@@ -1,5 +1,5 @@
 /* ssl/ssl_txt.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -60,7 +60,7 @@
 #include "buffer.h"
 #include "ssl_locl.h"
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int SSL_SESSION_print_fp(fp, x)
 FILE *fp;
 SSL_SESSION *x;
@@ -68,7 +68,7 @@ SSL_SESSION *x;
         BIO *b;
         int ret;
 
-        if ((b=BIO_new(BIO_s_file())) == NULL)
+        if ((b=BIO_new(BIO_s_file_internal())) == NULL)
 		{
 		SSLerr(SSL_F_SSL_SESSION_PRINT_FP,ERR_R_BUF_LIB);
                 return(0);
@@ -85,11 +85,30 @@ BIO *bp;
 SSL_SESSION *x;
 	{
 	int i;
-	char str[128];
+	char str[128],*s;
 
 	if (x == NULL) goto err;
 	if (BIO_puts(bp,"SSL-Session:\n") <= 0) goto err;
-	sprintf(str,"    Cipher    : %s\n",(x->cipher == NULL)?"unknown":x->cipher->name);
+	if (x->ssl_version == SSL2_VERSION)
+		s="SSLv2";
+	else if (x->ssl_version == SSL3_VERSION)
+		s="SSLv3";
+	else if (x->ssl_version == TLS1_VERSION)
+		s="TLSv1";
+	else
+		s="unknown";
+	sprintf(str,"    Protocol  : %s\n",s);
+	if (BIO_puts(bp,str) <= 0) goto err;
+
+	if (x->cipher == NULL)
+		{
+		if (((x->cipher_id) & 0xff000000) == 0x02000000)
+			sprintf(str,"    Cipher    : %06lX\n",x->cipher_id&0xffffff);
+		else
+			sprintf(str,"    Cipher    : %04lX\n",x->cipher_id&0xffff);
+		}
+	else
+		sprintf(str,"    Cipher    : %s\n",(x->cipher == NULL)?"unknown":x->cipher->name);
 	if (BIO_puts(bp,str) <= 0) goto err;
 	if (BIO_puts(bp,"    Session-ID: ") <= 0) goto err;
 	for (i=0; i<(int)x->session_id_length; i++)

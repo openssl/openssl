@@ -1,5 +1,5 @@
 /* ssl/ssl2.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -64,6 +64,9 @@ extern "C" {
 #endif
 
 /* Protocol Version Codes */
+#define SSL2_VERSION		0x0002
+#define SSL2_VERSION_MAJOR	0x00
+#define SSL2_VERSION_MINOR	0x02
 #define SSL2_CLIENT_VERSION	0x0002
 #define SSL2_SERVER_VERSION	0x0002
 
@@ -150,7 +153,6 @@ extern "C" {
 
 typedef struct ssl2_ctx_st
 	{
-	int first_packet;	/* enable first packet checking in server */
 	int three_byte_header;
 	int clear_text;		/* clear text */
 	int escape;		/* not used in SSLv2 */

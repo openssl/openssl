@@ -1,5 +1,5 @@
 /* crypto/dsa/dsa_gen.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -72,13 +72,15 @@
 #include "dsa.h"
 #include "rand.h"
 
-DSA *DSA_generate_parameters(bits,seed_in,seed_len,counter_ret,h_ret,callback)
+DSA *DSA_generate_parameters(bits,seed_in,seed_len,counter_ret,h_ret,callback,
+	cb_arg)
 int bits;
 unsigned char *seed_in;
 int seed_len;
 int *counter_ret;
 unsigned long *h_ret;
 void (*callback)();
+char *cb_arg;
 	{
 	int ok=0;
 	unsigned char seed[SHA_DIGEST_LENGTH];
@@ -120,7 +122,7 @@ void (*callback)();
 		for (;;)
 			{
 			/* step 1 */
-			if (callback != NULL) callback(0,m++);
+			if (callback != NULL) callback(0,m++,cb_arg);
 
 			if (!seed_len)
 				RAND_bytes(seed,SHA_DIGEST_LENGTH);
@@ -147,13 +149,13 @@ void (*callback)();
 			if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,q)) abort();
 
 			/* step 4 */
-			if (DSA_is_prime(q,callback) > 0) break;
+			if (DSA_is_prime(q,callback,cb_arg) > 0) break;
 			/* do a callback call */
 			/* step 5 */
 			}
 
-		if (callback != NULL) callback(2,0);
-		if (callback != NULL) callback(3,0);
+		if (callback != NULL) callback(2,0,cb_arg);
+		if (callback != NULL) callback(3,0,cb_arg);
 
 		/* step 6 */
 		counter=0;
@@ -196,7 +198,7 @@ void (*callback)();
 			if (BN_cmp(p,test) >= 0)
 				{
 				/* step 11 */
-				if (DSA_is_prime(p,callback) > 0)
+				if (DSA_is_prime(p,callback,cb_arg) > 0)
 					goto end;
 				}
 
@@ -206,11 +208,11 @@ void (*callback)();
 			/* step 14 */
 			if (counter >= 4096) break;
 
-			if (callback != NULL) callback(0,counter);
+			if (callback != NULL) callback(0,counter,cb_arg);
 			}
 		}
 end:
-	if (callback != NULL) callback(2,1);
+	if (callback != NULL) callback(2,1,cb_arg);
 
 	/* We now need to gernerate g */
 	/* Set r0=(p-1)/q */
@@ -227,7 +229,7 @@ end:
 		h++;
 		}
 
-	if (callback != NULL) callback(3,1);
+	if (callback != NULL) callback(3,1,cb_arg);
 
 	ok=1;
 err:
@@ -249,9 +251,10 @@ err:
 	return(ok?ret:NULL);
 	}
 
-int DSA_is_prime(w, callback)
+int DSA_is_prime(w, callback,cb_arg)
 BIGNUM *w;
 void (*callback)();
+char *cb_arg;
 	{
 	int ok= -1,j,i,n;
 	BN_CTX *ctx=NULL,*ctx2=NULL;
@@ -310,7 +313,7 @@ void (*callback)();
 				}
 
 			if (!BN_mod_mul(z,z,z,w,ctx)) goto err;
-			if (callback != NULL) callback(1,j);
+			if (callback != NULL) callback(1,j,cb_arg);
 			}
 		}
 

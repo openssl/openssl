@@ -7,6 +7,8 @@
 
 $INSTALLTOP="/usr/local/ssl";
 
+$ssl_version="0.8.2";
+
 $infile="MINFO";
 
 %ops=(
@@ -18,6 +20,7 @@ $infile="MINFO";
 	"BC-NT",   "Borland C++ 4.5 - Windows NT  - PROBABLY NOT WORKING",
 	"BC-W31",  "Borland C++ 4.5 - Windows 3.1 - PROBABLY NOT WORKING",
 	"BC-MSDOS","Borland C++ 4.5 - MSDOS",
+	"linux-elf","Linux elf",
 	"FreeBSD","FreeBSD distribution",
 	"default","cc under unix",
 	);
@@ -27,15 +30,18 @@ foreach (@ARGV)
 	{
 	if    (/^no-rc2$/)	{ $no_rc2=1; }
 	elsif (/^no-rc4$/)	{ $no_rc4=1; }
+	elsif (/^no-rc5$/)	{ $no_rc5=1; }
 	elsif (/^no-idea$/)	{ $no_idea=1; }
 	elsif (/^no-des$/)	{ $no_des=1; }
 	elsif (/^no-bf$/)	{ $no_bf=1; }
+	elsif (/^no-cast$/)	{ $no_cast=1; }
 	elsif (/^no-md2$/)  	{ $no_md2=1; }
 	elsif (/^no-md5$/)	{ $no_md5=1; }
 	elsif (/^no-sha$/)	{ $no_sha=1; }
 	elsif (/^no-sha1$/)	{ $no_sha1=1; }
+	elsif (/^no-rmd160$/)	{ $no_rmd160=1; }
 	elsif (/^no-mdc2$/)	{ $no_mdc2=1; }
-	elsif (/^no-patents$/)	{ $no_rc2=$no_rc4=$no_idea=$no_sha1=$no_rsa=1; }
+	elsif (/^no-patents$/)	{ $no_rc2=$no_rc4=$no_rc5=$no_idea=$no_rsa=1; }
 	elsif (/^no-rsa$/)	{ $no_rsa=1; }
 	elsif (/^no-dsa$/)	{ $no_dsa=1; }
 	elsif (/^no-dh$/)	{ $no_dh=1; }
@@ -44,6 +50,10 @@ foreach (@ARGV)
 	elsif (/^no-ssl3$/)	{ $no_ssl3=1; }
 	elsif (/^no-err$/)	{ $no_err=1; }
 	elsif (/^no-sock$/)	{ $no_sock=1; }
+
+	elsif (/^just-ssl$/)	{ $no_rc2=$no_idea=$no_des=$no_bf=$no_cast=1;
+				  $no_md2=$no_sha=$no_mdc2=$no_dsa=$no_dh=1;
+				  $no_ssl2=$no_err=1; }
 
 	elsif (/^rsaref$/)	{ $rsaref=1; }
 	elsif (/^gcc$/)		{ $gcc=1; }
@@ -65,8 +75,9 @@ foreach (@ARGV)
 				{ printf STDERR "\t%-10s\t%s\n",$i,$ops{$i}; }
 			print STDERR <<"EOF";
 and [options] can be one of
-	no-md2 no-md5 no-sha no-sha1 no-mdc2	- Skip this digest
-	no-rc2 no-rc4 no-idea no-des no-bf	- Skip this symetriccipher
+	no-md2 no-md5 no-sha no-sha1 no-mdc2 no-rmd160 - Skip this digest
+	no-rc2 no-rc4 no-idea no-des no-bf no-cast - Skip this symetric cipher
+	no-rc5
 	no-rsa no-dsa no-dh			- Skip this public key cipher
 	no-ssl2 no-ssl3				- Skip this version of SSL
 	just-ssl				- remove all non-ssl keys/digest
@@ -79,7 +90,7 @@ and [options] can be one of
 	rsaref					- Build to require RSAref
 
 Values that can be set
-TMP=tmpdir OUT=outdir SRC=srcdir BIN=binpath CC=C-compiler
+TMP=tmpdir OUT=outdir SRC=srcdir BIN=binpath INC=header-outdir CC=C-compiler
 
 -L<ex_lib_path> -l<ex_lib>			- extra library flags (unix)
 -<ex_cc_flags>					- extra 'cc' flags,
@@ -99,15 +110,20 @@ $no_ssl3=1 if ($no_rsa && $no_dh);
 $no_ssl2=1 if ($no_md5 || $no_rsa);
 $no_ssl2=1 if ($no_rsa);
 
-$cc=(defined($VARS{'CC'}))?$VARS{'CC'}:'cc';
-$src_dir=(defined($VARS{'SRC'}))?$VARS{'SRC'}:'.';
-$out_dir=(defined($VARS{'OUT'}))?$VARS{'OUT'}:'out';
-$tmp_dir=(defined($VARS{'TMP'}))?$VARS{'TMP'}:'tmp';
-$bin_dir=(defined($VARS{'BIN'}))?$VARS{'BIN'}:'';
+$out_def="out";
+$inc_def="outinc";
+$tmp_def="tmp";
+
 
 ($ssl,$crypto)=("ssl","crypto");
 $RSAglue="RSAglue";
 $ranlib="echo ranlib";
+
+$cc=(defined($VARS{'CC'}))?$VARS{'CC'}:'cc';
+$src_dir=(defined($VARS{'SRC'}))?$VARS{'SRC'}:'.';
+$bin_dir=(defined($VARS{'BIN'}))?$VARS{'BIN'}:'';
+
+# $bin_dir.=$o causes a core dump on my sparc :-(
 
 push(@INC,"util/pl","pl");
 if ($type eq "VC-MSDOS")
@@ -159,6 +175,12 @@ elsif ($type eq "FreeBSD")
 	require 'unix.pl';
 	$cflags='-DTERMIO -D_ANSI_SOURCE -O2 -fomit-frame-pointer';
 	}
+elsif ($type eq "linux-elf")
+	{
+	require "unix.pl";
+	require "linux.pl";
+	$unix=1;
+	}
 else
 	{
 	require "unix.pl";
@@ -167,18 +189,24 @@ else
 	$cflags.=' -DTERMIO';
 	}
 
-# $bin_dir.=$o causes a core dump on my sparc :-(
+$out_dir=(defined($VARS{'OUT'}))?$VARS{'OUT'}:$out_def.($debug?".dbg":"");
+$tmp_dir=(defined($VARS{'TMP'}))?$VARS{'TMP'}:$tmp_def.($debug?".dbg":"");
+$inc_dir=(defined($VARS{'INC'}))?$VARS{'INC'}:$inc_def;
+
 $bin_dir=$bin_dir.$o unless ((substr($bin_dir,-1,1) eq $o) || ($bin_dir eq ''));
 
 $cflags.=" -DNO_IDEA" if $no_idea;
 $cflags.=" -DNO_RC2"  if $no_rc2;
 $cflags.=" -DNO_RC4"  if $no_rc4;
+$cflags.=" -DNO_RC5"  if $no_rc5;
 $cflags.=" -DNO_MD2"  if $no_md2;
 $cflags.=" -DNO_MD5"  if $no_md5;
 $cflags.=" -DNO_SHA"  if $no_sha;
 $cflags.=" -DNO_SHA1" if $no_sha1;
+$cflags.=" -DNO_RMD160" if $no_rmd160;
 $cflags.=" -DNO_MDC2" if $no_mdc2;
 $cflags.=" -DNO_BLOWFISH"  if $no_bf;
+$cflags.=" -DNO_CAST" if $no_cast;
 $cflags.=" -DNO_DES"  if $no_des;
 $cflags.=" -DNO_RSA"  if $no_rsa;
 $cflags.=" -DNO_DSA"  if $no_dsa;
@@ -234,6 +262,7 @@ CC=$bin_dir${cc}
 CFLAG=$cflags
 APP_CFLAG=$app_cflag
 LIB_CFLAG=$lib_cflag
+SHLIB_CFLAG=$shl_cflag
 APP_EX_OBJ=$app_ex_obj
 SHLIB_EX_OBJ=$shlib_ex_obj
 # add extra libraries to this define, for solaris -lsocket -lnsl would
@@ -254,11 +283,25 @@ DES_CRYPT_OBJ=$des_crypt_obj
 DES_CRYPT_SRC=$des_crypt_src
 BF_ENC_OBJ=$bf_enc_obj
 BF_ENC_SRC=$bf_enc_src
+CAST_ENC_OBJ=$cast_enc_obj
+CAST_ENC_SRC=$cast_enc_src
+RC4_ENC_OBJ=$rc4_enc_obj
+RC4_ENC_SRC=$rc4_enc_src
+RC5_ENC_OBJ=$rc5_enc_obj
+RC5_ENC_SRC=$rc5_enc_src
+MD5_ASM_OBJ=$md5_asm_obj
+MD5_ASM_SRC=$md5_asm_src
+SHA1_ASM_OBJ=$sha1_asm_obj
+SHA1_ASM_SRC=$sha1_asm_src
+RMD160_ASM_OBJ=$rmd160_asm_obj
+RMD160_ASM_SRC=$rmd160_asm_src
 
 # The output directory for everything intersting
 OUT_D=$out_dir
 # The output directory for all the temporary muck
 TMP_D=$tmp_dir
+# The output directory for the header files
+INC_D=$inc_dir
 
 CP=$cp
 RM=$rm
@@ -280,11 +323,9 @@ RSAGLUE=$RSAglue
 # BIN_D  - Binary output directory
 # TEST_D - Binary test file output directory
 # LIB_D  - library output directory
-# INC_D  - include directory
 BIN_D=\$(OUT_D)
 TEST_D=\$(OUT_D)
 LIB_D=\$(OUT_D)
-INC_D=\$(OUT_D)
 
 # INCL_D - local library directory
 # OBJ_D  - temp object file directory
@@ -294,8 +335,10 @@ INCL_D=\$(TMP_D)
 O_SSL=     \$(LIB_D)$o$plib\$(SSL)$shlibp
 O_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$shlibp
 O_RSAGLUE= \$(LIB_D)$o$plib\$(RSAGLUE)$libp
-L_SSL=     \$(LIB_D)$o$plib\$(SSL)$libp
-L_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$libp
+SO_SSL=    $plib\$(SSL)$so_shlibp
+SO_CRYPTO= $plib\$(CRYPTO)$so_shlibp
+L_SSL=     \$(LIB_D)$o\$(SSL)$libp
+L_CRYPTO=  \$(LIB_D)$o\$(CRYPTO)$libp
 
 L_LIBS= \$(L_SSL) \$(L_CRYPTO)
 #L_LIBS= \$(O_SSL) \$(O_RSAGLUE) -lrsaref \$(O_CRYPTO)
@@ -304,25 +347,35 @@ L_LIBS= \$(L_SSL) \$(L_CRYPTO)
 # Don't touch anything below this point
 ######################################################
 
-INC=-DFLAT_INC -I\$(INC_D) -I\$(INCL_D)
+INC=-I\$(INC_D) -I\$(INCL_D)
 APP_CFLAGS=\$(INC) \$(CFLAG) \$(APP_CFLAG)
 LIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG)
+SHLIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG) \$(SHLIB_CFLAG)
 LIBS_DEP=\$(O_CRYPTO) \$(O_RSAGLUE) \$(O_SSL)
 
 #############################################
 EOF
 
 $rules=<<"EOF";
-all: banner \$(OUT_D) \$(TMP_D) headers lib exe
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INC_D) headers lib exe
 
 banner:
 $banner
 
-\$(OUT_D):
-	\$(MKDIR) \$(OUT_D)
-
 \$(TMP_D):
 	\$(MKDIR) \$(TMP_D)
+
+\$(BIN_D):
+	\$(MKDIR) \$(BIN_D)
+
+\$(TEST_D):
+	\$(MKDIR) \$(TEST_D)
+
+\$(LIB_D):
+	\$(MKDIR) \$(LIB_D)
+
+\$(INC_D):
+	\$(MKDIR) \$(INC_D)
 
 headers: \$(HEADER) \$(EXHEADER)
 
@@ -335,10 +388,10 @@ install:
 	\$(MKDIR) \$(INSTALLTOP)${o}bin
 	\$(MKDIR) \$(INSTALLTOP)${o}include
 	\$(MKDIR) \$(INSTALLTOP)${o}lib
-	\$(CP) \$(INC_D)${o}*.h \$(INSTALLTOP)${o}include
+	\$(CP) \$(INC_D)${o}*.\[ch\] \$(INSTALLTOP)${o}include
 	\$(CP) \$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin
-	\$(CP) \$(LIB_D)$o\$(O_SSL) \$(INSTALLTOP)${o}lib
-	\$(CP) \$(LIB_D)$o\$(O_CRYPTO) \$(INSTALLTOP)${o}lib
+	\$(CP) \$(O_SSL) \$(INSTALLTOP)${o}lib
+	\$(CP) \$(O_CRYPTO) \$(INSTALLTOP)${o}lib
 
 clean:
 	\$(RM) \$(TMP_D)$o*.*
@@ -427,6 +480,9 @@ $rules.=&do_compile_rule("\$(OBJ_D)",$e_exe,'-DMONOLITH $(APP_CFLAGS)');
 foreach (values %lib_nam)
 	{
 	$lib_obj=$lib_obj{$_};
+	local($slib)=$shlib;
+
+	$slib=0 if ($_ eq "RSAGLUE");
 
 	if (($_ eq "SSL") && $no_ssl2 && $no_ssl3)
 		{
@@ -442,22 +498,53 @@ foreach (values %lib_nam)
 
 	if (($bn_mulw_obj ne "") && ($_ eq "CRYPTO"))
 		{
-		$lib_obj =~ s/\S*bn_mulw\S*/\$(BN_MULW_OBJ)/;
+		$lib_obj =~ s/\s\S*\/bn_mulw\S*/ \$(BN_MULW_OBJ)/;
 		$rules.=&do_asm_rule($bn_mulw_obj,$bn_mulw_src);
 		}
 	if (($des_enc_obj ne "") && ($_ eq "CRYPTO"))
 		{
-		$lib_obj =~ s/\S*des_enc\S*/\$(DES_ENC_OBJ)/;
-		$lib_obj =~ s/\S*fcrypt_b\S*\s*//;
+		$lib_obj =~ s/\s\S*des_enc\S*/ \$(DES_ENC_OBJ)/;
+		$lib_obj =~ s/\s\S*\/fcrypt_b\S*\s*/ /;
 		$rules.=&do_asm_rule($des_enc_obj,$des_enc_src);
 		}
 	if (($bf_enc_obj ne "") && ($_ eq "CRYPTO"))
 		{
-		$lib_obj =~ s/\S*bf_enc\S*/\$(BF_ENC_OBJ)/;
+		$lib_obj =~ s/\s\S*\/bf_enc\S*/ \$(BF_ENC_OBJ)/;
 		$rules.=&do_asm_rule($bf_enc_obj,$bf_enc_src);
 		}
+	if (($cast_enc_obj ne "") && ($_ eq "CRYPTO"))
+		{
+		$lib_obj =~ s/(\s\S*\/c_enc\S*)/ \$(CAST_ENC_OBJ)/;
+		$rules.=&do_asm_rule($cast_enc_obj,$cast_enc_src);
+		}
+	if (($rc4_enc_obj ne "") && ($_ eq "CRYPTO"))
+		{
+		$lib_obj =~ s/\s\S*\/rc4_enc\S*/ \$(RC4_ENC_OBJ)/;
+		$rules.=&do_asm_rule($rc4_enc_obj,$rc4_enc_src);
+		}
+	if (($rc5_enc_obj ne "") && ($_ eq "CRYPTO"))
+		{
+		$lib_obj =~ s/\s\S*\/rc5_enc\S*/ \$(RC5_ENC_OBJ)/;
+		$rules.=&do_asm_rule($rc5_enc_obj,$rc5_enc_src);
+		}
+	if (($md5_asm_obj ne "") && ($_ eq "CRYPTO"))
+		{
+		$lib_obj =~ s/\s(\S*\/md5_dgst\S*)/ $1 \$(MD5_ASM_OBJ)/;
+		$rules.=&do_asm_rule($md5_asm_obj,$md5_asm_src);
+		}
+	if (($sha1_asm_obj ne "") && ($_ eq "CRYPTO"))
+		{
+		$lib_obj =~ s/\s(\S*\/sha1dgst\S*)/ $1 \$(SHA1_ASM_OBJ)/;
+		$rules.=&do_asm_rule($sha1_asm_obj,$sha1_asm_src);
+		}
+	if (($rmd160_asm_obj ne "") && ($_ eq "CRYPTO"))
+		{
+		$lib_obj =~ s/\s(\S*\/rmd_dgst\S*)/ $1 \$(RMD160_ASM_OBJ)/;
+		$rules.=&do_asm_rule($rmd160_asm_obj,$rmd160_asm_src);
+		}
 	$defs.=&do_defs(${_}."OBJ",$lib_obj,"\$(OBJ_D)",$obj);
-	$rules.=&do_compile_rule("\$(OBJ_D)",$lib_obj{$_},"\$(LIB_CFLAGS)");
+	$lib=($slib)?" \$(SHLIB_CFLAGS)":" \$(LIB_CFLAGS)";
+	$rules.=&do_compile_rule("\$(OBJ_D)",$lib_obj{$_},$lib);
 	}
 
 $defs.=&do_defs("T_EXE",$test,"\$(TEST_D)",$exep);
@@ -468,10 +555,10 @@ foreach (split(/\s+/,$test))
 	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
 	}
 
-$rules.= &do_lib_rule("\$(SSLOBJ)","\$(O_SSL)",$ssl,$shlib);
-$rules.= &do_lib_rule("\$(RSAGLUEOBJ)","\$(O_RSAGLUE)",$RSAglue,0)
+$rules.= &do_lib_rule("\$(SSLOBJ)","\$(O_SSL)",$ssl,$shlib,"\$(SO_SSL)");
+$rules.= &do_lib_rule("\$(RSAGLUEOBJ)","\$(O_RSAGLUE)",$RSAglue,0,"")
 	unless $no_rsa;
-$rules.= &do_lib_rule("\$(CRYPTOOBJ)","\$(O_CRYPTO)",$crypto,$shlib);
+$rules.= &do_lib_rule("\$(CRYPTOOBJ)","\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)");
 
 $rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
 
@@ -491,6 +578,7 @@ sub var_add
 	return("") if $no_idea && $dir =~ /\/idea/;
 	return("") if $no_rc2  && $dir =~ /\/rc2/;
 	return("") if $no_rc4  && $dir =~ /\/rc4/;
+	return("") if $no_rc5  && $dir =~ /\/rc5/;
 	return("") if $no_rsa  && $dir =~ /\/rsa/;
 	return("") if $no_rsa  && $dir =~ /^rsaref/;
 	return("") if $no_dsa  && $dir =~ /\/dsa/;
@@ -505,6 +593,7 @@ sub var_add
 	return("") if $no_mdc2 && $dir =~ /\/mdc2/;
 	return("") if $no_sock && $dir =~ /\/proxy/;
 	return("") if $no_bf   && $dir =~ /\/bf/;
+	return("") if $no_cast && $dir =~ /\/cast/;
 
 	$val =~ s/^\s*(.*)\s*$/$1/;
 	@a=split(/\s+/,$val);
@@ -514,7 +603,9 @@ sub var_add
 	@a=grep(!/^e_.*_d$/,@a) if $no_des;
 	@a=grep(!/^e_.*_i$/,@a) if $no_idea;
 	@a=grep(!/^e_.*_r2$/,@a) if $no_rc2;
+	@a=grep(!/^e_.*_r5$/,@a) if $no_rc5;
 	@a=grep(!/^e_.*_bf$/,@a) if $no_bf;
+	@a=grep(!/^e_.*_c$/,@a) if $no_cast;
 	@a=grep(!/^e_rc4$/,@a) if $no_rc4;
 
 	@a=grep(!/(^s2_)|(^s23_)/,@a) if $no_ssl2;
@@ -567,7 +658,7 @@ sub clean_up_ws
 sub do_defs
 	{
 	local($var,$files,$location,$postfix)=@_;
-	local($_,$ret);
+	local($_,$ret,$pf);
 	local(*OUT,$tmp,$t);
 
 	$files =~ s/\//$o/g if $o ne '/';
@@ -576,19 +667,26 @@ sub do_defs
 	$Vars{$var}.="";
 	foreach (split(/ /,$files))
 		{
+		$orig=$_;
 		$_=&bname($_) unless /^\$/;
 		if ($n++ == 2)
 			{
 			$n=0;
 			$ret.="\\\n\t";
 			}
-		if ($_ =~ /BN_MULW/)
-			{ $t="$_ "; }
-		elsif ($_ =~ /DES_ENC/)
-			{ $t="$_ "; }
-		elsif ($_ =~ /BF_ENC/)
-			{ $t="$_ "; }
-		else	{ $t="$location${o}$_$postfix "; }
+		if (($_ =~ /bss_file/) && ($postfix eq ".h"))
+			{ $pf=".c"; }
+		else	{ $pf=$postfix; }
+		if ($_ =~ /BN_MULW/)	{ $t="$_ "; }
+		elsif ($_ =~ /DES_ENC/)	{ $t="$_ "; }
+		elsif ($_ =~ /BF_ENC/)	{ $t="$_ "; }
+		elsif ($_ =~ /CAST_ENC/){ $t="$_ "; }
+		elsif ($_ =~ /RC4_ENC/)	{ $t="$_ "; }
+		elsif ($_ =~ /RC5_ENC/)	{ $t="$_ "; }
+		elsif ($_ =~ /MD5_ASM/)	{ $t="$_ "; }
+		elsif ($_ =~ /SHA1_ASM/){ $t="$_ "; }
+		elsif ($_ =~ /RMD160_ASM/){ $t="$_ "; }
+		else	{ $t="$location${o}$_$pf "; }
 
 		$Vars{$var}.="$t ";
 		$ret.=$t;
@@ -610,13 +708,16 @@ sub bname
 sub do_copy_rule
 	{
 	local($to,$files,$p)=@_;
-	local($ret,$_,$n);
+	local($ret,$_,$n,$pp);
 	
 	$files =~ s/\//$o/g if $o ne '/';
 	foreach (split(/\s+/,$files))
 		{
 		$n=&bname($_);
-		$ret.="$to${o}$n$p: \$(SRC_D)$o$_$p\n\t\$(CP) \$(SRC_D)$o$_$p $to${o}$n$p\n\n";
+		if ($n =~ /bss_file/)
+			{ $pp=".c"; }
+		else	{ $pp=$p; }
+		$ret.="$to${o}$n$pp: \$(SRC_D)$o$_$pp\n\t\$(CP) \$(SRC_D)$o$_$pp $to${o}$n$pp\n\n";
 		}
 	return($ret);
 	}

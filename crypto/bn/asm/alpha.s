@@ -3,16 +3,15 @@
  # Thanks to tzeruch@ceddec.com for sending me the gcc output for
  # bn_div64.
 	.file	1 "bn_mulw.c"
-	.version	"01.01"
 	.set noat
 gcc2_compiled.:
 __gnu_compiled_c:
 	.text
 	.align 3
-	.globl bn_mul_add_word
-	.ent bn_mul_add_word
-bn_mul_add_word:
-bn_mul_add_word..ng:
+	.globl bn_mul_add_words
+	.ent bn_mul_add_words
+bn_mul_add_words:
+bn_mul_add_words..ng:
 	.frame $30,0,$26,0
 	.prologue 0
 	subq $18,2,$25	# num=-2
@@ -74,12 +73,12 @@ $42:
 	.align 4
 $43:
 	ret $31,($26),1
-	.end bn_mul_add_word
+	.end bn_mul_add_words
 	.align 3
-	.globl bn_mul_word
-	.ent bn_mul_word
-bn_mul_word:
-bn_mul_word..ng:
+	.globl bn_mul_words
+	.ent bn_mul_words
+bn_mul_words:
+bn_mul_words..ng:
 	.frame $30,0,$26,0
 	.prologue 0
 	subq $18,2,$25	# num=-2
@@ -125,7 +124,7 @@ $242:
 	stq $1,0($16)
 $243:
 	ret $31,($26),1
-	.end bn_mul_word
+	.end bn_mul_words
 	.align 3
 	.globl bn_sqr_words
 	.ent bn_sqr_words
@@ -172,6 +171,41 @@ $442:
 $443:
 	ret $31,($26),1
 	.end bn_sqr_words
+
+	.align 3
+	.globl bn_add_words
+	.ent bn_add_words
+bn_add_words:
+bn_add_words..ng:
+	.frame $30,0,$26,0
+	.prologue 0
+
+	bis	$31,$31,$8	# carry = 0
+	ble	$19,$900
+$901:
+	ldq	$0,0($17)	# a[0]
+	ldq	$1,0($18)	# a[1]
+
+	addq	$0,$1,$3	# c=a+b;
+	 addq	$17,8,$17	# a++
+
+	cmpult	$3,$1,$7	# did we overflow?
+	 addq	$18,8,$18	# b++
+
+	addq	$8,$3,$3	# c+=carry
+
+	cmpult	$3,$8,$8	# did we overflow?
+	 stq	$3,($16)	# r[0]=c
+
+	addq	$7,$8,$8	# add into overflow
+	 subq	$19,1,$19	# loop--
+
+	addq	$16,8,$16	# r++
+	 bgt	$19,$901
+$900:
+	bis	$8,$8,$0	# return carry
+	ret $31,($26),1
+	.end bn_add_words
 
  #
  # What follows was taken directly from the C compiler with a few

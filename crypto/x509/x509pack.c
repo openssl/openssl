@@ -1,5 +1,5 @@
 /* crypto/x509/x509pack.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -141,7 +141,7 @@ ASN1_OCTET_STRING *os;
 			(ASN1_BIT_STRING **)ex,&p,os->length);
 		break;
 	case V_ASN1_OCTET_STRING:
-		ret=(ASN1_STRING *)d2i_ASN1_BIT_STRING(
+		ret=(ASN1_STRING *)d2i_ASN1_OCTET_STRING(
 			(ASN1_BIT_STRING **)ex,&p,os->length);
 		break;
 	case V_ASN1_IA5STRING:

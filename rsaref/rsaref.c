@@ -1,5 +1,5 @@
 /* rsaref/rsaref.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -125,6 +125,8 @@ static RSA_METHOD rsa_pkcs1_ref_meth={
 	RSA_ref_mod_exp,
 	BN_ref_mod_exp,
 	NULL,
+	NULL,
+	0,
 	NULL,
 	};
 

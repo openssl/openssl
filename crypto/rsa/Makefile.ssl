@@ -22,8 +22,10 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= rsa_enc.c rsa_gen.c rsa_lib.c rsa_sign.c rsa_saos.c $(ERRC).c
-LIBOBJ= rsa_enc.o rsa_gen.o rsa_lib.o rsa_sign.o rsa_saos.o $(ERRC).o
+LIBSRC= rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c rsa_saos.c $(ERRC).c \
+	rsa_pk1.c rsa_ssl.c rsa_none.c
+LIBOBJ= rsa_eay.o rsa_gen.o rsa_lib.o rsa_sign.o rsa_saos.o $(ERRC).o \
+	rsa_pk1.o rsa_ssl.o rsa_none.o
 
 SRC= $(LIBSRC)
 
@@ -79,6 +81,6 @@ clean:
 
 errors:
 	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
-	perl ../err/err_genc.pl $(ERR).h $(ERRC).c
+	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

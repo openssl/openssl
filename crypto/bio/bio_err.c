@@ -60,6 +60,7 @@
 #include "bio.h"
 
 /* BEGIN ERROR CODES */
+#ifndef NO_ERR
 static ERR_STRING_DATA BIO_str_functs[]=
 	{
 {ERR_PACK(0,BIO_F_ACPT_STATE,0),	"ACPT_STATE"},
@@ -75,9 +76,11 @@ static ERR_STRING_DATA BIO_str_functs[]=
 {ERR_PACK(0,BIO_F_BIO_READ,0),	"BIO_read"},
 {ERR_PACK(0,BIO_F_BIO_SOCK_INIT,0),	"BIO_sock_init"},
 {ERR_PACK(0,BIO_F_BIO_WRITE,0),	"BIO_write"},
+{ERR_PACK(0,BIO_F_BUFFER_CTRL,0),	"BUFFER_CTRL"},
 {ERR_PACK(0,BIO_F_CONN_STATE,0),	"CONN_STATE"},
 {ERR_PACK(0,BIO_F_FILE_CTRL,0),	"FILE_CTRL"},
 {ERR_PACK(0,BIO_F_MEM_WRITE,0),	"MEM_WRITE"},
+{ERR_PACK(0,BIO_F_SSL_NEW,0),	"SSL_NEW"},
 {ERR_PACK(0,BIO_F_WSASTARTUP,0),	"WSASTARTUP"},
 {0,NULL},
 	};
@@ -93,6 +96,7 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 {BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET,"error setting nbio on accept socket"},
 {BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET ,"gethostbyname addr is not af inet"},
 {BIO_R_INVALID_IP_ADDRESS                ,"invalid ip address"},
+{BIO_R_KEEPALIVE                         ,"keepalive"},
 {BIO_R_NBIO_CONNECT_ERROR                ,"nbio connect error"},
 {BIO_R_NO_ACCEPT_PORT_SPECIFIED          ,"no accept port specified"},
 {BIO_R_NO_HOSTHNAME_SPECIFIED            ,"no hosthname specified"},
@@ -108,14 +112,19 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 {0,NULL},
 	};
 
+#endif
+
 void ERR_load_BIO_strings()
 	{
 	static int init=1;
 
-	if (init)
-		{
+	if (init);
+		{;
 		init=0;
+#ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_BIO,BIO_str_functs);
 		ERR_load_strings(ERR_LIB_BIO,BIO_str_reasons);
+#endif
+
 		}
 	}

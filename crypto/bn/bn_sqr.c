@@ -1,5 +1,5 @@
 /* crypto/bn/bn_sqr.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -69,7 +69,7 @@ BN_CTX *ctx;
 	{
 	int i,j,max,al;
 	BIGNUM *tmp;
-	BN_ULONG *ap,*rp,c;
+	BN_ULONG *ap,*rp;
 
 	tmp=ctx->bn[ctx->tos];
 
@@ -81,8 +81,8 @@ BN_CTX *ctx;
 		}
 
 	max=(al*2);
-	if (bn_expand(r,max*BN_BITS2) == NULL) return(0);
-	if (bn_expand(tmp,max*BN_BITS2) == NULL) return(0);
+	if (bn_wexpand(r,1+max) == NULL) return(0);
+	if (bn_wexpand(tmp,1+max) == NULL) return(0);
 
 	r->neg=0;
 
@@ -95,7 +95,7 @@ BN_CTX *ctx;
 	if (--j > 0)
 		{
 		ap++;
-		rp[j]=bn_mul_word(rp,ap,j,ap[-1]);
+		rp[j]=bn_mul_words(rp,ap,j,ap[-1]);
 		rp+=2;
 		}
 
@@ -103,56 +103,17 @@ BN_CTX *ctx;
 		{
 		j--;
 		ap++;
-		rp[j]=bn_mul_add_word(rp,ap,j,ap[-1]);
+		rp[j]=bn_mul_add_words(rp,ap,j,ap[-1]);
 		rp+=2;
 		}
 
-	/* inlined shift, 2 words at once */
-	j=max;
-	rp=r->d;
-	c=0;
-	for (i=0; i<j; i++)
-		{
-		BN_ULONG t;
+	bn_add_words(r->d,r->d,r->d,max);
 
-		t= *rp;
-		*(rp++)=((t<<1)|c)&BN_MASK2;
-		c=(t & BN_TBIT)?1:0;
-
-#if 0
-		t= *rp;
-		*(rp++)=((t<<1)|c)&BN_MASK2;
-		c=(t & BN_TBIT)?1:0;
-#endif
-		}
-	/* there will not be a carry */
+	/* There will not be a carry */
 
 	bn_sqr_words(tmp->d,a->d,al);
 
-	/* inlined add */
-	ap=tmp->d;
-	rp=r->d;
-	c=0;
-	j=max;
-	for (i=0; i<j; i++)
-		{
-		BN_ULONG t1,t2;
-
-		t1= *(ap++);
-		t2= *rp;
-		if (c)
-			{
-			c=(t2 >= ((~t1)&BN_MASK2));
-			t2=(t1+t2+1)&BN_MASK2;
-			}
-		else
-			{
-			t2=(t1+t2)&BN_MASK2;
-			c=(t2<t1);
-			}
-		*(rp++)=t2;
-		}
-	/* there will be no carry */
+	bn_add_words(r->d,r->d,tmp->d,max);
 
 	r->top=max;
 	if (r->d[max-1] == 0) r->top--;

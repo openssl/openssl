@@ -1,5 +1,5 @@
 /* crypto/bf/blowfish.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -86,7 +86,8 @@ typedef struct bf_key_st
 void BF_set_key(BF_KEY *key, int len, unsigned char *data);
 void BF_ecb_encrypt(unsigned char *in,unsigned char *out,BF_KEY *key,
 	int enc);
-void BF_encrypt(BF_LONG *data,BF_KEY *key,int enc);
+void BF_encrypt(BF_LONG *data,BF_KEY *key);
+void BF_decrypt(BF_LONG *data,BF_KEY *key);
 void BF_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
 	BF_KEY *ks, unsigned char *iv, int enc);
 void BF_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
@@ -100,6 +101,7 @@ char *BF_options(void);
 void BF_set_key();
 void BF_ecb_encrypt();
 void BF_encrypt();
+void BF_decrypt();
 void BF_cbc_encrypt();
 void BF_cfb64_encrypt();
 void BF_ofb64_encrypt();

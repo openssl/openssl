@@ -1,5 +1,5 @@
 /* apps/apps.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -65,13 +65,8 @@
 #include "apps.h"
 #undef NON_MAIN
 
-#ifdef WIN16
-#define APPS_WIN16
-#ifdef FLAT_BUILD
-#include "bss_file.c"
-#else
-#include "../crypto/bio/bss_file.c"
-#endif
+#ifdef WINDOWS
+#  include "bss_file.c"
 #endif
 
 #ifndef NOPROTO

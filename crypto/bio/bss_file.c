@@ -1,5 +1,5 @@
 /* crypto/bio/bss_file.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -56,11 +56,22 @@
  * [including the GNU Public Licence.]
  */
 
+/*
+ * 03-Dec-1997	rdenny@dc3.com  Fix bug preventing use of stdin/stdout
+ *		with binary data (e.g. asn1parse -inform DER < xxx) under
+ *		Windows
+ */
+
+#ifndef HEADER_BSS_FILE_C
+#define HEADER_BSS_FILE_C
+
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
 #include "bio.h"
 #include "err.h"
+
+#if !defined(NO_STDIO)
 
 #ifndef NOPROTO
 static int MS_CALLBACK file_write(BIO *h,char *buf,int num);
@@ -82,7 +93,8 @@ static int MS_CALLBACK file_free();
 
 static BIO_METHOD methods_filep=
 	{
-	BIO_TYPE_FILE,"FILE pointer",
+	BIO_TYPE_FILE,
+	"FILE pointer",
 	file_write,
 	file_read,
 	file_puts,
@@ -92,7 +104,6 @@ static BIO_METHOD methods_filep=
 	file_free,
 	};
 
-#if !defined(WIN16) || defined(APPS_WIN16)
 BIO *BIO_new_file(filename,mode)
 char *filename;
 char *mode;
@@ -102,17 +113,13 @@ char *mode;
 
 	if ((file=fopen(filename,mode)) == NULL)
 		{
-		SYSerr(SYS_F_FOPEN,errno);
+		SYSerr(SYS_F_FOPEN,get_last_sys_error());
+		ERR_add_error_data(5,"fopen('",filename,"','",mode,"')");
 		BIOerr(BIO_F_BIO_NEW_FILE,ERR_R_SYS_LIB);
 		return(NULL);
 		}
-
-	if ((ret=BIO_new(BIO_s_file())) == NULL)
+	if ((ret=BIO_new(BIO_s_file_internal())) == NULL)
 		return(NULL);
-#if 0
-	if ((ret=BIO_new(BIO_s_file_internal_w16())) == NULL)
-		return(NULL);
-#endif
 
 	BIO_set_fp(ret,file,BIO_CLOSE);
 	return(ret);
@@ -126,30 +133,15 @@ int close_flag;
 
 	if ((ret=BIO_new(BIO_s_file())) == NULL)
 		return(NULL);
-#if 0
-	if ((ret=BIO_new(BIO_s_file_internal_w16())) == NULL)
-#endif
 
 	BIO_set_fp(ret,stream,close_flag);
 	return(ret);
 	}
-#endif /* !APPS_WIN16 */
-
-#if !defined(WIN16) || defined(APPS_WIN16)
 
 BIO_METHOD *BIO_s_file()
 	{
 	return(&methods_filep);
 	}
-
-#else
-
-BIO_METHOD *BIO_s_file_internal_w16()
-	{
-	return(&methods_filep);
-	}
-
-#endif
 
 static int MS_CALLBACK file_new(bi)
 BIO *bi;
@@ -236,6 +228,13 @@ char *ptr;
 		b->shutdown=(int)num;
 		b->ptr=(char *)ptr;
 		b->init=1;
+#if defined(MSDOS) || defined(WINDOWS)
+		/* Set correct text/binary mode */
+		if (num & BIO_FP_TEXT)
+			_setmode(fileno((FILE *)ptr),_O_TEXT);
+		else
+			_setmode(fileno((FILE *)ptr),_O_BINARY);
+#endif
 		break;
 	case BIO_C_SET_FILENAME:
 		file_free(b);
@@ -267,7 +266,8 @@ char *ptr;
 		fp=fopen(ptr,p);
 		if (fp == NULL)
 			{
-			SYSerr(SYS_F_FOPEN,errno);
+			SYSerr(SYS_F_FOPEN,get_last_sys_error());
+			ERR_add_error_data(5,"fopen('",ptr,"','",p,"')");
 			BIOerr(BIO_F_FILE_CTRL,ERR_R_SYS_LIB);
 			ret=0;
 			break;
@@ -331,4 +331,9 @@ char *str;
 	ret=file_write(bp,str,n);
 	return(ret);
 	}
+
+#endif /* NO_STDIO */
+
+#endif /* HEADER_BSS_FILE_C */
+
 

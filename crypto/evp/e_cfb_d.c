@@ -1,5 +1,5 @@
 /* crypto/evp/e_cfb_d.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -77,6 +77,11 @@ static EVP_CIPHER d_cfb_cipher=
 	1,8,8,
 	des_cfb_init_key,
 	des_cfb_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ks)),
+	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
 	};
 
 EVP_CIPHER *EVP_des_cfb()
@@ -90,13 +95,13 @@ unsigned char *key;
 unsigned char *iv;
 int enc;
 	{
-	ctx->c.des_cfb.num=0;
+	ctx->num=0;
 
 	if (iv != NULL)
-		memcpy(&(ctx->c.des_cfb.oiv[0]),iv,8);
-	memcpy(&(ctx->c.des_cfb.iv[0]),&(ctx->c.des_cfb.oiv[0]),8);
+		memcpy(&(ctx->oiv[0]),iv,8);
+	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
-		des_set_key((des_cblock *)key,ctx->c.des_cfb.ks);
+		des_set_key((des_cblock *)key,ctx->c.des_ks);
 	}
 
 static void des_cfb_cipher(ctx,out,in,inl)
@@ -107,7 +112,7 @@ unsigned int inl;
 	{
 	des_cfb64_encrypt(
 		in,out,
-		(long)inl, ctx->c.des_cfb.ks,
-		(des_cblock *)&(ctx->c.des_cfb.iv[0]),
-		&ctx->c.des_cfb.num,ctx->encrypt);
+		(long)inl, ctx->c.des_ks,
+		(des_cblock *)&(ctx->iv[0]),
+		&ctx->num,ctx->encrypt);
 	}

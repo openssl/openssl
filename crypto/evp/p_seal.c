@@ -1,5 +1,5 @@
 /* crypto/evp/p_seal.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -74,30 +74,23 @@ EVP_PKEY **pubk;
 int npubk;
 	{
 	unsigned char key[EVP_MAX_KEY_LENGTH];
-	int i,ret=0,n;
+	int i;
 	
 	if (npubk <= 0) return(0);
 	RAND_bytes(key,EVP_MAX_KEY_LENGTH);
 	if (type->iv_len > 0)
 		RAND_bytes(iv,type->iv_len);
 
+	EVP_CIPHER_CTX_init(ctx);
 	EVP_EncryptInit(ctx,type,key,iv);
+
 	for (i=0; i<npubk; i++)
 		{
-		if (pubk[i]->type != EVP_PKEY_RSA)
-			{
-			EVPerr(EVP_F_EVP_SEALINIT,EVP_R_PUBLIC_KEY_NOT_RSA);
-			goto err;
-			}
-		n=RSA_public_encrypt(type->key_len,key,ek[i],pubk[i]->pkey.rsa,
-			RSA_PKCS1_PADDING);
-		if (n <= 0) goto err;
-		ekl[i]=n;
+		ekl[i]=EVP_PKEY_encrypt(ek[i],key,EVP_CIPHER_key_length(type),
+			pubk[i]);
+		if (ekl[i] <= 0) return(-1);
 		}
-	ret=npubk;
-err:
-	memset(key,0,EVP_MAX_KEY_LENGTH);
-	return(ret);
+	return(npubk);
 	}
 
 /* MACRO

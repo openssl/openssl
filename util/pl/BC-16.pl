@@ -21,7 +21,7 @@ $lflags="$base_lflags";
 if ($win16)
 	{
 	$shlib=1;
-	$cflags.=" -DWIN16";
+	$cflags.=" -DWINDOWS -DWIN16";
 	$app_cflag="-W";
 	$lib_cflag="-WD";
 	$lflags.="/Twe";

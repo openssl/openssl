@@ -1,5 +1,5 @@
 /* crypto/asn1/x_exten.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -108,6 +108,10 @@ long length;
 	M_ASN1_D2I_start_sequence();
 	M_ASN1_D2I_get(ret->object,d2i_ASN1_OBJECT);
 
+	if ((ret->argp != NULL) && (ret->ex_free != NULL))
+		ret->ex_free(ret);
+	ret->argl=0;
+	ret->argp=NULL;
 	ret->netscape_hack=0;
 	if ((c.slen != 0) &&
 		(M_ASN1_next == (V_ASN1_UNIVERSAL|V_ASN1_BOOLEAN)))
@@ -132,6 +136,9 @@ X509_EXTENSION *X509_EXTENSION_new()
 	M_ASN1_New(ret->value,ASN1_OCTET_STRING_new);
 	ret->critical=0;
 	ret->netscape_hack=0;
+	ret->argl=0L;
+	ret->argp=NULL;
+	ret->ex_free=NULL;
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_EXTENSION_NEW);
 	}
@@ -140,6 +147,8 @@ void X509_EXTENSION_free(a)
 X509_EXTENSION *a;
 	{
 	if (a == NULL) return;
+	if ((a->argp != NULL) && (a->ex_free != NULL))
+		a->ex_free(a);
 	ASN1_OBJECT_free(a->object);
 	ASN1_OCTET_STRING_free(a->value);
 	Free((char *)a);

@@ -1,5 +1,5 @@
 /* crypto/rc2/rc2_cbc.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -85,7 +85,7 @@ int encrypt;
 			tin1^=tout1;
 			tin[0]=tin0;
 			tin[1]=tin1;
-			RC2_encrypt(tin,ks,RC2_ENCRYPT);
+			RC2_encrypt(tin,ks);
 			tout0=tin[0]; l2c(tout0,out);
 			tout1=tin[1]; l2c(tout1,out);
 			}
@@ -96,7 +96,7 @@ int encrypt;
 			tin1^=tout1;
 			tin[0]=tin0;
 			tin[1]=tin1;
-			RC2_encrypt(tin,ks,RC2_ENCRYPT);
+			RC2_encrypt(tin,ks);
 			tout0=tin[0]; l2c(tout0,out);
 			tout1=tin[1]; l2c(tout1,out);
 			}
@@ -112,7 +112,7 @@ int encrypt;
 			{
 			c2l(in,tin0); tin[0]=tin0;
 			c2l(in,tin1); tin[1]=tin1;
-			RC2_encrypt(tin,ks,RC2_DECRYPT);
+			RC2_decrypt(tin,ks);
 			tout0=tin[0]^xor0;
 			tout1=tin[1]^xor1;
 			l2c(tout0,out);
@@ -124,7 +124,7 @@ int encrypt;
 			{
 			c2l(in,tin0); tin[0]=tin0;
 			c2l(in,tin1); tin[1]=tin1;
-			RC2_encrypt(tin,ks,RC2_DECRYPT);
+			RC2_decrypt(tin,ks);
 			tout0=tin[0]^xor0;
 			tout1=tin[1]^xor1;
 			l2cn(tout0,tout1,out,l+8);
@@ -136,5 +136,100 @@ int encrypt;
 		}
 	tin0=tin1=tout0=tout1=xor0=xor1=0;
 	tin[0]=tin[1]=0;
+	}
+
+void RC2_encrypt(d,key)
+unsigned long *d;
+RC2_KEY *key;
+	{
+	int i,n;
+	register RC2_INT *p0,*p1;
+	register RC2_INT x0,x1,x2,x3,t;
+	unsigned long l;
+
+	l=d[0];
+	x0=(RC2_INT)l&0xffff;
+	x1=(RC2_INT)(l>>16L);
+	l=d[1];
+	x2=(RC2_INT)l&0xffff;
+	x3=(RC2_INT)(l>>16L);
+
+	n=3;
+	i=5;
+
+	p0=p1= &(key->data[0]);
+	for (;;)
+		{
+		t=(x0+(x1& ~x3)+(x2&x3)+ *(p0++))&0xffff;
+		x0=(t<<1)|(t>>15);
+		t=(x1+(x2& ~x0)+(x3&x0)+ *(p0++))&0xffff;
+		x1=(t<<2)|(t>>14);
+		t=(x2+(x3& ~x1)+(x0&x1)+ *(p0++))&0xffff;
+		x2=(t<<3)|(t>>13);
+		t=(x3+(x0& ~x2)+(x1&x2)+ *(p0++))&0xffff;
+		x3=(t<<5)|(t>>11);
+
+		if (--i == 0)
+			{
+			if (--n == 0) break;
+			i=(n == 2)?6:5;
+
+			x0+=p1[x3&0x3f];
+			x1+=p1[x0&0x3f];
+			x2+=p1[x1&0x3f];
+			x3+=p1[x2&0x3f];
+			}
+		}
+
+	d[0]=(unsigned long)(x0&0xffff)|((unsigned long)(x1&0xffff)<<16L);
+	d[1]=(unsigned long)(x2&0xffff)|((unsigned long)(x3&0xffff)<<16L);
+	}
+
+void RC2_decrypt(d,key)
+unsigned long *d;
+RC2_KEY *key;
+	{
+	int i,n;
+	register RC2_INT *p0,*p1;
+	register RC2_INT x0,x1,x2,x3,t;
+	unsigned long l;
+
+	l=d[0];
+	x0=(RC2_INT)l&0xffff;
+	x1=(RC2_INT)(l>>16L);
+	l=d[1];
+	x2=(RC2_INT)l&0xffff;
+	x3=(RC2_INT)(l>>16L);
+
+	n=3;
+	i=5;
+
+	p0= &(key->data[63]);
+	p1= &(key->data[0]);
+	for (;;)
+		{
+		t=((x3<<11)|(x3>>5))&0xffff;
+		x3=(t-(x0& ~x2)-(x1&x2)- *(p0--))&0xffff;
+		t=((x2<<13)|(x2>>3))&0xffff;
+		x2=(t-(x3& ~x1)-(x0&x1)- *(p0--))&0xffff;
+		t=((x1<<14)|(x1>>2))&0xffff;
+		x1=(t-(x2& ~x0)-(x3&x0)- *(p0--))&0xffff;
+		t=((x0<<15)|(x0>>1))&0xffff;
+		x0=(t-(x1& ~x3)-(x2&x3)- *(p0--))&0xffff;
+
+		if (--i == 0)
+			{
+			if (--n == 0) break;
+			i=(n == 2)?6:5;
+
+			x3=(x3-p1[x2&0x3f])&0xffff;
+			x2=(x2-p1[x1&0x3f])&0xffff;
+			x1=(x1-p1[x0&0x3f])&0xffff;
+			x0=(x0-p1[x3&0x3f])&0xffff;
+			}
+		}
+
+	d[0]=(unsigned long)(x0&0xffff)|((unsigned long)(x1&0xffff)<<16L);
+	d[1]=(unsigned long)(x2&0xffff)|((unsigned long)(x3&0xffff)<<16L);
 	}
 

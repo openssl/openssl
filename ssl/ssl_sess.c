@@ -1,5 +1,5 @@
 /* ssl/ssl_sess.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -61,6 +61,51 @@
 #include "rand.h"
 #include "ssl_locl.h"
 
+#ifndef NOPROTO
+static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
+static void SSL_SESSION_list_add(SSL_CTX *ctx,SSL_SESSION *s);
+#else
+static void SSL_SESSION_list_remove();
+static void SSL_SESSION_list_add();
+#endif
+
+static ssl_session_num=0;
+static STACK *ssl_session_meth=NULL;
+
+SSL_SESSION *SSL_get_session(ssl)
+SSL *ssl;
+	{
+	return(ssl->session);
+	}
+
+int SSL_SESSION_get_ex_new_index(argl,argp,new_func,dup_func,free_func)
+long argl;
+char *argp;
+int (*new_func)();
+int (*dup_func)();
+void (*free_func)();
+        {
+        ssl_session_num++;
+        return(CRYPTO_get_ex_new_index(ssl_session_num-1,
+		&ssl_session_meth,
+                argl,argp,new_func,dup_func,free_func));
+        }
+
+int SSL_SESSION_set_ex_data(s,idx,arg)
+SSL_SESSION *s;
+int idx;
+char *arg;
+	{
+	return(CRYPTO_set_ex_data(&s->ex_data,idx,arg));
+	}
+
+char *SSL_SESSION_get_ex_data(s,idx)
+SSL_SESSION *s;
+int idx;
+	{
+	return(CRYPTO_get_ex_data(&s->ex_data,idx));
+	}
+
 SSL_SESSION *SSL_SESSION_new()
 	{
 	SSL_SESSION *ss;
@@ -76,6 +121,9 @@ SSL_SESSION *SSL_SESSION_new()
 	ss->references=1;
 	ss->timeout=60*5+4; /* 5 minute timeout by default */
 	ss->time=time(NULL);
+	ss->prev=NULL;
+	ss->next=NULL;
+	CRYPTO_new_ex_data(ssl_session_meth,(char *)ss,&ss->ex_data);
 	return(ss);
 	}
 
@@ -101,12 +149,17 @@ int session;
 		{
 		if (s->version == SSL2_CLIENT_VERSION)
 			{
-			ss->ssl_version=2;
+			ss->ssl_version=SSL2_VERSION;
 			ss->session_id_length=SSL2_SSL_SESSION_ID_LENGTH;
 			}
-		else if (s->version == SSL3_VERSION_MAJOR)
+		else if (s->version == SSL3_VERSION)
 			{
-			ss->ssl_version=3;
+			ss->ssl_version=SSL3_VERSION;
+			ss->session_id_length=SSL3_SSL_SESSION_ID_LENGTH;
+			}
+		else if (s->version == TLS1_VERSION)
+			{
+			ss->ssl_version=TLS1_VERSION;
 			ss->session_id_length=SSL3_SSL_SESSION_ID_LENGTH;
 			}
 		else
@@ -140,23 +193,26 @@ int session;
 	return(1);
 	}
 
-int ssl_get_prev_session(s, len, session)
+int ssl_get_prev_session(s,session_id,len)
 SSL *s;
+unsigned char *session_id;
 int len;
-unsigned char *session;
 	{
-	SSL_SESSION *ret,data;
+	SSL_SESSION *ret=NULL,data;
 
 	/* conn_init();*/
 	data.ssl_version=s->version;
 	data.session_id_length=len;
 	if (len > SSL_MAX_SSL_SESSION_ID_LENGTH)
 		return(0);
-	memcpy(data.session_id,session,len);;
+	memcpy(data.session_id,session_id,len);;
 
-	CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
-	ret=(SSL_SESSION *)lh_retrieve(s->ctx->sessions,(char *)&data);
-	CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+	if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
+		{
+		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
+		ret=(SSL_SESSION *)lh_retrieve(s->ctx->sessions,(char *)&data);
+		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+		}
 
 	if (ret == NULL)
 		{
@@ -165,7 +221,7 @@ unsigned char *session;
 		s->ctx->sess_miss++;
 		ret=NULL;
 		if ((s->ctx->get_session_cb != NULL) &&
-			((ret=s->ctx->get_session_cb(s,session,len,&copy))
+			((ret=s->ctx->get_session_cb(s,session_id,len,&copy))
 				!= NULL))
 			{
 			s->ctx->sess_cb_hit++;
@@ -188,7 +244,7 @@ unsigned char *session;
 		p=buf;
 		l=ret->cipher_id;
 		l2n(l,p);
-		if (ret->ssl_version == 3)
+		if ((ret->ssl_version>>8) == SSL3_VERSION_MAJOR)
 			ret->cipher=ssl_get_cipher_by_char(s,&(buf[2]));
 		else 
 			ret->cipher=ssl_get_cipher_by_char(s,&(buf[1]));
@@ -227,6 +283,7 @@ int SSL_CTX_add_session(ctx,c)
 SSL_CTX *ctx;
 SSL_SESSION *c;
 	{
+	int ret=0;
 	SSL_SESSION *s;
 
 	/* conn_init(); */
@@ -234,7 +291,10 @@ SSL_SESSION *c;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
 	s=(SSL_SESSION *)lh_insert(ctx->sessions,(char *)c);
-	CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+	
+	/* Put on the end of the queue unless it is already in the cache */
+	if (s == NULL)
+		SSL_SESSION_list_add(ctx,c);
 
 	/* If the same session if is being 're-added', Free the old
 	 * one when the last person stops using it.
@@ -243,10 +303,27 @@ SSL_SESSION *c;
 	if (s != NULL)
 		{
 		SSL_SESSION_free(s);
-		return(0);
+		ret=0;
 		}
 	else
-		return(1);
+		{
+		ret=1;
+
+		if (SSL_CTX_sess_get_cache_size(ctx) > 0)
+			{
+			while (SSL_CTX_sess_number(ctx) >
+				SSL_CTX_sess_get_cache_size(ctx))
+				{
+				if (!SSL_CTX_remove_session(ctx,
+					ctx->session_cache_tail))
+					break;
+				else
+					ctx->sess_cache_full++;
+				}
+			}
+		}
+	CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+	return(ret);
 	}
 
 int SSL_CTX_remove_session(ctx,c)
@@ -256,11 +333,15 @@ SSL_SESSION *c;
 	SSL_SESSION *r;
 	int ret=0;
 
-	if ((c->session_id_length != 0) && (c != NULL))
+	if ((c != NULL) && (c->session_id_length != 0))
 		{
 		CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
 		r=(SSL_SESSION *)lh_delete(ctx->sessions,(char *)c);
-		if (r != NULL) ret=1;
+		if (r != NULL)
+			{
+			ret=1;
+			SSL_SESSION_list_remove(ctx,c);
+			}
 
 		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 
@@ -268,7 +349,7 @@ SSL_SESSION *c;
 			{
 			r->not_resumable=1;
 			if (ctx->remove_session_cb != NULL)
-				ctx->remove_session_cb(ctx,c);
+				ctx->remove_session_cb(ctx,r);
 			SSL_SESSION_free(r);
 			}
 		}
@@ -283,6 +364,9 @@ SSL_SESSION *ss;
 	int i;
 
 	i=CRYPTO_add(&ss->references,-1,CRYPTO_LOCK_SSL_SESSION);
+#ifdef REF_PRINT
+	REF_PRINT("SSL_SESSION",ss);
+#endif
 	if (i > 0) return;
 #ifdef REF_CHECK
 	if (i < 0)
@@ -291,6 +375,8 @@ SSL_SESSION *ss;
 		abort(); /* ok */
 		}
 #endif
+
+	CRYPTO_free_ex_data(ssl_session_meth,(char *)ss,&ss->ex_data);
 
 	memset(ss->key_arg,0,SSL_MAX_KEY_ARG_LENGTH);
 	memset(ss->master_key,0,SSL_MAX_MASTER_KEY_LENGTH);
@@ -335,10 +421,18 @@ SSL_SESSION *session;
 		/* CRYPTO_w_unlock(CRYPTO_LOCK_SSL);*/
 		ret=1;
 		}
+	else
+		{
+		if (s->session != NULL)
+			{
+			SSL_SESSION_free(s->session);
+			s->session=NULL;
+			}
+		}
 	return(ret);
 	}
 
-long SSL_set_timeout(s,t)
+long SSL_SESSION_set_timeout(s,t)
 SSL_SESSION *s;
 long t;
 	{
@@ -347,21 +441,21 @@ long t;
 	return(1);
 	}
 
-long SSL_get_timeout(s)
+long SSL_SESSION_get_timeout(s)
 SSL_SESSION *s;
 	{
 	if (s == NULL) return(0);
 	return(s->timeout);
 	}
 
-long SSL_get_time(s)
+long SSL_SESSION_get_time(s)
 SSL_SESSION *s;
 	{
 	if (s == NULL) return(0);
 	return(s->time);
 	}
 
-long SSL_set_time(s,t)
+long SSL_SESSION_set_time(s,t)
 SSL_SESSION *s;
 long t;
 	{
@@ -383,7 +477,10 @@ TIMEOUT_PARAM *p;
 	{
 	if ((p->time == 0) || (p->time > (s->time+s->timeout))) /* timeout */
 		{
+		/* The reason we don't call SSL_CTX_remove_session() is to
+		 * save on locking overhead */
 		lh_delete(p->cache,(char *)s);
+		SSL_SESSION_list_remove(p->ctx,s);
 		s->not_resumable=1;
 		if (p->ctx->remove_session_cb != NULL)
 			p->ctx->remove_session_cb(p->ctx,s);
@@ -423,3 +520,63 @@ SSL *s;
 	else
 		return(0);
 	}
+
+/* locked by SSL_CTX in the calling function */
+static void SSL_SESSION_list_remove(ctx,s)
+SSL_CTX *ctx;
+SSL_SESSION *s;
+	{
+	if ((s->next == NULL) || (s->prev == NULL)) return;
+
+	if (s->next == (SSL_SESSION *)&(ctx->session_cache_tail))
+		{ /* last element in list */
+		if (s->prev == (SSL_SESSION *)&(ctx->session_cache_head))
+			{ /* only one element in list */
+			ctx->session_cache_head=NULL;
+			ctx->session_cache_tail=NULL;
+			}
+		else
+			{
+			ctx->session_cache_tail=s->prev;
+			s->prev->next=(SSL_SESSION *)&(ctx->session_cache_tail);
+			}
+		}
+	else
+		{
+		if (s->prev == (SSL_SESSION *)&(ctx->session_cache_head))
+			{ /* first element in list */
+			ctx->session_cache_head=s->next;
+			s->next->prev=(SSL_SESSION *)&(ctx->session_cache_head);
+			}
+		else
+			{ /* middle of list */
+			s->next->prev=s->prev;
+			s->prev->next=s->next;
+			}
+		}
+	s->prev=s->next=NULL;
+	}
+
+static void SSL_SESSION_list_add(ctx,s)
+SSL_CTX *ctx;
+SSL_SESSION *s;
+	{
+	if ((s->next != NULL) && (s->prev != NULL))
+		SSL_SESSION_list_remove(ctx,s);
+
+	if (ctx->session_cache_head == NULL)
+		{
+		ctx->session_cache_head=s;
+		ctx->session_cache_tail=s;
+		s->prev=(SSL_SESSION *)&(ctx->session_cache_head);
+		s->next=(SSL_SESSION *)&(ctx->session_cache_tail);
+		}
+	else
+		{
+		s->next=ctx->session_cache_head;
+		s->next->prev=s;
+		s->prev=(SSL_SESSION *)&(ctx->session_cache_head);
+		ctx->session_cache_head=s;
+		}
+	}
+

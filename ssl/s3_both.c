@@ -1,5 +1,5 @@
 /* ssl/s3_both.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -69,16 +69,12 @@
 /* SSL3err(SSL_F_SSL3_GET_FINISHED,SSL_R_EXCESSIVE_MESSAGE_SIZE);
  */
 
-unsigned char ssl3_server_finished_const[4]=
-	{SSL3_MD_SERVER_FINISHED_CONST};
-unsigned char ssl3_client_finished_const[4]=
-	{SSL3_MD_CLIENT_FINISHED_CONST};
-
-int ssl3_send_finished(s,a,b,sender)
+int ssl3_send_finished(s,a,b,sender,slen)
 SSL *s;
 int a;
 int b;
 unsigned char *sender;
+int slen;
 	{
 	unsigned char *p,*d;
 	int i;
@@ -89,11 +85,12 @@ unsigned char *sender;
 		d=(unsigned char *)s->init_buf->data;
 		p= &(d[4]);
 
-		i=ssl3_final_finish_mac(s,&(s->s3->finish_dgst1),sender,p);
+		i=s->method->ssl3_enc->final_finish_mac(s,
+			&(s->s3->finish_dgst1),
+			&(s->s3->finish_dgst2),
+			sender,slen,p);
 		p+=i;
 		l=i;
-		i=ssl3_final_finish_mac(s,&(s->s3->finish_dgst2),sender,p);
-		l+=i;
 
 		*(d++)=SSL3_MT_FINISHED;
 		l2n3(l,d);
@@ -107,13 +104,12 @@ unsigned char *sender;
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
-int ssl3_get_finished(s,a,b,sender)
+int ssl3_get_finished(s,a,b)
 SSL *s;
 int a;
 int b;
-unsigned char *sender;
 	{
-	int al,i,j,ok;
+	int al,i,ok;
 	long n;
 	unsigned char *p;
 
@@ -133,7 +129,7 @@ unsigned char *sender;
 	/* If this occurs if we has missed a message */
 	if (!s->s3->change_cipher_spec)
 		{
-		al=SSL3_AD_UNEXPECTED_MESSAGE;
+		al=SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerr(SSL_F_SSL3_GET_FINISHED,SSL_R_GOT_A_FIN_BEFORE_A_CCS);
 		goto f_err;
 		}
@@ -141,20 +137,18 @@ unsigned char *sender;
 
 	p=(unsigned char *)s->init_buf->data;
 
-	i=EVP_MD_CTX_size(&(s->s3->finish_dgst1));
-	j=EVP_MD_CTX_size(&(s->s3->finish_dgst2));
+	i=s->method->ssl3_enc->finish_mac_length;
 
-	if ((i+j) != n)
+	if (i != n)
 		{
-		al=SSL3_AD_ILLEGAL_PARAMETER;
+		al=SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_FINISHED,SSL_R_BAD_DIGEST_LENGTH);
 		goto f_err;
 		}
 
-	if (	(memcmp(  p,    &(s->s3->tmp.finish_md1[0]),i) != 0) ||
-		(memcmp(&(p[i]),&(s->s3->tmp.finish_md2[0]),j) != 0))
+	if (memcmp(  p,    (char *)&(s->s3->tmp.finish_md[0]),i) != 0)
 		{
-		al=SSL3_AD_ILLEGAL_PARAMETER;
+		al=SSL_AD_DECRYPT_ERROR;
 		SSLerr(SSL_F_SSL3_GET_FINISHED,SSL_R_DIGEST_CHECK_FAILED);
 		goto f_err;
 		}
@@ -204,34 +198,43 @@ X509 *x;
 	X509_STORE_CTX xs_ctx;
 	X509_OBJECT obj;
 
-	X509_STORE_CTX_init(&xs_ctx,s->ctx->cert_store,NULL,NULL);
-
+	/* TLSv1 sends a chain with nothing in it, instead of an alert */
 	buf=s->init_buf;
-	for (;;)
+	if (!BUF_MEM_grow(buf,(int)(10)))
 		{
-		n=i2d_X509(x,NULL);
-		if (!BUF_MEM_grow(buf,(int)(n+l+3)))
-			{
-			SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
-			return(0);
-			}
-		p=(unsigned char *)&(buf->data[l]);
-		l2n3(n,p);
-		i2d_X509(x,&p);
-		l+=n+3;
-		if (X509_NAME_cmp(X509_get_subject_name(x),
-			X509_get_issuer_name(x)) == 0) break;
-
-		i=X509_STORE_get_by_subject(&xs_ctx,X509_LU_X509,
-			X509_get_issuer_name(x),&obj);
-		if (i <= 0) break;
-		x=obj.data.x509;
-		/* Count is one too high since the X509_STORE_get uped the
-		 * ref count */
-		X509_free(x);
+		SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
+		return(0);
 		}
+	if (x != NULL)
+		{
+		X509_STORE_CTX_init(&xs_ctx,s->ctx->cert_store,NULL,NULL);
 
-	X509_STORE_CTX_cleanup(&xs_ctx);
+		for (;;)
+			{
+			n=i2d_X509(x,NULL);
+			if (!BUF_MEM_grow(buf,(int)(n+l+3)))
+				{
+				SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
+				return(0);
+				}
+			p=(unsigned char *)&(buf->data[l]);
+			l2n3(n,p);
+			i2d_X509(x,&p);
+			l+=n+3;
+			if (X509_NAME_cmp(X509_get_subject_name(x),
+				X509_get_issuer_name(x)) == 0) break;
+
+			i=X509_STORE_get_by_subject(&xs_ctx,X509_LU_X509,
+				X509_get_issuer_name(x),&obj);
+			if (i <= 0) break;
+			x=obj.data.x509;
+			/* Count is one too high since the X509_STORE_get uped the
+			 * ref count */
+			X509_free(x);
+			}
+
+		X509_STORE_CTX_cleanup(&xs_ctx);
+		}
 
 	l-=7;
 	p=(unsigned char *)&(buf->data[4]);
@@ -260,7 +263,7 @@ int *ok;
 		s->s3->tmp.reuse_message=0;
 		if ((mt >= 0) && (s->s3->tmp.message_type != mt))
 			{
-			al=SSL3_AD_UNEXPECTED_MESSAGE;
+			al=SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 			}
@@ -283,7 +286,7 @@ int *ok;
 
 		if ((mt >= 0) && (*p != mt))
 			{
-			al=SSL3_AD_UNEXPECTED_MESSAGE;
+			al=SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 			}
@@ -292,7 +295,7 @@ int *ok;
 		n2l3(p,l);
 		if (l > (unsigned long)max)
 			{
-			al=SSL3_AD_ILLEGAL_PARAMETER;
+			al=SSL_AD_ILLEGAL_PARAMETER;
 			SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_EXCESSIVE_MESSAGE_SIZE);
 			goto f_err;
 			}
@@ -381,31 +384,53 @@ err:
 	}
 
 int ssl_verify_alarm_type(type)
-int type;
+long type;
 	{
 	int al;
 
 	switch(type)
 		{
 	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-
+	case X509_V_ERR_UNABLE_TO_GET_CRL:
+		al=SSL_AD_UNKNOWN_CA;
+		break;
 	case X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE:
+	case X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE:
 	case X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY:
-	case X509_V_ERR_CERT_SIGNATURE_FAILURE:
-	case X509_V_ERR_CERT_NOT_YET_VALID:
 	case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
 	case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
+	case X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD:
+	case X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD:
+	case X509_V_ERR_CERT_NOT_YET_VALID:
+	case X509_V_ERR_CRL_NOT_YET_VALID:
+		al=SSL_AD_BAD_CERTIFICATE;
+		break;
+	case X509_V_ERR_CERT_SIGNATURE_FAILURE:
+	case X509_V_ERR_CRL_SIGNATURE_FAILURE:
+		al=SSL_AD_DECRYPT_ERROR;
+		break;
+	case X509_V_ERR_CERT_HAS_EXPIRED:
+	case X509_V_ERR_CRL_HAS_EXPIRED:
+		al=SSL_AD_CERTIFICATE_EXPIRED;
+		break;
+	case X509_V_ERR_CERT_REVOKED:
+		al=SSL_AD_CERTIFICATE_REVOKED;
+		break;
+	case X509_V_ERR_OUT_OF_MEM:
+		al=SSL_AD_INTERNAL_ERROR;
+		break;
 	case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
 	case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
 	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
 	case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
-		al=SSL3_AD_BAD_CERTIFICATE;
+	case X509_V_ERR_CERT_CHAIN_TOO_LONG:
+		al=SSL_AD_UNKNOWN_CA;
 		break;
-	case X509_V_ERR_CERT_HAS_EXPIRED:
-		al=SSL3_AD_CERTIFICATE_EXPIRED;
+	case X509_V_ERR_APPLICATION_VERIFICATION:
+		al=SSL_AD_HANDSHAKE_FAILURE;
 		break;
 	default:
-		al=SSL3_AD_CERTIFICATE_UNKNOWN;
+		al=SSL_AD_CERTIFICATE_UNKNOWN;
 		break;
 		}
 	return(al);
@@ -419,7 +444,7 @@ SSL *s;
 
 	if (s->s3->rbuf.buf == NULL)
 		{
-		if (s->ctx->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
+		if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
 			extra=SSL3_RT_MAX_EXTRA;
 		else
 			extra=0;

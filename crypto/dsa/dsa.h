@@ -1,5 +1,5 @@
 /* crypto/dsa/dsa.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -106,7 +106,6 @@ typedef struct dsa_st
 
 DSA *	DSA_new(void);
 int	DSA_size(DSA *);
-	/* DSA *	DSA_generate_key(int bits, void (*callback)()); */
 	/* next 4 return -1 on error */
 int	DSA_sign_setup( DSA *dsa,BN_CTX *ctx_in,BIGNUM **kinvp,BIGNUM **rp);
 int	DSA_sign(int type,unsigned char *dgst,int dlen,
@@ -121,7 +120,8 @@ DSA *	d2i_DSAPublicKey(DSA **a, unsigned char **pp, long length);
 DSA *	d2i_DSAPrivateKey(DSA **a, unsigned char **pp, long length);
 DSA * 	d2i_DSAparams(DSA **a, unsigned char **pp, long length);
 DSA *	DSA_generate_parameters(int bits, unsigned char *seed,int seed_len,
-		int *counter_ret, unsigned long *h_ret,void (*callback)());
+		int *counter_ret, unsigned long *h_ret,void
+		(*callback)(),char *cb_arg);
 int	DSA_generate_key(DSA *a);
 int	i2d_DSAPublicKey(DSA *a, unsigned char **pp);
 int 	i2d_DSAPrivateKey(DSA *a, unsigned char **pp);
@@ -131,12 +131,12 @@ int	i2d_DSAparams(DSA *a,unsigned char **pp);
 int	DSAparams_print(BIO *bp, DSA *x);
 int	DSA_print(BIO *bp, DSA *x, int off);
 #endif
-#ifndef WIN16
+#ifndef NO_FP_API
 int	DSAparams_print_fp(FILE *fp, DSA *x);
 int	DSA_print_fp(FILE *bp, DSA *x, int off);
 #endif
 
-int DSA_is_prime(BIGNUM *q,void (*callback)());
+int DSA_is_prime(BIGNUM *q,void (*callback)(),char *cb_arg);
 
 #else
 
@@ -163,7 +163,7 @@ int	DSA_is_prime();
 int	DSAparams_print();
 int	DSA_print();
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int	DSAparams_print_fp();
 int	DSA_print_fp();
 #endif

@@ -1,5 +1,5 @@
 /* crypto/evp/e_ofb_r2.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -79,6 +79,11 @@ static EVP_CIPHER r2_ofb_cipher=
 	1,EVP_RC2_KEY_SIZE,8,
 	rc2_ofb_init_key,
 	rc2_ofb_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc2_ks)),
+	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
 	};
 
 EVP_CIPHER *EVP_rc2_ofb()
@@ -92,13 +97,13 @@ unsigned char *key;
 unsigned char *iv;
 int enc;
 	{
-	ctx->c.rc2_cfb.num=0;
+	ctx->num=0;
 
 	if (iv != NULL)
-		memcpy(&(ctx->c.rc2_cfb.oiv[0]),iv,8);
-	memcpy(&(ctx->c.rc2_cfb.iv[0]),&(ctx->c.rc2_cfb.oiv[0]),8);
+		memcpy(&(ctx->oiv[0]),iv,8);
+	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
-		RC2_set_key(&(ctx->c.rc2_cfb.ks),EVP_RC2_KEY_SIZE,key,
+		RC2_set_key(&(ctx->c.rc2_ks),EVP_RC2_KEY_SIZE,key,
 			EVP_RC2_KEY_SIZE*8);
 	}
 
@@ -110,9 +115,9 @@ unsigned int inl;
 	{
 	RC2_ofb64_encrypt(
 		in,out,
-		(long)inl, &(ctx->c.rc2_cfb.ks),
-		&(ctx->c.rc2_cfb.iv[0]),
-		&ctx->c.rc2_cfb.num);
+		(long)inl, &(ctx->c.rc2_ks),
+		&(ctx->iv[0]),
+		&ctx->num);
 	}
 
 #endif

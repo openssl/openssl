@@ -1,5 +1,5 @@
 /* crypto/asn1/a_d2i_fp.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -63,7 +63,7 @@
 
 #define HEADER_SIZE   8
 
-#ifndef WIN16
+#ifndef NO_FP_API
 char *ASN1_d2i_fp(xnew,d2i,in,x)
 char *(*xnew)();
 char *(*d2i)();
@@ -108,6 +108,7 @@ unsigned char **x;
 		return(NULL);
 		}
 
+	ERR_clear_error();
 	for (;;)
 		{
 		if (want >= (len-off))

@@ -1,5 +1,5 @@
 /* crypto/bn/bn_exp.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -120,6 +120,38 @@ err:
 
 #endif
 
+/* this one works - simple but works */
+int BN_exp(r,a,p,ctx)
+BIGNUM *r,*a,*p;
+BN_CTX *ctx;
+	{
+	int i,bits,ret=0;
+	BIGNUM *v,*tmp;
+
+	v=ctx->bn[ctx->tos++];
+	tmp=ctx->bn[ctx->tos++];
+
+	if (BN_copy(v,a) == NULL) goto err;
+	bits=BN_num_bits(p);
+
+	if (BN_is_odd(p))
+		{ if (BN_copy(r,a) == NULL) goto err; }
+	else	{ if (BN_one(r)) goto err; }
+
+	for (i=1; i<bits; i++)
+		{
+		if (!BN_sqr(tmp,v,ctx)) goto err;
+		if (BN_is_bit_set(p,i))
+			{
+			if (!BN_mul(tmp,r,v)) goto err;
+			}
+		}
+	ret=1;
+err:
+	ctx->tos-=2;
+	return(ret);
+	}
+
 int BN_mod_exp(r,a,p,m,ctx)
 BIGNUM *r;
 BIGNUM *a;
@@ -137,7 +169,7 @@ BN_CTX *ctx;
 /*	if ((m->d[m->top-1]&BN_TBIT) && BN_is_odd(m)) */
 
 	if (BN_is_odd(m))
-		{ ret=BN_mod_exp_mont(r,a,p,m,ctx); }
+		{ ret=BN_mod_exp_mont(r,a,p,m,ctx,NULL); }
 	else
 #endif
 #ifdef RECP_MUL_MOD
@@ -266,17 +298,19 @@ err:
 /* #endif */
 
 /* #ifdef MONT_MUL_MOD */
-int BN_mod_exp_mont(r,a,p,m,ctx)
+int BN_mod_exp_mont(r,a,p,m,ctx,in_mont)
 BIGNUM *r;
 BIGNUM *a;
 BIGNUM *p;
 BIGNUM *m;
 BN_CTX *ctx;
+BN_MONT_CTX *in_mont;
 	{
+#define TABLE_SIZE	16
 	int i,j,bits,ret=0,wstart,wend,window,wvalue;
 	int start=1;
 	BIGNUM *d,*aa;
-	BIGNUM *val[16];
+	BIGNUM *val[TABLE_SIZE];
 	BN_MONT_CTX *mont=NULL;
 
 	if (!(m->d[0] & 1))
@@ -295,8 +329,15 @@ BN_CTX *ctx;
 	/* If this is not done, things will break in the montgomery
 	 * part */
 
-	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
-	if (!BN_MONT_CTX_set(mont,m,ctx)) goto err;
+#if 1
+	if (in_mont != NULL)
+		mont=in_mont;
+	else
+#endif
+		{
+		if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
+		if (!BN_MONT_CTX_set(mont,m,ctx)) goto err;
+		}
 
 	val[0]=BN_new();
 	if (BN_ucmp(a,m) >= 0)
@@ -309,11 +350,11 @@ BN_CTX *ctx;
 	if (!BN_to_montgomery(val[0],aa,mont,ctx)) goto err; /* 1 */
 	if (!BN_mod_mul_montgomery(d,val[0],val[0],mont,ctx)) goto err; /* 2 */
 
-	if (bits <= 17) /* This is probably 3 or 0x10001, so just do singles */
+	if (bits <= 20) /* This is probably 3 or 0x10001, so just do singles */
 		window=1;
-	else if (bits >= 256)
+	else if (bits > 250)
 		window=5;	/* max size of window */
-	else if (bits >= 128)
+	else if (bits >= 120)
 		window=4;
 	else
 		window=3;
@@ -325,7 +366,7 @@ BN_CTX *ctx;
 		if (!BN_mod_mul_montgomery(val[i],val[i-1],d,mont,ctx))
 			goto err;
 		}
-	for (; i<16; i++)
+	for (; i<TABLE_SIZE; i++)
 		val[i]=NULL;
 
 	start=1;	/* This is used to avoid multiplication etc
@@ -341,8 +382,10 @@ BN_CTX *ctx;
 		if (BN_is_bit_set(p,wstart) == 0)
 			{
 			if (!start)
+				{
 				if (!BN_mod_mul_montgomery(r,r,r,mont,ctx))
 				goto err;
+				}
 			if (wstart == 0) break;
 			wstart--;
 			continue;
@@ -388,9 +431,9 @@ BN_CTX *ctx;
 	BN_from_montgomery(r,r,mont,ctx);
 	ret=1;
 err:
-	if (mont != NULL) BN_MONT_CTX_free(mont);
+	if ((in_mont == NULL) && (mont != NULL)) BN_MONT_CTX_free(mont);
 	ctx->tos--;
-	for (i=0; i<16; i++)
+	for (i=0; i<TABLE_SIZE; i++)
 		if (val[i] != NULL) BN_clear_free(val[i]);
 	return(ret);
 	}

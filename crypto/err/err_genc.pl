@@ -1,6 +1,8 @@
 #!/usr/local/bin/perl
 
-($#ARGV == 1) || die "usage: $0 <header file> <output C file>\n";
+if ($ARGV[0] eq "-s") { $static=1; shift @ARGV; }
+
+($#ARGV == 1) || die "usage: $0 [-s] <header file> <output C file>\n";
 open(IN,"<$ARGV[0]") || die "unable to open $ARGV[0]:$!\n";
 open(STDOUT,">$ARGV[1]") || die "unable to open $ARGV[1]:$!\n";
 
@@ -58,19 +60,67 @@ foreach (sort keys %out)
 	print "{0,NULL},\n";
 	print "\t};\n\n";
 	}
+print "#endif\n";
 
-print "void ERR_load_${type}_strings()\n";
-print "\t{\n";
-print "\tstatic int init=1;\n\n";
-print "\tif (init)\n";
-print "\t\t{\n";
-print "\t\tinit=0;\n";
-print "\t\tERR_load_strings(ERR_LIB_$type,${type}_str_functs);\n"
-	if $Func;
-print "\t\tERR_load_strings(ERR_LIB_$type,${type}_str_reasons);\n"
-	if $Reas;
-print "\t\t}\n";
-print "\t}\n";
+if ($static)
+	{ $lib="ERR_LIB_$type"; }
+else
+	{ $lib="${type}_lib_error_code"; }
+
+$str="";
+$str.="#ifndef NO_ERR\n";
+$str.="\t\tERR_load_strings($lib,${type}_str_functs);\n" if $Func;
+$str.="\t\tERR_load_strings($lib,${type}_str_reasons);\n" if $Reas;
+$str.="#endif\n";
+
+if (!$static)
+	{
+print <<"EOF";
+
+static int ${type}_lib_error_code=0;
+
+void ERR_load_${type}_strings()
+	{
+	static int init=1;
+
+	if (${type}_lib_error_code == 0)
+		${type}_lib_error_code=ERR_get_next_error_library();
+
+	if (init);
+		{;
+		init=0;
+$str
+		}
+	}
+
+void ERR_${type}_error(function,reason,file,line)
+int function;
+int reason;
+char *file;
+int line;
+	{
+	if (${type}_lib_error_code == 0)
+		${type}_lib_error_code=ERR_get_next_error_library();
+	ERR_PUT_error(${type}_lib_error_code,function,reason,file,line);
+	}
+EOF
+	}
+else # $static
+	{
+	print <<"EOF";
+
+void ERR_load_${type}_strings()
+	{
+	static int init=1;
+
+	if (init);
+		{;
+		init=0;
+$str
+		}
+	}
+EOF
+	}
 
 sub header
 	{
@@ -143,5 +193,6 @@ EOF
 	print "#include \"err.h\"\n";
 	print "#include \"$header\"\n";
 	print "\n/* BEGIN ERROR CODES */\n";
+	print "#ifndef NO_ERR\n";
 	}
 

@@ -1,5 +1,5 @@
 /* crypto/bio/bio_lib.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -58,8 +58,13 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include "crypto.h"
 #include "cryptlib.h"
 #include "bio.h"
+#include "stack.h"
+
+static STACK *bio_meth=NULL;
+static int bio_meth_num=0;
 
 BIO *BIO_new(method)
 BIO_METHOD *method;
@@ -89,15 +94,16 @@ BIO_METHOD *method;
 	bio->cb_arg=NULL;
 	bio->init=0;
 	bio->shutdown=1;
-	bio->num=0;
 	bio->flags=0;
 	bio->retry_reason=0;
+	bio->num=0;
 	bio->ptr=NULL;
 	bio->prev_bio=NULL;
 	bio->next_bio=NULL;
 	bio->references=1;
 	bio->num_read=0L;
 	bio->num_write=0L;
+	CRYPTO_new_ex_data(bio_meth,(char *)bio,&bio->ex_data);
 	if (method->create != NULL)
 		if (!method->create(bio))
 			return(0);
@@ -112,7 +118,9 @@ BIO *a;
 	if (a == NULL) return(0);
 
 	i=CRYPTO_add(&a->references,-1,CRYPTO_LOCK_BIO);
-
+#ifdef REF_PRINT
+	REF_PRINT("BIO",a);
+#endif
         if (i > 0) return(1);
 #ifdef REF_CHECK
 	if (i < 0)
@@ -124,6 +132,8 @@ BIO *a;
 	if ((a->callback != NULL) &&
 		((i=(int)a->callback(a,BIO_CB_FREE,NULL,0,0L,1L)) <= 0))
 			return(i);
+
+	CRYPTO_free_ex_data(bio_meth,(char *)a,&a->ex_data);
 
 	if ((a->method == NULL) || (a->method->destroy == NULL)) return(1);
 	ret=a->method->destroy(a);
@@ -137,6 +147,7 @@ char *out;
 int outl;
 	{
 	int i;
+	long (*cb)();
 
 	if ((b == NULL) || (b->method == NULL) || (b->method->bread == NULL))
 		{
@@ -144,8 +155,9 @@ int outl;
 		return(-2);
 		}
 
-	if ((b->callback != NULL) &&
-		((i=(int)b->callback(b,BIO_CB_READ,out,outl,0L,1L)) <= 0))
+	cb=b->callback;
+	if ((cb != NULL) &&
+		((i=(int)cb(b,BIO_CB_READ,out,outl,0L,1L)) <= 0))
 			return(i);
 
 	if (!b->init)
@@ -157,8 +169,8 @@ int outl;
 	i=b->method->bread(b,out,outl);
 	if (i > 0) b->num_read+=(unsigned long)i;
 
-	if (b->callback != NULL)
-		i=(int)b->callback(b,BIO_CB_READ|BIO_CB_RETURN,out,outl,
+	if (cb != NULL)
+		i=(int)cb(b,BIO_CB_READ|BIO_CB_RETURN,out,outl,
 			0L,(long)i);
 	return(i);
 	}
@@ -169,15 +181,20 @@ char *in;
 int inl;
 	{
 	int i;
+	long (*cb)();
 
-	if ((b == NULL) || (b->method == NULL) || (b->method->bwrite == NULL))
+	if (b == NULL)
+		return(0);
+
+	cb=b->callback;
+	if ((b->method == NULL) || (b->method->bwrite == NULL))
 		{
 		BIOerr(BIO_F_BIO_WRITE,BIO_R_UNSUPPORTED_METHOD);
 		return(-2);
 		}
 
-	if ((b->callback != NULL) &&
-		((i=(int)b->callback(b,BIO_CB_WRITE,in,inl,0L,1L)) <= 0))
+	if ((cb != NULL) &&
+		((i=(int)cb(b,BIO_CB_WRITE,in,inl,0L,1L)) <= 0))
 			return(i);
 
 	if (!b->init)
@@ -189,8 +206,8 @@ int inl;
 	i=b->method->bwrite(b,in,inl);
 	if (i > 0) b->num_write+=(unsigned long)i;
 
-	if (b->callback != NULL)
-		i=(int)b->callback(b,BIO_CB_WRITE|BIO_CB_RETURN,in,inl,
+	if (cb != NULL)
+		i=(int)cb(b,BIO_CB_WRITE|BIO_CB_RETURN,in,inl,
 			0L,(long)i);
 	return(i);
 	}
@@ -200,6 +217,7 @@ BIO *b;
 char *in;
 	{
 	int i;
+	long (*cb)();
 
 	if ((b == NULL) || (b->method == NULL) || (b->method->bputs == NULL))
 		{
@@ -207,8 +225,10 @@ char *in;
 		return(-2);
 		}
 
-	if ((b->callback != NULL) &&
-		((i=(int)b->callback(b,BIO_CB_PUTS,in,0,0L,1L)) <= 0))
+	cb=b->callback;
+
+	if ((cb != NULL) &&
+		((i=(int)cb(b,BIO_CB_PUTS,in,0,0L,1L)) <= 0))
 			return(i);
 
 	if (!b->init)
@@ -219,8 +239,8 @@ char *in;
 
 	i=b->method->bputs(b,in);
 
-	if (b->callback != NULL)
-		i=(int)b->callback(b,BIO_CB_PUTS|BIO_CB_RETURN,in,0,
+	if (cb != NULL)
+		i=(int)cb(b,BIO_CB_PUTS|BIO_CB_RETURN,in,0,
 			0L,(long)i);
 	return(i);
 	}
@@ -231,6 +251,7 @@ char *in;
 int inl;
 	{
 	int i;
+	long (*cb)();
 
 	if ((b == NULL) || (b->method == NULL) || (b->method->bgets == NULL))
 		{
@@ -238,8 +259,10 @@ int inl;
 		return(-2);
 		}
 
-	if ((b->callback != NULL) &&
-		((i=(int)b->callback(b,BIO_CB_GETS,in,inl,0L,1L)) <= 0))
+	cb=b->callback;
+
+	if ((cb != NULL) &&
+		((i=(int)cb(b,BIO_CB_GETS,in,inl,0L,1L)) <= 0))
 			return(i);
 
 	if (!b->init)
@@ -250,13 +273,13 @@ int inl;
 
 	i=b->method->bgets(b,in,inl);
 
-	if (b->callback != NULL)
-		i=(int)b->callback(b,BIO_CB_GETS|BIO_CB_RETURN,in,inl,
+	if (cb != NULL)
+		i=(int)cb(b,BIO_CB_GETS|BIO_CB_RETURN,in,inl,
 			0L,(long)i);
 	return(i);
 	}
 
-long BIO_ctrl_int(b,cmd,larg,iarg)
+long BIO_int_ctrl(b,cmd,larg,iarg)
 BIO *b;
 int cmd;
 long larg;
@@ -268,6 +291,19 @@ int iarg;
 	return(BIO_ctrl(b,cmd,larg,(char *)&i));
 	}
 
+char *BIO_ptr_ctrl(b,cmd,larg)
+BIO *b;
+int cmd;
+long larg;
+	{
+	char *p=NULL;
+
+	if (BIO_ctrl(b,cmd,larg,(char *)&p) <= 0)
+		return(NULL);
+	else
+		return(p);
+	}
+
 long BIO_ctrl(b,cmd,larg,parg)
 BIO *b;
 int cmd;
@@ -275,6 +311,7 @@ long larg;
 char *parg;
 	{
 	long ret;
+	long (*cb)();
 
 	if (b == NULL) return(0);
 
@@ -284,14 +321,16 @@ char *parg;
 		return(-2);
 		}
 
-	if ((b->callback != NULL) &&
-		((ret=b->callback(b,BIO_CB_CTRL,parg,cmd,larg,1L)) <= 0))
+	cb=b->callback;
+
+	if ((cb != NULL) &&
+		((ret=cb(b,BIO_CB_CTRL,parg,cmd,larg,1L)) <= 0))
 		return(ret);
 
 	ret=b->method->ctrl(b,cmd,larg,parg);
 
-	if (b->callback != NULL)
-		ret=b->callback(b,BIO_CB_CTRL|BIO_CB_RETURN,parg,cmd,
+	if (cb != NULL)
+		ret=cb(b,BIO_CB_CTRL|BIO_CB_RETURN,parg,cmd,
 			larg,ret);
 	return(ret);
 	}
@@ -309,6 +348,7 @@ BIO *b,*bio;
 	lb->next_bio=bio;
 	if (bio != NULL)
 		bio->prev_bio=lb;
+	/* called to do internal processing */
 	BIO_ctrl(b,BIO_CTRL_PUSH,0,NULL);
 	return(b);
 	}
@@ -420,6 +460,11 @@ BIO *in;
 			BIO_free(new);
 			goto err;
 			}
+
+	        /* copy app data */
+	        if (!CRYPTO_dup_ex_data(bio_meth,&new->ex_data,&bio->ex_data))
+	                goto err;
+
 		if (ret == NULL)
 			{
 			eoc=new;
@@ -443,5 +488,32 @@ BIO *b;
 	{
 	BIO_set_flags(b,BIO_get_retry_flags(b->next_bio));
 	b->retry_reason=b->next_bio->retry_reason;
+	}
+
+int BIO_get_ex_new_index(argl,argp,new_func,dup_func,free_func)
+long argl;
+char *argp;
+int (*new_func)();
+int (*dup_func)();
+void (*free_func)();
+        {
+        bio_meth_num++;
+        return(CRYPTO_get_ex_new_index(bio_meth_num-1,&bio_meth,
+                argl,argp,new_func,dup_func,free_func));
+        }
+
+int BIO_set_ex_data(bio,idx,data)
+BIO *bio;
+int idx;
+char *data;
+	{
+	return(CRYPTO_set_ex_data(&(bio->ex_data),idx,data));
+	}
+
+char *BIO_get_ex_data(bio,idx)
+BIO *bio;
+int idx;
+	{
+	return(CRYPTO_get_ex_data(&(bio->ex_data),idx));
 	}
 

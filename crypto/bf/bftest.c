@@ -1,5 +1,5 @@
 /* crypto/bf/bftest.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -71,13 +71,13 @@ char *bf_key[2]={
 
 /* big endian */
 BF_LONG bf_plain[2][2]={
-	{0x424c4f57,0x46495348},
-	{0xfedcba98,0x76543210}
+	{0x424c4f57L,0x46495348L},
+	{0xfedcba98L,0x76543210L}
 	};
 
 BF_LONG bf_cipher[2][2]={
-	{0x324ed0fe,0xf413a203},
-	{0xcc91732b,0x8022f684}
+	{0x324ed0feL,0xf413a203L},
+	{0xcc91732bL,0x8022f684L}
 	};
 /************/
 
@@ -317,8 +317,8 @@ static int print_test_data()
 	printf("\niv[8]     = ");
 	for (j=0; j<8; j++)
 		printf("%02X",cbc_iv[j]);
-	printf("\ndata[%d]  = '%s'",strlen(cbc_data)+1,cbc_data);
-	printf("\ndata[%d]  = ",strlen(cbc_data)+1);
+	printf("\ndata[%d]  = '%s'",(int)strlen(cbc_data)+1,cbc_data);
+	printf("\ndata[%d]  = ",(int)strlen(cbc_data)+1);
 	for (j=0; j<strlen(cbc_data)+1; j++)
 		printf("%02X",cbc_data[j]);
 	printf("\n");
@@ -329,13 +329,13 @@ static int print_test_data()
 	printf("\n");
 
 	printf("cfb64 cipher text\n");
-	printf("cipher[%d]= ",strlen(cbc_data)+1);
+	printf("cipher[%d]= ",(int)strlen(cbc_data)+1);
 	for (j=0; j<strlen(cbc_data)+1; j++)
 		printf("%02X",cfb64_ok[j]);
 	printf("\n");
 
 	printf("ofb64 cipher text\n");
-	printf("cipher[%d]= ",strlen(cbc_data)+1);
+	printf("cipher[%d]= ",(int)strlen(cbc_data)+1);
 	for (j=0; j<strlen(cbc_data)+1; j++)
 		printf("%02X",ofb64_ok[j]);
 	printf("\n");
@@ -358,7 +358,7 @@ static int test()
 
 		data[0]=bf_plain[n][0];
 		data[1]=bf_plain[n][1];
-		BF_encrypt(data,&key,BF_ENCRYPT);
+		BF_encrypt(data,&key);
 		if (memcmp(&(bf_cipher[n][0]),&(data[0]),8) != 0)
 			{
 			printf("BF_encrypt error encrypting\n");
@@ -373,7 +373,7 @@ static int test()
 			printf("\n");
 			}
 
-		BF_encrypt(&(data[0]),&key,BF_DECRYPT);
+		BF_decrypt(&(data[0]),&key);
 		if (memcmp(&(bf_plain[n][0]),&(data[0]),8) != 0)
 			{
 			printf("BF_encrypt error decrypting\n");

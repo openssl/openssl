@@ -18,7 +18,7 @@ $cflags="-d $op -DL_ENDIAN ";
 $base_lflags="-c";
 $lflags="$base_lflags";
 
-$cflags.=" -DWIN32";
+$cflags.=" -DWINDOWS -DWIN32";
 $app_cflag="-WC";
 $lib_cflag="-WC";
 $lflags.=" -Tpe";

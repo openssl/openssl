@@ -1,5 +1,5 @@
 /* ssl/s23_srvr.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -74,10 +74,12 @@ int ssl23_get_client_hello();
 static SSL_METHOD *ssl23_get_server_method(ver)
 int ver;
 	{
-	if (ver == 2)
+	if (ver == SSL2_VERSION)
 		return(SSLv2_server_method());
-	else if (ver == 3)
+	else if (ver == SSL3_VERSION)
 		return(SSLv3_server_method());
+	else if (ver == TLS1_VERSION)
+		return(TLSv1_server_method());
 	else
 		return(NULL);
 	}
@@ -109,7 +111,7 @@ SSL *s;
 
 	RAND_seed((unsigned char *)&Time,sizeof(Time));
 	ERR_clear_error();
-	errno=0;
+	clear_sys_error();
 
 	if (s->info_callback != NULL)
 		cb=s->info_callback;
@@ -132,7 +134,7 @@ SSL *s;
 
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
-			s->version=3;
+			/* s->version=SSL3_VERSION; */
 			s->type=SSL_ST_ACCEPT;
 
 			if (s->init_buf == NULL)
@@ -197,8 +199,7 @@ SSL *s;
 	unsigned char *p,*d,*dd;
 	unsigned int i;
 	unsigned int csl,sil,cl;
-	int n=0,j;
-	BIO *bbio;
+	int n=0,j,tls1=0;
 	int type=0,use_sslv2_strong=0;
 
 	/* read the initial header */
@@ -219,11 +220,28 @@ SSL *s;
 			if ((p[3] == 0x00) && (p[4] == 0x02))
 				{
 				/* SSLv2 */
-				type=1;
+				if (!(s->options & SSL_OP_NO_SSLv2))
+					type=1;
 				}
 			else if (p[3] == SSL3_VERSION_MAJOR)
 				{
-				if (s->ctx->options & SSL_OP_NON_EXPORT_FIRST)
+				/* SSLv3/TLSv1 */
+				if (p[4] >= TLS1_VERSION_MINOR)
+					{
+					if (!(s->options & SSL_OP_NO_TLSv1))
+						{
+						tls1=1;
+						s->state=SSL23_ST_SR_CLNT_HELLO_B;
+						}
+					else if (!(s->options & SSL_OP_NO_SSLv3))
+						{
+						s->state=SSL23_ST_SR_CLNT_HELLO_B;
+						}
+					}
+				else if (!(s->options & SSL_OP_NO_SSLv3))
+					s->state=SSL23_ST_SR_CLNT_HELLO_B;
+
+				if (s->options & SSL_OP_NON_EXPORT_FIRST)
 					{
 					STACK *sk;
 					SSL_CIPHER *c;
@@ -275,30 +293,37 @@ SSL *s;
 							}
 						}
 					}
-				/* SSLv3 */
-				s->state=SSL23_ST_SR_CLNT_HELLO_B;
 				}
 			}
 		else if ((p[0] == SSL3_RT_HANDSHAKE) &&
 			 (p[1] == SSL3_VERSION_MAJOR) &&
 			 (p[5] == SSL3_MT_CLIENT_HELLO))
 			{
-			/* true SSLv3 */
-			type=3;
+			/* true SSLv3 or tls1 */
+			if (p[2] >= TLS1_VERSION_MINOR)
+				{
+				if (!(s->options & SSL_OP_NO_TLSv1))
+					{
+					type=3;
+					tls1=1;
+					}
+				else if (!(s->options & SSL_OP_NO_SSLv3))
+					type=3;
+				}
+			else if (!(s->options & SSL_OP_NO_SSLv3))
+				type=3;
 			}
-		/* I will not introduce error codes since that will probably
-		 * disrupt the error codes alread allocated and could play
-		 * havoc with dynamic allocation.  Upgrade to 0.9.x :-)
-		 */
-		else if ((strncmp("GET ", (char *)p,4) == 0) ||
-			 (strncmp("POST ",(char *)p,5) == 0) ||
-			 (strncmp("HEAD ",(char *)p,5) == 0) ||
-			 (strncmp("PUT ", (char *)p,4) == 0))
+		else if ((strncmp("GET ", p,4) == 0) ||
+			 (strncmp("POST ",p,5) == 0) ||
+			 (strncmp("HEAD ",p,5) == 0) ||
+			 (strncmp("PUT ", p,4) == 0))
 			{
+			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_HTTP_REQUEST);
 			goto err;
 			}
-		else if (strncmp("CONNECT",(char *)p,7) == 0)
+		else if (strncmp("CONNECT",p,7) == 0)
 			{
+			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_HTTPS_PROXY_REQUEST);
 			goto err;
 			}
 		}
@@ -306,7 +331,7 @@ SSL *s;
 next_bit:
 	if (s->state == SSL23_ST_SR_CLNT_HELLO_B)
 		{
-		/* we have a SSLv3 in a SSLv2 header */
+		/* we have a SSLv3/TLSv1 in a SSLv2 header */
 		type=2;
 		p=s->packet;
 		n=((p[0]&0x7f)<<8)|p[1];
@@ -334,7 +359,10 @@ next_bit:
 			}
 
 		*(d++)=SSL3_VERSION_MAJOR;
-		*(d++)=SSL3_VERSION_MINOR;
+		if (tls1)
+			*(d++)=TLS1_VERSION_MINOR;
+		else
+			*(d++)=SSL3_VERSION_MINOR;
 
 		/* lets populate the random area */
 		/* get the chalenge_length */
@@ -374,7 +402,7 @@ next_bit:
 	if (type == 1)
 		{
 		/* we are talking sslv2 */
-		/* we need to clean up the SSLv3 setup and put in the
+		/* we need to clean up the SSLv3/TLSv1 setup and put in the
 		 * sslv2 stuff. */
 
 		if (s->s2 == NULL)
@@ -394,7 +422,7 @@ next_bit:
 			}
 
 		s->state=SSL2_ST_GET_CLIENT_HELLO_A;
-		if ((s->ctx->options & SSL_OP_MSIE_SSLV2_RSA_PADDING) ||
+		if ((s->options & SSL_OP_MSIE_SSLV2_RSA_PADDING) ||
 			use_sslv2_strong)
 			s->s2->ssl2_rollback=0;
 		else
@@ -415,21 +443,9 @@ next_bit:
 
 	if ((type == 2) || (type == 3))
 		{
-		/* we have sslv3 */
+		/* we have SSLv3/TLSv1 */
 
-		if (s->bbio == NULL)
-			{
-			bbio=BIO_new(BIO_f_buffer());
-			if (bbio == NULL)
-				goto err;
-			s->bbio=bbio;
-			}
-		else
-			bbio=s->bbio;
-		BIO_reset(bbio);
-		if (!BIO_set_write_buffer_size(bbio,16*1024))
-			goto err;
-		s->wbio=BIO_push(bbio,s->wbio);
+		if (!ssl_init_wbio_buffer(s,1)) goto err;
 
 		/* we are in this state */
 		s->state=SSL3_ST_SR_CLNT_HELLO_A;
@@ -452,7 +468,16 @@ next_bit:
 			s->s3->rbuf.offset=0;
 			}
 
-		s->method=SSLv3_server_method();
+		if (tls1)
+			{
+			s->version=TLS1_VERSION;
+			s->method=TLSv1_server_method();
+			}
+		else
+			{
+			s->version=SSL3_VERSION;
+			s->method=SSLv3_server_method();
+			}
 		s->handshake_func=s->method->ssl_accept;
 		}
 	

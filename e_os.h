@@ -1,5 +1,5 @@
 /* e_os.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -63,8 +63,16 @@
 extern "C" {
 #endif
 
+/* Used to checking reference counts, most while doing perl5 stuff :-) */
+#ifdef REF_PRINT
+#undef REF_PRINT
+#define REF_PRINT(a,b)	fprintf(stderr,"%08X:%4d:%s\n",(int)b,b->references,a)
+#endif
+
 #ifndef DEVRANDOM
-#undef DEVRANDOM  /* set this to your 'random' device if you have one */
+/* set this to your 'random' device if you have one.
+ * My default, we will try to read this file */
+#define DEVRANDOM "/dev/urandom"
 #endif
 
 #if defined(NOCONST)
@@ -91,12 +99,34 @@ extern "C" {
 #  endif
 #endif
 
+#ifdef WIN32
+#define get_last_sys_error()	GetLastError()
+#define clear_sys_error()	SetLastError(0)
+#else
+#define get_last_sys_error()	errno
+#define clear_sys_error()	errno=0
+#endif
+
+#ifdef WINDOWS
+#define get_last_socket_error()	WSAGetLastError()
+#define clear_socket_error()	WSASetLastError(0)
+#else
+#define get_last_socket_error()	errno
+#define clear_socket_error()	errno=0
+#define ioctlsocket(a,b,c)	ioctl(a,b,c)
+#endif
+
 #ifdef WIN16
+#  define NO_FP_API
 #  define MS_CALLBACK	_far _loadds
 #  define MS_FAR	_far
 #else
 #  define MS_CALLBACK
 #  define MS_FAR
+#endif
+
+#ifdef NO_STDIO
+#  define NO_FP_API
 #endif
 
 #if defined(WINDOWS) || defined(MSDOS)
@@ -121,9 +151,8 @@ extern "C" {
 #  include <io.h>
 #  include <fcntl.h>
 
-#if defined(WIN16) && (!defined(MONOLITH) || defined(SSLEAY)) && defined(_WINEXITNOPERSIST)
-#  define EXIT(n)		{ if (n == 0) _wsetexit(_WINEXITNOPERSIST); \
-				return(n); }
+#if defined(WIN16) && !defined(MONOLITH) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
+#  define EXIT(n) { if (n == 0) _wsetexit(_WINEXITNOPERSIST); return(n); }
 #else
 #  define EXIT(n)		return(n);
 #endif
@@ -138,7 +167,7 @@ extern "C" {
 #  define R_OK	4
 #endif
 #  define SSLEAY_CONF	"ssleay.cnf"
-#  define NUL_DEV		"nul"
+#  define NUL_DEV	"nul"
 #  define RFILE		".rnd"
 
 #else /* The non-microsoft world world */
@@ -191,6 +220,9 @@ extern HINSTANCE _hInstance;
 #      include <netdb.h>
 #      include <sys/types.h>
 #      include <sys/socket.h>
+#      ifdef FILIO_H
+#        include <sys/filio.h> /* Added for FIONBIO under unixware */
+#      endif
 #      include <sys/param.h>
 #      include <sys/time.h> /* Needed under linux for FD_XXX */
 #      include <netinet/in.h>
@@ -234,12 +266,14 @@ extern HINSTANCE _hInstance;
 #ifndef NOPROTO
 #define P_CC_CC	const void *,const void *
 #define P_I_I		int,int 
+#define P_I_I_P		int,int,char *
 #define P_I_I_P_I	int,int,char *,int
 #define P_IP_I_I_P_I	int *,int,int,char *,int
 #define P_V		void 
 #else
 #define P_CC_CC
 #define P_I_I
+#define P_I_I_P
 #define P_IP_I_I_P_I
 #define P_I_I_P_I
 #define P_V

@@ -60,13 +60,18 @@
 #include "pkcs7.h"
 
 /* BEGIN ERROR CODES */
+#ifndef NO_ERR
 static ERR_STRING_DATA PKCS7_str_functs[]=
 	{
+{ERR_PACK(0,PKCS7_F_PKCS7_ADD_CERTIFICATE,0),	"PKCS7_add_certificate"},
+{ERR_PACK(0,PKCS7_F_PKCS7_ADD_CRL,0),	"PKCS7_add_crl"},
+{ERR_PACK(0,PKCS7_F_PKCS7_ADD_RECIPIENT_INFO,0),	"PKCS7_add_recipient_info"},
 {ERR_PACK(0,PKCS7_F_PKCS7_ADD_SIGNER,0),	"PKCS7_add_signer"},
 {ERR_PACK(0,PKCS7_F_PKCS7_CTRL,0),	"PKCS7_ctrl"},
-{ERR_PACK(0,PKCS7_F_PKCS7_DATAFINAL,0),	"PKCS7_DATAFINAL"},
 {ERR_PACK(0,PKCS7_F_PKCS7_DATAINIT,0),	"PKCS7_dataInit"},
+{ERR_PACK(0,PKCS7_F_PKCS7_DATASIGN,0),	"PKCS7_dataSign"},
 {ERR_PACK(0,PKCS7_F_PKCS7_DATAVERIFY,0),	"PKCS7_dataVerify"},
+{ERR_PACK(0,PKCS7_F_PKCS7_SET_CIPHER,0),	"PKCS7_set_cipher"},
 {ERR_PACK(0,PKCS7_F_PKCS7_SET_CONTENT,0),	"PKCS7_set_content"},
 {ERR_PACK(0,PKCS7_F_PKCS7_SET_TYPE,0),	"PKCS7_set_type"},
 {0,NULL},
@@ -81,19 +86,25 @@ static ERR_STRING_DATA PKCS7_str_reasons[]=
 {PKCS7_R_UNABLE_TO_FIND_MEM_BIO          ,"unable to find mem bio"},
 {PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST   ,"unable to find message digest"},
 {PKCS7_R_UNKNOWN_DIGEST_TYPE             ,"unknown digest type"},
+{PKCS7_R_UNSUPPORTED_CIPHER_TYPE         ,"unsupported cipher type"},
 {PKCS7_R_UNSUPPORTED_CONTENT_TYPE        ,"unsupported content type"},
 {PKCS7_R_WRONG_CONTENT_TYPE              ,"wrong content type"},
 {0,NULL},
 	};
 
+#endif
+
 void ERR_load_PKCS7_strings()
 	{
 	static int init=1;
 
-	if (init)
-		{
+	if (init);
+		{;
 		init=0;
+#ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_PKCS7,PKCS7_str_functs);
 		ERR_load_strings(ERR_LIB_PKCS7,PKCS7_str_reasons);
+#endif
+
 		}
 	}

@@ -60,9 +60,10 @@
 #include "objects.h"
 
 /* BEGIN ERROR CODES */
+#ifndef NO_ERR
 static ERR_STRING_DATA OBJ_str_functs[]=
 	{
-{ERR_PACK(0,OBJ_F_OBJ_CREATE_AND_ADD_OBJECT,0),	"OBJ_create_and_add_object"},
+{ERR_PACK(0,OBJ_F_OBJ_CREATE,0),	"OBJ_create"},
 {ERR_PACK(0,OBJ_F_OBJ_DUP,0),	"OBJ_dup"},
 {ERR_PACK(0,OBJ_F_OBJ_NID2LN,0),	"OBJ_nid2ln"},
 {ERR_PACK(0,OBJ_F_OBJ_NID2OBJ,0),	"OBJ_nid2obj"},
@@ -77,14 +78,19 @@ static ERR_STRING_DATA OBJ_str_reasons[]=
 {0,NULL},
 	};
 
+#endif
+
 void ERR_load_OBJ_strings()
 	{
 	static int init=1;
 
-	if (init)
-		{
+	if (init);
+		{;
 		init=0;
+#ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_OBJ,OBJ_str_functs);
 		ERR_load_strings(ERR_LIB_OBJ,OBJ_str_reasons);
+#endif
+
 		}
 	}

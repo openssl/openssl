@@ -1,0 +1,24 @@
+The 'new' system.
+
+The X509_EXTENSION_METHOD includes extensions and attributes and/or names. 
+Basically everthing that can be added to an X509 with an OID identifying it.
+
+It operates via 2 methods per object id.
+int a2i_XXX(X509 *x,char *str,int len);
+int i2a_XXX(BIO *bp,X509 *x);
+
+The a2i_XXX function will add the object with a value converted from the
+string into the X509.  Len can be -1 in which case the length is calculated
+via strlen(str).   Applications can always use direct knowledge to load and
+unload the relevent objects themselves.
+
+i2a_XXX will print to the passed BIO, a text representation of the
+relevet object.  Use a memory BIO if you want it printed to a buffer :-).
+
+X509_add_by_NID(X509 *x,int nid,char *str,int len);
+X509_add_by_OBJ(X509 *x,ASN1_OBJECT *obj,char *str,int len);
+
+X509_print_by_name(BIO *bp,X509 *x);
+X509_print_by_NID(BIO *bp,X509 *x);
+X509_print_by_OBJ(BIO *bp,X509 *x);
+

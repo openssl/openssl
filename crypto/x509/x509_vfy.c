@@ -1,5 +1,5 @@
 /* crypto/x509/x509_vfy.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -62,6 +62,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "crypto.h"
 #include "cryptlib.h"
 #include "lhash.h"
 #include "buffer.h"
@@ -79,7 +80,13 @@ static int null_callback();
 static int internal_verify();
 #endif
 
-char *X509_version="X509 part of SSLeay 0.8.1b 29-Jun-1998";
+char *X509_version="X509 part of SSLeay 0.9.0b 29-Jun-1998";
+static STACK *x509_store_ctx_method=NULL;
+static int x509_store_ctx_num=0;
+#if 0
+static int x509_store_num=1;
+static STACK *x509_store_method=NULL;
+#endif
 
 static int null_callback(ok,e)
 int ok;
@@ -427,13 +434,13 @@ ASN1_UTCTIME *ctm;
 		offset=((str[1]-'0')*10+(str[2]-'0'))*60;
 		offset+=(str[3]-'0')*10+(str[4]-'0');
 		if (*str == '-')
-			offset-=offset;
+			offset=-offset;
 		}
 	atm.type=V_ASN1_UTCTIME;
 	atm.length=sizeof(buff2);
 	atm.data=(unsigned char *)buff2;
 
-	X509_gmtime_adj(&atm,offset);
+	X509_gmtime_adj(&atm,-offset);
 
 	i=(buff1[0]-'0')*10+(buff1[1]-'0');
 	if (i < 70) i+=100;
@@ -505,6 +512,8 @@ STACK *chain;
 EVP_PKEY *X509_get_pubkey(x)
 X509 *x;
 	{
+	if ((x == NULL) || (x->cert_info == NULL))
+		return(NULL);
 	return(X509_PUBKEY_get(x->cert_info->key));
 	}
 
@@ -580,6 +589,116 @@ X509 *x;
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 
 	return(ret);	
+	}
+
+int X509_STORE_add_crl(ctx,x)
+X509_STORE *ctx;
+X509_CRL *x;
+	{
+	X509_OBJECT *obj,*r;
+	int ret=1;
+
+	if (x == NULL) return(0);
+	obj=(X509_OBJECT *)Malloc(sizeof(X509_OBJECT));
+	if (obj == NULL)
+		{
+		X509err(X509_F_X509_STORE_ADD_CRL,ERR_R_MALLOC_FAILURE);
+		return(0);
+		}
+	obj->type=X509_LU_CRL;
+	obj->data.crl=x;
+
+	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
+
+	X509_OBJECT_up_ref_count(obj);
+
+	r=(X509_OBJECT *)lh_insert(ctx->certs,(char *)obj);
+	if (r != NULL)
+		{ /* oops, put it back */
+		lh_delete(ctx->certs,(char *)obj);
+		X509_OBJECT_free_contents(obj);
+		Free(obj);
+		lh_insert(ctx->certs,(char *)r);
+		X509err(X509_F_X509_STORE_ADD_CRL,X509_R_CERT_ALREADY_IN_HASH_TABLE);
+		ret=0;
+		}
+
+	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+
+	return(ret);	
+	}
+
+int X509_STORE_CTX_get_ex_new_index(argl,argp,new_func,dup_func,free_func)
+long argl;
+char *argp;
+int (*new_func)();
+int (*dup_func)();
+void (*free_func)();
+        {
+        x509_store_ctx_num++;
+        return(CRYPTO_get_ex_new_index(x509_store_ctx_num-1,
+		&x509_store_ctx_method,
+                argl,argp,new_func,dup_func,free_func));
+        }
+
+int X509_STORE_CTX_set_ex_data(ctx,idx,data)
+X509_STORE_CTX *ctx;
+int idx;
+char *data;
+	{
+	return(CRYPTO_set_ex_data(&ctx->ex_data,idx,data));
+	}
+
+char *X509_STORE_CTX_get_ex_data(ctx,idx)
+X509_STORE_CTX *ctx;
+int idx;
+	{
+	return(CRYPTO_get_ex_data(&ctx->ex_data,idx));
+	}
+
+int X509_STORE_CTX_get_error(ctx)
+X509_STORE_CTX *ctx;
+	{
+	return(ctx->error);
+	}
+
+void X509_STORE_CTX_set_error(ctx,err)
+X509_STORE_CTX *ctx;
+int err;
+	{
+	ctx->error=err;
+	}
+
+int X509_STORE_CTX_get_error_depth(ctx)
+X509_STORE_CTX *ctx;
+	{
+	return(ctx->error_depth);
+	}
+
+X509 *X509_STORE_CTX_get_current_cert(ctx)
+X509_STORE_CTX *ctx;
+	{
+	return(ctx->current_cert);
+	}
+
+STACK *X509_STORE_CTX_get_chain(ctx)
+X509_STORE_CTX *ctx;
+	{
+	return(ctx->chain);
+	}
+
+void X509_STORE_CTX_set_cert(ctx,x)
+X509_STORE_CTX *ctx;
+X509 *x;
+	{
+	ctx->cert=x;
+	}
+
+void X509_STORE_CTX_set_chain(ctx,sk)
+X509_STORE_CTX *ctx;
+STACK *sk;
+	{
+	ctx->untrusted=sk;
 	}
 
 

@@ -1,5 +1,5 @@
 /* crypto/evp/evp.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -72,6 +72,9 @@ extern "C" {
 #if !defined(NO_SHA) || !defined(NO_SHA1)
 #include "sha.h"
 #endif
+#ifndef NO_RIPEMD
+#include "ripemd.h"
+#endif
 #ifndef NO_DES
 #include "des.h"
 #endif
@@ -81,8 +84,14 @@ extern "C" {
 #ifndef NO_RC2
 #include "rc2.h"
 #endif
+#ifndef NO_RC5
+#include "rc5.h"
+#endif
 #ifndef NO_BLOWFISH
 #include "blowfish.h"
+#endif
+#ifndef NO_CAST
+#include "cast.h"
 #endif
 #ifndef NO_IDEA
 #include "idea.h"
@@ -91,12 +100,14 @@ extern "C" {
 #include "mdc2.h"
 #endif
 
-#define EVP_RC2_KEY_SIZE	16
-#define EVP_RC4_KEY_SIZE	16
-#define EVP_BLOWFISH_KEY_SIZE	16
-#define EVP_MAX_MD_SIZE		20
-#define EVP_MAX_KEY_LENGTH	24
-#define EVP_MAX_IV_LENGTH	8
+#define EVP_RC2_KEY_SIZE		16
+#define EVP_RC4_KEY_SIZE		16
+#define EVP_BLOWFISH_KEY_SIZE		16
+#define EVP_CAST5_KEY_SIZE		16
+#define EVP_RC5_32_12_16_KEY_SIZE	16
+#define EVP_MAX_MD_SIZE			(16+20) /* The SSLv3 md5+sha1 type */
+#define EVP_MAX_KEY_LENGTH		24
+#define EVP_MAX_IV_LENGTH		8
 
 #ifndef NO_RSA
 #include "rsa.h"
@@ -132,10 +143,15 @@ extern "C" {
 #define EVP_PKEY_RSA	NID_rsaEncryption
 #define EVP_PKEY_RSA2	NID_rsa
 #define EVP_PKEY_DSA	NID_dsa
+#define EVP_PKEY_DSA1	NID_dsa_2
 #define EVP_PKEY_DSA2	NID_dsaWithSHA
 #define EVP_PKEY_DSA3	NID_dsaWithSHA1
+#define EVP_PKEY_DSA4	NID_dsaWithSHA1_2
 #define EVP_PKEY_DH	NID_dhKeyAgreement
 
+/* Type needs to be a bit field
+ * Sub-type needs to be for variations on the method, as in, can it do
+ * arbitary encryption.... */
 typedef struct evp_pkey_st
 	{
 	int type;
@@ -155,6 +171,79 @@ typedef struct evp_pkey_st
 #endif
 	} EVP_PKEY;
 
+#define EVP_PKEY_MO_SIGN	0x0001
+#define EVP_PKEY_MO_VERIFY	0x0002
+#define EVP_PKEY_MO_ENCRYPT	0x0004
+#define EVP_PKEY_MO_DECRYPT	0x0008
+
+#if 0
+/* This structure is required to tie the message digest and signing together.
+ * The lookup can be done by md/pkey_method, oid, oid/pkey_method, or
+ * oid, md and pkey.
+ * This is required because for various smart-card perform the digest and
+ * signing/verification on-board.  To handle this case, the specific
+ * EVP_MD and EVP_PKEY_METHODs need to be closely associated.
+ * When a PKEY is created, it will have a EVP_PKEY_METHOD ossociated with it.
+ * This can either be software or a token to provide the required low level
+ * routines.
+ */
+typedef struct evp_pkey_md_st
+	{
+	int oid;
+	EVP_MD *md;
+	EVP_PKEY_METHOD *pkey;
+	} EVP_PKEY_MD;
+
+#define EVP_rsa_md2()
+		EVP_PKEY_MD_add(NID_md2WithRSAEncryption,\
+			EVP_rsa_pkcs1(),EVP_md2())
+#define EVP_rsa_md5()
+		EVP_PKEY_MD_add(NID_md5WithRSAEncryption,\
+			EVP_rsa_pkcs1(),EVP_md5())
+#define EVP_rsa_sha0()
+		EVP_PKEY_MD_add(NID_shaWithRSAEncryption,\
+			EVP_rsa_pkcs1(),EVP_sha())
+#define EVP_rsa_sha1()
+		EVP_PKEY_MD_add(NID_sha1WithRSAEncryption,\
+			EVP_rsa_pkcs1(),EVP_sha1())
+#define EVP_rsa_ripemd160()
+		EVP_PKEY_MD_add(NID_ripemd160WithRSA,\
+			EVP_rsa_pkcs1(),EVP_ripemd160())
+#define EVP_rsa_mdc2()
+		EVP_PKEY_MD_add(NID_mdc2WithRSA,\
+			EVP_rsa_octet_string(),EVP_mdc2())
+#define EVP_dsa_sha()
+		EVP_PKEY_MD_add(NID_dsaWithSHA,\
+			EVP_dsa(),EVP_mdc2())
+#define EVP_dsa_sha1()
+		EVP_PKEY_MD_add(NID_dsaWithSHA1,\
+			EVP_dsa(),EVP_sha1())
+
+typedef struct evp_pkey_method_st
+	{
+	char *name;
+	int flags;
+	int type;		/* RSA, DSA, an SSLeay specific constant */
+	int oid;		/* For the pub-key type */
+	int encrypt_oid;	/* pub/priv key encryption */
+
+	int (*sign)();
+	int (*verify)();
+	struct	{
+		int
+		int (*set)();	/* get and/or set the underlying type */
+		int (*get)();
+		int (*encrypt)();
+		int (*decrypt)();
+		int (*i2d)();
+		int (*d2i)();
+		int (*dup)();
+		} pub,priv;
+	int (*set_asn1_parameters)();
+	int (*get_asn1_parameters)();
+	} EVP_PKEY_METHOD;
+#endif
+
 #ifndef EVP_MD
 typedef struct env_md_st
 	{
@@ -167,14 +256,17 @@ typedef struct env_md_st
 
 	int (*sign)();
 	int (*verify)();
-	int required_pkey_type[4]; /*EVP_PKEY_xxx */
+	int required_pkey_type[5]; /*EVP_PKEY_xxx */
+	int block_size;
+	int ctx_size; /* how big does the ctx need to be */
 	} EVP_MD;
 
 #define EVP_PKEY_NULL_method	NULL,NULL,{0,0,0,0}
 
 #ifndef NO_DSA
 #define EVP_PKEY_DSA_method	DSA_sign,DSA_verify, \
-				{EVP_PKEY_DSA,EVP_PKEY_DSA2,EVP_PKEY_DSA3,0}
+				{EVP_PKEY_DSA,EVP_PKEY_DSA2,EVP_PKEY_DSA3, \
+					EVP_PKEY_DSA4,0}
 #else
 #define EVP_PKEY_DSA_method	EVP_PKEY_NULL_method
 #endif
@@ -204,6 +296,9 @@ typedef struct env_md_ctx_st
 #ifndef NO_MD5
 		MD5_CTX md5;
 #endif
+#ifndef NO_MD5
+		RIPEMD160_CTX ripemd160;
+#endif
 #if !defined(NO_SHA) || !defined(NO_SHA1)
 		SHA_CTX sha;
 #endif
@@ -222,6 +317,11 @@ typedef struct evp_cipher_st
 	void (*init)();		/* init for encryption */
 	void (*do_cipher)();	/* encrypt data */
 	void (*cleanup)();	/* used by cipher method */ 
+	int ctx_size;		/* how big the ctx needs to be */
+	/* int set_asn1_parameters(EVP_CIPHER_CTX,ASN1_TYPE *); */
+	int (*set_asn1_parameters)(); /* Populate a ASN1_TYPE with parameters */
+	/* int get_asn1_parameters(EVP_CIPHER_CTX,ASN1_TYPE *); */
+	int (*get_asn1_parameters)(); /* Get parameters from a ASN1_TYPE */
 	} EVP_CIPHER;
 
 typedef struct evp_cipher_info_st
@@ -235,7 +335,12 @@ typedef struct evp_cipher_ctx_st
 	EVP_CIPHER *cipher;
 	int encrypt;		/* encrypt or decrypt */
 	int buf_len;		/* number we have left */
-	unsigned char buf[8];
+
+	unsigned char  oiv[EVP_MAX_IV_LENGTH];	/* original iv */
+	unsigned char  iv[EVP_MAX_IV_LENGTH];	/* working iv */
+	unsigned char buf[EVP_MAX_IV_LENGTH];	/* saved partial block */
+	int num;				/* used by cfb/ofb mode */
+
 	char *app_data;		/* aplication stuff */
 	union	{
 #ifndef NO_RC4
@@ -246,102 +351,34 @@ typedef struct evp_cipher_ctx_st
 			} rc4;
 #endif
 #ifndef NO_DES
+		des_key_schedule des_ks;/* key schedule */
 		struct
 			{
 			des_key_schedule ks;/* key schedule */
-			} des_ecb;
-
-		struct
-			{
-			C_Block oiv;	/* original iv */
-			C_Block iv;	/* working iv */
-			des_key_schedule ks;/* key schedule */
-			} des_cbc;
-
-		struct
-			{
-			C_Block oiv;	/* original iv */
-			C_Block iv;	/* working iv */
 			C_Block inw;
 			C_Block outw;
-			des_key_schedule ks;/* key schedule */
 			} desx_cbc;
-
 		struct
 			{
-			C_Block oiv;	/* original iv */
-			C_Block iv;	/* working iv */
-			des_key_schedule ks;/* key schedule */
+			des_key_schedule ks1;/* key schedule */
 			des_key_schedule ks2;/* key schedule (for ede) */
 			des_key_schedule ks3;/* key schedule (for ede3) */
-			int num;	/* used by cfb mode */
-			} des_cfb;
-
-		struct
-			{
-			C_Block oiv;	/* original iv */
-			C_Block iv;	/* working iv */
-			des_key_schedule ks1;/* ksched 1 */
-			des_key_schedule ks2;/* ksched 2 */
-			des_key_schedule ks3;/* ksched 3 */
 			} des_ede;
 #endif
 #ifndef NO_IDEA
-		struct
-			{
-			IDEA_KEY_SCHEDULE ks;/* key schedule */
-			} idea_ecb;
-		struct
-			{
-			unsigned char oiv[8];/* original iv */
-			unsigned char iv[8]; /* working iv */
-			IDEA_KEY_SCHEDULE ks;/* key schedule */
-			} idea_cbc;
-		struct
-			{
-			unsigned char oiv[8];/* original iv */
-			unsigned char iv[8]; /* working iv */
-			IDEA_KEY_SCHEDULE ks;/* key schedule */
-			int num;	/* used by cfb mode */
-			} idea_cfb;
+		IDEA_KEY_SCHEDULE idea_ks;/* key schedule */
 #endif
 #ifndef NO_RC2
-		struct
-			{
-			RC2_KEY ks;/* key schedule */
-			} rc2_ecb;
-		struct
-			{
-			unsigned char oiv[8];/* original iv */
-			unsigned char iv[8]; /* working iv */
-			RC2_KEY ks;/* key schedule */
-			} rc2_cbc;
-		struct
-			{
-			unsigned char oiv[8];/* original iv */
-			unsigned char iv[8]; /* working iv */
-			RC2_KEY ks;/* key schedule */
-			int num;	/* used by cfb mode */
-			} rc2_cfb;
+		RC2_KEY rc2_ks;/* key schedule */
+#endif
+#ifndef NO_RC5
+		RC5_32_KEY rc5_ks;/* key schedule */
 #endif
 #ifndef NO_BLOWFISH
-		struct
-			{
-			BF_KEY ks;/* key schedule */
-			} bf_ecb;
-		struct
-			{
-			unsigned char oiv[8];/* original iv */
-			unsigned char iv[8]; /* working iv */
-			BF_KEY ks;/* key schedule */
-			} bf_cbc;
-		struct
-			{
-			unsigned char oiv[8];/* original iv */
-			unsigned char iv[8]; /* working iv */
-			BF_KEY ks;/* key schedule */
-			int num;	/* used by cfb mode */
-			} bf_cfb;
+		BF_KEY bf_ks;/* key schedule */
+#endif
+#ifndef NO_CAST
+		CAST_KEY cast_ks;/* key schedule */
 #endif
 		} c;
 	} EVP_CIPHER_CTX;
@@ -356,6 +393,7 @@ typedef struct evp_Encode_Ctx_st
 			 * line is decoded */
 	unsigned char enc_data[80];	/* data to encode */
 	int line_num;	/* number read on current line */
+	int expect_nl;
 	} EVP_ENCODE_CTX;
 
 #define EVP_PKEY_assign_RSA(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA,\
@@ -374,7 +412,10 @@ typedef struct evp_Encode_Ctx_st
 #define EVP_MD_type(e)			((e)->type)
 #define EVP_MD_pkey_type(e)		((e)->pkey_type)
 #define EVP_MD_size(e)			((e)->md_size)
-#define EVP_MD_CTX_size(e)		((e)->digest->md_size)
+#define EVP_MD_block_size(e)		((e)->block_size)
+
+#define EVP_MD_CTX_size(e)		EVP_MD_size((e)->digest)
+#define EVP_MD_CTX_block_size(e)	EVP_MD_block_size((e)->digest)
 #define EVP_MD_CTX_type(e)		((e)->digest)
 
 #define EVP_CIPHER_nid(e)		((e)->nid)
@@ -471,6 +512,7 @@ int	EVP_DecodeBlock(unsigned char *t, unsigned
 
 void	ERR_load_EVP_strings(void );
 
+void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *a);
 void EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 
 #ifdef HEADER_BIO_H
@@ -489,6 +531,7 @@ EVP_MD *EVP_sha1(void);
 EVP_MD *EVP_dss(void);
 EVP_MD *EVP_dss1(void);
 EVP_MD *EVP_mdc2(void);
+EVP_MD *EVP_ripemd160(void);
 
 EVP_CIPHER *EVP_enc_null(void);		/* does nothing :-) */
 EVP_CIPHER *EVP_des_ecb(void);
@@ -505,18 +548,28 @@ EVP_CIPHER *EVP_des_ede_cbc(void);
 EVP_CIPHER *EVP_des_ede3_cbc(void);
 EVP_CIPHER *EVP_desx_cbc(void);
 EVP_CIPHER *EVP_rc4(void);
+EVP_CIPHER *EVP_rc4_40(void);
 EVP_CIPHER *EVP_idea_ecb(void);
 EVP_CIPHER *EVP_idea_cfb(void);
 EVP_CIPHER *EVP_idea_ofb(void);
 EVP_CIPHER *EVP_idea_cbc(void);
 EVP_CIPHER *EVP_rc2_ecb(void);
 EVP_CIPHER *EVP_rc2_cbc(void);
+EVP_CIPHER *EVP_rc2_40_cbc(void);
 EVP_CIPHER *EVP_rc2_cfb(void);
 EVP_CIPHER *EVP_rc2_ofb(void);
 EVP_CIPHER *EVP_bf_ecb(void);
 EVP_CIPHER *EVP_bf_cbc(void);
 EVP_CIPHER *EVP_bf_cfb(void);
 EVP_CIPHER *EVP_bf_ofb(void);
+EVP_CIPHER *EVP_cast5_ecb(void);
+EVP_CIPHER *EVP_cast5_cbc(void);
+EVP_CIPHER *EVP_cast5_cfb(void);
+EVP_CIPHER *EVP_cast5_ofb(void);
+EVP_CIPHER *EVP_rc5_32_12_16_cbc(void);
+EVP_CIPHER *EVP_rc5_32_12_16_ecb(void);
+EVP_CIPHER *EVP_rc5_32_12_16_cfb(void);
+EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 
 void SSLeay_add_all_algorithms(void);
 void SSLeay_add_all_ciphers(void);
@@ -531,7 +584,12 @@ EVP_CIPHER *EVP_get_cipherbyname(char *name);
 EVP_MD *EVP_get_digestbyname(char *name);
 void EVP_cleanup(void);
 
+int		EVP_PKEY_decrypt(unsigned char *dec_key,unsigned char *enc_key,
+			int enc_key_len,EVP_PKEY *private_key);
+int		EVP_PKEY_encrypt(unsigned char *enc_key,
+			unsigned char *key,int key_len,EVP_PKEY *pub_key);
 int		EVP_PKEY_type(int type);
+int		EVP_PKEY_bits(EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
 int 		EVP_PKEY_assign(EVP_PKEY *pkey,int type,char *key);
 EVP_PKEY *	EVP_PKEY_new(void);
@@ -547,6 +605,15 @@ int		i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp);
 int EVP_PKEY_copy_parameters(EVP_PKEY *to,EVP_PKEY *from);
 int EVP_PKEY_missing_parameters(EVP_PKEY *pkey);
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey,int mode);
+int EVP_PKEY_cmp_parameters(EVP_PKEY *a,EVP_PKEY *b);
+
+/* calls methods */
+int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
+int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
+
+/* These are used by EVP_CIPHER methods */
+int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c,ASN1_TYPE *type);
+int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c,ASN1_TYPE *type);
 
 #else
 
@@ -596,6 +663,7 @@ int	EVP_DecodeBlock();
 
 void	ERR_load_EVP_strings();
 
+void EVP_CIPHER_CTX_init();
 void EVP_CIPHER_CTX_cleanup();
 
 #ifdef HEADER_BIO_H
@@ -629,18 +697,28 @@ EVP_CIPHER *EVP_des_ede_cbc();
 EVP_CIPHER *EVP_des_ede3_cbc();
 EVP_CIPHER *EVP_desx_cbc();
 EVP_CIPHER *EVP_rc4();
+EVP_CIPHER *EVP_rc4_40();
 EVP_CIPHER *EVP_idea_ecb();
 EVP_CIPHER *EVP_idea_cfb();
 EVP_CIPHER *EVP_idea_ofb();
 EVP_CIPHER *EVP_idea_cbc();
 EVP_CIPHER *EVP_rc2_ecb();
 EVP_CIPHER *EVP_rc2_cbc();
+EVP_CIPHER *EVP_rc2_40_cbc();
 EVP_CIPHER *EVP_rc2_cfb();
 EVP_CIPHER *EVP_rc2_ofb();
 EVP_CIPHER *EVP_bf_ecb();
 EVP_CIPHER *EVP_bf_cbc();
 EVP_CIPHER *EVP_bf_cfb();
 EVP_CIPHER *EVP_bf_ofb();
+EVP_CIPHER *EVP_cast5_ecb();
+EVP_CIPHER *EVP_cast5_cbc();
+EVP_CIPHER *EVP_cast5_cfb();
+EVP_CIPHER *EVP_cast5_ofb();
+EVP_CIPHER *EVP_rc5_32_12_16_cbc();
+EVP_CIPHER *EVP_rc5_32_12_16_ecb();
+EVP_CIPHER *EVP_rc5_32_12_16_cfb();
+EVP_CIPHER *EVP_rc5_32_12_16_ofb();
 
 void SSLeay_add_all_algorithms();
 void SSLeay_add_all_ciphers();
@@ -655,7 +733,10 @@ EVP_CIPHER *EVP_get_cipherbyname();
 EVP_MD *EVP_get_digestbyname();
 void EVP_cleanup();
 
+int		EVP_PKEY_decrypt();
+int		EVP_PKEY_encrypt();
 int		EVP_PKEY_type();
+int		EVP_PKEY_bits();
 int		EVP_PKEY_size();
 int 		EVP_PKEY_assign();
 EVP_PKEY *	EVP_PKEY_new();
@@ -669,6 +750,13 @@ int		i2d_PrivateKey();
 int EVP_PKEY_copy_parameters();
 int EVP_PKEY_missing_parameters();
 int EVP_PKEY_save_parameters();
+int EVP_PKEY_cmp_parameters();
+
+int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
+int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
+
+int EVP_CIPHER_set_asn1_iv();
+int EVP_CIPHER_get_asn1_iv();
 
 #endif
 
@@ -680,10 +768,11 @@ int EVP_PKEY_save_parameters();
 #define EVP_F_EVP_DECRYPTFINAL				 101
 #define EVP_F_EVP_OPENINIT				 102
 #define EVP_F_EVP_PKEY_COPY_PARAMETERS			 103
-#define EVP_F_EVP_PKEY_NEW				 104
-#define EVP_F_EVP_SEALINIT				 105
-#define EVP_F_EVP_SIGNFINAL				 106
-#define EVP_F_EVP_VERIFYFINAL				 107
+#define EVP_F_EVP_PKEY_DECRYPT				 104
+#define EVP_F_EVP_PKEY_ENCRYPT				 105
+#define EVP_F_EVP_PKEY_NEW				 106
+#define EVP_F_EVP_SIGNFINAL				 107
+#define EVP_F_EVP_VERIFYFINAL				 108
 
 /* Reason codes. */
 #define EVP_R_BAD_DECRYPT				 100

@@ -60,6 +60,7 @@
 #include "buffer.h"
 
 /* BEGIN ERROR CODES */
+#ifndef NO_ERR
 static ERR_STRING_DATA BUF_str_functs[]=
 	{
 {ERR_PACK(0,BUF_F_BUF_MEM_GROW,0),	"BUF_MEM_grow"},
@@ -69,13 +70,18 @@ static ERR_STRING_DATA BUF_str_functs[]=
 {0,NULL},
 	};
 
+#endif
+
 void ERR_load_BUF_strings()
 	{
 	static int init=1;
 
-	if (init)
-		{
+	if (init);
+		{;
 		init=0;
+#ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_BUF,BUF_str_functs);
+#endif
+
 		}
 	}

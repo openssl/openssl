@@ -1,5 +1,5 @@
 /* crypto/pem/pem_all.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -58,13 +58,14 @@
 
 #include <stdio.h>
 #undef SSLEAY_MACROS
+#include "cryptlib.h"
 #include "bio.h"
 #include "evp.h"
 #include "x509.h"
 #include "pkcs7.h"
 #include "pem.h"
 
-#ifndef WIN16
+#ifndef NO_FP_API
 /* The X509 functions */
 X509 *PEM_read_X509(fp,x,cb)
 FILE *fp;
@@ -85,7 +86,7 @@ int (*cb)();
 		PEM_STRING_X509,bp,(char **)x,cb));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int PEM_write_X509(fp,x)
 FILE *fp;
 X509 *x;
@@ -103,7 +104,7 @@ X509 *x;
 		(char *)x, NULL,NULL,0,NULL));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 /* The X509_REQ functions */
 X509_REQ *PEM_read_X509_REQ(fp,x,cb)
 FILE *fp;
@@ -124,7 +125,7 @@ int (*cb)();
 		PEM_STRING_X509_REQ,bp,(char **)x,cb));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int PEM_write_X509_REQ(fp,x)
 FILE *fp;
 X509_REQ *x;
@@ -142,7 +143,7 @@ X509_REQ *x;
 		bp,(char *)x, NULL,NULL,0,NULL));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 /* The X509_CRL functions */
 X509_CRL *PEM_read_X509_CRL(fp,x,cb)
 FILE *fp;
@@ -163,7 +164,7 @@ int (*cb)();
 		PEM_STRING_X509_CRL,bp,(char **)x,cb));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int PEM_write_X509_CRL(fp,x)
 FILE *fp;
 X509_CRL *x;
@@ -182,7 +183,7 @@ X509_CRL *x;
 	}
 
 #ifndef NO_RSA
-#ifndef WIN16
+#ifndef NO_FP_API
 /* The RSAPrivateKey functions */
 RSA *PEM_read_RSAPrivateKey(fp,x,cb)
 FILE *fp;
@@ -221,7 +222,7 @@ int (*cb)();
 		PEM_STRING_RSA_PUBLIC,bp,(char **)x,cb));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int PEM_write_RSAPrivateKey(fp,x,enc,kstr,klen,cb)
 FILE *fp;
 RSA *x;
@@ -267,7 +268,7 @@ RSA *x;
 #endif /* !NO_RSA */
 
 #ifndef NO_DSA
-#ifndef WIN16
+#ifndef NO_FP_API
 /* The DSAPrivateKey functions */
 DSA *PEM_read_DSAPrivateKey(fp,x,cb)
 FILE *fp;
@@ -288,7 +289,7 @@ int (*cb)();
 		PEM_STRING_DSA,bp,(char **)x,cb));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int PEM_write_DSAPrivateKey(fp,x,enc,kstr,klen,cb)
 FILE *fp;
 DSA *x;
@@ -315,7 +316,7 @@ int (*cb)();
 	}
 #endif
 
-#ifndef WIN16
+#ifndef NO_FP_API
 /* The PrivateKey functions */
 EVP_PKEY *PEM_read_PrivateKey(fp,x,cb)
 FILE *fp;
@@ -336,7 +337,7 @@ int (*cb)();
 		PEM_STRING_EVP_PKEY,bp,(char **)x,cb));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int PEM_write_PrivateKey(fp,x,enc,kstr,klen,cb)
 FILE *fp;
 EVP_PKEY *x;
@@ -364,7 +365,7 @@ int (*cb)();
 		bp,(char *)x,enc,kstr,klen,cb));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 /* The PKCS7 functions */
 PKCS7 *PEM_read_PKCS7(fp,x,cb)
 FILE *fp;
@@ -385,7 +386,7 @@ int (*cb)();
 		PEM_STRING_PKCS7,bp,(char **)x,cb));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int PEM_write_PKCS7(fp,x)
 FILE *fp;
 PKCS7 *x;
@@ -404,7 +405,7 @@ PKCS7 *x;
 	}
 
 #ifndef NO_DH
-#ifndef WIN16
+#ifndef NO_FP_API
 /* The DHparams functions */
 DH *PEM_read_DHparams(fp,x,cb)
 FILE *fp;
@@ -425,7 +426,7 @@ int (*cb)();
 		PEM_STRING_DHPARAMS,bp,(char **)x,cb));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int PEM_write_DHparams(fp,x)
 FILE *fp;
 DH *x;
@@ -445,7 +446,7 @@ DH *x;
 #endif
 
 #ifndef NO_DSA
-#ifndef WIN16
+#ifndef NO_FP_API
 /* The DSAparams functions */
 DSA *PEM_read_DSAparams(fp,x,cb)
 FILE *fp;
@@ -466,7 +467,7 @@ int (*cb)();
 		PEM_STRING_DSAPARAMS,bp,(char **)x,cb));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 int PEM_write_DSAparams(fp,x)
 FILE *fp;
 DSA *x;

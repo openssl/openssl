@@ -1,5 +1,5 @@
 /* crypto/x509/x509_txt.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -71,11 +71,11 @@
 #include "pem.h"
 
 char *X509_verify_cert_error_string(n)
-int n;
+long n;
 	{
 	static char buf[100];
 
-	switch (n)
+	switch ((int)n)
 		{
 	case X509_V_OK:
 		return("ok");
@@ -105,9 +105,9 @@ int n;
 		return("format error in certificate's notBefore field");
 	case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
 		return("format error in certificate's notAfter field");
-	case X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FILED:
+	case X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD:
 		return("format error in CRL's lastUpdate field");
-	case X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FILED:
+	case X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD:
 		return("format error in CRL's nextUpdate field");
 	case X509_V_ERR_OUT_OF_MEM:
 		return("out of memory");
@@ -121,8 +121,10 @@ int n;
 		return("unable to verify the first certificate");
 	case X509_V_ERR_CERT_CHAIN_TOO_LONG:
 		return("certificate chain too long");
+	case X509_V_ERR_APPLICATION_VERIFICATION:
+		return("application verification failure");
 	default:
-		sprintf(buf,"error number %d",n);
+		sprintf(buf,"error number %ld",n);
 		return(buf);
 		}
 	}

@@ -1,5 +1,5 @@
 /* apps/ssleay.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -56,14 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
-#define DEBUG
+#ifndef DEBUG
+#undef DEBUG
+#endif
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#ifdef WIN16
-#define APPS_WIN16
-#endif
 #include "bio.h"
 #include "crypto.h"
 #include "lhash.h"
@@ -78,19 +77,22 @@
 #include "s_apps.h"
 #include "err.h"
 
+/*
+#ifdef WINDOWS
+#include "bss_file.c"
+#endif
+*/
 
 #ifndef NOPROTO
 static unsigned long MS_CALLBACK hash(FUNCTION *a);
 static int MS_CALLBACK cmp(FUNCTION *a,FUNCTION *b);
 static LHASH *prog_init(void );
 static int do_cmd(LHASH *prog,int argc,char *argv[]);
-static void sig_stop(int i);
 #else
 static unsigned long MS_CALLBACK hash();
 static int MS_CALLBACK cmp();
 static LHASH *prog_init();
 static int do_cmd();
-static void sig_stop();
 #endif
 
 LHASH *config=NULL;
@@ -143,7 +145,7 @@ char *Argv[];
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE);
+			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
@@ -224,6 +226,7 @@ char *Argv[];
 			}
 		if (ret != 0)
 			BIO_printf(bio_err,"error in %s\n",argv[0]);
+		BIO_flush(bio_err);
 		}
 	BIO_printf(bio_err,"bad exit\n");
 	ret=1;

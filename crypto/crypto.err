@@ -1,0 +1,8 @@
+/* Error codes for the CRYPTO functions. */
+
+/* Function codes. */
+#define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX		 100
+#define CRYPTO_F_CRYPTO_GET_NEW_LOCKID			 101
+#define CRYPTO_F_CRYPTO_SET_EX_DATA			 102
+
+/* Reason codes. */

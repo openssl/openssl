@@ -1,5 +1,5 @@
 /* ssl/ssl_locl.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -63,11 +63,7 @@
 #include <string.h>
 #include <errno.h>
 
-#ifdef FLAT_INC
 #include "e_os.h"
-#else
-#include "../e_os.h"
-#endif
 
 #include "buffer.h"
 #include "bio.h"
@@ -188,11 +184,10 @@
 #define SSL_eFZA		0x00008000L
 #define SSL_eNULL		0x00010000L
 
-#define SSL_MAC_MASK		0x000e0000L
+#define SSL_MAC_MASK		0x00060000L
 #define SSL_MD5			0x00020000L
-#define SSL_SHA0		0x00040000L
-#define SSL_SHA1		0x00080000L
-#define SSL_SHA			(SSL_SHA0|SSL_SHA1)
+#define SSL_SHA1		0x00040000L
+#define SSL_SHA			(SSL_SHA1)
 
 #define SSL_EXP_MASK		0x00300000L
 #define SSL_EXP			0x00100000L
@@ -298,9 +293,27 @@ typedef struct cert_st
 #define ssl_get_cipher_by_char(ssl,ptr) \
 		((ssl)->method->get_cipher_by_char(ptr))
 
-extern unsigned char ssl3_client_finished_const[4];
-extern unsigned char ssl3_server_finished_const[4];
+/* This is for the SSLv3/TLSv1.0 differences in crypto/hash stuff
+ * It is a bit of a mess of functions, but hell, think of it as
+ * an opaque strucute :-) */
+typedef struct ssl3_enc_method
+	{
+	int (*enc)();
+	int (*mac)();
+	int (*setup_key_block)();
+	int (*generate_master_secret)();
+	int (*change_cipher_state)();
+	int (*final_finish_mac)();
+	int finish_mac_length;
+	int (*cert_verify_mac)();
+	unsigned char client_finished[20];
+	int client_finished_len;
+	unsigned char server_finished[20];
+	int server_finished_len;
+	int (*alert_value)();
+	} SSL3_ENC_METHOD;
 
+extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 extern SSL_CIPHER ssl2_ciphers[];
 extern SSL_CIPHER ssl3_ciphers[];
 
@@ -317,7 +330,7 @@ CERT *ssl_cert_new(void);
 void ssl_cert_free(CERT *c);
 int ssl_set_cert_type(CERT *c, int type);
 int ssl_get_new_session(SSL *s, int session);
-int ssl_get_prev_session(SSL *s, int len, unsigned char *session);
+int ssl_get_prev_session(SSL *s, unsigned char *session,int len);
 int ssl_cipher_id_cmp(SSL_CIPHER *a,SSL_CIPHER *b);
 int ssl_cipher_ptr_id_cmp(SSL_CIPHER **ap,SSL_CIPHER **bp);
 STACK *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,STACK **skp);
@@ -333,7 +346,7 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *,SSL_CIPHER *);
 int ssl_cert_type(X509 *x,EVP_PKEY *pkey);
 void ssl_set_cert_masks(CERT *c);
 STACK *ssl_get_ciphers_by_id(SSL *s);
-int ssl_verify_alarm_type(int type);
+int ssl_verify_alarm_type(long type);
 
 int ssl2_enc_init(SSL *s, int client);
 void ssl2_generate_key_material(SSL *s);
@@ -354,7 +367,7 @@ int	ssl2_accept(SSL *s);
 int	ssl2_connect(SSL *s);
 int	ssl2_read(SSL *s, char *buf, int len);
 int	ssl2_peek(SSL *s, char *buf, int len);
-int	ssl2_write(SSL *s, const char *buf, int len);
+int	ssl2_write(SSL *s, char *buf, int len);
 int	ssl2_shutdown(SSL *s);
 void	ssl2_clear(SSL *s);
 long	ssl2_ctrl(SSL *s,int cmd, long larg, char *parg);
@@ -365,7 +378,7 @@ SSL_CIPHER *ssl3_get_cipher_by_char(unsigned char *p);
 int ssl3_put_cipher_by_char(SSL_CIPHER *c,unsigned char *p);
 void ssl3_init_finished_mac(SSL *s);
 int ssl3_send_server_certificate(SSL *s);
-int ssl3_get_finished(SSL *s,int state_a,int state_b,unsigned char *sender);
+int ssl3_get_finished(SSL *s,int state_a,int state_b);
 int ssl3_setup_key_block(SSL *s);
 int ssl3_send_change_cipher_spec(SSL *s,int state_a,int state_b);
 int ssl3_change_cipher_state(SSL *s,int which);
@@ -376,17 +389,18 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out,
 	unsigned char *p, int len);
 int ssl3_get_req_cert_type(SSL *s,unsigned char *p);
 long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
-int ssl3_send_finished(SSL *s, int a, int b, unsigned char *sender);
+int ssl3_send_finished(SSL *s, int a, int b, unsigned char *sender,int slen);
 int ssl3_num_ciphers(void);
 SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 int ssl3_renegotiate(SSL *ssl); 
+int ssl3_renegotiate_check(SSL *ssl); 
 int ssl3_dispatch_alert(SSL *s);
 int ssl3_read_bytes(SSL *s, int type, char *buf, int len);
-void ssl3_generate_key_block(SSL *s, unsigned char *km, int num);
 int ssl3_part_read(SSL *s, int i);
 int ssl3_write_bytes(SSL *s, int type, char *buf, int len);
-int ssl3_final_finish_mac(SSL *s, EVP_MD_CTX *in_ctx,
-	unsigned char *sender, unsigned char *p);
+int ssl3_final_finish_mac(SSL *s, EVP_MD_CTX *ctx1,EVP_MD_CTX *ctx2,
+	unsigned char *sender, int slen,unsigned char *p);
+int ssl3_cert_verify_mac(SSL *s, EVP_MD_CTX *in, unsigned char *p);
 void ssl3_finish_mac(SSL *s, unsigned char *buf, int len);
 int ssl3_enc(SSL *s, int send_data);
 int ssl3_mac(SSL *ssl, unsigned char *md, int send_data);
@@ -399,7 +413,7 @@ int	ssl3_accept(SSL *s);
 int	ssl3_connect(SSL *s);
 int	ssl3_read(SSL *s, char *buf, int len);
 int	ssl3_peek(SSL *s,char *buf, int len);
-int	ssl3_write(SSL *s, const char *buf, int len);
+int	ssl3_write(SSL *s, char *buf, int len);
 int	ssl3_shutdown(SSL *s);
 void	ssl3_clear(SSL *s);
 long	ssl3_ctrl(SSL *s,int cmd, long larg, char *parg);
@@ -410,6 +424,28 @@ int ssl23_accept(SSL *s);
 int ssl23_connect(SSL *s);
 int ssl23_read_bytes(SSL *s, int n);
 int ssl23_write_bytes(SSL *s);
+
+int tls1_new(SSL *s);
+void tls1_free(SSL *s);
+void tls1_clear(SSL *s);
+long tls1_ctrl(SSL *s,int cmd, long larg, char *parg);
+SSL_METHOD *tlsv1_base_method(void );
+
+
+int ssl_init_wbio_buffer(SSL *s, int push);
+
+int tls1_change_cipher_state(SSL *s, int which);
+int tls1_setup_key_block(SSL *s);
+int tls1_enc(SSL *s, int snd);
+int tls1_final_finish_mac(SSL *s, EVP_MD_CTX *in1_ctx, EVP_MD_CTX *in2_ctx,
+	unsigned char *str, int slen, unsigned char *p);
+int tls1_cert_verify_mac(SSL *s, EVP_MD_CTX *in, unsigned char *p);
+int tls1_mac(SSL *ssl, unsigned char *md, int snd);
+int tls1_generate_master_secret(SSL *s, unsigned char *out,
+	unsigned char *p, int len);
+int tls1_alert_code(int code);
+int ssl3_alert_code(int code);
+
 
 #else
 
@@ -485,9 +521,9 @@ int ssl3_send_finished();
 int ssl3_num_ciphers();
 SSL_CIPHER *ssl3_get_cipher();
 int ssl3_renegotiate();
+int ssl3_renegotiate_check();
 int ssl3_dispatch_alert();
 int ssl3_read_bytes();
-void ssl3_generate_key_block();
 int ssl3_part_read();
 int ssl3_write_bytes();
 int ssl3_final_finish_mac();
@@ -514,6 +550,8 @@ int ssl23_accept();
 int ssl23_connect();
 int ssl23_read_bytes();
 int ssl23_write_bytes();
+
+int ssl_init_wbio_buffer();
 
 #endif
 

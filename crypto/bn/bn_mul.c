@@ -1,5 +1,5 @@
 /* crypto/bn/bn_mul.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -61,6 +61,7 @@
 #include "bn_lcl.h"
 
 /* r must be different to a and b */
+/* int BN_mmul(r, a, b) */
 int BN_mul(r, a, b)
 BIGNUM *r;
 BIGNUM *a;
@@ -79,21 +80,130 @@ BIGNUM *b;
 		}
 
 	max=(al+bl);
-	if (bn_expand(r,(max)*BN_BITS2) == NULL) return(0);
+	if (bn_wexpand(r,max) == NULL) return(0);
 	r->top=max;
 	r->neg=a->neg^b->neg;
 	ap=a->d;
 	bp=b->d;
 	rp=r->d;
 
-	rp[al]=bn_mul_word(rp,ap,al,*(bp++));
+	rp[al]=bn_mul_words(rp,ap,al,*(bp++));
 	rp++;
 	for (i=1; i<bl; i++)
 		{
-		rp[al]=bn_mul_add_word(rp,ap,al,*(bp++));
+		rp[al]=bn_mul_add_words(rp,ap,al,*(bp++));
 		rp++;
 		}
 	if (r->d[max-1] == 0) r->top--;
 	return(1);
 	}
 
+#if 0
+#include "stack.h"
+
+int limit=16;
+
+typedef struct bn_pool_st
+	{
+	int used;
+	int tos;
+	STACK *sk; 
+	} BN_POOL;
+
+BIGNUM *BN_POOL_push(bp)
+BN_POOL *bp;
+	{
+	BIGNUM *ret;
+
+	if (bp->used >= bp->tos)
+		{
+		ret=BN_new();
+		sk_push(bp->sk,(char *)ret);
+		bp->tos++;
+		bp->used++;
+		}
+	else
+		{
+		ret=(BIGNUM *)sk_value(bp->sk,bp->used);
+		bp->used++;
+		}
+	return(ret);
+	}
+
+void BN_POOL_pop(bp,num)
+BN_POOL *bp;
+int num;
+	{
+	bp->used-=num;
+	}
+
+int BN_mul(r,a,b)
+BIGNUM *r,*a,*b;
+	{
+	static BN_POOL bp;
+	static init=1;
+
+	if (init)
+		{
+		bp.used=0;
+		bp.tos=0;
+		bp.sk=sk_new_null();
+		init=0;
+		}
+	return(BN_mm(r,a,b,&bp));
+	}
+
+/* r must be different to a and b */
+int BN_mm(m, A, B, bp)
+BIGNUM *m,*A,*B;
+BN_POOL *bp;
+	{
+	int i,num;
+	int an,bn;
+	BIGNUM *a,*b,*c,*d,*ac,*bd;
+
+	an=A->top;
+	bn=B->top;
+	if ((an <= limit) || (bn <= limit))
+		{
+		return(BN_mmul(m,A,B));
+		}
+
+	a=BN_POOL_push(bp);
+	b=BN_POOL_push(bp);
+	c=BN_POOL_push(bp);
+	d=BN_POOL_push(bp);
+	ac=BN_POOL_push(bp);
+	bd=BN_POOL_push(bp);
+
+	num=(an <= bn)?an:bn;
+	num=1<<(BN_num_bits_word(num-1)-1);
+
+	/* Are going to now chop things into 'num' word chunks. */
+	num*=BN_BITS2;
+
+	BN_copy(a,A);
+	BN_mask_bits(a,num);
+	BN_rshift(b,A,num);
+
+	BN_copy(c,B);
+	BN_mask_bits(c,num);
+	BN_rshift(d,B,num);
+
+	BN_sub(ac ,b,a);
+	BN_sub(bd,c,d);
+	BN_mm(m,ac,bd,bp);
+	BN_mm(ac,a,c,bp);
+	BN_mm(bd,b,d,bp);
+
+	BN_add(m,m,ac);
+	BN_add(m,m,bd);
+	BN_lshift(m,m,num);
+	BN_lshift(bd,bd,num*2);
+
+	BN_add(m,m,ac);
+	BN_add(m,m,bd);
+	BN_POOL_pop(bp,6);
+	return(1);
+	}
+#endif

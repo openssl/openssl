@@ -1,5 +1,5 @@
 /* crypto/evp/evp_enc.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -60,7 +60,14 @@
 #include "cryptlib.h"
 #include "evp.h"
 
-char *EVP_version="EVP part of SSLeay 0.8.1b 29-Jun-1998";
+char *EVP_version="EVP part of SSLeay 0.9.0b 29-Jun-1998";
+
+void EVP_CIPHER_CTX_init(ctx)
+EVP_CIPHER_CTX *ctx;
+	{
+	memset(ctx,0,sizeof(EVP_CIPHER_CTX));
+	/* ctx->cipher=NULL; */
+	}
 
 void EVP_CipherInit(ctx,data,key,iv,enc)
 EVP_CIPHER_CTX *ctx;

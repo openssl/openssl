@@ -1,5 +1,5 @@
 /* ssl/s2_pkt.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -70,8 +70,8 @@
 
 #ifndef NOPROTO
 static int read_n(SSL *s,unsigned int n,unsigned int max,unsigned int extend);
-static int do_ssl_write(SSL *s, const char *buf, unsigned int len);
-static int write_pending(SSL *s, const char *buf, unsigned int len);
+static int do_ssl_write(SSL *s, char *buf, unsigned int len);
+static int write_pending(SSL *s, char *buf, unsigned int len);
 static int ssl_mt_error(int n);
 #else
 static int read_n();
@@ -121,7 +121,7 @@ int len;
 			}
 		}
 
-	errno=0;
+	clear_sys_error();
 	s->rwstate=SSL_NOTHING;
 	if (len <= 0) return(len);
 
@@ -231,7 +231,7 @@ int len;
 				(s->s2->rlength%EVP_CIPHER_CTX_block_size(s->enc_read_ctx) != 0))
 				{
 				SSLerr(SSL_F_SSL2_READ,SSL_R_BAD_MAC_DECODE);
-				return(SSL_RWERR_BAD_MAC_DECODE);
+				return(-1);
 				}
 			}
 		INC32(s->s2->read_sequence); /* expect next number */
@@ -248,7 +248,7 @@ int len;
 	else
 		{
 		SSLerr(SSL_F_SSL2_READ,SSL_R_BAD_STATE);
-			return(SSL_RWERR_INTERNAL_ERROR);
+			return(-1);
 		}
 	}
 
@@ -312,7 +312,7 @@ unsigned int extend;
 	s->packet=s->s2->rbuf;
 	while (newb < (int)n)
 		{
-		errno=0;
+		clear_sys_error();
 		if (s->rbio != NULL)
 			{
 			s->rwstate=SSL_READING;
@@ -356,7 +356,7 @@ unsigned int extend;
 
 int ssl2_write(s, buf, len)
 SSL *s;
-const char *buf;
+char *buf;
 int len;
 	{
 	unsigned int n,tot;
@@ -380,7 +380,7 @@ int len;
 			return(-1);
 		}
 
-	errno=0;
+	clear_sys_error();
 	s->rwstate=SSL_NOTHING;
 	if (len <= 0) return(len);
 
@@ -405,7 +405,7 @@ int len;
 
 static int write_pending(s,buf,len)
 SSL *s;
-const char *buf;
+char *buf;
 unsigned int len;
 	{
 	int i;
@@ -414,15 +414,15 @@ unsigned int len;
 
 	/* check that they have given us the same buffer to
 	 * write */
-	if ((s->s2->wpend_tot != (int)len) || (s->s2->wpend_buf != buf))
+	if ((s->s2->wpend_tot > (int)len) || (s->s2->wpend_buf != buf))
 		{
 		SSLerr(SSL_F_WRITE_PENDING,SSL_R_BAD_WRITE_RETRY);
-		return(SSL_RWERR_BAD_WRITE_RETRY);
+		return(-1);
 		}
 
 	for (;;)
 		{
-		errno=0;
+		clear_sys_error();
 		if (s->wbio != NULL)
 			{
 			s->rwstate=SSL_WRITING;
@@ -453,7 +453,7 @@ unsigned int len;
 
 static int do_ssl_write(s, buf, len)
 SSL *s;
-const char *buf;
+char *buf;
 unsigned int len;
 	{
 	unsigned int j,k,olen,p,mac_size,bs;

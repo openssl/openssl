@@ -1,5 +1,5 @@
 /* crypto/bn/bn_shift.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -70,12 +70,12 @@ BIGNUM *a;
 	if (r != a)
 		{
 		r->neg=a->neg;
-		if (bn_expand(r,(a->top+1)*BN_BITS2) == NULL) return(0);
+		if (bn_wexpand(r,a->top+1) == NULL) return(0);
 		r->top=a->top;
 		}
 	else
 		{
-		if (bn_expand(r,(a->top+1)*BN_BITS2) == NULL) return(0);
+		if (bn_wexpand(r,a->top+1) == NULL) return(0);
 		}
 	ap=a->d;
 	rp=r->d;
@@ -108,7 +108,7 @@ BIGNUM *a;
 		}
 	if (a != r)
 		{
-		if (bn_expand(r,a->top*BN_BITS2) == NULL) return(0);
+		if (bn_wexpand(r,a->top) == NULL) return(0);
 		r->top=a->top;
 		r->neg=a->neg;
 		}
@@ -135,7 +135,7 @@ int n;
 	BN_ULONG l;
 
 	r->neg=a->neg;
-	if (bn_expand(r,(a->top*BN_BITS2)+n) == NULL) return(0);
+	if (bn_wexpand(r,a->top+(n/BN_BITS2)+1) == NULL) return(0);
 	nw=n/BN_BITS2;
 	lb=n%BN_BITS2;
 	rb=BN_BITS2-lb;
@@ -180,7 +180,7 @@ int n;
 	if (r != a)
 		{
 		r->neg=a->neg;
-		if (bn_expand(r,(a->top-nw+1)*BN_BITS2) == NULL) return(0);
+		if (bn_wexpand(r,a->top-nw+1) == NULL) return(0);
 		}
 
 	f= &(a->d[nw]);

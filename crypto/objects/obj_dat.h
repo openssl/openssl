@@ -61,12 +61,12 @@
  * perl obj_dat.pl < objects.h > obj_dat.h
  */
 
-#define NUM_NID 97
-#define NUM_SN 70
-#define NUM_LN 96
-#define NUM_OBJ 78
+#define NUM_NID 124
+#define NUM_SN 95
+#define NUM_LN 122
+#define NUM_OBJ 95
 
-static unsigned char lvalues[515]={
+static unsigned char lvalues[600]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  0] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  6] OBJ_pkcs */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,     /* [ 13] OBJ_md2 */
@@ -120,10 +120,10 @@ static unsigned char lvalues[515]={
 0x2B,0x0E,0x03,0x02,0x1A,                    /* [349] OBJ_sha1 */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x05,/* [354] OBJ_sha1WithRSAEncryption */
 0x2B,0x0E,0x03,0x02,0x0D,                    /* [363] OBJ_dsaWithSHA */
-0x2B,0x0E,0x03,0x02,0x0C,                    /* [368] OBJ_dsa */
+0x2B,0x0E,0x03,0x02,0x0C,                    /* [368] OBJ_dsa_2 */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0B,/* [373] OBJ_pbeWithSHA1AndRC2_CBC */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0C,/* [382] OBJ_pbeWithSHA1AndRC4 */
-0x2B,0x0E,0x03,0x02,0x1B,                    /* [391] OBJ_dsaWithSHA1 */
+0x2B,0x0E,0x03,0x02,0x1B,                    /* [391] OBJ_dsaWithSHA1_2 */
 0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x01,/* [396] OBJ_netscape_cert_type */
 0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x02,/* [405] OBJ_netscape_base_url */
 0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x03,/* [414] OBJ_netscape_revocation_url */
@@ -145,6 +145,23 @@ static unsigned char lvalues[515]={
 0x55,0x1D,0x23,                              /* [503] OBJ_authority_key_identifier */
 0x55,0x08,0x03,0x65,                         /* [506] OBJ_mdc2 */
 0x55,0x08,0x03,0x64,                         /* [510] OBJ_mdc2WithRSA */
+0x55,0x04,0x2A,                              /* [514] OBJ_givenName */
+0x55,0x04,0x04,                              /* [517] OBJ_surname */
+0x55,0x04,0x2B,                              /* [520] OBJ_initials */
+0x55,0x04,0x2D,                              /* [523] OBJ_uniqueIdentifier */
+0x55,0x1D,0x1F,                              /* [526] OBJ_crl_distribution_points */
+0x2B,0x0E,0x03,0x02,0x03,                    /* [529] OBJ_md5WithRSA */
+0x55,0x04,0x05,                              /* [534] OBJ_serialNumber */
+0x55,0x04,0x0C,                              /* [537] OBJ_title */
+0x55,0x04,0x0D,                              /* [540] OBJ_description */
+0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x0A,/* [543] OBJ_cast5_cbc */
+0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x0C,/* [552] OBJ_pbeWithMD5AndCast5_CBC */
+0x2A,0x86,0x48,0xCE,0x38,0x04,0x03,          /* [561] OBJ_dsaWithSHA1 */
+0x2B,0x0E,0x03,0x02,0x1D,                    /* [568] OBJ_sha1WithRSA */
+0x2A,0x86,0x48,0xCE,0x38,0x04,0x01,          /* [573] OBJ_dsa */
+0x2B,0x24,0x03,0x02,0x01,                    /* [580] OBJ_ripemd160 */
+0x2B,0x24,0x03,0x03,0x01,0x02,               /* [585] OBJ_ripemd160WithRSA */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x03,0x08,     /* [591] OBJ_rc5_cbc */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -237,12 +254,12 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"RSA-SHA1","sha1WithRSAEncryption",NID_sha1WithRSAEncryption,9,
 	&(lvalues[354]),0},
 {"DSA-SHA","dsaWithSHA",NID_dsaWithSHA,5,&(lvalues[363]),0},
-{"DSA","dsaEncryption",NID_dsa,5,&(lvalues[368]),0},
+{"DSA-old","dsaEncryption-old",NID_dsa_2,5,&(lvalues[368]),0},
 {"pbeWithSHA1AndRC2-CBC","pbeWithSHA1AndRC2-CBC",
 	NID_pbeWithSHA1AndRC2_CBC,9,&(lvalues[373]),0},
 {"pbeWithSHA1AndRC4","pbeWithSHA1AndRC4",NID_pbeWithSHA1AndRC4,9,
 	&(lvalues[382]),0},
-{"DSA-SHA1","dsaWithSHA1",NID_dsaWithSHA1,5,&(lvalues[391]),0},
+{"DSA-SHA1-old","dsaWithSHA1",NID_dsaWithSHA1_2,5,&(lvalues[391]),0},
 {"nsCertType","Netscape Cert Type",NID_netscape_cert_type,9,
 	&(lvalues[396]),0},
 {"nsBaseUrl","Netscape Base Url",NID_netscape_base_url,9,
@@ -284,6 +301,36 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"BF-OFB","bf-ofb",NID_bf_ofb64,0,NULL},
 {"MDC2","mdc2",NID_mdc2,4,&(lvalues[506]),0},
 {"RSA-MDC2","mdc2withRSA",NID_mdc2WithRSA,4,&(lvalues[510]),0},
+{"RC4-40","rc4-40",NID_rc4_40,0,NULL},
+{"RC2-40-CBC","rc2-40-cbc",NID_rc2_40_cbc,0,NULL},
+{"G","givenName",NID_givenName,3,&(lvalues[514]),0},
+{"S","surname",NID_surname,3,&(lvalues[517]),0},
+{"I","initials",NID_initials,3,&(lvalues[520]),0},
+{"UID","uniqueIdentifier",NID_uniqueIdentifier,3,&(lvalues[523]),0},
+{"crlDistributionPoints","X509v3 CRL Distribution Points",
+	NID_crl_distribution_points,3,&(lvalues[526]),0},
+{"RSA-NP-MD5","md5WithRSA",NID_md5WithRSA,5,&(lvalues[529]),0},
+{"SN","serialNumber",NID_serialNumber,3,&(lvalues[534]),0},
+{"T","title",NID_title,3,&(lvalues[537]),0},
+{"D","description",NID_description,3,&(lvalues[540]),0},
+{"CAST5-CBC","cast5-cbc",NID_cast5_cbc,9,&(lvalues[543]),0},
+{"CAST5-ECB","cast5-ecb",NID_cast5_ecb,0,NULL},
+{"CAST5-CFB","cast5-cfb",NID_cast5_cfb64,0,NULL},
+{"CAST5-OFB","cast5-ofb",NID_cast5_ofb64,0,NULL},
+{"pbeWithMD5AndCast5CBC","pbeWithMD5AndCast5CBC",
+	NID_pbeWithMD5AndCast5_CBC,9,&(lvalues[552]),0},
+{"DSA-SHA1","dsaWithSHA1",NID_dsaWithSHA1,7,&(lvalues[561]),0},
+{"MD5-SHA1","md5-sha1",NID_md5_sha1,0,NULL},
+{"RSA-SHA1-2","sha1WithRSA",NID_sha1WithRSA,5,&(lvalues[568]),0},
+{"DSA","dsaEncryption",NID_dsa,7,&(lvalues[573]),0},
+{"RIPEMD160","ripemd160",NID_ripemd160,5,&(lvalues[580]),0},
+{NULL,NULL,NID_undef,0,NULL},
+{"RSA-RIPEMD160","ripemd160WithRSA",NID_ripemd160WithRSA,6,
+	&(lvalues[585]),0},
+{"RC5-CBC","rc5-cbc",NID_rc5_cbc,8,&(lvalues[591]),0},
+{"RC5-ECB","rc5-ecb",NID_rc5_ecb,0,NULL},
+{"RC5-CFB","rc5-cfb",NID_rc5_cfb64,0,NULL},
+{"RC5-OFB","rc5-ofb",NID_rc5_ofb64,0,NULL},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -292,7 +339,12 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[92]),/* "BF-ECB" */
 &(nid_objs[94]),/* "BF-OFB" */
 &(nid_objs[14]),/* "C" */
+&(nid_objs[108]),/* "CAST5-CBC" */
+&(nid_objs[110]),/* "CAST5-CFB" */
+&(nid_objs[109]),/* "CAST5-ECB" */
+&(nid_objs[111]),/* "CAST5-OFB" */
 &(nid_objs[13]),/* "CN" */
+&(nid_objs[107]),/* "D" */
 &(nid_objs[31]),/* "DES-CBC" */
 &(nid_objs[30]),/* "DES-CFB" */
 &(nid_objs[29]),/* "DES-ECB" */
@@ -306,10 +358,14 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[63]),/* "DES-EDE3-OFB" */
 &(nid_objs[45]),/* "DES-OFB" */
 &(nid_objs[80]),/* "DESX-CBC" */
-&(nid_objs[67]),/* "DSA" */
+&(nid_objs[116]),/* "DSA" */
 &(nid_objs[66]),/* "DSA-SHA" */
-&(nid_objs[70]),/* "DSA-SHA1" */
+&(nid_objs[113]),/* "DSA-SHA1" */
+&(nid_objs[70]),/* "DSA-SHA1-old" */
+&(nid_objs[67]),/* "DSA-old" */
 &(nid_objs[48]),/* "Email" */
+&(nid_objs[99]),/* "G" */
+&(nid_objs[101]),/* "I" */
 &(nid_objs[34]),/* "IDEA-CBC" */
 &(nid_objs[35]),/* "IDEA-CFB" */
 &(nid_objs[36]),/* "IDEA-ECB" */
@@ -317,28 +373,44 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[15]),/* "L" */
 &(nid_objs[ 3]),/* "MD2" */
 &(nid_objs[ 4]),/* "MD5" */
+&(nid_objs[114]),/* "MD5-SHA1" */
 &(nid_objs[95]),/* "MDC2" */
 &(nid_objs[57]),/* "Netscape" */
 &(nid_objs[17]),/* "O" */
 &(nid_objs[18]),/* "OU" */
+&(nid_objs[98]),/* "RC2-40-CBC" */
 &(nid_objs[37]),/* "RC2-CBC" */
 &(nid_objs[39]),/* "RC2-CFB" */
 &(nid_objs[38]),/* "RC2-ECB" */
 &(nid_objs[40]),/* "RC2-OFB" */
 &(nid_objs[ 5]),/* "RC4" */
+&(nid_objs[97]),/* "RC4-40" */
+&(nid_objs[120]),/* "RC5-CBC" */
+&(nid_objs[122]),/* "RC5-CFB" */
+&(nid_objs[121]),/* "RC5-ECB" */
+&(nid_objs[123]),/* "RC5-OFB" */
+&(nid_objs[117]),/* "RIPEMD160" */
 &(nid_objs[19]),/* "RSA" */
 &(nid_objs[ 7]),/* "RSA-MD2" */
 &(nid_objs[ 8]),/* "RSA-MD5" */
 &(nid_objs[96]),/* "RSA-MDC2" */
+&(nid_objs[104]),/* "RSA-NP-MD5" */
+&(nid_objs[119]),/* "RSA-RIPEMD160" */
 &(nid_objs[42]),/* "RSA-SHA" */
 &(nid_objs[65]),/* "RSA-SHA1" */
+&(nid_objs[115]),/* "RSA-SHA1-2" */
+&(nid_objs[100]),/* "S" */
 &(nid_objs[41]),/* "SHA" */
 &(nid_objs[64]),/* "SHA1" */
+&(nid_objs[105]),/* "SN" */
 &(nid_objs[16]),/* "ST" */
+&(nid_objs[106]),/* "T" */
+&(nid_objs[102]),/* "UID" */
 &(nid_objs[ 0]),/* "UNDEF" */
 &(nid_objs[90]),/* "authorityKeyIdentifier" */
 &(nid_objs[87]),/* "basicConstraints" */
 &(nid_objs[89]),/* "certificatePolicies" */
+&(nid_objs[103]),/* "crlDistributionPoints" */
 &(nid_objs[88]),/* "crlNumber" */
 &(nid_objs[86]),/* "issuerAltName" */
 &(nid_objs[83]),/* "keyUsage" */
@@ -376,6 +448,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[12]),/* "X509" */
 &(nid_objs[90]),/* "X509v3 Authority Key Identifier" */
 &(nid_objs[87]),/* "X509v3 Basic Constraints" */
+&(nid_objs[103]),/* "X509v3 CRL Distribution Points" */
 &(nid_objs[88]),/* "X509v3 CRL Number" */
 &(nid_objs[89]),/* "X509v3 Certificate Policies" */
 &(nid_objs[86]),/* "X509v3 Issuer Alternative Name" */
@@ -387,6 +460,10 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[93]),/* "bf-cfb" */
 &(nid_objs[92]),/* "bf-ecb" */
 &(nid_objs[94]),/* "bf-ofb" */
+&(nid_objs[108]),/* "cast5-cbc" */
+&(nid_objs[110]),/* "cast5-cfb" */
+&(nid_objs[109]),/* "cast5-ecb" */
+&(nid_objs[111]),/* "cast5-ofb" */
 &(nid_objs[54]),/* "challengePassword" */
 &(nid_objs[13]),/* "commonName" */
 &(nid_objs[50]),/* "contentType" */
@@ -404,21 +481,28 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[61]),/* "des-ede3-cfb" */
 &(nid_objs[63]),/* "des-ede3-ofb" */
 &(nid_objs[45]),/* "des-ofb" */
+&(nid_objs[107]),/* "description" */
 &(nid_objs[80]),/* "desx-cbc" */
 &(nid_objs[28]),/* "dhKeyAgreement" */
-&(nid_objs[67]),/* "dsaEncryption" */
+&(nid_objs[116]),/* "dsaEncryption" */
+&(nid_objs[67]),/* "dsaEncryption-old" */
 &(nid_objs[66]),/* "dsaWithSHA" */
 &(nid_objs[70]),/* "dsaWithSHA1" */
+&(nid_objs[113]),/* "dsaWithSHA1" */
 &(nid_objs[48]),/* "emailAddress" */
 &(nid_objs[56]),/* "extendedCertificateAttributes" */
+&(nid_objs[99]),/* "givenName" */
 &(nid_objs[34]),/* "idea-cbc" */
 &(nid_objs[35]),/* "idea-cfb" */
 &(nid_objs[36]),/* "idea-ecb" */
 &(nid_objs[46]),/* "idea-ofb" */
+&(nid_objs[101]),/* "initials" */
 &(nid_objs[15]),/* "localityName" */
 &(nid_objs[ 3]),/* "md2" */
 &(nid_objs[ 7]),/* "md2WithRSAEncryption" */
 &(nid_objs[ 4]),/* "md5" */
+&(nid_objs[114]),/* "md5-sha1" */
+&(nid_objs[104]),/* "md5WithRSA" */
 &(nid_objs[ 8]),/* "md5WithRSAEncryption" */
 &(nid_objs[95]),/* "mdc2" */
 &(nid_objs[96]),/* "mdc2withRSA" */
@@ -426,6 +510,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[17]),/* "organizationName" */
 &(nid_objs[18]),/* "organizationalUnitName" */
 &(nid_objs[ 9]),/* "pbeWithMD2AndDES-CBC" */
+&(nid_objs[112]),/* "pbeWithMD5AndCast5CBC" */
 &(nid_objs[10]),/* "pbeWithMD5AndDES-CBC" */
 &(nid_objs[68]),/* "pbeWithSHA1AndRC2-CBC" */
 &(nid_objs[69]),/* "pbeWithSHA1AndRC4" */
@@ -439,21 +524,34 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[24]),/* "pkcs7-signedAndEnvelopedData" */
 &(nid_objs[22]),/* "pkcs7-signedData" */
 &(nid_objs[47]),/* "pkcs9" */
+&(nid_objs[98]),/* "rc2-40-cbc" */
 &(nid_objs[37]),/* "rc2-cbc" */
 &(nid_objs[39]),/* "rc2-cfb" */
 &(nid_objs[38]),/* "rc2-ecb" */
 &(nid_objs[40]),/* "rc2-ofb" */
 &(nid_objs[ 5]),/* "rc4" */
+&(nid_objs[97]),/* "rc4-40" */
+&(nid_objs[120]),/* "rc5-cbc" */
+&(nid_objs[122]),/* "rc5-cfb" */
+&(nid_objs[121]),/* "rc5-ecb" */
+&(nid_objs[123]),/* "rc5-ofb" */
+&(nid_objs[117]),/* "ripemd160" */
+&(nid_objs[119]),/* "ripemd160WithRSA" */
 &(nid_objs[19]),/* "rsa" */
 &(nid_objs[ 6]),/* "rsaEncryption" */
 &(nid_objs[ 1]),/* "rsadsi" */
+&(nid_objs[105]),/* "serialNumber" */
 &(nid_objs[41]),/* "sha" */
 &(nid_objs[64]),/* "sha1" */
+&(nid_objs[115]),/* "sha1WithRSA" */
 &(nid_objs[65]),/* "sha1WithRSAEncryption" */
 &(nid_objs[42]),/* "shaWithRSAEncryption" */
 &(nid_objs[52]),/* "signingTime" */
 &(nid_objs[16]),/* "stateOrProvinceName" */
+&(nid_objs[100]),/* "surname" */
+&(nid_objs[106]),/* "title" */
 &(nid_objs[ 0]),/* "undefined" */
+&(nid_objs[102]),/* "uniqueIdentifier" */
 &(nid_objs[55]),/* "unstructuredAddress" */
 &(nid_objs[49]),/* "unstructuredName" */
 };
@@ -463,11 +561,18 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[12]),/* OBJ_X509                         2 5 4 */
 &(nid_objs[81]),/* OBJ_ld_ce                        2 5 29 */
 &(nid_objs[13]),/* OBJ_commonName                   2 5 4 3 */
+&(nid_objs[100]),/* OBJ_surname                      2 5 4 4 */
+&(nid_objs[105]),/* OBJ_serialNumber                 2 5 4 5 */
 &(nid_objs[14]),/* OBJ_countryName                  2 5 4 6 */
 &(nid_objs[15]),/* OBJ_localityName                 2 5 4 7 */
 &(nid_objs[16]),/* OBJ_stateOrProvinceName          2 5 4 8 */
 &(nid_objs[17]),/* OBJ_organizationName             2 5 4 10 */
 &(nid_objs[18]),/* OBJ_organizationalUnitName       2 5 4 11 */
+&(nid_objs[106]),/* OBJ_title                        2 5 4 12 */
+&(nid_objs[107]),/* OBJ_description                  2 5 4 13 */
+&(nid_objs[99]),/* OBJ_givenName                    2 5 4 42 */
+&(nid_objs[101]),/* OBJ_initials                     2 5 4 43 */
+&(nid_objs[102]),/* OBJ_uniqueIdentifier             2 5 4 45 */
 &(nid_objs[82]),/* OBJ_subject_key_identifier       2 5 29 14 */
 &(nid_objs[83]),/* OBJ_key_usage                    2 5 29 15 */
 &(nid_objs[84]),/* OBJ_private_key_usage_period     2 5 29 16 */
@@ -475,24 +580,31 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[86]),/* OBJ_issuer_alt_name              2 5 29 18 */
 &(nid_objs[87]),/* OBJ_basic_constraints            2 5 29 19 */
 &(nid_objs[88]),/* OBJ_crl_number                   2 5 29 20 */
+&(nid_objs[103]),/* OBJ_crl_distribution_points      2 5 29 31 */
 &(nid_objs[89]),/* OBJ_certificate_policies         2 5 29 32 */
 &(nid_objs[90]),/* OBJ_authority_key_identifier     2 5 29 35 */
 &(nid_objs[19]),/* OBJ_rsa                          2 5 8 1 1 */
 &(nid_objs[96]),/* OBJ_mdc2WithRSA                  2 5 8 3 100 */
 &(nid_objs[95]),/* OBJ_mdc2                         2 5 8 3 101 */
+&(nid_objs[104]),/* OBJ_md5WithRSA                   1 3 14 3 2 3 */
 &(nid_objs[29]),/* OBJ_des_ecb                      1 3 14 3 2 6 */
 &(nid_objs[31]),/* OBJ_des_cbc                      1 3 14 3 2 7 */
 &(nid_objs[45]),/* OBJ_des_ofb64                    1 3 14 3 2 8 */
 &(nid_objs[30]),/* OBJ_des_cfb64                    1 3 14 3 2 9 */
-&(nid_objs[67]),/* OBJ_dsa                          1 3 14 3 2 12 */
+&(nid_objs[67]),/* OBJ_dsa_2                        1 3 14 3 2 12 */
 &(nid_objs[66]),/* OBJ_dsaWithSHA                   1 3 14 3 2 13 */
 &(nid_objs[42]),/* OBJ_shaWithRSAEncryption         1 3 14 3 2 15 */
 &(nid_objs[32]),/* OBJ_des_ede                      1 3 14 3 2 17 */
 &(nid_objs[41]),/* OBJ_sha                          1 3 14 3 2 18 */
 &(nid_objs[64]),/* OBJ_sha1                         1 3 14 3 2 26 */
-&(nid_objs[70]),/* OBJ_dsaWithSHA1                  1 3 14 3 2 27 */
+&(nid_objs[70]),/* OBJ_dsaWithSHA1_2                1 3 14 3 2 27 */
+&(nid_objs[115]),/* OBJ_sha1WithRSA                  1 3 14 3 2 29 */
+&(nid_objs[117]),/* OBJ_ripemd160                    1 3 36 3 2 1 */
 &(nid_objs[ 1]),/* OBJ_rsadsi                       1 2 840 113549 */
+&(nid_objs[119]),/* OBJ_ripemd160WithRSA             1 3 36 3 3 1 2 */
 &(nid_objs[ 2]),/* OBJ_pkcs                         1 2 840 113549 1 */
+&(nid_objs[116]),/* OBJ_dsa                          1 2 840 10040 4 1 */
+&(nid_objs[113]),/* OBJ_dsaWithSHA1                  1 2 840 10040 4 3 */
 &(nid_objs[57]),/* OBJ_netscape                     2 16 840 1 113730 */
 &(nid_objs[27]),/* OBJ_pkcs3                        1 2 840 113549 1 3 */
 &(nid_objs[20]),/* OBJ_pkcs7                        1 2 840 113549 1 7 */
@@ -502,8 +614,11 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[37]),/* OBJ_rc2_cbc                      1 2 840 113549 3 2 */
 &(nid_objs[ 5]),/* OBJ_rc4                          1 2 840 113549 3 4 */
 &(nid_objs[44]),/* OBJ_des_ede3_cbc                 1 2 840 113549 3 7 */
+&(nid_objs[120]),/* OBJ_rc5_cbc                      1 2 840 113549 3 8 */
 &(nid_objs[58]),/* OBJ_netscape_cert_extension      2 16 840 1 113730 1 */
 &(nid_objs[59]),/* OBJ_netscape_data_type           2 16 840 1 113730 2 */
+&(nid_objs[108]),/* OBJ_cast5_cbc                    1 2 840 113533 7 66 10 */
+&(nid_objs[112]),/* OBJ_pbeWithMD5AndCast5_CBC       1 2 840 113533 7 66 12 */
 &(nid_objs[ 6]),/* OBJ_rsaEncryption                1 2 840 113549 1 1 1 */
 &(nid_objs[ 7]),/* OBJ_md2WithRSAEncryption         1 2 840 113549 1 1 2 */
 &(nid_objs[ 8]),/* OBJ_md5WithRSAEncryption         1 2 840 113549 1 1 4 */

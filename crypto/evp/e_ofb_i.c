@@ -1,5 +1,5 @@
 /* crypto/evp/e_ofb_i.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -79,6 +79,11 @@ static EVP_CIPHER i_ofb_cipher=
 	1,IDEA_KEY_LENGTH,IDEA_BLOCK,
 	idea_ofb_init_key,
 	idea_ofb_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.idea_ks)),
+	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
 	};
 
 EVP_CIPHER *EVP_idea_ofb()
@@ -92,13 +97,13 @@ unsigned char *key;
 unsigned char *iv;
 int enc;
 	{
-	ctx->c.idea_cfb.num=0;
+	ctx->num=0;
 
 	if (iv != NULL)
-		memcpy(&(ctx->c.idea_cfb.oiv[0]),iv,8);
-	memcpy(&(ctx->c.idea_cfb.iv[0]),&(ctx->c.idea_cfb.oiv[0]),8);
+		memcpy(&(ctx->oiv[0]),iv,8);
+	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
-		idea_set_encrypt_key(key,&(ctx->c.idea_cfb.ks));
+		idea_set_encrypt_key(key,&(ctx->c.idea_ks));
 	}
 
 static void idea_ofb_cipher(ctx,out,in,inl)
@@ -109,8 +114,8 @@ unsigned int inl;
 	{
 	idea_ofb64_encrypt(
 		in,out,(long)inl,
-		&(ctx->c.idea_cfb.ks),&(ctx->c.idea_cfb.iv[0]),
-		&ctx->c.idea_cfb.num);
+		&(ctx->c.idea_ks),&(ctx->iv[0]),
+		&ctx->num);
 	}
 
 #endif

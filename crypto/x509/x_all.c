@@ -1,5 +1,5 @@
 /* crypto/x509/x_all.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -148,7 +148,7 @@ X509_EXTENSION *ex;
 		(char *(*)())d2i_X509_EXTENSION,(char *)ex));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 X509 *d2i_X509_fp(fp,x509)
 FILE *fp;
 X509 *x509;
@@ -187,7 +187,7 @@ X509_CRL *crl;
 		(char *(*)())d2i_X509_CRL,(char *)crl));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 X509_CRL *d2i_X509_CRL_fp(fp,crl)
 FILE *fp;
 X509_CRL *crl;
@@ -228,7 +228,7 @@ PKCS7 *p7;
 		(char *(*)())d2i_PKCS7,(char *)p7));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 PKCS7 *d2i_PKCS7_fp(fp,p7)
 FILE *fp;
 PKCS7 *p7;
@@ -269,7 +269,7 @@ X509_REQ *req;
 		(char *(*)())d2i_X509_REQ,(char *)req));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 X509_REQ *d2i_X509_REQ_fp(fp,req)
 FILE *fp;
 X509_REQ *req;
@@ -318,7 +318,7 @@ RSA *rsa;
 		(char *(*)())d2i_RSAPrivateKey,(char *)rsa));
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 RSA *d2i_RSAPrivateKey_fp(fp,rsa)
 FILE *fp;
 RSA *rsa;
@@ -386,7 +386,7 @@ RSA *rsa;
 #endif
 
 #ifndef NO_DSA
-#ifndef WIN16
+#ifndef NO_FP_API
 DSA *d2i_DSAPrivateKey_fp(fp,dsa)
 FILE *fp;
 DSA *dsa;

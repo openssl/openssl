@@ -2,10 +2,10 @@
 gcc2_compiled.:
 .section	".text"
 	.align 4
-	.global bn_mul_add_word
-	.type	 bn_mul_add_word,#function
+	.global bn_mul_add_words
+	.type	 bn_mul_add_words,#function
 	.proc	016
-bn_mul_add_word:
+bn_mul_add_words:
 	!#PROLOGUE# 0
 	save %sp,-112,%sp
 	!#PROLOGUE# 1
@@ -98,12 +98,12 @@ bn_mul_add_word:
 	ret
 	restore %g0,%i4,%o0
 .LLfe1:
-	.size	 bn_mul_add_word,.LLfe1-bn_mul_add_word
+	.size	 bn_mul_add_words,.LLfe1-bn_mul_add_words
 	.align 4
-	.global bn_mul_word
-	.type	 bn_mul_word,#function
+	.global bn_mul_words
+	.type	 bn_mul_words,#function
 	.proc	016
-bn_mul_word:
+bn_mul_words:
 	!#PROLOGUE# 0
 	save %sp,-112,%sp
 	!#PROLOGUE# 1
@@ -176,7 +176,7 @@ bn_mul_word:
 	ret
 	restore
 .LLfe2:
-	.size	 bn_mul_word,.LLfe2-bn_mul_word
+	.size	 bn_mul_words,.LLfe2-bn_mul_words
 	.align 4
 	.global bn_sqr_words
 	.type	 bn_sqr_words,#function
@@ -234,10 +234,113 @@ bn_sqr_words:
 	nop
 .LLfe3:
 	.size	 bn_sqr_words,.LLfe3-bn_sqr_words
+	.align 4
+	.global bn_add_words
+	.type	 bn_add_words,#function
+	.proc	016
+bn_add_words:
+	!#PROLOGUE# 0
+	save %sp,-112,%sp
+	!#PROLOGUE# 1
+	mov %i0,%o2
+	mov %i1,%o3
+	mov %i2,%o4
+	mov %i3,%i5
+	mov 0,%o0
+	mov 0,%o1
+	add %o2,12,%o7
+	add %o4,12,%g4
+	b .LL42
+	add %o3,12,%g1
+.LL45:
+	add %i5,-1,%i5
+	mov %i4,%g3
+	ld [%g4-8],%i4
+	mov 0,%g2
+	mov %i4,%i1
+	mov 0,%i0
+	addcc %g3,%i1,%g3
+	addx %g2,%i0,%g2
+	addcc %o1,%g3,%o1
+	addx %o0,%g2,%o0
+	st %o1,[%o7-8]
+	mov %o0,%i3
+	mov 0,%i2
+	mov %i2,%o0
+	mov %i3,%o1
+	cmp %i5,0
+	ble .LL43
+	add %i5,-1,%i5
+	ld [%g1-4],%i4
+	mov %i4,%g3
+	ld [%g4-4],%i4
+	mov 0,%g2
+	mov %i4,%i1
+	mov 0,%i0
+	addcc %g3,%i1,%g3
+	addx %g2,%i0,%g2
+	addcc %o1,%g3,%o1
+	addx %o0,%g2,%o0
+	st %o1,[%o7-4]
+	mov %o0,%i3
+	mov 0,%i2
+	mov %i2,%o0
+	mov %i3,%o1
+	cmp %i5,0
+	ble .LL43
+	add %i5,-1,%i5
+	ld [%g1],%i4
+	mov %i4,%g3
+	ld [%g4],%i4
+	mov 0,%g2
+	mov %i4,%i1
+	mov 0,%i0
+	addcc %g3,%i1,%g3
+	addx %g2,%i0,%g2
+	addcc %o1,%g3,%o1
+	addx %o0,%g2,%o0
+	st %o1,[%o7]
+	mov %o0,%i3
+	mov 0,%i2
+	mov %i2,%o0
+	mov %i3,%o1
+	cmp %i5,0
+	ble .LL43
+	add %g1,16,%g1
+	add %o3,16,%o3
+	add %g4,16,%g4
+	add %o4,16,%o4
+	add %o7,16,%o7
+	add %o2,16,%o2
+.LL42:
+	ld [%o3],%i4
+	add %i5,-1,%i5
+	mov %i4,%g3
+	ld [%o4],%i4
+	mov 0,%g2
+	mov %i4,%i1
+	mov 0,%i0
+	addcc %g3,%i1,%g3
+	addx %g2,%i0,%g2
+	addcc %o1,%g3,%o1
+	addx %o0,%g2,%o0
+	st %o1,[%o2]
+	mov %o0,%i3
+	mov 0,%i2
+	mov %i2,%o0
+	mov %i3,%o1
+	cmp %i5,0
+	bg,a .LL45
+	ld [%g1-8],%i4
+.LL43:
+	ret
+	restore %g0,%o1,%o0
+.LLfe4:
+	.size	 bn_add_words,.LLfe4-bn_add_words
 .section	".rodata"
 	.align 8
 .LLC0:
-	.asciz	"Division would overflow\n"
+	.asciz	"Division would overflow (%d)\n"
 .section	".text"
 	.align 4
 	.global bn_div64
@@ -249,20 +352,20 @@ bn_div64:
 	!#PROLOGUE# 1
 	mov 0,%l1
 	cmp %i2,0
-	bne .LL42
+	bne .LL51
 	mov 2,%l0
-	b .LL59
+	b .LL68
 	mov -1,%i0
-.LL42:
+.LL51:
 	call BN_num_bits_word,0
 	mov %i2,%o0
 	mov %o0,%o2
 	cmp %o2,32
-	be .LL43
+	be .LL52
 	mov 1,%o0
 	sll %o0,%o2,%o0
 	cmp %i0,%o0
-	bleu .LL60
+	bleu .LL69
 	mov 32,%o0
 	sethi %hi(__iob+32),%o0
 	or %o0,%lo(__iob+32),%o0
@@ -271,89 +374,89 @@ bn_div64:
 	or %o1,%lo(.LLC0),%o1
 	call abort,0
 	nop
-.LL43:
+.LL52:
 	mov 32,%o0
-.LL60:
+.LL69:
 	cmp %i0,%i2
-	blu .LL44
+	blu .LL53
 	sub %o0,%o2,%o2
 	sub %i0,%i2,%i0
-.LL44:
+.LL53:
 	cmp %o2,0
-	be .LL45
-	sethi %hi(-65536),%o7
-	sll %i2,%o2,%i2
+	be .LL54
 	sll %i0,%o2,%o1
+	sll %i2,%o2,%i2
 	sub %o0,%o2,%o0
 	srl %i1,%o0,%o0
 	or %o1,%o0,%i0
 	sll %i1,%o2,%i1
-.LL45:
+.LL54:
 	srl %i2,16,%g2
 	sethi %hi(65535),%o0
 	or %o0,%lo(65535),%o1
 	and %i2,%o1,%g3
 	mov %o0,%g4
+	sethi %hi(-65536),%o7
 	mov %o1,%g1
-.LL46:
+.LL55:
 	srl %i0,16,%o0
 	cmp %o0,%g2
-	be .LL50
+	be .LL59
 	or %g4,%lo(65535),%o3
 	wr %g0,%g0,%y
 	nop
 	nop
 	nop
 	udiv %i0,%g2,%o3
-.LL50:
+.LL59:
 	and %i1,%o7,%o0
 	srl %o0,16,%o5
 	smul %o3,%g3,%o4
 	smul %o3,%g2,%o2
-.LL51:
+.LL60:
 	sub %i0,%o2,%o1
 	andcc %o1,%o7,%g0
-	bne .LL52
+	bne .LL61
 	sll %o1,16,%o0
 	add %o0,%o5,%o0
 	cmp %o4,%o0
-	bleu .LL52
+	bleu .LL61
 	sub %o4,%g3,%o4
 	sub %o2,%g2,%o2
-	b .LL51
+	b .LL60
 	add %o3,-1,%o3
-.LL52:
+.LL61:
 	smul %o3,%g2,%o2
 	smul %o3,%g3,%o0
 	srl %o0,16,%o1
 	sll %o0,16,%o0
 	and %o0,%o7,%o0
 	cmp %i1,%o0
-	bgeu .LL56
+	bgeu .LL65
 	add %o2,%o1,%o2
 	add %o2,1,%o2
-.LL56:
+.LL65:
 	cmp %i0,%o2
-	bgeu .LL57
+	bgeu .LL66
 	sub %i1,%o0,%i1
 	add %i0,%i2,%i0
 	add %o3,-1,%o3
-.LL57:
+.LL66:
 	addcc %l0,-1,%l0
-	be .LL47
+	be .LL56
 	sub %i0,%o2,%i0
 	sll %o3,16,%l1
 	sll %i0,16,%o0
 	srl %i1,16,%o1
 	or %o0,%o1,%i0
 	and %i1,%g1,%o0
-	b .LL46
+	b .LL55
 	sll %o0,16,%i1
-.LL47:
+.LL56:
 	or %l1,%o3,%i0
-.LL59:
+.LL68:
 	ret
 	restore
-.LLfe4:
-	.size	 bn_div64,.LLfe4-bn_div64
-	.ident	"GCC: (GNU) 2.7.0"
+.LLfe5:
+	.size	 bn_div64,.LLfe5-bn_div64
+	.ident	"GCC: (GNU) 2.7.2.3"

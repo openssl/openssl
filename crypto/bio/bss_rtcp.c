@@ -1,5 +1,5 @@
 /* crypto/bio/bss_rtcp.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -96,7 +96,8 @@ static int rtcp_free(BIO *data);
 
 static BIO_METHOD rtcp_method=
 	{
-	BIO_TYPE_FD,"RTCP",
+	BIO_TYPE_FD,
+	"RTCP",
 	rtcp_write,
 	rtcp_read,
 	rtcp_puts,

@@ -1,5 +1,5 @@
 /* crypto/bio/bss_acpt.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -121,7 +121,8 @@ void BIO_ACCEPT_free();
 
 static BIO_METHOD methods_acceptp=
 	{
-	BIO_TYPE_ACCEPT,"socket accept",
+	BIO_TYPE_ACCEPT,
+	"socket accept",
 	acpt_write,
 	acpt_read,
 	acpt_puts,
@@ -375,6 +376,7 @@ char *ptr;
 	int *ip;
 	long ret=1;
 	BIO_ACCEPT *data;
+	char **pp;
 
 	data=(BIO_ACCEPT *)b->ptr;
 
@@ -422,6 +424,20 @@ char *ptr;
 			if (ip != NULL)
 				*ip=data->accept_sock;
 			ret=b->num;
+			}
+		else
+			ret= -1;
+		break;
+	case BIO_C_GET_ACCEPT:
+		if (b->init)
+			{
+			if (ptr != NULL)
+				{
+				pp=(char **)ptr;
+				*pp=data->param_addr;
+				}
+			else
+				ret= -1;
 			}
 		else
 			ret= -1;

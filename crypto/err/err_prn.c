@@ -1,5 +1,5 @@
 /* crypto/err/err_prn.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -64,20 +64,22 @@
 #include "err.h"
 #include "crypto.h"
 
-#ifndef WIN16
+#ifndef NO_FP_API
 void ERR_print_errors_fp(fp)
 FILE *fp;
 	{
 	unsigned long l;
 	char buf[200];
-	char *file;
-	int line;
+	char *file,*data;
+	int line,flags;
 	unsigned long es;
 
 	es=CRYPTO_thread_id();
-	while ((l=ERR_get_error_line(&file,&line)) != 0)
-		fprintf(fp,"%lu:%s:%s:%d\n",es,ERR_error_string(l,buf),
-			file,line);
+	while ((l=ERR_get_error_line_data(&file,&line,&data,&flags)) != 0)
+		{
+		fprintf(fp,"%lu:%s:%s:%d:%s\n",es,ERR_error_string(l,buf),
+			file,line,(flags&ERR_TXT_STRING)?data:"");
+		}
 	}
 #endif
 
@@ -87,16 +89,19 @@ BIO *bp;
 	unsigned long l;
 	char buf[256];
 	char buf2[256];
-	char *file;
-	int line;
+	char *file,*data;
+	int line,flags;
 	unsigned long es;
 
 	es=CRYPTO_thread_id();
-	while ((l=ERR_get_error_line(&file,&line)) != 0)
+	while ((l=ERR_get_error_line_data(&file,&line,&data,&flags)) != 0)
 		{
-		sprintf(buf2,"%lu:%s:%s:%d\n",es,ERR_error_string(l,buf),
+		sprintf(buf2,"%lu:%s:%s:%d:",es,ERR_error_string(l,buf),
 			file,line);
 		BIO_write(bp,buf2,strlen(buf2));
+		if (flags & ERR_TXT_STRING)
+			BIO_write(bp,data,strlen(data));
+		BIO_write(bp,"\n",1);
 		}
 	}
 

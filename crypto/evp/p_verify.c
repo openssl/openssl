@@ -1,5 +1,5 @@
 /* crypto/evp/p_verify.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -71,6 +71,7 @@ EVP_PKEY *pkey;
 	unsigned char m[EVP_MAX_MD_SIZE];
 	unsigned int m_len;
 	int i,ok=0,v;
+	MS_STATIC EVP_MD_CTX tmp_ctx;
 
 	for (i=0; i<4; i++)
 		{
@@ -87,7 +88,8 @@ EVP_PKEY *pkey;
 		EVPerr(EVP_F_EVP_VERIFYFINAL,EVP_R_WRONG_PUBLIC_KEY_TYPE);
 		return(-1);
 		}
-	EVP_DigestFinal(ctx,&(m[0]),&m_len);
+	memcpy(&tmp_ctx,ctx,sizeof(EVP_MD_CTX));
+	EVP_DigestFinal(&tmp_ctx,&(m[0]),&m_len);
         if (ctx->digest->verify == NULL)
                 {
 		EVPerr(EVP_F_EVP_VERIFYFINAL,EVP_R_NO_VERIFY_FUNCTION_CONFIGURED);
@@ -97,3 +99,4 @@ EVP_PKEY *pkey;
 	return(ctx->digest->verify(ctx->digest->type,m,m_len,
 		sigbuf,siglen,pkey->pkey.ptr));
 	}
+

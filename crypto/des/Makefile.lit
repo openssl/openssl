@@ -54,10 +54,10 @@ AS=as
 
 # Assember version of des_encrypt*().
 DES_ENC=des_enc.o fcrypt_b.o		# normal C version
-#DES_ENC=asm/dx86-elf.o	asm/cx86-elf.o	# elf format x86
-#DES_ENC=asm/dx86-out.o	asm/cx86-out.o	# a.out format x86
-#DES_ENC=asm/dx86-sol.o	asm/cx86-sol.o	# solaris format x86 
-#DES_ENC=asm/dx86bsdi.o	asm/cx86basi.o	# bsdi format x86 
+#DES_ENC=asm/dx86-elf.o	asm/yx86-elf.o	# elf format x86
+#DES_ENC=asm/dx86-out.o	asm/yx86-out.o	# a.out format x86
+#DES_ENC=asm/dx86-sol.o	asm/yx86-sol.o	# solaris format x86 
+#DES_ENC=asm/dx86bsdi.o	asm/yx86basi.o	# bsdi format x86 
 
 LIBDIR=/usr/local/lib
 BINDIR=/usr/local/bin
@@ -66,8 +66,8 @@ MANDIR=/usr/local/man
 MAN1=1
 MAN3=3
 SHELL=/bin/sh
-OBJ_LIT=ede_enc.o cbc_enc.o ncbc_enc.o ecb_enc.o $(DES_ENC) fcrypt.o set_key.o
-OBJ_FULL=cbc3_enc.o cbc_cksm.o $(OBJ_LIT) pcbc_enc.o \
+OBJ_LIT=cbc_enc.o ecb_enc.o $(DES_ENC) fcrypt.o set_key.o
+OBJ_FULL=cbc_cksm.o $(OBJ_LIT) pcbc_enc.o \
 	xcbc_enc.o qud_cksm.o \
 	cfb64ede.o cfb64enc.o cfb_enc.o ecb3_enc.o \
 	enc_read.o enc_writ.o ofb64ede.o ofb64enc.o ofb_enc.o  \
@@ -76,22 +76,21 @@ OBJ_FULL=cbc3_enc.o cbc_cksm.o $(OBJ_LIT) pcbc_enc.o \
 GENERAL_LIT=COPYRIGHT INSTALL README VERSION Makefile des_crypt.man \
 	des.doc options.txt asm
 GENERAL_FULL=$(GENERAL_LIT) FILES Imakefile times vms.com KERBEROS MODES.DES \
-	GNUmakefile des.man DES.pm DES.pod DES.xs Makefile.PL \
+	des.man DES.pm DES.pod DES.xs Makefile.PL dess.cpp des3s.cpp \
 	Makefile.uni typemap t Makefile.ssl makefile.bc Makefile.lit \
 	des.org des_locl.org
 TESTING_LIT=	destest speed des_opts
-TESTING_FULL=	destest speed des_opts $(TESTING_LIT)
+TESTING_FULL=	rpw $(TESTING_LIT)
 TESTING_SRC_LIT=destest.c speed.c des_opts.c
 TESTING_SRC_FULL=rpw.c $(TESTING_SRC_LIT)
 HEADERS_LIT=des_ver.h des.h des_locl.h podd.h sk.h spr.h
 HEADERS_FULL= $(HEADERS_LIT) rpc_des.h
-LIBDES_LIT=ede_enc.c cbc_enc.c ncbc_enc.c ecb_enc.c fcrypt.c set_key.c \
-	des_enc.c fcrypt_b.c
+LIBDES_LIT=cbc_enc.c ecb_enc.c fcrypt.c set_key.c des_enc.c fcrypt_b.c
 LIBDES_FULL= cbc_cksm.c pcbc_enc.c qud_cksm.c \
-	cfb64ede.c cfb64enc.c cfb_enc.c ecb3_enc.c  cbc3_enc.c  \
+	cfb64ede.c cfb64enc.c cfb_enc.c ecb3_enc.c \
 	enc_read.c enc_writ.c ofb64ede.c ofb64enc.c ofb_enc.c  \
 	rand_key.c rpc_enc.c  str2key.c  supp.c \
-	xcbc_enc.c $(LIBDES_LIT) read_pwd.c read2pwd.c 
+	xcbc_enc.c $(LIBDES_LIT) read_pwd.c read2pwd.c
 
 PERL=	des.pl testdes.pl doIP doPC1 doPC2 PC1 PC2 shifts.pl
 
@@ -115,48 +114,54 @@ gcc:
 	$(MAKE) CC=gcc CFLAGS="-O3 -fomit-frame-pointer $(OPTS) $(CFLAG)" all
 
 x86-elf:
-	$(MAKE) DES_ENC='asm/dx86-elf.o asm/cx86-elf.o' CC=$(CC) CFLAGS="-DELF $(OPTS) $(CFLAG)" all
+	$(MAKE) DES_ENC='asm/dx86-elf.o asm/yx86-elf.o' CC=$(CC) CFLAGS="-DELF $(OPTS) $(CFLAG)" all
 
 x86-out:
-	$(MAKE) DES_ENC='asm/dx86-out.o asm/cx86-out.o' CC=$(CC) CFLAGS="-DOUT $(OPTS) $(CFLAG)" all
+	$(MAKE) DES_ENC='asm/dx86-out.o asm/yx86-out.o' CC=$(CC) CFLAGS="-DOUT $(OPTS) $(CFLAG)" all
 
 x86-solaris:
-	$(MAKE) DES_ENC='asm/dx86-sol.o asm/cx86-sol.o' CC=$(CC) CFLAGS="-DSOL $(OPTS) $(CFLAG)" all
+	$(MAKE) DES_ENC='asm/dx86-sol.o asm/yx86-sol.o' CC=$(CC) CFLAGS="-DSOL $(OPTS) $(CFLAG)" all
 
 x86-bsdi:
-	$(MAKE) DES_ENC='asm/dx86bsdi.o asm/cx86bsdi.o' CC=$(CC) CFLAGS="-DBSDI $(OPTS) $(CFLAG)" all
+	$(MAKE) DES_ENC='asm/dx86bsdi.o asm/yx86bsdi.o' CC=$(CC) CFLAGS="-DBSDI $(OPTS) $(CFLAG)" all
 
 # elf
-asm/dx86-elf.o: asm/dx86-cpp.s asm/dx86unix.cpp
+asm/dx86-elf.o: asm/dx86unix.cpp
 	$(CPP) -DELF asm/dx86unix.cpp | $(AS) -o asm/dx86-elf.o
 
-asm/cx86-elf.o: asm/cx86-cpp.s asm/cx86unix.cpp
-	$(CPP) -DELF asm/cx86unix.cpp | $(AS) -o asm/cx86-elf.o
+asm/yx86-elf.o: asm/yx86unix.cpp
+	$(CPP) -DELF asm/yx86unix.cpp | $(AS) -o asm/yx86-elf.o
 
 # solaris
-asm/dx86-sol.o: asm/dx86-cpp.s asm/dx86unix.cpp
+asm/dx86-sol.o: asm/dx86unix.cpp
 	$(CC) -E -DSOL asm/dx86unix.cpp | sed 's/^#.*//' > asm/dx86-sol.s
 	as -o asm/dx86-sol.o asm/dx86-sol.s
 	rm -f asm/dx86-sol.s
 
-asm/cx86-sol.o: asm/cx86-cpp.s asm/cx86unix.cpp
-	$(CC) -E -DSOL asm/cx86unix.cpp | sed 's/^#.*//' > asm/cx86-sol.s
-	as -o asm/cx86-sol.o asm/cx86-sol.s
-	rm -f asm/cx86-sol.s
+asm/yx86-sol.o: asm/yx86unix.cpp
+	$(CC) -E -DSOL asm/yx86unix.cpp | sed 's/^#.*//' > asm/yx86-sol.s
+	as -o asm/yx86-sol.o asm/yx86-sol.s
+	rm -f asm/yx86-sol.s
 
 # a.out
-asm/dx86-out.o: asm/dx86-cpp.s asm/dx86unix.cpp
+asm/dx86-out.o: asm/dx86unix.cpp
 	$(CPP) -DOUT asm/dx86unix.cpp | $(AS) -o asm/dx86-out.o
 
-asm/cx86-out.o: asm/cx86-cpp.s asm/cx86unix.cpp
-	$(CPP) -DOUT asm/cx86unix.cpp | $(AS) -o asm/cx86-out.o
+asm/yx86-out.o: asm/yx86unix.cpp
+	$(CPP) -DOUT asm/yx86unix.cpp | $(AS) -o asm/yx86-out.o
 
 # bsdi
-asm/dx86bsdi.o: asm/dx86-cpp.s asm/dx86unix.cpp
+asm/dx86bsdi.o: asm/dx86unix.cpp
 	$(CPP) -DBSDI asm/dx86unix.cpp | $(AS) -o asm/dx86bsdi.o
 
-asm/cx86bsdi.o: asm/cx86-cpp.s asm/cx86unix.cpp
-	$(CPP) -DBSDI asm/cx86unix.cpp | $(AS) -o asm/cx86bsdi.o
+asm/yx86bsdi.o: asm/yx86unix.cpp
+	$(CPP) -DBSDI asm/yx86unix.cpp | $(AS) -o asm/yx86bsdi.o
+
+asm/dx86unix.cpp:
+	(cd asm; perl des-586.pl cpp >dx86unix.cpp)
+
+asm/yx86unix.cpp:
+	(cd asm; perl crypt586.pl cpp >yx86unix.cpp)
 
 test:	all
 	./destest
@@ -211,7 +216,7 @@ dclean:
 	mv -f Makefile.new Makefile
 
 # Eric is probably going to choke when he next looks at this --tjh
-install: $(DLIB) des
+install:
 	if test $(INSTALLTOP); then \
 	    echo SSL style install; \
 	    cp $(DLIB) $(INSTALLTOP)/lib; \
@@ -224,8 +229,6 @@ install: $(DLIB) des
 	    chmod 644 $(INSTALLTOP)/lib/$(DLIB); \
 	    cp des.h $(INSTALLTOP)/include; \
 	    chmod 644 $(INSTALLTOP)/include/des.h; \
-	    cp des $(INSTALLTOP)/bin; \
-	    chmod 755 $(INSTALLTOP)/bin/des; \
 	else \
 	    echo Standalone install; \
 	    cp $(DLIB) $(LIBDIR)/$(DLIB); \
@@ -237,8 +240,6 @@ install: $(DLIB) des
 	      fi; \
 	    fi; \
 	    chmod 644 $(LIBDIR)/$(DLIB); \
-	    cp des $(BINDIR)/des; \
-	    chmod 711 $(BINDIR)/des; \
 	    cp des_crypt.man $(MANDIR)/man$(MAN3)/des_crypt.$(MAN3); \
 	    chmod 644 $(MANDIR)/man$(MAN3)/des_crypt.$(MAN3); \
 	    cp des.man $(MANDIR)/man$(MAN1)/des.$(MAN1); \

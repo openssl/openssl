@@ -1,5 +1,5 @@
 /* crypto/des/ofb_enc.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -72,7 +72,7 @@ long length;
 des_key_schedule schedule;
 des_cblock (*ivec);
 	{
-	register DES_LONG d0,d1,v0,v1,n=(numbits+7)/8;
+	register DES_LONG d0,d1,vv0,vv1,v0,v1,n=(numbits+7)/8;
 	register DES_LONG mask0,mask1;
 	register long l=length;
 	register int num=numbits;
@@ -94,7 +94,7 @@ des_cblock (*ivec);
 			mask0=0xffffffffL;
 		else
 			mask0=(1L<<num)-1;
-		mask1=0x00000000;
+		mask1=0x00000000L;
 		}
 
 	iv=(unsigned char *)ivec;
@@ -104,19 +104,36 @@ des_cblock (*ivec);
 	ti[1]=v1;
 	while (l-- > 0)
 		{
+		ti[0]=v0;
+		ti[1]=v1;
 		des_encrypt((DES_LONG *)ti,schedule,DES_ENCRYPT);
+		vv0=ti[0];
+		vv1=ti[1];
 		c2ln(in,d0,d1,n);
 		in+=n;
-		d0=(d0^ti[0])&mask0;
-		d1=(d1^ti[1])&mask1;
+		d0=(d0^vv0)&mask0;
+		d1=(d1^vv1)&mask1;
 		l2cn(d0,d1,out,n);
 		out+=n;
+
+		if (num == 32)
+			{ v0=v1; v1=vv0; }
+		else if (num == 64)
+				{ v0=vv0; v1=vv1; }
+		else if (num > 32) /* && num != 64 */
+			{
+			v0=((v1>>(num-32))|(vv0<<(64-num)))&0xffffffffL;
+			v1=((vv0>>(num-32))|(vv1<<(64-num)))&0xffffffffL;
+			}
+		else /* num < 32 */
+			{
+			v0=((v0>>num)|(v1<<(32-num)))&0xffffffffL;
+			v1=((v1>>num)|(vv0<<(32-num)))&0xffffffffL;
+			}
 		}
-	v0=ti[0];
-	v1=ti[1];
 	iv=(unsigned char *)ivec;
 	l2c(v0,iv);
 	l2c(v1,iv);
-	v0=v1=d0=d1=ti[0]=ti[1]=0;
+	v0=v1=d0=d1=ti[0]=ti[1]=vv0=vv1=0;
 	}
 

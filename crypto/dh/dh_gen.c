@@ -1,5 +1,5 @@
 /* crypto/dh/dh_gen.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -83,10 +83,11 @@
  * this generator function can take a very very long time to run.
  */
 
-DH *DH_generate_parameters(prime_len,generator,callback)
+DH *DH_generate_parameters(prime_len,generator,callback,cb_arg)
 int prime_len;
 int generator;
-void (*callback)(P_I_I);
+void (*callback)(P_I_I_P);
+char *cb_arg;
 	{
 	BIGNUM *p=NULL,*t1,*t2;
 	DH *ret=NULL;
@@ -125,9 +126,9 @@ void (*callback)(P_I_I);
 	else
 		g=generator;
 	
-	p=BN_generate_prime(prime_len,1,t1,t2,callback);
+	p=BN_generate_prime(prime_len,1,t1,t2,callback,cb_arg);
 	if (p == NULL) goto err;
-	if (callback != NULL) callback(3,0);
+	if (callback != NULL) callback(3,0,cb_arg);
 	ret->p=p;
 	ret->g=BN_new();
 	if (!BN_set_word(ret->g,g)) goto err;

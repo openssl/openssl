@@ -1,5 +1,5 @@
 /* crypto/bn/bn_mont.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -95,8 +95,8 @@ BN_MONT_CTX *mont;
 BN_CTX *ctx;
 	{
 	BIGNUM *n,*t1,*r;
-	BN_ULONG *ap,*np,*rp,k,n0,v,v2;
-	int al,nl,max,i,x;
+	BN_ULONG *ap,*np,*rp,n0,v;
+	int al,nl,max,i,x,ri;
 	int retn=0;
 
 	t1=ctx->bn[ctx->tos];
@@ -105,50 +105,76 @@ BN_CTX *ctx;
 	if (!BN_copy(r,a)) goto err;
 	n=mont->N;
 
-	if (!BN_copy(t1,a)) goto err;
-	BN_mask_bits(t1,mont->ri);
+	ap=a->d;
+	/* mont->ri is the size of mont->N in bits/words */
+	al=ri=mont->ri/BN_BITS2;
 
-	a=t1;
-
-	al=a->top;
 	nl=n->top;
 	if ((al == 0) || (nl == 0)) { r->top=0; return(1); }
 
 	max=(nl+al+1); /* allow for overflow (no?) XXX */
-	if (bn_expand(r,(max)*BN_BITS2) == NULL) goto err;
+	if (bn_wexpand(r,max) == NULL) goto err;
+	if (bn_wexpand(ret,max) == NULL) goto err;
 
 	r->neg=a->neg^n->neg;
-	ap=a->d;
 	np=n->d;
 	rp=r->d;
 
-	/* clear the top bytes of T */
+	/* clear the top words of T */
+#if 1
 	for (i=r->top; i<max; i++) /* memset? XXX */
 		r->d[i]=0;
-/*	memset(&(r->d[r->top]),0,(max-r->top)*sizeof(BN_ULONG)); */
+#else
+	memset(&(r->d[r->top]),0,(max-r->top)*sizeof(BN_ULONG)); 
+#endif
 
 	r->top=max;
 	n0=mont->n0;
 
 	for (i=0; i<nl; i++)
 		{
-		/* This is were part words probably goes wrong */
-		k=(rp[0]*n0)&BN_MASK2;
-		v=bn_mul_add_word(rp,np,nl,k);
-		
-		for (x=nl; v; x++)
+#if 0
+		int x1,x2;
+
+		if (i+4 > nl)
 			{
-			v2=rp[x];
-			v2+=v;
-			rp[x]=v2;
-			v=((v2&BN_MASK2) < v)?1:0; /* ever true? XXX */
+			x2=nl;
+			x1=0;
+			}
+		else
+			{
+			x2=i+4;
+			x1=nl-x2;
+			}
+		v=bn_mul_add_words(&(rp[x1]),&(np[x1]),x2,(rp[x1]*n0)&BN_MASK2);
+#else
+		v=bn_mul_add_words(rp,np,nl,(rp[0]*n0)&BN_MASK2);
+#endif
+
+		if (((rp[nl]+=v)&BN_MASK2) < v)
+			{
+			for (x=(nl+1); (((++rp[x])&BN_MASK2) == 0); x++)
+				;
 			}
 		rp++;
 		}
 	while (r->d[r->top-1] == 0)
 		r->top--;
 
+	/* mont->ri will be a multiple of the word size */
+#if 0
 	BN_rshift(ret,r,mont->ri);
+#else
+	ap=r->d;
+	rp=ret->d;
+	x=ri;
+	al=r->top-x;
+	for (i=0; i<al; i++)
+		{
+		rp[i]=ap[i+x];
+		}
+	ret->top=al;
+#endif
 
 	if (BN_ucmp(ret,mont->N) >= 0)
 		{

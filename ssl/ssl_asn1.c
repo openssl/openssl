@@ -1,5 +1,5 @@
 /* ssl/ssl_asn1.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -116,7 +116,7 @@ unsigned char **pp;
 		l=in->cipher_id;
 	else
 		l=in->cipher->id;
-	if (in->ssl_version == 2)
+	if (in->ssl_version == SSL2_VERSION)
 		{
 		a.cipher.length=3;
 		buf[0]=((unsigned char)(l>>16L))&0xff;
@@ -221,7 +221,7 @@ long length;
 
 	os.data=NULL; os.length=0;
 	M_ASN1_D2I_get(osp,d2i_ASN1_OCTET_STRING);
-	if (ssl_version == 2)
+	if (ssl_version == SSL2_VERSION)
 		{
 		if (os.length != 3)
 			{
@@ -233,7 +233,7 @@ long length;
 			((unsigned long)os.data[1]<< 8L)|
 			 (unsigned long)os.data[2];
 		}
-	else if (ssl_version == 3)
+	else if ((ssl_version>>8) == 3)
 		{
 		if (os.length != 2)
 			{
@@ -254,9 +254,9 @@ long length;
 	ret->cipher_id=id;
 
 	M_ASN1_D2I_get(osp,d2i_ASN1_OCTET_STRING);
-	if (ssl_version == 3)
+	if ((ssl_version>>8) == SSL3_VERSION)
 		i=SSL3_MAX_SSL_SESSION_ID_LENGTH;
-	else /* if (ssl_version == 2) */
+	else /* if (ssl_version == SSL2_VERSION) */
 		i=SSL2_MAX_SSL_SESSION_ID_LENGTH;
 
 	if (os.length > i)

@@ -113,6 +113,7 @@ RSA *RSA_generate_key(
 int bits;
 unsigned long e;
 void (*callback)();
+char *cb_arg;
 	This routine is used to generate RSA private keys.  It takes
 	quite a period of time to run and should only be used to
 	generate initial private keys that should then be stored
@@ -126,8 +127,9 @@ void (*callback)();
 	The callback function (if not NULL) is called in the following
 	situations.
 	when we have generated a suspected prime number to test,
-	callback(0,num1++).  When it passes a prime number test,
-	callback(1,num2++).  When it is rejected as one of
+	callback(0,num1++,cb_arg).  When it passes a prime number test,
+	callback(1,num2++,cb_arg).  When it is rejected as one of
 	the 2 primes required due to gcd(prime,e value) != 0,
-	callback(2,num3++).  When finally accepted as one of the 2 primes,
-	callback(3,num4++).
+	callback(2,num3++,cb_arg).  When finally accepted as one
+	of the 2 primes, callback(3,num4++,cb_arg).
+

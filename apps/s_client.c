@@ -1,5 +1,5 @@
 /* apps/s_client.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -60,7 +60,7 @@
 #include <stdlib.h>
 #include <string.h>
 #define USE_SOCKETS
-#ifdef WIN16
+#ifdef NO_STDIO
 #define APPS_WIN16
 #endif
 #include "apps.h"
@@ -127,6 +127,8 @@ static void sc_usage()
 	BIO_printf(bio_err," -quiet        - no s_client output\n");
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
+	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
+	BIO_printf(bio_err," -no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
 	BIO_printf(bio_err," -cipher       - prefered cipher to use, use the 'ssleay ciphers'\n");
 	BIO_printf(bio_err,"                 command to se what is available\n");
@@ -137,6 +139,7 @@ int MAIN(argc, argv)
 int argc;
 char **argv;
 	{
+	int off=0;
 	SSL *con=NULL,*con2=NULL;
 	int s,k,width,state=0;
 	char *cbuf=NULL,*sbuf=NULL;
@@ -165,6 +168,7 @@ char **argv;
 #endif
 
 	apps_startup();
+	c_Pause=0;
 	c_quiet=0;
 	c_debug=0;
 
@@ -235,6 +239,10 @@ char **argv;
 		else if	(strcmp(*argv,"-ssl3") == 0)
 			meth=SSLv3_client_method();
 #endif
+#ifndef NO_TLS1
+		else if	(strcmp(*argv,"-tls1") == 0)
+			meth=TLSv1_client_method();
+#endif
 		else if (strcmp(*argv,"-bugs") == 0)
 			bugs=1;
 		else if	(strcmp(*argv,"-key") == 0)
@@ -256,6 +264,12 @@ char **argv;
 			if (--argc < 1) goto bad;
 			CAfile= *(++argv);
 			}
+		else if (strcmp(*argv,"-no_tls1") == 0)
+			off|=SSL_OP_NO_TLSv1;
+		else if (strcmp(*argv,"-no_ssl3") == 0)
+			off|=SSL_OP_NO_SSLv3;
+		else if (strcmp(*argv,"-no_ssl2") == 0)
+			off|=SSL_OP_NO_SSLv2;
 		else if	(strcmp(*argv,"-cipher") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -302,7 +316,10 @@ bad:
 		goto end;
 		}
 
-	if (bugs) SSL_CTX_set_options(ctx,SSL_OP_ALL);
+	if (bugs)
+		SSL_CTX_set_options(ctx,SSL_OP_ALL|off);
+	else
+		SSL_CTX_set_options(ctx,off);
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
 	if (cipher != NULL)
@@ -319,20 +336,21 @@ bad:
 	if ((!SSL_CTX_load_verify_locations(ctx,CAfile,CApath)) ||
 		(!SSL_CTX_set_default_verify_paths(ctx)))
 		{
-		BIO_printf(bio_err,"error seting default verify locations\n");
+		/* BIO_printf(bio_err,"error seting default verify locations\n"); */
 		ERR_print_errors(bio_err);
-		goto end;
+		/* goto end; */
 		}
 
 	SSL_load_error_strings();
 
 	con=(SSL *)SSL_new(ctx);
+/*	SSL_set_cipher_list(con,"RC4-MD5"); */
 
 re_start:
 
 	if (init_client(&s,host,port) == 0)
 		{
-		BIO_printf(bio_err,"connect:errno=%d\n",errno);
+		BIO_printf(bio_err,"connect:errno=%d\n",get_last_socket_error());
 		SHUTDOWN(s);
 		goto end;
 		}
@@ -343,7 +361,11 @@ re_start:
 		{
 		unsigned long l=1;
 		BIO_printf(bio_c_out,"turning on non blocking io\n");
-		socket_ioctl(s,FIONBIO,&l);
+		if (BIO_socket_ioctl(s,FIONBIO,&l) < 0)
+			{
+			ERR_print_errors(bio_err);
+			goto end;
+			}
 		}
 #endif                                              
 	if (c_Pause & 0x01) con->debug=1;
@@ -386,7 +408,7 @@ re_start:
 		FD_ZERO(&readfds);
 		FD_ZERO(&writefds);
 
-		if (SSL_in_init(con))
+		if (SSL_in_init(con) && !SSL_total_renegotiations(con))
 			{
 			in_init=1;
 			tty_on=0;
@@ -427,11 +449,11 @@ re_start:
 /*		printf("mode tty(%d %d%d) ssl(%d%d)\n",
 			tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
 
-/*		printf("pending=%d\n",SSL_pending(con)); */
 		i=select(width,&readfds,&writefds,NULL,NULL);
 		if ( i < 0)
 			{
-			BIO_printf(bio_err,"bad select %d\n",sock_err());
+			BIO_printf(bio_err,"bad select %d\n",
+				get_last_socket_error());
 			goto shut;
 			/* goto end; */
 			}
@@ -489,7 +511,7 @@ re_start:
 				if ((k != 0) || (cbuf_len != 0))
 					{
 					BIO_printf(bio_err,"write:errno=%d\n",
-						errno);
+						get_last_socket_error());
 					goto shut;
 					}
 				else
@@ -526,7 +548,10 @@ re_start:
 #endif
 		else if (FD_ISSET(SSL_get_fd(con),&readfds))
 			{
-			k=SSL_read(con,sbuf,BUFSIZZ);
+#ifdef RENEG
+{ static int iiii; if (++iiii == 52) { SSL_renegotiate(con); iiii=0; } }
+#endif
+			k=SSL_read(con,sbuf,1024 /* BUFSIZZ */ );
 
 			switch (SSL_get_error(con,k))
 				{
@@ -555,7 +580,7 @@ re_start:
 				BIO_printf(bio_c_out,"read X BLOCK\n");
 				break;
 			case SSL_ERROR_SYSCALL:
-				BIO_printf(bio_err,"read:errno=%d\n",errno);
+				BIO_printf(bio_err,"read:errno=%d\n",get_last_socket_error());
 				goto shut;
 			case SSL_ERROR_ZERO_RETURN:
 				BIO_printf(bio_c_out,"closed\n");
@@ -619,7 +644,7 @@ BIO *bio;
 SSL *s;
 int full;
 	{
-	X509 *peer;
+	X509 *peer=NULL;
 	char *p;
 	static char *space="                ";
 	char buf[BUFSIZ];
@@ -657,7 +682,6 @@ int full;
 			X509_NAME_oneline(X509_get_issuer_name(peer),
 				buf,BUFSIZ);
 			BIO_printf(bio,"issuer=%s\n",buf);
-			X509_free(peer);
 			}
 		else
 			BIO_printf(bio,"no peer certificate available\n");
@@ -687,7 +711,7 @@ int full;
 				{
 				if (*p == ':')
 					{
-					BIO_write(bio,space,15-j);
+					BIO_write(bio,space,15-j%25);
 					i++;
 					j=0;
 					BIO_write(bio,((i%3)?" ":"\n"),1);
@@ -711,7 +735,12 @@ int full;
 	BIO_printf(bio,"%s, Cipher is %s\n",
 		SSL_CIPHER_get_version(c),
 		SSL_CIPHER_get_name(c));
+	if (peer != NULL)
+		BIO_printf(bio,"Server public key is %d bit\n",
+			EVP_PKEY_bits(X509_get_pubkey(peer)));
 	SSL_SESSION_print(bio,SSL_get_session(s));
 	BIO_printf(bio,"---\n");
+	if (peer != NULL)
+		X509_free(peer);
 	}
 

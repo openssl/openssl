@@ -1,5 +1,5 @@
 /* crypto/evp/bio_enc.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -116,6 +116,7 @@ BIO *bi;
 	BIO_ENC_CTX *ctx;
 
 	ctx=(BIO_ENC_CTX *)Malloc(sizeof(BIO_ENC_CTX));
+	EVP_CIPHER_CTX_init(&ctx->cipher);
 	if (ctx == NULL) return(0);
 
 	ctx->buf_len=0;
@@ -376,6 +377,26 @@ again:
 		}
 	return(ret);
 	}
+
+/*
+void BIO_set_cipher_ctx(b,c)
+BIO *b;
+EVP_CIPHER_ctx *c;
+	{
+	if (b == NULL) return;
+
+	if ((b->callback != NULL) &&
+		(b->callback(b,BIO_CB_CTRL,(char *)c,BIO_CTRL_SET,e,0L) <= 0))
+		return;
+
+	b->init=1;
+	ctx=(BIO_ENC_CTX *)b->ptr;
+	memcpy(ctx->cipher,c,sizeof(EVP_CIPHER_CTX));
+	
+	if (b->callback != NULL)
+		b->callback(b,BIO_CB_CTRL,(char *)c,BIO_CTRL_SET,e,1L);
+	}
+*/
 
 void BIO_set_cipher(b,c,k,i,e)
 BIO *b;

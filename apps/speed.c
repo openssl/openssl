@@ -1,5 +1,5 @@
 /* apps/speed.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -73,8 +73,9 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
+#include <math.h>
 #include "apps.h"
-#ifdef WIN16
+#ifdef NO_STDIO
 #define APPS_WIN16
 #endif
 #include "crypto.h"
@@ -122,12 +123,20 @@ struct tms {
 #endif
 #ifndef NO_MD5
 #include "md5.h"
+#include "hmac.h"
+#include "evp.h"
 #endif
-#if !defined(NO_SHA) && !defined(NO_SHA1)
+#ifndef NO_SHA1
 #include "sha.h"
+#endif
+#ifndef NO_RMD160
+#include "ripemd.h"
 #endif
 #ifndef NO_RC4
 #include "rc4.h"
+#endif
+#ifndef NO_RC5
+#include "rc5.h"
 #endif
 #ifndef NO_RC2
 #include "rc2.h"
@@ -137,6 +146,9 @@ struct tms {
 #endif
 #ifndef NO_BLOWFISH
 #include "blowfish.h"
+#endif
+#ifndef NO_CAST
+#include "cast.h"
 #endif
 #ifndef NO_RSA
 #include "rsa.h"
@@ -165,7 +177,7 @@ struct tms {
 #endif
 
 #undef BUFSIZE
-#define BUFSIZE	((long)1024*8)
+#define BUFSIZE	((long)1024*8+1)
 int run=0;
 
 #ifndef NOPROTO
@@ -248,13 +260,12 @@ char **argv;
 	{
 	unsigned char *buf=NULL,*buf2=NULL;
 	int ret=1;
-#define ALGOR_NUM	11
+#define ALGOR_NUM	14
 #define SIZE_NUM	5
 #define RSA_NUM		4
 #define DSA_NUM		3
 	long count,rsa_count;
 	int i,j,k,rsa_num,rsa_num2;
-	unsigned int kk;
 #ifndef NO_MD2
 	unsigned char md2[MD2_DIGEST_LENGTH];
 #endif
@@ -263,12 +274,19 @@ char **argv;
 #endif
 #ifndef NO_MD5
 	unsigned char md5[MD5_DIGEST_LENGTH];
+	unsigned char hmac[MD5_DIGEST_LENGTH];
 #endif
-#if !defined(NO_SHA) || !defined(NO_SHA1)
+#ifndef NO_SHA1
 	unsigned char sha[SHA_DIGEST_LENGTH];
+#endif
+#ifndef NO_RMD160
+	unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
 #endif
 #ifndef NO_RC4
 	RC4_KEY rc4_ks;
+#endif
+#ifndef NO_RC5
+	RC5_32_KEY rc5_ks;
 #endif
 #ifndef NO_RC2
 	RC2_KEY rc2_ks;
@@ -278,6 +296,9 @@ char **argv;
 #endif
 #ifndef NO_BLOWFISH
 	BF_KEY bf_ks;
+#endif
+#ifndef NO_CAST
+	CAST_KEY cast_ks;
 #endif
 	static unsigned char key16[16]=
 		{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
@@ -292,21 +313,24 @@ char **argv;
 #define	D_MD2		0
 #define	D_MDC2		1
 #define	D_MD5		2
-#define	D_SHA		3
+#define	D_HMAC		3
 #define	D_SHA1		4
-#define	D_RC4		5
-#define	D_CBC_DES	6
-#define	D_EDE3_DES	7
-#define	D_CBC_IDEA	8
-#define	D_CBC_RC2	9
-#define	D_CBC_BF	10
+#define D_RMD160	5
+#define	D_RC4		6
+#define	D_CBC_DES	7
+#define	D_EDE3_DES	8
+#define	D_CBC_IDEA	9
+#define	D_CBC_RC2	10
+#define	D_CBC_RC5	11
+#define	D_CBC_BF	12
+#define	D_CBC_CAST	13
 	double d,results[ALGOR_NUM][SIZE_NUM];
 	static int lengths[SIZE_NUM]={8,64,256,1024,8*1024};
 	long c[ALGOR_NUM][SIZE_NUM];
 	static char *names[ALGOR_NUM]={
-		"md2","mdc2","md5","sha","sha1","rc4",
+		"md2","mdc2","md5","hmac(md5)","sha1","rmd160","rc4",
 		"des cbc","des ede3","idea cbc",
-		"rc2 cbc","blowfish cbc"};
+		"rc2 cbc","rc5-32/12 cbc","blowfish cbc","cast cbc"};
 #define	R_DSA_512	0
 #define	R_DSA_1024	1
 #define	R_DSA_2048	2
@@ -315,32 +339,32 @@ char **argv;
 #define	R_RSA_2048	2
 #define	R_RSA_4096	3
 	RSA *rsa_key[RSA_NUM];
-	DSA *dsa_key[DSA_NUM];
 	long rsa_c[RSA_NUM][2];
-	long dsa_c[DSA_NUM][2];
 #ifndef NO_RSA
 	double rsa_results[RSA_NUM][2];
-#endif
-#ifndef NO_DSA
-	double dsa_results[DSA_NUM][2];
-#endif
 	static unsigned int rsa_bits[RSA_NUM]={512,1024,2048,4096};
-	static unsigned int dsa_bits[DSA_NUM]={512,1024,2048};
 	static unsigned char *rsa_data[RSA_NUM]=
 		{test512,test1024,test2048,test4096};
 	static int rsa_data_length[RSA_NUM]={
 		sizeof(test512),sizeof(test1024),
 		sizeof(test2048),sizeof(test4096)};
-	int doit[ALGOR_NUM];
+#endif
+#ifndef NO_DSA
+	DSA *dsa_key[DSA_NUM];
+	long dsa_c[DSA_NUM][2];
+	double dsa_results[DSA_NUM][2];
+	static unsigned int dsa_bits[DSA_NUM]={512,1024,2048};
+#endif
 	int rsa_doit[RSA_NUM];
 	int dsa_doit[DSA_NUM];
+	int doit[ALGOR_NUM];
 	int pr_header=0;
 
 	apps_startup();
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE);
+			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	for (i=0; i<RSA_NUM; i++)
 		rsa_key[i]=NULL;
@@ -383,12 +407,22 @@ char **argv;
 			if (strcmp(*argv,"md5") == 0) doit[D_MD5]=1;
 		else
 #endif
-#ifndef NO_SHA
-			if (strcmp(*argv,"sha") == 0) doit[D_SHA]=1;
+#ifndef NO_MD5
+			if (strcmp(*argv,"hmac") == 0) doit[D_HMAC]=1;
 		else
 #endif
 #ifndef NO_SHA1
 			if (strcmp(*argv,"sha1") == 0) doit[D_SHA1]=1;
+		else
+			if (strcmp(*argv,"sha") == 0) doit[D_SHA1]=1;
+		else
+#endif
+#ifndef NO_RMD160
+			if (strcmp(*argv,"ripemd") == 0) doit[D_RMD160]=1;
+		else
+			if (strcmp(*argv,"rmd160") == 0) doit[D_RMD160]=1;
+		else
+			if (strcmp(*argv,"ripemd160") == 0) doit[D_RMD160]=1;
 		else
 #endif
 #ifndef NO_RC4
@@ -429,6 +463,11 @@ char **argv;
 		else if (strcmp(*argv,"rc2") == 0) doit[D_CBC_RC2]=1;
 		else
 #endif
+#ifndef NO_RC5
+		     if (strcmp(*argv,"rc5-cbc") == 0) doit[D_CBC_RC5]=1;
+		else if (strcmp(*argv,"rc5") == 0) doit[D_CBC_RC5]=1;
+		else
+#endif
 #ifndef NO_IDEA
 		     if (strcmp(*argv,"idea-cbc") == 0) doit[D_CBC_IDEA]=1;
 		else if (strcmp(*argv,"idea") == 0) doit[D_CBC_IDEA]=1;
@@ -437,6 +476,13 @@ char **argv;
 #ifndef NO_BLOWFISH
 		     if (strcmp(*argv,"bf-cbc") == 0) doit[D_CBC_BF]=1;
 		else if (strcmp(*argv,"blowfish") == 0) doit[D_CBC_BF]=1;
+		else if (strcmp(*argv,"bf") == 0) doit[D_CBC_BF]=1;
+		else
+#endif
+#ifndef NO_CAST
+		     if (strcmp(*argv,"cast-cbc") == 0) doit[D_CBC_CAST]=1;
+		else if (strcmp(*argv,"cast") == 0) doit[D_CBC_CAST]=1;
+		else if (strcmp(*argv,"cast5") == 0) doit[D_CBC_CAST]=1;
 		else
 #endif
 #ifndef NO_DES
@@ -467,17 +513,20 @@ char **argv;
 #endif
 			{
 			BIO_printf(bio_err,"bad value, pick one of\n");
-			BIO_printf(bio_err,"md2      mdc2	md5      sha      sha1\n");
+			BIO_printf(bio_err,"md2      mdc2	md5      hmac      sha1    rmd160\n");
 #ifndef NO_IDEA
 			BIO_printf(bio_err,"idea-cbc ");
 #endif
 #ifndef NO_RC2
 			BIO_printf(bio_err,"rc2-cbc  ");
 #endif
-#ifndef NO_RC2
+#ifndef NO_RC5
+			BIO_printf(bio_err,"rc5-cbc  ");
+#endif
+#ifndef NO_BLOWFISH
 			BIO_printf(bio_err,"bf-cbc");
 #endif
-#if !defined(NO_IDEA) && !defined(NO_RC2) && !defined(NO_BLOWFISH)
+#if !defined(NO_IDEA) && !defined(NO_RC2) && !defined(NO_BLOWFISH) && !defined(NO_RC5)
 			BIO_printf(bio_err,"\n");
 #endif
 			BIO_printf(bio_err,"des-cbc  des-ede3 ");
@@ -527,6 +576,14 @@ char **argv;
 			BIO_printf(bio_err,"internal error loading RSA key number %d\n",i);
 			goto end;
 			}
+#if 0
+		else
+			{
+			BIO_printf(bio_err,"Loaded RSA key, %d bit modulus and e= 0x",BN_num_bits(rsa_key[i]->n));
+			BN_print(bio_err,rsa_key[i]->e);
+			BIO_printf(bio_err,"\n");
+			}
+#endif
 		}
 #endif
 
@@ -550,8 +607,14 @@ char **argv;
 #ifndef NO_RC2
 	RC2_set_key(&rc2_ks,16,key16,128);
 #endif
+#ifndef NO_RC5
+	RC5_32_set_key(&rc5_ks,16,key16,12);
+#endif
 #ifndef NO_BLOWFISH
 	BF_set_key(&bf_ks,16,key16);
+#endif
+#ifndef NO_CAST
+	CAST_set_key(&cast_ks,16,key16);
 #endif
 
 	memset(rsa_c,0,sizeof(rsa_c));
@@ -570,22 +633,26 @@ char **argv;
 	c[D_MD2][0]=count/10;
 	c[D_MDC2][0]=count/10;
 	c[D_MD5][0]=count;
-	c[D_SHA][0]=count;
+	c[D_HMAC][0]=count;
 	c[D_SHA1][0]=count;
+	c[D_RMD160][0]=count;
 	c[D_RC4][0]=count*5;
 	c[D_CBC_DES][0]=count;
 	c[D_EDE3_DES][0]=count/3;
 	c[D_CBC_IDEA][0]=count;
 	c[D_CBC_RC2][0]=count;
+	c[D_CBC_RC5][0]=count;
 	c[D_CBC_BF][0]=count;
+	c[D_CBC_CAST][0]=count;
 
 	for (i=1; i<SIZE_NUM; i++)
 		{
 		c[D_MD2][i]=c[D_MD2][0]*4*lengths[0]/lengths[i];
 		c[D_MDC2][i]=c[D_MDC2][0]*4*lengths[0]/lengths[i];
 		c[D_MD5][i]=c[D_MD5][0]*4*lengths[0]/lengths[i];
-		c[D_SHA][i]=c[D_SHA][0]*4*lengths[0]/lengths[i];
+		c[D_HMAC][i]=c[D_HMAC][0]*4*lengths[0]/lengths[i];
 		c[D_SHA1][i]=c[D_SHA1][0]*4*lengths[0]/lengths[i];
+		c[D_RMD160][i]=c[D_RMD160][0]*4*lengths[0]/lengths[i];
 		}
 	for (i=1; i<SIZE_NUM; i++)
 		{
@@ -598,7 +665,9 @@ char **argv;
 		c[D_EDE3_DES][i]=c[D_EDE3_DES][i-1]*l0/l1;
 		c[D_CBC_IDEA][i]=c[D_CBC_IDEA][i-1]*l0/l1;
 		c[D_CBC_RC2][i]=c[D_CBC_RC2][i-1]*l0/l1;
+		c[D_CBC_RC5][i]=c[D_CBC_RC5][i-1]*l0/l1;
 		c[D_CBC_BF][i]=c[D_CBC_BF][i-1]*l0/l1;
+		c[D_CBC_CAST][i]=c[D_CBC_CAST][i-1]*l0/l1;
 		}
 	rsa_c[R_RSA_512][0]=count/2000;
 	rsa_c[R_RSA_512][1]=count/400;
@@ -636,7 +705,7 @@ char **argv;
 			}				
 		}
 
-#define COND(d)	(count != (d))
+#define COND(d)	(count < (d))
 #define COUNT(d) (d)
 #else
 #define COND(c)	(run)
@@ -685,7 +754,7 @@ char **argv;
 			print_message(names[D_MD5],c[D_MD5][j],lengths[j]);
 			Time_F(START);
 			for (count=0,run=1; COND(c[D_MD5][j]); count++)
-				MD5(buf,(unsigned long)lengths[j],&(md5[0]));
+				MD5(&(buf[0]),(unsigned long)lengths[j],&(md5[0]));
 			d=Time_F(STOP);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MD5],d);
@@ -694,19 +763,27 @@ char **argv;
 		}
 #endif
 
-#ifndef NO_SHA
-	if (doit[D_SHA])
+#ifndef NO_MD5
+	if (doit[D_HMAC])
 		{
+		HMAC_CTX hctx;
+		HMAC_Init(&hctx,(unsigned char *)"This is a key...",
+			16,EVP_md5());
+
 		for (j=0; j<SIZE_NUM; j++)
 			{
-			print_message(names[D_SHA],c[D_SHA][j],lengths[j]);
+			print_message(names[D_HMAC],c[D_HMAC][j],lengths[j]);
 			Time_F(START);
-			for (count=0,run=1; COND(c[D_SHA][j]); count++)
-				SHA(buf,(unsigned long)lengths[j],&(sha[0]));
+			for (count=0,run=1; COND(c[D_HMAC][j]); count++)
+				{
+				HMAC_Init(&hctx,NULL,0,NULL);
+                                HMAC_Update(&hctx,buf,lengths[j]);
+                                HMAC_Final(&hctx,&(hmac[0]),NULL);
+				}
 			d=Time_F(STOP);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
-				count,names[D_SHA],d);
-			results[D_SHA][j]=((double)count)/d*lengths[j];
+				count,names[D_HMAC],d);
+			results[D_HMAC][j]=((double)count)/d*lengths[j];
 			}
 		}
 #endif
@@ -723,6 +800,22 @@ char **argv;
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_SHA1],d);
 			results[D_SHA1][j]=((double)count)/d*lengths[j];
+			}
+		}
+#endif
+#ifndef NO_RMD160
+	if (doit[D_RMD160])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_RMD160],c[D_RMD160][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_RMD160][j]); count++)
+				RIPEMD160(buf,(unsigned long)lengths[j],&(rmd160[0]));
+			d=Time_F(STOP);
+			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
+				count,names[D_RMD160],d);
+			results[D_RMD160][j]=((double)count)/d*lengths[j];
 			}
 		}
 #endif
@@ -816,6 +909,24 @@ char **argv;
 			}
 		}
 #endif
+#ifndef NO_RC5
+	if (doit[D_CBC_RC5])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_CBC_RC5],c[D_CBC_RC5][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_CBC_RC5][j]); count++)
+				RC5_32_cbc_encrypt(buf,buf,
+					(unsigned long)lengths[j],&rc5_ks,
+					(unsigned char *)&(iv[0]),RC5_ENCRYPT);
+			d=Time_F(STOP);
+			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
+				count,names[D_CBC_RC5],d);
+			results[D_CBC_RC5][j]=((double)count)/d*lengths[j];
+			}
+		}
+#endif
 #ifndef NO_BLOWFISH
 	if (doit[D_CBC_BF])
 		{
@@ -834,6 +945,24 @@ char **argv;
 			}
 		}
 #endif
+#ifndef NO_CAST
+	if (doit[D_CBC_CAST])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_CBC_CAST],c[D_CBC_CAST][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_CBC_CAST][j]); count++)
+				CAST_cbc_encrypt(buf,buf,
+					(unsigned long)lengths[j],&cast_ks,
+					(unsigned char *)&(iv[0]),CAST_ENCRYPT);
+			d=Time_F(STOP);
+			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
+				count,names[D_CBC_CAST],d);
+			results[D_CBC_CAST][j]=((double)count)/d*lengths[j];
+			}
+		}
+#endif
 
 	RAND_bytes(buf,30);
 #ifndef NO_RSA
@@ -842,6 +971,7 @@ char **argv;
 		if (!rsa_doit[j]) continue;
 		pkey_print_message("private","rsa",rsa_c[j][0],rsa_bits[j],
 			RSA_SECONDS);
+/*		RSA_blinding_on(rsa_key[j],NULL); */
 		Time_F(START);
 		for (count=0,run=1; COND(rsa_c[j][0]); count++)
 			{
@@ -861,6 +991,7 @@ char **argv;
 		rsa_results[j][0]=d/(double)count;
 		rsa_count=count;
 
+#if 1
 		pkey_print_message("public","rsa",rsa_c[j][1],rsa_bits[j],
 			RSA_SECONDS);
 		Time_F(START);
@@ -880,6 +1011,7 @@ char **argv;
 		BIO_printf(bio_err,"%ld %d bit public RSA's in %.2fs\n",
 			count,rsa_bits[j],d);
 		rsa_results[j][1]=d/(double)count;
+#endif
 
 		if (rsa_count <= 1)
 			{
@@ -894,6 +1026,8 @@ char **argv;
 #ifndef NO_DSA
 	for (j=0; j<DSA_NUM; j++)
 		{
+		unsigned int kk;
+
 		if (!dsa_doit[j]) continue;
 		DSA_generate_key(dsa_key[j]);
 /*		DSA_sign_setup(dsa_key[j],NULL); */
@@ -966,7 +1100,7 @@ char **argv;
 #ifndef NO_BLOWFISH
 	printf("%s ",BF_options());
 #endif
-	fprintf(stdout,"%s\n",SSLeay_version(SSLEAY_CFLAGS));
+	fprintf(stdout,"\n%s\n",SSLeay_version(SSLEAY_CFLAGS));
 
 	if (pr_header)
 		{
@@ -980,7 +1114,7 @@ char **argv;
 	for (k=0; k<ALGOR_NUM; k++)
 		{
 		if (!doit[k]) continue;
-		fprintf(stdout,"%-12s",names[k]);
+		fprintf(stdout,"%-13s",names[k]);
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			if (results[k][j] > 10000)
@@ -995,9 +1129,14 @@ char **argv;
 	for (k=0; k<RSA_NUM; k++)
 		{
 		if (!rsa_doit[k]) continue;
-		if (j) { printf("%18ssign    verify\n"," "); j=0; }
-		fprintf(stdout,"rsa %4d bits %8.4fs %8.4fs",
-			rsa_bits[k],rsa_results[k][0],rsa_results[k][1]);
+		if (j)
+			{
+			printf("%18ssign    verify    sign/s verify/s\n"," ");
+			j=0;
+			}
+		fprintf(stdout,"rsa %4d bits %8.4fs %8.4fs %8.1f %8.1f",
+			rsa_bits[k],rsa_results[k][0],rsa_results[k][1],
+			1.0/rsa_results[k][0],1.0/rsa_results[k][1]);
 		fprintf(stdout,"\n");
 		}
 #endif
@@ -1006,9 +1145,13 @@ char **argv;
 	for (k=0; k<DSA_NUM; k++)
 		{
 		if (!dsa_doit[k]) continue;
-		if (j) { printf("%18ssign    verify\n"," "); j=0; }
-		fprintf(stdout,"dsa %4d bits %8.4fs %8.4fs",
-			dsa_bits[k],dsa_results[k][0],dsa_results[k][1]);
+		if (j)	{
+			printf("%18ssign    verify    sign/s verify/s\n"," ");
+			j=0;
+			}
+		fprintf(stdout,"dsa %4d bits %8.4fs %8.4fs %8.1f %8.1f",
+			dsa_bits[k],dsa_results[k][0],dsa_results[k][1],
+			1.0/dsa_results[k][0],1.0/dsa_results[k][1]);
 		fprintf(stdout,"\n");
 		}
 #endif
@@ -1066,3 +1209,4 @@ int tm;
 	num=num;
 #endif
 	}
+

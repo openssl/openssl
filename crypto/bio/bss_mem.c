@@ -1,5 +1,5 @@
 /* crypto/bio/bss_mem.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -81,7 +81,8 @@ static int mem_free();
 
 static BIO_METHOD mem_method=
 	{
-	BIO_TYPE_MEM,"memory buffer",
+	BIO_TYPE_MEM,
+	"memory buffer",
 	mem_write,
 	mem_read,
 	mem_puts,

@@ -1,5 +1,5 @@
 /* crypto/asn1/a_bytes.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -67,14 +67,14 @@
  */
 
 static unsigned long tag2bit[32]={
-0,	0,	0,	0,	/* tags  0 -  3 */
+0,	0,	0,	B_ASN1_BIT_STRING,	/* tags  0 -  3 */
 B_ASN1_OCTET_STRING,	0,	0,		B_ASN1_UNKNOWN,/* tags  4- 7 */
 B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,/* tags  8-11 */
 B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,/* tags 12-15 */
 0,	0,	B_ASN1_NUMERICSTRING,B_ASN1_PRINTABLESTRING,
 B_ASN1_T61STRING,B_ASN1_VIDEOTEXSTRING,B_ASN1_IA5STRING,0,
 0,B_ASN1_GRAPHICSTRING,B_ASN1_ISO64STRING,B_ASN1_GENERALSTRING,
-B_ASN1_UNIVERSALSTRING,B_ASN1_UNKNOWN,B_ASN1_UNKNOWN,B_ASN1_UNKNOWN,
+B_ASN1_UNIVERSALSTRING,B_ASN1_UNKNOWN,B_ASN1_BMPSTRING,B_ASN1_UNKNOWN,
 	};
 
 #ifndef NOPROTO
@@ -97,13 +97,6 @@ int type;
 	int inf,tag,xclass;
 	int i=0;
 
-	if ((a == NULL) || ((*a) == NULL))
-		{
-		if ((ret=ASN1_STRING_new()) == NULL) return(NULL);
-		}
-	else
-		ret=(*a);
-
 	p= *pp;
 	inf=ASN1_get_object(&p,&len,&tag,&xclass,length);
 	if (inf & 0x80) goto err;
@@ -118,6 +111,18 @@ int type;
 		i=ASN1_R_WRONG_TYPE;
 		goto err;
 		}
+
+	/* If a bit-string, exit early */
+	if (tag == V_ASN1_BIT_STRING)
+		return(d2i_ASN1_BIT_STRING(a,pp,length));
+
+	if ((a == NULL) || ((*a) == NULL))
+		{
+		if ((ret=ASN1_STRING_new()) == NULL) return(NULL);
+		}
+	else
+		ret=(*a);
+
 	if (len != 0)
 		{
 		s=(unsigned char *)Malloc((int)len+1);
@@ -157,6 +162,10 @@ int xclass;
 	unsigned char *p;
 
 	if (a == NULL)  return(0);
+
+	if (tag == V_ASN1_BIT_STRING)
+		return(i2d_ASN1_BIT_STRING(a,pp));
+		
 	ret=a->length;
 	r=ASN1_object_size(0,ret,tag);
 	if (pp == NULL) return(r);
@@ -229,7 +238,7 @@ int Pclass;
 		{
 		if (len != 0)
 			{
-			if (ret->length < len)
+			if ((ret->length < len) || (ret->data == NULL))
 				{
 				if (ret->data != NULL) Free((char *)ret->data);
 				s=(unsigned char *)Malloc((int)len);

@@ -1,5 +1,5 @@
 /* crypto/pem/pem_info.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -64,7 +64,7 @@
 #include "x509.h"
 #include "pem.h"
 
-#ifndef WIN16
+#ifndef NO_FP_API
 STACK *PEM_X509_INFO_read(fp,sk,cb)
 FILE *fp;
 STACK *sk;

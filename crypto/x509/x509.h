@@ -1,5 +1,5 @@
 /* crypto/x509/x509.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -90,6 +90,24 @@ extern "C" {
 #define X509_FILETYPE_ASN1	2
 #define X509_FILETYPE_DEFAULT	3
 
+#define X509v3_KU_DIGITAL_SIGNATURE	0x0080
+#define X509v3_KU_NON_REPUDIATION	0x0040
+#define X509v3_KU_KEY_ENCIPHERMENT	0x0020
+#define X509v3_KU_DATA_ENCIPHERMENT	0x0010
+#define X509v3_KU_KEY_AGREEMENT		0x0008
+#define X509v3_KU_KEY_CERT_SIGN		0x0004
+#define X509v3_KU_CRL_SIGN		0x0002
+#define X509v3_KU_ENCIPHER_ONLY		0x0001
+#define X509v3_KU_DECIPHER_ONLY		0x8000
+#define X509v3_KU_UNDEF			0xffff
+
+typedef struct X509_objects_st
+	{
+	int nid;
+	int (*a2i)();
+	int (*i2a)();
+	} X509_OBJECTS;
+
 typedef struct X509_algor_st
 	{
 	ASN1_OBJECT *algorithm;
@@ -133,25 +151,39 @@ typedef struct X509_name_st
 #else
 	char *bytes;
 #endif
+	unsigned long hash; /* Keep the hash around for lookups */
 	} X509_NAME;
 
+#define X509_EX_V_NETSCAPE_HACK		0x8000
+#define X509_EX_V_INIT			0x0001
 typedef struct X509_extension_st
 	{
 	ASN1_OBJECT *object;
 	short critical;
 	short netscape_hack;
 	ASN1_OCTET_STRING *value;
+	long argl;			/* used when decoding */
+	char *argp;			/* used when decoding */
+	void (*ex_free)();		/* clear argp stuff */
 	} X509_EXTENSION;
 
-#define X509_EXT_PACK_UNKNOWN	0
-#define X509_EXT_PACK_STRING	1 /* X509v3_pack_string() */
-
+/* #if 1 */
 typedef struct x509_extension_method_st
 	{
 	int nid;
 	int data_type;
 	int pack_type;
+	void (*ex_clear)();
+	int (*ex_get_bool)();
+	int (*ex_set_bool)();
+	int (*ex_get_str)();
+	int (*ex_set_str)();
+	char *(*ex_get_struct)();
+	int (*ex_set_struct)();
+	int (*a2i)();
+	int (*i2a)();
 	} X509_EXTENSION_METHOD;
+/* #endif */
 
 typedef struct X509_req_info_st
 	{
@@ -307,8 +339,6 @@ typedef struct CBCParameter_st
 	a->sig_alg,a->signature,(char *)a->req_info,r)
 #define X509_CRL_verify(a,r) ASN1_verify((int (*)())i2d_X509_CRL_INFO, \
 	a->sig_alg, a->signature,(char *)a->crl,r)
-#define NETSCAPE_SPKI_verify(a,r) ASN1_verify((int (*)())i2d_NETSCAPE_SPKAC, \
-		a->sig_algor,a->signature, (char *)a->spkac,r)
 
 #define X509_sign(x,pkey,md) \
 	ASN1_sign((int (*)())i2d_X509_CINF, x->cert_info->signature, \
@@ -428,6 +458,9 @@ typedef struct CBCParameter_st
 		(char *)data,md,len)
 #endif
 
+#define X509_EXT_PACK_UNKNOWN	1
+#define X509_EXT_PACK_STRING	2
+
 #define		X509_get_version(x) ASN1_INTEGER_get((x)->cert_info->version)
 /* #define	X509_get_serialNumber(x) ((x)->cert_info->serialNumber) */
 #define		X509_get_notBefore(x) ((x)->cert_info->validity->notBefore)
@@ -448,7 +481,7 @@ typedef struct CBCParameter_st
 #ifndef SSLEAY_MACROS
 #ifdef HEADER_ENVELOPE_H
 int X509_verify(X509 *a, EVP_PKEY *r);
-char *X509_verify_cert_error_string(int n);
+char *X509_verify_cert_error_string(long n);
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
 int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
@@ -464,7 +497,7 @@ int X509_NAME_digest(X509_NAME *data,EVP_MD *type,
 	unsigned char *md,unsigned int *len);
 #endif
 
-#ifndef WIN16
+#ifndef NO_FP_API
 X509 *d2i_X509_fp(FILE *fp, X509 *x509);
 int i2d_X509_fp(FILE *fp,X509 *x509);
 X509_CRL *d2i_X509_CRL_fp(FILE *fp,X509_CRL *crl);
@@ -515,7 +548,7 @@ char *		X509_get_default_cert_dir_env(void );
 char *		X509_get_default_cert_file_env(void );
 char *		X509_get_default_private_dir(void );
 
-X509_REQ *	X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey);
+X509_REQ *	X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, EVP_MD *md);
 X509 *		X509_REQ_to_X509(X509_REQ *r, int days,EVP_PKEY *pkey);
 void ERR_load_X509_strings(void );
 
@@ -674,7 +707,7 @@ int		X509_NAME_cmp (X509_NAME *a, X509_NAME *b);
 unsigned long	X509_NAME_hash(X509_NAME *x);
 
 int		X509_CRL_cmp(X509_CRL *a,X509_CRL *b);
-#ifndef WIN16
+#ifndef NO_FP_API
 int		X509_print_fp(FILE *bp,X509 *x);
 int		X509_REQ_print_fp(FILE *bp,X509_REQ *req);
 #endif
@@ -691,9 +724,11 @@ int 		X509_NAME_get_text_by_NID(X509_NAME *name, int nid,
 int		X509_NAME_get_text_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj,
 			char *buf,int len);
 
-int 		X509_NAME_get_index_by_NID(X509_NAME *name,int nid,int oldpos);
+/* NOTE: you should be passsing -1, not 0 as lastpos.  The functions that use
+ * lastpos, seach after that position on. */
+int 		X509_NAME_get_index_by_NID(X509_NAME *name,int nid,int lastpos);
 int 		X509_NAME_get_index_by_OBJ(X509_NAME *name,ASN1_OBJECT *obj,
-			int oldpos);
+			int lastpos);
 X509_NAME_ENTRY *X509_NAME_get_entry(X509_NAME *name, int loc);
 X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc);
 int 		X509_NAME_add_entry(X509_NAME *name,X509_NAME_ENTRY *ne,
@@ -711,37 +746,38 @@ ASN1_OBJECT *	X509_NAME_ENTRY_get_object(X509_NAME_ENTRY *ne);
 ASN1_STRING *	X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne);
 
 int		X509v3_get_ext_count(STACK *x);
-int		X509v3_get_ext_by_NID(STACK *x, int nid, int oldpos);
-int		X509v3_get_ext_by_OBJ(STACK *x,ASN1_OBJECT *obj,int oldpos);
-int		X509v3_get_ext_by_critical(STACK *x, int crit, int oldpos);
+int		X509v3_get_ext_by_NID(STACK *x, int nid, int lastpos);
+int		X509v3_get_ext_by_OBJ(STACK *x,ASN1_OBJECT *obj,int lastpos);
+int		X509v3_get_ext_by_critical(STACK *x, int crit, int lastpos);
 X509_EXTENSION *X509v3_get_ext(STACK *x, int loc);
 X509_EXTENSION *X509v3_delete_ext(STACK *x, int loc);
 STACK *		X509v3_add_ext(STACK **x, X509_EXTENSION *ex, int loc);
+
 int		X509v3_data_type_by_OBJ(ASN1_OBJECT *obj);
 int		X509v3_data_type_by_NID(int nid);
 int		X509v3_pack_type_by_OBJ(ASN1_OBJECT *obj);
 int		X509v3_pack_type_by_NID(int nid);
 
 int		X509_get_ext_count(X509 *x);
-int		X509_get_ext_by_NID(X509 *x, int nid, int oldpos);
-int		X509_get_ext_by_OBJ(X509 *x,ASN1_OBJECT *obj,int oldpos);
-int		X509_get_ext_by_critical(X509 *x, int crit, int oldpos);
+int		X509_get_ext_by_NID(X509 *x, int nid, int lastpos);
+int		X509_get_ext_by_OBJ(X509 *x,ASN1_OBJECT *obj,int lastpos);
+int		X509_get_ext_by_critical(X509 *x, int crit, int lastpos);
 X509_EXTENSION *X509_get_ext(X509 *x, int loc);
 X509_EXTENSION *X509_delete_ext(X509 *x, int loc);
 int		X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc);
 
 int		X509_CRL_get_ext_count(X509_CRL *x);
-int		X509_CRL_get_ext_by_NID(X509_CRL *x, int nid, int oldpos);
-int		X509_CRL_get_ext_by_OBJ(X509_CRL *x,ASN1_OBJECT *obj,int oldpos);
-int		X509_CRL_get_ext_by_critical(X509_CRL *x, int crit, int oldpos);
+int		X509_CRL_get_ext_by_NID(X509_CRL *x, int nid, int lastpos);
+int		X509_CRL_get_ext_by_OBJ(X509_CRL *x,ASN1_OBJECT *obj,int lastpos);
+int		X509_CRL_get_ext_by_critical(X509_CRL *x, int crit, int lastpos);
 X509_EXTENSION *X509_CRL_get_ext(X509_CRL *x, int loc);
 X509_EXTENSION *X509_CRL_delete_ext(X509_CRL *x, int loc);
 int		X509_CRL_add_ext(X509_CRL *x, X509_EXTENSION *ex, int loc);
 
 int		X509_REVOKED_get_ext_count(X509_REVOKED *x);
-int		X509_REVOKED_get_ext_by_NID(X509_REVOKED *x, int nid, int oldpos);
-int		X509_REVOKED_get_ext_by_OBJ(X509_REVOKED *x,ASN1_OBJECT *obj,int oldpos);
-int		X509_REVOKED_get_ext_by_critical(X509_REVOKED *x, int crit, int oldpos);
+int		X509_REVOKED_get_ext_by_NID(X509_REVOKED *x, int nid, int lastpos);
+int		X509_REVOKED_get_ext_by_OBJ(X509_REVOKED *x,ASN1_OBJECT *obj,int lastpos);
+int		X509_REVOKED_get_ext_by_critical(X509_REVOKED *x, int crit, int lastpos);
 X509_EXTENSION *X509_REVOKED_get_ext(X509_REVOKED *x, int loc);
 X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
 int		X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);
@@ -787,7 +823,7 @@ int X509_digest();
 int X509_NAME_digest();
 #endif
 
-#ifndef WIN16
+#ifndef NO_FP_API
 X509 *d2i_X509_fp();
 int i2d_X509_fp();
 X509_CRL *d2i_X509_CRL_fp();
@@ -979,7 +1015,7 @@ int		X509_NAME_cmp ();
 unsigned long	X509_NAME_hash();
 
 int		X509_CRL_cmp();
-#ifndef WIN16
+#ifndef NO_FP_API
 int		X509_print_fp();
 int		X509_REQ_print_fp();
 #endif
@@ -1011,11 +1047,11 @@ int		X509v3_get_ext_by_critical();
 X509_EXTENSION *X509v3_get_ext();
 X509_EXTENSION *X509v3_delete_ext();
 STACK *		X509v3_add_ext();
+
 int		X509v3_data_type_by_OBJ();
 int		X509v3_data_type_by_NID();
 int		X509v3_pack_type_by_OBJ();
 int		X509v3_pack_type_by_NID();
-
 
 int		X509_get_ext_count();
 int		X509_get_ext_by_NID();
@@ -1077,20 +1113,22 @@ X509 *X509_find_by_subject();
 #define X509_F_X509_EXTENSION_CREATE_BY_OBJ		 109
 #define X509_F_X509_GET_PUBKEY_PARAMETERS		 110
 #define X509_F_X509_LOAD_CERT_FILE			 111
-#define X509_F_X509_NAME_ADD_ENTRY			 112
-#define X509_F_X509_NAME_ENTRY_CREATE_BY_NID		 113
-#define X509_F_X509_NAME_ENTRY_SET_OBJECT		 114
-#define X509_F_X509_NAME_ONELINE			 115
-#define X509_F_X509_NAME_PRINT				 116
-#define X509_F_X509_PRINT_FP				 117
-#define X509_F_X509_PUBKEY_GET				 118
-#define X509_F_X509_PUBKEY_SET				 119
-#define X509_F_X509_REQ_PRINT				 120
-#define X509_F_X509_REQ_PRINT_FP			 121
-#define X509_F_X509_REQ_TO_X509				 122
-#define X509_F_X509_STORE_ADD_CERT			 123
-#define X509_F_X509_TO_X509_REQ				 124
-#define X509_F_X509_VERIFY_CERT				 125
+#define X509_F_X509_LOAD_CRL_FILE			 112
+#define X509_F_X509_NAME_ADD_ENTRY			 113
+#define X509_F_X509_NAME_ENTRY_CREATE_BY_NID		 114
+#define X509_F_X509_NAME_ENTRY_SET_OBJECT		 115
+#define X509_F_X509_NAME_ONELINE			 116
+#define X509_F_X509_NAME_PRINT				 117
+#define X509_F_X509_PRINT_FP				 118
+#define X509_F_X509_PUBKEY_GET				 119
+#define X509_F_X509_PUBKEY_SET				 120
+#define X509_F_X509_REQ_PRINT				 121
+#define X509_F_X509_REQ_PRINT_FP			 122
+#define X509_F_X509_REQ_TO_X509				 123
+#define X509_F_X509_STORE_ADD_CERT			 124
+#define X509_F_X509_STORE_ADD_CRL			 125
+#define X509_F_X509_TO_X509_REQ				 126
+#define X509_F_X509_VERIFY_CERT				 127
 
 /* Reason codes. */
 #define X509_R_BAD_X509_FILETYPE			 100
@@ -1105,6 +1143,7 @@ X509 *X509_find_by_subject();
 #define X509_R_UNKNOWN_NID				 109
 #define X509_R_UNKNOWN_STRING_TYPE			 110
 #define X509_R_UNSUPPORTED_ALGORITHM			 111
+#define X509_R_WRONG_LOOKUP_TYPE			 112
  
 #ifdef  __cplusplus
 }

@@ -38,7 +38,7 @@ make -f Makefile.ssl links
 Makefile.ssl		CC CFLAG EX_LIBS BN_MULW
 crypto/des/des.h	DES_LONG
 crypto/des/des_locl.h	DES_PTR
-crypto/md/md2.h		MD2_INT
+crypto/md2/md2.h	MD2_INT
 crypto/rc4/rc4.h	RC4_INT
 crypto/rc4/rc4_enc.c	RC4_INDEX
 crypto/rc2/rc2.h	RC2_INT

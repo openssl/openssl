@@ -1,5 +1,5 @@
 /* crypto/asn1/n_pkey.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -81,14 +81,11 @@ typedef struct netscape_pkey_st
  * ASN1err(ASN1_F_NETSCAPE_PKEY_NEW,ASN1_R_DECODING_ERROR);
  */
 #ifndef NOPROTO
-static RSA *d2i_Netscape_RSA_2(RSA **a, unsigned char **pp, long length,
-	int (*cb)());
 static int i2d_NETSCAPE_PKEY(NETSCAPE_PKEY *a, unsigned char **pp);
 static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY(NETSCAPE_PKEY **a,unsigned char **pp, long length);
 static NETSCAPE_PKEY *NETSCAPE_PKEY_new(void);
 static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *);
 #else
-static RSA *d2i_Netscape_RSA_2();
 static int i2d_NETSCAPE_PKEY();
 static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY();
 static NETSCAPE_PKEY *NETSCAPE_PKEY_new();
@@ -183,6 +180,8 @@ int (*cb)();
 	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,
 		strlen((char *)buf),1,key,NULL);
 	memset(buf,0,256);
+
+	EVP_CIPHER_CTX_init(&ctx);
 	EVP_EncryptInit(&ctx,EVP_rc4(),key,NULL);
 	EVP_EncryptUpdate(&ctx,os2.data,&i,os2.data,os2.length);
 	EVP_EncryptFinal(&ctx,&(os2.data[i]),&j);
@@ -234,7 +233,7 @@ int (*cb)();
 	M_ASN1_D2I_Finish(a,RSA_free,ASN1_F_D2I_NETSCAPE_RSA);
 	}
 
-static RSA *d2i_Netscape_RSA_2(a,pp,length,cb)
+RSA *d2i_Netscape_RSA_2(a,pp,length,cb)
 RSA **a;
 unsigned char **pp;
 long length;
@@ -274,6 +273,8 @@ int (*cb)();
 	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,
 		strlen((char *)buf),1,key,NULL);
 	memset(buf,0,256);
+
+	EVP_CIPHER_CTX_init(&ctx);
 	EVP_DecryptInit(&ctx,EVP_rc4(),key,NULL);
 	EVP_DecryptUpdate(&ctx,os->data,&i,os->data,os->length);
 	EVP_DecryptFinal(&ctx,&(os->data[i]),&j);

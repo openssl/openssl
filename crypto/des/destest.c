@@ -1,5 +1,5 @@
 /* crypto/des/destest.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -222,7 +222,16 @@ static unsigned char cbc_key [8]={0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef};
 static unsigned char cbc2_key[8]={0xf0,0xe1,0xd2,0xc3,0xb4,0xa5,0x96,0x87};
 static unsigned char cbc3_key[8]={0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10};
 static unsigned char cbc_iv  [8]={0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10};
-static char cbc_data[40]="7654321 Now is the time for ";
+/* Changed the following text constant to binary so it will work on ebcdic
+ * machines :-) */
+/* static char cbc_data[40]="7654321 Now is the time for \0001"; */
+static char cbc_data[40]={
+	0x37,0x36,0x35,0x34,0x33,0x32,0x31,0x20,
+	0x4E,0x6F,0x77,0x20,0x69,0x73,0x20,0x74,
+	0x68,0x65,0x20,0x74,0x69,0x6D,0x65,0x20,
+	0x66,0x6F,0x72,0x20,0x00,0x31,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	};
 
 static unsigned char cbc_ok[32]={
 	0xcc,0xd1,0x73,0xff,0xab,0x20,0x39,0xf4,
@@ -395,14 +404,17 @@ char *argv[];
 		}
 	memset(cbc_out,0,40);
 	memset(cbc_in,0,40);
-	des_cbc_encrypt((C_Block *)cbc_data,(C_Block *)cbc_out,
+	memcpy(iv3,cbc_iv,sizeof(cbc_iv));
+	des_ncbc_encrypt((C_Block *)cbc_data,(C_Block *)cbc_out,
 		(long)strlen((char *)cbc_data)+1,ks,
-		(C_Block *)cbc_iv,DES_ENCRYPT);
+		(C_Block *)iv3,DES_ENCRYPT);
 	if (memcmp(cbc_out,cbc_ok,32) != 0)
 		printf("cbc_encrypt encrypt error\n");
-	des_cbc_encrypt((C_Block *)cbc_out,(C_Block *)cbc_in,
+
+	memcpy(iv3,cbc_iv,sizeof(cbc_iv));
+	des_ncbc_encrypt((C_Block *)cbc_out,(C_Block *)cbc_in,
 		(long)strlen((char *)cbc_data)+1,ks,
-		(C_Block *)cbc_iv,DES_DECRYPT);
+		(C_Block *)iv3,DES_DECRYPT);
 	if (memcmp(cbc_in,cbc_data,strlen((char *)cbc_data)) != 0)
 		{
 		printf("cbc_encrypt decrypt error\n");
@@ -432,7 +444,7 @@ char *argv[];
 		(long)strlen((char *)cbc_data)+1,ks,
 		(C_Block *)iv3,
 		(C_Block *)cbc2_key, (C_Block *)cbc3_key, DES_DECRYPT);
-	if (memcmp(cbc_in,cbc_data,32) != 0)
+	if (memcmp(cbc_in,cbc_data,strlen((char *)cbc_data)+1) != 0)
 		{
 		printf("des_xcbc_encrypt decrypt error\n");
 		err=1;
@@ -458,7 +470,7 @@ char *argv[];
 	memset(cbc_out,0,40);
 	memset(cbc_in,0,40);
 	i=strlen((char *)cbc_data)+1;
-	i=((i+7)/8)*8;
+	/* i=((i+7)/8)*8; */
 	memcpy(iv3,cbc_iv,sizeof(cbc_iv));
 
 	des_ede3_cbc_encrypt((C_Block *)cbc_data,(C_Block *)cbc_out,
@@ -500,7 +512,7 @@ char *argv[];
 		}
 	des_pcbc_encrypt((C_Block *)cbc_out,(C_Block *)cbc_in,
 		(long)strlen(cbc_data)+1,ks,(C_Block *)cbc_iv,DES_DECRYPT);
-	if (memcmp(cbc_in,cbc_data,32) != 0)
+	if (memcmp(cbc_in,cbc_data,strlen(cbc_data)+1) != 0)
 		{
 		printf("pcbc_encrypt decrypt error\n");
 		err=1;
@@ -554,6 +566,12 @@ char *argv[];
 	if (memcmp(ofb_cipher,ofb_buf1,sizeof(ofb_buf1)) != 0)
 		{
 		printf("ofb_encrypt encrypt error\n");
+printf("%02X %02X %02X %02X %02X %02X %02X %02X\n",
+ofb_buf1[8+0], ofb_buf1[8+1], ofb_buf1[8+2], ofb_buf1[8+3],
+ofb_buf1[8+4], ofb_buf1[8+5], ofb_buf1[8+6], ofb_buf1[8+7]);
+printf("%02X %02X %02X %02X %02X %02X %02X %02X\n",
+ofb_buf1[8+0], ofb_cipher[8+1], ofb_cipher[8+2], ofb_cipher[8+3],
+ofb_buf1[8+4], ofb_cipher[8+5], ofb_cipher[8+6], ofb_cipher[8+7]);
 		err=1;
 		}
 	memcpy(ofb_tmp,ofb_iv,sizeof(ofb_iv));
@@ -562,6 +580,12 @@ char *argv[];
 	if (memcmp(plain,ofb_buf2,sizeof(ofb_buf2)) != 0)
 		{
 		printf("ofb_encrypt decrypt error\n");
+printf("%02X %02X %02X %02X %02X %02X %02X %02X\n",
+ofb_buf2[8+0], ofb_buf2[8+1], ofb_buf2[8+2], ofb_buf2[8+3],
+ofb_buf2[8+4], ofb_buf2[8+5], ofb_buf2[8+6], ofb_buf2[8+7]);
+printf("%02X %02X %02X %02X %02X %02X %02X %02X\n",
+plain[8+0], plain[8+1], plain[8+2], plain[8+3],
+plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 		err=1;
 		}
 
@@ -636,10 +660,12 @@ char *argv[];
 	printf("Doing quad_cksum\n");
 	cs=quad_cksum((C_Block *)cbc_data,(C_Block *)qret,
 		(long)strlen(cbc_data),2,(C_Block *)cbc_iv);
+	j=sizeof(lqret[0])-4;
 	for (i=0; i<4; i++)
 		{
 		lqret[i]=0;
 		memcpy(&(lqret[i]),&(qret[i][0]),4);
+		if (j > 0) lqret[i]=lqret[i]>>(j*8); /* For Cray */
 		}
 	{ /* Big-endian fix */
 	static DES_LONG l=1;
@@ -692,7 +718,7 @@ char *argv[];
 	for (i=0; i<4; i++)
 		{
 		printf(" %d",i);
-		des_cbc_encrypt((C_Block *)&(cbc_out[i]),(C_Block *)cbc_in,
+		des_ncbc_encrypt((C_Block *)&(cbc_out[i]),(C_Block *)cbc_in,
 			(long)strlen(cbc_data)+1,ks,(C_Block *)cbc_iv,
 			DES_ENCRYPT);
 		}
@@ -700,7 +726,7 @@ char *argv[];
 	for (i=0; i<4; i++)
 		{
 		printf(" %d",i);
-		des_cbc_encrypt((C_Block *)cbc_out,(C_Block *)&(cbc_in[i]),
+		des_ncbc_encrypt((C_Block *)cbc_out,(C_Block *)&(cbc_in[i]),
 			(long)strlen(cbc_data)+1,ks,(C_Block *)cbc_iv,
 			DES_ENCRYPT);
 		}

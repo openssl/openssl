@@ -1,5 +1,5 @@
 /* crypto/bio/bss_sock.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -107,7 +107,8 @@ int BIO_fd_should_retry();
 #ifndef BIO_FD
 static BIO_METHOD methods_sockp=
 	{
-	BIO_TYPE_SOCKET,"socket",
+	BIO_TYPE_SOCKET,
+	"socket",
 	sock_write,
 	sock_read,
 	sock_puts,
@@ -217,10 +218,11 @@ int outl;
 
 	if (out != NULL)
 		{
-		errno=0;
 #if defined(WINDOWS) && !defined(BIO_FD)
+		clear_socket_error();
 		ret=recv(b->num,out,outl,0);
 #else
+		clear_sys_error();
 		ret=read(b->num,out,outl);
 #endif
 		BIO_clear_retry_flags(b);
@@ -248,10 +250,11 @@ int inl;
 	{
 	int ret;
 	
-	errno=0;
 #if defined(WINDOWS) && !defined(BIO_FD)
+	clear_socket_error();
 	ret=send(b->num,in,inl,0);
 #else
+	clear_sys_error();
 	ret=write(b->num,in,inl);
 #endif
 	BIO_clear_retry_flags(b);
@@ -370,20 +373,25 @@ int BIO_fd_should_retry(i)
 #endif
 int i;
 	{
+	int err;
+
 	if ((i == 0) || (i == -1))
 		{
 #if !defined(BIO_FD) && defined(WINDOWS)
-		errno=WSAGetLastError();
+		err=get_last_socket_error();
+#else
+		err=get_last_sys_error();
 #endif
 
 #if defined(WINDOWS) /* more microsoft stupidity */
-		if ((i == -1) && (errno == 0))
+		if ((i == -1) && (err == 0))
 			return(1);
 #endif
+
 #ifndef BIO_FD
-		return(BIO_sock_non_fatal_error(errno));
+		return(BIO_sock_non_fatal_error(err));
 #else
-		return(BIO_fd_non_fatal_error(errno));
+		return(BIO_fd_non_fatal_error(err));
 #endif
 		}
 	return(0);
@@ -416,6 +424,10 @@ int err;
 # else
 	case EWOULDBLOCK:
 # endif
+#endif
+
+#if defined(ENOTCONN)
+	case ENOTCONN:
 #endif
 
 #ifdef EINTR

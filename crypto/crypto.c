@@ -1,5 +1,5 @@
 /* crypto/crypto.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -60,6 +60,7 @@
  * BN_ASM */
 #ifndef BN_ASM
 #undef BN_ASM
+#define X86_ASM
 #endif
 
 #ifndef DES_ASM
@@ -95,9 +96,11 @@
 #define CRYPTO_PEM_SUBSET
 #define CRYPTO_RAND_SUBSET
 #define CRYPTO_RC_SUBSET
-#define CRYPTO_BF_SUBSET
+#define CRYPTO_BLOWFISH_SUBSET
+#define CRYPTO_CAST_SUBSET
 #define CRYPTO_RSA_SUBSET
 #define CRYPTO_SHA_SUBSET
+#define CRYPTO_HMAC_SUBSET
 #define CRYPTO_SHA1_SUBSET
 #define CRYPTO_STACK_SUBSET
 #define CRYPTO_TXT_DB_SUBSET
@@ -213,6 +216,7 @@
 #include "asn1/x_val.c"
 #include "asn1/x_x509.c"
 #endif
+
 #ifdef CRYPTO_BN_SUBSET
 #include "bn/bn_add.c"
 #include "bn/bn_div.c"
@@ -234,7 +238,9 @@
 #include "bn/bn_word.c"
 #include "bn/bn_print.c"
 #include "bn/bn_err.c"
+#include "bn/bn_blind.c"
 #endif
+
 #ifdef CRYPTO_BIO_SUBSET
 #include "bio/bf_buff.c"
 #include "bio/bf_null.c"
@@ -256,14 +262,17 @@
 #include "bio/b_dump.c"
 #include "bio/bio_err.c"
 #endif
+
 #ifdef CRYPTO_BUFFER_SUBSET
 #include "buffer/buf_err.c"
 #include "buffer/buffer.c"
 #endif
+
 #ifdef CRYPTO_CONF_SUBSET
 #include "conf/conf.c"
 #include "conf/conf_err.c"
 #endif
+
 #ifdef CRYPTO_DES_SUBSET
 #include "des/read_pwd.c"
 #ifndef NO_DES
@@ -271,12 +280,9 @@
 #include "des/fcrypt_b.c"
 #include "des/des_enc.c"
 #endif
-#include "des/ncbc_enc.c"
-#include "des/cbc3_enc.c"
 #include "des/cbc_cksm.c"
 #include "des/xcbc_enc.c"
 #include "des/cbc_enc.c"
-#include "des/ede_enc.c"
 #include "des/cfb64ede.c"
 #include "des/cfb64enc.c"
 #include "des/cfb_enc.c"
@@ -298,6 +304,7 @@
 #include "des/supp.c"
 #endif
 #endif
+
 #ifdef CRYPTO_DH_SUBSET
 #ifndef NO_DH
 #include "dh/dh_check.c"
@@ -307,6 +314,7 @@
 #include "dh/dh_lib.c"
 #endif
 #endif
+
 #ifdef CRYPTO_DSA_SUBSET
 #ifndef NO_DSA
 #include "dsa/dsa_gen.c"
@@ -317,11 +325,13 @@
 #include "dsa/dsa_err.c"
 #endif
 #endif
+
 #ifdef CRYPTO_ERROR_SUBSET
 #include "err/err.c"
 #include "err/err_all.c"
 #include "err/err_prn.c"
 #endif
+
 #ifdef CRYPTO_EVP_SUBSET
 #include "evp/bio_md.c"
 #include "evp/bio_b64.c"
@@ -357,6 +367,12 @@
 #include "evp/e_ecb_bf.c"
 #include "evp/e_ofb_bf.c"
 #endif
+#ifndef NO_CAST
+#include "evp/e_cbc_c.c"
+#include "evp/e_cfb_c.c"
+#include "evp/e_ecb_c.c"
+#include "evp/e_ofb_c.c"
+#endif
 #ifndef NO_RC4
 #include "evp/e_rc4.c"
 #endif
@@ -375,6 +391,7 @@
 #include "evp/p_sign.c"
 #include "evp/p_verify.c"
 #endif
+
 #ifdef CRYPTO_IDEA_SUBSET
 #ifndef NO_IDEA
 #include "idea/i_cbc.c"
@@ -384,34 +401,49 @@
 #include "idea/i_skey.c"
 #endif
 #endif
-#ifdef CRYPTO_BF_SUBSET
+
+#ifdef CRYPTO_BLOWFISH_SUBSET
 #ifndef NO_BLOWFISH
 #include "bf/bf_cfb64.c"
 #include "bf/bf_ecb.c"
 #ifndef BF_ASM
 #include "bf/bf_enc.c"
 #endif
-#include "bf/bf_cbc.c"
 #include "bf/bf_ofb64.c"
 #include "bf/bf_skey.c"
 #endif
 #endif
+
+#ifdef CRYPTO_CAST_SUBSET
+#ifndef NO_CAST
+#include "cast/c_cfb64.c"
+#include "cast/c_ecb.c"
+#ifndef CAST_ASM
+#include "cast/c_enc.c"
+#endif
+#include "cast/c_ofb64.c"
+#include "cast/c_skey.c"
+#endif
+#endif
+
 #ifdef CRYPTO_LHASH_SUBSET
 #include "lhash/lh_stats.c"
 #include "lhash/lhash.c"
 #endif
+
 #ifdef CRYPTO_MD_SUBSET
 #ifndef NO_MD2
-#include "md/md2_dgst.c"
-#include "md/md2_one.c"
+#include "md2/md2_dgst.c"
+#include "md2/md2_one.c"
 #include "evp/m_md2.c"
 #endif
 #ifndef NO_MD5
-#include "md/md5_dgst.c"
-#include "md/md5_one.c"
+#include "md5/md5_dgst.c"
+#include "md5/md5_one.c"
 #include "evp/m_md5.c"
 #endif
 #endif
+
 #ifdef CRYPTO_MDC2_SUBSET
 #ifndef NO_MDC2
 #include "mdc2/mdc2dgst.c"
@@ -419,11 +451,13 @@
 #include "evp/m_mdc2.c"
 #endif
 #endif
+
 #ifdef CRYPTO_OBJECTS_SUBSET
 #include "objects/obj_dat.c"
 #include "objects/obj_err.c"
 #include "objects/obj_lib.c"
 #endif
+
 #ifdef CRYPTO_PEM_SUBSET
 #include "pem/pem_err.c"
 #include "pem/pem_info.c"
@@ -434,23 +468,35 @@
 #include "pem/pem_sign.c"
 #endif
 #endif
+
 #ifdef CRYPTO_RAND_SUBSET
 #include "rand/md_rand.c"
 #include "rand/randfile.c"
 #endif
+
 #ifdef CRYPTO_RC_SUBSET
-#ifndef NO_RC4
+#ifndef NO_RC2
 #include "rc2/rc2_cbc.c"
 #include "rc2/rc2_ecb.c"
 #include "rc2/rc2_skey.c"
 #include "rc2/rc2cfb64.c"
 #include "rc2/rc2ofb64.c"
+#endif
+#ifndef NO_RC4
+#include "rc4/rc4_skey.c"
+#ifndef RC4_ASM
 #include "rc4/rc4_enc.c"
 #endif
 #endif
+#endif
+
+#ifdef CRYPTO_HMAC_SUBSET
+#include "hmac/hmac.c"
+#endif
+
 #ifdef CRYPTO_RSA_SUBSET
 #ifndef NO_RSA
-#include "rsa/rsa_enc.c"
+#include "rsa/rsa_eay.c"
 #include "rsa/rsa_err.c"
 #include "rsa/rsa_gen.c"
 #include "rsa/rsa_lib.c"
@@ -458,6 +504,7 @@
 #include "rsa/rsa_saos.c"
 #endif
 #endif
+
 #ifdef CRYPTO_SHA1_SUBSET
 #ifndef NO_SHA1
 #include "sha/sha1_one.c"
@@ -466,6 +513,7 @@
 #include "evp/m_sha1.c"
 #endif
 #endif
+
 #ifdef CRYPTO_SHA_SUBSET
 #ifndef NO_SHA
 #include "evp/m_dss.c"
@@ -474,12 +522,15 @@
 #include "evp/m_sha.c"
 #endif
 #endif
+
 #ifdef CRYPTO_STACK_SUBSET
 #include "stack/stack.c"
 #endif
+
 #ifdef CRYPTO_TXT_DB_SUBSET
 #include "txt_db/txt_db.c"
 #endif
+
 #ifdef CRYPTO_X509_SUBSET
 #include "x509/x509_cmp.c"
 #include "x509/x509_d2.c"
@@ -504,9 +555,11 @@
 #include "x509/v3_net.c"
 #include "x509/v3_x509.c"
 #endif
-#endif
-#ifdef CRYPTO_PKCS7_SUBSET /* I have an excplicit removal of 7 lines */
+
+
+#ifdef CRYPTO_PKCS7_SUBSET /* I have an explicit removal of 7 lines */
 #include "pkcs7/pk7_lib.c"
 #include "pkcs7/pkcs7err.c"
-#endif
+#include "pkcs7/pk7_doit.c"
+#endif /* CRYPTO_PKCS7_SUBSET */
 

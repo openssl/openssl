@@ -29,10 +29,13 @@ LIBSRC= encode.c digest.c evp_enc.c evp_key.c \
 	e_cfb_3d.c e_ofb_3d.c e_xcbc_d.c \
 	e_ecb_r2.c e_cbc_r2.c e_cfb_r2.c e_ofb_r2.c \
 	e_ecb_bf.c e_cbc_bf.c e_cfb_bf.c e_ofb_bf.c \
+	e_ecb_c.c e_cbc_c.c e_cfb_c.c e_ofb_c.c \
+	e_ecb_r5.c e_cbc_r5.c e_cfb_r5.c e_ofb_r5.c \
 	m_null.c m_md2.c m_md5.c m_sha.c m_sha1.c m_dss.c m_dss1.c m_mdc2.c \
-	p_open.c p_seal.c p_sign.c p_verify.c p_lib.c \
+	m_ripemd.c \
+	p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c \
 	bio_md.c bio_b64.c bio_enc.c $(ERRC).c e_null.c \
-	c_all.c
+	c_all.c evp_lib.c
 
 LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o \
 	e_ecb_d.o e_cbc_d.o e_cfb_d.o e_ofb_d.o \
@@ -41,10 +44,13 @@ LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o \
 	e_cfb_3d.o e_ofb_3d.o e_xcbc_d.o \
 	e_ecb_r2.o e_cbc_r2.o e_cfb_r2.o e_ofb_r2.o \
 	e_ecb_bf.o e_cbc_bf.o e_cfb_bf.o e_ofb_bf.o \
+	e_ecb_c.o e_cbc_c.o e_cfb_c.o e_ofb_c.o \
+	e_ecb_r5.o e_cbc_r5.o e_cfb_r5.o e_ofb_r5.o \
 	m_null.o m_md2.o m_md5.o m_sha.o m_sha1.o m_dss.o m_dss1.o m_mdc2.o \
-	p_open.o p_seal.o p_sign.o p_verify.o p_lib.o \
+	m_ripemd.o \
+	p_open.o p_seal.o p_sign.o p_verify.o p_lib.o p_enc.o p_dec.o \
 	bio_md.o bio_b64.o bio_enc.o $(ERRC).o e_null.o \
-	c_all.o
+	c_all.o evp_lib.o
 
 SRC= $(LIBSRC)
 
@@ -100,6 +106,6 @@ clean:
 
 errors:
 	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
-	perl ../err/err_genc.pl $(ERR).h $(ERRC).c
+	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

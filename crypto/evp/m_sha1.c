@@ -1,5 +1,5 @@
 /* crypto/evp/m_sha1.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -71,6 +71,8 @@ static EVP_MD sha1_md=
 	SHA1_Update,
 	SHA1_Final,
 	EVP_PKEY_RSA_method,
+	SHA_CBLOCK,
+	sizeof(EVP_MD *)+sizeof(SHA_CTX),
 	};
 
 EVP_MD *EVP_sha1()

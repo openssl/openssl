@@ -1,5 +1,5 @@
 /* crypto/evp/e_cfb_3d.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -80,6 +80,11 @@ static EVP_CIPHER d_ede_cfb_cipher2=
 	1,16,8,
 	des_ede_cfb_init_key,
 	des_ede_cfb_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
+	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
 	};
 
 static EVP_CIPHER d_ede3_cfb_cipher3=
@@ -88,6 +93,11 @@ static EVP_CIPHER d_ede3_cfb_cipher3=
 	1,24,8,
 	des_ede3_cfb_init_key,
 	des_ede_cfb_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
+	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
 	};
 
 EVP_CIPHER *EVP_des_ede_cfb()
@@ -106,18 +116,18 @@ unsigned char *key;
 unsigned char *iv;
 int enc;
 	{
-	ctx->c.des_cfb.num=0;
+	ctx->num=0;
 
 	if (iv != NULL)
-		memcpy(&(ctx->c.des_cfb.oiv[0]),iv,8);
-	memcpy(&(ctx->c.des_cfb.iv[0]),&(ctx->c.des_cfb.oiv[0]),8);
+		memcpy(&(ctx->oiv[0]),iv,8);
+	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
 		{
-		des_set_key((des_cblock *)key,ctx->c.des_cfb.ks);
-		des_set_key((des_cblock *)&(key[8]),ctx->c.des_cfb.ks2);
-		memcpy( (char *)ctx->c.des_cfb.ks3,
-			(char *)ctx->c.des_cfb.ks,
-			sizeof(ctx->c.des_cfb.ks));
+		des_set_key((des_cblock *)key,ctx->c.des_ede.ks1);
+		des_set_key((des_cblock *)&(key[8]),ctx->c.des_ede.ks2);
+		memcpy( (char *)ctx->c.des_ede.ks3,
+			(char *)ctx->c.des_ede.ks1,
+			sizeof(ctx->c.des_ede.ks1));
 		}
 	}
 
@@ -127,16 +137,16 @@ unsigned char *key;
 unsigned char *iv;
 int enc;
 	{
-	ctx->c.des_cfb.num=0;
+	ctx->num=0;
 
 	if (iv != NULL)
-		memcpy(&(ctx->c.des_cfb.oiv[0]),iv,8);
-	memcpy(&(ctx->c.des_cfb.iv[0]),&(ctx->c.des_cfb.oiv[0]),8);
+		memcpy(&(ctx->oiv[0]),iv,8);
+	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
 		{
-		des_set_key((des_cblock *)key,ctx->c.des_cfb.ks);
-		des_set_key((des_cblock *)&(key[8]),ctx->c.des_cfb.ks2);
-		des_set_key((des_cblock *)&(key[16]),ctx->c.des_cfb.ks3);
+		des_set_key((des_cblock *)key,ctx->c.des_ede.ks1);
+		des_set_key((des_cblock *)&(key[8]),ctx->c.des_ede.ks2);
+		des_set_key((des_cblock *)&(key[16]),ctx->c.des_ede.ks3);
 		}
 	}
 
@@ -148,9 +158,9 @@ unsigned int inl;
 	{
 	des_ede3_cfb64_encrypt(
 		in,out,(long)inl,
-		ctx->c.des_cfb.ks,
-		ctx->c.des_cfb.ks2,
-		ctx->c.des_cfb.ks3,
-		(des_cblock *)&(ctx->c.des_cfb.iv[0]),
-		&ctx->c.des_cfb.num,ctx->encrypt);
+		ctx->c.des_ede.ks1,
+		ctx->c.des_ede.ks2,
+		ctx->c.des_ede.ks3,
+		(des_cblock *)&(ctx->iv[0]),
+		&ctx->num,ctx->encrypt);
 	}

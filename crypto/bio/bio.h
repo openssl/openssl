@@ -1,5 +1,5 @@
 /* crypto/bio/bio.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -63,6 +63,8 @@
 extern "C" {
 #endif
 
+#include "crypto.h"
+
 /* These are the 'types' of BIOs */
 #define BIO_TYPE_NONE		0
 #define BIO_TYPE_MEM		(1|0x0400)
@@ -78,7 +80,7 @@ extern "C" {
 #define BIO_TYPE_BASE64		(11|0x0200)		/* filter */
 #define BIO_TYPE_CONNECT	(12|0x0400|0x0100)	/* socket - connect */
 #define BIO_TYPE_ACCEPT		(13|0x0400|0x0100)	/* socket for accept */
-#define BIO_TYPE_PROXY_CLIENT	(14|0x0400)		/* client proxy BIO */
+#define BIO_TYPE_PROXY_CLIENT	(14|0x0200)		/* client proxy BIO */
 #define BIO_TYPE_PROXY_SERVER	(15|0x0200)		/* server proxy BIO */
 #define BIO_TYPE_NBIO_TEST	(16|0x0200)		/* server proxy BIO */
 #define BIO_TYPE_NULL_FILTER	(17|0x0200)
@@ -107,6 +109,9 @@ extern "C" {
 #define BIO_CTRL_FLUSH		11  /* opt - 'flush' buffered output */
 #define BIO_CTRL_DUP		12  /* man - extra stuff for 'duped' BIO */
 #define BIO_CTRL_WPENDING	13  /* opt - number of bytes still to write */
+/* callback is int cb(BIO *bio,state,ret); */
+#define BIO_CTRL_SET_CALLBACK	14  /* opt - set callback function */
+#define BIO_CTRL_GET_CALLBACK	15  /* opt - set callback function */
 
 #define BIO_CTRL_SET_FILENAME	30	/* BIO_s_file special */
 
@@ -122,12 +127,24 @@ extern "C" {
 #define BIO_FLAGS_RWS (BIO_FLAGS_READ|BIO_FLAGS_WRITE|BIO_FLAGS_IO_SPECIAL)
 #define BIO_FLAGS_SHOULD_RETRY	0x08
 
+/* Used in BIO_gethostbyname() */
+#define BIO_GHBN_CTRL_HITS		1
+#define BIO_GHBN_CTRL_MISSES		2
+#define BIO_GHBN_CTRL_CACHE_SIZE	3
+#define BIO_GHBN_CTRL_GET_ENTRY		4
+#define BIO_GHBN_CTRL_FLUSH		5
+
 /* Mostly used in the SSL BIO */
-#define BIO_FLAGS_PROTOCOL_DELAYED_READ 0x10
-#define BIO_FLAGS_PROTOCOL_DELAYED_WRITE 0x20
-#define BIO_FLAGS_PROTOCOL_STARTUP	0x40
+/* Not used anymore
+ * #define BIO_FLAGS_PROTOCOL_DELAYED_READ 0x10
+ * #define BIO_FLAGS_PROTOCOL_DELAYED_WRITE 0x20
+ * #define BIO_FLAGS_PROTOCOL_STARTUP	0x40
+ */
+
+#define BIO_FLAGS_BASE64_NO_NL	0x100
 
 #define BIO_set_flags(b,f) ((b)->flags|=(f))
+#define BIO_get_flags(b) ((b)->flags)
 #define BIO_set_retry_special(b) \
 		((b)->flags|=(BIO_FLAGS_IO_SPECIAL|BIO_FLAGS_SHOULD_RETRY))
 #define BIO_set_retry_read(b) \
@@ -232,7 +249,7 @@ typedef struct bio_st
 	unsigned long num_read;
 	unsigned long num_write;
 
-	char *app_data;
+	CRYPTO_EX_DATA ex_data;
 	} BIO;
 
 typedef struct bio_f_buffer_ctx_struct
@@ -249,6 +266,17 @@ typedef struct bio_f_buffer_ctx_struct
 	int obuf_len;		/* how many bytes are in it */
 	int obuf_off;		/* write/read offset */
 	} BIO_F_BUFFER_CTX;
+
+/* connect BIO stuff */
+#define BIO_CONN_S_BEFORE		1
+#define BIO_CONN_S_GET_IP		2
+#define BIO_CONN_S_GET_PORT		3
+#define BIO_CONN_S_CREATE_SOCKET	4
+#define BIO_CONN_S_CONNECT		5
+#define BIO_CONN_S_OK			6
+#define BIO_CONN_S_BLOCKED_CONNECT	7
+#define BIO_CONN_S_NBIO			8
+#define BIO_CONN_get_param_hostname	BIO_ctrl
 
 #define BIO_number_read(b)	((b)->num_read)
 #define BIO_number_written(b)	((b)->num_write)
@@ -275,19 +303,40 @@ typedef struct bio_f_buffer_ctx_struct
 #define BIO_C_SSL_MODE				119
 #define BIO_C_GET_MD_CTX			120
 #define BIO_C_GET_PROXY_PARAM			121
+#define BIO_C_SET_BUFF_READ_DATA		122 /* data to read first */
+#define BIO_C_GET_CONNECT			123
+#define BIO_C_GET_ACCEPT			124
+#define BIO_C_SET_SSL_RENEGOTIATE_BYTES		125
+#define BIO_C_GET_SSL_NUM_RENEGOTIATES		126
+#define BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT	127
 
-#define BIO_set_app_data(s,arg)		((s)->app_data=(char *)arg)
-#define BIO_get_app_data(s)		((s)->app_data)
+#define BIO_set_app_data(s,arg)		BIO_set_ex_data(s,0,(char *)arg)
+#define BIO_get_app_data(s)		BIO_get_ex_data(s,0)
+
+int BIO_get_ex_num(BIO *bio);
+int BIO_set_ex_data(BIO *bio,int idx,char *data);
+char *BIO_get_ex_data(BIO *bio,int idx);
+void BIO_set_ex_free_func(BIO *bio,int idx,void (*cb)());
+int BIO_get_ex_new_index(long argl, char *argp, int (*new_func)(),
+	int (*dup_func)(), void (*free_func)());
 
 /* BIO_s_connect_socket() */
-#define BIO_set_hostname(b,name) BIO_ctrl(b,BIO_C_SET_CONNECT,0,(char *)name)
-#define BIO_set_port(b,port)	BIO_ctrl(b,BIO_C_SET_CONNECT,1,(char *)port)
+#define BIO_set_conn_hostname(b,name) BIO_ctrl(b,BIO_C_SET_CONNECT,0,(char *)name)
+#define BIO_set_conn_port(b,port) BIO_ctrl(b,BIO_C_SET_CONNECT,1,(char *)port)
+#define BIO_set_conn_ip(b,ip)	  BIO_ctrl(b,BIO_C_SET_CONNECT,2,(char *)ip)
+#define BIO_set_conn_int_port(b,port) BIO_ctrl(b,BIO_C_SET_CONNECT,3,(char *)port)
+#define BIO_get_conn_hostname(b)  BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,0)
+#define BIO_get_conn_port(b)      BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,1)
+#define BIO_get_conn_ip(b,ip) BIO_ptr_ctrl(b,BIO_C_SET_CONNECT,2)
+#define BIO_get_conn_int port(b,port) BIO_int_ctrl(b,BIO_C_SET_CONNECT,3,port)
+
 #define BIO_set_nbio(b,n)	BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL)
 
 /* BIO_s_accept_socket() */
 #define BIO_set_accept_port(b,name) BIO_ctrl(b,BIO_C_SET_ACCEPT,0,(char *)name)
+#define BIO_get_accept_port(b)	BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,0)
 /* #define BIO_set_nbio(b,n)	BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL) */
-#define BIO_set_nbio_accpet(b,n) BIO_ctrl(b,BIO_C_SET_ACCEPT,1,(n)?"a":NULL)
+#define BIO_set_nbio_accept(b,n) BIO_ctrl(b,BIO_C_SET_ACCEPT,1,(n)?"a":NULL)
 #define BIO_set_accept_bios(b,bio) BIO_ctrl(b,BIO_C_SET_ACCEPT,2,(char *)bio)
 
 #define BIO_do_connect(b)	BIO_do_handshake(b)
@@ -302,12 +351,14 @@ typedef struct bio_f_buffer_ctx_struct
 /* BIO *BIO_get_filter_bio(BIO *bio); */
 #define BIO_set_proxy_cb(b,cb) BIO_ctrl(b,BIO_C_SET_PROXY_PARAM,3,(char *)(cb))
 #define BIO_set_proxy_header(b,sk) BIO_ctrl(b,BIO_C_SET_PROXY_PARAM,4,(char *)sk)
+#define BIO_set_no_connect_return(b,bool) BIO_int_ctrl(b,BIO_C_SET_PROXY_PARAM,5,bool)
 
 #define BIO_get_proxy_header(b,skp) BIO_ctrl(b,BIO_C_GET_PROXY_PARAM,0,(char *)skp)
 #define BIO_get_proxies(b,pxy_p) BIO_ctrl(b,BIO_C_GET_PROXY_PARAM,1,(char *)(pxy_p))
 #define BIO_get_url(b,url)	BIO_ctrl(b,BIO_C_GET_PROXY_PARAM,2,(char *)(url))
+#define BIO_get_no_connect_return(b)	BIO_ctrl(b,BIO_C_GET_PROXY_PARAM,5,NULL)
 
-#define BIO_set_fd(b,fd,c)	BIO_ctrl_int(b,BIO_C_SET_FD,c,fd)
+#define BIO_set_fd(b,fd,c)	BIO_int_ctrl(b,BIO_C_SET_FD,c,fd)
 #define BIO_get_fd(b,c)		BIO_ctrl(b,BIO_C_GET_FD,0,(char *)c)
 
 #define BIO_set_fp(b,fp,c)	BIO_ctrl(b,BIO_C_SET_FILE_PTR,c,(char *)fp)
@@ -320,9 +371,19 @@ typedef struct bio_f_buffer_ctx_struct
 #define BIO_append_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \
 		BIO_CLOSE|BIO_FP_APPEND,name)
 
+/* WARNING WARNING, this ups the reference count on the read bio of the
+ * SSL structure.  This is because the ssl read BIO is now pointed to by
+ * the next_bio field in the bio.  So when you free the BIO, make sure
+ * you are doing a BIO_free_all() to catch the underlying BIO. */
 #define BIO_set_ssl(b,ssl,c)	BIO_ctrl(b,BIO_C_SET_SSL,c,(char *)ssl)
 #define BIO_get_ssl(b,sslp)	BIO_ctrl(b,BIO_C_GET_SSL,0,(char *)sslp)
 #define BIO_set_ssl_mode(b,client)	BIO_ctrl(b,BIO_C_SSL_MODE,client,NULL)
+#define BIO_set_ssl_renegotiate_bytes(b,num) \
+	BIO_ctrl(b,BIO_C_SET_SSL_RENEGOTIATE_BYTES,num,NULL);
+#define BIO_get_num_renegotiates(b) \
+	BIO_ctrl(b,BIO_C_SET_SSL_NUM_RENEGOTIATES,0,NULL);
+#define BIO_set_ssl_renegotiate_timeout(b,seconds) \
+	BIO_ctrl(b,BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT,seconds,NULL);
 
 /* defined in evp.h */
 /* #define BIO_set_md(b,md)	BIO_ctrl(b,BIO_C_SET_MD,1,(char *)md) */
@@ -333,11 +394,12 @@ typedef struct bio_f_buffer_ctx_struct
 /* For the BIO_f_buffer() type */
 #define BIO_get_buffer_num_lines(b)	BIO_ctrl(b,BIO_C_GET_BUFF_NUM_LINES,0,NULL)
 #define BIO_set_buffer_size(b,size)	BIO_ctrl(b,BIO_C_SET_BUFF_SIZE,size,NULL)
-#define BIO_set_read_buffer_size(b,size) BIO_ctrl_int(b,BIO_C_SET_BUFF_SIZE,size,0)
-#define BIO_set_write_buffer_size(b,size) BIO_ctrl_int(b,BIO_C_SET_BUFF_SIZE,size,1)
+#define BIO_set_read_buffer_size(b,size) BIO_int_ctrl(b,BIO_C_SET_BUFF_SIZE,size,0)
+#define BIO_set_write_buffer_size(b,size) BIO_int_ctrl(b,BIO_C_SET_BUFF_SIZE,size,1)
+#define BIO_set_buffer_read_data(b,buf,num) BIO_ctrl(b,BIO_C_SET_BUFF_READ_DATA,num,buf)
 
 /* Don't use the next one unless you know what you are doing :-) */
-#define BIO_dup_state(b,ret)	BIO_ctrl(b,BIO_CTRL_DUP,0,(char *)ret)
+#define BIO_dup_state(b,ret)	BIO_ctrl(b,BIO_CTRL_DUP,0,(char *)(ret))
 
 #define BIO_reset(b)		(int)BIO_ctrl(b,BIO_CTRL_RESET,0,NULL)
 #define BIO_eof(b)		(int)BIO_ctrl(b,BIO_CTRL_EOF,0,NULL)
@@ -346,9 +408,49 @@ typedef struct bio_f_buffer_ctx_struct
 #define BIO_pending(b)		(int)BIO_ctrl(b,BIO_CTRL_PENDING,0,NULL)
 #define BIO_wpending(b)		(int)BIO_ctrl(b,BIO_CTRL_WPENDING,0,NULL)
 #define BIO_flush(b)		(int)BIO_ctrl(b,BIO_CTRL_FLUSH,0,NULL)
+#define BIO_get_info_callback(b,cbp) (int)BIO_ctrl(b,BIO_CTRL_GET_CALLBACK,0,(char *)cbp)
+#define BIO_set_info_callback(b,cb) (int)BIO_ctrl(b,BIO_CTRL_SET_CALLBACK,0,(char *)cb)
 
 /* For the BIO_f_buffer() type */
 #define BIO_buffer_get_num_lines(b) BIO_ctrl(b,BIO_CTRL_GET,0,NULL)
+
+#ifdef NO_STDIO
+#define NO_FP_API
+#endif
+
+#ifndef NOPROTO
+#  if defined(WIN16) && defined(_WINDLL)
+BIO_METHOD *BIO_s_file_internal(void);
+BIO *BIO_new_file_internal(char *filename, char *mode);
+BIO *BIO_new_fp_internal(FILE *stream, int close_flag);
+#    define BIO_s_file	BIO_s_file_internal
+#    define BIO_new_file	BIO_new_file_internal
+#    define BIO_new_fp	BIO_new_fp_internal
+#  else /* FP_API */
+BIO_METHOD *BIO_s_file(void );
+BIO *BIO_new_file(char *filename, char *mode);
+BIO *BIO_new_fp(FILE *stream, int close_flag);
+#    define BIO_s_file_internal		BIO_s_file
+#    define BIO_new_file_internal	BIO_new_file
+#    define BIO_new_fp_internal		BIO_s_file
+#  endif /* FP_API */
+#else
+#  if defined(WIN16) && defined(_WINDLL)
+BIO_METHOD *BIO_s_file_internal();
+BIO *BIO_new_file_internal();
+BIO *BIO_new_fp_internal();
+#    define BIO_s_file	BIO_s_file_internal
+#    define BIO_new_file	BIO_new_file_internal
+#    define BIO_new_fp	BIO_new_fp_internal
+#  else /* FP_API */
+BIO_METHOD *BIO_s_file();
+BIO *BIO_new_file();
+BIO *BIO_new_fp();
+#    define BIO_s_file_internal		BIO_s_file
+#    define BIO_new_file_internal	BIO_new_file
+#    define BIO_new_fp_internal		BIO_s_file
+#  endif /* FP_API */
+#endif
 
 #ifndef NOPROTO
 BIO *	BIO_new(BIO_METHOD *type);
@@ -359,7 +461,8 @@ int	BIO_gets(BIO *bp,char *buf, int size);
 int	BIO_write(BIO *b, char *data, int len);
 int	BIO_puts(BIO *bp,char *buf);
 long	BIO_ctrl(BIO *bp,int cmd,long larg,char *parg);
-long	BIO_ctrl_int(BIO *bp,int cmd,long larg,int iarg);
+char *	BIO_ptr_ctrl(BIO *bp,int cmd,long larg);
+long	BIO_int_ctrl(BIO *bp,int cmd,long larg,int iarg);
 BIO *	BIO_push(BIO *b,BIO *append);
 BIO *	BIO_pop(BIO *b);
 void	BIO_free_all(BIO *a);
@@ -374,12 +477,6 @@ long BIO_debug_callback(BIO *bio,int cmd,char *argp,int argi,
 #else
 long _far _loadds BIO_debug_callback(BIO *bio,int cmd,char *argp,int argi,
 	long argl,long ret);
-#endif
-
-#if !defined(WIN16) || defined(APPS_WIN16)
-BIO_METHOD *BIO_s_file(void);
-#else
-BIO_METHOD *BIO_s_file_internal_w16(void);
 #endif
 
 BIO_METHOD *BIO_s_mem(void);
@@ -411,16 +508,14 @@ int BIO_set_tcp_ndelay(int sock,int turn_on);
 
 void ERR_load_BIO_strings(void );
 
-#if !defined(WIN16) || defined(APPS_WIN16)
-BIO *BIO_new_file(char *filename, char *mode);
-BIO *BIO_new_fp(FILE *stream, int close_flag);
-#endif
 BIO *BIO_new_socket(int sock, int close_flag);
 BIO *BIO_new_fd(int fd, int close_flag);
 BIO *BIO_new_connect(char *host_port);
 BIO *BIO_new_accept(char *host_port);
 
 void BIO_copy_next_retry(BIO *b);
+
+long BIO_ghbn_ctrl(int cmd,int iarg,char *parg);
 
 #else
 
@@ -431,8 +526,9 @@ int	BIO_read();
 int	BIO_gets();
 int	BIO_write();
 int	BIO_puts();
+char *	BIO_ptr_ctrl();
 long	BIO_ctrl();
-long	BIO_ctrl_int();
+long	BIO_int_ctrl();
 BIO *	BIO_push();
 BIO *	BIO_pop();
 void	BIO_free_all();
@@ -445,12 +541,6 @@ BIO *	BIO_dup_chain();
 long BIO_debug_callback();
 #else
 long _far _loadds BIO_debug_callback();
-#endif
-
-#if !defined(WIN16) || defined(APPS_WIN16)
-BIO_METHOD *BIO_s_file();
-#else
-BIO_METHOD *BIO_s_file_internal_w16();
 #endif
 
 BIO_METHOD *BIO_s_mem();
@@ -482,16 +572,14 @@ int BIO_set_tcp_ndelay();
 
 void ERR_load_BIO_strings();
 
-#if !defined(WIN16) || defined(APPS_WIN16)
-BIO *BIO_new_file();
-BIO *BIO_new_fp();
-#endif
 BIO *BIO_new_socket();
 BIO *BIO_new_fd();
 BIO *BIO_new_connect();
 BIO *BIO_new_accept();
 
 void BIO_copy_next_retry();
+
+int BIO_ghbn_ctrl();
 
 #endif
 
@@ -562,10 +650,12 @@ int BIO_printf();
 #define BIO_F_BIO_READ					 110
 #define BIO_F_BIO_SOCK_INIT				 111
 #define BIO_F_BIO_WRITE					 112
-#define BIO_F_CONN_STATE				 113
-#define BIO_F_FILE_CTRL					 114
-#define BIO_F_MEM_WRITE					 115
-#define BIO_F_WSASTARTUP				 116
+#define BIO_F_BUFFER_CTRL				 113
+#define BIO_F_CONN_STATE				 114
+#define BIO_F_FILE_CTRL					 115
+#define BIO_F_MEM_WRITE					 116
+#define BIO_F_SSL_NEW					 117
+#define BIO_F_WSASTARTUP				 118
 
 /* Reason codes. */
 #define BIO_R_ACCEPT_ERROR				 100
@@ -577,18 +667,19 @@ int BIO_printf();
 #define BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET	 106
 #define BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET		 107
 #define BIO_R_INVALID_IP_ADDRESS			 108
-#define BIO_R_NBIO_CONNECT_ERROR			 109
-#define BIO_R_NO_ACCEPT_PORT_SPECIFIED			 110
-#define BIO_R_NO_HOSTHNAME_SPECIFIED			 111
-#define BIO_R_NO_PORT_DEFINED				 112
-#define BIO_R_NO_PORT_SPECIFIED				 113
-#define BIO_R_NULL_PARAMETER				 114
-#define BIO_R_UNABLE_TO_BIND_SOCKET			 115
-#define BIO_R_UNABLE_TO_CREATE_SOCKET			 116
-#define BIO_R_UNABLE_TO_LISTEN_SOCKET			 117
-#define BIO_R_UNINITALISED				 118
-#define BIO_R_UNSUPPORTED_METHOD			 119
-#define BIO_R_WSASTARTUP				 120
+#define BIO_R_KEEPALIVE					 109
+#define BIO_R_NBIO_CONNECT_ERROR			 110
+#define BIO_R_NO_ACCEPT_PORT_SPECIFIED			 111
+#define BIO_R_NO_HOSTHNAME_SPECIFIED			 112
+#define BIO_R_NO_PORT_DEFINED				 113
+#define BIO_R_NO_PORT_SPECIFIED				 114
+#define BIO_R_NULL_PARAMETER				 115
+#define BIO_R_UNABLE_TO_BIND_SOCKET			 116
+#define BIO_R_UNABLE_TO_CREATE_SOCKET			 117
+#define BIO_R_UNABLE_TO_LISTEN_SOCKET			 118
+#define BIO_R_UNINITALISED				 119
+#define BIO_R_UNSUPPORTED_METHOD			 120
+#define BIO_R_WSASTARTUP				 121
  
 #ifdef  __cplusplus
 }

@@ -1,5 +1,5 @@
 /* apps/s_server.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -61,7 +61,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef WIN16
+#ifdef NO_STDIO
 #define APPS_WIN16
 #endif
 #include "lhash.h"
@@ -82,8 +82,11 @@ static void close_accept_socket(void );
 static void sv_usage(void);
 static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp,SSL_CTX *ctx);
+#ifndef NO_DH
 static DH *load_dh_param(void );
 static DH *get_dh512(void);
+#endif
+/* static void s_server_init(void);*/
 #else
 static RSA MS_CALLBACK *tmp_rsa_cb();
 static int sv_body();
@@ -92,8 +95,11 @@ static void close_accept_socket();
 static void sv_usage();
 static int init_ssl_connection();
 static void print_stats();
+#ifndef NO_DH
 static DH *load_dh_param();
 static DH *get_dh512();
+#endif
+/* static void s_server_init(); */
 #endif
 
 
@@ -101,6 +107,7 @@ static DH *get_dh512();
 #define S_ISDIR(a)	(((a) & _S_IFMT) == _S_IFDIR)
 #endif
 
+#ifndef NO_DH
 static unsigned char dh512_p[]={
 	0xDA,0x58,0x3C,0x16,0xD9,0x85,0x22,0x89,0xD0,0xE4,0xAF,0x75,
 	0x6F,0x4C,0xCA,0x92,0xDD,0x4B,0xE5,0x33,0xB8,0x04,0xFB,0x0F,
@@ -117,15 +124,14 @@ static DH *get_dh512()
 	{
 	DH *dh=NULL;
 
-#ifndef NO_DH
 	if ((dh=DH_new()) == NULL) return(NULL);
 	dh->p=BN_bin2bn(dh512_p,sizeof(dh512_p),NULL);
 	dh->g=BN_bin2bn(dh512_g,sizeof(dh512_g),NULL);
 	if ((dh->p == NULL) || (dh->g == NULL))
 		return(NULL);
-#endif
 	return(dh);
 	}
+#endif
 
 /* static int load_CA(SSL_CTX *ctx, char *file);*/
 
@@ -142,8 +148,9 @@ static int accept_socket= -1;
 extern int verify_depth;
 
 static char *cipher=NULL;
-int verify=SSL_VERIFY_NONE;
-char *s_cert_file=TEST_CERT,*s_key_file=NULL;
+static int s_server_verify=SSL_VERIFY_NONE;
+static char *s_cert_file=TEST_CERT,*s_key_file=NULL;
+static char *s_dcert_file=NULL,*s_dkey_file=NULL;
 #ifdef FIONBIO
 static int s_nbio=0;
 #endif
@@ -155,11 +162,33 @@ static BIO *bio_s_out=NULL;
 static int s_debug=0;
 static int s_quiet=0;
 
+#if 0
+static void s_server_init()
+	{
+	cipher=NULL;
+	s_server_verify=SSL_VERIFY_NONE;
+	s_dcert_file=NULL;
+	s_dkey_file=NULL;
+	s_cert_file=TEST_CERT;
+	s_key_file=NULL;
+#ifdef FIONBIO
+	s_nbio=0;
+#endif
+	s_nbio_test=0;
+	ctx=NULL;
+	www=0;
+
+	bio_s_out=NULL;
+	s_debug=0;
+	s_quiet=0;
+	}
+#endif
+
 static void sv_usage()
 	{
 	BIO_printf(bio_err,"usage: s_server [args ...]\n");
 	BIO_printf(bio_err,"\n");
-	BIO_printf(bio_err," -accpet arg   - port to accept on (default is %d\n",PORT);
+	BIO_printf(bio_err," -accept arg   - port to accept on (default is %d\n",PORT);
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -Verify arg   - turn on peer certificate verification, must have a cert.\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use, PEM format assumed\n");
@@ -180,14 +209,18 @@ static void sv_usage()
 	BIO_printf(bio_err," -no_tmp_rsa   - Do not generate a tmp RSA key\n");
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - Just talk SSLv3\n");
+	BIO_printf(bio_err," -tls1         - Just talk TLSv1\n");
+	BIO_printf(bio_err," -no_ssl2      - Just disable SSLv2\n");
+	BIO_printf(bio_err," -no_ssl3      - Just disable SSLv3\n");
+	BIO_printf(bio_err," -no_tls1      - Just disable TLSv1\n");
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatability\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Returns requested page from to a 'GET <path> HTTP/1.0'\n");
 	}
 
-static int local_argc;
+static int local_argc=0;
 static char **local_argv;
-static int hack;
+static int hack=0;
 
 int MAIN(argc, argv)
 int argc;
@@ -197,10 +230,13 @@ char *argv[];
 	char *CApath=NULL,*CAfile=NULL;
 	int badop=0,bugs=0;
 	int ret=1;
+	int off=0;
 	int no_tmp_rsa=0,nocert=0;
 	int state=0;
 	SSL_METHOD *meth=NULL;
+#ifndef NO_DH
 	DH *dh=NULL;
+#endif
 
 #if !defined(NO_SSL2) && !defined(NO_SSL3)
 	meth=SSLv23_server_method();
@@ -240,14 +276,14 @@ char *argv[];
 			}
 		else if	(strcmp(*argv,"-verify") == 0)
 			{
-			verify=SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE;
+			s_server_verify=SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE;
 			if (--argc < 1) goto bad;
 			verify_depth=atoi(*(++argv));
 			BIO_printf(bio_err,"verify depth is %d\n",verify_depth);
 			}
 		else if	(strcmp(*argv,"-Verify") == 0)
 			{
-			verify=SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT|
+			s_server_verify=SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT|
 				SSL_VERIFY_CLIENT_ONCE;
 			if (--argc < 1) goto bad;
 			verify_depth=atoi(*(++argv));
@@ -262,6 +298,16 @@ char *argv[];
 			{
 			if (--argc < 1) goto bad;
 			s_key_file= *(++argv);
+			}
+		else if	(strcmp(*argv,"-dcert") == 0)
+			{
+			if (--argc < 1) goto bad;
+			s_dcert_file= *(++argv);
+			}
+		else if	(strcmp(*argv,"-dkey") == 0)
+			{
+			if (--argc < 1) goto bad;
+			s_dkey_file= *(++argv);
 			}
 		else if (strcmp(*argv,"-nocert") == 0)
 			{
@@ -309,6 +355,12 @@ char *argv[];
 			{ www=1; }
 		else if	(strcmp(*argv,"-WWW") == 0)
 			{ www=2; }
+		else if	(strcmp(*argv,"-no_ssl2") == 0)
+			{ off|=SSL_OP_NO_SSLv2; }
+		else if	(strcmp(*argv,"-no_ssl3") == 0)
+			{ off|=SSL_OP_NO_SSLv3; }
+		else if	(strcmp(*argv,"-no_tls1") == 0)
+			{ off|=SSL_OP_NO_TLSv1; }
 #ifndef NO_SSL2
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			{ meth=SSLv2_server_method(); }
@@ -316,6 +368,10 @@ char *argv[];
 #ifndef NO_SSL3
 		else if	(strcmp(*argv,"-ssl3") == 0)
 			{ meth=SSLv3_server_method(); }
+#endif
+#ifndef NO_TLS1
+		else if	(strcmp(*argv,"-tls1") == 0)
+			{ meth=TLSv1_server_method(); }
 #endif
 		else
 			{
@@ -352,6 +408,8 @@ bad:
 		{
 		s_cert_file=NULL;
 		s_key_file=NULL;
+		s_dcert_file=NULL;
+		s_dkey_file=NULL;
 		}
 
 	SSL_load_error_strings();
@@ -364,11 +422,15 @@ bad:
 		goto end;
 		}
 
+	SSL_CTX_set_quiet_shutdown(ctx,1);
 	if (bugs) SSL_CTX_set_options(ctx,SSL_OP_ALL);
 	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
+	SSL_CTX_set_options(ctx,off);
 	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NON_EXPORT_FIRST);
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
+
+	SSL_CTX_sess_set_cache_size(ctx,128);
 
 #if 0
 	if (cipher == NULL) cipher=getenv("SSL_CIPHER");
@@ -385,9 +447,9 @@ bad:
 	if ((!SSL_CTX_load_verify_locations(ctx,CAfile,CApath)) ||
 		(!SSL_CTX_set_default_verify_paths(ctx)))
 		{
-		BIO_printf(bio_err,"X509_load_verify_locations\n");
+		/* BIO_printf(bio_err,"X509_load_verify_locations\n"); */
 		ERR_print_errors(bio_err);
-		goto end;
+		/* goto end; */
 		}
 
 #ifndef NO_DH
@@ -410,6 +472,11 @@ bad:
 	
 	if (!set_cert_stuff(ctx,s_cert_file,s_key_file))
 		goto end;
+	if (s_dcert_file != NULL)
+		{
+		if (!set_cert_stuff(ctx,s_dcert_file,s_dkey_file))
+			goto end;
+		}
 
 #if 1
 	SSL_CTX_set_tmp_rsa_callback(ctx,tmp_rsa_cb);
@@ -435,7 +502,7 @@ bad:
 
 	if (cipher != NULL)
 		SSL_CTX_set_cipher_list(ctx,cipher);
-	SSL_CTX_set_verify(ctx,verify,verify_callback);
+	SSL_CTX_set_verify(ctx,s_server_verify,verify_callback);
 
 	SSL_CTX_set_client_CA_list(ctx,SSL_load_client_CA_file(s_cert_file));
 
@@ -464,16 +531,23 @@ SSL_CTX *ssl_ctx;
 		SSL_CTX_sess_number(ssl_ctx));
 	BIO_printf(bio,"%4d client connects (SSL_connect())\n",
 		SSL_CTX_sess_connect(ssl_ctx));
+	BIO_printf(bio,"%4d client renegotiates (SSL_connect())\n",
+		SSL_CTX_sess_connect_renegotiate(ssl_ctx));
 	BIO_printf(bio,"%4d client connects that finished\n",
 		SSL_CTX_sess_connect_good(ssl_ctx));
 	BIO_printf(bio,"%4d server accepts (SSL_accept())\n",
 		SSL_CTX_sess_accept(ssl_ctx));
+	BIO_printf(bio,"%4d server renegotiates (SSL_accept())\n",
+		SSL_CTX_sess_accept_renegotiate(ssl_ctx));
 	BIO_printf(bio,"%4d server accepts that finished\n",
 		SSL_CTX_sess_accept_good(ssl_ctx));
 	BIO_printf(bio,"%4d session cache hits\n",SSL_CTX_sess_hits(ssl_ctx));
 	BIO_printf(bio,"%4d session cache misses\n",SSL_CTX_sess_misses(ssl_ctx));
 	BIO_printf(bio,"%4d session cache timeouts\n",SSL_CTX_sess_timeouts(ssl_ctx));
 	BIO_printf(bio,"%4d callback cache hits\n",SSL_CTX_sess_cb_hits(ssl_ctx));
+	BIO_printf(bio,"%4d cache full overflows (%d allowed)\n",
+		SSL_CTX_sess_cache_full(ssl_ctx),
+		SSL_CTX_sess_get_cache_size(ssl_ctx));
 	}
 
 static int sv_body(hostname, s)
@@ -500,7 +574,8 @@ int s;
 
 		if (!s_quiet)
 			BIO_printf(bio_err,"turning on non blocking io\n");
-		socket_ioctl(s,FIONBIO,&sl);
+		if (BIO_socket_ioctl(s,FIONBIO,&sl) < 0)
+			ERR_print_errors(bio_err);
 		}
 #endif
 
@@ -539,7 +614,7 @@ int s;
 		if (i <= 0) continue;
 		if (FD_ISSET(fileno(stdin),&readfds))
 			{
-			i=read(fileno(stdin),buf,BUFSIZZ);
+			i=read(fileno(stdin),buf,128/*BUFSIZZ*/);
 			if (!s_quiet)
 				{
 				if ((i <= 0) || (buf[0] == 'Q'))
@@ -558,18 +633,24 @@ int s;
 					ret= -11;*/
 					goto err;
 					}
-				if (buf[0] == 'r')
+				if ((buf[0] == 'r') && 
+					((buf[1] == '\n') || (buf[1] == '\r')))
 					{
 					SSL_renegotiate(con);
+					i=SSL_do_handshake(con);
+					printf("SSL_do_handshake -> %d\n",i);
 					i=0; /*13; */
 					continue;
 					strcpy(buf,"server side RE-NEGOTIATE\n");
 					}
-				if (buf[0] == 'R')
+				if ((buf[0] == 'R') &&
+					((buf[1] == '\0') || (buf[1] == '\r')))
 					{
 					SSL_set_verify(con,
 						SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE,NULL);
 					SSL_renegotiate(con);
+					i=SSL_do_handshake(con);
+					printf("SSL_do_handshake -> %d\n",i);
 					i=0; /* 13; */
 					continue;
 					strcpy(buf,"server side RE-NEGOTIATE asking for client cert\n");
@@ -588,19 +669,27 @@ int s;
 			for (;;)
 				{
 				/* should do a select for the write */
-				k=SSL_write(con,&(buf[l]),(unsigned int)i);
-				if (
-#ifdef FIONBIO
-					s_nbio &&
+#ifdef RENEG
+{ static count=0; if (++count == 100) { count=0; SSL_renegotiate(con); } }
 #endif
-					BIO_sock_should_retry(k))
+				k=SSL_write(con,&(buf[l]),(unsigned int)i);
+				switch (SSL_get_error(con,k))
 					{
+				case SSL_ERROR_NONE:
+					break;
+				case SSL_ERROR_WANT_WRITE:
+				case SSL_ERROR_WANT_READ:
+				case SSL_ERROR_WANT_X509_LOOKUP:
 					BIO_printf(bio_s_out,"Write BLOCK\n");
-					continue;
-					}
-				if (k <= 0)
-					{
+					break;
+				case SSL_ERROR_SYSCALL:
+				case SSL_ERROR_SSL:
+					BIO_printf(bio_s_out,"ERROR\n");
 					ERR_print_errors(bio_err);
+					ret=1;
+					goto err;
+					break;
+				case SSL_ERROR_ZERO_RETURN:
 					BIO_printf(bio_s_out,"DONE\n");
 					ret=1;
 					goto err;
@@ -629,25 +718,29 @@ int s;
 				}
 			else
 				{
-				i=SSL_read(con,(char *)buf,BUFSIZZ);
-				if ((i <= 0) &&
-#ifdef FIONBIO
-					s_nbio &&
-#endif
-					BIO_sock_should_retry(i))
+				i=SSL_read(con,(char *)buf,128 /*BUFSIZZ */);
+				switch (SSL_get_error(con,i))
 					{
+				case SSL_ERROR_NONE:
+					write(fileno(stdout),buf,
+						(unsigned int)i);
+					break;
+				case SSL_ERROR_WANT_WRITE:
+				case SSL_ERROR_WANT_READ:
+				case SSL_ERROR_WANT_X509_LOOKUP:
 					BIO_printf(bio_s_out,"Read BLOCK\n");
-					}
-				else if (i <= 0)
-					{
+					break;
+				case SSL_ERROR_SYSCALL:
+				case SSL_ERROR_SSL:
+					BIO_printf(bio_s_out,"ERROR\n");
 					ERR_print_errors(bio_err);
+					ret=1;
+					goto err;
+				case SSL_ERROR_ZERO_RETURN:
 					BIO_printf(bio_s_out,"DONE\n");
 					ret=1;
 					goto err;
 					}
-				else
-					write(fileno(stdout),buf,
-						(unsigned int)i);
 				}
 			}
 		}
@@ -685,7 +778,7 @@ SSL *con;
 	int i;
 	char *str;
 	X509 *peer;
-	int verify_error;
+	long verify_error;
 	MS_STATIC char buf[BUFSIZ];
 
 	if ((i=SSL_accept(con)) <= 0)
@@ -730,20 +823,20 @@ SSL *con;
 	return(1);
 	}
 
+#ifndef NO_DH
 static DH *load_dh_param()
 	{
 	DH *ret=NULL;
 	BIO *bio;
 
-#ifndef NO_DH
 	if ((bio=BIO_new_file(DH_PARAM,"r")) == NULL)
 		goto err;
 	ret=PEM_read_bio_DHparams(bio,NULL,NULL);
 err:
 	if (bio != NULL) BIO_free(bio);
-#endif
 	return(ret);
 	}
+#endif
 
 #if 0
 static int load_CA(ctx,file)
@@ -779,6 +872,7 @@ int s;
 	SSL *con;
 	SSL_CIPHER *c;
 	BIO *io,*ssl_bio,*sbio;
+	long total_bytes;
 
 	io=BIO_new(BIO_f_buffer());
 	ssl_bio=BIO_new(BIO_f_ssl());
@@ -787,16 +881,17 @@ int s;
 #ifdef FIONBIO	
 	if (s_nbio)
 		{
-		unsigned int long sl=1;
+		unsigned long sl=1;
 
 		if (!s_quiet)
 			BIO_printf(bio_err,"turning on non blocking io\n");
-		socket_ioctl(s,FIONBIO,&sl);
+		if (BIO_socket_ioctl(s,FIONBIO,&sl) < 0)
+			ERR_print_errors(bio_err);
 		}
 #endif
 
 	/* lets make the output buffer a reasonable size */
-	if (!BIO_set_write_buffer_size(io,16*1024)) goto err;
+	if (!BIO_set_write_buffer_size(io,253 /*16*1024*/)) goto err;
 
 	if ((con=(SSL *)SSL_new(ctx)) == NULL) goto err;
 
@@ -875,14 +970,15 @@ int s;
 
 		/* else we have data */
 		if (	((www == 1) && (strncmp("GET ",buf,4) == 0)) ||
-			((www == 2) && (strncmp("GET stats ",buf,10) == 0)))
+			((www == 2) && (strncmp("GET /stats ",buf,10) == 0)))
 			{
 			char *p;
 			X509 *peer;
 			STACK *sk;
-			static char *space="                ";
+			static char *space="                          ";
 
 			BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
+			BIO_puts(io,"<HTML><BODY BGCOLOR=ffffff>\n");
 			BIO_puts(io,"<pre>\n");
 /*			BIO_puts(io,SSLeay_version(SSLEAY_VERSION));*/
 			BIO_puts(io,"\n");
@@ -901,10 +997,10 @@ int s;
 			for (i=0; i<j; i++)
 				{
 				c=(SSL_CIPHER *)sk_value(sk,i);
-				BIO_printf(io,"%s:%-25s",
+				BIO_printf(io,"%-11s:%-25s",
 					SSL_CIPHER_get_version(c),
 					SSL_CIPHER_get_name(c));
-				if ((((i+1)%3) == 0) && (i+1 != j))
+				if ((((i+1)%2) == 0) && (i+1 != j))
 					BIO_puts(io,"\n");
 				}
 			BIO_puts(io,"\n");
@@ -917,7 +1013,7 @@ int s;
 					{
 					if (*p == ':')
 						{
-						BIO_write(io,space,15-j);
+						BIO_write(io,space,26-j);
 						i++;
 						j=0;
 						BIO_write(io,((i%3)?" ":"\n"),1);
@@ -935,7 +1031,7 @@ int s;
 				?"---\nReused, "
 				:"---\nNew, "));
 			c=SSL_get_current_cipher(con);
-			BIO_printf(io,"SSLv%d, Cipher is %s\n",
+			BIO_printf(io,"%s, Cipher is %s\n",
 				SSL_CIPHER_get_version(c),
 				SSL_CIPHER_get_name(c));
 			SSL_SESSION_print(io,SSL_get_session(con));
@@ -951,6 +1047,7 @@ int s;
 				}
 			else
 				BIO_puts(io,"no client certificate available\n");
+			BIO_puts(io,"</BODY></HTML>\r\n\r\n");
 			break;
 			}
 		else if ((www == 2) && (strncmp("GET ",buf,4) == 0))
@@ -969,6 +1066,7 @@ int s;
 					(strncmp(&(e[-1]),"/../",4) == 0))
 					dot=1;
 				}
+			
 
 			if (*e == '\0')
 				{
@@ -1028,18 +1126,31 @@ int s;
 			else
 				BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n");
 			/* send the file */
+			total_bytes=0;
 			for (;;)
 				{
 				i=BIO_read(file,buf,1024);
 				if (i <= 0) break;
 
+				total_bytes+=i;
+				fprintf(stderr,"%d\n",i);
+				if (total_bytes > 3*1024)
+					{
+					total_bytes=0;
+					fprintf(stderr,"RENEGOTIATE\n");
+					SSL_renegotiate(con);
+					}
+
 				for (j=0; j<i; )
 					{
+#ifdef RENEG
+{ static count=0; if (++count == 13) { SSL_renegotiate(con); } }
+#endif
 					k=BIO_write(io,&(buf[j]),i-j);
 					if (k <= 0)
 						{
 						if (!BIO_should_retry(io))
-							break;
+							goto write_error;
 						else
 							{
 							BIO_printf(bio_s_out,"rwrite W BLOCK\n");
@@ -1051,6 +1162,7 @@ int s;
 						}
 					}
 				}
+write_error:
 			BIO_free(file);
 			break;
 			}
@@ -1068,12 +1180,13 @@ int s;
 			break;
 		}
 end:
-#if 0
+#if 1
 	/* make sure we re-use sessions */
 	SSL_set_shutdown(con,SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
 #else
 	/* This kills performace */
-	SSL_shutdown(con);
+/*	SSL_shutdown(con); A shutdown gets sent in the
+ *	BIO_free_all(io) procession */
 #endif
 
 err:
@@ -1082,7 +1195,7 @@ err:
 		BIO_printf(bio_s_out,"ACCEPT\n");
 
 	if (io != NULL) BIO_free_all(io);
-/*	if (ssl_bio != NULL) BIO_free(ssl_bio); */
+/*	if (ssl_bio != NULL) BIO_free(ssl_bio);*/
 	return(ret);
 	}
 
@@ -1100,7 +1213,7 @@ int export;
 			BIO_flush(bio_err);
 			}
 #ifndef NO_RSA
-		rsa_tmp=RSA_generate_key(512,RSA_F4,NULL);
+		rsa_tmp=RSA_generate_key(512,RSA_F4,NULL,NULL);
 #endif
 		if (!s_quiet)
 			{

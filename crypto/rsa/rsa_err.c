@@ -60,6 +60,7 @@
 #include "rsa.h"
 
 /* BEGIN ERROR CODES */
+#ifndef NO_ERR
 static ERR_STRING_DATA RSA_str_functs[]=
 	{
 {ERR_PACK(0,RSA_F_RSA_EAY_PRIVATE_DECRYPT,0),	"RSA_EAY_PRIVATE_DECRYPT"},
@@ -68,6 +69,14 @@ static ERR_STRING_DATA RSA_str_functs[]=
 {ERR_PACK(0,RSA_F_RSA_EAY_PUBLIC_ENCRYPT,0),	"RSA_EAY_PUBLIC_ENCRYPT"},
 {ERR_PACK(0,RSA_F_RSA_GENERATE_KEY,0),	"RSA_generate_key"},
 {ERR_PACK(0,RSA_F_RSA_NEW_METHOD,0),	"RSA_new_method"},
+{ERR_PACK(0,RSA_F_RSA_PADDING_ADD_NONE,0),	"RSA_padding_add_none"},
+{ERR_PACK(0,RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1,0),	"RSA_padding_add_PKCS1_type_1"},
+{ERR_PACK(0,RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2,0),	"RSA_padding_add_PKCS1_type_2"},
+{ERR_PACK(0,RSA_F_RSA_PADDING_ADD_SSLV23,0),	"RSA_padding_add_SSLv23"},
+{ERR_PACK(0,RSA_F_RSA_PADDING_CHECK_NONE,0),	"RSA_padding_check_none"},
+{ERR_PACK(0,RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,0),	"RSA_padding_check_PKCS1_type_1"},
+{ERR_PACK(0,RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2,0),	"RSA_padding_check_PKCS1_type_2"},
+{ERR_PACK(0,RSA_F_RSA_PADDING_CHECK_SSLV23,0),	"RSA_padding_check_SSLv23"},
 {ERR_PACK(0,RSA_F_RSA_PRINT,0),	"RSA_print"},
 {ERR_PACK(0,RSA_F_RSA_PRINT_FP,0),	"RSA_print_fp"},
 {ERR_PACK(0,RSA_F_RSA_SIGN,0),	"RSA_sign"},
@@ -84,12 +93,16 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {RSA_R_BAD_FIXED_HEADER_DECRYPT          ,"bad fixed header decrypt"},
 {RSA_R_BAD_PAD_BYTE_COUNT                ,"bad pad byte count"},
 {RSA_R_BAD_SIGNATURE                     ,"bad signature"},
+{RSA_R_BAD_ZERO_BYTE                     ,"bad zero byte"},
 {RSA_R_BLOCK_TYPE_IS_NOT_01              ,"block type is not 01"},
 {RSA_R_BLOCK_TYPE_IS_NOT_02              ,"block type is not 02"},
 {RSA_R_DATA_GREATER_THAN_MOD_LEN         ,"data greater than mod len"},
+{RSA_R_DATA_TOO_LARGE                    ,"data too large"},
 {RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE       ,"data too large for key size"},
+{RSA_R_DATA_TOO_SMALL                    ,"data too small"},
 {RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY        ,"digest too big for rsa key"},
 {RSA_R_NULL_BEFORE_BLOCK_MISSING         ,"null before block missing"},
+{RSA_R_PADDING_CHECK_FAILED              ,"padding check failed"},
 {RSA_R_SSLV3_ROLLBACK_ATTACK             ,"sslv3 rollback attack"},
 {RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD,"the asn1 object identifier is not known for this md"},
 {RSA_R_UNKNOWN_ALGORITHM_TYPE            ,"unknown algorithm type"},
@@ -98,14 +111,19 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {0,NULL},
 	};
 
+#endif
+
 void ERR_load_RSA_strings()
 	{
 	static int init=1;
 
-	if (init)
-		{
+	if (init);
+		{;
 		init=0;
+#ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_RSA,RSA_str_functs);
 		ERR_load_strings(ERR_LIB_RSA,RSA_str_reasons);
+#endif
+
 		}
 	}

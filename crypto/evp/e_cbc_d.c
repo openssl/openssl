@@ -1,5 +1,5 @@
 /* crypto/evp/e_cbc_d.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -77,6 +77,11 @@ static EVP_CIPHER d_cbc_cipher=
 	8,8,8,
 	des_cbc_init_key,
 	des_cbc_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ks)),
+	EVP_CIPHER_get_asn1_iv,
+	EVP_CIPHER_set_asn1_iv,
 	};
 
 EVP_CIPHER *EVP_des_cbc()
@@ -91,10 +96,10 @@ unsigned char *iv;
 int enc;
 	{
 	if (iv != NULL)
-		memcpy(&(ctx->c.des_cbc.oiv[0]),iv,8);
-	memcpy(&(ctx->c.des_cbc.iv[0]),&(ctx->c.des_cbc.oiv[0]),8);
+		memcpy(&(ctx->oiv[0]),iv,8);
+	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
-		des_set_key((des_cblock *)key,ctx->c.des_cbc.ks);
+		des_set_key((des_cblock *)key,ctx->c.des_ks);
 	}
 
 static void des_cbc_cipher(ctx,out,in,inl)
@@ -105,7 +110,7 @@ unsigned int inl;
 	{
 	des_ncbc_encrypt(
 		(des_cblock *)in,(des_cblock *)out,
-		(long)inl, ctx->c.des_cbc.ks,
-		(des_cblock *)&(ctx->c.des_cbc.iv[0]),
+		(long)inl, ctx->c.des_ks,
+		(des_cblock *)&(ctx->iv[0]),
 		ctx->encrypt);
 	}

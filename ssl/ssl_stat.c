@@ -1,5 +1,5 @@
 /* ssl/ssl_stat.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -207,6 +207,7 @@ SSL *s;
 		{
 	case SSL_ST_READ_HEADER: str="read header"; break;
 	case SSL_ST_READ_BODY: str="read body"; break;
+	case SSL_ST_READ_DONE: str="read done"; break;
 	default: str="unknown"; break;
 		}
 	return(str);

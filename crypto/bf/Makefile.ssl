@@ -25,8 +25,8 @@ TEST=bftest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=bf_skey.c bf_ecb.c bf_enc.c bf_cbc.c bf_cfb64.c bf_ofb64.c 
-LIBOBJ=bf_skey.o bf_ecb.o $(BF_ENC) bf_cbc.o bf_cfb64.o bf_ofb64.o
+LIBSRC=bf_skey.c bf_ecb.c bf_enc.c bf_cfb64.c bf_ofb64.c 
+LIBOBJ=bf_skey.o bf_ecb.o $(BF_ENC) bf_cfb64.o bf_ofb64.o
 
 SRC= $(LIBSRC)
 
@@ -46,22 +46,25 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 # elf
-asm/bx86-elf.o: asm/bx86-cpp.s asm/bx86unix.cpp
+asm/bx86-elf.o: asm/bx86unix.cpp
 	$(CPP) -DELF asm/bx86unix.cpp | as -o asm/bx86-elf.o
 
 # solaris
-asm/bx86-sol.o: asm/bx86-cpp.s asm/bx86unix.cpp
+asm/bx86-sol.o: asm/bx86unix.cpp
 	$(CC) -E -DSOL asm/bx86unix.cpp | sed 's/^#.*//' > asm/bx86-sol.s
 	as -o asm/bx86-sol.o asm/bx86-sol.s
 	rm -f asm/bx86-sol.s
 
 # a.out
-asm/bx86-out.o: asm/bx86-cpp.s asm/bx86unix.cpp
+asm/bx86-out.o: asm/bx86unix.cpp
 	$(CPP) -DOUT asm/bx86unix.cpp | as -o asm/bx86-out.o
 
 # bsdi
-asm/bx86bsdi.o: asm/bx86-cpp.s asm/bx86unix.cpp
+asm/bx86bsdi.o: asm/bx86unix.cpp
 	$(CPP) -DBSDI asm/bx86unix.cpp | as -o asm/bx86bsdi.o
+
+asm/bx86unix.cpp:
+	(cd asm; perl bf-586.pl cpp >bx86unix.cpp)
 
 files:
 	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
@@ -73,10 +76,6 @@ links:
 	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
 	$(TOP)/util/mklink.sh ../../test $(TEST)
 	$(TOP)/util/mklink.sh ../../apps $(APPS)
-	/bin/rm -f asm/x86ms.pl asm/x86unix.pl
-	$(TOP)/util/point.sh ../../perlasm/x86ms.pl asm/x86ms.pl
-	$(TOP)/util/point.sh ../../perlasm/x86unix.pl asm/x86unix.pl
-
 
 install:
 	@for i in $(EXHEADER) ; \

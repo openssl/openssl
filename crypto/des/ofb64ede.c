@@ -1,5 +1,5 @@
 /* crypto/des/ofb64ede.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -91,8 +91,8 @@ int *num;
 		{
 		if (n == 0)
 			{
-			ti[0]=v0;
-			ti[1]=v1;
+			/* ti[0]=v0; */
+			/* ti[1]=v1; */
 			des_encrypt3((DES_LONG *)ti,k1,k2,k3);
 			v0=ti[0];
 			v1=ti[1];

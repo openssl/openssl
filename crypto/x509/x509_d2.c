@@ -1,5 +1,5 @@
 /* crypto/x509/x509_d2.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -63,6 +63,7 @@
 #include "crypto.h"
 #include "x509.h"
 
+#ifndef NO_STDIO
 int X509_STORE_set_default_paths(ctx)
 X509_STORE *ctx;
 	{
@@ -101,6 +102,9 @@ char *path;
 		if (lookup == NULL) return(0);
 		X509_LOOKUP_add_dir(lookup,path,X509_FILETYPE_PEM);
 		}
+	if ((path == NULL) && (file == NULL))
+		return(0);
 	return(1);
 	}
 
+#endif

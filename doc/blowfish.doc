@@ -54,20 +54,17 @@ unsigned char *key;
 	72 bytes.  As a warning, blowfish has a very very slow set_key
 	function, it actually runs BF_encrypt 521 times.
 	
-void BF_encrypt(
-unsigned long *data,
-BF_KEY *key,
-int encrypt);
-	This is the Blowfish encryption function that gets called by just about
-	every other Blowfish routine in the library.  You should not use this
-	function except to implement 'modes' of Blowfish.
+void BF_encrypt(unsigned long *data, BF_KEY *key);
+void BF_decrypt(unsigned long *data, BF_KEY *key);
+	These are the Blowfish encryption function that gets called by just
+	about every other Blowfish routine in the library.  You should not
+	use this function except to implement 'modes' of Blowfish.
 	I say this because the
 	functions that call this routine do the conversion from 'char *' to
 	long, and this needs to be done to make sure 'non-aligned' memory
 	access do not occur.
 	Data is a pointer to 2 unsigned long's and key is the
-	BF_KEY to use.  Encryption or decryption is indicated by 'encrypt'.
-	which can have the values BF_ENCRYPT or BF_DECRYPT.
+	BF_KEY to use. 
 
 void BF_ecb_encrypt(
 unsigned char *in,

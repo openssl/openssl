@@ -1,5 +1,5 @@
 /* crypto/asn1/pkcs8.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -122,6 +122,9 @@ X509 *a;
 	if (a == NULL) return;
 
 	i=CRYPTO_add_lock(&a->references,-1,CRYPTO_LOCK_X509_KEY);
+#ifdef REF_PRINT
+	REF_PRINT("X509_KEY",a);
+#endif
 	if (i > 0) return;
 #ifdef REF_CHECK
 	if (i < 0)

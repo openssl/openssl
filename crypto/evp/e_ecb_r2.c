@@ -1,5 +1,5 @@
 /* crypto/evp/e_ecb_r2.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -79,6 +79,11 @@ static EVP_CIPHER r2_ecb_cipher=
 	8,EVP_RC2_KEY_SIZE,0,
 	rc2_ecb_init_key,
 	rc2_ecb_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc2_ks)),
+	NULL,
+	NULL,
 	};
 
 EVP_CIPHER *EVP_rc2_ecb()
@@ -93,7 +98,7 @@ unsigned char *iv;
 int enc;
 	{
 	if (key != NULL)
-		RC2_set_key(&(ctx->c.rc2_ecb.ks),EVP_RC2_KEY_SIZE,key,
+		RC2_set_key(&(ctx->c.rc2_ks),EVP_RC2_KEY_SIZE,key,
 			EVP_RC2_KEY_SIZE*8);
 	}
 
@@ -111,7 +116,7 @@ unsigned int inl;
 		{
 		RC2_ecb_encrypt(
 			&(in[i]),&(out[i]),
-			&(ctx->c.rc2_ecb.ks),ctx->encrypt);
+			&(ctx->c.rc2_ks),ctx->encrypt);
 		}
 	}
 

@@ -1,5 +1,5 @@
 /* crypto/bio/bio_cb.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -87,10 +87,16 @@ long ret;
 		sprintf(p,"Free - %s\n",bio->method->name);
 		break;
 	case BIO_CB_READ:
-		sprintf(p,"read(%d,%d) - %s\n",bio->num,argi,bio->method->name);
+		if (bio->method->type & BIO_TYPE_DESCRIPTOR)
+			sprintf(p,"read(%d,%d) - %s fd=%d\n",bio->num,argi,bio->method->name,bio->num);
+		else
+			sprintf(p,"read(%d,%d) - %s\n",bio->num,argi,bio->method->name);
 		break;
 	case BIO_CB_WRITE:
-		sprintf(p,"write(%d,%d) - %s\n",bio->num,argi,bio->method->name);
+		if (bio->method->type & BIO_TYPE_DESCRIPTOR)
+			sprintf(p,"write(%d,%d) - %s fd=%d\n",bio->num,argi,bio->method->name,bio->num);
+		else
+			sprintf(p,"write(%d,%d) - %s\n",bio->num,argi,bio->method->name);
 		break;
 	case BIO_CB_PUTS:
 		sprintf(p,"puts() - %s\n",bio->method->name);
@@ -124,7 +130,7 @@ long ret;
 	b=(BIO *)bio->cb_arg;
 	if (b != NULL)
 		BIO_write(b,buf,strlen(buf));
-#ifndef WIN16
+#if !defined(NO_STDIO) && !defined(WIN16)
 	else
 		fputs(buf,stderr);
 #endif

@@ -1,5 +1,5 @@
 /* crypto/asn1/x_crl.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -130,7 +130,8 @@ unsigned char **pp;
 	M_ASN1_I2D_len(a->sig_alg,i2d_X509_ALGOR);
 	M_ASN1_I2D_len(a->issuer,i2d_X509_NAME);
 	M_ASN1_I2D_len(a->lastUpdate,i2d_ASN1_UTCTIME);
-	M_ASN1_I2D_len(a->nextUpdate,i2d_ASN1_UTCTIME);
+	if (a->nextUpdate != NULL)
+		{ M_ASN1_I2D_len(a->nextUpdate,i2d_ASN1_UTCTIME); }
 	M_ASN1_I2D_len_SEQ_opt(a->revoked,i2d_X509_REVOKED);
 	M_ASN1_I2D_len_EXP_set_opt(a->extensions,i2d_X509_EXTENSION,0,
 		V_ASN1_SEQUENCE,v1);
@@ -144,7 +145,8 @@ unsigned char **pp;
 	M_ASN1_I2D_put(a->sig_alg,i2d_X509_ALGOR);
 	M_ASN1_I2D_put(a->issuer,i2d_X509_NAME);
 	M_ASN1_I2D_put(a->lastUpdate,i2d_ASN1_UTCTIME);
-	M_ASN1_I2D_put(a->nextUpdate,i2d_ASN1_UTCTIME);
+	if (a->nextUpdate != NULL)
+		{ M_ASN1_I2D_put(a->nextUpdate,i2d_ASN1_UTCTIME); }
 	M_ASN1_I2D_put_SEQ_opt(a->revoked,i2d_X509_REVOKED);
 	M_ASN1_I2D_put_EXP_set_opt(a->extensions,i2d_X509_EXTENSION,0,
 		V_ASN1_SEQUENCE,v1);
@@ -175,7 +177,7 @@ long length;
 	M_ASN1_D2I_get(ret->sig_alg,d2i_X509_ALGOR);
 	M_ASN1_D2I_get(ret->issuer,d2i_X509_NAME);
 	M_ASN1_D2I_get(ret->lastUpdate,d2i_ASN1_UTCTIME);
-	M_ASN1_D2I_get(ret->nextUpdate,d2i_ASN1_UTCTIME);
+	M_ASN1_D2I_get_opt(ret->nextUpdate,d2i_ASN1_UTCTIME,V_ASN1_UTCTIME);
 	if (ret->revoked != NULL)
 		{
 		while (sk_num(ret->revoked))
@@ -264,7 +266,7 @@ X509_CRL_INFO *X509_CRL_INFO_new()
 	M_ASN1_New(ret->sig_alg,X509_ALGOR_new);
 	M_ASN1_New(ret->issuer,X509_NAME_new);
 	M_ASN1_New(ret->lastUpdate,ASN1_UTCTIME_new);
-	M_ASN1_New(ret->nextUpdate,ASN1_UTCTIME_new);
+	ret->nextUpdate=NULL;
 	M_ASN1_New(ret->revoked,sk_new_null);
 	M_ASN1_New(ret->extensions,sk_new_null);
 	ret->revoked->comp=(int (*)())X509_REVOKED_cmp;
@@ -303,7 +305,8 @@ X509_CRL_INFO *a;
 	X509_ALGOR_free(a->sig_alg);
 	X509_NAME_free(a->issuer);
 	ASN1_UTCTIME_free(a->lastUpdate);
-	ASN1_UTCTIME_free(a->nextUpdate);
+	if (a->nextUpdate)
+		ASN1_UTCTIME_free(a->nextUpdate);
 	sk_pop_free(a->revoked,X509_REVOKED_free);
 	sk_pop_free(a->extensions,X509_EXTENSION_free);
 	Free((char *)a);
@@ -317,6 +320,9 @@ X509_CRL *a;
 	if (a == NULL) return;
 
 	i=CRYPTO_add(&a->references,-1,CRYPTO_LOCK_X509_CRL);
+#ifdef REF_PRINT
+	REF_PRINT("X509_CRL",a);
+#endif
 	if (i > 0) return;
 #ifdef REF_CHECK
 	if (i < 0)

@@ -5,10 +5,11 @@
 #define EVP_F_EVP_DECRYPTFINAL				 101
 #define EVP_F_EVP_OPENINIT				 102
 #define EVP_F_EVP_PKEY_COPY_PARAMETERS			 103
-#define EVP_F_EVP_PKEY_NEW				 104
-#define EVP_F_EVP_SEALINIT				 105
-#define EVP_F_EVP_SIGNFINAL				 106
-#define EVP_F_EVP_VERIFYFINAL				 107
+#define EVP_F_EVP_PKEY_DECRYPT				 104
+#define EVP_F_EVP_PKEY_ENCRYPT				 105
+#define EVP_F_EVP_PKEY_NEW				 106
+#define EVP_F_EVP_SIGNFINAL				 107
+#define EVP_F_EVP_VERIFYFINAL				 108
 
 /* Reason codes. */
 #define EVP_R_BAD_DECRYPT				 100

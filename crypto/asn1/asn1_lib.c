@@ -1,5 +1,5 @@
 /* crypto/asn1/asn1_lib.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -69,7 +69,7 @@ static int asn1_get_length();
 static void asn1_put_length();
 #endif
 
-char *ASN1_version="ASN1 part of SSLeay 0.8.1b 29-Jun-1998";
+char *ASN1_version="ASN1 part of SSLeay 0.9.0b 29-Jun-1998";
 
 int ASN1_check_infinite_end(p,len)
 unsigned char **p;
@@ -133,8 +133,8 @@ long omax;
 #ifdef undef
 	fprintf(stderr,"p=%d + *plength=%d > omax=%d + *pp=%d  (%d > %d)\n", 
 		p,*plength,omax,*pp,(p+ *plength),omax+ *pp);
-#endif
 
+#endif
 	if ((p+ *plength) > (omax+ *pp))
 		{
 		ASN1err(ASN1_F_ASN1_GET_OBJECT,ASN1_R_TOO_LONG);
@@ -429,5 +429,16 @@ ASN1_STRING *a,*b;
 		}
 	else
 		return(i);
+	}
+
+void asn1_add_error(address,offset)
+unsigned char *address;
+int offset;
+	{
+	char buf1[16],buf2[16];
+
+	sprintf(buf1,"%lu",(unsigned long)address);
+	sprintf(buf2,"%d",offset);
+	ERR_add_error_data(4,"address=",buf1," offset=",buf2);
 	}
 

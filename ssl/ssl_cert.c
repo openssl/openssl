@@ -1,5 +1,5 @@
 /* ssl/ssl_cert.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -94,6 +94,9 @@ CERT *c;
 	int i;
 
 	i=CRYPTO_add(&c->references,-1,CRYPTO_LOCK_SSL_CERT);
+#ifdef REF_PRINT
+	REF_PRINT("CERT",c);
+#endif
 	if (i > 0) return;
 #ifdef REF_CHECK
 	if (i < 0)
@@ -215,7 +218,8 @@ SSL *s;
 	{
 	if (s->type == SSL_ST_CONNECT)
 		{ /* we are in the client */
-		if ((s->version == 3) && (s->s3 != NULL))
+		if (((s->version>>8) == SSL3_VERSION_MAJOR) &&
+			(s->s3 != NULL))
 			return(s->s3->tmp.ca_names);
 		else
 			return(NULL);
@@ -270,6 +274,7 @@ X509_NAME **a,**b;
 	return(X509_NAME_cmp(*a,*b));
 	}
 
+#ifndef NO_STDIO
 STACK *SSL_load_client_CA_file(file)
 char *file;
 	{
@@ -280,11 +285,9 @@ char *file;
 
 	ret=sk_new(NULL);
 	sk=sk_new(name_cmp);
-#ifdef WIN16
-	in=BIO_new(BIO_s_file_internal_w16());
-#else
-	in=BIO_new(BIO_s_file());
-#endif
+
+	in=BIO_new(BIO_s_file_internal());
+
 	if ((ret == NULL) || (sk == NULL) || (in == NULL))
 		{
 		SSLerr(SSL_F_SSL_LOAD_CLIENT_CA_FILE,ERR_R_MALLOC_FAILURE);
@@ -322,5 +325,5 @@ err:
 	if (x != NULL) X509_free(x);
 	return(ret);
 	}
-
+#endif
 

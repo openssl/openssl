@@ -1,5 +1,5 @@
 /* crypto/asn1/a_type.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -115,6 +115,9 @@ unsigned char **pp;
 	case V_ASN1_UNIVERSALSTRING:
 		r=M_i2d_ASN1_UNIVERSALSTRING(a->value.universalstring,pp);
 		break;
+	case V_ASN1_BMPSTRING:
+		r=M_i2d_ASN1_BMPSTRING(a->value.bmpstring,pp);
+		break;
 	case V_ASN1_UTCTIME:
 		r=i2d_ASN1_UTCTIME(a->value.utctime,pp);
 		break;
@@ -211,6 +214,11 @@ long length;
 	case V_ASN1_UNIVERSALSTRING:
 		if ((ret->value.universalstring=
 			M_d2i_ASN1_UNIVERSALSTRING(NULL,&p,max-p)) == NULL)
+			goto err;
+		break;
+	case V_ASN1_BMPSTRING:
+		if ((ret->value.bmpstring=
+			M_d2i_ASN1_BMPSTRING(NULL,&p,max-p)) == NULL)
 			goto err;
 		break;
 	case V_ASN1_UTCTIME:

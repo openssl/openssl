@@ -1,5 +1,5 @@
 /* apps/s_time.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#undef NO_SHUTDOWN
+#define NO_SHUTDOWN
 
 /*-----------------------------------------
    cntime - SSL client connection timer program
@@ -67,7 +67,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef WIN16
+#ifdef NO_STDIO
 #define APPS_WIN16
 #endif
 #include "x509.h"
@@ -154,10 +154,12 @@ extern int verify_error;
 static void s_time_usage(void);
 static int parseArgs( int argc, char **argv );
 static SSL *doConnection( SSL *scon );
+static void s_time_init(void);
 #else
 static void s_time_usage();
 static int parseArgs();
 static SSL *doConnection();
+static void s_time_init();
 #endif
 
 
@@ -180,14 +182,37 @@ static char *s_www_path=NULL;
 static long bytes_read=0; 
 static int st_bugs=0;
 static int perform=0;
-
 #ifdef FIONBIO
 static int t_nbio=0;
 #endif
-
 #ifdef WIN32
 static int exitNow = 0;		/* Set when it's time to exit main */
 #endif
+
+static void s_time_init()
+	{
+	host=SSL_CONNECT_NAME;
+	t_cert_file=NULL;
+	t_key_file=NULL;
+	CApath=NULL;
+	CAfile=NULL;
+	tm_cipher=NULL;
+	tm_verify = SSL_VERIFY_NONE;
+	maxTime = SECONDS;
+	tm_ctx=NULL;
+	s_time_meth=NULL;
+	s_www_path=NULL;
+	bytes_read=0; 
+	st_bugs=0;
+	perform=0;
+
+#ifdef FIONBIO
+	t_nbio=0;
+#endif
+#ifdef WIN32
+	exitNow = 0;		/* Set when it's time to exit main */
+#endif
+	}
 
 /***********************************************************************
  * usage - display usage message
@@ -237,6 +262,7 @@ char **argv;
 #endif
 
 	apps_startup();
+	s_time_init();
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
@@ -396,6 +422,7 @@ char **argv;
 	long finishtime=0;
 	int ret=1,i;
 	MS_STATIC char buf[1024*8];
+	int ver;
 
 #if !defined(NO_SSL2) && !defined(NO_SSL3)
 	s_time_meth=SSLv23_client_method();
@@ -412,6 +439,8 @@ char **argv;
 	SSLeay_add_ssl_algorithms();
 	if ((tm_ctx=SSL_CTX_new(s_time_meth)) == NULL) return(1);
 
+	SSL_CTX_set_quiet_shutdown(tm_ctx,1);
+
 	if (st_bugs) SSL_CTX_set_options(tm_ctx,SSL_OP_ALL);
 	SSL_CTX_set_cipher_list(tm_ctx,tm_cipher);
 	if(!set_cert_stuff(tm_ctx,t_cert_file,t_key_file)) 
@@ -422,9 +451,9 @@ char **argv;
 	if ((!SSL_CTX_load_verify_locations(tm_ctx,CAfile,CApath)) ||
 		(!SSL_CTX_set_default_verify_paths(tm_ctx)))
 		{
-		BIO_printf(bio_err,"error seting default verify locations\n");
+		/* BIO_printf(bio_err,"error seting default verify locations\n"); */
 		ERR_print_errors(bio_err);
-		goto end;
+		/* goto end; */
 		}
 
 	if (tm_cipher == NULL)
@@ -471,11 +500,24 @@ char **argv;
 #else
 		SSL_shutdown(scon);
 #endif
-		SHUTDOWN(SSL_get_fd(scon));
+		SHUTDOWN2(SSL_get_fd(scon));
 
 		nConn += 1;
-		fputc(SSL_session_reused(scon)?'r':
-			(SSL_version(scon))+'0', stdout );
+		if (SSL_session_reused(scon))
+			ver='r';
+		else
+			{
+			ver=SSL_version(scon);
+			if (ver == TLS1_VERSION)
+				ver='t';
+			else if (ver == SSL3_VERSION)
+				ver='3';
+			else if (ver == SSL2_VERSION)
+				ver='2';
+			else
+				ver='*';
+			}
+		fputc(ver,stdout);
 		fflush(stdout);
 
 		SSL_free( scon );
@@ -512,7 +554,7 @@ next:
 #else
 	SSL_shutdown(scon);
 #endif
-	SHUTDOWN(SSL_get_fd(scon));
+	SHUTDOWN2(SSL_get_fd(scon));
 
 	nConn = 0;
 	totalTime = 0.0;
@@ -551,11 +593,24 @@ next:
 #else
 		SSL_shutdown(scon);
 #endif
-		SHUTDOWN(SSL_get_fd(scon));
+		SHUTDOWN2(SSL_get_fd(scon));
 	
 		nConn += 1;
-		fputc(SSL_session_reused(scon)?'r':
-			(SSL_version(scon))+'0', stdout );
+		if (SSL_session_reused(scon))
+			ver='r';
+		else
+			{
+			ver=SSL_version(scon);
+			if (ver == TLS1_VERSION)
+				ver='t';
+			else if (ver == SSL3_VERSION)
+				ver='3';
+			else if (ver == SSL2_VERSION)
+				ver='2';
+			else
+				ver='*';
+			}
+		fputc(ver,stdout);
 		fflush(stdout);
 		}
 	totalTime += tm_Time_F(STOP); /* Add the time for this iteration*/
@@ -595,8 +650,8 @@ SSL *scon;
 	if ((conn=BIO_new(BIO_s_connect())) == NULL)
 		return(NULL);
 
-/*	BIO_set_port(conn,port);*/
-	BIO_set_hostname(conn,host);
+/*	BIO_set_conn_port(conn,port);*/
+	BIO_set_conn_hostname(conn,host);
 
 	if (scon == NULL)
 		serverCon=(SSL *)SSL_new(tm_ctx);

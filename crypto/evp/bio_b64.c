@@ -1,5 +1,5 @@
 /* crypto/evp/bio_b64.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -81,6 +81,7 @@ static int b64_free();
 #endif
 
 #define B64_BLOCK_SIZE	1024
+#define B64_BLOCK_SIZE2	768
 #define B64_NONE	0
 #define B64_ENCODE	1
 #define B64_DECODE	2
@@ -155,7 +156,7 @@ BIO *b;
 char *out;
 int outl;
 	{
-	int ret=0,i,ii,j,k,x,n,num;
+	int ret=0,i,ii,j,k,x,n,num,ret_code=0;
 	BIO_B64_CTX *ctx;
 	unsigned char *p,*q;
 
@@ -169,6 +170,7 @@ int outl;
 		ctx->encode=B64_DECODE;
 		ctx->buf_len=0;
 		ctx->buf_off=0;
+		ctx->tmp_len=0;
 		EVP_DecodeInit(&(ctx->base64));
 		}
 
@@ -192,6 +194,7 @@ int outl;
 	/* At this point, we have room of outl bytes and an empty
 	 * buffer, so we should read in some more. */
 
+	ret_code=0;
 	while (outl > 0)
 		{
 		if (ctx->cont <= 0) break;
@@ -201,16 +204,24 @@ int outl;
 
 		if (i <= 0)
 			{
+			ret_code=i;
+
 			/* Should be continue next time we are called? */
 			if (!BIO_should_retry(b->next_bio))
 				ctx->cont=i;
+			/* else we should continue when called again */
 			break;
 			}
 		i+=ctx->tmp_len;
 
 		/* We need to scan, a line at a time until we
 		 * have a valid line if we are starting. */
-		if (ctx->start)
+		if (ctx->start && (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL))
+			{
+			/* ctx->start=1; */
+			ctx->tmp_len=0;
+			}
+		else if (ctx->start)
 			{
 			q=p=(unsigned char *)ctx->tmp;
 			for (j=0; j<i; j++)
@@ -273,13 +284,51 @@ int outl;
 			else
 				ctx->tmp_len=0;
 			}
-		i=EVP_DecodeUpdate(&(ctx->base64),
-			(unsigned char *)ctx->buf,&ctx->buf_len,
-			(unsigned char *)ctx->tmp,i);
+
+		if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL)
+			{
+			int z,jj;
+
+			jj=(i>>2)<<2;
+			z=EVP_DecodeBlock((unsigned char *)ctx->buf,
+				(unsigned char *)ctx->tmp,jj);
+			if (jj > 2)
+				{
+				if (ctx->tmp[jj-1] == '=')
+					{
+					z--;
+					if (ctx->tmp[jj-2] == '=')
+						z--;
+					}
+				}
+			/* z is now number of output bytes and jj is the
+			 * number consumed */
+			if (jj != i)
+				{
+				memcpy((unsigned char *)ctx->tmp,
+					(unsigned char *)&(ctx->tmp[jj]),i-jj);
+				ctx->tmp_len=i-jj;
+				}
+			ctx->buf_len=0;
+			if (z > 0)
+				{
+				ctx->buf_len=z;
+				i=1;
+				}
+			else
+				i=z;
+			}
+		else
+			{
+			i=EVP_DecodeUpdate(&(ctx->base64),
+				(unsigned char *)ctx->buf,&ctx->buf_len,
+				(unsigned char *)ctx->tmp,i);
+			}
 		ctx->cont=i;
 		ctx->buf_off=0;
 		if (i < 0)
 			{
+			ret_code=0;
 			ctx->buf_len=0;
 			break;
 			}
@@ -302,7 +351,7 @@ int outl;
 		}
 	BIO_clear_retry_flags(b);
 	BIO_copy_next_retry(b);
-	return((ret == 0)?ctx->cont:ret);
+	return((ret == 0)?ret_code:ret);
 	}
 
 static int b64_write(b,in,inl)
@@ -321,6 +370,7 @@ int inl;
 		ctx->encode=B64_ENCODE;
 		ctx->buf_len=0;
 		ctx->buf_off=0;
+		ctx->tmp_len=0;
 		EVP_EncodeInit(&(ctx->base64));
 		}
 
@@ -344,9 +394,41 @@ int inl;
 	while (inl > 0)
 		{
 		n=(inl > B64_BLOCK_SIZE)?B64_BLOCK_SIZE:inl;
-		EVP_EncodeUpdate(&(ctx->base64),
-			(unsigned char *)ctx->buf,&ctx->buf_len,
-			(unsigned char *)in,n);
+
+		if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL)
+			{
+			if (ctx->tmp_len > 0)
+				{
+				n=3-ctx->tmp_len;
+				memcpy(&(ctx->tmp[ctx->tmp_len]),in,n);
+				ctx->tmp_len+=n;
+				n=ctx->tmp_len;
+				if (n < 3)
+					break;
+				ctx->buf_len=EVP_EncodeBlock(
+					(unsigned char *)ctx->buf,
+					(unsigned char *)ctx->tmp,n);
+				}
+			else
+				{
+				if (n < 3)
+					{
+					memcpy(&(ctx->tmp[0]),in,n);
+					ctx->tmp_len=n;
+					break;
+					}
+				n-=n%3;
+				ctx->buf_len=EVP_EncodeBlock(
+					(unsigned char *)ctx->buf,
+					(unsigned char *)in,n);
+				}
+			}
+		else
+			{
+			EVP_EncodeUpdate(&(ctx->base64),
+				(unsigned char *)ctx->buf,&ctx->buf_len,
+				(unsigned char *)in,n);
+			}
 		inl-=n;
 		in+=n;
 
@@ -419,7 +501,20 @@ again:
 				break;
 				}
 			}
-		if (ctx->base64.num != 0)
+		if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL)
+			{
+			if (ctx->tmp_len != 0)
+				{
+				ctx->buf_len=EVP_EncodeBlock(
+					(unsigned char *)ctx->buf,
+					(unsigned char *)ctx->tmp,
+					ctx->tmp_len);
+				ctx->buf_off=0;
+				ctx->tmp_len=0;
+				goto again;
+				}
+			}
+		else if (ctx->base64.num != 0)
 			{
 			ctx->buf_off=0;
 			EVP_EncodeFinal(&(ctx->base64),

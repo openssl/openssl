@@ -87,9 +87,7 @@
 #elif defined( __sgi )                /* Newer MIPS */
 #  define BF_PTR
 #elif defined( i386 )         /* x86 boxes, should be gcc */
-#  define BF_PTR2
 #elif defined( _MSC_VER )     /* x86 boxes, Visual C */
-#  define BF_PTR2
 #endif /* Systems-specific speed defines */
 
 #undef c2l

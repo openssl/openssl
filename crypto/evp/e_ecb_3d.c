@@ -1,5 +1,5 @@
 /* crypto/evp/e_ecb_3d.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -80,6 +80,11 @@ static EVP_CIPHER d_ede_cipher2=
 	8,16,0,
 	des_ede_init_key,
 	des_ede_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
+	NULL,
+	NULL,
 	};
 
 static EVP_CIPHER d_ede3_cipher3=
@@ -88,6 +93,10 @@ static EVP_CIPHER d_ede3_cipher3=
 	8,24,0,
 	des_ede3_init_key,
 	des_ede_cipher,
+	NULL,
+	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.des_ede)),
+	NULL,
 	};
 
 EVP_CIPHER *EVP_des_ede()

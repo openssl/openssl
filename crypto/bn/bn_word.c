@@ -1,5 +1,5 @@
 /* crypto/bn/bn_word.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -71,11 +71,12 @@ unsigned long w;
 #endif
 	int i;
 
+	w&=BN_MASK2;
 	for (i=a->top-1; i>=0; i--)
 		{
 #ifndef BN_LLONG
-		ret=((ret<<BN_BITS4)|((a->d[i]>>BN_BITS4)&BN_MASK2l))%(int)w;
-		ret=((ret<<BN_BITS4)|(a->d[i]&BN_MASK2l))%(int)w;
+		ret=((ret<<BN_BITS4)|((a->d[i]>>BN_BITS4)&BN_MASK2l))%(unsigned long)w;
+		ret=((ret<<BN_BITS4)|(a->d[i]&BN_MASK2l))%(unsigned long)w;
 #else
 		ret=(BN_ULLONG)(((ret<<(BN_ULLONG)BN_BITS2)|a->d[i])%
 			(BN_ULLONG)w);
@@ -93,18 +94,15 @@ unsigned long w;
 
 	if (a->top == 0) return(0);
 	ret=0;
+	w&=BN_MASK2;
 	for (i=a->top-1; i>=0; i--)
 		{
-#ifndef BN_LLONG
-		ret=((ret<<BN_BITS4)|((a->d[i]>>BN_BITS4)&BN_MASK2l))%(int)w;
-		ret=((ret<<BN_BITS4)|(a->d[i]&BN_MASK2l))%(int)w;
-#else
-		BN_ULLONG ll;
-
-		ll=((BN_ULLONG)ret<<(BN_ULONG)BN_BITS2)|a->d[i];
-		a->d[i]=(BN_ULONG)(ll/w);
-		ret=(BN_ULONG)(ll%w);
-#endif
+		BN_ULONG l,d;
+		
+		l=a->d[i];
+		d=bn_div64(ret,l,w);
+		ret=(l-((d*w)&BN_MASK2))&BN_MASK2;
+		a->d[i]=d;
 		}
 	if (a->d[a->top-1] == 0)
 		a->top--;
@@ -118,7 +116,16 @@ unsigned long w;
 	BN_ULONG l;
 	int i;
 
-	if (bn_expand(a,a->top*BN_BITS2+1) == NULL) return(0);
+	if (a->neg)
+		{
+		a->neg=0;
+		i=BN_sub_word(a,w);
+		if (!BN_is_zero(a))
+			a->neg=1;
+		return(i);
+		}
+	w&=BN_MASK2;
+	if (bn_wexpand(a,a->top+1) == NULL) return(0);
 	i=0;
 	for (;;)
 		{
@@ -135,21 +142,63 @@ unsigned long w;
 	return(1);
 	}
 
-#ifdef undef
-BN_ULONG *BN_mod_inverse_word(a)
-BN_ULONG a;
+int BN_sub_word(a, w)
+BIGNUM *a;
+unsigned long w;
 	{
-	BN_ULONG A,B,X,Y,M,D,R,RET,T;
-	int sign,hight=1;
+	int i;
 
-	X=0;
-	Y=1;
-	A=0;
-	B=a;
-	sign=1;
-
-	while (B != 0)
+	if (a->neg)
 		{
+		a->neg=0;
+		i=BN_add_word(a,w);
+		a->neg=1;
+		return(i);
+		}
 
-#endif
+	w&=BN_MASK2;
+	if ((a->top == 1) && (a->d[0] < w))
+		{
+		a->d[0]=w-a->d[0];
+		a->neg=1;
+		return(1);
+		}
+	i=0;
+	for (;;)
+		{
+		if (a->d[i] >= w)
+			{
+			a->d[i]-=w;
+			break;
+			}
+		else
+			{
+			a->d[i]=(a->d[i]-w)&BN_MASK2;
+			i++;
+			w=1;
+			}
+		}
+	if ((a->d[i] == 0) && (i == (a->top-1)))
+		a->top--;
+	return(1);
+	}
+
+int BN_mul_word(a,w)
+BIGNUM *a;
+unsigned long w;
+	{
+	BN_ULONG ll;
+
+	w&=BN_MASK2;
+	if (a->top)
+		{
+		ll=bn_mul_words(a->d,a->d,a->top,w);
+		if (ll)
+			{
+			if (bn_wexpand(a,a->top+1) == NULL) return(0);
+			a->d[a->top++]=ll;
+			}
+		}
+	return(0);
+	}
 

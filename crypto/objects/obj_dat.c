@@ -1,5 +1,5 @@
 /* crypto/objects/obj_dat.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 #include "cryptlib.h"
 #include "lhash.h"
 #include "asn1.h"
@@ -128,7 +129,7 @@ ADDED_OBJ *ca;
 	default:
 		abort();
 		}
-	ret&=0x3fffffff;
+	ret&=0x3fffffffL;
 	ret|=ca->type<<30L;
 	return(ret);
 	}
@@ -199,6 +200,7 @@ void OBJ_cleanup()
 	lh_doall(added,cleanup2); /* set counters */
 	lh_doall(added,cleanup3); /* free objects */
 	lh_free(added);
+	added=NULL;
 	}
 
 int OBJ_new_nid(num)
@@ -251,7 +253,7 @@ err:
 	for (i=ADDED_DATA; i<=ADDED_NID; i++)
 		if (ao[i] != NULL) Free(ao[i]);
 	if (o != NULL) Free(o);
-	return(0);
+	return(NID_undef);
 	}
 
 ASN1_OBJECT *OBJ_nid2obj(n)
@@ -385,9 +387,34 @@ char *s;
 
 	ret=OBJ_sn2nid(s);
 	if (ret == NID_undef)
-		return(OBJ_ln2nid(s));
-	else
-		return(ret);
+		{
+		ret=OBJ_ln2nid(s);
+		if (ret == NID_undef)
+			{
+			ASN1_OBJECT *op=NULL;
+			unsigned char *buf,*p;
+			int i;
+
+			i=a2d_ASN1_OBJECT(NULL,0,s,-1);
+			if (i <= 0)
+				{
+				/* clear the error */
+				ERR_get_error();
+				return(0);
+				}
+
+			if ((buf=(unsigned char *)Malloc(i)) == NULL)
+				return(NID_undef);
+			a2d_ASN1_OBJECT(buf,i,s,-1);
+			p=buf;
+			op=d2i_ASN1_OBJECT(NULL,&p,i);
+			if (op == NULL) return(NID_undef);
+			ret=OBJ_obj2nid(op);
+			ASN1_OBJECT_free(op);
+			Free(buf);
+			}
+		}
+	return(ret);
 	}
 
 int OBJ_ln2nid(s)
@@ -471,7 +498,56 @@ int (*cmp)();
 	return(NULL);
 	}
 
-int OBJ_create_and_add_object(oid,sn,ln)
+int OBJ_create_objects(in)
+BIO *in;
+	{
+	MS_STATIC char buf[512];
+	int i,num= -1;
+	char *o,*s,*l=NULL;
+
+	for (;;)
+		{
+		s=o=NULL;
+		i=BIO_gets(in,buf,512);
+		if (i <= 0) return(num);
+		buf[i-1]='\0';
+		if (!isalnum(buf[0])) return(num);
+		o=s=buf;
+		while (isdigit(*s) || (*s == '.'))
+			s++;
+		if (*s != '\0')
+			{
+			*(s++)='\0';
+			while (isspace(*s))
+				s++;
+			if (*s == '\0')
+				s=NULL;
+			else
+				{
+				l=s;
+				while ((*l != '\0') && !isspace(*l))
+					l++;
+				if (*l != '\0')
+					{
+					*(l++)='\0';
+					while (isspace(*l))
+						l++;
+					if (*l == '\0') l=NULL;
+					}
+				else
+					l=NULL;
+				}
+			}
+		else
+			s=NULL;
+		if ((o == NULL) || (*o == '\0')) return(num);
+		if (!OBJ_create(o,s,l)) return(num);
+		num++;
+		}
+	return(num);
+	}
+
+int OBJ_create(oid,sn,ln)
 char *oid;
 char *sn;
 char *ln;
@@ -486,7 +562,7 @@ char *ln;
 
 	if ((buf=(unsigned char *)Malloc(i)) == NULL)
 		{
-		OBJerr(OBJ_F_OBJ_CREATE_AND_ADD_OBJECT,OBJ_R_MALLOC_FAILURE);
+		OBJerr(OBJ_F_OBJ_CREATE,OBJ_R_MALLOC_FAILURE);
 		return(0);
 		}
 	i=a2d_ASN1_OBJECT(buf,i,oid,-1);
@@ -499,3 +575,4 @@ err:
 	Free((char *)buf);
 	return(ok);
 	}
+

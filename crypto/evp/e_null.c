@@ -1,5 +1,5 @@
 /* crypto/evp/e_null.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -77,6 +77,10 @@ static EVP_CIPHER n_cipher=
 	1,0,0,
 	null_init_key,
 	null_cipher,
+	NULL,
+	0,
+	NULL,
+	NULL,
 	};
 
 EVP_CIPHER *EVP_enc_null()

@@ -1,0 +1,104 @@
+#
+# SSLeay/crypto/ripemd/Makefile
+#
+
+DIR=    ripemd
+TOP=    ../..
+CC=     cc
+CPP=    $(CC) -E
+INCLUDES=
+CFLAG=-g
+INSTALLTOP=/usr/local/ssl
+MAKE=           make -f Makefile.ssl
+MAKEDEPEND=     makedepend -f Makefile.ssl
+MAKEFILE=       Makefile.ssl
+AR=             ar r
+
+RIP_ASM_OBJ=
+
+CFLAGS= $(INCLUDES) $(CFLAG)
+
+GENERAL=Makefile
+TEST=rmdtest.c
+APPS=rmd160.c
+
+LIB=$(TOP)/libcrypto.a
+LIBSRC=rmd_dgst.c rmd_one.c
+LIBOBJ=rmd_dgst.o rmd_one.o $(RMD160_ASM_OBJ)
+
+SRC= $(LIBSRC)
+
+EXHEADER= ripemd.h
+HEADER= rmd_locl.h rmdconst.h $(EXHEADER)
+
+ALL=    $(GENERAL) $(SRC) $(HEADER)
+
+top:
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+
+all:    lib
+
+lib:    $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
+	sh $(TOP)/util/ranlib.sh $(LIB)
+	@touch lib
+
+# elf
+asm/rm86-elf.o: asm/rm86unix.cpp
+	$(CPP) -DELF asm/rm86unix.cpp | as -o asm/rm86-elf.o
+
+# solaris
+asm/rm86-sol.o: asm/rm86unix.cpp
+	$(CC) -E -DSOL asm/rm86unix.cpp | sed 's/^#.*//' > asm/rm86-sol.s
+	as -o asm/rm86-sol.o asm/rm86-sol.s
+	rm -f asm/rm86-sol.s
+
+# a.out
+asm/rm86-out.o: asm/rm86unix.cpp
+	$(CPP) -DOUT asm/rm86unix.cpp | as -o asm/rm86-out.o
+
+# bsdi
+asm/rm86bsdi.o: asm/rm86unix.cpp
+	$(CPP) -DBSDI asm/rm86unix.cpp | as -o asm/rm86bsdi.o
+
+asm/rm86unix.cpp:
+	(cd asm; perl rmd-586.pl cpp >rm86unix.cpp)
+
+files:
+	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+
+links:
+	/bin/rm -f Makefile
+	$(TOP)/util/point.sh Makefile.ssl Makefile ;
+	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
+	$(TOP)/util/mklink.sh ../../test $(TEST)
+	$(TOP)/util/mklink.sh ../../apps $(APPS)
+
+install:
+	@for i in $(EXHEADER) ; \
+	do  \
+	(cp $$i $(INSTALLTOP)/include/$$i; \
+	chmod 644 $(INSTALLTOP)/include/$$i ); \
+	done;
+
+tags:
+	ctags $(SRC)
+
+tests:
+
+lint:
+	lint -DLINT $(INCLUDES) $(SRC)>fluff
+
+depend:
+	$(MAKEDEPEND) $(INCLUDES) $(PROGS) $(LIBSRC)
+
+dclean:
+	perl -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
+
+clean:
+	/bin/rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+
+errors:
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.

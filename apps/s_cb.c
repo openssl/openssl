@@ -1,5 +1,5 @@
 /* apps/s_cb.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -71,7 +71,6 @@
 int verify_depth=0;
 int verify_error=X509_V_OK;
 
-/* should be X509 * but we can just have them as char *. */
 int MS_CALLBACK verify_callback(ok, ctx)
 int ok;
 X509_STORE_CTX *ctx;
@@ -137,7 +136,7 @@ char *key_file;
 		if (SSL_CTX_use_certificate_file(ctx,cert_file,
 			SSL_FILETYPE_PEM) <= 0)
 			{
-			BIO_printf(bio_err,"unable to set certificate file\n");
+			BIO_printf(bio_err,"unable to get certificate from '%s'\n",cert_file);
 			ERR_print_errors(bio_err);
 			return(0);
 			}
@@ -145,7 +144,7 @@ char *key_file;
 		if (SSL_CTX_use_PrivateKey_file(ctx,key_file,
 			SSL_FILETYPE_PEM) <= 0)
 			{
-			BIO_printf(bio_err,"unable to set public key file\n");
+			BIO_printf(bio_err,"unable to get private key from '%s'\n",key_file);
 			ERR_print_errors(bio_err);
 			return(0);
 			}

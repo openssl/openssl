@@ -1,5 +1,5 @@
 /* apps/enc.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -96,7 +96,7 @@ char **argv;
 	char *str=NULL;
 	char *hkey=NULL,*hiv=NULL;
 	int enc=1,printkey=0,i,base64=0;
-	int debug=0;
+	int debug=0,olb64=0;
 	EVP_CIPHER *cipher=NULL,*c;
 	char *inf=NULL,*outf=NULL;
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
@@ -107,7 +107,7 @@ char **argv;
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE);
+			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	/* first check the program name */
         program_name(argv[0],pname,PROG_NAME_SIZE);
@@ -148,6 +148,8 @@ char **argv;
 			debug=1;
 		else if	(strcmp(*argv,"-P") == 0)
 			printkey=2;
+		else if	(strcmp(*argv,"-A") == 0)
+			olb64=1;
 		else if	(strcmp(*argv,"-a") == 0)
 			base64=1;
 		else if	(strcmp(*argv,"-base64") == 0)
@@ -280,6 +282,18 @@ bad:
 				LN_bf_ecb, LN_bf_cbc,
 				LN_bf_cfb64, LN_bf_ofb64);
 			BIO_printf(bio_err," -%-4s (%s)\n","bf", LN_bf_cbc);
+#endif
+#ifndef NO_BLOWFISH
+			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
+				LN_cast5_ecb, LN_cast5_cbc,
+				LN_cast5_cfb64, LN_cast5_ofb64);
+			BIO_printf(bio_err," -%-4s (%s)\n","cast", LN_cast5_cbc);
+#endif
+#ifndef NO_BLOWFISH
+			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
+				LN_rc5_ecb, LN_rc5_cbc,
+				LN_rc5_cfb64, LN_rc5_ofb64);
+			BIO_printf(bio_err," -%-4s (%s)\n","rc5", LN_rc5_cbc);
 #endif
 			goto end;
 			}
@@ -463,6 +477,8 @@ bad:
 			BIO_set_callback(b64,BIO_debug_callback);
 			BIO_set_callback_arg(b64,bio_err);
 			}
+		if (olb64)
+			BIO_set_flags(b64,BIO_FLAGS_BASE64_NO_NL);
 		if (enc)
 			wbio=BIO_push(b64,wbio);
 		else

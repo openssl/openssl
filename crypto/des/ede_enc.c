@@ -1,5 +1,5 @@
 /* crypto/des/ede_enc.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -149,7 +149,7 @@ int enc;
 			{
 			c2l(in,tin0);
 			c2l(in,tin1);
-
+			
 			t0=tin0;
 			t1=tin1;
 
@@ -158,13 +158,14 @@ int enc;
 			des_decrypt3((DES_LONG *)tin,ks1,ks2,ks3);
 			tout0=tin[0];
 			tout1=tin[1];
-
+		
 			tout0^=xor0;
 			tout1^=xor1;
 			l2cn(tout0,tout1,out,l+8);
 			xor0=t0;
 			xor1=t1;
 			}
+
 		iv=(unsigned char *)ivec;
 		l2c(xor0,iv);
 		l2c(xor1,iv);

@@ -1,5 +1,5 @@
 /* apps/asn1pars.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -75,6 +75,7 @@
  * -i		- indent the details by depth
  * -offset	- where in the file to start
  * -length	- how many bytes to use
+ * -oid file	- extra oid decription file
  */
 
 #undef PROG
@@ -89,17 +90,16 @@ char **argv;
 	long num;
 	BIO *in=NULL,*out=NULL,*b64=NULL;
 	int informat,indent=0;
-	char *infile,*str=NULL,*prog;
+	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL;
 	BUF_MEM *buf=NULL;
 
-	infile=NULL;
 	informat=FORMAT_PEM;
 
 	apps_startup();
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE);
+			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	prog=argv[0];
 	argc--;
@@ -119,6 +119,11 @@ char **argv;
 		else if (strcmp(*argv,"-i") == 0)
 			{
 			indent=1;
+			}
+		else if (strcmp(*argv,"-oid") == 0)
+			{
+			if (--argc < 1) goto bad;
+			oidfile= *(++argv);
 			}
 		else if (strcmp(*argv,"-offset") == 0)
 			{
@@ -151,6 +156,7 @@ bad:
 		BIO_printf(bio_err," -offset arg   offset into file\n");
 		BIO_printf(bio_err," -length arg   lenth of section in file\n");
 		BIO_printf(bio_err," -i            indent entries\n");
+		BIO_printf(bio_err," -oid file     file of extra oid definitions\n");
 		goto end;
 		}
 
@@ -163,7 +169,19 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 		}
-	BIO_set_fp(out,stdout,BIO_NOCLOSE);
+	BIO_set_fp(out,stdout,BIO_NOCLOSE|BIO_FP_TEXT);
+
+	if (oidfile != NULL)
+		{
+		if (BIO_read_filename(in,oidfile) <= 0)
+			{
+			BIO_printf(bio_err,"problems opening %s\n",oidfile);
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		OBJ_create_objects(in);
+		}
+
 	if (infile == NULL)
 		BIO_set_fp(in,stdin,BIO_NOCLOSE);
 	else
@@ -214,6 +232,7 @@ end:
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	if (buf != NULL) BUF_MEM_free(buf);
+	OBJ_cleanup();
 	EXIT(ret);
 	}
 

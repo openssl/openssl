@@ -1,5 +1,5 @@
 /* crypto/rc2/rc2_locl.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -143,4 +143,14 @@
                          *((c)++)=(unsigned char)(((l)>>16L)&0xff), \
                          *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
                          *((c)++)=(unsigned char)(((l)     )&0xff))
+
+#define C_RC2(n) \
+	t=(x0+(x1& ~x3)+(x2&x3)+ *(p0++))&0xffff; \
+	x0=(t<<1)|(t>>15); \
+	t=(x1+(x2& ~x0)+(x3&x0)+ *(p0++))&0xffff; \
+	x1=(t<<2)|(t>>14); \
+	t=(x2+(x3& ~x1)+(x0&x1)+ *(p0++))&0xffff; \
+	x2=(t<<3)|(t>>13); \
+	t=(x3+(x0& ~x2)+(x1&x2)+ *(p0++))&0xffff; \
+	x3=(t<<5)|(t>>11);
 

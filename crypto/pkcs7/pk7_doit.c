@@ -1,5 +1,5 @@
 /* crypto/pkcs7/pk7_doit.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
+#include "rand.h"
 #include "objects.h"
 #include "x509.h"
 
@@ -69,6 +70,11 @@ BIO *bio;
 	BIO *out=NULL,*btmp;
 	X509_ALGOR *xa;
 	EVP_MD *evp_md;
+	EVP_CIPHER *evp_cipher=NULL;
+	STACK *md_sk=NULL,*rsk=NULL;
+	X509_ALGOR *xalg=NULL;
+	PKCS7_RECIP_INFO *ri=NULL;
+	EVP_PKEY *pkey;
 
 	i=OBJ_obj2nid(p7->type);
 	p7->state=PKCS7_S_HEADER;
@@ -76,9 +82,29 @@ BIO *bio;
 	switch (i)
 		{
 	case NID_pkcs7_signed:
-		for (i=0; i<sk_num(p7->d.sign->md_algs); i++)
+		md_sk=p7->d.sign->md_algs;
+		break;
+	case NID_pkcs7_signedAndEnveloped:
+		rsk=p7->d.signed_and_enveloped->recipientinfo;
+		md_sk=p7->d.signed_and_enveloped->md_algs;
+		evp_cipher=EVP_get_cipherbyname(OBJ_nid2sn(OBJ_obj2nid(p7->d.signed_and_enveloped->enc_data->algorithm->algorithm)));
+		if (evp_cipher == NULL)
 			{
-			xa=(X509_ALGOR *)sk_value(p7->d.sign->md_algs,i);
+			PKCS7err(PKCS7_F_PKCS7_DATAINIT,PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
+			goto err;
+			}
+		xalg=p7->d.signed_and_enveloped->enc_data->algorithm;
+		break;
+	default:
+		PKCS7err(PKCS7_F_PKCS7_DATAINIT,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
+	        goto err;
+		}
+
+	if (md_sk != NULL)
+		{
+		for (i=0; i<sk_num(md_sk); i++)
+			{
+			xa=(X509_ALGOR *)sk_value(md_sk,i);
 			if ((btmp=BIO_new(BIO_f_md())) == NULL) goto err;
 
 			j=OBJ_obj2nid(xa->algorithm);
@@ -95,12 +121,61 @@ BIO *bio;
 			else
 				BIO_push(out,btmp);
 			}
-		break;
-	default:
-		PKCS7err(PKCS7_F_PKCS7_DATAINIT,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
-	        goto err;
 		}
-	if (bio == NULL)
+
+	if (evp_cipher != NULL)
+		{
+		unsigned char key[EVP_MAX_KEY_LENGTH];
+		unsigned char iv[EVP_MAX_IV_LENGTH];
+		int keylen,ivlen;
+		int jj,max;
+		unsigned char *tmp;
+
+		if ((btmp=BIO_new(BIO_f_cipher())) == NULL) goto err;
+		keylen=EVP_CIPHER_key_length(evp_cipher);
+		ivlen=EVP_CIPHER_iv_length(evp_cipher);
+
+		if (ivlen > 0)
+			{
+			ASN1_OCTET_STRING *os;
+
+			RAND_bytes(iv,ivlen);
+			os=ASN1_OCTET_STRING_new();
+			ASN1_OCTET_STRING_set(os,iv,ivlen);
+		/*	ASN1_TYPE_set(xalg->parameter,V_ASN1_OCTET_STRING,
+				(char *)os);
+		*/	}
+		RAND_bytes(key,keylen);
+
+		/* Lets do the pub key stuff :-) */
+		max=0;
+		for (i=0; i<sk_num(rsk); i++)
+			{
+			ri=(PKCS7_RECIP_INFO *)sk_value(rsk,i);
+			if (ri->cert == NULL) abort();
+			pkey=X509_get_pubkey(ri->cert);
+			jj=EVP_PKEY_size(pkey);
+			if (max < jj) max=jj;
+			}
+		if ((tmp=(unsigned char *)Malloc(max)) == NULL) abort();
+		for (i=0; i<sk_num(rsk); i++)
+			{
+			ri=(PKCS7_RECIP_INFO *)sk_value(rsk,i);
+			pkey=X509_get_pubkey(ri->cert);
+			jj=EVP_PKEY_encrypt(tmp,key,keylen,pkey);
+			if (jj <= 0) abort();
+			ASN1_OCTET_STRING_set(ri->enc_key,tmp,jj);
+			}
+
+		BIO_set_cipher(btmp,evp_cipher,key,iv,1);
+
+		if (out == NULL)
+			out=btmp;
+		else
+			BIO_push(out,btmp);
+		}
+
+	if (bio == NULL) /* ??????????? */
 		{
 		if (p7->detached)
 			bio=BIO_new(BIO_s_null());
@@ -114,7 +189,8 @@ BIO *bio;
 
 				os=p7->d.sign->contents->d.data;
 				if (os->length > 0)
-					BIO_write(bio,os->data,os->length);
+					BIO_write(bio,(char *)os->data,
+						os->length);
 				}
 			}
 		}
@@ -135,22 +211,35 @@ BIO *bio;
 	BUF_MEM *buf=NULL;
 	PKCS7_SIGNER_INFO *si;
 	EVP_MD_CTX *mdc,ctx_tmp;
-	STACK *sk;
+	STACK *sk,*si_sk=NULL;
 	unsigned char *p,*pp=NULL;
 	int x;
+	ASN1_OCTET_STRING *os=NULL;
 
 	i=OBJ_obj2nid(p7->type);
 	p7->state=PKCS7_S_HEADER;
 
 	switch (i)
 		{
+	case NID_pkcs7_signedAndEnveloped:
+		/* XXXXXXXXXXXXXXXX */
+		si_sk=p7->d.signed_and_enveloped->signer_info;
+		os=ASN1_OCTET_STRING_new();
+		p7->d.signed_and_enveloped->enc_data->enc_data=os;
+		break;
 	case NID_pkcs7_signed:
+		si_sk=p7->d.sign->signer_info;
+		os=p7->d.sign->contents->d.data;
+		break;
+		}
 
+	if (si_sk != NULL)
+		{
 		if ((buf=BUF_MEM_new()) == NULL) goto err;
-		for (i=0; i<sk_num(p7->d.sign->signer_info); i++)
+		for (i=0; i<sk_num(si_sk); i++)
 			{
 			si=(PKCS7_SIGNER_INFO *)
-				sk_value(p7->d.sign->signer_info,i);
+				sk_value(si_sk,i);
 			if (si->pkey == NULL)
 				continue;
 			j=OBJ_obj2nid(si->digest_enc_alg->algorithm);
@@ -161,13 +250,13 @@ BIO *bio;
 				if ((btmp=BIO_find_type(btmp,BIO_TYPE_MD)) 
 					== NULL)
 					{
-					PKCS7err(PKCS7_F_PKCS7_DATAFINAL,PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
+					PKCS7err(PKCS7_F_PKCS7_DATASIGN,PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
 					goto err;
 					}
 				BIO_get_md_ctx(btmp,&mdc);
 				if (mdc == NULL)
 					{
-					PKCS7err(PKCS7_F_PKCS7_DATAFINAL,PKCS7_R_INTERNAL_ERROR);
+					PKCS7err(PKCS7_F_PKCS7_DATASIGN,PKCS7_R_INTERNAL_ERROR);
 					goto err;
 					}
 				if (EVP_MD_pkey_type(EVP_MD_CTX_type(mdc)) == j)
@@ -195,40 +284,31 @@ BIO *bio;
 				Free(pp);
 				}
 
-			if (!EVP_SignFinal(&ctx_tmp,buf->data,
+			if (!EVP_SignFinal(&ctx_tmp,(unsigned char *)buf->data,
 				(unsigned int *)&buf->length,si->pkey))
 				goto err;
 			if (!ASN1_STRING_set(si->enc_digest,
 				(unsigned char *)buf->data,buf->length))
 				goto err;
-
 			}
 		if (p7->detached)
-			PKCS7_content_free(p7->d.sign->contents);
+			ASN1_OCTET_STRING_set(os,(unsigned char *)"",0);
 		else
 			{
 			btmp=BIO_find_type(bio,BIO_TYPE_MEM);
 			if (btmp == NULL)
 				{
-				PKCS7err(PKCS7_F_PKCS7_DATAFINAL,PKCS7_R_UNABLE_TO_FIND_MEM_BIO);
+				PKCS7err(PKCS7_F_PKCS7_DATASIGN,PKCS7_R_UNABLE_TO_FIND_MEM_BIO);
 				goto err;
 				}
 			BIO_get_mem_ptr(btmp,&buf_mem);
-			ASN1_OCTET_STRING_set(p7->d.sign->contents->d.data,
+			ASN1_OCTET_STRING_set(os,
 				(unsigned char *)buf_mem->data,buf_mem->length);
 			}
 		if (pp != NULL) Free(pp);
 		pp=NULL;
-		break;
-	default:
-		PKCS7err(PKCS7_F_PKCS7_DATAFINAL,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
-	        goto err;
 		}
 
-	if (p7->detached)
-		{
-
-		}
 	ret=1;
 err:
 	if (buf != NULL) BUF_MEM_free(buf);
@@ -253,6 +333,7 @@ PKCS7_SIGNER_INFO *si;
 	X509 *x509;
 
 	if (!PKCS7_type_is_signed(p7)) abort();
+	/* XXXXXXXXXXXXXXXXXXXXXXX */
 	ias=si->issuer_and_serial;
 	s=p7->d.sign;
 

@@ -1,5 +1,5 @@
 /* crypto/evp/p_sign.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -88,9 +88,11 @@ EVP_PKEY *pkey;
 	unsigned char m[EVP_MAX_MD_SIZE];
 	unsigned int m_len;
 	int i,ok=0,v;
+	MS_STATIC EVP_MD_CTX tmp_ctx;
 
 	*siglen=0;
-	EVP_DigestFinal(ctx,&(m[0]),&m_len);
+	memcpy(&tmp_ctx,ctx,sizeof(EVP_MD_CTX));
+	EVP_DigestFinal(&tmp_ctx,&(m[0]),&m_len);
 	for (i=0; i<4; i++)
 		{
 		v=ctx->digest->required_pkey_type[i];

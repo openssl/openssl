@@ -1,5 +1,5 @@
 /* apps/version.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -77,7 +77,7 @@ char **argv;
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE);
+			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	if (argc == 1) version=1;
 	for (i=1; i<argc; i++)
@@ -121,6 +121,7 @@ char **argv;
 #ifndef NO_BLOWFISH
 		printf("%s ",BF_options());
 #endif
+		printf("\n");
 		}
 	if (cflags)  printf("%s\n",SSLeay_version(SSLEAY_CFLAGS));
 end:

@@ -1,5 +1,5 @@
 /* crypto/mem.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -165,7 +165,7 @@ char *file;
 int line;
 	{
 	char *ret;
-	MEM *m;
+	MEM *m,*mm;
 
 	if ((ret=malloc_func(num)) == NULL)
 		return(NULL);
@@ -193,12 +193,10 @@ int line;
 		m->line=line;
 		m->num=num;
 		m->order=order++;
-		if (lh_insert(mh,(char *)m) != NULL)
+		if ((mm=(MEM *)lh_insert(mh,(char *)m)) != NULL)
 			{
-			free(m);
-			free(ret);
-			/* abort(); */
-			ret=NULL;
+			/* Not good, but don't sweat it */
+			free(mm);
 			}
 		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
 		}
@@ -338,7 +336,7 @@ void (*cb)();
 	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
 	}
 
-#ifndef WIN16
+#ifndef NO_FP_API
 void CRYPTO_mem_leaks_fp(fp)
 FILE *fp;
 	{
