@@ -4,6 +4,11 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Add a generic structure called OPENSSL_ITEM.  This can be used to
+     pass a list of arguments to any function as well as provide a way
+     for a function to pass data back to the caller.
+     [Richard Levitte]
+
   *) Add the functions BUF_strndup() and BUF_memdup().  BUF_strndup()
      works like BUF_strdup() but can be used to duplicate a portion of
      a string.  The copy gets NUL-terminated.  BUF_memdup() duplicates

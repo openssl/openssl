@@ -152,6 +152,16 @@ extern "C" {
 #define SSLEAY_PLATFORM		4
 #define SSLEAY_DIR		5
 
+/* A generic structure to pass assorted data in a expandable way */
+typedef struct openssl_item_st
+	{
+	int code;
+	void *value;		/* Not used for flag attributes */
+	size_t value_size;	/* Max size of value for output, length for input */
+	size_t *value_length;	/* Returned length of value for output */
+	} OPENSSL_ITEM;
+
+
 /* When changing the CRYPTO_LOCK_* list, be sure to maintin the text lock
  * names in cryptlib.c
  */
@@ -192,7 +202,8 @@ extern "C" {
 #define CRYPTO_LOCK_ECDH		34
 #define CRYPTO_LOCK_BN  		35
 #define CRYPTO_LOCK_EC_PRE_COMP		36
-#define CRYPTO_NUM_LOCKS		37
+#define CRYPTO_LOCK_STORE		37
+#define CRYPTO_NUM_LOCKS		38
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2
@@ -302,6 +313,7 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
 #define CRYPTO_EX_INDEX_ECDSA		12
 #define CRYPTO_EX_INDEX_ECDH		13
 #define CRYPTO_EX_INDEX_COMP		14
+#define CRYPTO_EX_INDEX_STORE		15
 
 /* Dynamically assigned indexes start from this value (don't use directly, use
  * via CRYPTO_ex_data_new_class). */
