@@ -197,7 +197,7 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BN_RECP_CTX *recp,
 			   5383BF622A20B17E1BAA999336988B82B93F5FB77B55B4B68
 			   9412000000000031 / 298EB5957DBFB8CBB2CC2A9F789D2B5
 			   fails, for example. */
-			ret=BN_div(dv,rem,a,&(recp->N),ctx);
+			ret=BN_div(dv,rem,m,&(recp->N),ctx);
 #else
 			BNerr(BN_F_BN_MOD_MUL_RECIPROCAL,BN_R_BAD_RECIPROCAL);
 #endif
