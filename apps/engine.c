@@ -85,6 +85,38 @@ static void identity(void *ptr)
 	return;
 	}
 
+static int append_buf(char **buf, char *s, int *size, int step)
+	{
+	int l = strlen(s);
+
+	if (*buf == NULL)
+		{
+		*size = step;
+		*buf = OPENSSL_malloc(*size);
+		if (*buf == NULL)
+			return 0;
+		**buf = '\0';
+		}
+
+	if (**buf != '\0')
+		l += 2;		/* ", " */
+
+	if (strlen(*buf) + strlen(s) >= *size)
+		{
+		*size += step;
+		*buf = OPENSSL_realloc(*buf, *size);
+		}
+
+	if (*buf == NULL)
+		return 0;
+
+	if (**buf != '\0')
+		strcat(*buf, ", ");
+	strcat(*buf, s);
+
+	return 1;
+	}
+
 int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
@@ -117,16 +149,7 @@ int MAIN(int argc, char **argv)
 		if (strcmp(*argv,"-v") == 0)
 			verbose=1;
 		else if (strcmp(*argv,"-c") == 0)
-			{
 			list_cap=1;
-
-			/* When list_cap is implemented. remove the following
-			 * 3 lines.
-			 */
-			BIO_printf(bio_err, "-c not yet supported\n");
-			badops=1;
-			break;
-			}
 		else if (strcmp(*argv,"-t") == 0)
 			test_avail=1;
 		else if ((strncmp(*argv,"-h",2) == 0) ||
@@ -166,19 +189,46 @@ int MAIN(int argc, char **argv)
 			const char *name = ENGINE_get_name(e);
 			BIO_printf(bio_out, "%s (%s)", name, id);
 			if (list_cap || test_avail)
-				BIO_printf(bio_out, ": ");
+				BIO_printf(bio_out, ":");
 			if (test_avail)
 				{
 				if (ENGINE_init(e))
 					{
-					BIO_printf(bio_out, "available");
+					BIO_printf(bio_out, " available");
 					ENGINE_finish(e);
 					}
 				else
 					{
-					BIO_printf(bio_out, "unavailable");
+					BIO_printf(bio_out, " unavailable");
 					ERR_clear_error();
 					}
+				}
+			if (list_cap)
+				{
+				int cap_size = 256;
+				char *cap_buf = NULL;
+
+				if (ENGINE_get_RSA(e) != NULL
+					&& !append_buf(&cap_buf, "RSA",
+						&cap_size, 256))
+					goto end;
+				if (ENGINE_get_DSA(e) != NULL
+					&& !append_buf(&cap_buf, "DSA",
+						&cap_size, 256))
+					goto end;
+				if (ENGINE_get_DH(e) != NULL
+					&& !append_buf(&cap_buf, "DH",
+						&cap_size, 256))
+					goto end;
+				if (ENGINE_get_RAND(e) != NULL
+					&& !append_buf(&cap_buf, "RAND",
+						&cap_size, 256))
+					goto end;
+
+				if (*cap_buf != '\0')
+					BIO_printf(bio_out, " [%s]", cap_buf);
+
+				OPENSSL_free(cap_buf);
 				}
 			BIO_printf(bio_out, "\n");
 			}
@@ -187,10 +237,9 @@ int MAIN(int argc, char **argv)
 		}
 
 	ret=0;
-	ERR_print_errors(bio_err);
 end:
+	ERR_print_errors(bio_err);
 	sk_pop_free(engines, identity);
 	if (bio_out != NULL) BIO_free_all(bio_out);
 	EXIT(ret);
 	}
-

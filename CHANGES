@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) 'openssl engine' can now list capabilities.
+     [Richard Levitte]
+
   *) Better error reporting in 'openssl engine'.
      [Richard Levitte]
 
