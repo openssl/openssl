@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.6e and 0.9.6f  [XX xxx XXXX]
+
+  *)
+
  Changes between 0.9.6d and 0.9.6e  [30 Jul 2002]
 
   *) Fix cipher selection routines: ciphers without encryption had no flags
