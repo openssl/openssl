@@ -1,0 +1,23 @@
+# CAVS Version 1.3
+# Config Info for : "OpenSSL"
+# TDES Monte Carlo (Modes) Test for OFB
+# State : Encrypt and Decrypt
+# Mon Aug 11 11:59:23 AM
+
+[ENCRYPT]
+NumKeys = 1
+
+KEY1 = 2cf2299423382586
+KEY2 = 2cf2299423382586
+KEY3 = 2cf2299423382586
+IV = 80dd1c8e1e6a8081
+PLAINTEXT = 79926b660fb978f5
+
+[DECRYPT]
+NumKeys = 1
+
+KEY1 = 3b07dab068fead46
+KEY2 = 3b07dab068fead46
+KEY3 = 3b07dab068fead46
+IV = 70cb6a6bfcf6b663
+CIPHERTEXT = eea6690e43672324

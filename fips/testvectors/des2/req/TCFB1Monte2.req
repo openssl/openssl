@@ -1,0 +1,23 @@
+# CAVS Version 1.3
+# Config Info for : "Open SSL 2Key 3DES"
+# TDES Monte Carlo (Modes) Test for CFB1
+# State : Encrypt and Decrypt
+# Wed Aug 13 09:30:31 AM
+
+[ENCRYPT]
+NumKeys = 2
+
+KEY1 = 6d087a8c917fbc16
+KEY2 = 3786e63d8f91d3a2
+KEY3 = 6d087a8c917fbc16
+IV = 4d4b9132643e4e74
+PLAINTEXT = 1
+
+[DECRYPT]
+NumKeys = 2
+
+KEY1 = c4c873468ce0238f
+KEY2 = 6e51cde61c648045
+KEY3 = c4c873468ce0238f
+IV = 68bcca71362a3648
+CIPHERTEXT = 0
