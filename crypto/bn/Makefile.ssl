@@ -62,7 +62,7 @@ bn_prime.h: bn_prime.pl
 divtest: divtest.c ../../libcrypto.a
 	cc -I../../include divtest.c -o divtest ../../libcrypto.a
 
-bnbug: bnbug.c ../../libcrypto.a
+bnbug: bnbug.c ../../libcrypto.a top
 	cc -g -I../../include bnbug.c -o bnbug ../../libcrypto.a
 
 lib:	$(LIBOBJ)
