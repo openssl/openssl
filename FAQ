@@ -68,9 +68,7 @@ multi-threaded versions of the standard libraries.  If your platform
 is not one of these, consult the INSTALL file.
 
 Multi-threaded applications must provide two callback functions to
-OpenSSL.  This will be described in the threads(3) manpage.  [That
-page has not been written yet.  Please read the "threads.doc" section
-of doc/ssleay.txt instead.]
+OpenSSL.  This is described in the threads(3) manpage.
 
 
 * Why do I get a "PRNG not seeded" error message?

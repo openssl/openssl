@@ -1,0 +1,62 @@
+=pod
+
+=head1 NAME
+
+CRYPTO_set_locking_callback, CRYPTO_set_id_callback - OpenSSL thread support
+
+=head1 SYNOPSIS
+
+ #include <openssl/crypto.h>
+
+ void CRYPTO_set_locking_callback(void (*locking_function)(int mode,
+        int n, const char *file, int line));
+
+ void CRYPTO_set_id_callback(unsigned long (*id_function)(void));
+
+=head1 DESCRIPTION
+
+OpenSSL can safely be used in multi-threaded applications provided
+that two callback functions are set.
+
+locking_function(int mode, int type, const char *file, int line) is
+needed to perform locking on shared data stuctures. Multi-threaded
+applications will crash at random if it is not set.
+
+locking_function() must be able to handle up to B<CRYPTO_NUM_LOCKS>
+different mutex locks. It sets the B<n>th lock if B<mode> &
+B<CRYPTO_LOCK>, and releases it otherwise.
+
+B<file> and B<line> are the file number of the function setting the
+lock. They can be useful for debugging.
+
+id_function(void) is a function that returns a thread ID. It is not
+needed on Windows nor on platforms where getpid() returns a different
+ID for each thread.
+
+=NOTE
+
+You can find out if OpenSSL was configured with thread support:
+
+ #define OPENSSL_THREAD_DEFINES
+ #include <openssl/opensslconf.h>
+ #if defined(THREADS)
+   // thread support enabled
+ #else
+   // no thread support
+ #endif
+
+=head1 EXAMPLES
+
+B<crypto/threads/mttest.c> shows examples of the callback functions on
+Solaris, Irix and Win32.
+
+=head1 HISTORY
+
+CRYPTO_set_locking_callback() and CRYPTO_set_id_callback() are
+available in all versions of SSLeay and OpenSSL.
+
+=head1 SEE ALSO
+
+L<crypto(3)|crypto(3)>
+
+=cut
