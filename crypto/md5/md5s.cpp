@@ -32,7 +32,7 @@ void GetTSC(unsigned long& tsc)
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "md5.h"
+#include <openssl/md5.h>
 
 extern "C" {
 void md5_block_x86(MD5_CTX *ctx, unsigned char *buffer,int num);

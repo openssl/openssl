@@ -8,11 +8,11 @@
 #include <errno.h>
 
 #include "rsa.h"       /* SSLeay stuff */
-#include "crypto.h"
-#include "x509.h"
-#include "pem.h"
-#include "ssl.h"
-#include "err.h"
+#include <openssl/crypto.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #define HOME "/usr/users/sampo/demo/"
 #define CERTF HOME "plain-cert.pem"

@@ -32,7 +32,7 @@ void GetTSC(unsigned long& tsc)
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "ripemd.h"
+#include <openssl/ripemd.h>
 
 extern "C" {
 void ripemd160_block_x86(RIPEMD160_CTX *ctx, unsigned char *buffer,int num);
