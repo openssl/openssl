@@ -253,11 +253,7 @@
 #endif
 
 #undef BUFSIZE
-/* BUFSIZE needs to be one cipherblock larger than the largest number in the
-   lengths array (see below), to make space for padding when doing EVP tests.
-   1024 extra bytes may seem much, but hey, it doesn't hurt!
-							-- Richard Levitte */
-#define BUFSIZE	((long)1024*9+1)
+#define BUFSIZE	((long)1024*8+1)
 int run=0;
 
 static char ftime_used = 0, times_used = 0, gettimeofday_used = 0, getrusage_used = 0;
@@ -1812,6 +1808,7 @@ int MAIN(int argc, char **argv)
 					EVP_DecryptInit_ex(&ctx,evp_cipher,NULL,key16,iv);
 				else
 					EVP_EncryptInit_ex(&ctx,evp_cipher,NULL,key16,iv);
+				EVP_CIPHER_CTX_set_padding(&ctx, 0);
 
 				Time_F(START);
 				if(decrypt)
