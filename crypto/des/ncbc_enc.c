@@ -58,19 +58,21 @@
 
 #include "des_locl.h"
 
-void des_ncbc_encrypt(des_cblock (*input), des_cblock (*output), long length,
-	     des_key_schedule schedule, des_cblock (*ivec), int enc)
+#ifdef CBC_ENC_C__DONT_UPDATE_IV
+void des_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+	     des_key_schedule schedule, des_cblock *ivec, int enc)
+#else
+void des_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+	     des_key_schedule schedule, des_cblock *ivec, int enc)
+#endif
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;
-	register unsigned char *in,*out;
 	register long l=length;
 	DES_LONG tin[2];
 	unsigned char *iv;
 
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
-	iv=(unsigned char *)ivec;
+	iv = &(*ivec)[0];
 
 	if (enc)
 		{
@@ -95,9 +97,11 @@ void des_ncbc_encrypt(des_cblock (*input), des_cblock (*output), long length,
 			tout0=tin[0]; l2c(tout0,out);
 			tout1=tin[1]; l2c(tout1,out);
 			}
-		iv=(unsigned char *)ivec;
+#ifndef CBC_ENC_C__DONT_UPDATE_IV
+		iv = &(*ivec)[0];
 		l2c(tout0,iv);
 		l2c(tout1,iv);
+#endif
 		}
 	else
 		{
@@ -115,11 +119,25 @@ void des_ncbc_encrypt(des_cblock (*input), des_cblock (*output), long length,
 			xor0=tin0;
 			xor1=tin1;
 			}
-		iv=(unsigned char *)ivec;
+		if (l != -8)
+			{
+			c2l(in,tin0); tin[0]=tin0;
+			c2l(in,tin1); tin[1]=tin1;
+			des_encrypt((DES_LONG *)tin,schedule,DES_DECRYPT);
+			tout0=tin[0]^xor0;
+			tout1=tin[1]^xor1;
+			l2cn(tout0,tout1,out,l+8);
+#ifndef CBC_ENC_C__DONT_UPDATE_IV
+			xor0=tin0;
+			xor1=tin1;
+#endif
+			}
+#ifndef CBC_ENC_C__DONT_UPDATE_IV 
+		iv = &(*ivec)[0];
 		l2c(xor0,iv);
 		l2c(xor1,iv);
+#endif
 		}
 	tin0=tin1=tout0=tout1=xor0=xor1=0;
 	tin[0]=tin[1]=0;
 	}
-
