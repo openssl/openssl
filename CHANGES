@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add configuration option to build on Linux on both big-endian and
+     little-endian MIPS.
+     [Ralf Baechle <ralf@uni-koblenz.de>]
+
   *) Give the OpenSSL applications more possibilities to make use of
      keys (public as well as private) handled by engines.
      [Richard Levitte]

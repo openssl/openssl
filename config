@@ -413,7 +413,22 @@ case "$GUESSOS" in
 	    esac
 	fi
 	;;
-  mips-*-linux?) OUT="linux-mips" ;;
+  mips-*-linux?)
+          cat >dummy.c <<EOF
+#include <stdio.h>  /* for printf() prototype */
+        int main (argc, argv) int argc; char *argv[]; {
+#ifdef __MIPSEB__
+  printf ("linux-%s\n", argv[1]);
+#endif
+#ifdef __MIPSEL__
+  printf ("linux-%sel\n", argv[1]);
+#endif
+  return 0;
+}
+EOF
+	${CC} -o dummy dummy.c && OUT=`./dummy ${MACHINE}`
+	rm dummy dummy.c
+	;;
   ppc-*-linux2) OUT="linux-ppc" ;;
   m68k-*-linux*) OUT="linux-m68k" ;;
   ia64-*-linux?) OUT="linux-ia64" ;;
