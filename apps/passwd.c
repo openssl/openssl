@@ -46,7 +46,7 @@ int MAIN(int argc, char **argv)
 	BIO *out = NULL;
 	int i, badopt, opt_done;
 	int passed_salt = 0, quiet = 0, table = 0;
-	int crypt = 0;
+	int usecrypt = 0;
 	size_t pw_maxlen = 0;
 
 	apps_startup();
@@ -64,7 +64,7 @@ int MAIN(int argc, char **argv)
 	while (!badopt && !opt_done && argv[++i] != NULL)
 		{
 		if (strcmp(argv[i], "-crypt") == 0)
-			crypt = 1;
+			usecrypt = 1;
 		else if (strcmp(argv[i], "-salt") == 0)
 			{
 			if ((argv[i+1] != NULL) && (salt == NULL))
@@ -88,9 +88,9 @@ int MAIN(int argc, char **argv)
 			}
 		}
 
-	if (crypt /* + algo2 + algo3 + ... */ == 0) /* use default */
-		crypt = 1;
-	if (crypt /* + algo2 + algo3 */ > 1) /* conflict */
+	if (usecrypt /* + algo2 + algo3 + ... */ == 0) /* use default */
+		usecrypt = 1;
+	if (usecrypt /* + algo2 + algo3 */ > 1) /* conflict */
 		badopt = 1;
 
 	if (badopt) 
@@ -105,7 +105,7 @@ int MAIN(int argc, char **argv)
 		goto err;
 		}
 
-	if (crypt)
+	if (usecrypt)
 		pw_maxlen = 8;
 	/* else if ... */
 
@@ -131,7 +131,7 @@ int MAIN(int argc, char **argv)
 		/* first make sure we have a salt */
 		if (!passed_salt)
 			{
-			if (crypt)
+			if (usecrypt)
 				{
 				if (salt_malloc == NULL)
 					{
@@ -165,7 +165,7 @@ int MAIN(int argc, char **argv)
 		assert(strlen(passwd) <= pw_maxlen);
 		
 		/* now compute password hash */
-		if (crypt)
+		if (usecrypt)
 			{
 			char *hash = des_crypt(passwd, salt);
 			if (table)
