@@ -315,7 +315,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 
 	if (words > (INT_MAX/(4*BN_BITS2)))
 		{
-		BNerr(BN_F_BN_EXPAND_INTERNAL,BN_R_TOO_LARGE);
+		BNerr(BN_F_BN_EXPAND_INTERNAL,BN_R_BIGNUM_TOO_LONG);
 		return NULL;
 		}
 

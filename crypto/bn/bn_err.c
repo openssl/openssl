@@ -95,6 +95,7 @@ static ERR_STRING_DATA BN_str_reasons[]=
 	{
 {BN_R_ARG2_LT_ARG3                       ,"arg2 lt arg3"},
 {BN_R_BAD_RECIPROCAL                     ,"bad reciprocal"},
+{BN_R_BIGNUM_TOO_LONG                    ,"bignum too long"},
 {BN_R_CALLED_WITH_EVEN_MODULUS           ,"called with even modulus"},
 {BN_R_DIV_BY_ZERO                        ,"div by zero"},
 {BN_R_ENCODING_ERROR                     ,"encoding error"},
@@ -105,7 +106,6 @@ static ERR_STRING_DATA BN_str_reasons[]=
 {BN_R_NOT_INITIALIZED                    ,"not initialized"},
 {BN_R_NO_INVERSE                         ,"no inverse"},
 {BN_R_P_IS_NOT_PRIME                     ,"p is not prime"},
-{BN_R_TOO_LARGE                          ,"too large"},
 {BN_R_TOO_MANY_ITERATIONS                ,"too many iterations"},
 {BN_R_TOO_MANY_TEMPORARY_VARIABLES       ,"too many temporary variables"},
 {0,NULL}
