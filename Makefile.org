@@ -207,7 +207,7 @@ sub_all:
 	fi; \
 	done; \
 	if echo "$(DIRS)" | \
-	    grep '\(^\| \)\(crypto\|ssl\)\( \|$$\)' > /dev/null 2>&1 && \
+	    egrep '(^| )(crypto|ssl)( |$$)' > /dev/null 2>&1 && \
 	   [ -n "$(SHARED_LIBS)" ]; then \
 		$(MAKE) $(SHARED_LIBS); \
 	fi
@@ -254,14 +254,14 @@ do_bsd-gcc-shared: linux-shared
 do_linux-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-Wl,-S,-soname=lib$$i.so.${SHLIB_MAJOR} \
+		-Wl,-S,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,--whole-archive lib$$i.a \
 		-Wl,--no-whole-archive $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -l$$i"; \
 	done
 
 # This assumes that GNU utilities are *not* used
-do_true64-shared:
+do_tru64-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -no_archive -o lib$$i.so \
 		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
@@ -273,7 +273,7 @@ do_true64-shared:
 do_solaris-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-h lib$$i.so.${SHLIB_MAJOR} \
+		-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -l$$i"; \
 	done

@@ -204,6 +204,12 @@
      The previous value, 12, was not always sufficient for BN_mod_exp().
      [Bodo Moeller]
 
+  *) Make sure that shared libraries get the internal name engine with
+     the full version number and not just 0.  This should mark the
+     shared libraries as not backward compatible.  Of course, this should
+     be changed again when we can guarantee backward binary compatibility.
+     [Richard Levitte]
+
   *) Fix typo in get_cert_by_subject() in by_dir.c
      [Jean-Marc Desperrier <jean-marc.desperrier@certplus.com>]
 
