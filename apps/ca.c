@@ -1645,7 +1645,7 @@ err:
 
 	if (ret) ERR_print_errors(bio_err);
 	app_RAND_write_file(randfile, bio_err);
-	if (free_key & key)
+	if (free_key && key)
 		OPENSSL_free(key);
 	BN_free(serial);
 	TXT_DB_free(db);
