@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
 		}
 	else
 		printf("Successfully added and removed to an empty list!\n");
-	printf("About to fill up the engine type array\n");
+	printf("About to beef up the engine-type list\n");
 	for(loop = 0; loop < 512; loop++)
 		{
 		sprintf(buf, "id%i", loop);
@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
 			printf("."); fflush(stdout);
 		}
 cleanup_loop:
-	printf("\nAbout to empty the engine type array\n");
+	printf("\nAbout to empty the engine-type list\n");
 	while((ptr = ENGINE_get_first()) != NULL)
 		{
 		if(!ENGINE_remove(ptr))
@@ -235,7 +235,7 @@ cleanup_loop:
 		free((char *)(ENGINE_get_id(block[loop])));
 		free((char *)(ENGINE_get_name(block[loop])));
 		}
-	printf("\nTests complete\n");
+	printf("\nTests completed happily\n");
 	to_return = 0;
 end:
 	if(to_return)

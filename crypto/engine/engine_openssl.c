@@ -80,7 +80,7 @@ static int openssl_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 static ENGINE engine_openssl =
         {
 	"openssl",
-	"Software default 'hardware' support",
+	"Software default engine support",
 	NULL,
 	NULL,
 	NULL, /* these methods are "stolen" in ENGINE_openssl() */

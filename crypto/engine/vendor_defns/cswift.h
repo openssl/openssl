@@ -1,6 +1,6 @@
 /* Attribution notice: Rainbow have generously allowed me to reproduce
  * the necessary definitions here from their API. This means the support
- * can build independantly of whether application builders have the
+ * can build independently of whether application builders have the
  * API or hardware. This will allow developers to easily produce software
  * that has latent hardware support for any users that have accelertors
  * installed, without the developers themselves needing anything extra.

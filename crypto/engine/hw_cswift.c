@@ -67,7 +67,7 @@
 
 /* Attribution notice: Rainbow have generously allowed me to reproduce
  * the necessary definitions here from their API. This means the support
- * can build independantly of whether application builders have the
+ * can build independently of whether application builders have the
  * API or hardware. This will allow developers to easily produce software
  * that has latent hardware support for any users that have accelerators
  * installed, without the developers themselves needing anything extra.
@@ -92,8 +92,11 @@ static int cswift_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa);
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int cswift_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+/* This function is alised to mod_exp (with the DH and mont dropped). */
+static int cswift_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
-/* Our internal RSA_METHOD that we provide const pointers to */
+/* Our internal RSA_METHOD that we provide pointers to */
 static RSA_METHOD cswift_rsa =
 	{
 	"CryptoSwift RSA method",
@@ -111,14 +114,27 @@ static RSA_METHOD cswift_rsa =
 	NULL
 	};
 
+/* Our internal DH_METHOD that we provide pointers to */
+static DH_METHOD cswift_dh =
+	{
+	"CryptoSwift DH method",
+	NULL,
+	NULL,
+	cswift_mod_exp_dh,
+	NULL,
+	NULL,
+	0,
+	NULL
+	};
+
 /* Our ENGINE structure. */
 static ENGINE engine_cswift =
         {
 	"cswift",
-	"CryptoSwift hardware support",
+	"CryptoSwift hardware engine support",
 	&cswift_rsa,
 	NULL,
-	NULL,
+	&cswift_dh,
 	NULL,
 	cswift_mod_exp,
 	cswift_mod_exp_crt,
@@ -133,7 +149,8 @@ static ENGINE engine_cswift =
  * (indeed - the lock will already be held by our caller!!!) */
 ENGINE *ENGINE_cswift()
 	{
-	RSA_METHOD *meth;
+	RSA_METHOD *meth1;
+	DH_METHOD *meth2;
 
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the cswift-specific mod_exp and mod_exp_crt so we use
@@ -142,11 +159,16 @@ ENGINE *ENGINE_cswift()
 	 * code may not hook properly, and if you own one of these
 	 * cards then you have the right to do RSA operations on it
 	 * anyway! */ 
-	meth = RSA_PKCS1_SSLeay();
-	cswift_rsa.rsa_pub_enc = meth->rsa_pub_enc;
-	cswift_rsa.rsa_pub_dec = meth->rsa_pub_dec;
-	cswift_rsa.rsa_priv_enc = meth->rsa_priv_enc;
-	cswift_rsa.rsa_priv_dec = meth->rsa_priv_dec;
+	meth1 = RSA_PKCS1_SSLeay();
+	cswift_rsa.rsa_pub_enc = meth1->rsa_pub_enc;
+	cswift_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
+	cswift_rsa.rsa_priv_enc = meth1->rsa_priv_enc;
+	cswift_rsa.rsa_priv_dec = meth1->rsa_priv_dec;
+
+	/* Much the same for Diffie-Hellman */
+	meth2 = DH_OpenSSL();
+	cswift_dh.generate_key = meth2->generate_key;
+	cswift_dh.compute_key = meth2->compute_key;
 	return &engine_cswift;
 	}
 
@@ -310,10 +332,12 @@ static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		goto err;
 		}
 	sw_param.type = SW_ALG_EXP;
-	sw_param.up.exp.modulus.nbytes = BN_bn2bin(m, (char *)modulus->d);
-	sw_param.up.exp.modulus.value = (char *)modulus->d;
-	sw_param.up.exp.exponent.nbytes = BN_bn2bin(p, (char *)exponent->d);
-	sw_param.up.exp.exponent.value = (char *)exponent->d;
+	sw_param.up.exp.modulus.nbytes = BN_bn2bin(m,
+		(unsigned char *)modulus->d);
+	sw_param.up.exp.modulus.value = (unsigned char *)modulus->d;
+	sw_param.up.exp.exponent.nbytes = BN_bn2bin(p,
+		(unsigned char *)exponent->d);
+	sw_param.up.exp.exponent.value = (unsigned char *)exponent->d;
 	/* Attach the key params */
 	if(p_CSwift_AttachKeyParam(hac, &sw_param) != SW_OK)
 		{
@@ -321,11 +345,11 @@ static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		goto err;
 		}
 	/* Prepare the argument and response */
-	arg.nbytes = BN_bn2bin(a, (char *)argument->d);
-	arg.value = (char *)argument->d;
+	arg.nbytes = BN_bn2bin(a, (unsigned char *)argument->d);
+	arg.value = (unsigned char *)argument->d;
 	res.nbytes = BN_num_bytes(m);
 	memset(result->d, 0, res.nbytes);
-	res.value = (char *)result->d;
+	res.value = (unsigned char *)result->d;
 	/* Perform the operation */
 	if(p_CSwift_SimpleRequest(hac, SW_CMD_MODEXP, &arg, 1, &res, 1) != SW_OK)
 		{
@@ -333,7 +357,7 @@ static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		goto err;
 		}
 	/* Convert the response */
-	BN_bin2bn((char *)result->d, res.nbytes, r);
+	BN_bin2bn((unsigned char *)result->d, res.nbytes, r);
 	to_return = 1;
 err:
 	if(acquired)
@@ -398,16 +422,19 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		goto err;
 		}
 	sw_param.type = SW_ALG_CRT;
-	sw_param.up.crt.p.nbytes = BN_bn2bin(p, (char *)rsa_p->d);
-	sw_param.up.crt.p.value = (char *)rsa_p->d;
-	sw_param.up.crt.q.nbytes = BN_bn2bin(q, (char *)rsa_q->d);
-	sw_param.up.crt.q.value = (char *)rsa_q->d;
-	sw_param.up.crt.dmp1.nbytes = BN_bn2bin(dmp1, (char *)rsa_dmp1->d);
-	sw_param.up.crt.dmp1.value = (char *)rsa_dmp1->d;
-	sw_param.up.crt.dmq1.nbytes = BN_bn2bin(dmq1, (char *)rsa_dmq1->d);
-	sw_param.up.crt.dmq1.value = (char *)rsa_dmq1->d;
-	sw_param.up.crt.iqmp.nbytes = BN_bn2bin(iqmp, (char *)rsa_iqmp->d);
-	sw_param.up.crt.iqmp.value = (char *)rsa_iqmp->d;
+	sw_param.up.crt.p.nbytes = BN_bn2bin(p, (unsigned char *)rsa_p->d);
+	sw_param.up.crt.p.value = (unsigned char *)rsa_p->d;
+	sw_param.up.crt.q.nbytes = BN_bn2bin(q, (unsigned char *)rsa_q->d);
+	sw_param.up.crt.q.value = (unsigned char *)rsa_q->d;
+	sw_param.up.crt.dmp1.nbytes = BN_bn2bin(dmp1,
+		(unsigned char *)rsa_dmp1->d);
+	sw_param.up.crt.dmp1.value = (unsigned char *)rsa_dmp1->d;
+	sw_param.up.crt.dmq1.nbytes = BN_bn2bin(dmq1,
+		(unsigned char *)rsa_dmq1->d);
+	sw_param.up.crt.dmq1.value = (unsigned char *)rsa_dmq1->d;
+	sw_param.up.crt.iqmp.nbytes = BN_bn2bin(iqmp,
+		(unsigned char *)rsa_iqmp->d);
+	sw_param.up.crt.iqmp.value = (unsigned char *)rsa_iqmp->d;
 	/* Attach the key params */
 	if(p_CSwift_AttachKeyParam(hac, &sw_param) != SW_OK)
 		{
@@ -415,11 +442,11 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		goto err;
 		}
 	/* Prepare the argument and response */
-	arg.nbytes = BN_bn2bin(a, (char *)argument->d);
-	arg.value = (char *)argument->d;
+	arg.nbytes = BN_bn2bin(a, (unsigned char *)argument->d);
+	arg.value = (unsigned char *)argument->d;
 	res.nbytes = 2 * BN_num_bytes(p);
 	memset(result->d, 0, res.nbytes);
-	res.value = (char *)result->d;
+	res.value = (unsigned char *)result->d;
 	/* Perform the operation */
 	if(p_CSwift_SimpleRequest(hac, SW_CMD_MODEXP_CRT, &arg, 1,
 			&res, 1) != SW_OK)
@@ -428,7 +455,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		goto err;
 		}
 	/* Convert the response */
-	BN_bin2bn((char *)result->d, res.nbytes, r);
+	BN_bin2bn((unsigned char *)result->d, res.nbytes, r);
 	to_return = 1;
 err:
 	if(acquired)
@@ -465,6 +492,13 @@ err:
 
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int cswift_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
+	{
+	return cswift_mod_exp(r, a, p, m, ctx);
+	}
+
+/* This function is aliased to mod_exp (with the dh and mont dropped). */
+static int cswift_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return cswift_mod_exp(r, a, p, m, ctx);

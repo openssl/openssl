@@ -102,7 +102,6 @@ $crypto.=" crypto/dsa/dsa.h" unless $no_dsa;
 $crypto.=" crypto/dh/dh.h" unless $no_dh;
 $crypto.=" crypto/hmac/hmac.h" unless $no_hmac;
 
-$crypto.=" crypto/dso/dso.h";
 $crypto.=" crypto/engine/engine.h";
 $crypto.=" crypto/stack/stack.h";
 $crypto.=" crypto/buffer/buffer.h";

@@ -177,6 +177,7 @@ int ENGINE_finish(ENGINE *e)
 		}
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	if((e->funct_ref == 1) && e->finish)
+#if 0
 		/* This is the last functional reference and the engine
 		 * requires cleanup so we do it now. */
 		to_return = e->finish();
@@ -188,6 +189,30 @@ int ENGINE_finish(ENGINE *e)
 		e->funct_ref--;
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+#else
+		/* I'm going to deliberately do a convoluted version of this
+		 * piece of code because we don't want "finish" functions
+		 * being called inside a locked block of code, if at all
+		 * possible. I'd rather have this call take an extra couple
+		 * of ticks than have throughput serialised on a externally-
+		 * provided callback function that may conceivably never come
+		 * back. :-( */
+		{
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+		/* CODE ALERT: This *IS* supposed to be "=" and NOT "==" :-) */
+		if((to_return = e->finish()))
+			{
+			CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+			/* Cleanup the functional reference which is also a
+			 * structural reference. */
+			e->struct_ref--;
+			e->funct_ref--;
+			CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+			}
+		}
+	else
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+#endif
 	return to_return;
 	}
 
