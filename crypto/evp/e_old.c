@@ -56,6 +56,10 @@
  *
  */
 
+#ifdef OPENSSL_NO_DEPRECATED
+static void *dummy = &dummy;
+#else
+
 #include <openssl/evp.h>
 
 /* Define some deprecated functions, so older programs
@@ -105,4 +109,6 @@ const EVP_CIPHER *EVP_aes_128_cfb(void) { return EVP_aes_128_cfb128(); }
 const EVP_CIPHER *EVP_aes_192_cfb(void) { return EVP_aes_192_cfb128(); }
 #undef EVP_aes_256_cfb
 const EVP_CIPHER *EVP_aes_256_cfb(void) { return EVP_aes_256_cfb128(); }
+#endif
+
 #endif
