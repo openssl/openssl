@@ -94,6 +94,9 @@ ASN1_PRINTABLESTRING *d2i_ASN1_PRINTABLESTRING(ASN1_PRINTABLESTRING **a,
 	{ return(M_d2i_ASN1_PRINTABLESTRING(a,pp,
 	     l)); }
 
+int i2d_ASN1_PRINTABLESTRING(ASN1_PRINTABLESTRING *a, unsigned char **pp)
+	{ return(M_i2d_ASN1_PRINTABLESTRING(a,pp)); }
+
 int i2d_ASN1_PRINTABLE(ASN1_STRING *a, unsigned char **pp)
 	{ return(M_i2d_ASN1_PRINTABLE(a,pp)); }
 
