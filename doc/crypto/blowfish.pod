@@ -32,7 +32,7 @@ by Counterpane (see http://www.counterpane.com/blowfish.html ).
 
 Blowfish is a block cipher that operates on 64 bit (8 byte) blocks of data.
 It uses a variable size key, but typically, 128 bit (16 byte) keys are
-a considered good for strong encryption.  Blowfish can be used in the same
+considered good for strong encryption.  Blowfish can be used in the same
 modes as DES (see L<des_modes(7)|des_modes(7)>).  Blowfish is currently one
 of the faster block ciphers.  It is quite a bit faster than DES, and much
 faster than IDEA or RC2.
