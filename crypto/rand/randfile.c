@@ -211,7 +211,7 @@ const char *RAND_file_name(char *buf, size_t size)
 		{
 		if (OPENSSL_issetugid() == 0)
 			s=getenv("HOME");
-		if (s != NULL && ((int)(strlen(s)+strlen(RFILE)+2) < size))
+		if (s != NULL && (strlen(s)+strlen(RFILE)+2 < size))
 			{
 			strcpy(buf,s);
 #ifndef VMS
