@@ -81,7 +81,7 @@ int SHA224_Final (unsigned char *md, SHA256_CTX *c)
 /*
  * Note that FIPS180-2 discusses "Truncation of the Hash Function Output."
  * default: case below covers for it. It's not clear however if it's
- * permitted to truncate at amount of bits not divisable by 4. I bet not,
+ * permitted to truncate to amount of bytes not divisible by 4. I bet not,
  * but if it is, then default: case shall be extended. For reference.
  * Idea behind separate cases for pre-defined lenghts is to let the
  * compiler decide if it's appropriate to unroll small loops.
