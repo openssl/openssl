@@ -126,7 +126,7 @@ int main(int argc,char **argv)
     {
     if(argc != 2)
 	{
-	fprintf(stderr,"%s [primes|pqg]\n",argv[0]);
+	fprintf(stderr,"%s [prime|pqg]\n",argv[0]);
 	exit(1);
 	}
     if(!FIPS_mode_set(1,argv[0]))
@@ -135,10 +135,15 @@ int main(int argc,char **argv)
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
 	exit(1);
 	}
-    if(!strcmp(argv[1],"primes"))
+    if(!strcmp(argv[1],"prime"))
 	primes();
-    else
+    else if(!strcmp(argv[1],"pqg"))
 	pqg();
+    else
+	{
+	fprintf(stderr,"Don't know how to %s.\n",argv[1]);
+	exit(1);
+	}
 
     return 0;
     }
