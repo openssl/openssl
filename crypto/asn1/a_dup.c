@@ -78,6 +78,6 @@ char *ASN1_dup(int (*i2d)(), char *(*d2i)(), char *x)
 	i=i2d(x,&p);
 	p= b;
 	ret=d2i(NULL,&p,i);
-	Free((char *)b);
+	Free(b);
 	return(ret);
 	}

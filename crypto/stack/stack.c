@@ -126,7 +126,7 @@ STACK *sk_new(int (*c)())
 	ret->sorted=0;
 	return(ret);
 err1:
-	Free((char *)ret);
+	Free(ret);
 err0:
 	return(NULL);
 	}
@@ -276,8 +276,8 @@ void sk_pop_free(STACK *st, void (*func)())
 void sk_free(STACK *st)
 	{
 	if (st == NULL) return;
-	if (st->data != NULL) Free((char *)st->data);
-	Free((char *)st);
+	if (st->data != NULL) Free(st->data);
+	Free(st);
 	}
 
 int sk_num(STACK *st)

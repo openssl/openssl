@@ -111,7 +111,7 @@ void X509_CERT_AUX_free(X509_CERT_AUX *a)
 	ASN1_UTF8STRING_free(a->alias);
 	ASN1_OCTET_STRING_free(a->keyid);
 	ASN1_TYPE_free(a->other);
-	Free((char *)a);
+	Free(a);
 }
 
 int i2d_X509_CERT_AUX(X509_CERT_AUX *a, unsigned char **pp)

@@ -152,7 +152,7 @@ PKCS7 *d2i_PKCS7(PKCS7 **a, unsigned char **pp, long length)
 		{
 		if ((*a)->asn1 != NULL)
 			{
-			Free((char *)(*a)->asn1);
+			Free((*a)->asn1);
 			(*a)->asn1=NULL;
 			}
 		(*a)->length=0;
@@ -251,7 +251,7 @@ void PKCS7_free(PKCS7 *a)
 		{
 		ASN1_OBJECT_free(a->type);
 		}
-	Free((char *)a);
+	Free(a);
 	}
 
 void PKCS7_content_free(PKCS7 *a)
@@ -259,7 +259,7 @@ void PKCS7_content_free(PKCS7 *a)
 	if(a == NULL)
 	    return;
 
-	if (a->asn1 != NULL) Free((char *)a->asn1);
+	if (a->asn1 != NULL) Free(a->asn1);
 
 	if (a->d.ptr != NULL)
 		{

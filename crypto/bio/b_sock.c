@@ -334,7 +334,7 @@ static void ghbn_free(struct hostent *a)
 			Free(a->h_addr_list[i]);
 		Free(a->h_addr_list);
 		}
-	if (a->h_name != NULL) Free((char *)a->h_name);
+	if (a->h_name != NULL) Free(a->h_name);
 	Free(a);
 	}
 

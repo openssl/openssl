@@ -643,7 +643,7 @@ int OBJ_create(char *oid, char *sn, char *ln)
 	ok=OBJ_add_object(op);
 err:
 	ASN1_OBJECT_free(op);
-	Free((char *)buf);
+	Free(buf);
 	return(ok);
 	}
 

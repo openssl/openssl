@@ -643,14 +643,14 @@ static void mime_hdr_free(MIME_HEADER *hdr)
 	if(hdr->name) Free(hdr->name);
 	if(hdr->value) Free(hdr->value);
 	if(hdr->params) sk_pop_free(hdr->params, mime_param_free);
-	Free((char *)hdr);
+	Free(hdr);
 }
 
 static void mime_param_free(MIME_PARAM *param)
 {
 	if(param->param_name) Free(param->param_name);
 	if(param->param_value) Free(param->param_value);
-	Free((char *)param);
+	Free(param);
 }
 
 /* Check for a multipart boundary. Returns:

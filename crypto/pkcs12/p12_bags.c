@@ -188,5 +188,5 @@ void PKCS12_BAGS_free (PKCS12_BAGS *a)
 	}
 
 	ASN1_OBJECT_free (a->type);
-	Free ((char *)a);
+	Free (a);
 }

@@ -248,7 +248,7 @@ ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a, unsigned char **pp,
 		memcpy(s,p,(int)len);
 	}
 
-	if (ret->data != NULL) Free((char *)ret->data);
+	if (ret->data != NULL) Free(ret->data);
 	ret->data=s;
 	ret->length=(int)len;
 	if (a != NULL) (*a)=ret;
@@ -317,7 +317,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, unsigned char **pp,
 		p+=len;
 	}
 
-	if (ret->data != NULL) Free((char *)ret->data);
+	if (ret->data != NULL) Free(ret->data);
 	ret->data=s;
 	ret->length=(int)len;
 	if (a != NULL) (*a)=ret;
@@ -340,7 +340,7 @@ int ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
 	if (a->length < (sizeof(long)+1))
 		{
 		if (a->data != NULL)
-			Free((char *)a->data);
+			Free(a->data);
 		if ((a->data=(unsigned char *)Malloc(sizeof(long)+1)) != NULL)
 			memset((char *)a->data,0,sizeof(long)+1);
 		}

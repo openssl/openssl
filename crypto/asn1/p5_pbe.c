@@ -103,7 +103,7 @@ void PBEPARAM_free (PBEPARAM *a)
 	if(a==NULL) return;
 	M_ASN1_OCTET_STRING_free(a->salt);
 	M_ASN1_INTEGER_free (a->iter);
-	Free ((char *)a);
+	Free (a);
 }
 
 /* Return an algorithm identifier for a PKCS#5 PBE algorithm */

@@ -133,7 +133,7 @@ int RSA_print(BIO *bp, RSA *x, int off)
 	if (!print(bp,"coefficient:",x->iqmp,m,off)) goto err;
 	ret=1;
 err:
-	if (m != NULL) Free((char *)m);
+	if (m != NULL) Free(m);
 	return(ret);
 	}
 #endif /* NO_RSA */
@@ -204,7 +204,7 @@ int DSA_print(BIO *bp, DSA *x, int off)
 	if ((x->g != NULL) && !print(bp,"G:   ",x->g,m,off)) goto err;
 	ret=1;
 err:
-	if (m != NULL) Free((char *)m);
+	if (m != NULL) Free(m);
 	return(ret);
 	}
 #endif /* !NO_DSA */
@@ -307,7 +307,7 @@ int DHparams_print(BIO *bp, DH *x)
 err:
 		DHerr(DH_F_DHPARAMS_PRINT,reason);
 		}
-	if (m != NULL) Free((char *)m);
+	if (m != NULL) Free(m);
 	return(ret);
 	}
 #endif
@@ -352,7 +352,7 @@ int DSAparams_print(BIO *bp, DSA *x)
 	if (!print(bp,"g:",x->g,m,4)) goto err;
 	ret=1;
 err:
-	if (m != NULL) Free((char *)m);
+	if (m != NULL) Free(m);
 	DSAerr(DSA_F_DSAPARAMS_PRINT,reason);
 	return(ret);
 	}

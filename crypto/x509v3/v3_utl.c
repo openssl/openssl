@@ -104,7 +104,7 @@ void X509V3_conf_free(CONF_VALUE *conf)
 	if(conf->name) Free(conf->name);
 	if(conf->value) Free(conf->value);
 	if(conf->section) Free(conf->section);
-	Free((char *)conf);
+	Free(conf);
 }
 
 int X509V3_add_value_bool(const char *name, int asn1_bool,

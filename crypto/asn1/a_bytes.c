@@ -124,7 +124,7 @@ ASN1_STRING *d2i_ASN1_type_bytes(ASN1_STRING **a, unsigned char **pp,
 	else
 		s=NULL;
 
-	if (ret->data != NULL) Free((char *)ret->data);
+	if (ret->data != NULL) Free(ret->data);
 	ret->length=(int)len;
 	ret->data=s;
 	ret->type=tag;
@@ -218,7 +218,7 @@ ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, unsigned char **pp, long length,
 			{
 			if ((ret->length < len) || (ret->data == NULL))
 				{
-				if (ret->data != NULL) Free((char *)ret->data);
+				if (ret->data != NULL) Free(ret->data);
 				s=(unsigned char *)Malloc((int)len + 1);
 				if (s == NULL)
 					{
@@ -235,7 +235,7 @@ ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, unsigned char **pp, long length,
 		else
 			{
 			s=NULL;
-			if (ret->data != NULL) Free((char *)ret->data);
+			if (ret->data != NULL) Free(ret->data);
 			}
 
 		ret->length=(int)len;

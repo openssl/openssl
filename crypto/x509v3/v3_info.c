@@ -204,7 +204,7 @@ void ACCESS_DESCRIPTION_free(ACCESS_DESCRIPTION *a)
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->method);
 	GENERAL_NAME_free(a->location);
-	Free ((char *)a);
+	Free (a);
 }
 
 STACK_OF(ACCESS_DESCRIPTION) *AUTHORITY_INFO_ACCESS_new()

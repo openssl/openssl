@@ -129,7 +129,7 @@ int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
 		ASN1err(ASN1_F_ASN1_SIGN,ERR_R_EVP_LIB);
 		goto err;
 		}
-	if (signature->data != NULL) Free((char *)signature->data);
+	if (signature->data != NULL) Free(signature->data);
 	signature->data=buf_out;
 	buf_out=NULL;
 	signature->length=outl;
@@ -141,8 +141,8 @@ int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
 err:
 	memset(&ctx,0,sizeof(ctx));
 	if (buf_in != NULL)
-		{ memset((char *)buf_in,0,(unsigned int)inl); Free((char *)buf_in); }
+		{ memset((char *)buf_in,0,(unsigned int)inl); Free(buf_in); }
 	if (buf_out != NULL)
-		{ memset((char *)buf_out,0,outll); Free((char *)buf_out); }
+		{ memset((char *)buf_out,0,outll); Free(buf_out); }
 	return(outl);
 	}

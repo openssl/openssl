@@ -121,7 +121,7 @@ int i2d_DSAPublicKey(DSA *a, unsigned char **pp)
 		bs.length=BN_bn2bin(num[i],bs.data);
 		i2d_ASN1_INTEGER(&bs,&p);
 		}
-	Free((char *)bs.data);
+	Free(bs.data);
 	*pp=p;
 	if(all) return(t);
 	else return(tot);

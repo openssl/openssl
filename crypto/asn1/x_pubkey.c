@@ -112,7 +112,7 @@ void X509_PUBKEY_free(X509_PUBKEY *a)
 	X509_ALGOR_free(a->algor);
 	M_ASN1_BIT_STRING_free(a->public_key);
 	if (a->pkey != NULL) EVP_PKEY_free(a->pkey);
-	Free((char *)a);
+	Free(a);
 	}
 
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)

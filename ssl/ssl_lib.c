@@ -380,7 +380,7 @@ void SSL_free(SSL *s)
 
 	if (s->method != NULL) s->method->ssl_free(s);
 
-	Free((char *)s);
+	Free(s);
 	}
 
 void SSL_set_bio(SSL *s,BIO *rbio,BIO *wbio)
@@ -1215,7 +1215,7 @@ void SSL_CTX_free(SSL_CTX *a)
 		sk_X509_pop_free(a->extra_certs,X509_free);
 	if (a->comp_methods != NULL)
 		sk_SSL_COMP_pop_free(a->comp_methods,SSL_COMP_free);
-	Free((char *)a);
+	Free(a);
 	}
 
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)

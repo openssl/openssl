@@ -211,7 +211,7 @@ void GENERAL_NAME_free(GENERAL_NAME *a)
 		break;
 
 	}
-	Free ((char *)a);
+	Free (a);
 }
 
 /* Now the GeneralNames versions: a SEQUENCE OF GeneralName. These are needed as
@@ -286,6 +286,6 @@ void OTHERNAME_free(OTHERNAME *a)
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->type_id);
 	ASN1_TYPE_free(a->value);
-	Free ((char *)a);
+	Free (a);
 }
 

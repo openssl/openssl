@@ -302,7 +302,7 @@ void EVP_PKEY_free(EVP_PKEY *x)
 		}
 #endif
 	EVP_PKEY_free_it(x);
-	Free((char *)x);
+	Free(x);
 	}
 
 static void EVP_PKEY_free_it(EVP_PKEY *x)

@@ -149,7 +149,7 @@ LHASH *lh_new(unsigned long (*h)(), int (*c)())
 	ret->error=0;
 	return(ret);
 err1:
-	Free((char *)ret);
+	Free(ret);
 err0:
 	return(NULL);
 	}
@@ -172,8 +172,8 @@ void lh_free(LHASH *lh)
 			n=nn;
 			}
 		}
-	Free((char *)lh->b);
-	Free((char *)lh);
+	Free(lh->b);
+	Free(lh);
 	}
 
 void *lh_insert(LHASH *lh, void *data)
@@ -233,7 +233,7 @@ void *lh_delete(LHASH *lh, void *data)
 		nn= *rn;
 		*rn=nn->next;
 		ret=nn->data;
-		Free((char *)nn);
+		Free(nn);
 		lh->num_delete++;
 		}
 

@@ -139,7 +139,7 @@ int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)())
 		}
 
 	if (pkey->private_key->data != NULL)
-		Free((char *)pkey->private_key->data);
+		Free(pkey->private_key->data);
 	if ((pkey->private_key->data=(unsigned char *)Malloc(l[0])) == NULL)
 		{
 		ASN1err(ASN1_F_I2D_NETSCAPE_RSA,ERR_R_MALLOC_FAILURE);
@@ -334,7 +334,7 @@ static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *a)
 	M_ASN1_INTEGER_free(a->version);
 	X509_ALGOR_free(a->algor);
 	M_ASN1_OCTET_STRING_free(a->private_key);
-	Free((char *)a);
+	Free(a);
 	}
 
 #endif /* NO_RC4 */

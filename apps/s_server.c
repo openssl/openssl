@@ -336,7 +336,7 @@ static int ebcdic_write(BIO *b, char *in, int inl)
 		num = num + num;  /* double the size */
 		if (num < inl)
 			num = inl;
-		Free((char*)wbuf);
+		Free(wbuf);
 		wbuf=(EBCDIC_OUTBUFF *)Malloc(sizeof(EBCDIC_OUTBUFF) + num);
 
 		wbuf->alloced = num;

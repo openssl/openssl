@@ -222,7 +222,7 @@ ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, unsigned char **pp,
 		}
 	if ((ret->data == NULL) || (ret->length < len))
 		{
-		if (ret->data != NULL) Free((char *)ret->data);
+		if (ret->data != NULL) Free(ret->data);
 		ret->data=(unsigned char *)Malloc(len ? (int)len : 1);
 		ret->flags|=ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 		if (ret->data == NULL)

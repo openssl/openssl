@@ -126,6 +126,6 @@ void X509_KEY_free(X509 *a)
 	X509_CINF_free(a->cert_info);
 	X509_ALGOR_free(a->sig_alg);
 	ASN1_BIT_STRING_free(a->signature);
-	Free((char *)a);
+	Free(a);
 	}
 

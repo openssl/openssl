@@ -104,7 +104,7 @@ void PBE2PARAM_free (PBE2PARAM *a)
 	if(a==NULL) return;
 	X509_ALGOR_free(a->keyfunc);
 	X509_ALGOR_free(a->encryption);
-	Free ((char *)a);
+	Free (a);
 }
 
 int i2d_PBKDF2PARAM(PBKDF2PARAM *a, unsigned char **pp)
@@ -158,7 +158,7 @@ void PBKDF2PARAM_free (PBKDF2PARAM *a)
 	M_ASN1_INTEGER_free(a->iter);
 	M_ASN1_INTEGER_free(a->keylength);
 	X509_ALGOR_free(a->prf);
-	Free ((char *)a);
+	Free (a);
 }
 
 /* Return an algorithm identifier for a PKCS#5 v2.0 PBE algorithm:

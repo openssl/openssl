@@ -132,7 +132,7 @@ void AUTHORITY_KEYID_free(AUTHORITY_KEYID *a)
 	M_ASN1_OCTET_STRING_free(a->keyid);
 	sk_GENERAL_NAME_pop_free(a->issuer, GENERAL_NAME_free);
 	M_ASN1_INTEGER_free (a->serial);
-	Free ((char *)a);
+	Free (a);
 }
 
 static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,

@@ -181,7 +181,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 			sk_NAME_FUNCS_value(name_funcs_stack,ret->type)
 				->free_func(ret->name,ret->type,ret->data);
 			}
-		Free((char *)ret);
+		Free(ret);
 		}
 	else
 		{
@@ -216,7 +216,7 @@ int OBJ_NAME_remove(const char *name, int type)
 			sk_NAME_FUNCS_value(name_funcs_stack,ret->type)
 				->free_func(ret->name,ret->type,ret->data);
 			}
-		Free((char *)ret);
+		Free(ret);
 		return(1);
 		}
 	else

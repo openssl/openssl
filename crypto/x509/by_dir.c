@@ -218,9 +218,9 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 				memcpy(ip,ctx->dirs_type,(ctx->num_dirs_alloced-10)*
 					sizeof(int));
 				if (ctx->dirs != NULL)
-					Free((char *)ctx->dirs);
+					Free(ctx->dirs);
 				if (ctx->dirs_type != NULL)
-					Free((char *)ctx->dirs_type);
+					Free(ctx->dirs_type);
 				ctx->dirs=pp;
 				ctx->dirs_type=ip;
 				}

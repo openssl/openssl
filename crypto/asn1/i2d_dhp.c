@@ -118,7 +118,7 @@ int i2d_DHparams(DH *a, unsigned char **pp)
 		bs.length=BN_bn2bin(num[i],bs.data);
 		i2d_ASN1_INTEGER(&bs,&p);
 		}
-	Free((char *)bs.data);
+	Free(bs.data);
 	ret=t;
 err:
 	if (num[2] != NULL) BN_free(num[2]);

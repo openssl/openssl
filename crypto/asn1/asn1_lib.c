@@ -381,8 +381,8 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
 void ASN1_STRING_free(ASN1_STRING *a)
 	{
 	if (a == NULL) return;
-	if (a->data != NULL) Free((char *)a->data);
-	Free((char *)a);
+	if (a->data != NULL) Free(a->data);
+	Free(a);
 	}
 
 int ASN1_STRING_cmp(ASN1_STRING *a, ASN1_STRING *b)

@@ -163,7 +163,7 @@ void X509_REQ_INFO_free(X509_REQ_INFO *a)
 	X509_NAME_free(a->subject);
 	X509_PUBKEY_free(a->pubkey);
 	sk_X509_ATTRIBUTE_pop_free(a->attributes,X509_ATTRIBUTE_free);
-	Free((char *)a);
+	Free(a);
 	}
 
 int i2d_X509_REQ(X509_REQ *a, unsigned char **pp)
@@ -230,7 +230,7 @@ void X509_REQ_free(X509_REQ *a)
 	X509_REQ_INFO_free(a->req_info);
 	X509_ALGOR_free(a->sig_alg);
 	M_ASN1_BIT_STRING_free(a->signature);
-	Free((char *)a);
+	Free(a);
 	}
 
 

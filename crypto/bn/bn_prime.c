@@ -83,11 +83,13 @@ BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe, BIGNUM *add,
 	BIGNUM t;
 	int found=0;
 	int i,j,c1=0;
-	BN_CTX *ctx;
+	BN_CTX *ctx,*ctx2=NULL;
 	int checks = BN_prime_checks_for_size(bits);
 
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
+	ctx2=BN_CTX_new();
+	if (ctx2 == NULL) goto err;
 	if (ret == NULL)
 		{
 		if ((rnd=BN_new()) == NULL) goto err;
@@ -119,7 +121,7 @@ loop:
 
 	if (!safe)
 		{
-		i=BN_is_prime(rnd,checks,callback,ctx,cb_arg);
+		i=BN_is_prime_fasttest(rnd,checks,callback,ctx,ctx2,cb_arg,0);
 		if (i == -1) goto err;
 		if (i == 0) goto loop;
 		}
@@ -133,11 +135,11 @@ loop:
 
 		for (i=0; i<checks; i++)
 			{
-			j=BN_is_prime(rnd,1,callback,ctx,cb_arg);
+			j=BN_is_prime_fasttest(rnd,1,callback,ctx,ctx2,cb_arg,0);
 			if (j == -1) goto err;
 			if (j == 0) goto loop;
 
-			j=BN_is_prime(&t,1,callback,ctx,cb_arg);
+			j=BN_is_prime_fasttest(&t,1,callback,ctx,ctx2,cb_arg,0);
 			if (j == -1) goto err;
 			if (j == 0) goto loop;
 
@@ -151,6 +153,7 @@ err:
 	if (!found && (ret == NULL) && (rnd != NULL)) BN_free(rnd);
 	BN_free(&t);
 	if (ctx != NULL) BN_CTX_free(ctx);
+	if (ctx2 != NULL) BN_CTX_free(ctx2);
 	return(found ? rnd : NULL);
 	}
 

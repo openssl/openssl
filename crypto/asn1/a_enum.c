@@ -219,7 +219,7 @@ ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a, unsigned char **pp,
 		p+=len;
 	}
 
-	if (ret->data != NULL) Free((char *)ret->data);
+	if (ret->data != NULL) Free(ret->data);
 	ret->data=s;
 	ret->length=(int)len;
 	if (a != NULL) (*a)=ret;
@@ -242,7 +242,7 @@ int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
 	if (a->length < (sizeof(long)+1))
 		{
 		if (a->data != NULL)
-			Free((char *)a->data);
+			Free(a->data);
 		if ((a->data=(unsigned char *)Malloc(sizeof(long)+1)) != NULL)
 			memset((char *)a->data,0,sizeof(long)+1);
 		}

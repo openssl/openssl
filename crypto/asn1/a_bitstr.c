@@ -173,7 +173,7 @@ ASN1_BIT_STRING *d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, unsigned char **pp,
 		s=NULL;
 
 	ret->length=(int)len;
-	if (ret->data != NULL) Free((char *)ret->data);
+	if (ret->data != NULL) Free(ret->data);
 	ret->data=s;
 	ret->type=V_ASN1_BIT_STRING;
 	if (a != NULL) (*a)=ret;

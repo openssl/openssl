@@ -108,6 +108,6 @@ int ASN1_i2d_bio(int (*i2d)(), BIO *out, unsigned char *x)
 		j+=i;
 		n-=i;
 		}
-	Free((char *)b);
+	Free(b);
 	return(ret);
 	}

@@ -153,7 +153,7 @@ void X509_free(X509 *a)
 	X509_CERT_AUX_free(a->aux);
 
 	if (a->name != NULL) Free(a->name);
-	Free((char *)a);
+	Free(a);
 	}
 
 int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,

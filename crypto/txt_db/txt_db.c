@@ -181,7 +181,7 @@ err:
 #endif
 		if (ret->data != NULL) sk_free(ret->data);
 		if (ret->index != NULL) Free(ret->index);
-		if (ret->qual != NULL) Free((char *)ret->qual);
+		if (ret->qual != NULL) Free(ret->qual);
 		if (ret != NULL) Free(ret);
 		return(NULL);
 		}
