@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/12 10:05:11 $
+  ______________                           $Date: 2000/09/12 10:07:19 $
 
   DEVELOPMENT STATE
 
@@ -21,6 +21,7 @@
 			sco5-gcc			- passed
 			sco5-cc				- passed
 			FreeBSD				- passed
+			Win32				- failed (PCURSORINFO)
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
