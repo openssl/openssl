@@ -276,11 +276,11 @@ typedef struct ENGINE_CMD_DEFN_st
 	} ENGINE_CMD_DEFN;
 
 /* Generic function pointer */
-typedef int (*ENGINE_GEN_FUNC_PTR)();
+typedef int (*ENGINE_GEN_FUNC_PTR)(void);
 /* Generic function pointer taking no arguments */
 typedef int (*ENGINE_GEN_INT_FUNC_PTR)(ENGINE *);
 /* Specific control function pointer */
-typedef int (*ENGINE_CTRL_FUNC_PTR)(ENGINE *, int, long, void *, void (*f)());
+typedef int (*ENGINE_CTRL_FUNC_PTR)(ENGINE *, int, long, void *, void (*f)(void));
 /* Generic load_key function pointer */
 typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *,
 	UI_METHOD *ui_method, void *callback_data);
@@ -397,7 +397,7 @@ int ENGINE_register_all_complete(void);
  * reference to an engine, but many control commands may require the engine be
  * functional. The caller should be aware of trying commands that require an
  * operational ENGINE, and only use functional references in such situations. */
-int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
+int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
 
 /* This function tests if an ENGINE-specific command is usable as a "setting".
  * Eg. in an application's config file that gets processed through
@@ -410,7 +410,7 @@ int ENGINE_cmd_is_executable(ENGINE *e, int cmd);
  * See the comment on ENGINE_ctrl_cmd_string() for an explanation on how to
  * use the cmd_name and cmd_optional. */
 int ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name,
-        long i, void *p, void (*f)(), int cmd_optional);
+        long i, void *p, void (*f)(void), int cmd_optional);
 
 /* This function passes a command-name and argument to an ENGINE. The cmd_name
  * is converted to a command number and the control command is called using
