@@ -796,6 +796,7 @@ int set_name_ex(unsigned long *flags, const char *arg)
 		{ "nofname", XN_FLAG_FN_NONE, XN_FLAG_FN_MASK},
 		{ "sname", XN_FLAG_FN_SN, XN_FLAG_FN_MASK},
 		{ "lname", XN_FLAG_FN_LN, XN_FLAG_FN_MASK},
+		{ "align", XN_FLAG_FN_ALIGN, 0},
 		{ "oid", XN_FLAG_FN_OID, XN_FLAG_FN_MASK},
 		{ "space_eq", XN_FLAG_SPC_EQ, 0},
 		{ "dump_unknown", XN_FLAG_DUMP_UNKNOWN_FIELDS, 0},

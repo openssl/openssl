@@ -115,9 +115,10 @@ any extensions present and any trust settings.
 
 =item B<-certopt option>
 
-customise the output format used with B<-text>. This option may be used more
-than once to set multiple options. See the B<OUTPUT OPTIONS> section for
-more information.
+customise the output format used with B<-text>. The B<option> argument can be
+a single option or multiple options separated by commas. The B<-certopt> switch
+may be also be used more than once to set multiple options. See the B<TEXT OPTIONS>
+section for more information.
 
 =item B<-noout>
 
@@ -148,9 +149,10 @@ outputs the issuer name.
 
 =item B<-nameopt option>
 
-option which determines how the subject or issuer names are displayed. This
-option may be used more than once to set multiple options. See the B<NAME
-OPTIONS> section for more information.
+option which determines how the subject or issuer names are displayed. The
+B<option> argument can be a single option or multiple options separated by
+commas.  Alternatively the B<-nameopt> switch may be used more than once to
+set multiple options. See the B<NAME OPTIONS> section for more information.
 
 =item B<-email>
 
@@ -390,7 +392,7 @@ options.
 =item B<multiline>
 
 a multiline format. It is equivalent B<esc_ctrl>, B<esc_msb>, B<sep_multiline>,
-B<spc_eq> and B<lname>.
+B<spc_eq>, B<lname> and B<align>.
 
 =item B<esc_2253>
 
@@ -485,6 +487,11 @@ not display the field at all. B<sname> uses the "short name" form
 B<oid> represents the OID in numerical form and is useful for
 diagnostic purpose.
 
+=item B<align>
+
+align field values for a more readable output. Only usable with
+B<sep_multiline>.
+
 =item B<spc_eq>
 
 places spaces round the B<=> character which follows the field
@@ -492,7 +499,7 @@ name.
 
 =back
 
-=head1 OUTPUT OPTIONS
+=head1 TEXT OPTIONS
 
 As well as customising the name output format, it is also possible to
 customise the actual fields printed using the B<certopt> options when
@@ -562,6 +569,13 @@ ASN1 parse unsupported extensions.
 
 hex dump unsupported extensions.
 
+=item B<ca_default>
+
+the value used by the B<ca> utility, equivalent to B<no_issuer>, B<no_pubkey>, B<no_header>,
+B<no_version>, B<no_sigdump> and B<no_signame>.
+
+
+
 =over 4
 
 =back
@@ -590,7 +604,7 @@ Display the certificate subject name in RFC2253 form:
 Display the certificate subject name in oneline form on a terminal
 supporting UTF8:
 
- openssl x509 -in cert.pem -noout -subject -nameopt oneline -nameopt -escmsb
+ openssl x509 -in cert.pem -noout -subject -nameopt oneline,-escmsb
 
 Display the certificate MD5 fingerprint:
 

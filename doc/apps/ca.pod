@@ -317,6 +317,23 @@ the same as B<-msie_hack>
 the same as B<-policy>. Mandatory. See the B<POLICY FORMAT> section
 for more information.
 
+=item B<nameopt>, B<certopt>
+
+these options allow the format used to display the certificate details
+when asking the user to confirm signing. All the options supported by
+the B<x509> utilities B<-nameopt> and B<-certopt> switches can be used
+here, except the B<no_signame> and B<no_sigdump> are permanently set
+and cannot be disabled (this is because the certificate signature cannot
+be displayed because the certificate has not been signed at this point).
+
+For convenience the values B<default_ca> are accepted by both to produce
+a reasonable output.
+
+If neither option is present the format used in earlier versions of
+OpenSSL is used. Use of the old format is B<strongly> discouraged because
+it only displays fields mentioned in the B<policy> section, mishandles
+multicharacter string types and does not display extensions.
+
 =back
 
 =head1 POLICY FORMAT
@@ -407,6 +424,9 @@ A sample configuration file with the relevant sections for B<ca>:
 
  policy         = policy_any            # default policy
 
+ nameopt	= default_ca		# Subject name display option
+ certopt	= default_ca		# Certificate display option
+
  [ policy_any ]
  countryName            = supplied
  stateOrProvinceName    = optional
@@ -420,7 +440,7 @@ A sample configuration file with the relevant sections for B<ca>:
 The B<ca> command is quirky and at times downright unfriendly.
 
 The B<ca> utility was originally meant as an example of how to do things
-in a CA. It was not supposed be be used as a full blown CA itself:
+in a CA. It was not supposed to be used as a full blown CA itself:
 nevertheless some people are using it for this purpose.
 
 The B<ca> command is effectively a single user command: no locking is
@@ -487,9 +507,8 @@ exposed at either a command or interface level so a more friendly utility
 B<CA.pl> help a little but not very much.
 
 Any fields in a request that are not present in a policy are silently
-deleted. This does not happen if the B<-preserveDN> option is used but
-the extra fields are not displayed when the user is asked to certify
-a request. The behaviour should be more friendly and configurable.
+deleted. This does not happen if the B<-preserveDN> option is used.
+The behaviour should be more friendly and configurable.
 
 Cancelling some commands by refusing to certify a certificate can
 create an empty file.
