@@ -1161,14 +1161,21 @@ if ($ranlib eq "")
 
 $bn_obj = $bn_asm unless $bn_obj ne "";
 
-my $fips_des_obj='asm/fips-dx86-elf.o'	if ($des_obj =~ /\-elf\.o$/);
-my $fips_sha1_obj='asm/sx86-elf.o'	if ($sha1_obj =~ /\-elf\.o$/);
+my $fips_des_obj;
+my $fips_sha1_obj;
 if ($fips)
 	{
+	if ($des_obj =~ /\-elf\.o$/ && $no_shared) # FIPS DES module is not PIC
+		{
+		$fips_des_obj='asm/fips-dx86-elf.o';
+		$openssl_other_defines.="#define OPENSSL_FIPS_DES_ASM\n";
+		}
+	else {	$fips_des_obj=$fips_des_enc;  }
+	$fips_sha1_obj='asm/sx86-elf.o' if ($sha1_obj =~ /\-elf\.o$/);
 	$des_obj=$sha1_obj="";
 	$openssl_other_defines.="#define OPENSSL_FIPS\n";
 	}
-$des_obj=$des_enc	unless (!$fips && $des_obj =~ /\.o$/);
+$des_obj=$des_enc	unless ($des_obj =~ /\.o$/);
 $bf_obj=$bf_enc		unless ($bf_obj =~ /\.o$/);
 $cast_obj=$cast_enc	unless ($cast_obj =~ /\.o$/);
 $rc4_obj=$rc4_enc	unless ($rc4_obj =~ /\.o$/);
