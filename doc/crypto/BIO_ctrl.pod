@@ -3,9 +3,9 @@
 =head1 NAME
 
 BIO_ctrl, BIO_callback_ctrl, BIO_ptr_ctrl, BIO_int_ctrl, BIO_reset,
-BIO_flush, BIO_eof, BIO_set_close, BIO_get_close, BIO_pending,
-BIO_wpending, BIO_ctrl_pending, BIO_ctrl_wpending, BIO_get_info_callback,
-BIO_set_info_callback - BIO control operations
+BIO_seek, BIO_tell, BIO_flush, BIO_eof, BIO_set_close, BIO_get_close,
+BIO_pending, BIO_wpending, BIO_ctrl_pending, BIO_ctrl_wpending,
+BIO_get_info_callback, BIO_set_info_callback - BIO control operations
 
 =head1 SYNOPSIS
 
@@ -17,6 +17,8 @@ BIO_set_info_callback - BIO control operations
  long BIO_int_ctrl(BIO *bp,int cmd,long larg,int iarg);
 
  int BIO_reset(BIO *b);
+ int BIO_seek(BIO *b, int ofs);
+ int BIO_tell(BIO *b);
  int BIO_flush(BIO *b);
  int BIO_eof(BIO *b);
  int BIO_set_close(BIO *b,long flag);
@@ -41,8 +43,14 @@ specific to a particular type of BIO are described in the specific
 BIOs manual page as well as any special features of the standard
 calls.
 
-BIO_reset() typically reset a BIO to some initial state, in the case
-of file related BIOs for example it rewinds the file pointer.
+BIO_reset() typically resets a BIO to some initial state, in the case
+of file related BIOs for example it rewinds the file pointer to the
+start of the file.
+
+BIO_seek() resets a file related BIO's file position pointer to B<ofs>
+bytes from start of file.
+
+BIO_tell() returns the current file position of a file related BIO.
 
 BIO_flush() normally writes out any internally buffered data, in some
 cases it is used to signal EOF and that no more data will be written.
@@ -66,6 +74,9 @@ macros which call BIO_ctrl().
 =head1 RETURN VALUES
 
 BIO_reset() returns 1 for success and 0 for failure.
+
+BIO_seek() and BIO_tell() both return the current file position on success
+and -1 for failure.
 
 BIO_flush() returns 1 for success and 0 or -1 for failure.
 
