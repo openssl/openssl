@@ -4,6 +4,18 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Fix for a nasty bug in ASN1_TYPE handling. ASN1_TYPE is used for
+     a general "ANY" type, as such it should be able to decode anything
+     including tagged types. However it didn't check the class so it would
+     wrongly interpret tagged types in the same way as their universal
+     counterpart and unknown types were just rejected. Changed so that the
+     tagged and unknown types are handled in the same way as a SEQUENCE:
+     that is the encoding is stored intact. There is also a new type
+     "V_ASN1_OTHER" which is used when the class is not universal, in this
+     case we have no idea what the actual type is so we just lump them all
+     together.
+     [Steve Henson]
+
   *) On VMS, stdout may very well lead to a file that is written to
      in a record-oriented fashion.  That means that every write() will
      write a separate record, which will be read separately by the

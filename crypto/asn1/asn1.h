@@ -83,6 +83,7 @@ extern "C" {
 #define V_ASN1_PRIMATIVE_TAG		0x1f
 
 #define V_ASN1_APP_CHOOSE		-2	/* let the recipient choose */
+#define V_ASN1_OTHER			-3	/* used in ASN1_TYPE */
 
 #define V_ASN1_NEG			0x100	/* negative flag */
 
