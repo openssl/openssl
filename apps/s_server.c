@@ -1386,15 +1386,30 @@ static int www_body(char *hostname, int s, unsigned char *context)
 
 			/* skip the '/' */
 			p= &(buf[5]);
-			dot=0;
+
+			dot = 1;
 			for (e=p; *e != '\0'; e++)
 				{
-				if (e[0] == ' ') break;
-				if (	(e[0] == '.') &&
-					(strncmp(&(e[-1]),"/../",4) == 0))
-					dot=1;
+				if (e[0] == ' ')
+					break;
+
+				switch (dot)
+					{
+				case 0:
+					dot = (e[0] == '/') ? 1 : 0;
+					break;
+				case 1:
+					dot = (e[0] == '.') ? 2 : 0;
+					break;
+				case 2:
+					dot = (e[0] == '.') ? 3 : 0;
+					break;
+				case 3:
+					dot = (e[0] == '/') ? -1 : 0;
+					break;
+					}
 				}
-			
+			dot = (dot == 3) || (dot == -1); /* filename contains ".." component */
 
 			if (*e == '\0')
 				{

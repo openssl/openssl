@@ -141,11 +141,12 @@ static int i2d_X509_NAME_entries(X509_NAME *a)
 			}
 		size+=i2d_X509_NAME_ENTRY(ne,NULL);
 		}
-	/* If empty no extra SET OF needed */
-	if (ret)
-		ret+=ASN1_object_size(1,size,V_ASN1_SET);
 	if (fe != NULL)
+		{
+		/* SET OF needed only if entries is non empty */
+		ret+=ASN1_object_size(1,size,V_ASN1_SET);
 		fe->size=size;
+		}
 
 	r=ASN1_object_size(1,ret,V_ASN1_SEQUENCE);
 

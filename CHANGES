@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Change bctest to avoid here-documents inside command substitution
+     (workaround for FreeBSD /bin/sh bug).
+     [Bodo Moeller]
+
   *) Rename 'des_encrypt' to 'des_encrypt1'.  This avoids the clashes
      with des_encrypt() defined on some operating systems, like Solaris
      and UnixWare.
@@ -28,6 +32,10 @@
      PKCS12_BROKEN_KEYGEN compilation option to retain the old
      (but broken) behaviour.
      [Steve Henson]
+
+  *) Enhance bctest to search for a working bc along $PATH and print
+     it when found.
+     [Tim Rice <tim@multitalents.net> via Richard Levitte]
 
   *) Fix memory leaks in err.c: free err_data string if necessary;
      don't write to the wrong index in ERR_set_error_data.
