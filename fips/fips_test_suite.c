@@ -23,6 +23,7 @@
 #include <openssl/sha.h>
 #include <openssl/err.h>
 #include <openssl/fips.h>
+#include <openssl/md5.h>
 
 #ifndef OPENSSL_FIPS
 int main(int argc, char *argv[])
@@ -65,7 +66,8 @@ static int FIPS_des_test()
     DES_cblock ciphertext;
     DES_cblock buf;
 
-    DES_set_key(&userkey, &key);
+    if(DES_set_key(&userkey, &key))
+	return 0;
     DES_ecb_encrypt( &plaintext, &ciphertext, &key, 1);
     DES_ecb_encrypt( &ciphertext, &buf, &key, 0);
     if (memcmp(buf, plaintext, sizeof(buf)))
@@ -86,7 +88,8 @@ static int FIPS_dsa_test()
     dsa = DSA_generate_parameters(512,NULL,0,NULL,NULL,NULL,NULL);
     if (!dsa)
 	return 0;
-    DSA_generate_key(dsa);
+    if(!DSA_generate_key(dsa))
+	return 0;
     if ( DSA_sign(0,dgst,strlen(dgst),sig,&siglen,dsa) != 1 )
 	return 0;
     if ( DSA_verify(0,dgst,strlen(dgst),sig,siglen,dsa) != 1 )
@@ -138,6 +141,24 @@ static int FIPS_sha1_test()
     return 1;
     }
 
+/* MD5: generate hash of known digest value and compate to known
+   precomputed correct hash */
+
+static int md5_test()
+    {
+    unsigned char digest[MD5_DIGEST_LENGTH] =
+	{ 0x48, 0x50, 0xf0, 0xa3, 0x3a, 0xed, 0xd3, 0xaf, 0x6e, 0x47, 0x7f, 0x83, 0x02, 0xb1, 0x09, 0x68 };
+    char str[] = "etaonrishd";
+
+    unsigned char md[MD5_DIGEST_LENGTH];
+
+    if (!MD5(str,strlen(str),md))
+	return 0;
+    if (memcmp(md,digest,sizeof(md)))
+	return 0;
+    return 1;
+    }
+
 static int Error;
 const char * Fail(const char *msg)
     {
@@ -149,6 +170,11 @@ int main(int argc,char **argv)
     {
 
     printf("\tFIPS-mode test application\n\n");
+
+    /* Non-Approved cryptographic operation
+     */
+    printf("0. Non-Approved cryptographic operation...");
+    printf( md5_test() ? "successful\n" :  Fail("FAILED!\n") );
 
     /* Power-up self test failure
     */
@@ -204,6 +230,12 @@ int main(int argc,char **argv)
     */
     printf("7. SHA-1 hash...");
     printf( FIPS_sha1_test() ? "successful\n" :  Fail("FAILED!\n") );
+
+    /* Non-Approved cryptographic operation
+    */
+    printf("8. Non-Approved cryptographic operation...");
+    printf( md5_test() ? Fail("passed INCORRECTLY!\n")
+	    : "failed as expected\n" );
 
     printf("\nAll tests completed with %d errors\n", Error);
     return 0;
