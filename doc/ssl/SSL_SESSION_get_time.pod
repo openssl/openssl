@@ -8,14 +8,14 @@ SSL_SESSION_get_time, SSL_SESSION_set_time, SSL_SESSION_get_timeout, SSL_SESSION
 
  #include <openssl/ssl.h>
 
- long SSL_SESSION_get_time(SSL_SESSION *s);
+ long SSL_SESSION_get_time(const SSL_SESSION *s);
  long SSL_SESSION_set_time(SSL_SESSION *s, long tm);
- long SSL_SESSION_get_timeout(SSL_SESSION *s);
+ long SSL_SESSION_get_timeout(const SSL_SESSION *s);
  long SSL_SESSION_set_timeout(SSL_SESSION *s, long tm);
 
- long SSL_get_time(SSL_SESSION *s);
+ long SSL_get_time(const SSL_SESSION *s);
  long SSL_set_time(SSL_SESSION *s, long tm);
- long SSL_get_timeout(SSL_SESSION *s);
+ long SSL_get_timeout(const SSL_SESSION *s);
  long SSL_set_timeout(SSL_SESSION *s, long tm);
 
 =head1 DESCRIPTION

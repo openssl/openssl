@@ -8,7 +8,7 @@ SSL_get_peer_cert_chain - get the X509 certificate chain of the peer
 
  #include <openssl/ssl.h>
 
- STACKOF(X509) *SSL_get_peer_cert_chain(SSL *ssl);
+ STACKOF(X509) *SSL_get_peer_cert_chain(const SSL *ssl);
 
 =head1 DESCRIPTION
 

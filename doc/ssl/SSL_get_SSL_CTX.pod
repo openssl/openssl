@@ -8,7 +8,7 @@ SSL_get_SSL_CTX - get the SSL_CTX from which an SSL is created
 
  #include <openssl/ssl.h>
 
- SSL_CTX *SSL_get_SSL_CTX(SSL *ssl);
+ SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl);
 
 =head1 DESCRIPTION
 

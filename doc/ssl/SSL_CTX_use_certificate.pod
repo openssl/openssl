@@ -31,8 +31,8 @@ SSL_CTX_use_certificate, SSL_CTX_use_certificate_ASN1, SSL_CTX_use_certificate_f
  int SSL_use_RSAPrivateKey_ASN1(SSL *ssl, unsigned char *d, long len);
  int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type);
 
- int SSL_CTX_check_private_key(SSL_CTX *ctx);
- int SSL_check_private_key(SSL *ssl);
+ int SSL_CTX_check_private_key(const SSL_CTX *ctx);
+ int SSL_check_private_key(const SSL *ssl);
 
 =head1 DESCRIPTION
 
