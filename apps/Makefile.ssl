@@ -87,6 +87,7 @@ all:	exe
 exe:	$(PROGRAM)
 
 req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
+	LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	$(CC) -o req $(CFLAG) sreq.o $(A_OBJ) $(RAND_OBJ) $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
 
 sreq.o: req.c 
