@@ -144,10 +144,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		{
 		/* If we have enough, we break */
 		if (depth < num) break; /* FIXME: If this happens, we should take
-								 * note of it and, if appropriate, use the
-								 * X509_V_ERR_CERT_CHAIN_TOO_LONG error
-								 * code later.
-								 */
+		                         * note of it and, if appropriate, use the
+		                         * X509_V_ERR_CERT_CHAIN_TOO_LONG error
+		                         * code later.
+		                         */
 
 		/* If we are self signed, we break */
 		xn=X509_get_issuer_name(x);
