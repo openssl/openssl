@@ -315,7 +315,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 
 static void ssleay_rand_seed(const void *buf, int num)
 	{
-	ssleay_rand_add(buf, num, (float)num);
+	ssleay_rand_add(buf, num, (double)num);
 	}
 
 static int ssleay_rand_bytes(unsigned char *buf, int num)

@@ -233,7 +233,7 @@ int RAND_poll(void)
 #if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	if (n > 0)
 		{
-		RAND_add(tmpbuf,sizeof tmpbuf,(float)n);
+		RAND_add(tmpbuf,sizeof tmpbuf,(double)n);
 		OPENSSL_cleanse(tmpbuf,n);
 		}
 #endif
