@@ -115,8 +115,8 @@ my $bits1="THIRTY_TWO_BIT ";
 my $bits2="SIXTY_FOUR_BIT ";
 
 my $x86_elf_asm="x86cpuid-elf.o:asm/bn86-elf.o asm/co86-elf.o:asm/dx86-elf.o asm/yx86-elf.o:asm/ax86-elf.o:asm/bx86-elf.o:asm/mx86-elf.o:asm/sx86-elf.o asm/s512sse2-elf.o:asm/cx86-elf.o:asm/rx86-elf.o:asm/rm86-elf.o:asm/r586-elf.o";
-my $x86_coff_asm="x86cpuid-cof.o:asm/bn86-cof.o asm/co86-cof.o:asm/dx86-cof.o asm/yx86-cof.o::asm/bx86-cof.o:asm/mx86-cof.o:asm/sx86-cof.o asm/s512sse2-cof.o:asm/cx86-cof.o:asm/rx86-cof.o:asm/rm86-cof.o:asm/r586-cof.o";
-my $x86_out_asm="x86cpuid-out.o:bn86-out.o co86-out.o:dx86-out.o yx86-out.o::bx86-out.o:mx86-out.o:sx86-out.o s512sse2-out.o:cx86-out.o:rx86-out.o:rm86-out.o:r586-out.o";
+my $x86_coff_asm="x86cpuid-cof.o:asm/bn86-cof.o asm/co86-cof.o:asm/dx86-cof.o asm/yx86-cof.o:asm/ax86-cof.o:asm/bx86-cof.o:asm/mx86-cof.o:asm/sx86-cof.o asm/s512sse2-cof.o:asm/cx86-cof.o:asm/rx86-cof.o:asm/rm86-cof.o:asm/r586-cof.o";
+my $x86_out_asm="x86cpuid-out.o:bn86-out.o co86-out.o:dx86-out.o yx86-out.o:ax86-out.o:bx86-out.o:mx86-out.o:sx86-out.o s512sse2-out.o:cx86-out.o:rx86-out.o:rm86-out.o:r586-out.o";
 
 my $ia64_asm=":asm/ia64.o::asm/aes-ia64.o:::asm/sha1-ia64.o asm/sha256-ia64.o asm/sha512-ia64.o::asm/rc4-ia64.o::";
 

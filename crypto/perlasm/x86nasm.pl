@@ -106,7 +106,7 @@ sub get_mem
 		$reg2=&conv($1);
 		$addr="$under$2";
 		}
-	elsif ($addr =~ /^[_a-zA-Z]$/)
+	elsif ($addr =~ /^[_a-z][_a-z0-9]*$/i)
 		{
 		$addr="$under$addr";
 		}

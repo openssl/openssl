@@ -54,11 +54,11 @@ asm/aes-ia64.s: asm/aes-ia64.S
 	$(CC) $(CFLAGS) -E asm/aes-ia64.S > $@
 
 asm/ax86-elf.s: asm/aes-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) aes-586.pl elf $(CFLAGS) > ../$@)
+	(cd asm; $(PERL) aes-586.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
 asm/ax86-cof.s: asm/aes-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) aes-586.pl coff $(CFLAGS) > ../$@)
-asm/ax86-out.s: asm/aes-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) aes-586.pl a.out $(CFLAGS) > ../$@)
+	(cd asm; $(PERL) aes-586.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
+ax86-out.s: asm/aes-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) aes-586.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
