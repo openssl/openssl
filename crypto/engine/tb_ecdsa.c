@@ -69,7 +69,7 @@ void ENGINE_unregister_ECDSA(ENGINE *e)
 	engine_table_unregister(&ecdsa_table, e);
 	}
 
-static void engine_unregister_all_ECDSA()
+static void engine_unregister_all_ECDSA(void)
 	{
 	engine_table_cleanup(&ecdsa_table);
 	}
