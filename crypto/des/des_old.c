@@ -72,6 +72,7 @@
  *
  */
 
+#define OPENSSL_DES_LIBDES_COMPATIBILITY
 #include <openssl/des_old.h>
 #include <openssl/des.h>
 #include <openssl/rand.h>
