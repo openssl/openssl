@@ -19,7 +19,7 @@ static int int_verify_depth = 10;
  * and "s_server" utilities. */
 void cb_ssl_info(SSL *s, int where, int ret)
 {
-	char *str1, *str2;
+	const char *str1, *str2;
 	int w;
 
 	if(!fp_cb_ssl_info)
