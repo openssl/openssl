@@ -4,6 +4,27 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add DSO method for VMS.
+     [Richard Levitte]
+
+  *) Bug fix: Montgomery multiplication could produce results with the
+     wrong sign.
+     [Ulf Möller]
+
+  *) Add RPM specification openssl.spec and modify it to build three
+     packages.  The default package contains applications, application
+     documentation and run-time libraries.  The devel package contains
+     include files, static libraries and function documentation.  The
+     doc package contains the contents of the doc directory.  The original
+     openssl.spec was provided by Damien Miller <djm@mindrot.org>.
+     [Richard Levitte]
+     
+  *) Add a large number of documentation files for many SSL routines.
+     [Lutz Jaenicke <Lutz.Jaenicke@aet.TU-Cottbus.DE>]
+
+  *) Add a configuration entry for Sony News 4.
+     [NAKAJI Hiroyuki <nakaji@tutrp.tut.ac.jp>]
+
   *) Don't set the two most significant bits to one when generating a
      random number < q in the DSA library.
      [Ulf Möller]

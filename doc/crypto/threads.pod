@@ -2,7 +2,10 @@
 
 =head1 NAME
 
-CRYPTO_set_locking_callback, CRYPTO_set_id_callback - OpenSSL thread support
+CRYPTO_set_locking_callback, CRYPTO_set_id_callback, CRYPTO_num_locks,
+CRYPTO_set_dynlock_create_callback, CRYPTO_set_dynlock_lock_callback,
+CRYPTO_set_dynlock_destroy_callback, CRYPTO_get_new_dynlockid,
+CRYPTO_destroy_dynlockid, CRYPTO_lock - OpenSSL thread support
 
 =head1 SYNOPSIS
 
@@ -33,6 +36,17 @@ CRYPTO_set_locking_callback, CRYPTO_set_id_callback - OpenSSL thread support
 
  void CRYPTO_lock(int mode, int n, const char *file, int line);
 
+ #define CRYPTO_w_lock(type)	\
+	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,__FILE__,__LINE__)
+ #define CRYPTO_w_unlock(type)	\
+	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE,type,__FILE__,__LINE__)
+ #define CRYPTO_r_lock(type)	\
+	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_READ,type,__FILE__,__LINE__)
+ #define CRYPTO_r_unlock(type)	\
+	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_READ,type,__FILE__,__LINE__)
+ #define CRYPTO_add(addr,amount,type)	\
+	CRYPTO_add_lock(addr,amount,type,__FILE__,__LINE__)
+
 =head1 DESCRIPTION
 
 OpenSSL can safely be used in multi-threaded applications provided
@@ -57,12 +71,16 @@ Additionally, OpenSSL supports dynamic locks, and sometimes, some parts
 of OpenSSL need it for better performance.  To enable this, the following
 is required:
 
+=over 4
+
 =item *
 Three additional callback function, dyn_create_function, dyn_lock_function
 and dyn_destroy_function.
 
 =item *
 A structure defined with the data that each lock needs to handle.
+
+=back
 
 struct CRYPTO_dynlock_value has to be defined to contain whatever structure
 is needed to handle locks.

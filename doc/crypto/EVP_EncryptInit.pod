@@ -2,7 +2,17 @@
 
 =head1 NAME
 
-EVP_EncryptInit, EVP_EncryptUpdate, EVP_EncryptFinal - EVP cipher routines
+EVP_EncryptInit, EVP_EncryptUpdate, EVP_EncryptFinal, EVP_DecryptInit,
+EVP_DecryptUpdate, EVP_DecryptFinal, EVP_CipherInit, EVP_CipherUpdate,
+EVP_CipherFinal, EVP_CIPHER_CTX_set_key_length, EVP_CIPHER_CTX_ctrl,
+EVP_CIPHER_CTX_cleanup, EVP_get_cipherbyname, EVP_get_cipherbynid,
+EVP_get_cipherbyobj, EVP_CIPHER_nid, EVP_CIPHER_block_size,
+EVP_CIPHER_key_length, EVP_CIPHER_iv_length, EVP_CIPHER_flags,
+EVP_CIPHER_mode, EVP_CIPHER_type, EVP_CIPHER_CTX_cipher, EVP_CIPHER_CTX_nid,
+EVP_CIPHER_CTX_block_size, EVP_CIPHER_CTX_key_length, EVP_CIPHER_CTX_iv_length,
+EVP_CIPHER_CTX_get_app_data, EVP_CIPHER_CTX_set_app_data, EVP_CIPHER_CTX_type,
+EVP_CIPHER_CTX_flags, EVP_CIPHER_CTX_mode, EVP_CIPHER_param_to_asn1,
+EVP_CIPHER_asn1_to_param - EVP cipher routines
 
 =head1 SYNOPSIS
 

@@ -190,6 +190,7 @@ int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
 #if 0
 	BN_rshift(ret,r,mont->ri);
 #else
+	ret->neg = r->neg;
 	x=ri;
 	rp=ret->d;
 	ap= &(r->d[x]);

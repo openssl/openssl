@@ -247,6 +247,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-v11-${SYSTEM}"; exit 0;
 	;;
 
+    NEWS-OS:4.*)
+	echo "mips-sony-newsos4"; exit 0;
+	;;
+
 esac
 
 #
@@ -470,6 +474,7 @@ case "$GUESSOS" in
   # these are all covered by the catchall below
   # *-aix) OUT="aix-$CC" ;;
   # *-dgux) OUT="dgux" ;;
+  mips-sony-newsos4) OUT="newsos4-gcc" ;;
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 

@@ -33,6 +33,10 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 #               multithreaded applications (default is "threads" if we
 #               know how to do it)
 # [no-]shared	[don't] try to create shared libraries when supported.
+#               IT IS NOT RECOMMENDED TO USE "shared"!  Since this is a
+#               development branch, the positions of the ENGINE symbols
+#               in the transfer vector are constantly moving, so binary
+#               backward compatibility can't be guaranteed in any way.
 # no-asm        do not use assembler
 # no-dso        do not compile in any native shared-library methods. This
 #               will ensure that all methods just return NULL.
@@ -397,6 +401,9 @@ my %table=(
 
 ##### MacOS X (a.k.a. Rhapsody) setup
 "rhapsody-ppc-cc","cc:-O3 -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",
+
+##### Sony NEWS-OS 4.x
+"newsos4-gcc","gcc:-O -DB_ENDIAN -DNEWS4::(unknown):-lmld -liberty:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::",
 
 );
 

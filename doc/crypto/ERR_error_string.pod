@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-ERR_error_string - obtain human-readable error message
+ERR_error_string, ERR_error_string_n, ERR_lib_error_string,
+ERR_func_error_string, ERR_reason_error_string - obtain human-readable
+error message
 
 =head1 SYNOPSIS
 

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-	BIO_push, BIO_pop - add and remove BIOs from a chain.
+BIO_push, BIO_pop - add and remove BIOs from a chain.
 
 =head1 SYNOPSIS
 

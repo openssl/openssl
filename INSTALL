@@ -57,7 +57,10 @@
 
   shared        In addition to the usual static libraries, create shared
                 libraries on platforms where it's supported.  See "Note on
-                shared libraries" below.
+                shared libraries" below.  THIS IS NOT RECOMMENDED!  Since
+                this is a development branch, the positions of the ENGINE
+                symbols in the transfer vector are constantly moving, so
+                binary backward compatibility can't be guaranteed in any way.
 
   no-asm        Do not use assembler code.
 
