@@ -135,13 +135,9 @@ static int generate_key(DH *dh)
 
 	l = dh->length ? dh->length : BN_num_bits(dh->p)-1; /* secret exponent length */
 
-	do
-		{
-		if (!BN_rand(priv_key, l, 0, 0)) goto err;
-		if (!ENGINE_get_DH(dh->engine)->bn_mod_exp(dh, pub_key, dh->g,
-			priv_key,dh->p,ctx,mont)) goto err;
-		}
-	while (BN_is_one(priv_key));
+	if (!BN_rand(priv_key, l, 0, 0)) goto err;
+	if (!ENGINE_get_DH(dh->engine)->bn_mod_exp(dh, pub_key, dh->g,
+		priv_key,dh->p,ctx,mont)) goto err;
 		
 	dh->pub_key=pub_key;
 	dh->priv_key=priv_key;
