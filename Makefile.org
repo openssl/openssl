@@ -251,7 +251,7 @@ dclean:
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i && echo "making dclean in $$i..." && \
-	$(MAKE) SDIRS='${SDIRS}' dclean ) || exit 1; \
+	$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' dclean ) || exit 1; \
 	done;
 
 rehash:

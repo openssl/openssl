@@ -136,7 +136,7 @@ dclean:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i; echo "making dclean in crypto/$$i..."; \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' dclean ); \
+	$(MAKE) PERL='${PERL}' CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' dclean ); \
 	done;
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
