@@ -4,6 +4,9 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add a configuration entry for Sony News 4.
+     [NAKAJI Hiroyuki <nakaji@tutrp.tut.ac.jp>]
+
   *) Don't set the two most significant bits to one when generating a
      random number < q in the DSA library.
      [Ulf Möller]

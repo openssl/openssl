@@ -283,11 +283,15 @@ extern "C" {
 #    ifndef NO_SYS_TYPES_H
 #      include <sys/types.h>
 #    endif
-#    ifdef NeXT
+#    if defined(NeXT) || defined(NEWS4)
 #      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP
                          * (unless when compiling with -D_POSIX_SOURCE,
                          * which doesn't work for us) */
 #      define ssize_t int /* ditto */
+#    endif
+#    ifdef NEWS4 /* setvbuf is missing on mips-sony-bsd */
+#      define setvbuf(a, b, c, d) setbuffer((a), (b), (d))
+       typedef unsigned long clock_t;
 #    endif
 
 #    define OPENSSL_CONF	"openssl.cnf"
