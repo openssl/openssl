@@ -82,13 +82,13 @@ EVP_PBE_alg_add(NID_pbe_WithSHA1And40BitRC2_CBC, EVP_rc2_40_cbc(),
 #endif
 }
 
-int PKCS12_PBE_keyivgen (const char *pass, int passlen, ASN1_TYPE *param,
-	     EVP_CIPHER *cipher, EVP_MD *md,
-	     unsigned char *key, unsigned char *iv)
+int PKCS12_PBE_keyivgen (EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
+		ASN1_TYPE *param, EVP_CIPHER *cipher, EVP_MD *md, int en_de)
 {
 	PBEPARAM *pbe;
 	int saltlen, iter;
 	unsigned char *salt, *pbuf;
+	unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
 
 	/* Extract useful info from parameter */
 	pbuf = param->value.sequence->data;
@@ -115,5 +115,8 @@ int PKCS12_PBE_keyivgen (const char *pass, int passlen, ASN1_TYPE *param,
 		return 0;
 	}
 	PBEPARAM_free(pbe);
+	EVP_CipherInit(ctx, cipher, key, iv, en_de);
+	memset(key, 0, EVP_MAX_KEY_LENGTH);
+	memset(iv, 0, EVP_MAX_IV_LENGTH);
 	return 1;
 }

@@ -79,7 +79,6 @@ int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 {
 
 	EVP_PBE_CTL *pbetmp, pbelu;
-	unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
 	int i;
 	pbelu.pbe_nid = OBJ_obj2nid(pbe_obj);
 	if (pbelu.pbe_nid != NID_undef) i = sk_find(pbe_algs, (char *)&pbelu);
@@ -95,13 +94,12 @@ int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	}
 	if (passlen == -1) passlen = strlen(pass);
 	pbetmp = (EVP_PBE_CTL *)sk_value (pbe_algs, i);
-	i = (*pbetmp->keygen)(pass, passlen, param, pbetmp->cipher,
-						 pbetmp->md, key, iv);
+	i = (*pbetmp->keygen)(ctx, pass, passlen, param, pbetmp->cipher,
+						 pbetmp->md, en_de);
 	if (!i) {
 		EVPerr(EVP_F_EVP_PBE_CIPHERINIT,EVP_R_KEYGEN_FAILURE);
 		return 0;
 	}
-	EVP_CipherInit (ctx, pbetmp->cipher, key, iv, en_de);
 	return 1;	
 }
 

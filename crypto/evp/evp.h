@@ -395,9 +395,9 @@ typedef struct evp_Encode_Ctx_st
 	} EVP_ENCODE_CTX;
 
 /* Password based encryption function */
-typedef int (EVP_PBE_KEYGEN)(const char *pass, int passlen,
+typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 		ASN1_TYPE *param, EVP_CIPHER *cipher,
-                EVP_MD *md, unsigned char *key, unsigned char *iv);
+                EVP_MD *md, int en_de);
 
 #define EVP_PKEY_assign_RSA(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA,\
 					(char *)(rsa))
@@ -635,9 +635,9 @@ int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c,ASN1_TYPE *type);
 int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c,ASN1_TYPE *type);
 
 /* PKCS5 password based encryption */
-int PKCS5_PBE_keyivgen(const char *pass, int passlen, ASN1_TYPE *param,
-			 EVP_CIPHER *cipher, EVP_MD *md,
-			 unsigned char *key, unsigned char *iv);
+int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
+			 ASN1_TYPE *param, EVP_CIPHER *cipher, EVP_MD *md,
+			 int en_de);
 
 void PKCS5_PBE_add(void);
 
