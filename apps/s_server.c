@@ -205,7 +205,7 @@ static void sv_usage()
 	BIO_printf(bio_err," -CApath arg   - PEM format directory of CA's\n");
 	BIO_printf(bio_err," -CAfile arg   - PEM format file of CA's\n");
 	BIO_printf(bio_err," -nocert       - Don't use any certificates (Anon-DH)\n");
-	BIO_printf(bio_err," -cipher arg   - play with 'ssleay ciphers' to see what goes here\n");
+	BIO_printf(bio_err," -cipher arg   - play with 'openssl ciphers' to see what goes here\n");
 	BIO_printf(bio_err," -quiet        - No server output\n");
 	BIO_printf(bio_err," -no_tmp_rsa   - Do not generate a tmp RSA key\n");
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");

@@ -88,7 +88,7 @@
 
 #define MONOLITH
 
-#include "ssleay.c"
+#include "openssl.c"
 #include "apps.c"
 #include "asn1pars.c"
 #ifndef NO_RSA

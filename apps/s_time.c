@@ -228,7 +228,7 @@ static void s_time_usage()
                 not specified but cert fill is.\n\
 -CApath arg   - PEM format directory of CA's\n\
 -CAfile arg   - PEM format file of CA's\n\
--cipher       - prefered cipher to use, play with 'ssleay ciphers'\n\n";
+-cipher       - prefered cipher to use, play with 'openssl ciphers'\n\n";
 
 	printf( "usage: client <args>\n\n" );
 

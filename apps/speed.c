@@ -450,7 +450,7 @@ char **argv;
 			}
 		else
 #endif
-			if (strcmp(*argv,"ssleay") == 0) 
+			if (strcmp(*argv,"openssl") == 0) 
 			{
 			RSA_set_default_method(RSA_PKCS1_SSLeay());
 			j--;

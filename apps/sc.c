@@ -138,7 +138,7 @@ static void sc_usage()
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
 	BIO_printf(bio_err," -no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
-	BIO_printf(bio_err," -cipher       - prefered cipher to use, use the 'ssleay ciphers'\n");
+	BIO_printf(bio_err," -cipher       - prefered cipher to use, use the 'openssl ciphers'\n");
 	BIO_printf(bio_err,"                 command to see what is available\n");
 
 	}
