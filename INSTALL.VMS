@@ -16,6 +16,7 @@ This file is divided in the following parts:
 				  may go wrong or may surprise you.
   Report			- How to get in touch with me.
 
+
 Compilation:
 ============
 
@@ -35,26 +36,28 @@ directory.  The syntax is trhe following:
 <option> must be one of the following:
 
       ALL       Just build "everything".
-      DATE      Just build the "[.INCLUDE]DATE.H" file.
+      CONFIG    Just build the "[.CRYPTO]OPENSSLCONF.H" file.
+      BUILDINF  Just build the "[.INCLUDE]BUILDINF.H" file.
       SOFTLINKS Just copies some files, to simulate Unix soft links.
+      BUILDALL  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done.
       RSAREF    Just build the "[.xxx.EXE.RSAREF]LIBRSAGLUE.OLB" library.
       CRYPTO    Just build the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
       SSL       Just build the "[.xxx.EXE.SSL]LIBSSL.OLB" library.
       SSL_TASK  Just build the "[.xxx.EXE.SSL]SSL_TASK.EXE" program.
-      TEST      Just build the "test" programs for OpenSSL.
-      APPS      Just build the "application" programs for OpenSSL.
+      TEST      Just build the "[.xxx.EXE.TEST]" test programs for OpenSSL.
+      APPS      Just build the "[.xxx.EXE.APPS]" application programs for OpenSSL.
 
 <rsaref-p> must be one of the following:
 
       RSAREF    compile using the RSAREF Library
       NORSAREF  compile without using RSAREF
 
-Note: The RSAREF libraries are NOT INCLUDED and you have to
-      download it from "ftp://ftp.rsa.com/rsaref".  You have to
-      get the ".tar-Z" file as the ".zip" file doesn't have the
-      directory structure stored.  You have to extract the file
-      into the [.RSAREF] directory as that is where the scripts
-      will look for the files.
+Note 1: The RSAREF libraries are NOT INCLUDED and you have to
+        download it from "ftp://ftp.rsa.com/rsaref".  You have to
+        get the ".tar-Z" file as the ".zip" file doesn't have the
+        directory structure stored.  You have to extract the file
+        into the [.RSAREF] directory as that is where the scripts
+        will look for the files.
 
 Note 2: I have never done this, so I've no idea if it works or not.
 
@@ -65,7 +68,6 @@ Note 2: I have never done this, so I've no idea if it works or not.
 
 <compiler> must be one of the following:
 
-      VAXC      For VAX C.
       DECC      For DEC C.
       GNUC      For GNU C.
 
@@ -77,15 +79,33 @@ named LIBSSL.OLB, and you will find a bunch of useful programs in
 just to test them.  For production use, make sure you install first, see
 Installation below.
 
-Note: Some programs in this package require a TCP/IP library.
+Note 1: Some programs in this package require a TCP/IP library.
 
 Note 2: if you want to compile the crypto library only, please make sure
-        you have at least done a @MAKEVMS DATE and a @MAKEVMS SOFTLINKS.
-        A lot of things will break if you don't.
+        you have at least done a @MAKEVMS CONFIG, a @MAKEVMS BUILDINF and
+        a @MAKEVMS SOFTLINKS.  A lot of things will break if you don't.
 
-Note 3: Alpha users will get a number of informational messages when
-        compiling the [.asm]vms.mar file in the BN (bignum) part of
-        the crypto library.  These can be safely ignored.
+
+Logical names:
+==============
+
+There are a few things that can't currently be given through the command
+line.  Instead, logical names are used.
+
+Currently, the logical names supported are:
+
+      OPENSSL_NO_ASM    with value YES, the assembler parts of OpenSSL will
+                        not be used.  Instead, plain C implementations are
+                        used.  This is good to try if something doesn't work.
+      OPENSSL_NO_'alg'  with value YES, the corresponding crypto algorithm
+                        will not be implemented.  Supported algorithms to
+                        do this with are: RSA, DSA, DH, MD2, MD5, RIPEMD,
+                        SHA, DES, MDC2, CR2, RC4, RC5, IDEA, BF, CAST, HMAC,
+                        SSL2.  So, for example, having the logical name
+                        OPENSSL_NO_RSA with the value YES means that the
+                        LIBCRYPTO.OLB library will not contain an RSA
+                        implementation.
+
 
 Test:
 =====
@@ -98,6 +118,7 @@ If a test fails, try with defining the logical name OPENSSL_NO_ASM (yes,
 it's an ugly hack!) and rebuild. Please send a bug report to
 <openssl-bugs@openssl.org>, including the output of "openssl version -a"
 and of the failed test.
+
 
 Installation:
 =============
@@ -158,6 +179,7 @@ The logical names that are set up are the following:
 		(the NOTE in section 4 of "Installation in Detail").
 		You don't need to "deleting old header files"!!!
 
+
 Backward portability:
 =====================
 
@@ -212,19 +234,6 @@ directory by default, it may very well be that you have to give them
 extra arguments.  Please experiment.
 
 
-Report:
-=======
-
-I maintain a few mailinglists for bug reports and such on software that
-I develop/port/enhance/destroy.  Please look at http://www.free.lp.se/
-for further info.
-
-
--- 
-Richard Levitte <richard@levitte.org>
-1999-03-09
-
-
 TODO:
 =====
 
@@ -242,4 +251,4 @@ have any ideas.
 
 --
 Richard Levitte <richard@levitte.org>
-1999-05-24
+2000-02-27
