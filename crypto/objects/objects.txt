@@ -536,10 +536,12 @@ X509 5			: 			: serialNumber
 X509 6			: C			: countryName
 X509 7			: L			: localityName
 X509 8			: ST			: stateOrProvinceName
+X509 9			:			: streetAddress
 X509 10			: O			: organizationName
 X509 11			: OU			: organizationalUnitName
 X509 12			: 			: title
 X509 13			: 			: description
+X509 17			:			: postalCode
 X509 41			: name			: name
 X509 42			: GN			: givenName
 X509 43			: 			: initials

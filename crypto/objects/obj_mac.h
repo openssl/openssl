@@ -1619,6 +1619,10 @@
 #define NID_stateOrProvinceName		16
 #define OBJ_stateOrProvinceName		OBJ_X509,8L
 
+#define LN_streetAddress		"streetAddress"
+#define NID_streetAddress		660
+#define OBJ_streetAddress		OBJ_X509,9L
+
 #define SN_organizationName		"O"
 #define LN_organizationName		"organizationName"
 #define NID_organizationName		17
@@ -1636,6 +1640,10 @@
 #define LN_description		"description"
 #define NID_description		107
 #define OBJ_description		OBJ_X509,13L
+
+#define LN_postalCode		"postalCode"
+#define NID_postalCode		661
+#define OBJ_postalCode		OBJ_X509,17L
 
 #define SN_name		"name"
 #define LN_name		"name"
