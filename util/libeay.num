@@ -3213,8 +3213,8 @@ SHA512_Update                           3615	EXIST::FUNCTION:SHA,SHA512
 SHA256_Init                             3616	EXIST::FUNCTION:SHA,SHA256
 SHA224                                  3617	EXIST::FUNCTION:SHA,SHA256
 SHA384_Update                           3618	EXIST::FUNCTION:SHA,SHA512
-SHA224_Final                            3619	NOEXIST::FUNCTION:
-SHA224_Update                           3620	NOEXIST::FUNCTION:
+SHA224_Final                            3619	EXIST::FUNCTION:SHA,SHA256
+SHA224_Update                           3620	EXIST::FUNCTION:SHA,SHA256
 SHA512_Final                            3621	EXIST::FUNCTION:SHA,SHA512
 SHA224_Init                             3622	EXIST::FUNCTION:SHA,SHA256
 SHA512_Init                             3623	EXIST::FUNCTION:SHA,SHA512

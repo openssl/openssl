@@ -536,6 +536,26 @@
 #define NID_sha1WithRSAEncryption		65
 #define OBJ_sha1WithRSAEncryption		OBJ_pkcs1,5L
 
+#define SN_sha256WithRSAEncryption		"RSA-SHA256"
+#define LN_sha256WithRSAEncryption		"sha256WithRSAEncryption"
+#define NID_sha256WithRSAEncryption		737
+#define OBJ_sha256WithRSAEncryption		OBJ_pkcs1,11L
+
+#define SN_sha384WithRSAEncryption		"RSA-SHA384"
+#define LN_sha384WithRSAEncryption		"sha384WithRSAEncryption"
+#define NID_sha384WithRSAEncryption		738
+#define OBJ_sha384WithRSAEncryption		OBJ_pkcs1,12L
+
+#define SN_sha512WithRSAEncryption		"RSA-SHA512"
+#define LN_sha512WithRSAEncryption		"sha512WithRSAEncryption"
+#define NID_sha512WithRSAEncryption		739
+#define OBJ_sha512WithRSAEncryption		OBJ_pkcs1,13L
+
+#define SN_sha224WithRSAEncryption		"RSA-SHA224"
+#define LN_sha224WithRSAEncryption		"sha224WithRSAEncryption"
+#define NID_sha224WithRSAEncryption		740
+#define OBJ_sha224WithRSAEncryption		OBJ_pkcs1,14L
+
 #define SN_pkcs3		"pkcs3"
 #define NID_pkcs3		27
 #define OBJ_pkcs3		OBJ_pkcs,3L
@@ -2363,6 +2383,28 @@
 #define SN_des_ede3_cfb8		"DES-EDE3-CFB8"
 #define LN_des_ede3_cfb8		"des-ede3-cfb8"
 #define NID_des_ede3_cfb8		735
+
+#define OBJ_nist_hashalgs		OBJ_nistAlgorithms,2L
+
+#define SN_sha256		"SHA256"
+#define LN_sha256		"sha256"
+#define NID_sha256		741
+#define OBJ_sha256		OBJ_nist_hashalgs,1L
+
+#define SN_sha384		"SHA384"
+#define LN_sha384		"sha384"
+#define NID_sha384		742
+#define OBJ_sha384		OBJ_nist_hashalgs,2L
+
+#define SN_sha512		"SHA512"
+#define LN_sha512		"sha512"
+#define NID_sha512		743
+#define OBJ_sha512		OBJ_nist_hashalgs,3L
+
+#define SN_sha224		"SHA224"
+#define LN_sha224		"sha224"
+#define NID_sha224		744
+#define OBJ_sha224		OBJ_nist_hashalgs,4L
 
 #define SN_hold_instruction_code		"holdInstructionCode"
 #define LN_hold_instruction_code		"Hold Instruction Code"

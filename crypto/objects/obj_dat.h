@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 737
-#define NUM_SN 732
-#define NUM_LN 732
-#define NUM_OBJ 694
+#define NUM_NID 745
+#define NUM_SN 740
+#define NUM_LN 740
+#define NUM_OBJ 702
 
-static unsigned char lvalues[4885]={
+static unsigned char lvalues[4957]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -762,6 +762,14 @@ static unsigned char lvalues[4885]={
 0x50,                                        /* [4879] OBJ_joint_iso_itu_t */
 0x67,                                        /* [4880] OBJ_international_organizations */
 0x55,0x1D,0x36,                              /* [4881] OBJ_inhibit_any_policy */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0B,/* [4884] OBJ_sha256WithRSAEncryption */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0C,/* [4893] OBJ_sha384WithRSAEncryption */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0D,/* [4902] OBJ_sha512WithRSAEncryption */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0E,/* [4911] OBJ_sha224WithRSAEncryption */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x01,/* [4920] OBJ_sha256 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x02,/* [4929] OBJ_sha384 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x03,/* [4938] OBJ_sha512 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x04,/* [4947] OBJ_sha224 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1909,6 +1917,18 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"DES-EDE3-CFB8","des-ede3-cfb8",NID_des_ede3_cfb8,0,NULL},
 {"inhibitAnyPolicy","X509v3 Inhibit Any Policy",
 	NID_inhibit_any_policy,3,&(lvalues[4881]),0},
+{"RSA-SHA256","sha256WithRSAEncryption",NID_sha256WithRSAEncryption,9,
+	&(lvalues[4884]),0},
+{"RSA-SHA384","sha384WithRSAEncryption",NID_sha384WithRSAEncryption,9,
+	&(lvalues[4893]),0},
+{"RSA-SHA512","sha512WithRSAEncryption",NID_sha512WithRSAEncryption,9,
+	&(lvalues[4902]),0},
+{"RSA-SHA224","sha224WithRSAEncryption",NID_sha224WithRSAEncryption,9,
+	&(lvalues[4911]),0},
+{"SHA256","sha256",NID_sha256,9,&(lvalues[4920]),0},
+{"SHA384","sha384",NID_sha384,9,&(lvalues[4929]),0},
+{"SHA512","sha512",NID_sha512,9,&(lvalues[4938]),0},
+{"SHA224","sha224",NID_sha224,9,&(lvalues[4947]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2038,8 +2058,16 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[42]),/* "RSA-SHA" */
 &(nid_objs[65]),/* "RSA-SHA1" */
 &(nid_objs[115]),/* "RSA-SHA1-2" */
+&(nid_objs[740]),/* "RSA-SHA224" */
+&(nid_objs[737]),/* "RSA-SHA256" */
+&(nid_objs[738]),/* "RSA-SHA384" */
+&(nid_objs[739]),/* "RSA-SHA512" */
 &(nid_objs[41]),/* "SHA" */
 &(nid_objs[64]),/* "SHA1" */
+&(nid_objs[744]),/* "SHA224" */
+&(nid_objs[741]),/* "SHA256" */
+&(nid_objs[742]),/* "SHA384" */
+&(nid_objs[743]),/* "SHA512" */
 &(nid_objs[188]),/* "SMIME" */
 &(nid_objs[167]),/* "SMIME-CAPS" */
 &(nid_objs[100]),/* "SN" */
@@ -3343,6 +3371,14 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[64]),/* "sha1" */
 &(nid_objs[115]),/* "sha1WithRSA" */
 &(nid_objs[65]),/* "sha1WithRSAEncryption" */
+&(nid_objs[744]),/* "sha224" */
+&(nid_objs[740]),/* "sha224WithRSAEncryption" */
+&(nid_objs[741]),/* "sha256" */
+&(nid_objs[737]),/* "sha256WithRSAEncryption" */
+&(nid_objs[742]),/* "sha384" */
+&(nid_objs[738]),/* "sha384WithRSAEncryption" */
+&(nid_objs[743]),/* "sha512" */
+&(nid_objs[739]),/* "sha512WithRSAEncryption" */
 &(nid_objs[42]),/* "shaWithRSAEncryption" */
 &(nid_objs[52]),/* "signingTime" */
 &(nid_objs[454]),/* "simpleSecurityObject" */
@@ -3844,6 +3880,10 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 8]),/* OBJ_md5WithRSAEncryption         1 2 840 113549 1 1 4 */
 &(nid_objs[65]),/* OBJ_sha1WithRSAEncryption        1 2 840 113549 1 1 5 */
 &(nid_objs[708]),/* OBJ_rsaOAEPEncryptionSET         1 2 840 113549 1 1 6 */
+&(nid_objs[737]),/* OBJ_sha256WithRSAEncryption      1 2 840 113549 1 1 11 */
+&(nid_objs[738]),/* OBJ_sha384WithRSAEncryption      1 2 840 113549 1 1 12 */
+&(nid_objs[739]),/* OBJ_sha512WithRSAEncryption      1 2 840 113549 1 1 13 */
+&(nid_objs[740]),/* OBJ_sha224WithRSAEncryption      1 2 840 113549 1 1 14 */
 &(nid_objs[28]),/* OBJ_dhKeyAgreement               1 2 840 113549 1 3 1 */
 &(nid_objs[ 9]),/* OBJ_pbeWithMD2AndDES_CBC         1 2 840 113549 1 5 1 */
 &(nid_objs[10]),/* OBJ_pbeWithMD5AndDES_CBC         1 2 840 113549 1 5 3 */
@@ -3911,6 +3951,10 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[427]),/* OBJ_aes_256_cbc                  2 16 840 1 101 3 4 1 42 */
 &(nid_objs[428]),/* OBJ_aes_256_ofb128               2 16 840 1 101 3 4 1 43 */
 &(nid_objs[429]),/* OBJ_aes_256_cfb128               2 16 840 1 101 3 4 1 44 */
+&(nid_objs[741]),/* OBJ_sha256                       2 16 840 1 101 3 4 2 1 */
+&(nid_objs[742]),/* OBJ_sha384                       2 16 840 1 101 3 4 2 2 */
+&(nid_objs[743]),/* OBJ_sha512                       2 16 840 1 101 3 4 2 3 */
+&(nid_objs[744]),/* OBJ_sha224                       2 16 840 1 101 3 4 2 4 */
 &(nid_objs[71]),/* OBJ_netscape_cert_type           2 16 840 1 113730 1 1 */
 &(nid_objs[72]),/* OBJ_netscape_base_url            2 16 840 1 113730 1 2 */
 &(nid_objs[73]),/* OBJ_netscape_revocation_url      2 16 840 1 113730 1 3 */

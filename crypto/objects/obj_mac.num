@@ -734,3 +734,11 @@ des_cfb8		733
 des_ede3_cfb1		734
 des_ede3_cfb8		735
 inhibit_any_policy		736
+sha256WithRSAEncryption		737
+sha384WithRSAEncryption		738
+sha512WithRSAEncryption		739
+sha224WithRSAEncryption		740
+sha256		741
+sha384		742
+sha512		743
+sha224		744
