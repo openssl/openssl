@@ -435,6 +435,7 @@ case "$GUESSOS" in
 	*)	OUT="linux-sparcv7" ;;
 	esac ;;
   arm*-*-linux2) OUT="linux-elf-arm" ;;
+  s390-*-linux2) OUT="linux-s390" ;;
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux1) OUT="linux-aout" ;;
   sun4u*-*-solaris2)
