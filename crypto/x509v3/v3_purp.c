@@ -371,6 +371,8 @@ static int ca_check(const X509 *x)
 		else return 0;
 	} else {
 		if((x->ex_flags & V1_ROOT) == V1_ROOT) return 3;
+		/* If key usage present it must have certSign so tolerate it */
+		else if (x->ex_flags & EXFLAG_KUSAGE) return 3;
 		else return 2;
 	}
 }
@@ -389,7 +391,7 @@ static int check_ssl_ca(const X509 *x)
 	if(ca_ret != 2) return ca_ret;
 	else return 0;
 }
-	
+
 
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
@@ -455,7 +457,7 @@ static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x, int c
 	int ret;
 	ret = purpose_smime(x, ca);
 	if(!ret || ca) return ret;
-	if(ku_reject(x, KU_DIGITAL_SIGNATURE)) return 0;
+	if(ku_reject(x, KU_DIGITAL_SIGNATURE|KU_NON_REPUDIATION)) return 0;
 	return ret;
 }
 

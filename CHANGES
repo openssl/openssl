@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Tolerate nonRepudiation as being valid for S/MIME signing and certSign
+     keyUsage if basicConstraints absent for a CA.
+     [Steve Henson]
+
   *) Make SMIME_write_PKCS7() write mail header values with a format that
      is more generally accepted (no spaces before the semicolon), since
      some programs can't parse those values properly otherwise.  Also make
