@@ -391,6 +391,98 @@ $shared_cflag = -fPIC
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
+*** OpenUNIX-8
+$cc           = cc
+$cflags       = -O -DFILIO_H -Kalloca
+$unistd       = 
+$thread_cflag = -Kthread
+$sys_id       = -lsocket -lnsl
+$lflags       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= svr5-shared
+$shared_cflag = -Kpic
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
+*** OpenUNIX-8-gcc
+$cc           = gcc
+$cflags       = -O -DFILIO_H -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = -pthread
+$sys_id       = -lsocket -lnsl
+$lflags       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= svr5-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
+*** OpenUNIX-8-pentium
+$cc           = cc
+$cflags       = -O -DFILIO_H -Kalloca -Kpentium
+$unistd       = 
+$thread_cflag = -Kthread
+$sys_id       = -lsocket -lnsl
+$lflags       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= svr5-shared
+$shared_cflag = -Kpic
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
+*** OpenUNIX-8-pentium_pro
+$cc           = cc
+$cflags       = -O -DFILIO_H -Kalloca -Kpentium_pro
+$unistd       = 
+$thread_cflag = -Kthread
+$sys_id       = -lsocket -lnsl
+$lflags       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= svr5-shared
+$shared_cflag = -Kpic
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
 *** ReliantUNIX
 $cc           = cc
 $cflags       = -KPIC -g -DTERMIOS -DB_ENDIAN
@@ -3191,10 +3283,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$dso_scheme   = dlfcn
+$shared_target= svr5-shared
+$shared_cflag = -Kpic
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
 *** unixware-7-pentium
@@ -3214,10 +3306,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$dso_scheme   = dlfcn
+$shared_target= svr5-shared
+$shared_cflag = -Kpic
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
 *** unixware-7-pentium_pro
@@ -3237,8 +3329,8 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$dso_scheme   = dlfcn
+$shared_target= svr5-shared
+$shared_cflag = -Kpic
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
