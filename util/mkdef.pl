@@ -867,7 +867,7 @@ sub update_numbers
 			$new_syms++;
 			printf OUT "%s%-40s%d\t%s\n","",$s, ++$start_num,$i;
 			if (exists $r{$s}) {
-				($s, $i) = split /\\/,$r{$sym};
+				($s, $i) = split /\\/,$r{$s};
 				printf OUT "%s%-40s%d\t%s\n","",$s, $start_num,$i;
 			}
 		}
