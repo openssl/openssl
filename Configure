@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [hw-xxx] [rsaref] [no-threads] [no-asm] [no-dso] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx] [rsaref] [no-threads] [no-asm] [no-dso] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -23,11 +23,10 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 #               default).  This needn't be set in advance, you can
 #               just as well use "make INSTALL_PREFIX=/whatever install".
 #
-# hw-xxx        compile support for specific crypto hardware. Generic
-#               OpenSSL-style methods relating to this support are
-#               always compiled but return NULL if the hardware support
-#               isn't compiled. Currently, hw-cswift is the only support
-#               of this form.
+# no-hw-xxx     do not compile support for specific crypto hardware.
+#               Generic OpenSSL-style methods relating to this support
+#               are always compiled but return NULL if the hardware
+#               support isn't compiled.
 # rsaref        use RSAref
 # [no-]threads  [don't] try to create a library that is suitable for
 #               multithreaded applications (default is "threads" if we
@@ -475,12 +474,12 @@ foreach (@ARGV)
 			$openssl_algorithm_defines .= "#define NO_MDC2\n";
 			}
 		}
-	elsif (/^hw-(.+)$/)
+	elsif (/^no-hw-(.+)$/)
 		{
 		my $hw=$1;
 		$hw =~ tr/[a-z]/[A-Z]/;
-		$flags .= "-DHW_$hw ";
-		$openssl_other_defines .= "#define HW_$hw\n";
+		$flags .= "-DNO_HW_$hw ";
+		$openssl_other_defines .= "#define NO_HW_$hw\n";
 		}
 	elsif (/^386$/)
 		{ $processor=386; }

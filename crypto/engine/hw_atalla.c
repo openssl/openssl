@@ -63,7 +63,7 @@
 #include "engine_int.h"
 #include <openssl/engine.h>
 
-#ifdef HW_ATALLA
+#ifndef NO_HW_ATALLA
 
 #include "vendor_defns/atalla.h"
 
@@ -153,6 +153,7 @@ static ENGINE engine_atalla =
 	NULL,
 	atalla_init,
 	atalla_finish,
+	NULL, /* no ctrl() */
 	0, /* no flags */
 	0, 0, /* no references */
 	NULL, NULL /* unlinked */
@@ -432,4 +433,4 @@ static int atalla_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 	return atalla_mod_exp(r, a, p, m, ctx);
 	}
 
-#endif /* HW_ATALLA */
+#endif /* !NO_HW_ATALLA */

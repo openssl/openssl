@@ -64,7 +64,7 @@
 #include "engine_int.h"
 #include <openssl/engine.h>
 
-#ifdef HW_NCIPHER
+#ifndef NO_HW_NCIPHER
 
 /* Attribution notice: nCipher har said several times that it's OK for
  * us to implement a general interface to their boxes, and recently declared
@@ -471,15 +471,19 @@ static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)())
 	switch(cmd)
 		{
 	case ENGINE_CTRL_SET_LOGSTREAM:
+		{
+		BIO *bio = (BIO *)p;
+
 		if (logstream)
 			{
 			BIO_free(logstream);
 			logstream = NULL;
 			}
 		if (CRYPTO_add(&bio->references,1,CRYPTO_LOCK_BIO) > 1)
-			logstream = (BIO *)p;
+			logstream = bio;
 		else
 			ENGINEerr(ENGINE_F_HWCRHK_CTRL,ENGINE_R_BIO_WAS_FREED);
+		}
 		break;
 	default:
 		ENGINEerr(ENGINE_F_HWCRHK_CTRL,
@@ -768,5 +772,4 @@ static void log_message(void *logstream, const char *message)
 	CRYPTO_w_unlock(CRYPTO_LOCK_BIO);
 	}
 
-#endif /* HW_NCIPHER */
-
+#endif /* !NO_HW_NCIPHER */

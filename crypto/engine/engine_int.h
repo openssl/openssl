@@ -130,21 +130,21 @@ typedef struct engine_st
 /* Returns a structure of software only methods (the default). */
 ENGINE *ENGINE_openssl();
 
-#ifdef HW_CSWIFT
+#ifndef NO_HW_CSWIFT
 /* Returns a structure of cswift methods ... NB: This can exist and be
  * "used" even on non-cswift systems because the "init" will fail if the
  * card/library are not found. */
 ENGINE *ENGINE_cswift();
-#endif /* HW_CSWIFT */
+#endif /* !NO_HW_CSWIFT */
 
-#ifdef HW_NCIPHER
+#ifndef NO_HW_NCIPHER
 ENGINE *ENGINE_ncipher();
-#endif /* HW_NCIPHER */
+#endif /* !NO_HW_NCIPHER */
 
-#ifdef HW_ATALLA
+#ifndef NO_HW_ATALLA
 /* Returns a structure of atalla methods. */
 ENGINE *ENGINE_atalla();
-#endif /* HW_ATALLA */
+#endif /* !NO_HW_ATALLA */
 
 #ifdef  __cplusplus
 }
