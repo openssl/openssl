@@ -410,7 +410,7 @@ $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
 
 my $flags="";
 my $depflags="";
-my $openssl_exclude_defines="";
+my $openssl_algorithm_defines="";
 my $openssl_thread_defines="";
 my $openssl_other_defines="";
 my $libs="";
@@ -422,7 +422,7 @@ foreach (@ARGV)
 	 	{
 		$no_asm=1;
 		$flags .= "-DNO_ASM ";
-		$openssl_exclude_defines .= "#define NO_ASM\n";
+		$openssl_algorithm_defines .= "#define NO_ASM\n";
 		}
 	elsif (/^no-threads$/)
 		{ $no_threads=1; }
@@ -435,14 +435,14 @@ foreach (@ARGV)
 		$algo =~ tr/[a-z]/[A-Z]/;
 		$flags .= "-DNO_$algo ";
 		$depflags .= "-DNO_$algo ";
-		$openssl_exclude_defines .= "#define NO_$algo\n";
+		$openssl_algorithm_defines .= "#define NO_$algo\n";
 		if ($algo eq "DES")
 			{
 			push @skip, "mdc2";
 			$options .= " no-mdc2";
 			$flags .= "-DNO_MDC2 ";
 			$depflags .= "-DNO_MDC2 ";
-			$openssl_exclude_defines .= "#define NO_MDC2\n";
+			$openssl_algorithm_defines .= "#define NO_MDC2\n";
 			}
 		}
 	elsif (/^386$/)
@@ -727,11 +727,11 @@ print OUT "/* opensslconf.h */\n";
 print OUT "/* WARNING: Generated automatically from opensslconf.h.in by Configure. */\n\n";
 
 print OUT "/* OpenSSL was configured with the following options: */\n";
-$openssl_exclude_defines =~ s/^\s*#\s*define\s+(.*)/# ifndef $1\n#  define $1\n# endif/mg;
-$openssl_exclude_defines = "   /* no ciphers excluded */\n" if $openssl_exclude_defines eq "";
+$openssl_algorithm_defines =~ s/^\s*#\s*define\s+(.*)/# ifndef $1\n#  define $1\n# endif/mg;
+$openssl_algorithm_defines = "   /* no ciphers excluded */\n" if $openssl_algorithm_defines eq "";
 $openssl_thread_defines =~ s/^\s*#\s*define\s+(.*)/# ifndef $1\n#  define $1\n# endif/mg;
 $openssl_other_defines =~ s/^\s*#\s*define\s+(.*)/# ifndef $1\n#  define $1\n# endif/mg;
-print OUT "#ifdef OPENSSL_ALGORITHM_DEFINES\n$openssl_exclude_defines#endif\n";
+print OUT "#ifdef OPENSSL_ALGORITHM_DEFINES\n$openssl_algorithm_defines#endif\n";
 print OUT "#ifdef OPENSSL_THREAD_DEFINES\n$openssl_thread_defines#endif\n";
 print OUT "#ifdef OPENSSL_OTHER_DEFINES\n$openssl_other_defines#endif\n\n";
 
