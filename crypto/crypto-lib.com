@@ -88,7 +88,7 @@ $! Define The Different Encryption Types.
 $!
 $ ENCRYPT_TYPES = "Basic,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ -
 		  "DES,RC2,RC4,RC5,IDEA,BF,CAST,"+ -
-		  "BN,EC,RSA,DSA,DH,DSO,ENGINE,RIJNDAEL,"+ -
+		  "BN,EC,RSA,DSA,DH,DSO,ENGINE,AES,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,"+ -
 		  "EVP,EVP_2,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5"
@@ -212,10 +212,10 @@ $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
 $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"eng_table,eng_pkey,eng_fat,eng_all,"+ -
 	"tb_rsa,tb_dsa,tb_dh,tb_rand,tb_cipher,tb_digest,"+ -
-	"eng_openssl,eng_dyn,"+ -
+	"eng_openssl,eng_dyn,eng_cnf,"+ -
 	"hw_atalla,hw_cswift,hw_ncipher,hw_nuron,hw_ubsec,"+ -
 	"hw_openbsd_dev_crypto"
-$ LIB_RIJNDAEL = "rd_fst"
+$ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
@@ -250,7 +250,7 @@ $ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
 	"f_int,f_string,n_pkey,"+ -
 	"f_enum,a_hdr,x_pkey,a_bool,x_exten,"+ -
 	"asn1_par,asn1_lib,asn1_err,a_meth,a_bytes,a_strnid,"+ -
-	"evp_asn1,asn_pack,p5_pbe,p5_pbev2,p8_pkey"
+	"evp_asn1,asn_pack,p5_pbe,p5_pbev2,p8_pkey,asn_moid"
 $ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err,"+ -
 	"pem_x509,pem_xaux,pem_oth,pem_pk8,pem_pkey"
 $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
@@ -263,7 +263,7 @@ $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 	"v3_prn,v3_utl,v3err,v3_genn,v3_alt,v3_skey,v3_akey,v3_pku,"+ -
 	"v3_int,v3_enum,v3_sxnet,v3_cpols,v3_crld,v3_purp,v3_info,"+ -
 	"v3_ocsp,v3_akeya"
-$ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def"
+$ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def,conf_mod,conf_mall"
 $ LIB_TXT_DB = "txt_db"
 $ LIB_PKCS7 = "pk7_asn1,pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,"+ -
 	"pk7_mime"
