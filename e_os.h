@@ -79,7 +79,7 @@ extern "C" {
 #ifndef DEVRANDOM
 /* set this to your 'random' device if you have one.
  * My default, we will try to read this file */
-#define DEVRANDOM "/gibtsnich/dev/urandom"
+#define DEVRANDOM "/dev/urandom"
 #endif
 
 #if defined(__MWERKS__) && defined(macintosh)
