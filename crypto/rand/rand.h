@@ -70,6 +70,7 @@ typedef struct rand_meth_st
 	void (*cleanup)(void);
 	void (*add)(const void *buf, int num, double entropy);
 	int (*pseudorand)(unsigned char *buf, int num);
+	int (*status)(void);
 	} RAND_METHOD;
 
 #ifdef BN_DEBUG

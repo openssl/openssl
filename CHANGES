@@ -4,6 +4,11 @@
 
  Changes between 0.9.5 and 0.9.6  [XX XXX 2000]
 
+  *) Include RAND_status() into RAND_METHOD instead of implementing
+     it only for md_rand.c  Otherwise replacing the PRNG by calling
+     RAND_set_rand_method would be impossible.
+     [Bodo Moeller]
+
   *) Don't let DSA_generate_key() enter an infinite loop if the random
      number generation fails.
      [Bodo Moeller]

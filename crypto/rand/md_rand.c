@@ -156,6 +156,7 @@ static void ssleay_rand_seed(const void *buf, int num);
 static void ssleay_rand_add(const void *buf, int num, double add_entropy);
 static int ssleay_rand_bytes(unsigned char *buf, int num);
 static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num);
+static int ssleay_rand_status(void);
 
 RAND_METHOD rand_ssleay_meth={
 	ssleay_rand_seed,
@@ -163,6 +164,7 @@ RAND_METHOD rand_ssleay_meth={
 	ssleay_rand_cleanup,
 	ssleay_rand_add,
 	ssleay_rand_pseudo_bytes,
+	ssleay_rand_status
 	}; 
 
 RAND_METHOD *RAND_SSLeay(void)
@@ -502,7 +504,7 @@ static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num)
 	return (ret);
 	}
 
-int RAND_status(void)
+static int ssleay_rand_status(void)
 	{
 	if (!initialized)
 		ssleay_rand_initialize();
