@@ -192,10 +192,8 @@ int	BN_rand_range(BIGNUM *r, BIGNUM *min, BIGNUM *range)
 			{
 			/* range = 11..._2, so each iteration succeeds with probability > .5 */
 			if (!BN_rand(r, n, 0, 0)) return 0;
-			fprintf(stderr, "?");
 			}
 		while (BN_cmp(r, range) >= 0);
-		fprintf(stderr, "! (11...)\n");
 		}
 	else
 		{
@@ -215,10 +213,8 @@ int	BN_rand_range(BIGNUM *r, BIGNUM *min, BIGNUM *range)
 				if (BN_cmp(r, range) >= 0)
 					if (!BN_sub(r, r, range)) return 0;
 				}
-			fprintf(stderr, "?");
 			}
 		while (BN_cmp(r, range) >= 0);
-		fprintf(stderr, "! (10...)\n");
 		}
 
 	if (min != NULL)
