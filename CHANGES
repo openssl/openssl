@@ -4,6 +4,14 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Update support for ECC-based TLS ciphersuites according to
+     draft-ietf-tls-ecc-03.txt: the KDF1 key derivation function with
+     SHA-1 now is only used for "small" curves (where the
+     representation of a field element takes up to 24 bytes); for
+     larger curves, the field element resulting from ECDH is directly
+     used as premaster secret.
+     [Douglas Stebila (Sun Microsystems Laboratories)]
+
   *) Add code for kP+lQ timings to crypto/ec/ectest.c, and add SEC2
      curve secp160r1 to the tests.
      [Douglas Stebila (Sun Microsystems Laboratories)]

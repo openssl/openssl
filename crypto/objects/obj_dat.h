@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 721
-#define NUM_SN 716
-#define NUM_LN 716
-#define NUM_OBJ 690
+#define NUM_NID 724
+#define NUM_SN 719
+#define NUM_LN 719
+#define NUM_OBJ 693
 
-static unsigned char lvalues[4879]={
+static unsigned char lvalues[4882]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -432,7 +432,7 @@ static unsigned char lvalues[4879]={
 0x2B,0x06,0x01,0x04,0x01,0x8B,0x3A,0x82,0x58,/* [2865] OBJ_dcObject */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x19,/* [2874] OBJ_domainComponent */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0D,/* [2884] OBJ_Domain */
-0x50,                                        /* [2894] OBJ_joint_iso_ccitt */
+0x00,                                        /* [2894] OBJ_joint_iso_ccitt */
 0x55,0x01,0x05,                              /* [2895] OBJ_selected_attribute_types */
 0x55,0x01,0x05,0x37,                         /* [2898] OBJ_clearance */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x03,/* [2902] OBJ_md4WithRSAEncryption */
@@ -758,6 +758,9 @@ static unsigned char lvalues[4879]={
 0x55,0x1D,0x20,0x00,                         /* [4868] OBJ_any_policy */
 0x55,0x1D,0x21,                              /* [4872] OBJ_policy_mappings */
 0x55,0x1D,0x1E,                              /* [4875] OBJ_name_constraints */
+0x00,                                        /* [4878] OBJ_itu_t */
+0x50,                                        /* [4879] OBJ_joint_iso_itu_t */
+0x67,                                        /* [4880] OBJ_international_organizations */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1370,8 +1373,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"dcobject","dcObject",NID_dcObject,9,&(lvalues[2865]),0},
 {"DC","domainComponent",NID_domainComponent,10,&(lvalues[2874]),0},
 {"domain","Domain",NID_Domain,10,&(lvalues[2884]),0},
-{"JOINT-ISO-CCITT","joint-iso-ccitt",NID_joint_iso_ccitt,1,
-	&(lvalues[2894]),0},
+{"NULL","NULL",NID_joint_iso_ccitt,1,&(lvalues[2894]),0},
 {"selected-attribute-types","Selected Attribute Types",
 	NID_selected_attribute_types,3,&(lvalues[2895]),0},
 {"clearance","clearance",NID_clearance,4,&(lvalues[2898]),0},
@@ -1389,7 +1391,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[2941]),0},
 {"noRevAvail","X509v3 No Revocation Available",NID_no_rev_avail,3,
 	&(lvalues[2944]),0},
-{"CCITT","ccitt",NID_ccitt,1,&(lvalues[2947]),0},
+{"NULL","NULL",NID_ccitt,1,&(lvalues[2947]),0},
 {"ansi-X9-62","ANSI X9.62",NID_ansi_X9_62,5,&(lvalues[2948]),0},
 {"prime-field","prime-field",NID_X9_62_prime_field,7,&(lvalues[2953]),0},
 {"characteristic-two-field","characteristic-two-field",
@@ -1887,6 +1889,11 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[4872]),0},
 {"nameConstraints","X509v3 Name Constraints",NID_name_constraints,3,
 	&(lvalues[4875]),0},
+{"ITU-T","itu-t",NID_itu_t,1,&(lvalues[4878]),0},
+{"JOINT-ISO-ITU-T","joint-iso-itu-t",NID_joint_iso_itu_t,1,
+	&(lvalues[4879]),0},
+{"international-organizations","International Organizations",
+	NID_international_organizations,1,&(lvalues[4880]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1912,7 +1919,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[110]),/* "CAST5-CFB" */
 &(nid_objs[109]),/* "CAST5-ECB" */
 &(nid_objs[111]),/* "CAST5-OFB" */
-&(nid_objs[404]),/* "CCITT" */
 &(nid_objs[13]),/* "CN" */
 &(nid_objs[141]),/* "CRLReason" */
 &(nid_objs[417]),/* "CSPName" */
@@ -1947,7 +1953,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[46]),/* "IDEA-OFB" */
 &(nid_objs[181]),/* "ISO" */
 &(nid_objs[183]),/* "ISO-US" */
-&(nid_objs[393]),/* "JOINT-ISO-CCITT" */
+&(nid_objs[721]),/* "ITU-T" */
+&(nid_objs[722]),/* "JOINT-ISO-ITU-T" */
 &(nid_objs[15]),/* "L" */
 &(nid_objs[ 3]),/* "MD2" */
 &(nid_objs[257]),/* "MD4" */
@@ -1955,6 +1962,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[114]),/* "MD5-SHA1" */
 &(nid_objs[95]),/* "MDC2" */
 &(nid_objs[388]),/* "Mail" */
+&(nid_objs[393]),/* "NULL" */
+&(nid_objs[404]),/* "NULL" */
 &(nid_objs[57]),/* "Netscape" */
 &(nid_objs[366]),/* "Nonce" */
 &(nid_objs[17]),/* "O" */
@@ -2291,6 +2300,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[527]),/* "identified-organization" */
 &(nid_objs[461]),/* "info" */
 &(nid_objs[101]),/* "initials" */
+&(nid_objs[723]),/* "international-organizations" */
 &(nid_objs[142]),/* "invalidityDate" */
 &(nid_objs[294]),/* "ipsecEndSystem" */
 &(nid_objs[295]),/* "ipsecTunnel" */
@@ -2634,6 +2644,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[296]),/* "IPSec User" */
 &(nid_objs[182]),/* "ISO Member Body" */
 &(nid_objs[183]),/* "ISO US Member Body" */
+&(nid_objs[723]),/* "International Organizations" */
 &(nid_objs[142]),/* "Invalidity Date" */
 &(nid_objs[569]),/* "MIME MHS" */
 &(nid_objs[388]),/* "Mail" */
@@ -2647,6 +2658,8 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[716]),/* "Microsoft Smartcardlogin" */
 &(nid_objs[136]),/* "Microsoft Trust List Signing" */
 &(nid_objs[717]),/* "Microsoft Universal Principal Name" */
+&(nid_objs[393]),/* "NULL" */
+&(nid_objs[404]),/* "NULL" */
 &(nid_objs[72]),/* "Netscape Base Url" */
 &(nid_objs[76]),/* "Netscape CA Policy Url" */
 &(nid_objs[74]),/* "Netscape CA Revocation Url" */
@@ -2765,7 +2778,6 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[110]),/* "cast5-cfb" */
 &(nid_objs[109]),/* "cast5-ecb" */
 &(nid_objs[111]),/* "cast5-ofb" */
-&(nid_objs[404]),/* "ccitt" */
 &(nid_objs[152]),/* "certBag" */
 &(nid_objs[528]),/* "certicom-arc" */
 &(nid_objs[581]),/* "certificate extensions" */
@@ -3015,8 +3027,9 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[101]),/* "initials" */
 &(nid_objs[181]),/* "iso" */
 &(nid_objs[687]),/* "issuer capabilities" */
+&(nid_objs[721]),/* "itu-t" */
 &(nid_objs[492]),/* "janetMailbox" */
-&(nid_objs[393]),/* "joint-iso-ccitt" */
+&(nid_objs[722]),/* "joint-iso-itu-t" */
 &(nid_objs[150]),/* "keyBag" */
 &(nid_objs[477]),/* "lastModifiedBy" */
 &(nid_objs[476]),/* "lastModifiedTime" */
@@ -3329,14 +3342,17 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 
 static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 0]),/* OBJ_undef                        0 */
-&(nid_objs[404]),/* OBJ_ccitt                        0 */
+&(nid_objs[721]),/* OBJ_itu_t                        0 */
+&(nid_objs[393]),/* OBJ_joint_iso_ccitt              OBJ_joint_iso_itu_t */
+&(nid_objs[404]),/* OBJ_ccitt                        OBJ_itu_t */
 &(nid_objs[434]),/* OBJ_data                         0 9 */
 &(nid_objs[181]),/* OBJ_iso                          1 */
 &(nid_objs[182]),/* OBJ_member_body                  1 2 */
 &(nid_objs[379]),/* OBJ_org                          1 3 */
 &(nid_objs[527]),/* OBJ_identified_organization      1 3 */
-&(nid_objs[393]),/* OBJ_joint_iso_ccitt              2 */
+&(nid_objs[722]),/* OBJ_joint_iso_itu_t              2 */
 &(nid_objs[11]),/* OBJ_X500                         2 5 */
+&(nid_objs[723]),/* OBJ_international_organizations  2 23 */
 &(nid_objs[380]),/* OBJ_dod                          1 3 6 */
 &(nid_objs[12]),/* OBJ_X509                         2 5 4 */
 &(nid_objs[378]),/* OBJ_X500algorithms               2 5 8 */

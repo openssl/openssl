@@ -1870,6 +1870,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			{
 			EC_GROUP *srvr_group = NULL;
 			int ecdh_clnt_cert = 0;
+			int field_size = 0;
 
 			/* Did we send out the client's
 			 * ECDH share for use in premaster
@@ -1962,7 +1963,21 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			 * make sure to clear it out afterwards
 			 */
 
-			n=ECDH_compute_key(p, KDF1_SHA1_len, srvr_ecpoint, clnt_ecdh, KDF1_SHA1);
+			field_size = EC_GROUP_get_degree(clnt_ecdh->group);
+			if (field_size <= 0)
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, 
+				       ERR_R_ECDH_LIB);
+				goto err;
+				}
+			/* If field size is not more than 24 octets, then use SHA-1 hash of result;
+			 * otherwise, use result (see section 4.8 of draft-ietf-tls-ecc-03.txt;
+			 * this is new with this version of the Internet Draft).
+			 */
+			if (field_size <= 24 * 8)
+				n=ECDH_compute_key(p, KDF1_SHA1_len, srvr_ecpoint, clnt_ecdh, KDF1_SHA1);
+			else
+				n=ECDH_compute_key(p, (field_size+7)/8, srvr_ecpoint, clnt_ecdh, NULL);
 			if (n <= 0)
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, 
@@ -2375,7 +2390,8 @@ err:
 /* This is the complement of nid2curve_id in s3_srvr.c. */
 static int curve_id2nid(int curve_id)
 {
-	/* ECC curves from draft-ietf-tls-ecc-01.txt (Mar 15, 2001) */
+	/* ECC curves from draft-ietf-tls-ecc-01.txt (Mar 15, 2001)
+	 * (no changes in draft-ietf-tls-ecc-03.txt [June 2003]) */
 	static int nid_list[26] =
 	{
 		0,

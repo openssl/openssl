@@ -2079,12 +2079,28 @@ int MAIN(int argc, char **argv)
 					}
 				else
 					{
-					secret_size_a = ECDH_compute_key(secret_a, KDF1_SHA1_len,
+					/* If field size is not more than 24 octets, then use SHA-1 hash of result;
+					 * otherwise, use result (see section 4.8 of draft-ietf-tls-ecc-03.txt).
+					 */
+					int field_size, outlen;
+					void *(*kdf)(void *in, size_t inlen, void *out, size_t outlen);
+					field_size = EC_GROUP_get_degree(ecdh_a[j]->group);
+					if (field_size <= 24 * 8)
+						{
+						outlen = KDF1_SHA1_len;
+						kdf = KDF1_SHA1;
+						}
+					else
+						{
+						outlen = (field_size+7)/8;
+						kdf = NULL;
+						}
+					secret_size_a = ECDH_compute_key(secret_a, outlen,
 						ecdh_b[j]->pub_key,
-						ecdh_a[j], KDF1_SHA1);
-					secret_size_b = ECDH_compute_key(secret_b, KDF1_SHA1_len,
+						ecdh_a[j], kdf);
+					secret_size_b = ECDH_compute_key(secret_b, outlen,
 						ecdh_a[j]->pub_key,
-						ecdh_b[j], KDF1_SHA1);
+						ecdh_b[j], kdf);
 					if (secret_size_a != secret_size_b) 
 						ecdh_checks = 0;
 					else
@@ -2113,9 +2129,9 @@ int MAIN(int argc, char **argv)
 					Time_F(START);
 					for (count=0,run=1; COND(ecdh_c[j][0]); count++)
 						{
-						ECDH_compute_key(secret_a, KDF1_SHA1_len,
+						ECDH_compute_key(secret_a, outlen,
 						ecdh_b[j]->pub_key,
-						ecdh_a[j], KDF1_SHA1);
+						ecdh_a[j], kdf);
 						}
 					d=Time_F(STOP);
 					BIO_printf(bio_err, mr ? "+R7:%ld:%d:%.2f\n" :"%ld %d-bit ECDH ops in %.2fs\n",

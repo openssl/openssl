@@ -158,6 +158,7 @@ int EC_GROUP_get_curve_GFp(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN
 int EC_GROUP_set_curve_GF2m(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int EC_GROUP_get_curve_GF2m(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
 
+/* returns the number of bits needed to represent a field element */
 int EC_GROUP_get_degree(const EC_GROUP *);
 
 /* EC_GROUP_check() returns 1 if 'group' defines a valid group, 0 otherwise */

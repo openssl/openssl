@@ -1962,6 +1962,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		if ((l & SSL_kECDH) || (l & SSL_kECDHE))
 		{
 		int ret = 1;
+		int field_size = 0;
 
                 /* initialize structures for server's ECDH key pair */
 		if ((srvr_ecdh = EC_KEY_new()) == NULL) 
@@ -2062,7 +2063,21 @@ static int ssl3_get_client_key_exchange(SSL *s)
                         }
 
 		/* Compute the shared pre-master secret */
-                i = ECDH_compute_key(p, KDF1_SHA1_len, clnt_ecpoint, srvr_ecdh, KDF1_SHA1);
+		field_size = EC_GROUP_get_degree(srvr_ecdh->group);
+		if (field_size <= 0)
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, 
+			       ERR_R_ECDH_LIB);
+			goto err;
+			}
+		/* If field size is not more than 24 octets, then use SHA-1 hash of result;
+		 * otherwise, use result (see section 4.8 of draft-ietf-tls-ecc-03.txt;
+		 * this is new with this version of the Internet Draft).
+		 */
+		if (field_size <= 24 * 8)
+		    i = ECDH_compute_key(p, KDF1_SHA1_len, clnt_ecpoint, srvr_ecdh, KDF1_SHA1);
+		else
+		    i = ECDH_compute_key(p, (field_size+7)/8, clnt_ecpoint, srvr_ecdh, NULL);
                 if (i <= 0)
                         {
                         SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
@@ -2459,7 +2474,8 @@ int ssl3_send_server_certificate(SSL *s)
 /* This is the complement of curve_id2nid in s3_clnt.c. */
 static int nid2curve_id(int nid)
 {
-	/* ECC curves from draft-ietf-tls-ecc-01.txt (Mar 15, 2001) */
+	/* ECC curves from draft-ietf-tls-ecc-01.txt (Mar 15, 2001)
+	 * (no changes in draft-ietf-tls-ecc-03.txt [June 2003]) */
 	switch (nid) {
 	case NID_sect163k1: /* sect163k1 (1) */
 		return 1;

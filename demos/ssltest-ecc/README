@@ -1,6 +1,6 @@
 Scripts for using ECC ciphersuites with test/testssl
 (these ciphersuites are described in the Internet Draft available at
-http://www.ietf.org/internet-drafts/draft-ietf-tls-ecc-02.txt).
+http://www.ietf.org/internet-drafts/draft-ietf-tls-ecc-03.txt).
 
 Use ECCcertgen.sh, RSAcertgen.sh, ECC-RSAcertgen.sh to generate
 root, client and server certs of the following types:

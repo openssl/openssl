@@ -131,6 +131,10 @@ extern "C" {
  * suites to use 5B and 5C instead (this may change with future
  * updates to the IETF draft).
  */
+/* draft-ietf-tls-ecc-03.txt (June 2003) gives a changed list of
+ * ciphersuites, but does not define numbers for all of them
+ * because of possible conflicts with other Internet Drafts;
+ * most numbers are still subject to change. */
 #define TLS1_CK_ECDH_ECDSA_WITH_NULL_SHA                0x03000047
 #define TLS1_CK_ECDH_ECDSA_WITH_RC4_128_SHA             0x03000048
 #define TLS1_CK_ECDH_ECDSA_WITH_DES_CBC_SHA             0x03000049
