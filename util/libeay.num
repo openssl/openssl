@@ -2262,3 +2262,5 @@ NCONF_dump_bio                          2287
 CONF_dump_bio                           2288
 NCONF_free_data                         2289
 CONF_set_default_method                 2290
+ERR_error_string_n                      2291
+BIO_snprintf                            2292

@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/04/01 12:32:10 $
+  ______________                           $Date: 2000/04/14 23:35:50 $
 
   DEVELOPMENT STATE
 
@@ -88,10 +88,6 @@
       don't work unless the key length matches the fixed value (some vendors
       use a key length decided by the size of the RSA encrypted key and expect
       RC2 to adapt).
-
-    o ERR_error_string(..., buf) does not know how large buf is,
-      there should be ERR_error_string_n(..., buf, bufsize)
-      or similar.
 
   WISHES
 

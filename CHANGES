@@ -4,6 +4,12 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) New function ERR_error_string_n(e, buf, len) which is like
+     ERR_error_string(e, buf), but writes at most 'len' bytes
+     including the 0 terminator.  For ERR_error_string_n, 'buf'
+     may not be NULL.
+     [Damien Miller <djm@mindrot.org>, Bodo Moeller]
+
   *) CONF library reworked to become more general.  A new CONF
      configuration file reader "class" is implemented as well as a
      new functions (NCONF_*, for "New CONF") to handle it.  The now

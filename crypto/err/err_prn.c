@@ -76,7 +76,8 @@ void ERR_print_errors_fp(FILE *fp)
 	es=CRYPTO_thread_id();
 	while ((l=ERR_get_error_line_data(&file,&line,&data,&flags)) != 0)
 		{
-		fprintf(fp,"%lu:%s:%s:%d:%s\n",es,ERR_error_string(l,buf),
+		ERR_error_string_n(l, buf, sizeof buf);
+		fprintf(fp,"%lu:%s:%s:%d:%s\n",es,buf,
 			file,line,(flags&ERR_TXT_STRING)?data:"");
 		}
 	}
@@ -94,7 +95,8 @@ void ERR_print_errors(BIO *bp)
 	es=CRYPTO_thread_id();
 	while ((l=ERR_get_error_line_data(&file,&line,&data,&flags)) != 0)
 		{
-		sprintf(buf2,"%lu:%s:%s:%d:",es,ERR_error_string(l,buf),
+		ERR_error_string_n(l, buf, sizeof buf);
+		sprintf(buf2,"%lu:%s:%s:%d:",es,buf,
 			file,line);
 		BIO_write(bp,buf2,strlen(buf2));
 		if (flags & ERR_TXT_STRING)

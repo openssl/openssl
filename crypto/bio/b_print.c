@@ -78,48 +78,7 @@
 # endif
 #endif
 
-static void dopr (char *buffer, size_t maxlen, size_t *retlen,
-	const char *format, va_list args);
-#ifdef USE_ALLOCATING_PRINT
-static void doapr (char **buffer, size_t *retlen,
-	const char *format, va_list args);
-#endif
-
-int BIO_printf (BIO *bio, ...)
-	{
-	va_list args;
-	char *format;
-	int ret;
-	size_t retlen;
-#ifdef USE_ALLOCATING_PRINT
-	char *hugebuf;
-#else
-	MS_STATIC char hugebuf[1024*2]; /* 10k in one chunk is the limit */
-#endif
-
-	va_start(args, bio);
-	format=va_arg(args, char *);
-
-#ifndef USE_ALLOCATING_PRINT
-	hugebuf[0]='\0';
-	dopr(hugebuf, sizeof(hugebuf), &retlen, format, args);
-#else
-	hugebuf = NULL;
-	CRYPTO_push_info("doapr()");
-	doapr(&hugebuf, &retlen, format, args);
-	if (hugebuf)
-		{
-#endif
-		ret=BIO_write(bio, hugebuf, (int)retlen);
-
-#ifdef USE_ALLOCATING_PRINT
-		Free(hugebuf);
-		}
-	CRYPTO_pop_info();
-#endif
-	va_end(args);
-	return(ret);
-	}
+/***************************************************************************/
 
 /*
  * Copyright Patrick Powell 1995
@@ -140,6 +99,7 @@ int BIO_printf (BIO *bio, ...)
  * o Andrew Tridgell <tridge@samba.org>        (1998, for Samba)
  * o Luke Mewburn <lukem@netbsd.org>           (1999, for LukemFTP)
  * o Ralf S. Engelschall <rse@engelschall.com> (1999, for Pth)
+ * o ...                                       (for OpenSSL)
  */
 
 #if HAVE_LONG_DOUBLE
@@ -161,18 +121,17 @@ static void fmtint     (void (*)(char **, size_t *, size_t *, int),
 			char **, size_t *, size_t *, LLONG, int, int, int, int);
 static void fmtfp      (void (*)(char **, size_t *, size_t *, int),
 			char **, size_t *, size_t *, LDOUBLE, int, int, int);
-#ifndef USE_ALLOCATING_PRINT
 static int dopr_isbig (size_t, size_t);
 static int dopr_copy (size_t);
 static void dopr_outch (char **, size_t *, size_t *, int);
-#else
+#ifdef USE_ALLOCATING_PRINT
 static int doapr_isbig (size_t, size_t);
 static int doapr_copy (size_t);
 static void doapr_outch (char **, size_t *, size_t *, int);
 #endif
 static void _dopr(void (*)(char **, size_t *, size_t *, int),
 		  int (*)(size_t, size_t), int (*)(size_t),
-		  char **buffer, size_t *maxlen, size_t *retlen,
+		  char **buffer, size_t *maxlen, size_t *retlen, int *truncated,
 		  const char *format, va_list args);
 
 /* format read states */
@@ -213,8 +172,9 @@ dopr(
     const char *format,
     va_list args)
 {
+    int ignored;
     _dopr(dopr_outch, dopr_isbig, dopr_copy,
-	  &buffer, &maxlen, retlen, format, args);
+        &buffer, &maxlen, retlen, &ignored, format, args);
 }
 
 #else
@@ -226,8 +186,9 @@ doapr(
     va_list args)
 {
     size_t dummy_maxlen = 0;
+    int ignored;
     _dopr(doapr_outch, doapr_isbig, doapr_copy,
-	  buffer, &dummy_maxlen, retlen, format, args);
+        buffer, &dummy_maxlen, retlen, &ignored, format, args);
 }
 #endif
 
@@ -239,6 +200,7 @@ _dopr(
     char **buffer,
     size_t *maxlen,
     size_t *retlen,
+    int *truncated,
     const char *format,
     va_list args)
 {
@@ -374,7 +336,7 @@ _dopr(
                     break;
                 }
                 fmtint(outch_fn, buffer, &currlen, maxlen,
-		       value, 10, min, max, flags);
+                       value, 10, min, max, flags);
                 break;
             case 'X':
                 flags |= DP_F_UP;
@@ -409,7 +371,7 @@ _dopr(
                 else
                     fvalue = va_arg(args, double);
                 fmtfp(outch_fn, buffer, &currlen, maxlen,
-		      fvalue, min, max, flags);
+                      fvalue, min, max, flags);
                 break;
             case 'E':
                 flags |= DP_F_UP;
@@ -436,7 +398,7 @@ _dopr(
                 if (max < 0)
                     max = (*copy_fn)(*maxlen);
                 fmtstr(outch_fn, buffer, &currlen, maxlen, strvalue,
-		       flags, min, max);
+                       flags, min, max);
                 break;
             case 'p':
                 value = (long)va_arg(args, void *);
@@ -484,7 +446,8 @@ _dopr(
             break;
         }
     }
-    if (currlen >= *maxlen - 1)
+    *truncated = (currlen > *maxlen - 1);
+    if (*truncated)
         currlen = *maxlen - 1;
     (*buffer)[currlen] = '\0';
     *retlen = currlen;
@@ -842,3 +805,62 @@ doapr_outch(
     return;
 }
 #endif
+
+/***************************************************************************/
+
+int BIO_printf (BIO *bio, const char *format, ...)
+	{
+	va_list args;
+	int ret;
+	size_t retlen;
+#ifdef USE_ALLOCATING_PRINT
+	char *hugebuf;
+#else
+	MS_STATIC char hugebuf[1024*2]; /* 10k in one chunk is the limit */
+#endif
+
+	va_start(args, format);
+
+#ifndef USE_ALLOCATING_PRINT
+	hugebuf[0]='\0';
+	dopr(hugebuf, sizeof(hugebuf), &retlen, format, args);
+#else
+	hugebuf = NULL;
+	CRYPTO_push_info("doapr()");
+	doapr(&hugebuf, &retlen, format, args);
+	if (hugebuf)
+		{
+#endif
+		ret=BIO_write(bio, hugebuf, (int)retlen);
+
+#ifdef USE_ALLOCATING_PRINT
+		Free(hugebuf);
+		}
+	CRYPTO_pop_info();
+#endif
+	va_end(args);
+	return(ret);
+	}
+
+/* As snprintf is not available everywhere, we provide our own implementation.
+ * This function has nothing to do with BIOs, but it's closely related
+ * to BIO_printf, and we need *some* name prefix ...
+ * (XXX  the function should be renamed, but to what?) */
+int BIO_snprintf(char *buf, size_t n, const char *format, ...)
+	{
+	va_list args;
+	size_t retlen;
+	int truncated;
+
+	va_start(args, format);
+	_dopr(dopr_outch, dopr_isbig, dopr_copy,
+		&buf, &n, &retlen, &truncated, format, args);
+	if (truncated)
+		/* In case of truncation, return -1 like traditional snprintf.
+		 * (Current drafts for ISO/IEC 9899 say snprintf should return
+		 * the number of characters that would have been written,
+		 * had the buffer been large enough.) */
+		return -1;
+	else
+		return (retlen <= INT_MAX) ? retlen : -1;
+	}

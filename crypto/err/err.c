@@ -118,6 +118,7 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
+#include <openssl/bio.h>
 
 
 static LHASH *error_hash=NULL;
@@ -477,13 +478,11 @@ static unsigned long get_error_values(int inc, const char **file, int *line,
 	return(ret);
 	}
 
-/* BAD for multi-threaded, uses a local buffer if ret == NULL */
-char *ERR_error_string(unsigned long e, char *ret)
+void ERR_error_string_n(unsigned long e, char *buf, size_t len)
 	{
-	static char buf[256];
+	char lsbuf[64], fsbuf[64], rsbuf[64];
 	const char *ls,*fs,*rs;
 	unsigned long l,f,r;
-	int i;
 
 	l=ERR_GET_LIB(e);
 	f=ERR_GET_FUNC(e);
@@ -493,21 +492,50 @@ char *ERR_error_string(unsigned long e, char *ret)
 	fs=ERR_func_error_string(e);
 	rs=ERR_reason_error_string(e);
 
-	if (ret == NULL) ret=buf;
-
-	sprintf(&(ret[0]),"error:%08lX:",e);
-	i=strlen(ret);
-	if (ls == NULL)
-		sprintf(&(ret[i]),":lib(%lu) ",l);
-	else	sprintf(&(ret[i]),"%s",ls);
-	i=strlen(ret);
+	if (ls == NULL) 
+		BIO_snprintf(lsbuf, sizeof(lsbuf), "lib(%lu)", l);
 	if (fs == NULL)
-		sprintf(&(ret[i]),":func(%lu) ",f);
-	else	sprintf(&(ret[i]),":%s",fs);
-	i=strlen(ret);
+		BIO_snprintf(fsbuf, sizeof(fsbuf), "func(%lu)", f);
 	if (rs == NULL)
-		sprintf(&(ret[i]),":reason(%lu)",r);
-	else	sprintf(&(ret[i]),":%s",rs);
+		BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", r);
+
+	BIO_snprintf(buf, len,"error:%08lX:%s:%s:%s", e, ls?ls:lsbuf, 
+		fs?fs:fsbuf, rs?rs:rsbuf);
+	if (strlen(buf) == len-1)
+		{
+		/* output may be truncated; make sure we always have 5 
+		 * colon-separated fields, i.e. 4 colons ... */
+#define NUM_COLONS 4
+		if (len > NUM_COLONS) /* ... if possible */
+			{
+			int i;
+			char *s = buf;
+			
+			for (i = 0; i < NUM_COLONS; i++)
+				{
+				char *colon = strchr(s, ':');
+				if (colon == NULL || colon > &buf[len-1] - NUM_COLONS + i)
+					{
+					/* set colon no. i at last possible position
+					 * (buf[len-1] is the terminating 0)*/
+					colon = &buf[len-1] - NUM_COLONS + i;
+					*colon = ':';
+					}
+				s = colon + 1;
+				}
+			}
+		}
+	}
+
+/* BAD for multi-threading: uses a local buffer if ret == NULL */
+/* ERR_error_string_n should be used instead for ret != NULL
+ * as ERR_error_string cannot know how large the buffer is */
+char *ERR_error_string(unsigned long e, char *ret)
+	{
+	static char buf[256];
+
+	if (ret == NULL) ret=buf;
+	ERR_error_string_n(e, buf, 256);
 
 	return(ret);
 	}

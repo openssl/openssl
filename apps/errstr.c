@@ -104,7 +104,10 @@ int MAIN(int argc, char **argv)
 	for (i=1; i<argc; i++)
 		{
 		if (sscanf(argv[i],"%lx",&l))
-			printf("%s\n",ERR_error_string(l,buf));
+			{
+			ERR_error_string_n(l, buf, sizeof buf);
+			printf("%s\n",buf);
+			}
 		else
 			{
 			printf("%s: bad error code\n",argv[i]);
