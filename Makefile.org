@@ -156,6 +156,7 @@ SDIRS=  \
 MAKEFILE= Makefile.ssl
 MAKE=     make -f Makefile.ssl
 
+MANDIR=$(OPENSSLDIR)/man
 MAN1=1
 MAN3=3
 SHELL=/bin/sh
@@ -356,10 +357,10 @@ install: all install_docs
 
 install_docs:
 	@$(PERL) $(TOP)/util/mkdir-p.pl \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/man/man1 \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/man/man3 \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/man/man5 \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/man/man7
+		$(INSTALL_PREFIX)$(MANDIR)/man1 \
+		$(INSTALL_PREFIX)$(MANDIR)/man3 \
+		$(INSTALL_PREFIX)$(MANDIR)/man5 \
+		$(INSTALL_PREFIX)$(MANDIR)/man7
 	@echo installing man 1 and man 5
 	@for i in doc/apps/*.pod; do \
 		(cd `dirname $$i`; \
@@ -367,7 +368,7 @@ install_docs:
 		sec=`[ "$$fn" = "config" ] && echo 5 || echo 1`; \
 		$(PERL) ../../util/pod2man.pl --section=$$sec --center=OpenSSL \
 			 --release=$(VERSION) `basename $$i` \
-			>  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man$$sec/`basename $$i .pod`.$$sec); \
+			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec); \
 	done
 	@echo installing man 3 and man 7
 	@for i in doc/crypto/*.pod doc/ssl/*.pod; do \
@@ -376,7 +377,7 @@ install_docs:
 		sec=`[ "$$fn" = "des_modes" ] && echo 7 || echo 3`; \
 		$(PERL) ../../util/pod2man.pl --section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i` \
-			>  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man$$sec/`basename $$i .pod`.$$sec); \
+			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec); \
 	done
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
