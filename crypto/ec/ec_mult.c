@@ -307,12 +307,13 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
  *       (thus the boundaries should be increased)
  */
 #define EC_window_bits_for_scalar_size(b) \
-		((b) >= 2000 ? 6 : \
-		 (b) >=  800 ? 5 : \
-		 (b) >=  300 ? 4 : \
-		 (b) >=   70 ? 3 : \
-		 (b) >=   20 ? 2 : \
-		  1)
+		((size_t) \
+		 ((b) >= 2000 ? 6 : \
+		  (b) >=  800 ? 5 : \
+		  (b) >=  300 ? 4 : \
+		  (b) >=   70 ? 3 : \
+		  (b) >=   20 ? 2 : \
+		  1))
 
 /* Compute
  *      \sum scalars[i]*points[i],
