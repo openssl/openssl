@@ -123,7 +123,7 @@ int get_signed_seq2string(PKCS7_SIGNER_INFO *si, char **str1, char **str2)
 	so=PKCS7_get_signed_attribute(si,signed_seq2string_nid);
 	if (so && (so->type == V_ASN1_SEQUENCE))
 		{
-		ASN1_CTX c;
+		ASN1_const_CTX c;
 		ASN1_STRING *s;
 		long length;
 		ASN1_OCTET_STRING *os1,*os2;
@@ -144,7 +144,7 @@ int get_signed_seq2string(PKCS7_SIGNER_INFO *si, char **str1, char **str2)
 			goto err;
 		c.slen-=(c.p-c.q);
 
-		if (!asn1_Finish(&c)) goto err;
+		if (!asn1_const_Finish(&c)) goto err;
 		*str1=malloc(os1->length+1);
 		*str2=malloc(os2->length+1);
 		memcpy(*str1,os1->data,os1->length);
@@ -290,7 +290,7 @@ int sk_get_seq2string(STACK_OF(X509_ATTRIBUTE) *sk, char **str1, char **str2)
 	so=PKCS7_get_signed_attribute(&si,signed_seq2string_nid);
 	if (so->type == V_ASN1_SEQUENCE)
 		{
-		ASN1_CTX c;
+		ASN1_const_CTX c;
 		ASN1_STRING *s;
 		long length;
 		ASN1_OCTET_STRING *os1,*os2;
@@ -311,7 +311,7 @@ int sk_get_seq2string(STACK_OF(X509_ATTRIBUTE) *sk, char **str1, char **str2)
 			goto err;
 		c.slen-=(c.p-c.q);
 
-		if (!asn1_Finish(&c)) goto err;
+		if (!asn1_const_Finish(&c)) goto err;
 		*str1=malloc(os1->length+1);
 		*str2=malloc(os2->length+1);
 		memcpy(*str1,os1->data,os1->length);
