@@ -95,6 +95,7 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 {BIO_R_ACCEPT_ERROR                      ,"accept error"},
 {BIO_R_BAD_FOPEN_MODE                    ,"bad fopen mode"},
 {BIO_R_BAD_HOSTNAME_LOOKUP               ,"bad hostname lookup"},
+{BIO_R_BROKEN_PIPE                       ,"broken pipe"},
 {BIO_R_CONNECT_ERROR                     ,"connect error"},
 {BIO_R_ERROR_SETTING_NBIO                ,"error setting nbio"},
 {BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET,"error setting nbio on accepted socket"},

@@ -64,6 +64,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <openssl/crypto.h>
 
 /* These are the 'types' of BIOs */
@@ -317,6 +318,15 @@ typedef struct bio_f_buffer_ctx_struct
 #define BIO_C_GET_SOCKS				134
 #define BIO_C_SET_SOCKS				135
 
+#define BIO_C_SET_WRITE_BUF_SIZE		136/* for BIO_s_bio */
+#define BIO_C_GET_WRITE_BUF_SIZE		137
+#define BIO_C_MAKE_BIO_PAIR			138
+#define BIO_C_DESTROY_BIO_PAIR			139
+#define BIO_C_GET_WRITE_GUARANTEE		140
+#define BIO_C_GET_READ_REQUEST			141
+#define BIO_C_SHUTDOWN_WR			142
+
+
 #define BIO_set_app_data(s,arg)		BIO_set_ex_data(s,0,(char *)arg)
 #define BIO_get_app_data(s)		BIO_get_ex_data(s,0)
 
@@ -431,12 +441,28 @@ int BIO_read_filename(BIO *b,const char *name);
 #define BIO_get_close(b)	(int)BIO_ctrl(b,BIO_CTRL_GET_CLOSE,0,NULL)
 #define BIO_pending(b)		(int)BIO_ctrl(b,BIO_CTRL_PENDING,0,NULL)
 #define BIO_wpending(b)		(int)BIO_ctrl(b,BIO_CTRL_WPENDING,0,NULL)
+/* ...pending macros have inappropriate return type */
+size_t BIO_ctrl_pending(BIO *b);
+size_t BIO_ctrl_wpending(BIO *b);
 #define BIO_flush(b)		(int)BIO_ctrl(b,BIO_CTRL_FLUSH,0,NULL)
 #define BIO_get_info_callback(b,cbp) (int)BIO_ctrl(b,BIO_CTRL_GET_CALLBACK,0,(char *)cbp)
 #define BIO_set_info_callback(b,cb) (int)BIO_ctrl(b,BIO_CTRL_SET_CALLBACK,0,(char *)cb)
 
 /* For the BIO_f_buffer() type */
 #define BIO_buffer_get_num_lines(b) BIO_ctrl(b,BIO_CTRL_GET,0,NULL)
+
+/* For BIO_s_bio() */
+#define BIO_set_write_buf_size(b,size) (int)BIO_ctrl(b,BIO_C_SET_WRITE_BUF_SIZE,size,NULL)
+#define BIO_get_write_buf_size(b,size) (size_t)BIO_ctrl(b,BIO_C_GET_WRITE_BUF_SIZE,size,NULL)
+#define BIO_make_bio_pair(b1,b2)   (int)BIO_ctrl(b1,BIO_C_MAKE_BIO_PAIR,0,b2)
+#define BIO_destroy_bio_pair(b)    (int)BIO_ctrl(b,BIO_C_DESTROY_BIO_PAIR,0,NULL)
+/* macros with inappropriate type -- but ...pending macros use int too: */
+#define BIO_get_write_guarantee(b) (int)BIO_ctrl(b,BIO_C_GET_WRITE_GUARANTEE,0,NULL)
+#define BIO_get_read_request(b)    (int)BIO_ctrl(b,BIO_C_GET_READ_REQUEST,0,NULL)
+size_t BIO_ctrl_get_write_guarantee(BIO *b);
+size_t BIO_ctrl_get_read_request(BIO *b);
+
+
 
 #ifdef NO_STDIO
 #define NO_FP_API
@@ -473,7 +499,7 @@ int	BIO_read(BIO *b, void *data, int len);
 int	BIO_gets(BIO *bp,char *buf, int size);
 int	BIO_write(BIO *b, const char *data, int len);
 int	BIO_puts(BIO *bp,const char *buf);
-long	BIO_ctrl(BIO *bp,int cmd,long larg,char *parg);
+long	BIO_ctrl(BIO *bp,int cmd,long larg,void *parg);
 char *	BIO_ptr_ctrl(BIO *bp,int cmd,long larg);
 long	BIO_int_ctrl(BIO *bp,int cmd,long larg,int iarg);
 BIO *	BIO_push(BIO *b,BIO *append);
@@ -538,6 +564,13 @@ BIO *BIO_new_fd(int fd, int close_flag);
 BIO *BIO_new_connect(char *host_port);
 BIO *BIO_new_accept(char *host_port);
 
+int BIO_new_bio_pair(BIO **bio1, size_t writebuf1,
+	BIO **bio2, size_t writebuf2);
+/* If successful, returns 1 and in *bio1, *bio2 two BIO pair endpoints.
+ * Otherwise returns 0 and sets *bio1 and *bio2 to NULL.
+ * Size 0 uses default value.
+ */
+
 void BIO_copy_next_retry(BIO *b);
 
 long BIO_ghbn_ctrl(int cmd,int iarg,char *parg);
@@ -579,6 +612,7 @@ int BIO_printf(BIO *bio, ...);
 #define BIO_R_ACCEPT_ERROR				 100
 #define BIO_R_BAD_FOPEN_MODE				 101
 #define BIO_R_BAD_HOSTNAME_LOOKUP			 102
+#define BIO_R_BROKEN_PIPE				 124
 #define BIO_R_CONNECT_ERROR				 103
 #define BIO_R_ERROR_SETTING_NBIO			 104
 #define BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET	 105

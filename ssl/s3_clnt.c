@@ -254,6 +254,7 @@ int ssl3_connect(SSL *s)
 		case SSL3_ST_CW_CERT_A:
 		case SSL3_ST_CW_CERT_B:
 		case SSL3_ST_CW_CERT_C:
+		case SSL3_ST_CW_CERT_D:
 			ret=ssl3_send_client_certificate(s);
 			if (ret <= 0) goto end;
 			s->state=SSL3_ST_CW_KEY_EXCH_A;

@@ -4,6 +4,16 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Add missing case to s3_clnt.c state machine -- one of the new SSL tests
+     through a BIO pair triggered the default case, i.e.
+     SSLerr(...,SSL_R_UNKNOWN_STATE).
+     [Bodo Moeller]
+
+  *) New "BIO pair" concept (crypto/bio/bss_bio.c) so that applications
+     can use the SSL library even if none of the specific BIOs is
+     appropriate.
+     [Bodo Moeller]
+
   *) Fix a bug in i2d_DSAPublicKey() which meant it returned the wrong value
      for the encoded length.
      [Jeon KyoungHo <khjeon@sds.samsung.co.kr>]

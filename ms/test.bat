@@ -91,7 +91,7 @@ echo test sslv2 with server authentication
 ssltest -ssl2 -server_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
-echo test sslv2 with client authentication 
+echo test sslv2 with client authentication
 ssltest -ssl2 -client_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
@@ -107,7 +107,7 @@ echo test sslv3 with server authentication
 ssltest -ssl3 -server_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
-echo test sslv3 with client authentication 
+echo test sslv3 with client authentication
 ssltest -ssl3 -client_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
@@ -123,7 +123,7 @@ echo test sslv2/sslv3 with server authentication
 ssltest -server_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
-echo test sslv2/sslv3 with client authentication 
+echo test sslv2/sslv3 with client authentication
 ssltest -client_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
@@ -131,6 +131,53 @@ echo test sslv2/sslv3 with both client and server authentication
 ssltest -server_auth -client_auth -CAfile cert.tmp
 if errorlevel 1 goto done
 
+echo test sslv2 via BIO pair
+ssltest -bio_pair -ssl2
+if errorlevel 1 goto done
+
+echo test sslv2 with server authentication via BIO pair
+ssltest -bio_pair -ssl2 -server_auth -CAfile cert.tmp
+if errorlevel 1 goto done
+
+echo test sslv2 with client authentication via BIO pair
+ssltest -bio_pair -ssl2 -client_auth -CAfile cert.tmp
+if errorlevel 1 goto done
+
+echo test sslv2 with both client and server authentication via BIO pair
+ssltest -bio_pair -ssl2 -server_auth -client_auth -CAfile cert.tmp
+if errorlevel 1 goto done
+
+echo test sslv3 via BIO pair
+ssltest -bio_pair -ssl3
+if errorlevel 1 goto done
+
+echo test sslv3 with server authentication via BIO pair
+ssltest -bio_pair -ssl3 -server_auth -CAfile cert.tmp
+if errorlevel 1 goto done
+
+echo test sslv3 with client authentication  via BIO pair
+ssltest -bio_pair -ssl3 -client_auth -CAfile cert.tmp
+if errorlevel 1 goto done
+
+echo test sslv3 with both client and server authentication via BIO pair
+ssltest -bio_pair -ssl3 -server_auth -client_auth -CAfile cert.tmp
+if errorlevel 1 goto done
+
+echo test sslv2/sslv3 via BIO pair
+ssltest
+if errorlevel 1 goto done
+
+echo test sslv2/sslv3 with server authentication
+ssltest -bio_pair -server_auth -CAfile cert.tmp
+if errorlevel 1 goto done
+
+echo test sslv2/sslv3 with client authentication via BIO pair
+ssltest -bio_pair -client_auth -CAfile cert.tmp
+if errorlevel 1 goto done
+
+echo test sslv2/sslv3 with both client and server authentication via BIO pair
+ssltest -bio_pair -server_auth -client_auth -CAfile cert.tmp
+if errorlevel 1 goto done
 
 del cert.tmp
 

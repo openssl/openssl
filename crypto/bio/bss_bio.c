@@ -1,11 +1,11 @@
 /* crypto/bio/bss_bio.c  -*- Mode: C; c-file-style: "eay" -*- */
 
-/*  *** Not yet finished (or even tested). *** */
-
 /* Special method for a BIO where the other endpoint is also a BIO
- * of this kind, handled by the same thread.
+ * of this kind, handled by the same thread (i.e. the "peer" is actually
+ * ourselves, wearing a different hat).
  * Such "BIO pairs" are mainly for using the SSL library with I/O interfaces
- * for which no specific BIO method is available. */
+ * for which no specific BIO method is available.
+ * See ssl/ssltest.c for some hints on how this can be used. */
 
 #include <assert.h>
 #include <stdlib.h>
@@ -19,7 +19,7 @@ static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);
 static int bio_read(BIO *bio, char *buf, int size);
 static int bio_write(BIO *bio, char *buf, int num);
-static long bio_ctrl(BIO *bio, int cmd, long num, char *ptr);
+static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr);
 static int bio_puts(BIO *bio, char *str);
 
 static int bio_make_pair(BIO *bio1, BIO *bio2);
@@ -74,6 +74,7 @@ static int bio_new(BIO *bio)
 	b->size = 17*1024; /* enough for one TLS record (just a default) */
 	b->buf = NULL;
 
+	bio->ptr = b;
 	return 1;
 	}
 
@@ -103,19 +104,167 @@ static int bio_free(BIO *bio)
 
 
 
-static int bio_read(BIO *bio, char *buf, int size)
+static int bio_read(BIO *bio, char *buf, int size_)
 	{
-	/* XXX */
-	return -1;
+	size_t size = size_;
+	size_t rest;
+	struct bio_bio_st *b, *peer_b;
+
+	BIO_clear_retry_flags(bio);
+
+	if (!bio->init)
+		return 0;
+
+	b = bio->ptr;
+	assert(b != NULL);
+	assert(b->peer != NULL);
+	peer_b = b->peer->ptr;
+	assert(peer_b != NULL);
+	assert(peer_b->buf != NULL);
+
+	peer_b->request = 0; /* will be set in "retry_read" situation */
+
+	if (buf == NULL || size == 0)
+		return 0;
+
+	if (peer_b->len == 0)
+		{
+		if (peer_b->closed)
+			return 0; /* writer has closed, and no data is left */
+		else
+			{
+			BIO_set_retry_read(bio); /* buffer is empty */
+			if (size <= peer_b->size)
+				peer_b->request = size;
+			else
+				peer_b->request = peer_b->size; /* don't ask for more than
+				                                 * the peer can deliver
+				                                 * in one write */
+			return -1;
+			}
+		}
+
+	/* we can read */
+	if (peer_b->len < size)
+		size = peer_b->len;
+
+	/* now read "size" bytes */
+	
+	rest = size;
+	
+	assert(rest > 0);
+	do /* one or two iterations */
+		{
+		size_t chunk;
+		
+		assert(rest <= peer_b->len);
+		if (peer_b->offset + rest <= peer_b->size)
+			chunk = rest;
+		else
+			/* wrap around ring buffer */
+			chunk = peer_b->size - peer_b->offset;
+		assert(peer_b->offset + chunk <= peer_b->size);
+		
+		memcpy(buf, peer_b->buf + peer_b->offset, chunk);
+		
+		peer_b->len -= chunk;
+		if (peer_b->len)
+			{
+			peer_b->offset += chunk;
+			assert(peer_b->offset <= peer_b->size);
+			if (peer_b->offset == peer_b->size)
+				peer_b->offset = 0;
+			buf += chunk;
+			}
+		else
+			{
+			/* buffer now empty, no need to advance "buf" */
+			assert(chunk == rest);
+			peer_b->offset = 0;
+			}
+		rest -= chunk;
+		}
+	while (rest);
+	
+	peer_b->request -= size;
+	return size;
 	}
 
-static int bio_write(BIO *bio, char *buf, int num)
+static int bio_write(BIO *bio, char *buf, int num_)
 	{
-	/* XXX */
-	return -1;
-	}
+	size_t num = num_;
+	size_t rest;
+	struct bio_bio_st *b;
+
+	BIO_clear_retry_flags(bio);
+
+	if (!bio->init || buf == NULL || num == 0)
+		return 0;
+
+	b = bio->ptr;		
+	assert(b != NULL);
+	assert(b->peer != NULL);
+	assert(b->buf != NULL);
+
+	b->request = 0;
+	if (b->closed)
+		{
+		/* we already closed */
+		BIOerr(BIO_F_BIO_WRITE, BIO_R_BROKEN_PIPE);
+		return -1;
+		}
+
+	assert(b->len <= b->size);
+
+	if (b->len == b->size)
+		{
+		BIO_set_retry_write(bio); /* buffer is full */
+		return -1;
+		}
+
+	/* we can write */
+	if (num > b->size - b->len)
+		num = b->size - b->len;
 	
-static long bio_ctrl(BIO *bio, int cmd, long num, char *ptr)
+	/* now write "num" bytes */
+
+	rest = num;
+	
+	assert(rest > 0);
+	do /* one or two iterations */
+		{
+		size_t write_offset;
+		size_t chunk;
+
+		assert(b->len + rest <= b->size);
+
+		write_offset = b->offset + b->len;
+		if (write_offset >= b->size)
+			write_offset -= b->size;
+		/* b->buf[write_offset] is the first byte we can write to. */
+
+		if (write_offset + rest <= b->size)
+			chunk = rest;
+		else
+			/* wrap around ring buffer */
+			chunk = b->size - write_offset;
+		
+		memcpy(b->buf + write_offset, buf, chunk);
+		
+		b->len += chunk;
+
+		assert(b->len <= b->size);
+		
+		rest -= chunk;
+		buf += chunk;
+		}
+	while (rest);
+
+	return num;
+	}
+
+
+static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 	{
 	long ret;
 	struct bio_bio_st *b = bio->ptr;
@@ -124,13 +273,76 @@ static long bio_ctrl(BIO *bio, int cmd, long num, char *ptr)
 
 	switch (cmd)
 		{
-		/* XXX Additional commands: */
-		/* - Set buffer size */
-		/* - make pair */
-		/* - destroy pair */
-		/* - get number of bytes that the next write will accept */
-		/* - get number of bytes requested by peer */
-		/* - send "close" */
+	/* specific CTRL codes */
+
+	case BIO_C_SET_WRITE_BUF_SIZE:
+		if (b->peer)
+			{
+			BIOerr(BIO_F_BIO_CTRL, BIO_R_IN_USE);
+			ret = 0;
+			}
+		else
+			{
+			size_t new_size = num;
+
+			if (b->size != new_size)
+				{
+				if (b->buf) 
+					{
+					Free(b->buf);
+					b->buf = NULL;
+					}
+				b->size = new_size;
+				}
+			ret = 1;
+			}
+		break;
+
+	case BIO_C_GET_WRITE_BUF_SIZE:
+		num = (long) b->size;
+
+	case BIO_C_MAKE_BIO_PAIR:
+		{
+		BIO *other_bio = ptr;
+		
+		if (bio_make_pair(bio, other_bio))
+			ret = 1;
+		else
+			ret = 0;
+		}
+		break;
+		
+	case BIO_C_DESTROY_BIO_PAIR:
+		/* Effects both BIOs in the pair -- call just once!
+		 * Or let BIO_free(bio1); BIO_free(bio2); do the job. */
+		bio_destroy_pair(bio);
+		ret = 1;
+		break;
+
+	case BIO_C_GET_WRITE_GUARANTEE:
+		/* How many bytes can the caller feed to the next write
+		 * withouth having to keep any? */
+		if (b->peer == NULL || b->closed)
+			ret = 0;
+		else
+			ret = (long) b->size - b->len;
+		break;
+
+	case BIO_C_GET_READ_REQUEST:
+		/* If the peer unsuccesfully tried to read, how many bytes
+		 * were requested?  (As with BIO_CTRL_PENDING, that number
+		 * can usually be treated as boolean.) */
+		ret = (long) b->request;
+		break;
+
+	case BIO_C_SHUTDOWN_WR:
+		/* similar to shutdown(..., SHUT_WR) */
+		b->closed = 1;
+		ret = 1;
+		break;
+
+
+	/* standard CTRL codes follow */
 
 	case BIO_CTRL_RESET:
 		if (b->buf != NULL)
@@ -169,12 +381,41 @@ static long bio_ctrl(BIO *bio, int cmd, long num, char *ptr)
 		break;
 
 	case BIO_CTRL_DUP:
-		/* XXX */
+		/* See BIO_dup_chain for circumstances we have to expect. */
+		{
+		BIO *other_bio = ptr;
+		struct bio_bio_st *other_b;
+		
+		assert(other_bio != NULL);
+		other_b = other_bio->ptr;
+		assert(other_b != NULL);
+		
+		assert(other_b->buf == NULL); /* other_bio is always fresh */
+
+		other_b->size = b->size;
+		}
+
 		ret = 1;
 		break;
 
 	case BIO_CTRL_FLUSH:
 		ret = 1;
+		break;
+
+	case BIO_CTRL_EOF:
+		{
+		BIO *other_bio = ptr;
+		
+		if (other_bio)
+			{
+			struct bio_bio_st *other_b = other_bio->ptr;
+			
+			assert(other_b != NULL);
+			ret = other_b->len == 0 && other_b->closed;
+			}
+		else
+			ret = 1;
+		}
 		break;
 
 	default:
@@ -188,8 +429,6 @@ static int bio_puts(BIO *bio, char *str)
 	return bio_write(bio, str, strlen(str));
 	}
 
-/* Until bio_make_pair is used, make a dummy function use it for -pedantic */
-void dummy() { bio_make_pair(NULL,NULL); }
 
 static int bio_make_pair(BIO *bio1, BIO *bio2)
 	{
@@ -272,4 +511,68 @@ static void bio_destroy_pair(BIO *bio)
 			b->offset = 0;
 			}
 		}
+	}
+ 
+
+/* Exported convenience functions */
+int BIO_new_bio_pair(BIO **bio1_p, size_t writebuf1,
+	BIO **bio2_p, size_t writebuf2)
+	 {
+	 BIO *bio1 = NULL, *bio2 = NULL;
+	 long r;
+	 int ret = 0;
+
+	 bio1 = BIO_new(BIO_s_bio());
+	 if (bio1 == NULL)
+		 goto err;
+	 bio2 = BIO_new(BIO_s_bio());
+	 if (bio2 == NULL)
+		 goto err;
+
+	 if (writebuf1)
+		 {
+		 r = BIO_set_write_buf_size(bio1, writebuf1);
+		 if (!r)
+			 goto err;
+		 }
+	 if (writebuf2)
+		 {
+		 r = BIO_set_write_buf_size(bio2, writebuf2);
+		 if (!r)
+			 goto err;
+		 }
+
+	 r = BIO_make_bio_pair(bio1, bio2);
+	 if (!r)
+		 goto err;
+	 ret = 1;
+
+ err:
+	 if (ret == 0)
+		 {
+		 if (bio1)
+			 {
+			 BIO_free(bio1);
+			 bio1 = NULL;
+			 }
+		 if (bio2)
+			 {
+			 BIO_free(bio2);
+			 bio2 = NULL;
+			 }
+		 }
+
+	 *bio1_p = bio1;
+	 *bio2_p = bio2;
+	 return ret;
+	 }
+
+size_t BIO_ctrl_get_write_guarantee(BIO *bio)
+    {
+	return BIO_ctrl(bio, BIO_C_GET_WRITE_GUARANTEE, 0, NULL);
+	}
+
+size_t BIO_ctrl_read_request(BIO *bio)
+    {
+	return BIO_ctrl(bio, BIO_C_GET_READ_REQUEST, 0, NULL);
 	}
