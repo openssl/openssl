@@ -21,35 +21,35 @@ set Ucert=certU.ss
 
 echo make a certificate request using 'req'
 %reqcmd% -config %CAconf% -out %CAreq% -keyout %CAkey% -new
-if errorlevel 1 goto err_req
+if errorlevel 1 goto e_req
 
 echo convert the certificate request into a self signed certificate using 'x509'
 %x509cmd% -CAcreateserial -in %CAreq% -days 30 -req -out %CAcert% -signkey %CAkey% >err.ss
-if errorlevel 1 goto err_x509
+if errorlevel 1 goto e_x509
 
 echo --
 echo convert a certificate into a certificate request using 'x509'
 %x509cmd% -in %CAcert% -x509toreq -signkey %CAkey% -out %CAreq2% >err.ss
-if errorlevel 1 goto err_x509_2
+if errorlevel 1 goto e_x509_2
 
 %reqcmd% -verify -in %CAreq% -noout
-if errorlevel 1 goto err_verify_1
+if errorlevel 1 goto e_vrfy_1
 
 %reqcmd% -verify -in %CAreq2% -noout
-if errorlevel 1 goto err_verify_2
+if errorlevel 1 goto e_vrfy_2
 
 %verifycmd% -CAfile %CAcert% %CAcert%
-if errorlevel 1 goto err_verify_3
+if errorlevel 1 goto e_vrfy_3
 
 echo --
 echo make another certificate request using 'req'
 %reqcmd% -config %Uconf% -out %Ureq% -keyout %Ukey% -new >err.ss
-if errorlevel 1 goto err_req_gen
+if errorlevel 1 goto e_req_gen
 
 echo --
 echo sign certificate request with the just created CA via 'x509'
 %x509cmd% -CAcreateserial -in %Ureq% -days 30 -req -out %Ucert% -CA %CAcert% -CAkey %CAkey% -CAserial %CAserial%
-if errorlevel 1 goto err_x509_sign
+if errorlevel 1 goto e_x_sign
 
 %verifycmd% -CAfile %CAcert% %Ucert%
 echo --
@@ -70,28 +70,28 @@ del err.ss
 
 goto end
 
-:err_req
+:e_req
 echo error using 'req' to generate a certificate request
 goto end
-:err_x509
+:e_x509
 echo error using 'x509' to self sign a certificate request
 goto end
-:err_x509_2
+:e_x509_2
 echo error using 'x509' convert a certificate to a certificate request
 goto end
-:err_verify_1
+:e_vrfy_1
 echo first generated request is invalid
 goto end
-:err_verify_2
+:e_vrfy_2
 echo second generated request is invalid
 goto end
-:err_verify_3
+:e_vrfy_3
 echo first generated cert is invalid
 goto end
-:err_req_gen
+:e_req_gen
 echo error using 'req' to generate a certificate request
 goto end
-:err_x509_sign
+:e_x_sign
 echo error using 'x509' to sign a certificate request
 goto end
 
