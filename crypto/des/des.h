@@ -66,10 +66,6 @@
 #include <openssl/opensslconf.h> /* DES_LONG */
 #include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
 
-#ifndef OPENSSL_DISABLE_OLD_DES_SUPPORT
-# include <openssl/des_old.h>
-#endif
-
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
 # undef OPENSSL_EXTERN
 # define OPENSSL_EXTERN OPENSSL_EXPORT
@@ -94,6 +90,10 @@ typedef struct DES_ks
 	DES_LONG deslong[2];
 	} ks[16];
     } DES_key_schedule;
+
+#ifndef OPENSSL_DISABLE_OLD_DES_SUPPORT
+# include <openssl/des_old.h>
+#endif
 
 #define DES_KEY_SZ 	(sizeof(DES_cblock))
 #define DES_SCHEDULE_SZ (sizeof(DES_key_schedule))

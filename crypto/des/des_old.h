@@ -95,6 +95,10 @@
 #error DES is disabled.
 #endif
 
+#ifndef HEADER_DES_H
+#error You must include des.h, not des_old.h directly.
+#endif
+
 #ifdef _KERBEROS_DES_H
 #error <openssl/des_old.h> replaces <kerberos/des.h>.
 #endif
@@ -128,43 +132,43 @@ typedef struct _ossl_old_des_ks_struct
 #define const_des_cblock const_DES_cblock
 #define des_key_schedule DES_key_schedule
 #define des_ecb3_encrypt(i,o,k1,k2,k3,e)\
-	DES_ecb3_encrypt((i),(o),(&k1),(&k2),(&k3),(e))
+	DES_ecb3_encrypt((i),(o),&(k1),&(k2),&(k3),(e))
 #define des_ede3_cbc_encrypt(i,o,l,k1,k2,k3,iv,e)\
-	DES_ede3_cbc_encrypt((i),(o),(l),(&k1),(&k2),(&k3),(iv),(e))
+	DES_ede3_cbc_encrypt((i),(o),(l),&(k1),&(k2),&(k3),(iv),(e))
 #define des_ede3_cbcm_encrypt(i,o,l,k1,k2,k3,iv1,iv2,e)\
-	DES_ede3_cbcm_encrypt((i),(o),(l),(&k1),(&k2),(&k3),(iv1),(iv2),(e))
+	DES_ede3_cbcm_encrypt((i),(o),(l),&(k1),&(k2),&(k3),(iv1),(iv2),(e))
 #define des_ede3_cfb64_encrypt(i,o,l,k1,k2,k3,iv,n,e)\
-	DES_ede3_cfb64_encrypt((i),(o),(l),(&k1),(&k2),(&k3),(iv),(n),(e))
+	DES_ede3_cfb64_encrypt((i),(o),(l),&(k1),&(k2),&(k3),(iv),(n),(e))
 #define des_ede3_ofb64_encrypt(i,o,l,k1,k2,k3,iv,n)\
-	DES_ede3_ofb64_encrypt((i),(o),(l),(&k1),(&k2),(&k3),(iv),(n))
+	DES_ede3_ofb64_encrypt((i),(o),(l),&(k1),&(k2),&(k3),(iv),(n))
 #define des_options()\
 	DES_options()
 #define des_cbc_cksum(i,o,l,k,iv)\
-	DES_cbc_cksum((i),(o),(l),(&k),(iv))
+	DES_cbc_cksum((i),(o),(l),&(k),(iv))
 #define des_cbc_encrypt(i,o,l,k,iv,e)\
-	DES_cbc_encrypt((i),(o),(l),(&k),(iv),(e))
+	DES_cbc_encrypt((i),(o),(l),&(k),(iv),(e))
 #define des_ncbc_encrypt(i,o,l,k,iv,e)\
-	DES_ncbc_encrypt((i),(o),(l),(&k),(iv),(e))
+	DES_ncbc_encrypt((i),(o),(l),&(k),(iv),(e))
 #define des_xcbc_encrypt(i,o,l,k,iv,inw,outw,e)\
-	DES_xcbc_encrypt((i),(o),(l),(&k),(iv),(inw),(outw),(e))
+	DES_xcbc_encrypt((i),(o),(l),&(k),(iv),(inw),(outw),(e))
 #define des_cfb_encrypt(i,o,n,l,k,iv,e)\
-	DES_cfb_encrypt((i),(o),(n),(l),(&k),(iv),(e))
+	DES_cfb_encrypt((i),(o),(n),(l),&(k),(iv),(e))
 #define des_ecb_encrypt(i,o,k,e)\
-	DES_ecb_encrypt((i),(o),(&k),(e))
+	DES_ecb_encrypt((i),(o),&(k),(e))
 #define des_encrypt1(d,k,e)\
-	DES_encrypt1((d),(&k),(e))
+	DES_encrypt1((d),&(k),(e))
 #define des_encrypt2(d,k,e)\
-	DES_encrypt2((d),(&k),(e))
+	DES_encrypt2((d),&(k),(e))
 #define des_encrypt3(d,k1,k2,k3)\
-	DES_encrypt3((d),(&k1),(&k2),(&k3))
+	DES_encrypt3((d),&(k1),&(k2),&(k3))
 #define des_decrypt3(d,k1,k2,k3)\
-	DES_decrypt3((d),(&k1),(&k2),(&k3))
+	DES_decrypt3((d),&(k1),&(k2),&(k3))
 #define des_xwhite_in2out(k,i,o)\
 	DES_xwhite_in2out((k),(i),(o))
 #define des_enc_read(f,b,l,k,iv)\
-	DES_enc_read((f),(b),(l),(&k),(iv))
+	DES_enc_read((f),(b),(l),&(k),(iv))
 #define des_enc_write(f,b,l,k,iv)\
-	DES_enc_write((f),(b),(l),(&k),(iv))
+	DES_enc_write((f),(b),(l),&(k),(iv))
 #define des_fcrypt(b,s,r)\
 	DES_fcrypt((b),(s),(r))
 #define des_crypt(b,s)\
@@ -174,13 +178,13 @@ typedef struct _ossl_old_des_ks_struct
 	DES_crypt((b),(s))
 #endif
 #define des_ofb_encrypt(i,o,n,l,k,iv)\
-	DES_ofb_encrypt((i),(o),(n),(l),(&k),(iv))
+	DES_ofb_encrypt((i),(o),(n),(l),&(k),(iv))
 #define des_pcbc_encrypt(i,o,l,k,iv,e)\
-	DES_pcbc_encrypt((i),(o),(l),(&k),(iv),(e))
+	DES_pcbc_encrypt((i),(o),(l),&(k),(iv),(e))
 #define des_quad_cksum(i,o,l,c,s)\
 	DES_quad_cksum((i),(o),(l),(c),(s))
 #define des_random_seed(k)\
-	DES_random_seed((k))
+	_ossl_096_des_random_seed((k))
 #define des_random_key(r)\
 	DES_random_key((r))
 #define des_read_password(k,p,v) \
@@ -194,21 +198,21 @@ typedef struct _ossl_old_des_ks_struct
 #define des_is_weak_key(k)\
 	DES_is_weak_key((k))
 #define des_set_key(k,ks)\
-	DES_set_key((k),(&ks))
+	DES_set_key((k),&(ks))
 #define des_key_sched(k,ks)\
-	DES_key_sched((k),(&ks))
+	DES_key_sched((k),&(ks))
 #define des_set_key_checked(k,ks)\
-	DES_set_key_checked((k),(&ks))
+	DES_set_key_checked((k),&(ks))
 #define des_set_key_unchecked(k,ks)\
-	DES_set_key_unchecked((k),(&ks))
+	DES_set_key_unchecked((k),&(ks))
 #define des_string_to_key(s,k)\
 	DES_string_to_key((s),(k))
 #define des_string_to_2keys(s,k1,k2)\
 	DES_string_to_2keys((s),(k1),(k2))
 #define des_cfb64_encrypt(i,o,l,ks,iv,n,e)\
-	DES_cfb64_encrypt((i),(o),(l),(&ks),(iv),(n),(e))
+	DES_cfb64_encrypt((i),(o),(l),&(ks),(iv),(n),(e))
 #define des_ofb64_encrypt(i,o,l,ks,iv,n)\
-	DES_ofb64_encrypt((i),(o),(l),(&ks),(iv),(n))
+	DES_ofb64_encrypt((i),(o),(l),&(ks),(iv),(n))
 		
 
 #define des_ecb2_encrypt(i,o,k1,k2,e) \
@@ -386,6 +390,8 @@ void _ossl_old_des_cfb64_encrypt(unsigned char *in, unsigned char *out, long len
 	_ossl_old_des_key_schedule schedule, _ossl_old_des_cblock *ivec, int *num, int enc);
 void _ossl_old_des_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	_ossl_old_des_key_schedule schedule, _ossl_old_des_cblock *ivec, int *num);
+
+void _ossl_096_des_random_seed(des_cblock *key);
 
 /* The following definitions provide compatibility with the MIT Kerberos
  * library. The _ossl_old_des_key_schedule structure is not binary compatible. */
