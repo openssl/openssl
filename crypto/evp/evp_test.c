@@ -206,7 +206,7 @@ int main(int argc,char **argv)
 
     for( ; ; )
 	{
-	char acLine[4096];
+	char line[4096];
 	char *p;
 	char *cipher;
 	unsigned char *iv,*key,*plaintext,*ciphertext;
@@ -214,11 +214,11 @@ int main(int argc,char **argv)
 	int kn,in,pn,cn;
 	ENGINE *e;
 
-	if(!fgets((char *)acLine,sizeof acLine,f))
+	if(!fgets((char *)line,sizeof line,f))
 	    break;
-	if(acLine[0] == '#')
+	if(line[0] == '#' || line[0] == '\n')
 	    continue;
-	p=acLine;
+	p=line;
 	cipher=strsep(&p,":");	
 	key=ustrsep(&p,":");
 	iv=ustrsep(&p,":");
