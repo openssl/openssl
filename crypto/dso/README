@@ -1,0 +1,22 @@
+TODO
+----
+
+Get a fix on how the paths should be handled. For now, flags == 0
+and this is currently just passing strings directly onto the
+underlying system calls and letting them do what they want with
+the paths. However, it may be desirable to implement flags that
+control the way the loading is performed (or attempted), and I
+invisage that DSO_ctrl() will be used to control this.
+
+NOTES
+-----
+
+I've checked out HPUX (well, version 11 at least) and shl_t is
+a pointer type so it's safe to use in the way it has been in
+dso_dl.c. On the other hand, HPUX11 support dlfcn too and
+according to their man page, prefer developers to move to that.
+I'll leave Richard's changes there as I guess dso_dl is needed
+for HPUX10.20.
+
+[G-T]
+
