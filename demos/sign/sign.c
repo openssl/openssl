@@ -96,7 +96,7 @@ int main ()
   
   fp = fopen (keyfile, "r");
   if (fp == NULL) exit (1);
-  pkey = PEM_read_PrivateKey(fp, NULL, NULL);
+  pkey = PEM_read_PrivateKey(fp, NULL, NULL, NULL);
   fclose (fp);
 
   if (pkey == NULL) { 
@@ -122,7 +122,7 @@ int main ()
   
   fp = fopen (certfile, "r");
   if (fp == NULL) exit (1);
-  x509 = PEM_read_X509(fp, NULL, NULL);
+  x509 = PEM_read_X509(fp, NULL, NULL, NULL);
   fclose (fp);
 
   if (x509 == NULL) {
