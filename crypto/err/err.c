@@ -652,12 +652,15 @@ void ERR_remove_state(unsigned long pid)
 		pid=(unsigned long)CRYPTO_thread_id();
 	tmp.pid=pid;
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-	p=(ERR_STATE *)lh_delete(thread_hash,&tmp);
-	if (lh_num_items(thread_hash) == 0)
+	if (thread_hash)
 		{
-		/* make sure we don't leak memory */
-		lh_free(thread_hash);
-		thread_hash = NULL;
+		p=(ERR_STATE *)lh_delete(thread_hash,&tmp);
+		if (lh_num_items(thread_hash) == 0)
+			{
+			/* make sure we don't leak memory */
+			lh_free(thread_hash);
+			thread_hash = NULL;
+			}
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 
