@@ -928,7 +928,7 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 	}
 #endif /* BN_RECURSION */
 
-int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
+int BN_mul(BIGNUM *r, /* almost const */ const BIGNUM *a, /* almost const */ const BIGNUM *b, BN_CTX *ctx)
 	{
 	int top,al,bl;
 	BIGNUM *rr;

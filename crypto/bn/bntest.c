@@ -165,7 +165,6 @@ int main(int argc, char *argv[])
 	if (!results)
 		BIO_puts(out,"obase=16\nibase=16\n");
 
-#if 0
 	message(out,"BN_add");
 	if (!test_add(out)) goto err;
 	BIO_flush(out);
@@ -230,7 +229,6 @@ int main(int argc, char *argv[])
 	message(out,"BN_exp");
 	if (!test_exp(out,ctx)) goto err;
 	BIO_flush(out);
-#endif
 
 	message(out,"BN_kronecker");
 	if (!test_kron(out,ctx)) goto err;
@@ -946,34 +944,20 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 	 * don't want to test whether  b  is prime but whether BN_kronecker
 	 * works.) */
 
-#if 0
 	if (!BN_generate_prime(b, 512, 0, NULL, NULL, genprime_cb, NULL)) goto err;
-#else
-	if (!BN_set_word(b,65537)) goto err;
-#endif
 	putc('\n', stderr);
 
 	for (i = 0; i < num0; i++)
 		{
-#if 0
 		if (!BN_rand(a, 512, 0, 0)) goto err;
 		a->neg = rand_neg();
-#else
-		if (!BN_bin2bn("\x01\xff\xff\xff\xff", 5, a)) goto err;
-#endif
 
 		/* t := (b-1)/2  (note that b is odd) */
 		if (!BN_copy(t, b)) goto err;
 		if (!BN_sub_word(t, 1)) goto err;
 		if (!BN_rshift1(t, t)) goto err;
 		/* r := a^t mod b */
-#if 0
 		if (!BN_mod_exp(r, a, t, b, ctx)) goto err;
-#elif 0
-		if (!BN_mod_exp_recp(r, a, t, b, ctx)) goto err;
-#else
-		if (!BN_mod_exp_simple(r, a, t, b, ctx)) goto err;
-#endif
 
 		if (BN_is_word(r, 1))
 			legendre = 1;
@@ -989,7 +973,7 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 				}
 			legendre = -1;
 			}
-
+		
 		kronecker = BN_kronecker(a, b, ctx);
 		if (kronecker < -1) goto err;
 		
@@ -997,7 +981,7 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 			{
 			fprintf(stderr, "legendre != kronecker; a = ");
 			BN_print_fp(stderr, a);
-			fprintf(stderr, ", a = ");
+			fprintf(stderr, ", b = ");
 			BN_print_fp(stderr, b);
 			fprintf(stderr, "\n");
 			goto err;
