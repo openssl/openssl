@@ -417,6 +417,7 @@ int ENGINE_free(ENGINE *e)
 		abort();
 		}
 #endif
+	sk_ENGINE_EVP_CIPHER_pop_free(e->ciphers,ENGINE_free_engine_cipher);
 	CRYPTO_free_ex_data(engine_ex_data_stack, e, &e->ex_data);
 	OPENSSL_free(e);
 	return 1;

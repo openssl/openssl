@@ -1165,7 +1165,11 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 			BIO_printf(err,"can't use that engine\n");
 			return NULL;
 			}
+
+		ENGINE_load_engine_ciphers(e);
+
 		BIO_printf(err,"engine \"%s\" set.\n", engine);
+
 		/* Free our "structural" reference. */
 		ENGINE_free(e);
 		}

@@ -1,9 +1,6 @@
-/* crypto/engine/engine_all.c -*- mode: C; c-file-style: "eay" -*- */
-/* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
- * project 2000.
- */
+/* Written by Ben Laurie <ben@algroup.co.uk> August 2001 */
 /* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,87 +53,27 @@
  *
  */
 
-#include <openssl/err.h>
 #include <openssl/engine.h>
+#include <openssl/evp.h>
 #include "engine_int.h"
 
-static int engine_add(ENGINE *e)
+static void load_ciphers(ENGINE *e)
+    {
+    ENGINE_add_cipher(e,EVP_dev_crypto_des_ede3_cbc());
+    }
+
+ENGINE *ENGINE_openbsd_dev_crypto(void)
+    {
+    ENGINE *engine=ENGINE_new();
+
+    if(!ENGINE_set_id(engine,"openbsd_dev_crypto")
+       || !ENGINE_set_name(engine,"OpenBSD /dev/crypto"))
 	{
-	int toret = 1;
-	if (!ENGINE_by_id(ENGINE_get_id(e)))
-		{
-		(void)ERR_get_error();
-		toret = ENGINE_add(e);
-		}
-	ENGINE_free(e);
-	return toret;
+	ENGINE_free(engine);
+	return NULL;
 	}
+    load_ciphers(engine);
 
-void ENGINE_load_cswift(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_CSWIFT
-	engine_add(ENGINE_cswift());
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-#endif /* !OPENSSL_NO_HW */
-	}
+    return engine;
+    }
 
-void ENGINE_load_chil(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_CSWIFT
-	engine_add(ENGINE_ncipher());
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-#endif /* !OPENSSL_NO_HW */
-	}
-
-void ENGINE_load_atalla(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_CSWIFT
-	engine_add(ENGINE_atalla());
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-#endif /* !OPENSSL_NO_HW */
-	}
-
-void ENGINE_load_nuron(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_CSWIFT
-	engine_add(ENGINE_nuron());
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-#endif /* !OPENSSL_NO_HW */
-	}
-
-void ENGINE_load_ubsec(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_UBSEC
-	engine_add(ENGINE_ubsec());
-#endif /* !OPENSSL_NO_HW_UBSEC */
-#endif /* !OPENSSL_NO_HW */
-	}
-
-void ENGINE_load_openbsd_dev_crypto(void)
-	{
-#ifndef OPENSSL_NO_HW
-# ifdef OPENSSL_OPENBSD_DEV_CRYPTO
-	engine_add(ENGINE_openbsd_dev_crypto());
-# endif
-#endif /* !OPENSSL_NO_HW */
-	}
-
-void ENGINE_load_builtin_engines(void)
-	{
-	static int done=0;
-
-	if (done) return;
-	done=1;
-
-	ENGINE_load_cswift();
-	ENGINE_load_chil();
-	ENGINE_load_atalla();
-	ENGINE_load_nuron();
-	ENGINE_load_ubsec();
-	ENGINE_load_openbsd_dev_crypto();
-	}

@@ -94,7 +94,7 @@ static void identity(void *ptr)
 	return;
 	}
 
-static int append_buf(char **buf, char *s, int *size, int step)
+static int append_buf(char **buf, const char *s, int *size, int step)
 	{
 	int l = strlen(s);
 
@@ -430,6 +430,7 @@ skip_arg_loop:
 				{
 				int cap_size = 256;
 				char *cap_buf = NULL;
+				int k,n;
 
 				if (ENGINE_get_RSA(e) != NULL
 					&& !append_buf(&cap_buf, "RSA",
@@ -447,6 +448,13 @@ skip_arg_loop:
 					&& !append_buf(&cap_buf, "RAND",
 						&cap_size, 256))
 					goto end;
+
+				n=ENGINE_cipher_num(e);
+				for(k=0 ; k < n ; ++k)
+					if(!append_buf(&cap_buf,
+						       OBJ_nid2sn(ENGINE_get_cipher(e, k)->nid),
+						       &cap_size, 256))
+						goto end;
 
 				if (cap_buf && (*cap_buf != '\0'))
 					BIO_printf(bio_out, " [%s]", cap_buf);

@@ -513,6 +513,7 @@ names.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 names.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
 names.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 names.o: ../cryptlib.h names.c
+openbsd_hw.o: openbsd_hw.c
 p5_crpt.o: ../../e_os.h ../../include/openssl/asn1.h
 p5_crpt.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 p5_crpt.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

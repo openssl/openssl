@@ -304,7 +304,11 @@ void ENGINE_load_chil(void);
 void ENGINE_load_atalla(void);
 void ENGINE_load_nuron(void);
 void ENGINE_load_ubsec(void);
+void ENGINE_load_openbsd_dev_crypto(void);
 void ENGINE_load_builtin_engines(void);
+
+/* Load all the currently known ciphers from all engines */
+void ENGINE_load_ciphers(void);
 
 /* Send parametrised control commands to the engine. The possibilities to send
  * down an integer, a pointer to data or a function pointer are provided. Any of
@@ -373,6 +377,7 @@ int ENGINE_set_load_privkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpriv_f);
 int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f);
 int ENGINE_set_flags(ENGINE *e, int flags);
 int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
+int ENGINE_add_cipher(ENGINE *e,const EVP_CIPHER *c);
 /* Copies across all ENGINE methods and pointers. NB: This does *not* change
  * reference counts however. */
 int ENGINE_cpy(ENGINE *dest, const ENGINE *src);
@@ -399,6 +404,8 @@ const RSA_METHOD *ENGINE_get_RSA(const ENGINE *e);
 const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e);
 const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
 const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
+int ENGINE_cipher_num(const ENGINE *e);
+const EVP_CIPHER *ENGINE_get_cipher(const ENGINE *e, int n);
 BN_MOD_EXP ENGINE_get_BN_mod_exp(const ENGINE *e);
 BN_MOD_EXP_CRT ENGINE_get_BN_mod_exp_crt(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e);
@@ -472,6 +479,10 @@ int ENGINE_set_default(ENGINE *e, unsigned int flags);
  * This function is called as part of the ENGINE_cleanup() function, so there's
  * no need to call both (although no harm is done). */
 int ENGINE_clear_defaults(void);
+
+/* Instruct an engine to load any EVP ciphers it knows of */
+/* XXX make this work via defaults? */
+void ENGINE_load_engine_ciphers(ENGINE *e);
 
 /* Obligatory error function. */
 void ERR_load_ENGINE_strings(void);

@@ -87,6 +87,15 @@ extern "C" {
 
 #endif
 
+typedef struct engine_evp_cipher_st
+	{
+	const EVP_CIPHER *cipher;
+	} ENGINE_EVP_CIPHER;
+
+DECLARE_STACK_OF(ENGINE_EVP_CIPHER)
+
+void ENGINE_free_engine_cipher(ENGINE_EVP_CIPHER *p);
+
 /* NB: Bitwise OR-able values for the "flags" variable in ENGINE are now exposed
  * in engine.h. */
 
@@ -100,6 +109,7 @@ struct engine_st
 	const DSA_METHOD *dsa_meth;
 	const DH_METHOD *dh_meth;
 	const RAND_METHOD *rand_meth;
+
 	BN_MOD_EXP bn_mod_exp;
 	BN_MOD_EXP_CRT bn_mod_exp_crt;
 	ENGINE_GEN_INT_FUNC_PTR init;
@@ -107,6 +117,9 @@ struct engine_st
 	ENGINE_CTRL_FUNC_PTR ctrl;
 	ENGINE_LOAD_KEY_PTR load_privkey;
 	ENGINE_LOAD_KEY_PTR load_pubkey;
+
+	STACK_OF(ENGINE_EVP_CIPHER) *ciphers;
+
 	const ENGINE_CMD_DEFN *cmd_defns;
 	int flags;
 	/* reference count on the structure itself */
@@ -155,6 +168,10 @@ ENGINE *ENGINE_nuron();
 #ifndef OPENSSL_NO_HW_UBSEC
 ENGINE *ENGINE_ubsec();
 #endif /* !OPENSSL_NO_HW_UBSEC */
+
+#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
+ENGINE *ENGINE_openbsd_dev_crypto(void);
+#endif
 
 #endif /* !OPENSSL_NO_HW */
 

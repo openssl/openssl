@@ -24,9 +24,13 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= engine_err.c engine_lib.c engine_list.c engine_all.c engine_openssl.c \
-	hw_atalla.c hw_cswift.c hw_ncipher.c hw_nuron.c hw_ubsec.c
+	engine_evp.c \
+	hw_atalla.c hw_cswift.c hw_ncipher.c hw_nuron.c hw_ubsec.c \
+	hw_openbsd_dev_crypto.c
 LIBOBJ= engine_err.o engine_lib.o engine_list.o engine_all.o engine_openssl.o \
-	hw_atalla.o hw_cswift.o hw_ncipher.o hw_nuron.o hw_ubsec.o
+	engine_evp.o \
+	hw_atalla.o hw_cswift.o hw_ncipher.o hw_nuron.o hw_ubsec.o \
+	hw_openbsd_dev_crypto.o
 
 SRC= $(LIBSRC)
 
@@ -103,6 +107,18 @@ engine_err.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 engine_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 engine_err.o: ../../include/openssl/types.h ../../include/openssl/ui.h
 engine_err.o: engine_err.c
+engine_evp.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+engine_evp.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+engine_evp.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+engine_evp.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
+engine_evp.o: ../../include/openssl/evp.h ../../include/openssl/obj_mac.h
+engine_evp.o: ../../include/openssl/objects.h
+engine_evp.o: ../../include/openssl/opensslconf.h
+engine_evp.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+engine_evp.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+engine_evp.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+engine_evp.o: ../../include/openssl/types.h ../../include/openssl/ui.h
+engine_evp.o: engine_evp.c engine_int.h
 engine_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 engine_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 engine_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -194,6 +210,25 @@ hw_nuron.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 hw_nuron.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 hw_nuron.o: ../../include/openssl/types.h ../../include/openssl/ui.h
 hw_nuron.o: ../cryptlib.h hw_nuron.c
+hw_openbsd_dev_crypto.o: ../../include/openssl/asn1.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/crypto.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/e_os2.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/engine.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/evp.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/obj_mac.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/objects.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/opensslconf.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/opensslv.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/rand.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/rsa.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/safestack.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/stack.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/symhacks.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/types.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/ui.h engine_int.h
+hw_openbsd_dev_crypto.o: hw_openbsd_dev_crypto.c
 hw_ubsec.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_ubsec.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 hw_ubsec.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

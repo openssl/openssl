@@ -1,7 +1,4 @@
-/* crypto/engine/engine_all.c -*- mode: C; c-file-style: "eay" -*- */
-/* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
- * project 2000.
- */
+/* Written by Ben Laurie <ben@algroup.co.uk> August 2001 */
 /* ====================================================================
  * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
@@ -56,87 +53,46 @@
  *
  */
 
-#include <openssl/err.h>
 #include <openssl/engine.h>
+#include <openssl/evp.h>
 #include "engine_int.h"
+#include <string.h>
 
-static int engine_add(ENGINE *e)
-	{
-	int toret = 1;
-	if (!ENGINE_by_id(ENGINE_get_id(e)))
-		{
-		(void)ERR_get_error();
-		toret = ENGINE_add(e);
-		}
-	ENGINE_free(e);
-	return toret;
-	}
+int ENGINE_add_cipher(ENGINE *e,const EVP_CIPHER *c)
+    {
+    ENGINE_EVP_CIPHER *p;
 
-void ENGINE_load_cswift(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_CSWIFT
-	engine_add(ENGINE_cswift());
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-#endif /* !OPENSSL_NO_HW */
-	}
+    p=OPENSSL_malloc(sizeof *p);
+    p->cipher=c;
 
-void ENGINE_load_chil(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_CSWIFT
-	engine_add(ENGINE_ncipher());
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-#endif /* !OPENSSL_NO_HW */
-	}
+    if(!e->ciphers)
+	e->ciphers=sk_ENGINE_EVP_CIPHER_new_null();
+    sk_ENGINE_EVP_CIPHER_push(e->ciphers,p);
 
-void ENGINE_load_atalla(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_CSWIFT
-	engine_add(ENGINE_atalla());
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-#endif /* !OPENSSL_NO_HW */
-	}
+    return 1;
+    }
 
-void ENGINE_load_nuron(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_CSWIFT
-	engine_add(ENGINE_nuron());
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-#endif /* !OPENSSL_NO_HW */
-	}
+void ENGINE_free_engine_cipher(ENGINE_EVP_CIPHER *p)
+    { OPENSSL_free(p); }
 
-void ENGINE_load_ubsec(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_UBSEC
-	engine_add(ENGINE_ubsec());
-#endif /* !OPENSSL_NO_HW_UBSEC */
-#endif /* !OPENSSL_NO_HW */
-	}
+int ENGINE_cipher_num(const ENGINE *e)
+    { return sk_ENGINE_EVP_CIPHER_num(e->ciphers); }
 
-void ENGINE_load_openbsd_dev_crypto(void)
-	{
-#ifndef OPENSSL_NO_HW
-# ifdef OPENSSL_OPENBSD_DEV_CRYPTO
-	engine_add(ENGINE_openbsd_dev_crypto());
-# endif
-#endif /* !OPENSSL_NO_HW */
-	}
+const EVP_CIPHER *ENGINE_get_cipher(const ENGINE *e, int n)
+    { return sk_ENGINE_EVP_CIPHER_value(e->ciphers, n)->cipher; }
 
-void ENGINE_load_builtin_engines(void)
-	{
-	static int done=0;
+void ENGINE_load_ciphers()
+    {
+    ENGINE *e;
 
-	if (done) return;
-	done=1;
+    for(e=ENGINE_get_first() ; e ; e=ENGINE_get_next(e))
+	ENGINE_load_engine_ciphers(e);
+    }
+	
+void ENGINE_load_engine_ciphers(ENGINE *e)
+    {
+    int n;
 
-	ENGINE_load_cswift();
-	ENGINE_load_chil();
-	ENGINE_load_atalla();
-	ENGINE_load_nuron();
-	ENGINE_load_ubsec();
-	ENGINE_load_openbsd_dev_crypto();
-	}
+    for(n=0 ; n < sk_ENGINE_EVP_CIPHER_num(e->ciphers) ; ++n)
+	EVP_add_cipher(sk_ENGINE_EVP_CIPHER_value(e->ciphers,n)->cipher);
+    }

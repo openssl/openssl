@@ -12,6 +12,9 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Add symmetric cipher support to ENGINE. Expect the API to change!
+     [Ben Laurie]
+
   +) New CRL functions: X509_CRL_set_version(), X509_CRL_set_issuer_name()
      X509_CRL_set_lastUpdate(), X509_CRL_set_nextUpdate(), X509_CRL_sort(),
      X509_REVOKED_set_serialNumber(), and X509_REVOKED_set_revocationDate().

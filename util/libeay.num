@@ -2628,3 +2628,7 @@ HMAC_CTX_cleanup                        3076	EXIST::FUNCTION:HMAC
 EVP_MD_CTX_cleanup                      3077	EXIST::FUNCTION:
 EVP_MD_CTX_destroy                      3078	EXIST::FUNCTION:
 des_release_key                         3079	EXIST::FUNCTION:DES
+ENGINE_load_openbsd_dev_crypto          3080	EXIST::FUNCTION:
+ENGINE_add_all_evp                      3081	EXIST::FUNCTION:
+ENGINE_add_evp_cipher                   3082	EXIST::FUNCTION:
+ENGINE_load_evp                         3083	EXIST::FUNCTION:
