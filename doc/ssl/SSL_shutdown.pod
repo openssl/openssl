@@ -49,9 +49,12 @@ shutdown alert. On success, the second call to SSL_shutdown() will return
 with 1.
 
 =item If the peer already sent the "close notify" alert B<and> it was
-already processed implicitly inside another call of e.g.
-B<SSL_read(3)|SSL_read(3)>, SSL_shutdown() will send the "close notify"
-alert, set the SSL_SENT_SHUTDOWN flag and will immediately return with 1.
+already processed implicitly inside another function
+(L<SSL_read(3)|SSL_read(3)>), the SSL_RECEIVED_SHUTDOWN flag is set.
+SSL_shutdown() will send the "close notify" alert, set the SSL_SENT_SHUTDOWN
+flag and will immediately return with 1.
+Whether SSL_RECEIVED_SHUTDOWN is already set can be checked using the
+SSL_get_shutdown() (see also L<SSL_set_shutdown(3)|SSL_set_shutdown(3)> call.
 
 =back
 
