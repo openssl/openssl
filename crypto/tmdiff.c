@@ -59,6 +59,9 @@
 #include <stdlib.h>
 #include "cryptlib.h"
 #include <openssl/tmdiff.h>
+#if !defined(OPENSSL_SYS_MSDOS)
+#include OPENSSL_UNISTD
+#endif
 
 #ifdef TIMEB
 #undef OPENSSL_SYS_WIN32
@@ -101,14 +104,19 @@
 
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ
-# ifndef CLK_TCK
-#  ifndef _BSD_CLK_TCK_ /* FreeBSD hack */
-#   define HZ  100.0
-#  else /* _BSD_CLK_TCK_ */
-#   define HZ ((double)_BSD_CLK_TCK_)
+# if defined(_SC_CLK_TCK) \
+     && (!defined(OPENSSL_SYS_VMS) || __CTRL_VER >= 70000000)
+#  define HZ ((double)sysconf(_SC_CLK_TCK))
+# else
+#  ifndef CLK_TCK
+#   ifndef _BSD_CLK_TCK_ /* FreeBSD hack */
+#    define HZ  100.0
+#   else /* _BSD_CLK_TCK_ */
+#    define HZ ((double)_BSD_CLK_TCK_)
+#   endif
+#  else /* CLK_TCK */
+#   define HZ ((double)CLK_TCK)
 #  endif
-# else /* CLK_TCK */
-#  define HZ ((double)CLK_TCK)
 # endif
 #endif
 
