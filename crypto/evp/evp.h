@@ -640,6 +640,12 @@ int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c,ASN1_TYPE *type);
 int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 			 ASN1_TYPE *param, EVP_CIPHER *cipher, EVP_MD *md,
 			 int en_de);
+int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
+				unsigned char *salt, int saltlen, int iter,
+					 int keylen, unsigned char *out);
+int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
+			 ASN1_TYPE *param, EVP_CIPHER *cipher, EVP_MD *md,
+			 int en_de);
 
 void PKCS5_PBE_add(void);
 
@@ -663,7 +669,6 @@ void EVP_PBE_cleanup(void);
 #define EVP_F_EVP_OPENINIT				 102
 #define EVP_F_EVP_PBE_ALG_ADD				 115
 #define EVP_F_EVP_PBE_CIPHERINIT			 116
-#define EVP_F_EVP_PKCS5_PBE_KEYIVGEN			 117
 #define EVP_F_EVP_PKCS82PKEY				 111
 #define EVP_F_EVP_PKCS8_SET_BROKEN			 112
 #define EVP_F_EVP_PKEY2PKCS8				 113
@@ -673,12 +678,15 @@ void EVP_PBE_cleanup(void);
 #define EVP_F_EVP_PKEY_NEW				 106
 #define EVP_F_EVP_SIGNFINAL				 107
 #define EVP_F_EVP_VERIFYFINAL				 108
+#define EVP_F_PKCS5_PBE_KEYIVGEN			 117
+#define EVP_F_PKCS5_V2_PBE_KEYIVGEN			 118
 #define EVP_F_RC2_MAGIC_TO_METH				 109
 
 /* Reason codes. */
 #define EVP_R_BAD_DECRYPT				 100
 #define EVP_R_BN_DECODE_ERROR				 112
 #define EVP_R_BN_PUBKEY_ERROR				 113
+#define EVP_R_CIPHER_PARAMETER_ERROR			 122
 #define EVP_R_DECODE_ERROR				 114
 #define EVP_R_DIFFERENT_KEY_TYPES			 101
 #define EVP_R_ENCODE_ERROR				 115
@@ -694,8 +702,12 @@ void EVP_PBE_cleanup(void);
 #define EVP_R_PUBLIC_KEY_NOT_RSA			 106
 #define EVP_R_UNKNOWN_PBE_ALGORITHM			 121
 #define EVP_R_UNSUPPORTED_CIPHER			 107
+#define EVP_R_UNSUPPORTED_KEYLENGTH			 123
+#define EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION	 124
 #define EVP_R_UNSUPPORTED_KEY_SIZE			 108
+#define EVP_R_UNSUPPORTED_PRF				 125
 #define EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM		 118
+#define EVP_R_UNSUPPORTED_SALT_TYPE			 126
 #define EVP_R_WRONG_FINAL_BLOCK_LENGTH			 109
 #define EVP_R_WRONG_PUBLIC_KEY_TYPE			 110
 

@@ -71,7 +71,6 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_PACK(0,EVP_F_EVP_OPENINIT,0),	"EVP_OpenInit"},
 {ERR_PACK(0,EVP_F_EVP_PBE_ALG_ADD,0),	"EVP_PBE_alg_add"},
 {ERR_PACK(0,EVP_F_EVP_PBE_CIPHERINIT,0),	"EVP_PBE_CipherInit"},
-{ERR_PACK(0,EVP_F_EVP_PKCS5_PBE_KEYIVGEN,0),	"EVP_PKCS5_PBE_KEYIVGEN"},
 {ERR_PACK(0,EVP_F_EVP_PKCS82PKEY,0),	"EVP_PKCS82PKEY"},
 {ERR_PACK(0,EVP_F_EVP_PKCS8_SET_BROKEN,0),	"EVP_PKCS8_SET_BROKEN"},
 {ERR_PACK(0,EVP_F_EVP_PKEY2PKCS8,0),	"EVP_PKEY2PKCS8"},
@@ -81,6 +80,8 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_PACK(0,EVP_F_EVP_PKEY_NEW,0),	"EVP_PKEY_new"},
 {ERR_PACK(0,EVP_F_EVP_SIGNFINAL,0),	"EVP_SignFinal"},
 {ERR_PACK(0,EVP_F_EVP_VERIFYFINAL,0),	"EVP_VerifyFinal"},
+{ERR_PACK(0,EVP_F_PKCS5_PBE_KEYIVGEN,0),	"PKCS5_PBE_keyivgen"},
+{ERR_PACK(0,EVP_F_PKCS5_V2_PBE_KEYIVGEN,0),	"PKCS5_v2_PBE_keyivgen"},
 {ERR_PACK(0,EVP_F_RC2_MAGIC_TO_METH,0),	"RC2_MAGIC_TO_METH"},
 {0,NULL}
 	};
@@ -90,6 +91,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {EVP_R_BAD_DECRYPT                       ,"bad decrypt"},
 {EVP_R_BN_DECODE_ERROR                   ,"bn decode error"},
 {EVP_R_BN_PUBKEY_ERROR                   ,"bn pubkey error"},
+{EVP_R_CIPHER_PARAMETER_ERROR            ,"cipher parameter error"},
 {EVP_R_DECODE_ERROR                      ,"decode error"},
 {EVP_R_DIFFERENT_KEY_TYPES               ,"different key types"},
 {EVP_R_ENCODE_ERROR                      ,"encode error"},
@@ -105,8 +107,12 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {EVP_R_PUBLIC_KEY_NOT_RSA                ,"public key not rsa"},
 {EVP_R_UNKNOWN_PBE_ALGORITHM             ,"unknown pbe algorithm"},
 {EVP_R_UNSUPPORTED_CIPHER                ,"unsupported cipher"},
+{EVP_R_UNSUPPORTED_KEYLENGTH             ,"unsupported keylength"},
+{EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION,"unsupported key derivation function"},
 {EVP_R_UNSUPPORTED_KEY_SIZE              ,"unsupported key size"},
+{EVP_R_UNSUPPORTED_PRF                   ,"unsupported prf"},
 {EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM ,"unsupported private key algorithm"},
+{EVP_R_UNSUPPORTED_SALT_TYPE             ,"unsupported salt type"},
 {EVP_R_WRONG_FINAL_BLOCK_LENGTH          ,"wrong final block length"},
 {EVP_R_WRONG_PUBLIC_KEY_TYPE             ,"wrong public key type"},
 {0,NULL}

@@ -133,7 +133,7 @@ void HMAC_cleanup(HMAC_CTX *ctx)
 	memset(ctx,0,sizeof(HMAC_CTX));
 	}
 
-unsigned char *HMAC(EVP_MD *evp_md, unsigned char *key, int key_len,
+unsigned char *HMAC(const EVP_MD *evp_md, const unsigned char *key, int key_len,
 	     unsigned char *d, int n, unsigned char *md, unsigned int *md_len)
 	{
 	HMAC_CTX c;

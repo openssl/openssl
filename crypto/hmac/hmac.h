@@ -88,7 +88,7 @@ void HMAC_Init(HMAC_CTX *ctx, const unsigned char *key, int len,
 void HMAC_Update(HMAC_CTX *ctx,unsigned char *key, int len);
 void HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
 void HMAC_cleanup(HMAC_CTX *ctx);
-unsigned char *HMAC(EVP_MD *evp_md, unsigned char *key, int key_len,
+unsigned char *HMAC(const EVP_MD *evp_md, const unsigned char *key, int key_len,
 	unsigned char *d, int n, unsigned char *md, unsigned int *md_len);
 
 
