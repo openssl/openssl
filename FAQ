@@ -36,6 +36,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the linker complain about undefined symbols?
 * Why does the OpenSSL test fail with "bc: command not found"?
 * Why does the OpenSSL test fail with "bc: 1 no implemented"?
+* Why does the OpenSSL test fail with "bc: stack empty"?
 * Why does the OpenSSL compilation fail on Alpha Tru64 Unix?
 * Why does the OpenSSL compilation fail with "ar: command not found"?
 * Why does the OpenSSL compilation fail on Win32 with VC++?
@@ -396,6 +397,17 @@ tests, get GNU bc from ftp://ftp.gnu.org or from your OS distributor.
 On some SCO installations or versions, bc has a bug that gets triggered
 when you run the test suite (using "make test").  The message returned is
 "bc: 1 not implemented".
+
+The best way to deal with this is to find another implementation of bc
+and compile/install it.  GNU bc (see http://www.gnu.org/software/software.html
+for download instructions) can be safely used, for example.
+
+
+* Why does the OpenSSL test fail with "bc: stack empty"?
+
+On some DG/ux versions, bc seems to have a too small stack for calculations
+that the OpenSSL bntest throws at it.  This gets triggered when you run the
+test suite (using "make test").  The message returned is "bc: stack empty".
 
 The best way to deal with this is to find another implementation of bc
 and compile/install it.  GNU bc (see http://www.gnu.org/software/software.html
