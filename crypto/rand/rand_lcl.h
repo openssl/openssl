@@ -112,7 +112,7 @@
 #ifndef HEADER_RAND_LCL_H
 #define HEADER_RAND_LCL_H
 
-#define ENTROPY_NEEDED 20  /* require 160 bits = 20 bytes of randomness */
+#define ENTROPY_NEEDED 32  /* require 256 bits = 32 bytes of randomness */
 
 
 #if !defined(USE_MD5_RAND) && !defined(USE_SHA1_RAND) && !defined(USE_MDC2_RAND) && !defined(USE_MD2_RAND)
