@@ -6710,8 +6710,8 @@ CRYPTO_set_locking_callback(locking_function);
 before any multithreading is started.
 id_function does not need to be defined under Windows NT or 95, the
 correct function will be called if it is not.  Under unix, getpid()
-is call if the id_callback is not defined, for solaris this is wrong
-(since threads id's are not pid's) but under IRIX it is correct
+is call if the id_callback is not defined, for Solaris this is wrong
+(since threads id's are not pid's) but under Linux it is correct
 (threads are just processes sharing the data segement).
 
 The locking_callback is used to perform locking by the SSLeay library.
