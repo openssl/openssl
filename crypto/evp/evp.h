@@ -823,6 +823,7 @@ void ERR_load_EVP_strings(void);
 /* Error codes for the EVP functions. */
 
 /* Function codes. */
+#define EVP_F_AES_INIT_KEY				 129
 #define EVP_F_D2I_PKEY					 100
 #define EVP_F_EVP_CIPHERINIT				 123
 #define EVP_F_EVP_CIPHER_CTX_CTRL			 124
@@ -853,6 +854,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_RC5_CTRL					 125
 
 /* Reason codes. */
+#define EVP_R_AES_KEY_SETUP_FAILED			 140
 #define EVP_R_BAD_BLOCK_LENGTH				 136
 #define EVP_R_BAD_DECRYPT				 100
 #define EVP_R_BAD_KEY_LENGTH				 137

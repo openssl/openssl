@@ -173,8 +173,8 @@ LIBKRB5=
 # we might set SHLIB_MARK to '$(SHARED_LIBS)'.
 SHLIB_MARK=
 
-DIRS=   crypto ssl $(SHLIB_MARK) apps test tools
-SHLIBDIRS= crypto ssl
+DIRS=   fips crypto ssl $(SHLIB_MARK) apps test tools
+SHLIBDIRS= fips crypto ssl
 
 # dirs in crypto to build
 SDIRS=  \
@@ -202,6 +202,7 @@ ONEDIRS=out tmp
 EDIRS=  times doc bugs util include certs ms shlib mt demos perl sf dep VMS
 WDIRS=  windows
 LIBS=   libcrypto.a libssl.a
+SIGS=	libcrypto.a.sha1 libcrypto$(SHLIBEXT).sha1
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
 SHARED_LIBS=
@@ -219,7 +220,7 @@ HEADER=         e_os.h
 # When we're prepared to use shared libraries in the programs we link here
 # we might remove 'clean-shared' from the targets to perform at this stage
 
-all: Makefile.ssl sub_all openssl.pc
+all: Makefile.ssl sub_all openssl.pc sigs
 
 sub_all:
 	@for i in $(DIRS); \
@@ -831,6 +832,14 @@ install: all install_docs
 			sed -e '1,/^$$/d' doc/openssl-shared.txt; \
 		fi; \
 	fi
+	@for i in $(SIGS) ;\
+	do \
+		if [ -f "$$i" ]; then \
+		(       echo installing $$i; \
+			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+			mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
+		fi; \
+	done;
 	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
 

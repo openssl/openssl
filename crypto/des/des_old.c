@@ -84,7 +84,7 @@ void _ossl_old_des_ecb3_encrypt(_ossl_old_des_cblock *input,_ossl_old_des_cblock
 	des_key_schedule ks1,des_key_schedule ks2,
 	des_key_schedule ks3, int enc)
 	{
-	DES_ecb3_encrypt((const_DES_cblock *)input, output,
+	DES_ecb3_encrypt((const unsigned char *)input, (unsigned char *)output,
 		(DES_key_schedule *)ks1, (DES_key_schedule *)ks2,
 		(DES_key_schedule *)ks3, enc);
 	}

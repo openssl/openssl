@@ -40,6 +40,7 @@ EXPTEST=	exptest
 IDEATEST=	ideatest
 SHATEST=	shatest
 SHA1TEST=	sha1test
+FIPS_SHA1TEST=	fips_sha1test
 MDC2TEST=	mdc2test
 RMDTEST=	rmdtest
 MD2TEST=	md2test
@@ -53,39 +54,42 @@ BFTEST=		bftest
 CASTTEST=	casttest
 DESTEST=	destest
 RANDTEST=	randtest
+FIPS_RANDTEST=	fips_randtest
 DHTEST=		dhtest
 DSATEST=	dsatest
+FIPS_DSATEST=	fips_dsatest
 METHTEST=	methtest
 SSLTEST=	ssltest
 RSATEST=	rsa_test
 ENGINETEST=	enginetest
 EVPTEST=	evp_test
+FIPS_AESTEST=	fips_aesavs
 
 TESTS=		alltests
 
 EXE=	$(BNTEST) $(ECTEST) $(IDEATEST) $(MD2TEST)  $(MD4TEST) $(MD5TEST) $(HMACTEST) \
 	$(RC2TEST) $(RC4TEST) $(RC5TEST) \
-	$(DESTEST) $(SHATEST) $(SHA1TEST) $(MDC2TEST) $(RMDTEST) \
-	$(RANDTEST) $(DHTEST) $(ENGINETEST) \
-	$(BFTEST) $(CASTTEST) $(SSLTEST) $(EXPTEST) $(DSATEST) $(RSATEST) \
-	$(EVPTEST)
+	$(DESTEST) $(SHATEST) $(SHA1TEST) $(FIPS_SHA1TEST) $(MDC2TEST) $(RMDTEST) \
+	$(RANDTEST) $(FIPS_RANDTEST) $(DHTEST) $(ENGINETEST) \
+	$(BFTEST) $(CASTTEST) $(SSLTEST) $(EXPTEST) $(DSATEST) $(FIPS_DSATEST) $(RSATEST) \
+	$(EVPTEST) $(FIPS_AESTEST)
 
 # $(METHTEST)
 
 OBJ=	$(BNTEST).o $(ECTEST).o $(IDEATEST).o $(MD2TEST).o $(MD4TEST).o $(MD5TEST).o \
 	$(HMACTEST).o \
 	$(RC2TEST).o $(RC4TEST).o $(RC5TEST).o \
-	$(DESTEST).o $(SHATEST).o $(SHA1TEST).o $(MDC2TEST).o $(RMDTEST).o \
-	$(RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
-	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o \
-	$(EVPTEST).o
+	$(DESTEST).o $(SHATEST).o $(SHA1TEST).o $(FIPS_SHA1TEST).o $(MDC2TEST).o $(RMDTEST).o \
+	$(RANDTEST).o $(FIPS_RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
+	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o $(FIPS_DSATEST).o $(EXPTEST).o $(RSATEST).o \
+	$(EVPTEST).o $(FIPS_AESTEST).o
 SRC=	$(BNTEST).c $(ECTEST).c $(IDEATEST).c $(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c \
 	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c \
-	$(DESTEST).c $(SHATEST).c $(SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
-	$(RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
-	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c \
-	$(EVPTEST).c
+	$(DESTEST).c $(SHATEST).c $(SHA1TEST).c $(FIPS_SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
+	$(RANDTEST).c $(FIPS_RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
+	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c $(FIPS_DSATEST).c $(EXPTEST).c $(RSATEST).c \
+	$(EVPTEST).c $(FIPS_AESTEST).c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -135,7 +139,12 @@ alltests: \
 	test_rmd test_rc2 test_rc4 test_rc5 test_bf test_cast test_aes \
 	test_rand test_bn test_ec test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
-	test_ss test_ca test_engine test_evp test_ssl
+	test_ss test_ca test_engine test_evp test_ssl fips_test_aes
+
+fips_test_aes:
+	-mkdir rsp
+	-mkdir rsp/fips_aes_data
+	$(SET_SO_PATHS); ./$(FIPS_AESTEST) -d fips_aes_data/list
 
 test_evp:
 	$(SET_SO_PATHS); ./$(EVPTEST) evptests.txt
@@ -149,6 +158,7 @@ test_idea:
 test_sha:
 	$(SET_SO_PATHS); ./$(SHATEST)
 	$(SET_SO_PATHS); ./$(SHA1TEST)
+	$(SET_SO_PATHS); ./$(FIPS_SHA1TEST) sha1vectors.txt | sed s/Strings/Hashes/ | cmp sha1hashes.txt -
 
 test_mdc2:
 	$(SET_SO_PATHS); ./$(MDC2TEST)
@@ -185,6 +195,7 @@ test_rc5:
 
 test_rand:
 	$(SET_SO_PATHS); ./$(RANDTEST)
+	$(SET_SO_PATHS); ./$(FIPS_RANDTEST)
 
 test_enc:
 	@$(SET_SO_PATHS); sh ./testenc
@@ -241,6 +252,8 @@ test_dsa:
 	@echo "Generate a set of DSA parameters"
 	$(SET_SO_PATHS); ./$(DSATEST)
 	$(SET_SO_PATHS); ./$(DSATEST) -app2_1
+	$(SET_SO_PATHS); ./$(FIPS_DSATEST)
+	$(SET_SO_PATHS); ./$(FIPS_DSATEST) -app2_1
 
 test_gen:
 	@echo "Generate and verify a certificate request"
@@ -288,6 +301,13 @@ $(DLIBSSL):
 
 $(DLIBCRYPTO):
 	(cd ..; $(MAKE) DIRS=crypto all)
+
+$(FIPS_AESTEST): $(FIPS_AESTEST).o $(DLIBCRYPTO)
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	  $(CC) -o $(FIPS_AESTEST) $(CFLAGS) $(FIPS_AESTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	else \
+	  $(CC) -o $(FIPS_AESTEST) $(CFLAGS) $(FIPS_AESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
+	fi
 
 $(RSATEST): $(RSATEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
@@ -351,6 +371,13 @@ $(SHA1TEST): $(SHA1TEST).o $(DLIBCRYPTO)
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	  $(CC) -o $(SHA1TEST) $(CFLAGS) $(SHA1TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
+	fi
+
+$(FIPS_SHA1TEST): $(FIPS_SHA1TEST).o $(DLIBCRYPTO)
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	  $(CC) -o $(FIPS_SHA1TEST) $(CFLAGS) $(FIPS_SHA1TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	else \
+	  $(CC) -o $(FIPS_SHA1TEST) $(CFLAGS) $(FIPS_SHA1TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 
 $(RMDTEST): $(RMDTEST).o $(DLIBCRYPTO)
@@ -449,6 +476,13 @@ $(RANDTEST): $(RANDTEST).o $(DLIBCRYPTO)
 	  $(CC) -o $(RANDTEST) $(CFLAGS) $(RANDTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 
+$(FIPS_RANDTEST): $(FIPS_RANDTEST).o $(DLIBCRYPTO)
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	  $(CC) -o $(FIPS_RANDTEST) $(CFLAGS) $(FIPS_RANDTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	else \
+	  $(CC) -o $(FIPS_RANDTEST) $(CFLAGS) $(FIPS_RANDTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
+	fi
+
 $(DHTEST): $(DHTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
 	  $(CC) -o $(DHTEST) $(CFLAGS) $(DHTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
@@ -463,6 +497,13 @@ $(DSATEST): $(DSATEST).o $(DLIBCRYPTO)
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	  $(CC) -o $(DSATEST) $(CFLAGS) $(DSATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
+	fi
+
+$(FIPS_DSATEST): $(FIPS_DSATEST).o $(DLIBCRYPTO)
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	  $(CC) -o $(FIPS_DSATEST) $(CFLAGS) $(FIPS_DSATEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	else \
+	  $(CC) -o $(FIPS_DSATEST) $(CFLAGS) $(FIPS_DSATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 
 $(METHTEST): $(METHTEST).o $(DLIBCRYPTO)
@@ -603,6 +644,33 @@ exptest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 exptest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
 exptest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 exptest.o: ../include/openssl/symhacks.h exptest.c
+fips_aesavs.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_aesavs.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+fips_aesavs.o: ../include/openssl/bn.h ../include/openssl/cast.h
+fips_aesavs.o: ../include/openssl/crypto.h ../include/openssl/des.h
+fips_aesavs.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+fips_aesavs.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips_aesavs.o: ../include/openssl/err.h ../include/openssl/evp.h
+fips_aesavs.o: ../include/openssl/fips.h ../include/openssl/idea.h
+fips_aesavs.o: ../include/openssl/lhash.h ../include/openssl/md2.h
+fips_aesavs.o: ../include/openssl/md4.h ../include/openssl/md5.h
+fips_aesavs.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+fips_aesavs.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+fips_aesavs.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+fips_aesavs.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+fips_aesavs.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+fips_aesavs.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+fips_aesavs.o: ../include/openssl/sha.h ../include/openssl/stack.h
+fips_aesavs.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
+fips_aesavs.o: ../include/openssl/ui_compat.h fips_aesavs.c
+fips_randtest.o: ../e_os.h ../include/openssl/crypto.h ../include/openssl/des.h
+fips_randtest.o: ../include/openssl/des_old.h ../include/openssl/e_os2.h
+fips_randtest.o: ../include/openssl/fips_rand.h
+fips_randtest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+fips_randtest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
+fips_randtest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+fips_randtest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
+fips_randtest.o: ../include/openssl/ui_compat.h fips_randtest.c
 hmactest.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
 hmactest.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 hmactest.o: ../include/openssl/bn.h ../include/openssl/cast.h

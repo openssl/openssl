@@ -1,0 +1,94 @@
+#
+# SSLeay/fips/rand/Makefile
+#
+
+DIR=	rand
+TOP=	../..
+CC=	cc
+INCLUDES=
+CFLAG=-g
+INSTALL_PREFIX=
+OPENSSLDIR=     /usr/local/ssl
+INSTALLTOP=/usr/local/ssl
+MAKE=		make -f Makefile.ssl
+MAKEDEPPROG=	makedepend
+MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
+MAKEFILE=	Makefile.ssl
+AR=		ar r
+
+CFLAGS= $(INCLUDES) $(CFLAG)
+
+GENERAL=Makefile
+TEST= fips_randtest.c
+APPS=
+
+LIB=$(TOP)/libcrypto.a
+LIBSRC=fips_rand.c
+LIBOBJ=fips_rand.o
+
+SRC= $(LIBSRC)
+
+EXHEADER= fips_rand.h
+HEADER=	$(EXHEADER)
+
+ALL=    $(GENERAL) $(SRC) $(HEADER)
+
+top:
+	(cd ../..; $(MAKE) DIRS=fips SDIRS=$(DIR) sub_all)
+
+all:	check lib
+
+check:
+	TOP=`pwd`/$(TOP) ../fips_check_sha1 fingerprint.sha1 $(SRC) $(HEADER)
+
+lib:	$(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
+	$(RANLIB) $(LIB) || echo Never mind.
+	@touch lib
+
+files:
+	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+
+links:
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
+	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+
+install:
+	@for i in $(EXHEADER) ; \
+	do  \
+	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
+	done;
+
+tags:
+	ctags $(SRC)
+
+tests:
+
+lint:
+	lint -DLINT $(INCLUDES) $(SRC)>fluff
+
+depend:
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+
+dclean:
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
+
+clean:
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.
+
+fips_rand.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+fips_rand.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+fips_rand.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_rand.o: ../../include/openssl/fips_rand.h ../../include/openssl/lhash.h
+fips_rand.o: ../../include/openssl/opensslconf.h
+fips_rand.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+fips_rand.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+fips_rand.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+fips_rand.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+fips_rand.o: fips_rand.c
