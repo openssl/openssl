@@ -80,6 +80,12 @@ extern "C" {
  */
 #define DSO_FLAG_NAME_TRANSLATION 0x01
 
+/* The following flag controls the translation of symbol names to upper
+ * case.  This is currently only being implemented for OpenVMS.
+ */
+#define DSO_FLAG_UPCASE_SYMBOL    0x02
+
+
 typedef void (*DSO_FUNC_TYPE)(void);
 
 typedef struct dso_st DSO;
