@@ -304,6 +304,9 @@ my %table=(
 #### HP MPE/iX http://jazz.external.hp.com/src/openssl/
 "MPE/iX-gcc", "gcc:-D_ENDIAN -DBN_DIV2W -O3 -D_POSIX_SOURCE -D_SOCKET_SOURCE -I/SYSLOG/PUB::(unknown):MPE:-L/SYSLOG/PUB -lsyslog -lsocket -lcurses:BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 
+#### PARISC Linux setups
+"linux-parisc","gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W::-D_REENTRANT:::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::",
+
 # Dec Alpha, OSF/1 - the alpha164-cc is historical, for the conversion
 # from the older DEC C Compiler to the newer compiler.  It's now the
 # same as the preferred entry, alpha-cc.  If you are still using the
