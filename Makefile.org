@@ -247,7 +247,8 @@ link-shared:
 		for i in $(SHLIBDIRS); do \
 			prev=lib$$i$(SHLIB_EXT); \
 			for j in $${tmp:-x}; do \
-				( set -x; ln -f -s $$prev lib$$i$$j ); \
+				( set -x; \
+				rm -f lib$$i$$j; ln -s $$prev lib$$i$$j ); \
 				prev=lib$$i$$j; \
 			done; \
 		done; \
