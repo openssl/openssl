@@ -62,8 +62,9 @@
 #include "hmac.h"
 #include "ssl_locl.h"
 
-static void tls1_P_hash(EVP_MD *md, unsigned char *sec, int sec_len,
-	     unsigned char *seed, int seed_len, unsigned char *out, int olen)
+static void tls1_P_hash(const EVP_MD *md, unsigned char *sec, int sec_len,
+			unsigned char *seed, int seed_len, unsigned char *out,
+			int olen)
 	{
 	int chunk,n;
 	unsigned int j;
@@ -105,9 +106,10 @@ static void tls1_P_hash(EVP_MD *md, unsigned char *sec, int sec_len,
 	memset(A1,0,sizeof(A1));
 	}
 
-static void tls1_PRF(EVP_MD *md5, EVP_MD *sha1, unsigned char *label,
-	     int label_len, unsigned char *sec, int slen, unsigned char *out1,
-	     unsigned char *out2, int olen)
+static void tls1_PRF(const EVP_MD *md5, const EVP_MD *sha1,
+		     unsigned char *label, int label_len, unsigned char *sec,
+		     int slen, unsigned char *out1, unsigned char *out2,
+		     int olen)
 	{
 	int len,i;
 	unsigned char *S1,*S2;
@@ -142,8 +144,8 @@ static void tls1_generate_key_block(SSL *s, unsigned char *km,
 	p+=SSL3_RANDOM_SIZE;
 
 	tls1_PRF(s->ctx->md5,s->ctx->sha1,buf,(int)(p-buf),
-		s->session->master_key,s->session->master_key_length,
-		km,tmp,num);
+		 s->session->master_key,s->session->master_key_length,
+		 km,tmp,num);
 	}
 
 int tls1_change_cipher_state(SSL *s, int which)
