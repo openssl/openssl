@@ -197,7 +197,11 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 			ss=s;
 			s=p+1;
 			len=(int)(p-ss);
-			if (len == 0) continue;
+			if (len == 0)
+				{
+				if (ss == p) break;
+				continue;
+				}
 			for (j=0; j<ctx->num_dirs; j++)
 				if (strncmp(ctx->dirs[j],ss,(unsigned int)len) == 0)
 					continue;

@@ -468,7 +468,7 @@ static void sig_out(BIO* b)
 	longswap(&(ctx->buf[ctx->buf_len]), md->digest->md_size);
 	ctx->buf_len+= md->digest->md_size;
 
-	EVP_DigestUpdate(md, WELLKNOWN, strlen(WELLKNOWN));
+	EVP_DigestUpdate(md, (unsigned char*)WELLKNOWN, strlen(WELLKNOWN));
 	md->digest->final(&(ctx->buf[ctx->buf_len]), &(md->md.base[0]));
 	ctx->buf_len+= md->digest->md_size;
 	ctx->blockout= 1;
@@ -492,7 +492,7 @@ static void sig_in(BIO* b)
 	longswap(&(md->md.base[0]), md->digest->md_size);
 	ctx->buf_off+= md->digest->md_size;
 
-	EVP_DigestUpdate(md, WELLKNOWN, strlen(WELLKNOWN));
+	EVP_DigestUpdate(md, (unsigned char*)WELLKNOWN, strlen(WELLKNOWN));
 	md->digest->final(tmp, &(md->md.base[0]));
 	ret= memcmp(&(ctx->buf[ctx->buf_off]), tmp, md->digest->md_size) == 0;
 	ctx->buf_off+= md->digest->md_size;
@@ -525,7 +525,7 @@ static void block_out(BIO* b)
 	tl= swapem(tl);
 	memcpy(ctx->buf, &tl, OK_BLOCK_BLOCK);
 	tl= swapem(tl);
-	EVP_DigestUpdate(md, &(ctx->buf[OK_BLOCK_BLOCK]), tl);
+	EVP_DigestUpdate(md, (unsigned char*) &(ctx->buf[OK_BLOCK_BLOCK]), tl);
 	md->digest->final(&(ctx->buf[ctx->buf_len]), &(md->md.base[0]));
 	ctx->buf_len+= md->digest->md_size;
 	ctx->blockout= 1;
@@ -545,7 +545,7 @@ static void block_in(BIO* b)
 	tl= swapem(tl);
 	if (ctx->buf_len < tl+ OK_BLOCK_BLOCK+ md->digest->md_size) return;
  
-	EVP_DigestUpdate(md, &(ctx->buf[OK_BLOCK_BLOCK]), tl);
+	EVP_DigestUpdate(md, (unsigned char*) &(ctx->buf[OK_BLOCK_BLOCK]), tl);
 	md->digest->final(tmp, &(md->md.base[0]));
 	if(memcmp(&(ctx->buf[tl+ OK_BLOCK_BLOCK]), tmp, md->digest->md_size) == 0)
 		{

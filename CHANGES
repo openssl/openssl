@@ -5,6 +5,13 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Fix lots of warnings.
+     [Richard Levitte <levitte@stacken.kth.se>]
+ 
+  *) In add_cert_dir() in crypto/x509/by_dir.c, break out of the loop if
+     the directory spec didn't end with a LIST_SEPARATOR_CHAR.
+	 [Richard Levitte <levitte@stacken.kth.se>]
+ 
   *) Fix problems with sizeof(long) == 8.
      [Andy Polyakov <appro@fy.chalmers.se>]
 

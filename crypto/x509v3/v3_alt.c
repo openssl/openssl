@@ -392,7 +392,8 @@ if(!name_cmp(name, "email")) {
 
 if(is_string) {
 	if(!(gen->d.ia5 = ASN1_IA5STRING_new()) ||
-		      !ASN1_STRING_set(gen->d.ia5, value, strlen(value))) {
+		      !ASN1_STRING_set(gen->d.ia5, (unsigned char*)value,
+				       strlen(value))) {
 		X509V3err(X509V3_F_V2I_GENERAL_NAME,ERR_R_MALLOC_FAILURE);
 		goto err;
 	}

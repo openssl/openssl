@@ -64,6 +64,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "apps.h"
+#include "conf.h"
 #include "bio.h"
 #include "err.h"
 #include "bn.h"
@@ -73,7 +74,6 @@
 #include "x509v3.h"
 #include "objects.h"
 #include "pem.h"
-#include "conf.h"
 
 #ifndef W_OK
 #include <sys/file.h>

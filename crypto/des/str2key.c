@@ -92,7 +92,7 @@ void des_string_to_key(const char *str, des_cblock key)
 	des_check_key=0;
 	des_set_key(key,ks);
 	des_check_key=i;
-	des_cbc_cksum(str,key,length,ks,key);
+	des_cbc_cksum((unsigned char*)str,key,length,ks,key);
 	memset(ks,0,sizeof(ks));
 	des_set_odd_parity(key);
 	}
@@ -153,9 +153,9 @@ void des_string_to_2keys(const char *str, des_cblock key1, des_cblock key2)
 	i=des_check_key;
 	des_check_key=0;
 	des_set_key(key1,ks);
-	des_cbc_cksum(str,key1,length,ks,key1);
+	des_cbc_cksum((unsigned char*)str,key1,length,ks,key1);
 	des_set_key(key2,ks);
-	des_cbc_cksum(str,key2,length,ks,key2);
+	des_cbc_cksum((unsigned char*)str,key2,length,ks,key2);
 	des_check_key=i;
 	memset(ks,0,sizeof(ks));
 	des_set_odd_parity(key1);

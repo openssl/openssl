@@ -93,17 +93,17 @@ int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
 	/* extra unencrypted data 
 	 * for when a block of 100 comes in but is des_read one byte at
 	 * a time. */
-	static char *unnet=NULL;
+	static unsigned char *unnet=NULL;
 	static int unnet_start=0;
 	static int unnet_left=0;
-	static char *tmpbuf=NULL;
+	static unsigned char *tmpbuf=NULL;
 	int i;
 	long num=0,rnum;
 	unsigned char *p;
 
 	if (tmpbuf == NULL)
 		{
-		tmpbuf=(char *)Malloc(BSIZE);
+		tmpbuf=(unsigned char *)Malloc(BSIZE);
 		if (tmpbuf == NULL) return(-1);
 		}
 	if (net == NULL)
@@ -113,7 +113,7 @@ int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
 		}
 	if (unnet == NULL)
 		{
-		unnet=(char *)Malloc(BSIZE);
+		unnet=(unsigned char *)Malloc(BSIZE);
 		if (unnet == NULL) return(-1);
 		}
 	/* left over data from last decrypt */
@@ -216,11 +216,11 @@ int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
 		else
 			{
 			if (des_rw_mode & DES_PCBC_MODE)
-				des_pcbc_encrypt(net,buf,num,sched,iv,
-						 DES_DECRYPT);
+				des_pcbc_encrypt(net,(unsigned char*)buf,num,
+						 sched,iv,DES_DECRYPT);
 			else
-				des_cbc_encrypt(net,buf,num,sched,iv,
-						DES_DECRYPT);
+				des_cbc_encrypt(net,(unsigned char*)buf,num,
+						sched,iv,DES_DECRYPT);
 			}
 		}
 	return((int)num);

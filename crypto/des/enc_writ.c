@@ -88,15 +88,15 @@ int des_enc_write(int fd, const char *buf, int len, des_key_schedule sched,
 
 	long rnum;
 	int i,j,k,outnum;
-	static char *outbuf=NULL;
-	char shortbuf[8];
+	static unsigned char *outbuf=NULL;
+	unsigned char shortbuf[8];
 	char *p;
-	const char *cp;
+	const unsigned char *cp;
 	static int start=1;
 
 	if (outbuf == NULL)
 		{
-		outbuf=(char *)Malloc(BSIZE+HDRSIZE);
+		outbuf=(unsigned char *)Malloc(BSIZE+HDRSIZE);
 		if (outbuf == NULL) return(-1);
 		}
 	/* If we are sending less than 8 bytes, the same char will look
@@ -138,7 +138,7 @@ int des_enc_write(int fd, const char *buf, int len, des_key_schedule sched,
 		}
 	else
 		{
-		cp=buf;
+		cp=(unsigned char*)buf;
 		rnum=((len+7)/8*8); /* round up to nearest eight */
 		}
 

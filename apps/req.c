@@ -826,7 +826,7 @@ end:
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, int attribs)
 	{
 	int ret=0,i;
-	unsigned char *p,*q;
+	char *p,*q;
 	X509_REQ_INFO *ri;
 	char buf[100];
 	int nid,min,max;

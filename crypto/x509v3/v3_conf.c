@@ -125,7 +125,7 @@ static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid,
 	X509V3_EXT_METHOD *method;
 	STACK *nval;
 	char *ext_struc;
-	char *ext_der, *p;
+	unsigned char *ext_der, *p;
 	int ext_len;
 	ASN1_OCTET_STRING *ext_oct;
 	if(ext_nid == NID_undef) {
