@@ -215,7 +215,7 @@ sub_all:
 	else \
 		$(MAKE) $$i; \
 	fi; \
-	done; \
+	done;
 
 libcrypto$(SHLIB_EXT): libcrypto.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
@@ -223,6 +223,7 @@ libcrypto$(SHLIB_EXT): libcrypto.a
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
 	fi
+
 libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
 		$(MAKE) SHLIBDIRS=ssl SHLIBDEPS='-lcrypto' build-shared; \
