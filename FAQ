@@ -13,6 +13,9 @@ OpenSSL  -  Frequently Asked Questions
 * Why do I get errors about unknown algorithms?
 * How do I create certificates or certificate requests?
 * Why can't I create certificate requests?
+* Why does <SSL program> fail with a certificate verify error?
+* How can I create DSA certificates?
+* Why can't I make an SSL connection using a DSA certificate?
 * Why can't the OpenSSH configure script detect OpenSSL?
 
 
@@ -156,6 +159,7 @@ on how to obtain and install the free GNU C compiler.
 
 A number of Linux and *BSD distributions include OpenSSL.
 
+
 * I've compiled a program under Windows and it crashes: why?
 
 This is usually because you've missed the comment in INSTALL.W32. You
@@ -189,6 +193,34 @@ You typically get the error:
 
 This is because it can't find the configuration file. Check out the
 DIAGNOSTICS section of req(1) for more information.
+
+
+* Why does <SSL program> fail with a certificate verify error?
+
+This problem is usually indicated by log messages saying something like
+"unable to get local issuer certificate" or "self signed certificate".
+When a certificate is verified its root CA must be "trusted" by OpenSSL
+this typically means that the CA certificate must be placed in a directory
+or file and the relevant program configured to read it. The OpenSSL program
+'verify' behaves in a similar way and issues similar error messages: check
+the verify(1) program manual page for more information.
+
+
+* How can I create DSA certificates?
+
+Check the CA.pl(1) manual page for a DSA certificate example.
+
+
+* Why can't I make an SSL connection to a server using a DSA certificate?
+
+Typically you'll see a message saying there are no shared ciphers when
+the same setup works fine with an RSA certificate. There are two possible
+causes. The client may not support connections to DSA servers most web
+browsers only support connections to servers supporting RSA cipher suites.
+The other cause is that a set of DH parameters has not been supplied to
+the server. DH parameters can be created with the dhparam(1) command and
+loaded using the SSL_CTX_set_tmp_dh() for example: check the source to
+s_server in apps/s_server.c for an example.
 
 
 * Why can't the OpenSSH configure script detect OpenSSL?

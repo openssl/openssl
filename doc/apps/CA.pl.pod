@@ -102,6 +102,35 @@ the request and finally create a PKCS#12 file containing it.
  CA.pl -signreq
  CA.pl -pkcs12 "My Test Certificate"
 
+=head1 DSA CERTIFICATES
+
+Although the B<CA.pl> creates RSA CAs and requests it is still possible to
+use it with DSA certificates and requests using the L<req(1)|req(1)> command
+directly. The following example shows the steps that would typically be taken.
+
+Create some DSA parameters:
+
+ openssl dsaparam -out dsap.pem 1024
+
+Create a DSA CA certificate and private key:
+
+ openssl req -x509 -newkey dsa:dsap.pem -keyout cacert.pem -out cacert.pem
+
+Create the CA directories and files:
+
+ CA.pl -newca
+
+enter cacert.pem when prompted for the CA file name.
+
+Create a DSA certificate request and privat key (a different set of parameters
+can optionally be created first):
+
+ openssl req -out newreq.pem -newkey dsa:dsap.pem 
+
+Sign the request:
+
+ CA.pl -signreq
+
 =head1 NOTES
 
 Most of the filenames mentioned can be modified by editing the B<CA.pl> script.
