@@ -232,12 +232,12 @@ int X509_PURPOSE_get_id(X509_PURPOSE *xp)
 	return xp->purpose;
 }
 
-char *X509_PURPOSE_iget_name(X509_PURPOSE *xp)
+char *X509_PURPOSE_get0_name(X509_PURPOSE *xp)
 {
 	return xp->name;
 }
 
-char *X509_PURPOSE_iget_sname(X509_PURPOSE *xp)
+char *X509_PURPOSE_get0_sname(X509_PURPOSE *xp)
 {
 	return xp->sname;
 }

@@ -825,8 +825,8 @@ X509_CERT_AUX *	d2i_X509_CERT_AUX(X509_CERT_AUX **a,unsigned char **pp,
 int X509_alias_rset(X509 *x, unsigned char *name, int len);
 unsigned char * X509_alias_iget(X509 *x, int *len);
 int (*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int);
-int X509_radd_trust_object(X509 *x, ASN1_OBJECT *obj);
-int X509_radd_reject_object(X509 *x, ASN1_OBJECT *obj);
+int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj);
+int X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj);
 void X509_trust_clear(X509 *x);
 void X509_reject_clear(X509 *x);
 
@@ -916,14 +916,14 @@ int X509_REQ_get_attr_by_OBJ(const X509_REQ *req, ASN1_OBJECT *obj,
 			  int lastpos);
 X509_ATTRIBUTE *X509_REQ_get_attr(const X509_REQ *req, int loc);
 X509_ATTRIBUTE *X509_REQ_delete_attr(X509_REQ *req, int loc);
-int X509_REQ_radd_attr(X509_REQ *req, X509_ATTRIBUTE *attr);
-int X509_REQ_radd_attr_by_OBJ(X509_REQ *req,
+int X509_REQ_add1_attr(X509_REQ *req, X509_ATTRIBUTE *attr);
+int X509_REQ_add1_attr_by_OBJ(X509_REQ *req,
 			ASN1_OBJECT *obj, int type,
 			unsigned char *bytes, int len);
-int X509_REQ_radd_attr_by_NID(X509_REQ *req,
+int X509_REQ_add1_attr_by_NID(X509_REQ *req,
 			int nid, int type,
 			unsigned char *bytes, int len);
-int X509_REQ_radd_attr_by_txt(X509_REQ *req,
+int X509_REQ_add1_attr_by_txt(X509_REQ *req,
 			char *attrname, int type,
 			unsigned char *bytes, int len);
 
@@ -1050,15 +1050,15 @@ int X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk, ASN1_OBJECT *obj,
 			  int lastpos);
 X509_ATTRIBUTE *X509at_get_attr(const STACK_OF(X509_ATTRIBUTE) *x, int loc);
 X509_ATTRIBUTE *X509at_delete_attr(STACK_OF(X509_ATTRIBUTE) *x, int loc);
-STACK_OF(X509_ATTRIBUTE) *X509at_radd_attr(STACK_OF(X509_ATTRIBUTE) **x,
+STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
 					 X509_ATTRIBUTE *attr);
-STACK_OF(X509_ATTRIBUTE) *X509at_radd_attr_by_OBJ(STACK_OF(X509_ATTRIBUTE) **x,
+STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_OBJ(STACK_OF(X509_ATTRIBUTE) **x,
 			ASN1_OBJECT *obj, int type,
 			unsigned char *bytes, int len);
-STACK_OF(X509_ATTRIBUTE) *X509at_radd_attr_by_NID(STACK_OF(X509_ATTRIBUTE) **x,
+STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_NID(STACK_OF(X509_ATTRIBUTE) **x,
 			int nid, int type,
 			unsigned char *bytes, int len);
-STACK_OF(X509_ATTRIBUTE) *X509at_radd_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x,
+STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x,
 			char *attrname, int type,
 			unsigned char *bytes, int len);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
@@ -1067,13 +1067,13 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
 	     ASN1_OBJECT *obj, int atrtype, void *data, int len);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_txt(X509_ATTRIBUTE **attr,
 		char *atrname, int type, unsigned char *bytes, int len);
-int X509_ATTRIBUTE_rset_object(X509_ATTRIBUTE *attr, ASN1_OBJECT *obj);
-int X509_ATTRIBUTE_rset_data(X509_ATTRIBUTE *attr, int attrtype, void *data, int len);
-void *X509_ATTRIBUTE_iget_data(X509_ATTRIBUTE *attr, int idx,
+int X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, ASN1_OBJECT *obj);
+int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, void *data, int len);
+void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
 					int atrtype, void *data);
 int X509_ATTRIBUTE_count(X509_ATTRIBUTE *attr);
-ASN1_OBJECT *X509_ATTRIBUTE_iget_object(X509_ATTRIBUTE *attr);
-ASN1_TYPE *X509_ATTRIBUTE_iget_type(X509_ATTRIBUTE *attr, int idx);
+ASN1_OBJECT *X509_ATTRIBUTE_get0_object(X509_ATTRIBUTE *attr);
+ASN1_TYPE *X509_ATTRIBUTE_get0_type(X509_ATTRIBUTE *attr, int idx);
 
 int		X509_verify_cert(X509_STORE_CTX *ctx);
 
@@ -1121,7 +1121,7 @@ int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 					char *name, int arg1, void *arg2);
 void X509_TRUST_cleanup(void);
 int X509_TRUST_get_flags(X509_TRUST *xp);
-char *X509_TRUST_iget_name(X509_TRUST *xp);
+char *X509_TRUST_get0_name(X509_TRUST *xp);
 int X509_TRUST_get_trust(X509_TRUST *xp);
 
 /* BEGIN ERROR CODES */
@@ -1143,8 +1143,8 @@ int X509_TRUST_get_trust(X509_TRUST *xp);
 #define X509_F_X509_ATTRIBUTE_CREATE_BY_NID		 136
 #define X509_F_X509_ATTRIBUTE_CREATE_BY_OBJ		 137
 #define X509_F_X509_ATTRIBUTE_CREATE_BY_TXT		 140
-#define X509_F_X509_ATTRIBUTE_IGET_DATA			 139
-#define X509_F_X509_ATTRIBUTE_RSET_DATA			 138
+#define X509_F_X509_ATTRIBUTE_GET0_DATA			 139
+#define X509_F_X509_ATTRIBUTE_SET1_DATA			 138
 #define X509_F_X509_CHECK_PRIVATE_KEY			 128
 #define X509_F_X509_EXTENSION_CREATE_BY_NID		 108
 #define X509_F_X509_EXTENSION_CREATE_BY_OBJ		 109

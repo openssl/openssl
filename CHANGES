@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Change function names to the new naming convention.
+     [Steve Henson]
+
   *) Allow for the possibility of temp RSA key generation failure:
      the code used to assume it always worked and crashed on failure.
      [Steve Henson]

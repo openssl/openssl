@@ -184,7 +184,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 	}
 
 
-	signers = PKCS7_iget_signers(p7, certs, flags);
+	signers = PKCS7_get0_signers(p7, certs, flags);
 
 	if(!signers) return 0;
 
@@ -264,7 +264,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 	return 0;
 }
 
-STACK_OF(X509) *PKCS7_iget_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
+STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 {
 	STACK_OF(X509) *signers;
 	STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
@@ -274,16 +274,16 @@ STACK_OF(X509) *PKCS7_iget_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 	int i;
 
 	if(!p7) {
-		PKCS7err(PKCS7_F_PKCS7_IGET_SIGNERS,PKCS7_R_INVALID_NULL_POINTER);
+		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,PKCS7_R_INVALID_NULL_POINTER);
 		return NULL;
 	}
 
 	if(!PKCS7_type_is_signed(p7)) {
-		PKCS7err(PKCS7_F_PKCS7_IGET_SIGNERS,PKCS7_R_WRONG_CONTENT_TYPE);
+		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,PKCS7_R_WRONG_CONTENT_TYPE);
 		return NULL;
 	}
 	if(!(signers = sk_X509_new(NULL))) {
-		PKCS7err(PKCS7_F_PKCS7_IGET_SIGNERS,ERR_R_MALLOC_FAILURE);
+		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
@@ -292,7 +292,7 @@ STACK_OF(X509) *PKCS7_iget_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 	sinfos = PKCS7_get_signer_info(p7);
 
 	if(sk_PKCS7_SIGNER_INFO_num(sinfos) <= 0) {
-		PKCS7err(PKCS7_F_PKCS7_IGET_SIGNERS,PKCS7_R_NO_SIGNERS);
+		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,PKCS7_R_NO_SIGNERS);
 		return 0;
 	}
 
@@ -309,7 +309,7 @@ STACK_OF(X509) *PKCS7_iget_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 		              X509_find_by_issuer_and_serial (p7->d.sign->cert,
 					      	ias->issuer, ias->serial);
 	    if (!signer) {
-			PKCS7err(PKCS7_F_PKCS7_IGET_SIGNERS,PKCS7_R_SIGNER_CERTIFICATE_NOT_FOUND);
+			PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,PKCS7_R_SIGNER_CERTIFICATE_NOT_FOUND);
 			sk_X509_free(signers);
 			return 0;
 	    }

@@ -617,16 +617,16 @@ int		EVP_PKEY_bits(EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
 int 		EVP_PKEY_assign(EVP_PKEY *pkey,int type,char *key);
 #ifndef NO_RSA
-int 		EVP_PKEY_rset_RSA(EVP_PKEY *pkey,RSA *key);
-RSA *		EVP_PKEY_rget_RSA(EVP_PKEY *pkey);
+int 		EVP_PKEY_set1_RSA(EVP_PKEY *pkey,RSA *key);
+RSA *		EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
 #endif
 #ifndef NO_DSA
-int 		EVP_PKEY_rset_DSA(EVP_PKEY *pkey,DSA *key);
-DSA *		EVP_PKEY_rget_DSA(EVP_PKEY *pkey);
+int 		EVP_PKEY_set1_DSA(EVP_PKEY *pkey,DSA *key);
+DSA *		EVP_PKEY_get1_DSA(EVP_PKEY *pkey);
 #endif
 #ifndef NO_DH
-int 		EVP_PKEY_rset_DH(EVP_PKEY *pkey,DH *key);
-DH *		EVP_PKEY_rget_DH(EVP_PKEY *pkey);
+int 		EVP_PKEY_set1_DH(EVP_PKEY *pkey,DH *key);
+DH *		EVP_PKEY_get1_DH(EVP_PKEY *pkey);
 #endif
 EVP_PKEY *	EVP_PKEY_new(void);
 void		EVP_PKEY_free(EVP_PKEY *pkey);
@@ -695,9 +695,9 @@ void EVP_PBE_cleanup(void);
 #define EVP_F_EVP_PKEY_DECRYPT				 104
 #define EVP_F_EVP_PKEY_ENCRYPT				 105
 #define EVP_F_EVP_PKEY_NEW				 106
-#define EVP_F_EVP_PKEY_RGET_DH				 119
-#define EVP_F_EVP_PKEY_RGET_DSA				 120
-#define EVP_F_EVP_PKEY_RGET_RSA				 121
+#define EVP_F_EVP_PKEY_GET1_DH				 119
+#define EVP_F_EVP_PKEY_GET1_DSA				 120
+#define EVP_F_EVP_PKEY_GET1_RSA				 121
 #define EVP_F_EVP_SIGNFINAL				 107
 #define EVP_F_EVP_VERIFYFINAL				 108
 #define EVP_F_PKCS5_PBE_KEYIVGEN			 117

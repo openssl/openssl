@@ -397,7 +397,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 							BIO *data, int flags);
 int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 					BIO *indata, BIO *out, int flags);
-STACK_OF(X509) *PKCS7_iget_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags);
+STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags);
 PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, EVP_CIPHER *cipher,
 								int flags);
 int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags);
@@ -433,7 +433,7 @@ int SMIME_text(BIO *in, BIO *out);
 #define PKCS7_F_PKCS7_DATAVERIFY			 107
 #define PKCS7_F_PKCS7_DECRYPT				 114
 #define PKCS7_F_PKCS7_ENCRYPT				 115
-#define PKCS7_F_PKCS7_IGET_SIGNERS			 124
+#define PKCS7_F_PKCS7_GET0_SIGNERS			 124
 #define PKCS7_F_PKCS7_SET_CIPHER			 108
 #define PKCS7_F_PKCS7_SET_CONTENT			 109
 #define PKCS7_F_PKCS7_SET_TYPE				 110

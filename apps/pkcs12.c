@@ -693,7 +693,7 @@ int get_cert_chain (X509 *cert, STACK_OF(X509) **chain)
 		i = X509_STORE_CTX_get_error (&store_ctx);
 		goto err;
 	}
-	chn =  X509_STORE_CTX_rget_chain(&store_ctx);
+	chn =  X509_STORE_CTX_get1_chain(&store_ctx);
 	i = 0;
 	*chain = chn;
 err:

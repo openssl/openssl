@@ -563,14 +563,14 @@ bad:
 	if(trust) {
 		for(i = 0; i < sk_ASN1_OBJECT_num(trust); i++) {
 			objtmp = sk_ASN1_OBJECT_value(trust, i);
-			X509_radd_trust_object(x, objtmp);
+			X509_add1_trust_object(x, objtmp);
 		}
 	}
 
 	if(reject) {
 		for(i = 0; i < sk_ASN1_OBJECT_num(reject); i++) {
 			objtmp = sk_ASN1_OBJECT_value(reject, i);
-			X509_radd_reject_object(x, objtmp);
+			X509_add1_reject_object(x, objtmp);
 		}
 	}
 
@@ -1235,7 +1235,7 @@ static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
 	int id, i, idret;
 	char *pname;
 	id = X509_PURPOSE_get_id(pt);
-	pname = X509_PURPOSE_iget_name(pt);
+	pname = X509_PURPOSE_get0_name(pt);
 	for(i = 0; i < 2; i++) {
 		idret = X509_check_purpose(cert, id, i);
 		BIO_printf(bio, "%s%s : ", pname, i ? " CA" : ""); 

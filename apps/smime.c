@@ -488,9 +488,9 @@ int MAIN(int argc, char **argv)
 		}
 #ifdef CRYPTO_MDEBUG
 		CRYPTO_pop_info();
-		CRYPTO_push_info("PKCS7_iget_signers");
+		CRYPTO_push_info("PKCS7_get0_signers");
 #endif		
-		signers = PKCS7_iget_signers(p7, other, flags);
+		signers = PKCS7_get0_signers(p7, other, flags);
 #ifdef CRYPTO_MDEBUG
 		CRYPTO_pop_info();
 		CRYPTO_push_info("save_certs");

@@ -535,8 +535,8 @@ int X509_PURPOSE_get_by_id(int id);
 int X509_PURPOSE_add(int id, int trust, int flags,
 			int (*ck)(X509_PURPOSE *, X509 *, int),
 				char *name, char *sname, void *arg);
-char *X509_PURPOSE_iget_name(X509_PURPOSE *xp);
-char *X509_PURPOSE_iget_sname(X509_PURPOSE *xp);
+char *X509_PURPOSE_get0_name(X509_PURPOSE *xp);
+char *X509_PURPOSE_get0_sname(X509_PURPOSE *xp);
 int X509_PURPOSE_get_trust(X509_PURPOSE *xp);
 void X509_PURPOSE_cleanup(void);
 int X509_PURPOSE_get_id(X509_PURPOSE *);

@@ -160,7 +160,7 @@ unsigned char *X509_alias_iget(X509 *x, int *len)
 	return x->aux->alias->data;
 }
 
-int X509_radd_trust_object(X509 *x, ASN1_OBJECT *obj)
+int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj)
 {
 	X509_CERT_AUX *aux;
 	ASN1_OBJECT *objtmp;
@@ -171,7 +171,7 @@ int X509_radd_trust_object(X509 *x, ASN1_OBJECT *obj)
 	return sk_ASN1_OBJECT_push(aux->trust, objtmp);
 }
 
-int X509_radd_reject_object(X509 *x, ASN1_OBJECT *obj)
+int X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj)
 {
 	X509_CERT_AUX *aux;
 	ASN1_OBJECT *objtmp;

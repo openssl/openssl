@@ -1103,7 +1103,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 			for (i = 0; i < sk_CONF_VALUE_num(attr_sk); i++)
 				{
 				v=sk_CONF_VALUE_value(attr_sk,i);
-				if(!X509_REQ_radd_attr_by_txt(req, v->name, MBSTRING_ASC,
+				if(!X509_REQ_add1_attr_by_txt(req, v->name, MBSTRING_ASC,
 					(unsigned char *)v->value, -1)) return 0;
 				}
 			}
@@ -1201,7 +1201,7 @@ start:
 	buf[--i]='\0';
 	if(!req_check_len(i, min, max)) goto start;
 
-	if(!X509_REQ_radd_attr_by_NID(req, nid, MBSTRING_ASC,
+	if(!X509_REQ_add1_attr_by_NID(req, nid, MBSTRING_ASC,
 					(unsigned char *)buf, -1)) {
 		BIO_printf(bio_err, "Error adding attribute\n");
 		ERR_print_errors(bio_err);

@@ -191,8 +191,8 @@ end:
 		for(i = 0; i < X509_PURPOSE_get_count(); i++) {
 			X509_PURPOSE *ptmp;
 			ptmp = X509_PURPOSE_iget(i);
-			BIO_printf(bio_err, "\t%-10s\t%s\n", X509_PURPOSE_iget_sname(ptmp),
-								X509_PURPOSE_iget_name(ptmp));
+			BIO_printf(bio_err, "\t%-10s\t%s\n", X509_PURPOSE_get0_sname(ptmp),
+								X509_PURPOSE_get0_name(ptmp));
 		}
 	}
 	if (cert_ctx != NULL) X509_STORE_free(cert_ctx);
