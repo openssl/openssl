@@ -5,6 +5,11 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.6j and OpenSSL 0.9.6k:
+
+      o Security: fix various ASN1 parsing bugs.
+      o SSL/TLS protocol fix for unrequested client certificates.
+
   Major changes between OpenSSL 0.9.6i and OpenSSL 0.9.6j:
 
       o Security: counter the Klima-Pokorny-Rosa extension of
