@@ -622,6 +622,7 @@ my $rc2	="crypto/rc2/rc2.h";
 my $bf	="crypto/bf/bf_locl.h";
 my $bn_asm	="bn_asm.o";
 my $des_enc="des_enc.o fcrypt_b.o";
+my $fips_des_enc="fips_des_enc.o";
 my $bf_enc	="bf_enc.o";
 my $cast_enc="c_enc.o";
 my $rc4_enc="rc4_enc.o";
@@ -1156,6 +1157,8 @@ if ($fips)
 	$des_obj=$sha1_obj="";
 	}
 $des_obj=$des_enc	unless (!$fips && $des_obj =~ /\.o$/);
+my $fips_des_obj='asm/fips-dx86-elf.o';
+$fips_des_obj=$fips_des_enc unless $processor eq '386';
 $bf_obj=$bf_enc		unless ($bf_obj =~ /\.o$/);
 $cast_obj=$cast_enc	unless ($cast_obj =~ /\.o$/);
 $rc4_obj=$rc4_enc	unless ($rc4_obj =~ /\.o$/);
@@ -1254,6 +1257,7 @@ while (<IN>)
 	s/^EXE_EXT=.*$/EXE_EXT= $exe_ext/;
 	s/^BN_ASM=.*$/BN_ASM= $bn_obj/;
 	s/^DES_ENC=.*$/DES_ENC= $des_obj/;
+	s/^FIPS_DES_ENC=.*$/FIPS_DES_ENC= $fips_des_obj/;
 	s/^BF_ENC=.*$/BF_ENC= $bf_obj/;
 	s/^CAST_ENC=.*$/CAST_ENC= $cast_obj/;
 	s/^RC4_ENC=.*$/RC4_ENC= $rc4_obj/;
