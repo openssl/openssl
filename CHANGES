@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Disable ssl2_peek and ssl3_peek (i.e., both implementations
+     of SSL_peek) because they both are completely broken.
+     They will be fixed RSN by adding an additional 'peek' parameter
+     to the internal read functions.
+     [Bodo Moeller]
+
   *) New function BN_kronecker.
      [Bodo Moeller]
 
