@@ -200,7 +200,7 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, char *ptr)
 		break;
 	case BIO_C_SET_FILE_PTR:
 		file_free(b);
-		b->shutdown=(int)num;
+		b->shutdown=(int)num&BIO_CLOSE;
 		b->ptr=(char *)ptr;
 		b->init=1;
 #if defined(MSDOS) || defined(WINDOWS)
