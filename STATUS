@@ -1,89 +1,11 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/04/03 09:02:07 $
+  ______________                           $Date: 2001/04/09 07:15:16 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.7:  Under development...
-    o  OpenSSL 0.9.6a: Bugfix release -- under development...
-                       Beta 1 released on March 13th, 2001
-	HP-UX 10.20 (hpux-parisc-cc)		- PASSED [normal+engine]
-	HP-UX 10.20 (hpux-parisc-gcc)		- PASSED [normal+engine]
-	HP-UX 11.00 32bit (hpux-parisc-gcc)	- FAILED [engine]
-		"openssl speed rsa1024 -engine cswift" fails unless
-		libswift.sl is renamed to libswift.so.
-		[CORRECTED]
-	HP MPE/iX				- PASSED [presumed normal]
-	Linux 2.2.17 SMP (linux-elf)		- PASSED [normal+engine]
-	Windows (VC-WIN32)			- FAILED [presumed normal]
-		Missing line in ms/32all.bat:
-			perl util\mkfiles.pl >MINFO
-		[CORRECTED]
-		In randfile.c, line 214, signed and unsigned int are mixed.
-		[CORRECTED]
-		In s_client.c and s_server.c, RAND_status() needs to get
-		declared (#include <openssl/rand.h>)
-		[CORRECTED]
-	OpenVMS (any version)			- FAILED [normal+engine]
-		Missing instructions in building script.
-		[CORRECTED]
-	AIX 4.3					- FAILED [engine]
-		Needs -DDSO_DLFCN and -DHAVE_DLFCN_H to work.
-		[CORRECTED] (but will not be automagically configured)
-	Irix 6.5.11				- FAILED [presumed normal]
-		BN_sqr test fails.
-        solaris64-sparcv9-cc (SunOS 5.8)        - PASSED [normal+engine]
-	BSDI 4.0.1 (bsdi-elf-gcc)		- FAILED [engine]
-		Needs -DDSO_DLFCN, -DHAVE_DLFCN_H and -ldl to work.
-		[CORRECTED]
-	mingw32 w/ gcc 2.95.2			- PASSED [presumed normal]
-
-                       Beta 2 released on March 21st, 2001
-	OpenVMS (tested on VMS 7.2-1 for Alpha)	- PASSED [presumed normal]
-        solaris64-sparcv9-cc (SunOS 5.8)        - PASSED [normal]
-	AIX 4.3					- FAILED [engine]
-		(because it's not automagically configured to use DSO)
-		[CORRECTED]
-	BSDI 4.0.1 (bsdi-elf-gcc)		- PASSED [engine]
-	HP-UX 11.00 32bit (hpux-parisc-gcc)	- PASSED [engine]
-	Solaris 8 (solaris-sparv8-gcc)		- PASSED [presumed normal]
-		There seems to be something wrong with installing shared
-		libraries, however.
-	UnixWare 2.1.3 (unixware-2.1-pentium)	- PASSED [presumed normal]
-	SCO Open Server 5.0.4 (sco5-cc-pentium)	- PASSED [presumed normal]
-	SCO Open Server 5.0.4 (sco5-gcc)	- PASSED [presumed normal]
-	Caldera eDesktop 2.4 (linux-elf)	- PASSED [presumed normal]
-	Caldera eServer 2.3 (linux-elf)		- PASSED [presumed normal]
-	Red Hat 6.2 (linux-elf)			- PASSED [presumed normal]
-	SCO Open Server 3 (3.2v4.2) (sco3-gcc)	- FAILED [presumed normal]
-		Too many -L when linking the application "openssl"
-		[CORRECTED]
-	Solaris 7 (solaris-sparcv9-cc)		- PASSED [engine]
-
-                       Beta 3 released on March 30th, 2001
-	RedHat 6.2/Linux 2.2.14 (linux-elf)	- PASSED [normal+engine]
-	HP-UX 11.0 32-bit (hpux-parisc-gcc)	- PASSED [engine]
-	AIX 4.3 (aix43-gcc)			- PASSED [engine]
-	FreeBSD 4.1 (FreeBSD-elf)		- PASSED [engine]
-	Solaris 2.7 (solaris-sparcv9-cc)	- PASSED [engine]
-	BSDi 4.0.1 (bsdi-elf-gcc)		- PASSED [engine]
-	HP-UX 10.20, w/ ANSI-C and w/ gcc	- PASSED [normal+engine]
-	Irix					- PASSED [presumed normal]
-	OpenVMS/Alpha 7.2-1 w/ UCX 5.1, CC 6.4	- PASSED [normal]
-		There's a small warning about ebcdic.c being empty
-		[CORRECTED]
-	OpenVMS/VAX 7.2-1 w/ UCX 5.1, CC 6.4	- PASSED [normal]
-		There's a small warning about ebcdic.c being empty
-		[CORRECTED]
-	Win32 (VC-NT and VC-WIN32, static)	- PASSED [normal]
-	OpenVMS/VAX 6.2 w/ CC 6.2-003		- FAILED [normal]
-		libfisdef.h and LIB$M_FIS_MIXEDCASE do not exist in
-		that version of OpenVMS.
-		[CORRECTED]
-	DGUX R4.11MU06 88k (dgux-R4-gcc)	- FAILED [normal]
-		The entry in Configure had a typo.
-		[CORRECTED]
-
+    o  OpenSSL 0.9.6a: Released on April      5th, 2001
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
     o  OpenSSL 0.9.5:  Released on February  28th, 2000
