@@ -12,6 +12,10 @@
          +) applies to 0.9.7 only
 
 
+  +) New random seeder for OpenVMS, using the system process statistics
+     that are easily reachable.
+     [Richard Levitte]
+
   +) Windows apparently can't transparently handle global
      variables defined in DLLs. Initialisations such as:
 
