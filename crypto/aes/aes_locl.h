@@ -62,7 +62,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_MSC_VER) && !defined(OPENSSL_SYS_WINCE)
+#if defined(_MSC_VER) && !defined(_M_IA64) && !defined(OPENSSL_SYS_WINCE)
 # define SWAP(x) (_lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00)
 # define GETU32(p) SWAP(*((u32 *)(p)))
 # define PUTU32(ct, st) { *((u32 *)(ct)) = SWAP((st)); }
