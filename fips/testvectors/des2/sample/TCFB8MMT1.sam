@@ -1,0 +1,42 @@
+# CAVS Version 1.3
+# Config Info for : "Open SSL 2Key 3DES"
+# TDES Multi block Message Test for CFB8
+# State : Encrypt and Decrypt
+# Wed Aug 13 09:32:14 AM
+
+[ENCRYPT]
+
+COUNT = 0
+KEY1 = fde0d679bc5d67fd
+KEY2 = fde0d679bc5d67fd
+KEY3 = fde0d679bc5d67fd
+IV = 753ce88d8bfcdc54
+PLAINTEXT = ca
+CIPHERTEXT = 4c
+
+COUNT = 1
+KEY1 = 0beaf8ab2f4ab529
+KEY2 = 0beaf8ab2f4ab529
+KEY3 = 0beaf8ab2f4ab529
+IV = 03c605dd0725e975
+PLAINTEXT = 2097
+CIPHERTEXT = b6d3
+
+[DECRYPT]
+
+COUNT = 0
+KEY1 = 49a8c8d9cd3132d5
+KEY2 = 49a8c8d9cd3132d5
+KEY3 = 49a8c8d9cd3132d5
+IV = 7a3c522eacae2481
+CIPHERTEXT = 7e
+PLAINTEXT = 06
+
+COUNT = 1
+KEY1 = 6dadc7a192626b9d
+KEY2 = 6dadc7a192626b9d
+KEY3 = 6dadc7a192626b9d
+IV = 0648315772eadce7
+CIPHERTEXT = 3ce3
+PLAINTEXT = 7885
+
