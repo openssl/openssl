@@ -3,6 +3,15 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Allow multiple 'certopt' and 'nameopt' options to be separated
+     by commas. Add 'namopt' and 'certopt' options to the 'ca' config
+     file: this allows the display of the certificate about to be
+     signed to be customised, to allow certain fields to be included
+     or excluded and extension details. The old system didn't display
+     multicharacter strings properly, omitted fields not in the policy
+     and couldn't display additional details such as extensions.
+     [Steve Henson]
+
   *) Fix memory leaks in err.c: free err_data string if necessary;
      don't write to the wrong index in ERR_set_error_data.
      [Bodo Moeller]

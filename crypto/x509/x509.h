@@ -364,6 +364,8 @@ DECLARE_STACK_OF(X509_TRUST)
 
 #define XN_FLAG_DUMP_UNKNOWN_FIELDS (1 << 24)
 
+#define XN_FLAG_FN_ALIGN	(1 << 25)	/* Align field names to 20 characters */
+
 /* Complete set of RFC2253 flags */
 
 #define XN_FLAG_RFC2253 (ASN1_STRFLGS_RFC2253 | \
@@ -386,7 +388,8 @@ DECLARE_STACK_OF(X509_TRUST)
 			ASN1_STRFLGS_ESC_MSB | \
 			XN_FLAG_SEP_MULTILINE | \
 			XN_FLAG_SPC_EQ | \
-			XN_FLAG_FN_LN)
+			XN_FLAG_FN_LN | \
+			XN_FLAG_FN_ALIGN)
 
 typedef struct X509_revoked_st
 	{

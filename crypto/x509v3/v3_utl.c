@@ -240,7 +240,7 @@ int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint)
 
 /*#define DEBUG*/
 
-STACK_OF(CONF_VALUE) *X509V3_parse_list(char *line)
+STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
 {
 	char *p, *q, c;
 	char *ntmp, *vtmp;

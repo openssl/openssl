@@ -112,7 +112,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 
 	if((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
 			mlch = '\n';
-			nmindent = 16;
+			nmindent = 12;
 	}
 
 	if(nmflags == X509_FLAG_COMPAT)

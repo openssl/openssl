@@ -371,6 +371,8 @@ static int do_indent(char_io *io_ch, void *arg, int indent)
 	return 1;
 }
 
+#define FN_WIDTH_LN	25
+#define FN_WIDTH_SN	10
 
 static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
 				int indent, unsigned long flags)
@@ -456,19 +458,25 @@ static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
 		val = X509_NAME_ENTRY_get_data(ent);
 		fn_nid = OBJ_obj2nid(fn);
 		if(fn_opt != XN_FLAG_FN_NONE) {
-			int objlen;
+			int objlen, fld_len;
 			if((fn_opt == XN_FLAG_FN_OID) || (fn_nid==NID_undef) ) {
 				OBJ_obj2txt(objtmp, 80, fn, 1);
 				objbuf = objtmp;
 			} else {
-				if(fn_opt == XN_FLAG_FN_SN) 
+				if(fn_opt == XN_FLAG_FN_SN) {
+					fld_len = FN_WIDTH_SN;
 					objbuf = OBJ_nid2sn(fn_nid);
-				else if(fn_opt == XN_FLAG_FN_LN)
+				} else if(fn_opt == XN_FLAG_FN_LN) {
+					fld_len = FN_WIDTH_LN;
 					objbuf = OBJ_nid2ln(fn_nid);
-				else objbuf = "";
+				} else objbuf = "";
 			}
 			objlen = strlen(objbuf);
 			if(!io_ch(arg, objbuf, objlen)) return -1;
+			if ((objlen < fld_len) && (flags & XN_FLAG_FN_ALIGN)) {
+				if (!do_indent(io_ch, arg, fld_len - objlen)) return -1;
+				outlen += fld_len - objlen;
+			}
 			if(!io_ch(arg, sep_eq, sep_eq_len)) return -1;
 			outlen += objlen + sep_eq_len;
 		}

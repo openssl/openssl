@@ -132,6 +132,8 @@
 #define ENV_EXTENSIONS      	"x509_extensions"
 #define ENV_CRLEXT      	"crl_extensions"
 #define ENV_MSIE_HACK		"msie_hack"
+#define ENV_NAMEOPT		"name_opt"
+#define ENV_CERTOPT		"cert_opt"
 
 #define ENV_DATABASE		"database"
 
@@ -210,23 +212,29 @@ static int save_serial(char *serialfile, BIGNUM *serial);
 static int certify(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 		   const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,TXT_DB *db,
 		   BIGNUM *serial, char *subj, char *startdate,char *enddate,
-		   int days, int batch, char *ext_sect, LHASH *conf,int verbose);
+		   int days, int batch, char *ext_sect, LHASH *conf,int verbose,
+		   unsigned long certopt, unsigned long nameopt, int default_op,
+		   int ext_copy);
 static int certify_cert(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
 			TXT_DB *db, BIGNUM *serial, char *subj, char *startdate,
 			char *enddate, int days, int batch, char *ext_sect,
-			LHASH *conf,int verbose);
+			LHASH *conf,int verbose, unsigned long certopt,
+			unsigned long nameopt, int default_op, int ext_copy);
 static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			 const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
 			 TXT_DB *db, BIGNUM *serial,char *subj, char *startdate,
 			 char *enddate, int days, char *ext_sect,LHASH *conf,
-				int verbose);
+			 int verbose, unsigned long certopt, unsigned long nameopt,
+			 int default_op, int ext_copy);
 static int fix_data(int nid, int *type);
 static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial,char *subj,
 	char *startdate, char *enddate, int days, int batch, int verbose,
-	X509_REQ *req, char *ext_sect, LHASH *conf);
+	X509_REQ *req, char *ext_sect, LHASH *conf,
+	unsigned long certopt, unsigned long nameopt, int default_op,
+	int ext_copy);
 static X509_NAME *do_subject(char *subject);
 static int do_revoke(X509 *x509, TXT_DB *db, int ext, char *extval);
 static int get_certificate_status(const char *ser_status, TXT_DB *db);
@@ -234,6 +242,7 @@ static int do_updatedb(TXT_DB *db);
 static int check_time_format(char *str);
 char *make_revocation_str(int rev_type, char *rev_arg);
 int make_revoked(X509_REVOKED *rev, char *str);
+int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str);
 static LHASH *conf=NULL;
 static LHASH *extconf=NULL;
 static char *section=NULL;
@@ -292,6 +301,9 @@ int MAIN(int argc, char **argv)
 	int days=0;
 	int batch=0;
 	int notext=0;
+	unsigned long nameopt = 0, certopt = 0;
+	int default_op = 1;
+	int ext_copy = 0;
 	X509 *x509=NULL;
 	X509 *x=NULL;
 	BIO *in=NULL,*out=NULL,*Sout=NULL,*Cout=NULL;
@@ -758,6 +770,35 @@ bad:
 	if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
 		msie_hack=1;
 
+	f=CONF_get_string(conf,section,ENV_NAMEOPT);
+
+	if (f)
+		{
+		if (!set_name_ex(&nameopt, f))
+			{
+			BIO_printf(bio_err, "Invalid name options: \"%s\"\n", f);
+			goto err;
+			}
+		default_op = 0;
+		}
+	else
+		ERR_clear_error();
+
+	f=CONF_get_string(conf,section,ENV_CERTOPT);
+
+	if (f)
+		{
+		if (!set_cert_ex(&certopt, f))
+			{
+			BIO_printf(bio_err, "Invalid certificate options: \"%s\"\n", f);
+			goto err;
+			}
+		default_op = 0;
+		}
+	else
+		ERR_clear_error();
+
+
 	/*****************************************************************/
 	/* lookup where to write new certificates */
 	if ((outdir == NULL) && (req))
@@ -1148,7 +1189,7 @@ bad:
 			total++;
 			j=certify_spkac(&x,spkac_file,pkey,x509,dgst,attribs,db,
 				serial,subj,startdate,enddate, days,extensions,conf,
-				verbose);
+				verbose, certopt, nameopt, default_op, ext_copy);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -1172,7 +1213,8 @@ bad:
 			total++;
 			j=certify_cert(&x,ss_cert_file,pkey,x509,dgst,attribs,
 				db,serial,subj,startdate,enddate,days,batch,
-				extensions,conf,verbose);
+				extensions,conf,verbose, certopt, nameopt,
+							default_op, ext_copy);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -1191,7 +1233,8 @@ bad:
 			total++;
 			j=certify(&x,infile,pkey,x509,dgst,attribs,db,
 				serial,subj,startdate,enddate,days,batch,
-				extensions,conf,verbose);
+				extensions,conf,verbose, certopt, nameopt,
+				default_op, ext_copy);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -1210,7 +1253,8 @@ bad:
 			total++;
 			j=certify(&x,argv[i],pkey,x509,dgst,attribs,db,
 				serial,subj,startdate,enddate,days,batch,
-				extensions,conf,verbose);
+				extensions,conf,verbose, certopt, nameopt,
+				default_op, ext_copy);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -1684,7 +1728,9 @@ err:
 static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
 	     BIGNUM *serial, char *subj, char *startdate, char *enddate, int days,
-	     int batch, char *ext_sect, LHASH *lconf, int verbose)
+	     int batch, char *ext_sect, LHASH *lconf, int verbose,
+	     unsigned long certopt, unsigned long nameopt, int default_op,
+	     int ext_copy)
 	{
 	X509_REQ *req=NULL;
 	BIO *in=NULL;
@@ -1732,7 +1778,8 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 		BIO_printf(bio_err,"Signature ok\n");
 
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,startdate, enddate,
-		days,batch,verbose,req,ext_sect,lconf);
+		days,batch,verbose,req,ext_sect,lconf,
+		certopt, nameopt, default_op, ext_copy);
 
 err:
 	if (req != NULL) X509_REQ_free(req);
@@ -1743,7 +1790,9 @@ err:
 static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
 	     BIGNUM *serial, char *subj, char *startdate, char *enddate, int days,
-	     int batch, char *ext_sect, LHASH *lconf, int verbose)
+	     int batch, char *ext_sect, LHASH *lconf, int verbose,
+	     unsigned long certopt, unsigned long nameopt, int default_op,
+	     int ext_copy)
 	{
 	X509 *req=NULL;
 	X509_REQ *rreq=NULL;
@@ -1794,7 +1843,8 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 		goto err;
 
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,startdate,enddate,days,
-		batch,verbose,rreq,ext_sect,lconf);
+		batch,verbose,rreq,ext_sect,lconf, certopt, nameopt, default_op,
+			ext_copy);
 
 err:
 	if (rreq != NULL) X509_REQ_free(rreq);
@@ -1806,7 +1856,9 @@ err:
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	     STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial, char *subj,
 	     char *startdate, char *enddate, int days, int batch, int verbose,
-	     X509_REQ *req, char *ext_sect, LHASH *lconf)
+	     X509_REQ *req, char *ext_sect, LHASH *lconf,
+	     unsigned long certopt, unsigned long nameopt, int default_op,
+	     int ext_copy)
 	{
 	X509_NAME *name=NULL,*CAname=NULL,*subject=NULL;
 	ASN1_UTCTIME *tm,*tmptm;
@@ -1821,7 +1873,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	char *p;
 	CONF_VALUE *cv;
 	char *row[DB_NUMBER],**rrow,**irow=NULL;
-	char buf[25],*pbuf;
+	char buf[25];
 
 	tmptm=ASN1_UTCTIME_new();
 	if (tmptm == NULL)
@@ -1847,20 +1899,14 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		X509_NAME_free(n);
 		}
 
-	BIO_printf(bio_err,"The Subject's Distinguished Name is as follows\n");
+	if (default_op)
+		BIO_printf(bio_err,"The Subject's Distinguished Name is as follows\n");
 	name=X509_REQ_get_subject_name(req);
 	for (i=0; i<X509_NAME_entry_count(name); i++)
 		{
-		ne=(X509_NAME_ENTRY *)X509_NAME_get_entry(name,i);
-		obj=X509_NAME_ENTRY_get_object(ne);
-		j=i2a_ASN1_OBJECT(bio_err,obj);
+		ne= X509_NAME_get_entry(name,i);
 		str=X509_NAME_ENTRY_get_data(ne);
-		pbuf=buf;
-		for (j=22-j; j>0; j--)
-			*(pbuf++)=' ';
-		*(pbuf++)=':';
-		*(pbuf++)='\0';
-		BIO_puts(bio_err,buf);
+		obj=X509_NAME_ENTRY_get_object(ne);
 
 		if (msie_hack)
 			{
@@ -1879,17 +1925,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 				str->type=V_ASN1_IA5STRING;
 			}
 
-		if (str->type == V_ASN1_PRINTABLESTRING)
-			BIO_printf(bio_err,"PRINTABLE:'");
-		else if (str->type == V_ASN1_T61STRING)
-			BIO_printf(bio_err,"T61STRING:'");
-		else if (str->type == V_ASN1_IA5STRING)
-			BIO_printf(bio_err,"IA5STRING:'");
-		else if (str->type == V_ASN1_UNIVERSALSTRING)
-			BIO_printf(bio_err,"UNIVERSALSTRING:'");
-		else
-			BIO_printf(bio_err,"ASN.1 %2d:'",str->type);
-
 		/* check some things */
 		if ((OBJ_obj2nid(obj) == NID_pkcs9_emailAddress) &&
 			(str->type != V_ASN1_IA5STRING))
@@ -1906,6 +1941,28 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 			BIO_printf(bio_err,"\nThe string contains characters that are illegal for the ASN.1 type\n");
 			goto err;
 			}
+
+		if (default_op)
+			old_entry_print(bio_err, obj, str);
+#if 0
+		j=i2a_ASN1_OBJECT(bio_err,obj);
+		pbuf=buf;
+		for (j=22-j; j>0; j--)
+			*(pbuf++)=' ';
+		*(pbuf++)=':';
+		*(pbuf++)='\0';
+		BIO_puts(bio_err,buf);
+
+		if (str->type == V_ASN1_PRINTABLESTRING)
+			BIO_printf(bio_err,"PRINTABLE:'");
+		else if (str->type == V_ASN1_T61STRING)
+			BIO_printf(bio_err,"T61STRING:'");
+		else if (str->type == V_ASN1_IA5STRING)
+			BIO_printf(bio_err,"IA5STRING:'");
+		else if (str->type == V_ASN1_UNIVERSALSTRING)
+			BIO_printf(bio_err,"UNIVERSALSTRING:'");
+		else
+			BIO_printf(bio_err,"ASN.1 %2d:'",str->type);
 			
 		p=(char *)str->data;
 		for (j=str->length; j>0; j--)
@@ -1920,6 +1977,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 			p++;
 			}
 		BIO_printf(bio_err,"'\n");
+#endif
 		}
 
 	/* Ok, now we check the 'policy' stuff. */
@@ -2196,6 +2254,13 @@ again2:
 
 	if (!batch)
 		{
+		if (!default_op)
+			{
+			BIO_printf(bio_err, "Certificate Details:\n");
+			/* Never print signature details because signature not present */
+			certopt |= X509_FLAG_NO_SIGDUMP | X509_FLAG_NO_SIGNAME;
+			X509_print_ex(bio_err, ret, nameopt, certopt); 
+			}
 		BIO_printf(bio_err,"Sign the certificate? [y/n]:");
 		(void)BIO_flush(bio_err);
 		buf[0]='\0';
@@ -2312,7 +2377,8 @@ static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
 	     BIGNUM *serial, char *subj, char *startdate, char *enddate, int days,
-	     char *ext_sect, LHASH *lconf, int verbose)
+	     char *ext_sect, LHASH *lconf, int verbose, unsigned long certopt,
+	     unsigned long nameopt, int default_op, int ext_copy)
 	{
 	STACK_OF(CONF_VALUE) *sk=NULL;
 	LHASH *parms=NULL;
@@ -2447,7 +2513,8 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	X509_REQ_set_pubkey(req,pktmp);
 	EVP_PKEY_free(pktmp);
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,startdate,enddate,
-		   days,1,verbose,req,ext_sect,lconf);
+		   days,1,verbose,req,ext_sect,lconf, certopt, nameopt, default_op,
+			ext_copy);
 err:
 	if (req != NULL) X509_REQ_free(req);
 	if (parms != NULL) CONF_free(parms);
@@ -3054,4 +3121,44 @@ static X509_NAME *do_subject(char *subject)
 		}
 
 	return n;
+	}
+
+
+int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str)
+	{
+	char buf[25],*pbuf, *p;
+	int j;
+	j=i2a_ASN1_OBJECT(bp,obj);
+	pbuf=buf;
+	for (j=22-j; j>0; j--)
+		*(pbuf++)=' ';
+	*(pbuf++)=':';
+	*(pbuf++)='\0';
+	BIO_puts(bp,buf);
+
+	if (str->type == V_ASN1_PRINTABLESTRING)
+		BIO_printf(bp,"PRINTABLE:'");
+	else if (str->type == V_ASN1_T61STRING)
+		BIO_printf(bp,"T61STRING:'");
+	else if (str->type == V_ASN1_IA5STRING)
+		BIO_printf(bp,"IA5STRING:'");
+	else if (str->type == V_ASN1_UNIVERSALSTRING)
+		BIO_printf(bp,"UNIVERSALSTRING:'");
+	else
+		BIO_printf(bp,"ASN.1 %2d:'",str->type);
+			
+	p=(char *)str->data;
+	for (j=str->length; j>0; j--)
+		{
+		if ((*p >= ' ') && (*p <= '~'))
+			BIO_printf(bp,"%c",*p);
+		else if (*p & 0x80)
+			BIO_printf(bp,"\\0x%02X",*p);
+		else if ((unsigned char)*p == 0xf7)
+			BIO_printf(bp,"^?");
+		else	BIO_printf(bp,"^%c",*p+'@');
+		p++;
+		}
+	BIO_printf(bp,"'\n");
+	return 1;
 	}

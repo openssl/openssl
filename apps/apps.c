@@ -66,6 +66,7 @@
 #undef NON_MAIN
 #include <openssl/err.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/safestack.h>
@@ -87,6 +88,7 @@ typedef struct {
 } NAME_EX_TBL;
 
 static int set_table_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl);
+static int set_multi_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl);
 
 int app_init(long mesgwin);
 #ifdef undef /* never finished - probably never will be :-) */
@@ -744,10 +746,14 @@ end:
 /* BIO_dump unknown extensions */
 #define X509V3_EXT_DUMP_UNKNOWN		(3L << 16)
 
+#define X509_FLAG_CA (X509_FLAG_NO_ISSUER | X509_FLAG_NO_PUBKEY | \
+			 X509_FLAG_NO_HEADER | X509_FLAG_NO_VERSION)
+
 int set_cert_ex(unsigned long *flags, const char *arg)
 {
 	static const NAME_EX_TBL cert_tbl[] = {
 		{ "compatible", X509_FLAG_COMPAT, 0xffffffffl},
+		{ "ca_default", X509_FLAG_CA, 0xffffffffl},
 		{ "no_header", X509_FLAG_NO_HEADER, 0},
 		{ "no_version", X509_FLAG_NO_VERSION, 0},
 		{ "no_serial", X509_FLAG_NO_SERIAL, 0},
@@ -765,7 +771,7 @@ int set_cert_ex(unsigned long *flags, const char *arg)
 		{ "ext_dump", X509V3_EXT_DUMP_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
 		{ NULL, 0, 0}
 	};
-	return set_table_opts(flags, arg, cert_tbl);
+	return set_multi_opts(flags, arg, cert_tbl);
 }
 
 int set_name_ex(unsigned long *flags, const char *arg)
@@ -796,9 +802,26 @@ int set_name_ex(unsigned long *flags, const char *arg)
 		{ "RFC2253", XN_FLAG_RFC2253, 0xffffffffL},
 		{ "oneline", XN_FLAG_ONELINE, 0xffffffffL},
 		{ "multiline", XN_FLAG_MULTILINE, 0xffffffffL},
+		{ "ca_default", XN_FLAG_MULTILINE, 0xffffffffL},
 		{ NULL, 0, 0}
 	};
-	return set_table_opts(flags, arg, ex_tbl);
+	return set_multi_opts(flags, arg, ex_tbl);
+}
+
+static int set_multi_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl)
+{
+	STACK_OF(CONF_VALUE) *vals;
+	CONF_VALUE *val;
+	int i, ret = 1;
+	if(!arg) return 0;
+	vals = X509V3_parse_list(arg);
+	for (i = 0; i < sk_CONF_VALUE_num(vals); i++) {
+		val = sk_CONF_VALUE_value(vals, i);
+		if (!set_table_opts(flags, val->name, in_tbl))
+			ret = 0;
+	}
+	sk_CONF_VALUE_pop_free(vals, X509V3_conf_free);
+	return ret;
 }
 
 static int set_table_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl)
