@@ -141,20 +141,6 @@ typedef struct kssl_ctx_st
 #define KSSL_CTX_ERR	1
 #define KSSL_NOMEM	2
 
-
-/* Private (internal to OpenSSL) */
-void print_krb5_data(char *label, krb5_data *kdata);
-void print_krb5_authdata(char *label, krb5_authdata **adata);
-void print_krb5_keyblock(char *label, krb5_keyblock *keyblk);
-
-char *kstring(char *string);
-char *knumber(int len, krb5_octet *contents);
-
-EVP_CIPHER *kssl_map_enc(krb5_enctype enctype);
-
-int kssl_keytab_is_available(KSSL_CTX *kssl_ctx);
-int kssl_tgt_is_available(KSSL_CTX *kssl_ctx);
-
 /* Public (for use by applications that use OpenSSL with Kerberos 5 support */
 krb5_error_code kssl_ctx_setstring(KSSL_CTX *kssl_ctx, int which, char *text);
 KSSL_CTX *kssl_ctx_new(void);
