@@ -202,7 +202,7 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, char *key)
 	pkey->type=EVP_PKEY_type(type);
 	pkey->save_type=type;
 	pkey->pkey.ptr=key;
-	return(1);
+	return(key != NULL);
 	}
 
 #ifndef NO_RSA
