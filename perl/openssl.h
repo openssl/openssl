@@ -60,7 +60,7 @@ extern "C" {
 #endif
 
 #include "EXTERN.h"
-#include <openssl/perl.h>
+#include "perl.h"
 #include "XSUB.h"
 
 #ifdef __cplusplus

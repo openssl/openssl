@@ -23,7 +23,7 @@ void
 p5_EVP_MD_new(...)
 	PREINIT:
 		EVP_MD_CTX *ctx;
-		EVP_MD *md;
+		const EVP_MD *md;
 		char *name;
 	PPCODE:
 		if ((items == 1) && SvPOK(ST(0)))

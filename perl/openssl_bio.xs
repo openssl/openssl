@@ -66,6 +66,7 @@ boot_bio(void)
 
 MODULE = OpenSSL::BIO  PACKAGE = OpenSSL::BIO  PREFIX = p5_BIO_
 
+PROTOTYPES: ENABLE
 VERSIONCHECK: DISABLE
 
 void
@@ -216,7 +217,7 @@ p5_BIO_pop(b)
              * perl library, in which case it will have a perl
              * SV, otherwise it will have been created internally,
              * inside OpenSSL.  For the 'pushed in', it needs
-             * the reference count decememted. */
+             * the reference count decremented. */
             arg = (SV *)BIO_get_ex_data(bio, p5_bio_ex_bio_ptr);
             if (arg == NULL) {
                 arg = new_ref("OpenSSL::BIO",(char *)bio,0);

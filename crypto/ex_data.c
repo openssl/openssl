@@ -141,7 +141,7 @@ char *CRYPTO_get_ex_data(CRYPTO_EX_DATA *ad, int idx)
 		return(sk_value(ad->sk,idx));
 	}
 
-/* The callback is called with the 'object', which is the origional data object
+/* The callback is called with the 'object', which is the original data object
  * being duplicated, a pointer to the
  * 'new' object to be inserted, the index, and the argi/argp
  */

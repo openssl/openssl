@@ -64,6 +64,8 @@ ex_cleanup(obj, data, ad, idx, argl, argp)
 
 MODULE = OpenSSL  PACKAGE = OpenSSL
 
+PROTOTYPES: ENABLE
+
 BOOT:
     boot_bio();
     boot_cipher();

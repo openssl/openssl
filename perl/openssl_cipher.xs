@@ -9,13 +9,14 @@ int boot_cipher()
 
 MODULE =  OpenSSL::Cipher	PACKAGE = OpenSSL::Cipher PREFIX = p5_EVP_C_
 
+PROTOTYPES: ENABLE
 VERSIONCHECK: DISABLE
 
 void
 p5_EVP_C_new(...)
 	PREINIT:
 		EVP_CIPHER_CTX *ctx;
-		EVP_CIPHER *c;
+		const EVP_CIPHER *c;
 		char *name;
 	PPCODE:
 		if ((items == 1) && SvPOK(ST(0)))

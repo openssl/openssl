@@ -2,7 +2,11 @@
 ##  Makefile.PL -- Perl MakeMaker specification
 ##
 
-$V = '0.9.2b';
+open(IN,"<../Makefile.ssl") || die "unable to open Makefile.ssl!\n";
+while(<IN>) {
+    $V=$1 if (/^VERSION=(.*)$/);
+}
+close(IN);
 print "Configuring companion Perl module for OpenSSL $V\n";
 
 use ExtUtils::MakeMaker;
@@ -18,7 +22,6 @@ WriteMakefile(
     'DEFINE'        => '',
     'INC'           => '-I../include',
     'H'             => ['openssl.h'],
-    'C'             => ['openssl_cb.c'],
     'OBJECT' =>
         'OpenSSL.o ' .
         'openssl_bio.o ' .

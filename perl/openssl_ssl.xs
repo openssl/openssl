@@ -60,6 +60,7 @@ int boot_ssl()
 
 MODULE =  OpenSSL::SSL	PACKAGE = OpenSSL::SSL::CTX PREFIX = p5_SSL_CTX_
 
+PROTOTYPES: ENABLE
 VERSIONCHECK: DISABLE
 
 void
@@ -75,7 +76,7 @@ p5_SSL_CTX_new(...)
 		else if ((items == 2) && SvPOK(ST(1)))
 			method=SvPV(ST(1),na);
 		else
-			croak("Usage: OpenSSL::SSL_CTX::new(type)");
+			croak("Usage: OpenSSL::SSL::CTX::new(type)");
 			
 		if (strcmp(method,"SSLv3") == 0)
 			meth=SSLv3_method();
@@ -95,9 +96,15 @@ p5_SSL_CTX_new(...)
 			meth=SSLv2_client_method();
 		else if (strcmp(method,"SSLv2_server") == 0)
 			meth=SSLv2_server_method();
+		else if (strcmp(method,"TLSv1") == 0)
+			meth=TLSv1_method();
+		else if (strcmp(method,"TLSv1_client") == 0)
+			meth=TLSv1_client_method();
+		else if (strcmp(method,"TLSv1_server") == 0)
+			meth=TLSv1_server_method();
 		else
 			{
-			croak("Not passed a valid SSL method name, should be 'SSLv[23] [client|server]'");
+			croak("Not a valid SSL method name, should be 'SSLv[23] [client|server]'");
 			}
 		EXTEND(sp,1);
 		PUSHs(sv_newmortal());
@@ -176,7 +183,6 @@ p5_SSL_new(...)
 		SV *sv_ctx;
 		SSL_CTX *ctx;
 		SSL *ssl;
-		int i;
 		SV *arg;
 	PPCODE:
 		pr_name("p5_SSL_new");
@@ -198,8 +204,8 @@ p5_SSL_new(...)
 
 		/* Now this is being a little hairy, we keep a pointer to
 		 * our perl reference.  We need to do a different one
-		 * to the one we return because it will have it's reference
-		 * count droped to 0 apon return and if we up its reference
+		 * to the one we return because it will have its reference
+		 * count dropped to 0 upon return and if we up its reference
 		 * count, it will never be DESTROYED */
 		arg=newSVsv(ST(0));
 		SSL_set_ex_data(ssl,p5_ssl_ex_ssl_ptr,(char *)arg);
@@ -363,7 +369,9 @@ p5_SSL_DESTROY(ssl)
 	SSL *ssl;
 	CODE:
 	pr_name_dd("p5_SSL_DESTROY",ssl->references,ssl->ctx->references);
+#ifdef DEBUG
 	fprintf(stderr,"SSL_DESTROY %d\n",ssl->references);
+#endif
 	SSL_free(ssl);
 
 int
