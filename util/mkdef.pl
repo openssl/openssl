@@ -221,6 +221,7 @@ my $ssl="ssl/ssl.h";
 $ssl.=" ssl/kssl.h";
 
 my $crypto ="crypto/crypto.h";
+$crypto.=" crypto/o_dir.h";
 $crypto.=" crypto/des/des.h crypto/des/des_old.h" ; # unless $no_des;
 $crypto.=" crypto/idea/idea.h" ; # unless $no_idea;
 $crypto.=" crypto/rc4/rc4.h" ; # unless $no_rc4;
