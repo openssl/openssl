@@ -763,7 +763,7 @@ static int surewarehk_rsa_priv_dec(int flen,unsigned char *from,unsigned char *t
 		if (ret!=1)
 			goto err;
 		/* intermediate buffer for padding */
-		if ((buf=(unsigned char *)OPENSSL_malloc(tlen)) == NULL)
+		if ((buf=OPENSSL_malloc(tlen)) == NULL)
 		{
 			RSAerr(ENGINE_F_SUREWAREHK_RSA_PRIV_DEC,ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -773,14 +773,14 @@ static int surewarehk_rsa_priv_dec(int flen,unsigned char *from,unsigned char *t
 		{
 #ifndef NO_SHA
 		case RSA_PKCS1_OAEP_PADDING:
-			ret=RSA_padding_check_PKCS1_OAEP(to,tlen,buf,tlen,tlen,NULL,0);
+			ret=RSA_padding_check_PKCS1_OAEP(to,tlen,(unsigned char *)buf,tlen,tlen,NULL,0);
 			break;
 #endif
  		case RSA_SSLV23_PADDING:
-			ret=RSA_padding_check_SSLv23(to,tlen,buf,flen,tlen);
+			ret=RSA_padding_check_SSLv23(to,tlen,(unsigned char *)buf,flen,tlen);
 			break;
 		case RSA_NO_PADDING:
-			ret=RSA_padding_check_none(to,tlen,buf,flen,tlen);
+			ret=RSA_padding_check_none(to,tlen,(unsigned char *)buf,flen,tlen);
 			break;
 		default:
 			RSAerr(ENGINE_F_SUREWAREHK_RSA_PRIV_DEC,RSA_R_UNKNOWN_PADDING_TYPE);
