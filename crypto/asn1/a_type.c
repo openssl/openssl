@@ -123,6 +123,8 @@ int i2d_ASN1_TYPE(ASN1_TYPE *a, unsigned char **pp)
 		break;
 	case V_ASN1_SET:
 	case V_ASN1_SEQUENCE:
+	case V_ASN1_OTHER:
+	default:
 		if (a->value.set == NULL)
 			r=0;
 		else
@@ -159,6 +161,8 @@ ASN1_TYPE *d2i_ASN1_TYPE(ASN1_TYPE **a, unsigned char **pp, long length)
 
 	inf=ASN1_get_object(&q,&len,&tag,&xclass,length);
 	if (inf & 0x80) goto err;
+	/* If not universal tag we've no idea what it is */
+	if(xclass != V_ASN1_UNIVERSAL) tag = V_ASN1_OTHER;
 	
 	ASN1_TYPE_component_free(ret);
 
@@ -245,6 +249,8 @@ ASN1_TYPE *d2i_ASN1_TYPE(ASN1_TYPE **a, unsigned char **pp, long length)
 		break;
 	case V_ASN1_SET:
 	case V_ASN1_SEQUENCE:
+	case V_ASN1_OTHER:
+	default:
 		/* Sets and sequences are left complete */
 		if ((ret->value.set=ASN1_STRING_new()) == NULL) goto err;
 		ret->value.set->type=tag;
@@ -252,9 +258,6 @@ ASN1_TYPE *d2i_ASN1_TYPE(ASN1_TYPE **a, unsigned char **pp, long length)
 		if (!ASN1_STRING_set(ret->value.set,p,(int)len)) goto err;
 		p+=len;
 		break;
-	default:
-		ASN1err(ASN1_F_D2I_ASN1_TYPE,ASN1_R_BAD_TYPE);
-		goto err;
 		}
 
 	ret->type=tag;
@@ -333,10 +336,9 @@ static void ASN1_TYPE_component_free(ASN1_TYPE *a)
 		case V_ASN1_UNIVERSALSTRING:
 		case V_ASN1_BMPSTRING:
 		case V_ASN1_UTF8STRING:
-			ASN1_STRING_free((ASN1_STRING *)a->value.ptr);
-			break;
+		case V_ASN1_OTHER:
 		default:
-			/* MEMORY LEAK */
+			ASN1_STRING_free((ASN1_STRING *)a->value.ptr);
 			break;
 			}
 		a->type=0;
