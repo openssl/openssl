@@ -1,4 +1,9 @@
 /* crypto/des/ncbc_enc.c */
+/*
+ * #included by:
+ *    cbc_enc.c  (des_cbc_encrypt)
+ *    des_enc.c  (des_ncbc_encrypt)
+ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
