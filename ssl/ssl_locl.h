@@ -108,6 +108,11 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECC cipher suite support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #ifndef HEADER_SSL_LOCL_H
 #define HEADER_SSL_LOCL_H
@@ -227,52 +232,56 @@
  * that the different entities within are mutually exclusive:
  * ONLY ONE BIT PER MASK CAN BE SET AT A TIME.
  */
-#define SSL_MKEY_MASK		0x0000003FL
+#define SSL_MKEY_MASK		0x000000FFL
 #define SSL_kRSA		0x00000001L /* RSA key exchange */
 #define SSL_kDHr		0x00000002L /* DH cert RSA CA cert */
 #define SSL_kDHd		0x00000004L /* DH cert DSA CA cert */
 #define SSL_kFZA		0x00000008L
 #define SSL_kEDH		0x00000010L /* tmp DH key no DH cert */
 #define SSL_kKRB5		0x00000020L /* Kerberos5 key exchange */
+#define SSL_kECDH               0x00000040L /* ECDH w/ long-term keys */
+#define SSL_kECDHE              0x00000080L /* ephemeral ECDH */
 #define SSL_EDH			(SSL_kEDH|(SSL_AUTH_MASK^SSL_aNULL))
 
-#define SSL_AUTH_MASK		0x00000FC0L
-#define SSL_aRSA		0x00000040L /* Authenticate with RSA */
-#define SSL_aDSS 		0x00000080L /* Authenticate with DSS */
+#define SSL_AUTH_MASK		0x00007F00L
+#define SSL_aRSA		0x00000100L /* Authenticate with RSA */
+#define SSL_aDSS 		0x00000200L /* Authenticate with DSS */
 #define SSL_DSS 		SSL_aDSS
-#define SSL_aFZA 		0x00000100L
-#define SSL_aNULL 		0x00000200L /* no Authenticate, ADH */
-#define SSL_aDH 		0x00000400L /* no Authenticate, ADH */
-#define SSL_aKRB5               0x00000800L /* Authenticate with KRB5 */
+#define SSL_aFZA 		0x00000400L
+#define SSL_aNULL 		0x00000800L /* no Authenticate, ADH */
+#define SSL_aDH 		0x00001000L /* no Authenticate, ADH */
+#define SSL_aKRB5               0x00002000L /* Authenticate with KRB5 */
+#define SSL_aECDSA              0x00004000L /* Authenticate with ECDSA */
 
 #define SSL_NULL		(SSL_eNULL)
 #define SSL_ADH			(SSL_kEDH|SSL_aNULL)
 #define SSL_RSA			(SSL_kRSA|SSL_aRSA)
 #define SSL_DH			(SSL_kDHr|SSL_kDHd|SSL_kEDH)
+#define SSL_ECDH		(SSL_kECDH|SSL_kECDHE)
 #define SSL_FZA			(SSL_aFZA|SSL_kFZA|SSL_eFZA)
 #define SSL_KRB5                (SSL_kKRB5|SSL_aKRB5)
 
-#define SSL_ENC_MASK		0x0087F000L
-#define SSL_DES			0x00001000L
-#define SSL_3DES		0x00002000L
-#define SSL_RC4			0x00004000L
-#define SSL_RC2			0x00008000L
-#define SSL_IDEA		0x00010000L
-#define SSL_eFZA		0x00020000L
-#define SSL_eNULL		0x00040000L
-#define SSL_AES			0x00800000L
+#define SSL_ENC_MASK		0x043F8000L
+#define SSL_DES			0x00008000L
+#define SSL_3DES		0x00010000L
+#define SSL_RC4			0x00020000L
+#define SSL_RC2			0x00040000L
+#define SSL_IDEA		0x00080000L
+#define SSL_eFZA		0x00100000L
+#define SSL_eNULL		0x00200000L
+#define SSL_AES			0x04000000L
 
-#define SSL_MAC_MASK		0x00180000L
-#define SSL_MD5			0x00080000L
-#define SSL_SHA1		0x00100000L
+#define SSL_MAC_MASK		0x00c00000L
+#define SSL_MD5			0x00400000L
+#define SSL_SHA1		0x00800000L
 #define SSL_SHA			(SSL_SHA1)
 
-#define SSL_SSL_MASK		0x00600000L
-#define SSL_SSLV2		0x00200000L
-#define SSL_SSLV3		0x00400000L
+#define SSL_SSL_MASK		0x03000000L
+#define SSL_SSLV2		0x01000000L
+#define SSL_SSLV3		0x02000000L
 #define SSL_TLSV1		SSL_SSLV3	/* for now */
 
-/* we have used 007fffff - 9 bits left to go */
+/* we have used 07ffffff - 5 bits left to go. */
 
 /*
  * Export and cipher strength information. For each cipher we have to decide
@@ -344,7 +353,8 @@
 #define SSL_PKEY_DSA_SIGN	2
 #define SSL_PKEY_DH_RSA		3
 #define SSL_PKEY_DH_DSA		4
-#define SSL_PKEY_NUM		5
+#define SSL_PKEY_ECC            5
+#define SSL_PKEY_NUM		6
 
 /* SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
  * 	    <- (EXPORT & (RSA_ENC | RSA_TMP) & RSA_SIGN)
@@ -359,6 +369,15 @@
 #define CERT_PUBLIC_KEY		1
 #define CERT_PRIVATE_KEY	2
 */
+
+#ifndef OPENSSL_NO_EC
+/* From ECC-TLS draft, used in encoding the curve type in 
+ * ECParameters
+ */
+#define EXPLICIT_PRIME_CURVE_TYPE  1   
+#define EXPLICIT_CHAR2_CURVE_TYPE  2
+#define NAMED_CURVE_TYPE           3
+#endif  /* OPENSSL_NO_EC */
 
 typedef struct cert_pkey_st
 	{
@@ -386,6 +405,11 @@ typedef struct cert_st
 	DH *dh_tmp;
 	DH *(*dh_tmp_cb)(SSL *ssl,int is_export,int keysize);
 #endif
+#ifndef OPENSSL_NO_ECDH
+	EC_KEY *ecdh_tmp;
+	/* Callback for generating ephemeral ECDH keys */
+	EC_KEY *(*ecdh_tmp_cb)(SSL *ssl,int is_export,int keysize);
+#endif
 
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 
@@ -410,6 +434,9 @@ typedef struct sess_cert_st
 #endif
 #ifndef OPENSSL_NO_DH
 	DH *peer_dh_tmp; /* not used for SSL 2 */
+#endif
+#ifndef OPENSSL_NO_ECDH
+	EC_KEY *peer_ecdh_tmp;
 #endif
 
 	int references; /* actually always 1 at the moment */

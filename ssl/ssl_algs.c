@@ -101,6 +101,9 @@ int SSL_library_init(void)
 	EVP_add_digest_alias(SN_dsaWithSHA1,"DSS1");
 	EVP_add_digest_alias(SN_dsaWithSHA1,"dss1");
 #endif
+#ifndef OPENSSL_NO_ECDSA
+	EVP_add_digest(EVP_ecdsa());
+#endif
 	/* If you want support for phased out ciphers, add the following */
 #if 0
 	EVP_add_digest(EVP_sha());

@@ -161,6 +161,11 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECC cipher suite support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #ifndef HEADER_SSL_H 
 #define HEADER_SSL_H 
@@ -265,6 +270,7 @@ extern "C" {
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"
 #define SSL_TXT_ALL		"ALL"
+#define SSL_TXT_ECC		"ECCdraft" /* ECC ciphersuites are not yet official */
 
 /*
  * COMPLEMENTOF* definitions. These identifiers are used to (de-select)
@@ -470,6 +476,8 @@ typedef struct ssl_session_st
 
 /* As server, disallow session resumption on renegotiation */
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
+/* If set, always create a new key when using tmp_ecdh parameters */
+#define SSL_OP_SINGLE_ECDH_USE				0x00080000L
 /* If set, always create a new key when using tmp_dh parameters */
 #define SSL_OP_SINGLE_DH_USE				0x00100000L
 /* Set to always use the tmp_rsa key when doing RSA operations,
@@ -1074,19 +1082,21 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 #define SSL_CTRL_NEED_TMP_RSA			1
 #define SSL_CTRL_SET_TMP_RSA			2
 #define SSL_CTRL_SET_TMP_DH			3
-#define SSL_CTRL_SET_TMP_RSA_CB			4
-#define SSL_CTRL_SET_TMP_DH_CB			5
+#define SSL_CTRL_SET_TMP_ECDH			4
+#define SSL_CTRL_SET_TMP_RSA_CB			5
+#define SSL_CTRL_SET_TMP_DH_CB			6
+#define SSL_CTRL_SET_TMP_ECDH_CB		7
 
-#define SSL_CTRL_GET_SESSION_REUSED		6
-#define SSL_CTRL_GET_CLIENT_CERT_REQUEST	7
-#define SSL_CTRL_GET_NUM_RENEGOTIATIONS		8
-#define SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS	9
-#define SSL_CTRL_GET_TOTAL_RENEGOTIATIONS	10
-#define SSL_CTRL_GET_FLAGS			11
-#define SSL_CTRL_EXTRA_CHAIN_CERT		12
+#define SSL_CTRL_GET_SESSION_REUSED		8
+#define SSL_CTRL_GET_CLIENT_CERT_REQUEST	9
+#define SSL_CTRL_GET_NUM_RENEGOTIATIONS		10
+#define SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS	11
+#define SSL_CTRL_GET_TOTAL_RENEGOTIATIONS	12
+#define SSL_CTRL_GET_FLAGS			13
+#define SSL_CTRL_EXTRA_CHAIN_CERT		14
 
-#define SSL_CTRL_SET_MSG_CALLBACK               13
-#define SSL_CTRL_SET_MSG_CALLBACK_ARG           14
+#define SSL_CTRL_SET_MSG_CALLBACK               15
+#define SSL_CTRL_SET_MSG_CALLBACK_ARG           16
 
 /* Stats */
 #define SSL_CTRL_SESS_NUMBER			20
@@ -1129,6 +1139,8 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_RSA,0,(char *)rsa)
 #define SSL_CTX_set_tmp_dh(ctx,dh) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
+#define SSL_CTX_set_tmp_ecdh(ctx,ecdh) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_ECDH,0,(char *)ecdh)
 
 #define SSL_need_tmp_RSA(ssl) \
 	SSL_ctrl(ssl,SSL_CTRL_NEED_TMP_RSA,0,NULL)
@@ -1136,6 +1148,8 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 	SSL_ctrl(ssl,SSL_CTRL_SET_TMP_RSA,0,(char *)rsa)
 #define SSL_set_tmp_dh(ssl,dh) \
 	SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
+#define SSL_set_tmp_ecdh(ssl,ecdh) \
+	SSL_ctrl(ssl,SSL_CTRL_SET_TMP_ECDH,0,(char *)ecdh)
 
 #define SSL_CTX_add_extra_chain_cert(ctx,x509) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)
@@ -1445,6 +1459,14 @@ void SSL_set_tmp_dh_callback(SSL *ssl,
 				 DH *(*dh)(SSL *ssl,int is_export,
 					   int keylength));
 #endif
+#ifndef OPENSSL_NO_ECDH
+void SSL_CTX_set_tmp_ecdh_callback(SSL_CTX *ctx,
+				 EC_KEY *(*ecdh)(SSL *ssl,int is_export,
+					   int keylength));
+void SSL_set_tmp_ecdh_callback(SSL *ssl,
+				 EC_KEY *(*ecdh)(SSL *ssl,int is_export,
+					   int keylength));
+#endif
 
 #ifndef OPENSSL_NO_COMP
 int SSL_COMP_add_compression_method(int id,COMP_METHOD *cm);
@@ -1619,6 +1641,9 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_BAD_DH_P_LENGTH				 110
 #define SSL_R_BAD_DIGEST_LENGTH				 111
 #define SSL_R_BAD_DSA_SIGNATURE				 112
+#define SSL_R_BAD_ECC_CERT				 1117
+#define SSL_R_BAD_ECDSA_SIGNATURE			 1112
+#define SSL_R_BAD_ECPOINT				 1113
 #define SSL_R_BAD_HELLO_REQUEST				 105
 #define SSL_R_BAD_LENGTH				 271
 #define SSL_R_BAD_MAC_DECODE				 113
@@ -1659,6 +1684,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC	 1109
 #define SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG		 148
 #define SSL_R_DIGEST_CHECK_FAILED			 149
+#define SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER		 1119
 #define SSL_R_ENCRYPTED_LENGTH_TOO_LONG			 150
 #define SSL_R_ERROR_GENERATING_TMP_RSA_KEY		 1092
 #define SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST		 151
@@ -1699,6 +1725,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_MISSING_RSA_ENCRYPTING_CERT		 169
 #define SSL_R_MISSING_RSA_SIGNING_CERT			 170
 #define SSL_R_MISSING_TMP_DH_KEY			 171
+#define SSL_R_MISSING_TMP_ECDH_KEY			 1114
 #define SSL_R_MISSING_TMP_RSA_KEY			 172
 #define SSL_R_MISSING_TMP_RSA_PKEY			 173
 #define SSL_R_MISSING_VERIFY_MESSAGE			 174
@@ -1796,8 +1823,10 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG	 234
 #define SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER		 235
 #define SSL_R_UNABLE_TO_DECODE_DH_CERTS			 236
+#define SSL_R_UNABLE_TO_DECODE_ECDH_CERTS		 1115
 #define SSL_R_UNABLE_TO_EXTRACT_PUBLIC_KEY		 237
 #define SSL_R_UNABLE_TO_FIND_DH_PARAMETERS		 238
+#define SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS		 1116
 #define SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS	 239
 #define SSL_R_UNABLE_TO_FIND_SSL_METHOD			 240
 #define SSL_R_UNABLE_TO_LOAD_SSL2_MD5_ROUTINES		 241
@@ -1818,6 +1847,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_UNKNOWN_STATE				 255
 #define SSL_R_UNSUPPORTED_CIPHER			 256
 #define SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM		 257
+#define SSL_R_UNSUPPORTED_ELLIPTIC_CURVE		 1118
 #define SSL_R_UNSUPPORTED_OPTION			 1091
 #define SSL_R_UNSUPPORTED_PROTOCOL			 258
 #define SSL_R_UNSUPPORTED_SSL_VERSION			 259

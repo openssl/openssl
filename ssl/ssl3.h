@@ -108,6 +108,11 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECC cipher suite support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #ifndef HEADER_SSL3_H 
 #define HEADER_SSL3_H 
@@ -285,7 +290,12 @@ typedef struct ssl3_buffer_st
 #define SSL3_CT_RSA_EPHEMERAL_DH		5
 #define SSL3_CT_DSS_EPHEMERAL_DH		6
 #define SSL3_CT_FORTEZZA_DMS			20
-#define SSL3_CT_NUMBER				7
+/* SSL3_CT_NUMBER is used to size arrays and it must be large
+ * enough to contain all of the cert types defined either for
+ * SSLv3 and TLSv1.
+ */
+#define SSL3_CT_NUMBER			7
+
 
 #define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS	0x0001
 #define SSL3_FLAGS_DELAY_CLIENT_FINISHED	0x0002
@@ -370,6 +380,11 @@ typedef struct ssl3_state_st
 #ifndef OPENSSL_NO_DH
 		DH *dh;
 #endif
+
+#ifndef OPENSSL_NO_ECDH
+		EC_KEY *ecdh; /* holds short lived ECDH key */
+#endif
+
 		/* used when SSL_ST_FLUSH_DATA is entered */
 		int next_state;			
 

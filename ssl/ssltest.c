@@ -108,6 +108,11 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECC cipher suite support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #define _XOPEN_SOURCE 600	/* Or gethostname won't be declared properly
 				   on Linux and GNU platforms. */
@@ -201,6 +206,9 @@ static void sv_usage(void)
 	fprintf(stderr," -dhe1024dsa   - use 1024 bit key (with 160-bit subprime) for DHE\n");
 	fprintf(stderr," -no_dhe       - disable DHE\n");
 #endif
+#ifndef OPENSSL_NO_ECDH
+	fprintf(stderr," -no_ecdhe     - disable ECDHE\n");
+#endif
 #ifndef OPENSSL_NO_SSL2
 	fprintf(stderr," -ssl2         - use SSLv2\n");
 #endif
@@ -221,7 +229,12 @@ static void sv_usage(void)
 	fprintf(stderr," -f            - Test even cases that can't work\n");
 	fprintf(stderr," -time         - measure processor time used by client and server\n");
 	fprintf(stderr," -zlib         - use zlib compression\n");
-	fprintf(stderr," -time         - use rle compression\n");
+	fprintf(stderr," -rle          - use rle compression\n");
+#ifndef OPENSSL_NO_ECDH
+	fprintf(stderr," -named_curve arg  - Elliptic curve name to use for ephemeral ECDH keys.\n" \
+	               "                 Use \"openssl ecparam -list_curves\" for all names\n"  \
+	               "                 (default is sect163r2).\n");
+#endif
 	}
 
 static void print_details(SSL *c_ssl, const char *prefix)
@@ -345,6 +358,7 @@ int main(int argc, char *argv[])
 	char *server_key=NULL;
 	char *client_cert=TEST_CLIENT_CERT;
 	char *client_key=NULL;
+	char *named_curve = NULL;
 	SSL_CTX *s_ctx=NULL;
 	SSL_CTX *c_ctx=NULL;
 	SSL_METHOD *meth=NULL;
@@ -355,7 +369,11 @@ int main(int argc, char *argv[])
 	DH *dh;
 	int dhe1024 = 0, dhe1024dsa = 0;
 #endif
+#ifndef OPENSSL_NO_ECDH
+	EC_KEY *ecdh = NULL;
+#endif
 	int no_dhe = 0;
+	int no_ecdhe = 0;
 	int print_time = 0;
 	clock_t s_time = 0, c_time = 0;
 	int comp = 0;
@@ -408,6 +426,8 @@ int main(int argc, char *argv[])
 #endif
 		else if	(strcmp(*argv,"-no_dhe") == 0)
 			no_dhe=1;
+		else if	(strcmp(*argv,"-no_ecdhe") == 0)
+			no_ecdhe=1;
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			ssl2=1;
 		else if	(strcmp(*argv,"-tls1") == 0)
@@ -494,6 +514,13 @@ int main(int argc, char *argv[])
 			{
 			comp = COMP_RLE;
 			}
+#ifndef OPENSSL_NO_ECDH		
+		else if	(strcmp(*argv,"-named_curve") == 0)
+			{
+			if (--argc < 1) goto bad;
+			named_curve = *(++argv);
+			}
+#endif
 		else if	(strcmp(*argv,"-app_verify") == 0)
 			{
 			app_verify = 1;
@@ -607,6 +634,44 @@ bad:
 		}
 #else
 	(void)no_dhe;
+#endif
+
+#ifndef OPENSSL_NO_ECDH
+	if (!no_ecdhe)
+		{
+		ecdh = EC_KEY_new();
+		if (ecdh != NULL)
+			{
+			if (named_curve)
+				{
+				int nid = OBJ_sn2nid(named_curve);
+
+				if (nid == 0)
+					{
+					BIO_printf(bio_err, "unknown curve name (%s)\n", named_curve);
+					EC_KEY_free(ecdh);
+					goto end;
+					}
+
+				ecdh->group = EC_GROUP_new_by_nid(nid);
+				if (ecdh->group == NULL)
+					{
+					BIO_printf(bio_err, "unable to create curve (%s)\n", named_curve);
+					EC_KEY_free(ecdh);
+					goto end;
+					}
+				}
+			
+			if (ecdh->group == NULL)
+				ecdh->group=EC_GROUP_new_by_nid(NID_sect163r2);
+
+			SSL_CTX_set_tmp_ecdh(s_ctx, ecdh);
+			SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_ECDH_USE);
+			EC_KEY_free(ecdh);
+			}
+		}
+#else
+	(void)no_ecdhe;
 #endif
 
 #ifndef OPENSSL_NO_RSA

@@ -108,6 +108,32 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ *
+ * Portions of the attached software ("Contribution") are developed by 
+ * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
+ *
+ * The Contribution is licensed pursuant to the OpenSSL open source
+ * license provided above.
+ *
+ * In addition, Sun covenants to all licensees who provide a reciprocal
+ * covenant with respect to their own patents if any, not to sue under
+ * current and future patent claims necessarily infringed by the making,
+ * using, practicing, selling, offering for sale and/or otherwise
+ * disposing of the Contribution as delivered hereunder 
+ * (or portions thereof), provided that such covenant shall not apply:
+ *  1) for code that a licensee deletes from the Contribution;
+ *  2) separates from the Contribution; or
+ *  3) for infringements caused by:
+ *       i) the modification of the Contribution or
+ *      ii) the combination of the  Contribution with other software or
+ *          devices where such combination causes the infringement.
+ *
+ * ECC cipher suite support in OpenSSL originally written by
+ * Vipul Gupta and Sumit Gupta of Sun Microsystems Laboratories.
+ *
+ */
 
 #include <stdio.h>
 #include "ssl_locl.h"
@@ -131,6 +157,12 @@ static int ssl3_send_client_key_exchange(SSL *s);
 static int ssl3_get_key_exchange(SSL *s);
 static int ssl3_get_server_certificate(SSL *s);
 static int ssl3_check_cert_and_algorithm(SSL *s);
+
+#ifndef OPENSSL_NO_ECDH
+static int curve_id2nid(int curve_id);
+int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs);
+#endif
+
 static SSL_METHOD *ssl3_get_client_method(int ver)
 	{
 	if (ver == SSL3_VERSION)
@@ -262,7 +294,7 @@ int ssl3_connect(SSL *s)
 
 		case SSL3_ST_CR_CERT_A:
 		case SSL3_ST_CR_CERT_B:
-			/* Check if it is anon DH */
+			/* Check if it is anon DH/ECDH */
 			if (!(s->s3->tmp.new_cipher->algorithms & SSL_aNULL))
 				{
 				ret=ssl3_get_server_certificate(s);
@@ -329,6 +361,13 @@ int ssl3_connect(SSL *s)
 			 * sent back */
 			/* For TLS, cert_req is set to 2, so a cert chain
 			 * of nothing is sent, but no verify packet is sent */
+			/* XXX: For now, we do not support client 
+			 * authentication in ECDH cipher suites with
+			 * ECDH (rather than ECDSA) certificates.
+			 * We need to skip the certificate verify 
+			 * message when client's ECDH public key is sent 
+			 * inside the client certificate.
+			 */
 			if (s->s3->tmp.cert_req == 1)
 				{
 				s->state=SSL3_ST_CW_CERT_VRFY_A;
@@ -944,6 +983,13 @@ static int ssl3_get_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_DH
 	DH *dh=NULL;
 #endif
+#ifndef OPENSSL_NO_ECDH
+	EC_KEY *ecdh = NULL;
+	BN_CTX *bn_ctx = NULL;
+	EC_POINT *srvr_ecpoint = NULL;
+	int curve_nid = 0;
+	int encoded_pt_len = 0;
+#endif
 
 	/* use same message size as in ssl3_get_certificate_request()
 	 * as ServerKeyExchange message may be skipped */
@@ -978,6 +1024,13 @@ static int ssl3_get_key_exchange(SSL *s)
 			{
 			DH_free(s->session->sess_cert->peer_dh_tmp);
 			s->session->sess_cert->peer_dh_tmp=NULL;
+			}
+#endif
+#ifndef OPENSSL_NO_ECDH
+		if (s->session->sess_cert->peer_ecdh_tmp)
+			{
+			EC_KEY_free(s->session->sess_cert->peer_ecdh_tmp);
+			s->session->sess_cert->peer_ecdh_tmp=NULL;
 			}
 #endif
 		}
@@ -1121,6 +1174,101 @@ static int ssl3_get_key_exchange(SSL *s)
 		goto f_err;
 		}
 #endif /* !OPENSSL_NO_DH */
+
+#ifndef OPENSSL_NO_ECDH
+	else if (alg & SSL_kECDHE)
+		{
+		if ((ecdh=EC_KEY_new()) == NULL)
+			{
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+
+		/* Extract elliptic curve parameters and the
+		 * server's ephemeral ECDH public key.
+		 * Keep accumulating lengths of various components in
+		 * param_len and make sure it never exceeds n.
+		 */
+
+		/* XXX: For now we only support named (not generic) curves
+		 * and the ECParameters in this case is just two bytes.
+		 */
+		param_len=2;
+		if ((param_len > n) ||
+		    (*p != NAMED_CURVE_TYPE) || 
+		    ((curve_nid = curve_id2nid(*(p + 1))) == 0)) 
+			{
+			al=SSL_AD_INTERNAL_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
+			goto f_err;
+			}
+
+		if (!(ecdh->group=EC_GROUP_new_by_nid(curve_nid)))
+			{
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_EC_LIB);
+			goto err;
+			}
+
+		if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) &&
+		    (EC_GROUP_get_degree(ecdh->group) > 163))
+			{
+			al=SSL_AD_EXPORT_RESTRICTION;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER);
+			goto f_err;
+			}
+
+		p+=2;
+
+		/* Next, get the encoded ECPoint */
+		if (((srvr_ecpoint = EC_POINT_new(ecdh->group)) == NULL) ||
+		    ((bn_ctx = BN_CTX_new()) == NULL))
+			{
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+
+		encoded_pt_len = *p;  /* length of encoded point */
+		p+=1;
+		param_len += (1 + encoded_pt_len);
+		if ((param_len > n) ||
+		    (EC_POINT_oct2point(ecdh->group, srvr_ecpoint, 
+			p, encoded_pt_len, bn_ctx) == 0))
+			{
+			al=SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_ECPOINT);
+			goto f_err;
+			}
+
+		n-=param_len;
+		p+=encoded_pt_len;
+
+		/* The ECC/TLS specification does not mention
+		 * the use of DSA to sign ECParameters in the server
+		 * key exchange message. We do support RSA and ECDSA.
+		 */
+		if (0) ;
+#ifndef OPENSSL_NO_RSA
+		else if (alg & SSL_aRSA)
+			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
+#endif
+#ifndef OPENSSL_NO_ECDSA
+		else if (alg & SSL_aECDSA)
+			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
+#endif
+		/* else anonymous ECDH, so no certificate or pkey. */
+		ecdh->pub_key = srvr_ecpoint;
+		s->session->sess_cert->peer_ecdh_tmp=ecdh;
+		ecdh=NULL;
+		BN_CTX_free(bn_ctx);
+		srvr_ecpoint = NULL;
+		}
+	else if (alg & SSL_kECDH)
+		{
+		al=SSL_AD_UNEXPECTED_MESSAGE;
+		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
+		goto f_err;
+		}
+#endif /* !OPENSSL_NO_ECDH */
 	if (alg & SSL_aFZA)
 		{
 		al=SSL_AD_HANDSHAKE_FAILURE;
@@ -1130,7 +1278,6 @@ static int ssl3_get_key_exchange(SSL *s)
 
 
 	/* p points to the next byte, there are 'n' bytes left */
-
 
 	/* if it was signed, check the signature */
 	if (pkey != NULL)
@@ -1201,6 +1348,24 @@ static int ssl3_get_key_exchange(SSL *s)
 			}
 		else
 #endif
+#ifndef OPENSSL_NO_ECDSA
+			if (pkey->type == EVP_PKEY_ECDSA)
+			{
+			/* let's do ECDSA */
+			EVP_VerifyInit_ex(&md_ctx,EVP_ecdsa(), NULL);
+			EVP_VerifyUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
+			EVP_VerifyUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
+			EVP_VerifyUpdate(&md_ctx,param,param_len);
+			if (!EVP_VerifyFinal(&md_ctx,p,(int)n,pkey))
+				{
+				/* bad signature */
+				al=SSL_AD_DECRYPT_ERROR;
+				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_SIGNATURE);
+				goto f_err;
+				}
+			}
+		else
+#endif
 			{
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
 			goto err;
@@ -1235,6 +1400,12 @@ err:
 #ifndef OPENSSL_NO_DH
 	if (dh != NULL)
 		DH_free(dh);
+#endif
+#ifndef OPENSSL_NO_ECDH
+	BN_CTX_free(bn_ctx);
+	EC_POINT_free(srvr_ecpoint);
+	if (ecdh != NULL)
+		EC_KEY_free(ecdh);
 #endif
 	EVP_MD_CTX_cleanup(&md_ctx);
 	return(-1);
@@ -1423,6 +1594,14 @@ static int ssl3_send_client_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_KRB5
         KSSL_ERR kssl_err;
 #endif /* OPENSSL_NO_KRB5 */
+#ifndef OPENSSL_NO_ECDH
+	EC_KEY *clnt_ecdh = NULL;
+	EC_POINT *srvr_ecpoint = NULL;
+	EVP_PKEY *srvr_pub_pkey = NULL;
+	unsigned char *encodedPoint = NULL;
+	int encoded_pt_len = 0;
+	BN_CTX * bn_ctx = NULL;
+#endif
 
 	if (s->state == SSL3_ST_CW_KEY_EXCH_A)
 		{
@@ -1680,10 +1859,180 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			/* perhaps clean things up a bit EAY EAY EAY EAY*/
 			}
 #endif
+
+#ifndef OPENSSL_NO_ECDH 
+		else if ((l & SSL_kECDH) || (l & SSL_kECDHE))
+			{
+			EC_GROUP *srvr_group = NULL;
+			int ecdh_clnt_cert = 0;
+
+			/* Did we send out the client's
+			 * ECDH share for use in premaster
+			 * computation as part of client certificate?
+			 * If so, set ecdh_clnt_cert to 1.
+			 */
+			if ((l & SSL_kECDH) && (s->cert != NULL)) 
+				{
+				/* XXX: For now, we do not support client
+				 * authentication using ECDH certificates.
+				 * To add such support, one needs to add
+				 * code that checks for appropriate 
+				 * conditions and sets ecdh_clnt_cert to 1.
+				 * For example, the cert have an ECC
+				 * key on the same curve as the server's
+				 * and the key should be authorized for
+				 * key agreement.
+				 *
+				 * One also needs to add code in ssl3_connect
+				 * to skip sending the certificate verify
+				 * message.
+				 *
+				 * if ((s->cert->key->privatekey != NULL) &&
+				 *     (s->cert->key->privatekey->type ==
+				 *      EVP_PKEY_ECC) && ...)
+				 * ecdh_clnt_cert = 1;
+				 */
+				}
+
+			if (s->session->sess_cert->peer_ecdh_tmp != NULL)
+				{
+				srvr_group = s->session->sess_cert-> \
+				    peer_ecdh_tmp->group;
+				srvr_ecpoint = s->session->sess_cert-> \
+				    peer_ecdh_tmp->pub_key;
+				}
+			else
+				{
+				/* Get the Server Public Key from Cert */
+				srvr_pub_pkey = X509_get_pubkey(s->session-> \
+				    sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
+				if ((srvr_pub_pkey == NULL) ||
+				    (srvr_pub_pkey->type != EVP_PKEY_ECDSA) ||
+				    (srvr_pub_pkey->pkey.eckey == NULL))
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+					    ERR_R_INTERNAL_ERROR);
+					goto err;
+					}
+
+				srvr_group = srvr_pub_pkey->pkey.eckey->group;
+				srvr_ecpoint = 
+				    srvr_pub_pkey->pkey.eckey->pub_key;
+				}
+
+			if ((srvr_group == NULL) || (srvr_ecpoint == NULL))
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+				    ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
+
+			if ((clnt_ecdh=EC_KEY_new()) == NULL) 
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+
+			clnt_ecdh->group = srvr_group;
+			if (ecdh_clnt_cert) 
+				{ 
+                                /* Reuse key info from our certificate
+				 * We only need our private key to perform
+				 * the ECDH computation.
+				 */
+				clnt_ecdh->priv_key = BN_dup(s->cert->key-> \
+				    privatekey->pkey.eckey->priv_key);
+				}
+			else 
+				{
+				/* Generate a new ECDH key pair */
+				if (!(EC_KEY_generate_key(clnt_ecdh)))
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
+					goto err;
+					}
+				}
+
+                        /* use the 'p' output buffer for the ECDH key, but
+                         * make sure to clear it out afterwards
+			 */
+
+                        n=ECDH_compute_key(p, srvr_ecpoint, clnt_ecdh);
+			if (n <= 0)
+                                {
+                                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, 
+				       ERR_R_ECDH_LIB);
+                                goto err;
+				}
+
+                        /* generate master key from the result */
+                        s->session->master_key_length = s->method->ssl3_enc \
+			    -> generate_master_secret(s, 
+				s->session->master_key,
+				p, n);
+
+                        memset(p, 0, n); /* clean up */
+
+			if (ecdh_clnt_cert) 
+				{
+				/* Send empty client key exch message */
+				n = 0;
+				}
+			else 
+				{
+				/* First check the size of encoding and
+				 * allocate memory accordingly.
+				 */
+				encoded_pt_len = 
+				    EC_POINT_point2oct(clnt_ecdh->group, 
+					clnt_ecdh->pub_key, 
+					POINT_CONVERSION_UNCOMPRESSED, 
+					NULL, 0, NULL);
+
+				encodedPoint = (unsigned char *) 
+				    OPENSSL_malloc(encoded_pt_len * 
+					sizeof(unsigned char)); 
+				bn_ctx = BN_CTX_new();
+				if ((encodedPoint == NULL) || 
+				    (bn_ctx == NULL)) 
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+					goto err;
+					}
+
+				/* Encode the public key */
+				n = EC_POINT_point2oct(clnt_ecdh->group, 
+				    clnt_ecdh->pub_key, 
+				    POINT_CONVERSION_UNCOMPRESSED, 
+				    encodedPoint, encoded_pt_len, bn_ctx);
+
+				*p = n; /* length of encoded point */
+                                /* Encoded point will be copied here */
+				p += 1; 
+				/* copy the point */
+				memcpy((unsigned char *)p, encodedPoint, n);
+				/* increment n to account for length field */
+				n += 1; 
+				}
+
+			/* Free allocated memory */
+			BN_CTX_free(bn_ctx);
+			if (encodedPoint != NULL) OPENSSL_free(encodedPoint);
+			if (clnt_ecdh != NULL) 
+				{
+                                 /* group is shared */
+				 clnt_ecdh->group = NULL; 
+				 EC_KEY_free(clnt_ecdh);
+				}
+			EVP_PKEY_free(srvr_pub_pkey);
+			}
+#endif /* !OPENSSL_NO_ECDH */
 		else
 			{
-			ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_HANDSHAKE_FAILURE);
-			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+			ssl3_send_alert(s, SSL3_AL_FATAL,
+			    SSL_AD_HANDSHAKE_FAILURE);
+			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+			    ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 		
@@ -1699,6 +2048,17 @@ static int ssl3_send_client_key_exchange(SSL *s)
 	/* SSL3_ST_CW_KEY_EXCH_B */
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 err:
+#ifndef OPENSSL_NO_ECDH
+	BN_CTX_free(bn_ctx);
+	if (encodedPoint != NULL) OPENSSL_free(encodedPoint);
+	if (clnt_ecdh != NULL) 
+		{
+		/* group is shared */
+		clnt_ecdh->group = NULL; 
+		EC_KEY_free(clnt_ecdh);
+		}
+        EVP_PKEY_free(srvr_pub_pkey);
+#endif
 	return(-1);
 	}
 
@@ -1750,6 +2110,23 @@ static int ssl3_send_client_verify(SSL *s)
 				(unsigned int *)&j,pkey->pkey.dsa))
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,ERR_R_DSA_LIB);
+				goto err;
+				}
+			s2n(j,p);
+			n=j+2;
+			}
+		else
+#endif
+#ifndef OPENSSL_NO_ECDSA
+			if (pkey->type == EVP_PKEY_ECDSA)
+			{
+			if (!ECDSA_sign(pkey->save_type,
+				&(data[MD5_DIGEST_LENGTH]),
+				SHA_DIGEST_LENGTH,&(p[2]),
+				(unsigned int *)&j,pkey->pkey.eckey))
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
+				    ERR_R_ECDSA_LIB);
 				goto err;
 				}
 			s2n(j,p);
@@ -1888,6 +2265,21 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 	/* This is the passed certificate */
 
 	idx=sc->peer_cert_type;
+#ifndef OPENSSL_NO_ECDH
+	if (idx == SSL_PKEY_ECC)
+		{
+		if (check_srvr_ecc_cert_and_alg(sc->peer_pkeys[idx].x509,
+		    s->s3->tmp.new_cipher) == 0) 
+			{ /* check failed */
+			SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_BAD_ECC_CERT);
+			goto f_err;			
+			}
+		else 
+			{
+			return 1;
+			}
+		}
+#endif
 	pkey=X509_get_pubkey(sc->peer_pkeys[idx].x509);
 	i=X509_certificate_type(sc->peer_pkeys[idx].x509,pkey);
 	EVP_PKEY_free(pkey);
@@ -1973,3 +2365,44 @@ err:
 	return(0);
 	}
 
+
+#ifndef OPENSSL_NO_ECDH
+/* This is the complement of nid2curve_id in s3_srvr.c. */
+static int curve_id2nid(int curve_id)
+{
+	/* ECC curves from draft-ietf-tls-ecc-01.txt (Mar 15, 2001) */
+	static int nid_list[26] =
+	{
+		0,
+		NID_sect163k1, /* sect163k1 (1) */
+		NID_sect163r1, /* sect163r1 (2) */
+		NID_sect163r2, /* sect163r2 (3) */
+		NID_sect193r1, /* sect193r1 (4) */ 
+		NID_sect193r2, /* sect193r2 (5) */ 
+		NID_sect233k1, /* sect233k1 (6) */
+		NID_sect233r1, /* sect233r1 (7) */ 
+		NID_sect239k1, /* sect239k1 (8) */ 
+		NID_sect283k1, /* sect283k1 (9) */
+		NID_sect283r1, /* sect283r1 (10) */ 
+		NID_sect409k1, /* sect409k1 (11) */ 
+		NID_sect409r1, /* sect409r1 (12) */
+		NID_sect571k1, /* sect571k1 (13) */ 
+		NID_sect571r1, /* sect571r1 (14) */ 
+		NID_secp160k1, /* secp160k1 (15) */
+		NID_secp160r1, /* secp160r1 (16) */ 
+		NID_secp160r2, /* secp160r2 (17) */ 
+		NID_secp192k1, /* secp192k1 (18) */
+		NID_X9_62_prime192v1, /* secp192r1 (19) */ 
+		NID_secp224k1, /* secp224k1 (20) */ 
+		NID_secp224r1, /* secp224r1 (21) */
+		NID_secp256k1, /* secp256k1 (22) */ 
+		NID_X9_62_prime256v1, /* secp256r1 (23) */ 
+		NID_secp384r1, /* secp384r1 (24) */
+		NID_secp521r1  /* secp521r1 (25) */	
+	};
+	
+	if ((curve_id < 1) || (curve_id > 25)) return 0;
+
+	return nid_list[curve_id];
+}
+#endif

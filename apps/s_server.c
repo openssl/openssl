@@ -108,6 +108,11 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECDH support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #include <assert.h>
 #include <stdio.h>
@@ -164,6 +169,7 @@ static int generate_session_id(const SSL *ssl, unsigned char *id,
 static DH *load_dh_param(char *dhfile);
 static DH *get_dh512(void);
 #endif
+
 #ifdef MONOLITH
 static void s_server_init(void);
 #endif
@@ -201,6 +207,7 @@ static DH *get_dh512(void)
 	return(dh);
 	}
 #endif
+
 
 /* static int load_CA(SSL_CTX *ctx, char *file);*/
 
@@ -279,6 +286,11 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -dkey arg     - second private key file to use (usually for DSA)\n");
 	BIO_printf(bio_err," -dhparam arg  - DH parameter file to use, in cert file if not specified\n");
 	BIO_printf(bio_err,"                 or a default set of parameters is used\n");
+#ifndef OPENSSL_NO_ECDH
+	BIO_printf(bio_err," -named_curve arg  - Elliptic curve name to use for ephemeral ECDH keys.\n" \
+	                   "                 Use \"openssl ecparam -list_curves\" for all names\n" \
+	                   "                 (default is sect163r2).\n");
+#endif
 #ifdef FIONBIO
 	BIO_printf(bio_err," -nbio         - Run with non-blocking IO\n");
 #endif
@@ -302,6 +314,9 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -no_tls1      - Just disable TLSv1\n");
 #ifndef OPENSSL_NO_DH
 	BIO_printf(bio_err," -no_dhe       - Disable ephemeral DH\n");
+#endif
+#ifndef OPENSSL_NO_ECDH
+	BIO_printf(bio_err," -no_ecdhe     - Disable ephemeral ECDH\n");
 #endif
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatibility\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
@@ -476,10 +491,11 @@ int MAIN(int argc, char *argv[])
 	char *CApath=NULL,*CAfile=NULL;
 	char *context = NULL;
 	char *dhfile = NULL;
+	char *named_curve = NULL;
 	int badop=0,bugs=0;
 	int ret=1;
 	int off=0;
-	int no_tmp_rsa=0,no_dhe=0,nocert=0;
+	int no_tmp_rsa=0,no_dhe=0,no_ecdhe=0,nocert=0;
 	int state=0;
 	SSL_METHOD *meth=NULL;
 	ENGINE *e=NULL;
@@ -560,6 +576,13 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			dhfile = *(++argv);
 			}
+#ifndef OPENSSL_NO_ECDH		
+		else if	(strcmp(*argv,"-named_curve") == 0)
+			{
+			if (--argc < 1) goto bad;
+			named_curve = *(++argv);
+			}
+#endif
 		else if	(strcmp(*argv,"-dcert") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -628,6 +651,8 @@ int MAIN(int argc, char *argv[])
 			{ no_tmp_rsa=1; }
 		else if	(strcmp(*argv,"-no_dhe") == 0)
 			{ no_dhe=1; }
+		else if	(strcmp(*argv,"-no_ecdhe") == 0)
+			{ no_ecdhe=1; }
 		else if	(strcmp(*argv,"-www") == 0)
 			{ www=1; }
 		else if	(strcmp(*argv,"-WWW") == 0)
@@ -796,6 +821,59 @@ bad:
 
 		SSL_CTX_set_tmp_dh(ctx,dh);
 		DH_free(dh);
+		}
+#endif
+
+#ifndef OPENSSL_NO_ECDH
+	if (!no_ecdhe)
+		{
+		EC_KEY *ecdh=NULL;
+
+		ecdh = EC_KEY_new();
+		if (ecdh == NULL)
+			{
+			BIO_printf(bio_err,"Could not create ECDH struct.\n");
+			goto end;
+			}
+
+		if (named_curve)
+			{
+			int nid = OBJ_sn2nid(named_curve);
+
+			if (nid == 0)
+				{
+				BIO_printf(bio_err, "unknown curve name (%s)\n", 
+					named_curve);
+				goto end;
+				}
+
+			ecdh->group = EC_GROUP_new_by_nid(nid);
+			if (ecdh->group == NULL)
+				{
+				BIO_printf(bio_err, "unable to create curve (%s)\n", 
+					named_curve);
+				goto end;
+				}
+			}
+
+		if (ecdh->group != NULL)
+			{
+			BIO_printf(bio_s_out,"Setting temp ECDH parameters\n");
+			}
+		else
+			{
+			BIO_printf(bio_s_out,"Using default temp ECDH parameters\n");
+			ecdh->group=EC_GROUP_new_by_nid(NID_sect163r2);
+			if (ecdh->group == NULL) 
+				{
+				BIO_printf(bio_err, "unable to create curve (sect163r2)\n");
+				goto end;
+				}
+			}
+		(void)BIO_flush(bio_s_out);
+
+		SSL_CTX_set_tmp_ecdh(ctx,ecdh);
+		EC_KEY_free(ecdh);
 		}
 #endif
 	

@@ -110,7 +110,11 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECC cipher suite support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #ifdef REF_CHECK
 #  include <assert.h>
@@ -1467,6 +1471,10 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	int rsa_enc_export,dh_rsa_export,dh_dsa_export;
 	int rsa_tmp_export,dh_tmp_export,kl;
 	unsigned long mask,emask;
+	int have_ecc_cert, have_ecdh_tmp, ecdh_ok, ecdsa_ok, ecc_pkey_size;
+	X509 *x = NULL;
+	EVP_PKEY *ecc_pkey = NULL;
+	int signature_nid = 0;
 
 	if (c == NULL) return;
 
@@ -1487,6 +1495,9 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	dh_tmp=dh_tmp_export=0;
 #endif
 
+#ifndef OPENSSL_NO_ECDH
+	have_ecdh_tmp=(c->ecdh_tmp != NULL || c->ecdh_tmp_cb != NULL);
+#endif
 	cpk= &(c->pkeys[SSL_PKEY_RSA_ENC]);
 	rsa_enc= (cpk->x509 != NULL && cpk->privatekey != NULL);
 	rsa_enc_export=(rsa_enc && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
@@ -1501,7 +1512,8 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 /* FIX THIS EAY EAY EAY */
 	dh_dsa=  (cpk->x509 != NULL && cpk->privatekey != NULL);
 	dh_dsa_export=(dh_dsa && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
-
+	cpk= &(c->pkeys[SSL_PKEY_ECC]);
+	have_ecc_cert= (cpk->x509 != NULL && cpk->privatekey != NULL);
 	mask=0;
 	emask=0;
 
@@ -1541,7 +1553,7 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	if (rsa_enc || rsa_sign)
 		{
 		mask|=SSL_aRSA;
-		emask|=SSL_aRSA;
+		mask|=SSL_aRSA;
 		}
 
 	if (dsa_sign)
@@ -1558,9 +1570,129 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	emask|=SSL_kKRB5|SSL_aKRB5;
 #endif
 
+	/* An ECC certificate may be usable for ECDH and/or
+	 * ECDSA cipher suites depending on the key usage extension.
+	 */
+	if (have_ecc_cert)
+		{
+                /* This call populates extension flags (ex_flags) */
+		x = (c->pkeys[SSL_PKEY_ECC]).x509;
+		X509_check_purpose(x, -1, 0);
+		ecdh_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
+		    (x->ex_kusage & X509v3_KU_KEY_AGREEMENT) : 1;
+		ecdsa_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
+		    (x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE) : 1;
+		ecc_pkey = X509_get_pubkey(x);
+		ecc_pkey_size = (ecc_pkey != NULL) ? 
+		    EVP_PKEY_bits(ecc_pkey) : 0;
+		EVP_PKEY_free(ecc_pkey);
+		if ((x->sig_alg) && (x->sig_alg->algorithm))
+			signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
+#ifndef OPENSSL_NO_ECDH
+		if (ecdh_ok)
+			{
+			if ((signature_nid == NID_md5WithRSAEncryption) ||
+			    (signature_nid == NID_md4WithRSAEncryption) ||
+			    (signature_nid == NID_md2WithRSAEncryption))
+				{
+				mask|=SSL_kECDH|SSL_aRSA;
+				if (ecc_pkey_size <= 163)
+					emask|=SSL_kECDH|SSL_aRSA;
+				}
+			if (signature_nid == NID_ecdsa_with_SHA1)
+				{
+				mask|=SSL_kECDH|SSL_aECDSA;
+				if (ecc_pkey_size <= 163)
+					emask|=SSL_kECDH|SSL_aECDSA;
+				}
+			}
+#endif
+#ifndef OPENSSL_NO_ECDSA
+		if (ecdsa_ok)
+			{
+			mask|=SSL_aECDSA;
+			emask|=SSL_aECDSA;
+			}
+#endif
+		}
+
+#ifndef OPENSSL_NO_ECDH
+	if (have_ecdh_tmp)
+		{
+		mask|=SSL_kECDHE;
+		emask|=SSL_kECDHE;
+		}
+#endif
 	c->mask=mask;
 	c->export_mask=emask;
 	c->valid=1;
+	}
+
+/* This handy macro borrowed from crypto/x509v3/v3_purp.c */
+#define ku_reject(x, usage) \
+	(((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
+
+int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
+	{
+	unsigned long alg = cs->algorithms;
+	EVP_PKEY *pkey = NULL;
+	int keysize = 0;
+	int signature_nid = 0;
+
+	if (SSL_C_IS_EXPORT(cs))
+		{
+		/* ECDH key length in export ciphers must be <= 163 bits */
+		pkey = X509_get_pubkey(x);
+		if (pkey == NULL) return 0;
+		keysize = EVP_PKEY_bits(pkey);
+		EVP_PKEY_free(pkey);
+		if (keysize > 163) return 0;
+		}
+
+	/* This call populates the ex_flags field correctly */
+	X509_check_purpose(x, -1, 0);
+	if ((x->sig_alg) && (x->sig_alg->algorithm))
+		signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
+	if (alg & SSL_kECDH) 
+		{
+		/* key usage, if present, must allow key agreement */
+		if (ku_reject(x, X509v3_KU_KEY_AGREEMENT))
+			{
+			printf("ECC cert not authorized for key agreement\n");
+			return 0;
+			}
+		if (alg & SSL_aECDSA) 
+			{
+			/* signature alg must be ECDSA */
+			if (signature_nid != NID_ecdsa_with_SHA1)
+				{
+				printf("ECC cert not signed w/ ECDSA\n");
+				return 0;
+				}
+			}
+		if (alg & SSL_aRSA)
+			{
+			/* signature alg must be RSA */
+			if ((signature_nid != NID_md5WithRSAEncryption) &&
+			    (signature_nid != NID_md4WithRSAEncryption) &&
+			    (signature_nid != NID_md2WithRSAEncryption))
+				{
+				printf("ECC cert not signed w/ RSA\n");
+				return 0;
+				}
+			}
+		} 
+	else if (alg & SSL_aECDSA)
+		{
+		/* key usage, if present, must allow signing */
+		if (ku_reject(x, X509v3_KU_DIGITAL_SIGNATURE))
+			{
+			printf("ECC cert not authorized for signature\n");
+			return 0;
+			}
+		}
+
+	return 1;  /* all checks are ok */
 	}
 
 /* THIS NEEDS CLEANING UP */
@@ -1577,7 +1709,26 @@ X509 *ssl_get_server_send_cert(SSL *s)
 	mask=is_export?c->export_mask:c->mask;
 	kalg=alg&(SSL_MKEY_MASK|SSL_AUTH_MASK);
 
-	if 	(kalg & SSL_kDHr)
+	if (kalg & SSL_kECDH)
+		{
+		/* we don't need to look at SSL_kECDHE 
+		 * since no certificate is needed for
+		 * anon ECDH and for authenticated
+		 * ECDHE, the check for the auth 
+		 * algorithm will set i correctly
+		 * NOTE: For ECDH-RSA, we need an ECC
+		 * not an RSA cert but for ECDHE-RSA
+		 * we need an RSA cert. Placing the
+		 * checks for SSL_kECDH before RSA
+		 * checks ensures the correct cert is chosen.
+		 */
+		i=SSL_PKEY_ECC;
+		}
+	else if (kalg & SSL_aECDSA)
+		{
+		i=SSL_PKEY_ECC;
+		}
+	else if (kalg & SSL_kDHr)
 		i=SSL_PKEY_DH_RSA;
 	else if (kalg & SSL_kDHd)
 		i=SSL_PKEY_DH_DSA;
@@ -1601,6 +1752,7 @@ X509 *ssl_get_server_send_cert(SSL *s)
 		return(NULL);
 		}
 	if (c->pkeys[i].x509 == NULL) return(NULL);
+
 	return(c->pkeys[i].x509);
 	}
 
@@ -1624,6 +1776,9 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s,SSL_CIPHER *cipher)
 		else
 			return(NULL);
 		}
+	else if ((alg & SSL_aECDSA) &&
+	         (c->pkeys[SSL_PKEY_ECC].privatekey != NULL))
+		return(c->pkeys[SSL_PKEY_ECC].privatekey);
 	else /* if (alg & SSL_aNULL) */
 		{
 		SSLerr(SSL_F_SSL_GET_SIGN_PKEY,ERR_R_INTERNAL_ERROR);
@@ -2268,6 +2423,20 @@ void SSL_set_tmp_dh_callback(SSL *ssl,DH *(*dh)(SSL *ssl,int is_export,
 						int keylength))
 	{
 	SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_DH_CB,(void (*)())dh);
+	}
+#endif
+
+#ifndef OPENSSL_NO_ECDH
+void SSL_CTX_set_tmp_ecdh_callback(SSL_CTX *ctx,EC_KEY *(*ecdh)(SSL *ssl,int is_export,
+							int keylength))
+	{
+	SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TMP_ECDH_CB,(void (*)())ecdh);
+	}
+
+void SSL_set_tmp_ecdh_callback(SSL *ssl,EC_KEY *(*ecdh)(SSL *ssl,int is_export,
+						int keylength))
+	{
+	SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_ECDH_CB,(void (*)())ecdh);
 	}
 #endif
 

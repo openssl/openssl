@@ -103,6 +103,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECC cipher suite support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #include <stdio.h>
 
@@ -234,6 +239,15 @@ CERT *ssl_cert_dup(CERT *cert)
 	ret->dh_tmp_cb = cert->dh_tmp_cb;
 #endif
 
+#ifndef OPENSSL_NO_ECDH
+	if (cert->ecdh_tmp)
+		{
+		EC_KEY_up_ref(cert->ecdh_tmp);
+		ret->ecdh_tmp = cert->ecdh_tmp;
+		}
+	ret->ecdh_tmp_cb = cert->ecdh_tmp_cb;
+#endif
+
 	for (i = 0; i < SSL_PKEY_NUM; i++)
 		{
 		if (cert->pkeys[i].x509 != NULL)
@@ -268,7 +282,11 @@ CERT *ssl_cert_dup(CERT *cert)
 			case SSL_PKEY_DH_DSA:
 				/* We have a DH key. */
 				break;
-				
+
+			case SSL_PKEY_ECC:
+				/* We have an ECC key */
+				break;
+
 			default:
 				/* Can't happen. */
 				SSLerr(SSL_F_SSL_CERT_DUP, SSL_R_LIBRARY_BUG);
@@ -293,6 +311,10 @@ err:
 #ifndef OPENSSL_NO_DH
 	if (ret->dh_tmp != NULL)
 		DH_free(ret->dh_tmp);
+#endif
+#ifndef OPENSSL_NO_ECDH
+	if (ret->ecdh_tmp != NULL)
+		EC_KEY_free(ret->ecdh_tmp);
 #endif
 
 	for (i = 0; i < SSL_PKEY_NUM; i++)
@@ -332,6 +354,9 @@ void ssl_cert_free(CERT *c)
 #endif
 #ifndef OPENSSL_NO_DH
 	if (c->dh_tmp) DH_free(c->dh_tmp);
+#endif
+#ifndef OPENSSL_NO_ECDH
+	if (c->ecdh_tmp) EC_KEY_free(c->ecdh_tmp);
 #endif
 
 	for (i=0; i<SSL_PKEY_NUM; i++)
@@ -438,6 +463,10 @@ void ssl_sess_cert_free(SESS_CERT *sc)
 #ifndef OPENSSL_NO_DH
 	if (sc->peer_dh_tmp != NULL)
 		DH_free(sc->peer_dh_tmp);
+#endif
+#ifndef OPENSSL_NO_ECDH
+	if (sc->peer_ecdh_tmp != NULL)
+		EC_KEY_free(sc->peer_ecdh_tmp);
 #endif
 
 	OPENSSL_free(sc);
