@@ -4,6 +4,9 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) CygWin32 support.
+     [John Jarvie <jjarvie@newsguy.com>]
+
   *) The type-safe stack code has been rejigged. It is now only compiled
      in when OpenSSL is configured with the DEBUG_SAFESTACK option and
      by default all type-specific stack functions are "#define"d back to

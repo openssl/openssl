@@ -362,11 +362,13 @@ my %table=(
 "BC-32","bcc32:::::BN_LLONG DES_PTR RC4_INDEX:::",
 "BC-16","bcc:::(unknown)::BN_LLONG DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 
-# CygWin32
+# Mingw32
 # (Note: the real CFLAGS for Windows builds are defined by util/mk1mf.pl
 # and its library files in util/pl/*)
-"CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:",
 "Mingw32", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:",
+
+# CygWin32
+"CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:",
 
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
 "ultrix-cc","cc:-std1 -O -Olimit 1000 -DL_ENDIAN::(unknown)::::::",
@@ -386,7 +388,7 @@ my %table=(
 );
 
 my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
-	BC-16 CygWin32 Mingw32);
+	BC-16 Mingw32);
 
 my $prefix="";
 my $openssldir="";
