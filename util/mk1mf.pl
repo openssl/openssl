@@ -403,7 +403,7 @@ vclean:
 EOF
     
 my $platform_cpp_symbol = "MK1MF_PLATFORM_$platform";
-$platform_cpp_symbol =~ s/-/_/;
+$platform_cpp_symbol =~ s/-/_/g;
 if (open(IN,"crypto/buildinf.h"))
 	{
 	# Remove entry for this platform in existing file buildinf.h.
