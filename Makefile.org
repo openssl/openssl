@@ -217,12 +217,12 @@ HEADER=         e_os.h
 
 all: Makefile.ssl build_all openssl.pc
 
-BUILD_CMD=if echo " $(DIRS) " | grep " $$i " >/dev/null 2>/dev/null; then \
-	if [ -d "$$i" ]; then \
-		(cd $$i && echo "making all in $$i..." && \
-		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' AS='${AS}' ASFLAG='${ASFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}' all ) || exit 1; \
+BUILD_CMD=if echo " $(DIRS) " | grep " $$dir " >/dev/null 2>/dev/null; then \
+	if [ -d "$$dir" ]; then \
+		(cd $$dir && echo "making $$target in $$dir..." && \
+		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' AS='${AS}' ASFLAG='${ASFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}' $$target ) || exit 1; \
 	else \
-		$(MAKE) $$i; \
+		$(MAKE) $$dir; \
 	fi; fi
 
 sub_all: build_all
@@ -231,17 +231,21 @@ build_all: build_libs build_apps build_tests build_tools
 build_libs: build_crypto build_ssl build_engines
 
 build_crypto:
-	@i=crypto; $(BUILD_CMD)
+	@dir=crypto; target=all; $(BUILD_CMD)
 build_ssl:
-	@i=ssl; $(BUILD_CMD)
+	@dir=ssl; target=all; $(BUILD_CMD)
 build_engines:
-	@i=engines; $(BUILD_CMD)
+	@dir=engines; target=all; $(BUILD_CMD)
 build_apps:
-	@i=apps; $(BUILD_CMD)
+	@dir=apps; target=all; $(BUILD_CMD)
 build_tests:
-	@i=test; $(BUILD_CMD)
+	@dir=test; target=all; $(BUILD_CMD)
 build_tools:
-	@i=tools; $(BUILD_CMD)
+	@dir=tools; target=all; $(BUILD_CMD)
+
+all_testapps: build_libs build_testapps
+build_testapps:
+	@dir=crypto; target=testapps; $(BUILD_CMD)
 
 libcrypto$(SHLIB_EXT): libcrypto.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
@@ -355,12 +359,7 @@ links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
-	@set -e; for i in $(DIRS); do \
-	if [ -d "$$i" ]; then \
-		(cd $$i && echo "making links in $$i..." && \
-		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PERL='${PERL}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' links ) || exit 1; \
-	fi; \
-	done;
+	@set -e; target=links; for dir in $(DIRS); do $(BUILD_CMD); done
 
 gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \
