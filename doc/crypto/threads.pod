@@ -53,8 +53,10 @@ OpenSSL can safely be used in multi-threaded applications provided
 that at least two callback functions are set.
 
 locking_function(int mode, int n, const char *file, int line) is
-needed to perform locking on shared data structures. Multi-threaded
-applications will crash at random if it is not set.
+needed to perform locking on shared data structures.
+(Note that OpenSSL uses a number of global data structures that
+will be implicitly shared whenever multiple threads use OpenSSL.)
+Multi-threaded applications will crash at random if it is not set.
 
 locking_function() must be able to handle up to CRYPTO_num_locks()
 different mutex locks. It sets the B<n>-th lock if B<mode> &
