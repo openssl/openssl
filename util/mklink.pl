@@ -24,7 +24,9 @@ chop($pwd);
 my @pwd_path = split(/\//, $pwd);
 
 my @to_path = ();
-foreach my $dirname (@from_path) {
+
+my $dirname;
+foreach $dirname (@from_path) {
 
     # In this loop, @to_path always is a relative path from
     # @pwd_path (interpreted is an absolute path) to the original pwd.
@@ -45,7 +47,8 @@ foreach my $dirname (@from_path) {
 
 my $to = join('/', @to_path);
 
-foreach my $file (@files) {
+my $file;
+foreach $file (@files) {
 #    print "ln -s $to/$file $from/$file\n";
     symlink("$to/$file", "$from/$file");
     print $file . " => $from/$file\n";
