@@ -409,7 +409,7 @@ int MAIN(int argc, char **argv)
                 if (keyform == FORMAT_ENGINE) {
         		if (!e) {
         			BIO_printf(bio_err,"no engine specified\n");
-                		goto err;
+                		goto end;
 			}
                         key = ENGINE_load_private_key(e, keyfile, passin);
                 } else {
