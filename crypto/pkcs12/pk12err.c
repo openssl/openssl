@@ -65,13 +65,14 @@
 #ifndef NO_ERR
 static ERR_STRING_DATA PKCS12_str_functs[]=
 	{
-{ERR_PACK(0,PKCS12_F_ADD_FRIENDLYNAME,0),	"ADD_FRIENDLYNAME"},
-{ERR_PACK(0,PKCS12_F_ADD_FRIENDLYNAME_ASC,0),	"ADD_FRIENDLYNAME_ASC"},
-{ERR_PACK(0,PKCS12_F_ADD_FRIENDLYNAME_UNI,0),	"ADD_FRIENDLYNAME_UNI"},
 {ERR_PACK(0,PKCS12_F_PARSE_BAGS,0),	"PARSE_BAGS"},
+{ERR_PACK(0,PKCS12_F_PKCS12_ADD_FRIENDLYNAME,0),	"PKCS12_ADD_FRIENDLYNAME"},
+{ERR_PACK(0,PKCS12_F_PKCS12_ADD_FRIENDLYNAME_ASC,0),	"PKCS12_add_friendlyname_asc"},
+{ERR_PACK(0,PKCS12_F_PKCS12_ADD_FRIENDLYNAME_UNI,0),	"PKCS12_add_friendlyname_uni"},
 {ERR_PACK(0,PKCS12_F_PKCS12_ADD_LOCALKEYID,0),	"PKCS12_add_localkeyid"},
 {ERR_PACK(0,PKCS12_F_PKCS12_CREATE,0),	"PKCS12_create"},
 {ERR_PACK(0,PKCS12_F_PKCS12_DECRYPT_D2I,0),	"PKCS12_decrypt_d2i"},
+{ERR_PACK(0,PKCS12_F_PKCS12_FRIENDLYNAME_ASC,0),	"PKCS12_FRIENDLYNAME_ASC"},
 {ERR_PACK(0,PKCS12_F_PKCS12_GEN_MAC,0),	"PKCS12_gen_mac"},
 {ERR_PACK(0,PKCS12_F_PKCS12_I2D_ENCRYPT,0),	"PKCS12_i2d_encrypt"},
 {ERR_PACK(0,PKCS12_F_PKCS12_INIT,0),	"PKCS12_init"},
@@ -122,17 +123,46 @@ static ERR_STRING_DATA PKCS12_str_reasons[]=
 
 #endif
 
-void ERR_load_PKCS12_strings(void)
+#ifdef PKCS12_LIB_NAME
+static ERR_STRING_DATA PKCS12_lib_name[]=
+        {
+{0	,PKCS12_LIB_NAME},
+{0,NULL}
+	};
+#endif
+
+
+int PKCS12_lib_error_code=0;
+
+void ERR_load_PKCS12_strings()
 	{
 	static int init=1;
+
+	if (PKCS12_lib_error_code == 0)
+		PKCS12_lib_error_code=ERR_get_next_error_library();
 
 	if (init)
 		{
 		init=0;
 #ifndef NO_ERR
-		ERR_load_strings(ERR_LIB_PKCS12,PKCS12_str_functs);
-		ERR_load_strings(ERR_LIB_PKCS12,PKCS12_str_reasons);
+		ERR_load_strings(PKCS12_lib_error_code,PKCS12_str_functs);
+		ERR_load_strings(PKCS12_lib_error_code,PKCS12_str_reasons);
 #endif
 
+#ifdef PKCS12_LIB_NAME
+		PKCS12_lib_name->error = ERR_PACK(PKCS12_lib_error_code,0,0);
+		ERR_load_strings(0,PKCS12_lib_name);
+#endif;
 		}
+	}
+
+void ERR_PKCS12_error(function,reason,file,line)
+int function;
+int reason;
+char *file;
+int line;
+	{
+	if (PKCS12_lib_error_code == 0)
+		PKCS12_lib_error_code=ERR_get_next_error_library();
+	ERR_PUT_error(PKCS12_lib_error_code,function,reason,file,line);
 	}

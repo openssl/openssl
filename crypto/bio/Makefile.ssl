@@ -15,8 +15,6 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERR=bio
-ERRC=bio_err
 GENERAL=Makefile
 TEST=
 APPS=

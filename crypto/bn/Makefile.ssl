@@ -19,8 +19,6 @@ BN_ASM=		bn_asm.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERR=bn
-ERRC=bn_err
 GENERAL=Makefile
 TEST=bntest.c exptest.c
 APPS=

@@ -151,7 +151,8 @@ int PKCS12_add_friendlyname_asc (PKCS12_SAFEBAG *bag, const char *name,
 	unsigned char *uniname;
 	int ret, unilen;
 	if (!asc2uni(name, &uniname, &unilen)) {
-		PKCS12err(PKCS12_F_ADD_FRIENDLYNAME_ASC,ERR_R_MALLOC_FAILURE);
+		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME_ASC,
+							ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	ret = PKCS12_add_friendlyname_uni (bag, uniname, unilen);
@@ -169,34 +170,40 @@ int PKCS12_add_friendlyname_uni (PKCS12_SAFEBAG *bag,
 	/* Zap ending double null if included */
 	if(!name[namelen - 1] && !name[namelen - 2]) namelen -= 2;
 	if (!(fname = ASN1_TYPE_new ())) {
-		PKCS12err(PKCS12_F_ADD_FRIENDLYNAME_UNI,ERR_R_MALLOC_FAILURE);
+		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME_UNI,
+							ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	fname->type = V_ASN1_BMPSTRING;
 	if (!(bmp = ASN1_BMPSTRING_new())) {
-		PKCS12err(PKCS12_F_ADD_FRIENDLYNAME_UNI,ERR_R_MALLOC_FAILURE);
+		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME_UNI,
+							ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	if (!(bmp->data = Malloc (namelen))) {
-		PKCS12err(PKCS12_F_ADD_FRIENDLYNAME_UNI,ERR_R_MALLOC_FAILURE);
+		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME_UNI,
+							ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	memcpy (bmp->data, name, namelen);
 	bmp->length = namelen;
 	fname->value.bmpstring = bmp;
 	if (!(attrib = X509_ATTRIBUTE_new ())) {
-		PKCS12err(PKCS12_F_ADD_FRIENDLYNAME_UNI,ERR_R_MALLOC_FAILURE);
+		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME_UNI,
+							ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	attrib->object = OBJ_nid2obj(NID_friendlyName);
 	if (!(attrib->value.set = sk_new(NULL))) {
-		PKCS12err(PKCS12_F_ADD_FRIENDLYNAME,ERR_R_MALLOC_FAILURE);
+		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME,
+							ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	sk_push (attrib->value.set, (char *)fname);
 	attrib->set = 1;
 	if (!bag->attrib && !(bag->attrib = sk_new (NULL))) {
-		PKCS12err(PKCS12_F_ADD_FRIENDLYNAME_UNI, ERR_R_MALLOC_FAILURE);
+		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME_UNI,
+							ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	sk_push (bag->attrib, (char *)attrib);

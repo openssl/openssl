@@ -20,8 +20,6 @@ EX_LIBS=
  
 CFLAGS= $(INCLUDE) $(CFLAG) -DCFLAGS="\"$(CC) $(CFLAG)\"" -DPLATFORM="\"$(PLATFORM)\""
 
-ERR=crypto
-ERRC=cpt_err
 
 LIBS=
 

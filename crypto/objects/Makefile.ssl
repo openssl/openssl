@@ -15,8 +15,6 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERR=objects
-ERRC=obj_err
 GENERAL=Makefile README
 TEST=
 APPS=

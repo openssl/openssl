@@ -167,6 +167,8 @@ while (($lib, $hdr) = each %hinc)
 # oddly named structure BIO_F_CTX which needs to be ignored.
 # If a code doesn't exist in list compiled from headers then mark it
 # with the value "X" as a place holder to give it a value later.
+# Store all function and reason codes found in %ufcodes and %urcodes
+# so all those unreferenced can be printed out.
 
 
 foreach $file (@source) {
@@ -174,16 +176,19 @@ foreach $file (@source) {
 	next if exists $cskip{$file};
 	open(IN, "<$file") || die "Can't open source file $file\n";
 	while(<IN>) {
-		if(/(([A-Z0-9]+)_F_[A-Z0-9_]+)/) {
+		if(/(([A-Z0-9]+)_F_([A-Z0-9_]+))/) {
 			next unless exists $csrc{$2};
 			next if($1 eq "BIO_F_BUFFER_CTX");
+			$ufcodes{$1} = 1;
 			if(!exists $fcodes{$1}) {
 				$fcodes{$1} = "X";
 				$fnew{$2}++;
 			}
+			$notrans{$1} = 1 unless exists $ftrans{$3};
 		}
 		if(/(([A-Z0-9]+)_R_[A-Z0-9_]+)/) {
 			next unless exists $csrc{$2};
+			$urcodes{$1} = 1;
 			if(!exists $rcodes{$1}) {
 				$rcodes{$1} = "X";
 				$rnew{$2}++;
@@ -353,8 +358,6 @@ EOF
 		$fn = $1;
 		if(exists $ftrans{$fn}) {
 			$fn = $ftrans{$fn};
-		} else {
-			push @notrans, $i;
 		}
 		print OUT "{ERR_PACK(0,$i,0),\t\"$fn\"},\n";
 	}
@@ -452,9 +455,35 @@ EOF
 
 }
 
-if($debug && defined(@notrans)) {
+if($debug && defined(%notrans)) {
 	print STDERR "The following function codes were not translated:\n";
-	foreach(@notrans)
+	foreach(sort keys %notrans)
+	{
+		print STDERR "$_\n";
+	}
+}
+
+# Make a list of unreferenced function and reason codes
+
+foreach (keys %fcodes) {
+	push (@funref, $_) unless exists $ufcodes{$_};
+}
+
+foreach (keys %rcodes) {
+	push (@runref, $_) unless exists $urcodes{$_};
+}
+
+if($debug && defined(@funref) ) {
+	print STDERR "The following function codes were not referenced:\n";
+	foreach(sort @funref)
+	{
+		print STDERR "$_\n";
+	}
+}
+
+if($debug && defined(@runref) ) {
+	print STDERR "The following reason codes were not referenced:\n";
+	foreach(sort @runref)
 	{
 		print STDERR "$_\n";
 	}

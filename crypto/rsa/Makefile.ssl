@@ -15,8 +15,6 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERR=rsa
-ERRC=rsa_err
 GENERAL=Makefile
 TEST=rsa_oaep_test.c
 APPS=

@@ -15,8 +15,6 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERR=x509v3
-ERRC=v3err
 GENERAL=Makefile README
 TEST=
 APPS=

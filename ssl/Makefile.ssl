@@ -15,8 +15,6 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERR=ssl
-ERRC=ssl_err
 GENERAL=Makefile README
 TEST=ssltest.c
 APPS=

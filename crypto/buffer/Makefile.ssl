@@ -15,8 +15,6 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERR=buffer
-ERRC=buf_err
 GENERAL=Makefile
 TEST=
 APPS=

@@ -15,8 +15,6 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERR=pkcs7
-ERRC=pkcs7err
 GENERAL=Makefile README
 TEST=
 APPS=

@@ -15,8 +15,6 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERR=rsaref
-ERRC=rsar_err
 GENERAL=Makefile
 TEST=
 APPS=

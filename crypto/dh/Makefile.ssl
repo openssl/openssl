@@ -15,8 +15,6 @@ AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERR=dh
-ERRC=dh_err
 GENERAL=Makefile
 TEST= dhtest.c
 APPS=

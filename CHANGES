@@ -13,7 +13,8 @@
      aren't needed for error creation any more) and do a better job of
      translating function codes into names. The old 'ASN1 error code imbedded
      in a comment' is no longer necessary and it doesn't use .err files which
-     have now been deleted.
+     have now been deleted. Also the error code call doesn't have to appear all
+     on one line (which resulted in some large lines...).
      [Steve Henson]
 
   *) Change #include filenames from <foo.h> to <openssl/foo.h>.
