@@ -1287,7 +1287,7 @@ EXITPOINT:
 
 //	Send some bytes
 
-int MacSocket_send(const int inSocketNum,void *inBuff,int inBuffLength)
+int MacSocket_send(const int inSocketNum,const void *inBuff,int inBuffLength)
 {
 OSErr			errCode = noErr;
 int				bytesSent = 0;

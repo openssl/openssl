@@ -301,8 +301,8 @@ EVP_des_ede_cfb                         308	EXIST::FUNCTION:DES
 EVP_des_ede_ofb                         309	EXIST::FUNCTION:DES
 EVP_des_ofb                             310	EXIST::FUNCTION:DES
 EVP_desx_cbc                            311	EXIST::FUNCTION:DES
-EVP_dss                                 312	EXIST::FUNCTION:SHA,DSA
-EVP_dss1                                313	EXIST::FUNCTION:SHA,DSA
+EVP_dss                                 312	EXIST::FUNCTION:DSA,SHA
+EVP_dss1                                313	EXIST::FUNCTION:DSA,SHA
 EVP_enc_null                            314	EXIST::FUNCTION:
 EVP_get_cipherbyname                    315	EXIST::FUNCTION:
 EVP_get_digestbyname                    316	EXIST::FUNCTION:
@@ -1212,7 +1212,7 @@ name_cmp                                1239	EXIST::FUNCTION:
 str_dup                                 1240	NOEXIST::FUNCTION:
 i2s_ASN1_ENUMERATED                     1241	EXIST::FUNCTION:
 i2s_ASN1_ENUMERATED_TABLE               1242	EXIST::FUNCTION:
-BIO_s_log                               1243	EXIST:!WIN16,!WIN32,!macintosh:FUNCTION:
+BIO_s_log                               1243	EXIST:!WIN32,!macintosh,!WIN16:FUNCTION:
 BIO_f_reliable                          1244	EXIST::FUNCTION:
 PKCS7_dataFinal                         1245	EXIST::FUNCTION:
 PKCS7_dataDecode                        1246	EXIST::FUNCTION:

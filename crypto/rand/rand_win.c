@@ -254,6 +254,10 @@ int RAND_poll(void)
          * at random times on Windows 2000.  Reported by Jeffrey Altman.  
          * Only use it on NT.
 	 */
+	/* Wolfgang Marczy <WMarczy@topcall.co.at> reports that
+	 * the RegQueryValueEx call below can hang on NT4.0 (SP6).
+	 * So we don't use this at all for now. */
+#if 0
         if ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT &&
 		osverinfo.dwMajorVersion < 5)
 		{
@@ -283,13 +287,23 @@ int RAND_poll(void)
 			{
                         /* For entropy count assume only least significant
 			 * byte of each DWORD is random.
-                         */
+			 */
 			RAND_add(&length, sizeof(length), 0);
 			RAND_add(buf, length, length / 4.0);
+
+			/* Close the Registry Key to allow Windows to cleanup/close
+			 * the open handle
+			 * Note: The 'HKEY_PERFORMANCE_DATA' key is implicitly opened
+			 *       when the RegQueryValueEx above is done.  However, if
+			 *       it is not explicitly closed, it can cause disk
+			 *       partition manipulation problems.
+			 */
+			RegCloseKey(HKEY_PERFORMANCE_DATA);
 			}
 		if (buf)
 			free(buf);
 		}
+#endif
 
 	if (advapi)
 		{
@@ -461,7 +475,7 @@ int RAND_poll(void)
 						hlist.th32ProcessID,
 						hlist.th32HeapID))
 						{
-						int entrycnt = 50;
+						int entrycnt = 80;
 						do
 							RAND_add(&hentry,
 								hentry.dwSize, 5);

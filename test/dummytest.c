@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 
 	p = strrchr(argv[0], '/');
 	if (!p) p = strrchr(argv[0], '\\');
-#ifdef OPENSSL_SYS_VMS
+#ifdef VMS
 	if (!p) p = strrchr(argv[0], ']');
 	if (p) q = strrchr(p, '>');
 	if (q) p = q;
