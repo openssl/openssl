@@ -77,6 +77,8 @@ extern "C" {
 #define OCSP_DEFAULT_NONCE_LENGTH	16
 
 #define OCSP_NOCERTS			0x1
+#define OCSP_NOINTERN			0x2
+#define OCSP_NOSIGS			0x4
 
 /*   CertID ::= SEQUENCE {
  *       hashAlgorithm            AlgorithmIdentifier,
@@ -531,6 +533,8 @@ DECLARE_ASN1_FUNCTIONS(OCSP_SERVICELOC)
 
 int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST* a, unsigned long flags);
 
+int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
+				X509_STORE *st, unsigned long flags);
 
 void ERR_load_OCSP_strings(void);
 
@@ -548,6 +552,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_F_CERT_ID_NEW				 102
 #define OCSP_F_CERT_STATUS_NEW				 103
 #define OCSP_F_D2I_OCSP_NONCE				 109
+#define OCSP_F_OCSP_BASIC_VERIFY			 113
 #define OCSP_F_OCSP_CHECK_NONCE				 112
 #define OCSP_F_OCSP_RESPONSE_GET1_BASIC			 111
 #define OCSP_F_OCSP_SENDREQ_BIO				 110
@@ -577,6 +582,8 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_R_SERVER_RESPONSE_ERROR			 117
 #define OCSP_R_SERVER_RESPONSE_PARSE_ERROR		 118
 #define OCSP_R_SERVER_WRITE_ERROR			 119
+#define OCSP_R_SIGNATURE_FAILURE			 124
+#define OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND		 125
 #define OCSP_R_UNEXPECTED_NONCE_IN_RESPONSE		 123
 #define OCSP_R_UNKNOWN_NID				 107
 #define OCSP_R_UNSUPPORTED_OPTION			 113

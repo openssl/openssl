@@ -131,7 +131,7 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 
 int RAND_egd(const char *path)
 	{
-	int num, ret;
+	int num, ret = 0;
 	unsigned char buf[256];
 
 	num = RAND_query_egd_bytes(path, buf, 255);

@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Initial code to implement OCSP basic response verify. This
+     is currently incomplete. Currently just finds the signer's
+     certificate and verifies the signature on the response.
+     [Steve Henson]
+
   *) New SSLeay_version code SSLEAY_DIR to determine the compiled-in
      value of OPENSSLDIR.  This is available via the new '-d' option
      to 'openssl version', and is also included in 'openssl version -a'.
