@@ -483,7 +483,7 @@ $(ECDSATEST): $(ECDSATEST).o $(DLIBCRYPTO)
 	else \
 	  $(CC) -o $(ECDSATEST) $(CFLAGS) $(ECDSATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
-	
+
 $(ECDHTEST): $(ECDHTEST).o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
 	  $(CC) -o $(ECDHTEST) $(CFLAGS) $(ECDHTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
@@ -499,7 +499,7 @@ $(ECDHTEST): $(ECDHTEST).o $(DLIBCRYPTO)
 #	  $(CC) -o $(RDTEST) $(CFLAGS) $(RDTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 #	else \
 #	  $(CC) -o $(RDTEST) $(CFLAGS) $(RDTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi
+#	fi
 
 dummytest: dummytest.o $(DLIBCRYPTO)
 	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \

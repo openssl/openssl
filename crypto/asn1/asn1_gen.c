@@ -143,7 +143,7 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 	unsigned char *cpy_start, *p;
 	int cpy_len;
 	long hdr_len;
-	int hdr_constructed, hdr_tag, hdr_class;
+	int hdr_constructed = 0, hdr_tag, hdr_class;
 	int r;
 
 	asn1_tags.imp_tag = -1;
@@ -268,7 +268,7 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
 	tag_exp_arg *arg = bitstr;
 	int i;
 	int utype;
-	int vlen;
+	int vlen = 0;
 	const char *p, *vstart = NULL;
 
 	int tmp_tag, tmp_class;
