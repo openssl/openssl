@@ -283,6 +283,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 	/* we knoe there's an 8 byte header.  That's documented */
 	opcdef_p = (struct opcdef *) Malloc(8 + strlen(s));
 	opcdef_p->opc$b_ms_type = OPC$_RQ_RQST;
+	opcdef_p->opc$b_ms_target = VMS_OPC_target;
 	memcpy(opcdef_p->opc$b_ms_target, &priority, 3);
 	opcdef_p->opc$l_ms_rqstid = 0;
 	memcpy(&opcdef_p->opc$l_ms_text, buf, len);
