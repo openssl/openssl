@@ -3,6 +3,6 @@
 FP=$1
 shift
 
-egrep '^CFLAG=.*-DFIPS( |$)' $TOP/Makefile || exit 0
+egrep 'define OPENSSL_FIPS' $TOP/include/openssl/opensslconf.h > /dev/null || exit 0
 
 $TOP/fips/sha1/fips_standalone_sha1 $@ | diff -u $FP - || { echo; echo "*** Your source code does not match the FIPS certified source ***"; echo; exit 1; }

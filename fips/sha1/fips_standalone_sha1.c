@@ -48,6 +48,7 @@
  */
 
 #include <openssl/sha.h>
+#include <openssl/opensslconf.h>
 #include <stdio.h>
 #include <stdlib.h>
 

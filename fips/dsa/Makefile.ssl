@@ -1,5 +1,5 @@
 #
-# SSLeay/fips/sha1/Makefile
+# SSLeay/fips/dsa/Makefile
 #
 
 DIR=	dsa

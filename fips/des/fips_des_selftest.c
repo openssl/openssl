@@ -51,8 +51,9 @@
 #include <openssl/err.h>
 #include <openssl/fips.h>
 #include <openssl/des.h>
+#include <openssl/opensslconf.h>
 
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
 static struct
     {
     DES_cblock key;
