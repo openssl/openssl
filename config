@@ -104,6 +104,14 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "m68k-apple-aux3"; exit 0
 	;;
 
+    AIX:[3456789]:4:*)
+	echo "${MACHINE}-ibm-aix43"; exit 0
+	;;
+
+    AIX:*:[56789]:*)
+	echo "${MACHINE}-ibm-aix43"; exit 0
+	;;
+
     AIX:*)
 	echo "${MACHINE}-ibm-aix"; exit 0
 	;;
