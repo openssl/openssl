@@ -70,6 +70,8 @@
 
 #include <limits.h>
 
+#include "cryptlib.h"
+
 #include <openssl/ecdh.h>
 #include <openssl/err.h>
 #include <openssl/sha.h>
