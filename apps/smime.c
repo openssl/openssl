@@ -109,6 +109,9 @@ int MAIN(int argc, char **argv)
 	args = argv + 1;
 	ret = 1;
 
+	if (!load_config(bio_err, NULL))
+		goto end;
+
 	while (!badarg && *args && *args[0] == '-') {
 		if (!strcmp (*args, "-encrypt")) operation = SMIME_ENCRYPT;
 		else if (!strcmp (*args, "-decrypt")) operation = SMIME_DECRYPT;

@@ -503,6 +503,8 @@ bad:
 
 	if (req_conf != NULL)
 		{
+		if (!load_config(bio_err, req_conf))
+			goto end;
 		p=NCONF_get_string(req_conf,NULL,"oid_file");
 		if (p == NULL)
 			ERR_clear_error();

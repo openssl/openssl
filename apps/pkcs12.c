@@ -127,6 +127,9 @@ int MAIN(int argc, char **argv)
     enc = EVP_des_ede3_cbc();
     if (bio_err == NULL ) bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
 
+	if (!load_config(bio_err, NULL))
+		goto end;
+
     args = argv + 1;
 
 

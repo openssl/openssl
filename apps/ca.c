@@ -590,6 +590,9 @@ bad:
 		goto err;
 		}
 
+	if (!load_config(bio_err, conf))
+		goto err;
+
 	/* Lets get the config section we are using */
 	if (section == NULL)
 		{
