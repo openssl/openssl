@@ -28,6 +28,7 @@ B<openssl> B<smime>
 [B<-from ad>]
 [B<-subject s>]
 [B<-text>]
+[B<-rand file(s)>]
 [cert.pem]...
 
 =head1 DESCRIPTION
@@ -172,6 +173,13 @@ the private key to use when signing or decrypting. This must match the
 corresponding certificate. If this option is not specified then the
 private key must be included in the certificate file specified with
 the B<-recip> or B<-signer> file.
+
+=item B<-rand file(s)>
+
+a file or files containing random data used to seed the random number
+generator. Multiple files can be specified separated by a OS-dependent
+character.  For MS-Windows, the separator is B<;>.  For OpenVMS, it's
+B<,>.  For all others, it's B<:>.
 
 =item B<cert.pem...>
 

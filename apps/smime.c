@@ -102,7 +102,8 @@ int MAIN(int argc, char **argv)
 	int flags = PKCS7_DETACHED;
 	char *to = NULL, *from = NULL, *subject = NULL;
 	char *CAfile = NULL, *CApath = NULL, *passin = NULL;
-
+	char *inrand = NULL;
+	int need_rand = 0;
 	args = argv + 1;
 
 	ret = 1;
@@ -145,17 +146,27 @@ int MAIN(int argc, char **argv)
 				flags |= PKCS7_BINARY;
 		else if (!strcmp (*args, "-nosigs"))
 				flags |= PKCS7_NOSIGS;
-		else if (!strcmp(*argv,"-passin")) {
-			if (--argc < 1) badarg = 1;
-			else passin= *(++argv);
+		else if (!strcmp(*args,"-rand")) {
+			if (args[1]) {
+				args++;
+				inrand = *args;
+			} else badarg = 1;
+			need_rand = 1;
+		} else if (!strcmp(*args,"-passin")) {
+			if (args[1]) {
+				args++;
+				passin = *args;
+			} else badarg = 1;
 		} else if (!strcmp(*argv,"-envpassin")) {
-			if (--argc < 1) badarg = 1;
-			else if(!(passin= getenv(*(++argv)))) {
-				BIO_printf(bio_err,
-				 "Can't read environment variable %s\n",
-								*argv);
-				badarg = 1;
-			}
+			if (args[1]) {
+				args++;
+				if(!(passin= getenv(*args))) {
+					BIO_printf(bio_err,
+					 "Can't read environment variable %s\n",
+								*args);
+					badarg = 1;
+				}
+			} else badarg = 1;
 		} else if (!strcmp (*args, "-to")) {
 			if (args[1]) {
 				args++;
@@ -220,6 +231,7 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err, "No signer certificate specified\n");
 			badarg = 1;
 		}
+		need_rand = 1;
 	} else if(operation == SMIME_DECRYPT) {
 		if(!recipfile) {
 			BIO_printf(bio_err, "No recipient certificate and key specified\n");
@@ -230,6 +242,7 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err, "No recipient(s) certificate(s) specified\n");
 			badarg = 1;
 		}
+		need_rand = 1;
 	} else if(!operation) badarg = 1;
 
 	if (badarg) {
@@ -268,8 +281,18 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-text          include or delete text MIME headers\n");
 		BIO_printf (bio_err, "-CApath dir    trusted certificates directory\n");
 		BIO_printf (bio_err, "-CAfile file   trusted certificates file\n");
+		BIO_printf(bio_err,  "-rand file:file:...\n");
+		BIO_printf(bio_err,  "               load the file (or the files in the directory) into\n");
+		BIO_printf(bio_err,  "               the random number generator\n");
 		BIO_printf (bio_err, "cert.pem       recipient certificate(s) for encryption\n");
 		goto end;
+	}
+
+	if (need_rand) {
+		app_RAND_load_file(NULL, bio_err, (inrand != NULL));
+		if (inrand != NULL)
+			BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
+				app_RAND_load_files(inrand));
 	}
 
 	ret = 2;
@@ -499,6 +522,8 @@ end:
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_remove_all_info();
 #endif
+	if (need_rand)
+		app_RAND_write_file(NULL, bio_err);
 	if(ret) ERR_print_errors(bio_err);
 	sk_X509_pop_free(encerts, X509_free);
 	sk_X509_pop_free(other, X509_free);

@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Add -rand argument to smime and pkcs12 applications and read/write
+     of seed file.
+     [Steve Henson]
+
   *) New 'passwd' tool for crypt(3) and apr1 password hashes.
      [Bodo Moeller]
 

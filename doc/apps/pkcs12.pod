@@ -41,6 +41,7 @@ B<openssl> B<pkcs12>
 [B<-envpassin var>]
 [B<-passout password>]
 [B<-envpassout var>]
+[B<-rand file(s)>]
 
 =head1 DESCRIPTION
 
@@ -252,6 +253,13 @@ option.
 
 This option is included for compatibility with previous versions, it used
 to be needed to use MAC iterations counts but they are now used by default.
+
+=item B<-rand file(s)>
+
+a file or files containing random data used to seed the random number
+generator. Multiple files can be specified separated by a OS-dependent
+character.  For MS-Windows, the separator is B<;>.  For OpenVMS, it's
+B<,>.  For all others, it's B<:>.
 
 =back
 

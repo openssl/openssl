@@ -114,6 +114,7 @@ int MAIN(int argc, char **argv)
     STACK *canames = NULL;
     char *cpass = NULL, *mpass = NULL;
     char *passin = NULL, *passout = NULL;
+    char *inrand = NULL;
 
     apps_startup();
 
@@ -170,6 +171,11 @@ int MAIN(int argc, char **argv)
 					badarg = 1;
 				}
 			} else badarg = 1;
+		} else if (!strcmp (*args, "-rand")) {
+		    if (args[1]) {
+			args++;	
+			inrand = *args;
+		    } else badarg = 1;
 		} else if (!strcmp (*args, "-inkey")) {
 		    if (args[1]) {
 			args++;	
@@ -212,7 +218,7 @@ int MAIN(int argc, char **argv)
 			if(!(passin= getenv(*args))) {
 				BIO_printf(bio_err,
 				 "Can't read environment variable %s\n",
-								*argv);
+								*args);
 				badarg = 1;
 			}
 		    } else badarg = 1;
@@ -222,7 +228,7 @@ int MAIN(int argc, char **argv)
 			if(!(passout= getenv(*args))) {
 				BIO_printf(bio_err,
 				 "Can't read environment variable %s\n",
-								*argv);
+								*args);
 				badarg = 1;
 			}
 		    } else badarg = 1;
@@ -290,6 +296,9 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-envpassin p  environment variable containing input file pass phrase\n");
 	BIO_printf (bio_err, "-passout p    output file pass phrase\n");
 	BIO_printf (bio_err, "-envpassout p environment variable containing output file pass phrase\n");
+	BIO_printf(bio_err,  "-rand file:file:...\n");
+	BIO_printf(bio_err,  "              load the file (or the files in the directory) into\n");
+	BIO_printf(bio_err,  "              the random number generator\n");
     	goto end;
     }
 
@@ -306,6 +315,12 @@ int MAIN(int argc, char **argv)
 	mpass = macpass;
     }
 
+    if(export_cert || inrand) {
+    	app_RAND_load_file(NULL, bio_err, (inrand != NULL));
+        if (inrand != NULL)
+		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
+			app_RAND_load_files(inrand));
+    }
     ERR_load_crypto_strings();
 
 #ifdef CRYPTO_MDEBUG
@@ -558,6 +573,7 @@ int MAIN(int argc, char **argv)
     PKCS12_free(p12);
     ret = 0;
     end:
+    if(export_cert || inrand) app_RAND_write_file(NULL, bio_err);
 #ifdef CRYPTO_MDEBUG
     CRYPTO_remove_all_info();
 #endif
