@@ -79,16 +79,9 @@ static ASN1_OBJECT *ln_objs[1];
 static ASN1_OBJECT *obj_objs[1];
 #endif
 
-#ifndef NOPROTO
 static int sn_cmp(ASN1_OBJECT **a, ASN1_OBJECT **b);
 static int ln_cmp(ASN1_OBJECT **a, ASN1_OBJECT **b);
 static int obj_cmp(ASN1_OBJECT **a, ASN1_OBJECT **b);
-#else
-static int sn_cmp();
-static int ln_cmp();
-static int obj_cmp();
-#endif
-
 #define ADDED_DATA	0
 #define ADDED_SNAME	1
 #define ADDED_LNAME	2

@@ -68,14 +68,8 @@
 #undef PROG
 #define PROG	verify_main
 
-#ifndef NOPROTO
 static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx,char *file);
-#else
-static int MS_CALLBACK cb();
-static int check();
-#endif
-
 static int v_verbose=0;
 
 int MAIN(int argc, char **argv)

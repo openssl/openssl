@@ -73,12 +73,7 @@
 #undef PROG
 #define PROG	dgst_main
 
-#ifndef NOPROTO
 void do_fp(unsigned char *buf,BIO *f,int sep);
-#else
-void do_fp();
-#endif
-
 int MAIN(int argc, char **argv)
 	{
 	unsigned char *buf=NULL;

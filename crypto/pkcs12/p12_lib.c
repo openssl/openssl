@@ -61,11 +61,6 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/pkcs12.h>
 
-/*
- *ASN1err(ASN1_F_PKCS12_NEW,ASN1_R_DECODE_ERROR)
- *ASN1err(ASN1_F_D2I_PKCS12,ASN1_R_DECODE_ERROR)
- */
-
 int i2d_PKCS12(PKCS12 *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);

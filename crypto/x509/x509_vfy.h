@@ -256,7 +256,6 @@ struct x509_store_state_st
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50
 
-#ifndef NOPROTO
 #ifdef HEADER_LHASH_H
 X509_OBJECT *X509_OBJECT_retrieve_by_subject(LHASH *h,int type,X509_NAME *name);
 #endif
@@ -318,63 +317,6 @@ X509 *	X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
 STACK *	X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx);
 void	X509_STORE_CTX_set_cert(X509_STORE_CTX *c,X509 *x);
 void	X509_STORE_CTX_set_chain(X509_STORE_CTX *c,STACK_OF(X509) *sk);
-
-#else
-
-#ifdef HEADER_LHASH_H
-X509_OBJECT *X509_OBJECT_retrieve_by_subject();
-#endif
-void X509_OBJECT_up_ref_count();
-void X509_OBJECT_free_contents();
-X509_STORE *X509_STORE_new();
-void X509_STORE_free();
-
-void X509_STORE_CTX_init();
-void X509_STORE_CTX_cleanup();
-
-X509_LOOKUP *X509_STORE_add_lookup();
-
-X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir();
-X509_LOOKUP_METHOD *X509_LOOKUP_file();
-
-int X509_STORE_add_cert();
-int X509_STORE_add_crl();
-
-int X509_STORE_get_by_subject();
-
-int X509_LOOKUP_ctrl();
-
-#ifndef NO_STDIO
-int X509_load_cert_file();
-int X509_load_crl_file();
-#endif
-
-X509_LOOKUP *X509_LOOKUP_new();
-void X509_LOOKUP_free();
-int X509_LOOKUP_init();
-int X509_LOOKUP_by_subject();
-int X509_LOOKUP_by_issuer_serial();
-int X509_LOOKUP_by_fingerprint();
-int X509_LOOKUP_by_alias();
-int X509_LOOKUP_shutdown();
-
-#ifndef NO_STDIO
-int	X509_STORE_load_locations ();
-int	X509_STORE_set_default_paths();
-#endif
-
-int X509_STORE_CTX_get_ex_new_index();
-int	X509_STORE_CTX_set_ex_data();
-void *	X509_STORE_CTX_get_ex_data();
-int	X509_STORE_CTX_get_error();
-void	X509_STORE_CTX_set_error();
-int	X509_STORE_CTX_get_error_depth();
-X509 *	X509_STORE_CTX_get_current_cert();
-STACK *	X509_STORE_CTX_get_chain();
-void	X509_STORE_CTX_set_cert();
-void	X509_STORE_CTX_set_chain();
-
-#endif
 
 #ifdef  __cplusplus
 }

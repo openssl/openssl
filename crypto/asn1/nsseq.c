@@ -65,11 +65,6 @@
 
 /* Netscape certificate sequence structure */
 
-/*
- * ASN1err(ASN1_F_NETSCAPE_CERT_SEQUENCE_NEW,ERR_R_MALLOC_FAILURE);
- * ASN1err(ASN1_F_D2I_NETSCAPE_CERT_SEQUENCE,ERR_R_MALLOC_FAILURE);
- */
-
 int i2d_NETSCAPE_CERT_SEQUENCE(NETSCAPE_CERT_SEQUENCE *a, unsigned char **pp)
 {
 	int v = 0;

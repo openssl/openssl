@@ -73,7 +73,6 @@
 
 #if !defined(NO_STDIO)
 
-#ifndef NOPROTO
 static int MS_CALLBACK file_write(BIO *h,char *buf,int num);
 static int MS_CALLBACK file_read(BIO *h,char *buf,int size);
 static int MS_CALLBACK file_puts(BIO *h,char *str);
@@ -81,16 +80,6 @@ static int MS_CALLBACK file_gets(BIO *h,char *str,int size);
 static long MS_CALLBACK file_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int MS_CALLBACK file_new(BIO *h);
 static int MS_CALLBACK file_free(BIO *data);
-#else
-static int MS_CALLBACK file_write();
-static int MS_CALLBACK file_read();
-static int MS_CALLBACK file_puts();
-static int MS_CALLBACK file_gets();
-static long MS_CALLBACK file_ctrl();
-static int MS_CALLBACK file_new();
-static int MS_CALLBACK file_free();
-#endif
-
 static BIO_METHOD methods_filep=
 	{
 	BIO_TYPE_FILE,

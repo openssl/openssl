@@ -62,18 +62,10 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/x509v3.h>
 
-#ifndef NOPROTO
 static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, PKEY_USAGE_PERIOD *usage, BIO *out, int indent);
 /*
 static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *values);
 */
-#else
-
-static int i2r_PKEY_USAGE_PERIOD();
-static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD();
-
-#endif
-
 X509V3_EXT_METHOD v3_pkey_usage_period = {
 NID_private_key_usage_period, 0,
 (X509V3_EXT_NEW)PKEY_USAGE_PERIOD_new,
@@ -84,12 +76,6 @@ NULL, NULL, NULL, NULL,
 (X509V3_EXT_I2R)i2r_PKEY_USAGE_PERIOD, NULL,
 NULL
 };
-
-
-/*
- * ASN1err(ASN1_F_PKEY_USAGE_PERIOD_NEW,ERR_R_MALLOC_FAILURE);
- * ASN1err(ASN1_F_D2I_PKEY_USAGE_PERIOD,ERR_R_MALLOC_FAILURE);
- */
 
 int i2d_PKEY_USAGE_PERIOD(PKEY_USAGE_PERIOD *a, unsigned char **pp)
 {

@@ -64,11 +64,6 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-/*
- * ASN1err(ASN1_F_GENERAL_NAME_NEW,ERR_R_MALLOC_FAILURE);
- * ASN1err(ASN1_F_D2I_GENERAL_NAME,ERR_R_MALLOC_FAILURE);
- */
-
 int i2d_GENERAL_NAME(GENERAL_NAME *a, unsigned char **pp)
 {
 	unsigned char *p;

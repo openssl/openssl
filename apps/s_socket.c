@@ -69,14 +69,8 @@
 #include "s_apps.h"
 #include <openssl/ssl.h>
 
-#ifndef NOPROTO
 static struct hostent *GetHostByName(char *name);
 int sock_init(void );
-#else
-static struct hostent *GetHostByName();
-int sock_init();
-#endif
-
 #ifdef WIN16
 #define SOCKET_PROTOCOL	0 /* more microsoft stupidity */
 #else

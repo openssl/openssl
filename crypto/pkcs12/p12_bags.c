@@ -61,11 +61,6 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/pkcs12.h>
 
-/*
- *ASN1err(ASN1_F_PKCS12_BAGS_NEW,ASN1_R_DECODE_ERROR)
- *ASN1err(ASN1_F_D2I_PKCS12_BAGS,ASN1_R_DECODE_ERROR)
- */
-
 int i2d_PKCS12_BAGS(PKCS12_BAGS *a, unsigned char **pp)
 {
 	int bagnid, v = 0;

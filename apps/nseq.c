@@ -65,11 +65,7 @@
 #undef PROG
 #define PROG nseq_main
 
-#ifdef NOPROTO
 static int dump_cert_text(BIO *out, X509 *x);
-#else
-static int dump_cert_text();
-#endif
 
 int MAIN(int argc, char **argv)
 {

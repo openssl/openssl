@@ -63,7 +63,6 @@
 #include "ssl_locl.h"
 #include <openssl/evp.h>
 
-#ifndef NOPROTO
 static SSL_METHOD *ssl2_get_server_method(int ver);
 static int get_client_master_key(SSL *s);
 static int get_client_hello(SSL *s);
@@ -74,18 +73,6 @@ static int server_finish(SSL *s);
 static int request_certificate(SSL *s);
 static int ssl_rsa_private_decrypt(CERT *c, int len, unsigned char *from,
 	unsigned char *to,int padding);
-#else
-static SSL_METHOD *ssl2_get_server_method();
-static int get_client_master_key();
-static int get_client_hello();
-static int server_hello(); 
-static int get_client_finished();
-static int server_verify();
-static int server_finish();
-static int request_certificate();
-static int ssl_rsa_private_decrypt();
-#endif
-
 #define BREAK	break
 
 static SSL_METHOD *ssl2_get_server_method(int ver)

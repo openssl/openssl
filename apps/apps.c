@@ -69,12 +69,7 @@
 #  include "bss_file.c"
 #endif
 
-#ifndef NOPROTO
 int app_init(long mesgwin);
-#else
-int app_init();
-#endif
-
 #ifdef undef /* never finished - probably never will be :-) */
 int args_from_file(char *file, int *argc, char **argv[])
 	{

@@ -82,12 +82,7 @@ char *ret[]={
 	"d5976f79d83d3a0dc9806c3c66f3efd8",
 	};
 
-#ifndef NOPROTO
 static char *pt(unsigned char *md);
-#else
-static char *pt();
-#endif
-
 int main(int argc, char *argv[])
 	{
 	int i,err=0;

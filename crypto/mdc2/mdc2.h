@@ -76,21 +76,11 @@ typedef struct mdc2_ctx_st
 	int pad_type; /* either 1 or 2, default 1 */
 	} MDC2_CTX;
 
-#ifndef NOPROTO
 
 void MDC2_Init(MDC2_CTX *c);
 void MDC2_Update(MDC2_CTX *c, unsigned char *data, unsigned long len);
 void MDC2_Final(unsigned char *md, MDC2_CTX *c);
 unsigned char *MDC2(unsigned char *d, unsigned long n, unsigned char *md);
-
-#else
-
-void MDC2_Init();
-void MDC2_Update();
-void MDC2_Final();
-unsigned char *MDC2();
-
-#endif
 
 #ifdef  __cplusplus
 }

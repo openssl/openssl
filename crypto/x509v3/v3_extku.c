@@ -63,14 +63,8 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-#ifndef NOPROTO
 static STACK *v2i_ext_ku(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
 static STACK *i2v_ext_ku(X509V3_EXT_METHOD *method, STACK *eku, STACK *extlist);
-#else
-static STACK *v2i_ext_ku();
-static STACK *i2v_ext_ku();
-#endif
-
 X509V3_EXT_METHOD v3_ext_ku = {
 NID_ext_key_usage, 0,
 (X509V3_EXT_NEW)ext_ku_new,

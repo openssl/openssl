@@ -64,12 +64,7 @@ const char *ssl3_version_str="SSLv3" OPENSSL_VERSION_PTEXT;
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers)/sizeof(SSL_CIPHER))
 
-#ifndef NOPROTO
 static long ssl3_default_timeout(void );
-#else
-static long ssl3_default_timeout();
-#endif
-
 SSL_CIPHER ssl3_ciphers[]={
 /* The RSA ciphers */
 /* Cipher 01 */
@@ -640,11 +635,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, char *parg)
 		}
 		break;
 	case SSL_CTRL_SET_TMP_RSA_CB:
-#ifndef NOPROTO
 		s->cert->rsa_tmp_cb = (RSA *(*)(SSL *, int, int))parg;
-#else
-		s->cert->rsa_tmp_cb = (RSA *(*)())parg;
-#endif
 		break;
 #endif
 #ifndef NO_DH
@@ -671,11 +662,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, char *parg)
 		}
 		break;
 	case SSL_CTRL_SET_TMP_DH_CB:
-#ifndef NOPROTO
 		s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))parg;
-#else
-		s->cert->dh_tmp_cb = (DH *(*)())parg;
-#endif
 		break;
 #endif
 	default:
@@ -731,11 +718,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 		}
 		/* break; */
 	case SSL_CTRL_SET_TMP_RSA_CB:
-#ifndef NOPROTO
 		cert->rsa_tmp_cb=(RSA *(*)(SSL *, int, int))parg;
-#else
-		cert->rsa_tmp_cb=(RSA *(*)())parg;
-#endif
 		break;
 #endif
 #ifndef NO_DH
@@ -762,11 +745,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 		}
 		/*break; */
 	case SSL_CTRL_SET_TMP_DH_CB:
-#ifndef NOPROTO
 		cert->dh_tmp_cb=(DH *(*)(SSL *, int, int))parg;
-#else
-		cert->dh_tmp_cb=(DH *(*)())parg;
-#endif
 		break;
 #endif
 	/* A Thawte special :-) */

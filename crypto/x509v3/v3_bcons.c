@@ -64,16 +64,8 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-#ifndef NOPROTO
 static STACK *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method, BASIC_CONSTRAINTS *bcons, STACK *extlist);
 static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *values);
-
-#else
-
-static STACK *i2v_BASIC_CONSTRAINTS();
-static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS();
-
-#endif
 
 X509V3_EXT_METHOD v3_bcons = {
 NID_basic_constraints, 0,
@@ -88,11 +80,6 @@ NULL,NULL,
 NULL
 };
 
-
-/*
- * ASN1err(ASN1_F_BASIC_CONSTRAINTS_NEW,ERR_R_MALLOC_FAILURE);
- * ASN1err(ASN1_F_D2I_BASIC_CONSTRAINTS,ERR_R_MALLOC_FAILURE);
- */
 
 int i2d_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS *a, unsigned char **pp)
 {

@@ -78,7 +78,6 @@ typedef struct hmac_ctx_st
 
 #define HMAC_size(e)	(EVP_MD_size((e)->md))
 
-#ifndef NOPROTO
 
 void HMAC_Init(HMAC_CTX *ctx, const unsigned char *key, int len,
 	       const EVP_MD *md);
@@ -88,16 +87,6 @@ void HMAC_cleanup(HMAC_CTX *ctx);
 unsigned char *HMAC(EVP_MD *evp_md, unsigned char *key, int key_len,
 	unsigned char *d, int n, unsigned char *md, unsigned int *md_len);
 
-
-#else
-
-void HMAC_Init();
-void HMAC_Update();
-void HMAC_Final();
-void HMAC_cleanup();
-unsigned char *HMAC();
-
-#endif
 
 #ifdef  __cplusplus
 }

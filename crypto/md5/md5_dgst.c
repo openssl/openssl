@@ -70,22 +70,12 @@ char *MD5_version="MD5" OPENSSL_VERSION_PTEXT;
 #define INIT_DATA_C (unsigned long)0x98badcfeL
 #define INIT_DATA_D (unsigned long)0x10325476L
 
-#ifndef NOPROTO
 #  ifdef MD5_ASM
      void md5_block_x86(MD5_CTX *c, unsigned long *p,int num);
 #    define md5_block md5_block_x86
 #  else
      static void md5_block(MD5_CTX *c, unsigned long *p,int num);
 #  endif
-#else
-#  ifdef MD5_ASM
-     void md5_block_x86();
-#    define md5_block md5_block_x86
-#  else
-     static void md5_block();
-#  endif
-#endif
-
 void MD5_Init(MD5_CTX *c)
 	{
 	c->A=INIT_DATA_A;

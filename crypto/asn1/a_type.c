@@ -60,16 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/asn1_mac.h>
 
-/* ASN1err(ASN1_F_D2I_ASN1_BYTES,ASN1_R_WRONG_TAG);
- * ASN1err(ASN1_F_ASN1_COLLATE_PRIMATIVE,ASN1_R_WRONG_TAG);
- */
-
-#ifndef NOPROTO
 static void ASN1_TYPE_component_free(ASN1_TYPE *a);
-#else
-static void ASN1_TYPE_component_free();
-#endif
-
 int i2d_ASN1_TYPE(ASN1_TYPE *a, unsigned char **pp)
 	{
 	int r=0;

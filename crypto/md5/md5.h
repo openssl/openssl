@@ -78,20 +78,11 @@ typedef struct MD5state_st
 	int num;
 	} MD5_CTX;
 
-#ifndef NOPROTO
 void MD5_Init(MD5_CTX *c);
 void MD5_Update(MD5_CTX *c, const void *data, unsigned long len);
 void MD5_Final(unsigned char *md, MD5_CTX *c);
 unsigned char *MD5(unsigned char *d, unsigned long n, unsigned char *md);
 void MD5_Transform(MD5_CTX *c, unsigned char *b);
-#else
-void MD5_Init();
-void MD5_Update();
-void MD5_Final();
-unsigned char *MD5();
-void MD5_Transform();
-#endif
-
 #ifdef  __cplusplus
 }
 #endif

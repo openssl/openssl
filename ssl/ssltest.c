@@ -73,20 +73,11 @@
 #define TEST_SERVER_CERT "../apps/server.pem"
 #define TEST_CLIENT_CERT "../apps/client.pem"
 
-#ifndef NOPROTO
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export,int keylength);
 #ifndef NO_DSA
 static DH *get_dh512(void);
 #endif
-#else
-int MS_CALLBACK verify_callback();
-static RSA MS_CALLBACK *tmp_rsa_cb();
-#ifndef NO_DSA
-static DH *get_dh512();
-#endif
-#endif
-
 BIO *bio_err=NULL;
 BIO *bio_stdout=NULL;
 
@@ -98,12 +89,7 @@ static int s_nbio=0;
 #endif
 
 
-#ifndef  NOPROTO
 int doit(SSL *s_ssl,SSL *c_ssl,long bytes);
-#else
-int doit();
-#endif
-
 static void sv_usage(void)
 	{
 	fprintf(stderr,"usage: ssltest [args ...]\n");

@@ -60,10 +60,6 @@
 #include "cryptlib.h"
 #include <openssl/asn1_mac.h>
 #include <openssl/pkcs12.h>
-/*
- *ASN1err(ASN1_F_PKCS12_MAC_DATA_NEW,ASN1_R_DECODE_ERROR)
- *ASN1err(ASN1_F_D2I_PKCS12_MAC_DATA,ASN1_R_DECODE_ERROR)
- */
 
 int i2d_PKCS12_MAC_DATA(PKCS12_MAC_DATA *a, unsigned char **pp)
 {

@@ -62,16 +62,10 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-#ifndef NOPROTO
 static int asn1_print_info(BIO *bp, int tag, int xclass,int constructed,
 	int indent);
 static int asn1_parse2(BIO *bp, unsigned char **pp, long length,
 	int offset, int depth, int indent);
-#else
-static int asn1_print_info();
-static int asn1_parse2();
-#endif
-
 static int asn1_print_info(BIO *bp, int tag, int xclass, int constructed,
 	     int indent)
 	{

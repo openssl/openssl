@@ -62,16 +62,9 @@
 
 /* Simplified PKCS#12 routines */
 
-#ifndef NOPROTO
 static int parse_pk12( PKCS12 *p12, const char *pass, int passlen, EVP_PKEY **pkey, X509 **cert, STACK **ca);
 static int parse_bags( STACK *bags, const char *pass, int passlen, EVP_PKEY **pkey, X509 **cert, STACK **ca, ASN1_OCTET_STRING **keyid, char *keymatch);
 static int parse_bag( PKCS12_SAFEBAG *bag, const char *pass, int passlen, EVP_PKEY **pkey, X509 **cert, STACK **ca, ASN1_OCTET_STRING **keyid, char *keymatch);
-#else
-static int parse_pk12();
-static int parse_bags();
-static int parse_bag();
-#endif
-
 /* Parse and decrypt a PKCS#12 structure returning user key, user cert
  * and other (CA) certs. Note either ca should be NULL, *ca should be NULL,
  * or it should point to a valid STACK structure. pkey and cert can be

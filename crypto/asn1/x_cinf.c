@@ -60,11 +60,6 @@
 #include "cryptlib.h"
 #include <openssl/asn1_mac.h>
 
-/*
- * ASN1err(ASN1_F_D2I_X509_CINF,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_CINF_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
- */
-
 int i2d_X509_CINF(X509_CINF *a, unsigned char **pp)
 	{
 	int v1=0,v2=0;

@@ -88,7 +88,6 @@ typedef struct rc5_key_st
 	RC5_32_INT data[2*(RC5_16_ROUNDS+1)];
 	} RC5_32_KEY;
 
-#ifndef NOPROTO
  
 void RC5_32_set_key(RC5_32_KEY *key, int len, unsigned char *data,
 	int rounds);
@@ -102,18 +101,6 @@ void RC5_32_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	RC5_32_KEY *schedule, unsigned char *ivec, int *num, int enc);
 void RC5_32_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	RC5_32_KEY *schedule, unsigned char *ivec, int *num);
-
-#else
-
-void RC5_32_set_key();
-void RC5_32_ecb_encrypt();
-void RC5_32_encrypt();
-void RC5_32_decrypt();
-void RC5_32_cbc_encrypt();
-void RC5_32_cfb64_encrypt();
-void RC5_32_ofb64_encrypt();
-
-#endif
 
 #ifdef  __cplusplus
 }

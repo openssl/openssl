@@ -181,16 +181,9 @@ struct tms {
 #define BUFSIZE	((long)1024*8+1)
 int run=0;
 
-#ifndef NOPROTO
 static double Time_F(int s);
 static void print_message(char *s,long num,int length);
 static void pkey_print_message(char *str,char *str2,long num,int bits,int sec);
-#else
-static double Time_F();
-static void print_message();
-static void pkey_print_message();
-#endif
-
 #ifdef SIGALRM
 #if defined(__STDC__) || defined(sgi) || defined(_AIX)
 #define SIGRETTYPE void
@@ -198,12 +191,7 @@ static void pkey_print_message();
 #define SIGRETTYPE int
 #endif 
 
-#ifndef NOPROTO
 static SIGRETTYPE sig_done(int sig);
-#else
-static SIGRETTYPE sig_done();
-#endif
-
 static SIGRETTYPE sig_done(int sig)
 	{
 	signal(SIGALRM,sig_done);

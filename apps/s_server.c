@@ -74,7 +74,6 @@
 #include <openssl/ssl.h>
 #include "s_apps.h"
 
-#ifndef NOPROTO
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export,int keylength);
 static int sv_body(char *hostname, int s, unsigned char *context);
 static int www_body(char *hostname, int s, unsigned char *context);
@@ -87,21 +86,6 @@ static DH *load_dh_param(void );
 static DH *get_dh512(void);
 #endif
 /* static void s_server_init(void);*/
-#else
-static RSA MS_CALLBACK *tmp_rsa_cb();
-static int sv_body();
-static int www_body();
-static void close_accept_socket();
-static void sv_usage();
-static int init_ssl_connection();
-static void print_stats();
-#ifndef NO_DH
-static DH *load_dh_param();
-static DH *get_dh512();
-#endif
-/* static void s_server_init(); */
-#endif
-
 
 #ifndef S_ISDIR
 #define S_ISDIR(a)	(((a) & _S_IFMT) == _S_IFDIR)

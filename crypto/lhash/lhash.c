@@ -107,23 +107,12 @@ const char *lh_version="lhash" OPENSSL_VERSION_PTEXT;
 #define UP_LOAD		(2*LH_LOAD_MULT) /* load times 256  (default 2) */
 #define DOWN_LOAD	(LH_LOAD_MULT)   /* load times 256  (default 1) */
 
-#ifndef NOPROTO
 
 #define P_CP	char *
 #define P_CPP	char *,char *
 static void expand(LHASH *lh);
 static void contract(LHASH *lh);
 static LHASH_NODE **getrn(LHASH *lh, char *data, unsigned long *rhash);
-
-#else
-
-#define	P_CP
-#define P_CPP
-static void expand();
-static void contract();
-static LHASH_NODE **getrn();
-
-#endif
 
 LHASH *lh_new(unsigned long (*h)(), int (*c)())
 	{

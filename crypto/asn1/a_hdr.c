@@ -61,13 +61,6 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/asn1.h>
 
-/*
- * ASN1err(ASN1_F_D2I_ASN1_HEADER,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_I2D_ASN1_HEADER,ERR_R_BAD_GET_ASN1_OBJECT_CALL);
- * ASN1err(ASN1_F_I2D_ASN1_HEADER,ERR_R_BAD_GET_ASN1_OBJECT_CALL);
- * ASN1err(ASN1_F_ASN1_HEADER_NEW,ERR_R_BAD_GET_ASN1_OBJECT_CALL);
- */
-
 int i2d_ASN1_HEADER(ASN1_HEADER *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);

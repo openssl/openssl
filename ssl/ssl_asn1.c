@@ -75,11 +75,6 @@ typedef struct ssl_session_asn1_st
 	ASN1_INTEGER timeout;
 	} SSL_SESSION_ASN1;
 
-/*
- * SSLerr(SSL_F_I2D_SSL_SESSION,SSL_R_CIPHER_CODE_WRONG_LENGTH);
- * SSLerr(SSL_F_D2I_SSL_SESSION,SSL_R_UNSUPPORTED_CIPHER);
- */
-
 int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)

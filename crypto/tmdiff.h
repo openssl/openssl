@@ -67,21 +67,11 @@
 extern "C" {
 #endif
 
-#ifndef NOPROTO
 char *ms_time_new(void );
 void ms_time_free(char *a);
 void ms_time_get(char *a);
 double ms_time_diff(char *start,char *end);
 int ms_time_cmp(char *ap,char *bp);
-
-#else
-
-char *ms_time_new();
-void ms_time_free();
-void ms_time_get();
-double ms_time_diff();
-int ms_time_cmp();
-#endif
 
 #ifdef  __cplusplus
 }

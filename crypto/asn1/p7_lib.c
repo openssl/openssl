@@ -61,11 +61,6 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/objects.h>
 
-/* ASN1err(ASN1_F_D2I_PKCS7,ASN1_R_BAD_PKCS7_CONTENT);
- * ASN1err(ASN1_F_I2D_PKCS7,ASN1_R_BAD_PKCS7_TYPE);
- * ASN1err(ASN1_F_PKCS7_NEW,ASN1_R_BAD_PKCS7_TYPE);
- */
-
 int i2d_PKCS7(PKCS7 *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);

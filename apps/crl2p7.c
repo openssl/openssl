@@ -72,12 +72,7 @@
 #include <openssl/pem.h>
 #include <openssl/objects.h>
 
-#ifndef NOPROTO
 static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile);
-#else
-static int add_certs_from_file();
-#endif
-
 #undef PROG
 #define PROG	crl2pkcs7_main
 

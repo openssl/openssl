@@ -59,12 +59,7 @@
 #include <openssl/idea.h>
 #include "idea_lcl.h"
 
-#ifndef NOPROTO
 static IDEA_INT inverse(unsigned int xin);
-#else
-static IDEA_INT inverse();
-#endif
-
 void idea_set_encrypt_key(unsigned char *key, IDEA_KEY_SCHEDULE *ks)
 	{
 	int i;

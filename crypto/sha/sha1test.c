@@ -87,12 +87,7 @@ char *bigret=
 	"34aa973cd4c4daa4f61eeb2bdbad27316534016f";
 #endif
 
-#ifndef NOPROTO
 static char *pt(unsigned char *md);
-#else
-static char *pt();
-#endif
-
 int main(int argc, char *argv[])
 	{
 	int i,err=0;

@@ -64,12 +64,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#ifndef NOPROTO
 static void ext_print(BIO *out, X509_EXTENSION *ex);
-#else
-static void ext_print();
-#endif
-
 #ifndef NO_FP_API
 int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
         {

@@ -65,11 +65,6 @@
 
 #define PKCS5_SALT_LEN	8
 
-/*
- *ASN1err(ASN1_F_PBEPARAM_NEW,ASN1_R_DECODE_ERROR)
- *ASN1err(ASN1_F_D2I_PBEPARAM,ASN1_R_DECODE_ERROR)
- */
-
 int i2d_PBEPARAM(PBEPARAM *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);

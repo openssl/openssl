@@ -143,12 +143,7 @@ struct tms {
 #define BUFSIZE	((long)1024)
 long run=0;
 
-#ifndef NOPROTO
 double Time_F(int s);
-#else
-double Time_F();
-#endif
-
 #ifdef SIGALRM
 #if defined(__STDC__) || defined(sgi)
 #define SIGRETTYPE void
@@ -156,12 +151,7 @@ double Time_F();
 #define SIGRETTYPE int
 #endif
 
-#ifndef NOPROTO
 SIGRETTYPE sig_done(int sig);
-#else
-SIGRETTYPE sig_done();
-#endif
-
 SIGRETTYPE sig_done(int sig)
 	{
 	signal(SIGALRM,sig_done);

@@ -63,25 +63,6 @@
 #include <openssl/rsaref.h>
 #include <openssl/rand.h>
 
-/* 
- * RSAREFerr(RSAREF_F_RSA_REF_BN2BIN,RSAREF_R_CONTENT_ENCODING);
- * RSAREFerr(RSAREF_F_RSA_REF_PRIVATE_DECRYPT,RSAREF_R_DATA);
- * RSAREFerr(RSAREF_F_RSA_REF_PRIVATE_ENCRYPT,RSAREF_R_DIGEST_ALGORITHM);
- * RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_DECRYPT,RSAREF_R_ENCODING);
- * RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT,RSAREF_R_KEY);
- * RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT,RSAREF_R_KEY_ENCODING);
- * RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT,RSAREF_R_LEN);
- * RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT,RSAREF_R_MODULUS_LEN);
- * RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT,RSAREF_R_NEED_RANDOM);
- * RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT,RSAREF_R_PRIVATE_KEY);
- * RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT,RSAREF_R_PUBLIC_KEY);
- * RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT,RSAREF_R_SIGNATURE);
- * RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT,RSAREF_R_SIGNATURE_ENCODING);
- * RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_ENCRYPT,RSAREF_R_ENCRYPTION_ALGORITHM);
- * RSAREFerr(RSAREF_F_RSAREF_BN2BIN,ERR_R_BN_LIB);
- */
-
-#ifndef NOPROTO
 static int RSAref_bn2bin(BIGNUM * from, unsigned char* to, int max);
 #ifdef undef
 static BIGNUM* RSAref_bin2bn(unsigned char* from, BIGNUM * to, int max);
@@ -98,24 +79,6 @@ int RSA_ref_public_decrypt(int len, unsigned char *from,
 	unsigned char *to, RSA *rsa, int padding);
 static int BN_ref_mod_exp(BIGNUM *r,BIGNUM *a,BIGNUM *p,BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 static int RSA_ref_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa);
-#else
-
-static int RSAref_bn2bin();
-#ifdef undef
-static BIGNUM* RSAref_bin2bn();
-#endif
-static int RSAref_Public_eay2ref();
-static int RSAref_Private_eay2ref();
-static int BN_ref_mod_exp();
-static int RSA_ref_mod_exp();
-int RSA_ref_private_decrypt();
-int RSA_ref_private_encrypt();
-int RSA_ref_public_encrypt();
-int RSA_ref_public_decrypt();
-static int BN_ref_mod_exp();
-static int RSA_ref_mod_exp();
-#endif
-
 static RSA_METHOD rsa_pkcs1_ref_meth={
 	"RSAref PKCS#1 RSA",
 	RSA_ref_public_encrypt,

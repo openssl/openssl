@@ -61,14 +61,8 @@
 #include "cryptlib.h"
 #include <openssl/x509v3.h>
 
-#ifndef NOPROTO
 static ASN1_OCTET_STRING *octet_string_new(void);
 static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
-#else
-static ASN1_OCTET_STRING *s2i_skey_id();
-static ASN1_OCTET_STRING *octet_string_new();
-#endif
-
 X509V3_EXT_METHOD v3_skey_id = { 
 NID_subject_key_identifier, 0,
 (X509V3_EXT_NEW)octet_string_new, ASN1_STRING_free,

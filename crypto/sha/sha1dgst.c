@@ -80,22 +80,12 @@ char *SHA1_version="SHA1" OPENSSL_VERSION_PTEXT;
 #define K_40_59 0x8f1bbcdcUL
 #define K_60_79 0xca62c1d6UL
 
-#ifndef NOPROTO
 #  ifdef SHA1_ASM
      void sha1_block_x86(SHA_CTX *c, register SHA_LONG *p, int num);
 #    define sha1_block sha1_block_x86
 #  else
      void sha1_block(SHA_CTX *c, register SHA_LONG *p, int num);
 #  endif
-#else
-#  ifdef SHA1_ASM
-     void sha1_block_x86();
-#    define sha1_block sha1_block_x86
-#  else
-     void sha1_block();
-#  endif
-#endif
-
 
 #if defined(L_ENDIAN) && defined(SHA1_ASM)
 #  define	M_c2nl 		c2l

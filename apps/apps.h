@@ -127,20 +127,11 @@ typedef struct args_st
 	int count;
         } ARGS;
 
-#ifndef NOPROTO
 int should_retry(int i);
 int args_from_file(char *file, int *argc, char **argv[]);
 int str2fmt(char *s);
 void program_name(char *in,char *out,int size);
 int chopup_args(ARGS *arg,char *buf, int *argc, char **argv[]);
-#else
-int should_retry();
-int args_from_file();
-int str2fmt();
-void program_name();
-int chopup_args();
-#endif
-
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1
 #define FORMAT_TEXT     2

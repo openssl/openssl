@@ -81,7 +81,6 @@ typedef struct bf_key_st
 	BF_LONG S[4*256];
 	} BF_KEY;
 
-#ifndef NOPROTO
  
 void BF_set_key(BF_KEY *key, int len, unsigned char *data);
 void BF_ecb_encrypt(unsigned char *in,unsigned char *out,BF_KEY *key,
@@ -95,19 +94,6 @@ void BF_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
 void BF_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	BF_KEY *schedule, unsigned char *ivec, int *num);
 const char *BF_options(void);
-
-#else
-
-void BF_set_key();
-void BF_ecb_encrypt();
-void BF_encrypt();
-void BF_decrypt();
-void BF_cbc_encrypt();
-void BF_cfb64_encrypt();
-void BF_ofb64_encrypt();
-const char *BF_options();
-
-#endif
 
 #ifdef  __cplusplus
 }

@@ -74,24 +74,10 @@ typedef struct netscape_pkey_st
 	ASN1_OCTET_STRING *private_key;
 	} NETSCAPE_PKEY;
 
-/*
- * ASN1err(ASN1_F_D2I_NETSCAPE_RSA,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_NETSCAPE_RSA,ASN1_R_DECODING_ERROR);
- * ASN1err(ASN1_F_D2I_NETSCAPE_PKEY,ASN1_R_DECODING_ERROR);
- * ASN1err(ASN1_F_NETSCAPE_PKEY_NEW,ASN1_R_DECODING_ERROR);
- */
-#ifndef NOPROTO
 static int i2d_NETSCAPE_PKEY(NETSCAPE_PKEY *a, unsigned char **pp);
 static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY(NETSCAPE_PKEY **a,unsigned char **pp, long length);
 static NETSCAPE_PKEY *NETSCAPE_PKEY_new(void);
 static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *);
-#else
-static int i2d_NETSCAPE_PKEY();
-static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY();
-static NETSCAPE_PKEY *NETSCAPE_PKEY_new();
-static void NETSCAPE_PKEY_free();
-#endif
-
 int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)())
 	{
 	int i,j,l[6];

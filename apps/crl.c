@@ -88,12 +88,7 @@ static char *crl_usage[]={
 NULL
 };
 
-#ifndef NOPROTO
 static X509_CRL *load_crl(char *file, int format);
-#else
-static X509_CRL *load_crl();
-#endif
-
 static BIO *bio_out=NULL;
 
 int MAIN(int argc, char **argv)

@@ -102,12 +102,7 @@ struct test_st
 	};
 
 
-#ifndef NOPROTO
 static char *pt(unsigned char *md);
-#else
-static char *pt();
-#endif
-
 int main(int argc, char *argv[])
 	{
 	int i,err=0;

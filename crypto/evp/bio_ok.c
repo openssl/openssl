@@ -125,7 +125,6 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
-#ifndef NOPROTO
 static int ok_write(BIO *h,char *buf,int num);
 static int ok_read(BIO *h,char *buf,int size);
 static long ok_ctrl(BIO *h,int cmd,long arg1,char *arg2);
@@ -135,18 +134,6 @@ static void sig_out(BIO* b);
 static void sig_in(BIO* b);
 static void block_out(BIO* b);
 static void block_in(BIO* b);
-#else
-static int ok_write();
-static int ok_read();
-static long ok_ctrl();
-static int ok_new();
-static int ok_free();
-static void sig_out();
-static void sig_in();
-static void block_out();
-static void block_in();
-#endif
-
 #define OK_BLOCK_SIZE	(1024*4)
 #define OK_BLOCK_BLOCK	4
 #define IOBS		(OK_BLOCK_SIZE+ OK_BLOCK_BLOCK+ 3*EVP_MAX_MD_SIZE)

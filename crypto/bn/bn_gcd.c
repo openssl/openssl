@@ -60,12 +60,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-#ifndef NOPROTO
 static BIGNUM *euclid(BIGNUM *a, BIGNUM *b);
-#else
-static BIGNUM *euclid();
-#endif
-
 int BN_gcd(BIGNUM *r, BIGNUM *in_a, BIGNUM *in_b, BN_CTX *ctx)
 	{
 	BIGNUM *a,*b,*t;

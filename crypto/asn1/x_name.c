@@ -61,19 +61,7 @@
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
 
-/*
- * ASN1err(ASN1_F_D2I_X509_NAME,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_NAME_NEW,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
- * ASN1err(ASN1_F_D2I_X509_NAME_ENTRY,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_NAME_ENTRY_NEW,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
- */
-
-#ifndef NOPROTO
 static int i2d_X509_NAME_entries(X509_NAME *a);
-#else
-static int i2d_X509_NAME_entries();
-#endif
-
 int i2d_X509_NAME_ENTRY(X509_NAME_ENTRY *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);

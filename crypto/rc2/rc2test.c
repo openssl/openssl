@@ -125,14 +125,8 @@ static unsigned char cfb_cipher64[CFB_TEST_SIZE]={
 	}; 
 
 
-#ifndef NOPROTO
 /*static int cfb64_test(unsigned char *cfb_cipher);*/
 static char *pt(unsigned char *p);
-#else
-/*static int cfb64_test(); */
-static char *pt();
-#endif
-
 #endif
 
 int main(int argc, char *argv[])

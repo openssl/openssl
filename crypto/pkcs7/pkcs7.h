@@ -221,7 +221,6 @@ typedef struct pkcs7_st
 #endif
 
 
-#ifndef NOPROTO
 PKCS7_ISSUER_AND_SERIAL *PKCS7_ISSUER_AND_SERIAL_new(void );
 void			PKCS7_ISSUER_AND_SERIAL_free(
 				PKCS7_ISSUER_AND_SERIAL *a);
@@ -349,97 +348,6 @@ ASN1_TYPE *PKCS7_get_signed_attribute(PKCS7_SIGNER_INFO *si, int nid);
 int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk);
 int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk);
 
-
-#else
-
-PKCS7_ISSUER_AND_SERIAL *PKCS7_ISSUER_AND_SERIAL_new();
-void			PKCS7_ISSUER_AND_SERIAL_free();
-int 			i2d_PKCS7_ISSUER_AND_SERIAL();
-PKCS7_ISSUER_AND_SERIAL *d2i_PKCS7_ISSUER_AND_SERIAL();
-
-#ifndef SSLEAY_MACROS
-int			PKCS7_ISSUER_AND_SERIAL_digest();
-#ifndef NO_FP_API
-PKCS7 *d2i_PKCS7_fp();
-int i2d_PKCS7_fp();
-#endif
-PKCS7 *PKCS7_dup();
-PKCS7 *d2i_PKCS7_bio();
-int i2d_PKCS7_bio();
-
-#endif
-
-PKCS7_SIGNER_INFO	*PKCS7_SIGNER_INFO_new();
-void			PKCS7_SIGNER_INFO_free();
-int 			i2d_PKCS7_SIGNER_INFO();
-PKCS7_SIGNER_INFO	*d2i_PKCS7_SIGNER_INFO();
-PKCS7_RECIP_INFO	*PKCS7_RECIP_INFO_new();
-void			PKCS7_RECIP_INFO_free();
-int 			i2d_PKCS7_RECIP_INFO();
-PKCS7_RECIP_INFO	*d2i_PKCS7_RECIP_INFO();
-PKCS7_SIGNED		*PKCS7_SIGNED_new();
-void			PKCS7_SIGNED_free();
-int 			i2d_PKCS7_SIGNED();
-PKCS7_SIGNED		*d2i_PKCS7_SIGNED();
-PKCS7_ENC_CONTENT	*PKCS7_ENC_CONTENT_new();
-void			PKCS7_ENC_CONTENT_free();
-int 			i2d_PKCS7_ENC_CONTENT();
-PKCS7_ENC_CONTENT	*d2i_PKCS7_ENC_CONTENT();
-PKCS7_ENVELOPE		*PKCS7_ENVELOPE_new();
-void			PKCS7_ENVELOPE_free();
-int 			i2d_PKCS7_ENVELOPE();
-PKCS7_ENVELOPE		*d2i_PKCS7_ENVELOPE();
-PKCS7_SIGN_ENVELOPE	*PKCS7_SIGN_ENVELOPE_new();
-void			PKCS7_SIGN_ENVELOPE_free();
-int 			i2d_PKCS7_SIGN_ENVELOPE();
-PKCS7_SIGN_ENVELOPE	*d2i_PKCS7_SIGN_ENVELOPE();
-PKCS7_DIGEST		*PKCS7_DIGEST_new();
-void			PKCS7_DIGEST_free();
-int 			i2d_PKCS7_DIGEST();
-PKCS7_DIGEST		*d2i_PKCS7_DIGEST();
-PKCS7_ENCRYPT		*PKCS7_ENCRYPT_new();
-void			PKCS7_ENCRYPT_free();
-int 			i2d_PKCS7_ENCRYPT();
-PKCS7_ENCRYPT		*d2i_PKCS7_ENCRYPT();
-PKCS7			*PKCS7_new();
-void			PKCS7_free();
-void			PKCS7_content_free();
-int 			i2d_PKCS7();
-PKCS7			*d2i_PKCS7();
-
-void ERR_load_PKCS7_strings();
-
-long PKCS7_ctrl();
-int PKCS7_set_type();
-int PKCS7_set_content();
-int PKCS7_SIGNER_INFO_set();
-int PKCS7_add_signer();
-int PKCS7_add_certificate();
-int PKCS7_add_crl();
-int PKCS7_content_new();
-int PKCS7_dataVerify();
-BIO *PKCS7_dataInit();
-int PKCS7_dataFinal();
-BIO *PKCS7_dataDecode();
-PKCS7_SIGNER_INFO *PKCS7_add_signature();
-X509 *PKCS7_cert_from_signer_info();
-STACK *PKCS7_get_signer_info();
-
-PKCS7_RECIP_INFO *PKCS7_add_recipient();
-int PKCS7_add_recipient_info();
-int PKCS7_RECIP_INFO_set();
-int PKCS7_set_cipher();
-
-PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial();
-ASN1_OCTET_STRING *PKCS7_digest_from_attributes();
-int PKCS7_add_signed_attribute();
-int PKCS7_add_attribute();
-ASN1_TYPE *PKCS7_get_attribute();
-ASN1_TYPE *PKCS7_get_signed_attribute();
-void PKCS7_set_signed_attributes();
-void PKCS7_set_attributes();
-
-#endif
 
 
 /* BEGIN ERROR CODES */

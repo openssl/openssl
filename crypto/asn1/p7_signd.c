@@ -61,11 +61,6 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/x509.h>
 
-/*
- * ASN1err(ASN1_F_PKCS7_SIGNED_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_PKCS7_SIGNED,ERR_R_ASN1_LENGTH_MISMATCH);
- */
-
 int i2d_PKCS7_SIGNED(PKCS7_SIGNED *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);

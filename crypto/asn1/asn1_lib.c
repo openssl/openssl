@@ -61,14 +61,8 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1_mac.h>
 
-#ifndef NOPROTO
 static int asn1_get_length(unsigned char **pp,int *inf,long *rl,int max);
 static void asn1_put_length(unsigned char **pp, int length);
-#else
-static int asn1_get_length();
-static void asn1_put_length();
-#endif
-
 const char *ASN1_version="ASN.1" OPENSSL_VERSION_PTEXT;
 
 int ASN1_check_infinite_end(unsigned char **p, long len)

@@ -65,11 +65,6 @@
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
 
-/*
- * ASN1err(ASN1_F_D2I_DSAPUBLICKEY,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_I2D_DSAPUBLICKEY,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
- */
-
 DSA *d2i_DSAPublicKey(DSA **a, unsigned char **pp, long length)
 	{
 	int i=ASN1_R_PARSING;

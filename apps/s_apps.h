@@ -60,7 +60,6 @@
 #define PORT_STR        "4433"
 #define PROTOCOL        "tcp"
 
-#ifndef NOPROTO
 int do_accept(int acc_sock, int *sock, char **host);
 int do_server(int port, int *ret, int (*cb) (), char *context);
 #ifdef HEADER_X509_H
@@ -93,27 +92,5 @@ long MS_CALLBACK bio_dump_cb(BIO *bio, int cmd, const char *argp,
 void MS_CALLBACK apps_ssl_info_callback(SSL *s, int where, int ret);
 #else
 void MS_CALLBACK apps_ssl_info_callback(char *s, int where, int ret);
-#endif
-
-#else
-int do_accept();
-int do_server();
-int MS_CALLBACK verify_callback();
-int set_cert_stuff();
-int init_client();
-int init_client_ip();
-int nbio_init_client_ip();
-int nbio_sock_error();
-int spawn();
-int init_server();
-int should_retry();
-void sock_cleanup();
-int extract_port();
-int extract_host_port();
-int host_ip();
-
-long MS_CALLBACK bio_dump_cb();
-void MS_CALLBACK apps_ssl_info_callback();
-
 #endif
 

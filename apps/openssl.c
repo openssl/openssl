@@ -83,18 +83,10 @@
 #endif
 */
 
-#ifndef NOPROTO
 static unsigned long MS_CALLBACK hash(FUNCTION *a);
 static int MS_CALLBACK cmp(FUNCTION *a,FUNCTION *b);
 static LHASH *prog_init(void );
 static int do_cmd(LHASH *prog,int argc,char *argv[]);
-#else
-static unsigned long MS_CALLBACK hash();
-static int MS_CALLBACK cmp();
-static LHASH *prog_init();
-static int do_cmd();
-#endif
-
 LHASH *config=NULL;
 char *default_config_file=NULL;
 

@@ -63,15 +63,7 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/x509.h>
 
-/* EVPerr(EVP_F_D2I_PKEY,EVP_R_UNSUPPORTED_CIPHER); */
-/* EVPerr(EVP_F_D2I_PKEY,EVP_R_IV_TOO_LARGE); */
-
-#ifndef NOPROTO
 static void EVP_PKEY_free_it(EVP_PKEY *x);
-#else
-static void EVP_PKEY_free_it();
-#endif
-
 int EVP_PKEY_bits(EVP_PKEY *pkey)
 	{
 #ifndef NO_RSA

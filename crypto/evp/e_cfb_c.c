@@ -63,16 +63,10 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void cast_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void cast_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void cast_cfb_init_key();
-static void cast_cfb_cipher();
-#endif
-
 static EVP_CIPHER cast5_cfb_cipher=
 	{
 	NID_cast5_cfb64,

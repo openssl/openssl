@@ -76,7 +76,6 @@ EVP_CIPHER *enc;
 #define CLCERTS		0x8
 #define CACERTS		0x10
 
-#ifndef NOPROTO
 int get_cert_chain(X509 *cert, STACK **chain);
 int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen, int options);
 int dump_certs_pkeys_bags(BIO *out, STACK *bags, char *pass, int passlen, int options);
@@ -85,17 +84,6 @@ int print_attribs(BIO *out, STACK *attrlst, char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
 int alg_print(BIO *x, X509_ALGOR *alg);
 int cert_load(BIO *in, STACK *sk);
-#else
-int get_cert_chain();
-int dump_certs_keys_p12();
-int dump_certs_pkeys_bags();
-int dump_certs_pkeys_bag();
-int print_attribs();
-void hex_prin();
-int alg_print();
-int cert_load();
-#endif
-
 int MAIN(int argc, char **argv)
 {
     char *infile=NULL, *outfile=NULL, *keyname = NULL;	

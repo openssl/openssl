@@ -73,12 +73,7 @@
 #undef PROG
 #define PROG gendsa_main
 
-#ifndef NOPROTO
 static long dsa_load_rand(char *names);
-#else
-static long dsa_load_rand();
-#endif
-
 int MAIN(int argc, char **argv)
 	{
 	char buffer[200];

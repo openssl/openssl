@@ -70,12 +70,7 @@
 #endif
 #include <openssl/pem.h>
 
-#ifndef NOPROTO
 int set_hex(char *in,unsigned char *out,int size);
-#else
-int set_hex();
-#endif
-
 #undef SIZE
 #undef BSIZE
 #undef PROG

@@ -66,7 +66,6 @@
 /* BIO_put and BIO_get both add to the digest,
  * BIO_gets returns the digest */
 
-#ifndef NOPROTO
 static int nbiof_write(BIO *h,char *buf,int num);
 static int nbiof_read(BIO *h,char *buf,int size);
 static int nbiof_puts(BIO *h,char *str);
@@ -74,16 +73,6 @@ static int nbiof_gets(BIO *h,char *str,int size);
 static long nbiof_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int nbiof_new(BIO *h);
 static int nbiof_free(BIO *data);
-#else
-static int nbiof_write();
-static int nbiof_read();
-static int nbiof_puts();
-static int nbiof_gets();
-static long nbiof_ctrl();
-static int nbiof_new();
-static int nbiof_free();
-#endif
-
 typedef struct nbio_test_st
 	{
 	/* only set if we sent a 'should retry' error */

@@ -74,12 +74,7 @@
 			*((c)++)=(unsigned char)(((l)>>16L)&0xff), \
 			*((c)++)=(unsigned char)(((l)>>24L)&0xff))
 
-#ifndef NOPROTO
 static void mdc2_body(MDC2_CTX *c, unsigned char *in, unsigned int len);
-#else
-static void mdc2_body();
-#endif
-
 void MDC2_Init(MDC2_CTX *c)
 	{
 	c->num=0;

@@ -65,22 +65,12 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-#ifndef NOPROTO
 static int ssl_write(BIO *h,char *buf,int num);
 static int ssl_read(BIO *h,char *buf,int size);
 static int ssl_puts(BIO *h,char *str);
 static long ssl_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int ssl_new(BIO *h);
 static int ssl_free(BIO *data);
-#else
-static int ssl_write();
-static int ssl_read();
-static int ssl_puts();
-static long ssl_ctrl();
-static int ssl_new();
-static int ssl_free();
-#endif
-
 typedef struct bio_ssl_st
 	{
 	SSL *ssl; /* The ssl handle :-) */

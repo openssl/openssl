@@ -60,11 +60,6 @@
 #include "cryptlib.h"
 #include <openssl/asn1_mac.h>
 
-/*
- *ASN1err(ASN1_F_PKCS8_PRIV_KEY_INFO_NEW,ASN1_R_DECODE_ERROR)
- *ASN1err(ASN1_F_D2I_PKCS8_PRIV_KEY_INFO,ASN1_R_DECODE_ERROR)
- */
-
 int i2d_PKCS8_PRIV_KEY_INFO (PKCS8_PRIV_KEY_INFO *a, unsigned char **pp)
 {
 

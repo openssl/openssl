@@ -169,7 +169,6 @@ struct IOSB {
 #define NX509_SIG 32
 #endif
 
-#ifndef NOPROTO
 static void read_till_nl(FILE *);
 static void recsig(int);
 static void pushsig(void);
@@ -177,16 +176,6 @@ static void popsig(void);
 #if defined(MSDOS) && !defined(WIN16)
 static int noecho_fgets(char *buf, int size, FILE *tty);
 #endif
-#else
-static void read_till_nl();
-static void recsig();
-static void pushsig();
-static void popsig();
-#if defined(MSDOS) && !defined(WIN16)
-static int noecho_fgets();
-#endif
-#endif
-
 #ifdef SIGACTION
  static struct sigaction savsig[NX509_SIG];
 #else

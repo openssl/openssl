@@ -61,16 +61,9 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-#ifndef NOPROTO
 static ASN1_BIT_STRING *asn1_bit_string_new(void);
 static ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
 static STACK *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, ASN1_BIT_STRING *bits, STACK *extlist);
-#else
-static ASN1_BIT_STRING *asn1_bit_string_new();
-static ASN1_BIT_STRING *v2i_ASN1_BIT_STRING();
-static STACK *i2v_ASN1_BIT_STRING();
-#endif
-
 static BIT_STRING_BITNAME ns_cert_type_table[] = {
 {0, "SSL Client", "client"},
 {1, "SSL Server", "server"},

@@ -60,12 +60,7 @@
 #include "des_locl.h"
 #include "des_ver.h"
 
-#ifndef NOPROTO
 int _des_crypt(char *buf,int len,struct desparams *desp);
-#else
-int _des_crypt();
-#endif
-
 int _des_crypt(char *buf, int len, struct desparams *desp)
 	{
 	des_key_schedule ks;

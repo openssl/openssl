@@ -92,14 +92,8 @@ static int c_Pause=0;
 static int c_debug=0;
 static int c_showcerts=0;
 
-#ifndef NOPROTO
 static void sc_usage(void);
 static void print_stuff(BIO *berr,SSL *con,int full);
-#else
-static void sc_usage();
-static void print_stuff();
-#endif
-
 static BIO *bio_c_out=NULL;
 static int c_quiet=0;
 

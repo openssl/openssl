@@ -61,16 +61,10 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void null_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void null_init_key();
-static void null_cipher();
-#endif
-
 static EVP_CIPHER n_cipher=
 	{
 	NID_undef,

@@ -74,14 +74,8 @@
 #undef PROG
 #define PROG genrsa_main
 
-#ifndef NOPROTO
 static void MS_CALLBACK genrsa_cb(int p, int n, char *arg);
 static long gr_load_rand(char *names);
-#else
-static void MS_CALLBACK genrsa_cb();
-static long gr_load_rand();
-#endif
-
 int MAIN(int argc, char **argv)
 	{
 	int ret=1;

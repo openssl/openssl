@@ -62,7 +62,6 @@
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 
-#ifndef NOPROTO
 static int enc_write(BIO *h,char *buf,int num);
 static int enc_read(BIO *h,char *buf,int size);
 /*static int enc_puts(BIO *h,char *str); */
@@ -70,16 +69,6 @@ static int enc_read(BIO *h,char *buf,int size);
 static long enc_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int enc_new(BIO *h);
 static int enc_free(BIO *data);
-#else
-static int enc_write();
-static int enc_read();
-/*static int enc_puts(); */
-/*static int enc_gets(); */
-static long enc_ctrl();
-static int enc_new();
-static int enc_free();
-#endif
-
 #define ENC_BLOCK_SIZE	(1024*4)
 
 typedef struct enc_struct

@@ -75,10 +75,6 @@ extern "C" {
 #define DEVRANDOM "/dev/urandom"
 #endif
 
-#if defined(NOCONST)
-#define const
-#endif
-
 /********************************************************************
  The Microsoft section
  ********************************************************************/
@@ -280,22 +276,12 @@ extern HINSTANCE _hInstance;
 
 /***********************************************/
 
-#ifndef NOPROTO
 #define P_CC_CC	const void *,const void *
 #define P_I_I		int,int 
 #define P_I_I_P		int,int,char *
 #define P_I_I_P_I	int,int,char *,int
 #define P_IP_I_I_P_I	int *,int,int,char *,int
 #define P_V		void 
-#else
-#define P_CC_CC
-#define P_I_I
-#define P_I_I_P
-#define P_IP_I_I_P_I
-#define P_I_I_P_I
-#define P_V
-#endif
-
 /* not used yet */
 #define	CS_BEGIN
 #define CS_END

@@ -151,18 +151,10 @@ struct tms {
 extern int verify_depth;
 extern int verify_error;
 
-#ifndef NOPROTO
 static void s_time_usage(void);
 static int parseArgs( int argc, char **argv );
 static SSL *doConnection( SSL *scon );
 static void s_time_init(void);
-#else
-static void s_time_usage();
-static int parseArgs();
-static SSL *doConnection();
-static void s_time_init();
-#endif
-
 
 /***********************************************************************
  * Static data declarations

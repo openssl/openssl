@@ -83,12 +83,7 @@
  * -genkey
  */
 
-#ifndef NOPROTO
 static void MS_CALLBACK dsa_cb(int p, int n, char *arg);
-#else
-static void MS_CALLBACK dsa_cb();
-#endif
-
 int MAIN(int argc, char **argv)
 	{
 	DSA *dsa=NULL;

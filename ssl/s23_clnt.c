@@ -63,18 +63,9 @@
 #include <openssl/evp.h>
 #include "ssl_locl.h"
 
-#define BREAK break
-
-#ifndef NOPROTO
 static SSL_METHOD *ssl23_get_client_method(int ver);
 static int ssl23_client_hello(SSL *s);
 static int ssl23_get_server_hello(SSL *s);
-#else
-static SSL_METHOD *ssl23_get_client_method();
-static int ssl23_client_hello();
-static int ssl23_get_server_hello();
-#endif
-
 static SSL_METHOD *ssl23_get_client_method(int ver)
 	{
 	if (ver == SSL2_VERSION)

@@ -60,7 +60,6 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
-#ifndef NOPROTO
 static int ssl23_num_ciphers(void );
 static SSL_CIPHER *ssl23_get_cipher(unsigned int u);
 static int ssl23_read(SSL *s, void *buf, int len);
@@ -68,16 +67,6 @@ static int ssl23_write(SSL *s, const void *buf, int len);
 static long ssl23_default_timeout(void );
 static int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
 static SSL_CIPHER *ssl23_get_cipher_by_char(const unsigned char *p);
-#else
-static int ssl23_num_ciphers();
-static SSL_CIPHER *ssl23_get_cipher();
-static int ssl23_read();
-static int ssl23_write();
-static long ssl23_default_timeout();
-static int ssl23_put_cipher_by_char();
-static SSL_CIPHER *ssl23_get_cipher_by_char();
-#endif
-
 char *SSL23_version_str="SSLv2/3 compatibility" OPENSSL_VERSION_PTEXT;
 
 static SSL_METHOD SSLv23_data= {

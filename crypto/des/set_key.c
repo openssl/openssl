@@ -67,12 +67,7 @@
 #include "podd.h"
 #include "sk.h"
 
-#ifndef NOPROTO
 static int check_parity(const des_cblock key);
-#else
-static int check_parity();
-#endif
-
 int des_check_key=0;
 
 void des_set_odd_parity(des_cblock key)

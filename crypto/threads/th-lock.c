@@ -82,7 +82,6 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#ifndef NOPROTO
 int CRYPTO_thread_setup(void);
 void CRYPTO_thread_cleanup(void);
 
@@ -94,21 +93,6 @@ static void pthreads_locking_callback(int mode,int type,char *file,int line);
 static unsigned long irix_thread_id(void );
 static unsigned long solaris_thread_id(void );
 static unsigned long pthreads_thread_id(void );
-
-#else
-int CRYPOTO_thread_setup();
-void CRYPTO_cleanup();
-
-static void irix_locking_callback();
-static void solaris_locking_callback();
-static void win32_locking_callback();
-static void pthreads_locking_callback();
-
-static unsigned long irix_thread_id();
-static unsigned long solaris_thread_id();
-static unsigned long pthreads_thread_id();
-
-#endif
 
 /* usage:
  * CRYPTO_thread_setup();

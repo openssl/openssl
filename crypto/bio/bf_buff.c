@@ -62,7 +62,6 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 
-#ifndef NOPROTO
 static int buffer_write(BIO *h,char *buf,int num);
 static int buffer_read(BIO *h,char *buf,int size);
 static int buffer_puts(BIO *h,char *str);
@@ -70,16 +69,6 @@ static int buffer_gets(BIO *h,char *str,int size);
 static long buffer_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int buffer_new(BIO *h);
 static int buffer_free(BIO *data);
-#else
-static int buffer_write();
-static int buffer_read();
-static int buffer_puts();
-static int buffer_gets();
-static long buffer_ctrl();
-static int buffer_new();
-static int buffer_free();
-#endif
-
 #define DEFAULT_BUFFER_SIZE	1024
 
 static BIO_METHOD methods_buffer=

@@ -61,25 +61,10 @@
 #define USE_SOCKETS
 #include "ssl_locl.h"
 
-/* SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_PEER_ERROR_NO_CIPHER);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_PEER_ERROR_NO_CERTIFICATE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_PEER_ERROR_CERTIFICATE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_PEER_ERROR_UNSUPPORTED_CERTIFICATE_TYPE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_UNKNOWN_REMOTE_ERROR_TYPE);
- */
-
-#ifndef NOPROTO
 static int read_n(SSL *s,unsigned int n,unsigned int max,unsigned int extend);
 static int do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len);
 static int write_pending(SSL *s, const unsigned char *buf, unsigned int len);
 static int ssl_mt_error(int n);
-#else
-static int read_n();
-static int do_ssl_write();
-static int write_pending();
-static int ssl_mt_error();
-#endif
-
 int ssl2_peek(SSL *s, char *buf, int len)
 	{
 	int ret;

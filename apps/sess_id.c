@@ -83,12 +83,7 @@ static char *sess_id_usage[]={
 NULL
 };
 
-#ifndef NOPROTO
 static SSL_SESSION *load_sess_id(char *file, int format);
-#else
-static SSL_SESSION *load_sess_id();
-#endif
-
 int MAIN(int argc, char **argv)
 	{
 	SSL_SESSION *x=NULL;

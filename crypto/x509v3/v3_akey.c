@@ -63,16 +63,8 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/x509v3.h>
 
-#ifndef NOPROTO
 static STACK *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, AUTHORITY_KEYID *akeyid, STACK *extlist);
 static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *values);
-
-#else
-
-static STACK *i2v_AUTHORITY_KEYID();
-static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID();
-
-#endif
 
 X509V3_EXT_METHOD v3_akey_id = {
 NID_authority_key_identifier, X509V3_EXT_MULTILINE,
@@ -87,11 +79,6 @@ NULL,NULL,
 NULL
 };
 
-
-/*
- * ASN1err(ASN1_F_AUTHORITY_KEYID_NEW,ERR_R_MALLOC_FAILURE);
- * ASN1err(ASN1_F_D2I_AUTHORITY_KEYID,ERR_R_MALLOC_FAILURE);
- */
 
 int i2d_AUTHORITY_KEYID(AUTHORITY_KEYID *a, unsigned char **pp)
 {

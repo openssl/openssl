@@ -65,7 +65,6 @@
 /* BIO_put and BIO_get both add to the digest,
  * BIO_gets returns the digest */
 
-#ifndef NOPROTO
 static int md_write(BIO *h,char *buf,int num);
 static int md_read(BIO *h,char *buf,int size);
 /*static int md_puts(BIO *h,char *str); */
@@ -73,16 +72,6 @@ static int md_gets(BIO *h,char *str,int size);
 static long md_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int md_new(BIO *h);
 static int md_free(BIO *data);
-#else
-static int md_write();
-static int md_read();
-/*static int md_puts(); */
-static int md_gets();
-static long md_ctrl();
-static int md_new();
-static int md_free();
-#endif
-
 static BIO_METHOD methods_md=
 	{
 	BIO_TYPE_MD,"message digest",

@@ -62,22 +62,12 @@
 
 char *RMD160_version="RIPE-MD160" OPENSSL_VERSION_PTEXT;
 
-#ifndef NOPROTO
 #  ifdef RMD160_ASM
      void ripemd160_block_x86(RIPEMD160_CTX *c, unsigned long *p,int num);
 #    define ripemd160_block ripemd160_block_x86
 #  else
      void ripemd160_block(RIPEMD160_CTX *c, unsigned long *p,int num);
 #  endif
-#else
-#  ifdef RMD160_ASM
-     void ripemd160_block_x86();
-#    define ripemd160_block ripemd160_block_x86
-#  else
-     void ripemd160_block();
-#  endif
-#endif
-
 void RIPEMD160_Init(RIPEMD160_CTX *c)
 	{
 	c->A=RIPEMD160_A;

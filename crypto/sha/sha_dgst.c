@@ -80,12 +80,7 @@ char *SHA_version="SHA" OPENSSL_VERSION_PTEXT;
 #define K_40_59 0x8f1bbcdcUL
 #define K_60_79 0xca62c1d6UL
 
-#ifndef NOPROTO
    void sha_block(SHA_CTX *c, register SHA_LONG *p, int num);
-#else
-   void sha_block();
-#endif
-
 #define	M_c2nl 		c2nl
 #define	M_p_c2nl	p_c2nl
 #define	M_c2nl_p	c2nl_p

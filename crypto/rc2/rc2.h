@@ -75,7 +75,6 @@ typedef struct rc2_key_st
 	RC2_INT data[64];
 	} RC2_KEY;
 
-#ifndef NOPROTO
  
 void RC2_set_key(RC2_KEY *key, int len, unsigned char *data,int bits);
 void RC2_ecb_encrypt(unsigned char *in,unsigned char *out,RC2_KEY *key,
@@ -88,18 +87,6 @@ void RC2_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	RC2_KEY *schedule, unsigned char *ivec, int *num, int enc);
 void RC2_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	RC2_KEY *schedule, unsigned char *ivec, int *num);
-
-#else
-
-void RC2_set_key();
-void RC2_ecb_encrypt();
-void RC2_encrypt();
-void RC2_decrypt();
-void RC2_cbc_encrypt();
-void RC2_cfb64_encrypt();
-void RC2_ofb64_encrypt();
-
-#endif
 
 #ifdef  __cplusplus
 }

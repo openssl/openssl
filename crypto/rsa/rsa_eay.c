@@ -62,7 +62,6 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 
-#ifndef NOPROTO
 static int RSA_eay_public_encrypt(int flen, unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
 static int RSA_eay_private_encrypt(int flen, unsigned char *from,
@@ -74,16 +73,6 @@ static int RSA_eay_private_decrypt(int flen, unsigned char *from,
 static int RSA_eay_mod_exp(BIGNUM *r0, BIGNUM *i, RSA *rsa);
 static int RSA_eay_init(RSA *rsa);
 static int RSA_eay_finish(RSA *rsa);
-#else
-static int RSA_eay_public_encrypt();
-static int RSA_eay_private_encrypt();
-static int RSA_eay_public_decrypt();
-static int RSA_eay_private_decrypt();
-static int RSA_eay_mod_exp();
-static int RSA_eay_init();
-static int RSA_eay_finish();
-#endif
-
 static RSA_METHOD rsa_pkcs1_eay_meth={
 	"Eric Young's PKCS#1 RSA",
 	RSA_eay_public_encrypt,

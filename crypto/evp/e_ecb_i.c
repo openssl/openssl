@@ -63,16 +63,10 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void idea_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void idea_ecb_init_key();
-static void idea_ecb_cipher();
-#endif
-
 static EVP_CIPHER i_ecb_cipher=
 	{
 	NID_idea_ecb,

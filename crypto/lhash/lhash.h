@@ -116,7 +116,6 @@ typedef struct lhash_st
  * in lh_insert(). */
 #define lh_error(lh)	((lh)->error)
 
-#ifndef NOPROTO
 LHASH *lh_new(unsigned long (*h)(), int (*c)());
 void lh_free(LHASH *lh);
 char *lh_insert(LHASH *lh, char *data);
@@ -137,26 +136,6 @@ void lh_stats_bio(LHASH *lh, BIO *out);
 void lh_node_stats_bio(LHASH *lh, BIO *out);
 void lh_node_usage_stats_bio(LHASH *lh, BIO *out);
 #endif
-#else
-LHASH *lh_new();
-void lh_free();
-char *lh_insert();
-char *lh_delete();
-char *lh_retrieve();
-void lh_doall();
-void lh_doall_arg();
-unsigned long lh_strhash();
-
-#ifndef NO_FP_API
-void lh_stats();
-void lh_node_stats();
-void lh_node_usage_stats();
-#endif
-void lh_stats_bio();
-void lh_node_stats_bio();
-void lh_node_usage_stats_bio();
-#endif
-
 #ifdef  __cplusplus
 }
 #endif

@@ -300,12 +300,7 @@ typedef struct cert_st
 /*#define RSA_DEBUG	*/ 
 /*#define IDEA_DEBUG	*/ 
 
-#ifndef NOPROTO
 #define FP_ICC  (int (*)(const void *,const void *))
-#else
-#define FP_ICC
-#endif
-
 #define ssl_put_cipher_by_char(ssl,ciph,ptr) \
 		((ssl)->method->put_cipher_by_char((ciph),(ptr)))
 #define ssl_get_cipher_by_char(ssl,ptr) \
@@ -343,7 +338,6 @@ extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 extern SSL_CIPHER ssl2_ciphers[];
 extern SSL_CIPHER ssl3_ciphers[];
 
-#ifndef NOPROTO
 
 SSL_METHOD *ssl_bad_method(int ver);
 SSL_METHOD *sslv2_base_method(void);
@@ -482,134 +476,5 @@ int ssl_ok(SSL *s);
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 
-
-#else
-
-SSL_METHOD *ssl_bad_method();
-SSL_METHOD *sslv2_base_method();
-SSL_METHOD *sslv23_base_method();
-SSL_METHOD *sslv3_base_method();
-
-void ssl_clear_cipher_ctx();
-int ssl_clear_bad_session();
-CERT *ssl_cert_new();
-int ssl_cert_instantiate();
-void ssl_cert_free();
-int ssl_set_cert_type();
-int ssl_get_new_session();
-int ssl_get_prev_session();
-int ssl_cipher_id_cmp();
-int ssl_cipher_ptr_id_cmp();
-STACK *ssl_bytes_to_cipher_list();
-int ssl_cipher_list_to_bytes();
-STACK *ssl_create_cipher_list();
-void ssl_update_cache();
-int ssl_session_get_ciphers();
-int ssl_verify_cert_chain();
-int ssl_undefined_function();
-X509 *ssl_get_server_send_cert();
-EVP_PKEY *ssl_get_sign_pkey();
-int ssl_cert_type();
-void ssl_set_cert_masks();
-STACK *ssl_get_ciphers_by_id();
-int ssl_verify_alarm_type();
-
-int ssl2_enc_init();
-void ssl2_generate_key_material();
-void ssl2_enc();
-void ssl2_mac();
-SSL_CIPHER *ssl2_get_cipher_by_char();
-int ssl2_put_cipher_by_char();
-int ssl2_part_read();
-int ssl2_do_write();
-int ssl2_set_certificate();
-void ssl2_return_error();
-void ssl2_write_error();
-int ssl2_num_ciphers();
-SSL_CIPHER *ssl2_get_cipher();
-int	ssl2_new();
-void	ssl2_free();
-int	ssl2_accept();
-int	ssl2_connect();
-int	ssl2_read();
-int	ssl2_peek();
-int	ssl2_write();
-int	ssl2_shutdown();
-void	ssl2_clear();
-long	ssl2_ctrl();
-long	ssl2_ctx_ctrl();
-int	ssl2_pending();
-
-SSL_CIPHER *ssl3_get_cipher_by_char();
-int ssl3_put_cipher_by_char();
-void ssl3_init_finished_mac();
-int ssl3_send_server_certificate();
-int ssl3_get_finished();
-int ssl3_setup_key_block();
-int ssl3_send_change_cipher_spec();
-int ssl3_change_cipher_state();
-void ssl3_cleanup_key_block();
-int ssl3_do_write();
-void ssl3_send_alert();
-int ssl3_generate_master_secret();
-int ssl3_get_req_cert_type();
-long ssl3_get_message();
-int ssl3_send_finished();
-int ssl3_num_ciphers();
-SSL_CIPHER *ssl3_get_cipher();
-int ssl3_renegotiate();
-int ssl3_renegotiate_check();
-int ssl3_dispatch_alert();
-int ssl3_read_bytes();
-int ssl3_part_read();
-int ssl3_write_bytes();
-int ssl3_final_finish_mac();
-void ssl3_finish_mac();
-int ssl3_enc();
-int ssl3_mac();
-unsigned long ssl3_output_cert_chain();
-SSL_CIPHER *ssl3_choose_cipher();
-int	ssl3_setup_buffers();
-int	ssl3_new();
-void	ssl3_free();
-int	ssl3_accept();
-int	ssl3_connect();
-int	ssl3_read();
-int	ssl3_peek();
-int	ssl3_write();
-int	ssl3_shutdown();
-void	ssl3_clear();
-long	ssl3_ctrl();
-long	ssl3_ctx_ctrl();
-int	ssl3_pending();
-
-int ssl23_accept();
-int ssl23_connect();
-int ssl23_read_bytes();
-int ssl23_write_bytes();
-
-int ssl_init_wbio_buffer();
-void ssl_free_wbio_buffer();
-
-int ssl3_cert_verify_mac();
-int ssl3_alert_code();
-int tls1_new();
-void tls1_free();
-void tls1_clear();
-long tls1_ctrl();
-SSL_METHOD *tlsv1_base_method();
-int tls1_change_cipher_state();
-int tls1_setup_key_block();
-int tls1_enc();
-int tls1_final_finish_mac();
-int tls1_cert_verify_mac();
-int tls1_mac();
-int tls1_generate_master_secret();
-int tls1_alert_code();
-int ssl_ok();
-SSL_COMP *ssl3_comp_find();
-STACK *SSL_COMP_get_compression_methods();
-
-#endif
 
 #endif

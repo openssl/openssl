@@ -67,15 +67,10 @@
 
 #define SXNET_TEST
 
-#ifndef NOPROTO
 static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out, int indent);
 #ifdef SXNET_TEST
 static SXNET * sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
 #endif
-#else
-static int sxnet_i2r();
-#endif
-
 X509V3_EXT_METHOD v3_sxnet = {
 NID_sxnet, X509V3_EXT_MULTILINE,
 (X509V3_EXT_NEW)SXNET_new,
@@ -94,13 +89,6 @@ NULL,
 NULL
 };
 
-
-/*
- * ASN1err(ASN1_F_SXNET_NEW,ERR_R_MALLOC_FAILURE);
- * ASN1err(ASN1_F_D2I_SXNET,ERR_R_MALLOC_FAILURE);
- * ASN1err(ASN1_F_SXNETID_NEW,ERR_R_MALLOC_FAILURE);
- * ASN1err(ASN1_F_D2I_SXNETID,ERR_R_MALLOC_FAILURE);
- */
 
 int i2d_SXNET(SXNET *a, unsigned char **pp)
 {

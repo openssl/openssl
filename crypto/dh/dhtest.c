@@ -73,12 +73,7 @@
 #define MS_CALLBACK
 #endif
 
-#ifndef NOPROTO
 static void MS_CALLBACK cb(int p, int n, char *arg);
-#else
-static void MS_CALLBACK cb();
-#endif
-
 #ifdef NO_STDIO
 #define APPS_WIN16
 #include "bss_file.c"

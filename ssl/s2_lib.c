@@ -61,12 +61,7 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
-#ifndef NOPROTO
 static long ssl2_default_timeout(void );
-#else
-static long ssl2_default_timeout();
-#endif
-
 const char *ssl2_version_str="SSLv2" OPENSSL_VERSION_PTEXT;
 
 #define SSL2_NUM_CIPHERS (sizeof(ssl2_ciphers)/sizeof(SSL_CIPHER))

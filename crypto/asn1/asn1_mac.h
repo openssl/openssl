@@ -447,14 +447,8 @@ err:\
 #define M_ASN1_I2D_finish()	*pp=p; \
 				return(r);
 
-#ifndef NOPROTO
 int asn1_GetSequence(ASN1_CTX *c, long *length);
 void asn1_add_error(unsigned char *address,int offset);
-#else 
-int asn1_GetSequence();
-void asn1_add_error();
-#endif
-
 #ifdef  __cplusplus
 }
 #endif

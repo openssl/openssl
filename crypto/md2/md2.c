@@ -62,18 +62,10 @@
 
 #define BUFSIZE	1024*16
 
-#ifndef NOPROTO
 void do_fp(FILE *f);
 void pt(unsigned char *md);
 int read(int, void *, unsigned int);
 void exit(int);
-#else
-void do_fp();
-void pt();
-int read();
-void exit();
-#endif
-
 int main(int argc, char *argv[])
 	{
 	int i,err=0;

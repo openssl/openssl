@@ -124,12 +124,7 @@ struct tms {
 #define BUFSIZE	((long)1024*8)
 int run=0;
 
-#ifndef NOPROTO
 static double Time_F(int s);
-#else
-static double Time_F();
-#endif
-
 #define START	0
 #define STOP	1
 

@@ -64,12 +64,7 @@
 #include <openssl/x509.h>
 #include "ssl_locl.h"
 
-#ifndef NOPROTO
 static SSL_METHOD *tls1_get_server_method(int ver);
-#else
-static SSL_METHOD *tls1_get_server_method();
-#endif
-
 static SSL_METHOD *tls1_get_server_method(int ver)
 	{
 	if (ver == TLS1_VERSION)

@@ -63,10 +63,6 @@
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
 
-/*
- * ASN1err(ASN1_F_I2D_DSAPRIVATEKEY,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
- */
-
 int i2d_DSAPrivateKey(DSA *a, unsigned char **pp)
 	{
 	BIGNUM *num[6];

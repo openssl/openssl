@@ -80,20 +80,11 @@
 #ifndef NO_SYSLOG
 
 
-#ifndef NOPROTO
 static int MS_CALLBACK slg_write(BIO *h,char *buf,int num);
 static int MS_CALLBACK slg_puts(BIO *h,char *str);
 static long MS_CALLBACK slg_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int MS_CALLBACK slg_new(BIO *h);
 static int MS_CALLBACK slg_free(BIO *data);
-#else
-static int MS_CALLBACK slg_write();
-static int MS_CALLBACK slg_puts();
-static long MS_CALLBACK slg_ctrl();
-static int MS_CALLBACK slg_new();
-static int MS_CALLBACK slg_free();
-#endif
-
 static int xopenlog(BIO* bp, const char* name, int level);
 static int xcloselog(BIO* bp);
 

@@ -61,14 +61,8 @@
 #include <openssl/rand.h>
 #include "ssl_locl.h"
 
-#ifndef NOPROTO
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx,SSL_SESSION *s);
-#else
-static void SSL_SESSION_list_remove();
-static void SSL_SESSION_list_add();
-#endif
-
 static int ssl_session_num=0;
 static STACK *ssl_session_meth=NULL;
 

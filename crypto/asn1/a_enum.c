@@ -62,9 +62,6 @@
 
 /* Support for ASN1 ENUMERATED type: based on a_int.c */
 
-/* ASN1err(ASN1_F_D2I_ASN1_ENUMERATED,ASN1_R_EXPECTING_AN_ENUMERATED);
- */
-
 int i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **pp)
 	{
 	int pad=0,ret,r,i,t;

@@ -132,7 +132,6 @@ extern int des_check_key;	/* defaults to false */
 extern int des_rw_mode;		/* defaults to DES_PCBC_MODE */
 extern int des_set_weak_key_flag; /* set the weak key flag */
 
-#ifndef NOPROTO
 const char *des_options(void);
 void des_ecb3_encrypt(const des_cblock input, des_cblock output,
 		      des_key_schedule ks1,des_key_schedule ks2,
@@ -236,66 +235,6 @@ void des_init_random_number_generator(des_cblock *key);
 void des_set_random_generator_seed(des_cblock *key);
 void des_set_sequence_number(des_cblock new_sequence_number);
 void des_generate_random_block(des_cblock *block);
-#endif
-
-#else
-
-char *des_options();
-void des_ecb3_encrypt();
-DES_LONG des_cbc_cksum();
-void des_cbc_encrypt();
-void des_ncbc_encrypt();
-void des_xcbc_encrypt();
-void des_cfb_encrypt();
-void des_ede3_cfb64_encrypt();
-void des_ede3_ofb64_encrypt();
-void des_ecb_encrypt();
-void des_encrypt();
-void des_encrypt2();
-void des_encrypt3();
-void des_decrypt3();
-void des_ede3_cbc_encrypt();
-void des_ede3_cbcm_encrypt();
-int des_enc_read();
-int des_enc_write();
-char *des_fcrypt();
-#ifdef PERL5
-char *des_crypt();
-#else
-char *crypt();
-#endif
-void des_ofb_encrypt();
-void des_pcbc_encrypt();
-DES_LONG des_quad_cksum();
-void des_random_seed();
-void des_random_key();
-int des_read_password();
-int des_read_2passwords();
-int des_read_pw_string();
-void des_set_odd_parity();
-int des_is_weak_key();
-int des_set_key();
-int des_key_sched();
-void des_string_to_key();
-void des_string_to_2keys();
-void des_cfb64_encrypt();
-void des_ofb64_encrypt();
-int des_read_pw();
-void des_xwhite_in2out();
-
-/* Extra functions from Mark Murray <mark@grondar.za> */
-void des_cblock_print_file();
-/* The following functions are not in the normal unix build or the
- * SSLeay build.  When using the SSLeay build, use RAND_seed()
- * and RAND_bytes() instead. */
-#ifdef FreeBSD
-int des_new_random_key();
-void des_init_random_number_generator();
-void des_set_random_generator_seed();
-void des_set_sequence_number();
-void des_generate_random_block();
-#endif
-
 #endif
 
 #ifdef  __cplusplus

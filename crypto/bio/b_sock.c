@@ -65,8 +65,6 @@
 #include "cryptlib.h"
 #include <openssl/bio.h>
 
-/*	BIOerr(BIO_F_WSASTARTUP,BIO_R_WSASTARTUP ); */
-
 #ifdef WIN16
 #define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
 #else
@@ -96,16 +94,9 @@ static struct ghbn_cache_st
 	unsigned long order;
 	} ghbn_cache[GHBN_NUM];
 
-#ifndef NOPROTO
 static int get_ip(const char *str,unsigned char *ip);
 static void ghbn_free(struct hostent *a);
 static struct hostent *ghbn_dup(struct hostent *a);
-#else
-static int get_ip();
-static void ghbn_free();
-static struct hostent *ghbn_dup();
-#endif
-
 int BIO_get_host_ip(const char *str, unsigned char *ip)
 	{
 	int i;

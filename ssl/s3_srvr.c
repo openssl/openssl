@@ -66,15 +66,6 @@
 #include <openssl/x509.h>
 #include "ssl_locl.h"
 
-#define BREAK	break
-/* SSLerr(SSL_F_SSL3_ACCEPT,ERR_R_MALLOC_FAILURE);
- * SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,ERR_R_MALLOC_FAILURE);
- * SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
- * SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,ERR_R_MALLOC_FAILURE);
- * SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,ERR_R_MALLOC_FAILURE);
- */
-
-#ifndef NOPROTO
 static SSL_METHOD *ssl3_get_server_method(int ver);
 static int ssl3_get_client_hello(SSL *s);
 static int ssl3_send_server_hello(SSL *s);
@@ -85,21 +76,6 @@ static int ssl3_get_cert_verify(SSL *s);
 static int ssl3_get_client_key_exchange(SSL *s);
 static int ssl3_get_client_certificate(SSL *s);
 static int ssl3_send_hello_request(SSL *s);
-
-#else
-
-static SSL_METHOD *ssl3_get_server_method();
-static int ssl3_get_client_hello();
-static int ssl3_send_server_hello();
-static int ssl3_send_server_key_exchange();
-static int ssl3_send_certificate_request();
-static int ssl3_send_server_done();
-static int ssl3_get_cert_verify();
-static int ssl3_get_client_key_exchange();
-static int ssl3_get_client_certificate();
-static int ssl3_send_hello_request();
-
-#endif
 
 static SSL_METHOD *ssl3_get_server_method(int ver)
 	{

@@ -77,7 +77,6 @@ typedef struct cast_key_st
 	int short_key;	/* Use reduced rounds for short key */
 	} CAST_KEY;
 
-#ifndef NOPROTO
  
 void CAST_set_key(CAST_KEY *key, int len, unsigned char *data);
 void CAST_ecb_encrypt(unsigned char *in,unsigned char *out,CAST_KEY *key,
@@ -90,18 +89,6 @@ void CAST_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	CAST_KEY *schedule, unsigned char *ivec, int *num, int enc);
 void CAST_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	CAST_KEY *schedule, unsigned char *ivec, int *num);
-
-#else
-
-void CAST_set_key();
-void CAST_ecb_encrypt();
-void CAST_encrypt();
-void CAST_decrypt();
-void CAST_cbc_encrypt();
-void CAST_cfb64_encrypt();
-void CAST_ofb64_encrypt();
-
-#endif
 
 #ifdef  __cplusplus
 }

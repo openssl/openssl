@@ -117,7 +117,6 @@ static char *x509_usage[]={
 NULL
 };
 
-#ifndef NOPROTO
 static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx);
 static EVP_PKEY *load_key(char *file, int format);
 static X509 *load_cert(char *file, int format);
@@ -125,14 +124,6 @@ static int sign (X509 *x, EVP_PKEY *pkey,int days,const EVP_MD *digest);
 static int x509_certify (X509_STORE *ctx,char *CAfile,const EVP_MD *digest,
 			 X509 *x,X509 *xca,EVP_PKEY *pkey,char *serial,
 			 int create,int days);
-#else
-static int MS_CALLBACK callb();
-static EVP_PKEY *load_key();
-static X509 *load_cert();
-static int sign ();
-static int x509_certify ();
-#endif
-
 static int reqfile=0;
 
 int MAIN(int argc, char **argv)

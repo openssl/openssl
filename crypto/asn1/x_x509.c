@@ -61,11 +61,6 @@
 #include <openssl/evp.h>
 #include <openssl/asn1_mac.h>
 
-/*
- * ASN1err(ASN1_F_D2I_X509,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_NEW,ERR_R_BAD_GET_ASN1_OBJECT_CALL);
- */
-
 static ASN1_METHOD meth={
 	(int (*)())  i2d_X509,
 	(char *(*)())d2i_X509,

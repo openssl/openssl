@@ -67,7 +67,6 @@
 
 #include "conf_lcl.h"
 
-#ifndef NOPROTO
 static void value_free_hash(CONF_VALUE *a, LHASH *conf);
 static void value_free_stack(CONF_VALUE *a,LHASH *conf);
 static unsigned long hash(CONF_VALUE *v);
@@ -79,20 +78,6 @@ static int str_copy(LHASH *conf,char *section,char **to, char *from);
 static char *scan_quote(char *p);
 static CONF_VALUE *new_section(LHASH *conf,char *section);
 static CONF_VALUE *get_section(LHASH *conf,char *section);
-#else
-static void value_free_hash();
-static void value_free_stack();
-static unsigned long hash();
-static int cmp();
-static char *eat_ws();
-static char *eat_alpha_numeric();
-static void clear_comments();
-static int str_copy();
-static char *scan_quote();
-static CONF_VALUE *new_section();
-static CONF_VALUE *get_section();
-#endif
-
 #define scan_esc(p)	((((p)[1] == '\0')?(p++):(p+=2)),p)
 
 const char *CONF_version="CONF" OPENSSL_VERSION_PTEXT;

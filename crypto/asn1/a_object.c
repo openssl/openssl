@@ -62,11 +62,6 @@
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
 
-/* ASN1err(ASN1_F_ASN1_OBJECT_NEW,ASN1_R_EXPECTING_AN_OBJECT); 
- * ASN1err(ASN1_F_D2I_ASN1_OBJECT,ASN1_R_BAD_OBJECT_HEADER); 
- * ASN1err(ASN1_F_I2T_ASN1_OBJECT,ASN1_R_BAD_OBJECT_HEADER);
- */
-
 int i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp)
 	{
 	unsigned char *p;

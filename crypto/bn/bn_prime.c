@@ -68,7 +68,6 @@
  */
 #include "bn_prime.h"
 
-#ifndef NOPROTO
 static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx,BN_CTX *ctx2,
 	BN_MONT_CTX *mont);
 static int probable_prime(BIGNUM *rnd, int bits);
@@ -76,13 +75,6 @@ static int probable_prime_dh(BIGNUM *rnd, int bits,
 	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
 static int probable_prime_dh_strong(BIGNUM *rnd, int bits,
 	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
-#else
-static int witness();
-static int probable_prime();
-static int probable_prime_dh();
-static int probable_prime_dh_strong();
-#endif
-
 BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int strong, BIGNUM *add,
 	     BIGNUM *rem, void (*callback)(P_I_I_P), char *cb_arg)
 	{

@@ -65,7 +65,6 @@
 #include <openssl/bio.h>
 
 #ifndef BIO_FD
-#ifndef NOPROTO
 static int sock_write(BIO *h,char *buf,int num);
 static int sock_read(BIO *h,char *buf,int size);
 static int sock_puts(BIO *h,char *str);
@@ -74,18 +73,7 @@ static int sock_new(BIO *h);
 static int sock_free(BIO *data);
 int BIO_sock_should_retry(int s);
 #else
-static int sock_write();
-static int sock_read();
-static int sock_puts();
-static long sock_ctrl();
-static int sock_new();
-static int sock_free();
-int BIO_sock_should_retry();
-#endif
 
-#else
-
-#ifndef NOPROTO
 static int fd_write(BIO *h,char *buf,int num);
 static int fd_read(BIO *h,char *buf,int size);
 static int fd_puts(BIO *h,char *str);
@@ -93,15 +81,6 @@ static long fd_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int fd_new(BIO *h);
 static int fd_free(BIO *data);
 int BIO_fd_should_retry(int s);
-#else
-static int fd_write();
-static int fd_read();
-static int fd_puts();
-static long fd_ctrl();
-static int fd_new();
-static int fd_free();
-int BIO_fd_should_retry();
-#endif
 #endif
 
 #ifndef BIO_FD

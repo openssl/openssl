@@ -60,9 +60,6 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
-/* ASN1err(ASN1_F_D2I_ASN1_BMPSTRING,ASN1_R_EXPECTING_AN_INTEGER);
- */
-
 int i2d_ASN1_BMPSTRING(ASN1_BMPSTRING *a, unsigned char **pp)
 	{
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,

@@ -64,8 +64,6 @@
 #include "cryptlib.h"
 #include <openssl/bio.h>
 
-/*	BIOerr(BIO_F_WSASTARTUP,BIO_R_WSASTARTUP ); */
-
 #ifdef WIN16
 #define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
 #else
@@ -89,35 +87,16 @@ typedef struct bio_accept_st
 	BIO *bio_chain;
 	} BIO_ACCEPT;
 
-#ifndef NOPROTO
 static int acpt_write(BIO *h,char *buf,int num);
 static int acpt_read(BIO *h,char *buf,int size);
 static int acpt_puts(BIO *h,char *str);
 static long acpt_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int acpt_new(BIO *h);
 static int acpt_free(BIO *data);
-#else
-static int acpt_write();
-static int acpt_read();
-static int acpt_puts();
-static long acpt_ctrl();
-static int acpt_new();
-static int acpt_free();
-#endif
-
-#ifndef NOPROTO
 static int acpt_state(BIO *b, BIO_ACCEPT *c);
 static void acpt_close_socket(BIO *data);
 BIO_ACCEPT *BIO_ACCEPT_new(void );
 void BIO_ACCEPT_free(BIO_ACCEPT *a);
-
-#else
-
-static int acpt_state();
-static void acpt_close_socket();
-BIO_ACCEPT *BIO_ACCEPT_new();
-void BIO_ACCEPT_free();
-#endif
 
 #define ACPT_S_BEFORE			1
 #define ACPT_S_GET_ACCEPT_SOCKET	2

@@ -156,7 +156,6 @@ extern int EF_PROTECT_BELOW;
 extern int EF_ALIGNMENT;
 #endif
 
-#ifndef NOPROTO
 static int add_oid_section(LHASH *conf);
 static void lookup_fail(char *name,char *tag);
 static int MS_CALLBACK key_callback(char *buf,int len,int verify);
@@ -187,27 +186,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	LHASH *conf);
 static int do_revoke(X509 *x509, TXT_DB *db);
 static int check_time_format(char *str);
-#else
-static int add_oid_section();
-static void lookup_fail();
-static int MS_CALLBACK key_callback();
-static unsigned long index_serial_hash();
-static int index_serial_cmp();
-static unsigned long index_name_hash();
-static int index_name_qual();
-static int index_name_cmp();
-static int fix_data();
-static BIGNUM *load_serial();
-static int save_serial();
-static int certify();
-static int certify_cert();
-static int certify_spkac();
-static void write_new_certificate();
-static int do_body();
-static int do_revoke();
-static int check_time_format();
-#endif
-
 static LHASH *conf;
 static char *key=NULL;
 static char *section=NULL;

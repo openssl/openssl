@@ -60,11 +60,6 @@
 #include "cryptlib.h"
 #include <openssl/asn1_mac.h>
 
-/* ASN1err(ASN1_F_X509_VAL_NEW,ERR_R_MALLOC_FAILURE);
- * ASN1err(ASN1_F_X509_VAL_FREE,ERR_R_MALLOC_FAILURE);
- * ASN1err(ASN1_F_D2I_X509_VAL,ERR_R_MALLOC_FAILURE);
- */
-
 int i2d_X509_VAL(X509_VAL *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);

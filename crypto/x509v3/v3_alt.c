@@ -61,18 +61,10 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-#ifndef NOPROTO
 static STACK_OF(GENERAL_NAME) *v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
 static STACK_OF(GENERAL_NAME) *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
 static int copy_email(X509V3_CTX *ctx, STACK_OF(GENERAL_NAME) *gens);
 static int copy_issuer(X509V3_CTX *ctx, STACK_OF(GENERAL_NAME) *gens);
-#else
-static STACK *v2i_issuer_alt();
-static STACK *v2i_subject_alt();
-static int copy_email();
-static int copy_issuer();
-#endif
-
 X509V3_EXT_METHOD v3_alt[] = {
 { NID_subject_alt_name, 0,
 (X509V3_EXT_NEW)GENERAL_NAMES_new,

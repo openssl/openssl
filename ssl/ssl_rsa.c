@@ -64,14 +64,8 @@
 #include <openssl/pem.h>
 #include "ssl_locl.h"
 
-#ifndef NOPROTO
 static int ssl_set_cert(CERT *c, X509 *x509);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
-#else
-static int ssl_set_cert();
-static int ssl_set_pkey();
-#endif
-
 int SSL_use_certificate(SSL *ssl, X509 *x)
 	{
 	if (x == NULL)

@@ -62,7 +62,6 @@
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 
-#ifndef NOPROTO
 static int ber_write(BIO *h,char *buf,int num);
 static int ber_read(BIO *h,char *buf,int size);
 /*static int ber_puts(BIO *h,char *str); */
@@ -70,16 +69,6 @@ static int ber_read(BIO *h,char *buf,int size);
 static long ber_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int ber_new(BIO *h);
 static int ber_free(BIO *data);
-#else
-static int ber_write();
-static int ber_read();
-/*static int ber_puts(); */
-/*static int ber_gets(); */
-static long ber_ctrl();
-static int ber_new();
-static int ber_free();
-#endif
-
 #define BER_BUF_SIZE	(32)
 
 /* This is used to hold the state of the BER objects being read. */

@@ -60,10 +60,6 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
-/* ASN1err(ASN1_F_ASN1_STRING_NEW,ASN1_R_STRING_TOO_SHORT);
- * ASN1err(ASN1_F_D2I_ASN1_BIT_STRING,ASN1_R_EXPECTING_A_BIT_STRING);
- */
-
 int i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	{
 	int ret,j,r,bits,len;

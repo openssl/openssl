@@ -71,14 +71,8 @@
 #include <openssl/x509.h>
 #include <openssl/objects.h>
 
-#ifndef NOPROTO
 static int null_callback(int ok,X509_STORE_CTX *e);
 static int internal_verify(X509_STORE_CTX *ctx);
-#else
-static int null_callback();
-static int internal_verify();
-#endif
-
 const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
 
 static STACK *x509_store_ctx_method=NULL;

@@ -60,10 +60,6 @@
 #include "cryptlib.h"
 #include <openssl/asn1_mac.h>
 
-/* ASN1err(ASN1_F_D2I_ASN1_TYPE_BYTES,ASN1_R_WRONG_TYPE);
- * ASN1err(ASN1_F_ASN1_COLLATE_PRIMATIVE,ASN1_R_WRONG_TAG);
- */
-
 static unsigned long tag2bit[32]={
 0,	0,	0,	B_ASN1_BIT_STRING,	/* tags  0 -  3 */
 B_ASN1_OCTET_STRING,	0,	0,		B_ASN1_UNKNOWN,/* tags  4- 7 */
@@ -75,12 +71,7 @@ B_ASN1_T61STRING,B_ASN1_VIDEOTEXSTRING,B_ASN1_IA5STRING,0,
 B_ASN1_UNIVERSALSTRING,B_ASN1_UNKNOWN,B_ASN1_BMPSTRING,B_ASN1_UNKNOWN,
 	};
 
-#ifndef NOPROTO
 static int asn1_collate_primative(ASN1_STRING *a, ASN1_CTX *c);
-#else
-static int asn1_collate_primative();
-#endif
-
 /* type is a 'bitmap' of acceptable string types.
  */
 ASN1_STRING *d2i_ASN1_type_bytes(ASN1_STRING **a, unsigned char **pp,

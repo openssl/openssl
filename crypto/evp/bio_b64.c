@@ -62,7 +62,6 @@
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 
-#ifndef NOPROTO
 static int b64_write(BIO *h,char *buf,int num);
 static int b64_read(BIO *h,char *buf,int size);
 /*static int b64_puts(BIO *h,char *str); */
@@ -70,16 +69,6 @@ static int b64_read(BIO *h,char *buf,int size);
 static long b64_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int b64_new(BIO *h);
 static int b64_free(BIO *data);
-#else
-static int b64_write();
-static int b64_read();
-/*static int b64_puts(); */
-/*static int b64_gets(); */
-static long b64_ctrl();
-static int b64_new();
-static int b64_free();
-#endif
-
 #define B64_BLOCK_SIZE	1024
 #define B64_BLOCK_SIZE2	768
 #define B64_NONE	0

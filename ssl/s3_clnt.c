@@ -63,17 +63,6 @@
 #include <openssl/evp.h>
 #include "ssl_locl.h"
 
-#define BREAK break
-/* SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,ERR_R_MALLOC_FAILURE);
- * SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,ERR_R_MALLOC_FAILURE);
- * SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,ERR_R_MALLOC_FAILURE);
- * SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
- * SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,ERR_R_MALLOC_FAILURE);
- * SSLerr(SSL_F_SSL3_GET_SERVER_DONE,ERR_R_MALLOC_FAILURE);
-SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_SSL3_SESSION_ID_TOO_SHORT);
- */
-
-#ifndef NOPROTO
 static SSL_METHOD *ssl3_get_client_method(int ver);
 static int ssl3_client_hello(SSL *s);
 static int ssl3_get_server_hello(SSL *s);
@@ -86,21 +75,6 @@ static int ssl3_send_client_key_exchange(SSL *s);
 static int ssl3_get_key_exchange(SSL *s);
 static int ssl3_get_server_certificate(SSL *s);
 static int ssl3_check_cert_and_algorithm(SSL *s);
-#else
-static SSL_METHOD *ssl3_get_client_method();
-static int ssl3_client_hello();
-static int ssl3_get_server_hello();
-static int ssl3_get_certificate_request();
-static int ca_dn_cmp();
-static int ssl3_get_server_done();
-static int ssl3_send_client_verify();
-static int ssl3_send_client_certificate();
-static int ssl3_send_client_key_exchange();
-static int ssl3_get_key_exchange();
-static int ssl3_get_server_certificate();
-static int ssl3_check_cert_and_algorithm();
-#endif
-
 static SSL_METHOD *ssl3_get_client_method(int ver)
 	{
 	if (ver == SSL3_VERSION)

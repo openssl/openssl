@@ -84,7 +84,6 @@ typedef struct SHAstate_st
 	int num;
 	} SHA_CTX;
 
-#ifndef NOPROTO
 void SHA_Init(SHA_CTX *c);
 void SHA_Update(SHA_CTX *c, unsigned char *data, unsigned long len);
 void SHA_Final(unsigned char *md, SHA_CTX *c);
@@ -95,19 +94,6 @@ void SHA1_Update(SHA_CTX *c, unsigned char *data, unsigned long len);
 void SHA1_Final(unsigned char *md, SHA_CTX *c);
 unsigned char *SHA1(unsigned char *d, unsigned long n,unsigned char *md);
 void SHA1_Transform(SHA_CTX *c, unsigned char *data);
-#else
-void SHA_Init();
-void SHA_Update();
-void SHA_Final();
-unsigned char *SHA();
-void SHA_Transform();
-void SHA1_Init();
-void SHA1_Update();
-void SHA1_Final();
-unsigned char *SHA1();
-void SHA1_Transform();
-#endif
-
 #ifdef  __cplusplus
 }
 #endif

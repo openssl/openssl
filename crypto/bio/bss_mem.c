@@ -61,7 +61,6 @@
 #include "cryptlib.h"
 #include <openssl/bio.h>
 
-#ifndef NOPROTO
 static int mem_write(BIO *h,char *buf,int num);
 static int mem_read(BIO *h,char *buf,int size);
 static int mem_puts(BIO *h,char *str);
@@ -69,16 +68,6 @@ static int mem_gets(BIO *h,char *str,int size);
 static long mem_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int mem_new(BIO *h);
 static int mem_free(BIO *data);
-#else
-static int mem_write();
-static int mem_read();
-static int mem_puts();
-static int mem_gets();
-static long mem_ctrl();
-static int mem_new();
-static int mem_free();
-#endif
-
 static BIO_METHOD mem_method=
 	{
 	BIO_TYPE_MEM,

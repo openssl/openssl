@@ -68,7 +68,6 @@
 static LHASH *error_hash=NULL;
 static LHASH *thread_hash=NULL;
 
-#ifndef NOPROTO
 static unsigned long err_hash(ERR_STRING_DATA *a);
 static int err_cmp(ERR_STRING_DATA *a, ERR_STRING_DATA *b);
 static unsigned long pid_hash(ERR_STATE *pid);
@@ -76,16 +75,6 @@ static int pid_cmp(ERR_STATE *a,ERR_STATE *pid);
 static unsigned long get_error_values(int inc,const char **file,int *line,
 				      const char **data,int *flags);
 static void ERR_STATE_free(ERR_STATE *s);
-#else
-static unsigned long err_hash();
-static int err_cmp();
-static unsigned long pid_hash();
-static int pid_cmp();
-static unsigned long get_error_values();
-static void ERR_STATE_free();
-ERR_STATE *s;
-#endif
-
 #ifndef NO_ERR
 static ERR_STRING_DATA ERR_str_libraries[]=
 	{

@@ -60,9 +60,6 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
-/* ASN1err(ASN1_F_D2I_ASN1_VISIBLESTRING,ERR_R_MALLOC_FAILURE);
- */
-
 int i2d_ASN1_VISIBLESTRING(ASN1_VISIBLESTRING *a, unsigned char **pp)
 	{
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,

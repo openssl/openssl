@@ -63,11 +63,6 @@
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
 
-/*
- * ASN1err(ASN1_F_D2I_DHPARAMS,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_I2D_DHPARAMS,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
- */
-
 DH *d2i_DHparams(DH **a, unsigned char **pp, long length)
 	{
 	int i=ERR_R_NESTED_ASN1_ERROR;

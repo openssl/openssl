@@ -75,21 +75,12 @@ typedef struct lookup_dir_st
 	int num_dirs_alloced;
 	} BY_DIR;
 
-#ifndef NOPROTO
 static int dir_ctrl(X509_LOOKUP *ctx,int cmd,char *argp,long argl,char **ret);
 static int new_dir(X509_LOOKUP *lu);
 static void free_dir(X509_LOOKUP *lu);
 static int add_cert_dir(BY_DIR *ctx,const char *dir,int type);
 static int get_cert_by_subject(X509_LOOKUP *xl,int type,X509_NAME *name,
 	X509_OBJECT *ret);
-#else
-static int dir_ctrl();
-static int new_dir();
-static void free_dir();
-static int add_cert_dir();
-static int get_cert_by_subject();
-#endif
-
 X509_LOOKUP_METHOD x509_dir_lookup=
 	{
 	"Load certs from files in a directory",

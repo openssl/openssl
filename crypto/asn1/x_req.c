@@ -61,13 +61,6 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/x509.h>
 
-/*
- * ASN1err(ASN1_F_D2I_X509_REQ,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_X509_REQ_INFO,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_REQ_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_REQ_INFO_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
- */
-
 int i2d_X509_REQ_INFO(X509_REQ_INFO *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);

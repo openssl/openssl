@@ -82,7 +82,6 @@
 #ifndef RAND
 #define RAND
 #endif
-#undef NOPROTO
 #endif
 
 #if defined(__STDC__) || defined(VMS) || defined(M_XENIX) || defined(MSDOS)
@@ -100,15 +99,6 @@
 #ifdef MSDOS
 #define getpid() 2
 #define RAND
-#undef NOPROTO
-#endif
-
-#if defined(NOCONST)
-#define const
-#endif
-
-#ifdef __STDC__
-#undef NOPROTO
 #endif
 
 #ifdef RAND
@@ -430,11 +420,6 @@
 
 extern const DES_LONG des_SPtrans[8][64];
 
-#ifndef NOPROTO
 void fcrypt_body(DES_LONG *out,des_key_schedule ks,
 	DES_LONG Eswap0, DES_LONG Eswap1);
-#else
-void fcrypt_body();
-#endif
-
 #endif

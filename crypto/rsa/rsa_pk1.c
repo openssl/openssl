@@ -62,18 +62,6 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 
-#ifndef NOPROTO
-int RSA_padding_add_PKCS1_type_1();
-int RSA_padding_check_PKCS1_type_1();
-int RSA_padding_add_PKCS1_type_2();
-int RSA_padding_check_PKCS1_type_2();
-int RSA_padding_add_SSLv23();
-int RSA_padding_check_SSLv23();
-int RSA_padding_add_none();
-int RSA_padding_check_none();
-
-#endif
-
 int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
 	     unsigned char *from, int flen)
 	{

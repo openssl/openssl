@@ -63,16 +63,10 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void rc4_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void rc4_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void rc4_init_key();
-static void rc4_cipher();
-#endif
-
 static EVP_CIPHER r4_cipher=
 	{
 	NID_rc4,

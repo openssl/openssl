@@ -69,12 +69,7 @@ const char *MD2_version="MD2" OPENSSL_VERSION_PTEXT;
 
 #define UCHAR	unsigned char
 
-#ifndef NOPROTO
 static void md2_block(MD2_CTX *c, unsigned char *d);
-#else
-static void md2_block();
-#endif
-
 /* The magic S table - I have converted it to hex since it is
  * basicaly just a random byte string. */
 static MD2_INT S[256]={

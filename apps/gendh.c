@@ -73,14 +73,8 @@
 #undef PROG
 #define PROG gendh_main
 
-#ifndef NOPROTO
 static void MS_CALLBACK dh_cb(int p, int n, char *arg);
 static long dh_load_rand(char *names);
-#else
-static void MS_CALLBACK dh_cb();
-static long dh_load_rand();
-#endif
-
 int MAIN(int argc, char **argv)
 	{
 	char buffer[200];

@@ -301,18 +301,10 @@ static unsigned char ofb_cipher[24]=
 DES_LONG cbc_cksum_ret=0xB462FEF7L;
 unsigned char cbc_cksum_data[8]={0x1D,0x26,0x93,0x97,0xf7,0xfe,0x62,0xb4};
 
-#ifndef NOPROTO
 static char *pt(unsigned char *p);
 static int cfb_test(int bits, unsigned char *cfb_cipher);
 static int cfb64_test(unsigned char *cfb_cipher);
 static int ede_cfb64_test(unsigned char *cfb_cipher);
-#else
-static char *pt();
-static int cfb_test();
-static int cfb64_test();
-static int ede_cfb64_test();
-#endif
-
 int main(int argc, char *argv[])
 	{
 	int i,j,err=0;

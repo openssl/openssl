@@ -61,7 +61,6 @@
 #include "cryptlib.h"
 #include <openssl/bio.h>
 
-#ifndef NOPROTO
 static int null_write(BIO *h,char *buf,int num);
 static int null_read(BIO *h,char *buf,int size);
 static int null_puts(BIO *h,char *str);
@@ -69,16 +68,6 @@ static int null_gets(BIO *h,char *str,int size);
 static long null_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int null_new(BIO *h);
 static int null_free(BIO *data);
-#else
-static int null_write();
-static int null_read();
-static int null_puts();
-static int null_gets();
-static long null_ctrl();
-static int null_new();
-static int null_free();
-#endif
-
 static BIO_METHOD null_method=
 	{
 	BIO_TYPE_NULL,

@@ -60,10 +60,6 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
-/* ASN1err(ASN1_F_D2I_ASN1_PRINT_TYPE,ASN1_R_WRONG_PRINTABLE_TYPE);
- * ASN1err(ASN1_F_D2I_ASN1_PRINT_TYPE,ASN1_R_TAG_VALUE_TOO_HIGH);
- */
-
 int i2d_ASN1_IA5STRING(ASN1_IA5STRING *a, unsigned char **pp)
 	{ return(M_i2d_ASN1_IA5STRING(a,pp)); }
 

@@ -60,8 +60,6 @@
 #include "cryptlib.h"
 #include <openssl/asn1_mac.h>
 
-/* ASN1err(ASN1_F_ASN1_TYPE_NEW,ERR_R_MALLOC_FAILURE);
- */
 typedef struct
     {
     unsigned char *pbData;

@@ -74,12 +74,7 @@
 
 const char *STACK_version="Stack" OPENSSL_VERSION_PTEXT;
 
-#ifndef NOPROTO
 #define	FP_ICC	(int (*)(const void *,const void *))
-#else
-#define FP_ICC
-#endif
-
 #include <errno.h>
 
 int (*sk_set_cmp_func(STACK *sk, int (*c)()))(void)

@@ -72,18 +72,8 @@ const char *PEM_version="PEM" OPENSSL_VERSION_PTEXT;
 
 #define MIN_LENGTH	4
 
-/* PEMerr(PEM_F_PEM_WRITE_BIO,ERR_R_MALLOC_FAILURE);
- * PEMerr(PEM_F_PEM_READ_BIO,ERR_R_MALLOC_FAILURE);
- */
-
-#ifndef NOPROTO
 static int def_callback(char *buf, int num, int w);
 static int load_iv(unsigned char **fromp,unsigned char *to, int num);
-#else
-static int def_callback();
-static int load_iv();
-#endif
-
 static int def_callback(char *buf, int num, int w)
 	{
 #ifdef NO_FP_API

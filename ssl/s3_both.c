@@ -64,11 +64,6 @@
 #include <openssl/x509.h>
 #include "ssl_locl.h"
 
-#define BREAK	break
-
-/* SSL3err(SSL_F_SSL3_GET_FINISHED,SSL_R_EXCESSIVE_MESSAGE_SIZE);
- */
-
 int ssl3_send_finished(SSL *s, int a, int b, unsigned char *sender,
 	     int slen)
 	{

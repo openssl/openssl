@@ -61,11 +61,6 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/objects.h>
 
-/*
- * ASN1err(ASN1_F_D2I_X509_KEY,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_KEY_NEW,ERR_R_BAD_GET_ASN1_OBJECT_CALL);
- */
-
 int i2d_X509_KEY(X509 *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);

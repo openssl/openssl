@@ -252,14 +252,8 @@ unsigned char key_out[KEY_TEST_NUM][8]={
 	{0x05,0x04,0x4B,0x62,0xFA,0x52,0xD0,0x80},
 	};
 
-#ifndef NOPROTO
 static int test(void );
 static int print_test_data(void );
-#else
-static int test();
-static int print_test_data();
-#endif
-
 int main(int argc, char *argv[])
 	{
 	int ret;

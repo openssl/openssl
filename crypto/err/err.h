@@ -214,7 +214,6 @@ typedef struct ERR_string_data_st
 	const char *string;
 	} ERR_STRING_DATA;
 
-#ifndef NOPROTO
 void ERR_put_error(int lib, int func,int reason,const char *file,int line);
 void ERR_set_error_data(char *data,int flags);
 
@@ -255,47 +254,6 @@ char *ERR_get_err_state_table(void );
 #endif
 
 int ERR_get_next_error_library(void );
-
-#else
-
-void ERR_put_error();
-void ERR_set_error_data();
-
-unsigned long ERR_get_error();
-unsigned long ERR_get_error_line();
-unsigned long ERR_get_error_line_data();
-unsigned long ERR_peek_error();
-unsigned long ERR_peek_error_line();
-unsigned long ERR_peek_error_line_data();
-void ERR_clear_error();
-char *ERR_error_string();
-char *ERR_lib_error_string();
-char *ERR_func_error_string();
-char *ERR_reason_error_string();
-#ifndef NO_FP_API
-void ERR_print_errors_fp();
-#endif
-void ERR_print_errors();
-void ERR_add_error_data();
-void ERR_load_strings();
-void ERR_load_ERR_strings();
-void ERR_load_crypto_strings();
-void ERR_free_strings();
-
-void ERR_remove_state();
-ERR_STATE *ERR_get_state();
-
-#ifdef HEADER_LHASH_H
-LHASH *ERR_get_string_table();
-LHASH *ERR_get_err_state_table();
-#else
-char *ERR_get_string_table();
-char *ERR_get_err_state_table();
-#endif
-
-int ERR_get_next_error_library();
-
-#endif
 
 #ifdef	__cplusplus
 }

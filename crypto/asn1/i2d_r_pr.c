@@ -63,11 +63,6 @@
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
 
-/*
- * ASN1err(ASN1_F_D2I_RSAPRIVATEKEY,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_I2D_RSAPRIVATEKEY,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
- */
-
 int i2d_RSAPrivateKey(RSA *a, unsigned char **pp)
 	{
 	BIGNUM *num[9];

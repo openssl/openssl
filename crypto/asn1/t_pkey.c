@@ -70,17 +70,8 @@
 #include <openssl/dsa.h>
 #endif
 
-/* DHerr(DH_F_DHPARAMS_PRINT,ERR_R_MALLOC_FAILURE);
- * DSAerr(DSA_F_DSAPARAMS_PRINT,ERR_R_MALLOC_FAILURE);
- */
-
-#ifndef NOPROTO
 static int print(BIO *fp,const char *str,BIGNUM *num,
 		unsigned char *buf,int off);
-#else
-static int print();
-#endif
-
 #ifndef NO_RSA
 #ifndef NO_FP_API
 int RSA_print_fp(FILE *fp, RSA *x, int off)

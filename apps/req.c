@@ -107,7 +107,6 @@
  *		  require.  This format is wrong
  */
 
-#ifndef NOPROTO
 static int make_REQ(X509_REQ *req,EVP_PKEY *pkey,int attribs);
 static int add_attribute_object(STACK *n, char *text, char *def, 
 	char *value, int nid,int min,int max);
@@ -117,16 +116,6 @@ static void MS_CALLBACK req_cb(int p,int n,char *arg);
 static int req_fix_data(int nid,int *type,int len,int min,int max);
 static int check_end(char *str, char *end);
 static int add_oid_section(LHASH *conf);
-#else
-static int make_REQ();
-static int add_attribute_object();
-static int add_DN_object();
-static void MS_CALLBACK req_cb();
-static int req_fix_data();
-static int check_end();
-static int add_oid_section();
-#endif
-
 #ifndef MONOLITH
 static char *default_config_file=NULL;
 static LHASH *config=NULL;

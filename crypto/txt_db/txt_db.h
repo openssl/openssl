@@ -85,7 +85,6 @@ typedef struct txt_db_st
 	char **arg_row;
 	} TXT_DB;
 
-#ifndef NOPROTO
 #ifdef HEADER_BIO_H
 TXT_DB *TXT_DB_read(BIO *in, int num);
 long TXT_DB_write(BIO *out, TXT_DB *db);
@@ -98,17 +97,6 @@ int TXT_DB_create_index(TXT_DB *db,int field,int (*qual)(),
 void TXT_DB_free(TXT_DB *db);
 char **TXT_DB_get_by_index(TXT_DB *db, int idx, char **value);
 int TXT_DB_insert(TXT_DB *db,char **value);
-
-#else
-
-TXT_DB *TXT_DB_read();
-long TXT_DB_write();
-int TXT_DB_create_index();
-void TXT_DB_free();
-char **TXT_DB_get_by_index();
-int TXT_DB_insert();
-
-#endif
 
 #ifdef  __cplusplus
 }

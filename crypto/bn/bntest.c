@@ -70,7 +70,6 @@
 #include "../bio/bss_file.c"
 #endif
 
-#ifndef NOPROTO
 int test_add(BIO *bp);
 int test_sub(BIO *bp);
 int test_lshift1(BIO *bp);
@@ -87,24 +86,6 @@ int test_mod_mul(BIO *bp,BN_CTX *ctx);
 int test_mod_exp(BIO *bp,BN_CTX *ctx);
 int test_exp(BIO *bp,BN_CTX *ctx);
 int rand_neg(void);
-#else
-int test_add ();
-int test_sub ();
-int test_lshift1 ();
-int test_lshift ();
-int test_rshift1 ();
-int test_rshift ();
-int test_div ();
-int test_mul ();
-int test_sqr ();
-int test_mont ();
-int test_mod ();
-int test_mod_mul ();
-int test_mod_exp ();
-int test_exp ();
-int rand_neg();
-#endif
-
 static int results=0;
 
 #ifdef NO_STDIO

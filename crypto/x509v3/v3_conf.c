@@ -66,22 +66,12 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#ifndef NOPROTO
 static int v3_check_critical(char **value);
 static int v3_check_generic(char **value);
 static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value);
 static X509_EXTENSION *v3_generic_extension(const char *ext, char *value, int crit, int type);
 static char *conf_lhash_get_string(void *db, char *section, char *value);
 static STACK *conf_lhash_get_section(void *db, char *section);
-#else
-static int v3_check_critical();
-static int v3_check_generic();
-static X509_EXTENSION *do_ext_conf();
-static X509V3_EXTENSION *v3_generic_extension();
-static char *conf_lhash_get_string();
-static STACK *conf_lhash_get_section();
-#endif
-
 /* LHASH *conf:  Config file    */
 /* char *name:  Name    */
 /* char *value:  Value    */

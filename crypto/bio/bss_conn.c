@@ -64,8 +64,6 @@
 #include "cryptlib.h"
 #include <openssl/bio.h>
 
-/*	BIOerr(BIO_F_WSASTARTUP,BIO_R_WSASTARTUP ); */
-
 #ifdef WIN16
 #define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
 #else
@@ -94,37 +92,17 @@ typedef struct bio_connect_st
 	int (*info_callback)();
 	} BIO_CONNECT;
 
-#ifndef NOPROTO
 static int conn_write(BIO *h,char *buf,int num);
 static int conn_read(BIO *h,char *buf,int size);
 static int conn_puts(BIO *h,char *str);
 static long conn_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int conn_new(BIO *h);
 static int conn_free(BIO *data);
-#else
-static int conn_write();
-static int conn_read();
-static int conn_puts();
-static long conn_ctrl();
-static int conn_new();
-static int conn_free();
-#endif
-
-#ifndef NOPROTO
 
 static int conn_state(BIO *b, BIO_CONNECT *c);
 static void conn_close_socket(BIO *data);
 BIO_CONNECT *BIO_CONNECT_new(void );
 void BIO_CONNECT_free(BIO_CONNECT *a);
-
-#else
-
-static int conn_state();
-static void conn_close_socket();
-BIO_CONNECT *BIO_CONNECT_new();
-void BIO_CONNECT_free();
-
-#endif
 
 static BIO_METHOD methods_connectp=
 	{

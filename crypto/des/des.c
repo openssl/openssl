@@ -77,9 +77,6 @@
 #endif
 #include <sys/stat.h>
 #endif
-#if defined(NOCONST)
-#define const
-#endif
 #include <openssl/des.h>
 
 #if defined(__STDC__) || defined(VMS) || defined(M_XENIX) || defined(MSDOS)
@@ -91,7 +88,6 @@
 #define srandom(s) srand(s)
 #endif
 
-#ifndef NOPROTO
 void usage(void);
 void doencryption(void);
 int uufwrite(unsigned char *data, int size, unsigned int num, FILE *fp);
@@ -102,17 +98,6 @@ int uudecode(unsigned char *in,int num,unsigned char *out);
 void des_3cbc_encrypt(des_cblock *input,des_cblock *output,long length,
 	des_key_schedule sk1,des_key_schedule sk2,
 	des_cblock *ivec1,des_cblock *ivec2,int enc);
-#else
-void usage();
-void doencryption();
-int uufwrite();
-void uufwriteEnd();
-int uufread();
-int uuencode();
-int uudecode();
-void des_3cbc_encrypt();
-#endif
-
 #ifdef VMS
 #define EXIT(a) exit(a&0x10000000L)
 #else

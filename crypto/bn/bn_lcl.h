@@ -242,21 +242,11 @@ extern int bn_limit_num_high;   /* (1<<bn_limit_bits_high) */
 extern int bn_limit_bits_mont;
 extern int bn_limit_num_mont;   /* (1<<bn_limit_bits_mont) */
 
-#ifndef NOPROTO
 
 BIGNUM *bn_expand2(BIGNUM *b, int bits);
 
 #ifdef X86_ASM
 void bn_add_words(BN_ULONG *r,BN_ULONG *a,int num);
-#endif
-
-#else
-
-BIGNUM *bn_expand2();
-#ifdef X86_ASM
-BN_ULONG bn_add_words();
-#endif
-
 #endif
 
 #ifdef  __cplusplus

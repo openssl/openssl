@@ -94,18 +94,11 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 
 static STACK *app_locks=NULL;
 
-#ifndef NOPROTO
 static void (MS_FAR *locking_callback)(int mode,int type,
 	const char *file,int line)=NULL;
 static int (MS_FAR *add_lock_callback)(int *pointer,int amount,
 	int type,const char *file,int line)=NULL;
 static unsigned long (MS_FAR *id_callback)(void)=NULL;
-#else
-static void (MS_FAR *locking_callback)()=NULL;
-static int (MS_FAR *add_lock_callback)()=NULL;
-static unsigned long (MS_FAR *id_callback)()=NULL;
-#endif
-
 int CRYPTO_get_new_lockid(char *name)
 	{
 	char *str;

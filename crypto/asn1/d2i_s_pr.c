@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-/* Origional version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
+/* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
 
 #include <stdio.h>
 #include "cryptlib.h"
@@ -64,12 +64,6 @@
 #include <openssl/dsa.h>
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
-
-/*
- * ASN1err(ASN1_F_D2I_DSAPRIVATEKEY,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_I2D_DSAPRIVATEKEY,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
- * ASN1err(ASN1_F_I2D_DSAPRIVATEKEY,ASN1_R_PARSING);
- */
 
 DSA *d2i_DSAPrivateKey(DSA **a, unsigned char **pp, long length)
 	{

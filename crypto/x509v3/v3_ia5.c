@@ -63,16 +63,9 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-#ifndef NOPROTO
 static ASN1_IA5STRING *ia5string_new(void);
 static char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5);
 static ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
-#else
-static ASN1_IA5STRING *ia5string_new();
-static char *i2s_ASN1_IA5STRING();
-static ASN1_IA5STRING *s2i_ASN1_IA5STRING();
-#endif
-
 X509V3_EXT_METHOD v3_ns_ia5_list[] = { 
 EXT_IA5STRING(NID_netscape_base_url),
 EXT_IA5STRING(NID_netscape_revocation_url),

@@ -61,10 +61,6 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
-/* ASN1err(ASN1_F_ASN1_UTCTIME_NEW,ASN1_R_UTCTIME_TOO_LONG);
- * ASN1err(ASN1_F_D2I_ASN1_UTCTIME,ASN1_R_EXPECTING_A_UTCTIME);
- */
-
 int i2d_ASN1_UTCTIME(ASN1_UTCTIME *a, unsigned char **pp)
 	{
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,
