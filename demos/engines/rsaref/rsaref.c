@@ -88,7 +88,7 @@ static int rsaref_digests(ENGINE *e, const EVP_MD **digest,
 static int rsaref_cipher_nids[] =
 	{ NID_des_cbc, NID_des_ede3_cbc, NID_desx_cbc, 0 };
 static int rsaref_digest_nids[] =
-	{ 0 };
+	{ NID_md2, NID_md5, 0 };
 
 /*****************************************************************************
  * DES functions
@@ -112,7 +112,7 @@ int cipher_desx_cbc_clean(EVP_CIPHER_CTX *);
 /*****************************************************************************
  * Our DES ciphers
  **/
-static EVP_CIPHER cipher_des_cbc =
+static const EVP_CIPHER cipher_des_cbc =
 	{
 	NID_des_cbc,
 	8, 8, 8,
@@ -127,7 +127,7 @@ static EVP_CIPHER cipher_des_cbc =
 	NULL
 	};
 
-static EVP_CIPHER cipher_des_ede3_cbc =
+static const EVP_CIPHER cipher_des_ede3_cbc =
 	{
 	NID_des_ede3_cbc,
 	8, 24, 8,
@@ -142,7 +142,7 @@ static EVP_CIPHER cipher_des_ede3_cbc =
 	NULL
 	};
 
-static EVP_CIPHER cipher_desx_cbc =
+static const EVP_CIPHER cipher_desx_cbc =
 	{
 	NID_desx_cbc,
 	8, 24, 8,
@@ -155,6 +155,53 @@ static EVP_CIPHER cipher_desx_cbc =
 	NULL,
 	NULL,
 	NULL
+	};
+
+/*****************************************************************************
+ * MD functions
+ **/
+static int digest_md2_init(EVP_MD_CTX *ctx);
+static int digest_md2_update(EVP_MD_CTX *ctx,const void *data,
+	unsigned long count);
+static int digest_md2_final(EVP_MD_CTX *ctx,unsigned char *md);
+static int digest_md5_init(EVP_MD_CTX *ctx);
+static int digest_md5_update(EVP_MD_CTX *ctx,const void *data,
+	unsigned long count);
+static int digest_md5_final(EVP_MD_CTX *ctx,unsigned char *md);
+
+/*****************************************************************************
+ * Our MD digests
+ **/
+static const EVP_MD digest_md2 =
+	{
+	NID_md2,
+	NID_md2WithRSAEncryption,
+	16,
+	0,
+	digest_md2_init,
+	digest_md2_update,
+	digest_md2_final,
+	NULL,
+	NULL,
+	EVP_PKEY_RSA_method,
+	16,
+	sizeof(MD2_CTX)
+	};
+
+static const EVP_MD digest_md5 =
+	{
+	NID_md5,
+	NID_md5WithRSAEncryption,
+	16,
+	0,
+	digest_md5_init,
+	digest_md5_update,
+	digest_md5_final,
+	NULL,
+	NULL,
+	EVP_PKEY_RSA_method,
+	64,
+	sizeof(MD5_CTX)
 	};
 
 /*****************************************************************************
@@ -486,6 +533,10 @@ static int rsaref_digests(ENGINE *e, const EVP_MD **digest,
 	/* We are being asked for a specific digest */
 	switch (nid)
 		{
+	case NID_md2:
+		*digest = &digest_md2; break;
+	case NID_md5:
+		*digest = &digest_md5; break;
 	default:
 		ok = 0;
 		*digest = NULL;
@@ -503,15 +554,28 @@ int cipher_des_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc)
 	{
 	DES_CBCInit(data(ctx), (unsigned char *)key, (unsigned char *)iv, enc);
+	return 1;
 	}
 int cipher_des_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl)
 	{
-	DES_CBCUpdate(data(ctx), out, (unsigned char *)in, inl);
+	int ret = DES_CBCUpdate(data(ctx), out, (unsigned char *)in, inl);
+	switch (ret)
+		{
+	case RE_LEN:
+		RSAREFerr(RSAREF_F_CIPHER_DES_CBC_CODE,RSAREF_R_LENGTH_NOT_BLOCK_ALIGNED);
+		break;
+	case 0:
+		break;
+	default:
+		RSAREFerr(RSAREF_F_CIPHER_DES_CBC_CODE,RSAREF_R_UNKNOWN_FAULT);
+		}
+	return !ret;
 	}
 int cipher_des_cbc_clean(EVP_CIPHER_CTX *ctx)
 	{
 	memset(data(ctx), 0, ctx->cipher->ctx_size);
+	return 1;
 	}
 
 #undef data
@@ -521,15 +585,28 @@ int cipher_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	{
 	DES3_CBCInit(data(ctx), (unsigned char *)key, (unsigned char *)iv,
 		enc);
+	return 1;
 	}
 int cipher_des_ede3_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl)
 	{
-	DES3_CBCUpdate(data(ctx), out, (unsigned char *)in, inl);
+	int ret = DES3_CBCUpdate(data(ctx), out, (unsigned char *)in, inl);
+	switch (ret)
+		{
+	case RE_LEN:
+		RSAREFerr(RSAREF_F_CIPHER_DES_CBC_CODE,RSAREF_R_LENGTH_NOT_BLOCK_ALIGNED);
+		break;
+	case 0:
+		break;
+	default:
+		RSAREFerr(RSAREF_F_CIPHER_DES_CBC_CODE,RSAREF_R_UNKNOWN_FAULT);
+		}
+	return !ret;
 	}
 int cipher_des_ede3_cbc_clean(EVP_CIPHER_CTX *ctx)
 	{
 	memset(data(ctx), 0, ctx->cipher->ctx_size);
+	return 1;
 	}
 
 #undef data
@@ -539,13 +616,67 @@ int cipher_desx_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	{
 	DESX_CBCInit(data(ctx), (unsigned char *)key, (unsigned char *)iv,
 		enc);
+	return 1;
 	}
 int cipher_desx_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl)
 	{
-	DESX_CBCUpdate(data(ctx), out, (unsigned char *)in, inl);
+	int ret = DESX_CBCUpdate(data(ctx), out, (unsigned char *)in, inl);
+	switch (ret)
+		{
+	case RE_LEN:
+		RSAREFerr(RSAREF_F_CIPHER_DES_CBC_CODE,RSAREF_R_LENGTH_NOT_BLOCK_ALIGNED);
+		break;
+	case 0:
+		break;
+	default:
+		RSAREFerr(RSAREF_F_CIPHER_DES_CBC_CODE,RSAREF_R_UNKNOWN_FAULT);
+		}
+	return !ret;
 	}
 int cipher_desx_cbc_clean(EVP_CIPHER_CTX *ctx)
 	{
 	memset(data(ctx), 0, ctx->cipher->ctx_size);
+	return 1;
+	}
+
+/*****************************************************************************
+ * MD functions
+ **/
+#undef data
+#define data(ctx) ((MD2_CTX *)(ctx)->md_data)
+static int digest_md2_init(EVP_MD_CTX *ctx)
+	{
+	MD2Init(data(ctx));
+	return 1;
+	}
+static int digest_md2_update(EVP_MD_CTX *ctx,const void *data,
+	unsigned long count)
+	{
+	MD2Update(data(ctx), (unsigned char *)data, (unsigned int)count);
+	return 1;
+	}
+static int digest_md2_final(EVP_MD_CTX *ctx,unsigned char *md)
+	{
+	MD2Final(md, data(ctx));
+	return 1;
+	}
+
+#undef data
+#define data(ctx) ((MD5_CTX *)(ctx)->md_data)
+static int digest_md5_init(EVP_MD_CTX *ctx)
+	{
+	MD5Init(data(ctx));
+	return 1;
+	}
+static int digest_md5_update(EVP_MD_CTX *ctx,const void *data,
+	unsigned long count)
+	{
+	MD5Update(data(ctx), (unsigned char *)data, (unsigned int)count);
+	return 1;
+	}
+static int digest_md5_final(EVP_MD_CTX *ctx,unsigned char *md)
+	{
+	MD5Final(md, data(ctx));
+	return 1;
 	}
