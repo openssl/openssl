@@ -127,15 +127,29 @@ The logical names that are set up are the following:
 
   SSLROOT       a dotted concealed logical name pointing at the
                 root directory.
-  SSLLIB        points at the directory where CRYPTORTL.OLB and
-		SSLRTL.OLB are installed.
-  SSLINCLUDE    points at the directory where the header files are
-                installed.
-  SSLEXE        points at the directory where the applications are
-                installed.
-  SSLCERTS      the place where the certificates are stored.
-  SSLPRIVATE    I'm actually not sure what this is used for.
 
+  SSLCERTS      Initially an empty directory, this is the default
+		location for certificate files.
+  SSLMISC	Various scripts.
+  SSLPRIVATE	Initially an empty directory, this is the default
+		location for private key files.
+
+  SSLEXE        Contains the openssl binary and a few other utility
+		programs.
+  SSLINCLUDE    Contains the header files needed if you want to
+		compile programs with libcrypto or libssl.
+  SSLLIB        Contains the OpenSSL library files (LIBCRYPTO.OLB
+		and LIBSSL.OLB) themselves.
+
+  OPENSSL	Same as SSLINCLUDE.  This is because the standard
+		way to include OpenSSL header files from version
+		0.9.3 and on is:
+
+			#include <openssl/header.h>
+
+		For more info on this issue, see the INSTALL. file
+		(the NOTE in section 4 of "Installation in Detail").
+		You don't need to "deleting old header files"!!!
 
 Backward portability:
 =====================
