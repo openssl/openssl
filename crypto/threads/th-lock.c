@@ -74,6 +74,9 @@
 #include <ulocks.h>
 #include <sys/prctl.h>
 #endif
+#ifdef PTHREADS
+#include <pthread.h>
+#endif
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
@@ -82,7 +85,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-int CRYPTO_thread_setup(void);
+void CRYPTO_thread_setup(void);
 void CRYPTO_thread_cleanup(void);
 
 static void irix_locking_callback(int mode,int type,char *file,int line);
@@ -104,13 +107,14 @@ static unsigned long pthreads_thread_id(void );
 
 #ifdef WIN32
 
-static HANDLE lock_cs[CRYPTO_NUM_LOCKS];
+static HANDLE *lock_cs;
 
-int CRYPTO_thread_setup(void)
+void CRYPTO_thread_setup(void)
 	{
 	int i;
 
-	for (i=0; i<CRYPTO_NUM_LOCKS; i++)
+	lock_cs=Malloc(CRYPTO_num_locks() * sizeof(HANDLE));
+	for (i=0; i<CRYPTO_num_locks(); i++)
 		{
 		lock_cs[i]=CreateMutex(NULL,FALSE,NULL);
 		}
@@ -125,8 +129,9 @@ static void CRYPTO_thread_cleanup(void)
 	int i;
 
 	CRYPTO_set_locking_callback(NULL);
-	for (i=0; i<CRYPTO_NUM_LOCKS; i++)
+	for (i=0; i<CRYPTO_num_locks(); i++)
 		CloseHandle(lock_cs[i]);
+	Free(lock_cs);
 	}
 
 void win32_locking_callback(int mode, int type, char *file, int line)
@@ -147,18 +152,24 @@ void win32_locking_callback(int mode, int type, char *file, int line)
 
 #define USE_MUTEX
 
-static mutex_t lock_cs[CRYPTO_NUM_LOCKS];
 #ifdef USE_MUTEX
-static long lock_count[CRYPTO_NUM_LOCKS];
+static mutex_t *lock_cs;
 #else
-static rwlock_t lock_cs[CRYPTO_NUM_LOCKS];
+static rwlock_t *lock_cs;
 #endif
+static long *lock_count;
 
 void CRYPTO_thread_setup(void)
 	{
 	int i;
 
-	for (i=0; i<CRYPTO_NUM_LOCKS; i++)
+#ifdef USE_MUTEX
+	lock_cs=Malloc(CRYPTO_num_locks() * sizeof(mutex_t));
+#else
+	lock_cs=Malloc(CRYPTO_num_locks() * sizeof(rwlock_t));
+#endif
+	lock_count=Malloc(CRYPTO_num_locks() * sizeof(long));
+	for (i=0; i<CRYPTO_num_locks(); i++)
 		{
 		lock_count[i]=0;
 #ifdef USE_MUTEX
@@ -177,7 +188,7 @@ void CRYPTO_thread_cleanup(void)
 	int i;
 
 	CRYPTO_set_locking_callback(NULL);
-	for (i=0; i<CRYPTO_NUM_LOCKS; i++)
+	for (i=0; i<CRYPTO_num_locks(); i++)
 		{
 #ifdef USE_MUTEX
 		mutex_destroy(&(lock_cs[i]));
@@ -185,6 +196,8 @@ void CRYPTO_thread_cleanup(void)
 		rwlock_destroy(&(lock_cs[i]));
 #endif
 		}
+	Free(lock_cs);
+	Free(lock_count);
 	}
 
 void solaris_locking_callback(int mode, int type, char *file, int line)
@@ -237,7 +250,7 @@ unsigned long solaris_thread_id(void)
 /* I don't think this works..... */
 
 static usptr_t *arena;
-static usema_t *lock_cs[CRYPTO_NUM_LOCKS];
+static usema_t **lock_cs;
 
 void CRYPTO_thread_setup(void)
 	{
@@ -254,7 +267,8 @@ void CRYPTO_thread_setup(void)
 	arena=usinit(filename);
 	unlink(filename);
 
-	for (i=0; i<CRYPTO_NUM_LOCKS; i++)
+	lock_cs=Malloc(CRYPTO_num_locks() * sizeof(usema_t *));
+	for (i=0; i<CRYPTO_num_locks(); i++)
 		{
 		lock_cs[i]=usnewsema(arena,1);
 		}
@@ -268,7 +282,7 @@ void CRYPTO_thread_cleanup(void)
 	int i;
 
 	CRYPTO_set_locking_callback(NULL);
-	for (i=0; i<CRYPTO_NUM_LOCKS; i++)
+	for (i=0; i<CRYPTO_num_locks(); i++)
 		{
 		char buf[10];
 
@@ -276,6 +290,7 @@ void CRYPTO_thread_cleanup(void)
 		usdumpsema(lock_cs[i],stdout,buf);
 		usfreesema(lock_cs[i],arena);
 		}
+	Free(lock_cs);
 	}
 
 void irix_locking_callback(int mode, int type, char *file, int line)
@@ -302,14 +317,16 @@ unsigned long irix_thread_id(void)
 /* Linux and a few others */
 #ifdef PTHREADS
 
-static pthread_mutex_t lock_cs[CRYPTO_NUM_LOCKS];
-static long lock_count[CRYPTO_NUM_LOCKS];
+static pthread_mutex_t *lock_cs;
+static long *lock_count;
 
 void CRYPTO_thread_setup(void)
 	{
 	int i;
 
-	for (i=0; i<CRYPTO_NUM_LOCKS; i++)
+	lock_cs=Malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
+	lock_count=Malloc(CRYPTO_num_locks() * sizeof(long));
+	for (i=0; i<CRYPTO_num_locks(); i++)
 		{
 		lock_count[i]=0;
 		pthread_mutex_init(&(lock_cs[i]),NULL);
@@ -324,10 +341,12 @@ void thread_cleanup(void)
 	int i;
 
 	CRYPTO_set_locking_callback(NULL);
-	for (i=0; i<CRYPTO_NUM_LOCKS; i++)
+	for (i=0; i<CRYPTO_num_locks(); i++)
 		{
 		pthread_mutex_destroy(&(lock_cs[i]));
 		}
+	Free(lock_cs);
+	Free(lock_count);
 	}
 
 void pthreads_locking_callback(int mode, int type, char *file,
