@@ -83,40 +83,47 @@ clean:
 dso_dl.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 dso_dl.o: ../../include/openssl/crypto.h ../../include/openssl/dso.h
 dso_dl.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
-dso_dl.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
-dso_dl.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-dso_dl.o: ../../include/openssl/stack.h ../cryptlib.h
+dso_dl.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dso_dl.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+dso_dl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+dso_dl.o: ../cryptlib.h
 dso_dlfcn.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 dso_dlfcn.o: ../../include/openssl/crypto.h ../../include/openssl/dso.h
 dso_dlfcn.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
-dso_dlfcn.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dso_dlfcn.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dso_dlfcn.o: ../../include/openssl/opensslconf.h
 dso_dlfcn.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 dso_dlfcn.o: ../../include/openssl/stack.h ../cryptlib.h
-dso_err.o: ../../include/openssl/crypto.h ../../include/openssl/dso.h
-dso_err.o: ../../include/openssl/err.h ../../include/openssl/opensslv.h
+dso_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+dso_err.o: ../../include/openssl/dso.h ../../include/openssl/err.h
+dso_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslv.h
 dso_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 dso_lib.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 dso_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dso.h
 dso_lib.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
-dso_lib.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
-dso_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-dso_lib.o: ../../include/openssl/stack.h ../cryptlib.h
+dso_lib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dso_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+dso_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+dso_lib.o: ../cryptlib.h
 dso_null.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 dso_null.o: ../../include/openssl/crypto.h ../../include/openssl/dso.h
 dso_null.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
-dso_null.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dso_null.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dso_null.o: ../../include/openssl/opensslconf.h
 dso_null.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 dso_null.o: ../../include/openssl/stack.h ../cryptlib.h
 dso_openssl.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 dso_openssl.o: ../../include/openssl/crypto.h ../../include/openssl/dso.h
 dso_openssl.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
-dso_openssl.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dso_openssl.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dso_openssl.o: ../../include/openssl/opensslconf.h
 dso_openssl.o: ../../include/openssl/opensslv.h
 dso_openssl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 dso_openssl.o: ../cryptlib.h
 dso_win32.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 dso_win32.o: ../../include/openssl/crypto.h ../../include/openssl/dso.h
 dso_win32.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
-dso_win32.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dso_win32.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dso_win32.o: ../../include/openssl/opensslconf.h
 dso_win32.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 dso_win32.o: ../../include/openssl/stack.h ../cryptlib.h

@@ -59,6 +59,15 @@
 #ifndef HEADER_SSL_H 
 #define HEADER_SSL_H 
 
+#ifndef NO_COMP
+#include <openssl/comp.h>
+#endif
+#ifndef NO_BIO
+#include <openssl/bio.h>
+#endif
+#ifndef NO_X509
+#include <openssl/x509.h>
+#endif
 #include <openssl/safestack.h>
 
 #ifdef  __cplusplus
@@ -385,7 +394,7 @@ typedef struct ssl_comp_st
 {
     int id;
     char *name;
-#ifdef HEADER_COMP_H
+#ifndef NO_COMP
     COMP_METHOD *method;
 #else
     char *method;
@@ -603,7 +612,7 @@ struct ssl_st
 	 * same.  This is so data can be read and written to different
 	 * handlers */
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 	BIO *rbio; /* used by SSL_read */
 	BIO *wbio; /* used by SSL_write */
 	BIO *bbio; /* used during session-id reuse to concatinate
@@ -667,7 +676,7 @@ struct ssl_st
 
 	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
 	const EVP_MD *read_hash;		/* used for mac generation */
-#ifdef HEADER_COMP_H
+#ifndef NO_COMP
 	COMP_CTX *expand;			/* uncompress */
 #else
 	char *expand;
@@ -675,7 +684,7 @@ struct ssl_st
 
 	EVP_CIPHER_CTX *enc_write_ctx;		/* cryptographic state */
 	const EVP_MD *write_hash;		/* used for mac generation */
-#ifdef HEADER_COMP_H
+#ifndef NO_COMP
 	COMP_CTX *compress;			/* compression */
 #else
 	char *compress;	
@@ -961,7 +970,7 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 #define SSL_add_dir_cert_subjects_to_stack SSL_add_dir_cert_sub_to_stack
 #endif
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 BIO_METHOD *BIO_f_ssl(void);
 BIO *BIO_new_ssl(SSL_CTX *ctx,int client);
 BIO *BIO_new_ssl_connect(SSL_CTX *ctx);
@@ -998,7 +1007,7 @@ int	SSL_set_fd(SSL *s, int fd);
 int	SSL_set_rfd(SSL *s, int fd);
 int	SSL_set_wfd(SSL *s, int fd);
 #endif
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 void	SSL_set_bio(SSL *s, BIO *rbio,BIO *wbio);
 BIO *	SSL_get_rbio(SSL *s);
 BIO *	SSL_get_wbio(SSL *s);
@@ -1053,7 +1062,7 @@ int	SSL_SESSION_cmp(SSL_SESSION *a,SSL_SESSION *b);
 #ifndef NO_FP_API
 int	SSL_SESSION_print_fp(FILE *fp,SSL_SESSION *ses);
 #endif
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 int	SSL_SESSION_print(BIO *fp,SSL_SESSION *ses);
 #endif
 void	SSL_SESSION_free(SSL_SESSION *ses);
@@ -1249,7 +1258,7 @@ void SSL_set_tmp_dh_callback(SSL *ssl,
 					   int keylength));
 #endif
 
-#ifdef HEADER_COMP_H
+#ifndef NO_COMP
 int SSL_COMP_add_compression_method(int id,COMP_METHOD *cm);
 #else
 int SSL_COMP_add_compression_method(int id,char *cm);

@@ -63,9 +63,12 @@
  * and things should work as expected */
 #include "cryptlib.h"
 
+#ifndef NO_BIO
+#include <openssl/bio.h>
+#endif
 #include <openssl/lhash.h>
 
-#ifndef HEADER_BIO_H
+#ifdef NO_BIO
 
 void lh_stats(LHASH *lh, FILE *out)
 	{

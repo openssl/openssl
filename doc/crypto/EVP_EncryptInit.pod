@@ -8,28 +8,30 @@ EVP_EncryptInit, EVP_EncryptUpdate, EVP_EncryptFinal - EVP cipher routines
 
  #include <openssl/evp.h>
 
- void EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
+ int EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
          unsigned char *key, unsigned char *iv);
- void EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
+ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl, unsigned char *in, int inl);
- void EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out,
+ int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl);
 
- void EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
+ int EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
          unsigned char *key, unsigned char *iv);
- void EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
+ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl, unsigned char *in, int inl);
  int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm,
          int *outl);
 
- void EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
+ int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
          unsigned char *key, unsigned char *iv, int enc);
- void EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
+ int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl, unsigned char *in, int inl);
  int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm,
          int *outl);
 
- void EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
+ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
+ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
+ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 
  const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
  #define EVP_get_cipherbynid(a) EVP_get_cipherbyname(OBJ_nid2sn(a))
@@ -38,15 +40,21 @@ EVP_EncryptInit, EVP_EncryptUpdate, EVP_EncryptFinal - EVP cipher routines
  #define EVP_CIPHER_nid(e)		((e)->nid)
  #define EVP_CIPHER_block_size(e)	((e)->block_size)
  #define EVP_CIPHER_key_length(e)	((e)->key_len)
- #define EVP_CIPHER_iv_length(e)	((e)->iv_len)
-
+ #define EVP_CIPHER_iv_length(e)		((e)->iv_len)
+ #define EVP_CIPHER_flags(e)		((e)->flags)
+ #define EVP_CIPHER_mode(e)		((e)->flags) & EVP_CIPH_MODE)
  int EVP_CIPHER_type(const EVP_CIPHER *ctx);
+
  #define EVP_CIPHER_CTX_cipher(e)	((e)->cipher)
  #define EVP_CIPHER_CTX_nid(e)		((e)->cipher->nid)
  #define EVP_CIPHER_CTX_block_size(e)	((e)->cipher->block_size)
- #define EVP_CIPHER_CTX_key_length(e)	((e)->cipher->key_len)
+ #define EVP_CIPHER_CTX_key_length(e)	((e)->key_len)
  #define EVP_CIPHER_CTX_iv_length(e)	((e)->cipher->iv_len)
+ #define EVP_CIPHER_CTX_get_app_data(e)	((e)->app_data)
+ #define EVP_CIPHER_CTX_set_app_data(e,d) ((e)->app_data=(char *)(d))
  #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
+ #define EVP_CIPHER_CTX_flags(e)		((e)->cipher->flags)
+ #define EVP_CIPHER_CTX_mode(e)		((e)->cipher->flags & EVP_CIPH_MODE)
 
  int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
  int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
@@ -62,10 +70,8 @@ as EVP_des_cbc() . B<key> is the symmetric key to use and B<iv> is the
 IV to use (if necessary), the actual number of bytes used for the
 key and IV depends on the cipher. It is possible to set all parameters
 to NULL except B<type> in an initial call and supply the remaining
-parameters in subsequent calls. This is normally done when the 
-EVP_CIPHER_asn1_to_param() function is called to set the cipher
-parameters from an ASN1 AlgorithmIdentifier and the key from a
-different source.
+parameters in subsequent calls, all of which have B<type> set to NULL.
+This is done when the default cipher parameters are not appropriate.
 
 EVP_EncryptUpdate() encrypts B<inl> bytes from the buffer B<in> and
 writes the encrypted version to B<out>. This function can be called
@@ -93,7 +99,8 @@ cipher block size is 1 in which case B<inl> bytes is sufficient.
 EVP_CipherInit(), EVP_CipherUpdate() and EVP_CipherFinal() are functions
 that can be used for decryption or encryption. The operation performed
 depends on the value of the B<enc> parameter. It should be set to 1 for
-encryption and 0 for decryption.
+encryption, 0 for decryption and -1 to leave the value unchanged (the
+actual value of 'enc' being supplied in a previous call).
 
 EVP_CIPHER_CTX_cleanup() clears all information from a cipher context.
 It should be called after all operations using a cipher are complete
@@ -111,7 +118,13 @@ IDENTIFIER.
 EVP_CIPHER_key_length() and EVP_CIPHER_CTX_key_length() return the key
 length of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
 structure. The constant B<EVP_MAX_KEY_LENGTH> is the maximum key length
-for all ciphers.
+for all ciphers. Note: although EVP_CIPHER_key_length() is fixed for a
+given cipher, the value of EVP_CIPHER_CTX_key_length() may be different
+for variable key length ciphers.
+
+EVP_CIPHER_CTX_set_key_length() sets the key length of the cipher ctx.
+If the cipher is a fixed length cipher then attempting to set the key
+length to any value other than the fixed value is an error.
 
 EVP_CIPHER_iv_length() and EVP_CIPHER_CTX_iv_length() return the IV
 length of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>.
@@ -133,6 +146,11 @@ B<NID_undef>.
 EVP_CIPHER_CTX_cipher() returns the B<EVP_CIPHER> structure when passed
 an B<EVP_CIPHER_CTX> structure.
 
+EVP_CIPHER_mode() and EVP_CIPHER_CTX_mode() return the block cipher mode:
+EVP_CIPH_ECB_MODE, EVP_CIPH_CBC_MODE, EVP_CIPH_CFB_MODE or
+EVP_CIPH_OFB_MODE. If the cipher is a stream cipher then
+EVP_CIPH_STREAM_CIPHER is returned.
+
 EVP_CIPHER_param_to_asn1() sets the AlgorithmIdentifier "parameter" based
 on the passed cipher. This will typically include any parameters and an
 IV. The cipher IV (if any) must be set when this call is made. This call
@@ -149,21 +167,24 @@ key set to NULL, EVP_CIPHER_asn1_to_param() will be called and finally
 EVP_CipherInit() again with all parameters except the key set to NULL. It is
 possible for this function to fail if the cipher does not have any ASN1 support
 or the parameters cannot be set (for example the RC2 effective key length
-does not have an B<EVP_CIPHER> structure).
+is not supported.
+
+EVP_CIPHER_CTX_ctrl() allows various cipher specific parameters to be determined
+and set. Currently only the RC2 effective key length and the number of rounds of
+RC5 can be set.
 
 =head1 RETURN VALUES
 
-EVP_EncryptInit(), EVP_EncryptUpdate() and EVP_EncryptFinal() do not return
-values.
+EVP_EncryptInit(), EVP_EncryptUpdate() and EVP_EncryptFinal() return 1 for success
+and 0 for failure.
 
-EVP_DecryptInit() and EVP_DecryptUpdate() do not return values.
+EVP_DecryptInit() and EVP_DecryptUpdate() return 1 for success and 0 for failure.
 EVP_DecryptFinal() returns 0 if the decrypt failed or 1 for success.
 
-EVP_CipherInit() and EVP_CipherUpdate() do not return values.
-EVP_CipherFinal() returns 1 for a decryption failure or 1 for success, if
-the operation is encryption then it always returns 1.
+EVP_CipherInit() and EVP_CipherUpdate() return 1 for success and 0 for failure.
+EVP_CipherFinal() returns 1 for a decryption failure or 1 for success.
 
-EVP_CIPHER_CTX_cleanup() does not return a value.
+EVP_CIPHER_CTX_cleanup() returns 1 for success and 0 for failure.
 
 EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
 return an B<EVP_CIPHER> structure or NULL on error.
@@ -187,6 +208,75 @@ EVP_CIPHER_CTX_cipher() returns an B<EVP_CIPHER> structure.
 EVP_CIPHER_param_to_asn1() and EVP_CIPHER_asn1_to_param() return 1 for 
 success or zero for failure.
 
+=head1 CIPHER LISTING
+
+All algorithms have a fixed key length unless otherwise stated.
+
+=over 4
+
+=item EVP_enc_null()
+
+Null cipher: does nothing.
+
+=item EVP_des_cbc(void), EVP_des_ecb(void), EVP_des_cfb(void), EVP_des_ofb(void)
+
+DES in CBC, ECB, CFB and OFB modes respectively. 
+
+=item EVP_des_ede_cbc(void), EVP_des_ede(), EVP_des_ede_ofb(void),  EVP_des_ede_cfb(void)
+
+Two key triple DES in CBC, ECB, CFB and OFB modes respectively.
+
+=item EVP_des_ede3_cbc(void), EVP_des_ede3(), EVP_des_ede3_ofb(void),  EVP_des_ede3_cfb(void)
+
+Three key triple DES in CBC, ECB, CFB and OFB modes respectively.
+
+=item EVP_desx_cbc(void)
+
+DESX algorithm in CBC mode.
+
+=item EVP_rc4(void)
+
+RC4 stream cipher. This is a variable key length cipher with default key length 128 bits.
+
+=item EVP_rc4_40(void)
+
+RC4 stream cipher with 40 bit key length. This is obsolete and new code should use EVP_rc4()
+and the EVP_CIPHER_CTX_set_key_length() function.
+
+=item EVP_idea_cbc() EVP_idea_ecb(void), EVP_idea_cfb(void), EVP_idea_ofb(void), EVP_idea_cbc(void)
+
+IDES encryption algorothm in CBC, ECB, CFB and OFB modes respectively.
+
+=item EVP_rc2_cbc(void), EVP_rc2_ecb(void), EVP_rc2_cfb(void), EVP_rc2_ofb(void)
+
+RC2 encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key
+length cipher with an additional parameter called "effective key bits" or "effective key length".
+By default both are set to 128 bits.
+
+=item EVP_rc2_40_cbc(void), EVP_rc2_64_cbc(void)
+
+RC2 algorithm in CBC mode with a default key length and effective key length of 40 and 64 bits.
+These are obsolete and new code should use EVP_rc2_cbc(), EVP_CIPHER_CTX_set_key_length() and
+EVP_CIPHER_CTX_ctrl() to set the key length and effective key length.
+
+=item EVP_bf_cbc(void), EVP_bf_ecb(void), EVP_bf_cfb(void), EVP_bf_ofb(void);
+
+Blowfish encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key
+length cipher.
+
+=item EVP_cast5_cbc(void), EVP_cast5_ecb(void), EVP_cast5_cfb(void), EVP_cast5_ofb(void)
+
+CAST encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key
+length cipher.
+
+=item EVP_rc5_32_12_16_cbc(void), EVP_rc5_32_12_16_ecb(void), EVP_rc5_32_12_16_cfb(void), EVP_rc5_32_12_16_ofb(void)
+
+RC5 encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key length
+cipher with an additional "number of rounds" parameter. By default the key length is set to 128
+bits and 12 rounds.
+
+=back
+
 =head1 NOTES
 
 Where possible the B<EVP> interface to symmetric ciphers should be used in
@@ -206,14 +296,49 @@ test that the input data or key is correct. A random block has better than
 1 in 256 chance of being of the correct format and problems with the
 input data earlier on will not produce a final decrypt error.
 
+The functions EVP_EncryptInit(), EVP_EncryptUpdate(), EVP_EncryptFinal(),
+EVP_DecryptInit(), EVP_DecryptUpdate(), EVP_CipherInit() and EVP_CipherUpdate()
+and EVP_CIPHER_CTX_cleanup() did not return errors in OpenSSL version 0.9.5a or
+earlier. Software only versions of encryption algorithms will never return
+error codes for these functions, unless there is a programming error (for example
+and attempt to set the key before the cipher is set in EVP_EncryptInit() ).
+
 =head1 BUGS
 
-The current B<EVP> cipher interface is not as flexible as it should be. Only
-certain "spot" encryption algorithms can be used for ciphers which have various
-parameters associated with them (RC2, RC5 for example) this is inadequate.
+For RC5 the number of rounds can currently only be set to 8, 12 or 16. This is
+a limitation of the current RC5 code rather than the EVP interface.
 
-Several of the functions do not return error codes because the software versions
-can never fail. This is not true of hardware versions.
+It should be possible to disable PKCS padding: currently it isn't.
+
+EVP_MAX_KEY_LENGTH and EVP_MAX_IV_LENGTH only refer to the internal ciphers with
+default key lengths. If custom ciphers exceed these values the results are
+unpredictable. This is because it has become standard practice to define a 
+generic key as a fixed unsigned char array containing EVP_MAX_KEY_LENGTH bytes.
+
+The ASN1 code is incomplete (and sometimes innacurate) it has only been tested
+for certain common S/MIME ciphers (RC2, DES, triple DES) in CBC mode.
+
+=head1 EXAMPLES
+
+Get the number of rounds used in RC5:
+
+ int nrounds;
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_RC5_ROUNDS, 0, &i);
+
+Get the RC2 effective key length:
+
+ int key_bits;
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_RC2_KEY_BITS, 0, &i);
+
+Set the number of rounds used in RC5:
+
+ int nrounds;
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC5_ROUNDS, i, NULL);
+
+Set the number of rounds used in RC2:
+
+ int nrounds;
+ EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC2_KEY_BITS, i, NULL);
 
 =head1 SEE ALSO
 

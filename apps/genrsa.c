@@ -114,7 +114,7 @@ int MAIN(int argc, char **argv)
 			}
 		else if (strcmp(*argv,"-3") == 0)
 			f4=3;
-		else if (strcmp(*argv,"-F4") == 0)
+		else if (strcmp(*argv,"-F4") == 0 || strcmp(*argv,"-f4") == 0)
 			f4=RSA_F4;
 		else if (strcmp(*argv,"-rand") == 0)
 			{

@@ -23,9 +23,9 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= engine_err.c engine_lib.c engine_list.c engine_openssl.c \
-	hw_cswift.c
+	hw_cswift.c hw_ncipher.c
 LIBOBJ= engine_err.o engine_lib.o engine_list.o engine_openssl.o \
-	hw_cswift.o
+	hw_cswift.o hw_ncipher.o
 
 SRC= $(LIBSRC)
 
@@ -80,9 +80,10 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-engine_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-engine_err.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-engine_err.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+engine_err.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+engine_err.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
+engine_err.o: ../../include/openssl/dsa.h ../../include/openssl/engine.h
+engine_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 engine_err.o: ../../include/openssl/opensslconf.h
 engine_err.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 engine_err.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
@@ -92,7 +93,7 @@ engine_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 engine_lib.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 engine_lib.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 engine_lib.o: ../../include/openssl/engine.h ../../include/openssl/err.h
-engine_lib.o: ../../include/openssl/opensslconf.h
+engine_lib.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 engine_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 engine_lib.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 engine_lib.o: ../../include/openssl/stack.h ../cryptlib.h engine_int.h
@@ -101,6 +102,7 @@ engine_list.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 engine_list.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 engine_list.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 engine_list.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+engine_list.o: ../../include/openssl/lhash.h
 engine_list.o: ../../include/openssl/opensslconf.h
 engine_list.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 engine_list.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
@@ -110,7 +112,7 @@ engine_openssl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 engine_openssl.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 engine_openssl.o: ../../include/openssl/dso.h ../../include/openssl/e_os.h
 engine_openssl.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-engine_openssl.o: ../../include/openssl/err.h
+engine_openssl.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 engine_openssl.o: ../../include/openssl/opensslconf.h
 engine_openssl.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 engine_openssl.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
@@ -120,7 +122,18 @@ hw_cswift.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 hw_cswift.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 hw_cswift.o: ../../include/openssl/dso.h ../../include/openssl/e_os.h
 hw_cswift.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-hw_cswift.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+hw_cswift.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+hw_cswift.o: ../../include/openssl/opensslconf.h
 hw_cswift.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 hw_cswift.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 hw_cswift.o: ../../include/openssl/stack.h ../cryptlib.h engine_int.h
+hw_ncipher.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+hw_ncipher.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+hw_ncipher.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+hw_ncipher.o: ../../include/openssl/dso.h ../../include/openssl/e_os.h
+hw_ncipher.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
+hw_ncipher.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+hw_ncipher.o: ../../include/openssl/opensslconf.h
+hw_ncipher.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+hw_ncipher.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+hw_ncipher.o: ../../include/openssl/stack.h ../cryptlib.h engine_int.h

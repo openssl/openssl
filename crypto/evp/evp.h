@@ -67,6 +67,9 @@
 # undef OPENSSL_ALGORITHM_DEFINES
 #endif
 
+#ifndef NO_BIO
+#include <openssl/bio.h>
+#endif
 #ifndef NO_MD2
 #include <openssl/md2.h>
 #endif
@@ -593,7 +596,7 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 BIO_METHOD *BIO_f_md(void);
 BIO_METHOD *BIO_f_base64(void);
 BIO_METHOD *BIO_f_cipher(void);

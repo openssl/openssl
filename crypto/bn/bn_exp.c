@@ -55,6 +55,60 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
+
 
 #include <stdio.h>
 #include "cryptlib.h"
@@ -67,7 +121,7 @@
 #endif
 
 
-#define TABLE_SIZE	16
+#define TABLE_SIZE	32
 
 /* slow but works */
 int BN_mod_mul(BIGNUM *ret, BIGNUM *a, BIGNUM *b, const BIGNUM *m, BN_CTX *ctx)
@@ -373,27 +427,22 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	ts=1;
 
 	if (!BN_mod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
-	if (!BN_mod_mul_reciprocal(aa,&(val[0]),&(val[0]),&recp,ctx))
-		goto err;				/* 2 */
 
-	if (bits <= 17) /* This is probably 3 or 0x10001, so just do singles */
-		window=1;
-	else if (bits >= 256)
-		window=5;	/* max size of window */
-	else if (bits >= 128)
-		window=4;
-	else
-		window=3;
-
-	j=1<<(window-1);
-	for (i=1; i<j; i++)
+	window = BN_window_bits_for_exponent_size(bits);
+	if (window > 1)
 		{
-		BN_init(&val[i]);
-		if (!BN_mod_mul_reciprocal(&(val[i]),&(val[i-1]),aa,&recp,ctx))
-			goto err;
+		if (!BN_mod_mul_reciprocal(aa,&(val[0]),&(val[0]),&recp,ctx))
+			goto err;				/* 2 */
+		j=1<<(window-1);
+		for (i=1; i<j; i++)
+			{
+			BN_init(&val[i]);
+			if (!BN_mod_mul_reciprocal(&(val[i]),&(val[i-1]),aa,&recp,ctx))
+				goto err;
+			}
+		ts=i;
 		}
-	ts=i;
-
+		
 	start=1;	/* This is used to avoid multiplication etc
 			 * when there is only the value '1' in the
 			 * buffer. */
@@ -520,25 +569,20 @@ int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
 	else
 		aa=a;
 	if (!BN_to_montgomery(&(val[0]),aa,mont,ctx)) goto err; /* 1 */
-	if (!BN_mod_mul_montgomery(d,&(val[0]),&(val[0]),mont,ctx)) goto err; /* 2 */
 
-	if (bits <= 20) /* This is probably 3 or 0x10001, so just do singles */
-		window=1;
-	else if (bits >= 256)
-		window=5;	/* max size of window */
-	else if (bits >= 128)
-		window=4;
-	else
-		window=3;
-
-	j=1<<(window-1);
-	for (i=1; i<j; i++)
+	window = BN_window_bits_for_exponent_size(bits);
+	if (window > 1)
 		{
-		BN_init(&(val[i]));
-		if (!BN_mod_mul_montgomery(&(val[i]),&(val[i-1]),d,mont,ctx))
-			goto err;
+		if (!BN_mod_mul_montgomery(d,&(val[0]),&(val[0]),mont,ctx)) goto err; /* 2 */
+		j=1<<(window-1);
+		for (i=1; i<j; i++)
+			{
+			BN_init(&(val[i]));
+			if (!BN_mod_mul_montgomery(&(val[i]),&(val[i-1]),d,mont,ctx))
+				goto err;
+			}
+		ts=i;
 		}
-	ts=i;
 
 	start=1;	/* This is used to avoid multiplication etc
 			 * when there is only the value '1' in the
@@ -611,11 +655,17 @@ err:
 
 int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
                          const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont)
-/* if we had BN_mod_exp_mont_2, we could even use windowing in it */
 	{
-	int b, bits, ret=0;
-	BIGNUM *d, *r, *t;
 	BN_MONT_CTX *mont = NULL;
+	int b, bits, ret=0;
+	BN_ULONG w, next_w;
+	BIGNUM *d, *r, *t;
+	BIGNUM *swap_tmp;
+#define BN_MOD_MUL_WORD(r, w, m) \
+		(BN_mul_word(r, (w)) && \
+		(BN_ucmp(r, (m)) >= 0 ? \
+			(BN_mod(t, r, m, ctx) && (swap_tmp = r, r = t, t = swap_tmp, 1)) : \
+			1))
 
 	bn_check_top(p);
 	bn_check_top(m);
@@ -641,8 +691,11 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 	if (!tried_atalla)
 		{
 		BN_set_word(t, a);
-		if (BN_mod_exp_word_atalla(rr, t, p, m))
+		if (BN_mod_exp_atalla(rr, t, p, m))
+			{
+			BN_CTX_end(ctx);
 			return 1;
+			}
 		}
 /* If it fails, try the other methods */
 #endif
@@ -656,26 +709,45 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 		}
 
 	if (!BN_to_montgomery(r, BN_value_one(), mont, ctx)) goto err;
-	for (b = bits-1; b >= 0; b--)
+
+	/* bits-1 >= 0 */
+
+	/* The result is accumulated in the product r*w. */
+	w = a; /* bit 'bits-1' of 'p' is always set */
+	for (b = bits-2; b >= 0; b--)
 		{
+		/* First, square r*w. */
+		next_w = w*w;
+		if ((next_w/w) != w) /* overflow */
+			{
+			if (!BN_MOD_MUL_WORD(r, w, m))
+				goto err;
+			next_w = 1;
+			}
+		w = next_w;
+		if (!BN_mod_mul_montgomery(r, r, r, mont, ctx))
+			goto err;
+
+		/* Second, multiply r*w by 'a' if exponent bit is set. */
 		if (BN_is_bit_set(p, b))
 			{
-			if (!BN_mul_word(r, a))
-				goto err;
-			if (BN_ucmp(r, m) >= 0)
+			next_w = w*a;
+			if ((next_w/a) != w) /* overflow */
 				{
-				if (!BN_mod(t, r, m, ctx))
+				if (!BN_MOD_MUL_WORD(r, w, m))
 					goto err;
-				{ BIGNUM *swap_tmp = r; r = t; t = swap_tmp; }
+				next_w = a;
 				}
-			}
-		
-		if (b > 0)
-			{
-			if (!BN_mod_mul_montgomery(r, r, r, mont, ctx))
-				goto err;
+			w = next_w;
 			}
 		}
+	/* Finally, set r:=r*w. */
+	if (w != 1)
+		{
+		if (!BN_MOD_MUL_WORD(r, w, m))
+			goto err;
+		}
+
 	BN_from_montgomery(rr, r, mont, ctx);
 	ret = 1;
 err:
@@ -708,26 +780,21 @@ int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
 	BN_init(&(val[0]));
 	ts=1;
 	if (!BN_mod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
-	if (!BN_mod_mul(d,&(val[0]),&(val[0]),m,ctx))
-		goto err;				/* 2 */
 
-	if (bits <= 17) /* This is probably 3 or 0x10001, so just do singles */
-		window=1;
-	else if (bits >= 256)
-		window=5;	/* max size of window */
-	else if (bits >= 128)
-		window=4;
-	else
-		window=3;
-
-	j=1<<(window-1);
-	for (i=1; i<j; i++)
+	window = BN_window_bits_for_exponent_size(bits);
+	if (window > 1)
 		{
-		BN_init(&(val[i]));
-		if (!BN_mod_mul(&(val[i]),&(val[i-1]),d,m,ctx))
-			goto err;
+		if (!BN_mod_mul(d,&(val[0]),&(val[0]),m,ctx))
+			goto err;				/* 2 */
+		j=1<<(window-1);
+		for (i=1; i<j; i++)
+			{
+			BN_init(&(val[i]));
+			if (!BN_mod_mul(&(val[i]),&(val[i-1]),d,m,ctx))
+				goto err;
+			}
+		ts=i;
 		}
-	ts=i;
 
 	start=1;	/* This is used to avoid multiplication etc
 			 * when there is only the value '1' in the

@@ -64,6 +64,15 @@
 #define X509_REVOKED_get_ext_by_critical X509_REVOKED_get_ext_by_critic
 #endif
 
+#ifndef NO_BUFFER
+#include <openssl/buffer.h>
+#endif
+#ifndef NO_EVP
+#include <openssl/evp.h>
+#endif
+#ifndef NO_BIO
+#include <openssl/bio.h>
+#endif
 #include <openssl/stack.h>
 #include <openssl/asn1.h>
 #include <openssl/safestack.h>
@@ -242,7 +251,7 @@ typedef struct X509_name_st
 	{
 	STACK_OF(X509_NAME_ENTRY) *entries;
 	int modified;	/* true if 'bytes' needs to be built */
-#ifdef HEADER_BUFFER_H
+#ifndef NO_BUFFER
 	BUF_MEM *bytes;
 #else
 	char *bytes;
@@ -663,7 +672,7 @@ typedef struct private_key_st
 	int references;
 	} X509_PKEY;
 
-#ifdef HEADER_ENVELOPE_H
+#ifndef NO_EVP
 typedef struct X509_info_st
 	{
 	X509 *x509;
@@ -950,7 +959,7 @@ extern "C" {
 const char *X509_verify_cert_error_string(long n);
 
 #ifndef SSLEAY_MACROS
-#ifdef HEADER_ENVELOPE_H
+#ifndef NO_EVP
 int X509_verify(X509 *a, EVP_PKEY *r);
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
@@ -1010,7 +1019,7 @@ int i2d_PrivateKey_fp(FILE *fp, EVP_PKEY *pkey);
 EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a);
 #endif
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 X509 *d2i_X509_bio(BIO *bp,X509 **x509);
 int i2d_X509_bio(BIO *bp,X509 *x509);
 X509_CRL *d2i_X509_CRL_bio(BIO *bp,X509_CRL **crl);
@@ -1216,7 +1225,7 @@ NETSCAPE_CERT_SEQUENCE *NETSCAPE_CERT_SEQUENCE_new(void);
 NETSCAPE_CERT_SEQUENCE *d2i_NETSCAPE_CERT_SEQUENCE(NETSCAPE_CERT_SEQUENCE **a, unsigned char **pp, long length);
 void NETSCAPE_CERT_SEQUENCE_free(NETSCAPE_CERT_SEQUENCE *a);
 
-#ifdef HEADER_ENVELOPE_H
+#ifndef NO_EVP
 X509_INFO *	X509_INFO_new(void);
 void		X509_INFO_free(X509_INFO *a);
 char *		X509_NAME_oneline(X509_NAME *a,char *buf,int size);
@@ -1296,7 +1305,7 @@ int		X509_CRL_print_fp(FILE *bp,X509_CRL *x);
 int		X509_REQ_print_fp(FILE *bp,X509_REQ *req);
 #endif
 
-#ifdef HEADER_BIO_H
+#ifndef NO_BIO
 int		X509_NAME_print(BIO *bp, X509_NAME *name, int obase);
 int		X509_print(BIO *bp,X509 *x);
 int		X509_CERT_AUX_print(BIO *bp,X509_CERT_AUX *x, int indent);

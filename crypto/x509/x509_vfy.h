@@ -65,6 +65,9 @@
 #ifndef HEADER_X509_VFY_H
 #define HEADER_X509_VFY_H
 
+#ifndef NO_LHASH
+#include <openssl/lhash.h>
+#endif
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 
@@ -190,7 +193,7 @@ typedef struct x509_store_st
 	{
 	/* The following is a cache of trusted certs */
 	int cache; 	/* if true, stash any hits */
-#ifdef HEADER_LHASH_H
+#ifndef NO_LHASH
 	LHASH *certs;	/* cached certs; */ 
 #else
 	char *certs;
@@ -315,7 +318,7 @@ struct x509_store_state_st      /* X509_STORE_CTX */
 #define X509v3_add_standard_extensions oX509v3_add_standard_extensions
 #endif
 
-#ifdef HEADER_LHASH_H
+#ifndef NO_LHASH
 X509_OBJECT *X509_OBJECT_retrieve_by_subject(LHASH *h,int type,X509_NAME *name);
 #endif
 void X509_OBJECT_up_ref_count(X509_OBJECT *a);

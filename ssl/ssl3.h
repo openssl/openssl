@@ -59,6 +59,9 @@
 #ifndef HEADER_SSL3_H 
 #define HEADER_SSL3_H 
 
+#ifndef NO_COMP
+#include <openssl/comp.h>
+#endif
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
@@ -310,7 +313,7 @@ typedef struct ssl3_state_st
 
 		const EVP_CIPHER *new_sym_enc;
 		const EVP_MD *new_hash;
-#ifdef HEADER_COMP_H
+#ifndef NO_COMP
 		const SSL_COMP *new_compression;
 #else
 		char *new_compression;

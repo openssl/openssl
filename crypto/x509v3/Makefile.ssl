@@ -464,18 +464,19 @@ v3_utl.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
 v3_utl.o: ../cryptlib.h
 v3err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 v3err.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
-v3err.o: ../../include/openssl/cast.h ../../include/openssl/conf.h
-v3err.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-v3err.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-v3err.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
-v3err.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-v3err.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
-v3err.o: ../../include/openssl/md2.h ../../include/openssl/md5.h
-v3err.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
-v3err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-v3err.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
-v3err.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
-v3err.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
-v3err.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-v3err.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
-v3err.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+v3err.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
+v3err.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+v3err.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+v3err.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+v3err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+v3err.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+v3err.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
+v3err.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+v3err.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+v3err.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
+v3err.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+v3err.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+v3err.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+v3err.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+v3err.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+v3err.o: ../../include/openssl/x509v3.h

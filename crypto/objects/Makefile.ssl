@@ -93,9 +93,10 @@ obj_dat.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 obj_dat.o: ../cryptlib.h obj_dat.h
 obj_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 obj_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-obj_err.o: ../../include/openssl/err.h ../../include/openssl/objects.h
-obj_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-obj_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+obj_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+obj_err.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+obj_err.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+obj_err.o: ../../include/openssl/stack.h
 obj_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 obj_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 obj_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h

@@ -4,9 +4,38 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
-  *) New function BN_mod_exp_mont_word for small bases (roughly 20%
-     faster than BN_mod_exp_mont even though it does not use
-     windowing).
+  *) The evp_local.h macros were using 'c.##kname' which resulted in
+     invalid expansion on some systems (SCO 5.0.5 for example).
+     Corrected to 'c.kname'.
+     [Phillip Porch <root@theporch.com>]
+
+  *) New X509_get1_email() and X509_REQ_get1_email() functions that return
+     a STACK of email addresses from a certificate or request, these look
+     in the subject name and the subject alternative name extensions and 
+     omit any duplicate addresses.
+     [Steve Henson]
+
+  *) Re-implement BN_mod_exp2_mont using independent (and larger) windows.
+     This makes DSA verification about 2 % faster.
+     [Bodo Moeller]
+
+  *) Increase maximum window size in BN_mod_exp_... to 6 bits instead of 5
+     (meaning that now 2^5 values will be precomputed, which is only 4 KB
+     plus overhead for 1024 bit moduli).
+     This makes exponentiations about 0.5 % faster for 1024 bit
+     exponents (as measured by "openssl speed rsa2048").
+     [Bodo Moeller]
+
+  *) Rename memory handling macros to avoid conflicts with other
+     software:
+          Malloc         =>  OPENSSL_malloc
+          Malloc_locked  =>  OPENSSL_malloc_locked
+          Realloc        =>  OPENSSL_realloc
+          Free           =>  OPENSSL_free
+     [Richard Levitte]
+
+  *) New function BN_mod_exp_mont_word for small bases (roughly 15%
+     faster than BN_mod_exp_mont, i.e. 7% for a full DH exchange).
      [Bodo Moeller]
 
   *) CygWin32 support.

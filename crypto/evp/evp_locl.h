@@ -70,28 +70,28 @@
 static int cname##_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl) \
 {\
 	BLOCK_CIPHER_ecb_loop() \
-		cprefix##_ecb_encrypt(in + i, out + i, &ctx->c.##kname, ctx->encrypt);\
+		cprefix##_ecb_encrypt(in + i, out + i, &ctx->c.kname, ctx->encrypt);\
 	return 1;\
 }
 
 #define BLOCK_CIPHER_func_ofb(cname, cprefix, kname) \
 static int cname##_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl) \
 {\
-	cprefix##_ofb64_encrypt(in, out, (long)inl, &ctx->c.##kname, ctx->iv, &ctx->num);\
+	cprefix##_ofb64_encrypt(in, out, (long)inl, &ctx->c.kname, ctx->iv, &ctx->num);\
 	return 1;\
 }
 
 #define BLOCK_CIPHER_func_cbc(cname, cprefix, kname) \
 static int cname##_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl) \
 {\
-	cprefix##_cbc_encrypt(in, out, (long)inl, &ctx->c.##kname, ctx->iv, ctx->encrypt);\
+	cprefix##_cbc_encrypt(in, out, (long)inl, &ctx->c.kname, ctx->iv, ctx->encrypt);\
 	return 1;\
 }
 
 #define BLOCK_CIPHER_func_cfb(cname, cprefix, kname) \
 static int cname##_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl) \
 {\
-	cprefix##_cfb64_encrypt(in, out, (long)inl, &ctx->c.##kname, ctx->iv, &ctx->num, ctx->encrypt);\
+	cprefix##_cfb64_encrypt(in, out, (long)inl, &ctx->c.kname, ctx->iv, &ctx->num, ctx->encrypt);\
 	return 1;\
 }
 
@@ -111,7 +111,7 @@ static EVP_CIPHER cname##_cbc = {\
 	cname##_cbc_cipher,\
 	cleanup,\
 	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+\
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.##kstruct)),\
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.kstruct)),\
 	set_asn1, get_asn1,\
 	ctrl, \
 	NULL \
@@ -124,7 +124,7 @@ static EVP_CIPHER cname##_cfb = {\
 	cname##_cfb_cipher,\
 	cleanup,\
 	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+\
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.##kstruct)),\
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.kstruct)),\
 	set_asn1, get_asn1,\
 	ctrl,\
 	NULL \
@@ -137,7 +137,7 @@ static EVP_CIPHER cname##_ofb = {\
 	cname##_ofb_cipher,\
 	cleanup,\
 	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+\
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.##kstruct)),\
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.kstruct)),\
 	set_asn1, get_asn1,\
 	ctrl,\
 	NULL \
@@ -150,7 +150,7 @@ static EVP_CIPHER cname##_ecb = {\
 	cname##_ecb_cipher,\
 	cleanup,\
 	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+\
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.##kstruct)),\
+		sizeof((((EVP_CIPHER_CTX *)NULL)->c.kstruct)),\
 	set_asn1, get_asn1,\
 	ctrl,\
 	NULL \

@@ -10,9 +10,9 @@ EVP_SealInit, EVP_SealUpdate, EVP_SealFinal - EVP envelope encryption
 
  int EVP_SealInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char **ek,
 		int *ekl, unsigned char *iv,EVP_PKEY **pubk, int npubk);
- void EVP_SealUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
+ int EVP_SealUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl, unsigned char *in, int inl);
- void EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out,
+ int EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl);
 
 =head1 DESCRIPTION
@@ -41,9 +41,10 @@ page.
 
 =head1 RETURN VALUES
 
-EVP_SealInit() returns -1 on error or B<npubk> if successful.
+EVP_SealInit() returns 0 on error or B<npubk> if successful.
 
-EVP_SealUpdate() and EVP_SealFinal() do not return values.
+EVP_SealUpdate() and EVP_SealFinal() return 1 for success and 0 for
+failure.
 
 =head1 NOTES
 
@@ -58,6 +59,11 @@ on large amounts of data, this is because public key encryption is slow
 but symmetric encryption is fast. So symmetric encryption is used for
 bulk encryption and the small random symmetric key used is transferred
 using public key encryption.
+
+It is possible to call EVP_SealInit() twice in the same way as
+EVP_EncryptInit(). The first call should have B<npubk> set to 0
+and (after setting any cipher paramaters) it should be called again
+with B<type> set to NULL.
 
 =head1 SEE ALSO
 

@@ -168,7 +168,7 @@ my %table=(
 
 # Sunos configs, assuming sparc for the gcc one.
 ##"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST::(unknown)::DES_UNROLL:::",
-"sunos-gcc","gcc:-O3 -mv8 -Dssize_t=int::(unknown):-liberty:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL DES_PTR DES_RISC1:::",
+"sunos-gcc","gcc:-O3 -mv8 -Dssize_t=int::(unknown)::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL DES_PTR DES_RISC1:::",
 
 #### IRIX 5.x configs
 # -mips2 flag is added by ./config when appropriate.
@@ -250,8 +250,8 @@ my %table=(
 # Dec Alpha, OSF/1 - the alpha164-cc is the flags for a 21164A with
 # the new compiler
 # For gcc, the following gave a %50 speedup on a 164 over the 'DES_INT' version
-"alpha-gcc","gcc:-O3::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_RISC1:asm/alpha.o::",
-"alpha-cc", "cc:-std1 -tune host -O4 -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK:asm/alpha.o::",
+"alpha-gcc","gcc:-O3::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_RISC1:asm/alpha.o:::::::::dlfcn",
+"alpha-cc", "cc:-std1 -tune host -O4 -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK:asm/alpha.o:::::::::dlfcn",
 "alpha164-cc", "cc:-std1 -tune host -fast -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK:asm/alpha.o::",
 "FreeBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_PTR DES_RISC2:::",
 

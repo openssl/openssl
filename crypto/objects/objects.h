@@ -979,8 +979,8 @@ typedef struct obj_name_st
 
 
 int OBJ_NAME_init(void);
-int OBJ_NAME_new_index(unsigned long (*hash_func)(),int (*cmp_func)(),
-	void (*free_func)());
+int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),int (*cmp_func)(const void *, const void *),
+	void (*free_func)(const char *, int, const char *));
 const char *OBJ_NAME_get(const char *name,int type);
 int OBJ_NAME_add(const char *name,int type,const char *data);
 int OBJ_NAME_remove(const char *name,int type);
@@ -997,7 +997,7 @@ int		OBJ_txt2nid(char *s);
 int		OBJ_ln2nid(const char *s);
 int		OBJ_sn2nid(const char *s);
 int		OBJ_cmp(ASN1_OBJECT *a,ASN1_OBJECT *b);
-char *		OBJ_bsearch(char *key,char *base,int num,int size,int (*cmp)());
+char *		OBJ_bsearch(char *key,char *base,int num,int size,int (*cmp)(const void *, const void *));
 
 void		ERR_load_OBJ_strings(void );
 

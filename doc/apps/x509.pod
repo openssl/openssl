@@ -19,6 +19,7 @@ B<openssl> B<x509>
 [B<-hash>]
 [B<-subject>]
 [B<-issuer>]
+[B<-email>]
 [B<-startdate>]
 [B<-enddate>]
 [B<-purpose>]
@@ -136,6 +137,10 @@ outputs the subject name.
 =item B<-issuer>
 
 outputs the issuer name.
+
+=item B<-email>
+
+outputs the email address(es) if any.
 
 =item B<-startdate>
 
@@ -401,6 +406,10 @@ digests the fingerprint of a certificate is unique to that certificate and
 two certificates with the same fingerprint can be considered to be the same.
 
 The Netscape fingerprint uses MD5 whereas MSIE uses SHA1.
+
+The B<-email> option searches the subject name and the subject alternative
+name extension. Only unique email addresses will be printed out: it will
+not print the same address more than once.
 
 =head1 CERTIFICATE EXTENSIONS
 

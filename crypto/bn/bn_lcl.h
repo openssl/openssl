@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #ifndef HEADER_BN_LCL_H
 #define HEADER_BN_LCL_H
@@ -64,6 +117,51 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+
+/*
+ * BN_window_bits_for_exponent_size -- macro for sliding window mod_exp functions
+ *
+ *
+ * For window size 'w' (w >= 2) and a random 'b' bits exponent,
+ * the number of multiplications is a constant plus on average
+ *
+ *    2^(w-1) + (b-w)/(w+1);
+ *
+ * here  2^(w-1)  is for precomputing the table (we actually need
+ * entries only for windows that have the lowest bit set), and
+ * (b-w)/(w+1)  is an approximation for the expected number of
+ * w-bit windows, not counting the first one.
+ *
+ * Thus we should use
+ *
+ *    w >= 6  if        b > 671
+ *     w = 5  if  671 > b > 239
+ *     w = 4  if  239 > b >  79
+ *     w = 3  if   79 > b >  23
+ *    w <= 2  if   23 > b
+ *
+ * (with draws in between).  Very small exponents are often selected
+ * with low Hamming weight, so we use  w = 1  for b <= 23.
+ */
+#if 1
+#define BN_window_bits_for_exponent_size(b) \
+		((b) > 671 ? 6 : \
+		 (b) > 239 ? 5 : \
+		 (b) >  79 ? 4 : \
+		 (b) >  23 ? 3 : 1)
+#else
+/* Old SSLeay/OpenSSL table.
+ * Maximum window size was 5, so this table differs for b==1024;
+ * but it coincides for other interesting values (b==160, b==512).
+ */
+#define BN_window_bits_for_exponent_size(b) \
+		((b) > 255 ? 5 : \
+		 (b) > 127 ? 4 : \
+		 (b) >  17 ? 3 : 1)
+#endif	 
+
+
 
 /* Pentium pro 16,16,16,32,64 */
 /* Alpha       16,16,16,16.64 */

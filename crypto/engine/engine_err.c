@@ -101,6 +101,13 @@ static ERR_STRING_DATA ENGINE_str_functs[]=
 {ERR_PACK(0,ENGINE_F_ENGINE_SET_NAME,0),	"ENGINE_set_name"},
 {ERR_PACK(0,ENGINE_F_ENGINE_SET_RAND,0),	"ENGINE_set_RAND"},
 {ERR_PACK(0,ENGINE_F_ENGINE_SET_RSA,0),	"ENGINE_set_RSA"},
+{ERR_PACK(0,ENGINE_F_HWCRHK_FINISH,0),	"hwcrhk_finish"},
+{ERR_PACK(0,ENGINE_F_HWCRHK_INIT,0),	"hwcrhk_init"},
+{ERR_PACK(0,ENGINE_F_HWCRHK_MOD_EXP,0),	"hwcrhk_mod_exp"},
+{ERR_PACK(0,ENGINE_F_HWCRHK_MOD_EXP_CRT,0),	"hwcrhk_mod_exp_crt"},
+{ERR_PACK(0,ENGINE_F_HWCRHK_RAND_BYTES,0),	"hwcrhk_rand_bytes"},
+{ERR_PACK(0,ENGINE_F_HWCRHK_RSA_MOD_EXP,0),	"hwcrhk_rsa_mod_exp"},
+{ERR_PACK(0,ENGINE_F_LOG_MESSAGE,0),	"log_message"},
 {0,NULL}
 	};
 
@@ -114,14 +121,17 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_ENGINE_IS_NOT_IN_LIST          ,"engine is not in the list"},
 {ENGINE_R_FINISH_FAILED                  ,"finish failed"},
 {ENGINE_R_GET_HANDLE_FAILED              ,"could not obtain hardware handle"},
+{ENGINE_R_HWCRYPTOHOOK_REPORTS           ,"hwcryptohook reports"},
 {ENGINE_R_ID_OR_NAME_MISSING             ,"'id' or 'name' missing"},
 {ENGINE_R_INIT_FAILED                    ,"init failed"},
 {ENGINE_R_INTERNAL_LIST_ERROR            ,"internal list error"},
 {ENGINE_R_MISSING_KEY_COMPONENTS         ,"missing key components"},
+{ENGINE_R_NOT_INITIALISED                ,"not initialised"},
 {ENGINE_R_NOT_LOADED                     ,"not loaded"},
 {ENGINE_R_NO_SUCH_ENGINE                 ,"no such engine"},
 {ENGINE_R_PROVIDE_PARAMETERS             ,"provide parameters"},
 {ENGINE_R_REQUEST_FAILED                 ,"request failed"},
+{ENGINE_R_REQUEST_FALLBACK               ,"request fallback"},
 {ENGINE_R_UNIT_FAILURE                   ,"unit failure"},
 {0,NULL}
 	};
