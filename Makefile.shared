@@ -583,15 +583,13 @@ link_app.irix:
 	fi; \
 	$(LINK_APP)
 
-# HP-UX includes the full pathname of libs we depend on, so we would get
-# ./libcrypto (with ./ as path information) compiled into libssl, hence
-# we omit the SHLIBDEPS. Applications must be linked with -lssl -lcrypto
-# anyway.
-# The object modules are loaded from lib$i.a using the undocumented -Fl
-# option.
-#
-# WARNING: Until DSO is fixed to support a search path, we support SHLIB_PATH
-#          by temporarily specifying "+s"!
+# 32-bit PA-RISC HP-UX embeds the -L pathname of libs we link with, so
+# we compensate for it with +cdp ../: and +cdp ./:. Yes, these rewrite
+# rules imply that we can only link one level down in catalog structure,
+# but that's what takes place for the moment of this writing. +cdp option
+# was introduced in HP-UX 11.x and applies in 32-bit PA-RISC link
+# editor context only [it's simply ignored in other cases, which are all
+# ELFs by the way].
 #
 link_o.hpux:
 	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
