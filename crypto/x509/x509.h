@@ -167,13 +167,28 @@ typedef struct X509_extension_st
 	void (*ex_free)();		/* clear argp stuff */
 	} X509_EXTENSION;
 
+/* a sequence of these are used */
+typedef struct x509_attributes_st
+	{
+	ASN1_OBJECT *object;
+	int set; /* 1 for a set, 0 for a single item (which is wrong) */
+	union	{
+		char		*ptr;
+/* 1 */		STACK /* ASN1_TYPE */ *set;
+/* 0 */		ASN1_TYPE	*single;
+		} value;
+	} X509_ATTRIBUTE;
+
+DECLARE_STACK_OF(X509_ATTRIBUTE)
+DECLARE_ASN1_SET_OF(X509_ATTRIBUTE)
+
 typedef struct X509_req_info_st
 	{
 	ASN1_INTEGER *version;
 	X509_NAME *subject;
 	X509_PUBKEY *pubkey;
 	/*  d=2 hl=2 l=  0 cons: cont: 00 */
-	STACK /* X509_ATTRIBUTE */ *attributes; /* [ 0 ] */
+	STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
 	int req_kludge;
 	} X509_REQ_INFO;
 
@@ -239,20 +254,6 @@ typedef struct X509_crl_st
 	ASN1_BIT_STRING *signature;
 	int references;
 	} X509_CRL;
-
-/* a sequence of these are used */
-typedef struct x509_attributes_st
-	{
-	ASN1_OBJECT *object;
-	int set; /* 1 for a set, 0 for a single item (which is wrong) */
-	union	{
-		char		*ptr;
-/* 1 */		STACK /* ASN1_TYPE */ *set;
-/* 0 */		ASN1_TYPE	*single;
-		} value;
-	} X509_ATTRIBUTE;
-
-DECLARE_STACK_OF(X509_ATTRIBUTE)
 
 typedef struct private_key_st
 	{

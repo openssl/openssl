@@ -89,7 +89,7 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 	const char *neg;
 	X509_REQ_INFO *ri;
 	EVP_PKEY *pkey;
-	STACK *sk;
+	STACK_OF(X509_ATTRIBUTE) *sk;
 	char str[128];
 
 	ri=x->req_info;
@@ -142,7 +142,7 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 	if (BIO_puts(bp,str) <= 0) goto err;
 
 	sk=x->req_info->attributes;
-	if ((sk == NULL) || (sk_num(sk) == 0))
+	if ((sk == NULL) || (sk_X509_ATTRIBUTE_num(sk) == 0))
 		{
 		if (!x->req_info->req_kludge)
 			{
@@ -152,7 +152,7 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 		}
 	else
 		{
-		for (i=0; i<sk_num(sk); i++)
+		for (i=0; i<sk_X509_ATTRIBUTE_num(sk); i++)
 			{
 			ASN1_TYPE *at;
 			X509_ATTRIBUTE *a;
@@ -160,7 +160,7 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 			ASN1_TYPE *t;
 			int j,type=0,count=1,ii=0;
 
-			a=(X509_ATTRIBUTE *)sk_value(sk,i);
+			a=sk_X509_ATTRIBUTE_value(sk,i);
 			sprintf(str,"%12s","");
 			if (BIO_puts(bp,str) <= 0) goto err;
 			if ((j=i2a_ASN1_OBJECT(bp,a->object)) > 0)

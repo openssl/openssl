@@ -210,6 +210,10 @@ err:\
 		M_ASN1_D2I_get_imp_set(r,func,free_func,\
 			x,V_ASN1_CONTEXT_SPECIFIC);
 
+#define M_ASN1_D2I_get_IMP_set_type(type,r,func,free_func,x) \
+		M_ASN1_D2I_get_imp_set_type(type,r,func,free_func,\
+			x,V_ASN1_CONTEXT_SPECIFIC);
+
 #define M_ASN1_D2I_get_imp_set(r,func,free_func,a,b) \
 	c.q=c.p; \
 	if (d2i_ASN1_SET(&(r),&c.p,c.slen,(char *(*)())func,\
@@ -328,10 +332,19 @@ err:\
 #define M_ASN1_I2D_len_IMP_SET(a,f,x) \
 		ret+=i2d_ASN1_SET(a,NULL,f,x,V_ASN1_CONTEXT_SPECIFIC,IS_SET);
 
+#define M_ASN1_I2D_len_IMP_SET_type(type,a,f,x) \
+		ret+=i2d_ASN1_SET_OF_##type(a,NULL,f,x, \
+					    V_ASN1_CONTEXT_SPECIFIC,IS_SET);
+
 #define M_ASN1_I2D_len_IMP_SET_opt(a,f,x) \
 		if ((a != NULL) && (sk_num(a) != 0)) \
 			ret+=i2d_ASN1_SET(a,NULL,f,x,V_ASN1_CONTEXT_SPECIFIC, \
 					  IS_SET);
+
+#define M_ASN1_I2D_len_IMP_SET_opt_type(type,a,f,x) \
+		if ((a != NULL) && (sk_##type##_num(a) != 0)) \
+			ret+=i2d_ASN1_SET_OF_##type(a,NULL,f,x, \
+					       V_ASN1_CONTEXT_SPECIFIC,IS_SET);
 
 #define M_ASN1_I2D_len_IMP_SEQUENCE(a,f,x) \
 		ret+=i2d_ASN1_SET(a,NULL,f,x,V_ASN1_CONTEXT_SPECIFIC, \
@@ -385,6 +398,8 @@ err:\
 			V_ASN1_UNIVERSAL,IS_SET)
 #define M_ASN1_I2D_put_IMP_SET(a,f,x) i2d_ASN1_SET(a,&p,f,x,\
 			V_ASN1_CONTEXT_SPECIFIC,IS_SET)
+#define M_ASN1_I2D_put_IMP_SET_type(type,a,f,x) \
+     i2d_ASN1_SET_OF_##type(a,&p,f,x,V_ASN1_CONTEXT_SPECIFIC,IS_SET)
 #define M_ASN1_I2D_put_IMP_SEQUENCE(a,f,x) i2d_ASN1_SET(a,&p,f,x,\
 			V_ASN1_CONTEXT_SPECIFIC,IS_SEQUENCE)
 
@@ -403,6 +418,12 @@ err:\
 		if ((a != NULL) && (sk_num(a) != 0)) \
 			{ i2d_ASN1_SET(a,&p,f,x,V_ASN1_CONTEXT_SPECIFIC, \
 				       IS_SET); }
+
+#define M_ASN1_I2D_put_IMP_SET_opt_type(type,a,f,x) \
+		if ((a != NULL) && (sk_##type##_num(a) != 0)) \
+			{ i2d_ASN1_SET_OF_##type(a,&p,f,x, \
+						 V_ASN1_CONTEXT_SPECIFIC, \
+						 IS_SET); }
 
 #define M_ASN1_I2D_put_IMP_SEQUENCE_opt(a,f,x) \
 		if ((a != NULL) && (sk_num(a) != 0)) \

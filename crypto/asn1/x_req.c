@@ -78,11 +78,12 @@ int i2d_X509_REQ_INFO(X509_REQ_INFO *a, unsigned char **pp)
 	 */
 	if (a->req_kludge) 
 	        {
-	        M_ASN1_I2D_len_IMP_SET_opt(a->attributes,i2d_X509_ATTRIBUTE,0);
+	        M_ASN1_I2D_len_IMP_SET_opt_type(X509_ATTRIBUTE,a->attributes,i2d_X509_ATTRIBUTE,0);
 		}
 	else
 	        {
-	        M_ASN1_I2D_len_IMP_SET(a->attributes,	i2d_X509_ATTRIBUTE,0);
+	        M_ASN1_I2D_len_IMP_SET_type(X509_ATTRIBUTE,a->attributes,
+					    i2d_X509_ATTRIBUTE,0);
 		}
 	
 	M_ASN1_I2D_seq_total();
@@ -98,11 +99,13 @@ int i2d_X509_REQ_INFO(X509_REQ_INFO *a, unsigned char **pp)
 	 */
 	if (a->req_kludge)
 		{
-	        M_ASN1_I2D_put_IMP_SET_opt(a->attributes,i2d_X509_ATTRIBUTE,0);
+	        M_ASN1_I2D_put_IMP_SET_opt_type(X509_ATTRIBUTE,a->attributes,
+						i2d_X509_ATTRIBUTE,0);
 		}
 	else
 		{
-	        M_ASN1_I2D_put_IMP_SET(a->attributes,i2d_X509_ATTRIBUTE,0);
+	        M_ASN1_I2D_put_IMP_SET_type(X509_ATTRIBUTE,a->attributes,
+					    i2d_X509_ATTRIBUTE,0);
 		}
 
 	M_ASN1_I2D_finish();
@@ -130,8 +133,9 @@ X509_REQ_INFO *d2i_X509_REQ_INFO(X509_REQ_INFO **a, unsigned char **pp,
 		ret->req_kludge=1;
 	else
 		{
-		M_ASN1_D2I_get_IMP_set(ret->attributes,d2i_X509_ATTRIBUTE,
-			X509_ATTRIBUTE_free,0);
+		M_ASN1_D2I_get_IMP_set_type(X509_ATTRIBUTE,ret->attributes,
+					    d2i_X509_ATTRIBUTE,
+					    X509_ATTRIBUTE_free,0);
 		}
 
 	M_ASN1_D2I_Finish(a,X509_REQ_INFO_free,ASN1_F_D2I_X509_REQ_INFO);
@@ -146,7 +150,7 @@ X509_REQ_INFO *X509_REQ_INFO_new(void)
 	M_ASN1_New(ret->version,ASN1_INTEGER_new);
 	M_ASN1_New(ret->subject,X509_NAME_new);
 	M_ASN1_New(ret->pubkey,X509_PUBKEY_new);
-	M_ASN1_New(ret->attributes,sk_new_null);
+	M_ASN1_New(ret->attributes,sk_X509_ATTRIBUTE_new_null);
 	ret->req_kludge=0;
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_REQ_INFO_NEW);
@@ -158,7 +162,7 @@ void X509_REQ_INFO_free(X509_REQ_INFO *a)
 	ASN1_INTEGER_free(a->version);
 	X509_NAME_free(a->subject);
 	X509_PUBKEY_free(a->pubkey);
-	sk_pop_free(a->attributes,X509_ATTRIBUTE_free);
+	sk_X509_ATTRIBUTE_pop_free(a->attributes,X509_ATTRIBUTE_free);
 	Free((char *)a);
 	}
 

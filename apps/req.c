@@ -108,8 +108,9 @@
  */
 
 static int make_REQ(X509_REQ *req,EVP_PKEY *pkey,int attribs);
-static int add_attribute_object(STACK *n, char *text, char *def, 
-	char *value, int nid,int min,int max);
+static int add_attribute_object(STACK_OF(X509_ATTRIBUTE) *n, char *text,
+				char *def, char *value, int nid, int min,
+				int max);
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 	int nid,int min,int max);
 static void MS_CALLBACK req_cb(int p,int n,char *arg);
@@ -1022,8 +1023,9 @@ err:
 	return(ret);
 	}
 
-static int add_attribute_object(STACK *n, char *text, char *def, char *value,
-	     int nid, int min, int max)
+static int add_attribute_object(STACK_OF(X509_ATTRIBUTE) *n, char *text,
+				char *def, char *value, int nid, int min,
+				int max)
 	{
 	int i,z;
 	X509_ATTRIBUTE *xa=NULL;
@@ -1098,7 +1100,7 @@ start:
 	at=NULL;
 	/* only one item per attribute */
 
-	if (!sk_push(n,(char *)xa)) goto err;
+	if (!sk_X509_ATTRIBUTE_push(n,xa)) goto err;
 	return(1);
 err:
 	if (xa != NULL) X509_ATTRIBUTE_free(xa);
