@@ -40,6 +40,10 @@
  
  Changes between 0.9.6d and 0.9.7  [XX xxx 2002]
 
+  *) Fix escaping of non-ASCII characters when using the -subj option
+     of the "openssl req" command line tool. (Robert Joop <joop@fokus.gmd.de>)
+     [Lutz Jaenicke]
+
   *) Make object definitions compliant to LDAP (RFC2256): SN is the short
      form for "surname", serialNumber has no short form.
      Use "mail" as the short name for "rfc822Mailbox" according to RFC2798;

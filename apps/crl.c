@@ -87,6 +87,7 @@ static char *crl_usage[]={
 " -noout          - no CRL output\n",
 " -CAfile  name   - verify CRL using certificates in file \"name\"\n",
 " -CApath  dir    - verify CRL using certificates in \"dir\"\n",
+" -nameopt arg    - various certificate name options\n",
 NULL
 };
 
@@ -97,6 +98,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	unsigned long nmflag = 0;
 	X509_CRL *x=NULL;
 	char *CAfile = NULL, *CApath = NULL;
 	int ret=1,i,num,badops=0;
@@ -105,7 +107,7 @@ int MAIN(int argc, char **argv)
 	char *infile=NULL,*outfile=NULL;
 	int hash=0,issuer=0,lastupdate=0,nextupdate=0,noout=0,text=0;
 	int fingerprint = 0;
-	char **pp,buf[256];
+	char **pp;
 	X509_STORE *store = NULL;
 	X509_STORE_CTX ctx;
 	X509_LOOKUP *lookup = NULL;
@@ -188,6 +190,11 @@ int MAIN(int argc, char **argv)
 			text = 1;
 		else if (strcmp(*argv,"-hash") == 0)
 			hash= ++num;
+		else if (strcmp(*argv,"-nameopt") == 0)
+			{
+			if (--argc < 1) goto bad;
+			if (!set_name_ex(&nmflag, *(++argv))) goto bad;
+			}
 		else if (strcmp(*argv,"-issuer") == 0)
 			issuer= ++num;
 		else if (strcmp(*argv,"-lastupdate") == 0)
@@ -271,9 +278,7 @@ bad:
 			{
 			if (issuer == i)
 				{
-				X509_NAME_oneline(X509_CRL_get_issuer(x),
-								buf,256);
-				BIO_printf(bio_out,"issuer= %s\n",buf);
+				print_name(bio_out, "issuer=", X509_CRL_get_issuer(x), nmflag);
 				}
 
 			if (hash == i)
