@@ -74,10 +74,18 @@ if [ "x$XREL" != "x" ]; then
 		echo "whatever-whatever-sco5"; exit 0
 		;;
 	    4.2MP)
-		if [ "x$VERSION" = "x2.1.1" ]; then
+		if [ "x$VERSION" = "x2.01" ]; then
+		    echo "${MACHINE}-whatever-unixware201"; exit 0
+		elif [ "x$VERSION" = "x2.02" ]; then
+		    echo "${MACHINE}-whatever-unixware202"; exit 0
+		elif [ "x$VERSION" = "x2.03" ]; then
+		    echo "${MACHINE}-whatever-unixware203"; exit 0
+		elif [ "x$VERSION" = "x2.1.1" ]; then
 		    echo "${MACHINE}-whatever-unixware211"; exit 0
 		elif [ "x$VERSION" = "x2.1.2" ]; then
 		    echo "${MACHINE}-whatever-unixware212"; exit 0
+		elif [ "x$VERSION" = "x2.1.3" ]; then
+		    echo "${MACHINE}-whatever-unixware213"; exit 0
 		else
 		    echo "${MACHINE}-whatever-unixware2"; exit 0
 		fi
@@ -518,9 +526,12 @@ EOF
   *-*-unixware7) OUT="unixware-7" ;;
   *-*-UnixWare7) OUT="unixware-7" ;;
   *-*-Unixware7) OUT="unixware-7" ;;
-  *-*-unixware[1-2]*) OUT="unixware-2.0" ;;
-  *-*-UnixWare[1-2]*) OUT="unixware-2.0" ;;
-  *-*-Unixware[1-2]*) OUT="unixware-2.0" ;;
+  *-*-unixware20*) OUT="unixware-2.0" ;;
+  *-*-unixware21*) OUT="unixware-2.1" ;;
+  *-*-UnixWare20*) OUT="unixware-2.0" ;;
+  *-*-UnixWare21*) OUT="unixware-2.1" ;;
+  *-*-Unixware20*) OUT="unixware-2.0" ;;
+  *-*-Unixware21*) OUT="unixware-2.1" ;;
   BS2000-siemens-sysv4) OUT="BS2000-OSD" ;;
   RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
   *-siemens-sysv4) OUT="SINIX" ;;
