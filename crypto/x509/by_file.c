@@ -100,8 +100,8 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 	case X509_L_FILE_LOAD:
 		if (argl == X509_FILETYPE_DEFAULT)
 			{
-			ok=X509_load_cert_crl_file(ctx,X509_get_default_cert_file(),
-				X509_FILETYPE_PEM);
+			ok = (X509_load_cert_crl_file(ctx,X509_get_default_cert_file(),
+				X509_FILETYPE_PEM) != 0);
 			if (!ok)
 				{
 				X509err(X509_F_BY_FILE_CTRL,X509_R_LOADING_DEFAULTS);
@@ -109,16 +109,17 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 			else
 				{
 				file=(char *)Getenv(X509_get_default_cert_file_env());
-				ok=X509_load_cert_crl_file(ctx,file,
-					X509_FILETYPE_PEM);
+				ok = (X509_load_cert_crl_file(ctx,file,
+					X509_FILETYPE_PEM) != 0);
 				}
 			}
 		else
 			{
 			if(argl == X509_FILETYPE_PEM)
-				ok=X509_load_cert_crl_file(ctx,argp,
-					X509_FILETYPE_PEM);
-			else ok=X509_load_cert_file(ctx,argp,(int)argl);
+				ok = (X509_load_cert_crl_file(ctx,argp,
+					X509_FILETYPE_PEM) != 0);
+			else
+				ok = (X509_load_cert_file(ctx,argp,(int)argl) != 0);
 			}
 		break;
 		}
