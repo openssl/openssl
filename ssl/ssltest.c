@@ -1053,10 +1053,10 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 					if (num > 1)
 						--num; /* test restartability even more thoroughly */
 					
-					r = BIO_nwrite(io1, &dataptr, (int)num);
+					r = BIO_nwrite0(io1, &dataptr);
 					assert(r > 0);
-					assert(r <= (int)num);
-					num = r;
+					if (r < num)
+						num = r;
 					r = BIO_read(io2, dataptr, (int)num);
 					if (r != (int)num) /* can't happen */
 						{
@@ -1065,6 +1065,13 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 						goto err;
 						}
 					progress = 1;
+					r = BIO_nwrite(io1, &dataptr, (int)num);
+					if (r != (int)num) /* can't happen */
+						{
+						fprintf(stderr, "ERROR: BIO_nwrite() did not accept "
+							"BIO_nwrite0() bytes");
+						goto err;
+						}
 					
 					if (debug)
 						printf((io2 == client_io) ?
