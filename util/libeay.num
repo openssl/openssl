@@ -2056,3 +2056,7 @@ rijndaelKeyEncToDec                     2644	EXIST::FUNCTION:
 rijndaelDecryptRound                    2645	EXIST::FUNCTION:
 rijndaelEncrypt                         2646	EXIST::FUNCTION:
 rijndaelKeySched                        2647	EXIST::FUNCTION:
+OBJ_NAME_do_all_sorted                  2648	EXIST::FUNCTION:
+OBJ_NAME_do_all                         2649	EXIST::FUNCTION:
+BN_nnmod                                2650	EXIST::FUNCTION:
+BN_swap                                 2651	EXIST::FUNCTION:

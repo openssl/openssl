@@ -61,6 +61,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
+
 /* The old slow way */
 #if 0
 int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
@@ -152,6 +153,14 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 # endif /* __GNUC__ */
 #endif /* NO_ASM */
 
+
+/* BN_div computes  dv := num / divisor,  rounding towards zero, and sets up
+ * rm  such that  dv*divisor + rm = num  holds.
+ * Thus:
+ *     dv->neg == num->neg ^ divisor->neg  (unless the result is zero)
+ *     rm->neg == num->neg                 (unless the remainder is zero)
+ * If 'dv' or 'rm' is NULL, the respective value is not returned.
+ */
 int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	   BN_CTX *ctx)
 	{
@@ -331,7 +340,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	if (rm != NULL)
 		{
 		BN_rshift(rm,snum,norm_shift);
-		rm->neg=num->neg;
+		if (!BN_is_zero(rm))
+			rm->neg = num->neg;
 		}
 	BN_CTX_end(ctx);
 	return(1);
@@ -341,40 +351,3 @@ err:
 	}
 
 #endif
-
-/* rem != m */
-int BN_mod(BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
-	{
-#if 0 /* The old slow way */
-	int i,nm,nd;
-	BIGNUM *dv;
-
-	if (BN_ucmp(m,d) < 0)
-		return((BN_copy(rem,m) == NULL)?0:1);
-
-	BN_CTX_start(ctx);
-	dv=BN_CTX_get(ctx);
-
-	if (!BN_copy(rem,m)) goto err;
-
-	nm=BN_num_bits(rem);
-	nd=BN_num_bits(d);
-	if (!BN_lshift(dv,d,nm-nd)) goto err;
-	for (i=nm-nd; i>=0; i--)
-		{
-		if (BN_cmp(rem,dv) >= 0)
-			{
-			if (!BN_sub(rem,rem,dv)) goto err;
-			}
-		if (!BN_rshift1(dv,dv)) goto err;
-		}
-	BN_CTX_end(ctx);
-	return(1);
- err:
-	BN_CTX_end(ctx);
-	return(0);
-#else
-	return(BN_div(NULL,rem,m,d,ctx));
-#endif
-	}
-

@@ -1,8 +1,33 @@
-
  OpenSSL CHANGES
  _______________
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
+
+  *) New function BN_swap.
+     [Bodo Moeller]
+
+  *) Use BN_nnmod instead of BN_mod in crypto/bn/bn_exp.c so that
+     the exponentiation functions are more likely to produce reasonable
+     results on negative inputs.
+     [Bodo Moeller]
+
+  *) Change BN_mod_mul so that the result is always non-negative.
+     Previously, it could be negative if one of the factors was negative;
+     I don't think anyone really wanted that behaviour.
+     [Bodo Moeller]
+
+  *) Move BN_mod_... functions into new file crypto/bn/bn_mod.c
+     (except for exponentation, which stays in crypto/bn/bn_exp.c,
+     and BN_mod_mul_reciprocal, which stays in crypto/bn/bn_recp.c)
+     and add new functions:
+          BN_nnmod
+          BN_mod_sqr
+          BN_mod_add
+          BN_mod_sub
+     These functions always generate non-negative results.
+     BN_nnmod otherwise is like BN_mod (if BN_mod computes a remainder  r
+     such that  |m| < r < 0,  BN_nnmod will output  rem + |m|  instead).
+     [Lenka Fibikova <fibikova@exp-math.uni-essen.de>, Bodo Moeller]
 
   *) Remove a few calls to bn_wexpand() in BN_sqr() (the one in there
      was actually never needed) and in BN_mul().  The removal in BN_mul()

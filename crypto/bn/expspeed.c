@@ -187,9 +187,6 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 	int i,k;
 	double tm;
 	long num;
-	BN_MONT_CTX m;
-
-	memset(&m,0,sizeof(m));
 
 	num=BASENUM;
 	for (i=0; i<NUM_SIZES; i++)
@@ -200,11 +197,9 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 		BN_mod(a,a,c,ctx);
 		BN_mod(b,b,c,ctx);
 
-		BN_MONT_CTX_set(&m,c,ctx);
-
 		Time_F(START);
 		for (k=0; k<num; k++)
-			BN_mod_exp_mont(r,a,b,c,ctx,&m);
+			BN_mod_exp(r,a,b,c,ctx);
 		tm=Time_F(STOP);
 		printf("mul %4d ^ %4d %% %d -> %8.3fms %5.1f\n",sizes[i],sizes[i],sizes[i],tm*1000.0/num,tm*mul_c[i]/num);
 		num/=7;

@@ -18,72 +18,6 @@
 
 #define MAX_ROUNDS	10
 
-int BN_smod(BIGNUM *rem, BIGNUM *m, BIGNUM *d, BN_CTX *ctx)
-{
-	int r_sign;
-
-	assert(rem != NULL && m != NULL && d != NULL && ctx != NULL);
-
-	if (d->neg) return 0;
-	r_sign = m->neg;
-
-	if (r_sign) m->neg = 0;
-	if (!(BN_div(NULL,rem,m,d,ctx))) return 0;
-	if (r_sign) 
-	{
-		m->neg = r_sign;
-		if (!BN_is_zero(rem))
-		{
-			rem->neg = r_sign;
-			BN_add(rem, rem, d);
-		}
-	}
-	return 1;
-}
-
-int BN_mod_sub(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *m, BN_CTX *ctx) 
-{
-	assert(r != NULL && a != NULL && b != NULL && m != NULL && ctx != NULL);
-
-	if (!BN_sub(r, a, b)) return 0;
-	return BN_smod(r, r, m, ctx);
-
-}
-
-int BN_mod_add(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *m, BN_CTX *ctx) 
-{
-	assert(r != NULL && a != NULL && b != NULL && m != NULL && ctx != NULL);
-
-	if (!BN_add(r, a, b)) return 0;
-	return BN_smod(r, r, m, ctx);
-
-}
-
-int BN_mod_sqr(BIGNUM *r, BIGNUM *a, BIGNUM *p, BN_CTX *ctx)
-{
-	assert(r != NULL && a != NULL && p != NULL && ctx != NULL);
-
-	if (!BN_sqr(r, a, ctx)) return 0;
-	return BN_div(NULL, r, r, p, ctx);
-}
-
-int BN_swap(BIGNUM *x, BIGNUM *y)
-{
-	BIGNUM *c;
-
-	assert(x != NULL && y != NULL);
-
-	if ((c = BN_dup(x)) == NULL) goto err;
-	if ((BN_copy(x, y)) == NULL) goto err;
-	if ((BN_copy(y, c)) == NULL) goto err;
-	BN_clear_free(c);
-	return 1;
-
-err:
-	if (c != NULL) BN_clear_free(c);
-	return 0;
-}
-
 
 int BN_legendre(BIGNUM *a, BIGNUM *p, BN_CTX *ctx) 
 {
@@ -99,7 +33,7 @@ int BN_legendre(BIGNUM *a, BIGNUM *p, BN_CTX *ctx)
 
 	ctx->tos += 3;
 
-	if (!BN_smod(x, a, p, ctx)) goto err;
+	if (!BN_nnmod(x, a, p, ctx)) goto err;
 	if (BN_is_zero(x)) 
 	{
 
@@ -136,7 +70,7 @@ int BN_legendre(BIGNUM *a, BIGNUM *p, BN_CTX *ctx)
 		if (BN_mod_word(x, 4) == 3 && BN_mod_word(y, 4) == 3) L = -L;
 		if (!BN_swap(x, y)) goto err;
 
-		if (!BN_smod(x, x, y, ctx)) goto err;
+		if (!BN_nnmod(x, x, y, ctx)) goto err;
 
 	}
 

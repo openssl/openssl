@@ -88,7 +88,6 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	max=(al+al);
 	if (bn_wexpand(rr,max+1) == NULL) goto err;
 
-	r->neg=0;
 	if (al == 4)
 		{
 #ifndef BN_SQR_COMBA
@@ -140,6 +139,7 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 		}
 
 	rr->top=max;
+	rr->neg=0;
 	if ((max > 0) && (rr->d[max-1] == 0)) rr->top--;
 	if (rr != r) BN_copy(r,rr);
 	ret = 1;

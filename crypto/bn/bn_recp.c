@@ -167,7 +167,8 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
 
 	if (i != recp->shift)
 		recp->shift=BN_reciprocal(&(recp->Nr),&(recp->N),
-			i,ctx);
+			i,ctx); /* BN_reciprocal returns i, or -1 for an error */
+	if (recp->shift == -1) goto err;
 
 	if (!BN_rshift(a,m,j)) goto err;
 	if (!BN_mul(b,a,&(recp->Nr),ctx)) goto err;
@@ -203,6 +204,7 @@ err:
  * We actually calculate with an extra word of precision, so
  * we can do faster division if the remainder is not required.
  */
+/* r := 2^len / m */
 int BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
 	{
 	int ret= -1;

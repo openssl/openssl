@@ -75,8 +75,6 @@ extern "C" {
 #define BN_MUL_COMBA
 #define BN_SQR_COMBA
 #define BN_RECURSION
-#define RECP_MUL_MOD
-#define MONT_MUL_MOD
 
 /* This next option uses the C libraries (2 word)/(1 word) function.
  * If it is not defined, I use my C version (which is slower).
@@ -284,9 +282,6 @@ typedef struct bn_recp_ctx_st
 	int flags;
 	} BN_RECP_CTX;
 
-#define BN_to_montgomery(r,a,mont,ctx)	BN_mod_mul_montgomery(\
-	r,a,&((mont)->RR),(mont),ctx)
-
 #define BN_prime_checks 0 /* default: select number of iterations
 			     based on the size of the number */
 
@@ -335,6 +330,7 @@ BIGNUM *BN_new(void);
 void	BN_init(BIGNUM *);
 void	BN_clear_free(BIGNUM *a);
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
+void	BN_swap(BIGNUM *a, BIGNUM *b);
 BIGNUM *BN_bin2bn(const unsigned char *s,int len,BIGNUM *ret);
 int	BN_bn2bin(const BIGNUM *a, unsigned char *to);
 BIGNUM *BN_mpi2bn(const unsigned char *s,int len,BIGNUM *ret);
@@ -343,11 +339,14 @@ int	BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
-int	BN_mod(BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx);
-int	BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
-	BN_CTX *ctx);
 int	BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
 int	BN_sqr(BIGNUM *r, const BIGNUM *a,BN_CTX *ctx);
+int	BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
+	BN_CTX *ctx);
+#define BN_mod(rem,m,d,ctx) BN_div(NULL,(rem),(m),(d),(ctx))
+int	BN_nnmod(BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx);
+int	BN_mod_mul(BIGNUM *ret, const BIGNUM *a, const BIGNUM *b,
+	const BIGNUM *m, BN_CTX *ctx);
 BN_ULONG BN_mod_word(const BIGNUM *a, BN_ULONG w);
 BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w);
 int	BN_mul_word(BIGNUM *a, BN_ULONG w);
@@ -373,8 +372,6 @@ int	BN_mod_exp2_mont(BIGNUM *r, const BIGNUM *a1, const BIGNUM *p1,
 int	BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	const BIGNUM *m,BN_CTX *ctx);
 int	BN_mask_bits(BIGNUM *a,int n);
-int	BN_mod_mul(BIGNUM *ret, const BIGNUM *a, const BIGNUM *b,
-	const BIGNUM *m, BN_CTX *ctx);
 #ifndef NO_FP_API
 int	BN_print_fp(FILE *fp, const BIGNUM *a);
 #endif
@@ -413,6 +410,8 @@ BN_MONT_CTX *BN_MONT_CTX_new(void );
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx);
 int BN_mod_mul_montgomery(BIGNUM *r,const BIGNUM *a,const BIGNUM *b,
 	BN_MONT_CTX *mont, BN_CTX *ctx);
+#define BN_to_montgomery(r,a,mont,ctx)	BN_mod_mul_montgomery(\
+	(r),(a),&((mont)->RR),(mont),(ctx))
 int BN_from_montgomery(BIGNUM *r,const BIGNUM *a,
 	BN_MONT_CTX *mont, BN_CTX *ctx);
 void BN_MONT_CTX_free(BN_MONT_CTX *mont);
@@ -518,4 +517,3 @@ void bn_dump1(FILE *o, const char *a, const BN_ULONG *b,int n);
 }
 #endif
 #endif
-

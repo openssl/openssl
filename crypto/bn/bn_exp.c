@@ -110,36 +110,10 @@
  */
 
 
-#include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
 #define TABLE_SIZE	32
-
-/* slow but works */
-int BN_mod_mul(BIGNUM *ret, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
-	BN_CTX *ctx)
-	{
-	BIGNUM *t;
-	int r=0;
-
-	bn_check_top(a);
-	bn_check_top(b);
-	bn_check_top(m);
-
-	BN_CTX_start(ctx);
-	if ((t = BN_CTX_get(ctx)) == NULL) goto err;
-	if (a == b)
-		{ if (!BN_sqr(t,a,ctx)) goto err; }
-	else
-		{ if (!BN_mul(t,a,b,ctx)) goto err; }
-	if (!BN_mod(ret,t,m,ctx)) goto err;
-	r=1;
-err:
-	BN_CTX_end(ctx);
-	return(r);
-	}
-
 
 /* this one works - simple but works */
 int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
@@ -186,6 +160,26 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	bn_check_top(p);
 	bn_check_top(m);
 
+	/* For even modulus  m = 2^k*m_odd,  it might make sense to compute
+	 * a^p mod m_odd  and  a^p mod 2^k  separately (with Montgomery
+	 * exponentiation for the odd part), using appropriate exponent
+	 * reductions, and combine the results using the CRT.
+	 *
+	 * For now, we use Montgomery only if the modulus is odd; otherwise,
+	 * exponentiation using the reciprocal-based quick remaindering
+	 * algorithm is used.
+	 *
+	 * (For computations  a^p mod m  where  a, p, m  are of the same
+	 * length, BN_mod_exp_recp takes roughly 50 .. 70 % the time
+	 * required by the standard algorithm, and BN_mod_exp takes
+	 * about 33 .. 40 % of it.
+	 * [Timings obtained with expspeed.c on a AMD K6-2 platform under Linux,
+	 * with various OpenSSL debugging macros defined.  YMMV.])
+	 */
+
+#define MONT_MUL_MOD
+#define RECP_MUL_MOD
+
 #ifdef MONT_MUL_MOD
 	/* I have finally been able to take out this pre-condition of
 	 * the top bit being set.  It was caused by an error in BN_div
@@ -195,7 +189,7 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 
 	if (BN_is_odd(m))
 		{
-		if (a->top == 1)
+		if (a->top == 1 && !a->neg)
 			{
 			BN_ULONG A = a->d[0];
 			ret=BN_mod_exp_mont_word(r,A,p,m,ctx,NULL);
@@ -241,7 +235,7 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	BN_init(&(val[0]));
 	ts=1;
 
-	if (!BN_mod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
+	if (!BN_nnmod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
 
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1)
@@ -369,9 +363,9 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	BN_init(&val[0]);
 	ts=1;
-	if (BN_ucmp(a,m) >= 0)
+	if (!a->neg && BN_ucmp(a,m) >= 0)
 		{
-		if (!BN_mod(&(val[0]),a,m,ctx))
+		if (!BN_nnmod(&(val[0]),a,m,ctx))
 			goto err;
 		aa= &(val[0]);
 		}
@@ -613,7 +607,7 @@ int BN_mod_exp_simple(BIGNUM *r,
 
 	BN_init(&(val[0]));
 	ts=1;
-	if (!BN_mod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
+	if (!BN_nnmod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
 
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1)

@@ -1414,6 +1414,13 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_INVALID_COMMAND				 280
 #define SSL_R_INVALID_PURPOSE				 278
 #define SSL_R_INVALID_TRUST				 279
+#define SSL_R_KRB5_C_CC_PRINC				 1094
+#define SSL_R_KRB5_C_GET_CRED				 1095
+#define SSL_R_KRB5_C_INIT				 1096
+#define SSL_R_KRB5_C_MK_REQ				 1097
+#define SSL_R_KRB5_S_BAD_TICKET				 1098
+#define SSL_R_KRB5_S_INIT				 1099
+#define SSL_R_KRB5_S_RD_REQ				 1100
 #define SSL_R_LENGTH_MISMATCH				 159
 #define SSL_R_LENGTH_TOO_SHORT				 160
 #define SSL_R_LIBRARY_BUG				 274
