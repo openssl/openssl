@@ -10,6 +10,12 @@
      in ssl3_get_client_key_exchange (ssl/s3_srvr.c).
      [Bodo Moeller]
 
+  *) Turn on RSA blinding by default, to avoid a timing attack. Applications
+     that don't want it can call RSA_blinding_off(). They would be ill-advised
+     to do so in most cases. The automatic enabling can also be turned off
+     by defining OPENSSL_FORCE_NO_RSA_BLINDING at compile-time.
+     [Ben Laurie, Steve Henson, Geoff Thorpe]
+
  Changes between 0.9.6h and 0.9.6i  [19 Feb 2003]
 
   *) In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
