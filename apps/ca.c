@@ -1243,21 +1243,7 @@ bad:
 
 			BIO_printf(bio_err,"Write out database with %d new entries\n",sk_X509_num(cert_sk));
 
-			if(strlen(serialfile) > BSIZE-5 || strlen(dbfile) > BSIZE-5)
-				{
-				BIO_printf(bio_err,"file name too long\n");
-				goto err;
-				}
-
-			strcpy(buf[0],serialfile);
-
-#ifdef OPENSSL_SYS_VMS
-			strcat(buf[0],"-new");
-#else
-			strcat(buf[0],".new");
-#endif
-
-			if (!save_serial(buf[0],serial,NULL)) goto err;
+			if (!save_serial(serialfile,"new",serial,NULL)) goto err;
 
 			if (!save_index(dbfile, "new", db)) goto err;
 			}
@@ -1317,34 +1303,7 @@ bad:
 		if (sk_X509_num(cert_sk))
 			{
 			/* Rename the database and the serial file */
-			strncpy(buf[2],serialfile,BSIZE-4);
-			buf[2][BSIZE-4]='\0';
-
-#ifdef OPENSSL_SYS_VMS
-			strcat(buf[2],"-old");
-#else
-			strcat(buf[2],".old");
-#endif
-
-			BIO_free(in);
-			BIO_free_all(out);
-			in=NULL;
-			out=NULL;
-			if (rename(serialfile,buf[2]) < 0)
-				{
-				BIO_printf(bio_err,"unable to rename %s to %s\n",
-					serialfile,buf[2]);
-				perror("reason");
-				goto err;
-				}
-			if (rename(buf[0],serialfile) < 0)
-				{
-				BIO_printf(bio_err,"unable to rename %s to %s\n",
-					buf[0],serialfile);
-				perror("reason");
-				rename(buf[2],serialfile);
-				goto err;
-				}
+			if (!rotate_serial(serialfile,"new","old")) goto err;
 
 			if (!rotate_index(dbfile,"new","old")) goto err;
 

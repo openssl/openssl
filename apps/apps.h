@@ -311,7 +311,8 @@ typedef struct ca_db_st
 	} CA_DB;
 
 BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai);
-int save_serial(char *serialfile, BIGNUM *serial, ASN1_INTEGER **retai);
+int save_serial(char *serialfile, char *suffix, BIGNUM *serial, ASN1_INTEGER **retai);
+int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix);
 CA_DB *load_index(char *dbfile, DB_ATTR *dbattr);
 int index_index(CA_DB *db);
 int save_index(char *dbfile, char *suffix, CA_DB *db);

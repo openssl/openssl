@@ -1519,19 +1519,44 @@ BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
 	return(ret);
 	}
 
-int save_serial(char *serialfile, BIGNUM *serial, ASN1_INTEGER **retai)
+int save_serial(char *serialfile, char *suffix, BIGNUM *serial, ASN1_INTEGER **retai)
 	{
-	BIO *out;
+	char buf[1][BSIZE];
+	BIO *out = NULL;
 	int ret=0;
 	ASN1_INTEGER *ai=NULL;
+	int j;
 
+	if (suffix == NULL)
+		j = strlen(serialfile);
+	else
+		j = strlen(serialfile) + strlen(suffix) + 1;
+	if (j >= BSIZE)
+		{
+		BIO_printf(bio_err,"file name too long\n");
+		goto err;
+		}
+
+	if (suffix == NULL)
+		BUF_strlcpy(buf[0], serialfile, BSIZE);
+	else
+		{
+#ifndef OPENSSL_SYS_VMS
+		j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, suffix);
+#else
+		j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", serialfile, suffix);
+#endif
+		}
+#ifdef RL_DEBUG
+	BIO_printf(bio_err, "DEBUG: writing \"%s\"\n", buf[0]);
+#endif
 	out=BIO_new(BIO_s_file());
 	if (out == NULL)
 		{
 		ERR_print_errors(bio_err);
 		goto err;
 		}
-	if (BIO_write_filename(out,serialfile) <= 0)
+	if (BIO_write_filename(out,buf[0]) <= 0)
 		{
 		perror(serialfile);
 		goto err;
@@ -1554,6 +1579,76 @@ err:
 	if (out != NULL) BIO_free_all(out);
 	if (ai != NULL) ASN1_INTEGER_free(ai);
 	return(ret);
+	}
+
+int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
+	{
+	char buf[5][BSIZE];
+	int i,j;
+	struct stat sb;
+
+	i = strlen(serialfile) + strlen(old_suffix);
+	j = strlen(serialfile) + strlen(new_suffix);
+	if (i > j) j = i;
+	if (j + 1 >= BSIZE)
+		{
+		BIO_printf(bio_err,"file name too long\n");
+		goto err;
+		}
+
+#ifndef OPENSSL_SYS_VMS
+	j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s",
+		serialfile, new_suffix);
+#else
+	j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s",
+		serialfile, new_suffix);
+#endif
+#ifndef OPENSSL_SYS_VMS
+	j = BIO_snprintf(buf[1], sizeof buf[1], "%s.%s",
+		serialfile, old_suffix);
+#else
+	j = BIO_snprintf(buf[1], sizeof buf[1], "%s-%s",
+		serialfile, old_suffix);
+#endif
+	if (stat(serialfile,&sb) < 0)
+		{
+		if (errno != ENOENT 
+#ifdef ENOTDIR
+			&& errno != ENOTDIR)
+#endif
+			goto err;
+		}
+	else
+		{
+#ifdef RL_DEBUG
+		BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
+			serialfile, buf[1]);
+#endif
+		if (rename(serialfile,buf[1]) < 0)
+			{
+			BIO_printf(bio_err,
+				"unable to rename %s to %s\n",
+				serialfile, buf[1]);
+			perror("reason");
+			goto err;
+			}
+		}
+#ifdef RL_DEBUG
+	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
+		buf[0],serialfile);
+#endif
+	if (rename(buf[0],serialfile) < 0)
+		{
+		BIO_printf(bio_err,
+			"unable to rename %s to %s\n",
+			buf[0],serialfile);
+		perror("reason");
+		rename(buf[1],serialfile);
+		goto err;
+		}
+	return 1;
+ err:
+	return 0;
 	}
 
 CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)

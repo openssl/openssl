@@ -1064,7 +1064,7 @@ static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile, int create
 	if (!BN_add_word(serial,1))
 		{ BIO_printf(bio_err,"add_word failure\n"); goto end; }
 
-	if (!save_serial(buf, serial, &bs)) goto end;
+	if (!save_serial(buf, NULL, serial, &bs)) goto end;
 
  end:
 	if (buf) OPENSSL_free(buf);
