@@ -483,7 +483,7 @@ RSA_private_decrypt                     490	EXIST::FUNCTION:RSA
 RSA_private_encrypt                     491	EXIST::FUNCTION:RSA
 RSA_public_decrypt                      492	EXIST::FUNCTION:RSA
 RSA_public_encrypt                      493	EXIST::FUNCTION:RSA
-RSA_set_default_method                  494	EXIST::FUNCTION:RSA
+RSA_set_default_method                  494	NOEXIST::FUNCTION:
 RSA_sign                                495	EXIST::FUNCTION:RSA
 RSA_sign_ASN1_OCTET_STRING              496	EXIST::FUNCTION:RSA
 RSA_size                                497	EXIST::FUNCTION:RSA
@@ -1457,7 +1457,7 @@ d2i_ASN1_SET_OF_ASN1_OBJECT             1844	NOEXIST::FUNCTION:
 PKCS7_signatureVerify                   1845	EXIST::FUNCTION:
 RSA_set_method                          1846	EXIST::FUNCTION:RSA
 RSA_get_method                          1847	EXIST::FUNCTION:RSA
-RSA_get_default_method                  1848	EXIST::FUNCTION:RSA
+RSA_get_default_method                  1848	NOEXIST::FUNCTION:
 RSA_check_key                           1869	EXIST::FUNCTION:RSA
 OBJ_obj2txt                             1870	EXIST::FUNCTION:
 DSA_dup_DH                              1871	EXIST::FUNCTION:DSA,DH
@@ -1481,9 +1481,9 @@ DSA_new_method                          1888	EXIST::FUNCTION:DSA
 DH_new_method                           1889	EXIST::FUNCTION:DH
 DH_OpenSSL                              1890	EXIST::FUNCTION:DH
 DSA_get_ex_new_index                    1891	EXIST::FUNCTION:DSA
-DH_get_default_method                   1892	EXIST::FUNCTION:DH
+DH_get_default_method                   1892	NOEXIST::FUNCTION:
 DSA_set_ex_data                         1893	EXIST::FUNCTION:DSA
-DH_set_default_method                   1894	EXIST::FUNCTION:DH
+DH_set_default_method                   1894	NOEXIST::FUNCTION:
 DSA_get_ex_data                         1895	EXIST::FUNCTION:DSA
 X509V3_EXT_REQ_add_conf                 1896	EXIST::FUNCTION:
 NETSCAPE_SPKI_print                     1897	EXIST::FUNCTION:
@@ -1519,7 +1519,7 @@ EVP_PKEY_get1_DSA                       1935	EXIST::FUNCTION:DSA
 ASN1_BMPSTRING_new                      1936	EXIST::FUNCTION:
 ASN1_mbstring_copy                      1937	EXIST::FUNCTION:
 ASN1_UTF8STRING_new                     1938	EXIST::FUNCTION:
-DSA_get_default_method                  1941	EXIST::FUNCTION:DSA
+DSA_get_default_method                  1941	NOEXIST::FUNCTION:
 i2d_ASN1_SET_OF_ACCESS_DESCRIPTION      1945	NOEXIST::FUNCTION:
 ASN1_T61STRING_free                     1946	EXIST::FUNCTION:
 DSA_set_method                          1949	EXIST::FUNCTION:DSA
@@ -1554,7 +1554,7 @@ i2d_RSA_PUBKEY_bio                      1985	EXIST::FUNCTION:RSA
 ASN1_BIT_STRING_num_asc                 1986	EXIST::FUNCTION:
 i2d_PUBKEY                              1987	EXIST::FUNCTION:
 ASN1_UTCTIME_free                       1988	EXIST::FUNCTION:
-DSA_set_default_method                  1989	EXIST::FUNCTION:DSA
+DSA_set_default_method                  1989	NOEXIST::FUNCTION:
 X509_PURPOSE_get_by_id                  1990	EXIST::FUNCTION:
 ACCESS_DESCRIPTION_free                 1994	EXIST::FUNCTION:
 PEM_read_bio_PUBKEY                     1995	EXIST::FUNCTION:
@@ -1777,7 +1777,7 @@ NCONF_load_fp                           2278	EXIST::FUNCTION:FP_API
 NCONF_new                               2279	EXIST::FUNCTION:
 NCONF_get_string                        2280	EXIST::FUNCTION:
 NCONF_free                              2281	EXIST::FUNCTION:
-NCONF_get_number                        2282	EXIST::FUNCTION:
+NCONF_get_number                        2282	NOEXIST::FUNCTION:
 CONF_dump_fp                            2283	EXIST::FUNCTION:
 NCONF_load_bio                          2284	EXIST::FUNCTION:
 NCONF_dump_fp                           2285	EXIST::FUNCTION:
@@ -1795,7 +1795,7 @@ i2d_ASN1_SET_OF_PKCS7                   2328	NOEXIST::FUNCTION:
 BIO_vfree                               2334	EXIST::FUNCTION:
 d2i_ASN1_SET_OF_ASN1_INTEGER            2339	NOEXIST::FUNCTION:
 d2i_ASN1_SET_OF_PKCS12_SAFEBAG          2341	NOEXIST::FUNCTION:
-ASN1_UTCTIME_get                        2350	EXIST::FUNCTION:
+ASN1_UTCTIME_get                        2350	NOEXIST::FUNCTION:
 X509_REQ_digest                         2362	EXIST::FUNCTION:
 X509_CRL_digest                         2391	EXIST::FUNCTION:
 d2i_ASN1_SET_OF_PKCS7                   2397	NOEXIST::FUNCTION:
@@ -1872,7 +1872,7 @@ DSO_METHOD_vms                          2462	EXIST::FUNCTION:
 BIO_f_linebuffer                        2463	EXIST:VMS:FUNCTION:
 X509_print_ex                           2464	EXIST::FUNCTION:
 X509_print_ex_fp                        2465	EXIST::FUNCTION:FP_API
-EVP_rijndael_ecb                        2466	EXIST::FUNCTION:
+EVP_rijndael_ecb                        2466	EXIST::FUNCTION:RIJNDAEL
 NCONF_get_number_e                      2467	EXIST::FUNCTION:
 ERR_load_ENGINE_strings                 2468	EXIST::FUNCTION:
 ENGINE_set_DSA                          2469	EXIST::FUNCTION:
@@ -2030,9 +2030,9 @@ OCSP_BASICRESP_new                      2618	EXIST::FUNCTION:
 d2i_OCSP_SERVICELOC                     2619	EXIST::FUNCTION:
 OCSP_response_new                       2620	EXIST::FUNCTION:
 i2a_OCSP_RESPID                         2621	EXIST::FUNCTION:
-OCSP_nochain_new                        2622	EXIST::FUNCTION:
+OCSP_nochain_new                        2622	NOEXIST::FUNCTION:
 OCSP_RESPID_new                         2623	EXIST::FUNCTION:
-OCSP_add_standard_extension             2624	EXIST::FUNCTION:
+OCSP_add_standard_extension             2624	NOEXIST::FUNCTION:
 OCSP_RESPBYTES_free                     2625	EXIST::FUNCTION:
 i2d_OCSP_BASICRESP                      2626	EXIST::FUNCTION:
 OCSP_SIGNATURE_new                      2627	EXIST::FUNCTION:
@@ -2050,3 +2050,9 @@ ENGINE_load_builtin_engines             2638	EXIST::FUNCTION:
 bn_dup_expand                           2639	EXIST::FUNCTION:
 ENGINE_load_nuron                       2640	EXIST::FUNCTION:
 ENGINE_load_atalla                      2641	EXIST::FUNCTION:
+rijndaelEncryptRound                    2642	EXIST::FUNCTION:
+rijndaelDecrypt                         2643	EXIST::FUNCTION:
+rijndaelKeyEncToDec                     2644	EXIST::FUNCTION:
+rijndaelDecryptRound                    2645	EXIST::FUNCTION:
+rijndaelEncrypt                         2646	EXIST::FUNCTION:
+rijndaelKeySched                        2647	EXIST::FUNCTION:
