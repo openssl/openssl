@@ -1,4 +1,6 @@
 /* pkcs12.c */
+#if !defined(NO_DES) && !defined(NO_SHA1)
+
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project 1999.
  */
@@ -697,3 +699,5 @@ void hex_prin(BIO *out, unsigned char *buf, int len)
 	int i;
 	for (i = 0; i < len; i++) BIO_printf (out, "%02X ", buf[i]);
 }
+
+#endif
