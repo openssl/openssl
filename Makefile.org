@@ -11,6 +11,7 @@ SHLIB_MAJOR=
 SHLIB_MINOR=
 PLATFORM=dist
 OPTIONS=
+CONFIGURE_ARGS=
 SHLIB_TARGET=
 
 # INSTALL_PREFIX is for package builders so that they can configure

@@ -559,7 +559,7 @@ OUT="$PREFIX$OUT"
 
 $PERL ./Configure LIST | grep "$OUT" > /dev/null
 if [ $? = "0" ]; then
-  echo Configuring for $OUT
+  #echo Configuring for $OUT
 
   if [ "$TEST" = "true" ]; then
     echo $PERL ./Configure $OUT $options

@@ -429,104 +429,149 @@ $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
 
 &usage if ($#ARGV < 0);
 
-my $flags="";
-my $depflags="";
-my $openssl_algorithm_defines="";
-my $openssl_thread_defines="";
-my $openssl_other_defines="";
-my $libs="";
-my $target="";
-my $options="";
-my $symlink=1;
-foreach (@ARGV)
+my $flags;
+my $depflags;
+my $openssl_algorithm_defines;
+my $openssl_thread_defines;
+my $openssl_other_defines;
+my $libs;
+my $target;
+my $options;
+my $symlink;
+
+my @argvcopy=@ARGV;
+my $argvstring="";
+my $argv_unprocessed=1;
+
+while($argv_unprocessed)
 	{
-	s /^-no-/no-/; # some people just can't read the instructions
-	if (/^no-asm$/)
-	 	{
-		$no_asm=1;
-		$flags .= "-DNO_ASM ";
-		$openssl_other_defines .= "#define NO_ASM\n";
-		}
-	elsif (/^no-dso$/)
-		{ $no_dso=1; }
-	elsif (/^no-threads$/)
-		{ $no_threads=1; }
-	elsif (/^threads$/)
-		{ $threads=1; }
-	elsif (/^no-shared$/)
-		{ $no_shared=1; }
-	elsif (/^shared$/)
-		{ $no_shared=0; }
-	elsif (/^no-symlinks$/)
-		{ $symlink=0; }
-	elsif (/^no-(.+)$/)
+	$flags="";
+	$depflags="";
+	$openssl_algorithm_defines="";
+	$openssl_thread_defines="";
+	$openssl_other_defines="";
+	$libs="";
+	$target="";
+	$options="";
+	$symlink=1;
+
+	$argv_unprocessed=0;
+	$argvstring=join(' ',@argvcopy);
+
+PROCESS_ARGS:
+	foreach (@argvcopy)
 		{
-		my $algo=$1;
-		push @skip,$algo;
-		$algo =~ tr/[a-z]/[A-Z]/;
-		$flags .= "-DNO_$algo ";
-		$depflags .= "-DNO_$algo ";
-		$openssl_algorithm_defines .= "#define NO_$algo\n";
-		if ($algo eq "DES")
-			{
-			push @skip, "mdc2";
-			$options .= " no-mdc2";
-			$flags .= "-DNO_MDC2 ";
-			$depflags .= "-DNO_MDC2 ";
-			$openssl_algorithm_defines .= "#define NO_MDC2\n";
+		s /^-no-/no-/; # some people just can't read the instructions
+		if (/^no-asm$/)
+		 	{
+			$no_asm=1;
+			$flags .= "-DNO_ASM ";
+			$openssl_other_defines .= "#define NO_ASM\n";
 			}
-		}
-	elsif (/^386$/)
-		{ $processor=386; }
-	elsif (/^rsaref$/)
-		{
-		$libs.= "-lRSAglue -lrsaref ";
-		$flags.= "-DRSAref ";
-		$openssl_other_defines .= "#define RSAref\n";
-		}
-	elsif (/^[-+]/)
-		{
-		if (/^-[lL](.*)$/)
+		elsif (/^no-dso$/)
+			{ $no_dso=1; }
+		elsif (/^no-threads$/)
+			{ $no_threads=1; }
+		elsif (/^threads$/)
+			{ $threads=1; }
+		elsif (/^no-shared$/)
+			{ $no_shared=1; }
+		elsif (/^shared$/)
+			{ $no_shared=0; }
+		elsif (/^no-symlinks$/)
+			{ $symlink=0; }
+		elsif (/^no-(.+)$/)
 			{
-			$libs.=$_." ";
+			my $algo=$1;
+			push @skip,$algo;
+			$algo =~ tr/[a-z]/[A-Z]/;
+			$flags .= "-DNO_$algo ";
+			$depflags .= "-DNO_$algo ";
+			$openssl_algorithm_defines .= "#define NO_$algo\n";
+			if ($algo eq "DES")
+				{
+				push @skip, "mdc2";
+				$options .= " no-mdc2";
+				$flags .= "-DNO_MDC2 ";
+				$depflags .= "-DNO_MDC2 ";
+				$openssl_algorithm_defines .= "#define NO_MDC2\n";
+				}
 			}
-		elsif (/^-[^-]/ or /^\+/)
+		elsif (/^reconfigure/ || /^reconf/)
 			{
-			$flags.=$_." ";
+			if (open(IN,"<$Makefile"))
+				{
+				while (<IN>)
+					{
+					chop;
+					if (/^CONFIGURE_ARGS=(.*)/)
+						{
+						$argvstring=$1;
+						@argvcopy=split(' ',$argvstring);
+						die "Incorrect data to reconfigure, please do a normal configuration\n"
+							if (grep(/^reconf/,@argvcopy));
+						print "Reconfiguring with: $argvstring\n";
+						$argv_unprocessed=1;
+						close(IN);
+						last PROCESS_ARGS;
+						}
+					}
+				close(IN);
+				}
+			die "Insufficient data to reconfigure, please do a normal configuration\n";
 			}
-		elsif (/^--prefix=(.*)$/)
+		elsif (/^386$/)
+			{ $processor=386; }
+		elsif (/^rsaref$/)
 			{
-			$prefix=$1;
+			$libs.= "-lRSAglue -lrsaref ";
+			$flags.= "-DRSAref ";
+			$openssl_other_defines .= "#define RSAref\n";
 			}
-		elsif (/^--openssldir=(.*)$/)
+		elsif (/^[-+]/)
 			{
-			$openssldir=$1;
+			if (/^-[lL](.*)$/)
+				{
+				$libs.=$_." ";
+				}
+			elsif (/^-[^-]/ or /^\+/)
+				{
+				$flags.=$_." ";
+				}
+			elsif (/^--prefix=(.*)$/)
+				{
+				$prefix=$1;
+				}
+			elsif (/^--openssldir=(.*)$/)
+				{
+				$openssldir=$1;
+				}
+			elsif (/^--install.prefix=(.*)$/)
+				{
+				$install_prefix=$1;
+				}
+			else
+				{
+				print STDERR $usage;
+				exit(1);
+				}
 			}
-		elsif (/^--install.prefix=(.*)$/)
+		elsif ($_ =~ /^([^:]+):(.+)$/)
 			{
-			$install_prefix=$1;
+			eval "\$table{\$1} = \"$2\""; # allow $xxx constructs in the string
+			$target=$1;
 			}
 		else
 			{
-			print STDERR $usage;
-			exit(1);
+			die "target already defined - $target\n" if ($target ne "");
+			$target=$_;
 			}
-		}
-	elsif ($_ =~ /^([^:]+):(.+)$/)
-		{
-		eval "\$table{\$1} = \"$2\""; # allow $xxx constructs in the string
-		$target=$1;
-		}
-	else
-		{
-		die "target already defined - $target\n" if ($target ne "");
-		$target=$_;
-		}
-	unless ($_ eq $target) {
-		if ($options eq "") {
-			$options = $_;
-		} else {
-			$options .= " ".$_;
+		unless ($_ eq $target) {
+			if ($options eq "") {
+				$options = $_;
+			} else {
+				$options .= " ".$_;
+			}
 		}
 	}
 }
@@ -545,6 +590,8 @@ if ($target eq "LIST") {
 	}
 	exit 0;
 }
+
+print "Configuring for $target\n";
 
 &usage if (!defined($table{$target}));
 
@@ -736,6 +783,7 @@ while (<IN>)
 	s/^INSTALL_PREFIX=.*$/INSTALL_PREFIX=$install_prefix/;
 	s/^PLATFORM=.*$/PLATFORM=$target/;
 	s/^OPTIONS=.*$/OPTIONS=$options/;
+	s/^CONFIGURE_ARGS=.*$/CONFIGURE_ARGS=$argvstring/;
 	s/^CC=.*$/CC= $cc/;
 	s/^CFLAG=.*$/CFLAG= $cflags/;
 	s/^DEPFLAG=.*$/DEPFLAG= $depflags/;
