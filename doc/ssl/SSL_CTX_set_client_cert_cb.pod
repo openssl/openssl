@@ -15,8 +15,10 @@ SSL_CTX_set_client_cert_cb, SSL_CTX_get_client_cert_cb - handle client certifica
 =head1 DESCRIPTION
 
 SSL_CTX_set_client_cert_cb() sets the B<client_cert_cb()> callback, that is
-called when a client certificate is requested by a server.
-When B<client_cert_cb()> is NULL, not callback function is used.
+called when a client certificate is requested by a server and no certificate
+was yet set for the SSL object.
+
+When B<client_cert_cb()> is NULL, no callback function is used.
 
 SSL_CTX_get_client_cert_cb() returns a pointer to the currently set callback
 function.
@@ -25,9 +27,13 @@ client_cert_cb() is the application defined callback. If it wants to
 set a certificate, a certificate/private key combination must be set
 using the B<x509> and B<pkey> arguments and "1" must be returned. The
 certificate will be installed into B<ssl>, see the NOTES and BUGS sections.
-If no certificate should be set, "0" has to be returned and the default
-certificate will be sent. A fatal error can be indicated by returning
-a negative value, in which case the handshake will be canceled.
+If no certificate should be set, "0" has to be returned and no certificate
+will be sent. A negative return value will suspend the handshake and the
+handshake function will return immediatly. L<SSL_get_error(3)|SSL_get_error(3)>
+will return SSL_ERROR_WANT_X509_LOOKUP to indicate, that the handshake was
+suspended. The next call to the handshake function will again lead to the call
+of client_cert_cb(). It is the job of the client_cert_cb() to store information
+about the state of the last call, if required to continue.
 
 =head1 NOTES
 
@@ -35,26 +41,24 @@ During a handshake (or renegotiation) a server may request a certificate
 from the client. A client certificate must only be sent, when the server
 did send the request.
 
-When no callback function is set, an OpenSSL client will send the certificate
-that was set using the
-L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)> family of functions.
-The TLS standard requires that only a certificate is sent, if it matches
-the list of acceptable CAs sent by the server. This constraint is
-violated by the default behavior of the OpenSSL library. Using the
-callback function it is possible to implement a proper selection routine
-or to allow a user interaction to choose the certificate to be sent.
-The callback function can obtain the list of acceptable CAs using the
-L<SSL_get_client_CA_list(3)|SSL_get_client_CA_list(3)> function.
+When a certificate was set using the
+L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)> family of functions,
+it will be sent to the server. The TLS standard requires that only a
+certificate is sent, if it matches the list of acceptable CAs sent by the
+server. This constraint is violated by the default behavior of the OpenSSL
+library. Using the callback function it is possible to implement a proper
+selection routine or to allow a user interaction to choose the certificate to
+be sent.
 
-If a callback function is defined, the callback function will be called.
+If a callback function is defined and no certificate was yet defined for the
+SSL object, the callback function will be called.
 If the callback function returns a certificate, the OpenSSL library
 will try to load the private key and certificate data into the SSL
-object using SSL_use_certificate() and SSL_use_private_key() functions.
-Thus it will permanently override the certificate and key previously
-installed and will not be reset by calling L<SSL_clear(3)|SSL_clear(3)>.
-If the callback returns no certificate, the OpenSSL library will send
-the certificate previously installed for the SSL_CTX object or the specific
-certificate of the SSL object, if available.
+object using the SSL_use_certificate() and SSL_use_private_key() functions.
+Thus it will permanently install the certificate and key for this SSL
+object. It will not be reset by calling L<SSL_clear(3)|SSL_clear(3)>.
+If the callback returns no certificate, the OpenSSL library will not send
+a certificate.
 
 =head1 BUGS
 
