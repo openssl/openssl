@@ -124,6 +124,7 @@
 #include <openssl/objects.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
+#include <openssl/x509v3.h>
 #include "ssl_locl.h"
 
 int SSL_get_ex_data_X509_STORE_CTX_idx(void)
@@ -432,6 +433,15 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 		X509_STORE_CTX_set_depth(&ctx, SSL_get_verify_depth(s));
 	X509_STORE_CTX_set_ex_data(&ctx,SSL_get_ex_data_X509_STORE_CTX_idx(),
 		(char *)s);
+	/* We need to set the verify purpose. The purpose can be determined by
+	 * the context: if its a server it will verify SSL client certificates
+	 * or vice versa.
+         */
+
+	if(s->server) i = X509_PURPOSE_SSL_CLIENT;
+	else i = X509_PURPOSE_SSL_SERVER;
+
+	X509_STORE_CTX_purpose_inherit(&ctx, i, s->purpose, s->trust);
 
 	if (s->ctx->app_verify_callback != NULL)
 		i=s->ctx->app_verify_callback(&ctx); /* should pass app_verify_arg */
@@ -542,7 +552,7 @@ int SSL_CTX_add_client_CA(SSL_CTX *ctx,X509 *x)
 	return(add_client_CA(&(ctx->client_CA),x));
 	}
 
-static int name_cmp(X509_NAME **a,X509_NAME **b)
+static int xname_cmp(X509_NAME **a,X509_NAME **b)
 	{
 	return(X509_NAME_cmp(*a,*b));
 	}
@@ -564,7 +574,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
 	STACK_OF(X509_NAME) *ret,*sk;
 
 	ret=sk_X509_NAME_new(NULL);
-	sk=sk_X509_NAME_new(name_cmp);
+	sk=sk_X509_NAME_new(xname_cmp);
 
 	in=BIO_new(BIO_s_file_internal());
 
@@ -625,7 +635,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     int ret=1;
     int (*oldcmp)(X509_NAME **a, X509_NAME **b);
 
-    oldcmp=sk_X509_NAME_set_cmp_func(stack,name_cmp);
+    oldcmp=sk_X509_NAME_set_cmp_func(stack,xname_cmp);
 
     in=BIO_new(BIO_s_file_internal());
 

@@ -215,3 +215,7 @@ SSL_CTX_set_cert_verify_callback        232
 sk_SSL_COMP_sort                        233
 sk_SSL_CIPHER_sort                      234
 SSL_CTX_set_default_passwd_cb_userdata  235
+SSL_set_purpose                         236
+SSL_CTX_set_trust                       237
+SSL_CTX_set_purpose                     238
+SSL_set_trust                           239

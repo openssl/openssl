@@ -732,9 +732,9 @@ int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose)
 	return X509_STORE_CTX_purpose_inherit(ctx, 0, purpose, 0);
 	}
 
-void X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
+int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
 	{
-	ctx->trust = trust;
+	return X509_STORE_CTX_purpose_inherit(ctx, 0, 0, trust);
 	}
 
 /* This function is used to set the X509_STORE_CTX purpose and trust

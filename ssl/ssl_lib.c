@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
+#include <openssl/x509v3.h>
 #include "ssl_locl.h"
 
 char *SSL_version_str=OPENSSL_VERSION_TEXT;
@@ -263,6 +264,46 @@ int SSL_set_session_id_context(SSL *ssl,const unsigned char *sid_ctx,
 
     return 1;
     }
+
+int SSL_CTX_set_purpose(SSL_CTX *s, int purpose)
+{
+	if(X509_PURPOSE_get_by_id(purpose) == -1) {
+		SSLerr(SSL_F_SSL_CTX_SET_PURPOSE, SSL_R_INVALID_PURPOSE);
+		return 0;
+	}
+	s->purpose = purpose;
+	return 1;
+}
+
+int SSL_set_purpose(SSL *s, int purpose)
+{
+	if(X509_PURPOSE_get_by_id(purpose) == -1) {
+		SSLerr(SSL_F_SSL_SET_PURPOSE, SSL_R_INVALID_PURPOSE);
+		return 0;
+	}
+	s->purpose = purpose;
+	return 1;
+}
+	
+int SSL_CTX_set_trust(SSL_CTX *s, int trust)
+{
+	if(X509_TRUST_get_by_id(trust) == -1) {
+		SSLerr(SSL_F_SSL_CTX_SET_TRUST, SSL_R_INVALID_TRUST);
+		return 0;
+	}
+	s->trust = trust;
+	return 1;
+}
+
+int SSL_set_trust(SSL *s, int trust)
+{
+	if(X509_TRUST_get_by_id(trust) == -1) {
+		SSLerr(SSL_F_SSL_SET_TRUST, SSL_R_INVALID_TRUST);
+		return 0;
+	}
+	s->trust = trust;
+	return 1;
+}
 
 void SSL_free(SSL *s)
 	{
@@ -1078,6 +1119,12 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 
 	ret->extra_certs=NULL;
 	ret->comp_methods=SSL_COMP_get_compression_methods();
+
+	/* Initialise X509 tables: otherwise some certificate operations
+	 * wont work. This is a non op if called more than once.
+	 */
+
+	X509_init();
 
 	return(ret);
 err:

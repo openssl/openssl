@@ -1009,6 +1009,12 @@ int	SSL_CTX_set_session_id_context(SSL_CTX *ctx,const unsigned char *sid_ctx,
 SSL *	SSL_new(SSL_CTX *ctx);
 int	SSL_set_session_id_context(SSL *ssl,const unsigned char *sid_ctx,
 				   unsigned int sid_ctx_len);
+
+int SSL_CTX_set_purpose(SSL_CTX *s, int purpose);
+int SSL_set_purpose(SSL *s, int purpose);
+int SSL_CTX_set_trust(SSL_CTX *s, int trust);
+int SSL_set_trust(SSL *s, int trust);
+
 void	SSL_free(SSL *ssl);
 int 	SSL_accept(SSL *ssl);
 int 	SSL_connect(SSL *ssl);
@@ -1235,8 +1241,10 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL_CREATE_CIPHER_LIST			 166
 #define SSL_F_SSL_CTX_CHECK_PRIVATE_KEY			 168
 #define SSL_F_SSL_CTX_NEW				 169
+#define SSL_F_SSL_CTX_SET_PURPOSE			 226
 #define SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT		 219
 #define SSL_F_SSL_CTX_SET_SSL_VERSION			 170
+#define SSL_F_SSL_CTX_SET_TRUST				 229
 #define SSL_F_SSL_CTX_USE_CERTIFICATE			 171
 #define SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1		 172
 #define SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE	 220
@@ -1264,9 +1272,11 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL_SET_CERT				 191
 #define SSL_F_SSL_SET_FD				 192
 #define SSL_F_SSL_SET_PKEY				 193
+#define SSL_F_SSL_SET_PURPOSE				 227
 #define SSL_F_SSL_SET_RFD				 194
 #define SSL_F_SSL_SET_SESSION				 195
 #define SSL_F_SSL_SET_SESSION_ID_CONTEXT		 218
+#define SSL_F_SSL_SET_TRUST				 228
 #define SSL_F_SSL_SET_WFD				 196
 #define SSL_F_SSL_SHUTDOWN				 224
 #define SSL_F_SSL_UNDEFINED_FUNCTION			 197
@@ -1348,6 +1358,8 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_HTTP_REQUEST				 156
 #define SSL_R_INTERNAL_ERROR				 157
 #define SSL_R_INVALID_CHALLENGE_LENGTH			 158
+#define SSL_R_INVALID_PURPOSE				 278
+#define SSL_R_INVALID_TRUST				 279
 #define SSL_R_LENGTH_MISMATCH				 159
 #define SSL_R_LENGTH_TOO_SHORT				 160
 #define SSL_R_LIBRARY_BUG				 274

@@ -17,9 +17,8 @@
      when the X509_STORE_CTX structure is set up) and checks the pathlength.
 
      There is a NO_CHAIN_VERIFY compilation option to keep the old behaviour:
-     this is because when it is finally working it will reject chains with
-     invalid extensions whereas every previous version of OpenSSL and SSLeay
-     made no checks at all.
+     this is because it will reject chains with invalid extensions whereas
+     every previous version of OpenSSL and SSLeay made no checks at all.
 
      Trust code: checks the root CA for the relevant trust settings. Trust
      settings have an initial value consistent with the verify purpose: e.g.
@@ -31,6 +30,10 @@
      Also added X509_STORE_CTX_new() and X509_STORE_CTX_free() functions
      which should be used for version portability: especially since the
      verify structure is likely to change more often now.
+
+     SSL integration. Add purpose and trust to SSL_CTX and SSL and functions
+     to set them. If not set then assume SSL clients will verify SSL servers
+     and vice versa.
 
      Two new options to the verify program: -untrusted allows a set of
      untrusted certificates to be passed in and -purpose which sets the
