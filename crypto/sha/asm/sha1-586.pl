@@ -8,8 +8,8 @@ require "x86asm.pl";
 &asm_init($ARGV[0],"sha1-586.pl",$ARGV[$#ARGV] eq "386");
 
 $A="eax";
-$B="ebx";
-$C="ecx";
+$B="ecx";
+$C="ebx";
 $D="edx";
 $E="edi";
 $T="esi";
@@ -19,7 +19,7 @@ $off=9*4;
 
 @K=(0x5a827999,0x6ed9eba1,0x8f1bbcdc,0xca62c1d6);
 
-&sha1_block("sha1_block_x86");
+&sha1_block_data("sha1_block_asm_data_order");
 
 &asm_finish();
 
@@ -53,11 +53,14 @@ sub X_expand
 	local($in)=@_;
 
 	&comment("First, load the words onto the stack in network byte order");
-	for ($i=0; $i<16; $i++)
+	for ($i=0; $i<16; $i+=2)
 		{
-		&mov("eax",&DWP(($i+0)*4,$in,"",0)) unless $i == 0;
-		&bswap("eax");
-		&mov(&swtmp($i+0),"eax");
+		&mov($A,&DWP(($i+0)*4,$in,"",0));# unless $i == 0;
+		 &mov($B,&DWP(($i+1)*4,$in,"",0));
+		&bswap($A);
+		 &bswap($B);
+		&mov(&swtmp($i+0),$A);
+		 &mov(&swtmp($i+1),$B);
 		}
 
 	&comment("We now have the X array on the stack");
@@ -312,7 +315,7 @@ sub BODY_60_79
 	&BODY_20_39(@_);
 	}
 
-sub sha1_block
+sub sha1_block_host
 	{
 	local($name)=@_;
 
@@ -325,35 +328,77 @@ sub sha1_block
 	# D 	12
 	# E 	16
 
-	&push("esi");
-	 &push("ebp");
-	&mov("eax",	&wparam(2));
+	&mov("ecx",	&wparam(2));
+	 &push("esi");
+	&shl("ecx",6);
 	 &mov("esi",	&wparam(1));
-	&add("eax",	"esi");	# offset to leave on
-	 &mov("ebp",	&wparam(0));
+	&push("ebp");
+	 &add("ecx","esi");	# offset to leave on
 	&push("ebx");
-	 &sub("eax",	64);
+	 &mov("ebp",	&wparam(0));
 	&push("edi");
-	 &mov($B,	&DWP( 4,"ebp","",0));
-	&stack_push(18);
 	 &mov($D,	&DWP(12,"ebp","",0));
-	&mov($E,	&DWP(16,"ebp","",0));
-	 &mov($C,	&DWP( 8,"ebp","",0));
-	&mov(&swtmp(17),"eax");
+	&stack_push(18+9);
+	 &mov($E,	&DWP(16,"ebp","",0));
+	&mov($C,	&DWP( 8,"ebp","",0));
+	 &mov(&swtmp(17),"ecx");
 
 	&comment("First we need to setup the X array");
-	 &mov("eax",&DWP(0,"esi","",0)); # pulled out of X_expand
+
+	for ($i=0; $i<16; $i+=2)
+		{
+		&mov($A,&DWP(($i+0)*4,"esi","",0));# unless $i == 0;
+		 &mov($B,&DWP(($i+1)*4,"esi","",0));
+		&mov(&swtmp($i+0),$A);
+		 &mov(&swtmp($i+1),$B);
+		}
+	&jmp(&label("shortcut"));
+	&function_end_B($name);
+	}
+
+
+sub sha1_block_data
+	{
+	local($name)=@_;
+
+	&function_begin_B($name,"");
+
+	# parameter 1 is the MD5_CTX structure.
+	# A	0
+	# B	4
+	# C	8
+	# D 	12
+	# E 	16
+
+	&mov("ecx",	&wparam(2));
+	 &push("esi");
+	&shl("ecx",6);
+	 &mov("esi",	&wparam(1));
+	&push("ebp");
+	 &add("ecx","esi");	# offset to leave on
+	&push("ebx");
+	 &mov("ebp",	&wparam(0));
+	&push("edi");
+	 &mov($D,	&DWP(12,"ebp","",0));
+	&stack_push(18+9);
+	 &mov($E,	&DWP(16,"ebp","",0));
+	&mov($C,	&DWP( 8,"ebp","",0));
+	 &mov(&swtmp(17),"ecx");
+
+	&comment("First we need to setup the X array");
 
 	&set_label("start") unless $normal;
 
 	&X_expand("esi");
-	 &mov(&swtmp(16),"esi");
+	 &mov(&wparam(1),"esi");
 
+	&set_label("shortcut");
 	&comment("");
 	&comment("Start processing");
 
 	# odd start
 	&mov($A,	&DWP( 0,"ebp","",0));
+	 &mov($B,	&DWP( 4,"ebp","",0));
 	$X="esp";
 	&BODY_00_15(-2,$K[0],$X, 0,$A,$B,$C,$D,$E,$T);
 	&BODY_00_15( 0,$K[0],$X, 1,$T,$A,$B,$C,$D,$E);
@@ -468,24 +513,26 @@ sub sha1_block
 	&add($C,$T);
 
 	 &mov(&DWP( 0,$tmp1,"",0),$A);
-	&mov("esi",&swtmp(16));
-	 &mov(&DWP( 8,$tmp1,"",0),$C);	# This is for looping
+	&mov("esi",&wparam(1));
+	 &mov(&DWP( 8,$tmp1,"",0),$C);
  	&add("esi",64);
 	 &mov("eax",&swtmp(17));
 	&mov(&DWP(16,$tmp1,"",0),$E);
-	 &cmp("eax","esi");
-	&mov(&DWP( 4,$tmp1,"",0),$B);	# This is for looping
-	 &jl(&label("end"));
-	&mov("eax",&DWP(0,"esi","",0));	# Pulled down from 
-	 &jmp(&label("start"));
+	 &cmp("esi","eax");
+	&mov(&DWP( 4,$tmp1,"",0),$B);
+	 &jl(&label("start"));
 
-	&set_label("end");
-	&stack_pop(18);
+	&stack_pop(18+9);
 	 &pop("edi");
 	&pop("ebx");
 	 &pop("ebp");
 	&pop("esi");
 	 &ret();
+
+	# it has to reside within sha1_block_asm_host_order body
+	# because it calls &jmp(&label("shortcut"));
+	&sha1_block_host("sha1_block_asm_host_order");
+
 	&function_end_B($name);
 	}
 

@@ -8,302 +8,303 @@
         .486
 .model FLAT
 _TEXT	SEGMENT
-PUBLIC	_sha1_block_x86
+PUBLIC	_sha1_block_asm_data_order
 
-_sha1_block_x86 PROC NEAR
+_sha1_block_asm_data_order PROC NEAR
+	mov	ecx,		DWORD PTR 12[esp]
 	push	esi
+	shl	ecx,		6
+	mov	esi,		DWORD PTR 12[esp]
 	push	ebp
-	mov	eax,		DWORD PTR 20[esp]
-	mov	esi,		DWORD PTR 16[esp]
-	add	eax,		esi
-	mov	ebp,		DWORD PTR 12[esp]
+	add	ecx,		esi
 	push	ebx
-	sub	eax,		64
+	mov	ebp,		DWORD PTR 16[esp]
 	push	edi
-	mov	ebx,		DWORD PTR 4[ebp]
-	sub	esp,		72
 	mov	edx,		DWORD PTR 12[ebp]
+	sub	esp,		108
 	mov	edi,		DWORD PTR 16[ebp]
-	mov	ecx,		DWORD PTR 8[ebp]
-	mov	DWORD PTR 68[esp],eax
+	mov	ebx,		DWORD PTR 8[ebp]
+	mov	DWORD PTR 68[esp],ecx
 	; First we need to setup the X array
-	mov	eax,		DWORD PTR [esi]
 L000start:
 	; First, load the words onto the stack in network byte order
+	mov	eax,		DWORD PTR [esi]
+	mov	ecx,		DWORD PTR 4[esi]
 	bswap	eax
+	bswap	ecx
 	mov	DWORD PTR [esp],eax
-	mov	eax,		DWORD PTR 4[esi]
-	bswap	eax
-	mov	DWORD PTR 4[esp],eax
+	mov	DWORD PTR 4[esp],ecx
 	mov	eax,		DWORD PTR 8[esi]
+	mov	ecx,		DWORD PTR 12[esi]
 	bswap	eax
+	bswap	ecx
 	mov	DWORD PTR 8[esp],eax
-	mov	eax,		DWORD PTR 12[esi]
-	bswap	eax
-	mov	DWORD PTR 12[esp],eax
+	mov	DWORD PTR 12[esp],ecx
 	mov	eax,		DWORD PTR 16[esi]
+	mov	ecx,		DWORD PTR 20[esi]
 	bswap	eax
+	bswap	ecx
 	mov	DWORD PTR 16[esp],eax
-	mov	eax,		DWORD PTR 20[esi]
-	bswap	eax
-	mov	DWORD PTR 20[esp],eax
+	mov	DWORD PTR 20[esp],ecx
 	mov	eax,		DWORD PTR 24[esi]
+	mov	ecx,		DWORD PTR 28[esi]
 	bswap	eax
+	bswap	ecx
 	mov	DWORD PTR 24[esp],eax
-	mov	eax,		DWORD PTR 28[esi]
-	bswap	eax
-	mov	DWORD PTR 28[esp],eax
+	mov	DWORD PTR 28[esp],ecx
 	mov	eax,		DWORD PTR 32[esi]
+	mov	ecx,		DWORD PTR 36[esi]
 	bswap	eax
+	bswap	ecx
 	mov	DWORD PTR 32[esp],eax
-	mov	eax,		DWORD PTR 36[esi]
-	bswap	eax
-	mov	DWORD PTR 36[esp],eax
+	mov	DWORD PTR 36[esp],ecx
 	mov	eax,		DWORD PTR 40[esi]
+	mov	ecx,		DWORD PTR 44[esi]
 	bswap	eax
+	bswap	ecx
 	mov	DWORD PTR 40[esp],eax
-	mov	eax,		DWORD PTR 44[esi]
-	bswap	eax
-	mov	DWORD PTR 44[esp],eax
+	mov	DWORD PTR 44[esp],ecx
 	mov	eax,		DWORD PTR 48[esi]
+	mov	ecx,		DWORD PTR 52[esi]
 	bswap	eax
+	bswap	ecx
 	mov	DWORD PTR 48[esp],eax
-	mov	eax,		DWORD PTR 52[esi]
-	bswap	eax
-	mov	DWORD PTR 52[esp],eax
+	mov	DWORD PTR 52[esp],ecx
 	mov	eax,		DWORD PTR 56[esi]
+	mov	ecx,		DWORD PTR 60[esi]
 	bswap	eax
+	bswap	ecx
 	mov	DWORD PTR 56[esp],eax
-	mov	eax,		DWORD PTR 60[esi]
-	bswap	eax
-	mov	DWORD PTR 60[esp],eax
+	mov	DWORD PTR 60[esp],ecx
 	; We now have the X array on the stack
 	; starting at sp-4
-	mov	DWORD PTR 64[esp],esi
+	mov	DWORD PTR 132[esp],esi
+L001shortcut:
 	; 
 	; Start processing
 	mov	eax,		DWORD PTR [ebp]
+	mov	ecx,		DWORD PTR 4[ebp]
 	; 00_15 0
-	mov	esi,		ecx
+	mov	esi,		ebx
 	mov	ebp,		eax
 	xor	esi,		edx
 	rol	ebp,		5
-	and	esi,		ebx
+	and	esi,		ecx
 	add	ebp,		edi
-	ror	ebx,		1
+	ror	ecx,		1
 	mov	edi,		DWORD PTR [esp]
-	ror	ebx,		1
+	ror	ecx,		1
 	xor	esi,		edx
 	lea	ebp,		DWORD PTR 1518500249[edi*1+ebp]
-	mov	edi,		ebx
+	mov	edi,		ecx
 	add	esi,		ebp
-	xor	edi,		ecx
+	xor	edi,		ebx
 	mov	ebp,		esi
 	and	edi,		eax
 	rol	ebp,		5
 	add	ebp,		edx
 	mov	edx,		DWORD PTR 4[esp]
 	ror	eax,		1
-	xor	edi,		ecx
+	xor	edi,		ebx
 	ror	eax,		1
 	lea	ebp,		DWORD PTR 1518500249[edx*1+ebp]
 	add	edi,		ebp
 	; 00_15 2
 	mov	edx,		eax
 	mov	ebp,		edi
-	xor	edx,		ebx
+	xor	edx,		ecx
 	rol	ebp,		5
 	and	edx,		esi
-	add	ebp,		ecx
-	ror	esi,		1
-	mov	ecx,		DWORD PTR 8[esp]
-	ror	esi,		1
-	xor	edx,		ebx
-	lea	ebp,		DWORD PTR 1518500249[ecx*1+ebp]
-	mov	ecx,		esi
-	add	edx,		ebp
-	xor	ecx,		eax
-	mov	ebp,		edx
-	and	ecx,		edi
-	rol	ebp,		5
 	add	ebp,		ebx
-	mov	ebx,		DWORD PTR 12[esp]
-	ror	edi,		1
-	xor	ecx,		eax
-	ror	edi,		1
+	ror	esi,		1
+	mov	ebx,		DWORD PTR 8[esp]
+	ror	esi,		1
+	xor	edx,		ecx
 	lea	ebp,		DWORD PTR 1518500249[ebx*1+ebp]
-	add	ecx,		ebp
-	; 00_15 4
-	mov	ebx,		edi
-	mov	ebp,		ecx
-	xor	ebx,		esi
+	mov	ebx,		esi
+	add	edx,		ebp
+	xor	ebx,		eax
+	mov	ebp,		edx
+	and	ebx,		edi
 	rol	ebp,		5
-	and	ebx,		edx
+	add	ebp,		ecx
+	mov	ecx,		DWORD PTR 12[esp]
+	ror	edi,		1
+	xor	ebx,		eax
+	ror	edi,		1
+	lea	ebp,		DWORD PTR 1518500249[ecx*1+ebp]
+	add	ebx,		ebp
+	; 00_15 4
+	mov	ecx,		edi
+	mov	ebp,		ebx
+	xor	ecx,		esi
+	rol	ebp,		5
+	and	ecx,		edx
 	add	ebp,		eax
 	ror	edx,		1
 	mov	eax,		DWORD PTR 16[esp]
 	ror	edx,		1
-	xor	ebx,		esi
+	xor	ecx,		esi
 	lea	ebp,		DWORD PTR 1518500249[eax*1+ebp]
 	mov	eax,		edx
-	add	ebx,		ebp
+	add	ecx,		ebp
 	xor	eax,		edi
-	mov	ebp,		ebx
-	and	eax,		ecx
+	mov	ebp,		ecx
+	and	eax,		ebx
 	rol	ebp,		5
 	add	ebp,		esi
 	mov	esi,		DWORD PTR 20[esp]
-	ror	ecx,		1
+	ror	ebx,		1
 	xor	eax,		edi
-	ror	ecx,		1
+	ror	ebx,		1
 	lea	ebp,		DWORD PTR 1518500249[esi*1+ebp]
 	add	eax,		ebp
 	; 00_15 6
-	mov	esi,		ecx
+	mov	esi,		ebx
 	mov	ebp,		eax
 	xor	esi,		edx
 	rol	ebp,		5
-	and	esi,		ebx
+	and	esi,		ecx
 	add	ebp,		edi
-	ror	ebx,		1
+	ror	ecx,		1
 	mov	edi,		DWORD PTR 24[esp]
-	ror	ebx,		1
+	ror	ecx,		1
 	xor	esi,		edx
 	lea	ebp,		DWORD PTR 1518500249[edi*1+ebp]
-	mov	edi,		ebx
+	mov	edi,		ecx
 	add	esi,		ebp
-	xor	edi,		ecx
+	xor	edi,		ebx
 	mov	ebp,		esi
 	and	edi,		eax
 	rol	ebp,		5
 	add	ebp,		edx
 	mov	edx,		DWORD PTR 28[esp]
 	ror	eax,		1
-	xor	edi,		ecx
+	xor	edi,		ebx
 	ror	eax,		1
 	lea	ebp,		DWORD PTR 1518500249[edx*1+ebp]
 	add	edi,		ebp
 	; 00_15 8
 	mov	edx,		eax
 	mov	ebp,		edi
-	xor	edx,		ebx
+	xor	edx,		ecx
 	rol	ebp,		5
 	and	edx,		esi
-	add	ebp,		ecx
-	ror	esi,		1
-	mov	ecx,		DWORD PTR 32[esp]
-	ror	esi,		1
-	xor	edx,		ebx
-	lea	ebp,		DWORD PTR 1518500249[ecx*1+ebp]
-	mov	ecx,		esi
-	add	edx,		ebp
-	xor	ecx,		eax
-	mov	ebp,		edx
-	and	ecx,		edi
-	rol	ebp,		5
 	add	ebp,		ebx
-	mov	ebx,		DWORD PTR 36[esp]
-	ror	edi,		1
-	xor	ecx,		eax
-	ror	edi,		1
+	ror	esi,		1
+	mov	ebx,		DWORD PTR 32[esp]
+	ror	esi,		1
+	xor	edx,		ecx
 	lea	ebp,		DWORD PTR 1518500249[ebx*1+ebp]
-	add	ecx,		ebp
-	; 00_15 10
-	mov	ebx,		edi
-	mov	ebp,		ecx
-	xor	ebx,		esi
+	mov	ebx,		esi
+	add	edx,		ebp
+	xor	ebx,		eax
+	mov	ebp,		edx
+	and	ebx,		edi
 	rol	ebp,		5
-	and	ebx,		edx
+	add	ebp,		ecx
+	mov	ecx,		DWORD PTR 36[esp]
+	ror	edi,		1
+	xor	ebx,		eax
+	ror	edi,		1
+	lea	ebp,		DWORD PTR 1518500249[ecx*1+ebp]
+	add	ebx,		ebp
+	; 00_15 10
+	mov	ecx,		edi
+	mov	ebp,		ebx
+	xor	ecx,		esi
+	rol	ebp,		5
+	and	ecx,		edx
 	add	ebp,		eax
 	ror	edx,		1
 	mov	eax,		DWORD PTR 40[esp]
 	ror	edx,		1
-	xor	ebx,		esi
+	xor	ecx,		esi
 	lea	ebp,		DWORD PTR 1518500249[eax*1+ebp]
 	mov	eax,		edx
-	add	ebx,		ebp
+	add	ecx,		ebp
 	xor	eax,		edi
-	mov	ebp,		ebx
-	and	eax,		ecx
+	mov	ebp,		ecx
+	and	eax,		ebx
 	rol	ebp,		5
 	add	ebp,		esi
 	mov	esi,		DWORD PTR 44[esp]
-	ror	ecx,		1
+	ror	ebx,		1
 	xor	eax,		edi
-	ror	ecx,		1
+	ror	ebx,		1
 	lea	ebp,		DWORD PTR 1518500249[esi*1+ebp]
 	add	eax,		ebp
 	; 00_15 12
-	mov	esi,		ecx
+	mov	esi,		ebx
 	mov	ebp,		eax
 	xor	esi,		edx
 	rol	ebp,		5
-	and	esi,		ebx
+	and	esi,		ecx
 	add	ebp,		edi
-	ror	ebx,		1
+	ror	ecx,		1
 	mov	edi,		DWORD PTR 48[esp]
-	ror	ebx,		1
+	ror	ecx,		1
 	xor	esi,		edx
 	lea	ebp,		DWORD PTR 1518500249[edi*1+ebp]
-	mov	edi,		ebx
+	mov	edi,		ecx
 	add	esi,		ebp
-	xor	edi,		ecx
+	xor	edi,		ebx
 	mov	ebp,		esi
 	and	edi,		eax
 	rol	ebp,		5
 	add	ebp,		edx
 	mov	edx,		DWORD PTR 52[esp]
 	ror	eax,		1
-	xor	edi,		ecx
+	xor	edi,		ebx
 	ror	eax,		1
 	lea	ebp,		DWORD PTR 1518500249[edx*1+ebp]
 	add	edi,		ebp
 	; 00_15 14
 	mov	edx,		eax
 	mov	ebp,		edi
-	xor	edx,		ebx
+	xor	edx,		ecx
 	rol	ebp,		5
 	and	edx,		esi
-	add	ebp,		ecx
-	ror	esi,		1
-	mov	ecx,		DWORD PTR 56[esp]
-	ror	esi,		1
-	xor	edx,		ebx
-	lea	ebp,		DWORD PTR 1518500249[ecx*1+ebp]
-	mov	ecx,		esi
-	add	edx,		ebp
-	xor	ecx,		eax
-	mov	ebp,		edx
-	and	ecx,		edi
-	rol	ebp,		5
 	add	ebp,		ebx
-	mov	ebx,		DWORD PTR 60[esp]
-	ror	edi,		1
-	xor	ecx,		eax
-	ror	edi,		1
+	ror	esi,		1
+	mov	ebx,		DWORD PTR 56[esp]
+	ror	esi,		1
+	xor	edx,		ecx
 	lea	ebp,		DWORD PTR 1518500249[ebx*1+ebp]
-	add	ecx,		ebp
+	mov	ebx,		esi
+	add	edx,		ebp
+	xor	ebx,		eax
+	mov	ebp,		edx
+	and	ebx,		edi
+	rol	ebp,		5
+	add	ebp,		ecx
+	mov	ecx,		DWORD PTR 60[esp]
+	ror	edi,		1
+	xor	ebx,		eax
+	ror	edi,		1
+	lea	ebp,		DWORD PTR 1518500249[ecx*1+ebp]
+	add	ebx,		ebp
 	; 16_19 16
 	nop
 	mov	ebp,		DWORD PTR [esp]
-	mov	ebx,		DWORD PTR 8[esp]
-	xor	ebx,		ebp
+	mov	ecx,		DWORD PTR 8[esp]
+	xor	ecx,		ebp
 	mov	ebp,		DWORD PTR 32[esp]
-	xor	ebx,		ebp
+	xor	ecx,		ebp
 	mov	ebp,		DWORD PTR 52[esp]
-	xor	ebx,		ebp
+	xor	ecx,		ebp
 	mov	ebp,		edi
-	rol	ebx,		1
+	rol	ecx,		1
 	xor	ebp,		esi
-	mov	DWORD PTR [esp],ebx
+	mov	DWORD PTR [esp],ecx
 	and	ebp,		edx
-	lea	ebx,		DWORD PTR 1518500249[eax*1+ebx]
+	lea	ecx,		DWORD PTR 1518500249[eax*1+ecx]
 	xor	ebp,		esi
-	mov	eax,		ecx
-	add	ebx,		ebp
+	mov	eax,		ebx
+	add	ecx,		ebp
 	rol	eax,		5
 	ror	edx,		1
-	add	ebx,		eax
+	add	ecx,		eax
 	mov	eax,		DWORD PTR 4[esp]
 	mov	ebp,		DWORD PTR 12[esp]
 	xor	eax,		ebp
@@ -316,14 +317,14 @@ L000start:
 	mov	ebp,		edx
 	xor	ebp,		edi
 	mov	DWORD PTR 4[esp],eax
-	and	ebp,		ecx
+	and	ebp,		ebx
 	lea	eax,		DWORD PTR 1518500249[esi*1+eax]
 	xor	ebp,		edi
-	mov	esi,		ebx
+	mov	esi,		ecx
 	rol	esi,		5
-	ror	ecx,		1
+	ror	ebx,		1
 	add	eax,		esi
-	ror	ecx,		1
+	ror	ebx,		1
 	add	eax,		ebp
 	; 16_19 18
 	mov	ebp,		DWORD PTR 8[esp]
@@ -333,17 +334,17 @@ L000start:
 	xor	esi,		ebp
 	mov	ebp,		DWORD PTR 60[esp]
 	xor	esi,		ebp
-	mov	ebp,		ecx
+	mov	ebp,		ebx
 	rol	esi,		1
 	xor	ebp,		edx
 	mov	DWORD PTR 8[esp],esi
-	and	ebp,		ebx
+	and	ebp,		ecx
 	lea	esi,		DWORD PTR 1518500249[edi*1+esi]
 	xor	ebp,		edx
 	mov	edi,		eax
 	add	esi,		ebp
 	rol	edi,		5
-	ror	ebx,		1
+	ror	ecx,		1
 	add	esi,		edi
 	mov	edi,		DWORD PTR 12[esp]
 	mov	ebp,		DWORD PTR 20[esp]
@@ -351,15 +352,15 @@ L000start:
 	mov	ebp,		DWORD PTR 44[esp]
 	xor	edi,		ebp
 	mov	ebp,		DWORD PTR [esp]
-	ror	ebx,		1
+	ror	ecx,		1
 	xor	edi,		ebp
 	rol	edi,		1
-	mov	ebp,		ebx
-	xor	ebp,		ecx
+	mov	ebp,		ecx
+	xor	ebp,		ebx
 	mov	DWORD PTR 12[esp],edi
 	and	ebp,		eax
 	lea	edi,		DWORD PTR 1518500249[edx*1+edi]
-	xor	ebp,		ecx
+	xor	ebp,		ebx
 	mov	edx,		esi
 	rol	edx,		5
 	ror	eax,		1
@@ -378,54 +379,54 @@ L000start:
 	rol	edx,		1
 	xor	ebp,		eax
 	mov	DWORD PTR 16[esp],edx
-	xor	ebp,		ebx
-	lea	edx,		DWORD PTR 1859775393[ecx*1+edx]
-	mov	ecx,		edi
-	rol	ecx,		5
-	ror	esi,		1
-	add	ecx,		ebp
-	ror	esi,		1
-	add	edx,		ecx
-	; 20_39 21
-	mov	ecx,		DWORD PTR 20[esp]
-	mov	ebp,		DWORD PTR 28[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 52[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 8[esp]
-	xor	ecx,		ebp
-	mov	ebp,		edi
-	rol	ecx,		1
-	xor	ebp,		esi
-	mov	DWORD PTR 20[esp],ecx
-	xor	ebp,		eax
-	lea	ecx,		DWORD PTR 1859775393[ebx*1+ecx]
-	mov	ebx,		edx
+	xor	ebp,		ecx
+	lea	edx,		DWORD PTR 1859775393[ebx*1+edx]
+	mov	ebx,		edi
 	rol	ebx,		5
-	ror	edi,		1
+	ror	esi,		1
 	add	ebx,		ebp
-	ror	edi,		1
-	add	ecx,		ebx
-	; 20_39 22
-	mov	ebx,		DWORD PTR 24[esp]
-	mov	ebp,		DWORD PTR 32[esp]
+	ror	esi,		1
+	add	edx,		ebx
+	; 20_39 21
+	mov	ebx,		DWORD PTR 20[esp]
+	mov	ebp,		DWORD PTR 28[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 56[esp]
+	mov	ebp,		DWORD PTR 52[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 12[esp]
+	mov	ebp,		DWORD PTR 8[esp]
 	xor	ebx,		ebp
-	mov	ebp,		edx
+	mov	ebp,		edi
 	rol	ebx,		1
-	xor	ebp,		edi
-	mov	DWORD PTR 24[esp],ebx
 	xor	ebp,		esi
-	lea	ebx,		DWORD PTR 1859775393[eax*1+ebx]
-	mov	eax,		ecx
+	mov	DWORD PTR 20[esp],ebx
+	xor	ebp,		eax
+	lea	ebx,		DWORD PTR 1859775393[ecx*1+ebx]
+	mov	ecx,		edx
+	rol	ecx,		5
+	ror	edi,		1
+	add	ecx,		ebp
+	ror	edi,		1
+	add	ebx,		ecx
+	; 20_39 22
+	mov	ecx,		DWORD PTR 24[esp]
+	mov	ebp,		DWORD PTR 32[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 56[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 12[esp]
+	xor	ecx,		ebp
+	mov	ebp,		edx
+	rol	ecx,		1
+	xor	ebp,		edi
+	mov	DWORD PTR 24[esp],ecx
+	xor	ebp,		esi
+	lea	ecx,		DWORD PTR 1859775393[eax*1+ecx]
+	mov	eax,		ebx
 	rol	eax,		5
 	ror	edx,		1
 	add	eax,		ebp
 	ror	edx,		1
-	add	ebx,		eax
+	add	ecx,		eax
 	; 20_39 23
 	mov	eax,		DWORD PTR 28[esp]
 	mov	ebp,		DWORD PTR 36[esp]
@@ -434,17 +435,17 @@ L000start:
 	xor	eax,		ebp
 	mov	ebp,		DWORD PTR 16[esp]
 	xor	eax,		ebp
-	mov	ebp,		ecx
+	mov	ebp,		ebx
 	rol	eax,		1
 	xor	ebp,		edx
 	mov	DWORD PTR 28[esp],eax
 	xor	ebp,		edi
 	lea	eax,		DWORD PTR 1859775393[esi*1+eax]
-	mov	esi,		ebx
+	mov	esi,		ecx
 	rol	esi,		5
-	ror	ecx,		1
+	ror	ebx,		1
 	add	esi,		ebp
-	ror	ecx,		1
+	ror	ebx,		1
 	add	eax,		esi
 	; 20_39 24
 	mov	esi,		DWORD PTR 32[esp]
@@ -454,17 +455,17 @@ L000start:
 	xor	esi,		ebp
 	mov	ebp,		DWORD PTR 20[esp]
 	xor	esi,		ebp
-	mov	ebp,		ebx
+	mov	ebp,		ecx
 	rol	esi,		1
-	xor	ebp,		ecx
+	xor	ebp,		ebx
 	mov	DWORD PTR 32[esp],esi
 	xor	ebp,		edx
 	lea	esi,		DWORD PTR 1859775393[edi*1+esi]
 	mov	edi,		eax
 	rol	edi,		5
-	ror	ebx,		1
+	ror	ecx,		1
 	add	edi,		ebp
-	ror	ebx,		1
+	ror	ecx,		1
 	add	esi,		edi
 	; 20_39 25
 	mov	edi,		DWORD PTR 36[esp]
@@ -476,9 +477,9 @@ L000start:
 	xor	edi,		ebp
 	mov	ebp,		eax
 	rol	edi,		1
-	xor	ebp,		ebx
-	mov	DWORD PTR 36[esp],edi
 	xor	ebp,		ecx
+	mov	DWORD PTR 36[esp],edi
+	xor	ebp,		ebx
 	lea	edi,		DWORD PTR 1859775393[edx*1+edi]
 	mov	edx,		esi
 	rol	edx,		5
@@ -498,54 +499,54 @@ L000start:
 	rol	edx,		1
 	xor	ebp,		eax
 	mov	DWORD PTR 40[esp],edx
-	xor	ebp,		ebx
-	lea	edx,		DWORD PTR 1859775393[ecx*1+edx]
-	mov	ecx,		edi
-	rol	ecx,		5
-	ror	esi,		1
-	add	ecx,		ebp
-	ror	esi,		1
-	add	edx,		ecx
-	; 20_39 27
-	mov	ecx,		DWORD PTR 44[esp]
-	mov	ebp,		DWORD PTR 52[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 12[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 32[esp]
-	xor	ecx,		ebp
-	mov	ebp,		edi
-	rol	ecx,		1
-	xor	ebp,		esi
-	mov	DWORD PTR 44[esp],ecx
-	xor	ebp,		eax
-	lea	ecx,		DWORD PTR 1859775393[ebx*1+ecx]
-	mov	ebx,		edx
+	xor	ebp,		ecx
+	lea	edx,		DWORD PTR 1859775393[ebx*1+edx]
+	mov	ebx,		edi
 	rol	ebx,		5
-	ror	edi,		1
+	ror	esi,		1
 	add	ebx,		ebp
-	ror	edi,		1
-	add	ecx,		ebx
-	; 20_39 28
-	mov	ebx,		DWORD PTR 48[esp]
-	mov	ebp,		DWORD PTR 56[esp]
+	ror	esi,		1
+	add	edx,		ebx
+	; 20_39 27
+	mov	ebx,		DWORD PTR 44[esp]
+	mov	ebp,		DWORD PTR 52[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 16[esp]
+	mov	ebp,		DWORD PTR 12[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 36[esp]
+	mov	ebp,		DWORD PTR 32[esp]
 	xor	ebx,		ebp
-	mov	ebp,		edx
+	mov	ebp,		edi
 	rol	ebx,		1
-	xor	ebp,		edi
-	mov	DWORD PTR 48[esp],ebx
 	xor	ebp,		esi
-	lea	ebx,		DWORD PTR 1859775393[eax*1+ebx]
-	mov	eax,		ecx
+	mov	DWORD PTR 44[esp],ebx
+	xor	ebp,		eax
+	lea	ebx,		DWORD PTR 1859775393[ecx*1+ebx]
+	mov	ecx,		edx
+	rol	ecx,		5
+	ror	edi,		1
+	add	ecx,		ebp
+	ror	edi,		1
+	add	ebx,		ecx
+	; 20_39 28
+	mov	ecx,		DWORD PTR 48[esp]
+	mov	ebp,		DWORD PTR 56[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 16[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 36[esp]
+	xor	ecx,		ebp
+	mov	ebp,		edx
+	rol	ecx,		1
+	xor	ebp,		edi
+	mov	DWORD PTR 48[esp],ecx
+	xor	ebp,		esi
+	lea	ecx,		DWORD PTR 1859775393[eax*1+ecx]
+	mov	eax,		ebx
 	rol	eax,		5
 	ror	edx,		1
 	add	eax,		ebp
 	ror	edx,		1
-	add	ebx,		eax
+	add	ecx,		eax
 	; 20_39 29
 	mov	eax,		DWORD PTR 52[esp]
 	mov	ebp,		DWORD PTR 60[esp]
@@ -554,17 +555,17 @@ L000start:
 	xor	eax,		ebp
 	mov	ebp,		DWORD PTR 40[esp]
 	xor	eax,		ebp
-	mov	ebp,		ecx
+	mov	ebp,		ebx
 	rol	eax,		1
 	xor	ebp,		edx
 	mov	DWORD PTR 52[esp],eax
 	xor	ebp,		edi
 	lea	eax,		DWORD PTR 1859775393[esi*1+eax]
-	mov	esi,		ebx
+	mov	esi,		ecx
 	rol	esi,		5
-	ror	ecx,		1
+	ror	ebx,		1
 	add	esi,		ebp
-	ror	ecx,		1
+	ror	ebx,		1
 	add	eax,		esi
 	; 20_39 30
 	mov	esi,		DWORD PTR 56[esp]
@@ -574,17 +575,17 @@ L000start:
 	xor	esi,		ebp
 	mov	ebp,		DWORD PTR 44[esp]
 	xor	esi,		ebp
-	mov	ebp,		ebx
+	mov	ebp,		ecx
 	rol	esi,		1
-	xor	ebp,		ecx
+	xor	ebp,		ebx
 	mov	DWORD PTR 56[esp],esi
 	xor	ebp,		edx
 	lea	esi,		DWORD PTR 1859775393[edi*1+esi]
 	mov	edi,		eax
 	rol	edi,		5
-	ror	ebx,		1
+	ror	ecx,		1
 	add	edi,		ebp
-	ror	ebx,		1
+	ror	ecx,		1
 	add	esi,		edi
 	; 20_39 31
 	mov	edi,		DWORD PTR 60[esp]
@@ -596,9 +597,9 @@ L000start:
 	xor	edi,		ebp
 	mov	ebp,		eax
 	rol	edi,		1
-	xor	ebp,		ebx
-	mov	DWORD PTR 60[esp],edi
 	xor	ebp,		ecx
+	mov	DWORD PTR 60[esp],edi
+	xor	ebp,		ebx
 	lea	edi,		DWORD PTR 1859775393[edx*1+edi]
 	mov	edx,		esi
 	rol	edx,		5
@@ -618,54 +619,54 @@ L000start:
 	rol	edx,		1
 	xor	ebp,		eax
 	mov	DWORD PTR [esp],edx
-	xor	ebp,		ebx
-	lea	edx,		DWORD PTR 1859775393[ecx*1+edx]
-	mov	ecx,		edi
-	rol	ecx,		5
-	ror	esi,		1
-	add	ecx,		ebp
-	ror	esi,		1
-	add	edx,		ecx
-	; 20_39 33
-	mov	ecx,		DWORD PTR 4[esp]
-	mov	ebp,		DWORD PTR 12[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 36[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 56[esp]
-	xor	ecx,		ebp
-	mov	ebp,		edi
-	rol	ecx,		1
-	xor	ebp,		esi
-	mov	DWORD PTR 4[esp],ecx
-	xor	ebp,		eax
-	lea	ecx,		DWORD PTR 1859775393[ebx*1+ecx]
-	mov	ebx,		edx
+	xor	ebp,		ecx
+	lea	edx,		DWORD PTR 1859775393[ebx*1+edx]
+	mov	ebx,		edi
 	rol	ebx,		5
-	ror	edi,		1
+	ror	esi,		1
 	add	ebx,		ebp
-	ror	edi,		1
-	add	ecx,		ebx
-	; 20_39 34
-	mov	ebx,		DWORD PTR 8[esp]
-	mov	ebp,		DWORD PTR 16[esp]
+	ror	esi,		1
+	add	edx,		ebx
+	; 20_39 33
+	mov	ebx,		DWORD PTR 4[esp]
+	mov	ebp,		DWORD PTR 12[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 40[esp]
+	mov	ebp,		DWORD PTR 36[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 60[esp]
+	mov	ebp,		DWORD PTR 56[esp]
 	xor	ebx,		ebp
-	mov	ebp,		edx
+	mov	ebp,		edi
 	rol	ebx,		1
-	xor	ebp,		edi
-	mov	DWORD PTR 8[esp],ebx
 	xor	ebp,		esi
-	lea	ebx,		DWORD PTR 1859775393[eax*1+ebx]
-	mov	eax,		ecx
+	mov	DWORD PTR 4[esp],ebx
+	xor	ebp,		eax
+	lea	ebx,		DWORD PTR 1859775393[ecx*1+ebx]
+	mov	ecx,		edx
+	rol	ecx,		5
+	ror	edi,		1
+	add	ecx,		ebp
+	ror	edi,		1
+	add	ebx,		ecx
+	; 20_39 34
+	mov	ecx,		DWORD PTR 8[esp]
+	mov	ebp,		DWORD PTR 16[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 40[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 60[esp]
+	xor	ecx,		ebp
+	mov	ebp,		edx
+	rol	ecx,		1
+	xor	ebp,		edi
+	mov	DWORD PTR 8[esp],ecx
+	xor	ebp,		esi
+	lea	ecx,		DWORD PTR 1859775393[eax*1+ecx]
+	mov	eax,		ebx
 	rol	eax,		5
 	ror	edx,		1
 	add	eax,		ebp
 	ror	edx,		1
-	add	ebx,		eax
+	add	ecx,		eax
 	; 20_39 35
 	mov	eax,		DWORD PTR 12[esp]
 	mov	ebp,		DWORD PTR 20[esp]
@@ -674,17 +675,17 @@ L000start:
 	xor	eax,		ebp
 	mov	ebp,		DWORD PTR [esp]
 	xor	eax,		ebp
-	mov	ebp,		ecx
+	mov	ebp,		ebx
 	rol	eax,		1
 	xor	ebp,		edx
 	mov	DWORD PTR 12[esp],eax
 	xor	ebp,		edi
 	lea	eax,		DWORD PTR 1859775393[esi*1+eax]
-	mov	esi,		ebx
+	mov	esi,		ecx
 	rol	esi,		5
-	ror	ecx,		1
+	ror	ebx,		1
 	add	esi,		ebp
-	ror	ecx,		1
+	ror	ebx,		1
 	add	eax,		esi
 	; 20_39 36
 	mov	esi,		DWORD PTR 16[esp]
@@ -694,17 +695,17 @@ L000start:
 	xor	esi,		ebp
 	mov	ebp,		DWORD PTR 4[esp]
 	xor	esi,		ebp
-	mov	ebp,		ebx
+	mov	ebp,		ecx
 	rol	esi,		1
-	xor	ebp,		ecx
+	xor	ebp,		ebx
 	mov	DWORD PTR 16[esp],esi
 	xor	ebp,		edx
 	lea	esi,		DWORD PTR 1859775393[edi*1+esi]
 	mov	edi,		eax
 	rol	edi,		5
-	ror	ebx,		1
+	ror	ecx,		1
 	add	edi,		ebp
-	ror	ebx,		1
+	ror	ecx,		1
 	add	esi,		edi
 	; 20_39 37
 	mov	edi,		DWORD PTR 20[esp]
@@ -716,9 +717,9 @@ L000start:
 	xor	edi,		ebp
 	mov	ebp,		eax
 	rol	edi,		1
-	xor	ebp,		ebx
-	mov	DWORD PTR 20[esp],edi
 	xor	ebp,		ecx
+	mov	DWORD PTR 20[esp],edi
+	xor	ebp,		ebx
 	lea	edi,		DWORD PTR 1859775393[edx*1+edi]
 	mov	edx,		esi
 	rol	edx,		5
@@ -738,57 +739,57 @@ L000start:
 	rol	edx,		1
 	xor	ebp,		eax
 	mov	DWORD PTR 24[esp],edx
-	xor	ebp,		ebx
-	lea	edx,		DWORD PTR 1859775393[ecx*1+edx]
-	mov	ecx,		edi
-	rol	ecx,		5
-	ror	esi,		1
-	add	ecx,		ebp
-	ror	esi,		1
-	add	edx,		ecx
-	; 20_39 39
-	mov	ecx,		DWORD PTR 28[esp]
-	mov	ebp,		DWORD PTR 36[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 60[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 16[esp]
-	xor	ecx,		ebp
-	mov	ebp,		edi
-	rol	ecx,		1
-	xor	ebp,		esi
-	mov	DWORD PTR 28[esp],ecx
-	xor	ebp,		eax
-	lea	ecx,		DWORD PTR 1859775393[ebx*1+ecx]
-	mov	ebx,		edx
+	xor	ebp,		ecx
+	lea	edx,		DWORD PTR 1859775393[ebx*1+edx]
+	mov	ebx,		edi
 	rol	ebx,		5
-	ror	edi,		1
+	ror	esi,		1
 	add	ebx,		ebp
-	ror	edi,		1
-	add	ecx,		ebx
-	; 40_59 40
-	mov	ebx,		DWORD PTR 32[esp]
-	mov	ebp,		DWORD PTR 40[esp]
+	ror	esi,		1
+	add	edx,		ebx
+	; 20_39 39
+	mov	ebx,		DWORD PTR 28[esp]
+	mov	ebp,		DWORD PTR 36[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR [esp]
+	mov	ebp,		DWORD PTR 60[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 20[esp]
+	mov	ebp,		DWORD PTR 16[esp]
 	xor	ebx,		ebp
-	mov	ebp,		edx
+	mov	ebp,		edi
 	rol	ebx,		1
+	xor	ebp,		esi
+	mov	DWORD PTR 28[esp],ebx
+	xor	ebp,		eax
+	lea	ebx,		DWORD PTR 1859775393[ecx*1+ebx]
+	mov	ecx,		edx
+	rol	ecx,		5
+	ror	edi,		1
+	add	ecx,		ebp
+	ror	edi,		1
+	add	ebx,		ecx
+	; 40_59 40
+	mov	ecx,		DWORD PTR 32[esp]
+	mov	ebp,		DWORD PTR 40[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR [esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 20[esp]
+	xor	ecx,		ebp
+	mov	ebp,		edx
+	rol	ecx,		1
 	or	ebp,		edi
-	mov	DWORD PTR 32[esp],ebx
+	mov	DWORD PTR 32[esp],ecx
 	and	ebp,		esi
-	lea	ebx,		DWORD PTR 2400959708[eax*1+ebx]
+	lea	ecx,		DWORD PTR 2400959708[eax*1+ecx]
 	mov	eax,		edx
 	ror	edx,		1
 	and	eax,		edi
 	or	ebp,		eax
-	mov	eax,		ecx
+	mov	eax,		ebx
 	rol	eax,		5
 	add	ebp,		eax
 	mov	eax,		DWORD PTR 36[esp]
-	add	ebx,		ebp
+	add	ecx,		ebp
 	mov	ebp,		DWORD PTR 44[esp]
 	xor	eax,		ebp
 	mov	ebp,		DWORD PTR 4[esp]
@@ -797,19 +798,19 @@ L000start:
 	ror	edx,		1
 	xor	eax,		ebp
 	rol	eax,		1
-	mov	ebp,		ecx
+	mov	ebp,		ebx
 	mov	DWORD PTR 36[esp],eax
 	or	ebp,		edx
 	lea	eax,		DWORD PTR 2400959708[esi*1+eax]
-	mov	esi,		ecx
+	mov	esi,		ebx
 	and	ebp,		edi
 	and	esi,		edx
 	or	ebp,		esi
-	mov	esi,		ebx
+	mov	esi,		ecx
 	rol	esi,		5
-	ror	ecx,		1
+	ror	ebx,		1
 	add	ebp,		esi
-	ror	ecx,		1
+	ror	ebx,		1
 	add	eax,		ebp
 	; 40_59 41
 	; 40_59 42
@@ -820,15 +821,15 @@ L000start:
 	xor	esi,		ebp
 	mov	ebp,		DWORD PTR 28[esp]
 	xor	esi,		ebp
-	mov	ebp,		ebx
+	mov	ebp,		ecx
 	rol	esi,		1
-	or	ebp,		ecx
+	or	ebp,		ebx
 	mov	DWORD PTR 40[esp],esi
 	and	ebp,		edx
 	lea	esi,		DWORD PTR 2400959708[edi*1+esi]
-	mov	edi,		ebx
-	ror	ebx,		1
-	and	edi,		ecx
+	mov	edi,		ecx
+	ror	ecx,		1
+	and	edi,		ebx
 	or	ebp,		edi
 	mov	edi,		eax
 	rol	edi,		5
@@ -840,16 +841,16 @@ L000start:
 	mov	ebp,		DWORD PTR 12[esp]
 	xor	edi,		ebp
 	mov	ebp,		DWORD PTR 32[esp]
-	ror	ebx,		1
+	ror	ecx,		1
 	xor	edi,		ebp
 	rol	edi,		1
 	mov	ebp,		eax
 	mov	DWORD PTR 44[esp],edi
-	or	ebp,		ebx
+	or	ebp,		ecx
 	lea	edi,		DWORD PTR 2400959708[edx*1+edi]
 	mov	edx,		eax
-	and	ebp,		ecx
-	and	edx,		ebx
+	and	ebp,		ebx
+	and	edx,		ecx
 	or	ebp,		edx
 	mov	edx,		esi
 	rol	edx,		5
@@ -870,63 +871,63 @@ L000start:
 	rol	edx,		1
 	or	ebp,		eax
 	mov	DWORD PTR 48[esp],edx
-	and	ebp,		ebx
-	lea	edx,		DWORD PTR 2400959708[ecx*1+edx]
-	mov	ecx,		esi
+	and	ebp,		ecx
+	lea	edx,		DWORD PTR 2400959708[ebx*1+edx]
+	mov	ebx,		esi
 	ror	esi,		1
-	and	ecx,		eax
-	or	ebp,		ecx
-	mov	ecx,		edi
-	rol	ecx,		5
-	add	ebp,		ecx
-	mov	ecx,		DWORD PTR 52[esp]
+	and	ebx,		eax
+	or	ebp,		ebx
+	mov	ebx,		edi
+	rol	ebx,		5
+	add	ebp,		ebx
+	mov	ebx,		DWORD PTR 52[esp]
 	add	edx,		ebp
 	mov	ebp,		DWORD PTR 60[esp]
-	xor	ecx,		ebp
+	xor	ebx,		ebp
 	mov	ebp,		DWORD PTR 20[esp]
-	xor	ecx,		ebp
+	xor	ebx,		ebp
 	mov	ebp,		DWORD PTR 40[esp]
 	ror	esi,		1
-	xor	ecx,		ebp
-	rol	ecx,		1
+	xor	ebx,		ebp
+	rol	ebx,		1
 	mov	ebp,		edi
-	mov	DWORD PTR 52[esp],ecx
+	mov	DWORD PTR 52[esp],ebx
 	or	ebp,		esi
-	lea	ecx,		DWORD PTR 2400959708[ebx*1+ecx]
-	mov	ebx,		edi
+	lea	ebx,		DWORD PTR 2400959708[ecx*1+ebx]
+	mov	ecx,		edi
 	and	ebp,		eax
-	and	ebx,		esi
-	or	ebp,		ebx
-	mov	ebx,		edx
-	rol	ebx,		5
+	and	ecx,		esi
+	or	ebp,		ecx
+	mov	ecx,		edx
+	rol	ecx,		5
 	ror	edi,		1
-	add	ebp,		ebx
+	add	ebp,		ecx
 	ror	edi,		1
-	add	ecx,		ebp
+	add	ebx,		ebp
 	; 40_59 45
 	; 40_59 46
-	mov	ebx,		DWORD PTR 56[esp]
+	mov	ecx,		DWORD PTR 56[esp]
 	mov	ebp,		DWORD PTR [esp]
-	xor	ebx,		ebp
+	xor	ecx,		ebp
 	mov	ebp,		DWORD PTR 24[esp]
-	xor	ebx,		ebp
+	xor	ecx,		ebp
 	mov	ebp,		DWORD PTR 44[esp]
-	xor	ebx,		ebp
+	xor	ecx,		ebp
 	mov	ebp,		edx
-	rol	ebx,		1
+	rol	ecx,		1
 	or	ebp,		edi
-	mov	DWORD PTR 56[esp],ebx
+	mov	DWORD PTR 56[esp],ecx
 	and	ebp,		esi
-	lea	ebx,		DWORD PTR 2400959708[eax*1+ebx]
+	lea	ecx,		DWORD PTR 2400959708[eax*1+ecx]
 	mov	eax,		edx
 	ror	edx,		1
 	and	eax,		edi
 	or	ebp,		eax
-	mov	eax,		ecx
+	mov	eax,		ebx
 	rol	eax,		5
 	add	ebp,		eax
 	mov	eax,		DWORD PTR 60[esp]
-	add	ebx,		ebp
+	add	ecx,		ebp
 	mov	ebp,		DWORD PTR 4[esp]
 	xor	eax,		ebp
 	mov	ebp,		DWORD PTR 28[esp]
@@ -935,19 +936,19 @@ L000start:
 	ror	edx,		1
 	xor	eax,		ebp
 	rol	eax,		1
-	mov	ebp,		ecx
+	mov	ebp,		ebx
 	mov	DWORD PTR 60[esp],eax
 	or	ebp,		edx
 	lea	eax,		DWORD PTR 2400959708[esi*1+eax]
-	mov	esi,		ecx
+	mov	esi,		ebx
 	and	ebp,		edi
 	and	esi,		edx
 	or	ebp,		esi
-	mov	esi,		ebx
+	mov	esi,		ecx
 	rol	esi,		5
-	ror	ecx,		1
+	ror	ebx,		1
 	add	ebp,		esi
-	ror	ecx,		1
+	ror	ebx,		1
 	add	eax,		ebp
 	; 40_59 47
 	; 40_59 48
@@ -958,15 +959,15 @@ L000start:
 	xor	esi,		ebp
 	mov	ebp,		DWORD PTR 52[esp]
 	xor	esi,		ebp
-	mov	ebp,		ebx
+	mov	ebp,		ecx
 	rol	esi,		1
-	or	ebp,		ecx
+	or	ebp,		ebx
 	mov	DWORD PTR [esp],esi
 	and	ebp,		edx
 	lea	esi,		DWORD PTR 2400959708[edi*1+esi]
-	mov	edi,		ebx
-	ror	ebx,		1
-	and	edi,		ecx
+	mov	edi,		ecx
+	ror	ecx,		1
+	and	edi,		ebx
 	or	ebp,		edi
 	mov	edi,		eax
 	rol	edi,		5
@@ -978,16 +979,16 @@ L000start:
 	mov	ebp,		DWORD PTR 36[esp]
 	xor	edi,		ebp
 	mov	ebp,		DWORD PTR 56[esp]
-	ror	ebx,		1
+	ror	ecx,		1
 	xor	edi,		ebp
 	rol	edi,		1
 	mov	ebp,		eax
 	mov	DWORD PTR 4[esp],edi
-	or	ebp,		ebx
+	or	ebp,		ecx
 	lea	edi,		DWORD PTR 2400959708[edx*1+edi]
 	mov	edx,		eax
-	and	ebp,		ecx
-	and	edx,		ebx
+	and	ebp,		ebx
+	and	edx,		ecx
 	or	ebp,		edx
 	mov	edx,		esi
 	rol	edx,		5
@@ -1008,63 +1009,63 @@ L000start:
 	rol	edx,		1
 	or	ebp,		eax
 	mov	DWORD PTR 8[esp],edx
-	and	ebp,		ebx
-	lea	edx,		DWORD PTR 2400959708[ecx*1+edx]
-	mov	ecx,		esi
+	and	ebp,		ecx
+	lea	edx,		DWORD PTR 2400959708[ebx*1+edx]
+	mov	ebx,		esi
 	ror	esi,		1
-	and	ecx,		eax
-	or	ebp,		ecx
-	mov	ecx,		edi
-	rol	ecx,		5
-	add	ebp,		ecx
-	mov	ecx,		DWORD PTR 12[esp]
+	and	ebx,		eax
+	or	ebp,		ebx
+	mov	ebx,		edi
+	rol	ebx,		5
+	add	ebp,		ebx
+	mov	ebx,		DWORD PTR 12[esp]
 	add	edx,		ebp
 	mov	ebp,		DWORD PTR 20[esp]
-	xor	ecx,		ebp
+	xor	ebx,		ebp
 	mov	ebp,		DWORD PTR 44[esp]
-	xor	ecx,		ebp
+	xor	ebx,		ebp
 	mov	ebp,		DWORD PTR [esp]
 	ror	esi,		1
-	xor	ecx,		ebp
-	rol	ecx,		1
+	xor	ebx,		ebp
+	rol	ebx,		1
 	mov	ebp,		edi
-	mov	DWORD PTR 12[esp],ecx
+	mov	DWORD PTR 12[esp],ebx
 	or	ebp,		esi
-	lea	ecx,		DWORD PTR 2400959708[ebx*1+ecx]
-	mov	ebx,		edi
+	lea	ebx,		DWORD PTR 2400959708[ecx*1+ebx]
+	mov	ecx,		edi
 	and	ebp,		eax
-	and	ebx,		esi
-	or	ebp,		ebx
-	mov	ebx,		edx
-	rol	ebx,		5
+	and	ecx,		esi
+	or	ebp,		ecx
+	mov	ecx,		edx
+	rol	ecx,		5
 	ror	edi,		1
-	add	ebp,		ebx
+	add	ebp,		ecx
 	ror	edi,		1
-	add	ecx,		ebp
+	add	ebx,		ebp
 	; 40_59 51
 	; 40_59 52
-	mov	ebx,		DWORD PTR 16[esp]
+	mov	ecx,		DWORD PTR 16[esp]
 	mov	ebp,		DWORD PTR 24[esp]
-	xor	ebx,		ebp
+	xor	ecx,		ebp
 	mov	ebp,		DWORD PTR 48[esp]
-	xor	ebx,		ebp
+	xor	ecx,		ebp
 	mov	ebp,		DWORD PTR 4[esp]
-	xor	ebx,		ebp
+	xor	ecx,		ebp
 	mov	ebp,		edx
-	rol	ebx,		1
+	rol	ecx,		1
 	or	ebp,		edi
-	mov	DWORD PTR 16[esp],ebx
+	mov	DWORD PTR 16[esp],ecx
 	and	ebp,		esi
-	lea	ebx,		DWORD PTR 2400959708[eax*1+ebx]
+	lea	ecx,		DWORD PTR 2400959708[eax*1+ecx]
 	mov	eax,		edx
 	ror	edx,		1
 	and	eax,		edi
 	or	ebp,		eax
-	mov	eax,		ecx
+	mov	eax,		ebx
 	rol	eax,		5
 	add	ebp,		eax
 	mov	eax,		DWORD PTR 20[esp]
-	add	ebx,		ebp
+	add	ecx,		ebp
 	mov	ebp,		DWORD PTR 28[esp]
 	xor	eax,		ebp
 	mov	ebp,		DWORD PTR 52[esp]
@@ -1073,19 +1074,19 @@ L000start:
 	ror	edx,		1
 	xor	eax,		ebp
 	rol	eax,		1
-	mov	ebp,		ecx
+	mov	ebp,		ebx
 	mov	DWORD PTR 20[esp],eax
 	or	ebp,		edx
 	lea	eax,		DWORD PTR 2400959708[esi*1+eax]
-	mov	esi,		ecx
+	mov	esi,		ebx
 	and	ebp,		edi
 	and	esi,		edx
 	or	ebp,		esi
-	mov	esi,		ebx
+	mov	esi,		ecx
 	rol	esi,		5
-	ror	ecx,		1
+	ror	ebx,		1
 	add	ebp,		esi
-	ror	ecx,		1
+	ror	ebx,		1
 	add	eax,		ebp
 	; 40_59 53
 	; 40_59 54
@@ -1096,15 +1097,15 @@ L000start:
 	xor	esi,		ebp
 	mov	ebp,		DWORD PTR 12[esp]
 	xor	esi,		ebp
-	mov	ebp,		ebx
+	mov	ebp,		ecx
 	rol	esi,		1
-	or	ebp,		ecx
+	or	ebp,		ebx
 	mov	DWORD PTR 24[esp],esi
 	and	ebp,		edx
 	lea	esi,		DWORD PTR 2400959708[edi*1+esi]
-	mov	edi,		ebx
-	ror	ebx,		1
-	and	edi,		ecx
+	mov	edi,		ecx
+	ror	ecx,		1
+	and	edi,		ebx
 	or	ebp,		edi
 	mov	edi,		eax
 	rol	edi,		5
@@ -1116,16 +1117,16 @@ L000start:
 	mov	ebp,		DWORD PTR 60[esp]
 	xor	edi,		ebp
 	mov	ebp,		DWORD PTR 16[esp]
-	ror	ebx,		1
+	ror	ecx,		1
 	xor	edi,		ebp
 	rol	edi,		1
 	mov	ebp,		eax
 	mov	DWORD PTR 28[esp],edi
-	or	ebp,		ebx
+	or	ebp,		ecx
 	lea	edi,		DWORD PTR 2400959708[edx*1+edi]
 	mov	edx,		eax
-	and	ebp,		ecx
-	and	edx,		ebx
+	and	ebp,		ebx
+	and	edx,		ecx
 	or	ebp,		edx
 	mov	edx,		esi
 	rol	edx,		5
@@ -1146,63 +1147,63 @@ L000start:
 	rol	edx,		1
 	or	ebp,		eax
 	mov	DWORD PTR 32[esp],edx
-	and	ebp,		ebx
-	lea	edx,		DWORD PTR 2400959708[ecx*1+edx]
-	mov	ecx,		esi
+	and	ebp,		ecx
+	lea	edx,		DWORD PTR 2400959708[ebx*1+edx]
+	mov	ebx,		esi
 	ror	esi,		1
-	and	ecx,		eax
-	or	ebp,		ecx
-	mov	ecx,		edi
-	rol	ecx,		5
-	add	ebp,		ecx
-	mov	ecx,		DWORD PTR 36[esp]
+	and	ebx,		eax
+	or	ebp,		ebx
+	mov	ebx,		edi
+	rol	ebx,		5
+	add	ebp,		ebx
+	mov	ebx,		DWORD PTR 36[esp]
 	add	edx,		ebp
 	mov	ebp,		DWORD PTR 44[esp]
-	xor	ecx,		ebp
+	xor	ebx,		ebp
 	mov	ebp,		DWORD PTR 4[esp]
-	xor	ecx,		ebp
+	xor	ebx,		ebp
 	mov	ebp,		DWORD PTR 24[esp]
 	ror	esi,		1
-	xor	ecx,		ebp
-	rol	ecx,		1
+	xor	ebx,		ebp
+	rol	ebx,		1
 	mov	ebp,		edi
-	mov	DWORD PTR 36[esp],ecx
+	mov	DWORD PTR 36[esp],ebx
 	or	ebp,		esi
-	lea	ecx,		DWORD PTR 2400959708[ebx*1+ecx]
-	mov	ebx,		edi
+	lea	ebx,		DWORD PTR 2400959708[ecx*1+ebx]
+	mov	ecx,		edi
 	and	ebp,		eax
-	and	ebx,		esi
-	or	ebp,		ebx
-	mov	ebx,		edx
-	rol	ebx,		5
+	and	ecx,		esi
+	or	ebp,		ecx
+	mov	ecx,		edx
+	rol	ecx,		5
 	ror	edi,		1
-	add	ebp,		ebx
+	add	ebp,		ecx
 	ror	edi,		1
-	add	ecx,		ebp
+	add	ebx,		ebp
 	; 40_59 57
 	; 40_59 58
-	mov	ebx,		DWORD PTR 40[esp]
+	mov	ecx,		DWORD PTR 40[esp]
 	mov	ebp,		DWORD PTR 48[esp]
-	xor	ebx,		ebp
+	xor	ecx,		ebp
 	mov	ebp,		DWORD PTR 8[esp]
-	xor	ebx,		ebp
+	xor	ecx,		ebp
 	mov	ebp,		DWORD PTR 28[esp]
-	xor	ebx,		ebp
+	xor	ecx,		ebp
 	mov	ebp,		edx
-	rol	ebx,		1
+	rol	ecx,		1
 	or	ebp,		edi
-	mov	DWORD PTR 40[esp],ebx
+	mov	DWORD PTR 40[esp],ecx
 	and	ebp,		esi
-	lea	ebx,		DWORD PTR 2400959708[eax*1+ebx]
+	lea	ecx,		DWORD PTR 2400959708[eax*1+ecx]
 	mov	eax,		edx
 	ror	edx,		1
 	and	eax,		edi
 	or	ebp,		eax
-	mov	eax,		ecx
+	mov	eax,		ebx
 	rol	eax,		5
 	add	ebp,		eax
 	mov	eax,		DWORD PTR 44[esp]
-	add	ebx,		ebp
+	add	ecx,		ebp
 	mov	ebp,		DWORD PTR 52[esp]
 	xor	eax,		ebp
 	mov	ebp,		DWORD PTR 12[esp]
@@ -1211,19 +1212,19 @@ L000start:
 	ror	edx,		1
 	xor	eax,		ebp
 	rol	eax,		1
-	mov	ebp,		ecx
+	mov	ebp,		ebx
 	mov	DWORD PTR 44[esp],eax
 	or	ebp,		edx
 	lea	eax,		DWORD PTR 2400959708[esi*1+eax]
-	mov	esi,		ecx
+	mov	esi,		ebx
 	and	ebp,		edi
 	and	esi,		edx
 	or	ebp,		esi
-	mov	esi,		ebx
+	mov	esi,		ecx
 	rol	esi,		5
-	ror	ecx,		1
+	ror	ebx,		1
 	add	ebp,		esi
-	ror	ecx,		1
+	ror	ebx,		1
 	add	eax,		ebp
 	; 40_59 59
 	; 20_39 60
@@ -1234,17 +1235,17 @@ L000start:
 	xor	esi,		ebp
 	mov	ebp,		DWORD PTR 36[esp]
 	xor	esi,		ebp
-	mov	ebp,		ebx
+	mov	ebp,		ecx
 	rol	esi,		1
-	xor	ebp,		ecx
+	xor	ebp,		ebx
 	mov	DWORD PTR 48[esp],esi
 	xor	ebp,		edx
 	lea	esi,		DWORD PTR 3395469782[edi*1+esi]
 	mov	edi,		eax
 	rol	edi,		5
-	ror	ebx,		1
+	ror	ecx,		1
 	add	edi,		ebp
-	ror	ebx,		1
+	ror	ecx,		1
 	add	esi,		edi
 	; 20_39 61
 	mov	edi,		DWORD PTR 52[esp]
@@ -1256,9 +1257,9 @@ L000start:
 	xor	edi,		ebp
 	mov	ebp,		eax
 	rol	edi,		1
-	xor	ebp,		ebx
-	mov	DWORD PTR 52[esp],edi
 	xor	ebp,		ecx
+	mov	DWORD PTR 52[esp],edi
+	xor	ebp,		ebx
 	lea	edi,		DWORD PTR 3395469782[edx*1+edi]
 	mov	edx,		esi
 	rol	edx,		5
@@ -1278,54 +1279,54 @@ L000start:
 	rol	edx,		1
 	xor	ebp,		eax
 	mov	DWORD PTR 56[esp],edx
-	xor	ebp,		ebx
-	lea	edx,		DWORD PTR 3395469782[ecx*1+edx]
-	mov	ecx,		edi
-	rol	ecx,		5
-	ror	esi,		1
-	add	ecx,		ebp
-	ror	esi,		1
-	add	edx,		ecx
-	; 20_39 63
-	mov	ecx,		DWORD PTR 60[esp]
-	mov	ebp,		DWORD PTR 4[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 28[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 48[esp]
-	xor	ecx,		ebp
-	mov	ebp,		edi
-	rol	ecx,		1
-	xor	ebp,		esi
-	mov	DWORD PTR 60[esp],ecx
-	xor	ebp,		eax
-	lea	ecx,		DWORD PTR 3395469782[ebx*1+ecx]
-	mov	ebx,		edx
+	xor	ebp,		ecx
+	lea	edx,		DWORD PTR 3395469782[ebx*1+edx]
+	mov	ebx,		edi
 	rol	ebx,		5
-	ror	edi,		1
+	ror	esi,		1
 	add	ebx,		ebp
-	ror	edi,		1
-	add	ecx,		ebx
-	; 20_39 64
-	mov	ebx,		DWORD PTR [esp]
-	mov	ebp,		DWORD PTR 8[esp]
+	ror	esi,		1
+	add	edx,		ebx
+	; 20_39 63
+	mov	ebx,		DWORD PTR 60[esp]
+	mov	ebp,		DWORD PTR 4[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 32[esp]
+	mov	ebp,		DWORD PTR 28[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 52[esp]
+	mov	ebp,		DWORD PTR 48[esp]
 	xor	ebx,		ebp
-	mov	ebp,		edx
+	mov	ebp,		edi
 	rol	ebx,		1
-	xor	ebp,		edi
-	mov	DWORD PTR [esp],ebx
 	xor	ebp,		esi
-	lea	ebx,		DWORD PTR 3395469782[eax*1+ebx]
-	mov	eax,		ecx
+	mov	DWORD PTR 60[esp],ebx
+	xor	ebp,		eax
+	lea	ebx,		DWORD PTR 3395469782[ecx*1+ebx]
+	mov	ecx,		edx
+	rol	ecx,		5
+	ror	edi,		1
+	add	ecx,		ebp
+	ror	edi,		1
+	add	ebx,		ecx
+	; 20_39 64
+	mov	ecx,		DWORD PTR [esp]
+	mov	ebp,		DWORD PTR 8[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 32[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 52[esp]
+	xor	ecx,		ebp
+	mov	ebp,		edx
+	rol	ecx,		1
+	xor	ebp,		edi
+	mov	DWORD PTR [esp],ecx
+	xor	ebp,		esi
+	lea	ecx,		DWORD PTR 3395469782[eax*1+ecx]
+	mov	eax,		ebx
 	rol	eax,		5
 	ror	edx,		1
 	add	eax,		ebp
 	ror	edx,		1
-	add	ebx,		eax
+	add	ecx,		eax
 	; 20_39 65
 	mov	eax,		DWORD PTR 4[esp]
 	mov	ebp,		DWORD PTR 12[esp]
@@ -1334,17 +1335,17 @@ L000start:
 	xor	eax,		ebp
 	mov	ebp,		DWORD PTR 56[esp]
 	xor	eax,		ebp
-	mov	ebp,		ecx
+	mov	ebp,		ebx
 	rol	eax,		1
 	xor	ebp,		edx
 	mov	DWORD PTR 4[esp],eax
 	xor	ebp,		edi
 	lea	eax,		DWORD PTR 3395469782[esi*1+eax]
-	mov	esi,		ebx
+	mov	esi,		ecx
 	rol	esi,		5
-	ror	ecx,		1
+	ror	ebx,		1
 	add	esi,		ebp
-	ror	ecx,		1
+	ror	ebx,		1
 	add	eax,		esi
 	; 20_39 66
 	mov	esi,		DWORD PTR 8[esp]
@@ -1354,17 +1355,17 @@ L000start:
 	xor	esi,		ebp
 	mov	ebp,		DWORD PTR 60[esp]
 	xor	esi,		ebp
-	mov	ebp,		ebx
+	mov	ebp,		ecx
 	rol	esi,		1
-	xor	ebp,		ecx
+	xor	ebp,		ebx
 	mov	DWORD PTR 8[esp],esi
 	xor	ebp,		edx
 	lea	esi,		DWORD PTR 3395469782[edi*1+esi]
 	mov	edi,		eax
 	rol	edi,		5
-	ror	ebx,		1
+	ror	ecx,		1
 	add	edi,		ebp
-	ror	ebx,		1
+	ror	ecx,		1
 	add	esi,		edi
 	; 20_39 67
 	mov	edi,		DWORD PTR 12[esp]
@@ -1376,9 +1377,9 @@ L000start:
 	xor	edi,		ebp
 	mov	ebp,		eax
 	rol	edi,		1
-	xor	ebp,		ebx
-	mov	DWORD PTR 12[esp],edi
 	xor	ebp,		ecx
+	mov	DWORD PTR 12[esp],edi
+	xor	ebp,		ebx
 	lea	edi,		DWORD PTR 3395469782[edx*1+edi]
 	mov	edx,		esi
 	rol	edx,		5
@@ -1398,54 +1399,54 @@ L000start:
 	rol	edx,		1
 	xor	ebp,		eax
 	mov	DWORD PTR 16[esp],edx
-	xor	ebp,		ebx
-	lea	edx,		DWORD PTR 3395469782[ecx*1+edx]
-	mov	ecx,		edi
-	rol	ecx,		5
-	ror	esi,		1
-	add	ecx,		ebp
-	ror	esi,		1
-	add	edx,		ecx
-	; 20_39 69
-	mov	ecx,		DWORD PTR 20[esp]
-	mov	ebp,		DWORD PTR 28[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 52[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 8[esp]
-	xor	ecx,		ebp
-	mov	ebp,		edi
-	rol	ecx,		1
-	xor	ebp,		esi
-	mov	DWORD PTR 20[esp],ecx
-	xor	ebp,		eax
-	lea	ecx,		DWORD PTR 3395469782[ebx*1+ecx]
-	mov	ebx,		edx
+	xor	ebp,		ecx
+	lea	edx,		DWORD PTR 3395469782[ebx*1+edx]
+	mov	ebx,		edi
 	rol	ebx,		5
-	ror	edi,		1
+	ror	esi,		1
 	add	ebx,		ebp
-	ror	edi,		1
-	add	ecx,		ebx
-	; 20_39 70
-	mov	ebx,		DWORD PTR 24[esp]
-	mov	ebp,		DWORD PTR 32[esp]
+	ror	esi,		1
+	add	edx,		ebx
+	; 20_39 69
+	mov	ebx,		DWORD PTR 20[esp]
+	mov	ebp,		DWORD PTR 28[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 56[esp]
+	mov	ebp,		DWORD PTR 52[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 12[esp]
+	mov	ebp,		DWORD PTR 8[esp]
 	xor	ebx,		ebp
-	mov	ebp,		edx
+	mov	ebp,		edi
 	rol	ebx,		1
-	xor	ebp,		edi
-	mov	DWORD PTR 24[esp],ebx
 	xor	ebp,		esi
-	lea	ebx,		DWORD PTR 3395469782[eax*1+ebx]
-	mov	eax,		ecx
+	mov	DWORD PTR 20[esp],ebx
+	xor	ebp,		eax
+	lea	ebx,		DWORD PTR 3395469782[ecx*1+ebx]
+	mov	ecx,		edx
+	rol	ecx,		5
+	ror	edi,		1
+	add	ecx,		ebp
+	ror	edi,		1
+	add	ebx,		ecx
+	; 20_39 70
+	mov	ecx,		DWORD PTR 24[esp]
+	mov	ebp,		DWORD PTR 32[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 56[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 12[esp]
+	xor	ecx,		ebp
+	mov	ebp,		edx
+	rol	ecx,		1
+	xor	ebp,		edi
+	mov	DWORD PTR 24[esp],ecx
+	xor	ebp,		esi
+	lea	ecx,		DWORD PTR 3395469782[eax*1+ecx]
+	mov	eax,		ebx
 	rol	eax,		5
 	ror	edx,		1
 	add	eax,		ebp
 	ror	edx,		1
-	add	ebx,		eax
+	add	ecx,		eax
 	; 20_39 71
 	mov	eax,		DWORD PTR 28[esp]
 	mov	ebp,		DWORD PTR 36[esp]
@@ -1454,17 +1455,17 @@ L000start:
 	xor	eax,		ebp
 	mov	ebp,		DWORD PTR 16[esp]
 	xor	eax,		ebp
-	mov	ebp,		ecx
+	mov	ebp,		ebx
 	rol	eax,		1
 	xor	ebp,		edx
 	mov	DWORD PTR 28[esp],eax
 	xor	ebp,		edi
 	lea	eax,		DWORD PTR 3395469782[esi*1+eax]
-	mov	esi,		ebx
+	mov	esi,		ecx
 	rol	esi,		5
-	ror	ecx,		1
+	ror	ebx,		1
 	add	esi,		ebp
-	ror	ecx,		1
+	ror	ebx,		1
 	add	eax,		esi
 	; 20_39 72
 	mov	esi,		DWORD PTR 32[esp]
@@ -1474,17 +1475,17 @@ L000start:
 	xor	esi,		ebp
 	mov	ebp,		DWORD PTR 20[esp]
 	xor	esi,		ebp
-	mov	ebp,		ebx
+	mov	ebp,		ecx
 	rol	esi,		1
-	xor	ebp,		ecx
+	xor	ebp,		ebx
 	mov	DWORD PTR 32[esp],esi
 	xor	ebp,		edx
 	lea	esi,		DWORD PTR 3395469782[edi*1+esi]
 	mov	edi,		eax
 	rol	edi,		5
-	ror	ebx,		1
+	ror	ecx,		1
 	add	edi,		ebp
-	ror	ebx,		1
+	ror	ecx,		1
 	add	esi,		edi
 	; 20_39 73
 	mov	edi,		DWORD PTR 36[esp]
@@ -1496,9 +1497,9 @@ L000start:
 	xor	edi,		ebp
 	mov	ebp,		eax
 	rol	edi,		1
-	xor	ebp,		ebx
-	mov	DWORD PTR 36[esp],edi
 	xor	ebp,		ecx
+	mov	DWORD PTR 36[esp],edi
+	xor	ebp,		ebx
 	lea	edi,		DWORD PTR 3395469782[edx*1+edi]
 	mov	edx,		esi
 	rol	edx,		5
@@ -1518,54 +1519,54 @@ L000start:
 	rol	edx,		1
 	xor	ebp,		eax
 	mov	DWORD PTR 40[esp],edx
-	xor	ebp,		ebx
-	lea	edx,		DWORD PTR 3395469782[ecx*1+edx]
-	mov	ecx,		edi
-	rol	ecx,		5
-	ror	esi,		1
-	add	ecx,		ebp
-	ror	esi,		1
-	add	edx,		ecx
-	; 20_39 75
-	mov	ecx,		DWORD PTR 44[esp]
-	mov	ebp,		DWORD PTR 52[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 12[esp]
-	xor	ecx,		ebp
-	mov	ebp,		DWORD PTR 32[esp]
-	xor	ecx,		ebp
-	mov	ebp,		edi
-	rol	ecx,		1
-	xor	ebp,		esi
-	mov	DWORD PTR 44[esp],ecx
-	xor	ebp,		eax
-	lea	ecx,		DWORD PTR 3395469782[ebx*1+ecx]
-	mov	ebx,		edx
+	xor	ebp,		ecx
+	lea	edx,		DWORD PTR 3395469782[ebx*1+edx]
+	mov	ebx,		edi
 	rol	ebx,		5
-	ror	edi,		1
+	ror	esi,		1
 	add	ebx,		ebp
-	ror	edi,		1
-	add	ecx,		ebx
-	; 20_39 76
-	mov	ebx,		DWORD PTR 48[esp]
-	mov	ebp,		DWORD PTR 56[esp]
+	ror	esi,		1
+	add	edx,		ebx
+	; 20_39 75
+	mov	ebx,		DWORD PTR 44[esp]
+	mov	ebp,		DWORD PTR 52[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 16[esp]
+	mov	ebp,		DWORD PTR 12[esp]
 	xor	ebx,		ebp
-	mov	ebp,		DWORD PTR 36[esp]
+	mov	ebp,		DWORD PTR 32[esp]
 	xor	ebx,		ebp
-	mov	ebp,		edx
+	mov	ebp,		edi
 	rol	ebx,		1
-	xor	ebp,		edi
-	mov	DWORD PTR 48[esp],ebx
 	xor	ebp,		esi
-	lea	ebx,		DWORD PTR 3395469782[eax*1+ebx]
-	mov	eax,		ecx
+	mov	DWORD PTR 44[esp],ebx
+	xor	ebp,		eax
+	lea	ebx,		DWORD PTR 3395469782[ecx*1+ebx]
+	mov	ecx,		edx
+	rol	ecx,		5
+	ror	edi,		1
+	add	ecx,		ebp
+	ror	edi,		1
+	add	ebx,		ecx
+	; 20_39 76
+	mov	ecx,		DWORD PTR 48[esp]
+	mov	ebp,		DWORD PTR 56[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 16[esp]
+	xor	ecx,		ebp
+	mov	ebp,		DWORD PTR 36[esp]
+	xor	ecx,		ebp
+	mov	ebp,		edx
+	rol	ecx,		1
+	xor	ebp,		edi
+	mov	DWORD PTR 48[esp],ecx
+	xor	ebp,		esi
+	lea	ecx,		DWORD PTR 3395469782[eax*1+ecx]
+	mov	eax,		ebx
 	rol	eax,		5
 	ror	edx,		1
 	add	eax,		ebp
 	ror	edx,		1
-	add	ebx,		eax
+	add	ecx,		eax
 	; 20_39 77
 	mov	eax,		DWORD PTR 52[esp]
 	mov	ebp,		DWORD PTR 60[esp]
@@ -1574,17 +1575,17 @@ L000start:
 	xor	eax,		ebp
 	mov	ebp,		DWORD PTR 40[esp]
 	xor	eax,		ebp
-	mov	ebp,		ecx
+	mov	ebp,		ebx
 	rol	eax,		1
 	xor	ebp,		edx
 	mov	DWORD PTR 52[esp],eax
 	xor	ebp,		edi
 	lea	eax,		DWORD PTR 3395469782[esi*1+eax]
-	mov	esi,		ebx
+	mov	esi,		ecx
 	rol	esi,		5
-	ror	ecx,		1
+	ror	ebx,		1
 	add	esi,		ebp
-	ror	ecx,		1
+	ror	ebx,		1
 	add	eax,		esi
 	; 20_39 78
 	mov	esi,		DWORD PTR 56[esp]
@@ -1594,17 +1595,17 @@ L000start:
 	xor	esi,		ebp
 	mov	ebp,		DWORD PTR 44[esp]
 	xor	esi,		ebp
-	mov	ebp,		ebx
+	mov	ebp,		ecx
 	rol	esi,		1
-	xor	ebp,		ecx
+	xor	ebp,		ebx
 	mov	DWORD PTR 56[esp],esi
 	xor	ebp,		edx
 	lea	esi,		DWORD PTR 3395469782[edi*1+esi]
 	mov	edi,		eax
 	rol	edi,		5
-	ror	ebx,		1
+	ror	ecx,		1
 	add	edi,		ebp
-	ror	ebx,		1
+	ror	ecx,		1
 	add	esi,		edi
 	; 20_39 79
 	mov	edi,		DWORD PTR 60[esp]
@@ -1616,49 +1617,100 @@ L000start:
 	xor	edi,		ebp
 	mov	ebp,		eax
 	rol	edi,		1
-	xor	ebp,		ebx
-	mov	DWORD PTR 60[esp],edi
 	xor	ebp,		ecx
+	mov	DWORD PTR 60[esp],edi
+	xor	ebp,		ebx
 	lea	edi,		DWORD PTR 3395469782[edx*1+edi]
 	mov	edx,		esi
 	rol	edx,		5
 	add	edx,		ebp
-	mov	ebp,		DWORD PTR 92[esp]
+	mov	ebp,		DWORD PTR 128[esp]
 	ror	eax,		1
 	add	edi,		edx
 	ror	eax,		1
 	; End processing
 	; 
 	mov	edx,		DWORD PTR 12[ebp]
-	add	edx,		ebx
-	mov	ebx,		DWORD PTR 4[ebp]
-	add	ebx,		esi
+	add	edx,		ecx
+	mov	ecx,		DWORD PTR 4[ebp]
+	add	ecx,		esi
 	mov	esi,		eax
 	mov	eax,		DWORD PTR [ebp]
 	mov	DWORD PTR 12[ebp],edx
 	add	eax,		edi
 	mov	edi,		DWORD PTR 16[ebp]
-	add	edi,		ecx
-	mov	ecx,		DWORD PTR 8[ebp]
-	add	ecx,		esi
+	add	edi,		ebx
+	mov	ebx,		DWORD PTR 8[ebp]
+	add	ebx,		esi
 	mov	DWORD PTR [ebp],eax
-	mov	esi,		DWORD PTR 64[esp]
-	mov	DWORD PTR 8[ebp],ecx
+	mov	esi,		DWORD PTR 132[esp]
+	mov	DWORD PTR 8[ebp],ebx
 	add	esi,		64
 	mov	eax,		DWORD PTR 68[esp]
 	mov	DWORD PTR 16[ebp],edi
-	cmp	eax,		esi
-	mov	DWORD PTR 4[ebp],ebx
-	jl	$L001end
-	mov	eax,		DWORD PTR [esi]
-	jmp	L000start
-$L001end:
-	add	esp,		72
+	cmp	esi,		eax
+	mov	DWORD PTR 4[ebp],ecx
+	jl	L000start
+	add	esp,		108
 	pop	edi
 	pop	ebx
 	pop	ebp
 	pop	esi
 	ret
-_sha1_block_x86 ENDP
+_TEXT	SEGMENT
+PUBLIC	_sha1_block_asm_host_order
+
+_sha1_block_asm_host_order PROC NEAR
+	mov	ecx,		DWORD PTR 12[esp]
+	push	esi
+	shl	ecx,		6
+	mov	esi,		DWORD PTR 12[esp]
+	push	ebp
+	add	ecx,		esi
+	push	ebx
+	mov	ebp,		DWORD PTR 16[esp]
+	push	edi
+	mov	edx,		DWORD PTR 12[ebp]
+	sub	esp,		108
+	mov	edi,		DWORD PTR 16[ebp]
+	mov	ebx,		DWORD PTR 8[ebp]
+	mov	DWORD PTR 68[esp],ecx
+	; First we need to setup the X array
+	mov	eax,		DWORD PTR [esi]
+	mov	ecx,		DWORD PTR 4[esi]
+	mov	DWORD PTR [esp],eax
+	mov	DWORD PTR 4[esp],ecx
+	mov	eax,		DWORD PTR 8[esi]
+	mov	ecx,		DWORD PTR 12[esi]
+	mov	DWORD PTR 8[esp],eax
+	mov	DWORD PTR 12[esp],ecx
+	mov	eax,		DWORD PTR 16[esi]
+	mov	ecx,		DWORD PTR 20[esi]
+	mov	DWORD PTR 16[esp],eax
+	mov	DWORD PTR 20[esp],ecx
+	mov	eax,		DWORD PTR 24[esi]
+	mov	ecx,		DWORD PTR 28[esi]
+	mov	DWORD PTR 24[esp],eax
+	mov	DWORD PTR 28[esp],ecx
+	mov	eax,		DWORD PTR 32[esi]
+	mov	ecx,		DWORD PTR 36[esi]
+	mov	DWORD PTR 32[esp],eax
+	mov	DWORD PTR 36[esp],ecx
+	mov	eax,		DWORD PTR 40[esi]
+	mov	ecx,		DWORD PTR 44[esi]
+	mov	DWORD PTR 40[esp],eax
+	mov	DWORD PTR 44[esp],ecx
+	mov	eax,		DWORD PTR 48[esi]
+	mov	ecx,		DWORD PTR 52[esi]
+	mov	DWORD PTR 48[esp],eax
+	mov	DWORD PTR 52[esp],ecx
+	mov	eax,		DWORD PTR 56[esi]
+	mov	ecx,		DWORD PTR 60[esi]
+	mov	DWORD PTR 56[esp],eax
+	mov	DWORD PTR 60[esp],ecx
+	jmp	L001shortcut
+_sha1_block_asm_host_order ENDP
+_TEXT	ENDS
+_sha1_block_asm_data_order ENDP
 _TEXT	ENDS
 END
