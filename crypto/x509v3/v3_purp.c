@@ -91,7 +91,7 @@ static STACK_OF(X509_PURPOSE) *xptable = NULL;
 
 static int xp_cmp(X509_PURPOSE **a, X509_PURPOSE **b)
 {
-	return (*a)->purpose_id - (*b)->purpose_id;
+	return (*a)->purpose - (*b)->purpose;
 }
 
 int X509_check_purpose(X509 *x, int id, int ca)
@@ -100,6 +100,7 @@ int X509_check_purpose(X509 *x, int id, int ca)
 	X509_PURPOSE *pt;
 	if(!(x->ex_flags & EXFLAG_SET)) {
 		CRYPTO_w_lock(CRYPTO_LOCK_X509);
+		X509_init();
 		x509v3_cache_extensions(x);
 		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
 	}
@@ -126,16 +127,16 @@ int X509_PURPOSE_get_by_sname(char *sname)
 	X509_PURPOSE *xptmp;
 	for(i = 0; i < sk_X509_PURPOSE_num(xptable); i++) {
 		xptmp = sk_X509_PURPOSE_value(xptable, i);
-		if(!strcmp(xptmp->purpose_sname, sname)) return i;
+		if(!strcmp(xptmp->sname, sname)) return i;
 	}
 	return -1;
 }
 
 
-int X509_PURPOSE_get_by_id(int id)
+int X509_PURPOSE_get_by_id(int purpose)
 {
 	X509_PURPOSE tmp;
-	tmp.purpose_id = id;
+	tmp.purpose = purpose;
 	if(!xptable) return -1;
 	return sk_X509_PURPOSE_find(xptable, &tmp);
 }
@@ -153,7 +154,7 @@ int X509_PURPOSE_add(X509_PURPOSE *xp)
 			}
 		}
 			
-	idx = X509_PURPOSE_get_by_id(xp->purpose_id);
+	idx = X509_PURPOSE_get_by_id(xp->purpose);
 	if(idx != -1) {
 		xptable_free(sk_X509_PURPOSE_value(xptable, idx));
 		sk_X509_PURPOSE_set(xptable, idx, xp);
@@ -169,11 +170,11 @@ int X509_PURPOSE_add(X509_PURPOSE *xp)
 static void xptable_free(X509_PURPOSE *p)
 	{
 	if(!p) return;
-	if (p->purpose_flags & X509_PURPOSE_DYNAMIC) 
+	if (p->flags & X509_PURPOSE_DYNAMIC) 
 		{
-		if (p->purpose_flags & X509_PURPOSE_DYNAMIC_NAME) {
-			Free(p->purpose_name);
-			Free(p->purpose_sname);
+		if (p->flags & X509_PURPOSE_DYNAMIC_NAME) {
+			Free(p->name);
+			Free(p->sname);
 		}
 		Free(p);
 		}
@@ -188,28 +189,27 @@ void X509_PURPOSE_cleanup(void)
 void X509_PURPOSE_add_standard(void)
 {
 	X509_PURPOSE *xp;
-	for(xp = xstandard; xp->purpose_name; xp++)
-		X509_PURPOSE_add(xp);
+	for(xp = xstandard; xp->name; xp++) X509_PURPOSE_add(xp);
 }
 
 int X509_PURPOSE_get_id(X509_PURPOSE *xp)
 {
-	return xp->purpose_id;
+	return xp->purpose;
 }
 
 char *X509_PURPOSE_iget_name(X509_PURPOSE *xp)
 {
-	return xp->purpose_name;
+	return xp->name;
 }
 
 char *X509_PURPOSE_iget_sname(X509_PURPOSE *xp)
 {
-	return xp->purpose_sname;
+	return xp->sname;
 }
 
 int X509_PURPOSE_get_trust(X509_PURPOSE *xp)
 {
-	return xp->trust_id;
+	return xp->trust;
 }
 
 static void x509v3_cache_extensions(X509 *x)

@@ -40,11 +40,12 @@ applications should use the more secure PKCS#8 format using the B<pkcs8>
 This specifies the input format. The B<DER> option with a private key uses
 an ASN1 DER encoded form of an ASN.1 SEQUENCE consisting of the values of
 version (currently zero), p, q, g, the public and private key components
-respectively as ASN.1 INTEGERs. When used with a public key it outputs a
-SEQUENCE of the public key component, p, q and g respectively.
+respectively as ASN.1 INTEGERs. When used with a public key it uses a
+SubjectPublicKeyInfo structure: it is an error if the key is not DSA.
 
 The B<PEM> form is the default format: it consists of the B<DER> format base64
-encoded with additional header and footer lines.
+encoded with additional header and footer lines. In the case of a private key
+PKCS#8 format is also accepted.
 
 =item B<-outform DER|PEM>
 

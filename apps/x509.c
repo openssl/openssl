@@ -384,8 +384,7 @@ bad:
 		app_RAND_load_file(NULL, bio_err, 0);
 
 	ERR_load_crypto_strings();
-	X509V3_add_standard_extensions();
-	X509_PURPOSE_add_standard();
+	X509_init();
 
 	if (!X509_STORE_set_default_paths(ctx))
 		{
@@ -871,8 +870,7 @@ end:
 	EVP_PKEY_free(Upkey);
 	EVP_PKEY_free(CApkey);
 	X509_REQ_free(rq);
-	X509V3_EXT_cleanup();
-	X509_PURPOSE_cleanup();
+	X509_cleanup();
 	EXIT(ret);
 	}
 

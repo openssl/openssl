@@ -1,0 +1,128 @@
+=pod
+
+=head1 NAME
+
+pkcs7 - PKCS#7 utility
+
+=head1 SYNOPSIS
+
+B<openssl> B<verify>
+[B<-CApath directory>]
+[B<-CAfile file>]
+[B<-purpose purpose>]
+[B<-untrusted file>]
+[B<-help>]
+[B<-verbose>]
+[B<->]
+[certificates]
+
+
+=head1 DESCRIPTION
+
+The B<verify> command verifies certificate chains.
+
+=head1 COMMAND OPTIONS
+
+=over 4
+
+=item B<-CApath directory>
+
+A directory of trusted certificates. The certificates should have names
+of the form: hash.0 or have symbolic links to them of this
+form ("hash" is the hashed certificate subject name: see the B<-hash> option
+of the B<x509> utility). Under Unix the B<c_rehash> script will automatically
+create symbolic links to a directory of certificates.
+
+=item B<-CAfile file>
+
+A file of trusted certificates. The file should contain multiple certificates
+in PEM format concatenated together.
+
+=item B<-untrusted file>
+
+A file of untrusted certificates. The file should contain multiple certificates
+
+=item B<-purpose purpose>
+
+the intended use for the certificate. Without this option no chain verification
+will be done. Currently accepted uses are B<sslclient>, B<sslserver>,
+B<nssslserver>, B<smimesign>, B<smimeencrypt>. See the B<VERIFY OPERATION>
+section for more information.
+
+=item B<-help>
+
+prints out a usage message.
+
+=item B<-verbose>
+
+print extra information about the operations being performed.
+
+=item B<->
+
+marks the last option. All arguments following this are assumed to be
+certificate files.
+
+
+=item B<certificates>
+
+one or more certificates to verify. If no certificate filenames are included
+then an attempt is made to read a certificate from standard input. They should
+all be in PEM format.
+
+
+=back
+
+=head1 VERIFY OPERATION
+
+The B<verify> program uses the same functions as the internal SSL and S/MIME
+verification, therefore this description applies to these verify operations
+too.
+
+There is one crucial difference between the verify operations performed
+by the B<verify> program: wherever possible an attempt is made to continue
+after an error whereas normally the verify operation would halt on the
+first error. This allows all the problems with a certificate chain to be
+determined.
+
+The verify operation consists of a number of separate steps.
+
+Firstly a certificate chain is built up starting from the supplied certificate
+and ending in the root CA. It is an error if the whole chain cannot be built
+up. The chain is built up by looking up a certificate whose subject name
+matches the issuer name of the current certificate. If a certificate is found
+whose subject and issuer names are identical it is assumed to be the root CA.
+The lookup first looks in the list of untrusted certificates and if no match
+is found the remaining lookups are from the trusted certficates. The root CA
+is always looked up in the trusted certificate list: if the certificate to
+verify is a root certificate then an exact match must be found in the trusted
+list.
+
+The second operation is to check every untrusted certificate's extensions for
+consistency with the supplied purpose. If the B<-purpose> option is not included
+then no checks are done. The supplied or "leaf" certificate must have extensions
+compatible with the supplied purpose and all other certificates must also be valid
+CA certificates. The precise extensions required are described in more detail in
+the B<CERTIFICATE EXTENSIONS> section.
+
+The third operation is to check the trust settings on the root CA. The root
+CA should be trusted for the supplied purpose. For compatability with previous
+versions of SSLeay and OpenSSL a certificate with no trust settings is considered
+to be valid for all purposes. 
+
+The final operation is to check the validity of the certificate chain. The validity
+period is checked against the current system time and the notBefore and notAfter
+dates in the certificate. The certificate signatures are also checked at this
+point.
+
+If all operations complete successfully then certificate is considered valid. If
+any operation fails then the certificate is not valid.
+
+=head1 CERTIFICATE EXTENSIONS
+
+...to be added...
+
+=head1 SEE ALSO
+
+x509(1)
+
+=cut

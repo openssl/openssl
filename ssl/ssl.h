@@ -429,6 +429,9 @@ struct ssl_ctx_st
 /**/	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 /**/	int (*default_verify_callback)(int ok,X509_STORE_CTX *ctx);
 
+	int purpose;		/* Purpose setting */
+	int trust;		/* Trust setting */
+
 	/* Default password callback. */
 /**/	pem_password_cb *default_passwd_callback;
 
@@ -574,6 +577,9 @@ struct ssl_st
 
 	int read_ahead;		/* Read as many input bytes as possible */
 	int hit;		/* reusing a previous session */
+
+	int purpose;		/* Purpose setting */
+	int trust;		/* Trust setting */
 
 	/* crypto */
 	STACK_OF(SSL_CIPHER) *cipher_list;

@@ -294,13 +294,13 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		}
 
 	/* We have the chain complete: now we need to check its purpose */
-	if(ctx->chain_purpose > 0) ok = check_chain_purpose(ctx);
+	if(ctx->purpose > 0) ok = check_chain_purpose(ctx);
 
 	if(!ok) goto end;
 
 	/* The chain extensions are OK: check trust */
 
-	if(ctx->trust_purpose > 0) ok = check_trust(ctx);
+	if(ctx->trust > 0) ok = check_trust(ctx);
 
 	if(!ok) goto end;
 
@@ -339,7 +339,7 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 	/* Check all untrusted certificates */
 	for(i = 0; i < ctx->last_untrusted; i++) {
 		x = sk_X509_value(ctx->chain, i);
-		if(!X509_check_purpose(x, ctx->chain_purpose, i)) {
+		if(!X509_check_purpose(x, ctx->purpose, i)) {
 			if(i) ctx->error = X509_V_ERR_INVALID_CA;
 			else ctx->error = X509_V_ERR_INVALID_PURPOSE;
 			ctx->error_depth = i;
@@ -376,7 +376,7 @@ static int check_trust(X509_STORE_CTX *ctx)
 /* For now just check the last certificate in the chain */
 	i = sk_X509_num(ctx->chain) - 1;
 	x = sk_X509_value(ctx->chain, i);
-	ok = X509_check_trust(x, ctx->trust_purpose, 0);
+	ok = X509_check_trust(x, ctx->trust, 0);
 	if(ok == X509_TRUST_TRUSTED) return 1;
 	ctx->error_depth = sk_X509_num(ctx->chain) - 1;
 	ctx->current_cert = x;
@@ -727,32 +727,61 @@ void X509_STORE_CTX_set_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 	ctx->untrusted=sk;
 	}
 
-int X509_STORE_CTX_chain_purpose(X509_STORE_CTX *ctx, int purpose)
+int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose)
 	{
-		return X509_set_purpose_and_trust(purpose,
-				&ctx->chain_purpose, &ctx->trust_purpose);
+	return X509_STORE_CTX_purpose_inherit(ctx, 0, purpose, 0);
 	}
 
-void X509_STORE_CTX_trust_purpose(X509_STORE_CTX *ctx, int purpose)
+void X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
 	{
-	ctx->trust_purpose = purpose;
+	ctx->trust = trust;
 	}
 
-int X509_set_purpose_and_trust(int id, int *purp, int *trust)
+/* This function is used to set the X509_STORE_CTX purpose and trust
+ * values. This is intended to be used when another structure has its
+ * own trust and purpose values which (if set) will be inherited by
+ * the ctx. If they aren't set then we will usually have a default
+ * purpose in mind which should then be used to set the trust value.
+ * An example of this is SSL use: an SSL structure will have its own
+ * purpose and trust settings which the application can set: if they
+ * aren't set then we use the default of SSL client/server.
+ */
+
+int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
+				int purpose, int trust)
 {
-	X509_PURPOSE *ptmp;
 	int idx;
-	idx = X509_PURPOSE_get_by_id(id);
-	if(idx == -1) {
-		X509err(X509_F_X509_SET_PURPOSE_AND_TRUST,
-					X509_R_UNKNOWN_TRUST_ID);
-		return 0;
+	/* If purpose not set use default */
+	if(!purpose) purpose = def_purpose;
+	/* If we have a purpose then check it is valid */
+	if(purpose) {
+		idx = X509_PURPOSE_get_by_id(purpose);
+		if(idx == -1) {
+			X509err(X509_F_X509_STORE_CTX_PURPOSE_INHERIT,
+						X509_R_UNKNOWN_PURPOSE_ID);
+			return 0;
+		}
+		/* If trust not set then get from purpose default */
+		if(!trust) {
+			X509_PURPOSE *ptmp;
+			ptmp = X509_PURPOSE_iget(idx);
+			trust = ptmp->trust;
+		}
 	}
-	ptmp = X509_PURPOSE_iget(idx);
-	if(purp) *purp = id;
-	if(trust) *trust = ptmp->trust_id;
+	if(trust) {
+		idx = X509_TRUST_get_by_id(trust);
+		if(idx == -1) {
+			X509err(X509_F_X509_STORE_CTX_PURPOSE_INHERIT,
+						X509_R_UNKNOWN_TRUST_ID);
+			return 0;
+		}
+	}
+
+	if(purpose) ctx->purpose = purpose;
+	if(trust) ctx->trust = trust;
 	return 1;
 }
+
 
 IMPLEMENT_STACK_OF(X509)
 IMPLEMENT_ASN1_SET_OF(X509)

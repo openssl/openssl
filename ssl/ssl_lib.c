@@ -201,6 +201,8 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->verify_mode=ctx->verify_mode;
 	s->verify_depth=ctx->verify_depth;
 	s->verify_callback=ctx->default_verify_callback;
+	s->purpose = ctx->purpose;
+	s->trust = ctx->trust;
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->ctx=ctx;
 

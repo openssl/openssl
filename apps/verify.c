@@ -84,9 +84,7 @@ int MAIN(int argc, char **argv)
 	X509_STORE *cert_ctx=NULL;
 	X509_LOOKUP *lookup=NULL;
 
-	X509_PURPOSE_add_standard();
-	X509_TRUST_add_standard();
-	X509V3_add_standard_extensions();
+	X509_init();
 	cert_ctx=X509_STORE_new();
 	if (cert_ctx == NULL) goto end;
 	X509_STORE_set_verify_cb_func(cert_ctx,cb);
@@ -198,9 +196,7 @@ end:
 	}
 	if (cert_ctx != NULL) X509_STORE_free(cert_ctx);
 	sk_X509_pop_free(untrusted, X509_free);
-	X509V3_EXT_cleanup();
-	X509_PURPOSE_cleanup();
-	X509_TRUST_cleanup();
+	X509_cleanup();
 	EXIT(ret);
 	}
 
@@ -246,7 +242,7 @@ static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, int purpos
 		goto end;
 		}
 	X509_STORE_CTX_init(csc,ctx,x,uchain);
-	if(purpose >= 0) X509_STORE_CTX_chain_purpose(csc, purpose);
+	if(purpose >= 0) X509_STORE_CTX_set_purpose(csc, purpose);
 	i=X509_verify_cert(csc);
 	X509_STORE_CTX_free(csc);
 

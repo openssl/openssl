@@ -403,8 +403,8 @@ void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	ctx->cert=x509;
 	ctx->untrusted=chain;
 	ctx->last_untrusted=0;
-	ctx->chain_purpose=0;
-	ctx->trust_purpose=0;
+	ctx->purpose=0;
+	ctx->trust=0;
 	ctx->valid=0;
 	ctx->chain=NULL;
 	ctx->depth=9;

@@ -329,12 +329,12 @@ DECLARE_ASN1_SET_OF(POLICYINFO)
 #define X509_PURPOSE_DYNAMIC_NAME	0x2
 
 typedef struct x509_purpose_st {
-	int purpose_id;
-	int trust_id;		/* Default trust ID */
-	int purpose_flags;
+	int purpose;
+	int trust;		/* Default trust ID */
+	int flags;
 	int (*check_purpose)(struct x509_purpose_st *, X509 *, int);
-	char *purpose_name;
-	char *purpose_sname;
+	char *name;
+	char *sname;
 	void *usr_data;
 } X509_PURPOSE;
 

@@ -172,19 +172,16 @@ must be "trusted". By default a trusted certificate must be stored
 locally and must be a root CA: any certificate chain ending in this CA
 is then usable for any purpose.
 
-Adding trust settings modifies this behaviour: if a certificate is being 
-verified and one of the certificate chain is marked as trusted for that
-specific purpose then the verify succeeds without looking up any more
-certificates. Similarly if the use is prohibited then the certificate
-is automatically rejected. If a purpose is neither permitted nor prohibited
-then the certificate extensions are checked for consistency with the required
-purpose and the process continues.
-
-If a root CA is reached then it must be marked as trusted for the required
-purpose or the verify fails.
+Trust settings currently are only used with a root CA. They allow a finer
+control over the purposes the root CA can be used for. For example a CA
+may be trusted for SSL client but not SSL server use.
 
 See the description of the B<verify> utility for more information on the
 meaning of trust settings.
+
+Future versions of OpenSSL will recognise trust settings on any
+certificate: not just root CAs.
+
 
 =over 4
 
@@ -211,13 +208,13 @@ clears all the permitted or trusted uses of the certificate.
 
 =item B<-clrreject>
 
-clears all the prohibited or untrusted uses of the certificate.
+clears all the prohibited or rejected uses of the certificate.
 
 =item B<-addtrust arg>
 
 adds a trusted certificate use. Currently acceptable values
-are all (any purpose), sslclient (SSL client use), sslserver
-(SSL server use) email (S/MIME email) and objsign (Object signing).
+are B<all> (any purpose), B<sslclient> (SSL client use), B<sslserver>
+(SSL server use) B<email> (S/MIME email) and B<objsign> (Object signing).
 
 =item B<-addreject arg>
 
