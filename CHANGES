@@ -4,9 +4,11 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
-  *) Fix SSL 2.0 rollback checking: The previous implementation of the
-     test was never triggered due to an off-by-one error in
-     RSA_padding_check_SSLv23().
+  *) Fix SSL 2.0 rollback checking: Due to an off-by-one error in
+     RSA_padding_check_SSLv23(), special padding was never detected
+     and thus the SSL 3.0/TLS 1.0 countermeasure against protocol
+     version rollback attacks was not effective.
+
      In s23_clnt.c, don't use special rollback-attack detection padding
      (RSA_SSLV23_PADDING) if SSL 2.0 is the only protocol enabled in the
      client; similarly, in s23_srvr.c, don't do the rollback check if
