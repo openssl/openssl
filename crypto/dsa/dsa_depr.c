@@ -91,9 +91,7 @@ DSA *DSA_generate_parameters(int bits,
 
 	if ((ret=DSA_new()) == NULL) return NULL;
 
-	cb.ver = 1;
-	cb.arg = cb_arg;
-	cb.cb_1 = callback;
+	BN_GENCB_set_old(&cb, callback, cb_arg);
 
 	if(DSA_generate_parameters_ex(ret, bits, seed_in, seed_len,
 				counter_ret, h_ret, &cb))

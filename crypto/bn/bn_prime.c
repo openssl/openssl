@@ -142,11 +142,11 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 		{
 	case 1:
 		/* Deprecated-style callbacks */
-		cb->cb_1(a, b, cb->arg);
+		cb->cb.cb_1(a, b, cb->arg);
 		return 1;
 	case 2:
 		/* New-style callbacks */
-		return cb->cb_2(a, b, cb);
+		return cb->cb.cb_2(a, b, cb);
 	default:
 		break;
 		}

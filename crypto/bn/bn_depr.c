@@ -70,9 +70,7 @@ BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
 	BIGNUM *rnd=NULL;
 	int found = 0;
 
-	cb.ver = 1;
-	cb.arg = cb_arg;
-	cb.cb_1 = callback;
+	BN_GENCB_set_old(&cb, callback, cb_arg);
 
 	if (ret == NULL)
 		{
@@ -94,9 +92,7 @@ int BN_is_prime(const BIGNUM *a, int checks, void (*callback)(int,int,void *),
 	BN_CTX *ctx_passed, void *cb_arg)
 	{
 	BN_GENCB cb;
-	cb.ver = 1;
-	cb.arg = cb_arg;
-	cb.cb_1 = callback;
+	BN_GENCB_set_old(&cb, callback, cb_arg);
 	return BN_is_prime_ex(a, checks, ctx_passed, &cb);
 	}
 
@@ -106,9 +102,7 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 		int do_trial_division)
 	{
 	BN_GENCB cb;
-	cb.ver = 1;
-	cb.arg = cb_arg;
-	cb.cb_1 = callback;
+	BN_GENCB_set_old(&cb, callback, cb_arg);
 	return BN_is_prime_fasttest_ex(a, checks, ctx_passed,
 				do_trial_division, &cb);
 	}

@@ -166,22 +166,16 @@ int RSA_generate_key_ex(RSA *rsa, int bits, unsigned long e_value, BN_GENCB *cb)
 		goto err;
 		}
 */
-	rsa->d=BN_mod_inverse(NULL,rsa->e,r0,ctx2);	/* d */
-	if (rsa->d == NULL) goto err;
+	if (!BN_mod_inverse(rsa->d,rsa->e,r0,ctx2)) goto err;	/* d */
 
 	/* calculate d mod (p-1) */
-	rsa->dmp1=BN_new();
-	if (rsa->dmp1 == NULL) goto err;
 	if (!BN_mod(rsa->dmp1,rsa->d,r1,ctx)) goto err;
 
 	/* calculate d mod (q-1) */
-	rsa->dmq1=BN_new();
-	if (rsa->dmq1 == NULL) goto err;
 	if (!BN_mod(rsa->dmq1,rsa->d,r2,ctx)) goto err;
 
 	/* calculate inverse of q mod p */
-	rsa->iqmp=BN_mod_inverse(NULL,rsa->q,rsa->p,ctx2);
-	if (rsa->iqmp == NULL) goto err;
+	if (!BN_mod_inverse(rsa->iqmp,rsa->q,rsa->p,ctx2)) goto err;
 
 	ok=1;
 err:

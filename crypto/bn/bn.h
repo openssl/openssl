@@ -299,10 +299,22 @@ struct bn_gencb_st
 		void (*cb_1)(int, int, void *);
 		/* if(ver==2) - new callback style */
 		int (*cb_2)(int, int, BN_GENCB *);
-		};
+		} cb;
 	};
 /* Wrapper function to make using BN_GENCB easier,  */
 int BN_GENCB_call(BN_GENCB *cb, int a, int b);
+/* Macro to populate a BN_GENCB structure with an "old"-style callback */
+#define BN_GENCB_set_old(gencb, callback, cb_arg) { \
+		BN_GENCB *tmp_gencb = (gencb); \
+		tmp_gencb->ver = 1; \
+		tmp_gencb->arg = (cb_arg); \
+		tmp_gencb->cb.cb_1 = (callback); }
+/* Macro to populate a BN_GENCB structure with a "new"-style callback */
+#define BN_GENCB_set(gencb, callback, cb_arg) { \
+		BN_GENCB *tmp_gencb = (gencb); \
+		tmp_gencb->ver = 2; \
+		tmp_gencb->arg = (cb_arg); \
+		tmp_gencb->cb.cb_2 = (callback); }
 
 #define BN_prime_checks 0 /* default: select number of iterations
 			     based on the size of the number */

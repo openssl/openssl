@@ -70,9 +70,7 @@ DH *DH_generate_parameters(int prime_len, int generator,
 	if((ret=DH_new()) == NULL)
 		return NULL;
 
-	cb.ver = 1;
-	cb.arg = cb_arg;
-	cb.cb_1 = callback;
+	BN_GENCB_set_old(&cb, callback, cb_arg);
 
 	if(DH_generate_parameters_ex(ret, prime_len, generator, &cb))
 		return ret;

@@ -71,9 +71,7 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
 	if((rsa=RSA_new()) == NULL)
 		return 0;
 
-	cb.ver = 1;
-	cb.arg = cb_arg;
-	cb.cb_1 = callback;
+	BN_GENCB_set_old(&cb, callback, cb_arg);
 
 	if(RSA_generate_key_ex(rsa, bits, e_value, &cb))
 		return rsa;

@@ -281,10 +281,7 @@ bad:
 	if (numbits > 0)
 		{
 		BN_GENCB cb;
-		cb.ver = 2;
-		cb.cb_2 = dsa_cb;
-		cb.arg = bio_err;
-
+		BN_GENCB_set(&cb, dsa_cb, bio_err);
 		assert(need_rand);
 		dsa = DSA_new();
 		if(!dsa)
