@@ -1,4 +1,7 @@
 #!/usr/bin/sh
+#
+# Run this script from the OpenSSL root directory:
+# sh shlib/hpux10-cc.sh
 # 
 # HP-UX (10.20) shared library installation:
 # Compile and install OpenSSL with best possible optimization:
@@ -16,10 +19,10 @@
 #
 # WARNING: At high optimization levels, HP's ANSI-C compiler can chew up
 #          large amounts of memory and CPU time. Make sure to have at least
-#          128MB of RAM available and that you kernel is configure to allow
-#          128MB data size (maxdsiz parameter).
+#          128MB of RAM available and that your kernel is configured to allow
+#          at least 128MB data size (maxdsiz parameter).
 #          The installation process can take several hours, even on fast
-#          machines. +O4 Optimization of the libcrypto.sl shared library may
+#          machines. +O4 optimization of the libcrypto.sl shared library may
 #          take 1 hour on a C200 (200MHz PA8200 CPU), +O3 compilation of
 #          fcrypt_b.c can take 20 minutes on this machine. Stay patient.
 #
@@ -31,7 +34,7 @@ SITEFLAGS="+DAportable +w1"
 #
 # Set the default additions to build with HP-UX.
 # -D_REENTRANT must/should be defined on HP-UX manually, since we do call
-# Confiugure directly.
+# Configure directly.
 # +Oall increases the optimization done.
 #
 MYFLAGS="-D_REENTRANT +Oall $SITEFLAGS"

@@ -203,6 +203,8 @@ my %table=(
 #					<appro@fy.chalmers.se>
 #
 "hpux-parisc-cc","cc:-Ae +O3 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+# Since there is mention of this in shlib/hpux10-cc.sh
+"hpux-parisc-cc-o4","cc:-Ae +O4 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 "hpux-parisc-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W::::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 "hpux64-parisc-cc","cc:-Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:::",
 
