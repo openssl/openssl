@@ -255,9 +255,6 @@ int main(int Argc, char *Argv[])
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
-	ERR_load_crypto_strings();
-	ENGINE_load_builtin_engines();
-
 	/* Lets load up our environment a little */
 	p=getenv("OPENSSL_CONF");
 	if (p == NULL)
@@ -350,12 +347,6 @@ end:
 		}
 	if (prog != NULL) lh_free(prog);
 	if (arg.data != NULL) OPENSSL_free(arg.data);
-	ERR_remove_state(0);
-
-	EVP_cleanup();
-	ERR_free_strings();
-	
-	ENGINE_cleanup();
 
 	apps_shutdown();
 
