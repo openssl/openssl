@@ -222,7 +222,7 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 	if ((aout < 4) || (bout != aout) || (memcmp(abuf,bbuf,aout) != 0))
 		{
 #ifndef NOISY
-		BIO_printf(out, "failed\n\n");
+		BIO_printf(out, " failed\n\n");
 		BIO_printf(out, "key a:\n");
 		BIO_printf(out, "private key: ");
 		BN_print(out, a->priv_key);
@@ -261,7 +261,7 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 	else
 		{
 #ifndef NOISY
-		BIO_printf(out, "ok\n");
+		BIO_printf(out, " ok\n");
 #endif
 		ret=1;
 		}
