@@ -4,6 +4,12 @@
 
  Changes between 0.9.7a and 0.9.7b  [xx XXX 2003]
 
+  *) Fixed a typo bug that would cause ENGINE_set_default() to set an
+     ENGINE as defaults for all supported algorithms irrespective of
+     the 'flags' parameter. 'flags' is now honoured, so applications
+     should make sure they are passing it correctly.
+     [Geoff Thorpe]
+
   *) Target "mingw" now allows native Windows code to be generated in
      the Cygwin environment as well as with the MinGW compiler.
      [Ulf Moeller] 

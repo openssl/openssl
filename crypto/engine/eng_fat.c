@@ -66,18 +66,18 @@ int ENGINE_set_default(ENGINE *e, unsigned int flags)
 	if((flags & ENGINE_METHOD_DIGESTS) && !ENGINE_set_default_digests(e))
 		return 0;
 #ifndef OPENSSL_NO_RSA
-	if((flags & ENGINE_METHOD_RSA) & !ENGINE_set_default_RSA(e))
+	if((flags & ENGINE_METHOD_RSA) && !ENGINE_set_default_RSA(e))
 		return 0;
 #endif
 #ifndef OPENSSL_NO_DSA
-	if((flags & ENGINE_METHOD_DSA) & !ENGINE_set_default_DSA(e))
+	if((flags & ENGINE_METHOD_DSA) && !ENGINE_set_default_DSA(e))
 		return 0;
 #endif
 #ifndef OPENSSL_NO_DH
-	if((flags & ENGINE_METHOD_DH) & !ENGINE_set_default_DH(e))
+	if((flags & ENGINE_METHOD_DH) && !ENGINE_set_default_DH(e))
 		return 0;
 #endif
-	if((flags & ENGINE_METHOD_RAND) & !ENGINE_set_default_RAND(e))
+	if((flags & ENGINE_METHOD_RAND) && !ENGINE_set_default_RAND(e))
 		return 0;
 	return 1;
 	}
