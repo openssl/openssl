@@ -165,6 +165,13 @@
 
  One final comment about compiling applications linked to the OpenSSL library.
  If you don't use the multithreaded DLL runtime library (/MD option) your
- program will almost certainly crash: see the original SSLeay description
- below for more details.
-
+ program will almost certainly crash because malloc gets confused -- the
+ OpenSSL DLLs are statically linked to one version, the application must
+ not use a different one.  You might be able to work around such problems
+ by adding CRYPTO_malloc_init() to your program before any calls to the
+ OpenSSL libraries: This tells the OpenSSL libraries to use the same
+ malloc(), free() and realloc() as the application.  However there are many
+ standard library functions used by OpenSSL that call malloc() internally
+ (e.g. fopen()), and OpenSSL cannot change these; so in general you cannot
+ rely on CYRPTO_malloc_init() solving your problem, and you should
+ consistently use the multithreaded library.
