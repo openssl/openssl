@@ -243,11 +243,11 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
  * unless CRYPTO_MDEBUG is defined) */
 #define CRYPTO_malloc_debug_init()	do {\
 	CRYPTO_set_mem_debug_functions(\
-		(void (*)())CRYPTO_dbg_malloc,\
-		(void (*)())CRYPTO_dbg_realloc,\
-		(void (*)())CRYPTO_dbg_free,\
-		(void (*)())CRYPTO_dbg_set_options,\
-		(long (*)())CRYPTO_dbg_get_options);\
+		CRYPTO_dbg_malloc,\
+		CRYPTO_dbg_realloc,\
+		CRYPTO_dbg_free,\
+		CRYPTO_dbg_set_options,\
+		CRYPTO_dbg_get_options);\
 	} while(0)
 
 int CRYPTO_mem_ctrl(int mode);
