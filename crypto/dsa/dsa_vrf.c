@@ -69,73 +69,7 @@
 int DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 		  DSA *dsa)
 	{
-	BN_CTX *ctx;
-	BIGNUM u1,u2,t1;
-	BN_MONT_CTX *mont=NULL;
-	int ret = -1;
-
-	if ((ctx=BN_CTX_new()) == NULL) goto err;
-	BN_init(&u1);
-	BN_init(&u2);
-	BN_init(&t1);
-
-	/* Calculate W = inv(S) mod Q
-	 * save W in u2 */
-	if ((BN_mod_inverse(&u2,sig->s,dsa->q,ctx)) == NULL) goto err;
-
-	/* save M in u1 */
-	if (BN_bin2bn(dgst,dgst_len,&u1) == NULL) goto err;
-
-	/* u1 = M * w mod q */
-	if (!BN_mod_mul(&u1,&u1,&u2,dsa->q,ctx)) goto err;
-
-	/* u2 = r * w mod q */
-	if (!BN_mod_mul(&u2,sig->r,&u2,dsa->q,ctx)) goto err;
-
-	if ((dsa->method_mont_p == NULL) && (dsa->flags & DSA_FLAG_CACHE_MONT_P))
-		{
-		if ((dsa->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dsa->method_mont_p,
-				dsa->p,ctx)) goto err;
-		}
-	mont=(BN_MONT_CTX *)dsa->method_mont_p;
-
-#if 0
-	{
-	BIGNUM t2;
-
-	BN_init(&t2);
-	/* v = ( g^u1 * y^u2 mod p ) mod q */
-	/* let t1 = g ^ u1 mod p */
-	if (!BN_mod_exp_mont(&t1,dsa->g,&u1,dsa->p,ctx,mont)) goto err;
-	/* let t2 = y ^ u2 mod p */
-	if (!BN_mod_exp_mont(&t2,dsa->pub_key,&u2,dsa->p,ctx,mont)) goto err;
-	/* let u1 = t1 * t2 mod p */
-	if (!BN_mod_mul(&u1,&t1,&t2,dsa->p,ctx)) goto err_bn;
-	BN_free(&t2);
-	}
-	/* let u1 = u1 mod q */
-	if (!BN_mod(&u1,&u1,dsa->q,ctx)) goto err;
-#else
-	{
-	if (!BN_mod_exp2_mont(&t1,dsa->g,&u1,dsa->pub_key,&u2,dsa->p,ctx,mont))
-		goto err;
-	/* BN_copy(&u1,&t1); */
-	/* let u1 = u1 mod q */
-	if (!BN_mod(&u1,&t1,dsa->q,ctx)) goto err;
-	}
-#endif
-	/* V is now in u1.  If the signature is correct, it will be
-	 * equal to R. */
-	ret=(BN_ucmp(&u1, sig->r) == 0);
-
-	err:
-	if (ret != 1) DSAerr(DSA_F_DSA_DO_VERIFY,ERR_R_BN_LIB);
-	if (ctx != NULL) BN_CTX_free(ctx);
-	BN_free(&u1);
-	BN_free(&u2);
-	BN_free(&t1);
-	return(ret);
+	return dsa->meth->dsa_do_verify(dgst, dgst_len, sig, dsa);
 	}
 
 /* data has already been hashed (probably with SHA or SHA-1). */

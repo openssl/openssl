@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Initial support for DSA_METHOD. This is based on the RSA_METHOD and
+     provides hooks that allow the default DSA functions or functions on a
+     "per key" basis to be replaced. This allows hardware acceleration and
+     hardware key storage to be handled without major modification to the
+     library. Also added low level modexp hooks and CRYPTO_EX structure and 
+     associated functions.
+     [Steve Henson]
+
   *) Add a new flag to memory BIOs, BIO_FLAG_MEM_RDONLY. This marks the BIO
      as "read only": it can't be written to and the buffer it points to will
      not be freed. Reading from a read only BIO is much more efficient than

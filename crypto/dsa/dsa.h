@@ -74,13 +74,41 @@ extern "C" {
 #endif
 
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
 #ifndef NO_DH
 # include <openssl/dh.h>
 #endif
 
 #define DSA_FLAG_CACHE_MONT_P	0x01
 
-typedef struct dsa_st
+typedef struct dsa_st DSA;
+
+typedef struct DSA_SIG_st
+	{
+	BIGNUM *r;
+	BIGNUM *s;
+	} DSA_SIG;
+
+typedef struct dsa_method {
+	const char *name;
+	DSA_SIG * (*dsa_do_sign)(const unsigned char *dgst, int dlen, DSA *dsa);
+	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
+								BIGNUM **rp);
+	int (*dsa_do_verify)(const unsigned char *dgst, int dgst_len,
+							DSA_SIG *sig, DSA *dsa);
+	int (*dsa_mod_exp)(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
+			BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx,
+			BN_MONT_CTX *in_mont);
+	int (*bn_mod_exp)(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+				const BIGNUM *m, BN_CTX *ctx,
+				BN_MONT_CTX *m_ctx); /* Can be null */
+	int (*init)(DSA *dsa);
+	int (*finish)(DSA *dsa);
+	int flags;
+	char *app_data;
+} DSA_METHOD;
+
+struct dsa_st
 	{
 	/* This first variable is used to pick up errors where
 	 * a DSA is passed instead of of a EVP_PKEY */
@@ -100,15 +128,10 @@ typedef struct dsa_st
 	int flags;
 	/* Normally used to cache montgomery values */
 	char *method_mont_p;
-
 	int references;
-	} DSA;
-
-typedef struct DSA_SIG_st
-	{
-	BIGNUM *r;
-	BIGNUM *s;
-	} DSA_SIG;
+	CRYPTO_EX_DATA ex_data;
+	DSA_METHOD *meth;
+	};
 
 #define DSAparams_dup(x) (DSA *)ASN1_dup((int (*)())i2d_DSAparams, \
 		(char *(*)())d2i_DSAparams,(char *)(x))
@@ -131,7 +154,10 @@ DSA_SIG * DSA_do_sign(const unsigned char *dgst,int dlen,DSA *dsa);
 int	DSA_do_verify(const unsigned char *dgst,int dgst_len,
 		      DSA_SIG *sig,DSA *dsa);
 
+DSA_METHOD *DSA_OpenSSL(void);
+
 DSA *	DSA_new(void);
+DSA *	DSA_new_method(DSA_METHOD *meth);
 int	DSA_size(DSA *);
 	/* next 4 return -1 on error */
 int	DSA_sign_setup( DSA *dsa,BN_CTX *ctx_in,BIGNUM **kinvp,BIGNUM **rp);
@@ -140,6 +166,10 @@ int	DSA_sign(int type,const unsigned char *dgst,int dlen,
 int	DSA_verify(int type,const unsigned char *dgst,int dgst_len,
 		unsigned char *sigbuf, int siglen, DSA *dsa);
 void	DSA_free (DSA *r);
+int DSA_get_ex_new_index(long argl, char *argp, int (*new_func)(),
+	     int (*dup_func)(), void (*free_func)());
+int DSA_set_ex_data(DSA *d, int idx, char *arg);
+char *DSA_get_ex_data(DSA *d, int idx);
 
 void	ERR_load_DSA_strings(void );
 
