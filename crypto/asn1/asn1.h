@@ -68,6 +68,10 @@ extern "C" {
 #include <openssl/stack.h>
 #include <openssl/safestack.h>
 
+#ifdef VMS
+#include <openssl/vms_idhacks.h>
+#endif
+
 #define V_ASN1_UNIVERSAL		0x00
 #define	V_ASN1_APPLICATION		0x40
 #define V_ASN1_CONTEXT_SPECIFIC		0x80

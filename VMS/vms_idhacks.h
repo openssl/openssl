@@ -99,6 +99,27 @@
 #define sk_PKCS7_RECIP_INFO_pop		sk_PKCS7_RECINF_pop
 #define sk_PKCS7_RECIP_INFO_sort	sk_PKCS7_RECINF_sort
 
+/* Hack the names created with DECLARE_STACK_OF(ASN1_STRING_TABLE) */
+#define sk_ASN1_STRING_TABLE_new	sk_ASN1_STRTAB_new
+#define sk_ASN1_STRING_TABLE_new_null	sk_ASN1_STRTAB_new_null
+#define sk_ASN1_STRING_TABLE_free	sk_ASN1_STRTAB_free
+#define sk_ASN1_STRING_TABLE_num	sk_ASN1_STRTAB_num
+#define sk_ASN1_STRING_TABLE_value	sk_ASN1_STRTAB_value
+#define sk_ASN1_STRING_TABLE_set	sk_ASN1_STRTAB_set
+#define sk_ASN1_STRING_TABLE_zero	sk_ASN1_STRTAB_zero
+#define sk_ASN1_STRING_TABLE_push	sk_ASN1_STRTAB_push
+#define sk_ASN1_STRING_TABLE_unshift	sk_ASN1_STRTAB_unshift
+#define sk_ASN1_STRING_TABLE_find	sk_ASN1_STRTAB_find
+#define sk_ASN1_STRING_TABLE_delete	sk_ASN1_STRTAB_delete
+#define sk_ASN1_STRING_TABLE_delete_ptr	sk_ASN1_STRTAB_delete_ptr
+#define sk_ASN1_STRING_TABLE_insert	sk_ASN1_STRTAB_insert
+#define sk_ASN1_STRING_TABLE_set_cmp_func	sk_ASN1_STRTAB_set_cmp_func
+#define sk_ASN1_STRING_TABLE_dup	sk_ASN1_STRTAB_dup
+#define sk_ASN1_STRING_TABLE_pop_free	sk_ASN1_STRTAB_pop_free
+#define sk_ASN1_STRING_TABLE_shift	sk_ASN1_STRTAB_shift
+#define sk_ASN1_STRING_TABLE_pop	sk_ASN1_STRTAB_pop
+#define sk_ASN1_STRING_TABLE_sort	sk_ASN1_STRTAB_sort
+
 /* Hack the names created with DECLARE_ASN1_SET_OF(PKCS7_SIGNER_INFO) */
 #define i2d_ASN1_SET_OF_PKCS7_SIGNER_INFO i2d_ASN1_SET_OF_PKCS7_SIGINF
 #define d2i_ASN1_SET_OF_PKCS7_SIGNER_INFO d2i_ASN1_SET_OF_PKCS7_SIGINF
