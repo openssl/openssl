@@ -44,7 +44,7 @@ foreach (@ARGV)
 foreach ("md2","md4","md5","sha","sha1","mdc2","rmd160")
 	{
 	push(@files,$_);
-	printf "\t{FUNC_TYPE_MD,\"%s\",dgst_main},\n",$_;
+	printf "#ifndef OPENSSL_NO_".uc($_)."\n\t{FUNC_TYPE_MD,\"".$_."\",dgst_main},\n#endif\n";
 	}
 
 foreach (

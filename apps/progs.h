@@ -113,13 +113,27 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"rand",rand_main},
 	{FUNC_TYPE_GENERAL,"engine",engine_main},
 	{FUNC_TYPE_GENERAL,"ocsp",ocsp_main},
+#ifndef OPENSSL_NO_MD2
 	{FUNC_TYPE_MD,"md2",dgst_main},
+#endif
+#ifndef OPENSSL_NO_MD4
 	{FUNC_TYPE_MD,"md4",dgst_main},
+#endif
+#ifndef OPENSSL_NO_MD5
 	{FUNC_TYPE_MD,"md5",dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA
 	{FUNC_TYPE_MD,"sha",dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA1
 	{FUNC_TYPE_MD,"sha1",dgst_main},
+#endif
+#ifndef OPENSSL_NO_MDC2
 	{FUNC_TYPE_MD,"mdc2",dgst_main},
+#endif
+#ifndef OPENSSL_NO_RMD160
 	{FUNC_TYPE_MD,"rmd160",dgst_main},
+#endif
 #ifndef OPENSSL_NO_AES
 	{FUNC_TYPE_CIPHER,"aes-128-cbc",enc_main},
 #endif
