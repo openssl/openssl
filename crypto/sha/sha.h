@@ -63,7 +63,7 @@
 extern "C" {
 #endif
 
-#if defined(NO_SHA) || defined(NO_SHA0) || defined(NO_SHA1)
+#if defined(NO_SHA) || (defined(NO_SHA0) && defined(NO_SHA1))
 #error SHA is disabled.
 #endif
 

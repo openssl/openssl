@@ -85,6 +85,9 @@ int main(int argc, char *argv[])
 #endif
 
 static void MS_CALLBACK dsa_cb(int p, int n, char *arg);
+
+/* seed, out_p, out_q, out_g are taken from the updated Appendix 5 to
+ * FIPS PUB 186 and also appear in Appendix 5 to FIPS PIB 186-1 */
 static unsigned char seed[20]={
 	0xd5,0x01,0x4e,0x4b,0x60,0xef,0x2b,0xa8,0xb6,0x21,0x1b,0x40,
 	0x62,0xba,0x32,0x24,0xe0,0x42,0x7d,0xd3,
@@ -141,9 +144,8 @@ int main(int argc, char **argv)
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 	BIO_printf(bio_err,"test generation of DSA parameters\n");
-	BIO_printf(bio_err,"expect '.*' followed by 3 lines of '.'s and '+'s\n");
-	dsa=DSA_generate_parameters(512,seed,20,&counter,&h,dsa_cb,
-		(char *)bio_err);
+
+	dsa=DSA_generate_parameters(512,seed,20,&counter,&h,dsa_cb,(char *)bio_err);
 
 	BIO_printf(bio_err,"seed\n");
 	for (i=0; i<20; i+=4)

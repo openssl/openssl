@@ -963,6 +963,14 @@ static int ssl3_send_server_key_exchange(SSL *s)
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,SSL_R_MISSING_TMP_DH_KEY);
 				goto f_err;
 				}
+
+			if (s->s3->tmp.dh != NULL)
+				{
+				DH_free(dh);
+				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, SSL_R_INTERNAL_ERROR);
+				goto err;
+				}
+
 			if ((dh=DHparams_dup(dhp)) == NULL)
 				{
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_DH_LIB);
@@ -1109,7 +1117,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 		s->init_off=0;
 		}
 
-	/* SSL3_ST_SW_KEY_EXCH_B */
+	s->state = SSL3_ST_SW_KEY_EXCH_B;
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);

@@ -20,14 +20,14 @@ for use in the DSA.
 B<bits> is the length of the prime to be generated; the DSS allows a
 maximum of 1024 bits.
 
-If B<seed> is NULL or B<seed_len> E<lt> 20, the primes will be
+If B<seed> is B<NULL> or B<seed_len> E<lt> 20, the primes will be
 generated at random. Otherwise, the seed is used to generate
 them. If the given seed does not yield a prime q, a new random
 seed is chosen and placed at B<seed>.
 
 DSA_generate_parameters() places the iteration count in
 *B<counter_ret> and a counter used for finding a generator in
-*B<h_ret>, unless these are NULL.
+*B<h_ret>, unless these are B<NULL>.
 
 A callback function may be used to provide feedback about the progress
 of the key generation. If B<callback> is not B<NULL>, it will be
@@ -37,13 +37,15 @@ called as follows:
 
 =item *
 
-When the the m-th candidate for q is generated, B<callback(0, m,
-cb_arg)> is called.
+When a candidate for q is generated, B<callback(0, m++, cb_arg)> is called
+(m is 0 for the first candidate).
 
 =item *
 
-B<callback(1, j++, cb_arg)> is called in the inner loop of the
-Miller-Rabin primality test.
+While a candidate for q is tested, B<callback(1, i, cb_arg)>
+is called in the outer loop of the Miller-Rabin primality tests
+(once for each witness that confirms that the candidate may be prime).
+i is the loop counter (starting at 0).
 
 =item *
 
@@ -52,10 +54,15 @@ B<callback(3, 0, cb_arg)> are called.
 
 =item *
 
-While candidates for p are being tested, B<callback(1, j++, cb_arg)>
-is called in the inner loop of the Miller-Rabin primality test, then
-B<callback(0, counter, cb_arg)> is called when the next candidate
-is chosen.
+Before a candidate for p (other than the first) is generated and tested,
+B<callback(0, counter, cb_arg)> is called.
+
+=item *
+
+While a candidate for p is tested, B<callback(1, j++, cb_arg)>
+is called in the outer loop of the Miller-Rabin primality test
+(once for each witness that confirms that the candidate may be prime).
+i is the loop counter (starting at 0).
 
 =item *
 
@@ -70,14 +77,10 @@ When the generator has been found, B<callback(3, 1, cb_arg)> is called.
 =head1 RETURN VALUE
 
 DSA_generate_parameters() returns a pointer to the DSA structure, or
-NULL if the parameter generation fails. The error codes can be
+B<NULL> if the parameter generation fails. The error codes can be
 obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
 
 =head1 BUGS
-
-The deterministic generation of p does not follow the NIST algorithm:
-r0 is SHA1(s+k+1), but should be SHA1(s+j+k) with j_0=2,
-j_counter=j_counter-1 + n + 1.
 
 Seed lengths E<gt> 20 are not supported.
 
@@ -90,5 +93,9 @@ L<DSA_free(3)|DSA_free(3)>
 
 DSA_generate_parameters() appeared in SSLeay 0.8. The B<cb_arg>
 argument was added in SSLeay 0.9.0.
-
+In versions up to OpenSSL 0.9.4, B<callback(1, ...)> was called
+in the inner loop of the Miller-Rabin test whenever it reached the
+squaring step (the parameters to B<callback> did not reveal how many
+witnesses had been tested); since OpenSSL 0.9.5, B<callback(1, ...)>
+is called as in BN_is_prime(3), i.e. once for each witness.
 =cut

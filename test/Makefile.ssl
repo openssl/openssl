@@ -197,12 +197,13 @@ test_verify:
 	../apps/openssl verify -CApath ../certs ../certs/*.pem
 
 test_dh:
-	@echo "Generate as set of DH parameters"
+	@echo "Generate a set of DH parameters"
 	./$(DHTEST)
 
 test_dsa:
-	@echo "Generate as set of DSA parameters"
+	@echo "Generate a set of DSA parameters"
 	./$(DSATEST)
+	./$(DSATEST) -app2_1
 
 test_gen:
 	@echo "Generate and verify a certificate request"

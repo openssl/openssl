@@ -292,7 +292,7 @@ typedef struct bn_recp_ctx_st
  * of Applied Cryptography [Menezes, van Oorschot, Vanstone; CRC Press 1996];
  * original paper: Damgaard, Landrock, Pomerance: Average case error estimates
  * for the strong probable prime test. -- Math. Comp. 61 (1993) 177-194) */
-#define BN_prime_checks_size(b) ((b) >= 1300 ?  2 : \
+#define BN_prime_checks_for_size(b) ((b) >= 1300 ?  2 : \
                                 (b) >=  850 ?  3 : \
                                 (b) >=  650 ?  4 : \
                                 (b) >=  550 ?  5 : \
@@ -406,6 +406,10 @@ BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,BIGNUM *add,
 		BIGNUM *rem,void (*callback)(int,int,void *),void *cb_arg);
 int	BN_is_prime(BIGNUM *p,int nchecks,void (*callback)(int,int,void *),
 		BN_CTX *ctx,void *cb_arg);
+int	BN_is_prime_fasttest(BIGNUM *p,int nchecks,
+		void (*callback)(int,int,void *),
+		BN_CTX *ctx,BN_CTX *ctx2,void *cb_arg,
+		int do_trial_division);
 void	ERR_load_BN_strings(void );
 
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w);

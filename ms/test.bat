@@ -135,6 +135,10 @@ echo test sslv2 via BIO pair
 ssltest -bio_pair -ssl2
 if errorlevel 1 goto done
 
+echo test sslv2/sslv3 with 1024 bit DHE via BIO pair
+ssltest -bio_pair -dhe1024 -v
+if errorlevel 1 goto done
+
 echo test sslv2 with server authentication via BIO pair
 ssltest -bio_pair -ssl2 -server_auth -CAfile cert.tmp
 if errorlevel 1 goto done

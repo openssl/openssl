@@ -2211,3 +2211,5 @@ sk_CRYPTO_EX_DATA_FUNCS_num             2235
 sk_CRYPTO_EX_DATA_FUNCS_pop_free        2236
 sk_CRYPTO_EX_DATA_FUNCS_insert          2237
 sk_CRYPTO_EX_DATA_FUNCS_zero            2238
+BN_pseudo_rand                          2239
+BN_is_prime_fasttest                    2240

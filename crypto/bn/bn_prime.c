@@ -84,7 +84,7 @@ BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe, BIGNUM *add,
 	int found=0;
 	int i,j,c1=0;
 	BN_CTX *ctx;
-	int checks = BN_prime_checks_size(bits);
+	int checks = BN_prime_checks_for_size(bits);
 
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
@@ -154,10 +154,12 @@ err:
 	return(found ? rnd : NULL);
 	}
 
-int BN_is_prime(BIGNUM *a, int checks, void (*callback)(int,int,void *),
-	     BN_CTX *ctx_passed, void *cb_arg)
+int BN_is_prime_fasttest(BIGNUM *a, int checks,
+		void (*callback)(int,int,void *),
+		BN_CTX *ctx_passed, BN_CTX *ctx2_passed, void *cb_arg,
+		int do_trial_division)
 	{
-	int i,j,c2=0,ret= -1;
+	int i,j,ret= -1;
 	BIGNUM *check;
 	BN_CTX *ctx=NULL,*ctx2=NULL;
 	BN_MONT_CTX *mont=NULL;
@@ -165,17 +167,25 @@ int BN_is_prime(BIGNUM *a, int checks, void (*callback)(int,int,void *),
 	if (checks == BN_prime_checks)
 		{
 		int bits = BN_num_bits(a);
-		checks = BN_prime_checks_size(bits);
+		checks = BN_prime_checks_for_size(bits);
 		}
 
 	if (!BN_is_odd(a))
 		return(0);
+	if (do_trial_division)
+		for (i = 1; i < NUMPRIMES; i++)
+			if (BN_mod_word(a, primes[i]) == 0) 
+				return 0;
+
 	if (ctx_passed != NULL)
 		ctx=ctx_passed;
 	else
 		if ((ctx=BN_CTX_new()) == NULL) goto err;
+	if (ctx2_passed != NULL)
+		ctx2=ctx2_passed;
+	else
+		if ((ctx2=BN_CTX_new()) == NULL) goto err;
 
-	if ((ctx2=BN_CTX_new()) == NULL) goto err;
 	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
 
 	check= &(ctx->bn[ctx->tos++]);
@@ -185,7 +195,9 @@ int BN_is_prime(BIGNUM *a, int checks, void (*callback)(int,int,void *),
 
 	for (i=0; i<checks; i++)
 		{
-		if (!BN_pseudo_rand(check,BN_num_bits(a)-1,0,0)) goto err;
+		if (!BN_pseudo_rand(check,BN_num_bits(a),0,0)) goto err;
+		if (BN_cmp(check, a) >= 0)
+			BN_sub(check, check, a);
 		j=witness(check,a,ctx,ctx2,mont);
 		if (j == -1) goto err;
 		if (j)
@@ -193,18 +205,24 @@ int BN_is_prime(BIGNUM *a, int checks, void (*callback)(int,int,void *),
 			ret=0;
 			goto err;
 			}
-		if (callback != NULL) callback(1,c2++,cb_arg);
+		if (callback != NULL) callback(1,i,cb_arg);
 		}
 	ret=1;
 err:
 	ctx->tos--;
 	if ((ctx_passed == NULL) && (ctx != NULL))
 		BN_CTX_free(ctx);
-	if (ctx2 != NULL)
+	if ((ctx2_passed == NULL) && (ctx2 != NULL))
 		BN_CTX_free(ctx2);
 	if (mont != NULL) BN_MONT_CTX_free(mont);
 		
 	return(ret);
+	}
+
+int BN_is_prime(BIGNUM *a, int checks, void (*callback)(int,int,void *),
+	BN_CTX *ctx_passed, void *cb_arg)
+	{
+	return BN_is_prime_fasttest(a, checks, callback, ctx_passed, NULL, cb_arg, 0);
 	}
 
 static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx, BN_CTX *ctx2,
@@ -274,7 +292,7 @@ err:
 static int probable_prime(BIGNUM *rnd, int bits)
 	{
 	int i;
-	MS_STATIC BN_ULONG mods[NUMPRIMES];
+	BN_ULONG mods[NUMPRIMES];
 	BN_ULONG delta,d;
 
 again:

@@ -4,16 +4,41 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Bugfix: ssl3_send_server_key_exchange was not restartable
+     (the state was not changed to SSL3_ST_SW_KEY_EXCH_B, and because of
+     this the server could overwrite ephemeral keys that the client
+     has already seen).
+     [Bodo Moeller]
+
+  *) Turn DSA_is_prime into a macro that calls BN_is_prime,
+     using 50 iterations of the Rabin-Miller test.
+
+     DSA_generate_parameters now uses BN_is_prime_fasttest (with 50
+     iterations of the Rabin-Miller test as required by the appendix
+     to FIPS PUB 186[-1]) instead of DSA_is_prime.
+     As BN_is_prime_fasttest includes trial division, DSA parameter
+     generation becomes much faster.
+
+     This implies a change for the callback functions in DSA_is_prime
+     and DSA_generate_parameters: They are now called once for each
+     positive witness in the Rabin-Miller test, not just occasionally
+     in the inner loop; and the parameters to the callback function now
+     provide an iteration count for the outer loop rather than for the
+     current invocation of the inner loop.
+     [Bodo Moeller]
+
+  *) New functions BN_is_prime_fasttest that optionally does trial
+     division before starting the Rabin-Miller test and has
+     an additional BN_CTX * argument (whereas BN_is_prime always
+     has to allocate at least one BN_CTX).
+     [Bodo Moeller]    
+
   *) Fix for bug in CRL encoding. The validity dates weren't being handled
      as ASN1_TIME.
      [Steve Henson]
 
   *) New -pkcs12 option to CA.pl script to write out a PKCS#12 file.
      [Steve Henson]
-
-  *) Use BN_prime_checks_size(BN_num_bits(w)) rounds of Miller-Rabin when
-     generating DSA primes.
-     [Ulf Möller]
 
   *) New function BN_pseudo_rand().
      [Ulf Möller]
@@ -41,7 +66,10 @@
   *) Make BN_generate_prime() return NULL on error if ret!=NULL.
      [Ulf Möller]
 
-  *) Retain source code compatibility for BN_prime_checks macro.
+  *) Retain source code compatibility for BN_prime_checks macro:
+     BN_is_prime(..., BN_prime_checks, ...) now uses
+     BN_prime_checks_for_size to determine the appropriate number of
+     Rabin-Miller iterations.
      [Ulf Möller]
 
   *) Diffie-Hellman uses "safe" primes: DH_check() return code renamed to
@@ -114,10 +142,9 @@
 
   *) Do more iterations of Rabin-Miller probable prime test (specifically,
      3 for 1024-bit primes, 6 for 512-bit primes, 12 for 256-bit primes
-     instead of only 2 for all lengths; see BN_prime_checks_size definition
+     instead of only 2 for all lengths; see BN_prime_checks_for_size definition
      in crypto/bn/bn_prime.c for the complete table).  This guarantees a
-     false-positive rate of at most 2^-80 (actually less because we are
-     additionally doing trial division) for random input.
+     false-positive rate of at most 2^-80 for random input.
      [Bodo Moeller]
 
   *) Rewrite ssl3_read_n (ssl/s3_pkt.c) avoiding a couple of bugs.

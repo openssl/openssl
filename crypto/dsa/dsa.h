@@ -197,7 +197,11 @@ int	DSAparams_print_fp(FILE *fp, DSA *x);
 int	DSA_print_fp(FILE *bp, DSA *x, int off);
 #endif
 
-int DSA_is_prime(BIGNUM *q,void (*callback)(),void *cb_arg);
+#define DSS_prime_checks 50
+/* Primality test according to FIPS PUB 186[-1], Appendix 2.1:
+ * 50 rounds of Rabin-Miller */
+#define DSA_is_prime(n, callback, cb_arg) \
+	BN_is_prime(n, DSS_prime_checks, callback, NULL, cb_arg)
 
 #ifndef NO_DH
 /* Convert DSA structure (key or just parameters) into DH structure
@@ -218,7 +222,6 @@ DH *DSA_dup_DH(DSA *r);
 #define DSA_F_DSAPARAMS_PRINT_FP			 101
 #define DSA_F_DSA_DO_SIGN				 112
 #define DSA_F_DSA_DO_VERIFY				 113
-#define DSA_F_DSA_IS_PRIME				 102
 #define DSA_F_DSA_NEW					 103
 #define DSA_F_DSA_PRINT					 104
 #define DSA_F_DSA_PRINT_FP				 105
