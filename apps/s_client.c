@@ -746,8 +746,8 @@ re_start:
 				goto shut;
 				}
 			}
-#ifdef OPENSSL_SYS_WINDOWS
-		/* Assume Windows can always write */
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+		/* Assume Windows/DOS can always write */
 		else if (!ssl_pending && write_tty)
 #else
 		else if (!ssl_pending && FD_ISSET(fileno(stdout),&writefds))

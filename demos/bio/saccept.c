@@ -45,6 +45,11 @@ char *argv[];
 
 	SSL_load_error_strings();
 
+#ifdef WATT32
+	dbug_init();
+	sock_init();
+#endif
+
 	/* Add ciphers and message digests */
 	OpenSSL_add_ssl_algorithms();
 

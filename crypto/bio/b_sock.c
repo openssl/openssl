@@ -467,6 +467,12 @@ int BIO_sock_init(void)
 			}
 		}
 #endif /* OPENSSL_SYS_WINDOWS */
+#ifdef WATT32
+	extern int _watt_do_exit;
+	_watt_do_exit = 0;    /* don't make sock_init() call exit() */
+	if (sock_init())
+		return (-1);
+#endif
 	return(1);
 	}
 

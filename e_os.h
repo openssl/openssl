@@ -154,6 +154,13 @@ extern "C" {
 #define readsocket(s,b,n)	recv((s),(b),(n),0)
 #define writesocket(s,b,n)	send((s),(b),(n),0)
 #define EADDRINUSE		WSAEADDRINUSE
+#elif defined(__DJGPP__)
+#define WATT32
+#define get_last_socket_error()	errno
+#define clear_socket_error()	errno=0
+#define closesocket(s)		close_s(s)
+#define readsocket(s,b,n)	read_s(s,b,n)
+#define writesocket(s,b,n)	send(s,b,n,0)
 #elif defined(MAC_OS_pre_X)
 #define get_last_socket_error()	errno
 #define clear_socket_error()	errno=0
@@ -207,7 +214,7 @@ extern "C" {
 #    define S_IFMT	_S_IFMT
 #  endif
 
-#  if !defined(WINNT)
+#  if !defined(WINNT) && !defined(__DJGPP__)
 #    define NO_SYSLOG
 #  endif
 #  define NO_DIRENT
@@ -344,7 +351,7 @@ extern "C" {
 /*************/
 
 #ifdef USE_SOCKETS
-#  if (defined(WINDOWS) || defined(MSDOS)) && !defined(__DJGPP__)
+#  if defined(WINDOWS) || defined(MSDOS)
       /* windows world */
 
 #    ifdef OPENSSL_NO_SOCK
@@ -352,13 +359,18 @@ extern "C" {
 #      define SSLeay_Read(a,b,c)	(-1)
 #      define SHUTDOWN(fd)		close(fd)
 #      define SHUTDOWN2(fd)		close(fd)
-#    else
+#    elif !defined(__DJGPP__)
 #      include <winsock.h>
 extern HINSTANCE _hInstance;
 #      define SSLeay_Write(a,b,c)	send((a),(b),(c),0)
 #      define SSLeay_Read(a,b,c)	recv((a),(b),(c),0)
 #      define SHUTDOWN(fd)		{ shutdown((fd),0); closesocket(fd); }
 #      define SHUTDOWN2(fd)		{ shutdown((fd),2); closesocket(fd); }
+#    else
+#      define SSLeay_Write(a,b,c)	write_s(a,b,c,0)
+#      define SSLeay_Read(a,b,c)	read_s(a,b,c)
+#      define SHUTDOWN(fd)		close_s(fd)
+#      define SHUTDOWN2(fd)		close_s(fd)
 #    endif
 
 #  elif defined(MAC_OS_pre_X)
