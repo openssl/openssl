@@ -5,7 +5,7 @@
 
 $o='/';
 $cp='cp';
-$rm='rm -f';
+$rm='rem'; # use 'rm -f' if using GNU file utilities
 $mkdir='gmkdir';
 
 # gcc wouldn't accept backslashes in paths
