@@ -7,7 +7,7 @@ s_server - SSL/TLS server program
 
 =head1 SYNOPSIS
 
-B<openssl> B<s_client>
+B<openssl> B<s_server>
 [B<-accept port>]
 [B<-context id>]
 [B<-verify depth>]

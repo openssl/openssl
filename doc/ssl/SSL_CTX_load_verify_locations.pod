@@ -33,10 +33,6 @@ which can be used e.g. for descriptions of the certificates.
 The B<CAfile> is processed on execution of the SSL_CTX_load_verify_locations()
 function.
 
-If on an TLS/SSL server no special setting is performed using *client_CA_list()
-functions, the certificates contained in B<CAfile> are listed to the client
-as available CAs during the TLS/SSL handshake.
-
 If B<CApath> is not NULL, it points to a directory containing CA certificates
 in PEM format. The files each contain one CA certificate. The files are
 looked up by the CA subject name hash value, which must hence be available.
@@ -50,9 +46,6 @@ The certificates in B<CApath> are only looked up when required, e.g. when
 building the certificate chain or when actually performing the verification
 of a peer certificate.
 
-On a server, the certificates in B<CApath> are not listed as available
-CA certificates to a client during a TLS/SSL handshake.
-
 When looking up CA certificates, the OpenSSL library will first search the
 certificates in B<CAfile>, then those in B<CApath>. Certificate matching
 is done based on the subject name, the key identifier (if present), and the
@@ -61,6 +54,13 @@ do not match, the next certificate will be tried. If a first certificate
 matching the parameters is found, the verification process will be performed;
 no other certificates for the same parameters will be searched in case of
 failure.
+
+In server mode, when requesting a client certificate, the server must send
+the list of CAs of which it will accept client certificates. This list
+is not influenced by the contents of B<CAfile> or B<CApath> and must
+explicitely be set using the
+L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>
+family of functions.
 
 When building its own certificate chain, an OpenSSL client/server will
 try to fill in missing certificates from B<CAfile>/B<CApath>, if the

@@ -36,25 +36,23 @@ the chosen B<ssl>, overriding the setting valid for B<ssl>'s SSL_CTX object.
 
 When a TLS/SSL server requests a client certificate (see
 B<SSL_CTX_set_verify_options()>), it sends a list of CAs, for which
-it will accept certificates, to the client. If no special list is provided,
-the CAs available using the B<CAfile> option in
-L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
-are sent.
+it will accept certificates, to the client.
 
-This list can be explicitly set using the SSL_CTX_set_client_CA_list() for
+This list must explicitly be set using SSL_CTX_set_client_CA_list() for
 B<ctx> and SSL_set_client_CA_list() for the specific B<ssl>. The list
 specified overrides the previous setting. The CAs listed do not become
 trusted (B<list> only contains the names, not the complete certificates); use
 L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)> 
 to additionally load them for verification.
 
+If the list of acceptable CAs is compiled in a file, the
+L<SSL_load_client_CA_file(3)|SSL_load_client_CA_file(3)>
+function can be used to help importing the necessary data.
+
 SSL_CTX_add_client_CA() and SSL_add_client_CA() can be used to add additional
 items the list of client CAs. If no list was specified before using
 SSL_CTX_set_client_CA_list() or SSL_set_client_CA_list(), a new client
-CA list for B<ctx> or B<ssl> (as appropriate) is opened. The CAs implicitly
-specified using
-L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
-are no longer used automatically.
+CA list for B<ctx> or B<ssl> (as appropriate) is opened.
 
 These functions are only useful for TLS/SSL servers.
 
@@ -80,11 +78,17 @@ to find out the reason.
 
 =back
 
+=head1 EXAMPLES
+
+Scan all certificates in B<CAfile> and list them as acceptable CAs:
+
+  SSL_CTX_set_client_CA_list(ctx,SSL_load_client_CA_file(CAfile));
+
 =head1 SEE ALSO
 
 L<ssl(3)|ssl(3)>,
 L<SSL_get_client_CA_list(3)|SSL_get_client_CA_list(3)>,
-L<SSL_load_client_CA_file(3)|SSL_load_client_CA_file(3)>
+L<SSL_load_client_CA_file(3)|SSL_load_client_CA_file(3)>,
 L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
 
 =cut

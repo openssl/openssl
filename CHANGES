@@ -2,6 +2,25 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
+
+  *) Move 'if (!initialized) RAND_poll()' into regions protected by
+     CRYPTO_LOCK_RAND.  This is not strictly necessary, but avoids
+     having multiple threads call RAND_poll() concurrently.
+     [Bodo Moeller]
+
+  *) In crypto/rand/md_rand.c, replace 'add_do_not_lock' flag by a
+     combination of a flag and a thread ID variable.
+     Otherwise while one thread is in ssleay_rand_bytes (which sets the
+     flag), *other* threads can enter ssleay_add_bytes without obeying
+     the CRYPTO_LOCK_RAND lock (and may even illegaly release the lock
+     that they do not hold after the first thread unsets add_do_not_lock).
+     [Bodo Moeller]
+
+  *) Change bctest again: '-x' expressions are not available in all
+     versions of 'test'.
+     [Bodo Moeller]
+
  Changes between 0.9.6 and 0.9.6a  [5 Apr 2001]
 
   *) Fix a couple of memory leaks in PKCS7_dataDecode()

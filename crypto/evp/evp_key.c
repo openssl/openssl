@@ -95,9 +95,9 @@ int EVP_read_pw_string(char *buf, int len, const char *prompt, int verify)
 #endif
 	}
 
-int EVP_BytesToKey(const EVP_CIPHER *type, EVP_MD *md, unsigned char *salt,
-	     unsigned char *data, int datal, int count, unsigned char *key,
-	     unsigned char *iv)
+int EVP_BytesToKey(const EVP_CIPHER *type, EVP_MD *md, 
+             const unsigned char *salt, const unsigned char *data, int datal, 
+             int count, unsigned char *key, unsigned char *iv)
 	{
 	EVP_MD_CTX c;
 	unsigned char md_buf[EVP_MAX_MD_SIZE];

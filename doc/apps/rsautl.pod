@@ -101,11 +101,11 @@ Sign some data using a private key:
 
 Recover the signed data
 
- openssl rsautl -sign -in sig -inkey key.pem
+ openssl rsautl -verify -in sig -inkey key.pem
 
 Examine the raw signed data:
 
- openssl rsautl -sign -in file -inkey key.pem -raw -hexdump
+ openssl rsautl -verify -in file -inkey key.pem -raw -hexdump
 
  0000 - 00 01 ff ff ff ff ff ff-ff ff ff ff ff ff ff ff   ................
  0010 - ff ff ff ff ff ff ff ff-ff ff ff ff ff ff ff ff   ................
