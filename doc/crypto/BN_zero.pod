@@ -39,6 +39,9 @@ BN_value_one() returns the constant.
 
 Someone might change the constant.
 
+If a B<BIGNUM> is equal to 0xffffffffL it can be represented as an
+unsigned long but this value is also returned on error.
+
 =head1 SEE ALSO
 
 L<bn(3)|bn(3)>, L<BN_bn2bin(3)|BN_bn2bin(3)>

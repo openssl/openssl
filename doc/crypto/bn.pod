@@ -144,14 +144,14 @@ The following description is based on the SSLeay documentation:
         int neg;
         } BIGNUM;
 
-The big number is stored in B<d>, a malloc()ed array of B<BN_ULONG>s.
-A B<BN_ULONG> can be either 16, 32 or 64 bits in size, depending on
-the 'number of bits' specified in bn.h.
+The big number is stored in B<d>, a malloc()ed array of B<BN_ULONG>s,
+least significant first. A B<BN_ULONG> can be either 16, 32 or 64 bits
+in size, depending on the 'number of bits' specified in bn.h. 
 
 B<max> is the size of the B<d> array that has been allocated.  B<top>
 is the 'last' entry being used, so for a value of 4, bn.d[0]=4 and
 bn.top=1. B<neg> is 1 if the number is negative.  When a BIGNUM is
-'0', the B<d> field can be NULL and B<top> == 0.  Various routines in
+'0', the B<d> field can be NULL and B<top> == 0. Various routines in
 this library require the use of temporary B<BIGNUM> variables during
 their execution.  Since dynamic memory allocation to create B<BIGNUM>s
 is rather expensive when used in conjunction with repeated subroutine
@@ -165,6 +165,8 @@ temporary B<BIGNUM>s any publicly exported function will use.
         int tos;                    /* top of stack */
         BIGNUM *bn[BN_CTX_NUM];     /* The variables */
         } BN_CTX;
+
+B<tos> is the index of the first unused B<BIGNUM> in the B<bn> array.
 
 =head1 SEE ALSO
 

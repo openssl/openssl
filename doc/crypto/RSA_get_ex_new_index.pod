@@ -71,7 +71,7 @@ B<new_func()> and B<free_func()> take the same parameters. B<parent> is a
 pointer to the parent RSA structure. B<ptr> is a the application specific data
 (this wont be of much use in B<new_func()>. B<ad> is a pointer to the
 B<CRYPTO_EX_DATA> structure from the parent RSA structure: the functions
-B<CRYPTO_get_ex_data()> and B<CRYPTO_get_ex_data()> can be called to manipulate
+B<CRYPTO_get_ex_data()> and B<CRYPTO_set_ex_data()> can be called to manipulate
 it. The B<idx> parameter is the index: this will be the same value returned by
 B<RSA_get_ex_new_index()> when the functions were initially registered. Finally
 the B<argl> and B<argp> parameters are the values originally passed to the same
@@ -112,7 +112,7 @@ present in the parent RSA structure when it is called.
 
 =head1 SEE ALSO
 
-L<rsa(3)|rsa(3)>
+L<rsa(3)|rsa(3)>, L<CRYPTO_set_ex_data(3)|CRYPTO_set_ex_data(3)>
 
 =head1 HISTORY
 
