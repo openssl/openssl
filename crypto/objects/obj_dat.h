@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 645
-#define NUM_SN 641
-#define NUM_LN 641
-#define NUM_OBJ 615
+#define NUM_NID 650
+#define NUM_SN 643
+#define NUM_LN 643
+#define NUM_OBJ 617
 
-static unsigned char lvalues[4435]={
+static unsigned char lvalues[4455]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -683,6 +683,8 @@ static unsigned char lvalues[4435]={
 0x67,0x2A,0x08,0xAE,0x7B,                    /* [4412] OBJ_set_brand_Novus */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x03,0x0A,     /* [4417] OBJ_des_cdmf */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x06,/* [4425] OBJ_rsaOAEPEncryptionSET */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x14,0x02,0x02,/* [4434] OBJ_ms_smartcard_login */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x14,0x02,0x03,/* [4444] OBJ_ms_upn */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1719,6 +1721,13 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"DES-CDMF","des-cdmf",NID_des_cdmf,8,&(lvalues[4417]),0},
 {"rsaOAEPEncryptionSET","rsaOAEPEncryptionSET",
 	NID_rsaOAEPEncryptionSET,9,&(lvalues[4425]),0},
+{NULL,NULL,NID_undef,0,NULL},
+{NULL,NULL,NID_undef,0,NULL},
+{NULL,NULL,NID_undef,0,NULL},
+{"msSmartcardLogin","Microsoft Smartcardlogin",NID_ms_smartcard_login,
+	10,&(lvalues[4434]),0},
+{"msUPN","Microsoft Universal Principal Name",NID_ms_upn,10,
+	&(lvalues[4444]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2127,6 +2136,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[138]),/* "msEFS" */
 &(nid_objs[171]),/* "msExtReq" */
 &(nid_objs[137]),/* "msSGC" */
+&(nid_objs[648]),/* "msSmartcardLogin" */
+&(nid_objs[649]),/* "msUPN" */
 &(nid_objs[481]),/* "nSRecord" */
 &(nid_objs[173]),/* "name" */
 &(nid_objs[369]),/* "noCheck" */
@@ -2401,7 +2412,9 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[171]),/* "Microsoft Extension Request" */
 &(nid_objs[134]),/* "Microsoft Individual Code Signing" */
 &(nid_objs[137]),/* "Microsoft Server Gated Crypto" */
+&(nid_objs[648]),/* "Microsoft Smartcardlogin" */
 &(nid_objs[136]),/* "Microsoft Trust List Signing" */
+&(nid_objs[649]),/* "Microsoft Universal Principal Name" */
 &(nid_objs[72]),/* "Netscape Base Url" */
 &(nid_objs[76]),/* "Netscape CA Policy Url" */
 &(nid_objs[74]),/* "Netscape CA Revocation Url" */
@@ -3557,6 +3570,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[136]),/* OBJ_ms_ctl_sign                  1 3 6 1 4 1 311 10 3 1 */
 &(nid_objs[137]),/* OBJ_ms_sgc                       1 3 6 1 4 1 311 10 3 3 */
 &(nid_objs[138]),/* OBJ_ms_efs                       1 3 6 1 4 1 311 10 3 4 */
+&(nid_objs[648]),/* OBJ_ms_smartcard_login           1 3 6 1 4 1 311 20 2 2 */
+&(nid_objs[649]),/* OBJ_ms_upn                       1 3 6 1 4 1 311 20 2 3 */
 &(nid_objs[196]),/* OBJ_id_smime_mod_cms             1 2 840 113549 1 9 16 0 1 */
 &(nid_objs[197]),/* OBJ_id_smime_mod_ess             1 2 840 113549 1 9 16 0 2 */
 &(nid_objs[198]),/* OBJ_id_smime_mod_oid             1 2 840 113549 1 9 16 0 3 */

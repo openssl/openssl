@@ -645,3 +645,5 @@ rsaOAEPEncryptionSET		644
 itu_t		645
 joint_iso_itu_t		646
 international_organizations		647
+ms_smartcard_login		648
+ms_upn		649
