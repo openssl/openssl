@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/01/01 15:58:14 $
+  ______________                           $Date: 1999/01/02 16:28:51 $
 
   DEVELOPMENT STATE
 
@@ -19,19 +19,33 @@
 
   OPEN ISSUES
 
-    o  The apps/ dir should be cleaned up. 
-       Ralf proposes the following cleanup:
-       1. We rename the ssleay program to openssl.
-          => This way it's consistent with out project and
-             with the already started openssl(1) manpage, etc.
-       2. We no longer create such a lot of <command> links for
-          "openssl <command>". Instead we follow the "cvs" interface idea
-          where all <command>s are called as "cvs <command>".
-          => This no longer messes up the install dir with
-             symlinks and provides a single-one and consistent command line
-             interface. Additionally we can document it nicely with the single
-             already started openssl(1) manual page.
-       Status: Ralf +1
+    o  The Makefile hierarchy and build mechanism is still not a round thing:
+
+       1. The config vs. Configure scripts
+          It's the same nasty situation as for Apache with APACI vs.
+          src/Configure. It confuses.
+          Suggestion: Merge Configure and config into a single configure
+                      script with a Autoconf style interface ;-) and remove
+                      Configure and config. Or even let us use GNU Autoconf
+                      itself. Then we can avoid a lot of those platform checks
+                      which are currently in Configure.
+
+       2. The massive symlinking of Makefile.ssl -> Makefile:
+          First the `make -f Makefile.ssl links' command is nasty, second the
+          whole process is slow and third it seems to be done without real
+          need. And forth, the dependecies are currently missing.  And fifth,
+          it's complicated to always go to the top-level in order to get the
+          local variables overriden.
+          Suggestion: Rename Makefile.ssl to Makefile.in, add
+                      dependencies to Makefile.in and change the build process
+                      to _generate_ Makefile out of Makefile.in by
+                      substituting variables like CC, etc. This solves the
+                      above problems.
+
+       3. The xxx.org -> xxx.h generation:
+          It's not obvious for which file xxx.org is the source.
+          Suggestion: Rename xxx.org to xxx.h.in (Autoconf style), this way
+                      one sees that xxx.h.in is the input for xxx.h
 
     o  The installation under "make install" produces a very
        installation layout: $prefix/certs and $prefix/private dirs.  That's
