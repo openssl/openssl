@@ -104,8 +104,12 @@ void prime_field_tests(void);
 void char2_field_tests(void);
 void internal_curve_test(void);
 
+#define TIMING_BASE_PT 0
+#define TIMING_RAND_PT 1
+#define TIMING_SIMUL 2
+
 #if 0
-static void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
+static void timings(EC_GROUP *group, int type, BN_CTX *ctx)
 	{
 	clock_t clck;
 	int i, j;
@@ -129,7 +133,7 @@ static void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
 		{
 		if ((r[i] = BN_new()) == NULL) ABORT;
 		if (!BN_pseudo_rand(r[i], BN_num_bits(s), 0, 0)) ABORT;
-		if (multi)
+		if (type != TIMING_BASE_PT)
 			{
 			if ((r0[i] = BN_new()) == NULL) ABORT;
 			if (!BN_pseudo_rand(r0[i], BN_num_bits(s), 0, 0)) ABORT;
@@ -141,12 +145,13 @@ static void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
 		{
 		for (j = 0; j < 10; j++)
 			{
-			if (!EC_POINT_mul(group, P, r[i], multi ? P : NULL, multi ? r0[i] : NULL, ctx)) ABORT;
+			if (!EC_POINT_mul(group, P, (type != TIMING_RAND_PT) ? r[i] : NULL, 
+				(type != TIMING_BASE_PT) ? P : NULL, (type != TIMING_BASE_PT) ? r0[i] : NULL, ctx)) ABORT;
 			}
 		}
-	fprintf(stdout, "\n");
-	
 	clck = clock() - clck;
+
+	fprintf(stdout, "\n");
 
 #ifdef CLOCKS_PER_SEC
 	/* "To determine the time in seconds, the value returned
@@ -161,9 +166,16 @@ static void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
 #	define CLOCKS_PER_SEC 1
 #endif
 
-	fprintf(stdout, "%i %s in %.2f " UNIT "\n", i*j,
-		multi ? "s*P+t*Q operations" : "point multiplications",
-		(double)clck/CLOCKS_PER_SEC);
+	if (type == TIMING_BASE_PT) {
+		fprintf(stdout, "%i %s in %.2f " UNIT "\n", i*j,
+			"base point multiplications", (double)clck/CLOCKS_PER_SEC);
+	} else if (type == TIMING_RAND_PT) {
+		fprintf(stdout, "%i %s in %.2f " UNIT "\n", i*j,
+			"random point multiplications", (double)clck/CLOCKS_PER_SEC);
+	} else if (type == TIMING_SIMUL) {
+		fprintf(stdout, "%i %s in %.2f " UNIT "\n", i*j,
+			"s*P+t*Q operations", (double)clck/CLOCKS_PER_SEC);
+	}
 	fprintf(stdout, "average: %.4f " UNIT "\n", (double)clck/(CLOCKS_PER_SEC*i*j));
 
 	EC_POINT_free(P);
@@ -171,7 +183,7 @@ static void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
 	for (i = 0; i < 10; i++)
 		{
 		BN_free(r[i]);
-		if (multi) BN_free(r0[i]);
+		if (type != TIMING_BASE_PT) BN_free(r0[i]);
 		}
 	}
 #endif
@@ -181,7 +193,7 @@ void prime_field_tests()
 	BN_CTX *ctx = NULL;
 	BIGNUM *p, *a, *b;
 	EC_GROUP *group;
-	EC_GROUP *P_192 = NULL, *P_224 = NULL, *P_256 = NULL, *P_384 = NULL, *P_521 = NULL;
+	EC_GROUP *P_160 = NULL, *P_192 = NULL, *P_224 = NULL, *P_256 = NULL, *P_384 = NULL, *P_521 = NULL;
 	EC_POINT *P, *Q, *R;
 	BIGNUM *x, *y, *z;
 	unsigned char buf[100];
@@ -330,6 +342,52 @@ void prime_field_tests()
 
 	if (!EC_POINT_invert(group, P, ctx)) ABORT;
 	if (0 != EC_POINT_cmp(group, P, R, ctx)) ABORT;
+
+
+	/* Curve secp160r1 (Certicom Research SEC 2 Version 1.0, section 2.4.2, 2000)
+	 * -- not a NIST curve, but commonly used */
+	
+	if (!BN_hex2bn(&p, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFF")) ABORT;
+	if (1 != BN_is_prime_ex(p, BN_prime_checks, ctx, NULL)) ABORT;
+	if (!BN_hex2bn(&a, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFC")) ABORT;
+	if (!BN_hex2bn(&b, "1C97BEFC54BD7A8B65ACF89F81D4D4ADC565FA45")) ABORT;
+	if (!EC_GROUP_set_curve_GFp(group, p, a, b, ctx)) ABORT;
+
+	if (!BN_hex2bn(&x, "4A96B5688EF573284664698968C38BB913CBFC82")) ABORT;
+	if (!BN_hex2bn(&y, "23a628553168947d59dcc912042351377ac5fb32")) ABORT;
+	if (!EC_POINT_set_affine_coordinates_GFp(group, P, x, y, ctx)) ABORT;
+	if (!EC_POINT_is_on_curve(group, P, ctx)) ABORT;
+	if (!BN_hex2bn(&z, "0100000000000000000001F4C8F927AED3CA752257")) ABORT;
+	if (!EC_GROUP_set_generator(group, P, z, BN_value_one())) ABORT;
+
+	if (!EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)) ABORT;
+	fprintf(stdout, "\nSEC2 curve secp160r1 -- Generator:\n     x = 0x");
+	BN_print_fp(stdout, x);
+	fprintf(stdout, "\n     y = 0x");
+	BN_print_fp(stdout, y);
+	fprintf(stdout, "\n");
+	/* G_y value taken from the standard: */
+	if (!BN_hex2bn(&z, "23a628553168947d59dcc912042351377ac5fb32")) ABORT;
+	if (0 != BN_cmp(y, z)) ABORT;
+
+	fprintf(stdout, "verify degree ...");
+	if (EC_GROUP_get_degree(group) != 160) ABORT;
+	fprintf(stdout, " ok\n");
+	
+	fprintf(stdout, "verify group order ...");
+	fflush(stdout);
+	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
+	fprintf(stdout, ".");
+	fflush(stdout);
+	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
+	fprintf(stdout, " ok\n");
+
+	if (!(P_160 = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT;
+	if (!EC_GROUP_copy(P_160, group)) ABORT;
 
 
 	/* Curve P-192 (FIPS PUB 186-2, App. 6) */
@@ -637,16 +695,24 @@ void prime_field_tests()
 
 
 #if 0
-	timings(P_192, 0, ctx);
-	timings(P_192, 1, ctx);
-	timings(P_224, 0, ctx);
-	timings(P_224, 1, ctx);
-	timings(P_256, 0, ctx);
-	timings(P_256, 1, ctx);
-	timings(P_384, 0, ctx);
-	timings(P_384, 1, ctx);
-	timings(P_521, 0, ctx);
-	timings(P_521, 1, ctx);
+	timings(P_160, TIMING_BASE_PT, ctx);
+	timings(P_160, TIMING_RAND_PT, ctx);
+	timings(P_160, TIMING_SIMUL, ctx);
+	timings(P_192, TIMING_BASE_PT, ctx);
+	timings(P_192, TIMING_RAND_PT, ctx);
+	timings(P_192, TIMING_SIMUL, ctx);
+	timings(P_224, TIMING_BASE_PT, ctx);
+	timings(P_224, TIMING_RAND_PT, ctx);
+	timings(P_224, TIMING_SIMUL, ctx);
+	timings(P_256, TIMING_BASE_PT, ctx);
+	timings(P_256, TIMING_RAND_PT, ctx);
+	timings(P_256, TIMING_SIMUL, ctx);
+	timings(P_384, TIMING_BASE_PT, ctx);
+	timings(P_384, TIMING_RAND_PT, ctx);
+	timings(P_384, TIMING_SIMUL, ctx);
+	timings(P_521, TIMING_BASE_PT, ctx);
+	timings(P_521, TIMING_RAND_PT, ctx);
+	timings(P_521, TIMING_SIMUL, ctx);
 #endif
 
 
@@ -659,6 +725,7 @@ void prime_field_tests()
 	EC_POINT_free(R);
 	BN_free(x); BN_free(y); BN_free(z);
 
+	if (P_160) EC_GROUP_free(P_160);
 	if (P_192) EC_GROUP_free(P_192);
 	if (P_224) EC_GROUP_free(P_224);
 	if (P_256) EC_GROUP_free(P_256);
@@ -1103,26 +1170,36 @@ void char2_field_tests()
 
 
 #if 0
-	timings(C2_K163, 0, ctx);
-	timings(C2_K163, 1, ctx);
-	timings(C2_B163, 0, ctx);
-	timings(C2_B163, 1, ctx);
-	timings(C2_K233, 0, ctx);
-	timings(C2_K233, 1, ctx);
-	timings(C2_B233, 0, ctx);
-	timings(C2_B233, 1, ctx);
-	timings(C2_K283, 0, ctx);
-	timings(C2_K283, 1, ctx);
-	timings(C2_B283, 0, ctx);
-	timings(C2_B283, 1, ctx);
-	timings(C2_K409, 0, ctx);
-	timings(C2_K409, 1, ctx);
-	timings(C2_B409, 0, ctx);
-	timings(C2_B409, 1, ctx);
-	timings(C2_K571, 0, ctx);
-	timings(C2_K571, 1, ctx);
-	timings(C2_B571, 0, ctx);
-	timings(C2_B571, 1, ctx);
+	timings(C2_K163, TIMING_BASE_PT, ctx);
+	timings(C2_K163, TIMING_RAND_PT, ctx);
+	timings(C2_K163, TIMING_SIMUL, ctx);
+	timings(C2_B163, TIMING_BASE_PT, ctx);
+	timings(C2_B163, TIMING_RAND_PT, ctx);
+	timings(C2_B163, TIMING_SIMUL, ctx);
+	timings(C2_K233, TIMING_BASE_PT, ctx);
+	timings(C2_K233, TIMING_RAND_PT, ctx);
+	timings(C2_K233, TIMING_SIMUL, ctx);
+	timings(C2_B233, TIMING_BASE_PT, ctx);
+	timings(C2_B233, TIMING_RAND_PT, ctx);
+	timings(C2_B233, TIMING_SIMUL, ctx);
+	timings(C2_K283, TIMING_BASE_PT, ctx);
+	timings(C2_K283, TIMING_RAND_PT, ctx);
+	timings(C2_K283, TIMING_SIMUL, ctx);
+	timings(C2_B283, TIMING_BASE_PT, ctx);
+	timings(C2_B283, TIMING_RAND_PT, ctx);
+	timings(C2_B283, TIMING_SIMUL, ctx);
+	timings(C2_K409, TIMING_BASE_PT, ctx);
+	timings(C2_K409, TIMING_RAND_PT, ctx);
+	timings(C2_K409, TIMING_SIMUL, ctx);
+	timings(C2_B409, TIMING_BASE_PT, ctx);
+	timings(C2_B409, TIMING_RAND_PT, ctx);
+	timings(C2_B409, TIMING_SIMUL, ctx);
+	timings(C2_K571, TIMING_BASE_PT, ctx);
+	timings(C2_K571, TIMING_RAND_PT, ctx);
+	timings(C2_K571, TIMING_SIMUL, ctx);
+	timings(C2_B571, TIMING_BASE_PT, ctx);
+	timings(C2_B571, TIMING_RAND_PT, ctx);
+	timings(C2_B571, TIMING_SIMUL, ctx);
 #endif
 
 

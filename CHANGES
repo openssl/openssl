@@ -4,6 +4,10 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Add code for kP+lQ timings to crypto/ec/ectest.c, and add SEC2
+     curve secp160r1 to the tests.
+     [Douglas Stebila (Sun Microsystems Laboratories)]
+
   *) Add the possibility to load symbols globally with DSO.
      [Götz Babin-Ebell <babin-ebell@trustcenter.de> via Richard Levitte]
 
