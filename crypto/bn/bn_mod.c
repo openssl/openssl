@@ -149,7 +149,7 @@ int BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m, BN_
  * and less than  m */
 int BN_mod_add_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m)
 	{
-	if (!BN_add(r, a, b)) return 0;
+	if (!BN_uadd(r, a, b)) return 0;
 	if (BN_ucmp(r, m) >= 0)
 		return BN_usub(r, r, m);
 	return 1;
