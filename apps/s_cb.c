@@ -231,6 +231,8 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 
 int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key)
 	{
+	if (cert ==  NULL)
+		return 1;
 	if (SSL_CTX_use_certificate(ctx,cert) <= 0)
 		{
 		BIO_printf(bio_err,"error setting certificate\n");

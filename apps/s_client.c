@@ -482,21 +482,32 @@ bad:
 	if (key_file == NULL)
 		key_file = cert_file;
 
-	key = load_key(bio_err, key_file, key_format, 0, pass, e,
-		       "client certificate private key file");
-	if (!key)
+
+	if (key_file)
+
 		{
-		ERR_print_errors(bio_err);
-		goto end;
+
+		key = load_key(bio_err, key_file, key_format, 0, pass, e,
+			       "client certificate private key file");
+		if (!key)
+			{
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+
 		}
 
-	cert = load_cert(bio_err,cert_file,cert_format,
-			NULL, e, "client certificate file");
+	if (cert_file)
 
-	if (!cert)
 		{
-		ERR_print_errors(bio_err);
-		goto end;
+		cert = load_cert(bio_err,cert_file,cert_format,
+				NULL, e, "client certificate file");
+
+		if (!cert)
+			{
+			ERR_print_errors(bio_err);
+			goto end;
+			}
 		}
 
 	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
