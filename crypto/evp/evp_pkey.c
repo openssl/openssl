@@ -133,7 +133,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 		     * SEQUENCE {parameters, priv_key}
 		     * SEQUENCE {pub_key, priv_key}
 		     */
-                     
+
 		    t1 = (ASN1_TYPE *)sk_value(ndsa, 0);
 		    t2 = (ASN1_TYPE *)sk_value(ndsa, 1);
 		    if(t1->type == V_ASN1_SEQUENCE) {
@@ -152,7 +152,14 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 			goto dsaerr;
 		    }
 		    privkey = t2->value.integer;
-		} else if (!(privkey=d2i_ASN1_INTEGER (NULL, &p, pkeylen))) {
+		} else {
+			if (!(privkey=d2i_ASN1_INTEGER (NULL, &p, pkeylen))) {
+				EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
+				goto dsaerr;
+			}
+			param = p8->pkeyalg->parameter;
+		}
+		if (!param || (param->type != V_ASN1_SEQUENCE)) {
 			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
 			goto dsaerr;
 		}
@@ -186,7 +193,8 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 
 		EVP_PKEY_assign_DSA(pkey, dsa);
 		BN_CTX_free (ctx);
-		sk_pop_free(ndsa, ASN1_TYPE_free);
+		if(ndsa) sk_pop_free(ndsa, ASN1_TYPE_free);
+		else ASN1_INTEGER_free(privkey);
 		break;
 		dsaerr:
 		BN_CTX_free (ctx);

@@ -4,6 +4,10 @@
 
  Changes between 0.9.5 and 0.9.5a  [XX XXX 2000]
 
+  *) Fix the PKCS#8 DSA private key code so it decodes keys again
+     and fix a memory leak.
+     [Steve Henson]
+
   *) In util/mkerr.pl (which implements 'make errors'), preserve
      reason strings from the previous version of the .c file, as
      the default to have only downcase letters (and digits) in
