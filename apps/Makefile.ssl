@@ -34,7 +34,7 @@ SCRIPTS=CA.sh CA.pl der_chop
 
 EXE= $(PROGRAM)
 
-E_EXE=	verify asn1pars req dgst dh dhparam enc gendh errstr \
+E_EXE=	verify asn1pars req dgst dh dhparam enc passwd gendh errstr \
 	ca crl rsa dsa dsaparam \
 	x509 genrsa gendsa s_server s_client speed \
 	s_time version pkcs7 crl2pkcs7 sess_id ciphers nseq pkcs12 \
@@ -49,7 +49,7 @@ S_SRC=	s_cb.c s_socket.c
 RAND_OBJ=app_rand.o
 RAND_SRC=app_rand.c
 
-E_OBJ=	verify.o asn1pars.o req.o dgst.o dh.o dhparam.o enc.o gendh.o errstr.o \
+E_OBJ=	verify.o asn1pars.o req.o dgst.o dh.o dhparam.o enc.o passwd.o gendh.o errstr.o \
 	ca.o pkcs7.o crl2p7.o crl.o \
 	rsa.o dsa.o dsaparam.o \
 	x509.o genrsa.o gendsa.o s_server.o s_client.o speed.o \
@@ -58,7 +58,7 @@ E_OBJ=	verify.o asn1pars.o req.o dgst.o dh.o dhparam.o enc.o gendh.o errstr.o \
 
 #	pem_mail.o
 
-E_SRC=	verify.c asn1pars.c req.c dgst.c dh.c enc.c gendh.c errstr.c ca.c \
+E_SRC=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c ca.c \
 	pkcs7.c crl2p7.c crl.c \
 	rsa.c dsa.c dsaparam.c \
 	x509.c genrsa.c gendsa.c s_server.c s_client.c speed.c \

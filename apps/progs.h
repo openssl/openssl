@@ -8,6 +8,7 @@ extern int dgst_main(int argc,char *argv[]);
 extern int dh_main(int argc,char *argv[]);
 extern int dhparam_main(int argc,char *argv[]);
 extern int enc_main(int argc,char *argv[]);
+extern int passwd_main(int argc,char *argv[]);
 extern int gendh_main(int argc,char *argv[]);
 extern int errstr_main(int argc,char *argv[]);
 extern int ca_main(int argc,char *argv[]);
@@ -55,6 +56,7 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"dhparam",dhparam_main},
 #endif
 	{FUNC_TYPE_GENERAL,"enc",enc_main},
+	{FUNC_TYPE_GENERAL,"passwd",passwd_main},
 #ifndef NO_DH
 	{FUNC_TYPE_GENERAL,"gendh",gendh_main},
 #endif

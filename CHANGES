@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) New 'passwd' tool, currently only -fcrypt is implemented.
+     [Bodo Moeller]
+
   *) Add command line password options to the remaining applications.
      [Steve Henson]
 
