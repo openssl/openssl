@@ -360,15 +360,13 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 		 */
 		if ((fh = fopen(DEVRANDOM, "r")) != NULL)
 			{
-			unsigned char tmpbuf[32];
+			unsigned char tmpbuf[ENTROPY_NEEDED];
+			int i;
 
-			fread((unsigned char *)tmpbuf,1,32,fh);
-			/* we don't care how many bytes we read,
-			 * we will just copy the 'stack' if there is
-			 * nothing else :-) */
+			i=fread((unsigned char *)tmpbuf,1,ENTROPY_NEEDED,fh);
 			fclose(fh);
-			RAND_seed(tmpbuf,32);
-			memset(tmpbuf,0,32);
+			RAND_seed(tmpbuf,i);
+			memset(tmpbuf,0,i);
 			}
 #endif
 #ifdef PURIFY
