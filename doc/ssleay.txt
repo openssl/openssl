@@ -6245,7 +6245,7 @@ SSL_get_app_data
 void SSL_CTX_set_default_verify
 
 /* This callback, if set, totaly overrides the normal SSLeay verification
- * functions and should return 1 on sucesss and 0 on failure */
+ * functions and should return 1 on success and 0 on failure */
 void SSL_CTX_set_cert_verify_callback
 
 /* The following are the same as the equivilent SSL_xxx functions.
