@@ -505,6 +505,7 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int num);
 #define BN_R_INVALID_LENGTH				 106
 #define BN_R_NOT_INITIALIZED				 107
 #define BN_R_NO_INVERSE					 108
+#define BN_R_TOO_LARGE					 114
 #define BN_R_TOO_MANY_TEMPORARY_VARIABLES		 109
 
 #ifdef  __cplusplus

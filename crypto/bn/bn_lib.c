@@ -319,6 +319,12 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 
 	if (words > b->dmax)
 		{
+		if (words > (INT_MAX/(4*BN_BITS2)))
+			{
+			BNerr(BN_F_BN_EXPAND2,BN_R_TOO_LARGE);
+			return NULL;
+			}
+			
 		bn_check_top(b);	
 		if (BN_get_flags(b,BN_FLG_STATIC_DATA))
 			{
