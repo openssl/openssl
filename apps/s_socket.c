@@ -60,7 +60,7 @@
    recursive header file inclusion, resulting in the compiler complaining
    that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
    is needed to have fileno() declared correctly...  So let's define u_int */
-#if defined(__DECC) && !defined(__U_INT)
+#if defined(VMS) && defined(__DECC) && !defined(__U_INT)
 #define __U_INT
 typedef unsigned int u_int;
 #endif
