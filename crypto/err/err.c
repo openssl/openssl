@@ -568,7 +568,7 @@ static void err_load_strings(int lib, ERR_STRING_DATA *str)
 
 void ERR_load_strings(int lib, ERR_STRING_DATA *str)
 	{
-	err_load_ERR_strings();
+	ERR_load_ERR_strings();
 	err_load_strings(lib, str);
 	}
 
