@@ -152,7 +152,7 @@ int MAIN(int argc, char **argv)
 	X509 *x509ss=NULL;
 	X509_REQ *req=NULL;
 	EVP_PKEY *pkey=NULL;
-	int i,badops=0,newreq=0,verbose=0,pkey_type=TYPE_RSA;
+	int i=0,badops=0,newreq=0,verbose=0,pkey_type=TYPE_RSA;
 	long newkey = -1;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,verify=0,noout=0,text=0,keyform=FORMAT_PEM;
