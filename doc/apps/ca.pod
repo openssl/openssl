@@ -597,12 +597,6 @@ The use of an in memory text database can cause problems when large
 numbers of certificates are present because, as the name implies
 the database has to be kept in memory.
 
-It is not possible to certify two certificates with the same DN: this
-is a side effect of how the text database is indexed and it cannot easily
-be fixed without introducing other problems. Some S/MIME clients can use
-two certificates with the same DN for separate signing and encryption
-keys.
-
 The B<ca> command really needs rewriting or the required functionality
 exposed at either a command or interface level so a more friendly utility
 (perl script or GUI) can handle things properly. The scripts B<CA.sh> and
