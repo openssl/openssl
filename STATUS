@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/01/10 16:37:35 $
+  ______________                           $Date: 2001/01/11 13:33:10 $
 
   DEVELOPMENT STATE
 
@@ -21,7 +21,7 @@
 
   AVAILABLE PATCHES
 
-    o CA.pl patch (Damien Miller)
+    o
 
   IN PROGRESS
 
@@ -50,13 +50,13 @@
     o  #include <openssl/e_os.h> in exported header files is illegal since
        e_os.h is suitable only for library-internal use
 
+  OPEN ISSUES
+
     o  crypto/ex_data.c is not really thread-safe and so must be used
        with care (e.g., extra locking where necessary, or don't call
        CRYPTO_get_ex_new_index once multiple threads exist).
        The current API is not suitable for everything that it pretends
        to offer.
-
-  OPEN ISSUES
 
     o  The Makefile hierarchy and build mechanism is still not a round thing:
 
