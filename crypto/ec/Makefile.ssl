@@ -24,10 +24,10 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	ec_lib.c ecp_smpl.c ecp_mont.c ecp_recp.c ecp_nist.c ec_cvt.c ec_mult.c \
-	ec_err.c ec_curve.c ec_check.c
+	ec_err.c ec_curve.c ec_check.c ec_print.c
 
 LIBOBJ=	ec_lib.o ecp_smpl.o ecp_mont.o ecp_recp.o ecp_nist.o ec_cvt.o ec_mult.o \
-	ec_err.o ec_curve.o ec_check.o
+	ec_err.o ec_curve.o ec_check.o ec_print.o
 
 SRC= $(LIBSRC)
 
@@ -122,6 +122,12 @@ ec_mult.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 ec_mult.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 ec_mult.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ec_mult.o: ec_lcl.h ec_mult.c
+ec_print.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+ec_print.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+ec_print.o: ../../include/openssl/opensslconf.h
+ec_print.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+ec_print.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+ec_print.o: ec_lcl.h ec_print.c
 ecp_mont.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ecp_mont.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 ecp_mont.o: ../../include/openssl/ec.h ../../include/openssl/err.h

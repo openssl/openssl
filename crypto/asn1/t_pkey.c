@@ -266,58 +266,36 @@ int ECDSA_print(BIO *bp, const ECDSA *x, int off)
 		reason = ERR_R_EC_LIB;
 		goto err;
 		}
-	if (!EC_GROUP_get_order(x->group, tmp_6, NULL) || !EC_GROUP_get_cofactor(x->group, tmp_7, NULL))
+	if (!EC_GROUP_get_order(x->group, tmp_6, NULL) || 
+            !EC_GROUP_get_cofactor(x->group, tmp_7, NULL))
 		{
 		reason = ERR_R_EC_LIB;
 		goto err;
 		}
-	if ((buf_len = EC_POINT_point2oct(x->group, point, ECDSA_get_conversion_form(x), NULL, 0, ctx)) == 0)
+	if ((tmp_4 = EC_POINT_point2bn(x->group, point, 
+		ECDSA_get_conversion_form(x), tmp_4, ctx)) == NULL)
 		{
-		reason = ECDSA_R_UNEXPECTED_PARAMETER_LENGTH;
+		reason = ERR_R_EC_LIB;
 		goto err;
 		}
+	if ((tmp_5 = EC_POINT_point2bn(x->group, x->pub_key,
+		ECDSA_get_conversion_form(x), tmp_5, ctx)) == NULL)
+		{
+		reason = ERR_R_EC_LIB;
+		goto err;
+		}
+
+	buf_len = BN_num_bytes(tmp_1);
+	if (buf_len < (i = BN_num_bytes(tmp_2))) buf_len = i;
+	if (buf_len < (i = BN_num_bytes(tmp_3))) buf_len = i;
+	if (buf_len < (i = BN_num_bytes(tmp_4))) buf_len = i;
+	if (buf_len < (i = BN_num_bytes(tmp_5))) buf_len = i;
+	if (buf_len < (i = BN_num_bytes(tmp_6))) buf_len = i;
+	if (buf_len < (i = BN_num_bytes(tmp_7))) buf_len = i;
+	buf_len += 10;
 	if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
 		{
 		reason = ERR_R_MALLOC_FAILURE;
-		goto err;
-		}
-	if (!EC_POINT_point2oct(x->group, point, ECDSA_get_conversion_form(x), 
-				buffer, buf_len, ctx)) goto err;
-	if ((tmp_4 = BN_bin2bn(buffer, buf_len, NULL)) == NULL)
-		{
-		reason = ERR_R_BN_LIB;
-		goto err;
-		}
-	if ((i = EC_POINT_point2oct(x->group, x->pub_key, ECDSA_get_conversion_form(x), NULL, 0, ctx)) == 0)
-		{
-		reason = ECDSA_R_UNEXPECTED_PARAMETER_LENGTH;
-		goto err;
-		}
-	if (i > buf_len && (buffer = OPENSSL_realloc(buffer, i)) == NULL)
-		{
-		reason = ERR_R_MALLOC_FAILURE;
-		buf_len = i;
-		goto err;
-		}
-	if (!EC_POINT_point2oct(x->group, x->pub_key, ECDSA_get_conversion_form(x), 
-				buffer, buf_len, ctx))
-		{
-		reason = ERR_R_EC_LIB;
-		goto err;
-		}
-	if ((tmp_5 = BN_bin2bn(buffer, buf_len, NULL)) == NULL)
-		{
-		reason = ERR_R_BN_LIB;
-		goto err;
-		}
-	if (tmp_1 != NULL)
-		i = BN_num_bytes(tmp_1)*2;
-	else
-		i=256;
-	if ((i + 10) > buf_len && (buffer = OPENSSL_realloc(buffer, i+10)) == NULL)
-		{
-		reason = ERR_R_MALLOC_FAILURE;
-		buf_len = i;
 		goto err;
 		}
 	if (off)
@@ -552,25 +530,22 @@ int ECDSAParameters_print(BIO *bp, const ECDSA *x)
 	if ((point = EC_GROUP_get0_generator(x->group)) == NULL) goto err;
 	if (!EC_GROUP_get_order(x->group, tmp_5, ctx)) goto err;
 	if (!EC_GROUP_get_cofactor(x->group, tmp_6, ctx)) goto err;	
-	buf_len = EC_POINT_point2oct(x->group, point, ECDSA_get_conversion_form(x), NULL, 0, ctx);
-	if (!buf_len || (buffer = OPENSSL_malloc(buf_len)) == NULL)
-	{
-		reason = ERR_R_MALLOC_FAILURE;
-		goto err;
-	}
-	if (!EC_POINT_point2oct(x->group, point, ECDSA_get_conversion_form(x), buffer, buf_len, ctx))
-	{
+
+	if ((tmp_4 = EC_POINT_point2bn(x->group, point, 
+		ECDSA_get_conversion_form(x), NULL, ctx)) == NULL)
+		{
 		reason = ERR_R_EC_LIB;
 		goto err;
-	}
-	if ((tmp_4 = BN_bin2bn(buffer, buf_len, NULL)) == NULL)
-	{
-		reason = ERR_R_BN_LIB;
-		goto err;
-	}
-  
-	i = BN_num_bits(tmp_1) + 10;
-	if (i > buf_len && (buffer = OPENSSL_realloc(buffer, i)) == NULL)
+		}
+
+  	buf_len = BN_num_bytes(tmp_1);
+	if (buf_len < (i = BN_num_bytes(tmp_2))) buf_len = i;
+	if (buf_len < (i = BN_num_bytes(tmp_3))) buf_len = i;
+	if (buf_len < (i = BN_num_bytes(tmp_4))) buf_len = i;
+	if (buf_len < (i = BN_num_bytes(tmp_5))) buf_len = i;
+	if (buf_len < (i = BN_num_bytes(tmp_6))) buf_len = i;
+	buf_len += 10;
+	if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
 	{
 		reason=ERR_R_MALLOC_FAILURE;
 		goto err;

@@ -4,6 +4,15 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Add functions 
+          EC_POINT_point2bn()
+          EC_POINT_bn2point()
+          EC_POINT_point2hex()
+          EC_POINT_hex2point()
+     providing useful interfaces to EC_POINT_point2oct() and
+     EC_POINT_oct2point().
+     [Nils Larsch <nla@trustcenter.de>]
+
   *) Change internals of the EC library so that the functions
           EC_GROUP_set_generator()
           EC_GROUP_get_generator()
@@ -12,7 +21,7 @@
      are implemented directly in crypto/ec/ec_lib.c and not dispatched
      to methods, which would lead to unnecessary code duplication when
      adding different types of curves.
-     [Nils Larsch with input by Bodo Moeller]
+     [Nils Larsch <nla@trustcenter.de> with input by Bodo Moeller]
 
   *) Implement compute_wNAF (crypto/ec/ec_mult.c) without BIGNUM
      arithmetic, and such that modified wNAFs are generated
