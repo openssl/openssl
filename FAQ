@@ -6,6 +6,7 @@ OpenSSL  -  Frequently Asked Questions
 * Do I need patent licenses to use OpenSSL?
 * Is OpenSSL thread-safe?
 * Why do I get a "PRNG not seeded" error message?
+* Where can I get a compiled version of OpenSSL?
 
 
 * Where is the documentation?
@@ -86,3 +87,16 @@ randomness.  If this error occurs, please contact the author of the
 application you are using.  It is likely that it never worked
 correctly.  OpenSSL 0.9.5 makes the error visible by refusing to
 perform potentially insecure encryption.
+
+
+* Where can I get a compiled version of OpenSSL?
+
+Some applications that use OpenSSL are distributed in binary form.
+When using such an application, you don't need to install OpenSSL
+yourself; the application will include the required parts (e.g. DLLs).
+
+If you want to install OpenSSL on a Windows system and you don't have
+a C compiler, read the "Mingw32" section of INSTALL.W32 for information
+on how to obtain and install the free GNU C compiler.
+
+A number of Linux and *BSD distributions include OpenSSL.
