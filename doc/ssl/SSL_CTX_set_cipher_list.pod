@@ -41,10 +41,12 @@ RSA export ciphers with a keylength of 512 bits for the RSA key require
 a temporary 512 bit RSA key, as typically the supplied key has a length
 of 1024 bit (see
 L<SSL_CTX_set_tmp_rsa_callback(3)|SSL_CTX_set_tmp_rsa_callback(3)>).
-RSA ciphers using EDH need a certificate and key and additional DH-parameters.
+RSA ciphers using EDH need a certificate and key and additional DH-parameters
+(see L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>).
 
 A DSA cipher can only be chosen, when a DSA certificate is available.
-DSA ciphers always use DH key exchange and therefore need DH-parameters.
+DSA ciphers always use DH key exchange and therefore need DH-parameters
+(see L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>).
 
 When these conditions are not met for any cipher in the list (e.g. a
 client only supports export RSA ciphers with a asymmetric key length
