@@ -527,9 +527,6 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 {
 	EC_KEY		*eckey;
-#if 0 /* unused */
-	ASN1_INTEGER	*prkey = NULL;
-#endif
 	unsigned char	*p, *pp;
 	int 		nid, i, ret = 0;
 	unsigned int    tmp_flags;
