@@ -104,41 +104,6 @@ int RSA_check_key(RSA *key)
 		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_N_DOES_NOT_EQUAL_P_Q);
 		}
 	
-	/* dmp1 = d mod (p-1)? */
-	r = BN_sub(i, key->p, BN_value_one());
-	if (!r) { ret = -1; goto err; }
-
-	r = BN_mod(j, key->d, i, ctx);
-	if (!r) { ret = -1; goto err; }
-
-	if (BN_cmp(j, key->dmp1) != 0)
-		{
-		ret = 0;
-		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_DMP1_NOT_CONGRUENT_TO_D);
-		}
-	
-	/* dmq1 = d mod (q-1)? */    
-	r = BN_sub(i, key->q, BN_value_one());
-	if (!r) { ret = -1; goto err; }
-	
-	r = BN_mod(j, key->d, i, ctx);
-	if (!r) { ret = -1; goto err; }
-
-	if (BN_cmp(j, key->dmq1) != 0)
-		{
-		ret = 0;
-		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_DMQ1_NOT_CONGRUENT_TO_D);
-		}
-	
-	/* iqmp = q^-1 mod p? */
-	if(!BN_mod_inverse(i, key->q, key->p, ctx)) { ret = -1; goto err; }
-
-	if (BN_cmp(i, key->iqmp) != 0)
-		{
-		ret = 0;
-		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_IQMP_NOT_INVERSE_OF_Q);
-		}
-	
 	/* d*e = 1  mod lcm(p-1,q-1)? */
 
 	r = BN_sub(i, key->p, BN_value_one());
@@ -163,6 +128,51 @@ int RSA_check_key(RSA *key)
 		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_D_E_NOT_CONGRUENT_TO_1);
 		}
 	
+	if (key->dmp1 != NULL && key->dmq1 != NULL && key->iqmp != NULL)
+		{
+		/* dmp1 = d mod (p-1)? */
+		r = BN_sub(i, key->p, BN_value_one());
+		if (!r) { ret = -1; goto err; }
+
+		r = BN_mod(j, key->d, i, ctx);
+		if (!r) { ret = -1; goto err; }
+
+		if (BN_cmp(j, key->dmp1) != 0)
+			{
+			ret = 0;
+			RSAerr(RSA_F_RSA_CHECK_KEY,
+				RSA_R_DMP1_NOT_CONGRUENT_TO_D);
+			}
+	
+		/* dmq1 = d mod (q-1)? */    
+		r = BN_sub(i, key->q, BN_value_one());
+		if (!r) { ret = -1; goto err; }
+	
+		r = BN_mod(j, key->d, i, ctx);
+		if (!r) { ret = -1; goto err; }
+
+		if (BN_cmp(j, key->dmq1) != 0)
+			{
+			ret = 0;
+			RSAerr(RSA_F_RSA_CHECK_KEY,
+				RSA_R_DMQ1_NOT_CONGRUENT_TO_D);
+			}
+	
+		/* iqmp = q^-1 mod p? */
+		if(!BN_mod_inverse(i, key->q, key->p, ctx))
+			{
+			ret = -1;
+			goto err;
+			}
+
+		if (BN_cmp(i, key->iqmp) != 0)
+			{
+			ret = 0;
+			RSAerr(RSA_F_RSA_CHECK_KEY,
+				RSA_R_IQMP_NOT_INVERSE_OF_Q);
+			}
+		}
+
  err:
 	if (i != NULL) BN_free(i);
 	if (j != NULL) BN_free(j);
