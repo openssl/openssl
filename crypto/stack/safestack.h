@@ -72,6 +72,7 @@ type *sk_##type##_value(const STACK_OF(type) *sk,int n); \
 type *sk_##type##_set(STACK_OF(type) *sk,int n,type *v); \
 void sk_##type##_zero(STACK_OF(type) *sk); \
 int sk_##type##_push(STACK_OF(type) *sk,type *v); \
+int sk_##type##_unshift(STACK_OF(type) *sk,type *v); \
 int sk_##type##_find(STACK_OF(type) *sk,type *v); \
 type *sk_##type##_delete(STACK_OF(type) *sk,int n); \
 void sk_##type##_delete_ptr(STACK_OF(type) *sk,type *v); \
@@ -100,6 +101,8 @@ void sk_##type##_zero(STACK_OF(type) *sk) \
     { sk_zero((STACK *)sk); } \
 int sk_##type##_push(STACK_OF(type) *sk,type *v) \
     { return sk_push((STACK *)sk,(char *)v); } \
+int sk_##type##_unshift(STACK_OF(type) *sk,type *v) \
+    { return sk_unshift((STACK *)sk,(char *)v); } \
 int sk_##type##_find(STACK_OF(type) *sk,type *v) \
     { return sk_find((STACK *)sk,(char *)v); } \
 type *sk_##type##_delete(STACK_OF(type) *sk,int n) \
