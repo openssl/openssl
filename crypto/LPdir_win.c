@@ -1,4 +1,4 @@
-/* $LP: LPlib/source/LPdir_win.c,v 1.3 2004/07/19 16:34:54 _cvs_levitte Exp $ */
+/* $LP: LPlib/source/LPdir_win.c,v 1.4 2004/07/20 21:15:55 _cvs_levitte Exp $ */
 /*
  * Copyright (c) 2004, Richard Levitte <richard@levitte.org>
  * All rights reserved.
@@ -25,6 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <windows.h>
+#include <tchar.h>
 #ifndef LPDIR_H
 #include "LPdir.h"
 #endif
@@ -57,29 +58,31 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
 	}
       memset(*ctx, '\0', sizeof(LP_DIR_CTX));
 
-#ifdef LP_SYS_WINCE
-      {
-	WCHAR *wdir = NULL;
-	size_t index = 0;
+      if (sizeof(TCHAR) != sizeof(char))
+	{
+	  TCHAR *wdir = NULL;
+	  size_t index = 0,len=strlen(direcory);
 
-	wdir = (WCHAR *)malloc((strlen(directory) + 1) * 2);
-	if (wdir == NULL)
-	  {
-	    errno = ENOMEM;
-	    free(*ctx);
-	    return 0;
-	  }
+	  wdir = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
+	  if (wdir == NULL)
+	    {
+	      errno = ENOMEM;
+	      free(*ctx);
+	      return 0;
+	    }
 
-	for (index = 0; index < strlen(directory) + 1; index++)
-	  wdir[index] = (short)directory[index];
-
-	(*ctx)->handle = FindFirstFile(wdir, &(*ctx)->ctx);
-
-	free(wdir);
-      }
-#else
-      (*ctx)->handle = FindFirstFile(directory, &(*ctx)->ctx);
+#ifdef LP_MULTIBYTE_AVAILABLE
+	  if (!MultiByteToWideChar (CP_THREAD_ACP,0,directory,len,wdir,len+1))
 #endif
+	    for (index = 0; index < strlen(directory) + 1; index++)
+	      wdir[index] = (TCHAR)directory[index];
+
+	  (*ctx)->handle = FindFirstFile(wdir, &(*ctx)->ctx);
+
+	  free(wdir);
+	}
+      else
+	(*ctx)->handle = FindFirstFile(directory, &(*ctx)->ctx);
 
       if ((*ctx)->handle == INVALID_HANDLE_VALUE)
 	{
@@ -97,8 +100,27 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
 	}
     }
 
-  strncpy((*ctx)->entry_name, (*ctx)->ctx.cFileName,
-	  sizeof((*ctx)->entry_name));
+  if (sizeof(TCHAR) != sizeof(char))
+    {
+      TCHAR *wdir=(*ctx)->ctx.cFileName;
+      size_t i,len;
+
+      for (len=0;wdir[len] && len<(sizeof((*ctx)->entry_name)-1);)
+	len++;
+
+#ifdef LP_MULTIBYTE_AVAILABLE
+      if (!WideCharToMultiByte (CP_THREAD_ACP,0,wdir,len,
+				(*ctx)->entry_name,
+				sizeof((*ctx)->entry_name)-1,NULL,0))
+#endif
+	for (i=0;i<len;i++) (*ctx)->entry_name[i] = (char)wdir[i];
+    }
+  else
+    strncpy((*ctx)->entry_name, (*ctx)->ctx.cFileName,
+	    sizeof((*ctx)->entry_name)-1);
+
+  (*ctx)->entry_name[sizeof((*ctx)->entry_name)-1] = '\0';
+
   return (*ctx)->entry_name;
 }
 

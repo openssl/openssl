@@ -1,4 +1,4 @@
-/* $LP: LPlib/source/LPdir_win32.c,v 1.1 2004/06/14 10:07:56 _cvs_levitte Exp $ */
+/* $LP: LPlib/source/LPdir_win32.c,v 1.2 2004/07/20 21:15:55 _cvs_levitte Exp $ */
 /*
  * Copyright (c) 2004, Richard Levitte <richard@levitte.org>
  * All rights reserved.
@@ -26,4 +26,5 @@
  */
 
 #define LP_SYS_WIN32
+#define LP_MULTIBYTE_AVAILABLE
 #include "LPdir_win.c"

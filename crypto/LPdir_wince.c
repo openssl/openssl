@@ -1,4 +1,4 @@
-/* $LP: LPlib/source/LPdir_wince.c,v 1.1 2004/06/14 10:07:56 _cvs_levitte Exp $ */
+/* $LP: LPlib/source/LPdir_wince.c,v 1.2 2004/07/20 21:15:55 _cvs_levitte Exp $ */
 /*
  * Copyright (c) 2004, Richard Levitte <richard@levitte.org>
  * All rights reserved.
@@ -26,4 +26,6 @@
  */
 
 #define LP_SYS_WINCE
+/* We might want to define LP_MULTIBYTE_AVAILABLE here.  It's currently
+   under investigation what the exact conditions would be */
 #include "LPdir_win.c"
