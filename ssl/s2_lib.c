@@ -470,10 +470,14 @@ void ssl2_write_error(SSL *s)
 
 	if (i < 0)
 		s->error=error;
-	else if (i != s->error)
+	else
+		{
 		s->error=error-i;
-	/* else
-		s->error=0; */
+
+		if (s->error == 0)
+			if (s->msg_callback)
+				s->msg_callback(1, s->version, 0, buf, 3, s, s->msg_callback_arg); /* ERROR */
+		}
 	}
 
 int ssl2_shutdown(SSL *s)

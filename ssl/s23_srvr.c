@@ -420,7 +420,9 @@ int ssl23_get_client_hello(SSL *s)
 		j=ssl23_read_bytes(s,n+2);
 		if (j <= 0) return(j);
 
-		ssl3_finish_mac(s,&(s->packet[2]),s->packet_length-2);
+		ssl3_finish_mac(s, s->packet+2, s->packet_length-2);
+		if (s->msg_callback)
+			s->msg_callback(0, SSL2_VERSION, 0, s->packet+2, s->packet_length-2, s, s->msg_callback_arg); /* CLIENT-HELLO */
 
 		p=s->packet;
 		p+=5;

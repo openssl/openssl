@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -651,27 +651,36 @@ int ssl2_part_read(SSL *s, unsigned long f, int i)
 	unsigned char *p;
 	int j;
 
-	/* check for error */
-	if ((s->init_num == 0) && (i >= 3))
-		{
-		p=(unsigned char *)s->init_buf->data;
-		if (p[0] == SSL2_MT_ERROR)
-			{
-			j=(p[1]<<8)|p[2];
-			SSLerr((int)f,ssl_mt_error(j));
-			}
-		}
-
 	if (i < 0)
 		{
 		/* ssl2_return_error(s); */
 		/* for non-blocking io,
-		 * this is not fatal */
+		 * this is not necessarily fatal */
 		return(i);
 		}
 	else
 		{
 		s->init_num+=i;
+
+		/* Check for error.  While there are recoverable errors,
+		 * this function is not called when those must be expected;
+		 * any error detected here is fatal. */
+		if (s->init_num >= 3)
+			{
+			p=(unsigned char *)s->init_buf->data;
+			if (p[0] == SSL2_MT_ERROR)
+				{
+				j=(p[1]<<8)|p[2];
+				SSLerr((int)f,ssl_mt_error(j));
+				s->init_num -= 3;
+				if (s->init_num > 0)
+					memmove(p, p+3, s->init_num);
+				}
+			}
+
+		/* If it's not an error message, we have some error anyway --
+		 * the message was shorter than expected.  This too is treated
+		 * as fatal (at least if SSL_get_error is asked for its opinion). */
 		return(0);
 		}
 	}
@@ -682,7 +691,11 @@ int ssl2_do_write(SSL *s)
 
 	ret=ssl2_write(s,&s->init_buf->data[s->init_off],s->init_num);
 	if (ret == s->init_num)
+		{
+		if (s->msg_callback)
+			s->msg_callback(1, s->version, 0, s->init_buf->data, (size_t)(s->init_off + s->init_num), s, s->msg_callback_arg);
 		return(1);
+		}
 	if (ret < 0)
 		return(-1);
 	s->init_off+=ret;

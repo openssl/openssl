@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include "ssl_locl.h"
 #ifndef OPENSSL_NO_SSL2
@@ -322,6 +375,7 @@ end:
 static int get_client_master_key(SSL *s)
 	{
 	int is_export,i,n,keya,ek;
+	unsigned long len;
 	unsigned char *p;
 	SSL_CIPHER *cp;
 	const EVP_CIPHER *c;
@@ -334,6 +388,8 @@ static int get_client_master_key(SSL *s)
 
 		if (i < (10-s->init_num))
 			return(ssl2_part_read(s,SSL_F_GET_CLIENT_MASTER_KEY,i));
+		s->init_num = 10;
+
 		if (*(p++) != SSL2_MT_CLIENT_MASTER_KEY)
 			{
 			if (p[-1] != SSL2_MT_ERROR)
@@ -362,15 +418,23 @@ static int get_client_master_key(SSL *s)
 		n2s(p,i); s->s2->tmp.enc=i;
 		n2s(p,i); s->session->key_arg_length=i;
 		s->state=SSL2_ST_GET_CLIENT_MASTER_KEY_B;
-		s->init_num=0;
 		}
 
 	/* SSL2_ST_GET_CLIENT_MASTER_KEY_B */
 	p=(unsigned char *)s->init_buf->data;
 	keya=s->session->key_arg_length;
-	n=s->s2->tmp.clear+s->s2->tmp.enc+keya - s->init_num;
-	i=ssl2_read(s,(char *)&(p[s->init_num]),n);
+	len = 10 + (unsigned long)s->s2->tmp.clear + (unsigned long)s->s2->tmp.enc + (unsigned long)keya;
+	if (len > SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER)
+		{
+		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_MESSAGE_TOO_LONG);
+		return -1;
+		}
+	n = (int)len - s->init_num;
+	i = ssl2_read(s,(char *)&(p[s->init_num]),n);
 	if (i != n) return(ssl2_part_read(s,SSL_F_GET_CLIENT_MASTER_KEY,i));
+	if (s->msg_callback)
+		s->msg_callback(0, s->version, 0, p, (size_t)len, s, s->msg_callback_arg); /* CLIENT-MASTER-KEY */
+	p += 10;
 
 	memcpy(s->session->key_arg,&(p[s->s2->tmp.clear+s->s2->tmp.enc]),
 		(unsigned int)keya);
@@ -448,6 +512,7 @@ static int get_client_master_key(SSL *s)
 static int get_client_hello(SSL *s)
 	{
 	int i,n;
+	unsigned long len;
 	unsigned char *p;
 	STACK_OF(SSL_CIPHER) *cs; /* a stack of SSL_CIPHERS */
 	STACK_OF(SSL_CIPHER) *cl; /* the ones we want to use */
@@ -468,6 +533,7 @@ static int get_client_hello(SSL *s)
 		i=ssl2_read(s,(char *)&(p[s->init_num]),9-s->init_num);
 		if (i < (9-s->init_num)) 
 			return(ssl2_part_read(s,SSL_F_GET_CLIENT_HELLO,i));
+		s->init_num = 9;
 	
 		if (*(p++) != SSL2_MT_CLIENT_HELLO)
 			{
@@ -492,15 +558,22 @@ static int get_client_hello(SSL *s)
 			return(-1);
 			}
 		s->state=SSL2_ST_GET_CLIENT_HELLO_C;
-		s->init_num=0;
 		}
 
 	/* SSL2_ST_GET_CLIENT_HELLO_C */
 	p=(unsigned char *)s->init_buf->data;
-	n=s->s2->tmp.cipher_spec_length+s->s2->challenge_length+
-		s->s2->tmp.session_id_length-s->init_num;
-	i=ssl2_read(s,(char *)&(p[s->init_num]),n);
+	len = 9 + (unsigned long)s->s2->tmp.cipher_spec_length + (unsigned long)s->s2->challenge_length + (unsigned long)s->s2->tmp.session_id_length;
+	if (len > SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER)
+		{
+		SSLerr(SSL_F_GET_CLIENT_HELLO,SSL_R_MESSAGE_TOO_LONG);
+		return -1;
+		}
+	n = (int)len - s->init_num;
+	i = ssl2_read(s,(char *)&(p[s->init_num]),n);
 	if (i != n) return(ssl2_part_read(s,SSL_F_GET_CLIENT_HELLO,i));
+	if (s->msg_callback)
+		s->msg_callback(0, s->version, 0, p, (size_t)len, s, s->msg_callback_arg); /* CLIENT-HELLO */
+	p += 9;
 
 	/* get session-id before cipher stuff so we can get out session
 	 * structure if it is cached */
@@ -722,14 +795,16 @@ static int server_hello(SSL *s)
 static int get_client_finished(SSL *s)
 	{
 	unsigned char *p;
-	int i;
+	int i, n;
+	unsigned long len;
 
 	p=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL2_ST_GET_CLIENT_FINISHED_A)
 		{
-		i=ssl2_read(s,(char *)&(p[s->init_num]),1-s->init_num);
-		if (i < 1-s->init_num)
+		i=ssl2_read(s,(char *)&(p[s->init_num]),3-s->init_num);
+		if (i < 3-s->init_num)
 			return(ssl2_part_read(s,SSL_F_GET_CLIENT_FINISHED,i));
+		s->init_num = 3;
 
 		if (*p != SSL2_MT_CLIENT_FINISHED)
 			{
@@ -742,16 +817,20 @@ static int get_client_finished(SSL *s)
 				SSLerr(SSL_F_GET_CLIENT_FINISHED,SSL_R_PEER_ERROR);
 			return(-1);
 			}
-		s->init_num=0;
 		s->state=SSL2_ST_GET_CLIENT_FINISHED_B;
 		}
 
 	/* SSL2_ST_GET_CLIENT_FINISHED_B */
-	i=ssl2_read(s,(char *)&(p[s->init_num]),s->s2->conn_id_length-s->init_num);
-	if (i < (int)s->s2->conn_id_length-s->init_num)
+	len = 1 + (unsigned long)s->s2->conn_id_length;
+	n = (int)len - s->init_num;
+	i = ssl2_read(s,(char *)&(p[s->init_num]),n);
+	if (i < n)
 		{
 		return(ssl2_part_read(s,SSL_F_GET_CLIENT_FINISHED,i));
 		}
+	if (s->msg_callback)
+		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg); /* CLIENT-FINISHED */
+	p += 1;
 	if (memcmp(p,s->s2->conn_id,(unsigned int)s->s2->conn_id_length) != 0)
 		{
 		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
@@ -807,6 +886,7 @@ static int request_certificate(SSL *s)
 	unsigned char *p,*p2,*buf2;
 	unsigned char *ccd;
 	int i,j,ctype,ret= -1;
+	unsigned long len;
 	X509 *x509=NULL;
 	STACK_OF(X509) *sk=NULL;
 
@@ -840,16 +920,31 @@ static int request_certificate(SSL *s)
 	if (s->state == SSL2_ST_SEND_REQUEST_CERTIFICATE_C)
 		{
 		p=(unsigned char *)s->init_buf->data;
-		i=ssl2_read(s,(char *)&(p[s->init_num]),6-s->init_num);
-		if (i < 3)
+		i=ssl2_read(s,(char *)&(p[s->init_num]),6-s->init_num); /* try to read 6 octets ... */
+		if (i < 3-s->init_num) /* ... but don't call ssl2_part_read now if we got at least 3
+		                        * (probably NO-CERTIFICATE-ERROR) */
 			{
 			ret=ssl2_part_read(s,SSL_F_REQUEST_CERTIFICATE,i);
 			goto end;
 			}
+		s->init_num += i;
 
-		if ((*p == SSL2_MT_ERROR) && (i >= 3))
+		if ((s->init_num >= 3) && (p[0] == SSL2_MT_ERROR))
 			{
 			n2s(p,i);
+			if (i != SSL2_PE_NO_CERTIFICATE)
+				{
+				/* not the error message we expected -- let ssl2_part_read handle it */
+				s->init_num -= 3;
+				ret = ssl2_part_read(s,SSL_F_REQUEST_CERTIFICATE, 3);
+				goto end;
+				}
+
+			if (s->msg_callback)
+				s->msg_callback(0, s->version, 0, p, 3, s, s->msg_callback_arg); /* ERROR */
+
+			/* this is the one place where we can recover from an SSL 2.0 error */
+
 			if (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)
 				{
 				ssl2_return_error(s,SSL2_PE_BAD_CERTIFICATE);
@@ -859,12 +954,18 @@ static int request_certificate(SSL *s)
 			ret=1;
 			goto end;
 			}
-		if ((*(p++) != SSL2_MT_CLIENT_CERTIFICATE) || (i < 6))
+		if ((*(p++) != SSL2_MT_CLIENT_CERTIFICATE) || (s->init_num < 6))
 			{
 			ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 			SSLerr(SSL_F_REQUEST_CERTIFICATE,SSL_R_SHORT_READ);
 			goto end;
 			}
+		if (s->init_num != 6)
+			{
+			SSLerr(SSL_F_REQUEST_CERTIFICATE, ERR_R_INTERNAL_ERROR);
+			goto end;
+			}
+		
 		/* ok we have a response */
 		/* certificate type, there is only one right now. */
 		ctype= *(p++);
@@ -877,18 +978,26 @@ static int request_certificate(SSL *s)
 		n2s(p,i); s->s2->tmp.clen=i;
 		n2s(p,i); s->s2->tmp.rlen=i;
 		s->state=SSL2_ST_SEND_REQUEST_CERTIFICATE_D;
-		s->init_num=0;
 		}
 
 	/* SSL2_ST_SEND_REQUEST_CERTIFICATE_D */
 	p=(unsigned char *)s->init_buf->data;
-	j=s->s2->tmp.clen+s->s2->tmp.rlen-s->init_num;
-	i=ssl2_read(s,(char *)&(p[s->init_num]),j);
+	len = 6 + (unsigned long)s->s2->tmp.clen + (unsigned long)s->s2->tmp.rlen;
+	if (len > SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER)
+		{
+		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_MESSAGE_TOO_LONG);
+		goto end;
+		}
+	j = (int)len - s->init_num;
+	i = ssl2_read(s,(char *)&(p[s->init_num]),j);
 	if (i < j) 
 		{
 		ret=ssl2_part_read(s,SSL_F_REQUEST_CERTIFICATE,i);
 		goto end;
 		}
+	if (s->msg_callback)
+		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg); /* CLIENT-CERTIFICATE */
+	p += 6;
 
 	x509=(X509 *)d2i_X509(NULL,&p,(long)s->s2->tmp.clen);
 	if (x509 == NULL)

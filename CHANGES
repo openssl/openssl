@@ -111,8 +111,11 @@
 
      'openssl s_client' and 'openssl s_server' have new '-msg' options
      to enable a callback that displays all protocol messages.
+     [Bodo Moeller]
 
-     TODO: SSL 2.0, doc/ssl/, doc/apps/
+  *) Change ssl/s2_clnt.c and ssl/s3_srvr.c so that received handshake
+     messages are stored in a single piece (fixed-length part and
+     variable-length part) and fix various bugs found on the way.
      [Bodo Moeller]
 
   *) In ssl3_get_client_hello (ssl/s3_srvr.c), generate a fatal alert

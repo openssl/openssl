@@ -211,6 +211,7 @@ static int ssl23_client_hello(SSL *s)
 	unsigned char *buf;
 	unsigned char *p,*d;
 	int i,ch_len;
+	int ret;
 
 	buf=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL23_ST_CW_CLNT_HELLO_A)
@@ -302,7 +303,11 @@ static int ssl23_client_hello(SSL *s)
 		}
 
 	/* SSL3_ST_CW_CLNT_HELLO_B */
-	return(ssl23_write_bytes(s));
+	ret = ssl23_write_bytes(s);
+	if (ret >= 2)
+		if (s->msg_callback)
+			s->msg_callback(1, SSL2_VERSION, 0, s->init_buf->data+2, ret-2, s, s->msg_callback_arg); /* CLIENT-HELLO */
+	return ret;
 	}
 
 static int ssl23_get_server_hello(SSL *s)
