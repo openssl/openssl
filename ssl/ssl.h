@@ -1357,8 +1357,8 @@ const char *SSL_alert_type_string(int value);
 const char *SSL_alert_desc_string_long(int value);
 const char *SSL_alert_desc_string(int value);
 
-void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *list);
-void SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *list);
+void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list);
+void SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list);
 STACK_OF(X509_NAME) *SSL_get_client_CA_list(SSL *s);
 STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(SSL_CTX *s);
 int SSL_add_client_CA(SSL *ssl,X509 *x);

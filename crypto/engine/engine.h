@@ -513,7 +513,7 @@ ENGINE *ENGINE_get_digest_engine(int nid);
  * structure will have had its reference count up'd so the caller
  * should still free their own reference 'e'. */
 int ENGINE_set_default_RSA(ENGINE *e);
-int ENGINE_set_default_string(ENGINE *e, const char *list);
+int ENGINE_set_default_string(ENGINE *e, const char *def_list);
 /* Same for the other "methods" */
 int ENGINE_set_default_DSA(ENGINE *e);
 int ENGINE_set_default_DH(ENGINE *e);

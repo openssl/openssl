@@ -505,12 +505,12 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 	return(i);
 	}
 
-static void set_client_CA_list(STACK_OF(X509_NAME) **ca_list,STACK_OF(X509_NAME) *list)
+static void set_client_CA_list(STACK_OF(X509_NAME) **ca_list,STACK_OF(X509_NAME) *name_list)
 	{
 	if (*ca_list != NULL)
 		sk_X509_NAME_pop_free(*ca_list,X509_NAME_free);
 
-	*ca_list=list;
+	*ca_list=name_list;
 	}
 
 STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk)
@@ -532,14 +532,14 @@ STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk)
 	return(ret);
 	}
 
-void SSL_set_client_CA_list(SSL *s,STACK_OF(X509_NAME) *list)
+void SSL_set_client_CA_list(SSL *s,STACK_OF(X509_NAME) *name_list)
 	{
-	set_client_CA_list(&(s->client_CA),list);
+	set_client_CA_list(&(s->client_CA),name_list);
 	}
 
-void SSL_CTX_set_client_CA_list(SSL_CTX *ctx,STACK_OF(X509_NAME) *list)
+void SSL_CTX_set_client_CA_list(SSL_CTX *ctx,STACK_OF(X509_NAME) *name_list)
 	{
-	set_client_CA_list(&(ctx->client_CA),list);
+	set_client_CA_list(&(ctx->client_CA),name_list);
 	}
 
 STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(SSL_CTX *ctx)
