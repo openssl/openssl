@@ -238,7 +238,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
        	int verbose, X509_REQ *req, char *ext_sect, CONF *conf,
 	unsigned long certopt, unsigned long nameopt, int default_op,
 	int ext_copy);
-static X509_NAME *do_subject(char *subject, int email_dn);
+static X509_NAME *do_subject(char *subject);
 static int do_revoke(X509 *x509, TXT_DB *db, int ext, char *extval);
 static int get_certificate_status(const char *ser_status, TXT_DB *db);
 static int do_updatedb(TXT_DB *db);
@@ -1859,7 +1859,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 
 	if (subj)
 		{
-		X509_NAME *n = do_subject(subj, email_dn);
+		X509_NAME *n = do_subject(subj);
 
 		if (!n)
 			{
@@ -2993,7 +2993,7 @@ int make_revoked(X509_REVOKED *rev, char *str)
 	return ret;
 	}
 
-static X509_NAME *do_subject(char *subject, int email_dn)
+static X509_NAME *do_subject(char *subject)
 	{
 	X509_NAME *n = NULL;
 
@@ -3041,9 +3041,6 @@ static X509_NAME *do_subject(char *subject, int email_dn)
 			BIO_printf(bio_err, "No value provided for Subject Attribute %s, skipped\n", ne_name);
 			continue;
 			}
-
-		if ((nid == NID_pkcs9_emailAddress) && (email_dn == 0))
-			continue;
 
 		if (!X509_NAME_add_entry_by_NID(n, nid, MBSTRING_ASC, (unsigned char*)ne_value, -1,-1,0))
 			{
