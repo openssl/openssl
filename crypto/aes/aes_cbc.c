@@ -104,7 +104,7 @@ void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 			memcpy(tmp, in, AES_BLOCK_SIZE);
 			AES_decrypt(tmp, tmp, key);
 			for(n=0; n < len; ++n)
-				out[n] ^= ivec[n];
+				out[n] = tmp[n] ^ ivec[n];
 			memcpy(ivec, tmp, AES_BLOCK_SIZE);
 		}			
 	}

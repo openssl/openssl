@@ -91,17 +91,19 @@ static int PKCS7_type_is_other(PKCS7* p7)
 
 	}
 
-static int PKCS7_type_is_octet_string(PKCS7* p7)
+static ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7)
 	{
-	if ( 0==PKCS7_type_is_other(p7) )
-		return 0;
-
-	return (V_ASN1_OCTET_STRING==p7->d.other->type) ? 1 : 0;
+	if ( PKCS7_type_is_data(p7))
+		return p7->d.data;
+	if ( PKCS7_type_is_other(p7) && p7->d.other
+		&& (p7->d.other->type == V_ASN1_OCTET_STRING))
+		return p7->d.other->value.octet_string;
+	return NULL;
 	}
 
 BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 	{
-	int i,j;
+	int i;
 	BIO *out=NULL,*btmp=NULL;
 	X509_ALGOR *xa;
 	const EVP_MD *evp_md;
@@ -159,8 +161,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 				goto err;
 				}
 
-			j=OBJ_obj2nid(xa->algorithm);
-			evp_md=EVP_get_digestbyname(OBJ_nid2sn(j));
+			evp_md=EVP_get_digestbyobj(xa->algorithm);
 			if (evp_md == NULL)
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATAINIT,PKCS7_R_UNKNOWN_DIGEST_TYPE);
@@ -250,29 +251,22 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		btmp=NULL;
 		}
 
-	if (bio == NULL) {
+	if (bio == NULL)
+		{
 		if (PKCS7_is_detached(p7))
 			bio=BIO_new(BIO_s_null());
-		else {
-			if (PKCS7_type_is_signed(p7) ) { 
-				if ( PKCS7_type_is_data(p7->d.sign->contents)) {
-					ASN1_OCTET_STRING *os;
-					os=p7->d.sign->contents->d.data;
-					if (os->length > 0)
-						bio = BIO_new_mem_buf(os->data, os->length);
-				}
-				else if ( PKCS7_type_is_octet_string(p7->d.sign->contents) ) {
-					ASN1_OCTET_STRING *os;
-					os=p7->d.sign->contents->d.other->value.octet_string;
-					if (os->length > 0)
-						bio = BIO_new_mem_buf(os->data, os->length);
-				}
-			}
-			if(bio == NULL) {
+		else
+			{
+			ASN1_OCTET_STRING *os;
+			os = PKCS7_get_octet_string(p7->d.sign->contents);
+			if (os && os->length > 0)
+				bio = BIO_new_mem_buf(os->data, os->length);
+			if(bio == NULL)
+				{
 				bio=BIO_new(BIO_s_mem());
 				BIO_set_mem_eof_return(bio,0);
+				}
 			}
-		}
 	}
 	BIO_push(out,bio);
 	bio=NULL;
@@ -311,7 +305,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	switch (i)
 		{
 	case NID_pkcs7_signed:
-		data_body=p7->d.sign->contents->d.data;
+		data_body=PKCS7_get_octet_string(p7->d.sign->contents);
 		md_sk=p7->d.sign->md_algs;
 		break;
 	case NID_pkcs7_signedAndEnveloped:
@@ -319,7 +313,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		md_sk=p7->d.signed_and_enveloped->md_algs;
 		data_body=p7->d.signed_and_enveloped->enc_data->enc_data;
 		enc_alg=p7->d.signed_and_enveloped->enc_data->algorithm;
-		evp_cipher=EVP_get_cipherbyname(OBJ_nid2sn(OBJ_obj2nid(enc_alg->algorithm)));
+		evp_cipher=EVP_get_cipherbyobj(enc_alg->algorithm);
 		if (evp_cipher == NULL)
 			{
 			PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
@@ -331,7 +325,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		rsk=p7->d.enveloped->recipientinfo;
 		enc_alg=p7->d.enveloped->enc_data->algorithm;
 		data_body=p7->d.enveloped->enc_data->enc_data;
-		evp_cipher=EVP_get_cipherbyname(OBJ_nid2sn(OBJ_obj2nid(enc_alg->algorithm)));
+		evp_cipher=EVP_get_cipherbyobj(enc_alg->algorithm);
 		if (evp_cipher == NULL)
 			{
 			PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
@@ -357,7 +351,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 				}
 
 			j=OBJ_obj2nid(xa->algorithm);
-			evp_md=EVP_get_digestbyname(OBJ_nid2sn(j));
+			evp_md=EVP_get_digestbynid(j);
 			if (evp_md == NULL)
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNKNOWN_DIGEST_TYPE);
@@ -531,9 +525,9 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 		break;
 	case NID_pkcs7_signed:
 		si_sk=p7->d.sign->signer_info;
-		os=p7->d.sign->contents->d.data;
+		os=PKCS7_get_octet_string(p7->d.sign->contents);
 		/* If detached data then the content is excluded */
-		if(p7->detached) {
+		if(PKCS7_type_is_data(p7->d.sign->contents) && p7->detached) {
 			M_ASN1_OCTET_STRING_free(os);
 			p7->d.sign->contents->d.data = NULL;
 		}
