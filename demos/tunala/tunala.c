@@ -69,8 +69,8 @@ typedef struct _tunala_world_t {
 static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		const char *CAfile, const char *cert, const char *key,
 		const char *dcert, const char *dkey, const char *cipher_list,
-		int out_state, int out_verify, int verify_mode,
-		unsigned int verify_depth);
+		const char *dh_file, const char *dh_special, int out_state,
+		int out_verify, int verify_mode, unsigned int verify_depth);
 static void selector_init(tunala_selector_t *selector);
 static void selector_add_listener(tunala_selector_t *selector, int fd);
 static void selector_add_tunala(tunala_selector_t *selector, tunala_item_t *t);
@@ -98,6 +98,8 @@ static const char *def_dkey = NULL;
 static const char *def_engine_id = NULL;
 static int def_server_mode = 0;
 static const char *def_cipher_list = NULL;
+static const char *def_dh_file = NULL;
+static const char *def_dh_special = NULL;
 static int def_out_state = 0;
 static unsigned int def_out_verify = 0;
 static int def_out_totals = 0;
@@ -118,6 +120,8 @@ static const char *helpstring =
 " -engine <id|NULL>      (default = NULL)\n"
 " -server <0|1>          (default = 0, ie. an SSL client)\n"
 " -cipher <list>         (specifies cipher list to use)\n"
+" -dh_file <path>        (a PEM file containing DH parameters to use)\n"
+" -dh_special <NULL|generate|standard> (see below: def=NULL)\n"
 " -out_state             (prints SSL handshake states)\n"
 " -out_verify <0|1|2|3>  (prints certificate verification states: def=1)\n"
 " -out_totals            (prints out byte-totals when a tunnel closes)\n"
@@ -126,10 +130,45 @@ static const char *helpstring =
 " -v_once                (no verification in renegotiates)\n"
 " -v_depth <num>         (limit certificate chain depth, default = 10)\n"
 " -<h|help|?>            (displays this help screen)\n"
-"NB: It is recommended to specify a cert+key when operating as an\n"
-"SSL server. If you only specify '-cert', the same file must\n"
-"contain a matching private key.\n";
+"Notes:\n"
+"(1) It is recommended to specify a cert+key when operating as an SSL server.\n"
+"    If you only specify '-cert', the same file must contain a matching\n"
+"    private key.\n"
+"(2) Either dh_file or dh_special can be used to specify where DH parameters\n"
+"    will be obtained from (or '-dh_special NULL' for the default choice) but\n"
+"    you cannot specify both. For dh_special, 'generate' will create new DH\n"
+"    parameters on startup, and 'standard' will use embedded parameters\n"
+"    instead.\n";
 
+/* Default DH parameters for use with "-dh_special standard" ... stolen striaght
+ * from s_server. */
+static unsigned char dh512_p[]={
+	0xDA,0x58,0x3C,0x16,0xD9,0x85,0x22,0x89,0xD0,0xE4,0xAF,0x75,
+	0x6F,0x4C,0xCA,0x92,0xDD,0x4B,0xE5,0x33,0xB8,0x04,0xFB,0x0F,
+	0xED,0x94,0xEF,0x9C,0x8A,0x44,0x03,0xED,0x57,0x46,0x50,0xD3,
+	0x69,0x99,0xDB,0x29,0xD7,0x76,0x27,0x6B,0xA2,0xD3,0xD4,0x12,
+	0xE2,0x18,0xF4,0xDD,0x1E,0x08,0x4C,0xF6,0xD8,0x00,0x3E,0x7C,
+	0x47,0x74,0xE8,0x33,
+	};
+static unsigned char dh512_g[]={
+	0x02,
+	};
+
+/* And the function that parses the above "standard" parameters, again, straight
+ * out of s_server. */
+static DH *get_dh512(void)
+	{
+	DH *dh=NULL;
+
+	if ((dh=DH_new()) == NULL) return(NULL);
+	dh->p=BN_bin2bn(dh512_p,sizeof(dh512_p),NULL);
+	dh->g=BN_bin2bn(dh512_g,sizeof(dh512_g),NULL);
+	if ((dh->p == NULL) || (dh->g == NULL))
+		return(NULL);
+	return(dh);
+	}
+
+/* Various help/error messages used by main() */
 static int usage(const char *errstr, int isunknownarg)
 {
 	if(isunknownarg)
@@ -180,6 +219,17 @@ static int parse_server_mode(const char *s, int *servermode)
 	}
 	*servermode = (int)l;
 	return 1;
+}
+
+static int parse_dh_special(const char *s, const char **dh_special)
+{
+	if((strcmp(s, "NULL") == 0) || (strcmp(s, "generate") == 0) ||
+			(strcmp(s, "standard") == 0)) {
+		*dh_special = s;
+		return 1;
+	}
+	fprintf(stderr, "Error, '%s' is an invalid value for 'dh_special'\n", s);
+	return 0;
 }
 
 static int parse_verify_level(const char *s, unsigned int *verify_level)
@@ -240,6 +290,8 @@ int main(int argc, char *argv[])
 	const char *engine_id = def_engine_id;
 	int server_mode = def_server_mode;
 	const char *cipher_list = def_cipher_list;
+	const char *dh_file = def_dh_file;
+	const char *dh_special = def_dh_special;
 	int out_state = def_out_state;
 	unsigned int out_verify = def_out_verify;
 	int out_totals = def_out_totals;
@@ -333,6 +385,25 @@ next_arg:
 			argc--; argv++;
 			cipher_list = *argv;
 			goto next_arg;
+		} else if(strcmp(*argv, "-dh_file") == 0) {
+			if(argc < 2)
+				return usage("-dh_file requires an argument", 0);
+			if(dh_special)
+				return usage("cannot mix -dh_file with "
+						"-dh_special", 0);
+			argc--; argv++;
+			dh_file = *argv;
+			goto next_arg;
+		} else if(strcmp(*argv, "-dh_special") == 0) {
+			if(argc < 2)
+				return usage("-dh_special requires an argument", 0);
+			if(dh_file)
+				return usage("cannot mix -dh_file with "
+						"-dh_special", 0);
+			argc--; argv++;
+			if(!parse_dh_special(*argv, &dh_special))
+				return 1;
+			goto next_arg;
 		} else if(strcmp(*argv, "-out_state") == 0) {
 			out_state = 1;
 			goto next_arg;
@@ -377,8 +448,9 @@ next_arg:
 	err_str0("ip_initialise succeeded");
 	/* Create the SSL_CTX */
 	if((world.ssl_ctx = initialise_ssl_ctx(server_mode, engine_id,
-			cacert, cert, key, dcert, dkey, cipher_list, out_state,
-			out_verify, verify_mode, verify_depth)) == NULL)
+			cacert, cert, key, dcert, dkey, cipher_list, dh_file,
+			dh_special, out_state, out_verify, verify_mode,
+			verify_depth)) == NULL)
 		return err_str1("initialise_ssl_ctx(engine_id=%s) failed",
 			(engine_id == NULL) ? "NULL" : engine_id);
 	err_str1("initialise_ssl_ctx(engine_id=%s) succeeded",
@@ -554,11 +626,62 @@ static int ctx_set_cert(SSL_CTX *ctx, const char *cert, const char *key)
 	return toret;
 }
 
+static int ctx_set_dh(SSL_CTX *ctx, const char *dh_file, const char *dh_special)
+{
+	DH *dh = NULL;
+	FILE *fp = NULL;
+
+	if(dh_special) {
+		if(strcmp(dh_special, "NULL") == 0)
+			return 1;
+		if(strcmp(dh_special, "standard") == 0) {
+			if((dh = get_dh512()) == NULL) {
+				fprintf(stderr, "Error, can't parse 'standard'"
+						" DH parameters\n");
+				return 0;
+			}
+			fprintf(stderr, "Info, using 'standard' DH parameters\n");
+			goto do_it;
+		}
+		if(strcmp(dh_special, "generate") != 0)
+			/* This shouldn't happen - screening values is handled
+			 * in main(). */
+			abort();
+		fprintf(stderr, "Info, generating DH parameters ... ");
+		fflush(stderr);
+		if((dh = DH_generate_parameters(512, DH_GENERATOR_5,
+					NULL, NULL)) == NULL) {
+			fprintf(stderr, "error!\n");
+			return 0;
+		}
+		fprintf(stderr, "complete\n");
+		goto do_it;
+	}
+	/* So, we're loading dh_file */
+	if((fp = fopen(dh_file, "r")) == NULL) {
+		fprintf(stderr, "Error, couldn't open '%s' for DH parameters\n",
+				dh_file);
+		return 0;
+	}
+	dh = PEM_read_DHparams(fp, NULL, NULL, NULL);
+	fclose(fp);
+	if(dh == NULL) {
+		fprintf(stderr, "Error, could not parse DH parameters from '%s'\n",
+				dh_file);
+		return 0;
+	}
+	fprintf(stderr, "Info, using DH parameters from file '%s'\n", dh_file);
+do_it:
+	SSL_CTX_set_tmp_dh(ctx, dh);
+	DH_free(dh);
+	return 1;
+}
+
 static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		const char *CAfile, const char *cert, const char *key,
 		const char *dcert, const char *dkey, const char *cipher_list,
-		int out_state, int out_verify, int verify_mode,
-		unsigned int verify_depth)
+		const char *dh_file, const char *dh_special, int out_state,
+		int out_verify, int verify_mode, unsigned int verify_depth)
 {
 	SSL_CTX *ctx, *ret = NULL;
 	SSL_METHOD *meth;
@@ -619,6 +742,10 @@ static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		fprintf(stderr, "Info, set cipher list '%s'\n", cipher_list);
 	} else
 		fprintf(stderr, "Info, operating with default cipher list\n");
+
+	/* dh_file & dh_special */
+	if((dh_file || dh_special) && !ctx_set_dh(ctx, dh_file, dh_special))
+		goto err;
 
 	/* out_state (output of SSL handshake states to screen). */
 	if(out_state)
