@@ -113,6 +113,8 @@ static char *x509_usage[]={
 " -addreject arg  - reject certificate for a given purpose\n",
 " -setalias arg   - set certificate alias\n",
 " -days arg       - How long till expiry of a signed certificate - def 30 days\n",
+" -checkend arg   - check whether the cert expires in the next arg seconds\n",
+"                   exit 1 if so, 0 if not\n",
 " -signkey arg    - self sign cert with arg\n",
 " -x509toreq      - output a certification request object\n",
 " -req            - input is a certificate request, sign and output.\n",
@@ -173,6 +175,7 @@ int MAIN(int argc, char **argv)
 	LHASH *extconf = NULL;
 	char *extsect = NULL, *extfile = NULL, *passin = NULL, *passargin = NULL;
 	int need_rand = 0;
+	int checkend=0,checkoffset=0;
 
 	reqfile=0;
 
@@ -353,6 +356,12 @@ int MAIN(int argc, char **argv)
 			startdate= ++num;
 		else if (strcmp(*argv,"-enddate") == 0)
 			enddate= ++num;
+		else if (strcmp(*argv,"-checkend") == 0)
+			{
+			if (--argc < 1) goto bad;
+			checkoffset=atoi(*(++argv));
+			checkend=1;
+			}
 		else if (strcmp(*argv,"-noout") == 0)
 			noout= ++num;
 		else if (strcmp(*argv,"-trustout") == 0)
@@ -837,6 +846,24 @@ bad:
 				noout=1;
 				}
 			}
+		}
+
+	if(checkend)
+		{
+		time_t t=ASN1_UTCTIME_get(X509_get_notAfter(x));
+		time_t tnow=time(NULL);
+
+		if(tnow+checkoffset > t)
+			{
+			BIO_printf(out,"Certificate will expire\n");
+			ret=1;
+			}
+		else
+			{
+			BIO_printf(out,"Certificate will not expire\n");
+			ret=0;
+			}
+		goto end;
 		}
 
 	if (noout)
