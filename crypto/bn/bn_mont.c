@@ -339,9 +339,9 @@ BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
 	{
 	if (to == from) return(to);
 
-	BN_copy(&(to->RR),&(from->RR));
-	BN_copy(&(to->N),&(from->N));
-	BN_copy(&(to->Ni),&(from->Ni));
+	if (!BN_copy(&(to->RR),&(from->RR))) return NULL;
+	if (!BN_copy(&(to->N),&(from->N))) return NULL;
+	if (!BN_copy(&(to->Ni),&(from->Ni))) return NULL;
 	to->ri=from->ri;
 	to->n0=from->n0;
 	return(to);

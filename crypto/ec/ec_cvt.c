@@ -63,8 +63,8 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
 	
 	/* Finally, this will use EC_GFp_nist_method if 'p' is a special
 	 * prime with optimized modular arithmetics (for NIST curves)
-	 * and EC_GFp_mont_method or EC_GFp_recp_method otherwise. */
-	meth = EC_GFp_simple_method();
+	 */
+	meth = EC_GFp_mont_method();
 	
 	ret = EC_GROUP_new(meth);
 	if (ret == NULL)

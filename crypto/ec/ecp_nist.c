@@ -90,8 +90,8 @@ const EC_METHOD *EC_GFp_nist_method(void)
 		ec_GFp_simple_make_affine,
 		ec_GFp_nist_field_mul,
 		ec_GFp_nist_field_sqr,
-		ec_GFp_nist_field_encode,
-		ec_GFp_nist_field_decode };
+		0 /* field_encode */,
+		0 /* field_decode */ };
 
 	return &ret;
 	}
@@ -128,12 +128,4 @@ int ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, con
 
 
 int ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx);
-/* TODO */
-
-
-int ec_GFp_nist_field_encode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx);
-/* TODO */
-
-
-int ec_GFp_nist_field_decode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx);
 /* TODO */

@@ -630,12 +630,29 @@ int ec_GFp_simple_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT
 		}
 	else
 		{
-		if (!BN_mod_mul(tmp2, &group->a, x, &group->field, ctx)) goto err;
+		if (group->meth->field_decode)
+			{
+			if (!group->meth->field_decode(group, tmp2, &group->a, ctx)) goto err;
+			if (!BN_mod_mul(tmp2, tmp2, x, &group->field, ctx)) goto err;
+			}
+		else
+			{
+			if (!BN_mod_mul(tmp2, &group->a, x, &group->field, ctx)) goto err;
+			}
+		
 		if (!BN_mod_add_quick(tmp1, tmp1, tmp2, &group->field)) goto err;
 		}
 	
 	/* tmp1 := tmp1 + b */
-	if (!BN_mod_add_quick(tmp1, tmp1, &group->b, &group->field)) goto err;
+	if (group->meth->field_decode)
+		{
+		if (!group->meth->field_decode(group, tmp2, &group->b, ctx)) goto err;
+		if (!BN_mod_add_quick(tmp1, tmp1, tmp2, &group->field)) goto err;
+		}
+	else
+		{
+		if (!BN_mod_add_quick(tmp1, tmp1, &group->b, &group->field)) goto err;
+		}
 	
 	if (!BN_mod_sqrt(y, tmp1, &group->field, ctx))
 		{

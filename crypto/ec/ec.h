@@ -168,6 +168,10 @@ void ERR_load_EC_strings(void);
 /* Error codes for the EC functions. */
 
 /* Function codes. */
+#define EC_F_EC_GFP_MONT_FIELD_DECODE			 133
+#define EC_F_EC_GFP_MONT_FIELD_ENCODE			 134
+#define EC_F_EC_GFP_MONT_FIELD_MUL			 131
+#define EC_F_EC_GFP_MONT_FIELD_SQR			 132
 #define EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP		 100
 #define EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR		 101
 #define EC_F_EC_GFP_SIMPLE_MAKE_AFFINE			 102
@@ -199,6 +203,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP	 125
 #define EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP	 126
 #define EC_F_EC_POINT_SET_TO_INFINITY			 127
+#define EC_F_GFP_MONT_GROUP_SET_CURVE_GFP		 135
 
 /* Reason codes. */
 #define EC_R_BUFFER_TOO_SMALL				 100
@@ -208,6 +213,7 @@ void ERR_load_EC_strings(void);
 #define EC_R_INVALID_ENCODING				 102
 #define EC_R_INVALID_FIELD				 103
 #define EC_R_INVALID_FORM				 104
+#define EC_R_NOT_INITIALIZED				 111
 #define EC_R_NO_SUCH_EXTRA_DATA				 105
 #define EC_R_POINT_AT_INFINITY				 106
 #define EC_R_POINT_IS_NOT_ON_CURVE			 107

@@ -98,8 +98,10 @@ int main(int argc, char *argv[])
 	if (!BN_hex2bn(&a, "7")) ABORT;
 	if (!BN_hex2bn(&b, "C")) ABORT;
 	
-	group = EC_GROUP_new_curve_GFp(p, a, b, NULL);
+	group = EC_GROUP_new(EC_GFp_mont_method());
 	if (!group) ABORT;
+	if (!EC_GROUP_set_curve_GFp(group, p, a, b, ctx)) ABORT;
+	if (!EC_GROUP_get_curve_GFp(group, p, a, b, ctx)) ABORT;
 
 	fprintf(stdout, "Curve defined by Weierstrass equation\n     y^2 = x^3 + a*x + b  (mod 0x");
 	BN_print_fp(stdout, p);
@@ -132,8 +134,11 @@ int main(int argc, char *argv[])
 	if (!EC_POINT_set_compressed_coordinates_GFp(group, Q, x, 1, ctx)) ABORT;
 	if (!EC_POINT_is_on_curve(group, Q, ctx))
 		{
-		fprintf(stderr, "Point is not on curve, x = 0x");
+		if (!EC_POINT_get_affine_coordinates_GFp(group, Q, x, y, ctx)) ABORT;
+		fprintf(stderr, "Point is not on curve: x = 0x");
 		BN_print_fp(stderr, x);
+		fprintf(stderr, ", y = 0x");
+		BN_print_fp(stderr, y);
 		fprintf(stderr, "\n");
 		ABORT;
 		}

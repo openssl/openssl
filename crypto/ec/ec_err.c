@@ -66,6 +66,10 @@
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA EC_str_functs[]=
 	{
+{ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_DECODE,0),	"ec_GFp_mont_field_decode"},
+{ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_ENCODE,0),	"ec_GFp_mont_field_encode"},
+{ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_MUL,0),	"ec_GFp_mont_field_mul"},
+{ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_SQR,0),	"ec_GFp_mont_field_sqr"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP,0),	"ec_GFp_simple_group_set_curve_GFp"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR,0),	"ec_GFp_simple_group_set_generator"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_MAKE_AFFINE,0),	"ec_GFp_simple_make_affine"},
@@ -97,6 +101,7 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_PACK(0,EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP,0),	"EC_POINT_set_compressed_coordinates_GFp"},
 {ERR_PACK(0,EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP,0),	"EC_POINT_set_Jprojective_coordinates_GFp"},
 {ERR_PACK(0,EC_F_EC_POINT_SET_TO_INFINITY,0),	"EC_POINT_set_to_infinity"},
+{ERR_PACK(0,EC_F_GFP_MONT_GROUP_SET_CURVE_GFP,0),	"GFP_MONT_GROUP_SET_CURVE_GFP"},
 {0,NULL}
 	};
 
@@ -109,6 +114,7 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {EC_R_INVALID_ENCODING                   ,"invalid encoding"},
 {EC_R_INVALID_FIELD                      ,"invalid field"},
 {EC_R_INVALID_FORM                       ,"invalid form"},
+{EC_R_NOT_INITIALIZED                    ,"not initialized"},
 {EC_R_NO_SUCH_EXTRA_DATA                 ,"no such extra data"},
 {EC_R_POINT_AT_INFINITY                  ,"point at infinity"},
 {EC_R_POINT_IS_NOT_ON_CURVE              ,"point is not on curve"},
