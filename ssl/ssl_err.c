@@ -318,6 +318,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_REUSE_CERT_LENGTH_NOT_ZERO        ,"reuse cert length not zero"},
 {SSL_R_REUSE_CERT_TYPE_NOT_ZERO          ,"reuse cert type not zero"},
 {SSL_R_REUSE_CIPHER_LIST_NOT_ZERO        ,"reuse cipher list not zero"},
+{SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED  ,"session id context uninitialized"},
 {SSL_R_SHORT_READ                        ,"short read"},
 {SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE,"signature for non signing certificate"},
 {SSL_R_SSL23_DOING_SESSION_ID_REUSE      ,"ssl23 doing session id reuse"},

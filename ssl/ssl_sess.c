@@ -225,7 +225,11 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 	   && (!s->sid_ctx_length || ret->sid_ctx_length != s->sid_ctx_length
 	       || memcmp(ret->sid_ctx,s->sid_ctx,ret->sid_ctx_length)))
 	    {
-	    SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT);
+		if (s->sid_ctx_length)
+			SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT);
+		else
+			/* application should have used SSL[_CTX]_set_session_id_context */
+			SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED);
 	    return 0;
 	    }
 
