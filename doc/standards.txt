@@ -251,7 +251,3 @@ To be implemented:
 These are documents that describe things that are planed to be
 implemented in the hopefully short future.
 
-2712 Addition of Kerberos Cipher Suites to Transport Layer Security
-     (TLS). A. Medvinsky, M. Hur. October 1999. (Format: TXT=13763 bytes)
-     (Status: PROPOSED STANDARD)
-
