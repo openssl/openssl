@@ -281,12 +281,12 @@ typedef struct ssl_session_st
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x00000200L
 #define SSL_OP_TLS_ROLLBACK_BUG				0x00000400L
 
-/* If set, only use tmp_dh parameters once */
+/* If set, always create a new key when using tmp_dh parameters */
 #define SSL_OP_SINGLE_DH_USE				0x00100000L
 /* Set to also use the tmp_rsa key when doing RSA operations. */
 #define SSL_OP_EPHEMERAL_RSA				0x00200000L
 
-/* The next flag deliberatly changes the ciphertest, this is a check
+/* The next flag deliberately changes the ciphertest, this is a check
  * for the PKCS#1 attack */
 #define SSL_OP_PKCS1_CHECK_1				0x08000000L
 #define SSL_OP_PKCS1_CHECK_2				0x10000000L
