@@ -1,4 +1,4 @@
-/* crypto/evp/evp_key.c */
+/* crypto/ui/ui_compat.c */ /* This was previously crypto/des/read2pwd.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,113 +56,42 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/x509.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
+#include <openssl/des.h>
 #include <openssl/ui.h>
 
-/* should be init to zeros. */
-static char prompt_string[80];
-
-void EVP_set_pw_prompt(char *prompt)
+int des_read_password(des_cblock *key, const char *prompt, int verify)
 	{
-	if (prompt == NULL)
-		prompt_string[0]='\0';
-	else
-		strncpy(prompt_string,prompt,79);
-	}
-
-char *EVP_get_pw_prompt(void)
-	{
-	if (prompt_string[0] == '\0')
-		return(NULL);
-	else
-		return(prompt_string);
-	}
-
-/* For historical reasons, the standard function for reading passwords is
- * in the DES library -- if someone ever wants to disable DES,
- * this function will fail */
-int EVP_read_pw_string(char *buf, int len, const char *prompt, int verify)
-	{
-	int ret;
-	char buff[BUFSIZ];
+	int ok;
+	char buf[BUFSIZ],buff[BUFSIZ];
 	UI *ui;
 
-	if ((prompt == NULL) && (prompt_string[0] != '\0'))
-		prompt=prompt_string;
 	ui = UI_new();
-	UI_add_input_string(ui,prompt,0,buf,0,(len>=BUFSIZ)?BUFSIZ-1:len);
+	UI_add_input_string(ui,prompt,0,buf,0,BUFSIZ-1);
 	if (verify)
-		UI_add_verify_string(ui,prompt,0,
-			buff,0,(len>=BUFSIZ)?BUFSIZ-1:len,buf);
-	ret = UI_process(ui);
+		UI_add_verify_string(ui,prompt,0,buff,0,BUFSIZ-1,buf);
+	if ((ok=UI_process(ui)) == 0)
+		des_string_to_key(buf,key);
 	UI_free(ui);
+	memset(buf,0,BUFSIZ);
 	memset(buff,0,BUFSIZ);
-	return ret;
+	return(ok);
 	}
 
-int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md, 
-	     const unsigned char *salt, const unsigned char *data, int datal,
-	     int count, unsigned char *key, unsigned char *iv)
+int des_read_2passwords(des_cblock *key1, des_cblock *key2, const char *prompt,
+	     int verify)
 	{
-	EVP_MD_CTX c;
-	unsigned char md_buf[EVP_MAX_MD_SIZE];
-	int niv,nkey,addmd=0;
-	unsigned int mds=0,i;
+	int ok;
+	char buf[BUFSIZ],buff[BUFSIZ];
+	UI *ui;
 
-	nkey=type->key_len;
-	niv=type->iv_len;
-
-	if (data == NULL) return(nkey);
-
-	for (;;)
-		{
-		EVP_DigestInit(&c,md);
-		if (addmd++)
-			EVP_DigestUpdate(&c,&(md_buf[0]),mds);
-		EVP_DigestUpdate(&c,data,datal);
-		if (salt != NULL)
-			EVP_DigestUpdate(&c,salt,PKCS5_SALT_LEN);
-		EVP_DigestFinal(&c,&(md_buf[0]),&mds);
-
-		for (i=1; i<(unsigned int)count; i++)
-			{
-			EVP_DigestInit(&c,md);
-			EVP_DigestUpdate(&c,&(md_buf[0]),mds);
-			EVP_DigestFinal(&c,&(md_buf[0]),&mds);
-			}
-		i=0;
-		if (nkey)
-			{
-			for (;;)
-				{
-				if (nkey == 0) break;
-				if (i == mds) break;
-				if (key != NULL)
-					*(key++)=md_buf[i];
-				nkey--;
-				i++;
-				}
-			}
-		if (niv && (i != mds))
-			{
-			for (;;)
-				{
-				if (niv == 0) break;
-				if (i == mds) break;
-				if (iv != NULL)
-					*(iv++)=md_buf[i];
-				niv--;
-				i++;
-				}
-			}
-		if ((nkey == 0) && (niv == 0)) break;
-		}
-	memset(&c,0,sizeof(c));
-	memset(&(md_buf[0]),0,EVP_MAX_MD_SIZE);
-	return(type->key_len);
+	ui = UI_new();
+	UI_add_input_string(ui,prompt,0,buf,0,BUFSIZ-1);
+	if (verify)
+		UI_add_verify_string(ui,prompt,0,buff,0,BUFSIZ-1,buf);
+	if ((ok=UI_process(ui)) == 0)
+		des_string_to_2keys(buf,key1,key2);
+	UI_free(ui);
+	memset(buf,0,BUFSIZ);
+	memset(buff,0,BUFSIZ);
+	return(ok);
 	}
-

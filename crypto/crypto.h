@@ -124,7 +124,8 @@ extern "C" {
 #define	CRYPTO_LOCK_DSO			26
 #define	CRYPTO_LOCK_DYNLOCK		27
 #define	CRYPTO_LOCK_ENGINE		28
-#define	CRYPTO_NUM_LOCKS		29
+#define	CRYPTO_LOCK_UI			29
+#define	CRYPTO_NUM_LOCKS		30
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2

@@ -91,7 +91,7 @@ $ ENCRYPT_TYPES = "Basic,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ -
 		  "BN,EC,RSA,DSA,DH,DSO,ENGINE,RIJNDAEL,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,"+ -
 		  "EVP,EVP_2,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
-		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP"
+		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI"
 $ ENCRYPT_PROGRAMS = "DES,PKCS7"
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
@@ -269,6 +269,8 @@ $ LIB_COMP = "comp_lib,"+ -
 	"c_rle,c_zlib"
 $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
 	"ocsp_srv,ocsp_prn,ocsp_vfy,ocsp_err"
+$ LIB_UI_COMPAT = "ui_compat"
+$ LIB_UI = "ui_er,ui_lib,ui_openssl,"+LIB_UI_COMPAT
 $!
 $! Setup exceptional compilations
 $!

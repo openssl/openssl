@@ -26,6 +26,7 @@ L RAND		crypto/rand/rand.h		crypto/rand/rand_err.c
 L DSO		crypto/dso/dso.h		crypto/dso/dso_err.c
 L ENGINE	crypto/engine/engine.h		crypto/engine/engine_err.c
 L OCSP		crypto/ocsp/ocsp.h		crypto/ocsp/ocsp_err.c
+L UI		crypto/ui/ui.h			crypto/ui/ui_err.c
 
 # additional header files to be scanned for function names
 L NONE		crypto/x509/x509_vfy.h		NONE

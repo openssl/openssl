@@ -101,7 +101,8 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"dso",
 	"dynlock",
 	"engine",
-#if CRYPTO_NUM_LOCKS != 29
+	"ui",
+#if CRYPTO_NUM_LOCKS != 30
 # error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 	};

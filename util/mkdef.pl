@@ -243,6 +243,7 @@ $crypto.=" crypto/x509v3/x509v3.h";
 $crypto.=" crypto/rand/rand.h";
 $crypto.=" crypto/comp/comp.h" ; # unless $no_comp;
 $crypto.=" crypto/ocsp/ocsp.h";
+$crypto.=" crypto/ui/ui.h";
 $crypto.=" crypto/tmdiff.h";
 
 my $symhacks="crypto/symhacks.h";
