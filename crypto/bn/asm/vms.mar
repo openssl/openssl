@@ -202,7 +202,7 @@ n=12 ;(AP)	n	by value (input)
 ;     r = r - d
 ;     q = q + 1
 ;   }
-; while (r > d)
+; while (r >= d)
 ;   {
 ;     r = r - d
 ;     q = q + 1
@@ -253,21 +253,21 @@ d=12 ;(AP)	d	by value (input)
 3$:
 	tstl	r3
 	bgeq	4$
-	incl	r6		; since the high bit in r is set, set rprim
+	incl	r6		; since the high bit in r is set, set r'
 4$:
-	ashl	#1,r2,r2
-	ashl	#1,r3,r3
-	addl	r5,r3
+	ashl	#1,r2,r2	; q = q << 1
+	ashl	#1,r3,r3	; r = r << 1
+	addl	r5,r3		; r = r + a'
 
 	tstl	r6
-	beql	5$
-	subl	r4,r3
-	incl	r2
+	beql	5$		; if r'
+	subl	r4,r3		;   r = r - d
+	incl	r2		;   q = q + 1
 5$:
 	cmpl	r3,r4
-	blequ	42$
-	subl	r4,r3
-	incl	r2
+	blssu	42$		; while r >= d
+	subl	r4,r3		;   r = r - d
+	incl	r2		;   q = q + 1
 	brb	5$	
 42$:
 ;	movl	r3,r1
