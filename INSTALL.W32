@@ -6,7 +6,11 @@
  this is tested on Win32 but it may also work in Win 3.1 with some
  modification.
 
- You need Perl for Win32 (available from http://www.activestate.com/ActivePerl)
+ You need Perl for Win32 -- either ActiveState Perl, available from
+ http://www.activestate.com/ActivePerl, or the perl that comes with
+ Cygwin.  Version 5.6.1-2 of the latter has been reported to work,
+ although earlier versions might cause `./Configure' to fail.
+
  and one of the following C compilers:
 
   * Visual C++
