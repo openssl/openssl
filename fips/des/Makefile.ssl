@@ -94,3 +94,12 @@ dclean:
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+fips_des_enc.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+fips_des_enc.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
+fips_des_enc.o: ../../include/openssl/opensslconf.h
+fips_des_enc.o: ../../include/openssl/opensslv.h
+fips_des_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+fips_des_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+fips_des_enc.o: ../../include/openssl/ui_compat.h fips_des_enc.c
+fips_des_enc.o: fips_des_locl.h

@@ -88,7 +88,4 @@ clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-fips_sha1dgst.o: ../../include/openssl/e_os2.h
-fips_sha1dgst.o: ../../include/openssl/opensslconf.h
-fips_sha1dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/sha.h
-fips_sha1dgst.o: fips_md32_common.h fips_sha1dgst.c fips_sha_locl.h
+fips_sha1dgst.o: ../../include/openssl/opensslv.h fips_sha1dgst.c
