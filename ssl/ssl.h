@@ -1178,7 +1178,7 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void );
 #define SSL_CTX_get_read_ahead(ctx) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_GET_READ_AHEAD,0,NULL)
 #define SSL_CTX_set_read_ahead(ctx,m) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_READ_AHEAD,0,NULL)
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_READ_AHEAD,m,NULL)
 
      /* NB: the keylength is only applicable when is_export is true */
 #ifndef NO_RSA
