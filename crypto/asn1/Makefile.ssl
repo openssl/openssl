@@ -375,6 +375,16 @@ evp_asn1.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 evp_asn1.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
 evp_asn1.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
 evp_asn1.o: ../crypto.h asn1.h asn1_mac.h
+f_enum.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+f_enum.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+f_enum.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+f_enum.o: ../../include/err.h ../../include/evp.h ../../include/idea.h
+f_enum.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+f_enum.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
+f_enum.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+f_enum.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+f_enum.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+f_enum.o: ../crypto.h asn1.h
 f_int.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 f_int.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 f_int.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h

@@ -701,7 +701,7 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 	printf("Doing quad_cksum\n");
 	/* This is obviously done this way especially to puzzle me. Although
 	   quad_cksum returns up to 4 groups of 8 bytes, this test gets it to
-	   produce 2 groupos then treats them as 4 groups of 4 bytes.
+	   produce 2 groups then treats them as 4 groups of 4 bytes.
 	   Ben 13 Feb 1999 */
 	cs=quad_cksum(cbc_data,(des_cblocks)qret,strlen(cbc_data),2,cbc_iv);
 

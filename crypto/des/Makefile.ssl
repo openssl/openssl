@@ -148,6 +148,7 @@ cfb_enc.o: des.h des_locl.h
 des_enc.o: des.h des_locl.h
 ecb3_enc.o: des.h des_locl.h
 ecb_enc.o: des.h des_locl.h spr.h
+ede_cbcm_enc.o: des.h des_locl.h
 enc_read.o: des.h des_locl.h
 enc_writ.o: des.h des_locl.h
 fcrypt.o: des.h des.h des_locl.h des_locl.h
