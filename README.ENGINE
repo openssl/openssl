@@ -184,7 +184,7 @@
 
        openssl engine dynamic \
                  -pre SO_PATH:/lib/libfoo.so \
-                 -pre ENGINE_ID:foo \
+                 -pre ID:foo \
                  -pre LOAD \
                  -pre "CMD_FOO:some input data"
 
@@ -192,7 +192,7 @@
 
        openssl engine -vvvv dynamic \
                  -pre SO_PATH:/lib/libfoo.so \
-                 -pre ENGINE_ID:foo \
+                 -pre ID:foo \
                  -pre LOAD
 
     Applications that support the ENGINE API and more specifically, the
