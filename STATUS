@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/02/27 20:14:03 $
+  ______________                           $Date: 2000/02/28 11:32:42 $
 
   DEVELOPMENT STATE
 
@@ -20,7 +20,9 @@
                          hpux-parisc-gcc (gcc 2.7.1) - test passed
                          hpux-parisc-gcc (gcc 2.8.0) - test passed
                          AIX 4.3 (aix-cc)     - test passed
+                         FreeBSD 2.2.8-STABLE - test failed
                          FreeBSD 3.0-RELEASE  - test passed
+                         FreeBSD 3.4-STABLE   - test passed
                          OpenVMS V7.1/Alpha   - test passed
                          OpenVMS V7.2-1/Alpha - test passed
                          OpenVMS V7.2/VAX     - test failed (is corrected)
@@ -33,6 +35,7 @@
 			 linux-alpha+bwx-ccc  - test passed
 			 linux-alpha-gcc (gcc 2.95.1) - test passed
 			 linux-elf            - test passed
+			 WinNT4 SP6 VC++ 6 SP3 - test passed
                        Proposed release time: Monday, February 28th 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
     o  OpenSSL 0.9.3a: Released on May      29th, 1999
