@@ -353,7 +353,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-	ENGINE *e;
+	ENGINE *e = NULL;
 	unsigned char *buf=NULL,*buf2=NULL;
 	int mret=1;
 	long count=0,save_count=0;

@@ -12,6 +12,10 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Have the CHIL engine fork-safe (as defined by nCipher) and actually
+     make the newer ENGINE framework commands for the CHIL engine work.
+     [Toomas Kiisk <vix@cyber.ee> and Richard Levitte]
+
   +) Make it possible to produce shared libraries on ReliantUNIX.
      [Robert Dahlem <Robert.Dahlem@ffm2.siemens.de> via Richard Levitte]
 

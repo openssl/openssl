@@ -357,7 +357,7 @@ static HWCryptoHook_CallerContext password_context = { NULL, NULL, NULL };
 
 /* Stuff to pass to the HWCryptoHook library */
 static HWCryptoHook_InitInfo hwcrhk_globals = {
-	0,			/* Flags */
+	HWCryptoHook_InitFlags_SimpleForkCheck,	/* Flags */
 	&logstream,		/* logstream */
 	sizeof(BN_ULONG),	/* limbsize */
 	0,			/* mslimb first: false for BNs */
@@ -741,11 +741,13 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 		break;
 	case ENGINE_CTRL_SET_USER_INTERFACE:
+	case HWCRHK_CMD_SET_USER_INTERFACE:
 		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 		password_context.ui_method = (UI_METHOD *)p;
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 		break;
 	case ENGINE_CTRL_SET_CALLBACK_DATA:
+	case HWCRHK_CMD_SET_CALLBACK_DATA:
 		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 		password_context.callback_data = p;
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
