@@ -78,14 +78,12 @@ EXPORTS
     BIO_f_md                           @60
     BIO_f_nbio_test                    @915
     BIO_f_null                         @61
-    BIO_f_proxy_server                 @62
     BIO_fd_non_fatal_error             @63
     BIO_fd_should_retry                @64
     BIO_find_type                      @65
     BIO_free                           @66
     BIO_free_all                       @67
     BIO_get_accept_socket              @69
-    BIO_get_filter_bio                 @70
     BIO_get_host_ip                    @71
     BIO_get_port                       @72
     BIO_get_retry_BIO                  @73
@@ -101,7 +99,6 @@ EXPORTS
     BIO_new_file                       @82
     BIO_new_fp                         @83
     BIO_new_socket                     @84
-    BIO_new_socks4a_connect            @1110
     BIO_pop                            @85
     BIO_printf                         @86
     BIO_ptr_ctrl                       @969
@@ -114,9 +111,7 @@ EXPORTS
     BIO_s_file                         @93
     BIO_s_mem                          @95
     BIO_s_null                         @96
-    BIO_s_proxy_client                 @97
     BIO_s_socket                       @98
-    BIO_s_socks4a_connect              @1111
     BIO_set                            @100
     BIO_set_cipher                     @101
     BIO_set_tcp_ndelay                 @102
@@ -307,7 +302,6 @@ EXPORTS
     ERR_load_OBJ_strings               @241
     ERR_load_PEM_strings               @242
     ERR_load_PKCS7_strings             @919
-    ERR_load_PROXY_strings             @243
     ERR_load_RSA_strings               @244
     ERR_load_X509_strings              @245
     ERR_load_crypto_strings            @246
@@ -567,27 +561,11 @@ EXPORTS
     PKCS7_get_signed_attribute         @1143
     PKCS7_get_signer_info              @940
     PKCS7_new                          @445
+    PKCS7_set_attributes               @1153
     PKCS7_set_cipher                   @1075
     PKCS7_set_content                  @929
+    PKCS7_set_signed_attributes        @1154
     PKCS7_set_type                     @928
-    PROXY_ENTRY_add_noproxy            @446
-    PROXY_ENTRY_clear_noproxy          @447
-    PROXY_ENTRY_free                   @448
-    PROXY_ENTRY_get_noproxy            @449
-    PROXY_ENTRY_new                    @450
-    PROXY_ENTRY_set_server             @451
-    PROXY_add_noproxy                  @452
-    PROXY_add_server                   @453
-    PROXY_check_by_host                @454
-    PROXY_check_url                    @455
-    PROXY_clear_noproxy                @456
-    PROXY_free                         @457
-    PROXY_get_noproxy                  @458
-    PROXY_get_proxies                  @459
-    PROXY_get_proxy_entry              @460
-    PROXY_load_conf                    @461
-    PROXY_new                          @462
-    PROXY_print                        @463
     RAND_SSLeay                        @1113
     RAND_bytes                         @464
     RAND_cleanup                       @465
@@ -673,6 +651,8 @@ EXPORTS
     TXT_DB_write                       @516
     X509_ALGOR_free                    @517
     X509_ALGOR_new                     @518
+    X509_ATTRIBUTE_create              @1155
+    X509_ATTRIBUTE_dup                 @1156
     X509_ATTRIBUTE_free                @519
     X509_ATTRIBUTE_new                 @520
     X509_CINF_free                     @521

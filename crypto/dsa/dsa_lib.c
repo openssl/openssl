@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-/* Origional version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
+/* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
 
 #include <stdio.h>
 #include "cryptlib.h"
@@ -64,7 +64,7 @@
 #include "dsa.h"
 #include "asn1.h"
 
-char *DSA_version="\0DSA part of SSLeay 0.9.1a 06-Jul-1998";
+char *DSA_version="DSA part of SSLeay 0.9.1c 22-Dec-1998";
 
 DSA *DSA_new()
 	{

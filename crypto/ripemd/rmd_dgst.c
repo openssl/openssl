@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "rmd_locl.h"
 
-char *RMD160_version="RIPEMD160 part of SSLeay 0.9.1a 06-Jul-1998";
+char *RMD160_version="RIPE-MD160 part of SSLeay 0.9.1c 22-Dec-1998";
 
 #ifndef NOPROTO
 #  ifdef RMD160_ASM

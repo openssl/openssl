@@ -46,7 +46,7 @@ sub dofile
 	open(OUT,">$ff.new") || die "unable to open $f:$!\n";
 	print OUT @a;
 	close(OUT);
-	rename($f,"$ff.old") || die "unable to rename $f\n";
+	rename($f,"$ff.bak") || die "unable to rename $f\n";
 	rename("$ff.new",$f) || die "unable to rename $ff.new\n";
 	}
 

@@ -235,7 +235,7 @@ printf("number BN_from_montgomery\n");
 		/* hmm... if a is between i and 2*i, things are bad */
 		if (a->top > i)
 			{
-			j=bn_add_words(ret->d,ret->d,&(a->d[i]),i);
+			j=(int)(bn_add_words(ret->d,ret->d,&(a->d[i]),i));
 			if (j) /* overflow */
 				bn_sub_words(ret->d,ret->d,mont->N.d,i);
 			}

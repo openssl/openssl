@@ -126,13 +126,13 @@ static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
 static long md_count[2]={0,0};
 
-char *RAND_version="RAND part of SSLeay 0.9.1a 06-Jul-1998";
+char *RAND_version="RAND part of SSLeay 0.9.1c 22-Dec-1998";
 
 static void ssleay_rand_cleanup(void);
 static void ssleay_rand_seed(unsigned char *buf, int num);
 static void ssleay_rand_bytes(unsigned char *buf, int num);
 
-RAND_METHOD rand_ssleay={
+RAND_METHOD rand_ssleay_meth={
 	ssleay_rand_seed,
 	ssleay_rand_bytes,
 	ssleay_rand_cleanup,
@@ -140,7 +140,7 @@ RAND_METHOD rand_ssleay={
 
 RAND_METHOD *RAND_SSLeay()
 	{
-	return(&rand_ssleay);
+	return(&rand_ssleay_meth);
 	}
 
 static void ssleay_rand_cleanup()

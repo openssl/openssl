@@ -66,7 +66,7 @@
 #undef BUFSIZE
 #define BUFSIZE	512
 
-char *TXT_DB_version="TXT_DB part of SSLeay 0.9.1a 06-Jul-1998";
+char *TXT_DB_version="TXT_DB part of SSLeay 0.9.1c 22-Dec-1998";
 
 TXT_DB *TXT_DB_read(in,num)
 BIO *in;

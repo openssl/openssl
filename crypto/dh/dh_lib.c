@@ -61,7 +61,7 @@
 #include "bn.h"
 #include "dh.h"
 
-char *DH_version="Diffie-Hellman part of SSLeay 0.9.1a 06-Jul-1998";
+char *DH_version="Diffie-Hellman part of SSLeay 0.9.1c 22-Dec-1998";
 
 DH *DH_new()
 	{

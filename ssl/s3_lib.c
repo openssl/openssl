@@ -60,7 +60,7 @@
 #include "objects.h"
 #include "ssl_locl.h"
 
-char *ssl3_version_str="SSLv3 part of SSLeay 0.9.1a 06-Jul-1998";
+char *ssl3_version_str="SSLv3 part of SSLeay 0.9.1c 22-Dec-1998";
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers)/sizeof(SSL_CIPHER))
 
@@ -530,7 +530,7 @@ char *parg;
 		ret=s->s3->total_renegotiations;
 		break;
 	case SSL_CTRL_GET_FLAGS:
-		ret=s->s3->flags;
+		ret=(int)(s->s3->flags);
 		break;
 	default:
 		break;
@@ -619,7 +619,7 @@ char *parg;
 		cert->dh_tmp_cb=(DH *(*)())parg;
 		break;
 #endif
-	/* A Thwate special :-) */
+	/* A Thawte special :-) */
 	case SSL_CTRL_EXTRA_CHAIN_CERT:
 		if (ctx->extra_certs == NULL)
 			{

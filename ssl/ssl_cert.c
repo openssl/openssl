@@ -69,7 +69,7 @@ int SSL_get_ex_data_X509_STORE_CTX_idx()
 	if (ssl_x509_store_ctx_idx < 0)
 		{
 		ssl_x509_store_ctx_idx=X509_STORE_CTX_get_ex_new_index(
-			0,"SSL for verifiy callback",NULL,NULL,NULL);
+			0,"SSL for verify callback",NULL,NULL,NULL);
 		}
 	return(ssl_x509_store_ctx_idx);
 	}

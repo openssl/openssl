@@ -333,7 +333,10 @@ end:
 static int get_client_master_key(s)
 SSL *s;
 	{
-	int export,i,n,keya,error=0,ek;
+	int export,i,n,keya,ek;
+#if 0
+	int error=0;
+#endif
 	unsigned char *p;
 	SSL_CIPHER *cp;
 	EVP_CIPHER *c;

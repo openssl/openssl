@@ -909,7 +909,6 @@ int atrtype;
 char *value;
 	{
 	X509_ATTRIBUTE *attr=NULL;
-	ASN1_TYPE *val=NULL;
 
 	if (*sk == NULL)
 		{

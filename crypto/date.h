@@ -1,1 +1,1 @@
-#define DATE	"Wed Jul 22 12:21:22 EST 1998"
+#define DATE	"Tue Dec 22 15:40:03 CET 1998"

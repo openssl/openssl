@@ -75,6 +75,6 @@ foreach $file (@files)
 	close(IN);
 	close(OUT);
 	(!$found) && die "unable to update the version number in $file\n";
-	rename($file,"$file.old") || die "unable to rename $file:$!\n";
+	rename($file,"$file.bak") || die "unable to rename $file:$!\n";
 	rename("$file.new",$file) || die "unable to rename $file.new:$!\n";
 	}

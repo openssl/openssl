@@ -1124,3 +1124,7 @@ ms_time_new				1149
 ms_time_free				1150
 ms_time_cmp				1151
 ms_time_get				1152
+PKCS7_set_attributes			1153
+PKCS7_set_signed_attributes		1154
+X509_ATTRIBUTE_create			1155
+X509_ATTRIBUTE_dup			1156

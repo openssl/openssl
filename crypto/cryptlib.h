@@ -88,7 +88,7 @@ extern "C" {
 #define X509_CERT_AREA		"/usr/local/ssl"
 #define X509_CERT_DIR		"/usr/local/ssl/certs"
 #define X509_CERT_FILE		"/usr/local/ssl/cert.pem"
-#define X509_PRIVATE_DIR        "/usr/local/ssl/private"
+#define X509_PRIVATE_DIR	"/usr/local/ssl/private"
 
 #define X509_CERT_DIR_EVP        "SSL_CERT_DIR"
 #define X509_CERT_FILE_EVP       "SSL_CERT_FILE"

@@ -176,16 +176,16 @@ printf(" bn_mul_recursive %d * %d\n",n2,n2);
 	 * r[32] holds (b[1]*b[1])
 	 */
 
-	c1=bn_add_words(t,r,&(r[n2]),n2);
+	c1=(int)(bn_add_words(t,r,&(r[n2]),n2));
 
 	if (neg) /* if t[32] is negative */
 		{
-		c1-=bn_sub_words(&(t[n2]),t,&(t[n2]),n2);
+		c1-=(int)(bn_sub_words(&(t[n2]),t,&(t[n2]),n2));
 		}
 	else
 		{
 		/* Might have a carry */
-		c1+=bn_add_words(&(t[n2]),&(t[n2]),t,n2);
+		c1+=(int)(bn_add_words(&(t[n2]),&(t[n2]),t,n2));
 		}
 
 	/* t[32] holds (a[0]-a[1])*(b[1]-b[0])+(a[0]*b[0])+(a[1]*b[1])
@@ -193,7 +193,7 @@ printf(" bn_mul_recursive %d * %d\n",n2,n2);
 	 * r[32] holds (b[1]*b[1])
 	 * c1 holds the carry bits
 	 */
-	c1+=bn_add_words(&(r[n]),&(r[n]),&(t[n2]),n2);
+	c1+=(int)(bn_add_words(&(r[n]),&(r[n]),&(t[n2]),n2));
 	if (c1)
 		{
 		p= &(r[n+n2]);
@@ -311,15 +311,15 @@ printf(" bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
 	 * r[32] holds (b[1]*b[1])
 	 */
 
-	c1=bn_add_words(t,r,&(r[n2]),n2);
-	c1-=bn_sub_words(&(t[n2]),t,&(t[n2]),n2);
+	c1=(int)(bn_add_words(t,r,&(r[n2]),n2));
+	c1-=(int)(bn_sub_words(&(t[n2]),t,&(t[n2]),n2));
 
 	/* t[32] holds (a[0]-a[1])*(b[1]-b[0])+(a[0]*b[0])+(a[1]*b[1])
 	 * r[10] holds (a[0]*b[0])
 	 * r[32] holds (b[1]*b[1])
 	 * c1 holds the carry bits
 	 */
-	c1+=bn_add_words(&(r[n]),&(r[n]),&(t[n2]),n2);
+	c1+=(int)(bn_add_words(&(r[n]),&(r[n]),&(t[n2]),n2));
 	if (c1)
 		{
 		p= &(r[n+n2]);
@@ -454,7 +454,7 @@ printf(" bn_mul_high %d * %d\n",n2,n2);
 	if (l != NULL)
 		{
 		lp= &(t[n2+n]);
-		c1=bn_add_words(lp,&(r[0]),&(l[0]),n);
+		c1=(int)(bn_add_words(lp,&(r[0]),&(l[0]),n));
 		}
 	else
 		{
@@ -463,7 +463,7 @@ printf(" bn_mul_high %d * %d\n",n2,n2);
 		}
 
 	if (neg)
-		neg=bn_sub_words(&(t[n2]),lp,&(t[0]),n);
+		neg=(int)(bn_sub_words(&(t[n2]),lp,&(t[0]),n));
 	else
 		{
 		bn_add_words(&(t[n2]),lp,&(t[0]),n);
@@ -498,25 +498,25 @@ printf(" bn_mul_high %d * %d\n",n2,n2);
 	if (l != NULL)
 		{
 		lp= &(t[n2]);
-		c1= bn_add_words(lp,&(t[n2+n]),&(l[0]),n);
+		c1= (int)(bn_add_words(lp,&(t[n2+n]),&(l[0]),n));
 		}
 	else
 		{
 		lp= &(t[n2+n]);
 		c1=0;
 		}
-	c1+=bn_add_words(&(t[n2]),lp,  &(r[0]),n);
+	c1+=(int)(bn_add_words(&(t[n2]),lp,  &(r[0]),n));
 	if (oneg)
-		c1-=bn_sub_words(&(t[n2]),&(t[n2]),&(t[0]),n);
+		c1-=(int)(bn_sub_words(&(t[n2]),&(t[n2]),&(t[0]),n));
 	else
-		c1+=bn_add_words(&(t[n2]),&(t[n2]),&(t[0]),n);
+		c1+=(int)(bn_add_words(&(t[n2]),&(t[n2]),&(t[0]),n));
 
-	c2 =bn_add_words(&(r[0]),&(r[0]),&(t[n2+n]),n);
-	c2+=bn_add_words(&(r[0]),&(r[0]),&(r[n]),n);
+	c2 =(int)(bn_add_words(&(r[0]),&(r[0]),&(t[n2+n]),n));
+	c2+=(int)(bn_add_words(&(r[0]),&(r[0]),&(r[n]),n));
 	if (oneg)
-		c2-=bn_sub_words(&(r[0]),&(r[0]),&(t[n]),n);
+		c2-=(int)(bn_sub_words(&(r[0]),&(r[0]),&(t[n]),n));
 	else
-		c2+=bn_add_words(&(r[0]),&(r[0]),&(t[n]),n);
+		c2+=(int)(bn_add_words(&(r[0]),&(r[0]),&(t[n]),n));
 	
 	if (c1 != 0) /* Add starting at r[0], could be +ve or -ve */
 		{

@@ -57,7 +57,7 @@
  */
 
 /* A nice addition from Dr Stephen Henson <shenson@bigfoot.com> to 
- * add the -strparse option which parses nested binarary structures
+ * add the -strparse option which parses nested binary structures
  */
 
 #include <stdio.h>

@@ -65,8 +65,8 @@
 #ifdef NO_RAND
 static RAND_METHOD *rand_meth=NULL;
 #else
-extern RAND_METHOD rand_ssleay;
-static RAND_METHOD *rand_meth= &rand_ssleay;
+extern RAND_METHOD rand_ssleay_meth;
+static RAND_METHOD *rand_meth= &rand_ssleay_meth;
 #endif
 
 void RAND_set_rand_method(meth)

@@ -59,7 +59,7 @@
 #include "cast.h"
 #include "cast_lcl.h"
 
-char *CAST_version="CAST part of SSLeay 0.9.1a 06-Jul-1998";
+char *CAST_version="CAST part of SSLeay 0.9.1c 22-Dec-1998";
 
 void CAST_ecb_encrypt(in, out, ks, encrypt)
 unsigned char *in;

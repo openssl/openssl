@@ -59,7 +59,7 @@
 #include "rc4.h"
 #include "rc4_locl.h"
 
-char *RC4_version="RC4 part of SSLeay 0.9.1a 06-Jul-1998";
+char *RC4_version="RC4 part of SSLeay 0.9.1c 22-Dec-1998";
 
 char *RC4_options()
 	{

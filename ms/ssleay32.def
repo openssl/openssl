@@ -12,7 +12,6 @@ EXPORTS
     BIO_new_buffer_ssl_connect         @173
     BIO_new_ssl                        @122
     BIO_new_ssl_connect                @174
-    BIO_proxy_ssl_copy_session_id      @123
     BIO_ssl_copy_session_id            @124
     BIO_ssl_shutdown                   @131
     ERR_load_SSL_strings               @1

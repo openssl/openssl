@@ -243,7 +243,7 @@ X509 *x;
 		X509_STORE_CTX_cleanup(&xs_ctx);
 		}
 
-	/* Thwate special :-) */
+	/* Thawte special :-) */
 	if (s->ctx->extra_certs != NULL)
 	for (i=0; i<sk_num(s->ctx->extra_certs); i++)
 		{

@@ -315,7 +315,7 @@ typedef struct ssl3_enc_method
 	int (*alert_value)();
 	} SSL3_ENC_METHOD;
 
-/* Used for holding the relevent compression methods loaded into SSL_CTX */
+/* Used for holding the relevant compression methods loaded into SSL_CTX */
 typedef struct ssl3_comp_st
 	{
 	int comp_id;	/* The identifer byte for this compression type */

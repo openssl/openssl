@@ -1,0 +1,144 @@
+
+ OpenTLS CHANGES
+ _______________
+
+
+ Changes between 0.9.01b and 0.9.1c
+
+  *) Updated the README file.
+     [Ralf S. Engelschall]
+
+  *) Added various .cvsignore files in the CVS repository subdirs
+     to make a "cvs update" really silent.
+     [Ralf S. Engelschall]
+
+  *) Recompiled the error-definition header files and added
+     missing symbols to the Win32 linker tables.
+     [Ralf S. Engelschall]
+
+  *) Cleaned up the top-level documents;
+     o new files: CHANGES and LICENSE
+     o merged VERSION, HISTORY* and README* files a CHANGES.SSLeay 
+     o merged COPYRIGHT into LICENSE
+     o removed obsolete TODO file
+     o renamed MICROSOFT to INSTALL.W32
+     [Ralf S. Engelschall]
+
+  *) Removed dummy files from the 0.9.1b source tree: 
+     crypto/asn1/x crypto/bio/cd crypto/bio/fg crypto/bio/grep crypto/bio/vi
+     crypto/bn/asm/......add.c crypto/bn/asm/a.out crypto/dsa/f crypto/md5/f
+     crypto/pem/gmon.out crypto/perlasm/f crypto/pkcs7/build crypto/rsa/f
+     crypto/sha/asm/f crypto/threads/f ms/zzz ssl/f ssl/f.mak test/f
+     util/f.mak util/pl/f util/pl/f.mak crypto/bf/bf_locl.old apps/f
+     [Ralf S. Engelschall]
+
+  *) Added various platform portability fixed.
+     [Marc J. Cox]
+
+  *) The Genesis of the OpenTLS rpject:
+     We start with the latest (unreleased) SSLeay version 0.9.1b which Eric A.
+     Joung and Tim J. Hudson created while they were working for C2Net until
+     summer 1998.
+     [The OpenTLS Project]
+ 
+ Changes between 0.9.0b and 0.9.1b
+
+  *) Updated a few CA certificates under certs/
+     [Eric A. Young]
+
+  *) Changed some BIGNUM api stuff.
+     [Eric A. Young]
+
+  *) Various platform ports: OpenBSD, Ultrix, IRIX 64bit, NetBSD, 
+     DGUX x86, Linux Alpha, etc.
+     [Eric A. Young]
+
+  *) New COMP library [crypto/comp/] for SSL Record Layer Compression: 
+     RLE (dummy implemented) and ZLIB (really implemented when ZLIB is
+     available).
+     [Eric A. Young]
+
+  *) Add -strparse option to asn1pars program which parses nested 
+     binary structures 
+     [Dr Stephen Henson <shenson@bigfoot.com>]
+
+  *) Added "oid_file" to ssleay.cnf for "ca" and "req" programs.
+     [Eric A. Young]
+
+  *) DSA fix for "ca" program.
+     [Eric A. Young]
+
+  *) Added "-genkey" option to "dsaparam" program.
+     [Eric A. Young]
+
+  *) Added RIPE MD160 (rmd160) message digest.
+     [Eric A. Young]
+
+  *) Added -a (all) option to "ssleay version" command.
+     [Eric A. Young]
+
+  *) Added PLATFORM define which is the id given to Configure.
+     [Eric A. Young]
+
+  *) Added MemCheck_XXXX functions to crypto/mem.c for memory checking.
+     [Eric A. Young]
+
+  *) Extended the ASN.1 parser routines.
+     [Eric A. Young]
+
+  *) Extended BIO routines to support REUSEADDR, seek, tell, etc.
+     [Eric A. Young]
+
+  *) Added a BN_CTX to the BN library.
+     [Eric A. Young]
+
+  *) Fixed the weak key values in DES library
+     [Eric A. Young]
+
+  *) Changed API in EVP library for cipher aliases.
+     [Eric A. Young]
+
+  *) Added support for RC2/64bit cipher.
+     [Eric A. Young]
+
+  *) Converted the lhash library to the crypto/mem.c functions.
+     [Eric A. Young]
+
+  *) Added more recognized ASN.1 object ids.
+     [Eric A. Young]
+
+  *) Added more RSA padding checks for SSL/TLS.
+     [Eric A. Young]
+
+  *) Added BIO proxy/filter functionality.
+     [Eric A. Young]
+
+  *) Added extra_certs to SSL_CTX which can be used
+     send extra CA certificates to the client in the CA cert chain sending
+     process. It can be configured with SSL_CTX_add_extra_chain_cert().
+     [Eric A. Young]
+
+  *) Now Fortezza is denied in the authentication phase because
+     this is key exchange mechanism is not supported by SSLeay at all.
+     [Eric A. Young]
+
+  *) Additional PKCS1 checks.
+     [Eric A. Young]
+
+  *) Support the string "TLSv1" for all TLS v1 ciphers.
+     [Eric A. Young]
+
+  *) Added function SSL_get_ex_data_X509_STORE_CTX_idx() which gives the
+     ex_data index of the SSL context in the X509_STORE_CTX ex_data.
+     [Eric A. Young]
+
+  *) Fixed a few memory leaks.
+     [Eric A. Young]
+
+  *) Fixed various code and comment typos.
+     [Eric A. Young]
+
+  *) A minor bug in ssl/s3_clnt.c where there would always be 4 0 
+     bytes sent in the client random.
+     [Edward Bishop <ebishop@spyglass.com>]
+

@@ -1,7 +1,7 @@
 #
 # Makefile for all the SSL related library routines and utilities
-VERSION = 0.9.1b
-PLATFORM=debug
+VERSION = 0.9.1c
+PLATFORM=dist
 #
 # make install will install:
 #   libraries into $INSTALLTOP/lib
@@ -62,11 +62,11 @@ PLATFORM=debug
 # equal 4.
 # PKCS1_CHECK - pkcs1 tests.
 
-CC= gcc
+CC= cc
 #CFLAG= -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized -DSHA1_ASM -DMD5_ASM -DRMD160_ASM
-CFLAG= -DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror
+CFLAG= -O -DNOPROTO
 PEX_LIBS= -L. -L.. -L../.. -L../../..
-EX_LIBS= -lefence
+EX_LIBS= 
 AR=ar r
 
 # Set BN_ASM to bn_asm.o if you want to use the C version
@@ -173,16 +173,11 @@ SHELL=/bin/sh
 TOP=    .
 ONEDIRS=out tmp
 EDIRS=  times doc bugs util include certs ms shlib mt demos perl sf dep
-MISC=   COPYRIGHT Configure HISTORY.090	HISTORY.066 INSTALL Makefile.ssl \
-	Makefile \
-	README TODO HISTORY README.066 README.080 README.090 \
-	VERSION PROBLEMS MINFO makefile.one e_os.h \
-	MICROSOFT makevms.com config PATENTS
 WDIRS=  windows
 LIBS=   libcrypto.a libssl.a 
 
 GENERAL=        Makefile
-BASENAME=       SSLeay
+BASENAME=       opentls
 NAME=           $(BASENAME)-$(VERSION)
 TARFILE=        $(NAME).tar
 WTARFILE=       $(NAME)-win.tar
@@ -292,16 +287,13 @@ errors:
 	done;
 
 tar:
-	@(cd ..;\
-	mv $(BASENAME) $(NAME); \
-	export STUFF; \
-	for i in $(MISC) $(DIRS) $(EDIRS) $(ONEDIRS) ;\
-	do \
-		STUFF="$$STUFF $(NAME)/$$i"; \
-	done; \
-	tar cf $(NAME)/$(TARFILE) $$STUFF; \
-	mv $(NAME) $(BASENAME) ) 
-	gzip -f $(TARFILE)
+	@gtar --no-recursion -cvf - \
+		`find * -depth -print | grep -v CVS | grep -v .cvsignore | sort` |\
+	tardy --user_number=0  --user_name=rse      \
+	      --group_number=0 --group_name=opentls \
+	      --prefix=opentls-$(VERSION) - |\
+	gzip --best >../$(TARFILE).gz; \
+	ls -l ../$(TARFILE).gz
 
 dist:   
 	perl Configure dist

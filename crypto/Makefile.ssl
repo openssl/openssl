@@ -54,7 +54,7 @@ top:
 
 all: date.h lib subdirs
 
-date.h: ../Makefile.ssl ../VERSION
+date.h: ../Makefile.ssl
 	echo "#define DATE	\"`date`\"" >date.h
 
 subdirs:
