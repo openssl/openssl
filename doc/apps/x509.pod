@@ -61,8 +61,9 @@ certificate trust settings.
 Since there are a large number of options they will split up into
 various sections.
 
+=head1 OPTIONS
 
-=head1 INPUT, OUTPUT AND GENERAL PURPOSE OPTIONS
+=head2 INPUT, OUTPUT AND GENERAL PURPOSE OPTIONS
 
 =over 4
 
@@ -100,7 +101,7 @@ this option has no effect: SHA1 is always used with DSA keys.
 
 =back
 
-=head1 DISPLAY OPTIONS
+=head2 DISPLAY OPTIONS
 
 Note: the B<-alias> and B<-purpose> options are also display options
 but are described in the B<TRUST SETTINGS> section.
@@ -152,7 +153,7 @@ outputs the issuer name.
 option which determines how the subject or issuer names are displayed. The
 B<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the B<SUBJECT AND ISSUER NAME OPTIONS> section for more information.
+set multiple options. See the B<NAME OPTIONS> section for more information.
 
 =item B<-email>
 
@@ -181,7 +182,7 @@ this outputs the certificate in the form of a C source file.
 
 =back
 
-=head1 TRUST SETTINGS
+=head2 TRUST SETTINGS
 
 Please note these options are currently experimental and may well change.
 
@@ -252,7 +253,7 @@ EXTENSIONS> section.
 
 =back
 
-=head1 SIGNING OPTIONS
+=head2 SIGNING OPTIONS
 
 The B<x509> utility can be used to sign certificates and requests: it
 can thus behave like a "mini CA".
@@ -362,7 +363,7 @@ specified then the extensions should either be contained in the unnamed
 
 =back
 
-=head1 SUBJECT AND ISSUER NAME OPTIONS
+=head2 NAME OPTIONS
 
 The B<nameopt> command line switch determines how the subject and issuer
 names are displayed. If no B<nameopt> switch is present the default "oneline"
@@ -499,7 +500,7 @@ name.
 
 =back
 
-=head1 TEXT OPTIONS
+=head2 TEXT OPTIONS
 
 As well as customising the name output format, it is also possible to
 customise the actual fields printed using the B<certopt> options when
