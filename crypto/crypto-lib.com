@@ -229,7 +229,7 @@ $ LIB_EVP_2 = "e_ecb_c,e_cbc_c,e_cfb_c,e_ofb_c,"+ -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,evp_lib,bio_ok,evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
-	"a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,a_bmp,"+ -
+	"a_null,a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,a_bmp,"+ -
 	"a_enum,a_vis,a_utf8,a_sign,a_digest,a_verify,a_mbstr,"+ -
 	"x_algor,x_val,x_pubkey,x_sig,x_req,x_attrib,"+ -
 	"x_name,x_cinf,x_x509,x_crl,x_info,x_spki,nsseq,"+ -
