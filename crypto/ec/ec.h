@@ -19,7 +19,7 @@
 
 typedef struct bn_ec_struct		/* E: y^2 = x^3 + Ax + B  (mod p) */
 {
-	BIGNUM	*A, *B, *p, *h;		/* h = 1/2 mod p = (p + 1)/2 */
+	BIGNUM	*A, *B, *p;
 	int is_in_mont;
 } EC;
 
@@ -44,7 +44,6 @@ typedef struct bn_ecp_precompute_struct /* Pi[i] = [2i + 1]P	i = 0..2^{r-1} - 1 
 
 EC *EC_new();
 void EC_clear_free(EC *E);
-int EC_set_half(EC *E);
 #ifdef MONTGOMERY
 int EC_to_montgomery(EC *E, BN_MONTGOMERY *mont, BN_CTX *ctx);
 int EC_from_montgomery(EC *E, BN_MONTGOMERY *mont, BN_CTX *ctx);

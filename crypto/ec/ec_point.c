@@ -157,7 +157,7 @@ EC_POINT *ECP_generate(BIGNUM *x, BIGNUM *z,EC *E, BN_CTX *ctx)
 	int Pnorm, Pinfty, X0, A0;
 
 	assert(E != NULL);
-	assert(E->A != NULL && E->B != NULL && E->p != NULL && E->h != NULL);
+	assert(E->A != NULL && E->B != NULL && E->p != NULL);
 
 	assert(ctx != NULL);
 
@@ -559,7 +559,7 @@ int ECP_double(EC_POINT *R, EC_POINT *P, EC *E, BN_CTX *ctx)
 	assert(R->X != NULL && R->Y != NULL && R->Z != NULL);
 
 	assert(E != NULL);
-	assert(E->A != NULL && E->B != NULL && E->p != NULL && E->h != NULL);
+	assert(E->A != NULL && E->B != NULL && E->p != NULL);
 
 	assert(ctx != NULL);
 
@@ -664,8 +664,7 @@ int ECP_add(EC_POINT *R, EC_POINT *P, EC_POINT *Q, EC *E, BN_CTX *ctx)
 	assert(R->X != NULL && R->Y != NULL && R->Z != NULL);
 
 	assert(E != NULL);
-	assert(E->A != NULL && E->B != NULL && E->p != NULL && E->h != NULL);
-	assert(!BN_is_zero(E->h));;
+	assert(E->A != NULL && E->B != NULL && E->p != NULL);
 
 	assert(ctx != NULL);
 
@@ -772,9 +771,10 @@ int ECP_add(EC_POINT *R, EC_POINT *P, EC_POINT *Q, EC *E, BN_CTX *ctx)
 	if (!BN_mod_mul(n5, n4, n5, p, ctx)) goto err;
 	if (!BN_mod_mul(n1, n2, n5, p, ctx)) goto err;
 	if (!BN_mod_sub(n0, n0, n1, p, ctx)) goto err;
-	if (!BN_mod_mul(R->Y, n0, E->h, p, ctx)) goto err;	/* Y = (L6 * L9 - L8 * L5^3) / 2 */
-
-
+	if (BN_is_odd(n0))
+		if (!BN_add(n0, n0, p)) goto err;
+	/* now  0 <= n0 < 2*p,  and n0 is even */
+	if (!BN_rshift1(R->Y, n0)) goto err;			/* Y = (L6 * L9 - L8 * L5^3) / 2 */
 
 #ifdef TEST
 	if (!ECP_is_on_ec(R, E, ctx)) return 0;
@@ -849,7 +849,7 @@ int ECP_multiply(EC_POINT *R, BIGNUM *k, ECP_PRECOMPUTE *prec, EC *E, BN_CTX *ct
 	assert(R->X != NULL && R->Y != NULL && R->Z != NULL);
 
 	assert(E != NULL);
-	assert(E->A != NULL && E->B != NULL && E->p != NULL && E->h != NULL);
+	assert(E->A != NULL && E->B != NULL && E->p != NULL);
 
 	assert(k != NULL);
 	assert(!k->neg);
@@ -1068,7 +1068,7 @@ int ECP_mont_double(EC_POINT *R, EC_POINT *P, EC *E, BN_MONTGOMERY *mont, BN_CTX
 	assert(R->X != NULL && R->Y != NULL && R->Z != NULL);
 
 	assert(E != NULL);
-	assert(E->A != NULL && E->B != NULL && E->p != NULL && E->h != NULL);
+	assert(E->A != NULL && E->B != NULL && E->p != NULL);
 
 	assert(ctx != NULL);
 	
@@ -1153,8 +1153,7 @@ int ECP_mont_add(EC_POINT *R, EC_POINT *P, EC_POINT *Q, EC *E, BN_MONTGOMERY *mo
 	assert(R->X != NULL && R->Y != NULL && R->Z != NULL);
 
 	assert(E != NULL);
-	assert(E->A != NULL && E->B != NULL && E->p != NULL && E->h != NULL);
-	assert(!BN_is_zero(E->h));;
+	assert(E->A != NULL && E->B != NULL && E->p != NULL);
 
 	assert(ctx != NULL);
 
@@ -1252,8 +1251,10 @@ int ECP_mont_add(EC_POINT *R, EC_POINT *P, EC_POINT *Q, EC *E, BN_MONTGOMERY *mo
 	if (!BN_mont_mod_mul(n6, n4, n5, mont)) goto err;
 	if (!BN_mont_mod_mul(n1, n2, n6, mont)) goto err;
 	if (!BN_mod_sub_quick(n0, n0, n1, p)) goto err;
-	if (!BN_mont_mod_mul(R->Y, n0, E->h, mont)) goto err;	/* Y = (L6 * L9 - L8 * L5^3) / 2 */
-
+	if (BN_is_odd(n0))
+		if (!BN_add(n0, n0, p)) goto err;
+	/* now  0 <= n0 < 2*p,  and n0 is even */
+	if (!BN_rshift1(R->Y, n0)) goto err;				/* Y = (L6 * L9 - L8 * L5^3) / 2 */
 
 	BN_CTX_end(ctx);
 	return 1;
@@ -1331,7 +1332,7 @@ int ECP_mont_multiply(EC_POINT *R, BIGNUM *k, ECP_PRECOMPUTE *prec, EC *E, BN_MO
 	assert(R->X != NULL && R->Y != NULL && R->Z != NULL);
 
 	assert(E != NULL);
-	assert(E->A != NULL && E->B != NULL && E->p != NULL && E->h != NULL);
+	assert(E->A != NULL && E->B != NULL && E->p != NULL);
 
 	assert(k != NULL);
 	assert(!k->neg);
@@ -1421,7 +1422,7 @@ int ECP_mont_multiply2(EC_POINT *R, BIGNUM *k, EC_POINT *P, EC *E, BN_MONTGOMERY
 	assert(P->X != NULL && P->Y != NULL && P->Z != NULL);
 
 	assert(E != NULL);
-	assert(E->A != NULL && E->B != NULL && E->p != NULL && E->h != NULL);
+	assert(E->A != NULL && E->B != NULL && E->p != NULL);
 
 	assert(k != NULL);
 	assert(!k->neg);
