@@ -123,6 +123,7 @@ int MAIN(int argc, char **argv)
 	int accept_count = -1;
 	int badarg = 0;
 	int i;
+	int ignore_err = 0;
 	STACK *reqnames = NULL;
 	STACK_OF(OCSP_CERTID) *ids = NULL;
 
@@ -182,6 +183,8 @@ int MAIN(int argc, char **argv)
 				}
 			else badarg = 1;
 			}
+		else if (!strcmp(*args, "-ignore_err"))
+			ignore_err = 1;
 		else if (!strcmp(*args, "-noverify"))
 			noverify = 1;
 		else if (!strcmp(*args, "-nonce"))
@@ -783,6 +786,8 @@ int MAIN(int argc, char **argv)
 		{
 		BIO_printf(out, "Responder Error: %s (%d)\n",
 				OCSP_response_status_str(i), i);
+		if (ignore_err)
+			goto redo_accept;
 		ret = 0;
 		goto end;
 		}
