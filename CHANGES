@@ -26,13 +26,13 @@
      entries for variables.
      [Steve Henson]
 
+  *) Fix a deadlock in CRYPTO_mem_leaks().
+     [Bodo Moeller]
+
   *) Add functionality to apps/openssl.c for detecting locking
      problems: As the program is single-threaded, all we have
      to do is register a locking callback using an array for
      storing which locks are currently held by the program.
-
-     Fix a deadlock in CRYPTO_mem_leaks() that was detected in
-     apps/openssl.c.
      [Bodo Moeller]
 
   *) Use a lock around the call to CRYPTO_get_ex_new_index() in
