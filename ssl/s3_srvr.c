@@ -368,10 +368,10 @@ int ssl3_accept(SSL *s)
 			 * a client cert, it can be verified */ 
 			s->method->ssl3_enc->cert_verify_mac(s,
 				&(s->s3->finish_dgst1),
-				&(s->s3->tmp.finish_md[0]));
+				&(s->s3->tmp.cert_verify_md[0]));
 			s->method->ssl3_enc->cert_verify_mac(s,
 				&(s->s3->finish_dgst2),
-				&(s->s3->tmp.finish_md[MD5_DIGEST_LENGTH]));
+				&(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]));
 
 			break;
 
@@ -1484,7 +1484,7 @@ static int ssl3_get_cert_verify(SSL *s)
 #ifndef NO_RSA 
 	if (pkey->type == EVP_PKEY_RSA)
 		{
-		i=RSA_verify(NID_md5_sha1, s->s3->tmp.finish_md,
+		i=RSA_verify(NID_md5_sha1, s->s3->tmp.cert_verify_md,
 			MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH, p, i, 
 							pkey->pkey.rsa);
 		if (i < 0)
@@ -1506,7 +1506,7 @@ static int ssl3_get_cert_verify(SSL *s)
 		if (pkey->type == EVP_PKEY_DSA)
 		{
 		j=DSA_verify(pkey->save_type,
-			&(s->s3->tmp.finish_md[MD5_DIGEST_LENGTH]),
+			&(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]),
 			SHA_DIGEST_LENGTH,p,i,pkey->pkey.dsa);
 		if (j <= 0)
 			{

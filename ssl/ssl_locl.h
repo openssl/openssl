@@ -442,7 +442,7 @@ int ssl3_dispatch_alert(SSL *s);
 int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len);
 int ssl3_part_read(SSL *s, int i);
 int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
-int ssl3_final_finish_mac(SSL *s, EVP_MD_CTX *ctx1,EVP_MD_CTX *ctx2,
+int ssl3_final_finish_mac(SSL *s, EVP_MD_CTX *ctx1, EVP_MD_CTX *ctx2,
 	const char *sender, int slen,unsigned char *p);
 int ssl3_cert_verify_mac(SSL *s, EVP_MD_CTX *in, unsigned char *p);
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);

@@ -79,7 +79,7 @@ static unsigned char ssl3_pad_2[48]={
 	0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c };
 
 static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
-	unsigned char *sender, int len, unsigned char *p);
+	const char *sender, int len, unsigned char *p);
 
 static void ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 	{
@@ -423,7 +423,7 @@ int ssl3_final_finish_mac(SSL *s, EVP_MD_CTX *ctx1, EVP_MD_CTX *ctx2,
 	}
 
 static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
-	     unsigned char *sender, int len, unsigned char *p)
+	     const char *sender, int len, unsigned char *p)
 	{
 	unsigned int ret;
 	int npad,n;

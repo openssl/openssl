@@ -314,8 +314,14 @@ typedef struct ssl3_ctx_st
 	int in_read_app_data;
 
 	struct	{
-		/* Actually only needs to be 16+20 for SSLv3 and 12 for TLS */
-		unsigned char finish_md[EVP_MAX_MD_SIZE*2];
+		/* actually only needs to be 16+20 */
+		unsigned char cert_verify_md[EVP_MAX_MD_SIZE*2];
+
+		/* actually only need to be 16+20 for SSLv3 and 12 for TLS */
+		unsigned char server_finish_md[EVP_MAX_MD_SIZE*2];
+		int server_finish_md_len;
+		unsigned char client_finish_md[EVP_MAX_MD_SIZE*2];
+		int client_finish_md_len;
 		
 		unsigned long message_size;
 		int message_type;

@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Clean up 'Finished' handling.
+     [Bodo Moeller]
+
   *) Enhanced support for Alpha Linux is added. Now ./config checks if
      the host supports BWX extension and if Compaq C is present on the
      $PATH. Just exploiting of the BWX extention results in 20-30%
