@@ -23,8 +23,8 @@
           Free           =>  OPENSSL_free
      [Richard Levitte]
 
-  *) New function BN_mod_exp_mont_word for small bases (roughly 15-20%
-     faster than BN_mod_exp_mont, i.e. 7-10% for a full DH exchange).
+  *) New function BN_mod_exp_mont_word for small bases (roughly 15%
+     faster than BN_mod_exp_mont, i.e. 7% for a full DH exchange).
      [Bodo Moeller]
 
   *) CygWin32 support.
