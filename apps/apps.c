@@ -218,10 +218,16 @@ void program_name(char *in, char *out, int size)
 #ifdef WIN32
 int WIN32_rename(char *from, char *to)
 	{
+#ifdef WINNT
 	int ret;
+/* Note: MoveFileEx() doesn't work under Win95, Win98 */
 
 	ret=MoveFileEx(from,to,MOVEFILE_REPLACE_EXISTING|MOVEFILE_COPY_ALLOWED);
 	return(ret?0:-1);
+#else
+        unlink(to);
+        return MoveFile(from, to);
+#endif
 	}
 #endif
 

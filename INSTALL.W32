@@ -117,10 +117,7 @@
  someone forgot to add a function to the header file.
 
  In this latter case check out the header file to see if the function is
- defined in the header file: it should be defined twice: once with ANSI
- prototypes and once without. If its missing from the non ASNI section then
- add an entry for it: check that ms\do_ms now reports missing numbers and
- update the numbers as above.
+ defined in the header file.
 
  If you get warnings in the code then the compilation will halt.
 
@@ -140,7 +137,9 @@
 
 --------------------------------------------------------------------------------
 The orignal Windows build instructions from SSLeay follow. 
-Note: some of this may be out of date and no longer applicable
+Note: some of this may be out of date and no longer applicable. In particular
+the Crypto_malloc_init() comment appears to be wrong: you always need to use
+the same runtime library as the DLL itself.
 --------------------------------------------------------------------------------
 
 The Microsoft World.

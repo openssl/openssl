@@ -219,14 +219,16 @@ sub do_defs
 				$funcs{"sk_${1}_set"} = 1;
 				$funcs{"sk_${1}_zero"} = 1;
 				$funcs{"sk_${1}_push"} = 1;
-				$funcs{"sk_${1}_pop"} = 1;
+				$funcs{"sk_${1}_unshift"} = 1;
 				$funcs{"sk_${1}_find"} = 1;
 				$funcs{"sk_${1}_delete"} = 1;
 				$funcs{"sk_${1}_delete_ptr"} = 1;
+				$funcs{"sk_${1}_insert"} = 1;
 				$funcs{"sk_${1}_set_cmp_func"} = 1;
 				$funcs{"sk_${1}_dup"} = 1;
 				$funcs{"sk_${1}_pop_free"} = 1;
 				$funcs{"sk_${1}_shift"} = 1;
+				$funcs{"sk_${1}_pop"} = 1;
 			} elsif ($safe_stack_def &&
 				/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
 				$funcs{"d2i_ASN1_SET_OF_${1}"} = 1;

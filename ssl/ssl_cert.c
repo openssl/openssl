@@ -380,7 +380,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     X509 *x=NULL;
     X509_NAME *xn=NULL;
     int ret=1;
-    int (*oldcmp)();
+    int (*oldcmp)(X509_NAME **a, X509_NAME **b);
 
     oldcmp=sk_X509_NAME_set_cmp_func(stack,name_cmp);
 

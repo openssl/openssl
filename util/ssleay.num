@@ -201,3 +201,13 @@ sk_SSL_COMP_set_cmp_func                218
 sk_SSL_COMP_dup                         219
 sk_SSL_COMP_pop_free                    220
 sk_SSL_COMP_shift                       221
+SSL_CTX_use_certificate_chain_file      222
+sk_SSL_COMP_insert                      223
+sk_SSL_CIPHER_insert                    224
+SSL_CTX_set_verify_depth                225
+SSL_set_verify_depth                    226
+sk_SSL_CIPHER_unshift                   227
+SSL_CTX_get_verify_depth                228
+SSL_get_verify_depth                    229
+sk_SSL_COMP_unshift                     230
+SSL_CTX_set_session_id_context          231
