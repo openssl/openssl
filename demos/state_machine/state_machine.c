@@ -258,7 +258,7 @@ int OpenSocket(int nPort)
     return nFD;
     }
 
-void main(int argc,char **argv)
+int main(int argc,char **argv)
     {
     SSLStateMachine *pMachine;
     int nPort;
@@ -366,4 +366,6 @@ void main(int argc,char **argv)
 	    SSLStateMachine_write_inject(pMachine,buf,n);
 	    }
 	}
+    /* not reached */
+    return 0;
     }
