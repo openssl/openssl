@@ -178,55 +178,55 @@ int UTF8_putc(unsigned char *str, int len, unsigned long value)
 	if(!str) len = 6;	/* Maximum we will need */
 	else if(len <= 0) return -1;
 	if(value < 0x80) {
-		if(str) *str = value;
+		if(str) *str = (unsigned char)value;
 		return 1;
 	}
 	if(value < 0x800) {
 		if(len < 2) return -1;
 		if(str) {
-			*str++ = ((value >> 6) & 0x1f) | 0xc0;
-			*str = (value & 0x3f) | 0x80;
+			*str++ = (unsigned char)(((value >> 6) & 0x1f) | 0xc0);
+			*str = (unsigned char)((value & 0x3f) | 0x80);
 		}
 		return 2;
 	}
 	if(value < 0x10000) {
 		if(len < 3) return -1;
 		if(str) {
-			*str++ = ((value >> 12) & 0xf) | 0xe0;
-			*str++ = ((value >> 6) & 0x3f) | 0x80;
-			*str = (value & 0x3f) | 0x80;
+			*str++ = (unsigned char)(((value >> 12) & 0xf) | 0xe0);
+			*str++ = (unsigned char)(((value >> 6) & 0x3f) | 0x80);
+			*str = (unsigned char)((value & 0x3f) | 0x80);
 		}
 		return 3;
 	}
 	if(value < 0x200000) {
 		if(len < 4) return -1;
 		if(str) {
-			*str++ = ((value >> 18) & 0x7) | 0xf0;
-			*str++ = ((value >> 12) & 0x3f) | 0x80;
-			*str++ = ((value >> 6) & 0x3f) | 0x80;
-			*str = (value & 0x3f) | 0x80;
+			*str++ = (unsigned char)(((value >> 18) & 0x7) | 0xf0);
+			*str++ = (unsigned char)(((value >> 12) & 0x3f) | 0x80);
+			*str++ = (unsigned char)(((value >> 6) & 0x3f) | 0x80);
+			*str = (unsigned char)((value & 0x3f) | 0x80);
 		}
 		return 4;
 	}
 	if(value < 0x4000000) {
 		if(len < 5) return -1;
 		if(str) {
-			*str++ = ((value >> 24) & 0x3) | 0xf8;
-			*str++ = ((value >> 18) & 0x3f) | 0x80;
-			*str++ = ((value >> 12) & 0x3f) | 0x80;
-			*str++ = ((value >> 6) & 0x3f) | 0x80;
-			*str = (value & 0x3f) | 0x80;
+			*str++ = (unsigned char)(((value >> 24) & 0x3) | 0xf8);
+			*str++ = (unsigned char)(((value >> 18) & 0x3f) | 0x80);
+			*str++ = (unsigned char)(((value >> 12) & 0x3f) | 0x80);
+			*str++ = (unsigned char)(((value >> 6) & 0x3f) | 0x80);
+			*str = (unsigned char)((value & 0x3f) | 0x80);
 		}
 		return 5;
 	}
 	if(len < 6) return -1;
 	if(str) {
-		*str++ = ((value >> 30) & 0x1) | 0xfc;
-		*str++ = ((value >> 24) & 0x3f) | 0x80;
-		*str++ = ((value >> 18) & 0x3f) | 0x80;
-		*str++ = ((value >> 12) & 0x3f) | 0x80;
-		*str++ = ((value >> 6) & 0x3f) | 0x80;
-		*str = (value & 0x3f) | 0x80;
+		*str++ = (unsigned char)(((value >> 30) & 0x1) | 0xfc);
+		*str++ = (unsigned char)(((value >> 24) & 0x3f) | 0x80);
+		*str++ = (unsigned char)(((value >> 18) & 0x3f) | 0x80);
+		*str++ = (unsigned char)(((value >> 12) & 0x3f) | 0x80);
+		*str++ = (unsigned char)(((value >> 6) & 0x3f) | 0x80);
+		*str = (unsigned char)((value & 0x3f) | 0x80);
 	}
 	return 6;
 }
