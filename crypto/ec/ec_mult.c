@@ -64,6 +64,7 @@
 #if 1
 /*
  * wNAF-based interleaving multi-exponentation method
+ * (<URL:http://www.informatik.tu-darmstadt.de/TI/Mitarbeiter/moeller.html#multiexp>)
  */
 
 
