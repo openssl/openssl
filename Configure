@@ -117,6 +117,9 @@ my $bits2="SIXTY_FOUR_BIT ";
 my $x86_elf_asm="x86cpuid-elf.o:asm/bn86-elf.o asm/co86-elf.o:asm/dx86-elf.o asm/yx86-elf.o::asm/bx86-elf.o:asm/mx86-elf.o:asm/sx86-elf.o asm/s512sse2-elf.o:asm/cx86-elf.o:asm/rx86-elf.o:asm/rm86-elf.o:asm/r586-elf.o";
 my $x86_coff_asm="x86cpuid-cof.o:asm/bn86-cof.o asm/co86-cof.o:asm/dx86-cof.o asm/yx86-cof.o::asm/bx86-cof.o:asm/mx86-cof.o:asm/sx86-cof.o asm/s512sse2-cof.o:asm/cx86-cof.o:asm/rx86-cof.o:asm/rm86-cof.o:asm/r586-cof.o";
 my $x86_out_asm="x86cpuid-out.o:bn86-out.o co86-out.o:dx86-out.o yx86-out.o::bx86-out.o:mx86-out.o:sx86-out.o s512sse2-out.o:cx86-out.o:rx86-out.o:rm86-out.o:r586-out.o";
+
+my $ia64_asm=":asm/ia64.o::asm/aes-ia64.o:::asm/sha256-ia64.o asm/sha512-ia64.o::asm/rc4-ia64.o::";
+
 my $no_asm="::::::::::";
 
 # -DB_ENDIAN slows things down on a sparc for md5, but helps sha1.
@@ -258,13 +261,13 @@ my %table=(
 "hpux64-parisc2-cc","cc:+DD64 +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::asm/pa-risc2W.o::::::::::dlfcn:hpux-shared:+Z:+DD64 -b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # HP/UX IA-64 targets
-"hpux-ia64-cc","cc:-Ae +DD32 +O2 +Olit=all -z -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::asm/ia64.o::asm/aes-ia64.o:::asm/sha256-ia64.o asm/sha512-ia64.o:::::dlfcn:hpux-shared:+Z:+DD32 -b:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-ia64-cc","cc:-Ae +DD32 +O2 +Olit=all -z -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux-shared:+Z:+DD32 -b:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # Frank Geurts <frank.geurts@nl.abnamro.com> has patiently assisted with
 # with debugging of the following config.
-"hpux64-ia64-cc","cc:-Ae +DD64 +O3 +Olit=all -z -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::asm/ia64.o::asm/aes-ia64.o:::asm/sha256-ia64.o asm/sha512-ia64.o:::::dlfcn:hpux-shared:+Z:+DD64 -b:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux64-ia64-cc","cc:-Ae +DD64 +O3 +Olit=all -z -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux-shared:+Z:+DD64 -b:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # GCC builds...
-"hpux-ia64-gcc","gcc:-O3 -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::asm/ia64.o::asm/aes-ia64.o:::asm/sha256-ia64.o asm/sha512-ia64.o:::::dlfcn:hpux-shared:-fpic:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"hpux64-ia64-gcc","gcc:-mlp64 -O3 -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::asm/ia64.o::asm/aes-ia64.o:::asm/sha256-ia64.o asm/sha512-ia64.o:::::dlfcn:hpux-shared:-fpic:-mlp64 -shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)", 
+"hpux-ia64-gcc","gcc:-O3 -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT::asm/ia64.o::asm/aes-ia64.o:::asm/sha256-ia64.o asm/sha512-ia64.o::asm/rc4-ia64.o:::dlfcn:hpux-shared:-fpic:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux64-ia64-gcc","gcc:-mlp64 -O3 -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux-shared:-fpic:-mlp64 -shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)", 
 
 # Legacy HPUX 9.X configs...
 "hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O2 -z::(unknown)::-Wl,+s -ldld:DES_PTR DES_UNROLL DES_RISC1:${no_asm}:dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -316,8 +319,8 @@ my %table=(
 "linux-m68k",	"gcc:-DB_ENDIAN -DTERMIO -O2 -fomit-frame-pointer -Wall::-D_REENTRANT:::BN_LLONG::",
 "linux-s390",	"gcc:-DB_ENDIAN -DTERMIO -DNO_ASM -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-s390x",	"gcc:-DB_ENDIAN -DTERMIO -DNO_ASM -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-ia64",	"gcc:-DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK RC4_CHAR::asm/ia64.o::asm/aes-ia64.o:::asm/sha256-ia64.o asm/sha512-ia64.o:::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-ia64-ecc","ecc:-DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK RC4_CHAR::asm/ia64.o::asm/aes-ia64.o:::asm/sha256-ia64.o asm/sha512-ia64.o:::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-ia64",	"gcc:-DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-ia64-ecc","ecc:-DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-x86_64",	"gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall -DMD32_REG_T=int::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL:amd64cpuid.o:asm/x86_64-gcc.o:::::::asm/rc4-amd64.o:::dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-elf-arm","gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-parisc",	"gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W::-D_REENTRANT:::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::",
@@ -356,7 +359,7 @@ my %table=(
 
 "FreeBSD-elf",	"gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::-pthread -D_REENTRANT -D_THREAD_SAFE -D_THREADSAFE:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "FreeBSD-sparc64","gcc:-DB_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer::-pthread -D_REENTRANT -D_THREAD_SAFE -D_THREADSAFE:::SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2 BF_PTR:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"FreeBSD-ia64",	"gcc:-DL_ENDIAN -DTERMIOS -O -fomit-frame-pointer::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK RC4_CHAR::asm/ia64.o::::::::::dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"FreeBSD-ia64",	"gcc:-DL_ENDIAN -DTERMIOS -O -fomit-frame-pointer::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${ia64_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "FreeBSD-alpha","gcc:-DTERMIOS -O::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_PTR DES_RISC2:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "FreeBSD",	"gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
 
