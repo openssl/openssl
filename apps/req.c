@@ -306,7 +306,7 @@ int MAIN(int argc, char **argv)
 						goto end;
 						}
 
-					dtmp=X509_get_pubkey(xtmp);
+					if ((dtmp=X509_get_pubkey(xtmp)) == NULL) goto end;
 					if (dtmp->type == EVP_PKEY_DSA)
 						dsa_params=DSAparams_dup(dtmp->pkey.dsa);
 					EVP_PKEY_free(dtmp);
@@ -818,19 +818,20 @@ loop:
 			/* Set version to V3 */
 			if(!X509_set_version(x509ss, 2)) goto end;
 			if (serial)
-				X509_set_serialNumber(x509ss, serial);
+				{
+				if (!X509_set_serialNumber(x509ss, serial)) goto end;
+				}
 			else
-				ASN1_INTEGER_set(X509_get_serialNumber(x509ss),0L);
+				{
+				if (!ASN1_INTEGER_set(X509_get_serialNumber(x509ss),0L)) goto end;
+				}
 
-			X509_set_issuer_name(x509ss,
-				X509_REQ_get_subject_name(req));
-			X509_gmtime_adj(X509_get_notBefore(x509ss),0);
-			X509_gmtime_adj(X509_get_notAfter(x509ss),
-				(long)60*60*24*days);
-			X509_set_subject_name(x509ss,
-				X509_REQ_get_subject_name(req));
+			if (!X509_set_issuer_name(x509ss, X509_REQ_get_subject_name(req))) goto end;
+			if (!X509_gmtime_adj(X509_get_notBefore(x509ss),0)) goto end;
+			if (!X509_gmtime_adj(X509_get_notAfter(x509ss), (long)60*60*24*days)) goto end;
+			if (!X509_set_subject_name(x509ss, X509_REQ_get_subject_name(req))) goto end;
 			tmppkey = X509_REQ_get_pubkey(req);
-			X509_set_pubkey(x509ss,tmppkey);
+			if (!tmppkey || !X509_set_pubkey(x509ss,tmppkey)) goto end;
 			EVP_PKEY_free(tmppkey);
 
 			/* Set up V3 context struct */
@@ -1129,7 +1130,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int attribs,
 		}
 	if(!i) goto err;
 
-	X509_REQ_set_pubkey(req,pkey);
+	if (!X509_REQ_set_pubkey(req,pkey)) goto err;
 
 	ret=1;
 err:
