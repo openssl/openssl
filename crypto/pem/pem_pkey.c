@@ -85,6 +85,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, vo
 	else if (strcmp(nm,PEM_STRING_PKCS8INF) == 0) {
 		PKCS8_PRIV_KEY_INFO *p8inf;
 		p8inf=d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, len);
+		if(!p8inf) goto p8err;
 		ret = EVP_PKCS82PKEY(p8inf);
 		PKCS8_PRIV_KEY_INFO_free(p8inf);
 	} else if (strcmp(nm,PEM_STRING_PKCS8) == 0) {
