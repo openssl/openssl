@@ -547,14 +547,6 @@ BIGNUM *bn_dup_expand(const BIGNUM *a, int words);
 		} \
 	}
 
-#define bn_clear_top2max(a) \
-	{ \
-	int      index = (a)->dmax - (a)->top; \
-	BN_ULONG *ftl = &(a)->d[(a)->top-1]; \
-	for (; index != 0; index--) \
-		*(++ftl) = 0x0; \
-	}
-
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
 BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
 void     bn_sqr_words(BN_ULONG *rp, const BN_ULONG *ap, int num);

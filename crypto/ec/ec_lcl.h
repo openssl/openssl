@@ -227,6 +227,7 @@ struct ec_group_st {
 
 	void *field_data1; /* method-specific (e.g., Montgomery structure) */
 	void *field_data2; /* method-specific */
+	int (*field_mod_func)(BIGNUM *, const BIGNUM *, const BIGNUM *,	BN_CTX *); /* method-specific */
 } /* EC_GROUP */;
 
 

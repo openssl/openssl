@@ -486,6 +486,8 @@ void ERR_load_EC_strings(void);
 #define EC_R_INVALID_PRIVATE_KEY			 123
 #define EC_R_MISSING_PARAMETERS				 124
 #define EC_R_MISSING_PRIVATE_KEY			 125
+#define EC_R_NOT_A_NIST_PRIME			         135
+#define EC_R_NOT_A_SUPPORTED_NIST_PRIME	                 136
 #define EC_R_NOT_IMPLEMENTED				 126
 #define EC_R_NOT_INITIALIZED				 111
 #define EC_R_NO_FIELD_MOD				 133
@@ -494,7 +496,6 @@ void ERR_load_EC_strings(void);
 #define EC_R_PKPARAMETERS2GROUP_FAILURE			 127
 #define EC_R_POINT_AT_INFINITY				 106
 #define EC_R_POINT_IS_NOT_ON_CURVE			 107
-#define EC_R_PRIME_IS_NOT_A_NIST_PRIME			 135
 #define EC_R_SLOT_FULL					 108
 #define EC_R_UNDEFINED_GENERATOR			 113
 #define EC_R_UNDEFINED_ORDER				 128

@@ -109,9 +109,6 @@ const EC_METHOD *EC_GFp_nist_method(void)
 	return &ret;
 	}
 
-#define	ECP_MOD_CAST	\
-	(int (*)(BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *))
-
 #if BN_BITS2 == 64 && UINT_MAX != 4294967295UL && ULONG_MAX != 4294967295UL
 #define	NO_32_BIT_TYPE
 #endif
@@ -155,31 +152,34 @@ int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 	if ((tmp_bn = BN_CTX_get(ctx)) == NULL) goto err;
 
 	if (BN_ucmp(BN_get0_nist_prime_192(), p) == 0)
-		group->field_data1 = (void *)BN_nist_mod_192;
+		group->field_mod_func = BN_nist_mod_192;
 	else if (BN_ucmp(BN_get0_nist_prime_224(), p) == 0)
-#if !defined(ECP_NO_32_BIT_TYPE) || defined(OPENSSL_NO_ASM)
-		group->field_data1 = (void *)BN_nist_mod_224;
+#if !defined(NO_32_BIT_TYPE) || defined(OPENSSL_NO_ASM)
+		group->field_mod_func = BN_nist_mod_224;
 #else
+		ECerr(EC_F_EC_GFP_NIST_GROUP_SET_CURVE_GFP, EC_R_NOT_A_SUPPORTED_NIST_PRIME);
 		goto err;
 #endif
 	else if (BN_ucmp(BN_get0_nist_prime_256(), p) == 0)
-#if !defined(ECP_NO_32_BIT_TYPE) || defined(OPENSSL_NO_ASM)
-		group->field_data1 = (void *)BN_nist_mod_256;
+#if !defined(NO_32_BIT_TYPE) || defined(OPENSSL_NO_ASM)
+		group->field_mod_func = BN_nist_mod_256;
 #else
+		ECerr(EC_F_EC_GFP_NIST_GROUP_SET_CURVE_GFP, EC_R_NOT_A_SUPPORTED_NIST_PRIME);
 		goto err;
 #endif
 	else if (BN_ucmp(BN_get0_nist_prime_384(), p) == 0)
-#if !defined(ECP_NO_32_BIT_TYPE) || defined(OPENSSL_NO_ASM)
-		group->field_data1 = (void *)BN_nist_mod_384;
+#if !defined(NO_32_BIT_TYPE) || defined(OPENSSL_NO_ASM)
+		group->field_mod_func = BN_nist_mod_384;
 #else
+		ECerr(EC_F_EC_GFP_NIST_GROUP_SET_CURVE_GFP, EC_R_NOT_A_SUPPORTED_NIST_PRIME);
 		goto err;
 #endif
 	else if (BN_ucmp(BN_get0_nist_prime_521(), p) == 0)
-		group->field_data1 = (void *)BN_nist_mod_521;
+		/* this one works in the NO_32_BIT_TYPE case */
+		group->field_mod_func = BN_nist_mod_521;
 	else
 		{
-		ECerr(EC_F_EC_GFP_NIST_GROUP_SET_CURVE_GFP, 
-			EC_R_PRIME_IS_NOT_A_NIST_PRIME);
+		ECerr(EC_F_EC_GFP_NIST_GROUP_SET_CURVE_GFP, EC_R_NOT_A_NIST_PRIME);
 		goto err;
 		}
 
@@ -188,10 +188,10 @@ int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 	group->field.neg = 0;
 
 	/* group->a */
-	(ECP_MOD_CAST group->field_data1)(&group->a, a, p, ctx);
+	if (!group->field_mod_func(&group->a, a, p, ctx)) goto err;
 
 	/* group->b */
-	(ECP_MOD_CAST group->field_data1)(&group->b, b, p, ctx);
+	if (!group->field_mod_func(&group->b, b, p, ctx)) goto err;
 
 	/* group->a_is_minus3 */
 	if (!BN_add_word(tmp_bn, 3)) goto err;
@@ -242,7 +242,7 @@ int ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 		if ((ctx_new = ctx = BN_CTX_new()) == NULL) goto err;
 
 	if (!BN_mul(r, a, b, ctx)) goto err;
-	if (!(ECP_MOD_CAST group->field_data1)(r, r, &group->field, ctx))
+	if (!group->field_mod_func(r, r, &group->field, ctx))
 		goto err;
 
 	ret=1;
@@ -267,7 +267,7 @@ int ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 		if ((ctx_new = ctx = BN_CTX_new()) == NULL) goto err;
 
 	if (!BN_sqr(r, a, ctx)) goto err;
-	if (!(ECP_MOD_CAST group->field_data1)(r, r, &group->field, ctx))
+	if (!group->field_mod_func(r, r, &group->field, ctx))
 		goto err;
 
 	ret=1;

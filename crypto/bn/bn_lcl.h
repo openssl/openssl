@@ -239,6 +239,16 @@ struct bignum_ctx
 #define Lw(t)    (((BN_ULONG)(t))&BN_MASK2)
 #define Hw(t)    (((BN_ULONG)((t)>>BN_BITS2))&BN_MASK2)
 
+
+#define bn_clear_top2max(a) \
+	{ \
+	int      index = (a)->dmax - (a)->top; \
+	BN_ULONG *ftl = &(a)->d[(a)->top-1]; \
+	for (; index != 0; index--) \
+		*(++ftl) = 0x0; \
+	}
+
+
 /* This is used for internal error checking and is not normally used */
 #ifdef BN_DEBUG
 # include <assert.h>

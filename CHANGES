@@ -10,6 +10,9 @@
      if applicable.
      [Nils Larsch <nla@trustcenter.de>]
 
+  *) Add new lock type (CRYPTO_LOCK_BN).
+     [Bodo Moeller]
+
   *) Change the ENGINE framework to automatically load engines
      dynamically from specific directories unless they could be
      found to already be built in or loaded.  Move all the

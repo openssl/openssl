@@ -99,9 +99,25 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
 
 	if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx))
 		{
-		/* remove the last error code form the error queue */
-		ERR_get_error();
-		/* try the normal mont method */
+		unsigned long err;
+		  
+		err = ERR_peek_last_error();
+
+		if (!(ERR_GET_LIB(err) == ERR_LIB_EC &&
+			((ERR_GET_REASON(err) == EC_R_NOT_A_NIST_PRIME) ||
+			 (ERR_GET_REASON(err) == EC_R_NOT_A_SUPPORTED_NIST_PRIME))))
+			{
+			/* real error */
+			
+			EC_GROUP_clear_free(ret);
+			return NULL;
+			}
+			
+		
+		/* not an actual error, we just cannot use EC_GFp_nist_method */
+
+		ERR_clear_error();
+
 		EC_GROUP_clear_free(ret);
 		meth = EC_GFp_mont_method();
 
@@ -118,6 +134,7 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
 
 	return ret;
 	}
+
 
 EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	{

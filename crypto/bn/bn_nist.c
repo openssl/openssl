@@ -54,11 +54,12 @@
  */
 
 #include "bn_lcl.h"
+#include "cryptlib.h"
 
 #define BN_NIST_192_TOP	(192+BN_BITS2-1)/BN_BITS2
 #define BN_NIST_224_TOP	(224+BN_BITS2-1)/BN_BITS2
 #define BN_NIST_256_TOP	(256+BN_BITS2-1)/BN_BITS2
-#define	BN_NIST_384_TOP	(384+BN_BITS2-1)/BN_BITS2
+#define BN_NIST_384_TOP	(384+BN_BITS2-1)/BN_BITS2
 #define BN_NIST_521_TOP	(521+BN_BITS2-1)/BN_BITS2
 
 #if BN_BITS2 == 64
@@ -314,7 +315,7 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	if (top == 0)
 		return BN_zero(r);
 	else if (top > 0)
-		return (r == a)? 1 : !!BN_copy(r ,a);
+		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
 
 	if (r != a)
 		if (!BN_ncopy(r, a, BN_NIST_192_TOP))
@@ -353,7 +354,7 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		}
 	r->top = BN_NIST_192_TOP;
 
-#if 0
+#if 1
 	bn_clear_top2max(r);
 #endif
 	bn_fix_top(r);
@@ -393,7 +394,7 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	if (tmp_int == 0)
 		return BN_zero(r);
 	else if (tmp_int > 0)
-		return (r == a)? 1 : !!BN_copy(r ,a);
+		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
 
 	if (r != a)
 		if (!BN_ncopy(r, a, BN_NIST_224_TOP))
@@ -445,7 +446,7 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 			}
 
 	r->top = BN_NIST_224_TOP;
-#if 0
+#if 1
 	bn_clear_top2max(r);
 #endif
 	bn_fix_top(r);
@@ -503,13 +504,20 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	BN_32_BIT_BUF(14) BN_32_BIT_BUF(15)
 
 	if (!_is_set_256_data)
-		_init_256_data();
-
+		{
+		CRYPTO_w_lock(CRYPTO_LOCK_BN);
+		
+		if (!_is_set_256_data)
+			_init_256_data();
+		
+		CRYPTO_w_unlock(CRYPTO_LOCK_BN);
+		}
+	
 	tmp_int = BN_ucmp(field, a);
 	if (tmp_int == 0)
 		return BN_zero(r);
 	else if (tmp_int > 0)
-		return (r == a)? 1 : !!BN_copy(r ,a);
+		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
 
 	if (r != a)
 		if (!BN_ncopy(r, a, BN_NIST_256_TOP))
@@ -596,7 +604,7 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		}
 
 	r->top = BN_NIST_256_TOP;
-#if 0
+#if 1
 	bn_clear_top2max(r);
 #endif
 	bn_fix_top(r);
@@ -657,13 +665,20 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	BN_32_BIT_BUF(22) BN_32_BIT_BUF(23)
 
 	if (!_is_set_384_data)
-		_init_384_data();
+		{
+		CRYPTO_w_lock(CRYPTO_LOCK_BN);
+		
+		if (!_is_set_384_data)
+			_init_384_data();
+
+		CRYPTO_w_unlock(CRYPTO_LOCK_BN);
+		}
 
 	tmp_int = BN_ucmp(field, a);
 	if (tmp_int == 0)
 		return BN_zero(r);
 	else if (tmp_int > 0)
-		return (r == a)? 1 : !!BN_copy(r ,a);
+		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
 
 	if (r != a)
 		if (!BN_ncopy(r, a, BN_NIST_384_TOP))
@@ -757,7 +772,7 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		}
 
 	r->top = BN_NIST_384_TOP;
-#if 0
+#if 1
 	bn_clear_top2max(r);
 #endif
 	bn_fix_top(r);
@@ -793,7 +808,7 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	top = a->top;
 	if (top < BN_NIST_521_TOP  || ( top == BN_NIST_521_TOP &&
            (!(a->d[BN_NIST_521_TOP-1] & ~(BN_NIST_521_TOP_MASK)))))
-		return (r == a)? 1 : !!BN_copy(r ,a);
+		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
 
 	BN_CTX_start(ctx);
 	tmp = BN_CTX_get(ctx);
