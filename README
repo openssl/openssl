@@ -163,6 +163,9 @@
  the string "[PATCH]" in the subject. Please be sure to include a
  textual explanation of what your patch does.
 
+ Note: For legal reasons, contributions from the US can be accepted only
+ if a copy of the patch is sent to crypt@bxa.doc.gov
+
  The preferred format for changes is "diff -u" output. You might
  generate it like this:
 
