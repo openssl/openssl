@@ -198,8 +198,10 @@ int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 void CRYPTO_get_mem_functions(void *(**m)(size_t), void *(**r)(void *, size_t),
 	void (**f)(void *))
 	{
-	if (m != NULL) *m=malloc_func;
-	if (r != NULL) *r=realloc_func;
+	if (m != NULL) *m = (malloc_ex_func == default_malloc_ex) ? 
+	                     malloc_func : 0;
+	if (r != NULL) *r = (realloc_ex_func == default_realloc_ex) ? 
+	                     realloc_func : 0;
 	if (f != NULL) *f=free_func;
 	}
 
@@ -217,7 +219,8 @@ void CRYPTO_get_mem_ex_functions(
 
 void CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *))
 	{
-	if (m != NULL) *m=malloc_locked_func;
+	if (m != NULL) *m = (malloc_locked_ex_func == default_malloc_locked_ex) ? 
+	                     malloc_locked_func : 0;
 	if (f != NULL) *f=free_locked_func;
 	}
 
