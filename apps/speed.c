@@ -1625,7 +1625,7 @@ show_res:
 #endif
 #ifdef HZ
 #define as_string(s) (#s)
-		printf("HZ=%g", HZ);
+		printf("HZ=%g", (double)HZ);
 # ifdef _SC_CLK_TCK
 		printf(" [sysconf value]");
 # endif
