@@ -254,6 +254,10 @@ int RAND_poll(void)
          * at random times on Windows 2000.  Reported by Jeffrey Altman.  
          * Only use it on NT.
 	 */
+	/* Wolfgang Marczy <WMarczy@topcall.co.at> reports that
+	 * the RegQueryValueEx call below can hang on NT4.0 (SP6).
+	 * So we don't use this at all for now. */
+#if 0
         if ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT &&
 		osverinfo.dwMajorVersion < 5)
 		{
@@ -290,6 +294,7 @@ int RAND_poll(void)
 		if (buf)
 			free(buf);
 		}
+#endif
 
 	if (advapi)
 		{
@@ -461,7 +466,7 @@ int RAND_poll(void)
 						hlist.th32ProcessID,
 						hlist.th32HeapID))
 						{
-						int entrycnt = 50;
+						int entrycnt = 80;
 						do
 							RAND_add(&hentry,
 								hentry.dwSize, 5);
