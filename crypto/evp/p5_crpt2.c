@@ -55,6 +55,7 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+#if !defined(NO_HMAC) && !defined(NO_SHA)
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/x509.h>
@@ -243,4 +244,4 @@ static void h__dump (const unsigned char *p, int len)
         fprintf(stderr, "\n");
 }
 #endif
-
+#endif
