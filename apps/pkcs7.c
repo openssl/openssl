@@ -82,7 +82,9 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
+#endif
 	PKCS7 *p7=NULL;
 	int i,badops=0;
 	BIO *in=NULL,*out=NULL;
@@ -90,7 +92,9 @@ int MAIN(int argc, char **argv)
 	char *infile,*outfile,*prog;
 	int print_certs=0,text=0,noout=0;
 	int ret=1;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 
 	apps_startup();
 
@@ -134,11 +138,13 @@ int MAIN(int argc, char **argv)
 			text=1;
 		else if (strcmp(*argv,"-print_certs") == 0)
 			print_certs=1;
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -161,14 +167,18 @@ bad:
 		BIO_printf(bio_err," -print_certs  print any certs or crl in the input\n");
 		BIO_printf(bio_err," -text         print full details of certificates\n");
 		BIO_printf(bio_err," -noout        don't output encoded data\n");
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
+#endif
 		ret = 1;
 		goto end;
 		}
 
 	ERR_load_crypto_strings();
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());

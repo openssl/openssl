@@ -148,7 +148,9 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
+#endif
 	DH *dh=NULL;
 	int i,badops=0,text=0;
 #ifndef OPENSSL_NO_DSA
@@ -157,7 +159,10 @@ int MAIN(int argc, char **argv)
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,check=0,noout=0,C=0,ret=1;
 	char *infile,*outfile,*prog;
-	char *inrand=NULL,*engine=NULL;
+	char *inrand=NULL;
+#ifndef OPENSSL_NO_ENGINE
+	char *engine=NULL;
+#endif
 	int num = 0, g = 0;
 
 	apps_startup();
@@ -199,11 +204,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-check") == 0)
 			check=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -249,7 +256,9 @@ bad:
 		BIO_printf(bio_err," -2            generate parameters using  2 as the generator value\n");
 		BIO_printf(bio_err," -5            generate parameters using  5 as the generator value\n");
 		BIO_printf(bio_err," numbits       number of bits in to generate (default 512)\n");
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
+#endif
 		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"               - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"               the random number generator\n");
@@ -259,7 +268,9 @@ bad:
 
 	ERR_load_crypto_strings();
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if (g && !num)
 		num = DEFBITS;

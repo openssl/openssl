@@ -85,7 +85,9 @@ int MAIN(int argc, char **argv)
 	ENGINE *e = NULL;
 	BIO *in = NULL, *out = NULL;
 	char *infile = NULL, *outfile = NULL;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
+#endif
 	char *keyfile = NULL;
 	char rsa_mode = RSA_VERIFY, key_type = KEY_PRIVKEY;
 	int keyform = FORMAT_PEM;
@@ -125,9 +127,11 @@ int MAIN(int argc, char **argv)
 		} else if (strcmp(*argv,"-keyform") == 0) {
 			if (--argc < 1) badarg = 1;
 			keyform=str2fmt(*(++argv));
+#ifndef OPENSSL_NO_ENGINE
 		} else if(!strcmp(*argv, "-engine")) {
 			if (--argc < 1) badarg = 1;
 			engine = *(++argv);
+#endif
 		} else if(!strcmp(*argv, "-pubin")) {
 			key_type = KEY_PUBKEY;
 		} else if(!strcmp(*argv, "-certin")) {
@@ -162,7 +166,9 @@ int MAIN(int argc, char **argv)
 		goto end;
 	}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 /* FIXME: seed PRNG only if needed */
 	app_RAND_load_file(NULL, bio_err, 0);
@@ -305,7 +311,9 @@ static void usage()
 	BIO_printf(bio_err, "-encrypt        encrypt with public key\n");
 	BIO_printf(bio_err, "-decrypt        decrypt with private key\n");
 	BIO_printf(bio_err, "-hexdump        hex dump output\n");
+#ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
+#endif
 
 }
 

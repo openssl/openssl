@@ -81,7 +81,9 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
+#endif
 	int ret=1;
 	RSA *rsa=NULL;
 	int i,num=DEFBITS;
@@ -90,7 +92,9 @@ int MAIN(int argc, char **argv)
 	unsigned long f4=RSA_F4;
 	char *outfile=NULL;
 	char *passargout = NULL, *passout = NULL;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 	char *inrand=NULL;
 	BIO *out=NULL;
 
@@ -122,11 +126,13 @@ int MAIN(int argc, char **argv)
 			f4=3;
 		else if (strcmp(*argv,"-F4") == 0 || strcmp(*argv,"-f4") == 0)
 			f4=RSA_F4;
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-rand") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -177,7 +183,9 @@ bad:
 		BIO_printf(bio_err," -passout arg    output file pass phrase source\n");
 		BIO_printf(bio_err," -f4             use F4 (0x10001) for the E value\n");
 		BIO_printf(bio_err," -3              use 3 for the E value\n");
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
+#endif
 		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"                 load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"                 the random number generator\n");
@@ -191,7 +199,9 @@ bad:
 		goto err;
 	}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if (outfile == NULL)
 		{

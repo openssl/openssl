@@ -104,7 +104,9 @@ int MAIN(int argc, char **argv)
 	char *infile,*outfile,*prog;
 	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 	int modulus=0;
 
 	apps_startup();
@@ -156,11 +158,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			passargout= *(++argv);
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-sgckey") == 0)
 			sgckey=1;
 		else if (strcmp(*argv,"-pubin") == 0)
@@ -212,13 +216,17 @@ bad:
 		BIO_printf(bio_err," -check          verify key consistency\n");
 		BIO_printf(bio_err," -pubin          expect a public key in input file\n");
 		BIO_printf(bio_err," -pubout         output a public key\n");
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
+#endif
 		goto end;
 		}
 
 	ERR_load_crypto_strings();
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");

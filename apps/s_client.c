@@ -222,7 +222,9 @@ static void sc_usage(void)
 	BIO_printf(bio_err,"                 for those protocols that support it, where\n");
 	BIO_printf(bio_err,"                 'prot' defines which one to assume.  Currently,\n");
 	BIO_printf(bio_err,"                 only \"smtp\" is supported.\n");
+#ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
+#endif
 	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 
 	}
@@ -254,8 +256,10 @@ int MAIN(int argc, char **argv)
 	SSL_METHOD *meth=NULL;
 	BIO *sbio;
 	char *inrand=NULL;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine_id=NULL;
 	ENGINE *e=NULL;
+#endif
 #ifdef OPENSSL_SYS_WINDOWS
 	struct timeval tv;
 #endif
@@ -415,11 +419,13 @@ int MAIN(int argc, char **argv)
 			else
 				goto bad;
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if	(strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine_id = *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-rand") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -444,7 +450,9 @@ bad:
 	OpenSSL_add_ssl_algorithms();
 	SSL_load_error_strings();
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine_id, 1);
+#endif
 
 	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
 		&& !RAND_status())

@@ -68,7 +68,9 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 #ifdef OPENSSL_SYS_WINDOWS
 #include "../bio/bss_file.c"
 #endif

@@ -318,7 +318,9 @@ struct env_md_st
 struct env_md_ctx_st
 	{
 	const EVP_MD *digest;
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE *engine; /* functional reference if 'digest' is ENGINE-provided */
+#endif
 	unsigned long flags;
 	void *md_data;
 	} /* EVP_MD_CTX */;
@@ -390,7 +392,9 @@ typedef struct evp_cipher_info_st
 struct evp_cipher_ctx_st
 	{
 	const EVP_CIPHER *cipher;
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE *engine;	/* functional reference if 'cipher' is ENGINE-provided */
+#endif
 	int encrypt;		/* encrypt or decrypt */
 	int buf_len;		/* number we have left */
 

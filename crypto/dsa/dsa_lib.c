@@ -63,7 +63,9 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/asn1.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 
 const char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
 
@@ -93,11 +95,13 @@ int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
         const DSA_METHOD *mtmp;
         mtmp = dsa->meth;
         if (mtmp->finish) mtmp->finish(dsa);
+#ifndef OPENSSL_NO_ENGINE
 	if (dsa->engine)
 		{
 		ENGINE_finish(dsa->engine);
 		dsa->engine = NULL;
 		}
+#endif
         dsa->meth = meth;
         if (meth->init) meth->init(dsa);
         return 1;
@@ -114,6 +118,7 @@ DSA *DSA_new_method(ENGINE *engine)
 		return(NULL);
 		}
 	ret->meth = DSA_get_default_method();
+#ifndef OPENSSL_NO_ENGINE
 	if (engine)
 		{
 		if (!ENGINE_init(engine))
@@ -138,6 +143,7 @@ DSA *DSA_new_method(ENGINE *engine)
 			return NULL;
 			}
 		}
+#endif
 
 	ret->pad=0;
 	ret->version=0;
@@ -158,8 +164,10 @@ DSA *DSA_new_method(ENGINE *engine)
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
+#ifndef OPENSSL_NO_ENGINE
 		if (ret->engine)
 			ENGINE_finish(ret->engine);
+#endif
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;
@@ -189,8 +197,10 @@ void DSA_free(DSA *r)
 
 	if(r->meth->finish)
 		r->meth->finish(r);
+#ifndef OPENSSL_NO_ENGINE
 	if(r->engine)
 		ENGINE_finish(r->engine);
+#endif
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
 

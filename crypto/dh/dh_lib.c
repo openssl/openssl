@@ -60,7 +60,9 @@
 #include "cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/dh.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 
 const char *DH_version="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
@@ -85,11 +87,13 @@ int DH_set_method(DH *dh, const DH_METHOD *meth)
         const DH_METHOD *mtmp;
         mtmp = dh->meth;
         if (mtmp->finish) mtmp->finish(dh);
+#ifndef OPENSSL_NO_ENGINE
 	if (dh->engine)
 		{
 		ENGINE_finish(dh->engine);
 		dh->engine = NULL;
 		}
+#endif
         dh->meth = meth;
         if (meth->init) meth->init(dh);
         return 1;
@@ -112,6 +116,7 @@ DH *DH_new_method(ENGINE *engine)
 		}
 
 	ret->meth = DH_get_default_method();
+#ifndef OPENSSL_NO_ENGINE
 	if (engine)
 		{
 		if (!ENGINE_init(engine))
@@ -135,6 +140,7 @@ DH *DH_new_method(ENGINE *engine)
 			return NULL;
 			}
 		}
+#endif
 
 	ret->pad=0;
 	ret->version=0;
@@ -154,8 +160,10 @@ DH *DH_new_method(ENGINE *engine)
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
+#ifndef OPENSSL_NO_ENGINE
 		if (ret->engine)
 			ENGINE_finish(ret->engine);
+#endif
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;
@@ -182,8 +190,10 @@ void DH_free(DH *r)
 
 	if (r->meth->finish)
 		r->meth->finish(r);
+#ifndef OPENSSL_NO_ENGINE
 	if (r->engine)
 		ENGINE_finish(r->engine);
+#endif
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
 

@@ -90,7 +90,9 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
+#endif
 	DSA *dsa=NULL;
 	int i,badops=0,text=0;
 	BIO *in=NULL,*out=NULL;
@@ -98,7 +100,9 @@ int MAIN(int argc, char **argv)
 	char *infile,*outfile,*prog,*inrand=NULL;
 	int numbits= -1,num,genkey=0;
 	int need_rand=0;
+#ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
+#endif
 
 	apps_startup();
 
@@ -139,11 +143,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
 			}
+#ifndef OPENSSL_NO_ENGINE
 		else if(strcmp(*argv, "-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine = *(++argv);
 			}
+#endif
 		else if (strcmp(*argv,"-text") == 0)
 			text=1;
 		else if (strcmp(*argv,"-C") == 0)
@@ -191,7 +197,9 @@ bad:
 		BIO_printf(bio_err," -noout        no output\n");
 		BIO_printf(bio_err," -genkey       generate a DSA key\n");
 		BIO_printf(bio_err," -rand         files to use for random number input\n");
+#ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
+#endif
 		BIO_printf(bio_err," number        number of bits to use for generating private key\n");
 		goto end;
 		}
@@ -235,7 +243,9 @@ bad:
 			}
 		}
 
+#ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
+#endif
 
 	if (need_rand)
 		{

@@ -56,6 +56,8 @@
  *
  */
 
+#ifndef OPENSSL_NO_ENGINE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -518,3 +520,4 @@ end:
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
+#endif

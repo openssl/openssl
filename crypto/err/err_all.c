@@ -82,7 +82,9 @@
 #include <openssl/pkcs12.h>
 #include <openssl/rand.h>
 #include <openssl/dso.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
 
@@ -122,7 +124,9 @@ void ERR_load_crypto_strings(void)
 	ERR_load_PKCS12_strings();
 	ERR_load_RAND_strings();
 	ERR_load_DSO_strings();
+#ifndef OPENSSL_NO_ENGINE
 	ERR_load_ENGINE_strings();
+#endif
 	ERR_load_OCSP_strings();
 	ERR_load_UI_strings();
 #endif

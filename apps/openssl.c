@@ -122,7 +122,9 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 #define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
 #include "progs.h"
 #include "s_apps.h"
