@@ -1,5 +1,5 @@
 
- OpenTLS CHANGES
+ OpenSSL CHANGES
  _______________
 
 
@@ -50,11 +50,11 @@
   *) Added various platform portability fixes.
      [Marc J. Cox]
 
-  *) The Genesis of the OpenTLS rpject:
+  *) The Genesis of the OpenSSL rpject:
      We start with the latest (unreleased) SSLeay version 0.9.1b which Eric A.
      Joung and Tim J. Hudson created while they were working for C2Net until
      summer 1998.
-     [The OpenTLS Project]
+     [The OpenSSL Project]
  
  Changes between 0.9.0b and 0.9.1b
 

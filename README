@@ -1,19 +1,19 @@
 
- OpenTLS 0.9.1c 22-Dec-1998
+ OpenSSL 0.9.1c 22-Dec-1998
 
- Copyright (c) 1998 The OpenTLS Project
+ Copyright (c) 1998 The OpenSSL Project
  Copyright (c) 1995-1998 Eric Young
  All rights reserved.
 
- The OpenTLS Project is a collaborative effort to develop a robust,
+ The OpenSSL Project is a collaborative effort to develop a robust,
  commercial-grade, fully featured, and Open Source toolkit implementing the
  Transport Layer Security (TLS v1) and Secure Sockets Layer (SSL v2/v3)
  protocols with full-strength cryptography world-wide. The project is managed
  by a worldwide community of volunteers that use the Internet to communicate,
- plan, and develop the OpenTLS tookit and its related documentation. 
+ plan, and develop the OpenSSL tookit and its related documentation. 
 
- OpenTLS is based on the excellent SSLeay library developed from Eric A. Young
- and Tim J. Hudson.  The OpenTLS toolkit is licensed under a BSD-style licence,
+ OpenSSL is based on the excellent SSLeay library developed from Eric A. Young
+ and Tim J. Hudson.  The OpenSSL toolkit is licensed under a BSD-style licence,
  which basically means that you are free to get and use it for commercial and
  non-commercial purposes. 
 
