@@ -574,11 +574,11 @@ ___
 		&main'blindpop($dst);
 		&main'add($dst,"\$_GLOBAL_OFFSET_TABLE_+[.-" .
 				&main'label("PIC_me_up") . "]");
-		&main'mov($dst,&main'DWP("$under$sym\@GOT",$dst));
+		&main'mov($dst,&main'DWP($sym."\@GOT",$dst));
 		}
 	else
 		{
-		&main'lea($dst,&main'DWP("$under$sym"));
+		&main'lea($dst,&main'DWP($sym));
 		}
 	}
 
