@@ -63,7 +63,7 @@
 
 struct ui_method_st
 	{
-	const char *name;
+	char *name;
 
 	/* All the functions return 1 or non-NULL for success and 0 or NULL
 	   for failure */

@@ -56,18 +56,9 @@
  *
  */
 
-#include <openssl/e_os2.h>
-/* The following defines enable the declaration of strdup(), which is an
-   extended function according to X/Open. */
-#ifdef OPENSSL_SYS_VMS_DECC
-# define _XOPEN_SOURCE_EXTENDED
-#endif
-#ifdef OPENSSL_SYS_UNIX
-# define _XOPEN_SOURCE
-# define _XOPEN_SOURCE_EXTENDED	/* For Linux and probably anything GNU */
-#endif
 #include <string.h>
-
+#include <openssl/e_os2.h>
+#include <openssl/buffer.h>
 #include <openssl/ui.h>
 #include <openssl/err.h>
 #include "ui_locl.h"
@@ -173,7 +164,7 @@ int UI_dup_input_string(UI *ui, const char *prompt, int flags,
 
 	if (prompt)
 		{
-		prompt_copy=strdup(prompt);
+		prompt_copy=BUF_strdup(prompt);
 		if (prompt_copy == NULL)
 			{
 			UIerr(UI_F_UI_DUP_INPUT_STRING,ERR_R_MALLOC_FAILURE);
@@ -199,7 +190,7 @@ int UI_dup_verify_string(UI *ui, const char *prompt, int flags,
 
 	if (prompt)
 		{
-		prompt_copy=strdup(prompt);
+		prompt_copy=BUF_strdup(prompt);
 		if (prompt_copy == NULL)
 			{
 			UIerr(UI_F_UI_DUP_VERIFY_STRING,ERR_R_MALLOC_FAILURE);
@@ -223,7 +214,7 @@ int UI_dup_info_string(UI *ui, const char *text)
 
 	if (text)
 		{
-		text_copy=strdup(text);
+		text_copy=BUF_strdup(text);
 		if (text_copy == NULL)
 			{
 			UIerr(UI_F_UI_DUP_INFO_STRING,ERR_R_MALLOC_FAILURE);
@@ -247,7 +238,7 @@ int UI_dup_error_string(UI *ui, const char *text)
 
 	if (text)
 		{
-		text_copy=strdup(text);
+		text_copy=BUF_strdup(text);
 		if (text_copy == NULL)
 			{
 			UIerr(UI_F_UI_DUP_ERROR_STRING,ERR_R_MALLOC_FAILURE);
@@ -427,8 +418,18 @@ UI_METHOD *UI_create_method(char *name)
 
 	if (ui_method)
 		memset(ui_method, 0, sizeof(*ui_method));
-	ui_method->name = strdup(name);
+	ui_method->name = BUF_strdup(name);
 	return ui_method;
+	}
+
+/* BIG FSCKING WARNING!!!!  If you use this on a statically allocated method
+   (that is, it hasn't been allocated using UI_create_method(), you deserve
+   anything Murphy can throw at you and more!  You have been warned. */
+void UI_destroy_method(UI_METHOD *ui_method)
+	{
+	OPENSSL_free(ui_method->name);
+	ui_method->name = NULL;
+	OPENSSL_free(ui_method);
 	}
 
 int UI_method_set_opener(UI_METHOD *method, int (*opener)(UI *ui))

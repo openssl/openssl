@@ -271,6 +271,7 @@ enum UI_string_types
 
 /* Create and manipulate methods */
 UI_METHOD *UI_create_method(char *name);
+void UI_destroy_method(UI_METHOD *ui_method);
 int UI_method_set_opener(UI_METHOD *method, int (*opener)(UI *ui));
 int UI_method_set_writer(UI_METHOD *method, int (*writer)(UI *ui, UI_STRING *uis));
 int UI_method_set_flusher(UI_METHOD *method, int (*flusher)(UI *ui));
