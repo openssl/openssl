@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/21 10:27:35 $
+  ______________                           $Date: 2000/09/21 12:54:41 $
 
   DEVELOPMENT STATE
 
@@ -85,6 +85,23 @@
 			ultrix-cc (V4.5)			- success
 			ultrix-gcc (V4.5, gcc 2.8.1)		- success
                        0.9.6-beta3 is available:
+			aix-cc (4.3)				- success
+			aix-cc [engine] (4.3)			- success
+			linux-elf (RedHat 6.2)			- success
+			linux-elf [engine] (RedHat 6.2)		- success
+			solaris-sparcv9-gcc (5.7, gcc 2.95.2)	- success
+			solaris-sparcv9-cc (5.6, SunWS C 4.2)	- success
+			solaris-sparcv9-cc [engine] (5.6, SunWS C 4.2)- success
+			WinNT (4 SP6, VC6 SP2)			- success
+			WinNT (4 SP6, Cygwin)			- success
+				The files used for testing must have CR/LF
+					as line endings.
+			WinNT (4 SP6, Mingw32)			- failed
+				mingw32a.mak contains a few lines that
+					generate an error.
+			WinNT (4 SP6, VC6 SP4)			- failed
+				Complains about unresolved external symbol
+					__imp__RegQueryValueEx.
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
