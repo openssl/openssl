@@ -96,7 +96,7 @@ returns is of zero length.
 
 EVP_get_digestbyname(), EVP_get_digestbynid() and EVP_get_digestbyobj()
 return an B<EVP_MD> structure when passed a digest name, a digest NID or
-and ASN1_OBJECT structure respectively. The digest table must be initialised
+an ASN1_OBJECT structure respectively. The digest table must be initialised
 using, for example, OpenSSL_add_all_digests() for these functions to work.
 
 =head1 RETURN VALUES
@@ -112,9 +112,9 @@ EVP_MD_size(), EVP_MD_block_size(), EVP_MD_CTX_size(e), EVP_MD_size(),
 EVP_MD_CTX_block_size()	and EVP_MD_block_size() return the digest or block
 size in bytes.
 
-EVP_md_null(), EVP_MD *EVP_md2(), EVP_MD *EVP_md5(), EVP_MD *EVP_sha(),
-EVP_sha1(), EVP_dss(), EVP_dss1(), EVP_mdc2() and EVP_ripemd160() return
-pointers to the corresponding EVP_MD structures.
+EVP_md_null(), EVP_md2(), EVP_md5(), EVP_sha(), EVP_sha1(), EVP_dss(),
+EVP_dss1(), EVP_mdc2() and EVP_ripemd160() return pointers to the
+corresponding EVP_MD structures.
 
 EVP_get_digestbyname(), EVP_get_digestbynid() and EVP_get_digestbyobj()
 return either an B<EVP_MD> structure or NULL if an error occurs.
@@ -186,7 +186,7 @@ in code that must be recompiled if the size of B<EVP_MD_CTX> increases.
 
 L<evp(3)|evp(3)>, L<hmac(3)|hmac(3)>, L<md2(3)|md2(3)>,
 L<md5(3)|md5(3)>, L<mdc2(3)|mdc2(3)>, L<ripemd(3)|ripemd(3)>,
-L<sha(3)|sha(3)>
+L<sha(3)|sha(3)>, L<digest(1)|digest(1)>
 
 =head1 HISTORY
 

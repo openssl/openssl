@@ -29,7 +29,7 @@ EVP_EncryptInit, EVP_EncryptUpdate, EVP_EncryptFinal - EVP cipher routines
  #define EVP_CIPHER_nid(e)		((e)->nid)
  #define EVP_CIPHER_block_size(e)	((e)->block_size)
  #define EVP_CIPHER_key_length(e)	((e)->key_len)
- #define EVP_CIPHER_iv_length(e)		((e)->iv_len)
+ #define EVP_CIPHER_iv_length(e)	((e)->iv_len)
 
  int EVP_CIPHER_type(const EVP_CIPHER *ctx);
  #define EVP_CIPHER_CTX_cipher(e)	((e)->cipher)
@@ -38,6 +38,9 @@ EVP_EncryptInit, EVP_EncryptUpdate, EVP_EncryptFinal - EVP cipher routines
  #define EVP_CIPHER_CTX_key_length(e)	((e)->cipher->key_len)
  #define EVP_CIPHER_CTX_iv_length(e)	((e)->cipher->iv_len)
  #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
+
+ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
+ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
 
 =head1 DESCRIPTION
 
@@ -48,7 +51,12 @@ EVP_EncryptInit() initialises a cipher context B<ctx> for encryption
 with cipher B<type>. B<type> is normally supplied by a function such
 as EVP_des_cbc() . B<key> is the symmetric key to use and B<iv> is the
 IV to use (if necessary), the actual number of bytes used for the
-key and IV depends on the cipher.
+key and IV depends on the cipher. It is possible to set all parameters
+to NULL except B<type> in an initial call and supply the remaining
+parameters in subsequent calls. This is normally done when the 
+EVP_CIPHER_asn1_to_param() function is called to set the cipher
+parameters from an ASN1 AlgorithmIdentifier and the key from a
+different source.
 
 EVP_EncryptUpdate() encrypts B<inl> bytes from the buffer B<in> and
 writes the encrypted version to B<out>. This function can be called
@@ -82,6 +90,56 @@ EVP_CIPHER_CTX_cleanup() clears all information from a cipher context.
 It should be called after all operations using a cipher are complete
 so sensitive information does not remain in memory.
 
+EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
+return an EVP_CIPHER structure when passed a cipher name, a NID or an
+ASN1_OBJECT structure.
+
+EVP_CIPHER_nid() and EVP_CIPHER_CTX_nid() return the NID of a cipher when
+passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX> structure.  The actual NID
+value is an internal value which may not have a corresponding OBJECT
+IDENTIFIER.
+
+EVP_CIPHER_key_length() and EVP_CIPHER_CTX_key_length() return the key
+length of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
+structure. The constant B<EVP_MAX_KEY_LENGTH> is the maximum key length
+for all ciphers.
+
+EVP_CIPHER_iv_length() and EVP_CIPHER_CTX_iv_length() return the IV
+length of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>.
+It will return zero if the cipher does not use an IV.  The constant
+B<EVP_MAX_IV_LENGTH> is the maximum IV length for all ciphers.
+
+EVP_CIPHER_block_size() and EVP_CIPHER_CTX_block_size() return the block
+size of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
+structure. The constant B<EVP_MAX_IV_LENGTH> is also the maximum block
+length for all ciphers.
+
+EVP_CIPHER_type() and EVP_CIPHER_CTX_type() return the type of the passed
+cipher or context. This "type" is the actual NID of the cipher OBJECT
+IDENTIFIER as such it ignores the cipher parameters and 40 bit RC2 and
+128 bit RC2 have the same NID.
+
+EVP_CIPHER_CTX_cipher() returns the B<EVP_CIPHER> structure when passed
+an B<EVP_CIPHER_CTX> structure.
+
+EVP_CIPHER_param_to_asn1() sets the AlgorithmIdentifier "parameter" based
+on the passed cipher. This will typically include any parameters and an
+IV. The cipher IV (if any) must be set when this call is made. This call
+should be made before the cipher is actually "used" (before any
+EVP_EncryptUpdate(), EVP_DecryptUpdate() calls for example). This function
+may fail if the cipher does not have any ASN1 support.
+
+EVP_CIPHER_asn1_to_param() sets the cipher parameters based on an ASN1
+AlgorithmIdentifier "parameter". The precise effect depends on the cipher
+In the case of RC2, for example, it will set the IV and effective key length.
+This function should be called after the base cipher type is set but before
+the key is set. For example EVP_CipherInit() will be called with the IV and
+key set to NULL, EVP_CIPHER_asn1_to_param() will be called and finally
+EVP_CipherInit() again with all parameters except the key set to NULL. It is
+possible for this function to fail if the cipher does not have any ASN1 support
+or the parameters cannot be set (for example the RC2 effective key length
+does not have an B<EVP_CIPHER> structure).
+
 =head1 RETURN VALUES
 
 EVP_EncryptInit(), EVP_EncryptUpdate() and EVP_EncryptFinal() do not return
@@ -93,6 +151,22 @@ EVP_DecryptFinal() returns 0 if the decrypt failed or 1 for success.
 EVP_CipherInit() and EVP_CipherUpdate() do not return values.
 EVP_CipherFinal() returns 1 for a decryption failure or 1 for success, if
 the operation is encryption then it always returns 1.
+
+EVP_CIPHER_CTX_cleanup() does not return a value.
+
+EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
+return an B<EVP_CIPHER> structure or NULL on error.
+
+EVP_CIPHER_nid() and EVP_CIPHER_CTX_nid() return a NID.
+
+EVP_CIPHER_block_size() and EVP_CIPHER_CTX_block_size() return the block
+size.
+
+EVP_CIPHER_key_length() and EVP_CIPHER_CTX_key_length() return the key
+length.
+
+EVP_CIPHER_iv_length() and EVP_CIPHER_CTX_iv_length() return the IV
+length or zero if the cipher does not use an IV.
 
 =head1 NOTES
 
