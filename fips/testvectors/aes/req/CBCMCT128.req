@@ -1,20 +1,20 @@
-# CAVS 2.0
+# CAVS Version 1.3
 # Config info for OpenSSL
 # AESVS MCT test data for CBC
 # State : Encrypt and Decrypt
 # Key Length : 128
-# Tue Jun 24 02:39:58 PM
+# Mon Aug 11 12:03:32 AM
 
 [ENCRYPT]
 
 COUNT = 0
-KEY = c8ebb8e12ab9bcceb55d3d42b38c6fb1
-IV = 6c8f49ad89c5e254caa72f39693c6d76
-PLAINTEXT = 9e2fe1eadfbb36d3451eec24922d6da8
+KEY = 56349d49be5e31930b35b52e052d59dd
+IV = d5371509b3f61c60628c8100e630325a
+PLAINTEXT = 6d03908b1c2b3131bbf7001575d5d6e8
 
 [DECRYPT]
 
 COUNT = 0
-KEY = fd43cd4edaba8227b05a7bec889aa6ec
-IV = 53e9756bf95a16ccb81c2e3c224ccf6b
-CIPHERTEXT = 49c67e5d59d0f8c6e8d1e850ef947041
+KEY = 753b57afd353bcb36dceb1e6d8be89a4
+IV = 014a7e9aab6153569646316eff29c0cb
+CIPHERTEXT = 103e0eab98fb5d62410bf651cc31caff

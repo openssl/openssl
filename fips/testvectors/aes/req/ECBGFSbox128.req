@@ -1,9 +1,9 @@
-# CAVS 2.0
+# CAVS Version 1.3
 # Config info for OpenSSL
 # AESVS GFSbox test data for ECB
 # State : Encrypt and Decrypt
 # Key Length : 128
-# Tue Jun 24 02:39:36 PM
+# Mon Aug 11 12:03:09 AM
 
 [ENCRYPT]
 

@@ -1,17 +1,17 @@
-# CAVS 2.0
-# Config Info for : "OpenSSL_DES"
+# CAVS Version 1.3
+# Config Info for : "OpenSSL"
 # DES Monte Carlo (Modes) Test for CBC
 # State : Encrypt and Decrypt
-# Tue Jun 24 03:12:12 PM
+# Mon Aug 11 11:44:49 AM
 
 [ENCRYPT]
-KEY = 98a275e5da515da2
-IV = f58d8cada3a4248a
-PLAINTEXT = 96d1169b840e8fdb
+KEY = 862c732ad608c7c4
+IV = ff81eb90e5447f75
+PLAINTEXT = 7e342edf1ed9f1bc
 
 
 [DECRYPT]
-KEY = fde0d679bc5d67fd
-IV = 753ce88d8bfcdc54
-CIPHERTEXT = cacec93587bec613
+KEY = 32298ac8587c8054
+IV = 07a1f8f1bb2e90aa
+CIPHERTEXT = e569720ad5aeab8a
 

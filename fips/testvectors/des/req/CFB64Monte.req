@@ -1,17 +1,17 @@
-# CAVS 2.0
-# Config Info for : "OpenSSL_DES"
+# CAVS Version 1.3
+# Config Info for : "OpenSSL"
 # DES Monte Carlo (Modes) Test for CFB64
 # State : Encrypt and Decrypt
-# Tue Jun 24 03:13:22 PM
+# Mon Aug 11 11:45:59 AM
 
 [ENCRYPT]
-KEY = 62d65740708019f1
-IV = 14544ea4813c49d9
-PLAINTEXT = c3acc89b9b6037ef
+KEY = c4101052f44562d5
+IV = 1599b4a4809a2ff2
+PLAINTEXT = d62670d023434ce4
 
 
 [DECRYPT]
-KEY = 1938ce9d3170e943
-IV = 50da37dea25a9471
-CIPHERTEXT = ac81a4c963661942
+KEY = f2abbff762978649
+IV = 5f8f47b45f7eefa2
+CIPHERTEXT = 4b75469a35d12656
 

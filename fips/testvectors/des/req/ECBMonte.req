@@ -1,15 +1,15 @@
-# CAVS 2.0
-# Config Info for : "OpenSSL_DES"
+# CAVS Version 1.3
+# Config Info for : "OpenSSL"
 # DES Monte Carlo (Modes) Test for ECB
 # State : Encrypt and Decrypt
-# Tue Jun 24 03:11:52 PM
+# Mon Aug 11 11:44:28 AM
 
 [ENCRYPT]
-KEY = 85ec01545e169b7c
-PLAINTEXT = a58819aa56a768fa
+KEY = 3792a26dd92f8ad0
+PLAINTEXT = 956bdaaa14b5e606
 
 
 [DECRYPT]
-KEY = 2a4a34049bb9f4e9
-CIPHERTEXT = ccb58233c54a7e4b
+KEY = 7004438cdad6e5a7
+CIPHERTEXT = d4c12efa514dc1d7
 

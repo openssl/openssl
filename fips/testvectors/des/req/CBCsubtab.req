@@ -1,8 +1,8 @@
-# CAVS 2.0
-# Config Info for : "OpenSSL_DES"
+# CAVS Version 1.3
+# Config Info for : "OpenSSL"
 # SUBSTITUTION TABLE - KAT for CBC
 # State : Encrypt and Decrypt
-# Tue Jun 24 03:11:51 PM
+# Mon Aug 11 11:44:28 AM
 
 [ENCRYPT]
 COUNT = 0
