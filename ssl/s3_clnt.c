@@ -1461,6 +1461,8 @@ static int ssl3_send_client_key_exchange(SSL *s)
                         krb5rc = kssl_cget_tkt(kssl_ctx, &enc_ticket, authp,
 				&kssl_err);
 			enc = kssl_map_enc(kssl_ctx->enctype);
+                        if (enc == NULL)
+                            goto err;
 #ifdef KSSL_DEBUG
                         {
                         printf("kssl_cget_tkt rtn %d\n", krb5rc);

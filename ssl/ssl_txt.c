@@ -139,6 +139,18 @@ int SSL_SESSION_print(BIO *bp, SSL_SESSION *x)
 			{
 			if (BIO_printf(bp,"%02X",x->key_arg[i]) <= 0) goto err;
 			}
+#ifndef OPENSSL_NO_KRB5
+       if (BIO_puts(bp,"/n    Krb5 Principal: ") <= 0) goto err;
+            if (x->krb5_client_princ_len == 0)
+            {
+		if (BIO_puts(bp,"None") <= 0) goto err;
+		}
+	else
+		for (i=0; i<x->krb5_client_princ_len; i++)
+			{
+			if (BIO_printf(bp,"%02X",x->key_arg[i]) <= 0) goto err;
+			}
+#endif /* OPENSSL_NO_KRB5 */
 	if (x->compress_meth != 0)
 		{
 		SSL_COMP *comp;

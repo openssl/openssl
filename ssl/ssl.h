@@ -106,6 +106,7 @@ extern "C" {
 #define SSL_TXT_KRB5_DES_64_CBC_MD5   SSL3_TXT_KRB5_DES_64_CBC_MD5
 #define SSL_TXT_KRB5_DES_192_CBC3_SHA SSL3_TXT_KRB5_DES_192_CBC3_SHA
 #define SSL_TXT_KRB5_DES_192_CBC3_MD5 SSL3_TXT_KRB5_DES_192_CBC3_MD5
+#define SSL_MAX_KRB5_PRINCIPAL_LENGTH  256
 
 #define SSL_MAX_SSL_SESSION_ID_LENGTH		32
 #define SSL_MAX_SID_CTX_LENGTH			32
@@ -282,6 +283,11 @@ typedef struct ssl_session_st
 	 * via SSL_new */
 	unsigned int sid_ctx_length;
 	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
+
+#ifndef OPENSSL_NO_KRB5
+        unsigned int krb5_client_princ_len;
+        unsigned char krb5_client_princ[SSL_MAX_KRB5_PRINCIPAL_LENGTH];
+#endif /* OPENSSL_NO_KRB5 */
 
 	int not_resumable;
 

@@ -1493,7 +1493,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		enc_pms.data = p;
 		p+=enc_pms.length;
 
-		if (n != enc_ticket.length + authenticator.length +
+		if ((unsigned long)n != enc_ticket.length + authenticator.length +
 						enc_pms.length + 6)
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
@@ -1543,6 +1543,9 @@ static int ssl3_get_client_key_exchange(SSL *s)
 #endif	/* KSSL_DEBUG */
 
 		enc = kssl_map_enc(kssl_ctx->enctype);
+                if (enc == NULL)
+                    goto err;
+
 		memset(iv, 0, EVP_MAX_IV_LENGTH);	/* per RFC 1510 */
 
 		if (!EVP_DecryptInit(&ciph_ctx,enc,kssl_ctx->key,iv))
@@ -1582,6 +1585,17 @@ static int ssl3_get_client_key_exchange(SSL *s)
                 s->session->master_key_length=
                         s->method->ssl3_enc->generate_master_secret(s,
                                 s->session->master_key, pms, outl);
+
+                if (kssl_ctx->client_princ)
+                        {
+                        int len = strlen(kssl_ctx->client_princ);
+                        if ( len < SSL_MAX_KRB5_PRINCIPAL_LENGTH ) 
+                                {
+                                s->session->krb5_client_princ_len = len;
+                                memcpy(s->session->krb5_client_princ,kssl_ctx->client_princ,len);
+                                }
+                        }
+
 
                 /*  Was doing kssl_ctx_free() here,
 		**  but it caused problems for apache.

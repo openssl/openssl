@@ -760,19 +760,14 @@ kssl_map_enc(krb5_enctype enctype)
         {
 	switch (enctype)
 		{
-#if ! defined(KRB5_MIT_OLD11)
-					/*     cannot handle derived keys  */
-	case ENCTYPE_DES3_CBC_SHA1:		/*    EVP_des_ede3_cbc();  */
 	case ENCTYPE_DES_HMAC_SHA1:		/*    EVP_des_cbc();       */
-				return (EVP_CIPHER *) NULL;
-				break;
-#endif
 	case ENCTYPE_DES_CBC_CRC:
 	case ENCTYPE_DES_CBC_MD4:
 	case ENCTYPE_DES_CBC_MD5:
 	case ENCTYPE_DES_CBC_RAW:
 				return (EVP_CIPHER *) EVP_des_cbc();
 				break;
+	case ENCTYPE_DES3_CBC_SHA1:		/*    EVP_des_ede3_cbc();  */
 	case ENCTYPE_DES3_CBC_SHA:
 	case ENCTYPE_DES3_CBC_RAW:
 				return (EVP_CIPHER *) EVP_des_ede3_cbc();
@@ -1979,6 +1974,15 @@ krb5_error_code  kssl_check_authent(
 		}
 
 	enctype = dec_authent->etype->data[0];	/* should = kssl_ctx->enctype */
+#if !defined(KRB5_MIT_OLD11)
+            switch ( enctype ) {
+            case ENCTYPE_DES3_CBC_SHA1:		/*    EVP_des_ede3_cbc();  */
+            case ENCTYPE_DES3_CBC_SHA:
+            case ENCTYPE_DES3_CBC_RAW:
+                krb5rc = 0;                     /* Skip, can't handle derived keys */
+                goto err;
+            }
+#endif
 	enc = kssl_map_enc(enctype);
 	memset(iv, 0, EVP_MAX_IV_LENGTH);       /* per RFC 1510 */
 
