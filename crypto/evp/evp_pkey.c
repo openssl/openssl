@@ -82,6 +82,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 #endif
 	X509_ALGOR *a;
 	unsigned char *p;
+	const unsigned char *cp;
 	int pkeylen;
 	char obj_tmp[80];
 
@@ -103,7 +104,8 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 	{
 #ifndef NO_RSA
 		case NID_rsaEncryption:
-		if (!(rsa = d2i_RSAPrivateKey (NULL, &p, pkeylen))) {
+		cp = p;
+		if (!(rsa = d2i_RSAPrivateKey (NULL,&cp, pkeylen))) {
 			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
 			return NULL;
 		}
