@@ -196,6 +196,19 @@ typedef SW_U32 SW_CONTEXT_HANDLE; /* opaque context handle */
 
 /* Now the OpenSSL bits, these function types are the for the function
  * pointers that will bound into the Rainbow shared libraries. */
+/********** Peng's modification begins **********/
+#if defined(WIN32) /* For WIN32 platform */
+typedef SW_STATUS _stdcall t_swAcquireAccContext(SW_CONTEXT_HANDLE *hac);
+typedef SW_STATUS _stdcall t_swAttachKeyParam(SW_CONTEXT_HANDLE hac,
+				SW_PARAM *key_params);
+typedef SW_STATUS _stdcall t_swSimpleRequest(SW_CONTEXT_HANDLE hac,
+				SW_COMMAND_CODE cmd,
+				SW_LARGENUMBER pin[],
+				SW_U32 pin_count,
+				SW_LARGENUMBER pout[],
+				SW_U32 pout_count);
+typedef SW_STATUS _stdcall t_swReleaseAccContext(SW_CONTEXT_HANDLE hac);
+#else /* For other platforms */
 typedef SW_STATUS t_swAcquireAccContext(SW_CONTEXT_HANDLE *hac);
 typedef SW_STATUS t_swAttachKeyParam(SW_CONTEXT_HANDLE hac,
 				SW_PARAM *key_params);
@@ -206,6 +219,9 @@ typedef SW_STATUS t_swSimpleRequest(SW_CONTEXT_HANDLE hac,
 				SW_LARGENUMBER pout[],
 				SW_U32 pout_count);
 typedef SW_STATUS t_swReleaseAccContext(SW_CONTEXT_HANDLE hac);
+#endif
+/********** Peng's modification ends **********/
+
 
 #ifdef __cplusplus
 }
