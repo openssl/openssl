@@ -222,7 +222,7 @@ static void x509v3_cache_extensions(X509 *x)
 	if(x->ex_flags & EXFLAG_SET) return;
 	X509_digest(x, EVP_sha1(), x->sha1_hash, NULL);
 	/* Does subject name match issuer ? */
-	if(X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x)))
+	if(!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x)))
 			 x->ex_flags |= EXFLAG_SS;
 	/* V1 should mean no extensions ... */
 	if(!X509_get_version(x)) x->ex_flags |= EXFLAG_V1;

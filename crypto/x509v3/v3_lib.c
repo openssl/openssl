@@ -128,10 +128,13 @@ int X509V3_EXT_add_alias(int nid_to, int nid_from)
 	return 1;
 }
 
+static int added_exts = 0;
+
 void X509V3_EXT_cleanup(void)
 {
 	sk_pop_free(ext_list, ext_list_free);
 	ext_list = NULL;
+	added_exts = 0;
 }
 
 static void ext_list_free(X509V3_EXT_METHOD *ext)
@@ -147,6 +150,7 @@ extern X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_cpols, v3_crld;
 
 int X509V3_add_standard_extensions(void)
 {
+	if(added_exts) return 1;
 	X509V3_EXT_add_list(v3_ns_ia5_list);
 	X509V3_EXT_add_list(v3_alt);
 	X509V3_EXT_add(&v3_bcons);
@@ -162,6 +166,7 @@ int X509V3_add_standard_extensions(void)
 	X509V3_EXT_add(&v3_crl_reason);
 	X509V3_EXT_add(&v3_cpols);
 	X509V3_EXT_add(&v3_crld);
+	added_exts = 1;
 	return 1;
 }
 

@@ -85,6 +85,7 @@ int MAIN(int argc, char **argv)
 	X509_LOOKUP *lookup=NULL;
 
 	X509_PURPOSE_add_standard();
+	X509_TRUST_add_standard();
 	X509V3_add_standard_extensions();
 	cert_ctx=X509_STORE_new();
 	if (cert_ctx == NULL) goto end;
@@ -199,6 +200,7 @@ end:
 	sk_X509_pop_free(untrusted, X509_free);
 	X509V3_EXT_cleanup();
 	X509_PURPOSE_cleanup();
+	X509_TRUST_cleanup();
 	EXIT(ret);
 	}
 

@@ -12,15 +12,21 @@
      DSA key was used because it didn't fix the digest.
      [Steve Henson]
 
-  *) Very preliminary certificate chain verify code. Currently just tests
-     the untrusted certificates for consistency with the verify purpose
-     (which is set when the X509_STORE_CTX structure is set up) and checks
-     the pathlength. There is a NO_CHAIN_VERIFY compilation option to keep
-     the old behaviour: this is because when it is finally working it will
-     reject chains with invalid extensions whereas before it made no checks
-     at all.
+  *) Initial certificate chain verify code. Currently tests the untrusted
+     certificates for consistency with the verify purpose (which is set
+     when the X509_STORE_CTX structure is set up) and checks the pathlength.
 
-     Preliminary untested trust code. 
+     There is a NO_CHAIN_VERIFY compilation option to keep the old behaviour:
+     this is because when it is finally working it will reject chains with
+     invalid extensions whereas every previous version of OpenSSL and SSLeay
+     made no checks at all.
+
+     Trust code: checks the root CA for the relevant trust settings. Trust
+     settings have an initial value consistent with the verify purpose: e.g.
+     if the verify purpose is for SSL client use it expects the CA to be
+     trusted for SSL client use. However the default value can be changed to
+     permit custom trust settings: one example of this would be to only trust
+     certificates from a specific "secure" set of CAs.
 
      Also added X509_STORE_CTX_new() and X509_STORE_CTX_free() functions
      which should be used for version portability: especially since the

@@ -126,6 +126,10 @@ const char *X509_verify_cert_error_string(long n)
 		return ("path length constraint exceeded");
 	case X509_V_ERR_INVALID_PURPOSE:
 		return ("unsupported certificate purpose");
+	case X509_V_ERR_CERT_UNTRUSTED:
+		return ("certificate not trusted");
+	case X509_V_ERR_CERT_REJECTED:
+		return ("certificate rejected");
 	case X509_V_ERR_APPLICATION_VERIFICATION:
 		return("application verification failure");
 	default:

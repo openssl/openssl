@@ -263,6 +263,8 @@ struct x509_store_state_st      /* X509_STORE_CTX */
 #define		X509_V_ERR_INVALID_CA				24
 #define		X509_V_ERR_PATH_LENGTH_EXCEEDED			25
 #define		X509_V_ERR_INVALID_PURPOSE			26
+#define		X509_V_ERR_CERT_UNTRUSTED			27
+#define		X509_V_ERR_CERT_REJECTED			28
 
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50
@@ -347,8 +349,9 @@ X509 *	X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
 STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx);
 void	X509_STORE_CTX_set_cert(X509_STORE_CTX *c,X509 *x);
 void	X509_STORE_CTX_set_chain(X509_STORE_CTX *c,STACK_OF(X509) *sk);
-void X509_STORE_CTX_chain_purpose(X509_STORE_CTX *ctx, int purpose);
+int X509_STORE_CTX_chain_purpose(X509_STORE_CTX *ctx, int purpose);
 void X509_STORE_CTX_trust_purpose(X509_STORE_CTX *ctx, int purpose);
+int X509_set_purpose_and_trust(int id, int *purp, int *trust);
 
 #ifdef  __cplusplus
 }
