@@ -4,6 +4,12 @@
 
  Changes between 0.9.5 and 0.9.6  [XX XXX 2000]
 
+  *) In util/mkerr.pl (which implements 'make errors'), preserve
+     reason strings from the previous version of the .c file, as
+     the default to have only downcase letters (and digits) in
+     automatically generated reasons codes is not always appropriate.
+     [Bodo Moeller]
+
   *) In ERR_load_ERR_strings(), build an ERR_LIB_SYS error reason table
      using strerror.  Previously, ERR_reason_error_string() returned
      library names as reason strings for SYSerr; but SYSerr is a special
