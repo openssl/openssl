@@ -738,7 +738,16 @@ int MAIN(int argc, char **argv)
 		if (use_ssl == 1)
 			{
 			BIO *sbio;
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 			ctx = SSL_CTX_new(SSLv23_client_method());
+#elif !defined(OPENSSL_NO_SSL3)
+			ctx = SSL_CTX_new(SSLv3_client_method());
+#elif !defined(OPENSSL_NO_SSL2)
+			ctx = SSL_CTX_new(SSLv2_client_method());
+#else
+			BIO_printf(bio_err, "SSL is disabled\n");
+			goto end;
+#endif
 			SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
 			sbio = BIO_new_ssl(ctx, 1);
 			cbio = BIO_push(sbio, cbio);
