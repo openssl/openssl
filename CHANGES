@@ -5,6 +5,9 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) DES library cleanups.
+     [Ulf Möller]
+
   *) Add support for PKCS#5 v2.0 PBE algorithms. This will permit PKCS#8 to be
      used with any cipher unlike PKCS#5 v1.5 which can at most handle 64 bit
      ciphers. NOTE: although the key derivation function has been verified
