@@ -747,11 +747,12 @@ speed.o: ./testrsa.h apps.h
 spkac.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 spkac.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 spkac.o: ../include/openssl/buffer.h ../include/openssl/cast.h
-spkac.o: ../include/openssl/crypto.h ../include/openssl/des.h
-spkac.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-spkac.o: ../include/openssl/e_os.h ../include/openssl/e_os2.h
-spkac.o: ../include/openssl/err.h ../include/openssl/evp.h
-spkac.o: ../include/openssl/idea.h ../include/openssl/md2.h
+spkac.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+spkac.o: ../include/openssl/des.h ../include/openssl/dh.h
+spkac.o: ../include/openssl/dsa.h ../include/openssl/e_os.h
+spkac.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+spkac.o: ../include/openssl/evp.h ../include/openssl/idea.h
+spkac.o: ../include/openssl/lhash.h ../include/openssl/md2.h
 spkac.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
 spkac.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 spkac.o: ../include/openssl/opensslv.h ../include/openssl/pem.h

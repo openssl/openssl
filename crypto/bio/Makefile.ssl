@@ -172,8 +172,10 @@ bss_acpt.o: ../../include/openssl/opensslconf.h
 bss_acpt.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 bss_acpt.o: ../../include/openssl/stack.h ../cryptlib.h
 bss_bio.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-bss_bio.o: ../../include/openssl/err.h ../../include/openssl/opensslv.h
-bss_bio.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+bss_bio.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+bss_bio.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+bss_bio.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+bss_bio.o: ../../include/openssl/stack.h
 bss_conn.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 bss_conn.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
 bss_conn.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h

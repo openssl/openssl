@@ -62,7 +62,7 @@
  */
 
 #define NUM_NID 181
-#define NUM_SN 140
+#define NUM_SN 141
 #define NUM_LN 175
 #define NUM_OBJ 154
 
@@ -472,7 +472,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	8,&(lvalues[1052]),0},
 {"OCSP","OCSP",NID_ad_OCSP,8,&(lvalues[1060]),0},
 {"caIssuers","CA Issuers",NID_ad_ca_issuers,8,&(lvalues[1068]),0},
-{"OCSP Signing","OCSP Signing",NID_OCSP_sign,8,&(lvalues[1076]),0},
+{"OCSPSigning","OCSP Signing",NID_OCSP_sign,8,&(lvalues[1076]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -521,6 +521,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[57]),/* "Netscape" */
 &(nid_objs[17]),/* "O" */
 &(nid_objs[178]),/* "OCSP" */
+&(nid_objs[180]),/* "OCSPSigning" */
 &(nid_objs[18]),/* "OU" */
 &(nid_objs[ 9]),/* "PBE-MD2-DES" */
 &(nid_objs[168]),/* "PBE-MD2-RC2-64" */
