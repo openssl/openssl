@@ -477,26 +477,26 @@ int	EVP_BytesToKey(const EVP_CIPHER *type,const EVP_MD *md,
 		const unsigned char *salt, const unsigned char *data,
 		int datal, int count, unsigned char *key,unsigned char *iv);
 
-int	EVP_EncryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
+int	EVP_EncryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher,
 		const unsigned char *key, const unsigned char *iv);
-int	EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type, ENGINE *impl,
+int	EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher, ENGINE *impl,
 		const unsigned char *key, const unsigned char *iv);
 int	EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		int *outl, const unsigned char *in, int inl);
 int	EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
-int	EVP_DecryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
+int	EVP_DecryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher,
 		const unsigned char *key, const unsigned char *iv);
-int	EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type, ENGINE *impl,
+int	EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher, ENGINE *impl,
 		const unsigned char *key, const unsigned char *iv);
 int	EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		int *outl, const unsigned char *in, int inl);
 int	EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
-int	EVP_CipherInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
+int	EVP_CipherInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher,
 		       const unsigned char *key,const unsigned char *iv,
 		       int enc);
-int	EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type, ENGINE *impl,
+int	EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher, ENGINE *impl,
 		       const unsigned char *key,const unsigned char *iv,
 		       int enc);
 int	EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
