@@ -100,7 +100,7 @@ int MAIN(int argc, char **argv)
     int chain = 0;
     int badarg = 0;
     int iter = PKCS12_DEFAULT_ITER;
-    int maciter = 1;
+    int maciter = PKCS12_DEFAULT_ITER;
     int twopass = 0;
     int keytype = 0;
     int cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
@@ -143,6 +143,8 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp (*args, "-noiter")) iter = 1;
 		else if (!strcmp (*args, "-maciter"))
 					 maciter = PKCS12_DEFAULT_ITER;
+		else if (!strcmp (*args, "-nomaciter"))
+					 maciter = 1;
 		else if (!strcmp (*args, "-nodes")) enc=NULL;
 		else if (!strcmp (*args, "-certpbe")) {
 			if (args[1]) {

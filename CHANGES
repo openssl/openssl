@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add manpage for the pkcs12 command. Also change the default
+     behaviour so MAC iteration counts are used unless the new
+     -nomaciter option is used. This improves file security and
+     only older versions of MSIE (4.0 for example) need it.
+     [Steve Henson]
+
   *) Honor the no-xxx Configure options when creating .DEF files.
      [Ulf Möller]
 
