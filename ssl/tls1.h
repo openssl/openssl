@@ -65,6 +65,8 @@
 extern "C" {
 #endif
 
+#define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES	0
+
 #define TLS1_VERSION			0x0301
 #define TLS1_VERSION_MAJOR		0x03
 #define TLS1_VERSION_MINOR		0x01

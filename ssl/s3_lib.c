@@ -355,6 +355,7 @@ SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_CIPHERS,
 	},
 
+#if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES
 	/* New TLS Export CipherSuites */
 	/* Cipher 60 */
 	    {
@@ -383,6 +384,7 @@ SSL_CIPHER ssl3_ciphers[]={
 	    0,
 	    SSL_ALL_CIPHERS
 	    },
+#endif
 
 /* end of list */
 	};
