@@ -333,16 +333,13 @@ void program_name(char *in, char *out, int size)
 #ifdef OPENSSL_SYS_WIN32
 int WIN32_rename(char *from, char *to)
 	{
-#ifdef OPENSSL_SYS_WINNT
-	int ret;
-/* Note: MoveFileEx() doesn't work under Win95, Win98 */
-
-	ret=MoveFileEx(from,to,MOVEFILE_REPLACE_EXISTING|MOVEFILE_COPY_ALLOWED);
-	return(ret?0:-1);
-#else
-	unlink(to);
-	return MoveFile(from, to);
-#endif
+	/* Windows rename gives and error if 'to' exists, so delete it
+	 * first and ignore file not found errror
+	 */
+	if((remove(to) != 0) && (errno != ENOENT))
+		return -1;
+#undef rename
+	return rename(from, to);
 	}
 #endif
 

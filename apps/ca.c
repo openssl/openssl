@@ -1569,6 +1569,10 @@ bad:
 				}
 			j=TXT_DB_write(out,db);
 			if (j <= 0) goto err;
+			BIO_free_all(out);
+			out = NULL;
+			BIO_free_all(in);
+			in = NULL;
 			strncpy(buf[1],dbfile,BSIZE-4);
 			buf[1][BSIZE-4]='\0';
 #ifndef OPENSSL_SYS_VMS
