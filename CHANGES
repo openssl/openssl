@@ -5,6 +5,13 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) New functions DSA_do_sign and DSA_do_verify to provide access to
+     the raw DSA values prior to ASN.1 encoding.
+     [Ulf Möller]
+
+  *) Tweaks to Configure
+     Niels Poppe <niels@netbox.org>
+
   *) Add support for PKCS#5 v2.0 ASN1 PBES2 structures. No other support,
      yet...
      [Steve Henson]
