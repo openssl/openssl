@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2000]
 
+  *) Zero the premaster secret after deriving the master secret in
+     DH ciphersuites.
+     [Steve Henson]
+
   *) Add some EVP_add_digest_alias registrations (as found in
      OpenSSL_add_all_digests()) to SSL_library_init()
      aka OpenSSL_add_ssl_algorithms().  This provides improved
