@@ -1318,11 +1318,17 @@ start:		for (;;)
 
 			sprintf(buf,"%s_min",v->name);
 			if (!NCONF_get_number(req_conf,dn_sect,buf, &n_min))
+				{
+				ERR_clear_error();
 				n_min = -1;
+				}
 
 			sprintf(buf,"%s_max",v->name);
 			if (!NCONF_get_number(req_conf,dn_sect,buf, &n_max))
+				{
+				ERR_clear_error();
 				n_max = -1;
+				}
 
 			if (!add_DN_object(subj,v->value,def,value,nid,
 				n_min,n_max, chtype))

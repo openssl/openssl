@@ -105,7 +105,10 @@ ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t)
 
 	ts=OPENSSL_gmtime(&t,&data);
 	if (ts == NULL)
+		{
+		ASN1err(ASN1_F_ASN1_TIME_SET, ASN1_R_ERROR_GETTING_TIME);
 		return NULL;
+		}
 	if((ts->tm_year >= 50) && (ts->tm_year < 150))
 					return ASN1_UTCTIME_set(s, t);
 	return ASN1_GENERALIZEDTIME_set(s,t);
