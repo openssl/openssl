@@ -77,6 +77,11 @@ extern "C" {
 #include <openssl/ebcdic.h>
 #endif
 
+#if defined(VMS) || defined(__VMS)
+#include "vms_idhacks.h"
+#endif
+
+
 /* Backward compatibility to SSLeay */
 /* This is more to be used to check the correct DLL is being used
  * in the MS world. */
@@ -183,7 +188,7 @@ typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from, void *from_d
 					int idx, long argl, void *argp);
 
 /* This stuff is basically class callback functions
- * The current classes are SSL_CTX, SSL, SSL_SESION, and a few more */
+ * The current classes are SSL_CTX, SSL, SSL_SESSION, and a few more */
 
 typedef struct crypto_ex_data_func_st
 	{
