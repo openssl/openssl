@@ -87,7 +87,7 @@ static STACK_OF(CONF_VALUE) *i2v_crld(X509V3_EXT_METHOD *method,
 	int i;
 	for(i = 0; i < sk_DIST_POINT_num(crld); i++) {
 		point = sk_DIST_POINT_value(crld, i);
-		if(point->distpoint->fullname) {
+		if(point->distpoint && point->distpoint->fullname) {
 			exts = i2v_GENERAL_NAMES(NULL,
 					 point->distpoint->fullname, exts);
 		}
@@ -95,7 +95,7 @@ static STACK_OF(CONF_VALUE) *i2v_crld(X509V3_EXT_METHOD *method,
 			X509V3_add_value("reasons","<UNSUPPORTED>", &exts);
 		if(point->CRLissuer)
 			X509V3_add_value("CRLissuer","<UNSUPPORTED>", &exts);
-		if(point->distpoint->relativename)
+		if(point->distpoint && point->distpoint->relativename)
 		        X509V3_add_value("RelativeName","<UNSUPPORTED>", &exts);
 	}
 	return exts;
