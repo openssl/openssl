@@ -12,6 +12,11 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Fix ssl3_accept (ssl/s3_srvr.c): Do not call ssl_init_wbio_buffer()
+     when just sending a HelloRequest as this could interfere with
+     application data writes (and is totally unnecessary).
+     [Bodo Moeller; bug pointed out by Eric Rescorla <ekr@rtfm.com>]
+
   *) Fix ssl/s3_enc.c, ssl/t1_enc.c and ssl/s3_pkt.c so that we don't
      reveal whether illegal block cipher padding was found or a MAC
      verification error occured.  (Neither SSLerr() codes nor alerts
