@@ -400,12 +400,22 @@ int main(int argc, char *argv[])
 			debug=1;
 		else if	(strcmp(*argv,"-reuse") == 0)
 			reuse=1;
-#ifndef OPENSSL_NO_DH
 		else if	(strcmp(*argv,"-dhe1024") == 0)
+			{
+#ifndef OPENSSL_NO_DH
 			dhe1024=1;
-		else if	(strcmp(*argv,"-dhe1024dsa") == 0)
-			dhe1024dsa=1;
+#else
+			fprintf(stderr,"ignoring -dhe1024, since I'm compiled without DH\n";
 #endif
+			}
+		else if	(strcmp(*argv,"-dhe1024dsa") == 0)
+			{
+#ifndef OPENSSL_NO_DH
+			dhe1024dsa=1;
+#else
+			fprintf(stderr,"ignoring -dhe1024, since I'm compiled without DH\n";
+#endif
+			}
 		else if	(strcmp(*argv,"-no_dhe") == 0)
 			no_dhe=1;
 		else if	(strcmp(*argv,"-ssl2") == 0)
