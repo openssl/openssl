@@ -78,7 +78,8 @@ int RSA_ref_public_encrypt(int len, unsigned char *from,
 	unsigned char *to, RSA *rsa, int padding);
 int RSA_ref_public_decrypt(int len, unsigned char *from,
 	unsigned char *to, RSA *rsa, int padding);
-static int BN_ref_mod_exp(BIGNUM *r,BIGNUM *a,BIGNUM *p,BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+static int BN_ref_mod_exp(BIGNUM *r,BIGNUM *a,const BIGNUM *p,const BIGNUM *m,
+			  BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 static int RSA_ref_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa);
 static RSA_METHOD rsa_pkcs1_ref_meth={
 	"RSAref PKCS#1 RSA",
@@ -105,8 +106,8 @@ static int RSA_ref_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 	return(0);
 	}
 
-static int BN_ref_mod_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
-	     BN_CTX *ctx, BN_MONT_CTX *m_ctx)
+static int BN_ref_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+			  const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	RSAREFerr(RSAREF_F_BN_REF_MOD_EXP,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 	return(0);

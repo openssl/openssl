@@ -5,6 +5,10 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Introduce some semblance of const correctness to BN. Shame C doesn't
+     support mutable.
+     [Ben Laurie]
+
   *) "linux-sparc64-gcc" configuration (ultrapenguin).
      [Ray Miller <ray.miller@oucs.ox.ac.uk>]
 

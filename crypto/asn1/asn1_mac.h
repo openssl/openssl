@@ -163,6 +163,11 @@ err:\
 		V_ASN1_CONSTRUCTED|V_ASN1_SET)))\
 		{ M_ASN1_D2I_get_set(r,func,free_func); }
 
+#define M_ASN1_D2I_get_set_opt_type(type,r,func,free_func) \
+	if ((c.slen != 0) && (M_ASN1_next == (V_ASN1_UNIVERSAL| \
+		V_ASN1_CONSTRUCTED|V_ASN1_SET)))\
+		{ M_ASN1_D2I_get_set_type(type,r,func,free_func); }
+
 #define M_ASN1_I2D_len_SET_opt(a,f) \
 	if ((a != NULL) && (sk_num(a) != 0)) \
 		M_ASN1_I2D_len_SET(a,f);

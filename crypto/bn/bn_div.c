@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <openssl/bn.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
@@ -117,8 +118,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BIGNUM *d, BN_CTX *ctx)
 
 #else
 
-int BN_div(BIGNUM *dv, BIGNUM *rm, BIGNUM *num, BIGNUM *divisor,
-	     BN_CTX *ctx)
+int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
+	   BN_CTX *ctx)
 	{
 	int norm_shift,i,j,loop;
 	BIGNUM *tmp,wnum,*snum,*sdiv,*res;
@@ -283,7 +284,7 @@ err:
 #endif
 
 /* rem != m */
-int BN_mod(BIGNUM *rem, BIGNUM *m, BIGNUM *d, BN_CTX *ctx)
+int BN_mod(BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
 	{
 #if 0 /* The old slow way */
 	int i,nm,nd;

@@ -235,7 +235,7 @@ int BN_num_bits_word(BN_ULONG l)
 		}
 	}
 
-int BN_num_bits(BIGNUM *a)
+int BN_num_bits(const BIGNUM *a)
 	{
 	BN_ULONG l;
 	int i;
@@ -485,7 +485,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 	return(b);
 	}
 
-BIGNUM *BN_dup(BIGNUM *a)
+BIGNUM *BN_dup(const BIGNUM *a)
 	{
 	BIGNUM *r;
 
@@ -496,7 +496,7 @@ BIGNUM *BN_dup(BIGNUM *a)
 	return((BIGNUM *)BN_copy(r,a));
 	}
 
-BIGNUM *BN_copy(BIGNUM *a, BIGNUM *b)
+BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 	{
 	int i;
 	BN_ULONG *A;
@@ -643,7 +643,7 @@ int BN_bn2bin(BIGNUM *a, unsigned char *to)
 	return(n);
 	}
 
-int BN_ucmp(BIGNUM *a, BIGNUM *b)
+int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
 	{
 	int i;
 	BN_ULONG t1,t2,*ap,*bp;
@@ -665,7 +665,7 @@ int BN_ucmp(BIGNUM *a, BIGNUM *b)
 	return(0);
 	}
 
-int BN_cmp(BIGNUM *a, BIGNUM *b)
+int BN_cmp(const BIGNUM *a, const BIGNUM *b)
 	{
 	int i;
 	int gt,lt;
@@ -737,7 +737,7 @@ int BN_clear_bit(BIGNUM *a, int n)
 	return(1);
 	}
 
-int BN_is_bit_set(BIGNUM *a, int n)
+int BN_is_bit_set(const BIGNUM *a, int n)
 	{
 	int i,j;
 

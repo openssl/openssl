@@ -68,8 +68,8 @@
 
 #define MONT_WORD
 
-int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_MONT_CTX *mont,
-	     BN_CTX *ctx)
+int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
+			  BN_MONT_CTX *mont, BN_CTX *ctx)
 	{
 	BIGNUM *tmp,*tmp2;
 
@@ -298,7 +298,7 @@ void BN_MONT_CTX_free(BN_MONT_CTX *mont)
 		Free(mont);
 	}
 
-int BN_MONT_CTX_set(BN_MONT_CTX *mont, BIGNUM *mod, BN_CTX *ctx)
+int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 	{
 	BIGNUM Ri,*R;
 

@@ -117,7 +117,7 @@ union {
 	STACK /* PKCS12_SAFEBAG */ *safes;
 	ASN1_TYPE *other;
 }value;
-STACK *attrib;
+STACK_OF(X509_ATTRIBUTE) *attrib;
 ASN1_TYPE *rest;
 } PKCS12_SAFEBAG;
 
@@ -213,7 +213,7 @@ int PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, const char *name,
 int PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag, const unsigned char *name,
 				int namelen);
 int PKCS8_add_keyusage(PKCS8_PRIV_KEY_INFO *p8, int usage);
-ASN1_TYPE *PKCS12_get_attr_gen(STACK *attrs, int attr_nid);
+ASN1_TYPE *PKCS12_get_attr_gen(STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid);
 char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag);
 unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
 				int passlen, unsigned char *in, int inlen,

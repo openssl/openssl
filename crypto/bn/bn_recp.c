@@ -91,7 +91,7 @@ void BN_RECP_CTX_free(BN_RECP_CTX *recp)
 		Free(recp);
 	}
 
-int BN_RECP_CTX_set(BN_RECP_CTX *recp, BIGNUM *d, BN_CTX *ctx)
+int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
 	{
 	BN_copy(&(recp->N),d);
 	BN_zero(&(recp->Nr));

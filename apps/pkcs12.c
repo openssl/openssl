@@ -76,15 +76,15 @@ EVP_CIPHER *enc;
 #define CLCERTS		0x8
 #define CACERTS		0x10
 
-int get_cert_chain(X509 *cert, STACK **chain);
+int get_cert_chain(X509 *cert, STACK_OF(X509) **chain);
 int dump_cert_text (BIO *out, X509 *x);
 int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen, int options);
 int dump_certs_pkeys_bags(BIO *out, STACK *bags, char *pass, int passlen, int options);
 int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass, int passlen, int options);
-int print_attribs(BIO *out, STACK *attrlst, char *name);
+int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst, char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
 int alg_print(BIO *x, X509_ALGOR *alg);
-int cert_load(BIO *in, STACK *sk);
+int cert_load(BIO *in, STACK_OF(X509) *sk);
 int MAIN(int argc, char **argv)
 {
     char *infile=NULL, *outfile=NULL, *keyname = NULL;	
@@ -286,7 +286,7 @@ if (export_cert) {
 	PKCS8_PRIV_KEY_INFO *p8;
 	PKCS7 *authsafe;
 	X509 *cert, *ucert = NULL;
-	STACK *certs;
+	STACK_OF(X509) *certs;
 	char *catmp;
 	int i, pmatch = 0;
 	unsigned char keyid[EVP_MAX_MD_SIZE];
@@ -300,7 +300,7 @@ if (export_cert) {
 		goto end;
 	}
 
-	certs = sk_new(NULL);
+	certs = sk_X509_new(NULL);
 
 	/* Load in all certs in input file */
 	if(!cert_load(in, certs)) {
@@ -323,8 +323,8 @@ if (export_cert) {
 
 	/* Find certificate (if any) matching private key */
 
-	for(i = 0; i < sk_num(certs); i++) {
-			cert = (X509 *)sk_value(certs, i);
+	for(i = 0; i < sk_X509_num(certs); i++) {
+			cert = sk_X509_value(certs, i);
 			if(X509_check_private_key(cert, key)) {
 				ucert = cert;
 				break;
@@ -339,7 +339,7 @@ if (export_cert) {
 	/* If chaining get chain from user cert */
 	if (chain) {
         	int vret;
-		STACK *chain2;
+		STACK_OF(X509) *chain2;
 			
 		vret = get_cert_chain (ucert, &chain2);
 		if (vret) {
@@ -348,15 +348,15 @@ if (export_cert) {
 			goto end;
 		}
 		/* Exclude verified certificate */
-		for (i = 1; i < sk_num (chain2) ; i++) 
-				 sk_push(certs, sk_value (chain2, i));
-		sk_free(chain2);
+		for (i = 1; i < sk_X509_num (chain2) ; i++) 
+				 sk_X509_push(certs, sk_X509_value (chain2, i));
+		sk_X509_free(chain2);
 			
     	}
 
 	/* We now have loads of certificates: include them all */
-	for(i = 0; i < sk_num(certs); i++) {
-		cert = (X509 *)sk_value(certs, i);
+	for(i = 0; i < sk_X509_num(certs); i++) {
+		cert = sk_X509_value(certs, i);
 		bag = M_PKCS12_x5092certbag(cert);
 		/* If it matches private key mark it */
 		if(cert == ucert) {
@@ -586,11 +586,11 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 
 /* Hope this is OK .... */
 
-int get_cert_chain (X509 *cert, STACK **chain)
+int get_cert_chain (X509 *cert, STACK_OF(X509) **chain)
 {
 	X509_STORE *store;
 	X509_STORE_CTX store_ctx;
-	STACK *chn;
+	STACK_OF(X509) *chn;
 	int i;
 	X509 *x;
 	store = X509_STORE_new ();
@@ -600,9 +600,9 @@ int get_cert_chain (X509 *cert, STACK **chain)
 		i = X509_STORE_CTX_get_error (&store_ctx);
 		goto err;
 	}
-	chn =  sk_dup(X509_STORE_CTX_get_chain (&store_ctx));
-	for (i = 0; i < sk_num(chn); i++) {
-		x = (X509 *)sk_value(chn, i);
+	chn =  sk_X509_dup(X509_STORE_CTX_get_chain (&store_ctx));
+	for (i = 0; i < sk_X509_num(chn); i++) {
+		x = sk_X509_value(chn, i);
 		CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
 	}
 	i = 0;
@@ -628,14 +628,14 @@ int alg_print (BIO *x, X509_ALGOR *alg)
 
 /* Load all certificates from a given file */
 
-int cert_load(BIO *in, STACK *sk)
+int cert_load(BIO *in, STACK_OF(X509) *sk)
 {
 	int ret;
 	X509 *cert;
 	ret = 0;
 	while((cert = PEM_read_bio_X509(in, NULL, NULL))) {
 		ret = 1;
-		sk_push(sk, (char *)cert);
+		sk_X509_push(sk, cert);
 	}
 	if(ret) ERR_clear_error();
 	return ret;
@@ -643,7 +643,7 @@ int cert_load(BIO *in, STACK *sk)
 
 /* Generalised attribute print: handle PKCS#8 and bag attributes */
 
-int print_attribs (BIO *out, STACK *attrlst, char *name)
+int print_attribs (BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst, char *name)
 {
 	X509_ATTRIBUTE *attr;
 	ASN1_TYPE *av;
@@ -653,13 +653,13 @@ int print_attribs (BIO *out, STACK *attrlst, char *name)
 		BIO_printf(out, "%s: <No Attributes>\n", name);
 		return 1;
 	}
-	if(!sk_num(attrlst)) {
+	if(!sk_X509_ATTRIBUTE_num(attrlst)) {
 		BIO_printf(out, "%s: <Empty Attributes>\n", name);
 		return 1;
 	}
 	BIO_printf(out, "%s\n", name);
-	for(i = 0; i < sk_num(attrlst); i++) {
-		attr = (X509_ATTRIBUTE *) sk_value(attrlst, i);
+	for(i = 0; i < sk_X509_ATTRIBUTE_num(attrlst); i++) {
+		attr = sk_X509_ATTRIBUTE_value(attrlst, i);
 		attr_nid = OBJ_obj2nid(attr->object);
 		BIO_printf(out, "    ");
 		if(attr_nid == NID_undef) {

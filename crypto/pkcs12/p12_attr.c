@@ -93,11 +93,11 @@ int PKCS12_add_localkeyid (PKCS12_SAFEBAG *bag, unsigned char *name,
 	}
 	sk_ASN1_TYPE_push (attrib->value.set,keyid);
 	attrib->set = 1;
-	if (!bag->attrib && !(bag->attrib = sk_new (NULL))) {
+	if (!bag->attrib && !(bag->attrib = sk_X509_ATTRIBUTE_new (NULL))) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_LOCALKEYID, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	sk_push (bag->attrib, (char *)attrib);
+	sk_X509_ATTRIBUTE_push (bag->attrib, attrib);
 	return 1;
 }
 
@@ -202,22 +202,22 @@ int PKCS12_add_friendlyname_uni (PKCS12_SAFEBAG *bag,
 	}
 	sk_ASN1_TYPE_push (attrib->value.set,fname);
 	attrib->set = 1;
-	if (!bag->attrib && !(bag->attrib = sk_new (NULL))) {
+	if (!bag->attrib && !(bag->attrib = sk_X509_ATTRIBUTE_new (NULL))) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME_UNI,
 							ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	sk_push (bag->attrib, (char *)attrib);
+	sk_X509_ATTRIBUTE_push (bag->attrib, attrib);
 	return PKCS12_OK;
 }
 
-ASN1_TYPE *PKCS12_get_attr_gen (STACK *attrs, int attr_nid)
+ASN1_TYPE *PKCS12_get_attr_gen (STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid)
 {
 	X509_ATTRIBUTE *attrib;
 	int i;
 	if (!attrs) return NULL;
-	for (i = 0; i < sk_num (attrs); i++) {
-		attrib = (X509_ATTRIBUTE *) sk_value (attrs, i);
+	for (i = 0; i < sk_X509_ATTRIBUTE_num (attrs); i++) {
+		attrib = sk_X509_ATTRIBUTE_value (attrs, i);
 		if (OBJ_obj2nid (attrib->object) == attr_nid) {
 			if (sk_ASN1_TYPE_num (attrib->value.set))
 			    return sk_ASN1_TYPE_value(attrib->value.set, 0);

@@ -63,7 +63,7 @@
 #define TABLE_SIZE	16
 
 /* slow but works */
-int BN_mod_mul(BIGNUM *ret, BIGNUM *a, BIGNUM *b, BIGNUM *m, BN_CTX *ctx)
+int BN_mod_mul(BIGNUM *ret, BIGNUM *a, BIGNUM *b, const BIGNUM *m, BN_CTX *ctx)
 	{
 	BIGNUM *t;
 	int r=0;
@@ -154,7 +154,8 @@ err:
 	return(ret);
 	}
 
-int BN_mod_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
+int BN_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+	       BN_CTX *ctx)
 	{
 	int ret;
 
@@ -183,7 +184,8 @@ int BN_mod_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
 	}
 
 /* #ifdef RECP_MUL_MOD */
-int BN_mod_exp_recp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
+int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+		    const BIGNUM *m, BN_CTX *ctx)
 	{
 	int i,j,bits,ret=0,wstart,wend,window,wvalue;
 	int start=1,ts=0;
@@ -296,12 +298,13 @@ err:
 /* #endif */
 
 /* #ifdef MONT_MUL_MOD */
-int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx,
-	     BN_MONT_CTX *in_mont)
+int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
+		    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont)
 	{
 	int i,j,bits,ret=0,wstart,wend,window,wvalue;
 	int start=1,ts=0;
-	BIGNUM *d,*aa,*r;
+	BIGNUM *d,*r;
+	BIGNUM *aa;
 	BIGNUM val[TABLE_SIZE];
 	BN_MONT_CTX *mont=NULL;
 
