@@ -95,7 +95,7 @@ void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 	    {
 	    tin[0]=m0;
 	    tin[1]=m1;
-	    des_encrypt(tin,ks3,1);
+	    des_encrypt1(tin,ks3,1);
 	    m0=tin[0];
 	    m1=tin[1];
 
@@ -113,13 +113,13 @@ void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 
 	    tin[0]=tin0;
 	    tin[1]=tin1;
-	    des_encrypt(tin,ks1,1);
+	    des_encrypt1(tin,ks1,1);
 	    tin[0]^=m0;
 	    tin[1]^=m1;
-	    des_encrypt(tin,ks2,0);
+	    des_encrypt1(tin,ks2,0);
 	    tin[0]^=m0;
 	    tin[1]^=m1;
-	    des_encrypt(tin,ks1,1);
+	    des_encrypt1(tin,ks1,1);
 	    tout0=tin[0];
 	    tout1=tin[1];
 
@@ -146,7 +146,7 @@ void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 	    {
 	    tin[0]=m0;
 	    tin[1]=m1;
-	    des_encrypt(tin,ks3,1);
+	    des_encrypt1(tin,ks3,1);
 	    m0=tin[0];
 	    m1=tin[1];
 
@@ -158,13 +158,13 @@ void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 
 	    tin[0]=tin0;
 	    tin[1]=tin1;
-	    des_encrypt(tin,ks1,0);
+	    des_encrypt1(tin,ks1,0);
 	    tin[0]^=m0;
 	    tin[1]^=m1;
-	    des_encrypt(tin,ks2,1);
+	    des_encrypt1(tin,ks2,1);
 	    tin[0]^=m0;
 	    tin[1]^=m1;
-	    des_encrypt(tin,ks1,0);
+	    des_encrypt1(tin,ks1,0);
 	    tout0=tin[0];
 	    tout1=tin[1];
 

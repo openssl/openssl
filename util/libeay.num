@@ -779,7 +779,7 @@ des_ede3_cfb64_encrypt                  786	EXIST::FUNCTION:DES
 des_ede3_ofb64_encrypt                  787	EXIST::FUNCTION:DES
 des_enc_read                            788	EXIST::FUNCTION:DES
 des_enc_write                           789	EXIST::FUNCTION:DES
-des_encrypt                             790	EXIST::FUNCTION:DES
+des_encrypt1                            790	EXIST::FUNCTION:DES
 des_encrypt2                            791	EXIST::FUNCTION:DES
 des_encrypt3                            792	EXIST::FUNCTION:DES
 des_fcrypt                              793	EXIST::FUNCTION:DES

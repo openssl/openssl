@@ -85,7 +85,7 @@ void des_pcbc_encrypt(const unsigned char *input, unsigned char *output,
 				c2ln(in,sin0,sin1,length);
 			tin[0]=sin0^xor0;
 			tin[1]=sin1^xor1;
-			des_encrypt((DES_LONG *)tin,schedule,DES_ENCRYPT);
+			des_encrypt1((DES_LONG *)tin,schedule,DES_ENCRYPT);
 			tout0=tin[0];
 			tout1=tin[1];
 			xor0=sin0^tout0;
@@ -103,7 +103,7 @@ void des_pcbc_encrypt(const unsigned char *input, unsigned char *output,
 			c2l(in,sin1);
 			tin[0]=sin0;
 			tin[1]=sin1;
-			des_encrypt((DES_LONG *)tin,schedule,DES_DECRYPT);
+			des_encrypt1((DES_LONG *)tin,schedule,DES_DECRYPT);
 			tout0=tin[0]^xor0;
 			tout1=tin[1]^xor1;
 			if (length >= 8)

@@ -58,7 +58,7 @@
 
 #include "des_locl.h"
 
-void des_encrypt(DES_LONG *data, des_key_schedule ks, int enc)
+void des_encrypt1(DES_LONG *data, des_key_schedule ks, int enc)
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
