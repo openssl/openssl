@@ -83,6 +83,8 @@ void RAND_add(const void *buf,int num,double entropy);
 int  RAND_load_file(const char *file,long max_bytes);
 int  RAND_write_file(const char *file);
 const char *RAND_file_name(char *file,int num);
+int RAND_status(void);
+int RAND_egd(const char *path);
 #ifdef WINDOWS
 void RAND_screen(void);
 #endif

@@ -13,11 +13,14 @@ rand - Pseudo-random number generator
 
  void RAND_seed(const void *buf,int num);
  void RAND_add(const void *buf,int num,int entropy);
+ int  RAND_status(void);
  void RAND_screen(void);
 
  int  RAND_load_file(const char *file,long max_bytes);
  int  RAND_write_file(const char *file);
  const char *RAND_file_name(char *file,int num);
+
+ int  RAND_egd(const char *path);
 
  void RAND_set_rand_method(RAND_METHOD *meth);
  RAND_METHOD *RAND_get_rand_method(void);
@@ -147,7 +150,8 @@ L<RAND_add(3)|RAND_add(3)>).
 =head1 SEE ALSO
 
 L<BN_rand(3)|BN_rand(3)>, L<RAND_add(3)|RAND_add(3)>,
-L<RAND_load_file(3)|RAND_load_file(3)>, L<RAND_bytes(3)|RAND_bytes(3)>,
+L<RAND_load_file(3)|RAND_load_file(3)>, L<RAND_egd(3)|RAND_egd(3)>,
+L<RAND_bytes(3)|RAND_bytes(3)>,
 L<RAND_set_rand_method(3)|RAND_set_rand_method(3)>,
 L<RAND_cleanup(3)|RAND_cleanup(3)> 
 

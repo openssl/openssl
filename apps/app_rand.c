@@ -115,6 +115,7 @@
 
 
 static int seeded = 0;
+static int egdsocket = 0;
 
 int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn)
 	{
@@ -130,12 +131,19 @@ int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn)
 
 	if (file == NULL)
 		file = RAND_file_name(buffer, sizeof buffer);
+	else if (RAND_egd(file) > 0)
+		{
+		/* we try if the given filename is an EGD socket.
+		   if it is, we don't write anything back to the file. */
+		egdsocket = 1;
+		return 1;
+		}
 	if (file == NULL || !RAND_load_file(file, -1))
 		{
-		if (!dont_warn)
+		if (RAND_status() == 0 && !dont_warn)
 			{
 			BIO_printf(bio_e,"unable to load 'random state'\n");
-			BIO_printf(bio_e,"What this means is that the random number generator has not been seeded\n");
+			BIO_printf(bio_e,"This means that the random number generator has not been seeded\n");
 			BIO_printf(bio_e,"with much random data.\n");
 			if (consider_randfile) /* explanation does not apply when a file is explicitly named */
 				{
@@ -165,6 +173,7 @@ long app_RAND_load_files(char *name)
 		name=p+1;
 		if (*n == '\0') break;
 
+		tot+=RAND_egd(n);
 		tot+=RAND_load_file(n,1024L*1024L);
 		if (last) break;
 		}
@@ -177,7 +186,7 @@ int app_RAND_write_file(const char *file, BIO *bio_e)
 	{
 	char buffer[200];
 	
-	if (!seeded)
+	if (egdsocket || !seeded)
 		/* If we did not manage to read the seed file,
 		 * we should not write a low-entropy seed file back --
 		 * it would suppress a crucial warning the next time

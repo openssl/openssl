@@ -1,0 +1,31 @@
+=pod
+
+=head1 NAME
+
+RAND_egd - Query entropy gathering daemon
+
+=head1 SYNOPSIS
+
+ #include <openssl/rand.h>
+
+ int RAND_egd(const char *path);
+
+=head1 DESCRIPTION
+
+RAND_egd() queries the entropy gathering daemon EGD on socket B<path>.
+
+=head1 RETURN VALUES
+
+RAND_egd() returns the number of bytes read from the daemon on
+success, and -1 if the connection failed or the daemon did not return
+enough data to fully seed the PRNG.
+
+=head1 SEE ALSO
+
+L<rand(3)|rand(3)>, L<RAND_add(3)|RAND_add(3)>, L<RAND_cleanup(3)|RAND_cleanup(3)>
+
+=head1 HISTORY
+
+RAND_egd() is available since OpenSSL 0.9.5.
+
+=cut

@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Support EGD <http://www.lothar.com/tech/crypto/>.  New functions
+     RAND_egd() and RAND_status().  In the command line application,
+     the EGD socket can be specified like a seed file using RANDFILE
+     or -rand.
+     [Ulf Möller]
+
   *) Allow the string CERTIFICATE to be tolerated in PKCS#7 structures.
      Some CAs (e.g. Verisign) distribute certificates in this form.
      [Steve Henson]

@@ -139,6 +139,7 @@ static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
 static long md_count[2]={0,0};
 static double entropy=0;
+static int initialized=0;
 
 const char *RAND_version="RAND" OPENSSL_VERSION_PTEXT;
 
@@ -295,6 +296,51 @@ static void ssleay_rand_seed(const void *buf, int num)
 	ssleay_rand_add(buf, num, num);
 	}
 
+static void ssleay_rand_initialize(void)
+	{
+	unsigned long l;
+#ifndef GETPID_IS_MEANINGLESS
+	pid_t curr_pid = getpid();
+#endif
+#ifdef DEVRANDOM
+	FILE *fh;
+#endif
+
+	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+	/* put in some default random data, we need more than just this */
+#ifndef GETPID_IS_MEANINGLESS
+	l=curr_pid;
+	RAND_add(&l,sizeof(l),0);
+	l=getuid();
+	RAND_add(&l,sizeof(l),0);
+#endif
+	l=time(NULL);
+	RAND_add(&l,sizeof(l),0);
+
+#ifdef DEVRANDOM
+	/* Use a random entropy pool device. Linux and FreeBSD have
+	 * this. Use /dev/urandom if you can as /dev/random will block
+	 * if it runs out of random entries.  */
+
+	if ((fh = fopen(DEVRANDOM, "r")) != NULL)
+		{
+		unsigned char tmpbuf[ENTROPY_NEEDED];
+		int n;
+		
+		n=fread((unsigned char *)tmpbuf,1,ENTROPY_NEEDED,fh);
+		fclose(fh);
+		RAND_add(tmpbuf,sizeof tmpbuf,n);
+		memset(tmpbuf,0,n);
+		}
+#endif
+#ifdef PURIFY
+	memset(state,0,STATE_SIZE);
+	memset(md,0,MD_DIGEST_LENGTH);
+#endif
+	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+	initialized=1;
+	}
+
 static int ssleay_rand_bytes(unsigned char *buf, int num)
 	{
 	int i,j,k,st_num,st_idx;
@@ -302,13 +348,8 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	long md_c[2];
 	unsigned char local_md[MD_DIGEST_LENGTH];
 	MD_CTX m;
-	static int init=1;
-	unsigned long l;
 #ifndef GETPID_IS_MEANINGLESS
 	pid_t curr_pid = getpid();
-#endif
-#ifdef DEVRANDOM
-	FILE *fh;
 #endif
 
 #ifdef PREDICT
@@ -342,47 +383,8 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 
-	if (init)
-		{
-		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
-		/* put in some default random data, we need more than
-		 * just this */
-		RAND_add(&m,sizeof(m),0);
-#ifndef GETPID_IS_MEANINGLESS
-		l=curr_pid;
-		RAND_add(&l,sizeof(l),0);
-		l=getuid();
-		RAND_add(&l,sizeof(l),0);
-#endif
-		l=time(NULL);
-		RAND_add(&l,sizeof(l),0);
-
-#ifdef DEVRANDOM
-		/* 
-		 * Use a random entropy pool device.
-		 * Linux 1.3.x and FreeBSD-Current has 
-		 * this. Use /dev/urandom if you can
-		 * as /dev/random will block if it runs out
-		 * of random entries.
-		 */
-		if ((fh = fopen(DEVRANDOM, "r")) != NULL)
-			{
-			unsigned char tmpbuf[ENTROPY_NEEDED];
-			int n;
-
-			n=fread((unsigned char *)tmpbuf,1,ENTROPY_NEEDED,fh);
-			fclose(fh);
-			RAND_add(tmpbuf,sizeof tmpbuf,n);
-			memset(tmpbuf,0,n);
-			}
-#endif
-#ifdef PURIFY
-		memset(state,0,STATE_SIZE);
-		memset(md,0,MD_DIGEST_LENGTH);
-#endif
-		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
-		init=0;
-		}
+	if (!initialized)
+		ssleay_rand_initialize();
 
 	ok = (entropy >= ENTROPY_NEEDED);
 
@@ -471,6 +473,13 @@ static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num)
 			(void)ERR_get_error();
 		}
 	return (ret);
+	}
+
+int RAND_status(void)
+	{
+	if (!initialized)
+		ssleay_rand_initialize();
+	return (entropy >= ENTROPY_NEEDED);
 	}
 
 #ifdef WINDOWS

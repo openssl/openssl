@@ -12,6 +12,8 @@ RAND_add, RAND_seed, RAND_screen - Add entropy to the PRNG
 
  void RAND_add(const void *buf, int num, double entropy);
 
+ int  RAND_status(void);
+
  void RAND_screen(void);
 
 =head1 DESCRIPTION
@@ -46,7 +48,10 @@ used on servers that run without user interaction.
 
 =head1 RETURN VALUES
 
-These functions do not return values.
+RAND_status() returns 1 if the PRNG has been seeded with enough data,
+0 otherwise.
+
+The other functions do not return values.
 
 =head1 SEE ALSO
 
@@ -55,6 +60,7 @@ L<rand(3)|rand(3)>, L<RAND_load_file(3)|RAND_load_file(3)>, L<RAND_cleanup(3)|RA
 =head1 HISTORY
 
 RAND_seed() and RAND_screen() are available in all versions of SSLeay
-and OpenSSL. RAND_add() was added in OpenSSL 0.9.5.
+and OpenSSL. RAND_add() and RAND_status() have been added in OpenSSL
+0.9.5.
 
 =cut
