@@ -105,6 +105,6 @@ clean:
 
 rmd_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 rmd_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ripemd.h
-rmd_dgst.o: ../md32_common.h rmd_locl.h rmdconst.h
+rmd_dgst.o: ../md32_common.h rmd_dgst.c rmd_locl.h rmdconst.h
 rmd_one.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-rmd_one.o: ../../include/openssl/ripemd.h
+rmd_one.o: ../../include/openssl/ripemd.h rmd_one.c

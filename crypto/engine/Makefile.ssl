@@ -95,7 +95,7 @@ engine_all.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 engine_all.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 engine_all.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 engine_all.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-engine_all.o: ../../include/openssl/x509_vfy.h engine_int.h
+engine_all.o: ../../include/openssl/x509_vfy.h engine_all.c engine_int.h
 engine_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 engine_err.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 engine_err.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
@@ -110,7 +110,7 @@ engine_err.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 engine_err.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 engine_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 engine_err.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-engine_err.o: ../../include/openssl/x509_vfy.h
+engine_err.o: ../../include/openssl/x509_vfy.h engine_err.c
 engine_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 engine_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 engine_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -127,6 +127,7 @@ engine_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 engine_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 engine_lib.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
 engine_lib.o: ../../include/openssl/x509_vfy.h ../cryptlib.h engine_int.h
+engine_lib.o: engine_lib.c
 engine_list.o: ../../e_os.h ../../include/openssl/asn1.h
 engine_list.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 engine_list.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -143,6 +144,7 @@ engine_list.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 engine_list.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 engine_list.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
 engine_list.o: ../../include/openssl/x509_vfy.h ../cryptlib.h engine_int.h
+engine_list.o: engine_list.c
 engine_openssl.o: ../../e_os.h ../../include/openssl/asn1.h
 engine_openssl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 engine_openssl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -160,7 +162,7 @@ engine_openssl.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 engine_openssl.o: ../../include/openssl/stack.h
 engine_openssl.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 engine_openssl.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-engine_openssl.o: ../cryptlib.h
+engine_openssl.o: ../cryptlib.h engine_openssl.c
 hw_atalla.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_atalla.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 hw_atalla.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -176,7 +178,7 @@ hw_atalla.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 hw_atalla.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 hw_atalla.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 hw_atalla.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-hw_atalla.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+hw_atalla.o: ../../include/openssl/x509_vfy.h ../cryptlib.h hw_atalla.c
 hw_atalla.o: vendor_defns/atalla.h
 hw_cswift.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_cswift.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
@@ -193,7 +195,7 @@ hw_cswift.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 hw_cswift.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 hw_cswift.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 hw_cswift.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-hw_cswift.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+hw_cswift.o: ../../include/openssl/x509_vfy.h ../cryptlib.h hw_cswift.c
 hw_cswift.o: vendor_defns/cswift.h
 hw_ncipher.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_ncipher.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
@@ -210,7 +212,7 @@ hw_ncipher.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 hw_ncipher.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 hw_ncipher.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 hw_ncipher.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-hw_ncipher.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+hw_ncipher.o: ../../include/openssl/x509_vfy.h ../cryptlib.h hw_ncipher.c
 hw_ncipher.o: vendor_defns/hwcryptohook.h
 hw_nuron.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_nuron.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
@@ -227,7 +229,7 @@ hw_nuron.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 hw_nuron.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 hw_nuron.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 hw_nuron.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-hw_nuron.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+hw_nuron.o: ../../include/openssl/x509_vfy.h ../cryptlib.h hw_nuron.c
 hw_ubsec.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_ubsec.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 hw_ubsec.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -243,5 +245,5 @@ hw_ubsec.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 hw_ubsec.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 hw_ubsec.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 hw_ubsec.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-hw_ubsec.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+hw_ubsec.o: ../../include/openssl/x509_vfy.h ../cryptlib.h hw_ubsec.c
 hw_ubsec.o: vendor_defns/hw_ubsec.h

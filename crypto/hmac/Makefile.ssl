@@ -87,4 +87,4 @@ hmac.o: ../../include/openssl/hmac.h ../../include/openssl/obj_mac.h
 hmac.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 hmac.o: ../../include/openssl/opensslv.h ../../include/openssl/rsa.h
 hmac.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-hmac.o: ../../include/openssl/symhacks.h
+hmac.o: ../../include/openssl/symhacks.h hmac.c

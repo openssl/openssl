@@ -86,4 +86,4 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-rd_fst.o: rd_fst.h
+rd_fst.o: rd_fst.c rd_fst.h

@@ -142,24 +142,24 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 cbc_cksm.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-cbc_cksm.o: ../../include/openssl/opensslconf.h des_locl.h
+cbc_cksm.o: ../../include/openssl/opensslconf.h cbc_cksm.c des_locl.h
 cbc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-cbc_enc.o: ../../include/openssl/opensslconf.h des_locl.h ncbc_enc.c
+cbc_enc.o: ../../include/openssl/opensslconf.h cbc_enc.c des_locl.h ncbc_enc.c
 cfb64ede.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-cfb64ede.o: ../../include/openssl/opensslconf.h des_locl.h
+cfb64ede.o: ../../include/openssl/opensslconf.h cfb64ede.c des_locl.h
 cfb64enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-cfb64enc.o: ../../include/openssl/opensslconf.h des_locl.h
+cfb64enc.o: ../../include/openssl/opensslconf.h cfb64enc.c des_locl.h
 cfb_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-cfb_enc.o: ../../include/openssl/opensslconf.h des_locl.h
+cfb_enc.o: ../../include/openssl/opensslconf.h cfb_enc.c des_locl.h
 des_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-des_enc.o: ../../include/openssl/opensslconf.h des_locl.h des_locl.h ncbc_enc.c
+des_enc.o: ../../include/openssl/opensslconf.h des_enc.c des_locl.h ncbc_enc.c
 ecb3_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-ecb3_enc.o: ../../include/openssl/opensslconf.h des_locl.h
+ecb3_enc.o: ../../include/openssl/opensslconf.h des_locl.h ecb3_enc.c
 ecb_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 ecb_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-ecb_enc.o: des_locl.h spr.h
+ecb_enc.o: des_locl.h ecb_enc.c spr.h
 ede_cbcm_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-ede_cbcm_enc.o: ../../include/openssl/opensslconf.h des_locl.h
+ede_cbcm_enc.o: ../../include/openssl/opensslconf.h des_locl.h ede_cbcm_enc.c
 enc_read.o: ../../e_os.h ../../include/openssl/bio.h
 enc_read.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 enc_read.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
@@ -167,7 +167,7 @@ enc_read.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 enc_read.o: ../../include/openssl/opensslconf.h
 enc_read.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 enc_read.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-enc_read.o: ../cryptlib.h des_locl.h
+enc_read.o: ../cryptlib.h des_locl.h enc_read.c
 enc_writ.o: ../../e_os.h ../../include/openssl/bio.h
 enc_writ.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 enc_writ.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
@@ -176,27 +176,30 @@ enc_writ.o: ../../include/openssl/opensslconf.h
 enc_writ.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 enc_writ.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 enc_writ.o: ../../include/openssl/symhacks.h ../cryptlib.h des_locl.h
+enc_writ.o: enc_writ.c
 fcrypt.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-fcrypt.o: ../../include/openssl/opensslconf.h des_locl.h
+fcrypt.o: ../../include/openssl/opensslconf.h des_locl.h fcrypt.c
 fcrypt_b.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-fcrypt_b.o: ../../include/openssl/opensslconf.h des_locl.h
+fcrypt_b.o: ../../include/openssl/opensslconf.h des_locl.h fcrypt_b.c
 ofb64ede.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-ofb64ede.o: ../../include/openssl/opensslconf.h des_locl.h
+ofb64ede.o: ../../include/openssl/opensslconf.h des_locl.h ofb64ede.c
 ofb64enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-ofb64enc.o: ../../include/openssl/opensslconf.h des_locl.h
+ofb64enc.o: ../../include/openssl/opensslconf.h des_locl.h ofb64enc.c
 ofb_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-ofb_enc.o: ../../include/openssl/opensslconf.h des_locl.h
+ofb_enc.o: ../../include/openssl/opensslconf.h des_locl.h ofb_enc.c
 pcbc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-pcbc_enc.o: ../../include/openssl/opensslconf.h des_locl.h
+pcbc_enc.o: ../../include/openssl/opensslconf.h des_locl.h pcbc_enc.c
 qud_cksm.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-qud_cksm.o: ../../include/openssl/opensslconf.h des_locl.h
+qud_cksm.o: ../../include/openssl/opensslconf.h des_locl.h qud_cksm.c
 rand_key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 rand_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/rand.h
+rand_key.o: rand_key.c
 rpc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 rpc_enc.o: ../../include/openssl/opensslconf.h des_locl.h des_ver.h rpc_des.h
+rpc_enc.o: rpc_enc.c
 set_key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-set_key.o: ../../include/openssl/opensslconf.h des_locl.h
+set_key.o: ../../include/openssl/opensslconf.h des_locl.h set_key.c
 str2key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-str2key.o: ../../include/openssl/opensslconf.h des_locl.h
+str2key.o: ../../include/openssl/opensslconf.h des_locl.h str2key.c
 xcbc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-xcbc_enc.o: ../../include/openssl/opensslconf.h des_locl.h
+xcbc_enc.o: ../../include/openssl/opensslconf.h des_locl.h xcbc_enc.c
