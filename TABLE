@@ -3455,7 +3455,7 @@ $cc           = cc
 $cflags       = -O3 -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
-$sys_id       = MACOSX
+$sys_id       = MACOSX_RHAPSODY
 $lflags       = 
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $bn_obj       = 
@@ -4203,6 +4203,56 @@ $arflags      =
 *** vxworks-ppc405
 $cc           = ccppc
 $cflags       = -g -msoft-float -mlongcall -DCPU=PPC405 -I$(WIND_BASE)/target/h
+$unistd       = 
+$thread_cflag = 
+$sys_id       = VXWORKS
+$lflags       = -r
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+$arflags      = 
+
+*** vxworks-ppc750
+$cc           = ccppc
+$cflags       = -ansi -nostdinc -DPPC750 -D_REENTRANT -fvolatile -fno-builtin -fno-for-scope -fsigned-char -Wall -msoft-float -mlongcall -DCPU=PPC604 -I$(WIND_BASE)/target/h $(DEBUG_FLAG)
+$unistd       = 
+$thread_cflag = 
+$sys_id       = VXWORKS
+$lflags       = -r
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+$arflags      = 
+
+*** vxworks-ppc750-debug
+$cc           = ccppc
+$cflags       = -ansi -nostdinc -DPPC750 -D_REENTRANT -fvolatile -fno-builtin -fno-for-scope -fsigned-char -Wall -msoft-float -mlongcall -DCPU=PPC604 -I$(WIND_BASE)/target/h -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DDEBUG -g
 $unistd       = 
 $thread_cflag = 
 $sys_id       = VXWORKS
