@@ -63,13 +63,9 @@
 #include <graph.h>
 #endif
 
-#if defined(WIN32) && !defined(WINNT)
-#define WIN_CONSOLE_BUG
-#endif
-
-
 /* 06-Apr-92 Luke Brennan    Support for VMS */
 #include "des_locl.h"
+#include "cryptlib.h"
 #include <signal.h>
 #include <string.h>
 #include <setjmp.h>

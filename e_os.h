@@ -102,6 +102,9 @@ extern "C" {
 #ifdef WIN32
 #define get_last_sys_error()	GetLastError()
 #define clear_sys_error()	SetLastError(0)
+#if !defined(WINNT)
+#define WIN_CONSOLE_BUG
+#endif
 #else
 #define get_last_sys_error()	errno
 #define clear_sys_error()	errno=0
@@ -143,6 +146,12 @@ extern "C" {
 
 #ifndef S_IFMT
 #define S_IFMT	_S_IFMT
+
+#if !defined(WINNT)
+#define NO_SYSLOG
+#define NO_DIRENT
+#endif
+
 #endif
 
 #define strncasecmp(a,b,c)	strnicmp((a),(b),(c))

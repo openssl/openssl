@@ -235,7 +235,7 @@ sub do_line
 		{ return(undef); }
 	elsif ($W32 && /BIO_new_fp_internal/)
 		{ return(undef); }
-        elsif (/SSL_add_cert_dir_to_stack/)
+        elsif (/SSL_add_dir_cert_subjects_to_stack/)
 		{ return(undef); }
 	elsif (!$NT && /BIO_s_log/)
 		{ return(undef); }

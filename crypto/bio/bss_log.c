@@ -62,7 +62,6 @@
 
 */
 
-#if !defined(WIN32) || defined(WINNT)
 
 #include <stdio.h>
 #include <errno.h>
@@ -74,6 +73,8 @@
 #include "cryptlib.h"
 #include "buffer.h"
 #include "err.h"
+#ifndef NO_SYSLOG
+
 
 #ifndef NOPROTO
 static int MS_CALLBACK slg_write(BIO *h,char *buf,int num);

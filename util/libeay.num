@@ -1218,3 +1218,4 @@ BIO_s_log                               1243
 BIO_f_reliable                          1244
 PKCS7_dataFinal                         1245
 PKCS7_dataDecode                        1246
+X509V3_EXT_CRL_add_conf                 1247
