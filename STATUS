@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/05/17 08:17:30 $
+  ______________                           $Date: 1999/05/17 22:33:25 $
 
   DEVELOPMENT STATE
 
@@ -23,7 +23,6 @@
     o exptest and rsa_oaep_test fail with irix64-*
       (Don Badrak <dbadrak@geo.census.gov>: "Re: Problems to compile openssl
 	  on IRIX 6.2", openssl-users)
-    o const des_cblock problem
 
   AVAILABLE PATCHES
 
