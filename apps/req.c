@@ -479,7 +479,7 @@ bad:
 		req_conf=config;
 		BIO_printf(bio_err,"Using configuration from %s\n",
 			default_config_file);
-		if (i == 0)
+		if (req_conf == NULL)
 			{
 			BIO_printf(bio_err,"Unable to load config info\n");
 			}

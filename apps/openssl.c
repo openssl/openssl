@@ -274,7 +274,12 @@ int main(int Argc, char *Argv[])
 
 	config=NCONF_new(NULL);
 	i=NCONF_load(config,p,&errline);
-	if (i == 0) ERR_clear_error();
+	if (i == 0)
+		{
+		NCONF_free(config);
+		config = NULL;
+		ERR_clear_error();
+		}
 
 	prog=prog_init();
 
