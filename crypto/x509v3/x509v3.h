@@ -131,6 +131,8 @@ void *db;
 typedef struct v3_ext_method X509V3_EXT_METHOD;
 typedef struct v3_ext_ctx X509V3_CTX;
 
+DECLARE_STACK_OF(X509V3_EXT_METHOD)
+
 /* ext_flags values */
 #define X509V3_EXT_DYNAMIC	0x1
 #define X509V3_EXT_CTX_DEP	0x2

@@ -64,18 +64,18 @@
 
 #include "ext_dat.h"
 
-static STACK *ext_list = NULL;
+static STACK_OF(X509V3_EXT_METHOD) *ext_list = NULL;
 
 static int ext_cmp(X509V3_EXT_METHOD **a, X509V3_EXT_METHOD **b);
 static void ext_list_free(X509V3_EXT_METHOD *ext);
 
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 {
-	if(!ext_list && !(ext_list = sk_new((int (*)(const void *, const void *))ext_cmp))) {
+	if(!ext_list && !(ext_list = sk_X509V3_EXT_METHOD_new(ext_cmp))) {
 		X509V3err(X509V3_F_X509V3_EXT_ADD,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	if(!sk_push(ext_list, (char *)ext)) {
+	if(!sk_X509V3_EXT_METHOD_push(ext_list, ext)) {
 		X509V3err(X509V3_F_X509V3_EXT_ADD,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -98,9 +98,9 @@ X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
 			sizeof(X509V3_EXT_METHOD *), (int (*)(const void *, const void *))ext_cmp);
 	if(ret) return *ret;
 	if(!ext_list) return NULL;
-	idx = sk_find(ext_list, (char *)&tmp);
+	idx = sk_X509V3_EXT_METHOD_find(ext_list, &tmp);
 	if(idx == -1) return NULL;
-	return (X509V3_EXT_METHOD *)sk_value(ext_list, idx);
+	return sk_X509V3_EXT_METHOD_value(ext_list, idx);
 }
 
 X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext)
@@ -137,7 +137,7 @@ int X509V3_EXT_add_alias(int nid_to, int nid_from)
 
 void X509V3_EXT_cleanup(void)
 {
-	sk_pop_free(ext_list, (void(*)(void *)) ext_list_free);
+	sk_X509V3_EXT_METHOD_pop_free(ext_list, ext_list_free);
 	ext_list = NULL;
 }
 
@@ -219,3 +219,5 @@ void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 	if(crit) *crit = -1;
 	return NULL;
 }
+
+IMPLEMENT_STACK_OF(X509V3_EXT_METHOD)
