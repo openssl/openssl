@@ -239,14 +239,13 @@ static int pkcs7_output_data(BIO *out, BIO *data, PKCS7 *p7, int flags)
 	/* Finalize signatures */
 	PKCS7_dataFinal(p7, p7bio);
 
-	/* Now remove any digests from output BIO */
+	/* Now remove any digests prepended to the BIO */
 
-	while (1)
+	while (p7bio != out)
 		{
 		tmpbio = BIO_pop(p7bio);
-		if (tmpbio == out)
-			break;
-		BIO_free(tmpbio);
+		BIO_free(p7bio);
+		p7bio = tmpbio;
 		}
 
 	return 1;
