@@ -396,6 +396,10 @@ typedef struct asn1_header_st
 		(ASN1_BMPSTRING *)d2i_ASN1_type_bytes\
 		((ASN1_STRING **)a,pp,l,B_ASN1_BMPSTRING)
 
+  /* for the is_set parameter to i2d_ASN1_SET */
+#define IS_SEQUENCE	0
+#define IS_SET		1
+
 #ifndef NOPROTO
 ASN1_TYPE *	ASN1_TYPE_new(void );
 void		ASN1_TYPE_free(ASN1_TYPE *a);
@@ -475,10 +479,6 @@ int		i2d_ASN1_TIME(ASN1_TIME *a,unsigned char **pp);
 ASN1_TIME *	d2i_ASN1_TIME(ASN1_TIME **a,unsigned char **pp, long length);
 ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s,time_t t);
 
-
-  /* for the is_set parameter to i2d_ASN1_SET */
-#define IS_SEQUENCE	0
-#define IS_SET		1
 int		i2d_ASN1_SET(STACK *a, unsigned char **pp,
 			int (*func)(), int ex_tag, int ex_class, int is_set);
 STACK *		d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
