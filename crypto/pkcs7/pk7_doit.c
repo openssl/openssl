@@ -580,11 +580,11 @@ BIO *bio;
 				/* Now sign the mess */
 				EVP_SignInit(&ctx_tmp,md_tmp);
 				x=i2d_ASN1_SET(sk,NULL,i2d_X509_ATTRIBUTE,
-					V_ASN1_SET,V_ASN1_UNIVERSAL);
+					V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SET);
 				pp=(unsigned char *)Malloc(x);
 				p=pp;
 				i2d_ASN1_SET(sk,&p,i2d_X509_ATTRIBUTE,
-					V_ASN1_SET,V_ASN1_UNIVERSAL);
+					V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SET);
 				EVP_SignUpdate(&ctx_tmp,pp,x);
 				Free(pp);
 				pp=NULL;
@@ -743,11 +743,11 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 
 		EVP_VerifyInit(&mdc_tmp,EVP_get_digestbynid(md_type));
 		i=i2d_ASN1_SET(sk,NULL,i2d_X509_ATTRIBUTE,
-			V_ASN1_SET,V_ASN1_UNIVERSAL);
+			V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SET);
 		pp=(unsigned char *)Malloc(i);
 		p=pp;
 		i2d_ASN1_SET(sk,&p,i2d_X509_ATTRIBUTE,
-			V_ASN1_SET,V_ASN1_UNIVERSAL);
+			V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SET);
 		EVP_VerifyUpdate(&mdc_tmp,pp,i);
 		Free(pp);
 		}
