@@ -236,10 +236,10 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 		else
 			c=(unsigned char *)OPENSSL_realloc(a->data,w+1);
 		if (c == NULL) return(0);
+		if (w+1-a->length > 0) memset(c+a->length, 0, w+1-a->length);
 		a->data=c;
 		a->length=w+1;
-		c[w]=0;
-		}
+	}
 	a->data[w]=((a->data[w])&iv)|v;
 	while ((a->length > 0) && (a->data[a->length-1] == 0))
 		a->length--;
