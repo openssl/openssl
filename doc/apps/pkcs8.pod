@@ -19,6 +19,8 @@ B<openssl> B<pkcs8>
 [B<-noiter>]
 [B<-nocrypt>]
 [B<-nooct>]
+[B<-embed>]
+[B<-nsdb>]
 [B<-v2 alg>]
 [B<-v1 alg>]
 
@@ -93,10 +95,23 @@ code signing software used unencrypted private keys.
 
 =item B<-nooct>
 
-This option generates private keys in a broken format that some software
+This option generates RSA private keys in a broken format that some software
 uses. Specifically the private key should be enclosed in a OCTET STRING
 but some software just includes the structure itself without the
 surrounding OCTET STRING.
+
+=item B<-embed>
+
+This option generates DSA keys in a broken format. The DSA parameters are
+embedded inside the PrivateKey structure. In this form the OCTET STRING
+contains an ASN1 SEQUENCE consisting of two structures: a SEQUENCE containing
+the parameters and an ASN1 INTEGER containing the private key.
+
+=item B<-nsdb>
+
+This option generates DSA keys in a broken format compatible with Netscape
+private key databases. The PrivateKey contains a SEQUENCE consisting of
+the public and private keys respectively.
 
 =item B<-v2 alg>
 
@@ -202,11 +217,16 @@ Convert a private key from any PKCS#8 format to traditional format:
 
 =head1 STANDARDS
 
-Test vectors from this implementation were posted to the pkcs-tng mailing
-list using triple DES, DES and RC2 with high iteration counts, several
-people confirmed that they could decrypt the private keys produced and
-Therefore it can be assumed that the PKCS#5 v2.0 implementation is
-reasonably accurate at least as far as these algorithms are concerned.
+Test vectors from this PKCS#5 v2.0 implementation were posted to the
+pkcs-tng mailing list using triple DES, DES and RC2 with high iteration
+counts, several people confirmed that they could decrypt the private
+keys produced and Therefore it can be assumed that the PKCS#5 v2.0
+implementation is reasonably accurate at least as far as these
+algorithms are concerned.
+
+The format of PKCS#8 DSA (and other) private keys is not well documented:
+it is hidden away in PKCS#11 v2.01, section 11.9. OpenSSL's DSA private
+key format complies with this standard.
 
 =head1 BUGS
 

@@ -109,8 +109,6 @@ PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO(PKCS8_PRIV_KEY_INFO **a,
 	M_ASN1_D2I_get_IMP_set_opt_type(X509_ATTRIBUTE, ret->attributes,
 					d2i_X509_ATTRIBUTE,
 					X509_ATTRIBUTE_free, 0);
-	if (ASN1_TYPE_get(ret->pkey) == V_ASN1_SEQUENCE) 
-						ret->broken = PKCS8_NO_OCTET;
 	M_ASN1_D2I_Finish(a, PKCS8_PRIV_KEY_INFO_free, ASN1_F_D2I_PKCS8_PRIV_KEY_INFO);
 }
 

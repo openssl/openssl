@@ -2216,3 +2216,4 @@ BN_is_prime_fasttest                    2240
 BN_CTX_end                              2241
 BN_CTX_start                            2242
 BN_CTX_get                              2243
+EVP_PKEY2PKCS8_broken                   2244

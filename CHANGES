@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Add support for various broken PKCS#8 formats, and command line
+     options to produce them.
+     [Steve Henson]
+
   *) New functions BN_CTX_start(), BN_CTX_get() and BT_CTX_end() to
      get temporary BIGNUMs from a BN_CTX.
      [Ulf Möller]

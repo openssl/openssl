@@ -124,6 +124,8 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp (*args, "-noiter")) iter = 1;
 		else if (!strcmp (*args, "-nocrypt")) nocrypt = 1;
 		else if (!strcmp (*args, "-nooct")) p8_broken = PKCS8_NO_OCTET;
+		else if (!strcmp (*args, "-nsdb")) p8_broken = PKCS8_NS_DB;
+		else if (!strcmp (*args, "-embed")) p8_broken = PKCS8_EMBEDDED_PARAM;
 		else if (!strcmp(*args,"-passin"))
 			{
 			if (!args[1]) goto bad;
@@ -183,7 +185,9 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "-passout arg    input file pass phrase\n");
 		BIO_printf(bio_err, "-envpassout arg environment variable containing input file pass phrase\n");
 		BIO_printf(bio_err, "-topk8     output PKCS8 file\n");
-		BIO_printf(bio_err, "-nooct     use (broken) no octet form\n");
+		BIO_printf(bio_err, "-nooct     use (nonstandard) no octet format\n");
+		BIO_printf(bio_err, "-embed     use (nonstandard) embedded DSA parameters format\n");
+		BIO_printf(bio_err, "-nsdb      use (nonstandard) DSA Netscape DB format\n");
 		BIO_printf(bio_err, "-noiter    use 1 as iteration count\n");
 		BIO_printf(bio_err, "-nocrypt   use or expect unencrypted private key\n");
 		BIO_printf(bio_err, "-v2 alg    use PKCS#5 v2.0 and cipher \"alg\"\n");
@@ -224,12 +228,11 @@ int MAIN(int argc, char **argv)
 			return (1);
 		}
 		BIO_free(in);
-		if (!(p8inf = EVP_PKEY2PKCS8(pkey))) {
+		if (!(p8inf = EVP_PKEY2PKCS8_broken(pkey, p8_broken))) {
 			BIO_printf(bio_err, "Error converting key\n", outfile);
 			ERR_print_errors(bio_err);
 			return (1);
 		}
-		PKCS8_set_broken(p8inf, p8_broken);
 		if(nocrypt) {
 			if(outformat == FORMAT_PEM) 
 				PEM_write_bio_PKCS8_PRIV_KEY_INFO(out, p8inf);
@@ -316,7 +319,15 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "Warning: broken key encoding: ");
 		switch (p8inf->broken) {
 			case PKCS8_NO_OCTET:
-			BIO_printf(bio_err, "No Octet String\n");
+			BIO_printf(bio_err, "No Octet String in PrivateKey\n");
+			break;
+
+			case PKCS8_EMBEDDED_PARAM:
+			BIO_printf(bio_err, "DSA parameters included in PrivateKey\n");
+			break;
+
+			case PKCS8_NS_DB:
+			BIO_printf(bio_err, "DSA public key include in PrivateKey\n");
 			break;
 
 			default:

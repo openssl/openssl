@@ -433,8 +433,10 @@ X509_ALGOR *prf;
 typedef struct pkcs8_priv_key_info_st
         {
         int broken;     /* Flag for various broken formats */
-#define PKCS8_OK        0
-#define PKCS8_NO_OCTET  1
+#define PKCS8_OK		0
+#define PKCS8_NO_OCTET		1
+#define PKCS8_EMBEDDED_PARAM	2
+#define PKCS8_NS_DB		3
         ASN1_INTEGER *version;
         X509_ALGOR *pkeyalg;
         ASN1_TYPE *pkey; /* Should be OCTET STRING but some are broken */
@@ -1105,6 +1107,7 @@ void PKCS8_PRIV_KEY_INFO_free(PKCS8_PRIV_KEY_INFO *a);
 
 EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8);
 PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey);
+PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken);
 PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken);
 
 int X509_check_trust(X509 *x, int id, int flags);
