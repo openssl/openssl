@@ -269,7 +269,7 @@ foreach (@ARGV)
 			}
 		else
 			{
-			die "unknown options, only -Dxxx, -Lxxx -lxxx supported\n";
+			die "unknown options, only -Dxxx, -Lxxx and -lxxx supported\n";
 			}
 		}
 	else
