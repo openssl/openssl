@@ -560,7 +560,8 @@ usually an additional compiler option will suffice: E.g., add
      -I/usr/local/ssl/include/openssl
 or
      -I$pwd/include/openssl
-to the CFLAGS in the Makefile of the program that you want to compile.
+to the CFLAGS in the Makefile of the program that you want to compile
+(and leave all the original -I...'s in place!).
 
 Please make sure that no old OpenSSL header files are around:
 The include directory should now be empty except for the openssl
