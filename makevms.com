@@ -480,6 +480,33 @@ $!
 $ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,kssl.h
 $ COPY SYS$DISK:[.SSL]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
+$! Copy All The ".H" Files From The [.FIPS] Directories.
+$!
+$ FDIRS := ,SHA1,RAND,DES,AES,DSA,RSA
+$ EXHEADER_ := fips.h
+$ EXHEADER_SHA1 :=
+$ EXHEADER_RAND := fips_rand.h
+$ EXHEADER_DES :=
+$ EXHEADER_AES :=
+$ EXHEADER_DSA :=
+$ EXHEADER_RSA :=
+$
+$ I = 0
+$ LOOP_FDIRS: 
+$ D = F$EDIT(F$ELEMENT(I, ",", FDIRS),"TRIM")
+$ I = I + 1
+$ IF D .EQS. "," THEN GOTO LOOP_FDIRS_END
+$ tmp = EXHEADER_'D'
+$ IF tmp .EQS. "" THEN GOTO LOOP_FDIRS
+$ IF D .EQS. ""
+$ THEN
+$   COPY [.CRYPTO]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
+$ ELSE
+$   COPY [.CRYPTO.'D']'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
+$ ENDIF
+$ GOTO LOOP_FDIRS
+$ LOOP_FDIRS_END:
+$!
 $! Purge all doubles
 $!
 $ PURGE SYS$DISK:[.INCLUDE.OPENSSL]*.H
