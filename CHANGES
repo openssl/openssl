@@ -4,6 +4,9 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Add assembler implementation for IA-64
+     [Andy Polyakov]
+
   *) Change ssl/s2_clnt.c and ssl/s2_srvr.c so that received handshake
      messages are stored in a single piece (fixed-length part and
      variable-length part combined) and fix various bugs found on the way.
