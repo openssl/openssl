@@ -499,17 +499,124 @@ static int check_cert(X509_STORE_CTX *ctx)
 
 	}
 
+/* Check CRL times against values in X509_STORE_CTX */
+
+static int check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
+	{
+	time_t *ptime;
+	int i;
+	ctx->current_crl = crl;
+	if (ctx->flags & X509_V_FLAG_USE_CHECK_TIME)
+		ptime = &ctx->check_time;
+	else
+		ptime = NULL;
+
+	i=X509_cmp_time(X509_CRL_get_lastUpdate(crl), ptime);
+	if (i == 0)
+		{
+		ctx->error=X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD;
+		if (!notify || !ctx->verify_cb(0, ctx))
+			return 0;
+		}
+
+	if (i > 0)
+		{
+		ctx->error=X509_V_ERR_CRL_NOT_YET_VALID;
+		if (!notify || !ctx->verify_cb(0, ctx))
+			return 0;
+		}
+
+	if(X509_CRL_get_nextUpdate(crl))
+		{
+		i=X509_cmp_time(X509_CRL_get_nextUpdate(crl), ptime);
+
+		if (i == 0)
+			{
+			ctx->error=X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD;
+			if (!notify || !ctx->verify_cb(0, ctx))
+				return 0;
+			}
+
+		if (i < 0)
+			{
+			ctx->error=X509_V_ERR_CRL_HAS_EXPIRED;
+			if (!notify || !ctx->verify_cb(0, ctx))
+				return 0;
+			}
+		}
+
+	ctx->current_crl = NULL;
+
+	return 1;
+	}
+
+/* Lookup CRLs from the supplied list. Look for matching isser name
+ * and validity. If we can't find a valid CRL return the last one
+ * with matching name. This gives more meaningful error codes. Otherwise
+ * we'd get a CRL not found error if a CRL existed with matching name but
+ * was invalid.
+ */
+
+static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
+			X509_NAME *nm, STACK_OF(X509_CRL) *crls)
+	{
+	int i;
+	X509_CRL *crl, *best_crl = NULL;
+	for (i = 0; i < sk_X509_CRL_num(crls); i++)
+		{
+		crl = sk_X509_CRL_value(crls, i);
+		if (X509_NAME_cmp(nm, X509_CRL_get_issuer(crl)))
+			continue;
+		if (check_crl_time(ctx, crl, 0))
+			{
+			*pcrl = crl;
+			CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509);
+			return 1;
+			}
+		best_crl = crl;
+		}
+	if (best_crl)
+		{
+		*pcrl = best_crl;
+		CRYPTO_add(&best_crl->references, 1, CRYPTO_LOCK_X509);
+		}
+		
+	return 0;
+	}
+
 /* Retrieve CRL corresponding to certificate: currently just a
  * subject lookup: maybe use AKID later...
- * Also might look up any included CRLs too (e.g PKCS#7 signedData).
  */
-static int get_crl(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x)
+static int get_crl(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509 *x)
 	{
 	int ok;
+	X509_CRL *crl = NULL;
 	X509_OBJECT xobj;
-	ok = X509_STORE_get_by_subject(ctx, X509_LU_CRL, X509_get_issuer_name(x), &xobj);
-	if (!ok) return 0;
-	*crl = xobj.data.crl;
+	X509_NAME *nm;
+	nm = X509_get_issuer_name(x);
+	ok = get_crl_sk(ctx, &crl, nm, ctx->crls);
+	if (ok)
+		{
+		*pcrl = crl;
+		return 1;
+		}
+
+	ok = X509_STORE_get_by_subject(ctx, X509_LU_CRL, nm, &xobj);
+
+	if (!ok)
+		{
+		/* If we got a near match from get_crl_sk use that */
+		if (crl)
+			{
+			*pcrl = crl;
+			return 1;
+			}
+		return 0;
+		}
+
+	*pcrl = xobj.data.crl;
+	if (crl)
+		X509_CRL_free(crl);
 	return 1;
 	}
 
@@ -518,8 +625,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 	{
 	X509 *issuer = NULL;
 	EVP_PKEY *ikey = NULL;
-	int ok = 0, chnum, cnum, i;
-	time_t *ptime;
+	int ok = 0, chnum, cnum;
 	cnum = ctx->error_depth;
 	chnum = sk_X509_num(ctx->chain) - 1;
 	/* Find CRL issuer: if not last certificate then issuer
@@ -571,45 +677,8 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 			}
 		}
 
-	/* OK, CRL signature valid check times */
-	if (ctx->flags & X509_V_FLAG_USE_CHECK_TIME)
-		ptime = &ctx->check_time;
-	else
-		ptime = NULL;
-
-	i=X509_cmp_time(X509_CRL_get_lastUpdate(crl), ptime);
-	if (i == 0)
-		{
-		ctx->error=X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD;
-		ok = ctx->verify_cb(0, ctx);
-		if (!ok) goto err;
-		}
-
-	if (i > 0)
-		{
-		ctx->error=X509_V_ERR_CRL_NOT_YET_VALID;
-		ok = ctx->verify_cb(0, ctx);
-		if (!ok) goto err;
-		}
-
-	if(X509_CRL_get_nextUpdate(crl))
-		{
-		i=X509_cmp_time(X509_CRL_get_nextUpdate(crl), ptime);
-
-		if (i == 0)
-			{
-			ctx->error=X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD;
-			ok = ctx->verify_cb(0, ctx);
-			if (!ok) goto err;
-			}
-
-		if (i < 0)
-			{
-			ctx->error=X509_V_ERR_CRL_HAS_EXPIRED;
-			ok = ctx->verify_cb(0, ctx);
-			if (!ok) goto err;
-			}
-		}
+	if (!check_crl_time(ctx, crl, 1))
+		goto err;
 
 	ok = 1;
 
@@ -665,12 +734,58 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 	return 1;
 	}
 
+static int check_cert_time(X509_STORE_CTX *ctx, X509 *x)
+	{
+	time_t *ptime;
+	int i;
+
+	if (ctx->flags & X509_V_FLAG_USE_CHECK_TIME)
+		ptime = &ctx->check_time;
+	else
+		ptime = NULL;
+
+	i=X509_cmp_time(X509_get_notBefore(x), ptime);
+	if (i == 0)
+		{
+		ctx->error=X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
+		ctx->current_cert=x;
+		if (!ctx->verify_cb(0, ctx))
+			return 0;
+		}
+
+	if (i > 0)
+		{
+		ctx->error=X509_V_ERR_CERT_NOT_YET_VALID;
+		ctx->current_cert=x;
+		if (!ctx->verify_cb(0, ctx))
+			return 0;
+		}
+
+	i=X509_cmp_time(X509_get_notAfter(x), ptime);
+	if (i == 0)
+		{
+		ctx->error=X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
+		ctx->current_cert=x;
+		if (!ctx->verify_cb(0, ctx))
+			return 0;
+		}
+
+	if (i < 0)
+		{
+		ctx->error=X509_V_ERR_CERT_HAS_EXPIRED;
+		ctx->current_cert=x;
+		if (!ctx->verify_cb(0, ctx))
+			return 0;
+		}
+
+	return 1;
+	}
+
 static int internal_verify(X509_STORE_CTX *ctx)
 	{
-	int i,ok=0,n;
+	int ok=0,n;
 	X509 *xs,*xi;
 	EVP_PKEY *pkey=NULL;
-	time_t *ptime;
 	int (*cb)();
 
 	cb=ctx->verify_cb;
@@ -679,10 +794,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 	ctx->error_depth=n-1;
 	n--;
 	xi=sk_X509_value(ctx->chain,n);
-	if (ctx->flags & X509_V_FLAG_USE_CHECK_TIME)
-		ptime = &ctx->check_time;
-	else
-		ptime = NULL;
+
 	if (ctx->check_issued(ctx, xi, xi))
 		xs=xi;
 	else
@@ -735,41 +847,12 @@ static int internal_verify(X509_STORE_CTX *ctx)
 				}
 			EVP_PKEY_free(pkey);
 			pkey=NULL;
-
-			i=X509_cmp_time(X509_get_notBefore(xs), ptime);
-			if (i == 0)
-				{
-				ctx->error=X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
-				ctx->current_cert=xs;
-				ok=(*cb)(0,ctx);
-				if (!ok) goto end;
-				}
-			if (i > 0)
-				{
-				ctx->error=X509_V_ERR_CERT_NOT_YET_VALID;
-				ctx->current_cert=xs;
-				ok=(*cb)(0,ctx);
-				if (!ok) goto end;
-				}
-			xs->valid=1;
 			}
 
-		i=X509_cmp_time(X509_get_notAfter(xs), ptime);
-		if (i == 0)
-			{
-			ctx->error=X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
-			ctx->current_cert=xs;
-			ok=(*cb)(0,ctx);
-			if (!ok) goto end;
-			}
+		xs->valid = 1;
 
-		if (i < 0)
-			{
-			ctx->error=X509_V_ERR_CERT_HAS_EXPIRED;
-			ctx->current_cert=xs;
-			ok=(*cb)(0,ctx);
-			if (!ok) goto end;
-			}
+		if (!check_cert_time(ctx, xs))
+			goto end;
 
 		/* The last error (if any) is still in the error value */
 		ctx->current_cert=xs;
@@ -998,6 +1081,11 @@ void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x)
 void X509_STORE_CTX_set_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 	{
 	ctx->untrusted=sk;
+	}
+
+void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
+	{
+	ctx->crls=sk;
 	}
 
 int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose)

@@ -217,6 +217,8 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 			sk_X509_free(signers);
 			return 0;
 		}
+		if (!(flags & PKCS7_NOCRL))
+			X509_STORE_CTX_set0_crls(&cert_ctx, p7->d.sign->crl);
 		i = X509_verify_cert(&cert_ctx);
 		if (i <= 0) j = X509_STORE_CTX_get_error(&cert_ctx);
 		X509_STORE_CTX_cleanup(&cert_ctx);

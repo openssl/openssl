@@ -218,6 +218,7 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 	/* The following are set by the caller */
 	X509 *cert;		/* The cert to check */
 	STACK_OF(X509) *untrusted;	/* chain of X509s - untrusted - passed in */
+	STACK_OF(X509_CRL) *crls; /* CRLs */
 	int purpose;		/* purpose to check untrusted certificates */
 	int trust;		/* trust setting to check */
 	time_t	check_time;	/* time to make verify at */
@@ -409,6 +410,7 @@ STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx);
 STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx);
 void	X509_STORE_CTX_set_cert(X509_STORE_CTX *c,X509 *x);
 void	X509_STORE_CTX_set_chain(X509_STORE_CTX *c,STACK_OF(X509) *sk);
+void	X509_STORE_CTX_set0_crls(X509_STORE_CTX *c,STACK_OF(X509_CRL) *sk);
 int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose);
 int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust);
 int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,

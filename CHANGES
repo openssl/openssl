@@ -4,6 +4,12 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Add a local set of CRLs that can be used by X509_verify_cert() as well
+     as looking them up. This is useful when the verified structure may contain
+     CRLs, for example PKCS#7 signedData. Modify PKCS7_verify() to use any CRLs
+     present unless the new PKCS7_NO_CRL flag is asserted.
+     [Steve Henson]
+
   *) Extend ASN1 oid configuration module. It now additionally accepts the
      syntax:
 

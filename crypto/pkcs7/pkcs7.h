@@ -265,6 +265,7 @@ DECLARE_PKCS12_STACK_OF(PKCS7)
 #define PKCS7_NOOLDMIMETYPE	0x400
 #define PKCS7_CRLFEOL		0x800
 #define PKCS7_STREAM		0x1000
+#define PKCS7_NOCRL		0x2000
 
 /* Flags: for compatibility with older code */
 
