@@ -747,7 +747,7 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 static int check_policy(X509_STORE_CTX *ctx)
 	{
 	int ret;
-	ret = X509_policy_check(&ctx->tree, &ctx->explicit, ctx->chain,
+	ret = X509_policy_check(&ctx->tree, &ctx->explicit_policy, ctx->chain,
 				ctx->param->policies, ctx->param->flags);
 	if (ret == 0)
 		{
@@ -1246,7 +1246,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	ctx->valid=0;
 	ctx->chain=NULL;
 	ctx->error=0;
-	ctx->explicit=0;
+	ctx->explicit_policy=0;
 	ctx->error_depth=0;
 	ctx->current_cert=NULL;
 	ctx->current_issuer=NULL;
@@ -1398,7 +1398,7 @@ X509_POLICY_TREE *X509_STORE_CTX_get0_policy_tree(X509_STORE_CTX *ctx)
 
 int X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx)
 	{
-	return ctx->explicit;
+	return ctx->explicit_policy;
 	}
 
 int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name)

@@ -254,7 +254,7 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 	STACK_OF(X509) *chain; 		/* chain of X509s - built up and trusted */
 	X509_POLICY_TREE *tree;	/* Valid policy tree */
 
-	int explicit;		/* Require explicit policy value */
+	int explicit_policy;	/* Require explicit policy value */
 
 	/* When something goes wrong, this is why */
 	int error_depth;
