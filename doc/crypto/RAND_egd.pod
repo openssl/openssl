@@ -23,6 +23,11 @@ RAND_egd_bytes(path, 255);
 RAND_egd_bytes() queries the entropy gathering daemon EGD on socket B<path>.
 It queries B<bytes> bytes and uses L<RAND_add(3)|RAND_add(3)> to seed the
 OpenSSL built-in PRNG.
+This function is more flexible than RAND_egd().
+When only one secret key must
+be generated, it is not necessary to request the full amount 255 bytes from
+the EGD socket. This can be advantageous, since the amount of entropy
+that can be retrieved from EGD over time is limited.
 
 RAND_query_egd_bytes() performs the actual query of the EGD daemon on socket
 B<path>. If B<buf> is given, B<bytes> bytes are queried and written into
@@ -35,12 +40,6 @@ On systems without /dev/*random devices providing entropy from the kernel,
 the EGD entropy gathering daemon can be used to collect entropy. It provides
 a socket interface through which entropy can be gathered in chunks up to
 255 bytes. Several chunks can be queried during one connection.
-
-While RAND_egd() is longer available (see HISTORY section), the
-RAND_egd_bytes() function is more flexible. When only one secret key must
-be generated, it is not needed to request the full amount 255 bytes from
-the EGD socket. This can be advantageous, since the amount of entropy
-that can be retrieved from EGD over time is limited.
 
 EGD is available from http://www.lothar.com/tech/crypto/ (C<perl
 Makefile.PL; make; make install> to install). It is run as B<egd>
