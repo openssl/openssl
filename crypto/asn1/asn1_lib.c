@@ -104,10 +104,12 @@ int ASN1_get_object(unsigned char **pp, long *plength, int *ptag, int *pclass,
 			l<<=7L;
 			l|= *(p++)&0x7f;
 			if (--max == 0) goto err;
+			if (l > (INT_MAX >> 7L)) goto err;
 			}
 		l<<=7L;
 		l|= *(p++)&0x7f;
 		tag=(int)l;
+		if (--max == 0) goto err;
 		}
 	else
 		{ 

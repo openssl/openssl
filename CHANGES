@@ -555,7 +555,19 @@
      differing sizes.
      [Richard Levitte]
 
- Changes between 0.9.7b and 0.9.7c  [xx XXX 2003]
+ Changes between 0.9.7b and 0.9.7c  [30 Sep 2003]
+
+  *) Fix various bugs revealed by running the NISCC test suite:
+
+     Stop out of bounds reads in the ASN1 code when presented with
+     invalid tags (CAN-2003-0543 and CAN-2003-0544).
+     
+     Free up ASN1_TYPE correctly if ANY type is invalid (CAN-2003-0545).
+
+     If verify callback ignores invalid public key errors don't try to check
+     certificate signature with the NULL public key.
+
+     [Steve Henson]
 
   *) New -ignore_err option in ocsp application to stop the server
      exiting on the first error in a request.
@@ -2530,7 +2542,27 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Clean old EAY MD5 hack from e_os.h.
      [Richard Levitte]
 
- Changes between 0.9.6j and 0.9.6k  [xx XXX 2003]
+ Changes between 0.9.6j and 0.9.6k  [30 Sep 2003]
+
+  *) Fix various bugs revealed by running the NISCC test suite:
+
+     Stop out of bounds reads in the ASN1 code when presented with
+     invalid tags (CAN-2003-0543 and CAN-2003-0544).
+     
+     If verify callback ignores invalid public key errors don't try to check
+     certificate signature with the NULL public key.
+
+     [Steve Henson]
+
+  *) Fix various bugs revealed by running the NISCC test suite:
+
+     Stop out of bounds reads in the ASN1 code when presented with
+     invalid tags (CAN-2003-0543 and CAN-2003-0544).
+     
+     If verify callback ignores invalid public key errors don't try to check
+     certificate signature with the NULL public key.
+
+     [Steve Henson]
 
   *) In ssl3_accept() (ssl/s3_srvr.c) only accept a client certificate
      if the server requested one: as stated in TLS 1.0 and SSL 3.0

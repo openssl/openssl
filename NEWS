@@ -5,6 +5,13 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.7b and OpenSSL 0.9.7c:
+
+      o Security: fix various ASN1 parsing bugs.
+      o New -ignore_err option to OCSP utility.
+      o Various interop and bug fixes in S/MIME code.
+      o SSL/TLS protocol fix for unrequested client certificates.
+
   Major changes between OpenSSL 0.9.7a and OpenSSL 0.9.7b:
 
       o Security: counter the Klima-Pokorny-Rosa extension of
@@ -40,11 +47,14 @@
       o New elliptic curve library section.
       o New AES (Rijndael) library section.
       o Support for new platforms: Windows CE, Tandem OSS, A/UX, AIX 64-bit,
-        Linux x86_64
+        Linux x86_64, Linux 64-bit on Sparc v9
       o Extended support for some platforms: VxWorks
       o Enhanced support for shared libraries.
+      o Now only builds PIC code when shared library support is requested.
       o Support for pkg-config.
       o Lots of new manuals.
+      o Makes symbolic links to or copies of manuals to cover all described
+        functions.
       o Change DES API to clean up the namespace (some applications link also
         against libdes providing similar functions having the same name).
         Provide macros for backward compatibility (will be removed in the
@@ -69,6 +79,11 @@
       o SSL/TLS: allow more precise control of renegotiations and sessions.
       o SSL/TLS: add callback to retrieve SSL/TLS messages.
       o SSL/TLS: support AES cipher suites (RFC3268).
+
+  Major changes between OpenSSL 0.9.6j and OpenSSL 0.9.6k:
+
+      o Security: fix various ASN1 parsing bugs.
+      o SSL/TLS protocol fix for unrequested client certificates.
 
   Major changes between OpenSSL 0.9.6i and OpenSSL 0.9.6j:
 
