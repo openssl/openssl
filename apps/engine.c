@@ -520,6 +520,14 @@ skip_digests:
 
 	ret=0;
 end:
+#else
+
+# if PEDANTIC
+
+void *dummy=&dummy;
+
+# endif
+
 	ERR_print_errors(bio_err);
 	sk_pop_free(engines, identity);
 	sk_pop_free(pre_cmds, identity);
