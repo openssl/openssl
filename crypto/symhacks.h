@@ -157,10 +157,8 @@
 #define SSL_get_ex_data_X509_STORE_CTX_idx      SSL_get_ex_d_X509_STORE_CTX_idx
 #undef SSL_add_file_cert_subjects_to_stack
 #define SSL_add_file_cert_subjects_to_stack     SSL_add_file_cert_subjs_to_stk
-#if 0 /* This function is not defined i VMS. */
 #undef SSL_add_dir_cert_subjects_to_stack
 #define SSL_add_dir_cert_subjects_to_stack      SSL_add_dir_cert_subjs_to_stk
-#endif
 #undef SSL_CTX_use_certificate_chain_file
 #define SSL_CTX_use_certificate_chain_file      SSL_CTX_use_cert_chain_file
 #undef SSL_CTX_set_cert_verify_callback
