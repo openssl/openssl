@@ -183,7 +183,6 @@ int PKCS7_set_type(PKCS7 *p7, int type)
 		ASN1_INTEGER_set(p7->d.signed_and_enveloped->version,1);
 		if (!ASN1_INTEGER_set(p7->d.signed_and_enveloped->version,1))
 			goto err;
-  		break;
 		p7->d.signed_and_enveloped->enc_data->content_type
 						= OBJ_nid2obj(NID_pkcs7_data);
 		break;
