@@ -98,7 +98,7 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "mips2-sgi-irix"; exit 0
 	;;
 
-	IRIX:6.*)
+    IRIX:6.*)
 	echo "mips3-sgi-irix"; exit 0
 	;;
 
@@ -301,17 +301,27 @@ if [ "$GCCVER" != "" ]; then
   CC=gcc
   # then strip off whatever prefix Cygnus prepends the number with...
   GCCVER=`echo $GCCVER | sed 's/^[a-z]*\-//'`
-  # peak only digits before and after first dot, e.g. 2.95.1 gives 29
+  # peak single digit before and after first dot, e.g. 2.95.1 gives 29
   GCCVER=`echo $GCCVER | sed 's/\([0-9]\)\.\([0-9]\).*/\1\2/'`
 else
   CC=cc
-  if [ "$SYSTEM" = "SunOS" ]
-  then
-   case `cc -V 2>&1` in
-    *4*) CC=cc;;
-    *5*) CC=cc;;
-    *) CC=sc3;;
-   esac
+fi
+
+if [ "$SYSTEM" = "SunOS" ]; then
+  # assume output is "blah-blah C x.x"
+  CCVER=`(cc -V 2>&1) 2>/dev/null | \
+  	egrep -e '^cc: .* C [0-9]\.[0-9]' | \
+	sed 's/.* C \([0-9]\)\.\([0-9]\).*/\1\2/'`
+  CCVER=${CCVER:-0}
+  if [ $CCVER -gt 40 ]; then
+    CC=cc	# overrides gcc!!!
+    if [ $CCVER -eq 50 ]; then
+      echo "WARNING! Detected WorkShop C 5.0. Do make sure you have"
+      echo "         patch #107357-01 or later applied."
+      sleep 5
+    fi
+  elif [ "$CC" = "cc" -a $CCVER -gt 0 ]; then
+    CC=sc3
   fi
 fi
 
@@ -357,9 +367,9 @@ case "$GUESSOS" in
 	OUT="irix-mips3-$CC"
 	;;
   sparc64-*-linux2)
-	#Before we uncomment following line we have to wait at least till
-	#64-bit glibc for SPARC is available:-(
-    #echo "WARNING! If you wish to build 64-bit library, then you have to"
+	#Before we can uncomment following lines we have to wait at least
+	#till 64-bit glibc for SPARC is operational:-(
+	#echo "WARNING! If you wish to build 64-bit library, then you have to"
 	#echo "         invoke './Configure linux64-sparcv9' *manually*."
 	#echo "         Type Ctrl-C if you don't want to continue."
 	#read waste < /dev/tty
@@ -374,8 +384,18 @@ case "$GUESSOS" in
 	esac ;;
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux1) OUT="linux-aout" ;;
-  sun4u-sun-solaris2) OUT="solaris-usparc-$CC" ;;
-  sun4*-sun-solaris2) OUT="solaris-sparc-$CC" ;;
+  sun4u*-sun-solaris2)
+	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
+	if [ "$ISA64" != "" -a "$CC" = "cc" -a $CCVER -ge 50 ]; then
+		echo "WARNING! If you wish to build 64-bit library, then you have to"
+		echo "         invoke './Configure solaris64-sparcv9-cc' *manually*."
+		echo "         Type Ctrl-C if you don't want to continue."
+		read waste < /dev/tty
+	fi
+	OUT="solaris-sparcv9-$CC" ;;
+  sun4m-sun-solaris2)	OUT="solaris-sparcv8-$CC" ;;
+  sun4d-sun-solaris2)	OUT="solaris-sparcv8-$CC" ;;
+  sun4*-sun-solaris2)	OUT="solaris-sparcv7-$CC" ;;
   *86*-sun-solaris2) OUT="solaris-x86-$CC" ;;
   *-*-sunos4) OUT="sunos-$CC" ;;
   alpha*-*-freebsd) OUT="FreeBSD-alpha" ;;
@@ -401,15 +421,17 @@ case "$GUESSOS" in
 esac
 
 # gcc < 2.8 does not support -mcpu=ultrasparc
-if [ "$OUT" = solaris-usparc-gcc -a $GCCVER -lt 28 ]
+if [ "$OUT" = solaris-sparcv9-gcc -a $GCCVER -lt 28 ]
 then
   echo "WARNING! Do consider upgrading to gcc-2.8 or later."
-  OUT=solaris-usparc-oldgcc
+  sleep 5
+  OUT=solaris-sparcv9-gcc27
 fi
 if [ "$OUT" = "linux-sparcv9" -a $GCCVER -lt 28 ]
 then
   echo "WARNING! Falling down to 'linux-sparcv8'."
   echo "         Upgrade to gcc-2.8 or later."
+  sleep 5
   OUT=linux-sparcv8
 fi
 
