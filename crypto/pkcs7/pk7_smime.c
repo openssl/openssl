@@ -111,7 +111,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		/* Add SMIMECapabilities */
 		if(!(flags & PKCS7_NOSMIMECAP))
 		{
-		if(!(smcap = sk_X509_ALGOR_new(NULL))) {
+		if(!(smcap = sk_X509_ALGOR_new_null())) {
 			PKCS7err(PKCS7_F_PKCS7_SIGN,ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
@@ -285,7 +285,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,PKCS7_R_WRONG_CONTENT_TYPE);
 		return NULL;
 	}
-	if(!(signers = sk_X509_new(NULL))) {
+	if(!(signers = sk_X509_new_null())) {
 		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}

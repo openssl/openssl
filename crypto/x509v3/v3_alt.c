@@ -160,7 +160,7 @@ static STACK_OF(GENERAL_NAME) *v2i_issuer_alt(X509V3_EXT_METHOD *method,
 	STACK_OF(GENERAL_NAME) *gens = NULL;
 	CONF_VALUE *cnf;
 	int i;
-	if(!(gens = sk_GENERAL_NAME_new(NULL))) {
+	if(!(gens = sk_GENERAL_NAME_new_null())) {
 		X509V3err(X509V3_F_V2I_GENERAL_NAMES,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -225,7 +225,7 @@ static STACK_OF(GENERAL_NAME) *v2i_subject_alt(X509V3_EXT_METHOD *method,
 	STACK_OF(GENERAL_NAME) *gens = NULL;
 	CONF_VALUE *cnf;
 	int i;
-	if(!(gens = sk_GENERAL_NAME_new(NULL))) {
+	if(!(gens = sk_GENERAL_NAME_new_null())) {
 		X509V3err(X509V3_F_V2I_GENERAL_NAMES,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -304,7 +304,7 @@ STACK_OF(GENERAL_NAME) *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method,
 	STACK_OF(GENERAL_NAME) *gens = NULL;
 	CONF_VALUE *cnf;
 	int i;
-	if(!(gens = sk_GENERAL_NAME_new(NULL))) {
+	if(!(gens = sk_GENERAL_NAME_new_null())) {
 		X509V3err(X509V3_F_V2I_GENERAL_NAMES,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}

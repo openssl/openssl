@@ -114,7 +114,7 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 	unsigned int maclen;
 
 	if (!(asafes = M_PKCS12_unpack_authsafes(p12))) return 0;
-	if(!(newsafes = sk_PKCS7_new(NULL))) return 0;
+	if(!(newsafes = sk_PKCS7_new_null())) return 0;
 	for (i = 0; i < sk_PKCS7_num (asafes); i++) {
 		p7 = sk_PKCS7_value(asafes, i);
 		bagnid = OBJ_obj2nid(p7->type);

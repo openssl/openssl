@@ -93,7 +93,7 @@ int PKCS12_parse (PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 
 	/* Allocate stack for ca certificates if needed */
 	if ((ca != NULL) && (*ca == NULL)) {
-		if (!(*ca = sk_X509_new(NULL))) {
+		if (!(*ca = sk_X509_new_null())) {
 			PKCS12err(PKCS12_F_PKCS12_PARSE,ERR_R_MALLOC_FAILURE);
 			return 0;
 		}

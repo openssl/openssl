@@ -372,7 +372,7 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 	part = 0;
 	state = 0;
 	first = 1;
-	parts = sk_BIO_new(NULL);
+	parts = sk_BIO_new_null();
 	*ret = parts;
 	while ((len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
 		state = mime_bound_check(linebuf, len, bound, blen);

@@ -158,7 +158,7 @@ STACK *d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
 	STACK *ret=NULL;
 
 	if ((a == NULL) || ((*a) == NULL))
-		{ if ((ret=sk_new(NULL)) == NULL) goto err; }
+		{ if ((ret=sk_new_null()) == NULL) goto err; }
 	else
 		ret=(*a);
 

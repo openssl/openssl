@@ -141,7 +141,7 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-certfile") == 0)
 			{
 			if (--argc < 1) goto bad;
-			if(!certflst) certflst = sk_new(NULL);
+			if(!certflst) certflst = sk_new_null();
 			sk_push(certflst,*(++argv));
 			}
 		else
@@ -215,7 +215,7 @@ bad:
 	p7s->contents->type=OBJ_nid2obj(NID_pkcs7_data);
 
 	if (!ASN1_INTEGER_set(p7s->version,1)) goto end;
-	if ((crl_stack=sk_X509_CRL_new(NULL)) == NULL) goto end;
+	if ((crl_stack=sk_X509_CRL_new_null()) == NULL) goto end;
 	p7s->crl=crl_stack;
 	if (crl != NULL)
 		{
@@ -223,7 +223,7 @@ bad:
 		crl=NULL; /* now part of p7 for OPENSSL_freeing */
 		}
 
-	if ((cert_stack=sk_X509_new(NULL)) == NULL) goto end;
+	if ((cert_stack=sk_X509_new_null()) == NULL) goto end;
 	p7s->cert=cert_stack;
 
 	if(certflst) for(i = 0; i < sk_num(certflst); i++) {

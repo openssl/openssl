@@ -197,7 +197,7 @@ int MAIN(int argc, char **argv)
 		} else if (!strcmp (*args, "-caname")) {
 		    if (args[1]) {
 			args++;	
-			if (!canames) canames = sk_new(NULL);
+			if (!canames) canames = sk_new_null();
 			sk_push(canames, *args);
 		    } else badarg = 1;
 		} else if (!strcmp (*args, "-in")) {
@@ -404,7 +404,7 @@ int MAIN(int argc, char **argv)
 	CRYPTO_push_info("reading certs from input");
 #endif
 
-	certs = sk_X509_new(NULL);
+	certs = sk_X509_new_null();
 
 	/* Load in all certs in input file */
 	if(!cert_load(in, certs)) {
@@ -436,7 +436,7 @@ int MAIN(int argc, char **argv)
 	CRYPTO_push_info("reading certs from certfile");
 #endif
 
-	bags = sk_PKCS12_SAFEBAG_new (NULL);
+	bags = sk_PKCS12_SAFEBAG_new_null ();
 
 	/* Add any more certificates asked for */
 	if (certsin) {
@@ -527,7 +527,7 @@ int MAIN(int argc, char **argv)
 		goto export_end;
 	}
 
-	safes = sk_PKCS7_new (NULL);
+	safes = sk_PKCS7_new_null ();
 	sk_PKCS7_push (safes, authsafe);
 
 #ifdef CRYPTO_MDEBUG
@@ -543,7 +543,7 @@ int MAIN(int argc, char **argv)
 	p8 = NULL;
         if (name) PKCS12_add_friendlyname (bag, name, -1);
 	PKCS12_add_localkeyid (bag, keyid, keyidlen);
-	bags = sk_PKCS12_SAFEBAG_new(NULL);
+	bags = sk_PKCS12_SAFEBAG_new_null();
 	sk_PKCS12_SAFEBAG_push (bags, bag);
 
 #ifdef CRYPTO_MDEBUG

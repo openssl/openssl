@@ -109,7 +109,7 @@ static STACK_OF(DIST_POINT) *v2i_crld(X509V3_EXT_METHOD *method,
 	GENERAL_NAME *gen = NULL;
 	CONF_VALUE *cnf;
 	int i;
-	if(!(crld = sk_DIST_POINT_new(NULL))) goto merr;
+	if(!(crld = sk_DIST_POINT_new_null())) goto merr;
 	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
 		DIST_POINT *point;
 		cnf = sk_CONF_VALUE_value(nval, i);

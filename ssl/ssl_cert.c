@@ -589,7 +589,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
 	X509_NAME *xn=NULL;
 	STACK_OF(X509_NAME) *ret,*sk;
 
-	ret=sk_X509_NAME_new(NULL);
+	ret=sk_X509_NAME_new_null();
 	sk=sk_X509_NAME_new(xname_cmp);
 
 	in=BIO_new(BIO_s_file_internal());
