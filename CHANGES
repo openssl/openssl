@@ -4,6 +4,21 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Rework the system to generate shared libraries:
+
+     - Make note of the expected extension for the shared libraries and
+       if there is a need for symbolic links from for example libcrypto.so.0
+       to libcrypto.so.0.9.7.  There is extended info in Configure for
+       that.
+
+     - Make as few rebuilds of the shared libraries as possible.
+
+     - Still avoid linking the OpenSSL programs with the shared libraries.
+
+     - When installing, install the shared libraries separately from the
+       static ones.
+     [Richard Levitte]
+
   *) Fix for non blocking accept BIOs. Added new I/O special reason
      BIO_RR_ACCEPT to cover this case. Previously use of accept BIOs
      with non blocking I/O was not possible because no retry code was

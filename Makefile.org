@@ -9,6 +9,7 @@ SHLIB_VERSION_NUMBER=
 SHLIB_VERSION_HISTORY=
 SHLIB_MAJOR=
 SHLIB_MINOR=
+SHLIB_EXT=
 PLATFORM=dist
 OPTIONS=
 CONFIGURE_ARGS=
@@ -149,14 +150,11 @@ RMD160_ASM_OBJ= asm/rm86-out.o
 #RMD160_ASM_OBJ= asm/rm86-out.o       # a.out, FreeBSD
 #RMD160_ASM_OBJ= asm/rm86bsdi.o       # bsdi
 
-# To do special treatment, use "directory names" starting with a period.
 # When we're prepared to use shared libraries in the programs we link here
-# we might have SHLIB_MARK1 get the value ".shlib." and SHLIB_MARK2 be empty,
-# or have that configurable.
-SHLIB_MARK1=.shlib-clean.
-SHLIB_MARK2=.shlib.
+# we might set SHLIB_MARK to '$(SHARED_LIBS)'.
+SHLIB_MARK=
 
-DIRS=   crypto ssl rsaref $(SHLIB_MARK1) apps test tools $(SHLIB_MARK2)
+DIRS=   crypto ssl rsaref $(SHLIB_MARK) apps test tools
 SHLIBDIRS= crypto ssl
 
 # dirs in crypto to build
@@ -180,7 +178,10 @@ ONEDIRS=out tmp
 EDIRS=  times doc bugs util include certs ms shlib mt demos perl sf dep VMS
 WDIRS=  windows
 LIBS=   libcrypto.a libssl.a
-SHARED_LIBS=libcrypto.so libssl.so
+SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
+SHARED_SSL=libssl$(SHLIB_EXT)
+SHARED_LIBS=
+SHARED_LIBS_LINK_EXTS=
 
 GENERAL=        Makefile
 BASENAME=       openssl
@@ -190,88 +191,77 @@ WTARFILE=       $(NAME)-win.tar
 EXHEADER=       e_os.h e_os2.h
 HEADER=         e_os.h
 
-all: Makefile.ssl
-	@need_shlib=true; \
-	for i in $(DIRS) ;\
-	do \
-	if [ "$$i" = ".shlib-clean." ]; then \
-		if [ "$(SHLIB_TARGET)" != "" ]; then \
-			$(MAKE) clean-shared; \
-		fi; \
-	elif [ "$$i" = ".shlib." ]; then \
-		if [ "$(SHLIB_TARGET)" != "" ]; then \
-			$(MAKE) $(SHARED_LIBS); \
-		fi; \
-		need_shlib=false; \
-	else \
-		(cd $$i && echo "making all in $$i..." && \
-		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' SDIRS='${SDIRS}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
-	fi; \
-	done; \
-	if $$need_shlib && [ "$(SHLIB_MARK1)" != "" -o "$(SHLIB_MARK1)" != "" ]; then \
-		$(MAKE) $(SHARED_LIBS); \
-	fi
+# When we're prepared to use shared libraries in the programs we link here
+# we might remove 'clean-shared' from the targets to perform at this stage
+
+all: clean-shared Makefile.ssl sub_all
 
 sub_all:
-	@need_shlib=true; \
-	for i in $(DIRS) ;\
+	@for i in $(DIRS); \
 	do \
-	if [ "$$i" = ".shlib-clean." ]; then \
-		if [ "$(SHLIB_TARGET)" != "" ]; then \
-			$(MAKE) clean-shared; \
-		fi; \
-	elif [ "$$i" = ".shlib." ]; then \
-		if [ "$(SHLIB_TARGET)" != "" ]; then \
-			$(MAKE) $(SHARED_LIBS); \
-		fi; \
-		need_shlib=false; \
-	else \
+	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making all in $$i..." && \
 		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
+	else \
+		$(MAKE) $$i; \
 	fi; \
 	done; \
-	if $$need_shlib && [ "$(SHLIB_MARK1)" != "" -o "$(SHLIB_MARK1)" != "" ]; then \
+	if echo "$(DIRS)" | \
+	    grep '\(^\| \)\(crypto\|ssl\)\( \|$$\)' > /dev/null 2>&1 && \
+	   [ -n "$(SHARED_LIBS)" ]; then \
 		$(MAKE) $(SHARED_LIBS); \
 	fi
 
-libcrypto.so: libcrypto.a
+libcrypto$(SHLIB_EXT): libcrypto.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
-		$(MAKE) SHLIBDIRS=crypto $(SHLIB_TARGET); \
+		$(MAKE) SHLIBDIRS=crypto build-shared; \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
 	fi
-libssl.so: libcrypto.so libssl.a
+libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
-		$(MAKE) SHLIBDIRS=ssl SHLIBDEPS='-L. -lcrypto' $(SHLIB_TARGET); \
+		$(MAKE) SHLIBDIRS=ssl SHLIBDEPS='-L. -lcrypto' build-shared; \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
 	fi
 
 clean-shared:
-	for i in ${SHLIBDIRS}; do \
-	rm -f lib$$i.so \
-		lib$$i.so.${SHLIB_MAJOR} \
-		lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
+	@for i in $(SHLIBDIRS); do \
+		if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
+			tmp="$(SHARED_LIBS_LINK_EXTS)"; \
+			for j in $${tmp:-x}; do \
+				( set -x; rm -f lib$$i$$j ); \
+			done; \
+		fi; \
+		( set -x; rm -f lib$$i$(SHLIB_EXT) ); \
 	done
 
-linux-shared:
+link-shared:
+	@for i in $(SHLIBDIRS); do \
+		prev=lib$$i$(SHLIB_EXT); \
+		if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
+			tmp="$(SHARED_LIBS_LINK_EXTS)"; \
+			for j in $${tmp:-x}; do \
+				( set -x; ln -s -f $$prev lib$$i$$j ); \
+				prev=lib$$i$$j; \
+			done; \
+		fi; \
+	done
+
+build-shared: clean-shared do_$(SHLIB_TARGET) link-shared
+
+do_bsd-gcc-shared: linux-shared
+do_linux-shared:
 	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	rm -f lib$$i.so \
-		lib$$i.so.${SHLIB_MAJOR} \
-		lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
 	( set -x; ${CC}  -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,-S,-soname=lib$$i.so.${SHLIB_MAJOR} \
 		-Wl,--whole-archive lib$$i.a \
 		-Wl,--no-whole-archive $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -L. -l$$i"; \
-	( set -x; \
-		ln -s lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			lib$$i.so.${SHLIB_MAJOR}; \
-		ln -s lib$$i.so.${SHLIB_MAJOR} lib$$i.so ); \
 	done
 
 # This assumes that GNU utilities are *not* used
-true64-shared:
+do_true64-shared:
 	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -no_archive -o lib$$i.so \
 		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
@@ -280,18 +270,12 @@ true64-shared:
 	done
 
 # This assumes that GNU utilities are *not* used
-solaris-shared:
+do_solaris-shared:
 	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	rm -f lib$$i.so \
-		lib$$i.so.${SHLIB_MAJOR} \
-		lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
 	( set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-h lib$$i.so.${SHLIB_MAJOR} \
 		-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -L. -l$$i"; \
-	ln -s lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		lib$$i.so.${SHLIB_MAJOR}; \
-	ln -s lib$$i.so.${SHLIB_MAJOR} lib$$i.so; \
 	done
 
 Makefile.ssl: Makefile.org
@@ -306,7 +290,7 @@ clean:
 	rm -f shlib/*.o *.o core a.out fluff *.map rehash.time testlog make.log cctest cctest.c
 	@for i in $(DIRS) ;\
 	do \
-	if echo "$$i" | grep -v '^\.'; then \
+	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making clean in $$i..." && \
 		$(MAKE) SDIRS='${SDIRS}' clean ) || exit 1; \
 		rm -f $(LIBS); \
@@ -327,7 +311,7 @@ files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl > $(TOP)/MINFO
 	@for i in $(DIRS) ;\
 	do \
-	if echo "$$i" | grep -v '^\.'; then \
+	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making 'files' in $$i..." && \
 		$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' files ) || exit 1; \
 	fi; \
@@ -338,7 +322,7 @@ links:
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
 	@for i in $(DIRS); do \
-	if echo "$$i" | grep -v '^\.'; then \
+	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making links in $$i..." && \
 		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PERL='${PERL}' links ) || exit 1; \
 	fi; \
@@ -348,7 +332,7 @@ dclean:
 	rm -f *.bak
 	@for i in $(DIRS) ;\
 	do \
-	if echo "$$i" | grep -v '^\.'; then \
+	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making dclean in $$i..." && \
 		$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' dclean ) || exit 1; \
 	fi; \
@@ -372,7 +356,7 @@ report:
 depend:
 	@for i in $(DIRS) ;\
 	do \
-	if echo "$$i" | grep -v '^\.'; then \
+	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making dependencies $$i..." && \
 		$(MAKE) SDIRS='${SDIRS}' DEPFLAG='${DEPFLAG}' depend ) || exit 1; \
 	fi; \
@@ -381,7 +365,7 @@ depend:
 lint:
 	@for i in $(DIRS) ;\
 	do \
-	if echo "$$i" | grep -v '^\.'; then \
+	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making lint $$i..." && \
 		$(MAKE) SDIRS='${SDIRS}' lint ) || exit 1; \
 	fi; \
@@ -390,7 +374,7 @@ lint:
 tags:
 	@for i in $(DIRS) ;\
 	do \
-	if echo "$$i" | grep -v '^\.'; then \
+	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making tags $$i..." && \
 		$(MAKE) SDIRS='${SDIRS}' tags ) || exit 1; \
 	fi; \
@@ -452,7 +436,7 @@ install: all install_docs
 	done;
 	@for i in $(DIRS) ;\
 	do \
-	if echo "$$i" | grep -v '^\.'; then \
+	if [ -d "$$i" ]; then \
 		(cd $$i; echo "installing $$i..."; \
 		$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}' INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}' EX_LIBS='${EX_LIBS}' SDIRS='${SDIRS}' RANLIB='${RANLIB}' install ); \
 	fi; \
@@ -462,11 +446,24 @@ install: all install_docs
 		if [ -f "$$i" ]; then \
 		(       echo installing $$i; \
 			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-			(echo $$i | grep '\\.a$$' > /dev/null 2>&1) \
-			&& $(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
 		fi \
 	done
+	@if [ -n "$(SHARED_LIBS)" ]; then \
+		tmp="$(SHARED_LIBS)"; \
+		for i in $${tmp:-x}; \
+		do \
+			if [ -f "$$i" ]; then \
+			(       echo installing $$i; \
+				cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
+				chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
+			fi \
+		done; \
+		(	here="`pwd`"; \
+			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
+			make -f $$here/Makefile link-shared ); \
+	fi
 
 install_docs:
 	@$(PERL) $(TOP)/util/mkdir-p.pl \
@@ -492,12 +489,5 @@ install_docs:
 			--release=$(VERSION) `basename $$i`) \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
 	done
-
-shlib: all
-	if [ ! -d shlib_dir ] ; then mkdir shlib_dir ; else rm -f shlib_dir/* ; fi
-	cd shlib_dir ; ar -x ../libcrypto.a && $(CC) -shared ./*.o -Wl,-soname -Wl,libcrypto.so.0.9 \
-            -o ./libcrypto.so.0.9.4 && rm *.o
-	cd shlib_dir ; ar -x ../libssl.a && $(CC) -shared ./*.o -Wl,-soname -Wl,libssl.so.0.9 \
-            -o ./libssl.so.0.9.4 && rm *.o
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

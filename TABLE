@@ -19,6 +19,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** BC-32
 $cc           = bcc32
@@ -39,6 +40,7 @@ $rc5_obj      =
 $dso_scheme   = win32
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** BS2000-OSD
 $cc           = c89
@@ -59,6 +61,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** CygWin32
 $cc           = gcc
@@ -79,6 +82,7 @@ $rc5_obj      =
 $dso_scheme   = win32
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** FreeBSD
 $cc           = gcc
@@ -99,6 +103,7 @@ $rc5_obj      = asm/r586-out.o
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** FreeBSD-alpha
 $cc           = gcc
@@ -116,9 +121,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** FreeBSD-elf
 $cc           = gcc
@@ -136,9 +142,10 @@ $cast_obj     = asm/cx86-elf.o
 $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** MPE/iX-gcc
 $cc           = gcc
@@ -159,6 +166,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** Mingw32
 $cc           = gcc
@@ -179,6 +187,7 @@ $rc5_obj      =
 $dso_scheme   = win32
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** NetBSD-m68
 $cc           = gcc
@@ -196,9 +205,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** NetBSD-sparc
 $cc           = gcc
@@ -216,9 +226,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** NetBSD-x86
 $cc           = gcc
@@ -236,9 +247,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** OpenBSD
 $cc           = gcc
@@ -256,9 +268,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** OpenBSD-alpha
 $cc           = gcc
@@ -276,9 +289,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** OpenBSD-mips
 $cc           = gcc
@@ -296,9 +310,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** OpenBSD-x86
 $cc           = gcc
@@ -317,8 +332,9 @@ $rc4_obj      = asm/rx86-out.o
 $rmd160_obj   = asm/rm86-out.o
 $rc5_obj      = asm/r586-out.o
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** ReliantUNIX
 $cc           = cc
@@ -339,6 +355,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** SINIX
 $cc           = cc
@@ -359,6 +376,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** SINIX-N
 $cc           = /usr/ucb/cc
@@ -379,6 +397,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** VC-MSDOS
 $cc           = cl
@@ -399,6 +418,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** VC-NT
 $cc           = cl
@@ -419,6 +439,7 @@ $rc5_obj      =
 $dso_scheme   = win32
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** VC-W31-16
 $cc           = cl
@@ -439,6 +460,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** VC-W31-32
 $cc           = cl
@@ -459,6 +481,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** VC-WIN16
 $cc           = cl
@@ -479,6 +502,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** VC-WIN32
 $cc           = cl
@@ -499,6 +523,7 @@ $rc5_obj      =
 $dso_scheme   = win32
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** aix-cc
 $cc           = cc
@@ -519,6 +544,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** aix-gcc
 $cc           = gcc
@@ -539,6 +565,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** alpha-cc
 $cc           = cc
@@ -559,6 +586,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= true64-shared
 $shared_cflag = 
+$shared_extension = .so
 
 *** alpha-gcc
 $cc           = gcc
@@ -579,6 +607,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= true64-shared
 $shared_cflag = 
+$shared_extension = .so
 
 *** alpha164-cc
 $cc           = cc
@@ -599,6 +628,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= true64-shared
 $shared_cflag = 
+$shared_extension = .so
 
 *** bsdi-elf-gcc
 $cc           = gcc
@@ -616,9 +646,10 @@ $cast_obj     = asm/cx86-elf.o
 $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** bsdi-gcc
 $cc           = gcc
@@ -639,6 +670,7 @@ $rc5_obj      = asm/r586bsdi.o
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** cc
 $cc           = cc
@@ -659,6 +691,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** cray-t3e
 $cc           = cc
@@ -679,6 +712,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** cray-t90-cc
 $cc           = cc
@@ -699,6 +733,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** debug
 $cc           = gcc
@@ -719,6 +754,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** debug-ben
 $cc           = gcc
@@ -739,6 +775,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** debug-ben-debug
 $cc           = gcc
@@ -759,6 +796,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** debug-ben-strict
 $cc           = gcc
@@ -779,6 +817,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** debug-bodo
 $cc           = gcc
@@ -799,6 +838,7 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** debug-levitte-linux-elf
 $cc           = gcc
@@ -819,6 +859,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** debug-linux-elf
 $cc           = gcc
@@ -839,6 +880,7 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** debug-linux-elf-noefence
 $cc           = gcc
@@ -859,6 +901,7 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** debug-rse
 $cc           = cc
@@ -879,6 +922,7 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** debug-solaris-sparcv8-cc
 $cc           = cc
@@ -899,6 +943,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** debug-solaris-sparcv8-gcc
 $cc           = gcc
@@ -919,6 +964,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** debug-solaris-sparcv9-cc
 $cc           = cc
@@ -939,6 +985,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** debug-solaris-sparcv9-gcc
 $cc           = gcc
@@ -959,6 +1006,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** debug-steve
 $cc           = gcc
@@ -979,6 +1027,7 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** debug-ulf
 $cc           = gcc
@@ -999,6 +1048,7 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** dgux-R3-gcc
 $cc           = gcc
@@ -1019,6 +1069,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** dgux-R4-gcc
 $cc           = gcc
@@ -1039,6 +1090,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** dgux-R4-x86-gcc
 $cc           = gcc
@@ -1059,6 +1111,7 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** dist
 $cc           = cc
@@ -1079,6 +1132,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** gcc
 $cc           = gcc
@@ -1099,6 +1153,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux-brokencc
 $cc           = cc
@@ -1119,6 +1174,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux-brokengcc
 $cc           = gcc
@@ -1139,6 +1195,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux-cc
 $cc           = cc
@@ -1159,6 +1216,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux-gcc
 $cc           = gcc
@@ -1179,6 +1237,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux-parisc-cc
 $cc           = cc
@@ -1199,6 +1258,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux-parisc-cc-o4
 $cc           = cc
@@ -1219,6 +1279,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux-parisc-gcc
 $cc           = gcc
@@ -1239,6 +1300,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux-parisc1_1-cc
 $cc           = cc
@@ -1259,6 +1321,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux-parisc2-cc
 $cc           = cc
@@ -1279,6 +1342,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux10-brokencc
 $cc           = cc
@@ -1299,6 +1363,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux10-brokengcc
 $cc           = gcc
@@ -1319,6 +1384,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux10-cc
 $cc           = cc
@@ -1339,6 +1405,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux10-gcc
 $cc           = gcc
@@ -1359,6 +1426,7 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux64-parisc-cc
 $cc           = cc
@@ -1379,6 +1447,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** hpux64-parisc2-cc
 $cc           = cc
@@ -1399,6 +1468,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** irix-cc
 $cc           = cc
@@ -1419,6 +1489,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** irix-gcc
 $cc           = gcc
@@ -1439,6 +1510,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** irix-mips3-cc
 $cc           = cc
@@ -1459,6 +1531,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** irix-mips3-gcc
 $cc           = gcc
@@ -1479,6 +1552,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** irix64-mips4-cc
 $cc           = cc
@@ -1499,6 +1573,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** irix64-mips4-gcc
 $cc           = gcc
@@ -1519,6 +1594,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** linux-alpha+bwx-ccc
 $cc           = ccc
@@ -1539,13 +1615,14 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** linux-alpha+bwx-gcc
 $cc           = gcc
 $cflags       = -O3 -DL_ENDIAN -DTERMIO
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = 
+$lflags       = -ldl
 $bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL
 $bn_obj       = asm/alpha.o
 $des_obj      = 
@@ -1556,9 +1633,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-alpha-ccc
 $cc           = ccc
@@ -1579,13 +1657,14 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** linux-alpha-gcc
 $cc           = gcc
 $cflags       = -O3 -DL_ENDIAN -DTERMIO
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = 
+$lflags       = -ldl
 $bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_UNROLL
 $bn_obj       = asm/alpha.o
 $des_obj      = 
@@ -1596,9 +1675,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-aout
 $cc           = gcc
@@ -1619,6 +1699,7 @@ $rc5_obj      = asm/r586-out.o
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** linux-elf
 $cc           = gcc
@@ -1639,6 +1720,7 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-elf-arm
 $cc           = gcc
@@ -1659,6 +1741,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-ia64
 $cc           = gcc
@@ -1679,6 +1762,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** linux-m68k
 $cc           = gcc
@@ -1699,6 +1783,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** linux-mips
 $cc           = gcc
@@ -1719,6 +1804,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** linux-ppc
 $cc           = gcc
@@ -1739,6 +1825,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** linux-sparcv7
 $cc           = gcc
@@ -1759,6 +1846,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** linux-sparcv8
 $cc           = gcc
@@ -1779,6 +1867,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** linux-sparcv9
 $cc           = gcc
@@ -1799,6 +1888,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** ncr-scde
 $cc           = cc
@@ -1819,6 +1909,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** newsos4-gcc
 $cc           = gcc
@@ -1839,6 +1930,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** nextstep
 $cc           = cc
@@ -1859,6 +1951,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** nextstep3.3
 $cc           = cc
@@ -1879,6 +1972,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** purify
 $cc           = purify gcc
@@ -1899,6 +1993,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** qnx4
 $cc           = cc
@@ -1919,6 +2014,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** rhapsody-ppc-cc
 $cc           = cc
@@ -1939,6 +2035,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** sco5-cc
 $cc           = cc
@@ -1959,6 +2056,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** sco5-gcc
 $cc           = gcc
@@ -1979,6 +2077,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** solaris-sparc-sc3
 $cc           = cc
@@ -1999,6 +2098,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv7-cc
 $cc           = cc
@@ -2019,6 +2119,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv7-gcc
 $cc           = gcc
@@ -2039,6 +2140,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv8-cc
 $cc           = cc
@@ -2059,6 +2161,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv8-gcc
 $cc           = gcc
@@ -2079,6 +2182,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv9-cc
 $cc           = cc
@@ -2099,6 +2203,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv9-gcc
 $cc           = gcc
@@ -2119,6 +2224,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv9-gcc27
 $cc           = gcc
@@ -2139,6 +2245,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-x86-gcc
 $cc           = gcc
@@ -2159,6 +2266,7 @@ $rc5_obj      = asm/r586-sol.o
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris64-sparcv9-cc
 $cc           = cc
@@ -2179,6 +2287,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** sunos-gcc
 $cc           = gcc
@@ -2199,6 +2308,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** ultrix-cc
 $cc           = cc
@@ -2219,6 +2329,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** ultrix-gcc
 $cc           = gcc
@@ -2239,6 +2350,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** unixware-2.0
 $cc           = cc
@@ -2259,6 +2371,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** unixware-2.0-pentium
 $cc           = cc
@@ -2279,6 +2392,7 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
 
 *** unixware-7
 $cc           = cc
@@ -2299,3 +2413,4 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_extension = 
