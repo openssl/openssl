@@ -78,8 +78,8 @@ int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	if(enc && (enc != -1)) enc = 1;
 	if (cipher)
 		{
-		if(ctx->cipher_data)
-			OPENSSL_free(ctx->cipher_data);
+		if(ctx->cipher)
+			EVP_CIPHER_CTX_cleanup(ctx);
 		ctx->cipher=cipher;
 		ctx->cipher_data=OPENSSL_malloc(ctx->cipher->ctx_size);
 		ctx->key_len = cipher->key_len;
