@@ -267,7 +267,7 @@ errors:
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i && echo "making errors in $$i..." && \
-	$(MAKE) SDIRS='${SDIRS}' errors ) || exit 1; \
+	$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' errors ) || exit 1; \
 	done;
 
 tar:
