@@ -243,7 +243,8 @@ bad:
 		goto end;
 		}
 
-	if (cipher == NULL) cipher=getenv("SSL_CIPHER");
+	if (cipher == NULL && OPENSSL_issetugid() == 0)
+		cipher=getenv("SSL_CIPHER");
 
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
