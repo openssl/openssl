@@ -157,7 +157,7 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
 		goto err;
 		}
 */
-	rsa->d=(BIGNUM *)BN_mod_inverse(NULL,rsa->e,r0,ctx2);	/* d */
+	rsa->d=BN_mod_inverse(NULL,rsa->e,r0,ctx2);	/* d */
 	if (rsa->d == NULL) goto err;
 
 	/* calculate d mod (p-1) */

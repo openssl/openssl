@@ -131,8 +131,7 @@ int RSA_check_key(RSA *key)
 		}
 	
 	/* iqmp = q^-1 mod p? */
-	r = BN_mod_inverse(i, key->q, key->p, ctx);
-	if (!r) { ret = -1; goto err; }
+	if(!BN_mod_inverse(i, key->q, key->p, ctx)) { ret = -1; goto err; }
 
 	if (BN_cmp(i, key->iqmp) != 0)
 		{
