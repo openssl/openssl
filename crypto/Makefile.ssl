@@ -57,6 +57,10 @@ buildinf.h: ../Makefile.ssl
 	echo "  #define DATE \"`date`\""; \
 	echo "#endif" ) >buildinf.h
 
+testapps:
+	(cd des && make des)
+	(cd pkcs7 && make testapps)
+
 subdirs:
 	@for i in $(SDIRS) ;\
 	do \

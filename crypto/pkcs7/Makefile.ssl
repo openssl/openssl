@@ -37,7 +37,7 @@ top:
 
 test:
 
-all:	lib testapps
+all:	lib
 
 testapps: enc dec sign verify
 
