@@ -1,0 +1,214 @@
+OpenSSL X509V3 extension configuration: preliminary documentation.
+
+INTRODUCTION.
+
+For OpenSSL 0.9.2 the extension code has be considerably enhanced. It is now
+possible to add and print out common X509 V3 certificate and CRL extensions.
+
+For more information about the meaning of extensions see:
+
+http://www.imc.org/ietf-pkix/
+http://home.netscape.com/eng/security/certs.html
+
+PRINTING EXTENSIONS.
+
+Extension values are automatically printed out for supported extensions.
+
+x509 -in cert.pem -text
+crl -in crl.pem -text
+
+will give information in the extension printout, for example:
+
+
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:TRUE
+            X509v3 Subject Key Identifier: 
+                73:FE:F7:59:A7:E1:26:84:44:D6:44:36:EE:79:1A:95:7C:B1:4B:15
+            X509v3 Authority Key Identifier: 
+                keyid:73:FE:F7:59:A7:E1:26:84:44:D6:44:36:EE:79:1A:95:7C:B1:4B:15, DirName:/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/Email=email@1.address/Email=email@2.address, serial:00
+            X509v3 Key Usage: 
+                Certificate Sign, CRL Sign
+            X509v3 Subject Alternative Name: 
+                email:email@1.address, email:email@2.address
+
+CONFIGURATION FILES.
+
+The OpenSSL utilities 'ca' and 'req' can now have extension sections listing
+which certificate extensions to include. In each case a line:
+
+x509_extensions = extension_section
+
+indicates which section contains the extensions. In the case of 'req' the
+extension section is used when the -x509 option is present to create a
+self signed root certificate.
+
+EXTENSION SYNTAX.
+
+Extensions have the basic form:
+
+extension_name=[critical,] extension_options
+
+the use of the critical option makes the extension critical. Extreme caution
+should be made when using the critical flag. If an extension is marked
+as critical then any client that does not understand the extension should
+reject it as invalid. Some broken software will reject certificates which
+have *any* critical extensions (these violates PKIX but we have to live
+with it).
+
+There are three main types of extension, string extensions, multi valued
+extensions, and raw extensions.
+
+String extensions simply have a string which defines the value of the or how
+it is obtained.
+
+For example:
+
+nsComment="This is a Comment"
+
+Multi valued extensions have a short form and a long form. The short form
+is a list of names and values:
+
+basicConstraints=critical,CA:true,pathlen:1
+
+The long form allows the values to be placed in a separate section:
+
+basicConstraints=critical,@bs_section
+
+[bs_section]
+
+CA=true
+pathlen=1
+
+Both forms are equivalent. However it should be noted that in some cases the
+same name can appear multiple times, for example,
+
+subjectAltName=email:steve@here,email:steve@there
+
+in this case an equivalent long form is:
+
+subjectAltName=@alt_section
+
+[alt_section]
+
+email.1=steve@here
+email.2=steve@there
+
+This is because the configuration file code cannot handle the same name
+occurring twice in the same extension.
+
+Raw extensions allow arbitrary data to be placed in an extension. For
+example
+
+1.2.3.4=critical,RAW:01:02:03:04
+1.2.3.4=RAW:01020304
+
+The value following RAW is a hex dump of the extension contents. Any extension
+can be placed in this form to override the default behaviour. For example:
+
+basicConstraints=critical,RAW:00:01:02:03
+
+WARNING: raw extensions should be used with caution. It is possible to create
+totally invalid extensions unless care is taken.
+
+CURRENTLY SUPPORTED EXTENSIONS.
+
+Literal String extensions.
+
+In each case the 'value' of the extension is placed directly in the extension.
+Currently supported extensions in this category are: nsBaseUrl, nsRevocationUrl
+nsCaRevocationUrl, nsRenewalUrl, nsCaPolicyUrl, nsSslServerName and
+nsComment.
+
+For example:
+
+nsComment="This is a test comment"
+
+Bit Strings.
+
+Bit string extensions just consist of a list of suppported bits, currently
+two extensions are in this category: PKIX keyUsage and the Netscape specific
+nsCertType.
+
+nsCertType (netscape certificate type) takes the flags: client, server, email,
+objsign, reserved, sslCA, emailCA, objCA.
+
+keyUsage (PKIX key usage) takes the flags: digitalSignature, nonRepudiation,
+keyEncipherment, dataEncipherment, keyAgreement, keyCertSign, cRLCertSign,
+encipherOnly, decipherOnly.
+
+For example:
+
+nsCertType=server
+
+keyUsage=critical, digitalSignature, nonRepudiation
+
+
+Basic Constraints.
+
+Basic constraints is a multi valued extension that supports a CA and an
+optional pathlen option. The CA option takes the values true and false and
+pathlen takes an integer. Note if the CA option is false the pathlen option
+should be omitted.
+
+Examples:
+
+basicConstraints=CA:TRUE
+basicConstraints=critical,CA:TRUE, pathlen:10
+
+NOTE: for a CA to be considered valid it must have the CA option set to
+TRUE. An end user certificate MUST NOT have the CA value set to true.
+According to PKIX recommendations it should exclude the extension entirely
+however some software may require CA set to FALSE for end entity certificates.
+
+Subject Key Identifier.
+
+This is really a string extension and can take two possible values. Either
+a hex string giving details of the extension value to include or the word
+'hash' which then automatically follow PKIX guidelines in selecting and
+appropriate key identifier. The use of the hex string is strongly discouraged.
+
+Example: subjectKeyIdentifier=hash
+
+Authority Key Identifier.
+
+The authority key identifier extension permits two options. keyid and issuer:
+both can take the optional value "always".
+
+If the keyid option is present an attempt is made to copy the subject key
+identifier from the parent certificate. If the value "always" is present
+then an error is returned if the option fails.
+
+The issuer option copies the issuer and serial number from the issuer
+certificate. Normally this will only be done if the keyid option fails or
+is not included: the "always" flag will always include the value.
+
+Subject Alternative Name.
+
+The subject alternative name extension allows various literal values to be
+included in the configuration file. These include "email" (an email address)
+"URI" a uniform resource indicator, "DNS" (a DNS domain name), RID (a
+registered ID: OBJECT IDENTIFIER) and IP (and IP address).
+
+Also the email option include a special 'copy' value. This will automatically
+include and email addresses contained in the certificate subject name in
+the extension.
+
+Examples:
+
+subjectAltName=email:copy,email:my@other.address,URL:http://my.url.here/
+subjectAltName=email:my@other.address,RID:1.2.3.4
+
+Issuer Alternative Name.
+
+The issuer alternative name option supports all the literal options of
+subject alternative name. It does *not* support the email:copy option because
+that would not make sense. It does support and additional issuer:copy option
+that will copy all the subject alternative name values from the issuer 
+certificate (if possible).
+
+Display only extensions.
+
+Some extensions are only partially supported and currently are only displayed
+but cannot be set. These include private key usage period, CRL number, and
+CRL reason.
