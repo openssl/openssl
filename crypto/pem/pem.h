@@ -182,6 +182,84 @@ typedef struct pem_ctx_st
 	unsigned char *data;
 	} PEM_CTX;
 
+/* These macros make the PEM_read/PEM_write functions easier to maintain and
+ * write. Now they are all implemented with either:
+ * IMPLEMENT_PEM_rw(...) or IMPLEMENT_PEM_rw_cb(...)
+ */
+
+#ifdef NO_FP_API
+
+#define IMPLEMENT_PEM_read_fp(name, type, str, asn1) /**/
+#define IMPLEMENT_PEM_write_fp(name, type, str, asn1) /**/
+#define IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1) /**/
+
+#else
+
+#define IMPLEMENT_PEM_read_fp(name, type, str, asn1) \
+type *PEM_read_##name(FILE *fp, type **x, pem_password_cb *cb)\
+{ \
+return((type *)PEM_ASN1_read((char *(*)())d2i_##asn1, str,fp,(char **)x,cb)); \
+} \
+
+#define IMPLEMENT_PEM_write_fp(name, type, str, asn1) \
+int PEM_write_##name(FILE *fp, type *x) \
+{ \
+return(PEM_ASN1_write((int (*)())i2d_##asn1,str,fp, (char *)x, \
+							 NULL,NULL,0,NULL)); \
+} 
+
+#define IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1) \
+int PEM_write_##name(FILE *fp, type *x, const EVP_CIPHER *enc, \
+	     unsigned char *kstr, int klen, pem_password_cb *cb) \
+	{ \
+	return(PEM_ASN1_write((int (*)())i2d_##asn1,str,fp, \
+		(char *)x,enc,kstr,klen,cb)); \
+	}
+
+#endif
+
+#define IMPLEMENT_PEM_read_bio(name, type, str, asn1) \
+type *PEM_read_bio_##name(BIO *bp, type **x, pem_password_cb *cb)\
+{ \
+return((type *)PEM_ASN1_read_bio((char *(*)())d2i_##asn1, str,bp,\
+							(char **)x,cb)); \
+}
+
+#define IMPLEMENT_PEM_write_bio(name, type, str, asn1) \
+int PEM_write_bio_##name(BIO *bp, type *x) \
+{ \
+return(PEM_ASN1_write_bio((int (*)())i2d_##asn1,str,bp, (char *)x, \
+							 NULL,NULL,0,NULL)); \
+}
+
+#define IMPLEMENT_PEM_write_cb_bio(name, type, str, asn1) \
+int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
+	     unsigned char *kstr, int klen, pem_password_cb *cb) \
+	{ \
+	return(PEM_ASN1_write_bio((int (*)())i2d_##asn1,str,bp, \
+		(char *)x,enc,kstr,klen,cb)); \
+	}
+
+#define IMPLEMENT_PEM_write(name, type, str, asn1) \
+	IMPLEMENT_PEM_write_bio(name, type, str, asn1) \
+	IMPLEMENT_PEM_write_fp(name, type, str, asn1) 
+
+#define IMPLEMENT_PEM_write_cb(name, type, str, asn1) \
+	IMPLEMENT_PEM_write_cb_bio(name, type, str, asn1) \
+	IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1) 
+
+#define IMPLEMENT_PEM_read(name, type, str, asn1) \
+	IMPLEMENT_PEM_read_bio(name, type, str, asn1) \
+	IMPLEMENT_PEM_read_fp(name, type, str, asn1) 
+
+#define IMPLEMENT_PEM_rw(name, type, str, asn1) \
+	IMPLEMENT_PEM_read(name, type, str, asn1) \
+	IMPLEMENT_PEM_write(name, type, str, asn1)
+
+#define IMPLEMENT_PEM_rw_cb(name, type, str, asn1) \
+	IMPLEMENT_PEM_read(name, type, str, asn1) \
+	IMPLEMENT_PEM_write_cb(name, type, str, asn1)
+
 #ifdef SSLEAY_MACROS
 
 #define PEM_write_SSL_SESSION(fp,x) \
@@ -410,7 +488,7 @@ int PEM_write_X509(FILE *fp,X509 *x);
 int PEM_write_X509_REQ(FILE *fp,X509_REQ *x);
 int PEM_write_X509_CRL(FILE *fp,X509_CRL *x);
 #ifndef NO_RSA
-int PEM_write_RSAPrivateKey(FILE *fp,RSA *x,EVP_CIPHER *enc,unsigned char *kstr,
+int PEM_write_RSAPrivateKey(FILE *fp,RSA *x,const EVP_CIPHER *enc,unsigned char *kstr,
         int klen, pem_password_cb *);
 int PEM_write_RSAPublicKey(FILE *fp,RSA *x);
 #endif
@@ -419,7 +497,7 @@ int PEM_write_DSAPrivateKey(FILE *fp,DSA *x,const EVP_CIPHER *enc,
 			    unsigned char *kstr,
         int klen, pem_password_cb *);
 #endif
-int PEM_write_PrivateKey(FILE *fp,EVP_PKEY *x,EVP_CIPHER *enc,
+int PEM_write_PrivateKey(FILE *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
 	unsigned char *kstr,int klen, pem_password_cb *);
 int PEM_write_PKCS7(FILE *fp,PKCS7 *x);
 #ifndef NO_DH
@@ -468,7 +546,7 @@ int PEM_write_bio_RSAPublicKey(BIO *fp,RSA *x);
 int PEM_write_bio_DSAPrivateKey(BIO *fp,DSA *x,const EVP_CIPHER *enc,
         unsigned char *kstr,int klen, pem_password_cb *);
 #endif
-int PEM_write_bio_PrivateKey(BIO *fp,EVP_PKEY *x,EVP_CIPHER *enc,
+int PEM_write_bio_PrivateKey(BIO *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
         unsigned char *kstr,int klen, pem_password_cb *);
 int PEM_write_bio_PKCS7(BIO *bp,PKCS7 *x);
 #ifndef NO_DH

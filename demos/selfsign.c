@@ -4,13 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <openssl/buffer.h>
-#include <openssl/crypto.h>
-#include <openssl/objects.h>
-#include <openssl/asn1.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/conf.h>
+#include <openssl/x509v3.h>
 
 int mkit(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days);
 
@@ -22,7 +18,7 @@ int main()
 
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-	X509v3_add_netscape_extensions();
+	X509V3_add_standard_extensions();
 
 	if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 		BIO_set_fp(bio_err,stderr,BIO_NOCLOSE);
@@ -39,7 +35,7 @@ int main()
 	EVP_PKEY_free(pkey);
 	BIO_free(bio_err);
 
-	X509_cleanup_extensions();
+	X509V3_EXT_cleanup();
 
 	CRYPTO_mem_leaks(bio_err);
 	return(0);
@@ -53,9 +49,10 @@ int main()
 #  define MS_FAR
 #endif
 
-static void MS_CALLBACK callback(p, n)
+static void MS_CALLBACK callback(p, n, arg)
 int p;
 int n;
+void *arg;
 	{
 	char c='B';
 
@@ -76,11 +73,9 @@ int days;
 	X509 *x;
 	EVP_PKEY *pk;
 	RSA *rsa;
-	char *s;
 	X509_NAME *name=NULL;
 	X509_NAME_ENTRY *ne=NULL;
 	X509_EXTENSION *ex=NULL;
-	ASN1_OCTET_STRING *data=NULL;
 
 	
 	if ((pkeyp == NULL) || (*pkeyp == NULL))
@@ -135,24 +130,33 @@ int days;
 	/* finished with structure */
 	X509_NAME_free(name);
 
-	data=X509v3_pack_string(NULL,V_ASN1_BIT_STRING,
-		"\001",1);
-	ex=X509_EXTENSION_create_by_NID(NULL,NID_netscape_cert_type,0,data);
+	/* Add extension using V3 code: we can set the config file as NULL
+	 * because we wont reference any other sections. We can also set
+         * the context to NULL because none of these extensions below will need
+	 * to access it.
+	 */
+
+	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_cert_type, "server");
 	X509_add_ext(x,ex,-1);
 
-	X509v3_pack_string(&data,V_ASN1_IA5STRING,
-		"example comment extension",-1);
-	X509_EXTENSION_create_by_NID(&ex,NID_netscape_comment,0,data);
+	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_comment,
+						"example comment extension");
 	X509_add_ext(x,ex,-1);
 
-	X509v3_pack_string(&data,V_ASN1_BIT_STRING,
-		"www.cryptsoft.com",-1);
-	X509_EXTENSION_create_by_NID(&ex,NID_netscape_ssl_server_name,0,data);
+	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_ssl_server_name,
+							"www.openssl.org");
+
 	X509_add_ext(x,ex,-1);
+
+#if 0
+	/* might want something like this too.... */
+	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
+							"critical,CA:TRUE");
+
+
+	X509_add_ext(x,ex,-1);
+#endif
 	
-	X509_EXTENSION_free(ex);
-	ASN1_OCTET_STRING_free(data);
-
 	if (!X509_sign(x,pk,EVP_md5()))
 		goto err;
 
@@ -162,7 +166,3 @@ int days;
 err:
 	return(0);
 	}
-			 
-
-
-

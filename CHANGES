@@ -5,6 +5,16 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Fix demos/selfsign.c: it used obsolete and deleted functions, changed
+     to use the new extension code.
+     [Steve Henson]
+
+  *) Implement the PEM_read/PEM_write functions in crypto/pem/pem_all.c
+     with macros. This should make it easier to change their form, add extra
+     arguments etc. Fix a few PEM prototypes which didn't have cipher as a
+     constant.
+     [Steve Henson]
+
   *) Add to configuration table a new entry that can specify an alternative
      name for unistd.h (for pre-POSIX systems); we need this for NeXTstep,
      according to Mark Crispin <MRC@Panda.COM>.
