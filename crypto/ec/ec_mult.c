@@ -336,7 +336,7 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 		
 		for (i = 0; i < totalnum; i++)
 			{
-			if (wNAF_len[i] > k)
+			if (wNAF_len[i] > (size_t)k)
 				{
 				int digit = wNAF[i][k];
 				int is_neg;
