@@ -434,25 +434,25 @@ tags:
 	done;
 
 errors:
-	perl util/mkerr.pl -recurse -write
+	$(PERL) util/mkerr.pl -recurse -write
 
 stacks:
-	perl util/mkstack.pl -write
+	$(PERL) util/mkstack.pl -write
 
 util/libeay.num::
-	perl util/mkdef.pl crypto update
+	$(PERL) util/mkdef.pl crypto update
 
 util/ssleay.num::
-	perl util/mkdef.pl ssl update
+	$(PERL) util/mkdef.pl ssl update
 
 crypto/objects/obj_dat.h: crypto/objects/obj_mac.h crypto/objects/obj_dat.pl
-	perl crypto/objects/obj_dat.pl crypto/objects/obj_mac.h crypto/objects/obj_dat.h
+	$(PERL) crypto/objects/obj_dat.pl crypto/objects/obj_mac.h crypto/objects/obj_dat.h
 crypto/objects/obj_mac.h: crypto/objects/objects.pl crypto/objects/objects.txt 
-	perl crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num crypto/objects/obj_mac.h
+	$(PERL) crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num crypto/objects/obj_mac.h
 
 TABLE: Configure
 	(echo 'Output of `Configure TABLE'"':"; \
-	perl Configure TABLE) > TABLE
+	$(PERL) Configure TABLE) > TABLE
 
 update: depend errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h TABLE
 
