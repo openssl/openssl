@@ -180,7 +180,7 @@ int test_sig_vrf(ECDSA *ecdsa, const unsigned char* dgst)
         int       ret=0,type=0;
         unsigned char *buffer=NULL;
         unsigned int  buf_len;
-        clock_t  time;
+        clock_t  tim;
  
         if (!ecdsa || !ecdsa->group || !ecdsa->pub_key || !ecdsa->priv_key)
                 return 0;
@@ -192,24 +192,24 @@ int test_sig_vrf(ECDSA *ecdsa, const unsigned char* dgst)
         if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
                 goto err;
  
-        time = clock();
+        tim = clock();
         if (!ECDSA_sign(type, dgst , 20, buffer, &buf_len, ecdsa))
         {
                 BIO_printf(bio_err, "ECDSA_sign() FAILED \n");
                 goto err;
         }
-        time = clock() - time;
-        BIO_printf(bio_err, " [ ECDSA_sign() %.2f"UNIT, (double)time/(CLOCKS_PER_SEC));
+        tim = clock() - tim;
+        BIO_printf(bio_err, " [ ECDSA_sign() %.2f"UNIT, (double)tim/(CLOCKS_PER_SEC));
  
-        time = clock();
+        tim = clock();
         ret = ECDSA_verify(type, dgst, 20, buffer, buf_len, ecdsa);
         if (ret != 1)
         {
                 BIO_printf(bio_err, "ECDSA_verify() FAILED \n");
                 goto err;
         }
-        time = clock() - time;
-        BIO_printf(bio_err, " and ECDSA_verify() %.2f"UNIT" ] ", (double)time/(CLOCKS_PER_SEC));
+        tim = clock() - tim;
+        BIO_printf(bio_err, " and ECDSA_verify() %.2f"UNIT" ] ", (double)tim/(CLOCKS_PER_SEC));
  
 err:    OPENSSL_free(buffer);
         return(ret == 1);
@@ -323,11 +323,11 @@ int main(void)
 	int 	 	dgst_len=0;
 	unsigned char 	*dgst=NULL;
 	int 	 	ret = 0, i=0;
-	clock_t		time;
+	clock_t		tim;
 	unsigned char 	*buffer=NULL;
 	unsigned char   *pp;
 	long		buf_len=0;
-	double		time_d;
+	double		tim_d;
 	EVP_MD_CTX	*md_ctx=NULL;
 	
 	/* enable memory leak checking unless explicitly disabled */
@@ -542,20 +542,20 @@ int main(void)
 	if ((ecdsa = ECDSA_new()) == NULL) goto err;
 	if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_192)) == NULL) goto err;
 	if (!ECDSA_generate_key(ecdsa)) goto err;
-        time = clock();
+        tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
-        time = clock() - time;
-	time_d = (double)time / CLOCKS_PER_SEC;
+        tim = clock() - tim;
+	tim_d = (double)tim / CLOCKS_PER_SEC;
         BIO_printf(bio_err, "%d x ECDSA_do_sign()   in %.2f"UNIT" => average time for ECDSA_do_sign()   %.4f"UNIT"\n"
-		, ECDSA_NIST_TESTS, time_d, time_d / ECDSA_NIST_TESTS);
-	time = clock();
+		, ECDSA_NIST_TESTS, tim_d, tim_d / ECDSA_NIST_TESTS);
+	tim = clock();
 	for (i=0; i<ECDSA_NIST_TESTS; i++)
 		if (!ECDSA_do_verify(digest[i], 20, signatures[i], ecdsa)) goto err;
-	time = clock() - time;
-	time_d = (double)time / CLOCKS_PER_SEC;
+	tim = clock() - tim;
+	tim_d = (double)tim / CLOCKS_PER_SEC;
 	BIO_printf(bio_err, "%d x ECDSA_do_verify() in %.2f"UNIT" => average time for ECDSA_do_verify() %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, time_d, time_d/ECDSA_NIST_TESTS);
+                , ECDSA_NIST_TESTS, tim_d, tim_d/ECDSA_NIST_TESTS);
 	for (i=0; i<ECDSA_NIST_TESTS; i++)
 	{
 		ECDSA_SIG_free(signatures[i]);
@@ -568,20 +568,20 @@ int main(void)
         if ((ecdsa = ECDSA_new()) == NULL) goto err;
         if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_224)) == NULL) goto err;
         if (!ECDSA_generate_key(ecdsa)) goto err;
-        time = clock();
+        tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
-        time = clock() - time;
-        time_d = (double)time / CLOCKS_PER_SEC;
+        tim = clock() - tim;
+        tim_d = (double)tim / CLOCKS_PER_SEC;
         BIO_printf(bio_err, "%d x ECDSA_do_sign()   in %.2f"UNIT" => average time for ECDSA_do_sign()   %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, time_d, time_d / ECDSA_NIST_TESTS);
-        time = clock();
+                , ECDSA_NIST_TESTS, tim_d, tim_d / ECDSA_NIST_TESTS);
+        tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if (!ECDSA_do_verify(digest[i], 20, signatures[i], ecdsa)) goto err;
-        time = clock() - time;
-        time_d = (double)time / CLOCKS_PER_SEC;
+        tim = clock() - tim;
+        tim_d = (double)tim / CLOCKS_PER_SEC;
         BIO_printf(bio_err, "%d x ECDSA_do_verify() in %.2f"UNIT" => average time for ECDSA_do_verify() %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, time_d, time_d/ECDSA_NIST_TESTS);
+                , ECDSA_NIST_TESTS, tim_d, tim_d/ECDSA_NIST_TESTS);
 	for (i=0; i<ECDSA_NIST_TESTS; i++)
 	{
 		ECDSA_SIG_free(signatures[i]);
@@ -594,20 +594,20 @@ int main(void)
         if ((ecdsa = ECDSA_new()) == NULL) goto err;
         if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_256)) == NULL) goto err;
         if (!ECDSA_generate_key(ecdsa)) goto err;
-        time = clock();
+        tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
-        time = clock() - time;
-        time_d = (double)time / CLOCKS_PER_SEC;
+        tim = clock() - tim;
+        tim_d = (double)tim / CLOCKS_PER_SEC;
         BIO_printf(bio_err, "%d x ECDSA_do_sign()   in %.2f"UNIT" => average time for ECDSA_do_sign()   %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, time_d, time_d / ECDSA_NIST_TESTS);
-        time = clock();
+                , ECDSA_NIST_TESTS, tim_d, tim_d / ECDSA_NIST_TESTS);
+        tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if (!ECDSA_do_verify(digest[i], 20, signatures[i], ecdsa)) goto err;
-        time = clock() - time;
-        time_d = (double)time / CLOCKS_PER_SEC;
+        tim = clock() - tim;
+        tim_d = (double)tim / CLOCKS_PER_SEC;
         BIO_printf(bio_err, "%d x ECDSA_do_verify() in %.2f"UNIT" => average time for ECDSA_do_verify() %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, time_d, time_d/ECDSA_NIST_TESTS);
+                , ECDSA_NIST_TESTS, tim_d, tim_d/ECDSA_NIST_TESTS);
 	for (i=0; i<ECDSA_NIST_TESTS; i++)
 	{
 		ECDSA_SIG_free(signatures[i]);
@@ -620,20 +620,20 @@ int main(void)
         if ((ecdsa = ECDSA_new()) == NULL) goto err;
         if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_384)) == NULL) goto err;
         if (!ECDSA_generate_key(ecdsa)) goto err;
-        time = clock();
+        tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
-        time = clock() - time;
-        time_d = (double)time / CLOCKS_PER_SEC;
+        tim = clock() - tim;
+        tim_d = (double)tim / CLOCKS_PER_SEC;
         BIO_printf(bio_err, "%d x ECDSA_do_sign()   in %.2f"UNIT" => average time for ECDSA_do_sign()   %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, time_d, time_d / ECDSA_NIST_TESTS);
-        time = clock();
+                , ECDSA_NIST_TESTS, tim_d, tim_d / ECDSA_NIST_TESTS);
+        tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if (!ECDSA_do_verify(digest[i], 20, signatures[i], ecdsa)) goto err;
-        time = clock() - time;
-        time_d = (double)time / CLOCKS_PER_SEC;
+        tim = clock() - tim;
+        tim_d = (double)tim / CLOCKS_PER_SEC;
         BIO_printf(bio_err, "%d x ECDSA_do_verify() in %.2f"UNIT" => average time for ECDSA_do_verify() %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, time_d, time_d/ECDSA_NIST_TESTS);
+                , ECDSA_NIST_TESTS, tim_d, tim_d/ECDSA_NIST_TESTS);
 	for (i=0; i<ECDSA_NIST_TESTS; i++)
 	{
 		ECDSA_SIG_free(signatures[i]);
@@ -646,20 +646,20 @@ int main(void)
         if ((ecdsa = ECDSA_new()) == NULL) goto err;
         if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_521)) == NULL) goto err;
         if (!ECDSA_generate_key(ecdsa)) goto err;
-        time = clock();
+        tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
-        time = clock() - time;
-        time_d = (double)time / CLOCKS_PER_SEC;
+        tim = clock() - tim;
+        tim_d = (double)tim / CLOCKS_PER_SEC;
         BIO_printf(bio_err, "%d x ECDSA_do_sign()   in %.2f"UNIT" => average time for ECDSA_do_sign()   %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, time_d, time_d / ECDSA_NIST_TESTS);
-        time = clock();
+                , ECDSA_NIST_TESTS, tim_d, tim_d / ECDSA_NIST_TESTS);
+        tim = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
                 if (!ECDSA_do_verify(digest[i], 20, signatures[i], ecdsa)) goto err;
-        time = clock() - time;
-        time_d = (double)time / CLOCKS_PER_SEC;
+        tim = clock() - tim;
+        tim_d = (double)tim / CLOCKS_PER_SEC;
         BIO_printf(bio_err, "%d x ECDSA_do_verify() in %.2f"UNIT" => average time for ECDSA_do_verify() %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, time_d, time_d/ECDSA_NIST_TESTS);
+                , ECDSA_NIST_TESTS, tim_d, tim_d/ECDSA_NIST_TESTS);
 	ECDSA_free(ecdsa);
 	ecdsa = NULL;
 	for (i=0; i<ECDSA_NIST_TESTS; i++)
