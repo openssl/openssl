@@ -186,7 +186,7 @@ $ LIB_DES = "set_key,ecb_enc,cbc_enc,"+ -
 	"enc_read,enc_writ,ofb64enc,"+ -
 	"ofb_enc,str2key,pcbc_enc,qud_cksm,rand_key,"+ -
 	"des_enc,fcrypt_b,read2pwd,"+ -
-	"fcrypt,xcbc_enc,read_pwd,rpc_enc,cbc_cksm,supp,ede_cbcm_enc"
+	"fcrypt,xcbc_enc,read_pwd,rpc_enc,cbc_cksm,ede_cbcm_enc"
 $ LIB_RC2 = "rc2_ecb,rc2_skey,rc2_cbc,rc2cfb64,rc2ofb64"
 $ LIB_RC4 = "rc4_skey,rc4_enc"
 $ LIB_RC5 = "rc5_skey,rc5_ecb,rc5_enc,rc5cfb64,rc5ofb64"
@@ -1441,6 +1441,7 @@ $!
 $ IF P7 .NES. ""
 $ THEN
 $   ENCRYPT_TYPES = P7
+$! NYI:   ENCRYPT_PROGRAMS = P7
 $ ENDIF
 $!
 $!  Time To RETURN...
