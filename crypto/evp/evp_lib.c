@@ -68,7 +68,7 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	if (c->cipher->set_asn1_parameters != NULL)
 		ret=c->cipher->set_asn1_parameters(c,type);
 	else
-		ret=1;
+		ret=-1;
 	return(ret);
 	}
 
@@ -79,7 +79,7 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	if (c->cipher->get_asn1_parameters != NULL)
 		ret=c->cipher->get_asn1_parameters(c,type);
 	else
-		ret=1;
+		ret=-1;
 	return(ret);
 	}
 
