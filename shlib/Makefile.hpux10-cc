@@ -1,0 +1,51 @@
+# Makefile.hpux-cc
+
+major=1
+
+slib=libssl
+sh_slib=$(slib).so.$(major)
+
+clib=libcrypto
+sh_clib=$(clib).so.$(major)
+
+all : $(clib).sl $(slib).sl
+
+
+$(clib)_pic.a : $(clib).a
+	echo "Copying $? to $@"
+	cp -p $? $@
+
+$(slib)_pic.a : $(slib).a
+	echo "Copying $? to $@"
+	cp -p $? $@
+
+$(sh_clib) : $(clib)_pic.a
+	echo "collecting all object files for $@"
+	find . -name \*.o -print > allobjs
+	for obj in `ar t $(clib)_pic.a`; \
+	do \
+		grep /$$obj allobjs; \
+	done >objlist
+	echo "linking $@"
+	ld -b -s -z +h $@ -o $@ `cat objlist` -lc 
+	rm allobjs objlist
+
+$(clib).sl : $(sh_clib)
+	rm -f $@
+	ln -s $? $@
+
+$(sh_slib) : $(slib)_pic.a $(clib).sl
+	echo "collecting all object files for $@"
+	find . -name \*.o -print > allobjs
+	for obj in `ar t $(slib)_pic.a`; \
+	do \
+		grep /$$obj allobjs; \
+	done >objlist
+	echo "linking $@"
+	ld -b -s -z +h $@ +b /usr/local/ssl/lib:/usr/lib -o $@ `cat objlist` \
+			-L. -lcrypto -lc
+	rm -f allobjs objlist
+        
+$(slib).sl : $(sh_slib)
+	rm -f $@
+	ln -s $? $@

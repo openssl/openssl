@@ -2,9 +2,13 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.5 and 0.9.6  [xx Xxx 2000]
+ Changes between 0.9.5 and 0.9.6  [XX XXX 2000]
 
-  *) 
+  *) Shared library support for HPUX (in shlib/).
+     [Lutz Jaenicke <Lutz.Jaenicke@aet.TU-Cottbus.DE> and Anonymous]
+
+  *) Shared library support for Solaris gcc.
+     [Lutz Behnke <behnke@trustcenter.de>]
 
  Changes between 0.9.4 and 0.9.5  [28 Feb 2000]
 

@@ -385,4 +385,11 @@ install_docs:
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec); \
 	done
 
+shlib: all
+	if [ ! -d shlib_dir ] ; then mkdir shlib_dir ; else rm -f shlib_dir/* ; fi
+	cd shlib_dir ; ar -x ../libcrypto.a && $(CC) -shared ./*.o -Wl,-soname -Wl,libcrypto.so.0.9 \
+            -o ./libcrypto.so.0.9.4 && rm *.o
+	cd shlib_dir ; ar -x ../libssl.a && $(CC) -shared ./*.o -Wl,-soname -Wl,libssl.so.0.9 \
+            -o ./libssl.so.0.9.4 && rm *.o
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.

@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/02/28 12:11:37 $
+  ______________                           $Date: 2000/02/28 19:14:38 $
 
   DEVELOPMENT STATE
 
@@ -16,7 +16,6 @@
 
   AVAILABLE PATCHES
 
-    o shared libraries <behnke@trustcenter.de>
     o CA.pl patch (Damien Miller)
 
   IN PROGRESS
