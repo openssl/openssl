@@ -84,8 +84,8 @@
 #include "vendor_defns/cswift.h"
 #endif
 
-static int cswift_init(void);
-static int cswift_finish(void);
+static int cswift_init(ENGINE *);
+static int cswift_finish(ENGINE *);
 
 /* BIGNUM stuff */
 static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -251,7 +251,7 @@ static void release_context(SW_CONTEXT_HANDLE hac)
 	}
 
 /* (de)initialisation functions. */
-static int cswift_init(void)
+static int cswift_init(ENGINE *e)
 	{
         SW_CONTEXT_HANDLE hac;
         t_swAcquireAccContext *p1;
@@ -308,7 +308,7 @@ err:
 	return 0;
 	}
 
-static int cswift_finish(void)
+static int cswift_finish(ENGINE *e)
 	{
 	if(cswift_dso == NULL)
 		{

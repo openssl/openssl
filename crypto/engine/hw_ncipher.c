@@ -82,9 +82,9 @@
 #include "vendor_defns/hwcryptohook.h"
 #endif
 
-static int hwcrhk_init(void);
-static int hwcrhk_finish(void);
-static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)()); 
+static int hwcrhk_init(ENGINE *e);
+static int hwcrhk_finish(ENGINE *e);
+static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()); 
 
 /* Functions to handle mutexes */
 static int hwcrhk_mutex_init(HWCryptoHook_Mutex*, HWCryptoHook_CallerContext*);
@@ -113,9 +113,9 @@ static int hwcrhk_rand_bytes(unsigned char *buf, int num);
 static int hwcrhk_rand_status(void);
 
 /* KM stuff */
-static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
+static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 	const char *passphrase);
-static EVP_PKEY *hwcrhk_load_pubkey(const char *key_id,
+static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
 	const char *passphrase);
 static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 	int ind,long argl, void *argp);
@@ -376,7 +376,7 @@ static void release_context(HWCryptoHook_ContextHandle hac)
 	}
 
 /* (de)initialisation functions. */
-static int hwcrhk_init(void)
+static int hwcrhk_init(ENGINE *e)
 	{
 	HWCryptoHook_Init_t *p1;
 	HWCryptoHook_Finish_t *p2;
@@ -475,7 +475,7 @@ err:
 	return 0;
 	}
 
-static int hwcrhk_finish(void)
+static int hwcrhk_finish(ENGINE *e)
 	{
 	int to_return = 1;
 	if(hwcrhk_dso == NULL)
@@ -507,7 +507,7 @@ static int hwcrhk_finish(void)
 	return to_return;
 	}
 
-static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)())
+static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	{
 	int to_return = 1;
 
@@ -569,7 +569,7 @@ static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)())
 	return to_return;
 	}
 
-static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
+static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 	const char *passphrase)
 	{
 	RSA *rtmp = NULL;
@@ -649,9 +649,10 @@ static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
 	return NULL;
 	}
 
-static EVP_PKEY *hwcrhk_load_pubkey(const char *key_id, const char *passphrase)
+static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
+	const char *passphrase)
 	{
-	EVP_PKEY *res = hwcrhk_load_privkey(key_id, passphrase);
+	EVP_PKEY *res = hwcrhk_load_privkey(eng, key_id, passphrase);
 
 	if (res)
 		switch(res->type)

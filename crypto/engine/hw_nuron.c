@@ -72,7 +72,7 @@ static tfnModExp *pfnModExp = NULL;
 
 static DSO *pvDSOHandle = NULL;
 
-static int nuron_init(void)
+static int nuron_init(ENGINE *e)
 	{
 	if(pvDSOHandle != NULL)
 		{
@@ -98,7 +98,7 @@ static int nuron_init(void)
 	return 1;
 	}
 
-static int nuron_finish(void)
+static int nuron_finish(ENGINE *e)
 	{
 	if(pvDSOHandle == NULL)
 		{

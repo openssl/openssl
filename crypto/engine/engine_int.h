@@ -88,11 +88,11 @@ struct engine_st
 	const RAND_METHOD *rand_meth;
 	BN_MOD_EXP bn_mod_exp;
 	BN_MOD_EXP_CRT bn_mod_exp_crt;
-	int (*init)(void);
-	int (*finish)(void);
-	int (*ctrl)(int cmd, long i, void *p, void (*f)());
-	EVP_PKEY *(*load_privkey)(const char *key_id, const char *passphrase);
-	EVP_PKEY *(*load_pubkey)(const char *key_id, const char *passphrase);
+	ENGINE_GEN_INT_FUNC_PTR init;
+	ENGINE_GEN_INT_FUNC_PTR finish;
+	ENGINE_CTRL_FUNC_PTR ctrl;
+	ENGINE_LOAD_KEY_PTR load_privkey;
+	ENGINE_LOAD_KEY_PTR load_pubkey;
 	int flags;
 	/* reference count on the structure itself */
 	int struct_ref;

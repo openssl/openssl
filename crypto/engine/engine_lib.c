@@ -153,7 +153,7 @@ int ENGINE_init(ENGINE *e)
 	if((e->funct_ref == 0) && e->init)
 		/* This is the first functional reference and the engine
 		 * requires initialisation so we do it now. */
-		to_return = e->init();
+		to_return = e->init(e);
 	if(to_return)
 		{
 		/* OK, we return a functional reference which is also a
@@ -200,7 +200,7 @@ int ENGINE_finish(ENGINE *e)
 		{
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 		/* CODE ALERT: This *IS* supposed to be "=" and NOT "==" :-) */
-		if((to_return = e->finish()))
+		if((to_return = e->finish(e)))
 			{
 			CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 			/* Cleanup the functional reference which is also a
@@ -242,7 +242,7 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
 			ENGINE_R_NO_LOAD_FUNCTION);
 		return 0;
 		}
-	pkey = e->load_privkey(key_id, passphrase);
+	pkey = e->load_privkey(e, key_id, passphrase);
 	if (!pkey)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
@@ -278,7 +278,7 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
 			ENGINE_R_NO_LOAD_FUNCTION);
 		return 0;
 		}
-	pkey = e->load_pubkey(key_id, passphrase);
+	pkey = e->load_pubkey(e, key_id, passphrase);
 	if (!pkey)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
@@ -310,7 +310,7 @@ int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 		ENGINEerr(ENGINE_F_ENGINE_CTRL,ENGINE_R_NO_CONTROL_FUNCTION);
 		return 0;
 		}
-	return e->ctrl(cmd, i, p, f);
+	return e->ctrl(e, cmd, i, p, f);
 	}
 
 static ENGINE *engine_get_default_type(ENGINE_TYPE t)

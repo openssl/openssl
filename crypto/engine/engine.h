@@ -130,11 +130,11 @@ typedef struct engine_st ENGINE;
 /* Generic function pointer */
 typedef int (*ENGINE_GEN_FUNC_PTR)();
 /* Generic function pointer taking no arguments */
-typedef int (*ENGINE_GEN_INT_FUNC_PTR)(void);
+typedef int (*ENGINE_GEN_INT_FUNC_PTR)(ENGINE *);
 /* Specific control function pointer */
-typedef int (*ENGINE_CTRL_FUNC_PTR)(int cmd, long i, void *p, void (*f)());
+typedef int (*ENGINE_CTRL_FUNC_PTR)(ENGINE *, int, long, void *, void (*f)());
 /* Generic load_key function pointer */
-typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(const char *key_id, const char *passphrase);
+typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *, const char *);
 
 /* STRUCTURE functions ... all of these functions deal with pointers to
  * ENGINE structures where the pointers have a "structural reference".

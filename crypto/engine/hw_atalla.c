@@ -72,8 +72,8 @@
 #include "vendor_defns/atalla.h"
 #endif
 
-static int atalla_init(void);
-static int atalla_finish(void);
+static int atalla_init(ENGINE *e);
+static int atalla_finish(ENGINE *e);
 
 /* BIGNUM stuff */
 static int atalla_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -229,7 +229,7 @@ static const char *ATALLA_F2 = "ASI_RSAPrivateKeyOpFn";
 static const char *ATALLA_F3 = "ASI_GetPerformanceStatistics";
 
 /* (de)initialisation functions. */
-static int atalla_init(void)
+static int atalla_init(ENGINE *e)
 	{
 	tfnASI_GetHardwareConfig *p1;
 	tfnASI_RSAPrivateKeyOpFn *p2;
@@ -288,7 +288,7 @@ err:
 	return 0;
 	}
 
-static int atalla_finish(void)
+static int atalla_finish(ENGINE *e)
 	{
 	if(atalla_dso == NULL)
 		{

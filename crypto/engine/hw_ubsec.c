@@ -74,8 +74,8 @@
 #include "vendor_defns/hw_ubsec.h"
 #endif
 
-static int ubsec_init(void);
-static int ubsec_finish(void);
+static int ubsec_init(ENGINE *e);
+static int ubsec_finish(ENGINE *e);
 static int ubsec_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx);
 static int ubsec_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -251,7 +251,7 @@ static const char *UBSEC_F11 = "math_accelerate_ioctl";
 static const char *UBSEC_F12 = "rng_ioctl";
 
 /* (de)initialisation functions. */
-static int ubsec_init()
+static int ubsec_init(ENGINE *e)
 	{
 	t_UBSEC_ubsec_bytes_to_bits *p1;
 	t_UBSEC_ubsec_bits_to_bytes *p2;
@@ -347,7 +347,7 @@ err:
 	return 0;
 	}
 
-static int ubsec_finish()
+static int ubsec_finish(ENGINE *e)
 	{
 	if(ubsec_dso == NULL)
 		{
