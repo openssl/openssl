@@ -149,6 +149,21 @@
  * -X9_62_239v2		- use the X9_62 239v2 example curve over a 239 bit prime field
  * -X9_62_239v3		- use the X9_62 239v3 example curve over a 239 bit prime field
  * -X9_62_256v1		- use the X9_62 239v1 example curve over a 256 bit prime field
+ * -SECG_PRIME_112R1    - use the SECG 112r1 recommeded curve over a 112 bit prime field
+ * -SECG_PRIME_112R2    - use the SECG 112r2 recommeded curve over a 112 bit prime field
+ * -SECG_PRIME_128R1    - use the SECG 128r1 recommeded curve over a 128 bit prime field
+ * -SECG_PRIME_128R2    - use the SECG 128r2 recommeded curve over a 128 bit prime field
+ * -SECG_PRIME_160K1    - use the SECG 160k1 recommeded curve over a 160 bit prime field
+ * -SECG_PRIME_160R1    - use the SECG 160r1 recommeded curve over a 160 bit prime field
+ * -SECG_PRIME_160R2    - use the SECG 160r2 recommeded curve over a 160 bit prime field
+ * -SECG_PRIME_192K1    - use the SECG 192k1 recommeded curve over a 192 bit prime field
+ * -SECG_PRIME_192R1    - use the SECG 192r1 recommeded curve over a 192 bit prime field
+ * -SECG_PRIME_224K1    - use the SECG 224k1 recommeded curve over a 224 bit prime field
+ * -SECG_PRIME_224R1    - use the SECG 224r1 recommeded curve over a 224 bit prime field
+ * -SECG_PRIME_256K1    - use the SECG 256k1 recommeded curve over a 256 bit prime field
+ * -SECG_PRIME_256R1    - use the SECG 256r1 recommeded curve over a 256 bit prime field
+ * -SECG_PRIME_384R1    - use the SECG 384r1 recommeded curve over a 384 bit prime field
+ * -SECG_PRIME_521R1    - use the SECG 521r1 recommeded curve over a 521 bit prime field
  */
 
 int MAIN(int, char **);
@@ -304,28 +319,43 @@ int MAIN(int argc, char **argv)
 bad:
 		BIO_printf(bio_err,"%s [options] [bits] <infile >outfile\n",prog);
 		BIO_printf(bio_err,"where options are\n");
-		BIO_printf(bio_err," -inform arg   input format - DER or PEM\n");
-		BIO_printf(bio_err," -outform arg  output format - DER or PEM\n");
-		BIO_printf(bio_err," -in arg       input file\n");
-		BIO_printf(bio_err," -out arg      output file\n");
-		BIO_printf(bio_err," -text         print the key in text\n");
-		BIO_printf(bio_err," -C            Output C code\n");
-		BIO_printf(bio_err," -noout        no output\n");
-		BIO_printf(bio_err," -rand         files to use for random number input\n");
-		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
-		BIO_printf(bio_err," -named_curve  use the curve oid instead of the parameters\n");
-		BIO_printf(bio_err," -NIST_192     use the NIST recommeded curve parameters over a 192 bit prime field\n");
-		BIO_printf(bio_err," -NIST_224     use the NIST recommeded curve parameters over a 224 bit prime field\n");
-		BIO_printf(bio_err," -NIST_256     use the NIST recommeded curve parameters over a 256 bit prime field\n");
-		BIO_printf(bio_err," -NIST_384     use the NIST recommeded curve parameters over a 384 bit prime field\n");
-		BIO_printf(bio_err," -NIST_521     use the NIST recommeded curve parameters over a 521 bit prime field\n");
-		BIO_printf(bio_err," -X9_62_192v1  use the X9_62 192v1 example curve over a 192 bit prime field\n");
-		BIO_printf(bio_err," -X9_62_192v2  use the X9_62 192v2 example curve over a 192 bit prime field\n");
-		BIO_printf(bio_err," -X9_62_192v3  use the X9_62 192v3 example curve over a 192 bit prime field\n");
-		BIO_printf(bio_err," -X9_62_239v1  use the X9_62 239v1 example curve over a 239 bit prime field\n");
-		BIO_printf(bio_err," -X9_62_239v2  use the X9_62 239v2 example curve over a 239 bit prime field\n");
-		BIO_printf(bio_err," -X9_62_239v3  use the X9_62 239v3 example curve over a 239 bit prime field\n");
-		BIO_printf(bio_err," -X9_62_256v1  use the X9_62 239v1 example curve over a 256 bit prime field\n");
+		BIO_printf(bio_err," -inform arg        input format - DER or PEM\n");
+		BIO_printf(bio_err," -outform arg       output format - DER or PEM\n");
+		BIO_printf(bio_err," -in arg            input file\n");
+		BIO_printf(bio_err," -out arg           output file\n");
+		BIO_printf(bio_err," -text              print the key in text\n");
+		BIO_printf(bio_err," -C                 Output C code\n");
+		BIO_printf(bio_err," -noout             no output\n");
+		BIO_printf(bio_err," -rand              files to use for random number input\n");
+		BIO_printf(bio_err," -engine e          use engine e, possibly a hardware device.\n");
+		BIO_printf(bio_err," -named_curve       use the curve oid instead of the parameters\n");
+		BIO_printf(bio_err," -NIST_192          use the NIST recommeded curve parameters over a 192 bit prime field\n");
+		BIO_printf(bio_err," -NIST_224          use the NIST recommeded curve parameters over a 224 bit prime field\n");
+		BIO_printf(bio_err," -NIST_256          use the NIST recommeded curve parameters over a 256 bit prime field\n");
+		BIO_printf(bio_err," -NIST_384          use the NIST recommeded curve parameters over a 384 bit prime field\n");
+		BIO_printf(bio_err," -NIST_521          use the NIST recommeded curve parameters over a 521 bit prime field\n");
+		BIO_printf(bio_err," -X9_62_192v1       use the X9_62 192v1 example curve over a 192 bit prime field\n");
+		BIO_printf(bio_err," -X9_62_192v2       use the X9_62 192v2 example curve over a 192 bit prime field\n");
+		BIO_printf(bio_err," -X9_62_192v3       use the X9_62 192v3 example curve over a 192 bit prime field\n");
+		BIO_printf(bio_err," -X9_62_239v1       use the X9_62 239v1 example curve over a 239 bit prime field\n");
+		BIO_printf(bio_err," -X9_62_239v2       use the X9_62 239v2 example curve over a 239 bit prime field\n");
+		BIO_printf(bio_err," -X9_62_239v3       use the X9_62 239v3 example curve over a 239 bit prime field\n");
+		BIO_printf(bio_err," -X9_62_256v1       use the X9_62 239v1 example curve over a 256 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_112R1  use the SECG 112r1 recommeded curve over a 112 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_112R2  use the SECG 112r2 recommeded curve over a 112 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_128R1  use the SECG 128r1 recommeded curve over a 128 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_128R2  use the SECG 128r2 recommeded curve over a 128 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_160K1  use the SECG 160k1 recommeded curve over a 160 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_160R1  use the SECG 160r1 recommeded curve over a 160 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_160R2  use the SECG 160r2 recommeded curve over a 160 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_192K1  use the SECG 192k1 recommeded curve over a 192 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_192R1  use the SECG 192r1 recommeded curve over a 192 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_224K1  use the SECG 224k1 recommeded curve over a 224 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_224R1  use the SECG 224r1 recommeded curve over a 224 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_256K1  use the SECG 256k1 recommeded curve over a 256 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_256R1  use the SECG 256r1 recommeded curve over a 256 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_384R1  use the SECG 384r1 recommeded curve over a 384 bit prime field\n");
+		BIO_printf(bio_err," -SECG_PRIME_521R1  use the SECG 521r1 recommeded curve over a 521 bit prime field\n");
 		goto end;
 	}
 
@@ -505,29 +535,37 @@ bad:
 		 */
 
 		printf("ECDSA *get_ecdsa%d(void)\n\t{\n",bits_p);
+		printf("\tint ok=0;\n");
 		printf("\tECDSA    *ecdsa=NULL;\n");
 		printf("\tEC_POINT *point=NULL;\n");
 		printf("\tBIGNUM   *tmp_1=NULL,*tmp_2=NULL,*tmp_3=NULL;\n\n");
 		printf("\tif ((ecdsa=ECDSA_new()) == NULL)\n");
 		printf("\t\treturn(NULL);\n\n");
 		printf("\t/* generate EC_GROUP structure */\n");
-		printf("\ttmp_1 = BN_bin2bn(ecdsa%d_p, sizeof(ecdsa%d_p), NULL);\n", bits_p, bits_p);
-		printf("\ttmp_2 = BN_bin2bn(ecdsa%d_a, sizeof(ecdsa%d_a), NULL);\n", bits_p, bits_p);
-		printf("\ttmp_3 = BN_bin2bn(ecdsa%d_b, sizeof(ecdsa%d_b), NULL);\n", bits_p, bits_p);
-		printf("\tecdsa->group = EC_GROUP_new_curve_GFp(tmp_1, tmp_2, tmp_3, NULL);\n\n");
+		printf("\tif ((tmp_1 = BN_bin2bn(ecdsa%d_p, sizeof(ecdsa%d_p), NULL)) == NULL) goto err;\n", bits_p, bits_p);
+		printf("\tif ((tmp_2 = BN_bin2bn(ecdsa%d_a, sizeof(ecdsa%d_a), NULL)) == NULL) goto err;\n", bits_p, bits_p);
+		printf("\tif ((tmp_3 = BN_bin2bn(ecdsa%d_b, sizeof(ecdsa%d_b), NULL)) == NULL) goto err;\n", bits_p, bits_p);
+		printf("\tif ((ecdsa->group = EC_GROUP_new_curve_GFp(tmp_1, tmp_2, tmp_3, NULL)) == NULL) goto err;\n\n");
 		printf("\t/* build generator */\n");
-		printf("\tBN_bin2bn(ecdsa%d_x, sizeof(ecdsa%d_x), tmp_1);\n", bits_p, bits_p);
-		printf("\tBN_bin2bn(ecdsa%d_y, sizeof(ecdsa%d_y), tmp_2);\n", bits_p, bits_p);
-		printf("\tif ((point = EC_POINT_new(ecdsa->group)) == NULL)\n");
-		printf("\t\t{\n\t\tECDSA_free(ecdsa); BN_free(tmp_1); BN_free(tmp_2); BN_free(tmp_3);\n");
-		printf("\t\treturn(NULL);\n\t\t}\n");
-		printf("\tEC_POINT_set_affine_coordinates_GFp(ecdsa->group, point, tmp_1, tmp_2, NULL);\n");
+		printf("\tif (!BN_bin2bn(ecdsa%d_x, sizeof(ecdsa%d_x), tmp_1)) goto err;\n", bits_p, bits_p);
+		printf("\tif (!BN_bin2bn(ecdsa%d_y, sizeof(ecdsa%d_y), tmp_2)) goto err;\n", bits_p, bits_p);
+		printf("\tif ((point = EC_POINT_new(ecdsa->group)) == NULL) goto err;\n");
+		printf("\tif (!EC_POINT_set_affine_coordinates_GFp(ecdsa->group, point, tmp_1, tmp_2, NULL)) goto err;\n");
 		printf("\t/* set generator, order and cofactor */\n");
-		printf("\tBN_bin2bn(ecdsa%d_o, sizeof(ecdsa%d_o), tmp_1);\n", bits_p, bits_p);
-		printf("\tBN_bin2bn(ecdsa%d_c, sizeof(ecdsa%d_c), tmp_2);\n", bits_p, bits_p);
-		printf("\tEC_GROUP_set_generator(ecdsa->group, point, tmp_1, tmp_2);\n");
-		printf("\tBN_free(tmp_1); BN_free(tmp_2); BN_free(tmp_3);\n");
-		printf("\tEC_POINT_free(point);\n\n");
+		printf("\tif (!BN_bin2bn(ecdsa%d_o, sizeof(ecdsa%d_o), tmp_1)) goto err;\n", bits_p, bits_p);
+		printf("\tif (!BN_bin2bn(ecdsa%d_c, sizeof(ecdsa%d_c), tmp_2)) goto err;\n", bits_p, bits_p);
+		printf("\tif (!EC_GROUP_set_generator(ecdsa->group, point, tmp_1, tmp_2)) goto err;\n");
+		printf("\n\tok=1;\n");
+		printf("err:\n");
+		printf("\tif (tmp_1) BN_free(tmp_1);\n");
+		printf("\tif (tmp_2) BN_free(tmp_2);\n");
+		printf("\tif (tmp_3) BN_free(tmp_3);\n");
+		printf("\tif (point) EC_POINT_free(point);\n");
+		printf("\tif (!ok)\n");
+		printf("\t\t{\n");
+		printf("\t\tECDSA_free(ecdsa);\n");
+		printf("\t\tecdsa = NULL;\n");
+		printf("\t\t}\n");
 		printf("\treturn(ecdsa);\n\t}\n");
 	}
 

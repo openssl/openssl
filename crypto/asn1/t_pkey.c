@@ -519,7 +519,8 @@ int ECDSAParameters_print(BIO *bp, const ECDSA *x)
        unsigned char *buffer=NULL;
        int     buf_len;
        int     reason=ERR_R_EC_LIB, i, ret=0;
-       BIGNUM  *tmp_1=NULL, *tmp_2=NULL, *tmp_3=NULL, *tmp_4=NULL;
+       BIGNUM  *tmp_1=NULL, *tmp_2=NULL, *tmp_3=NULL, *tmp_4=NULL,
+               *tmp_5=NULL, *tmp_6=NULL;
        BN_CTX  *ctx=NULL;
        EC_POINT *point=NULL;
  
@@ -530,13 +531,16 @@ int ECDSAParameters_print(BIO *bp, const ECDSA *x)
 		goto err;
        }
        if ((tmp_1 = BN_new()) == NULL || (tmp_2 = BN_new()) == NULL ||
-	   (tmp_3 = BN_new()) == NULL || (ctx = BN_CTX_new()) == NULL)
+	   (tmp_3 = BN_new()) == NULL || (tmp_5 = BN_new()) == NULL ||
+           (tmp_6 = BN_new()) == NULL || (ctx = BN_CTX_new()) == NULL)
        {
 		reason = ERR_R_MALLOC_FAILURE;
 		goto err;
 	}
 	if (!EC_GROUP_get_curve_GFp(x->group, tmp_1, tmp_2, tmp_3, ctx)) goto err;
 	if ((point = EC_GROUP_get0_generator(x->group)) == NULL) goto err;
+	if (!EC_GROUP_get_order(x->group, tmp_5, ctx)) goto err;
+	if (!EC_GROUP_get_cofactor(x->group, tmp_6, ctx)) goto err;	
 	buf_len = EC_POINT_point2oct(x->group, point, POINT_CONVERSION_COMPRESSED, NULL, 0, ctx);
 	if (!buf_len || (buffer = OPENSSL_malloc(buf_len)) == NULL)
 	{
@@ -565,13 +569,17 @@ int ECDSAParameters_print(BIO *bp, const ECDSA *x)
 	if (!print(bp, "Prime p:", tmp_1, buffer, 4)) goto err;
 	if (!print(bp, "Curve a:", tmp_2, buffer, 4)) goto err;
 	if (!print(bp, "Curve b:", tmp_3, buffer, 4)) goto err;
-	if (!print(bp, "Generator ( compressed ) :", tmp_4, buffer, 4)) goto err; 
+	if (!print(bp, "Generator (compressed):", tmp_4, buffer, 4)) goto err; 
+	if (!print(bp, "Order:", tmp_5, buffer, 4)) goto err;
+	if (!print(bp, "Cofactor:", tmp_6, buffer, 4)) goto err;
 	ret=1;
 err:
 	if (tmp_1)  BN_free(tmp_1);
 	if (tmp_2)  BN_free(tmp_2);
 	if (tmp_3)  BN_free(tmp_3);
 	if (tmp_4)  BN_free(tmp_4);
+	if (tmp_5)  BN_free(tmp_5);
+	if (tmp_6)  BN_free(tmp_6);
 	if (ctx)    BN_CTX_free(ctx);
 	if (buffer) OPENSSL_free(buffer);
 	ECDSAerr(ECDSA_F_ECDSAPARAMETERS_PRINT, reason);
