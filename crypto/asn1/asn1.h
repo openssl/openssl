@@ -238,7 +238,7 @@ DECLARE_STACK_OF(ASN1_STRING_TABLE)
 #define ub_title			64
 #define ub_email_address		128
 
-#ifndef DEBUG
+#ifdef NO_ASN1_TYPEDEFS
 #define ASN1_INTEGER		ASN1_STRING
 #define ASN1_ENUMERATED		ASN1_STRING
 #define ASN1_BIT_STRING		ASN1_STRING

@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Change the ASN1 types so they are typedefs by default. Before
+     almost all types were #define'd to ASN1_STRING which was causing
+     STACK_OF() problems: you couldn't declare STACK_OF(ASN1_UTF8STRING)
+     for example.
+     [Steve Henson]
+
   *) Change names of new functions to the new get1/get0 naming
      convention: After 'get1', the caller owns a reference count
      and has to call ..._free; 'get0' returns a pointer to some
