@@ -128,7 +128,7 @@ typedef AEP_TRANSACTION_ID 		*AEP_TRANSACTION_ID_PTR;
 /*Return value type*/
 typedef AEP_U32					AEP_RV;
 
-#define MAX_PROCESS_CONNECTIONS 5
+#define MAX_PROCESS_CONNECTIONS 256
 
 #define RAND_BLK_SIZE 1024
 
@@ -145,47 +145,33 @@ typedef struct AEP_CONNECTION_ENTRY{
 } AEP_CONNECTION_ENTRY;
 
 
-AEP_RV GetBigNumSize(void* ArbBigNum, AEP_U32* BigNumSize);
-AEP_RV MakeAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize, unsigned char* AEP_BigNum);
-AEP_RV ConvertAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize, unsigned char* AEP_BigNum);
+typedef AEP_RV t_AEP_OpenConnection(AEP_CONNECTION_HNDL_PTR phConnection);
+typedef AEP_RV t_AEP_CloseConnection(AEP_CONNECTION_HNDL hConnection);
 
+typedef AEP_RV t_AEP_ModExp(AEP_CONNECTION_HNDL hConnection,
+			    AEP_VOID_PTR pA, AEP_VOID_PTR pP,
+			    AEP_VOID_PTR pN,
+			    AEP_VOID_PTR pResult,
+			    AEP_TRANSACTION_ID* pidTransID);
 
+typedef AEP_RV t_AEP_ModExpCrt(AEP_CONNECTION_HNDL hConnection,
+			       AEP_VOID_PTR pA, AEP_VOID_PTR pP,
+			       AEP_VOID_PTR pQ,
+			       AEP_VOID_PTR pDmp1, AEP_VOID_PTR pDmq1,
+			       AEP_VOID_PTR pIqmp,
+			       AEP_VOID_PTR pResult,
+			       AEP_TRANSACTION_ID* pidTransID);
 
-typedef unsigned int t_AEP_OpenConnection(unsigned int *phConnection);
+#ifdef AEPRAND
+typedef AEP_RV t_AEP_GenRandom(AEP_CONNECTION_HNDL hConnection,
+			       AEP_U32 Len,
+			       AEP_U32 Type,
+			       AEP_VOID_PTR pResult,
+			       AEP_TRANSACTION_ID* pidTransID);
+#endif
 
-typedef unsigned int t_AEP_ModExp(unsigned int hConnection, void *a, void *p,
-                                  void *n, void *r,AEP_U64 *tranid);
-
-typedef unsigned int t_AEP_ModExpCrt(unsigned int hConnection,void *a, void *p,
-                                  void *q, void *dmp1, void *dmq1,void *iqmp,
-						  void *r,AEP_U64 *tranid);
-
-typedef unsigned int t_AEP_GenRandom(AEP_CONNECTION_HNDL             hConnection,
-                AEP_U32                                 Len,
-                AEP_U32                                 Type,
-                AEP_VOID_PTR                    pResult,
-                AEP_TRANSACTION_ID*             pidTransID
-        );
-
-
-
-typedef unsigned int t_AEP_Initialize(AEP_VOID_PTR pInitArgs);
-typedef unsigned int t_AEP_Finalize();
-typedef unsigned int t_AEP_SetBNCallBacks(
-                AEP_RV (*GetBigNumSizeFunc)(),
-                AEP_RV (*MakeAEPBigNumFunc)(),
-                AEP_RV (*ConverAEPBigNumFunc)()
-        );
-
-/* These are the static string constants for the DSO file name and the function
- * symbol names to bind to. 
-*/
-static const char *AEP_LIBNAME = "aep";
-
-static const char *AEP_F1    = "AEP_ModExp";
-static const char *AEP_F2    = "AEP_ModExpCrt";
-static const char *AEP_F3    = "AEP_GenRandom";
-static const char *AEP_F4    = "AEP_Finalize";
-static const char *AEP_F5    = "AEP_Initialize";
-static const char *AEP_F6    = "AEP_OpenConnection";
-static const char *AEP_F7    = "AEP_SetBNCallBacks";
+typedef AEP_RV t_AEP_Initialize(AEP_VOID_PTR pInitArgs);
+typedef AEP_RV t_AEP_Finalize();
+typedef AEP_RV t_AEP_SetBNCallBacks(AEP_RV (*GetBigNumSizeFunc)(),
+				    AEP_RV (*MakeAEPBigNumFunc)(),
+				    AEP_RV (*ConverAEPBigNumFunc)());

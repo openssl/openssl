@@ -59,8 +59,8 @@
 #include <openssl/bn.h>
 #include <string.h>
 
-#include <openssl/e_os2.h>
-#ifndef OPENSSL_SYS_MSDOS
+#include <openssl/e_os.h>
+#ifndef MSDOS
 #include <unistd.h>
 #else
 #include <process.h>
@@ -82,22 +82,31 @@ typedef int pid_t;
 #endif
 
 
-static int aep_init(void);
-static int aep_finish(void);
-static int aep_get_connection(unsigned int *hConnection);
-static int aep_return_connection(unsigned int hConnection);
+static int aep_init();
+static int aep_finish();
+static AEP_RV aep_get_connection(AEP_CONNECTION_HNDL_PTR hConnection);
+static AEP_RV aep_return_connection(AEP_CONNECTION_HNDL hConnection);
+static AEP_RV aep_close_all_connections(int use_engine_lock, int *in_use);
 
 /* BIGNUM stuff */
 static int aep_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		       const BIGNUM *m, BN_CTX *ctx);
+static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a,
+			      const BIGNUM *p, const BIGNUM *q,
+			      const BIGNUM *dmp1, const BIGNUM *dmq1,
+			      const BIGNUM *iqmp, BN_CTX *ctx);
 
 /* RSA stuff */
+#ifndef NO_RSA
 static int aep_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa);
+#endif
+
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int aep_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 			    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
 /* DSA stuff */
+#ifndef NO_DSA
 static int aep_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 			   BIGNUM *p1, BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
 			   BN_CTX *ctx, BN_MONT_CTX *in_mont);
@@ -105,15 +114,30 @@ static int aep_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 static int aep_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
 			   const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
 			   BN_MONT_CTX *m_ctx);
+#endif
 
 /* DH stuff */
+#ifndef NO_DH
 /* This function is aliased to mod_exp (with the DH and mont dropped). */
 static int aep_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 			  const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-		
+#endif
+	
+#ifdef AEPRAND
 /* rand stuff   */
 static int aep_rand(unsigned char *buf, int num);
+static int aep_rand_status(void);
+#endif
 
+/* Bignum conversion stuff */
+static AEP_RV GetBigNumSize(AEP_VOID_PTR ArbBigNum, AEP_U32* BigNumSize);
+static AEP_RV MakeAEPBigNum(AEP_VOID_PTR ArbBigNum, AEP_U32 BigNumSize,
+			    unsigned char* AEP_BigNum);
+static AEP_RV ConvertAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize,
+			       unsigned char* AEP_BigNum);
+
+
+#ifndef NO_RSA
 /* Our internal RSA_METHOD that we provide pointers to */
 static RSA_METHOD aep_rsa =
 {
@@ -131,7 +155,9 @@ static RSA_METHOD aep_rsa =
   NULL,                /*rsa_sign*/
   NULL                 /*rsa_verify*/
 };
+#endif
 
+#ifndef NO_DSA
 /* Our internal DSA_METHOD that we provide pointers to */
 static DSA_METHOD aep_dsa =
 {
@@ -146,7 +172,9 @@ static DSA_METHOD aep_dsa =
   0,                   /* flags */
   NULL                 /* app_data */
 };
+#endif
 
+#ifndef NO_DH
 /* Our internal DH_METHOD that we provide pointers to */
 static DH_METHOD aep_dh =
 {
@@ -159,6 +187,9 @@ static DH_METHOD aep_dh =
   0,
   NULL
 };
+#endif
+
+#ifdef AEPRAND
 /* our internal RAND_method that we provide pointers to  */
 static RAND_METHOD aep_random =
 {
@@ -168,9 +199,10 @@ static RAND_METHOD aep_random =
   NULL,
   NULL,
   aep_rand,
-  NULL,
+  aep_rand_status,
 };
-	
+#endif
+
 /* Our ENGINE structure. */
 static ENGINE engine_aep =
 {
@@ -179,7 +211,11 @@ static ENGINE engine_aep =
   &aep_rsa,
   &aep_dsa,
   &aep_dh,
+#ifdef AEPRAND
   &aep_random,
+#else
+  NULL,
+#endif
   aep_mod_exp,
   NULL,
   aep_init,
@@ -198,20 +234,25 @@ static AEP_CONNECTION_ENTRY aep_app_conn_table[MAX_PROCESS_CONNECTIONS];
 /*Used to determine if this is a new process*/
 static pid_t    recorded_pid = 0;
 
-static int rnd_reference;
-
+#ifdef AEPRAND
 static AEP_U8   rand_block[RAND_BLK_SIZE];
 static AEP_U32  rand_block_bytes = 0;
-
+#endif
 
 
 /* As this is only ever called once, there's no need for locking
  * (indeed - the lock will already be held by our caller!!!) */
 ENGINE *ENGINE_aep()
 {
+#ifndef NO_RSA
   RSA_METHOD  *meth1;
+#endif
+#ifndef NO_DSA
   DSA_METHOD  *meth2;
+#endif
+#ifndef NO_DH
   DH_METHOD   *meth3;
+#endif
 
   /* We know that the "PKCS1_SSLeay()" functions hook properly
    * to the aep-specific mod_exp and mod_exp_crt so we use
@@ -220,15 +261,18 @@ ENGINE *ENGINE_aep()
    * code may not hook properly, and if you own one of these
    * cards then you have the right to do RSA operations on it
    * anyway! */
+#ifndef NO_RSA
   meth1 = RSA_PKCS1_SSLeay();
   aep_rsa.rsa_pub_enc = meth1->rsa_pub_enc;
   aep_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
   aep_rsa.rsa_priv_enc = meth1->rsa_priv_enc;
   aep_rsa.rsa_priv_dec = meth1->rsa_priv_dec;
+#endif
 
 
   /* Use the DSA_OpenSSL() method and just hook the mod_exp-ish
    * bits. */
+#ifndef NO_DSA
   meth2 = DSA_OpenSSL();
   aep_dsa.dsa_do_sign    = meth2->dsa_do_sign;
   aep_dsa.dsa_sign_setup = meth2->dsa_sign_setup;
@@ -237,12 +281,15 @@ ENGINE *ENGINE_aep()
   aep_dsa = *DSA_get_default_openssl_method(); 
   aep_dsa.dsa_mod_exp = aep_dsa_mod_exp; 
   aep_dsa.bn_mod_exp = aep_mod_exp_dsa;      
+#endif
 
   /* Much the same for Diffie-Hellman */
+#ifndef NO_DH
   meth3 = DH_OpenSSL();
   aep_dh.generate_key = meth3->generate_key;
   aep_dh.compute_key  = meth3->compute_key;
   aep_dh.bn_mod_exp   = meth3->bn_mod_exp;
+#endif
 
   return &engine_aep;
 }
@@ -254,12 +301,31 @@ ENGINE *ENGINE_aep()
  * implicitly. */
 static DSO *aep_dso = NULL;
 
+/* These are the static string constants for the DSO file name and the function
+ * symbol names to bind to. 
+*/
+static const char *AEP_LIBNAME = "aep";
+
+static const char *AEP_F1    = "AEP_ModExp";
+static const char *AEP_F2    = "AEP_ModExpCrt";
+#ifdef AEPRAND
+static const char *AEP_F3    = "AEP_GenRandom";
+#endif
+static const char *AEP_F4    = "AEP_Finalize";
+static const char *AEP_F5    = "AEP_Initialize";
+static const char *AEP_F6    = "AEP_OpenConnection";
+static const char *AEP_F7    = "AEP_SetBNCallBacks";
+static const char *AEP_F8    = "AEP_CloseConnection";
+
 /* These are the function pointers that are (un)set when the library has
  * successfully (un)loaded. */
 static t_AEP_OpenConnection    *p_AEP_OpenConnection  = NULL;
+static t_AEP_CloseConnection   *p_AEP_CloseConnection = NULL;
 static t_AEP_ModExp            *p_AEP_ModExp          = NULL;
 static t_AEP_ModExpCrt         *p_AEP_ModExpCrt       = NULL;
+#ifdef AEPRAND
 static t_AEP_GenRandom         *p_AEP_GenRandom       = NULL;
+#endif
 static t_AEP_Initialize        *p_AEP_Initialize      = NULL;
 static t_AEP_Finalize          *p_AEP_Finalize        = NULL;
 static t_AEP_SetBNCallBacks    *p_AEP_SetBNCallBacks  = NULL;
@@ -269,13 +335,14 @@ static int aep_init()
 {
   t_AEP_ModExp          *p1;
   t_AEP_ModExpCrt       *p2;
+#ifdef AEPRAND
   t_AEP_GenRandom       *p3;
+#endif
   t_AEP_Finalize        *p4;
   t_AEP_Initialize      *p5;
   t_AEP_OpenConnection  *p6;
   t_AEP_SetBNCallBacks  *p7;
-
-  unsigned int hConnection,rv;
+  t_AEP_CloseConnection *p8;
 
   int to_return = 0;
  
@@ -298,11 +365,14 @@ static int aep_init()
 
   if(!(p1 = (t_AEP_ModExp *)         DSO_bind_func( aep_dso,AEP_F1))  ||
      !(p2 = (t_AEP_ModExpCrt*)       DSO_bind_func( aep_dso,AEP_F2))  ||
+#ifdef AEPRAND
      !(p3 = (t_AEP_GenRandom*)       DSO_bind_func( aep_dso,AEP_F3))  ||
+#endif
      !(p4 = (t_AEP_Finalize*)        DSO_bind_func( aep_dso,AEP_F4))  ||
      !(p5 = (t_AEP_Initialize*)      DSO_bind_func( aep_dso,AEP_F5))  ||
      !(p6 = (t_AEP_OpenConnection*)  DSO_bind_func( aep_dso,AEP_F6))  ||
-     !(p7 = (t_AEP_SetBNCallBacks*)  DSO_bind_func( aep_dso,AEP_F7)))
+     !(p7 = (t_AEP_SetBNCallBacks*)  DSO_bind_func( aep_dso,AEP_F7))  ||
+     !(p8 = (t_AEP_CloseConnection*) DSO_bind_func( aep_dso,AEP_F8)))
     {
      
       ENGINEerr(ENGINE_F_AEP_INIT,ENGINE_R_DSO_FAILURE);
@@ -313,26 +383,14 @@ static int aep_init()
   
   p_AEP_ModExp           = p1;
   p_AEP_ModExpCrt        = p2;
+#ifdef AEPRAND
   p_AEP_GenRandom        = p3;
+#endif
   p_AEP_Finalize         = p4;
   p_AEP_Initialize       = p5;
   p_AEP_OpenConnection   = p6;
   p_AEP_SetBNCallBacks   = p7;
-
-
-  /* Perform a basic test to see if there's actually any unit
-   * running. */
-	
-  CRYPTO_add(&rnd_reference, 1, CRYPTO_LOCK_DYNLOCK); 
-  
-  rv = aep_get_connection(&hConnection);
-     
-  if (rv != AEP_R_OK)     
-       goto err;
-   
-  /* Everything's fine. */
- 
-  rv = aep_return_connection(hConnection);
+  p_AEP_CloseConnection  = p8;
  
   to_return = 1;
  
@@ -346,10 +404,13 @@ static int aep_init()
   p_AEP_OpenConnection    = NULL;
   p_AEP_ModExp            = NULL;
   p_AEP_ModExpCrt         = NULL;
+#ifdef AEPRAND
   p_AEP_GenRandom         = NULL;
+#endif
   p_AEP_Initialize        = NULL;
   p_AEP_Finalize          = NULL;
   p_AEP_SetBNCallBacks    = NULL;
+  p_AEP_CloseConnection   = NULL;
 
   return to_return;
  
@@ -357,13 +418,35 @@ static int aep_init()
 
 static int aep_finish()
 {
-  int to_return = 0;
+  int to_return = 0, in_use;
+  AEP_RV rv;
 
   if(aep_dso == NULL)
     {
       ENGINEerr(ENGINE_F_AEP_FINISH,ENGINE_R_NOT_LOADED);
       goto err;
     }
+
+  rv = aep_close_all_connections(0, &in_use);
+  if (rv != AEP_R_OK)
+    {
+      ENGINEerr(ENGINE_F_AEP_FINISH,ENGINE_R_CLOSE_HANDLES_FAILED);
+      goto err;
+    }
+  if (in_use)
+    {
+      ENGINEerr(ENGINE_F_AEP_FINISH,ENGINE_R_CONNECTIONS_IN_USE);
+      goto err;
+    }
+
+  rv = p_AEP_Finalize();
+  if (rv != AEP_R_OK)
+    {
+      ENGINEerr(ENGINE_F_AEP_FINISH,ENGINE_R_FINALIZE_FAILED);
+      goto err;
+    }
+
+
   if(!DSO_free(aep_dso))
     {
       ENGINEerr(ENGINE_F_AEP_FINISH,ENGINE_R_DSO_FAILURE);
@@ -371,15 +454,16 @@ static int aep_finish()
     }
 
   aep_dso = NULL;
+  p_AEP_CloseConnection   = NULL;
   p_AEP_OpenConnection    = NULL;
   p_AEP_ModExp            = NULL;
   p_AEP_ModExpCrt         = NULL;
+#ifdef AEPRAND
   p_AEP_GenRandom         = NULL;
+#endif
   p_AEP_Initialize        = NULL;
   p_AEP_Finalize          = NULL;
   p_AEP_SetBNCallBacks    = NULL;
-
-  CRYPTO_add(&rnd_reference, -1, CRYPTO_LOCK_DYNLOCK);    
 
   to_return = 1;
  err:
@@ -391,7 +475,8 @@ static int aep_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 {
   int to_return = 0;
 
-  unsigned int hConnection, rv;
+  AEP_CONNECTION_HNDL hConnection;
+  AEP_RV rv;
 
   /*Grab a connection from the pool*/
   rv = aep_get_connection(&hConnection);
@@ -423,12 +508,14 @@ static int aep_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
  err:
   return to_return;
 }
-	
-static int aep_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *q ,
-			   const BIGNUM *dmp1,const BIGNUM *dmq1,const BIGNUM *iqmp, BN_CTX *ctx)
+
+static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a,
+			      const BIGNUM *p, const BIGNUM *q ,
+			      const BIGNUM *dmp1,const BIGNUM *dmq1,
+			      const BIGNUM *iqmp, BN_CTX *ctx)
 {
   AEP_RV rv = AEP_R_OK;
-  unsigned int hConnection;
+  AEP_CONNECTION_HNDL hConnection;
 
   /*Grab a connection from the pool*/
   rv = aep_get_connection(&hConnection);
@@ -461,58 +548,59 @@ static int aep_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *
 }
 	
 
+#ifdef AEPRAND
 static int aep_rand(unsigned char *buf,int len )
 {
   AEP_RV rv = AEP_R_OK;
-  unsigned int hConnection;
+  AEP_CONNECTION_HNDL hConnection;
 
-  int to_return = 0;
-
-  
-  CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
+  CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 
   /*Can the request be serviced with what's already in the buffer?*/
   if (len <= rand_block_bytes)
     {
       memcpy(buf, &rand_block[RAND_BLK_SIZE - rand_block_bytes], len);
       rand_block_bytes -= len;
+      CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
     }
   else
   /*If not the get another block of random bytes*/
     {
+      CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+
       rv = aep_get_connection(&hConnection);
       if (rv !=  AEP_R_OK)
 	  { 
           ENGINEerr(ENGINE_F_AEP_RAND,ENGINE_R_GET_HANDLE_FAILED);             
-          CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-	  goto err;
+	  goto err_nounlock;
 	  }
 
       if (len > RAND_BLK_SIZE)
 	  {
-		rv = p_AEP_GenRandom(hConnection, len, 2, buf, NULL);
-		if (rv !=  AEP_R_OK)
+	    rv = p_AEP_GenRandom(hConnection, len, 2, buf, NULL);
+	    if (rv !=  AEP_R_OK)
 	    {  
               ENGINEerr(ENGINE_F_AEP_RAND,ENGINE_R_GET_RANDOM_FAILED); 
-	      CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-	      goto err;
+	      goto err_nounlock;
 	    }
 	  }
       else
 	  {
-		rv = p_AEP_GenRandom(hConnection, RAND_BLK_SIZE, 2, &rand_block[0], NULL);
-		if (rv !=  AEP_R_OK)
+	    CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+
+	    rv = p_AEP_GenRandom(hConnection, RAND_BLK_SIZE, 2, &rand_block[0], NULL);
+	    if (rv !=  AEP_R_OK)
 	    {       
               ENGINEerr(ENGINE_F_AEP_RAND,ENGINE_R_GET_RANDOM_FAILED); 
 	      
-              CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 	      goto err;
 	    }
 
-		rand_block_bytes = RAND_BLK_SIZE;
+	    rand_block_bytes = RAND_BLK_SIZE;
+	    memcpy(buf, &rand_block[RAND_BLK_SIZE - rand_block_bytes], len);
+	    rand_block_bytes -= len;
 
-		memcpy(buf, &rand_block[RAND_BLK_SIZE - rand_block_bytes], len);
-		rand_block_bytes -= len;
+	    CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 	  }
 
       rv = aep_return_connection(hConnection);
@@ -520,25 +608,32 @@ static int aep_rand(unsigned char *buf,int len )
 	  {
           ENGINEerr(ENGINE_F_AEP_RAND,ENGINE_R_RETURN_CONNECTION_FAILED); 
 	  
-          CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-	  goto err;
+	  goto err_nounlock;
 	  }
     }
   
-     CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-  to_return = 1;
+  return 1;
  err:
-  return to_return;
+  CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+ err_nounlock:
+  return 0;
 }
 	
+static int aep_rand_status(void)
+{
+	return 1;
+}
+#endif
 
+#ifndef NO_RSA
 static int aep_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 {
   BN_CTX *ctx = NULL;
- 
   int to_return = 0;
- 
   AEP_RV rv = AEP_R_OK;
+
+  if ((ctx = BN_CTX_new()) == NULL)
+    goto err;
 
   if (!aep_dso)
     {
@@ -574,8 +669,9 @@ static int aep_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
     BN_CTX_free(ctx);
   return to_return;
 }
+#endif
 		
-
+#ifndef NO_DSA
 static int aep_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 			   BIGNUM *p1, BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
 			   BN_CTX *ctx, BN_MONT_CTX *in_mont)
@@ -604,6 +700,7 @@ static int aep_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
   return aep_mod_exp(r, a, p, m, ctx); 
  
 }
+#endif
 
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int aep_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
@@ -613,15 +710,16 @@ static int aep_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 
 }
 
+#ifndef NO_DH
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
 static int aep_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 			  const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 {
     return aep_mod_exp(r, a, p, m, ctx);
-
 }
+#endif
 
-static int aep_get_connection(unsigned int *hConnection)
+static AEP_RV aep_get_connection(AEP_CONNECTION_HNDL_PTR phConnection)
 {
   int count;
   AEP_RV rv = AEP_R_OK;
@@ -637,6 +735,7 @@ static int aep_get_connection(unsigned int *hConnection)
     process*/
   if (recorded_pid != curr_pid)
     {
+      /*Remember our pid so we can check if we're in a new process*/
       recorded_pid = curr_pid;
 
       /*Call Finalize to make sure we have not inherited some data from a parent
@@ -650,8 +749,7 @@ static int aep_get_connection(unsigned int *hConnection)
 	{
 	  ENGINEerr(ENGINE_F_AEP_INIT,ENGINE_R_AEP_INIT_FAILURE);
 	  recorded_pid = 0;
-	  CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);	 
-	  return rv;
+	  goto end;
 	}
 
       /*Set the AEP big num call back functions*/
@@ -660,14 +758,15 @@ static int aep_get_connection(unsigned int *hConnection)
       if (rv != AEP_R_OK)
 	{
 	 
-        ENGINEerr(ENGINE_F_AEP_INIT,ENGINE_R_SETBNCALLBACK_FAILURE);
-		recorded_pid = 0;
-		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-		return rv;
+	  ENGINEerr(ENGINE_F_AEP_INIT,ENGINE_R_SETBNCALLBACK_FAILURE);
+	  recorded_pid = 0;
+	  goto end;
 	}
 
+#ifdef AEPRAND
       /*Reset the rand byte count*/
       rand_block_bytes = 0;
+#endif
 
       /*Init the structures*/
       for (count = 0;count < MAX_PROCESS_CONNECTIONS;count ++)
@@ -677,22 +776,18 @@ static int aep_get_connection(unsigned int *hConnection)
 	}
 
       /*Open a connection*/
-      rv = p_AEP_OpenConnection(hConnection);
+      rv = p_AEP_OpenConnection(phConnection);
 
       if (rv != AEP_R_OK)
 	{
           ENGINEerr(ENGINE_F_AEP_INIT,ENGINE_R_UNIT_FAILURE);
-		  recorded_pid = 0;
-          CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-	  return rv;
+	  recorded_pid = 0;
+	  goto end;
 	}
 
       aep_app_conn_table[0].conn_state = InUse;
-
-      aep_app_conn_table[0].conn_hndl = *hConnection;
-      CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-     
-      return (rv);
+      aep_app_conn_table[0].conn_hndl = *phConnection;
+      goto end;
     }
   /*Check the existing connections to see if we can find a free one*/
   for (count = 0;count < MAX_PROCESS_CONNECTIONS;count ++)
@@ -701,9 +796,8 @@ static int aep_get_connection(unsigned int *hConnection)
       if (aep_app_conn_table[count].conn_state == Connected)
 	{
 	  aep_app_conn_table[count].conn_state = InUse;
-	  *hConnection = aep_app_conn_table[count].conn_hndl;
-          CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE); 
-	  return rv;
+	  *phConnection = aep_app_conn_table[count].conn_hndl;
+	  goto end;
 	}
     }
   /*If no connections available, we're going to have to try to open a new one*/
@@ -712,33 +806,33 @@ static int aep_get_connection(unsigned int *hConnection)
         if (aep_app_conn_table[count].conn_state == NotConnected)
 	{
 	  /*Open a connection*/
-	  rv = p_AEP_OpenConnection(hConnection);
+	  rv = p_AEP_OpenConnection(phConnection);
 
 	  if (rv != AEP_R_OK)
 	    {	      
                ENGINEerr(ENGINE_F_AEP_INIT,ENGINE_R_UNIT_FAILURE);
-               CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-	       return rv;
+	       goto end;
 	    }
 
 	  aep_app_conn_table[count].conn_state = InUse;
 
-	  aep_app_conn_table[count].conn_hndl = *hConnection;
-          CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-	   return rv;
+	  aep_app_conn_table[count].conn_hndl = *phConnection;
+	  goto end;
 	}
     }
-  
+
+  rv = AEP_R_GENERAL_ERROR;
+ end:
   CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-  return AEP_R_GENERAL_ERROR;
+  return rv;
 }
 
 
-static int aep_return_connection(unsigned int hConnection)
+static AEP_RV aep_return_connection(AEP_CONNECTION_HNDL hConnection)
 {
   int count;
 
-   CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+  CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 
   /*Find the connection item that matches this connection handle*/
   for(count = 0;count < MAX_PROCESS_CONNECTIONS;count ++)
@@ -751,15 +845,44 @@ static int aep_return_connection(unsigned int hConnection)
 	}
     }
 
-   CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+  CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 
+  return AEP_R_OK;
+}
+
+static AEP_RV aep_close_all_connections(int use_engine_lock, int *in_use)
+{
+  int count;
+  AEP_RV rv;
+
+  *in_use = 0;
+  if (use_engine_lock) CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+  for (count = 0;count < MAX_PROCESS_CONNECTIONS;count ++)
+    {
+      switch (aep_app_conn_table[count].conn_state)
+	{
+	case Connected:
+	  rv = p_AEP_CloseConnection(aep_app_conn_table[count].conn_hndl);
+	  if (rv != AEP_R_OK)
+	    return rv;
+	  aep_app_conn_table[count].conn_state = NotConnected;
+	  aep_app_conn_table[count].conn_hndl  = 0;
+	  break;
+	case InUse:
+	  (*in_use)++;
+	  break;
+	case NotConnected:
+	  break;
+	}
+    }
+  if (use_engine_lock) CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
   return AEP_R_OK;
 }
 
 /*BigNum call back functions, used to convert OpenSSL bignums into AEP bignums.
 Note only 32bit Openssl build support*/
 
-AEP_RV GetBigNumSize(void* ArbBigNum, AEP_U32* BigNumSize)
+static AEP_RV GetBigNumSize(AEP_VOID_PTR ArbBigNum, AEP_U32* BigNumSize)
 {
   BIGNUM* bn;
 
@@ -776,7 +899,8 @@ AEP_RV GetBigNumSize(void* ArbBigNum, AEP_U32* BigNumSize)
   return AEP_R_OK;
 }
 
-AEP_RV MakeAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize, unsigned char* AEP_BigNum)
+static AEP_RV MakeAEPBigNum(AEP_VOID_PTR ArbBigNum, AEP_U32 BigNumSize,
+			    unsigned char* AEP_BigNum)
 {
   BIGNUM* bn;
 
@@ -808,7 +932,8 @@ AEP_RV MakeAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize, unsigned char* AEP_Big
 }
 
 /*Turn an AEP Big Num back to a user big num*/
-AEP_RV ConvertAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize, unsigned char* AEP_BigNum)
+static AEP_RV ConvertAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize,
+			       unsigned char* AEP_BigNum)
 {
   BIGNUM* bn;
 #ifndef SIXTY_FOUR_BIT_LONG
