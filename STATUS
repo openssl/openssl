@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/21 14:51:45 $
+  ______________                           $Date: 2000/09/21 17:11:52 $
 
   DEVELOPMENT STATE
 
@@ -107,12 +107,15 @@
 					happens when building the static
 					libraries.  Tests pass as soon as
 					you make sure advapi32.lib gets
-					liked in.
+					linked in. [FIXED]
 			VC-WIN32 (W2K Pro SP1, VC6 SP3, PSDK Jul2000)- success
 			hpux-parisc-gcc (B.10.20, gcc 2.95.2)	- success
 			hpux-parisc-cc (B.10.20, cc A.10.32.30)	- success
 			hpux-parisc-gcc [engine] (B.10.20, gcc 2.95.2)- success
 			hpux-parisc-cc [engine] (B.10.20, cc A.10.32.30)- success
+			FreeBSD (2.2.5)				- failed
+				Only having USE_TOD made speed.c issue an
+					error. [FIXED]
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
