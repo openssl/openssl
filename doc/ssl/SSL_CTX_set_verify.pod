@@ -135,9 +135,9 @@ process is immediately stopped with "verification failed" state. If
 SSL_VERIFY_PEER is set, a verification failure alert is sent to the peer and
 the TLS/SSL handshake is terminated. If B<verify_callback> returns 1,
 the verification process is continued. If B<verify_callback> always returns
-1, the TLS/SSL handshake will never be terminated because of this application
-experiencing a verification failure. The calling process can however
-retrieve the error code of the last verification error using
+1, the TLS/SSL handshake will not be terminated with respect to verification
+failures and the connection will be established. The calling process can
+however retrieve the error code of the last verification error using
 L<SSL_get_verify_result(3)|SSL_get_verify_result(3)> or by maintaining its
 own error storage managed by B<verify_callback>.
 
