@@ -361,8 +361,18 @@ if [ "$GCCVER" != "" ]; then
 else
   CC=cc
 fi
+GCCVER=${GCCVER:-0}
 
 if [ "$SYSTEM" = "SunOS" ]; then
+  if [ $GCCVER -ge 30 ]; then
+    # 64-bit ABI isn't officially supported in gcc 3.0, but it appears
+    # to be working, at the very least 'make test' passes...
+    if gcc -v -E -x c /dev/null 2>&1 | grep __arch64__ > /dev/null; then
+      GCC_ARCH="-m64"
+    else
+      GCC_ARCH="-m32"
+    fi
+  fi
   # check for WorkShop C, expected output is "cc: blah-blah C x.x"
   CCVER=`(cc -V 2>&1) 2>/dev/null | \
   	egrep -e '^cc: .* C [0-9]\.[0-9]' | \
@@ -393,7 +403,6 @@ if [ "${SYSTEM}-${MACHINE}" = "Linux-alpha" ]; then
   fi
 fi
 
-GCCVER=${GCCVER:-0}
 CCVER=${CCVER:-0}
 
 # read the output of the embedded GuessOS 
@@ -426,9 +435,9 @@ case "$GUESSOS" in
   mips4-sgi-irix64)
 	echo "WARNING! If you wish to build 64-bit library, then you have to"
 	echo "         invoke './Configure irix64-mips4-$CC' *manually*."
-	echo "         Type return if you want to continue, Ctrl-C to abort."
 	if [ "$TEST" = "false" ]; then
-	  read waste < /dev/tty
+	  echo "         You have about 5 seconds to press Ctrl-C to abort."
+	  (stty -icanon min 0 time 50; read waste) < /dev/tty
 	fi
         CPU=`(hinv -t cpu) 2>/dev/null | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
         CPU=${CPU:-0}
@@ -496,16 +505,39 @@ EOF
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux1) OUT="linux-aout" ;;
   sun4u*-*-solaris2)
+	OUT="solaris-sparcv9-$CC"
 	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
-	if [ "$ISA64" != "" -a "$CC" = "cc" -a $CCVER -ge 50 ]; then
+	if [ "$ISA64" != "" ]; then
+	    if [ "$CC" = "cc" -a $CCVER -ge 50 ]; then
 		echo "WARNING! If you wish to build 64-bit library, then you have to"
 		echo "         invoke './Configure solaris64-sparcv9-cc' *manually*."
-		echo "         Type return if you want to continue, Ctrl-C to abort."
 		if [ "$TEST" = "false" ]; then
-		  read waste < /dev/tty
+		  echo "         You have about 5 seconds to press Ctrl-C to abort."
+		  (stty -icanon min 0 max 50; read waste) < /dev/tty
 		fi
+	    elif [ "$CC" = "gcc" -a "$GCC_ARCH" = "-m64" ]; then
+		# $GCC_ARCH denotes default ABI chosen by compiler driver
+		# (first one found on the $PATH). I assume that user
+		# expects certain consistency with the rest of his builds
+		# and therefore switch over to 64-bit. <appro>
+		OUT="solaris64-sparcv9-gcc"
+		echo "WARNING! If you wish to build 32-bit library, then you have to"
+		echo "         invoke './Configure solaris-sparcv9-gcc' *manually*."
+		if [ "$TEST" = "false" ]; then
+		  echo "         You have about 5 seconds to press Ctrl-C to abort."
+		  (stty -icanon min 0 max 50; read waste) < /dev/tty
+		fi
+	    elif [ "$GCC_ARCH" = "-m32" ]; then
+		echo "NOTICE! If you *know* that your GNU C supports 64-bit/V9 ABI"
+		echo "        and wish to build 64-bit library, then you have to"
+		echo "        invoke './Configure solaris64-sparcv9-gcc' *manually*."
+		if [ "$TEST" = "false" ]; then
+		  echo "         You have about 5 seconds to press Ctrl-C to abort."
+		  (stty -icanon min 0 max 50; read waste) < /dev/tty
+		fi
+	    fi
 	fi
-	OUT="solaris-sparcv9-$CC" ;;
+	;;
   sun4m-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
   sun4d-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
   sun4*-*-solaris2)	OUT="solaris-sparcv7-$CC" ;;

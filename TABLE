@@ -1,4 +1,3 @@
-Output of `Configure TABLE':
 
 *** BC-16
 $cc           = bcc
@@ -969,6 +968,29 @@ $ranlib       =
 *** debug-ben-debug
 $cc           = gcc
 $cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = 
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** debug-ben-openbsd
+$cc           = gcc
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_OPENBSD_DEV_CRYPTO -DOPENSSL_NO_ASM -O2 -pedantic -Wall -Wshadow -Werror -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -2670,7 +2692,7 @@ $ranlib       =
 
 *** solaris-sparcv9-gcc
 $cc           = gcc
-$cflags       = -mcpu=ultrasparc -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
+$cflags       = -m32 -mcpu=ultrasparc -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -2782,6 +2804,29 @@ $shared_target= solaris-shared
 $shared_cflag = -KPIC
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = /usr/ccs/bin/ar rs
+
+*** solaris64-sparcv9-gcc
+$cc           = gcc
+$cflags       = -m64 -mcpu=ultrasparc -O3 -Wall -DB_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = ULTRASPARC
+$lflags       = -lsocket -lnsl -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = asm/md5-sparcv9.o
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= gnu-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
 
 *** sunos-gcc
 $cc           = gcc
