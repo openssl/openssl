@@ -415,6 +415,10 @@ static int ENGINE_free_util(ENGINE *e, int locked)
 		abort();
 		}
 #endif
+	/* Give the ENGINE a chance to do any structural cleanup corresponding
+	 * to allocation it did in its constructor (eg. unload error strings) */
+	if(e->destroy)
+		e->destroy(e);
 	sk_ENGINE_EVP_CIPHER_pop_free(e->ciphers,ENGINE_free_engine_cipher);
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ENGINE, e, &e->ex_data);
 	OPENSSL_free(e);
@@ -532,6 +536,12 @@ int ENGINE_set_BN_mod_exp_crt(ENGINE *e, BN_MOD_EXP_CRT bn_mod_exp_crt)
 	return 1;
 	}
 
+int ENGINE_set_destroy_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR destroy_f)
+	{
+	e->destroy = destroy_f;
+	return 1;
+	}
+
 int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f)
 	{
 	e->init = init_f;
@@ -646,6 +656,11 @@ BN_MOD_EXP ENGINE_get_BN_mod_exp(const ENGINE *e)
 BN_MOD_EXP_CRT ENGINE_get_BN_mod_exp_crt(const ENGINE *e)
 	{
 	return e->bn_mod_exp_crt;
+	}
+
+ENGINE_GEN_INT_FUNC_PTR ENGINE_get_destroy_function(const ENGINE *e)
+	{
+	return e->destroy;
 	}
 
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e)

@@ -112,6 +112,7 @@ struct engine_st
 
 	BN_MOD_EXP bn_mod_exp;
 	BN_MOD_EXP_CRT bn_mod_exp_crt;
+	ENGINE_GEN_INT_FUNC_PTR	destroy;
 	ENGINE_GEN_INT_FUNC_PTR init;
 	ENGINE_GEN_INT_FUNC_PTR finish;
 	ENGINE_CTRL_FUNC_PTR ctrl;
