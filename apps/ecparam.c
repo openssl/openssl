@@ -701,7 +701,7 @@ end:
 	OPENSSL_EXIT(ret);
 }
 
-int ecparam_print_var(BIO *out, BIGNUM *in, const char *var,
+static int ecparam_print_var(BIO *out, BIGNUM *in, const char *var,
 	int len, unsigned char *buffer)
 	{
 	BIO_printf(out, "static unsigned char %s_%d[] = {", var, len);
