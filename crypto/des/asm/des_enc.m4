@@ -108,6 +108,7 @@
 #define out6 %o6
 #define out7 %o7
 
+#define stub stb
 
 changequote({,})
 
