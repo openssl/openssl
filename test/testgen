@@ -27,7 +27,7 @@ fi
 
 echo "This could take some time."
 
-rm testkey.pem testreq.pem
+rm -f testkey.pem testreq.pem
 
 ../apps/openssl req -config test.cnf $req_new -out testreq.pem
 if [ $? != 0 ]; then
