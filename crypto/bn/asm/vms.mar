@@ -172,39 +172,54 @@ n=12 ;(AP)	n	by value (input)
 ; }
 ;
 ; Using EDIV would be very easy, if it didn't do signed calculations.
-; It doesn't accept a signed dividend, but accepts a signed divisor.
-; So, shifting down the dividend right one bit makes it positive, and
-; just makes us lose the lowest bit, which can be used afterwards as
-; an addition to the remainder.  All that needs to be done at the end
-; is a little bit of fiddling; shifting both quotient and remainder
-; one step to the left, and deal with the situation when the remainder
-; ends up being larger than the divisor.
+; Any time, any of the input numbers are signed, there are problems,
+; usually with integer overflow, at which point it returns useless
+; data (the quotient gets the value of l, and the remainder becomes 0).
 ;
-; We end up doing something like this:
+; If it was just for the dividend, it would be very easy, just divide
+; it by 2 (unsigned), do the division, multiply the resulting quotient
+; and remainder by 2, add the bit that was dropped when dividing by 2
+; to the remainder, and do some adjustment so the remainder doesn't
+; end up larger than the divisor.  This method works as long as the
+; divisor is positive, so we'll keep that (with a small adjustment)
+; as the main method.
+; For some cases when the divisor is negative (from EDIV's point of
+; view, i.e. when the highest bit is set), dividing the dividend by
+; 2 isn't enough, it needs to be divided by 4.  Furthermore, the
+; divisor needs to be divided by 2 (unsigned) as well, to avoid more
+; problems with the sign.  In this case, the divisor is so large,
+; from an unsigned point of view, that the dropped lowest bit is
+; insignificant for the operation, and therefore doesn't need
+; bothering with.  The remainder might end up incorrect, bit that's
+; adjusted at the end of the routine anyway.
 ;
-; l'    = l & 1
-; [h,l] = [h,l] >> 1
-; [q,r] = floor([h,l] / d)
-; if (q < 0) q = -q	# Because EDIV thought d was negative
+; So, the simplest way to handle this is always to divide the dividend
+; by 4, and to divide the divisor by 2 if it's highest bit is set.
+; After EDIV has been used, the quotient gets multiplied by 4 if the
+; original divisor was positive, otherwise 2.  The remainder, oddly
+; enough, is *always* multiplied by 4.
 ;
-; Now, we need to adjust back by multiplying quotient and remainder with 2,
-; and add the bit that dropped out when dividing by 2:
+; The routine ends with comparing the resulting remainder with the
+; original divisor and if the remainder is larger, subtract the
+; original divisor from it, and increase the quotient by 1.  This is
+; done until the remainder is smaller than the divisor.
 ;
-; r'    = r & 0x80000000
+; The complete algorithm looks like this:
+;
+; d'    = d
+; l'    = l & 3
+; [h,l] = [h,l] >> 2
+; [q,r] = floor([h,l] / d)	# This is the EDIV operation
+; if (q < 0) q = -q		# I doubt this is necessary any more
+;
+; r'    = r >> 30
+; if (d' > 0) q = q << 1
 ; q     = q << 1
-; r     = (r << 1) + a'
+; r     = (r << 2) + l'
 ;
-; And now, the final adjustment if the remainder happens to get larger than
-; the divisor:
-;
-; if (r')
+; while ([r',r] >= d)
 ;   {
-;     r = r - d
-;     q = q + 1
-;   }
-; while (r >= d)
-;   {
-;     r = r - d
+;     [r',r] = [r',r] - d
 ;     q = q + 1
 ;   }
 ;
@@ -216,63 +231,69 @@ d=12 ;(AP)	d	by value (input)
 
 ;lprim=r5
 ;rprim=r6
+;dprim=r7
 
 
 	.psect	code,nowrt
 
-.entry	bn_div_words,^m<r2,r3,r4,r5,r6>
+.entry	bn_div_words,^m<r2,r3,r4,r5,r6,r7>
 	movl	l(ap),r2
 	movl	h(ap),r3
 	movl	d(ap),r4
 
-	movl	#0,r5
+	bicl3	#^XFFFFFFFC,r2,r5 ; l' = l & 3
+	bicl3	#^X00000003,r2,r2
+
+	bicl3	#^XFFFFFFFC,r3,r6
+	bicl3	#^X00000003,r3,r3
+        
+	addl	r6,r2
+	rotl	#-2,r2,r2	; l = l >> 2
+	rotl	#-2,r3,r3	; h = h >> 2
+                
 	movl	#0,r6
+	movl	r4,r7		; d' = d
 
-	rotl	#-1,r2,r2	; l = l >> 1 (almost)
-	rotl	#-1,r3,r3	; h = h >> 1 (almost)
-
-	tstl	r2
-	bgeq	1$
-	xorl2	#^X80000000,r2	; fixup l so highest bit is 0
-	incl	r5		; l' = 1
-1$:
-	tstl	r3
-	bgeq	2$
-	xorl2	#^X80000000,r2	; fixup l so highest bit is 1,
-				; since that's what was lowest in h
-	xorl2	#^X80000000,r3	; fixup h so highest bit is 0
-2$:
 	tstl	r4
 	beql	666$		; Uh-oh, the divisor is 0...
-
+	bgtr	1$
+	rotl	#-1,r4,r4	; If d is negative, shift it right.
+	bicl2	#^X80000000,r4	; Since d is then a large number, the
+				; lowest bit is insignificant
+				; (contradict that, and I'll fix the problem!)
+1$:     
 	ediv	r4,r2,r2,r3	; Do the actual division
 
 	tstl	r2
 	bgeq	3$
 	mnegl	r2,r2		; if q < 0, negate it
-3$:
-	tstl	r3
-	bgeq	4$
-	incl	r6		; since the high bit in r is set, set r'
-4$:
+3$:     
+	tstl	r7
+	blss	4$
 	ashl	#1,r2,r2	; q = q << 1
-	ashl	#1,r3,r3	; r = r << 1
-	addl	r5,r3		; r = r + a'
+4$:     
+	ashl	#1,r2,r2	; q = q << 1
+	rotl	#2,r3,r3	; r = r << 2
+	bicl3	#^XFFFFFFFC,r3,r6 ; r' gets the high bits from r
+	bicl3	#^X00000003,r3,r3
+	addl	r5,r3		; r = r + l'
 
-	tstl	r6
-	beql	5$		; if r'
-	subl	r4,r3		;   r = r - d
-	incl	r2		;   q = q + 1
 5$:
-	cmpl	r3,r4
-	blssu	42$		; while r >= d
-	subl	r4,r3		;   r = r - d
+	tstl	r6
+	bneq	6$
+	cmpl	r3,r7
+	blssu	42$		; while [r',r] >= d'
+6$:
+	subl	r7,r3		;   r = r - d
+	sbwc	#0,r6
 	incl	r2		;   q = q + 1
 	brb	5$	
 42$:
 ;	movl	r3,r1
 	movl	r2,r0
+	ret
 666$:
+	movl	#^XFFFFFFFF,r0
 	ret
 
 	.title	vax_bn_add_words  unsigned add of two arrays
