@@ -4,6 +4,7 @@ package x86unix;
 
 $label="L000";
 $const="";
+$constl=0;
 
 $align=($main'aout)?"4":"16";
 $under=($main'aout)?"_":"";
@@ -484,8 +485,8 @@ sub main'putx
 	&main'push($_[0]);
 	&main'push('$Lstring' . ++$constl);
 	&main'call('printf');
-	$stack-=8;
 	&main'add("esp",8);
+	$stack-=8;
 	&popvars();
 
 	$const .= "Lstring$constl:\n\t.string \"\%X\"\n";
@@ -497,10 +498,9 @@ sub main'printf
 	&pushvars();
 	for ($i = @_ - 1; $i >= 0; $i--)
 		{
-		$constl++;
 		if ($i == 0) # change this to support %s format strings
 			{
-			&main'push('$Lstring' . $constl);
+			&main'push('$Lstring' . ++$constl);
 			$const .= "Lstring$constl:\n\t.string \"@_[$i]\"\n";
 			}
 		else
@@ -517,8 +517,8 @@ sub main'printf
 		}
 	&main'call('printf');
 	$stack-=4*@_;
-	&popvars();
 	&main'add("esp",4*@_);
+	&popvars();
 	}
 
 sub pushvars
