@@ -773,6 +773,7 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 	ret = 1;
 
 err:	
+	if (d) closedir(d);
 	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
 	return ret;
 	}
@@ -798,7 +799,7 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 		SYSerr(SYS_F_OPENDIR, get_last_sys_error());
 		ERR_add_error_data(3, "opendir('", dir, "')");
 		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
-		goto err;
+		goto err_noclose;
 		}
 	
 	do 
@@ -819,10 +820,11 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 			goto err;
 		}
 	while (FindNextFile(hFind, &FindFileData) != FALSE);
-	FindClose(hFind);
 	ret = 1;
 
-err:	
+err:
+	FindClose(hFind);
+err_noclose:	
 	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
 	return ret;
 	}
