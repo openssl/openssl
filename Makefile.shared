@@ -597,27 +597,29 @@ link_o.hpux32:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).sl; \
 	SHLIB_SUFFIX=; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
-	ALLSYMSFLAGS='-Fl'; \
+	LIBDEPS="$(LIBDEPS)"; \
+	ALLSYMSFLAGS='-Wl,-Fl'; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS="+vnocompatwarnings -b -z +s +h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX +b $(LIBRPATH)"; \
-	SHAREDCMD='/usr/ccs/bin/ld'; \
+	expr $(PLATFORM) : '.*64' > /dev/null && ALLSYMFLAGS='-Wl,+forceload'; \
+	SHAREDFLAGS="-Wl,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+b,$(LIBRPATH)"; \
+	SHAREDCMD=$(CC); \
 	$(LINK_SO_O) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
 link_a.hpux32:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).sl; \
 	SHLIB_SUFFIX=; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
-	ALLSYMSFLAGS='-Fl'; \
+	LIBDEPS="$(LIBDEPS)"; \
+	ALLSYMSFLAGS='-Wl,-Fl'; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS="+vnocompatwarnings -b -z +s +h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX +b $(LIBRPATH)"; \
-	SHAREDCMD='/usr/ccs/bin/ld'; \
+	expr $(PLATFORM) : '.*64' > /dev/null && ALLSYMFLAGS='-Wl,+forceload'; \
+	SHAREDFLAGS="-Wl,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+b,$(LIBRPATH)"; \
+	SHAREDCMD='$(CC)'; \
 	$(LINK_SO_A) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
 link_app.hpux32:
 	LDCMD=$(CC);\
 	LDFLAGS="-Wl,+b,$(LIBRPATH)"; \
-	LIBDEPS="$(LIBDEPS) -lc"; \
-	APPNAME="$(APPNAME)"
+	LIBDEPS="$(LIBDEPS)"; \
+	APPNAME="$(APPNAME)"; \
 	$(LINK_APP)
 
 # HP-UX includes the full pathname of libs we depend on, so we would get
