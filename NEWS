@@ -17,6 +17,11 @@
         a separate distribution.
       o New elliptic curve library section.
       o New AES (Rijndael) library section.
+      o Support for new platforms: Windows CE, Tandem OSS, A/UX, AIX 64-bit
+      o Extended support for some platforms: VxWorks
+      o Enhanced support for shared libraries.
+      o Support for pkg-config.
+      o Lots of new manuals.
       o Change DES API to clean up the namespace (some applications link also
         against libdes providing similar functions having the same name).
         Provide macros for backward compatibility (will be removed in the
@@ -30,6 +35,7 @@
       o Reworked parts of the BIGNUM code.
       o Support for new engines: Broadcom ubsec, Accelerated Encryption
         Processing, IBM 4758.
+      o A few new engines added in the demos area.
       o Extended and corrected OID (object identifier) table.
       o PRNG: query at more locations for a random device, automatic query for
         EGD style random sources at several locations.
@@ -39,6 +45,20 @@
       o SSL/TLS: allow more precise control of renegotiations and sessions.
       o SSL/TLS: add callback to retrieve SSL/TLS messages.
       o SSL/TLS: support AES cipher suites (RFC3268).
+
+  Major changes between OpenSSL 0.9.6g and OpenSSL 0.9.6h:
+
+      o New configuration targets for Tandem OSS and A/UX.
+      o New OIDs for Microsoft attributes.
+      o Better handling of SSL session caching.
+      o Better comparison of distinguished names.
+      o Better handling of shared libraries in a mixed GNU/non-GNU environment.
+      o Support assembler code with Borland C.
+      o Fixes for length problems.
+      o Fixes for uninitialised variables.
+      o Fixes for memory leaks, some unusual crashes and some race conditions.
+      o Fixes for smaller building problems.
+      o Updates of manuals, FAQ and other instructive documents.
 
   Major changes between OpenSSL 0.9.6f and OpenSSL 0.9.6g:
 
