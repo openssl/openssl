@@ -262,9 +262,12 @@ bad:
 		}
 
 	if (check)
-		if (RSA_check_key(rsa))
+		{
+		int r = RSA_check_key(rsa);
+
+		if (r == 1)
 			BIO_printf(out,"RSA key ok\n");
-		else
+		else if (r == 0)
 			{
 			long e;
 
@@ -276,13 +279,15 @@ bad:
 				BIO_printf(out, "RSA key error: %s\n", ERR_reason_error_string(e));
 				ERR_get_error(); /* remove e from error stack */
 				}
-			if (e != 0)
-				{
-				ERR_print_errors(bio_err);
-				goto end;
-				}
 			}
-	
+		
+		if (r == -1 || ERR_peek_error() != 0) /* should happen only if r == -1 */
+			{
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		}
+		
 	if (noout) goto end;
 	BIO_printf(bio_err,"writing RSA private key\n");
 	if 	(outformat == FORMAT_ASN1)

@@ -57,6 +57,7 @@ int RSA_check_key(RSA *key)
 	{
 	BIGNUM *i, *j, *k, *l, *m;
 	BN_CTX *ctx;
+	int r;
 	int ret=1;
 	
 	i = BN_new();
@@ -68,85 +69,99 @@ int RSA_check_key(RSA *key)
 	if (i == NULL || j == NULL || k == NULL || l == NULL ||
 		m == NULL || ctx == NULL)
 		{
-		ret = 0;
+		ret = -1;
 		RSAerr(RSA_F_RSA_CHECK_KEY, ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 	
 	/* p prime? */
-	if (BN_is_prime(key->p, BN_prime_checks, NULL, NULL, NULL) != 1)
+	r = BN_is_prime(key->p, BN_prime_checks, NULL, NULL, NULL);
+	if (r != 1)
 		{
-		ret = 0;
-		if (ERR_GET_REASON(ERR_peek_error()) == ERR_R_MALLOC_FAILURE)
+		ret = r;
+		if (r != 0)
 			goto err;
 		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_P_NOT_PRIME);
 		}
 	
 	/* q prime? */
-	if (BN_is_prime(key->q, BN_prime_checks, NULL, NULL, NULL) != 1)
+	r = BN_is_prime(key->q, BN_prime_checks, NULL, NULL, NULL);
+	if (r != 1)
 		{
-		ret = 0;
-		if (ERR_GET_REASON(ERR_peek_error()) == ERR_R_MALLOC_FAILURE)
+		ret = r;
+		if (r != 0)
 			goto err;
 		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_Q_NOT_PRIME);
 		}
 	
 	/* n = p*q? */
-	BN_mul(i, key->p, key->q, ctx);
+	r = BN_mul(i, key->p, key->q, ctx);
+	if (!r) { ret = -1; goto err; }
+	
 	if (BN_cmp(i, key->n) != 0)
 		{
 		ret = 0;
-		if (ERR_GET_REASON(ERR_peek_error()) == ERR_R_MALLOC_FAILURE)
-			goto err;
-		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_N_DOES_NOT_EQUAL_PQ);
+		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_N_DOES_NOT_EQUAL_P_Q);
 		}
 	
 	/* dmp1 = d mod (p-1)? */
-	BN_sub(i, key->p, BN_value_one());
-	BN_mod(j, key->d, i, ctx);
+	r = BN_sub(i, key->p, BN_value_one());
+	if (!r) { ret = -1; goto err; }
+
+	r = BN_mod(j, key->d, i, ctx);
+	if (!r) { ret = -1; goto err; }
+
 	if (BN_cmp(j, key->dmp1) != 0)
 		{
 		ret = 0;
-		if (ERR_GET_REASON(ERR_peek_error()) == ERR_R_MALLOC_FAILURE)
-			goto err;
 		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_DMP1_NOT_CONGRUENT_TO_D);
 		}
 	
 	/* dmq1 = d mod (q-1)? */    
-	BN_sub(i, key->q, BN_value_one());
-	BN_mod(j, key->d, i, ctx);
+	r = BN_sub(i, key->q, BN_value_one());
+	if (!r) { ret = -1; goto err; }
+	
+	r = BN_mod(j, key->d, i, ctx);
+	if (!r) { ret = -1; goto err; }
+
 	if (BN_cmp(j, key->dmq1) != 0)
 		{
 		ret = 0;
-		if (ERR_GET_REASON(ERR_peek_error()) == ERR_R_MALLOC_FAILURE)
-			goto err;
 		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_DMQ1_NOT_CONGRUENT_TO_D);
 		}
 	
 	/* iqmp = q^-1 mod p? */
-	BN_mod_inverse(i, key->q, key->p, ctx);
+	r = BN_mod_inverse(i, key->q, key->p, ctx);
+	if (!r) { ret = -1; goto err; }
+
 	if (BN_cmp(i, key->iqmp) != 0)
 		{
 		ret = 0;
-		if (ERR_GET_REASON(ERR_peek_error()) == ERR_R_MALLOC_FAILURE)
-			goto err;
 		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_IQMP_NOT_INVERSE_OF_Q);
 		}
 	
 	/* d*e = 1  mod lcm(p-1,q-1)? */
-	BN_sub(i, key->p, BN_value_one());
-	BN_sub(j, key->q, BN_value_one());
+
+	r = BN_sub(i, key->p, BN_value_one());
+	if (!r) { ret = -1; goto err; }
+	r = BN_sub(j, key->q, BN_value_one());
+	if (!r) { ret = -1; goto err; }
+
 	/* now compute k = lcm(i,j) */
-	BN_mul(l, i, j, ctx);
-	BN_gcd(m, i, j, ctx);
-	BN_div(k, NULL, l, m, ctx); /* remainder is 0 */
-	BN_mod_mul(i, key->d, key->e, k, ctx);
+	r = BN_mul(l, i, j, ctx);
+	if (!r) { ret = -1; goto err; }
+	r = BN_gcd(m, i, j, ctx);
+	if (!r) { ret = -1; goto err; }
+	r = BN_div(k, NULL, l, m, ctx); /* remainder is 0 */
+	if (!r) { ret = -1; goto err; }
+
+	r = BN_mod_mul(i, key->d, key->e, k, ctx);
+	if (!r) { ret = -1; goto err; }
+
 	if (!BN_is_one(i))
 		{
 		ret = 0;
-		if (ERR_GET_REASON(ERR_peek_error()) == ERR_R_MALLOC_FAILURE)
-			goto err;
-		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_DE_NOT_CONGRUENT_TO_1);
+		RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_D_E_NOT_CONGRUENT_TO_1);
 		}
 	
  err:
