@@ -150,7 +150,11 @@ int FIPS_mode_set(int onoff,const char *path)
 	/* automagically seed PRNG if not already seeded */
 	if(!FIPS_rand_seeded())
 	    {
-	    RAND_bytes(buf,sizeof buf);
+	    if(RAND_bytes(buf,sizeof buf) <= 0)
+		{
+		FIPS_selftest_fail=1;
+		return 0;
+		}
 	    FIPS_set_prng_key(buf,buf+8);
 	    FIPS_rand_seed(buf+16,8);
 	    }

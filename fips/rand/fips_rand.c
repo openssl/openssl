@@ -84,6 +84,11 @@ static int key_set;
 static int test_mode;
 static unsigned char test_faketime[8];
 
+#ifndef GETPID_IS_MEANINGLESS
+static int seed_pid;
+static int key_pid;
+#endif
+
 static void fips_rand_cleanup(void);
 static void fips_rand_add(const void *buf, int num, double add_entropy);
 static int fips_rand_bytes(unsigned char *buf, int num);
@@ -111,6 +116,9 @@ void FIPS_set_prng_key(const unsigned char k1[8],const unsigned char k2[8])
     memcpy(&key1,k1,sizeof key1);
     memcpy(&key2,k2,sizeof key2);
     key_set=1;
+#ifndef GETPID_IS_MEANINGLESS
+    key_pid=getpid();
+#endif
     second=0;
     }
 
@@ -224,6 +232,10 @@ void FIPS_rand_seed(const void *buf_, int num)
 	    n_seed+=t;
 	}
 
+#ifndef GETPID_IS_MEANINGLESS
+    seed_pid=getpid();
+#endif
+
     CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
     }
 
@@ -239,12 +251,29 @@ static int fips_rand_bytes(unsigned char *buf,int num)
     unsigned char intermediate[SEED_SIZE];
     unsigned char output[SEED_SIZE];
     static unsigned char previous[SEED_SIZE];
+#ifndef GETPID_IS_MEANINGLESS
+    int pid;
+#endif
 
     if(n_seed < sizeof seed)
 	{
 	RANDerr(RAND_F_FIPS_RAND_BYTES,RAND_R_PRNG_NOT_SEEDED);
 	return 0;
 	}
+
+#ifndef GETPID_IS_MEANINGLESS
+    pid=getpid();
+    if(pid != seed_pid)
+	{
+	RANDerr(RAND_F_FIPS_RAND_BYTES,RAND_R_PRNG_NOT_RESEEDED);
+	return 0;
+	}
+    if(pid != key_pid)
+	{
+	RANDerr(RAND_F_FIPS_RAND_BYTES,RAND_R_PRNG_NOT_REKEYED);
+	return 0;
+	}
+#endif
 
     fips_gettime(timeseed);
     fips_rand_encrypt(intermediate,timeseed);
