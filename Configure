@@ -681,6 +681,7 @@ if ($no_krb5
 	|| $withargs{"krb5-flavor"} eq "")
 	{
 	$cflags="-DNO_KRB5 $cflags";
+	$options.=" no-krb5" unless $no_krb5;
 	}
 else
 	{
