@@ -102,7 +102,7 @@ ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t)
 #else
 	ts=gmtime(&t);
 #endif
-	if((ts->tm_year >= 1950) && (ts->tm_year < 2050))
+	if((ts->tm_year >= 50) && (ts->tm_year < 150))
 					return ASN1_UTCTIME_set(s, t);
 	return ASN1_GENERALIZEDTIME_set(s,t);
 	}

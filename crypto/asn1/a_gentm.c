@@ -198,7 +198,7 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
 		s->data=(unsigned char *)p;
 		}
 
-	sprintf(p,"%04d%02d%02d%02d%02d%02dZ",ts->tm_year,
+	sprintf(p,"%04d%02d%02d%02d%02d%02dZ",ts->tm_year + 1900,
 		ts->tm_mon+1,ts->tm_mday,ts->tm_hour,ts->tm_min,ts->tm_sec);
 	s->length=strlen(p);
 	s->type=V_ASN1_GENERALIZEDTIME;
