@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/03/10 16:17:31 $
+  ______________                           $Date: 1999/03/14 01:16:42 $
 
   DEVELOPMENT STATE
 
@@ -14,7 +14,7 @@
          o  Linux RH 5.1     Steve Henson          OK
          o  Linux 2.0 RH 5.2 Ralf S. Engelschall   OK
          o  Linux 2.2 RH 5.2 Peter 'Luna' Altberg  OK
-         o  WinNT VC++ 6.0   Peter 'Luna' Altberg  troubles - see openssl-dev
+         o  WinNT,95 VC++ 5  Steve Henson          OK
 
        Proposed release time: Monday, March 15th 1999
 

@@ -58,6 +58,8 @@
 
 #include <errno.h>
 #include <time.h>
+#include <stdio.h>
+#include "cryptlib.h"
 #include "des_locl.h"
 
 int des_enc_write(fd, buf, len, sched, iv)
@@ -84,7 +86,7 @@ des_cblock iv;
 
 	if (outbuf == NULL)
 		{
-		outbuf=(char *)malloc(BSIZE+HDRSIZE);
+		outbuf=(char *)Malloc(BSIZE+HDRSIZE);
 		if (outbuf == NULL) return(-1);
 		}
 	/* If we are sending less than 8 bytes, the same char will look

@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include "cryptlib.h"
 #include "des_locl.h"
 
 /* This has some uglies in it but it works - even over sockets. */
@@ -87,17 +88,17 @@ des_cblock iv;
 
 	if (tmpbuf == NULL)
 		{
-		tmpbuf=(char *)malloc(BSIZE);
+		tmpbuf=(char *)Malloc(BSIZE);
 		if (tmpbuf == NULL) return(-1);
 		}
 	if (net == NULL)
 		{
-		net=(unsigned char *)malloc(BSIZE);
+		net=(unsigned char *)Malloc(BSIZE);
 		if (net == NULL) return(-1);
 		}
 	if (unnet == NULL)
 		{
-		unnet=(char *)malloc(BSIZE);
+		unnet=(char *)Malloc(BSIZE);
 		if (unnet == NULL) return(-1);
 		}
 	/* left over data from last decrypt */

@@ -1019,7 +1019,7 @@ void SSL_CTX_free(SSL_CTX *a)
 	if (a->extra_certs != NULL)
 		sk_pop_free(a->extra_certs,X509_free);
 	if (a->comp_methods != NULL)
-		sk_pop_free(a->comp_methods,free);
+		sk_pop_free(a->comp_methods,FreeFunc);
 	Free((char *)a);
 	}
 
