@@ -188,6 +188,9 @@ authorityKeyIdentifier=keyid,issuer:always
 # This stuff is for subjectAltName and issuerAltname.
 # Import the email address.
 # subjectAltName=email:copy
+# An alternative to produce certificates that aren't
+# deprecated according to PKIX.
+# subjectAltName=email:move
 
 # Copy subject details
 # issuerAltName=issuer:copy
