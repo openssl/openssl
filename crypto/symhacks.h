@@ -256,44 +256,6 @@
 #undef X509v3_add_standard_extensions
 #define X509v3_add_standard_extensions          oX509v3_add_standard_extensions
 
-/* The following hacks is to make sure that the old des_ functions do not
-   clash with the new DES_ functions */
-#define des_options				odes_options
-#define des_ecb3_encrypt			odes_ecb3_encrypt
-#define des_cbc_cksum				odes_cbc_cksum
-#define des_cbc_encrypt				odes_cbc_encrypt
-#define des_ncbc_encrypt			odes_ncbc_encrypt
-#define des_xcbc_encrypt			odes_xcbc_encrypt
-#define des_3cbc_encrypt			odes_3cbc_encrypt
-#define des_cfb_encrypt				odes_cfb_encrypt
-#define des_ecb_encrypt				odes_ecb_encrypt
-#define des_encrypt				odes_encrypt
-#define des_encrypt2				odes_encrypt2
-#define des_encrypt3				odes_encrypt3
-#define des_decrypt3				odes_decrypt3
-#define des_ede3_cbc_encrypt			odes_ede3_cbc_encrypt
-#define des_ede3_cfb64_encrypt			odes_ede3_cfb64_encrypt
-#define des_ede3_ofb64_encrypt			odes_ede3_ofb64_encrypt
-#define des_xwhite_in2out			odes_xwhite_in2out
-#define des_enc_read				odes_enc_read
-#define des_enc_write				odes_enc_write
-#define des_fcrypt				odes_fcrypt
-#define des_crypt				odes_crypt
-#define crypt					ocrypt
-#define des_ofb_encrypt				odes_ofb_encrypt
-#define des_pcbc_encrypt			odes_pcbc_encrypt
-#define des_quad_cksum				odes_quad_cksum
-#define des_random_seed				odes_random_seed
-#define des_random_key				odes_random_key
-#define des_set_odd_parity			odes_set_odd_parity
-#define des_is_weak_key				odes_is_weak_key
-#define des_set_key				odes_set_key
-#define des_key_sched				odes_key_sched
-#define des_string_to_key			odes_string_to_key
-#define des_string_to_2keys			odes_string_to_2keys
-#define des_cfb64_encrypt			odes_cfb64_encrypt
-#define des_ofb64_encrypt			odes_ofb64_encrypt
-
 
 #endif
 
