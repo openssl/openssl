@@ -304,7 +304,7 @@ fi
 case "$GUESSOS" in
   alpha-*-linux2) OUT="alpha-gcc" ;;
   *-*-linux2) OUT="linux-elf" ;;
-  *-*-linux) OUT="linux-aout" ;;
+  *-*-linux1) OUT="linux-aout" ;;
   sun4*-sun-solaris2) OUT="solaris-sparc-$CC" ;;
   *86*-sun-solaris2) OUT="solaris-x86-$CC" ;;
   *-*-sunos4) OUT="sunos-$CC" ;;
