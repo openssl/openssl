@@ -85,7 +85,7 @@ int MAIN(int argc, char **argv)
 	int ret=1,num=DEFBITS;
 	int g=2;
 	char *outfile=NULL;
-	char *inrand=NULL;
+	char *inrand=NULL,*inegd=NULL;
 	BIO *out=NULL;
 
 	apps_startup();
@@ -115,6 +115,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			inrand= *(++argv);
 			}
+		else if (strcmp(*argv,"-egd") == 0)
+			{
+			if (--argc < 1) goto bad;
+			inegd= *(++argv);
+			}
 		else
 			break;
 		argv++;
@@ -125,12 +130,13 @@ int MAIN(int argc, char **argv)
 bad:
 		BIO_printf(bio_err,"usage: gendh [args] [numbits]\n");
 		BIO_printf(bio_err," -out file - output the key to 'file\n");
-		BIO_printf(bio_err," -2    use 2 as the generator value\n");
-	/*	BIO_printf(bio_err," -3    use 3 as the generator value\n"); */
-		BIO_printf(bio_err," -5    use 5 as the generator value\n");
+		BIO_printf(bio_err," -2        - use 2 as the generator value\n");
+	/*	BIO_printf(bio_err," -3        - use 3 as the generator value\n"); */
+		BIO_printf(bio_err," -5        - use 5 as the generator value\n");
 		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"           - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"             the random number generator\n");
+		BIO_printf(bio_err," -egd file - load random seed from EGD socket\n");
 		goto end;
 		}
 		
@@ -152,13 +158,16 @@ bad:
 			}
 		}
 
-	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL)
+	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL && inegd == NULL)
 		{
 		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
 		}
 	if (inrand != NULL)
 		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
 			app_RAND_load_files(inrand));
+	if (inegd != NULL)
+		BIO_printf(bio_err,"%ld egd bytes loaded\n",
+			RAND_egd(inegd));
 
 	BIO_printf(bio_err,"Generating DH parameters, %d bit long safe prime, generator %d\n",num,g);
 	BIO_printf(bio_err,"This is going to take a long time\n");

@@ -65,6 +65,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
+#include <openssl/rand.h>
 #include <openssl/pkcs12.h>
 
 #define PROG pkcs12_main
@@ -116,7 +117,7 @@ int MAIN(int argc, char **argv)
     char *cpass = NULL, *mpass = NULL;
     char *passargin = NULL, *passargout = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL;
-    char *inrand = NULL;
+    char *inrand = NULL,*inegd=NULL;
 
     apps_startup();
 
@@ -177,6 +178,11 @@ int MAIN(int argc, char **argv)
 		    if (args[1]) {
 			args++;	
 			inrand = *args;
+		    } else badarg = 1;
+		} else if (!strcmp (*args, "-egd")) {
+		    if (args[1]) {
+			args++;	
+			inegd = *args;
 		    } else badarg = 1;
 		} else if (!strcmp (*args, "-inkey")) {
 		    if (args[1]) {
@@ -269,6 +275,7 @@ int MAIN(int argc, char **argv)
 	BIO_printf(bio_err,  "-rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	BIO_printf(bio_err,  "              load the file (or the files in the directory) into\n");
 	BIO_printf(bio_err,  "              the random number generator\n");
+	BIO_printf(bio_err,  "-egd file     load random seed from EGD socket\n");
     	goto end;
     }
 
@@ -296,10 +303,13 @@ int MAIN(int argc, char **argv)
     }
 
     if(export_cert || inrand) {
-    	app_RAND_load_file(NULL, bio_err, (inrand != NULL));
+    	app_RAND_load_file(NULL, bio_err, (inrand != NULL || inegd != NULL));
         if (inrand != NULL)
 		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
 			app_RAND_load_files(inrand));
+	if (inegd != NULL)
+		BIO_printf(bio_err,"%ld egd bytes loaded\n",
+			RAND_egd(inegd));
     }
     ERR_load_crypto_strings();
 

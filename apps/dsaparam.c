@@ -69,6 +69,7 @@
 #include <openssl/dsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/rand.h>
 
 #undef PROG
 #define PROG	dsaparam_main
@@ -94,7 +95,7 @@ int MAIN(int argc, char **argv)
 	int i,badops=0,text=0;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,noout=0,C=0,ret=1;
-	char *infile,*outfile,*prog,*inrand=NULL;
+	char *infile,*outfile,*prog,*inrand=NULL,*inegd=NULL;
 	int numbits= -1,num,genkey=0;
 	int need_rand=0;
 
@@ -149,6 +150,12 @@ int MAIN(int argc, char **argv)
 			inrand= *(++argv);
 			need_rand=1;
 			}
+		else if (strcmp(*argv,"-egd") == 0)
+			{
+			if (--argc < 1) goto bad;
+			inegd= *(++argv);
+			need_rand=1;
+			}
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
 		else if (sscanf(*argv,"%d",&num) == 1)
@@ -179,7 +186,10 @@ bad:
 		BIO_printf(bio_err," -text         print the key in text\n");
 		BIO_printf(bio_err," -C            Output C code\n");
 		BIO_printf(bio_err," -noout        no output\n");
-		BIO_printf(bio_err," -rand         files to use for random number input\n");
+		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+		BIO_printf(bio_err,"               load the file (or the files in the directory) into\n");
+		BIO_printf(bio_err,"               the random number generator\n");
+		BIO_printf(bio_err," -egd file     load random seed from EGD socket\n");
 		BIO_printf(bio_err," number        number of bits to use for generating private key\n");
 		goto end;
 		}
@@ -217,10 +227,14 @@ bad:
 
 	if (need_rand)
 		{
-		app_RAND_load_file(NULL, bio_err, (inrand != NULL));
+		app_RAND_load_file(NULL, bio_err,
+			(inrand != NULL || inegd != NULL));
 		if (inrand != NULL)
 			BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
 				app_RAND_load_files(inrand));
+		if (inegd != NULL)
+			BIO_printf(bio_err,"%ld egd bytes loaded\n",
+				RAND_egd(inegd));
 		}
 
 	if (numbits > 0)
