@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/17 22:36:25 $
+  ______________                           $Date: 2000/09/18 09:21:01 $
 
   DEVELOPMENT STATE
 
@@ -37,7 +37,20 @@
 			aix-gcc (AIX 4.3.2)		- passed
 			VMS/Alpha			- failed
 				Some things were missing [FIXED]
-                       0.9.6-beta1 is available:
+                       0.9.6-beta2 is available:
+			sunos-gcc			- passed
+			aix-gcc				- passed
+			Win32 w/ VC6 or Mingw32		- failed
+				RAND_poll(), a few uninitialised vars [FIXED]
+				RAND_poll() should used LoadLibrary instead of
+					GetModuleHandle [FIXED]
+				Major compilation problem with VC6 on NT
+				Mingw32 says "175: parse error before `DWORD'"
+			Win32 w/ CygWin			- success?
+			VMS/Alpha 7.1 (CPQ C 5.6-003, TCP/IP 5.0) - success
+				Just a small warning in dso_vms.c [FIXED]
+			VMS/Alpha 7.2-1 (CPQ 5.6-003, TCP/IP 5.0A) - success
+			VMS/VAX 7.2-1 (CPQ 5.2-003, TCP/IP 5.0) - success
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
