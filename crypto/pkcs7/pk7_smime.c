@@ -325,10 +325,6 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,PKCS7_R_WRONG_CONTENT_TYPE);
 		return NULL;
 	}
-	if(!(signers = sk_X509_new_null())) {
-		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
 
 	/* Collect all the signers together */
 
@@ -337,6 +333,11 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 	if(sk_PKCS7_SIGNER_INFO_num(sinfos) <= 0) {
 		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,PKCS7_R_NO_SIGNERS);
 		return 0;
+	}
+
+	if(!(signers = sk_X509_new_null())) {
+		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,ERR_R_MALLOC_FAILURE);
+		return NULL;
 	}
 
 	for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++)
