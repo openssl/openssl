@@ -700,7 +700,7 @@ static int aep_rand(unsigned char *buf,int len )
   
 	return 1;
  err:
-	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
+	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
  err_nounlock:
 	return 0;
 	}
