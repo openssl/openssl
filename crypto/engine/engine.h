@@ -503,6 +503,7 @@ ENGINE *ENGINE_get_digest_engine(int nid);
  * structure will have had its reference count up'd so the caller
  * should still free their own reference 'e'. */
 int ENGINE_set_default_RSA(ENGINE *e);
+int ENGINE_set_default_string(ENGINE *e, char *list);
 /* Same for the other "methods" */
 int ENGINE_set_default_DSA(ENGINE *e);
 int ENGINE_set_default_DH(ENGINE *e);
@@ -651,6 +652,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_MODULE_INIT			 187
 #define ENGINE_F_ENGINE_NEW				 122
 #define ENGINE_F_ENGINE_REMOVE				 123
+#define ENGINE_F_ENGINE_SET_DEFAULT_STRING		 189
 #define ENGINE_F_ENGINE_SET_DEFAULT_TYPE		 126
 #define ENGINE_F_ENGINE_SET_ID				 129
 #define ENGINE_F_ENGINE_SET_NAME			 130
@@ -691,6 +693,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_INVALID_ARGUMENT			 143
 #define ENGINE_R_INVALID_CMD_NAME			 137
 #define ENGINE_R_INVALID_CMD_NUMBER			 138
+#define ENGINE_R_INVALID_STRING				 150
 #define ENGINE_R_MISSING_KEY_COMPONENTS			 111
 #define ENGINE_R_NOT_INITIALISED			 117
 #define ENGINE_R_NOT_LOADED				 112

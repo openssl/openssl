@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/conf.h>
@@ -549,3 +550,48 @@ char *CONF_get1_default_config_file(void)
 
 	return file;
 	}
+
+/* This function takes a list separated by 'sep' and calls the
+ * callback function giving the start and length of each member
+ * optionally stripping leading and trailing whitespace. This can
+ * be used to parse comma separated lists for example.
+ */
+
+int CONF_parse_list(char *list, int sep, int nospc,
+		int (*list_cb)(char *elem, int len, void *usr), void *arg)
+	{
+	int ret;
+	char *lstart, *tmpend, *p;
+	lstart = list;
+
+	for(;;)
+		{
+		if (nospc)
+			{
+			while(*lstart && isspace((unsigned char)*lstart))
+				lstart++;
+			}
+		p = strchr(lstart, sep);
+		if (p == lstart || !*lstart)
+			ret = list_cb(NULL, 0, arg);
+		else
+			{
+			if (p)
+				tmpend = p - 1;
+			else 
+				tmpend = lstart + strlen(lstart) - 1;
+			if (nospc)
+				{
+				while(isspace((unsigned char)*tmpend))
+					tmpend--;
+				}
+			ret = list_cb(lstart, tmpend - lstart + 1, arg);
+			}
+		if (ret <= 0)
+			return ret;
+		if (p == NULL)
+			return 1;
+		lstart = p + 1;
+		}
+	}
+

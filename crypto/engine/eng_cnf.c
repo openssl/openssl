@@ -138,7 +138,12 @@ int int_engine_configure(char *name, char *value, const CONF *cnf)
 		 	 */
 			if (!strcmp(ctrlvalue, "EMPTY"))
 				ctrlvalue = NULL;
-			if (!ENGINE_ctrl_cmd_string(e,
+			if (!strcmp(ctrlname, "default_algorithms"))
+				{
+				if (!ENGINE_set_default_string(e, ctrlvalue))
+					goto err;
+				}
+			else if (!ENGINE_ctrl_cmd_string(e,
 					ctrlname, ctrlvalue, 0))
 				return 0;
 			}
@@ -151,7 +156,7 @@ int int_engine_configure(char *name, char *value, const CONF *cnf)
 		ENGINE_free(e);
 	return ret;
 	}
-	
+
 
 static int int_engine_module_init(CONF_IMODULE *md, const CONF *cnf)
 	{
