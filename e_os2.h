@@ -121,9 +121,6 @@ extern "C" {
 #  if defined(_WINDLL) /* This is used when building OpenSSL to indicate that
                           DLL linkage should be used */
 #   define OPENSSL_OPT_WINDLL
-#  elif defined(_DLL) /* This one is used quite much in the VC++ header
-                         files */
-#   define OPENSSL_OPT_WINDLL
 #  endif
 # endif
 #endif
