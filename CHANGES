@@ -11,6 +11,10 @@
          *) applies to 0.9.6a (/0.9.6b) and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Enhance the general user interface with mechanisms for inner control
+     and with pssibilities to have yes/no kind of prompts.
+     [Richard Levitte]
+
   *) Change all calls to low level digest routines in the library and
      applications to use EVP. Add missing calls to HMAC_cleanup() and
      don't assume HMAC_CTX can be copied using memcpy().
