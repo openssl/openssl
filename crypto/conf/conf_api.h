@@ -66,14 +66,13 @@ extern "C" {
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
 
-/* This was new_section */
+/* Up until OpenSSL 0.9.5a, this was new_section */
 CONF_VALUE *_CONF_new_section(CONF *conf, char *section);
-/* This was get_section */
+/* Up until OpenSSL 0.9.5a, this was get_section */
 CONF_VALUE *_CONF_get_section(CONF *conf, char *section);
-/* This was CONF_get_section */
+/* Up until OpenSSL 0.9.5a, this was CONF_get_section */
 STACK_OF(CONF_VALUE) *_CONF_get_section_values(CONF *conf, char *section);
 
-STACK_OF(CONF_VALUE) *_CONF_get_section_values(CONF *conf, char *section);
 int _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value);
 char *_CONF_get_string(CONF *conf, char *section, char *name);
 long _CONF_get_number(CONF *conf, char *section, char *name);
