@@ -512,7 +512,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
 	    !b->meth->group_get_curve(b, b1, b2, b3, ctx))
 		r = 1;
 
-	if (r || BN_cmp(a1, b2) || BN_cmp(a2, b2) || BN_cmp(a3, b3))
+	if (r || BN_cmp(a1, b1) || BN_cmp(a2, b2) || BN_cmp(a3, b3))
 		r = 1;
 
 	/* XXX EC_POINT_cmp() assumes that the methods are equal */
