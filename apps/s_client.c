@@ -154,7 +154,7 @@ char **argv;
 	char *cert_file=NULL,*key_file=NULL;
 	char *CApath=NULL,*CAfile=NULL,*cipher=NULL;
 	int reconnect=0,badop=0,verify=SSL_VERIFY_NONE,bugs=0;
-	int write_tty,read_tty,write_ssl,read_ssl,tty_on;
+	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
 	SSL_CTX *ctx=NULL;
 	int ret=1,in_init=1,i,nbio_test=0;
 	SSL_METHOD *meth=NULL;
@@ -439,31 +439,36 @@ re_start:
 				}
 			}
 
+		ssl_pending = read_ssl && SSL_pending(con);
+
+		if (!ssl_pending)
 #ifndef WINDOWS
-		if (tty_on)
 			{
-			if (read_tty)  FD_SET(fileno(stdin),&readfds);
-			if (write_tty) FD_SET(fileno(stdout),&writefds);
-			}
+			if (tty_on)
+				{
+				if (read_tty)  FD_SET(fileno(stdin),&readfds);
+				if (write_tty) FD_SET(fileno(stdout),&writefds);
+				}
 #endif
-		if (read_ssl)
-			FD_SET(SSL_get_fd(con),&readfds);
-		if (write_ssl)
-			FD_SET(SSL_get_fd(con),&writefds);
+			if (read_ssl)
+				FD_SET(SSL_get_fd(con),&readfds);
+			if (write_ssl)
+				FD_SET(SSL_get_fd(con),&writefds);
 
-/*		printf("mode tty(%d %d%d) ssl(%d%d)\n",
-			tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
+/*			printf("mode tty(%d %d%d) ssl(%d%d)\n",
+				tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
 
-		i=select(width,&readfds,&writefds,NULL,NULL);
-		if ( i < 0)
-			{
-			BIO_printf(bio_err,"bad select %d\n",
+			i=select(width,&readfds,&writefds,NULL,NULL);
+			if ( i < 0)
+				{
+				BIO_printf(bio_err,"bad select %d\n",
 				get_last_socket_error());
-			goto shut;
-			/* goto end; */
+				goto shut;
+				/* goto end; */
+				}
 			}
 
-		if (FD_ISSET(SSL_get_fd(con),&writefds))
+		if (!ssl_pending && FD_ISSET(SSL_get_fd(con),&writefds))
 			{
 			k=SSL_write(con,&(cbuf[cbuf_off]),
 				(unsigned int)cbuf_len);
@@ -531,7 +536,7 @@ re_start:
 				}
 			}
 #ifndef WINDOWS
-		else if (FD_ISSET(fileno(stdout),&writefds))
+		else if (!ssl_pending && FD_ISSET(fileno(stdout),&writefds))
 			{
 			i=write(fileno(stdout),&(sbuf[sbuf_off]),sbuf_len);
 
@@ -551,7 +556,7 @@ re_start:
 				}
 			}
 #endif
-		else if (FD_ISSET(SSL_get_fd(con),&readfds))
+		else if (ssl_pending || FD_ISSET(SSL_get_fd(con),&readfds))
 			{
 #ifdef RENEG
 { static int iiii; if (++iiii == 52) { SSL_renegotiate(con); iiii=0; } }
