@@ -2820,9 +2820,9 @@ EVP_des_ede_cfb64                       3261	EXIST::FUNCTION:DES
 EVP_aes_192_cfb128                      3262	EXIST::FUNCTION:AES
 EVP_aes_192_cfb1                        3263	EXIST::FUNCTION:AES
 EVP_des_cfb8                            3264	EXIST::FUNCTION:DES
-EVP_des_ede_cfb8                        3265	EXIST::FUNCTION:DES
+EVP_des_ede_cfb8                        3265	NOEXIST::FUNCTION:
 EVP_aes_256_cfb1                        3266	EXIST::FUNCTION:AES
-EVP_des_ede_cfb1                        3267	EXIST::FUNCTION:DES
+EVP_des_ede_cfb1                        3267	NOEXIST::FUNCTION:
 EVP_idea_cfb64                          3268	EXIST::FUNCTION:IDEA
 EVP_rc5_32_12_16_cfb64                  3269	EXIST::FUNCTION:RC5
 EVP_des_cfb1                            3270	EXIST::FUNCTION:DES
