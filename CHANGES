@@ -4,6 +4,9 @@
 
  Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
 
+  *) Fix crypto/bn/asm/mips3.s.
+     [Andy Polyakov]
+
   *) When only the key is given to "enc", the IV is undefined. Print out
      an error message in this case.
      [Lutz Jaenicke]
