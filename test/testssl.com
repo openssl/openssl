@@ -159,16 +159,25 @@ $	if $severity .ne. 1 then goto exit3
 $
 $!###########################################################################
 $
-$	write sys$output "test tls1 with 1024bit anonymous DH, multiple handshakes"
-$	'ssltest' -v -bio_pair -tls1 -cipher "ADH" -dhe1024dsa -num 10 -f -time
-$	if $severity .ne. 1 then goto exit3
-$
 $	set noon
 $	define/user sys$output nla0:
 $	mcr 'exe_dir'openssl no-rsa
-$	save_severity=$SEVERITY
+$	no_rsa=$SEVERITY
+$	define/user sys$output nla0:
+$	mcr 'exe_dir'openssl no-dh
+$	no_dh=$SEVERITY
 $	set on
-$	if save_severity
+$
+$	if no_dh
+$	then
+$	    write sys$output "skipping anonymous DH tests"
+$	else
+$	    write sys$output "test tls1 with 1024bit anonymous DH, multiple handshakes"
+$	    'ssltest' -v -bio_pair -tls1 -cipher "ADH" -dhe1024dsa -num 10 -f -time
+$	    if $severity .ne. 1 then goto exit3
+$	endif
+$
+$	if no_rsa
 $	then
 $	    write sys$output "skipping RSA tests"
 $	else
@@ -176,9 +185,14 @@ $	    write sys$output "test tls1 with 1024bit RSA, no DHE, multiple handshakes"
 $	    mcr 'texe_dir'ssltest -v -bio_pair -tls1 -cert [-.apps]server2.pem -no_dhe -num 10 -f -time
 $	    if $severity .ne. 1 then goto exit3
 $
-$	    write sys$output "test tls1 with 1024bit RSA, 1024bit DHE, multiple handshakes"
-$	    mcr 'texe_dir'ssltest -v -bio_pair -tls1 -cert [-.apps]server2.pem -dhe1024dsa -num 10 -f -time
-$	    if $severity .ne. 1 then goto exit3
+$	    if no_dh
+$	    then
+$		write sys$output "skipping RSA+DHE tests"
+$	    else
+$		write sys$output "test tls1 with 1024bit RSA, 1024bit DHE, multiple handshakes"
+$		mcr 'texe_dir'ssltest -v -bio_pair -tls1 -cert [-.apps]server2.pem -dhe1024dsa -num 10 -f -time
+$		if $severity .ne. 1 then goto exit3
+$	    endif
 $	endif
 $
 $	RET = 1
