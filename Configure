@@ -12,7 +12,7 @@ use strict;
 #
 # Configure options:
 # rsaref        use RSAref
-# no_asm        do not use assembler
+# no-asm        do not use assembler
 # 386           generate 80386 code
 # -DRSAref	build to use RSAref
 # -DNO_IDEA	build with no IDEA algorithm
