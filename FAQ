@@ -562,7 +562,12 @@ identifiers match? If they don't, then you most likely failed to run
 ./config and you're hereby advised to do so before filing a bug report.
 If ./config itself fails to run, then it's most likely problem with your
 local environment and you should turn to your system administrator (or
-similar).
+similar). If identifiers match (and/or no alternative identifier is
+suggested by ./config script), then the platform is unsupported. There might
+or might not be a workaround. Most notably on SPARC64 platforms with GNU
+C compiler you should be able to produce a working build by running
+'./config -m32'. I understand that -m32 might not be what you want/need,
+but the build should be operational.
 
 [PROG] ========================================================================
 
