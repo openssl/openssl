@@ -186,14 +186,18 @@
 
     openssl-bugs@openssl.org
 
+ Note that mail to openssl-bugs@openssl.org is forwarded to a public
+ mailing list. Confidential mail may be sent to openssl-security@openssl.org
+ (PGP key available from the key servers.)
+
  HOW TO CONTRIBUTE TO OpenSSL
  ----------------------------
 
  Development is coordinated on the openssl-dev mailing list (see
  http://www.openssl.org for information on subscribing). If you
- would like to submit a patch, send it to openssl-dev@openssl.org.
- Please be sure to include a textual explanation of what your patch
- does.
+ would like to submit a patch, send it to openssl-dev@openssl.org with
+ the string "[PATCH]" in the subject. Please be sure to include a
+ textual explanation of what your patch does.
 
  The preferred format for changes is "diff -u" output. You might
  generate it like this:
