@@ -156,7 +156,6 @@ int FIPS_selftest_rsa()
 	"\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a\xbc\xde";
     int n;
 
-    ERR_load_crypto_strings();
     key=RSA_new();
     clen=setkey(key,expected_ctext);
     n=RSA_public_encrypt(sizeof(original_ptext)-1,original_ptext,ctext,key,

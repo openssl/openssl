@@ -18,7 +18,7 @@ cd ../aes
 $S fips_aes_core.c fips_aes_selftest.c fips_aes_locl.h > fingerprint.sha1
 
 cd ../dsa
-$S fips_dsa_ossl.c fips_dsa_gen.c > fingerprint.sha1
+$S fips_dsa_ossl.c fips_dsa_gen.c fips_dsa_selftest.c > fingerprint.sha1
 
 cd ../des
 $S fips_des_enc.c fips_des_selftest.c fips_des_locl.h > fingerprint.sha1

@@ -63,10 +63,13 @@ int FIPS_md5_allowed;
 
 int FIPS_selftest()
     {
+    ERR_load_crypto_strings();
+
     return FIPS_selftest_sha1()
 	&& FIPS_selftest_aes()
 	&& FIPS_selftest_des()
-	&& FIPS_selftest_rsa();
+	&& FIPS_selftest_rsa()
+	&& FIPS_selftest_dsa();
     }
 
 static int FIPS_check_exe(const char *path)

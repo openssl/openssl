@@ -1,3 +1,3 @@
 SHA1(fips_rsa_eay.c)= 945cac757aecfad5a3c6bfcd4db7c384e51342f5
 SHA1(fips_rsa_gen.c)= 4367cb3840db0df5b50846a198c33911c28ab2f4
-SHA1(fips_rsa_selftest.c)= 1b7884479dd0d86cff13cb3467b5aa7b9d0c91e3
+SHA1(fips_rsa_selftest.c)= b77290943c00293b1671d098a219763dcfa7f6d8
