@@ -23,7 +23,7 @@ bytes long. If I<buf> is B<NULL>, the error string is placed in a
 static buffer.
 ERR_error_string_n() is a variant of ERR_error_string() that writes
 at most I<len> characters (including the terminating 0)
-and truncates the resulting string if necessary.
+and truncates the string if necessary.
 For ERR_error_string_n(), I<buf> may not be B<NULL>.
 
 The string will have the following format:
