@@ -677,7 +677,8 @@ install: all install_docs
 		done; \
 		(	here="`pwd`"; \
 			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-			$(MAKE) -f $$here/Makefile link-shared ); \
+			set $(MAKE); \
+			$$1 -f $$here/Makefile link-shared ); \
 	fi
 
 install_docs:
@@ -686,7 +687,7 @@ install_docs:
 		$(INSTALL_PREFIX)$(MANDIR)/man3 \
 		$(INSTALL_PREFIX)$(MANDIR)/man5 \
 		$(INSTALL_PREFIX)$(MANDIR)/man7
-	@pod2man=`cd ../../util; ./pod2mantest ignore`; \
+	@pod2man=`cd util; ./pod2mantest ignore`; \
 	for i in doc/apps/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "config" ]; then sec=5; else sec=1; fi; \
@@ -697,7 +698,7 @@ install_docs:
 			--release=$(VERSION) `basename $$i`") \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
 	done; \
-	@for i in doc/crypto/*.pod doc/ssl/*.pod; do \
+	for i in doc/crypto/*.pod doc/ssl/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "des_modes" ]; then sec=7; else sec=3; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
