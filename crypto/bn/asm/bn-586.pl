@@ -11,7 +11,7 @@ require "x86asm.pl";
 &bn_div_words("bn_div_words");
 &bn_add_words("bn_add_words");
 &bn_sub_words("bn_sub_words");
-&bn_sub_part_words("bn_sub_part_words");
+#&bn_sub_part_words("bn_sub_part_words");
 
 &asm_finish();
 
