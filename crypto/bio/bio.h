@@ -546,6 +546,7 @@ int BIO_printf(BIO *bio, ...);
 #define BIO_F_BIO_ACCEPT				 101
 #define BIO_F_BIO_BER_GET_HEADER			 102
 #define BIO_F_BIO_CTRL					 103
+#define BIO_F_BIO_GETHOSTBYNAME				 120
 #define BIO_F_BIO_GETS					 104
 #define BIO_F_BIO_GET_ACCEPT_SOCKET			 105
 #define BIO_F_BIO_GET_HOST_IP				 106

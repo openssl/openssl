@@ -673,14 +673,18 @@ err:
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 				       const char *dir)
     {
-    DIR *d=opendir(dir);
+    DIR *d;
     struct dirent *dstruct;
+    int ret = 0;
+
+    CRYPTO_w_lock(CRYPTO_LOCK_READDIR);
+    d = opendir(dir);
 
     /* Note that a side effect is that the CAs will be sorted by name */
     if(!d)
 	{
 	SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,ERR_R_MALLOC_FAILURE);
-	return 0;
+	goto err;
 	}
 
     while((dstruct=readdir(d)))
@@ -690,15 +694,18 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 	if(strlen(dir)+strlen(dstruct->d_name)+2 > sizeof buf)
 	    {
 	    SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,SSL_R_PATH_TOO_LONG);
-	    return 0;
+	    goto err;
 	    }
 	
 	sprintf(buf,"%s/%s",dir,dstruct->d_name);
 	if(!SSL_add_file_cert_subjects_to_stack(stack,buf))
-	    return 0;
+	    goto err;
 	}
+    ret = 1;
 
-    return 1;
+err:	
+    CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
+    return ret;
     }
 
 #endif

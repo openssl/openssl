@@ -150,8 +150,12 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
 		*port_ptr=(unsigned short)i;
 	else
 		{
-		s=getservbyname(str,"tcp");
-		if (s == NULL)
+		CRYPTO_w_lock(CRYPTO_LOCK_GETSERVBYNAME);
+ 		s=getservbyname(str,"tcp");
+		if(s != NULL)
+			*port_ptr=ntohs((unsigned short)s->s_port);
+		CRYPTO_w_unlock(CRYPTO_LOCK_GETSERVBYNAME);
+		if(s == NULL)
 			{
 			if (strcmp(str,"http") == 0)
 				*port_ptr=80;
@@ -177,9 +181,7 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
 				ERR_add_error_data(3,"service='",str,"'");
 				return(0);
 				}
-			return(1);
 			}
-		*port_ptr=htons((unsigned short)s->s_port);
 		}
 	return(1);
 	}
@@ -253,16 +255,18 @@ static struct hostent *ghbn_dup(struct hostent *a)
 	for (i=0; a->h_aliases[i] != NULL; i++)
 		;
 	i++;
-	ret->h_aliases=(char **)Malloc(sizeof(char *)*i);
-	memset(ret->h_aliases,0,sizeof(char *)*i);
-	if (ret == NULL) goto err;
+	ret->h_aliases = (char **)Malloc(i*sizeof(char *));
+	if (ret->h_aliases == NULL)
+		goto err;
+	memset(ret->h_aliases, 0, i*sizeof(char *));
 
 	for (i=0; a->h_addr_list[i] != NULL; i++)
 		;
 	i++;
-	ret->h_addr_list=(char **)Malloc(sizeof(char *)*i);
-	memset(ret->h_addr_list,0,sizeof(char *)*i);
-	if (ret->h_addr_list == NULL) goto err;
+	ret->h_addr_list=(char **)Malloc(i*sizeof(char *));
+	if (ret->h_addr_list == NULL)
+		goto err;
+	memset(ret->h_addr_list, 0, i*sizeof(char *));
 
 	j=strlen(a->h_name)+1;
 	if ((ret->h_name=Malloc(j)) == NULL) goto err;
@@ -323,7 +327,7 @@ struct hostent *BIO_gethostbyname(const char *name)
 
 /*	return(gethostbyname(name)); */
 
-	CRYPTO_w_lock(CRYPTO_LOCK_BIO_GETHOSTBYNAME);
+	CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
 	j=strlen(name);
 	if (j < 128)
 		{
@@ -349,15 +353,25 @@ struct hostent *BIO_gethostbyname(const char *name)
 		BIO_ghbn_miss++;
 		ret=gethostbyname(name);
 
-		if (ret == NULL) return(NULL);
-		if (j > 128) return(ret); /* too big to cache */
+		if (ret == NULL)
+			goto end;
+		if (j > 128) /* too big to cache */
+			{
+			ret = NULL;
+			goto end;
+			}
 
 		/* else add to cache */
 		if (ghbn_cache[lowi].ent != NULL)
 			ghbn_free(ghbn_cache[lowi].ent);
+		ghbn_cache[lowi].name[0] = '\0';
 
+		if((ret=ghbn_cache[lowi].ent=ghbn_dup(ret)) == NULL)
+			{
+			BIOerr(BIO_F_BIO_GETHOSTBYNAME,ERR_R_MALLOC_FAILURE);
+			goto end;
+			}
 		strncpy(ghbn_cache[lowi].name,name,128);
-		ghbn_cache[lowi].ent=ghbn_dup(ret);
 		ghbn_cache[lowi].order=BIO_ghbn_miss+BIO_ghbn_hits;
 		}
 	else
@@ -366,7 +380,8 @@ struct hostent *BIO_gethostbyname(const char *name)
 		ret= ghbn_cache[i].ent;
 		ghbn_cache[i].order=BIO_ghbn_miss+BIO_ghbn_hits;
 		}
-	CRYPTO_w_unlock(CRYPTO_LOCK_BIO_GETHOSTBYNAME);
+end:
+	CRYPTO_w_unlock(CRYPTO_LOCK_GETHOSTBYNAME);
 	return(ret);
 	}
 

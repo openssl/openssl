@@ -89,10 +89,12 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"rand",
 	"debug_malloc",
 	"BIO",
-	"bio_gethostbyname",
+	"gethostbyname",
+	"getservbyname",
+	"readdir",
 	"RSA_blinding",
-#if CRYPTO_NUM_LOCKS != 22
-# error "Inconsistency between crypto.h and cryptlic.c"
+#if CRYPTO_NUM_LOCKS != 24
+# error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 	};
 
