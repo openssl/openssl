@@ -206,6 +206,10 @@
      projects.  The old libdes interface is provided, as well as crypt(),
      if openssl/des_old.h is included.  Note that crypt() is no longer
      declared in openssl/des.h.
+     In order to maintain compatibility with current applications using
+     libcrypto, the old libdes interface is still provided, as long as
+     OPENSSL_NO_OLD_DES_SUPPORT is not defined, by automatically including
+     openssl/des_old.h. 
 
      NOTE: This is a major break of an old API into a new one.  Software
      authors are encouraged to switch to the DES_ style functions.  Some
