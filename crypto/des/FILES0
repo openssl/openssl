@@ -8,7 +8,7 @@ README		- What this package is.
 VERSION		- Which version this is and what was changed.
 KERBEROS	- Kerberos version 4 notes.
 Makefile.PL	- An old makefile to build with perl5, not current.
-Makefile.ssl	- The SSLeay makefile
+Makefile	- The SSLeay makefile
 Makefile.uni	- The normal unix makefile.
 GNUmakefile	- The makefile for use with glibc.
 makefile.bc	- A Borland C makefile
