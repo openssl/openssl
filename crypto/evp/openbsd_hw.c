@@ -62,6 +62,7 @@
 
 /* longest key supported in hardware */
 #define MAX_HW_KEY	24
+#define MAX_HW_IV	8
 
 static int fd;
 static int dev_failed;
@@ -107,6 +108,7 @@ static int dev_crypto_init(EVP_CIPHER_CTX *ctx)
 
 static int dev_crypto_cleanup(EVP_CIPHER_CTX *ctx)
     {
+    printf("Cleanup %d\n",data(ctx)->ses);
     if(ioctl(fd,CIOCFSESSION,&data(ctx)->ses) == -1)
 	err("CIOCFSESSION failed");
 
@@ -116,40 +118,34 @@ static int dev_crypto_cleanup(EVP_CIPHER_CTX *ctx)
     }
 
 /* FIXME: there should be some non-fatal way to report we fell back to s/w? */
-static int dev_crypto_des_ede3_init_key(EVP_CIPHER_CTX *ctx,
-					const unsigned char *key,
-					const unsigned char *iv, int enc)
+static int dev_crypto_init_key(EVP_CIPHER_CTX *ctx,int cipher,
+			       const unsigned char *key,int klen)
     {
     if(!dev_crypto_init(ctx))
-	{
-	/* fall back to using software... */
-	ctx->cipher=EVP_des_ede3_cbc();
-	return ctx->cipher->init(ctx,key,iv,enc);
-	}
-    memcpy(data(ctx)->key,key,24);
+	return 0;
+
+    assert(ctx->cipher->iv_len <= MAX_HW_IV);
+
+    memcpy(data(ctx)->key,key,klen);
     
-    data(ctx)->cipher=CRYPTO_3DES_CBC;
+    data(ctx)->cipher=cipher;
     data(ctx)->mac=0;
-    data(ctx)->keylen=24;
+    data(ctx)->keylen=klen;
 
     if (ioctl(fd,CIOCGSESSION,data(ctx)) == -1)
 	{
 	err("CIOCGSESSION failed");
-	/* fall back to using software... */
-	dev_crypto_cleanup(ctx);
-	ctx->cipher=EVP_des_ede3_cbc();
-	return ctx->cipher->init(ctx,key,iv,enc);
+	return 0;
 	}
+    printf("Init %d\n",data(ctx)->ses);
     return 1;
     }
 
-static int dev_crypto_des_ede3_cbc_cipher(EVP_CIPHER_CTX *ctx, 
-					  unsigned char *out,
-					  const unsigned char *in,
-					  unsigned int inl)
+static int dev_crypto_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
+			     const unsigned char *in,unsigned int inl)
     {
     struct crypt_op cryp;
-    unsigned char lb[8];
+    unsigned char lb[MAX_HW_IV];
 
     assert(data(ctx));
     assert(!dev_failed);
@@ -158,18 +154,16 @@ static int dev_crypto_des_ede3_cbc_cipher(EVP_CIPHER_CTX *ctx,
     cryp.ses=data(ctx)->ses;
     cryp.op=ctx->encrypt ? COP_ENCRYPT : COP_DECRYPT;
     cryp.flags=0;
-#if 0
-    cryp.len=((inl+7)/8)*8;
-#endif
     cryp.len=inl;
-    assert((inl&7) == 0);
+    assert((inl&ctx->cipher->block_size) == 0);
     cryp.src=(caddr_t)in;
     cryp.dst=(caddr_t)out;
     cryp.mac=0;
-    cryp.iv=(caddr_t)ctx->iv;
+    if(ctx->cipher->iv_len)
+	cryp.iv=(caddr_t)ctx->iv;
 
     if(!ctx->encrypt)
-	memcpy(lb,&in[cryp.len-8],8);
+	memcpy(lb,&in[cryp.len-ctx->cipher->iv_len],ctx->cipher->iv_len);
 
     if (ioctl(fd, CIOCCRYPT, &cryp) == -1)
 	{
@@ -179,12 +173,19 @@ static int dev_crypto_des_ede3_cbc_cipher(EVP_CIPHER_CTX *ctx,
 	}
 
     if(ctx->encrypt)
-	memcpy(ctx->iv,&out[cryp.len-8],8);
+	memcpy(ctx->iv,&out[cryp.len-ctx->cipher->iv_len],ctx->cipher->iv_len);
     else
-	memcpy(ctx->iv,lb,8);
+	memcpy(ctx->iv,lb,ctx->cipher->iv_len);
 
     return 1;
     }
+
+static int dev_crypto_des_ede3_init_key(EVP_CIPHER_CTX *ctx,
+					const unsigned char *key,
+					const unsigned char *iv, int enc)
+    { return dev_crypto_init_key(ctx,CRYPTO_3DES_CBC,key,24); }
+
+#define dev_crypto_des_ede3_cbc_cipher dev_crypto_cipher
 
 BLOCK_CIPHER_def_cbc(dev_crypto_des_ede3, session_op, NID_des_ede3, 8, 24, 8,
 		     0, dev_crypto_des_ede3_init_key,
@@ -192,6 +193,29 @@ BLOCK_CIPHER_def_cbc(dev_crypto_des_ede3, session_op, NID_des_ede3, 8, 24, 8,
 		     EVP_CIPHER_set_asn1_iv,
 		     EVP_CIPHER_get_asn1_iv,
 		     NULL)
+
+static int dev_crypto_rc4_init_key(EVP_CIPHER_CTX *ctx,
+					const unsigned char *key,
+					const unsigned char *iv, int enc)
+    { return dev_crypto_init_key(ctx,CRYPTO_ARC4,key,16); }
+
+static const EVP_CIPHER r4_cipher=
+    {
+    NID_rc4,
+    1,16,0,	/* FIXME: key should be up to 256 bytes */
+    EVP_CIPH_VARIABLE_LENGTH,
+    dev_crypto_rc4_init_key,
+    dev_crypto_cipher,
+    dev_crypto_cleanup,
+    sizeof(session_op),
+    NULL,
+    NULL,
+    NULL
+    };
+
+const EVP_CIPHER *EVP_dev_crypto_rc4(void)
+    { return &r4_cipher; }
+
 #else
 static void *dummy=&dummy;
 #endif

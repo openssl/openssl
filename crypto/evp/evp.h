@@ -558,6 +558,7 @@ const EVP_CIPHER *EVP_des_ede3_cbc(void);
 const EVP_CIPHER *EVP_desx_cbc(void);
 # ifdef OPENSSL_OPENBSD_DEV_CRYPTO
 const EVP_CIPHER *EVP_dev_crypto_des_ede3_cbc(void);
+const EVP_CIPHER *EVP_dev_crypto_rc4(void);
 # endif
 #endif
 #ifndef OPENSSL_NO_RC4

@@ -60,6 +60,7 @@
 static void load_ciphers(ENGINE *e)
     {
     ENGINE_add_cipher(e,EVP_dev_crypto_des_ede3_cbc());
+    ENGINE_add_cipher(e,EVP_dev_crypto_rc4());
     }
 
 ENGINE *ENGINE_openbsd_dev_crypto(void)

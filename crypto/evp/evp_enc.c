@@ -222,6 +222,7 @@ int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	b=ctx->cipher->block_size;
 	if (b == 1)
 		{
+		EVP_CIPHER_CTX_cleanup(ctx);
 		*outl=0;
 		return 1;
 		}
@@ -303,6 +304,7 @@ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	b=ctx->cipher->block_size;
 	if (ctx->flags & EVP_CIPH_NO_PADDING)
 		{
+		EVP_CIPHER_CTX_cleanup(ctx);
 		if(ctx->buf_len)
 			{
 			EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
@@ -315,12 +317,14 @@ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		{
 		if (ctx->buf_len || !ctx->final_used)
 			{
+			EVP_CIPHER_CTX_cleanup(ctx);
 			EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_WRONG_FINAL_BLOCK_LENGTH);
 			return(0);
 			}
 		n=ctx->final[b-1];
 		if (n > b)
 			{
+			EVP_CIPHER_CTX_cleanup(ctx);
 			EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_BAD_DECRYPT);
 			return(0);
 			}
@@ -328,6 +332,7 @@ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 			{
 			if (ctx->final[--b] != n)
 				{
+				EVP_CIPHER_CTX_cleanup(ctx);
 				EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_BAD_DECRYPT);
 				return(0);
 				}
@@ -339,6 +344,7 @@ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		}
 	else
 		*outl=0;
+	EVP_CIPHER_CTX_cleanup(ctx);
 	return(1);
 	}
 
