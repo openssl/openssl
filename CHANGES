@@ -4,6 +4,11 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) The evp_local.h macros were using 'c.##kname' which resulted in
+     invalid expansion on some systems (SCO 5.0.5 for example).
+     Corrected to 'c.kname'.
+     [Phillip Porch <root@theporch.com>]
+
   *) New X509_get1_email() and X509_REQ_get1_email() functions that return
      a STACK of email addresses from a certificate or request, these look
      in the subject name and the subject alternative name extensions and 

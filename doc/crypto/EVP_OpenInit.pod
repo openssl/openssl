@@ -10,9 +10,9 @@ EVP_OpenInit, EVP_OpenUpdate, EVP_OpenFinal - EVP envelope decryption
 
  int EVP_OpenInit(EVP_CIPHER_CTX *ctx,EVP_CIPHER *type,unsigned char *ek,
 		int ekl,unsigned char *iv,EVP_PKEY *priv);
- void EVP_OpenUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
+ int EVP_OpenUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl, unsigned char *in, int inl);
- void EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out,
+ int EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl);
 
 =head1 DESCRIPTION
@@ -45,10 +45,10 @@ key length must match the fixed cipher length.
 
 =head1 RETURN VALUES
 
-EVP_OpenInit() returns -1 on error or a non zero integer (actually the
+EVP_OpenInit() returns 0 on error or a non zero integer (actually the
 recovered secret key size) if successful.
 
-EVP_OpenUpdate() returns 1 for success of 0 for failure.
+EVP_OpenUpdate() returns 1 for success or 0 for failure.
 
 EVP_OpenFinal() returns 0 if the decrypt failed or 1 for success.
 
