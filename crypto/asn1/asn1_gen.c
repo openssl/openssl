@@ -722,6 +722,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
 		case V_ASN1_UTF8STRING:
 		case V_ASN1_VISIBLESTRING:
 		case V_ASN1_UNIVERSALSTRING:
+		case V_ASN1_GENERALSTRING:
 
 		if (format == ASN1_GEN_FORMAT_ASCII)
 			format = MBSTRING_ASC;
