@@ -1054,10 +1054,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	ctx->cert=x509;
 	ctx->untrusted=chain;
 	ctx->last_untrusted=0;
-	ctx->purpose=store->purpose;
-	ctx->trust=store->trust;
 	ctx->check_time=0;
-	ctx->flags=0;
 	ctx->other_ctx=NULL;
 	ctx->valid=0;
 	ctx->chain=NULL;
@@ -1071,49 +1068,62 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	 * use defaults.
 	 */
 
-	ctx->flags = store->flags;
 
-	if (store->check_issued)
+	if (store)
+		{
+		ctx->purpose=store->purpose;
+		ctx->trust=store->trust;
+		ctx->flags = store->flags;
+		ctx->cleanup = store->cleanup;
+		}
+	else
+		{
+		ctx->purpose = 0;
+		ctx->trust = 0;
+		ctx->flags = 0;
+		ctx->cleanup = 0;
+		}
+
+	if (store && store->check_issued)
 		ctx->check_issued = store->check_issued;
 	else
 		ctx->check_issued = check_issued;
 
-	if (store->get_issuer)
+	if (store && store->get_issuer)
 		ctx->get_issuer = store->get_issuer;
 	else
 		ctx->get_issuer = X509_STORE_CTX_get1_issuer;
 
-	if (store->verify_cb)
+	if (store && store->verify_cb)
 		ctx->verify_cb = store->verify_cb;
 	else
 		ctx->verify_cb = null_callback;
 
-	if (store->verify)
+	if (store && store->verify)
 		ctx->verify = store->verify;
 	else
 		ctx->verify = internal_verify;
 
-	if (store->check_revocation)
+	if (store && store->check_revocation)
 		ctx->check_revocation = store->check_revocation;
 	else
 		ctx->check_revocation = check_revocation;
 
-	if (store->get_crl)
+	if (store && store->get_crl)
 		ctx->get_crl = store->get_crl;
 	else
 		ctx->get_crl = get_crl;
 
-	if (store->check_crl)
+	if (store && store->check_crl)
 		ctx->check_crl = store->check_crl;
 	else
 		ctx->check_crl = check_crl;
 
-	if (store->cert_crl)
+	if (store && store->cert_crl)
 		ctx->cert_crl = store->cert_crl;
 	else
 		ctx->cert_crl = cert_crl;
 
-	ctx->cleanup = store->cleanup;
 
 	/* This memset() can't make any sense anyway, so it's removed. As
 	 * X509_STORE_CTX_cleanup does a proper "free" on the ex_data, we put a
