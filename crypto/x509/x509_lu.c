@@ -61,8 +61,8 @@
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
 
-static STACK *x509_store_meth=NULL;
-static STACK *x509_store_ctx_meth=NULL;
+static STACK_OF(CRYPTO_EX_DATA_FUNCS) *x509_store_meth=NULL;
+static STACK_OF(CRYPTO_EX_DATA_FUNCS) *x509_store_ctx_meth=NULL;
 
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 	{
@@ -244,7 +244,7 @@ void X509_STORE_free(X509_STORE *vfy)
 		}
 	sk_X509_LOOKUP_free(sk);
 
-	CRYPTO_free_ex_data(x509_store_meth,(char *)vfy,&vfy->ex_data);
+	CRYPTO_free_ex_data(x509_store_meth,vfy,&vfy->ex_data);
 	lh_doall(vfy->certs,cleanup);
 	lh_free(vfy->certs);
 	Free(vfy);
@@ -420,7 +420,7 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 		sk_X509_pop_free(ctx->chain,X509_free);
 		ctx->chain=NULL;
 		}
-	CRYPTO_free_ex_data(x509_store_ctx_meth,(char *)ctx,&(ctx->ex_data));
+	CRYPTO_free_ex_data(x509_store_ctx_meth,ctx,&(ctx->ex_data));
 	memset(&ctx->ex_data,0,sizeof(CRYPTO_EX_DATA));
 	}
 

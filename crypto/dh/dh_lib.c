@@ -65,7 +65,7 @@ const char *DH_version="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
 static DH_METHOD *default_DH_method;
 static int dh_meth_num = 0;
-static STACK *dh_meth = NULL;
+static STACK_OF(CRYPTO_EX_DATA_FUNCS) *dh_meth = NULL;
 
 void DH_set_default_method(DH_METHOD *meth)
 {
@@ -122,7 +122,7 @@ DH *DH_new_method(DH_METHOD *meth)
 		ret=NULL;
 		}
 	else
-		CRYPTO_new_ex_data(dh_meth,(char *)ret,&ret->ex_data);
+		CRYPTO_new_ex_data(dh_meth,ret,&ret->ex_data);
 	return(ret);
 	}
 
@@ -143,7 +143,7 @@ void DH_free(DH *r)
 	}
 #endif
 
-	CRYPTO_free_ex_data(dh_meth, (char *)r, &r->ex_data);
+	CRYPTO_free_ex_data(dh_meth, r, &r->ex_data);
 
 	if(r->meth->finish) r->meth->finish(r);
 
@@ -154,20 +154,20 @@ void DH_free(DH *r)
 	Free(r);
 	}
 
-int DH_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	     int (*dup_func)(), void (*free_func)())
+int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
 	dh_meth_num++;
 	return(CRYPTO_get_ex_new_index(dh_meth_num-1,
 		&dh_meth,argl,argp,new_func,dup_func,free_func));
         }
 
-int DH_set_ex_data(DH *d, int idx, char *arg)
+int DH_set_ex_data(DH *d, int idx, void *arg)
 	{
 	return(CRYPTO_set_ex_data(&d->ex_data,idx,arg));
 	}
 
-char *DH_get_ex_data(DH *d, int idx)
+void *DH_get_ex_data(DH *d, int idx)
 	{
 	return(CRYPTO_get_ex_data(&d->ex_data,idx));
 	}

@@ -66,13 +66,13 @@
 
 char *SSL_version_str=OPENSSL_VERSION_TEXT;
 
-static STACK *ssl_meth=NULL;
-static STACK *ssl_ctx_meth=NULL;
+static STACK_OF(CRYPTO_EX_DATA_FUNCS) *ssl_meth=NULL;
+static STACK_OF(CRYPTO_EX_DATA_FUNCS) *ssl_ctx_meth=NULL;
 static int ssl_meth_num=0;
 static int ssl_ctx_meth_num=0;
 
 OPENSSL_GLOBAL SSL3_ENC_METHOD ssl3_undef_enc_method={
-	/* evil casts, but these functions are only called if there's a libraryr bug */
+	/* evil casts, but these functions are only called if there's a library bug */
 	(int (*)(SSL *,int))ssl_undefined_function,
 	(int (*)(SSL *, unsigned char *, int))ssl_undefined_function,
 	ssl_undefined_function,
@@ -234,7 +234,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->mode=ctx->mode;
 	SSL_clear(s);
 
-	CRYPTO_new_ex_data(ssl_meth,(char *)s,&s->ex_data);
+	CRYPTO_new_ex_data(ssl_meth,s,&s->ex_data);
 
 	return(s);
 err:
@@ -1919,8 +1919,8 @@ long SSL_get_verify_result(SSL *ssl)
 	return(ssl->verify_result);
 	}
 
-int SSL_get_ex_new_index(long argl,char *argp,int (*new_func)(),
-			 int (*dup_func)(),void (*free_func)())
+int SSL_get_ex_new_index(long argl,void *argp,CRYPTO_EX_new *new_func,
+			 CRYPTO_EX_dup *dup_func,CRYPTO_EX_free *free_func)
 	{
 	ssl_meth_num++;
 	return(CRYPTO_get_ex_new_index(ssl_meth_num-1,
@@ -1937,8 +1937,8 @@ void *SSL_get_ex_data(SSL *s,int idx)
 	return(CRYPTO_get_ex_data(&s->ex_data,idx));
 	}
 
-int SSL_CTX_get_ex_new_index(long argl,char *argp,int (*new_func)(),
-			     int (*dup_func)(),void (*free_func)())
+int SSL_CTX_get_ex_new_index(long argl,void *argp,CRYPTO_EX_new *new_func,
+			     CRYPTO_EX_dup *dup_func,CRYPTO_EX_free *free_func)
 	{
 	ssl_ctx_meth_num++;
 	return(CRYPTO_get_ex_new_index(ssl_ctx_meth_num-1,

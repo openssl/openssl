@@ -70,6 +70,7 @@ extern "C" {
 #endif
 
 #include <openssl/stack.h>
+#include <openssl/safestack.h>
 #include <openssl/opensslv.h>
 
 #ifdef CHARSET_EBCDIC
@@ -165,30 +166,35 @@ extern "C" {
 /* predec of the BIO type */
 typedef struct bio_st BIO_dummy;
 
-
 typedef struct crypto_ex_data_st
 	{
 	STACK *sk;
 	int dummy; /* gcc is screwing up this data structure :-( */
 	} CRYPTO_EX_DATA;
 
+/* Called when a new object is created */
+typedef int CRYPTO_EX_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+					int idx, long argl, void *argp);
+/* Called when an object is free()ed */
+typedef void CRYPTO_EX_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+					int idx, long argl, void *argp);
+/* Called when we need to dup an object */
+typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from, void *from_d, 
+					int idx, long argl, void *argp);
+
 /* This stuff is basically class callback functions
  * The current classes are SSL_CTX, SSL, SSL_SESION, and a few more */
+
 typedef struct crypto_ex_data_func_st
 	{
 	long argl;	/* Arbitary long */
-	char *argp;	/* Arbitary char * */
-	/* Called when a new object is created */
-	int (*new_func)(/*char *obj,
-			char *item,int index,long argl,char *argp*/);
-	/* Called when this object is free()ed */
-	void (*free_func)(/*char *obj,
-			char *item,int index,long argl,char *argp*/);
-
-	/* Called when we need to dup this one */
-	int (*dup_func)(/*char *obj_to,char *obj_from,
-			char **new,int index,long argl,char *argp*/);
+	void *argp;	/* Arbitary void * */
+	CRYPTO_EX_new *new_func;
+	CRYPTO_EX_free *free_func;
+	CRYPTO_EX_dup *dup_func;
 	} CRYPTO_EX_DATA_FUNCS;
+
+DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
 
 /* Per class, we have a STACK of CRYPTO_EX_DATA_FUNCS for each CRYPTO_EX_DATA
  * entry.
@@ -259,13 +265,14 @@ int CRYPTO_is_mem_check_on(void);
 const char *SSLeay_version(int type);
 unsigned long SSLeay(void);
 
-int CRYPTO_get_ex_new_index(int idx,STACK **sk,long argl,char *argp,
-	int (*new_func)(),int (*dup_func)(),void (*free_func)());
-int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad,int idx,char *val);
-char *CRYPTO_get_ex_data(CRYPTO_EX_DATA *ad,int idx);
-int CRYPTO_dup_ex_data(STACK *meth,CRYPTO_EX_DATA *from,CRYPTO_EX_DATA *to);
-void CRYPTO_free_ex_data(STACK *meth,char *obj,CRYPTO_EX_DATA *ad);
-void CRYPTO_new_ex_data(STACK *meth, char *obj, CRYPTO_EX_DATA *ad);
+int CRYPTO_get_ex_new_index(int idx, STACK_OF(CRYPTO_EX_DATA_FUNCS) **skp, long argl, void *argp,
+	     CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val);
+void *CRYPTO_get_ex_data(CRYPTO_EX_DATA *ad,int idx);
+int CRYPTO_dup_ex_data(STACK_OF(CRYPTO_EX_DATA_FUNCS) *meth, CRYPTO_EX_DATA *to,
+	     CRYPTO_EX_DATA *from);
+void CRYPTO_free_ex_data(STACK_OF(CRYPTO_EX_DATA_FUNCS) *meth, void *obj, CRYPTO_EX_DATA *ad);
+void CRYPTO_new_ex_data(STACK_OF(CRYPTO_EX_DATA_FUNCS) *meth, void *obj, CRYPTO_EX_DATA *ad);
 
 int CRYPTO_get_new_lockid(char *name);
 

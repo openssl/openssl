@@ -68,7 +68,7 @@ const char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
 
 static DSA_METHOD *default_DSA_method;
 static int dsa_meth_num = 0;
-static STACK *dsa_meth = NULL;
+static STACK_OF(CRYPTO_EX_DATA_FUNCS) *dsa_meth = NULL;
 
 void DSA_set_default_method(DSA_METHOD *meth)
 {
@@ -132,7 +132,7 @@ DSA *DSA_new_method(DSA_METHOD *meth)
 		ret=NULL;
 		}
 	else
-		CRYPTO_new_ex_data(dsa_meth,(char *)ret,&ret->ex_data);
+		CRYPTO_new_ex_data(dsa_meth,ret,&ret->ex_data);
 	
 	return(ret);
 	}
@@ -156,7 +156,7 @@ void DSA_free(DSA *r)
 		}
 #endif
 
-	CRYPTO_free_ex_data(dsa_meth, (char *)r, &r->ex_data);
+	CRYPTO_free_ex_data(dsa_meth, r, &r->ex_data);
 
 	if(r->meth->finish) r->meth->finish(r);
 
@@ -189,20 +189,20 @@ int DSA_size(DSA *r)
 	return(ret);
 	}
 
-int DSA_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	     int (*dup_func)(), void (*free_func)())
+int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
 	dsa_meth_num++;
 	return(CRYPTO_get_ex_new_index(dsa_meth_num-1,
 		&dsa_meth,argl,argp,new_func,dup_func,free_func));
         }
 
-int DSA_set_ex_data(DSA *d, int idx, char *arg)
+int DSA_set_ex_data(DSA *d, int idx, void *arg)
 	{
 	return(CRYPTO_set_ex_data(&d->ex_data,idx,arg));
 	}
 
-char *DSA_get_ex_data(DSA *d, int idx)
+void *DSA_get_ex_data(DSA *d, int idx)
 	{
 	return(CRYPTO_get_ex_data(&d->ex_data,idx));
 	}

@@ -76,7 +76,7 @@ static int check_trust(X509_STORE_CTX *ctx);
 static int internal_verify(X509_STORE_CTX *ctx);
 const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
 
-static STACK *x509_store_ctx_method=NULL;
+static STACK_OF(CRYPTO_EX_DATA_FUNCS) *x509_store_ctx_method=NULL;
 static int x509_store_ctx_num=0;
 #if 0
 static int x509_store_num=1;
@@ -673,8 +673,8 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 	return(ret);	
 	}
 
-int X509_STORE_CTX_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	     int (*dup_func)(), void (*free_func)())
+int X509_STORE_CTX_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
         {
         x509_store_ctx_num++;
         return(CRYPTO_get_ex_new_index(x509_store_ctx_num-1,

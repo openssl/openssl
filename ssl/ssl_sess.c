@@ -65,7 +65,7 @@ static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx,SSL_SESSION *s);
 static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
 static int ssl_session_num=0;
-static STACK *ssl_session_meth=NULL;
+static STACK_OF(CRYPTO_EX_DATA_FUNCS) *ssl_session_meth=NULL;
 
 #if 1 /* traditional SSLeay behaviour */
 SSL_SESSION *SSL_get_session(SSL *ssl)
@@ -94,8 +94,8 @@ SSL_SESSION *SSL_get_session(SSL *ssl)
 	}
 #endif
 
-int SSL_SESSION_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	     int (*dup_func)(), void (*free_func)())
+int SSL_SESSION_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 	{
 	ssl_session_num++;
 	return(CRYPTO_get_ex_new_index(ssl_session_num-1,
@@ -132,7 +132,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 	ss->prev=NULL;
 	ss->next=NULL;
 	ss->compress_meth=0;
-	CRYPTO_new_ex_data(ssl_session_meth,(char *)ss,&ss->ex_data);
+	CRYPTO_new_ex_data(ssl_session_meth,ss,&ss->ex_data);
 	return(ss);
 	}
 
@@ -472,7 +472,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 		}
 #endif
 
-	CRYPTO_free_ex_data(ssl_session_meth,(char *)ss,&ss->ex_data);
+	CRYPTO_free_ex_data(ssl_session_meth,ss,&ss->ex_data);
 
 	memset(ss->key_arg,0,SSL_MAX_KEY_ARG_LENGTH);
 	memset(ss->master_key,0,SSL_MAX_MASTER_KEY_LENGTH);

@@ -63,7 +63,7 @@
 #include <openssl/bio.h>
 #include <openssl/stack.h>
 
-static STACK *bio_meth=NULL;
+static STACK_OF(CRYPTO_EX_DATA_FUNCS) *bio_meth=NULL;
 static int bio_meth_num=0;
 
 BIO *BIO_new(BIO_METHOD *method)
@@ -100,7 +100,7 @@ int BIO_set(BIO *bio, BIO_METHOD *method)
 	bio->references=1;
 	bio->num_read=0L;
 	bio->num_write=0L;
-	CRYPTO_new_ex_data(bio_meth,(char *)bio,&bio->ex_data);
+	CRYPTO_new_ex_data(bio_meth,bio,&bio->ex_data);
 	if (method->create != NULL)
 		if (!method->create(bio))
 			return(0);
@@ -129,7 +129,7 @@ int BIO_free(BIO *a)
 		((i=(int)a->callback(a,BIO_CB_FREE,NULL,0,0L,1L)) <= 0))
 			return(i);
 
-	CRYPTO_free_ex_data(bio_meth,(char *)a,&a->ex_data);
+	CRYPTO_free_ex_data(bio_meth,a,&a->ex_data);
 
 	if ((a->method == NULL) || (a->method->destroy == NULL)) return(1);
 	ret=a->method->destroy(a);
@@ -476,20 +476,20 @@ void BIO_copy_next_retry(BIO *b)
 	b->retry_reason=b->next_bio->retry_reason;
 	}
 
-int BIO_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	     int (*dup_func)(), void (*free_func)())
+int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 	{
 	bio_meth_num++;
 	return(CRYPTO_get_ex_new_index(bio_meth_num-1,&bio_meth,
 		argl,argp,new_func,dup_func,free_func));
 	}
 
-int BIO_set_ex_data(BIO *bio, int idx, char *data)
+int BIO_set_ex_data(BIO *bio, int idx, void *data)
 	{
 	return(CRYPTO_set_ex_data(&(bio->ex_data),idx,data));
 	}
 
-char *BIO_get_ex_data(BIO *bio, int idx)
+void *BIO_get_ex_data(BIO *bio, int idx)
 	{
 	return(CRYPTO_get_ex_data(&(bio->ex_data),idx));
 	}

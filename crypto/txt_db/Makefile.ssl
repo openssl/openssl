@@ -82,5 +82,6 @@ txt_db.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 txt_db.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
 txt_db.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 txt_db.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-txt_db.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
-txt_db.o: ../../include/openssl/txt_db.h ../cryptlib.h
+txt_db.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+txt_db.o: ../../include/openssl/stack.h ../../include/openssl/txt_db.h
+txt_db.o: ../cryptlib.h

@@ -88,11 +88,12 @@ clean:
 rsar_err.o: ../include/openssl/bn.h ../include/openssl/crypto.h
 rsar_err.o: ../include/openssl/err.h ../include/openssl/opensslconf.h
 rsar_err.o: ../include/openssl/opensslv.h ../include/openssl/rsa.h
-rsar_err.o: ../include/openssl/rsaref.h ../include/openssl/stack.h
+rsar_err.o: ../include/openssl/rsaref.h ../include/openssl/safestack.h
+rsar_err.o: ../include/openssl/stack.h
 rsaref.o: ../crypto/cryptlib.h ../include/openssl/bio.h ../include/openssl/bn.h
 rsaref.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
 rsaref.o: ../include/openssl/e_os.h ../include/openssl/e_os2.h
 rsaref.o: ../include/openssl/err.h ../include/openssl/opensslconf.h
 rsaref.o: ../include/openssl/opensslv.h ../include/openssl/rand.h
 rsaref.o: ../include/openssl/rsa.h ../include/openssl/rsaref.h
-rsaref.o: ../include/openssl/stack.h
+rsaref.o: ../include/openssl/safestack.h ../include/openssl/stack.h

@@ -334,7 +334,7 @@ typedef struct bio_f_buffer_ctx_struct
 #define BIO_C_RESET_READ_REQUEST		147
 
 
-#define BIO_set_app_data(s,arg)		BIO_set_ex_data(s,0,(char *)arg)
+#define BIO_set_app_data(s,arg)		BIO_set_ex_data(s,0,arg)
 #define BIO_get_app_data(s)		BIO_get_ex_data(s,0)
 
 /* BIO_s_connect() and BIO_s_socks4a_connect() */
@@ -478,10 +478,10 @@ int BIO_ctrl_reset_read_request(BIO *b);
 /* These two aren't currently implemented */
 /* int BIO_get_ex_num(BIO *bio); */
 /* void BIO_set_ex_free_func(BIO *bio,int idx,void (*cb)()); */
-int BIO_set_ex_data(BIO *bio,int idx,char *data);
-char *BIO_get_ex_data(BIO *bio,int idx);
-int BIO_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	int (*dup_func)(), void (*free_func)());
+int BIO_set_ex_data(BIO *bio,int idx,void *data);
+void *BIO_get_ex_data(BIO *bio,int idx);
+int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+	CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 unsigned long BIO_number_read(BIO *bio);
 unsigned long BIO_number_written(BIO *bio);
 

@@ -83,4 +83,5 @@ buffer.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 buffer.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
 buffer.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 buffer.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-buffer.o: ../../include/openssl/stack.h ../cryptlib.h
+buffer.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+buffer.o: ../cryptlib.h

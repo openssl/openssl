@@ -63,15 +63,15 @@
 #include <openssl/lhash.h>
 #include "cryptlib.h"
 
-int CRYPTO_get_ex_new_index(int idx, STACK **skp, long argl, char *argp,
-	     int (*new_func)(), int (*dup_func)(), void (*free_func)())
+int CRYPTO_get_ex_new_index(int idx, STACK_OF(CRYPTO_EX_DATA_FUNCS) **skp, long argl, void *argp,
+	     CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 	{
 	int ret= -1;
 	CRYPTO_EX_DATA_FUNCS *a;
 
 	MemCheck_off();
 	if (*skp == NULL)
-		*skp=sk_new_null();
+		*skp=sk_CRYPTO_EX_DATA_FUNCS_new_null();
 	if (*skp == NULL)
 		{
 		CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX,ERR_R_MALLOC_FAILURE);
@@ -88,23 +88,23 @@ int CRYPTO_get_ex_new_index(int idx, STACK **skp, long argl, char *argp,
 	a->new_func=new_func;
 	a->dup_func=dup_func;
 	a->free_func=free_func;
-	while (sk_num(*skp) <= idx)
+	while (sk_CRYPTO_EX_DATA_FUNCS_num(*skp) <= idx)
 		{
-		if (!sk_push(*skp,NULL))
+		if (!sk_CRYPTO_EX_DATA_FUNCS_push(*skp,NULL))
 			{
 			CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX,ERR_R_MALLOC_FAILURE);
 			Free(a);
 			goto err;
 			}
 		}
-	sk_set(*skp,idx, (char *)a);
+	sk_CRYPTO_EX_DATA_FUNCS_set(*skp,idx, a);
 	ret=idx;
 err:
 	MemCheck_on();
 	return(idx);
 	}
 
-int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, char *val)
+int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val)
 	{
 	int i;
 
@@ -131,7 +131,7 @@ int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, char *val)
 	return(1);
 	}
 
-char *CRYPTO_get_ex_data(CRYPTO_EX_DATA *ad, int idx)
+void *CRYPTO_get_ex_data(CRYPTO_EX_DATA *ad, int idx)
 	{
 	if (ad->sk == NULL)
 		return(0);
@@ -145,7 +145,7 @@ char *CRYPTO_get_ex_data(CRYPTO_EX_DATA *ad, int idx)
  * being duplicated, a pointer to the
  * 'new' object to be inserted, the index, and the argi/argp
  */
-int CRYPTO_dup_ex_data(STACK *meth, CRYPTO_EX_DATA *to,
+int CRYPTO_dup_ex_data(STACK_OF(CRYPTO_EX_DATA_FUNCS) *meth, CRYPTO_EX_DATA *to,
 	     CRYPTO_EX_DATA *from)
 	{
 	int i,j,m,r;
@@ -154,14 +154,14 @@ int CRYPTO_dup_ex_data(STACK *meth, CRYPTO_EX_DATA *to,
 
 	if (meth == NULL) return(1);
 	if (from->sk == NULL) return(1);
-	m=sk_num(meth);
+	m=sk_CRYPTO_EX_DATA_FUNCS_num(meth);
 	j=sk_num(from->sk);
 	for (i=0; i<j; i++)
 		{
 		from_d=CRYPTO_get_ex_data(from,i);
 		if (i < m)
 			{
-			mm=(CRYPTO_EX_DATA_FUNCS *)sk_value(meth,i);
+			mm=sk_CRYPTO_EX_DATA_FUNCS_value(meth,i);
 			if (mm->dup_func != NULL)
 				r=mm->dup_func(to,from,(char **)&from_d,i,
 					mm->argl,mm->argp);
@@ -172,18 +172,18 @@ int CRYPTO_dup_ex_data(STACK *meth, CRYPTO_EX_DATA *to,
 	}
 
 /* Call each free callback */
-void CRYPTO_free_ex_data(STACK *meth, char *obj, CRYPTO_EX_DATA *ad)
+void CRYPTO_free_ex_data(STACK_OF(CRYPTO_EX_DATA_FUNCS) *meth, void *obj, CRYPTO_EX_DATA *ad)
 	{
 	CRYPTO_EX_DATA_FUNCS *m;
-	char *ptr;
+	void *ptr;
 	int i,max;
 
 	if (meth != NULL)
 		{
-		max=sk_num(meth);
+		max=sk_CRYPTO_EX_DATA_FUNCS_num(meth);
 		for (i=0; i<max; i++)
 			{
-			m=(CRYPTO_EX_DATA_FUNCS *)sk_value(meth,i);
+			m=sk_CRYPTO_EX_DATA_FUNCS_value(meth,i);
 			if ((m != NULL) && (m->free_func != NULL))
 				{
 				ptr=CRYPTO_get_ex_data(ad,i);
@@ -198,19 +198,19 @@ void CRYPTO_free_ex_data(STACK *meth, char *obj, CRYPTO_EX_DATA *ad)
 		}
 	}
 
-void CRYPTO_new_ex_data(STACK *meth, char *obj, CRYPTO_EX_DATA *ad)
+void CRYPTO_new_ex_data(STACK_OF(CRYPTO_EX_DATA_FUNCS) *meth, void *obj, CRYPTO_EX_DATA *ad)
 	{
 	CRYPTO_EX_DATA_FUNCS *m;
-	char *ptr;
+	void *ptr;
 	int i,max;
 
 	ad->sk=NULL;
 	if (meth != NULL)
 		{
-		max=sk_num(meth);
+		max=sk_CRYPTO_EX_DATA_FUNCS_num(meth);
 		for (i=0; i<max; i++)
 			{
-			m=(CRYPTO_EX_DATA_FUNCS *)sk_value(meth,i);
+			m=sk_CRYPTO_EX_DATA_FUNCS_value(meth,i);
 			if ((m != NULL) && (m->new_func != NULL))
 				{
 				ptr=CRYPTO_get_ex_data(ad,i);
@@ -220,4 +220,4 @@ void CRYPTO_new_ex_data(STACK *meth, char *obj, CRYPTO_EX_DATA *ad)
 		}
 	}
 
-
+IMPLEMENT_STACK_OF(CRYPTO_EX_DATA_FUNCS)

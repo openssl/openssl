@@ -338,8 +338,8 @@ int	X509_STORE_load_locations (X509_STORE *ctx,
 int	X509_STORE_set_default_paths(X509_STORE *ctx);
 #endif
 
-int X509_STORE_CTX_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	int (*dup_func)(), void (*free_func)());
+int X509_STORE_CTX_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+	CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int	X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx,int idx,void *data);
 void *	X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx,int idx);
 int	X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);

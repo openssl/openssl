@@ -808,10 +808,10 @@ X509 *		X509_new(void);
 void		X509_free(X509 *a);
 int		i2d_X509(X509 *a,unsigned char **pp);
 X509 *		d2i_X509(X509 **a,unsigned char **pp,long length);
-int X509_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	     int (*dup_func)(), void (*free_func)());
-int X509_set_ex_data(X509 *r, int idx, char *arg);
-char *X509_get_ex_data(X509 *r, int idx);
+int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+int X509_set_ex_data(X509 *r, int idx, void *arg);
+void *X509_get_ex_data(X509 *r, int idx);
 int		i2d_X509_AUX(X509 *a,unsigned char **pp);
 X509 *		d2i_X509_AUX(X509 **a,unsigned char **pp,long length);
 

@@ -163,14 +163,15 @@ enc_read.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 enc_read.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
 enc_read.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 enc_read.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
-enc_read.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
-enc_read.o: ../cryptlib.h des_locl.h
+enc_read.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+enc_read.o: ../../include/openssl/stack.h ../cryptlib.h des_locl.h
 enc_writ.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 enc_writ.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
 enc_writ.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 enc_writ.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
 enc_writ.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-enc_writ.o: ../../include/openssl/stack.h ../cryptlib.h des_locl.h
+enc_writ.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+enc_writ.o: ../cryptlib.h des_locl.h
 fcrypt.o: ../../include/openssl/des.h ../../include/openssl/des.h
 fcrypt.o: ../../include/openssl/e_os2.h ../../include/openssl/e_os2.h
 fcrypt.o: ../../include/openssl/opensslconf.h
@@ -195,8 +196,8 @@ read_pwd.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 read_pwd.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
 read_pwd.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 read_pwd.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
-read_pwd.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
-read_pwd.o: ../cryptlib.h des_locl.h
+read_pwd.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+read_pwd.o: ../../include/openssl/stack.h ../cryptlib.h des_locl.h
 rpc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 rpc_enc.o: ../../include/openssl/opensslconf.h des_locl.h des_ver.h rpc_des.h
 set_key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h

@@ -155,10 +155,10 @@ DH *DH_new_method(DH_METHOD *meth);
 DH *	DH_new(void);
 void	DH_free(DH *dh);
 int	DH_size(DH *dh);
-int DH_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	     int (*dup_func)(), void (*free_func)());
-int DH_set_ex_data(DH *d, int idx, char *arg);
-char *DH_get_ex_data(DH *d, int idx);
+int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+int DH_set_ex_data(DH *d, int idx, void *arg);
+void *DH_get_ex_data(DH *d, int idx);
 DH *	DH_generate_parameters(int prime_len,int generator,
 		void (*callback)(int,int,void *),void *cb_arg);
 int	DH_check(DH *dh,int *codes);

@@ -82,7 +82,8 @@ lh_stats.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 lh_stats.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
 lh_stats.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 lh_stats.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-lh_stats.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
-lh_stats.o: ../cryptlib.h
+lh_stats.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+lh_stats.o: ../../include/openssl/stack.h ../cryptlib.h
 lhash.o: ../../include/openssl/crypto.h ../../include/openssl/lhash.h
-lhash.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
+lhash.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+lhash.o: ../../include/openssl/stack.h

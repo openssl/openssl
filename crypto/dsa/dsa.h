@@ -170,10 +170,10 @@ int	DSA_sign(int type,const unsigned char *dgst,int dlen,
 int	DSA_verify(int type,const unsigned char *dgst,int dgst_len,
 		unsigned char *sigbuf, int siglen, DSA *dsa);
 void	DSA_free (DSA *r);
-int DSA_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	     int (*dup_func)(), void (*free_func)());
-int DSA_set_ex_data(DSA *d, int idx, char *arg);
-char *DSA_get_ex_data(DSA *d, int idx);
+int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+int DSA_set_ex_data(DSA *d, int idx, void *arg);
+void *DSA_get_ex_data(DSA *d, int idx);
 
 void	ERR_load_DSA_strings(void );
 

@@ -853,7 +853,8 @@ t_pkey.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 t_pkey.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 t_pkey.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
 t_pkey.o: ../../include/openssl/opensslv.h ../../include/openssl/rsa.h
-t_pkey.o: ../../include/openssl/stack.h ../cryptlib.h
+t_pkey.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+t_pkey.o: ../cryptlib.h
 t_req.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 t_req.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 t_req.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
