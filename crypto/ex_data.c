@@ -226,9 +226,10 @@ static int ex_data_check(void)
 #define EX_DATA_CHECK(iffail) if(!ex_data && !ex_data_check()) {iffail}
 
 /* This "inner" callback is used by the callback function that follows it */
-static void def_cleanup_util_cb(CRYPTO_EX_DATA_FUNCS *v)
+static void def_cleanup_util_cb(void *v)
 	{
-	OPENSSL_free(v);
+	CRYPTO_EX_DATA_FUNCS *funcs = (CRYPTO_EX_DATA_FUNCS *)v;
+	OPENSSL_free(funcs);
 	}
 
 /* This callback is used in lh_doall to destroy all EX_CLASS_ITEM values from
@@ -349,7 +350,7 @@ static int int_get_new_index(int class_index, long argl, void *argp,
 static int int_new_ex_data(int class_index, void *obj,
 		CRYPTO_EX_DATA *ad)
 	{
-	int max,i;
+	int mx,i;
 	void *ptr;
 	CRYPTO_EX_DATA_FUNCS **storage = NULL;
 	EX_CLASS_ITEM *item = def_get_class(class_index);
@@ -358,23 +359,23 @@ static int int_new_ex_data(int class_index, void *obj,
 		return 0;
 	ad->sk = NULL;
 	CRYPTO_r_lock(CRYPTO_LOCK_EX_DATA);
-	max = sk_CRYPTO_EX_DATA_FUNCS_num(item->meth);
-	if(max > 0)
+	mx = sk_CRYPTO_EX_DATA_FUNCS_num(item->meth);
+	if(mx > 0)
 		{
-		storage = OPENSSL_malloc(max * sizeof(CRYPTO_EX_DATA_FUNCS*));
+		storage = OPENSSL_malloc(mx * sizeof(CRYPTO_EX_DATA_FUNCS*));
 		if(!storage)
 			goto skip;
-		for(i = 0; i < max; i++)
+		for(i = 0; i < mx; i++)
 			storage[i] = sk_CRYPTO_EX_DATA_FUNCS_value(item->meth,i);
 		}
 skip:
 	CRYPTO_r_unlock(CRYPTO_LOCK_EX_DATA);
-	if((max > 0) && !storage)
+	if((mx > 0) && !storage)
 		{
 		CRYPTOerr(CRYPTO_F_INT_NEW_EX_DATA,ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
-	for(i = 0; i < max; i++)
+	for(i = 0; i < mx; i++)
 		{
 		if(storage[i] && storage[i]->new_func)
 			{
@@ -392,7 +393,7 @@ skip:
 static int int_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
 		CRYPTO_EX_DATA *from)
 	{
-	int max, j, i;
+	int mx, j, i;
 	char *ptr;
 	CRYPTO_EX_DATA_FUNCS **storage = NULL;
 	EX_CLASS_ITEM *item;
@@ -402,26 +403,26 @@ static int int_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
 	if((item = def_get_class(class_index)) == NULL)
 		return 0;
 	CRYPTO_r_lock(CRYPTO_LOCK_EX_DATA);
-	max = sk_CRYPTO_EX_DATA_FUNCS_num(item->meth);
+	mx = sk_CRYPTO_EX_DATA_FUNCS_num(item->meth);
 	j = sk_num(from->sk);
-	if(j < max)
-		max = j;
-	if(max > 0)
+	if(j < mx)
+		mx = j;
+	if(mx > 0)
 		{
-		storage = OPENSSL_malloc(max * sizeof(CRYPTO_EX_DATA_FUNCS*));
+		storage = OPENSSL_malloc(mx * sizeof(CRYPTO_EX_DATA_FUNCS*));
 		if(!storage)
 			goto skip;
-		for(i = 0; i < max; i++)
+		for(i = 0; i < mx; i++)
 			storage[i] = sk_CRYPTO_EX_DATA_FUNCS_value(item->meth,i);
 		}
 skip:
 	CRYPTO_r_unlock(CRYPTO_LOCK_EX_DATA);
-	if((max > 0) && !storage)
+	if((mx > 0) && !storage)
 		{
 		CRYPTOerr(CRYPTO_F_INT_DUP_EX_DATA,ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
-	for(i = 0; i < max; i++)
+	for(i = 0; i < mx; i++)
 		{
 		ptr = CRYPTO_get_ex_data(from, i);
 		if(storage[i] && storage[i]->dup_func)
@@ -438,30 +439,30 @@ skip:
 static void int_free_ex_data(int class_index, void *obj,
 		CRYPTO_EX_DATA *ad)
 	{
-	int max,i;
+	int mx,i;
 	EX_CLASS_ITEM *item;
 	void *ptr;
 	CRYPTO_EX_DATA_FUNCS **storage = NULL;
 	if((item = def_get_class(class_index)) == NULL)
 		return;
 	CRYPTO_r_lock(CRYPTO_LOCK_EX_DATA);
-	max = sk_CRYPTO_EX_DATA_FUNCS_num(item->meth);
-	if(max > 0)
+	mx = sk_CRYPTO_EX_DATA_FUNCS_num(item->meth);
+	if(mx > 0)
 		{
-		storage = OPENSSL_malloc(max * sizeof(CRYPTO_EX_DATA_FUNCS*));
+		storage = OPENSSL_malloc(mx * sizeof(CRYPTO_EX_DATA_FUNCS*));
 		if(!storage)
 			goto skip;
-		for(i = 0; i < max; i++)
+		for(i = 0; i < mx; i++)
 			storage[i] = sk_CRYPTO_EX_DATA_FUNCS_value(item->meth,i);
 		}
 skip:
 	CRYPTO_r_unlock(CRYPTO_LOCK_EX_DATA);
-	if((max > 0) && !storage)
+	if((mx > 0) && !storage)
 		{
 		CRYPTOerr(CRYPTO_F_INT_FREE_EX_DATA,ERR_R_MALLOC_FAILURE);
 		return;
 		}
-	for(i = 0; i < max; i++)
+	for(i = 0; i < mx; i++)
 		{
 		if(storage[i] && storage[i]->free_func)
 			{
