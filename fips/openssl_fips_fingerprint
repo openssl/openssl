@@ -7,10 +7,14 @@ lib=$1
 exe=$2
 
 # deal with the case where we're run from within the build and OpenSSL is
-# not yet installed
+# not yet installed.  Also, make sure LD_LIBRARY_PATH is properly set in
+# case shared libraries are built.
 if [ "X$TOP" != "X" ]
 then
     PATH=$TOP/apps:$PATH
+    LD_LIBRARY_PATH=$TOP; export LD_LIBRARY_PATH
+else
+    LD_LIBRARY_PATH=.; export LD_LIBRARY_PATH
 fi
 
 elib=`echo $lib| sed 's/\//\\\\\//g'`
