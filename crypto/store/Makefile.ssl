@@ -29,7 +29,8 @@ LIBOBJ= str_err.o str_lib.o str_meth.o str_mem.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= store.h str_compat.h
+#EXHEADER= store.h str_compat.h
+EXHEADER= store.h
 HEADER=	$(EXHEADER) str_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
