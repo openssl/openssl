@@ -403,6 +403,11 @@ extern HINSTANCE _hInstance;
 #endif
 #endif
 
+#if defined(sun) && !defined(__svr4__)
+#define memmove(s1,s2,b) bcopy((s2),(s1),(n))
+#define strtoul(s,e,b) ((unsigned long int)strtol((s),(e),(b)))
+#endif
+
 /***********************************************/
 
 /* do we need to do this for getenv.
