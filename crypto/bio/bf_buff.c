@@ -69,7 +69,7 @@ static int buffer_gets(BIO *h, char *str, int size);
 static long buffer_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int buffer_new(BIO *h);
 static int buffer_free(BIO *data);
-static long buffer_callback_ctrl(BIO *h, int cmd, void (*fp)());
+static long buffer_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 #define DEFAULT_BUFFER_SIZE	1024
 
 static BIO_METHOD methods_buffer=
@@ -439,7 +439,7 @@ malloc_error:
 	return(0);
 	}
 
-static long buffer_callback_ctrl(BIO *b, int cmd, void (*fp)())
+static long buffer_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 	{
 	long ret=1;
 

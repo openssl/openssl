@@ -65,7 +65,7 @@
 /* Turn an ASN1 encoded SEQUENCE OF into a STACK of structures */
 
 STACK *ASN1_seq_unpack(unsigned char *buf, int len, char *(*d2i)(),
-	     void (*free_func)())
+	     void (*free_func)(void *))
 {
     STACK *sk;
     unsigned char *pbuf;

@@ -72,7 +72,7 @@ static int md_gets(BIO *h, char *str, int size);
 static long md_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int md_new(BIO *h);
 static int md_free(BIO *data);
-static long md_callback_ctrl(BIO *h,int cmd,void (*fp)());
+static long md_callback_ctrl(BIO *h,int cmd,bio_info_cb *fp);
 
 static BIO_METHOD methods_md=
 	{
@@ -223,7 +223,7 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
 	return(ret);
 	}
 
-static long md_callback_ctrl(BIO *b, int cmd, void (*fp)())
+static long md_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 	{
 	long ret=1;
 

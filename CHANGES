@@ -4,6 +4,12 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Patches to make OpenSSL compile under Win32 again. Mostly
+     work arounds for the VC++ problem that it treats func() as
+     func(void). Also stripped out the parts of mkdef.pl that
+     added extra typesafe functions: these no longer exist.
+     [Steve Henson]
+
   *) Reorganisation of the stack code. The macros are now all 
      collected in safestack.h . Each macro is defined in terms of
      a "stack macro" of the form SKM_<name>(type, a, b). The 

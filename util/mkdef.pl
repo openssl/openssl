@@ -270,37 +270,10 @@ sub do_defs
 			} elsif (/^\#/) {
 				next;
 			}
-			if (!$safe_stack_def &&
-				/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
+			if (/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
 				next;
-			} elsif ($safe_stack_def &&
-				/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
-				$funcs{"sk_${1}_new"} = 1;
-				$funcs{"sk_${1}_new_null"} = 1;
-				$funcs{"sk_${1}_free"} = 1;
-				$funcs{"sk_${1}_num"} = 1;
-				$funcs{"sk_${1}_value"} = 1;
-				$funcs{"sk_${1}_set"} = 1;
-				$funcs{"sk_${1}_zero"} = 1;
-				$funcs{"sk_${1}_push"} = 1;
-				$funcs{"sk_${1}_unshift"} = 1;
-				$funcs{"sk_${1}_find"} = 1;
-				$funcs{"sk_${1}_delete"} = 1;
-				$funcs{"sk_${1}_delete_ptr"} = 1;
-				$funcs{"sk_${1}_insert"} = 1;
-				$funcs{"sk_${1}_set_cmp_func"} = 1;
-				$funcs{"sk_${1}_dup"} = 1;
-				$funcs{"sk_${1}_pop_free"} = 1;
-				$funcs{"sk_${1}_shift"} = 1;
-				$funcs{"sk_${1}_pop"} = 1;
-				$funcs{"sk_${1}_sort"} = 1;
-			} if (!$safe_stack_def &&
-				/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
+			} elsif (/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
 				next;
-			} elsif ($safe_stack_def &&
-				/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
-				$funcs{"d2i_ASN1_SET_OF_${1}"} = 1;
-				$funcs{"i2d_ASN1_SET_OF_${1}"} = 1;
 			} elsif (/^DECLARE_PEM_rw\s*\(\s*(\w*)\s*,/ ||
 				     /^DECLARE_PEM_rw_cb\s*\(\s*(\w*)\s*,/ ) {
 				if (!($no_rsa && ($1 eq "RSAPrivateKey" ||

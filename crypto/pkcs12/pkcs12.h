@@ -182,13 +182,13 @@ PKCS12_decrypt_d2i_PKCS12_SAFEBAG((p7)->d.encrypted->enc_data->algorithm,\
 
 #define M_PKCS12_decrypt_skey(bag, pass, passlen) \
 (PKCS8_PRIV_KEY_INFO *) PKCS12_decrypt_d2i((bag)->value.shkeybag->algor, \
-(char *(*)())d2i_PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO_free, \
+(char *(*)())d2i_PKCS8_PRIV_KEY_INFO, (void (*)(void *))PKCS8_PRIV_KEY_INFO_free, \
 						(pass), (passlen), \
 			 (bag)->value.shkeybag->digest, 2)
 
 #define M_PKCS8_decrypt(p8, pass, passlen) \
 (PKCS8_PRIV_KEY_INFO *) PKCS12_decrypt_d2i((p8)->algor, \
-(char *(*)())d2i_PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO_free,\
+(char *(*)())d2i_PKCS8_PRIV_KEY_INFO, (void (*)(void *))PKCS8_PRIV_KEY_INFO_free,\
 			 (pass), (passlen), (p8)->digest, 2)
 
 #define PKCS12_get_attr(bag, attr_nid) \
@@ -226,7 +226,7 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
 				int passlen, unsigned char *in, int inlen,
 				unsigned char **data, int *datalen, int en_de);
 char *PKCS12_decrypt_d2i(X509_ALGOR *algor, char *(*d2i)(),
-			 void (*free_func)(), const char *pass, int passlen,
+			 void (*free_func)(void *), const char *pass, int passlen,
 			 ASN1_STRING *oct, int seq);
 ASN1_STRING *PKCS12_i2d_encrypt(X509_ALGOR *algor, int (*i2d)(),
 				const char *pass, int passlen, char *obj,

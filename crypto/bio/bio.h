@@ -211,6 +211,8 @@ extern "C" {
 
 typedef struct bio_st BIO;
 
+typedef void bio_info_cb(struct bio_st *, int, const char *, int, long, long);
+
 #ifndef WIN16
 typedef struct bio_method_st
 	{
@@ -223,7 +225,7 @@ typedef struct bio_method_st
 	long (*ctrl)(BIO *, int, long, void *);
 	int (*create)(BIO *);
 	int (*destroy)(BIO *);
-	long (*callback_ctrl)(BIO *, int, void (*)(struct bio_st *, int, const char *, int, long, long));
+        long (*callback_ctrl)(BIO *, int, bio_info_cb *);
 	} BIO_METHOD;
 #else
 typedef struct bio_method_st
@@ -460,8 +462,8 @@ int BIO_read_filename(BIO *b,const char *name);
 size_t BIO_ctrl_pending(BIO *b);
 size_t BIO_ctrl_wpending(BIO *b);
 #define BIO_flush(b)		(int)BIO_ctrl(b,BIO_CTRL_FLUSH,0,NULL)
-#define BIO_get_info_callback(b,cbp) (int)BIO_ctrl(b,BIO_CTRL_GET_CALLBACK,0,(void (**)())(cbp))
-#define BIO_set_info_callback(b,cb) (int)BIO_callback_ctrl(b,BIO_CTRL_SET_CALLBACK,(void (*)())(cb))
+#define BIO_get_info_callback(b,cbp) (int)BIO_ctrl(b,BIO_CTRL_GET_CALLBACK,0,(bio_info_cb **)(cbp))
+#define BIO_set_info_callback(b,cb) (int)BIO_callback_ctrl(b,BIO_CTRL_SET_CALLBACK,(bio_info_cb *)(cb))
 
 /* For the BIO_f_buffer() type */
 #define BIO_buffer_get_num_lines(b) BIO_ctrl(b,BIO_CTRL_GET,0,NULL)

@@ -189,7 +189,7 @@ STACK_OF(type) \
 	sk_sort(st)
 
 #define	SKM_ASN1_SET_OF_d2i(type, st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
-	d2i_ASN1_SET(st,pp,length, (char *(*)())d2i_func, (void (*)())free_func, ex_tag,ex_class)
+	d2i_ASN1_SET(st,pp,length, (char *(*)())d2i_func, (void (*)(void *))free_func, ex_tag,ex_class)
 #define	SKM_ASN1_SET_OF_i2d(type, st, pp, i2d_func, ex_tag, ex_class, is_set) \
 	i2d_ASN1_SET(st,pp,i2d_func,ex_tag,ex_class,is_set)
 

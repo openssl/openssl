@@ -152,7 +152,7 @@ SetBlob
         }
 
 STACK *d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
-	     char *(*func)(), void (*free_func)(), int ex_tag, int ex_class)
+	     char *(*func)(), void (*free_func)(void *), int ex_tag, int ex_class)
 	{
 	ASN1_CTX c;
 	STACK *ret=NULL;

@@ -36,8 +36,9 @@ int OBJ_NAME_init(void)
 	return(names_lh != NULL);
 	}
 
-int OBJ_NAME_new_index(unsigned long (*hash_func)(), int (*cmp_func)(),
-	     void (*free_func)())
+int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
+	int (*cmp_func)(const void *, const void *),
+	void (*free_func)(const char *, int, const char *))
 	{
 	int ret;
 	int i;

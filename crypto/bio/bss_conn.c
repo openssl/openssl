@@ -104,7 +104,7 @@ static int conn_puts(BIO *h, const char *str);
 static long conn_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int conn_new(BIO *h);
 static int conn_free(BIO *data);
-static long conn_callback_ctrl(BIO *h, int cmd, void (*fp)());
+static long conn_callback_ctrl(BIO *h, int cmd, bio_info_cb *);
 
 static int conn_state(BIO *b, BIO_CONNECT *c);
 static void conn_close_socket(BIO *data);
@@ -574,7 +574,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 		if (data->param_hostname)
 			BIO_set_conn_hostname(dbio,data->param_hostname);
 		BIO_set_nbio(dbio,data->nbio);
-		(void)BIO_set_info_callback(dbio,(void *(*)())(data->info_callback));
+                (void)BIO_set_info_callback(dbio,data->info_callback);
 		}
 		break;
 	case BIO_CTRL_SET_CALLBACK:
@@ -602,7 +602,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 	return(ret);
 	}
 
-static long conn_callback_ctrl(BIO *b, int cmd, void (*fp)())
+static long conn_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 	{
 	long ret=1;
 	BIO_CONNECT *data;

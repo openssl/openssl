@@ -658,7 +658,7 @@ ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s,time_t t);
 int		i2d_ASN1_SET(STACK *a, unsigned char **pp,
 			int (*func)(), int ex_tag, int ex_class, int is_set);
 STACK *		d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
-			char *(*func)(), void (*free_func)(),
+			char *(*func)(), void (*free_func)(void *),
 			int ex_tag, int ex_class);
 
 #ifndef NO_BIO
@@ -753,7 +753,7 @@ int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a,long *num,
 	unsigned char *data, int max_len);
 
 STACK *ASN1_seq_unpack(unsigned char *buf, int len, char *(*d2i)(),
-						 void (*free_func)() ); 
+						 void (*free_func)(void *) ); 
 unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(), unsigned char **buf,
 			     int *len );
 void *ASN1_unpack_string(ASN1_STRING *oct, char *(*d2i)());
