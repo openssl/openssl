@@ -2352,7 +2352,7 @@ $arflags      =
 
 *** hpux-parisc-cc
 $cc           = cc
-$cflags       = +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY
+$cflags       = +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2427,7 +2427,7 @@ $arflags      =
 
 *** hpux-parisc1_1-cc
 $cc           = cc
-$cflags       = +DA1.1 +DS1.1 +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY
+$cflags       = +DA1.1 +DS1.1 +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2452,7 +2452,7 @@ $arflags      =
 
 *** hpux-parisc2-cc
 $cc           = cc
-$cflags       = +DA2.0 +DS2.0 +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY
+$cflags       = +DA2.0 +DS2.0 +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2652,7 +2652,7 @@ $arflags      =
 
 *** hpux64-parisc2-cc
 $cc           = cc
-$cflags       = +DD64 +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY
+$cflags       = +DD64 +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
