@@ -98,7 +98,7 @@ struct dh_st
 	BIGNUM *p;
 	BIGNUM *g;
 	int length; /* optional */
-	BIGNUM *pub_key;	/* y */
+	BIGNUM *pub_key;	/* g^x */
 	BIGNUM *priv_key;	/* x */
 
 	int flags;
@@ -121,9 +121,13 @@ struct dh_st
 
 /* DH_check error codes */
 #define DH_CHECK_P_NOT_PRIME		0x01
-#define DH_CHECK_P_NOT_STRONG_PRIME	0x02
+#define DH_CHECK_P_NOT_SAFE_PRIME	0x02
 #define DH_UNABLE_TO_CHECK_GENERATOR	0x04
 #define DH_NOT_SUITABLE_GENERATOR	0x08
+
+/* primes p where (p-1)/2 is prime too are called "safe"; we define
+   this for backward compatibility: */
+#define DH_CHECK_P_NOT_STRONG_PRIME	DH_CHECK_P_NOT_SAFE_PRIME
 
 #define DHparams_dup(x) (DH *)ASN1_dup((int (*)())i2d_DHparams, \
 		(char *(*)())d2i_DHparams,(char *)(x))

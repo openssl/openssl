@@ -16,7 +16,7 @@ This function returns the RSA modulus size in bytes. It can be used to
 determine how much memory must be allocated for an RSA encrypted
 value.
 
-B<rsa->n> must not be B<NULL>.
+B<rsa-E<gt>n> must not be B<NULL>.
 
 =head1 RETURN VALUE
 

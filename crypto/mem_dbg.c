@@ -667,8 +667,6 @@ union void_fn_to_char_u
 	void (*fn_p)();
 	};
 
-static void (*mem_cb)()=NULL;
-
 static void cb_leak(MEM *m, char *cb)
 	{
 	union void_fn_to_char_u mem_callback;

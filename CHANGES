@@ -4,6 +4,17 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Make BN_generate_prime() return NULL on error if ret!=NULL.
+     [Ulf Möller]
+
+  *) Retain source code compatibility for BN_prime_checks macro.
+     [Ulf Möller]
+
+  *) Diffie-Hellman uses "safe" primes: DH_check() return code renamed to
+     DH_CHECK_P_NOT_SAFE_PRIME.
+     (Check if this is true? OpenPGP calls them "strong".)
+     [Ulf Möller]
+
   *) Merge the functionality of "dh" and "gendh" programs into a new program
      "dhparam". The old programs are retained for now but will handle DH keys
      (instead of parameters) in future.
@@ -57,8 +68,8 @@
 
   *) Do more iterations of Rabin-Miller probable prime test (specifically,
      3 for 1024-bit primes, 6 for 512-bit primes, 12 for 256-bit primes
-     instead of only 2 for all lengths; see BN_prime_checks definition
-     in crypto/bn/bn.h for the complete table).  This guarantees a
+     instead of only 2 for all lengths; see BN_prime_checks_size definition
+     in crypto/bn/bn_prime.c for the complete table).  This guarantees a
      false-positive rate of at most 2^-80 (actually less because we are
      additionally doing trial division) for random input.
      [Bodo Moeller]

@@ -1,0 +1,99 @@
+=pod
+
+=head1 NAME
+
+DH_set_default_method, DH_get_default_method, DH_set_method,
+DH_new_method, DH_OpenSSL - Select RSA method
+
+=head1 SYNOPSIS
+
+ #include <openssl/dh.h>
+
+ void DH_set_default_method(DH_METHOD *meth);
+
+ DH_METHOD *DH_get_default_method(void);
+
+ DH_METHOD *DH_set_method(DH *dh, DH_METHOD *meth);
+
+ DH *DH_new_method(DH_METHOD *meth);
+
+ DH_METHOD *DH_OpenSSL(void);
+
+=head1 DESCRIPTION
+
+A B<DH_METHOD> specifies the functions that OpenSSL uses for Diffie-Hellman
+operations. By modifying the method, alternative implementations
+such as hardware accelerators may be used.
+
+Initially, the default is to use the OpenSSL internal implementation.
+DH_OpenSSL() returns a pointer to that method.
+
+DH_set_default_method() makes B<meth> the default method for all B<DH>
+structures created later.
+
+DH_get_default_method() returns a pointer to the current default
+method.
+
+DH_set_method() selects B<meth> for all operations using the structure B<dh>.
+
+DH_get_method() returns a pointer to the method currently selected
+for B<dh>.
+
+DH_new_method() allocates and initializes a B<DH> structure so that
+B<method> will be used for the DH operations. If B<method> is B<NULL>,
+the default method is used.
+
+=head1 THE DH_METHOD STRUCTURE
+
+ typedef struct dh_meth_st
+ {
+     /* name of the implementation */
+	const char *name;
+
+     /* generate private and public DH values for key agreement */
+        int (*generate_key)(DH *dh);
+
+     /* compute shared secret */
+        int (*compute_key)(unsigned char *key, BIGNUM *pub_key, DH *dh);
+
+     /* compute r = a ^ p mod m. May be NULL */
+        int (*bn_mod_exp)(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+                                const BIGNUM *m, BN_CTX *ctx,
+                                BN_MONT_CTX *m_ctx);
+
+     /* called at DH_new */
+        int (*init)(DH *dh);
+
+     /* called at DH_free */
+        int (*finish)(DH *dh);
+
+        int flags;
+
+        char *app_data; /* ?? */
+
+ } DH_METHOD;
+
+=head1 RETURN VALUES
+
+DH_OpenSSL(), DH_get_default_method() and DH_get_method() return
+pointers to the respective B<DH_METHOD>s.
+
+DH_set_default_method() returns no value.
+
+DH_set_method() returns a pointer to the B<DH_METHOD> previously
+associated with B<dh>.
+
+DH_new_method() returns B<NULL> and sets an error code that can be
+obtained by ERR_get_error(3) if the allocation fails. Otherwise it
+returns a pointer to the newly allocated structure.
+
+=head1 SEE ALSO
+
+dh(3), DH_new(3)
+
+=head1 HISTORY
+
+DH_set_default_method(), DH_get_default_method(), DH_set_method(),
+DH_new_method() and DH_OpenSSL() were added in OpenSSL 0.9.4.
+
+=cut

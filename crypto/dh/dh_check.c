@@ -61,7 +61,7 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
-/* Check that p is a strong prime and
+/* Check that p is a safe prime and
  * if g is 2, 3 or 5, check that is is a suitable generator
  * where
  * for 2, p mod 24 == 11
@@ -88,11 +88,13 @@ int DH_check(DH *dh, int *ret)
 		l=BN_mod_word(dh->p,24);
 		if (l != 11) *ret|=DH_NOT_SUITABLE_GENERATOR;
 		}
-/*	else if (BN_is_word(dh->g,DH_GENERATOR_3))
+#if 0
+	else if (BN_is_word(dh->g,DH_GENERATOR_3))
 		{
 		l=BN_mod_word(dh->p,12);
 		if (l != 5) *ret|=DH_NOT_SUITABLE_GENERATOR;
-		}*/
+		}
+#endif
 	else if (BN_is_word(dh->g,DH_GENERATOR_5))
 		{
 		l=BN_mod_word(dh->p,10);
@@ -102,13 +104,13 @@ int DH_check(DH *dh, int *ret)
 	else
 		*ret|=DH_UNABLE_TO_CHECK_GENERATOR;
 
-	if (!BN_is_prime(dh->p,BN_prime_checks(BN_num_bits(dh->p)),NULL,ctx,NULL))
+	if (!BN_is_prime(dh->p,BN_prime_checks,NULL,ctx,NULL))
 		*ret|=DH_CHECK_P_NOT_PRIME;
 	else
 		{
 		if (!BN_rshift1(q,dh->p)) goto err;
-		if (!BN_is_prime(q,BN_prime_checks(BN_num_bits(q)),NULL,ctx,NULL))
-			*ret|=DH_CHECK_P_NOT_STRONG_PRIME;
+		if (!BN_is_prime(q,BN_prime_checks,NULL,ctx,NULL))
+			*ret|=DH_CHECK_P_NOT_SAFE_PRIME;
 		}
 	ok=1;
 err:

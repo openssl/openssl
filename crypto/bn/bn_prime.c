@@ -62,11 +62,29 @@
 #include "bn_lcl.h"
 #include <openssl/rand.h>
 
-/* The quick seive algorithm approach to weeding out primes is
+/* The quick sieve algorithm approach to weeding out primes is
  * Philip Zimmermann's, as implemented in PGP.  I have had a read of
  * his comments and implemented my own version.
  */
 #include "bn_prime.h"
+
+/* number of Miller-Rabin iterations for an error rate  of less than 2^-80
+ * for random 'b'-bit input, b >= 100 (taken from table 4.4 in the Handbook
+ * of Applied Cryptography [Menezes, van Oorschot, Vanstone; CRC Press 1996];
+ * original paper: Damgaard, Landrock, Pomerance: Average case error estimates
+ * for the strong probable prime test. -- Math. Comp. 61 (1993) 177-194) */
+#define BN_prime_checks_size(b) ((b) >= 1300 ?  2 : \
+                                (b) >=  850 ?  3 : \
+                                (b) >=  650 ?  4 : \
+                                (b) >=  550 ?  5 : \
+                                (b) >=  450 ?  6 : \
+                                (b) >=  400 ?  7 : \
+                                (b) >=  350 ?  8 : \
+                                (b) >=  300 ?  9 : \
+                                (b) >=  250 ? 12 : \
+                                (b) >=  200 ? 15 : \
+                                (b) >=  150 ? 18 : \
+                                /* b >= 100 */ 27)
 
 static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx,BN_CTX *ctx2,
 	BN_MONT_CTX *mont);
@@ -81,9 +99,10 @@ BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe, BIGNUM *add,
 	{
 	BIGNUM *rnd=NULL;
 	BIGNUM t;
+	int found=0;
 	int i,j,c1=0;
 	BN_CTX *ctx;
-	int checks = BN_prime_checks(bits);
+	int checks = BN_prime_checks_size(bits);
 
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
@@ -145,12 +164,12 @@ loop:
 			}
 		}
 	/* we have a prime :-) */
-	ret=rnd;
+	found = 1;
 err:
-	if ((ret == NULL) && (rnd != NULL)) BN_free(rnd);
+	if (!found && (ret == NULL) && (rnd != NULL)) BN_free(rnd);
 	BN_free(&t);
 	if (ctx != NULL) BN_CTX_free(ctx);
-	return(ret);
+	return(found ? rnd : NULL);
 	}
 
 int BN_is_prime(BIGNUM *a, int checks, void (*callback)(int,int,void *),
@@ -160,6 +179,12 @@ int BN_is_prime(BIGNUM *a, int checks, void (*callback)(int,int,void *),
 	BIGNUM *check;
 	BN_CTX *ctx=NULL,*ctx2=NULL;
 	BN_MONT_CTX *mont=NULL;
+
+	if (checks == BN_prime_checks)
+		{
+		int bits = BN_num_bits(a);
+		checks = BN_prime_checks_size(bits);
+		}
 
 	if (!BN_is_odd(a))
 		return(0);

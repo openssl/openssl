@@ -75,7 +75,7 @@ int RSA_check_key(RSA *key)
 		}
 	
 	/* p prime? */
-	r = BN_is_prime(key->p, BN_prime_checks(BN_num_bits(key->p)), NULL, NULL, NULL);
+	r = BN_is_prime(key->p, BN_prime_checks, NULL, NULL, NULL);
 	if (r != 1)
 		{
 		ret = r;
@@ -85,7 +85,7 @@ int RSA_check_key(RSA *key)
 		}
 	
 	/* q prime? */
-	r = BN_is_prime(key->q, BN_prime_checks(BN_num_bits(key->q)), NULL, NULL, NULL);
+	r = BN_is_prime(key->q, BN_prime_checks, NULL, NULL, NULL);
 	if (r != 1)
 		{
 		ret = r;

@@ -1,0 +1,31 @@
+=pod
+
+=head1 NAME
+
+DHparams_print, DHparams_print_fp - Print Diffie-Hellman parameters
+
+=head1 SYNOPSIS
+
+ #include <openssl/dh.h>
+
+ int DHparams_print_fp(FILE *fp, DH *x);
+
+ int DHparams_print(BIO *bp, DH *x);
+
+=head1 DESCRIPTION
+
+...
+
+=head1 RETURN VALUES
+
+...
+
+=head1 SEE ALSO
+
+...
+
+=head1 HISTORY
+
+...
+
+=cut

@@ -72,14 +72,14 @@
  * Having said all that,
  * there is another special case method for the generators 2, 3 and 5.
  * for 2, p mod 24 == 11
- * for 3, p mod 12 == 5  <<<<< does not work for strong primes.
+ * for 3, p mod 12 == 5  <<<<< does not work for safe primes.
  * for 5, p mod 10 == 3 or 7
  *
  * Thanks to Phil Karn <karn@qualcomm.com> for the pointers about the
  * special generators and for answering some of my questions.
  *
  * I've implemented the second simple method :-).
- * Since DH should be using a strong prime (both p and q are prime),
+ * Since DH should be using a safe prime (both p and q are prime),
  * this generator function can take a very very long time to run.
  */
 
@@ -105,7 +105,7 @@ DH *DH_generate_parameters(int prime_len, int generator,
 		BN_set_word(t2,11);
 		g=2;
 		}
-#ifdef undef  /* does not work for strong primes */
+#ifdef undef  /* does not work for safe primes */
 	else if (generator == DH_GENERATOR_3)
 		{
 		BN_set_word(t1,12);
