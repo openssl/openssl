@@ -1,0 +1,93 @@
+=pod
+
+=head1 NAME
+
+SSL_CTX_load_verify_locations - set default locations for trusted CA
+certificates
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
+                                   const char *CApath);
+
+=head1 DESCRIPTION
+
+SSL_CTX_load_verify_locations() specifies the locations for B<ctx>, at
+which CA certificates for verification purposes are located. The certificates
+available via B<CAfile> and B<CApath> are trusted.
+
+=head1 NOTES
+
+If B<CAfile> is not NULL, it points to a file of CA certificates in PEM
+format. The file can contain several CA certificates identified by
+
+ -----BEGIN CERTIFICATE-----
+ ... (CA certificate in base64 encoding) ...
+ -----END CERTIFICATE-----
+
+sequences. Before, between, and after the certificates text is allowed
+which can be used e.g. for descriptions of the certificates.
+
+The B<CAfile> is processed on execution of the SSL_CTX_load_verify_locations()
+function.
+
+If on an TLS/SSL server no special setting is perfomed using *client_CA_list()
+functions, the certificates contained in B<CAfile> are listed to the client
+as available CAs during the TLS/SSL handshake.
+
+If B<CApath> is not NULL, it points to a directory containing CA certificates
+in PEM format. The files each contain one CA certificate. The files are
+looked up by the CA subject name hash value, which must hence be available.
+Use the B<c_rehash> utility to create the necessary links.
+
+The certificates in B<CAfile> are only looked up when required, e.g. when
+building the certificate chain or when actually performing the verification
+of a peer certificate.
+
+On a server, the certificates in B<CApath> are not listed as available
+CA certificates to a client during a TLS/SSL handshake.
+
+=head1 EXAMPLES
+
+Generate a CA certificate file with descriptive text from the CA certificates
+ca1.pem ca2.pem ca3.pem:
+
+ #!/bin/sh
+ rm CAfile.pem
+ for i in ca1.pem ca2.pem ca3.pem ; do
+   openssl x509 -in $i -text >> CAfile.pem
+ done
+
+Prepare the directory /some/where/certs containing several CA certificates
+for use as B<CApath>:
+
+ cd /some/where/certs
+ c_rehash
+
+=head1 RETURN VALUES
+
+The following return values can occur:
+
+=over 4
+
+=item 0
+
+The operation failed because B<CAfile> and B<CApath> are NULL or the
+processing at one of the locations specified failed. Check the error
+stack to find out the reason.
+
+=item 1
+
+The operation succeeded.
+
+=back
+
+=head1 SEE ALSO
+
+L<ssl(3)|ssl(3)>,
+L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>,
+L<SSL_get_client_CA_list(3)|SSL_get_client_CA_list(3)>
+
+=cut
