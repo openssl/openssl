@@ -119,9 +119,10 @@
  *		  require.  This format is wrong
  */
 
-static int make_REQ(X509_REQ *req,EVP_PKEY *pkey,char *dn,int attribs,
-		unsigned long chtype);
-static int build_subject(X509_REQ *req, char *subj, unsigned long chtype);
+static int make_REQ(X509_REQ *req,EVP_PKEY *pkey,char *dn,int mutlirdn,
+		int attribs,unsigned long chtype);
+static int build_subject(X509_REQ *req, char *subj, unsigned long chtype,
+		int multirdn);
 static int prompt_info(X509_REQ *req,
 		STACK_OF(CONF_VALUE) *dn_sk, char *dn_sect,
 		STACK_OF(CONF_VALUE) *attr_sk, char *attr_sect, int attribs,
@@ -185,6 +186,7 @@ int MAIN(int argc, char **argv)
 	char *passin = NULL, *passout = NULL;
 	char *p;
 	char *subj = NULL;
+	int multirdn = 0;
 	const EVP_MD *md_alg=NULL,*digest=EVP_md5();
 	unsigned long chtype = MBSTRING_ASC;
 #ifndef MONOLITH
@@ -440,6 +442,8 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			subj= *(++argv);
 			}
+		else if (strcmp(*argv,"-multivalue-rdn") == 0)
+			multirdn=1;
 		else if (strcmp(*argv,"-days") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -511,6 +515,7 @@ bad:
 		BIO_printf(bio_err," -[digest]      Digest to sign with (md5, sha1, md2, mdc2, md4)\n");
 		BIO_printf(bio_err," -config file   request template file.\n");
 		BIO_printf(bio_err," -subj arg      set or modify request subject\n");
+		BIO_printf(bio_err," -multivalue-rdn enable support for multivalued RDNs\n");
 		BIO_printf(bio_err," -new           new request.\n");
 		BIO_printf(bio_err," -batch         do not ask anything during request generation\n");
 		BIO_printf(bio_err," -x509          output a x509 structure instead of a cert. req.\n");
@@ -887,7 +892,7 @@ loop:
 				goto end;
 				}
 
-			i=make_REQ(req,pkey,subj,!x509, chtype);
+			i=make_REQ(req,pkey,subj,multirdn,!x509, chtype);
 			subj=NULL; /* done processing '-subj' option */
 			if ((kludge > 0) && !sk_X509_ATTRIBUTE_num(req->req_info->attributes))
 				{
@@ -980,7 +985,7 @@ loop:
 			print_name(bio_err, "old subject=", X509_REQ_get_subject_name(req), nmflag);
 			}
 
-		if (build_subject(req, subj, chtype) == 0)
+		if (build_subject(req, subj, chtype, multirdn) == 0)
 			{
 			BIO_printf(bio_err, "ERROR: cannot modify subject\n");
 			ex=1;
@@ -1171,8 +1176,8 @@ end:
 	OPENSSL_EXIT(ex);
 	}
 
-static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int attribs,
-			unsigned long chtype)
+static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
+			int attribs, unsigned long chtype)
 	{
 	int ret=0,i;
 	char no_prompt = 0;
@@ -1222,7 +1227,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int attribs,
 	else 
 		{
 		if (subj)
-			i = build_subject(req, subj, chtype);
+			i = build_subject(req, subj, chtype, multirdn);
 		else
 			i = prompt_info(req, dn_sk, dn_sect, attr_sk, attr_sect, attribs, chtype);
 		}
@@ -1239,11 +1244,11 @@ err:
  * subject is expected to be in the format /type0=value0/type1=value1/type2=...
  * where characters may be escaped by \
  */
-static int build_subject(X509_REQ *req, char *subject, unsigned long chtype)
+static int build_subject(X509_REQ *req, char *subject, unsigned long chtype, int multirdn)
 	{
 	X509_NAME *n;
 
-	if (!(n = do_subject(subject, chtype)))
+	if (!(n = do_subject(subject, chtype, multirdn)))
 		return 0;
 
 	if (!X509_REQ_set_subject_name(req, n))

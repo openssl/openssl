@@ -316,7 +316,7 @@ int rotate_index(char *dbfile, char *new_suffix, char *old_suffix);
 void free_index(CA_DB *db);
 int index_name_cmp(const char **a, const char **b);
 
-X509_NAME *do_subject(char *str, long chtype);
+X509_NAME *do_subject(char *str, long chtype, int multirdn);
 
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1

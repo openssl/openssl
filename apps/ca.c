@@ -173,6 +173,7 @@ static char *ca_usage[]={
 " -msie_hack      - msie modifications to handle all those universal strings\n",
 " -revoke file    - Revoke a certificate (given in file)\n",
 " -subj arg       - Use arg instead of request's subject\n",
+" -multivalue-rdn - enable support for multivalued RDNs\n",
 " -extensions ..  - Extension section (override value in config file)\n",
 " -extfile file   - Configuration file with X509v3 extentions to add\n",
 " -crlexts ..     - CRL extension section (override value in config file)\n",
@@ -193,27 +194,27 @@ extern int EF_ALIGNMENT;
 static void lookup_fail(char *name,char *tag);
 static int certify(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 		   const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,CA_DB *db,
-		   BIGNUM *serial, char *subj, int email_dn, char *startdate,
+		   BIGNUM *serial, char *subj, int multirdn, int email_dn, char *startdate,
 		   char *enddate, long days, int batch, char *ext_sect, CONF *conf,
 		   int verbose, unsigned long certopt, unsigned long nameopt,
 		   int default_op, int ext_copy, int selfsign);
 static int certify_cert(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
-			CA_DB *db, BIGNUM *serial, char *subj, int email_dn,
+			CA_DB *db, BIGNUM *serial, char *subj, int multirdn, int email_dn,
 			char *startdate, char *enddate, long days, int batch,
 			char *ext_sect, CONF *conf,int verbose, unsigned long certopt,
 			unsigned long nameopt, int default_op, int ext_copy,
 			ENGINE *e);
 static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			 const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
-			 CA_DB *db, BIGNUM *serial,char *subj, int email_dn,
+			 CA_DB *db, BIGNUM *serial,char *subj, int multirdn, int email_dn,
 			 char *startdate, char *enddate, long days, char *ext_sect,
 			 CONF *conf, int verbose, unsigned long certopt, 
 			 unsigned long nameopt, int default_op, int ext_copy);
 static int fix_data(int nid, int *type);
 static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
-	STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial,char *subj,
+	STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial,char *subj, int multirdn,
 	int email_dn, char *startdate, char *enddate, long days, int batch,
        	int verbose, X509_REQ *req, char *ext_sect, CONF *conf,
 	unsigned long certopt, unsigned long nameopt, int default_op,
@@ -272,6 +273,7 @@ int MAIN(int argc, char **argv)
 	char *extensions=NULL;
 	char *extfile=NULL;
 	char *subj=NULL;
+	int multirdn = 0;
 	char *tmp_email_dn=NULL;
 	char *crl_ext=NULL;
 	int rev_type = REV_NONE;
@@ -351,6 +353,8 @@ EF_ALIGNMENT=0;
 			subj= *(++argv);
 			/* preserve=1; */
 			}
+		else if (strcmp(*argv,"-multivalue-rdn") == 0)
+			multirdn=1;
 		else if (strcmp(*argv,"-startdate") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1134,7 +1138,7 @@ bad:
 			{
 			total++;
 			j=certify_spkac(&x,spkac_file,pkey,x509,dgst,attribs,db,
-				serial,subj,email_dn,startdate,enddate,days,extensions,
+				serial,subj,multirdn,email_dn,startdate,enddate,days,extensions,
 				conf,verbose,certopt,nameopt,default_op,ext_copy);
 			if (j < 0) goto err;
 			if (j > 0)
@@ -1158,7 +1162,7 @@ bad:
 			{
 			total++;
 			j=certify_cert(&x,ss_cert_file,pkey,x509,dgst,attribs,
-				db,serial,subj,email_dn,startdate,enddate,days,batch,
+				db,serial,subj,multirdn,email_dn,startdate,enddate,days,batch,
 				extensions,conf,verbose, certopt, nameopt,
 				default_op, ext_copy, e);
 			if (j < 0) goto err;
@@ -1178,7 +1182,7 @@ bad:
 			{
 			total++;
 			j=certify(&x,infile,pkey,x509p,dgst,attribs,db,
-				serial,subj,email_dn,startdate,enddate,days,batch,
+				serial,subj,multirdn,email_dn,startdate,enddate,days,batch,
 				extensions,conf,verbose, certopt, nameopt,
 				default_op, ext_copy, selfsign);
 			if (j < 0) goto err;
@@ -1198,7 +1202,7 @@ bad:
 			{
 			total++;
 			j=certify(&x,argv[i],pkey,x509p,dgst,attribs,db,
-				serial,subj,email_dn,startdate,enddate,days,batch,
+				serial,subj,multirdn,email_dn,startdate,enddate,days,batch,
 				extensions,conf,verbose, certopt, nameopt,
 				default_op, ext_copy, selfsign);
 			if (j < 0) goto err;
@@ -1517,7 +1521,7 @@ static void lookup_fail(char *name, char *tag)
 
 static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, CA_DB *db,
-	     BIGNUM *serial, char *subj, int email_dn, char *startdate, char *enddate,
+	     BIGNUM *serial, char *subj, int multirdn, int email_dn, char *startdate, char *enddate,
 	     long days, int batch, char *ext_sect, CONF *lconf, int verbose,
 	     unsigned long certopt, unsigned long nameopt, int default_op,
 	     int ext_copy, int selfsign)
@@ -1573,7 +1577,7 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	else
 		BIO_printf(bio_err,"Signature ok\n");
 
-	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj, email_dn,
+	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj, multirdn, email_dn,
 		startdate,enddate,days,batch,verbose,req,ext_sect,lconf,
 		certopt, nameopt, default_op, ext_copy, selfsign);
 
@@ -1585,7 +1589,7 @@ err:
 
 static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, CA_DB *db,
-	     BIGNUM *serial, char *subj, int email_dn, char *startdate, char *enddate,
+	     BIGNUM *serial, char *subj, int multirdn, int email_dn, char *startdate, char *enddate,
 	     long days, int batch, char *ext_sect, CONF *lconf, int verbose,
 	     unsigned long certopt, unsigned long nameopt, int default_op,
 	     int ext_copy, ENGINE *e)
@@ -1627,7 +1631,7 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	if ((rreq=X509_to_X509_REQ(req,NULL,EVP_md5())) == NULL)
 		goto err;
 
-	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,email_dn,startdate,enddate,
+	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,multirdn,email_dn,startdate,enddate,
 		days,batch,verbose,rreq,ext_sect,lconf, certopt, nameopt, default_op,
 		ext_copy, 0);
 
@@ -1639,6 +1643,7 @@ err:
 
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	     STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial, char *subj,
+	     int multirdn,
 	     int email_dn, char *startdate, char *enddate, long days, int batch,
 	     int verbose, X509_REQ *req, char *ext_sect, CONF *lconf,
 	     unsigned long certopt, unsigned long nameopt, int default_op,
@@ -1671,7 +1676,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 
 	if (subj)
 		{
-		X509_NAME *n = do_subject(subj, MBSTRING_ASC);
+		X509_NAME *n = do_subject(subj, MBSTRING_ASC, multirdn);
 
 		if (!n)
 			{
@@ -2208,7 +2213,7 @@ static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 
 static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, CA_DB *db,
-	     BIGNUM *serial, char *subj, int email_dn, char *startdate, char *enddate,
+	     BIGNUM *serial, char *subj, int multirdn, int email_dn, char *startdate, char *enddate,
 	     long days, char *ext_sect, CONF *lconf, int verbose, unsigned long certopt,
 	     unsigned long nameopt, int default_op, int ext_copy)
 	{
@@ -2349,7 +2354,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 
 	X509_REQ_set_pubkey(req,pktmp);
 	EVP_PKEY_free(pktmp);
-	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,email_dn,startdate,enddate,
+	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,multirdn,email_dn,startdate,enddate,
 		   days,1,verbose,req,ext_sect,lconf, certopt, nameopt, default_op,
 			ext_copy, 0);
 err:
@@ -2842,13 +2847,14 @@ int make_revoked(X509_REVOKED *rev, char *str)
  * subject is expected to be in the format /type0=value0/type1=value1/type2=...
  * where characters may be escaped by \
  */
-X509_NAME *do_subject(char *subject, long chtype)
+X509_NAME *do_subject(char *subject, long chtype, int multirdn)
 	{
 	size_t buflen = strlen(subject)+1; /* to copy the types and values into. due to escaping, the copy can only become shorter */
 	char *buf = OPENSSL_malloc(buflen);
 	size_t max_ne = buflen / 2 + 1; /* maximum number of name elements */
 	char **ne_types = OPENSSL_malloc(max_ne * sizeof (char *));
 	char **ne_values = OPENSSL_malloc(max_ne * sizeof (char *));
+	int *mval = OPENSSL_malloc (max_ne * sizeof (int));
 
 	char *sp = subject, *bp = buf;
 	int i, ne_num = 0;
@@ -2868,6 +2874,9 @@ X509_NAME *do_subject(char *subject, long chtype)
 		goto error;
 		}
 	sp++; /* skip leading / */
+
+	/* no multivalued RDN by default */
+	mval[ne_num] = 0;
 
 	while (*sp)
 		{
@@ -2915,6 +2924,15 @@ X509_NAME *do_subject(char *subject, long chtype)
 			else if (*sp == '/')
 				{
 				sp++;
+				/* no multivalued RDN by default */
+				mval[ne_num+1] = 0;
+				break;
+				}
+			else if (*sp == '+' && multirdn)
+				{
+				/* a not escaped + signals a mutlivalued RDN */
+				sp++;
+				mval[ne_num+1] = -1;
 				break;
 				}
 			else
@@ -2941,7 +2959,7 @@ X509_NAME *do_subject(char *subject, long chtype)
 			continue;
 			}
 
-		if (!X509_NAME_add_entry_by_NID(n, nid, chtype, (unsigned char*)ne_values[i], -1,-1,0))
+		if (!X509_NAME_add_entry_by_NID(n, nid, chtype, (unsigned char*)ne_values[i], -1,-1,mval[i]))
 			goto error;
 		}
 
