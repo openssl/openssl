@@ -112,7 +112,7 @@ int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	}
 
 /* Convert the various cipher NIDs and dummies to a proper OID NID */
-int EVP_CIPHER_type(EVP_CIPHER *ctx)
+int EVP_CIPHER_type(const EVP_CIPHER *ctx)
 {
 	int nid;
 	nid = EVP_CIPHER_nid(ctx);

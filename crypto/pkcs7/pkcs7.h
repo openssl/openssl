@@ -120,6 +120,7 @@ typedef struct pkcs7_enc_content_st
 	ASN1_OBJECT			*content_type;
 	X509_ALGOR			*algorithm;
 	ASN1_OCTET_STRING		*enc_data;	/* [ 0 ] */
+	const EVP_CIPHER		*cipher;
 	} PKCS7_ENC_CONTENT;
 
 typedef struct pkcs7_enveloped_st
@@ -128,7 +129,7 @@ typedef struct pkcs7_enveloped_st
 	STACK /* PKCS7_RECIP_INFO */	*recipientinfo;
 	PKCS7_ENC_CONTENT		*enc_data;
 	} PKCS7_ENVELOPE;
-	
+
 typedef struct pkcs7_signedandenveloped_st
 	{
 	ASN1_INTEGER			*version;	/* version 1 */
@@ -324,7 +325,7 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx,
 
 BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio);
 int PKCS7_dataFinal(PKCS7 *p7, BIO *bio);
-BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509_STORE *xs);
+BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert);
 
 
 PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509,
@@ -335,7 +336,7 @@ STACK *PKCS7_get_signer_info(PKCS7 *p7);
 PKCS7_RECIP_INFO *PKCS7_add_recipient(PKCS7 *p7, X509 *x509);
 int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri);
 int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509);
-int PKCS7_set_cipher(PKCS7 *p7, EVP_CIPHER *cipher);
+int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher);
 
 PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx);
 ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK *sk);
@@ -363,19 +364,21 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk);
 #define PKCS7_F_PKCS7_ADD_RECIPIENT_INFO		 102
 #define PKCS7_F_PKCS7_ADD_SIGNER			 103
 #define PKCS7_F_PKCS7_CTRL				 104
+#define PKCS7_F_PKCS7_DATADECODE			 112
 #define PKCS7_F_PKCS7_DATAINIT				 105
 #define PKCS7_F_PKCS7_DATASIGN				 106
 #define PKCS7_F_PKCS7_DATAVERIFY			 107
 #define PKCS7_F_PKCS7_SET_CIPHER			 108
 #define PKCS7_F_PKCS7_SET_CONTENT			 109
 #define PKCS7_F_PKCS7_SET_TYPE				 110
-#define PKCS7_F_PKCS7_SIGNENVELOPEDECRYPT		 111
 
 /* Reason codes. */
+#define PKCS7_R_CIPHER_NOT_INITIALIZED			 116
 #define PKCS7_R_DECRYPTED_KEY_IS_WRONG_LENGTH		 100
 #define PKCS7_R_DIGEST_FAILURE				 101
 #define PKCS7_R_INTERNAL_ERROR				 102
 #define PKCS7_R_MISSING_CERIPEND_INFO			 103
+#define PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE	 115
 #define PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE	 104
 #define PKCS7_R_SIGNATURE_FAILURE			 105
 #define PKCS7_R_UNABLE_TO_FIND_CERTIFICATE		 106

@@ -88,23 +88,25 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 	case NID_pkcs7_signedAndEnveloped:
 		rsk=p7->d.signed_and_enveloped->recipientinfo;
 		md_sk=p7->d.signed_and_enveloped->md_algs;
-		evp_cipher=EVP_get_cipherbyname(OBJ_nid2sn(OBJ_obj2nid(p7->d.signed_and_enveloped->enc_data->algorithm->algorithm)));
+		xalg=p7->d.signed_and_enveloped->enc_data->algorithm;
+		evp_cipher=p7->d.signed_and_enveloped->enc_data->cipher;
 		if (evp_cipher == NULL)
 			{
-			PKCS7err(PKCS7_F_PKCS7_DATAINIT,PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
+			PKCS7err(PKCS7_F_PKCS7_DATAINIT,
+						PKCS7_R_CIPHER_NOT_INITIALIZED);
 			goto err;
 			}
-		xalg=p7->d.signed_and_enveloped->enc_data->algorithm;
 		break;
 	case NID_pkcs7_enveloped:
 		rsk=p7->d.enveloped->recipientinfo;
-		evp_cipher=EVP_get_cipherbyname(OBJ_nid2sn(OBJ_obj2nid(p7->d.enveloped->enc_data->algorithm->algorithm)));
+		xalg=p7->d.enveloped->enc_data->algorithm;
+		evp_cipher=p7->d.enveloped->enc_data->cipher;
 		if (evp_cipher == NULL)
 			{
-			PKCS7err(PKCS7_F_PKCS7_DATAINIT,PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
+			PKCS7err(PKCS7_F_PKCS7_DATAINIT,
+						PKCS7_R_CIPHER_NOT_INITIALIZED);
 			goto err;
 			}
-		xalg=p7->d.enveloped->enc_data->algorithm;
 		break;
 	default:
 		PKCS7err(PKCS7_F_PKCS7_DATAINIT,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
@@ -146,24 +148,28 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		int keylen,ivlen;
 		int jj,max;
 		unsigned char *tmp;
+		EVP_CIPHER_CTX *ctx;
 
 		if ((btmp=BIO_new(BIO_f_cipher())) == NULL)
 			{
 			PKCS7err(PKCS7_F_PKCS7_DATAINIT,ERR_R_BIO_LIB);
 			goto err;
 			}
+		BIO_get_cipher_ctx(btmp, &ctx);
 		keylen=EVP_CIPHER_key_length(evp_cipher);
 		ivlen=EVP_CIPHER_iv_length(evp_cipher);
+		RAND_bytes(key,keylen);
+		EVP_CipherInit(ctx, evp_cipher, key, iv, 1);
+		memset(key, 0, keylen);
+		xalg->algorithm = OBJ_nid2obj(EVP_CIPHER_type(evp_cipher));
 
 		if (ivlen > 0) {
-			EVP_CIPHER_CTX *ctx;
-			BIO_get_cipher_ctx(btmp, &ctx);
+			RAND_bytes(iv,ivlen);
 			if (xalg->parameter == NULL) 
 						xalg->parameter=ASN1_TYPE_new();
 			if(EVP_CIPHER_param_to_asn1(ctx, xalg->parameter) < 0)
 								       goto err;
 		}
-		RAND_bytes(key,keylen);
 
 		/* Lets do the pub key stuff :-) */
 		max=0;
@@ -200,8 +206,6 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			ASN1_OCTET_STRING_set(ri->enc_key,tmp,jj);
 			}
 		Free(tmp);
-
-		BIO_set_cipher(btmp,evp_cipher,key,iv,1);
 
 		if (out == NULL)
 			out=btmp;
@@ -249,8 +253,7 @@ err:
 	}
 
 /* int */
-BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio,
-	     X509_STORE *xs)
+BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	{
 	int i,j;
 	BIO *out=NULL,*btmp=NULL,*etmp=NULL,*bio=NULL;
@@ -286,7 +289,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio,
 		evp_cipher=EVP_get_cipherbyname(OBJ_nid2sn(OBJ_obj2nid(enc_alg->algorithm)));
 		if (evp_cipher == NULL)
 			{
-			PKCS7err(PKCS7_F_PKCS7_SIGNENVELOPEDECRYPT,PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
+			PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
 			goto err;
 			}
 		xalg=p7->d.signed_and_enveloped->enc_data->algorithm;
@@ -298,13 +301,13 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio,
 		evp_cipher=EVP_get_cipherbyname(OBJ_nid2sn(OBJ_obj2nid(enc_alg->algorithm)));
 		if (evp_cipher == NULL)
 			{
-			PKCS7err(PKCS7_F_PKCS7_SIGNENVELOPEDECRYPT,PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
+			PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
 			goto err;
 			}
 		xalg=p7->d.enveloped->enc_data->algorithm;
 		break;
 	default:
-		PKCS7err(PKCS7_F_PKCS7_SIGNENVELOPEDECRYPT,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
+		PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
 	        goto err;
 		}
 
@@ -316,7 +319,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio,
 			xa=(X509_ALGOR *)sk_value(md_sk,i);
 			if ((btmp=BIO_new(BIO_f_md())) == NULL)
 				{
-				PKCS7err(PKCS7_F_PKCS7_SIGNENVELOPEDECRYPT,ERR_R_BIO_LIB);
+				PKCS7err(PKCS7_F_PKCS7_DATADECODE,ERR_R_BIO_LIB);
 				goto err;
 				}
 
@@ -324,7 +327,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio,
 			evp_md=EVP_get_digestbyname(OBJ_nid2sn(j));
 			if (evp_md == NULL)
 				{
-				PKCS7err(PKCS7_F_PKCS7_SIGNENVELOPEDECRYPT,PKCS7_R_UNKNOWN_DIGEST_TYPE);
+				PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNKNOWN_DIGEST_TYPE);
 				goto err;
 				}
 
@@ -351,50 +354,36 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio,
 
 		if ((etmp=BIO_new(BIO_f_cipher())) == NULL)
 			{
-			PKCS7err(PKCS7_F_PKCS7_SIGNENVELOPEDECRYPT,ERR_R_BIO_LIB);
+			PKCS7err(PKCS7_F_PKCS7_DATADECODE,ERR_R_BIO_LIB);
 			goto err;
 			}
 
 		/* It was encrypted, we need to decrypt the secret key
 		 * with the private key */
 
-		/* We need to find a private key for one of the people in the
-		 * recipentinfo list */
-		if (rsk == NULL)
-			return(NULL);
-
-		/* FIXME: this assumes that the passed private key
-		 * corresponds to the first RecipientInfo. This in
-		 * general is not true
+		/* Find the recipientInfo which matches the passed certificate
+		 * (if any)
 		 */
 
-		ri=(PKCS7_RECIP_INFO *)sk_value(rsk,0);
-#if 0
-		X509_STORE_CTX_init(&s_ctx,xs,NULL,NULL);
-		for (i=0; i<sk_num(rsk); i++)
-			{
+		for (i=0; i<sk_num(rsk); i++) {
 			ri=(PKCS7_RECIP_INFO *)sk_value(rsk,i);
-			uf (X509_STORE_get_by_issuer_serial(&s_ctx,
-				X509_LU_PKEY,
-				ri->issuer_and_serial->issuer,
-				ri->issuer_and_serial->serial,
-				&ret))
-				break;
+			if(!X509_NAME_cmp(ri->issuer_and_serial->issuer,
+					pcert->cert_info->issuer) &&
+			     !ASN1_INTEGER_cmp(pcert->cert_info->serialNumber,
+					ri->issuer_and_serial->serial)) break;
 			ri=NULL;
-			}
-		if (ri == NULL) return(NULL);	
-		pkey=ret.data.pkey;
-#endif
-		if (pkey == NULL)
-			{
+		}
+		if (ri == NULL) {
+			PKCS7err(PKCS7_F_PKCS7_DATADECODE,
+				 PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE);
 			return(NULL);
-			}
+		}
 
 		jj=EVP_PKEY_size(pkey);
 		tmp=Malloc(jj+10);
 		if (tmp == NULL)
 			{
-			PKCS7err(PKCS7_F_PKCS7_SIGNENVELOPEDECRYPT,ERR_R_MALLOC_FAILURE);
+			PKCS7err(PKCS7_F_PKCS7_DATADECODE,ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
 
@@ -404,7 +393,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio,
 			pkey);
 		if (jj <= 0)
 			{
-			PKCS7err(PKCS7_F_PKCS7_SIGNENVELOPEDECRYPT,ERR_R_EVP_LIB);
+			PKCS7err(PKCS7_F_PKCS7_DATADECODE,ERR_R_EVP_LIB);
 			goto err;
 			}
 
@@ -416,7 +405,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio,
 
 		if (jj != EVP_CIPHER_CTX_key_length(evp_ctx))
 			{
-			PKCS7err(PKCS7_F_PKCS7_SIGNENVELOPEDECRYPT,PKCS7_R_DECRYPTED_KEY_IS_WRONG_LENGTH);
+			PKCS7err(PKCS7_F_PKCS7_DATADECODE,
+					PKCS7_R_DECRYPTED_KEY_IS_WRONG_LENGTH);
 			goto err;
 			}
 		EVP_CipherInit(evp_ctx,NULL,(unsigned char *)tmp,NULL,0);

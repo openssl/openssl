@@ -624,7 +624,7 @@ int EVP_PKEY_missing_parameters(EVP_PKEY *pkey);
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey,int mode);
 int EVP_PKEY_cmp_parameters(EVP_PKEY *a,EVP_PKEY *b);
 
-int EVP_CIPHER_type(EVP_CIPHER *ctx);
+int EVP_CIPHER_type(const EVP_CIPHER *ctx);
 
 /* calls methods */
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);

@@ -422,7 +422,7 @@ X509 *PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
 		return(NULL);
 	}
 
-int PKCS7_set_cipher(PKCS7 *p7, EVP_CIPHER *cipher)
+int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher)
 	{
 	int i;
 	PKCS7_ENC_CONTENT *ec;
@@ -441,7 +441,9 @@ int PKCS7_set_cipher(PKCS7 *p7, EVP_CIPHER *cipher)
 		return(0);
 		}
 
-	ec->algorithm->algorithm=OBJ_nid2obj(EVP_CIPHER_type(cipher));
-	return(ec->algorithm->algorithm != NULL);
+	/* Setup cipher OID */
+
+	ec->cipher = cipher;
+	return 1;
 	}
 

@@ -10,6 +10,11 @@
                                    [23-Dec-1998] down below; but in later
                                    versions, these hyphens are gone.]
 
+  *) Reorganise the PKCS#7 library and get rid of some of the more obvious
+     problems: find RecipientInfo structure that matches recipient certificate
+     and initialise the ASN1 structures properly based on passed cipher.
+     [Steve Henson]
+
   *) Belatedly make the BN tests actually check the results.
      [Ben Laurie]
 
