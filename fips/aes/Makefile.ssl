@@ -94,6 +94,15 @@ clean:
 fips_aes_core.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
 fips_aes_core.o: ../../include/openssl/opensslconf.h fips_aes_core.c
 fips_aes_core.o: fips_aes_locl.h
+fips_aes_selftest.o: ../../include/openssl/aes.h ../../include/openssl/bio.h
+fips_aes_selftest.o: ../../include/openssl/crypto.h
+fips_aes_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_aes_selftest.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+fips_aes_selftest.o: ../../include/openssl/opensslconf.h
+fips_aes_selftest.o: ../../include/openssl/opensslv.h
+fips_aes_selftest.o: ../../include/openssl/safestack.h
+fips_aes_selftest.o: ../../include/openssl/stack.h
+fips_aes_selftest.o: ../../include/openssl/symhacks.h fips_aes_selftest.c
 fips_aesavs.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
 fips_aesavs.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 fips_aesavs.o: ../../include/openssl/bn.h ../../include/openssl/cast.h

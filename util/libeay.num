@@ -2828,3 +2828,4 @@ EVP_rc5_32_12_16_cfb64                  3269	EXIST::FUNCTION:RC5
 EVP_des_cfb1                            3270	EXIST::FUNCTION:DES
 AES_cfb1_encrypt                        3271	EXIST::FUNCTION:AES
 EVP_des_ede3_cfb1                       3272	EXIST::FUNCTION:DES
+DES_ede3_cfb_encrypt                    3273	EXIST::FUNCTION:DES

@@ -110,3 +110,15 @@ fips_des_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 fips_des_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 fips_des_enc.o: ../../include/openssl/ui_compat.h fips_des_enc.c
 fips_des_enc.o: fips_des_locl.h
+fips_des_selftest.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+fips_des_selftest.o: ../../include/openssl/des.h
+fips_des_selftest.o: ../../include/openssl/des_old.h
+fips_des_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_des_selftest.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+fips_des_selftest.o: ../../include/openssl/opensslconf.h
+fips_des_selftest.o: ../../include/openssl/opensslv.h
+fips_des_selftest.o: ../../include/openssl/safestack.h
+fips_des_selftest.o: ../../include/openssl/stack.h
+fips_des_selftest.o: ../../include/openssl/symhacks.h
+fips_des_selftest.o: ../../include/openssl/ui.h
+fips_des_selftest.o: ../../include/openssl/ui_compat.h fips_des_selftest.c
