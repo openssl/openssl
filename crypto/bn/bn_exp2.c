@@ -240,7 +240,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, BIGNUM *a1, BIGNUM *p1, BIGNUM *a2,
 				{
 				/* consider bits b-window1+1 .. b for this window */
 				i = b-window1+1;
-				while (!BN_is_bit_set(p1, i))
+				while (!BN_is_bit_set(p1, i)) /* works for i<0 */
 					i++;
 				wpos1 = i;
 				wvalue1 = 1;
