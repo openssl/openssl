@@ -77,6 +77,12 @@ nothing is to be done, but select() can be used to check for the required
 condition. When using a buffering BIO, like a BIO pair, data must be written
 into or retrieved out of the BIO before being able to continue.
 
+SSL_shutdown() can be modified to only set the connection to "shutdown"
+state but not actually send the "close notify" alert messages,
+see L<SSL_CTX_set_quiet_shutdown(3)|SSL_CTX_set_quiet_shutdown(3)>.
+When "quiet shutdown" is enabled, SSL_shutdown() will always succeed
+and return 1.
+
 =head1 RETURN VALUES
 
 The following return values can occur:
@@ -109,6 +115,7 @@ to find out the reason.
 
 L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_connect(3)|SSL_connect(3)>,
 L<SSL_accept(3)|SSL_accept(3)>, L<SSL_set_shutdown(3)|SSL_set_shutdown(3)>,
+L<SSL_CTX_set_quiet_shutdown(3)|SSL_CTX_set_quiet_shutdown(3)>,
 L<SSL_clear(3)|SSL_clear(3)>, L<SSL_free(3)|SSL_free(3)>,
 L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>
 
