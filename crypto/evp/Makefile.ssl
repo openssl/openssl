@@ -313,6 +313,21 @@ encode.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 encode.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 encode.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 encode.o: ../../include/openssl/symhacks.h ../cryptlib.h encode.c
+evp_acnf.o: ../../e_os.h ../../include/openssl/asn1.h
+evp_acnf.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
+evp_acnf.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+evp_acnf.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+evp_acnf.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+evp_acnf.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+evp_acnf.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+evp_acnf.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+evp_acnf.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+evp_acnf.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+evp_acnf.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+evp_acnf.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
+evp_acnf.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+evp_acnf.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+evp_acnf.o: ../cryptlib.h evp_acnf.c
 evp_enc.o: ../../e_os.h ../../include/openssl/asn1.h
 evp_enc.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 evp_enc.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
