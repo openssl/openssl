@@ -625,6 +625,9 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
 	dataB=BUF_MEM_new();
 	if ((nameB == NULL) || (headerB == NULL) || (dataB == NULL))
 		{
+		BUF_MEM_free(nameB);
+		BUF_MEM_free(headerB);
+		BUF_MEM_free(dataB);
 		PEMerr(PEM_F_PEM_READ_BIO,ERR_R_MALLOC_FAILURE);
 		return(0);
 		}
