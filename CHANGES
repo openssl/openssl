@@ -1783,7 +1783,6 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      supply an oversized client master key. (CAN-2002-0656)
      [Ben Laurie (CHATS)]
 
-
  Changes between 0.9.6c and 0.9.6d  [9 May 2002]
 
   *) Fix crypto/asn1/a_sign.c so that 'parameters' is omitted (not
