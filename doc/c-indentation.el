@@ -13,12 +13,10 @@
 ;
 ; Apparently statement blocks that are not introduced by a statement
 ; such as "if" and that are not the body of a function cannot
-; be handled too well by CC mode with this indentation style.
-; The style defined below does not indent them at all.
-; To insert tabs manually, prefix them with ^Q (the "quoted-insert"
-; command of Emacs).  If you know a solution to this problem
-; or find other problems with this indentation style definition,
-; please send e-mail to bodo@openssl.org.
+; be handled too well by CC mode with this indentation style,
+; so you have to indent them manually (you can use C-q tab).
+; 
+; For suggesting improvements, please send e-mail to bodo@openssl.org.
 
 (c-add-style "eay"
 	     '((c-basic-offset . 8)
