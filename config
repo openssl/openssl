@@ -61,7 +61,7 @@ if [ "x$XREL" != "x" ]; then
 		echo "whatever-whatever-unixware1"; exit 0
 		;;
 	    5)
-		if [ "x$VERSION" = "x7" ]; then
+		if [ "`echo x$VERSION | sed -e 's/\..*//'`" = "x7" ]; then
 		    echo "${MACHINE}-sco-unixware7"; exit 0
 		fi
 		;;
