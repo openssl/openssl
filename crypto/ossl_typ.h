@@ -55,6 +55,8 @@
 #ifndef HEADER_OPENSSL_TYPES_H
 #define HEADER_OPENSSL_TYPES_H
 
+#include <openssl/e_os2.h>
+
 #ifdef NO_ASN1_TYPEDEFS
 #define ASN1_INTEGER		ASN1_STRING
 #define ASN1_ENUMERATED		ASN1_STRING
