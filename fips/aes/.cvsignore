@@ -1,4 +1,5 @@
 lib
 fips_aesavs
+fips_aesavs.sha1
 testlist
 Makefile.save

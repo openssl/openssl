@@ -2,3 +2,4 @@ Makefile.save
 lib
 fips_standalone_sha1
 fips_sha1test
+fips_sha1test.sha1

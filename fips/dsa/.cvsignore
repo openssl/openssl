@@ -1,3 +1,4 @@
 Makefile.save
 lib
 fips_dssvs
+fips_dssvs.sha1
