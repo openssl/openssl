@@ -73,6 +73,7 @@ int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
 			  BN_MONT_CTX *mont, BN_CTX *ctx)
 	{
 	BIGNUM *tmp,*tmp2;
+	int ret=0;
 
 	BN_CTX_start(ctx);
 	tmp = BN_CTX_get(ctx);
@@ -101,10 +102,10 @@ int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
 		}
 	/* reduce from aRR to aR */
 	if (!BN_from_montgomery(r,tmp,mont,ctx)) goto err;
-	BN_CTX_end(ctx);
-	return(1);
+	ret=1;
 err:
-	return(0);
+	BN_CTX_end(ctx);
+	return(ret);
 	}
 
 int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
