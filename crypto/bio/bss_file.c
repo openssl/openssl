@@ -213,6 +213,8 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 		b->shutdown=(int)num&BIO_CLOSE;
 		b->ptr=(char *)ptr;
 		b->init=1;
+		{
+		int fd = fileno((FILE*)ptr);
 #if defined(OPENSSL_SYS_WINDOWS)
 		if (num & BIO_FP_TEXT)
 			_setmode(fd,_O_TEXT);
@@ -222,12 +224,10 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
          /* Under CLib there are differences in file modes
          */
 		if (num & BIO_FP_TEXT)
-			_setmode(fileno((FILE *)ptr),O_TEXT);
+			_setmode(fd,O_TEXT);
 		else
-			_setmode(fileno((FILE *)ptr),O_BINARY);
+			_setmode(fd,O_BINARY);
 #elif defined(OPENSSL_SYS_MSDOS)
-		{
-		int fd = fileno((FILE*)ptr);
 		/* Set correct text/binary mode */
 		if (num & BIO_FP_TEXT)
 			_setmode(fd,_O_TEXT);
@@ -242,13 +242,13 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 			else
 				_setmode(fd,_O_BINARY);
 			}
-		}
 #elif defined(OPENSSL_SYS_OS2)
 		if (num & BIO_FP_TEXT)
-			setmode(fileno((FILE *)ptr), O_TEXT);
+			setmode(fd, O_TEXT);
 		else
-			setmode(fileno((FILE *)ptr), O_BINARY);
+			setmode(fd, O_BINARY);
 #endif
+		}
 		break;
 	case BIO_C_SET_FILENAME:
 		file_free(b);
