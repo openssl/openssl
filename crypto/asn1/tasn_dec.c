@@ -132,8 +132,18 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1
 	switch(it->itype) {
 
 		case ASN1_ITYPE_PRIMITIVE:
-		if(it->templates)
+		if(it->templates) {
+			/* tagging or OPTIONAL is currently illegal on an item template
+			 * because the flags can't get passed down. In practice this isn't
+			 * a problem: we include the relevant flags from the item template
+			 * in the template itself.
+			 */
+			if ((tag != -1) || opt) {
+				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_ILLEGAL_OPTIONS_ON_ITEM_TEMPLATE);
+				goto err;
+			}
 			return asn1_template_ex_d2i(pval, in, len, it->templates, opt, ctx);
+		}
 		return asn1_d2i_ex_primitive(pval, in, len, it, tag, aclass, opt, ctx);
 		break;
 
@@ -232,21 +242,21 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1
 			/* Otherwise must be an ASN1 parsing error */
 			errtt = tt;
 			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
-			return 0;
+			goto err;
 		}
 		/* Did we fall off the end without reading anything? */
 		if(i == it->tcount) {
 			/* If OPTIONAL, this is OK */
 			if(opt) return -1;
 			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_NO_MATCHING_CHOICE_TYPE);
-			return 0;
+			goto err;
 		}
 		/* Otherwise we got a match, allocate structure and populate it */
 		if(!*pval) {
 			if(!ASN1_item_ex_new(pval, it)) {
 				errtt = tt;
 				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
-				return 0;
+				goto err;
 			}
 		}
 		pchptr = asn1_get_field_ptr(pval, tt);

@@ -172,6 +172,7 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ASN1_R_ILLEGAL_CHARACTERS               ,"illegal characters"},
 {ASN1_R_ILLEGAL_NULL                     ,"illegal null"},
 {ASN1_R_ILLEGAL_OPTIONAL_ANY             ,"illegal optional any"},
+{ASN1_R_ILLEGAL_OPTIONS_ON_ITEM_TEMPLATE ,"illegal options on item template"},
 {ASN1_R_ILLEGAL_TAGGED_ANY               ,"illegal tagged any"},
 {ASN1_R_INTEGER_TOO_LARGE_FOR_LONG       ,"integer too large for long"},
 {ASN1_R_INVALID_BMPSTRING_LENGTH         ,"invalid bmpstring length"},
