@@ -77,8 +77,8 @@
 
 static int aep_init(void);
 static int aep_finish(void);
-static int aep_get_connection(AEP_CONNECTION_HNDL *hConnection);
-static int aep_return_connection(AEP_CONNECTION_HNDL hConnection);
+static int aep_get_connection(unsigned int *hConnection);
+static int aep_return_connection(unsigned int hConnection);
 
 /* BIGNUM stuff */
 static int aep_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
@@ -421,7 +421,7 @@ static int aep_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *
 			   const BIGNUM *dmp1,const BIGNUM *dmq1,const BIGNUM *iqmp, BN_CTX *ctx)
 {
   AEP_RV rv = AEP_R_OK;
-  AEP_U32 hConnection;
+  unsigned int hConnection;
 
   /*Grab a connection from the pool*/
   rv = aep_get_connection(&hConnection);
@@ -457,7 +457,7 @@ static int aep_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *
 static int aep_rand(unsigned char *buf,int len )
 {
   AEP_RV rv = AEP_R_OK;
-  AEP_U32 hConnection;
+  unsigned int hConnection;
 
   int to_return = 0;
 
@@ -614,7 +614,7 @@ static int aep_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 
 }
 
-static int aep_get_connection(AEP_CONNECTION_HNDL *hConnection)
+static int aep_get_connection(unsigned int *hConnection)
 {
   int count;
   AEP_RV rv = AEP_R_OK;
@@ -727,7 +727,7 @@ static int aep_get_connection(AEP_CONNECTION_HNDL *hConnection)
 }
 
 
-static int aep_return_connection(AEP_CONNECTION_HNDL hConnection)
+static int aep_return_connection(unsigned int hConnection)
 {
   int count;
 
