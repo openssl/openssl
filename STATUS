@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/18 13:35:05 $
+  ______________                           $Date: 2000/09/18 16:17:41 $
 
   DEVELOPMENT STATE
 
@@ -38,24 +38,30 @@
 			VMS/Alpha			- failed
 				Some things were missing [FIXED]
                        0.9.6-beta2 is available:
-			sunos-gcc			- passed
-			aix-gcc				- passed
-			Win32 w/ VC6 or Mingw32		- failed
+			sunos-gcc				- passed
+			aix-gcc					- passed
+			Win32 w/ VC6 or Mingw32			- failed
 				RAND_poll(), a few uninitialised vars [FIXED]
 				RAND_poll() should used LoadLibrary instead of
 					GetModuleHandle [FIXED]
 				Major compilation problem with VC6 on NT
 				Mingw32 says "175: parse error before `DWORD'"
-			Win32 w/ CygWin			- success?
+			Win32 w/ CygWin				- success?
 			VMS/Alpha 7.1 (CPQ C 5.6-003, TCP/IP 5.0) - success
 				Just a small warning in dso_vms.c [FIXED]
 			VMS/Alpha 7.2-1 (CPQ 5.6-003, TCP/IP 5.0A) - success
 			VMS/VAX 7.2-1 (CPQ 5.2-003, TCP/IP 5.0) - success
-			hpux-parisc-cc (HP-UX B.11.00)	- failed
+			hpux-parisc-cc (HP-UX B.11.00)		- failed
 				Typo in Configure, -ldl should be -ldld [FIXED]
-			solaris-sparcv9-gcc (2.6/ultra5)- success
-			FreeBSD (2.2.5-RELEASE)		- success
-			solaris-sparcv9-cc (SunOS 5.7 SC3.0) - failed
+			hpux-parisc-cc (10.20 w/ -ldld)		- success
+			hpux-parisc-gcc (10.20 w/ -ldld)	- success
+			hpux-parisc-cc [engine] (10.20 w/ -ldld)- success
+			hpux-parisc-gcc [endine] (10.20 w/ -ldld)- success
+				All hpux 10.20 targets succeeded provided -ldl
+				has been changed to -ldld.
+			solaris-sparcv9-gcc (2.6/ultra5)	- success
+			FreeBSD (2.2.5-RELEASE)			- success
+			solaris-sparcv9-cc (SunOS 5.7 SC3.0)	- failed
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
