@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add engine application.  It can currently list engines by name and
+     identity, and test if they are actually available.
+     [Richard Levitte]
+
   *) Add support for shared libraries under Irix.
      [Albert Chin-A-Young <china@thewrittenword.com>]
 
