@@ -7,6 +7,19 @@
   *) Fix EVP_dsa_sha macro.
      [Nils Larsch]
 
+  *) New option
+          SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
+     for disabling the SSL 3.0/TLS 1.0 CBC vulnerability countermeasure
+     that was added in OpenSSL 0.9.6d.
+
+     As the countermeasure turned out to be incompatible with some
+     broken SSL implementations, the new option is part of SSL_OP_ALL.
+     SSL_OP_ALL is usually employed when compatibility with weird SSL
+     implementations is desired (e.g. '-bugs' option to 's_client' and
+     's_server'), so the new option is automatically set in many
+     applications.
+     [Bodo Moeller]
+
  Changes between 0.9.6c and 0.9.6d  [9 May 2002]
 
   *) Fix crypto/asn1/a_sign.c so that 'parameters' is omitted (not
