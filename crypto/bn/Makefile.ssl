@@ -98,16 +98,8 @@ asm/sparcv8.o: asm/sparcv8.S
 
 asm/sparcv8plus.o: asm/sparcv8plus.S
 
-asm/ia64.o:	asm/ia64.S
-
-# Some compiler drivers (most notably HP-UX and Intel C++) don't
-# understand .S extension:-( I wish I could pipe output from cc -E,
-# but it's too compiler driver/ABI dependent to cover with a single
-# rule...	<appro@fy.chalmers.se>
-asm/ia64-cpp.o:	asm/ia64.S
-	$(CC) $(ASFLAGS) -E asm/ia64.S > /tmp/ia64.$$$$.s &&	\
-	$(CC) $(ASFLAGS) -c -o asm/ia64-cpp.o /tmp/ia64.$$$$.s;	\
-	rm -f /tmp/ia64.$$$$.s
+asm/ia64.s:	asm/ia64.S
+	$(CC) $(CFLAGS) -E asm/ia64.S > $@
 
 asm/x86_64-gcc.o: asm/x86_64-gcc.c
 
@@ -165,7 +157,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/co86unix.cpp asm/bn86unix.cpp asm/*-elf.* *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff bn_asm.s
+	rm -f asm/co86unix.cpp asm/bn86unix.cpp asm/*-elf.* asm/ia64.[so] *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff bn_asm.s
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

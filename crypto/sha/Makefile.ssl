@@ -64,6 +64,11 @@ asm/sx86bsdi.o: asm/sx86unix.cpp
 asm/sx86unix.cpp: asm/sha1-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha1-586.pl cpp $(PROCESSOR) >sx86unix.cpp)
 
+asm/sha256-ia64.s: asm/sha512-ia64.pl
+	(cd asm; $(PERL) sha512-ia64.pl $@ $(CFLAGS))
+asm/sha512-ia64.s: asm/sha512-ia64.pl
+	(cd asm; $(PERL) sha512-ia64.pl $@ $(CFLAGS))
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
@@ -96,7 +101,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/sx86unix.cpp asm/*-elf.* *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
+	rm -f asm/sx86unix.cpp asm/*.[so] *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -20,6 +20,7 @@ AR=		ar r
 AES_ASM_OBJ=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG)
 
 GENERAL=Makefile
 #TEST=aestest.c
@@ -48,6 +49,9 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 $(LIBOBJ): $(LIBSRC)
+
+asm/aes-ia64.s: asm/aes-ia64.S
+	$(CC) $(CFLAGS) -E asm/aes-ia64.S > $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
@@ -83,7 +87,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f asm/*.[so] *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
