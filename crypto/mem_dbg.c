@@ -641,6 +641,8 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 #endif
 	}
 
+static IMPLEMENT_LHASH_DOALL_ARG_FN(print_leak, MEM *, MEM_LEAK *)
+
 void CRYPTO_mem_leaks(BIO *b)
 	{
 	MEM_LEAK ml;
@@ -653,7 +655,7 @@ void CRYPTO_mem_leaks(BIO *b)
 	ml.chunks=0;
 	MemCheck_off(); /* obtains CRYPTO_LOCK_MALLOC2 */
 	if (mh != NULL)
-		lh_doall_arg(mh, (LHASH_DOALL_ARG_FN_TYPE)print_leak,
+		lh_doall_arg(mh, LHASH_DOALL_ARG_FN(print_leak),
 				(char *)&ml);
 	if (ml.chunks != 0)
 		{
@@ -732,16 +734,20 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
 /* FIXME: We really don't allow much to the callback.  For example, it has
    no chance of reaching the info stack for the item it processes.  Should
    it really be this way?  -- Richard Levitte */
-static void cb_leak(MEM *m,
-		    void (**cb)(unsigned long, const char *, int, int, void *))
+/* NB: The prototypes have been typedef'd to CRYPTO_MEM_LEAK_CB inside crypto.h
+ * If this code is restructured, remove the callback type if it is no longer
+ * needed. -- Geoff Thorpe */
+static void cb_leak(MEM *m, CRYPTO_MEM_LEAK_CB *cb)
 	{
 	(**cb)(m->order,m->file,m->line,m->num,m->addr);
 	}
 
-void CRYPTO_mem_leaks_cb(void (*cb)(unsigned long, const char *, int, int, void *))
+static IMPLEMENT_LHASH_DOALL_ARG_FN(cb_leak, MEM *, CRYPTO_MEM_LEAK_CB *)
+
+void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB cb)
 	{
 	if (mh == NULL) return;
 	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
-	lh_doall_arg(mh, (LHASH_DOALL_ARG_FN_TYPE)cb_leak,(void *)&cb);
+	lh_doall_arg(mh, LHASH_DOALL_ARG_FN(cb_leak), &cb);
 	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
 	}
