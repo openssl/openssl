@@ -83,7 +83,7 @@ int MAIN(int argc, char **argv)
 	int nocrypt = 0;
 	X509_SIG *p8;
 	PKCS8_PRIV_KEY_INFO *p8inf;
-	EVP_PKEY *pkey;
+	EVP_PKEY *pkey=NULL;
 	char pass[50], *passin = NULL, *passout = NULL, *p8pass = NULL;
 	int badarg = 0;
 	char *engine=NULL;

@@ -147,7 +147,7 @@ static UI_METHOD *ui_method = NULL;
 static int set_table_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl);
 static int set_multi_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl);
 
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
 /* Looks like this stuff is worth moving into separate function */
 static EVP_PKEY *
 load_netscape_key(BIO *err, BIO *key, const char *file,
@@ -832,7 +832,7 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format,
 		pkey=PEM_read_bio_PrivateKey(key,NULL,
 			(pem_password_cb *)password_callback, &cb_data);
 		}
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
 	else if (format == FORMAT_NETSCAPE || format == FORMAT_IISSGC)
 		pkey = load_netscape_key(err, key, file, key_descrip, format);
 #endif
@@ -901,7 +901,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
 		pkey=PEM_read_bio_PUBKEY(key,NULL,
 			(pem_password_cb *)password_callback, &cb_data);
 		}
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
 	else if (format == FORMAT_NETSCAPE || format == FORMAT_IISSGC)
 		pkey = load_netscape_key(err, key, file, key_descrip, format);
 #endif
@@ -917,7 +917,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
 	return(pkey);
 	}
 
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
 EVP_PKEY *
 load_netscape_key(BIO *err, BIO *key, const char *file,
 		const char *key_descrip, int format)

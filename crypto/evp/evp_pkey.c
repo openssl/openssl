@@ -84,9 +84,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 #endif
 	X509_ALGOR *a;
 	unsigned char *p;
-#ifndef OPENSSL_NO_RSA
 	const unsigned char *cp;
-#endif
 	int pkeylen;
 	char obj_tmp[80];
 

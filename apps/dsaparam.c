@@ -189,6 +189,7 @@ bad:
 		BIO_printf(bio_err," -text         print the key in text\n");
 		BIO_printf(bio_err," -C            Output C code\n");
 		BIO_printf(bio_err," -noout        no output\n");
+		BIO_printf(bio_err," -genkey       generate a DSA key\n");
 		BIO_printf(bio_err," -rand         files to use for random number input\n");
 		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err," number        number of bits to use for generating private key\n");
