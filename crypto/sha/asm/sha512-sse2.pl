@@ -1,5 +1,11 @@
 #!/usr/bin/env perl
 #
+# ====================================================================
+# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# project. Rights for redistribution and usage in source and binary
+# forms are granted according to the OpenSSL license.
+# ====================================================================
+#
 # SHA512_Transform_SSE2.
 #
 # As the name suggests, this is an IA-32 SSE2 implementation of
@@ -12,25 +18,26 @@
 # a 64-bit instruction set? Is it rich enough to implement SHA512?
 # If answer was "no," then you wouldn't have been reading this...
 #
-# [Preliminary] throughput numbers (larger is better):
+# Throughput performance in MBps (larger is better):
 #
-#		2.4GHz P4	1.4GHz AMD32	1.4GHz AMD64
-# SHA256/gcc	38		36		46
-# SHA512/gcc	9		15		72
-# SHA512/sse2	53(*)		51
-# SHA512/icc	21		21
-# SHA256/icc	52		42
+#		2.4GHz P4	1.4GHz AMD32	1.4GHz AMD64(*)
+# SHA256/gcc(*)	39		42		59
+# SHA512/gcc	17		23		92
+# SHA512/sse2	54(**)		55(**)
+# SHA512/icc	26		28
+# SHA256/icc(*)	64		54
 #
-#  (*)	I.e. it gives ~6x speed-up on P4 if compared to code generated
-#	by gcc, and 2.5x over icc. It was worth it:-) Well, one can
-#	argue that handcoded *non*-SSE2 implementation would perform
-#	better than compiler generated one, and comparison therefore
-#	is not exactly fair. As SHA512 puts enormous pressure on IA-32
-#	GP register bank, I reckon handcoded version wouldn't perform
-#	significantly better than one compiled with icc, ~20% perhaps.
-#	So that this code would still outperform it with distinguishing
-#	marginal. But feel free to prove me wrong:-)
-#
+# (*)	AMD64 and SHA256 numbers are presented mostly for amusement or
+#	reference purposes.
+# (**)	I.e. it gives ~2-3x speed-up if compared with compiler generated
+#	code. One can argue that hand-coded *non*-SSE2 implementation
+#	would perform better than compiler generated one as well, and
+#	that comparison is therefore not exactly fair. Well, as SHA512
+#	puts enormous pressure on IA-32 GP register bank, I reckon that
+#	hand-coded version wouldn't perform significantly better than
+#	one compiled with icc, ~20% perhaps... So that this code would
+#	still outperform it with distinguishing marginal. But feel free
+#	to prove me wrong:-)
 #						<appro@fy.chalmers.se>
 push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
@@ -67,7 +74,9 @@ sub SHA2_ROUND()
 
 	# I adhere to 64-bit %mmX registers in order to avoid/not care
 	# about #GP exceptions on misaligned 128-bit access, most
-	# notably in paddq with memory operand.
+	# notably in paddq with memory operand. Not to mention that
+	# SSE2 intructions operating on %mmX can be scheduled every
+	# cycle [and not every second one if operating on %xmmN].
 
 	&movq	("mm4",&QWP($Foff,$W512));	# load f
 	&movq	("mm5",&QWP($Goff,$W512));	# load g
@@ -135,7 +144,7 @@ sub SHA2_ROUND()
 	&paddq	($A,"mm6");			# a+=T2
 }
 
-$func="SHA512_Transform_SSE2";
+$func="sha512_block_sse2";
 
 &function_begin_B($func);
 	if (0) {# Caller is expected to check if it's appropriate to
@@ -169,6 +178,10 @@ $func="SHA512_Transform_SSE2";
 	&movdqu	("xmm1",&QWP(16,$Widx));
 	&movdqu	("xmm2",&QWP(32,$Widx));
 	&movdqu	("xmm3",&QWP(48,$Widx));
+
+&align(8);
+&set_label("_chunk_loop");
+
 	&movdqa	(&QWP($Aoff,$W512),"xmm0");	# a,b
 	&movdqa	(&QWP($Coff,$W512),"xmm1");	# c,d
 	&movdqa	(&QWP($Eoff,$W512),"xmm2");	# e,f
@@ -181,8 +194,12 @@ $func="SHA512_Transform_SSE2";
 
 	# Why aren't loops unrolled? It makes sense to unroll if
 	# execution time for loop body is comparable with branch
-	# penalties and/or if whole data-set resides in register
-	# bank. Neither is case here...
+	# penalties and/or if whole data-set resides in register bank.
+	# Neither is case here... Well, it would be possible to
+	# eliminate few store operations, but it would hardly affect
+	# so to say stop-watch performance, as there is a lot of
+	# available memory slots to fill. It will only relieve some
+	# pressure off memory bus...
 
 &align(8);
 &set_label("_1st_loop");		# 0-15
@@ -273,6 +290,10 @@ $func="SHA512_Transform_SSE2";
 	&movdqu	(&QWP(16,$Widx),"xmm1");
 	&movdqu	(&QWP(32,$Widx),"xmm2");
 	&movdqu	(&QWP(48,$Widx),"xmm3");
+
+&add	($data,16*8);				# advance input data pointer
+&dec	(&DWP(16,"ebp"));			# decrement 3rd arg
+&jnz	(&label("_chunk_loop"));
 
 	# epilogue
 	&emms	();	# required for at least ELF and Win32 ABIs
