@@ -71,6 +71,8 @@
 
 #ifndef OPENSSL_NO_SHA
 
+#ifdef FIPS
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -296,4 +298,6 @@ err:
 	if (mont != NULL) BN_MONT_CTX_free(mont);
 	return(ok?ret:NULL);
 	}
+#endif
+
 #endif
