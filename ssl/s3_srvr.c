@@ -573,9 +573,9 @@ int ssl3_accept(SSL *s)
 end:
 	/* BIO_flush(s->wbio); */
 
+	s->in_handshake--;
 	if (cb != NULL)
 		cb(s,SSL_CB_ACCEPT_EXIT,ret);
-	s->in_handshake--;
 	return(ret);
 	}
 
