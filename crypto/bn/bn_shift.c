@@ -172,6 +172,11 @@ int BN_rshift(BIGNUM *r, BIGNUM *a, int n)
 		r->neg=a->neg;
 		if (bn_wexpand(r,a->top-nw+1) == NULL) return(0);
 		}
+	else
+		{
+		if (n == 0)
+			return 1; /* or the copying loop will go berserk */
+		}
 
 	f= &(a->d[nw]);
 	t=r->d;

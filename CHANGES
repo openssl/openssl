@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2000]
 
+  *) BN_rshift bugfix for n == 0.
+     [Bodo Moeller]
+
   *) Store verify_result within SSL_SESSION also for client side to
      avoid potential security hole. (Re-used sessions on the client side
      always resulted in verify_result==X509_V_OK, not using the original
