@@ -96,13 +96,13 @@ b_dump.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 b_dump.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 b_dump.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 b_dump.o: ../cryptlib.h
-b_print.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-b_print.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
-b_print.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-b_print.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-b_print.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-b_print.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-b_print.o: ../cryptlib.h
+b_print.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+b_print.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+b_print.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+b_print.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+b_print.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+b_print.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+b_print.o: ../../include/openssl/symhacks.h ../cryptlib.h
 b_sock.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 b_sock.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
 b_sock.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
