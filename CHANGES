@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) In SSL_CTX_add_session, take into account that there might be multiple
+     SSL_SESSION structures with the same session ID (e.g. when two threads
+     concurrently obtain them from an external cache).
+     The internal cache can handle only one SSL_SESSION with a given ID,
+     so if there's a conflict, we now throw out the old one to achieve
+     consistency.
+     [Bodo Moeller]
+
   *) Add OIDs for idea and blowfish in CBC mode. This will allow both
      to be used in PKCS#5 v2.0 and S/MIME.  Also add checking to
      some routines that use cipher OIDs: some ciphers do not have OIDs

@@ -191,8 +191,14 @@ int ssl_get_new_session(SSL *s, int session)
 			CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 			if (r == NULL) break;
 			/* else - woops a session_id match */
-			/* XXX should also check external cache!
-			 * (But the probability of a collision is negligible, anyway...) */
+			/* XXX We should also check the external cache --
+			 * but the probability of a collision is negligible, and
+			 * we could not prevent the concurrent creation of sessions
+			 * with identical IDs since we currently don't have means
+			 * to atomically check whether a session ID already exists
+			 * and make a reservation for it if it does not
+			 * (this problem applies to the internal cache as well).
+			 */
 			}
 		}
 	else
@@ -216,7 +222,6 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 	SSL_SESSION *ret=NULL,data;
 	int fatal = 0;
 
-	/* conn_init();*/
 	data.ssl_version=s->version;
 	data.session_id_length=len;
 	if (len > SSL_MAX_SSL_SESSION_ID_LENGTH)
@@ -352,27 +357,47 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 	int ret=0;
 	SSL_SESSION *s;
 
-	/* conn_init(); */
+	/* add just 1 reference count for the SSL_CTX's session cache
+	 * even though it has two ways of access: each session is in a
+	 * doubly linked list and an lhash */
 	CRYPTO_add(&c->references,1,CRYPTO_LOCK_SSL_SESSION);
+	/* if session c is in already in cache, we take back the increment later */
 
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
 	s=(SSL_SESSION *)lh_insert(ctx->sessions,(char *)c);
 	
-	/* Put on the end of the queue unless it is already in the cache */
+	/* s != NULL iff we already had a session with the given PID.
+	 * In this case, s == c should hold (then we did not really modify
+	 * ctx->sessions), or we're in trouble. */
+	if (s != NULL && s != c)
+		{
+		/* We *are* in trouble ... */
+		SSL_SESSION_list_remove(ctx,s);
+		SSL_SESSION_free(s);
+		/* ... so pretend the other session did not exist in cache
+		 * (we cannot handle two SSL_SESSION structures with identical
+		 * session ID in the same cache, which could happen e.g. when
+		 * two threads concurrently obtain the same session from an external
+		 * cache) */
+		s = NULL;
+		}
+
+ 	/* Put at the head of the queue unless it is already in the cache */
 	if (s == NULL)
 		SSL_SESSION_list_add(ctx,c);
 
-	/* If the same session if is being 're-added', Free the old
-	 * one when the last person stops using it.
-	 * This will also work if it is alread in the cache.
-	 * The references will go up and then down :-) */
 	if (s != NULL)
 		{
-		SSL_SESSION_free(s);
+		/* existing cache entry -- decrement previously incremented reference
+		 * count because it already takes into account the cache */
+
+		SSL_SESSION_free(s); /* s == c */
 		ret=0;
 		}
 	else
 		{
+		/* new cache entry -- remove old ones if cache has become too large */
+		
 		ret=1;
 
 		if (SSL_CTX_sess_get_cache_size(ctx) > 0)
