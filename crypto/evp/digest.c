@@ -113,6 +113,7 @@
 #include "cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/evp.h>
+#include <openssl/engine.h>
 
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx)
 	{
@@ -130,6 +131,52 @@ EVP_MD_CTX *EVP_MD_CTX_create(void)
 
 int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 	{
+	return EVP_DigestInit_ex(ctx, type, NULL);
+	}
+int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+	{
+	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
+	 * so this context may already have an ENGINE! Try to avoid releasing
+	 * the previous handle, re-querying for an ENGINE, and having a
+	 * reinitialisation, when it may all be unecessary. */
+	if (ctx->engine && ctx->digest && (!type ||
+			(type && (type->type == ctx->digest->type))))
+		goto skip_to_init;
+	if (type)
+		{
+		/* Ensure an ENGINE left lying around from last time is cleared
+		 * (the previous check attempted to avoid this if the same
+		 * ENGINE and EVP_MD could be used). */
+		if(ctx->engine)
+			ENGINE_finish(ctx->engine);
+		if(!impl)
+			/* Ask if an ENGINE is reserved for this job */
+			impl = ENGINE_get_digest_engine(type->type);
+		if(impl)
+			{
+			/* There's an ENGINE for this job ... (apparently) */
+			const EVP_MD *d = ENGINE_get_digest(impl, type->type);
+			if(!d)
+				{
+				/* Same comment from evp_enc.c */
+				EVPerr(EVP_F_EVP_DIGESTINIT, EVP_R_INITIALIZATION_ERROR);
+				return 0;
+				}
+			/* We'll use the ENGINE's private digest definition */
+			type = d;
+			/* Store the ENGINE functional reference so we know
+			 * 'type' came from an ENGINE and we need to release
+			 * it when done. */
+			ctx->engine = impl;
+			}
+		else
+			ctx->engine = NULL;
+		}
+	else if(!ctx->digest)
+		{
+		EVPerr(EVP_F_EVP_DIGESTINIT, EVP_R_NO_DIGEST_SET);
+		return 0;
+		}
 	if (ctx->digest != type)
 		{
 		if (ctx->digest && ctx->digest->ctx_size)
@@ -138,6 +185,7 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 		if (type->ctx_size)
 			ctx->md_data=OPENSSL_malloc(type->ctx_size);
 		}
+skip_to_init:
 	return type->init(ctx);
 	}
 
@@ -164,6 +212,12 @@ int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 	if ((in == NULL) || (in->digest == NULL))
 		{
 		EVPerr(EVP_F_EVP_MD_CTX_COPY,EVP_R_INPUT_NOT_INITIALIZED);
+		return 0;
+		}
+	/* Make sure it's safe to copy a digest context using an ENGINE */
+	if (in->engine && !ENGINE_init(in->engine))
+		{
+		EVPerr(EVP_F_EVP_MD_CTX_COPY,ERR_R_ENGINE_LIB);
 		return 0;
 		}
 
@@ -217,6 +271,10 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 		memset(ctx->md_data,0,ctx->digest->ctx_size);
 		OPENSSL_free(ctx->md_data);
 		}
+	if(ctx->engine)
+		/* The EVP_MD we used belongs to an ENGINE, release the
+		 * functional reference we held for this reason. */
+		ENGINE_finish(ctx->engine);
 	memset(ctx,'\0',sizeof *ctx);
 
 	return 1;

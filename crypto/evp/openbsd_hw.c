@@ -52,6 +52,12 @@
 #include <openssl/rsa.h>
 #include "evp_locl.h"
 
+/* This stuff should now all be supported through
+ * crypto/engine/hw_openbsd_dev_crypto.c unless I botched it up */
+static void *dummy=&dummy;
+
+#if 0
+
 /* check flag after OpenSSL headers to ensure make depend works */
 #ifdef OPENSSL_OPENBSD_DEV_CRYPTO
 
@@ -436,4 +442,5 @@ static const EVP_MD md5_md=
 const EVP_MD *EVP_dev_crypto_md5(void)
     { return &md5_md; }
 
+#endif
 #endif

@@ -60,6 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/engine.h>
 #include "evp_locl.h"
 
 #include <assert.h>
@@ -75,24 +76,70 @@ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     const unsigned char *key, const unsigned char *iv, int enc)
 	{
+	return EVP_CipherInit_ex(ctx,cipher,NULL,key,iv,enc);
+	}
+int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
+	     const unsigned char *key, const unsigned char *iv, int enc)
+	{
 	if(enc && (enc != -1)) enc = 1;
+	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
+	 * so this context may already have an ENGINE! Try to avoid releasing
+	 * the previous handle, re-querying for an ENGINE, and having a
+	 * reinitialisation, when it may all be unecessary. */
+	if (ctx->engine && ctx->cipher && (!cipher ||
+			(cipher && (cipher->nid == ctx->cipher->nid))))
+		goto skip_to_init;
 	if (cipher)
 		{
+		/* Ensure an ENGINE left lying around from last time is cleared
+		 * (the previous check attempted to avoid this if the same
+		 * ENGINE and EVP_CIPHER could be used). */
+		if(ctx->engine)
+			ENGINE_finish(ctx->engine);
+		if(!impl)
+			/* Ask if an ENGINE is reserved for this job */
+			impl = ENGINE_get_cipher_engine(cipher->nid);
+		if(impl)
+			{
+			/* There's an ENGINE for this job ... (apparently) */
+			const EVP_CIPHER *c = ENGINE_get_cipher(impl, cipher->nid);
+			if(!c)
+				{
+				/* One positive side-effect of US's export
+				 * control history, is that we should at least
+				 * be able to avoid using US mispellings of
+				 * "initialisation"? */
+				EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_INITIALIZATION_ERROR);
+				return 0;
+				}
+			/* We'll use the ENGINE's private cipher definition */
+			cipher = c;
+			/* Store the ENGINE functional reference so we know
+			 * 'cipher' came from an ENGINE and we need to release
+			 * it when done. */
+			ctx->engine = impl;
+			}
+		else
+			ctx->engine = NULL;
 		ctx->cipher=cipher;
 		ctx->cipher_data=OPENSSL_malloc(ctx->cipher->ctx_size);
 		ctx->key_len = cipher->key_len;
 		ctx->flags = 0;
-		if(ctx->cipher->flags & EVP_CIPH_CTRL_INIT) {
-			if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL)) {
+		if(ctx->cipher->flags & EVP_CIPH_CTRL_INIT)
+			{
+			if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL))
+				{
 				EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_INITIALIZATION_ERROR);
 				return 0;
+				}
 			}
 		}
-	} else if(!ctx->cipher) {
+	else if(!ctx->cipher)
+		{
 		EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_NO_CIPHER_SET);
 		return 0;
-	}
-
+		}
+skip_to_init:
 	/* we assume block size is a power of 2 in *cryptUpdate */
 	assert(ctx->cipher->block_size == 1
 	       || ctx->cipher->block_size == 8
@@ -144,7 +191,7 @@ int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
 	if (ctx->encrypt)
 		return EVP_EncryptFinal(ctx,out,outl);
-	else	return(EVP_DecryptFinal(ctx,out,outl));
+	else	return EVP_DecryptFinal(ctx,out,outl);
 	}
 
 int EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -355,6 +402,10 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 		if(!c->cipher->cleanup(c)) return 0;
 		}
 	OPENSSL_free(c->cipher_data);
+	if (c->engine)
+		/* The EVP_CIPHER we used belongs to an ENGINE, release the
+		 * functional reference we held for this reason. */
+		ENGINE_finish(c->engine);
 	memset(c,0,sizeof(EVP_CIPHER_CTX));
 	return 1;
 	}
