@@ -114,7 +114,8 @@ pk7_attr.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 pk7_attr.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 pk7_attr.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 pk7_attr.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-pk7_attr.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pk7_attr.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+pk7_attr.o: ../../include/openssl/x509_vfy.h
 pk7_doit.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 pk7_doit.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 pk7_doit.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -133,9 +134,9 @@ pk7_doit.o: ../../include/openssl/rand.h ../../include/openssl/rc2.h
 pk7_doit.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
 pk7_doit.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 pk7_doit.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-pk7_doit.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
-pk7_doit.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-pk7_doit.o: ../cryptlib.h
+pk7_doit.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+pk7_doit.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pk7_doit.o: ../../include/openssl/x509v3.h ../cryptlib.h
 pk7_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 pk7_lib.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 pk7_lib.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -152,8 +153,9 @@ pk7_lib.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
 pk7_lib.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
 pk7_lib.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 pk7_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-pk7_lib.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
-pk7_lib.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+pk7_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+pk7_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pk7_lib.o: ../cryptlib.h
 pk7_mime.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 pk7_mime.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 pk7_mime.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -171,8 +173,9 @@ pk7_mime.o: ../../include/openssl/rand.h ../../include/openssl/rc2.h
 pk7_mime.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
 pk7_mime.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 pk7_mime.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-pk7_mime.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
-pk7_mime.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+pk7_mime.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+pk7_mime.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pk7_mime.o: ../cryptlib.h
 pk7_smime.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 pk7_smime.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 pk7_smime.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -191,8 +194,9 @@ pk7_smime.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 pk7_smime.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 pk7_smime.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 pk7_smime.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-pk7_smime.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-pk7_smime.o: ../../include/openssl/x509v3.h ../cryptlib.h
+pk7_smime.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+pk7_smime.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+pk7_smime.o: ../cryptlib.h
 pkcs7err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 pkcs7err.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 pkcs7err.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -209,4 +213,5 @@ pkcs7err.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 pkcs7err.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 pkcs7err.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 pkcs7err.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-pkcs7err.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pkcs7err.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+pkcs7err.o: ../../include/openssl/x509_vfy.h

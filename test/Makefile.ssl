@@ -337,7 +337,8 @@ bntest.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
 bntest.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
 bntest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 bntest.o: ../include/openssl/sha.h ../include/openssl/stack.h
-bntest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+bntest.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
+bntest.o: ../include/openssl/x509_vfy.h
 casttest.o: ../include/openssl/cast.h
 destest.o: ../include/openssl/des.h ../include/openssl/e_os2.h
 destest.o: ../include/openssl/opensslconf.h
@@ -345,18 +346,20 @@ dhtest.o: ../include/openssl/bio.h ../include/openssl/bn.h
 dhtest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
 dhtest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 dhtest.o: ../include/openssl/rand.h ../include/openssl/safestack.h
-dhtest.o: ../include/openssl/stack.h
+dhtest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 dsatest.o: ../include/openssl/bio.h ../include/openssl/bn.h
 dsatest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
 dsatest.o: ../include/openssl/dsa.h ../include/openssl/err.h
 dsatest.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 dsatest.o: ../include/openssl/opensslv.h ../include/openssl/rand.h
 dsatest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+dsatest.o: ../include/openssl/symhacks.h
 exptest.o: ../include/openssl/bio.h ../include/openssl/bn.h
 exptest.o: ../include/openssl/crypto.h ../include/openssl/err.h
 exptest.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 exptest.o: ../include/openssl/opensslv.h ../include/openssl/rand.h
 exptest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+exptest.o: ../include/openssl/symhacks.h
 hmactest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 hmactest.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 hmactest.o: ../include/openssl/cast.h ../include/openssl/crypto.h
@@ -371,7 +374,7 @@ hmactest.o: ../include/openssl/opensslv.h ../include/openssl/rc2.h
 hmactest.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
 hmactest.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 hmactest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-hmactest.o: ../include/openssl/stack.h
+hmactest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ideatest.o: ../include/openssl/idea.h ../include/openssl/opensslconf.h
 md2test.o: ../include/openssl/md2.h ../include/openssl/opensslconf.h
 md4test.o: ../include/openssl/md4.h
@@ -389,7 +392,7 @@ rsa_test.o: ../include/openssl/e_os2.h ../include/openssl/err.h
 rsa_test.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 rsa_test.o: ../include/openssl/opensslv.h ../include/openssl/rand.h
 rsa_test.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-rsa_test.o: ../include/openssl/stack.h
+rsa_test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 sha1test.o: ../include/openssl/sha.h
 shatest.o: ../include/openssl/sha.h
 ssltest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
@@ -412,5 +415,6 @@ ssltest.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 ssltest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 ssltest.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
 ssltest.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
-ssltest.o: ../include/openssl/stack.h ../include/openssl/tls1.h
-ssltest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+ssltest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+ssltest.o: ../include/openssl/tls1.h ../include/openssl/x509.h
+ssltest.o: ../include/openssl/x509_vfy.h

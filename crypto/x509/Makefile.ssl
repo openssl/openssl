@@ -104,8 +104,9 @@ by_dir.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
 by_dir.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
 by_dir.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 by_dir.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-by_dir.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
-by_dir.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+by_dir.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+by_dir.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+by_dir.o: ../cryptlib.h
 by_file.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 by_file.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 by_file.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -123,8 +124,9 @@ by_file.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
 by_file.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
 by_file.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 by_file.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-by_file.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
-by_file.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+by_file.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+by_file.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+by_file.o: ../cryptlib.h
 x509_att.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_att.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_att.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -143,8 +145,9 @@ x509_att.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509_att.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509_att.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509_att.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509_att.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509_att.o: ../../include/openssl/x509v3.h ../cryptlib.h
+x509_att.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509_att.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+x509_att.o: ../cryptlib.h
 x509_cmp.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_cmp.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_cmp.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -163,8 +166,9 @@ x509_cmp.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509_cmp.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509_cmp.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509_cmp.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509_cmp.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509_cmp.o: ../../include/openssl/x509v3.h ../cryptlib.h
+x509_cmp.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509_cmp.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+x509_cmp.o: ../cryptlib.h
 x509_d2.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_d2.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_d2.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -181,8 +185,9 @@ x509_d2.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
 x509_d2.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
 x509_d2.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 x509_d2.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-x509_d2.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
-x509_d2.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+x509_d2.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+x509_d2.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+x509_d2.o: ../cryptlib.h
 x509_def.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_def.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_def.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -200,8 +205,8 @@ x509_def.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509_def.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509_def.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509_def.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509_def.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509_def.o: ../cryptlib.h
+x509_def.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509_def.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
 x509_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_err.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_err.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -218,7 +223,8 @@ x509_err.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509_err.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509_err.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509_err.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509_err.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+x509_err.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509_err.o: ../../include/openssl/x509_vfy.h
 x509_ext.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_ext.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_ext.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -237,8 +243,9 @@ x509_ext.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509_ext.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509_ext.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509_ext.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509_ext.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509_ext.o: ../../include/openssl/x509v3.h ../cryptlib.h
+x509_ext.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509_ext.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+x509_ext.o: ../cryptlib.h
 x509_lu.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_lu.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_lu.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -255,8 +262,9 @@ x509_lu.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
 x509_lu.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
 x509_lu.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 x509_lu.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-x509_lu.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
-x509_lu.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+x509_lu.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+x509_lu.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+x509_lu.o: ../cryptlib.h
 x509_obj.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_obj.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_obj.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -274,8 +282,8 @@ x509_obj.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509_obj.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509_obj.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509_obj.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509_obj.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509_obj.o: ../cryptlib.h
+x509_obj.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509_obj.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
 x509_r2x.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_r2x.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_r2x.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -293,8 +301,8 @@ x509_r2x.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509_r2x.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509_r2x.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509_r2x.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509_r2x.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509_r2x.o: ../cryptlib.h
+x509_r2x.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509_r2x.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
 x509_req.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_req.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_req.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -313,8 +321,8 @@ x509_req.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509_req.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509_req.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509_req.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509_req.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509_req.o: ../cryptlib.h
+x509_req.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509_req.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
 x509_set.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_set.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_set.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -332,8 +340,8 @@ x509_set.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509_set.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509_set.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509_set.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509_set.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509_set.o: ../cryptlib.h
+x509_set.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509_set.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
 x509_trs.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_trs.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_trs.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -352,8 +360,9 @@ x509_trs.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509_trs.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509_trs.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509_trs.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509_trs.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509_trs.o: ../../include/openssl/x509v3.h ../cryptlib.h
+x509_trs.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509_trs.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+x509_trs.o: ../cryptlib.h
 x509_txt.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_txt.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_txt.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -371,8 +380,8 @@ x509_txt.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509_txt.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509_txt.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509_txt.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509_txt.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509_txt.o: ../cryptlib.h
+x509_txt.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509_txt.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
 x509_v3.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_v3.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_v3.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -390,9 +399,9 @@ x509_v3.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
 x509_v3.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
 x509_v3.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 x509_v3.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-x509_v3.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
-x509_v3.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-x509_v3.o: ../cryptlib.h
+x509_v3.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+x509_v3.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+x509_v3.o: ../../include/openssl/x509v3.h ../cryptlib.h
 x509_vfy.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509_vfy.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509_vfy.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -411,8 +420,9 @@ x509_vfy.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509_vfy.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509_vfy.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509_vfy.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509_vfy.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509_vfy.o: ../../include/openssl/x509v3.h ../cryptlib.h
+x509_vfy.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509_vfy.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+x509_vfy.o: ../cryptlib.h
 x509name.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509name.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509name.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -430,8 +440,8 @@ x509name.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509name.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509name.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509name.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509name.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509name.o: ../cryptlib.h
+x509name.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509name.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
 x509rset.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509rset.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509rset.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -449,8 +459,8 @@ x509rset.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509rset.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509rset.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509rset.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509rset.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509rset.o: ../cryptlib.h
+x509rset.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509rset.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
 x509spki.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 x509spki.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 x509spki.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -468,8 +478,8 @@ x509spki.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509spki.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509spki.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509spki.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509spki.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509spki.o: ../cryptlib.h
+x509spki.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509spki.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
 x509type.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x509type.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x509type.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -487,8 +497,8 @@ x509type.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 x509type.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
 x509type.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 x509type.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x509type.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x509type.o: ../cryptlib.h
+x509type.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x509type.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
 x_all.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x_all.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 x_all.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -505,5 +515,6 @@ x_all.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
 x_all.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
 x_all.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 x_all.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-x_all.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
-x_all.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+x_all.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+x_all.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+x_all.o: ../cryptlib.h
