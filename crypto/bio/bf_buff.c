@@ -497,8 +497,6 @@ static int buffer_gets(BIO *b, char *buf, int size)
 				{
 				BIO_copy_next_retry(b);
 				*buf='\0';
-				fprintf(stderr, "DEBUG[buffer_gets]: i = %d\n",
-					i);
 				if (i < 0) return((num > 0)?num:i);
 				if (i == 0) return(num);
 				}
