@@ -490,10 +490,13 @@ and then redo the compilation.  What you should really do is make sure
 Sometimes, you may get reports from VC++ command line (cl) that it
 can't find standard include files like stdio.h and other weirdnesses.
 One possible cause is that the environment isn't correctly set up.
-To solve that problem, one should run VCVARS32.BAT which is found in
-the 'bin' subdirectory of the VC++ installation directory (somewhere
-under 'Program Files').  This needs to be done prior to running NMAKE,
-and the changes are only valid for the current DOS session.
+To solve that problem for VC++ versions up to 6, one should run
+VCVARS32.BAT which is found in the 'bin' subdirectory of the VC++
+installation directory (somewhere under 'Program Files').  For VC++
+version 7 (and up?), which is also called VS.NET, the file is called
+VSVARS32.BAT instead.
+This needs to be done prior to running NMAKE, and the changes are only
+valid for the current DOS session.
 
 
 * What is special about OpenSSL on Redhat?
