@@ -46,7 +46,7 @@ typedef int t_zencod_dump_key (FILE *stream, char *msg, KEY *key);
 
 
 /*
- * Key managment tools
+ * Key management tools
  */
 typedef KEY *t_zencod_new_number (unsigned long len, unsigned char *data);
 typedef int t_zencod_init_number (KEY *n, unsigned long len, unsigned char *data);
