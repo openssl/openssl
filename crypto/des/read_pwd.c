@@ -58,7 +58,11 @@
 
 #if !defined(MSDOS) && !defined(VMS) && !defined(WIN32)
 #include <openssl/opensslconf.h>
-#include OPENSSL_UNISTD
+#ifdef OPENSSL_UNISTD
+# include OPENSSL_UNISTD
+#else
+# include <unistd.h>
+#endif
 /* If unistd.h defines _POSIX_VERSION, we conclude that we
  * are on a POSIX system and have sigaction and termios. */
 #if defined(_POSIX_VERSION)

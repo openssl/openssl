@@ -252,7 +252,7 @@ extern "C" {
 #  else
      /* !defined VMS */
 #    ifdef OPENSSL_UNISTD
-#      include OPENSLL_UNISTD
+#      include OPENSSL_UNISTD
 #    else
 #      include <unistd.h>
 #    endif

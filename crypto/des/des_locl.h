@@ -72,7 +72,11 @@
 
 #ifndef MSDOS
 #if !defined(VMS) || defined(__DECC)
-#include OPENSSL_UNISTD
+#ifdef OPENSSL_UNISTD
+# include OPENSSL_UNISTD
+#else
+# include <unistd.h>
+#endif
 #include <math.h>
 #endif
 #endif
