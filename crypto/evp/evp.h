@@ -248,7 +248,6 @@ typedef struct evp_pkey_method_st
 	int (*sign)();
 	int (*verify)();
 	struct	{
-		int
 		int (*set)();	/* get and/or set the underlying type */
 		int (*get)();
 		int (*encrypt)();
