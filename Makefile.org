@@ -687,6 +687,10 @@ rehash.time: certs
 		LIBPATH="`pwd`:$$LIBPATH"; \
 		if [ "$(PLATFORM)" = "Cygwin" ]; then PATH="`pwd`:$$PATH"; fi; \
 		export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
+		if [ -n "$(SHARED_LIBS)" ]; then \
+		  LD_PRELOAD="$$OSSL_LIBPATH/libssl.so $$OSSL_LIBPATH/libcrypto.so"; \
+		  export LD_PRELOAD; \
+		fi; \
 		$(PERL) tools/c_rehash certs)
 	touch rehash.time
 
@@ -701,6 +705,10 @@ tests: rehash
 	LIBPATH="`pwd`:$$LIBPATH"; \
 	if [ "$(PLATFORM)" = "Cygwin" ]; then PATH="`pwd`:$$PATH"; fi; \
 	export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
+	if [ -n "$(SHARED_LIBS)" ]; then \
+	  LD_PRELOAD="$$OSSL_LIBPATH/libssl.so $$OSSL_LIBPATH/libcrypto.so"; \
+	  export LD_PRELOAD; \
+	fi; \
 	apps/openssl version -a
 
 report:
