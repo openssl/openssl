@@ -98,13 +98,19 @@ int des_read_pw_string(char *buf,int length,const char *prompt,int verify)
 
 int des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify)
 	{
+	int ok = 0;
 	UI *ui;
 
 	ui = UI_new();
-	UI_add_input_string(ui,prompt,0,buf,0,BUFSIZ-1);
-	if (verify)
-		UI_add_verify_string(ui,prompt,0,buff,0,BUFSIZ-1,buf);
-	ok=UI_process(ui);
-	UI_free(ui);
+	if (ui)
+		{
+		ok = UI_add_input_string(ui,prompt,0,buf,0,BUFSIZ-1);
+		if (ok == 0 && verify)
+			ok = UI_add_verify_string(ui,prompt,0,buff,0,BUFSIZ-1,
+				buf);
+		if (ok == 0)
+			ok=UI_process(ui);
+		UI_free(ui);
+		}
 	return(ok);
 	}
