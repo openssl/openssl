@@ -187,7 +187,8 @@ $ LIB_DES = "set_key,ecb_enc,cbc_enc,"+ -
 	"enc_read,enc_writ,ofb64enc,"+ -
 	"ofb_enc,str2key,pcbc_enc,qud_cksm,rand_key,"+ -
 	"des_enc,fcrypt_b,"+ -
-	"fcrypt,xcbc_enc,rpc_enc,cbc_cksm,ede_cbcm_enc,des_old"
+	"fcrypt,xcbc_enc,rpc_enc,cbc_cksm,"+
+	"ede_cbcm_enc,des_old,read2pwd"
 $ LIB_RC2 = "rc2_ecb,rc2_skey,rc2_cbc,rc2cfb64,rc2ofb64"
 $ LIB_RC4 = "rc4_skey,rc4_enc"
 $ LIB_RC5 = "rc5_skey,rc5_ecb,rc5_enc,rc5cfb64,rc5ofb64"
@@ -214,8 +215,8 @@ $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"tb_rsa,tb_dsa,tb_dh,tb_rand,tb_cipher,tb_digest,"+ -
 	"eng_openssl,eng_dyn,eng_cnf,"+ -
 	"hw_atalla,hw_cswift,hw_ncipher,hw_nuron,hw_ubsec,"+ -
-	"hw_openbsd_dev_crypto"
-$ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc"
+	"hw_openbsd_dev_crypto,hw_aep,hw_sureware,hw_4758_cca"
+$ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,aes_ctr"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
@@ -274,8 +275,8 @@ $ LIB_COMP = "comp_lib,"+ -
 	"c_rle,c_zlib"
 $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
 	"ocsp_srv,ocsp_prn,ocsp_vfy,ocsp_err"
-$ LIB_UI_COMPAT = "ui_compat"
-$ LIB_UI = "ui_err,ui_lib,ui_openssl,"+LIB_UI_COMPAT
+$ LIB_UI_COMPAT = ",ui_compat"
+$ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"+LIB_UI_COMPAT
 $ LIB_KRB5 = "krb5_asn"
 $!
 $! Setup exceptional compilations

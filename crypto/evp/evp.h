@@ -69,6 +69,8 @@
 
 #include <openssl/ossl_typ.h>
 
+#include <openssl/symhacks.h>
+
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
