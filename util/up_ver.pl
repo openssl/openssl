@@ -60,8 +60,8 @@ foreach $file (@files)
 
 	while (<IN>)
 		{
-		if ((s/(SSLeay|OpenSSL) \d\.\d.\d[^"]*(\"|\s)/\1 $ver $time\2/) ||
-			s/^(\#define\s+SSLEAY_VERSION_NUMBER\s+0x)[0-9a-zA-Z]+(.*)$/$1$xver$2/)
+		if ((s/(SSLeay|OpenSSL|SSLeay\/OpenSSL) \d\.\d.\d[^"]*(\"|\s)/SSLeay\/OpenSSL $ver $time\2/) ||
+			s/^(\#define\s+OPENSSL_VERSION_NUMBER\s+0x)[0-9a-zA-Z]+(.*)$/$1$xver$2/)
 			{
 			print STDERR " Done";
 			$found++;

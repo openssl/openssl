@@ -95,7 +95,7 @@ static CONF_VALUE *get_section();
 
 #define scan_esc(p)	((((p)[1] == '\0')?(p++):(p+=2)),p)
 
-char *CONF_version="CONF part of SSLeay 0.9.1c 22-Dec-1998";
+char *CONF_version="CONF part of SSLeay/OpenSSL 0.9.1c 23-Dec-1998";
 
 LHASH *CONF_load(h,file,line)
 LHASH *h;

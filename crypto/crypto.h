@@ -65,10 +65,12 @@ extern "C" {
 
 #include "stack.h"
 
+#define OPENSSL_VERSION_NUMBER	0x0913	/* Version 0.9.1c is 0913 */
+
+/* Backward compatibility to SSLeay */
 /* This is more to be used to check the correct DLL is being used
  * in the MS world. */
-#define SSLEAY_VERSION_NUMBER	0x0913	/* Version 0.5.1c would be 0513 */
-
+#define SSLEAY_VERSION_NUMBER	OPENSSL_VERSION_NUMBER
 #define SSLEAY_VERSION		0
 /* #define SSLEAY_OPTIONS	1 no longer supported */
 #define SSLEAY_CFLAGS		2

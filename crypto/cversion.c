@@ -66,7 +66,7 @@ char *SSLeay_version(t)
 int t;
 	{
 	if (t == SSLEAY_VERSION)
-		return("SSLeay 0.9.1c 22-Dec-1998");
+		return("SSLeay/OpenSSL 0.9.1c 23-Dec-1998");
 	if (t == SSLEAY_BUILT_ON)
 		{
 #ifdef DATE

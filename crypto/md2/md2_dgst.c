@@ -61,7 +61,7 @@
 #include <string.h>
 #include "md2.h"
 
-char *MD2_version="MD2 part of SSLeay 0.9.1c 22-Dec-1998";
+char *MD2_version="MD2 part of SSLeay/OpenSSL 0.9.1c 23-Dec-1998";
 
 /* Implemented from RFC1319 The MD2 Message-Digest Algorithm
  */

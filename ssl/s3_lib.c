@@ -60,7 +60,7 @@
 #include "objects.h"
 #include "ssl_locl.h"
 
-char *ssl3_version_str="SSLv3 part of SSLeay 0.9.1c 22-Dec-1998";
+char *ssl3_version_str="SSLv3 part of SSLeay/OpenSSL 0.9.1c 23-Dec-1998";
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers)/sizeof(SSL_CIPHER))
 
