@@ -113,6 +113,9 @@
 
   *) Add new function BN_rand_range(), and fix DSA_sign_setup() to prevent
      Bleichenbacher's DSA attack.
+     Extend BN_[pseudo_]rand: As before, top=1 forces the highest two bits
+     to be set and top=0 forces the highest bit to be set; top=-1 is new
+     and leaves the highest bit random.
      [Ulf Moeller, Bodo Moeller]
 
   *) Update Rijndael code to version 3.0 and change EVP AES ciphers to
