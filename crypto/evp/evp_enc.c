@@ -197,6 +197,8 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 			*outl=bl;
 			}
 		}
+	else
+		*outl = 0;
 	i=inl&(bl-1);
 	inl-=i;
 	if (inl > 0)
