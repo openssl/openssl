@@ -1015,8 +1015,17 @@ sub is_valid
 			if ($keyword eq "RSA" && $no_rsa) { return 0; }
 			if ($keyword eq "DSA" && $no_dsa) { return 0; }
 			if ($keyword eq "DH" && $no_dh) { return 0; }
+			if ($keyword eq "EC" && $no_ec) { return 0; }
 			if ($keyword eq "HMAC" && $no_hmac) { return 0; }
 			if ($keyword eq "AES" && $no_aes) { return 0; }
+			if ($keyword eq "EVP" && $no_evp) { return 0; }
+			if ($keyword eq "LHASH" && $no_lhash) { return 0; }
+			if ($keyword eq "STACK" && $no_stack) { return 0; }
+			if ($keyword eq "ERR" && $no_err) { return 0; }
+			if ($keyword eq "BUFFER" && $no_buffer) { return 0; }
+			if ($keyword eq "BIO" && $no_bio) { return 0; }
+			if ($keyword eq "COMP" && $no_comp) { return 0; }
+			if ($keyword eq "DSO" && $no_dso) { return 0; }
 			if ($keyword eq "KRB5" && $no_krb5) { return 0; }
 			if ($keyword eq "FP_API" && $no_fp_api) { return 0; }
 
