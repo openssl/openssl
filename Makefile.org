@@ -336,7 +336,8 @@ install: all
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/lib \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man1 \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man3 \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man5
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man5 \
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man7
 	@for i in $(EXHEADER) ;\
 	do \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
@@ -354,9 +355,9 @@ install: all
 		$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 		chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
 	done
-	@echo installing man 1
+	@echo installing man 1 and man 5
 	@for i in doc/apps/*.pod; do (cd `dirname $$i`; fn=`basename $$i .pod`; sec=`[ "$$fn" = "config" ] && echo 5 || echo 1`; ../../util/pod2man.pl --section=$$sec --center=OpenSSL --release=$(VERSION) `basename $$i` >  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man$$sec/`basename $$i .pod`.$$sec); done
-	@echo installing man 3
-	@for i in doc/crypto/*.pod doc/ssl/*.pod; do (cd `dirname $$i`; ../../util/pod2man.pl --section=3 --center=OpenSSL --release=$(VERSION) `basename $$i` >  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man3/`basename $$i .pod`.3); done
+	@echo installing man 3 and man 7
+	@for i in doc/crypto/*.pod doc/ssl/*.pod; do (cd `dirname $$i`; fn=`basename $$i .pod`; sec=`[ "$$fn" = "des_modes" ] && echo 7 || echo 3`; ../../util/pod2man.pl --section=$$sec --center=OpenSSL --release=$(VERSION) `basename $$i` >  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man$$sec/`basename $$i .pod`.$$sec); done
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
