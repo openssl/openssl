@@ -2773,3 +2773,4 @@ AES_ofb128_encrypt                      3215	EXIST::FUNCTION:AES
 AES_ctr128_encrypt                      3216	EXIST::FUNCTION:AES
 AES_cfb128_encrypt                      3217	EXIST::FUNCTION:AES
 ENGINE_load_4758cca                     3218	EXIST::FUNCTION:
+_ossl_096_des_random_seed               3219	EXIST::FUNCTION:DES
