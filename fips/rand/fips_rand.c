@@ -56,9 +56,14 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/fips_rand.h>
+#include "e_os.h"
 #include <sys/time.h>
 #include <assert.h>
-#include <unistd.h>
+#ifdef OPENSSL_UNISTD
+# include OPENSSL_UNISTD
+#else
+# include <unistd.h>
+#endif
 #include <string.h>
 
 #define SEED_SIZE	8
