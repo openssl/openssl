@@ -73,8 +73,7 @@
 
 #ifndef NO_ASN1_OLD
 
-int ASN1_verify(int (*i2d)(void *, unsigned char **),
-		X509_ALGOR *a, ASN1_BIT_STRING *signature,
+int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
 		char *data, EVP_PKEY *pkey)
 	{
 	EVP_MD_CTX ctx;

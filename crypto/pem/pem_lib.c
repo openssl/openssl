@@ -158,9 +158,8 @@ void PEM_dek_info(char *buf, const char *type, int len, char *str)
 	}
 
 #ifndef OPENSSL_NO_FP_API
-void *PEM_ASN1_read(void *(*d2i)(void **,const unsigned char **,long),
-		    const char *name, FILE *fp,void **x,pem_password_cb *cb,
-		    void *u)
+void *PEM_ASN1_read(d2i_of_void *d2i, const char *name, FILE *fp, void **x,
+		    pem_password_cb *cb, void *u)
 	{
         BIO *b;
         void *ret;
@@ -261,7 +260,7 @@ err:
 	}
 
 #ifndef OPENSSL_NO_FP_API
-int PEM_ASN1_write(int (*i2d)(void *,unsigned char **), const char *name, FILE *fp,
+int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
 		   char *x, const EVP_CIPHER *enc, unsigned char *kstr,
 		   int klen, pem_password_cb *callback, void *u)
         {
@@ -280,7 +279,7 @@ int PEM_ASN1_write(int (*i2d)(void *,unsigned char **), const char *name, FILE *
         }
 #endif
 
-int PEM_ASN1_write_bio(int (*i2d)(void *,unsigned char **), const char *name, BIO *bp,
+int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 		       char *x, const EVP_CIPHER *enc, unsigned char *kstr,
 		       int klen, pem_password_cb *callback, void *u)
 	{

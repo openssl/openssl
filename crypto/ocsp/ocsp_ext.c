@@ -265,8 +265,7 @@ int OCSP_SINGLERESP_add_ext(OCSP_SINGLERESP *x, X509_EXTENSION *ex, int loc)
 
 /* also CRL Entry Extensions */
 
-ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s,
-				int (*i2d)(void *,unsigned char **), 
+ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, i2d_of_void *i2d,
 				void *data, STACK_OF(ASN1_OBJECT) *sk)
         {
 	int i;

@@ -72,9 +72,8 @@
 
 #ifndef NO_ASN1_OLD
 
-int ASN1_digest(int (*i2d)(void *, unsigned char **),
-		const EVP_MD *type, char *data, unsigned char *md,
-		unsigned int *len)
+int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
+		unsigned char *md, unsigned int *len)
 	{
 	int i;
 	unsigned char *str,*p;

@@ -82,7 +82,7 @@ STACK *ASN1_seq_unpack(const unsigned char *buf, int len,
  * OPENSSL_malloc'ed buffer
  */
 
-unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(void *,unsigned char **),
+unsigned char *ASN1_seq_pack(STACK *safes, i2d_of_void *i2d,
 			     unsigned char **buf, int *len)
 {
 	int safelen;
@@ -119,8 +119,7 @@ void *ASN1_unpack_string (ASN1_STRING *oct, d2i_of_void *d2i)
 
 /* Pack an ASN1 object into an ASN1_STRING */
 
-ASN1_STRING *ASN1_pack_string(void *obj, int (*i2d)(void *,unsigned char **),
-			      ASN1_STRING **oct)
+ASN1_STRING *ASN1_pack_string(void *obj, i2d_of_void *i2d, ASN1_STRING **oct)
 {
 	unsigned char *p;
 	ASN1_STRING *octmp;

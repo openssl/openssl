@@ -87,14 +87,15 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_p
 STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb, void *u)
 	{
 	X509_INFO *xi=NULL;
-	char *name=NULL,*header=NULL,**pp;
+	char *name=NULL,*header=NULL;
+	void *pp;
 	unsigned char *data=NULL;
 	const unsigned char *p;
 	long len,error=0;
 	int ok=0;
 	STACK_OF(X509_INFO) *ret=NULL;
 	unsigned int i,raw;
-	char *(*d2i)(void *,const unsigned char **,long);
+	d2i_of_void *d2i;
 
 	if (sk == NULL)
 		{
@@ -133,7 +134,7 @@ start:
 				if ((xi=X509_INFO_new()) == NULL) goto err;
 				goto start;
 				}
-			pp=(char **)&(xi->x509);
+			pp=&(xi->x509);
 			}
 		else if ((strcmp(name,PEM_STRING_X509_TRUSTED) == 0))
 			{
@@ -144,7 +145,7 @@ start:
 				if ((xi=X509_INFO_new()) == NULL) goto err;
 				goto start;
 				}
-			pp=(char **)&(xi->x509);
+			pp=&(xi->x509);
 			}
 		else if (strcmp(name,PEM_STRING_X509_CRL) == 0)
 			{
@@ -155,7 +156,7 @@ start:
 				if ((xi=X509_INFO_new()) == NULL) goto err;
 				goto start;
 				}
-			pp=(char **)&(xi->crl);
+			pp=&(xi->crl);
 			}
 		else
 #ifndef OPENSSL_NO_RSA
@@ -176,7 +177,7 @@ start:
 			if ((xi->x_pkey->dec_pkey=EVP_PKEY_new()) == NULL)
 				goto err;
 			xi->x_pkey->dec_pkey->type=EVP_PKEY_RSA;
-			pp=(char **)&(xi->x_pkey->dec_pkey->pkey.rsa);
+			pp=&(xi->x_pkey->dec_pkey->pkey.rsa);
 			if ((int)strlen(header) > 10) /* assume encrypted */
 				raw=1;
 			}
@@ -224,7 +225,7 @@ start:
  			if ((xi->x_pkey->dec_pkey=EVP_PKEY_new()) == NULL)
  				goto err;
  			xi->x_pkey->dec_pkey->type=EVP_PKEY_EC;
- 			pp=(char **)&(xi->x_pkey->dec_pkey->pkey.eckey);
+ 			pp=&(xi->x_pkey->dec_pkey->pkey.eckey);
  			if ((int)strlen(header) > 10) /* assume encrypted */
  				raw=1;
 			}

@@ -466,8 +466,7 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
 			X509 *signer, EVP_PKEY *key, const EVP_MD *dgst,
 			STACK_OF(X509) *certs, unsigned long flags);
 
-ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s,
-				int (*i2d)(void *,unsigned char **), 
+ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, i2d_of_void *i2d,
 				void *data, STACK_OF(ASN1_OBJECT) *sk);
 #define ASN1_STRING_encode_of(type,s,i2d,data,sk) \
 ((ASN1_STRING *(*)(ASN1_STRING *,I2D_OF(type),type *,STACK_OF(ASN1_OBJECT) *))ASN1_STRING_encode)(s,i2d,data,sk)

@@ -529,12 +529,11 @@ int	PEM_write_bio(BIO *bp,const char *name,char *hdr,unsigned char *data,
 		long len);
 int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm, const char *name, BIO *bp,
 	     pem_password_cb *cb, void *u);
-void *	PEM_ASN1_read_bio(void *(*d2i)(void **,const unsigned char **,long),
-			  const char *name,BIO *bp,void **x,
-			  pem_password_cb *cb, void *u);
+void *	PEM_ASN1_read_bio(d2i_of_void *d2i, const char *name, BIO *bp,
+			  void **x, pem_password_cb *cb, void *u);
 #define PEM_ASN1_read_bio_of(type,d2i,name,bp,x,cb,u) \
 ((type *(*)(D2I_OF(type),const char *,BIO *,type **,pem_password_cb *,void *))PEM_ASN1_read_bio)(d2i,name,bp,x,cb,u)
-int	PEM_ASN1_write_bio(int (*i2d)(void *,unsigned char **),const char *name,BIO *bp,char *x,
+int	PEM_ASN1_write_bio(i2d_of_void *i2d,const char *name,BIO *bp,char *x,
 			   const EVP_CIPHER *enc,unsigned char *kstr,int klen,
 			   pem_password_cb *cb, void *u);
 #define PEM_ASN1_write_bio_of(type,i2d,name,bp,x,enc,kstr,klen,cb,u) \
@@ -549,10 +548,9 @@ int	PEM_X509_INFO_write_bio(BIO *bp,X509_INFO *xi, EVP_CIPHER *enc,
 int	PEM_read(FILE *fp, char **name, char **header,
 		unsigned char **data,long *len);
 int	PEM_write(FILE *fp,char *name,char *hdr,unsigned char *data,long len);
-void *  PEM_ASN1_read(void *(*d2i)(void **,const unsigned char **,long),
-		      const char *name,FILE *fp,void **x,pem_password_cb *cb,
-		      void *u);
-int	PEM_ASN1_write(int (*i2d)(void *,unsigned char **),const char *name,FILE *fp,
+void *  PEM_ASN1_read(d2i_of_void *d2i, const char *name, FILE *fp, void **x,
+		      pem_password_cb *cb, void *u);
+int	PEM_ASN1_write(i2d_of_void *i2d,const char *name,FILE *fp,
 		       char *x,const EVP_CIPHER *enc,unsigned char *kstr,
 		       int klen,pem_password_cb *callback, void *u);
 STACK_OF(X509_INFO) *	PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
