@@ -3431,7 +3431,7 @@ $cflags       = -O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
-$lflags       = -lsocket -lnsl
+$lflags       = -lsocket -lnsl -lc89
 $bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = 
 $des_obj      = 
