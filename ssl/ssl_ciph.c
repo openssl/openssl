@@ -1129,11 +1129,11 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 		{
 		MemCheck_on();
 		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,ERR_R_MALLOC_FAILURE);
-		return(0);
+		return(1);
 		}
 	else
 		{
 		MemCheck_on();
-		return(1);
+		return(0);
 		}
 	}
