@@ -411,6 +411,9 @@ int STORE_ATTR_INFO_modify_number(STORE_ATTR_INFO *attrs, STORE_ATTR_TYPES code,
 /* Compare on basis of a bit pattern formed by the STORE_ATTR_TYPES values
    in each contained attribute. */
 int STORE_ATTR_INFO_compare(STORE_ATTR_INFO *a, STORE_ATTR_INFO *b);
+/* Check if the set of attributes in a is within the range of attributes
+   set in b. */
+int STORE_ATTR_INFO_in_range(STORE_ATTR_INFO *a, STORE_ATTR_INFO *b);
 /* Check if the set of attributes in a are also set in b. */
 int STORE_ATTR_INFO_in(STORE_ATTR_INFO *a, STORE_ATTR_INFO *b);
 /* Same as STORE_ATTR_INFO_in(), but also checks the attribute values. */

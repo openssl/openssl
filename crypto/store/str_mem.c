@@ -206,7 +206,7 @@ static int mem_delete(STORE *s, STORE_OBJECT_TYPES type,
 	return 0;
 	}
 
-/* The list functions may be the hardest to nuderstand.  Basically,
+/* The list functions may be the hardest to understand.  Basically,
    mem_list_start compiles a stack of attribute info elements, and
    puts that stack into the context to be returned.  mem_list_next
    will then find the first matching element in the store, and then
@@ -305,6 +305,8 @@ static STORE_OBJECT *mem_list_next(STORE *s, void *handle)
 			context->search_index);
 	for(srch = context->search_index;
 	    srch < sk_num(store->data)
+		    && STORE_ATTR_INFO_in_range(key.attr_info,
+			    (STORE_ATTR_INFO *)sk_value(store->data, srch))
 		    && !(cres = STORE_ATTR_INFO_in_ex(key.attr_info,
 				 (STORE_ATTR_INFO *)sk_value(store->data, srch)));
 	    srch++)

@@ -1536,21 +1536,94 @@ int STORE_parse_attrs_endp(void *handle)
 	return 0;
 	}
 
+static int attr_info_compare_compute_range(
+	unsigned char *abits, unsigned char *bbits,
+	unsigned int *alowp, unsigned int *ahighp,
+	unsigned int *blowp, unsigned int *bhighp)
+	{
+	unsigned int alow = (unsigned int)-1, ahigh = 0;
+	unsigned int blow = (unsigned int)-1, bhigh = 0;
+	int i, res = 0;
+
+	for (i = 0; i < (STORE_ATTR_TYPE_NUM + 8) / 8; i++, abits++, bbits++)
+		{
+		if (res == 0)
+			{
+			if (*abits < *bbits) res = -1;
+			if (*abits > *bbits) res = 1;
+			}
+		if (*abits)
+			{
+			if (alow == (unsigned int)-1)
+				{
+				alow = i * 8;
+				if (!(*abits & 0x01)) alow++;
+				if (!(*abits & 0x02)) alow++;
+				if (!(*abits & 0x04)) alow++;
+				if (!(*abits & 0x08)) alow++;
+				if (!(*abits & 0x10)) alow++;
+				if (!(*abits & 0x20)) alow++;
+				if (!(*abits & 0x40)) alow++;
+				}
+			ahigh = i * 8 + 7;
+			if (!(*abits & 0x80)) ahigh++;
+			if (!(*abits & 0x40)) ahigh++;
+			if (!(*abits & 0x20)) ahigh++;
+			if (!(*abits & 0x10)) ahigh++;
+			if (!(*abits & 0x08)) ahigh++;
+			if (!(*abits & 0x04)) ahigh++;
+			if (!(*abits & 0x02)) ahigh++;
+			}
+		if (*bbits)
+			{
+			if (blow == (unsigned int)-1)
+				{
+				blow = i * 8;
+				if (!(*bbits & 0x01)) blow++;
+				if (!(*bbits & 0x02)) blow++;
+				if (!(*bbits & 0x04)) blow++;
+				if (!(*bbits & 0x08)) blow++;
+				if (!(*bbits & 0x10)) blow++;
+				if (!(*bbits & 0x20)) blow++;
+				if (!(*bbits & 0x40)) blow++;
+				}
+			bhigh = i * 8 + 7;
+			if (!(*bbits & 0x80)) bhigh++;
+			if (!(*bbits & 0x40)) bhigh++;
+			if (!(*bbits & 0x20)) bhigh++;
+			if (!(*bbits & 0x10)) bhigh++;
+			if (!(*bbits & 0x08)) bhigh++;
+			if (!(*bbits & 0x04)) bhigh++;
+			if (!(*bbits & 0x02)) bhigh++;
+			}
+		}
+	if (ahigh + alow < bhigh + blow) res = -1;
+	if (ahigh + alow > bhigh + blow) res = 1;
+	if (alowp) *alowp = alow;
+	if (ahighp) *ahighp = ahigh;
+	if (blowp) *blowp = blow;
+	if (bhighp) *bhighp = bhigh;
+	return res;
+	}
+
 int STORE_ATTR_INFO_compare(STORE_ATTR_INFO *a, STORE_ATTR_INFO *b)
 	{
-	unsigned char *abits, *bbits;
-	int i;
-
 	if (a == b) return 0;
 	if (!a) return -1;
 	if (!b) return 1;
-	abits = a->set;
-	bbits = b->set;
-	for (i = 0; i < (STORE_ATTR_TYPE_NUM + 8) / 8; i++, abits++, bbits++)
-		{
-		if (*abits < *bbits) return -1;
-		if (*abits > *bbits) return 1;
-		}
+	return attr_info_compare_compute_range(a->set, b->set, 0, 0, 0, 0);
+	}
+int STORE_ATTR_INFO_in_range(STORE_ATTR_INFO *a, STORE_ATTR_INFO *b)
+	{
+	unsigned int alow, ahigh, blow, bhigh;
+
+	if (a == b) return 1;
+	if (!a) return 0;
+	if (!b) return 0;
+	attr_info_compare_compute_range(a->set, b->set,
+		&alow, &ahigh, &blow, &bhigh);
+	if (alow >= blow && ahigh <= bhigh)
+		return 1;
 	return 0;
 	}
 int STORE_ATTR_INFO_in(STORE_ATTR_INFO *a, STORE_ATTR_INFO *b)
@@ -1565,7 +1638,7 @@ int STORE_ATTR_INFO_in(STORE_ATTR_INFO *a, STORE_ATTR_INFO *b)
 	bbits = b->set;
 	for (i = 0; i < (STORE_ATTR_TYPE_NUM + 8) / 8; i++, abits++, bbits++)
 		{
-		if (*abits && *bbits != *abits)
+		if (*abits && (*bbits & *abits) != *abits)
 			return 0;
 		}
 	return 1;
