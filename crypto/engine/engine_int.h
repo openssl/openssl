@@ -93,6 +93,7 @@ struct engine_st
 	ENGINE_CTRL_FUNC_PTR ctrl;
 	ENGINE_LOAD_KEY_PTR load_privkey;
 	ENGINE_LOAD_KEY_PTR load_pubkey;
+	const ENGINE_CMD_DEFN *cmd_defns;
 	int flags;
 	/* reference count on the structure itself */
 	int struct_ref;

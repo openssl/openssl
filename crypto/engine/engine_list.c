@@ -472,6 +472,12 @@ int ENGINE_set_flags(ENGINE *e, int flags)
 	return 1;
 	}
 
+int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns)
+	{
+	e->cmd_defns = defns;
+	return 1;
+	}
+
 int ENGINE_cpy(ENGINE *dest, const ENGINE *src)
 	{
 	if(ENGINE_set_id(dest, ENGINE_get_id(src)) &&
@@ -494,7 +500,8 @@ int ENGINE_cpy(ENGINE *dest, const ENGINE *src)
 					ENGINE_get_load_privkey_function(src)) &&
 			ENGINE_set_load_pubkey_function(dest,
 					ENGINE_get_load_pubkey_function(src)) &&
-			ENGINE_set_flags(dest, ENGINE_get_flags(src)))
+			ENGINE_set_flags(dest, ENGINE_get_flags(src)) &&
+			ENGINE_set_cmd_defns(dest, ENGINE_get_cmd_defns(src)))
 		return 1;
 	return 0;
 	}
@@ -567,4 +574,9 @@ ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e)
 int ENGINE_get_flags(const ENGINE *e)
 	{
 	return e->flags;
+	}
+
+const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e)
+	{
+	return e->cmd_defns;
 	}

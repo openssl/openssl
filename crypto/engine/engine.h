@@ -86,6 +86,39 @@ extern "C" {
 /* ENGINE flags that can be set by ENGINE_set_flags(). */
 /* #define ENGINE_FLAGS_MALLOCED	0x0001 */ /* Not used */
 
+/* This flag is for ENGINEs that wish to handle the various 'CMD'-related
+ * control commands on their own. Without this flag, ENGINE_ctrl() handles these
+ * control commands on behalf of the ENGINE using their "cmd_defns" data. */
+#define ENGINE_FLAGS_MANUAL_CMD_CTRL	(int)0x0002
+
+/* ENGINEs can support their own command types, and these flags are used in
+ * ENGINE_CTRL_GET_CMD_FLAGS to indicate to the caller what kind of input each
+ * command expects. Currently only numeric and string input is supported. If a
+ * control command supports none of the _NUMERIC, _STRING, or _NO_INPUT options,
+ * then it is regarded as an "internal" control command - and not for use in
+ * config setting situations. As such, they're not available to the
+ * ENGINE_ctrl_cmd_string() function, only raw ENGINE_ctrl() access. Changes to
+ * this list of 'command types' should be reflected carefully in
+ * ENGINE_cmd_is_executable() and ENGINE_ctrl_cmd_string(). */
+
+/* accepts a 'long' input value (3rd parameter to ENGINE_ctrl) */
+#define ENGINE_CMD_FLAG_NUMERIC		(unsigned int)0x0001
+/* accepts string input (cast from 'void*' to 'const char *', 4th parameter to
+ * ENGINE_ctrl) */
+#define ENGINE_CMD_FLAG_STRING		(unsigned int)0x0002
+/* Indicates that the control command takes *no* input. Ie. the control command
+ * is unparameterised. */
+#define ENGINE_CMD_FLAG_NO_INPUT	(unsigned int)0x0004
+
+/* NB: These 3 control commands are deprecated and should not be used. ENGINEs
+ * relying on these commands should compile conditional support for
+ * compatibility (eg. if these symbols are defined) but should also migrate the
+ * same functionality to their own ENGINE-specific control functions that can be
+ * "discovered" by calling applications. The fact these control commands
+ * wouldn't be "executable" (ie. usable by text-based config) doesn't change the
+ * fact that application code can find and use them without requiring per-ENGINE
+ * hacking. */
+
 /* These flags are used to tell the ctrl function what should be done.
  * All command numbers are shared between all engines, even if some don't
  * make sense to some engines.  In such a case, they do nothing but return
@@ -94,6 +127,59 @@ extern "C" {
 #define ENGINE_CTRL_SET_PASSWORD_CALLBACK	2
 #define ENGINE_CTRL_HUP				3 /* Close and reinitialise any
 						     handles/connections etc. */
+
+/* These control commands allow an application to deal with an arbitrary engine
+ * in a dynamic way. Warn: Negative return values indicate errors FOR THESE
+ * COMMANDS because zero is used to indicate 'end-of-list'. Other commands,
+ * including ENGINE-specific command types, return zero for an error.
+ *
+ * An ENGINE can choose to implement these ctrl functions, and can internally
+ * manage things however it chooses - it does so by setting the
+ * ENGINE_FLAGS_MANUAL_CMD_CTRL flag (using ENGINE_set_flags()). Otherwise the
+ * ENGINE_ctrl() code handles this on the ENGINE's behalf using the cmd_defns
+ * data (set using ENGINE_set_cmd_defns()). This means an ENGINE's ctrl()
+ * handler need only implement its own commands - the above "meta" commands will
+ * be taken care of. */
+
+/* Returns non-zero if the supplied ENGINE has a ctrl() handler. If "not", then
+ * all the remaining control commands will return failure, so it is worth
+ * checking this first if the caller is trying to "discover" the engine's
+ * capabilities and doesn't want errors generated unnecessarily. */
+#define ENGINE_CTRL_HAS_CTRL_FUNCTION		10
+/* Returns a positive command number for the first command supported by the
+ * engine. Returns zero if no ctrl commands are supported. */
+#define ENGINE_CTRL_GET_FIRST_CMD_TYPE		11
+/* The 'long' argument specifies a command implemented by the engine, and the
+ * return value is the next command supported, or zero if there are no more. */
+#define ENGINE_CTRL_GET_NEXT_CMD_TYPE		12
+/* The 'void*' argument is a command name (cast from 'const char *'), and the
+ * return value is the command that corresponds to it. */
+#define ENGINE_CTRL_GET_CMD_FROM_NAME		13
+/* The next two allow a command to be converted into its corresponding string
+ * form. In each case, the 'long' argument supplies the command. In the NAME_LEN
+ * case, the return value is the length of the command name (not counting a
+ * trailing EOL). In the NAME case, the 'void*' argument must be a string buffer
+ * large enough, and it will be populated with the name of the command (WITH a
+ * trailing EOL). */
+#define ENGINE_CTRL_GET_NAME_LEN_FROM_CMD	14
+#define ENGINE_CTRL_GET_NAME_FROM_CMD		15
+/* The next two are similar but give a "short description" of a command. */
+#define ENGINE_CTRL_GET_DESC_LEN_FROM_CMD	16
+#define ENGINE_CTRL_GET_DESC_FROM_CMD		17
+/* With this command, the return value is the OR'd combination of
+ * ENGINE_CMD_FLAG_*** values that indicate what kind of input a given
+ * engine-specific ctrl command expects. */
+#define ENGINE_CTRL_GET_CMD_FLAGS		18
+
+/* ENGINE implementations should start the numbering of their own control
+ * commands from this value. (ie. ENGINE_CMD_BASE, ENGINE_CMD_BASE + 1, etc). */
+#define ENGINE_CMD_BASE		200
+
+/* NB: These 2 nCipher "chil" control commands are deprecated, and their
+ * functionality is now available through ENGINE-specific control commands
+ * (exposed through the above-mentioned 'CMD'-handling). Code using these 2
+ * commands should be migrated to the more general command handling before these
+ * are removed. */
 
 /* Flags specific to the nCipher "chil" engine */
 #define ENGINE_CTRL_CHIL_SET_FORKCHECK		100
@@ -104,6 +190,22 @@ extern "C" {
 #define ENGINE_CTRL_CHIL_NO_LOCKING		101
 	/* This prevents the initialisation function from providing mutex
 	 * callbacks to the nCipher library. */
+
+/* If an ENGINE supports its own specific control commands and wishes the
+ * framework to handle the above 'ENGINE_CMD_***'-manipulation commands on its
+ * behalf, it should supply a null-terminated array of ENGINE_CMD_DEFN entries
+ * to ENGINE_set_cmd_defns(). It should also implement a ctrl() handler that
+ * supports the stated commands (ie. the "cmd_num" entries as described by the
+ * array). NB: The array must be ordered in increasing order of cmd_num.
+ * "null-terminated" means that the last ENGINE_CMD_DEFN element has cmd_num set
+ * to zero and/or cmd_name set to NULL. */
+typedef struct ENGINE_CMD_DEFN_st
+	{
+	unsigned int cmd_num; /* The command number */
+	const char *cmd_name; /* The command name itself */
+	const char *cmd_desc; /* A short description of the command */
+	unsigned int cmd_flags; /* The input the command expects */
+	} ENGINE_CMD_DEFN;
 
 /* As we're missing a BIGNUM_METHOD, we need a couple of locally
  * defined function types that engines can implement. */
@@ -136,15 +238,15 @@ typedef int (*ENGINE_CTRL_FUNC_PTR)(ENGINE *, int, long, void *, void (*f)());
 /* Generic load_key function pointer */
 typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *, const char *);
 
-/* STRUCTURE functions ... all of these functions deal with pointers to
- * ENGINE structures where the pointers have a "structural reference".
- * This means that their reference is to allow access to the structure
- * but it does not imply that the structure is functional. To simply
- * increment or decrement the structural reference count, use ENGINE_new
- * and ENGINE_free. NB: This is not required when iterating using
- * ENGINE_get_next as it will automatically decrement the structural
- * reference count of the "current" ENGINE and increment the structural
- * reference count of the ENGINE it returns (unless it is NULL). */
+/* STRUCTURE functions ... all of these functions deal with pointers to ENGINE
+ * structures where the pointers have a "structural reference". This means that
+ * their reference is to allowed access to the structure but it does not imply
+ * that the structure is functional. To simply increment or decrement the
+ * structural reference count, use ENGINE_by_id and ENGINE_free. NB: This is not
+ * required when iterating using ENGINE_get_next as it will automatically
+ * decrement the structural reference count of the "current" ENGINE and
+ * increment the structural reference count of the ENGINE it returns (unless it
+ * is NULL). */
 
 /* Get the first/last "ENGINE" type available. */
 ENGINE *ENGINE_get_first(void);
@@ -166,6 +268,43 @@ void ENGINE_load_atalla(void);
 void ENGINE_load_nuron(void);
 void ENGINE_load_ubsec(void);
 void ENGINE_load_builtin_engines(void);
+
+/* Send parametrised control commands to the engine. The possibilities to send
+ * down an integer, a pointer to data or a function pointer are provided. Any of
+ * the parameters may or may not be NULL, depending on the command number. In
+ * actuality, this function only requires a structural (rather than functional)
+ * reference to an engine, but many control commands may require the engine be
+ * functional. The caller should be aware of trying commands that require an
+ * operational ENGINE, and only use functional references in such situations. */
+int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
+
+/* This function tests if an ENGINE-specific command is usable as a "setting".
+ * Eg. in an application's config file that gets processed through
+ * ENGINE_ctrl_cmd_string(). If this returns zero, it is not available to
+ * ENGINE_ctrl_cmd_string(), only ENGINE_ctrl(). */
+int ENGINE_cmd_is_executable(ENGINE *e, int cmd);
+
+/* This function passes a command-name and argument to an ENGINE. The cmd_name
+ * is converted to a command number and the control command is called using
+ * 'arg' as an argument (unless the ENGINE doesn't support such a command, in
+ * which case no control command is called). The command is checked for input
+ * flags, and if necessary the argument will be converted to a numeric value. If
+ * cmd_optional is non-zero, then if the ENGINE doesn't support the given
+ * cmd_name the return value will be success anyway. This function is intended
+ * for applications to use so that users (or config files) can supply
+ * engine-specific config data to the ENGINE at run-time to control behaviour of
+ * specific engines. As such, it shouldn't be used for calling ENGINE_ctrl()
+ * functions that return data, deal with binary data, or that are otherwise
+ * supposed to be used directly through ENGINE_ctrl() in application code. Any
+ * "return" data from an ENGINE_ctrl() operation in this function will be lost -
+ * the return value is interpreted as failure if the return value is zero,
+ * success otherwise, and this function returns a boolean value as a result. In
+ * other words, vendors of 'ENGINE'-enabled devices should write ENGINE
+ * implementations with parameterisations that work in this scheme, so that
+ * compliant ENGINE-based applications can work consistently with the same
+ * configuration for the same ENGINE-enabled devices, across applications. */
+int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
+				int cmd_optional);
 
 /* These functions are useful for manufacturing new ENGINE structures. They
  * don't address reference counting at all - one uses them to populate an ENGINE
@@ -189,6 +328,9 @@ int ENGINE_set_ctrl_function(ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f);
 int ENGINE_set_load_privkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpriv_f);
 int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f);
 int ENGINE_set_flags(ENGINE *e, int flags);
+int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
+/* Copies across all ENGINE methods and pointers. NB: This does *not* change
+ * reference counts however. */
 int ENGINE_cpy(ENGINE *dest, const ENGINE *src);
 
 /* These return values from within the ENGINE structure. These can be useful
@@ -208,6 +350,7 @@ ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
 ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(const ENGINE *e);
 ENGINE_LOAD_KEY_PTR ENGINE_get_load_privkey_function(const ENGINE *e);
 ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e);
+const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e);
 int ENGINE_get_flags(const ENGINE *e);
 
 /* FUNCTIONAL functions. These functions deal with ENGINE structures
@@ -230,12 +373,6 @@ int ENGINE_init(ENGINE *e);
  * a corresponding call to ENGINE_free as it also releases a structural
  * reference. */
 int ENGINE_finish(ENGINE *e);
-/* Send control parametrised commands to the engine.  The possibilities
- * to send down an integer, a pointer to data or a function pointer are
- * provided.  Any of the parameters may or may not be NULL, depending
- * on the command number */
-/* WARNING: This is currently experimental and may change radically! */
-int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
 
 /* The following functions handle keys that are stored in some secondary
  * location, handled by the engine.  The storage may be on a card or
@@ -276,20 +413,11 @@ int ENGINE_set_default(ENGINE *e, unsigned int flags);
 /* Obligatory error function. */
 void ERR_load_ENGINE_strings(void);
 
-/*
- * Error codes for all engine functions. NB: We use "generic"
- * function names instead of per-implementation ones because this
- * levels the playing field for externally implemented bootstrapped
- * support code. As the filename and line number is included, it's
- * more important to indicate the type of function, so that
- * bootstrapped code (that can't easily add its own errors in) can
- * use the same error codes too.
- */
-
 /* BEGIN ERROR CODES */
 /* The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
  */
+void ERR_load_ENGINE_strings(void);
 
 /* Error codes for the ENGINE functions. */
 
@@ -307,7 +435,9 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_CSWIFT_RSA_MOD_EXP			 104
 #define ENGINE_F_ENGINE_ADD				 105
 #define ENGINE_F_ENGINE_BY_ID				 106
+#define ENGINE_F_ENGINE_CMD_IS_EXECUTABLE		 170
 #define ENGINE_F_ENGINE_CTRL				 142
+#define ENGINE_F_ENGINE_CTRL_CMD_STRING			 171
 #define ENGINE_F_ENGINE_FINISH				 107
 #define ENGINE_F_ENGINE_FREE				 108
 #define ENGINE_F_ENGINE_GET_NEXT			 115
@@ -333,6 +463,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_HWCRHK_MOD_EXP_CRT			 138
 #define ENGINE_F_HWCRHK_RAND_BYTES			 139
 #define ENGINE_F_HWCRHK_RSA_MOD_EXP			 140
+#define ENGINE_F_INT_CTRL_HELPER			 172
 #define ENGINE_F_LOG_MESSAGE				 141
 #define ENGINE_F_NURON_FINISH				 157
 #define ENGINE_F_NURON_INIT				 156
@@ -347,10 +478,14 @@ void ERR_load_ENGINE_strings(void);
 
 /* Reason codes. */
 #define ENGINE_R_ALREADY_LOADED				 100
+#define ENGINE_R_ARGUMENT_IS_NOT_A_NUMBER		 133
 #define ENGINE_R_BIO_WAS_FREED				 121
 #define ENGINE_R_BN_CTX_FULL				 101
 #define ENGINE_R_BN_EXPAND_FAIL				 102
 #define ENGINE_R_CHIL_ERROR				 123
+#define ENGINE_R_CMD_NOT_EXECUTABLE			 134
+#define ENGINE_R_COMMAND_TAKES_INPUT			 135
+#define ENGINE_R_COMMAND_TAKES_NO_INPUT			 136
 #define ENGINE_R_CONFLICTING_ENGINE_ID			 103
 #define ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED		 119
 #define ENGINE_R_DSO_FAILURE				 104
@@ -364,6 +499,8 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_ID_OR_NAME_MISSING			 108
 #define ENGINE_R_INIT_FAILED				 109
 #define ENGINE_R_INTERNAL_LIST_ERROR			 110
+#define ENGINE_R_INVALID_CMD_NAME			 137
+#define ENGINE_R_INVALID_CMD_NUMBER			 138
 #define ENGINE_R_MISSING_KEY_COMPONENTS			 111
 #define ENGINE_R_NOT_INITIALISED			 117
 #define ENGINE_R_NOT_LOADED				 112
@@ -384,4 +521,3 @@ void ERR_load_ENGINE_strings(void);
 }
 #endif
 #endif
-
