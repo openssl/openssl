@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/dsa.h>
 #include <openssl/fips.h>
