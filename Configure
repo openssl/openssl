@@ -142,7 +142,7 @@ my %table=(
 # HPUX 9.X config.
 # Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or
 # egcs.  gcc 2.8.1 is also broken.
-"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::(unknown)::DES_PTR DES_UNROLL DES_RISC1:::", # BN_LLONG does not work
 "hpux-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 # HPUX 10.X config.  Supports threads.
 "hpux10-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
