@@ -589,7 +589,7 @@ Makefile.ssl: Makefile.org
 	@false
 
 libclean:
- 	rm -f *.map *.so *.so.* engines/*.so *.a */lib */*/lib
+	rm -f *.map *.so *.so.* engines/*.so *.a */lib */*/lib
 
 clean:	libclean
 	rm -f shlib/*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
