@@ -1636,7 +1636,8 @@ err:
 	BIO_free_all(out);
 	BIO_free_all(in);
 
-	sk_X509_pop_free(cert_sk,X509_free);
+	if (cert_sk)
+		sk_X509_pop_free(cert_sk,X509_free);
 
 	if (ret) ERR_print_errors(bio_err);
 	app_RAND_write_file(randfile, bio_err);
