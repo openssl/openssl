@@ -18,6 +18,12 @@
      now it really counts the depth.
      [Bodo Moeller]
 
+  *) Bugfix in crypto/x509/x509_cmp.c: The SSLerr macro was used
+     instead of X509err, which often resulted in confusing error
+     messages since the error codes are not globally unique
+     (e.g. an alleged error in ssl3_accept when a certificate
+     didn't match the private key).
+
   *) New function SSL_CTX_set_session_id_context that allows to set a default
      value (so that you don't need SSL_set_session_id_context for each
      connection using the SSL_CTX).
