@@ -96,7 +96,7 @@ int MAIN(int argc, char **argv)
     ENGINE *e = NULL;
     char *infile=NULL, *outfile=NULL, *keyname = NULL;	
     char *certfile=NULL;
-    BIO *in=NULL, *out = NULL, *inkey = NULL, *certsin = NULL;
+    BIO *in=NULL, *out = NULL;
     char **args;
     char *name = NULL;
     char *csp_name = NULL;
@@ -346,6 +346,7 @@ int MAIN(int argc, char **argv)
 	    goto end;
    }
 
+#if 0
    if (certfile) {
     	if(!(certsin = BIO_new_file(certfile, "r"))) {
 	    BIO_printf(bio_err, "Can't open certificate file %s\n", certfile);
@@ -361,6 +362,7 @@ int MAIN(int argc, char **argv)
 	    goto end;
 	}
      }
+#endif
 
 #ifdef CRYPTO_MDEBUG
     CRYPTO_pop_info();
@@ -414,12 +416,9 @@ int MAIN(int argc, char **argv)
 	CRYPTO_push_info("process -export_cert");
 	CRYPTO_push_info("reading private key");
 #endif
-	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, NULL, passin);
-	if (!inkey) (void) BIO_reset(in);
-	else BIO_free(inkey);
+	key = load_key(bio_err, keyname ? keyname : infile, FORMAT_PEM,
+		passin, e, "private key");
 	if (!key) {
-		BIO_printf (bio_err, "Error loading private key\n");
-		ERR_print_errors(bio_err);
 		goto export_end;
 	}
 
@@ -428,12 +427,9 @@ int MAIN(int argc, char **argv)
 	CRYPTO_push_info("reading certs from input");
 #endif
 
-	certs = sk_X509_new_null();
-
 	/* Load in all certs in input file */
-	if(!cert_load(in, certs)) {
-		BIO_printf(bio_err, "Error loading certificates from input\n");
-		ERR_print_errors(bio_err);
+	if(!(certs = load_certs(bio_err, infile, FORMAT_PEM, NULL, e,
+		"certificates"))) {
 		goto export_end;
 	}
 
@@ -463,13 +459,11 @@ int MAIN(int argc, char **argv)
 	bags = sk_PKCS12_SAFEBAG_new_null ();
 
 	/* Add any more certificates asked for */
-	if (certsin) {
-		if(!cert_load(certsin, certs)) {
-			BIO_printf(bio_err, "Error loading certificates from certfile\n");
-			ERR_print_errors(bio_err);
+	if (certfile) {
+		if(!(certs = load_certs(bio_err, certfile, FORMAT_PEM, NULL, e,
+			"certificates from certfile"))) {
 			goto export_end;
 		}
-	    	BIO_free(certsin);
  	}
 
 #ifdef CRYPTO_MDEBUG
@@ -686,6 +680,7 @@ int MAIN(int argc, char **argv)
     if (canames) sk_free(canames);
     if(passin) OPENSSL_free(passin);
     if(passout) OPENSSL_free(passout);
+    apps_shutdown();
     EXIT(ret);
 }
 
