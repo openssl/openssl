@@ -219,7 +219,8 @@ $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bf_lbuf"
 $ LIB_STACK = "stack"
 $ LIB_LHASH = "lhash,lh_stats"
-$ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,rand_win"
+$ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,"+ -
+	"rand_vms"
 $ LIB_ERR = "err,err_all,err_prn"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err"
 $ LIB_EVP = "encode,digest,evp_enc,evp_key,"+ -
@@ -267,7 +268,7 @@ $ LIB_PKCS12 = "p12_add,p12_asn,p12_attr,p12_crpt,p12_crt,p12_decr,"+ -
 $ LIB_COMP = "comp_lib,"+ -
 	"c_rle,c_zlib"
 $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,"+ -
-	"ocsp_lib,ocsp_prn,ocsp_err"
+	"ocsp_lib,ocsp_cl,ocsp_prn,ocsp_err"
 $!
 $! Setup exceptional compilations
 $!
