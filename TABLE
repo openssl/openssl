@@ -92,8 +92,8 @@ $rc5_obj      =
 $dso_scheme   = win32
 $shared_target= cygwin-shared
 $shared_cflag = 
-$shared_ldflag = .dll
-$shared_extension = 
+$shared_ldflag = 
+$shared_extension = .dll
 $ranlib       = 
 
 *** Cygwin-pre1.3
