@@ -119,6 +119,9 @@ int MAIN(int argc, char **argv)
 		} else if(!strcmp(*argv, "-inkey")) {
 			if (--argc < 1) badarg = 1;
 			keyfile = *(++argv);
+		} else if (strcmp(*argv,"-keyform") == 0) {
+			if (--argc < 1) goto bad;
+			keyform=str2fmt(*(++argv));
 		} else if(!strcmp(*argv, "-engine")) {
 			if (--argc < 1) badarg = 1;
 			engine = *(++argv);
@@ -287,6 +290,7 @@ static void usage()
 	BIO_printf(bio_err, "-in file        input file\n");
 	BIO_printf(bio_err, "-out file       output file\n");
 	BIO_printf(bio_err, "-inkey file     input key\n");
+	BIO_printf(bio_err, "-keyform arg    private key format - default PEM\n");
 	BIO_printf(bio_err, "-pubin          input is an RSA public\n");
 	BIO_printf(bio_err, "-certin         input is a certificate carrying an RSA public key\n");
 	BIO_printf(bio_err, "-ssl            use SSL v2 padding\n");
@@ -298,6 +302,8 @@ static void usage()
 	BIO_printf(bio_err, "-encrypt        encrypt with public key\n");
 	BIO_printf(bio_err, "-decrypt        decrypt with private key\n");
 	BIO_printf(bio_err, "-hexdump        hex dump output\n");
+	BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
+
 }
 
 #endif
