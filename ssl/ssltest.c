@@ -705,9 +705,21 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 
 			if (!progress && !prev_progress)
 				if (cw_num > 0 || cr_num > 0 || sw_num > 0 || sr_num > 0)
-					 /* can't happen */
 					{
 					fprintf(stderr, "ERROR: got stuck\n");
+					if (strcmp("SSLv2", SSL_get_version(c_ssl)) == 0)
+						{
+						fprintf(stderr, "This can happen for SSL2 because "
+							"CLIENT-FINISHED and SERVER-VERIFY are written \n"
+							"concurrently ...");
+						if (strncmp("2SCF", SSL_state_string(c_ssl), 4) == 0
+							&& strncmp("2SSV", SSL_state_string(s_ssl), 4) == 0)
+							{
+							fprintf(stderr, " ok.\n");
+							goto end;
+							}
+						}
+					fprintf(stderr, " ERROR.\n");
 					goto err;
 					}
 			prev_progress = progress;
@@ -721,6 +733,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 			SSL_get_version(c_ssl),
 			SSL_CIPHER_get_version(ciph),
 			SSL_CIPHER_get_name(ciph));
+ end:
 	ret = 0;
 
  err:

@@ -186,7 +186,6 @@ static int bio_read(BIO *bio, char *buf, int size_)
 		}
 	while (rest);
 	
-	peer_b->request -= size;
 	return size;
 	}
 
