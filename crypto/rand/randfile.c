@@ -162,6 +162,13 @@ int RAND_write_file(const char *file)
 		ret+=i;
 		if (n <= 0) break;
 		}
+#ifdef VMS
+	/* We may have updated an existing file using mode "rb+",
+	 * now remove any old extra bytes */
+	if (ret > 0)
+		ftruncate(fileno(out), ret);
+#endif
+
 	fclose(out);
 	memset(buf,0,BUFSIZE);
 err:
