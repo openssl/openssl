@@ -49,7 +49,11 @@ specific SSL object. The specific information is kept, when
 L<SSL_clear(3)|SSL_clear(3)> is called for this SSL object.
 
 SSL_CTX_use_certificate() loads the certificate B<x> into B<ctx>,
-SSL_use_certificate() loads B<x> into B<ssl>.
+SSL_use_certificate() loads B<x> into B<ssl>. The rest of the
+certificates needed to form the complete certificate chain can be
+specified using the
+L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>
+function.
 
 SSL_CTX_use_certificate_ASN1() loads the ASN1 encoded certificate from
 the memory location B<d> (with length B<len>) into B<ctx>,
@@ -59,6 +63,8 @@ SSL_CTX_use_certificate_file() loads the first certificate stored in B<file>
 into B<ctx>. The formatting B<type> of the certificate must be specified
 from the known types SSL_FILETYPE_PEM, SSL_FILETYPE_ASN1.
 SSL_use_certificate_file() loads the certificate from B<file> into B<ssl>.
+See the NOTES section on why SSL_CTX_use_certificate_chain_file()
+should be preferred.
 
 SSL_CTX_use_certificate_chain_file() loads a certificate chain from 
 B<file> into B<ctx>. The certificates must be in PEM format and must
@@ -111,7 +117,13 @@ in the file to the certificate store. The other certificates are added
 to the store of chain certificates using
 L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>.
 There exists only one extra chain store, so that the same chain is appended
-to both types of certificates, RSA and DSA!
+to both types of certificates, RSA and DSA! If it is not intented to use
+both type of certificate at the same time, it is recommended to use the
+SSL_CTX_use_certificate_chain_file() instead of the
+SSL_CTX_use_certificate_file() function in order to allow the use of
+complete certificate chains even when no trusted CA storage is used or
+when the CA issuing the certificate shall not be added to the trusted
+CA storage.
 
 If additional certificates are needed to complete the chain during the
 TLS negotiation, CA certificates are additionally looked up in the
