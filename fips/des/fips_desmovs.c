@@ -21,7 +21,7 @@
 #include <openssl/fips.h>
 #include <openssl/err.h>
 
-//#define AES_BLOCK_SIZE 16
+/*#define AES_BLOCK_SIZE 16*/
 
 #define VERBOSE 0
 
@@ -266,7 +266,7 @@ void do_mct(char *amode,
 	    FILE *rfp)
     {
     int i,imode;
-    unsigned char nk[16]; // double size to make the bitshift easier
+    unsigned char nk[16]; /* double size to make the bitshift easier */
 
     for (imode=0 ; imode < 6 ; ++imode)
 	if(!strcmp(amode,t_mode[imode]))
@@ -309,12 +309,12 @@ void do_mct(char *amode,
 	    if(j == 9999)
 		{
 		OutputValue(t_tag[dir],text,len,rfp,imode == CFB1);
-		//		memcpy(ivec,text,8);
+		/*		memcpy(ivec,text,8); */
 		}
-	    //	    DebugValue("iv",ctx.iv,8);
+	    /*	    DebugValue("iv",ctx.iv,8); */
 	    /* accumulate material for the next key */
 	    shiftin(nk,text,Sizes[imode]);
-	    //	    DebugValue("nk",nk,8);
+	    /*	    DebugValue("nk",nk,8); */
 	    if(imode == CFB1 || imode == CFB8 || imode == CBC)
 		memcpy(text,old_iv,8);
 	    }

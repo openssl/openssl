@@ -65,7 +65,7 @@ int FIPS_mode_set(int onoff)
     {
     if(onoff)
 	{
-	char buf[24];
+	unsigned char buf[24];
 
 	/* Don't go into FIPS mode twice, just so we can do automagic
 	   seeding */

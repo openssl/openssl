@@ -74,7 +74,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-//#include "cryptlib.h"
+/*#include "cryptlib.h"*/
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
