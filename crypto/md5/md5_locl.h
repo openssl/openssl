@@ -68,7 +68,7 @@
 #ifdef MD5_ASM
 # if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
 #  define md5_block_host_order md5_block_asm_host_order
-# elif defined(__sparc) && defined(OPENSSL_SYS_ULTRASPARC)
+# elif defined(__sparc) && defined(OPENSSL_SYSNAME_ULTRASPARC)
    void md5_block_asm_data_order_aligned (MD5_CTX *c, const MD5_LONG *p,int num);
 #  define HASH_BLOCK_DATA_ORDER_ALIGNED md5_block_asm_data_order_aligned
 # endif
