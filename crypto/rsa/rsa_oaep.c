@@ -130,14 +130,13 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	    if (db[i] != 0x00)
 		break;
 	if (db[i] != 0x01 || i++ >= dblen)
-	    RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP,
-		   RSA_R_OAEP_DECODING_ERROR);
+	  goto decoding_err;
 	else
 	    {
 	    mlen = dblen - i;
 	    if (tlen < mlen)
 		{
-		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP, RSA_R_DATA_TOO_LARGE);
+		RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_DATA_TOO_LARGE);
 		mlen = -1;
 		}
 	    else
