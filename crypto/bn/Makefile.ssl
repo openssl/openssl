@@ -102,6 +102,9 @@ asm/sparcv8.o: asm/sparcv8.S
 
 asm/sparcv8plus.o: asm/sparcv8plus.S
 
+asm/sparcv8plus-gcc.o: asm/sparcv8plus.S
+	gcc -E asm/sparcv8plus.S | as -xarch=v8plus /dev/fd/0 -o asm/sparcv8plus-gcc.o
+
 # MIPS 64 bit assember 
 asm/mips3.o: asm/mips3.s
 	/usr/bin/as -mips3 -O2 -o asm/mips3.o asm/mips3.s            

@@ -283,6 +283,14 @@ if [ $? = "0" ]; then
   CC=gcc
 else
   CC=cc
+  if [ "$SYSTEM" = "SunOS" ]
+  then
+   case `cc -V 2>&1` in
+    *4*) CC=sc4;;
+    *5*) CC=sc5;;
+    *) CC=cc;;
+   esac
+  fi
 fi
 
 # read the output of the embedded GuessOS 
@@ -298,6 +306,7 @@ case "$GUESSOS" in
   ppc-*-linux2) OUT="linux-ppc" ;;
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux1) OUT="linux-aout" ;;
+  sun4u-sun-solaris2) OUT="solaris-usparc-$CC" ;;
   sun4*-sun-solaris2) OUT="solaris-sparc-$CC" ;;
   *86*-sun-solaris2) OUT="solaris-x86-$CC" ;;
   *-*-sunos4) OUT="sunos-$CC" ;;
@@ -374,6 +383,6 @@ if [ $? = "0" ]; then
     $PERL ./Configure $OUT $options
   fi
 else
-  echo "This system is not supported. See file INSTALL for details."
+  echo "This system ($OUT) is not supported. See file INSTALL for details."
 fi
 )
