@@ -7,10 +7,10 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],"rc4-586.pl");
 
-$tx="eax";
-$ty="ebx";
-$x="ecx";
-$y="edx";
+$x="eax";
+$y="ebx";
+$tx="ecx";
+$ty="edx";
 $in="esi";
 $out="edi";
 $d="ebp";
@@ -31,7 +31,7 @@ sub RC4_loop
 			{
 			 &mov($ty,	&swtmp(2));
 			&cmp($ty,	$in);
-			 &jle(&label("finished"));
+			 &jbe(&label("finished"));
 			&inc($in);
 			}
 		else
@@ -39,7 +39,7 @@ sub RC4_loop
 			&add($ty,	8);
 			 &inc($in);
 			&cmp($ty,	$in);
-			 &jl(&label("finished"));
+			 &jb(&label("finished"));
 			&mov(&swtmp(2),	$ty);
 			}
 		}
@@ -88,35 +88,44 @@ sub RC4
 
 	&function_begin_B($name,"");
 
+	&mov($ty,&wparam(1));		# len
+	&cmp($ty,0);
+	&jne(&label("proceed"));
+	&ret();
+	&set_label("proceed");
+
 	&comment("");
 
 	&push("ebp");
 	 &push("ebx");
-	&mov(	$d,	&wparam(0));	# key
-	 &mov(	$ty,	&wparam(1));	# num
 	&push("esi");
 	 &push("edi");
+	&mov(	$d,	&wparam(0));	# key
+	 &mov(	$in,	&wparam(2));
 
 	&mov(	$x,	&DWP(0,$d,"",1));
 	 &mov(	$y,	&DWP(4,$d,"",1));
 
-	&mov(	$in,	&wparam(2));
+	&mov(	$out,	&wparam(3));
 	 &inc(	$x);
 
 	&stack_push(3);	# 3 temp variables
 	 &add(	$d,	8);
 	&and(	$x,		0xff);
 
+	# detect compressed schedule, see commentary section in rc4_skey.c...
+	&cmp(&DWP(256,$d),-1);
+	&je(&label("RC4_CHAR"));
+
 	 &lea(	$ty,	&DWP(-8,$ty,$in));
 
 	# check for 0 length input
 
-	&mov(	$out,	&wparam(3));
 	 &mov(	&swtmp(2),	$ty);	# this is now address to exit at
 	&mov(	$tx,	&DWP(0,$d,$x,4));
 
 	 &cmp(	$ty,	$in);
-	&jl(	&label("end")); # less than 8 bytes
+	&jb(	&label("end")); # less than 8 bytes
 
 	&set_label("start");
 
@@ -148,7 +157,7 @@ sub RC4
 	&mov(	&DWP(-4,$out,"",0),	$tx);
 	 &mov(	$tx,		&DWP(0,$d,$x,4));
 	&cmp($in,	$ty);
-	 &jle(&label("start"));
+	 &jbe(&label("start"));
 
 	&set_label("end");
 
@@ -161,6 +170,32 @@ sub RC4
 	&RC4_loop(4,0,1);
 	&RC4_loop(5,0,1);
 	&RC4_loop(6,1,1);
+
+	&jmp(&label("finished"));
+
+	&align(16);
+	# this is essentially Intel P4 specific codepath, see rc4_skey.c...
+	&set_label("RC4_CHAR");
+
+	&lea	($ty,&DWP(0,$in,$ty));
+	&mov	(&swtmp(2),$ty);
+
+	# strangely enough unrolled loop performs over 20% slower...
+	&set_label("RC4_CHAR_loop");
+		&movz	($tx,&BP(0,$d,$x));
+		&add	(&LB($y),&LB($tx));
+		&movz	($ty,&BP(0,$d,$y));
+		&movb	(&BP(0,$d,$y),&LB($tx));
+		&movb	(&BP(0,$d,$x),&LB($ty));
+		&add	(&LB($ty),&LB($tx));
+		&movz	($ty,&BP(0,$d,$ty));
+		&xorb	(&LB($ty),&BP(0,$in));
+		&movb	(&BP(0,$out),&LB($ty));
+		&inc	(&LB($x));
+		&inc	($in);
+		&inc	($out);
+		&cmp	($in,&swtmp(2));
+	&jb	(&label("RC4_CHAR_loop"));
 
 	&set_label("finished");
 	&dec(	$x);

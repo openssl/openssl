@@ -14,11 +14,12 @@ OPENSSL_ia32cap
 Value returned by OPENSSL_ia32cap_loc() is address of a variable
 containing IA-32 processor capabilities bit vector as it appears in EDX
 register after executing CPUID instruction with EAX=1 input value (see
-Intel Application Note #241618). Naturally it's meaningful on IA-32
+Intel Application Note #241618). Naturally it's meaningful on IA-32[E]
 platforms only. The variable is normally set up automatically upon
 toolkit initialization, but can be manipulated afterwards to modify
-crypto library behaviour. For the moment of this writing only two bits
-are significant, namely bit #26 denoting SSE2 support, and bit #4
+crypto library behaviour. For the moment of this writing three bits are
+significant, namely bit #28 denoting Hyperthreading, which is used to
+distinguish Intel P4 core, bit #26 denoting SSE2 support, and bit #4
 denoting presence of Time-Stamp Counter. Clearing bit #26 at run-time
 for example disables high-performance SSE2 code present in the crypto
 library. You might have to do this if target OpenSSL application is

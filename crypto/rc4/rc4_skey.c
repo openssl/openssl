@@ -93,25 +93,58 @@ void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
         unsigned int i;
         
         d= &(key->data[0]);
-	for (i=0; i<256; i++)
-		d[i]=i;
         key->x = 0;     
         key->y = 0;     
         id1=id2=0;     
 
-#define SK_LOOP(n) { \
+#define SK_LOOP(d,n) { \
 		tmp=d[(n)]; \
 		id2 = (data[id1] + tmp + id2) & 0xff; \
 		if (++id1 == len) id1=0; \
 		d[(n)]=d[id2]; \
 		d[id2]=tmp; }
 
+#if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM)
+# if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
+	defined(__INTEL__) || \
+	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64)
+	if (sizeof(RC4_INT) > 1) {
+		/*
+		 * Unlike all other x86 [and x86_64] implementations,
+		 * Intel P4 core [including EM64T] was found to perform
+		 * poorly with wider RC4_INT. Performance improvement
+		 * for IA-32 hand-coded assembler turned out to be 2.8x
+		 * if re-coded for RC4_CHAR! It's however inappropriate
+		 * to just switch to RC4_CHAR for x86[_64], as non-P4
+		 * implementations suffer from significant performance
+		 * losses then, e.g. PIII exhibits >2x deterioration,
+		 * and so does Opteron. In order to assure optimal
+		 * all-round performance, let us [try to] detect P4 at
+		 * run-time by checking upon HTT bit in CPU capability
+		 * vector and set up compressed key schedule, which is
+		 * recognized by correspondingly updated assembler
+		 * module...
+		 *				<appro@fy.chalmers.se>
+		 */
+		if (OPENSSL_ia32cap_P & (1<<28)) {
+			unsigned char *cp=(unsigned char *)d;
+
+			for (i=0;i<256;i++) cp[i]=i;
+			for (i=0;i<256;i++) SK_LOOP(cp,i);
+			/* mark schedule as compressed! */
+			d[256/sizeof(RC4_INT)]=-1;
+			return;
+		}
+	}
+# endif
+#endif
+	for (i=0; i < 256; i++) d[i]=i;
 	for (i=0; i < 256; i+=4)
 		{
-		SK_LOOP(i+0);
-		SK_LOOP(i+1);
-		SK_LOOP(i+2);
-		SK_LOOP(i+3);
+		SK_LOOP(d,i+0);
+		SK_LOOP(d,i+1);
+		SK_LOOP(d,i+2);
+		SK_LOOP(d,i+3);
 		}
 	}
     

@@ -25,6 +25,13 @@
 # Latter means that if you want to *estimate* what to expect from
 # *your* CPU, then multiply 54 by 3.3 and clock frequency in GHz.
 
+# Intel P4 EM64T core was found to run the AMD64 code really slow...
+# The only way to achieve comparable performance on P4 is to keep
+# RC4_CHAR. Kind of ironic, huh? As it's apparently impossible to
+# compose blended code, which would perform even within 30% marginal
+# on either AMD and Intel platforms, I implement both cases. See
+# rc4_skey.c for further details...
+
 $output=shift;
 
 $win64a=1 if ($output =~ /win64a.[s|asm]/);
@@ -90,6 +97,8 @@ $code.=<<___;
 	add	\$8,$dat
 	movl	`&PTR("DWORD:-8[$dat]")`,$XX#d
 	movl	`&PTR("DWORD:-4[$dat]")`,$YY#d
+	cmpl	\$-1,`&PTR("DWORD:256[$dat]")`
+	je	.LRC4_CHAR
 	test	\$-8,$len
 	jz	.Lloop1
 .align	16
@@ -167,6 +176,24 @@ $code.=<<___;
 	dec	$len
 	jnz	.Lloop1
 	jmp	.Lexit
+
+.align	16
+.LRC4_CHAR:
+	inc	$XX#b
+	movzb	`&PTR("BYTE:[$dat+$XX]")`,$TX#d
+	add	$TX#b,$YY#b
+	movzb	`&PTR("BYTE:[$dat+$YY]")`,$TY#d
+	movb	$TX#b,`&PTR("BYTE:[$dat+$YY]")`
+	movb	$TY#b,`&PTR("BYTE:[$dat+$XX]")`
+	add	$TX#b,$TY#b
+	movzb	`&PTR("BYTE:[$dat+$TY]")`,$TY#d
+	xorb	`&PTR("BYTE:[$inp]")`,$TY#b
+	movb	$TY#b,`&PTR("BYTE:[$out]")`
+	inc	$inp
+	inc	$out
+	dec	$len
+	jnz	.LRC4_CHAR
+	jmp	.Lexit
 ___
 $code.=<<___ if (defined($win64a));
 RC4	ENDP
@@ -189,6 +216,8 @@ if (defined($win64a)) {
     $code =~ s/mov[bwlq]/mov/gm;
     $code =~ s/movzb/movzx/gm;
     $code =~ s/repret/DB\t0F3h,0C3h/gm;
+    $code =~ s/cmpl/cmp/gm;
+    $code =~ s/xorb/xor/gm;
 } else {
     $code =~ s/([QD]*WORD|BYTE)://gm;
     $code =~ s/repret/.byte\t0xF3,0xC3/gm;
