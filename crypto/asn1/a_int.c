@@ -397,7 +397,16 @@ ASN1_INTEGER *BN_to_ASN1_INTEGER(BIGNUM *bn, ASN1_INTEGER *ai)
 	else ret->type=V_ASN1_INTEGER;
 	j=BN_num_bits(bn);
 	len=((j == 0)?0:((j/8)+1));
-	ret->data=(unsigned char *)OPENSSL_malloc(len+4);
+	if (ret->length < len+4)
+		{
+		char *new_data=(char *)OPENSSL_realloc(ret->data, len+4);
+		if (!new_data)
+			{
+			ASN1err(ASN1_F_BN_TO_ASN1_INTEGER,ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+		ret->data=new_data;
+		}
 	ret->length=BN_bn2bin(bn,ret->data);
 	/* Correct zero case */
 	if(!ret->length)

@@ -119,7 +119,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 		dsa->write_params=0;
 		ASN1_TYPE_free(a->parameter);
 		i=i2d_DSAparams(dsa,NULL);
-		p=(unsigned char *)OPENSSL_malloc(i);
+		if ((p=(unsigned char *)OPENSSL_malloc(i)) == NULL) goto err;
 		pp=p;
 		i2d_DSAparams(dsa,&pp);
 		a->parameter=ASN1_TYPE_new();
@@ -189,7 +189,11 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 		}
 
 	if ((i=i2d_PublicKey(pkey,NULL)) <= 0) goto err;
-	if ((s=(unsigned char *)OPENSSL_malloc(i+1)) == NULL) goto err;
+	if ((s=(unsigned char *)OPENSSL_malloc(i+1)) == NULL)
+		{
+		X509err(X509_F_X509_PUBKEY_SET,ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
 	p=s;
 	i2d_PublicKey(pkey,&p);
 	if (!M_ASN1_BIT_STRING_set(pk->public_key,s,i)) goto err;
