@@ -69,6 +69,7 @@
 #undef NON_MAIN
 #include "s_apps.h"
 #include <openssl/ssl.h>
+#include <openssl/e_os2.h>
 
 /* With IPv6, it looks like Digital has mixed up the proper order of
    recursive header file inclusion, resulting in the compiler complaining

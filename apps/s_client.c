@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/opensslconf.h>
+#include <openssl/e_os2.h>
 #ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif

@@ -62,7 +62,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <openssl/opensslconf.h>
+#include <openssl/e_os2.h>
 #ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif
