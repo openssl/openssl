@@ -64,6 +64,10 @@
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
 
+#ifdef NEG_PUBKEY_BUG
+#define d2i_ASN1_INTEGER d2i_ASN1_UINTEGER
+#endif
+
 DSA *d2i_DSAparams(DSA **a, unsigned char **pp, long length)
 	{
 	int i=ERR_R_NESTED_ASN1_ERROR;

@@ -518,6 +518,8 @@ int 		d2i_ASN1_BOOLEAN(int *a,unsigned char **pp,long length);
 int		i2d_ASN1_INTEGER(ASN1_INTEGER *a,unsigned char **pp);
 ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a,unsigned char **pp,
 			long length);
+ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a,unsigned char **pp,
+			long length);
 
 int		i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a,unsigned char **pp);
 ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a,unsigned char **pp,
@@ -739,6 +741,7 @@ ASN1_STRING *ASN1_pack_string(char *obj, int (*i2d)(), ASN1_OCTET_STRING **oct);
 #define ASN1_F_D2I_ASN1_TIME				 224
 #define ASN1_F_D2I_ASN1_TYPE				 133
 #define ASN1_F_D2I_ASN1_TYPE_BYTES			 134
+#define ASN1_F_D2I_ASN1_UINTEGER			 280
 #define ASN1_F_D2I_ASN1_UTCTIME				 135
 #define ASN1_F_D2I_ASN1_UTF8STRING			 266
 #define ASN1_F_D2I_ASN1_VISIBLESTRING			 267

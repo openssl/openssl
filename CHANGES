@@ -10,6 +10,12 @@
                                    [23-Dec-1998] down below; but in later
                                    versions, these hyphens are gone.]
 
+  *) Fix the encoding and decoding of negative ASN1 INTEGERS and conversion
+     to and from BNs: it was completely broken. New compilation option
+     NEG_PUBKEY_BUG to allow for some broken certificates that encode public
+     key elements as negative integers.
+     [Steve Henson]
+
   *) Reorganize and speed up MD5.
      [Andy Polyakov <appro@fy.chalmers.se>]
 

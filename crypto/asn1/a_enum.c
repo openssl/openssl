@@ -60,12 +60,15 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
-/* Support for ASN1 ENUMERATED type: based on a_int.c */
+/* 
+ * Code for ENUMERATED type: identical to INTEGER apart from a different tag.
+ * for comments on encoding see a_int.c
+ */
 
 int i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **pp)
 	{
 	int pad=0,ret,r,i,t;
-	unsigned char *p,*pt,*n,pb=0;
+	unsigned char *p,*n,pb=0;
 
 	if ((a == NULL) || (a->data == NULL)) return(0);
 	t=a->type;
@@ -75,16 +78,21 @@ int i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **pp)
 		{
 		ret=a->length;
 		i=a->data[0];
-		if ((t == V_ASN1_ENUMERATED) && (i > 127))
-			{
+		if ((t == V_ASN1_ENUMERATED) && (i > 127)) {
 			pad=1;
 			pb=0;
+		} else if(t == V_ASN1_NEG_ENUMERATED) {
+			if(i>128) {
+				pad=1;
+				pb=0xFF;
+			} else if(i == 128) {
+				for(i = 1; i < a->length; i++) if(a->data[i]) {
+						pad=1;
+						pb=0xFF;
+						break;
+				}
 			}
-		else if ((t == V_ASN1_NEG_ENUMERATED) && (i>128))
-			{
-			pad=1;
-			pb=0xFF;
-			}
+		}
 		ret+=pad;
 		}
 	r=ASN1_object_size(0,ret,V_ASN1_ENUMERATED);
@@ -100,14 +108,24 @@ int i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **pp)
 		memcpy(p,a->data,(unsigned int)a->length);
 		p+=a->length;
 		}
-	else
-		{
-		n=a->data;
-		pt=p;
-		for (i=a->length; i>0; i--)
-			*(p++)= (*(n++)^0xFF)+1;
-		if (!pad) *pt|=0x80;
+	else {
+		/* Begin at the end of the encoding */
+		n=a->data + a->length - 1;
+		p += a->length - 1;
+		i = a->length;
+		/* Copy zeros to destination as long as source is zero */
+		while(!*n) {
+			*(p--) = 0;
+			n--;
+			i--;
 		}
+		/* Complement and increment next octet */
+		*(p--) = ((*(n--)) ^ 0xff) + 1;
+		i--;
+		/* Complement any octets left */
+		for(;i > 0; i--) *(p--) = *(n--) ^ 0xff;
+		p += a->length;
+	}
 
 	*pp=p;
 	return(r);
@@ -156,16 +174,30 @@ ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a, unsigned char **pp,
 	if (*p & 0x80) /* a negative number */
 		{
 		ret->type=V_ASN1_NEG_ENUMERATED;
-		if (*p == 0xff)
-			{
+		if ((*p == 0xff) && (len != 1)) {
 			p++;
 			len--;
-			}
-		for (i=(int)len; i>0; i--)
-			*(to++)= (*(p++)^0xFF)+1;
 		}
-	else
-		{
+		i = len;
+		p += i - 1;
+		to += i - 1;
+		while((!*p) && i) {
+			*(to--) = 0;
+			i--;
+			p--;
+		}
+		if(!i) {
+			*s = 1;
+			s[len] = 0;
+			p += len;
+			len++;
+		} else {
+			*(to--) = (*(p--) ^ 0xff) + 1;
+			i--;
+			for(;i > 0; i--) *(to--) = *(p--) ^ 0xff;
+			p += len;
+		}
+	} else {
 		ret->type=V_ASN1_ENUMERATED;
 		if ((*p == 0) && (len != 1))
 			{
@@ -174,7 +206,7 @@ ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a, unsigned char **pp,
 			}
 		memcpy(s,p,(int)len);
 		p+=len;
-		}
+	}
 
 	if (ret->data != NULL) Free((char *)ret->data);
 	ret->data=s;
@@ -222,7 +254,6 @@ int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
 		d>>=8;
 		}
 	j=0;
-	if (v < 0) a->data[j++]=0;
 	for (k=i-1; k >=0; k--)
 		a->data[j++]=buf[k];
 	a->length=j;
@@ -272,7 +303,8 @@ ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai)
 		ASN1err(ASN1_F_BN_TO_ASN1_ENUMERATED,ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 		}
-	ret->type=V_ASN1_ENUMERATED;
+	if(bn->neg) ret->type = V_ASN1_NEG_ENUMERATED;
+	else ret->type=V_ASN1_ENUMERATED;
 	j=BN_num_bits(bn);
 	len=((j == 0)?0:((j/8)+1));
 	ret->data=(unsigned char *)Malloc(len+4);
@@ -289,5 +321,6 @@ BIGNUM *ASN1_ENUMERATED_to_BN(ASN1_ENUMERATED *ai, BIGNUM *bn)
 
 	if ((ret=BN_bin2bn(ai->data,ai->length,bn)) == NULL)
 		ASN1err(ASN1_F_ASN1_ENUMERATED_TO_BN,ASN1_R_BN_LIB);
+	if(ai->type == V_ASN1_NEG_ENUMERATED) bn->neg = 1;
 	return(ret);
 	}
