@@ -222,10 +222,20 @@ int MAIN(int argc, char **argv)
 			LN_md4,LN_md4);
 		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
 			LN_md2,LN_md2);
+#ifndef OPENSSL_NO_SHA
 		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
 			LN_sha1,LN_sha1);
 		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
 			LN_sha,LN_sha);
+#ifndef OPENSSL_NO_SHA256
+		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
+			LN_sha256,LN_sha256);
+#endif
+#ifndef OPENSSL_NO_SHA512
+		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
+			LN_sha512,LN_sha512);
+#endif
+#endif
 		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
 			LN_mdc2,LN_mdc2);
 		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",

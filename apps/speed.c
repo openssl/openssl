@@ -1576,6 +1576,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 
+#ifndef OPENSSL_NO_SHA256
 	if (doit[D_SHA256])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -1588,7 +1589,9 @@ int MAIN(int argc, char **argv)
 			print_result(D_SHA256,j,count,d);
 			}
 		}
+#endif
 
+#ifndef OPENSSL_NO_SHA512
 	if (doit[D_SHA512])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -1601,6 +1604,8 @@ int MAIN(int argc, char **argv)
 			print_result(D_SHA512,j,count,d);
 			}
 		}
+#endif
+
 #endif
 #ifndef OPENSSL_NO_RIPEMD
 	if (doit[D_RMD160])
