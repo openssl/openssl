@@ -85,13 +85,17 @@ top:
 
 all:	exe
 
-exe:	$(EXE)
+exe:	$(EXE) dummytest
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
 	@@$(TOP)/util/point.sh Makefile.ssl Makefile
+
+generate: $(SRC)
+$(SRC):
+	@$(TOP)/util/point.sh dummytest.c $@
 
 errors:
 
@@ -316,6 +320,9 @@ $(METHTEST): $(METHTEST).o $(DLIBCRYPTO)
 
 $(SSLTEST): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
 	$(CC) -o $(SSLTEST) $(CFLAGS) $(SSLTEST).o $(PEX_LIBS) $(LIBSSL) $(LIBCRYPTO) $(EX_LIBS)
+
+dummytest: dummytest.o $(DLIBCRYPTO)
+	$(CC) -o dummytest $(CFLAGS) dummytest.o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

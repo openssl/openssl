@@ -477,7 +477,7 @@ my %table=(
 
 # Cygwin
 "Cygwin-pre1.3", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -m486 -Wall::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
-"Cygwin", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32:cygwin-shared:::.dll",
+"Cygwin", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -march=486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32:cygwin-shared:::.dll",
 
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
 "ultrix-cc","cc:-std1 -O -Olimit 1000 -DL_ENDIAN::(unknown)::::::",
@@ -577,6 +577,7 @@ my $libs;
 my $target;
 my $options;
 my $symlink;
+my $make_depend=0;
 
 my @argvcopy=@ARGV;
 my $argvstring="";
@@ -1188,11 +1189,13 @@ if($IsWindows) {
 EOF
 	close(OUT);
 } else {
-	(system "make -f Makefile.ssl PERL=\'$perl\' links") == 0 or exit $?
-		if $symlink;
-	### (system 'make depend') == 0 or exit $? if $depflags ne "";
-	# Run "make depend" manually if you want to be able to delete
-	# the source code files of ciphers you left out.
+	my $make_command = "make -f Makefile.ssl PERL=\'$perl\'";
+	my $make_targets = "";
+	$make_targets .= " links" if $symlink;
+	$make_targets .= " depend" if $depflags ne "" && $make_depend;
+	$make_targets .= " gentests" if $symlink;
+	(system $make_command.$make_targets) == 0 or exit $?
+		if $make_targets ne "";
 	if ( $perl =~ m@^/@) {
 	    &dofile("tools/c_rehash",$perl,'^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";');
 	    &dofile("apps/der_chop",$perl,'^#!/', '#!%s');
@@ -1202,6 +1205,15 @@ EOF
 	    &dofile("tools/c_rehash",'/usr/local/bin/perl','^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";');
 	    &dofile("apps/der_chop",'/usr/local/bin/perl','^#!/', '#!%s');
 	    &dofile("apps/CA.pl",'/usr/local/bin/perl','^#!/', '#!%s');
+	}
+	if ($depflags ne "" && !$make_depend) {
+		print <<EOF;
+
+Since you've disabled at least one algorithm, you need to do the following
+before building:
+
+	make depend
+EOF
 	}	    
 }
 
