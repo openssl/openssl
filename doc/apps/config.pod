@@ -10,7 +10,8 @@ config - OpenSSL CONF library configuration files
 The OpenSSL CONF library can be used to read configuration files.
 It is used for the OpenSSL master configuration file B<openssl.cnf>
 and in a few other places like B<SPKAC> files and certificate extension
-files for the B<x509> utility.
+files for the B<x509> utility. OpenSSL applications can also use the
+CONF library for their own purposes.
 
 A configuration file is divided into a number of sections. Each section
 starts with a line B<[ section_name ]> and ends when a new section is
@@ -51,13 +52,71 @@ or the B<\> character. By making the last character of a line a B<\>
 a B<value> string can be spread across multiple lines. In addition
 the sequences B<\n>, B<\r>, B<\b> and B<\t> are recognized.
 
+=head1 OPENSSL LIBRARY CONFIGURATION
+
+In OpenSSL 0.9.7 and later applications can automatically configure certain
+aspects of OpenSSL using the master OpenSSL configuration file, or optionally
+an alternative configuration file. The B<openssl> utility includes this
+functionality: any sub command uses the master OpenSSL configuration file
+unless an option is used in the sub command to use an alternative configuration
+file.
+
+To enable library configuration the default section needs to contain an 
+appropriate line which points to the main configuration section. The default
+name is B<openssl_conf> which is used by the B<openssl> utility. Other
+applications may use an alternative name such as B<myapplicaton_conf>.
+
+The configuration section should consist of a set of name value pairs which
+contain specific module configuration information. The B<name> represents
+the name of the I<configuration module> the meaning of the B<value> is 
+module specific: it may, for example, represent a further configuration
+section containing configuration module specific information. E.g.
+
+ openssl_conf = openssl_init
+
+ [openssl_init]
+
+ oid_section = new_oids
+ engines = engine_section
+
+ [new_oids]
+
+ ... new oids here ...
+
+ [engine_section]
+
+ ... engine stuff here ...
+
+Currently there are two supported configuration modules supported. One for
+ASN1 objects another for ENGINE configuration.
+
+=head2 ASN1 OBJECT CONFIGURATION MODULE
+
+This module has the name B<oid_section>. The value of this variable points
+to a section containing name value pairs of OIDs: the name is the OID short
+and long name, the value is the numerical form of the OID. Although some of
+the B<openssl> utility sub commands already have their own ASN1 OBJECT section
+functionality not all do. By using the ASN1 OBJECT configuration module
+B<all> the B<openssl> utility sub commands can see the new objects as well
+as any compliant applications. For example:
+
+ [new_oids]
+ 
+ some_new_oid = 1.2.3.4
+ some_other_oid = 1.2.3.5
+
+=head2 ENGINE CONFIGURATION MODULE
+
+To be continued...
+
 =head1 NOTES
 
 If a configuration file attempts to expand a variable that doesn't exist
 then an error is flagged and the file will not load. This can happen
 if an attempt is made to expand an environment variable that doesn't
-exist. For example the default OpenSSL master configuration file used
-the value of B<HOME> which may not be defined on non Unix systems.
+exist. For example in a previous version of OpenSSL the default OpenSSL
+master configuration file used the value of B<HOME> which may not be
+defined on non Unix systems and would cause an error.
 
 This can be worked around by including a B<default> section to provide
 a default value: then if the environment lookup fails the default value

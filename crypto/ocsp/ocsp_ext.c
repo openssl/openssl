@@ -305,6 +305,8 @@ err:
 
 /* Add a nonce to an extension stack. A nonce can be specificed or if NULL
  * a random nonce will be generated.
+ * Note: OpenSSL 0.9.7d and later create an OCTET STRING containing the 
+ * nonce, previous versions used the raw nonce.
  */
 
 static int ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts, unsigned char *val, int len)
@@ -313,20 +315,28 @@ static int ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts, unsigned char *val, 
 	ASN1_OCTET_STRING os;
 	int ret = 0;
 	if (len <= 0) len = OCSP_DEFAULT_NONCE_LENGTH;
-	if (val) tmpval = val;
+	/* Create the OCTET STRING manually by writing out the header and
+	 * appending the content octets. This avoids an extra memory allocation
+	 * operation in some cases. Applications should *NOT* do this because
+         * it relies on library internals.
+	 */
+	os.length = ASN1_object_size(0, len, V_ASN1_OCTET_STRING);
+	os.data = OPENSSL_malloc(os.length);
+	if (os.data == NULL)
+		goto err;
+	tmpval = os.data;
+	ASN1_put_object(&tmpval, 0, len, V_ASN1_OCTET_STRING, V_ASN1_UNIVERSAL);
+	if (val)
+		memcpy(tmpval, val, len);
 	else
-		{
-		if (!(tmpval = OPENSSL_malloc(len))) goto err;
 		RAND_pseudo_bytes(tmpval, len);
-		}
-	os.data = tmpval;
-	os.length = len;
 	if(!X509V3_add1_i2d(exts, NID_id_pkix_OCSP_Nonce,
 			&os, 0, X509V3_ADD_REPLACE))
 				goto err;
 	ret = 1;
 	err:
-	if(!val) OPENSSL_free(tmpval);
+	if (os.data)
+		OPENSSL_free(os.data);
 	return ret;
 	}
 
