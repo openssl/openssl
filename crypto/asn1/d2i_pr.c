@@ -62,8 +62,12 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/asn1.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+#endif
 
 EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, unsigned char **pp,
 	     long length)
