@@ -231,6 +231,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -CAfile arg   - PEM format file of CA's\n");
 	BIO_printf(bio_err," -nocert       - Don't use any certificates (Anon-DH)\n");
 	BIO_printf(bio_err," -cipher arg   - play with 'openssl ciphers' to see what goes here\n");
+	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences\n");
 	BIO_printf(bio_err," -quiet        - No server output\n");
 	BIO_printf(bio_err," -no_tmp_rsa   - Do not generate a tmp RSA key\n");
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
@@ -508,6 +509,8 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			CApath= *(++argv);
 			}
+		else if	(strcmp(*argv,"-serverpref") == 0)
+			{ off|=SSL_OP_CIPHER_SERVER_PREFERENCE; }
 		else if	(strcmp(*argv,"-cipher") == 0)
 			{
 			if (--argc < 1) goto bad;

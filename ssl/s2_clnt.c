@@ -287,7 +287,7 @@ static int get_server_hello(SSL *s)
 	unsigned char *buf;
 	unsigned char *p;
 	int i,j;
-	STACK_OF(SSL_CIPHER) *sk=NULL,*cl;
+	STACK_OF(SSL_CIPHER) *sk=NULL,*cl, *prio, *allow;
 
 	buf=(unsigned char *)s->init_buf->data;
 	p=buf;
@@ -414,27 +414,43 @@ static int get_server_hello(SSL *s)
 		sk_SSL_CIPHER_set_cmp_func(sk,ssl_cipher_ptr_id_cmp);
 
 		/* get the array of ciphers we will accept */
-		cl=ssl_get_ciphers_by_id(s);
+		cl=SSL_get_ciphers(s);
+		sk_SSL_CIPHER_set_cmp_func(cl,ssl_cipher_ptr_id_cmp);
 
+		/*
+		 * If server preference flag set, choose the first
+		 * (highest priority) cipher the server sends, otherwise
+		 * client preference has priority.
+		 */
+		if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE)
+		    {
+		    prio = sk;
+		    allow = cl;
+		    }
+		else
+		    {
+		    prio = cl;
+		    allow = sk;
+		    }
 		/* In theory we could have ciphers sent back that we
 		 * don't want to use but that does not matter since we
 		 * will check against the list we originally sent and
 		 * for performance reasons we should not bother to match
 		 * the two lists up just to check. */
-		for (i=0; i<sk_SSL_CIPHER_num(cl); i++)
+		for (i=0; i<sk_SSL_CIPHER_num(prio); i++)
 			{
-			if (sk_SSL_CIPHER_find(sk,
-					       sk_SSL_CIPHER_value(cl,i)) >= 0)
+			if (sk_SSL_CIPHER_find(allow,
+					     sk_SSL_CIPHER_value(prio,i)) >= 0)
 				break;
 			}
 
-		if (i >= sk_SSL_CIPHER_num(cl))
+		if (i >= sk_SSL_CIPHER_num(prio))
 			{
 			ssl2_return_error(s,SSL2_PE_NO_CIPHER);
 			SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_NO_CIPHER_MATCH);
 			return(-1);
 			}
-		s->session->cipher=sk_SSL_CIPHER_value(cl,i);
+		s->session->cipher=sk_SSL_CIPHER_value(prio,i);
 
 
 		if (s->session->peer != NULL) /* can't happen*/

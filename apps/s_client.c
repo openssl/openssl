@@ -151,6 +151,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
 	BIO_printf(bio_err," -no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
+	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences (only SSLv2)\n");
 	BIO_printf(bio_err," -cipher       - preferred cipher to use, use the 'openssl ciphers'\n");
 	BIO_printf(bio_err,"                 command to see what is available\n");
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
@@ -311,6 +312,8 @@ int MAIN(int argc, char **argv)
 			off|=SSL_OP_NO_SSLv3;
 		else if (strcmp(*argv,"-no_ssl2") == 0)
 			off|=SSL_OP_NO_SSLv2;
+		else if (strcmp(*argv,"-serverpref") == 0)
+			off|=SSL_OP_CIPHER_SERVER_PREFERENCE;
 		else if	(strcmp(*argv,"-cipher") == 0)
 			{
 			if (--argc < 1) goto bad;

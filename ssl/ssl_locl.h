@@ -565,8 +565,8 @@ void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
 int ssl3_enc(SSL *s, int send_data);
 int ssl3_mac(SSL *ssl, unsigned char *md, int send_data);
 unsigned long ssl3_output_cert_chain(SSL *s, X509 *x);
-SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,STACK_OF(SSL_CIPHER) *have,
-			       STACK_OF(SSL_CIPHER) *pref);
+SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,STACK_OF(SSL_CIPHER) *clnt,
+			       STACK_OF(SSL_CIPHER) *srvr);
 int	ssl3_setup_buffers(SSL *s);
 int	ssl3_new(SSL *s);
 void	ssl3_free(SSL *s);

@@ -755,7 +755,7 @@ static int ssl3_get_client_hello(SSL *s)
 			}
 		}
 
-	/* Given s->session->ciphers and ssl_get_ciphers_by_id(s), we must
+	/* Given s->session->ciphers and SSL_get_ciphers, we must
 	 * pick a cipher */
 
 	if (!s->hit)
@@ -772,7 +772,7 @@ static int ssl3_get_client_hello(SSL *s)
 			}
 		ciphers=NULL;
 		c=ssl3_choose_cipher(s,s->session->ciphers,
-				     ssl_get_ciphers_by_id(s));
+				     SSL_get_ciphers(s));
 
 		if (c == NULL)
 			{

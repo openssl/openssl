@@ -337,6 +337,9 @@ typedef struct ssl_session_st
 #define SSL_OP_SINGLE_DH_USE				0x00100000L
 /* Set to also use the tmp_rsa key when doing RSA operations. */
 #define SSL_OP_EPHEMERAL_RSA				0x00200000L
+/* Set on servers to choose the cipher according to the server's
+ * preferences */
+#define SSL_OP_CIPHER_SERVER_PREFERENCE			0x00400000L
 
 /* The next flag deliberately changes the ciphertest, this is a check
  * for the PKCS#1 attack */

@@ -450,6 +450,7 @@ static int get_client_hello(SSL *s)
 	unsigned char *p;
 	STACK_OF(SSL_CIPHER) *cs; /* a stack of SSL_CIPHERS */
 	STACK_OF(SSL_CIPHER) *cl; /* the ones we want to use */
+	STACK_OF(SSL_CIPHER) *prio, *allow;
 	int z;
 
 	/* This is a bit of a hack to check for the correct packet
@@ -555,21 +556,37 @@ static int get_client_hello(SSL *s)
 			&s->session->ciphers);
 		if (cs == NULL) goto mem_err;
 
-		cl=ssl_get_ciphers_by_id(s);
+		cl=SSL_get_ciphers(s);
 
-		for (z=0; z<sk_SSL_CIPHER_num(cs); z++)
+		if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE)
+		    {
+		    prio=sk_SSL_CIPHER_dup(cl);
+		    if (prio == NULL) goto mem_err;
+		    allow = cs;
+		    }
+		else
+		    {
+		    prio = cs;
+		    allow = cl;
+		    }
+		for (z=0; z<sk_SSL_CIPHER_num(prio); z++)
 			{
-			if (sk_SSL_CIPHER_find(cl,sk_SSL_CIPHER_value(cs,z)) < 0)
+			if (sk_SSL_CIPHER_find(allow,sk_SSL_CIPHER_value(prio,z)) < 0)
 				{
-				sk_SSL_CIPHER_delete(cs,z);
+				sk_SSL_CIPHER_delete(prio,z);
 				z--;
 				}
 			}
-
+		if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE)
+		    {
+		    sk_SSL_CIPHER_free(s->session->ciphers);
+		    s->session->ciphers = prio;
+		    }
 		/* s->session->ciphers should now have a list of
 		 * ciphers that are on both the client and server.
 		 * This list is ordered by the order the client sent
-		 * the ciphers.
+		 * the ciphers or in the order of the server's preference
+		 * if SSL_OP_CIPHER_SERVER_PREFERENCE was set.
 		 */
 		}
 	p+=s->s2->tmp.cipher_spec_length;

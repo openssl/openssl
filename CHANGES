@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New option SSL_OP_CIPHER_SERVER_PREFERENCE allows the server to override
+     the clients preferred ciphersuites and rather use its own preferences.
+     Should help to work around M$ SGC (Server Gated Cryptography) bug in
+     Internet Explorer by ensuring unchanged hash method during stepup.
+     [Lutz Jaenicke]
+
   *) Make mkdef.pl recognise all DECLARE_ASN1 macros, change rijndael
      to aes and add a new 'exist' option to print out symbols that don't
      appear to exist.

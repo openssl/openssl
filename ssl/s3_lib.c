@@ -1364,10 +1364,11 @@ int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 	return(2);
 	}
 
-SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *have,
-	     STACK_OF(SSL_CIPHER) *pref)
+SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
+	     STACK_OF(SSL_CIPHER) *srvr)
 	{
 	SSL_CIPHER *c,*ret=NULL;
+	STACK_OF(SSL_CIPHER) *prio, *allow;
 	int i,j,ok;
 	CERT *cert;
 	unsigned long alg,mask,emask;
@@ -1375,20 +1376,45 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *have,
 	/* Let's see which ciphers we can support */
 	cert=s->cert;
 
-	sk_SSL_CIPHER_set_cmp_func(pref,ssl_cipher_ptr_id_cmp);
+#if 0
+	/* Do not set the compare functions, because this may lead to a
+	 * reordering by "id". We want to keep the original ordering.
+	 * We may pay a price in performance during sk_SSL_CIPHER_find(),
+	 * but would have to pay with the price of sk_SSL_CIPHER_dup().
+	 */
+	sk_SSL_CIPHER_set_cmp_func(srvr, ssl_cipher_ptr_id_cmp);
+	sk_SSL_CIPHER_set_cmp_func(clnt, ssl_cipher_ptr_id_cmp);
+#endif
 
 #ifdef CIPHER_DEBUG
-        printf("Have %d from %p:\n", sk_SSL_CIPHER_num(pref), pref);
-        for(i=0 ; i < sk_SSL_CIPHER_num(pref) ; ++i)
+        printf("Server has %d from %p:\n", sk_SSL_CIPHER_num(srvr), srvr);
+        for(i=0 ; i < sk_SSL_CIPHER_num(srvr) ; ++i)
 	    {
-	    c=sk_SSL_CIPHER_value(pref,i);
+	    c=sk_SSL_CIPHER_value(srvr,i);
+	    printf("%p:%s\n",c,c->name);
+	    }
+        printf("Client sent %d from %p:\n", sk_SSL_CIPHER_num(clnt), clnt);
+        for(i=0 ; i < sk_SSL_CIPHER_num(clnt) ; ++i)
+	    {
+	    c=sk_SSL_CIPHER_value(clnt,i);
 	    printf("%p:%s\n",c,c->name);
 	    }
 #endif
 
-	for (i=0; i<sk_SSL_CIPHER_num(have); i++)
+	if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE)
+	    {
+	    prio = srvr;
+	    allow = clnt;
+	    }
+	else
+	    {
+	    prio = clnt;
+	    allow = srvr;
+	    }
+
+	for (i=0; i<sk_SSL_CIPHER_num(prio); i++)
 		{
-		c=sk_SSL_CIPHER_value(have,i);
+		c=sk_SSL_CIPHER_value(prio,i);
 
 		ssl_set_cert_masks(cert,c);
 		mask=cert->mask;
@@ -1418,10 +1444,10 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *have,
 
 		if (!ok) continue;
 	
-		j=sk_SSL_CIPHER_find(pref,c);
+		j=sk_SSL_CIPHER_find(allow,c);
 		if (j >= 0)
 			{
-			ret=sk_SSL_CIPHER_value(pref,j);
+			ret=sk_SSL_CIPHER_value(allow,j);
 			break;
 			}
 		}
