@@ -79,9 +79,11 @@ the popular web browsers without RSA support.
 
 * Is OpenSSL thread-safe?
 
-Yes.  On Windows and many Unix systems, OpenSSL automatically uses the
-multi-threaded versions of the standard libraries.  If your platform
-is not one of these, consult the INSTALL file.
+Yes (with limitations: an SSL connection may not concurrently be used
+by multiple threads).  On Windows and many Unix systems, OpenSSL
+automatically uses the multi-threaded versions of the standard
+libraries.  If your platform is not one of these, consult the INSTALL
+file.
 
 Multi-threaded applications must provide two callback functions to
 OpenSSL.  This is described in the threads(3) manpage.
