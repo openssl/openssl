@@ -697,7 +697,11 @@ bad:
 #endif
 
 	if (cipher != NULL)
-		SSL_CTX_set_cipher_list(ctx,cipher);
+		if(!SSL_CTX_set_cipher_list(ctx,cipher)) {
+		BIO_printf(bio_err,"error seting cipher list\n");
+		ERR_print_errors(bio_err);
+		goto end;
+	}
 	SSL_CTX_set_verify(ctx,s_server_verify,verify_callback);
 	SSL_CTX_set_session_id_context(ctx,(void*)&s_server_session_id_context,
 		sizeof s_server_session_id_context);

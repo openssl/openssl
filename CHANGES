@@ -20,15 +20,27 @@
      (instead of parameters) in future.
      [Steve Henson]
 
-  *) Apply Lutz Jaenicke's 56bit cipher patch. This should fix the problems
-     with cipher ordering and the new EXPORT1024 ciphers. Only two minor
-     changes have been made, the error reason codes have been altered and the
-     @STRENGTH sorting behaviour changed so eNULL ciphers are also sorted
-     (if present).
+  *) Make the ciphers, s_server and s_client programs check the return values
+     when a new cipher list is set.
+     [Steve Henson]
 
-     One other addition: the "ciphers" program didn't check the return code
-     of SSL_CTX_set_cipher_list().
-     [Lutz Jaenicke <Lutz.Jaenicke@aet.TU-Cottbus.DE> modified by Steve Henson]
+  *) Enhance the SSL/TLS cipher mechanism to correctly handle the TLS 56bit
+     ciphers. Before when the 56bit ciphers were enabled the sorting was
+     wrong.
+
+     The syntax for the cipher sorting has been extended to support sorting by
+     cipher-strength (using the strength_bits hard coded in the tables).
+     The new command is "@STRENGTH" (see also doc/apps/ciphers.pod).
+
+     Fix a bug in the cipher-command parser: when supplying a cipher command
+     string with an "undefined" symbol (neither command nor alphanumeric
+     [A-Za-z0-9], ssl_set_cipher_list used to hang in an endless loop. Now
+     an error is flagged.
+
+     Due to the strength-sorting extension, the code of the
+     ssl_create_cipher_list() function was completely rearranged. I hope that
+     the readability was also increased :-)
+     [Lutz Jaenicke <Lutz.Jaenicke@aet.TU-Cottbus.DE>]
 
   *) Minor change to 'x509' utility. The -CAcreateserial option now uses 1
      for the first serial number and places 2 in the serial number file. This

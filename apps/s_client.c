@@ -338,6 +338,7 @@ bad:
 		}
 
 	SSLeay_add_ssl_algorithms();
+	SSL_load_error_strings();
 	ctx=SSL_CTX_new(meth);
 	if (ctx == NULL)
 		{
@@ -352,7 +353,11 @@ bad:
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
 	if (cipher != NULL)
-		SSL_CTX_set_cipher_list(ctx,cipher);
+		if(!SSL_CTX_set_cipher_list(ctx,cipher)) {
+		BIO_printf(bio_err,"error seting cipher list\n");
+		ERR_print_errors(bio_err);
+		goto end;
+	}
 #if 0
 	else
 		SSL_CTX_set_cipher_list(ctx,getenv("SSL_CIPHER"));
@@ -370,7 +375,6 @@ bad:
 		/* goto end; */
 		}
 
-	SSL_load_error_strings();
 
 	con=(SSL *)SSL_new(ctx);
 /*	SSL_set_cipher_list(con,"RC4-MD5"); */

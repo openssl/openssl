@@ -167,8 +167,11 @@ SSL code (?).
 
 =item B<-cipher cipherlist>
 
-this allows the cipher list sent by the client to be modified. See the
-B<ciphers> command for more information.
+this allows the cipher list used by the server to be modified.  When
+the client sends a list of supported ciphers the first client cipher
+also included in the server list is used. Because the client specifies
+the preference order, the order of the server cipherlist irrelevant. See
+the B<ciphers> command for more information.
 
 =item B<-www>
 

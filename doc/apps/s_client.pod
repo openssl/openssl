@@ -144,8 +144,10 @@ option enables various workarounds.
 
 =item B<-cipher cipherlist>
 
-this allows the cipher list sent by the client to be modified. See the
-B<ciphers> command for more information.
+this allows the cipher list sent by the client to be modified. Although
+the server determines which cipher suite is used it should take the first
+supported cipher in the list sent by the client. See the B<ciphers>
+command for more information.
 
 =back
 
