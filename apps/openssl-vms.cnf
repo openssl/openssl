@@ -86,6 +86,19 @@ distinguished_name	= req_distinguished_name
 attributes		= req_attributes
 x509_extensions	= v3_ca	# The extentions to add to the self signed cert
 
+# This sets the permitted types in a DirectoryString. There are several
+# options. 
+# default: PrintableString, T61String, BMPString.
+# pkix	 : PrintableString, BMPString.
+# utf8only: only UTF8Strings.
+# nobmp : PrintableString, T61String (no BMPStrings).
+# MASK:XXXX a literal mask value.
+# WARNING: current versions of Netscape crash on BMPStrings or UTF8Strings
+# so use this option with caution!
+dirstring_type = nobmp
+
+# req_extensions = v3_req # The extensions to add to a certificate request
+
 [ req_distinguished_name ]
 countryName			= Country Name (2 letter code)
 countryName_default		= AU
@@ -170,7 +183,15 @@ authorityKeyIdentifier=keyid,issuer:always
 #nsCaPolicyUrl
 #nsSslServerName
 
-[ v3_ca]
+[ v3_req ]
+
+# Extensions to add to a certificate request
+
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+
+[ v3_ca ]
+
 
 # Extensions for a typical CA
 
@@ -200,10 +221,11 @@ basicConstraints = CA:true
 # Copy issuer details
 # issuerAltName=issuer:copy
 
-# RAW DER hex encoding of an extension: beware experts only!
-# 1.2.3.5=RAW:02:03
+# DER hex encoding of an extension: beware experts only!
+# obj=DER:02:03
+# Where 'obj' is a standard or added object
 # You can even override a supported extension:
-# basicConstraints= critical, RAW:30:03:01:01:FF
+# basicConstraints= critical, DER:30:03:01:01:FF
 
 [ crl_ext ]
 
