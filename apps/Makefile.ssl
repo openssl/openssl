@@ -647,7 +647,8 @@ version.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 version.o: ../include/openssl/opensslv.h ../include/openssl/rc2.h
 version.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
 version.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
-version.o: ../include/openssl/sha.h ../include/openssl/stack.h apps.h progs.h
+version.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+version.o: ../include/openssl/stack.h apps.h progs.h
 x509.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 x509.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 x509.o: ../include/openssl/buffer.h ../include/openssl/cast.h

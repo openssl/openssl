@@ -89,5 +89,5 @@ hmac.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
 hmac.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 hmac.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 hmac.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
-hmac.o: ../../include/openssl/rsa.h ../../include/openssl/sha.h
-hmac.o: ../../include/openssl/stack.h
+hmac.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+hmac.o: ../../include/openssl/sha.h ../../include/openssl/stack.h

@@ -113,8 +113,9 @@ bf_buff.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
 bf_buff.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 bf_buff.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 bf_buff.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
-bf_buff.o: ../../include/openssl/rsa.h ../../include/openssl/sha.h
-bf_buff.o: ../../include/openssl/stack.h ../cryptlib.h
+bf_buff.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+bf_buff.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+bf_buff.o: ../cryptlib.h
 bf_nbio.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 bf_nbio.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 bf_nbio.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -128,8 +129,8 @@ bf_nbio.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 bf_nbio.o: ../../include/openssl/rand.h ../../include/openssl/rc2.h
 bf_nbio.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
 bf_nbio.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
-bf_nbio.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-bf_nbio.o: ../cryptlib.h
+bf_nbio.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+bf_nbio.o: ../../include/openssl/stack.h ../cryptlib.h
 bf_null.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 bf_null.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 bf_null.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -142,8 +143,9 @@ bf_null.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
 bf_null.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 bf_null.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
 bf_null.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
-bf_null.o: ../../include/openssl/rsa.h ../../include/openssl/sha.h
-bf_null.o: ../../include/openssl/stack.h ../cryptlib.h
+bf_null.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+bf_null.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+bf_null.o: ../cryptlib.h
 bio_cb.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 bio_cb.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
 bio_cb.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h

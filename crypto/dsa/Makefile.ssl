@@ -116,14 +116,16 @@ dsa_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 dsa_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
 dsa_lib.o: ../../include/openssl/e_os.h ../../include/openssl/err.h
 dsa_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-dsa_lib.o: ../../include/openssl/stack.h ../cryptlib.h
+dsa_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+dsa_lib.o: ../cryptlib.h
 dsa_sign.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 dsa_sign.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 dsa_sign.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
 dsa_sign.o: ../../include/openssl/e_os.h ../../include/openssl/err.h
 dsa_sign.o: ../../include/openssl/opensslconf.h
 dsa_sign.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
-dsa_sign.o: ../../include/openssl/stack.h ../cryptlib.h
+dsa_sign.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+dsa_sign.o: ../cryptlib.h
 dsa_vrf.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 dsa_vrf.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 dsa_vrf.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h

@@ -342,8 +342,8 @@ hmactest.o: ../include/openssl/mdc2.h ../include/openssl/objects.h
 hmactest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 hmactest.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
 hmactest.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
-hmactest.o: ../include/openssl/rsa.h ../include/openssl/sha.h
-hmactest.o: ../include/openssl/stack.h
+hmactest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+hmactest.o: ../include/openssl/sha.h ../include/openssl/stack.h
 ideatest.o: ../include/openssl/idea.h ../include/openssl/opensslconf.h
 md2test.o: ../include/openssl/md2.h ../include/openssl/opensslconf.h
 md5test.o: ../include/openssl/md5.h
