@@ -959,13 +959,13 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	{
 	int is_export,pkl,kl;
-	char *ver,*exp_str;
-	char *kx,*au,*enc,*mac;
+	const char *ver,*exp_str;
+	const char *kx,*au,*enc,*mac;
 	unsigned long alg,alg2,alg_s;
 #ifdef KSSL_DEBUG
-	static char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s AL=%lx\n";
+	static const char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s AL=%lx\n";
 #else
-	static char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
+	static const char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
 #endif /* KSSL_DEBUG */
 
 	alg=cipher->algorithms;
