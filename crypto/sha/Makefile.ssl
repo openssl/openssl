@@ -20,6 +20,7 @@ AR=             ar r
 SHA1_ASM_OBJ=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG)
 
 GENERAL=Makefile
 TEST=shatest.c sha1test.c

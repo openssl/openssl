@@ -25,6 +25,7 @@ RC4_ENC=rc4_enc.o
 #RC4_ENC=asm/rx86bdsi.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG)
 
 GENERAL=Makefile
 TEST=rc4test.c
