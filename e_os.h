@@ -194,9 +194,7 @@ extern "C" {
 #  include <io.h>
 #  include <fcntl.h>
 
-#  ifdef __MINGW32__
-#    define ssize_t long
-#  endif
+#  define ssize_t long
 
 #  if defined (__BORLANDC__)
 #    define _setmode setmode

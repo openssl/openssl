@@ -40,7 +40,7 @@ LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o tmdiff.o cpt_err.o ebcdi
 SRC= $(LIBSRC)
 
 EXHEADER= crypto.h tmdiff.h opensslv.h opensslconf.h ebcdic.h
-HEADER=	cryptlib.h buildinf.h $(EXHEADER)
+HEADER=	cryptlib.h buildinf.h md32_common.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
