@@ -752,8 +752,8 @@ void char2_field_tests()
 	if (!BN_hex2bn(&a, "3")) ABORT;
 	if (!BN_hex2bn(&b, "1")) ABORT;
 	
-	group = EC_GROUP_new(EC_GF2m_simple_method()); /* applications should use EC_GROUP_new_curve_GFp
-	                                             * so that the library gets to choose the EC_METHOD */
+	group = EC_GROUP_new(EC_GF2m_simple_method()); /* applications should use EC_GROUP_new_curve_GF2m
+	                                                * so that the library gets to choose the EC_METHOD */
 	if (!group) ABORT;
 	if (!EC_GROUP_set_curve_GF2m(group, p, a, b, ctx)) ABORT;
 
@@ -774,7 +774,7 @@ void char2_field_tests()
 	BN_print_fp(stdout, a);
 	fprintf(stdout, "\n     b = 0x");
 	BN_print_fp(stdout, b);
-	fprintf(stdout, "\n");
+	fprintf(stdout, "\n(0x... means binary polynomial)\n");
 
 	P = EC_POINT_new(group);
 	Q = EC_POINT_new(group);
@@ -1171,6 +1171,7 @@ int main(int argc, char *argv[])
 	RAND_seed(rnd_seed, sizeof rnd_seed); /* or BN_generate_prime may fail */
 
 	prime_field_tests();
+	puts("");
 	char2_field_tests();
 
 	ENGINE_cleanup();

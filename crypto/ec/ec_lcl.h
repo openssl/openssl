@@ -207,10 +207,10 @@ struct ec_group_st {
 	               */
 
 	unsigned int poly[5]; /* Field specification for curves over GF(2^m).
-						   * The irreducible f(t) is then of the form:
-						   *     t^poly[0] + t^poly[1] + ... + t^poly[k]
-						   * where m = poly[0] > poly[1] > ... > poly[k] = 0.
-						   */
+	                       * The irreducible f(t) is then of the form:
+	                       *     t^poly[0] + t^poly[1] + ... + t^poly[k]
+	                       * where m = poly[0] > poly[1] > ... > poly[k] = 0.
+	                       */
 
 	BIGNUM a, b; /* Curve coefficients.
 	              * (Here the assumption is that BIGNUMs can be used
