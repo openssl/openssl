@@ -170,7 +170,7 @@ authorityKeyIdentifier=keyid,issuer:always
 #nsCaPolicyUrl
 #nsSslServerName
 
-[ v3_ca]
+[ v3_ca ]
 
 # Extensions for a typical CA
 
