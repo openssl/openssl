@@ -202,9 +202,8 @@ static int bio_read(BIO *bio, char *buf, int size_)
  * (example usage:  bio_nread0(), read from buffer, bio_nread()
  *  or just         bio_nread(), read from buffer)
  */
-/* WARNING: The non-copying interface is totally untested as of yet --
- * I wrote it, but have not yet read it; and surely it still is full
- * of bugs. */
+/* WARNING: The non-copying interface is largely untested as of yet
+ * and may contain bugs. */
 static size_t bio_nread0(BIO *bio, char **buf)
 	{
 	struct bio_bio_st *b, *peer_b;

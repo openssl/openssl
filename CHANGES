@@ -17,7 +17,7 @@
      [Steve Henson]
 
   *) Non-copying interface to BIO pairs.
-     (still totally untested)
+     (still largely untested)
      [Bodo Moeller]
 
   *) New function ANS1_tag2str() to convert an ASN1 tag to a descriptive

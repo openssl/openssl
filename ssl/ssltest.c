@@ -56,11 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
+#include <assert.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <limits.h>
 
 #include "openssl/e_os.h"
 
@@ -653,48 +654,40 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 			{
 			/* "I/O" BETWEEN CLIENT AND SERVER. */
 
-			/* TODO: use non-blocking BIO interface for (say) the client
-			 * to illustrate its use and to test it. */
-
-#define RELAYBUFSIZ 200
-			static char buf[RELAYBUFSIZ];
-
-			/* RELAYBUF is arbitrary.  When writing data over some real
-			 * network, use a buffer of the same size as in the BIO_pipe
-			 * and make that size large (for reading from the network
-			 * small buffers usually won't hurt).
-			 * Here sizes differ for testing. */
-
 			size_t r1, r2;
-			size_t num;
-			int r;
+			BIO *io1 = server_io, *io2 = client_io;
+			/* we use the non-copying interface for io1
+			 * and the standard BIO_write/BIO_read interface for io2
+			 */
+			
 			static int prev_progress = 1;
 			int progress = 0;
 			
-			/* client to server */
+			/* io1 to io2 */
 			do
 				{
-				r1 = BIO_ctrl_pending(client_io);
-				r2 = BIO_ctrl_get_write_guarantee(server_io);
+				size_t num;
+				int r;
+
+				r1 = BIO_ctrl_pending(io1);
+				r2 = BIO_ctrl_get_write_guarantee(io2);
 
 				num = r1;
 				if (r2 < num)
 					num = r2;
 				if (num)
 					{
-					if (sizeof buf < num)
-						num = sizeof buf;
+					char *dataptr;
+
 					if (INT_MAX < num) /* yeah, right */
 						num = INT_MAX;
 					
-					r = BIO_read(client_io, buf, (int)num);
-					if (r != (int)num) /* can't happen */
-						{
-						fprintf(stderr, "ERROR: BIO_read could not read "
-							"BIO_ctrl_pending() bytes");
-						goto err;
-						}
-					r = BIO_write(server_io, buf, (int)num);
+					r = BIO_nread(io1, &dataptr, (int)num);
+					assert(r > 0);
+					assert(r <= (int)num);
+					/* possibly r < num (non-contiguous data) */
+					num = r;
+					r = BIO_write(io2, dataptr, (int)num);
 					if (r != (int)num) /* can't happen */
 						{
 						fprintf(stderr, "ERROR: BIO_write could not write "
@@ -704,48 +697,58 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 					progress = 1;
 
 					if (debug)
-						printf("C->S relaying: %d bytes\n", (int)num);
+						printf((io1 == client_io) ?
+							"C->S relaying: %d bytes\n" :
+							"S->C relaying: %d bytes\n",
+							(int)num);
 					}
 				}
 			while (r1 && r2);
 
-			/* server to client */
-			do
-				{
-				r1 = BIO_ctrl_pending(server_io);
-				r2 = BIO_ctrl_get_write_guarantee(client_io);
+			/* io2 to io1 */
+			{
+				size_t num;
+				int r;
 
+				r1 = BIO_ctrl_pending(io2);
+				r2 = BIO_ctrl_get_read_request(io1);
+				/* here we could use ..._get_write_guarantee instead of
+				 * ..._get_read_request, but by using the latter
+				 * we test restartability of the SSL implementation
+				 * more thoroughly */
 				num = r1;
 				if (r2 < num)
 					num = r2;
 				if (num)
 					{
-					if (sizeof buf < num)
-						num = sizeof buf;
+					char *dataptr;
+					
 					if (INT_MAX < num)
 						num = INT_MAX;
+
+					if (num > 1)
+						--num; /* for testing restartability even more thoroughly */
 					
-					r = BIO_read(server_io, buf, (int)num);
+					r = BIO_nwrite(io1, &dataptr, (int)num);
+					assert(r > 0);
+					assert(r <= (int)num);
+					num = r;
+					r = BIO_read(io2, dataptr, (int)num);
 					if (r != (int)num) /* can't happen */
 						{
 						fprintf(stderr, "ERROR: BIO_read could not read "
 							"BIO_ctrl_pending() bytes");
 						goto err;
 						}
-					r = BIO_write(client_io, buf, (int)num);
-					if (r != (int)num) /* can't happen */
-						{
-						fprintf(stderr, "ERROR: BIO_write could not write "
-							"BIO_ctrl_get_write_guarantee() bytes");
-						goto err;
-						}
 					progress = 1;
-
+					
 					if (debug)
-						printf("S->C relaying: %d bytes\n", (int)num);
+						printf((io2 == client_io) ?
+							"C->S relaying: %d bytes\n" :
+							"S->C relaying: %d bytes\n",
+							(int)num);
 					}
-				}
-			while (r1 && r2);
+			} /* no loop, BIO_ctrl_get_read_request now returns 0 anyway */
 
 			if (!progress && !prev_progress)
 				if (cw_num > 0 || cr_num > 0 || sw_num > 0 || sr_num > 0)
