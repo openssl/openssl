@@ -21,6 +21,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why can't I make an SSL connection using a DSA certificate?
 * How can I remove the passphrase on a private key?
 * Why can't the OpenSSH configure script detect OpenSSL?
+* Why does the OpenSSL test fail with "bc: 1 no implemented"?
 
 
 * Which is the current version of OpenSSL?
@@ -305,3 +306,13 @@ applied to the OpenSSH distribution:
  	fi
  	LIBS="$LIBS -lcrypto"
 ----- snip:end -----
+
+
+* Why does the OpenSSL test fail with "bc: 1 no implemented"?
+
+On some SCO installations or versions, bc has a bug that gets triggered when
+you run the test suite (using "make test").  The message returned is "bc:
+1 not implemented".  The best way to deal with this is to find another
+implementation of bc and compile/install it.  For example, GNU bc (see
+http://www.gnu.org/software/software.html for download instructions) can
+be safely used.
