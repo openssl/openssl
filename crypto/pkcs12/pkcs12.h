@@ -210,7 +210,6 @@ int PKCS12_key_gen_asc(unsigned char *pass, int passlen, unsigned char *salt, in
 int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int id, int iter, int n, unsigned char *out, const EVP_MD *md_type);
 int PKCS12_PBE_keyivgen(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, EVP_CIPHER *cipher, EVP_MD *md_type, unsigned char *key, unsigned char *iv);
 int PKCS12_gen_mac(PKCS12 *p12, unsigned char *pass, int passlen, unsigned char *mac, unsigned int *maclen);
-int PKCS12_gen_mac(PKCS12 *p12, unsigned char *pass, int passlen, unsigned char *mac, unsigned int *maclen);
 int PKCS12_verify_mac(PKCS12 *p12, unsigned char *pass, int passlen);
 int PKCS12_set_mac(PKCS12 *p12, unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, EVP_MD *md_type);
 int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen, EVP_MD *md_type);

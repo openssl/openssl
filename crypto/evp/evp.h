@@ -190,28 +190,28 @@ typedef struct evp_pkey_md_st
 	EVP_PKEY_METHOD *pkey;
 	} EVP_PKEY_MD;
 
-#define EVP_rsa_md2()
+#define EVP_rsa_md2() \
 		EVP_PKEY_MD_add(NID_md2WithRSAEncryption,\
 			EVP_rsa_pkcs1(),EVP_md2())
-#define EVP_rsa_md5()
+#define EVP_rsa_md5() \
 		EVP_PKEY_MD_add(NID_md5WithRSAEncryption,\
 			EVP_rsa_pkcs1(),EVP_md5())
-#define EVP_rsa_sha0()
+#define EVP_rsa_sha0() \
 		EVP_PKEY_MD_add(NID_shaWithRSAEncryption,\
 			EVP_rsa_pkcs1(),EVP_sha())
-#define EVP_rsa_sha1()
+#define EVP_rsa_sha1() \
 		EVP_PKEY_MD_add(NID_sha1WithRSAEncryption,\
 			EVP_rsa_pkcs1(),EVP_sha1())
-#define EVP_rsa_ripemd160()
+#define EVP_rsa_ripemd160() \
 		EVP_PKEY_MD_add(NID_ripemd160WithRSA,\
 			EVP_rsa_pkcs1(),EVP_ripemd160())
-#define EVP_rsa_mdc2()
+#define EVP_rsa_mdc2() \
 		EVP_PKEY_MD_add(NID_mdc2WithRSA,\
 			EVP_rsa_octet_string(),EVP_mdc2())
-#define EVP_dsa_sha()
+#define EVP_dsa_sha() \
 		EVP_PKEY_MD_add(NID_dsaWithSHA,\
 			EVP_dsa(),EVP_mdc2())
-#define EVP_dsa_sha1()
+#define EVP_dsa_sha1() \
 		EVP_PKEY_MD_add(NID_dsaWithSHA1,\
 			EVP_dsa(),EVP_sha1())
 

@@ -446,10 +446,11 @@ int BIO_read_filename(BIO *b,const char *name);
 
 #ifndef NOPROTO
 
-int BIO_get_ex_num(BIO *bio);
+/* These two aren't currently implemented */
+/* int BIO_get_ex_num(BIO *bio); */
+/* void BIO_set_ex_free_func(BIO *bio,int idx,void (*cb)()); */
 int BIO_set_ex_data(BIO *bio,int idx,char *data);
 char *BIO_get_ex_data(BIO *bio,int idx);
-void BIO_set_ex_free_func(BIO *bio,int idx,void (*cb)());
 int BIO_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 	int (*dup_func)(), void (*free_func)());
 
