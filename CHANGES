@@ -206,10 +206,11 @@
      symbols to the corresponding _old_des_*.
 
      All this is done because there are increasing clashes with libdes
-     and other des libraries that are currently used by other projects.
-     For now, the old libdes interface is provided, as well as crypt(),
-     unless OPENSSL_NO_OLD_DES_SUPPORT is defined, or if openssl/des_old.h
-     is included.  Note that crypt() is no longer declared in openssl/des.h.
+     and other DES libraries that are currently used by other projects.
+     The old libdes interface (including crypt()) is provided if
+     <openssl/des_old.h> is included.  For now, this automatically
+     happens in <openssl/des.h> unless OPENSSL_NO_OLD_DES_SUPPORT is
+     defined.  Note that crypt() is no longer declared in <openssl/des.h>.
 
      NOTE: This is a major break of an old API into a new one.  Software
      authors are encouraged to switch to the DES_ style functions.  Some
