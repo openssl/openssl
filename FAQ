@@ -32,7 +32,7 @@ OpenSSL  -  Frequently Asked Questions
 * Which is the current version of OpenSSL?
 
 The current version is available from <URL: http://www.openssl.org>.
-OpenSSL 0.9.6 was released on September 24th, 2000.
+OpenSSL 0.9.5a was released on April 1st, 2000.
 
 In addition to the current stable release, you can also access daily
 snapshots of the OpenSSL development version at <URL:
@@ -135,7 +135,7 @@ installing the SUNski package from Sun patch 105710-01 (Sparc) which
 adds a /dev/random device and make sure it gets used, usually through
 $RANDFILE.  There are probably similar patches for the other Solaris
 versions.  However, be warned that /dev/random is usually a blocking
-device, which may have some effects on OpenSSL.
+device, which may have som effects on OpenSSL.
 
 
 * Why does the linker complain about undefined symbols?
@@ -194,7 +194,7 @@ unsigned char *buf, *p;
 int len;
 
 len = i2d_PKCS7(p7, NULL);
-buf = OPENSSL_malloc(len); /* or Malloc, error checking omitted */
+buf = OPENSSL_Malloc(len); /* or Malloc, error checking omitted */
 p = buf;
 i2d_PKCS7(p7, &p);
 

@@ -1,5 +1,5 @@
 
- OpenSSL 0.9.6 24 Sep 2000
+ OpenSSL 0.9.6-beta2 17 Sep 2000
 
  Copyright (c) 1998-2000 The OpenSSL Project
  Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
@@ -162,9 +162,6 @@
  would like to submit a patch, send it to openssl-dev@openssl.org with
  the string "[PATCH]" in the subject. Please be sure to include a
  textual explanation of what your patch does.
-
- Note: For legal reasons, contributions from the US can be accepted only
- if a copy of the patch is sent to crypt@bxa.doc.gov
 
  The preferred format for changes is "diff -u" output. You might
  generate it like this:

@@ -108,12 +108,6 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 	STDout=BIO_new_fp(stdout,BIO_NOCLOSE);
-#ifdef VMS
-	{
-	BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-	STDout = BIO_push(tmpbio, STDout);
-	}
-#endif
 
 	argc--;
 	argv++;
@@ -201,7 +195,7 @@ err:
 end:
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (ssl != NULL) SSL_free(ssl);
-	if (STDout != NULL) BIO_free_all(STDout);
+	if (STDout != NULL) BIO_free(STDout);
 	EXIT(ret);
 	}
 

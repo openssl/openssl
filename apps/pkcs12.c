@@ -350,15 +350,8 @@ int MAIN(int argc, char **argv)
     CRYPTO_push_info("write files");
 #endif
 
-    if (!outfile) {
-	out = BIO_new_fp(stdout, BIO_NOCLOSE);
-#ifdef VMS
-	{
-	    BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-	    out = BIO_push(tmpbio, out);
-	}
-#endif
-    } else out = BIO_new_file(outfile, "wb");
+    if (!outfile) out = BIO_new_fp(stdout, BIO_NOCLOSE);
+    else out = BIO_new_file(outfile, "wb");
     if (!out) {
 	BIO_printf(bio_err, "Error opening output file %s\n",
 						outfile ? outfile : "<stdout>");
@@ -664,7 +657,7 @@ int MAIN(int argc, char **argv)
     CRYPTO_remove_all_info();
 #endif
     BIO_free(in);
-    BIO_free_all(out);
+    BIO_free(out);
     if (canames) sk_free(canames);
     if(passin) OPENSSL_free(passin);
     if(passout) OPENSSL_free(passout);
@@ -887,14 +880,14 @@ int print_attribs (BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst, char *name)
 				break;
 
 				case V_ASN1_OCTET_STRING:
-				hex_prin(out, av->value.octet_string->data,
-					av->value.octet_string->length);
+				hex_prin(out, av->value.bit_string->data,
+					av->value.bit_string->length);
 				BIO_printf(out, "\n");	
 				break;
 
 				case V_ASN1_BIT_STRING:
-				hex_prin(out, av->value.bit_string->data,
-					av->value.bit_string->length);
+				hex_prin(out, av->value.octet_string->data,
+					av->value.octet_string->length);
 				BIO_printf(out, "\n");	
 				break;
 

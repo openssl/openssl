@@ -183,12 +183,6 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 	STDout=BIO_new_fp(stdout,BIO_NOCLOSE);
-#ifdef VMS
-	{
-	BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-	STDout = BIO_push(tmpbio, STDout);
-	}
-#endif
 
 	informat=FORMAT_PEM;
 	outformat=FORMAT_PEM;
@@ -582,15 +576,7 @@ bad:
 			goto end;
 			}
 		if (outfile == NULL)
-			{
 			BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef VMS
-			{
-			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-			out = BIO_push(tmpbio, out);
-			}
-#endif
-			}
 		else
 			{
 			if (BIO_write_filename(out,outfile) <= 0)
@@ -947,8 +933,8 @@ end:
 		app_RAND_write_file(NULL, bio_err);
 	OBJ_cleanup();
 	CONF_free(extconf);
-	BIO_free_all(out);
-	BIO_free_all(STDout);
+	BIO_free(out);
+	BIO_free(STDout);
 	X509_STORE_free(ctx);
 	X509_REQ_free(req);
 	X509_free(x);

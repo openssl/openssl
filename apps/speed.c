@@ -87,7 +87,7 @@
 #elif !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
 # define TIMES
 #endif
-#if !defined(_UNICOS) && !defined(__OpenBSD__) && !defined(sgi) && !defined(__FreeBSD__) && !(defined(__bsdi) || defined(__bsdi__)) && !defined(_AIX) && !defined(MPE)
+#if !defined(_UNICOS) && !defined(__OpenBSD__)
 # define TIMEB
 #endif
 
@@ -115,7 +115,7 @@
 #include <sys/timeb.h>
 #endif
 
-#if !defined(TIMES) && !defined(TIMEB) && !defined(USE_TOD)
+#if !defined(TIMES) && !defined(TIMEB)
 #error "It seems neither struct tms nor struct timeb is supported in this platform!"
 #endif
 
