@@ -812,12 +812,7 @@ int n;
 	return(NULL);
 	}
 
-#ifndef NOPROTO
-static int sk_comp_cmp(SSL_COMP **a,SSL_COMP **b);
-#endif
-
-static int sk_comp_cmp(a,b)
-SSL_COMP **a,**b;
+static int sk_comp_cmp(SSL_COMP **a,SSL_COMP **b)
 	{
 	return((*a)->id-(*b)->id);
 	}
