@@ -1961,7 +1961,7 @@ krb5_error_code  kssl_check_authent(
 	const EVP_CIPHER	*enc = NULL;
 	unsigned char		iv[EVP_MAX_IV_LENGTH];
 	unsigned char		*p, *unenc_authent;
-	int 			padl, outl, unencbufsize;
+	int 			outl, unencbufsize;
 	struct tm		tm_time, *tm_l, *tm_g;
 	time_t			now, tl, tg, tr, tz_offset;
 
@@ -2033,7 +2033,7 @@ krb5_error_code  kssl_check_authent(
         if (!EVP_CipherInit(&ciph_ctx,enc,kssl_ctx->key,iv,0))
                 {
                 kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
-                        "EVP_DecryptInit_ex error decrypting authenticator.\n");
+                        "EVP_CipherInit error decrypting authenticator.\n");
                 krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
                 goto err;
                 }
@@ -2094,6 +2094,7 @@ krb5_error_code  kssl_check_authent(
 	if (auth)		KRB5_AUTHENT_free((KRB5_AUTHENT *) auth);
 	if (dec_authent)	KRB5_ENCDATA_free(dec_authent);
 	if (unenc_authent)	free(unenc_authent);
+	EVP_CIPHER_CTX_cleanup(&ciph_ctx);
 	return krb5rc;
 	}
 
