@@ -23,14 +23,6 @@ DES_ENC=	des_enc.o fcrypt_b.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-# We let the C compiler driver to take care of .s files. This is done in
-# order to be excused from maintaining a separate set of architecture
-# dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
-# gcc, then the driver will automatically translate it to -xarch=v8plus
-# and pass it down to assembler.
-AS=$(CC) -c
-ASFLAGS=$(CFLAGS)
-
 GENERAL=Makefile
 TEST=destest.c
 APPS=
