@@ -1133,49 +1133,73 @@ int MAIN(int argc, char **argv)
 		int ret;
 		if (!rsa_doit[j]) continue;
 		ret=RSA_sign(NID_md5_sha1, buf,36, buf2, &rsa_num, rsa_key[j]);
-		pkey_print_message("private","rsa",rsa_c[j][0],rsa_bits[j],
-			RSA_SECONDS);
-/*		RSA_blinding_on(rsa_key[j],NULL); */
-		Time_F(START,usertime);
-		for (count=0,run=1; COND(rsa_c[j][0]); count++)
+		if (ret == 0)
 			{
-			ret=RSA_sign(NID_md5_sha1, buf,36, buf2, &rsa_num,
-								 rsa_key[j]);
-			if (ret <= 0)
-				{
-				BIO_printf(bio_err,"RSA private encrypt failure\n");
-				ERR_print_errors(bio_err);
-				count=1;
-				break;
-				}
+			BIO_printf(bio_err,"RSA sign failure.  No RSA sign will be done.\n");
+			ERR_print_errors(bio_err);
+			rsa_count=1;
 			}
-		d=Time_F(STOP,usertime);
-		BIO_printf(bio_err,"%ld %d bit private RSA's in %.2fs\n",
-			count,rsa_bits[j],d);
-		rsa_results[j][0]=d/(double)count;
-		rsa_count=count;
+		else
+			{
+			pkey_print_message("private","rsa",
+				rsa_c[j][0],rsa_bits[j],
+				RSA_SECONDS);
+/*			RSA_blinding_on(rsa_key[j],NULL); */
+			Time_F(START,usertime);
+			for (count=0,run=1; COND(rsa_c[j][0]); count++)
+				{
+				ret=RSA_sign(NID_md5_sha1, buf,36, buf2,
+					&rsa_num, rsa_key[j]);
+				if (ret == 0)
+					{
+					BIO_printf(bio_err,
+						"RSA sign failure\n");
+					ERR_print_errors(bio_err);
+					count=1;
+					break;
+					}
+				}
+			d=Time_F(STOP,usertime);
+			BIO_printf(bio_err,
+				"%ld %d bit private RSA's in %.2fs\n",
+				count,rsa_bits[j],d);
+			rsa_results[j][0]=d/(double)count;
+			rsa_count=count;
+			}
 
 #if 1
 		ret=RSA_verify(NID_md5_sha1, buf,36, buf2, rsa_num, rsa_key[j]);
-		pkey_print_message("public","rsa",rsa_c[j][1],rsa_bits[j],
-			RSA_SECONDS);
-		Time_F(START,usertime);
-		for (count=0,run=1; COND(rsa_c[j][1]); count++)
+		if (ret <= 0)
 			{
-			ret=RSA_verify(NID_md5_sha1, buf,36, buf2, rsa_num,
-								rsa_key[j]);
-			if (ret <= 0)
-				{
-				BIO_printf(bio_err,"RSA verify failure\n");
-				ERR_print_errors(bio_err);
-				count=1;
-				break;
-				}
+			BIO_printf(bio_err,"RSA verify failure.  No RSA verify will be done.\n");
+			ERR_print_errors(bio_err);
+			dsa_doit[j] = 0;
 			}
-		d=Time_F(STOP,usertime);
-		BIO_printf(bio_err,"%ld %d bit public RSA's in %.2fs\n",
-			count,rsa_bits[j],d);
-		rsa_results[j][1]=d/(double)count;
+		else
+			{
+			pkey_print_message("public","rsa",
+				rsa_c[j][1],rsa_bits[j],
+				RSA_SECONDS);
+			Time_F(START,usertime);
+			for (count=0,run=1; COND(rsa_c[j][1]); count++)
+				{
+				ret=RSA_verify(NID_md5_sha1, buf,36, buf2,
+					rsa_num, rsa_key[j]);
+				if (ret == 0)
+					{
+					BIO_printf(bio_err,
+						"RSA verify failure\n");
+					ERR_print_errors(bio_err);
+					count=1;
+					break;
+					}
+				}
+			d=Time_F(STOP,usertime);
+			BIO_printf(bio_err,
+				"%ld %d bit public RSA's in %.2fs\n",
+				count,rsa_bits[j],d);
+			rsa_results[j][1]=d/(double)count;
+			}
 #endif
 
 		if (rsa_count <= 1)
@@ -1197,54 +1221,77 @@ int MAIN(int argc, char **argv)
 	for (j=0; j<DSA_NUM; j++)
 		{
 		unsigned int kk;
+		int ret;
 
 		if (!dsa_doit[j]) continue;
 		DSA_generate_key(dsa_key[j]);
 /*		DSA_sign_setup(dsa_key[j],NULL); */
-		rsa_num=DSA_sign(EVP_PKEY_DSA,buf,20,buf2,
+		ret=DSA_sign(EVP_PKEY_DSA,buf,20,buf2,
 			&kk,dsa_key[j]);
-		pkey_print_message("sign","dsa",dsa_c[j][0],dsa_bits[j],
-			DSA_SECONDS);
-		Time_F(START,usertime);
-		for (count=0,run=1; COND(dsa_c[j][0]); count++)
+		if (ret == 0)
 			{
-			rsa_num=DSA_sign(EVP_PKEY_DSA,buf,20,buf2,
-				&kk,dsa_key[j]);
-			if (rsa_num <= 0)
-				{
-				BIO_printf(bio_err,"DSA sign failure\n");
-				ERR_print_errors(bio_err);
-				count=1;
-				break;
-				}
+			BIO_printf(bio_err,"DSA sign failure.  No DSA sign will be done.\n");
+			ERR_print_errors(bio_err);
+			rsa_count=1;
 			}
-		d=Time_F(STOP,usertime);
-		BIO_printf(bio_err,"%ld %d bit DSA signs in %.2fs\n",
-			count,dsa_bits[j],d);
-		dsa_results[j][0]=d/(double)count;
-		rsa_count=count;
+		else
+			{
+			pkey_print_message("sign","dsa",
+				dsa_c[j][0],dsa_bits[j],
+				DSA_SECONDS);
+			Time_F(START,usertime);
+			for (count=0,run=1; COND(dsa_c[j][0]); count++)
+				{
+				ret=DSA_sign(EVP_PKEY_DSA,buf,20,buf2,
+					&kk,dsa_key[j]);
+				if (ret == 0)
+					{
+					BIO_printf(bio_err,
+						"DSA sign failure\n");
+					ERR_print_errors(bio_err);
+					count=1;
+					break;
+					}
+				}
+			d=Time_F(STOP,usertime);
+			BIO_printf(bio_err,"%ld %d bit DSA signs in %.2fs\n",
+				count,dsa_bits[j],d);
+			dsa_results[j][0]=d/(double)count;
+			rsa_count=count;
+			}
 
-		rsa_num2=DSA_verify(EVP_PKEY_DSA,buf,20,buf2,
+		ret=DSA_verify(EVP_PKEY_DSA,buf,20,buf2,
 			kk,dsa_key[j]);
-		pkey_print_message("verify","dsa",dsa_c[j][1],dsa_bits[j],
-			DSA_SECONDS);
-		Time_F(START,usertime);
-		for (count=0,run=1; COND(dsa_c[j][1]); count++)
+		if (ret <= 0)
 			{
-			rsa_num2=DSA_verify(EVP_PKEY_DSA,buf,20,buf2,
-				kk,dsa_key[j]);
-			if (rsa_num2 <= 0)
-				{
-				BIO_printf(bio_err,"DSA verify failure\n");
-				ERR_print_errors(bio_err);
-				count=1;
-				break;
-				}
+			BIO_printf(bio_err,"DSA verify failure.  No DSA verify will be done.\n");
+			ERR_print_errors(bio_err);
+			dsa_doit[j] = 0;
 			}
-		d=Time_F(STOP,usertime);
-		BIO_printf(bio_err,"%ld %d bit DSA verify in %.2fs\n",
-			count,dsa_bits[j],d);
-		dsa_results[j][1]=d/(double)count;
+		else
+			{
+			pkey_print_message("verify","dsa",
+				dsa_c[j][1],dsa_bits[j],
+				DSA_SECONDS);
+			Time_F(START,usertime);
+			for (count=0,run=1; COND(dsa_c[j][1]); count++)
+				{
+				ret=DSA_verify(EVP_PKEY_DSA,buf,20,buf2,
+					kk,dsa_key[j]);
+				if (ret <= 0)
+					{
+					BIO_printf(bio_err,
+						"DSA verify failure\n");
+					ERR_print_errors(bio_err);
+					count=1;
+					break;
+					}
+				}
+			d=Time_F(STOP,usertime);
+			BIO_printf(bio_err,"%ld %d bit DSA verify in %.2fs\n",
+				count,dsa_bits[j],d);
+			dsa_results[j][1]=d/(double)count;
+			}
 
 		if (rsa_count <= 1)
 			{
