@@ -59,13 +59,7 @@
 #ifndef HEADER_SSL_H 
 #define HEADER_SSL_H 
 
-#ifdef OPENSSL_ALGORITHM_DEFINES
-# include <openssl/opensslconf.h>
-#else
-# define OPENSSL_ALGORITHM_DEFINES
-# include <openssl/opensslconf.h>
-# undef OPENSSL_ALGORITHM_DEFINES
-#endif
+#include <openssl/e_os2.h>
 
 #ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
@@ -1021,8 +1015,15 @@ int	SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file); /* PEM t
 STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 int	SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					    const char *file);
+#ifndef OPENSSL_SYS_WIN32
+#ifndef OPENSSL_SYS_VMS
+#ifndef MAC_OX_pre_X
 int	SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					   const char *dir);
+#endif
+#endif
+#endif
+
 #endif
 
 void	ERR_load_SSL_strings(void );
