@@ -418,7 +418,7 @@ int MAIN(int argc, char *argv[])
 	int state=0;
 	SSL_METHOD *meth=NULL;
 	char *inrand=NULL;
-	char *engine_id=NULL;
+	char *engine=NULL;
 	ENGINE *e=NULL;
 #ifndef NO_DH
 	DH *dh=NULL;
@@ -582,7 +582,7 @@ int MAIN(int argc, char *argv[])
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
-			engine_id= *(++argv);
+			engine = *(++argv);
 			}
 		else
 			{
@@ -635,9 +635,9 @@ bad:
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
 
-	if (engine_id != NULL)
+	if (engine != NULL)
 		{
-		if((e = ENGINE_by_id(engine_id)) == NULL)
+		if((e = ENGINE_by_id(engine)) == NULL)
 			{
 			BIO_printf(bio_err,"invalid engine\n");
 			ERR_print_errors(bio_err);
@@ -654,7 +654,7 @@ bad:
 			ERR_print_errors(bio_err);
 			goto end;
 			}
-		BIO_printf(bio_err,"engine \"%s\" set.\n", engine_id);
+		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
 		ENGINE_free(e);
 		}
 
