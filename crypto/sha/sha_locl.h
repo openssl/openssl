@@ -59,6 +59,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/opensslconf.h>
+
 #ifdef undef
 /* one or the other needs to be defined */
 #ifndef SHA_1 /* FIPE 180-1 */
