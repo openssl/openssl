@@ -149,6 +149,7 @@ L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>, L<SSL_clear(3)|SSL_clear(3)>,
 L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>,
 L<SSL_CTX_set_default_passwd_cb(3)|SSL_CTX_set_default_passwd_cb(3)>,
 L<SSL_CTX_set_cipher_list(3)|SSL_CTX_set_cipher_list(3)>,
+L<SSL_CTX_set_client_cert_cb(3)|SSL_CTX_set_client_cert_cb(3)>,
 L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>
 
 =cut
