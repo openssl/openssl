@@ -174,6 +174,7 @@ $	write sys$output "test a^b%c implementations"
 $	mcr 'texe_dir''exptest'
 $	return
 $ test_ec:
+$	write sys$output "test elliptic curves"
 $	mcr 'texe_dir''ectest'
 $	return
 $ test_verify:

@@ -203,6 +203,7 @@ test_bn:
 	./$(EXPTEST)
 
 test_ec:
+	@echo 'test elliptic curves'
 	./$(ECTEST)
 
 test_verify:
