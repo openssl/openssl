@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/18 16:17:41 $
+  ______________                           $Date: 2000/09/18 16:53:05 $
 
   DEVELOPMENT STATE
 
@@ -44,8 +44,10 @@
 				RAND_poll(), a few uninitialised vars [FIXED]
 				RAND_poll() should used LoadLibrary instead of
 					GetModuleHandle [FIXED]
-				Major compilation problem with VC6 on NT
+				Major compilation problem with VC6 on NT.
+					[FIXED]
 				Mingw32 says "175: parse error before `DWORD'"
+					[FIXED?]
 			Win32 w/ CygWin				- success?
 			VMS/Alpha 7.1 (CPQ C 5.6-003, TCP/IP 5.0) - success
 				Just a small warning in dso_vms.c [FIXED]
@@ -58,10 +60,18 @@
 			hpux-parisc-cc [engine] (10.20 w/ -ldld)- success
 			hpux-parisc-gcc [endine] (10.20 w/ -ldld)- success
 				All hpux 10.20 targets succeeded provided -ldl
-				has been changed to -ldld.
+					has been changed to -ldld.
 			solaris-sparcv9-gcc (2.6/ultra5)	- success
-			FreeBSD (2.2.5-RELEASE)			- success
 			solaris-sparcv9-cc (SunOS 5.7 SC3.0)	- failed
+				Complaints about a number of -x parameters to
+					the compiler and failed to compile an
+					assembler file.  Maybe a too old
+					compiler?
+			FreeBSD (2.2.5-RELEASE)			- success
+			alpha-cc [engine] (OSF1 5.0A)		- success
+			irix-mips3-cc [engine] (Irix 6.2)	- success
+				One has to do the same as for OpenBSD in
+					speed.c [FIXED]
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
