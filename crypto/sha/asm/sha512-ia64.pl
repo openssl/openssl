@@ -98,7 +98,7 @@ open STDOUT,">$output" || die "can't open $output: $!";
 if ($^O eq "hpux") {
     $ADDP="addp4";
     for (@ARGV) { $ADDP="add" if (/[\+DD|\-mlp]64/); }
-}
+} else { $ADDP="add"; }
 for (@ARGV)  {	$big_endian=1 if (/\-DB_ENDIAN/);
 		$big_endian=0 if (/\-DL_ENDIAN/);  }
 if (!defined($big_endian))

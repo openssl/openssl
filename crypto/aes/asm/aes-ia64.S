@@ -71,13 +71,12 @@ AES_encrypt:
 	mov	prsave=pr	};;
 
 	.body
-{ .mib;	and	r40=3,r32
-	mov	pr.rot=7<<16
-	brp.exit.imp	.Le_rounds_cexit,.Le_cexit_insn
-				};;
+{ .mmi;	and	r40=3,r32
+	ADDP	r32=0,r32
+	mov	pr.rot=7<<16	};;
 #if defined(_HPUX_SOURCE)	// HPUX is big-endian, cut 15 cycles...
 { .mib; cmp.ne	p6,p0=r40,r0
-	ADDP	r41=4,r32		// 1st arg, borrow teN
+	add	r41=4,r32		// 1st arg, borrow teN
 (p6)	br.dpnt.many	.Le_unaligned	};;
 
 { .mmi;	ld4	r19=[r32],8
@@ -156,8 +155,9 @@ AES_encrypt:
 	add	te2=2048,te0	}
 .Le_common:
 { .mib; add	te3=3072,te0
-	add	r35=-3,r35	};;
-
+	add	r35=-3,r35
+	brp.exit.imp	.Le_rounds_cexit,.Le_cexit_insn
+				};;
 { .mii;	mov	ar.lc=r35		// borrowed s1
 	mov	ar.ec=3		};;
 
@@ -362,13 +362,12 @@ AES_decrypt:
 	mov	prsave=pr	};;
 
 	.body
-{ .mib;	and	r40=3,r32
-	mov	pr.rot=7<<16
-	brp.exit.imp	.Ld_rounds_cexit,.Ld_cexit_insn
-				};;
+{ .mmi;	and	r40=3,r32
+	ADDP	r32=0,r32
+	mov	pr.rot=7<<16	};;
 #if defined(_HPUX_SOURCE)	// HPUX is big-endian, cut 15 cycles...
 { .mib; cmp.ne	p6,p0=r40,r0
-	ADDP	r41=4,r32		// 1st arg, borrow teN
+	add	r41=4,r32		// 1st arg, borrow teN
 (p6)	br.dpnt.many	.Ld_unaligned	};;
 
 { .mmi;	ld4	r19=[r32],8
@@ -447,8 +446,9 @@ AES_decrypt:
 	add	te2=2048,te0	}
 .Ld_common:
 { .mib; add	te3=3072,te0
-	add	r35=-3,r35	};;
-
+	add	r35=-3,r35
+	brp.exit.imp	.Ld_rounds_cexit,.Ld_cexit_insn
+				};;
 { .mii;	mov	ar.lc=r35		// borrowed s1
 	mov	ar.ec=3		};;
 
