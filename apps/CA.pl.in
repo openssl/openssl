@@ -116,6 +116,11 @@ foreach (@ARGV) {
 							"-infiles newreq.pem");
 	    $RET=$?;
 	    print "Signed certificate is in newcert.pem\n";
+	} elsif (/^(-signCA)$/) {
+	    system ("$CA -policy policy_anything -out newcert.pem " .
+					"-extensions v3_ca -infiles newreq.pem");
+	    $RET=$?;
+	    print "Signed CA certificate is in newcert.pem\n";
 	} elsif (/^-signcert$/) {
 	    system ("$X509 -x509toreq -in newreq.pem -signkey newreq.pem " .
 								"-out tmp.pem");

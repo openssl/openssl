@@ -342,6 +342,10 @@ Sign a certificate request:
 
  openssl ca -in req.pem -out newcert.pem
 
+Sign a certificate request, using CA extensions:
+
+ openssl ca -in req.pem -extensions v3_ca -out newcert.pem
+
 Generate a CRL
 
  openssl ca -gencrl -out crl.pem

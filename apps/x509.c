@@ -611,7 +611,7 @@ bad:
 				}
 			else if (subject == i) 
 				{
-				print_name(STDout, "issuer= ",
+				print_name(STDout, "subject= ",
 					X509_get_subject_name(x), nmflag);
 				}
 			else if (serial == i)

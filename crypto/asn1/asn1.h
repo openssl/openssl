@@ -809,6 +809,8 @@ int ASN1_i2d_fp(int (*i2d)(),FILE *out,unsigned char *x);
 int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
 #endif
 
+int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
+
 #ifndef NO_BIO
 char *ASN1_d2i_bio(char *(*xnew)(),char *(*d2i)(),BIO *bp,unsigned char **x);
 int ASN1_i2d_bio(int (*i2d)(),BIO *out,unsigned char *x);
