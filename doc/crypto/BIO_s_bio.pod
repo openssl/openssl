@@ -77,12 +77,17 @@ value will return a value from BIO_write() less than the amount requested or if 
 buffer is full request a retry. BIO_ctrl_get_write_guarantee() is a function
 whereas BIO_get_write_guarantee() is a macro.
 
-BIO_get_read_request() and BIO_ctrl_get_read_request() return the amount of data
-requested (or the buffer size if it is less) if the last read failed due to an
-empty buffer. This can be used to determine how much data should be written to the
-other half of the pair so the next read will succeed: this is most useful in TLS/SSL
-applications where the amount of data read is usually meaningful rather than just
-a buffer size. After a successful read this call will return zero.
+BIO_get_read_request() and BIO_ctrl_get_read_request() return the
+amount of data requested, or the buffer size if it is less, if the
+last read attempt at the other half of the BIO pair failed due to an
+empty buffer.  This can be used to determine how much data should be
+written to the BIO so the next read will succeed: this is most useful
+in TLS/SSL applications where the amount of data read is usually
+meaningful rather than just a buffer size. After a successful read
+this call will return zero.  It also will return zero once new data
+has been written satisfying the read request or part of it.
+Note that BIO_get_read_request() never returns an amount larger
+than that returned by BIO_get_write_guarantee().
 
 BIO_ctrl_reset_read_request() can also be used to reset the value returned by
 BIO_get_read_request() to zero.
