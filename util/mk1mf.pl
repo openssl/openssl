@@ -831,6 +831,6 @@ sub read_options
 	elsif (/^-[lL].*$/)	{ $l_flags.="$_ "; }
 	elsif ((!/^-help/) && (!/^-h/) && (!/^-\?/) && /^-.*$/)
 		{ $c_flags.="$_ "; }
-	else { return(1); }
-	return(0);
+	else { return(0); }
+	return(1);
 	}
