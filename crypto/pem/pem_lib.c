@@ -432,6 +432,7 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
 	int o;
 	const EVP_CIPHER *enc=NULL;
 	char *p,c;
+	char **header_pp = &header;
 
 	cipher->cipher=NULL;
 	if ((header == NULL) || (*header == '\0') || (*header == '\n'))
@@ -478,7 +479,8 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
 		PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO,PEM_R_UNSUPPORTED_ENCRYPTION);
 		return(0);
 		}
-	if (!load_iv((unsigned char **)&header,&(cipher->iv[0]),enc->iv_len)) return(0);
+	if (!load_iv((unsigned char **)header_pp,&(cipher->iv[0]),enc->iv_len))
+		return(0);
 
 	return(1);
 	}

@@ -160,21 +160,22 @@ static int x509_name_ex_d2i(ASN1_VALUE **val, unsigned char **in, long len, cons
 					int tag, int aclass, char opt, ASN1_TLC *ctx)
 {
 	unsigned char *p = *in, *q;
-	STACK *intname = NULL;
+	STACK *intname = NULL, **intname_pp = &intname;
 	int i, j, ret;
-	X509_NAME *nm = NULL;
+	X509_NAME *nm = NULL, **nm_pp = &nm;
 	STACK_OF(X509_NAME_ENTRY) *entries;
 	X509_NAME_ENTRY *entry;
 	q = p;
 
 	/* Get internal representation of Name */
-	ret = ASN1_item_ex_d2i((ASN1_VALUE **)&intname, &p, len, ASN1_ITEM_rptr(X509_NAME_INTERNAL),
-								tag, aclass, opt, ctx);
+	ret = ASN1_item_ex_d2i((ASN1_VALUE **)intname_pp,
+			       &p, len, ASN1_ITEM_rptr(X509_NAME_INTERNAL),
+			       tag, aclass, opt, ctx);
 	
 	if(ret <= 0) return ret;
 
 	if(*val) x509_name_ex_free(val, NULL);
-	if(!x509_name_ex_new((ASN1_VALUE **)&nm, NULL)) goto err;
+	if(!x509_name_ex_new((ASN1_VALUE **)nm_pp, NULL)) goto err;
 	/* We've decoded it: now cache encoding */
 	if(!BUF_MEM_grow(nm->bytes, p - q)) goto err;
 	memcpy(nm->bytes->data, q, p - q);
@@ -218,7 +219,7 @@ static int x509_name_ex_i2d(ASN1_VALUE **val, unsigned char **out, const ASN1_IT
 
 static int x509_name_encode(X509_NAME *a)
 {
-	STACK *intname = NULL;
+	STACK *intname = NULL, **intname_pp = &intname;
 	int len;
 	unsigned char *p;
 	STACK_OF(X509_NAME_ENTRY) *entries = NULL;
@@ -236,10 +237,12 @@ static int x509_name_encode(X509_NAME *a)
 		}
 		if(!sk_X509_NAME_ENTRY_push(entries, entry)) goto memerr;
 	}
-	len = ASN1_item_ex_i2d((ASN1_VALUE **)&intname, NULL, ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
+	len = ASN1_item_ex_i2d((ASN1_VALUE **)intname_pp, NULL,
+			       ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
 	if (!BUF_MEM_grow(a->bytes,len)) goto memerr;
 	p=(unsigned char *)a->bytes->data;
-	ASN1_item_ex_i2d((ASN1_VALUE **)&intname, &p, ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
+	ASN1_item_ex_i2d((ASN1_VALUE **)intname_pp,
+			 &p, ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
 	sk_pop_free(intname, sk_internal_free);
 	a->modified = 0;
 	return len;
