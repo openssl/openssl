@@ -4,6 +4,16 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Allow the string CERTIFICATE to be tolerated in PKCS#7 structures.
+     Some CAs (e.g. Verisign) distribute certificates in this form.
+     [Steve Henson]
+
+  *) Remove the SSL_ALLOW_ADH compile option and set the default cipher
+     list to exclude them. This means that no special compilation option
+     is needed to use anonymous DH: it just needs to be included in the
+     cipher list.
+     [Steve Henson]
+
   *) Change the EVP_MD_CTX_type macro so its meaning consistent with
      EVP_MD_type. The old functionality is available in a new macro called
      EVP_MD_md(). Change code that uses it and update docs.

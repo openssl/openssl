@@ -134,12 +134,7 @@ extern "C" {
 
 /* 'DEFAULT' at the start of the cipher list insert the following string
  * in addition to this being the default cipher string */
-#ifndef NO_RSA
 #define SSL_DEFAULT_CIPHER_LIST	"ALL:!ADH:RC4+RSA:+SSLv2:@STRENGTH"
-#else
-#define SSL_ALLOW_ADH
-#define SSL_DEFAULT_CIPHER_LIST	"ALL:ADH+3DES:ADH+RC4:ADH+DES:@STRENGTH"
-#endif
 
 /* Used in SSL_set_shutdown()/SSL_get_shutdown(); */
 #define SSL_SENT_SHUTDOWN	1

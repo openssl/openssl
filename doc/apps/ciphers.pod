@@ -101,7 +101,8 @@ The following is a list of all permitted cipher strings and their meanings.
 =item B<DEFAULT>
 
 the default cipher list. This is determined at compile time and is normally
-B<TBA>. This must be the first cipher string specified.
+B<ALL:!ADH:RC4+RSA:+SSLv2:@STRENGTH>. This must be the first cipher string
+specified.
 
 =item B<ALL>
 
@@ -143,7 +144,7 @@ included.
 
 the cipher suites offering no authentication. This is currently the anonymous
 DH algorithms. These cipher suites are vulnerable to a "man in the middle"
-attack and so there use is normally discouraged.
+attack and so their use is normally discouraged.
 
 =item B<kRSA>, B<RSA>
 

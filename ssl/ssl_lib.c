@@ -1367,10 +1367,8 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 		emask|=SSL_aDSS;
 		}
 
-#ifdef SSL_ALLOW_ADH
 	mask|=SSL_aNULL;
 	emask|=SSL_aNULL;
-#endif
 
 	c->mask=mask;
 	c->export_mask=emask;

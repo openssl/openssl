@@ -71,6 +71,18 @@ Output all certificates in a file:
 
  openssl pkcs7 -in file.pem -print_certs -out certs.pem
 
+=head1 NOTES
+
+The PEM PKCS#7 format uses the header and footer lines:
+
+ -----BEGIN PKCS7-----
+ -----END PKCS7-----
+
+For compatability with some CAs it will also accept:
+
+ -----BEGIN CERTIFICATE-----
+ -----END CERTIFICATE-----
+
 =head1 RESTRICTIONS
 
 There is no option to print out all the fields of a PKCS#7 file.
