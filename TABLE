@@ -4374,3 +4374,28 @@ $shared_ldflag =
 $shared_extension = 
 $ranlib       = 
 $arflags      = 
+
+*** vxworks-ppc860
+$cc           = ccppc
+$cflags       = -g -msoft-float -DCPU=PPC860 -DNO_STRINGS_H -I$(WIND_BASE)/target/h
+$unistd       = 
+$thread_cflag = 
+$sys_id       = VXWORKS
+$lflags       = -r
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+$arflags      = 
