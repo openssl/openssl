@@ -395,7 +395,7 @@ my %table=(
 "aix-cc",   "cc:-O -DAIX -DB_ENDIAN -qmaxmem=16384::(unknown)::BN_LLONG RC4_CHAR:::",
 "aix-gcc",  "gcc:-O3 -DAIX -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR:::",
 "aix43-cc",   "cc:-O -DAIX -DB_ENDIAN -qmaxmem=16384::(unknown)::BN_LLONG RC4_CHAR::::::::::dlfcn:",
-"aix43-gcc",  "gcc:-O3 -DAIX -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR::::::::::dlfcn:",
+"aix43-gcc",  "gcc:-O1 -DAIX -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR::::::::::dlfcn:",
 
 #
 # Cray T90 and similar (SDSC)
