@@ -166,6 +166,7 @@ static ERR_STRING_DATA ERR_str_functs[]=
 	{ERR_PACK(0,SYS_F_WSASTARTUP,0),	"WSAstartup"},
 #endif
 	{ERR_PACK(0,SYS_F_OPENDIR,0),		"opendir"},
+	{ERR_PACK(0,SYS_F_FREAD,0),		"fread"},
 	{0,NULL},
 	};
 

@@ -162,6 +162,12 @@ static int MS_CALLBACK file_read(BIO *b, char *out, int outl)
 	if (b->init && (out != NULL))
 		{
 		ret=fread(out,1,(int)outl,(FILE *)b->ptr);
+		if(ret == 0 && ferror((FILE *)b->ptr))
+			{
+			SYSerr(SYS_F_FREAD,get_last_sys_error());
+			BIOerr(BIO_F_FILE_READ,ERR_R_SYS_LIB);
+			ret=-1;
+			}
 		}
 	return(ret);
 	}

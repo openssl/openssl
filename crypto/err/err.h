@@ -182,6 +182,7 @@ typedef struct err_state_st
 #define SYS_F_ACCEPT		8
 #define SYS_F_WSASTARTUP	9 /* Winsock stuff */
 #define SYS_F_OPENDIR		10
+#define SYS_F_FREAD		11
 
 
 /* reasons */

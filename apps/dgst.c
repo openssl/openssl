@@ -73,8 +73,9 @@
 #undef PROG
 #define PROG	dgst_main
 
-void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
-		EVP_PKEY *key, unsigned char *sigin, int siglen);
+int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
+	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
+	  const char *file);
 
 int MAIN(int, char **);
 
@@ -319,22 +320,36 @@ int MAIN(int argc, char **argv)
 	if (argc == 0)
 		{
 		BIO_set_fp(in,stdin,BIO_NOCLOSE);
-		do_fp(out, buf,inp,separator, out_bin, sigkey, sigbuf, siglen);
+		err=do_fp(out, buf,inp,separator, out_bin, sigkey, sigbuf,
+			  siglen,"","(stdin)");
 		}
 	else
 		{
 		name=OBJ_nid2sn(md->type);
 		for (i=0; i<argc; i++)
 			{
+			char *tmp,*tofree=NULL;
+			int r;
+
 			if (BIO_read_filename(in,argv[i]) <= 0)
 				{
 				perror(argv[i]);
 				err++;
 				continue;
 				}
-			if(!out_bin) BIO_printf(out, "%s(%s)= ",name,argv[i]);
-			do_fp(out, buf,inp,separator, out_bin, sigkey, 
-								sigbuf, siglen);
+			if(!out_bin)
+				{
+				tmp=tofree=OPENSSL_malloc(strlen(name)+strlen(argv[i])+5);
+				sprintf(tmp,"%s(%s)= ",name,argv[i]);
+				}
+			else
+				tmp="";
+			r=do_fp(out,buf,inp,separator,out_bin,sigkey,sigbuf,
+				siglen,tmp,argv[i]);
+			if(r)
+			    err=r;
+			if(tofree)
+				OPENSSL_free(tofree);
 			(void)BIO_reset(bmd);
 			}
 		}
@@ -353,8 +368,9 @@ end:
 	EXIT(err);
 	}
 
-void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
-			EVP_PKEY *key, unsigned char *sigin, int siglen)
+int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
+	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
+	  const char *file)
 	{
 	int len;
 	int i;
@@ -362,21 +378,33 @@ void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	for (;;)
 		{
 		i=BIO_read(bp,(char *)buf,BUFSIZE);
-		if (i <= 0) break;
+		if(i < 0)
+			{
+			BIO_printf(bio_err, "Read Error in %s\n",file);
+			ERR_print_errors(bio_err);
+			return 1;
+			}
+		if (i == 0) break;
 		}
 	if(sigin)
 		{
 		EVP_MD_CTX *ctx;
 		BIO_get_md_ctx(bp, &ctx);
 		i = EVP_VerifyFinal(ctx, sigin, (unsigned int)siglen, key); 
-		if(i > 0) BIO_printf(out, "Verified OK\n");
-		else if(i == 0) BIO_printf(out, "Verification Failure\n");
+		if(i > 0)
+			BIO_printf(out, "Verified OK\n");
+		else if(i == 0)
+			{
+			BIO_printf(out, "Verification Failure\n");
+			return 1;
+			}
 		else
 			{
 			BIO_printf(bio_err, "Error Verifying Data\n");
 			ERR_print_errors(bio_err);
+			return 1;
 			}
-		return;
+		return 0;
 		}
 	if(key)
 		{
@@ -386,7 +414,7 @@ void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			{
 			BIO_printf(bio_err, "Error Signing Data\n");
 			ERR_print_errors(bio_err);
-			return;
+			return 1;
 			}
 		}
 	else
@@ -395,6 +423,7 @@ void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	if(binout) BIO_write(out, buf, len);
 	else 
 		{
+		BIO_write(out,title,strlen(title));
 		for (i=0; i<len; i++)
 			{
 			if (sep && (i != 0))
@@ -403,5 +432,6 @@ void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			}
 		BIO_printf(out, "\n");
 		}
+	return 0;
 	}
 
