@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/03/09 15:36:53 $
+  ______________                           $Date: 1999/03/10 14:50:28 $
 
   DEVELOPMENT STATE
 
@@ -22,6 +22,10 @@
     o `make test' still fails under Solaris 2.6 in the test_ssl target
     o Compilation warnings: ctype-related int vs. char
     o Compilation error: "unsigned long*" and "int*" under AIX
+    o Why are NULL ciphers in front of the cipher spec?
+      (see my posting "Bug?!: Cipher Suite and NULL Ciphers" in openssl-dev)
+    o A Linux alpha user reported: "alpha.s does not have bn_div_word()"
+      (see posting "ALPHA error" in openssl-dev)
 
   AVAILABLE PATCHES
 
