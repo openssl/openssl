@@ -61,8 +61,8 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-/* Here follows specialised variants of bn_cmp_words(), bn_add_words() and
-   bn_sub_words().  They all have the property performing operations on
+/* Here follows specialised variants of bn_add_words() and
+   bn_sub_words().  They have the property performing operations on
    arrays of different sizes.  The sizes of those arrays is expressed through
    cl, which is the common length ( basicall, min(len(a),len(b)) ), and dl,
    which is the delta between the two lengths, calculated as len(a)-len(b).
@@ -70,17 +70,6 @@
    a result array as parameter, it must have the length cl+abs(dl).
    These functions should probably end up in bn_asm.c as soon as there are
    assembler counterparts for the systems that use assembler files.  */
-
-int bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b,
-	int cl, int dl)
-	{
-	if (dl < 0)		/* a < b */
-		return -1;
-	if (dl > 0)		/* a > b */
-		return 1;
-
-	return bn_cmp_words(a,b,cl);
-	}
 
 BN_ULONG bn_sub_part_words(BN_ULONG *r,
 	const BN_ULONG *a, const BN_ULONG *b,
