@@ -24,7 +24,7 @@
 #include <openssl/md5.h>
 #include <openssl/err.h>
 #include <openssl/fips.h>
-
+#include <openssl/bn.h>                                                                                          
 #ifndef OPENSSL_FIPS
 int main(int argc, char *argv[])
     {
@@ -174,12 +174,37 @@ static int dh_test()
 
     ERR_clear_error();
     dh = DH_generate_parameters(256, 2, NULL, NULL);
-    if (!dh)
-	{
-	ERR_load_crypto_strings();
-        ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+    if (dh)
+        return 1;
+    return 0;
+    }
+
+/* Zeroize
+*/
+static int Zeroize()
+    {
+    RSA *key;
+    unsigned char userkey[16] = 
+	{ 0x48, 0x50, 0xf0, 0xa3, 0x3a, 0xed, 0xd3, 0xaf, 0x6e, 0x47, 0x7f, 0x83, 0x02, 0xb1, 0x09, 0x68 };
+    int i, n;
+    
+    key = RSA_generate_key(1024,65537,NULL,NULL);
+    if (!key)
 	return 0;
-	}
+    n = BN_num_bytes(key->d);
+    printf(" Generated %d byte RSA private key\n", n);
+    printf("\tBN key before overwriting:\n%s\n", BN_bn2hex(key->d));
+    BN_rand(key->d,n*8,-1,0);
+    printf("\tBN key after overwriting:\n%s\n", BN_bn2hex(key->d));
+
+    printf("\tchar buffer key before overwriting: \n\t\t");
+    for(i = 0; i < sizeof(userkey); i++) printf("%02x", userkey[i]);
+        printf("\n");
+    RAND_bytes(userkey, sizeof userkey);
+    printf("\tchar buffer key after overwriting: \n\t\t");
+    for(i = 0; i < sizeof(userkey); i++) printf("%02x", userkey[i]);
+        printf("\n");
+
     return 1;
     }
 
@@ -194,6 +219,9 @@ int main(int argc,char **argv)
     {
 
     printf("\tFIPS-mode test application\n\n");
+
+    /* Load entropy from external file, if any */
+    RAND_load_file(".rnd", 1024);
 
     if (argv[1]) {
         /* Corrupted KAT tests */
@@ -300,6 +328,11 @@ int main(int argc,char **argv)
     printf("\tb. Included algorithm (D-H)...");
     printf( dh_test() ? "successful as expected\n"
 	    : Fail("failed INCORRECTLY!\n") );
+
+    /* Zeroization
+    */
+    printf("9. Zero-ization...\n");
+    Zeroize();
 
     printf("\nAll tests completed with %d errors\n", Error);
     return 0;
