@@ -200,56 +200,69 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 
 	for (i=0; i<loop-1; i++)
 		{
-		BN_ULONG q,n0,n1;
-		BN_ULONG l0;
+		BN_ULONG q,l0;
+#ifdef BN_DIV3W
+		q=bn_div_3_words(wnump,d0,d1);
+#else
+		BN_ULONG n0,n1,rem;
 
-		wnum.d--; wnum.top++;
 		n0=wnump[0];
 		n1=wnump[-1];
 		if (n0 == d0)
 			q=BN_MASK2;
 		else
+#if defined(BN_LLONG) && defined(BN_DIV2W)
+			q=((((BN_ULLONG)n0)<<BN_BITS2)|n1)/((BN_ULLONG)d0);
+#else
 			q=bn_div_words(n0,n1,d0);
+#endif
 		{
 #ifdef BN_LLONG
-		BN_ULLONG t1,t2,rem;
-		t1=((BN_ULLONG)n0<<BN_BITS2)|n1;
+		BN_ULLONG t2;
+
+		/*
+		 * rem doesn't have to be BN_ULLONG. The least we
+		 * know it's less that d0, isn't it?
+		 */
+		rem=(n1-q*d0)&BN_MASK2;
+
+		t2=(BN_ULLONG)d1*q;
 		for (;;)
 			{
-			rem=t1-(BN_ULLONG)q*d0;
-			t2=(BN_ULLONG)d1*q;
-                        if ((rem>>BN_BITS2) ||
-				(t2 <= ((rem<<BN_BITS2)|wnump[-2])))
+                        if (t2 <= ((((BN_ULLONG)rem)<<BN_BITS2)|wnump[-2]))
 				break;
 			q--;
+			rem += d0;
+			if (rem < d0) break; /* don't let rem overflow */
+			t2 -= d1;
 			}
 #else
-		BN_ULONG t1l,t1h,t2l,t2h,t3l,t3h,ql,qh,t3t;
-		t1h=n0;
-		t1l=n1;
+		BN_ULONG t2l,t2h,ql,qh;
+
+		/*
+		 * It's more than enough with the only multiplication.
+		 * See the comment above in BN_LLONG section...
+		 */
+		rem=(n1-q*d0)&BN_MASK2;
+
+		t2l=LBITS(d1); t2h=HBITS(d1);
+		ql =LBITS(q);  qh =HBITS(q);
+		mul64(t2l,t2h,ql,qh); /* t2=(BN_ULLONG)d1*q; */
+
 		for (;;)
 			{
-			t2l=LBITS(d1); t2h=HBITS(d1);
-			ql =LBITS(q);  qh =HBITS(q);
-			mul64(t2l,t2h,ql,qh); /* t2=(BN_ULLONG)d1*q; */
-
-			t3t=LBITS(d0); t3h=HBITS(d0);
-			mul64(t3t,t3h,ql,qh); /* t3=t1-(BN_ULLONG)q*d0; */
-			t3l=(t1l-t3t)&BN_MASK2;
-			if (t3l > t1l) t3h++;
-			t3h=(t1h-t3h)&BN_MASK2;
-
-			/*if ((t3>>BN_BITS2) ||
-				(t2 <= ((t3<<BN_BITS2)+wnump[-2])))
-				break; */
-			if (t3h) break;
-			if (t2h < t3l) break;
-			if ((t2h == t3l) && (t2l <= wnump[-2])) break;
-
+			if ((t2h < rem) ||
+				((t2h == rem) && (t2l <= wnump[-2])))
+				break;
 			q--;
+			rem += d0;
+			if (rem < d0) break; /* don't let rem overflow */
+			if (t2l < d1) t2h--; t2l -= d1;
 			}
 #endif
 		}
+#endif /* BN_DIV3W */
+		wnum.d--; wnum.top++;
 		l0=bn_mul_words(tmp->d,sdiv->d,div_n,q);
 		tmp->d[div_n]=l0;
 		for (j=div_n+1; j>0; j--)

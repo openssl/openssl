@@ -264,18 +264,20 @@ BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
 		else
 			q=h/dh;
 
+		th=q*dh;
+		tl=dl*q;
 		for (;;)
 			{
-			t=(h-(th=q*dh));
-			tl=BN_MASK2;
+			t=h-th;
 			if ((t&BN_MASK2h) ||
-				((tl=dl*q) <= (
+				((tl) <= (
 					(t<<BN_BITS4)|
 					((l&BN_MASK2h)>>BN_BITS4))))
 				break;
 			q--;
+			th-=dh;
+			tl-=dl;
 			}
-		if (tl==BN_MASK2) tl=q*dl;
 		t=(tl>>BN_BITS4);
 		tl=(tl<<BN_BITS4)&BN_MASK2h;
 		th+=t;

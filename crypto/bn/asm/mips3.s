@@ -1,5 +1,5 @@
 .rdata
-.asciiz "mips3.s, Version 1.0 (prerelease)"
+.asciiz "mips3.s, Version 1.0"
 .asciiz	"MIPS III/IV ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
 
 /*
@@ -19,19 +19,26 @@
  * a drop-in MIPS III/IV ISA replacement for crypto/bn/bn_asm.c
  * module. For updates see http://fy.chalmers.se/~appro/hpe/.
  *
- * The module is designed to work with "new" IRIX ABI(5), namely
- * N32 and N64. But it was tested only with MIPSpro 7.2.x assembler,
- * i.e. depends on preprocessor options set up by MIPSspro 7.2.x
- * driver. Another neat gadget offered by MIPSpro 7.2.x assembler is
- * an peep-hole(?) optimization pass. This gave me the opportunity
- * to make the code looking more regular as all those architecture
- * dependent(!) instruction rescheduling details were left to the
- * assembler. Cool, huh? Do note that I have no idea if GNU assembler
- * does anything similar nor how GNU C will do with this module.
- * Feedback on the matter is therefore very much appreciated:-)
+ * The module is designed to work with either of the "new" MIPS ABI(5),
+ * namely N32 or N64, offered by IRIX 6.x. It's not ment to work under
+ * IRIX 5.x not only because it doesn't support new ABIs but also
+ * because 5.x kernels put R4x00 CPU into 32-bit mode and all those
+ * 64-bit instructions (daddu, dmultu, etc.) found below gonna only
+ * cause illegal instruction exception:-(
+ *
+ * In addition the code depends on preprocessor flags set up by MIPSpro
+ * compiler driver (either as or cc) and therefore (probably?) can't be
+ * compiled by the GNU assembler. GNU C driver manages fine though...
+ * I mean as long as -mmips-as is specified or is the default option,
+ * because then it simply invokes /usr/bin/as which in turn takes
+ * perfect care of the preprocessor definitions. Another neat feature
+ * offered by the MIPSpro assembler is an optimization pass. This gave
+ * me the opportunity to have the code looking more regular as all those
+ * architecture dependent instruction rescheduling details were left to
+ * the assembler. Cool, huh?
  *
  * Performance improvement is astonishing! 'apps/openssl speed rsa dsa'
- * exhibits 3-3.5-3.7 times improvement!
+ * goes way over 3 times faster!
  *
  *					<appro@fy.chalmers.se>
  */
@@ -56,8 +63,8 @@
 
 #define	MINUS4	v1
 
+.align	5
 LEAF(bn_mul_add_words)
-	.align	5
 	.set	noreorder
 	bgtzl	a2,.L_bn_mul_add_words_proceed
 	ld	t0,0(a1)
@@ -185,8 +192,8 @@ LEAF(bn_mul_add_words)
 	jr	ra
 END(bn_mul_add_words)
 
+.align	5
 LEAF(bn_mul_words)
-	.align	5
 	.set	noreorder
 	bgtzl	a2,.L_bn_mul_words_proceed
 	ld	t0,0(a1)
@@ -284,8 +291,8 @@ LEAF(bn_mul_words)
 	jr	ra
 END(bn_mul_words)
 
+.align	5
 LEAF(bn_sqr_words)
-	.align	5
 	.set	noreorder
 	bgtzl	a2,.L_bn_sqr_words_proceed
 	ld	t0,0(a1)
@@ -371,8 +378,8 @@ LEAF(bn_sqr_words)
 	jr	ra
 END(bn_sqr_words)
 
+.align	5
 LEAF(bn_add_words)
-	.align	5
 	.set	noreorder
 	bgtzl	a3,.L_bn_add_words_proceed
 	ld	t0,0(a1)
@@ -471,8 +478,8 @@ LEAF(bn_add_words)
 	jr	ra
 END(bn_add_words)
 
+.align	5
 LEAF(bn_sub_words)
-	.align	5
 	.set	noreorder
 	bgtzl	a3,.L_bn_sub_words_proceed
 	ld	t0,0(a1)
@@ -567,24 +574,24 @@ END(bn_sub_words)
 
 #undef	MINUS4
 
+.align	5
 LEAF(bn_div_words)
-	.align	5
 	.set	noreorder
 	bnezl	a2,.L_bn_div_words_proceed
-	move	t0,zero
+	move	v1,zero
 	jr	ra
 	li	v0,-1		/* I'd rather signal div-by-zero
 				 * which can be done with 'break 7' */
-	.set	reorder
 
 .L_bn_div_words_proceed:
 	bltz	a2,.L_bn_div_words_body
-	.set	noreorder
+	move	t9,v1
 	dsll	a2,1
 	bgtz	a2,.-4
-	addu	t0,1
+	addu	t9,1
+
 	.set	reorder
-	negu	t1,t0
+	negu	t1,t9
 	li	t2,-1
 	dsll	t2,t1
 	and	t2,a0
@@ -593,64 +600,134 @@ LEAF(bn_div_words)
 	bnezl	t2,.+8
 	break	6		/* signal overflow */
 	.set	reorder
-	dsll	a0,t0
-	dsll	a1,t0
+	dsll	a0,t9
+	dsll	a1,t9
 	or	a0,AT
 
 #define	QT	ta0
-#define	DH	ta1
-#define	HH	ta2
-#define	MINUS1	ta3
+#define	HH	ta1
+#define	DH	v1
 .L_bn_div_words_body:
 	dsrl	DH,a2,32
-	li	v1,2
 	sgeu	AT,a0,a2
-	li	MINUS1,-1
 	.set	noreorder
 	bnezl	AT,.+8
 	dsubu	a0,a2
 	.set	reorder
 
-.L_bn_div_words_outer_loop:
+	li	QT,-1
 	dsrl	HH,a0,32
-	subu	v1,1
-	dsrl	QT,MINUS1,32	/* q=0xffffffff */
-	beq	DH,HH,.L_bn_div_words_inner_loop
+	dsrl	QT,32	/* q=0xffffffff */
+	beq	DH,HH,.L_bn_div_words_skip_div1
 	ddivu	zero,a0,DH
 	mflo	QT
-.L_bn_div_words_inner_loop:
+.L_bn_div_words_skip_div1:
 	dmultu	a2,QT
 	dsll	t3,a0,32
 	dsrl	AT,a1,32
 	or	t3,AT
 	mflo	t0
 	mfhi	t1
+.L_bn_div_words_inner_loop1:
 	sltu	t2,t3,t0
 	seq	t8,HH,t1
 	sltu	AT,HH,t1
 	and	t2,t8
 	or	AT,t2
 	.set	noreorder
-	bnezl	AT,.L_bn_div_words_inner_loop
-	dsubu	QT,1
+	beqz	AT,.L_bn_div_words_inner_loop1_done
+	sltu	t2,t0,a2
 	.set	reorder
-	
-	dsubu	a0,t3,t0
-	beqz	v1,.L_bn_div_words_outer_loop_done
+	dsubu	QT,1
+	dsubu	t0,a2
+	dsubu	t1,t2
+	b	.L_bn_div_words_inner_loop1
+.L_bn_div_words_inner_loop1_done:	
 
 	dsll	a1,32
+	dsubu	a0,t3,t0
 	dsll	v0,QT,32
-	b	.L_bn_div_words_outer_loop
 
-.L_bn_div_words_outer_loop_done:
+	li	QT,-1
+	dsrl	HH,a0,32
+	dsrl	QT,32	/* q=0xffffffff */
+	beq	DH,HH,.L_bn_div_words_skip_div2
+	ddivu	zero,a0,DH
+	mflo	QT
+.L_bn_div_words_skip_div2:
+	dmultu	a2,QT
+	dsll	t3,a0,32
+	dsrl	AT,a1,32
+	or	t3,AT
+	mflo	t0
+	mfhi	t1
+.L_bn_div_words_inner_loop2:
+	sltu	t2,t3,t0
+	seq	t8,HH,t1
+	sltu	AT,HH,t1
+	and	t2,t8
+	or	AT,t2
+	.set	noreorder
+	beqz	AT,.L_bn_div_words_inner_loop2_done
+	sltu	t2,t0,a2
+	.set	reorder
+	dsubu	QT,1
+	dsubu	t0,a2
+	dsubu	t1,t2
+	b	.L_bn_div_words_inner_loop2
+.L_bn_div_words_inner_loop2_done:	
+
+	dsubu	a0,t3,t0
 	or	v0,QT
-	move	v1,a0	/* v1 contains remainder if one wants it */
+	dsrl	v1,a0,t9	/* v1 contains remainder if anybody wants it */
+	dsrl	a2,t9		/* restore a2 */
 	jr	ra
-#undef	MINUS1
 #undef	HH
 #undef	DH
 #undef	QT
 END(bn_div_words)
+
+.align 5
+LEAF(bn_div_3_words)
+	.set	reorder
+	move	a3,a0		/* we know that bn_div_words doesn't
+				 * touch a3, ta2, ta3 and preserves a2
+				 * so that we can save two arguments
+				 * and return address in registers
+				 * instead of stack:-)
+				 */
+	ld	a0,(a3)
+	move	ta2,a2
+	move	a2,a1
+	ld	a1,-8(a3)
+	move	ta3,ra
+	move	v1,zero
+	li	v0,-1
+	beq	a0,a2,.L_bn_div_3_words_skip_div
+	jal	bn_div_words
+	move	ra,ta3
+.L_bn_div_3_words_skip_div:
+	dmultu	ta2,v0
+	ld	t2,-16(a3)
+	mflo	t0
+	mfhi	t1
+.L_bn_div_3_words_inner_loop:
+	sgeu	AT,t2,t0
+	seq	t9,t1,v1
+	sltu	t8,t1,v1
+	and	AT,t9
+	or	AT,t8
+	bnez	AT,.L_bn_div_3_words_inner_loop_done
+	daddu	v1,a2
+	sltu	t3,t0,ta2
+	sltu	AT,v1,a2
+	dsubu	v0,1
+	dsubu	t0,ta2
+	dsubu	t1,t3
+	beqz	AT,.L_bn_div_3_words_inner_loop
+.L_bn_div_3_words_inner_loop_done:
+	jr	ra
+END(bn_div_3_words)
 
 #define	a_0	t0
 #define	a_1	t1
@@ -679,20 +756,19 @@ END(bn_div_words)
 
 #define	FRAME_SIZE	48
 
+.align	5
 LEAF(bn_mul_comba8)
-	.align	5
 	.set	noreorder
 	PTR_SUB	sp,FRAME_SIZE
 	.frame	sp,64,ra
 	.set	reorder
-	ld	a_0,0(a1)	/* If compiled with -mips3 options
-				 * assembler barks on this line with
-				 * "shouldn't have mult/div as last
-				 * instruction in bb (R10K bug)"
-				 * warning. If anybody out there has
-				 * a clue on what does "bb" mean and
-				 * how to circumvent this do send me
-				 * a note.
+	ld	a_0,0(a1)	/* If compiled with -mips3 option on
+				 * R5000 box assembler barks on this
+				 * line with "shouldn't have mult/div
+				 * as last instruction in bb (R10K
+				 * bug)" warning. If anybody out there
+				 * has a clue about how to circumvent
+				 * this do send me a note.
 				 *		<appro@fy.chalmers.se>
 				 */
 	ld	b_0,0(a2)
@@ -1286,8 +1362,8 @@ LEAF(bn_mul_comba8)
 	jr	ra
 END(bn_mul_comba8)
 
+.align	5
 LEAF(bn_mul_comba4)
-	.align	5
 	.set	reorder
 	ld	a_0,0(a1)
 	ld	b_0,0(a2)
@@ -1444,8 +1520,8 @@ END(bn_mul_comba4)
 #define	a_6	b_2
 #define	a_7	b_3
 
+.align	5
 LEAF(bn_sqr_comba8)
-	.align	5
 	.set	reorder
 	ld	a_0,0(a1)
 	ld	a_1,8(a1)
@@ -1934,8 +2010,8 @@ LEAF(bn_sqr_comba8)
 	jr	ra
 END(bn_sqr_comba8)
 
+.align	5
 LEAF(bn_sqr_comba4)
-	.align	5
 	.set	reorder
 	ld	a_0,0(a1)
 	ld	a_1,8(a1)
