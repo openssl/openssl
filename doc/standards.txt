@@ -55,6 +55,8 @@ These are documents that describe things that are implemented in OpenSSL.
      Profile. R. Housley, W. Ford, W. Polk, D. Solo. January 1999.
      (Format: TXT=278438 bytes) (Status: PROPOSED STANDARD)
 
+PKCS#8: Private-Key Information Syntax Standard
+
 PKCS#12: Personal Information Exchange Syntax Standard, version 1.0.
 
 
