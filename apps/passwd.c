@@ -272,6 +272,7 @@ int MAIN(int argc, char **argv)
 			}
 		while (!done);
 		}
+	ret = 0;
 
 err:
 	ERR_print_errors(bio_err);
