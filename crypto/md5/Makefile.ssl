@@ -21,14 +21,6 @@ MD5_ASM_OBJ=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-# We let the C compiler driver to take care of .s files. This is done in
-# order to be excused from maintaining a separate set of architecture
-# dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
-# gcc, then the driver will automatically translate it to -xarch=v8plus
-# and pass it down to assembler.
-AS=$(CC) -c
-ASFLAGS=$(CFLAGS)
-
 GENERAL=Makefile
 TEST=md5test.c
 APPS=
@@ -55,14 +47,8 @@ lib:    $(LIBOBJ)
 	@touch lib
 
 # elf
-asm/mx86-elf.o: asm/mx86unix.cpp
-	$(CPP) -DELF -x c asm/mx86unix.cpp | as -o asm/mx86-elf.o
-
-# solaris
-asm/mx86-sol.o: asm/mx86unix.cpp
-	$(CC) -E -DSOL asm/mx86unix.cpp | sed 's/^#.*//' > asm/mx86-sol.s
-	as -o asm/mx86-sol.o asm/mx86-sol.s
-	rm -f asm/mx86-sol.s
+asm/mx86-elf.s: asm/md5-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) md5-586.pl elf $(CFLAGS) > mx86-elf.s)
 
 # a.out
 asm/mx86-out.o: asm/mx86unix.cpp
@@ -125,7 +111,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/mx86unix.cpp *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f asm/mx86unix.cpp asm/*-elf.* *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -49,14 +49,8 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 # elf
-asm/bx86-elf.o: asm/bx86unix.cpp
-	$(CPP) -DELF -x c asm/bx86unix.cpp | as -o asm/bx86-elf.o
-
-# solaris
-asm/bx86-sol.o: asm/bx86unix.cpp
-	$(CC) -E -DSOL asm/bx86unix.cpp | sed 's/^#.*//' > asm/bx86-sol.s
-	as -o asm/bx86-sol.o asm/bx86-sol.s
-	rm -f asm/bx86-sol.s
+asm/bx86-elf.s: asm/bf-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	(cd asm; $(PERL) bf-586.pl elf $(CFLAGS) $(PROCESSOR) > bx86-elf.s)
 
 # a.out
 asm/bx86-out.o: asm/bx86unix.cpp
@@ -103,7 +97,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/bx86unix.cpp *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f asm/bx86unix.cpp asm/*-elf.* *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -426,6 +426,11 @@ sub main'swtmp
 
 sub main'comment
 	{
+	if ($main'elf)	# GNU and SVR4 as'es use different comment delimiters,
+		{	# so we just skip comments...
+		push(@out,"\n");
+		return;
+		}
 	foreach (@_)
 		{
 		if (/^\s*$/)
@@ -546,7 +551,9 @@ sub popvars
 sub main'picmeup
 	{
 	local($dst,$sym)=@_;
-	local($tmp)=<<___;
+	if ($main'cpp)
+		{
+		local($tmp)=<<___;
 #if (defined(ELF) || defined(SOL)) && defined(PIC)
 	.align	8
 	call	1f
@@ -557,7 +564,22 @@ sub main'picmeup
 	leal	$sym,$regs{$dst}
 #endif
 ___
-	push(@out,$tmp);
+		push(@out,$tmp);
+		}
+	elsif ($main'pic && $main'elf)
+		{
+		push(@out,"\t.align\t8\n");
+		&main'call(&main'label("PIC_me_up"));
+		&main'set_label("PIC_me_up");
+		&main'blindpop($dst);
+		&main'add($dst,"\$_GLOBAL_OFFSET_TABLE_+[.-" .
+				&main'label("PIC_me_up") . "]");
+		&main'mov($dst,&main'DWP("$under$sym\@GOT",$dst));
+		}
+	else
+		{
+		&main'lea($dst,&main'DWP("$under$sym"));
+		}
 	}
 
 sub main'blindpop { &out1("popl",@_); }

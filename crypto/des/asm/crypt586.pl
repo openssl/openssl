@@ -32,8 +32,9 @@ sub fcrypt_body
 	&xor(	$R,	$R);
 
 	# PIC-ification:-)
-	if ($cpp)	{ &picmeup("edx","DES_SPtrans");   }
-	else		{ &lea("edx",&DWP("DES_SPtrans")); }
+	&picmeup("edx","DES_SPtrans");
+	#if ($cpp)	{ &picmeup("edx","DES_SPtrans");   }
+	#else		{ &lea("edx",&DWP("DES_SPtrans")); }
 	&push("edx");	# becomes &swtmp(1)
 	#
 	&mov($trans,&wparam(1)); # reloaded with DES_SPtrans in D_ENCRYPT
