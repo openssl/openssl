@@ -106,7 +106,7 @@ All of the above bug workarounds.
 
 =back
 
-It is save and recommended to use SSL_OP_ALL to enable the bug workaround
+It is safe and recommended to use SSL_OP_ALL to enable the bug workaround
 options.
 
 The following B<modifying> options are available:
