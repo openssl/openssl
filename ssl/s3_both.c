@@ -285,20 +285,34 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
 	if (s->state == st1) /* s->init_num < 4 */
 		{
-		while (s->init_num < 4)
-			{
-			i=ssl3_read_bytes(s,SSL3_RT_HANDSHAKE,&p[s->init_num],
-				4-s->init_num);
-			if (i <= 0)
-				{
-				s->rwstate=SSL_READING;
-				*ok = 0;
-				return i;
-				}
-			s->init_num+=i;
-			}
+		int skip_message;
 
-/* XXX server may always send Hello Request */
+		do
+			{
+			while (s->init_num < 4)
+				{
+				i=ssl3_read_bytes(s,SSL3_RT_HANDSHAKE,&p[s->init_num],
+					4-s->init_num);
+				if (i <= 0)
+					{
+					s->rwstate=SSL_READING;
+					*ok = 0;
+					return i;
+					}
+				s->init_num+=i;
+				}
+			
+			skip_message = 0;
+			if (!s->server)
+				if (p[0] == SSL3_MT_HELLO_REQUEST)
+					/* The server may always send 'Hello Request' messages --
+					 * we are doing a handshake anyway now, so ignore them
+					 * if their format is correct */
+					if (p[1] == 0 && p[2] == 0 &&p[3] == 0)
+						skip_message = 1;
+			}
+		while (skip_message);
+
 		if ((mt >= 0) && (*p != mt))
 			{
 			al=SSL_AD_UNEXPECTED_MESSAGE;
