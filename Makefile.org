@@ -665,7 +665,7 @@ dist:
 	$(PERL) Configure dist
 	@$(MAKE) dist_pem_h
 	@$(MAKE) SDIRS='${SDIRS}' clean
-	@$(MAKE) tar
+	@$(MAKE) TAR='${TAR}' TARFLAGS='${TARFLAGS}' tar
 
 dist_pem_h:
 	(cd crypto/pem; $(MAKE) CC='${CC}' SDIRS='${SDIRS}' CFLAG='${CFLAG}' pem.h; $(MAKE) clean)
