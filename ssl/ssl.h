@@ -241,11 +241,13 @@ typedef struct ssl_session_st
 	int not_resumable;
 
 	/* The cert is the certificate used to establish this connection */
-	struct cert_st /* CERT */ *cert;
+	struct cert_st /* CERT */ *sess_cert;
 	/* XXX should be struct sess_cert_st *sess_cert */
 
-	/* This is the cert for the other end.  On servers, it will be
-	 * the same as cert->x509 */
+	/* This is the cert for the other end.
+	 * On clients, it will be the same as sess_cert->key->x509
+	 * (the latter is not enough as sess_cert is not retained
+	 * in the external representation of sessions, see ssl_asn1.c). */
 	X509 *peer;
 
 	int references;

@@ -377,7 +377,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 	memset(ss->key_arg,0,SSL_MAX_KEY_ARG_LENGTH);
 	memset(ss->master_key,0,SSL_MAX_MASTER_KEY_LENGTH);
 	memset(ss->session_id,0,SSL_MAX_SSL_SESSION_ID_LENGTH);
-	if (ss->cert != NULL) ssl_cert_free(ss->cert);
+	if (ss->sess_cert != NULL) ssl_cert_free(ss->sess_cert);
 	if (ss->peer != NULL) X509_free(ss->peer);
 	if (ss->ciphers != NULL) sk_SSL_CIPHER_free(ss->ciphers);
 	memset(ss,0,sizeof(*ss));

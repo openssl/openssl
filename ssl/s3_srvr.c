@@ -129,7 +129,7 @@ int ssl3_accept(SSL *s)
 #ifdef undef
 	/* FIX THIS EAY EAY EAY */
 	/* we don't actually need a cert, we just need a cert or a DH_tmp */
-	if (((s->session == NULL) || (s->session->cert == NULL)) &&
+	if (((s->session == NULL) || (s->session->sess_cert == NULL)) &&
 		(s->cert == NULL))
 		{
 		SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_NO_CERTIFICATE_SET);
@@ -261,15 +261,15 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SW_KEY_EXCH_A:
 		case SSL3_ST_SW_KEY_EXCH_B:
 			l=s->s3->tmp.new_cipher->algorithms;
-			if (s->session->cert == NULL)
+			if (s->session->sess_cert == NULL)
 				{
 				if (s->cert != NULL)
 					{
 					CRYPTO_add(&s->cert->references,1,CRYPTO_LOCK_SSL_CERT);
-					s->session->cert=s->cert;
+					s->session->sess_cert=s->cert;
 					}
 				}
-			ct=s->session->cert;
+			ct=s->session->sess_cert;
 
 			/* clear this, it may get reset by
 			 * send_server_key_exchange */
@@ -898,7 +898,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 	if (s->state == SSL3_ST_SW_KEY_EXCH_A)
 		{
 		type=s->s3->tmp.new_cipher->algorithms & SSL_MKEY_MASK;
-		cert=s->session->cert;
+		cert=s->session->sess_cert;
 
 		buf=s->init_buf;
 
@@ -1207,9 +1207,9 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		/* FIX THIS UP EAY EAY EAY EAY */
 		if (s->s3->tmp.use_rsa_tmp)
 			{
-			if ((s->session->cert != NULL) &&
-				(s->session->cert->rsa_tmp != NULL))
-				rsa=s->session->cert->rsa_tmp;
+			if ((s->session->sess_cert != NULL) &&
+				(s->session->sess_cert->rsa_tmp != NULL))
+				rsa=s->session->sess_cert->rsa_tmp;
 			else if ((s->cert != NULL) &&
 				(s->cert->rsa_tmp != NULL))
 				rsa=s->cert->rsa_tmp;
@@ -1648,7 +1648,7 @@ static int ssl3_get_client_certificate(SSL *s)
 		X509_free(s->session->peer);
 	s->session->peer=sk_X509_shift(sk);
 
-	s->session->cert->cert_chain=sk;
+	s->session->sess_cert->cert_chain=sk;
 
 	sk=NULL;
 

@@ -122,7 +122,7 @@ int ssl2_accept(SSL *s)
 	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s);
 	s->in_handshake++;
 
-	if (((s->session == NULL) || (s->session->cert == NULL)) &&
+	if (((s->session == NULL) || (s->session->sess_cert == NULL)) &&
 		(s->cert == NULL))
 		{
 		SSLerr(SSL_F_SSL2_ACCEPT,SSL_R_NO_CERTIFICATE_SET);
@@ -376,7 +376,7 @@ static int get_client_master_key(SSL *s)
 	memcpy(s->session->key_arg,&(p[s->s2->tmp.clear+s->s2->tmp.enc]),
 		(unsigned int)keya);
 
-	if (s->session->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL)
+	if (s->session->sess_cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL)
 		{
 		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_NO_PRIVATEKEY);
@@ -603,24 +603,24 @@ static int server_hello(SSL *s)
 		if (!hit)
 			{			/* else add cert to session */
 			CRYPTO_add(&s->cert->references,1,CRYPTO_LOCK_SSL_CERT);
-			if (s->session->cert != NULL)
-				ssl_cert_free(s->session->cert);
-			s->session->cert=s->cert;		
+			if (s->session->sess_cert != NULL)
+				ssl_cert_free(s->session->sess_cert);
+			s->session->sess_cert=s->cert;		
 			}
 		else	/* We have a session id-cache hit, if the
 			 * session-id has no certificate listed against
 			 * the 'cert' structure, grab the 'old' one
 			 * listed against the SSL connection */
 			{
-			if (s->session->cert == NULL)
+			if (s->session->sess_cert == NULL)
 				{
 				CRYPTO_add(&s->cert->references,1,
 					CRYPTO_LOCK_SSL_CERT);
-				s->session->cert=s->cert;
+				s->session->sess_cert=s->cert;
 				}
 			}
 
-		if (s->session->cert == NULL)
+		if (s->session->sess_cert == NULL)
 			{
 			ssl2_return_error(s,SSL2_PE_NO_CERTIFICATE);
 			SSLerr(SSL_F_SERVER_HELLO,SSL_R_NO_CERTIFICATE_SPECIFIED);
@@ -873,7 +873,7 @@ static int request_certificate(SSL *s)
 			(unsigned int)s->s2->key_material_length);
 		EVP_VerifyUpdate(&ctx,ccd,SSL2_MIN_CERT_CHALLENGE_LENGTH);
 
-		i=i2d_X509(s->session->cert->pkeys[SSL_PKEY_RSA_ENC].x509,NULL);
+		i=i2d_X509(s->session->sess_cert->pkeys[SSL_PKEY_RSA_ENC].x509,NULL);
 		buf2=(unsigned char *)Malloc((unsigned int)i);
 		if (buf2 == NULL)
 			{
@@ -881,7 +881,7 @@ static int request_certificate(SSL *s)
 			goto msg_end;
 			}
 		p2=buf2;
-		i=i2d_X509(s->session->cert->pkeys[SSL_PKEY_RSA_ENC].x509,&p2);
+		i=i2d_X509(s->session->sess_cert->pkeys[SSL_PKEY_RSA_ENC].x509,&p2);
 		EVP_VerifyUpdate(&ctx,buf2,(unsigned int)i);
 		Free(buf2);
 

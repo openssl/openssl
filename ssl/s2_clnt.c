@@ -437,7 +437,7 @@ static int get_server_hello(SSL *s)
 	/* hmmm, can we have the problem of the other session with this
 	 * cert, Free's it before we increment the reference count. */
 	CRYPTO_w_lock(CRYPTO_LOCK_X509);
-	s->session->peer=s->session->cert->key->x509;
+	s->session->peer=s->session->sess_cert->key->x509;
 	/* Shouldn't do this: already locked */
 	/*CRYPTO_add(&s->session->peer->references,1,CRYPTO_LOCK_X509);*/
 	s->session->peer->references++;
@@ -570,7 +570,7 @@ static int client_master_key(SSL *s)
 		memcpy(d,sess->master_key,(unsigned int)clear);
 		d+=clear;
 
-		enc=ssl_rsa_public_encrypt(sess->cert,enc,
+		enc=ssl_rsa_public_encrypt(sess->sess_cert,enc,
 			&(sess->master_key[clear]),d,
 			(s->s2->ssl2_rollback)?RSA_SSLV23_PADDING:RSA_PKCS1_PADDING);
 		if (enc <= 0)
@@ -733,7 +733,7 @@ static int client_certificate(SSL *s)
 		EVP_SignUpdate(&ctx,s->s2->key_material,
 			(unsigned int)s->s2->key_material_length);
 		EVP_SignUpdate(&ctx,cert_ch,(unsigned int)cert_ch_len);
-		n=i2d_X509(s->session->cert->key->x509,&p);
+		n=i2d_X509(s->session->sess_cert->key->x509,&p);
 		EVP_SignUpdate(&ctx,buf,(unsigned int)n);
 
 		p=buf;
@@ -909,8 +909,8 @@ int ssl2_set_certificate(SSL *s, int type, int len, unsigned char *data)
 		}
 
 	/* cert for session */
-	if (s->session->cert) ssl_cert_free(s->session->cert);
-	s->session->cert=c;
+	if (s->session->sess_cert) ssl_cert_free(s->session->sess_cert);
+	s->session->sess_cert=c;
 
 /*	c->cert_type=type; */
 

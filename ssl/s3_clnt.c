@@ -767,8 +767,8 @@ static int ssl3_get_server_certificate(SSL *s)
 	c=ssl_cert_new();
 	if (c == NULL) goto err;
 
-	if (s->session->cert) ssl_cert_free(s->session->cert);
-	s->session->cert=c;
+	if (s->session->sess_cert) ssl_cert_free(s->session->sess_cert);
+	s->session->sess_cert=c;
 
 	c->cert_chain=sk;
 	x=sk_X509_value(sk,0);
@@ -854,26 +854,26 @@ static int ssl3_get_key_exchange(SSL *s)
 
 	param=p=(unsigned char *)s->init_buf->data;
 
-	if (s->session->cert != NULL)
+	if (s->session->sess_cert != NULL)
 		{
 #ifndef NO_RSA
-		if (s->session->cert->rsa_tmp != NULL)
+		if (s->session->sess_cert->rsa_tmp != NULL)
 			{
-			RSA_free(s->session->cert->rsa_tmp);
-			s->session->cert->rsa_tmp=NULL;
+			RSA_free(s->session->sess_cert->rsa_tmp);
+			s->session->sess_cert->rsa_tmp=NULL;
 			}
 #endif
 #ifndef NO_DH
-		if (s->session->cert->dh_tmp)
+		if (s->session->sess_cert->dh_tmp)
 			{
-			DH_free(s->session->cert->dh_tmp);
-			s->session->cert->dh_tmp=NULL;
+			DH_free(s->session->sess_cert->dh_tmp);
+			s->session->sess_cert->dh_tmp=NULL;
 			}
 #endif
 		}
 	else
 		{
-		s->session->cert=ssl_cert_new();
+		s->session->sess_cert=ssl_cert_new();
 		}
 
 	param_len=0;
@@ -918,16 +918,15 @@ static int ssl3_get_key_exchange(SSL *s)
 		p+=i;
 		n-=param_len;
 
-/*		s->session->cert->rsa_tmp=rsa;*/
 		/* this should be because we are using an export cipher */
 		if (alg & SSL_aRSA)
-			pkey=X509_get_pubkey(s->session->cert->pkeys[SSL_PKEY_RSA_ENC].x509);
+			pkey=X509_get_pubkey(s->session->sess_cert->pkeys[SSL_PKEY_RSA_ENC].x509);
 		else
 			{
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_INTERNAL_ERROR);
 			goto err;
 			}
-		s->session->cert->rsa_tmp=rsa;
+		s->session->sess_cert->rsa_tmp=rsa;
 		}
 	else
 #endif
@@ -987,16 +986,16 @@ static int ssl3_get_key_exchange(SSL *s)
 
 #ifndef NO_RSA
 		if (alg & SSL_aRSA)
-			pkey=X509_get_pubkey(s->session->cert->pkeys[SSL_PKEY_RSA_ENC].x509);
+			pkey=X509_get_pubkey(s->session->sess_cert->pkeys[SSL_PKEY_RSA_ENC].x509);
 		else
 #endif
 #ifndef NO_DSA
 		if (alg & SSL_aDSS)
-			pkey=X509_get_pubkey(s->session->cert->pkeys[SSL_PKEY_DSA_SIGN].x509);
+			pkey=X509_get_pubkey(s->session->sess_cert->pkeys[SSL_PKEY_DSA_SIGN].x509);
 #endif
 		/* else anonymous DH, so no certificate or pkey. */
 
-		s->session->cert->dh_tmp=dh;
+		s->session->sess_cert->dh_tmp=dh;
 		dh=NULL;
 		}
 	else if ((alg & SSL_kDHr) || (alg & SSL_kDHd))
@@ -1312,11 +1311,11 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
 
-			if (s->session->cert->rsa_tmp != NULL)
-				rsa=s->session->cert->rsa_tmp;
+			if (s->session->sess_cert->rsa_tmp != NULL)
+				rsa=s->session->sess_cert->rsa_tmp;
 			else
 				{
-				pkey=X509_get_pubkey(s->session->cert->pkeys[SSL_PKEY_RSA_ENC].x509);
+				pkey=X509_get_pubkey(s->session->sess_cert->pkeys[SSL_PKEY_RSA_ENC].x509);
 				if ((pkey == NULL) ||
 					(pkey->type != EVP_PKEY_RSA) ||
 					(pkey->pkey.rsa == NULL))
@@ -1369,8 +1368,8 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			{
 			DH *dh_srvr,*dh_clnt;
 
-			if (s->session->cert->dh_tmp != NULL)
-				dh_srvr=s->session->cert->dh_tmp;
+			if (s->session->sess_cert->dh_tmp != NULL)
+				dh_srvr=s->session->sess_cert->dh_tmp;
 			else
 				{
 				/* we get them from the cert */
@@ -1606,7 +1605,7 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 	DH *dh;
 #endif
 
-	c=s->session->cert;
+	c=s->session->sess_cert;
 
 	if (c == NULL)
 		{
@@ -1621,10 +1620,10 @@ static int ssl3_check_cert_and_algorithm(SSL *s)
 		return(1);
 
 #ifndef NO_RSA
-	rsa=s->session->cert->rsa_tmp;
+	rsa=s->session->sess_cert->rsa_tmp;
 #endif
 #ifndef NO_DH
-	dh=s->session->cert->dh_tmp;
+	dh=s->session->sess_cert->dh_tmp;
 #endif
 
 	/* This is the passed certificate */
