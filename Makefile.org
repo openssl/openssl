@@ -269,6 +269,7 @@ build-shared: do_$(SHLIB_TARGET) link-shared
 do_$(SHLIB_TARGET):
 	@ libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 		$(NEWMAKE) -f Makefile.shared \
+			SHARED_MAKEFILE=Makefile.shared \
 			CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
