@@ -24,7 +24,8 @@ http://www.rsasecurity.com/rsalabs/pkcs/.
 Implemented:
 ------------
 
-These are documents that describe things that are implemented in OpenSSL.
+These are documents that describe things that are implemented (in
+whole or at least great parts) in OpenSSL.
 
 1319 The MD2 Message-Digest Algorithm. B. Kaliski. April 1992.
      (Format: TXT=25661 bytes) (Status: INFORMATIONAL)
@@ -59,6 +60,11 @@ PKCS#8: Private-Key Information Syntax Standard
 
 PKCS#12: Personal Information Exchange Syntax Standard, version 1.0.
 
+2560 X.509 Internet Public Key Infrastructure Online Certificate
+     Status Protocol - OCSP. M. Myers, R. Ankney, A. Malpani, S. Galperin,
+     C. Adams. June 1999. (Format: TXT=43243 bytes) (Status: PROPOSED
+     STANDARD)
+
 
 Related:
 --------
@@ -83,6 +89,10 @@ STARTTLS documents.
 1424 Privacy Enhancement for Internet Electronic Mail: Part IV: Key
      Certification and Related Services. B. Kaliski. February 1993.
      (Format: TXT=17537 bytes) (Status: PROPOSED STANDARD)
+
+2256 A Summary of the X.500(96) User Schema for use with LDAPv3. M.
+     Wahl. December 1997. (Format: TXT=32377 bytes) (Status: PROPOSED
+     STANDARD)
 
 2487 SMTP Service Extension for Secure SMTP over TLS. P. Hoffman.
      January 1999. (Format: TXT=15120 bytes) (Status: PROPOSED STANDARD)
@@ -114,8 +124,7 @@ To be implemented:
 These are documents that describe things that are planed to be
 implemented in the hopefully short future.
 
-2560 X.509 Internet Public Key Infrastructure Online Certificate
-     Status Protocol - OCSP. M. Myers, R. Ankney, A. Malpani, S. Galperin,
-     C. Adams. June 1999. (Format: TXT=43243 bytes) (Status: PROPOSED
-     STANDARD)
+2712 Addition of Kerberos Cipher Suites to Transport Layer Security
+     (TLS). A. Medvinsky, M. Hur. October 1999. (Format: TXT=13763 bytes)
+     (Status: PROPOSED STANDARD)
 
