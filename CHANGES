@@ -3,6 +3,15 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add support for overriding the generation of SSL/TLS session IDs.
+     These callbacks can be registered either in an SSL_CTX or per SSL.
+     The purpose of this is to allow applications to control, if they wish,
+     the arbitrary values chosen for use as session IDs, particularly as it
+     can be useful for session caching in multiple-server environments. A
+     command-line switch for testing this (and any client code that wishes
+     to use such a feature) has been added to "s_server".
+     [Geoff Thorpe, Lutz Jaenicke]
+
   *) Modify mkdef.pl to recognise and parse prprocessor conditionals
      of the form '#if defined(...) || defined(...) || ...' and
      '#if !defined(...) && !defined(...) && ...'.  This also avoids
