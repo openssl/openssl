@@ -207,7 +207,8 @@ ecb_enc.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
 ecb_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 ecb_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ecb_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-ecb_enc.o: ../../include/openssl/ui_compat.h des_locl.h ecb_enc.c spr.h
+ecb_enc.o: ../../include/openssl/ui_compat.h des_locl.h des_ver.h ecb_enc.c
+ecb_enc.o: spr.h
 ede_cbcm_enc.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
 ede_cbcm_enc.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
 ede_cbcm_enc.o: ../../include/openssl/opensslconf.h
