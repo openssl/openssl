@@ -95,6 +95,11 @@ struct ec_method_st {
 	int (*add)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
 	int (*dbl)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
 
+	/* used by EC_POINT_is_at_infinity, EC_POINT_is_on_curve, EC_POINT_make_affine */
+	int (*is_at_infinity)(const EC_GROUP *, EC_POINT *, BN_CTX *);
+	int (*is_on_curve)(const EC_GROUP *, EC_POINT *, BN_CTX *);
+	int (*make_affine)(const EC_GROUP *, EC_POINT *, BN_CTX *);
+
 
 	/* internal functions */
 
@@ -118,7 +123,11 @@ struct ec_group_st {
 
 	BIGNUM a, b; /* Curve coefficients.
 	              * (Here the assumption is that BIGNUMs can be used
-	              * or abused for all kinds of fields, not just GF(p).) */
+	              * or abused for all kinds of fields, not just GF(p).)
+	              * For characteristic  > 3,  the curve is defined
+	              * by a Weierstrass equation of the form
+	              *     Y^2 = X^3 + a*X + b.
+	              */
 	int a_is_minus3; /* enable optimized point arithmetics for special case */
 
 	EC_POINT *generator; /* optional */
@@ -131,8 +140,9 @@ struct ec_group_st {
 struct ec_point_st {
 	EC_METHOD *meth;
 
-	BIGNUM x;
-	BIGNUM y;
-	BIGNUM z; /* Jacobian projective coordinates */
-	int z_is_one; /* enable optimized point arithmetics for special case */
+	BIGNUM X;
+	BIGNUM Y;
+	BIGNUM Z; /* Jacobian projective coordinates:
+	           * (X, Y, Z)  represents  (X/Z^2, Y/Z^3)  if  Z != 0 */
+	int Z_is_one; /* enable optimized point arithmetics for special case */
 } /* EC_POINT */;

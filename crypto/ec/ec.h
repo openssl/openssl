@@ -129,6 +129,11 @@ int EC_POINT_oct2point(const EC_GROUP *, EC_POINT *,
 int EC_POINT_add(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
 int EC_POINT_dbl(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
 
+int EC_POINT_is_at_infinity(const EC_GROUP *, EC_POINT *, BN_CTX *);
+int EC_POINT_is_on_curve(const EC_GROUP *, EC_POINT *, BN_CTX *);
+
+int EC_POINT_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
+
 
 
 /* TODO: scalar multiplication */
