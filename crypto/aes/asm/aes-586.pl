@@ -1245,7 +1245,7 @@ sub declast()
 	&mov	($acc,&wparam(0));		# load inp
 	&mov	($key,&wparam(4));		# load ivp
 
-	&test	($s2,~15);
+	&test	($s2,0xFFFFFFF0);
 	&jz	(&label("enc_tail"));		# short input...
 
 	&mov	($s0,&DWP(0,$key));		# load iv
@@ -1281,7 +1281,7 @@ sub declast()
 		&mov	(&wparam(1),$s3);		# save out
 
 		&sub	($s2,16);
-		&test	($s2,~15);
+		&test	($s2,0xFFFFFFF0);
 		&mov	(&wparam(2),$s2);		# save len
 	&jnz	(&label("enc_loop"));
 	&test	($s2,15);
