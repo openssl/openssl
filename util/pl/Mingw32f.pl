@@ -3,16 +3,9 @@
 # unix.pl - the standard unix makefile stuff.
 #
 
-# Need the Cygwin32 file utilities
-$o='/';
-$cp='cp';
-$rm='rm';
-$mkdir='gmkdir';
-
-# gcc wouldn't accept backslashes in paths
-#$o='\\';
-#$cp='copy';
-#$rm='del';
+$o='\\';
+$cp='copy';
+$rm='del';
 
 # C compiler stuff
 

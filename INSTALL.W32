@@ -86,11 +86,11 @@
    > perl util\mkfiles.pl >MINFO
    > perl util\mk1mf.pl Mingw32 >ms\mingw32.mak
 
- * If you don't have the GNU file utilities (cp, rm, etc.) installed,
-   an additional step is required:
+ * This step can be skipped if you have the GNU file utitilities (cp, rm, ...)
+   installed:
 
-   > perl util\mk1mf.pl VC-WIN32 no-asm >ms\nt.mak
-   > make -f ms/nt.mak
+   > perl util\mk1mf.pl Mingw32-files >ms\mingw32f.mak
+   > make -f ms/mingw32f.mak
 
    This will end with an error message. If you don't like that, install
    the file utilities. :)

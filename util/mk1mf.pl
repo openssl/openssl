@@ -19,6 +19,7 @@ $infile="MINFO";
 	"VC-W31-32",  "Microsoft Visual C++ 1.52 - Windows 3.1 - 386+",
 	"VC-MSDOS","Microsoft Visual C++ 1.52 - MSDOS",
 	"Mingw32", "GNU C++ - Windows NT or 9x",
+	"Mingw32-files", "Create files with DOS copy ...",
 	"BC-NT",   "Borland C++ 4.5 - Windows NT",
 	"BC-W31",  "Borland C++ 4.5 - Windows 3.1 - PROBABLY NOT WORKING",
 	"BC-MSDOS","Borland C++ 4.5 - MSDOS",
@@ -117,6 +118,7 @@ $out_def="out";
 $inc_def="outinc";
 $tmp_def="tmp";
 
+$mkdir="mkdir";
 
 ($ssl,$crypto)=("ssl","crypto");
 $RSAglue="RSAglue";
@@ -157,6 +159,10 @@ elsif (($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
 elsif ($platform eq "Mingw32")
 	{
 	require 'Mingw32.pl';
+	}
+elsif ($platform eq "Mingw32-files")
+	{
+	require 'Mingw32f.pl';
 	}
 elsif ($platform eq "BC-NT")
 	{
@@ -317,7 +323,7 @@ INCO_D=$inc_dir${o}openssl
 CP=$cp
 RM=$rm
 RANLIB=$ranlib
-MKDIR=mkdir
+MKDIR=$mkdir
 MKLIB=$bin_dir$mklib
 MLFLAGS=$mlflags
 ASM=$bin_dir$asm
