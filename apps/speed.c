@@ -191,7 +191,11 @@
 #endif
 
 #undef BUFSIZE
-#define BUFSIZE	((long)1024*8+1)
+/* BUFSIZE needs to be one cipherblock larger than the largest number in the
+   lengths array (see below), to make space for padding when doing EVP tests.
+   1024 extra bytes may seem much, but hey, it doesn't hurt!
+							-- Richard Levitte */
+#define BUFSIZE	((long)1024*9+1)
 int run=0;
 
 static double Time_F(int s, int usertime);
