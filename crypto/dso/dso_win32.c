@@ -86,6 +86,8 @@ static char *win32_name_converter(DSO *dso, const char *filename);
 static char *win32_merger(DSO *dso, const char *filespec1,
 	const char *filespec2);
 
+static const char *openssl_strnchr(const char *string, int c, size_t len);
+
 static DSO_METHOD dso_meth_win32 = {
 	"OpenSSL 'win32' shared library method",
 	win32_load,
@@ -258,7 +260,7 @@ struct file_st
 	const char *predir; int predirlen;
 	const char *dir; int dirlen;
 	const char *file; int filelen;
-	}
+	};
 
 static struct file_st *win32_splitter(DSO *dso, const char *filename,
 	int assume_last_is_dir)
@@ -270,7 +272,8 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 	if (!filename)
 		{
 		DSOerr(DSO_F_WIN32_MERGER,DSO_R_NO_FILENAME);
-		goto err;
+		/*goto err;*/
+		return(NULL);
 		}
 
 	result = OPENSSL_malloc(sizeof(struct file_st));
@@ -302,7 +305,8 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 				{
 				DSOerr(DSO_F_WIN32_MERGER,
 					DSO_R_INCORRECT_FILE_SYNTAX);
-				goto err;
+				/*goto err;*/
+				return(NULL);
 				}
 			result->device = start;
 			result->devicelen = filename - start;
@@ -354,14 +358,14 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 	while(*filename);
 
 	if(!result->nodelen) result->node = NULL;
-	if(!result->devicelen) result->devicce = NULL;
+	if(!result->devicelen) result->device = NULL;
 	if(!result->dirlen) result->dir = NULL;
 	if(!result->filelen) result->file = NULL;
 
 	return(result);
 	}
 
-static char *win32_joiner(DSO *dso, const file_st *file_split)
+static char *win32_joiner(DSO *dso, const struct file_st *file_split)
 	{
 	int len = 0, offset = 0;
 	char *result = NULL;
@@ -428,7 +432,7 @@ static char *win32_joiner(DSO *dso, const file_st *file_split)
 	start = file_split->predir;
 	while(file_split->predirlen > (start - file_split->predir))
 		{
-		const char *end = strnchr(start, '/',
+		const char *end = openssl_strnchr(start, '/',
 			file_split->predirlen - (start - file_split->predir));
 		if(!end)
 			end = start
@@ -446,7 +450,7 @@ static char *win32_joiner(DSO *dso, const file_st *file_split)
 	start = file_split->dir;
 	while(file_split->dirlen > (start - file_split->dir))
 		{
-		const char *end = strnchr(start, '/',
+		const char *end = openssl_strnchr(start, '/',
 			file_split->dirlen - (start - file_split->dir));
 		if(!end)
 			end = start
@@ -576,5 +580,18 @@ static char *win32_name_converter(DSO *dso, const char *filename)
 		sprintf(translated, "%s", filename);
 	return(translated);
 	}
+
+static const char *openssl_strnchr(const char *string, int c, size_t len)
+	{
+	size_t i;
+	const char *p;
+	for (i = 0, p = string; i < len && *p; i++, p++)
+		{
+		if (*p == c)
+			return p;
+		}
+	return NULL;
+	}
+
 
 #endif /* OPENSSL_SYS_WIN32 */

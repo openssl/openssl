@@ -627,7 +627,7 @@ static int print(BIO *bp, const char *number, BIGNUM *num, unsigned char *buf,
 static int print_bin(BIO *fp, const char *name, const unsigned char *buf,
 		size_t len, int off)
 	{
-	int i;
+	size_t i;
 	char str[128];
 
 	if (buf == NULL)

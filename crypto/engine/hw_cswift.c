@@ -939,7 +939,7 @@ static int cswift_rand_bytes(unsigned char *buf, int num)
 	}
 	acquired = 1;
 
-	while (nbytes < num)
+	while (nbytes < (size_t)num)
 	{
 		/* tell CryptoSwift how many bytes we want and where we want it.
 		 * Note: - CryptoSwift cannot do more than 4096 bytes at a time.
