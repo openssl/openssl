@@ -55,7 +55,7 @@ For socket B<BIO>s (e.g. when SSL_set_fd() was used) this means that
 select() or poll() on the underlying socket can be used to find out
 when the TLS/SSL I/O function should be retried.
 
-Caveat: Any SSL I/O function can lead to either of
+Caveat: Any TLS/SSL I/O function can lead to either of
 B<SSL_ERROR_WANT_READ> and B<SSL_ERROR_WANT_WRITE>, i.e. SSL_read()
 may want to write data and SSL_write() may want to read data.
 
@@ -63,7 +63,7 @@ may want to write data and SSL_write() may want to read data.
 
 The operation did not complete because an application callback set by
 SSL_CTX_set_client_cert_cb() has asked to be called again.
-The SSL I/O function should be called again later.
+The TLS/SSL I/O function should be called again later.
 Details depend on the application.
 
 =item SSL_ERROR_SYSCALL

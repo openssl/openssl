@@ -83,7 +83,7 @@ B<SSL> structures which are later created for the connections.
 
 =item B<SSL_SESSION> (SSL Session)
 
-This is a structure containing the current SSL session details for a
+This is a structure containing the current TLS/SSL session details for a
 connection: B<SSL_CIPHER>s, client and server certificates, keys, etc.
 
 =item B<SSL> (SSL Connection)
