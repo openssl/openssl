@@ -46,6 +46,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
@@ -188,3 +190,5 @@ BLOCK_CIPHER_def_cbc(dev_crypto_des_ede3, des_ede,NID_des_ede3, 8, 24, 8,
 		     EVP_CIPHER_set_asn1_iv,
 		     EVP_CIPHER_get_asn1_iv,
 		     NULL)
+
+#endif
