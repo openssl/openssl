@@ -10,8 +10,15 @@
      according to Mark Crispin <MRC@Panda.COM>.
      [Bodo Moeller]
 
+#if 0
   *) DES CBC did not update the IV. Weird.
      [Ben Laurie]
+#else
+     Look at des.c, cbc3_enc.c etc.: Those rely on that bevaviour of
+     des_cbc_encrypt and copy IVs themselves when they have to.
+     Either all those have to be changed too, or things must stay as they
+     are.
+#endif
 
   *) When bntest is run from "make test" it drives bc to check its
      calculations, as well as internally checking them. If an internal check

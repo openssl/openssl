@@ -58,6 +58,8 @@
 
 #include "des_locl.h"
 
+/* Note that this is inconsistent with other DES functions in that it doesn't
+   update ivec */
 void des_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	     des_key_schedule schedule, des_cblock *ivec, int enc)
 	{
@@ -92,9 +94,11 @@ void des_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			tout0=tin[0]; l2c(tout0,out);
 			tout1=tin[1]; l2c(tout1,out);
 			}
+#if 0
 		iv = &(*ivec)[0];
 		l2c(tout0,iv);
 		l2c(tout1,iv);
+#endif
 		}
 	else
 		{
@@ -123,9 +127,11 @@ void des_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 		/*	xor0=tin0;
 			xor1=tin1; */
 			}
+#if 0
 		iv = &(*ivec)[0];
 		l2c(xor0,iv);
 		l2c(xor1,iv);
+#endif
 		}
 	tin0=tin1=tout0=tout1=xor0=xor1=0;
 	tin[0]=tin[1]=0;
