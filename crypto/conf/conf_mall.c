@@ -81,7 +81,7 @@ void OPENSSL_load_builtin_modules(void)
 
 static int openssl_configured = 0;
 
-void OPENSSL_config(char *config_name)
+void OPENSSL_config(const char *config_name)
 	{
 	int err_exit = 0;
 	char *file;

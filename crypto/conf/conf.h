@@ -128,7 +128,7 @@ void CONF_free(LHASH *conf);
 int CONF_dump_fp(LHASH *conf, FILE *out);
 int CONF_dump_bio(LHASH *conf, BIO *out);
 
-void OPENSSL_config(char *config_name);
+void OPENSSL_config(const char *config_name);
 
 /* New conf code.  The semantics are different from the functions above.
    If that wasn't the case, the above functions would have been replaced */
