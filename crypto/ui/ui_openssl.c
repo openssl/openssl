@@ -465,7 +465,7 @@ static int open_console(UI *ui)
 		tty_out=stderr;
 #endif
 
-#if defined(TTY_get) && !defined(VMS)
+#if defined(TTY_get) && !defined(OPENSSL_SYS_VMS)
 	if (TTY_get(fileno(tty_in),&tty_orig) == -1)
 		{
 #ifdef ENOTTY
