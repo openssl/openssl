@@ -562,18 +562,12 @@ static int print(BIO *bp, const char *number, BIGNUM *num, unsigned char *buf,
 	     int off)
 	{
 	int n,i;
-	char str[128];
 	const char *neg;
 
 	if (num == NULL) return(1);
 	neg = (BN_get_sign(num))?"-":"";
-	if (off)
-		{
-		if (off > 128) off=128;
-		memset(str,' ',off);
-		if (BIO_write(bp,str,off) <= 0) return(0);
-		}
-
+	if(!BIO_indent(bp,off,128))
+		return 0;
 	if (BN_is_zero(num))
 		{
 		if (BIO_printf(bp, "%s 0\n", number) <= 0)

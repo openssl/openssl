@@ -538,7 +538,7 @@ int MAIN(int argc, char **argv)
 #endif
 
 	if(!noprompt &&
-		EVP_read_pw_string(pass, 50, "Enter Export Password:", 1))
+		EVP_read_pw_string(pass, sizeof pass, "Enter Export Password:", 1))
 		{
 	    	BIO_printf (bio_err, "Can't read Password\n");
 	    	goto export_end;
