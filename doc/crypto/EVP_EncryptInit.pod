@@ -74,7 +74,7 @@ EVP_CIPHER_asn1_to_param - EVP cipher routines
 The EVP cipher routines are a high level interface to certain
 symmetric ciphers.
 
-EVP_EncryptInit() initialises a cipher context B<ctx> for encryption
+EVP_EncryptInit() initializes a cipher context B<ctx> for encryption
 with cipher B<type>. B<type> is normally supplied by a function such
 as EVP_des_cbc() . B<key> is the symmetric key to use and B<iv> is the
 IV to use (if necessary), the actual number of bytes used for the
@@ -255,7 +255,7 @@ and the EVP_CIPHER_CTX_set_key_length() function.
 
 =item EVP_idea_cbc() EVP_idea_ecb(void), EVP_idea_cfb(void), EVP_idea_ofb(void), EVP_idea_cbc(void)
 
-IDES encryption algorothm in CBC, ECB, CFB and OFB modes respectively.
+IDEA encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
 
 =item EVP_rc2_cbc(void), EVP_rc2_ecb(void), EVP_rc2_cfb(void), EVP_rc2_ofb(void)
 
@@ -325,7 +325,7 @@ default key lengths. If custom ciphers exceed these values the results are
 unpredictable. This is because it has become standard practice to define a 
 generic key as a fixed unsigned char array containing EVP_MAX_KEY_LENGTH bytes.
 
-The ASN1 code is incomplete (and sometimes innacurate) it has only been tested
+The ASN1 code is incomplete (and sometimes inaccurate) it has only been tested
 for certain common S/MIME ciphers (RC2, DES, triple DES) in CBC mode.
 
 =head1 EXAMPLES

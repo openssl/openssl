@@ -46,11 +46,11 @@ size.
 
 BUF_strdup() copies a null terminated string into a block of allocated
 memory and returns a pointer to the allocated block.
-Unlike the standard C library strdup() this function uses Malloc() and so
+Unlike the standard C library strdup() this function uses OPENSSL_malloc() and so
 should be used in preference to the standard library strdup() because it can
 be used for memory leak checking or replacing the malloc() function.
 
-The memory allocated from BUF_strdup() should be freed up using the Free()
+The memory allocated from BUF_strdup() should be freed up using the OPENSSL_free()
 function.
 
 =head1 RETURN VALUES
@@ -68,6 +68,6 @@ L<bio(3)|bio(3)>
 =head1 HISTORY
 
 BUF_MEM_new(), BUF_MEM_free() and BUF_MEM_grow() are available in all
-versions of SSLeay and OpenSSL. BUF_strdup() was addded in SSLeay 0.8.
+versions of SSLeay and OpenSSL. BUF_strdup() was added in SSLeay 0.8.
 
 =cut

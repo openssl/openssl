@@ -171,9 +171,13 @@ typedef BOOL (WINAPI *MODULE32)(HANDLE, LPMODULEENTRY32);
 
 #include <lmcons.h>
 #include <lmstats.h>
+#if 0 /* Some compilers use LMSTR, others (VC6, for example) use LPTSTR.
+       * This part is disabled until a fix is found.
+       */
 typedef NET_API_STATUS (NET_API_FUNCTION * NETSTATGET)
         (LMSTR, LMSTR, DWORD, DWORD, LPBYTE*);
 typedef NET_API_STATUS (NET_API_FUNCTION * NETFREE)(LPBYTE);
+#endif /* 0 */
 
 int RAND_poll(void)
 {
@@ -184,18 +188,26 @@ int RAND_poll(void)
 	HWND h;
 
 	HMODULE advapi, kernel, user, netapi;
-	CRYPTACQUIRECONTEXT acquire;
-	CRYPTGENRANDOM gen;
-	CRYPTRELEASECONTEXT release;
-	NETSTATGET netstatget;
-	NETFREE netfree;
+	CRYPTACQUIRECONTEXT acquire = 0;
+	CRYPTGENRANDOM gen = 0;
+	CRYPTRELEASECONTEXT release = 0;
+#if 0 /* This part is disabled until a fix for the problem with the
+       * definition of NETSTATGET is found.
+       */
+	NETSTATGET netstatget = 0;
+	NETFREE netfree = 0;
+#endif /* 0 */
 
 	/* load functions dynamically - not available on all systems */
-	advapi = GetModuleHandle("ADVAPI32.DLL");
-	kernel = GetModuleHandle("KERNEL32.DLL");
-	user = GetModuleHandle("USER32.DLL");
-	netapi = GetModuleHandle("NETAPI32.DLL");
+	advapi = LoadLibrary("ADVAPI32.DLL");
+	kernel = LoadLibrary("KERNEL32.DLL");
+	user = LoadLibrary("USER32.DLL");
+	netapi = LoadLibrary("NETAPI32.DLL");
 
+#if 0 /* This part is disabled until a fix for the problem with the
+       * definition of NETSTATGET is found.  Also, note that VC6 doesn't
+       * understand strings starting with L".
+       */
 	if (netapi)
 		{
 		netstatget = (NETSTATGET) GetProcAddress(netapi,"NetStatisticsGet");
@@ -218,6 +230,13 @@ int RAND_poll(void)
 			}
 		}
 
+	if (netapi)
+		FreeLibrary(netapi);
+#endif /* 0 */
+ 
+#if 0 /* It appears like this can cause an exception deep within ADVAPI32.DLL
+       * at random times.  Reported by Jeffrey Altman.
+       */
 	/* Read Performance Statistics from NT/2000 registry */
 	/* The size of the performance data can vary from call to call */
 	/* so we must guess the size of the buffer to use and increase */
@@ -245,9 +264,10 @@ int RAND_poll(void)
 		RAND_add(&length, sizeof(length), 0);
 		RAND_add(buf, length, 0);
 		}
-	if ( buf )
+	if (buf)
 		free(buf);
 	}
+#endif /* 0 */
 
 	if (advapi)
 		{
@@ -288,6 +308,9 @@ int RAND_poll(void)
 			release(hProvider, 0);
 			}
 		}
+
+        if (advapi)
+		FreeLibrary(advapi);
 
 	/* timer data */
 	readtimer();
@@ -347,6 +370,8 @@ int RAND_poll(void)
 			w = queue(QS_ALLEVENTS);
 			RAND_add(&w, sizeof(w), 0);
 			}
+
+		FreeLibrary(user);
 		}
 
 	/* Toolhelp32 snapshot: enumerate processes, threads, modules and heap
@@ -443,6 +468,8 @@ int RAND_poll(void)
 			
 			CloseHandle(handle);
 			}
+
+		FreeLibrary(kernel);
 		}
 
 #ifdef DEBUG
@@ -502,11 +529,12 @@ void RAND_screen(void) /* function available for backward compatibility */
 /* feed timing information to the PRNG */
 static void readtimer(void)
 {
-	DWORD w, cyclecount;
+	DWORD w;
 	LARGE_INTEGER l;
 	static int have_perfc = 1;
 #ifndef __GNUC__
 	static int have_tsc = 1;
+	DWORD cyclecount;
 
 	if (have_tsc) {
 	  __try {

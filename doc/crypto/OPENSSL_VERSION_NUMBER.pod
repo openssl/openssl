@@ -39,7 +39,7 @@ for example
  0x000904100 == 0.9.4 release
  0x000905000 == 0.9.5 dev
 
-Version 0.9.5a had an interrim interpretation that is like the current one,
+Version 0.9.5a had an interim interpretation that is like the current one,
 except the patch level got the highest bit set, to keep continuity.  The
 number was therefore 0x0090581f.
 

@@ -143,7 +143,7 @@ The closing #endif etc will be automatically added by the script.
 
 The generated C error code file B<xxx_err.c> will load the header
 files B<stdio.h>, B<openssl/err.h> and B<openssl/xxx.h> so the
-header file must load any additional header files containg any
+header file must load any additional header files containing any
 definitions it uses.
 
 =head1 USING ERROR CODES IN EXTERNAL LIBRARIES

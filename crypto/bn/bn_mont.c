@@ -85,16 +85,7 @@ int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
 
 	if (a == b)
 		{
-#if 1 
-		bn_wexpand(tmp,a->top*2);
-		bn_wexpand(tmp2,a->top*4);
-		bn_sqr_recursive(tmp->d,a->d,a->top,tmp2->d);
-		tmp->top=a->top*2;
-		if (tmp->top > 0 && tmp->d[tmp->top-1] == 0)
-			tmp->top--;
-#else
 		if (!BN_sqr(tmp,a,ctx)) goto err;
-#endif
 		}
 	else
 		{

@@ -5,6 +5,15 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.5a and OpenSSL 0.9.6:
+
+      o Some documentation for BIO and SSL libraries.
+      o Enhanced chain verification using key identifiers.
+      o New sign and verify options to 'dgst' application.
+      o Support for DER and PEM encoded messages in 'smime' application.
+      o New 'rsautl' application, low level RSA utility.
+
+
   Major changes between OpenSSL 0.9.5 and OpenSSL 0.9.5a:
 
       o Bug fixes for Win32, SuSE Linux, NeXTSTEP and FreeBSD 2.2.8 

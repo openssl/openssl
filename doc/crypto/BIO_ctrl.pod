@@ -47,8 +47,8 @@ BIO_reset() typically resets a BIO to some initial state, in the case
 of file related BIOs for example it rewinds the file pointer to the
 start of the file.
 
-BIO_seek() resets a file related BIO's file position pointer to B<ofs>
-bytes from start of file.
+BIO_seek() resets a file related BIO's (that is file descriptor and
+FILE BIOs) file position pointer to B<ofs> bytes from start of file.
 
 BIO_tell() returns the current file position of a file related BIO.
 
@@ -73,10 +73,12 @@ macros which call BIO_ctrl().
 
 =head1 RETURN VALUES
 
-BIO_reset() returns 1 for success and 0 for failure.
+BIO_reset() normally returns 1 for success and 0 or -1 for failure. File
+BIOs are an exception, they return 0 for success and -1 for failure.
 
 BIO_seek() and BIO_tell() both return the current file position on success
-and -1 for failure.
+and -1 for failure, except file BIOs which for BIO_seek() always return 0
+for success and -1 for failure.
 
 BIO_flush() returns 1 for success and 0 or -1 for failure.
 
@@ -102,14 +104,24 @@ case of a file BIO some data may be available in the FILE structures
 internal buffers but it is not possible to determine this in a
 portably way. For other types of BIO they may not be supported.
 
-Filter BIOs if the do not internally handle a particular BIO_ctrl()
+Filter BIOs if they do not internally handle a particular BIO_ctrl()
 operation usually pass the operation to the next BIO in the chain.
 This often means there is no need to locate the required BIO for
 a particular operation, it can be called on a chain and it will
-be automatically passed to the relevant BIO.
+be automatically passed to the relevant BIO. However this can cause
+unexpected results: for example no current filter BIOs implement
+BIO_seek(), but this may still succeed if the chain ends in a FILE
+or file descriptor BIO.
 
-Source/sink BIOs will return an error if the do not recognize the
-BIO_ctrl() operation.
+Source/sink BIOs return an 0 if they do not recognize the BIO_ctrl()
+operation.
+
+=head1 BUGS
+
+Some of the return values are ambiguous and care should be taken. In
+particular a return value of 0 can be returned if an operation is not
+supported, if an error occurred, if EOF has not been reached and in
+the case of BIO_seek() on a file BIO for a successful operation. 
 
 =head1 SEE ALSO
 

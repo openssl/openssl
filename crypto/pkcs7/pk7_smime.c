@@ -172,12 +172,17 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 		PKCS7err(PKCS7_F_PKCS7_VERIFY,PKCS7_R_NO_CONTENT);
 		return 0;
 	}
+#if 0
+	/* NB: this test commented out because some versions of Netscape
+	 * illegally include zero length content when signing data.
+	 */
 
 	/* Check for data and content: two sets of data */
 	if(!PKCS7_get_detached(p7) && indata) {
 				PKCS7err(PKCS7_F_PKCS7_VERIFY,PKCS7_R_CONTENT_AND_DATA_PRESENT);
 		return 0;
 	}
+#endif
 
 	sinfos = PKCS7_get_signer_info(p7);
 

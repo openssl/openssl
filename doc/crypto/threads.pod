@@ -53,7 +53,7 @@ OpenSSL can safely be used in multi-threaded applications provided
 that at least two callback functions are set.
 
 locking_function(int mode, int n, const char *file, int line) is
-needed to perform locking on shared data stuctures. Multi-threaded
+needed to perform locking on shared data structures. Multi-threaded
 applications will crash at random if it is not set.
 
 locking_function() must be able to handle up to CRYPTO_num_locks()
@@ -89,7 +89,7 @@ dyn_create_function(const char *file, int line) is needed to create a
 lock.  Multi-threaded applications might crash at random if it is not set.
 
 dyn_lock_function(int mode, CRYPTO_dynlock *l, const char *file, int line)
-is needed to perform locking off dynamic lock nunmbered n. Multi-threaded
+is needed to perform locking off dynamic lock numbered n. Multi-threaded
 applications might crash at random if it is not set.
 
 dyn_destroy_function(CRYPTO_dynlock *l, const char *file, int line) is

@@ -50,12 +50,12 @@ EVP digest routines
 
 The EVP digest routines are a high level interface to message digests.
 
-EVP_DigestInit() initialises a digest context B<ctx> to use a digest
+EVP_DigestInit() initializes a digest context B<ctx> to use a digest
 B<type>: this will typically be supplied by a function such as
 EVP_sha1().
 
 EVP_DigestUpdate() hashes B<cnt> bytes of data at B<d> into the
-digest context B<ctx>. This funtion can be called several times on the
+digest context B<ctx>. This function can be called several times on the
 same B<ctx> to hash additional data.
 
 EVP_DigestFinal() retrieves the digest value from B<ctx> and places
@@ -63,7 +63,7 @@ it in B<md>. If the B<s> parameter is not NULL then the number of
 bytes of data written (i.e. the length of the digest) will be written
 to the integer at B<s>, at most B<EVP_MAX_MD_SIZE> bytes will be written.
 After calling EVP_DigestFinal() no additional calls to EVP_DigestUpdate()
-can be made, but EVP_DigestInit() can be called to initialiase a new
+can be made, but EVP_DigestInit() can be called to initialize a new
 digest operation.
 
 EVP_MD_CTX_copy() can be used to copy the message digest state from
@@ -102,7 +102,7 @@ returns is of zero length.
 
 EVP_get_digestbyname(), EVP_get_digestbynid() and EVP_get_digestbyobj()
 return an B<EVP_MD> structure when passed a digest name, a digest NID or
-an ASN1_OBJECT structure respectively. The digest table must be initialised
+an ASN1_OBJECT structure respectively. The digest table must be initialized
 using, for example, OpenSSL_add_all_digests() for these functions to work.
 
 =head1 RETURN VALUES

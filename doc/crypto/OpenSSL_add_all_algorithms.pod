@@ -44,7 +44,7 @@ by EVP_sha1(). It just needs to add them if it (or any of the functions it calls
 needs to lookup algorithms.
 
 The cipher and digest lookup functions are used in many parts of the library. If
-the table is not initialised several functions will misbehave and complain they
+the table is not initialized several functions will misbehave and complain they
 cannot find algorithms. This includes the PEM, PKCS#12, SSL and S/MIME libraries.
 This is a common query in the OpenSSL mailing lists.
 
