@@ -258,6 +258,7 @@ char *PEM_ASN1_read_bio(char *(*d2i)(), const char *name, BIO *bp, char **x,
 			PKCS8_PRIV_KEY_INFO *p8inf;
 			p8inf=d2i_PKCS8_PRIV_KEY_INFO(
 					(PKCS8_PRIV_KEY_INFO **) x, &p, len);
+			if(!p8inf) goto p8err;
 			ret = (char *)EVP_PKCS82PKEY(p8inf);
 			PKCS8_PRIV_KEY_INFO_free(p8inf);
 		} else if (strcmp(nm,PEM_STRING_PKCS8) == 0) {
