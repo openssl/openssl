@@ -54,6 +54,4 @@
  *
  */
 
-#include <openssl/ec.h>
-
 #include "ec_lcl.h"

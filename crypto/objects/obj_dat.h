@@ -1323,8 +1323,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[ 4]),/* "MD5" */
 &(nid_objs[114]),/* "MD5-SHA1" */
 &(nid_objs[95]),/* "MDC2" */
-&(nid_objs[393]),/* "NULL" */
 &(nid_objs[118]),/* "NULL" */
+&(nid_objs[393]),/* "NULL" */
 &(nid_objs[456]),/* "NULL" */
 &(nid_objs[480]),/* "NULL" */
 &(nid_objs[57]),/* "Netscape" */
@@ -1775,10 +1775,10 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[134]),/* "Microsoft Individual Code Signing" */
 &(nid_objs[137]),/* "Microsoft Server Gated Crypto" */
 &(nid_objs[136]),/* "Microsoft Trust List Signing" */
-&(nid_objs[480]),/* "NULL" */
+&(nid_objs[118]),/* "NULL" */
 &(nid_objs[393]),/* "NULL" */
 &(nid_objs[456]),/* "NULL" */
-&(nid_objs[118]),/* "NULL" */
+&(nid_objs[480]),/* "NULL" */
 &(nid_objs[72]),/* "Netscape Base Url" */
 &(nid_objs[76]),/* "Netscape CA Policy Url" */
 &(nid_objs[74]),/* "Netscape CA Revocation Url" */
@@ -2548,9 +2548,9 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[454]),/* OBJ_lastModifiedBy               0 9 2342 19200300 100 1 24 */
 &(nid_objs[391]),/* OBJ_domainComponent              0 9 2342 19200300 100 1 25 */
 &(nid_objs[455]),/* OBJ_aRecord                      0 9 2342 19200300 100 1 26 */
-&(nid_objs[456]),/* OBJ_                             0 9 2342 19200300 100 1 27 */
-&(nid_objs[393]),/* OBJ_                             0 9 2342 19200300 100 1 27 */
 &(nid_objs[118]),/* OBJ_                             0 9 2342 19200300 100 1 27 */
+&(nid_objs[393]),/* OBJ_                             0 9 2342 19200300 100 1 27 */
+&(nid_objs[456]),/* OBJ_                             0 9 2342 19200300 100 1 27 */
 &(nid_objs[480]),/* OBJ_                             0 9 2342 19200300 100 1 27 */
 &(nid_objs[457]),/* OBJ_mXRecord                     0 9 2342 19200300 100 1 28 */
 &(nid_objs[458]),/* OBJ_nSRecord                     0 9 2342 19200300 100 1 29 */

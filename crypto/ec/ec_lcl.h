@@ -53,3 +53,5 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+#include <openssl/ec.h>

@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/blowfish/Makefile
+# crypto/rijndael/Makefile
 #
 
 DIR=	rijndael
