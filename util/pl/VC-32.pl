@@ -92,7 +92,7 @@ if ($shlib)
 	{
 	$mlflags.=" $lflags /dll";
 #	$cflags =~ s| /MD| /MT|;
-	$lib_cflag=" /GD -D_WINDLL -D_DLL";
+	$lib_cflag=" -D_WINDLL -D_DLL";
 	$out_def="out32dll";
 	$tmp_def="tmp32dll";
 	}
