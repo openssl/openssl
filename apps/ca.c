@@ -650,8 +650,10 @@ bad:
 #endif
 		db_attr.unique_subject = parse_yesno(p,1);
 		}
-#ifdef RL_DEBUG
 	else
+		ERR_clear_error();
+#ifdef RL_DEBUG
+	if (!p)
 		BIO_printf(bio_err, "DEBUG: unique_subject undefined\n", p);
 #endif
 #ifdef RL_DEBUG
