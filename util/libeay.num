@@ -1104,7 +1104,7 @@ BN_RECP_CTX_set                         1131	EXIST::FUNCTION:
 BN_mod_mul_reciprocal                   1132	EXIST::FUNCTION:
 BN_mod_exp_recp                         1133	EXIST::FUNCTION:
 BN_div_recp                             1134	EXIST::FUNCTION:
-BN_CTX_init                             1135	EXIST::FUNCTION:
+BN_CTX_init                             1135	EXIST::FUNCTION:DEPRECATED
 BN_MONT_CTX_init                        1136	EXIST::FUNCTION:
 RAND_get_rand_method                    1137	EXIST::FUNCTION:
 PKCS7_add_attribute                     1138	EXIST::FUNCTION:
