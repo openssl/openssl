@@ -160,6 +160,7 @@ sub main'not	{ &out1("not",@_); }
 sub main'call	{ &out1("call",($_[0]=~/^\$L/?'':'_').$_[0]); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
+sub main'movz	{ &out2("movzx",@_); }
 
 sub out2
 	{
