@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <openssl/err.h>
 #include <openssl/bio.h>
-#include "proxy.h"
+/* #include "proxy.h" */
 
 extern int errno;
 

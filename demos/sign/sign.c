@@ -70,7 +70,7 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 
-void main ()
+int main ()
 {
   int err;
   int sig_len;
@@ -134,4 +134,5 @@ void main ()
   if (err != 1) {  ERR_print_errors_fp (stderr);    exit (1);  }
   EVP_PKEY_free (pkey);
   printf ("Signature Verified Ok.\n");
+  return(0);
 }

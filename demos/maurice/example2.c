@@ -33,7 +33,6 @@ int main()
   	EVP_PKEY *pubKey;
   	EVP_PKEY *privKey;
 	int len;
-	FILE *fp;
 
         ERR_load_crypto_strings();
 
@@ -72,6 +71,5 @@ int main()
 	EVP_PKEY_free(pubKey);
 	free(buf);
 	free(buf2);
+        return 0;
 }
-
-
