@@ -28,7 +28,7 @@ BIO_flush() on an encryption BIO that is being written through is
 used to signal that no more data is to be encrypted: this is used
 to flush and possibly pad the final block through the BIO.
 
-BIO_set_cipher() sets the cipher of BIO <b> to B<cipher> using key B<key>
+BIO_set_cipher() sets the cipher of BIO B<b> to B<cipher> using key B<key>
 and IV B<iv>. B<enc> should be set to 1 for encryption and zero for
 decryption.
 
