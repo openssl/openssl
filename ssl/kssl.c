@@ -818,7 +818,7 @@ int 	kssl_test_confound(unsigned char *p)
 **      what the highest assigned CKSUMTYPE_ constant is.  As of 1.2.2
 **      it is 0x000c (CKSUMTYPE_HMAC_SHA1_DES3).  So we will use 0x0010.
 */
-int 	*populate_cksumlens(void)
+size_t  *populate_cksumlens(void)
 	{
 	int 		i, j, n;
 	static size_t 	*cklens = NULL;
@@ -858,8 +858,9 @@ int 	*populate_cksumlens(void)
 */
 unsigned char	*kssl_skip_confound(krb5_enctype etype, unsigned char *a)
 	{
-	int 		i, cklen, conlen;
-	static int 	*cksumlens = NULL;
+	int 		i, conlen;
+	size_t		cklen;
+	static size_t 	*cksumlens = NULL;
 	unsigned char	*test_auth;
 
 	conlen = (etype)? 8: 0;
@@ -1107,7 +1108,7 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 			}
 
 		arlen = krb5_app_req.length;
-		p = krb5_app_req.data;
+		p = (unsigned char *)krb5_app_req.data;
 		ap_req = (KRB5_APREQBODY *) d2i_KRB5_APREQ(NULL, &p, arlen);
 		if (ap_req)
 			{
@@ -1116,9 +1117,9 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 			if (authenp->length  && 
 				(authenp->data = malloc(authenp->length)))
 				{
-				unsigned char	*p = authenp->data;
+				unsigned char	*adp = (unsigned char *)authenp->data;
 				authenp->length = i2d_KRB5_ENCDATA(
-						ap_req->authenticator, &p);
+						ap_req->authenticator, &adp);
 				}
 			}
 
@@ -1377,7 +1378,7 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
 	**			&ap_option, &krb5ticket)) != 0)  { Error }
 	*/
 
-	p = indata->data;
+	p = (unsigned char *)indata->data;
 	if ((asn1ticket = (KRB5_TKTBODY *) d2i_KRB5_TICKET(NULL, &p,
 						(long) indata->length)) == NULL)
 		{
@@ -1825,15 +1826,15 @@ void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 **  Return pointer to the (partially) filled in struct tm on success,
 **  return NULL on failure.
 */
-struct tm	*k_gmtime(ASN1_GENERALIZEDTIME *ctime, struct tm *k_tm)
+struct tm	*k_gmtime(ASN1_GENERALIZEDTIME *gtime, struct tm *k_tm)
 	{
 	char 		c, *p;
 
 	if (!k_tm)  return NULL;
-	if (ctime == NULL  ||  ctime->length < 14)  return NULL;
-	if (ctime->data == NULL)  return NULL;
+	if (gtime == NULL  ||  gtime->length < 14)  return NULL;
+	if (gtime->data == NULL)  return NULL;
 
-	p = &ctime->data[14];
+	p = (char *)&gtime->data[14];
 
 	c = *p;	 *p = '\0';  p -= 2;  k_tm->tm_sec  = atoi(p);      *(p+2) = c;
 	c = *p;	 *p = '\0';  p -= 2;  k_tm->tm_min  = atoi(p);      *(p+2) = c;
@@ -1963,7 +1964,7 @@ krb5_error_code  kssl_check_authent(
 		goto err;
 		}
 
-	p = authentp->data;
+	p = (unsigned char *)authentp->data;
 	if ((dec_authent = d2i_KRB5_ENCDATA(NULL, &p,
 					(long) authentp->length)) == NULL) 
 		{
