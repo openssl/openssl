@@ -501,6 +501,9 @@ my %table=(
 ##### VxWorks for various targets
 "vxworks-ppc405","ccppc:-g -msoft-float -mlongcall -DVXWORKS -DCPU=PPC405 -I\$(WIND_BASE)/target/h:::-r:::::",
 
+##### Compaq Non-Stop Kernel (Tandem)
+"tandem-c89","c89:-Ww -D__TANDEM -D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED=1 -D_TANDEM_SOURCE -DB_ENDIAN::(unknown)::THIRTY_TWO_BIT:::",
+
 );
 
 my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
