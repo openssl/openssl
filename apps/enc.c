@@ -82,6 +82,8 @@ int set_hex(char *in,unsigned char *out,int size);
 
 int MAIN(int argc, char **argv)
 	{
+	static const char magic[]="Salted__";
+	char mbuf[8];	/* should be 1 smaller than magic */
 	char *strbuf=NULL;
 	unsigned char *buff=NULL,*bufsize=NULL;
 	int bsize=BSIZE,verbose=0;
@@ -91,7 +93,7 @@ int MAIN(int argc, char **argv)
 	char *str=NULL;
 	char *hkey=NULL,*hiv=NULL,*hsalt = NULL;
 	int enc=1,printkey=0,i,base64=0;
-	int debug=0,olb64=0,nosalt=1;
+	int debug=0,olb64=0,nosalt=0;
 	const EVP_CIPHER *cipher=NULL,*c;
 	char *inf=NULL,*outf=NULL;
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
@@ -448,17 +450,26 @@ bad:
 						}
 					} else RAND_bytes(salt, PKCS5_SALT_LEN);
 					/* If -P option then don't bother writing */
-					if((printkey != 2) && (BIO_write(wbio,
-							(char *)salt,
-				    			PKCS5_SALT_LEN) != PKCS5_SALT_LEN)) {
+					if((printkey != 2)
+					   && (BIO_write(wbio,magic,
+							 sizeof magic-1) != sizeof magic-1
+					       || BIO_write(wbio,
+							    (char *)salt,
+							    PKCS5_SALT_LEN) != PKCS5_SALT_LEN)) {
 						BIO_printf(bio_err,"error writing output file\n");
 						goto end;
 					}
-				} else if(BIO_read(rbio, (unsigned char *)salt,
+				} else if(BIO_read(rbio,mbuf,sizeof mbuf) != sizeof mbuf
+					  || BIO_read(rbio,
+						      (unsigned char *)salt,
 				    PKCS5_SALT_LEN) != PKCS5_SALT_LEN) {
 					BIO_printf(bio_err,"error reading input file\n");
 					goto end;
+				} else if(memcmp(mbuf,magic,sizeof magic-1)) {
+				    BIO_printf(bio_err,"bad magic number\n");
+				    goto end;
 				}
+
 				sptr = salt;
 			}
 

@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Modify enc utility's salting as follows: make salting the default. Add a
+     magic header, so unsalted files fail gracefully instead of just decrypting
+     to garbage. This is because not salting is a big security hole, so people
+     should be discouraged from doing it.
+     [Ben Laurie]
+
   *) Fixes and enhancements to the 'x509' utility. It allowed a message
      digest to be passed on the command line but it only used this
      parameter when signing a certificate. Modified so all relevant
