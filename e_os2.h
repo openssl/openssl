@@ -90,17 +90,22 @@ extern "C" {
 
 /* For 32 bit environment, there seems to be the CygWin environment and then
    all the others that try to do the same thing Microsoft does... */
-#if defined(__CYGWIN32__) || defined(OPENSSL_SYSNAME_CYGWIN32)
+#if defined(OPENSSL_SYSNAME_UWIN)
 # undef OPENSSL_SYS_UNIX
-# define OPENSSL_SYS_WIN32_CYGWIN
+# define OPENSSL_SYS_WIN32_UWIN
 #else
-# if defined(_WIN32) || defined(OPENSSL_SYSNAME_WIN32)
+# if defined(__CYGWIN32__) || defined(OPENSSL_SYSNAME_CYGWIN32)
 #  undef OPENSSL_SYS_UNIX
-#  define OPENSSL_SYS_WIN32
-# endif
-# if defined(OPENSSL_SYSNAME_WINNT)
-#  undef OPENSSL_SYS_UNIX
-#  define OPENSSL_SYS_WINNT
+#  define OPENSSL_SYS_WIN32_CYGWIN
+# else
+#  if defined(_WIN32) || defined(OPENSSL_SYSNAME_WIN32)
+#   undef OPENSSL_SYS_UNIX
+#   define OPENSSL_SYS_WIN32
+#  endif
+#  if defined(OPENSSL_SYSNAME_WINNT)
+#   undef OPENSSL_SYS_UNIX
+#   define OPENSSL_SYS_WINNT
+#  endif
 # endif
 #endif
 
