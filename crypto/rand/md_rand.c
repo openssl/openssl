@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#define ENTROPY_NEEDED 32  /* require 128 bits of randomness */
+#define ENTROPY_NEEDED 16  /* require 128 bits of randomness */
 
 #ifndef MD_RAND_DEBUG
 # ifndef NDEBUG
