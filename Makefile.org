@@ -205,7 +205,7 @@ ONEDIRS=out tmp
 EDIRS=  times doc bugs util include certs ms shlib mt demos perl sf dep VMS
 WDIRS=  windows
 LIBS=   libcrypto.a libssl.a
-SIGS=	libcrypto.sha1
+SIGS=	libcrypto.a.sha1
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
 SHARED_LIBS=
@@ -226,10 +226,10 @@ HEADER=         e_os.h
 all: Makefile sub_all openssl.pc
 
 sigs:	$(SIGS)
-libcrypto.sha1: libcrypto.a
+libcrypto.a.sha1: libcrypto.a
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 		$(RANLIB) libcrypto.a; \
-		fips/sha1/fips_standalone_sha1 libcrypto.a > libcrypto.sha1; \
+		fips/sha1/fips_standalone_sha1 libcrypto.a > libcrypto.a.sha1; \
 	fi
 
 sub_all:
