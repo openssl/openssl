@@ -460,6 +460,16 @@
 
  Changes between 0.9.7a and 0.9.7b  [xx XXX 2003]
 
+  *) Countermeasure against the Klima-Pokorny-Rosa extension of
+     Bleichbacher's attack on PKCS #1 v1.5 padding: treat
+     a protocol version number mismatch like a decryption error
+     in ssl3_get_client_key_exchange (ssl/s3_srvr.c).
+     [Bodo Moeller]
+
+yet to be integrated into this CVS branch:
+- RSA blinding changes
+- Geoff's ENGINE_set_default() fix
+
   *) Target "mingw" now allows native Windows code to be generated in
      the Cygwin environment as well as with the MinGW compiler.
      [Ulf Moeller] 
