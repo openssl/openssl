@@ -115,11 +115,21 @@
 #include "apps.h"
 #include <openssl/evp.h>
 #include <openssl/crypto.h>
-#include <openssl/md2.h>
-#include <openssl/rc4.h>
-#include <openssl/des_old.h>
-#include <openssl/idea.h>
-#include <openssl/blowfish.h>
+#ifndef OPENSSL_NO_MD2
+# include <openssl/md2.h>
+#endif
+#ifndef OPENSSL_NO_RC4
+# include <openssl/rc4.h>
+#endif
+#ifndef OPENSSL_NO_DES
+# include <openssl/des_old.h>
+#endif
+#ifndef OPENSSL_NO_IDEA
+# include <openssl/idea.h>
+#endif
+#ifndef OPENSSL_NO_BF
+# include <openssl/blowfish.h>
+#endif
 
 #undef PROG
 #define PROG	version_main
