@@ -448,6 +448,9 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 		 * BIO pairs are symmetric.  A BIO pair behaves similar
 		 * to a non-blocking socketpair (but both endpoints must
 		 * be handled by the same thread).
+		 * [Here we could connect client and server to the ends
+		 * of a single BIO pair, but then this code would be less
+		 * suitable as an example for BIO pairs in general.]
 		 *
 		 * Useful functions for querying the state of BIO pair endpoints:
 		 *

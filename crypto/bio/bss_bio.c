@@ -374,7 +374,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 	case BIO_CTRL_PENDING:
 		if (b->peer != NULL)
 			{
-			struct bio_bio_st *peer_b =b->peer->ptr;
+			struct bio_bio_st *peer_b = b->peer->ptr;
 			
 			ret = (long) peer_b->len;
 			}
