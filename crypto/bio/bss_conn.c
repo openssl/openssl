@@ -130,7 +130,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 	int ret= -1,i;
 	unsigned long l;
 	char *p,*q;
-	int (*cb)()=NULL;
+	int (*cb)(const BIO *,int,int)=NULL;
 
 	if (c->info_callback != NULL)
 		cb=c->info_callback;
