@@ -209,9 +209,12 @@ static tfnASI_GetPerformanceStatistics *p_Atalla_GetPerformanceStatistics = NULL
 /* (de)initialisation functions. */
 static int atalla_init()
 	{
-        tfnASI_GetHardwareConfig *p1;
-        tfnASI_RSAPrivateKeyOpFn *p2;
-        tfnASI_GetPerformanceStatistics *p3;
+	tfnASI_GetHardwareConfig *p1;
+	tfnASI_RSAPrivateKeyOpFn *p2;
+	tfnASI_GetPerformanceStatistics *p3;
+	/* Not sure of the origin of this magic value, but Ben's code had it
+	 * and it seemed to have been working for a few people. :-) */
+	unsigned int config_buf[1024];
 
 	if(atalla_dso != NULL)
 		{
@@ -246,16 +249,13 @@ static int atalla_init()
 	p_Atalla_GetHardwareConfig = p1;
 	p_Atalla_RSAPrivateKeyOpFn = p2;
 	p_Atalla_GetPerformanceStatistics = p3;
-	/* TODO: Use p1 or p3 to test if we can actually talk to the
-	 * accelerator, similar to what the CryptoSwift code does at
-	 * the equivalent point. */
-#if 0
-	if(!check_all_is_cool_function())
+	/* Perform a basic test to see if there's actually any unit
+	 * running. */
+	if(p1(0L, config_buf) != 0)
 		{
 		ENGINEerr(ENGINE_F_ATALLA_INIT,ENGINE_R_UNIT_FAILURE);
 		goto err;
 		}
-#endif
 	/* Everything's fine. */
 	return 1;
 err:
