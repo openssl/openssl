@@ -294,12 +294,12 @@ static void doall_util_fn(LHASH *lh, int use_arg, LHASH_DOALL_FN_TYPE func,
 
 void lh_doall(LHASH *lh, LHASH_DOALL_FN_TYPE func)
 	{
-	doall_util_fn(lh, 0, func, (LHASH_DOALL_ARG_FN_TYPE)NULL, NULL);
+	doall_util_fn(lh, 0, func, (LHASH_DOALL_ARG_FN_TYPE)0, NULL);
 	}
 
 void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, const void *arg)
 	{
-	doall_util_fn(lh, 1, (LHASH_DOALL_FN_TYPE)NULL, func, arg);
+	doall_util_fn(lh, 1, (LHASH_DOALL_FN_TYPE)0, func, arg);
 	}
 
 static void expand(LHASH *lh)
