@@ -216,7 +216,9 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 	    while (numbytes != 1)
 		{
 	        num = read(fd, egdbuf, 1);
-	        if (num >= 0)
+	        if (num == 0)
+			goto err;	/* descriptor closed */
+		else if (num > 0)
 		    numbytes += num;
 	    	else
 		    {
@@ -246,7 +248,9 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 	    while (numbytes != egdbuf[0])
 		{
 	        num = read(fd, retrievebuf + numbytes, egdbuf[0] - numbytes);
-	        if (num >= 0)
+		if (num == 0)
+			goto err;	/* descriptor closed */
+	        else if (num > 0)
 		    numbytes += num;
 	    	else
 		    {
