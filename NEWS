@@ -15,6 +15,7 @@
       o Provisional support for international characters with UTF8.
       o Support for external crypto devices ('engine') is no longer
         a separate distribution.
+      o New elliptic curve library section.
 
   Changes between OpenSSL 0.9.6b and OpenSSL 0.9.6c:
 
