@@ -1429,11 +1429,16 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
 		printf("\tcaddrs: %p, authdata: %p\n",
 			krb5ticket->enc_part2->caddrs,
 			krb5ticket->enc_part2->authorization_data);
-		printf("\tcaddrs:\n");
-		for (i=0; paddr[i] != NULL; i++)
-			{  krb5_data d;
-			d.length=paddr[i]->length; d.data=paddr[i]->contents;
-			print_krb5_data("\t\tIP: ", &d);
+		if (paddr)
+			{
+			printf("\tcaddrs:\n");
+			for (i=0; paddr[i] != NULL; i++)
+				{
+				krb5_data d;
+				d.length=paddr[i]->length;
+				d.data=paddr[i]->contents;
+				print_krb5_data("\t\tIP: ", &d);
+				}
 			}
 		printf("\tstart/auth/end times: %d / %d / %d\n",
 			krb5ticket->enc_part2->times.starttime,
