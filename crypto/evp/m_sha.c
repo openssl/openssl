@@ -82,6 +82,7 @@ static const EVP_MD sha_md=
 	update,
 	final,
 	NULL,
+	NULL,
 	EVP_PKEY_RSA_method,
 	SHA_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA_CTX),

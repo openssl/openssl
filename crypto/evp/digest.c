@@ -165,6 +165,8 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 	/* Don't assume ctx->md_data was cleaned in EVP_Digest_Final,
 	 * because sometimes only copies of the context are ever finalised.
 	 */
+	if(ctx->digest && ctx->digest->cleanup)
+		ctx->digest->cleanup(ctx);
 	if(ctx->digest && ctx->digest->ctx_size && ctx->md_data)
 		{
 		memset(ctx->md_data,0,ctx->digest->ctx_size);

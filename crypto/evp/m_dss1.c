@@ -82,6 +82,7 @@ static const EVP_MD dss1_md=
 	update,
 	final,
 	NULL,
+	NULL,
 	EVP_PKEY_DSA_method,
 	SHA_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA_CTX),

@@ -222,6 +222,7 @@ struct env_md_st
 	int (*update)(EVP_MD_CTX *ctx,const void *data,unsigned long count);
 	int (*final)(EVP_MD_CTX *ctx,unsigned char *md);
 	int (*copy)(EVP_MD_CTX *to,const EVP_MD_CTX *from);
+	int (*cleanup)(EVP_MD_CTX *ctx);
 
 	/* FIXME: prototype these some day */
 	int (*sign)();

@@ -291,6 +291,17 @@ static int dev_crypto_init_digest(MD_DATA *md_data,int mac)
     return 1;
     }
 
+static int dev_crypto_cleanup_digest(MD_DATA *md_data)
+    {
+    if (ioctl(fd,CIOCFSESSION,&md_data->sess.ses) == -1)
+	{
+	err("CIOCFSESSION failed");
+	return 0;
+	}
+
+    return 1;
+    }
+
 /* FIXME: if device can do chained MACs, then don't accumulate */
 /* FIXME: move accumulation to the framework */
 static int dev_crypto_md5_init(EVP_MD_CTX *ctx)
@@ -346,7 +357,7 @@ static int do_digest(int ses,unsigned char *md,const void *data,int len)
 	    return 0;
 	    }
 	}
-    printf("done\n");
+    //    printf("done\n");
 
     return 1;
     }
@@ -374,13 +385,15 @@ static int dev_crypto_md5_final(EVP_MD_CTX *ctx,unsigned char *md)
     if(ctx->flags&EVP_MD_CTX_FLAG_ONESHOT)
 	{
 	memcpy(md,md_data->md,MD5_DIGEST_LENGTH);
-	return 1;
+	ret=1;
 	}
-
-    ret=do_digest(md_data->sess.ses,md,md_data->data,md_data->len);
-    OPENSSL_free(md_data->data);
-    md_data->data=NULL;
-    md_data->len=0;
+    else
+	{
+	ret=do_digest(md_data->sess.ses,md,md_data->data,md_data->len);
+	OPENSSL_free(md_data->data);
+	md_data->data=NULL;
+	md_data->len=0;
+	}
 
     return ret;
     }
@@ -399,6 +412,11 @@ static int dev_crypto_md5_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from)
     return 1;
     }
 
+static int dev_crypto_md5_cleanup(EVP_MD_CTX *ctx)
+    {
+    return dev_crypto_cleanup_digest(ctx->md_data);
+    }
+
 static const EVP_MD md5_md=
     {
     NID_md5,
@@ -409,6 +427,7 @@ static const EVP_MD md5_md=
     dev_crypto_md5_update,
     dev_crypto_md5_final,
     dev_crypto_md5_copy,
+    dev_crypto_md5_cleanup,
     EVP_PKEY_RSA_method,
     MD5_CBLOCK,
     sizeof(MD_DATA),

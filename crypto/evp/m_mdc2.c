@@ -83,6 +83,7 @@ static const EVP_MD mdc2_md=
 	update,
 	final,
 	NULL,
+	NULL,
 	EVP_PKEY_RSA_ASN1_OCTET_STRING_method,
 	MDC2_BLOCK,
 	sizeof(EVP_MD *)+sizeof(MDC2_CTX),

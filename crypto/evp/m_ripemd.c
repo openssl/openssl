@@ -83,6 +83,7 @@ static const EVP_MD ripemd160_md=
 	update,
 	final,
 	NULL,
+	NULL,
 	EVP_PKEY_RSA_method,
 	RIPEMD160_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(RIPEMD160_CTX),
