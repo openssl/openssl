@@ -395,6 +395,8 @@ BIO *BIO_pop(BIO *b)
 	if (b == NULL) return(NULL);
 	ret=b->next_bio;
 
+	BIO_ctrl(b,BIO_CTRL_POP,0,NULL);
+
 	if (b->prev_bio != NULL)
 		b->prev_bio->next_bio=b->next_bio;
 	if (b->next_bio != NULL)
@@ -402,7 +404,6 @@ BIO *BIO_pop(BIO *b)
 
 	b->next_bio=NULL;
 	b->prev_bio=NULL;
-	BIO_ctrl(b,BIO_CTRL_POP,0,NULL);
 	return(ret);
 	}
 
