@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/01/21 13:01:20 $
+  ______________                           $Date: 1999/01/30 12:06:16 $
 
   DEVELOPMENT STATE
 
@@ -12,8 +12,6 @@
   AVAILABLE PATCHES
 
   IN PROGRESS
-
-    o  Ben is folding in his patches
 
   NEEDS PATCH
 
@@ -30,19 +28,7 @@
                       itself. Then we can avoid a lot of those platform checks
                       which are currently in Configure.
 
-       2. The massive symlinking of Makefile.ssl -> Makefile:
-          First the `make -f Makefile.ssl links' command is nasty, second the
-          whole process is slow and third it seems to be done without real
-          need. And forth, the dependecies are currently missing.  And fifth,
-          it's complicated to always go to the top-level in order to get the
-          local variables overriden.
-          Suggestion: Rename Makefile.ssl to Makefile.in, add
-                      dependencies to Makefile.in and change the build process
-                      to _generate_ Makefile out of Makefile.in by
-                      substituting variables like CC, etc. This solves the
-                      above problems.
-
-       3. The xxx.org -> xxx.h generation:
+       2. The xxx.org -> xxx.h generation:
           It's not obvious for which file xxx.org is the source.
           Suggestion: Rename xxx.org to xxx.h.in (Autoconf style), this way
                       one sees that xxx.h.in is the input for xxx.h
