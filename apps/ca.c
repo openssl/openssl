@@ -126,6 +126,7 @@
 #define ENV_DEFAULT_CRL_DAYS 	"default_crl_days"
 #define ENV_DEFAULT_CRL_HOURS 	"default_crl_hours"
 #define ENV_DEFAULT_MD		"default_md"
+#define ENV_DEFAULT_EMAIL_DN	"email_in_dn"
 #define ENV_PRESERVE		"preserve"
 #define ENV_POLICY      	"policy"
 #define ENV_EXTENSIONS      	"x509_extensions"
@@ -182,6 +183,7 @@ static char *ca_usage[]={
 " -spkac file     - File contains DN and signed public key and challenge\n",
 " -ss_cert file   - File contains a self signed cert to sign\n",
 " -preserveDN     - Don't re-order the DN\n",
+" -noemailDN      - Don't add the EMAIL field into certificate' subject\n",
 " -batch          - Don't ask questions\n",
 " -msie_hack      - msie modifications to handle all those universal strings\n",
 " -revoke file    - Revoke a certificate (given in file)\n",
@@ -211,32 +213,32 @@ static BIGNUM *load_serial(char *serialfile);
 static int save_serial(char *serialfile, BIGNUM *serial);
 static int certify(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 		   const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,TXT_DB *db,
-		   BIGNUM *serial, char *subj, char *startdate,char *enddate,
-		   long days, int batch, char *ext_sect, CONF *conf,int verbose,
-		   unsigned long certopt, unsigned long nameopt, int default_op,
-		   int ext_copy);
+		   BIGNUM *serial, char *subj, int email_dn, char *startdate,
+		   char *enddate, long days, int batch, char *ext_sect, CONF *conf,
+		   int verbose, unsigned long certopt, unsigned long nameopt,
+		   int default_op, int ext_copy);
 static int certify_cert(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
-			TXT_DB *db, BIGNUM *serial, char *subj, char *startdate,
-			char *enddate, long days, int batch, char *ext_sect,
-			CONF *conf,int verbose, unsigned long certopt,
+			TXT_DB *db, BIGNUM *serial, char *subj, int email_dn,
+			char *startdate, char *enddate, long days, int batch,
+			char *ext_sect, CONF *conf,int verbose, unsigned long certopt,
 			unsigned long nameopt, int default_op, int ext_copy,
 			ENGINE *e);
 static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			 const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
-			 TXT_DB *db, BIGNUM *serial,char *subj, char *startdate,
-			 char *enddate, long days, char *ext_sect,CONF *conf,
-			 int verbose, unsigned long certopt, unsigned long nameopt,
-			 int default_op, int ext_copy);
+			 TXT_DB *db, BIGNUM *serial,char *subj, int email_dn,
+			 char *startdate, char *enddate, long days, char *ext_sect,
+			 CONF *conf, int verbose, unsigned long certopt, 
+			 unsigned long nameopt, int default_op, int ext_copy);
 static int fix_data(int nid, int *type);
 static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial,char *subj,
-	char *startdate, char *enddate, long days, int batch, int verbose,
-	X509_REQ *req, char *ext_sect, CONF *conf,
+	int email_dn, char *startdate, char *enddate, long days, int batch,
+       	int verbose, X509_REQ *req, char *ext_sect, CONF *conf,
 	unsigned long certopt, unsigned long nameopt, int default_op,
 	int ext_copy);
-static X509_NAME *do_subject(char *subject);
+static X509_NAME *do_subject(char *subject, int email_dn);
 static int do_revoke(X509 *x509, TXT_DB *db, int ext, char *extval);
 static int get_certificate_status(const char *ser_status, TXT_DB *db);
 static int do_updatedb(TXT_DB *db);
@@ -268,6 +270,7 @@ int MAIN(int argc, char **argv)
 	int total_done=0;
 	int badops=0;
 	int ret=1;
+	int email_dn=1;
 	int req=0;
 	int verbose=0;
 	int gencrl=0;
@@ -294,6 +297,7 @@ int MAIN(int argc, char **argv)
 	char *extensions=NULL;
 	char *extfile=NULL;
 	char *subj=NULL;
+	char *tmp_email_dn=NULL;
 	char *crl_ext=NULL;
 	int rev_type = REV_NONE;
 	char *rev_arg = NULL;
@@ -439,6 +443,8 @@ EF_ALIGNMENT=0;
 			batch=1;
 		else if (strcmp(*argv,"-preserveDN") == 0)
 			preserve=1;
+		else if (strcmp(*argv,"-noemailDN") == 0)
+			email_dn=0;
 		else if (strcmp(*argv,"-gencrl") == 0)
 			gencrl=1;
 		else if (strcmp(*argv,"-msie_hack") == 0)
@@ -1041,6 +1047,12 @@ bad:
 			lookup_fail(section,ENV_DEFAULT_MD);
 			goto err;
 			}
+		if ((email_dn == 1) && ((tmp_email_dn=NCONF_get_string(conf,
+			section,ENV_DEFAULT_EMAIL_DN)) != NULL ))
+			{
+			if(strcmp(tmp_email_dn,"no") == 0)
+				email_dn=0;
+			}
 		if ((dgst=EVP_get_digestbyname(md)) == NULL)
 			{
 			BIO_printf(bio_err,"%s is an unsupported message digest type\n",md);
@@ -1159,8 +1171,8 @@ bad:
 			{
 			total++;
 			j=certify_spkac(&x,spkac_file,pkey,x509,dgst,attribs,db,
-				serial,subj,startdate,enddate, days,extensions,conf,
-				verbose, certopt, nameopt, default_op, ext_copy);
+				serial,subj,email_dn,startdate,enddate,days,extensions,
+				conf,verbose,certopt,nameopt,default_op,ext_copy);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -1183,7 +1195,7 @@ bad:
 			{
 			total++;
 			j=certify_cert(&x,ss_cert_file,pkey,x509,dgst,attribs,
-				db,serial,subj,startdate,enddate,days,batch,
+				db,serial,subj,email_dn,startdate,enddate,days,batch,
 				extensions,conf,verbose, certopt, nameopt,
 				default_op, ext_copy, e);
 			if (j < 0) goto err;
@@ -1203,7 +1215,7 @@ bad:
 			{
 			total++;
 			j=certify(&x,infile,pkey,x509,dgst,attribs,db,
-				serial,subj,startdate,enddate,days,batch,
+				serial,subj,email_dn,startdate,enddate,days,batch,
 				extensions,conf,verbose, certopt, nameopt,
 				default_op, ext_copy);
 			if (j < 0) goto err;
@@ -1223,7 +1235,7 @@ bad:
 			{
 			total++;
 			j=certify(&x,argv[i],pkey,x509,dgst,attribs,db,
-				serial,subj,startdate,enddate,days,batch,
+				serial,subj,email_dn,startdate,enddate,days,batch,
 				extensions,conf,verbose, certopt, nameopt,
 				default_op, ext_copy);
 			if (j < 0) goto err;
@@ -1699,8 +1711,8 @@ err:
 
 static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
-	     BIGNUM *serial, char *subj, char *startdate, char *enddate, long days,
-	     int batch, char *ext_sect, CONF *lconf, int verbose,
+	     BIGNUM *serial, char *subj, int email_dn, char *startdate, char *enddate,
+	     long days, int batch, char *ext_sect, CONF *lconf, int verbose,
 	     unsigned long certopt, unsigned long nameopt, int default_op,
 	     int ext_copy)
 	{
@@ -1749,8 +1761,8 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	else
 		BIO_printf(bio_err,"Signature ok\n");
 
-	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,startdate, enddate,
-		days,batch,verbose,req,ext_sect,lconf,
+	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj, email_dn,
+		startdate,enddate,days,batch,verbose,req,ext_sect,lconf,
 		certopt, nameopt, default_op, ext_copy);
 
 err:
@@ -1761,8 +1773,8 @@ err:
 
 static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
-	     BIGNUM *serial, char *subj, char *startdate, char *enddate, long days,
-	     int batch, char *ext_sect, CONF *lconf, int verbose,
+	     BIGNUM *serial, char *subj, int email_dn, char *startdate, char *enddate,
+	     long days, int batch, char *ext_sect, CONF *lconf, int verbose,
 	     unsigned long certopt, unsigned long nameopt, int default_op,
 	     int ext_copy, ENGINE *e)
 	{
@@ -1803,9 +1815,9 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	if ((rreq=X509_to_X509_REQ(req,NULL,EVP_md5())) == NULL)
 		goto err;
 
-	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,startdate,enddate,days,
-		batch,verbose,rreq,ext_sect,lconf, certopt, nameopt, default_op,
-			ext_copy);
+	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,email_dn,startdate,enddate,
+		days,batch,verbose,rreq,ext_sect,lconf, certopt, nameopt, default_op,
+		ext_copy);
 
 err:
 	if (rreq != NULL) X509_REQ_free(rreq);
@@ -1815,12 +1827,12 @@ err:
 
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	     STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial, char *subj,
-	     char *startdate, char *enddate, long days, int batch, int verbose,
-	     X509_REQ *req, char *ext_sect, CONF *lconf,
+	     int email_dn, char *startdate, char *enddate, long days, int batch,
+	     int verbose, X509_REQ *req, char *ext_sect, CONF *lconf,
 	     unsigned long certopt, unsigned long nameopt, int default_op,
 	     int ext_copy)
 	{
-	X509_NAME *name=NULL,*CAname=NULL,*subject=NULL;
+	X509_NAME *name=NULL,*CAname=NULL,*subject=NULL, *dn_subject=NULL;
 	ASN1_UTCTIME *tm,*tmptm;
 	ASN1_STRING *str,*str2;
 	ASN1_OBJECT *obj;
@@ -1847,7 +1859,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 
 	if (subj)
 		{
-		X509_NAME *n = do_subject(subj);
+		X509_NAME *n = do_subject(subj, email_dn);
 
 		if (!n)
 			{
@@ -1861,6 +1873,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 
 	if (default_op)
 		BIO_printf(bio_err,"The Subject's Distinguished Name is as follows\n");
+
 	name=X509_REQ_get_subject_name(req);
 	for (i=0; i<X509_NAME_entry_count(name); i++)
 		{
@@ -1884,6 +1897,10 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 				(str->type == V_ASN1_PRINTABLESTRING))
 				str->type=V_ASN1_IA5STRING;
 			}
+
+		/* If no EMAIL is wanted in the subject */
+		if ((OBJ_obj2nid(obj) == NID_pkcs9_emailAddress) && (!email_dn))
+			continue;
 
 		/* check some things */
 		if ((OBJ_obj2nid(obj) == NID_pkcs9_emailAddress) &&
@@ -2018,14 +2035,44 @@ again2:
 	if (preserve)
 		{
 		X509_NAME_free(subject);
-		subject=X509_NAME_dup(X509_REQ_get_subject_name(req));
+		/* subject=X509_NAME_dup(X509_REQ_get_subject_name(req)); */
+		subject=X509_NAME_dup(name);
 		if (subject == NULL) goto err;
 		}
 
 	if (verbose)
 		BIO_printf(bio_err,"The subject name appears to be ok, checking data base for clashes\n");
 
-	row[DB_name]=X509_NAME_oneline(subject,NULL,0);
+	/* Build the correct Subject if no e-mail is wanted in the subject */
+	/* and add it later on because of the method extensions are added (altName) */
+	 
+	if (!email_dn)
+		{
+		if ((dn_subject=X509_NAME_new()) == NULL)
+			{
+			BIO_printf(bio_err,"Memory allocation failure\n");
+			goto err;
+			}
+
+		for (i=0; i<X509_NAME_entry_count(subject); i++)
+			{
+			ne= X509_NAME_get_entry(subject,i);
+			obj=X509_NAME_ENTRY_get_object(ne);
+			nid=OBJ_obj2nid(obj);
+
+			str=X509_NAME_ENTRY_get_data(ne);
+
+			if (nid == NID_pkcs9_emailAddress) continue;
+
+			if (!X509_NAME_add_entry(dn_subject,ne, -1, 0))
+				{
+				BIO_printf(bio_err,"Memory allocation failure\n");
+				goto err;
+				}
+			}
+		}
+
+	row[DB_name]=X509_NAME_oneline(dn_subject,NULL,0);
 	row[DB_serial]=BN_bn2hex(serial);
 	if ((row[DB_name] == NULL) || (row[DB_serial] == NULL))
 		{
@@ -2181,6 +2228,11 @@ again2:
 		goto err;
 		}
 
+	/* Set the right value for the noemailDN option */
+	if( email_dn == 0 )
+		{
+		if (!X509_set_subject_name(ret,dn_subject)) goto err;
+		}
 
 	if (!default_op)
 		{
@@ -2313,8 +2365,8 @@ static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 
 static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
-	     BIGNUM *serial, char *subj, char *startdate, char *enddate, long days,
-	     char *ext_sect, CONF *lconf, int verbose, unsigned long certopt,
+	     BIGNUM *serial, char *subj, int email_dn, char *startdate, char *enddate,
+	     long days, char *ext_sect, CONF *lconf, int verbose, unsigned long certopt,
 	     unsigned long nameopt, int default_op, int ext_copy)
 	{
 	STACK_OF(CONF_VALUE) *sk=NULL;
@@ -2405,6 +2457,11 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 			continue;
 			}
 
+		/*
+		if ((nid == NID_pkcs9_emailAddress) && (email_dn == 0))
+			continue;
+		*/
+		
 		j=ASN1_PRINTABLE_type((unsigned char *)buf,-1);
 		if (fix_data(nid, &j) == 0)
 			{
@@ -2449,7 +2506,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 
 	X509_REQ_set_pubkey(req,pktmp);
 	EVP_PKEY_free(pktmp);
-	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,startdate,enddate,
+	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,email_dn,startdate,enddate,
 		   days,1,verbose,req,ext_sect,lconf, certopt, nameopt, default_op,
 			ext_copy);
 err:
@@ -2935,7 +2992,7 @@ int make_revoked(X509_REVOKED *rev, char *str)
 	return ret;
 	}
 
-static X509_NAME *do_subject(char *subject)
+static X509_NAME *do_subject(char *subject, int email_dn)
 	{
 	X509_NAME *n = NULL;
 
@@ -2983,6 +3040,9 @@ static X509_NAME *do_subject(char *subject)
 			BIO_printf(bio_err, "No value provided for Subject Attribute %s, skipped\n", ne_name);
 			continue;
 			}
+
+		if ((nid == NID_pkcs9_emailAddress) && (email_dn == 0))
+			continue;
 
 		if (!X509_NAME_add_entry_by_NID(n, nid, MBSTRING_ASC, (unsigned char*)ne_value, -1,-1,0))
 			{

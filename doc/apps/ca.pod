@@ -34,6 +34,7 @@ B<openssl> B<ca>
 [B<-spkac file>]
 [B<-ss_cert file>]
 [B<-preserveDN>]
+[B<-noemailDN>]
 [B<-batch>]
 [B<-msie_hack>]
 [B<-extensions section>]
@@ -156,6 +157,15 @@ fields in the relevant policy section. When this option is set the order
 is the same as the request. This is largely for compatibility with the
 older IE enrollment control which would only accept certificates if their
 DNs match the order of the request. This is not needed for Xenroll.
+
+=item B<-noemailDN>
+
+The DN of a certificate can contain the EMAIL field if present in the
+request DN, however it is good policy just having the e-mail set into
+the altName extension of the certificate. When this option is set the
+EMAIL field is removed from the certificate' subject and set only in
+the, eventually present, extensions. The B<email_in_dn> keyword can be
+used in the configuration file to enable this behaviour.
 
 =item B<-batch>
 
@@ -308,6 +318,12 @@ the same as B<-crlexts>.
 
 the same as B<-preserveDN>
 
+=item B<email_in_dn>
+
+the same as B<-noemailDN>. If you want the EMAIL field to be removed
+from the DN of the certificate simply set this to 'no'. If not present
+the default is to allow for the EMAIL filed in the certificate's DN.
+
 =item B<msie_hack>
 
 the same as B<-msie_hack>
@@ -437,6 +453,7 @@ A sample configuration file with the relevant sections for B<ca>:
  default_md     = md5                   # md to use
 
  policy         = policy_any            # default policy
+ email_in_dn    = no                    # Don't add the email into cert DN
 
  nameopt	= default_ca		# Subject name display option
  certopt	= default_ca		# Certificate display option
@@ -518,8 +535,11 @@ exposed at either a command or interface level so a more friendly utility
 B<CA.pl> help a little but not very much.
 
 Any fields in a request that are not present in a policy are silently
-deleted. This does not happen if the B<-preserveDN> option is used.
-The behaviour should be more friendly and configurable.
+deleted. This does not happen if the B<-preserveDN> option is used. To
+enforce the absence of the EMAIL field within the DN, as suggested by
+RFCs, regardless the contents of the request' subject the B<-noemailDN>
+option can be used. The behaviour should be more friendly and
+configurable.
 
 Cancelling some commands by refusing to certify a certificate can
 create an empty file.
