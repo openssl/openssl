@@ -137,19 +137,19 @@ my %table=(
 ##"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST::(unknown)::DES_UNROLL:::",
 "sunos-gcc","gcc:-O3 -mv8::(unknown)::BN_LLONG RC4_CHAR DES_UNROLL DES_PTR DES_RISC1:::",
 
-# SGI configurations.  If the box is rather old (r3000 cpu), you will
-# probably have to remove the '-mips2' flag.  I've only been using
-# IRIX 5.[23].
-# I've recently done 32 and 64 bit mips assember, it make this RSA
-# 3 times faster, use if at all possible.
-#"irix-gcc","gcc:-O2 -mips2::SIXTY_FOUR_BIT BN_LLONG RC4_INDEX RC4_CHAR:::",
-"irix-gcc","gcc:-O2 -DTERMIOS -DB_ENDIAN::(unknown)::BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR:::",
+#### IRIX 5.x configs
+# -mips2 flag is added by ./config when appropriate.
+"irix-gcc","gcc:-O3 -DTERMIOS -DB_ENDIAN::(unknown)::BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR:::",
 "irix-cc", "cc:-O2 -use_readonly_const -DTERMIOS -DB_ENDIAN::(unknown)::BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR:::",
-"irix-mips3-gcc","gcc:-mips3 -O2 -DTERMIOS -DB_ENDIAN::(unknown)::MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT:::",
-"irix-mips3-cc", "cc:-O2 -use_readonly_const -DTERMIOS -DB_ENDIAN::(unknown)::DES_PTR DES_RISC2 DES_UNROLL BF_PTR SIXTY_FOUR_BIT:asm/mips3.o::",
-"debug-irix-cc", "cc:-w2 -g -DCRYPTO_MDEBUG -DTERMIOS -DB_ENDIAN::(unknown):::::",
-# This is the n64 mode build.
-"irix64-mips4-cc", "cc:-64 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN::(unknown)::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG:asm/mips3.o::",
+#### IRIX 6.x configs
+# Only N32 and N64 ABIs are supported. If you need O32 ABI build, invoke
+# './Configure irix-[g]cc' manually.
+# -mips4 flag is added by ./config when appropriate.
+"irix-mips3-gcc","gcc:-mabi=n32 -mmips-as -O3 -DTERMIOS -DB_ENDIAN::(unknown)::MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT:asm/mips3.o::",
+"irix-mips3-cc", "cc:-n32 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN::(unknown)::DES_PTR DES_RISC2 DES_UNROLL BF_PTR SIXTY_FOUR_BIT:asm/mips3.o::",
+# N64 ABI builds.
+"irix64-mips4-gcc","gcc:-mabi=64 -mips4 -mmips-as -O3 -DTERMIOS -DB_ENDIAN::(unknown)::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG:asm/mips3.o::",
+"irix64-mips4-cc", "cc:-64 -mips4 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN::(unknown)::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG:asm/mips3.o::",
 
 # HPUX 9.X config.
 # Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or

@@ -94,12 +94,16 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	esac
 	;;
 
-    IRIX:*)
-	echo "${MACHINE}-sgi-irix"; exit 0
+    IRIX:5.*)
+	echo "mips2-sgi-irix"; exit 0
+	;;
+
+	IRIX:6.*)
+	echo "mips3-sgi-irix"; exit 0
 	;;
 
     IRIX64:*)
-	echo "${MACHINE}-sgi-irix64"; exit 0
+	echo "mips4-sgi-irix64"; exit 0
 	;;
 
     Linux:[2-9].*)
@@ -298,7 +302,7 @@ if [ "$GCCVER" != "" ]; then
   # then strip off whatever prefix Cygnus prepends the number with...
   GCCVER=`echo $GCCVER | sed 's/^[a-z]*\-//'`
   # peak only digits before and after first dot, e.g. 2.95.1 gives 29
-  GCCVER=`echo $GCCVER | sed '/\([0-9]\)\.\([0-9]\).*/\1\2/'`
+  GCCVER=`echo $GCCVER | sed 's/\([0-9]\)\.\([0-9]\).*/\1\2/'`
 else
   CC=cc
   if [ "$SYSTEM" = "SunOS" ]
@@ -310,6 +314,9 @@ else
    esac
   fi
 fi
+
+GCCVER=${GCCVER:-0}
+CCVER=${CCVER:-0}
 
 # read the output of the embedded GuessOS 
 read GUESSOS
@@ -323,6 +330,32 @@ case "$GUESSOS" in
   alpha-*-linux2) OUT="alpha-gcc" ;;
   ppc-*-linux2) OUT="linux-ppc" ;;
   mips-*-linux?) OUT="linux-mips" ;;
+  mips2-sgi-irix)
+	CPU=`(hinv -t cpu) 2>/dev/null | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
+	CPU=${CPU:-0}
+	if [ $CPU -ge 4000 ]; then
+		options="$options -mips2"
+	fi
+	OUT="irix-$CC"
+	;;
+  mips3-sgi-irix)
+	CPU=`(hinv -t cpu) 2>/dev/null | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
+	CPU=${CPU:-0}
+	if [ $CPU -ge 5000 ]; then
+		options="$options -mips4"
+	else
+		options="$options -mips3"
+	fi
+	OUT="irix-mips3-$CC"
+	;;
+  mips4-sgi-irix64)
+	echo "WARNING! If you wish to build 64-bit library, then you have to"
+	echo "         invoke './Configre irix64-mips4-$CC' *manually*."
+	echo "         Type Ctrl-C if you don't want to continue."
+	read waste < /dev/tty
+	options="$options -mips4"
+	OUT="irix-mips3-$CC"
+	;;
   sparc64-*-linux2)
 	#Before we uncomment following line we have to wait at least till
 	#64-bit glibc for SPARC is available:-(
@@ -331,7 +364,7 @@ case "$GUESSOS" in
 	#echo "         Type Ctrl-C if you don't want to continue."
 	#read waste < /dev/tty
 	OUT="linux-sparcv9" ;;
-  sparc-*-linux2) OUT="linux-sparc" ;;
+  sparc-*-linux2)
 	KARCH=`awk '/type/{print$3}' /proc/cpuinfo`
 	case ${KARCH:-sun4} in
 	sun4u*)	OUT="linux-sparcv9" ;;
