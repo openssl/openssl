@@ -266,7 +266,7 @@ usage: config [options]
  -t	Test mode, do not run the Configure perl script.
  -h	This help.
 
-Any other text will be passed to ther Configure perl script.
+Any other text will be passed to the Configure perl script.
 Usefull options include
  no-asm Build with no assember code.
  -Dxxx	Add xxx define to compilation.
