@@ -4,6 +4,11 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2000]
 
+  *) Make the CRL encoding routines work with empty SEQUENCE OF. The
+     macros previously used would not encode an empty SEQUENCE OF
+     and break the signature.
+     [Steve Henson]
+
   *) Zero the premaster secret after deriving the master secret in
      DH ciphersuites.
      [Steve Henson]
