@@ -256,11 +256,6 @@ static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value,
 		goto err;
 		}
         ffunc = (conf_finish_func *)DSO_bind_func(dso, DSO_mod_finish_name);
-	if (!ffunc)
-		{
-		errcode = CONF_R_MISSING_FINISH_FUNCTION;
-		goto err;
-		}
 	/* All OK, add module */
 	md = module_add(dso, name, ifunc, ffunc);
 
@@ -458,7 +453,8 @@ void CONF_modules_finish(void)
 
 static void module_finish(CONF_IMODULE *imod)
 	{
-	imod->pmod->finish(imod);
+	if (imod->pmod->finish)
+		imod->pmod->finish(imod);
 	imod->pmod->links--;
 	OPENSSL_free(imod->name);
 	OPENSSL_free(imod->value);
