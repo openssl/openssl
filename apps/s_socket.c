@@ -80,7 +80,9 @@ typedef unsigned int u_int;
 #include <openssl/ssl.h>
 
 static struct hostent *GetHostByName(char *name);
+#ifdef WINDOWS
 static void sock_cleanup(void);
+#endif
 static int sock_init(void);
 static int init_client_ip(int *sock,unsigned char ip[4], int port);
 static int init_server(int *sock, int port);
@@ -130,17 +132,17 @@ static BOOL CALLBACK enumproc(HWND hwnd,LPARAM lParam)
 #endif /* WIN32 */
 #endif /* WINDOWS */
 
+#ifdef WINDOWS
 static void sock_cleanup(void)
 	{
-#ifdef WINDOWS
 	if (wsa_init_done)
 		{
 		wsa_init_done=0;
 		WSACancelBlockingCall();
 		WSACleanup();
 		}
-#endif
 	}
+#endif
 
 static int sock_init(void)
 	{
