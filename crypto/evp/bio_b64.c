@@ -484,10 +484,7 @@ again:
 			{
 			i=b64_write(b,NULL,0);
 			if (i < 0)
-				{
-				ret=i;
-				break;
-				}
+				return i;
 			}
 		if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL)
 			{
