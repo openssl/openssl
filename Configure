@@ -463,9 +463,11 @@ my %table=(
 #
 "OS390-Unix","c89.sh:-O -DB_ENDIAN -DCHARSET_EBCDIC -DNO_SYS_PARAM_H  -D_ALL_SOURCE::(unknown):::THIRTY_TWO_BIT DES_PTR DES_UNROLL MD2_CHAR RC4_INDEX RC4_CHAR BF_PTR:::",
 
-# Windows NT, Microsoft Visual C++ 4.0
+# Win64 targets, WIN64I denotes IA-64 and WIN64A - AMD64
+"VC-WIN64I","cl::::WIN64I::SIXTY_FOUR_BIT EXPORT_VAR_AS_FN:${no_asm}:win32",
+"VC-WIN64A","cl::::WIN64A::SIXTY_FOUR_BIT EXPORT_VAR_AS_FN:${no_asm}:win32",
 
-"VC-NT","cl::::WINNT::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${no_asm}:win32",
+# Visual C targets
 "VC-CE","cl::::WINCE::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${no_asm}:win32",
 "VC-WIN32","cl::::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${no_asm}:win32",
 "VC-WIN16","cl:::(unknown):WIN16::MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
@@ -533,7 +535,8 @@ my %table=(
 
 );
 
-my @MK1MF_Builds=qw(VC-NT VC-CE VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS
+my @MK1MF_Builds=qw(VC-WIN64I VC-WIN64A VC-CE VC-WIN32
+	VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS
 	BC-32 BC-16 OS2-EMX netware-clib netware-libc);
 
 my $idx = 0;
