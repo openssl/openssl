@@ -128,6 +128,7 @@
 #include <string.h>
 #include <time.h>
 
+#define USE_SOCKETS
 #include "e_os.h"
 
 #include <openssl/bio.h>
