@@ -2699,3 +2699,9 @@ EVP_DigestInit_ex                       3145	EXIST::FUNCTION:
 ERR_load_ENGINE_strings                 3146	EXIST::FUNCTION:
 ERR_load_EC_strings                     3147	EXIST::FUNCTION:EC
 ERR_load_UI_strings                     3148	EXIST::FUNCTION:
+EVP_MD_CTX_copy_ex                      3149	EXIST::FUNCTION:
+EVP_CipherFinal_ex                      3150	EXIST::FUNCTION:
+EVP_DecryptFinal_ex                     3151	EXIST::FUNCTION:
+EVP_EncryptFinal_ex                     3152	EXIST::FUNCTION:
+EVP_DigestFinal_ex                      3153	EXIST::FUNCTION:
+X509_supported_extension                3154	EXIST::FUNCTION:
