@@ -5,6 +5,8 @@
 
  Changes between 0.9.3 and 0.9.3a [?]  [xx May? 1999]
 
+  *) New configuration variant "sco5-gcc".
+
   *) Updated some demos.
      [Sean O Riordain, Wade Scholine]
 
