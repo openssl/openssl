@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 # At some point it became apparent that the original SSLeay RC4
-# assembler implementation performs suboptimal on latest IA-32
+# assembler implementation performs suboptimaly on latest IA-32
 # microarchitectures. After re-tuning performance has changed as
 # following:
 #
@@ -15,10 +15,12 @@
 #	In other words code performing further 13% faster on AMD
 #	would perform almost 2 times slower on Intel PIII...
 #	For reference! This code delivers ~80% of rc4-amd64.pl
-#	performance on same Opteron machine.
+#	performance on the same Opteron machine.
 # (**)	This number requires compressed key schedule set up by
-#	RC4_set_key, see commentary section in rc4_skey.c for
-#	further details.
+#	RC4_set_key and therefore doesn't apply to 0.9.7 [option for
+#	compressed key schedule is implemented in 0.9.8 and later,
+#	see commentary section in rc4_skey.c for further details].
+#
 #					<appro@fy.chalmers.se>
 
 push(@INC,"perlasm","../../perlasm");
@@ -130,6 +132,8 @@ sub RC4
 	 &add(	$d,	8);
 
 	# detect compressed schedule, see commentary section in rc4_skey.c...
+	# in 0.9.7 context ~50 bytes below RC4_CHAR label remain redundant,
+	# as compressed key schedule is set up in 0.9.8 and later.
 	&cmp(&DWP(256,$d),-1);
 	&je(&label("RC4_CHAR"));
 
@@ -190,7 +194,8 @@ sub RC4
 	&jmp(&label("finished"));
 
 	&align(16);
-	# this is essentially Intel P4 specific codepath, see rc4_skey.c...
+	# this is essentially Intel P4 specific codepath, see rc4_skey.c,
+	# and is engaged in 0.9.8 and later context...
 	&set_label("RC4_CHAR");
 
 	&lea	($ty,&DWP(0,$in,$ty));

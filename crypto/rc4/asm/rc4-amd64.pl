@@ -30,7 +30,9 @@
 # RC4_CHAR. Kind of ironic, huh? As it's apparently impossible to
 # compose blended code, which would perform even within 30% marginal
 # on either AMD and Intel platforms, I implement both cases. See
-# rc4_skey.c for further details...
+# rc4_skey.c for further details... This applies to 0.9.8 and later.
+# In 0.9.7 context RC4_CHAR codepath is never engaged and ~70 bytes
+# of code remain redundant.
 
 $output=shift;
 

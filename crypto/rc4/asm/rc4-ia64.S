@@ -18,7 +18,7 @@
 // to input and output streams. Secondly, less obvious, it's possible
 // to pull up some references to elements of the key schedule itself.
 // Fact is that such prior loads are not safe only for "degenerated"
-// key schedule, when all elements equal to the same value, which is
+// key schedule, when some elements equal to the same value, which is
 // never the case [key schedule setup routine makes sure it's not].
 // Furthermore. In order to compress loop body to the minimum, I chose
 // to deploy deposit instruction, which substitutes for the whole
