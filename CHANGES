@@ -4,6 +4,12 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Major change in util/mkdef.pl to include extra information
+     about each symbol, as well as presentig variables as well
+     as functions.  This change means that there's n more need
+     to rebuild the .num files when some algorithms are excluded.
+     [Richard Levitte]
+
   *) Allow the verify time to be set by an application,
      rather than always using the current time.
      [Steve Henson]
