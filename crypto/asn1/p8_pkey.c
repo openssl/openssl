@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/asn1_mac.h>
+#include <openssl/x509.h>
 
 int i2d_PKCS8_PRIV_KEY_INFO (PKCS8_PRIV_KEY_INFO *a, unsigned char **pp)
 {

@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/asn1_mac.h>
+#include <openssl/x509.h>
 
 int i2d_X509_CINF(X509_CINF *a, unsigned char **pp)
 	{

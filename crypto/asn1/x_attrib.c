@@ -60,6 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
+#include <openssl/x509.h>
 
 /* sequence */
 int i2d_X509_ATTRIBUTE(X509_ATTRIBUTE *a, unsigned char **pp)

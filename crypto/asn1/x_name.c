@@ -60,6 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
+#include <openssl/x509.h>
 
 static int i2d_X509_NAME_entries(X509_NAME *a);
 int i2d_X509_NAME_ENTRY(X509_NAME_ENTRY *a, unsigned char **pp)

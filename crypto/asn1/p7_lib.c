@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/asn1_mac.h>
+#include <openssl/pkcs7.h>
 #include <openssl/objects.h>
 
 int i2d_PKCS7(PKCS7 *a, unsigned char **pp)

@@ -60,6 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
+#include <openssl/x509.h>
 
 int i2d_X509_EXTENSION(X509_EXTENSION *a, unsigned char **pp)
 	{
