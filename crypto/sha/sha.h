@@ -70,11 +70,17 @@ extern "C" {
 #define SHA_LENGTH_BLOCK 8
 #define SHA_DIGEST_LENGTH 20
 
+#ifdef WIN16
+#define SHA_LONG unsigned long
+#else
+#define SHA_LONG unsigned int
+#endif	
+
 typedef struct SHAstate_st
 	{
-	unsigned long h0,h1,h2,h3,h4;
-	unsigned long Nl,Nh;
-	unsigned long data[SHA_LBLOCK];
+	SHA_LONG h0,h1,h2,h3,h4;
+	SHA_LONG Nl,Nh;
+	SHA_LONG data[SHA_LBLOCK];
 	int num;
 	} SHA_CTX;
 

@@ -69,23 +69,23 @@ char *SHA1_version="SHA1" OPENSSL_VERSION_PTEXT;
 /* Implemented from SHA-1 document - The Secure Hash Algorithm
  */
 
-#define INIT_DATA_h0 (unsigned long)0x67452301L
-#define INIT_DATA_h1 (unsigned long)0xefcdab89L
-#define INIT_DATA_h2 (unsigned long)0x98badcfeL
-#define INIT_DATA_h3 (unsigned long)0x10325476L
-#define INIT_DATA_h4 (unsigned long)0xc3d2e1f0L
+#define INIT_DATA_h0 0x67452301UL
+#define INIT_DATA_h1 0xefcdab89UL
+#define INIT_DATA_h2 0x98badcfeUL
+#define INIT_DATA_h3 0x10325476UL
+#define INIT_DATA_h4 0xc3d2e1f0UL
 
-#define K_00_19	0x5a827999L
-#define K_20_39 0x6ed9eba1L
-#define K_40_59 0x8f1bbcdcL
-#define K_60_79 0xca62c1d6L
+#define K_00_19	0x5a827999UL
+#define K_20_39 0x6ed9eba1UL
+#define K_40_59 0x8f1bbcdcUL
+#define K_60_79 0xca62c1d6UL
 
 #ifndef NOPROTO
 #  ifdef SHA1_ASM
      void sha1_block_x86(SHA_CTX *c, register unsigned long *p, int num);
 #    define sha1_block sha1_block_x86
 #  else
-     void sha1_block(SHA_CTX *c, register unsigned long *p, int num);
+     void sha1_block(SHA_CTX *c, register SHA_LONG *p, int num);
 #  endif
 #else
 #  ifdef SHA1_ASM
@@ -126,9 +126,9 @@ void SHA1_Init(SHA_CTX *c)
 void SHA1_Update(SHA_CTX *c, register unsigned char *data,
 	     unsigned long len)
 	{
-	register ULONG *p;
+	register SHA_LONG *p;
 	int ew,ec,sw,sc;
-	ULONG l;
+	SHA_LONG l;
 
 	if (len == 0) return;
 
@@ -195,13 +195,13 @@ void SHA1_Update(SHA_CTX *c, register unsigned char *data,
 	 */
 #if 1
 #if defined(B_ENDIAN) || defined(SHA1_ASM)
-	if ((((unsigned long)data)%sizeof(ULONG)) == 0)
+	if ((((unsigned long)data)%sizeof(SHA_LONG)) == 0)
 		{
 		sw=len/SHA_CBLOCK;
 		if (sw)
 			{
 			sw*=SHA_CBLOCK;
-			sha1_block(c,(ULONG *)data,sw);
+			sha1_block(c,(SHA_LONG *)data,sw);
 			data+=sw;
 			len-=sw;
 			}
@@ -214,7 +214,7 @@ void SHA1_Update(SHA_CTX *c, register unsigned char *data,
 	while (len >= SHA_CBLOCK)
 		{
 #if defined(B_ENDIAN) || defined(L_ENDIAN)
-		if (p != (unsigned long *)data)
+		if (p != (SHA_LONG *)data)
 			memcpy(p,data,SHA_CBLOCK);
 		data+=SHA_CBLOCK;
 #  ifdef L_ENDIAN
@@ -256,9 +256,9 @@ void SHA1_Update(SHA_CTX *c, register unsigned char *data,
 
 void SHA1_Transform(SHA_CTX *c, unsigned char *b)
 	{
-	ULONG p[16];
+	SHA_LONG p[16];
 #ifndef B_ENDIAN
-	ULONG *q;
+	SHA_LONG *q;
 	int i;
 #endif
 
@@ -279,7 +279,7 @@ void SHA1_Transform(SHA_CTX *c, unsigned char *b)
 	q=p;
 	for (i=(SHA_LBLOCK/4); i; i--)
 		{
-		ULONG l;
+		SHA_LONG l;
 		c2nl(b,l); *(q++)=l;
 		c2nl(b,l); *(q++)=l;
 		c2nl(b,l); *(q++)=l;
@@ -291,10 +291,10 @@ void SHA1_Transform(SHA_CTX *c, unsigned char *b)
 
 #ifndef SHA1_ASM
 
-void sha1_block(SHA_CTX *c, register unsigned long *W, int num)
+void sha1_block(SHA_CTX *c, register SHA_LONG *W, int num)
 	{
-	register ULONG A,B,C,D,E,T;
-	ULONG X[16];
+	register SHA_LONG A,B,C,D,E,T;
+	SHA_LONG X[16];
 
 	A=c->h0;
 	B=c->h1;
@@ -411,8 +411,8 @@ void sha1_block(SHA_CTX *c, register unsigned long *W, int num)
 void SHA1_Final(unsigned char *md, SHA_CTX *c)
 	{
 	register int i,j;
-	register ULONG l;
-	register ULONG *p;
+	register SHA_LONG l;
+	register SHA_LONG *p;
 	static unsigned char end[4]={0x80,0x00,0x00,0x00};
 	unsigned char *cp=end;
 

@@ -66,8 +66,6 @@
 #endif
 #endif
 
-#define ULONG	unsigned long
-
 #undef c2nl
 #define c2nl(c,l)	(l =(((unsigned long)(*((c)++)))<<24), \
 			 l|=(((unsigned long)(*((c)++)))<<16), \
