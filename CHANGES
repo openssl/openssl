@@ -4,6 +4,9 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add BSD-style MD5-based passwords to 'openssl passwd' (option '-1').
+     [Bodo Moeller]
+
   *) Addition of the command line parameter '-rand file' to 'openssl req'.
      The given file adds to whatever has already been seeded into the
      random pool through the RANDFILE configuration file option or
