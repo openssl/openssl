@@ -174,6 +174,7 @@ sub main'leave	{ &out0("leave"); }
 sub main'cpuid  { &out0("DW\t0A20Fh"); }
 sub main'rdtsc  { &out0("DW\t0310Fh"); }
 sub main'halt	{ &out0("hlt"); }
+sub main'movz	{ &out2("movzx",@_); }
 
 # SSE2
 sub main'emms	{ &out0("emms"); }
@@ -255,7 +256,7 @@ sub main'function_begin
 	push(@labels,$func);
 
 	local($tmp)=<<"EOF";
-_TEXT	SEGMENT
+_TEXT\$	SEGMENT PARA
 PUBLIC	_$func
 $extra
 _$func PROC NEAR
@@ -273,7 +274,7 @@ sub main'function_begin_B
 	local($func,$extra)=@_;
 
 	local($tmp)=<<"EOF";
-_TEXT	SEGMENT
+_TEXT\$	SEGMENT	PARA
 PUBLIC	_$func
 $extra
 _$func PROC NEAR
@@ -293,7 +294,7 @@ sub main'function_end
 	pop	ebp
 	ret
 _$func ENDP
-_TEXT	ENDS
+_TEXT\$	ENDS
 EOF
 	push(@out,$tmp);
 	$stack=0;
@@ -306,7 +307,7 @@ sub main'function_end_B
 
 	local($tmp)=<<"EOF";
 _$func ENDP
-_TEXT	ENDS
+_TEXT\$	ENDS
 EOF
 	push(@out,$tmp);
 	$stack=0;
