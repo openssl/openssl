@@ -252,7 +252,7 @@ sub der_it
 	$ret.=pack("C*",$a[0]*40+$a[1]);
 	shift @a;
 	shift @a;
-	while ($_=shift(@a))
+	foreach (@a)
 		{
 		@r=();
 		$t=0;
