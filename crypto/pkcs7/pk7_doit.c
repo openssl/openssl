@@ -715,7 +715,7 @@ PKCS7_SIGNER_INFO *si;
 	if ((sk != NULL) && (sk_num(sk) != 0))
 		{
 		unsigned char md_dat[EVP_MAX_MD_SIZE];
-		int md_len;
+		unsigned int md_len;
 		ASN1_OCTET_STRING *message_digest;
 
 		EVP_DigestFinal(&mdc_tmp,md_dat,&md_len);
