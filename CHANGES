@@ -4,6 +4,9 @@
 
  Changes between 0.9.5 and 0.9.6  [XX XXX 2000]
 
+  *) Added configuration support for Linux/IA64
+     [Rolf Haberrecker <rolf@suse.de>]
+
   *) Assembler module support for Mingw32.
      [Ulf Möller]
 

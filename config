@@ -409,6 +409,7 @@ case "$GUESSOS" in
 	;;
   mips-*-linux?) OUT="linux-mips" ;;
   ppc-*-linux2) OUT="linux-ppc" ;;
+  ia64-*-linux?) OUT="linux-ia64" ;;
   ppc-apple-rhapsody) OUT="rhapsody-ppc-cc" ;;
   sparc64-*-linux2)
 	#Before we can uncomment following lines we have to wait at least
