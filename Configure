@@ -410,6 +410,7 @@ $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
 
 my $flags="";
 my $depflags="";
+my $defines="";
 my $libs="";
 my $target="";
 my $options="";
@@ -419,6 +420,7 @@ foreach (@ARGV)
 	 	{
 		$no_asm=1;
 		$flags .= "-DNO_ASM ";
+		$defines .= "#define NO_ASM\n";
 		}
 	elsif (/^no-threads$/)
 		{ $no_threads=1; }
@@ -431,12 +433,14 @@ foreach (@ARGV)
 		$algo =~ tr/[a-z]/[A-Z]/;
 		$flags .= "-DNO_$algo ";
 		$depflags .= "-DNO_$algo ";
+		$defines .= "#define NO_$algo\n";
 		if ($algo eq "DES")
 			{
 			push @skip, "mdc2";
 			$options .= " no-mdc2";
 			$flags .= "-DNO_MDC2 ";
 			$depflags .= "-DNO_MDC2 ";
+			$defines .= "#define NO_MDC2\n";
 			}
 		}
 	elsif (/^386$/)
@@ -445,6 +449,7 @@ foreach (@ARGV)
 		{
 		$libs.= "-lRSAglue -lrsaref ";
 		$flags.= "-DRSAref ";
+		$defines .= "#define RSAref\n";
 		}
 	elsif (/^[-+]/)
 		{
@@ -522,6 +527,7 @@ print "IsWindows=$IsWindows\n";
 $cflags="$flags$cflags" if ($flags ne "");
 
 my $thread_cflags;
+my $thread_defines;
 if ($thread_cflag ne "(unknown)" && !$no_threads)
 	{
 	# If we know how to do it, support threads by default.
@@ -535,7 +541,14 @@ if ($thread_cflag eq "(unknown)")
 	}
 else
 	{
-	$thread_cflags="-DTHREADS $thread_cflag $cflags" 
+	$thread_cflags="-DTHREADS $thread_cflag $cflags";
+	foreach my $def (split ' ',$thread_cflag)
+		{
+		if ($def =~ s/^-D//)
+			{
+			$thread_defines .= "#define $def\n";
+			}
+		}
 	}	
 
 $lflags="$libs$lflags"if ($libs ne "");
@@ -549,6 +562,7 @@ if ($no_asm)
 if ($threads)
 	{
 		$cflags=$thread_cflags;
+		$defines .= $thread_defines;
 	}
 
 #my ($bn1)=split(/\s+/,$bn_obj);
@@ -704,7 +718,13 @@ foreach (sort split(/\s+/,$bn_ops))
 
 open(IN,'<crypto/opensslconf.h.in') || die "unable to read crypto/opensslconf.h.in:$!\n";
 open(OUT,'>crypto/opensslconf.h') || die "unable to create crypto/opensslconf.h:$!\n";
-print OUT "/* Generated automatically from opensslconf.h.in by Configure. */\n\n";
+print OUT "/* opensslconf.h */"
+print OUT "/* WARNING: Generated automatically from opensslconf.h.in by Configure. */\n\n";
+if ($defines ne "")
+	{
+	print OUT "/* OpenSSL was configured with the following options: */\n";
+	print OUT "#ifdef OPENSSL_EXCLUDED\n$defines#endif\n\n";
+	}
 while (<IN>)
 	{
 	if	(/^#define\s+OPENSSLDIR/)
