@@ -217,23 +217,12 @@ static int test_cipher(const char *cipher,const unsigned char *key,int kn,
 		       const unsigned char *ciphertext,int cn)
     {
     const EVP_CIPHER *c;
-    ENGINE *e;
 
     c=EVP_get_cipherbyname(cipher);
     if(!c)
 	return 0;
 
     test1(c,key,kn,iv,in,plaintext,pn,ciphertext,cn);
-
-    for(e=ENGINE_get_first() ; e ; e=ENGINE_get_next(e))
-	{
-	c=ENGINE_get_cipher_by_name(e,cipher);
-	if(!c)
-	    continue;
-	printf("Testing engine %s\n",ENGINE_get_name(e));
-
-	test1(c,key,kn,iv,in,plaintext,pn,ciphertext,cn);
-	}
 
     return 1;
     }
@@ -315,8 +304,10 @@ int main(int argc,char **argv)
 	exit(2);
 	}
 
+    /* Load up the software EVP_CIPHER and EVP_MD definitions */
     OpenSSL_add_all_ciphers();
     OpenSSL_add_all_digests();
+    /* Load all compiled-in ENGINEs */
     ENGINE_load_builtin_engines();
 
     for( ; ; )

@@ -68,6 +68,7 @@
 #endif
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
+#include <openssl/types.h>
 	
 #define DH_FLAG_CACHE_MONT_P	0x01
 
@@ -115,11 +116,8 @@ struct dh_st
 
 	int references;
 	CRYPTO_EX_DATA ex_data;
-#if 0
-	DH_METHOD *meth;
-#else
-	struct engine_st *engine;
-#endif
+	const DH_METHOD *meth;
+	ENGINE *engine;
 	};
 
 #define DH_GENERATOR_2		2
@@ -154,15 +152,10 @@ struct dh_st
 
 const DH_METHOD *DH_OpenSSL(void);
 
-void DH_set_default_openssl_method(const DH_METHOD *meth);
-const DH_METHOD *DH_get_default_openssl_method(void);
-#if 0
-const DH_METHOD *DH_set_method(DH *dh, const DH_METHOD *meth);
-DH *DH_new_method(const DH_METHOD *meth);
-#else
-int DH_set_method(DH *dh, struct engine_st *engine);
-DH *DH_new_method(struct engine_st *engine);
-#endif
+void DH_set_default_method(const DH_METHOD *meth);
+const DH_METHOD *DH_get_default_method(void);
+int DH_set_method(DH *dh, const DH_METHOD *meth);
+DH *DH_new_method(ENGINE *engine);
 
 DH *	DH_new(void);
 void	DH_free(DH *dh);

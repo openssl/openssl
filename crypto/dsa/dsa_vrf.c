@@ -70,7 +70,7 @@
 int DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 		  DSA *dsa)
 	{
-	return ENGINE_get_DSA(dsa->engine)->dsa_do_verify(dgst, dgst_len, sig, dsa);
+	return dsa->meth->dsa_do_verify(dgst, dgst_len, sig, dsa);
 	}
 
 /* data has already been hashed (probably with SHA or SHA-1). */

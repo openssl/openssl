@@ -60,6 +60,7 @@
 #define HEADER_RAND_H
 
 #include <stdlib.h>
+#include <openssl/types.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -79,10 +80,9 @@ typedef struct rand_meth_st
 extern int rand_predictable;
 #endif
 
-struct engine_st;
-
-int RAND_set_rand_method(struct engine_st *meth);
-const RAND_METHOD *RAND_get_rand_method(void );
+int RAND_set_rand_method(const RAND_METHOD *meth);
+const RAND_METHOD *RAND_get_rand_method(void);
+int RAND_set_rand_engine(ENGINE *engine);
 RAND_METHOD *RAND_SSLeay(void);
 void RAND_cleanup(void );
 int  RAND_bytes(unsigned char *buf,int num);

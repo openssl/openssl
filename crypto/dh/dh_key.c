@@ -74,12 +74,12 @@ static int dh_finish(DH *dh);
 
 int DH_generate_key(DH *dh)
 	{
-	return ENGINE_get_DH(dh->engine)->generate_key(dh);
+	return dh->meth->generate_key(dh);
 	}
 
 int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	{
-	return ENGINE_get_DH(dh->engine)->compute_key(key, pub_key, dh);
+	return dh->meth->compute_key(key, pub_key, dh);
 	}
 
 static DH_METHOD dh_ossl = {
@@ -140,8 +140,8 @@ static int generate_key(DH *dh)
 		l = dh->length ? dh->length : BN_num_bits(dh->p)-1; /* secret exponent length */
 		if (!BN_rand(priv_key, l, 0, 0)) goto err;
 		}
-	if (!ENGINE_get_DH(dh->engine)->bn_mod_exp(dh, pub_key, dh->g,
-		priv_key,dh->p,ctx,mont)) goto err;
+	if (!dh->meth->bn_mod_exp(dh, pub_key, dh->g, priv_key,dh->p,ctx,mont))
+		goto err;
 		
 	dh->pub_key=pub_key;
 	dh->priv_key=priv_key;
@@ -181,8 +181,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 		}
 
 	mont=(BN_MONT_CTX *)dh->method_mont_p;
-	if (!ENGINE_get_DH(dh->engine)->bn_mod_exp(dh, tmp, pub_key,
-				dh->priv_key,dh->p,ctx,mont))
+	if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key,dh->p,ctx,mont))
 		{
 		DHerr(DH_F_DH_COMPUTE_KEY,ERR_R_BN_LIB);
 		goto err;

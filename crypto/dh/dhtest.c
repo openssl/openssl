@@ -66,6 +66,7 @@
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
 
 #ifdef OPENSSL_NO_DH
 int main(int argc, char *argv[])
@@ -98,6 +99,10 @@ int main(int argc, char *argv[])
 	unsigned char *abuf=NULL,*bbuf=NULL;
 	int i,alen,blen,aout,bout,ret=1;
 	BIO *out;
+
+	CRYPTO_malloc_debug_init();
+	CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 #ifdef OPENSSL_SYS_WIN32
 	CRYPTO_malloc_init();
@@ -175,6 +180,9 @@ err:
 	if(b != NULL) DH_free(b);
 	if(a != NULL) DH_free(a);
 	BIO_free(out);
+	CRYPTO_cleanup_all_ex_data();
+	ERR_remove_state(0);
+	CRYPTO_mem_leaks_fp(stderr);
 	exit(ret);
 	return(ret);
 	}

@@ -66,97 +66,67 @@ const char *DH_version="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
 static const DH_METHOD *default_DH_method = NULL;
 
-void DH_set_default_openssl_method(const DH_METHOD *meth)
-{
-	ENGINE *e;
-	/* We'll need to notify the "openssl" ENGINE of this
-	 * change too. We won't bother locking things down at
-	 * our end as there was never any locking in these
-	 * functions! */
-	if(default_DH_method != meth)
-		{
-		default_DH_method = meth;
-		e = ENGINE_by_id("openssl");
-		if(e)
-			{
-			ENGINE_set_DH(e, meth);
-			ENGINE_free(e);
-			}
-		}
-}
+void DH_set_default_method(const DH_METHOD *meth)
+	{
+	default_DH_method = meth;
+	}
 
-const DH_METHOD *DH_get_default_openssl_method(void)
-{
-	if(!default_DH_method) default_DH_method = DH_OpenSSL();
+const DH_METHOD *DH_get_default_method(void)
+	{
+	if(!default_DH_method)
+		default_DH_method = DH_OpenSSL();
 	return default_DH_method;
-}
+	}
 
-#if 0
-DH_METHOD *DH_set_method(DH *dh, DH_METHOD *meth)
-{
-        DH_METHOD *mtmp;
+int DH_set_method(DH *dh, const DH_METHOD *meth)
+	{
+	/* NB: The caller is specifically setting a method, so it's not up to us
+	 * to deal with which ENGINE it comes from. */
+        const DH_METHOD *mtmp;
         mtmp = dh->meth;
         if (mtmp->finish) mtmp->finish(dh);
+	if (dh->engine)
+		{
+		ENGINE_finish(dh->engine);
+		dh->engine = NULL;
+		}
         dh->meth = meth;
         if (meth->init) meth->init(dh);
-        return mtmp;
+        return 1;
 }
-#else
-int DH_set_method(DH *dh, ENGINE *engine)
-{
-	ENGINE *mtmp;
-	const DH_METHOD *meth;
-	mtmp = dh->engine;
-	meth = ENGINE_get_DH(mtmp);
-	if (!ENGINE_init(engine))
-		return 0;
-	if (meth->finish) meth->finish(dh);
-	dh->engine= engine;
-	meth = ENGINE_get_DH(engine);
-	if (meth->init) meth->init(dh);
-	/* SHOULD ERROR CHECK THIS!!! */
-	ENGINE_finish(mtmp);
-	return 1;
-}
-#endif
 
 DH *DH_new(void)
-{
-	return DH_new_method(NULL);
-}
-
-#if 0
-DH *DH_new_method(DH_METHOD *meth)
-#else
-DH *DH_new_method(ENGINE *engine)
-#endif
 	{
-	const DH_METHOD *meth;
-	DH *ret;
-	ret=(DH *)OPENSSL_malloc(sizeof(DH));
+	return DH_new_method(NULL);
+	}
 
+DH *DH_new_method(ENGINE *engine)
+	{
+	DH *ret;
+
+	ret=(DH *)OPENSSL_malloc(sizeof(DH));
 	if (ret == NULL)
 		{
 		DHerr(DH_F_DH_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
 
-	if (engine)
+	ret->meth = DH_get_default_method();
+	ret->engine = engine;
+	if(!ret->engine)
+		ret->engine = ENGINE_get_default_DH();
+	if(ret->engine)
 		{
-		if(ENGINE_init(engine))
-			ret->engine = engine;
-		else 
-			ret->engine = NULL;
+		ret->meth = ENGINE_get_DH(ret->engine);
+		if(!ret->meth)
+			{
+			DHerr(DH_F_DH_NEW,ERR_R_ENGINE_LIB);
+			ENGINE_finish(ret->engine);
+			OPENSSL_free(ret);
+			return NULL;
+			}
 		}
-	else
-		ret->engine=ENGINE_get_default_DH();
-	if(ret->engine == NULL)
-		{
-		DHerr(DH_F_DH_NEW,ERR_LIB_ENGINE);
-		OPENSSL_free(ret);
-		return NULL;
-		}
-	meth = ENGINE_get_DH(ret->engine);
+
 	ret->pad=0;
 	ret->version=0;
 	ret->p=NULL;
@@ -171,9 +141,9 @@ DH *DH_new_method(ENGINE *engine)
 	ret->counter = NULL;
 	ret->method_mont_p=NULL;
 	ret->references = 1;
-	ret->flags=meth->flags;
+	ret->flags=ret->meth->flags;
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
-	if ((meth->init != NULL) && !meth->init(ret))
+	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
 		OPENSSL_free(ret);
@@ -184,7 +154,6 @@ DH *DH_new_method(ENGINE *engine)
 
 void DH_free(DH *r)
 	{
-	const DH_METHOD *meth;
 	int i;
 	if(r == NULL) return;
 	i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DH);
@@ -200,9 +169,10 @@ void DH_free(DH *r)
 	}
 #endif
 
-	meth = ENGINE_get_DH(r->engine);
-	if(meth->finish) meth->finish(r);
-	ENGINE_finish(r->engine);
+	if (r->meth->finish)
+		r->meth->finish(r);
+	if (r->engine)
+		ENGINE_finish(r->engine);
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
 

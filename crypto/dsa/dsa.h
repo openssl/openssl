@@ -74,6 +74,7 @@
 #endif
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
+#include <openssl/types.h>
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
 #endif
@@ -133,11 +134,9 @@ struct dsa_st
 	char *method_mont_p;
 	int references;
 	CRYPTO_EX_DATA ex_data;
-#if 0
-	DSA_METHOD *meth;
-#else
-	struct engine_st *engine;
-#endif
+	const DSA_METHOD *meth;
+	/* functional reference if 'meth' is ENGINE-provided */
+	ENGINE *engine;
 	};
 
 #define DSAparams_dup(x) (DSA *)ASN1_dup((int (*)())i2d_DSAparams, \
@@ -163,20 +162,12 @@ int	DSA_do_verify(const unsigned char *dgst,int dgst_len,
 
 const DSA_METHOD *DSA_OpenSSL(void);
 
-void        DSA_set_default_openssl_method(const DSA_METHOD *);
-const DSA_METHOD *DSA_get_default_openssl_method(void);
-#if 0
-const DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *);
-#else
-int DSA_set_method(DSA *dsa, struct engine_st *engine);
-#endif
+void	DSA_set_default_method(const DSA_METHOD *);
+const DSA_METHOD *DSA_get_default_method(void);
+int	DSA_set_method(DSA *dsa, const DSA_METHOD *);
 
 DSA *	DSA_new(void);
-#if 0
-DSA *	DSA_new_method(DSA_METHOD *meth);
-#else
-DSA *	DSA_new_method(struct engine_st *engine);
-#endif
+DSA *	DSA_new_method(ENGINE *engine);
 void	DSA_free (DSA *r);
 /* "up" the DSA object's reference count */
 int	DSA_up_ref(DSA *r);

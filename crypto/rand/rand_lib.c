@@ -62,37 +62,61 @@
 #include <openssl/rand.h>
 #include <openssl/engine.h>
 
-static ENGINE *rand_engine=NULL;
+/* non-NULL if default_RAND_meth is ENGINE-provided */
+static ENGINE *funct_ref =NULL;
+static const RAND_METHOD *default_RAND_meth = NULL;
 
-#if 0
-void RAND_set_rand_method(RAND_METHOD *meth)
+int RAND_set_rand_method(const RAND_METHOD *meth)
 	{
-	rand_meth=meth;
-	}
-#else
-int RAND_set_rand_method(ENGINE *engine)
-	{
-	ENGINE *mtmp;
-	mtmp = rand_engine;
-	if (engine && !ENGINE_init(engine))
-		return 0;
-	rand_engine = engine;
-	/* SHOULD ERROR CHECK THIS!!! */
-	if(mtmp)
-		ENGINE_finish(mtmp);
+	if(funct_ref)
+		{
+		ENGINE_finish(funct_ref);
+		funct_ref = NULL;
+		}
+	default_RAND_meth = meth;
 	return 1;
 	}
-#endif
 
 const RAND_METHOD *RAND_get_rand_method(void)
 	{
-	if (rand_engine == NULL
-		&& (rand_engine = ENGINE_get_default_RAND()) == NULL)
+	if (!default_RAND_meth)
 		{
-		RANDerr(RAND_F_RAND_GET_RAND_METHOD,ERR_LIB_ENGINE);
-		return NULL;
+		ENGINE *e = ENGINE_get_default_RAND();
+		if(e)
+			{
+			default_RAND_meth = ENGINE_get_RAND(e);
+			if(!default_RAND_meth)
+				{
+				ENGINE_finish(e);
+				e = NULL;
+				}
+			}
+		if(e)
+			funct_ref = e;
+		else
+			default_RAND_meth = RAND_SSLeay();
 		}
-	return ENGINE_get_RAND(rand_engine);
+	return default_RAND_meth;
+	}
+
+int RAND_set_rand_engine(ENGINE *engine)
+	{
+	const RAND_METHOD *tmp_meth = NULL;
+	if(engine)
+		{
+		if(!ENGINE_init(engine))
+			return 0;
+		tmp_meth = ENGINE_get_RAND(engine);
+		if(!tmp_meth)
+			{
+			ENGINE_finish(engine);
+			return 0;
+			}
+		}
+	/* This function releases any prior ENGINE so call it first */
+	RAND_set_rand_method(tmp_meth);
+	funct_ref = engine;
+	return 1;
 	}
 
 void RAND_cleanup(void)
@@ -100,6 +124,7 @@ void RAND_cleanup(void)
 	const RAND_METHOD *meth = RAND_get_rand_method();
 	if (meth && meth->cleanup)
 		meth->cleanup();
+	RAND_set_rand_method(NULL);
 	}
 
 void RAND_seed(const void *buf, int num)

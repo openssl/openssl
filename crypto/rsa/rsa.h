@@ -66,6 +66,7 @@
 #endif
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
+#include <openssl/types.h>
 
 #ifdef OPENSSL_NO_RSA
 #error RSA is disabled.
@@ -122,11 +123,9 @@ struct rsa_st
 	 * this is passed instead of aEVP_PKEY, it is set to 0 */
 	int pad;
 	long version;
-#if 0
-	RSA_METHOD *meth;
-#else
-	struct engine_st *engine;
-#endif
+	const RSA_METHOD *meth;
+	/* functional reference if 'meth' is ENGINE-provided */
+	ENGINE *engine;
 	BIGNUM *n;
 	BIGNUM *e;
 	BIGNUM *d;
@@ -180,11 +179,7 @@ struct rsa_st
 #define RSA_get_app_data(s)             RSA_get_ex_data(s,0)
 
 RSA *	RSA_new(void);
-#if 0
-RSA *	RSA_new_method(RSA_METHOD *method);
-#else
-RSA *	RSA_new_method(struct engine_st *engine);
-#endif
+RSA *	RSA_new_method(ENGINE *engine);
 int	RSA_size(const RSA *);
 RSA *	RSA_generate_key(int bits, unsigned long e,void
 		(*callback)(int,int,void *),void *cb_arg);
@@ -204,14 +199,10 @@ int	RSA_up_ref(RSA *r);
 
 int	RSA_flags(const RSA *r);
 
-void RSA_set_default_openssl_method(const RSA_METHOD *meth);
-const RSA_METHOD *RSA_get_default_openssl_method(void);
+void RSA_set_default_method(const RSA_METHOD *meth);
+const RSA_METHOD *RSA_get_default_method(void);
 const RSA_METHOD *RSA_get_method(const RSA *rsa);
-#if 0
-RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth);
-#else
-int RSA_set_method(RSA *rsa, struct engine_st *engine);
-#endif
+int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
 
 /* This function needs the memory locking malloc callbacks to be installed */
 int RSA_memory_lock(RSA *r);
