@@ -136,7 +136,7 @@ int main(int Argc, char *Argv[])
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+	MemCheck_start()
 
 	ERR_load_crypto_strings();
 
@@ -235,6 +235,13 @@ end:
 
 	EVP_cleanup();
 	ERR_free_strings();
+
+#ifdef LEVITTE_DEBUG
+	{
+	/* Just to make sure I get a memory leak I can see :-) */
+	char *p = Malloc(1024);
+	}
+#endif
 
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL)
