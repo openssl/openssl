@@ -4,6 +4,11 @@
 
  Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
 
+  *) Change ./Configure so that certain algorithms can be disabled by default.
+     The new counterpiece to "no-xxx" is "enable-xxx", and RC5 will now be
+     disabled unless "enable-rc5" is specified.
+     [Bodo Moeller]
+
   *) Add processing of proxy certificates (see RFC 3820).  This work was
      sponsored by KTH (The Royal Institute of Technology in Stockholm) and
      EGEE (Enabling Grids for E-science in Europe).

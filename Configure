@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -153,7 +153,7 @@ my %table=(
 "debug-ben-debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::::",
 "debug-ben-strict",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe::(unknown)::::::",
 "debug-rse","cc:-DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
-"debug-bodo",	"gcc:-DL_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBIO_PAIR_DEBUG -DPEDANTIC -g -m486 -pedantic -Wshadow -Wall::-D_REENTRANT:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
+"debug-bodo",	"gcc:-DL_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBIO_PAIR_DEBUG -DPEDANTIC -g -march=i486 -pedantic -Wshadow -Wall::-D_REENTRANT:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
 "debug-ulf", "gcc:-DTERMIOS -DL_ENDIAN -march=i486 -Wall -DBN_DEBUG -DBN_DEBUG_RAND -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -g -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations:::CYGWIN32:::${no_asm}:win32:cygwin-shared:::.dll",
 "debug-steve",	"gcc:-DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -mcpu=i486 -pedantic -Wno-long-long -Wall -Werror -Wshadow -pipe::-D_REENTRANT::-rdynamic -ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared",
 "debug-steve-linux-pseudo64",	"gcc:-DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DOPENSSL_NO_ASM -g -mcpu=i486 -Wall -Werror -Wshadow -pipe::-D_REENTRANT::-rdynamic -ldl:SIXTY_FOUR_BIT:${no_asm}:dlfcn:linux-shared",
@@ -565,10 +565,10 @@ my $openssldir="";
 my $exe_ext="";
 my $install_prefix="";
 my $no_threads=0;
-my $no_shared=1;
-my $zlib=0;
-my $no_krb5=0;
 my $threads=0;
+my $no_shared=0; # but "no-shared" is default
+my $zlib=1;      # but "no-zlib" is default
+my $no_krb5=0;   # but "no-krb5" is implied unless "--with-krb5-..." is used
 my $no_asm=0;
 my $no_dso=0;
 my @skip=();
@@ -596,13 +596,20 @@ my $processor="";
 my $default_ranlib;
 my $perl;
 
-my $no_ssl2=0;
-my $no_ssl3=0;
-my $no_tls1=0;
-my $no_md5=0;
-my $no_sha=0;
-my $no_rsa=0;
-my $no_dh=0;
+
+# All of the following is disabled by default (RC5 was enabled before 0.9.8):
+
+my %disabled = ( # "what"         => "comment"
+                 "rc5"            => "default",
+                 "shared"         => "default",
+                 "zlib"           => "default",
+                 "zlib-dynamic"   => "default"
+               );
+
+# Additional "no-..." options will be collected in %disabled.
+# To remove something from %disabled, use e.g. "enable-rc5".
+# For symmetry, "disable-..." is a synonym for "no-...".
+
 my $no_sse2=0;
 
 &usage if ($#ARGV < 0);
@@ -645,120 +652,38 @@ PROCESS_ARGS:
 	foreach (@argvcopy)
 		{
 		s /^-no-/no-/; # some people just can't read the instructions
-		if (/^--test-sanity$/)
+
+		# rewrite some options in "enable-..." form
+		s /^-?-?shared$/enable-shared/;
+		s /^threads$/enable-threads/;
+		s /^zlib$/enable-zlib/;
+		s /^zlib-dynamic$/enable-zlib-dynamic/;
+
+		if (/^no-(.+)$/ || /^disable-(.+)$/)
+			{
+			if ($1 eq "ssl")
+				{
+				$disabled{"ssl2"} = "option(ssl)";
+				$disabled{"ssl3"} = "option(ssl)";
+				}
+			elsif ($1 eq "tls")
+				{
+				$disabled{"tls1"} = "option(tls)"
+				}
+			else
+				{
+				$disabled{$1} = "option";
+				}
+			}			
+		elsif (/^enable-(.+)$/)
+			{
+			delete $disabled{$1};
+
+			$threads = 1 if ($1 eq "threads");
+			}
+		elsif (/^--test-sanity$/)
 			{
 			exit(&test_sanity());
-			}
-		elsif (/^no-asm$/)
-		 	{
-			$no_asm=1;
-			$openssl_other_defines .= "#define OPENSSL_NO_ASM\n";
-			}
-		elsif (/^no-err$/)
-		 	{
-			$flags .= "-DOPENSSL_NO_ERR ";
-			$openssl_other_defines .= "#define OPENSSL_NO_ERR\n";
-			}
-		elsif (/^no-hw-(.+)$/)
-			{
-			my $hw=$1;
-			$hw =~ tr/[a-z]/[A-Z]/;
-			$openssl_other_defines .= "#define OPENSSL_NO_HW_$hw\n";
-			}
-		elsif (/^no-hw$/)
-			{
-			$openssl_other_defines .= "#define OPENSSL_NO_HW\n";
-			}
-		elsif (/^no-dso$/)
-			{ $no_dso=1; }
-		elsif (/^no-krb5$/)
-			{ $no_krb5=1; }
-		elsif (/^no-threads$/)
-			{ $no_threads=1; }
-		elsif (/^threads$/)
-			{ $threads=1; }
-		elsif (/^no-shared$/)
-			{ $no_shared=1; }
-		elsif (/^shared$/ || /^-shared$/ || /^--shared$/)
-			{ $no_shared=0; }
-		elsif (/^no-zlib$/)
-			{ $zlib=0; }
-		elsif (/^zlib$/)
-			{ $zlib=1; }
-		elsif (/^zlib-dynamic$/)
-			{ $zlib=2; }
-		elsif (/^no-symlinks$/)
-			{ $symlink=0; }
-		elsif (/^no-ssl$/)
-			{ $no_ssl2 = $no_ssl3 = 1; }
-		elsif (/^no-ssl2$/)
-			{ $no_ssl2 = 1; }
-		elsif (/^no-ssl3$/)
-			{ $no_ssl3 = 1; }
-		elsif (/^no-tls1?$/)
-			{ $no_tls1 = 1; }
-		elsif (/^no-sse2$/)
-			{ $no_sse2 = 1; }
-		elsif (/^no-(.+)$/)
-			{
-			my $algo=$1;
-			push @skip,$algo;
-			$algo =~ tr/[a-z]/[A-Z]/;
-			#$flags .= "-DOPENSSL_NO_$algo ";
-			#$depflags .= "-DOPENSSL_NO_$algo ";
-			$openssl_algorithm_defines .= "#define OPENSSL_NO_$algo\n";
-			if ($algo eq "RIJNDAEL")
-				{
-				push @skip, "aes";
-				#$flags .= "-DOPENSSL_NO_AES ";
-				#$depflags .= "-DOPENSSL_NO_AES ";
-				$openssl_algorithm_defines .= "#define OPENSSL_NO_AES\n";
-				}
-			if ($algo eq "DES")
-				{
-				push @skip, "mdc2";
-				$options .= " no-mdc2";
-				#$flags .= "-DOPENSSL_NO_MDC2 ";
-				#$depflags .= "-DOPENSSL_NO_MDC2 ";
-				$openssl_algorithm_defines .= "#define OPENSSL_NO_MDC2\n";
-				}
-			if ($algo eq "EC")
-				{
-				push @skip, "ecdsa";
-				push @skip, "ecdh";
-				$options .= " no-ecdsa";
-				$options .= " no-ecdh";
-				$flags .= "-DOPENSSL_NO_ECDSA ";
-				$flags .= "-DOPENSSL_NO_ECDH ";
-				$depflags .= "-DOPENSSL_NO_ECDSA ";
-				$depflags .= "-DOPENSSL_NO_ECDH ";
-				$openssl_algorithm_defines .= "#define OPENSSL_NO_ECDSA\n";
-				$openssl_algorithm_defines .= "#define OPENSSL_NO_ECDH\n";
-				}
-			if ($algo eq "SHA" || $algo eq "SHA1")
-				{
-				push @skip, "ecdsa";
-				$options .= " no-ecdsa";
-				$flags .= "-DOPENSSL_NO_ECDSA ";
-				$depflags .= "-DOPENSSL_NO_ECDSA ";
-				$openssl_algorithm_defines .= "#define OPENSSL_NO_ECDSA\n";
-				}
-			if ($algo eq "MD5")
-				{
-				$no_md5 = 1;
-				}
-			if ($algo eq "SHA")
-				{
-				$no_sha = 1;
-				}
-			if ($algo eq "RSA")
-				{
-				$no_rsa = 1;
-				}
-			if ($algo eq "DH")
-				{
-				$no_dh = 1;
-				}
 			}
 		elsif (/^reconfigure/ || /^reconf/)
 			{
@@ -784,7 +709,7 @@ PROCESS_ARGS:
 			die "Insufficient data to reconfigure, please do a normal configuration\n";
 			}
 		elsif (/^386$/)
-			{ $processor=386; $no_sse2=1; }
+			{ $processor=386; }
 		elsif (/^rsaref$/)
 			{
 			# No RSAref support any more since it's not needed.
@@ -833,48 +758,69 @@ PROCESS_ARGS:
 			die "target already defined - $target\n" if ($target ne "");
 			$target=$_;
 			}
-		unless ($_ eq $target) {
-			if ($options eq "") {
-				$options = $_;
-			} else {
-				$options .= " ".$_;
+
+		unless ($_ eq $target || /^no-/ || /^disable-/)
+			{
+			# "no-..." follows later after implied disactivations
+			# have been derived.  (Don't take this too seroiusly,
+			# we really only write OPTIONS to the Makefile out of
+			# nostalgia.)
+
+			if ($options eq "")
+				{ $options = $_; }
+			else
+				{ $options .= " ".$_; }
 			}
 		}
 	}
-}
 
-$no_ssl3=1 if ($no_md5 || $no_sha);
-$no_ssl3=1 if ($no_rsa && $no_dh);
 
-$no_ssl2=1 if ($no_md5);
-$no_ssl2=1 if ($no_rsa);
 
-$no_tls1=1 if ($no_md5 || $no_sha);
-$no_tls1=1 if ($no_dh);
-
-if ($no_ssl2)
+if ($processor eq "386")
 	{
-	push @skip,"SSL2";
-	#$flags .= "-DOPENSSL_NO_SSL2 ";
-	#$depflags .= "-DOPENSSL_NO_SSL2 ";
-	$openssl_algorithm_defines .= "#define OPENSSL_NO_SSL2\n";
+	$disabled{"sse2"} = "forced";
 	}
 
-if ($no_ssl3)
+if (!defined($withargs{"krb5-flavor"}) || $withargs{"krb5-flavor"} eq "")
 	{
-	push @skip,"SSL3";
-	#$flags .= "-DOPENSSL_NO_SSL3 ";
-	#$depflags .= "-DOPENSSL_NO_SSL3 ";
-	$openssl_algorithm_defines .= "#define OPENSSL_NO_SSL3\n";
+	$disabled{"krb5"} = "krb5-flavor not specified";
 	}
 
-if ($no_tls1)
+if (!defined($disabled{"zlib-dynamic"}))
 	{
-	push @skip,"TLS1";
-	#$flags .= "-DOPENSSL_NO_TLS1 ";
-	#$depflags .= "-DOPENSSL_NO_TLS1 ";
-	$openssl_algorithm_defines .= "#define OPENSSL_NO_TLS1\n";
+	# "zlib-dynamic" was specifically enabled, so enable "zlib"
+	delete $disabled{"zlib"};
 	}
+
+if (defined($disabled{"rijndael"}))
+	{
+	$disabled{"aes"} = "forced";
+	}
+if (defined($disabled{"des"}))
+	{
+	$disabled{"mdc2"} = "forced";
+	}
+if (defined($disabled{"ec"}))
+	{
+	$disabled{"ecdsa"} = "forced";
+	$disabled{"ecdh"} = "forced";
+	}
+
+# SSL 2.0 requires MD5 and RSA
+if (defined($disabled{"md5"}) || defined($disabled{"rsa"}))
+	{
+	$disabled{"ssl2"} = "forced";
+	}
+
+# SSL 3.0 and TLS requires MD5 and SHA and either RSA or DSA+DH
+if (defined($disabled{"md5"}) || defined($disabled{"sha"})
+    || (defined($disabled{"rsa"})
+        && (defined($disabled{"dsa"}) || defined($disabled{"dh"}))))
+	{
+	$disabled{"ssl3"} = "forced";
+	$disabled{"tls1"} = "forced";
+	}
+
 
 if ($target eq "TABLE") {
 	foreach $target (sort keys %table) {
@@ -898,6 +844,59 @@ if ($target =~ m/^CygWin32(-.*)$/) {
 print "Configuring for $target\n";
 
 &usage if (!defined($table{$target}));
+
+
+foreach (sort (keys %disabled))
+	{
+	$options .= " no-$_";
+
+	printf "    no-%-12s %-10s", $_, "[$disabled{$_}]";
+
+	if (/^dso$/)
+		{ $no_dso = 1; }
+	elsif (/^threads$/)
+		{ $no_threads = 1; }
+	elsif (/^shared$/)
+		{ $no_shared = 1; }
+	elsif (/^zlib$/)
+		{ $zlib = 0; }
+	elsif (/^zlib-dynamic$/)
+		{ }
+	elsif (/^symlinks$/)
+		{ $symlink = 0; }
+	elsif (/^sse2$/)
+		{ $no_sse2 = 1; }
+	else
+		{
+		my ($ALGO, $algo);
+		($ALGO = $algo = $_) =~ tr/[a-z]/[A-Z]/;
+
+		if (/^asm$/ || /^err$/ || /^hw$/ || /^hw-/)
+			{
+			$openssl_other_defines .= "#define OPENSSL_NO_$ALGO\n";
+			print " OPENSSL_NO_$ALGO";
+		
+			if (/^err$/)
+				{ $flags .= "-DOPENSSL_NO_ERR "; }
+			}
+		else
+			{
+			$openssl_algorithm_defines .= "#define OPENSSL_NO_$ALGO\n";
+			print " OPENSSL_NO_$ALGO";
+
+			if (/^krb5$/)
+				{ $no_krb5 = 1; }
+			else
+				{
+				push @skip, $algo;
+				print " (skip dir)";
+				}
+			}
+		}
+
+	print "\n";
+	}
+
 
 my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
 
@@ -956,15 +955,7 @@ else			{ $no_user_cflags=1;       }
 
 # Kerberos settings.  The flavor must be provided from outside, either through
 # the script "config" or manually.
-if ($no_krb5
-	|| !defined($withargs{"krb5-flavor"})
-	|| $withargs{"krb5-flavor"} eq "")
-	{
-	#$cflags="-DOPENSSL_NO_KRB5 $cflags";
-	$options.=" no-krb5" unless $no_krb5;
-	$openssl_algorithm_defines .= "#define OPENSSL_NO_KRB5\n";
-	}
-else
+if (!$no_krb5)
 	{
 	my ($lresolv, $lpath, $lext);
 	if ($withargs{"krb5-flavor"} =~ /^[Hh]eimdal$/)
@@ -1100,8 +1091,14 @@ if ($threads)
 if ($zlib)
 	{
 	$cflags = "-DZLIB $cflags";
-	$cflags = "-DZLIB_SHARED $cflags" if $zlib == 2;
-	$lflags = "$lflags -lz" if $zlib == 1;
+	if (defined($disabled{"zlib-dynamic"}))
+		{
+		$lflags = "$lflags -lz";
+		}
+	else
+		{
+		$cflags = "-DZLIB_SHARED $cflags";
+		}
 	}
 
 # You will find shlib_mark1 and shlib_mark2 explained in Makefile.org
@@ -1159,7 +1156,7 @@ if ($ranlib eq "")
 #$bn1=$bn_asm unless ($bn1 =~ /\.o$/);
 #$bn_obj="$bn1";
 
-$cpuid_obj="" if ($processor==386);
+$cpuid_obj="" if ($processor eq "386");
 
 $bn_obj = $bn_asm unless $bn_obj ne "";
 # bn86* is the only one implementing bn_*_part_words
@@ -1470,7 +1467,7 @@ while (<IN>)
 	elsif	(/^#((define)|(undef))\s+RC4_INDEX/)
 		{ printf OUT "#%s RC4_INDEX\n",($rc4_idx)?"define":"undef"; }
 	elsif (/^#(define|undef)\s+I386_ONLY/)
-		{ printf OUT "#%s I386_ONLY\n", ($processor == 386)?
+		{ printf OUT "#%s I386_ONLY\n", ($processor eq "386")?
 			"define":"undef"; }
 	elsif	(/^#define\s+MD2_INT\s/)
 		{ printf OUT "#define MD2_INT unsigned %s\n",$type[$md2_int]; }
