@@ -209,7 +209,7 @@ sub using486
 
 sub main'file
 	{
-	push(@out, "segment .text\n");
+	push(@out, "segment .text use32\n");
 	}
 
 sub main'function_begin
