@@ -93,6 +93,20 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		return(NULL);
 		}
 
+	if (BN_is_zero(a) || BN_is_one(a))
+		{
+		if (ret == NULL)
+			ret = BN_new();
+		if (ret == NULL)
+			goto end;
+		if (!BN_set_word(ret, BN_is_one(a)))
+			{
+			BN_free(ret);
+			return NULL;
+			}
+		return ret;
+		}
+
 #if 0 /* if BN_mod_sqrt is used with correct input, this just wastes time */
 	r = BN_kronecker(a, p, ctx);
 	if (r < -1) return NULL;
@@ -119,7 +133,9 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	e = 1;
 	while (!BN_is_bit_set(p, e))
 		e++;
-	if (!BN_rshift(q, p, e)) goto end;
+	if (e > 2)
+		/* we don't need this  q  if  e = 1 or 2 */
+		if (!BN_rshift(q, p, e)) goto end;
 	q->neg = 0;
 
 	if (e == 1)
@@ -129,16 +145,74 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		 * directly by modular exponentiation.
 		 * We have
 		 *     2 * (p+1)/4 == 1   (mod (p-1)/2),
-		 * so we can use exponent  (p+1)/4,  i.e.  (q+1)/2.
+		 * so we can use exponent  (p+1)/4,  i.e.  (p-3)/4 + 1.
 		 */
-		if (!BN_add_word(q,1)) goto end;
-		if (!BN_rshift1(q,q)) goto end;
+		if (!BN_rshift(q, p, 2)) goto end;
+		if (!BN_add_word(q, 1)) goto end;
 		if (!BN_mod_exp(ret, a, q, p, ctx)) goto end;
 		err = 0;
 		goto end;
 		}
 	
-	/* e > 1, so we really have to use the Tonelli/Shanks algorithm.
+	if (e == 2)
+		{
+		/* p == 5  (mod 8)
+		 *
+		 * In this case  2  is always a non-square since
+		 * Legendre(2,p) = (-1)^((p^2-1)/8)  for any odd prime.
+		 * So if  a  really is a square, then  2*a  is a non-square.
+		 * Thus for
+		 *      b := (2*a)^((p-5)/8),
+		 *      i := (2*a)*b^2
+		 * we have
+		 *     i^2 = (2*a)^((1 + (p-5)/4)*2)
+		 *         = (2*a)^((p-1)/2)
+		 *         = -1;
+		 * so if we set
+		 *      x := a*b*(i-1),
+		 * then
+		 *     x^2 = a^2 * b^2 * (i^2 - 2*i + 1)
+		 *         = a^2 * b^2 * (-2*i)
+		 *         = a*(-i)*(2*a*b^2)
+		 *         = a*(-i)*i
+		 *         = a.
+		 *
+		 * (This is due to A.O.L. Atkin, 
+		 * <URL: http://listserv.nodak.edu/scripts/wa.exe?A2=ind9211&L=nmbrthry&O=T&P=562>,
+		 * November 1992.)
+		 */
+
+		/* make sure that  a  is reduced modulo p */
+		if (a->neg || BN_ucmp(a, p) >= 0)
+			{
+			if (!BN_nnmod(x, a, p, ctx)) goto end;
+			a = x; /* use x as temporary variable */
+			}
+
+		/* t := 2*a */
+		if (!BN_mod_lshift1_quick(t, a, p)) goto end;
+
+		/* b := (2*a)^((p-5)/8) */
+		if (!BN_rshift(q, p, 3)) goto end;
+		if (!BN_mod_exp(b, t, q, p, ctx)) goto end;
+
+		/* y := b^2 */
+		if (!BN_mod_sqr(y, b, p, ctx)) goto end;
+
+		/* t := (2*a)*b^2 - 1*/
+		if (!BN_mod_mul(t, t, y, p, ctx)) goto end;
+		if (!BN_sub_word(t, 1)) goto end; /* cannot become negative */
+
+		/* x = a*b*t */
+		if (!BN_mod_mul(x, a, b, p, ctx)) goto end;
+		if (!BN_mod_mul(x, x, t, p, ctx)) goto end;
+
+		if (!BN_copy(ret, x)) goto end;
+		err = 0;
+		goto end;
+		}
+	
+	/* e > 2, so we really have to use the Tonelli/Shanks algorithm.
 	 * First, find some  y  that is not a square. */
 	i = 2;
 	do

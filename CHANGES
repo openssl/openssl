@@ -32,7 +32,7 @@
      [Richard Levitte]
 
   *) New function BN_mod_sqrt for computing square roots modulo a prime
-     (Tonelli-Shanks algorithm).
+     (Tonelli-Shanks algorithm unless  p == 3 (mod 4)  or  p == 5 (mod 8)).
      [Lenka Fibikova <fibikova@exp-math.uni-essen.de>, Bodo Moeller]
 
   *) Store verify_result within SSL_SESSION also for client side to
