@@ -144,8 +144,8 @@ static char *ca_usage[]={
 " -spkac file     - File contains DN and signed public key and challenge\n",
 " -ss_cert file   - File contains a self signed cert to sign\n",
 " -preserveDN     - Don't re-order the DN\n",
-" -batch	  - Don't ask questions\n",
-" -msie_hack	  - msie modifications to handle all those universal strings\n",
+" -batch          - Don't ask questions\n",
+" -msie_hack      - msie modifications to handle all those universal strings\n",
 NULL
 };
 
@@ -590,13 +590,13 @@ bad:
 		if ((pp[DB_type][0] != DB_TYPE_REV) &&
 			(pp[DB_rev_date][0] != '\0'))
 			{
-			BIO_printf(bio_err,"entry %d: not, revoked yet has a revokation date\n",i+1);
+			BIO_printf(bio_err,"entry %d: not revoked yet, but has a revocation date\n",i+1);
 			goto err;
 			}
 		if ((pp[DB_type][0] == DB_TYPE_REV) &&
 			!check_time_format(pp[DB_rev_date]))
 			{
-			BIO_printf(bio_err,"entry %d: invalid revokation date\n",
+			BIO_printf(bio_err,"entry %d: invalid revocation date\n",
 				i+1);
 			goto err;
 			}
