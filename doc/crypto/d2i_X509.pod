@@ -7,6 +7,8 @@ i2d_X509_fp - X509 encode and decode functions
 
 =head1 SYNOPSIS
 
+ #include <openssl/x509.h>
+
  X509 *d2i_X509(X509 **px, unsigned char **in, int len);
  int i2d_X509(X509 *x, unsigned char **out);
 
