@@ -34,7 +34,7 @@ if it is being read from.
 BIOs can be joined together to form a chain (a single BIO is a chain
 with one component). A chain normally consist of one source/sink
 BIO and one or more filter BIOs. Data read from or written to the
-end BIO then traverses the chain to the end (normally a source/sink
+first BIO then traverses the chain to the end (normally a source/sink
 BIO).
 
 =head1 SEE ALSO
