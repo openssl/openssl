@@ -501,7 +501,7 @@ static int ui_read(UI *ui, UI_STRING *uis)
 			{
 			const char *password =
 				((PW_CB_DATA *)UI_get0_user_data(ui))->password;
-			if (password[0] != '\0')
+			if (password && password[0] != '\0')
 				{
 				UI_set_result(ui, uis, password);
 				return 1;
@@ -525,7 +525,7 @@ static int ui_write(UI *ui, UI_STRING *uis)
 			{
 			const char *password =
 				((PW_CB_DATA *)UI_get0_user_data(ui))->password;
-			if (password[0] != '\0')
+			if (password && password[0] != '\0')
 				return 1;
 			}
 		default:
