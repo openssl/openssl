@@ -5,3 +5,7 @@ tmp
 out
 outinc
 rehash.time
+testlog
+make.log
+cctest
+cctest.c
