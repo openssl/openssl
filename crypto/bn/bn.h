@@ -372,7 +372,17 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 #define BN_is_odd(a)	    (((a)->top > 0) && ((a)->d[0] & 1))
 
 #define BN_one(a)	(BN_set_word((a),1))
+#define BN_zero_ex(a) \
+	do { \
+		BIGNUM *_tmp_bn = (a); \
+		_tmp_bn->top = 0; \
+		_tmp_bn->neg = 0; \
+	} while(0)
+#ifdef OPENSSL_NO_DEPRECATED
+#define BN_zero(a)	BN_zero_ex(a)
+#else
 #define BN_zero(a)	(BN_set_word((a),0))
+#endif
 /* BN_set_sign(BIGNUM *, int) sets the sign of a BIGNUM
  * (0 for a non-negative value, 1 for negative) */
 #define BN_set_sign(a,b) ((a)->neg = (b))
