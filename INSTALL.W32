@@ -6,7 +6,7 @@
  this is tested on Win32 but it may also work in Win 3.1 with some
  modification.  See the end of this file for Eric's original comments.
 
- You need Perl for Win32 (available from http://activestate.com/ActivePerl)
+ You need Perl for Win32 (available from http://www.activestate.com/ActivePerl)
  and one of the following C compilers:
 
   * Visual C++
