@@ -149,6 +149,14 @@ typedef unsigned int u_int;
 #include <conio.h>
 #endif
 
+#ifdef OPENSSL_SYS_WINCE
+/* Windows CE incorrectly defines fileno as returning void*, so to avoid problems below... */
+#ifdef fileno
+#undef fileno
+#endif
+#define fileno(a) (int)_fileno(a)
+#endif
+
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO

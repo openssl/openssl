@@ -148,6 +148,9 @@
 #ifdef OPENSSL_SYS_VMS
 #  define TEST_SERVER_CERT "SYS$DISK:[-.APPS]SERVER.PEM"
 #  define TEST_CLIENT_CERT "SYS$DISK:[-.APPS]CLIENT.PEM"
+#elif defined(OPENSSL_SYS_WINCE)
+#  define TEST_SERVER_CERT "\\OpenSSL\\server.pem"
+#  define TEST_CLIENT_CERT "\\OpenSSL\\client.pem"
 #else
 #  define TEST_SERVER_CERT "../apps/server.pem"
 #  define TEST_CLIENT_CERT "../apps/client.pem"

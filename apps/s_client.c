@@ -140,6 +140,14 @@ typedef unsigned int u_int;
 #include <conio.h>
 #endif
 
+#ifdef OPENSSL_SYS_WINCE
+/* Windows CE incorrectly defines fileno as returning void*, so to avoid problems below... */
+#ifdef fileno
+#undef fileno
+#endif
+#define fileno(a) (int)_fileno(a)
+#endif
+
 
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
@@ -662,7 +670,11 @@ re_start:
 					tv.tv_usec = 0;
 					i=select(width,(void *)&readfds,(void *)&writefds,
 						 NULL,&tv);
+#ifdef OPENSSL_SYS_WINCE
+					if(!i && (!_kbhit() || !read_tty) ) continue;
+#else
 					if(!i && (!((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0))) || !read_tty) ) continue;
+#endif
 				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
 					 NULL,NULL);
 			}
@@ -828,7 +840,11 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 			}
 
 #ifdef OPENSSL_SYS_WINDOWS
+#ifdef OPENSSL_SYS_WINCE
+		else if (_kbhit())
+#else
 		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
+#endif
 #else
 		else if (FD_ISSET(fileno(stdin),&readfds))
 #endif

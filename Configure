@@ -500,6 +500,7 @@ my %table=(
 # Windows NT, Microsoft Visual C++ 4.0
 
 "VC-NT","cl::::WINNT::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}::::::::::win32",
+"VC-CE","cl::::WINCE::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}::::::::::win32",
 "VC-WIN32","cl::::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}::::::::::win32",
 "VC-WIN16","cl:::(unknown):WIN16::MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
 "VC-W31-16","cl:::(unknown):WIN16::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT:::",
@@ -571,8 +572,8 @@ my %table=(
 
 );
 
-my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
-	BC-16 Mingw32 OS2-EMX);
+my @WinTargets=qw(VC-NT VC-CE VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS
+	BC-32 BC-16 Mingw32 OS2-EMX);
 
 my $idx = 0;
 my $idx_cc = $idx++;

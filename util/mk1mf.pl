@@ -24,6 +24,7 @@ $infile="MINFO";
 
 %ops=(
 	"VC-WIN32",   "Microsoft Visual C++ [4-6] - Windows NT or 9X",
+	"VC-CE",   "Microsoft eMbedded Visual C++ 3.0 - Windows CE ONLY",
 	"VC-NT",   "Microsoft Visual C++ [4-6] - Windows NT ONLY",
 	"VC-W31-16",  "Microsoft Visual C++ 1.52 - Windows 3.1 - 286",
 	"VC-WIN16",   "Alias for VC-W31-32",
@@ -137,6 +138,10 @@ elsif (($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
 	{
 	$NT = 1 if $platform eq "VC-NT";
 	require 'VC-32.pl';
+	}
+elsif ($platform eq "VC-CE")
+	{
+	require 'VC-CE.pl';
 	}
 elsif ($platform eq "Mingw32")
 	{

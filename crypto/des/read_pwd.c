@@ -101,7 +101,9 @@
 
 #ifdef WIN_CONSOLE_BUG
 #include <windows.h>
+#ifndef OPENSSL_SYS_WINCE
 #include <wincon.h>
+#endif
 #endif
 
 
@@ -167,7 +169,7 @@
 #include <sys/ioctl.h>
 #endif
 
-#if defined(OPENSSL_SYS_MSDOS) && !defined(__CYGWIN32__)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(__CYGWIN32__) && !defined(OPENSSL_SYS_WINCE)
 #include <conio.h>
 #define fgets(a,b,c) noecho_fgets(a,b,c)
 #endif
@@ -222,7 +224,25 @@ int des_read_pw_string(char *buf, int length, const char *prompt,
 	return(ret);
 	}
 
-#ifndef OPENSSL_SYS_WIN16
+#ifdef OPENSSL_SYS_WINCE
+
+int des_read_pw(char *buf, char *buff, int size, const char *prompt, int verify)
+	{ 
+	memset(buf,0,size);
+	memset(buff,0,size);
+	return(0);
+	}
+
+#elif defined(OPENSSL_SYS_WIN16)
+
+int des_read_pw(char *buf, char *buff, int size, char *prompt, int verify)
+	{ 
+	memset(buf,0,size);
+	memset(buff,0,size);
+	return(0);
+	}
+
+#else /* !OPENSSL_SYS_WINCE && !OPENSSL_SYS_WIN16 */
 
 static void read_till_nl(FILE *in)
 	{
@@ -393,17 +413,6 @@ error:
 	return(!ok);
 	}
 
-#else /* OPENSSL_SYS_WIN16 */
-
-int des_read_pw(char *buf, char *buff, int size, char *prompt, int verify)
-	{ 
-	memset(buf,0,size);
-	memset(buff,0,size);
-	return(0);
-	}
-
-#endif
-
 static void pushsig(void)
 	{
 	int i;
@@ -466,7 +475,7 @@ static void recsig(int i)
 #endif
 	}
 
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN16)
+#ifdef OPENSSL_SYS_MSDOS
 static int noecho_fgets(char *buf, int size, FILE *tty)
 	{
 	int i;
@@ -509,3 +518,4 @@ static int noecho_fgets(char *buf, int size, FILE *tty)
 	return(strlen(buf));
 	}
 #endif
+#endif /* !OPENSSL_SYS_WINCE && !WIN16 */

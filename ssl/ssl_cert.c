@@ -818,10 +818,30 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 	WIN32_FIND_DATA FindFileData;
 	HANDLE hFind;
 	int ret = 0;
+#ifdef OPENSSL_SYS_WINCE
+	WCHAR* wdir = NULL;
+#endif
 
 	CRYPTO_w_lock(CRYPTO_LOCK_READDIR);
 	
+#ifdef OPENSSL_SYS_WINCE
+	/* convert strings to UNICODE */
+	{
+		BOOL result = FALSE;
+		int i;
+		wdir = malloc((strlen(dir)+1)*2);
+		if (wdir == NULL)
+			goto err_noclose;
+		for (i=0; i<(int)strlen(dir)+1; i++)
+			wdir[i] = (short)dir[i];
+	}
+#endif
+
+#ifdef OPENSSL_SYS_WINCE
+	hFind = FindFirstFile(wdir, &FindFileData);
+#else
 	hFind = FindFirstFile(dir, &FindFileData);
+#endif
 	/* Note that a side effect is that the CAs will be sorted by name */
 	if(hFind == INVALID_HANDLE_VALUE)
 		{
@@ -836,7 +856,11 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 		char buf[1024];
 		int r;
 		
+#ifdef OPENSSL_SYS_WINCE
+		if(strlen(dir)+_tcslen(FindFileData.cFileName)+2 > sizeof buf)
+#else
 		if(strlen(dir)+strlen(FindFileData.cFileName)+2 > sizeof buf)
+#endif
 			{
 			SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,SSL_R_PATH_TOO_LONG);
 			goto err;
@@ -854,6 +878,10 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 err:
 	FindClose(hFind);
 err_noclose:
+#ifdef OPENSSL_SYS_WINCE
+	if (wdir != NULL)
+		free(wdir);
+#endif
 	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
 	return ret;
 	}
