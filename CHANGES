@@ -4,6 +4,9 @@
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx XXXX]
 
+  *) New 'shared_ldflag' column in Configure platform table.
+     [Richard Levitte]
+
   *) Fix EVP_CIPHER_mode macro.
      ["Dan S. Camper" <dan@bti.net>]
 
