@@ -257,7 +257,7 @@ libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
 	fi
 
 clean-shared:
-	@for i in $(SHLIBDIRS); do \
+	@set -e; for i in $(SHLIBDIRS); do \
 		if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
 			tmp="$(SHARED_LIBS_LINK_EXTS)"; \
 			for j in $${tmp:-x}; do \
@@ -271,7 +271,7 @@ clean-shared:
 	done
 
 link-shared:
-	@ for i in ${SHLIBDIRS}; do \
+	@ set -e; for i in ${SHLIBDIRS}; do \
 		$(NEWMAKE) -f $(HERE)/Makefile.shared \
 			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
@@ -282,7 +282,7 @@ link-shared:
 build-shared: do_$(SHLIB_TARGET) link-shared
 
 do_$(SHLIB_TARGET):
-	@ libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	@ set -e; libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
 			libs="$(LIBKRB5) $$libs"; \
 		fi; \
@@ -320,7 +320,7 @@ libclean:
 
 clean:	libclean
 	rm -f shlib/*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
-	@for i in $(DIRS) ;\
+	@set -e; for i in $(DIRS) ;\
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making clean in $$i..." && \
@@ -331,7 +331,7 @@ clean:	libclean
 	rm -f openssl.pc
 	rm -f speed.* .pure
 	rm -f $(TARFILE)
-	@for i in $(ONEDIRS) ;\
+	@set -e; for i in $(ONEDIRS) ;\
 	do \
 	rm -fr $$i/*; \
 	done
@@ -342,7 +342,7 @@ makefile.one: files
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl > $(TOP)/MINFO
-	@for i in $(DIRS) ;\
+	@set -e; for i in $(DIRS) ;\
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making 'files' in $$i..." && \
@@ -354,7 +354,7 @@ links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
-	@for i in $(DIRS); do \
+	@set -e; for i in $(DIRS); do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making links in $$i..." && \
 		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PERL='${PERL}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' links ) || exit 1; \
@@ -367,7 +367,7 @@ gentests:
 
 dclean:
 	rm -f *.bak
-	@for i in $(DIRS) ;\
+	@set -e; for i in $(DIRS) ;\
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making dclean in $$i..." && \
@@ -405,7 +405,7 @@ report:
 	@$(PERL) util/selftest.pl
 
 depend:
-	@for i in $(DIRS) ;\
+	@set -e; for i in $(DIRS) ;\
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making dependencies $$i..." && \
@@ -414,7 +414,7 @@ depend:
 	done;
 
 lint:
-	@for i in $(DIRS) ;\
+	@set -e; for i in $(DIRS) ;\
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making lint $$i..." && \
@@ -423,7 +423,7 @@ lint:
 	done;
 
 tags:
-	@for i in $(DIRS) ;\
+	@set -e; for i in $(DIRS) ;\
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making tags $$i..." && \
@@ -500,19 +500,19 @@ install: all install_docs
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/private \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/lib
-	@for i in $(EXHEADER) ;\
+	@set -e; for i in $(EXHEADER) ;\
 	do \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
-	@for i in $(DIRS) ;\
+	@set -e; for i in $(DIRS) ;\
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i; echo "installing $$i..."; \
 		$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}' INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}' EX_LIBS='${EX_LIBS}' SDIRS='${SDIRS}' RANLIB='${RANLIB}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' install ); \
 	fi; \
 	done
-	@for i in $(LIBS) ;\
+	@set -e; for i in $(LIBS) ;\
 	do \
 		if [ -f "$$i" ]; then \
 		(       echo installing $$i; \
@@ -522,7 +522,7 @@ install: all install_docs
 			mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
 		fi; \
 	done;
-	@if [ -n "$(SHARED_LIBS)" ]; then \
+	@set -e; if [ -n "$(SHARED_LIBS)" ]; then \
 		tmp="$(SHARED_LIBS)"; \
 		for i in $${tmp:-x}; \
 		do \
@@ -568,7 +568,7 @@ install_docs:
 	if [ "$(PLATFORM)" = "DJGPP" -o "$(PLATFORM)" = "Cygwin" ]; then \
 		filecase=-i; \
 	fi; \
-	for i in doc/apps/*.pod; do \
+	set -e; for i in doc/apps/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "config" ]; then sec=5; else sec=1; fi; \
 		echo "installing man$$sec/$$fn.$${sec}$(MANSUFFIX)"; \
@@ -585,7 +585,7 @@ install_docs:
 				$$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
 			 done); \
 	done; \
-	for i in doc/crypto/*.pod doc/ssl/*.pod; do \
+	set -e; for i in doc/crypto/*.pod doc/ssl/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "des_modes" ]; then sec=7; else sec=3; fi; \
 		echo "installing man$$sec/$$fn.$${sec}$(MANSUFFIX)"; \
