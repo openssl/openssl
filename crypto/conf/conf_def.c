@@ -95,11 +95,11 @@ static CONF_METHOD default_method = {
 	def_init_default,
 	def_destroy,
 	def_destroy_data,
-	def_load,
 	def_load_bio,
 	def_dump,
 	def_is_number,
-	def_to_int
+	def_to_int,
+	def_load
 	};
 
 static CONF_METHOD WIN32_method = {
@@ -108,11 +108,11 @@ static CONF_METHOD WIN32_method = {
 	def_init_WIN32,
 	def_destroy,
 	def_destroy_data,
-	def_load,
 	def_load_bio,
 	def_dump,
 	def_is_number,
-	def_to_int
+	def_to_int,
+	def_load
 	};
 
 CONF_METHOD *NCONF_default()

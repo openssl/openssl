@@ -90,11 +90,11 @@ struct conf_method_st
 	int (MS_FAR *init)(CONF *conf);
 	int (MS_FAR *destroy)(CONF *conf);
 	int (MS_FAR *destroy_data)(CONF *conf);
-	int (MS_FAR *load)(CONF *conf, const char *name, long *eline);
 	int (MS_FAR *load_bio)(CONF *conf, BIO *bp, long *eline);
 	int (MS_FAR *dump)(CONF *conf, BIO *bp);
 	int (MS_FAR *is_number)(CONF *conf, char c);
 	int (MS_FAR *to_int)(CONF *conf, char c);
+	int (MS_FAR *load)(CONF *conf, const char *name, long *eline);
 	};
 
 int CONF_set_default_method(CONF_METHOD *meth);
