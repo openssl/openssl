@@ -238,6 +238,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		{
 		BN_ULONG q,l0;
 #if defined(BN_DIV3W) && !defined(NO_ASM)
+		BN_ULONG bn_div_3_words(BN_ULONG*,BN_ULONG,BN_ULONG);
 		q=bn_div_3_words(wnump,d1,d0);
 #else
 		BN_ULONG n0,n1,rem=0;

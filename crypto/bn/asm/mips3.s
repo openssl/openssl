@@ -586,13 +586,13 @@ LEAF(bn_div_3_words)
 	ld	a0,(a3)
 	move	ta2,a1
 	ld	a1,-8(a3)
-	move	ta3,ra
-	move	v1,zero
+	bne	a0,a2,.L_bn_div_3_words_proceed
 	li	v0,-1
-	beq	a0,a2,.L_bn_div_3_words_skip_div
+	jr	ra
+.L_bn_div_3_words_proceed:
+	move	ta3,ra
 	bal	bn_div_words
 	move	ra,ta3
-.L_bn_div_3_words_skip_div:
 	dmultu	ta2,v0
 	ld	t2,-16(a3)
 	move	ta0,zero
