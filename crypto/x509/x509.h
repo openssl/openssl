@@ -176,9 +176,8 @@ typedef struct X509_extension_st
 	short critical;
 	short netscape_hack;
 	ASN1_OCTET_STRING *value;
-	long argl;			/* used when decoding */
-	char *argp;			/* used when decoding */
-	void (*ex_free)();		/* clear argp stuff */
+	struct v3_ext_method *method;	/* V3 method to use */
+	void *ext_val;			/* extension value */
 	} X509_EXTENSION;
 
 DECLARE_STACK_OF(X509_EXTENSION)
@@ -583,6 +582,8 @@ RSA *d2i_RSAPublicKey_fp(FILE *fp,RSA **rsa);
 int i2d_RSAPublicKey_fp(FILE *fp,RSA *rsa);
 #endif
 #ifndef NO_DSA
+DSA *d2i_DSAPublicKey_fp(FILE *fp, DSA **dsa);
+int i2d_DSAPublicKey_fp(FILE *fp, DSA *dsa);
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa);
 int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
 X509_SIG *d2i_PKCS8_fp(FILE *fp,X509_SIG **p8);
@@ -607,6 +608,8 @@ RSA *d2i_RSAPublicKey_bio(BIO *bp,RSA **rsa);
 int i2d_RSAPublicKey_bio(BIO *bp,RSA *rsa);
 #endif
 #ifndef NO_DSA
+DSA *d2i_DSAPublicKey_bio(BIO *bp, DSA **dsa);
+int i2d_DSAPublicKey_bio(BIO *bp, DSA *dsa);
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa);
 int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
 #endif

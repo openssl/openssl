@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add -pubin and -pubout options to the rsa and dsa commands. These allow
+     a public key to be input or output. For example:
+     openssl rsa -in key.pem -pubout -out pubkey.pem
+     Also added necessary DSA public key functions to handle this.
+     [Steve Henson]
+
   *) Fix so PKCS7_dataVerify() doesn't crash if no certificates are contained
      in the message. This was handled by allowing
      X509_find_by_issuer_and_serial() to tolerate a NULL passed to it.

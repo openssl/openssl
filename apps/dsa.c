@@ -91,6 +91,7 @@ int MAIN(int argc, char **argv)
 	const EVP_CIPHER *enc=NULL;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,text=0,noout=0;
+	int pubin = 0, pubout = 0;
 	char *infile,*outfile,*prog;
 	int modulus=0;
 
@@ -136,6 +137,10 @@ int MAIN(int argc, char **argv)
 			text=1;
 		else if (strcmp(*argv,"-modulus") == 0)
 			modulus=1;
+		else if (strcmp(*argv,"-pubin") == 0)
+			pubin=1;
+		else if (strcmp(*argv,"-pubout") == 0)
+			pubout=1;
 		else if ((enc=EVP_get_cipherbyname(&(argv[0][1]))) == NULL)
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -187,19 +192,21 @@ bad:
 			}
 		}
 
-	BIO_printf(bio_err,"read DSA private key\n");
-	if	(informat == FORMAT_ASN1)
-		dsa=d2i_DSAPrivateKey_bio(in,NULL);
-	else if (informat == FORMAT_PEM)
-		dsa=PEM_read_bio_DSAPrivateKey(in,NULL,NULL,NULL);
-	else
+	BIO_printf(bio_err,"read DSA key\n");
+	if	(informat == FORMAT_ASN1) {
+		if(pubin) dsa=d2i_DSAPublicKey_bio(in,NULL);
+		else dsa=d2i_DSAPrivateKey_bio(in,NULL);
+	} else if (informat == FORMAT_PEM) {
+		if(pubin) dsa=PEM_read_bio_DSAPublicKey(in,NULL, NULL, NULL);
+		else dsa=PEM_read_bio_DSAPrivateKey(in,NULL,NULL,NULL);
+	} else
 		{
 		BIO_printf(bio_err,"bad input format specified for key\n");
 		goto end;
 		}
 	if (dsa == NULL)
 		{
-		BIO_printf(bio_err,"unable to load Private Key\n");
+		BIO_printf(bio_err,"unable to load Key\n");
 		ERR_print_errors(bio_err);
 		goto end;
 		}
@@ -231,12 +238,15 @@ bad:
 		}
 
 	if (noout) goto end;
-	BIO_printf(bio_err,"writing DSA private key\n");
-	if 	(outformat == FORMAT_ASN1)
-		i=i2d_DSAPrivateKey_bio(out,dsa);
-	else if (outformat == FORMAT_PEM)
-		i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,NULL,NULL);
-	else	{
+	BIO_printf(bio_err,"writing DSA key\n");
+	if 	(outformat == FORMAT_ASN1) {
+		if(pubin || pubout) i=i2d_DSAPublicKey_bio(out,dsa);
+		else i=i2d_DSAPrivateKey_bio(out,dsa);
+	} else if (outformat == FORMAT_PEM) {
+		if(pubin || pubout)
+			i=PEM_write_bio_DSAPublicKey(out,dsa);
+		else i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,NULL,NULL);
+	} else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;
 		}

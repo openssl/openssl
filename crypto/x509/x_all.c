@@ -329,6 +329,18 @@ int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa)
 	{
 	return(ASN1_i2d_fp(i2d_DSAPrivateKey,fp,(unsigned char *)dsa));
 	}
+
+DSA *d2i_DSAPublicKey_fp(FILE *fp, DSA **dsa)
+	{
+	return((DSA *)ASN1_d2i_fp((char *(*)())
+		DSA_new,(char *(*)())d2i_DSAPublicKey, (fp),
+		(unsigned char **)(dsa)));
+	}
+
+int i2d_DSAPublicKey_fp(FILE *fp, DSA *dsa)
+	{
+	return(ASN1_i2d_fp(i2d_DSAPublicKey,fp,(unsigned char *)dsa));
+	}
 #endif
 
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa)
@@ -342,6 +354,19 @@ int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa)
 	{
 	return(ASN1_i2d_bio(i2d_DSAPrivateKey,bp,(unsigned char *)dsa));
 	}
+
+DSA *d2i_DSAPublicKey_bio(BIO *bp, DSA **dsa)
+	{
+	return((DSA *)ASN1_d2i_bio((char *(*)())
+		DSA_new,(char *(*)())d2i_DSAPublicKey, (bp),
+		(unsigned char **)(dsa)));
+	}
+
+int i2d_DSAPublicKey_bio(BIO *bp, DSA *dsa)
+	{
+	return(ASN1_i2d_bio(i2d_DSAPublicKey,bp,(unsigned char *)dsa));
+	}
+
 #endif
 
 X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn)

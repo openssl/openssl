@@ -82,6 +82,8 @@
  * -text	- print a text version
  * -modulus	- print the RSA key modulus
  * -check	- verify key consistency
+ * -pubin	- Expect a public key in input file.
+ * -pubout	- Output a public key.
  */
 
 int MAIN(int argc, char **argv)
@@ -92,6 +94,7 @@ int MAIN(int argc, char **argv)
 	const EVP_CIPHER *enc=NULL;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,text=0,check=0,noout=0;
+	int pubin = 0, pubout = 0;
 	char *infile,*outfile,*prog;
 	int modulus=0;
 
@@ -131,6 +134,10 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
 			}
+		else if (strcmp(*argv,"-pubin") == 0)
+			pubin=1;
+		else if (strcmp(*argv,"-pubout") == 0)
+			pubout=1;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -167,6 +174,8 @@ bad:
 		BIO_printf(bio_err," -noout        don't print key out\n");
 		BIO_printf(bio_err," -modulus      print the RSA key modulus\n");
 		BIO_printf(bio_err," -check        verify key consistency\n");
+		BIO_printf(bio_err," -pubin        expect a public key in input file\n");
+		BIO_printf(bio_err," -pubout       output a public key\n");
 		goto end;
 		}
 
@@ -192,8 +201,10 @@ bad:
 		}
 
 	BIO_printf(bio_err,"read RSA private key\n");
-	if	(informat == FORMAT_ASN1)
-		rsa=d2i_RSAPrivateKey_bio(in,NULL);
+	if	(informat == FORMAT_ASN1) {
+		if (pubin) rsa=d2i_RSAPublicKey_bio(in,NULL);
+		else rsa=d2i_RSAPrivateKey_bio(in,NULL);
+	}
 #ifndef NO_RC4
 	else if (informat == FORMAT_NETSCAPE)
 		{
@@ -221,8 +232,10 @@ bad:
 		BUF_MEM_free(buf);
 		}
 #endif
-	else if (informat == FORMAT_PEM)
-		rsa=PEM_read_bio_RSAPrivateKey(in,NULL,NULL,NULL);
+	else if (informat == FORMAT_PEM) {
+		if(pubin) rsa=PEM_read_bio_RSAPublicKey(in,NULL,NULL,NULL);
+		else rsa=PEM_read_bio_RSAPrivateKey(in,NULL,NULL,NULL);
+	}
 	else
 		{
 		BIO_printf(bio_err,"bad input format specified for key\n");
@@ -230,7 +243,7 @@ bad:
 		}
 	if (rsa == NULL)
 		{
-		BIO_printf(bio_err,"unable to load Private Key\n");
+		BIO_printf(bio_err,"unable to load Key\n");
 		ERR_print_errors(bio_err);
 		goto end;
 		}
@@ -293,9 +306,11 @@ bad:
 		ret = 0;
 		goto end;
 		}
-	BIO_printf(bio_err,"writing RSA private key\n");
-	if 	(outformat == FORMAT_ASN1)
-		i=i2d_RSAPrivateKey_bio(out,rsa);
+	BIO_printf(bio_err,"writing RSA key\n");
+	if 	(outformat == FORMAT_ASN1) {
+		if(pubout || pubin) i=i2d_RSAPublicKey_bio(out,rsa);
+		else i=i2d_RSAPrivateKey_bio(out,rsa);
+	}
 #ifndef NO_RC4
 	else if (outformat == FORMAT_NETSCAPE)
 		{
@@ -315,15 +330,18 @@ bad:
 		Free(pp);
 		}
 #endif
-	else if (outformat == FORMAT_PEM)
-		i=PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,0,NULL,NULL);
-	else	{
+	else if (outformat == FORMAT_PEM) {
+		if(pubout || pubin)
+		    i=PEM_write_bio_RSAPublicKey(out,rsa);
+		else
+		    i=PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,0,NULL,NULL);
+	} else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;
 		}
 	if (!i)
 		{
-		BIO_printf(bio_err,"unable to write private key\n");
+		BIO_printf(bio_err,"unable to write key\n");
 		ERR_print_errors(bio_err);
 		}
 	else
