@@ -38,7 +38,7 @@ behaviour.
 =over 4
 
 =item When the application is the first party to send the "close notify"
-alert, SSL_shutdown() will only send the alert and the set the
+alert, SSL_shutdown() will only send the alert and then set the
 SSL_SENT_SHUTDOWN flag (so that the session is considered good and will
 be kept in cache). SSL_shutdown() will then return with 0. If a unidirectional
 shutdown is enough (the underlying connection shall be closed anyway), this
