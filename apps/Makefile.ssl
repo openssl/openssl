@@ -27,7 +27,7 @@ LIBSSL=-L.. -lssl
 
 SSLEAY= ssleay
 
-SCRIPTS=CA.sh der_chop
+SCRIPTS=CA.sh der_chop CA.pl
 
 EXE= $(SSLEAY)
 
