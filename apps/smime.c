@@ -168,6 +168,10 @@ int MAIN(int argc, char **argv)
 				flags |= PKCS7_BINARY;
 		else if (!strcmp (*args, "-nosigs"))
 				flags |= PKCS7_NOSIGS;
+		else if (!strcmp (*args, "-nooldmime"))
+				flags |= PKCS7_NOOLDMIMETYPE;
+		else if (!strcmp (*args, "-crlfeol"))
+				flags |= PKCS7_CRLFEOL;
 		else if (!strcmp (*args, "-crl_check"))
 				store_flags |= X509_V_FLAG_CRL_CHECK;
 		else if (!strcmp (*args, "-crl_check_all"))

@@ -3,7 +3,7 @@
  * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -150,9 +150,17 @@ static PKCS7 *B64_read_PKCS7(BIO *bio)
 
 int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 {
-	char linebuf[MAX_SMLEN];
 	char bound[33], c;
 	int i;
+	char *mime_prefix, *mime_eol;
+	if (flags & PKCS7_NOOLDMIMETYPE)
+		mime_prefix = "application/pkcs7-";
+	else
+		mime_prefix = "application/x-pkcs7-";
+	if (flags & PKCS7_CRLFEOL)
+		mime_eol = "\r\n";
+	else
+		mime_eol = "\n";
 	if((flags & PKCS7_DETACHED) && data) {
 	/* We want multipart/signed */
 		/* Generate a random boundary */
@@ -164,34 +172,42 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 			bound[i] = c;
 		}
 		bound[32] = 0;
-		BIO_printf(bio, "MIME-Version: 1.0\n");
+		BIO_printf(bio, "MIME-Version: 1.0%s", mime_eol);
 		BIO_printf(bio, "Content-Type: multipart/signed;");
-		BIO_printf(bio, " protocol=\"application/x-pkcs7-signature\";");
-		BIO_printf(bio, " micalg=sha1; boundary=\"----%s\"\n\n", bound);
-		BIO_printf(bio, "This is an S/MIME signed message\n\n");
+		BIO_printf(bio, " protocol=\"%ssignature\";", mime_prefix);
+		BIO_printf(bio, " micalg=sha1; boundary=\"----%s\"%s%s",
+						bound, mime_eol, mime_eol);
+		BIO_printf(bio, "This is an S/MIME signed message%s%s",
+						mime_eol, mime_eol);
 		/* Now write out the first part */
-		BIO_printf(bio, "------%s\n", bound);
-		if(flags & PKCS7_TEXT) BIO_printf(bio, "Content-Type: text/plain\n\n");
-		while((i = BIO_read(data, linebuf, MAX_SMLEN)) > 0) 
-						BIO_write(bio, linebuf, i);
-		BIO_printf(bio, "\n------%s\n", bound);
+		BIO_printf(bio, "------%s%s", bound, mime_eol);
+		SMIME_crlf_copy(data, bio, flags);
+		BIO_printf(bio, "%s------%s%s", mime_eol, bound, mime_eol);
 
 		/* Headers for signature */
 
-		BIO_printf(bio, "Content-Type: application/x-pkcs7-signature; name=\"smime.p7s\"\n");
-		BIO_printf(bio, "Content-Transfer-Encoding: base64\n");
-		BIO_printf(bio, "Content-Disposition: attachment; filename=\"smime.p7s\"\n\n");
+		BIO_printf(bio, "Content-Type: %ssignature;", mime_prefix); 
+		BIO_printf(bio, " name=\"smime.p7s\"%s", mime_eol);
+		BIO_printf(bio, "Content-Transfer-Encoding: base64%s",
+								mime_eol);
+		BIO_printf(bio, "Content-Disposition: attachment;");
+		BIO_printf(bio, " filename=\"smime.p7s\"%s%s",
+							mime_eol, mime_eol);
 		B64_write_PKCS7(bio, p7);
-		BIO_printf(bio,"\n------%s--\n\n", bound);
+		BIO_printf(bio,"%s------%s--%s%s", mime_eol, bound,
+						mime_eol, mime_eol);
 		return 1;
 	}
 	/* MIME headers */
-	BIO_printf(bio, "MIME-Version: 1.0\n");
-	BIO_printf(bio, "Content-Disposition: attachment; filename=\"smime.p7m\"\n");
-	BIO_printf(bio, "Content-Type: application/x-pkcs7-mime; name=\"smime.p7m\"\n");
-	BIO_printf(bio, "Content-Transfer-Encoding: base64\n\n");
+	BIO_printf(bio, "MIME-Version: 1.0%s", mime_eol);
+	BIO_printf(bio, "Content-Disposition: attachment;");
+	BIO_printf(bio, " filename=\"smime.p7m\"%s", mime_eol);
+	BIO_printf(bio, "Content-Type: %smime;", mime_prefix);
+	BIO_printf(bio, " name=\"smime.p7m\"%s", mime_eol);
+	BIO_printf(bio, "Content-Transfer-Encoding: base64%s%s",
+						mime_eol, mime_eol);
 	B64_write_PKCS7(bio, p7);
-	BIO_printf(bio, "\n");
+	BIO_printf(bio, "%s", mime_eol);
 	return 1;
 }
 
@@ -364,6 +380,7 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 {
 	char linebuf[MAX_SMLEN];
 	int len, blen;
+	int eol = 0, next_eol = 0;
 	BIO *bpart = NULL;
 	STACK_OF(BIO) *parts;
 	char state, part, first;
@@ -383,14 +400,19 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 			sk_BIO_push(parts, bpart);
 			return 1;
 		} else if(part) {
+			/* Strip CR+LF from linebuf */
+			next_eol = 0;
+			while(iscrlf(linebuf[len - 1])) {
+				next_eol = 1;
+				len--;
+			}
 			if(first) {
 				first = 0;
 				if(bpart) sk_BIO_push(parts, bpart);
 				bpart = BIO_new(BIO_s_mem());
-				
-			} else BIO_write(bpart, "\r\n", 2);
-			/* Strip CR+LF from linebuf */
-			while(iscrlf(linebuf[len - 1])) len--;
+			} else if (eol)
+				BIO_write(bpart, "\r\n", 2);
+			eol = next_eol;
 			BIO_write(bpart, linebuf, len);
 		}
 	}
