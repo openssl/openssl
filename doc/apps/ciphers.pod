@@ -203,6 +203,10 @@ cipher suites using DH, including anonymous DH.
 
 anonymous DH cipher suites.
 
+=item B<AES>
+
+cipher suites using AES.
+
 =item B<3DES>
 
 cipher suites using triple DES.
@@ -236,7 +240,9 @@ cipher suites using SHA1.
 =head1 CIPHER SUITE NAMES
 
 The following lists give the SSL or TLS cipher suites names from the
-relevant specification and their OpenSSL equivalents.
+relevant specification and their OpenSSL equivalents. It should be noted,
+that several cipher suite names do not include the authentication used,
+e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
 
 =head2 SSL v3.0 cipher suites.
 
@@ -305,6 +311,24 @@ relevant specification and their OpenSSL equivalents.
  TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA   EXP-ADH-DES-CBC-SHA
  TLS_DH_anon_WITH_DES_CBC_SHA            ADH-DES-CBC-SHA
  TLS_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
+
+=head2 AES ciphersuites from RFC3268, extending TLS v1.0
+
+ TLS_RSA_WITH_AES_128_CBC_SHA            AES128-SHA
+ TLS_RSA_WITH_AES_256_CBC_SHA            AES256-SHA
+
+ TLS_DH_DSS_WITH_AES_128_CBC_SHA         DH-DSS-AES128-SHA
+ TLS_DH_DSS_WITH_AES_256_CBC_SHA         DH-DSS-AES256-SHA
+ TLS_DH_RSA_WITH_AES_128_CBC_SHA         DH-RSA-AES128-SHA
+ TLS_DH_RSA_WITH_AES_256_CBC_SHA         DH-RSA-AES256-SHA
+
+ TLS_DHE_DSS_WITH_AES_128_CBC_SHA        DHE-DSS-AES128-SHA
+ TLS_DHE_DSS_WITH_AES_256_CBC_SHA        DHE-DSS-AES256-SHA
+ TLS_DHE_RSA_WITH_AES_128_CBC_SHA        DHE-RSA-AES128-SHA
+ TLS_DHE_RSA_WITH_AES_256_CBC_SHA        DHE-RSA-AES256-SHA
+
+ TLS_DH_anon_WITH_AES_128_CBC_SHA        ADH-AES128-SHA
+ TLS_DH_anon_WITH_AES_256_CBC_SHA        ADH-AES256-SHA
 
 =head2 Additional Export 1024 and other cipher suites
 
