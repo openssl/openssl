@@ -404,7 +404,7 @@ extern HINSTANCE _hInstance;
 #endif
 
 #if defined(sun) && !defined(__svr4__) && !defined(__SVR4)
-#define memmove(s1,s2,b) bcopy((s2),(s1),(n))
+#define memmove(s1,s2,n) bcopy((s2),(s1),(n))
 #endif
 
 /***********************************************/
