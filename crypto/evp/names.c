@@ -114,5 +114,10 @@ void EVP_cleanup(void)
 	{
 	OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
 	OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
+	/* The above calls will only clean out the contents of the name
+	   hash table, but not the hash table itself.  The following line
+	   does that part.  -- Richard Levitte */
+	OBJ_NAME_cleanup(-1);
+
 	EVP_PBE_cleanup();
 	}
