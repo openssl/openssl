@@ -6,6 +6,7 @@ OpenSSL  -  Frequently Asked Questions
 * How can I contact the OpenSSL developers?
 * Do I need patent licenses to use OpenSSL?
 * Is OpenSSL thread-safe?
+* Can I use OpenSSL's SSL library with non-blocking I/O?
 * Why do I get a "PRNG not seeded" error message?
 * Why does the linker complain about undefined symbols?
 * Where can I get a compiled version of OpenSSL?
@@ -101,6 +102,20 @@ file.
 
 Multi-threaded applications must provide two callback functions to
 OpenSSL.  This is described in the threads(3) manpage.
+
+
+* Can I use OpenSSL's SSL library with non-blocking I/O?
+
+Yes; make sure to read the SSL_get_error(3) manual page!
+
+A pitfall to avoid: Don't assume that SSL_read() will just read from
+the underlying transport or that SSL_write() will just write to it --
+it is also possible that SSL_write() cannot do any useful work until
+there is data to read, or that SSL_read() cannot do anything until it
+is possible to send data.  One reason for this is that the peer may
+request a new TLS/SSL handshake at any time during the protocol,
+requiring a bi-directional message exchange; both SSL_read() and
+SSL_write() will try to continue any pending handshake.
 
 
 * Why do I get a "PRNG not seeded" error message?
