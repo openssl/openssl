@@ -227,8 +227,7 @@ DSO_METHOD *DSO_set_method(DSO *dso, DSO_METHOD *meth);
  * for the first and third parameters. Use DSO_up and DSO_free for
  * subsequent reference count handling. Any flags passed in will be set
  * in the constructed DSO after its init() function but before the
- * load operation. This will be done with;
- *    DSO_ctrl(dso, DSO_CTRL_SET_FLAGS, flags, NULL); */
+ * load operation. If 'dso' is non-NULL, 'flags' is ignored. */
 DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags);
 
 /* This function binds to a variable inside a shared library. */

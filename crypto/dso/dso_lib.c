@@ -205,6 +205,12 @@ DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
 			goto err;
 			}
 		allocated = 1;
+		/* Pass the provided flags to the new DSO object */
+		if(DSO_ctrl(ret, DSO_CTRL_SET_FLAGS, flags, NULL) < 0)
+			{
+			DSOerr(DSO_F_DSO_LOAD,DSO_R_CTRL_FAILED);
+			goto err;
+			}
 		}
 	else
 		ret = dso;
@@ -226,13 +232,6 @@ DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
 	if(filename == NULL)
 		{
 		DSOerr(DSO_F_DSO_LOAD,DSO_R_NO_FILENAME);
-		goto err;
-		}
-	/* Bleurgh ... have to check for negative return values for
-	 * errors. <grimace> */
-	if(DSO_ctrl(ret, DSO_CTRL_SET_FLAGS, flags, NULL) < 0)
-		{
-		DSOerr(DSO_F_DSO_LOAD,DSO_R_CTRL_FAILED);
 		goto err;
 		}
 	if(ret->meth->dso_load == NULL)
