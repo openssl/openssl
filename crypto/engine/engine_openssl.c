@@ -76,7 +76,7 @@ static const char *engine_openssl_name = "Software default engine support";
 
 /* As this is only ever called once, there's no need for locking
  * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_openssl()
+ENGINE *ENGINE_openssl(void)
 	{
 	ENGINE *ret = ENGINE_new();
 	if(!ret)

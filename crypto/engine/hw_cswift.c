@@ -179,13 +179,75 @@ static DH_METHOD cswift_dh =
 	};
 #endif
 
+#ifndef OPENSSL_NO_ERR
+/* Error function codes for use in cswift operation */
+#define CSWIFT_F_CSWIFT_INIT			100
+#define CSWIFT_F_CSWIFT_FINISH			101
+#define CSWIFT_F_CSWIFT_CTRL			102
+#define CSWIFT_F_CSWIFT_MOD_EXP			103
+#define CSWIFT_F_CSWIFT_MOD_EXP_CRT		104
+#define CSWIFT_F_CSWIFT_RSA_MOD_EXP		105
+#define CSWIFT_F_CSWIFT_DSA_SIGN		106
+#define CSWIFT_F_CSWIFT_DSA_VERIFY		107
+/* Error reason codes */
+#define CSWIFT_R_ALREADY_LOADED			108
+#define CSWIFT_R_NOT_LOADED			109
+#define CSWIFT_R_UNIT_FAILURE			110
+#define CSWIFT_R_CTRL_COMMAND_NOT_IMPLEMENTED	113
+#define CSWIFT_R_BN_CTX_FULL			115
+#define CSWIFT_R_BN_EXPAND_FAIL			116
+#define CSWIFT_R_BAD_KEY_SIZE			117
+#define CSWIFT_R_REQUEST_FAILED			118
+#define CSWIFT_R_MISSING_KEY_COMPONENTS		120
+static ERR_STRING_DATA cswift_str_functs[] =
+	{
+	/* This first element is changed to match the dynamic 'lib' number */
+{ERR_PACK(0,0,0),				"cswift engine code"},
+{ERR_PACK(0,CSWIFT_F_CSWIFT_INIT,0),		"cswift_init"},
+{ERR_PACK(0,CSWIFT_F_CSWIFT_FINISH,0),		"cswift_finish"},
+{ERR_PACK(0,CSWIFT_F_CSWIFT_CTRL,0),		"cswift_ctrl"},
+{ERR_PACK(0,CSWIFT_F_CSWIFT_MOD_EXP,0),		"cswift_mod_exp"},
+{ERR_PACK(0,CSWIFT_F_CSWIFT_MOD_EXP_CRT,0),	"cswift_mod_exp_crt"},
+{ERR_PACK(0,CSWIFT_F_CSWIFT_RSA_MOD_EXP,0),	"cswift_rsa_mod_exp"},
+{ERR_PACK(0,CSWIFT_F_CSWIFT_DSA_SIGN,0),	"cswift_dsa_sign"},
+{ERR_PACK(0,CSWIFT_F_CSWIFT_DSA_VERIFY,0),	"cswift_dsa_verify"},
+/* Error reason codes */
+{CSWIFT_R_ALREADY_LOADED		 ,"already loaded"},
+{CSWIFT_R_NOT_LOADED			 ,"not loaded"},
+{CSWIFT_R_UNIT_FAILURE			 ,"unit failure"},
+{CSWIFT_R_CTRL_COMMAND_NOT_IMPLEMENTED	 ,"ctrl command not implemented"},
+{CSWIFT_R_BN_CTX_FULL			 ,"BN_CTX full"},
+{CSWIFT_R_BN_EXPAND_FAIL		 ,"bn_expand fail"},
+{CSWIFT_R_BAD_KEY_SIZE			 ,"bad key size"},
+{CSWIFT_R_REQUEST_FAILED		 ,"request failed"},
+{CSWIFT_R_MISSING_KEY_COMPONENTS	 ,"missing key components"},
+{0,NULL}
+	};
+/* The library number we obtain dynamically from the ERR code */
+static int cswift_err_lib = -1;
+#define CSWIFTerr(f,r) ERR_PUT_error(cswift_err_lib,(f),(r),__FILE__,__LINE__)
+static void cswift_load_error_strings(void)
+	{
+	if(cswift_err_lib < 0)
+		{
+		if((cswift_err_lib = ERR_get_next_error_library()) <= 0)
+			return;
+		cswift_str_functs[0].error = ERR_PACK(cswift_err_lib,0,0);
+		ERR_load_strings(cswift_err_lib, cswift_str_functs);
+		}
+	}
+#else
+#define CSWIFTerr(f,r)					/* NOP */
+static void cswift_load_error_strings(void) { }		/* NOP */
+#endif
+
 /* Constants used when creating the ENGINE */
 static const char *engine_cswift_id = "cswift";
 static const char *engine_cswift_name = "CryptoSwift hardware engine support";
 
-/* As this is only ever called once, there's no need for locking
- * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_cswift()
+/* This internal function is used by ENGINE_cswift() and possibly by the
+ * "dynamic" ENGINE support too */
+static int bind_helper(ENGINE *e)
 	{
 #ifndef OPENSSL_NO_RSA
 	const RSA_METHOD *meth1;
@@ -193,30 +255,24 @@ ENGINE *ENGINE_cswift()
 #ifndef OPENSSL_NO_DH
 	const DH_METHOD *meth2;
 #endif
-	ENGINE *ret = ENGINE_new();
-	if(!ret)
-		return NULL;
-	if(!ENGINE_set_id(ret, engine_cswift_id) ||
-			!ENGINE_set_name(ret, engine_cswift_name) ||
+	if(!ENGINE_set_id(e, engine_cswift_id) ||
+			!ENGINE_set_name(e, engine_cswift_name) ||
 #ifndef OPENSSL_NO_RSA
-			!ENGINE_set_RSA(ret, &cswift_rsa) ||
+			!ENGINE_set_RSA(e, &cswift_rsa) ||
 #endif
 #ifndef OPENSSL_NO_DSA
-			!ENGINE_set_DSA(ret, &cswift_dsa) ||
+			!ENGINE_set_DSA(e, &cswift_dsa) ||
 #endif
 #ifndef OPENSSL_NO_DH
-			!ENGINE_set_DH(ret, &cswift_dh) ||
+			!ENGINE_set_DH(e, &cswift_dh) ||
 #endif
-			!ENGINE_set_BN_mod_exp(ret, &cswift_mod_exp) ||
-			!ENGINE_set_BN_mod_exp_crt(ret, &cswift_mod_exp_crt) ||
-			!ENGINE_set_init_function(ret, cswift_init) ||
-			!ENGINE_set_finish_function(ret, cswift_finish) ||
-			!ENGINE_set_ctrl_function(ret, cswift_ctrl) ||
-			!ENGINE_set_cmd_defns(ret, cswift_cmd_defns))
-		{
-		ENGINE_free(ret);
-		return NULL;
-		}
+			!ENGINE_set_BN_mod_exp(e, &cswift_mod_exp) ||
+			!ENGINE_set_BN_mod_exp_crt(e, &cswift_mod_exp_crt) ||
+			!ENGINE_set_init_function(e, cswift_init) ||
+			!ENGINE_set_finish_function(e, cswift_finish) ||
+			!ENGINE_set_ctrl_function(e, cswift_ctrl) ||
+			!ENGINE_set_cmd_defns(e, cswift_cmd_defns))
+		return 0;
 
 #ifndef OPENSSL_NO_RSA
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
@@ -239,6 +295,24 @@ ENGINE *ENGINE_cswift()
 	cswift_dh.generate_key = meth2->generate_key;
 	cswift_dh.compute_key = meth2->compute_key;
 #endif
+
+	/* Ensure the cswift error handling is set up */
+	cswift_load_error_strings();
+	return 1;
+	}
+
+/* As this is only ever called once, there's no need for locking
+ * (indeed - the lock will already be held by our caller!!!) */
+ENGINE *ENGINE_cswift(void)
+	{
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!bind_helper(ret))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
 	return ret;
 	}
 
@@ -298,14 +372,14 @@ static int cswift_init(ENGINE *e)
 
 	if(cswift_dso != NULL)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_INIT,ENGINE_R_ALREADY_LOADED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_INIT,CSWIFT_R_ALREADY_LOADED);
 		goto err;
 		}
 	/* Attempt to load libswift.so/swift.dll/whatever. */
 	cswift_dso = DSO_load(NULL, CSWIFT_LIBNAME, NULL, 0);
 	if(cswift_dso == NULL)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_INIT,ENGINE_R_DSO_FAILURE);
+		CSWIFTerr(CSWIFT_F_CSWIFT_INIT,CSWIFT_R_NOT_LOADED);
 		goto err;
 		}
 	if(!(p1 = (t_swAcquireAccContext *)
@@ -317,7 +391,7 @@ static int cswift_init(ENGINE *e)
 			!(p4 = (t_swReleaseAccContext *)
 				DSO_bind_func(cswift_dso, CSWIFT_F4)))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_INIT,ENGINE_R_DSO_FAILURE);
+		CSWIFTerr(CSWIFT_F_CSWIFT_INIT,CSWIFT_R_NOT_LOADED);
 		goto err;
 		}
 	/* Copy the pointers */
@@ -329,7 +403,7 @@ static int cswift_init(ENGINE *e)
 	 * accelerator! */
 	if(!get_context(&hac))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_INIT,ENGINE_R_UNIT_FAILURE);
+		CSWIFTerr(CSWIFT_F_CSWIFT_INIT,CSWIFT_R_UNIT_FAILURE);
 		goto err;
 		}
 	release_context(hac);
@@ -349,12 +423,12 @@ static int cswift_finish(ENGINE *e)
 	{
 	if(cswift_dso == NULL)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_FINISH,ENGINE_R_NOT_LOADED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_FINISH,CSWIFT_R_NOT_LOADED);
 		return 0;
 		}
 	if(!DSO_free(cswift_dso))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_FINISH,ENGINE_R_DSO_FAILURE);
+		CSWIFTerr(CSWIFT_F_CSWIFT_FINISH,CSWIFT_R_UNIT_FAILURE);
 		return 0;
 		}
 	cswift_dso = NULL;
@@ -373,14 +447,12 @@ static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	case CSWIFT_CMD_SO_PATH:
 		if(p == NULL)
 			{
-			ENGINEerr(ENGINE_F_CSWIFT_CTRL,
-				ERR_R_PASSED_NULL_PARAMETER);
+			CSWIFTerr(CSWIFT_F_CSWIFT_CTRL,ERR_R_PASSED_NULL_PARAMETER);
 			return 0;
 			}
 		if(initialised)
 			{
-			ENGINEerr(ENGINE_F_CSWIFT_CTRL,
-				ENGINE_R_ALREADY_LOADED);
+			CSWIFTerr(CSWIFT_F_CSWIFT_CTRL,CSWIFT_R_ALREADY_LOADED);
 			return 0;
 			}
 		CSWIFT_LIBNAME = (const char *)p;
@@ -388,7 +460,7 @@ static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	default:
 		break;
 		}
-	ENGINEerr(ENGINE_F_CSWIFT_CTRL,ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED);
+	CSWIFTerr(CSWIFT_F_CSWIFT_CTRL,CSWIFT_R_CTRL_COMMAND_NOT_IMPLEMENTED);
 	return 0;
 	}
 
@@ -417,7 +489,7 @@ static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
  
 	if(!get_context(&hac))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_GET_HANDLE_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_UNIT_FAILURE);
 		goto err;
 		}
 	acquired = 1;
@@ -429,13 +501,13 @@ static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	result = BN_CTX_get(ctx);
 	if(!result)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_BN_CTX_FULL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_BN_CTX_FULL);
 		goto err;
 		}
 	if(!bn_wexpand(modulus, m->top) || !bn_wexpand(exponent, p->top) ||
 		!bn_wexpand(argument, a->top) || !bn_wexpand(result, m->top))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_BN_EXPAND_FAIL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_BN_EXPAND_FAIL);
 		goto err;
 		}
 	sw_param.type = SW_ALG_EXP;
@@ -452,13 +524,12 @@ static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	case SW_OK:
 		break;
 	case SW_ERR_INPUT_SIZE:
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,
-			ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_BAD_KEY_SIZE);
 		goto err;
 	default:
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		}
@@ -475,7 +546,7 @@ static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		&res, 1)) != SW_OK)
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		goto err;
@@ -511,7 +582,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
  
 	if(!get_context(&hac))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_GET_HANDLE_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_UNIT_FAILURE);
 		goto err;
 		}
 	acquired = 1;
@@ -526,7 +597,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	result = BN_CTX_get(ctx);
 	if(!result)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_BN_CTX_FULL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BN_CTX_FULL);
 		goto err;
 		}
 	if(!bn_wexpand(rsa_p, p->top) || !bn_wexpand(rsa_q, q->top) ||
@@ -536,7 +607,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			!bn_wexpand(argument, a->top) ||
 			!bn_wexpand(result, p->top + q->top))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_BN_EXPAND_FAIL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BN_EXPAND_FAIL);
 		goto err;
 		}
 	sw_param.type = SW_ALG_CRT;
@@ -560,13 +631,12 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	case SW_OK:
 		break;
 	case SW_ERR_INPUT_SIZE:
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,
-			ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BAD_KEY_SIZE);
 		goto err;
 	default:
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		}
@@ -583,7 +653,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		&res, 1)) != SW_OK)
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		goto err;
@@ -608,7 +678,7 @@ static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 		goto err;
 	if(!rsa->p || !rsa->q || !rsa->dmp1 || !rsa->dmq1 || !rsa->iqmp)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_RSA_MOD_EXP,ENGINE_R_MISSING_KEY_COMPONENTS);
+		CSWIFTerr(CSWIFT_F_CSWIFT_RSA_MOD_EXP,CSWIFT_R_MISSING_KEY_COMPONENTS);
 		goto err;
 		}
 	to_return = cswift_mod_exp_crt(r0, I, rsa->p, rsa->q, rsa->dmp1,
@@ -648,7 +718,7 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		goto err;
 	if(!get_context(&hac))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_GET_HANDLE_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_SIGN,CSWIFT_R_UNIT_FAILURE);
 		goto err;
 		}
 	acquired = 1;
@@ -661,7 +731,7 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	result = BN_CTX_get(ctx);
 	if(!result)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_BN_CTX_FULL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_SIGN,CSWIFT_R_BN_CTX_FULL);
 		goto err;
 		}
 	if(!bn_wexpand(dsa_p, dsa->p->top) ||
@@ -670,7 +740,7 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 			!bn_wexpand(dsa_key, dsa->priv_key->top) ||
 			!bn_wexpand(result, dsa->p->top))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_BN_EXPAND_FAIL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_SIGN,CSWIFT_R_BN_EXPAND_FAIL);
 		goto err;
 		}
 	sw_param.type = SW_ALG_DSA;
@@ -693,13 +763,12 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	case SW_OK:
 		break;
 	case SW_ERR_INPUT_SIZE:
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,
-			ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_SIGN,CSWIFT_R_BAD_KEY_SIZE);
 		goto err;
 	default:
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_SIGN,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		}
@@ -717,7 +786,7 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	if(sw_status != SW_OK)
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_SIGN,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		goto err;
@@ -761,7 +830,7 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 		goto err;
 	if(!get_context(&hac))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_GET_HANDLE_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_VERIFY,CSWIFT_R_UNIT_FAILURE);
 		goto err;
 		}
 	acquired = 1;
@@ -774,7 +843,7 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 	argument = BN_CTX_get(ctx);
 	if(!argument)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_BN_CTX_FULL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_VERIFY,CSWIFT_R_BN_CTX_FULL);
 		goto err;
 		}
 	if(!bn_wexpand(dsa_p, dsa->p->top) ||
@@ -783,7 +852,7 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 			!bn_wexpand(dsa_key, dsa->pub_key->top) ||
 			!bn_wexpand(argument, 40))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_BN_EXPAND_FAIL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_VERIFY,CSWIFT_R_BN_EXPAND_FAIL);
 		goto err;
 		}
 	sw_param.type = SW_ALG_DSA;
@@ -806,13 +875,12 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 	case SW_OK:
 		break;
 	case SW_ERR_INPUT_SIZE:
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,
-			ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_VERIFY,CSWIFT_R_BAD_KEY_SIZE);
 		goto err;
 	default:
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_VERIFY,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		}
@@ -834,7 +902,7 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 	if(sw_status != SW_OK)
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_VERIFY,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		goto err;
@@ -863,6 +931,21 @@ static int cswift_mod_exp_dh(const DH *dh, BIGNUM *r,
 	return cswift_mod_exp(r, a, p, m, ctx);
 	}
 #endif
+
+/* This stuff is needed if this ENGINE is being compiled into a self-contained
+ * shared-library. */
+#ifdef ENGINE_DYNAMIC_SUPPORT
+static int bind_fn(ENGINE *e, const char *id)
+	{
+	if(id && (strcmp(id, engine_cswift_id) != 0))
+		return 0;
+	if(!bind_helper(e))
+		return 0;
+	return 1;
+	}       
+IMPLEMENT_DYNAMIC_CHECK_FN()
+IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
+#endif /* ENGINE_DYNAMIC_SUPPORT */
 
 #endif /* !OPENSSL_NO_HW_CSWIFT */
 #endif /* !OPENSSL_NO_HW */

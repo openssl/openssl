@@ -80,6 +80,56 @@ static const ENGINE_CMD_DEFN nuron_cmd_defns[] = {
 	{0, NULL, NULL, 0}
 	};
 
+#ifndef OPENSSL_NO_ERR
+/* Error function codes for use in nuron operation */
+#define NURON_F_NURON_INIT			100
+#define NURON_F_NURON_FINISH			101
+#define NURON_F_NURON_CTRL			102
+#define NURON_F_NURON_MOD_EXP			103
+/* Error reason codes */
+#define NURON_R_ALREADY_LOADED			104
+#define NURON_R_DSO_NOT_FOUND			105
+#define NURON_R_DSO_FUNCTION_NOT_FOUND		106
+#define NURON_R_NOT_LOADED			107
+#define NURON_R_DSO_FAILURE			108
+#define NURON_R_CTRL_COMMAND_NOT_IMPLEMENTED	109
+#define NURON_R_NOT_LOADED			110
+static ERR_STRING_DATA nuron_str_functs[] =
+	{
+	/* This first element is changed to match the dynamic 'lib' number */
+{ERR_PACK(0,0,0),				"nuron engine code"},
+{ERR_PACK(0,NURON_F_NURON_INIT,0),		"nuron_init"},
+{ERR_PACK(0,NURON_F_NURON_FINISH,0),		"nuron_finish"},
+{ERR_PACK(0,NURON_F_NURON_CTRL,0),		"nuron_ctrl"},
+{ERR_PACK(0,NURON_F_NURON_MOD_EXP,0),		"nuron_mod_exp"},
+/* Error reason codes */
+{NURON_R_ALREADY_LOADED			,"already loaded"},
+{NURON_R_DSO_NOT_FOUND			,"DSO not found"},
+{NURON_R_DSO_FUNCTION_NOT_FOUND		,"DSO function not found"},
+{NURON_R_NOT_LOADED			,"not loaded"},
+{NURON_R_DSO_FAILURE			,"DSO failure"},
+{NURON_R_CTRL_COMMAND_NOT_IMPLEMENTED	,"ctrl command not implemented"},
+{NURON_R_NOT_LOADED			,"not loaded"},
+{0,NULL}
+	};
+/* The library number we obtain dynamically from the ERR code */
+static int nuron_err_lib = -1;
+#define NURONerr(f,r) ERR_PUT_error(nuron_err_lib,(f),(r),__FILE__,__LINE__)
+static void nuron_load_error_strings(void)
+	{
+	if(nuron_err_lib < 0)
+		{
+		if((nuron_err_lib = ERR_get_next_error_library()) <= 0)
+			return;
+		nuron_str_functs[0].error = ERR_PACK(nuron_err_lib,0,0);
+		ERR_load_strings(nuron_err_lib, nuron_str_functs);
+		}
+	}
+#else
+#define NURONerr(f,r)				  /* NOP */
+static void nuron_load_error_strings(void) { }	 /* NOP */
+#endif
+
 typedef int tfnModExp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,const BIGNUM *m);
 static tfnModExp *pfnModExp = NULL;
 
@@ -89,7 +139,7 @@ static int nuron_init(ENGINE *e)
 	{
 	if(pvDSOHandle != NULL)
 		{
-		ENGINEerr(ENGINE_F_NURON_INIT,ENGINE_R_ALREADY_LOADED);
+		NURONerr(NURON_F_NURON_INIT,NURON_R_ALREADY_LOADED);
 		return 0;
 		}
 
@@ -97,14 +147,14 @@ static int nuron_init(ENGINE *e)
 		DSO_FLAG_NAME_TRANSLATION_EXT_ONLY);
 	if(!pvDSOHandle)
 		{
-		ENGINEerr(ENGINE_F_NURON_INIT,ENGINE_R_DSO_NOT_FOUND);
+		NURONerr(NURON_F_NURON_INIT,NURON_R_DSO_NOT_FOUND);
 		return 0;
 		}
 
 	pfnModExp = (tfnModExp *)DSO_bind_func(pvDSOHandle, NURON_F1);
 	if(!pfnModExp)
 		{
-		ENGINEerr(ENGINE_F_NURON_INIT,ENGINE_R_DSO_FUNCTION_NOT_FOUND);
+		NURONerr(NURON_F_NURON_INIT,NURON_R_DSO_FUNCTION_NOT_FOUND);
 		return 0;
 		}
 
@@ -115,12 +165,12 @@ static int nuron_finish(ENGINE *e)
 	{
 	if(pvDSOHandle == NULL)
 		{
-		ENGINEerr(ENGINE_F_NURON_FINISH,ENGINE_R_NOT_LOADED);
+		NURONerr(NURON_F_NURON_FINISH,NURON_R_NOT_LOADED);
 		return 0;
 		}
 	if(!DSO_free(pvDSOHandle))
 		{
-		ENGINEerr(ENGINE_F_NURON_FINISH,ENGINE_R_DSO_FAILURE);
+		NURONerr(NURON_F_NURON_FINISH,NURON_R_DSO_FAILURE);
 		return 0;
 		}
 	pvDSOHandle=NULL;
@@ -136,12 +186,12 @@ static int nuron_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	case NURON_CMD_SO_PATH:
 		if(p == NULL)
 			{
-			ENGINEerr(ENGINE_F_NURON_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+			NURONerr(NURON_F_NURON_CTRL,ERR_R_PASSED_NULL_PARAMETER);
 			return 0;
 			}
 		if(initialised)
 			{
-			ENGINEerr(ENGINE_F_NURON_CTRL,ENGINE_R_ALREADY_LOADED);
+			NURONerr(NURON_F_NURON_CTRL,NURON_R_ALREADY_LOADED);
 			return 0;
 			}
 		NURON_LIBNAME = (const char *)p;
@@ -149,7 +199,7 @@ static int nuron_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	default:
 		break;
 		}
-	ENGINEerr(ENGINE_F_NURON_CTRL,ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED);
+	NURONerr(NURON_F_NURON_CTRL,NURON_R_CTRL_COMMAND_NOT_IMPLEMENTED);
 	return 0;
 }
 
@@ -158,7 +208,7 @@ static int nuron_mod_exp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,
 	{
 	if(!pvDSOHandle)
 		{
-		ENGINEerr(ENGINE_F_NURON_MOD_EXP,ENGINE_R_NOT_LOADED);
+		NURONerr(NURON_F_NURON_MOD_EXP,NURON_R_NOT_LOADED);
 		return 0;
 		}
 	return pfnModExp(r,a,p,m);
@@ -281,9 +331,9 @@ static DH_METHOD nuron_dh =
 static const char *engine_nuron_id = "nuron";
 static const char *engine_nuron_name = "Nuron hardware engine support";
 
-/* As this is only ever called once, there's no need for locking
- * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_nuron()
+/* This internal function is used by ENGINE_nuron() and possibly by the
+ * "dynamic" ENGINE support too */
+static int bind_helper(ENGINE *e)
 	{
 #ifndef OPENSSL_NO_RSA
 	const RSA_METHOD *meth1;
@@ -294,29 +344,23 @@ ENGINE *ENGINE_nuron()
 #ifndef OPENSSL_NO_DH
 	const DH_METHOD *meth3;
 #endif
-	ENGINE *ret = ENGINE_new();
-	if(!ret)
-		return NULL;
-	if(!ENGINE_set_id(ret, engine_nuron_id) ||
-			!ENGINE_set_name(ret, engine_nuron_name) ||
+	if(!ENGINE_set_id(e, engine_nuron_id) ||
+			!ENGINE_set_name(e, engine_nuron_name) ||
 #ifndef OPENSSL_NO_RSA
-			!ENGINE_set_RSA(ret, &nuron_rsa) ||
+			!ENGINE_set_RSA(e, &nuron_rsa) ||
 #endif
 #ifndef OPENSSL_NO_DSA
-			!ENGINE_set_DSA(ret, &nuron_dsa) ||
+			!ENGINE_set_DSA(e, &nuron_dsa) ||
 #endif
 #ifndef OPENSSL_NO_DH
-			!ENGINE_set_DH(ret, &nuron_dh) ||
+			!ENGINE_set_DH(e, &nuron_dh) ||
 #endif
-			!ENGINE_set_BN_mod_exp(ret, nuron_mod_exp) ||
-			!ENGINE_set_init_function(ret, nuron_init) ||
-			!ENGINE_set_finish_function(ret, nuron_finish) ||
-			!ENGINE_set_ctrl_function(ret, nuron_ctrl) ||
-			!ENGINE_set_cmd_defns(ret, nuron_cmd_defns))
-		{
-		ENGINE_free(ret);
-		return NULL;
-		}
+			!ENGINE_set_BN_mod_exp(e, nuron_mod_exp) ||
+			!ENGINE_set_init_function(e, nuron_init) ||
+			!ENGINE_set_finish_function(e, nuron_finish) ||
+			!ENGINE_set_ctrl_function(e, nuron_ctrl) ||
+			!ENGINE_set_cmd_defns(e, nuron_cmd_defns))
+		return 0;
 
 #ifndef OPENSSL_NO_RSA
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
@@ -348,8 +392,41 @@ ENGINE *ENGINE_nuron()
 	nuron_dh.generate_key=meth3->generate_key;
 	nuron_dh.compute_key=meth3->compute_key;
 #endif
+
+	/* Ensure the nuron error handling is set up */
+	nuron_load_error_strings();
+	return 1;
+	}
+
+/* As this is only ever called once, there's no need for locking
+ * (indeed - the lock will already be held by our caller!!!) */
+ENGINE *ENGINE_nuron(void)
+	{
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!bind_helper(ret))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
 	return ret;
 	}
+
+/* This stuff is needed if this ENGINE is being compiled into a self-contained
+ * shared-library. */	   
+#ifdef ENGINE_DYNAMIC_SUPPORT
+static int bind_fn(ENGINE *e, const char *id)
+	{
+	if(id && (strcmp(id, engine_nuron_id) != 0))
+		return 0;
+	if(!bind_helper(e))
+		return 0;
+	return 1;
+	}       
+IMPLEMENT_DYNAMIC_CHECK_FN()
+IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
+#endif /* ENGINE_DYNAMIC_SUPPORT */
 
 #endif /* !OPENSSL_NO_HW_NURON */
 #endif /* !OPENSSL_NO_HW */

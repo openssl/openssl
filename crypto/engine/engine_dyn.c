@@ -238,7 +238,7 @@ static dynamic_data_ctx *dynamic_get_data_ctx(ENGINE *e)
 
 /* As this is only ever called once, there's no need for locking
  * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_dynamic()
+ENGINE *ENGINE_dynamic(void)
 	{
 	ENGINE *ret = ENGINE_new();
 	if(!ret)

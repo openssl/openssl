@@ -173,13 +173,75 @@ static DH_METHOD ubsec_dh =
 	};
 #endif
 
+#ifndef OPENSSL_NO_ERR
+/* Error function codes for use in ubsec operation */
+#define UBSEC_F_UBSEC_INIT			100
+#define UBSEC_F_UBSEC_FINISH			101
+#define UBSEC_F_UBSEC_CTRL			102
+#define UBSEC_F_UBSEC_MOD_EXP			103
+#define UBSEC_F_UBSEC_RSA_MOD_EXP		104
+#define UBSEC_F_UBSEC_RSA_MOD_EXP_CRT		105
+#define UBSEC_F_UBSEC_DSA_SIGN			106
+#define UBSEC_F_UBSEC_DSA_VERIFY		107
+/* Error reason codes */
+#define UBSEC_R_ALREADY_LOADED			108
+#define UBSEC_R_DSO_FAILURE			109
+#define UBSEC_R_UNIT_FAILURE			110
+#define UBSEC_R_NOT_LOADED			111
+#define UBSEC_R_CTRL_COMMAND_NOT_IMPLEMENTED	112
+#define UBSEC_R_SIZE_TOO_LARGE_OR_TOO_SMALL	113
+#define UBSEC_R_BN_EXPAND_FAIL			114
+#define UBSEC_R_REQUEST_FAILED			115
+#define UBSEC_R_MISSING_KEY_COMPONENTS		116
+static ERR_STRING_DATA ubsec_str_functs[] =
+	{
+	/* This first element is changed to match the dynamic 'lib' number */
+{ERR_PACK(0,0,0),				"ubsec engine code"},
+{ERR_PACK(0,UBSEC_F_UBSEC_INIT,0),		"ubsec_init"},
+{ERR_PACK(0,UBSEC_F_UBSEC_FINISH,0),		"ubsec_finish"},
+{ERR_PACK(0,UBSEC_F_UBSEC_CTRL,0),		"ubsec_ctrl"},
+{ERR_PACK(0,UBSEC_F_UBSEC_MOD_EXP,0),		"ubsec_mod_exp"},
+{ERR_PACK(0,UBSEC_F_UBSEC_RSA_MOD_EXP,0),	"ubsec_rsa_mod_exp"},
+{ERR_PACK(0,UBSEC_F_UBSEC_RSA_MOD_EXP_CRT,0),	"ubsec_rsa_mod_exp_crt"},
+{ERR_PACK(0,UBSEC_F_UBSEC_DSA_SIGN,0),		"ubsec_dsa_sign"},
+{ERR_PACK(0,UBSEC_F_UBSEC_DSA_VERIFY,0),	"ubsec_dsa_verify"},
+/* Error reason codes */
+{UBSEC_R_ALREADY_LOADED			,"already loaded"},
+{UBSEC_R_DSO_FAILURE			,"DSO failure"},
+{UBSEC_R_UNIT_FAILURE			,"unit failure"},
+{UBSEC_R_NOT_LOADED			,"not loaded"},
+{UBSEC_R_CTRL_COMMAND_NOT_IMPLEMENTED	,"ctrl command not implemented"},
+{UBSEC_R_SIZE_TOO_LARGE_OR_TOO_SMALL	,"size too large or too small"},
+{UBSEC_R_BN_EXPAND_FAIL			,"bn_expand fail"},
+{UBSEC_R_REQUEST_FAILED			,"request failed"},
+{UBSEC_R_MISSING_KEY_COMPONENTS		,"missing key components"},
+{0,NULL}
+	};
+/* The library number we obtain dynamically from the ERR code */
+static int ubsec_err_lib = -1;
+#define UBSECerr(f,r) ERR_PUT_error(ubsec_err_lib,(f),(r),__FILE__,__LINE__)
+static void ubsec_load_error_strings(void)
+	{
+	if(ubsec_err_lib < 0)
+		{
+		if((ubsec_err_lib = ERR_get_next_error_library()) <= 0)
+			return;
+		ubsec_str_functs[0].error = ERR_PACK(ubsec_err_lib,0,0);
+		ERR_load_strings(ubsec_err_lib, ubsec_str_functs);
+		}
+	}
+#else
+#define UBSECerr(f,r)				  /* NOP */
+static void ubsec_load_error_strings(void) { }	 /* NOP */
+#endif
+
 /* Constants used when creating the ENGINE */
 static const char *engine_ubsec_id = "ubsec";
 static const char *engine_ubsec_name = "UBSEC hardware engine support";
 
-/* As this is only ever called once, there's no need for locking
- * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_ubsec()
+/* This internal function is used by ENGINE_ubsec() and possibly by the
+ * "dynamic" ENGINE support too */
+static int bind_helper(ENGINE *e)
 	{
 #ifndef OPENSSL_NO_RSA
 	const RSA_METHOD *meth1;
@@ -189,30 +251,24 @@ ENGINE *ENGINE_ubsec()
 	const DH_METHOD *meth3;
 #endif /* HAVE_UBSEC_DH */
 #endif
-	ENGINE *ret = ENGINE_new();
-	if(!ret)
-		return NULL;
-	if(!ENGINE_set_id(ret, engine_ubsec_id) ||
-			!ENGINE_set_name(ret, engine_ubsec_name) ||
+	if(!ENGINE_set_id(e, engine_ubsec_id) ||
+			!ENGINE_set_name(e, engine_ubsec_name) ||
 #ifndef OPENSSL_NO_RSA
-			!ENGINE_set_RSA(ret, &ubsec_rsa) ||
+			!ENGINE_set_RSA(e, &ubsec_rsa) ||
 #endif
 #ifndef OPENSSL_NO_DSA
-			!ENGINE_set_DSA(ret, &ubsec_dsa) ||
+			!ENGINE_set_DSA(e, &ubsec_dsa) ||
 #endif
 #ifndef OPENSSL_NO_DH
-			!ENGINE_set_DH(ret, &ubsec_dh) ||
+			!ENGINE_set_DH(e, &ubsec_dh) ||
 #endif
-			!ENGINE_set_BN_mod_exp(ret, ubsec_mod_exp) ||
-			!ENGINE_set_BN_mod_exp_crt(ret, ubsec_mod_exp_crt) ||
-			!ENGINE_set_init_function(ret, ubsec_init) ||
-			!ENGINE_set_finish_function(ret, ubsec_finish) ||
-			!ENGINE_set_ctrl_function(ret, ubsec_ctrl) ||
-			!ENGINE_set_cmd_defns(ret, ubsec_cmd_defns))
-		{
-		ENGINE_free(ret);
-		return NULL;
-		}
+			!ENGINE_set_BN_mod_exp(e, ubsec_mod_exp) ||
+			!ENGINE_set_BN_mod_exp_crt(e, ubsec_mod_exp_crt) ||
+			!ENGINE_set_init_function(e, ubsec_init) ||
+			!ENGINE_set_finish_function(e, ubsec_finish) ||
+			!ENGINE_set_ctrl_function(e, ubsec_ctrl) ||
+			!ENGINE_set_cmd_defns(e, ubsec_cmd_defns))
+		return 0;
 
 #ifndef OPENSSL_NO_RSA
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
@@ -238,6 +294,23 @@ ENGINE *ENGINE_ubsec()
 #endif /* HAVE_UBSEC_DH */
 #endif
 
+	/* Ensure the ubsec error handling is set up */
+	ubsec_load_error_strings();
+	return 1;
+	}
+
+/* As this is only ever called once, there's no need for locking
+ * (indeed - the lock will already be held by our caller!!!) */
+ENGINE *ENGINE_ubsec(void)
+	{
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!bind_helper(ret))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
 	return ret;
 	}
 
@@ -322,7 +395,7 @@ static int ubsec_init(ENGINE *e)
 
 	if(ubsec_dso != NULL)
 		{
-		ENGINEerr(ENGINE_F_UBSEC_INIT, ENGINE_R_ALREADY_LOADED);
+		UBSECerr(UBSEC_F_UBSEC_INIT, UBSEC_R_ALREADY_LOADED);
 		goto err;
 		}
 	/* 
@@ -331,7 +404,7 @@ static int ubsec_init(ENGINE *e)
 	ubsec_dso = DSO_load(NULL, UBSEC_LIBNAME, NULL, 0);
 	if(ubsec_dso == NULL)
 		{
-		ENGINEerr(ENGINE_F_UBSEC_INIT, ENGINE_R_DSO_FAILURE);
+		UBSECerr(UBSEC_F_UBSEC_INIT, UBSEC_R_DSO_FAILURE);
 		goto err;
 		}
 
@@ -358,7 +431,7 @@ static int ubsec_init(ENGINE *e)
 				DSO_bind_func(ubsec_dso, UBSEC_F11)) ||
 	!(p12 = (t_UBSEC_rng_ioctl *) DSO_bind_func(ubsec_dso, UBSEC_F12)))
 		{
-		ENGINEerr(ENGINE_F_UBSEC_INIT, ENGINE_R_DSO_FAILURE);
+		UBSECerr(UBSEC_F_UBSEC_INIT, UBSEC_R_DSO_FAILURE);
 		goto err;
 		}
 
@@ -390,7 +463,7 @@ static int ubsec_init(ENGINE *e)
 		}
 	else
 		{
-		ENGINEerr(ENGINE_F_UBSEC_INIT, ENGINE_R_UNIT_FAILURE);
+		UBSECerr(UBSEC_F_UBSEC_INIT, UBSEC_R_UNIT_FAILURE);
 		}
 
 err:
@@ -422,12 +495,12 @@ static int ubsec_finish(ENGINE *e)
 	{
 	if(ubsec_dso == NULL)
 		{
-		ENGINEerr(ENGINE_F_UBSEC_FINISH, ENGINE_R_NOT_LOADED);
+		UBSECerr(UBSEC_F_UBSEC_FINISH, UBSEC_R_NOT_LOADED);
 		return 0;
 		}
 	if(!DSO_free(ubsec_dso))
 		{
-		ENGINEerr(ENGINE_F_UBSEC_FINISH, ENGINE_R_DSO_FAILURE);
+		UBSECerr(UBSEC_F_UBSEC_FINISH, UBSEC_R_DSO_FAILURE);
 		return 0;
 		}
 	ubsec_dso = NULL;
@@ -460,12 +533,12 @@ static int ubsec_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	case UBSEC_CMD_SO_PATH:
 		if(p == NULL)
 			{
-			ENGINEerr(ENGINE_F_UBSEC_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+			UBSECerr(UBSEC_F_UBSEC_CTRL,ERR_R_PASSED_NULL_PARAMETER);
 			return 0;
 			}
 		if(initialised)
 			{
-			ENGINEerr(ENGINE_F_UBSEC_CTRL,ENGINE_R_ALREADY_LOADED);
+			UBSECerr(UBSEC_F_UBSEC_CTRL,UBSEC_R_ALREADY_LOADED);
 			return 0;
 			}
 		UBSEC_LIBNAME = (const char *)p;
@@ -473,7 +546,7 @@ static int ubsec_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	default:
 		break;
 		}
-	ENGINEerr(ENGINE_F_UBSEC_CTRL,ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED);
+	UBSECerr(UBSEC_F_UBSEC_CTRL,UBSEC_R_CTRL_COMMAND_NOT_IMPLEMENTED);
 	return 0;
 	}
 
@@ -485,27 +558,27 @@ static int ubsec_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
 	if(ubsec_dso == NULL)
 	{
-		ENGINEerr(ENGINE_F_UBSEC_MOD_EXP, ENGINE_R_NOT_LOADED);
+		UBSECerr(UBSEC_F_UBSEC_MOD_EXP, UBSEC_R_NOT_LOADED);
 		return 0;
 	}
 
 	/* Check if hardware can't handle this argument. */
 	y_len = BN_num_bits(m);
 	if (y_len > 1024) {
-		ENGINEerr(ENGINE_F_UBSEC_MOD_EXP, ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		UBSECerr(UBSEC_F_UBSEC_MOD_EXP, UBSEC_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
 		return 0;
 	} 
 
 	if(!bn_wexpand(r, m->top))
 	{
-		ENGINEerr(ENGINE_F_UBSEC_MOD_EXP, ENGINE_R_BN_EXPAND_FAIL);
+		UBSECerr(UBSEC_F_UBSEC_MOD_EXP, UBSEC_R_BN_EXPAND_FAIL);
 		return 0;
 	}
 	memset(r->d, 0, BN_num_bytes(m));
 
 	if ((fd = p_UBSEC_ubsec_open(UBSEC_KEY_DEVICE_NAME)) <= 0) {
 		fd = 0;
-		ENGINEerr(ENGINE_F_UBSEC_INIT, ENGINE_R_UNIT_FAILURE);
+		UBSECerr(UBSEC_F_UBSEC_INIT, UBSEC_R_UNIT_FAILURE);
 		return 0;
 	}
 
@@ -513,7 +586,7 @@ static int ubsec_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		(unsigned char *)m->d, BN_num_bits(m), (unsigned char *)p->d, 
 		BN_num_bits(p), (unsigned char *)r->d, &y_len) != 0)
 	{
-		ENGINEerr(ENGINE_F_UBSEC_MOD_EXP, ENGINE_R_REQUEST_FAILED);
+		UBSECerr(UBSEC_F_UBSEC_MOD_EXP, UBSEC_R_REQUEST_FAILED);
 		return 0;
 	}
 
@@ -534,7 +607,7 @@ static int ubsec_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 
 	if(!rsa->p || !rsa->q || !rsa->dmp1 || !rsa->dmq1 || !rsa->iqmp)
 		{
-		ENGINEerr(ENGINE_F_UBSEC_RSA_MOD_EXP, ENGINE_R_MISSING_KEY_COMPONENTS);
+		UBSECerr(UBSEC_F_UBSEC_RSA_MOD_EXP, UBSEC_R_MISSING_KEY_COMPONENTS);
 		goto err;
 		}
 
@@ -568,18 +641,18 @@ static int ubsec_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
 	/* Check if hardware can't handle this argument. */
 	if (y_len > 1024) {
-		ENGINEerr(ENGINE_F_UBSEC_MOD_EXP, ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		UBSECerr(UBSEC_F_UBSEC_MOD_EXP, UBSEC_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
 		return 0;
 	} 
 
 	if (!bn_wexpand(r, p->top + q->top + 1)) {
-		ENGINEerr(ENGINE_F_UBSEC_RSA_MOD_EXP_CRT, ENGINE_R_BN_EXPAND_FAIL);
+		UBSECerr(UBSEC_F_UBSEC_RSA_MOD_EXP_CRT, UBSEC_R_BN_EXPAND_FAIL);
 		return 0;
 	}
 
 	if ((fd = p_UBSEC_ubsec_open(UBSEC_KEY_DEVICE_NAME)) <= 0) {
 		fd = 0;
-		ENGINEerr(ENGINE_F_UBSEC_INIT, ENGINE_R_UNIT_FAILURE);
+		UBSECerr(UBSEC_F_UBSEC_INIT, UBSEC_R_UNIT_FAILURE);
 		return 0;
 	}
 
@@ -591,7 +664,7 @@ static int ubsec_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		(unsigned char *)dq->d, BN_num_bits(dq),
 		(unsigned char *)q->d, BN_num_bits(q),
 		(unsigned char *)r->d,  &y_len) != 0) {
-		ENGINEerr(ENGINE_F_UBSEC_MOD_EXP, ENGINE_R_REQUEST_FAILED);
+		UBSECerr(UBSEC_F_UBSEC_MOD_EXP, UBSEC_R_REQUEST_FAILED);
 		return 0;
 	}
 
@@ -684,18 +757,18 @@ static DSA_SIG *ubsec_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 
         if(!bn_wexpand(r, (160+BN_BITS2-1)/BN_BITS2) ||
        	   (!bn_wexpand(s, (160+BN_BITS2-1)/BN_BITS2))) {
-		ENGINEerr(ENGINE_F_UBSEC_DSA_SIGN, ENGINE_R_BN_EXPAND_FAIL);
+		UBSECerr(UBSEC_F_UBSEC_DSA_SIGN, UBSEC_R_BN_EXPAND_FAIL);
 		goto err;
 	}
 
 	if (BN_bin2bn(dgst,dlen,&m) == NULL) {
-		ENGINEerr(ENGINE_F_UBSEC_DSA_SIGN, ENGINE_R_BN_EXPAND_FAIL);
+		UBSECerr(UBSEC_F_UBSEC_DSA_SIGN, UBSEC_R_BN_EXPAND_FAIL);
 		goto err;
 	} 
 
 	if ((fd = p_UBSEC_ubsec_open(UBSEC_KEY_DEVICE_NAME)) <= 0) {
 		fd = 0;
-		ENGINEerr(ENGINE_F_UBSEC_INIT, ENGINE_R_UNIT_FAILURE);
+		UBSECerr(UBSEC_F_UBSEC_INIT, UBSEC_R_UNIT_FAILURE);
 		return 0;
 	}
 
@@ -708,7 +781,7 @@ static DSA_SIG *ubsec_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		(unsigned char *)dsa->priv_key->d, BN_num_bits(dsa->priv_key),
 		(unsigned char *)r->d, &r_len,
 		(unsigned char *)s->d, &s_len ) != 0) {
-		ENGINEerr(ENGINE_F_UBSEC_DSA_SIGN, ENGINE_R_REQUEST_FAILED);
+		UBSECerr(UBSEC_F_UBSEC_DSA_SIGN, UBSEC_R_REQUEST_FAILED);
 		goto err;
 	}
 
@@ -719,7 +792,7 @@ static DSA_SIG *ubsec_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 
 	to_return = DSA_SIG_new();
 	if(to_return == NULL) {
-		ENGINEerr(ENGINE_F_UBSEC_DSA_SIGN, ENGINE_R_BN_EXPAND_FAIL);
+		UBSECerr(UBSEC_F_UBSEC_DSA_SIGN, UBSEC_R_BN_EXPAND_FAIL);
 		goto err;
 	}
 
@@ -746,7 +819,7 @@ static int ubsec_dsa_verify(const unsigned char *dgst, int dgst_len,
 	BN_init(&v);
 
 	if(!bn_wexpand(&v, dsa->p->top)) {
-		ENGINEerr(ENGINE_F_UBSEC_DSA_VERIFY ,ENGINE_R_BN_EXPAND_FAIL);
+		UBSECerr(UBSEC_F_UBSEC_DSA_VERIFY ,UBSEC_R_BN_EXPAND_FAIL);
 		goto err;
 	}
 
@@ -756,7 +829,7 @@ static int ubsec_dsa_verify(const unsigned char *dgst, int dgst_len,
 
 	if ((fd = p_UBSEC_ubsec_open(UBSEC_KEY_DEVICE_NAME)) <= 0) {
 		fd = 0;
-		ENGINEerr(ENGINE_F_UBSEC_INIT, ENGINE_R_UNIT_FAILURE);
+		UBSECerr(UBSEC_F_UBSEC_INIT, UBSEC_R_UNIT_FAILURE);
 		return 0;
 	}
 
@@ -769,7 +842,7 @@ static int ubsec_dsa_verify(const unsigned char *dgst, int dgst_len,
 		(unsigned char *)sig->r->d, BN_num_bits(sig->r),
 		(unsigned char *)sig->s->d, BN_num_bits(sig->s),
 		(unsigned char *)v.d, &v_len) != 0) {
-		ENGINEerr(ENGINE_F_UBSEC_DSA_VERIFY , ENGINE_R_REQUEST_FAILED);
+		UBSECerr(UBSEC_F_UBSEC_DSA_VERIFY , UBSEC_R_REQUEST_FAILED);
 		goto err;
 	}
 
@@ -805,6 +878,21 @@ static int ubsec_rand_status(void)
 	return 0;
 	}
 #endif
+
+/* This stuff is needed if this ENGINE is being compiled into a self-contained
+ * shared-library. */
+#ifdef ENGINE_DYNAMIC_SUPPORT
+static int bind_fn(ENGINE *e, const char *id)
+	{
+	if(id && (strcmp(id, engine_ubsec_id) != 0))
+		return 0;
+	if(!bind_helper(e))
+		return 0;
+	return 1;
+	}
+IMPLEMENT_DYNAMIC_CHECK_FN()
+IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
+#endif /* ENGINE_DYNAMIC_SUPPORT */
 
 #endif /* !OPENSSL_NO_HW_UBSEC */
 #endif /* !OPENSSL_NO_HW */

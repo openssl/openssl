@@ -141,11 +141,11 @@ struct engine_st
  * do not return references - they are purely for bootstrapping). */
 
 /* Returns a structure of software only methods (the default). */
-ENGINE *ENGINE_openssl();
+ENGINE *ENGINE_openssl(void);
 
 /* Returns the "dynamic" ENGINE for loading entire ENGINE implementations from
  * shared libraries. */
-ENGINE *ENGINE_dynamic();
+ENGINE *ENGINE_dynamic(void);
 
 #ifndef OPENSSL_NO_HW
 
@@ -153,24 +153,24 @@ ENGINE *ENGINE_dynamic();
 /* Returns a structure of cswift methods ... NB: This can exist and be
  * "used" even on non-cswift systems because the "init" will fail if the
  * card/library are not found. */
-ENGINE *ENGINE_cswift();
+ENGINE *ENGINE_cswift(void);
 #endif /* !OPENSSL_NO_HW_CSWIFT */
 
 #ifndef OPENSSL_NO_HW_NCIPHER
-ENGINE *ENGINE_ncipher();
+ENGINE *ENGINE_ncipher(void);
 #endif /* !OPENSSL_NO_HW_NCIPHER */
 
 #ifndef OPENSSL_NO_HW_ATALLA
 /* Returns a structure of atalla methods. */
-ENGINE *ENGINE_atalla();
+ENGINE *ENGINE_atalla(void);
 #endif /* !OPENSSL_NO_HW_ATALLA */
 
 #ifndef OPENSSL_NO_HW_NURON
-ENGINE *ENGINE_nuron();
+ENGINE *ENGINE_nuron(void);
 #endif /* !OPENSSL_NO_HW_NURON */
 
 #ifndef OPENSSL_NO_HW_UBSEC
-ENGINE *ENGINE_ubsec();
+ENGINE *ENGINE_ubsec(void);
 #endif /* !OPENSSL_NO_HW_UBSEC */
 
 #ifdef OPENSSL_OPENBSD_DEV_CRYPTO
