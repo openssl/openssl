@@ -5,8 +5,8 @@ This is some preliminary documentation for OpenSSL.
                             BUFFER Library
 ==============================================================================
 
-The buffer library handles simple character arrays. Buffers are used for various
-purposes in the library, most notably memory BIOs.
+The buffer library handles simple character arrays. Buffers are used for
+various purposes in the library, most notably memory BIOs.
 
 The library uses the BUF_MEM structure defined in buffer.h:
 
@@ -200,9 +200,10 @@ CURRENTLY SUPPORTED EXTENSIONS.
 
 Literal String extensions.
 
-In each case the 'value' of the extension is placed directly in the extension.
-Currently supported extensions in this category are: nsBaseUrl, nsRevocationUrl
-nsCaRevocationUrl, nsRenewalUrl, nsCaPolicyUrl, nsSslServerName and nsComment.
+In each case the 'value' of the extension is placed directly in the
+extension. Currently supported extensions in this category are: nsBaseUrl,
+nsRevocationUrl, nsCaRevocationUrl, nsRenewalUrl, nsCaPolicyUrl,
+nsSslServerName and nsComment.
 
 For example:
 
@@ -344,13 +345,13 @@ userNotice qualifiers can be set using the syntax:
 
 userNotice.nnn=@notice
 
-The value of the userNotice qualifier is specified in the relevant section. This
-section can include explicitText, organization and noticeNumbers options. 
-explicitText and organization are text strings, noticeNumbers is a comma
-separated list of numbers. The organization and noticeNumbers options (if
-included) must BOTH be present. If you use the userNotice option with IE5 then
-you need the 'ia5org' option at the top level to modify the encoding: otherwise
-it will not be interpreted properly.
+The value of the userNotice qualifier is specified in the relevant section.
+This section can include explicitText, organization and noticeNumbers
+options. explicitText and organization are text strings, noticeNumbers is a
+comma separated list of numbers. The organization and noticeNumbers options
+(if included) must BOTH be present. If you use the userNotice option with IE5
+then you need the 'ia5org' option at the top level to modify the encoding:
+otherwise it will not be interpreted properly.
 
 Example:
 
@@ -475,9 +476,9 @@ PKCS12_free(p12);
 LOW LEVEL FUNCTIONS.
 
 In some cases the high level functions do not provide the necessary
-functionality. For example if you want to generate or parse more complex PKCS#12
-files. The sample pkcs12 application uses the low level functions to display
-details about the internal structure of a PKCS#12 file.
+functionality. For example if you want to generate or parse more complex
+PKCS#12 files. The sample pkcs12 application uses the low level functions
+to display details about the internal structure of a PKCS#12 file.
 
 Introduction.
 
@@ -502,14 +503,16 @@ integrity (so any unencrypted stuff below can't be tampered with).
 
 The reason for these levels is so various objects can be encrypted in various
 ways. For example you might want to encrypt a set of private keys with
-triple-DES and then include the related certificates either unencrypted or with
-lower encryption. Yes it's the dreaded crypto laws at work again which
-allow strong encryption on private keys and only weak encryption on other stuff.
+triple-DES and then include the related certificates either unencrypted or
+with lower encryption. Yes it's the dreaded crypto laws at work again which
+allow strong encryption on private keys and only weak encryption on other
+stuff.
 
 To build one of these things you turn all certificates and keys into safebags
 (with optional attributes). You collect the safebags into (one or more) STACKS
-and convert these into authsafes (encrypted or unencrypted).  The authsafes are
-collected into a STACK and added to a PKCS12 structure.  Finally a MAC inserted.
+and convert these into authsafes (encrypted or unencrypted).  The authsafes
+are collected into a STACK and added to a PKCS12 structure.  Finally a MAC
+inserted.
 
 Pulling one apart is basically the reverse process. The MAC is verified against
 the given password. The authsafes are extracted and each authsafe split into
@@ -536,9 +539,10 @@ PKCS8_PRIV_KEY_INFO *PKEY2PKCS8(EVP_PKEY *pkey)
 
 Take a private key and convert it into a PKCS#8 PrivateKeyInfo structure.
 Works for both RSA and DSA private keys. NB since the PKCS#8 PrivateKeyInfo
-structure contains a private key data in plain text form it should be free'd up
-as soon as it has been encrypted for security reasons (freeing up the structure
-zeros out the sensitive data). This can be done with PKCS8_PRIV_KEY_INFO_free().
+structure contains a private key data in plain text form it should be free'd
+up as soon as it has been encrypted for security reasons (freeing up the
+structure zeros out the sensitive data). This can be done with
+PKCS8_PRIV_KEY_INFO_free().
 
 PKCS8_add_keyusage(PKCS8_PRIV_KEY_INFO *p8, int usage)
 
@@ -552,9 +556,9 @@ KEY_EX is not limited and can be used for both.
 
 PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8)
 
-Convert a PKCS8 private key structure into a keybag. This routine embeds the p8
-structure in the keybag so p8 should not be freed up or used after it is called.
-The p8 structure will be freed up when the safebag is freed.
+Convert a PKCS8 private key structure into a keybag. This routine embeds the
+p8 structure in the keybag so p8 should not be freed up or used after it is
+called.  The p8 structure will be freed up when the safebag is freed.
 
 PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, PKCS8_PRIV_KEY_INFO *p8)
 
@@ -701,11 +705,13 @@ NID_pbe_WithSHA1And2_Key_TripleDES_CBC
 NID_pbe_WithSHA1And128BitRC2_CBC
 NID_pbe_WithSHA1And40BitRC2_CBC
 
-Which you use depends on the implementation you are exporting to. "Export grade"(i.e. cryptograhically challenged) products cannot support all algorithms.
-Typically you may be able to use any encryption on shrouded key bags but they
-must then be placed in an unencrypted authsafe. Other authsafes may only support
-40bit encryption. Of course if you are using SSLeay throughout you can strongly
-encrypt everything and have high iteration counts on everything.
+Which you use depends on the implementation you are exporting to. "Export
+grade" (i.e. cryptograhically challenged) products cannot support all
+algorithms. Typically you may be able to use any encryption on shrouded key
+bags but they must then be placed in an unencrypted authsafe. Other authsafes
+may only support 40bit encryption. Of course if you are using SSLeay
+throughout you can strongly encrypt everything and have high iteration counts
+on everything.
 
 3. For decryption routines only the password and length are needed.
 
