@@ -195,6 +195,11 @@ int main()
     int clen = 0;
     int num;
 
+#ifdef RSAref
+    printf("No OAEP support with RSAref - skipping test\n");
+    return 0;
+#endif
+
     plen = sizeof(ptext_ex) - 1;
 
     for (v = 0; v < 3; v++)

@@ -328,6 +328,9 @@ int padding;
 	RSARandomState rnd;
 	unsigned char buf[16];
 
+	if (padding == RSA_PKCS1_OAEP_PADDING) 
+		goto err;
+
 	R_RandomInit(&rnd);
 	R_GetRandomBytesNeeded((unsigned int *)&i,&rnd);
 	while (i > 0)
