@@ -59,6 +59,11 @@
 #ifndef HEADER_E_OS_H
 #define HEADER_E_OS_H
 
+#include <openssl/e_os2.h>
+/* <openssl/e_os2.h> contains what we can justify to make visible
+ * to the outside.  e_os.h shouldn't even be in the include/openssl
+ * directory, these are just local definitions. */
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -242,17 +247,6 @@ extern "C" {
 
 #endif
 
-/* Definitions of GLOBAL and EXTERN, to define and declare certain global
-   symbols that, with some compilers under VMS, have to be defined and
-   declared explicitely with globaldef and globalref.  On other OS:es,
-   these macros are defined with something sensible. */
-#if defined(VMS) && !defined(__DECC)
-#define EXTERN globalref
-#define GLOBAL globaldef
-#else
-#define EXTERN extern
-#define GLOBAL
-#endif
 
 /*************/
 
