@@ -113,6 +113,17 @@ If you used ./Configure instead of ./config, make sure that you
 selected the right target.  File formats may differ slightly between
 OS versions (for example sparcv8/sparcv9, or a.out/elf).
 
+In case you get errors about the following symbols, use the config
+option "no-asm", as described in INSTALL:
+
+ BF_cbc_encrypt, BF_decrypt, BF_encrypt, CAST_cbc_encrypt,
+ CAST_decrypt, CAST_encrypt, RC4, RC5_32_cbc_encrypt, RC5_32_decrypt,
+ RC5_32_encrypt, bn_add_words, bn_div_words, bn_mul_add_words,
+ bn_mul_comba4, bn_mul_comba8, bn_mul_words, bn_sqr_comba4,
+ bn_sqr_comba8, bn_sqr_words, bn_sub_words, des_decrypt3,
+ des_ede3_cbc_encrypt, des_encrypt, des_encrypt2, des_encrypt3,
+ des_ncbc_encrypt, md5_block_asm_host_order, sha1_block_asm_data_order
+
 If that doesn't help, you may want to try using the current snapshot.
 If the problem persists, please submit a bug report.
 
