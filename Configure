@@ -9,11 +9,14 @@ require 5.000;
 use strict;
 
 # see INSTALL for instructions.
-#
-# Usage: Configure [-Dxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-asm] [rsaref]
-#         [386] platform[:flags]
-#
+
+my $usage="Usage: Configure [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-asm] [rsaref] [--openssldir=OPENSSLDIR] [--prefix=DIR] os/compiler\n";
+
 # Options:
+# --openssldir  install OpenSSL in OPENSSLDIR (Default: DIR/ssl if the
+#               --prefix option is given; /usr/local/ssl otherwise)
+# --prefix      prefix for the OpenSSL include, lib and bin directories
+#               (Default: the OPENSSLDIR directory)
 # rsaref        use RSAref
 # no-asm        do not use assembler
 # 386           generate 80386 code
@@ -113,8 +116,8 @@ my %table=(
 "solaris-usparc-sc4","cc:-xtarget=ultra -xarch=v8plus -Xa -xO5 -DB_ENDIAN:\
 	-lsocket -lnsl:\
 	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
-"solaris-sparc-sc4-pic","cc:-xO5 -Xa -DB_ENDIAN -KPIC:-lsocket -lnsl:\
-	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::",
+#"solaris-sparc-sc4-pic","cc:-xO5 -Xa -DB_ENDIAN -KPIC:-lsocket -lnsl:\
+#	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::",
 
 # Sunos configs, assuming sparc for the gcc one.
 ##"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST::DES_UNROLL:::",
@@ -249,6 +252,8 @@ my %table=(
 my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
 	BC-16 CygWin32);
 
+my $installprefix="";
+my $openssldir="";
 my $no_asm=0;
 my $Makefile="Makefile.ssl";
 my $des_locl="crypto/des/des_locl.h";
@@ -276,43 +281,43 @@ my $perl;
 $ranlib=&which("ranlib") or $ranlib="true";
 $perl=&which("perl5") or $perl=&which("perl");
 
-if ($#ARGV < 0)
-	{
-	&bad_target;
-	exit(1);
-	}
+&usage if ($#ARGV < 0);
 
 my $flags="";
 my $libs="";
 my $target="";
 foreach (@ARGV)
 	{
-	if ($_ =~ /^no-asm$/)
+	if (/^no-asm$/)
 		{ $no_asm=1; }
-	elsif ($_ =~ /^386$/)
+	elsif (/^386$/)
 		{ $processor=386; }
-	elsif ($_ =~ /^rsaref$/)
+	elsif (/^rsaref$/)
 		{
 		$libs.= "-lRSAglue -lrsaref ";
 		$flags.= "-DRSAref ";
 		}
-	elsif ($_ =~ /^-/)
+	elsif (/^-/)
 		{
-		if ($_ =~ /^-[lL](.*)$/)
+		if (/^-[lL](.*)$/)
 			{
 			$libs.=$_." ";
 			}
-		elsif ($_ =~ /^-D(.*)$/)
+		elsif (/^-[DfK](.*)$/)
 			{
 			$flags.=$_." ";
 			}
-		elsif ($_ =~ /^-[fK](.*)$/)
+		elsif (/^--prefix=(.*)$/)
 			{
-			$flags.=$_." ";
+			$installprefix=$1;
+			}
+		elsif (/^--openssldir=(.*)$/)
+			{
+			$openssldir=$1;
 			}
 		else
 			{
-			die "unknown options, only -Dxxx, -Lxxx, -lxxx, -fxxx and -Kxxx are supported\n";
+			print STDERR $usage;
 			}
 		}
 	elsif ($_ =~ /^([^:]+):(.+)$/) {
@@ -323,19 +328,19 @@ foreach (@ARGV)
 		{
 		die "target already defined - $target\n" if ($target ne "");
 		$target=$_;
-		if (!defined($table{$target}))
-			{
-			&bad_target;
-			exit(1);
-			}
 		}
-	}
+}
 
-if (!defined($table{$target}))
-	{
-	&bad_target;
-	exit(1);
-	}
+&usage if (!defined($table{$target}));
+
+$openssldir="/usr/local/ssl" if ($openssldir eq "" and $installprefix eq "");
+$installprefix=$openssldir if $installprefix eq "";
+
+chop $openssldir if $openssldir =~ /\/$/;
+chop $installprefix if $installprefix =~ /\/$/;
+
+$openssldir=$installprefix . "/ssl" if $openssldir eq "";
+$openssldir=$installprefix . "/" . $openssldir if $openssldir !~ /^\//;
 
 my $IsWindows=scalar grep /^$target$/,@WinTargets;
 
@@ -386,6 +391,8 @@ open(OUT,">$Makefile") || die "unable to create $Makefile:$!\n";
 while (<IN>)
 	{
 	chop;
+	s/^INSTALLTOP=.*$/INSTALLTOP=$installprefix/;
+	s/^OPENSSLDIR=.*$/OPENSSLDIR=$openssldir/;
 	s/^PLATFORM=.*$/PLATFORM=$target/;
 	s/^CC=.*$/CC= $cc/;
 	s/^CFLAG=.*$/CFLAG= $cflags/;
@@ -470,7 +477,9 @@ open(IN,'<crypto/opensslconf.h.in') || die "unable to read crypto/opensslconf.h.
 open(OUT,'>crypto/opensslconf.h') || die "unable to create crypto/opensslconf.h:$!\n";
 while (<IN>)
 	{
-	if	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT_LONG/)
+	if	(/^#defined\s+OPENSSLDIR/)
+		{ print OUT "#define OPENSSLDIR $openssldir\n"; }
+	elsif	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT_LONG/)
 		{ printf OUT "#%s SIXTY_FOUR_BIT_LONG\n",($b64l)?"define":"undef"; }
 	elsif	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT/)
 		{ printf OUT "#%s SIXTY_FOUR_BIT\n",($b64)?"define":"undef"; }
@@ -540,7 +549,13 @@ if($IsWindows) {
 	close(OUT);
 }
 
-system 'make -f Makefile.ssl links' if !$IsWindows;
+if (!$IsWindows)
+	{
+	(system 'make -f Makefile.ssl links') == 0 or exit $?;
+	}
+
+&dofile("tools/c_rehash",$openssldir,'^DIR=',	'DIR=%s',);
+&dofile("util/mk1mf.pl",$openssldir,('^\$INSTALLTOP=','$INSTALLTOP="%s";',));
 
 my $pwd=`pwd`;
 chop($pwd);
@@ -557,7 +572,7 @@ conflicts with other libraries.
 
 To compile programs that use the old form <foo.h>,
 usually an additional compiler option will suffice: E.g., add
-     -I/usr/local/ssl/include/openssl
+     -I$installprefix/include/openssl
 or
      -I$pwd/include/openssl
 to the CFLAGS in the Makefile of the program that you want to compile
@@ -570,18 +585,26 @@ EOF
 
 exit(0);
 
-sub bad_target
+sub usage
 	{
-	print STDERR "Usage: Configure [-Dxxx] [-Lxxx] [-lxxx] [no-asm] [rsaref] os/compiler\n";
+	print STDERR $usage;
 	print STDERR "pick os/compiler from:";
 	my $j=0;
 	my $i;
 	foreach $i (sort keys %table)
 		{
+		next if $i =~ /^debug/;
+		print STDERR "\n" if ($j++ % 4) == 0;
+		printf(STDERR "%-18s ",$i);
+		}
+	foreach $i (sort keys %table)
+		{
+		next if $i !~ /^debug/;
 		print STDERR "\n" if ($j++ % 4) == 0;
 		printf(STDERR "%-18s ",$i);
 		}
 	print STDERR "\n";
+	exit(1);
 	}
 
 sub which
@@ -598,3 +621,22 @@ sub which
 		}
 	}
 
+sub dofile
+	{
+	my $f; my $p; my %m; my @a; my $k; my $ff;
+	($f,$p,%m)=@_;
+
+	open(IN,"<$f") || die "unable to open $f:$!\n";
+	@a=<IN>;
+	close(IN);
+	foreach $k (keys %m)
+		{
+		grep(/$k/ && ($_=sprintf($m{$k}."\n",$p)),@a);
+		}
+	($ff=$f) =~ s/\..*$//;
+	open(OUT,">$ff.new") || die "unable to open $f:$!\n";
+	print OUT @a;
+	close(OUT);
+	rename($f,"$ff.bak") || die "unable to rename $f\n";
+	rename("$ff.new",$f) || die "unable to rename $ff.new\n";
+	}

@@ -23,16 +23,25 @@
 
  This will build and install OpenSSL in the default location, which is (for
  historical reasons) /usr/local/ssl. If you want to install it anywhere else,
- do this after running `./config':
+ run config like this:
 
-  $ perl util/ssldir.pl /new/install/path
+  $ ./config --prefix=/usr/local --openssldir=/usr/local/openssl
 
  There are several options to ./config to customize the build:
 
-  rsaref    Build with RSADSI's RSAREF toolkit.
-  no-asm    Build with no assembler code.
-  386       Use the 80386 instruction set only (the default x86 code is
-            more efficient, but requires at least a 486).
+  --prefix=DIR  Install in DIR/bin, DIR/lib, DIR/include. Configuration
+                files used by OpenSSL will be in DIR/ssl or the directory
+                specified by --openssldir.
+
+  --openssldir=DIR Directory for OpenSSL files. If no prefix is specified,
+                the library files and binaries are also installed there.
+
+  rsaref        Build with RSADSI's RSAREF toolkit.
+
+  no-asm        Build with no assembler code.
+
+  386           Use the 80386 instruction set only (the default x86 code is
+                more efficient, but requires at least a 486).
 
  If anything goes wrong, follow the detailed instructions below. If your
  operating system is not (yet) supported by OpenSSL, see the section on
@@ -46,8 +55,8 @@
        $ ./config
 
      This guesses at your operating system (and compiler, if necessary) and
-     configures OpenSSL based on this guess. Check the first line of output to
-     see if it guessed correctly. If it did not get it correct or you want to
+     configures OpenSSL based on this guess. Run ./config -t -v to see
+     if it guessed correctly. If it did not get it correct or you want to
      use a different compiler then go to step 1b. Otherwise go to step 2.
 
  1b. Configure OpenSSL for your operating system manually
@@ -63,7 +72,7 @@
      as the argument to ./Configure. For example, a "linux-elf" user would
      run:
 
-       $ ./Configure linux-elf
+       $ ./Configure linux-elf [--prefix=DIR] [--openssldir=OPENSSLDIR]
 
      If your system is not available, you will have to edit the Configure
      program and add the correct configuration for your system.
@@ -72,20 +81,7 @@
      various macros in crypto/opensslconf.h (generated from
      crypto/opensslconf.h.in).
 
-  2. Set the install directory
-
-     If the install directory will be the default of /usr/local/ssl, skip to
-     the next stage. Otherwise, run
-
-        $ perl util/ssldir.pl /new/install/path
-
-     This configures the installation location into the "install" target of
-     the top-level Makefile, and also updates some defines in an include file
-     so that the default certificate directory is under the proper
-     installation directory. It also updates a few utility files used in the
-     build process.
-
-  3. Build OpenSSL by running:
+  2. Build OpenSSL by running:
 
        $ make
 
@@ -93,7 +89,7 @@
      OpenSSL binary ("openssl"). The libraries will be built in the top-level
      directory, and the binary will be in the "apps" directory.
 
-  4. After a successful build, the libraries should be tested. Run:
+  3. After a successful build, the libraries should be tested. Run:
 
        $ make rehash
        $ make test
@@ -101,24 +97,27 @@
      (The first line makes the test certificates in the "certs" directory
      accessable via an hash name, which is required for some of the tests).
 
-  5. If everything tests ok, install OpenSSL with
+  4. If everything tests ok, install OpenSSL with
 
        $ make install
 
      This will create the installation directory (if it does not exist) and
      then create the following subdirectories:
 
-       bin            Contains the openssl binary and a few other 
-                      utility programs. 
-       include        Contains the header files needed if you want to
-                      compile programs with libcrypto or libssl.
-       lib            Contains the library files themselves and the
-                      OpenSSL configuration file "openssl.cnf".
-       certs          Initially empty, this is the default location
-                      for certificate files.
-       private        Initially empty, this is the default location
-                      for private key files.
+       certs           Initially empty, this is the default location
+                       for certificate files.
+       private         Initially empty, this is the default location
+                       for private key files.
+       lib             Contains the OpenSSL configuration file "openssl.cnf".
 
+     If you didn't chose a different installation prefix, lib also contains
+     the library files themselves, and the following additional subdirectories
+     will be created:
+
+       bin             Contains the openssl binary and a few other 
+                       utility programs. 
+       include/openssl Contains the header files needed if you want to
+                       compile programs with libcrypto or libssl.
 
   NOTE: The header files used to reside directly in the include
   directory, but have now been moved to include/openssl so that

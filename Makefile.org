@@ -4,6 +4,10 @@
 
 VERSION = 0.9.2b
 PLATFORM=dist
+INSTALLTOP=/usr/local/ssl
+
+# Do not edit this manually. Use Configure --openssldir=DIR do change this!
+OPENSSLDIR=/usr/local/ssl
 
 # RSAref  - Define if we are to link with RSAref.
 # NO_IDEA - Define to build without the IDEA algorithm
@@ -138,9 +142,6 @@ SDIRS=  \
 	bn rsa dsa dh \
 	buffer bio stack lhash rand err objects \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp
-
-# Do not edit this manually. Use util/ssldir.pl do change this!
-INSTALLTOP=/usr/local/ssl
 
 MAKEFILE= Makefile.ssl
 MAKE=     make -f Makefile.ssl
@@ -286,14 +287,14 @@ dist_pem_h:
 install: all
 	@-mkdir -p $(INSTALLTOP)/bin 2>/dev/null
 	@-mkdir -p $(INSTALLTOP)/lib 2>/dev/null
-	@-mkdir -p $(INSTALLTOP)/include 2>/dev/null
 	@-mkdir -p $(INSTALLTOP)/include/openssl 2>/dev/null
-	@-mkdir -p $(INSTALLTOP)/certs 2>/dev/null
-	@-mkdir -p $(INSTALLTOP)/private 2>/dev/null
+	@-mkdir -p $(OPENSSLDIR)/certs 2>/dev/null
+	@-mkdir -p $(OPENSSLDIR)/private 2>/dev/null
+	@-mkdir -p $(OPENSSLDIR)/lib 2>/dev/null
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i; echo "installing $$i..."; \
-	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' EX_LIBS='${EX_LIBS}' SDIRS='${SDIRS}' install ); \
+	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}' EX_LIBS='${EX_LIBS}' SDIRS='${SDIRS}' install ); \
 	done
 	@for i in $(LIBS) ;\
 	do \

@@ -268,11 +268,7 @@ Usage: config [options]
  -h	This help.
 
 Any other text will be passed to the Configure perl script.
-Useful options include
- no-asm Build with no assember code.
- -Dxxx	Add xxx define to compilation.
- -Lxxx	Add xxx library include path to build.
- -lxxx	Add xxx library to build.
+See INSTALL for instructions.
 
 EOF
 ;;
