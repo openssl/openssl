@@ -57,12 +57,12 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include <openssl/err.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 
-#if !defined(RSA_NULL) && !defined(OPENSSL_FIPS)
+#if !defined(RSA_NULL) && defined(OPENSSL_FIPS)
 
 static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);

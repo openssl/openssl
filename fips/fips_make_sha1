@@ -22,3 +22,6 @@ $S fips_dsa_ossl.c fips_dsa_gen.c > fingerprint.sha1
 
 cd ../des
 $S fips_des_enc.c fips_des_selftest.c fips_des_locl.h > fingerprint.sha1
+
+cd ../rsa
+$S fips_rsa_eay.c fips_rsa_gen.c > fingerprint.sha1
