@@ -4,13 +4,17 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add support for 40 and 64 bit RC2 and RC4 algorithms: document
+     the 'enc' command.
+     [Steve Henson]
+
   *) Add the possibility to add extra information to the memory leak
      detecting output, to form tracebacks, showing from where each
      allocation was originated.  Also updated sid code to be multi-
      thread-safe.
      [Richard Levitte]
 
-  *) Add options -text and -noout to pkcs7 utility and delets the
+  *) Add options -text and -noout to pkcs7 utility and delete the
      encryption options which never did anything. Update docs.
      [Steve Henson]
 

@@ -118,6 +118,12 @@ FUNCTION functions[] = {
 #ifndef NO_RC4
 	{FUNC_TYPE_CIPHER,"rc4",enc_main},
 #endif
+#ifndef NO_RC4
+	{FUNC_TYPE_CIPHER,"rc4-64",enc_main},
+#endif
+#ifndef NO_RC4
+	{FUNC_TYPE_CIPHER,"rc4-40",enc_main},
+#endif
 #ifndef NO_RC2
 	{FUNC_TYPE_CIPHER,"rc2",enc_main},
 #endif
@@ -189,6 +195,12 @@ FUNCTION functions[] = {
 #endif
 #ifndef NO_RC2
 	{FUNC_TYPE_CIPHER,"rc2-ofb",enc_main},
+#endif
+#ifndef NO_RC2
+	{FUNC_TYPE_CIPHER,"rc2-64-cbc",enc_main},
+#endif
+#ifndef NO_RC2
+	{FUNC_TYPE_CIPHER,"rc2-40-cbc",enc_main},
 #endif
 #ifndef NO_BF
 	{FUNC_TYPE_CIPHER,"bf-cbc",enc_main},
