@@ -37,6 +37,7 @@ The return value points to an allocated SSL structure.
 =head1 SEE ALSO
 
 L<SSL_free(3)|SSL_free(3)>, L<SSL_clear(3)|SSL_clear(3)>,
+L<SSL_CTX_set_options(3)|SSL_CTX_set_options(3)>,
 L<ssl(3)|ssl(3)>
 
 =cut
