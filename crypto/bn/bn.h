@@ -252,6 +252,27 @@ typedef struct bignum_st
 	int flags;
 	} BIGNUM;
 
+/* Declaring static BIGNUMs as constant is tricky in C; the 'd' data can't be
+ * pre-declared const without having to cast away the const when declaring the
+ * BIGNUM. We use this alternative type for declaring const BIGNUMs. See
+ * bn_nist.c for examples. */
+typedef struct bignum_c_st
+	{
+	const BN_ULONG *d;
+	int top;
+	int dmax;
+	int neg;
+	int flags;
+	} BIGNUM_C;
+#ifdef BN_DEBUG
+/* Use a function to do this so that we can type-check the pointer we're
+ * casting */
+const BIGNUM *BIGNUM_CONST(const BIGNUM_C *bn);
+#else
+/* Use a macro instead */
+#define BIGNUM_CONST(bn)	((const BIGNUM *)bn)
+#endif
+
 /* Used for temp variables (declaration hidden in bn_lcl.h) */
 typedef struct bignum_ctx BN_CTX;
 

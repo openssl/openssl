@@ -874,3 +874,11 @@ int bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b,
 		}
 	return bn_cmp_words(a,b,cl);
 	}
+
+/* See the comments surrounding BIGNUM_C in bn.h */
+#ifdef BN_DEBUG
+const BIGNUM *BIGNUM_CONST(const BIGNUM_C *bn)
+	{
+	return (const BIGNUM *)bn;
+	}
+#endif
