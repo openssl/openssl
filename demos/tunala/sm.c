@@ -119,7 +119,8 @@ int state_machine_close_clean(state_machine_t *machine)
 	buffer_close(&machine->clean_in);
 	buffer_close(&machine->clean_out);
 	/* And start an SSL shutdown */
-	SSL_shutdown(machine->ssl);
+	if(machine->ssl)
+		SSL_shutdown(machine->ssl);
 	/* This is an "event", so flush the SSL of any generated traffic */
 	state_machine_churn(machine);
 	if(buffer_empty(&machine->dirty_in) &&

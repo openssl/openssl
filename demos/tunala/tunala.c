@@ -295,7 +295,7 @@ main_loop:
 		fprintf(stderr, "selector_select returned a badness error.\n");
 		abort();
 	case 0:
-		fprintf(stderr, "Warn, selector_select return 0 - signal??\n");
+		fprintf(stderr, "Warn, selector_select returned 0 - signal??\n");
 		goto main_loop;
 	default:
 		break;
@@ -678,7 +678,7 @@ static int tunala_item_io(tunala_selector_t *selector, tunala_item_t *item)
 			item->clean_send = -1;
 		item->clean_read = -1;
 	}
-	if(c_s) {
+	if(c_s && (item->clean_send != -1)) {
 		close(item->clean_send);
 		if(item->clean_send == item->clean_read)
 			item->clean_read = -1;
@@ -690,7 +690,7 @@ static int tunala_item_io(tunala_selector_t *selector, tunala_item_t *item)
 			item->dirty_send = -1;
 		item->dirty_read = -1;
 	}
-	if(d_s) {
+	if(d_s && (item->dirty_send != -1)) {
 		close(item->dirty_send);
 		if(item->dirty_send == item->dirty_read)
 			item->dirty_read = -1;
