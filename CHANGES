@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add support for shared libraries under Irix.
+     [Albert Chin-A-Young <china@thewrittenword.com>]
+
   *) Improve RPM specification file by forcing symbolic linking and making
      sure the installed documentation is also owned by root.root.
      [Damien Miller <djm@mindrot.org>]

@@ -279,6 +279,15 @@ do_solaris-shared:
 	done
 
 # This assumes that GNU utilities are *not* used
+do_irix-shared:
+	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	( set -x; ${CC} -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-Wl,-soname,lib$$i.so.${SHLIB_MAJOR} \
+		-all lib$$i.a $$libs ${EX_LIBS} -lc) || exit 1; \
+	libs="$$libs -L. -l$$i"; \
+	done
+
+# This assumes that GNU utilities are *not* used
 do_hpux-shared:
 	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; /usr/ccs/bin/ld +vnocompatwarnings \
