@@ -104,6 +104,7 @@ struct ui_st
 	STACK_OF(UI_STRING) *strings; /* We might want to prompt for more
 					 than one thing at a time, and
 					 with different echoing status.  */
+	void *user_data;
 	CRYPTO_EX_DATA ex_data;
 	};
 

@@ -129,6 +129,19 @@ int UI_dup_info_string(UI *ui, const char *text);
 int UI_add_error_string(UI *ui, const char *text);
 int UI_dup_error_string(UI *ui, const char *text);
 
+/* The following function is used to store a pointer to user-specific data.
+   Any previous such pointer will be returned and replaced.
+
+   For callback purposes, this function makes a lot more sense than using
+   ex_data, since the latter requires that different parts of OpenSSL or
+   applications share the same ex_data index.
+
+   Note that the UI_OpenSSL() method completely ignores the user data.
+   Other methods may not, however.  */
+void *UI_add_user_data(UI *ui, void *user_data);
+/* We need a user data retrieving function as well.  */
+void *UI_get0_user_data(UI *ui);
+
 /* Return the result associated with a prompt given with the index i. */
 const char *UI_get0_result(UI *ui, int i);
 

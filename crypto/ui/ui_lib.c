@@ -256,6 +256,18 @@ int UI_dup_error_string(UI *ui, const char *text)
 		NULL);
 	}
 
+void *UI_add_user_data(UI *ui, void *user_data)
+	{
+	void *old_data = ui->user_data;
+	ui->user_data = user_data;
+	return old_data;
+	}
+
+void *UI_get0_user_data(UI *ui)
+	{
+	return ui->user_data;
+	}
+
 const char *UI_get0_result(UI *ui, int i)
 	{
 	if (i < 0)
