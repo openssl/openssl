@@ -100,21 +100,18 @@ static EVP_CIPHER d_cbc_ede_cipher3=
 	EVP_CIPHER_get_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_des_ede_cbc()
+EVP_CIPHER *EVP_des_ede_cbc(void)
 	{
 	return(&d_cbc_ede_cipher2);
 	}
 
-EVP_CIPHER *EVP_des_ede3_cbc()
+EVP_CIPHER *EVP_des_ede3_cbc(void)
 	{
 	return(&d_cbc_ede_cipher3);
 	}
 	
-static void des_cbc_ede_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void des_cbc_ede_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	if (iv != NULL)
 		memcpy(&(ctx->oiv[0]),iv,8);
@@ -130,11 +127,8 @@ int enc;
 		}
 	}
 
-static void des_cbc_ede3_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void des_cbc_ede3_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	if (iv != NULL)
 		memcpy(&(ctx->oiv[0]),iv,8);
@@ -148,11 +142,8 @@ int enc;
 		}
 	}
 
-static void des_cbc_ede_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void des_cbc_ede_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	des_ede3_cbc_encrypt(in,out,inl, ctx->c.des_ede.ks1,
 		ctx->c.des_ede.ks2,ctx->c.des_ede.ks3,

@@ -78,12 +78,8 @@ static int parse_bag();
  * passed unitialised.
  */
 
-int PKCS12_parse (p12, pass, pkey, cert, ca)
-PKCS12 *p12;
-char *pass;
-EVP_PKEY **pkey;
-X509 **cert;
-STACK **ca;
+int PKCS12_parse (PKCS12 *p12, char *pass, EVP_PKEY **pkey, X509 **cert,
+	     STACK **ca)
 {
 
 /* Check for NULL PKCS12 structure */
@@ -129,13 +125,8 @@ return 0;
 
 /* Parse the outer PKCS#12 structure */
 
-static int parse_pk12 (p12, pass, passlen, pkey, cert, ca)
-PKCS12 *p12;
-unsigned char *pass;
-int passlen;
-EVP_PKEY **pkey;
-X509 **cert;
-STACK **ca;
+static int parse_pk12 (PKCS12 *p12, unsigned char *pass, int passlen,
+	     EVP_PKEY **pkey, X509 **cert, STACK **ca)
 {
 	STACK *asafes, *bags;
 	int i, bagnid;
@@ -169,15 +160,9 @@ STACK **ca;
 }
 
 
-static int parse_bags (bags, pass, passlen, pkey, cert, ca, keyid, keymatch)
-STACK *bags;
-unsigned char *pass;
-int passlen;
-EVP_PKEY **pkey;
-X509 **cert;
-STACK **ca;
-ASN1_OCTET_STRING **keyid;
-char *keymatch;
+static int parse_bags (STACK *bags, unsigned char *pass, int passlen,
+	     EVP_PKEY **pkey, X509 **cert, STACK **ca, ASN1_OCTET_STRING **keyid,
+	     char *keymatch)
 {
 	int i;
 	for (i = 0; i < sk_num (bags); i++) {
@@ -192,15 +177,9 @@ char *keymatch;
 #define MATCH_CERT 0x2
 #define MATCH_ALL  0x3
 
-static int parse_bag (bag, pass, passlen, pkey, cert, ca, keyid, keymatch)
-PKCS12_SAFEBAG *bag;
-unsigned char *pass;
-int passlen;
-EVP_PKEY **pkey;
-X509 **cert;
-STACK **ca;
-ASN1_OCTET_STRING **keyid;
-char *keymatch;
+static int parse_bag (PKCS12_SAFEBAG *bag, unsigned char *pass, int passlen,
+	     EVP_PKEY **pkey, X509 **cert, STACK **ca, ASN1_OCTET_STRING **keyid,
+	     char *keymatch)
 {
 	PKCS8_PRIV_KEY_INFO *p8;
 	X509 *x509;

@@ -58,13 +58,8 @@
 
 #include "des_locl.h"
 
-void des_ncbc_encrypt(input, output, length, schedule, ivec, enc)
-des_cblock (*input);
-des_cblock (*output);
-long length;
-des_key_schedule schedule;
-des_cblock (*ivec);
-int enc;
+void des_ncbc_encrypt(des_cblock (*input), des_cblock (*output), long length,
+	     des_key_schedule schedule, des_cblock (*ivec), int enc)
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;

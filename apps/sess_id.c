@@ -89,9 +89,7 @@ static SSL_SESSION *load_sess_id(char *file, int format);
 static SSL_SESSION *load_sess_id();
 #endif
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	SSL_SESSION *x=NULL;
 	int ret=1,i,num,badops=0;
@@ -271,9 +269,7 @@ end:
 	EXIT(ret);
 	}
 
-static SSL_SESSION *load_sess_id(infile, format)
-char *infile;
-int format;
+static SSL_SESSION *load_sess_id(char *infile, int format)
 	{
 	SSL_SESSION *x=NULL;
 	BIO *in=NULL;

@@ -60,18 +60,9 @@
 #include "cryptlib.h"
 #include "pkcs12.h"
 
-PKCS12 *PKCS12_create(pass, name, pkey, cert, ca, nid_key, nid_cert, iter,
- mac_iter, keytype)
-char *pass;
-char *name;
-EVP_PKEY *pkey;
-X509 *cert;
-STACK *ca;
-int nid_key;
-int nid_cert;
-int iter;
-int mac_iter;
-int keytype;
+PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
+	     STACK *ca, int nid_key, int nid_cert, int iter, int mac_iter,
+	     int keytype)
 {
 	PKCS12 *p12;
 	STACK *bags, *safes;

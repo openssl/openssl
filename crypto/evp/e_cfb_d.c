@@ -84,16 +84,13 @@ static EVP_CIPHER d_cfb_cipher=
 	EVP_CIPHER_get_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_des_cfb()
+EVP_CIPHER *EVP_des_cfb(void)
 	{
 	return(&d_cfb_cipher);
 	}
 	
-static void des_cfb_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void des_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	ctx->num=0;
 
@@ -104,11 +101,8 @@ int enc;
 		des_set_key(key,ctx->c.des_ks);
 	}
 
-static void des_cfb_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	des_cfb64_encrypt(
 		in,out,

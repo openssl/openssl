@@ -66,9 +66,7 @@
  *ASN1err(ASN1_F_D2I_PKCS12,ASN1_R_DECODE_ERROR)
  */
 
-int i2d_PKCS12(a,pp)
-PKCS12 *a;
-unsigned char **pp;
+int i2d_PKCS12(PKCS12 *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
 
@@ -85,10 +83,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-PKCS12 *d2i_PKCS12(a,pp,length)
-PKCS12 **a;
-unsigned char **pp;
-long length;
+PKCS12 *d2i_PKCS12(PKCS12 **a, unsigned char **pp, long length)
 {
 	M_ASN1_D2I_vars(a,PKCS12 *,PKCS12_new);
 	M_ASN1_D2I_Init();
@@ -99,7 +94,7 @@ long length;
 	M_ASN1_D2I_Finish(a, PKCS12_free, ASN1_F_D2I_PKCS12);
 }
 
-PKCS12 *PKCS12_new()
+PKCS12 *PKCS12_new(void)
 {
 	PKCS12 *ret=NULL;
 	ASN1_CTX c;
@@ -111,8 +106,7 @@ PKCS12 *PKCS12_new()
 	M_ASN1_New_Error(ASN1_F_PKCS12_NEW);
 }
 
-void PKCS12_free (a)
-PKCS12 *a;
+void PKCS12_free (PKCS12 *a)
 {
 	if (a == NULL) return;
 	ASN1_INTEGER_free (a->version);

@@ -112,7 +112,7 @@ static MD2_INT S[256]={
 	0xDB, 0x99, 0x8D, 0x33, 0x9F, 0x11, 0x83, 0x14,
 	};
 
-const char *MD2_options()
+const char *MD2_options(void)
 	{
 	if (sizeof(MD2_INT) == 1)
 		return("md2(char)");
@@ -120,8 +120,7 @@ const char *MD2_options()
 		return("md2(int)");
 	}
 
-void MD2_Init(c)
-MD2_CTX *c;
+void MD2_Init(MD2_CTX *c)
 	{
 	c->num=0;
 	memset(c->state,0,MD2_BLOCK*sizeof(MD2_INT));
@@ -129,10 +128,7 @@ MD2_CTX *c;
 	memset(c->data,0,MD2_BLOCK);
 	}
 
-void MD2_Update(c, data, len)
-MD2_CTX *c;
-register unsigned char *data;
-unsigned long len;
+void MD2_Update(MD2_CTX *c, register unsigned char *data, unsigned long len)
 	{
 	register UCHAR *p;
 
@@ -170,9 +166,7 @@ unsigned long len;
 	c->num=(int)len;
 	}
 
-static void md2_block(c, d)
-MD2_CTX *c;
-unsigned char *d;
+static void md2_block(MD2_CTX *c, unsigned char *d)
 	{
 	register MD2_INT t,*sp1,*sp2;
 	register int i,j;
@@ -208,9 +202,7 @@ unsigned char *d;
 	memset(state,0,48*sizeof(MD2_INT));
 	}
 
-void MD2_Final(md, c)
-unsigned char *md;
-MD2_CTX *c;
+void MD2_Final(unsigned char *md, MD2_CTX *c)
 	{
 	int i,v;
 	register UCHAR *cp;

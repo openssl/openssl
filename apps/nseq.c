@@ -70,9 +70,7 @@ static int dump_cert_text(BIO *out, X509 *x);
 static int dump_cert_text();
 #endif
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 {
 	char **args, *infile = NULL, *outfile = NULL;
 	BIO *in = NULL, *out = NULL;
@@ -163,9 +161,7 @@ end:
 	EXIT(ret);
 }
 
-static int dump_cert_text(out, x)
-BIO *out;
-X509 *x;
+static int dump_cert_text(BIO *out, X509 *x)
 {
         char buf[256];
         X509_NAME_oneline(X509_get_subject_name(x),buf,256);

@@ -139,9 +139,7 @@ static BIO_METHOD methods_connectp=
 	conn_free,
 	};
 
-static int conn_state(b,c)
-BIO *b;
-BIO_CONNECT *c;
+static int conn_state(BIO *b, BIO_CONNECT *c)
 	{
 	int ret= -1,i;
 	unsigned long l;
@@ -334,7 +332,7 @@ end:
 	return(ret);
 	}
 
-BIO_CONNECT *BIO_CONNECT_new()
+BIO_CONNECT *BIO_CONNECT_new(void)
 	{
 	BIO_CONNECT *ret;
 
@@ -354,8 +352,7 @@ BIO_CONNECT *BIO_CONNECT_new()
 	return(ret);
 	}
 
-void BIO_CONNECT_free(a)
-BIO_CONNECT *a;
+void BIO_CONNECT_free(BIO_CONNECT *a)
 	{
 	if(a == NULL)
 	    return;
@@ -367,13 +364,12 @@ BIO_CONNECT *a;
 	Free(a);
 	}
 
-BIO_METHOD *BIO_s_connect()
+BIO_METHOD *BIO_s_connect(void)
 	{
 	return(&methods_connectp);
 	}
 
-static int conn_new(bi)
-BIO *bi;
+static int conn_new(BIO *bi)
 	{
 	bi->init=0;
 	bi->num=INVALID_SOCKET;
@@ -384,8 +380,7 @@ BIO *bi;
 		return(1);
 	}
 
-static void conn_close_socket(bio)
-BIO *bio;
+static void conn_close_socket(BIO *bio)
 	{
 	BIO_CONNECT *c;
 
@@ -400,8 +395,7 @@ BIO *bio;
 		}
 	}
 
-static int conn_free(a)
-BIO *a;
+static int conn_free(BIO *a)
 	{
 	BIO_CONNECT *data;
 
@@ -419,10 +413,7 @@ BIO *a;
 	return(1);
 	}
 	
-static int conn_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int conn_read(BIO *b, char *out, int outl)
 	{
 	int ret=0;
 	BIO_CONNECT *data;
@@ -449,10 +440,7 @@ int outl;
 	return(ret);
 	}
 
-static int conn_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int conn_write(BIO *b, char *in, int inl)
 	{
 	int ret;
 	BIO_CONNECT *data;
@@ -475,11 +463,7 @@ int inl;
 	return(ret);
 	}
 
-static long conn_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long conn_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	BIO *dbio;
 	int *ip;
@@ -622,9 +606,7 @@ char *ptr;
 	return(ret);
 	}
 
-static int conn_puts(bp,str)
-BIO *bp;
-char *str;
+static int conn_puts(BIO *bp, char *str)
 	{
 	int n,ret;
 
@@ -633,8 +615,7 @@ char *str;
 	return(ret);
 	}
 
-BIO *BIO_new_connect(str)
-char *str;
+BIO *BIO_new_connect(char *str)
 	{
 	BIO *ret;
 

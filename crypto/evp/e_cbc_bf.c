@@ -86,16 +86,13 @@ static EVP_CIPHER bfish_cbc_cipher=
 	EVP_CIPHER_set_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_bf_cbc()
+EVP_CIPHER *EVP_bf_cbc(void)
 	{
 	return(&bfish_cbc_cipher);
 	}
 	
-static void bf_cbc_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void bf_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	if (iv != NULL)
 		memcpy(&(ctx->oiv[0]),iv,8);
@@ -104,11 +101,8 @@ int enc;
 		BF_set_key(&(ctx->c.bf_ks),EVP_BLOWFISH_KEY_SIZE,key);
 	}
 
-static void bf_cbc_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void bf_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	BF_cbc_encrypt(
 		in,out,(long)inl,

@@ -67,10 +67,7 @@
 #define TRUNCATE
 #define DUMP_WIDTH	16
 
-int BIO_dump(bio,s,len)
-BIO *bio;
-const char *s;
-int len;
+int BIO_dump(BIO *bio, const char *s, int len)
 {
   int ret=0;
   char buf[160+1],tmp[20];

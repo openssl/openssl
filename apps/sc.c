@@ -110,7 +110,7 @@ static void print_stuff();
 static BIO *bio_c_out=NULL;
 static int c_quiet=0;
 
-static void sc_usage()
+static void sc_usage(void)
 	{
 	BIO_printf(bio_err,"usage: client args\n");
 	BIO_printf(bio_err,"\n");
@@ -143,9 +143,7 @@ static void sc_usage()
 
 	}
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int off=0;
 	SSL *con=NULL,*con2=NULL;

@@ -130,33 +130,26 @@ static RSA_METHOD rsa_pkcs1_ref_meth={
 	NULL,
 	};
 
-RSA_METHOD *RSA_PKCS1_RSAref()
+RSA_METHOD *RSA_PKCS1_RSAref(void)
 	{
 	return(&rsa_pkcs1_ref_meth);
 	}
 
-static int RSA_ref_mod_exp(r0, I, rsa)
-BIGNUM *r0;
-BIGNUM *I;
-RSA *rsa;
+static int RSA_ref_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 	{
 	RSAREFerr(RSAREF_F_RSA_REF_MOD_EXP,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 	return(0);
 	}
 
-static int BN_ref_mod_exp(r,a,p,m,ctx,m_ctx)
-BIGNUM *r,*a,*p,*m;
-BN_CTX *ctx;
-BN_MONT_CTX *m_ctx;
+static int BN_ref_mod_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
+	     BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	RSAREFerr(RSAREF_F_BN_REF_MOD_EXP,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 	return(0);
 	}
 
-static int RSAref_bn2bin(from,to,max)
-BIGNUM *from;
-unsigned char *to; /* [max] */
-int max;
+/* unsigned char *to:  [max]    */
+static int RSAref_bn2bin(BIGNUM *from, unsigned char *to, int max)
 	{
 	int i;
 
@@ -174,10 +167,8 @@ int max;
 	}
 
 #ifdef undef
-static BIGNUM *RSAref_bin2bn(from,to,max)
-unsigned char *from; /* [max] */
-BIGNUM *to;
-int max;
+/* unsigned char *from:  [max]    */
+static BIGNUM *RSAref_bin2bn(unsigned char *from, BIGNUM *to, int max)
 	{
 	int i;
 	BIGNUM *ret;
@@ -189,9 +180,7 @@ int max;
 	return(ret);
 	}
 
-static int RSAref_Public_ref2eay(from,to)
-RSArefPublicKey *from;
-RSA *to;
+static int RSAref_Public_ref2eay(RSArefPublicKey *from, RSA *to)
 	{
 	to->n=RSAref_bin2bn(from->m,NULL,RSAref_MAX_LEN);
 	to->e=RSAref_bin2bn(from->e,NULL,RSAref_MAX_LEN);
@@ -200,9 +189,7 @@ RSA *to;
 	}
 #endif
 
-static int RSAref_Public_eay2ref(from,to)
-RSA *from;
-RSArefPublicKey *to;
+static int RSAref_Public_eay2ref(RSA *from, RSArefPublicKey *to)
 	{
 	to->bits=BN_num_bits(from->n);
 	if (!RSAref_bn2bin(from->n,to->m,RSAref_MAX_LEN)) return(0);
@@ -211,9 +198,7 @@ RSArefPublicKey *to;
 	}
 
 #ifdef undef
-static int RSAref_Private_ref2eay(from,to)
-RSArefPrivateKey *from;
-RSA *to;
+static int RSAref_Private_ref2eay(RSArefPrivateKey *from, RSA *to)
 	{
 	if ((to->n=RSAref_bin2bn(from->m,NULL,RSAref_MAX_LEN)) == NULL)
 		return(0);
@@ -237,9 +222,7 @@ RSA *to;
 	}
 #endif
 
-static int RSAref_Private_eay2ref(from,to)
-RSA *from;
-RSArefPrivateKey *to;
+static int RSAref_Private_eay2ref(RSA *from, RSArefPrivateKey *to)
 	{
 	to->bits=BN_num_bits(from->n);
 	if (!RSAref_bn2bin(from->n,to->m,RSAref_MAX_LEN)) return(0);
@@ -253,11 +236,8 @@ RSArefPrivateKey *to;
 	return(1);
 	}
 
-int RSA_ref_private_decrypt(len,from,to,rsa,padding)
-int len;
-unsigned char *from,*to;
-RSA *rsa;
-int padding;
+int RSA_ref_private_decrypt(int len, unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
 	{
 	int i,outlen= -1;
 	RSArefPrivateKey RSAkey;
@@ -274,11 +254,8 @@ err:
 	return(outlen);
 	}
 
-int RSA_ref_private_encrypt(len,from,to,rsa,padding)
-int len;
-unsigned char *from,*to;
-RSA *rsa;
-int padding;
+int RSA_ref_private_encrypt(int len, unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
 	{
 	int i,outlen= -1;
 	RSArefPrivateKey RSAkey;
@@ -300,11 +277,8 @@ err:
 	return(outlen);
 	}
 
-int RSA_ref_public_decrypt(len,from,to,rsa,padding)
-int len;
-unsigned char *from,*to;
-RSA *rsa;
-int padding;
+int RSA_ref_public_decrypt(int len, unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
 	{
 	int i,outlen= -1;
 	RSArefPublicKey RSAkey;
@@ -321,11 +295,8 @@ err:
 	return(outlen);
 	}
 
-int RSA_ref_public_encrypt(len,from,to,rsa,padding)
-int len;
-unsigned char *from,*to;
-RSA *rsa;
-int padding;
+int RSA_ref_public_encrypt(int len, unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
 	{
 	int outlen= -1;
 	int i;

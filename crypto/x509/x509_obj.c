@@ -63,10 +63,7 @@
 #include "x509.h"
 #include "buffer.h"
 
-char *X509_NAME_oneline(a,buf,len)
-X509_NAME *a;
-char *buf;
-int len;
+char *X509_NAME_oneline(X509_NAME *a, char *buf, int len)
 	{
 	X509_NAME_ENTRY *ne;
 	unsigned int i;

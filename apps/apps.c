@@ -76,10 +76,7 @@ int app_init();
 #endif
 
 #ifdef undef /* never finished - probably never will be :-) */
-int args_from_file(file,argc,argv)
-char *file;
-int *argc;
-char **argv[];
+int args_from_file(char *file, int *argc, char **argv[])
 	{
 	FILE *fp;
 	int num,i;
@@ -157,8 +154,7 @@ char **argv[];
 	}
 #endif
 
-int str2fmt(s)
-char *s;
+int str2fmt(char *s)
 	{
 	if 	((*s == 'D') || (*s == 'd'))
 		return(FORMAT_ASN1);
@@ -173,10 +169,7 @@ char *s;
 	}
 
 #if defined(MSDOS) || defined(WIN32) || defined(WIN16)
-void program_name(in,out,size)
-char *in;
-char *out;
-int size;
+void program_name(char *in, char *out, int size)
 	{
 	int i,n;
 	char *p=NULL;
@@ -213,10 +206,7 @@ int size;
 	out[n]='\0';
 	}
 #else
-void program_name(in,out,size)
-char *in;
-char *out;
-int size;
+void program_name(char *in, char *out, int size)
 	{
 	char *p;
 
@@ -231,9 +221,7 @@ int size;
 #endif
 
 #ifdef WIN32
-int WIN32_rename(from,to)
-char *from;
-char *to;
+int WIN32_rename(char *from, char *to)
 	{
 	int ret;
 
@@ -242,11 +230,7 @@ char *to;
 	}
 #endif
 
-int chopup_args(arg,buf,argc,argv)
-ARGS *arg;
-char *buf;
-int *argc;
-char **argv[];
+int chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 	{
 	int num,len,i;
 	char *p;
@@ -312,8 +296,7 @@ char **argv[];
 	}
 
 #ifndef APP_INIT
-int app_init(mesgwin)
-long mesgwin;
+int app_init(long mesgwin)
 	{
 	return(1);
 	}

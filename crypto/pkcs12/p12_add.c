@@ -62,12 +62,8 @@
 
 /* Pack an object into an OCTET STRING and turn into a safebag */
 
-PKCS12_SAFEBAG *PKCS12_pack_safebag (obj, i2d, nid1, nid2)
-char *obj;
-int (*i2d)();
-int nid1;
-int nid2;
-
+PKCS12_SAFEBAG *PKCS12_pack_safebag (char *obj, int (*i2d)(), int nid1,
+	     int nid2)
 {
 	PKCS12_BAGS *bag;
 	PKCS12_SAFEBAG *safebag;
@@ -91,8 +87,7 @@ int nid2;
 
 /* Turn PKCS8 object into a keybag */
 
-PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG (p8)
-PKCS8_PRIV_KEY_INFO *p8;
+PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG (PKCS8_PRIV_KEY_INFO *p8)
 {
 	PKCS12_SAFEBAG *bag;
 	if (!(bag = PKCS12_SAFEBAG_new())) {
@@ -106,8 +101,7 @@ PKCS8_PRIV_KEY_INFO *p8;
 
 /* Turn PKCS8 object into a shrouded keybag */
 
-PKCS12_SAFEBAG
-	 *PKCS12_MAKE_SHKEYBAG (pbe_nid, pass, passlen, salt, saltlen, iter, p8)int pbe_nid;
+PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG (pbe_nid, pass, passlen, salt, saltlen, iter, p8)int pbe_nid;
 unsigned char *pass;
 int passlen;
 unsigned char *salt;
@@ -134,8 +128,7 @@ PKCS8_PRIV_KEY_INFO *p8;
 }
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 data Contentinfo */
-PKCS7 *PKCS12_pack_p7data (sk)
-STACK *sk;
+PKCS7 *PKCS12_pack_p7data (STACK *sk)
 {
 	PKCS7 *p7;
 	if (!(p7 = PKCS7_new())) {
@@ -158,15 +151,8 @@ STACK *sk;
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 encrypted data ContentInfo */
 
-PKCS7 *PKCS12_pack_p7encdata (pbe_nid, pass, passlen, salt, saltlen, iter,
-									 bags)
-int pbe_nid;
-unsigned char *pass;
-int passlen;
-unsigned char *salt;
-int saltlen;
-int iter;
-STACK *bags;
+PKCS7 *PKCS12_pack_p7encdata (int pbe_nid, unsigned char *pass, int passlen,
+	     unsigned char *salt, int saltlen, int iter, STACK *bags)
 {
 	PKCS7 *p7;
 	X509_ALGOR *pbe;
@@ -198,14 +184,9 @@ STACK *bags;
 	return p7;
 }
 
-X509_SIG *PKCS8_encrypt (pbe_nid, pass, passlen, salt, saltlen, iter, p8inf)
-int pbe_nid;
-unsigned char *pass;
-int passlen;
-unsigned char *salt;
-int saltlen;
-int iter;
-PKCS8_PRIV_KEY_INFO *p8inf;
+X509_SIG *PKCS8_encrypt (int pbe_nid, unsigned char *pass, int passlen,
+	     unsigned char *salt, int saltlen, int iter,
+	     PKCS8_PRIV_KEY_INFO *p8inf)
 {
 	X509_SIG *p8;
 	X509_ALGOR *pbe;

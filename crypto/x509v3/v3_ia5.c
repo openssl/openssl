@@ -90,9 +90,8 @@ static ASN1_IA5STRING *ia5string_new(void)
 	return ASN1_IA5STRING_new();
 }
 
-static char *i2s_ASN1_IA5STRING(method, ia5)
-X509V3_EXT_METHOD *method;
-ASN1_IA5STRING *ia5;
+static char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
+	     ASN1_IA5STRING *ia5)
 {
 	char *tmp;
 	if(!ia5 || !ia5->length) return NULL;
@@ -102,10 +101,8 @@ ASN1_IA5STRING *ia5;
 	return tmp;
 }
 
-static ASN1_IA5STRING *s2i_ASN1_IA5STRING(method, ctx, str)
-X509V3_EXT_METHOD *method;
-X509V3_CTX *ctx;
-char *str;
+static ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
+	     X509V3_CTX *ctx, char *str)
 {
 	ASN1_IA5STRING *ia5;
 	if(!str) {

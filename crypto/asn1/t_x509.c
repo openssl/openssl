@@ -71,9 +71,7 @@
 #include "x509v3.h"
 
 #ifndef NO_FP_API
-int X509_print_fp(fp,x)
-FILE *fp;
-X509 *x;
+int X509_print_fp(FILE *fp, X509 *x)
         {
         BIO *b;
         int ret;
@@ -90,9 +88,7 @@ X509 *x;
         }
 #endif
 
-int X509_print(bp,x)
-BIO *bp;
-X509 *x;
+int X509_print(BIO *bp, X509 *x)
 	{
 	long l;
 	int ret=0,i,j,n;
@@ -233,9 +229,7 @@ err:
 	return(ret);
 	}
 
-int ASN1_STRING_print(bp,v)
-BIO *bp;
-ASN1_STRING *v;
+int ASN1_STRING_print(BIO *bp, ASN1_STRING *v)
 	{
 	int i,n;
 	char buf[80],*p;;
@@ -264,9 +258,7 @@ ASN1_STRING *v;
 	return(1);
 	}
 
-int ASN1_TIME_print(bp, tm)
-BIO *bp;
-ASN1_TIME *tm;
+int ASN1_TIME_print(BIO *bp, ASN1_TIME *tm)
 {
 	if(tm->type == V_ASN1_UTCTIME) return ASN1_UTCTIME_print(bp, tm);
 	if(tm->type == V_ASN1_GENERALIZEDTIME)
@@ -281,9 +273,7 @@ static const char *mon[12]=
     "Jul","Aug","Sep","Oct","Nov","Dec"
     };
 
-int ASN1_GENERALIZEDTIME_print(bp,tm)
-BIO *bp;
-ASN1_GENERALIZEDTIME *tm;
+int ASN1_GENERALIZEDTIME_print(BIO *bp, ASN1_GENERALIZEDTIME *tm)
 	{
 	char *v;
 	int gmt=0;
@@ -317,9 +307,7 @@ err:
 	return(0);
 	}
 
-int ASN1_UTCTIME_print(bp,tm)
-BIO *bp;
-ASN1_UTCTIME *tm;
+int ASN1_UTCTIME_print(BIO *bp, ASN1_UTCTIME *tm)
 	{
 	char *v;
 	int gmt=0;
@@ -354,10 +342,7 @@ err:
 	return(0);
 	}
 
-int X509_NAME_print(bp,name,obase)
-BIO *bp;
-X509_NAME *name;
-int obase;
+int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 	{
 	char *s,*c;
 	int ret=0,l,ll,i,first=1;

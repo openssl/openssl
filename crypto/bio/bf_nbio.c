@@ -104,13 +104,12 @@ static BIO_METHOD methods_nbiof=
 	nbiof_free,
 	};
 
-BIO_METHOD *BIO_f_nbio_test()
+BIO_METHOD *BIO_f_nbio_test(void)
 	{
 	return(&methods_nbiof);
 	}
 
-static int nbiof_new(bi)
-BIO *bi;
+static int nbiof_new(BIO *bi)
 	{
 	NBIO_TEST *nt;
 
@@ -123,8 +122,7 @@ BIO *bi;
 	return(1);
 	}
 
-static int nbiof_free(a)
-BIO *a;
+static int nbiof_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 	if (a->ptr != NULL)
@@ -135,10 +133,7 @@ BIO *a;
 	return(1);
 	}
 	
-static int nbiof_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int nbiof_read(BIO *b, char *out, int outl)
 	{
 	NBIO_TEST *nt;
 	int ret=0;
@@ -173,10 +168,7 @@ int outl;
 	return(ret);
 	}
 
-static int nbiof_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int nbiof_write(BIO *b, char *in, int inl)
 	{
 	NBIO_TEST *nt;
 	int ret=0;
@@ -221,11 +213,7 @@ int inl;
 	return(ret);
 	}
 
-static long nbiof_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long nbiof_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	long ret;
 
@@ -247,19 +235,14 @@ char *ptr;
 	return(ret);
 	}
 
-static int nbiof_gets(bp,buf,size)
-BIO *bp;
-char *buf;
-int size;
+static int nbiof_gets(BIO *bp, char *buf, int size)
 	{
 	if (bp->next_bio == NULL) return(0);
 	return(BIO_gets(bp->next_bio,buf,size));
 	}
 
 
-static int nbiof_puts(bp,str)
-BIO *bp;
-char *str;
+static int nbiof_puts(BIO *bp, char *str)
 	{
 	if (bp->next_bio == NULL) return(0);
 	return(BIO_puts(bp->next_bio,str));

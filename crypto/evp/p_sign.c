@@ -63,27 +63,20 @@
 #include "x509.h"
 
 #ifdef undef
-void EVP_SignInit(ctx,type)
-EVP_MD_CTX *ctx;
-EVP_MD *type;
+void EVP_SignInit(EVP_MD_CTX *ctx, EVP_MD *type)
 	{
 	EVP_DigestInit(ctx,type);
 	}
 
-void EVP_SignUpdate(ctx,data,count)
-EVP_MD_CTX *ctx;
-unsigned char *data;
-unsigned int count;
+void EVP_SignUpdate(EVP_MD_CTX *ctx, unsigned char *data,
+	     unsigned int count)
 	{
 	EVP_DigestUpdate(ctx,data,count);
 	}
 #endif
 
-int EVP_SignFinal(ctx,sigret,siglen,pkey)
-EVP_MD_CTX *ctx;
-unsigned char *sigret;
-unsigned int *siglen;
-EVP_PKEY *pkey;
+int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
+	     EVP_PKEY *pkey)
 	{
 	unsigned char m[EVP_MAX_MD_SIZE];
 	unsigned int m_len;

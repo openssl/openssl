@@ -72,18 +72,13 @@ static void SSL_SESSION_list_add();
 static int ssl_session_num=0;
 static STACK *ssl_session_meth=NULL;
 
-SSL_SESSION *SSL_get_session(ssl)
-SSL *ssl;
+SSL_SESSION *SSL_get_session(SSL *ssl)
 	{
 	return(ssl->session);
 	}
 
-int SSL_SESSION_get_ex_new_index(argl,argp,new_func,dup_func,free_func)
-long argl;
-char *argp;
-int (*new_func)();
-int (*dup_func)();
-void (*free_func)();
+int SSL_SESSION_get_ex_new_index(long argl, char *argp, int (*new_func)(),
+	     int (*dup_func)(), void (*free_func)())
         {
         ssl_session_num++;
         return(CRYPTO_get_ex_new_index(ssl_session_num-1,
@@ -91,22 +86,17 @@ void (*free_func)();
                 argl,argp,new_func,dup_func,free_func));
         }
 
-int SSL_SESSION_set_ex_data(s,idx,arg)
-SSL_SESSION *s;
-int idx;
-void *arg;
+int SSL_SESSION_set_ex_data(SSL_SESSION *s, int idx, void *arg)
 	{
 	return(CRYPTO_set_ex_data(&s->ex_data,idx,arg));
 	}
 
-void *SSL_SESSION_get_ex_data(s,idx)
-SSL_SESSION *s;
-int idx;
+void *SSL_SESSION_get_ex_data(SSL_SESSION *s, int idx)
 	{
 	return(CRYPTO_get_ex_data(&s->ex_data,idx));
 	}
 
-SSL_SESSION *SSL_SESSION_new()
+SSL_SESSION *SSL_SESSION_new(void)
 	{
 	SSL_SESSION *ss;
 
@@ -128,9 +118,7 @@ SSL_SESSION *SSL_SESSION_new()
 	return(ss);
 	}
 
-int ssl_get_new_session(s, session)
-SSL *s;
-int session;
+int ssl_get_new_session(SSL *s, int session)
 	{
 	SSL_SESSION *ss=NULL;
 
@@ -198,10 +186,7 @@ int session;
 	return(1);
 	}
 
-int ssl_get_prev_session(s,session_id,len)
-SSL *s;
-unsigned char *session_id;
-int len;
+int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 	{
 	SSL_SESSION *ret=NULL,data;
 	int copy=1;
@@ -292,9 +277,7 @@ int len;
 	return(1);
 	}
 
-int SSL_CTX_add_session(ctx,c)
-SSL_CTX *ctx;
-SSL_SESSION *c;
+int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 	{
 	int ret=0;
 	SSL_SESSION *s;
@@ -339,9 +322,7 @@ SSL_SESSION *c;
 	return(ret);
 	}
 
-int SSL_CTX_remove_session(ctx,c)
-SSL_CTX *ctx;
-SSL_SESSION *c;
+int SSL_CTX_remove_session(SSL_CTX *ctx, SSL_SESSION *c)
 	{
 	SSL_SESSION *r;
 	int ret=0;
@@ -371,8 +352,7 @@ SSL_SESSION *c;
 	return(ret);
 	}
 
-void SSL_SESSION_free(ss)
-SSL_SESSION *ss;
+void SSL_SESSION_free(SSL_SESSION *ss)
 	{
 	int i;
 
@@ -404,9 +384,7 @@ SSL_SESSION *ss;
 	Free(ss);
 	}
 
-int SSL_set_session(s, session)
-SSL *s;
-SSL_SESSION *session;
+int SSL_set_session(SSL *s, SSL_SESSION *session)
 	{
 	int ret=0;
 	SSL_METHOD *meth;
@@ -459,41 +437,33 @@ SSL_SESSION *session;
 	return(ret);
 	}
 
-long SSL_SESSION_set_timeout(s,t)
-SSL_SESSION *s;
-long t;
+long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 	{
 	if (s == NULL) return(0);
 	s->timeout=t;
 	return(1);
 	}
 
-long SSL_SESSION_get_timeout(s)
-SSL_SESSION *s;
+long SSL_SESSION_get_timeout(SSL_SESSION *s)
 	{
 	if (s == NULL) return(0);
 	return(s->timeout);
 	}
 
-long SSL_SESSION_get_time(s)
-SSL_SESSION *s;
+long SSL_SESSION_get_time(SSL_SESSION *s)
 	{
 	if (s == NULL) return(0);
 	return(s->time);
 	}
 
-long SSL_SESSION_set_time(s,t)
-SSL_SESSION *s;
-long t;
+long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 	{
 	if (s == NULL) return(0);
 	s->time=t;
 	return(t);
 	}
 
-long SSL_CTX_set_timeout(s,t)
-SSL_CTX *s;
-long t;
+long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 	{
 	long l;
 	if (s == NULL) return(0);
@@ -502,8 +472,7 @@ long t;
 	return(l);
 	}
 
-long SSL_CTX_get_timeout(s)
-SSL_CTX *s;
+long SSL_CTX_get_timeout(SSL_CTX *s)
 	{
 	if (s == NULL) return(0);
 	return(s->session_timeout);
@@ -516,9 +485,7 @@ typedef struct timeout_param_st
 	LHASH *cache;
 	} TIMEOUT_PARAM;
 
-static void timeout(s,p)
-SSL_SESSION *s;
-TIMEOUT_PARAM *p;
+static void timeout(SSL_SESSION *s, TIMEOUT_PARAM *p)
 	{
 	if ((p->time == 0) || (p->time > (s->time+s->timeout))) /* timeout */
 		{
@@ -533,9 +500,7 @@ TIMEOUT_PARAM *p;
 		}
 	}
 
-void SSL_CTX_flush_sessions(s,t)
-SSL_CTX *s;
-long t;
+void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 	{
 	unsigned long i;
 	TIMEOUT_PARAM tp;
@@ -552,8 +517,7 @@ long t;
 	CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 	}
 
-int ssl_clear_bad_session(s)
-SSL *s;
+int ssl_clear_bad_session(SSL *s)
 	{
 	if (	(s->session != NULL) &&
 		!(s->shutdown & SSL_SENT_SHUTDOWN) &&
@@ -567,9 +531,7 @@ SSL *s;
 	}
 
 /* locked by SSL_CTX in the calling function */
-static void SSL_SESSION_list_remove(ctx,s)
-SSL_CTX *ctx;
-SSL_SESSION *s;
+static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s)
 	{
 	if ((s->next == NULL) || (s->prev == NULL)) return;
 
@@ -602,9 +564,7 @@ SSL_SESSION *s;
 	s->prev=s->next=NULL;
 	}
 
-static void SSL_SESSION_list_add(ctx,s)
-SSL_CTX *ctx;
-SSL_SESSION *s;
+static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s)
 	{
 	if ((s->next != NULL) && (s->prev != NULL))
 		SSL_SESSION_list_remove(ctx,s);

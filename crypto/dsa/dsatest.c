@@ -117,9 +117,7 @@ static unsigned char out_g[]={
 
 static BIO *bio_err=NULL;
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 	{
 	DSA *dsa=NULL;
 	int counter,ret=0,i,j;
@@ -193,10 +191,7 @@ end:
 	return(0);
 	}
 
-static void MS_CALLBACK dsa_cb(p, n, arg)
-int p;
-int n;
-char *arg;
+static void MS_CALLBACK dsa_cb(int p, int n, char *arg)
 	{
 	char c='*';
 	static int ok=0,num=0;

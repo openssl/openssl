@@ -99,8 +99,7 @@ LHASH *config=NULL;
 char *default_config_file=NULL;
 
 #ifdef DEBUG
-static void sig_stop(i)
-int i;
+static void sig_stop(int i)
 	{
 	char *a=NULL;
 
@@ -113,9 +112,7 @@ int i;
 BIO *bio_err=NULL;
 #endif
 
-int main(Argc,Argv)
-int Argc;
-char *Argv[];
+int main(int Argc, char *Argv[])
 	{
 	ARGS arg;
 #define PROG_NAME_SIZE	16
@@ -258,10 +255,7 @@ end:
 #define LIST_MESSAGE_DIGEST_COMMANDS "list-message-digest-commands"
 #define LIST_CIPHER_COMMANDS "list-cipher-commands"
 
-static int do_cmd(prog,argc,argv)
-LHASH *prog;
-int argc;
-char *argv[];
+static int do_cmd(LHASH *prog, int argc, char *argv[])
 	{
 	FUNCTION f,*fp;
 	int i,ret=1,tp,nl;
@@ -354,7 +348,7 @@ static int SortFnByName(const void *_f1,const void *_f2)
     return strcmp(f1->name,f2->name);
     }
 
-static LHASH *prog_init()
+static LHASH *prog_init(void)
 	{
 	LHASH *ret;
 	FUNCTION *f;
@@ -372,14 +366,12 @@ static LHASH *prog_init()
 	return(ret);
 	}
 
-static int MS_CALLBACK cmp(a,b)
-FUNCTION *a,*b;
+static int MS_CALLBACK cmp(FUNCTION *a, FUNCTION *b)
 	{
 	return(strncmp(a->name,b->name,8));
 	}
 
-static unsigned long MS_CALLBACK hash(a)
-FUNCTION *a;
+static unsigned long MS_CALLBACK hash(FUNCTION *a)
 	{
 	return(lh_strhash(a->name));
 	}

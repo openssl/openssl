@@ -66,9 +66,7 @@
  * ASN1err(ASN1_F_D2I_PKCS7_SIGNED,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
-int i2d_PKCS7_SIGNED(a,pp)
-PKCS7_SIGNED *a;
-unsigned char **pp;
+int i2d_PKCS7_SIGNED(PKCS7_SIGNED *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -91,10 +89,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-PKCS7_SIGNED *d2i_PKCS7_SIGNED(a,pp,length)
-PKCS7_SIGNED **a;
-unsigned char **pp;
-long length;
+PKCS7_SIGNED *d2i_PKCS7_SIGNED(PKCS7_SIGNED **a, unsigned char **pp,
+	     long length)
 	{
 	M_ASN1_D2I_vars(a,PKCS7_SIGNED *,PKCS7_SIGNED_new);
 
@@ -111,7 +107,7 @@ long length;
 	M_ASN1_D2I_Finish(a,PKCS7_SIGNED_free,ASN1_F_D2I_PKCS7_SIGNED);
 	}
 
-PKCS7_SIGNED *PKCS7_SIGNED_new()
+PKCS7_SIGNED *PKCS7_SIGNED_new(void)
 	{
 	PKCS7_SIGNED *ret=NULL;
 	ASN1_CTX c;
@@ -127,8 +123,7 @@ PKCS7_SIGNED *PKCS7_SIGNED_new()
 	M_ASN1_New_Error(ASN1_F_PKCS7_SIGNED_NEW);
 	}
 
-void PKCS7_SIGNED_free(a)
-PKCS7_SIGNED *a;
+void PKCS7_SIGNED_free(PKCS7_SIGNED *a)
 	{
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->version);

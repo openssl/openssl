@@ -69,8 +69,7 @@ static SSL_METHOD *tls1_get_client_method(int ver);
 static SSL_METHOD *tls1_get_client_method();
 #endif
 
-static SSL_METHOD *tls1_get_client_method(ver)
-int ver;
+static SSL_METHOD *tls1_get_client_method(int ver)
 	{
 	if (ver == TLS1_VERSION)
 		return(TLSv1_client_method());
@@ -78,7 +77,7 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *TLSv1_client_method()
+SSL_METHOD *TLSv1_client_method(void)
 	{
 	static int init=1;
 	static SSL_METHOD TLSv1_client_data;

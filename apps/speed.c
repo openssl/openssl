@@ -204,8 +204,7 @@ static SIGRETTYPE sig_done(int sig);
 static SIGRETTYPE sig_done();
 #endif
 
-static SIGRETTYPE sig_done(sig)
-int sig;
+static SIGRETTYPE sig_done(int sig)
 	{
 	signal(SIGALRM,sig_done);
 	run=0;
@@ -218,8 +217,7 @@ int sig;
 #define START	0
 #define STOP	1
 
-static double Time_F(s)
-int s;
+static double Time_F(int s)
 	{
 	double ret;
 #ifdef TIMES
@@ -255,9 +253,7 @@ int s;
 #endif
 	}
 
-int MAIN(argc,argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	unsigned char *buf=NULL,*buf2=NULL;
 	int ret=1;
@@ -1183,10 +1179,7 @@ end:
 	EXIT(ret);
 	}
 
-static void print_message(s,num,length)
-char *s;
-long num;
-int length;
+static void print_message(char *s, long num, int length)
 	{
 #ifdef SIGALRM
 	BIO_printf(bio_err,"Doing %s for %ds on %d size blocks: ",s,SECONDS,length);
@@ -1201,12 +1194,8 @@ int length;
 #endif
 	}
 
-static void pkey_print_message(str,str2,num,bits,tm)
-char *str;
-char *str2;
-long num;
-int bits;
-int tm;
+static void pkey_print_message(char *str, char *str2, long num, int bits,
+	     int tm)
 	{
 #ifdef SIGALRM
 	BIO_printf(bio_err,"Doing %d bit %s %s's for %ds: ",bits,str,str2,tm);

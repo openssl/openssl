@@ -66,8 +66,7 @@ static SSL_METHOD *ssl3_get_method(int ver);
 static SSL_METHOD *ssl3_get_method();
 #endif
 
-static SSL_METHOD *ssl3_get_method(ver)
-int ver;
+static SSL_METHOD *ssl3_get_method(int ver)
 	{
 	if (ver == SSL3_VERSION)
 		return(SSLv3_method());
@@ -75,7 +74,7 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv3_method()
+SSL_METHOD *SSLv3_method(void)
 	{
 	static int init=1;
 	static SSL_METHOD SSLv3_data;

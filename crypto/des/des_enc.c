@@ -58,10 +58,7 @@
 
 #include "des_locl.h"
 
-void des_encrypt(data, ks, enc)
-DES_LONG *data;
-des_key_schedule ks;
-int enc;
+void des_encrypt(DES_LONG *data, des_key_schedule ks, int enc)
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
@@ -159,10 +156,7 @@ int enc;
 	l=r=t=u=0;
 	}
 
-void des_encrypt2(data, ks, enc)
-DES_LONG *data;
-des_key_schedule ks;
-int enc;
+void des_encrypt2(DES_LONG *data, des_key_schedule ks, int enc)
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
@@ -253,11 +247,8 @@ int enc;
 	l=r=t=u=0;
 	}
 
-void des_encrypt3(data,ks1,ks2,ks3)
-DES_LONG *data;
-des_key_schedule ks1;
-des_key_schedule ks2;
-des_key_schedule ks3;
+void des_encrypt3(DES_LONG *data, des_key_schedule ks1, des_key_schedule ks2,
+	     des_key_schedule ks3)
 	{
 	register DES_LONG l,r;
 
@@ -276,11 +267,8 @@ des_key_schedule ks3;
 	data[1]=r;
 	}
 
-void des_decrypt3(data,ks1,ks2,ks3)
-DES_LONG *data;
-des_key_schedule ks1;
-des_key_schedule ks2;
-des_key_schedule ks3;
+void des_decrypt3(DES_LONG *data, des_key_schedule ks1, des_key_schedule ks2,
+	     des_key_schedule ks3)
 	{
 	register DES_LONG l,r;
 
@@ -301,13 +289,8 @@ des_key_schedule ks3;
 
 #ifndef DES_DEFAULT_OPTIONS
 
-void des_ncbc_encrypt(in, out, length, schedule, ivec, enc)
-const unsigned char *in;
-unsigned char *out;
-long length;
-des_key_schedule schedule;
-des_cblock ivec;
-int enc;
+void des_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+	     des_key_schedule schedule, des_cblock ivec, int enc)
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;
@@ -380,15 +363,9 @@ int enc;
 	tin[0]=tin[1]=0;
 	}
 
-void des_ede3_cbc_encrypt(input, output, length, ks1, ks2, ks3, ivec, enc)
-const unsigned char *input;
-unsigned char *output;
-long length;
-des_key_schedule ks1;
-des_key_schedule ks2;
-des_key_schedule ks3;
-des_cblock ivec;
-int enc;
+void des_ede3_cbc_encrypt(const unsigned char *input, unsigned char *output,
+	     long length, des_key_schedule ks1, des_key_schedule ks2,
+	     des_key_schedule ks3, des_cblock ivec, int enc)
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;

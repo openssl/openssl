@@ -104,17 +104,13 @@ X509_LOOKUP_METHOD x509_dir_lookup=
 	NULL,			/* get_by_alias */
 	};
 
-X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir()
+X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
 	{
 	return(&x509_dir_lookup);
 	}
 
-static int dir_ctrl(ctx,cmd,argp,argl,retp)
-X509_LOOKUP *ctx;
-int cmd;
-long argl;
-char *argp;
-char **retp;
+static int dir_ctrl(X509_LOOKUP *ctx, int cmd, char *argp, long argl,
+	     char **retp)
 	{
 	int ret=0;
 	BY_DIR *ld;
@@ -146,8 +142,7 @@ char **retp;
 	return(ret);
 	}
 
-static int new_dir(lu)
-X509_LOOKUP *lu;
+static int new_dir(X509_LOOKUP *lu)
 	{
 	BY_DIR *a;
 
@@ -166,8 +161,7 @@ X509_LOOKUP *lu;
 	return(1);
 	}
 
-static void free_dir(lu)
-X509_LOOKUP *lu;
+static void free_dir(X509_LOOKUP *lu)
 	{
 	BY_DIR *a;
 	int i;
@@ -181,10 +175,7 @@ X509_LOOKUP *lu;
 	Free(a);
 	}
 
-static int add_cert_dir(ctx,dir, type)
-BY_DIR *ctx;
-const char *dir;
-int type;
+static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 	{
 	int j,len;
 	int *ip;
@@ -246,11 +237,8 @@ int type;
 	return(1);
 	}
 
-static int get_cert_by_subject(xl,type,name,ret)
-X509_LOOKUP *xl;
-int type;
-X509_NAME *name;
-X509_OBJECT *ret;
+static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
+	     X509_OBJECT *ret)
 	{
 	BY_DIR *ctx;
 	union	{

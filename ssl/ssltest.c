@@ -104,7 +104,7 @@ int doit(SSL *s_ssl,SSL *c_ssl,long bytes);
 int doit();
 #endif
 
-static void sv_usage()
+static void sv_usage(void)
 	{
 	fprintf(stderr,"usage: ssltest [args ...]\n");
 	fprintf(stderr,"\n");
@@ -132,9 +132,7 @@ static void sv_usage()
 	fprintf(stderr," -cipher arg   - The cipher list\n");
 	}
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	char *CApath=NULL,*CAfile=NULL;
 	int badop=0;
@@ -373,9 +371,7 @@ end:
 #define C_DONE	1
 #define S_DONE	2
 
-int doit(s_ssl,c_ssl,count)
-SSL *s_ssl,*c_ssl;
-long count;
+int doit(SSL *s_ssl, SSL *c_ssl, long count)
 	{
 	MS_STATIC char cbuf[1024*8],sbuf[1024*8];
 	long cw_num=count,cr_num=count;
@@ -674,9 +670,7 @@ err:
 	return(ret);
 	}
 
-int MS_CALLBACK verify_callback(ok, ctx)
-int ok;
-X509_STORE_CTX *ctx;
+int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
 	char *s,buf[256];
 
@@ -717,7 +711,7 @@ static unsigned char dh512_g[]={
 	0x02,
 	};
 
-static DH *get_dh512()
+static DH *get_dh512(void)
 	{
 	DH *dh=NULL;
 
@@ -730,10 +724,7 @@ static DH *get_dh512()
 	}
 #endif
 
-static RSA MS_CALLBACK *tmp_rsa_cb(s,export,keylength)
-SSL *s;
-int export;
-int keylength;
+static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export, int keylength)
 	{
 	static RSA *rsa_tmp=NULL;
 

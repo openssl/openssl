@@ -69,19 +69,17 @@ static RSA_METHOD *default_RSA_meth=NULL;
 static int rsa_meth_num=0;
 static STACK *rsa_meth=NULL;
 
-RSA *RSA_new()
+RSA *RSA_new(void)
 	{
 	return(RSA_new_method(NULL));
 	}
 
-void RSA_set_default_method(meth)
-RSA_METHOD *meth;
+void RSA_set_default_method(RSA_METHOD *meth)
 	{
 	default_RSA_meth=meth;
 	}
 
-RSA *RSA_new_method(meth)
-RSA_METHOD *meth;
+RSA *RSA_new_method(RSA_METHOD *meth)
 	{
 	RSA *ret;
 
@@ -132,8 +130,7 @@ RSA_METHOD *meth;
 	return(ret);
 	}
 
-void RSA_free(r)
-RSA *r;
+void RSA_free(RSA *r)
 	{
 	int i;
 
@@ -170,87 +167,59 @@ RSA *r;
 	Free(r);
 	}
 
-int RSA_get_ex_new_index(argl,argp,new_func,dup_func,free_func)
-long argl;
-char *argp;
-int (*new_func)();
-int (*dup_func)();
-void (*free_func)();
+int RSA_get_ex_new_index(long argl, char *argp, int (*new_func)(),
+	     int (*dup_func)(), void (*free_func)())
         {
 	rsa_meth_num++;
 	return(CRYPTO_get_ex_new_index(rsa_meth_num-1,
 		&rsa_meth,argl,argp,new_func,dup_func,free_func));
         }
 
-int RSA_set_ex_data(r,idx,arg)
-RSA *r;
-int idx;
-char *arg;
+int RSA_set_ex_data(RSA *r, int idx, char *arg)
 	{
 	return(CRYPTO_set_ex_data(&r->ex_data,idx,arg));
 	}
 
-char *RSA_get_ex_data(r,idx)
-RSA *r;
-int idx;
+char *RSA_get_ex_data(RSA *r, int idx)
 	{
 	return(CRYPTO_get_ex_data(&r->ex_data,idx));
 	}
 
-int RSA_size(r)
-RSA *r;
+int RSA_size(RSA *r)
 	{
 	return(BN_num_bytes(r->n));
 	}
 
-int RSA_public_encrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+int RSA_public_encrypt(int flen, unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
 	{
 	return(rsa->meth->rsa_pub_enc(flen, from, to, rsa, padding));
 	}
 
-int RSA_private_encrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+int RSA_private_encrypt(int flen, unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
 	{
 	return(rsa->meth->rsa_priv_enc(flen, from, to, rsa, padding));
 	}
 
-int RSA_private_decrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+int RSA_private_decrypt(int flen, unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
 	{
 	return(rsa->meth->rsa_priv_dec(flen, from, to, rsa, padding));
 	}
 
-int RSA_public_decrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+int RSA_public_decrypt(int flen, unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
 	{
 	return(rsa->meth->rsa_pub_dec(flen, from, to, rsa, padding));
 	}
 
-int RSA_flags(r)
-RSA *r;
+int RSA_flags(RSA *r)
 	{
 	return((r == NULL)?0:r->meth->flags);
 	}
 
-void RSA_blinding_off(rsa)
-RSA *rsa;
+void RSA_blinding_off(RSA *rsa)
 	{
 	if (rsa->blinding != NULL)
 		{
@@ -260,9 +229,7 @@ RSA *rsa;
 	rsa->flags&= ~RSA_FLAG_BLINDING;
 	}
 
-int RSA_blinding_on(rsa,p_ctx)
-RSA *rsa;
-BN_CTX *p_ctx;
+int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 	{
 	BIGNUM *A,*Ai;
 	BN_CTX *ctx;
@@ -295,8 +262,7 @@ err:
 	return(ret);
 	}
 
-int RSA_memory_lock(r)
-RSA *r;
+int RSA_memory_lock(RSA *r)
 	{
 	int i,j,k,off;
 	char *p;

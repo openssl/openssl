@@ -86,16 +86,13 @@ static EVP_CIPHER r2_cfb_cipher=
 	EVP_CIPHER_get_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_rc2_cfb()
+EVP_CIPHER *EVP_rc2_cfb(void)
 	{
 	return(&r2_cfb_cipher);
 	}
 	
-static void rc2_cfb_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void rc2_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	ctx->num=0;
 
@@ -107,11 +104,8 @@ int enc;
 			key,EVP_CIPHER_CTX_key_length(ctx)*8);
 	}
 
-static void rc2_cfb_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void rc2_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	RC2_cfb64_encrypt(
 		in,out,

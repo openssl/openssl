@@ -64,26 +64,19 @@
 #include "x509.h"
 #include "pem.h"
 
-void PEM_SignInit(ctx,type)
-EVP_MD_CTX *ctx;
-EVP_MD *type;
+void PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type)
 	{
 	EVP_DigestInit(ctx,type);
 	}
 
-void PEM_SignUpdate(ctx,data,count)
-EVP_MD_CTX *ctx;
-unsigned char *data;
-unsigned int count;
+void PEM_SignUpdate(EVP_MD_CTX *ctx, unsigned char *data,
+	     unsigned int count)
 	{
 	EVP_DigestUpdate(ctx,data,count);
 	}
 
-int PEM_SignFinal(ctx,sigret,siglen,pkey)
-EVP_MD_CTX *ctx;
-unsigned char *sigret;
-unsigned int *siglen;
-EVP_PKEY *pkey;
+int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
+	     EVP_PKEY *pkey)
 	{
 	unsigned char *m;
 	int i,ret=0;

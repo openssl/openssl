@@ -63,18 +63,14 @@
 /* ASN1err(ASN1_F_D2I_ASN1_OCTET_STRING,ASN1_R_EXPECTING_AN_OCTET_STRING);
  */
 
-int i2d_ASN1_OCTET_STRING(a, pp)
-ASN1_OCTET_STRING *a;
-unsigned char **pp;
+int i2d_ASN1_OCTET_STRING(ASN1_OCTET_STRING *a, unsigned char **pp)
 	{
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,
 		V_ASN1_OCTET_STRING,V_ASN1_UNIVERSAL));
 	}
 
-ASN1_OCTET_STRING *d2i_ASN1_OCTET_STRING(a, pp, length)
-ASN1_OCTET_STRING **a;
-unsigned char **pp;
-long length;
+ASN1_OCTET_STRING *d2i_ASN1_OCTET_STRING(ASN1_OCTET_STRING **a,
+	     unsigned char **pp, long length)
 	{
 	ASN1_OCTET_STRING *ret=NULL;
 

@@ -61,26 +61,19 @@
 #include "objects.h"
 #include "evp.h"
 
-void EVP_DigestInit(ctx,type)
-EVP_MD_CTX *ctx;
-const EVP_MD *type;
+void EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 	{
 	ctx->digest=type;
 	type->init(&(ctx->md));
 	}
 
-void EVP_DigestUpdate(ctx,data,count)
-EVP_MD_CTX *ctx;
-const unsigned char *data;
-unsigned int count;
+void EVP_DigestUpdate(EVP_MD_CTX *ctx, const unsigned char *data,
+	     unsigned int count)
 	{
 	ctx->digest->update(&(ctx->md.base[0]),data,(unsigned long)count);
 	}
 
-void EVP_DigestFinal(ctx,md,size)
-EVP_MD_CTX *ctx;
-unsigned char *md;
-unsigned int *size;
+void EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	{
 	ctx->digest->final(md,&(ctx->md.base[0]));
 	if (size != NULL)

@@ -82,9 +82,7 @@ static void MS_CALLBACK genrsa_cb();
 static long gr_load_rand();
 #endif
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int ret=1;
 	char buffer[200];
@@ -234,10 +232,7 @@ err:
 	EXIT(ret);
 	}
 
-static void MS_CALLBACK genrsa_cb(p, n, arg)
-int p;
-int n;
-char *arg;
+static void MS_CALLBACK genrsa_cb(int p, int n, char *arg)
 	{
 	char c='*';
 
@@ -252,8 +247,7 @@ char *arg;
 #endif
 	}
 
-static long gr_load_rand(name)
-char *name;
+static long gr_load_rand(char *name)
 	{
 	char *p,*n;
 	int last;

@@ -59,10 +59,8 @@
 #include <stdio.h>
 #include "rmd_locl.h"
 
-unsigned char *RIPEMD160(d, n, md)
-unsigned char *d;
-unsigned long n;
-unsigned char *md;
+unsigned char *RIPEMD160(unsigned char *d, unsigned long n,
+	     unsigned char *md)
 	{
 	RIPEMD160_CTX c;
 	static unsigned char m[RIPEMD160_DIGEST_LENGTH];

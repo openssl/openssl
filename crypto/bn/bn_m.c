@@ -70,8 +70,7 @@ typedef struct bn_pool_st
 	STACK *sk; 
 	} BN_POOL;
 
-BIGNUM *BN_POOL_push(bp)
-BN_POOL *bp;
+BIGNUM *BN_POOL_push(BN_POOL *bp)
 	{
 	BIGNUM *ret;
 
@@ -90,15 +89,12 @@ BN_POOL *bp;
 	return(ret);
 	}
 
-void BN_POOL_pop(bp,num)
-BN_POOL *bp;
-int num;
+void BN_POOL_pop(BN_POOL *bp, int num)
 	{
 	bp->used-=num;
 	}
 
-int BN_m(r,a,b)
-BIGNUM *r,*a,*b;
+int BN_m(BIGNUM *r, BIGNUM *a, BIGNUM *b)
 	{
 	static BN_POOL bp;
 	static init=1;
@@ -114,9 +110,7 @@ BIGNUM *r,*a,*b;
 	}
 
 /* r must be different to a and b */
-int BN_mm(m, A, B, bp)
-BIGNUM *m,*A,*B;
-BN_POOL *bp;
+int BN_mm(BIGNUM *m, BIGNUM *A, BIGNUM *B, BN_POOL *bp)
 	{
 	int i,num;
 	int an,bn;

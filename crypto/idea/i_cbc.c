@@ -59,13 +59,8 @@
 #include "idea.h"
 #include "idea_lcl.h"
 
-void idea_cbc_encrypt(in, out, length, ks, iv, encrypt)
-unsigned char *in;
-unsigned char *out;
-long length;
-IDEA_KEY_SCHEDULE *ks;
-unsigned char *iv;
-int encrypt;
+void idea_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
+	     IDEA_KEY_SCHEDULE *ks, unsigned char *iv, int encrypt)
 	{
 	register unsigned long tin0,tin1;
 	register unsigned long tout0,tout1,xor0,xor1;
@@ -138,9 +133,7 @@ int encrypt;
 	tin[0]=tin[1]=0;
 	}
 
-void idea_encrypt(d,key)
-unsigned long *d;
-IDEA_KEY_SCHEDULE *key;
+void idea_encrypt(unsigned long *d, IDEA_KEY_SCHEDULE *key)
 	{
 	register IDEA_INT *p;
 	register unsigned long x1,x2,x3,x4,t0,t1,ul;

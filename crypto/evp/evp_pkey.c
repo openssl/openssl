@@ -64,8 +64,7 @@
 
 /* Extract a private key from a PKCS8 structure */
 
-EVP_PKEY *EVP_PKCS82PKEY (p8)
-PKCS8_PRIV_KEY_INFO *p8;
+EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 {
 	EVP_PKEY *pkey;
 	RSA *rsa;
@@ -189,8 +188,7 @@ PKCS8_PRIV_KEY_INFO *p8;
 
 /* Turn a private key into a PKCS8 structure */
 
-PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(pkey)
-EVP_PKEY *pkey;
+PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey)
 {
 	PKCS8_PRIV_KEY_INFO *p8;
 	ASN1_INTEGER *dpkey;
@@ -263,9 +261,7 @@ EVP_PKEY *pkey;
 	return p8;
 }
 
-PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(p8, broken)
-PKCS8_PRIV_KEY_INFO *p8;
-int broken;
+PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken)
 {
 	switch (broken) {
 

@@ -74,10 +74,9 @@ void h__dump (unsigned char *p, int len);
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
-int PKCS12_key_gen_asc (pass, passlen, salt, saltlen, id, iter, n, out, md_type)
-unsigned char *pass, *salt, *out;
-int passlen, saltlen, id, iter, n;
-const EVP_MD *md_type;
+int PKCS12_key_gen_asc (unsigned char *pass, int passlen, unsigned char *salt,
+	     int saltlen, int id, int iter, int n, unsigned char *out,
+	     const EVP_MD *md_type)
 {
 	int ret;
 	unsigned char *unipass;
@@ -93,10 +92,9 @@ const EVP_MD *md_type;
 	return ret;
 }
 
-int PKCS12_key_gen_uni (pass, passlen, salt, saltlen, id, iter, n, out, md_type)
-unsigned char *pass, *salt, *out;
-int passlen, saltlen, id, iter, n;
-const EVP_MD *md_type;
+int PKCS12_key_gen_uni (unsigned char *pass, int passlen, unsigned char *salt,
+	     int saltlen, int id, int iter, int n, unsigned char *out,
+	     const EVP_MD *md_type)
 {
 	unsigned char *B, *D, *I, *p, *Ai;
 	int Slen, Plen, Ilen;
@@ -177,9 +175,7 @@ const EVP_MD *md_type;
 	return 0; /* This can't happen */
 }
 #ifdef DEBUG_KEYGEN
-void h__dump (p, len)
-unsigned char *p;
-int len;
+void h__dump (unsigned char *p, int len)
 {
 	for (; len --; p++) BIO_printf (bio_err, "%02X", *p);
 	BIO_printf (bio_err, "\n");	

@@ -62,11 +62,8 @@
 
 char *CAST_version="CAST" OPENSSL_VERSION_PTEXT;
 
-void CAST_ecb_encrypt(in, out, ks, encrypt)
-unsigned char *in;
-unsigned char *out;
-CAST_KEY *ks;
-int encrypt;
+void CAST_ecb_encrypt(unsigned char *in, unsigned char *out, CAST_KEY *ks,
+	     int encrypt)
 	{
 	CAST_LONG l,d[2];
 

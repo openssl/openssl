@@ -97,10 +97,7 @@ static CONF_VALUE *get_section();
 
 const char *CONF_version="CONF" OPENSSL_VERSION_PTEXT;
 
-LHASH *CONF_load(h,file,line)
-LHASH *h;
-char *file;
-long *line;
+LHASH *CONF_load(LHASH *h, char *file, long *line)
 	{
 	LHASH *ret=NULL;
 	FILE *in=NULL;
@@ -352,10 +349,7 @@ err:
 	return(NULL);
 	}
 		
-char *CONF_get_string(conf,section,name)
-LHASH *conf;
-char *section;
-char *name;
+char *CONF_get_string(LHASH *conf, char *section, char *name)
 	{
 	CONF_VALUE *v,vv;
 	char *p;
@@ -387,9 +381,7 @@ char *name;
 		return(Getenv(name));
 	}
 
-static CONF_VALUE *get_section(conf,section)
-LHASH *conf;
-char *section;
+static CONF_VALUE *get_section(LHASH *conf, char *section)
 	{
 	CONF_VALUE *v,vv;
 
@@ -400,9 +392,7 @@ char *section;
 	return(v);
 	}
 
-STACK *CONF_get_section(conf,section)
-LHASH *conf;
-char *section;
+STACK *CONF_get_section(LHASH *conf, char *section)
 	{
 	CONF_VALUE *v;
 
@@ -413,10 +403,7 @@ char *section;
 		return(NULL);
 	}
 
-long CONF_get_number(conf,section,name)
-LHASH *conf;
-char *section;
-char *name;
+long CONF_get_number(LHASH *conf, char *section, char *name)
 	{
 	char *str;
 	long ret=0;
@@ -433,8 +420,7 @@ char *name;
 		}
 	}
 
-void CONF_free(conf)
-LHASH *conf;
+void CONF_free(LHASH *conf)
 	{
 	if (conf == NULL) return;
 
@@ -449,9 +435,7 @@ LHASH *conf;
 	lh_free(conf);
 	}
 
-static void value_free_hash(a,conf)
-CONF_VALUE *a;
-LHASH *conf;
+static void value_free_hash(CONF_VALUE *a, LHASH *conf)
 	{
 	if (a->name != NULL)
 		{
@@ -459,9 +443,7 @@ LHASH *conf;
 		}
 	}
 
-static void value_free_stack(a,conf)
-CONF_VALUE *a;
-LHASH *conf;
+static void value_free_stack(CONF_VALUE *a, LHASH *conf)
 	{
 	CONF_VALUE *vv;
 	STACK *sk;
@@ -482,8 +464,7 @@ LHASH *conf;
 	Free(a);
 	}
 
-static void clear_comments(p)
-char *p;
+static void clear_comments(char *p)
 	{
 	char *to;
 
@@ -512,10 +493,7 @@ char *p;
 		}
 	}
 
-static int str_copy(conf,section,pto,from)
-LHASH *conf;
-char *section;
-char **pto,*from;
+static int str_copy(LHASH *conf, char *section, char **pto, char *from)
 	{
 	int q,r,rr=0,to=0,len=0;
 	char *s,*e,*rp,*p,*rrp,*np,*cp,v;
@@ -629,16 +607,14 @@ err:
 	return(0);
 	}
 
-static char *eat_ws(p)
-char *p;
+static char *eat_ws(char *p)
 	{
 	while (IS_WS(*p) && (!IS_EOF(*p)))
 		p++;
 	return(p);
 	}
 
-static char *eat_alpha_numeric(p)
-char *p;
+static char *eat_alpha_numeric(char *p)
 	{
 	for (;;)
 		{
@@ -653,14 +629,12 @@ char *p;
 		}
 	}
 
-static unsigned long hash(v)
-CONF_VALUE *v;
+static unsigned long hash(CONF_VALUE *v)
 	{
 	return((lh_strhash(v->section)<<2)^lh_strhash(v->name));
 	}
 
-static int cmp(a,b)
-CONF_VALUE *a,*b;
+static int cmp(CONF_VALUE *a, CONF_VALUE *b)
 	{
 	int i;
 
@@ -681,8 +655,7 @@ CONF_VALUE *a,*b;
 		return((a->name == NULL)?-1:1);
 	}
 
-static char *scan_quote(p)
-char *p;
+static char *scan_quote(char *p)
 	{
 	int q= *p;
 
@@ -700,9 +673,7 @@ char *p;
 	return(p);
 	}
 
-static CONF_VALUE *new_section(conf,section)
-LHASH *conf;
-char *section;
+static CONF_VALUE *new_section(LHASH *conf, char *section)
 	{
 	STACK *sk=NULL;
 	int ok=0,i;

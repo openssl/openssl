@@ -120,7 +120,7 @@ static ERR_STRING_DATA PKCS12_str_reasons[]=
 
 #endif
 
-void ERR_load_PKCS12_strings()
+void ERR_load_PKCS12_strings(void)
 	{
 	static int init=1;
 

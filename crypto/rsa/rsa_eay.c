@@ -98,17 +98,13 @@ static RSA_METHOD rsa_pkcs1_eay_meth={
 	NULL,
 	};
 
-RSA_METHOD *RSA_PKCS1_SSLeay()
+RSA_METHOD *RSA_PKCS1_SSLeay(void)
 	{
 	return(&rsa_pkcs1_eay_meth);
 	}
 
-static int RSA_eay_public_encrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+static int RSA_eay_public_encrypt(int flen, unsigned char *from,
+	     unsigned char *to, RSA *rsa, int padding)
 	{
 	BIGNUM f,ret;
 	int i,j,k,num=0,r= -1;
@@ -177,12 +173,8 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_private_encrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+static int RSA_eay_private_encrypt(int flen, unsigned char *from,
+	     unsigned char *to, RSA *rsa, int padding)
 	{
 	BIGNUM f,ret;
 	int i,j,k,num=0,r= -1;
@@ -256,12 +248,8 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_private_decrypt(flen, from, to, rsa,padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+static int RSA_eay_private_decrypt(int flen, unsigned char *from,
+	     unsigned char *to, RSA *rsa, int padding)
 	{
 	BIGNUM f,ret;
 	int j,num=0,r= -1;
@@ -350,12 +338,8 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_public_decrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+static int RSA_eay_public_decrypt(int flen, unsigned char *from,
+	     unsigned char *to, RSA *rsa, int padding)
 	{
 	BIGNUM f,ret;
 	int i,num=0,r= -1;
@@ -426,10 +410,7 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_mod_exp(r0, I, rsa)
-BIGNUM *r0;
-BIGNUM *I;
-RSA *rsa;
+static int RSA_eay_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 	{
 	BIGNUM r1,m1;
 	int ret=0;
@@ -493,15 +474,13 @@ err:
 	return(ret);
 	}
 
-static int RSA_eay_init(rsa)
-RSA *rsa;
+static int RSA_eay_init(RSA *rsa)
 	{
 	rsa->flags|=RSA_FLAG_CACHE_PUBLIC|RSA_FLAG_CACHE_PRIVATE;
 	return(1);
 	}
 
-static int RSA_eay_finish(rsa)
-RSA *rsa;
+static int RSA_eay_finish(RSA *rsa)
 	{
 	if (rsa->_method_mod_n != NULL)
 		BN_MONT_CTX_free(rsa->_method_mod_n);

@@ -68,14 +68,9 @@
 #include "objects.h"
 #include "buffer.h"
 
-int ASN1_sign(i2d,algor1,algor2,signature,data,pkey,type)
-int (*i2d)();
-X509_ALGOR *algor1;
-X509_ALGOR *algor2;
-ASN1_BIT_STRING *signature;
-char *data;
-EVP_PKEY *pkey;
-const EVP_MD *type;
+int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
+	     ASN1_BIT_STRING *signature, char *data, EVP_PKEY *pkey,
+	     const EVP_MD *type)
 	{
 	EVP_MD_CTX ctx;
 	unsigned char *p,*buf_in=NULL,*buf_out=NULL;

@@ -55,10 +55,8 @@
  * [including the GNU Public Licence.]
  */
 
-SV *new_ref(type,obj,mort)
-char *type;
-char *obj;
-	{
+SV *new_ref(char *type, char *obj, int mort)
+{
 	SV *ret;
 
 	if (mort)
@@ -69,13 +67,8 @@ char *obj;
 	return(ret);
 	}
 
-int ex_new(obj,data,ad,idx,argl,argp)
-char *obj;
-SV *data;
-CRYPTO_EX_DATA *ad;
-int idx;
-long argl;
-char *argp;
+int ex_new(char *obj, SV *data, CRYPTO_EX_DATA *ad, int idx, long argl,
+	     char *argp)
 	{
 	SV *sv;
 
@@ -86,13 +79,8 @@ fprintf(stderr,"ex_new idx=%d %08X %s\n",idx,obj,argp);
 	return(1);
 	}
 
-void ex_cleanup(obj,data,ad,idx,argl,argp)
-char *obj;
-SV *data;
-CRYPTO_EX_DATA *ad;
-int idx;
-long argl;
-char *argp;
+void ex_cleanup(char *obj, SV *data, CRYPTO_EX_DATA *ad, int idx, long argl,
+	     char *argp)
 	{
 	pr_name("ex_cleanup");
 fprintf(stderr,"ex_cleanup %08X %s\n",obj,argp);

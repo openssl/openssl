@@ -60,9 +60,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-int BN_bn2mpi(a,d)
-BIGNUM *a;
-unsigned char *d;
+int BN_bn2mpi(BIGNUM *a, unsigned char *d)
 	{
 	int bits;
 	int num=0;
@@ -90,10 +88,7 @@ unsigned char *d;
 	return(num+4+ext);
 	}
 
-BIGNUM *BN_mpi2bn(d,n,a)
-unsigned char *d;
-int n;
-BIGNUM *a;
+BIGNUM *BN_mpi2bn(unsigned char *d, int n, BIGNUM *a)
 	{
 	long len;
 	int neg=0;

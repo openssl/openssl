@@ -1678,7 +1678,7 @@ void SSL_set_info_callback(SSL *ssl,void (*cb)())
 	ssl->info_callback=cb;
 	}
 
-void (*SSL_get_info_callback(SSL *ssl))()
+void (*SSL_get_info_callback(SSL *ssl))(void)
 	{
 	return((void (*)())ssl->info_callback);
 	}

@@ -86,16 +86,13 @@ static EVP_CIPHER i_ofb_cipher=
 	EVP_CIPHER_get_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_idea_ofb()
+EVP_CIPHER *EVP_idea_ofb(void)
 	{
 	return(&i_ofb_cipher);
 	}
 	
-static void idea_ofb_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void idea_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	ctx->num=0;
 
@@ -106,11 +103,8 @@ int enc;
 		idea_set_encrypt_key(key,&(ctx->c.idea_ks));
 	}
 
-static void idea_ofb_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void idea_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	idea_ofb64_encrypt(
 		in,out,(long)inl,

@@ -63,18 +63,14 @@
 /* ASN1err(ASN1_F_D2I_ASN1_UTF8STRING,ERR_R_MALLOC_FAILURE);
  */
 
-int i2d_ASN1_UTF8STRING(a, pp)
-ASN1_UTF8STRING *a;
-unsigned char **pp;
+int i2d_ASN1_UTF8STRING(ASN1_UTF8STRING *a, unsigned char **pp)
 	{
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,
 		V_ASN1_UTF8STRING,V_ASN1_UNIVERSAL));
 	}
 
-ASN1_UTF8STRING *d2i_ASN1_UTF8STRING(a, pp, length)
-ASN1_UTF8STRING **a;
-unsigned char **pp;
-long length;
+ASN1_UTF8STRING *d2i_ASN1_UTF8STRING(ASN1_UTF8STRING **a, unsigned char **pp,
+	     long length)
 	{
 	ASN1_UTF8STRING *ret=NULL;
 

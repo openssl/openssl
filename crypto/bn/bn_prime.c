@@ -83,14 +83,8 @@ static int probable_prime_dh();
 static int probable_prime_dh_strong();
 #endif
 
-BIGNUM *BN_generate_prime(ret,bits,strong,add,rem,callback,cb_arg)
-BIGNUM *ret;
-int bits;
-int strong;
-BIGNUM *add;
-BIGNUM *rem;
-void (*callback)(P_I_I_P); 
-char *cb_arg;
+BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int strong, BIGNUM *add,
+	     BIGNUM *rem, void (*callback)(P_I_I_P), char *cb_arg)
 	{
 	BIGNUM *rnd=NULL;
 	BIGNUM t;
@@ -165,12 +159,8 @@ err:
 	return(ret);
 	}
 
-int BN_is_prime(a,checks,callback,ctx_passed,cb_arg)
-BIGNUM *a;
-int checks;
-void (*callback)(P_I_I_P);
-BN_CTX *ctx_passed;
-char *cb_arg;
+int BN_is_prime(BIGNUM *a, int checks, void (*callback)(P_I_I_P),
+	     BN_CTX *ctx_passed, char *cb_arg)
 	{
 	int i,j,c2=0,ret= -1;
 	BIGNUM *check;
@@ -218,11 +208,8 @@ err:
 
 #define RECP_MUL_MOD
 
-static int witness(a,n,ctx,ctx2,mont)
-BIGNUM *a;
-BIGNUM *n;
-BN_CTX *ctx,*ctx2;
-BN_MONT_CTX *mont;
+static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx, BN_CTX *ctx2,
+	     BN_MONT_CTX *mont)
 	{
 	int k,i,ret= -1,good;
 	BIGNUM *d,*dd,*tmp,*d1,*d2,*n1;
@@ -285,9 +272,7 @@ err:
 	return(ret);
 	}
 
-static int probable_prime(rnd, bits)
-BIGNUM *rnd;
-int bits;
+static int probable_prime(BIGNUM *rnd, int bits)
 	{
 	int i;
 	MS_STATIC BN_ULONG mods[NUMPRIMES];
@@ -318,12 +303,8 @@ again:
 	return(1);
 	}
 
-static int probable_prime_dh(rnd, bits, add, rem,ctx)
-BIGNUM *rnd;
-int bits;
-BIGNUM *add;
-BIGNUM *rem;
-BN_CTX *ctx;
+static int probable_prime_dh(BIGNUM *rnd, int bits, BIGNUM *add, BIGNUM *rem,
+	     BN_CTX *ctx)
 	{
 	int i,ret=0;
 	BIGNUM *t1;
@@ -358,12 +339,8 @@ err:
 	return(ret);
 	}
 
-static int probable_prime_dh_strong(p, bits, padd, rem,ctx)
-BIGNUM *p;
-int bits;
-BIGNUM *padd;
-BIGNUM *rem;
-BN_CTX *ctx;
+static int probable_prime_dh_strong(BIGNUM *p, int bits, BIGNUM *padd,
+	     BIGNUM *rem, BN_CTX *ctx)
 	{
 	int i,ret=0;
 	BIGNUM *t1,*qadd=NULL,*q=NULL;
@@ -412,10 +389,7 @@ err:
 	}
 
 #if 0
-static int witness(a, n,ctx)
-BIGNUM *a;
-BIGNUM *n;
-BN_CTX *ctx;
+static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx)
 	{
 	int k,i,nb,ret= -1;
 	BIGNUM *d,*dd,*tmp;

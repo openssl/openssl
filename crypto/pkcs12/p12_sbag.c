@@ -66,9 +66,7 @@
  *ASN1err(ASN1_F_D2I_PKCS12_SAFEBAG,ASN1_R_DECODE_ERROR)
  */
 
-int i2d_PKCS12_SAFEBAG(a,pp)
-PKCS12_SAFEBAG *a;
-unsigned char **pp;
+int i2d_PKCS12_SAFEBAG(PKCS12_SAFEBAG *a, unsigned char **pp)
 {
 	int bagnid, v = 0;
 	M_ASN1_I2D_vars(a);
@@ -146,7 +144,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-PKCS12_SAFEBAG *PKCS12_SAFEBAG_new()
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_new(void)
 {
 	PKCS12_SAFEBAG *ret=NULL;
 	ASN1_CTX c;
@@ -159,10 +157,8 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_new()
 	M_ASN1_New_Error(ASN1_F_PKCS12_SAFEBAG_NEW);
 }
 
-PKCS12_SAFEBAG *d2i_PKCS12_SAFEBAG(a,pp,length)
-PKCS12_SAFEBAG **a;
-unsigned char **pp;
-long length;
+PKCS12_SAFEBAG *d2i_PKCS12_SAFEBAG(PKCS12_SAFEBAG **a, unsigned char **pp,
+	     long length)
 {
 	int bagnid;
 	M_ASN1_D2I_vars(a,PKCS12_SAFEBAG *,PKCS12_SAFEBAG_new);
@@ -206,8 +202,7 @@ long length;
 	M_ASN1_D2I_Finish(a, PKCS12_SAFEBAG_free, ASN1_F_D2I_PKCS12_SAFEBAG);
 }
 
-void PKCS12_SAFEBAG_free (a)
-PKCS12_SAFEBAG *a;
+void PKCS12_SAFEBAG_free (PKCS12_SAFEBAG *a)
 {
 	if (a == NULL) return;
 	switch (OBJ_obj2nid(a->type)) {

@@ -66,9 +66,7 @@
  * ASN1err(ASN1_F_D2I_X509_ALGOR,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
-int i2d_X509_ALGOR(a,pp)
-X509_ALGOR *a;
-unsigned char **pp;
+int i2d_X509_ALGOR(X509_ALGOR *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -84,10 +82,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509_ALGOR *d2i_X509_ALGOR(a,pp,length)
-X509_ALGOR **a;
-unsigned char **pp;
-long length;
+X509_ALGOR *d2i_X509_ALGOR(X509_ALGOR **a, unsigned char **pp, long length)
 	{
 	M_ASN1_D2I_vars(a,X509_ALGOR *,X509_ALGOR_new);
 
@@ -104,7 +99,7 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_ALGOR_free,ASN1_F_D2I_X509_ALGOR);
 	}
 
-X509_ALGOR *X509_ALGOR_new()
+X509_ALGOR *X509_ALGOR_new(void)
 	{
 	X509_ALGOR *ret=NULL;
 	ASN1_CTX c;
@@ -116,8 +111,7 @@ X509_ALGOR *X509_ALGOR_new()
 	M_ASN1_New_Error(ASN1_F_X509_ALGOR_NEW);
 	}
 
-void X509_ALGOR_free(a)
-X509_ALGOR *a;
+void X509_ALGOR_free(X509_ALGOR *a)
 	{
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->algorithm);

@@ -81,9 +81,7 @@ static void MS_CALLBACK dh_cb();
 static long dh_load_rand();
 #endif
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	char buffer[200];
 	DH *dh=NULL;
@@ -191,10 +189,7 @@ end:
 	EXIT(ret);
 	}
 
-static void MS_CALLBACK dh_cb(p,n,arg)
-int p;
-int n;
-char *arg;
+static void MS_CALLBACK dh_cb(int p, int n, char *arg)
 	{
 	char c='*';
 
@@ -209,8 +204,7 @@ char *arg;
 #endif
 	}
 
-static long dh_load_rand(name)
-char *name;
+static long dh_load_rand(char *name)
 	{
 	char *p,*n;
 	int last;

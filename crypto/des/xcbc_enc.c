@@ -79,10 +79,8 @@ static unsigned char desx_white_in2out[256]={
 0xA7,0x1C,0xC9,0x09,0x69,0x9A,0x83,0xCF,0x29,0x39,0xB9,0xE9,0x4C,0xFF,0x43,0xAB,
 	};
 
-void des_xwhite_in2out(key,in,out)
-const des_cblock key;
-const des_cblock in;
-des_cblock out;
+void des_xwhite_in2out(const des_cblock key, const des_cblock in,
+	     des_cblock out)
 	{
 	int out0,out1;
 	int i;
@@ -106,15 +104,9 @@ des_cblock out;
 		}
 	}
 
-void des_xcbc_encrypt(in, out, length, schedule, ivec, inw,outw,enc)
-const unsigned char *in;
-unsigned char *out;
-long length;
-des_key_schedule schedule;
-des_cblock ivec;
-const des_cblock inw;
-const des_cblock outw;
-int enc;
+void des_xcbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+	     des_key_schedule schedule, des_cblock ivec, const des_cblock inw,
+	     const des_cblock outw, int enc)
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;

@@ -106,7 +106,7 @@ static ERR_STRING_DATA PEM_str_reasons[]=
 
 #endif
 
-void ERR_load_PEM_strings()
+void ERR_load_PEM_strings(void)
 	{
 	static int init=1;
 

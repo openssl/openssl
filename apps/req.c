@@ -137,9 +137,7 @@ static LHASH *req_conf=NULL;
 #define TYPE_DSA	2
 #define TYPE_DH		3
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 #ifndef NO_DSA
 	DSA *dsa_params=NULL;
@@ -825,10 +823,7 @@ end:
 	EXIT(ex);
 	}
 
-static int make_REQ(req,pkey,attribs)
-X509_REQ *req;
-EVP_PKEY *pkey;
-int attribs;
+static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, int attribs)
 	{
 	int ret=0,i;
 	unsigned char *p,*q;
@@ -984,14 +979,8 @@ err:
 	return(ret);
 	}
 
-static int add_DN_object(n,text,def,value,nid,min,max)
-X509_NAME *n;
-char *text;
-char *def;
-char *value;
-int nid;
-int min;
-int max;
+static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
+	     int nid, int min, int max)
 	{
 	int i,j,ret=0;
 	X509_NAME_ENTRY *ne=NULL;
@@ -1044,14 +1033,8 @@ err:
 	return(ret);
 	}
 
-static int add_attribute_object(n,text,def,value,nid,min,max)
-STACK *n;
-char *text;
-char *def;
-char *value;
-int nid;
-int min;
-int max;
+static int add_attribute_object(STACK *n, char *text, char *def, char *value,
+	     int nid, int min, int max)
 	{
 	int i,z;
 	X509_ATTRIBUTE *xa=NULL;
@@ -1135,10 +1118,7 @@ err:
 	return(0);
 	}
 
-static void MS_CALLBACK req_cb(p,n,arg)
-int p;
-int n;
-char *arg;
+static void MS_CALLBACK req_cb(int p, int n, char *arg)
 	{
 	char c='*';
 
@@ -1153,10 +1133,7 @@ char *arg;
 #endif
 	}
 
-static int req_fix_data(nid,type,len,min,max)
-int nid;
-int *type;
-int len,min,max;
+static int req_fix_data(int nid, int *type, int len, int min, int max)
 	{
 	if (nid == NID_pkcs9_emailAddress)
 		*type=V_ASN1_IA5STRING;
@@ -1189,9 +1166,7 @@ int len,min,max;
 	}
 
 /* Check if the end of a string matches 'end' */
-static int check_end(str, end)
-char *str;
-char *end;
+static int check_end(char *str, char *end)
 {
 	int elen, slen;	
 	char *tmp;
@@ -1202,8 +1177,7 @@ char *end;
 	return strcmp(tmp, end);
 }
 
-static int add_oid_section(conf)
-LHASH *conf;
+static int add_oid_section(LHASH *conf)
 {	
 	char *p;
 	STACK *sktmp;

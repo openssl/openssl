@@ -84,10 +84,7 @@ static int def_callback();
 static int load_iv();
 #endif
 
-static int def_callback(buf, num, w)
-char *buf;
-int num;
-int w;
+static int def_callback(char *buf, int num, int w)
 	{
 #ifdef NO_FP_API
 	/* We should not ever call the default callback routine from
@@ -123,9 +120,7 @@ int w;
 #endif
 	}
 
-void PEM_proc_type(buf, type)
-char *buf;
-int type;
+void PEM_proc_type(char *buf, int type)
 	{
 	const char *str;
 
@@ -143,11 +138,7 @@ int type;
 	strcat(buf,"\n");
 	}
 
-void PEM_dek_info(buf, type, len, str)
-char *buf;
-const char *type;
-int len;
-char *str;
+void PEM_dek_info(char *buf, const char *type, int len, char *str)
 	{
 	static unsigned char map[17]="0123456789ABCDEF";
 	long i;
@@ -167,12 +158,8 @@ char *str;
 	}
 
 #ifndef NO_FP_API
-char *PEM_ASN1_read(d2i,name,fp, x, cb)
-char *(*d2i)();
-const char *name;
-FILE *fp;
-char **x;
-int (*cb)();
+char *PEM_ASN1_read(char *(*d2i)(), const char *name, FILE *fp, char **x,
+	     int (*cb)())
 	{
         BIO *b;
         char *ret;
@@ -189,12 +176,8 @@ int (*cb)();
 	}
 #endif
 
-char *PEM_ASN1_read_bio(d2i,name,bp, x, cb)
-char *(*d2i)();
-const char *name;
-BIO *bp;
-char **x;
-int (*cb)();
+char *PEM_ASN1_read_bio(char *(*d2i)(), const char *name, BIO *bp, char **x,
+	     int (*cb)())
 	{
 	EVP_CIPHER_INFO cipher;
 	char *nm=NULL,*header=NULL;
@@ -242,15 +225,9 @@ err:
 	}
 
 #ifndef NO_FP_API
-int PEM_ASN1_write(i2d,name,fp, x, enc, kstr, klen, callback)
-int (*i2d)();
-const char *name;
-FILE *fp;
-char *x;
-const EVP_CIPHER *enc;
-unsigned char *kstr;
-int klen;
-int (*callback)();
+int PEM_ASN1_write(int (*i2d)(), const char *name, FILE *fp, char *x,
+	     const EVP_CIPHER *enc, unsigned char *kstr, int klen,
+	     int (*callback)())
         {
         BIO *b;
         int ret;
@@ -267,15 +244,9 @@ int (*callback)();
         }
 #endif
 
-int PEM_ASN1_write_bio(i2d,name,bp, x, enc, kstr, klen, callback)
-int (*i2d)();
-const char *name;
-BIO *bp;
-char *x;
-const EVP_CIPHER *enc;
-unsigned char *kstr;
-int klen;
-int (*callback)();
+int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
+	     const EVP_CIPHER *enc, unsigned char *kstr, int klen,
+	     int (*callback)())
 	{
 	EVP_CIPHER_CTX ctx;
 	int dsize=0,i,j,ret=0;
@@ -363,11 +334,8 @@ err:
 	return(ret);
 	}
 
-int PEM_do_header(cipher, data, plen, callback)
-EVP_CIPHER_INFO *cipher;
-unsigned char *data;
-long *plen;
-int (*callback)();
+int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
+	     int (*callback)())
 	{
 	int i,j,o,klen;
 	long len;
@@ -407,9 +375,7 @@ int (*callback)();
 	return(1);
 	}
 
-int PEM_get_EVP_CIPHER_INFO(header,cipher)
-char *header;
-EVP_CIPHER_INFO *cipher;
+int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
 	{
 	int o;
 	const EVP_CIPHER *enc=NULL;
@@ -459,9 +425,7 @@ EVP_CIPHER_INFO *cipher;
 	return(1);
 	}
 
-static int load_iv(fromp,to,num)
-unsigned char **fromp,*to;
-int num;
+static int load_iv(unsigned char **fromp, unsigned char *to, int num)
 	{
 	int v,i;
 	unsigned char *from;
@@ -491,12 +455,8 @@ int num;
 	}
 
 #ifndef NO_FP_API
-int PEM_write(fp, name, header, data,len)
-FILE *fp;
-char *name;
-char *header;
-unsigned char *data;
-long len;
+int PEM_write(FILE *fp, char *name, char *header, unsigned char *data,
+	     long len)
         {
         BIO *b;
         int ret;
@@ -513,12 +473,8 @@ long len;
         }
 #endif
 
-int PEM_write_bio(bp, name, header, data,len)
-BIO *bp;
-const char *name;
-char *header;
-unsigned char *data;
-long len;
+int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
+	     long len)
 	{
 	int nlen,n,i,j,outl;
 	unsigned char *buf;
@@ -573,12 +529,8 @@ err:
 	}
 
 #ifndef NO_FP_API
-int PEM_read(fp, name, header, data,len)
-FILE *fp;
-char **name;
-char **header;
-unsigned char **data;
-long *len;
+int PEM_read(FILE *fp, char **name, char **header, unsigned char **data,
+	     long *len)
         {
         BIO *b;
         int ret;
@@ -595,12 +547,8 @@ long *len;
         }
 #endif
 
-int PEM_read_bio(bp, name, header, data, len)
-BIO *bp;
-char **name;
-char **header;
-unsigned char **data;
-long *len;
+int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
+	     long *len)
 	{
 	EVP_ENCODE_CTX ctx;
 	int end=0,i,k,bl=0,hl=0,nohead=0;

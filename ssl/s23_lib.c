@@ -105,23 +105,22 @@ static SSL_METHOD SSLv23_data= {
 	&ssl3_undef_enc_method,
 	};
 
-static long ssl23_default_timeout()
+static long ssl23_default_timeout(void)
 	{
 	return(300);
 	}
 
-SSL_METHOD *sslv23_base_method()
+SSL_METHOD *sslv23_base_method(void)
 	{
 	return(&SSLv23_data);
 	}
 
-static int ssl23_num_ciphers()
+static int ssl23_num_ciphers(void)
 	{
 	return(ssl3_num_ciphers()+ssl2_num_ciphers());
 	}
 
-static SSL_CIPHER *ssl23_get_cipher(u)
-unsigned int u;
+static SSL_CIPHER *ssl23_get_cipher(unsigned int u)
 	{
 	unsigned int uu=ssl3_num_ciphers();
 
@@ -133,8 +132,7 @@ unsigned int u;
 
 /* This function needs to check if the ciphers required are actually
  * available */
-static SSL_CIPHER *ssl23_get_cipher_by_char(p)
-const unsigned char *p;
+static SSL_CIPHER *ssl23_get_cipher_by_char(const unsigned char *p)
 	{
 	SSL_CIPHER c,*cp;
 	unsigned long id;
@@ -150,9 +148,7 @@ const unsigned char *p;
 	return(cp);
 	}
 
-static int ssl23_put_cipher_by_char(c,p)
-const SSL_CIPHER *c;
-unsigned char *p;
+static int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 	{
 	long l;
 
@@ -167,10 +163,7 @@ unsigned char *p;
 	return(3);
 	}
 
-static int ssl23_read(s,buf,len)
-SSL *s;
-char *buf;
-int len;
+static int ssl23_read(SSL *s, char *buf, int len)
 	{
 	int n;
 
@@ -200,10 +193,7 @@ int len;
 		}
 	}
 
-static int ssl23_write(s,buf,len)
-SSL *s;
-const char *buf;
-int len;
+static int ssl23_write(SSL *s, const char *buf, int len)
 	{
 	int n;
 

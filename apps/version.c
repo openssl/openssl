@@ -66,9 +66,7 @@
 #undef PROG
 #define PROG	version_main
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int i,ret=0;
 	int cflags=0,version=0,date=0,options=0,platform=0;

@@ -73,8 +73,7 @@ static SSL_METHOD *ssl23_get_server_method();
 int ssl23_get_client_hello();
 #endif
 
-static SSL_METHOD *ssl23_get_server_method(ver)
-int ver;
+static SSL_METHOD *ssl23_get_server_method(int ver)
 	{
 	if (ver == SSL2_VERSION)
 		return(SSLv2_server_method());
@@ -86,7 +85,7 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv23_server_method()
+SSL_METHOD *SSLv23_server_method(void)
 	{
 	static int init=1;
 	static SSL_METHOD SSLv23_server_data;
@@ -102,8 +101,7 @@ SSL_METHOD *SSLv23_server_method()
 	return(&SSLv23_server_data);
 	}
 
-int ssl23_accept(s)
-SSL *s;
+int ssl23_accept(SSL *s)
 	{
 	BUF_MEM *buf;
 	unsigned long Time=time(NULL);
@@ -194,8 +192,7 @@ end:
 	}
 
 
-int ssl23_get_client_hello(s)
-SSL *s;
+int ssl23_get_client_hello(SSL *s)
 	{
 	char buf_space[8];
 	char *buf= &(buf_space[0]);

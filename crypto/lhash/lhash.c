@@ -125,9 +125,7 @@ static LHASH_NODE **getrn();
 
 #endif
 
-LHASH *lh_new(h, c)
-unsigned long (*h)();
-int (*c)();
+LHASH *lh_new(unsigned long (*h)(), int (*c)())
 	{
 	LHASH *ret;
 	int i;
@@ -170,8 +168,7 @@ err0:
 	return(NULL);
 	}
 
-void lh_free(lh)
-LHASH *lh;
+void lh_free(LHASH *lh)
 	{
 	unsigned int i;
 	LHASH_NODE *n,*nn;
@@ -193,9 +190,7 @@ LHASH *lh;
 	Free((char *)lh);
 	}
 
-char *lh_insert(lh, data)
-LHASH *lh;
-char *data;
+char *lh_insert(LHASH *lh, char *data)
 	{
 	unsigned long hash;
 	LHASH_NODE *nn,**rn;
@@ -233,9 +228,7 @@ char *data;
 	return(ret);
 	}
 
-char *lh_delete(lh, data)
-LHASH *lh;
-char *data;
+char *lh_delete(LHASH *lh, char *data)
 	{
 	unsigned long hash;
 	LHASH_NODE *nn,**rn;
@@ -266,9 +259,7 @@ char *data;
 	return(ret);
 	}
 
-char *lh_retrieve(lh, data)
-LHASH *lh;
-char *data;
+char *lh_retrieve(LHASH *lh, char *data)
 	{
 	unsigned long hash;
 	LHASH_NODE **rn;
@@ -290,17 +281,12 @@ char *data;
 	return(ret);
 	}
 
-void lh_doall(lh, func)
-LHASH *lh;
-void (*func)();
+void lh_doall(LHASH *lh, void (*func)())
 	{
 	lh_doall_arg(lh,func,NULL);
 	}
 
-void lh_doall_arg(lh, func, arg)
-LHASH *lh;
-void (*func)();
-char *arg;
+void lh_doall_arg(LHASH *lh, void (*func)(), char *arg)
 	{
 	int i;
 	LHASH_NODE *a,*n;
@@ -321,8 +307,7 @@ char *arg;
 		}
 	}
 
-static void expand(lh)
-LHASH *lh;
+static void expand(LHASH *lh)
 	{
 	LHASH_NODE **n,**n1,**n2,*np;
 	unsigned int p,i,j;
@@ -378,8 +363,7 @@ LHASH *lh;
 		}
 	}
 
-static void contract(lh)
-LHASH *lh;
+static void contract(LHASH *lh)
 	{
 	LHASH_NODE **n,*n1,*np;
 
@@ -418,10 +402,7 @@ LHASH *lh;
 		}
 	}
 
-static LHASH_NODE **getrn(lh, data, rhash)
-LHASH *lh;
-char *data;
-unsigned long *rhash;
+static LHASH_NODE **getrn(LHASH *lh, char *data, unsigned long *rhash)
 	{
 	LHASH_NODE **ret,*n1;
 	unsigned long hash,nn;
@@ -475,8 +456,7 @@ char *str;
  * no collisions on /usr/dict/words and it distributes on %2^n quite
  * well, not as good as MD5, but still good.
  */
-unsigned long lh_strhash(c)
-const char *c;
+unsigned long lh_strhash(const char *c)
 	{
 	unsigned long ret=0;
 	long n;

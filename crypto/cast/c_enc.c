@@ -59,9 +59,7 @@
 #include "cast.h"
 #include "cast_lcl.h"
 
-void CAST_encrypt(data,key)
-CAST_LONG *data;
-CAST_KEY *key;
+void CAST_encrypt(CAST_LONG *data, CAST_KEY *key)
 	{
 	register CAST_LONG l,r,*k,t;
 
@@ -93,9 +91,7 @@ CAST_KEY *key;
 	data[0]=r&0xffffffffL;
 	}
 
-void CAST_decrypt(data,key)
-CAST_LONG *data;
-CAST_KEY *key;
+void CAST_decrypt(CAST_LONG *data, CAST_KEY *key)
 	{
 	register CAST_LONG l,r,*k,t;
 
@@ -127,13 +123,8 @@ CAST_KEY *key;
 	data[0]=r&0xffffffffL;
 	}
 
-void CAST_cbc_encrypt(in, out, length, ks, iv, encrypt)
-unsigned char *in;
-unsigned char *out;
-long length;
-CAST_KEY *ks;
-unsigned char *iv;
-int encrypt;
+void CAST_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
+	     CAST_KEY *ks, unsigned char *iv, int encrypt)
 	{
 	register CAST_LONG tin0,tin1;
 	register CAST_LONG tout0,tout1,xor0,xor1;

@@ -65,10 +65,7 @@
 #include "rand.h"
 #include "asn1.h"
 
-DSA_SIG * DSA_do_sign(dgst,dlen,dsa)
-unsigned char *dgst;
-int dlen;
-DSA *dsa;
+DSA_SIG * DSA_do_sign(unsigned char *dgst, int dlen, DSA *dsa)
 	{
 	BIGNUM *kinv=NULL,*r=NULL,*s=NULL;
 	BIGNUM m;
@@ -133,13 +130,10 @@ err:
 
 /* data has already been hashed (probably with SHA or SHA-1). */
 
-int DSA_sign(type,dgst,dlen,sig,siglen,dsa)
-int type;
-unsigned char *dgst;
-int dlen;
-unsigned char *sig;    /* out */
-unsigned int *siglen;  /* out */
-DSA *dsa;
+/* unsigned char *sig:  out    */
+/* unsigned int *siglen:  out    */
+int DSA_sign(int type, unsigned char *dgst, int dlen, unsigned char *sig,
+	     unsigned int *siglen, DSA *dsa)
 	{
 	DSA_SIG *s;
 	s=DSA_do_sign(dgst,dlen,dsa);
@@ -153,11 +147,7 @@ DSA *dsa;
 	return(1);
 	}
 
-int DSA_sign_setup(dsa,ctx_in,kinvp,rp)
-DSA *dsa;
-BN_CTX *ctx_in;
-BIGNUM **kinvp;
-BIGNUM **rp;
+int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	{
 	BN_CTX *ctx;
 	BIGNUM k,*kinv=NULL,*r=NULL;

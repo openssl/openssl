@@ -66,9 +66,7 @@
  * ASN1err(ASN1_F_D2I_PKCS7_ENVELOPE,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
-int i2d_PKCS7_ENVELOPE(a,pp)
-PKCS7_ENVELOPE *a;
-unsigned char **pp;
+int i2d_PKCS7_ENVELOPE(PKCS7_ENVELOPE *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -85,10 +83,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-PKCS7_ENVELOPE *d2i_PKCS7_ENVELOPE(a,pp,length)
-PKCS7_ENVELOPE **a;
-unsigned char **pp;
-long length;
+PKCS7_ENVELOPE *d2i_PKCS7_ENVELOPE(PKCS7_ENVELOPE **a, unsigned char **pp,
+	     long length)
 	{
 	M_ASN1_D2I_vars(a,PKCS7_ENVELOPE *,PKCS7_ENVELOPE_new);
 
@@ -102,7 +98,7 @@ long length;
 	M_ASN1_D2I_Finish(a,PKCS7_ENVELOPE_free,ASN1_F_D2I_PKCS7_ENVELOPE);
 	}
 
-PKCS7_ENVELOPE *PKCS7_ENVELOPE_new()
+PKCS7_ENVELOPE *PKCS7_ENVELOPE_new(void)
 	{
 	PKCS7_ENVELOPE *ret=NULL;
 	ASN1_CTX c;
@@ -115,8 +111,7 @@ PKCS7_ENVELOPE *PKCS7_ENVELOPE_new()
 	M_ASN1_New_Error(ASN1_F_PKCS7_ENVELOPE_NEW);
 	}
 
-void PKCS7_ENVELOPE_free(a)
-PKCS7_ENVELOPE *a;
+void PKCS7_ENVELOPE_free(PKCS7_ENVELOPE *a)
 	{
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->version);

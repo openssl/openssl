@@ -93,9 +93,7 @@ NULL
  * ASN1err(ASN1_F_D2I_AUTHORITY_KEYID,ERR_R_MALLOC_FAILURE);
  */
 
-int i2d_AUTHORITY_KEYID(a,pp)
-AUTHORITY_KEYID *a;
-unsigned char **pp;
+int i2d_AUTHORITY_KEYID(AUTHORITY_KEYID *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
 
@@ -112,7 +110,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-AUTHORITY_KEYID *AUTHORITY_KEYID_new()
+AUTHORITY_KEYID *AUTHORITY_KEYID_new(void)
 {
 	AUTHORITY_KEYID *ret=NULL;
 	ASN1_CTX c;
@@ -124,10 +122,8 @@ AUTHORITY_KEYID *AUTHORITY_KEYID_new()
 	M_ASN1_New_Error(ASN1_F_AUTHORITY_KEYID_NEW);
 }
 
-AUTHORITY_KEYID *d2i_AUTHORITY_KEYID(a,pp,length)
-AUTHORITY_KEYID **a;
-unsigned char **pp;
-long length;
+AUTHORITY_KEYID *d2i_AUTHORITY_KEYID(AUTHORITY_KEYID **a, unsigned char **pp,
+	     long length)
 {
 	M_ASN1_D2I_vars(a,AUTHORITY_KEYID *,AUTHORITY_KEYID_new);
 	M_ASN1_D2I_Init();
@@ -141,8 +137,7 @@ long length;
 	M_ASN1_D2I_Finish(a, AUTHORITY_KEYID_free, ASN1_F_D2I_AUTHORITY_KEYID);
 }
 
-void AUTHORITY_KEYID_free(a)
-AUTHORITY_KEYID *a;
+void AUTHORITY_KEYID_free(AUTHORITY_KEYID *a)
 {
 	if (a == NULL) return;
 	ASN1_OCTET_STRING_free(a->keyid);
@@ -151,10 +146,8 @@ AUTHORITY_KEYID *a;
 	Free ((char *)a);
 }
 
-static STACK *i2v_AUTHORITY_KEYID(method, akeyid, extlist)
-X509V3_EXT_METHOD *method;
-AUTHORITY_KEYID *akeyid;
-STACK *extlist;
+static STACK *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
+	     AUTHORITY_KEYID *akeyid, STACK *extlist)
 {
 	char *tmp;
 	if(akeyid->keyid) {
@@ -181,10 +174,8 @@ STACK *extlist;
  * this is always included.
  */
 
-static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(method, ctx, values)
-X509V3_EXT_METHOD *method;
-X509V3_CTX *ctx;
-STACK *values;
+static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
+	     X509V3_CTX *ctx, STACK *values)
 {
 char keyid=0, issuer=0;
 int i;

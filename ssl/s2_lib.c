@@ -196,23 +196,22 @@ static SSL_METHOD SSLv2_data= {
 	&ssl3_undef_enc_method,
 	};
 
-static long ssl2_default_timeout()
+static long ssl2_default_timeout(void)
 	{
 	return(300);
 	}
 
-SSL_METHOD *sslv2_base_method()
+SSL_METHOD *sslv2_base_method(void)
 	{
 	return(&SSLv2_data);
 	}
 
-int ssl2_num_ciphers()
+int ssl2_num_ciphers(void)
 	{
 	return(SSL2_NUM_CIPHERS);
 	}
 
-SSL_CIPHER *ssl2_get_cipher(u)
-unsigned int u;
+SSL_CIPHER *ssl2_get_cipher(unsigned int u)
 	{
 	if (u < SSL2_NUM_CIPHERS)
 		return(&(ssl2_ciphers[SSL2_NUM_CIPHERS-1-u]));
@@ -220,14 +219,12 @@ unsigned int u;
 		return(NULL);
 	}
 
-int ssl2_pending(s)
-SSL *s;
+int ssl2_pending(SSL *s)
 	{
 	return(s->s2->ract_data_length);
 	}
 
-int ssl2_new(s)
-SSL *s;
+int ssl2_new(SSL *s)
 	{
 	SSL2_CTX *s2;
 
@@ -252,8 +249,7 @@ err:
 	return(0);
 	}
 
-void ssl2_free(s)
-SSL *s;
+void ssl2_free(SSL *s)
 	{
 	SSL2_CTX *s2;
 
@@ -268,8 +264,7 @@ SSL *s;
 	s->s2=NULL;
 	}
 
-void ssl2_clear(s)
-SSL *s;
+void ssl2_clear(SSL *s)
 	{
 	SSL2_CTX *s2;
 	unsigned char *rbuf,*wbuf;
@@ -289,11 +284,7 @@ SSL *s;
 	s->packet_length=0;
 	}
 
-long ssl2_ctrl(s,cmd,larg,parg)
-SSL *s;
-int cmd;
-long larg;
-char *parg;
+long ssl2_ctrl(SSL *s, int cmd, long larg, char *parg)
 	{
 	int ret=0;
 
@@ -308,19 +299,14 @@ char *parg;
 	return(ret);
 	}
 
-long ssl2_ctx_ctrl(ctx,cmd,larg,parg)
-SSL_CTX *ctx;
-int cmd;
-long larg;
-char *parg;
+long ssl2_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 	{
 	return(0);
 	}
 
 /* This function needs to check if the ciphers required are actually
  * available */
-SSL_CIPHER *ssl2_get_cipher_by_char(p)
-const unsigned char *p;
+SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p)
 	{
 	static int init=1;
 	static SSL_CIPHER *sorted[SSL2_NUM_CIPHERS];
@@ -353,9 +339,7 @@ const unsigned char *p;
 		return(*cpp);
 	}
 
-int ssl2_put_cipher_by_char(c,p)
-const SSL_CIPHER *c;
-unsigned char *p;
+int ssl2_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 	{
 	long l;
 
@@ -370,8 +354,7 @@ unsigned char *p;
 	return(3);
 	}
 
-void ssl2_generate_key_material(s)
-SSL *s;
+void ssl2_generate_key_material(SSL *s)
 	{
 	unsigned int i;
 	MD5_CTX ctx;
@@ -393,9 +376,7 @@ SSL *s;
 		}
 	}
 
-void ssl2_return_error(s,err)
-SSL *s;
-int err;
+void ssl2_return_error(SSL *s, int err)
 	{
 	if (!s->error)
 		{
@@ -407,8 +388,7 @@ int err;
 	}
 
 
-void ssl2_write_error(s)
-SSL *s;
+void ssl2_write_error(SSL *s)
 	{
 	char buf[3];
 	int i,error;
@@ -431,8 +411,7 @@ SSL *s;
 		s->error=0; */
 	}
 
-int ssl2_shutdown(s)
-SSL *s;
+int ssl2_shutdown(SSL *s)
 	{
 	s->shutdown=(SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
 	return(1);

@@ -58,10 +58,7 @@
 
 #include "des_locl.h"
 
-int des_read_password(key, prompt, verify)
-des_cblock key;
-const char *prompt;
-int verify;
+int des_read_password(des_cblock key, const char *prompt, int verify)
 	{
 	int ok;
 	char buf[BUFSIZ],buff[BUFSIZ];
@@ -73,11 +70,8 @@ int verify;
 	return(ok);
 	}
 
-int des_read_2passwords(key1, key2, prompt, verify)
-des_cblock key1;
-des_cblock key2;
-const char *prompt;
-int verify;
+int des_read_2passwords(des_cblock key1, des_cblock key2, const char *prompt,
+	     int verify)
 	{
 	int ok;
 	char buf[BUFSIZ],buff[BUFSIZ];

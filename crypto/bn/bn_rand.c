@@ -62,11 +62,7 @@
 #include "bn_lcl.h"
 #include "rand.h"
 
-int BN_rand(rnd, bits, top, bottom)
-BIGNUM *rnd;
-int bits;
-int top;
-int bottom;
+int BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
 	{
 	unsigned char *buf=NULL;
 	int ret=0,bit,bytes,mask;

@@ -63,8 +63,7 @@
 #define limit_bits 5			/* 2^5, or 32 words */
 #define limit_num (1<<limit_bits)
 
-int BN_m(r,a,b)
-BIGNUM *r,*a,*b;
+int BN_m(BIGNUM *r, BIGNUM *a, BIGNUM *b)
 	{
 	BIGNUM *sk;
 	int i,n;
@@ -82,9 +81,7 @@ BIGNUM *r,*a,*b;
 #define blbh	(sk[1])
 
 /* r must be different to a and b */
-int BN_mm(m, A, B, sk)
-BIGNUM *m,*A,*B;
-BIGNUM *sk;
+int BN_mm(BIGNUM *m, BIGNUM *A, BIGNUM *B, BIGNUM *sk)
 	{
 	int i,num,anum,bnum;
 	int an,bn;

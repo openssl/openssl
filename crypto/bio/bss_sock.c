@@ -118,7 +118,7 @@ static BIO_METHOD methods_sockp=
 	sock_free,
 	};
 
-BIO_METHOD *BIO_s_socket()
+BIO_METHOD *BIO_s_socket(void)
 	{
 	return(&methods_sockp);
 	}
@@ -135,19 +135,17 @@ static BIO_METHOD methods_fdp=
 	fd_free,
 	};
 
-BIO_METHOD *BIO_s_fd()
+BIO_METHOD *BIO_s_fd(void)
 	{
 	return(&methods_fdp);
 	}
 #endif
 
 #ifndef BIO_FD
-BIO *BIO_new_socket(fd,close_flag)
+BIO *BIO_new_socket(int fd, int close_flag)
 #else
-BIO *BIO_new_fd(fd,close_flag)
+BIO *BIO_new_fd(int fd,int close_flag)
 #endif
-int fd;
-int close_flag;
 	{
 	BIO *ret;
 
@@ -162,11 +160,10 @@ int close_flag;
 	}
 
 #ifndef BIO_FD
-static int sock_new(bi)
+static int sock_new(BIO *bi)
 #else
-static int fd_new(bi)
+static int fd_new(BIO *bi)
 #endif
-BIO *bi;
 	{
 	bi->init=0;
 	bi->num=0;
@@ -176,11 +173,10 @@ BIO *bi;
 	}
 
 #ifndef BIO_FD
-static int sock_free(a)
+static int sock_free(BIO *a)
 #else
-static int fd_free(a)
+static int fd_free(BIO *a)
 #endif
-BIO *a;
 	{
 	if (a == NULL) return(0);
 	if (a->shutdown)
@@ -202,13 +198,10 @@ BIO *a;
 	}
 	
 #ifndef BIO_FD
-static int sock_read(b,out,outl)
+static int sock_read(BIO *b, char *out, int outl)
 #else
-static int fd_read(b,out,outl)
+static int fd_read(BIO *b, char *out,int outl)
 #endif
-BIO *b;
-char *out;
-int outl;
 	{
 	int ret=0;
 
@@ -236,13 +229,10 @@ int outl;
 	}
 
 #ifndef BIO_FD
-static int sock_write(b,in,inl)
+static int sock_write(BIO *b, char *in, int inl)
 #else
-static int fd_write(b,in,inl)
+static int fd_write(BIO *b, char *in, int inl)
 #endif
-BIO *b;
-char *in;
-int inl;
 	{
 	int ret;
 	
@@ -267,14 +257,10 @@ int inl;
 	}
 
 #ifndef BIO_FD
-static long sock_ctrl(b,cmd,num,ptr)
+static long sock_ctrl(BIO *b, int cmd, long num, char *ptr)
 #else
-static long fd_ctrl(b,cmd,num,ptr)
+static long fd_ctrl(BIO *b, int cmd, long num, char *ptr)
 #endif
-BIO *b;
-int cmd;
-long num;
-char *ptr;
 	{
 	long ret=1;
 	int *ip;
@@ -340,22 +326,17 @@ char *ptr;
 	}
 
 #ifdef undef
-static int sock_gets(bp,buf,size)
-BIO *bp;
-char *buf;
-int size;
+static int sock_gets(BIO *bp, char *buf,int size)
 	{
 	return(-1);
 	}
 #endif
 
 #ifndef BIO_FD
-static int sock_puts(bp,str)
+static int sock_puts(BIO *bp, char *str)
 #else
-static int fd_puts(bp,str)
+static int fd_puts(BIO *bp, char *str)
 #endif
-BIO *bp;
-char *str;
 	{
 	int n,ret;
 
@@ -369,11 +350,10 @@ char *str;
 	}
 
 #ifndef BIO_FD
-int BIO_sock_should_retry(i)
+int BIO_sock_should_retry(int i)
 #else
-int BIO_fd_should_retry(i)
+int BIO_fd_should_retry(int i)
 #endif
-int i;
 	{
 	int err;
 
@@ -400,11 +380,10 @@ int i;
 	}
 
 #ifndef BIO_FD
-int BIO_sock_non_fatal_error(err)
+int BIO_sock_non_fatal_error(int err)
 #else
-int BIO_fd_non_fatal_error(err)
+int BIO_fd_non_fatal_error(int err)
 #endif
-int err;
 	{
 	switch (err)
 		{

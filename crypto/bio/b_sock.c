@@ -106,9 +106,7 @@ static void ghbn_free();
 static struct hostent *ghbn_dup();
 #endif
 
-int BIO_get_host_ip(str,ip)
-const char *str;
-unsigned char *ip;
+int BIO_get_host_ip(const char *str, unsigned char *ip)
 	{
 	int i;
 	struct hostent *he;
@@ -146,9 +144,7 @@ unsigned char *ip;
 	return(1);
 	}
 
-int BIO_get_port(str,port_ptr)
-const char *str;
-unsigned short *port_ptr;
+int BIO_get_port(const char *str, unsigned short *port_ptr)
 	{
 	int i;
 	struct servent *s;
@@ -197,8 +193,7 @@ unsigned short *port_ptr;
 	return(1);
 	}
 
-int BIO_sock_error(sock)
-int sock;
+int BIO_sock_error(int sock)
 	{
 	int j,i,size;
 		 
@@ -211,10 +206,7 @@ int sock;
 		return(j);
 	}
 
-long BIO_ghbn_ctrl(cmd,iarg,parg)
-int cmd;
-int iarg;
-char *parg;
+long BIO_ghbn_ctrl(int cmd, int iarg, char *parg)
 	{
 	int i;
 	char **p;
@@ -252,8 +244,7 @@ char *parg;
 	return(1);
 	}
 
-static struct hostent *ghbn_dup(a)
-struct hostent *a;
+static struct hostent *ghbn_dup(struct hostent *a)
 	{
 	struct hostent *ret;
 	int i,j;
@@ -305,8 +296,7 @@ err:
 	return(ret);
 	}
 
-static void ghbn_free(a)
-struct hostent *a;
+static void ghbn_free(struct hostent *a)
 	{
 	int i;
 
@@ -329,8 +319,7 @@ struct hostent *a;
 	Free(a);
 	}
 
-struct hostent *BIO_gethostbyname(name)
-const char *name;
+struct hostent *BIO_gethostbyname(const char *name)
 	{
 	struct hostent *ret;
 	int i,lowi=0,j;
@@ -385,7 +374,7 @@ const char *name;
 	return(ret);
 	}
 
-int BIO_sock_init()
+int BIO_sock_init(void)
 	{
 #ifdef WINDOWS
 	static struct WSAData wsa_state;
@@ -411,7 +400,7 @@ int BIO_sock_init()
 	return(1);
 	}
 
-void BIO_sock_cleanup()
+void BIO_sock_cleanup(void)
 	{
 #ifdef WINDOWS
 	if (wsa_init_done)
@@ -423,10 +412,7 @@ void BIO_sock_cleanup()
 #endif
 	}
 
-int BIO_socket_ioctl(fd,type,arg)
-int fd;
-long type;
-unsigned long *arg;
+int BIO_socket_ioctl(int fd, long type, unsigned long *arg)
 	{
 	int i;
 
@@ -438,9 +424,7 @@ unsigned long *arg;
 
 /* The reason I have implemented this instead of using sscanf is because
  * Visual C 1.52c gives an unresolved external when linking a DLL :-( */
-static int get_ip(str,ip)
-const char *str;
-unsigned char ip[4];
+static int get_ip(const char *str, unsigned char ip[4])
 	{
 	unsigned int tmp[4];
 	int num=0,c,ok=0;
@@ -475,9 +459,7 @@ unsigned char ip[4];
 	return(1);
 	}
 
-int BIO_get_accept_socket(host,bind_mode)
-char *host;
-int bind_mode;
+int BIO_get_accept_socket(char *host, int bind_mode)
 	{
 	int ret=0;
 	struct sockaddr_in server,client;
@@ -604,9 +586,7 @@ err:
 	return(s);
 	}
 
-int BIO_accept(sock,addr)
-int sock;
-char **addr;
+int BIO_accept(int sock, char **addr)
 	{
 	int ret=INVALID_SOCKET;
 	static struct sockaddr_in from;
@@ -648,9 +628,7 @@ end:
 	return(ret);
 	}
 
-int BIO_set_tcp_ndelay(s,on)
-int s;
-int on;
+int BIO_set_tcp_ndelay(int s, int on)
 	{
 	int ret=0;
 #if defined(TCP_NODELAY) && (defined(IPPROTO_TCP) || defined(SOL_TCP))
@@ -670,9 +648,7 @@ int on;
 	}
 #endif
 
-int BIO_socket_nbio(s,mode)
-int s;
-int mode;
+int BIO_socket_nbio(int s, int mode)
 	{
 	int ret= -1;
 	unsigned long l;

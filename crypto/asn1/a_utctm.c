@@ -65,19 +65,15 @@
  * ASN1err(ASN1_F_D2I_ASN1_UTCTIME,ASN1_R_EXPECTING_A_UTCTIME);
  */
 
-int i2d_ASN1_UTCTIME(a,pp)
-ASN1_UTCTIME *a;
-unsigned char **pp;
+int i2d_ASN1_UTCTIME(ASN1_UTCTIME *a, unsigned char **pp)
 	{
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,
 		V_ASN1_UTCTIME,V_ASN1_UNIVERSAL));
 	}
 
 
-ASN1_UTCTIME *d2i_ASN1_UTCTIME(a, pp, length)
-ASN1_UTCTIME **a;
-unsigned char **pp;
-long length;
+ASN1_UTCTIME *d2i_ASN1_UTCTIME(ASN1_UTCTIME **a, unsigned char **pp,
+	     long length)
 	{
 	ASN1_UTCTIME *ret=NULL;
 
@@ -101,8 +97,7 @@ err:
 	return(NULL);
 	}
 
-int ASN1_UTCTIME_check(d)
-ASN1_UTCTIME *d;
+int ASN1_UTCTIME_check(ASN1_UTCTIME *d)
 	{
 	static int min[8]={ 0, 1, 1, 0, 0, 0, 0, 0};
 	static int max[8]={99,12,31,23,59,59,12,59};
@@ -152,9 +147,7 @@ err:
 	return(0);
 	}
 
-int ASN1_UTCTIME_set_string(s,str)
-ASN1_UTCTIME *s;
-char *str;
+int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, char *str)
 	{
 	ASN1_UTCTIME t;
 
@@ -174,9 +167,7 @@ char *str;
 		return(0);
 	}
 
-ASN1_UTCTIME *ASN1_UTCTIME_set(s, t)
-ASN1_UTCTIME *s;
-time_t t;
+ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	{
 	char *p;
 	struct tm *ts;

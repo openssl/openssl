@@ -4,8 +4,7 @@
 #include "objects.h"
 #include "comp.h"
 
-COMP_CTX *COMP_CTX_new(meth)
-COMP_METHOD *meth;
+COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
 	{
 	COMP_CTX *ret;
 
@@ -28,8 +27,7 @@ COMP_METHOD *meth;
 	return(ret);
 	}
 
-void COMP_CTX_free(ctx)
-COMP_CTX *ctx;
+void COMP_CTX_free(COMP_CTX *ctx)
 	{
 	/* CRYPTO_free_ex_data(rsa_meth,(char *)ctx,&ctx->ex_data); */
 
@@ -42,12 +40,8 @@ COMP_CTX *ctx;
 	Free(ctx);
 	}
 
-int COMP_compress_block(ctx,out,olen,in,ilen)
-COMP_CTX *ctx;
-unsigned char *out;
-int olen;
-unsigned char *in;
-int ilen;
+int COMP_compress_block(COMP_CTX *ctx, unsigned char *out, int olen,
+	     unsigned char *in, int ilen)
 	{
 	int ret;
 	if (ctx->meth->compress == NULL)
@@ -64,12 +58,8 @@ int ilen;
 	return(ret);
 	}
 
-int COMP_expand_block(ctx,out,olen,in,ilen)
-COMP_CTX *ctx;
-unsigned char *out;
-int olen;
-unsigned char *in;
-int ilen;
+int COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
+	     unsigned char *in, int ilen)
 	{
 	int ret;
 

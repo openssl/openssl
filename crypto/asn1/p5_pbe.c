@@ -70,9 +70,7 @@
  *ASN1err(ASN1_F_D2I_PBEPARAM,ASN1_R_DECODE_ERROR)
  */
 
-int i2d_PBEPARAM(a, pp)
-PBEPARAM *a;
-unsigned char **pp;
+int i2d_PBEPARAM(PBEPARAM *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
 	M_ASN1_I2D_len (a->salt, i2d_ASN1_OCTET_STRING);
@@ -85,7 +83,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-PBEPARAM *PBEPARAM_new()
+PBEPARAM *PBEPARAM_new(void)
 {
 	PBEPARAM *ret=NULL;
 	ASN1_CTX c;
@@ -96,10 +94,7 @@ PBEPARAM *PBEPARAM_new()
 	M_ASN1_New_Error(ASN1_F_PBEPARAM_NEW);
 }
 
-PBEPARAM *d2i_PBEPARAM(a,pp,length)
-PBEPARAM **a;
-unsigned char **pp;
-long length;
+PBEPARAM *d2i_PBEPARAM(PBEPARAM **a, unsigned char **pp, long length)
 {
 	M_ASN1_D2I_vars(a,PBEPARAM *,PBEPARAM_new);
 	M_ASN1_D2I_Init();
@@ -109,8 +104,7 @@ long length;
 	M_ASN1_D2I_Finish(a, PBEPARAM_free, ASN1_F_D2I_PBEPARAM);
 }
 
-void PBEPARAM_free (a)
-PBEPARAM *a;
+void PBEPARAM_free (PBEPARAM *a)
 {
 	if(a==NULL) return;
 	ASN1_OCTET_STRING_free(a->salt);
@@ -120,11 +114,8 @@ PBEPARAM *a;
 
 /* Return an algorithm identifier for a PKCS#5 PBE algorithm */
 
-X509_ALGOR *PKCS5_pbe_set(alg, iter, salt, saltlen)
-int alg;
-int iter;
-unsigned char *salt;
-int saltlen;
+X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt,
+	     int saltlen)
 {
 	unsigned char *pdata, *ptmp;
 	int plen;

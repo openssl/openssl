@@ -66,9 +66,7 @@
 #include "cryptlib.h"
 #include "asn1.h"
 
-int i2d_ASN1_TIME(a,pp)
-ASN1_TIME *a;
-unsigned char **pp;
+int i2d_ASN1_TIME(ASN1_TIME *a, unsigned char **pp)
 	{
 	if(a->type == V_ASN1_UTCTIME || a->type == V_ASN1_GENERALIZEDTIME)
 				return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,
@@ -78,10 +76,7 @@ unsigned char **pp;
 	}
 
 
-ASN1_TIME *d2i_ASN1_TIME(a, pp, length)
-ASN1_TIME **a;
-unsigned char **pp;
-long length;
+ASN1_TIME *d2i_ASN1_TIME(ASN1_TIME **a, unsigned char **pp, long length)
 	{
 	unsigned char tag;
 	tag = **pp & ~V_ASN1_CONSTRUCTED;
@@ -94,9 +89,7 @@ long length;
 	}
 
 
-ASN1_TIME *ASN1_TIME_set(s, t)
-ASN1_TIME *s;
-time_t t;
+ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t)
 	{
 	struct tm *ts;
 #if defined(THREADS) && !defined(WIN32)

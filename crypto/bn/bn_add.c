@@ -61,10 +61,7 @@
 #include "bn_lcl.h"
 
 /* r can == a or b */
-int BN_add(r, a, b)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
+int BN_add(BIGNUM *r, BIGNUM *a, BIGNUM *b)
 	{
 	BIGNUM *tmp;
 
@@ -107,10 +104,7 @@ BIGNUM *b;
 	}
 
 /* unsigned add of b to a, r must be large enough */
-int BN_uadd(r,a,b)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
+int BN_uadd(BIGNUM *r, BIGNUM *a, BIGNUM *b)
 	{
 	register int i;
 	int max,min;
@@ -170,10 +164,7 @@ BIGNUM *b;
 	}
 
 /* unsigned subtraction of b from a, a must be larger than b. */
-int BN_usub(r, a, b)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
+int BN_usub(BIGNUM *r, BIGNUM *a, BIGNUM *b)
 	{
 	int max,min;
 	register BN_ULONG t1,t2,*ap,*bp,*rp;
@@ -264,10 +255,7 @@ BIGNUM *b;
 	return(1);
 	}
 
-int BN_sub(r, a, b)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
+int BN_sub(BIGNUM *r, BIGNUM *a, BIGNUM *b)
 	{
 	int max;
 	int add=0,neg=0;

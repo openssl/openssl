@@ -64,8 +64,7 @@
 #include "dsa.h"
 #include "rand.h"
 
-int DSA_generate_key(dsa)
-DSA *dsa;
+int DSA_generate_key(DSA *dsa)
 	{
 	int ok=0;
 	unsigned int i;

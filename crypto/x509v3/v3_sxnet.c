@@ -102,9 +102,7 @@ NULL
  * ASN1err(ASN1_F_D2I_SXNETID,ERR_R_MALLOC_FAILURE);
  */
 
-int i2d_SXNET(a,pp)
-SXNET *a;
-unsigned char **pp;
+int i2d_SXNET(SXNET *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
 
@@ -119,7 +117,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-SXNET *SXNET_new()
+SXNET *SXNET_new(void)
 {
 	SXNET *ret=NULL;
 	ASN1_CTX c;
@@ -130,10 +128,7 @@ SXNET *SXNET_new()
 	M_ASN1_New_Error(ASN1_F_SXNET_NEW);
 }
 
-SXNET *d2i_SXNET(a,pp,length)
-SXNET **a;
-unsigned char **pp;
-long length;
+SXNET *d2i_SXNET(SXNET **a, unsigned char **pp, long length)
 {
 	M_ASN1_D2I_vars(a,SXNET *,SXNET_new);
 	M_ASN1_D2I_Init();
@@ -143,8 +138,7 @@ long length;
 	M_ASN1_D2I_Finish(a, SXNET_free, ASN1_F_D2I_SXNET);
 }
 
-void SXNET_free(a)
-SXNET *a;
+void SXNET_free(SXNET *a)
 {
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->version);
@@ -152,9 +146,7 @@ SXNET *a;
 	Free (a);
 }
 
-int i2d_SXNETID(a,pp)
-SXNETID *a;
-unsigned char **pp;
+int i2d_SXNETID(SXNETID *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
 
@@ -169,7 +161,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-SXNETID *SXNETID_new()
+SXNETID *SXNETID_new(void)
 {
 	SXNETID *ret=NULL;
 	ASN1_CTX c;
@@ -180,10 +172,7 @@ SXNETID *SXNETID_new()
 	M_ASN1_New_Error(ASN1_F_SXNETID_NEW);
 }
 
-SXNETID *d2i_SXNETID(a,pp,length)
-SXNETID **a;
-unsigned char **pp;
-long length;
+SXNETID *d2i_SXNETID(SXNETID **a, unsigned char **pp, long length)
 {
 	M_ASN1_D2I_vars(a,SXNETID *,SXNETID_new);
 	M_ASN1_D2I_Init();
@@ -193,8 +182,7 @@ long length;
 	M_ASN1_D2I_Finish(a, SXNETID_free, ASN1_F_D2I_SXNETID);
 }
 
-void SXNETID_free(a)
-SXNETID *a;
+void SXNETID_free(SXNETID *a)
 {
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->zone);
@@ -202,11 +190,8 @@ SXNETID *a;
 	Free (a);
 }
 
-static int sxnet_i2r(method, sx, out, indent)
-X509V3_EXT_METHOD *method;
-SXNET *sx;
-BIO *out;
-int indent;
+static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
+	     int indent)
 {
 	long v;
 	char *tmp;
@@ -232,10 +217,8 @@ int indent;
  */
 
 
-static SXNET * sxnet_v2i(method, ctx, nval)
-X509V3_EXT_METHOD *method;
-X509V3_CTX *ctx;
-STACK *nval;
+static SXNET * sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+	     STACK *nval)
 {
 	CONF_VALUE *cnf;
 	SXNET *sx = NULL;
@@ -255,11 +238,8 @@ STACK *nval;
 
 /* Add an id given the zone as an ASCII number */
 
-int SXNET_add_id_asc(psx, zone, user, userlen)
-SXNET **psx;
-char *zone;
-unsigned char *user;
-int userlen;
+int SXNET_add_id_asc(SXNET **psx, char *zone, unsigned char *user,
+	     int userlen)
 {
 	ASN1_INTEGER *izone = NULL;
 	if(!(izone = s2i_ASN1_INTEGER(NULL, zone))) {
@@ -271,11 +251,8 @@ int userlen;
 
 /* Add an id given the zone as an unsigned long */
 
-int SXNET_add_id_ulong(psx, lzone, user, userlen)
-SXNET **psx;
-unsigned long lzone;
-unsigned char *user;
-int userlen;
+int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, unsigned char *user,
+	     int userlen)
 {
 	ASN1_INTEGER *izone = NULL;
 	if(!(izone = ASN1_INTEGER_new()) || !ASN1_INTEGER_set(izone, lzone)) {
@@ -292,11 +269,8 @@ int userlen;
  * free it up afterwards.
  */
 
-int SXNET_add_id_INTEGER(psx, zone, user, userlen)
-SXNET **psx;
-ASN1_INTEGER *zone;
-unsigned char *user;
-int userlen;
+int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, unsigned char *user,
+	     int userlen)
 {
 	SXNET *sx = NULL;
 	SXNETID *id = NULL;
@@ -335,9 +309,7 @@ int userlen;
 	return 0;
 }
 
-ASN1_OCTET_STRING *SXNET_get_id_asc(sx, zone)
-SXNET *sx;
-char *zone;
+ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, char *zone)
 {
 	ASN1_INTEGER *izone = NULL;
 	ASN1_OCTET_STRING *oct;
@@ -350,9 +322,7 @@ char *zone;
 	return oct;
 }
 
-ASN1_OCTET_STRING *SXNET_get_id_ulong(sx, lzone)
-SXNET *sx;
-unsigned long lzone;
+ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone)
 {
 	ASN1_INTEGER *izone = NULL;
 	ASN1_OCTET_STRING *oct;
@@ -366,9 +336,7 @@ unsigned long lzone;
 	return oct;
 }
 
-ASN1_OCTET_STRING *SXNET_get_id_INTEGER(sx, zone)
-SXNET *sx;
-ASN1_INTEGER *zone;
+ASN1_OCTET_STRING *SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone)
 {
 	SXNETID *id;
 	int i;

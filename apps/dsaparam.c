@@ -89,9 +89,7 @@ static void MS_CALLBACK dsa_cb(int p, int n, char *arg);
 static void MS_CALLBACK dsa_cb();
 #endif
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	DSA *dsa=NULL;
 	int i,badops=0,text=0;
@@ -342,10 +340,7 @@ end:
 	EXIT(ret);
 	}
 
-static void MS_CALLBACK dsa_cb(p, n, arg)
-int p;
-int n;
-char *arg;
+static void MS_CALLBACK dsa_cb(int p, int n, char *arg)
 	{
 	char c='*';
 

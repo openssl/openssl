@@ -313,9 +313,7 @@ static int cfb64_test();
 static int ede_cfb64_test();
 #endif
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,j,err=0;
 	des_cblock in,out,outin,iv3,iv2;
@@ -794,8 +792,7 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 	return(0);
 	}
 
-static char *pt(p)
-unsigned char *p;
+static char *pt(unsigned char *p)
 	{
 	static char bufs[10][20];
 	static int bnum=0;
@@ -816,9 +813,7 @@ unsigned char *p;
 
 #ifndef LIBDES_LIT
 
-static int cfb_test(bits, cfb_cipher)
-int bits;
-unsigned char *cfb_cipher;
+static int cfb_test(int bits, unsigned char *cfb_cipher)
 	{
 	des_key_schedule ks;
 	int i,err=0;
@@ -847,8 +842,7 @@ unsigned char *cfb_cipher;
 	return(err);
 	}
 
-static int cfb64_test(cfb_cipher)
-unsigned char *cfb_cipher;
+static int cfb64_test(unsigned char *cfb_cipher)
 	{
 	des_key_schedule ks;
 	int err=0,i,n;
@@ -881,8 +875,7 @@ unsigned char *cfb_cipher;
 	return(err);
 	}
 
-static int ede_cfb64_test(cfb_cipher)
-unsigned char *cfb_cipher;
+static int ede_cfb64_test(unsigned char *cfb_cipher)
 	{
 	des_key_schedule ks;
 	int err=0,i,n;

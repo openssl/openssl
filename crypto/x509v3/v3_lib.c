@@ -67,8 +67,7 @@ static STACK *ext_list = NULL;
 static int ext_cmp(X509V3_EXT_METHOD **a, X509V3_EXT_METHOD **b);
 static void ext_list_free(X509V3_EXT_METHOD *ext);
 
-int X509V3_EXT_add(ext)
-X509V3_EXT_METHOD *ext;
+int X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 {
 	if(!ext_list && !(ext_list = sk_new(ext_cmp))) {
 		X509V3err(X509V3_F_X509V3_EXT_ADD,ERR_R_MALLOC_FAILURE);
@@ -81,14 +80,12 @@ X509V3_EXT_METHOD *ext;
 	return 1;
 }
 
-static int ext_cmp(a, b)
-X509V3_EXT_METHOD **a, **b;
+static int ext_cmp(X509V3_EXT_METHOD **a, X509V3_EXT_METHOD **b)
 {
 	return ((*a)->ext_nid - (*b)->ext_nid);
 }
 
-X509V3_EXT_METHOD *X509V3_EXT_get_nid(nid)
-int nid;
+X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
 {
 	X509V3_EXT_METHOD tmp;
 	int idx;
@@ -99,8 +96,7 @@ int nid;
 	return (X509V3_EXT_METHOD *)sk_value(ext_list, idx);
 }
 
-X509V3_EXT_METHOD *X509V3_EXT_get(ext)
-X509_EXTENSION *ext;
+X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext)
 {
 	int nid;
 	if((nid = OBJ_obj2nid(ext->object)) == NID_undef) return NULL;
@@ -108,16 +104,14 @@ X509_EXTENSION *ext;
 }
 
 
-int X509V3_EXT_add_list(extlist)
-X509V3_EXT_METHOD *extlist;
+int X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist)
 {
 	for(;extlist->ext_nid!=-1;extlist++) 
 			if(!X509V3_EXT_add(extlist)) return 0;
 	return 1;
 }
 
-int X509V3_EXT_add_alias(nid_to, nid_from)
-int nid_to, nid_from;
+int X509V3_EXT_add_alias(int nid_to, int nid_from)
 {
 	X509V3_EXT_METHOD *ext, *tmpext;
 	if(!(ext = X509V3_EXT_get_nid(nid_from))) {
@@ -134,13 +128,12 @@ int nid_to, nid_from;
 	return 1;
 }
 
-void X509V3_EXT_cleanup()
+void X509V3_EXT_cleanup(void)
 {
 	sk_pop_free(ext_list, ext_list_free);
 }
 
-static void ext_list_free(ext)
-X509V3_EXT_METHOD *ext;
+static void ext_list_free(X509V3_EXT_METHOD *ext)
 {
 	if(ext->ext_flags & X509V3_EXT_DYNAMIC) Free(ext);
 }
@@ -151,7 +144,7 @@ extern X509V3_EXT_METHOD v3_ns_ia5_list[], v3_alt[], v3_skey_id, v3_akey_id;
 
 extern X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_cpols;
 
-int X509V3_add_standard_extensions()
+int X509V3_add_standard_extensions(void)
 {
 	X509V3_EXT_add_list(v3_ns_ia5_list);
 	X509V3_EXT_add_list(v3_alt);
@@ -171,8 +164,7 @@ int X509V3_add_standard_extensions()
 
 /* Return an extension internal structure */
 
-char *X509V3_EXT_d2i(ext)
-X509_EXTENSION *ext;
+char *X509V3_EXT_d2i(X509_EXTENSION *ext)
 {
 	X509V3_EXT_METHOD *method;
 	unsigned char *p;

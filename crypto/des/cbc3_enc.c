@@ -59,15 +59,9 @@
 #include "des_locl.h"
 
 /* HAS BUGS? DON'T USE - this is only present for use in des.c */
-void des_3cbc_encrypt(input, output, length, ks1, ks2, iv1, iv2, enc)
-des_cblock (*input);
-des_cblock (*output);
-long length;
-des_key_schedule ks1;
-des_key_schedule ks2;
-des_cblock (*iv1);
-des_cblock (*iv2);
-int enc;
+void des_3cbc_encrypt(des_cblock (*input), des_cblock (*output), long length,
+	     des_key_schedule ks1, des_key_schedule ks2, des_cblock (*iv1),
+	     des_cblock (*iv2), int enc)
 	{
 	int off=((int)length-1)/8;
 	long l8=((length+7)/8)*8;

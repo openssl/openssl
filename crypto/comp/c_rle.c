@@ -19,17 +19,13 @@ static COMP_METHOD rle_method={
 	NULL,
 	};
 
-COMP_METHOD *COMP_rle()
+COMP_METHOD *COMP_rle(void)
 	{
 	return(&rle_method);
 	}
 
-static int rle_compress_block(ctx,out,olen,in,ilen)
-COMP_CTX *ctx;
-unsigned char *out;
-unsigned int olen;
-unsigned char *in;
-unsigned int ilen;
+static int rle_compress_block(COMP_CTX *ctx, unsigned char *out,
+	     unsigned int olen, unsigned char *in, unsigned int ilen)
 	{
 	/* int i; */
 
@@ -44,12 +40,8 @@ unsigned int ilen;
 	return(ilen+1);
 	}
 
-static int rle_expand_block(ctx,out,olen,in,ilen)
-COMP_CTX *ctx;
-unsigned char *out;
-unsigned int olen;
-unsigned char *in;
-unsigned int ilen;
+static int rle_expand_block(COMP_CTX *ctx, unsigned char *out,
+	     unsigned int olen, unsigned char *in, unsigned int ilen)
 	{
 	int i;
 

@@ -79,9 +79,7 @@ void do_fp(unsigned char *buf,BIO *f,int sep);
 void do_fp();
 #endif
 
-int MAIN(argc,argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	unsigned char *buf=NULL;
 	int i,err=0;
@@ -203,10 +201,7 @@ end:
 	EXIT(err);
 	}
 
-void do_fp(buf,bp,sep)
-unsigned char *buf;
-BIO *bp;
-int sep;
+void do_fp(unsigned char *buf, BIO *bp, int sep)
 	{
 	int len;
 	int i;

@@ -84,16 +84,13 @@ static EVP_CIPHER d_ofb_cipher=
 	EVP_CIPHER_get_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_des_ofb()
+EVP_CIPHER *EVP_des_ofb(void)
 	{
 	return(&d_ofb_cipher);
 	}
 	
-static void des_ofb_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void des_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	ctx->num=0;
 
@@ -104,11 +101,8 @@ int enc;
 		des_set_key(key,ctx->c.des_ks);
 	}
 
-static void des_ofb_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void des_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	des_ofb64_encrypt(in,out,inl,ctx->c.des_ks,&(ctx->iv[0]),&ctx->num);
 	}

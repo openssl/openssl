@@ -65,8 +65,7 @@
 const static char *Hex="0123456789ABCDEF";
 
 /* Must 'Free' the returned data */
-char *BN_bn2hex(a)
-BIGNUM *a;
+char *BN_bn2hex(BIGNUM *a)
 	{
 	int i,j,v,z=0;
 	char *buf;
@@ -101,8 +100,7 @@ err:
 	}
 
 /* Must 'Free' the returned data */
-char *BN_bn2dec(a)
-BIGNUM *a;
+char *BN_bn2dec(BIGNUM *a)
 	{
 	int i=0,num;
 	char *buf=NULL;
@@ -156,9 +154,7 @@ err:
 	return(buf);
 	}
 
-int BN_hex2bn(bn,a)
-BIGNUM **bn;
-char *a;
+int BN_hex2bn(BIGNUM **bn, char *a)
 	{
 	BIGNUM *ret=NULL;
 	BN_ULONG l=0;
@@ -224,9 +220,7 @@ err:
 	return(0);
 	}
 
-int BN_dec2bn(bn,a)
-BIGNUM **bn;
-char *a;
+int BN_dec2bn(BIGNUM **bn, char *a)
 	{
 	BIGNUM *ret=NULL;
 	BN_ULONG l=0;
@@ -286,9 +280,7 @@ err:
 #ifndef NO_BIO
 
 #ifndef NO_FP_API
-int BN_print_fp(fp, a)
-FILE *fp;
-BIGNUM *a;
+int BN_print_fp(FILE *fp, BIGNUM *a)
 	{
 	BIO *b;
 	int ret;
@@ -302,9 +294,7 @@ BIGNUM *a;
 	}
 #endif
 
-int BN_print(bp, a)
-BIO *bp;
-BIGNUM *a;
+int BN_print(BIO *bp, BIGNUM *a)
 	{
 	int i,j,v,z=0;
 	int ret=0;

@@ -62,7 +62,7 @@
 #include "asn1_mac.h"
 #include "x509.h"
 
-X509_INFO *X509_INFO_new()
+X509_INFO *X509_INFO_new(void)
 	{
 	X509_INFO *ret=NULL;
 
@@ -84,8 +84,7 @@ X509_INFO *X509_INFO_new()
 	return(ret);
 	}
 
-void X509_INFO_free(x)
-X509_INFO *x;
+void X509_INFO_free(X509_INFO *x)
 	{
 	int i;
 

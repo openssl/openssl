@@ -71,7 +71,7 @@ static ERR_STRING_DATA CRYPTO_str_functs[]=
 
 #endif
 
-void ERR_load_CRYPTO_strings()
+void ERR_load_CRYPTO_strings(void)
 	{
 	static int init=1;
 

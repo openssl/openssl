@@ -72,12 +72,8 @@ static int asn1_print_info();
 static int asn1_parse2();
 #endif
 
-static int asn1_print_info(bp, tag, xclass, constructed,indent)
-BIO *bp;
-int tag;
-int xclass;
-int constructed;
-int indent;
+static int asn1_print_info(BIO *bp, int tag, int xclass, int constructed,
+	     int indent)
 	{
 	static const char fmt[]="%-18s";
 	static const char fmt2[]="%2d %-15s";
@@ -165,22 +161,13 @@ err:
 	return(0);
 	}
 
-int ASN1_parse(bp, pp, len, indent)
-BIO *bp;
-unsigned char *pp;
-long len;
-int indent;
+int ASN1_parse(BIO *bp, unsigned char *pp, long len, int indent)
 	{
 	return(asn1_parse2(bp,&pp,len,0,0,indent));
 	}
 
-static int asn1_parse2(bp, pp, length, offset, depth, indent)
-BIO *bp;
-unsigned char **pp;
-long length;
-int offset;
-int depth;
-int indent;
+static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
+	     int depth, int indent)
 	{
 	unsigned char *p,*ep,*tot,*op,*opp;
 	long len;

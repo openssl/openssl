@@ -70,9 +70,7 @@ char *usage[]={
 NULL
 };
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	FILE *in=NULL,*out=NULL;
 	char *infile=NULL,*outfile=NULL,*keystr=NULL;

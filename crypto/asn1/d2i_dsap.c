@@ -68,10 +68,7 @@
  * ASN1err(ASN1_F_I2D_DSAPARAMS,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
  */
 
-DSA *d2i_DSAparams(a,pp,length)
-DSA **a;
-unsigned char **pp;
-long length;
+DSA *d2i_DSAparams(DSA **a, unsigned char **pp, long length)
 	{
 	int i=ERR_R_NESTED_ASN1_ERROR;
 	ASN1_INTEGER *bs=NULL;

@@ -68,9 +68,7 @@
  * ASN1err(ASN1_F_I2D_RSAPUBLICKEY,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
  */
 
-int i2d_RSAPublicKey(a,pp)
-RSA *a;
-unsigned char **pp;
+int i2d_RSAPublicKey(RSA *a, unsigned char **pp)
 	{
 	BIGNUM *num[2];
 	ASN1_INTEGER bs;

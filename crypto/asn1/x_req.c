@@ -68,9 +68,7 @@
  * ASN1err(ASN1_F_X509_REQ_INFO_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
-int i2d_X509_REQ_INFO(a,pp)
-X509_REQ_INFO *a;
-unsigned char **pp;
+int i2d_X509_REQ_INFO(X509_REQ_INFO *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -117,10 +115,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509_REQ_INFO *d2i_X509_REQ_INFO(a,pp,length)
-X509_REQ_INFO **a;
-unsigned char **pp;
-long length;
+X509_REQ_INFO *d2i_X509_REQ_INFO(X509_REQ_INFO **a, unsigned char **pp,
+	     long length)
 	{
 	M_ASN1_D2I_vars(a,X509_REQ_INFO *,X509_REQ_INFO_new);
 
@@ -148,7 +144,7 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_REQ_INFO_free,ASN1_F_D2I_X509_REQ_INFO);
 	}
 
-X509_REQ_INFO *X509_REQ_INFO_new()
+X509_REQ_INFO *X509_REQ_INFO_new(void)
 	{
 	X509_REQ_INFO *ret=NULL;
 	ASN1_CTX c;
@@ -163,8 +159,7 @@ X509_REQ_INFO *X509_REQ_INFO_new()
 	M_ASN1_New_Error(ASN1_F_X509_REQ_INFO_NEW);
 	}
 	
-void X509_REQ_INFO_free(a)
-X509_REQ_INFO *a;
+void X509_REQ_INFO_free(X509_REQ_INFO *a)
 	{
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->version);
@@ -174,9 +169,7 @@ X509_REQ_INFO *a;
 	Free((char *)a);
 	}
 
-int i2d_X509_REQ(a,pp)
-X509_REQ *a;
-unsigned char **pp;
+int i2d_X509_REQ(X509_REQ *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 	M_ASN1_I2D_len(a->req_info,	i2d_X509_REQ_INFO);
@@ -192,10 +185,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509_REQ *d2i_X509_REQ(a,pp,length)
-X509_REQ **a;
-unsigned char **pp;
-long length;
+X509_REQ *d2i_X509_REQ(X509_REQ **a, unsigned char **pp, long length)
 	{
 	M_ASN1_D2I_vars(a,X509_REQ *,X509_REQ_new);
 
@@ -207,7 +197,7 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_REQ_free,ASN1_F_D2I_X509_REQ);
 	}
 
-X509_REQ *X509_REQ_new()
+X509_REQ *X509_REQ_new(void)
 	{
 	X509_REQ *ret=NULL;
 	ASN1_CTX c;
@@ -221,8 +211,7 @@ X509_REQ *X509_REQ_new()
 	M_ASN1_New_Error(ASN1_F_X509_REQ_NEW);
 	}
 
-void X509_REQ_free(a)
-X509_REQ *a;
+void X509_REQ_free(X509_REQ *a)
 	{
 	int i;
 

@@ -75,7 +75,7 @@ static EVP_MD md2_md=
 	sizeof(EVP_MD *)+sizeof(MD2_CTX),
 	};
 
-EVP_MD *EVP_md2()
+EVP_MD *EVP_md2(void)
 	{
 	return(&md2_md);
 	}

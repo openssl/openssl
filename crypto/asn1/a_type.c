@@ -70,9 +70,7 @@ static void ASN1_TYPE_component_free(ASN1_TYPE *a);
 static void ASN1_TYPE_component_free();
 #endif
 
-int i2d_ASN1_TYPE(a,pp)
-ASN1_TYPE *a;
-unsigned char **pp;
+int i2d_ASN1_TYPE(ASN1_TYPE *a, unsigned char **pp)
 	{
 	int r=0;
 
@@ -150,10 +148,7 @@ unsigned char **pp;
 	return(r);
 	}
 
-ASN1_TYPE *d2i_ASN1_TYPE(a,pp,length)
-ASN1_TYPE **a;
-unsigned char **pp;
-long length;
+ASN1_TYPE *d2i_ASN1_TYPE(ASN1_TYPE **a, unsigned char **pp, long length)
 	{
 	ASN1_TYPE *ret=NULL;
 	unsigned char *q,*p,*max;
@@ -280,7 +275,7 @@ err:
 	return(NULL);
 	}
 
-ASN1_TYPE *ASN1_TYPE_new()
+ASN1_TYPE *ASN1_TYPE_new(void)
 	{
 	ASN1_TYPE *ret=NULL;
 	ASN1_CTX c;
@@ -292,16 +287,14 @@ ASN1_TYPE *ASN1_TYPE_new()
 	M_ASN1_New_Error(ASN1_F_ASN1_TYPE_NEW);
 	}
 
-void ASN1_TYPE_free(a)
-ASN1_TYPE *a;
+void ASN1_TYPE_free(ASN1_TYPE *a)
 	{
 	if (a == NULL) return;
 	ASN1_TYPE_component_free(a);
 	Free((char *)(char *)a);
 	}
 
-int ASN1_TYPE_get(a)
-ASN1_TYPE *a;
+int ASN1_TYPE_get(ASN1_TYPE *a)
 	{
 	if (a->value.ptr != NULL)
 		return(a->type);
@@ -309,10 +302,7 @@ ASN1_TYPE *a;
 		return(0);
 	}
 
-void ASN1_TYPE_set(a,type,value)
-ASN1_TYPE *a;
-int type;
-char *value;
+void ASN1_TYPE_set(ASN1_TYPE *a, int type, char *value)
 	{
 	if (a->value.ptr != NULL)
 		ASN1_TYPE_component_free(a);
@@ -320,8 +310,7 @@ char *value;
 	a->value.ptr=value;
 	}
 
-static void ASN1_TYPE_component_free(a)
-ASN1_TYPE *a;
+static void ASN1_TYPE_component_free(ASN1_TYPE *a)
 	{
 	if (a == NULL) return;
 

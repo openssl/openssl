@@ -106,8 +106,7 @@ static int (MS_FAR *add_lock_callback)()=NULL;
 static unsigned long (MS_FAR *id_callback)()=NULL;
 #endif
 
-int CRYPTO_get_new_lockid(name)
-char *name;
+int CRYPTO_get_new_lockid(char *name)
 	{
 	char *str;
 	int i;
@@ -164,13 +163,12 @@ unsigned long (*CRYPTO_get_id_callback(P_V))(P_V)
 	return(id_callback);
 	}
 
-void CRYPTO_set_id_callback(func)
-unsigned long (*func)(P_V);
+void CRYPTO_set_id_callback(func) unsigned long (*func)(P_V);
 	{
 	id_callback=func;
 	}
 
-unsigned long CRYPTO_thread_id()
+unsigned long CRYPTO_thread_id(void)
 	{
 	unsigned long ret=0;
 
@@ -191,11 +189,7 @@ unsigned long CRYPTO_thread_id()
 	return(ret);
 	}
 
-void CRYPTO_lock(mode,type,file,line)
-int mode;
-int type;
-const char *file;
-int line;
+void CRYPTO_lock(int mode, int type, const char *file, int line)
 	{
 #ifdef LOCK_DEBUG
 		{
@@ -224,12 +218,8 @@ int line;
 		locking_callback(mode,type,file,line);
 	}
 
-int CRYPTO_add_lock(pointer,amount,type,file,line)
-int *pointer;
-int amount;
-int type;
-const char *file;
-int line;
+int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
+	     int line)
 	{
 	int ret;
 
@@ -267,8 +257,7 @@ int line;
 	return(ret);
 	}
 
-const char *CRYPTO_get_lock_name(type)
-int type;
+const char *CRYPTO_get_lock_name(int type)
 	{
 	if (type < 0)
 		return("ERROR");
@@ -286,10 +275,8 @@ int type;
 /* All we really need to do is remove the 'error' state when a thread
  * detaches */
 
-BOOL WINAPI DLLEntryPoint(hinstDLL,fdwReason,lpvReserved)
-HINSTANCE hinstDLL;
-DWORD fdwReason;
-LPVOID lpvReserved;
+BOOL WINAPI DLLEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason,
+	     LPVOID lpvReserved)
 	{
 	switch(fdwReason)
 		{

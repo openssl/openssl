@@ -70,9 +70,7 @@
  *ASN1err(ASN1_F_D2I_PBKDF2PARAM,ASN1_R_DECODE_ERROR)
  */
 
-int i2d_PBE2PARAM(a, pp)
-PBE2PARAM *a;
-unsigned char **pp;
+int i2d_PBE2PARAM(PBE2PARAM *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
 	M_ASN1_I2D_len (a->keyfunc, i2d_X509_ALGOR);
@@ -86,7 +84,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-PBE2PARAM *PBE2PARAM_new()
+PBE2PARAM *PBE2PARAM_new(void)
 {
 	PBE2PARAM *ret=NULL;
 	ASN1_CTX c;
@@ -97,10 +95,7 @@ PBE2PARAM *PBE2PARAM_new()
 	M_ASN1_New_Error(ASN1_F_PBE2PARAM_NEW);
 }
 
-PBE2PARAM *d2i_PBE2PARAM(a,pp,length)
-PBE2PARAM **a;
-unsigned char **pp;
-long length;
+PBE2PARAM *d2i_PBE2PARAM(PBE2PARAM **a, unsigned char **pp, long length)
 {
 	M_ASN1_D2I_vars(a,PBE2PARAM *,PBE2PARAM_new);
 	M_ASN1_D2I_Init();
@@ -110,8 +105,7 @@ long length;
 	M_ASN1_D2I_Finish(a, PBE2PARAM_free, ASN1_F_D2I_PBE2PARAM);
 }
 
-void PBE2PARAM_free (a)
-PBE2PARAM *a;
+void PBE2PARAM_free (PBE2PARAM *a)
 {
 	if(a==NULL) return;
 	X509_ALGOR_free(a->keyfunc);
@@ -119,9 +113,7 @@ PBE2PARAM *a;
 	Free ((char *)a);
 }
 
-int i2d_PBKDF2PARAM(a, pp)
-PBKDF2PARAM *a;
-unsigned char **pp;
+int i2d_PBKDF2PARAM(PBKDF2PARAM *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
 	M_ASN1_I2D_len (a->salt, i2d_ASN1_OCTET_STRING);
@@ -139,7 +131,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-PBKDF2PARAM *PBKDF2PARAM_new()
+PBKDF2PARAM *PBKDF2PARAM_new(void)
 {
 	PBKDF2PARAM *ret=NULL;
 	ASN1_CTX c;
@@ -152,10 +144,8 @@ PBKDF2PARAM *PBKDF2PARAM_new()
 	M_ASN1_New_Error(ASN1_F_PBKDF2PARAM_NEW);
 }
 
-PBKDF2PARAM *d2i_PBKDF2PARAM(a,pp,length)
-PBKDF2PARAM **a;
-unsigned char **pp;
-long length;
+PBKDF2PARAM *d2i_PBKDF2PARAM(PBKDF2PARAM **a, unsigned char **pp,
+	     long length)
 {
 	M_ASN1_D2I_vars(a,PBKDF2PARAM *,PBKDF2PARAM_new);
 	M_ASN1_D2I_Init();
@@ -167,8 +157,7 @@ long length;
 	M_ASN1_D2I_Finish(a, PBKDF2PARAM_free, ASN1_F_D2I_PBKDF2PARAM);
 }
 
-void PBKDF2PARAM_free (a)
-PBKDF2PARAM *a;
+void PBKDF2PARAM_free (PBKDF2PARAM *a)
 {
 	if(a==NULL) return;
 	ASN1_OCTET_STRING_free(a->salt);

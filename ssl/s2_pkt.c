@@ -80,10 +80,7 @@ static int write_pending();
 static int ssl_mt_error();
 #endif
 
-int ssl2_peek(s,buf,len)
-SSL *s;
-char *buf;
-int len;
+int ssl2_peek(SSL *s, char *buf, int len)
 	{
 	int ret;
 
@@ -99,10 +96,7 @@ int len;
 /* SSL_read -
  * This routine will return 0 to len bytes, decrypted etc if required.
  */
-int ssl2_read(s, buf, len)
-SSL *s;
-char *buf;
-int len;
+int ssl2_read(SSL *s, char *buf, int len)
 	{
 	int n;
 	unsigned char mac[MAX_MAC_SIZE];
@@ -252,11 +246,8 @@ int len;
 		}
 	}
 
-static int read_n(s, n, max, extend)
-SSL *s;
-unsigned int n;
-unsigned int max;
-unsigned int extend;
+static int read_n(SSL *s, unsigned int n, unsigned int max,
+	     unsigned int extend)
 	{
 	int i,off,newb;
 
@@ -354,10 +345,7 @@ unsigned int extend;
 	return(n);
 	}
 
-int ssl2_write(s, buf, len)
-SSL *s;
-const char *buf;
-int len;
+int ssl2_write(SSL *s, const char *buf, int len)
 	{
 	unsigned int n,tot;
 	int i;
@@ -403,10 +391,7 @@ int len;
 		}
 	}
 
-static int write_pending(s,buf,len)
-SSL *s;
-const char *buf;
-unsigned int len;
+static int write_pending(SSL *s, const char *buf, unsigned int len)
 	{
 	int i;
 
@@ -451,10 +436,7 @@ unsigned int len;
 		}
 	}
 
-static int do_ssl_write(s, buf, len)
-SSL *s;
-const char *buf;
-unsigned int len;
+static int do_ssl_write(SSL *s, const char *buf, unsigned int len)
 	{
 	unsigned int j,k,olen,p,mac_size,bs;
 	register unsigned char *pp;
@@ -575,10 +557,7 @@ unsigned int len;
 	return(write_pending(s,buf,olen));
 	}
 
-int ssl2_part_read(s,f,i)
-SSL *s;
-unsigned long f;
-int i;
+int ssl2_part_read(SSL *s, unsigned long f, int i)
 	{
 	unsigned char *p;
 	int j;
@@ -608,8 +587,7 @@ int i;
 		}
 	}
 
-int ssl2_do_write(s)
-SSL *s;
+int ssl2_do_write(SSL *s)
 	{
 	int ret;
 
@@ -624,8 +602,7 @@ SSL *s;
 	return(0);
 	}
 
-static int ssl_mt_error(n)
-int n;
+static int ssl_mt_error(int n)
 	{
 	int ret;
 

@@ -112,9 +112,7 @@ static int results=0;
 #include "bss_file.c"
 #endif
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	BN_CTX *ctx;
 	BIO *out;
@@ -229,8 +227,7 @@ err:
 	return(1);
 	}
 
-int test_add(bp)
-BIO *bp;
+int test_add(BIO *bp)
 	{
 	BIGNUM a,b,c;
 	int i;
@@ -269,8 +266,7 @@ BIO *bp;
 	return(1);
 	}
 
-int test_sub(bp)
-BIO *bp;
+int test_sub(BIO *bp)
 	{
 	BIGNUM a,b,c;
 	int i;
@@ -309,9 +305,7 @@ BIO *bp;
 	return(1);
 	}
 
-int test_div(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
+int test_div(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM a,b,c,d;
 	int i;
@@ -362,9 +356,7 @@ BN_CTX *ctx;
 	return(1);
 	}
 
-int test_div_recp(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
+int test_div_recp(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM a,b,c,d;
 	BN_RECP_CTX recp;
@@ -419,8 +411,7 @@ BN_CTX *ctx;
 	return(1);
 	}
 
-int test_mul(bp)
-BIO *bp;
+int test_mul(BIO *bp)
 	{
 	BIGNUM a,b,c;
 	int i;
@@ -464,9 +455,7 @@ BIO *bp;
 	return(1);
 	}
 
-int test_sqr(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
+int test_sqr(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM a,c;
 	int i;
@@ -501,9 +490,7 @@ BN_CTX *ctx;
 	return(1);
 	}
 
-int test_mont(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
+int test_mont(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM a,b,c,A,B;
 	BIGNUM n;
@@ -563,9 +550,7 @@ BN_num_bits(mont->N));
 	return(1);
 	}
 
-int test_mod(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
+int test_mod(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM *a,*b,*c;
 	int i;
@@ -604,9 +589,7 @@ BN_CTX *ctx;
 	return(1);
 	}
 
-int test_mod_mul(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
+int test_mod_mul(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM *a,*b,*c,*d,*e;
 	int i;
@@ -660,9 +643,7 @@ BN_CTX *ctx;
 	return(1);
 	}
 
-int test_mod_exp(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
+int test_mod_exp(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM *a,*b,*c,*d,*e;
 	int i;
@@ -705,9 +686,7 @@ BN_CTX *ctx;
 	return(1);
 	}
 
-int test_exp(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
+int test_exp(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM *a,*b,*d,*e;
 	int i;
@@ -745,8 +724,7 @@ BN_CTX *ctx;
 	return(1);
 	}
 
-int test_lshift(bp)
-BIO *bp;
+int test_lshift(BIO *bp)
 	{
 	BIGNUM *a,*b,*c;
 	int i;
@@ -781,8 +759,7 @@ BIO *bp;
 	return(1);
 	}
 
-int test_lshift1(bp)
-BIO *bp;
+int test_lshift1(BIO *bp)
 	{
 	BIGNUM *a,*b;
 	int i;
@@ -813,8 +790,7 @@ BIO *bp;
 	return(1);
 	}
 
-int test_rshift(bp)
-BIO *bp;
+int test_rshift(BIO *bp)
 	{
 	BIGNUM *a,*b,*c;
 	int i;
@@ -849,8 +825,7 @@ BIO *bp;
 	return(1);
 	}
 
-int test_rshift1(bp)
-BIO *bp;
+int test_rshift1(BIO *bp)
 	{
 	BIGNUM *a,*b;
 	int i;
@@ -881,7 +856,7 @@ BIO *bp;
 	return(1);
 	}
 
-int rand_neg()
+int rand_neg(void)
 	{
 	static unsigned int neg=0;
 	static int sign[8]={0,0,0,1,1,0,1,1};

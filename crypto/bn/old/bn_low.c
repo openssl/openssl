@@ -65,11 +65,7 @@ static int bn_mm_low(BIGNUM *m,BIGNUM *A,BIGNUM *B, int num,
 int BN_mul_low(BIGNUM *r, BIGNUM *a, BIGNUM *b,int words);
 
 /* r must be different to a and b */
-int BN_mul_low(r, a, b, num)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
-int num;
+int BN_mul_low(BIGNUM *r, BIGNUM *a, BIGNUM *b, int num)
 	{
 	BN_ULONG *ap,*bp,*rp;
 	BIGNUM *sk;
@@ -142,11 +138,8 @@ printf("BN_mul_low(%d,%d,%d)\n",a->top,b->top,num);
 #define t2	(sk[1])
 
 /* r must be different to a and b */
-int bn_mm_low(m, A, B, num, sk,ctx)
-BIGNUM *m,*A,*B;
-int num;
-BIGNUM *sk;
-BN_CTX *ctx;
+int bn_mm_low(BIGNUM *m, BIGNUM *A, BIGNUM *B, int num, BIGNUM *sk,
+	     BN_CTX *ctx)
 	{
 	int n; /* ,sqr=0; */
 	int an,bn;

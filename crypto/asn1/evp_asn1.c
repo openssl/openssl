@@ -61,10 +61,7 @@
 #include "asn1.h"
 #include "asn1_mac.h"
 
-int ASN1_TYPE_set_octetstring(a,data,len)
-ASN1_TYPE *a;
-unsigned char *data;
-int len;
+int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
 	{
 	ASN1_STRING *os;
 
@@ -74,10 +71,9 @@ int len;
 	return(1);
 	}
 
-int ASN1_TYPE_get_octetstring(a,data,max_len)
-ASN1_TYPE *a;
-unsigned char *data;
-int max_len; /* for returned value */
+/* int max_len:  for returned value    */
+int ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data,
+	     int max_len)
 	{
 	int ret,num;
 	unsigned char *p;
@@ -97,11 +93,8 @@ int max_len; /* for returned value */
 	return(ret);
 	}
 
-int ASN1_TYPE_set_int_octetstring(a,num,data,len)
-ASN1_TYPE *a;
-long num;
-unsigned char *data;
-int len;
+int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
+	     int len)
 	{
 	int n,size;
 	ASN1_OCTET_STRING os,*osp;
@@ -137,11 +130,9 @@ int len;
 
 /* we return the actual length..., num may be missing, in which
  * case, set it to zero */
-int ASN1_TYPE_get_int_octetstring(a,num,data,max_len)
-ASN1_TYPE *a;
-long *num;
-unsigned char *data;
-int max_len; /* for returned value */
+/* int max_len:  for returned value    */
+int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num, unsigned char *data,
+	     int max_len)
 	{
 	int ret= -1,n;
 	ASN1_INTEGER *ai=NULL;

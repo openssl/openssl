@@ -112,7 +112,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 
 #endif
 
-void ERR_load_EVP_strings()
+void ERR_load_EVP_strings(void)
 	{
 	static int init=1;
 

@@ -62,10 +62,7 @@
 
 /* r must not be a */
 /* I've just gone over this and it is now %20 faster on x86 - eay - 27 Jun 96 */
-int BN_sqr(r, a, ctx)
-BIGNUM *r;
-BIGNUM *a;
-BN_CTX *ctx;
+int BN_sqr(BIGNUM *r, BIGNUM *a, BN_CTX *ctx)
 	{
 	int max,al;
 	BIGNUM *tmp,*rr;
@@ -146,11 +143,7 @@ printf("BN_sqr %d * %d\n",a->top,a->top);
 	}
 
 /* tmp must have 2*n words */
-void bn_sqr_normal(r, a, n, tmp)
-BN_ULONG *r;
-BN_ULONG *a;
-int n;
-BN_ULONG *tmp;
+void bn_sqr_normal(BN_ULONG *r, BN_ULONG *a, int n, BN_ULONG *tmp)
 	{
 	int i,j,max;
 	BN_ULONG *ap,*rp;
@@ -197,10 +190,7 @@ BN_ULONG *tmp;
  * a[0]*b[0]+a[1]*b[1]+(a[0]-a[1])*(b[1]-b[0])
  * a[1]*b[1]
  */
-void bn_sqr_recursive(r,a,n2,t)
-BN_ULONG *r,*a;
-int n2;
-BN_ULONG *t;
+void bn_sqr_recursive(BN_ULONG *r, BN_ULONG *a, int n2, BN_ULONG *t)
 	{
 	int n=n2/2;
 	int zero,c1;

@@ -83,11 +83,8 @@ static int asn1_collate_primative();
 
 /* type is a 'bitmap' of acceptable string types.
  */
-ASN1_STRING *d2i_ASN1_type_bytes(a, pp, length, type)
-ASN1_STRING **a;
-unsigned char **pp;
-long length;
-int type;
+ASN1_STRING *d2i_ASN1_type_bytes(ASN1_STRING **a, unsigned char **pp,
+	     long length, int type)
 	{
 	ASN1_STRING *ret=NULL;
 	unsigned char *p,*s;
@@ -150,11 +147,7 @@ err:
 	return(NULL);
 	}
 
-int i2d_ASN1_bytes(a, pp, tag, xclass)
-ASN1_STRING *a;
-unsigned char **pp;
-int tag;
-int xclass;
+int i2d_ASN1_bytes(ASN1_STRING *a, unsigned char **pp, int tag, int xclass)
 	{
 	int ret,r,constructed;
 	unsigned char *p;
@@ -180,12 +173,8 @@ int xclass;
 	return(r);
 	}
 
-ASN1_STRING *d2i_ASN1_bytes(a, pp, length, Ptag, Pclass)
-ASN1_STRING **a;
-unsigned char **pp;
-long length;
-int Ptag;
-int Pclass;
+ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, unsigned char **pp, long length,
+	     int Ptag, int Pclass)
 	{
 	ASN1_STRING *ret=NULL;
 	unsigned char *p,*s;
@@ -277,9 +266,7 @@ err:
  * them into the one struture that is then returned */
 /* There have been a few bug fixes for this function from
  * Paul Keogh <paul.keogh@sse.ie>, many thanks to him */
-static int asn1_collate_primative(a,c)
-ASN1_STRING *a;
-ASN1_CTX *c;
+static int asn1_collate_primative(ASN1_STRING *a, ASN1_CTX *c)
 	{
 	ASN1_STRING *os=NULL;
 	BUF_MEM b;

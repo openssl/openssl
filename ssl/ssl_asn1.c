@@ -80,9 +80,7 @@ typedef struct ssl_session_asn1_st
  * SSLerr(SSL_F_D2I_SSL_SESSION,SSL_R_UNSUPPORTED_CIPHER);
  */
 
-int i2d_SSL_SESSION(in,pp)
-SSL_SESSION *in;
-unsigned char **pp;
+int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)
 	int v1=0,v2=0,v3=0,v4=0;
@@ -199,10 +197,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-SSL_SESSION *d2i_SSL_SESSION(a,pp,length)
-SSL_SESSION **a;
-unsigned char **pp;
-long length;
+SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
+	     long length)
 	{
 	int version,ssl_version=0,i;
 	long id;

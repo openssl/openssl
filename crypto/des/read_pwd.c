@@ -198,11 +198,8 @@ static int noecho_fgets();
 #endif
 static jmp_buf save;
 
-int des_read_pw_string(buf, length, prompt, verify)
-char *buf;
-int length;
-const char *prompt;
-int verify;
+int des_read_pw_string(char *buf, int length, const char *prompt,
+	     int verify)
 	{
 	char buff[BUFSIZ];
 	int ret;
@@ -214,8 +211,7 @@ int verify;
 
 #ifndef WIN16
 
-static void read_till_nl(in)
-FILE *in;
+static void read_till_nl(FILE *in)
 	{
 #define SIZE 4
 	char buf[SIZE+1];
@@ -227,12 +223,8 @@ FILE *in;
 
 
 /* return 0 if ok, 1 (or -1) otherwise */
-int des_read_pw(buf, buff, size, prompt, verify)
-char *buf;
-char *buff;
-int size;
-const char *prompt;
-int verify;
+int des_read_pw(char *buf, char *buff, int size, const char *prompt,
+	     int verify)
 	{
 #ifdef VMS
 	struct IOSB iosb;
@@ -382,12 +374,7 @@ error:
 
 #else /* WIN16 */
 
-int des_read_pw(buf, buff, size, prompt, verify)
-char *buf;
-char *buff;
-int size;
-char *prompt;
-int verify;
+int des_read_pw(char *buf, char *buff, int size, char *prompt, int verify)
 	{ 
 	memset(buf,0,size);
 	memset(buff,0,size);
@@ -396,7 +383,7 @@ int verify;
 
 #endif
 
-static void pushsig()
+static void pushsig(void)
 	{
 	int i;
 #ifdef SIGACTION
@@ -428,7 +415,7 @@ static void pushsig()
 #endif
 	}
 
-static void popsig()
+static void popsig(void)
 	{
 	int i;
 
@@ -450,8 +437,7 @@ static void popsig()
 		}
 	}
 
-static void recsig(i)
-int i;
+static void recsig(int i)
 	{
 	longjmp(save,1);
 #ifdef LINT
@@ -460,10 +446,7 @@ int i;
 	}
 
 #if defined(MSDOS) && !defined(WIN16)
-static int noecho_fgets(buf,size,tty)
-char *buf;
-int size;
-FILE *tty;
+static int noecho_fgets(char *buf, int size, FILE *tty)
 	{
 	int i;
 	char *p;

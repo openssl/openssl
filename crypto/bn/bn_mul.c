@@ -71,10 +71,8 @@
  * a[0]*b[0]+a[1]*b[1]+(a[0]-a[1])*(b[1]-b[0])
  * a[1]*b[1]
  */
-void bn_mul_recursive(r,a,b,n2,t)
-BN_ULONG *r,*a,*b;
-int n2;
-BN_ULONG *t;
+void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
+	     BN_ULONG *t)
 	{
 	int n=n2/2,c1,c2;
 	unsigned int neg,zero;
@@ -217,10 +215,8 @@ printf(" bn_mul_recursive %d * %d\n",n2,n2);
 
 /* n+tn is the word length
  * t needs to be n*4 is size, as does r */
-void bn_mul_part_recursive(r,a,b,tn,n,t)
-BN_ULONG *r,*a,*b;
-int tn,n;
-BN_ULONG *t;
+void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
+	     int n, BN_ULONG *t)
 	{
 	int i,j,n2=n*2;
 	unsigned int c1;
@@ -344,10 +340,8 @@ printf(" bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
 /* a and b must be the same size, which is n2.
  * r needs to be n2 words and t needs to be n2*2
  */
-void bn_mul_low_recursive(r,a,b,n2,t)
-BN_ULONG *r,*a,*b;
-int n2;
-BN_ULONG *t;
+void bn_mul_low_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
+	     BN_ULONG *t)
 	{
 	int n=n2/2;
 
@@ -377,10 +371,8 @@ printf(" bn_mul_low_recursive %d * %d\n",n2,n2);
  * l is the low words of the output.
  * t needs to be n2*3
  */
-void bn_mul_high(r,a,b,l,n2,t)
-BN_ULONG *r,*a,*b,*l;
-int n2;
-BN_ULONG *t;
+void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
+	     BN_ULONG *t)
 	{
 	int i,n;
 	int c1,c2;
@@ -565,9 +557,7 @@ printf(" bn_mul_high %d * %d\n",n2,n2);
 	}
 #endif
 
-int BN_mul(r,a,b,ctx)
-BIGNUM *r,*a,*b;
-BN_CTX *ctx;
+int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 	{
 	int top,al,bl;
 	BIGNUM *rr;
@@ -706,11 +696,7 @@ end:
 	return(1);
 	}
 
-void bn_mul_normal(r,a,na,b,nb)
-BN_ULONG *r,*a;
-int na;
-BN_ULONG *b;
-int nb;
+void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
 	{
 	BN_ULONG *rr;
 
@@ -746,9 +732,7 @@ printf(" bn_mul_normal %d * %d\n",na,nb);
 		}
 	}
 
-void bn_mul_low_normal(r,a,b,n)
-BN_ULONG *r,*a,*b;
-int n;
+void bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
 	{
 #ifdef BN_COUNT
 printf(" bn_mul_low_normal %d * %d\n",n,n);

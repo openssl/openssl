@@ -66,9 +66,7 @@
 #include "x509.h"
 #include "x509v3.h"
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 	X509 *cert;
 	FILE *inf;

@@ -66,9 +66,7 @@
  * ASN1err(ASN1_F_D2I_PKCS7_ENCRYPT,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
-int i2d_PKCS7_ENCRYPT(a,pp)
-PKCS7_ENCRYPT *a;
-unsigned char **pp;
+int i2d_PKCS7_ENCRYPT(PKCS7_ENCRYPT *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -83,10 +81,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-PKCS7_ENCRYPT *d2i_PKCS7_ENCRYPT(a,pp,length)
-PKCS7_ENCRYPT **a;
-unsigned char **pp;
-long length;
+PKCS7_ENCRYPT *d2i_PKCS7_ENCRYPT(PKCS7_ENCRYPT **a, unsigned char **pp,
+	     long length)
 	{
 	M_ASN1_D2I_vars(a,PKCS7_ENCRYPT *,PKCS7_ENCRYPT_new);
 
@@ -98,7 +94,7 @@ long length;
 	M_ASN1_D2I_Finish(a,PKCS7_ENCRYPT_free,ASN1_F_D2I_PKCS7_ENCRYPT);
 	}
 
-PKCS7_ENCRYPT *PKCS7_ENCRYPT_new()
+PKCS7_ENCRYPT *PKCS7_ENCRYPT_new(void)
 	{
 	PKCS7_ENCRYPT *ret=NULL;
 	ASN1_CTX c;
@@ -110,8 +106,7 @@ PKCS7_ENCRYPT *PKCS7_ENCRYPT_new()
 	M_ASN1_New_Error(ASN1_F_PKCS7_ENCRYPT_NEW);
 	}
 
-void PKCS7_ENCRYPT_free(a)
-PKCS7_ENCRYPT *a;
+void PKCS7_ENCRYPT_free(PKCS7_ENCRYPT *a)
 	{
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->version);

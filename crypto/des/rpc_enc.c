@@ -66,10 +66,7 @@ int _des_crypt(char *buf,int len,struct desparams *desp);
 int _des_crypt();
 #endif
 
-int _des_crypt(buf, len, desp)
-char *buf;
-int len;
-struct desparams *desp;
+int _des_crypt(char *buf, int len, struct desparams *desp)
 	{
 	des_key_schedule ks;
 	int enc;

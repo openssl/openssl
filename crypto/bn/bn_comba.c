@@ -70,8 +70,7 @@ void bn_mul_comba44(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b);
 void bn_sqr_comba88(BN_ULONG *r,BN_ULONG *a);
 void bn_sqr_comba44(BN_ULONG *r,BN_ULONG *a);
 
-void bn_mul_comba88(r,a,b)
-BN_ULONG *r,*a,*b;
+void bn_mul_comba88(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t;
@@ -180,8 +179,7 @@ BN_ULONG *r,*a,*b;
 	r[15]=c1;
 	}
 
-void bn_mul_comba44(r,a,b)
-BN_ULONG *r,*a,*b;
+void bn_mul_comba44(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t;
@@ -226,8 +224,7 @@ BN_ULONG *r,*a,*b;
 	r[7]=c2;
 	}
 
-void bn_sqr_comba88(r,a)
-BN_ULONG *r,*a;
+void bn_sqr_comba88(BN_ULONG *r, BN_ULONG *a)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t,tt;
@@ -308,8 +305,7 @@ BN_ULONG *r,*a;
 	r[15]=c1;
 	}
 
-void bn_sqr_comba44(r,a)
-BN_ULONG *r,*a;
+void bn_sqr_comba44(BN_ULONG *r, BN_ULONG *a)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t,tt;

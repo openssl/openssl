@@ -93,11 +93,8 @@ static FARPROC lpTopWndProc=NULL;
 static FARPROC lpTopHookProc=NULL;
 extern HINSTANCE _hInstance;  /* nice global CRT provides */
 
-static LONG FAR PASCAL topHookProc(hwnd,message,wParam,lParam)
-HWND hwnd;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+static LONG FAR PASCAL topHookProc(HWND hwnd, UINT message, WPARAM wParam,
+	     LPARAM lParam)
 	{
 	if (hwnd == topWnd)
 		{
@@ -122,7 +119,7 @@ static BOOL CALLBACK enumproc(HWND hwnd,LPARAM lParam)
 #endif /* WIN32 */
 #endif /* WINDOWS */
 
-void sock_cleanup()
+void sock_cleanup(void)
 	{
 #ifdef WINDOWS
 	if (wsa_init_done)
@@ -134,7 +131,7 @@ void sock_cleanup()
 #endif
 	}
 
-int sock_init()
+int sock_init(void)
 	{
 #ifdef WINDOWS
 	if (!wsa_init_done)
@@ -165,10 +162,7 @@ int sock_init()
 	return(1);
 	}
 
-int init_client(sock, host, port)
-int *sock;
-char *host;
-int port;
+int init_client(int *sock, char *host, int port)
 	{
 	unsigned char ip[4];
 	short p=0;
@@ -181,10 +175,7 @@ int port;
 	return(init_client_ip(sock,ip,port));
 	}
 
-int init_client_ip(sock, ip, port)
-int *sock;
-unsigned char ip[4];
-int port;
+int init_client_ip(int *sock, unsigned char ip[4], int port)
 	{
 	unsigned long addr;
 	struct sockaddr_in them;
@@ -215,8 +206,7 @@ int port;
 	return(1);
 	}
 
-int nbio_sock_error(sock)
-int sock;
+int nbio_sock_error(int sock)
 	{
 	int j,i,size;
 
@@ -228,10 +218,7 @@ int sock;
 		return(j);
 	}
 
-int nbio_init_client_ip(sock, ip, port)
-int *sock;
-unsigned char ip[4];
-int port;
+int nbio_init_client_ip(int *sock, unsigned char ip[4], int port)
 	{
 	unsigned long addr;
 	struct sockaddr_in them;
@@ -280,11 +267,7 @@ int port;
 		return(1);
 	}
 
-int do_server(port, ret, cb, context)
-int port;
-int *ret;
-int (*cb)();
-char *context;
+int do_server(int port, int *ret, int (*cb)(), char *context)
 	{
 	int sock;
 	char *name;
@@ -316,10 +299,7 @@ char *context;
 		}
 	}
 
-int init_server_long(sock, port, ip)
-int *sock;
-int port;
-char *ip;
+int init_server_long(int *sock, int port, char *ip)
 	{
 	int ret=0;
 	struct sockaddr_in server;
@@ -369,17 +349,12 @@ err:
 	return(ret);
 	}
 
-int init_server(sock,port)
-int *sock;
-int port;
+int init_server(int *sock, int port)
 	{
 	return(init_server_long(sock, port, NULL));
 	}
 
-int do_accept(acc_sock, sock, host)
-int acc_sock;
-int *sock;
-char **host;
+int do_accept(int acc_sock, int *sock, char **host)
 	{
 	int ret,i;
 	struct hostent *h1,*h2;
@@ -465,11 +440,8 @@ end:
 	return(1);
 	}
 
-int extract_host_port(str,host_ptr,ip,port_ptr)
-char *str;
-char **host_ptr;
-unsigned char *ip;
-short *port_ptr;
+int extract_host_port(char *str, char **host_ptr, unsigned char *ip,
+	     short *port_ptr)
 	{
 	char *h,*p;
 
@@ -493,9 +465,7 @@ err:
 	return(0);
 	}
 
-int host_ip(str,ip)
-char *str;
-unsigned char ip[4];
+int host_ip(char *str, unsigned char ip[4])
 	{
 	unsigned int in[4]; 
 	int i;
@@ -541,9 +511,7 @@ err:
 	return(0);
 	}
 
-int extract_port(str,port_ptr)
-char *str;
-short *port_ptr;
+int extract_port(char *str, short *port_ptr)
 	{
 	int i;
 	struct servent *s;
@@ -575,8 +543,7 @@ static struct ghbn_cache_st
 static unsigned long ghbn_hits=0L;
 static unsigned long ghbn_miss=0L;
 
-static struct hostent *GetHostByName(name)
-char *name;
+static struct hostent *GetHostByName(char *name)
 	{
 	struct hostent *ret;
 	int i,lowi=0;
@@ -616,11 +583,7 @@ char *name;
 	}
 
 #ifndef MSDOS
-int spawn(argc, argv, in, out)
-int argc;
-char **argv;
-int *in;
-int *out;
+int spawn(int argc, char **argv, int *in, int *out)
 	{
 	int pid;
 #define CHILD_READ	p1[0]

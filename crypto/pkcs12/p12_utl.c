@@ -62,9 +62,7 @@
 
 /* Cheap and nasty Unicode stuff */
 
-unsigned char *asc2uni (asc, uni, unilen)
-unsigned char *asc, **uni;
-int *unilen;
+unsigned char *asc2uni (unsigned char *asc, unsigned char **uni, int *unilen)
 {
 	int ulen, i;
 	unsigned char *unitmp;
@@ -79,9 +77,7 @@ int *unilen;
 	return unitmp;
 }
 
-char *uni2asc (uni, unilen)
-unsigned char *uni;
-int unilen;
+char *uni2asc (unsigned char *uni, int unilen)
 {
 	int asclen, i;
 	char *asctmp;
@@ -95,30 +91,22 @@ int unilen;
 	return asctmp;
 }
 
-int i2d_PKCS12_bio(bp, p12)
-BIO *bp;
-PKCS12 *p12;
+int i2d_PKCS12_bio(BIO *bp, PKCS12 *p12)
 {
 	return ASN1_i2d_bio((int(*)())i2d_PKCS12, bp, (unsigned char *)p12);
 }
 
-int i2d_PKCS12_fp(fp, p12)
-FILE *fp;
-PKCS12 *p12;
+int i2d_PKCS12_fp(FILE *fp, PKCS12 *p12)
 {
 	return ASN1_i2d_fp((int(*)())i2d_PKCS12, fp, (unsigned char *)p12);
 }
 
-PKCS12 *d2i_PKCS12_bio(bp, p12)
-BIO *bp;
-PKCS12 **p12;
+PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12)
 {
 	return (PKCS12 *)ASN1_d2i_bio((char *(*)())PKCS12_new,
          (char *(*)())d2i_PKCS12, bp, (unsigned char **)p12);
 }
-PKCS12 *d2i_PKCS12_fp(fp, p12)
-FILE *fp;
-PKCS12 **p12;
+PKCS12 *d2i_PKCS12_fp(FILE *fp, PKCS12 **p12)
 {
         return (PKCS12 *)ASN1_d2i_fp((char *(*)())PKCS12_new, 
          (char *(*)())d2i_PKCS12, fp, (unsigned char **)(p12));

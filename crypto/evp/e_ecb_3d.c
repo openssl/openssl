@@ -99,21 +99,18 @@ static EVP_CIPHER d_ede3_cipher3=
 	NULL,
 	};
 
-EVP_CIPHER *EVP_des_ede()
+EVP_CIPHER *EVP_des_ede(void)
 	{
 	return(&d_ede_cipher2);
 	}
 
-EVP_CIPHER *EVP_des_ede3()
+EVP_CIPHER *EVP_des_ede3(void)
 	{
 	return(&d_ede3_cipher3);
 	}
 
-static void des_ede_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void des_ede_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	if (key != NULL)
 		{
@@ -125,11 +122,8 @@ int enc;
 		}
 	}
 
-static void des_ede3_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void des_ede3_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	if (key != NULL)
 		{
@@ -139,11 +133,8 @@ int enc;
 		}
 	}
 
-static void des_ede_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void des_ede_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	unsigned int i;
 

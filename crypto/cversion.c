@@ -62,8 +62,7 @@
 #include "crypto.h"
 #include "date.h"
 
-const char *SSLeay_version(t)
-int t;
+const char *SSLeay_version(int t)
 	{
 	if (t == SSLEAY_VERSION)
 		return OPENSSL_VERSION_TEXT;
@@ -103,7 +102,7 @@ int t;
 	return("not available");
 	}
 
-unsigned long SSLeay()
+unsigned long SSLeay(void)
 	{
 	return(SSLEAY_VERSION_NUMBER);
 	}

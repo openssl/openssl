@@ -83,10 +83,7 @@ static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
 static int ssl3_handshake_mac();
 #endif
 
-static void ssl3_generate_key_block(s,km,num)
-SSL *s;
-unsigned char *km;
-int num;
+static void ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 	{
 	MD5_CTX m5;
 	SHA_CTX s1;
@@ -126,9 +123,7 @@ int num;
 	memset(smd,0,SHA_DIGEST_LENGTH);
 	}
 
-int ssl3_change_cipher_state(s,which)
-SSL *s;
-int which;
+int ssl3_change_cipher_state(SSL *s, int which)
 	{
 	unsigned char *p,*key_block,*mac_secret;
 	unsigned char exp_key[EVP_MAX_KEY_LENGTH];
@@ -278,8 +273,7 @@ err2:
 	return(0);
 	}
 
-int ssl3_setup_key_block(s)
-SSL *s;
+int ssl3_setup_key_block(SSL *s)
 	{
 	unsigned char *p;
 	const EVP_CIPHER *c;
@@ -319,8 +313,7 @@ err:
 	return(0);
 	}
 
-void ssl3_cleanup_key_block(s)
-SSL *s;
+void ssl3_cleanup_key_block(SSL *s)
 	{
 	if (s->s3->tmp.key_block != NULL)
 		{
@@ -332,9 +325,7 @@ SSL *s;
 	s->s3->tmp.key_block_length=0;
 	}
 
-int ssl3_enc(s,send)
-SSL *s;
-int send;
+int ssl3_enc(SSL *s, int send)
 	{
 	SSL3_RECORD *rec;
 	EVP_CIPHER_CTX *ds;
@@ -402,36 +393,25 @@ int send;
 	return(1);
 	}
 
-void ssl3_init_finished_mac(s)
-SSL *s;
+void ssl3_init_finished_mac(SSL *s)
 	{
 	EVP_DigestInit(&(s->s3->finish_dgst1),s->ctx->md5);
 	EVP_DigestInit(&(s->s3->finish_dgst2),s->ctx->sha1);
 	}
 
-void ssl3_finish_mac(s,buf,len)
-SSL *s;
-const unsigned char *buf;
-int len;
+void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
 	{
 	EVP_DigestUpdate(&(s->s3->finish_dgst1),buf,len);
 	EVP_DigestUpdate(&(s->s3->finish_dgst2),buf,len);
 	}
 
-int ssl3_cert_verify_mac(s,ctx,p)
-SSL *s;
-EVP_MD_CTX *ctx;
-unsigned char *p;
+int ssl3_cert_verify_mac(SSL *s, EVP_MD_CTX *ctx, unsigned char *p)
 	{
 	return(ssl3_handshake_mac(s,ctx,NULL,0,p));
 	}
 
-int ssl3_final_finish_mac(s,ctx1,ctx2,sender,len,p)
-SSL *s;
-EVP_MD_CTX *ctx1,*ctx2;
-unsigned char *sender;
-int len;
-unsigned char *p;
+int ssl3_final_finish_mac(SSL *s, EVP_MD_CTX *ctx1, EVP_MD_CTX *ctx2,
+	     unsigned char *sender, int len, unsigned char *p)
 	{
 	int ret;
 
@@ -441,12 +421,8 @@ unsigned char *p;
 	return(ret);
 	}
 
-static int ssl3_handshake_mac(s,in_ctx,sender,len,p)
-SSL *s;
-EVP_MD_CTX *in_ctx;
-unsigned char *sender;
-int len;
-unsigned char *p;
+static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
+	     unsigned char *sender, int len, unsigned char *p)
 	{
 	unsigned int ret;
 	int npad,n;
@@ -478,10 +454,7 @@ unsigned char *p;
 	return((int)ret);
 	}
 
-int ssl3_mac(ssl,md,send)
-SSL *ssl;
-unsigned char *md;
-int send;
+int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 	{
 	SSL3_RECORD *rec;
 	unsigned char *mac_sec,*seq;
@@ -535,11 +508,8 @@ int send;
 	return(md_size);
 	}
 
-int ssl3_generate_master_secret(s,out,p,len)
-SSL *s;
-unsigned char *out;
-unsigned char *p;
-int len;
+int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
+	     int len)
 	{
 	static const unsigned char *salt[3]={
 		(const unsigned char *)"A",
@@ -572,8 +542,7 @@ int len;
 	return(ret);
 	}
 
-int ssl3_alert_code(code)
-int code;
+int ssl3_alert_code(int code)
 	{
 	switch (code)
 		{

@@ -66,8 +66,7 @@
 static STACK *bio_meth=NULL;
 static int bio_meth_num=0;
 
-BIO *BIO_new(method)
-BIO_METHOD *method;
+BIO *BIO_new(BIO_METHOD *method)
 	{
 	BIO *ret=NULL;
 
@@ -85,9 +84,7 @@ BIO_METHOD *method;
 	return(ret);
 	}
 
-int BIO_set(bio,method)
-BIO *bio;
-BIO_METHOD *method;
+int BIO_set(BIO *bio, BIO_METHOD *method)
 	{
 	bio->method=method;
 	bio->callback=NULL;
@@ -110,8 +107,7 @@ BIO_METHOD *method;
 	return(1);
 	}
 
-int BIO_free(a)
-BIO *a;
+int BIO_free(BIO *a)
 	{
 	int ret=0,i;
 
@@ -141,10 +137,7 @@ BIO *a;
 	return(1);
 	}
 
-int BIO_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+int BIO_read(BIO *b, char *out, int outl)
 	{
 	int i;
 	long (*cb)();
@@ -176,10 +169,7 @@ int outl;
 	return(i);
 	}
 
-int BIO_write(b,in,inl)
-BIO *b;
-const char *in;
-int inl;
+int BIO_write(BIO *b, const char *in, int inl)
 	{
 	int i;
 	long (*cb)();
@@ -220,9 +210,7 @@ int inl;
 	return(i);
 	}
 
-int BIO_puts(b,in)
-BIO *b;
-const char *in;
+int BIO_puts(BIO *b, const char *in)
 	{
 	int i;
 	long (*cb)();
@@ -253,10 +241,7 @@ const char *in;
 	return(i);
 	}
 
-int BIO_gets(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+int BIO_gets(BIO *b, char *in, int inl)
 	{
 	int i;
 	long (*cb)();
@@ -287,11 +272,7 @@ int inl;
 	return(i);
 	}
 
-long BIO_int_ctrl(b,cmd,larg,iarg)
-BIO *b;
-int cmd;
-long larg;
-int iarg;
+long BIO_int_ctrl(BIO *b, int cmd, long larg, int iarg)
 	{
 	int i;
 
@@ -299,10 +280,7 @@ int iarg;
 	return(BIO_ctrl(b,cmd,larg,(char *)&i));
 	}
 
-char *BIO_ptr_ctrl(b,cmd,larg)
-BIO *b;
-int cmd;
-long larg;
+char *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
 	{
 	char *p=NULL;
 
@@ -312,11 +290,7 @@ long larg;
 		return(p);
 	}
 
-long BIO_ctrl(b,cmd,larg,parg)
-BIO *b;
-int cmd;
-long larg;
-char *parg;
+long BIO_ctrl(BIO *b, int cmd, long larg, char *parg)
 	{
 	long ret;
 	long (*cb)();
@@ -344,8 +318,7 @@ char *parg;
 	}
 
 /* put the 'bio' on the end of b's list of operators */
-BIO *BIO_push(b,bio)
-BIO *b,*bio;
+BIO *BIO_push(BIO *b, BIO *bio)
 	{
 	BIO *lb;
 
@@ -362,8 +335,7 @@ BIO *b,*bio;
 	}
 
 /* Remove the first and return the rest */
-BIO *BIO_pop(b)
-BIO *b;
+BIO *BIO_pop(BIO *b)
 	{
 	BIO *ret;
 
@@ -381,9 +353,7 @@ BIO *b;
 	return(ret);
 	}
 
-BIO *BIO_get_retry_BIO(bio,reason)
-BIO *bio;
-int *reason;
+BIO *BIO_get_retry_BIO(BIO *bio, int *reason)
 	{
 	BIO *b,*last;
 
@@ -399,15 +369,12 @@ int *reason;
 	return(last);
 	}
 
-int BIO_get_retry_reason(bio)
-BIO *bio;
+int BIO_get_retry_reason(BIO *bio)
 	{
 	return(bio->retry_reason);
 	}
 
-BIO *BIO_find_type(bio,type)
-BIO *bio;
-int type;
+BIO *BIO_find_type(BIO *bio, int type)
 	{
 	int mt,mask;
 
@@ -429,8 +396,7 @@ int type;
 	return(NULL);
 	}
 
-void BIO_free_all(bio)
-BIO *bio;
+void BIO_free_all(BIO *bio)
 	{
 	BIO *b;
 	int ref;
@@ -446,8 +412,7 @@ BIO *bio;
 		}
 	}
 
-BIO *BIO_dup_chain(in)
-BIO *in;
+BIO *BIO_dup_chain(BIO *in)
 	{
 	BIO *ret=NULL,*eoc=NULL,*bio,*new;
 
@@ -491,36 +456,26 @@ err:
 	return(NULL);	
 	}
 
-void BIO_copy_next_retry(b)
-BIO *b;
+void BIO_copy_next_retry(BIO *b)
 	{
 	BIO_set_flags(b,BIO_get_retry_flags(b->next_bio));
 	b->retry_reason=b->next_bio->retry_reason;
 	}
 
-int BIO_get_ex_new_index(argl,argp,new_func,dup_func,free_func)
-long argl;
-char *argp;
-int (*new_func)();
-int (*dup_func)();
-void (*free_func)();
+int BIO_get_ex_new_index(long argl, char *argp, int (*new_func)(),
+	     int (*dup_func)(), void (*free_func)())
         {
         bio_meth_num++;
         return(CRYPTO_get_ex_new_index(bio_meth_num-1,&bio_meth,
                 argl,argp,new_func,dup_func,free_func));
         }
 
-int BIO_set_ex_data(bio,idx,data)
-BIO *bio;
-int idx;
-char *data;
+int BIO_set_ex_data(BIO *bio, int idx, char *data)
 	{
 	return(CRYPTO_set_ex_data(&(bio->ex_data),idx,data));
 	}
 
-char *BIO_get_ex_data(bio,idx)
-BIO *bio;
-int idx;
+char *BIO_get_ex_data(BIO *bio, int idx)
 	{
 	return(CRYPTO_get_ex_data(&(bio->ex_data),idx));
 	}

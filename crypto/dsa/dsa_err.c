@@ -88,7 +88,7 @@ static ERR_STRING_DATA DSA_str_reasons[]=
 
 #endif
 
-void ERR_load_DSA_strings()
+void ERR_load_DSA_strings(void)
 	{
 	static int init=1;
 

@@ -72,9 +72,7 @@ static int ssl_set_cert();
 static int ssl_set_pkey();
 #endif
 
-int SSL_use_certificate(ssl, x)
-SSL *ssl;
-X509 *x;
+int SSL_use_certificate(SSL *ssl, X509 *x)
 	{
 	if (x == NULL)
 		{
@@ -90,10 +88,7 @@ X509 *x;
 	}
 
 #ifndef NO_STDIO
-int SSL_use_certificate_file(ssl, file, type)
-SSL *ssl;
-char *file;
-int type;
+int SSL_use_certificate_file(SSL *ssl, char *file, int type)
 	{
 	int j;
 	BIO *in;
@@ -142,10 +137,7 @@ end:
 	}
 #endif
 
-int SSL_use_certificate_ASN1(ssl, d,len)
-SSL *ssl;
-unsigned char *d;
-int len;
+int SSL_use_certificate_ASN1(SSL *ssl, unsigned char *d, int len)
 	{
 	X509 *x;
 	int ret;
@@ -163,9 +155,7 @@ int len;
 	}
 
 #ifndef NO_RSA
-int SSL_use_RSAPrivateKey(ssl, rsa)
-SSL *ssl;
-RSA *rsa;
+int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 	{
 	EVP_PKEY *pkey;
 	int ret;
@@ -195,9 +185,7 @@ RSA *rsa;
 	}
 #endif
 
-static int ssl_set_pkey(c,pkey)
-CERT *c;
-EVP_PKEY *pkey;
+static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 	{
 	int i,ok=0,bad=0;
 
@@ -271,10 +259,7 @@ EVP_PKEY *pkey;
 
 #ifndef NO_RSA
 #ifndef NO_STDIO
-int SSL_use_RSAPrivateKey_file(ssl, file, type)
-SSL *ssl;
-char *file;
-int type;
+int SSL_use_RSAPrivateKey_file(SSL *ssl, char *file, int type)
 	{
 	int j,ret=0;
 	BIO *in;
@@ -321,10 +306,7 @@ end:
 	}
 #endif
 
-int SSL_use_RSAPrivateKey_ASN1(ssl,d,len)
-SSL *ssl;
-unsigned char *d;
-long len;
+int SSL_use_RSAPrivateKey_ASN1(SSL *ssl, unsigned char *d, long len)
 	{
 	int ret;
 	unsigned char *p;
@@ -343,9 +325,7 @@ long len;
 	}
 #endif /* !NO_RSA */
 
-int SSL_use_PrivateKey(ssl, pkey)
-SSL *ssl;
-EVP_PKEY *pkey;
+int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey)
 	{
 	int ret;
 
@@ -364,10 +344,7 @@ EVP_PKEY *pkey;
 	}
 
 #ifndef NO_STDIO
-int SSL_use_PrivateKey_file(ssl, file, type)
-SSL *ssl;
-char *file;
-int type;
+int SSL_use_PrivateKey_file(SSL *ssl, char *file, int type)
 	{
 	int j,ret=0;
 	BIO *in;
@@ -409,11 +386,7 @@ end:
 	}
 #endif
 
-int SSL_use_PrivateKey_ASN1(type,ssl,d,len)
-int type;
-SSL *ssl;
-unsigned char *d;
-long len;
+int SSL_use_PrivateKey_ASN1(int type, SSL *ssl, unsigned char *d, long len)
 	{
 	int ret;
 	unsigned char *p;
@@ -431,9 +404,7 @@ long len;
 	return(ret);
 	}
 
-int SSL_CTX_use_certificate(ctx, x)
-SSL_CTX *ctx;
-X509 *x;
+int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 	{
 	if (x == NULL)
 		{
@@ -448,9 +419,7 @@ X509 *x;
 	return(ssl_set_cert(ctx->default_cert,x));
 	}
 
-static int ssl_set_cert(c,x)
-CERT *c;
-X509 *x;
+static int ssl_set_cert(CERT *c, X509 *x)
 	{
 	EVP_PKEY *pkey;
 	int i,ok=0,bad=0;
@@ -531,10 +500,7 @@ X509 *x;
 	}
 
 #ifndef NO_STDIO
-int SSL_CTX_use_certificate_file(ctx, file, type)
-SSL_CTX *ctx;
-char *file;
-int type;
+int SSL_CTX_use_certificate_file(SSL_CTX *ctx, char *file, int type)
 	{
 	int j;
 	BIO *in;
@@ -583,10 +549,7 @@ end:
 	}
 #endif
 
-int SSL_CTX_use_certificate_ASN1(ctx, len, d)
-SSL_CTX *ctx;
-int len;
-unsigned char *d;
+int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, unsigned char *d)
 	{
 	X509 *x;
 	int ret;
@@ -604,9 +567,7 @@ unsigned char *d;
 	}
 
 #ifndef NO_RSA
-int SSL_CTX_use_RSAPrivateKey(ctx, rsa)
-SSL_CTX *ctx;
-RSA *rsa;
+int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
 	{
 	int ret;
 	EVP_PKEY *pkey;
@@ -636,10 +597,7 @@ RSA *rsa;
 	}
 
 #ifndef NO_STDIO
-int SSL_CTX_use_RSAPrivateKey_file(ctx, file, type)
-SSL_CTX *ctx;
-char *file;
-int type;
+int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, char *file, int type)
 	{
 	int j,ret=0;
 	BIO *in;
@@ -686,10 +644,7 @@ end:
 	}
 #endif
 
-int SSL_CTX_use_RSAPrivateKey_ASN1(ctx,d,len)
-SSL_CTX *ctx;
-unsigned char *d;
-long len;
+int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, unsigned char *d, long len)
 	{
 	int ret;
 	unsigned char *p;
@@ -708,9 +663,7 @@ long len;
 	}
 #endif /* !NO_RSA */
 
-int SSL_CTX_use_PrivateKey(ctx, pkey)
-SSL_CTX *ctx;
-EVP_PKEY *pkey;
+int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
 	{
 	if (pkey == NULL)
 		{
@@ -726,10 +679,7 @@ EVP_PKEY *pkey;
 	}
 
 #ifndef NO_STDIO
-int SSL_CTX_use_PrivateKey_file(ctx, file, type)
-SSL_CTX *ctx;
-char *file;
-int type;
+int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, char *file, int type)
 	{
 	int j,ret=0;
 	BIO *in;
@@ -771,11 +721,8 @@ end:
 	}
 #endif
 
-int SSL_CTX_use_PrivateKey_ASN1(type,ctx,d,len)
-int type;
-SSL_CTX *ctx;
-unsigned char *d;
-long len;
+int SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx, unsigned char *d,
+	     long len)
 	{
 	int ret;
 	unsigned char *p;

@@ -63,12 +63,7 @@
 #define TABLE_SIZE	16
 
 /* slow but works */
-int BN_mod_mul(ret, a, b, m, ctx)
-BIGNUM *ret;
-BIGNUM *a;
-BIGNUM *b;
-BIGNUM *m;
-BN_CTX *ctx;
+int BN_mod_mul(BIGNUM *ret, BIGNUM *a, BIGNUM *b, BIGNUM *m, BN_CTX *ctx)
 	{
 	BIGNUM *t;
 	int r=0;
@@ -91,9 +86,7 @@ err:
 
 #if 0
 /* this one works - simple but works */
-int BN_mod_exp(r,a,p,m,ctx)
-BIGNUM *r,*a,*p,*m;
-BN_CTX *ctx;
+int BN_mod_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
 	{
 	int i,bits,ret=0;
 	BIGNUM *v,*tmp;
@@ -127,9 +120,7 @@ err:
 #endif
 
 /* this one works - simple but works */
-int BN_exp(r,a,p,ctx)
-BIGNUM *r,*a,*p;
-BN_CTX *ctx;
+int BN_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BN_CTX *ctx)
 	{
 	int i,bits,ret=0,tos;
 	BIGNUM *v,*rr;
@@ -163,12 +154,7 @@ err:
 	return(ret);
 	}
 
-int BN_mod_exp(r,a,p,m,ctx)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *p;
-BIGNUM *m;
-BN_CTX *ctx;
+int BN_mod_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
 	{
 	int ret;
 
@@ -197,12 +183,7 @@ BN_CTX *ctx;
 	}
 
 /* #ifdef RECP_MUL_MOD */
-int BN_mod_exp_recp(r,a,p,m,ctx)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *p;
-BIGNUM *m;
-BN_CTX *ctx;
+int BN_mod_exp_recp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
 	{
 	int i,j,bits,ret=0,wstart,wend,window,wvalue;
 	int start=1,ts=0;
@@ -315,13 +296,8 @@ err:
 /* #endif */
 
 /* #ifdef MONT_MUL_MOD */
-int BN_mod_exp_mont(rr,a,p,m,ctx,in_mont)
-BIGNUM *rr;
-BIGNUM *a;
-BIGNUM *p;
-BIGNUM *m;
-BN_CTX *ctx;
-BN_MONT_CTX *in_mont;
+int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx,
+	     BN_MONT_CTX *in_mont)
 	{
 	int i,j,bits,ret=0,wstart,wend,window,wvalue;
 	int start=1,ts=0;
@@ -461,12 +437,8 @@ err:
 /* #endif */
 
 /* The old fallback, simple version :-) */
-int BN_mod_exp_simple(r,a,p,m,ctx)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *p;
-BIGNUM *m;
-BN_CTX *ctx;
+int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
+	     BN_CTX *ctx)
 	{
 	int i,j,bits,ret=0,wstart,wend,window,wvalue,ts=0;
 	int start=1;

@@ -101,9 +101,7 @@ unsigned char output[7][30]={
 	{0},
 	};
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,err=0;
 	int j;

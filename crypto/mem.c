@@ -81,8 +81,7 @@ typedef struct mem_st
 	unsigned long order;
 	} MEM;
 
-int CRYPTO_mem_ctrl(mode)
-int mode;
+int CRYPTO_mem_ctrl(int mode)
 	{
 	int ret=mh_mode;
 
@@ -109,14 +108,12 @@ int mode;
 	return(ret);
 	}
 
-static int mem_cmp(a,b)
-MEM *a,*b;
+static int mem_cmp(MEM *a, MEM *b)
 	{
 	return(a->addr - b->addr);
 	}
 
-static unsigned long mem_hash(a)
-MEM *a;
+static unsigned long mem_hash(MEM *a)
 	{
 	unsigned long ret;
 
@@ -132,10 +129,7 @@ static char *(*malloc_func)()=	(char *(*)())malloc;
 static char *(*realloc_func)()=	(char *(*)())realloc;
 static void (*free_func)()=	(void (*)())free;
 
-void CRYPTO_set_mem_functions(m,r,f)
-char *(*m)();
-char *(*r)();
-void (*f)();
+void CRYPTO_set_mem_functions(char *(*m)(), char *(*r)(), void (*f)())
 	{
 	if ((m == NULL) || (r == NULL) || (f == NULL)) return;
 	malloc_func=m;
@@ -145,69 +139,53 @@ void (*f)();
 	free_locked_func=f;
 	}
 
-void CRYPTO_set_locked_mem_functions(m,f)
-char *(*m)();
-void (*f)();
+void CRYPTO_set_locked_mem_functions(char *(*m)(), void (*f)())
 	{
 	if ((m == NULL) || (f == NULL)) return;
 	malloc_locked_func=m;
 	free_locked_func=f;
 	}
 
-void CRYPTO_get_mem_functions(m,r,f)
-char *(**m)();
-char *(**r)();
-void (**f)();
+void CRYPTO_get_mem_functions(char *(**m)(), char *(**r)(), void (**f)())
 	{
 	if (m != NULL) *m=malloc_func;
 	if (r != NULL) *r=realloc_func;
 	if (f != NULL) *f=free_func;
 	}
 
-void CRYPTO_get_locked_mem_functions(m,f)
-char *(**m)();
-void (**f)();
+void CRYPTO_get_locked_mem_functions(char *(**m)(), void (**f)())
 	{
 	if (m != NULL) *m=malloc_locked_func;
 	if (f != NULL) *f=free_locked_func;
 	}
 
-void *CRYPTO_malloc_locked(num)
-int num;
+void *CRYPTO_malloc_locked(int num)
 	{
 	return(malloc_locked_func(num));
 	}
 
-void CRYPTO_free_locked(str)
-void *str;
+void CRYPTO_free_locked(void *str)
 	{
 	free_locked_func(str);
 	}
 
-void *CRYPTO_malloc(num)
-int num;
+void *CRYPTO_malloc(int num)
 	{
 	return(malloc_func(num));
 	}
 
-void *CRYPTO_realloc(str,num)
-void *str;
-int num;
+void *CRYPTO_realloc(void *str, int num)
 	{
 	return(realloc_func(str,num));
 	}
 
-void CRYPTO_free(str)
-void *str;
+void CRYPTO_free(void *str)
 	{
 	free_func(str);
 	}
 
 static unsigned long break_order_num=0;
-void *CRYPTO_dbg_malloc(num,file,line)
-int num;
-const char *file;
-int line;
+void *CRYPTO_dbg_malloc(int num, const char *file, int line)
 	{
 	char *ret;
 	MEM *m,*mm;
@@ -258,8 +236,7 @@ err:
 	return(ret);
 	}
 
-void CRYPTO_dbg_free(addr)
-void *addr;
+void CRYPTO_dbg_free(void *addr)
 	{
 	MEM m,*mp;
 
@@ -277,11 +254,7 @@ void *addr;
 	free_func(addr);
 	}
 
-void *CRYPTO_dbg_realloc(addr,num,file,line)
-void *addr;
-int num;
-const char *file;
-int line;
+void *CRYPTO_dbg_realloc(void *addr, int num, const char *file, int line)
 	{
 	char *ret;
 	MEM m,*mp;
@@ -307,20 +280,14 @@ int line;
 	return(ret);
 	}
 
-void *CRYPTO_remalloc(a,n)
-void *a;
-int n;
+void *CRYPTO_remalloc(void *a, int n)
 	{
 	if (a != NULL) Free(a);
 	a=(char *)Malloc(n);
 	return(a);
 	}
 
-void *CRYPTO_dbg_remalloc(a,n,file,line)
-void *a;
-int n;
-const char *file;
-int line;
+void *CRYPTO_dbg_remalloc(void *a, int n, const char *file, int line)
 	{
 	if (a != NULL) CRYPTO_dbg_free(a);
 	a=(char *)CRYPTO_dbg_malloc(n,file,line);
@@ -335,9 +302,7 @@ typedef struct mem_leak_st
 	long bytes;
 	} MEM_LEAK;
 
-static void print_leak(m,l)
-MEM *m;
-MEM_LEAK *l;
+static void print_leak(MEM *m, MEM_LEAK *l)
 	{
 	char buf[128];
 
@@ -350,8 +315,7 @@ MEM_LEAK *l;
 	l->bytes+=m->num;
 	}
 
-void CRYPTO_mem_leaks(b)
-BIO *b;
+void CRYPTO_mem_leaks(BIO *b)
 	{
 	MEM_LEAK ml;
 	char buf[80];
@@ -379,16 +343,13 @@ BIO *b;
 
 static void (*mem_cb)()=NULL;
 
-static void cb_leak(m,cb)
-MEM *m;
-char *cb;
+static void cb_leak(MEM *m, char *cb)
 	{
 	void (*mem_callback)()=(void (*)())cb;
 	mem_callback(m->order,m->file,m->line,m->num,m->addr);
 	}
 
-void CRYPTO_mem_leaks_cb(cb)
-void (*cb)();
+void CRYPTO_mem_leaks_cb(void (*cb)())
 	{
 	if (mh == NULL) return;
 	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
@@ -399,8 +360,7 @@ void (*cb)();
 	}
 
 #ifndef NO_FP_API
-void CRYPTO_mem_leaks_fp(fp)
-FILE *fp;
+void CRYPTO_mem_leaks_fp(FILE *fp)
 	{
 	BIO *b;
 

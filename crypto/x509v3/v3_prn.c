@@ -66,11 +66,7 @@
 
 /* Print out a name+value stack */
 
-void X509V3_EXT_val_prn(out, val, indent, ml)
-BIO *out;
-STACK *val;
-int indent;
-int ml;
+void X509V3_EXT_val_prn(BIO *out, STACK *val, int indent, int ml)
 {
 	int i;
 	CONF_VALUE *nval;
@@ -89,11 +85,7 @@ int ml;
 
 /* Main routine: print out a general extension */
 
-int X509V3_EXT_print(out, ext, flag, indent)
-BIO *out;
-X509_EXTENSION *ext;
-int flag;
-int indent;
+int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent)
 {
 	char *ext_str = NULL, *p, *value = NULL;
 	X509V3_EXT_METHOD *method;	
@@ -126,11 +118,7 @@ int indent;
 		return ok;
 }
 
-int X509V3_EXT_print_fp(fp, ext, flag, indent)
-FILE *fp;
-X509_EXTENSION *ext;
-int flag;
-int indent;
+int X509V3_EXT_print_fp(FILE *fp, X509_EXTENSION *ext, int flag, int indent)
 {
 	BIO *bio_tmp;
 	int ret;

@@ -60,7 +60,7 @@
 #include "err.h"
 #include "ssl.h"
 
-void SSL_load_error_strings()
+void SSL_load_error_strings(void)
 	{
 #ifndef NO_ERR
 	ERR_load_crypto_strings();

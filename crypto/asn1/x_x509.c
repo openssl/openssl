@@ -72,14 +72,12 @@ static ASN1_METHOD meth={
 	(char *(*)())X509_new,
 	(void (*)()) X509_free};
 
-ASN1_METHOD *X509_asn1_meth()
+ASN1_METHOD *X509_asn1_meth(void)
 	{
 	return(&meth);
 	}
 
-int i2d_X509(a,pp)
-X509 *a;
-unsigned char **pp;
+int i2d_X509(X509 *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -96,10 +94,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509 *d2i_X509(a,pp,length)
-X509 **a;
-unsigned char **pp;
-long length;
+X509 *d2i_X509(X509 **a, unsigned char **pp, long length)
 	{
 	M_ASN1_D2I_vars(a,X509 *,X509_new);
 
@@ -114,7 +109,7 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_free,ASN1_F_D2I_X509);
 	}
 
-X509 *X509_new()
+X509 *X509_new(void)
 	{
 	X509 *ret=NULL;
 	ASN1_CTX c;
@@ -130,8 +125,7 @@ X509 *X509_new()
 	M_ASN1_New_Error(ASN1_F_X509_NEW);
 	}
 
-void X509_free(a)
-X509 *a;
+void X509_free(X509 *a)
 	{
 	int i;
 

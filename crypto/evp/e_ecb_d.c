@@ -84,26 +84,20 @@ static EVP_CIPHER d_ecb_cipher=
 	NULL,
 	};
 
-EVP_CIPHER *EVP_des_ecb()
+EVP_CIPHER *EVP_des_ecb(void)
 	{
 	return(&d_ecb_cipher);
 	}
 	
-static void des_ecb_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void des_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	if (key != NULL)
 		des_set_key(key,ctx->c.des_ks);
 	}
 
-static void des_ecb_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	unsigned int i;
 

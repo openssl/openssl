@@ -62,9 +62,7 @@
 #include "objects.h"
 #include "x509.h"
 
-int X509_certificate_type(x,pkey)
-X509 *x;
-EVP_PKEY *pkey;
+int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
 	{
 	EVP_PKEY *pk;
 	int ret=0,i;

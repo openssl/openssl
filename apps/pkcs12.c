@@ -96,9 +96,7 @@ int alg_print();
 int cert_load();
 #endif
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 {
     char *infile=NULL, *outfile=NULL, *keyname = NULL;	
     char *certfile=NULL;
@@ -440,9 +438,7 @@ if (export_cert) {
     EXIT(ret);
 }
 
-int dump_cert_text (out, x)
-BIO *out;
-X509 *x;
+int dump_cert_text (BIO *out, X509 *x)
 {
 	char buf[256];
 	X509_NAME_oneline(X509_get_subject_name(x),buf,256);
@@ -456,12 +452,8 @@ X509 *x;
         return 0;
 }
 
-int dump_certs_keys_p12 (out, p12, pass, passlen, options)
-BIO *out;
-PKCS12 *p12;
-unsigned char *pass;
-int passlen;
-int options;
+int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, unsigned char *pass,
+	     int passlen, int options)
 {
 	STACK *asafes, *bags;
 	int i, bagnid;
@@ -493,12 +485,8 @@ int options;
 	return 1;
 }
 
-int dump_certs_pkeys_bags (out, bags, pass, passlen, options)
-BIO *out;
-STACK *bags;
-unsigned char *pass;
-int passlen;
-int options;
+int dump_certs_pkeys_bags (BIO *out, STACK *bags, unsigned char *pass,
+	     int passlen, int options)
 {
 	int i;
 	for (i = 0; i < sk_num (bags); i++) {
@@ -509,12 +497,8 @@ int options;
 	return 1;
 }
 
-int dump_certs_pkeys_bag (out, bag, pass, passlen, options)
-BIO *out;
-PKCS12_SAFEBAG *bag;
-unsigned char *pass;
-int passlen;
-int options;
+int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, unsigned char *pass,
+	     int passlen, int options)
 {
 	EVP_PKEY *pkey;
 	PKCS8_PRIV_KEY_INFO *p8;
@@ -584,9 +568,7 @@ int options;
 
 /* Hope this is OK .... */
 
-int get_cert_chain (cert, chain)
-X509 *cert;
-STACK **chain;
+int get_cert_chain (X509 *cert, STACK **chain)
 {
 	X509_STORE *store;
 	X509_STORE_CTX store_ctx;
@@ -614,9 +596,7 @@ err:
 	return i;
 }	
 
-int alg_print (x, alg)
-BIO *x;
-X509_ALGOR *alg;
+int alg_print (BIO *x, X509_ALGOR *alg)
 {
 	PBEPARAM *pbe;
 	unsigned char *p;
@@ -630,9 +610,7 @@ X509_ALGOR *alg;
 
 /* Load all certificates from a given file */
 
-int cert_load(in, sk)
-BIO *in;
-STACK *sk;
+int cert_load(BIO *in, STACK *sk)
 {
 	int ret;
 	X509 *cert;
@@ -647,10 +625,7 @@ STACK *sk;
 
 /* Generalised attribute print: handle PKCS#8 and bag attributes */
 
-int print_attribs (out, attrlst, name)
-BIO *out;
-STACK *attrlst;
-char *name;
+int print_attribs (BIO *out, STACK *attrlst, char *name)
 {
 	X509_ATTRIBUTE *attr;
 	ASN1_TYPE *av;
@@ -705,10 +680,7 @@ char *name;
 	return 1;
 }
 
-void hex_prin(out, buf, len)
-BIO *out;
-unsigned char *buf;
-int len;
+void hex_prin(BIO *out, unsigned char *buf, int len)
 {
 	int i;
 	for (i = 0; i < len; i++) BIO_printf (out, "%02X ", buf[i]);

@@ -95,10 +95,7 @@ NULL, NULL, NULL},
 EXT_END
 };
 
-STACK *i2v_GENERAL_NAMES(method, gens, ret)
-X509V3_EXT_METHOD *method;
-STACK *gens;
-STACK *ret;
+STACK *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method, STACK *gens, STACK *ret)
 {
 	int i;
 	GENERAL_NAME *gen;
@@ -109,10 +106,8 @@ STACK *ret;
 	return ret;
 }
 
-STACK *i2v_GENERAL_NAME(method, gen, ret)
-X509V3_EXT_METHOD *method;
-GENERAL_NAME *gen;
-STACK *ret;
+STACK *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method, GENERAL_NAME *gen,
+	     STACK *ret)
 {
 	char oline[256];
 	unsigned char *p;
@@ -166,10 +161,8 @@ STACK *ret;
 	return ret;
 }
 
-static STACK *v2i_issuer_alt(method, ctx, nval)
-X509V3_EXT_METHOD *method;
-X509V3_CTX *ctx;
-STACK *nval;
+static STACK *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+	     STACK *nval)
 {
 	STACK *gens = NULL;
 	CONF_VALUE *cnf;
@@ -198,9 +191,7 @@ STACK *nval;
 
 /* Append subject altname of issuer to issuer alt name of subject */
 
-static int copy_issuer(ctx, gens)
-X509V3_CTX *ctx;
-STACK *gens;
+static int copy_issuer(X509V3_CTX *ctx, STACK *gens)
 {
 	STACK *ialt;
 	char *gen;
@@ -235,10 +226,8 @@ STACK *gens;
 	
 }
 
-static STACK *v2i_subject_alt(method, ctx, nval)
-X509V3_EXT_METHOD *method;
-X509V3_CTX *ctx;
-STACK *nval;
+static STACK *v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+	     STACK *nval)
 {
 	STACK *gens = NULL;
 	CONF_VALUE *cnf;
@@ -269,9 +258,7 @@ STACK *nval;
  * GENERAL_NAMES
  */
 
-static int copy_email(ctx, gens)
-X509V3_CTX *ctx;
-STACK *gens;
+static int copy_email(X509V3_CTX *ctx, STACK *gens)
 {
 	X509_NAME *nm;
 	ASN1_IA5STRING *email = NULL;
@@ -317,10 +304,8 @@ STACK *gens;
 	
 }
 
-STACK *v2i_GENERAL_NAMES(method, ctx, nval)
-X509V3_EXT_METHOD *method;
-X509V3_CTX *ctx;
-STACK *nval;
+STACK *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+	     STACK *nval)
 {
 	GENERAL_NAME *gen;
 	STACK *gens = NULL;
@@ -341,10 +326,8 @@ STACK *nval;
 	return NULL;
 }
 
-GENERAL_NAME *v2i_GENERAL_NAME(method, ctx, cnf)
-X509V3_EXT_METHOD *method;
-X509V3_CTX *ctx;
-CONF_VALUE *cnf;
+GENERAL_NAME *v2i_GENERAL_NAME(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+	     CONF_VALUE *cnf)
 {
 char is_string = 0;
 int type;

@@ -104,13 +104,12 @@ static BIO_METHOD methods_sslp=
 	ssl_free,
 	};
 
-BIO_METHOD *BIO_f_ssl()
+BIO_METHOD *BIO_f_ssl(void)
 	{
 	return(&methods_sslp);
 	}
 
-static int ssl_new(bi)
-BIO *bi;
+static int ssl_new(BIO *bi)
 	{
 	BIO_SSL *bs;
 
@@ -127,8 +126,7 @@ BIO *bi;
 	return(1);
 	}
 
-static int ssl_free(a)
-BIO *a;
+static int ssl_free(BIO *a)
 	{
 	BIO_SSL *bs;
 
@@ -147,10 +145,7 @@ BIO *a;
 	return(1);
 	}
 	
-static int ssl_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int ssl_read(BIO *b, char *out, int outl)
 	{
 	int ret=1;
 	BIO_SSL *sb;
@@ -234,10 +229,7 @@ int outl;
 	return(ret);
 	}
 
-static int ssl_write(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int ssl_write(BIO *b, char *out, int outl)
 	{
 	int ret,r=0;
 	int retry_reason=0;
@@ -305,11 +297,7 @@ int outl;
 	return(ret);
 	}
 
-static long ssl_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long ssl_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	SSL **sslp,*ssl;
 	BIO_SSL *bs;
@@ -483,9 +471,7 @@ char *ptr;
 	return(ret);
 	}
 
-static int ssl_puts(bp,str)
-BIO *bp;
-char *str;
+static int ssl_puts(BIO *bp, char *str)
 	{
 	int n,ret;
 
@@ -494,8 +480,7 @@ char *str;
 	return(ret);
 	}
 
-BIO *BIO_new_buffer_ssl_connect(ctx)
-SSL_CTX *ctx;
+BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
 	{
 	BIO *ret=NULL,*buf=NULL,*ssl=NULL;
 
@@ -512,8 +497,7 @@ err:
 	return(NULL);
 	}
 
-BIO *BIO_new_ssl_connect(ctx)
-SSL_CTX *ctx;
+BIO *BIO_new_ssl_connect(SSL_CTX *ctx)
 	{
 	BIO *ret=NULL,*con=NULL,*ssl=NULL;
 
@@ -530,9 +514,7 @@ err:
 	return(NULL);
 	}
 
-BIO *BIO_new_ssl(ctx,client)
-SSL_CTX *ctx;
-int client;
+BIO *BIO_new_ssl(SSL_CTX *ctx, int client)
 	{
 	BIO *ret;
 	SSL *ssl;
@@ -553,8 +535,7 @@ int client;
 	return(ret);
 	}
 
-int BIO_ssl_copy_session_id(t,f)
-BIO *t,*f;
+int BIO_ssl_copy_session_id(BIO *t, BIO *f)
 	{
 	t=BIO_find_type(t,BIO_TYPE_SSL);
 	f=BIO_find_type(f,BIO_TYPE_SSL);
@@ -567,8 +548,7 @@ BIO *t,*f;
 	return(1);
 	}
 
-void BIO_ssl_shutdown(b)
-BIO *b;
+void BIO_ssl_shutdown(BIO *b)
 	{
 	SSL *s;
 

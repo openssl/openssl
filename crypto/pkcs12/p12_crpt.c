@@ -62,7 +62,7 @@
 
 /* PKCS#12 specific PBE functions */
 
-void PKCS12_PBE_add()
+void PKCS12_PBE_add(void)
 {
 EVP_PBE_alg_add(NID_pbe_WithSHA1And128BitRC4, EVP_rc4(), EVP_sha1(),
 							 PKCS12_PBE_keyivgen);
@@ -78,16 +78,9 @@ EVP_PBE_alg_add(NID_pbe_WithSHA1And40BitRC2_CBC, EVP_rc2_40_cbc(),
 					EVP_sha1(), PKCS12_PBE_keyivgen);
 }
 
-int PKCS12_PBE_keyivgen (pass, passlen, salt, saltlen, iter, cipher,
-								 md, key, iv)
-unsigned char *pass;
-int passlen;
-unsigned char *salt;
-int saltlen;
-int iter;
-EVP_CIPHER *cipher;
-EVP_MD *md;
-unsigned char *key, *iv;
+int PKCS12_PBE_keyivgen (unsigned char *pass, int passlen, unsigned char *salt,
+	     int saltlen, int iter, EVP_CIPHER *cipher, EVP_MD *md,
+	     unsigned char *key, unsigned char *iv)
 {
 	if (!PKCS12_key_gen (pass, passlen, salt, saltlen, PKCS12_KEY_ID,
  				iter, EVP_CIPHER_key_length(cipher), key, md)) {

@@ -70,10 +70,7 @@
  * ASN1err(ASN1_F_I2D_DSAPUBLICKEY,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
  */
 
-DSA *d2i_DSAPublicKey(a,pp,length)
-DSA **a;
-unsigned char **pp;
-long length;
+DSA *d2i_DSAPublicKey(DSA **a, unsigned char **pp, long length)
 	{
 	int i=ASN1_R_PARSING;
 	ASN1_INTEGER *bs=NULL;

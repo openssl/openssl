@@ -80,8 +80,7 @@ int bn_limit_num_high=8;   /* (1<<bn_limit_bits_high) */
 int bn_limit_bits_mont=0;
 int bn_limit_num_mont=8;   /* (1<<bn_limit_bits_mont) */
 
-void BN_set_params(mult,high,low,mont)
-int mult,high,low,mont;
+void BN_set_params(int mult, int high, int low, int mont)
 	{
 	if (mult >= 0)
 		{
@@ -113,8 +112,7 @@ int mult,high,low,mont;
 		}
 	}
 
-int BN_get_params(which)
-int which;
+int BN_get_params(int which)
 	{
 	if      (which == 0) return(bn_limit_bits);
 	else if (which == 1) return(bn_limit_bits_high);
@@ -123,7 +121,7 @@ int which;
 	else return(0);
 	}
 
-BIGNUM *BN_value_one()
+BIGNUM *BN_value_one(void)
 	{
 	static BN_ULONG data_one=1L;
 	static BIGNUM const_one={&data_one,1,1,0};
@@ -131,7 +129,7 @@ BIGNUM *BN_value_one()
 	return(&const_one);
 	}
 
-char *BN_options()
+char *BN_options(void)
 	{
 	static int init=0;
 	static char data[16];
@@ -150,8 +148,7 @@ char *BN_options()
 	return(data);
 	}
 
-int BN_num_bits_word(l)
-BN_ULONG l;
+int BN_num_bits_word(BN_ULONG l)
 	{
 	static char bits[256]={
 		0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,
@@ -238,8 +235,7 @@ BN_ULONG l;
 		}
 	}
 
-int BN_num_bits(a)
-BIGNUM *a;
+int BN_num_bits(BIGNUM *a)
 	{
 	BN_ULONG l;
 	int i;
@@ -259,8 +255,7 @@ BIGNUM *a;
 	return(i+BN_num_bits_word(l));
 	}
 
-void BN_clear_free(a)
-BIGNUM *a;
+void BN_clear_free(BIGNUM *a)
 	{
 	int i;
 
@@ -277,8 +272,7 @@ BIGNUM *a;
 		Free(a);
 	}
 
-void BN_free(a)
-BIGNUM *a;
+void BN_free(BIGNUM *a)
 	{
 	if (a == NULL) return;
 	if ((a->d != NULL) && !(BN_get_flags(a,BN_FLG_STATIC_DATA)))
@@ -288,13 +282,12 @@ BIGNUM *a;
 		Free(a);
 	}
 
-void BN_init(a)
-BIGNUM *a;
+void BN_init(BIGNUM *a)
 	{
 	memset(a,0,sizeof(BIGNUM));
 	}
 
-BIGNUM *BN_new()
+BIGNUM *BN_new(void)
 	{
 	BIGNUM *ret;
 
@@ -312,7 +305,7 @@ BIGNUM *BN_new()
 	}
 
 
-BN_CTX *BN_CTX_new()
+BN_CTX *BN_CTX_new(void)
 	{
 	BN_CTX *ret;
 
@@ -328,16 +321,14 @@ BN_CTX *BN_CTX_new()
 	return(ret);
 	}
 
-void BN_CTX_init(ctx)
-BN_CTX *ctx;
+void BN_CTX_init(BN_CTX *ctx)
 	{
 	memset(ctx,0,sizeof(BN_CTX));
 	ctx->tos=0;
 	ctx->flags=0;
 	}
 
-void BN_CTX_free(c)
-BN_CTX *c;
+void BN_CTX_free(BN_CTX *c)
 	{
 	int i;
 
@@ -350,9 +341,7 @@ BN_CTX *c;
 		Free(c);
 	}
 
-BIGNUM *bn_expand2(b, words)
-BIGNUM *b;
-int words;
+BIGNUM *bn_expand2(BIGNUM *b, int words)
 	{
 	BN_ULONG *A,*B,*a;
 	int i,j;
@@ -451,8 +440,7 @@ memset(A,0x5c,sizeof(BN_ULONG)*(words+1));
 	return(b);
 	}
 
-BIGNUM *BN_dup(a)
-BIGNUM *a;
+BIGNUM *BN_dup(BIGNUM *a)
 	{
 	BIGNUM *r;
 
@@ -463,9 +451,7 @@ BIGNUM *a;
 	return((BIGNUM *)BN_copy(r,a));
 	}
 
-BIGNUM *BN_copy(a, b)
-BIGNUM *a;
-BIGNUM *b;
+BIGNUM *BN_copy(BIGNUM *a, BIGNUM *b)
 	{
 	int i;
 	BN_ULONG *A,*B;
@@ -532,8 +518,7 @@ BIGNUM *b;
 	return(a);
 	}
 
-void BN_clear(a)
-BIGNUM *a;
+void BN_clear(BIGNUM *a)
 	{
 	if (a->d != NULL)
 		memset(a->d,0,a->max*sizeof(a->d[0]));
@@ -541,8 +526,7 @@ BIGNUM *a;
 	a->neg=0;
 	}
 
-BN_ULONG BN_get_word(a)
-BIGNUM *a;
+BN_ULONG BN_get_word(BIGNUM *a)
 	{
 	int i,n;
 	BN_ULONG ret=0;
@@ -561,9 +545,7 @@ BIGNUM *a;
 	return(ret);
 	}
 
-int BN_set_word(a,w)
-BIGNUM *a;
-BN_ULONG w;
+int BN_set_word(BIGNUM *a, BN_ULONG w)
 	{
 	int i,n;
 	if (bn_expand(a,sizeof(BN_ULONG)*8) == NULL) return(0);
@@ -589,10 +571,7 @@ BN_ULONG w;
 	}
 
 /* ignore negative */
-BIGNUM *BN_bin2bn(s, len, ret)
-unsigned char *s;
-int len;
-BIGNUM *ret;
+BIGNUM *BN_bin2bn(unsigned char *s, int len, BIGNUM *ret)
 	{
 	unsigned int i,m;
 	unsigned int n;
@@ -629,9 +608,7 @@ BIGNUM *ret;
 	}
 
 /* ignore negative */
-int BN_bn2bin(a, to)
-BIGNUM *a;
-unsigned char *to;
+int BN_bn2bin(BIGNUM *a, unsigned char *to)
 	{
 	int n,i;
 	BN_ULONG l;
@@ -645,9 +622,7 @@ unsigned char *to;
 	return(n);
 	}
 
-int BN_ucmp(a, b)
-BIGNUM *a;
-BIGNUM *b;
+int BN_ucmp(BIGNUM *a, BIGNUM *b)
 	{
 	int i;
 	BN_ULONG t1,t2,*ap,*bp;
@@ -669,9 +644,7 @@ BIGNUM *b;
 	return(0);
 	}
 
-int BN_cmp(a, b)
-BIGNUM *a;
-BIGNUM *b;
+int BN_cmp(BIGNUM *a, BIGNUM *b)
 	{
 	int i;
 	int gt,lt;
@@ -712,9 +685,7 @@ BIGNUM *b;
 	return(0);
 	}
 
-int BN_set_bit(a, n)
-BIGNUM *a;
-int n;
+int BN_set_bit(BIGNUM *a, int n)
 	{
 	int i,j,k;
 
@@ -732,9 +703,7 @@ int n;
 	return(1);
 	}
 
-int BN_clear_bit(a, n)
-BIGNUM *a;
-int n;
+int BN_clear_bit(BIGNUM *a, int n)
 	{
 	int i,j;
 
@@ -747,9 +716,7 @@ int n;
 	return(1);
 	}
 
-int BN_is_bit_set(a, n)
-BIGNUM *a;
-int n;
+int BN_is_bit_set(BIGNUM *a, int n)
 	{
 	int i,j;
 
@@ -760,9 +727,7 @@ int n;
 	return((a->d[i]&(((BN_ULONG)1)<<j))?1:0);
 	}
 
-int BN_mask_bits(a,n)
-BIGNUM *a;
-int n;
+int BN_mask_bits(BIGNUM *a, int n)
 	{
 	int b,w;
 
@@ -780,9 +745,7 @@ int n;
 	return(1);
 	}
 
-int bn_cmp_words(a,b,n)
-BN_ULONG *a,*b;
-int n;
+int bn_cmp_words(BN_ULONG *a, BN_ULONG *b, int n)
 	{
 	int i;
 	BN_ULONG aa,bb;

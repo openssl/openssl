@@ -135,9 +135,7 @@ static char *pt();
 
 #endif
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,n,err=0;
 	RC2_KEY key; 
@@ -208,8 +206,7 @@ char *argv[];
 	}
 
 #ifdef undef
-static int cfb64_test(cfb_cipher)
-unsigned char *cfb_cipher;
+static int cfb64_test(unsigned char *cfb_cipher)
         {
         IDEA_KEY_SCHEDULE eks,dks;
         int err=0,i,n;
@@ -247,8 +244,7 @@ unsigned char *cfb_cipher;
         return(err);
         }
 
-static char *pt(p)
-unsigned char *p;
+static char *pt(unsigned char *p)
 	{
 	static char bufs[10][20];
 	static int bnum=0;

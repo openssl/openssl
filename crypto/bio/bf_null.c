@@ -96,13 +96,12 @@ static BIO_METHOD methods_nullf=
 	nullf_free,
 	};
 
-BIO_METHOD *BIO_f_null()
+BIO_METHOD *BIO_f_null(void)
 	{
 	return(&methods_nullf);
 	}
 
-static int nullf_new(bi)
-BIO *bi;
+static int nullf_new(BIO *bi)
 	{
 	bi->init=1;
 	bi->ptr=NULL;
@@ -110,8 +109,7 @@ BIO *bi;
 	return(1);
 	}
 
-static int nullf_free(a)
-BIO *a;
+static int nullf_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 /*	a->ptr=NULL;
@@ -120,10 +118,7 @@ BIO *a;
 	return(1);
 	}
 	
-static int nullf_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int nullf_read(BIO *b, char *out, int outl)
 	{
 	int ret=0;
  
@@ -135,10 +130,7 @@ int outl;
 	return(ret);
 	}
 
-static int nullf_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int nullf_write(BIO *b, char *in, int inl)
 	{
 	int ret=0;
 
@@ -150,11 +142,7 @@ int inl;
 	return(ret);
 	}
 
-static long nullf_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long nullf_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	long ret;
 
@@ -175,19 +163,14 @@ char *ptr;
 	return(ret);
 	}
 
-static int nullf_gets(bp,buf,size)
-BIO *bp;
-char *buf;
-int size;
+static int nullf_gets(BIO *bp, char *buf, int size)
 	{
 	if (bp->next_bio == NULL) return(0);
 	return(BIO_gets(bp->next_bio,buf,size));
 	}
 
 
-static int nullf_puts(bp,str)
-BIO *bp;
-char *str;
+static int nullf_puts(BIO *bp, char *str)
 	{
 	if (bp->next_bio == NULL) return(0);
 	return(BIO_puts(bp->next_bio,str));

@@ -63,13 +63,8 @@
 #include "objects.h"
 #include "x509.h"
 
-int RSA_sign_ASN1_OCTET_STRING(type,m,m_len,sigret,siglen,rsa)
-int type;
-unsigned char *m;
-unsigned int m_len;
-unsigned char *sigret;
-unsigned int *siglen;
-RSA *rsa;
+int RSA_sign_ASN1_OCTET_STRING(int type, unsigned char *m, unsigned int m_len,
+	     unsigned char *sigret, unsigned int *siglen, RSA *rsa)
 	{
 	ASN1_OCTET_STRING sig;
 	int i,j,ret=1;
@@ -105,13 +100,9 @@ RSA *rsa;
 	return(ret);
 	}
 
-int RSA_verify_ASN1_OCTET_STRING(dtype, m, m_len, sigbuf, siglen, rsa)
-int dtype;
-unsigned char *m;
-unsigned int m_len;
-unsigned char *sigbuf;
-unsigned int siglen;
-RSA *rsa;
+int RSA_verify_ASN1_OCTET_STRING(int dtype, unsigned char *m,
+	     unsigned int m_len, unsigned char *sigbuf, unsigned int siglen,
+	     RSA *rsa)
 	{
 	int i,ret=0;
 	unsigned char *p,*s;

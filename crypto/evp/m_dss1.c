@@ -75,7 +75,7 @@ static EVP_MD dss1_md=
 	sizeof(EVP_MD *)+sizeof(SHA_CTX),
 	};
 
-EVP_MD *EVP_dss1()
+EVP_MD *EVP_dss1(void)
 	{
 	return(&dss1_md);
 	}

@@ -66,11 +66,8 @@
 #include "objects.h"
 #include "x509.h"
 
-int EVP_PKEY_encrypt(ek,key,key_len,pubk)
-unsigned char *ek;
-unsigned char *key;
-int key_len;
-EVP_PKEY *pubk;
+int EVP_PKEY_encrypt(unsigned char *ek, unsigned char *key, int key_len,
+	     EVP_PKEY *pubk)
 	{
 	int ret=0;
 	

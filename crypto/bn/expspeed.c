@@ -133,8 +133,7 @@ static double Time_F();
 #define START	0
 #define STOP	1
 
-static double Time_F(s)
-int s;
+static double Time_F(int s)
 	{
 	double ret;
 #ifdef TIMES
@@ -177,9 +176,7 @@ static int mul_c[NUM_SIZES]={8*8*8*8*8,8*8*8*8,8*8*8,8*8,8,1};
 
 void do_mul_exp(BIGNUM *r,BIGNUM *a,BIGNUM *b,BIGNUM *c,BN_CTX *ctx); 
 
-int main(argc,argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 	{
 	BN_CTX *ctx;
 	BIGNUM *a,*b,*c,*r;
@@ -193,12 +190,7 @@ char **argv;
 	do_mul_exp(r,a,b,c,ctx);
 	}
 
-void do_mul_exp(r,a,b,c,ctx)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
-BIGNUM *c;
-BN_CTX *ctx;
+void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 	{
 	int i,k;
 	double tm;

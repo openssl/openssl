@@ -66,9 +66,7 @@ static int add_attribute(STACK **sk, int nid, int atrtype, char *value);
 static ASN1_TYPE *get_attribute(STACK *sk, int nid);
 
 #if 1
-BIO *PKCS7_dataInit(p7,bio)
-PKCS7 *p7;
-BIO *bio;
+BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 	{
 	int i,j;
 	BIO *out=NULL,*btmp=NULL;
@@ -257,11 +255,8 @@ err:
 	}
 
 /* int */
-BIO *PKCS7_dataDecode(p7,pkey,in_bio,xs)
-PKCS7 *p7;
-EVP_PKEY *pkey;
-BIO *in_bio;
-X509_STORE *xs;
+BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio,
+	     X509_STORE *xs)
 	{
 	int i,j;
 	BIO *out=NULL,*btmp=NULL,*etmp=NULL,*bio=NULL;
@@ -470,9 +465,7 @@ err:
 	}
 #endif
 
-int PKCS7_dataFinal(p7,bio)
-PKCS7 *p7;
-BIO *bio;
+int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 	{
 	int ret=0;
 	int i,j;
@@ -636,12 +629,8 @@ err:
 	return(ret);
 	}
 
-int PKCS7_dataVerify(cert_store,ctx,bio,p7,si)
-X509_STORE *cert_store;
-X509_STORE_CTX *ctx;
-BIO *bio;
-PKCS7 *p7;
-PKCS7_SIGNER_INFO *si;
+int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
+	     PKCS7 *p7, PKCS7_SIGNER_INFO *si)
 	{
 /*	PKCS7_SIGNED *s; */
 	ASN1_OCTET_STRING *os;
@@ -782,9 +771,7 @@ err:
 	return(ret);
 	}
 
-PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(p7,idx)
-PKCS7 *p7;
-int idx;
+PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx)
 	{
 	STACK *rsk;
 	PKCS7_RECIP_INFO *ri;
@@ -799,23 +786,17 @@ int idx;
 	return(ri->issuer_and_serial);
 	}
 
-ASN1_TYPE *PKCS7_get_signed_attribute(si,nid)
-PKCS7_SIGNER_INFO *si;
-int nid;
+ASN1_TYPE *PKCS7_get_signed_attribute(PKCS7_SIGNER_INFO *si, int nid)
 	{
 	return(get_attribute(si->auth_attr,nid));
 	}
 
-ASN1_TYPE *PKCS7_get_attribute(si,nid)
-PKCS7_SIGNER_INFO *si;
-int nid;
+ASN1_TYPE *PKCS7_get_attribute(PKCS7_SIGNER_INFO *si, int nid)
 	{
 	return(get_attribute(si->unauth_attr,nid));
 	}
 
-static ASN1_TYPE *get_attribute(sk,nid)
-STACK *sk;
-int nid;
+static ASN1_TYPE *get_attribute(STACK *sk, int nid)
 	{
 	int i;
 	X509_ATTRIBUTE *xa;
@@ -837,8 +818,7 @@ int nid;
 	return(NULL);
 	}
 
-ASN1_OCTET_STRING *PKCS7_digest_from_attributes(sk)
-STACK *sk;
+ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK *sk)
 	{
 	X509_ATTRIBUTE *attr;
 	ASN1_TYPE *astype;
@@ -860,9 +840,7 @@ STACK *sk;
 	return NULL;
 	}
 
-int PKCS7_set_signed_attributes(p7si,sk)
-PKCS7_SIGNER_INFO *p7si;
-STACK *sk;
+int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk)
 	{
 	int i;
 
@@ -878,9 +856,7 @@ STACK *sk;
 	return(1);
 	}
 
-int PKCS7_set_attributes(p7si,sk)
-PKCS7_SIGNER_INFO *p7si;
-STACK *sk;
+int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK *sk)
 	{
 	int i;
 
@@ -896,29 +872,19 @@ STACK *sk;
 	return(1);
 	}
 
-int PKCS7_add_signed_attribute(p7si,nid,atrtype,value)
-PKCS7_SIGNER_INFO *p7si;
-int nid;
-int atrtype;
-char *value;
+int PKCS7_add_signed_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
+	     char *value)
 	{
 	return(add_attribute(&(p7si->auth_attr),nid,atrtype,value));
 	}
 
-int PKCS7_add_attribute(p7si,nid,atrtype,value)
-PKCS7_SIGNER_INFO *p7si;
-int nid;
-int atrtype;
-char *value;
+int PKCS7_add_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
+	     char *value)
 	{
 	return(add_attribute(&(p7si->unauth_attr),nid,atrtype,value));
 	}
 
-static int add_attribute(sk, nid, atrtype, value)
-STACK **sk;
-int nid;
-int atrtype;
-char *value;
+static int add_attribute(STACK **sk, int nid, int atrtype, char *value)
 	{
 	X509_ATTRIBUTE *attr=NULL;
 

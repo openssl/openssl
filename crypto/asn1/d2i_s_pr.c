@@ -71,10 +71,7 @@
  * ASN1err(ASN1_F_I2D_DSAPRIVATEKEY,ASN1_R_PARSING);
  */
 
-DSA *d2i_DSAPrivateKey(a,pp,length)
-DSA **a;
-unsigned char **pp;
-long length;
+DSA *d2i_DSAPrivateKey(DSA **a, unsigned char **pp, long length)
 	{
 	int i=ASN1_R_PARSING;
 	ASN1_INTEGER *bs=NULL;

@@ -5,6 +5,9 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Change functions to ANSI C.
+     [Ulf Möller]
+
   *) Fix typos in error codes.
      [Martin Kraemer <Martin.Kraemer@MchP.Siemens.De>, Ulf Möller]
 

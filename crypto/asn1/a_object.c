@@ -67,9 +67,7 @@
  * ASN1err(ASN1_F_I2T_ASN1_OBJECT,ASN1_R_BAD_OBJECT_HEADER);
  */
 
-int i2d_ASN1_OBJECT(a, pp)
-ASN1_OBJECT *a;
-unsigned char **pp;
+int i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp)
 	{
 	unsigned char *p;
 
@@ -87,11 +85,7 @@ unsigned char **pp;
 	return(a->length);
 	}
 
-int a2d_ASN1_OBJECT(out,olen,buf,num)
-unsigned char *out;
-int olen;
-const char *buf;
-int num;
+int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 	{
 	int i,first,len=0,c;
 	char tmp[24];
@@ -181,10 +175,7 @@ err:
 	return(0);
 	}
 
-int i2t_ASN1_OBJECT(buf,buf_len,a)
-char *buf;
-int buf_len;
-ASN1_OBJECT *a;
+int i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a)
 	{
 	int i,idx=0,n=0,len,nid;
 	unsigned long l;
@@ -257,9 +248,7 @@ ASN1_OBJECT *a;
 	return(n);
 	}
 
-int i2a_ASN1_OBJECT(bp,a)
-BIO *bp;
-ASN1_OBJECT *a;
+int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 	{
 	char buf[80];
 	int i;
@@ -272,10 +261,8 @@ ASN1_OBJECT *a;
 	return(i);
 	}
 
-ASN1_OBJECT *d2i_ASN1_OBJECT(a, pp, length)
-ASN1_OBJECT **a;
-unsigned char **pp;
-long length; 
+ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, unsigned char **pp,
+	     long length)
 	{
 	ASN1_OBJECT *ret=NULL;
 	unsigned char *p;
@@ -331,7 +318,7 @@ err:
 	return(NULL);
 	}
 
-ASN1_OBJECT *ASN1_OBJECT_new()
+ASN1_OBJECT *ASN1_OBJECT_new(void)
 	{
 	ASN1_OBJECT *ret;
 
@@ -350,8 +337,7 @@ ASN1_OBJECT *ASN1_OBJECT_new()
 	return(ret);
 	}
 
-void ASN1_OBJECT_free(a)
-ASN1_OBJECT *a;
+void ASN1_OBJECT_free(ASN1_OBJECT *a)
 	{
 	if (a == NULL) return;
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS)
@@ -372,11 +358,8 @@ ASN1_OBJECT *a;
 		Free(a);
 	}
 
-ASN1_OBJECT *ASN1_OBJECT_create(nid,data,len,sn,ln)
-int nid;
-unsigned char *data;
-int len;
-char *sn,*ln;
+ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,
+	     char *sn, char *ln)
 	{
 	ASN1_OBJECT o;
 

@@ -5,9 +5,7 @@
 
 int bn_mull(BIGNUM *r,BIGNUM *a,BIGNUM *b, BN_CTX *ctx);
 
-int bn_mull(r,a,b,ctx)
-BIGNUM *r,*a,*b;
-BN_CTX *ctx;
+int bn_mull(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 	{
 	int top,i,j,k,al,bl;
 	BIGNUM *t;
@@ -114,11 +112,7 @@ end:
 	}
 #endif
 
-void bn_mul_normal(r,a,na,b,nb)
-BN_ULONG *r,*a;
-int na;
-BN_ULONG *b;
-int nb;
+void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
 	{
 	BN_ULONG *rr;
 
@@ -155,9 +149,7 @@ printf(" bn_mul_normal %d * %d\n",na,nb);
 	}
 
 #if 1
-void bn_mul_low_normal(r,a,b,n)
-BN_ULONG *r,*a,*b;
-int n;
+void bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
 	{
 #ifdef BN_COUNT
 printf(" bn_mul_low_normal %d * %d\n",n,n);

@@ -103,18 +103,13 @@ typedef struct added_obj_st
 static int new_nid=NUM_NID;
 static LHASH *added=NULL;
 
-static int sn_cmp(ap,bp)
-ASN1_OBJECT **ap;
-ASN1_OBJECT **bp;
+static int sn_cmp(ASN1_OBJECT **ap, ASN1_OBJECT **bp)
 	{ return(strcmp((*ap)->sn,(*bp)->sn)); }
 
-static int ln_cmp(ap,bp)
-ASN1_OBJECT **ap;
-ASN1_OBJECT **bp;
+static int ln_cmp(ASN1_OBJECT **ap, ASN1_OBJECT **bp)
 	{ return(strcmp((*ap)->ln,(*bp)->ln)); }
 
-static unsigned long add_hash(ca)
-ADDED_OBJ *ca;
+static unsigned long add_hash(ADDED_OBJ *ca)
 	{
 	ASN1_OBJECT *a;
 	int i;
@@ -147,8 +142,7 @@ ADDED_OBJ *ca;
 	return(ret);
 	}
 
-static int add_cmp(ca,cb)
-ADDED_OBJ *ca,*cb;
+static int add_cmp(ADDED_OBJ *ca, ADDED_OBJ *cb)
 	{
 	ASN1_OBJECT *a,*b;
 	int i;
@@ -179,15 +173,14 @@ ADDED_OBJ *ca,*cb;
 	return(1); /* should not get here */
 	}
 
-static int init_added()
+static int init_added(void)
 	{
 	if (added != NULL) return(1);
 	added=lh_new(add_hash,add_cmp);
 	return(added != NULL);
 	}
 
-static void cleanup1(a)
-ADDED_OBJ *a;
+static void cleanup1(ADDED_OBJ *a)
 	{
 	a->obj->nid=0;
 	a->obj->flags|=ASN1_OBJECT_FLAG_DYNAMIC|
@@ -195,19 +188,17 @@ ADDED_OBJ *a;
 			ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 	}
 
-static void cleanup2(a)
-ADDED_OBJ *a;
+static void cleanup2(ADDED_OBJ *a)
 	{ a->obj->nid++; }
 
-static void cleanup3(a)
-ADDED_OBJ *a;
+static void cleanup3(ADDED_OBJ *a)
 	{
 	if (--a->obj->nid == 0)
 		ASN1_OBJECT_free(a->obj);
 	Free(a);
 	}
 
-void OBJ_cleanup()
+void OBJ_cleanup(void)
 	{
 	if (added == NULL) return;
 	added->down_load=0;
@@ -218,8 +209,7 @@ void OBJ_cleanup()
 	added=NULL;
 	}
 
-int OBJ_new_nid(num)
-int num;
+int OBJ_new_nid(int num)
 	{
 	int i;
 
@@ -228,8 +218,7 @@ int num;
 	return(i);
 	}
 
-int OBJ_add_object(obj)
-ASN1_OBJECT *obj;
+int OBJ_add_object(ASN1_OBJECT *obj)
 	{
 	ASN1_OBJECT *o;
 	ADDED_OBJ *ao[4],*aop;
@@ -273,8 +262,7 @@ err:
 	return(NID_undef);
 	}
 
-ASN1_OBJECT *OBJ_nid2obj(n)
-int n;
+ASN1_OBJECT *OBJ_nid2obj(int n)
 	{
 	ADDED_OBJ ad,*adp;
 	ASN1_OBJECT ob;
@@ -306,8 +294,7 @@ int n;
 		}
 	}
 
-const char *OBJ_nid2sn(n)
-int n;
+const char *OBJ_nid2sn(int n)
 	{
 	ADDED_OBJ ad,*adp;
 	ASN1_OBJECT ob;
@@ -339,8 +326,7 @@ int n;
 		}
 	}
 
-const char *OBJ_nid2ln(n)
-int n;
+const char *OBJ_nid2ln(int n)
 	{
 	ADDED_OBJ ad,*adp;
 	ASN1_OBJECT ob;
@@ -372,8 +358,7 @@ int n;
 		}
 	}
 
-int OBJ_obj2nid(a)
-ASN1_OBJECT *a;
+int OBJ_obj2nid(ASN1_OBJECT *a)
 	{
 	ASN1_OBJECT **op;
 	ADDED_OBJ ad,*adp;
@@ -403,9 +388,7 @@ ASN1_OBJECT *a;
  * it can be used with any objects, not just registered ones.
  */
 
-ASN1_OBJECT *OBJ_txt2obj(s, no_name)
-const char *s;
-int no_name;
+ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	{
 	int nid = NID_undef;
 	ASN1_OBJECT *op=NULL;
@@ -442,8 +425,7 @@ int no_name;
 	return op;
 	}
 
-int OBJ_txt2nid(s)
-char *s;
+int OBJ_txt2nid(char *s)
 {
 	ASN1_OBJECT *obj;
 	int nid;
@@ -453,8 +435,7 @@ char *s;
 	return nid;
 }
 
-int OBJ_ln2nid(s)
-const char *s;
+int OBJ_ln2nid(const char *s)
 	{
 	ASN1_OBJECT o,*oo= &o,**op;
 	ADDED_OBJ ad,*adp;
@@ -473,8 +454,7 @@ const char *s;
 	return((*op)->nid);
 	}
 
-int OBJ_sn2nid(s)
-const char *s;
+int OBJ_sn2nid(const char *s)
 	{
 	ASN1_OBJECT o,*oo= &o,**op;
 	ADDED_OBJ ad,*adp;
@@ -493,9 +473,7 @@ const char *s;
 	return((*op)->nid);
 	}
 
-static int obj_cmp(ap, bp)
-ASN1_OBJECT **ap;
-ASN1_OBJECT **bp;
+static int obj_cmp(ASN1_OBJECT **ap, ASN1_OBJECT **bp)
 	{
 	int j;
 	ASN1_OBJECT *a= *ap;
@@ -506,12 +484,7 @@ ASN1_OBJECT **bp;
 	return(memcmp(a->data,b->data,a->length));
         }
 
-char *OBJ_bsearch(key,base,num,size,cmp)
-char *key;
-char *base;
-int num;
-int size;
-int (*cmp)();
+char *OBJ_bsearch(char *key, char *base, int num, int size, int (*cmp)())
 	{
 	int l,h,i,c;
 	char *p;
@@ -534,8 +507,7 @@ int (*cmp)();
 	return(NULL);
 	}
 
-int OBJ_create_objects(in)
-BIO *in;
+int OBJ_create_objects(BIO *in)
 	{
 	MS_STATIC char buf[512];
 	int i,num=0;
@@ -583,10 +555,7 @@ BIO *in;
 	/* return(num); */
 	}
 
-int OBJ_create(oid,sn,ln)
-char *oid;
-char *sn;
-char *ln;
+int OBJ_create(char *oid, char *sn, char *ln)
 	{
 	int ok=0;
 	ASN1_OBJECT *op=NULL;

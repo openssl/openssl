@@ -184,7 +184,7 @@ int key3(RSA *key, unsigned char *c)
     SetKey;
     }
 
-int pad_unknown()
+int pad_unknown(void)
 {
     unsigned long l;
     while ((l = ERR_get_error()) != 0)

@@ -65,9 +65,7 @@
  * ASN1err(ASN1_F_X509_PUBKEY_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
-int i2d_X509_PUBKEY(a,pp)
-X509_PUBKEY *a;
-unsigned char **pp;
+int i2d_X509_PUBKEY(X509_PUBKEY *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -82,10 +80,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509_PUBKEY *d2i_X509_PUBKEY(a,pp,length)
-X509_PUBKEY **a;
-unsigned char **pp;
-long length;
+X509_PUBKEY *d2i_X509_PUBKEY(X509_PUBKEY **a, unsigned char **pp,
+	     long length)
 	{
 	M_ASN1_D2I_vars(a,X509_PUBKEY *,X509_PUBKEY_new);
 
@@ -101,7 +97,7 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_PUBKEY_free,ASN1_F_D2I_X509_PUBKEY);
 	}
 
-X509_PUBKEY *X509_PUBKEY_new()
+X509_PUBKEY *X509_PUBKEY_new(void)
 	{
 	X509_PUBKEY *ret=NULL;
 	ASN1_CTX c;
@@ -114,8 +110,7 @@ X509_PUBKEY *X509_PUBKEY_new()
 	M_ASN1_New_Error(ASN1_F_X509_PUBKEY_NEW);
 	}
 
-void X509_PUBKEY_free(a)
-X509_PUBKEY *a;
+void X509_PUBKEY_free(X509_PUBKEY *a)
 	{
 	if (a == NULL) return;
 	X509_ALGOR_free(a->algor);
@@ -124,9 +119,7 @@ X509_PUBKEY *a;
 	Free((char *)a);
 	}
 
-int X509_PUBKEY_set(x,pkey)
-X509_PUBKEY **x;
-EVP_PKEY *pkey;
+int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 	{
 	int ok=0;
 	X509_PUBKEY *pk;
@@ -209,8 +202,7 @@ err:
 	return(ok);
 	}
 
-EVP_PKEY *X509_PUBKEY_get(key)
-X509_PUBKEY *key;
+EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 	{
 	EVP_PKEY *ret=NULL;
 	long j;

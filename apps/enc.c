@@ -84,9 +84,7 @@ int set_hex();
 #define BSIZE	(8*1024)
 #define	PROG	enc_main
 
-int MAIN(argc,argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	char *strbuf=NULL;
 	unsigned char *buff=NULL,*bufsize=NULL;
@@ -521,10 +519,7 @@ end:
 	EXIT(ret);
 	}
 
-int set_hex(in,out,size)
-char *in;
-unsigned char *out;
-int size;
+int set_hex(char *in, unsigned char *out, int size)
 	{
 	int i,n;
 	unsigned char j;

@@ -64,10 +64,7 @@ static int bn_mm(BIGNUM *m,BIGNUM *A,BIGNUM *B, BIGNUM *sk,BN_CTX *ctx);
 
 /* r must be different to a and b */
 /* int BN_mmul(r, a, b) */
-int BN_mul(r, a, b)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
+int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b)
 	{
 	BN_ULONG *ap,*bp,*rp;
 	BIGNUM *sk;
@@ -132,10 +129,7 @@ printf("BN_mul(%d,%d)\n",a->top,b->top);
 #define blbh	(sk[1])
 
 /* r must be different to a and b */
-int bn_mm(m, A, B, sk,ctx)
-BIGNUM *m,*A,*B;
-BIGNUM *sk;
-BN_CTX *ctx;
+int bn_mm(BIGNUM *m, BIGNUM *A, BIGNUM *B, BIGNUM *sk, BN_CTX *ctx)
 	{
 	int n,num,sqr=0;
 	int an,bn;

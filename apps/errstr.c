@@ -68,9 +68,7 @@
 #undef PROG
 #define PROG	errstr_main
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int i,ret=0;
 	char buf[256];

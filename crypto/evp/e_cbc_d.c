@@ -84,16 +84,13 @@ static EVP_CIPHER d_cbc_cipher=
 	EVP_CIPHER_set_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_des_cbc()
+EVP_CIPHER *EVP_des_cbc(void)
 	{
 	return(&d_cbc_cipher);
 	}
 	
-static void des_cbc_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void des_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	if (iv != NULL)
 		memcpy(&(ctx->oiv[0]),iv,8);
@@ -102,11 +99,8 @@ int enc;
 		des_set_key(key,ctx->c.des_ks);
 	}
 
-static void des_cbc_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void des_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	des_ncbc_encrypt(in,out,inl,ctx->c.des_ks,&(ctx->iv[0]),ctx->encrypt);
 	}

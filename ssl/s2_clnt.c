@@ -88,8 +88,7 @@ static int ssl_rsa_public_encrypt();
 
 #define BREAK	break
 
-static SSL_METHOD *ssl2_get_client_method(ver)
-int ver;
+static SSL_METHOD *ssl2_get_client_method(int ver)
 	{
 	if (ver == SSL2_VERSION)
 		return(SSLv2_client_method());
@@ -97,7 +96,7 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv2_client_method()
+SSL_METHOD *SSLv2_client_method(void)
 	{
 	static int init=1;
 	static SSL_METHOD SSLv2_client_data;
@@ -113,8 +112,7 @@ SSL_METHOD *SSLv2_client_method()
 	return(&SSLv2_client_data);
 	}
 
-int ssl2_connect(s)
-SSL *s;
+int ssl2_connect(SSL *s)
 	{
 	unsigned long l=time(NULL);
 	BUF_MEM *buf=NULL;
@@ -296,8 +294,7 @@ end:
 	return(ret);
 	}
 
-static int get_server_hello(s)
-SSL *s;
+static int get_server_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p;
@@ -461,8 +458,7 @@ SSL *s;
 	return(1);
 	}
 
-static int client_hello(s)
-SSL *s;
+static int client_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
@@ -529,8 +525,7 @@ SSL *s;
 	return(ssl2_do_write(s));
 	}
 
-static int client_master_key(s)
-SSL *s;
+static int client_master_key(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
@@ -615,8 +610,7 @@ SSL *s;
 	return(ssl2_do_write(s));
 	}
 
-static int client_finished(s)
-SSL *s;
+static int client_finished(SSL *s)
 	{
 	unsigned char *p;
 
@@ -634,8 +628,7 @@ SSL *s;
 	}
 
 /* read the data and then respond */
-static int client_certificate(s)
-SSL *s;
+static int client_certificate(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
@@ -779,8 +772,7 @@ SSL *s;
 	return(ssl2_do_write(s));
 	}
 
-static int get_server_verify(s)
-SSL *s;
+static int get_server_verify(SSL *s)
 	{
 	unsigned char *p;
 	int i;
@@ -823,8 +815,7 @@ SSL *s;
 	return(1);
 	}
 
-static int get_server_finished(s)
-SSL *s;
+static int get_server_finished(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p;
@@ -889,11 +880,7 @@ SSL *s;
 	}
 
 /* loads in the certificate from the server */
-int ssl2_set_certificate(s, type, len, data)
-SSL *s;
-int type;
-int len;
-unsigned char *data;
+int ssl2_set_certificate(SSL *s, int type, int len, unsigned char *data)
 	{
 	STACK_OF(X509) *sk=NULL;
 	EVP_PKEY *pkey=NULL;
@@ -963,12 +950,8 @@ err:
 	return(ret);
 	}
 
-static int ssl_rsa_public_encrypt(c, len, from, to, padding)
-CERT *c;
-int len;
-unsigned char *from;
-unsigned char *to;
-int padding;
+static int ssl_rsa_public_encrypt(CERT *c, int len, unsigned char *from,
+	     unsigned char *to, int padding)
 	{
 	EVP_PKEY *pkey=NULL;
 	int i= -1;

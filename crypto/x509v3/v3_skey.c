@@ -84,17 +84,14 @@ static ASN1_OCTET_STRING *octet_string_new(void)
 	return ASN1_OCTET_STRING_new();
 }
 
-char *i2s_ASN1_OCTET_STRING(method, oct)
-X509V3_EXT_METHOD *method;
-ASN1_OCTET_STRING *oct;
+char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
+	     ASN1_OCTET_STRING *oct)
 {
 	return hex_to_string(oct->data, oct->length);
 }
 
-ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(method, ctx, str)
-X509V3_EXT_METHOD *method;
-X509V3_CTX *ctx;
-char *str;
+ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
+	     X509V3_CTX *ctx, char *str)
 {
 	ASN1_OCTET_STRING *oct;
 	long length;
@@ -115,10 +112,8 @@ char *str;
 
 }
 
-static ASN1_OCTET_STRING *s2i_skey_id(method, ctx, str)
-X509V3_EXT_METHOD *method;
-X509V3_CTX *ctx;
-char *str;
+static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
+	     X509V3_CTX *ctx, char *str)
 {
 	ASN1_OCTET_STRING *oct;
 	ASN1_BIT_STRING *pk;

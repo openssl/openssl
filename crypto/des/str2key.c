@@ -60,9 +60,7 @@
 
 extern int des_check_key;
 
-void des_string_to_key(str, key)
-const char *str;
-des_cblock key;
+void des_string_to_key(const char *str, des_cblock key)
 	{
 	des_key_schedule ks;
 	int i,length;
@@ -99,10 +97,7 @@ des_cblock key;
 	des_set_odd_parity(key);
 	}
 
-void des_string_to_2keys(str, key1, key2)
-const char *str;
-des_cblock key1;
-des_cblock key2;
+void des_string_to_2keys(const char *str, des_cblock key1, des_cblock key2)
 	{
 	des_key_schedule ks;
 	int i,length;

@@ -60,10 +60,7 @@
 #include <string.h>
 #include "sha.h"
 
-unsigned char *SHA(d, n, md)
-unsigned char *d;
-unsigned long n;
-unsigned char *md;
+unsigned char *SHA(unsigned char *d, unsigned long n, unsigned char *md)
 	{
 	SHA_CTX c;
 	static unsigned char m[SHA_DIGEST_LENGTH];

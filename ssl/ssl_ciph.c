@@ -159,13 +159,12 @@ static SSL_CIPHER cipher_aliases[]={
 static int init_ciphers=1;
 static void load_ciphers();
 
-static int cmp_by_name(a,b)
-SSL_CIPHER **a,**b;
+static int cmp_by_name(SSL_CIPHER **a, SSL_CIPHER **b)
 	{
 	return(strcmp((*a)->name,(*b)->name));
 	}
 
-static void load_ciphers()
+static void load_ciphers(void)
 	{
 	init_ciphers=0;
 	ssl_cipher_methods[SSL_ENC_DES_IDX]= 
@@ -185,11 +184,8 @@ static void load_ciphers()
 		EVP_get_digestbyname(SN_sha1);
 	}
 
-int ssl_cipher_get_evp(s,enc,md,comp)
-SSL_SESSION *s;
-const EVP_CIPHER **enc;
-const EVP_MD **md;
-SSL_COMP **comp;
+int ssl_cipher_get_evp(SSL_SESSION *s, const EVP_CIPHER **enc,
+	     const EVP_MD **md, SSL_COMP **comp)
 	{
 	int i;
 	SSL_CIPHER *c;
@@ -282,8 +278,8 @@ SSL_COMP **comp;
 #define ITEM_SEP(a) \
 	(((a) == ':') || ((a) == ' ') || ((a) == ';') || ((a) == ','))
 
-static void ll_append_tail(head,curr,tail)
-CIPHER_ORDER **head,*curr,**tail;
+static void ll_append_tail(CIPHER_ORDER **head, CIPHER_ORDER *curr,
+	     CIPHER_ORDER **tail)
 	{
 	if (curr == *tail) return;
 	if (curr == *head)
@@ -298,11 +294,10 @@ CIPHER_ORDER **head,*curr,**tail;
 	*tail=curr;
 	}
 
-STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(ssl_method,cipher_list,
-					     cipher_list_by_id,str)
-SSL_METHOD *ssl_method;
-STACK_OF(SSL_CIPHER) **cipher_list,**cipher_list_by_id;
-char *str;
+STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_METHOD *ssl_method,
+		STACK_OF(SSL_CIPHER) **cipher_list,
+		STACK_OF(SSL_CIPHER) **cipher_list_by_id,
+		char *str)
 	{
 	SSL_CIPHER *c;
 	char *l;
@@ -613,10 +608,7 @@ err:
 	return(ok);
 	}
 
-char *SSL_CIPHER_description(cipher,buf,len)
-SSL_CIPHER *cipher;
-char *buf;
-int len;
+char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	{
         int is_export,pkl,kl;
 	char *ver,*exp;
@@ -734,8 +726,7 @@ int len;
 	return(buf);
 	}
 
-char *SSL_CIPHER_get_version(c)
-SSL_CIPHER *c;
+char *SSL_CIPHER_get_version(SSL_CIPHER *c)
 	{
 	int i;
 
@@ -750,8 +741,7 @@ SSL_CIPHER *c;
 	}
 
 /* return the actual cipher being used */
-const char *SSL_CIPHER_get_name(c)
-SSL_CIPHER *c;
+const char *SSL_CIPHER_get_name(SSL_CIPHER *c)
 	{
 	if (c != NULL)
 		return(c->name);
@@ -759,9 +749,7 @@ SSL_CIPHER *c;
 	}
 
 /* number of bits for symetric cipher */
-int SSL_CIPHER_get_bits(c,alg_bits)
-SSL_CIPHER *c;
-int *alg_bits;
+int SSL_CIPHER_get_bits(SSL_CIPHER *c, int *alg_bits)
 	{
 	int ret=0,a=0;
 	const EVP_CIPHER *enc;
@@ -794,9 +782,7 @@ int *alg_bits;
 	return(ret);
 	}
 
-SSL_COMP *ssl3_comp_find(sk,n)
-STACK_OF(SSL_COMP) *sk;
-int n;
+SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 	{
 	SSL_COMP *ctmp;
 	int i,nn;
@@ -817,14 +803,12 @@ static int sk_comp_cmp(SSL_COMP **a,SSL_COMP **b)
 	return((*a)->id-(*b)->id);
 	}
 
-STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods()
+STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 	{
 	return(ssl_comp_methods);
 	}
 
-int SSL_COMP_add_compression_method(id,cm)
-int id;
-COMP_METHOD *cm;
+int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	{
 	SSL_COMP *comp;
 	STACK_OF(SSL_COMP) *sk;

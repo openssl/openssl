@@ -74,12 +74,9 @@ EVP_MD *md;
 EVP_PBE_KEYGEN *keygen;
 } EVP_PBE_CTL;
 
-int EVP_PBE_CipherInit (pbe_obj, pass, passlen, salt, saltlen, iter, ctx, en_de)
-ASN1_OBJECT *pbe_obj;
-int passlen, saltlen, iter;
-unsigned char *pass, *salt;
-EVP_CIPHER_CTX *ctx;
-int en_de;
+int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, unsigned char *pass, int passlen,
+	     unsigned char *salt, int saltlen, int iter, EVP_CIPHER_CTX *ctx,
+	     int en_de)
 {
 
 	EVP_PBE_CTL *pbetmp, pbelu;
@@ -112,12 +109,8 @@ int en_de;
 
 /* Setup a PBE algorithm but take most parameters from AlgorithmIdentifier */
 
-int EVP_PBE_ALGOR_CipherInit (algor, pass, passlen, ctx, en_de)
-X509_ALGOR *algor;
-unsigned char *pass;
-int passlen;
-EVP_CIPHER_CTX *ctx;
-int en_de;
+int EVP_PBE_ALGOR_CipherInit (X509_ALGOR *algor, unsigned char *pass,
+	     int passlen, EVP_CIPHER_CTX *ctx, int en_de)
 {
 	PBEPARAM *pbe;
 	int saltlen, iter;
@@ -147,19 +140,15 @@ int en_de;
 }
 
 
-static int pbe_cmp (pbe1, pbe2)
-EVP_PBE_CTL **pbe1, **pbe2;
+static int pbe_cmp (EVP_PBE_CTL **pbe1, EVP_PBE_CTL **pbe2)
 {
 	return ((*pbe1)->pbe_nid - (*pbe2)->pbe_nid);
 }
 
 /* Add a PBE algorithm */
 
-int EVP_PBE_alg_add (nid, cipher, md, keygen)
-int nid;
-EVP_CIPHER *cipher;
-EVP_MD *md;
-EVP_PBE_KEYGEN *keygen;
+int EVP_PBE_alg_add (int nid, EVP_CIPHER *cipher, EVP_MD *md,
+	     EVP_PBE_KEYGEN *keygen)
 {
 	EVP_PBE_CTL *pbe_tmp;
 	if (!pbe_algs) pbe_algs = sk_new (pbe_cmp);
@@ -175,7 +164,7 @@ EVP_PBE_KEYGEN *keygen;
 	return 1;
 }
 
-void EVP_PBE_cleanup()
+void EVP_PBE_cleanup(void)
 {
 	sk_pop_free(pbe_algs, FreeFunc);
 }

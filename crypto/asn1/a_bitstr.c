@@ -64,9 +64,7 @@
  * ASN1err(ASN1_F_D2I_ASN1_BIT_STRING,ASN1_R_EXPECTING_A_BIT_STRING);
  */
 
-int i2d_ASN1_BIT_STRING(a,pp)
-ASN1_BIT_STRING *a;
-unsigned char **pp;
+int i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	{
 	int ret,j,r,bits,len;
 	unsigned char *p,*d;
@@ -116,10 +114,8 @@ unsigned char **pp;
 	return(r);
 	}
 
-ASN1_BIT_STRING *d2i_ASN1_BIT_STRING(a, pp, length)
-ASN1_BIT_STRING **a;
-unsigned char **pp;
-long length;
+ASN1_BIT_STRING *d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, unsigned char **pp,
+	     long length)
 	{
 	ASN1_BIT_STRING *ret=NULL;
 	unsigned char *p,*s;
@@ -187,10 +183,7 @@ err:
 
 /* These next 2 functions from Goetz Babin-Ebell <babinebell@trustcenter.de>
  */
-int ASN1_BIT_STRING_set_bit(a,n,value)
-ASN1_BIT_STRING *a;
-int n;
-int value;
+int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 	{
 	int w,v,iv;
 	unsigned char *c;
@@ -220,9 +213,7 @@ int value;
 	return(1);
 	}
 
-int ASN1_BIT_STRING_get_bit(a,n)
-ASN1_BIT_STRING *a;
-int n;
+int ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n)
 	{
 	int w,v;
 

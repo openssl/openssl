@@ -134,7 +134,7 @@ typedef struct ms_tm
 #endif
 	} MS_TM;
 
-char *ms_time_new()
+char *ms_time_new(void)
 	{
 	MS_TM *ret;
 
@@ -148,15 +148,13 @@ char *ms_time_new()
 	return((char *)ret);
 	}
 
-void ms_time_free(a)
-char *a;
+void ms_time_free(char *a)
 	{
 	if (a != NULL)
 		Free(a);
 	}
 
-void ms_time_get(a)
-char *a;
+void ms_time_get(char *a)
 	{
 	MS_TM *tm=(MS_TM *)a;
 #ifdef WIN32
@@ -174,8 +172,7 @@ char *a;
 #endif
 	}
 
-double ms_time_diff(ap,bp)
-char *ap,*bp;
+double ms_time_diff(char *ap, char *bp)
 	{
 	MS_TM *a=(MS_TM *)ap;
 	MS_TM *b=(MS_TM *)bp;
@@ -204,8 +201,7 @@ char *ap,*bp;
 	return((ret < 0.0000001)?0.0000001:ret);
 	}
 
-int ms_time_cmp(ap,bp)
-char *ap,*bp;
+int ms_time_cmp(char *ap, char *bp)
 	{
 	MS_TM *a=(MS_TM *)ap,*b=(MS_TM *)bp;
 	double d;

@@ -70,12 +70,9 @@ char *crypt();
 #endif
 
 #if defined(PERL5) || defined(__FreeBSD__)
-char *des_crypt(buf,salt)
+char *des_crypt(const char *buf, const char *salt)
 #else
-char *crypt(buf,salt)
-#endif
-const char *buf;
-const char *salt;
+char *crypt(const char *buf, const char *salt)
 	{
 	static char buff[14];
 
@@ -83,10 +80,7 @@ const char *salt;
 	}
 
 
-char *des_fcrypt(buf,salt,ret)
-const char *buf;
-const char *salt;
-char *ret;
+char *des_fcrypt(const char *buf, const char *salt, char *ret)
 	{
 	unsigned int i,j,x,y;
 	DES_LONG Eswap0,Eswap1;

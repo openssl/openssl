@@ -68,10 +68,8 @@
 
 #define MONT_WORD
 
-int BN_mod_mul_montgomery(r,a,b,mont,ctx)
-BIGNUM *r,*a,*b;
-BN_MONT_CTX *mont;
-BN_CTX *ctx;
+int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_MONT_CTX *mont,
+	     BN_CTX *ctx)
 	{
 	BIGNUM *tmp,*tmp2;
 
@@ -107,11 +105,8 @@ err:
 	return(0);
 	}
 
-int BN_from_montgomery(ret,a,mont,ctx)
-BIGNUM *ret;
-BIGNUM *a;
-BN_MONT_CTX *mont;
-BN_CTX *ctx;
+int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
+	     BN_CTX *ctx)
 	{
 #ifdef BN_RECURSION_MONT
 	if (mont->use_word)
@@ -269,7 +264,7 @@ printf("number BN_from_montgomery\n");
 #endif
 	}
 
-BN_MONT_CTX *BN_MONT_CTX_new()
+BN_MONT_CTX *BN_MONT_CTX_new(void)
 	{
 	BN_MONT_CTX *ret;
 
@@ -281,8 +276,7 @@ BN_MONT_CTX *BN_MONT_CTX_new()
 	return(ret);
 	}
 
-void BN_MONT_CTX_init(ctx)
-BN_MONT_CTX *ctx;
+void BN_MONT_CTX_init(BN_MONT_CTX *ctx)
 	{
 	ctx->use_word=0;
 	ctx->ri=0;
@@ -292,8 +286,7 @@ BN_MONT_CTX *ctx;
 	ctx->flags=0;
 	}
 
-void BN_MONT_CTX_free(mont)
-BN_MONT_CTX *mont;
+void BN_MONT_CTX_free(BN_MONT_CTX *mont)
 	{
 	if(mont == NULL)
 	    return;
@@ -305,10 +298,7 @@ BN_MONT_CTX *mont;
 		Free(mont);
 	}
 
-int BN_MONT_CTX_set(mont,mod,ctx)
-BN_MONT_CTX *mont;
-BIGNUM *mod;
-BN_CTX *ctx;
+int BN_MONT_CTX_set(BN_MONT_CTX *mont, BIGNUM *mod, BN_CTX *ctx)
 	{
 	BIGNUM Ri,*R;
 
@@ -402,8 +392,7 @@ err:
 	return(0);
 	}
 
-BN_MONT_CTX *BN_MONT_CTX_copy(to, from)
-BN_MONT_CTX *to, *from;
+BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
 	{
 	if (to == from) return(to);
 

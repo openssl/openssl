@@ -190,7 +190,7 @@ static int t_nbio=0;
 static int exitNow = 0;		/* Set when it's time to exit main */
 #endif
 
-static void s_time_init()
+static void s_time_init(void)
 	{
 	host=SSL_CONNECT_NAME;
 	t_cert_file=NULL;
@@ -218,7 +218,7 @@ static void s_time_init()
 /***********************************************************************
  * usage - display usage message
  */
-static void s_time_usage()
+static void s_time_usage(void)
 {
 	static char umsg[] = "\
 -time arg     - max number of seconds to collect data, default %d\n\
@@ -250,9 +250,7 @@ static void s_time_usage()
  *
  * Returns 0 if ok, -1 on bad args
  */
-static int parseArgs(argc,argv)
-int argc;
-char **argv;
+static int parseArgs(int argc, char **argv)
 {
     int badop = 0;
 
@@ -377,8 +375,7 @@ bad:
 #define START	0
 #define STOP	1
 
-static double tm_Time_F(s)
-int s;
+static double tm_Time_F(int s)
 	{
 	static double ret;
 #ifdef TIMES
@@ -412,10 +409,7 @@ int s;
  * MAIN - main processing area for client
  *			real name depends on MONOLITH
  */
-int
-MAIN(argc,argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	double totalTime = 0.0;
 	int nConn = 0;
@@ -639,9 +633,7 @@ end:
  * Returns:
  *		SSL *	= the connection pointer.
  */
-static SSL *
-doConnection(scon)
-SSL *scon;
+static SSL *doConnection(SSL *scon)
 	{
 	BIO *conn;
 	SSL *serverCon;

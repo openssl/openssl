@@ -68,9 +68,7 @@
  */
 
 /* sequence */
-int i2d_X509_ATTRIBUTE(a,pp)
-X509_ATTRIBUTE *a;
-unsigned char **pp;
+int i2d_X509_ATTRIBUTE(X509_ATTRIBUTE *a, unsigned char **pp)
 	{
 	int k=0;
 	int r=0,ret=0;
@@ -100,10 +98,8 @@ unsigned char **pp;
 		}
 	}
 
-X509_ATTRIBUTE *d2i_X509_ATTRIBUTE(a,pp,length)
-X509_ATTRIBUTE **a;
-unsigned char **pp;
-long length;
+X509_ATTRIBUTE *d2i_X509_ATTRIBUTE(X509_ATTRIBUTE **a, unsigned char **pp,
+	     long length)
 	{
 	M_ASN1_D2I_vars(a,X509_ATTRIBUTE *,X509_ATTRIBUTE_new);
 
@@ -126,10 +122,7 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_ATTRIBUTE_free,ASN1_F_D2I_X509_ATTRIBUTE);
 	}
 
-X509_ATTRIBUTE *X509_ATTRIBUTE_create(nid,atrtype,value)
-int nid;
-int atrtype;
-char *value;
+X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, char *value)
 	{
 	X509_ATTRIBUTE *ret=NULL;
 	ASN1_TYPE *val=NULL;
@@ -150,7 +143,7 @@ err:
 	return(NULL);
 	}
 
-X509_ATTRIBUTE *X509_ATTRIBUTE_new()
+X509_ATTRIBUTE *X509_ATTRIBUTE_new(void)
 	{
 	X509_ATTRIBUTE *ret=NULL;
 	ASN1_CTX c;
@@ -163,8 +156,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_new()
 	M_ASN1_New_Error(ASN1_F_X509_ATTRIBUTE_NEW);
 	}
 	
-void X509_ATTRIBUTE_free(a)
-X509_ATTRIBUTE *a;
+void X509_ATTRIBUTE_free(X509_ATTRIBUTE *a)
 	{
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->object);

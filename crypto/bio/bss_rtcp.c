@@ -107,7 +107,7 @@ static BIO_METHOD rtcp_method=
 	rtcp_free,
 	};
 
-BIO_METHOD *BIO_s_rtcp()
+BIO_METHOD *BIO_s_rtcp(void)
 	{
 	return(&rtcp_method);
 	}
@@ -136,8 +136,7 @@ static int put ( io_channel chan, char *buffer, int length )
 }
 /***************************************************************************/
 
-static int rtcp_new(bi)
-BIO *bi;
+static int rtcp_new(BIO *bi)
 {
     struct rpc_ctx *ctx;
 	bi->init=1;
@@ -150,8 +149,7 @@ BIO *bi;
 	return(1);
 }
 
-static int rtcp_free(a)
-BIO *a;
+static int rtcp_free(BIO *a)
 {
 	if (a == NULL) return(0);
 	if ( a->ptr ) Free ( a->ptr );
@@ -159,10 +157,7 @@ BIO *a;
 	return(1);
 }
 	
-static int rtcp_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int rtcp_read(BIO *b, char *out, int outl)
 {
     int status, length;
     struct rpc_ctx *ctx;
@@ -209,10 +204,7 @@ int outl;
     return length;
 }
 
-static int rtcp_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int rtcp_write(BIO *b, char *in, int inl)
 {
     int status, i, segment, length;
     struct rpc_ctx *ctx;
@@ -241,11 +233,7 @@ int inl;
     return(i);
 }
 
-static long rtcp_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long rtcp_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	long ret=1;
 
@@ -276,17 +264,12 @@ char *ptr;
 	return(ret);
 	}
 
-static int rtcp_gets(bp,buf,size)
-BIO *bp;
-char *buf;
-int size;
+static int rtcp_gets(BIO *bp, char *buf, int size)
 	{
 	return(0);
 	}
 
-static int rtcp_puts(bp,str)
-BIO *bp;
-char *str;
+static int rtcp_puts(BIO *bp, char *str)
 {
     int length;
     if (str == NULL) return(0);

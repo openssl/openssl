@@ -71,7 +71,7 @@ static ERR_STRING_DATA BUF_str_functs[]=
 
 #endif
 
-void ERR_load_BUF_strings()
+void ERR_load_BUF_strings(void)
 	{
 	static int init=1;
 

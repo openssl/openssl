@@ -62,14 +62,8 @@
 #include "hmac.h"
 #include "ssl_locl.h"
 
-static void tls1_P_hash(md,sec,sec_len,seed,seed_len,out,olen)
-EVP_MD *md;
-unsigned char *sec;
-int sec_len;
-unsigned char *seed;
-int seed_len;
-unsigned char *out;
-int olen;
+static void tls1_P_hash(EVP_MD *md, unsigned char *sec, int sec_len,
+	     unsigned char *seed, int seed_len, unsigned char *out, int olen)
 	{
 	int chunk,n;
 	unsigned int j;
@@ -111,16 +105,9 @@ int olen;
 	memset(A1,0,sizeof(A1));
 	}
 
-static void tls1_PRF(md5,sha1,label,label_len,sec,slen,out1,out2,olen)
-EVP_MD *md5;
-EVP_MD *sha1;
-unsigned char *label;
-int label_len;
-unsigned char *sec;
-int slen;
-unsigned char *out1;
-unsigned char *out2;
-int olen;
+static void tls1_PRF(EVP_MD *md5, EVP_MD *sha1, unsigned char *label,
+	     int label_len, unsigned char *sec, int slen, unsigned char *out1,
+	     unsigned char *out2, int olen)
 	{
 	int len,i;
 	unsigned char *S1,*S2;
@@ -138,10 +125,8 @@ int olen;
 		out1[i]^=out2[i];
 	}
 
-static void tls1_generate_key_block(s,km,tmp,num)
-SSL *s;
-unsigned char *km,*tmp;
-int num;
+static void tls1_generate_key_block(SSL *s, unsigned char *km,
+	     unsigned char *tmp, int num)
 	{
 	unsigned char *p;
 	unsigned char buf[SSL3_RANDOM_SIZE*2+
@@ -161,9 +146,7 @@ int num;
 		km,tmp,num);
 	}
 
-int tls1_change_cipher_state(s,which)
-SSL *s;
-int which;
+int tls1_change_cipher_state(SSL *s, int which)
 	{
 	unsigned char *p,*key_block,*mac_secret;
 	unsigned char *exp_label,buf[TLS_MD_MAX_CONST_SIZE+
@@ -342,8 +325,7 @@ err2:
 	return(0);
 	}
 
-int tls1_setup_key_block(s)
-SSL *s;
+int tls1_setup_key_block(SSL *s)
 	{
 	unsigned char *p1,*p2;
 	const EVP_CIPHER *c;
@@ -399,9 +381,7 @@ err:
 	return(0);
 	}
 
-int tls1_enc(s,send)
-SSL *s;
-int send;
+int tls1_enc(SSL *s, int send)
 	{
 	SSL3_RECORD *rec;
 	EVP_CIPHER_CTX *ds;
@@ -498,10 +478,7 @@ int send;
 	return(1);
 	}
 
-int tls1_cert_verify_mac(s,in_ctx,out)
-SSL *s;
-EVP_MD_CTX *in_ctx;
-unsigned char *out;
+int tls1_cert_verify_mac(SSL *s, EVP_MD_CTX *in_ctx, unsigned char *out)
 	{
 	unsigned int ret;
 	EVP_MD_CTX ctx;
@@ -511,12 +488,8 @@ unsigned char *out;
 	return((int)ret);
 	}
 
-int tls1_final_finish_mac(s,in1_ctx,in2_ctx,str,slen,out)
-SSL *s;
-EVP_MD_CTX *in1_ctx,*in2_ctx;
-unsigned char *str;
-int slen;
-unsigned char *out;
+int tls1_final_finish_mac(SSL *s, EVP_MD_CTX *in1_ctx, EVP_MD_CTX *in2_ctx,
+	     unsigned char *str, int slen, unsigned char *out)
 	{
 	unsigned int i;
 	EVP_MD_CTX ctx;
@@ -542,10 +515,7 @@ unsigned char *out;
 	return((int)12);
 	}
 
-int tls1_mac(ssl,md,send)
-SSL *ssl;
-unsigned char *md;
-int send;
+int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	{
 	SSL3_RECORD *rec;
 	unsigned char *mac_sec,*seq;
@@ -605,11 +575,8 @@ printf("rec=");
 	return(md_size);
 	}
 
-int tls1_generate_master_secret(s,out,p,len)
-SSL *s;
-unsigned char *out;
-unsigned char *p;
-int len;
+int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
+	     int len)
 	{
 	unsigned char buf[SSL3_RANDOM_SIZE*2+TLS_MD_MASTER_SECRET_CONST_SIZE];
 	unsigned char buff[SSL_MAX_MASTER_KEY_LENGTH];
@@ -627,8 +594,7 @@ int len;
 	return(SSL3_MASTER_SECRET_SIZE);
 	}
 
-int tls1_alert_code(code)
-int code;
+int tls1_alert_code(int code)
 	{
 	switch (code)
 		{

@@ -87,9 +87,7 @@ static int add_certs_from_file();
  * -out arg	- output file - default stdout
  */
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int i,badops=0;
 	BIO *in=NULL,*out=NULL;
@@ -288,9 +286,7 @@ end:
  *	number of certs added if successful, -1 if not.
  *----------------------------------------------------------------------
  */
-static int add_certs_from_file(stack,certfile)
-STACK_OF(X509) *stack;
-char *certfile;
+static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
 	{
 	struct stat st;
 	BIO *in=NULL;

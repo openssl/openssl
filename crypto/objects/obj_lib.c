@@ -62,8 +62,7 @@
 #include "objects.h"
 #include "buffer.h"
 
-ASN1_OBJECT *OBJ_dup(o)
-ASN1_OBJECT *o;
+ASN1_OBJECT *OBJ_dup(ASN1_OBJECT *o)
 	{
 	ASN1_OBJECT *r;
 	int i;
@@ -117,9 +116,7 @@ err:
 	return(NULL);
 	}
 
-int OBJ_cmp(a,b)
-ASN1_OBJECT *a;
-ASN1_OBJECT *b;
+int OBJ_cmp(ASN1_OBJECT *a, ASN1_OBJECT *b)
 	{
 	int ret;
 

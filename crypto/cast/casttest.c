@@ -120,9 +120,7 @@ static unsigned char cfb_cipher64[CFB_TEST_SIZE]={
 	}; 
 #endif
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
     {
 #ifdef FULL_TEST
     long l;

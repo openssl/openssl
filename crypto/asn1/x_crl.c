@@ -78,9 +78,7 @@ static int X509_REVOKED_cmp();
 static int X509_REVOKED_seq_cmp();
 #endif
 
-int i2d_X509_REVOKED(a,pp)
-X509_REVOKED *a;
-unsigned char **pp;
+int i2d_X509_REVOKED(X509_REVOKED *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -97,10 +95,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509_REVOKED *d2i_X509_REVOKED(a,pp,length)
-X509_REVOKED **a;
-unsigned char **pp;
-long length;
+X509_REVOKED *d2i_X509_REVOKED(X509_REVOKED **a, unsigned char **pp,
+	     long length)
 	{
 	M_ASN1_D2I_vars(a,X509_REVOKED *,X509_REVOKED_new);
 
@@ -113,9 +109,7 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_REVOKED_free,ASN1_F_D2I_X509_REVOKED);
 	}
 
-int i2d_X509_CRL_INFO(a,pp)
-X509_CRL_INFO *a;
-unsigned char **pp;
+int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 	{
 	int v1=0;
 	long l=0;
@@ -155,10 +149,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509_CRL_INFO *d2i_X509_CRL_INFO(a,pp,length)
-X509_CRL_INFO **a;
-unsigned char **pp;
-long length;
+X509_CRL_INFO *d2i_X509_CRL_INFO(X509_CRL_INFO **a, unsigned char **pp,
+	     long length)
 	{
 	int i,ver=0;
 	M_ASN1_D2I_vars(a,X509_CRL_INFO *,X509_CRL_INFO_new);
@@ -220,9 +212,7 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_CRL_INFO_free,ASN1_F_D2I_X509_CRL_INFO);
 	}
 
-int i2d_X509_CRL(a,pp)
-X509_CRL *a;
-unsigned char **pp;
+int i2d_X509_CRL(X509_CRL *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -239,10 +229,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509_CRL *d2i_X509_CRL(a,pp,length)
-X509_CRL **a;
-unsigned char **pp;
-long length;
+X509_CRL *d2i_X509_CRL(X509_CRL **a, unsigned char **pp, long length)
 	{
 	M_ASN1_D2I_vars(a,X509_CRL *,X509_CRL_new);
 
@@ -256,7 +243,7 @@ long length;
 	}
 
 
-X509_REVOKED *X509_REVOKED_new()
+X509_REVOKED *X509_REVOKED_new(void)
 	{
 	X509_REVOKED *ret=NULL;
 	ASN1_CTX c;
@@ -269,7 +256,7 @@ X509_REVOKED *X509_REVOKED_new()
 	M_ASN1_New_Error(ASN1_F_X509_REVOKED_NEW);
 	}
 
-X509_CRL_INFO *X509_CRL_INFO_new()
+X509_CRL_INFO *X509_CRL_INFO_new(void)
 	{
 	X509_CRL_INFO *ret=NULL;
 	ASN1_CTX c;
@@ -287,7 +274,7 @@ X509_CRL_INFO *X509_CRL_INFO_new()
 	M_ASN1_New_Error(ASN1_F_X509_CRL_INFO_NEW);
 	}
 
-X509_CRL *X509_CRL_new()
+X509_CRL *X509_CRL_new(void)
 	{
 	X509_CRL *ret=NULL;
 	ASN1_CTX c;
@@ -301,8 +288,7 @@ X509_CRL *X509_CRL_new()
 	M_ASN1_New_Error(ASN1_F_X509_CRL_NEW);
 	}
 
-void X509_REVOKED_free(a)
-X509_REVOKED *a;
+void X509_REVOKED_free(X509_REVOKED *a)
 	{
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->serialNumber);
@@ -311,8 +297,7 @@ X509_REVOKED *a;
 	Free((char *)a);
 	}
 
-void X509_CRL_INFO_free(a)
-X509_CRL_INFO *a;
+void X509_CRL_INFO_free(X509_CRL_INFO *a)
 	{
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->version);
@@ -326,8 +311,7 @@ X509_CRL_INFO *a;
 	Free((char *)a);
 	}
 
-void X509_CRL_free(a)
-X509_CRL *a;
+void X509_CRL_free(X509_CRL *a)
 	{
 	int i;
 
@@ -352,16 +336,14 @@ X509_CRL *a;
 	Free((char *)a);
 	}
 
-static int X509_REVOKED_cmp(a,b)
-X509_REVOKED **a,**b;
+static int X509_REVOKED_cmp(X509_REVOKED **a, X509_REVOKED **b)
 	{
 	return(ASN1_STRING_cmp(
 		(ASN1_STRING *)(*a)->serialNumber,
 		(ASN1_STRING *)(*b)->serialNumber));
 	}
 
-static int X509_REVOKED_seq_cmp(a,b)
-X509_REVOKED **a,**b;
+static int X509_REVOKED_seq_cmp(X509_REVOKED **a, X509_REVOKED **b)
 	{
 	return((*a)->sequence-(*b)->sequence);
 	}

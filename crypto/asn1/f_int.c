@@ -61,9 +61,7 @@
 #include "buffer.h"
 #include "x509.h"
 
-int i2a_ASN1_INTEGER(bp, a)
-BIO *bp;
-ASN1_INTEGER *a;
+int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a)
 	{
 	int i,n=0;
 	static const char *h="0123456789ABCDEF";
@@ -96,11 +94,7 @@ err:
 	return(-1);
 	}
 
-int a2i_ASN1_INTEGER(bp,bs,buf,size)
-BIO *bp;
-ASN1_INTEGER *bs;
-char *buf;
-int size;
+int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 	{
 	int ret=0;
 	int i,j,k,m,n,again,bufsize;

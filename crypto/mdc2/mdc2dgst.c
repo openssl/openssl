@@ -80,8 +80,7 @@ static void mdc2_body(MDC2_CTX *c, unsigned char *in, unsigned int len);
 static void mdc2_body();
 #endif
 
-void MDC2_Init(c)
-MDC2_CTX *c;
+void MDC2_Init(MDC2_CTX *c)
 	{
 	c->num=0;
 	c->pad_type=1;
@@ -89,10 +88,7 @@ MDC2_CTX *c;
 	memset(&(c->hh[0]),0x25,MDC2_BLOCK);
 	}
 
-void MDC2_Update(c,in,len)
-MDC2_CTX *c;
-register unsigned char *in;
-unsigned long len;
+void MDC2_Update(MDC2_CTX *c, register unsigned char *in, unsigned long len)
 	{
 	int i,j;
 
@@ -127,10 +123,7 @@ unsigned long len;
 		}
 	}
 
-static void mdc2_body(c,in,len)
-MDC2_CTX *c;
-unsigned char *in;
-unsigned int len;
+static void mdc2_body(MDC2_CTX *c, unsigned char *in, unsigned int len)
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG ttin0,ttin1;
@@ -168,9 +161,7 @@ unsigned int len;
 		}
 	}
 
-void MDC2_Final(md,c)
-unsigned char *md;
-MDC2_CTX *c;
+void MDC2_Final(unsigned char *md, MDC2_CTX *c)
 	{
 	int i,j;
 

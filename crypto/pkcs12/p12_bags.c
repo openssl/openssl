@@ -66,9 +66,7 @@
  *ASN1err(ASN1_F_D2I_PKCS12_BAGS,ASN1_R_DECODE_ERROR)
  */
 
-int i2d_PKCS12_BAGS(a,pp)
-PKCS12_BAGS *a;
-unsigned char **pp;
+int i2d_PKCS12_BAGS(PKCS12_BAGS *a, unsigned char **pp)
 {
 	int bagnid, v = 0;
 	M_ASN1_I2D_vars(a);
@@ -126,7 +124,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-PKCS12_BAGS *PKCS12_BAGS_new()
+PKCS12_BAGS *PKCS12_BAGS_new(void)
 {
 	PKCS12_BAGS *ret=NULL;
 	ASN1_CTX c;
@@ -137,10 +135,8 @@ PKCS12_BAGS *PKCS12_BAGS_new()
 	M_ASN1_New_Error(ASN1_F_PKCS12_BAGS_NEW);
 }
 
-PKCS12_BAGS *d2i_PKCS12_BAGS(a,pp,length)
-PKCS12_BAGS **a;
-unsigned char **pp;
-long length;
+PKCS12_BAGS *d2i_PKCS12_BAGS(PKCS12_BAGS **a, unsigned char **pp,
+	     long length)
 {
 	int bagnid;
 	M_ASN1_D2I_vars(a,PKCS12_BAGS *,PKCS12_BAGS_new);
@@ -174,8 +170,7 @@ long length;
 	M_ASN1_D2I_Finish(a, PKCS12_BAGS_free, ASN1_F_D2I_PKCS12_BAGS);
 }
 
-void PKCS12_BAGS_free (a)
-PKCS12_BAGS *a;
+void PKCS12_BAGS_free (PKCS12_BAGS *a)
 {
 	if (a == NULL) return;
 	switch (OBJ_obj2nid(a->type)) {

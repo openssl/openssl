@@ -63,12 +63,8 @@
 #include "pkcs12.h"
 
 /* Generate a MAC */
-int PKCS12_gen_mac (p12, pass, passlen, mac, maclen)
-PKCS12 *p12;
-unsigned char *pass;
-int passlen;
-unsigned char *mac;
-unsigned int *maclen;
+int PKCS12_gen_mac (PKCS12 *p12, unsigned char *pass, int passlen,
+	     unsigned char *mac, unsigned int *maclen)
 {
 	const EVP_MD *md_type;
 	HMAC_CTX hmac;
@@ -96,10 +92,7 @@ unsigned int *maclen;
 }
 
 /* Verify the mac */
-int PKCS12_verify_mac (p12, pass, passlen)
-PKCS12 *p12;
-unsigned char *pass;
-int passlen;
+int PKCS12_verify_mac (PKCS12 *p12, unsigned char *pass, int passlen)
 {
 	unsigned char mac[EVP_MAX_MD_SIZE];
 	unsigned int maclen;
@@ -121,14 +114,8 @@ int passlen;
 
 /* Set a mac */
 
-int PKCS12_set_mac (p12, pass, passlen, salt, saltlen, iter, md_type)
-PKCS12 *p12;
-unsigned char *pass;
-int passlen;
-unsigned char *salt;
-int saltlen;
-int iter;
-EVP_MD *md_type;
+int PKCS12_set_mac (PKCS12 *p12, unsigned char *pass, int passlen,
+	     unsigned char *salt, int saltlen, int iter, EVP_MD *md_type)
 {
 	unsigned char mac[EVP_MAX_MD_SIZE];
 	int maclen;
@@ -150,12 +137,8 @@ EVP_MD *md_type;
 }
 
 /* Set up a mac structure */
-int PKCS12_setup_mac (p12, iter, salt, saltlen, md_type)
-PKCS12 *p12;
-int iter;
-unsigned char *salt;
-int saltlen;
-EVP_MD *md_type;
+int PKCS12_setup_mac (PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
+	     EVP_MD *md_type)
 {
 	if (!(p12->mac = PKCS12_MAC_DATA_new ())) return PKCS12_ERROR;
 	if (iter > 1) {

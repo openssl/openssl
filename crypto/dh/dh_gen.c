@@ -83,11 +83,8 @@
  * this generator function can take a very very long time to run.
  */
 
-DH *DH_generate_parameters(prime_len,generator,callback,cb_arg)
-int prime_len;
-int generator;
-void (*callback)(P_I_I_P);
-char *cb_arg;
+DH *DH_generate_parameters(int prime_len, int generator,
+	     void (*callback)(P_I_I_P), char *cb_arg)
 	{
 	BIGNUM *p=NULL,*t1,*t2;
 	DH *ret=NULL;

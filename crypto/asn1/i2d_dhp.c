@@ -67,9 +67,7 @@
  * ASN1err(ASN1_F_X509_DHPARAMS_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
-int i2d_DHparams(a,pp)
-DH *a;
-unsigned char **pp;
+int i2d_DHparams(DH *a, unsigned char **pp)
 	{
 	BIGNUM *num[3];
 	ASN1_INTEGER bs;

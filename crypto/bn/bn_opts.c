@@ -102,9 +102,7 @@ void do_it(int sec, PARMS *p);
 #define P_MULH	5
 #define P_MRED	6
 
-int main(argc,argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 	{
 	PARMS p;
 	BN_MONT_CTX *mont;
@@ -203,9 +201,7 @@ char **argv;
 	do_it(num,&p);
 	}
 
-void do_it(num,p)
-int num;
-PARMS *p;
+void do_it(int num, PARMS *p)
 	{
 	char *start,*end;
 	int i,j,number;
@@ -240,9 +236,7 @@ PARMS *p;
 		}
 	}
 
-int time_it(sec,p)
-int sec;
-PARMS *p;
+int time_it(int sec, PARMS *p)
 	{
 	char *start,*end;
 	int i,j;
@@ -279,9 +273,7 @@ PARMS *p;
 	return(i);
 	}
 
-void do_mul_exp(num,p)
-int num;
-PARMS *p;
+void do_mul_exp(int num, PARMS *p)
 	{
 	int i;
 
@@ -290,9 +282,7 @@ PARMS *p;
 			p->ctx,p->mont);
 	}
 
-void do_mul(num,p)
-int num;
-PARMS *p;
+void do_mul(int num, PARMS *p)
 	{
 	int i;
 
@@ -300,9 +290,7 @@ PARMS *p;
 		BN_mul(&(p->r),&(p->a),&(p->b),p->ctx);
 	}
 
-void do_sqr(num,p)
-int num;
-PARMS *p;
+void do_sqr(int num, PARMS *p)
 	{
 	int i;
 
@@ -310,9 +298,7 @@ PARMS *p;
 			BN_sqr(&(p->r),&(p->a),p->ctx);
 	}
 
-void do_mul_low(num,p)
-int num;
-PARMS *p;
+void do_mul_low(int num, PARMS *p)
 	{
 	int i;
 	
@@ -320,9 +306,7 @@ PARMS *p;
 		BN_mul_low(&(p->r),&(p->a),&(p->b),p->w,p->ctx);
 	}
 
-void do_mul_high(num,p)
-int num;
-PARMS *p;
+void do_mul_high(int num, PARMS *p)
 	{
 	int i;
 
@@ -330,9 +314,7 @@ PARMS *p;
 		BN_mul_low(&(p->r),&(p->a),&(p->b),&(p->low),p->w,p->ctx);
 	}
 
-void do_from_montgomery(num,p)
-int num;
-PARMS *p;
+void do_from_montgomery(int num, PARMS *p)
 	{
 	int i;
 	

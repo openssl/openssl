@@ -110,11 +110,7 @@ static int do_uncompress();
 static int do_change_cipher_spec();
 #endif
 
-static int ssl3_read_n(s,n,max,extend)
-SSL *s;
-int n;
-int max;
-int extend;
+static int ssl3_read_n(SSL *s, int n, int max, int extend)
 	{
 	int i,off,newb;
 
@@ -223,8 +219,7 @@ int extend;
  * ssl->s3->rrec.data, 	- data
  * ssl->s3->rrec.length, - number of bytes
  */
-static int ssl3_get_record(s)
-SSL *s;
+static int ssl3_get_record(SSL *s)
 	{
 	int ssl_major,ssl_minor,al;
 	int n,i,ret= -1;
@@ -435,8 +430,7 @@ err:
 	return(ret);
 	}
 
-static int do_uncompress(ssl)
-SSL *ssl;
+static int do_uncompress(SSL *ssl)
 	{
 	int i;
 	SSL3_RECORD *rr;
@@ -453,8 +447,7 @@ SSL *ssl;
 	return(1);
 	}
 
-static int do_compress(ssl)
-SSL *ssl;
+static int do_compress(SSL *ssl)
 	{
 	int i;
 	SSL3_RECORD *wr;
@@ -475,11 +468,7 @@ SSL *ssl;
 /* Call this to write data
  * It will return <= 0 if not all data has been sent or non-blocking IO.
  */
-int ssl3_write_bytes(s,type,buf,len)
-SSL *s;
-int type;
-const char *buf;
-int len;
+int ssl3_write_bytes(SSL *s, int type, const char *buf, int len)
 	{
 	unsigned int tot,n,nw;
 	int i;
@@ -524,11 +513,8 @@ int len;
 		}
 	}
 
-static int do_ssl3_write(s,type,buf,len)
-SSL *s;
-int type;
-const char *buf;
-unsigned int len;
+static int do_ssl3_write(SSL *s, int type, const char *buf,
+	     unsigned int len)
 	{
 	unsigned char *p,*plen;
 	int i,mac_size,clear=0;
@@ -642,11 +628,8 @@ err:
 	}
 
 /* if s->s3->wbuf.left != 0, we need to call this */
-static int ssl3_write_pending(s,type,buf,len)
-SSL *s;
-int type;
-const char *buf;
-unsigned int len;
+static int ssl3_write_pending(SSL *s, int type, const char *buf,
+	     unsigned int len)
 	{
 	int i;
 
@@ -686,11 +669,7 @@ unsigned int len;
 		}
 	}
 
-int ssl3_read_bytes(s,type,buf,len)
-SSL *s;
-int type;
-char *buf;
-int len;
+int ssl3_read_bytes(SSL *s, int type, char *buf, int len)
 	{
 	int al,i,j,n,ret;
 	SSL3_RECORD *rr;
@@ -984,8 +963,7 @@ err:
 	return(-1);
 	}
 
-static int do_change_cipher_spec(s)
-SSL *s;
+static int do_change_cipher_spec(SSL *s)
 	{
 	int i;
 	unsigned char *sender;
@@ -1027,9 +1005,7 @@ SSL *s;
 	return(1);
 	}
 
-int ssl3_do_write(s,type)
-SSL *s;
-int type;
+int ssl3_do_write(SSL *s, int type)
 	{
 	int ret;
 
@@ -1043,10 +1019,7 @@ int type;
 	return(0);
 	}
 
-void ssl3_send_alert(s,level,desc)
-SSL *s;
-int level;
-int desc;
+void ssl3_send_alert(SSL *s, int level, int desc)
 	{
 	/* Map tls/ssl alert value to correct one */
 	desc=s->method->ssl3_enc->alert_value(desc);
@@ -1064,8 +1037,7 @@ int desc;
 	 * some time in the future */
 	}
 
-int ssl3_dispatch_alert(s)
-SSL *s;
+int ssl3_dispatch_alert(SSL *s)
 	{
 	int i,j;
 	void (*cb)()=NULL;

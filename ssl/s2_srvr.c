@@ -88,8 +88,7 @@ static int ssl_rsa_private_decrypt();
 
 #define BREAK	break
 
-static SSL_METHOD *ssl2_get_server_method(ver)
-int ver;
+static SSL_METHOD *ssl2_get_server_method(int ver)
 	{
 	if (ver == SSL2_VERSION)
 		return(SSLv2_server_method());
@@ -97,7 +96,7 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv2_server_method()
+SSL_METHOD *SSLv2_server_method(void)
 	{
 	static int init=1;
 	static SSL_METHOD SSLv2_server_data;
@@ -113,8 +112,7 @@ SSL_METHOD *SSLv2_server_method()
 	return(&SSLv2_server_data);
 	}
 
-int ssl2_accept(s)
-SSL *s;
+int ssl2_accept(SSL *s)
 	{
 	unsigned long l=time(NULL);
 	BUF_MEM *buf=NULL;
@@ -334,8 +332,7 @@ end:
 	return(ret);
 	}
 
-static int get_client_master_key(s)
-SSL *s;
+static int get_client_master_key(SSL *s)
 	{
 	int export,i,n,keya,ek;
 	unsigned char *p;
@@ -460,8 +457,7 @@ SSL *s;
 	return(1);
 	}
 
-static int get_client_hello(s)
-SSL *s;
+static int get_client_hello(SSL *s)
 	{
 	int i,n;
 	unsigned char *p;
@@ -603,8 +599,7 @@ mem_err:
 	return(0);
 	}
 
-static int server_hello(s)
-SSL *s;
+static int server_hello(SSL *s)
 	{
 	unsigned char *p,*d;
 	int n,hit;
@@ -694,8 +689,7 @@ SSL *s;
 	return(ssl2_do_write(s));
 	}
 
-static int get_client_finished(s)
-SSL *s;
+static int get_client_finished(SSL *s)
 	{
 	unsigned char *p;
 	int i;
@@ -737,8 +731,7 @@ SSL *s;
 	return(1);
 	}
 
-static int server_verify(s)
-SSL *s;
+static int server_verify(SSL *s)
 	{
 	unsigned char *p;
 
@@ -756,8 +749,7 @@ SSL *s;
 	return(ssl2_do_write(s));
 	}
 
-static int server_finish(s)
-SSL *s;
+static int server_finish(SSL *s)
 	{
 	unsigned char *p;
 
@@ -780,8 +772,7 @@ SSL *s;
 	}
 
 /* send the request and check the response */
-static int request_certificate(s)
-SSL *s;
+static int request_certificate(SSL *s)
 	{
 	unsigned char *p,*p2,*buf2;
 	unsigned char *ccd;
@@ -938,12 +929,8 @@ end:
 	return(ret);
 	}
 
-static int ssl_rsa_private_decrypt(c, len, from, to,padding)
-CERT *c;
-int len;
-unsigned char *from;
-unsigned char *to;
-int padding;
+static int ssl_rsa_private_decrypt(CERT *c, int len, unsigned char *from,
+	     unsigned char *to, int padding)
 	{
 	RSA *rsa;
 	int i;

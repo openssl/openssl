@@ -86,9 +86,7 @@ static void MS_CALLBACK cb();
 
 BIO *out=NULL;
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	DH *a,*b;
 	char buf[12];
@@ -170,10 +168,7 @@ err:
 	return(ret);
 	}
 
-static void MS_CALLBACK cb(p, n,arg)
-int p;
-int n;
-char *arg;
+static void MS_CALLBACK cb(int p, int n, char *arg)
 	{
 	char c='*';
 

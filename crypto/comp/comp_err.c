@@ -63,7 +63,7 @@
 #ifndef NO_ERR
 #endif
 
-void ERR_load__strings()
+void ERR_load__strings(void)
 	{
 	static int init=1;
 

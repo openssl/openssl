@@ -82,9 +82,7 @@
  * -modulus	- print the DSA public key
  */
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int ret=1;
 	DSA *dsa=NULL;

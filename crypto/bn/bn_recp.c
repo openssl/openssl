@@ -60,8 +60,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-void BN_RECP_CTX_init(recp)
-BN_RECP_CTX *recp;
+void BN_RECP_CTX_init(BN_RECP_CTX *recp)
 	{
 	BN_init(&(recp->N));
 	BN_init(&(recp->Nr));
@@ -69,7 +68,7 @@ BN_RECP_CTX *recp;
 	recp->flags=0;
 	}
 
-BN_RECP_CTX *BN_RECP_CTX_new()
+BN_RECP_CTX *BN_RECP_CTX_new(void)
 	{
 	BN_RECP_CTX *ret;
 
@@ -81,8 +80,7 @@ BN_RECP_CTX *BN_RECP_CTX_new()
 	return(ret);
 	}
 
-void BN_RECP_CTX_free(recp)
-BN_RECP_CTX *recp;
+void BN_RECP_CTX_free(BN_RECP_CTX *recp)
 	{
 	if(recp == NULL)
 	    return;
@@ -93,10 +91,7 @@ BN_RECP_CTX *recp;
 		Free(recp);
 	}
 
-int BN_RECP_CTX_set(recp,d,ctx)
-BN_RECP_CTX *recp;
-BIGNUM *d;
-BN_CTX *ctx;
+int BN_RECP_CTX_set(BN_RECP_CTX *recp, BIGNUM *d, BN_CTX *ctx)
 	{
 	BN_copy(&(recp->N),d);
 	BN_zero(&(recp->Nr));
@@ -105,12 +100,8 @@ BN_CTX *ctx;
 	return(1);
 	}
 
-int BN_mod_mul_reciprocal(r, x, y, recp, ctx)
-BIGNUM *r;
-BIGNUM *x;
-BIGNUM *y;
-BN_RECP_CTX *recp;
-BN_CTX *ctx;
+int BN_mod_mul_reciprocal(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_RECP_CTX *recp,
+	     BN_CTX *ctx)
 	{
 	int ret=0;
 	BIGNUM *a;
@@ -133,12 +124,8 @@ err:
 	return(ret);
 	}
 
-int BN_div_recp(dv,rem,m,recp,ctx)
-BIGNUM *dv;
-BIGNUM *rem;
-BIGNUM *m;
-BN_RECP_CTX *recp;
-BN_CTX *ctx;
+int BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BN_RECP_CTX *recp,
+	     BN_CTX *ctx)
 	{
 	int i,j,tos,ret=0,ex;
 	BIGNUM *a,*b,*d,*r;
@@ -221,11 +208,7 @@ err:
  * We actually calculate with an extra word of precision, so
  * we can do faster division if the remainder is not required.
  */
-int BN_reciprocal(r,m,len,ctx)
-BIGNUM *r;
-BIGNUM *m;
-int len;
-BN_CTX *ctx;
+int BN_reciprocal(BIGNUM *r, BIGNUM *m, int len, BN_CTX *ctx)
 	{
 	int ret= -1;
 	BIGNUM t;

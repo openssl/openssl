@@ -63,14 +63,8 @@
 #include "lhash.h"
 #include "cryptlib.h"
 
-int CRYPTO_get_ex_new_index(idx,skp,argl,argp,new_func,dup_func,free_func)
-int idx;
-STACK **skp;
-long argl;
-char *argp;
-int (*new_func)();
-int (*dup_func)();
-void (*free_func)();
+int CRYPTO_get_ex_new_index(int idx, STACK **skp, long argl, char *argp,
+	     int (*new_func)(), int (*dup_func)(), void (*free_func)())
 	{
 	int ret= -1;
 	CRYPTO_EX_DATA_FUNCS *a;
@@ -110,10 +104,7 @@ err:
 	return(idx);
 	}
 
-int CRYPTO_set_ex_data(ad,idx,val)
-CRYPTO_EX_DATA *ad;
-int idx;
-char *val;
+int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, char *val)
 	{
 	int i;
 
@@ -140,9 +131,7 @@ char *val;
 	return(1);
 	}
 
-char *CRYPTO_get_ex_data(ad,idx)
-CRYPTO_EX_DATA *ad;
-int idx;
+char *CRYPTO_get_ex_data(CRYPTO_EX_DATA *ad, int idx)
 	{
 	if (ad->sk == NULL)
 		return(0);
@@ -156,9 +145,8 @@ int idx;
  * being duplicated, a pointer to the
  * 'new' object to be inserted, the index, and the argi/argp
  */
-int CRYPTO_dup_ex_data(meth,to,from)
-STACK *meth;
-CRYPTO_EX_DATA *to,*from;
+int CRYPTO_dup_ex_data(STACK *meth, CRYPTO_EX_DATA *to,
+	     CRYPTO_EX_DATA *from)
 	{
 	int i,j,m,r;
 	CRYPTO_EX_DATA_FUNCS *mm;
@@ -184,10 +172,7 @@ CRYPTO_EX_DATA *to,*from;
 	}
 
 /* Call each free callback */
-void CRYPTO_free_ex_data(meth,obj,ad)
-STACK *meth;
-char *obj;
-CRYPTO_EX_DATA *ad;
+void CRYPTO_free_ex_data(STACK *meth, char *obj, CRYPTO_EX_DATA *ad)
 	{
 	CRYPTO_EX_DATA_FUNCS *m;
 	char *ptr;
@@ -213,10 +198,7 @@ CRYPTO_EX_DATA *ad;
 		}
 	}
 
-void CRYPTO_new_ex_data(meth,obj,ad)
-STACK *meth;
-char *obj;
-CRYPTO_EX_DATA *ad;
+void CRYPTO_new_ex_data(STACK *meth, char *obj, CRYPTO_EX_DATA *ad)
 	{
 	CRYPTO_EX_DATA_FUNCS *m;
 	char *ptr;

@@ -105,13 +105,12 @@ static BIO_METHOD methods_slg=
 	slg_free,
 	};
 
-BIO_METHOD *BIO_s_log()
+BIO_METHOD *BIO_s_log(void)
 	{
 	return(&methods_slg);
 	}
 
-static int MS_CALLBACK slg_new(bi)
-BIO *bi;
+static int MS_CALLBACK slg_new(BIO *bi)
 	{
 	bi->init=1;
 	bi->num=0;
@@ -124,18 +123,14 @@ BIO *bi;
 	return(1);
 	}
 
-static int MS_CALLBACK slg_free(a)
-BIO *a;
+static int MS_CALLBACK slg_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 	xcloselog(a);
 	return(1);
 	}
 	
-static int MS_CALLBACK slg_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int MS_CALLBACK slg_write(BIO *b, char *in, int inl)
 	{
 	int ret= inl;
 	char* buf= in;
@@ -192,11 +187,7 @@ int inl;
 	return(ret);
 	}
 
-static long MS_CALLBACK slg_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long MS_CALLBACK slg_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	switch (cmd)
 		{
@@ -210,9 +201,7 @@ char *ptr;
 	return(0);
 	}
 
-static int MS_CALLBACK slg_puts(bp,str)
-BIO *bp;
-char *str;
+static int MS_CALLBACK slg_puts(BIO *bp, char *str)
 	{
 	int n,ret;
 

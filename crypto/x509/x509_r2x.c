@@ -65,10 +65,7 @@
 #include "objects.h"
 #include "buffer.h"
 
-X509 *X509_REQ_to_X509(r,days,pkey)
-X509_REQ *r;
-int days;
-EVP_PKEY *pkey;
+X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 	{
 	X509 *ret=NULL;
 	X509_CINF *xi=NULL;

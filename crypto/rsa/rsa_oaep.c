@@ -13,13 +13,8 @@
 
 int MGF1(unsigned char *mask, long len, unsigned char *seed, long seedlen);
 
-int RSA_padding_add_PKCS1_OAEP(to, tlen, from, flen, param, plen)
-     unsigned char *to;
-     int tlen;
-     unsigned char *from;
-     int flen;
-     unsigned char *param;
-     int plen;
+int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
+	     unsigned char *from, int flen, unsigned char *param, int plen)
     {
     int i, emlen = tlen - 1;
     unsigned char *db, *seed;
@@ -73,14 +68,9 @@ int RSA_padding_add_PKCS1_OAEP(to, tlen, from, flen, param, plen)
     return (1);
     }
 
-int RSA_padding_check_PKCS1_OAEP(to, tlen, from, flen, num, param, plen)
-     unsigned char *to;
-     int tlen;
-     unsigned char *from;
-     int flen;
-     int num;
-     unsigned char *param;
-     int plen;
+int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
+	     unsigned char *from, int flen, int num, unsigned char *param,
+	     int plen)
     {
     int i, dblen, mlen = -1;
     unsigned char *maskeddb;

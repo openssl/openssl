@@ -62,10 +62,8 @@
 
 /* Add a local keyid to a safebag */
 
-int PKCS12_add_localkeyid (bag, name, namelen)
-PKCS12_SAFEBAG *bag;
-unsigned char *name;
-int namelen;
+int PKCS12_add_localkeyid (PKCS12_SAFEBAG *bag, unsigned char *name,
+	     int namelen)
 {
 	X509_ATTRIBUTE *attrib;
 	ASN1_BMPSTRING *oct;
@@ -105,9 +103,7 @@ int namelen;
 
 /* Add key usage to PKCS#8 structure */
 
-int PKCS8_add_keyusage (p8, usage)
-PKCS8_PRIV_KEY_INFO *p8;
-int usage;
+int PKCS8_add_keyusage (PKCS8_PRIV_KEY_INFO *p8, int usage)
 {
 	X509_ATTRIBUTE *attrib;
 	ASN1_BIT_STRING *bstr;
@@ -149,10 +145,8 @@ int usage;
 
 /* Add a friendlyname to a safebag */
 
-int PKCS12_add_friendlyname_asc (bag, name, namelen)
-PKCS12_SAFEBAG *bag;
-unsigned char *name;
-int namelen;
+int PKCS12_add_friendlyname_asc (PKCS12_SAFEBAG *bag, unsigned char *name,
+	     int namelen)
 {
 	unsigned char *uniname;
 	int ret, unilen;
@@ -166,10 +160,8 @@ int namelen;
 }
 	
 
-int PKCS12_add_friendlyname_uni (bag, name, namelen)
-PKCS12_SAFEBAG *bag;
-unsigned char *name;
-int namelen;
+int PKCS12_add_friendlyname_uni (PKCS12_SAFEBAG *bag, unsigned char *name,
+	     int namelen)
 {
 	X509_ATTRIBUTE *attrib;
 	ASN1_BMPSTRING *bmp;
@@ -211,9 +203,7 @@ int namelen;
 	return PKCS12_OK;
 }
 
-ASN1_TYPE *PKCS12_get_attr_gen (attrs, attr_nid)
-STACK *attrs;
-int attr_nid;
+ASN1_TYPE *PKCS12_get_attr_gen (STACK *attrs, int attr_nid)
 {
 	X509_ATTRIBUTE *attrib;
 	int i;
@@ -230,8 +220,7 @@ int attr_nid;
 	return NULL;
 }
 
-char *PKCS12_get_friendlyname(bag)
-PKCS12_SAFEBAG *bag;
+char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag)
 {
 	ASN1_TYPE *atype;
 	if (!(atype = PKCS12_get_attr(bag, NID_friendlyName))) return NULL;

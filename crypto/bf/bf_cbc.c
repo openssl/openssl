@@ -59,13 +59,8 @@
 #include "blowfish.h"
 #include "bf_locl.h"
 
-void BF_cbc_encrypt(in, out, length, ks, iv, encrypt)
-unsigned char *in;
-unsigned char *out;
-long length;
-BF_KEY *ks;
-unsigned char *iv;
-int encrypt;
+void BF_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
+	     BF_KEY *ks, unsigned char *iv, int encrypt)
 	{
 	register BF_LONG tin0,tin1;
 	register BF_LONG tout0,tout1,xor0,xor1;

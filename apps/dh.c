@@ -81,9 +81,7 @@
  * -C
  */
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	DH *dh=NULL;
 	int i,badops=0,text=0;

@@ -65,8 +65,7 @@
 #include "crypto.h"
 
 #ifndef NO_FP_API
-void ERR_print_errors_fp(fp)
-FILE *fp;
+void ERR_print_errors_fp(FILE *fp)
 	{
 	unsigned long l;
 	char buf[200];
@@ -83,8 +82,7 @@ FILE *fp;
 	}
 #endif
 
-void ERR_print_errors(bp)
-BIO *bp;
+void ERR_print_errors(BIO *bp)
 	{
 	unsigned long l;
 	char buf[256];

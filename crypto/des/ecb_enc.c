@@ -103,11 +103,8 @@ const char *des_options(void)
 	}
 		
 
-void des_ecb_encrypt(in, out, ks, enc)
-const des_cblock in;
-des_cblock out;
-des_key_schedule ks;
-int enc;
+void des_ecb_encrypt(const des_cblock in, des_cblock out, des_key_schedule ks,
+	     int enc)
 	{
 	register DES_LONG l;
 	DES_LONG ll[2];

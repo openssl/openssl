@@ -62,12 +62,7 @@
 
 /* The old slow way */
 #if 0
-int BN_div(dv, rem, m, d,ctx)
-BIGNUM *dv;
-BIGNUM *rem;
-BIGNUM *m;
-BIGNUM *d;
-BN_CTX *ctx;
+int BN_div(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BIGNUM *d, BN_CTX *ctx)
 	{
 	int i,nm,nd;
 	BIGNUM *D;
@@ -122,12 +117,8 @@ BN_CTX *ctx;
 
 #else
 
-int BN_div(dv, rm, num, divisor,ctx)
-BIGNUM *dv;
-BIGNUM *rm;
-BIGNUM *num;
-BIGNUM *divisor;
-BN_CTX *ctx;
+int BN_div(BIGNUM *dv, BIGNUM *rm, BIGNUM *num, BIGNUM *divisor,
+	     BN_CTX *ctx)
 	{
 	int norm_shift,i,j,loop;
 	BIGNUM *tmp,wnum,*snum,*sdiv,*res;
@@ -292,11 +283,7 @@ err:
 #endif
 
 /* rem != m */
-int BN_mod(rem, m, d,ctx)
-BIGNUM *rem;
-BIGNUM *m;
-BIGNUM *d;
-BN_CTX *ctx;
+int BN_mod(BIGNUM *rem, BIGNUM *m, BIGNUM *d, BN_CTX *ctx)
 	{
 #if 0 /* The old slow way */
 	int i,nm,nd;

@@ -84,12 +84,8 @@ int des_rw_mode=DES_PCBC_MODE;
  */
 
 
-int des_enc_read(fd, buf, len, sched, iv)
-int fd;
-char *buf;
-int len;
-des_key_schedule sched;
-des_cblock iv;
+int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
+	     des_cblock iv)
 	{
 	/* data to be unencrypted */
 	int net_num=0;

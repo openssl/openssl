@@ -62,9 +62,7 @@
 #include "evp.h"
 #include "objects.h"
 
-int i2d_PrivateKey(a,pp)
-EVP_PKEY *a;
-unsigned char **pp;
+int i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp)
 	{
 #ifndef NO_RSA
 	if (a->type == EVP_PKEY_RSA)

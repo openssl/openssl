@@ -80,7 +80,7 @@ static ERR_STRING_DATA OBJ_str_reasons[]=
 
 #endif
 
-void ERR_load_OBJ_strings()
+void ERR_load_OBJ_strings(void)
 	{
 	static int init=1;
 

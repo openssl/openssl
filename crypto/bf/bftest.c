@@ -260,9 +260,7 @@ static int test();
 static int print_test_data();
 #endif
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int ret;
 
@@ -275,7 +273,7 @@ char *argv[];
 	return(0);
 	}
 
-static int print_test_data()
+static int print_test_data(void)
 	{
 	unsigned int i,j;
 
@@ -342,7 +340,7 @@ static int print_test_data()
 	return(0);
 	}
 
-static int test()
+static int test(void)
 	{
 	unsigned char cbc_in[40],cbc_out[40],iv[8];
 	int i,n,err=0;

@@ -65,10 +65,7 @@
 #include "pem.h"
 
 #ifndef NO_FP_API
-STACK *PEM_X509_INFO_read(fp,sk,cb)
-FILE *fp;
-STACK *sk;
-int (*cb)();
+STACK *PEM_X509_INFO_read(FILE *fp, STACK *sk, int (*cb)())
 	{
         BIO *b;
         STACK *ret;
@@ -85,10 +82,7 @@ int (*cb)();
 	}
 #endif
 
-STACK *PEM_X509_INFO_read_bio(bp,sk,cb)
-BIO *bp;
-STACK *sk;
-int (*cb)();
+STACK *PEM_X509_INFO_read_bio(BIO *bp, STACK *sk, int (*cb)())
 	{
 	X509_INFO *xi=NULL;
 	char *name=NULL,*header=NULL,**pp;
@@ -271,13 +265,8 @@ err:
 
 
 /* A TJH addition */
-int PEM_X509_INFO_write_bio(bp,xi,enc,kstr,klen,cb)
-BIO *bp;
-X509_INFO *xi;
-EVP_CIPHER *enc;
-unsigned char *kstr;
-int klen;
-int (*cb)();
+int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
+	     unsigned char *kstr, int klen, int (*cb)())
 	{
 	EVP_CIPHER_CTX ctx;
 	int i,ret=0;

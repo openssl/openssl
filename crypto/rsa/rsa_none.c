@@ -62,11 +62,8 @@
 #include "rsa.h"
 #include "rand.h"
 
-int RSA_padding_add_none(to,tlen,from,flen)
-unsigned char *to;
-int tlen;
-unsigned char *from;
-int flen;
+int RSA_padding_add_none(unsigned char *to, int tlen, unsigned char *from,
+	     int flen)
 	{
 	if (flen > tlen)
 		{
@@ -84,12 +81,8 @@ int flen;
 	return(1);
 	}
 
-int RSA_padding_check_none(to,tlen,from,flen,num)
-unsigned char *to;
-int tlen;
-unsigned char *from;
-int flen;
-int num;
+int RSA_padding_check_none(unsigned char *to, int tlen, unsigned char *from,
+	     int flen, int num)
 	{
 
 	if (flen > tlen)

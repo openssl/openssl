@@ -95,13 +95,12 @@ static BIO_METHOD methods_md=
 	md_free,
 	};
 
-BIO_METHOD *BIO_f_md()
+BIO_METHOD *BIO_f_md(void)
 	{
 	return(&methods_md);
 	}
 
-static int md_new(bi)
-BIO *bi;
+static int md_new(BIO *bi)
 	{
 	EVP_MD_CTX *ctx;
 
@@ -114,8 +113,7 @@ BIO *bi;
 	return(1);
 	}
 
-static int md_free(a)
-BIO *a;
+static int md_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 	Free(a->ptr);
@@ -125,10 +123,7 @@ BIO *a;
 	return(1);
 	}
 	
-static int md_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int md_read(BIO *b, char *out, int outl)
 	{
 	int ret=0;
 	EVP_MD_CTX *ctx;
@@ -152,10 +147,7 @@ int outl;
 	return(ret);
 	}
 
-static int md_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int md_write(BIO *b, char *in, int inl)
 	{
 	int ret=0;
 	EVP_MD_CTX *ctx;
@@ -178,11 +170,7 @@ int inl;
 	return(ret);
 	}
 
-static long md_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long md_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	EVP_MD_CTX *ctx,*dctx,**pctx;
 	const EVP_MD **ppmd;
@@ -243,10 +231,7 @@ char *ptr;
 	return(ret);
 	}
 
-static int md_gets(bp,buf,size)
-BIO *bp;
-char *buf;
-int size;
+static int md_gets(BIO *bp, char *buf, int size)
 	{
 	EVP_MD_CTX *ctx;
 	unsigned int ret;

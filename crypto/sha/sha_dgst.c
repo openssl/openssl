@@ -92,8 +92,7 @@ char *SHA_version="SHA" OPENSSL_VERSION_PTEXT;
 #define	M_p_c2nl_p	p_c2nl_p
 #define	M_nl2c		nl2c
 
-void SHA_Init(c)
-SHA_CTX *c;
+void SHA_Init(SHA_CTX *c)
 	{
 	c->h0=INIT_DATA_h0;
 	c->h1=INIT_DATA_h1;
@@ -105,10 +104,7 @@ SHA_CTX *c;
 	c->num=0;
 	}
 
-void SHA_Update(c, data, len)
-SHA_CTX *c;
-register unsigned char *data;
-unsigned long len;
+void SHA_Update(SHA_CTX *c, register unsigned char *data, unsigned long len)
 	{
 	register ULONG *p;
 	int ew,ec,sw,sc;
@@ -238,9 +234,7 @@ unsigned long len;
 	p[sw]=l;
 	}
 
-void SHA_Transform(c,b)
-SHA_CTX *c;
-unsigned char *b;
+void SHA_Transform(SHA_CTX *c, unsigned char *b)
 	{
 	ULONG p[16];
 #if !defined(B_ENDIAN)
@@ -275,10 +269,7 @@ unsigned char *b;
 	sha_block(c,p,64);
 	}
 
-void sha_block(c, W, num)
-SHA_CTX *c;
-register unsigned long *W;
-int num;
+void sha_block(SHA_CTX *c, register unsigned long *W, int num)
 	{
 	register ULONG A,B,C,D,E,T;
 	ULONG X[16];
@@ -394,9 +385,7 @@ int num;
 		}
 	}
 
-void SHA_Final(md, c)
-unsigned char *md;
-SHA_CTX *c;
+void SHA_Final(unsigned char *md, SHA_CTX *c)
 	{
 	register int i,j;
 	register ULONG l;

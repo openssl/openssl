@@ -80,7 +80,7 @@ static ERR_STRING_DATA DH_str_reasons[]=
 
 #endif
 
-void ERR_load_DH_strings()
+void ERR_load_DH_strings(void)
 	{
 	static int init=1;
 

@@ -120,7 +120,7 @@ static unsigned char dh512_g[]={
 	0x02,
 	};
 
-static DH *get_dh512()
+static DH *get_dh512(void)
 	{
 	DH *dh=NULL;
 
@@ -164,7 +164,7 @@ static int s_debug=0;
 static int s_quiet=0;
 
 #if 0
-static void s_server_init()
+static void s_server_init(void)
 	{
 	cipher=NULL;
 	s_server_verify=SSL_VERIFY_NONE;
@@ -185,7 +185,7 @@ static void s_server_init()
 	}
 #endif
 
-static void sv_usage()
+static void sv_usage(void)
 	{
 	BIO_printf(bio_err,"usage: s_server [args ...]\n");
 	BIO_printf(bio_err,"\n");
@@ -226,9 +226,7 @@ static int local_argc=0;
 static char **local_argv;
 static int hack=0;
 
-int MAIN(argc, argv)
-int argc;
-char *argv[];
+int MAIN(int argc, char *argv[])
 	{
 	short port=PORT;
 	char *CApath=NULL,*CAfile=NULL;
@@ -533,9 +531,7 @@ end:
 	EXIT(ret);
 	}
 
-static void print_stats(bio,ssl_ctx)
-BIO *bio;
-SSL_CTX *ssl_ctx;
+static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
 	{
 	BIO_printf(bio,"%4ld items in the session cache\n",
 		SSL_CTX_sess_number(ssl_ctx));
@@ -560,10 +556,7 @@ SSL_CTX *ssl_ctx;
 		SSL_CTX_sess_get_cache_size(ssl_ctx));
 	}
 
-static int sv_body(hostname, s, context)
-char *hostname;
-int s;
-char *context;
+static int sv_body(char *hostname, int s, char *context)
 	{
 	char *buf=NULL;
 	fd_set readfds;
@@ -779,7 +772,7 @@ err:
 	return(ret);
 	}
 
-static void close_accept_socket()
+static void close_accept_socket(void)
 	{
 	BIO_printf(bio_err,"shutdown accept socket\n");
 	if (accept_socket >= 0)
@@ -788,8 +781,7 @@ static void close_accept_socket()
 		}
 	}
 
-static int init_ssl_connection(con)
-SSL *con;
+static int init_ssl_connection(SSL *con)
 	{
 	int i;
 	const char *str;
@@ -844,7 +836,7 @@ SSL *con;
 	}
 
 #ifndef NO_DH
-static DH *load_dh_param()
+static DH *load_dh_param(void)
 	{
 	DH *ret=NULL;
 	BIO *bio;
@@ -859,9 +851,7 @@ err:
 #endif
 
 #if 0
-static int load_CA(ctx,file)
-SSL_CTX *ctx;
-char *file;
+static int load_CA(SSL_CTX *ctx, char *file)
 	{
 	FILE *in;
 	X509 *x=NULL;
@@ -881,10 +871,7 @@ char *file;
 	}
 #endif
 
-static int www_body(hostname, s, context)
-char *hostname;
-int s;
-char *context;
+static int www_body(char *hostname, int s, char *context)
 	{
 	char *buf=NULL;
 	int ret=1;
@@ -1226,10 +1213,7 @@ err:
 	return(ret);
 	}
 
-static RSA MS_CALLBACK *tmp_rsa_cb(s,export,keylength)
-SSL *s;
-int export;
-int keylength;
+static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export, int keylength)
 	{
 	static RSA *rsa_tmp=NULL;
 

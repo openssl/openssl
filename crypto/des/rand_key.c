@@ -62,15 +62,13 @@
 static int seed=0;
 static des_cblock init;
 
-void des_random_seed(key)
-des_cblock key;
+void des_random_seed(des_cblock key)
 	{
 	memcpy(init,key,sizeof(des_cblock));
 	seed=1;
 	}
 
-void des_random_key(ret)
-unsigned char *ret;
+void des_random_key(unsigned char *ret)
 	{
 	des_key_schedule ks;
 	static DES_LONG c=0;

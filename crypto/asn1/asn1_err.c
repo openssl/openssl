@@ -306,7 +306,7 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 
 #endif
 
-void ERR_load_ASN1_strings()
+void ERR_load_ASN1_strings(void)
 	{
 	static int init=1;
 

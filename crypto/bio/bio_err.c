@@ -116,7 +116,7 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 
 #endif
 
-void ERR_load_BIO_strings()
+void ERR_load_BIO_strings(void)
 	{
 	static int init=1;
 

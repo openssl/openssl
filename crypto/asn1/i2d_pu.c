@@ -62,9 +62,7 @@
 #include "evp.h"
 #include "objects.h"
 
-int i2d_PublicKey(a,pp)
-EVP_PKEY *a;
-unsigned char **pp;
+int i2d_PublicKey(EVP_PKEY *a, unsigned char **pp)
 	{
 	switch (a->type)
 		{

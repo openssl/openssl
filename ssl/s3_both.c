@@ -69,12 +69,8 @@
 /* SSL3err(SSL_F_SSL3_GET_FINISHED,SSL_R_EXCESSIVE_MESSAGE_SIZE);
  */
 
-int ssl3_send_finished(s,a,b,sender,slen)
-SSL *s;
-int a;
-int b;
-unsigned char *sender;
-int slen;
+int ssl3_send_finished(SSL *s, int a, int b, unsigned char *sender,
+	     int slen)
 	{
 	unsigned char *p,*d;
 	int i;
@@ -111,10 +107,7 @@ int slen;
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
-int ssl3_get_finished(s,a,b)
-SSL *s;
-int a;
-int b;
+int ssl3_get_finished(SSL *s, int a, int b)
 	{
 	int al,i,ok;
 	long n;
@@ -174,9 +167,7 @@ f_err:
  * ssl->session->read_compression	assign
  * ssl->session->read_hash		assign
  */
-int ssl3_send_change_cipher_spec(s,a,b)
-SSL *s;
-int a,b;
+int ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 	{ 
 	unsigned char *p;
 
@@ -194,9 +185,7 @@ int a,b;
 	return(ssl3_do_write(s,SSL3_RT_CHANGE_CIPHER_SPEC));
 	}
 
-unsigned long ssl3_output_cert_chain(s,x)
-SSL *s;
-X509 *x;
+unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)
 	{
 	unsigned char *p;
 	int n,i;
@@ -271,11 +260,7 @@ X509 *x;
 	return(l);
 	}
 
-long ssl3_get_message(s,st1,stn,mt,max,ok)
-SSL *s;
-int st1,stn,mt;
-long max;
-int *ok;
+long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	{
 	unsigned char *p;
 	unsigned long l;
@@ -356,9 +341,7 @@ err:
 	return(-1);
 	}
 
-int ssl_cert_type(x,pkey)
-X509 *x;
-EVP_PKEY *pkey;
+int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 	{
 	EVP_PKEY *pk;
 	int ret= -1,i,j;
@@ -408,8 +391,7 @@ err:
 	return(ret);
 	}
 
-int ssl_verify_alarm_type(type)
-long type;
+int ssl_verify_alarm_type(long type)
 	{
 	int al;
 
@@ -461,8 +443,7 @@ long type;
 	return(al);
 	}
 
-int ssl3_setup_buffers(s)
-SSL *s;
+int ssl3_setup_buffers(SSL *s)
 	{
 	unsigned char *p;
 	unsigned int extra;

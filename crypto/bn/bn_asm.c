@@ -62,10 +62,7 @@
 
 #ifdef BN_LLONG 
 
-BN_ULONG bn_mul_add_words(rp,ap,num,w)
-BN_ULONG *rp,*ap;
-int num;
-BN_ULONG w;
+BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
 	{
 	BN_ULONG c1=0;
 
@@ -89,10 +86,7 @@ BN_ULONG w;
 	return(c1);
 	} 
 
-BN_ULONG bn_mul_words(rp,ap,num,w)
-BN_ULONG *rp,*ap;
-int num;
-BN_ULONG w;
+BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
 	{
 	BN_ULONG c1=0;
 
@@ -115,9 +109,7 @@ BN_ULONG w;
 	return(c1);
 	} 
 
-void bn_sqr_words(r,a,n)
-BN_ULONG *r,*a;
-int n;
+void bn_sqr_words(BN_ULONG *r, BN_ULONG *a, int n)
         {
 	bn_check_num(n);
 	if (n <= 0) return;
@@ -148,10 +140,7 @@ int n;
 
 #else
 
-BN_ULONG bn_mul_add_words(rp,ap,num,w)
-BN_ULONG *rp,*ap;
-int num;
-BN_ULONG w;
+BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
 	{
 	BN_ULONG c=0;
 	BN_ULONG bl,bh;
@@ -178,10 +167,7 @@ BN_ULONG w;
 	return(c);
 	} 
 
-BN_ULONG bn_mul_words(rp,ap,num,w)
-BN_ULONG *rp,*ap;
-int num;
-BN_ULONG w;
+BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
 	{
 	BN_ULONG carry=0;
 	BN_ULONG bl,bh;
@@ -208,9 +194,7 @@ BN_ULONG w;
 	return(carry);
 	} 
 
-void bn_sqr_words(r,a,n)
-BN_ULONG *r,*a;
-int n;
+void bn_sqr_words(BN_ULONG *r, BN_ULONG *a, int n)
         {
 	bn_check_num(n);
 	if (n <= 0) return;
@@ -237,8 +221,7 @@ int n;
 
 #if defined(BN_LLONG) && defined(BN_DIV2W)
 
-BN_ULONG bn_div_words(h,l,d)
-BN_ULONG h,l,d;
+BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
 	{
 	return((BN_ULONG)(((((BN_ULLONG)h)<<BN_BITS2)|l)/(BN_ULLONG)d));
 	}
@@ -247,8 +230,7 @@ BN_ULONG h,l,d;
 
 /* Divide h-l by d and return the result. */
 /* I need to test this some more :-( */
-BN_ULONG bn_div_words(h,l,d)
-BN_ULONG h,l,d;
+BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
 	{
 	BN_ULONG dh,dl,q,ret=0,th,tl,t;
 	int i,count=2;
@@ -318,9 +300,7 @@ BN_ULONG h,l,d;
 #endif
 
 #ifdef BN_LLONG
-BN_ULONG bn_add_words(r,a,b,n)
-BN_ULONG *r,*a,*b;
-int n;
+BN_ULONG bn_add_words(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
         {
 	BN_ULLONG ll=0;
 
@@ -356,9 +336,7 @@ int n;
 	return((BN_ULONG)ll);
 	}
 #else
-BN_ULONG bn_add_words(r,a,b,n)
-BN_ULONG *r,*a,*b;
-int n;
+BN_ULONG bn_add_words(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
         {
 	BN_ULONG c,l,t;
 
@@ -408,9 +386,7 @@ int n;
 	}
 #endif
 
-BN_ULONG bn_sub_words(r,a,b,n)
-BN_ULONG *r,*a,*b;
-int n;
+BN_ULONG bn_sub_words(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
         {
 	BN_ULONG t1,t2;
 	int c=0;
@@ -510,8 +486,7 @@ int n;
 	mul_add_c2((a)[i],(a)[j],c0,c1,c2)
 #endif
 
-void bn_mul_comba8(r,a,b)
-BN_ULONG *r,*a,*b;
+void bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t;
@@ -620,8 +595,7 @@ BN_ULONG *r,*a,*b;
 	r[15]=c1;
 	}
 
-void bn_mul_comba4(r,a,b)
-BN_ULONG *r,*a,*b;
+void bn_mul_comba4(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t;
@@ -666,8 +640,7 @@ BN_ULONG *r,*a,*b;
 	r[7]=c2;
 	}
 
-void bn_sqr_comba8(r,a)
-BN_ULONG *r,*a;
+void bn_sqr_comba8(BN_ULONG *r, BN_ULONG *a)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t,tt;
@@ -748,8 +721,7 @@ BN_ULONG *r,*a;
 	r[15]=c1;
 	}
 
-void bn_sqr_comba4(r,a)
-BN_ULONG *r,*a;
+void bn_sqr_comba4(BN_ULONG *r, BN_ULONG *a)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t,tt;
@@ -791,23 +763,20 @@ BN_ULONG *r,*a;
 
 /* hmm... is it faster just to do a multiply? */
 #undef bn_sqr_comba4
-void bn_sqr_comba4(r,a)
-BN_ULONG *r,*a;
+void bn_sqr_comba4(BN_ULONG *r, BN_ULONG *a)
 	{
 	BN_ULONG t[8];
 	bn_sqr_normal(r,a,4,t);
 	}
 
 #undef bn_sqr_comba8
-void bn_sqr_comba8(r,a)
-BN_ULONG *r,*a;
+void bn_sqr_comba8(BN_ULONG *r, BN_ULONG *a)
 	{
 	BN_ULONG t[16];
 	bn_sqr_normal(r,a,8,t);
 	}
 
-void bn_mul_comba4(r,a,b)
-BN_ULONG *r,*a,*b;
+void bn_mul_comba4(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 	{
 	r[4]=bn_mul_words(    &(r[0]),a,4,b[0]);
 	r[5]=bn_mul_add_words(&(r[1]),a,4,b[1]);
@@ -815,8 +784,7 @@ BN_ULONG *r,*a,*b;
 	r[7]=bn_mul_add_words(&(r[3]),a,4,b[3]);
 	}
 
-void bn_mul_comba8(r,a,b)
-BN_ULONG *r,*a,*b;
+void bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 	{
 	r[ 8]=bn_mul_words(    &(r[0]),a,8,b[0]);
 	r[ 9]=bn_mul_add_words(&(r[1]),a,8,b[1]);

@@ -67,9 +67,7 @@
 
 /* Test application to add extensions from a config file */
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 	LHASH *conf;
 	X509 *cert;

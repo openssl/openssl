@@ -75,8 +75,7 @@ static int check_parity();
 
 int des_check_key=0;
 
-void des_set_odd_parity(key)
-des_cblock key;
+void des_set_odd_parity(des_cblock key)
 	{
 	int i;
 
@@ -84,8 +83,7 @@ des_cblock key;
 		key[i]=odd_parity[key[i]];
 	}
 
-static int check_parity(key)
-const des_cblock key;
+static int check_parity(const des_cblock key)
 	{
 	int i;
 
@@ -127,8 +125,7 @@ static des_cblock weak_keys[NUM_WEAK_KEY]={
 	{0xE0,0xFE,0xE0,0xFE,0xF1,0xFE,0xF1,0xFE},
 	{0xFE,0xE0,0xFE,0xE0,0xFE,0xF1,0xFE,0xF1}};
 
-int des_is_weak_key(key)
-const des_cblock key;
+int des_is_weak_key(const des_cblock key)
 	{
 	int i;
 
@@ -157,9 +154,7 @@ const des_cblock key;
  * return -1 if key parity error,
  * return -2 if illegal weak key.
  */
-int des_set_key(key, schedule)
-const des_cblock key;
-des_key_schedule schedule;
+int des_set_key(const des_cblock key, des_key_schedule schedule)
 	{
 	static int shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
 	register DES_LONG c,d,t,s,t2;
@@ -238,9 +233,7 @@ des_key_schedule schedule;
 	return(0);
 	}
 
-int des_key_sched(key, schedule)
-const des_cblock key;
-des_key_schedule schedule;
+int des_key_sched(const des_cblock key, des_key_schedule schedule)
 	{
 	return(des_set_key(key,schedule));
 	}

@@ -95,13 +95,12 @@ static BIO_METHOD mem_method=
 /* bio->num is used to hold the value to return on 'empty', if it is
  * 0, should_retry is not set */
 
-BIO_METHOD *BIO_s_mem()
+BIO_METHOD *BIO_s_mem(void)
 	{
 	return(&mem_method);
 	}
 
-static int mem_new(bi)
-BIO *bi;
+static int mem_new(BIO *bi)
 	{
 	BUF_MEM *b;
 
@@ -114,8 +113,7 @@ BIO *bi;
 	return(1);
 	}
 
-static int mem_free(a)
-BIO *a;
+static int mem_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 	if (a->shutdown)
@@ -129,10 +127,7 @@ BIO *a;
 	return(1);
 	}
 	
-static int mem_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int mem_read(BIO *b, char *out, int outl)
 	{
 	int ret= -1;
 	BUF_MEM *bm;
@@ -161,10 +156,7 @@ int outl;
 	return(ret);
 	}
 
-static int mem_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int mem_write(BIO *b, char *in, int inl)
 	{
 	int ret= -1;
 	int blen;
@@ -187,11 +179,7 @@ end:
 	return(ret);
 	}
 
-static long mem_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long mem_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	long ret=1;
 	char **pptr;
@@ -257,10 +245,7 @@ char *ptr;
 	return(ret);
 	}
 
-static int mem_gets(bp,buf,size)
-BIO *bp;
-char *buf;
-int size;
+static int mem_gets(BIO *bp, char *buf, int size)
 	{
 	int i,j;
 	int ret= -1;
@@ -290,9 +275,7 @@ int size;
 	return(ret);
 	}
 
-static int mem_puts(bp,str)
-BIO *bp;
-char *str;
+static int mem_puts(BIO *bp, char *str)
 	{
 	int n,ret;
 

@@ -71,9 +71,7 @@
 int verify_depth=0;
 int verify_error=X509_V_OK;
 
-int MS_CALLBACK verify_callback(ok, ctx)
-int ok;
-X509_STORE_CTX *ctx;
+int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
 	char buf[256];
 	X509 *err_cert;
@@ -123,10 +121,7 @@ X509_STORE_CTX *ctx;
 	return(ok);
 	}
 
-int set_cert_stuff(ctx, cert_file, key_file)
-SSL_CTX *ctx;
-char *cert_file;
-char *key_file;
+int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 	{
 	if (cert_file != NULL)
 		{
@@ -181,13 +176,8 @@ char *key_file;
 	return(1);
 	}
 
-long MS_CALLBACK bio_dump_cb(bio,cmd,argp,argi,argl,ret)
-BIO *bio;
-int cmd;
-const char *argp;
-int argi;
-long argl;
-long ret;
+long MS_CALLBACK bio_dump_cb(BIO *bio, int cmd, const char *argp, int argi,
+	     long argl, long ret)
 	{
 	BIO *out;
 
@@ -210,10 +200,7 @@ long ret;
 	return(ret);
 	}
 
-void MS_CALLBACK apps_ssl_info_callback(s,where,ret)
-SSL *s;
-int where;
-int ret;
+void MS_CALLBACK apps_ssl_info_callback(SSL *s, int where, int ret)
 	{
 	char *str;
 	int w;

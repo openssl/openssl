@@ -128,13 +128,12 @@ static BIO_METHOD methods_ber=
 	ber_free,
 	};
 
-BIO_METHOD *BIO_f_ber()
+BIO_METHOD *BIO_f_ber(void)
 	{
 	return(&methods_ber);
 	}
 
-static int ber_new(bi)
-BIO *bi;
+static int ber_new(BIO *bi)
 	{
 	BIO_BER_CTX *ctx;
 
@@ -149,8 +148,7 @@ BIO *bi;
 	return(1);
 	}
 
-static int ber_free(a)
-BIO *a;
+static int ber_free(BIO *a)
 	{
 	BIO_BER_CTX *b;
 
@@ -164,9 +162,7 @@ BIO *a;
 	return(1);
 	}
 
-int bio_ber_get_header(bio,ctx)
-BIO *bio;
-BIO_BER_CTX *ctx;
+int bio_ber_get_header(BIO *bio, BIO_BER_CTX *ctx)
 	{
 	char buf[64];
 	int i,j,n;
@@ -236,10 +232,7 @@ BIO_BER_CTX *ctx;
 	if (ret & V_ASN1_CONSTRUCTED)
 	}
 	
-static int ber_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int ber_read(BIO *b, char *out, int outl)
 	{
 	int ret=0,i,n;
 	BIO_BER_CTX *ctx;
@@ -286,10 +279,7 @@ again:
 		}
 	}
 
-static int ber_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int ber_write(BIO *b, char *in, int inl)
 	{
 	int ret=0,n,i;
 	BIO_ENC_CTX *ctx;
@@ -344,11 +334,7 @@ int inl;
 	return(ret);
 	}
 
-static long ber_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long ber_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	BIO *dbio;
 	BIO_ENC_CTX *ctx,*dctx;
@@ -454,12 +440,8 @@ EVP_CIPHER_ctx *c;
 	}
 */
 
-void BIO_set_cipher(b,c,k,i,e)
-BIO *b;
-EVP_CIPHER *c;
-unsigned char *k;
-unsigned char *i;
-int e;
+void BIO_set_cipher(BIO *b, EVP_CIPHER *c, unsigned char *k, unsigned char *i,
+	     int e)
 	{
 	BIO_ENC_CTX *ctx;
 

@@ -63,7 +63,7 @@
 
 const char *DH_version="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
-DH *DH_new()
+DH *DH_new(void)
 	{
 	DH *ret;
 
@@ -85,8 +85,7 @@ DH *DH_new()
 	return(ret);
 	}
 
-void DH_free(r)
-DH *r;
+void DH_free(DH *r)
 	{
 	if(r == NULL) return;
 	if (r->p != NULL) BN_clear_free(r->p);
@@ -98,8 +97,7 @@ DH *r;
 	Free(r);
 	}
 
-int DH_size(dh)
-DH *dh;
+int DH_size(DH *dh)
 	{
 	return(BN_num_bytes(dh->p));
 	}

@@ -107,45 +107,38 @@ static SSL_METHOD TLSv1_data= {
 	&TLSv1_enc_data,
 	};
 
-static long tls1_default_timeout()
+static long tls1_default_timeout(void)
 	{
 	/* 2 hours, the 24 hours mentioned in the TLSv1 spec
 	 * is way too long for http, the cache would over fill */
 	return(60*60*2);
 	}
 
-SSL_METHOD *tlsv1_base_method()
+SSL_METHOD *tlsv1_base_method(void)
 	{
 	return(&TLSv1_data);
 	}
 
-int tls1_new(s)
-SSL *s;
+int tls1_new(SSL *s)
 	{
 	if (!ssl3_new(s)) return(0);
 	s->method->ssl_clear(s);
 	return(1);
 	}
 
-void tls1_free(s)
-SSL *s;
+void tls1_free(SSL *s)
 	{
 	ssl3_free(s);
 	}
 
-void tls1_clear(s)
-SSL *s;
+void tls1_clear(SSL *s)
 	{
 	ssl3_clear(s);
 	s->version=TLS1_VERSION;
 	}
 
 #if 0
-long tls1_ctrl(s,cmd,larg,parg)
-SSL *s;
-int cmd;
-long larg;
-char *parg;
+long tls1_ctrl(SSL *s, int cmd, long larg, char *parg)
 	{
 	return(0);
 	}

@@ -116,7 +116,7 @@ static ERR_STRING_DATA X509_str_reasons[]=
 
 #endif
 
-void ERR_load_X509_strings()
+void ERR_load_X509_strings(void)
 	{
 	static int init=1;
 

@@ -60,13 +60,8 @@
 
 /* Note that this is inconsistent with other DES functions, in that it doesn't
    update ivec */
-void des_cbc_encrypt(in, out, length, schedule, ivec, enc)
-const unsigned char *in;
-unsigned char *out;
-long length;
-des_key_schedule schedule;
-des_cblock ivec;
-int enc;
+void des_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+	     des_key_schedule schedule, des_cblock ivec, int enc)
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;

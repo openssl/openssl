@@ -64,14 +64,8 @@
  * 64bit block we have used is contained in *num;
  */
 
-void CAST_cfb64_encrypt(in, out, length, schedule, ivec, num, encrypt)
-unsigned char *in;
-unsigned char *out;
-long length;
-CAST_KEY *schedule;
-unsigned char *ivec;
-int *num;
-int encrypt;
+void CAST_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
+	     CAST_KEY *schedule, unsigned char *ivec, int *num, int encrypt)
 	{
 	register CAST_LONG v0,v1,t;
 	register int n= *num;

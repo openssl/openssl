@@ -135,9 +135,7 @@ static int x509_certify ();
 
 static int reqfile=0;
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int ret=1;
 	X509_REQ *req=NULL;
@@ -704,16 +702,9 @@ end:
 	EXIT(ret);
 	}
 
-static int x509_certify(ctx,CAfile,digest,x,xca,pkey,serialfile,create,days)
-X509_STORE *ctx;
-char *CAfile;
-const EVP_MD *digest;
-X509 *x;
-X509 *xca;
-EVP_PKEY *pkey;
-char *serialfile;
-int create;
-int days;
+static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
+	     X509 *x, X509 *xca, EVP_PKEY *pkey, char *serialfile, int create,
+	     int days)
 	{
 	int ret=0;
 	BIO *io=NULL;
@@ -859,9 +850,7 @@ end:
 	return(ret);
 	}
 
-static int MS_CALLBACK callb(ok, ctx)
-int ok;
-X509_STORE_CTX *ctx;
+static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx)
 	{
 	char buf[256];
 	int err;
@@ -894,9 +883,7 @@ X509_STORE_CTX *ctx;
 		}
 	}
 
-static EVP_PKEY *load_key(file, format)
-char *file;
-int format;
+static EVP_PKEY *load_key(char *file, int format)
 	{
 	BIO *key=NULL;
 	EVP_PKEY *pkey=NULL;
@@ -949,9 +936,7 @@ end:
 	return(pkey);
 	}
 
-static X509 *load_cert(file, format)
-char *file;
-int format;
+static X509 *load_cert(char *file, int format)
 	{
 	ASN1_HEADER *ah=NULL;
 	BUF_MEM *buf=NULL;
@@ -1038,11 +1023,7 @@ end:
 	}
 
 /* self sign */
-static int sign(x, pkey, days, digest)
-X509 *x;
-EVP_PKEY *pkey;
-int days;
-const EVP_MD *digest;
+static int sign(X509 *x, EVP_PKEY *pkey, int days, const EVP_MD *digest)
 	{
 
 	EVP_PKEY *pktmp;

@@ -64,17 +64,13 @@
 #include "evp.h"
 #include "x509.h"
 
-int X509v3_get_ext_count(x)
-STACK *x;
+int X509v3_get_ext_count(STACK *x)
 	{
 	if (x == NULL) return(0);
 	return(sk_num(x));
 	}
 
-int X509v3_get_ext_by_NID(x,nid,lastpos)
-STACK *x;
-int nid;
-int lastpos;
+int X509v3_get_ext_by_NID(STACK *x, int nid, int lastpos)
 	{
 	ASN1_OBJECT *obj;
 
@@ -83,10 +79,7 @@ int lastpos;
 	return(X509v3_get_ext_by_OBJ(x,obj,lastpos));
 	}
 
-int X509v3_get_ext_by_OBJ(sk,obj,lastpos)
-STACK *sk;
-ASN1_OBJECT *obj;
-int lastpos;
+int X509v3_get_ext_by_OBJ(STACK *sk, ASN1_OBJECT *obj, int lastpos)
 	{
 	int n;
 	X509_EXTENSION *ex;
@@ -105,10 +98,7 @@ int lastpos;
 	return(-1);
 	}
 
-int X509v3_get_ext_by_critical(sk,crit,lastpos)
-STACK *sk;
-int crit;
-int lastpos;
+int X509v3_get_ext_by_critical(STACK *sk, int crit, int lastpos)
 	{
 	int n;
 	X509_EXTENSION *ex;
@@ -128,9 +118,7 @@ int lastpos;
 	return(-1);
 	}
 
-X509_EXTENSION *X509v3_get_ext(x,loc)
-STACK *x;
-int loc;
+X509_EXTENSION *X509v3_get_ext(STACK *x, int loc)
 	{
 	if ((x == NULL) || (sk_num(x) <= loc) || (loc < 0))
 		return(NULL);
@@ -138,9 +126,7 @@ int loc;
 		return((X509_EXTENSION *)sk_value(x,loc));
 	}
 
-X509_EXTENSION *X509v3_delete_ext(x,loc)
-STACK *x;
-int loc;
+X509_EXTENSION *X509v3_delete_ext(STACK *x, int loc)
 	{
 	X509_EXTENSION *ret;
 
@@ -150,10 +136,7 @@ int loc;
 	return(ret);
 	}
 
-STACK *X509v3_add_ext(x,ex,loc)
-STACK **x;
-X509_EXTENSION *ex;
-int loc;
+STACK *X509v3_add_ext(STACK **x, X509_EXTENSION *ex, int loc)
 	{
 	X509_EXTENSION *new_ex=NULL;
 	int n;
@@ -186,11 +169,8 @@ err2:
 	return(NULL);
 	}
 
-X509_EXTENSION *X509_EXTENSION_create_by_NID(ex,nid,crit,data)
-X509_EXTENSION **ex;
-int nid;
-int crit;
-ASN1_OCTET_STRING *data;
+X509_EXTENSION *X509_EXTENSION_create_by_NID(X509_EXTENSION **ex, int nid,
+	     int crit, ASN1_OCTET_STRING *data)
 	{
 	ASN1_OBJECT *obj;
 	X509_EXTENSION *ret;
@@ -206,11 +186,8 @@ ASN1_OCTET_STRING *data;
 	return(ret);
 	}
 
-X509_EXTENSION *X509_EXTENSION_create_by_OBJ(ex,obj,crit,data)
-X509_EXTENSION **ex;
-ASN1_OBJECT *obj;
-int crit;
-ASN1_OCTET_STRING *data;
+X509_EXTENSION *X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex,
+	     ASN1_OBJECT *obj, int crit, ASN1_OCTET_STRING *data)
 	{
 	X509_EXTENSION *ret;
 
@@ -240,9 +217,7 @@ err:
 	return(NULL);
 	}
 
-int X509_EXTENSION_set_object(ex,obj)
-X509_EXTENSION *ex;
-ASN1_OBJECT *obj;
+int X509_EXTENSION_set_object(X509_EXTENSION *ex, ASN1_OBJECT *obj)
 	{
 	if ((ex == NULL) || (obj == NULL))
 		return(0);
@@ -251,18 +226,14 @@ ASN1_OBJECT *obj;
 	return(1);
 	}
 
-int X509_EXTENSION_set_critical(ex,crit)
-X509_EXTENSION *ex;
-int crit;
+int X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit)
 	{
 	if (ex == NULL) return(0);
 	ex->critical=(crit)?0xFF:0;
 	return(1);
 	}
 
-int X509_EXTENSION_set_data(ex,data)
-X509_EXTENSION *ex;
-ASN1_OCTET_STRING *data;
+int X509_EXTENSION_set_data(X509_EXTENSION *ex, ASN1_OCTET_STRING *data)
 	{
 	int i;
 
@@ -272,22 +243,19 @@ ASN1_OCTET_STRING *data;
 	return(1);
 	}
 
-ASN1_OBJECT *X509_EXTENSION_get_object(ex)
-X509_EXTENSION *ex;
+ASN1_OBJECT *X509_EXTENSION_get_object(X509_EXTENSION *ex)
 	{
 	if (ex == NULL) return(NULL);
 	return(ex->object);
 	}
 
-ASN1_OCTET_STRING *X509_EXTENSION_get_data(ex)
-X509_EXTENSION *ex;
+ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ex)
 	{
 	if (ex == NULL) return(NULL);
 	return(ex->value);
 	}
 
-int X509_EXTENSION_get_critical(ex)
-X509_EXTENSION *ex;
+int X509_EXTENSION_get_critical(X509_EXTENSION *ex)
 	{
 	if (ex == NULL) return(0);
 	return(ex->critical);

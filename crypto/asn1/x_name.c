@@ -74,9 +74,7 @@ static int i2d_X509_NAME_entries(X509_NAME *a);
 static int i2d_X509_NAME_entries();
 #endif
 
-int i2d_X509_NAME_ENTRY(a,pp)
-X509_NAME_ENTRY *a;
-unsigned char **pp;
+int i2d_X509_NAME_ENTRY(X509_NAME_ENTRY *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -91,10 +89,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509_NAME_ENTRY *d2i_X509_NAME_ENTRY(a,pp,length)
-X509_NAME_ENTRY **a;
-unsigned char **pp;
-long length;
+X509_NAME_ENTRY *d2i_X509_NAME_ENTRY(X509_NAME_ENTRY **a, unsigned char **pp,
+	     long length)
 	{
 	M_ASN1_D2I_vars(a,X509_NAME_ENTRY *,X509_NAME_ENTRY_new);
 
@@ -106,9 +102,7 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_NAME_ENTRY_free,ASN1_F_D2I_X509_NAME_ENTRY);
 	}
 
-int i2d_X509_NAME(a,pp)
-X509_NAME *a;
-unsigned char **pp;
+int i2d_X509_NAME(X509_NAME *a, unsigned char **pp)
 	{
 	int ret;
 
@@ -128,8 +122,7 @@ unsigned char **pp;
 	return(ret);
 	}
 
-static int i2d_X509_NAME_entries(a)
-X509_NAME *a;
+static int i2d_X509_NAME_entries(X509_NAME *a)
 	{
 	X509_NAME_ENTRY *ne,*fe=NULL;
 	STACK *sk;
@@ -190,10 +183,7 @@ err:
 	return(-1);
 	}
 
-X509_NAME *d2i_X509_NAME(a,pp,length)
-X509_NAME **a;
-unsigned char **pp;
-long length;
+X509_NAME *d2i_X509_NAME(X509_NAME **a, unsigned char **pp, long length)
 	{
 	int set=0,i;
 	int idx=0;
@@ -232,7 +222,7 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_NAME_free,ASN1_F_D2I_X509_NAME);
 	}
 
-X509_NAME *X509_NAME_new()
+X509_NAME *X509_NAME_new(void)
 	{
 	X509_NAME *ret=NULL;
 	ASN1_CTX c;
@@ -246,7 +236,7 @@ X509_NAME *X509_NAME_new()
 	M_ASN1_New_Error(ASN1_F_X509_NAME_NEW);
 	}
 
-X509_NAME_ENTRY *X509_NAME_ENTRY_new()
+X509_NAME_ENTRY *X509_NAME_ENTRY_new(void)
 	{
 	X509_NAME_ENTRY *ret=NULL;
 	ASN1_CTX c;
@@ -260,8 +250,7 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_new()
 	M_ASN1_New_Error(ASN1_F_X509_NAME_ENTRY_NEW);
 	}
 
-void X509_NAME_free(a)
-X509_NAME *a;
+void X509_NAME_free(X509_NAME *a)
 	{
 	if(a == NULL)
 	    return;
@@ -271,8 +260,7 @@ X509_NAME *a;
 	Free((char *)a);
 	}
 
-void X509_NAME_ENTRY_free(a)
-X509_NAME_ENTRY *a;
+void X509_NAME_ENTRY_free(X509_NAME_ENTRY *a)
 	{
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->object);
@@ -280,9 +268,7 @@ X509_NAME_ENTRY *a;
 	Free((char *)a);
 	}
 
-int X509_NAME_set(xn,name)
-X509_NAME **xn;
-X509_NAME *name;
+int X509_NAME_set(X509_NAME **xn, X509_NAME *name)
 	{
 	X509_NAME *in;
 

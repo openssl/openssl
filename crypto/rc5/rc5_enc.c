@@ -60,13 +60,8 @@
 #include "rc5.h"
 #include "rc5_locl.h"
 
-void RC5_32_cbc_encrypt(in, out, length, ks, iv, encrypt)
-unsigned char *in;
-unsigned char *out;
-long length;
-RC5_32_KEY *ks;
-unsigned char *iv;
-int encrypt;
+void RC5_32_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
+	     RC5_32_KEY *ks, unsigned char *iv, int encrypt)
 	{
 	register unsigned long tin0,tin1;
 	register unsigned long tout0,tout1,xor0,xor1;
@@ -139,9 +134,7 @@ int encrypt;
 	tin[0]=tin[1]=0;
 	}
 
-void RC5_32_encrypt(d,key)
-unsigned long *d;
-RC5_32_KEY *key;
+void RC5_32_encrypt(unsigned long *d, RC5_32_KEY *key)
 	{
 	RC5_32_INT a,b,*s;
 
@@ -180,9 +173,7 @@ RC5_32_KEY *key;
 	d[1]=b;
 	}
 
-void RC5_32_decrypt(d,key)
-unsigned long *d;
-RC5_32_KEY *key;
+void RC5_32_decrypt(unsigned long *d, RC5_32_KEY *key)
 	{
 	RC5_32_INT a,b,*s;
 

@@ -80,9 +80,7 @@
 #undef PROG
 #define PROG	asn1parse_main
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int i,badops=0,offset=0,ret=1,j;
 	unsigned int length=0;

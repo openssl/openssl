@@ -60,11 +60,7 @@
 #include <string.h>
 #include "hmac.h"
 
-void HMAC_Init(ctx,key,len,md)
-HMAC_CTX *ctx;
-unsigned char *key;
-int len;
-const EVP_MD *md;
+void HMAC_Init(HMAC_CTX *ctx, unsigned char *key, int len, const EVP_MD *md)
 	{
 	int i,j,reset=0;
 	unsigned char pad[HMAC_MAX_MD_CBLOCK];
@@ -112,18 +108,12 @@ const EVP_MD *md;
 	memcpy(&ctx->md_ctx,&ctx->i_ctx,sizeof(ctx->i_ctx));
 	}
 
-void HMAC_Update(ctx,data,len)
-HMAC_CTX *ctx;
-unsigned char *data;
-int len;
+void HMAC_Update(HMAC_CTX *ctx, unsigned char *data, int len)
 	{
 	EVP_DigestUpdate(&(ctx->md_ctx),data,len);
 	}
 
-void HMAC_Final(ctx,md,len)
-HMAC_CTX *ctx;
-unsigned char *md;
-unsigned int *len;
+void HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len)
 	{
 	int j;
 	unsigned int i;
@@ -137,20 +127,13 @@ unsigned int *len;
 	EVP_DigestFinal(&(ctx->md_ctx),md,len);
 	}
 
-void HMAC_cleanup(ctx)
-HMAC_CTX *ctx;
+void HMAC_cleanup(HMAC_CTX *ctx)
 	{
 	memset(ctx,0,sizeof(HMAC_CTX));
 	}
 
-unsigned char *HMAC(evp_md,key,key_len,d,n,md,md_len)
-EVP_MD *evp_md;
-unsigned char *key;
-int key_len;
-unsigned char *d;
-int n;
-unsigned char *md;
-unsigned int *md_len;
+unsigned char *HMAC(EVP_MD *evp_md, unsigned char *key, int key_len,
+	     unsigned char *d, int n, unsigned char *md, unsigned int *md_len)
 	{
 	HMAC_CTX c;
 	static unsigned char m[EVP_MAX_MD_SIZE];

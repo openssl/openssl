@@ -65,9 +65,7 @@
 /* ASN1err(ASN1_F_D2I_ASN1_ENUMERATED,ASN1_R_EXPECTING_AN_ENUMERATED);
  */
 
-int i2d_ASN1_ENUMERATED(a,pp)
-ASN1_ENUMERATED *a;
-unsigned char **pp;
+int i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **pp)
 	{
 	int pad=0,ret,r,i,t;
 	unsigned char *p,*pt,*n,pb=0;
@@ -118,10 +116,8 @@ unsigned char **pp;
 	return(r);
 	}
 
-ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(a, pp, length)
-ASN1_ENUMERATED **a;
-unsigned char **pp;
-long length;
+ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a, unsigned char **pp,
+	     long length)
 	{
 	ASN1_ENUMERATED *ret=NULL;
 	unsigned char *p,*to,*s;
@@ -196,9 +192,7 @@ err:
 	return(NULL);
 	}
 
-int ASN1_ENUMERATED_set(a,v)
-ASN1_ENUMERATED *a;
-long v;
+int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
 	{
 	int i,j,k;
 	unsigned char buf[sizeof(long)+1];
@@ -238,8 +232,7 @@ long v;
 	return(1);
 	}
 
-long ASN1_ENUMERATED_get(a)
-ASN1_ENUMERATED *a;
+long ASN1_ENUMERATED_get(ASN1_ENUMERATED *a)
 	{
 	int neg=0,i;
 	long r=0;
@@ -268,9 +261,7 @@ ASN1_ENUMERATED *a;
 	return(r);
 	}
 
-ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(bn,ai)
-BIGNUM *bn;
-ASN1_ENUMERATED *ai;
+ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai)
 	{
 	ASN1_ENUMERATED *ret;
 	int len,j;
@@ -295,9 +286,7 @@ err:
 	return(NULL);
 	}
 
-BIGNUM *ASN1_ENUMERATED_to_BN(ai,bn)
-ASN1_ENUMERATED *ai;
-BIGNUM *bn;
+BIGNUM *ASN1_ENUMERATED_to_BN(ASN1_ENUMERATED *ai, BIGNUM *bn)
 	{
 	BIGNUM *ret;
 

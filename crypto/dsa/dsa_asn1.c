@@ -21,8 +21,7 @@ DSA_SIG *DSA_SIG_new(void)
 	return(ret);
 }
 
-void DSA_SIG_free(r)
-DSA_SIG *r;
+void DSA_SIG_free(DSA_SIG *r)
 {
 	if (r == NULL) return;
 	if (r->r) BN_clear_free(r->r);
@@ -30,9 +29,7 @@ DSA_SIG *r;
 	Free(r);
 }
 
-int i2d_DSA_SIG(v,pp)
-DSA_SIG *v;
-unsigned char **pp;
+int i2d_DSA_SIG(DSA_SIG *v, unsigned char **pp)
 {
 	int t=0,len;
 	ASN1_INTEGER rbs,sbs;
@@ -72,10 +69,7 @@ unsigned char **pp;
 	return(t);
 }
 
-DSA_SIG *d2i_DSA_SIG(a,pp,length)
-DSA_SIG **a;
-unsigned char **pp;
-long length;
+DSA_SIG *d2i_DSA_SIG(DSA_SIG **a, unsigned char **pp, long length)
 {
 	int i=ERR_R_NESTED_ASN1_ERROR;
 	ASN1_INTEGER *bs=NULL;

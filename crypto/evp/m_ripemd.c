@@ -75,7 +75,7 @@ static EVP_MD ripemd160_md=
 	sizeof(EVP_MD *)+sizeof(RIPEMD160_CTX),
 	};
 
-EVP_MD *EVP_ripemd160()
+EVP_MD *EVP_ripemd160(void)
 	{
 	return(&ripemd160_md);
 	}

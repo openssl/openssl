@@ -188,13 +188,12 @@ static BIO_METHOD methods_ok=
 	ok_free,
 	};
 
-BIO_METHOD *BIO_f_reliable()
+BIO_METHOD *BIO_f_reliable(void)
 	{
 	return(&methods_ok);
 	}
 
-static int ok_new(bi)
-BIO *bi;
+static int ok_new(BIO *bi)
 	{
 	BIO_OK_CTX *ctx;
 
@@ -216,8 +215,7 @@ BIO *bi;
 	return(1);
 	}
 
-static int ok_free(a)
-BIO *a;
+static int ok_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 	memset(a->ptr,0,sizeof(BIO_OK_CTX));
@@ -228,10 +226,7 @@ BIO *a;
 	return(1);
 	}
 	
-static int ok_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int ok_read(BIO *b, char *out, int outl)
 	{
 	int ret=0,i,n;
 	BIO_OK_CTX *ctx;
@@ -302,10 +297,7 @@ int outl;
 	return(ret);
 	}
 
-static int ok_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int ok_write(BIO *b, char *in, int inl)
 	{
 	int ret=0,n,i;
 	BIO_OK_CTX *ctx;
@@ -363,11 +355,7 @@ int inl;
 	return(ret);
 	}
 
-static long ok_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long ok_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	BIO_OK_CTX *ctx;
 	EVP_MD *md;

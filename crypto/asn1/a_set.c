@@ -84,14 +84,9 @@ static int SetBlobCmp(const void *elem1, const void *elem2 )
     return b1->cbData-b2->cbData;
     }
 
-int i2d_ASN1_SET(a,pp,func,ex_tag,ex_class,is_set)
-STACK *a;
-unsigned char **pp;
-int (*func)();
-int ex_tag;
-int ex_class;
-int is_set;	/* if TRUE, then sort the contents (i.e. it isn't a SEQUENCE) */
-
+/* int is_set:  if TRUE, then sort the contents (i.e. it isn't a SEQUENCE)    */
+int i2d_ASN1_SET(STACK *a, unsigned char **pp, int (*func)(), int ex_tag,
+	     int ex_class, int is_set)
 	{
 	int ret=0,r;
 	int i;
@@ -158,14 +153,8 @@ SetBlob
         return(r);
         }
 
-STACK *d2i_ASN1_SET(a,pp,length,func,free_func,ex_tag,ex_class)
-STACK **a;
-unsigned char **pp;
-long length;
-char *(*func)();
-void (*free_func)();
-int ex_tag;
-int ex_class;
+STACK *d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
+	     char *(*func)(), void (*free_func)(), int ex_tag, int ex_class)
 	{
 	ASN1_CTX c;
 	STACK *ret=NULL;

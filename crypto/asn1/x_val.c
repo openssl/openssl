@@ -65,9 +65,7 @@
  * ASN1err(ASN1_F_D2I_X509_VAL,ERR_R_MALLOC_FAILURE);
  */
 
-int i2d_X509_VAL(a,pp)
-X509_VAL *a;
-unsigned char **pp;
+int i2d_X509_VAL(X509_VAL *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -82,10 +80,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509_VAL *d2i_X509_VAL(a,pp,length)
-X509_VAL **a;
-unsigned char **pp;
-long length;
+X509_VAL *d2i_X509_VAL(X509_VAL **a, unsigned char **pp, long length)
 	{
 	M_ASN1_D2I_vars(a,X509_VAL *,X509_VAL_new);
 
@@ -96,7 +91,7 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_VAL_free,ASN1_F_D2I_X509_VAL);
 	}
 
-X509_VAL *X509_VAL_new()
+X509_VAL *X509_VAL_new(void)
 	{
 	X509_VAL *ret=NULL;
 	ASN1_CTX c;
@@ -108,8 +103,7 @@ X509_VAL *X509_VAL_new()
 	M_ASN1_New_Error(ASN1_F_X509_VAL_NEW);
 	}
 
-void X509_VAL_free(a)
-X509_VAL *a;
+void X509_VAL_free(X509_VAL *a)
 	{
 	if (a == NULL) return;
 	ASN1_TIME_free(a->notBefore);

@@ -62,13 +62,13 @@
 #include "pkcs12.h"
 #include "objects.h"
 
-void SSLeay_add_all_algorithms()
+void SSLeay_add_all_algorithms(void)
 	{
 	SSLeay_add_all_ciphers();
 	SSLeay_add_all_digests();
 	}
 
-void SSLeay_add_all_ciphers()
+void SSLeay_add_all_ciphers(void)
 	{
 #ifndef NO_DES
 	EVP_add_cipher(EVP_des_cfb());
@@ -153,7 +153,7 @@ void SSLeay_add_all_ciphers()
 	}
 
 
-void SSLeay_add_all_digests()
+void SSLeay_add_all_digests(void)
 	{
 #ifndef NO_MD2
 	EVP_add_digest(EVP_md2());

@@ -63,13 +63,8 @@
 #include "bio.h"
 #include "err.h"
 
-long MS_CALLBACK BIO_debug_callback(bio,cmd,argp,argi,argl,ret)
-BIO *bio;
-int cmd;
-const char *argp;
-int argi;
-long argl;
-long ret;
+long MS_CALLBACK BIO_debug_callback(BIO *bio, int cmd, const char *argp,
+	     int argi, long argl, long ret)
 	{
 	BIO *b;
 	MS_STATIC char buf[256];

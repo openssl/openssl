@@ -114,7 +114,7 @@ static ERR_STRING_DATA RSAREF_str_reasons[]=
 
 #endif
 
-void ERR_load_RSAREF_strings()
+void ERR_load_RSAREF_strings(void)
 	{
 	static int init=1;
 

@@ -62,8 +62,7 @@
 #include "rand.h"
 #include "dh.h"
 
-int DH_generate_key(dh)
-DH *dh;
+int DH_generate_key(DH *dh)
 	{
 	int ok=0;
 	unsigned int i;
@@ -119,10 +118,7 @@ err:
 	return(ok);
 	}
 
-int DH_compute_key(key,pub_key,dh)
-unsigned char *key;
-BIGNUM *pub_key;
-DH *dh;
+int DH_compute_key(unsigned char *key, BIGNUM *pub_key, DH *dh)
 	{
 	BN_CTX ctx;
 	BN_MONT_CTX *mont;

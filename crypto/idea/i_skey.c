@@ -65,9 +65,7 @@ static IDEA_INT inverse(unsigned int xin);
 static IDEA_INT inverse();
 #endif
 
-void idea_set_encrypt_key(key, ks)
-unsigned char *key;
-IDEA_KEY_SCHEDULE *ks;
+void idea_set_encrypt_key(unsigned char *key, IDEA_KEY_SCHEDULE *ks)
 	{
 	int i;
 	register IDEA_INT *kt,*kf,r0,r1,r2;
@@ -101,9 +99,7 @@ IDEA_KEY_SCHEDULE *ks;
 		}
 	}
 
-void idea_set_decrypt_key(ek, dk)
-IDEA_KEY_SCHEDULE *ek;
-IDEA_KEY_SCHEDULE *dk;
+void idea_set_decrypt_key(IDEA_KEY_SCHEDULE *ek, IDEA_KEY_SCHEDULE *dk)
 	{
 	int r;
 	register IDEA_INT *fp,*tp,t;
@@ -133,8 +129,7 @@ IDEA_KEY_SCHEDULE *dk;
 	}
 
 /* taken directly from the 'paper' I'll have a look at it later */
-static IDEA_INT inverse(xin)
-unsigned int xin;
+static IDEA_INT inverse(unsigned int xin)
 	{
 	long n1,n2,q,r,b1,b2,t;
 

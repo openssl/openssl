@@ -66,8 +66,7 @@ static SSL_METHOD *tls1_get_method(int ver);
 static SSL_METHOD *tls1_get_method();
 #endif
 
-static SSL_METHOD *tls1_get_method(ver)
-int ver;
+static SSL_METHOD *tls1_get_method(int ver)
 	{
 	if (ver == TLS1_VERSION)
 		return(TLSv1_method());
@@ -75,7 +74,7 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *TLSv1_method()
+SSL_METHOD *TLSv1_method(void)
 	{
 	static int init=1;
 	static SSL_METHOD TLSv1_data;

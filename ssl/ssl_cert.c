@@ -66,7 +66,7 @@
 #include "pem.h"
 #include "ssl_locl.h"
 
-int SSL_get_ex_data_X509_STORE_CTX_idx()
+int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 	{
 	static int ssl_x509_store_ctx_idx= -1;
 
@@ -78,7 +78,7 @@ int SSL_get_ex_data_X509_STORE_CTX_idx()
 	return(ssl_x509_store_ctx_idx);
 	}
 
-CERT *ssl_cert_new()
+CERT *ssl_cert_new(void)
 	{
 	CERT *ret;
 
@@ -207,8 +207,7 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 	return(i);
 	}
 
-static void set_client_CA_list(STACK_OF(X509_NAME) **ca_list,
-			       STACK_OF(X509_NAME) *list)
+static void set_client_CA_list(STACK_OF(X509_NAME) **ca_list,STACK_OF(X509_NAME) *list)
 	{
 	if (*ca_list != NULL)
 		sk_X509_NAME_pop_free(*ca_list,X509_NAME_free);

@@ -92,13 +92,12 @@ static BIO_METHOD null_method=
 	null_free,
 	};
 
-BIO_METHOD *BIO_s_null()
+BIO_METHOD *BIO_s_null(void)
 	{
 	return(&null_method);
 	}
 
-static int null_new(bi)
-BIO *bi;
+static int null_new(BIO *bi)
 	{
 	bi->init=1;
 	bi->num=0;
@@ -106,34 +105,23 @@ BIO *bi;
 	return(1);
 	}
 
-static int null_free(a)
-BIO *a;
+static int null_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 	return(1);
 	}
 	
-static int null_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int null_read(BIO *b, char *out, int outl)
 	{
 	return(0);
 	}
 
-static int null_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int null_write(BIO *b, char *in, int inl)
 	{
 	return(inl);
 	}
 
-static long null_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long null_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	long ret=1;
 
@@ -159,17 +147,12 @@ char *ptr;
 	return(ret);
 	}
 
-static int null_gets(bp,buf,size)
-BIO *bp;
-char *buf;
-int size;
+static int null_gets(BIO *bp, char *buf, int size)
 	{
 	return(0);
 	}
 
-static int null_puts(bp,str)
-BIO *bp;
-char *str;
+static int null_puts(BIO *bp, char *str)
 	{
 	if (str == NULL) return(0);
 	return(strlen(str));

@@ -61,7 +61,7 @@
 #include "lhash.h"
 #include "ssl_locl.h"
 
-int SSL_library_init()
+int SSL_library_init(void)
 	{
 #ifndef NO_DES
 	EVP_add_cipher(EVP_des_cbc());

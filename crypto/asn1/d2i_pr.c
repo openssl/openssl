@@ -63,11 +63,8 @@
 #include "objects.h"
 #include "x509.h"
 
-EVP_PKEY *d2i_PrivateKey(type,a,pp,length)
-int type;
-EVP_PKEY **a;
-unsigned char **pp;
-long length;
+EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, unsigned char **pp,
+	     long length)
 	{
 	EVP_PKEY *ret;
 

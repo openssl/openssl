@@ -66,11 +66,8 @@
 #include "objects.h"
 #include "x509.h"
 
-int EVP_PKEY_decrypt(key,ek,ekl,priv)
-unsigned char *key;
-unsigned char *ek;
-int ekl;
-EVP_PKEY *priv;
+int EVP_PKEY_decrypt(unsigned char *key, unsigned char *ek, int ekl,
+	     EVP_PKEY *priv)
 	{
 	int ret= -1;
 	

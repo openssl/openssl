@@ -71,9 +71,7 @@ static void ext_print();
 #endif
 
 #ifndef NO_FP_API
-int X509_CRL_print_fp(fp,x)
-FILE *fp;
-X509_CRL *x;
+int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
         {
         BIO *b;
         int ret;
@@ -90,9 +88,7 @@ X509_CRL *x;
         }
 #endif
 
-int X509_CRL_print(out, x)
-BIO *out;
-X509_CRL *x;
+int X509_CRL_print(BIO *out, X509_CRL *x)
 {
 	char buf[256];
 	unsigned char *s;
@@ -157,9 +153,7 @@ X509_CRL *x;
 
 }
 
-static void ext_print(out, ex)
-BIO *out;
-X509_EXTENSION *ex;
+static void ext_print(BIO *out, X509_EXTENSION *ex)
 {
 	ASN1_OBJECT *obj;
 	int j;

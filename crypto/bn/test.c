@@ -50,9 +50,7 @@ main()
 	}
 
 #if 0
-int bn_mul_high(r,a,b,low,words)
-BIGNUM *r,*a,*b,*low;
-int words;
+int bn_mul_high(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *low, int words)
 	{
 	int i;
 	BIGNUM t1,t2,t3,h,ah,al,bh,bl,m,s0,s1;
@@ -151,10 +149,8 @@ t3.max=t3.top;
 	BN_free(&m); BN_free(&h);
 	}
 
-int BN_mod_mul_montgomery(r,a,b,mont,ctx)
-BIGNUM *r,*a,*b;
-BN_MONT_CTX *mont;
-BN_CTX *ctx;
+int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_MONT_CTX *mont,
+	     BN_CTX *ctx)
 	{
 	BIGNUM *tmp;
 
@@ -176,11 +172,7 @@ err:
 	return(0);
 	}
 
-int BN_from_montgomery(r,a,mont,ctx)
-BIGNUM *r;
-BIGNUM *a;
-BN_MONT_CTX *mont;
-BN_CTX *ctx;
+int BN_from_montgomery(BIGNUM *r, BIGNUM *a, BN_MONT_CTX *mont, BN_CTX *ctx)
 	{
 	BIGNUM z1;
 	BIGNUM *t1,*t2;
@@ -217,10 +209,7 @@ err:
 	return(0);
 	}
 
-int BN_MONT_CTX_set(mont,mod,ctx)
-BN_MONT_CTX *mont;
-BIGNUM *mod;
-BN_CTX *ctx;
+int BN_MONT_CTX_set(BN_MONT_CTX *mont, BIGNUM *mod, BN_CTX *ctx)
 	{
 	BIGNUM *Ri=NULL,*R=NULL;
 

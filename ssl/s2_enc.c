@@ -59,9 +59,7 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 
-int ssl2_enc_init(s, client)
-SSL *s;
-int client;
+int ssl2_enc_init(SSL *s, int client)
 	{
 	/* Max number of bytes needed */
 	EVP_CIPHER_CTX *rs,*ws;
@@ -114,9 +112,7 @@ err:
 /* read/writes from s->s2->mac_data using length for encrypt and 
  * decrypt.  It sets the s->s2->padding, s->[rw]length and
  * s->s2->pad_data ptr if we are encrypting */
-void ssl2_enc(s,send)
-SSL *s;
-int send;
+void ssl2_enc(SSL *s, int send)
 	{
 	EVP_CIPHER_CTX *ds;
 	unsigned long l;
@@ -146,10 +142,7 @@ int send;
 	EVP_Cipher(ds,s->s2->mac_data,s->s2->mac_data,l);
 	}
 
-void ssl2_mac(s, md,send)
-SSL *s;
-unsigned char *md;
-int send;
+void ssl2_mac(SSL *s, unsigned char *md, int send)
 	{
 	EVP_MD_CTX c;
 	unsigned char sequence[4],*p,*sec,*act;

@@ -66,9 +66,7 @@ static BIGNUM *euclid(BIGNUM *a, BIGNUM *b);
 static BIGNUM *euclid();
 #endif
 
-int BN_gcd(r,in_a,in_b,ctx)
-BIGNUM *r,*in_a,*in_b;
-BN_CTX *ctx;
+int BN_gcd(BIGNUM *r, BIGNUM *in_a, BIGNUM *in_b, BN_CTX *ctx)
 	{
 	BIGNUM *a,*b,*t;
 	int ret=0;
@@ -92,8 +90,7 @@ err:
 	return(ret);
 	}
 
-static BIGNUM *euclid(a,b)
-BIGNUM *a,*b;
+static BIGNUM *euclid(BIGNUM *a, BIGNUM *b)
 	{
 	BIGNUM *t;
 	int shifts=0;
@@ -148,11 +145,7 @@ err:
 	}
 
 /* solves ax == 1 (mod n) */
-BIGNUM *BN_mod_inverse(in, a, n, ctx)
-BIGNUM *in;
-BIGNUM *a;
-BIGNUM *n;
-BN_CTX *ctx;
+BIGNUM *BN_mod_inverse(BIGNUM *in, BIGNUM *a, BIGNUM *n, BN_CTX *ctx)
 	{
 	BIGNUM *A,*B,*X,*Y,*M,*D,*R;
 	BIGNUM *T,*ret=NULL;

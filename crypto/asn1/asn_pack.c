@@ -64,11 +64,8 @@
 
 /* Turn an ASN1 encoded SEQUENCE OF into a STACK of structures */
 
-STACK *ASN1_seq_unpack(buf, len, d2i, free_func)
-unsigned char *buf;
-int len;
-char *(*d2i)();
-void (*free_func)();
+STACK *ASN1_seq_unpack(unsigned char *buf, int len, char *(*d2i)(),
+	     void (*free_func)())
 {
     STACK *sk;
     unsigned char *pbuf;
@@ -83,11 +80,8 @@ void (*free_func)();
  * Malloc'ed buffer
  */
 
-unsigned char *ASN1_seq_pack(safes, i2d, buf, len)
-STACK *safes;
-int (*i2d)();
-unsigned char **buf;
-int *len;
+unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(), unsigned char **buf,
+	     int *len)
 {
 	int safelen;
 	unsigned char *safe, *p;
@@ -110,9 +104,7 @@ int *len;
 
 /* Extract an ASN1 object from an ASN1_STRING */
 
-char *ASN1_unpack_string (oct, d2i)
-ASN1_STRING *oct;
-char *(*d2i)();
+char *ASN1_unpack_string (ASN1_STRING *oct, char *(*d2i)())
 {
 	unsigned char *p;
 	char *ret;
@@ -125,10 +117,7 @@ char *(*d2i)();
 
 /* Pack an ASN1 object into an ASN1_STRING */
 
-ASN1_STRING *ASN1_pack_string (obj, i2d, oct)
-char *obj;
-int (*i2d)();
-ASN1_STRING **oct;
+ASN1_STRING *ASN1_pack_string (char *obj, int (*i2d)(), ASN1_STRING **oct)
 {
 	unsigned char *p;
 	ASN1_STRING *octmp;

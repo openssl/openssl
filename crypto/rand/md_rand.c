@@ -140,12 +140,12 @@ RAND_METHOD rand_ssleay_meth={
 	ssleay_rand_cleanup,
 	}; 
 
-RAND_METHOD *RAND_SSLeay()
+RAND_METHOD *RAND_SSLeay(void)
 	{
 	return(&rand_ssleay_meth);
 	}
 
-static void ssleay_rand_cleanup()
+static void ssleay_rand_cleanup(void)
 	{
 	memset(state,0,sizeof(state));
 	state_num=0;
@@ -155,9 +155,7 @@ static void ssleay_rand_cleanup()
 	md_count[1]=0;
 	}
 
-static void ssleay_rand_seed(buf,num)
-const void *buf;
-int num;
+static void ssleay_rand_seed(const void *buf, int num)
 	{
 	int i,j,k,st_idx,st_num;
 	MD_CTX m;
@@ -219,9 +217,7 @@ int num;
 	memset((char *)&m,0,sizeof(m));
 	}
 
-static void ssleay_rand_bytes(buf,num)
-unsigned char *buf;
-int num;
+static void ssleay_rand_bytes(unsigned char *buf, int num)
 	{
 	int i,j,k,st_num,st_idx;
 	MD_CTX m;

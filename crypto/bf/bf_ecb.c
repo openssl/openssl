@@ -67,7 +67,7 @@
 
 const char *BF_version="BlowFish" OPENSSL_VERSION_PTEXT;
 
-const char *BF_options()
+const char *BF_options(void)
 	{
 #ifdef BF_PTR
 	return("blowfish(ptr)");
@@ -78,11 +78,8 @@ const char *BF_options()
 #endif
 	}
 
-void BF_ecb_encrypt(in, out, ks, encrypt)
-unsigned char *in;
-unsigned char *out;
-BF_KEY *ks;
-int encrypt;
+void BF_ecb_encrypt(unsigned char *in, unsigned char *out, BF_KEY *ks,
+	     int encrypt)
 	{
 	BF_LONG l,d[2];
 

@@ -118,7 +118,7 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 
 #endif
 
-void ERR_load_RSA_strings()
+void ERR_load_RSA_strings(void)
 	{
 	static int init=1;
 

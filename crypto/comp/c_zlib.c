@@ -40,12 +40,8 @@ static COMP_METHOD zlib_method={
 	NULL,
 	};
 
-static int zlib_compress_block(ctx,out,olen,in,ilen)
-COMP_CTX *ctx;
-unsigned char *out;
-unsigned int olen;
-unsigned char *in;
-unsigned int ilen;
+static int zlib_compress_block(COMP_CTX *ctx, unsigned char *out,
+	     unsigned int olen, unsigned char *in, unsigned int ilen)
 	{
 	unsigned long l;
 	int i;
@@ -74,12 +70,8 @@ fprintf(stderr,"compress(%4d)->%4d %s\n",ilen,(int)l,(clear)?"clear":"zlib");
 	return((int)l);
 	}
 
-static int zlib_expand_block(ctx,out,olen,in,ilen)
-COMP_CTX *ctx;
-unsigned char *out;
-unsigned int olen;
-unsigned char *in;
-unsigned int ilen;
+static int zlib_expand_block(COMP_CTX *ctx, unsigned char *out,
+	     unsigned int olen, unsigned char *in, unsigned int ilen)
 	{
 	unsigned long l;
 	int i;
@@ -100,11 +92,8 @@ unsigned int ilen;
 	return((int)l);
 	}
 
-static int zz_uncompress (dest, destLen, source, sourceLen)
-    Bytef *dest;
-    uLongf *destLen;
-    const Bytef *source;
-    uLong sourceLen;
+static int zz_uncompress (Bytef *dest, uLongf *destLen, const Bytef *source,
+	     uLong sourceLen)
 {
     z_stream stream;
     int err;
@@ -137,7 +126,7 @@ static int zz_uncompress (dest, destLen, source, sourceLen)
 
 #endif
 
-COMP_METHOD *COMP_zlib()
+COMP_METHOD *COMP_zlib(void)
 	{
 	return(&zlib_method);
 	}

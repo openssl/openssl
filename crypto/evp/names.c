@@ -62,8 +62,7 @@
 #include "objects.h"
 #include "x509.h"
 
-int EVP_add_cipher(c)
-EVP_CIPHER *c;
+int EVP_add_cipher(EVP_CIPHER *c)
 	{
 	int r;
 
@@ -73,8 +72,7 @@ EVP_CIPHER *c;
 	return(r);
 	}
 
-int EVP_add_digest(md)
-EVP_MD *md;
+int EVP_add_digest(EVP_MD *md)
 	{
 	int r;
 	const char *name;
@@ -96,8 +94,7 @@ EVP_MD *md;
 	return(r);
 	}
 
-const EVP_CIPHER *EVP_get_cipherbyname(name)
-const char *name;
+const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
 	{
 	const EVP_CIPHER *cp;
 
@@ -105,8 +102,7 @@ const char *name;
 	return(cp);
 	}
 
-const EVP_MD *EVP_get_digestbyname(name)
-const char *name;
+const EVP_MD *EVP_get_digestbyname(const char *name)
 	{
 	const EVP_MD *cp;
 
@@ -114,7 +110,7 @@ const char *name;
 	return(cp);
 	}
 
-void EVP_cleanup()
+void EVP_cleanup(void)
 	{
 	OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
 	OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);

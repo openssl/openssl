@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include "buffer.h"
 
-BUF_MEM *BUF_MEM_new()
+BUF_MEM *BUF_MEM_new(void)
 	{
 	BUF_MEM *ret;
 
@@ -76,8 +76,7 @@ BUF_MEM *BUF_MEM_new()
 	return(ret);
 	}
 
-void BUF_MEM_free(a)
-BUF_MEM *a;
+void BUF_MEM_free(BUF_MEM *a)
 	{
 	if(a == NULL)
 	    return;
@@ -90,9 +89,7 @@ BUF_MEM *a;
 	Free(a);
 	}
 
-int BUF_MEM_grow(str, len)
-BUF_MEM *str;
-int len;
+int BUF_MEM_grow(BUF_MEM *str, int len)
 	{
 	char *ret;
 	unsigned int n;
@@ -127,8 +124,7 @@ int len;
 	return(len);
 	}
 
-char *BUF_strdup(str)
-const char *str;
+char *BUF_strdup(const char *str)
 	{
 	char *ret;
 	int n;

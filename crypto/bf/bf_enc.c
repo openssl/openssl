@@ -65,13 +65,11 @@
  */
 
 #if (BF_ROUNDS != 16) && (BF_ROUNDS != 20)
-If you set BF_ROUNDS to some value other than 16 or 20, you will have
+#error If you set BF_ROUNDS to some value other than 16 or 20, you will have \
 to modify the code.
 #endif
 
-void BF_encrypt(data,key)
-BF_LONG *data;
-BF_KEY *key;
+void BF_encrypt(BF_LONG *data, BF_KEY *key)
 	{
 	register BF_LONG l,r,*p,*s;
 
@@ -111,9 +109,7 @@ BF_KEY *key;
 
 #ifndef BF_DEFAULT_OPTIONS
 
-void BF_decrypt(data,key)
-BF_LONG *data;
-BF_KEY *key;
+void BF_decrypt(BF_LONG *data, BF_KEY *key)
 	{
 	register BF_LONG l,r,*p,*s;
 
@@ -151,13 +147,8 @@ BF_KEY *key;
 	data[0]=r&0xffffffffL;
 	}
 
-void BF_cbc_encrypt(in, out, length, ks, iv, encrypt)
-unsigned char *in;
-unsigned char *out;
-long length;
-BF_KEY *ks;
-unsigned char *iv;
-int encrypt;
+void BF_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
+	     BF_KEY *ks, unsigned char *iv, int encrypt)
 	{
 	register BF_LONG tin0,tin1;
 	register BF_LONG tout0,tout1,xor0,xor1;

@@ -388,7 +388,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 
 #endif
 
-void ERR_load_SSL_strings()
+void ERR_load_SSL_strings(void)
 	{
 	static int init=1;
 

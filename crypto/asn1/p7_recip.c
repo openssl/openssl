@@ -66,9 +66,7 @@
  * ASN1err(ASN1_F_D2I_PKCS7_RECIP_INFO,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
-int i2d_PKCS7_RECIP_INFO(a,pp)
-PKCS7_RECIP_INFO *a;
-unsigned char **pp;
+int i2d_PKCS7_RECIP_INFO(PKCS7_RECIP_INFO *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -87,10 +85,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-PKCS7_RECIP_INFO *d2i_PKCS7_RECIP_INFO(a,pp,length)
-PKCS7_RECIP_INFO **a;
-unsigned char **pp;
-long length;
+PKCS7_RECIP_INFO *d2i_PKCS7_RECIP_INFO(PKCS7_RECIP_INFO **a,
+	     unsigned char **pp, long length)
 	{
 	M_ASN1_D2I_vars(a,PKCS7_RECIP_INFO *,PKCS7_RECIP_INFO_new);
 
@@ -104,7 +100,7 @@ long length;
 	M_ASN1_D2I_Finish(a,PKCS7_RECIP_INFO_free,ASN1_F_D2I_PKCS7_RECIP_INFO);
 	}
 
-PKCS7_RECIP_INFO *PKCS7_RECIP_INFO_new()
+PKCS7_RECIP_INFO *PKCS7_RECIP_INFO_new(void)
 	{
 	PKCS7_RECIP_INFO *ret=NULL;
 	ASN1_CTX c;
@@ -119,8 +115,7 @@ PKCS7_RECIP_INFO *PKCS7_RECIP_INFO_new()
 	M_ASN1_New_Error(ASN1_F_PKCS7_RECIP_INFO_NEW);
 	}
 
-void PKCS7_RECIP_INFO_free(a)
-PKCS7_RECIP_INFO *a;
+void PKCS7_RECIP_INFO_free(PKCS7_RECIP_INFO *a)
 	{
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->version);

@@ -74,9 +74,7 @@ int read();
 void exit();
 #endif
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,err=0;
 	FILE *IN;
@@ -105,8 +103,7 @@ char *argv[];
 	return(err);
 	}
 
-void do_fp(f)
-FILE *f;
+void do_fp(FILE *f)
 	{
 	MD2_CTX c;
 	unsigned char md[MD2_DIGEST_LENGTH];
@@ -125,8 +122,7 @@ FILE *f;
 	pt(md);
 	}
 
-void pt(md)
-unsigned char *md;
+void pt(unsigned char *md)
 	{
 	int i;
 

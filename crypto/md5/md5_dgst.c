@@ -86,8 +86,7 @@ char *MD5_version="MD5" OPENSSL_VERSION_PTEXT;
 #  endif
 #endif
 
-void MD5_Init(c)
-MD5_CTX *c;
+void MD5_Init(MD5_CTX *c)
 	{
 	c->A=INIT_DATA_A;
 	c->B=INIT_DATA_B;
@@ -98,10 +97,7 @@ MD5_CTX *c;
 	c->num=0;
 	}
 
-void MD5_Update(c, _data, len)
-MD5_CTX *c;
-const void *_data;
-unsigned long len;
+void MD5_Update(MD5_CTX *c, const void *_data, unsigned long len)
 	{
 	register const unsigned char *data=_data;
 	register ULONG *p;
@@ -232,9 +228,7 @@ unsigned long len;
 		}
 	}
 
-void MD5_Transform(c,b)
-MD5_CTX *c;
-unsigned char *b;
+void MD5_Transform(MD5_CTX *c, unsigned char *b)
 	{
 	ULONG p[16];
 #if !defined(L_ENDIAN)
@@ -271,10 +265,7 @@ unsigned char *b;
 
 #ifndef MD5_ASM
 
-static void md5_block(c, X, num)
-MD5_CTX *c;
-register ULONG *X;
-int num;
+static void md5_block(MD5_CTX *c, register ULONG *X, int num)
 	{
 	register ULONG A,B,C,D;
 
@@ -368,9 +359,7 @@ int num;
 	}
 #endif
 
-void MD5_Final(md, c)
-unsigned char *md;
-MD5_CTX *c;
+void MD5_Final(unsigned char *md, MD5_CTX *c)
 	{
 	register int i,j;
 	register ULONG l;
@@ -425,8 +414,7 @@ MD5_CTX *c;
 	}
 
 #ifdef undef
-int printit(l)
-unsigned long *l;
+int printit(unsigned long *l)
 	{
 	int i,ii;
 

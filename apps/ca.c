@@ -215,9 +215,7 @@ static char *section=NULL;
 static int preserve=0;
 static int msie_hack=0;
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int total=0;
 	int total_done=0;
@@ -1179,16 +1177,12 @@ err:
 	EXIT(ret);
 	}
 
-static void lookup_fail(name,tag)
-char *name;
-char *tag;
+static void lookup_fail(char *name, char *tag)
 	{
 	BIO_printf(bio_err,"variable lookup failed for %s::%s\n",name,tag);
 	}
 
-static int MS_CALLBACK key_callback(buf,len,verify)
-char *buf;
-int len,verify;
+static int MS_CALLBACK key_callback(char *buf, int len, int verify)
 	{
 	int i;
 
@@ -1199,8 +1193,7 @@ int len,verify;
 	return(i);
 	}
 
-static unsigned long index_serial_hash(a)
-char **a;
+static unsigned long index_serial_hash(char **a)
 	{
 	char *n;
 
@@ -1209,9 +1202,7 @@ char **a;
 	return(lh_strhash(n));
 	}
 
-static int index_serial_cmp(a,b)
-char **a;
-char **b;
+static int index_serial_cmp(char **a, char **b)
 	{
 	char *aa,*bb;
 
@@ -1220,21 +1211,17 @@ char **b;
 	return(strcmp(aa,bb));
 	}
 
-static unsigned long index_name_hash(a)
-char **a;
+static unsigned long index_name_hash(char **a)
 	{ return(lh_strhash(a[DB_name])); }
 
-static int index_name_qual(a)
-char **a;
+static int index_name_qual(char **a)
 	{ return(a[0][0] == 'V'); }
 
-static int index_name_cmp(a,b)
-char **a;
-char **b;
-	{ return(strcmp(a[DB_name],b[DB_name])); }
+static int index_name_cmp(char **a, char **b)
+	{ return(strcmp(a[DB_name],
+	     b[DB_name])); }
 
-static BIGNUM *load_serial(serialfile)
-char *serialfile;
+static BIGNUM *load_serial(char *serialfile)
 	{
 	BIO *in=NULL;
 	BIGNUM *ret=NULL;
@@ -1272,9 +1259,7 @@ err:
 	return(ret);
 	}
 
-static int save_serial(serialfile,serial)
-char *serialfile;
-BIGNUM *serial;
+static int save_serial(char *serialfile, BIGNUM *serial)
 	{
 	BIO *out;
 	int ret=0;
@@ -1306,22 +1291,10 @@ err:
 	return(ret);
 	}
 
-static int certify(xret,infile,pkey,x509,dgst,policy,db,serial,startdate,days,
-		   batch,ext_sect,lconf,verbose)
-X509 **xret;
-char *infile;
-EVP_PKEY *pkey;
-X509 *x509;
-const EVP_MD *dgst;
-STACK *policy;
-TXT_DB *db;
-BIGNUM *serial;
-char *startdate;
-int days;
-int batch;
-char *ext_sect;
-LHASH *lconf;
-int verbose;
+static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
+	     const EVP_MD *dgst, STACK *policy, TXT_DB *db, BIGNUM *serial,
+	     char *startdate, int days, int batch, char *ext_sect, LHASH *lconf,
+		 int verbose)
 	{
 	X509_REQ *req=NULL;
 	BIO *in=NULL;
@@ -1377,22 +1350,11 @@ err:
 	return(ok);
 	}
 
-static int certify_cert(xret,infile,pkey,x509,dgst,policy,db,serial,startdate,
-			days,batch,ext_sect,lconf,verbose)
-X509 **xret;
-char *infile;
-EVP_PKEY *pkey;
-X509 *x509;
-const EVP_MD *dgst;
-STACK *policy;
-TXT_DB *db;
-BIGNUM *serial;
-char *startdate;
-int days;
-int batch;
-char *ext_sect;
-LHASH *lconf;
-int verbose;
+static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
+	     const EVP_MD *dgst, STACK *policy, TXT_DB *db, BIGNUM *serial,
+	     char *startdate, int days, int batch, char *ext_sect, LHASH *lconf,
+		 int verbose)
+
 	{
 	X509 *req=NULL;
 	X509_REQ *rreq=NULL;
@@ -1452,22 +1414,9 @@ err:
 	return(ok);
 	}
 
-static int do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,days,
-		   batch,verbose,req,ext_sect,lconf)
-X509 **xret;
-EVP_PKEY *pkey;
-X509 *x509;
-const EVP_MD *dgst;
-STACK *policy;
-TXT_DB *db;
-BIGNUM *serial;
-char *startdate;
-int days;
-int batch;
-int verbose;
-X509_REQ *req;
-char *ext_sect;
-LHASH *lconf;
+static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
+	     STACK *policy, TXT_DB *db, BIGNUM *serial, char *startdate, int days,
+	     int batch, int verbose, X509_REQ *req, char *ext_sect, LHASH *lconf)
 	{
 	X509_NAME *name=NULL,*CAname=NULL,*subject=NULL;
 	ASN1_UTCTIME *tm,*tmptm;
@@ -1895,10 +1844,7 @@ err:
 	return(ok);
 	}
 
-static void write_new_certificate(bp,x, output_der)
-BIO *bp;
-X509 *x;
-int output_der;
+static void write_new_certificate(BIO *bp, X509 *x, int output_der)
 	{
 	char *f;
 	char buf[256];
@@ -1924,21 +1870,9 @@ int output_der;
 	BIO_puts(bp,"\n");
 	}
 
-static int certify_spkac(xret,infile,pkey,x509,dgst,policy,db,serial,
-			 startdate,days,ext_sect,lconf,verbose)
-X509 **xret;
-char *infile;
-EVP_PKEY *pkey;
-X509 *x509;
-const EVP_MD *dgst;
-STACK *policy;
-TXT_DB *db;
-BIGNUM *serial;
-char *startdate;
-int days;
-char *ext_sect;
-LHASH *lconf;
-int verbose;
+static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
+	     const EVP_MD *dgst, STACK *policy, TXT_DB *db, BIGNUM *serial,
+	     char *startdate, int days, char *ext_sect, LHASH *lconf, int verbose)
 	{
 	STACK *sk=NULL;
 	LHASH *parms=NULL;
@@ -2094,9 +2028,7 @@ err:
 	return(ok);
 	}
 
-static int fix_data(nid,type)
-int nid;
-int *type;
+static int fix_data(int nid, int *type)
 	{
 	if (nid == NID_pkcs9_emailAddress)
 		*type=V_ASN1_IA5STRING;
@@ -2111,8 +2043,7 @@ int *type;
 	return(1);
 	}
 
-static int check_time_format(str)
-char *str;
+static int check_time_format(char *str)
 	{
 	ASN1_UTCTIME tm;
 
@@ -2122,8 +2053,7 @@ char *str;
 	return(ASN1_UTCTIME_check(&tm));
 	}
 
-static int add_oid_section(hconf)
-LHASH *hconf;
+static int add_oid_section(LHASH *hconf)
 {	
 	char *p;
 	STACK *sktmp;
@@ -2145,9 +2075,7 @@ LHASH *hconf;
 	return 1;
 }
 
-static int do_revoke(x509,db)
-X509 *x509;
-TXT_DB *db;
+static int do_revoke(X509 *x509, TXT_DB *db)
 {
         ASN1_UTCTIME *tm=NULL;
         char *row[DB_NUMBER],**rrow,**irow;

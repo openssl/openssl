@@ -87,9 +87,7 @@ typedef struct lines_St
 	struct lines_st *next;
 	} LINES;
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 	{
 	FILE *in;
 	RSA *rsa=NULL;

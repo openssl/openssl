@@ -66,7 +66,7 @@
 
 const char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
 
-DSA *DSA_new()
+DSA *DSA_new(void)
 	{
 	DSA *ret;
 
@@ -95,8 +95,7 @@ DSA *DSA_new()
 	return(ret);
 	}
 
-void DSA_free(r)
-DSA *r;
+void DSA_free(DSA *r)
 	{
 	int i;
 
@@ -127,8 +126,7 @@ DSA *r;
 	Free(r);
 	}
 
-int DSA_size(r)
-DSA *r;
+int DSA_size(DSA *r)
 	{
 	int ret,i;
 	ASN1_INTEGER bs;

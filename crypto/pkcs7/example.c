@@ -3,8 +3,7 @@
 #include <malloc.h>
 #include "pkcs7.h"
 
-int add_signed_time(si)
-PKCS7_SIGNER_INFO *si;
+int add_signed_time(PKCS7_SIGNER_INFO *si)
 	{
 	ASN1_UTCTIME *sign_time;
 
@@ -16,8 +15,7 @@ PKCS7_SIGNER_INFO *si;
 	return(1);
 	}
 
-ASN1_UTCTIME *get_signed_time(si)
-PKCS7_SIGNER_INFO *si;
+ASN1_UTCTIME *get_signed_time(PKCS7_SIGNER_INFO *si)
 	{
 	ASN1_TYPE *so;
 	ASN1_UTCTIME *ut;
@@ -32,9 +30,7 @@ PKCS7_SIGNER_INFO *si;
 	
 static int signed_string_nid= -1;
 
-int add_signed_string(si,str)
-PKCS7_SIGNER_INFO *si;
-char *str;
+int add_signed_string(PKCS7_SIGNER_INFO *si, char *str)
 	{
 	ASN1_OCTET_STRING *os;
 
@@ -49,10 +45,7 @@ char *str;
 		V_ASN1_OCTET_STRING,(char *)os);
 	}
 
-int get_signed_string(si,buf,len)
-PKCS7_SIGNER_INFO *si;
-char *buf;
-int len;
+int get_signed_string(PKCS7_SIGNER_INFO *si, char *buf, int len)
 	{
 	ASN1_TYPE *so;
 	ASN1_OCTET_STRING *os;
@@ -80,13 +73,10 @@ int len;
 
 static signed_seq2string_nid= -1;
 /* ########################################### */
-int add_signed_seq2string(si,str1,str2)
-PKCS7_SIGNER_INFO *si;
-char *str1;
-char *str2;
+int add_signed_seq2string(PKCS7_SIGNER_INFO *si, char *str1, char *str2)
+	{
 	/* To add an object of OID 1.9.999, which is a sequence containing
 	 * 2 octet strings */
-	{
 	unsigned char *p;
 	ASN1_OCTET_STRING *os1,*os2;
 	ASN1_STRING *seq;
@@ -123,10 +113,7 @@ char *str2;
 	}
 
 /* For this case, I will malloc the return strings */
-int get_signed_seq2string(si,str1,str2)
-PKCS7_SIGNER_INFO *si;
-char **str1;
-char **str2;
+int get_signed_seq2string(PKCS7_SIGNER_INFO *si, char **str1, char **str2)
 	{
 	ASN1_TYPE *so;
 
@@ -178,7 +165,7 @@ err:
  * THE OTHER WAY TO DO THINGS
  * #######################################
  */
-X509_ATTRIBUTE *create_time()
+X509_ATTRIBUTE *create_time(void)
 	{
 	ASN1_UTCTIME *sign_time;
 	X509_ATTRIBUTE *ret;
@@ -191,8 +178,7 @@ X509_ATTRIBUTE *create_time()
 	return(ret);
 	}
 
-ASN1_UTCTIME *sk_get_time(sk)
-STACK *sk;
+ASN1_UTCTIME *sk_get_time(STACK *sk)
 	{
 	ASN1_TYPE *so;
 	ASN1_UTCTIME *ut;
@@ -207,8 +193,7 @@ STACK *sk;
 	return(ut);
 	}
 	
-X509_ATTRIBUTE *create_string(si,str)
-char *str;
+X509_ATTRIBUTE *create_string(char *str)
 	{
 	ASN1_OCTET_STRING *os;
 	X509_ATTRIBUTE *ret;
@@ -225,10 +210,7 @@ char *str;
 	return(ret);
 	}
 
-int sk_get_string(sk,buf,len)
-STACK *sk;
-char *buf;
-int len;
+int sk_get_string(STACK *sk, char *buf, int len)
 	{
 	ASN1_TYPE *so;
 	ASN1_OCTET_STRING *os;
@@ -257,13 +239,10 @@ int len;
 	return(0);
 	}
 
-X509_ATTRIBUTE *add_seq2string(si,str1,str2)
-PKCS7_SIGNER_INFO *si;
-char *str1;
-char *str2;
+X509_ATTRIBUTE *add_seq2string(PKCS7_SIGNER_INFO *si, char *str1, char *str2)
+	{
 	/* To add an object of OID 1.9.999, which is a sequence containing
 	 * 2 octet strings */
-	{
 	unsigned char *p;
 	ASN1_OCTET_STRING *os1,*os2;
 	ASN1_STRING *seq;
@@ -301,10 +280,7 @@ char *str2;
 	}
 
 /* For this case, I will malloc the return strings */
-int sk_get_seq2string(sk,str1,str2)
-STACK *sk;
-char **str1;
-char **str2;
+int sk_get_seq2string(STACK *sk, char **str1, char **str2)
 	{
 	ASN1_TYPE *so;
 	PKCS7_SIGNER_INFO si;

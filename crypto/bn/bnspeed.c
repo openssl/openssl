@@ -133,8 +133,7 @@ static double Time_F();
 #define START	0
 #define STOP	1
 
-static double Time_F(s)
-int s;
+static double Time_F(int s)
 	{
 	double ret;
 #ifdef TIMES
@@ -176,9 +175,7 @@ static int sizes[NUM_SIZES]={128,256,512,1024,2048};
 
 void do_mul(BIGNUM *r,BIGNUM *a,BIGNUM *b,BN_CTX *ctx); 
 
-int main(argc,argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 	{
 	BN_CTX *ctx;
 	BIGNUM a,b,c;
@@ -191,11 +188,7 @@ char **argv;
 	do_mul(&a,&b,&c,ctx);
 	}
 
-void do_mul(r,a,b,ctx)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
-BN_CTX *ctx;
+void do_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 	{
 	int i,j,k;
 	double tm;

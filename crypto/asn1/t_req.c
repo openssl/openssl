@@ -64,9 +64,7 @@
 #include "x509.h"
 
 #ifndef NO_FP_API
-int X509_REQ_print_fp(fp,x)
-FILE *fp;
-X509_REQ *x;
+int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
         {
         BIO *b;
         int ret;
@@ -83,9 +81,7 @@ X509_REQ *x;
         }
 #endif
 
-int X509_REQ_print(bp,x)
-BIO *bp;
-X509_REQ *x;
+int X509_REQ_print(BIO *bp, X509_REQ *x)
 	{
 	unsigned long l;
 	int i,n;

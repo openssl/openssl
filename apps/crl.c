@@ -96,9 +96,7 @@ static X509_CRL *load_crl();
 
 static BIO *bio_out=NULL;
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	X509_CRL *x=NULL;
 	int ret=1,i,num,badops=0;
@@ -262,9 +260,7 @@ end:
 	EXIT(ret);
 	}
 
-static X509_CRL *load_crl(infile, format)
-char *infile;
-int format;
+static X509_CRL *load_crl(char *infile, int format)
 	{
 	X509_CRL *x=NULL;
 	BIO *in=NULL;

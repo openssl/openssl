@@ -60,10 +60,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-BN_BLINDING *BN_BLINDING_new(A,Ai,mod)
-BIGNUM *A;
-BIGNUM *Ai;
-BIGNUM *mod;
+BN_BLINDING *BN_BLINDING_new(BIGNUM *A, BIGNUM *Ai, BIGNUM *mod)
 	{
 	BN_BLINDING *ret=NULL;
 
@@ -87,8 +84,7 @@ err:
 	return(NULL);
 	}
 
-void BN_BLINDING_free(r)
-BN_BLINDING *r;
+void BN_BLINDING_free(BN_BLINDING *r)
 	{
 	if(r == NULL)
 	    return;
@@ -98,9 +94,7 @@ BN_BLINDING *r;
 	Free(r);
 	}
 
-int BN_BLINDING_update(b,ctx)
-BN_BLINDING *b;
-BN_CTX *ctx;
+int BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
 	{
 	int ret=0;
 
@@ -118,10 +112,7 @@ err:
 	return(ret);
 	}
 
-int BN_BLINDING_convert(n,b,ctx)
-BIGNUM *n;
-BN_BLINDING *b;
-BN_CTX *ctx;
+int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
 	{
 	bn_check_top(n);
 
@@ -133,10 +124,7 @@ BN_CTX *ctx;
 	return(BN_mod_mul(n,n,b->A,b->mod,ctx));
 	}
 
-int BN_BLINDING_invert(n,b,ctx)
-BIGNUM *n;
-BN_BLINDING *b;
-BN_CTX *ctx;
+int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
 	{
 	int ret;
 

@@ -64,15 +64,9 @@
 #include "x509.h"
 #include "pem.h"
 
-int PEM_SealInit(ctx,type,md_type,ek,ekl,iv,pubk,npubk)
-PEM_ENCODE_SEAL_CTX *ctx;
-EVP_CIPHER *type;
-EVP_MD *md_type;
-unsigned char **ek;
-int *ekl;
-unsigned char *iv;
-EVP_PKEY **pubk;
-int npubk;
+int PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
+	     unsigned char **ek, int *ekl, unsigned char *iv, EVP_PKEY **pubk,
+	     int npubk)
 	{
 	unsigned char key[EVP_MAX_KEY_LENGTH];
 	int ret= -1;
@@ -118,12 +112,8 @@ err:
 	return(ret);
 	}
 
-void PEM_SealUpdate(ctx,out,outl,in,inl)
-PEM_ENCODE_SEAL_CTX *ctx;
-unsigned char *out;
-int *outl;
-unsigned char *in;
-int inl;
+void PEM_SealUpdate(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *out, int *outl,
+	     unsigned char *in, int inl)
 	{
 	unsigned char buffer[1600];
 	int i,j;
@@ -146,13 +136,8 @@ int inl;
 		}
 	}
 
-int PEM_SealFinal(ctx,sig,sigl,out,outl,priv)
-PEM_ENCODE_SEAL_CTX *ctx;
-unsigned char *sig;
-int *sigl;
-unsigned char *out;
-int *outl;
-EVP_PKEY *priv;
+int PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
+	     unsigned char *out, int *outl, EVP_PKEY *priv)
 	{
 	unsigned char *s=NULL;
 	int ret=0,j;

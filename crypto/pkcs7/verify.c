@@ -204,9 +204,7 @@ err:
 	}
 
 /* should be X509 * but we can just have them as char *. */
-int verify_callback(ok, ctx)
-int ok;
-X509_STORE_CTX *ctx;
+int verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
 	char buf[256];
 	X509 *err_cert;

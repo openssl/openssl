@@ -91,9 +91,7 @@ NULL
  * ASN1err(ASN1_F_D2I_PKEY_USAGE_PERIOD,ERR_R_MALLOC_FAILURE);
  */
 
-int i2d_PKEY_USAGE_PERIOD(a,pp)
-PKEY_USAGE_PERIOD *a;
-unsigned char **pp;
+int i2d_PKEY_USAGE_PERIOD(PKEY_USAGE_PERIOD *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
 
@@ -108,7 +106,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-PKEY_USAGE_PERIOD *PKEY_USAGE_PERIOD_new()
+PKEY_USAGE_PERIOD *PKEY_USAGE_PERIOD_new(void)
 {
 	PKEY_USAGE_PERIOD *ret=NULL;
 	ASN1_CTX c;
@@ -119,10 +117,8 @@ PKEY_USAGE_PERIOD *PKEY_USAGE_PERIOD_new()
 	M_ASN1_New_Error(ASN1_F_PKEY_USAGE_PERIOD_NEW);
 }
 
-PKEY_USAGE_PERIOD *d2i_PKEY_USAGE_PERIOD(a,pp,length)
-PKEY_USAGE_PERIOD **a;
-unsigned char **pp;
-long length;
+PKEY_USAGE_PERIOD *d2i_PKEY_USAGE_PERIOD(PKEY_USAGE_PERIOD **a,
+	     unsigned char **pp, long length)
 {
 	M_ASN1_D2I_vars(a,PKEY_USAGE_PERIOD *,PKEY_USAGE_PERIOD_new);
 	M_ASN1_D2I_Init();
@@ -134,8 +130,7 @@ long length;
 	M_ASN1_D2I_Finish(a, PKEY_USAGE_PERIOD_free, ASN1_F_D2I_PKEY_USAGE_PERIOD);
 }
 
-void PKEY_USAGE_PERIOD_free(a)
-PKEY_USAGE_PERIOD *a;
+void PKEY_USAGE_PERIOD_free(PKEY_USAGE_PERIOD *a)
 {
 	if (a == NULL) return;
 	ASN1_GENERALIZEDTIME_free(a->notBefore);
@@ -143,11 +138,8 @@ PKEY_USAGE_PERIOD *a;
 	Free ((char *)a);
 }
 
-static int i2r_PKEY_USAGE_PERIOD(method, usage, out, indent)
-X509V3_EXT_METHOD *method;
-PKEY_USAGE_PERIOD *usage;
-BIO *out;
-int indent;
+static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
+	     PKEY_USAGE_PERIOD *usage, BIO *out, int indent)
 {
 	BIO_printf(out, "%*s", indent, "");
 	if(usage->notBefore) {

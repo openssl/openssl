@@ -64,43 +64,30 @@
  * ASN1err(ASN1_F_D2I_ASN1_PRINT_TYPE,ASN1_R_TAG_VALUE_TOO_HIGH);
  */
 
-int i2d_ASN1_IA5STRING(a,pp)
-ASN1_IA5STRING *a;
-unsigned char **pp;
+int i2d_ASN1_IA5STRING(ASN1_IA5STRING *a, unsigned char **pp)
 	{ return(M_i2d_ASN1_IA5STRING(a,pp)); }
 
-ASN1_IA5STRING *d2i_ASN1_IA5STRING(a,pp,l)
-ASN1_IA5STRING **a;
-unsigned char **pp;
-long l;
+ASN1_IA5STRING *d2i_ASN1_IA5STRING(ASN1_IA5STRING **a, unsigned char **pp,
+	     long l)
 	{ return(M_d2i_ASN1_IA5STRING(a,pp,l)); }
 
-ASN1_T61STRING *d2i_ASN1_T61STRING(a,pp,l)
-ASN1_T61STRING **a;
-unsigned char **pp;
-long l;
+ASN1_T61STRING *d2i_ASN1_T61STRING(ASN1_T61STRING **a, unsigned char **pp,
+	     long l)
 	{ return(M_d2i_ASN1_T61STRING(a,pp,l)); }
 
-ASN1_PRINTABLESTRING *d2i_ASN1_PRINTABLESTRING(a,pp,l)
-ASN1_PRINTABLESTRING **a;
-unsigned char **pp;
-long l;
-	{ return(M_d2i_ASN1_PRINTABLESTRING(a,pp,l)); }
+ASN1_PRINTABLESTRING *d2i_ASN1_PRINTABLESTRING(ASN1_PRINTABLESTRING **a,
+	     unsigned char **pp, long l)
+	{ return(M_d2i_ASN1_PRINTABLESTRING(a,pp,
+	     l)); }
 
-int i2d_ASN1_PRINTABLE(a,pp)
-ASN1_STRING *a;
-unsigned char **pp;
+int i2d_ASN1_PRINTABLE(ASN1_STRING *a, unsigned char **pp)
 	{ return(M_i2d_ASN1_PRINTABLE(a,pp)); }
 
-ASN1_STRING *d2i_ASN1_PRINTABLE(a,pp,l)
-ASN1_STRING **a;
-unsigned char **pp;
-long l;
+ASN1_STRING *d2i_ASN1_PRINTABLE(ASN1_STRING **a, unsigned char **pp,
+	     long l)
 	{ return(M_d2i_ASN1_PRINTABLE(a,pp,l)); }
 
-int ASN1_PRINTABLE_type(s,len)
-unsigned char *s;
-int len;
+int ASN1_PRINTABLE_type(unsigned char *s, int len)
 	{
 	int c;
 	int ia5=0;
@@ -131,8 +118,7 @@ int len;
 	return(V_ASN1_PRINTABLESTRING);
 	}
 
-int ASN1_UNIVERSALSTRING_to_string(s)
-ASN1_UNIVERSALSTRING *s;
+int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)
 	{
 	int i;
 	unsigned char *p;
@@ -160,24 +146,16 @@ ASN1_UNIVERSALSTRING *s;
 	}
 
 
-int i2d_DIRECTORYSTRING(a,pp)
-ASN1_STRING *a;
-unsigned char **pp;
+int i2d_DIRECTORYSTRING(ASN1_STRING *a, unsigned char **pp)
 	{ return(M_i2d_DIRECTORYSTRING(a,pp)); }
 
-ASN1_STRING *d2i_DIRECTORYSTRING(a,pp,l)
-ASN1_STRING **a;
-unsigned char **pp;
-long l;
+ASN1_STRING *d2i_DIRECTORYSTRING(ASN1_STRING **a, unsigned char **pp,
+	     long l)
 	{ return(M_d2i_DIRECTORYSTRING(a,pp,l)); }
 
-int i2d_DISPLAYTEXT(a,pp)
-ASN1_STRING *a;
-unsigned char **pp;
+int i2d_DISPLAYTEXT(ASN1_STRING *a, unsigned char **pp)
 	{ return(M_i2d_DISPLAYTEXT(a,pp)); }
 
-ASN1_STRING *d2i_DISPLAYTEXT(a,pp,l)
-ASN1_STRING **a;
-unsigned char **pp;
-long l;
+ASN1_STRING *d2i_DISPLAYTEXT(ASN1_STRING **a, unsigned char **pp,
+	     long l)
 	{ return(M_d2i_DISPLAYTEXT(a,pp,l)); }

@@ -79,9 +79,7 @@ static long dsa_load_rand(char *names);
 static long dsa_load_rand();
 #endif
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	char buffer[200];
 	DSA *dsa=NULL;
@@ -214,8 +212,7 @@ end:
 	EXIT(ret);
 	}
 
-static long dsa_load_rand(name)
-char *name;
+static long dsa_load_rand(char *name)
 	{
 	char *p,*n;
 	int last;

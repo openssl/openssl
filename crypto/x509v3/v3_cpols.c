@@ -98,10 +98,8 @@ NULL
  * ASN1err(ASN1_F_D2I_NOTICEREF,ERR_R_MALLOC_FAILURE);
  */
 
-static STACK_OF(POLICYINFO) *r2i_certpol(method, ctx, value)
-X509V3_EXT_METHOD *method;
-X509V3_CTX *ctx;
-char *value;
+static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
+		X509V3_CTX *ctx, char *value)
 {
 	STACK_OF(POLICYINFO) *pols = NULL;
 	char *pstr;
@@ -150,9 +148,7 @@ char *value;
 	return NULL;
 }
 
-static POLICYINFO *policy_section(ctx, polstrs)
-X509V3_CTX *ctx;
-STACK *polstrs;
+static POLICYINFO *policy_section(X509V3_CTX *ctx, STACK *polstrs)
 {
 	int i;
 	CONF_VALUE *cnf;
@@ -224,9 +220,7 @@ STACK *polstrs;
 	
 }
 
-static POLICYQUALINFO *notice_section(ctx, unot)
-X509V3_CTX *ctx;
-STACK *unot;
+static POLICYQUALINFO *notice_section(X509V3_CTX *ctx, STACK *unot)
 {
 	int i;
 	CONF_VALUE *cnf;
@@ -293,8 +287,7 @@ STACK *unot;
 	return NULL;
 }
 
-static STACK *nref_nos(nos)
-STACK *nos;
+static STACK *nref_nos(STACK *nos)
 {
 	STACK *nnums;
 	CONF_VALUE *cnf;
@@ -322,11 +315,8 @@ STACK *nos;
 }
 
 
-static int i2r_certpol(method, pol, out, indent)
-X509V3_EXT_METHOD *method;
-STACK_OF(POLICYINFO) *pol;
-BIO *out;
-int indent;
+static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol,
+		BIO *out, int indent)
 {
 	int i;
 	POLICYINFO *pinfo;
@@ -343,29 +333,24 @@ int indent;
 }
 
 
-int i2d_CERTIFICATEPOLICIES(a, pp)
-STACK_OF(POLICYINFO) *a;
-unsigned char **pp;
+int i2d_CERTIFICATEPOLICIES(STACK_OF(POLICYINFO) *a, unsigned char **pp)
 {
 
 return i2d_ASN1_SET_OF_POLICYINFO(a, pp, i2d_POLICYINFO, V_ASN1_SEQUENCE,
                                                  V_ASN1_UNIVERSAL, IS_SEQUENCE);}
 
-STACK_OF(POLICYINFO) *CERTIFICATEPOLICIES_new()
+STACK_OF(POLICYINFO) *CERTIFICATEPOLICIES_new(void)
 {
 	return sk_POLICYINFO_new_null();
 }
 
-void CERTIFICATEPOLICIES_free(a)
-STACK_OF(POLICYINFO) *a;
+void CERTIFICATEPOLICIES_free(STACK_OF(POLICYINFO) *a)
 {
 	sk_POLICYINFO_pop_free(a, POLICYINFO_free);
 }
 
-STACK_OF(POLICYINFO) *d2i_CERTIFICATEPOLICIES(a,pp,length)
-STACK_OF(POLICYINFO) **a;
-unsigned char **pp;
-long length;
+STACK_OF(POLICYINFO) *d2i_CERTIFICATEPOLICIES(STACK_OF(POLICYINFO) **a,
+		unsigned char **pp,long length)
 {
 return d2i_ASN1_SET_OF_POLICYINFO(a, pp, length, d2i_POLICYINFO,
                          POLICYINFO_free, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
@@ -375,9 +360,7 @@ return d2i_ASN1_SET_OF_POLICYINFO(a, pp, length, d2i_POLICYINFO,
 IMPLEMENT_STACK_OF(POLICYINFO)
 IMPLEMENT_ASN1_SET_OF(POLICYINFO)
 
-int i2d_POLICYINFO(a,pp)
-POLICYINFO *a;
-unsigned char **pp;
+int i2d_POLICYINFO(POLICYINFO *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
 
@@ -394,7 +377,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-POLICYINFO *POLICYINFO_new()
+POLICYINFO *POLICYINFO_new(void)
 {
 	POLICYINFO *ret=NULL;
 	ASN1_CTX c;
@@ -405,10 +388,7 @@ POLICYINFO *POLICYINFO_new()
 	M_ASN1_New_Error(ASN1_F_POLICYINFO_NEW);
 }
 
-POLICYINFO *d2i_POLICYINFO(a,pp,length)
-POLICYINFO **a;
-unsigned char **pp;
-long length;
+POLICYINFO *d2i_POLICYINFO(POLICYINFO **a, unsigned char **pp,long length)
 {
 	M_ASN1_D2I_vars(a,POLICYINFO *,POLICYINFO_new);
 	M_ASN1_D2I_Init();
@@ -421,8 +401,7 @@ long length;
 	M_ASN1_D2I_Finish(a, POLICYINFO_free, ASN1_F_D2I_POLICYINFO);
 }
 
-void POLICYINFO_free(a)
-POLICYINFO *a;
+void POLICYINFO_free(POLICYINFO *a)
 {
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->policyid);
@@ -430,10 +409,8 @@ POLICYINFO *a;
 	Free (a);
 }
 
-static void print_qualifiers(out, quals, indent)
-BIO *out;
-STACK_OF(POLICYQUALINFO) *quals;
-int indent;
+static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals,
+		int indent)
 {
 	POLICYQUALINFO *qualinfo;
 	int i;
@@ -462,10 +439,7 @@ int indent;
 	}
 }
 
-static void print_notice(out, notice, indent)
-BIO *out;
-USERNOTICE *notice;
-int indent;
+static void print_notice(BIO *out, USERNOTICE *notice, int indent)
 {
 	int i;
 	if(notice->noticeref) {
@@ -493,9 +467,7 @@ int indent;
 		
 	
 
-int i2d_POLICYQUALINFO(a,pp)
-POLICYQUALINFO *a;
-unsigned char **pp;
+int i2d_POLICYQUALINFO(POLICYQUALINFO *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
 
@@ -534,7 +506,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-POLICYQUALINFO *POLICYQUALINFO_new()
+POLICYQUALINFO *POLICYQUALINFO_new(void)
 {
 	POLICYQUALINFO *ret=NULL;
 	ASN1_CTX c;
@@ -545,10 +517,8 @@ POLICYQUALINFO *POLICYQUALINFO_new()
 	M_ASN1_New_Error(ASN1_F_POLICYQUALINFO_NEW);
 }
 
-POLICYQUALINFO *d2i_POLICYQUALINFO(a,pp,length)
-POLICYQUALINFO **a;
-unsigned char **pp;
-long length;
+POLICYQUALINFO *d2i_POLICYQUALINFO(POLICYQUALINFO **a, unsigned char **pp,
+		long length)
 {
 	M_ASN1_D2I_vars(a,POLICYQUALINFO *,POLICYQUALINFO_new);
 	M_ASN1_D2I_Init();
@@ -570,8 +540,7 @@ long length;
 	M_ASN1_D2I_Finish(a, POLICYQUALINFO_free, ASN1_F_D2I_POLICYQUALINFO);
 }
 
-void POLICYQUALINFO_free(a)
-POLICYQUALINFO *a;
+void POLICYQUALINFO_free(POLICYQUALINFO *a)
 {
 	if (a == NULL) return;
 	switch(OBJ_obj2nid(a->pqualid)) {
@@ -592,9 +561,7 @@ POLICYQUALINFO *a;
 	Free (a);
 }
 
-int i2d_USERNOTICE(a,pp)
-USERNOTICE *a;
-unsigned char **pp;
+int i2d_USERNOTICE(USERNOTICE *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
 
@@ -609,7 +576,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-USERNOTICE *USERNOTICE_new()
+USERNOTICE *USERNOTICE_new(void)
 {
 	USERNOTICE *ret=NULL;
 	ASN1_CTX c;
@@ -620,10 +587,7 @@ USERNOTICE *USERNOTICE_new()
 	M_ASN1_New_Error(ASN1_F_USERNOTICE_NEW);
 }
 
-USERNOTICE *d2i_USERNOTICE(a,pp,length)
-USERNOTICE **a;
-unsigned char **pp;
-long length;
+USERNOTICE *d2i_USERNOTICE(USERNOTICE **a, unsigned char **pp,long length)
 {
 	M_ASN1_D2I_vars(a,USERNOTICE *,USERNOTICE_new);
 	M_ASN1_D2I_Init();
@@ -635,8 +599,7 @@ long length;
 	M_ASN1_D2I_Finish(a, USERNOTICE_free, ASN1_F_D2I_USERNOTICE);
 }
 
-void USERNOTICE_free(a)
-USERNOTICE *a;
+void USERNOTICE_free(USERNOTICE *a)
 {
 	if (a == NULL) return;
 	NOTICEREF_free(a->noticeref);
@@ -644,9 +607,7 @@ USERNOTICE *a;
 	Free (a);
 }
 
-int i2d_NOTICEREF(a,pp)
-NOTICEREF *a;
-unsigned char **pp;
+int i2d_NOTICEREF(NOTICEREF *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
 
@@ -661,7 +622,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 }
 
-NOTICEREF *NOTICEREF_new()
+NOTICEREF *NOTICEREF_new(void)
 {
 	NOTICEREF *ret=NULL;
 	ASN1_CTX c;
@@ -672,10 +633,7 @@ NOTICEREF *NOTICEREF_new()
 	M_ASN1_New_Error(ASN1_F_NOTICEREF_NEW);
 }
 
-NOTICEREF *d2i_NOTICEREF(a,pp,length)
-NOTICEREF **a;
-unsigned char **pp;
-long length;
+NOTICEREF *d2i_NOTICEREF(NOTICEREF **a, unsigned char **pp,long length)
 {
 	M_ASN1_D2I_vars(a,NOTICEREF *,NOTICEREF_new);
 	M_ASN1_D2I_Init();
@@ -692,8 +650,7 @@ long length;
 	M_ASN1_D2I_Finish(a, NOTICEREF_free, ASN1_F_D2I_NOTICEREF);
 }
 
-void NOTICEREF_free(a)
-NOTICEREF *a;
+void NOTICEREF_free(NOTICEREF *a)
 {
 	if (a == NULL) return;
 	DISPLAYTEXT_free(a->organization);

@@ -70,9 +70,7 @@
  * should hold.
  */
 
-int DH_check(dh,ret)
-DH *dh;
-int *ret;
+int DH_check(DH *dh, int *ret)
 	{
 	int ok=0;
 	BN_CTX *ctx=NULL;

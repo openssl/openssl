@@ -62,13 +62,8 @@
 #include "objects.h"
 #include "x509.h"
 
-int EVP_OpenInit(ctx,type,ek,ekl,iv,priv)
-EVP_CIPHER_CTX *ctx;
-EVP_CIPHER *type;
-unsigned char *ek;
-int ekl;
-unsigned char *iv;
-EVP_PKEY *priv;
+int EVP_OpenInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char *ek,
+	     int ekl, unsigned char *iv, EVP_PKEY *priv)
 	{
 	unsigned char *key=NULL;
 	int i,size=0,ret=0;
@@ -106,10 +101,7 @@ err:
 	return(ret);
 	}
 
-int EVP_OpenFinal(ctx,out,outl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-int *outl;
+int EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
 	int i;
 

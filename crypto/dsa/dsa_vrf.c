@@ -66,11 +66,7 @@
 #include "asn1.h"
 #include "asn1_mac.h"
 
-int DSA_do_verify(dgst,dgst_len,sig,dsa)
-unsigned char *dgst;
-int dgst_len;
-DSA_SIG *sig;
-DSA *dsa;
+int DSA_do_verify(unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 	{
 	BN_CTX *ctx;
 	BIGNUM u1,u2,t1;
@@ -147,13 +143,8 @@ DSA *dsa;
  *      0: incorrect signature
  *     -1: error
  */
-int DSA_verify(type,dgst,dgst_len,sigbuf,siglen,dsa)
-int type;
-unsigned char *dgst;
-int dgst_len;
-unsigned char *sigbuf;
-int siglen;
-DSA *dsa;
+int DSA_verify(int type, unsigned char *dgst, int dgst_len,
+	     unsigned char *sigbuf, int siglen, DSA *dsa)
 	{
 	DSA_SIG *s;
 	int ret=-1;

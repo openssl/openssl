@@ -81,9 +81,7 @@
  * -print_certs
  */
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	PKCS7 *p7=NULL;
 	int i,badops=0;

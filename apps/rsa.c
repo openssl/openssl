@@ -82,9 +82,7 @@
  * -modulus	- print the RSA key modulus
  */
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int ret=1;
 	RSA *rsa=NULL;

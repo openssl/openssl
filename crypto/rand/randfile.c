@@ -71,9 +71,7 @@
 
 /* #define RFILE ".rand" - defined in ../../e_os.h */
 
-int RAND_load_file(file,bytes)
-const char *file;
-long bytes;
+int RAND_load_file(const char *file, long bytes)
 	{
 	MS_STATIC unsigned char buf[BUFSIZE];
 	struct stat sb;
@@ -108,8 +106,7 @@ err:
 	return(ret);
 	}
 
-int RAND_write_file(file)
-const char *file;
+int RAND_write_file(const char *file)
 	{
 	unsigned char buf[BUFSIZE];
 	int i,ret=0;
@@ -140,9 +137,7 @@ err:
 	return(ret);
 	}
 
-char *RAND_file_name(buf,size)
-char *buf;
-int size;
+char *RAND_file_name(char *buf, int size)
 	{
 	char *s;
 	char *ret=NULL;

@@ -15,15 +15,8 @@
 #define EXP2_TABLE_BITS	2 /* 1  2  3  4  5  */
 #define EXP2_TABLE_SIZE	4 /* 2  4  8 16 32  */
 
-int BN_mod_exp2_mont(rr,a1,p1,a2,p2,m,ctx,in_mont)
-BIGNUM *rr;
-BIGNUM *a1;
-BIGNUM *p1;
-BIGNUM *a2;
-BIGNUM *p2;
-BIGNUM *m;
-BN_CTX *ctx;
-BN_MONT_CTX *in_mont;
+int BN_mod_exp2_mont(BIGNUM *rr, BIGNUM *a1, BIGNUM *p1, BIGNUM *a2,
+	     BIGNUM *p2, BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont)
 	{
 	int i,j,k,bits,bits1,bits2,ret=0,wstart,wend,window,xvalue,yvalue;
 	int start=1,ts=0,x,y;

@@ -62,10 +62,7 @@
 #include "asn1_mac.h"
 
 #ifndef NO_FP_API
-int ASN1_i2d_fp(i2d,out,x)
-int (*i2d)();
-FILE *out;
-unsigned char *x;
+int ASN1_i2d_fp(int (*i2d)(), FILE *out, unsigned char *x)
         {
         BIO *b;
         int ret;
@@ -82,10 +79,7 @@ unsigned char *x;
         }
 #endif
 
-int ASN1_i2d_bio(i2d,out,x)
-int (*i2d)();
-BIO *out;
-unsigned char *x;
+int ASN1_i2d_bio(int (*i2d)(), BIO *out, unsigned char *x)
 	{
 	char *b;
 	unsigned char *p;

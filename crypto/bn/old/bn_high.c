@@ -15,9 +15,7 @@ int BN_mul_high(BIGNUM *r,BIGNUM *a,BIGNUM *b,BIGNUM *low, int words);
 #undef t1
 #undef t2
 
-int BN_mul_high(r,a,b,low,words)
-BIGNUM *r,*a,*b,*low;
-int words;
+int BN_mul_high(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *low, int words)
 	{
 	int w2,borrow=0,full=0;
 	BIGNUM t1,t2,t3,h,ah,al,bh,bl,m,s0,s1;

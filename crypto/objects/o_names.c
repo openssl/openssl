@@ -17,7 +17,7 @@ static STACK *names_free=NULL;
 static unsigned long obj_name_hash(OBJ_NAME *a);
 static int obj_name_cmp(OBJ_NAME *a,OBJ_NAME *b);
 
-int OBJ_NAME_init()
+int OBJ_NAME_init(void)
 	{
 	if (names_lh != NULL) return(1);
 	MemCheck_off();
@@ -26,10 +26,8 @@ int OBJ_NAME_init()
 	return(names_lh != NULL);
 	}
 
-int OBJ_NAME_new_index(hash_func,cmp_func,free_func)
-unsigned long (*hash_func)();
-int (*cmp_func)();
-void (*free_func)();
+int OBJ_NAME_new_index(unsigned long (*hash_func)(), int (*cmp_func)(),
+	     void (*free_func)())
 	{
 	int ret;
 	int i;
@@ -66,9 +64,7 @@ void (*free_func)();
 	return(ret);
 	}
 
-static int obj_name_cmp(a,b)
-OBJ_NAME *a;
-OBJ_NAME *b;
+static int obj_name_cmp(OBJ_NAME *a, OBJ_NAME *b)
 	{
 	int ret;
 	int (*cmp)();
@@ -87,8 +83,7 @@ OBJ_NAME *b;
 	return(ret);
 	}
 
-static unsigned long obj_name_hash(a)
-OBJ_NAME *a;
+static unsigned long obj_name_hash(OBJ_NAME *a)
 	{
 	unsigned long ret;
 	unsigned long (*hash)();
@@ -106,9 +101,7 @@ OBJ_NAME *a;
 	return(ret);
 	}
 
-const char *OBJ_NAME_get(name,type)
-const char *name;
-int type;
+const char *OBJ_NAME_get(const char *name, int type)
 	{
 	OBJ_NAME on,*ret;
 	int num=0,alias;
@@ -138,10 +131,7 @@ int type;
 		}
 	}
 
-int OBJ_NAME_add(name,type,data)
-const char *name;
-int type;
-const char *data;
+int OBJ_NAME_add(const char *name, int type, const char *data)
 	{
 	void (*f)();
 	OBJ_NAME *onp,*ret;
@@ -186,9 +176,7 @@ const char *data;
 	return(1);
 	}
 
-int OBJ_NAME_remove(name,type)
-const char *name;
-int type;
+int OBJ_NAME_remove(const char *name, int type)
 	{
 	OBJ_NAME on,*ret;
 	void (*f)();
@@ -216,9 +204,8 @@ int type;
 
 static int free_type;
 
-static void names_lh_free(onp,type)
-OBJ_NAME *onp;
-	{
+static void names_lh_free(OBJ_NAME *onp, int type)
+{
 	if(onp == NULL)
 	    return;
 
@@ -228,8 +215,7 @@ OBJ_NAME *onp;
 		}
 	}
 
-void OBJ_NAME_cleanup(type)
-int type;
+void OBJ_NAME_cleanup(int type)
 	{
 	unsigned long down_load;
 

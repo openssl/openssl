@@ -464,25 +464,24 @@ static SSL_METHOD SSLv3_data= {
 	&SSLv3_enc_data,
 	};
 
-static long ssl3_default_timeout()
+static long ssl3_default_timeout(void)
 	{
 	/* 2 hours, the 24 hours mentioned in the SSLv3 spec
 	 * is way too long for http, the cache would over fill */
 	return(60*60*2);
 	}
 
-SSL_METHOD *sslv3_base_method()
+SSL_METHOD *sslv3_base_method(void)
 	{
 	return(&SSLv3_data);
 	}
 
-int ssl3_num_ciphers()
+int ssl3_num_ciphers(void)
 	{
 	return(SSL3_NUM_CIPHERS);
 	}
 
-SSL_CIPHER *ssl3_get_cipher(u)
-unsigned int u;
+SSL_CIPHER *ssl3_get_cipher(unsigned int u)
 	{
 	if (u < SSL3_NUM_CIPHERS)
 		return(&(ssl3_ciphers[SSL3_NUM_CIPHERS-1-u]));
@@ -491,14 +490,12 @@ unsigned int u;
 	}
 
 /* The problem is that it may not be the correct record type */
-int ssl3_pending(s)
-SSL *s;
+int ssl3_pending(SSL *s)
 	{
 	return(s->s3->rrec.length);
 	}
 
-int ssl3_new(s)
-SSL *s;
+int ssl3_new(SSL *s)
 	{
 	SSL3_CTX *s3;
 
@@ -520,8 +517,7 @@ err:
 	return(0);
 	}
 
-void ssl3_free(s)
-SSL *s;
+void ssl3_free(SSL *s)
 	{
 	if(s == NULL)
 	    return;
@@ -544,8 +540,7 @@ SSL *s;
 	s->s3=NULL;
 	}
 
-void ssl3_clear(s)
-SSL *s;
+void ssl3_clear(SSL *s)
 	{
 	unsigned char *rp,*wp;
 
@@ -576,11 +571,7 @@ SSL *s;
 	s->version=SSL3_VERSION;
 	}
 
-long ssl3_ctrl(s,cmd,larg,parg)
-SSL *s;
-int cmd;
-long larg;
-char *parg;
+long ssl3_ctrl(SSL *s, int cmd, long larg, char *parg)
 	{
 	int ret=0;
 
@@ -693,11 +684,7 @@ char *parg;
 	return(ret);
 	}
 
-long ssl3_ctx_ctrl(ctx,cmd,larg,parg)
-SSL_CTX *ctx;
-int cmd;
-long larg;
-char *parg;
+long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 	{
 	CERT *cert;
 
@@ -800,8 +787,7 @@ char *parg;
 
 /* This function needs to check if the ciphers required are actually
  * available */
-SSL_CIPHER *ssl3_get_cipher_by_char(p)
-const unsigned char *p;
+SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 	{
 	static int init=1;
 	static SSL_CIPHER *sorted[SSL3_NUM_CIPHERS];
@@ -833,9 +819,7 @@ const unsigned char *p;
 		return(*cpp);
 	}
 
-int ssl3_put_cipher_by_char(c,p)
-const SSL_CIPHER *c;
-unsigned char *p;
+int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 	{
 	long l;
 
@@ -849,9 +833,7 @@ unsigned char *p;
 	return(2);
 	}
 
-int ssl3_part_read(s,i)
-SSL *s;
-int i;
+int ssl3_part_read(SSL *s, int i)
 	{
 	s->rwstate=SSL_READING;
 
@@ -866,10 +848,8 @@ int i;
 		}
 	}
 
-SSL_CIPHER *ssl3_choose_cipher(s,have,pref)
-SSL *s;
-STACK_OF(SSL_CIPHER) *have;
-STACK_OF(SSL_CIPHER) *pref;
+SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *have,
+	     STACK_OF(SSL_CIPHER) *pref)
 	{
 	SSL_CIPHER *c,*ret=NULL;
 	int i,j,ok;
@@ -931,9 +911,7 @@ STACK_OF(SSL_CIPHER) *pref;
 	return(ret);
 	}
 
-int ssl3_get_req_cert_type(s,p)
-SSL *s;
-unsigned char *p;
+int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 	{
 	int ret=0;
 	unsigned long alg;
@@ -970,8 +948,7 @@ unsigned char *p;
 	return(ret);
 	}
 
-int ssl3_shutdown(s)
-SSL *s;
+int ssl3_shutdown(SSL *s)
 	{
 
 	/* Don't do anything much if we have not done the handshake or
@@ -1011,10 +988,7 @@ SSL *s;
 		return(0);
 	}
 
-int ssl3_write(s,buf,len)
-SSL *s;
-const char *buf;
-int len;
+int ssl3_write(SSL *s, const char *buf, int len)
 	{
 	int ret,n;
 
@@ -1067,10 +1041,7 @@ int len;
 	return(ret);
 	}
 
-int ssl3_read(s,buf,len)
-SSL *s;
-char *buf;
-int len;
+int ssl3_read(SSL *s, char *buf, int len)
 	{
 	int ret;
 	
@@ -1092,10 +1063,7 @@ int len;
 	return(ret);
 	}
 
-int ssl3_peek(s,buf,len)
-SSL *s;
-char *buf;
-int len;
+int ssl3_peek(SSL *s, char *buf, int len)
 	{
 	SSL3_RECORD *rr;
 	int n;
@@ -1117,8 +1085,7 @@ int len;
 	return(n);
 	}
 
-int ssl3_renegotiate(s)
-SSL *s;
+int ssl3_renegotiate(SSL *s)
 	{
 	if (s->handshake_func == NULL)
 		return(1);
@@ -1130,8 +1097,7 @@ SSL *s;
 	return(1);
 	}
 
-int ssl3_renegotiate_check(s)
-SSL *s;
+int ssl3_renegotiate_check(SSL *s)
 	{
 	int ret=0;
 

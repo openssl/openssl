@@ -68,12 +68,8 @@
 #include "buffer.h"
 #include "evp.h"
 
-int ASN1_verify(i2d,a,signature,data,pkey)
-int (*i2d)();
-X509_ALGOR *a;
-ASN1_BIT_STRING *signature;
-char *data;
-EVP_PKEY *pkey;
+int ASN1_verify(int (*i2d)(), X509_ALGOR *a, ASN1_BIT_STRING *signature,
+	     char *data, EVP_PKEY *pkey)
 	{
 	EVP_MD_CTX ctx;
 	const EVP_MD *type;

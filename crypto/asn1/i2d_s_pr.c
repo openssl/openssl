@@ -67,9 +67,7 @@
  * ASN1err(ASN1_F_I2D_DSAPRIVATEKEY,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
  */
 
-int i2d_DSAPrivateKey(a,pp)
-DSA *a;
-unsigned char **pp;
+int i2d_DSAPrivateKey(DSA *a, unsigned char **pp)
 	{
 	BIGNUM *num[6];
 	unsigned char data[1];

@@ -101,8 +101,7 @@ static int ssl3_send_hello_request();
 
 #endif
 
-static SSL_METHOD *ssl3_get_server_method(ver)
-int ver;
+static SSL_METHOD *ssl3_get_server_method(int ver)
 	{
 	if (ver == SSL3_VERSION)
 		return(SSLv3_server_method());
@@ -110,7 +109,7 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv3_server_method()
+SSL_METHOD *SSLv3_server_method(void)
 	{
 	static int init=1;
 	static SSL_METHOD SSLv3_server_data;
@@ -126,8 +125,7 @@ SSL_METHOD *SSLv3_server_method()
 	return(&SSLv3_server_data);
 	}
 
-int ssl3_accept(s)
-SSL *s;
+int ssl3_accept(SSL *s)
 	{
 	BUF_MEM *buf;
 	unsigned long l,Time=time(NULL);
@@ -523,8 +521,7 @@ end:
 	return(ret);
 	}
 
-static int ssl3_send_hello_request(s)
-SSL *s;
+static int ssl3_send_hello_request(SSL *s)
 	{
 	unsigned char *p;
 
@@ -546,8 +543,7 @@ SSL *s;
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
-static int ssl3_get_client_hello(s)
-SSL *s;
+static int ssl3_get_client_hello(SSL *s)
 	{
 	int i,j,ok,al,ret= -1;
 	long n;
@@ -814,8 +810,7 @@ err:
 	return(ret);
 	}
 
-static int ssl3_send_server_hello(s)
-SSL *s;
+static int ssl3_send_server_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
@@ -881,8 +876,7 @@ SSL *s;
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
-static int ssl3_send_server_done(s)
-SSL *s;
+static int ssl3_send_server_done(SSL *s)
 	{
 	unsigned char *p;
 
@@ -906,8 +900,7 @@ SSL *s;
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
-static int ssl3_send_server_key_exchange(s)
-SSL *s;
+static int ssl3_send_server_key_exchange(SSL *s)
 	{
 #ifndef NO_RSA
 	unsigned char *q;
@@ -1131,8 +1124,7 @@ err:
 	return(-1);
 	}
 
-static int ssl3_send_certificate_request(s)
-SSL *s;
+static int ssl3_send_certificate_request(SSL *s)
 	{
 	unsigned char *p,*d;
 	int i,j,nl,off,n;
@@ -1209,8 +1201,7 @@ err:
 	return(-1);
 	}
 
-static int ssl3_get_client_key_exchange(s)
-SSL *s;
+static int ssl3_get_client_key_exchange(SSL *s)
 	{
 	int i,al,ok;
 	long n;
@@ -1416,8 +1407,7 @@ err:
 	return(-1);
 	}
 
-static int ssl3_get_cert_verify(s)
-SSL *s;
+static int ssl3_get_cert_verify(SSL *s)
 	{
 	EVP_PKEY *pkey=NULL;
 	unsigned char *p;
@@ -1555,8 +1545,7 @@ end:
 	return(ret);
 	}
 
-static int ssl3_get_client_certificate(s)
-SSL *s;
+static int ssl3_get_client_certificate(SSL *s)
 	{
 	int i,ok,al,ret= -1;
 	X509 *x=NULL;
@@ -1698,8 +1687,7 @@ err:
 	return(ret);
 	}
 
-int ssl3_send_server_certificate(s)
-SSL *s;
+int ssl3_send_server_certificate(SSL *s)
 	{
 	unsigned long l;
 	X509 *x;

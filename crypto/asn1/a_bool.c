@@ -64,9 +64,7 @@
  * ASN1err(ASN1_F_D2I_ASN1_BOOLEAN,ASN1_R_BOOLEAN_IS_WRONG_LENGTH);
  */
 
-int i2d_ASN1_BOOLEAN(a,pp)
-int a;
-unsigned char **pp;
+int i2d_ASN1_BOOLEAN(int a, unsigned char **pp)
 	{
 	int r;
 	unsigned char *p;
@@ -81,10 +79,7 @@ unsigned char **pp;
 	return(r);
 	}
 
-int d2i_ASN1_BOOLEAN(a, pp, length)
-int *a;
-unsigned char **pp;
-long length;
+int d2i_ASN1_BOOLEAN(int *a, unsigned char **pp, long length)
 	{
 	int ret= -1;
 	unsigned char *p;

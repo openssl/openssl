@@ -82,7 +82,7 @@
 #include "pkcs12.h"
 #include "err.h"
 
-void ERR_load_crypto_strings()
+void ERR_load_crypto_strings(void)
 	{
 	static int done=0;
 

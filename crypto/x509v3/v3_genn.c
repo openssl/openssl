@@ -69,9 +69,7 @@
  * ASN1err(ASN1_F_D2I_GENERAL_NAME,ERR_R_MALLOC_FAILURE);
  */
 
-int i2d_GENERAL_NAME(a,pp)
-GENERAL_NAME *a;
-unsigned char **pp;
+int i2d_GENERAL_NAME(GENERAL_NAME *a, unsigned char **pp)
 {
 	unsigned char *p;
 	int ret;
@@ -120,7 +118,7 @@ unsigned char **pp;
 	return ret;
 }
 
-GENERAL_NAME *GENERAL_NAME_new()
+GENERAL_NAME *GENERAL_NAME_new(void)
 {
 	GENERAL_NAME *ret=NULL;
 	ASN1_CTX c;
@@ -131,10 +129,8 @@ GENERAL_NAME *GENERAL_NAME_new()
 	M_ASN1_New_Error(ASN1_F_GENERAL_NAME_NEW);
 }
 
-GENERAL_NAME *d2i_GENERAL_NAME(a,pp,length)
-GENERAL_NAME **a;
-unsigned char **pp;
-long length;
+GENERAL_NAME *d2i_GENERAL_NAME(GENERAL_NAME **a, unsigned char **pp,
+	     long length)
 {
 	unsigned char _tmp;
 	M_ASN1_D2I_vars(a,GENERAL_NAME *,GENERAL_NAME_new);
@@ -181,8 +177,7 @@ long length;
 	M_ASN1_D2I_Finish(a, GENERAL_NAME_free, ASN1_F_D2I_GENERAL_NAME);
 }
 
-void GENERAL_NAME_free(a)
-GENERAL_NAME *a;
+void GENERAL_NAME_free(GENERAL_NAME *a)
 {
 	if (a == NULL) return;
 	switch(a->type) {
@@ -219,29 +214,23 @@ GENERAL_NAME *a;
  * an explicit functions.
  */
 
-STACK *GENERAL_NAMES_new()
+STACK *GENERAL_NAMES_new(void)
 {
 	return sk_new(NULL);
 }
 
-void GENERAL_NAMES_free(a)
-STACK *a;
+void GENERAL_NAMES_free(STACK *a)
 {
 	sk_pop_free(a, GENERAL_NAME_free);
 }
 
-STACK *d2i_GENERAL_NAMES(a,pp,length)
-STACK **a;
-unsigned char **pp;
-long length;
+STACK *d2i_GENERAL_NAMES(STACK **a, unsigned char **pp, long length)
 {
 return d2i_ASN1_SET(a, pp, length, (char *(*)())d2i_GENERAL_NAME,
 			 GENERAL_NAME_free, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
 }
 
-int i2d_GENERAL_NAMES(a,pp)
-STACK *a;
-unsigned char **pp;
+int i2d_GENERAL_NAMES(STACK *a, unsigned char **pp)
 {
 return i2d_ASN1_SET(a, pp, i2d_GENERAL_NAME, V_ASN1_SEQUENCE,
 						 V_ASN1_UNIVERSAL, IS_SEQUENCE);

@@ -63,9 +63,7 @@
 /* ASN1err(ASN1_F_D2I_ASN1_INTEGER,ASN1_R_EXPECTING_AN_INTEGER);
  */
 
-int i2d_ASN1_INTEGER(a,pp)
-ASN1_INTEGER *a;
-unsigned char **pp;
+int i2d_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 	{
 	int pad=0,ret,r,i,t;
 	unsigned char *p,*pt,*n,pb=0;
@@ -116,10 +114,8 @@ unsigned char **pp;
 	return(r);
 	}
 
-ASN1_INTEGER *d2i_ASN1_INTEGER(a, pp, length)
-ASN1_INTEGER **a;
-unsigned char **pp;
-long length;
+ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a, unsigned char **pp,
+	     long length)
 	{
 	ASN1_INTEGER *ret=NULL;
 	unsigned char *p,*to,*s;
@@ -194,9 +190,7 @@ err:
 	return(NULL);
 	}
 
-int ASN1_INTEGER_set(a,v)
-ASN1_INTEGER *a;
-long v;
+int ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
 	{
 	int i,j,k;
 	unsigned char buf[sizeof(long)+1];
@@ -236,8 +230,7 @@ long v;
 	return(1);
 	}
 
-long ASN1_INTEGER_get(a)
-ASN1_INTEGER *a;
+long ASN1_INTEGER_get(ASN1_INTEGER *a)
 	{
 	int neg=0,i;
 	long r=0;
@@ -266,9 +259,7 @@ ASN1_INTEGER *a;
 	return(r);
 	}
 
-ASN1_INTEGER *BN_to_ASN1_INTEGER(bn,ai)
-BIGNUM *bn;
-ASN1_INTEGER *ai;
+ASN1_INTEGER *BN_to_ASN1_INTEGER(BIGNUM *bn, ASN1_INTEGER *ai)
 	{
 	ASN1_INTEGER *ret;
 	int len,j;
@@ -293,9 +284,7 @@ err:
 	return(NULL);
 	}
 
-BIGNUM *ASN1_INTEGER_to_BN(ai,bn)
-ASN1_INTEGER *ai;
-BIGNUM *bn;
+BIGNUM *ASN1_INTEGER_to_BN(ASN1_INTEGER *ai, BIGNUM *bn)
 	{
 	BIGNUM *ret;
 
