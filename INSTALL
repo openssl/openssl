@@ -37,6 +37,13 @@
 
   rsaref        Build with RSADSI's RSAREF toolkit.
 
+  no-threads    Don't try to build with support for multi-threaded
+                applications.
+
+  threads       Build with support for multi-threaded applications.
+                This will usually require additional system-dependent options!
+                See "Note on multi-threading" below.
+
   no-asm        Build with no assembler code.
 
   386           Use the 80386 instruction set only (the default x86 code is
@@ -179,6 +186,22 @@
      while the header files still are able to #include each other
      with names of the form <foo.h>.
 
+
+ Note on multi-threading
+ -----------------------
+
+ For some systems, the OpenSSL Configure script knows what compiler options
+ are needed to generate a library that is suitable for multi-threaded
+ applications.  On these systems, support for multi-threading is enabled
+ by default; use the "no-threads" option to disable (this should never be
+ necessary).
+
+ On other systems, to enable support for multi-threading, you will have
+ to specifiy at least two options: "threads", and a system-dependent option.
+ (The latter is "-D_REENTRANT" on various systems.)  The default in this
+ case, obviously, is not to include support for multi-threading (but
+ you can still use "no-threads" to suppress an annoying warning message
+ from the Configure script.)
 
 
 --------------------------------------------------------------------------------
