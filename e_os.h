@@ -246,18 +246,38 @@ extern "C" {
 #    define RFILE		".rnd"
 #    define LIST_SEPARATOR_CHAR ','
 #    define NUL_DEV		"NLA0:"
-  /* We need to do this, because DEC C converts exit code 0 to 1, but not 1
-     to 0.  We will convert 1 to 3!  Also, add the inhibit message bit... */
-#    ifndef MONOLITH
+  /* We need to do this since VMS has the following coding on status codes:
+
+     Bits 0-2: status type: 0 = warning, 1 = success, 2 = error, 3 = info ...
+               The important thing to know is that odd numbers are considered
+	       good, while even ones are considered errors.
+     Bits 3-15: actual status number
+     Bits 16-27: facility number.  0 is considered "unknown"
+     Bits 28-31: control bits.  If bit 28 is set, the shell won't try to
+                 output the message (which, for random codes, just looks ugly)
+
+     So, what we do here is to change 0 to 1 to get the default success status,
+     and everything else is shifted up to fit into the status number field, and
+     the status is tagged as an error, which I believe is what is wanted here.
+     -- Richard Levitte
+  */
+#    if !defined(MONOLITH) || defined(OPENSSL_C)
 #      define EXIT(n)		do { int __VMS_EXIT = n; \
-                                     if (__VMS_EXIT == 1) __VMS_EXIT = 3; \
+                                     if (__VMS_EXIT == 0) \
+				       __VMS_EXIT = 1; \
+				     else \
+				       __VMS_EXIT = (n << 3) | 2; \
                                      __VMS_EXIT |= 0x10000000; \
-				     exit(n); return(n); } while(0)
+				     exit(__VMS_EXIT); \
+				     return(__VMS_EXIT); } while(0)
 #    else
 #      define EXIT(n)		do { int __VMS_EXIT = n; \
-                                     if (__VMS_EXIT == 1) __VMS_EXIT = 3; \
+                                     if (__VMS_EXIT == 0) \
+				       __VMS_EXIT = 1; \
+				     else \
+				       __VMS_EXIT = (n << 3) | 2; \
                                      __VMS_EXIT |= 0x10000000; \
-				     return(n); } while(0)
+				     return(__VMS_EXIT); } while(0)
 #    endif
 #    define NO_SYS_PARAM_H
 #  else
