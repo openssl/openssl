@@ -61,12 +61,12 @@
  * perl obj_dat.pl < objects.h > obj_dat.h
  */
 
-#define NUM_NID 126
-#define NUM_SN 97
-#define NUM_LN 124
-#define NUM_OBJ 98
+#define NUM_NID 127
+#define NUM_SN 98
+#define NUM_LN 125
+#define NUM_OBJ 99
 
-static unsigned char lvalues[611]={
+static unsigned char lvalues[614]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -165,6 +165,7 @@ static unsigned char lvalues[611]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x03,0x08,     /* [592] OBJ_rc5_cbc */
 0x29,0x01,0x01,0x85,0x1A,                    /* [600] OBJ_rle_compression */
 0x29,0x01,0x01,0x85,0x1A,                    /* [605] OBJ_zlib_compression */
+0x55,0x1D,0x25,                              /* [610] OBJ_ext_key_usage */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -336,6 +337,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"RC5-OFB","rc5-ofb",NID_rc5_ofb64,0,NULL},
 {"RLE","run length compression",NID_rle_compression,5,&(lvalues[600]),0},
 {"ZLIB","zlib compression",NID_zlib_compression,5,&(lvalues[605]),0},
+{"extendedKeyUsage","X509v3 Extended Key Usage",NID_ext_key_usage,3,
+	&(lvalues[610]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -419,6 +422,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[89]),/* "certificatePolicies" */
 &(nid_objs[103]),/* "crlDistributionPoints" */
 &(nid_objs[88]),/* "crlNumber" */
+&(nid_objs[126]),/* "extendedKeyUsage" */
 &(nid_objs[86]),/* "issuerAltName" */
 &(nid_objs[83]),/* "keyUsage" */
 &(nid_objs[81]),/* "ld-ce" */
@@ -458,6 +462,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[103]),/* "X509v3 CRL Distribution Points" */
 &(nid_objs[88]),/* "X509v3 CRL Number" */
 &(nid_objs[89]),/* "X509v3 Certificate Policies" */
+&(nid_objs[126]),/* "X509v3 Extended Key Usage" */
 &(nid_objs[86]),/* "X509v3 Issuer Alternative Name" */
 &(nid_objs[83]),/* "X509v3 Key Usage" */
 &(nid_objs[84]),/* "X509v3 Private Key Usage Period" */
@@ -593,11 +598,12 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[103]),/* OBJ_crl_distribution_points      2 5 29 31 */
 &(nid_objs[89]),/* OBJ_certificate_policies         2 5 29 32 */
 &(nid_objs[90]),/* OBJ_authority_key_identifier     2 5 29 35 */
+&(nid_objs[126]),/* OBJ_ext_key_usage                2 5 29 37 */
 &(nid_objs[19]),/* OBJ_rsa                          2 5 8 1 1 */
 &(nid_objs[96]),/* OBJ_mdc2WithRSA                  2 5 8 3 100 */
 &(nid_objs[95]),/* OBJ_mdc2                         2 5 8 3 101 */
-&(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666.1 */
 &(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666.2 */
+&(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666.1 */
 &(nid_objs[104]),/* OBJ_md5WithRSA                   1 3 14 3 2 3 */
 &(nid_objs[29]),/* OBJ_des_ecb                      1 3 14 3 2 6 */
 &(nid_objs[31]),/* OBJ_des_cbc                      1 3 14 3 2 7 */

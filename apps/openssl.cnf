@@ -1,5 +1,5 @@
 #
-# SSLeay example configuration file.
+# OpenSSL example configuration file.
 # This is mostly being used for generation of certificate requests.
 #
 
@@ -80,7 +80,7 @@ localityName			= Locality Name (eg, city)
 
 # we can do this but it is not needed normally :-)
 #1.organizationName		= Second Organization Name (eg, company)
-#1.organizationName_default	= CryptSoft Pty Ltd
+#1.organizationName_default	= World Wide Web Pty Ltd
 
 organizationalUnitName		= Organizational Unit Name (eg, section)
 #organizationalUnitName_default	=
@@ -102,7 +102,7 @@ unstructuredName		= An optional company name
 
 [ x509v3_extensions ]
 
-nsCaRevocationUrl		= http://www.cryptsoft.com/ca-crl.pem
+nsCaRevocationUrl		= http://www.domain.dom/ca-crl.pem
 nsComment			= "This is a comment"
 
 # under ASN.1, the 0 bit would be encoded as 80

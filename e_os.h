@@ -172,7 +172,8 @@ extern "C" {
 #ifndef R_OK
 #  define R_OK	4
 #endif
-#  define SSLEAY_CONF	"ssleay.cnf"
+#  define OPENSSL_CONF	"openssl.cnf"
+#  define SSLEAY_CONF	OPENSSL_CONF
 #  define NUL_DEV	"nul"
 #  define RFILE		".rnd"
 
@@ -184,7 +185,8 @@ extern "C" {
 #    include <unistd.h>
 #  endif
 
-#  define SSLEAY_CONF	"ssleay.cnf"
+#  define OPENSSL_CONF	"openssl.cnf"
+#  define SSLEAY_CONF	OPENSSL_CONF
 #  define RFILE		".rnd"
 #  define LIST_SEPARATOR_CHAR ':'
 #  ifndef MONOLITH

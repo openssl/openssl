@@ -357,12 +357,14 @@ bad:
 
 #ifndef MONOLITH
 	/* Lets load up our environment a little */
-	p=getenv("SSLEAY_CONF");
+	p=getenv("OPENSSL_CONF");
+	if (p == NULL)
+		p=getenv("SSLEAY_CONF");
 	if (p == NULL)
 		{
 		strcpy(config_name,X509_get_default_cert_area());
 		strcat(config_name,"/lib/");
-		strcat(config_name,SSLEAY_CONF);
+		strcat(config_name,OPENSSL_CONF);
 		p=config_name;
 		}
         default_config_file=p;

@@ -1,8 +1,5 @@
 #!/usr/local/bin/perl
 
-$mkprog='mklinks';
-$rmprog='rmlinks';
-
 print "#ifndef NOPROTO\n";
 
 grep(s/^asn1pars$/asn1parse/,@ARGV);
@@ -38,8 +35,7 @@ foreach (@ARGV)
 	$str="\t{FUNC_TYPE_GENERAL,\"$_\",${_}_main},\n";
 	if (($_ =~ /^s_/) || ($_ =~ /^ciphers$/))
 		{ print "#if !defined(NO_SOCK) && !(defined(NO_SSL2) && defined(O_SSL3))\n${str}#endif\n"; } 
-	elsif ( ($_ =~ /^rsa$/) || ($_ =~ /^genrsa$/) ||
-		($_ =~ /^req$/) || ($_ =~ /^ca$/) || ($_ =~ /^x509$/))
+	elsif ( ($_ =~ /^rsa$/) || ($_ =~ /^genrsa$/) ) 
 		{ print "#ifndef NO_RSA\n${str}#endif\n";  }
 	elsif ( ($_ =~ /^dsa$/) || ($_ =~ /^gendsa$/) || ($_ =~ /^dsaparam$/))
 		{ print "#ifndef NO_DSA\n${str}#endif\n"; }
@@ -84,31 +80,3 @@ foreach (
 print "\t{0,NULL,NULL}\n\t};\n";
 print "#endif\n\n";
 
-open(OUT,">$mkprog") || die "unable to open '$prog':$!\n";
-print OUT "#!/bin/sh\nfor i in ";
-foreach (@files)
-	{ print OUT $_." "; }
-print OUT <<'EOF';
-
-do
-echo making symlink for $i
-/bin/rm -f $i
-ln -s ssleay $i
-done
-EOF
-close(OUT);
-chmod(0755,$mkprog);
-
-open(OUT,">$rmprog") || die "unable to open '$prog':$!\n";
-print OUT "#!/bin/sh\nfor i in ";
-foreach (@files)
-	{ print OUT $_." "; }
-print OUT <<'EOF';
-
-do
-echo removing $i
-/bin/rm -f $i
-done
-EOF
-close(OUT);
-chmod(0755,$rmprog);

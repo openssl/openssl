@@ -1,5 +1,5 @@
 #
-# SSLeay/apps/Makefile.ssl
+#  apps/Makefile.ssl
 #
 
 DIR=		apps
@@ -25,18 +25,18 @@ DLIBSSL=../libssl.a
 LIBCRYPTO=-L.. -lcrypto
 LIBSSL=-L.. -lssl
 
-SSLEAY= ssleay
+PROGRAM= openssl
 
-SCRIPTS=CA.sh der_chop CA.pl
+SCRIPTS=CA.sh CA.pl der_chop
 
-EXE= $(SSLEAY)
+EXE= $(PROGRAM)
 
 E_EXE=	verify asn1pars req dgst dh enc gendh errstr ca crl \
 	rsa dsa dsaparam \
 	x509 genrsa s_server s_client speed \
 	s_time version pkcs7 crl2pkcs7 sess_id ciphers
 
-PROGS= $(SSLEAY).c
+PROGS= $(PROGRAM).c
 
 A_OBJ=apps.o
 A_SRC=apps.c
@@ -86,18 +86,15 @@ sreq.o: req.c
 files:
 	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
-install: mklinks
-	@for i in $(EXE) $(SCRIPTS) mklinks; \
+install:
+	@for i in $(EXE) $(SCRIPTS); \
 	do  \
 	(echo installing $$i; \
 	 cp $$i $(INSTALLTOP)/bin/$$i; \
 	 chmod 755 $(INSTALLTOP)/bin/$$i ); \
 	 done; \
-	cp ssleay.cnf $(INSTALLTOP)/lib
-	chmod 644 $(INSTALLTOP)/lib/ssleay.cnf
-	cd $(INSTALLTOP)/bin; \
-	/bin/sh ./mklinks; \
-	/bin/rm -f ./mklinks
+	cp openssl.cnf $(INSTALLTOP)/lib; \
+	chmod 644 $(INSTALLTOP)/lib/openssl.cnf
 
 tags:
 	ctags $(SRC)
@@ -130,15 +127,12 @@ $(DLIBSSL):
 $(DLIBCRYPTO):
 	(cd ../crypto; $(MAKE))
 
-$(SSLEAY): progs.h $(E_OBJ) $(SSLEAY).o $(DLIBCRYPTO) $(DLIBSSL)
-	$(RM) $(SSLEAY)
-	$(CC) -o $(SSLEAY) $(CFLAGS) $(SSLEAY).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBCRYPTO) $(EX_LIBS)
+$(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
+	$(RM) $(PROGRAM)
+	$(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBCRYPTO) $(EX_LIBS)
 
 progs.h:
-	perl ./g_ssleay.pl $(E_EXE) >progs.h
-	$(RM) $(SSLEAY).o
-
-mklinks:
-	perl ./g_ssleay.pl $(E_EXE) >progs.h
+	perl ./progs.pl $(E_EXE) >progs.h
+	$(RM) $(PROGRAM).o
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

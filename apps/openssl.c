@@ -1,4 +1,4 @@
-/* apps/ssleay.c */
+/* apps/openssl.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -152,12 +152,14 @@ char *Argv[];
 	ERR_load_crypto_strings();
 
 	/* Lets load up our environment a little */
-	p=getenv("SSLEAY_CONF");
+	p=getenv("OPENSSL_CONF");
+	if (p == NULL)
+		p=getenv("SSLEAY_CONF");
 	if (p == NULL)
 		{
 		strcpy(config_name,X509_get_default_cert_area());
 		strcat(config_name,"/lib/");
-		strcat(config_name,SSLEAY_CONF);
+		strcat(config_name,OPENSSL_CONF);
 		p=config_name;
 		}
 
@@ -191,7 +193,7 @@ char *Argv[];
 		goto end;
 		}
 
-	/* ok, lets enter the old 'SSLeay>' mode */
+	/* ok, lets enter the old 'OpenSSL>' mode */
 	
 	for (;;)
 		{
@@ -204,7 +206,7 @@ char *Argv[];
 			p[0]='\0';
 			if (i++)
 				prompt=">";
-			else	prompt="SSLeay>";
+			else	prompt="OpenSSL> ";
 			fputs(prompt,stdout);
 			fflush(stdout);
 			fgets(p,n,stdin);
@@ -278,10 +280,10 @@ char *argv[];
 		}
 	else
 		{
-		BIO_printf(bio_err,"'%s' is a bad command, valid commands are",
+		BIO_printf(bio_err,"openssl:Error: '%s' is an invalid command.\n",
 			argv[0]);
+		BIO_printf(bio_err, "\nStandard commands");
 		i=0;
-		fp=functions;
 		tp=0;
 		for (fp=functions; fp->name != NULL; fp++)
 			{
@@ -299,17 +301,17 @@ char *argv[];
 					{
 					i=1;
 					BIO_printf(bio_err,
-						"Message Digest commands - see the dgst command for more details\n");
+						"\nMessage Digest commands (see the `dgst' command for more details)\n");
 					}
 				else if (tp == FUNC_TYPE_CIPHER)
 					{
 					i=1;
-					BIO_printf(bio_err,"Cipher commands - see the enc command for more details\n");
+					BIO_printf(bio_err,"\nCipher commands (see the `enc' command for more details)\n");
 					}
 				}
 			BIO_printf(bio_err,"%-15s",fp->name);
 			}
-		BIO_printf(bio_err,"\nquit\n");
+		BIO_printf(bio_err,"\n\n");
 		ret=0;
 		}
 end:
