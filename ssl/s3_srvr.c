@@ -1652,7 +1652,19 @@ static int ssl3_get_client_certificate(SSL *s)
 	if (s->session->peer != NULL)
 		X509_free(s->session->peer);
 	s->session->peer=sk_X509_shift(sk);
+
+	/* FIXME: s->session->cert could be a SSL_CTX's struct cert_st!
+	 * struct cert_st is used for too many purposes.  It makes
+	 * sense to use the same structure in both SSL_CTX and SSL,
+	 * but then don't put any per-connection data in it. */
+#if 0 /* This could become a workaround, but it would still be utterly ugly */
+	if (!ssl_cert_instantiate(&s->cert, s->ctx->default_cert)) 
+		{
+		handle the error;
+		}
+#endif
 	s->session->cert->cert_chain=sk;
+
 	sk=NULL;
 
 	ret=1;
