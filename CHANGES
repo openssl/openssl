@@ -16,6 +16,11 @@
      help make "keygen" another member function of RSA_METHOD etc.
      [Geoff Thorpe]
 
+  *) Change the ZLIB compression method to be stateful, and make it
+     available to TLS with the number defined in 
+     draft-ietf-tls-compression-04.txt.
+     [Richard Levitte]
+
   *) Add the ASN.1 structures and functions for CertificatePair, which
      is defined as follows (according to X.509_4thEditionDraftV6.pdf):
 
