@@ -215,8 +215,8 @@ static void lock_dbg_cb(int mode, int type, const char *file, int line)
 int main(int Argc, char *Argv[])
 	{
 	ARGS arg;
-#define PROG_NAME_SIZE	16
-	char pname[PROG_NAME_SIZE];
+#define PROG_NAME_SIZE	39
+	char pname[PROG_NAME_SIZE+1];
 	FUNCTION f,*fp;
 	MS_STATIC char *prompt,buf[1024],config_name[256];
 	int n,i,ret=0;
