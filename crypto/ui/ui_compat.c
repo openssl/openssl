@@ -57,6 +57,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <string.h>
 #include <openssl/ui_compat.h>
 
 #ifndef OPENSSL_NO_DES
