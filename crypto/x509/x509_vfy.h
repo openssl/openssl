@@ -154,7 +154,7 @@ typedef struct x509_lookup_method_st
 			    X509_OBJECT *ret);
 	} X509_LOOKUP_METHOD;
 
-typedef struct x509_store_state_st X509_STORE_CTX;
+typedef struct x509_store_ctx_st X509_STORE_CTX;
 
 /* This is used to hold everything.  It is used for all certificate
  * validation.  Once we have a certificate chain, the 'verify'
@@ -194,7 +194,7 @@ struct x509_lookup_st
 /* This is a used when verifying cert chains.  Since the
  * gathering of the cert chain can take some time (and have to be
  * 'retried', this needs to be kept and passed around. */
-struct x509_store_state_st      /* X509_STORE_CTX */
+struct x509_store_ctx_st      /* X509_STORE_CTX */
 	{
 	X509_STORE *ctx;
 	int current_method;	/* used when looking up certs */
