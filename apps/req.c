@@ -666,11 +666,8 @@ loop:
 
 			/* Set up V3 context struct */
 
-			ext_ctx.issuer_cert = x509ss;
-			ext_ctx.subject_cert = x509ss;
-			ext_ctx.subject_req = NULL;
-			ext_ctx.crl = NULL;
-			ext_ctx.flags = 0;
+			X509V3_set_ctx(&ext_ctx, x509ss, x509ss, NULL, NULL, 0);
+			X509V3_set_conf_lhash(&ext_ctx, req_conf);
 
 			/* Add extensions */
 			if(extensions && !X509V3_EXT_add_conf(req_conf, 

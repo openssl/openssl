@@ -1073,11 +1073,8 @@ bad:
 		    if (ci->version == NULL)
 		    if ((ci->version=ASN1_INTEGER_new()) == NULL) goto err;
 		    ASN1_INTEGER_set(ci->version,1); /* version 2 CRL */
-		    crlctx.crl = crl;
-		    crlctx.issuer_cert = x509;
-		    crlctx.subject_cert = NULL;
-		    crlctx.subject_req = NULL;
-		    crlctx.flags = 0;
+		    X509V3_set_ctx(&crlctx, x509, NULL, NULL, crl, 0);
+		    X509V3_set_conf_lhash(&crlctx, conf);
 
 		    if(!X509V3_EXT_CRL_add_conf(conf, &crlctx,
 						 crl_ext, crl)) goto err;
@@ -1792,11 +1789,8 @@ again2:
 
 		ci->extensions = NULL;
 
-		ctx.subject_cert = ret;
-		ctx.issuer_cert = x509;
-		ctx.subject_req = req;
-		ctx.crl = NULL;
-		ctx.flags = 0;
+		X509V3_set_ctx(&ctx, x509, ret, req, NULL, 0);
+		X509V3_set_conf_lhash(&ctx, lconf);
 
 		if(!X509V3_EXT_add_conf(lconf, &ctx, ext_sect, ret)) goto err;
 

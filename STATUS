@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/04/16 11:32:33 $
+  ______________                           $Date: 1999/04/16 23:57:00 $
 
   DEVELOPMENT STATE
 
@@ -45,6 +45,8 @@
         Proper (or at least usable) certificate chain verification.
         Documentation on X509 V3 extension code.
         PKCS#12 code cleanup and enhancement.
+	PKCS #8 and PKCS#5 v2.0 support.
+	Private key, certificate and CRL API and implementation.
 
     o Mark is currently working on:
         Folding in any changes that are in the C2Net code base that were

@@ -80,7 +80,7 @@ typedef char * (*X509V3_EXT_V2I)(struct v3_ext_method *method, struct v3_ext_ctx
 typedef char * (*X509V3_EXT_I2S)(struct v3_ext_method *method, char *ext);
 typedef char * (*X509V3_EXT_S2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
 typedef int (*X509V3_EXT_I2R)(struct v3_ext_method *method, char *ext, BIO *out, int indent);
-typedef char *(*X509V3_EXT_R2I)(struct v3_ext_method *method, char *db, char *value);
+typedef char * (*X509V3_EXT_R2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
 
 /* V3 extension structure */
 
@@ -102,11 +102,17 @@ X509V3_EXT_V2I v2i;
 
 /* The following are used for raw extensions */
 X509V3_EXT_I2R i2r;
-X509V3_EXT_R2I r2i;	/* Doesn't do anything *YET* */
+X509V3_EXT_R2I r2i;
 
 char *usr_data;	/* Any extension specific data */
 };
 
+typedef struct X509V3_CONF_METHOD_st {
+char * (*get_string)(void *db, char *section, char *value);
+STACK * (*get_section)(void *db, char *section);
+void (*free_string)(void *db, char * string);
+void (*free_section)(void *db, STACK *section);
+} X509V3_CONF_METHOD;
 
 /* Context specific info */
 struct v3_ext_ctx {
@@ -116,6 +122,8 @@ X509 *issuer_cert;
 X509 *subject_cert;
 X509_REQ *subject_req;
 X509_CRL *crl;
+X509V3_CONF_METHOD *db_meth;
+void *db;
 /* Maybe more here */
 };
 
@@ -278,7 +286,15 @@ int X509V3_EXT_CRL_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section, X509_CR
 int X509V3_EXT_check_conf(LHASH *conf, char *section);
 int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool);
 int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint);
+void X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH *lhash);
 #endif
+
+char * X509V3_get_string(X509V3_CTX *ctx, char *name, char *section);
+STACK * X509V3_get_section(X509V3_CTX *ctx, char *section);
+void X509V3_free_string(X509V3_CTX *ctx, char *str);
+void X509V3_free_section( X509V3_CTX *ctx, STACK *section);
+void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
+				 X509_REQ *req, X509_CRL *crl, int flags);
 
 int X509V3_add_value(char *name, char *value, STACK **extlist);
 int X509V3_add_value_bool(char *name, int asn1_bool, STACK **extlist);
@@ -368,7 +384,14 @@ int X509V3_EXT_add_conf();
 int X509V3_EXT_check_conf();
 int X509V3_get_value_bool();
 int X509V3_get_value_int();
+void X509V3_set_conf_lhash();
 #endif
+
+char * X509V3_get_string();
+STACK * X509V3_get_section();
+void X509V3_free_string();
+void X509V3_free_section();
+void X509V3_set_ctx();
 
 int X509V3_add_value();
 int X509V3_add_value_bool();

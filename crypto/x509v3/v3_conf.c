@@ -295,3 +295,85 @@ char *section;
 	static X509V3_CTX ctx_tst = { CTX_TEST, NULL, NULL, NULL, NULL };
 	return X509V3_EXT_add_conf(conf, &ctx_tst, section, NULL);
 }
+
+/* Config database functions */
+
+char * X509V3_get_string(ctx, name, section)
+X509V3_CTX *ctx;
+char *name;
+char *section;
+{
+	if(ctx->db_meth->get_string)
+			return ctx->db_meth->get_string(ctx->db, name, section);
+	return NULL;
+}
+
+STACK * X509V3_get_section(ctx, section)
+X509V3_CTX *ctx;
+char *section;
+{
+	if(ctx->db_meth->get_section)
+			return ctx->db_meth->get_section(ctx->db, section);
+	return NULL;
+}
+
+void X509V3_free_string(ctx, str)
+X509V3_CTX *ctx;
+char *str;
+{
+	if(ctx->db_meth->free_string)
+			return ctx->db_meth->free_string(ctx->db, str);
+}
+
+void X509V3_free_section(ctx, section)
+X509V3_CTX *ctx;
+STACK *section;
+{
+	if(ctx->db_meth->free_section)
+			return ctx->db_meth->free_section(ctx->db, section);
+}
+
+static char *conf_lhash_get_string(db, section, value)
+void *db;
+char *section;
+char *value;
+{
+	return CONF_get_string(db, section, value);
+}
+
+static STACK *conf_lhash_get_section(db, section)
+void *db;
+char *section;
+{
+	return CONF_get_section(db, section);
+}
+
+static X509V3_CONF_METHOD conf_lhash_method = {
+conf_lhash_get_string,
+conf_lhash_get_section,
+NULL,
+NULL
+};
+
+void X509V3_set_conf_lhash(ctx, lhash)
+X509V3_CTX *ctx;
+LHASH *lhash;
+{
+	ctx->db_meth = &conf_lhash_method;
+	ctx->db = lhash;
+}
+
+void X509V3_set_ctx(ctx, issuer, subj, req, crl, flags)
+X509V3_CTX *ctx;
+X509 *issuer;
+X509 *subj;
+X509_REQ *req;
+X509_CRL *crl;
+int flags;
+{
+	ctx->issuer_cert = issuer;
+	ctx->subject_cert = subj;
+	ctx->crl = crl;
+	ctx->subject_req = req;
+	ctx->flags = flags;
+}

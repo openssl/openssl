@@ -5,6 +5,10 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Add code to allow r2i extensions to access the configuration database,
+     add an LHASH database driver and add several ctx helper functions.
+     [Steve Henson]
+
   *) Fix an evil bug in bn_expand2() which caused various BN functions to
      fail when they extended the size of a BIGNUM.
      [Steve Henson]
