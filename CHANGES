@@ -4,6 +4,12 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add '-tls1' option to 'openssl ciphers', which was already
+     mentioned in the documentation but had not been implemented.
+     (This option is not yet really useful because even the additional
+     experimental TLS 1.0 ciphers are currently treated as SSL 3.0 ciphers.)
+     [Bodo Moeller]
+
   *) Initial DSO code added into libcrypto for letting OpenSSL (and
      OpenSSL-based applications) load shared libraries and bind to
      them in a portable way.

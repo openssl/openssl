@@ -74,6 +74,7 @@ static char *ciphers_usage[]={
 " -v          - verbose mode, a textual listing of the ciphers in SSLeay\n",
 " -ssl2       - SSL2 mode\n",
 " -ssl3       - SSL3 mode\n",
+" -tls1       - TLS1 mode\n",
 NULL
 };
 
@@ -121,6 +122,10 @@ int MAIN(int argc, char **argv)
 #ifndef NO_SSL3
 		else if (strcmp(*argv,"-ssl3") == 0)
 			meth=SSLv3_client_method();
+#endif
+#ifndef NO_TLS1
+		else if (strcmp(*argv,"-tls1") == 0)
+			meth=TLSv1_client_method();
 #endif
 		else if ((strncmp(*argv,"-h",2) == 0) ||
 			 (strcmp(*argv,"-?") == 0))
