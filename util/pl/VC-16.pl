@@ -44,7 +44,7 @@ if ($win16)
 else
 	{
 	$no_sock=1;
-	$cflags.=" -DMSDOS";
+	$cflags.=" -DOPENSSL_SYSNAME_MSDOS";
 	$lflags.=" /EXEPACK";
 	$ex_libs.="oldnames.lib llibce.lib";
 	}

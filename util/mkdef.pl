@@ -448,6 +448,10 @@ sub do_defs
 	    		}
 
 			s/\/\*.*?\*\///gs;                   # ignore comments
+			if (/\/\*/) {			     # if we have part
+				$line = $_;		     # of a comment,
+				next;			     # continue reading
+			}
 			s/{[^{}]*}//gs;                      # ignore {} blocks
 			print STDERR "DEBUG: \$def=\"$def\"\n" if $debug && $def ne "";
 			print STDERR "DEBUG: \$_=\"$_\"\n" if $debug;
