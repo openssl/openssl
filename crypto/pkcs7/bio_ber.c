@@ -92,7 +92,7 @@ typedef struct bio_ber_struct
 	/* most of the following are used when doing non-blocking IO */
 	/* reading */
 	long num_left;	/* number of bytes still to read/write in block */
-	int depth;	/* used with idefinite encoding. */
+	int depth;	/* used with indefinite encoding. */
 	int finished;	/* No more read data */
 
 	/* writting */ 

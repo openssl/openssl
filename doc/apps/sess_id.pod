@@ -45,7 +45,7 @@ input by default.
 
 =item B<-out filename>
 
-This specifies the output filename to write session information toor standard
+This specifies the output filename to write session information to or standard
 output if this option is not specified.
 
 =item B<-text>

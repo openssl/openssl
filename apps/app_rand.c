@@ -180,7 +180,7 @@ int app_RAND_write_file(const char *file, BIO *bio_e)
 	if (!seeded)
 		/* If we did not manage to read the seed file,
 		 * we should not write a low-entropy seed file back --
-		 * it would supress a crucial warning the next time
+		 * it would suppress a crucial warning the next time
 		 * we want to use it. */
 		return 0;
 

@@ -252,7 +252,7 @@ int main(int argc, char **argv)
 		}
 
 #ifndef TIMES
-	fprintf(stderr,"To get the most acurate results, try to run this\n");
+	fprintf(stderr,"To get the most accurate results, try to run this\n");
 	fprintf(stderr,"program when this computer is idle.\n");
 #endif
 

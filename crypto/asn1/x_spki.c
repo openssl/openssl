@@ -57,7 +57,7 @@
  */
 
  /* This module was send to me my Pat Richards <patr@x509.com> who
-  * wrote it.  It is under my Copyright with his permision
+  * wrote it.  It is under my Copyright with his permission
   */
 
 #include <stdio.h>

@@ -105,7 +105,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {EVP_R_INPUT_NOT_INITIALIZED             ,"input not initialized"},
 {EVP_R_IV_TOO_LARGE                      ,"iv too large"},
 {EVP_R_KEYGEN_FAILURE                    ,"keygen failure"},
-{EVP_R_MISSING_PARMATERS                 ,"missing parmaters"},
+{EVP_R_MISSING_PARAMETERS                ,"missing parameters"},
 {EVP_R_NO_DSA_PARAMETERS                 ,"no dsa parameters"},
 {EVP_R_NO_SIGN_FUNCTION_CONFIGURED       ,"no sign function configured"},
 {EVP_R_NO_VERIFY_FUNCTION_CONFIGURED     ,"no verify function configured"},

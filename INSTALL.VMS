@@ -51,7 +51,7 @@ directory.  The syntax is trhe following:
 
 Note: The RSAREF libraries are NOT INCLUDED and you have to
       download it from "ftp://ftp.rsa.com/rsaref".  You have to
-      get the ".tar-Z" file as the ".zip" file dosen't have the
+      get the ".tar-Z" file as the ".zip" file doesn't have the
       directory structure stored.  You have to extract the file
       into the [.RSAREF] directory as that is where the scripts
       will look for the files.
@@ -175,7 +175,7 @@ dependent on the OpenVMS version or the C library version, *and* you
 can use those macros to simulate older OpenVMS or C library versions,
 by defining the macros _VMS_V6_SOURCE, __VMS_VER and __CTRL_VER with
 correct values.  In the compilation scripts, I've provided the possibility
-for the user to influense the creation of such macros, through a bunch of
+for the user to influence the creation of such macros, through a bunch of
 symbols, all having names starting with USER_.  Here's the list of them:
 
   USER_CCFLAGS		 - Used to give additional qualifiers to the

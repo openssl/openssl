@@ -122,7 +122,7 @@ EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, unsigned char **pp,
 	int keytype;
 	p = *pp;
 	/* Dirty trick: read in the ASN1 data into a STACK_OF(ASN1_TYPE):
-	 * by analysing it we can determine the passed structure: this
+	 * by analyzing it we can determine the passed structure: this
 	 * assumes the input is surrounded by an ASN1 SEQUENCE.
 	 */
 	inkey = d2i_ASN1_SET_OF_ASN1_TYPE(NULL, &p, length, d2i_ASN1_TYPE, 

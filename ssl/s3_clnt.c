@@ -1225,7 +1225,7 @@ fclose(out);
 
 		if ((xn=d2i_X509_NAME(NULL,&q,l)) == NULL)
 			{
-			/* If netscape tollerance is on, ignore errors */
+			/* If netscape tolerance is on, ignore errors */
 			if (s->options & SSL_OP_NETSCAPE_CA_DN_BUG)
 				goto cont;
 			else
@@ -1258,7 +1258,7 @@ cont:
 		ERR_clear_error();
 		}
 
-	/* we should setup a certficate to return.... */
+	/* we should setup a certificate to return.... */
 	s->s3->tmp.cert_req=1;
 	s->s3->tmp.ctype_num=ctype_num;
 	if (s->s3->tmp.ca_names != NULL)

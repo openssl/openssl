@@ -64,11 +64,11 @@
  *
  * 2.1 eay - Added an 'error in last operation' flag. eay 6-May-98
  *
- * 2.0 eay - Fixed a bug that occured when using lh_delete
+ * 2.0 eay - Fixed a bug that occurred when using lh_delete
  *	     from inside lh_doall().  As entries were deleted,
  *	     the 'table' was 'contract()ed', making some entries
  *	     jump from the end of the table to the start, there by
- *	     skiping the lh_doall() processing. eay - 4/12/95
+ *	     skipping the lh_doall() processing. eay - 4/12/95
  *
  * 1.9 eay - Fixed a memory leak in lh_free, the LHASH_NODEs
  *	     were not being free()ed. 21/11/95

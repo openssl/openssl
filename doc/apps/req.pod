@@ -308,7 +308,7 @@ just consist of field names and values: for example,
 
  CN=My Name
  OU=My Organization
- emailAddress=someone@somehere.org
+ emailAddress=someone@somewhere.org
 
 This allows external programs (e.g. GUI based) to generate a template file
 with all the field names and values and just pass it to B<req>. An example

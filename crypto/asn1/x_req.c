@@ -73,7 +73,7 @@ int i2d_X509_REQ_INFO(X509_REQ_INFO *a, unsigned char **pp)
 	 * allow some CA Software to accept the cert request.
 	 * It is not following the PKCS standards ...
 	 * PKCS#10 pg 5
-	 * attributes [0] IMPLICIT Attibutes
+	 * attributes [0] IMPLICIT Attributes
 	 * NOTE: no OPTIONAL ... so it *must* be there
 	 */
 	if (a->req_kludge) 
@@ -94,7 +94,7 @@ int i2d_X509_REQ_INFO(X509_REQ_INFO *a, unsigned char **pp)
 	/* this is a *nasty* hack reported to be required by some CA's.
 	 * It is not following the PKCS standards ...
 	 * PKCS#10 pg 5
-	 * attributes [0] IMPLICIT Attibutes
+	 * attributes [0] IMPLICIT Attributes
 	 * NOTE: no OPTIONAL ... so it *must* be there
 	 */
 	if (a->req_kludge)
@@ -126,7 +126,7 @@ X509_REQ_INFO *d2i_X509_REQ_INFO(X509_REQ_INFO **a, unsigned char **pp,
 	 * have been reported as requiring it.
 	 * It is not following the PKCS standards ...
 	 * PKCS#10 pg 5
-	 * attributes [0] IMPLICIT Attibutes
+	 * attributes [0] IMPLICIT Attributes
 	 * NOTE: no OPTIONAL ... so it *must* be there
 	 */
 	if (asn1_Finish(&c))

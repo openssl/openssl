@@ -182,14 +182,14 @@
 #endif
 
 /* The changes to this macro may help or hinder, depending on the
- * compiler and the achitecture.  gcc2 always seems to do well :-).
+ * compiler and the architecture.  gcc2 always seems to do well :-).
  * Inspired by Dana How <how@isl.stanford.edu>
  * DO NOT use the alternative version on machines with 8 byte longs.
  * It does not seem to work on the Alpha, even when DES_LONG is 4
  * bytes, probably an issue of accessing non-word aligned objects :-( */
 #ifdef DES_PTR
 
-/* It recently occured to me that 0^0^0^0^0^0^0 == 0, so there
+/* It recently occurred to me that 0^0^0^0^0^0^0 == 0, so there
  * is no reason to not xor all the sub items together.  This potentially
  * saves a register since things can be xored directly into L */
 

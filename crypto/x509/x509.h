@@ -379,7 +379,7 @@ DECLARE_STACK_OF(X509_INFO)
 
 /* The next 2 structures and their 8 routines were sent to me by
  * Pat Richard <patr@x509.com> and are used to manipulate
- * Netscapes spki strucutres - usefull if you are writing a CA web page
+ * Netscapes spki structures - useful if you are writing a CA web page
  */
 typedef struct Netscape_spkac_st
 	{
@@ -901,7 +901,7 @@ int		X509_REQ_set_subject_name(X509_REQ *req,X509_NAME *name);
 int		X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_REQ_get_pubkey(X509_REQ *req);
 int		X509_REQ_extension_nid(int nid);
-int *		X509_REQ_get_extesion_nids(void);
+int *		X509_REQ_get_extension_nids(void);
 void		X509_REQ_set_extension_nids(int *nids);
 STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req);
 int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
@@ -962,7 +962,7 @@ int		X509_NAME_get_text_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj,
 			char *buf,int len);
 
 /* NOTE: you should be passsing -1, not 0 as lastpos.  The functions that use
- * lastpos, seach after that position on. */
+ * lastpos, search after that position on. */
 int 		X509_NAME_get_index_by_NID(X509_NAME *name,int nid,int lastpos);
 int 		X509_NAME_get_index_by_OBJ(X509_NAME *name,ASN1_OBJECT *obj,
 			int lastpos);

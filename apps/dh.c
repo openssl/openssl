@@ -219,7 +219,7 @@ bad:
 		BN_print(stdout,dh->g);
 		printf("\n");
 		if (dh->length != 0)
-			printf("recomented private length=%ld\n",dh->length);
+			printf("recommended private length=%ld\n",dh->length);
 #endif
 		}
 	
@@ -298,7 +298,7 @@ bad:
 			}
 		if (!i)
 			{
-			BIO_printf(bio_err,"unable to write DH paramaters\n");
+			BIO_printf(bio_err,"unable to write DH parameters\n");
 			ERR_print_errors(bio_err);
 			goto end;
 			}

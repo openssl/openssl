@@ -223,7 +223,7 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 	BN_CTX *ctx = NULL;
 	BIGNUM *A1, *A1_odd, *check; /* taken from ctx */
 	BN_MONT_CTX *mont = NULL;
-	const BIGNUM *A;
+	const BIGNUM *A = NULL;
 
 	if (checks == BN_prime_checks)
 		checks = BN_prime_checks_for_size(BN_num_bits(a));
@@ -364,7 +364,7 @@ again:
 			d=delta;
 			delta+=2;
 			/* perhaps need to check for overflow of
-			 * delta (but delta can be upto 2^32)
+			 * delta (but delta can be up to 2^32)
 			 * 21-May-98 eay - added overflow check */
 			if (delta < d) goto again;
 			goto loop;

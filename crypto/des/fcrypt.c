@@ -9,7 +9,7 @@
 #include <openssl/ebcdic.h>
 #endif
 
-/* This version of crypt has been developed from my MIT compatable
+/* This version of crypt has been developed from my MIT compatible
  * DES library.
  * The library is available at pub/Crypto/DES at ftp.psy.uq.oz.au
  * Eric Young (eay@cryptsoft.com)
@@ -19,7 +19,7 @@
  * I have included directive PARA for shared memory computers.
  * I have included a directive LONGCRYPT to using this routine to cipher
  * passwords with more then 8 bytes like HP-UX 10.x it used. The MAXPLEN
- * definition is the maximum of lenght of password and can changed. I have
+ * definition is the maximum of length of password and can changed. I have
  * defined 24.
  */
 
@@ -124,8 +124,8 @@ char *des_fcrypt(const char *buf, const char *salt, char *ret)
 	 * returns *\0XXXXXXXXX
 	 * The \0 makes the string look like * so the pwd "*" would
 	 * crypt to "*".  This was found when replacing the crypt in
-	 * our shared libraries.  People found that the disbled
-	 * accounts effectivly had no passwd :-(. */
+	 * our shared libraries.  People found that the disabled
+	 * accounts effectively had no passwd :-(. */
 #ifndef CHARSET_EBCDIC
 	x=ret[0]=((salt[0] == '\0')?'A':salt[0]);
 	Eswap0=con_salt[x]<<2;

@@ -369,7 +369,7 @@ struct ssl_ctx_st
 	STACK_OF(SSL_CIPHER) *cipher_list_by_id;
 
 	struct x509_store_st /* X509_STORE */ *cert_store;
-	struct lhash_st /* LHASH */ *sessions;	/* a set of SSL_SESSION's */
+	struct lhash_st /* LHASH */ *sessions;	/* a set of SSL_SESSIONs */
 	/* Most session-ids that will be cached, default is
 	 * SSL_SESSION_CACHE_MAX_SIZE_DEFAULT. 0 is unlimited. */
 	unsigned long session_cache_size;
@@ -655,7 +655,7 @@ struct ssl_st
 	unsigned long mode; /* API behaviour */
 	int first_packet;
 	int client_version;	/* what was passed, used for
-				 * SSLv3/TLS rolback check */
+				 * SSLv3/TLS rollback check */
 	};
 
 #include <openssl/ssl2.h>
@@ -663,7 +663,7 @@ struct ssl_st
 #include <openssl/tls1.h> /* This is mostly sslv3 with a few tweaks */
 #include <openssl/ssl23.h>
 
-/* compatablity */
+/* compatibility */
 #define SSL_set_app_data(s,arg)		(SSL_set_ex_data(s,0,(char *)arg))
 #define SSL_get_app_data(s)		(SSL_get_ex_data(s,0))
 #define SSL_SESSION_set_app_data(s,a)	(SSL_SESSION_set_ex_data(s,0,(char *)a))
@@ -672,7 +672,7 @@ struct ssl_st
 #define SSL_CTX_set_app_data(ctx,arg)	(SSL_CTX_set_ex_data(ctx,0,(char *)arg))
 
 /* The following are the possible values for ssl->state are are
- * used to indicate where we are upto in the SSL connection establishment.
+ * used to indicate where we are up to in the SSL connection establishment.
  * The macros that follow are about the only things you should need to use
  * and even then, only when using non-blocking IO.
  * It can also be useful to work out where you were when the connection
@@ -730,7 +730,7 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 
 #define SSLeay_add_ssl_algorithms()	SSL_library_init()
 
-/* this is for backward compatablility */
+/* this is for backward compatibility */
 #if 0 /* NEW_SSLEAY */
 #define SSL_CTX_set_default_verify(a,b,c) SSL_CTX_set_verify(a,b,c)
 #define SSL_set_pref_cipher(c,n)	SSL_set_cipher_list(c,n)
@@ -738,7 +738,7 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 #define SSL_remove_session(a,b)		SSL_CTX_remove_session((a),(b))
 #define SSL_flush_sessions(a,b)		SSL_CTX_flush_sessions((a),(b))
 #endif
-/* More backward compatablity */
+/* More backward compatibility */
 #define SSL_get_cipher(s) \
 		SSL_CIPHER_get_name(SSL_get_current_cipher(s))
 #define SSL_get_cipher_bits(s,np) \
@@ -790,11 +790,11 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 #define SSL_AD_ACCESS_DENIED		TLS1_AD_ACCESS_DENIED	/* fatal */
 #define SSL_AD_DECODE_ERROR		TLS1_AD_DECODE_ERROR	/* fatal */
 #define SSL_AD_DECRYPT_ERROR		TLS1_AD_DECRYPT_ERROR
-#define SSL_AD_EXPORT_RESTRICION	TLS1_AD_EXPORT_RESTRICION/* fatal */
+#define SSL_AD_EXPORT_RESTRICTION	TLS1_AD_EXPORT_RESTRICTION/* fatal */
 #define SSL_AD_PROTOCOL_VERSION		TLS1_AD_PROTOCOL_VERSION /* fatal */
 #define SSL_AD_INSUFFICIENT_SECURITY	TLS1_AD_INSUFFICIENT_SECURITY/* fatal */
 #define SSL_AD_INTERNAL_ERROR		TLS1_AD_INTERNAL_ERROR	/* fatal */
-#define SSL_AD_USER_CANCLED		TLS1_AD_USER_CANCLED
+#define SSL_AD_USER_CANCELLED		TLS1_AD_USER_CANCELLED
 #define SSL_AD_NO_RENEGOTIATION		TLS1_AD_NO_RENEGOTIATION
 
 #define SSL_ERROR_NONE			0
@@ -1474,14 +1474,14 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_TLSV1_ALERT_DECODE_ERROR			 1050
 #define SSL_R_TLSV1_ALERT_DECRYPTION_FAILED		 1021
 #define SSL_R_TLSV1_ALERT_DECRYPT_ERROR			 1051
-#define SSL_R_TLSV1_ALERT_EXPORT_RESTRICION		 1060
+#define SSL_R_TLSV1_ALERT_EXPORT_RESTRICTION		 1060
 #define SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY		 1071
 #define SSL_R_TLSV1_ALERT_INTERNAL_ERROR		 1080
 #define SSL_R_TLSV1_ALERT_NO_RENEGOTIATION		 1100
 #define SSL_R_TLSV1_ALERT_PROTOCOL_VERSION		 1070
 #define SSL_R_TLSV1_ALERT_RECORD_OVERFLOW		 1022
 #define SSL_R_TLSV1_ALERT_UNKNOWN_CA			 1048
-#define SSL_R_TLSV1_ALERT_USER_CANCLED			 1090
+#define SSL_R_TLSV1_ALERT_USER_CANCELLED		 1090
 #define SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER	 232
 #define SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST 233
 #define SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG	 234

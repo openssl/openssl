@@ -162,7 +162,7 @@ typedef struct err_state_st
 #define ERR_GET_REASON(l)	(int)((l)&0xfffL)
 #define ERR_FATAL_ERROR(l)	(int)((l)&ERR_R_FATAL)
 
-/* OS fuctions */
+/* OS functions */
 #define SYS_F_FOPEN		1
 #define SYS_F_CONNECT		2
 #define SYS_F_GETSERVBYNAME	3

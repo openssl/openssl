@@ -188,7 +188,7 @@ int X509_NAME_cmp(X509_NAME *a, X509_NAME *b)
 
 #ifndef NO_MD5
 /* I now DER encode the name and hash it.  Since I cache the DER encoding,
- * this is reasonably effiecent. */
+ * this is reasonably efficient. */
 unsigned long X509_NAME_hash(X509_NAME *x)
 	{
 	unsigned long ret=0;

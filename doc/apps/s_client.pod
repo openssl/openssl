@@ -111,11 +111,11 @@ print extensive debugging information including a hex dump of all traffic.
 
 =item B<-nbio_test>
 
-tests non blocking I/O
+tests non-blocking I/O
 
 =item B<-nbio>
 
-turns on non blocking I/O
+turns on non-blocking I/O
 
 =item B<-crlf>
 

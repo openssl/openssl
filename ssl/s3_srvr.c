@@ -788,7 +788,7 @@ static int ssl3_get_client_hello(SSL *s)
 	 * compression		- basically ignored right now
 	 * ssl version is set	- sslv3
 	 * s->session		- The ssl session has been setup.
-	 * s->hit		- sesson reuse flag
+	 * s->hit		- session reuse flag
 	 * s->tmp.new_cipher	- the new cipher to use.
 	 */
 

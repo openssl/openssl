@@ -163,9 +163,9 @@
  * can be publicly accessed.
  * Use the according functions for cipher management instead.
  *
- * The bit mask hendling in the selection and sorting scheme in
+ * The bit mask handling in the selection and sorting scheme in
  * ssl_create_cipher_list() has only limited capabilities, reflecting
- * that the different entities within are mutually exclusiv:
+ * that the different entities within are mutually exclusive:
  * ONLY ONE BIT PER MASK CAN BE SET AT A TIME.
  */
 #define SSL_MKEY_MASK		0x0000001FL
@@ -212,14 +212,14 @@
 /* we have used 001fffff - 11 bits left to go */
 
 /*
- * Export and cipher strenght information. For each cipher we have to decide
+ * Export and cipher strength information. For each cipher we have to decide
  * whether it is exportable or not. This information is likely to change
  * over time, since the export control rules are no static technical issue.
  *
  * Independent of the export flag the cipher strength is sorted into classes.
  * SSL_EXP40 was denoting the 40bit US export limit of past times, which now
  * is at 56bit (SSL_EXP56). If the exportable cipher class is going to change
- * againg (eg. to 64bit) the use of "SSL_EXP*" becomes blurred even more,
+ * again (eg. to 64bit) the use of "SSL_EXP*" becomes blurred even more,
  * since SSL_EXP64 could be similar to SSL_LOW.
  * For this reason SSL_MICRO and SSL_MINI macros are included to widen the
  * namespace of SSL_LOW-SSL_HIGH to lower values. As development of speed
@@ -371,7 +371,7 @@ typedef struct sess_cert_st
 
 /* This is for the SSLv3/TLSv1.0 differences in crypto/hash stuff
  * It is a bit of a mess of functions, but hell, think of it as
- * an opaque strucute :-) */
+ * an opaque structure :-) */
 typedef struct ssl3_enc_method
 	{
 	int (*enc)(SSL *, int);
@@ -392,7 +392,7 @@ typedef struct ssl3_enc_method
 /* Used for holding the relevant compression methods loaded into SSL_CTX */
 typedef struct ssl3_comp_st
 	{
-	int comp_id;	/* The identifer byte for this compression type */
+	int comp_id;	/* The identifier byte for this compression type */
 	char *name;	/* Text name used for the compression type */
 	COMP_METHOD *method; /* The method :-) */
 	} SSL3_COMP;

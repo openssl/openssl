@@ -74,7 +74,7 @@
  * -i		- indent the details by depth
  * -offset	- where in the file to start
  * -length	- how many bytes to use
- * -oid file	- extra oid decription file
+ * -oid file	- extra oid description file
  */
 
 #undef PROG
@@ -172,7 +172,7 @@ bad:
 		BIO_printf(bio_err," -out arg      output file\n");
 		BIO_printf(bio_err," -noout arg    don't produce any output\n");
 		BIO_printf(bio_err," -offset arg   offset into file\n");
-		BIO_printf(bio_err," -length arg   lenth of section in file\n");
+		BIO_printf(bio_err," -length arg   length of section in file\n");
 		BIO_printf(bio_err," -i            indent entries\n");
 		BIO_printf(bio_err," -oid file     file of extra oid definitions\n");
 		BIO_printf(bio_err," -strparse offset\n");

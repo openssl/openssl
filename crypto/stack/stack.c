@@ -59,7 +59,7 @@
 /* Code for stacks
  * Author - Eric Young v 1.0
  * 1.2 eay 12-Mar-97 -	Modified sk_find so that it _DOES_ return the
- *			lowest index for the seached item.
+ *			lowest index for the searched item.
  *
  * 1.1 eay - Take from netdb and added to SSLeay
  *

@@ -184,7 +184,7 @@ case SSL3_ST_SR_CERT_VRFY_B:	str="SSLv3 read certificate verify B"; break;
 #endif
 
 #if !defined(NO_SSL2) && !defined(NO_SSL3)
-/* SSLv2/v3 compatablitity states */
+/* SSLv2/v3 compatibility states */
 /* client */
 case SSL23_ST_CW_CLNT_HELLO_A:	str="SSLv2/v3 write client hello A"; break;
 case SSL23_ST_CW_CLNT_HELLO_B:	str="SSLv2/v3 write client hello B"; break;
@@ -333,7 +333,7 @@ case SSL3_ST_SR_CERT_VRFY_B:			str="3RCV_B"; break;
 #endif
 
 #if !defined(NO_SSL2) && !defined(NO_SSL3)
-/* SSLv2/v3 compatablitity states */
+/* SSLv2/v3 compatibility states */
 /* client */
 case SSL23_ST_CW_CLNT_HELLO_A:			str="23WCHA"; break;
 case SSL23_ST_CW_CLNT_HELLO_B:			str="23WCHB"; break;
@@ -404,7 +404,7 @@ char *SSL_alert_desc_string_long(int value)
 		str="close notify";
 		break;
 	case SSL3_AD_UNEXPECTED_MESSAGE:
-		str="unexected_message";
+		str="unexpected_message";
 		break;
 	case SSL3_AD_BAD_RECORD_MAC:
 		str="bad record mac";
@@ -431,7 +431,7 @@ char *SSL_alert_desc_string_long(int value)
 		str="certificate expired";
 		break;
 	case SSL3_AD_CERTIFICATE_UNKNOWN:
-		str="certifcate unknown";
+		str="certificate unknown";
 		break;
 	case SSL3_AD_ILLEGAL_PARAMETER:
 		str="illegal parameter";

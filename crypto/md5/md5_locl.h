@@ -81,7 +81,7 @@ void md5_block_data_order (MD5_CTX *c, const void *p,int num);
 /*
  * *_block_host_order is expected to handle aligned data while
  * *_block_data_order - unaligned. As algorithm and host (x86)
- * are in this case of the same "endianess" these two are
+ * are in this case of the same "endianness" these two are
  * otherwise indistinguishable. But normally you don't want to
  * call the same function because unaligned access in places
  * where alignment is expected is usually a "Bad Thing". Indeed,
@@ -126,7 +126,7 @@ void md5_block_data_order (MD5_CTX *c, const void *p,int num);
  * Little-endians (Intel and Alpha) feel better without this.
  * It looks like memcpy does better job than generic
  * md5_block_data_order on copying-n-aligning input data.
- * But franlky speaking I didn't expect such result on Alpha.
+ * But frankly speaking I didn't expect such result on Alpha.
  * On the other hand I've got this with egcs-1.0.2 and if
  * program is compiled with another (better?) compiler it
  * might turn out other way around.
@@ -147,7 +147,7 @@ void md5_block_data_order (MD5_CTX *c, const void *p,int num);
 */
 
 /* As pointed out by Wei Dai <weidai@eskimo.com>, the above can be
- * simplified to the code below.  Wei attributes these optimisations
+ * simplified to the code below.  Wei attributes these optimizations
  * to Peter Gutmann's SHS code, and he attributes it to Rich Schroeppel.
  */
 #define	F(b,c,d)	((((c) ^ (d)) & (b)) ^ (d))

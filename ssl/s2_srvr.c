@@ -689,7 +689,7 @@ static int server_hello(SSL *s)
 		s->init_off=0;
 		}
 	/* SSL2_ST_SEND_SERVER_HELLO_B */
- 	/* If we are using TCP/IP, the performace is bad if we do 2
+ 	/* If we are using TCP/IP, the performance is bad if we do 2
  	 * writes without a read between them.  This occurs when
  	 * Session-id reuse is used, so I will put in a buffering module
  	 */

@@ -183,7 +183,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifndef TIMES
-	printf("To get the most acurate results, try to run this\n");
+	printf("To get the most accurate results, try to run this\n");
 	printf("program when this computer is idle.\n");
 #endif
 

@@ -119,7 +119,7 @@ int MAIN(int argc, char **argv)
 				i = X509_PURPOSE_get_by_sname(*(++argv));
 				if(i < 0)
 					{
-					BIO_printf(bio_err, "unrecognised purpose\n");
+					BIO_printf(bio_err, "unrecognized purpose\n");
 					goto end;
 					}
 				xptmp = X509_PURPOSE_iget(i);
@@ -185,7 +185,7 @@ int MAIN(int argc, char **argv)
 end:
 	if (ret == 1) {
 		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] cert1 cert2 ...\n");
-		BIO_printf(bio_err,"recognised usages:\n");
+		BIO_printf(bio_err,"recognized usages:\n");
 		for(i = 0; i < X509_PURPOSE_get_count(); i++) {
 			X509_PURPOSE *ptmp;
 			ptmp = X509_PURPOSE_iget(i);

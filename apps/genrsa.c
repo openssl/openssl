@@ -94,7 +94,7 @@ int MAIN(int argc, char **argv)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 	if ((out=BIO_new(BIO_s_file())) == NULL)
 		{
-		BIO_printf(bio_err,"unable to creat BIO for output\n");
+		BIO_printf(bio_err,"unable to create BIO for output\n");
 		goto err;
 		}
 
@@ -178,7 +178,7 @@ bad:
 
 	if (rsa == NULL) goto err;
 	
-	/* We need to do the folloing for when the base number size is <
+	/* We need to do the following for when the base number size is <
 	 * long, esp windows 3.1 :-(. */
 	l=0L;
 	for (i=0; i<rsa->e->top; i++)

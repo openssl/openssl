@@ -76,7 +76,7 @@ extern "C" {
 #define BIO_TYPE_SOCKET		(5|0x0400|0x0100)
 #define BIO_TYPE_NULL		(6|0x0400)
 #define BIO_TYPE_SSL		(7|0x0200)
-#define BIO_TYPE_MD		(8|0x0200)		/* pasive filter */
+#define BIO_TYPE_MD		(8|0x0200)		/* passive filter */
 #define BIO_TYPE_BUFFER		(9|0x0200)		/* filter */
 #define BIO_TYPE_CIPHER		(10|0x0200)		/* filter */
 #define BIO_TYPE_BASE64		(11|0x0200)		/* filter */
@@ -168,7 +168,7 @@ extern "C" {
 #define BIO_get_retry_flags(b) \
 		((b)->flags&(BIO_FLAGS_RWS|BIO_FLAGS_SHOULD_RETRY))
 
-/* These shouldbe used by the application to tell why we should retry */
+/* These should be used by the application to tell why we should retry */
 #define BIO_should_read(a)		((a)->flags & BIO_FLAGS_READ)
 #define BIO_should_write(a)		((a)->flags & BIO_FLAGS_WRITE)
 #define BIO_should_io_special(a)	((a)->flags & BIO_FLAGS_IO_SPECIAL)

@@ -63,7 +63,7 @@ it creates a file "newcert.p12". This command can thus be called after the
 B<-sign> option. The PKCS#12 file can be imported directly into a browser.
 If there is an additional argument on the command line it will be used as the
 "friendly name" for the certificate (which is typically displayed in the browser
-list box), otherwise the name "My Certifictate" is used.
+list box), otherwise the name "My Certificate" is used.
 
 =item B<-sign>, B<-signreq>, B<-xsign>
 

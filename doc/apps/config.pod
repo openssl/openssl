@@ -49,7 +49,7 @@ instead of calling B<getenv()> directly.
 It is possible to escape certain characters by using any kind of quote
 or the B<\> character. By making the last character of a line a B<\>
 a B<value> string can be spread across multiple lines. In addition
-the sequences B<\n>, B<\r>, B<\b> and B<\t> are recognised.
+the sequences B<\n>, B<\r>, B<\b> and B<\t> are recognized.
 
 =head1 NOTES
 

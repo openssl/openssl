@@ -185,7 +185,7 @@ void bn_sqr_normal(BN_ULONG *r, BN_ULONG *a, int n, BN_ULONG *tmp)
  * n must be a power of 2.
  * We multiply and return the result.
  * t must be 2*n words in size
- * We calulate
+ * We calculate
  * a[0]*b[0]
  * a[0]*b[0]+a[1]*b[1]+(a[0]-a[1])*(b[1]-b[0])
  * a[1]*b[1]

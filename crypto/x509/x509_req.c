@@ -132,7 +132,7 @@ int X509_REQ_extension_nid(int req_nid)
 	}
 }
 
-int *X509_REQ_get_extesion_nids(void)
+int *X509_REQ_get_extension_nids(void)
 {
 	return ext_nids;
 }

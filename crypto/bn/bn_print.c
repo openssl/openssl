@@ -137,7 +137,7 @@ char *BN_bn2dec(const BIGNUM *a)
 			}
 		lp--;
 		/* We now have a series of blocks, BN_DEC_NUM chars
-		 * in length, where the last one needs trucation.
+		 * in length, where the last one needs truncation.
 		 * The blocks need to be reversed in order. */
 		sprintf(p,BN_DEC_FMT1,*lp);
 		while (*p) p++;
@@ -171,7 +171,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
 	num=i+neg;
 	if (bn == NULL) return(num);
 
-	/* a is the start of the hex digets, and it is 'i' long */
+	/* a is the start of the hex digits, and it is 'i' long */
 	if (*bn == NULL)
 		{
 		if ((ret=BN_new()) == NULL) return(0);
@@ -185,7 +185,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
 	/* i is the number of hex digests; */
 	if (bn_expand(ret,i*4) == NULL) goto err;
 
-	j=i; /* least significate 'hex' */
+	j=i; /* least significant 'hex' */
 	m=0;
 	h=0;
 	while (j > 0)
@@ -236,8 +236,8 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
 	num=i+neg;
 	if (bn == NULL) return(num);
 
-	/* a is the start of the digets, and it is 'i' long.
-	 * We chop it into BN_DEC_NUM digets at a time */
+	/* a is the start of the digits, and it is 'i' long.
+	 * We chop it into BN_DEC_NUM digits at a time */
 	if (*bn == NULL)
 		{
 		if ((ret=BN_new()) == NULL) return(0);

@@ -148,7 +148,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
 	BIO_printf(bio_err," -no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
-	BIO_printf(bio_err," -cipher       - prefered cipher to use, use the 'openssl ciphers'\n");
+	BIO_printf(bio_err," -cipher       - preferred cipher to use, use the 'openssl ciphers'\n");
 	BIO_printf(bio_err,"                 command to see what is available\n");
 
 	}
@@ -354,7 +354,7 @@ bad:
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
 	if (cipher != NULL)
 		if(!SSL_CTX_set_cipher_list(ctx,cipher)) {
-		BIO_printf(bio_err,"error seting cipher list\n");
+		BIO_printf(bio_err,"error setting cipher list\n");
 		ERR_print_errors(bio_err);
 		goto end;
 	}
@@ -370,7 +370,7 @@ bad:
 	if ((!SSL_CTX_load_verify_locations(ctx,CAfile,CApath)) ||
 		(!SSL_CTX_set_default_verify_paths(ctx)))
 		{
-		/* BIO_printf(bio_err,"error seting default verify locations\n"); */
+		/* BIO_printf(bio_err,"error setting default verify locations\n"); */
 		ERR_print_errors(bio_err);
 		/* goto end; */
 		}

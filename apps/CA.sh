@@ -60,7 +60,7 @@ case $i in
     echo "Request (and private key) is in newreq.pem"
     ;;
 -newca)     
-    # if explictly asked for or it doesn't exist then setup the directory
+    # if explicitly asked for or it doesn't exist then setup the directory
     # structure that Eric likes to manage things 
     NEW="1"
     if [ "$NEW" -o ! -f ${CATOP}/serial ]; then

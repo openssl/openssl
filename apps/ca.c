@@ -517,7 +517,7 @@ bad:
 		}
 
 	/*****************************************************************/
-	/* we definitly need an public key, so lets get it */
+	/* we definitely need an public key, so lets get it */
 
 	if ((keyfile == NULL) && ((keyfile=CONF_get_string(conf,
 		section,ENV_PRIVATE_KEY)) == NULL))
@@ -592,7 +592,7 @@ bad:
 		if (access(outdir,R_OK|W_OK|X_OK) != 0)
 #endif
 			{
-			BIO_printf(bio_err,"I am unable to acces the %s directory\n",outdir);
+			BIO_printf(bio_err,"I am unable to access the %s directory\n",outdir);
 			perror(outdir);
 			goto err;
 			}
@@ -676,7 +676,7 @@ bad:
 		TXT_DB_write(out,db);
 		BIO_printf(bio_err,"%d entries loaded from the database\n",
 			db->data->num);
-		BIO_printf(bio_err,"generating indexs\n");
+		BIO_printf(bio_err,"generating index\n");
 		}
 	
 	if (!TXT_DB_create_index(db,DB_serial,NULL,index_serial_hash,
@@ -1008,14 +1008,14 @@ bad:
 			out=NULL;
 			if (rename(serialfile,buf[2]) < 0)
 				{
-				BIO_printf(bio_err,"unabel to rename %s to %s\n",
+				BIO_printf(bio_err,"unable to rename %s to %s\n",
 					serialfile,buf[2]);
 				perror("reason");
 				goto err;
 				}
 			if (rename(buf[0],serialfile) < 0)
 				{
-				BIO_printf(bio_err,"unabel to rename %s to %s\n",
+				BIO_printf(bio_err,"unable to rename %s to %s\n",
 					buf[0],serialfile);
 				perror("reason");
 				rename(buf[2],serialfile);
@@ -1032,14 +1032,14 @@ bad:
 
 			if (rename(dbfile,buf[2]) < 0)
 				{
-				BIO_printf(bio_err,"unabel to rename %s to %s\n",
+				BIO_printf(bio_err,"unable to rename %s to %s\n",
 					dbfile,buf[2]);
 				perror("reason");
 				goto err;
 				}
 			if (rename(buf[1],dbfile) < 0)
 				{
-				BIO_printf(bio_err,"unabel to rename %s to %s\n",
+				BIO_printf(bio_err,"unable to rename %s to %s\n",
 					buf[1],dbfile);
 				perror("reason");
 				rename(buf[2],dbfile);
@@ -1686,7 +1686,7 @@ again2:
 		}
 
 	if (verbose)
-		BIO_printf(bio_err,"The subject name apears to be ok, checking data base for clashes\n");
+		BIO_printf(bio_err,"The subject name appears to be ok, checking data base for clashes\n");
 
 	row[DB_name]=X509_NAME_oneline(subject,NULL,0);
 	row[DB_serial]=BN_bn2hex(serial);
@@ -1743,7 +1743,7 @@ again2:
 		goto err;
 		}
 
-	/* We are now totaly happy, lets make and sign the certificate */
+	/* We are now totally happy, lets make and sign the certificate */
 	if (verbose)
 		BIO_printf(bio_err,"Everything appears to be ok, creating and signing the certificate\n");
 
@@ -1790,7 +1790,7 @@ again2:
 		ASN1_INTEGER_set(ci->version,2); /* version 3 certificate */
 
 		/* Free the current entries if any, there should not
-		 * be any I belive */
+		 * be any I believe */
 		if (ci->extensions != NULL)
 			sk_X509_EXTENSION_pop_free(ci->extensions,
 						   X509_EXTENSION_free);

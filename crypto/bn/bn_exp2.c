@@ -9,7 +9,7 @@
  * bits=1  75.4%  79.4%
  * bits=2  61.2%  62.4%
  * bits=3  61.3%  59.3%
- * The lack of speed improvment is also a function of the pre-calculation
+ * The lack of speed improvement is also a function of the pre-calculation
  * which could be removed.
  */
 #define EXP2_TABLE_BITS	2 /* 1  2  3  4  5  */

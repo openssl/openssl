@@ -294,7 +294,7 @@ int MAIN(int argc, char **argv)
 		encerts = sk_X509_new_null();
 		while (*args) {
 			if(!(cert = load_cert(*args))) {
-				BIO_printf(bio_err, "Can't read recipent certificate file %s\n", *args);
+				BIO_printf(bio_err, "Can't read recipient certificate file %s\n", *args);
 				goto end;
 			}
 			sk_X509_push(encerts, cert);

@@ -331,7 +331,7 @@ again:
 	/* We now have - encrypted [ MAC [ compressed [ plain ] ] ]
 	 * rr->length bytes of encrypted compressed stuff. */
 
-	/* check is not needed I belive */
+	/* check is not needed I believe */
 	if (rr->length > (unsigned int)SSL3_RT_MAX_ENCRYPTED_LENGTH+extra)
 		{
 		al=SSL_AD_RECORD_OVERFLOW;

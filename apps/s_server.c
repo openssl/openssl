@@ -239,7 +239,7 @@ static void sv_usage(void)
 #ifndef NO_DH
 	BIO_printf(bio_err," -no_dhe       - Disable ephemeral DH\n");
 #endif
-	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatability\n");
+	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatibility\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
 	}
@@ -698,7 +698,7 @@ bad:
 
 	if (cipher != NULL)
 		if(!SSL_CTX_set_cipher_list(ctx,cipher)) {
-		BIO_printf(bio_err,"error seting cipher list\n");
+		BIO_printf(bio_err,"error setting cipher list\n");
 		ERR_print_errors(bio_err);
 		goto end;
 	}
@@ -1448,7 +1448,7 @@ end:
 	/* make sure we re-use sessions */
 	SSL_set_shutdown(con,SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
 #else
-	/* This kills performace */
+	/* This kills performance */
 /*	SSL_shutdown(con); A shutdown gets sent in the
  *	BIO_free_all(io) procession */
 #endif

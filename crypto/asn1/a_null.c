@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
-/* ASN1 functions for NULL type. For compatability with other ASN1 code
+/* ASN1 functions for NULL type. For compatibility with other ASN1 code
  * it returns a pointer to an "ASN1_NULL" structure. The new/free functions
  * don't need to do any allocating because nothing is stored in a NULL.
  */

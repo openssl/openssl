@@ -152,7 +152,7 @@ int des_enc_write(int fd, const void *_buf, int len,
 	for (j=0; j<outnum; j+=i)
 		{
 		/* eay 26/08/92 I was not doing writing from where we
-		 * got upto. */
+		 * got up to. */
 		i=write(fd,(void *)&(outbuf[j]),outnum-j);
 		if (i == -1)
 			{

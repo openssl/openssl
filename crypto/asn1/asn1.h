@@ -81,7 +81,7 @@ extern "C" {
 #define V_ASN1_PRIMITIVE_TAG		0x1f
 #define V_ASN1_PRIMATIVE_TAG		0x1f
 
-#define V_ASN1_APP_CHOOSE		-2	/* let the recipent choose */
+#define V_ASN1_APP_CHOOSE		-2	/* let the recipient choose */
 
 #define V_ASN1_UNDEF			-1
 #define V_ASN1_EOC			0
@@ -176,7 +176,7 @@ typedef struct asn1_ctx_st
 	int tag;	/* tag from last 'get object' */
 	int xclass;	/* class from last 'get object' */
 	long slen;	/* length of last 'get object' */
-	unsigned char *max; /* largest value of p alowed */
+	unsigned char *max; /* largest value of p allowed */
 	unsigned char *q;/* temporary variable */
 	unsigned char **pp;/* variable */
 	int line;	/* used in error processing */

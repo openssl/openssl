@@ -67,7 +67,7 @@
 	and everything was OK. BUT if user types wrong password 
 	BIO_f_cipher outputs only garbage and my function crashes. Yes
 	I can and I should fix my function, but BIO_f_cipher is 
-	easy way to add encryption support to many exisiting applications
+	easy way to add encryption support to many existing applications
 	and it's hard to debug and fix them all. 
 
 	So I wanted another BIO which would catch the incorrect passwords and
@@ -80,10 +80,10 @@
 	1) you must somehow separate checksum from actual data. 
 	2) you need lot's of memory when reading the file, because you 
 	must read to the end of the file and verify the checksum before
-	leting the application to read the data. 
+	letting the application to read the data. 
 	
 	BIO_f_reliable tries to solve both problems, so that you can 
-	read and write arbitraly long streams using only fixed amount
+	read and write arbitrary long streams using only fixed amount
 	of memory.
 
 	BIO_f_reliable splits data stream into blocks. Each block is prefixed
@@ -91,7 +91,7 @@
 	several Kbytes of memory to buffer single block before verifying 
 	it's digest. 
 
-	BIO_f_reliable goes futher and adds several important capabilities:
+	BIO_f_reliable goes further and adds several important capabilities:
 
 	1) the digest of the block is computed over the whole stream 
 	-- so nobody can rearrange the blocks or remove or replace them.
@@ -110,7 +110,7 @@
 	and then compare the digest output.
 
 	Bad things: BIO_f_reliable knows what's going on in EVP_Digest. I 
-	initialy wrote and tested this code on x86 machine and wrote the
+	initially wrote and tested this code on x86 machine and wrote the
 	digests out in machine-dependent order :( There are people using
 	this code and I cannot change this easily without making existing
 	data files unreadable.

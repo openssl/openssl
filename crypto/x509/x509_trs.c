@@ -227,7 +227,7 @@ int X509_TRUST_get_trust(X509_TRUST *xp)
 static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags)
 {
 	if(x->aux) return obj_trust(trust->arg1, x, flags);
-	/* we don't have any trust settings: for compatability
+	/* we don't have any trust settings: for compatibility
 	 * we return trusted if it is self signed
 	 */
 	X509_check_purpose(x, -1, 0);

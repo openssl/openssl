@@ -91,7 +91,7 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_PEM,0,0)		,"PEM routines"},
 {ERR_PACK(ERR_LIB_ASN1,0,0)		,"asn1 encoding routines"},
 {ERR_PACK(ERR_LIB_X509,0,0)		,"x509 certificate routines"},
-{ERR_PACK(ERR_LIB_CONF,0,0)		,"configuation file routines"},
+{ERR_PACK(ERR_LIB_CONF,0,0)		,"configuration file routines"},
 {ERR_PACK(ERR_LIB_METH,0,0)		,"X509 lookup 'method' routines"},
 {ERR_PACK(ERR_LIB_SSL,0,0)		,"SSL routines"},
 {ERR_PACK(ERR_LIB_RSAREF,0,0)		,"RSAref routines"},

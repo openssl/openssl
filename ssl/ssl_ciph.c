@@ -608,7 +608,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 				{
 				/*
 				 * We hit something, we cannot deal with,
-				 * it is no command or seperator nor
+				 * it is no command or separator nor
 				 * alphanumeric, so we call this an error.
 				 */
 				SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
@@ -633,7 +633,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 				multi=0;
 
 			/*
-			 * Now search for the name in the ca_list. Be carefule
+			 * Now search for the name in the ca_list. Be careful
 			 * with the strncmp, because the "buflen" limitation
 			 * will make the rule "ADH:SOME" and the cipher
 			 * "ADH-MY-CIPHER" look like a match for buflen=3.
@@ -752,7 +752,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 * There might be two types of entries in the rule_str: 1) names
 	 * of ciphers themselves 2) aliases for groups of ciphers.
 	 * For 1) we need the available ciphers and for 2) the cipher
-	 * groups of cipher_aliases added togehter in one list (otherwise
+	 * groups of cipher_aliases added together in one list (otherwise
 	 * we would be happy with just the cipher_aliases table).
 	 */
 	num_of_group_aliases = sizeof(cipher_aliases) / sizeof(SSL_CIPHER);
@@ -844,7 +844,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 
 	/*
 	 * Now it is getting really strange. If something failed during
-	 * the previous pointer assignement or if one of the pointers was
+	 * the previous pointer assignment or if one of the pointers was
 	 * not requested, the error condition is met. That might be
 	 * discussable. The strange thing is however that in this case
 	 * the memory "ret" pointed to is "free()ed" and hence the pointer
@@ -1006,7 +1006,7 @@ const char *SSL_CIPHER_get_name(SSL_CIPHER *c)
 	return("(NONE)");
 	}
 
-/* number of bits for symetric cipher */
+/* number of bits for symmetric cipher */
 int SSL_CIPHER_get_bits(SSL_CIPHER *c, int *alg_bits)
 	{
 	int ret=0;

@@ -83,12 +83,12 @@ extern "C" {
  * The reason for this flag is that when the particular C compiler
  * library routine is used, and the library is linked with a different
  * compiler, the library is missing.  This mostly happens when the
- * library is built with gcc and then linked using nornal cc.  This would
- * be a common occurance because gcc normally produces code that is
+ * library is built with gcc and then linked using normal cc.  This would
+ * be a common occurrence because gcc normally produces code that is
  * 2 times faster than system compilers for the big number stuff.
  * For machines with only one compiler (or shared libraries), this should
  * be on.  Again this in only really a problem on machines
- * using "long long's", are 32bit, and are not using my assember code. */
+ * using "long long's", are 32bit, and are not using my assembler code. */
 #if defined(MSDOS) || defined(WINDOWS) || defined(linux)
 #define BN_DIV2W
 #endif
@@ -118,8 +118,8 @@ extern "C" {
 
 /* This is where the long long data type is 64 bits, but long is 32.
  * For machines where there are 64bit registers, this is the mode to use.
- * IRIX, on R4000 and above should use this mode, along with the relevent
- * assember code :-).  Do NOT define BN_LLONG.
+ * IRIX, on R4000 and above should use this mode, along with the relevant
+ * assembler code :-).  Do NOT define BN_LLONG.
  */
 #ifdef SIXTY_FOUR_BIT
 #undef BN_LLONG

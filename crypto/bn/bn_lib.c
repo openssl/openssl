@@ -394,7 +394,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
  * if A and B happen to share same cache line such code is going to
  * cause severe cache trashing. Both factors have severe impact on
  * performance of modern CPUs and this is the reason why this
- * particulare piece of code is #ifdefed away and replaced by more
+ * particular piece of code is #ifdefed away and replaced by more
  * "friendly" version found in #else section below. This comment
  * also applies to BN_copy function.
  *
@@ -425,7 +425,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 				A[0]=B[0];
 			case 0:
 				/* I need the 'case 0' entry for utrix cc.
-				 * If the optimiser is turned on, it does the
+				 * If the optimizer is turned on, it does the
 				 * switch table by doing
 				 * a=top&7
 				 * a--;

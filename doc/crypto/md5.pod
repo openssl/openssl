@@ -30,7 +30,7 @@ MD5_Final - MD2 and MD5 hash functions
 
 =head1 DESCRIPTION
 
-MD2 and MD5 are cryptographic hashs function with a 128 bit output.
+MD2 and MD5 are cryptographic hash functions with a 128 bit output.
 
 MD2() and MD5() compute the MD2 and MD5 message digest of the B<n>
 bytes at B<d> and place it in B<md> (which must have space for

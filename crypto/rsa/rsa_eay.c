@@ -264,7 +264,7 @@ static int RSA_eay_private_decrypt(int flen, unsigned char *from,
 		goto err;
 		}
 
-	/* This check was for equallity but PGP does evil things
+	/* This check was for equality but PGP does evil things
 	 * and chops off the top '0' bytes */
 	if (flen > num)
 		{
@@ -357,7 +357,7 @@ static int RSA_eay_public_decrypt(int flen, unsigned char *from,
 		goto err;
 		}
 
-	/* This check was for equallity but PGP does evil things
+	/* This check was for equality but PGP does evil things
 	 * and chops off the top '0' bytes */
 	if (flen > num)
 		{

@@ -25,7 +25,7 @@ the appropriate cipherlist.
 
 =item B<-v>
 
-verbose option. List ciphers with a complete decsription of the authentication,
+verbose option. List ciphers with a complete description of the authentication,
 key exchange, encryption and mac algorithms used along with any key size
 restrictions and whether the algorithm is classed as an "export" cipher.
 
@@ -186,7 +186,7 @@ cipher suites using DH, including anonymous DH.
 
 =item B<ADH>
 
-anoymous DH cipher suites.
+anonymous DH cipher suites.
 
 =item B<3DES>
 
@@ -313,7 +313,7 @@ Note: these ciphers can also be used in SSL v3.
 
 =head1 NOTES
 
-The non ephemeral DH modes are currently unimplimented in OpenSSL
+The non-ephemeral DH modes are currently unimplemented in OpenSSL
 because there is no support for DH certificates.
 
 Some compiled versions of OpenSSL may not include all the ciphers

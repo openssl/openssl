@@ -413,7 +413,7 @@ next_bit:
 		*(d++) = v[1];
 
 		/* lets populate the random area */
-		/* get the chalenge_length */
+		/* get the challenge_length */
 		i=(cl > SSL3_RANDOM_SIZE)?SSL3_RANDOM_SIZE:cl;
 		memset(d,0,SSL3_RANDOM_SIZE);
 		memcpy(&(d[SSL3_RANDOM_SIZE-i]),&(p[csl+sil]),i);

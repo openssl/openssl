@@ -250,7 +250,7 @@ typedef struct pkcs7_st
 #define PKCS7_BINARY	0x80
 #define PKCS7_NOATTR	0x100
 
-/* Flags: for compatability with older code */
+/* Flags: for compatibility with older code */
 
 #define SMIME_TEXT	PKCS7_TEXT
 #define SMIME_NOCERTS	PKCS7_NOCERTS

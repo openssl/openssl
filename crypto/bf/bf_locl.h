@@ -148,7 +148,7 @@
                          *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
                          *((c)++)=(unsigned char)(((l)     )&0xff))
 
-/* This is actually a big endian algorithm, the most significate byte
+/* This is actually a big endian algorithm, the most significant byte
  * is used to lookup array 0 */
 
 #if defined(BF_PTR2)
@@ -183,8 +183,8 @@
 
 /*
  * This is normally very good on RISC platforms where normally you
- * have to explicitely "multiplicate" array index by sizeof(BF_LONG)
- * in order to caclulate the effective address. This implementation
+ * have to explicitly "multiply" array index by sizeof(BF_LONG)
+ * in order to calculate the effective address. This implementation
  * excuses CPU from this extra work. Power[PC] uses should have most
  * fun as (R>>BF_i)&BF_M gets folded into a single instruction, namely
  * rlwinm. So let'em double-check if their compiler does it.

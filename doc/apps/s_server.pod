@@ -194,7 +194,7 @@ If a connection request is established with an SSL client and neither the
 B<-www> nor the B<-WWW> option has been used then normally any data received
 from the client is displayed and any key presses will be sent to the client. 
 
-Certain single letter commands are also recognised which perform special
+Certain single letter commands are also recognized which perform special
 operations: these are listed below.
 
 =over 4

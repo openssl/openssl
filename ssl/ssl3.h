@@ -282,7 +282,7 @@ typedef struct ssl3_ctx_st
 
 	int warn_alert;
 	int fatal_alert;
-	/* we alow one fatal and one warning alert to be outstanding,
+	/* we allow one fatal and one warning alert to be outstanding,
 	 * send close alert via the warning alert */
 	int alert_dispatch;
 	unsigned char send_alert[2];

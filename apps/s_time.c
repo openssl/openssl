@@ -216,7 +216,7 @@ static void s_time_usage(void)
                 file if not specified by this option\n\
 -CApath arg   - PEM format directory of CA's\n\
 -CAfile arg   - PEM format file of CA's\n\
--cipher       - prefered cipher to use, play with 'openssl ciphers'\n\n";
+-cipher       - preferred cipher to use, play with 'openssl ciphers'\n\n";
 
 	printf( "usage: s_time <args>\n\n" );
 
@@ -225,7 +225,7 @@ static void s_time_usage(void)
 	printf("-nbio         - Run with non-blocking IO\n");
 	printf("-ssl2         - Just use SSLv2\n");
 	printf("-ssl3         - Just use SSLv3\n");
-	printf("-bugs         - Turn on SSL bug compatability\n");
+	printf("-bugs         - Turn on SSL bug compatibility\n");
 	printf("-new          - Just time new connections\n");
 	printf("-reuse        - Just time connection reuse\n");
 	printf("-www page     - Retrieve 'page' from the site\n");
@@ -431,7 +431,7 @@ int MAIN(int argc, char **argv)
 	if ((!SSL_CTX_load_verify_locations(tm_ctx,CAfile,CApath)) ||
 		(!SSL_CTX_set_default_verify_paths(tm_ctx)))
 		{
-		/* BIO_printf(bio_err,"error seting default verify locations\n"); */
+		/* BIO_printf(bio_err,"error setting default verify locations\n"); */
 		ERR_print_errors(bio_err);
 		/* goto end; */
 		}

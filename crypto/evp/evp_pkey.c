@@ -231,7 +231,7 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey)
 		case EVP_PKEY_DSA:
 		p8->pkeyalg->algorithm = OBJ_nid2obj(NID_dsa);
 
-		/* get paramaters and place in AlgorithmIdentifier */
+		/* get parameters and place in AlgorithmIdentifier */
 		len = i2d_DSAparams (pkey->pkey.dsa, NULL);
 		if (!(p = Malloc(len))) {
 			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);

@@ -298,7 +298,7 @@ int DHparams_print(BIO *bp, DH *x)
 	if (!print(bp,"generator:",x->g,m,4)) goto err;
 	if (x->length != 0)
 		{
-		if (BIO_printf(bp,"    recomented-private-length: %d bits\n",
+		if (BIO_printf(bp,"    recommended-private-length: %d bits\n",
 			(int)x->length) <= 0) goto err;
 		}
 	ret=1;

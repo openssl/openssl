@@ -632,7 +632,7 @@ extern "C" {
 #define OBJ_ripemd160			1L,3L,36L,3L,2L,1L
 
 /* The name should actually be rsaSignatureWithripemd160, but I'm going
- * to contiune using the convention I'm using with the other ciphers */
+ * to continue using the convention I'm using with the other ciphers */
 #define SN_ripemd160WithRSA		"RSA-RIPEMD160"
 #define LN_ripemd160WithRSA		"ripemd160WithRSA"
 #define NID_ripemd160WithRSA		119
@@ -740,7 +740,7 @@ extern "C" {
 #define NID_ms_efs			138
 #define OBJ_ms_efs			1L,3L,6L,1L,4L,1L,311L,10L,3L,4L
 
-/* Addidional usage: Netscape */
+/* Additional usage: Netscape */
 
 #define SN_ns_sgc			"nsSGC"
 #define LN_ns_sgc			"Netscape Server Gated Crypto"

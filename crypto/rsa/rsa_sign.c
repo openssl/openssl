@@ -181,7 +181,7 @@ int RSA_verify(int dtype, unsigned char *m, unsigned int m_len,
 
 
 	#ifdef RSA_DEBUG
-		/* put a backward compatability flag in EAY */
+		/* put a backward compatibility flag in EAY */
 		fprintf(stderr,"in(%s) expect(%s)\n",OBJ_nid2ln(sigtype),
 			OBJ_nid2ln(dtype));
 	#endif

@@ -497,12 +497,12 @@ static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num)
  */
 /*
  * I have modified the loading of bytes via RAND_seed() mechanism since
- * the origional would have been very very CPU intensive since RAND_seed()
+ * the original would have been very very CPU intensive since RAND_seed()
  * does an MD5 per 16 bytes of input.  The cost to digest 16 bytes is the same
  * as that to digest 56 bytes.  So under the old system, a screen of
- * 1024*768*256 would have been CPU cost of approximatly 49,000 56 byte MD5
+ * 1024*768*256 would have been CPU cost of approximately 49,000 56 byte MD5
  * digests or digesting 2.7 mbytes.  What I have put in place would
- * be 48 16k MD5 digests, or efectivly 48*16+48 MD5 bytes or 816 kbytes
+ * be 48 16k MD5 digests, or effectively 48*16+48 MD5 bytes or 816 kbytes
  * or about 3.5 times as much.
  * - eric 
  */

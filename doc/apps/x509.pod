@@ -179,7 +179,7 @@ may be trusted for SSL client but not SSL server use.
 See the description of the B<verify> utility for more information on the
 meaning of trust settings.
 
-Future versions of OpenSSL will recognise trust settings on any
+Future versions of OpenSSL will recognize trust settings on any
 certificate: not just root CAs.
 
 

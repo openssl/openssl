@@ -597,7 +597,7 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 		tmpval = BUF_strdup(value);
 		if(!tmpval) return 0;
 	} else tmpval = NULL;
-	/* Paramter values are case sensitive so leave as is */
+	/* Parameter values are case sensitive so leave as is */
 	mparam = (MIME_PARAM *) Malloc(sizeof(MIME_PARAM));
 	if(!mparam) return 0;
 	mparam->param_name = tmpname;

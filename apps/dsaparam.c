@@ -317,7 +317,7 @@ bad:
 			}
 		if (!i)
 			{
-			BIO_printf(bio_err,"unable to write DSA paramaters\n");
+			BIO_printf(bio_err,"unable to write DSA parameters\n");
 			ERR_print_errors(bio_err);
 			goto end;
 			}

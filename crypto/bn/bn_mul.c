@@ -66,7 +66,7 @@
  * n2 must be a power of 2.
  * We multiply and return the result.
  * t must be 2*n2 words in size
- * We calulate
+ * We calculate
  * a[0]*b[0]
  * a[0]*b[0]+a[1]*b[1]+(a[0]-a[1])*(b[1]-b[0])
  * a[1]*b[1]
@@ -620,7 +620,7 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 			goto end;
 			}
 #  ifdef BN_RECURSION
-		goto symetric;
+		goto symmetric;
 #  endif
 		}
 #endif
@@ -640,19 +640,19 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 			bn_wexpand(b,al);
 			b->d[bl]=0;
 			bl++;
-			goto symetric;
+			goto symmetric;
 			}
 		else if ((i ==  -1) && !BN_get_flags(a,BN_FLG_STATIC_DATA))
 			{
 			bn_wexpand(a,bl);
 			a->d[al]=0;
 			al++;
-			goto symetric;
+			goto symmetric;
 			}
 		}
 #endif
 
-	/* asymetric and >= 4 */ 
+	/* asymmetric and >= 4 */ 
 	if (bn_wexpand(rr,top) == NULL) return(0);
 	rr->top=top;
 	bn_mul_normal(rr->d,a->d,al,b->d,bl);
@@ -660,8 +660,8 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 #ifdef BN_RECURSION
 	if (0)
 		{
-symetric:
-		/* symetric and > 4 */
+symmetric:
+		/* symmetric and > 4 */
 		/* 16 or larger */
 		j=BN_num_bits_word((BN_ULONG)al);
 		j=1<<(j-1);

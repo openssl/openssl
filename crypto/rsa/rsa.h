@@ -95,7 +95,7 @@ typedef struct rsa_meth_st
  * to be signed/verified: this allows them to be used. Note: for this to work
  * the RSA_public_decrypt() and RSA_private_encrypt() should *NOT* be used
  * RSA_sign(), RSA_verify() should be used instead. Note: for backwards
- * compatability this functionality is only enabled if the RSA_FLAG_SIGN_VER
+ * compatibility this functionality is only enabled if the RSA_FLAG_SIGN_VER
  * option is set in 'flags'.
  */
 	int (*rsa_sign)(int type, unsigned char *m, unsigned int m_len,

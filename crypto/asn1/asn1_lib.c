@@ -176,7 +176,7 @@ static int asn1_get_length(unsigned char **pp, int *inf, long *rl, int max)
 	}
 
 /* class 0 is constructed
- * constructed == 2 for indefinitle length constructed */
+ * constructed == 2 for indefinite length constructed */
 void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
 	     int xclass)
 	{
@@ -349,7 +349,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 	if (data != NULL)
 		{
 		memcpy(str->data,data,len);
-		/* an alowance for strings :-) */
+		/* an allowance for strings :-) */
 		str->data[len]='\0';
 		}
 	return(1);

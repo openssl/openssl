@@ -61,11 +61,11 @@
 #include <openssl/opensslv.h>
 
 /* Blowfish as implemented from 'Blowfish: Springer-Verlag paper'
- * (From LECTURE NOTES IN COIMPUTER SCIENCE 809, FAST SOFTWARE ENCRYPTION,
+ * (From LECTURE NOTES IN COMPUTER SCIENCE 809, FAST SOFTWARE ENCRYPTION,
  * CAMBRIDGE SECURITY WORKSHOP, CAMBRIDGE, U.K., DECEMBER 9-11, 1993)
  */
 
-const char *BF_version="BlowFish" OPENSSL_VERSION_PTEXT;
+const char *BF_version="Blowfish" OPENSSL_VERSION_PTEXT;
 
 const char *BF_options(void)
 	{

@@ -65,7 +65,7 @@ struct bio_bio_st
 
 	size_t request; /* valid iff peer != NULL; 0 if len != 0,
 	                 * otherwise set by peer to number of bytes
-	                 * it (unsuccesfully) tried to read,
+	                 * it (unsuccessfully) tried to read,
 	                 * never more than buffer space (size-len) warrants. */
 };
 
@@ -387,7 +387,7 @@ static size_t bio_nwrite0(BIO *bio, char **buf)
 		write_offset -= b->size;
 	if (write_offset + num > b->size)
 		/* no ring buffer wrap-around for non-copying interface
-		 * (to fulfil the promise by BIO_ctrl_get_write_guarantee,
+		 * (to fulfill the promise by BIO_ctrl_get_write_guarantee,
 		 * BIO_nwrite may have to be called twice) */
 		num = b->size - write_offset;
 
@@ -479,7 +479,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 
 	case BIO_C_GET_WRITE_GUARANTEE:
 		/* How many bytes can the caller feed to the next write
-		 * withouth having to keep any? */
+		 * without having to keep any? */
 		if (b->peer == NULL || b->closed)
 			ret = 0;
 		else
@@ -487,7 +487,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 		break;
 
 	case BIO_C_GET_READ_REQUEST:
-		/* If the peer unsuccesfully tried to read, how many bytes
+		/* If the peer unsuccessfully tried to read, how many bytes
 		 * were requested?  (As with BIO_CTRL_PENDING, that number
 		 * can usually be treated as boolean.) */
 		ret = (long) b->request;
@@ -765,7 +765,7 @@ int BIO_ctrl_reset_read_request(BIO *bio)
 	}
 
 
-/* BIO_nread0/nread/nwrite0/nwrite are availabe only for BIO pairs for now
+/* BIO_nread0/nread/nwrite0/nwrite are available only for BIO pairs for now
  * (conceivably some other BIOs could allow non-copying reads and writes too.)
  */
 int BIO_nread0(BIO *bio, char **buf)

@@ -245,7 +245,7 @@ int ssl2_connect(SSL *s)
 		/*	ERR_clear_error();*/
 
 			/* If we want to cache session-ids in the client
-			 * and we sucessfully add the session-id to the
+			 * and we successfully add the session-id to the
 			 * cache, and there is a callback, then pass it out.
 			 * 26/11/96 - eay - only add if not a re-used session.
 			 */
@@ -368,7 +368,7 @@ static int get_server_hello(SSL *s)
 		*/
 #endif
 
-		/* we need to do this incase we were trying to reuse a 
+		/* we need to do this in case we were trying to reuse a 
 		 * client session but others are already reusing it.
 		 * If this was a new 'blank' session ID, the session-id
 		 * length will still be 0 */
@@ -418,7 +418,7 @@ static int get_server_hello(SSL *s)
 
 		/* In theory we could have ciphers sent back that we
 		 * don't want to use but that does not matter since we
-		 * will check against the list we origionally sent and
+		 * will check against the list we originally sent and
 		 * for performance reasons we should not bother to match
 		 * the two lists up just to check. */
 		for (i=0; i<sk_SSL_CIPHER_num(cl); i++)
@@ -768,7 +768,7 @@ static int client_certificate(SSL *s)
 			{
 			/* this is not good.  If things have failed it
 			 * means there so something wrong with the key.
-			 * We will contiune with a 0 length signature
+			 * We will continue with a 0 length signature
 			 */
 			}
 		memset(&ctx,0,sizeof(ctx));

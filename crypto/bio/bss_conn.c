@@ -90,11 +90,11 @@ typedef struct bio_connect_st
 	struct sockaddr_in them;
 
 	/* int socket; this will be kept in bio->num so that it is
-	 * compatable with the bss_sock bio */ 
+	 * compatible with the bss_sock bio */ 
 
 	/* called when the connection is initially made
 	 *  callback(BIO,state,ret);  The callback should return
-	 * 'ret'.  state is for compatablity with the ssl info_callback */
+	 * 'ret'.  state is for compatibility with the ssl info_callback */
 	int (*info_callback)();
 	} BIO_CONNECT;
 
@@ -500,7 +500,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, char *ptr)
 				*((int *)ptr)=data->port;
 				}
 			if ((!b->init) || (ptr == NULL))
-				*pptr="not initalised";
+				*pptr="not initialized";
 			ret=1;
 			}
 		break;

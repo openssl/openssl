@@ -492,7 +492,7 @@ int MAIN(int argc, char **argv)
     CRYPTO_push_info("verify MAC");
 #endif
 	if (!PKCS12_verify_mac (p12, mpass, -1)) {
-	    BIO_printf (bio_err, "Mac verify errror: invalid password?\n");
+	    BIO_printf (bio_err, "Mac verify error: invalid password?\n");
 	    ERR_print_errors (bio_err);
 	    goto end;
 	} else BIO_printf (bio_err, "MAC verified OK\n");

@@ -245,7 +245,7 @@ bad:
 			BIO_printf(bio_err,"rc2     :128 bit key RC2 encryption\n");
 #endif
 #ifndef NO_BF
-			BIO_printf(bio_err,"bf      :128 bit key BlowFish encryption\n");
+			BIO_printf(bio_err,"bf      :128 bit key Blowfish encryption\n");
 #endif
 #ifndef NO_RC4
 			BIO_printf(bio_err," -%-5s :128 bit key RC4 encryption\n",

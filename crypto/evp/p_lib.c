@@ -119,7 +119,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, EVP_PKEY *from)
 
 	if (EVP_PKEY_missing_parameters(from))
 		{
-		EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS,EVP_R_MISSING_PARMATERS);
+		EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS,EVP_R_MISSING_PARAMETERS);
 		goto err;
 		}
 #ifndef NO_DSA

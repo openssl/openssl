@@ -149,7 +149,7 @@ extern "C" {
 
 /* Type needs to be a bit field
  * Sub-type needs to be for variations on the method, as in, can it do
- * arbitary encryption.... */
+ * arbitrary encryption.... */
 typedef struct evp_pkey_st
 	{
 	int type;
@@ -343,7 +343,7 @@ typedef struct evp_cipher_ctx_st
 	unsigned char buf[EVP_MAX_IV_LENGTH];	/* saved partial block */
 	int num;				/* used by cfb/ofb mode */
 
-	char *app_data;		/* aplication stuff */
+	char *app_data;		/* application stuff */
 	union	{
 #ifndef NO_RC4
 		struct
@@ -715,7 +715,7 @@ void EVP_PBE_cleanup(void);
 #define EVP_R_INPUT_NOT_INITIALIZED			 111
 #define EVP_R_IV_TOO_LARGE				 102
 #define EVP_R_KEYGEN_FAILURE				 120
-#define EVP_R_MISSING_PARMATERS				 103
+#define EVP_R_MISSING_PARAMETERS			 103
 #define EVP_R_NO_DSA_PARAMETERS				 116
 #define EVP_R_NO_SIGN_FUNCTION_CONFIGURED		 104
 #define EVP_R_NO_VERIFY_FUNCTION_CONFIGURED		 105

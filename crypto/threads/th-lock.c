@@ -96,7 +96,7 @@ static unsigned long pthreads_thread_id(void );
 
 /* usage:
  * CRYPTO_thread_setup();
- * applicaion code
+ * application code
  * CRYPTO_thread_cleanup();
  */
 
