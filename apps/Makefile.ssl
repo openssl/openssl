@@ -100,8 +100,8 @@ install:
 	(echo installing $$i; \
 	 cp $$i $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
 	 chmod 755 $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i ); \
-	 done;
-	cp openssl.cnf $(INSTALL_PREFIX)$(OPENSSLDIR)/lib; \
+	 done
+	@cp openssl.cnf $(INSTALL_PREFIX)$(OPENSSLDIR)/lib; \
 	chmod 644 $(INSTALL_PREFIX)$(OPENSSLDIR)/lib/openssl.cnf
 
 tags:
