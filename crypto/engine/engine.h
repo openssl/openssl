@@ -477,11 +477,11 @@ int ENGINE_set_ciphers(ENGINE *e, ENGINE_CIPHERS_PTR f);
 int ENGINE_set_digests(ENGINE *e, ENGINE_DIGESTS_PTR f);
 int ENGINE_set_flags(ENGINE *e, int flags);
 int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
-/* These functions (and the "get" function lower down) allow control over any
- * per-structure ENGINE data. */
+/* These functions allow control over any per-structure ENGINE data. */
 int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 		CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
+void *ENGINE_get_ex_data(const ENGINE *e, int idx);
 
 /* This function cleans up anything that needs it. Eg. the ENGINE_add() function
  * automatically ensures the list cleanup function is registered to be called
@@ -514,7 +514,6 @@ const EVP_CIPHER *ENGINE_get_cipher(ENGINE *e, int nid);
 const EVP_MD *ENGINE_get_digest(ENGINE *e, int nid);
 const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e);
 int ENGINE_get_flags(const ENGINE *e);
-void *ENGINE_get_ex_data(const ENGINE *e, int idx);
 
 /* FUNCTIONAL functions. These functions deal with ENGINE structures
  * that have (or will) be initialised for use. Broadly speaking, the
