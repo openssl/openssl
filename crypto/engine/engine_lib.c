@@ -288,6 +288,7 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
 
 int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	{
+	int ctrl_exists;
 	if(e == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_CTRL,ERR_R_PASSED_NULL_PARAMETER);
@@ -299,12 +300,13 @@ int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 		ENGINEerr(ENGINE_F_ENGINE_CTRL,ENGINE_R_NO_REFERENCE);
 		return 0;
 		}
-	if (!e->ctrl)
+	ctrl_exists = (e->ctrl ? 1 : 0);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+	if (!ctrl_exists)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_CTRL,ENGINE_R_NO_CONTROL_FUNCTION);
 		return 0;
 		}
-	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	return e->ctrl(cmd, i, p, f);
 	}
 
