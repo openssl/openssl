@@ -316,10 +316,10 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[])
 	int n, dN, d0, d1;
 	BN_ULONG zz, *z;
 	
-	/* Since the algorithm does reduction in place, if a == r, copy the
+	/* Since the algorithm does reduction in the r value, if a != r, copy the
 	 * contents of a into r so we can do reduction in r. 
 	 */
-	if ((a != NULL) && (a->d != r->d))
+	if (a != r)
 		{
 		if (!bn_wexpand(r, a->top)) return 0;
 		for (j = 0; j < a->top; j++)
@@ -427,7 +427,7 @@ int	BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsig
 	BN_CTX_start(ctx);
 	if ((s = BN_CTX_get(ctx)) == NULL) goto err;
 	
-	zlen = a->top + b->top;
+	zlen = a->top + b->top + 4;
 	if (!bn_wexpand(s, zlen)) goto err;
 	s->top = zlen;
 
