@@ -20,3 +20,12 @@
 
  If that finishes successfully you will find the libraries and programs in the
  "out" directory.
+
+ Alternatively, you can make a dynamic build that puts the library code into
+ crypto.dll and ssl.dll by running
+
+ > make -f os2-emx-dll.mak
+
+ This will build the above mentioned dlls and a matching pair of import
+ libraries in the "out_dll" directory along with the set of test programs
+ and the openssl application.
