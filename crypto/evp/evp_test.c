@@ -85,8 +85,39 @@ static int convert(unsigned char *s)
     return s-d;
     }
 
-static unsigned char *ustrsep(char **p,const char *sep)
-    { return (unsigned char *)strsep((char **)p,sep); }
+static unsigned char *ustrsep(char **string ,const char *delim)
+    {
+    char isdelim[256];
+    char *token = *string;
+
+    if (**string == 0)
+        return NULL;
+
+    memset(isdelim, 0, 256);
+    isdelim[0] = 1;
+
+    while (*delim)
+	{
+        isdelim[(unsigned char)(*delim)] = 1;
+        delim++;
+	}
+
+    while (!isdelim[(unsigned char)(**string)])
+	{
+	while (!isdelim[(unsigned char)(**string)])
+	    {
+	    (*string)++;
+	    }
+
+        if (**string)
+	    {
+            **string = 0;
+	    (*string)++;
+	    }
+
+	return token;
+	}
+    }
 
 static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 		  const unsigned char *iv,int in,
