@@ -65,9 +65,10 @@ static ASN1_OCTET_STRING *octet_string_new(void);
 static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
 X509V3_EXT_METHOD v3_skey_id = { 
 NID_subject_key_identifier, 0,
-(X509V3_EXT_NEW)octet_string_new, ASN1_STRING_free,
+(X509V3_EXT_NEW)octet_string_new,
+(X509V3_EXT_FREE)ASN1_STRING_free,
 (X509V3_EXT_D2I)d2i_ASN1_OCTET_STRING,
-i2d_ASN1_OCTET_STRING,
+(X509V3_EXT_I2D)i2d_ASN1_OCTET_STRING,
 (X509V3_EXT_I2S)i2s_ASN1_OCTET_STRING,
 (X509V3_EXT_S2I)s2i_skey_id,
 NULL, NULL, NULL, NULL, NULL};

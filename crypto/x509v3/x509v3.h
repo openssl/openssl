@@ -72,10 +72,10 @@ struct v3_ext_ctx;
 
 /* Useful typedefs */
 
-typedef void * (*X509V3_EXT_NEW)();
-typedef void (*X509V3_EXT_FREE)();
-typedef char * (*X509V3_EXT_D2I)();
-typedef int (*X509V3_EXT_I2D)();
+typedef void * (*X509V3_EXT_NEW)(void);
+typedef void (*X509V3_EXT_FREE)(void *);
+typedef void * (*X509V3_EXT_D2I)(void *, unsigned char ** , long);
+typedef int (*X509V3_EXT_I2D)(void *, unsigned char **);
 typedef STACK_OF(CONF_VALUE) * (*X509V3_EXT_I2V)(struct v3_ext_method *method, void *ext, STACK_OF(CONF_VALUE) *extlist);
 typedef void * (*X509V3_EXT_V2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, STACK_OF(CONF_VALUE) *values);
 typedef char * (*X509V3_EXT_I2S)(struct v3_ext_method *method, void *ext);
@@ -255,9 +255,10 @@ DECLARE_ASN1_SET_OF(POLICYINFO)
 #define X509V3_set_ctx_nodb(ctx) ctx->db = NULL;
 
 #define EXT_BITSTRING(nid, table) { nid, 0, \
-			(X509V3_EXT_NEW)asn1_bit_string_new, ASN1_STRING_free, \
+			(X509V3_EXT_NEW)asn1_bit_string_new, \
+			(X509V3_EXT_FREE)ASN1_STRING_free, \
 			(X509V3_EXT_D2I)d2i_ASN1_BIT_STRING, \
-			i2d_ASN1_BIT_STRING, \
+			(X509V3_EXT_I2D)i2d_ASN1_BIT_STRING, \
 			NULL, NULL, \
 			(X509V3_EXT_I2V)i2v_ASN1_BIT_STRING, \
 			(X509V3_EXT_V2I)v2i_ASN1_BIT_STRING, \
@@ -265,9 +266,10 @@ DECLARE_ASN1_SET_OF(POLICYINFO)
 			(char *)table}
 
 #define EXT_IA5STRING(nid) { nid, 0, \
-			(X509V3_EXT_NEW)ia5string_new, ASN1_STRING_free, \
+			(X509V3_EXT_NEW)ia5string_new, \
+			(X509V3_EXT_FREE)ASN1_STRING_free, \
 			(X509V3_EXT_D2I)d2i_ASN1_IA5STRING, \
-			i2d_ASN1_IA5STRING, \
+			(X509V3_EXT_I2D)i2d_ASN1_IA5STRING, \
 			(X509V3_EXT_I2S)i2s_ASN1_IA5STRING, \
 			(X509V3_EXT_S2I)s2i_ASN1_IA5STRING, \
 			NULL, NULL, NULL, NULL, \
@@ -329,10 +331,11 @@ STACK_OF(GENERAL_NAME) *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method,
 char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *ia5);
 ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
 
-int i2d_ext_ku(STACK *a, unsigned char **pp);
-STACK *d2i_ext_ku(STACK **a, unsigned char **pp, long length);
-void ext_ku_free(STACK *a);
-STACK *ext_ku_new(void);
+int i2d_ext_ku(STACK_OF(ASN1_OBJECT) *a, unsigned char **pp);
+STACK_OF(ASN1_OBJECT) *d2i_ext_ku(STACK_OF(ASN1_OBJECT) **a,
+					unsigned char **pp, long length);
+void ext_ku_free(STACK_OF(ASN1_OBJECT) *a);
+STACK_OF(ASN1_OBJECT) *ext_ku_new(void);
 
 int i2d_CERTIFICATEPOLICIES(STACK_OF(POLICYINFO) *a, unsigned char **pp);
 STACK_OF(POLICYINFO) *CERTIFICATEPOLICIES_new(void);

@@ -581,11 +581,11 @@ void X509V3_string_free(X509V3_CTX *ctx, char *str);
 
 This function frees up the string returned by the above function.
 
-STACK * X509V3_get_section(X509V3_CTX *ctx, char *section);
+STACK_OF(CONF_VALUE) * X509V3_get_section(X509V3_CTX *ctx, char *section);
 
-This function returns a whole section as a STACK of CONF_VALUE structures.
+This function returns a whole section as a STACK_OF(CONF_VALUE) .
 
-void X509V3_section_free( X509V3_CTX *ctx, STACK *section);
+void X509V3_section_free( X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section);
 
 This function frees up the STACK returned by the above function.
 
@@ -595,9 +595,9 @@ be set to an X509V3_CTX_METHOD structure. This structure contains the following
 function pointers:
 
 char * (*get_string)(void *db, char *section, char *value);
-STACK * (*get_section)(void *db, char *section);
+STACK_OF(CONF_VALUE) * (*get_section)(void *db, char *section);
 void (*free_string)(void *db, char * string);
-void (*free_section)(void *db, STACK *section);
+void (*free_section)(void *db, STACK_OF(CONF_VALUE) *section);
 
 these will be called and passed the 'db' element in the X509V3_CTX structure
 to access the database. If a given function is not implemented or not required
@@ -646,24 +646,28 @@ int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint);
 
 This accepts a decimal integer of arbitrary length and sets an ASN1_INTEGER.
 
-int X509V3_add_value(const char *name, const char *value, STACK **extlist);
+int X509V3_add_value(const char *name, const char *value,
+						STACK_OF(CONF_VALUE) **extlist);
 
 This simply adds a string name and value pair.
 
 int X509V3_add_value_uchar(const char *name, const unsigned char *value,
-                           STACK **extlist);
+                          			STACK_OF(CONF_VALUE) **extlist);
 
 The same as above but for an unsigned character value.
 
-int X509V3_add_value_bool(const char *name, int asn1_bool, STACK **extlist);
+int X509V3_add_value_bool(const char *name, int asn1_bool,
+						STACK_OF(CONF_VALUE) **extlist);
 
 This adds either "TRUE" or "FALSE" depending on the value of 'ans1_bool'
 
-int X509V3_add_value_bool_nf(char *name, int asn1_bool, STACK **extlist);
+int X509V3_add_value_bool_nf(char *name, int asn1_bool,
+						STACK_OF(CONF_VALUE) **extlist);
 
 This is the same as above except it adds nothing if asn1_bool is FALSE.
 
-int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint, STACK **extlist);
+int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
+						STACK_OF(CONF_VALUE) **extlist);
 
 This function adds the value of the ASN1_INTEGER in decimal form.
 
@@ -678,8 +682,8 @@ Currently there are three types of supported extensions.
 String extensions are simple strings where the value is placed directly in the
 extensions, and the string returned is printed out.
 
-Multi value extensions are passed a STACK of name and value pairs or return
-such a STACK.
+Multi value extensions are passed a STACK_OF(CONF_VALUE) name and value pairs
+or return a STACK_OF(CONF_VALUE).
 
 Raw extensions are just passed a BIO or a value and it is the extensions
 responsiblity to handle all the necessary printing.
@@ -776,7 +780,7 @@ This function takes the string representation in the ext parameter and returns
 an allocated internal structure: ext_free() will be used on this internal
 structure after use.
 
-i2v and v2i handle a stack of CONF_VALUE structures:
+i2v and v2i handle a STACK_OF(CONF_VALUE):
 
 typedef struct
 {
@@ -787,16 +791,17 @@ typedef struct
 
 Only the name and value members are currently used.
 
-STACK * i2v(struct v3_ext_method *method, void *ext);
+STACK_OF(CONF_VALUE) * i2v(struct v3_ext_method *method, void *ext);
 
 This function is passed the internal structure in the ext parameter and
 returns a STACK of CONF_VALUE structures. The values of name, value,
 section and the structure itself will be freed up with Free after use.
 Several helper functions are available to add values to this STACK.
 
-void * v2i(struct v3_ext_method *method, struct v3_ext_ctx *ctx, STACK *values);
+void * v2i(struct v3_ext_method *method, struct v3_ext_ctx *ctx,
+						STACK_OF(CONF_VALUE) *values);
 
-This function takes a STACK of CONF_VALUE structures and should set the
+This function takes a STACK_OF(CONF_VALUE) structures and should set the
 values of the external structure. This typically uses the name element to
 determine which structure element to set and the value element to determine
 what to set it to. Several helper functions are available for this

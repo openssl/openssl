@@ -61,25 +61,25 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-static STACK_OF(GENERAL_NAME) *v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
-static STACK_OF(GENERAL_NAME) *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
+static STACK_OF(GENERAL_NAME) *v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
+static STACK_OF(GENERAL_NAME) *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 static int copy_email(X509V3_CTX *ctx, STACK_OF(GENERAL_NAME) *gens);
 static int copy_issuer(X509V3_CTX *ctx, STACK_OF(GENERAL_NAME) *gens);
 X509V3_EXT_METHOD v3_alt[] = {
 { NID_subject_alt_name, 0,
 (X509V3_EXT_NEW)GENERAL_NAMES_new,
-GENERAL_NAMES_free,
+(X509V3_EXT_FREE)GENERAL_NAMES_free,
 (X509V3_EXT_D2I)d2i_GENERAL_NAMES,
-i2d_GENERAL_NAMES,
+(X509V3_EXT_I2D)i2d_GENERAL_NAMES,
 NULL, NULL,
 (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
 (X509V3_EXT_V2I)v2i_subject_alt,
 NULL, NULL, NULL},
 { NID_issuer_alt_name, 0,
 (X509V3_EXT_NEW)GENERAL_NAMES_new,
-GENERAL_NAMES_free,
+(X509V3_EXT_FREE)GENERAL_NAMES_free,
 (X509V3_EXT_D2I)d2i_GENERAL_NAMES,
-i2d_GENERAL_NAMES,
+(X509V3_EXT_I2D)i2d_GENERAL_NAMES,
 NULL, NULL,
 (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
 (X509V3_EXT_V2I)v2i_issuer_alt,
@@ -156,7 +156,7 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 }
 
 static STACK_OF(GENERAL_NAME) *v2i_issuer_alt(X509V3_EXT_METHOD *method,
-						 X509V3_CTX *ctx, STACK *nval)
+				 X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 {
 	STACK_OF(GENERAL_NAME) *gens = NULL;
 	CONF_VALUE *cnf;
@@ -165,8 +165,8 @@ static STACK_OF(GENERAL_NAME) *v2i_issuer_alt(X509V3_EXT_METHOD *method,
 		X509V3err(X509V3_F_V2I_GENERAL_NAMES,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	for(i = 0; i < sk_num(nval); i++) {
-		cnf = (CONF_VALUE *)sk_value(nval, i);
+	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
+		cnf = sk_CONF_VALUE_value(nval, i);
 		if(!name_cmp(cnf->name, "issuer") && cnf->value &&
 						!strcmp(cnf->value, "copy")) {
 			if(!copy_issuer(ctx, gens)) goto err;
@@ -221,7 +221,7 @@ static int copy_issuer(X509V3_CTX *ctx, STACK_OF(GENERAL_NAME) *gens)
 }
 
 static STACK_OF(GENERAL_NAME) *v2i_subject_alt(X509V3_EXT_METHOD *method,
-						 X509V3_CTX *ctx, STACK *nval)
+				 X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 {
 	STACK_OF(GENERAL_NAME) *gens = NULL;
 	CONF_VALUE *cnf;
@@ -230,8 +230,8 @@ static STACK_OF(GENERAL_NAME) *v2i_subject_alt(X509V3_EXT_METHOD *method,
 		X509V3err(X509V3_F_V2I_GENERAL_NAMES,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	for(i = 0; i < sk_num(nval); i++) {
-		cnf = (CONF_VALUE *)sk_value(nval, i);
+	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
+		cnf = sk_CONF_VALUE_value(nval, i);
 		if(!name_cmp(cnf->name, "email") && cnf->value &&
 						!strcmp(cnf->value, "copy")) {
 			if(!copy_email(ctx, gens)) goto err;

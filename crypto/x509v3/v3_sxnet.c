@@ -69,14 +69,15 @@
 
 static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out, int indent);
 #ifdef SXNET_TEST
-static SXNET * sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
+static SXNET * sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+						STACK_OF(CONF_VALUE) *nval);
 #endif
 X509V3_EXT_METHOD v3_sxnet = {
 NID_sxnet, X509V3_EXT_MULTILINE,
 (X509V3_EXT_NEW)SXNET_new,
-SXNET_free,
+(X509V3_EXT_FREE)SXNET_free,
 (X509V3_EXT_D2I)d2i_SXNET,
-i2d_SXNET,
+(X509V3_EXT_I2D)i2d_SXNET,
 NULL, NULL,
 NULL, 
 #ifdef SXNET_TEST
@@ -206,13 +207,13 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
 
 
 static SXNET * sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-	     STACK *nval)
+	     STACK_OF(CONF_VALUE) *nval)
 {
 	CONF_VALUE *cnf;
 	SXNET *sx = NULL;
 	int i;
-	for(i = 0; i < sk_num(nval); i++) {
-		cnf = (CONF_VALUE *)sk_value(nval, i);
+	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
+		cnf = sk_CONF_VALUE_value(nval, i);
 		if(!SXNET_add_id_asc(&sx, cnf->name, cnf->value, -1))
 								 return NULL;
 	}

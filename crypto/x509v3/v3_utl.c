@@ -96,7 +96,7 @@ int X509V3_add_value_uchar(const char *name, const unsigned char *value,
     return X509V3_add_value(name,(const char *)value,extlist);
     }
 
-/* Free function for STACK of CONF_VALUE */
+/* Free function for STACK_OF(CONF_VALUE) */
 
 void X509V3_conf_free(CONF_VALUE *conf)
 {
