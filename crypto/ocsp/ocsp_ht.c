@@ -111,19 +111,19 @@ Content-Length: %d\r\n\r\n";
 	 */
 
 	/* Skip to first white space (passed protocol info) */
-	for(p = tmpbuf; *p && !isspace(*p); p++) continue;
+	for(p = tmpbuf; *p && !isspace((unsigned char)*p); p++) continue;
 	if(!*p) {
 		OCSPerr(OCSP_F_OCSP_SENDREQ_BIO,OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
 		goto err;
 	}
 	/* Skip past white space to start of response code */
-	while(*p && isspace(*p)) p++;
+	while(*p && isspace((unsigned char)*p)) p++;
 	if(!*p) {
 		OCSPerr(OCSP_F_OCSP_SENDREQ_BIO,OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
 		goto err;
 	}
 	/* Find end of response code: first whitespace after start of code */
-	for(q = p; *q && !isspace(*q); q++) continue;
+	for(q = p; *q && !isspace((unsigned char)*q); q++) continue;
 	if(!*q) {
 		OCSPerr(OCSP_F_OCSP_SENDREQ_BIO,OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
 		goto err;
@@ -134,11 +134,11 @@ Content-Length: %d\r\n\r\n";
 	retcode = strtoul(p, &r, 10);
 	if(*r) goto err;
 	/* Skip over any leading white space in message */
-	while(*q && isspace(*q))  q++;
+	while(*q && isspace((unsigned char)*q))  q++;
 	if(!*q) goto err;
 	/* Finally zap any trailing white space in message (include CRLF) */
 	/* We know q has a non white space character so this is OK */
-	for(r = q + strlen(q) - 1; isspace(*r); r--) *r = 0;
+	for(r = q + strlen(q) - 1; isspace((unsigned char)*r); r--) *r = 0;
 	if(retcode != 200) {
 		OCSPerr(OCSP_F_OCSP_SENDREQ_BIO,OCSP_R_SERVER_RESPONSE_ERROR);
 		ERR_add_error_data(4, "Code=", p, ",Reason=", q);
@@ -147,7 +147,7 @@ Content-Length: %d\r\n\r\n";
 	/* Find blank line marking beginning of content */	
 	while(BIO_gets(mem, tmpbuf, 512) > 0)
 	{
-		for(p = tmpbuf; *p && isspace(*p); p++) continue;
+		for(p = tmpbuf; *p && isspace((unsigned char)*p); p++) continue;
 		if(!*p) break;
 	}
 	if(*p) {
