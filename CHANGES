@@ -17,10 +17,10 @@
        d2i_PublicKey (crypto/asn1/d2i_pu.c) have been modified to make
        them suitable for ECDSA where domain parameters must be
        extracted before the specific public key.
-     [Nils Larsch <nla@trustcenter.de]
+     [Nils Larsch <nla@trustcenter.de>]
 
   *) Add reference counting for EC_GROUP objects.
-     [Nils Larsch <nla@trustcenter.de]
+     [Nils Larsch <nla@trustcenter.de>]
 
   *) Include some named elliptic curves.  These can be obtained from
      the new functions
