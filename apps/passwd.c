@@ -196,7 +196,9 @@ int MAIN(int argc, char **argv)
 	if (passwds == NULL)
 		{
 		/* no passwords on the command line */
-		passwd = passwd_malloc = Malloc(pw_maxlen + 1);
+#define PASSWD_MALLOC_SIZE (pw_maxlen + 2)
+		/* longer than necessary so that we can warn about truncation */
+		passwd = passwd_malloc = Malloc(PASSWD_MALLOC_SIZE);
 		if (passwd_malloc == NULL)
 			goto err;
 		}
@@ -208,7 +210,7 @@ int MAIN(int argc, char **argv)
 		
 		passwds = passwds_static;
 		if (in == NULL)
-			if (EVP_read_pw_string(passwd_malloc, pw_maxlen + 1, "Password: ", 0) != 0)
+			if (EVP_read_pw_string(passwd_malloc, PASSWD_MALLOC_SIZE, "Password: ", 0) != 0)
 				goto err;
 		passwds[0] = passwd_malloc;
 		}
