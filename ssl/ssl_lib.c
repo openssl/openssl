@@ -1073,14 +1073,17 @@ int ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
  * preference */
 STACK_OF(SSL_CIPHER) *SSL_get_ciphers(SSL *s)
 	{
-	if ((s != NULL) && (s->cipher_list != NULL))
+	if (s != NULL)
 		{
-		return(s->cipher_list);
-		}
-	else if ((s->ctx != NULL) &&
-		(s->ctx->cipher_list != NULL))
-		{
-		return(s->ctx->cipher_list);
+		if (s->cipher_list != NULL)
+			{
+			return(s->cipher_list);
+			}
+		else if ((s->ctx != NULL) &&
+			(s->ctx->cipher_list != NULL))
+			{
+			return(s->ctx->cipher_list);
+			}
 		}
 	return(NULL);
 	}
@@ -1089,14 +1092,17 @@ STACK_OF(SSL_CIPHER) *SSL_get_ciphers(SSL *s)
  * algorithm id */
 STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s)
 	{
-	if ((s != NULL) && (s->cipher_list_by_id != NULL))
+	if (s != NULL)
 		{
-		return(s->cipher_list_by_id);
-		}
-	else if ((s != NULL) && (s->ctx != NULL) &&
-		(s->ctx->cipher_list_by_id != NULL))
-		{
-		return(s->ctx->cipher_list_by_id);
+		if (s->cipher_list_by_id != NULL)
+			{
+			return(s->cipher_list_by_id);
+			}
+		else if ((s->ctx != NULL) &&
+			(s->ctx->cipher_list_by_id != NULL))
+			{
+			return(s->ctx->cipher_list_by_id);
+			}
 		}
 	return(NULL);
 	}
