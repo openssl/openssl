@@ -352,7 +352,7 @@ int MAIN(int argc, char **argv)
 	ENGINE *e;
 	unsigned char *buf=NULL,*buf2=NULL;
 	int mret=1;
-	long count,rsa_count,save_count=0;
+	long count=0,rsa_count,save_count=0;
 	int i,j,k;
 #ifndef OPENSSL_NO_RSA
 	unsigned rsa_num;
@@ -424,7 +424,7 @@ int MAIN(int argc, char **argv)
 #define	D_CBC_BF	13
 #define	D_CBC_CAST	14
 #define D_EVP		15
-	double d;
+	double d=0;
 	long c[ALGOR_NUM][SIZE_NUM];
 #define	R_DSA_512	0
 #define	R_DSA_1024	1
@@ -1501,7 +1501,7 @@ show_res:
 #endif
 #ifdef HZ
 #define as_string(s) (#s)
-		printf("HZ=%g", HZ);
+		printf("HZ=%g", (double)HZ);
 # ifdef _SC_CLK_TCK
 		printf(" [sysconf value]");
 # endif
