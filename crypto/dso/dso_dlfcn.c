@@ -112,7 +112,7 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
  * as we don't have autoconf yet, I'm implementing a hack that could
  * be hacked further relatively easily to deal with cases as we find
  * them. Initially this is to cope with OpenBSD. */
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 #	ifdef DL_LAZY
 #		define DLOPEN_FLAG DL_LAZY
 #	else
