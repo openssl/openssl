@@ -163,7 +163,7 @@ sub main'push	{ &out1("push",@_); $stack+=4; }
 sub main'pop	{ &out1("pop",@_); $stack-=4; }
 sub main'bswap	{ &out1("bswap",@_); &using486(); }
 sub main'not	{ &out1("not",@_); }
-sub main'call	{ &out1("call",($_[0]=~/^\.L/?'':'_').$_[0]); }
+sub main'call	{ &out1("call",($_[0]=~/^\$L/?'':'_').$_[0]); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
 
@@ -315,7 +315,7 @@ sub main'label
 	{
 	if (!defined($label{$_[0]}))
 		{
-		$label{$_[0]}=".${label}${_[0]}";
+		$label{$_[0]}="\$${label}${_[0]}";
 		$label++;
 		}
 	return($label{$_[0]});
@@ -325,7 +325,7 @@ sub main'set_label
 	{
 	if (!defined($label{$_[0]}))
 		{
-		$label{$_[0]}=".${label}${_[0]}";
+		$label{$_[0]}="\$${label}${_[0]}";
 		$label++;
 		}
 	push(@out,"$label{$_[0]}:\n");
