@@ -34,13 +34,17 @@ update:		FORCE.update
 		perl ../../../util/mkerr.pl -conf rsaref.ec \
 			-nostatic -staticloader -write rsaref.c
 
+darwin:		install $(SHLIB).darwin
+cygwin:		install $(SHLIB).cygwin
 gnu:		install $(SHLIB).gnu
+alpha-osf1:	install $(SHLIB).alpha-osf1
 tru64:		install $(SHLIB).tru64
 solaris:	install $(SHLIB).solaris
 irix:		install $(SHLIB).irix
 hpux32:		install $(SHLIB).hpux32
 hpux64:		install $(SHLIB).hpux64
 aix:		install $(SHLIB).aix
+reliantunix:	install $(SHLIB).reliantunix
 
 $(LIB):		$(OBJ)
 		$(AR) $(LIB) $(OBJ)
@@ -51,6 +55,18 @@ LINK_SO=	\
   (nm -Pg $(LIBNAME).o | grep ' [BDT] ' | cut -f1 -d' ' > $(LIBNAME).exp; \
    $$SHAREDCMD $$SHAREDFLAGS -o $(SHLIB) $(LIBNAME).o -L ../../.. -lcrypto -lc)
 
+$(SHLIB).darwin:	$(LIB) install/librsaref.a
+		ALLSYMSFLAGS='-all_load' \
+		SHAREDFLAGS='-dynamiclib -install_name $(SHLIB)' \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO)
+		touch $(SHLIB).darwin
+$(SHLIB).cygwin:	$(LIB) install/librsaref.a
+		ALLSYMSFLAGS='--whole-archive' \
+		SHAREDFLAGS='-shared -Wl,-Bsymbolic -Wl,--out-implib,$(LIBNAME).dll.a' \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO)
+		touch $(SHLIB).cygwin
 $(SHLIB).gnu:	$(LIB) install/librsaref.a
 		ALLSYMSFLAGS='--whole-archive' \
 		SHAREDFLAGS='-shared -Wl,-soname=$(SHLIB)' \
