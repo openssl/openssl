@@ -69,6 +69,7 @@
 #include "bn.h"
 #include "evp.h"
 #include "x509.h"
+#include "x509v3.h"
 #include "objects.h"
 #include "pem.h"
 
@@ -305,7 +306,7 @@ bad:
 		}
 
 	ERR_load_crypto_strings();
-	X509v3_add_netscape_extensions();
+	X509V3_add_standard_extensions();
 
 	if (!X509_STORE_set_default_paths(ctx))
 		{

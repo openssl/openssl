@@ -108,6 +108,7 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_PROXY,0,0)		,"Proxy routines"},
 {ERR_PACK(ERR_LIB_BIO,0,0)		,"BIO routines"},
 {ERR_PACK(ERR_LIB_PKCS7,0,0)		,"PKCS7 routines"},
+{ERR_PACK(ERR_LIB_X509V3,0,0)		,"X509 V3 routines"},
 {0,NULL},
 	};
 

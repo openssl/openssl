@@ -116,6 +116,7 @@ typedef struct err_state_st
 #define ERR_LIB_PROXY		31
 #define ERR_LIB_BIO		32
 #define ERR_LIB_PKCS7		33
+#define ERR_LIB_X509V3		34
 
 #define ERR_LIB_USER		128
 
@@ -141,6 +142,7 @@ typedef struct err_state_st
 #define RSAREFerr(f,r) ERR_PUT_error(ERR_LIB_RSAREF,(f),(r),ERR_file_name,__LINE__)
 #define PROXYerr(f,r) ERR_PUT_error(ERR_LIB_PROXY,(f),(r),ERR_file_name,__LINE__)
 #define PKCS7err(f,r) ERR_PUT_error(ERR_LIB_PKCS7,(f),(r),ERR_file_name,__LINE__)
+#define X509V3err(f,r) ERR_PUT_error(ERR_LIB_X509V3,(f),(r),ERR_file_name,__LINE__)
 
 /* Borland C seems too stupid to be able to shift and do longs in
  * the pre-processor :-( */

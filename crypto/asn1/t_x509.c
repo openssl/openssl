@@ -68,6 +68,7 @@
 #endif
 #include "objects.h"
 #include "x509.h"
+#include "x509v3.h"
 
 #ifndef NO_FP_API
 int X509_print_fp(fp,x)
@@ -190,7 +191,9 @@ X509 *x;
 		BIO_printf(bp,"%8sX509v3 extensions:\n","");
 		for (i=0; i<n; i++)
 			{
+#if 0
 			int data_type,pack_type;
+#endif
 			ASN1_OBJECT *obj;
 
 			ex=X509_get_ext(x,i);
@@ -200,7 +203,7 @@ X509 *x;
 			j=X509_EXTENSION_get_critical(ex);
 			if (BIO_printf(bp,": %s\n%16s",j?"critical":"","") <= 0)
 				goto err;
-
+#if 0
 			pack_type=X509v3_pack_type_by_OBJ(obj);
 			data_type=X509v3_data_type_by_OBJ(obj);
 			
@@ -231,7 +234,8 @@ X509 *x;
 						}
 					}
 				}
-			else
+#endif
+			if(!X509V3_EXT_print(bp, ex, 0))
 				{
 				ASN1_OCTET_STRING_print(bp,ex->value);
 				}

@@ -10,6 +10,7 @@ L BIO		bio/bio.err
 L OBJ		objects/objects.err
 L PEM		pem/pem.err
 L X509		x509/x509.err
+L X509V3	x509v3/x509v3.err
 L METH		meth/meth.err
 L ASN1		asn1/asn1.err
 L CONF		conf/conf.err
