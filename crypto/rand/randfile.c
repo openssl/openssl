@@ -61,6 +61,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/e_os.h>
+#include <openssl/crypto.h>
+#include <openssl/rand.h>
+
 #ifdef OPENSSL_SYS_VMS
 #include <unixio.h>
 #endif
@@ -72,10 +76,6 @@
 #else
 # include <sys/stat.h>
 #endif
-
-#include <openssl/e_os.h>
-#include <openssl/crypto.h>
-#include <openssl/rand.h>
 
 #undef BUFSIZE
 #define BUFSIZE	1024
