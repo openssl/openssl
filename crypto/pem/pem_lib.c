@@ -567,7 +567,7 @@ int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 	     long len)
 	{
 	int nlen,n,i,j,outl;
-	unsigned char *buf;
+	unsigned char *buf = NULL;
 	EVP_ENCODE_CTX ctx;
 	int reason=ERR_R_BUF_LIB;
 	
@@ -587,7 +587,7 @@ int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 			goto err;
 		}
 
-	buf=(unsigned char *)OPENSSL_malloc(PEM_BUFSIZE*8);
+	buf = OPENSSL_malloc(PEM_BUFSIZE*8);
 	if (buf == NULL)
 		{
 		reason=ERR_R_MALLOC_FAILURE;
@@ -608,12 +608,15 @@ int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 	EVP_EncodeFinal(&ctx,buf,&outl);
 	if ((outl > 0) && (BIO_write(bp,(char *)buf,outl) != outl)) goto err;
 	OPENSSL_free(buf);
+	buf = NULL;
 	if (	(BIO_write(bp,"-----END ",9) != 9) ||
 		(BIO_write(bp,name,nlen) != nlen) ||
 		(BIO_write(bp,"-----\n",6) != 6))
 		goto err;
 	return(i+outl);
 err:
+	if (buf)
+		OPENSSL_free(buf);
 	PEMerr(PEM_F_PEM_WRITE_BIO,reason);
 	return(0);
 	}
