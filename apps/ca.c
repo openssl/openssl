@@ -597,7 +597,10 @@ bad:
 		goto err;
 		}
 	if(tofree)
+		{
 		OPENSSL_free(tofree);
+		tofree = NULL;
+		}
 
 	if (!load_config(bio_err, conf))
 		goto err;
@@ -1642,7 +1645,7 @@ err:
 
 	if (ret) ERR_print_errors(bio_err);
 	app_RAND_write_file(randfile, bio_err);
-	if (free_key)
+	if (free_key & key)
 		OPENSSL_free(key);
 	BN_free(serial);
 	TXT_DB_free(db);
