@@ -6,12 +6,13 @@ crl2pkcs7 - Create a PKCS#7 structure from a CRL and certificates.
 
 =head1 SYNOPSIS
 
-B<openssl> B<pkcs7>
+B<openssl> B<crl2pkcs7>
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
 [B<-out filename>]
-[B<-print_certs>]
+[B<-certfile filename>]
+[B<-nocrl>]
 
 =head1 DESCRIPTION
 
