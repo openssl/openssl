@@ -136,7 +136,7 @@ extern "C" {
 #define BN_MASK2h	(0xffffffff00000000LL)
 #define BN_MASK2h1	(0xffffffff80000000LL)
 #define BN_TBIT		(0x8000000000000000LL)
-#define BN_DEC_CONV	(10000000000000000000LL)
+#define BN_DEC_CONV	(10000000000000000000ULL)
 #define BN_DEC_FMT1	"%llu"
 #define BN_DEC_FMT2	"%019llu"
 #define BN_DEC_NUM	19
