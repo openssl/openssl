@@ -338,14 +338,14 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 				{
 				if (!BN_lshift1(tmp,X)) goto err;
 				}
-			else if (BN_is_word(D,3))
-				{
-				if (!BN_lshift1(tmp,X)) goto err;
-				if (!BN_add(tmp,tmp,X)) goto err;
-				}
 			else if (BN_is_word(D,4))
 				{
 				if (!BN_lshift(tmp,X,2)) goto err;
+				}
+			else if (D->top == 1)
+				{
+				if (!BN_copy(tmp,X)) goto err;
+				if (!BN_mul_word(tmp,D->d[0])) goto err;
 				}
 			else
 				{
