@@ -546,7 +546,11 @@ static int ssl3_client_hello(SSL *s)
 		*(p++)=i;
 		if (i != 0)
 			{
-			die(i <= sizeof s->session->session_id);
+			if (i > sizeof s->session->session_id)
+				{
+				SSLerr(SSL_F_SSL3_CLIENT_HELLO, SSL_R_INTERNAL_ERROR);
+				goto err;
+				}
 			memcpy(p,s->session->session_id,i);
 			p+=i;
 			}

@@ -200,7 +200,12 @@ int ssl_get_new_session(SSL *s, int session)
 		ss->session_id_length=0;
 		}
 
-	die(s->sid_ctx_length <= sizeof ss->sid_ctx);
+	if (s->sid_ctx_length > sizeof ss->sid_ctx)
+		{
+		SSLerr(SSL_F_SSL_GET_NEW_SESSION, SSL_R_INTERNAL_ERROR);
+		SSL_SESSION_free(ss);
+		return 0;
+		}
 	memcpy(ss->sid_ctx,s->sid_ctx,s->sid_ctx_length);
 	ss->sid_ctx_length=s->sid_ctx_length;
 	s->session=ss;

@@ -399,8 +399,7 @@ static int get_client_master_key(SSL *s)
 				SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_READ_WRONG_PACKET_TYPE);
 				}
 			else
-				SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,
-					SSL_R_PEER_ERROR);
+				SSLerr(SSL_F_GET_CLIENT_MASTER_KEY, SSL_R_PEER_ERROR);
 			return(-1);
 			}
 
@@ -408,8 +407,7 @@ static int get_client_master_key(SSL *s)
 		if (cp == NULL)
 			{
 			ssl2_return_error(s,SSL2_PE_NO_CIPHER);
-			SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,
-				SSL_R_NO_CIPHER_MATCH);
+			SSLerr(SSL_F_GET_CLIENT_MASTER_KEY, SSL_R_NO_CIPHER_MATCH);
 			return(-1);
 			}
 		s->session->cipher= cp;
@@ -420,8 +418,8 @@ static int get_client_master_key(SSL *s)
 		n2s(p,i); s->session->key_arg_length=i;
 		if(s->session->key_arg_length > SSL_MAX_KEY_ARG_LENGTH)
 			{
-			SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,
-				   SSL_R_KEY_ARG_TOO_LONG);
+			ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
+			SSLerr(SSL_F_GET_CLIENT_MASTER_KEY, SSL_R_KEY_ARG_TOO_LONG);
 			return -1;
 			}
 		s->state=SSL2_ST_GET_CLIENT_MASTER_KEY_B;
@@ -429,11 +427,17 @@ static int get_client_master_key(SSL *s)
 
 	/* SSL2_ST_GET_CLIENT_MASTER_KEY_B */
 	p=(unsigned char *)s->init_buf->data;
-	die(s->init_buf->length >= SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER);
+	if (s->init_buf->length < SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER)
+		{
+		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
+		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY, SSL_R_INTERNAL_ERROR);
+		return -1;
+		}
 	keya=s->session->key_arg_length;
 	len = 10 + (unsigned long)s->s2->tmp.clear + (unsigned long)s->s2->tmp.enc + (unsigned long)keya;
 	if (len > SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER)
 		{
+		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_MESSAGE_TOO_LONG);
 		return -1;
 		}
@@ -510,7 +514,13 @@ static int get_client_master_key(SSL *s)
 #endif
 
 	if (is_export) i+=s->s2->tmp.clear;
-	die(i <= SSL_MAX_MASTER_KEY_LENGTH);
+
+	if (i > SSL_MAX_MASTER_KEY_LENGTH)
+		{
+		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
+		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY, SSL_R_INTERNAL_ERROR);
+		return -1;
+		}
 	s->session->master_key_length=i;
 	memcpy(s->session->master_key,p,(unsigned int)i);
 	return(1);
@@ -560,6 +570,7 @@ static int get_client_hello(SSL *s)
 		if (	(i < SSL2_MIN_CHALLENGE_LENGTH) ||
 			(i > SSL2_MAX_CHALLENGE_LENGTH))
 			{
+			ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 			SSLerr(SSL_F_GET_CLIENT_HELLO,SSL_R_INVALID_CHALLENGE_LENGTH);
 			return(-1);
 			}
@@ -571,6 +582,7 @@ static int get_client_hello(SSL *s)
 	len = 9 + (unsigned long)s->s2->tmp.cipher_spec_length + (unsigned long)s->s2->challenge_length + (unsigned long)s->s2->tmp.session_id_length;
 	if (len > SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER)
 		{
+		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 		SSLerr(SSL_F_GET_CLIENT_HELLO,SSL_R_MESSAGE_TOO_LONG);
 		return -1;
 		}
@@ -658,7 +670,12 @@ static int get_client_hello(SSL *s)
 	p+=s->s2->tmp.session_id_length;
 
 	/* challenge */
-	die(s->s2->challenge_length <= sizeof s->s2->challenge);
+	if (s->s2->challenge_length > sizeof s->s2->challenge)
+		{
+		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
+		SSLerr(SSL_F_GET_CLIENT_HELLO, SSL_R_INTERNAL_ERROR);
+		return -1;
+		}
 	memcpy(s->s2->challenge,p,(unsigned int)s->s2->challenge_length);
 	return(1);
 mem_err:
@@ -810,7 +827,12 @@ static int get_client_finished(SSL *s)
 		}
 
 	/* SSL2_ST_GET_CLIENT_FINISHED_B */
-	die(s->s2->conn_id_length <= sizeof s->s2->conn_id);
+	if (s->s2->conn_id_length > sizeof s->s2->conn_id)
+		{
+		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
+		SSLerr(SSL_F_GET_CLIENT_FINISHED, SSL_R_INTERNAL_ERROR);
+		return -1;
+		}
 	len = 1 + (unsigned long)s->s2->conn_id_length;
 	n = (int)len - s->init_num;
 	i = ssl2_read(s,(char *)&(p[s->init_num]),n);
@@ -836,7 +858,11 @@ static int server_verify(SSL *s)
 		{
 		p=(unsigned char *)s->init_buf->data;
 		*(p++)=SSL2_MT_SERVER_VERIFY;
-		die(s->s2->challenge_length <= sizeof s->s2->challenge);
+		if (s->s2->challenge_length > sizeof s->s2->challenge)
+			{
+			SSLerr(SSL_F_SERVER_VERIFY, SSL_R_INTERNAL_ERROR);
+			return -1;
+			}
 		memcpy(p,s->s2->challenge,(unsigned int)s->s2->challenge_length);
 		/* p+=s->s2->challenge_length; */
 
@@ -856,10 +882,12 @@ static int server_finish(SSL *s)
 		p=(unsigned char *)s->init_buf->data;
 		*(p++)=SSL2_MT_SERVER_FINISHED;
 
-		die(s->session->session_id_length
-		    <= sizeof s->session->session_id);
-		memcpy(p,s->session->session_id,
-			(unsigned int)s->session->session_id_length);
+		if (s->session->session_id_length > sizeof s->session->session_id)
+			{
+			SSLerr(SSL_F_SERVER_FINISH, SSL_R_INTERNAL_ERROR);
+			return -1;
+			}
+		memcpy(p,s->session->session_id, (unsigned int)s->session->session_id_length);
 		/* p+=s->session->session_id_length; */
 
 		s->state=SSL2_ST_SEND_SERVER_FINISHED_B;

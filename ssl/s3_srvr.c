@@ -949,7 +949,11 @@ static int ssl3_send_server_hello(SSL *s)
 			s->session->session_id_length=0;
 
 		sl=s->session->session_id_length;
-		die(sl <= sizeof s->session->session_id);
+		if (sl > sizeof s->session->session_id)
+			{
+			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO, SSL_R_INTERNAL_ERROR);
+			return -1;
+			}
 		*(p++)=sl;
 		memcpy(p,s->session->session_id,sl);
 		p+=sl;
