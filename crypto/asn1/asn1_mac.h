@@ -135,7 +135,7 @@ err:\
 		}
 
 #define M_ASN1_D2I_get_imp(b,func, type) \
-	M_ASN1_next=(_tmp& ~V_ASN1_PRIMATIVE_TAG)|type; \
+	M_ASN1_next=(_tmp& V_ASN1_CONSTRUCTED)|type; \
 	c.q=c.p; \
 	if (func(&(b),&c.p,c.slen) == NULL) \
 		{c.line=__LINE__; M_ASN1_next_prev = _tmp; goto err; } \
