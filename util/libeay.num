@@ -1870,3 +1870,5 @@ X509_keyid_set1                         2460	EXIST::FUNCTION:
 BIO_next                                2461	EXIST::FUNCTION:
 DSO_METHOD_vms                          2462	EXIST::FUNCTION:
 BIO_f_linebuffer                        2463	EXIST:VMS:FUNCTION:
+X509_print_ex                           2464	EXIST::FUNCTION:
+X509_print_ex_fp                        2465	EXIST::FUNCTION:FP_API
