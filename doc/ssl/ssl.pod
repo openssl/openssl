@@ -623,7 +623,8 @@ connection defined in the B<SSL> structure.
 
 =head1 SEE ALSO
 
-L<openssl(1)|openssl(1)>, L<crypto(3)|crypto(3)>
+L<openssl(1)|openssl(1)>, L<crypto(3)|crypto(3)>,
+L<SSL_get_error(3)|SSL_get_error(3)>
 
 =head1 HISTORY
 
