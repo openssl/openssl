@@ -25,6 +25,35 @@
      applications.
      [Bodo Moeller]
 
+  *) Changes in security patch:
+
+     Changes marked "(CHATS)" were sponsored by the Defense Advanced
+     Research Projects Agency (DARPA) and Air Force Research Laboratory,
+     Air Force Materiel Command, USAF, under agreement number
+     F30602-01-2-0537.
+
+  *) Add various sanity checks to asn1_get_length() to reject
+     the ASN1 length bytes if they exceed sizeof(long), will appear
+     negative or the content length exceeds the length of the
+     supplied buffer.
+     [Steve Henson, Adi Stav <stav@mercury.co.il>, James Yonan <jim@ntlp.com>]
+
+  *) Assertions for various potential buffer overflows, not known to
+     happen in practice.
+     [Ben Laurie (CHATS)]
+
+  *) Various temporary buffers to hold ASCII versions of integers were
+     too small for 64 bit platforms. (CAN-2002-0655)
+     [Matthew Byng-Maddick <mbm@aldigital.co.uk> and Ben Laurie (CHATS)>
+
+  *) Remote buffer overflow in SSL3 protocol - an attacker could
+     supply an oversized session ID to a client. (CAN-2002-0656)
+     [Ben Laurie (CHATS)]
+
+  *) Remote buffer overflow in SSL2 protocol - an attacker could
+     supply an oversized client master key. (CAN-2002-0656)
+     [Ben Laurie (CHATS)]
+
  Changes between 0.9.6c and 0.9.6d  [9 May 2002]
 
   *) Fix crypto/asn1/a_sign.c so that 'parameters' is omitted (not

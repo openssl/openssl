@@ -491,3 +491,11 @@ BOOL WINAPI DLLEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason,
 #endif
 
 #endif
+
+void OpenSSLDie(const char *file,int line,const char *assertion)
+    {
+    fprintf(stderr,"%s(%d): OpenSSL internal error, assertion failed: %s\n",
+	    file,line,assertion);
+    abort();
+    }
+

@@ -88,10 +88,12 @@ conf_api.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 conf_api.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 conf_def.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 conf_def.o: ../../include/openssl/conf.h ../../include/openssl/conf_api.h
-conf_def.o: ../../include/openssl/crypto.h ../../include/openssl/err.h
-conf_def.o: ../../include/openssl/lhash.h ../../include/openssl/opensslv.h
-conf_def.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-conf_def.o: ../../include/openssl/symhacks.h conf_def.h
+conf_def.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+conf_def.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+conf_def.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+conf_def.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+conf_def.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+conf_def.o: ../cryptlib.h conf_def.h
 conf_err.o: ../../include/openssl/bio.h ../../include/openssl/conf.h
 conf_err.o: ../../include/openssl/crypto.h ../../include/openssl/err.h
 conf_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslv.h
