@@ -46,7 +46,6 @@ top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
 all: subdirs lib check shared
-	ls -l $(LIB) $(LIBOBJ)
 
 check:
 	TOP=`pwd`/$(TOP) ./fips_check_sha1 fingerprint.sha1 $(SRC) $(HEADER)

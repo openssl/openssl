@@ -51,5 +51,8 @@
 
 void FIPS_set_prng_key(const unsigned char k1[8],const unsigned char k2[8]);
 void FIPS_test_mode(int test,const unsigned char faketime[8]);
+void FIPS_rand_seed(const void *buf, int num);
+/* NB: this returns true if _partially_ seeded */
+int FIPS_rand_seeded(void);
 
 extern RAND_METHOD rand_fips_meth;

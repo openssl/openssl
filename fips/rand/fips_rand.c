@@ -73,14 +73,13 @@ static int test_mode;
 static unsigned char test_faketime[8];
 
 static void fips_rand_cleanup(void);
-static void fips_rand_seed(const void *buf, int num);
 static void fips_rand_add(const void *buf, int num, double add_entropy);
 static int fips_rand_bytes(unsigned char *buf, int num);
 static int fips_rand_status(void);
 
 RAND_METHOD rand_fips_meth=
     {
-    fips_rand_seed,
+    FIPS_rand_seed,
     fips_rand_bytes,
     fips_rand_cleanup,
     fips_rand_add,
@@ -102,6 +101,10 @@ void FIPS_test_mode(int test,const unsigned char faketime[8])
 	return;
     memcpy(test_faketime,faketime,sizeof test_faketime);
     }
+
+/* NB: this returns true if _partially_ seeded */
+int FIPS_rand_seeded()
+    { return key_set || n_seed; }
 
 static void fips_gettime(unsigned char buf[8])
     {
@@ -144,7 +147,7 @@ static void fips_rand_cleanup(void)
     n_seed=0;
     }
 
-static void fips_rand_seed(const void *buf_, int num)
+void FIPS_rand_seed(const void *buf_, int num)
     {
     const char *buf=buf_;
     int n;
@@ -186,7 +189,7 @@ static void fips_rand_seed(const void *buf_, int num)
 
 static void fips_rand_add(const void *buf, int num, double add_entropy)
     {
-    fips_rand_seed(buf,num);
+    FIPS_rand_seed(buf,num);
     }
 
 static int fips_rand_bytes(unsigned char *buf,int num)

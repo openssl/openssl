@@ -47,7 +47,7 @@
  *
  */
 
-#ifdef FIPS
+#if defined(FIPS) || defined(OPENSSL_FIPS)
 /* Note that these are defined in crypto/cryptlib.c so they're
  * available even without -lfips.
  */
@@ -76,12 +76,14 @@ void ERR_load_FIPS_strings(void);
 
 /* Function codes. */
 #define FIPS_F_FIPS_DSA_CHECK				 102
+#define FIPS_F_FIPS_MODE_SET				 105
 #define FIPS_F_FIPS_SELFTEST_AES			 104
 #define FIPS_F_FIPS_SELFTEST_SHA1			 103
 #define FIPS_F_HASH_FINAL				 100
 #define FIPS_F_SSLEAY_RAND_BYTES			 101
 
 /* Reason codes. */
+#define FIPS_R_FIPS_MODE_ALREADY_SET			 102
 #define FIPS_R_NON_FIPS_METHOD				 100
 #define FIPS_R_SELFTEST_FAILED				 101
 

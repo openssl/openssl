@@ -50,6 +50,7 @@
 #include <openssl/fips.h>
 #include <openssl/rand.h>
 #include <openssl/fips_rand.h>
+#include <openssl/err.h>
 
 #ifdef FIPS
 
@@ -62,13 +63,30 @@ int FIPS_selftest()
 
 int FIPS_mode_set(int onoff)
     {
-    FIPS_mode=onoff;
     if(onoff)
 	{
+	char buf[24];
+
+	/* Don't go into FIPS mode twice, just so we can do automagic
+	   seeding */
+	if(FIPS_mode)
+	    FIPSerr(FIPS_F_FIPS_MODE_SET,FIPS_R_FIPS_MODE_ALREADY_SET);
+
+	/* automagically seed PRNG if not already seeded */
+	if(!FIPS_rand_seeded())
+	    {
+	    RAND_bytes(buf,sizeof buf);
+	    FIPS_set_prng_key(buf,buf+8);
+	    FIPS_rand_seed(buf+16,8);
+	    }
+
+	/* now switch into FIPS mode */
 	FIPS_rand_check=&rand_fips_meth;
 	RAND_set_rand_method(&rand_fips_meth);
+	FIPS_mode=onoff;
 	return FIPS_selftest();
 	}
+    FIPS_mode=onoff;
     return 1;
     }
 

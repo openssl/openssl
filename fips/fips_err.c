@@ -67,6 +67,7 @@
 static ERR_STRING_DATA FIPS_str_functs[]=
 	{
 {ERR_PACK(0,FIPS_F_FIPS_DSA_CHECK,0),	"FIPS_dsa_check"},
+{ERR_PACK(0,FIPS_F_FIPS_MODE_SET,0),	"FIPS_mode_set"},
 {ERR_PACK(0,FIPS_F_FIPS_SELFTEST_AES,0),	"FIPS_selftest_aes"},
 {ERR_PACK(0,FIPS_F_FIPS_SELFTEST_SHA1,0),	"FIPS_selftest_sha1"},
 {ERR_PACK(0,FIPS_F_HASH_FINAL,0),	"HASH_FINAL"},
@@ -76,6 +77,7 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 
 static ERR_STRING_DATA FIPS_str_reasons[]=
 	{
+{FIPS_R_FIPS_MODE_ALREADY_SET            ,"fips mode already set"},
 {FIPS_R_NON_FIPS_METHOD                  ,"non fips method"},
 {FIPS_R_SELFTEST_FAILED                  ,"selftest failed"},
 {0,NULL}
