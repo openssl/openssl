@@ -68,9 +68,6 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 
 #ifdef OPENSSL_NO_DSA
 int main(int argc, char *argv[])
