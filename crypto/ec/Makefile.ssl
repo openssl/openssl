@@ -24,10 +24,10 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	ec_lib.c ecp_smpl.c ecp_mont.c ecp_recp.c ecp_nist.c ec_cvt.c ec_mult.c \
-	ec_err.c ec_curve.c
+	ec_err.c ec_curve.c ec_check.c
 
 LIBOBJ=	ec_lib.o ecp_smpl.o ecp_mont.o ecp_recp.o ecp_nist.o ec_cvt.o ec_mult.o \
-	ec_err.o ec_curve.o
+	ec_err.o ec_curve.o ec_check.o
 
 SRC= $(LIBSRC)
 
@@ -82,6 +82,13 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+ec_check.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+ec_check.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+ec_check.o: ../../include/openssl/ec.h ../../include/openssl/err.h
+ec_check.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+ec_check.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+ec_check.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+ec_check.o: ec_check.c ec_lcl.h
 ec_curve.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 ec_curve.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ec_curve.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

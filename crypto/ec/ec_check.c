@@ -1,6 +1,6 @@
-/* crypto/ec/ecp_nist.c */
+/* crypto/ec/ec_check.c */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,82 +54,69 @@
  */
 
 #include "ec_lcl.h"
+#include <openssl/err.h>
 
-#if 0
-const EC_METHOD *EC_GFp_nist_method(void)
+int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
 	{
-	static const EC_METHOD ret = {
-		ec_GFp_nist_group_init,
-		ec_GFp_nist_group_finish,
-		ec_GFp_nist_group_clear_finish,
-		ec_GFp_nist_group_copy,
-		ec_GFp_nist_group_set_curve_GFp,
-		ec_GFp_simple_group_get_curve_GFp,
-		ec_GFp_simple_group_set_generator,
-		ec_GFp_simple_group_get0_generator,
-		ec_GFp_simple_group_get_order,
-		ec_GFp_simple_group_get_cofactor,
-		ec_GFp_simple_group_check_discriminant,
-		ec_GFp_simple_point_init,
-		ec_GFp_simple_point_finish,
-		ec_GFp_simple_point_clear_finish,
-		ec_GFp_simple_point_copy,
-		ec_GFp_simple_point_set_to_infinity,
-		ec_GFp_simple_set_Jprojective_coordinates_GFp,
-		ec_GFp_simple_get_Jprojective_coordinates_GFp,
-		ec_GFp_simple_point_set_affine_coordinates_GFp,
-		ec_GFp_simple_point_get_affine_coordinates_GFp,
-		ec_GFp_simple_set_compressed_coordinates_GFp,
-		ec_GFp_simple_point2oct,
-		ec_GFp_simple_oct2point,
-		ec_GFp_simple_add,
-		ec_GFp_simple_dbl,
-		ec_GFp_simple_invert,
-		ec_GFp_simple_is_at_infinity,
-		ec_GFp_simple_is_on_curve,
-		ec_GFp_simple_cmp,
-		ec_GFp_simple_make_affine,
-		ec_GFp_simple_points_make_affine,
-		ec_GFp_nist_field_mul,
-		ec_GFp_nist_field_sqr,
-		0 /* field_encode */,
-		0 /* field_decode */,
-		0 /* field_set_to_one */ };
+	int ret = 0;
+	BIGNUM *order;
+	BN_CTX *new_ctx = NULL;
+	EC_POINT *point = NULL;
 
-	return &ret;
+	if (ctx == NULL)
+		{
+		ctx = new_ctx = BN_CTX_new();
+		if (ctx == NULL)
+			{
+			ECerr(EC_F_EC_GROUP_CHECK, ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+		}
+	BN_CTX_start(ctx);
+	if ((order = BN_CTX_get(ctx)) == NULL) goto err;
+
+	/* check the discriminant */
+	if (!EC_GROUP_check_discriminant(group, ctx))
+		{
+		ECerr(EC_F_EC_GROUP_CHECK, EC_R_DISCRIMINANT_IS_ZERO);
+		goto err;
+		}
+
+	/* check the generator */
+	if (group->generator == NULL)
+		{
+		ECerr(EC_F_EC_GROUP_CHECK, EC_R_UNDEFINED_GENERATOR);
+		goto err;
+		}
+	if (!EC_POINT_is_on_curve(group, group->generator, ctx))
+		{
+		ECerr(EC_F_EC_GROUP_CHECK, EC_R_POINT_IS_NOT_ON_CURVE);
+		goto err;
+		}
+
+	/* check the order of the generator */
+	if ((point = EC_POINT_new(group)) == NULL) goto err;
+	if (!EC_GROUP_get_order(group, order, ctx)) goto err; 
+	if (BN_is_zero(order))
+		{
+		ECerr(EC_F_EC_GROUP_CHECK, EC_R_UNDEFINED_ORDER);
+		goto err;
+		}
+	
+	if (!EC_POINT_mul(group, point, order, NULL, NULL, ctx)) goto err;
+	if (!EC_POINT_is_at_infinity(group, point))
+		{
+		ECerr(EC_F_EC_GROUP_CHECK, EC_R_INVALID_GROUP_ORDER);
+		goto err;
+		}
+
+	ret = 1;
+
+err:
+	BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	if (point)
+		EC_POINT_free(point);
+	return ret;
 	}
-#endif
-
-
-int ec_GFp_nist_group_init(EC_GROUP *group)
-	{
-	int ok;
-
-	ok = ec_GFp_simple_group_init(group);
-	group->field_data1 = NULL;
-	return ok;
-	}
-
-
-int ec_GFp_nist_group_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
-/* TODO */
-
-
-void ec_GFp_nist_group_finish(EC_GROUP *group);
-/* TODO */
-
-
-void ec_GFp_nist_group_clear_finish(EC_GROUP *group);
-/* TODO */
-
-
-int ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src);
-/* TODO */
-
-
-int ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
-/* TODO */
-
-
-int ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, BN_CTX *ctx);
-/* TODO */

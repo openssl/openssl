@@ -127,6 +127,9 @@ int EC_GROUP_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 
 /* EC_GROUP_check() returns 1 if 'group' defines a valid group, 0 otherwise */
 int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx);
+/* EC_GROUP_check_discriminant() returns 1 if the discriminant of the
+ * elliptic curve is not zero, 0 otherwise */
+int EC_GROUP_check_discriminant(const EC_GROUP *, BN_CTX *);
 
 /* EC_GROUP_new_GFp() calls EC_GROUP_new() and EC_GROUP_set_GFp()
  * after choosing an appropriate EC_METHOD */
@@ -227,7 +230,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GFP_MONT_FIELD_ENCODE			 134
 #define EC_F_EC_GFP_MONT_FIELD_MUL			 131
 #define EC_F_EC_GFP_MONT_FIELD_SQR			 132
-#define EC_F_EC_GFP_SIMPLE_GROUP_CHECK			 151
+#define EC_F_EC_GFP_SIMPLE_GROUP_CHECK_DISCRIMINANT	 152
 #define EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP		 100
 #define EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR		 101
 #define EC_F_EC_GFP_SIMPLE_MAKE_AFFINE			 102
@@ -238,6 +241,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GFP_SIMPLE_POINT_SET_AFFINE_COORDINATES_GFP 128
 #define EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES_GFP 129
 #define EC_F_EC_GROUP_CHECK				 150
+#define EC_F_EC_GROUP_CHECK_DISCRIMINANT		 153
 #define EC_F_EC_GROUP_COPY				 106
 #define EC_F_EC_GROUP_GET0_GENERATOR			 139
 #define EC_F_EC_GROUP_GET_COFACTOR			 140

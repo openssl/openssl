@@ -73,7 +73,7 @@ const EC_METHOD *EC_GFp_simple_method(void)
 		ec_GFp_simple_group_get0_generator,
 		ec_GFp_simple_group_get_order,
 		ec_GFp_simple_group_get_cofactor,
-		ec_GFp_simple_group_check,
+		ec_GFp_simple_group_check_discriminant,
 		ec_GFp_simple_point_init,
 		ec_GFp_simple_point_finish,
 		ec_GFp_simple_point_clear_finish,
@@ -339,20 +339,19 @@ int ec_GFp_simple_group_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN
 	}
 
 
-int ec_GFp_simple_group_check(const EC_GROUP *group, BN_CTX *ctx)
+int ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 	{
 	int ret = 0;
 	BIGNUM *a,*b,*order,*tmp_1,*tmp_2;
 	const BIGNUM *p = &group->field;
 	BN_CTX *new_ctx = NULL;
-	EC_POINT *point = NULL;
 
 	if (ctx == NULL)
 		{
 		ctx = new_ctx = BN_CTX_new();
 		if (ctx == NULL)
 			{
-			ECerr(EC_F_EC_GFP_SIMPLE_GROUP_CHECK, ERR_R_MALLOC_FAILURE);
+			ECerr(EC_F_EC_GFP_SIMPLE_GROUP_CHECK_DISCRIMINANT, ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
 		}
@@ -380,11 +379,7 @@ int ec_GFp_simple_group_check(const EC_GROUP *group, BN_CTX *ctx)
          * 0 =< a, b < p */
 	if (BN_is_zero(a))
 		{
-		if (BN_is_zero(b))
-			{
-			ECerr(EC_F_EC_GFP_SIMPLE_GROUP_CHECK, EC_R_DISCRIMINANT_IS_ZERO);
-			goto err;
-			}
+		if (BN_is_zero(b)) goto err;
 		}
 	else if (!BN_is_zero(b))
 		{
@@ -398,49 +393,14 @@ int ec_GFp_simple_group_check(const EC_GROUP *group, BN_CTX *ctx)
 		/* tmp_2 = 27*b^2 */
 
 		if (!BN_mod_add(a, tmp_1, tmp_2, p, ctx)) goto err;
-		if (BN_is_zero(a))
-			{
-			ECerr(EC_F_EC_GFP_SIMPLE_GROUP_CHECK, EC_R_DISCRIMINANT_IS_ZERO);
-			goto err;
-			}
+		if (BN_is_zero(a)) goto err;
 		}
-	
-	/* check the generator */
-	if (group->generator == NULL)
-		{
-		ECerr(EC_F_EC_GFP_SIMPLE_GROUP_CHECK, EC_R_UNDEFINED_GENERATOR);
-		goto err;
-		}
-	if (!ec_GFp_simple_is_on_curve(group, group->generator, ctx))
-		{
-		ECerr(EC_F_EC_GFP_SIMPLE_GROUP_CHECK, EC_R_POINT_IS_NOT_ON_CURVE);
-		goto err;
-		}
-
-	/* check the order of the generator */
-	if ((point = EC_POINT_new(group)) == NULL) goto err;
-	if (!EC_GROUP_get_order(group, order, ctx)) goto err; 
-	if (BN_is_zero(order))
-		{
-		ECerr(EC_F_EC_GFP_SIMPLE_GROUP_CHECK, EC_R_UNDEFINED_ORDER);
-		goto err;
-		}
-	
-	if (!EC_POINT_mul(group, point, order, NULL, NULL, ctx)) goto err;
-	if (!EC_POINT_is_at_infinity(group, point))
-		{
-		ECerr(EC_F_EC_GFP_SIMPLE_GROUP_CHECK, EC_R_INVALID_GROUP_ORDER);
-		goto err;
-		}
-
 	ret = 1;
 
 err:
 	BN_CTX_end(ctx);
 	if (new_ctx != NULL)
 		BN_CTX_free(new_ctx);
-	if (point)
-		EC_POINT_free(point);
 	return ret;
 	}
 

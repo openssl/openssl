@@ -83,7 +83,7 @@ struct ec_method_st {
 	int (*group_get_cofactor)(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 
 	/* used by EC_GROUP_check: */
-	int (*group_check)(const EC_GROUP *, BN_CTX *);
+	int (*group_check_discriminant)(const EC_GROUP *, BN_CTX *);
 
 	/* used by EC_POINT_new, EC_POINT_free, EC_POINT_clear_free, EC_POINT_copy: */
 	int (*point_init)(EC_POINT *);
@@ -218,7 +218,7 @@ int ec_GFp_simple_group_set_generator(EC_GROUP *, const EC_POINT *generator,
 EC_POINT *ec_GFp_simple_group_get0_generator(const EC_GROUP *);
 int ec_GFp_simple_group_get_order(const EC_GROUP *, BIGNUM *order, BN_CTX *);
 int ec_GFp_simple_group_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
-int ec_GFp_simple_group_check(const EC_GROUP *, BN_CTX *);
+int ec_GFp_simple_group_check_discriminant(const EC_GROUP *, BN_CTX *);
 int ec_GFp_simple_point_init(EC_POINT *);
 void ec_GFp_simple_point_finish(EC_POINT *);
 void ec_GFp_simple_point_clear_finish(EC_POINT *);

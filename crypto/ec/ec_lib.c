@@ -237,14 +237,14 @@ int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
 	}
 
 
-int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
+int EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 	{
-	if (group->meth->group_check == 0)
+	if (group->meth->group_check_discriminant == 0)
 		{
-		ECerr(EC_F_EC_GROUP_CHECK, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ECerr(EC_F_EC_GROUP_CHECK_DISCRIMINANT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 		}
-	return group->meth->group_check(group, ctx);
+	return group->meth->group_check_discriminant(group, ctx);
 	}
 
 

@@ -69,7 +69,7 @@ const EC_METHOD *EC_GFp_recp_method(void)
 		ec_GFp_simple_group_get0_generator,
 		ec_GFp_simple_group_get_order,
 		ec_GFp_simple_group_get_cofactor,
-		ec_GFp_simple_group_check,
+		ec_GFp_simple_group_check_discriminant,
 		ec_GFp_simple_point_init,
 		ec_GFp_simple_point_finish,
 		ec_GFp_simple_point_clear_finish,
