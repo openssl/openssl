@@ -331,7 +331,7 @@ typedef struct Netscape_spki_st
 typedef struct Netscape_certificate_sequence
 	{
 	ASN1_OBJECT *type;
-	STACK /* X509 */ *certs;
+	STACK_OF(X509) *certs;
 	} NETSCAPE_CERT_SEQUENCE;
 
 #ifndef HEADER_BN_H

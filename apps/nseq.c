@@ -123,11 +123,11 @@ int MAIN(int argc, char **argv)
 
 	if (toseq) {
 		seq = NETSCAPE_CERT_SEQUENCE_new();
-		seq->certs = sk_new(NULL);
+		seq->certs = sk_X509_new(NULL);
 		while((x509 = PEM_read_bio_X509(in, NULL, NULL))) 
-					sk_push(seq->certs, (char *)x509);
+		    sk_X509_push(seq->certs,x509);
 
-		if(!sk_num(seq->certs))
+		if(!sk_X509_num(seq->certs))
 		{
 			BIO_printf (bio_err, "Error reading certs file %s\n", infile);
 			ERR_print_errors(bio_err);
@@ -144,8 +144,8 @@ int MAIN(int argc, char **argv)
 		goto end;
 	}
 
-	for(i = 0; i < sk_num(seq->certs); i++) {
-		x509 = (X509 *) sk_value(seq->certs, i);
+	for(i = 0; i < sk_X509_num(seq->certs); i++) {
+		x509 = sk_X509_value(seq->certs, i);
 		dump_cert_text(out, x509);
 		PEM_write_bio_X509(out, x509);
 	}
