@@ -114,6 +114,7 @@
 
 #include <openssl/aes.h>
 #include "aes_locl.h"
+#include "e_os.h"
 
 /* The input and output encrypted as though 128bit cfb mode is being
  * used.  The extra state information to record how much of the
