@@ -889,7 +889,7 @@ int ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 	size_t field_len, enc_len;
 	int ret = 0;
 
-	if (len <= 0)
+	if (len == 0)
 		{
 		ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_BUFFER_TOO_SMALL);
 		return 0;
