@@ -4,6 +4,48 @@
 
  Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
 
+  *) The countermeasure against Bleichbacher's attack on PKCS #1 v1.5
+     RSA encryption was accidentily removed in s3_srvr.c in OpenSSL 0.9.5
+     when fixing the server behaviour for backwards-compatible 'client
+     hello' messages.  (Note that the attack is impractical against
+     SSL 3.0 and TLS 1.0 anyway because length and version checking
+     means that the probability of guessing a valid ciphertext is
+     around 2^-40; see section 5 in Bleichenbacher's CRYPTO '98
+     paper.)
+
+     Before 0.9.5, the countermeasure (hide the error by generating a
+     random 'decryption result') did not work properly because
+     ERR_clear_error() was missing, meaning that SSL_get_error() would
+     detect the supposedly ignored error.
+
+     Both problems are now fixed.
+     [Bodo Moeller]
+
+  *) In crypto/bio/bf_buff.c, increase DEFAULT_BUFFER_SIZE to 4096
+     (previously it was 1024).
+     [Bodo Moeller]
+
+  *) Fix for compatibility mode trust settings: ignore trust settings
+     unless some valid trust or reject settings are present.
+     [Steve Henson]
+
+  *) Fix for blowfish EVP: its a variable length cipher.
+     [Steve Henson]
+
+  *) Fix various bugs related to DSA S/MIME verification. Handle missing
+     parameters in DSA public key structures and return an error in the
+     DSA routines if parameters are absent.
+     [Steve Henson]
+
+  *) In versions up to 0.9.6, RAND_file_name() resorted to file ".rnd"
+     in the current directory if neither $RANDFILE nor $HOME was set.
+     RAND_file_name() in 0.9.6a returned NULL in this case.  This has
+     caused some confusion to Windows users who haven't defined $HOME.
+     Thus RAND_file_name() is changed again: e_os.h can define a
+     DEFAULT_HOME, which will be used if $HOME is not set.
+     For Windows, we use "C:"; on other platforms, we still require
+     environment variables.
+
   *) Move 'if (!initialized) RAND_poll()' into regions protected by
      CRYPTO_LOCK_RAND.  This is not strictly necessary, but avoids
      having multiple threads call RAND_poll() concurrently.
@@ -2382,7 +2424,7 @@
                                      copied!)
      [Bodo Moeller]
 
-  *) Bugfix: SSL_set_mode ignored its parameter, only SSL_CTX_set_mode
+  *) Bugfix: SSL_set_options ignored its parameter, only SSL_CTX_set_options
      worked.
 
   *) Fix problems with no-hmac etc.

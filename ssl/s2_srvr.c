@@ -405,12 +405,13 @@ static int get_client_master_key(SSL *s)
 	/* bad decrypt */
 #if 1
 	/* If a bad decrypt, continue with protocol but with a
-	 * dud master secret */
+	 * random master secret (Bleichenbacher attack) */
 	if ((i < 0) ||
 		((!is_export && (i != EVP_CIPHER_key_length(c)))
 		|| (is_export && ((i != ek) || (s->s2->tmp.clear+i !=
 			EVP_CIPHER_key_length(c))))))
 		{
+		ERR_clear_error();
 		if (is_export)
 			i=ek;
 		else

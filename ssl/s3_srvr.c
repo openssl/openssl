@@ -1322,14 +1322,15 @@ static int ssl3_get_client_key_exchange(SSL *s)
 
 		i=RSA_private_decrypt((int)n,p,p,rsa,RSA_PKCS1_PADDING);
 
+		al = -1;
+		
 		if (i != SSL_MAX_MASTER_KEY_LENGTH)
 			{
 			al=SSL_AD_DECODE_ERROR;
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_BAD_RSA_DECRYPT);
-			goto f_err;
 			}
 
-		if (!((p[0] == (s->client_version>>8)) && (p[1] == (s->client_version & 0xff))))
+		if ((al == -1) && !((p[0] == (s->client_version>>8)) && (p[1] == (s->client_version & 0xff))))
 			{
 			/* The premaster secret must contain the same version number as the
 			 * ClientHello to detect version rollback attacks (strangely, the
@@ -1347,6 +1348,27 @@ static int ssl3_get_client_key_exchange(SSL *s)
 				}
 			}
 
+		if (al != -1)
+			{
+#if 0
+			goto f_err;
+#else
+			/* Some decryption failure -- use random value instead as countermeasure
+			 * against Bleichenbacher's attack on PKCS #1 v1.5 RSA padding
+			 * (see RFC 2246, section 7.4.7.1).
+			 * But note that due to length and protocol version checking, the
+			 * attack is impractical anyway (see section 5 in D. Bleichenbacher:
+			 * "Chosen Ciphertext Attacks Against Protocols Based on the RSA
+			 * Encryption Standard PKCS #1", CRYPTO '98, LNCS 1462, pp. 1-12).
+			 */
+			ERR_clear_error();
+			i = SSL_MAX_MASTER_KEY_LENGTH;
+			p[0] = s->client_version >> 8;
+			p[1] = s->client_version & 0xff;
+			RAND_pseudo_bytes(p+2, i-2); /* should be RAND_bytes, but we cannot work around a failure */
+#endif
+			}
+	
 		s->session->master_key_length=
 			s->method->ssl3_enc->generate_master_secret(s,
 				s->session->master_key,

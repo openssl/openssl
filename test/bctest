@@ -104,5 +104,8 @@ EOF
 done
 
 echo "No working bc found.  Consider installing GNU bc." >&2
-echo "cat >/dev/null"
+if [ "$1" = ignore ]; then
+  echo "cat >/dev/null"
+  exit 0
+fi
 exit 1

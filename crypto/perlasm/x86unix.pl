@@ -79,7 +79,7 @@ sub main'DWP
 	local($addr,$reg1,$reg2,$idx)=@_;
 
 	$ret="";
-	$addr =~ s/(^|[+ \t])([A-Za-z_]+)($|[+ \t])/$1$under$2$3/;
+	$addr =~ s/(^|[+ \t])([A-Za-z_]+[A-Za-z0-9_]+)($|[+ \t])/$1$under$2$3/;
 	$reg1="$regs{$reg1}" if defined($regs{$reg1});
 	$reg2="$regs{$reg2}" if defined($regs{$reg2});
 	$ret.=$addr if ($addr ne "") && ($addr ne 0);

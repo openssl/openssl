@@ -85,6 +85,7 @@ static ERR_STRING_DATA DSA_str_functs[]=
 static ERR_STRING_DATA DSA_str_reasons[]=
 	{
 {DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE       ,"data too large for key size"},
+{DSA_R_MISSING_PARAMETERS                ,"missing parameters"},
 {0,NULL}
 	};
 

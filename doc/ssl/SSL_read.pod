@@ -29,7 +29,22 @@ initialized to client or server mode. This is not the case if a generic
 method is being used (see L<SSL_CTX_new(3)|SSL_CTX_new(3)>, so that
 L<SSL_set_connect_state(3)|SSL_set_connect_state(3)> or SSL_set_accept_state()
 must be used before the first call to an SSL_read() or
-L<SSL_write(3)|SSL_write(3)> function.
+L<SSL_write(3)|SSL_write(3)> function).
+
+SSL_read() works based on the SSL/TLS records. The data are received in
+records (with a maximum record size of 16kB for SSLv3/TLSv1). Only when a
+record has been completely received, it can be processed (decryption and
+check of integrity). Therefore data that was not retrieved at the last
+call of SSL_read() can still be buffered inside the SSL layer and will be
+retrieved on the next call to SSL_read(). If B<num> is higher than the
+number of bytes buffered, SSL_read() will return with the bytes buffered.
+If no more bytes are in the buffer, SSL_read() will trigger the processing
+of the next record. Only when the record has been received and processed
+completely, SSL_read() will return reporting success. At most the contents
+of the record will be returned. As the size of an SSL/TLS record may exceed
+the maximum packet size of the underlying transport (e.g. TCP), it may
+be necessary to read several packets from the transport layer before the
+record is complete and SSL_read() can succeed.
 
 If the underlying BIO is B<blocking>, SSL_read() will only return, once the
 read operation has been finished or an error occurred, except when a
