@@ -84,7 +84,7 @@ typedef int pid_t;
 #define AEP_LIB_NAME "aep engine"
 #define FAIL_TO_SW 0x10101010
 
-#include "hw_aep_err.c"
+#include "e_aep_err.c"
 
 static int aep_init(ENGINE *e);
 static int aep_finish(ENGINE *e);

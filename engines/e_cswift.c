@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
+#include <openssl/buffer.h>
 #include <openssl/dso.h>
 #include <openssl/engine.h>
 
@@ -84,7 +84,7 @@
 #endif
 
 #define CSWIFT_LIB_NAME "cswift engine"
-#include "hw_cswift_err.c"
+#include "e_cswift_err.c"
 
 static int cswift_destroy(ENGINE *e);
 static int cswift_init(ENGINE *e);

@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
+#include <openssl/buffer.h>
 #include <openssl/dso.h>
 #include <openssl/engine.h>
 
@@ -67,7 +67,7 @@
 #ifndef OPENSSL_NO_HW_NURON
 
 #define NURON_LIB_NAME "nuron engine"
-#include "hw_nuron_err.c"
+#include "e_nuron_err.c"
 
 static const char *NURON_LIBNAME = NULL;
 static const char *get_NURON_LIBNAME(void)

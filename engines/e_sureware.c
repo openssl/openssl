@@ -51,12 +51,9 @@
 ====================================================================*/
 
 #include <stdio.h>
-#include "cryptlib.h"
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include <openssl/dso.h>
-#include "eng_int.h"
-#include "engine.h"
 #include <openssl/engine.h>
 
 #ifndef OPENSSL_NO_HW
@@ -69,7 +66,7 @@
 #endif
 
 #define SUREWARE_LIB_NAME "sureware engine"
-#include "hw_sureware_err.c"
+#include "e_sureware_err.c"
 
 static int surewarehk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
 static int surewarehk_destroy(ENGINE *e);

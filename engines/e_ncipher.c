@@ -59,7 +59,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "cryptlib.h"
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include <openssl/dso.h>
@@ -84,7 +83,7 @@
 #endif
 
 #define HWCRHK_LIB_NAME "hwcrhk engine"
-#include "hw_ncipher_err.c"
+#include "e_ncipher_err.c"
 
 static int hwcrhk_destroy(ENGINE *e);
 static int hwcrhk_init(ENGINE *e);

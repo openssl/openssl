@@ -60,7 +60,7 @@
 
 #include <stdio.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
+#include <openssl/buffer.h>
 #include <openssl/dso.h>
 #include <openssl/engine.h>
 
@@ -74,7 +74,7 @@
 #endif
 
 #define UBSEC_LIB_NAME "ubsec engine"
-#include "hw_ubsec_err.c"
+#include "e_ubsec_err.c"
 
 #define FAIL_TO_SOFTWARE -15
 

@@ -56,7 +56,6 @@
 #include <stdio.h>
 #include <openssl/crypto.h>
 /* #include <openssl/pem.h> */
-#include "cryptlib.h"
 #include <openssl/dso.h>
 #include <openssl/x509.h>
 #include <openssl/objects.h>
@@ -71,7 +70,7 @@
 #include "vendor_defns/hw_4758_cca.h"
 #endif
 
-#include "hw_4758_cca_err.c"
+#include "e_4758_cca_err.c"
 
 static int ibm_4758_cca_destroy(ENGINE *e);
 static int ibm_4758_cca_init(ENGINE *e);

@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
+#include <openssl/buffer.h>
 #include <openssl/dso.h>
 #include <openssl/engine.h>
 
@@ -72,7 +72,7 @@
 #endif
 
 #define ATALLA_LIB_NAME "atalla engine"
-#include "hw_atalla_err.c"
+#include "e_atalla_err.c"
 
 static int atalla_destroy(ENGINE *e);
 static int atalla_init(ENGINE *e);
