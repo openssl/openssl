@@ -109,13 +109,13 @@ if($do_crypto == 1) {
 }
 
 } else {
-
-	&print_def_file(*STDOUT,"SSLEAY",*ssl_list,@ssl_func)
+	my $err = 0;
+	$err += &print_def_file(*STDOUT,"SSLEAY",*ssl_list,@ssl_func)
 		if $do_ssl == 1;
 
-	&print_def_file(*STDOUT,"LIBEAY",*crypto_list,@crypto_func)
+	$err += &print_def_file(*STDOUT,"LIBEAY",*crypto_list,@crypto_func)
 		if $do_crypto == 1;
-
+	exit($err);
 }
 
 
@@ -290,6 +290,7 @@ sub print_def_file
 {
 	(*OUT,my $name,*nums,@functions)=@_;
 	my $n =1;
+	my $nodef=0;
 
 	if ($W32)
 		{ $name.="32"; }
@@ -329,14 +330,17 @@ EOF
 
 	foreach $func (@functions) {
 		if (!defined($nums{$func})) {
-			printf STDERR "$func does not have a number assigned\n"
-					if(!$do_update);
+		    if(!$do_update) {
+			printf STDERR "$func does not have a number assigned\n";
+			$nodef = 1;
+		    }
 		} else {
 			$n=$nums{$func};
 			printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$func,$n;
 		}
 	}
 	printf OUT "\n";
+	return ($nodef);
 }
 
 sub load_numbers

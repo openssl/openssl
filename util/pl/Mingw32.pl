@@ -1,12 +1,11 @@
 #!/usr/local/bin/perl
 #
-# unix.pl - the standard unix makefile stuff.
+# Mingw32.pl -- Mingw32 with GNU cp (Mingw32f.pl uses DOS tools) 
 #
 
-# Need the Cygwin32 file utilities
 $o='/';
 $cp='cp';
-$rm='rm';
+$rm='del'; # use 'rm -f' if using GNU file utilities
 $mkdir='gmkdir';
 
 # gcc wouldn't accept backslashes in paths

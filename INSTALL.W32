@@ -72,43 +72,30 @@
 
  To build OpenSSL, you need the Mingw32 package and GNU make.
 
- Compiler installation:
+ * Compiler installation:
 
- Mingw32 is available from <ftp://ftp.xraylith.wisc.edu/pub/khan/gnu-win32/
- mingw32/egcs-1.1.2/egcs-1.1.2-mingw32.zip>. GNU make is at
- <ftp://agnes.dida.physik.uni-essen.de/home/janjaap/mingw32/binaries/
- make-3.76.1.zip>. Install both of them in C:\egcs-1.1.2 and run
- C:\egcs-1.1.2\mingw32.bat to set the PATH.
+   Mingw32 is available from <ftp://ftp.xraylith.wisc.edu/pub/khan/gnu-win32/
+   mingw32/egcs-1.1.2/egcs-1.1.2-mingw32.zip>. GNU make is at
+   <ftp://agnes.dida.physik.uni-essen.de/home/janjaap/mingw32/binaries/
+   make-3.76.1.zip>. Install both of them in C:\egcs-1.1.2 and run
+   C:\egcs-1.1.2\mingw32.bat to set the PATH.
 
- * Configure OpenSSL:
+ * Compile OpenSSL:
 
-   > perl Configure Mingw32
-   > perl util\mkfiles.pl >MINFO
-   > perl util\mk1mf.pl Mingw32 >ms\mingw32.mak
+   Run ms\mw.bat
 
- * This step can be skipped if you have the GNU file utitilities (cp, rm, ...)
-   installed:
+   This will create the library and binaries in out.
 
-   > perl util\mk1mf.pl Mingw32-files >ms\mingw32f.mak
-   > make -f ms/mingw32f.mak
+   libcrypto.a and libssl.a are the static libraries. To use the DLLs,
+   link with libeay32.a and libssl32.a instead.
 
-   This will end with an error message. If you don't like that, install
-   the file utilities. :)
+   See troubleshooting if you get error messages about functions not having
+   a number assigned.
 
- * Compile the library:
-   > make -f ms/mingw32.mak
-
-   You can now try the tests:
+ * You can now try the tests:
 
    > cd out
    > ..\ms\test
-
- * Build the OpenSSL DLLs:
-
-   > perl util\mkdef.pl 32 libeay > ms\libeay32.def
-   > perl util\mkdef.pl 32 ssleay > ms\ssleay32.def
-
-   [to be done]
 
  Troubleshooting
  ---------------
@@ -150,9 +137,6 @@
  If you don't use the multithreaded DLL runtime library (/MD option) your
  program will almost certainly crash: see the original SSLeay description
  below for more details.
-
- Tweaks
- ------
 
 --------------------------------------------------------------------------------
 The orignal Windows build instructions from SSLeay follow. 

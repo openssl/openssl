@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-# unix.pl - the standard unix makefile stuff.
+# Mingw32f.pl -- copy files; Mingw32.pl is needed to do the compiling. 
 #
 
 $o='\\';
