@@ -15,9 +15,9 @@ On the 2 alpha C compilers I had access to, it was not possible to do
 were 64 bits).  So the hand assember gives access to the 128 bit result and
 a 2 times speedup :-).
 
-There are 2 versions of assember for the HP PA-RISC.
-pa-risc.s is the origional one which works fine.
-pa-risc2.s is a new version that often generates warnings but if the
-tests pass, it gives performance that is over 2 times faster than
-pa-risc.s.
-Both were generated using gcc :-)
+There are 3 versions of assember for the HP PA-RISC.
+
+pa-risc.s is the origional one which works fine and generated using gcc :-)
+
+pa-risc2W.s and pa-risc2.s are 64 and 32-bit PA-RISC 2.0 implementations
+by Chris Ruemmler from HP (with some help from the HP C compiler).

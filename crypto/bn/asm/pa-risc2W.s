@@ -1,11 +1,5 @@
 ;
-; PA-RISC 2.0 implementation of bn_asm code, based on the
-; 64-bit version of the code.  This code is effectively the
-; same as the 64-bit version except the register model is
-; slightly different given all values must be 32-bit between
-; function calls.  Thus the 64-bit return values are returned
-; in %ret0 and %ret1 vs just %ret0 as is done in 64-bit
-;
+; PA-RISC 64-bit implementation of bn_asm code
 ;
 ; This code is approximately 2x faster than the C version
 ; for RSA/DSA.
@@ -20,14 +14,14 @@
 ; The code compiles with HP's assembler
 ;
 
-	.level	2.0N
+	.level	2.0W
 	.space	$TEXT$
 	.subspa	$CODE$,QUAD=0,ALIGN=8,ACCESS=0x2c,CODE_ONLY
 
 ;
 ; Global Register definitions used for the routines.
 ;
-; Some information about HP's runtime architecture for 32-bits.
+; Some information about HP's runtime architecture for 64-bits.
 ;
 ; "Caller save" means the calling function must save the register
 ; if it wants the register to be preserved.
@@ -45,8 +39,10 @@
 ;     "caller save" registers: r1,r19-r26
 ;     "callee save" registers: r3-r18
 ;     return register        :  r2  (rp)
-;     return values          ; r28,r29  (ret0,ret1)
+;     return values          ; r28  (ret0,ret1)
 ;     Stack pointer          ; r30  (sp) 
+;     global data pointer    ; r27  (dp)
+;     argument pointer       ; r29  (ap)
 ;     millicode return ptr   ; r31  (also a caller save register)
 
 
@@ -57,19 +53,15 @@ r_ptr       .reg %r26
 a_ptr       .reg %r25
 b_ptr       .reg %r24
 num         .reg %r24
+w           .reg %r23
 n           .reg %r23
 
-;
-; Note that the "w" argument for bn_mul_add_words and bn_mul_words
-; is passed on the stack at a delta of -56 from the top of stack
-; as the routine is entered.
-;
 
 ;
 ; Globals used in some routines
 ;
 
-top_overflow .reg %r23
+top_overflow .reg %r29
 high_mask    .reg %r22    ; value 0xffffffff80000000L
 
 
@@ -82,8 +74,8 @@ high_mask    .reg %r22    ; value 0xffffffff80000000L
 ;
 ; arg0 = r_ptr
 ; arg1 = a_ptr
-; arg3 = num
-; -56(sp) =  w
+; arg2 = num
+; arg3 = w
 ;
 ; Local register definitions
 ;
@@ -132,27 +124,27 @@ bn_mul_add_words
     STD     %r3,0(%sp)          ; save r3  
     STD     %r4,8(%sp)          ; save r4  
 	NOP                         ; Needed to make the loop 16-byte aligned
-	NOP                         ; needed to make the loop 16-byte aligned
+	NOP                         ; Needed to make the loop 16-byte aligned
 
     STD     %r5,16(%sp)         ; save r5  
-	NOP
     STD     %r6,24(%sp)         ; save r6  
     STD     %r7,32(%sp)         ; save r7  
-
     STD     %r8,40(%sp)         ; save r8  
+
     STD     %r9,48(%sp)         ; save r9  
-    COPY    %r0,%ret1           ; return 0 by default
+    COPY    %r0,%ret0           ; return 0 by default
     DEPDI,Z 1,31,1,top_overflow ; top_overflow = 1 << 32    
+	STD     w,56(%sp)           ; store w on stack
 
     CMPIB,>= 0,num,bn_mul_add_words_exit  ; if (num <= 0) then exit
-	LDO     128(%sp),%sp        ; bump stack
+	LDO     128(%sp),%sp       ; bump stack
 
 	;
 	; The loop is unrolled twice, so if there is only 1 number
     ; then go straight to the cleanup code.
 	;
 	CMPIB,= 1,num,bn_mul_add_words_single_top
-	FLDD    -184(%sp),fw        ; (-56-128) load up w into fw (fw_h/fw_l)
+	FLDD    -72(%sp),fw     ; load up w into fp register fw (fw_h/fw_l)
 
 	;
 	; This loop is unrolled 2 times (64-byte aligned as well)
@@ -217,7 +209,7 @@ bn_mul_add_words_unroll2
     ADD     lt_1,m1_1,lt_1           ; lt[1] = lt[1]+m1[1];
     ADD,DC  ht_1,%r0,ht_1            ; ht[1]++
 
-    ADD    %ret1,lt_0,lt_0           ; lt[0] = lt[0] + c;
+    ADD    %ret0,lt_0,lt_0           ; lt[0] = lt[0] + c;
 	ADD,DC  ht_0,%r0,ht_0            ; ht[0]++
     ADD     lt_0,rp_val,lt_0         ; lt[0] = lt[0]+rp[0]
     ADD,DC  ht_0,%r0,ht_0            ; ht[0]++
@@ -228,7 +220,7 @@ bn_mul_add_words_unroll2
     STD     lt_0,0(r_ptr)            ; rp[0] = lt[0]
 
     ADD     lt_1,rp_val_1,lt_1       ; lt[1] = lt[1]+rp[1]
-    ADD,DC  ht_1,%r0,%ret1           ; ht[1]++
+    ADD,DC  ht_1,%r0,%ret0           ; ht[1]++
     LDO     16(a_ptr),a_ptr          ; a_ptr += 2
 
     STD     lt_1,8(r_ptr)            ; rp[1] = lt[1]
@@ -268,16 +260,14 @@ bn_mul_add_words_single_top
     ADD,L   ht_0,m_0,ht_0             ; ht+= (m>>32)
     ADD     lt_0,m1_0,tmp_0           ; tmp_0 = lt+m1;
     ADD,DC  ht_0,%r0,ht_0             ; ht++
-    ADD     %ret1,tmp_0,lt_0          ; lt = lt + c;
+    ADD     %ret0,tmp_0,lt_0          ; lt = lt + c;
     ADD,DC  ht_0,%r0,ht_0             ; ht++
     ADD     lt_0,rp_val,lt_0          ; lt = lt+rp[0]
-    ADD,DC  ht_0,%r0,%ret1            ; ht++
+    ADD,DC  ht_0,%r0,%ret0            ; ht++
     STD     lt_0,0(r_ptr)             ; rp[0] = lt
 
 bn_mul_add_words_exit
     .EXIT
-	
-    EXTRD,U %ret1,31,32,%ret0         ; for 32-bit, return in ret0/ret1
     LDD     -80(%sp),%r9              ; restore r9  
     LDD     -88(%sp),%r8              ; restore r8  
     LDD     -96(%sp),%r7              ; restore r7  
@@ -294,8 +284,8 @@ bn_mul_add_words_exit
 ;
 ; arg0 = rp
 ; arg1 = ap
-; arg3 = num
-; w on stack at -56(sp)
+; arg2 = num
+; arg3 = w
 
 bn_mul_words
 	.proc
@@ -306,22 +296,22 @@ bn_mul_words
 
     STD     %r3,0(%sp)          ; save r3  
     STD     %r4,8(%sp)          ; save r4  
-	NOP
     STD     %r5,16(%sp)         ; save r5  
-
     STD     %r6,24(%sp)         ; save r6  
+
     STD     %r7,32(%sp)         ; save r7  
-    COPY    %r0,%ret1           ; return 0 by default
+    COPY    %r0,%ret0           ; return 0 by default
     DEPDI,Z 1,31,1,top_overflow ; top_overflow = 1 << 32    
+	STD     w,56(%sp)           ; w on stack
 
     CMPIB,>= 0,num,bn_mul_words_exit
-	LDO     128(%sp),%sp    ; bump stack
+	LDO     128(%sp),%sp       ; bump stack
 
 	;
 	; See if only 1 word to do, thus just do cleanup
 	;
 	CMPIB,= 1,num,bn_mul_words_single_top
-	FLDD    -184(%sp),fw        ; (-56-128) load up w into fw (fw_h/fw_l)
+	FLDD    -72(%sp),fw     ; load up w into fp register fw (fw_h/fw_l)
 
 	;
 	; This loop is unrolled 2 times (64-byte aligned as well)
@@ -383,7 +373,7 @@ bn_mul_words_unroll2
 
     ADD     lt_1,m1_1,lt_1            ; lt = lt+m1;
     ADD,DC  ht_1,%r0,ht_1             ; ht++
-    ADD    %ret1,lt_0,lt_0            ; lt = lt + c (ret1);
+    ADD    %ret0,lt_0,lt_0            ; lt = lt + c (ret0);
 	ADD,DC  ht_0,%r0,ht_0             ; ht++
 
     ADD     ht_0,lt_1,lt_1            ; lt = lt + c (ht_0)
@@ -391,7 +381,7 @@ bn_mul_words_unroll2
     STD     lt_0,0(r_ptr)             ; rp[0] = lt
     STD     lt_1,8(r_ptr)             ; rp[1] = lt
 
-	COPY    ht_1,%ret1                ; carry = ht
+	COPY    ht_1,%ret0                ; carry = ht
 	LDO    -2(num),num                ; num = num - 2;
     LDO     16(a_ptr),a_ptr           ; ap += 2
 	CMPIB,<= 2,num,bn_mul_words_unroll2
@@ -430,22 +420,21 @@ bn_mul_words_single_top
     ADD     lt_0,m1_0,lt_0            ; lt= lt+m1;
     ADD,DC  ht_0,%r0,ht_0             ; ht++
 
-    ADD     %ret1,lt_0,lt_0           ; lt = lt + c;
+    ADD     %ret0,lt_0,lt_0           ; lt = lt + c;
     ADD,DC  ht_0,%r0,ht_0             ; ht++
 
-    COPY    ht_0,%ret1                ; copy carry
+    COPY    ht_0,%ret0                ; copy carry
     STD     lt_0,0(r_ptr)             ; rp[0] = lt
 
 bn_mul_words_exit
     .EXIT
-    EXTRD,U %ret1,31,32,%ret0           ; for 32-bit, return in ret0/ret1
     LDD     -96(%sp),%r7              ; restore r7  
     LDD     -104(%sp),%r6             ; restore r6  
     LDD     -112(%sp),%r5             ; restore r5  
     LDD     -120(%sp),%r4             ; restore r4  
     BVE     (%rp)
     LDD,MB  -128(%sp),%r3             ; restore r3
-	.PROCEND	
+	.PROCEND	;in=23,24,25,26,29;out=28;
 
 ;----------------------------------------------------------------------------
 ;
@@ -593,7 +582,7 @@ bn_add_words
 	.align 64
 
     CMPIB,>= 0,n,bn_add_words_exit
-    COPY    %r0,%ret1           ; return 0 by default
+    COPY    %r0,%ret0           ; return 0 by default
 
 	;
 	; If 2 or more numbers do the loop
@@ -607,18 +596,18 @@ bn_add_words
 bn_add_words_unroll2
 	LDD     0(a_ptr),t
 	LDD     0(b_ptr),b
-	ADD     t,%ret1,t                    ; t = t+c;
-	ADD,DC  %r0,%r0,%ret1                ; set c to carry
+	ADD     t,%ret0,t                    ; t = t+c;
+	ADD,DC  %r0,%r0,%ret0                ; set c to carry
 	ADD     t,b,l                        ; l = t + b[0]
-	ADD,DC  %ret1,%r0,%ret1              ; c+= carry
+	ADD,DC  %ret0,%r0,%ret0              ; c+= carry
 	STD     l,0(r_ptr)
 
 	LDD     8(a_ptr),t
 	LDD     8(b_ptr),b
-	ADD     t,%ret1,t                     ; t = t+c;
-	ADD,DC  %r0,%r0,%ret1                 ; set c to carry
+	ADD     t,%ret0,t                     ; t = t+c;
+	ADD,DC  %r0,%r0,%ret0                 ; set c to carry
 	ADD     t,b,l                         ; l = t + b[0]
-	ADD,DC  %ret1,%r0,%ret1               ; c+= carry
+	ADD,DC  %ret0,%r0,%ret0               ; c+= carry
 	STD     l,8(r_ptr)
 
 	LDO     -2(n),n
@@ -634,16 +623,16 @@ bn_add_words_single_top
 	LDD     0(a_ptr),t
 	LDD     0(b_ptr),b
 
-	ADD     t,%ret1,t                 ; t = t+c;
-	ADD,DC  %r0,%r0,%ret1             ; set c to carry (could use CMPCLR??)
+	ADD     t,%ret0,t                 ; t = t+c;
+	ADD,DC  %r0,%r0,%ret0             ; set c to carry (could use CMPCLR??)
 	ADD     t,b,l                     ; l = t + b[0]
-	ADD,DC  %ret1,%r0,%ret1           ; c+= carry
+	ADD,DC  %ret0,%r0,%ret0           ; c+= carry
 	STD     l,0(r_ptr)
 
 bn_add_words_exit
     .EXIT
     BVE     (%rp)
-    EXTRD,U %ret1,31,32,%ret0           ; for 32-bit, return in ret0/ret1
+	NOP
 	.PROCEND	;in=23,24,25,26,29;out=28;
 
 ;----------------------------------------------------------------------------
@@ -669,7 +658,7 @@ bn_sub_words
 	.align 64
 
     CMPIB,>=  0,n,bn_sub_words_exit
-    COPY    %r0,%ret1           ; return 0 by default
+    COPY    %r0,%ret0           ; return 0 by default
 
 	;
 	; If 2 or more numbers do the loop
@@ -684,24 +673,24 @@ bn_sub_words_unroll2
 	LDD     0(a_ptr),t1
 	LDD     0(b_ptr),t2
 	SUB     t1,t2,sub_tmp1           ; t3 = t1-t2; 
-	SUB     sub_tmp1,%ret1,sub_tmp1  ; t3 = t3- c; 
+	SUB     sub_tmp1,%ret0,sub_tmp1  ; t3 = t3- c; 
 
 	CMPCLR,*>> t1,t2,sub_tmp2        ; clear if t1 > t2
 	LDO      1(%r0),sub_tmp2
 	
 	CMPCLR,*= t1,t2,%r0
-	COPY    sub_tmp2,%ret1
+	COPY    sub_tmp2,%ret0
 	STD     sub_tmp1,0(r_ptr)
 
 	LDD     8(a_ptr),t1
 	LDD     8(b_ptr),t2
 	SUB     t1,t2,sub_tmp1            ; t3 = t1-t2; 
-	SUB     sub_tmp1,%ret1,sub_tmp1   ; t3 = t3- c; 
+	SUB     sub_tmp1,%ret0,sub_tmp1   ; t3 = t3- c; 
 	CMPCLR,*>> t1,t2,sub_tmp2         ; clear if t1 > t2
 	LDO      1(%r0),sub_tmp2
 	
 	CMPCLR,*= t1,t2,%r0
-	COPY    sub_tmp2,%ret1
+	COPY    sub_tmp2,%ret0
 	STD     sub_tmp1,8(r_ptr)
 
 	LDO     -2(n),n
@@ -717,19 +706,19 @@ bn_sub_words_single_top
 	LDD     0(a_ptr),t1
 	LDD     0(b_ptr),t2
 	SUB     t1,t2,sub_tmp1            ; t3 = t1-t2; 
-	SUB     sub_tmp1,%ret1,sub_tmp1   ; t3 = t3- c; 
+	SUB     sub_tmp1,%ret0,sub_tmp1   ; t3 = t3- c; 
 	CMPCLR,*>> t1,t2,sub_tmp2         ; clear if t1 > t2
 	LDO      1(%r0),sub_tmp2
 	
 	CMPCLR,*= t1,t2,%r0
-	COPY    sub_tmp2,%ret1
+	COPY    sub_tmp2,%ret0
 
 	STD     sub_tmp1,0(r_ptr)
 
 bn_sub_words_exit
     .EXIT
     BVE     (%rp)
-    EXTRD,U %ret1,31,32,%ret0           ; for 32-bit, return in ret0/ret1
+	NOP
 	.PROCEND	;in=23,24,25,26,29;out=28;
 
 ;------------------------------------------------------------------------------
@@ -740,178 +729,176 @@ bn_sub_words_exit
 ; arg1 = l
 ; arg2 = d
 ;
-; This is mainly just output from the HP C compiler.  
+; This is mainly just modified assembly from the compiler, thus the
+; lack of variable names.
 ;
 ;------------------------------------------------------------------------------
 bn_div_words
-	.PROC
-	.EXPORT	bn_div_words,ENTRY,PRIV_LEV=3,ARGW0=GR,ARGW1=GR,ARGW2=GR,ARGW3=GR,RTNVAL=GR,LONG_RETURN
-	.IMPORT	BN_num_bits_word,CODE
+	.proc
+	.callinfo CALLER,FRAME=272,ENTRY_GR=%r10,SAVE_RP,ARGS_SAVED,ORDERING_AWARE
+	.EXPORT	bn_div_words,ENTRY,PRIV_LEV=3,NO_RELOCATION,LONG_RETURN
+	.IMPORT	BN_num_bits_word,CODE,NO_RELOCATION
 	.IMPORT	__iob,DATA
-	.IMPORT	fprintf,CODE
-	.IMPORT	abort,CODE
+	.IMPORT	fprintf,CODE,NO_RELOCATION
+	.IMPORT	abort,CODE,NO_RELOCATION
 	.IMPORT	$$div2U,MILLICODE
-	.CALLINFO CALLER,FRAME=144,ENTRY_GR=%r9,SAVE_RP,ARGS_SAVED,ORDERING_AWARE
-        .ENTRY
-        STW     %r2,-20(%r30)   ;offset 0x8ec
-        STW,MA  %r3,192(%r30)   ;offset 0x8f0
-        STW     %r4,-188(%r30)  ;offset 0x8f4
-        DEPD    %r5,31,32,%r6   ;offset 0x8f8
-        STD     %r6,-184(%r30)  ;offset 0x8fc
-        DEPD    %r7,31,32,%r8   ;offset 0x900
-        STD     %r8,-176(%r30)  ;offset 0x904
-        STW     %r9,-168(%r30)  ;offset 0x908
-        LDD     -248(%r30),%r3  ;offset 0x90c
-        COPY    %r26,%r4        ;offset 0x910
-        COPY    %r24,%r5        ;offset 0x914
-        DEPD    %r25,31,32,%r4  ;offset 0x918
-        CMPB,*<>        %r3,%r0,$0006000C       ;offset 0x91c
-        DEPD    %r23,31,32,%r5  ;offset 0x920
-        MOVIB,TR        -1,%r29,$00060002       ;offset 0x924
-        EXTRD,U %r29,31,32,%r28 ;offset 0x928
-$0006002A
-        LDO     -1(%r29),%r29   ;offset 0x92c
-        SUB     %r23,%r7,%r23   ;offset 0x930
-$00060024
-        SUB     %r4,%r31,%r25   ;offset 0x934
-        AND     %r25,%r19,%r26  ;offset 0x938
-        CMPB,*<>,N      %r0,%r26,$00060046      ;offset 0x93c
-        DEPD,Z  %r25,31,32,%r20 ;offset 0x940
-        OR      %r20,%r24,%r21  ;offset 0x944
-        CMPB,*<<,N      %r21,%r23,$0006002A     ;offset 0x948
-        SUB     %r31,%r2,%r31   ;offset 0x94c
-$00060046
-$0006002E
-        DEPD,Z  %r23,31,32,%r25 ;offset 0x950
-        EXTRD,U %r23,31,32,%r26 ;offset 0x954
-        AND     %r25,%r19,%r24  ;offset 0x958
-        ADD,L   %r31,%r26,%r31  ;offset 0x95c
-        CMPCLR,*>>=     %r5,%r24,%r0    ;offset 0x960
-        LDO     1(%r31),%r31    ;offset 0x964
-$00060032
-        CMPB,*<<=,N     %r31,%r4,$00060036      ;offset 0x968
-        LDO     -1(%r29),%r29   ;offset 0x96c
-        ADD,L   %r4,%r3,%r4     ;offset 0x970
-$00060036
-        ADDIB,=,N       -1,%r8,$D0      ;offset 0x974
-        SUB     %r5,%r24,%r28   ;offset 0x978
-$0006003A
-        SUB     %r4,%r31,%r24   ;offset 0x97c
-        SHRPD   %r24,%r28,32,%r4        ;offset 0x980
-        DEPD,Z  %r29,31,32,%r9  ;offset 0x984
-        DEPD,Z  %r28,31,32,%r5  ;offset 0x988
-$0006001C
-        EXTRD,U %r4,31,32,%r31  ;offset 0x98c
-        CMPB,*<>,N      %r31,%r2,$00060020      ;offset 0x990
-        MOVB,TR %r6,%r29,$D1    ;offset 0x994
-        STD     %r29,-152(%r30) ;offset 0x998
-$0006000C
-        EXTRD,U %r3,31,32,%r25  ;offset 0x99c
-        COPY    %r3,%r26        ;offset 0x9a0
-        EXTRD,U %r3,31,32,%r9   ;offset 0x9a4
-        EXTRD,U %r4,31,32,%r8   ;offset 0x9a8
-        .CALL   ARGW0=GR,ARGW1=GR,RTNVAL=GR     ;in=25,26;out=28;
-        B,L     BN_num_bits_word,%r2    ;offset 0x9ac
-        EXTRD,U %r5,31,32,%r7   ;offset 0x9b0
-        LDI     64,%r20 ;offset 0x9b4
-        DEPD    %r7,31,32,%r5   ;offset 0x9b8
-        DEPD    %r8,31,32,%r4   ;offset 0x9bc
-        DEPD    %r9,31,32,%r3   ;offset 0x9c0
-        CMPB,=  %r28,%r20,$00060012     ;offset 0x9c4
-        COPY    %r28,%r24       ;offset 0x9c8
-        MTSARCM %r24    ;offset 0x9cc
-        DEPDI,Z -1,%sar,1,%r19  ;offset 0x9d0
-        CMPB,*>>,N      %r4,%r19,$D2    ;offset 0x9d4
-$00060012
-        SUBI    64,%r24,%r31    ;offset 0x9d8
-        CMPCLR,*<<      %r4,%r3,%r0     ;offset 0x9dc
-        SUB     %r4,%r3,%r4     ;offset 0x9e0
-$00060016
-        CMPB,=  %r31,%r0,$0006001A      ;offset 0x9e4
-        COPY    %r0,%r9 ;offset 0x9e8
-        MTSARCM %r31    ;offset 0x9ec
-        DEPD,Z  %r3,%sar,64,%r3 ;offset 0x9f0
-        SUBI    64,%r31,%r26    ;offset 0x9f4
-        MTSAR   %r26    ;offset 0x9f8
-        SHRPD   %r4,%r5,%sar,%r4        ;offset 0x9fc
-        MTSARCM %r31    ;offset 0xa00
-        DEPD,Z  %r5,%sar,64,%r5 ;offset 0xa04
-$0006001A
-        DEPDI,Z -1,31,32,%r19   ;offset 0xa08
-        AND     %r3,%r19,%r29   ;offset 0xa0c
-        EXTRD,U %r29,31,32,%r2  ;offset 0xa10
-        DEPDI,Z -1,63,32,%r6    ;offset 0xa14
-        MOVIB,TR        2,%r8,$0006001C ;offset 0xa18
-        EXTRD,U %r3,63,32,%r7   ;offset 0xa1c
+    .entry
+    STD     %r2,-16(%r30)   
+    STD,MA  %r3,352(%r30)   
+    STD     %r4,-344(%r30)  
+    STD     %r5,-336(%r30)  
+    STD     %r6,-328(%r30)  
+    STD     %r7,-320(%r30)  
+    STD     %r8,-312(%r30)  
+    STD     %r9,-304(%r30)  
+    STD     %r10,-296(%r30)
+
+    STD     %r27,-288(%r30)             ; save gp
+
+    COPY    %r24,%r3           ; save d 
+    COPY    %r26,%r4           ; save h (high 64-bits)
+    LDO      -1(%r0),%ret0     ; return -1 by default	
+
+    CMPB,*=  %r0,%arg2,$D3     ; if (d == 0)
+    COPY    %r25,%r5           ; save l (low 64-bits)
+
+    LDO     -48(%r30),%r29     ; create ap 
+    .CALL   ;in=26,29;out=28;
+    B,L     BN_num_bits_word,%r2 
+    COPY    %r3,%r26        
+    LDD     -288(%r30),%r27    ; restore gp 
+    LDI     64,%r21 
+
+    CMPB,=  %r21,%ret0,$00000012   ;if (i == 64) (forward) 
+    COPY    %ret0,%r24             ; i   
+    MTSARCM %r24    
+    DEPDI,Z -1,%sar,1,%r29  
+    CMPB,*<<,N %r29,%r4,bn_div_err_case ; if (h > 1<<i) (forward) 
+
+$00000012
+    SUBI    64,%r24,%r31                       ; i = 64 - i;
+    CMPCLR,*<< %r4,%r3,%r0                     ; if (h >= d)
+    SUB     %r4,%r3,%r4                        ; h -= d
+    CMPB,=  %r31,%r0,$0000001A                 ; if (i)
+    COPY    %r0,%r10                           ; ret = 0
+    MTSARCM %r31                               ; i to shift
+    DEPD,Z  %r3,%sar,64,%r3                    ; d <<= i;
+    SUBI    64,%r31,%r19                       ; 64 - i; redundent
+    MTSAR   %r19                               ; (64 -i) to shift
+    SHRPD   %r4,%r5,%sar,%r4                   ; l>> (64-i)
+    MTSARCM %r31                               ; i to shift
+    DEPD,Z  %r5,%sar,64,%r5                    ; l <<= i;
+
+$0000001A
+    DEPDI,Z -1,31,32,%r19                      
+    EXTRD,U %r3,31,32,%r6                      ; dh=(d&0xfff)>>32
+    EXTRD,U %r3,63,32,%r8                      ; dl = d&0xffffff
+    LDO     2(%r0),%r9
+    STD    %r3,-280(%r30)                      ; "d" to stack
+
+$0000001C
+    DEPDI,Z -1,63,32,%r29                      ; 
+    EXTRD,U %r4,31,32,%r31                     ; h >> 32
+    CMPB,*=,N  %r31,%r6,$D2     	       ; if ((h>>32) != dh)(forward) div
+    COPY    %r4,%r26       
+    EXTRD,U %r4,31,32,%r25 
+    COPY    %r6,%r24      
+    .CALL   ;in=23,24,25,26;out=20,21,22,28,29; (MILLICALL)
+    B,L     $$div2U,%r2     
+    EXTRD,U %r6,31,32,%r23  
+    DEPD    %r28,31,32,%r29 
 $D2
-        ADDIL   LR'__iob-$global$,%r27,%r1      ;offset 0xa20
-        LDIL    LR'C$7,%r21     ;offset 0xa24
-        LDO     RR'__iob-$global$+32(%r1),%r26  ;offset 0xa28
-        .CALL   ARGW0=GR,ARGW1=GR,ARGW2=GR,RTNVAL=GR    ;in=24,25,26;out=28;
-        B,L     fprintf,%r2     ;offset 0xa2c
-        LDO     RR'C$7(%r21),%r25       ;offset 0xa30
-        .CALL           ;
-        B,L     abort,%r2       ;offset 0xa34
-        NOP             ;offset 0xa38
-        B       $D3     ;offset 0xa3c
-        LDW     -212(%r30),%r2  ;offset 0xa40
-$00060020
-        COPY    %r4,%r26        ;offset 0xa44
-        EXTRD,U %r4,31,32,%r25  ;offset 0xa48
-        COPY    %r2,%r24        ;offset 0xa4c
-        .CALL   ;in=23,24,25,26;out=20,21,22,28,29; (MILLICALL)
-        B,L     $$div2U,%r31    ;offset 0xa50
-        EXTRD,U %r2,31,32,%r23  ;offset 0xa54
-        DEPD    %r28,31,32,%r29 ;offset 0xa58
-$00060022
-        STD     %r29,-152(%r30) ;offset 0xa5c
+    STD     %r29,-272(%r30)                   ; q
+    AND     %r5,%r19,%r24                   ; t & 0xffffffff00000000;
+    EXTRD,U %r24,31,32,%r24                 ; ??? 
+    FLDD    -272(%r30),%fr7                 ; q
+    FLDD    -280(%r30),%fr8                 ; d
+    XMPYU   %fr8L,%fr7L,%fr10  
+    FSTD    %fr10,-256(%r30)   
+    XMPYU   %fr8L,%fr7R,%fr22  
+    FSTD    %fr22,-264(%r30)   
+    XMPYU   %fr8R,%fr7L,%fr11 
+    XMPYU   %fr8R,%fr7R,%fr23
+    FSTD    %fr11,-232(%r30)
+    FSTD    %fr23,-240(%r30)
+    LDD     -256(%r30),%r28
+    DEPD,Z  %r28,31,32,%r2 
+    LDD     -264(%r30),%r20
+    ADD,L   %r20,%r2,%r31   
+    LDD     -232(%r30),%r22 
+    DEPD,Z  %r22,31,32,%r22 
+    LDD     -240(%r30),%r21 
+    B       $00000024       ; enter loop  
+    ADD,L   %r21,%r22,%r23 
+
+$0000002A
+    LDO     -1(%r29),%r29   
+    SUB     %r23,%r8,%r23   
+$00000024
+    SUB     %r4,%r31,%r25   
+    AND     %r25,%r19,%r26  
+    CMPB,*<>,N      %r0,%r26,$00000046  ; (forward)
+    DEPD,Z  %r25,31,32,%r20 
+    OR      %r20,%r24,%r21  
+    CMPB,*<<,N  %r21,%r23,$0000002A ;(backward) 
+    SUB     %r31,%r6,%r31   
+;-------------Break path---------------------
+
+$00000046
+    DEPD,Z  %r23,31,32,%r25              ;tl
+    EXTRD,U %r23,31,32,%r26              ;t
+    AND     %r25,%r19,%r24               ;tl = (tl<<32)&0xfffffff0000000L
+    ADD,L   %r31,%r26,%r31               ;th += t; 
+    CMPCLR,*>>=     %r5,%r24,%r0         ;if (l<tl)
+    LDO     1(%r31),%r31                 ; th++;
+    CMPB,*<<=,N     %r31,%r4,$00000036   ;if (n < th) (forward)
+    LDO     -1(%r29),%r29                ;q--; 
+    ADD,L   %r4,%r3,%r4                  ;h += d;
+$00000036
+    ADDIB,=,N       -1,%r9,$D1 ;if (--count == 0) break (forward) 
+    SUB     %r5,%r24,%r28                ; l -= tl;
+    SUB     %r4,%r31,%r24                ; h -= th;
+    SHRPD   %r24,%r28,32,%r4             ; h = ((h<<32)|(l>>32));
+    DEPD,Z  %r29,31,32,%r10              ; ret = q<<32
+    b      $0000001C
+    DEPD,Z  %r28,31,32,%r5               ; l = l << 32 
+
 $D1
-        AND     %r5,%r19,%r24   ;offset 0xa60
-        EXTRD,U %r24,31,32,%r24 ;offset 0xa64
-        STW     %r2,-160(%r30)  ;offset 0xa68
-        STW     %r7,-128(%r30)  ;offset 0xa6c
-        FLDD    -152(%r30),%fr4 ;offset 0xa70
-        FLDD    -152(%r30),%fr7 ;offset 0xa74
-        FLDW    -160(%r30),%fr8L        ;offset 0xa78
-        FLDW    -128(%r30),%fr5L        ;offset 0xa7c
-        XMPYU   %fr8L,%fr7L,%fr10       ;offset 0xa80
-        FSTD    %fr10,-136(%r30)        ;offset 0xa84
-        XMPYU   %fr8L,%fr7R,%fr22       ;offset 0xa88
-        FSTD    %fr22,-144(%r30)        ;offset 0xa8c
-        XMPYU   %fr5L,%fr4L,%fr11       ;offset 0xa90
-        XMPYU   %fr5L,%fr4R,%fr23       ;offset 0xa94
-        FSTD    %fr11,-112(%r30)        ;offset 0xa98
-        FSTD    %fr23,-120(%r30)        ;offset 0xa9c
-        LDD     -136(%r30),%r28 ;offset 0xaa0
-        DEPD,Z  %r28,31,32,%r31 ;offset 0xaa4
-        LDD     -144(%r30),%r20 ;offset 0xaa8
-        ADD,L   %r20,%r31,%r31  ;offset 0xaac
-        LDD     -112(%r30),%r22 ;offset 0xab0
-        DEPD,Z  %r22,31,32,%r22 ;offset 0xab4
-        LDD     -120(%r30),%r21 ;offset 0xab8
-        B       $00060024       ;offset 0xabc
-        ADD,L   %r21,%r22,%r23  ;offset 0xac0
-$D0
-        OR      %r9,%r29,%r29   ;offset 0xac4
-$00060040
-        EXTRD,U %r29,31,32,%r28 ;offset 0xac8
-$00060002
-$L2
-        LDW     -212(%r30),%r2  ;offset 0xacc
+    OR      %r10,%r29,%r28           ; ret |= q
 $D3
-        LDW     -168(%r30),%r9  ;offset 0xad0
-        LDD     -176(%r30),%r8  ;offset 0xad4
-        EXTRD,U %r8,31,32,%r7   ;offset 0xad8
-        LDD     -184(%r30),%r6  ;offset 0xadc
-        EXTRD,U %r6,31,32,%r5   ;offset 0xae0
-        LDW     -188(%r30),%r4  ;offset 0xae4
-        BVE     (%r2)   ;offset 0xae8
+    LDD     -368(%r30),%r2  
+$D0
+    LDD     -296(%r30),%r10 
+    LDD     -304(%r30),%r9  
+    LDD     -312(%r30),%r8  
+    LDD     -320(%r30),%r7  
+    LDD     -328(%r30),%r6  
+    LDD     -336(%r30),%r5  
+    LDD     -344(%r30),%r4  
+    BVE     (%r2)   
         .EXIT
-        LDW,MB  -192(%r30),%r3  ;offset 0xaec
-	.PROCEND	;in=23,25;out=28,29;fpin=105,107;
+    LDD,MB  -352(%r30),%r3 
 
-
-
+bn_div_err_case
+    MFIA    %r6     
+    ADDIL   L'bn_div_words-bn_div_err_case,%r6,%r1 
+    LDO     R'bn_div_words-bn_div_err_case(%r1),%r6  
+    ADDIL   LT'__iob,%r27,%r1       
+    LDD     RT'__iob(%r1),%r26      
+    ADDIL   L'C$4-bn_div_words,%r6,%r1    
+    LDO     R'C$4-bn_div_words(%r1),%r25  
+    LDO     64(%r26),%r26   
+    .CALL           ;in=24,25,26,29;out=28;
+    B,L     fprintf,%r2    
+    LDO     -48(%r30),%r29 
+    LDD     -288(%r30),%r27
+    .CALL           ;in=29;
+    B,L     abort,%r2      
+    LDO     -48(%r30),%r29 
+    LDD     -288(%r30),%r27
+    B       $D0         
+    LDD     -368(%r30),%r2  
+	.PROCEND	;in=24,25,26,29;out=28;
 
 ;----------------------------------------------------------------------------
 ;
@@ -1612,7 +1599,7 @@ bn_mul_comba4
 	.SPACE	$TEXT$
 	.SUBSPA	$CODE$
 	.SUBSPA	$LIT$,QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=16
-C$7
+C$4
 	.ALIGN	8
 	.STRINGZ	"Division would overflow (%d)\n"
 	.END
