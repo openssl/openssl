@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #include <openssl/sha.h>
+#include <openssl/evp.h>
 
 unsigned char app_c1[SHA512_DIGEST_LENGTH] = {
 	0xdd,0xaf,0x35,0xa1,0x93,0x61,0x7a,0xba,
@@ -66,20 +67,20 @@ unsigned char app_d3[SHA384_DIGEST_LENGTH] = {
 int main ()
 { unsigned char md[SHA512_DIGEST_LENGTH];
   int		i;
-  SHA512_CTX	ctx;
+  EVP_MD_CTX	evp;
 
 #ifdef OPENSSL_IA32_SSE2
     { extern int OPENSSL_ia32cap;
       char      *env;
 
-	if (env=getenv("OPENSSL_ia32cap"))
+	if ((env=getenv("OPENSSL_ia32cap")))
 	    OPENSSL_ia32cap = strtol (env,NULL,0);
     }
 #endif
 
     fprintf(stdout,"Testing SHA-512 ");
 
-    SHA512((unsigned char *)"abc",3,md);
+    EVP_Digest ("abc",3,md,NULL,EVP_sha512(),NULL);
     if (memcmp(md,app_c1,sizeof(app_c1)))
     {	fflush(stdout);
 	fprintf(stderr,"\nTEST 1 of 3 failed.\n");
@@ -88,10 +89,10 @@ int main ()
     else
 	fprintf(stdout,"."); fflush(stdout);
 
-    SHA512((unsigned char *)"abcdefgh""bcdefghi""cdefghij""defghijk"
-	   "efghijkl""fghijklm""ghijklmn""hijklmno"
-	   "ijklmnop""jklmnopq""klmnopqr""lmnopqrs"
-	   "mnopqrst""nopqrstu",112,md);
+    EVP_Digest ("abcdefgh""bcdefghi""cdefghij""defghijk"
+		"efghijkl""fghijklm""ghijklmn""hijklmno"
+		"ijklmnop""jklmnopq""klmnopqr""lmnopqrs"
+		"mnopqrst""nopqrstu",112,md,NULL,EVP_sha512(),NULL);
     if (memcmp(md,app_c2,sizeof(app_c2)))
     {	fflush(stdout);
 	fprintf(stderr,"\nTEST 2 of 3 failed.\n");
@@ -100,19 +101,21 @@ int main ()
     else
 	fprintf(stdout,"."); fflush(stdout);
 
-    SHA512_Init(&ctx);
+    EVP_MD_CTX_init (&evp);
+    EVP_DigestInit_ex (&evp,EVP_sha512(),NULL);
     for (i=0;i<1000000;i+=288)
-	SHA512_Update(&ctx, "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
-			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
-			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
-			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
-			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
-			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
-			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
-			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
-			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
-			    (1000000-i)<288?1000000-i:288);
-    SHA512_Final(md,&ctx);
+	EVP_DigestUpdate (&evp,	"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
+				(1000000-i)<288?1000000-i:288);
+    EVP_DigestFinal_ex (&evp,md,NULL);
+    EVP_MD_CTX_cleanup (&evp);
 
     if (memcmp(md,app_c3,sizeof(app_c3)))
     {	fflush(stdout);
@@ -126,7 +129,7 @@ int main ()
 
     fprintf(stdout,"Testing SHA-384 ");
 
-    SHA384((unsigned char *)"abc",3,md);
+    EVP_Digest ("abc",3,md,NULL,EVP_sha384(),NULL);
     if (memcmp(md,app_d1,sizeof(app_d1)))
     {	fflush(stdout);
 	fprintf(stderr,"\nTEST 1 of 3 failed.\n");
@@ -135,10 +138,10 @@ int main ()
     else
 	fprintf(stdout,"."); fflush(stdout);
 
-    SHA384((unsigned char *)"abcdefgh""bcdefghi""cdefghij""defghijk"
-	   "efghijkl""fghijklm""ghijklmn""hijklmno"
-	   "ijklmnop""jklmnopq""klmnopqr""lmnopqrs"
-	   "mnopqrst""nopqrstu",112,md);
+    EVP_Digest ("abcdefgh""bcdefghi""cdefghij""defghijk"
+		"efghijkl""fghijklm""ghijklmn""hijklmno"
+		"ijklmnop""jklmnopq""klmnopqr""lmnopqrs"
+		"mnopqrst""nopqrstu",112,md,NULL,EVP_sha384(),NULL);
     if (memcmp(md,app_d2,sizeof(app_d2)))
     {	fflush(stdout);
 	fprintf(stderr,"\nTEST 2 of 3 failed.\n");
@@ -147,12 +150,14 @@ int main ()
     else
 	fprintf(stdout,"."); fflush(stdout);
 
-    SHA384_Init(&ctx);
+    EVP_MD_CTX_init (&evp);
+    EVP_DigestInit_ex (&evp,EVP_sha384(),NULL);
     for (i=0;i<1000000;i+=64)
-	SHA512_Update(&ctx, "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
-			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
-			    (1000000-i)<64?1000000-i:64);
-    SHA384_Final(md,&ctx);
+	EVP_DigestUpdate (&evp,	"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+				"aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
+				(1000000-i)<64?1000000-i:64);
+    EVP_DigestFinal_ex (&evp,md,NULL);
+    EVP_MD_CTX_cleanup (&evp);
 
     if (memcmp(md,app_d3,sizeof(app_d3)))
     {	fflush(stdout);
