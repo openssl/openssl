@@ -694,23 +694,24 @@ ssl_ciph.o: ../include/openssl/crypto.h ../include/openssl/des.h
 ssl_ciph.o: ../include/openssl/des_old.h ../include/openssl/dh.h
 ssl_ciph.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
 ssl_ciph.o: ../include/openssl/err.h ../include/openssl/evp.h
-ssl_ciph.o: ../include/openssl/idea.h ../include/openssl/kssl.h
-ssl_ciph.o: ../include/openssl/lhash.h ../include/openssl/md2.h
-ssl_ciph.o: ../include/openssl/md4.h ../include/openssl/md5.h
-ssl_ciph.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
-ssl_ciph.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-ssl_ciph.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-ssl_ciph.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-ssl_ciph.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
-ssl_ciph.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
-ssl_ciph.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
-ssl_ciph.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-ssl_ciph.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
-ssl_ciph.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
-ssl_ciph.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-ssl_ciph.o: ../include/openssl/tls1.h ../include/openssl/ui.h
-ssl_ciph.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
-ssl_ciph.o: ../include/openssl/x509_vfy.h ssl_ciph.c ssl_locl.h
+ssl_ciph.o: ../include/openssl/fips.h ../include/openssl/idea.h
+ssl_ciph.o: ../include/openssl/kssl.h ../include/openssl/lhash.h
+ssl_ciph.o: ../include/openssl/md2.h ../include/openssl/md4.h
+ssl_ciph.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
+ssl_ciph.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+ssl_ciph.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+ssl_ciph.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+ssl_ciph.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+ssl_ciph.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+ssl_ciph.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+ssl_ciph.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+ssl_ciph.o: ../include/openssl/sha.h ../include/openssl/ssl.h
+ssl_ciph.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
+ssl_ciph.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+ssl_ciph.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+ssl_ciph.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
+ssl_ciph.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h ssl_ciph.c
+ssl_ciph.o: ssl_locl.h
 ssl_err.o: ../include/openssl/aes.h ../include/openssl/asn1.h
 ssl_err.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 ssl_err.o: ../include/openssl/bn.h ../include/openssl/buffer.h

@@ -752,6 +752,28 @@ pkcs8.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 pkcs8.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
 pkcs8.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
 pkcs8.o: ../include/openssl/x509_vfy.h apps.h pkcs8.c
+prime.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
+prime.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+prime.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+prime.o: ../include/openssl/cast.h ../include/openssl/conf.h
+prime.o: ../include/openssl/crypto.h ../include/openssl/des.h
+prime.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+prime.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+prime.o: ../include/openssl/engine.h ../include/openssl/err.h
+prime.o: ../include/openssl/evp.h ../include/openssl/idea.h
+prime.o: ../include/openssl/lhash.h ../include/openssl/md2.h
+prime.o: ../include/openssl/md4.h ../include/openssl/md5.h
+prime.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+prime.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+prime.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+prime.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
+prime.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+prime.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+prime.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+prime.o: ../include/openssl/sha.h ../include/openssl/stack.h
+prime.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
+prime.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
+prime.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h prime.c
 rand.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
 rand.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 rand.o: ../include/openssl/bn.h ../include/openssl/buffer.h

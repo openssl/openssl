@@ -103,10 +103,10 @@ sha1_one.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 sha1_one.o: ../../include/openssl/symhacks.h sha1_one.c
 sha1dgst.o: ../../include/openssl/opensslconf.h
 sha1dgst.o: ../../include/openssl/opensslv.h sha1dgst.c
-sha_dgst.o: ../../fips/fips_locl.h ../../include/openssl/bio.h
-sha_dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-sha_dgst.o: ../../include/openssl/err.h ../../include/openssl/fips.h
-sha_dgst.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+sha_dgst.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+sha_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+sha_dgst.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+sha_dgst.o: ../../include/openssl/opensslconf.h
 sha_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 sha_dgst.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 sha_dgst.o: ../../include/openssl/symhacks.h ../md32_common.h sha_dgst.c

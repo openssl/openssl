@@ -131,6 +131,7 @@ void ERR_load_RAND_strings(void);
 
 /* Reason codes. */
 #define RAND_R_NON_FIPS_METHOD				 101
+#define RAND_R_PRNG_ASKING_FOR_TOO_MUCH			 105
 #define RAND_R_PRNG_NOT_REKEYED				 103
 #define RAND_R_PRNG_NOT_RESEEDED			 104
 #define RAND_R_PRNG_NOT_SEEDED				 100

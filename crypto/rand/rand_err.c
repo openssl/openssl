@@ -75,6 +75,7 @@ static ERR_STRING_DATA RAND_str_functs[]=
 static ERR_STRING_DATA RAND_str_reasons[]=
 	{
 {RAND_R_NON_FIPS_METHOD                  ,"non fips method"},
+{RAND_R_PRNG_ASKING_FOR_TOO_MUCH         ,"prng asking for too much"},
 {RAND_R_PRNG_NOT_REKEYED                 ,"prng not rekeyed"},
 {RAND_R_PRNG_NOT_RESEEDED                ,"prng not reseeded"},
 {RAND_R_PRNG_NOT_SEEDED                  ,"PRNG not seeded"},

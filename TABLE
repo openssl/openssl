@@ -1818,10 +1818,10 @@ $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= linux-shared
+$shared_cflag = -fPIC
 $shared_ldflag = 
-$shared_extension = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
 
@@ -2071,6 +2071,56 @@ $dso_scheme   =
 $shared_target= 
 $shared_cflag = 
 $shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+$arflags      = 
+
+*** debug-vos-gcc
+$cc           = gcc
+$cflags       = -b hppa1.1-stratus-vos -O0 -g -Wall -D_POSIX_C_SOURCE=200112L -D_BSD -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = VOS
+$lflags       = -Wl,-map
+$bn_ops       = BN_LLONG
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = .so
+$shared_extension = 
+$ranlib       = 
+$arflags      = 
+
+*** debug-vos-vcc
+$cc           = vcc
+$cflags       = -b i386-stratus-vos -O0 -g -D_POSIX_C_SOURCE=200112L -D_BSD -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = VOS
+$lflags       = -Wl,-map
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = .so
 $shared_extension = 
 $ranlib       = 
 $arflags      = 
@@ -3031,7 +3081,7 @@ $cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
-$lflags       = 
+$lflags       = -ldl
 $bn_ops       = BN_LLONG
 $bn_obj       = 
 $des_obj      = 
@@ -4297,6 +4347,56 @@ $shared_target= gnu-shared
 $shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+
+*** vos-gcc
+$cc           = gcc
+$cflags       = -b hppa1.1-stratus-vos -O3 -Wall -Wuninitialized -D_POSIX_C_SOURCE=200112L -D_BSD
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = VOS
+$lflags       = -Wl,-map
+$bn_ops       = BN_LLONG
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = .so
+$shared_extension = 
+$ranlib       = 
+$arflags      = 
+
+*** vos-vcc
+$cc           = vcc
+$cflags       = -b i386-stratus-vos -O3 -D_POSIX_C_SOURCE=200112L -D_BSD
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = VOS
+$lflags       = -Wl,-map
+$bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = .so
+$shared_extension = 
 $ranlib       = 
 $arflags      = 
 

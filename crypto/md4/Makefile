@@ -78,11 +78,10 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-md4_dgst.o: ../../fips/fips_locl.h ../../include/openssl/bio.h
-md4_dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-md4_dgst.o: ../../include/openssl/err.h ../../include/openssl/fips.h
-md4_dgst.o: ../../include/openssl/lhash.h ../../include/openssl/md4.h
-md4_dgst.o: ../../include/openssl/opensslconf.h
+md4_dgst.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+md4_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+md4_dgst.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+md4_dgst.o: ../../include/openssl/md4.h ../../include/openssl/opensslconf.h
 md4_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 md4_dgst.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 md4_dgst.o: ../md32_common.h md4_dgst.c md4_locl.h

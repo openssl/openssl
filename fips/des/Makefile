@@ -148,10 +148,10 @@ fips_desmovs.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
 fips_desmovs.o: fips_desmovs.c
 fips_set_key.o: ../../e_os.h ../../include/openssl/crypto.h
 fips_set_key.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-fips_set_key.o: ../../include/openssl/e_os2.h
+fips_set_key.o: ../../include/openssl/e_os2.h ../../include/openssl/fips.h
 fips_set_key.o: ../../include/openssl/opensslconf.h
 fips_set_key.o: ../../include/openssl/opensslv.h
 fips_set_key.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 fips_set_key.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-fips_set_key.o: ../../include/openssl/ui_compat.h ../fips.h fips_des_locl.h
+fips_set_key.o: ../../include/openssl/ui_compat.h fips_des_locl.h
 fips_set_key.o: fips_set_key.c

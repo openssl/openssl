@@ -96,10 +96,10 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-rmd_dgst.o: ../../fips/fips_locl.h ../../include/openssl/bio.h
-rmd_dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-rmd_dgst.o: ../../include/openssl/err.h ../../include/openssl/fips.h
-rmd_dgst.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+rmd_dgst.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+rmd_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+rmd_dgst.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+rmd_dgst.o: ../../include/openssl/opensslconf.h
 rmd_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ripemd.h
 rmd_dgst.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 rmd_dgst.o: ../../include/openssl/symhacks.h ../md32_common.h rmd_dgst.c

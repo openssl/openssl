@@ -394,6 +394,23 @@ e_null.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 e_null.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 e_null.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 e_null.o: ../../include/openssl/ui_compat.h ../cryptlib.h e_null.c
+e_old.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+e_old.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
+e_old.o: ../../include/openssl/bn.h ../../include/openssl/cast.h
+e_old.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+e_old.o: ../../include/openssl/des_old.h ../../include/openssl/dh.h
+e_old.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+e_old.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+e_old.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
+e_old.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+e_old.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+e_old.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+e_old.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rc2.h
+e_old.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+e_old.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+e_old.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+e_old.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+e_old.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h e_old.c
 e_rc2.o: ../../e_os.h ../../include/openssl/aes.h ../../include/openssl/asn1.h
 e_rc2.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 e_rc2.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
