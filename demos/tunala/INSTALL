@@ -3,7 +3,7 @@ There are two ways to build this code;
 (1) Manually
 
 (2) Using all-singing all-dancing (all-confusing) autotools, ie. autoconf,
-automake, libtool, and their little friends (autoheader, etc).
+automake, and their little friends (autoheader, etc).
 
 =================
 Building Manually
@@ -51,9 +51,9 @@ this way and the default Makefile isn't sufficient;
 Building Automagically
 ======================
 
-Automagic building is handled courtesy of autoconf, automake, and libtool. There
-is in fact two steps required to build, and only the first has to be done on a
-system with these tools installed (and if I was prepared to bloat out the CVS
+Automagic building is handled courtesy of autoconf, automake, etc. There are in
+fact two steps required to build, and only the first has to be done on a system
+with these tools installed (and if I was prepared to bloat out the CVS
 repository, I could store these extra files, but I'm not).
 
 First step: "autogunk.sh"
@@ -84,18 +84,6 @@ variable prior to running configure, eg.
 
 would cause "gcc" to be used even if there is an otherwise preferable (to
 autoconf) native compiler on your system.
-
-*IMPORTANT* It's highly recommended to pass "--disable-shared" to the configure
-script. Otherwise, libtool may elect to build most of the code as a
-shared-library, hide various bits of it in dotted directories and generating
-wrapper scripts in place of the linked binary. The autotool stuff, when "make
-install" is run (which you probably won't want to do for this dinky little
-thing) will unravel all that mess and either install a small executable +
-shared-lib or will install a linked executable. Passing the above flag ensures
-this is all done statically even if the platform supports building and using
-shared-libraries. Ie;
-
-    ./configure --disable-shared
 
 After this run "make" and it should build the "tunala" executable.
 

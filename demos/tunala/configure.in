@@ -3,10 +3,10 @@ AC_INIT(tunala.c)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE(tunala, 0.0.1-dev)
 
-dnl Checks for programs.
+dnl Checks for programs. (Though skip libtool)
 AC_PROG_CC
-AC_PROG_LIBTOOL
-AM_PROG_LIBTOOL
+dnl AC_PROG_LIBTOOL
+dnl AM_PROG_LIBTOOL
 
 dnl Checks for libraries.
 AC_CHECK_LIB(dl, dlopen)

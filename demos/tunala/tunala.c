@@ -108,6 +108,7 @@ static unsigned int def_verify_depth = 10;
 static int def_out_state = 0;
 static unsigned int def_out_verify = 0;
 static int def_out_totals = 0;
+static int def_out_conns = 0;
 
 static const char *helpstring =
 "\n'Tunala' (A tunneler with a New Zealand accent)\n"
@@ -133,6 +134,7 @@ static const char *helpstring =
 " -v_strict              (do not continue if peer doesn't authenticate)\n"
 " -v_once                (no verification in renegotiates)\n"
 " -v_depth <num>         (limit certificate chain depth, default = 10)\n"
+" -out_conns             (prints client connections and disconnections)\n"
 " -out_state             (prints SSL handshake states)\n"
 " -out_verify <0|1|2|3>  (prints certificate verification states: def=1)\n"
 " -out_totals            (prints out byte-totals when a tunnel closes)\n"
@@ -314,6 +316,7 @@ int main(int argc, char *argv[])
 	int out_state = def_out_state;
 	unsigned int out_verify = def_out_verify;
 	int out_totals = def_out_totals;
+	int out_conns = def_out_conns;
 
 /* Parse command-line arguments */
 next_arg:
@@ -466,6 +469,9 @@ next_arg:
 		} else if(strcmp(*argv, "-out_totals") == 0) {
 			out_totals = 1;
 			goto next_arg;
+		} else if(strcmp(*argv, "-out_conns") == 0) {
+			out_conns = 1;
+			goto next_arg;
 		} else if((strcmp(*argv, "-h") == 0) ||
 				(strcmp(*argv, "-help") == 0) ||
 				(strcmp(*argv, "-?") == 0)) {
@@ -474,11 +480,14 @@ next_arg:
 		} else
 			return usage(*argv, 1);
 	}
+	/* Run any sanity checks we want here */
+	if(!cert && !dcert && server_mode)
+		fprintf(stderr, "WARNING: you are running an SSL server without "
+				"a certificate - this may not work!\n");
 
 	/* Initialise network stuff */
 	if(!ip_initialise())
 		return err_str0("ip_initialise failed");
-	err_str0("ip_initialise succeeded");
 	/* Create the SSL_CTX */
 	if((world.ssl_ctx = initialise_ssl_ctx(server_mode, engine_id,
 			cacert, cert, key, dcert, dkey, cipher_list, dh_file,
@@ -486,20 +495,19 @@ next_arg:
 			verify_mode, verify_depth)) == NULL)
 		return err_str1("initialise_ssl_ctx(engine_id=%s) failed",
 			(engine_id == NULL) ? "NULL" : engine_id);
-	err_str1("initialise_ssl_ctx(engine_id=%s) succeeded",
-			(engine_id == NULL) ? "NULL" : engine_id);
+	if(engine_id)
+		fprintf(stderr, "Info, engine '%s' initialised\n", engine_id);
 	/* Create the listener */
 	if((world.listen_fd = ip_create_listener(listenhost)) == -1)
 		return err_str1("ip_create_listener(%s) failed", listenhost);
-	err_str1("ip_create_listener(%s) succeeded", listenhost);
+	fprintf(stderr, "Info, listening on '%s'\n", listenhost);
 	if(!ip_parse_address(proxyhost, &proxy_ip, &proxy_port, 0))
 		return err_str1("ip_parse_address(%s) failed", proxyhost);
-	err_str1("ip_parse_address(%s) succeeded", proxyhost);
-	fprintf(stderr, "Info - proxying to %d.%d.%d.%d:%d\n",
+	fprintf(stderr, "Info, proxying to '%s' (%d.%d.%d.%d:%d)\n", proxyhost,
 			(int)proxy_ip[0], (int)proxy_ip[1],
 			(int)proxy_ip[2], (int)proxy_ip[3], (int)proxy_port);
-	fprintf(stderr, "Info - set maxtunnels to %d\n", (int)max_tunnels);
-	fprintf(stderr, "Info - set to operate as an SSL %s\n",
+	fprintf(stderr, "Info, set maxtunnels to %d\n", (int)max_tunnels);
+	fprintf(stderr, "Info, set to operate as an SSL %s\n",
 			(server_mode ? "server" : "client"));
 	/* Initialise the rest of the stuff */
 	world.tunnels_used = world.tunnels_size = 0;
@@ -534,7 +542,7 @@ main_loop:
 		if(!tunala_world_new_item(&world, newfd, proxy_ip,
 						proxy_port, flipped))
 			fprintf(stderr, "tunala_world_new_item failed\n");
-		else
+		else if(out_conns)
 			fprintf(stderr, "Info, new tunnel opened, now up to "
 					"%d\n", world.tunnels_used);
 	}
@@ -570,7 +578,8 @@ main_loop:
 						&t_item->sm,SM_CLEAN_IN)));
 skip_totals:
 			tunala_world_del_item(&world, loop);
-			fprintf(stderr, "Info, tunnel closed, down to %d\n",
+			if(out_conns)
+				fprintf(stderr, "Info, tunnel closed, down to %d\n",
 					world.tunnels_used);
 		}
 		else {
