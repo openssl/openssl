@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/04/26 08:28:59 $
+  ______________                           $Date: 2002/05/05 23:48:51 $
 
   DEVELOPMENT STATE
 
@@ -61,12 +61,6 @@
 	OCSP
 
   NEEDS PATCH
-
-    o  inappropriate AlgorithmIdentifier used in S/MIME signatures
-       (key type instead of signature algorithm)
-
-    o  AES ciphersuites are not (yet) official and should not be enabled
-       unless explicitly requested
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
 
