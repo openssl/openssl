@@ -355,7 +355,7 @@ do_hpux64-shared:
 #  HP/UX-32bit: +vnocompatwarnings -b -z +s \
 #		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}
 #  HP/UX-64bit: -b -z +h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}
-#  AIX:		-bE:lib$$i.exp -bM:SRE
+#  AIX:		-G -bE:lib$$i.exp -bM:SRE
 # SHAREDCMD would be:
 #  GNU systems: $(CC)
 #  Tru64 Unix:  $(CC)
@@ -365,7 +365,7 @@ do_hpux64-shared:
 #  HP/UX-64bit: /usr/ccs/bin/ld
 #  AIX:		$(CC)
 ALLSYMSFLAG=-bnogc
-SHAREDFLAGS=-bE:lib$$i.exp -bM:SRE
+SHAREDFLAGS=-G -bE:lib$$i.exp -bM:SRE
 SHAREDCMD=$(CC)
 do_aix-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
