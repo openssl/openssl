@@ -269,7 +269,7 @@ extern "C" {
 /* The following cipher list is used by default.
  * It also is substituted when an application-defined cipher list string
  * starts with 'DEFAULT'. */
-#define SSL_DEFAULT_CIPHER_LIST	"ALL:!ADH:@STRENGTH"
+#define SSL_DEFAULT_CIPHER_LIST	"ALL:!ADH:RC4:@STRENGTH"
 
 /* Used in SSL_set_shutdown()/SSL_get_shutdown(); */
 #define SSL_SENT_SHUTDOWN	1
