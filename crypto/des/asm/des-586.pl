@@ -73,8 +73,9 @@ sub DES_encrypt
 		}
 
 	# PIC-ification:-)
-	if ($cpp)	{ &picmeup($trans,"DES_SPtrans");   }
-	else		{ &lea($trans,&DWP("DES_SPtrans")); }
+	&picmeup($trans,"DES_SPtrans");
+	#if ($cpp)	{ &picmeup($trans,"DES_SPtrans");   }
+	#else		{ &lea($trans,&DWP("DES_SPtrans")); }
 
 	&mov(	"ecx",	&wparam(1)	);
 	&cmp("ebx","0");
