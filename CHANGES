@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) RAND_load_file(..., -1) reads the complete file and uses it to
+     seed the PRNG (previously an explicit byte count was required).
+     The bytes obtained by stat() are no longer counted for the
+     return value.
+     [Bodo Möller, Ulf Möller]
+
   *) Clean up CRYPTO_EX_DATA functions, some of these didn't have prototypes
      used (char *) instead of (void *) and had casts all over the place.
      [Steve Henson]
