@@ -1,4 +1,4 @@
-@echo=off
+@echo off
 
 set test=..\ms
 set opath=%PATH%
