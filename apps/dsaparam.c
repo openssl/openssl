@@ -164,11 +164,11 @@ int MAIN(int argc, char **argv)
 bad:
 		BIO_printf(bio_err,"%s [options] [bits] <infile >outfile\n",prog);
 		BIO_printf(bio_err,"where options are\n");
-		BIO_printf(bio_err," -inform arg   input format - one of DER TXT PEM\n");
-		BIO_printf(bio_err," -outform arg  output format - one of DER TXT PEM\n");
+		BIO_printf(bio_err," -inform arg   input format - DER or PEM\n");
+		BIO_printf(bio_err," -outform arg  output format - DER or PEM\n");
 		BIO_printf(bio_err," -in arg       input file\n");
 		BIO_printf(bio_err," -out arg      output file\n");
-		BIO_printf(bio_err," -text         check the DSA parameters\n");
+		BIO_printf(bio_err," -text         print the key in text\n");
 		BIO_printf(bio_err," -C            Output C code\n");
 		BIO_printf(bio_err," -noout        no output\n");
 		BIO_printf(bio_err," -rand         files to use for random number input\n");
