@@ -16,6 +16,8 @@ cipher suites correctly.
      [Nils Gura and Douglas Stebila (Sun Microsystems Laboratories)]
 
   *) Add ECDH in new directory crypto/ecdh/.
+TODO: more general interface (return  x  coordinate, not its hash)
+TODO: bug: pad  x  with leading zeros if necessary
      [Douglas Stebila (Sun Microsystems Laboratories)]
 
   *) Let BN_rand_range() abort with an error after 100 iterations
