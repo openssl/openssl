@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.7d and 0.9.7f  [XX xxx XXXX]
+
+  *)
+
  Changes between 0.9.7d and 0.9.7e  [25 Oct 2004]
 
   *) Avoid a race condition when CRLs are checked in a multi threaded 
