@@ -113,14 +113,14 @@ this option checks the consistency of an RSA private key.
 
 =item B<-pubin>
 
-by default a private key is input file with this option a public key is input
-instead.
+by default a private key is read from the input file: with this
+option a public key is read instead.
 
 =item B<-pubout>
 
-by default a private key is output with this option a public
-key will be output instead. This option is automatically set if the input is
-a public key.
+by default a private key is output: with this option a public
+key will be output instead. This option is automatically set if
+the input is a public key.
 
 =back
 
@@ -130,6 +130,11 @@ The PEM private key format uses the header and footer lines:
 
  -----BEGIN RSA PRIVATE KEY-----
  -----END RSA PRIVATE KEY-----
+
+The PEM public key format uses the header and footer lines:
+
+ -----BEGIN PUBLIC KEY-----
+ -----END PUBLIC KEY-----
 
 =head1 EXAMPLES
 

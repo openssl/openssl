@@ -88,6 +88,13 @@ to each certificate.
 
 =back
 
+=head1 NOTES
+
+The PEM CRL format uses the header and footer lines:
+
+ -----BEGIN X509 CRL-----
+ -----END X509 CRL-----
+
 =head1 EXAMPLES
 
 Convert a CRL file from PEM to DER:

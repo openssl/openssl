@@ -225,8 +225,8 @@ implementation is reasonably accurate at least as far as these
 algorithms are concerned.
 
 The format of PKCS#8 DSA (and other) private keys is not well documented:
-it is hidden away in PKCS#11 v2.01, section 11.9. OpenSSL's DSA private
-key format complies with this standard.
+it is hidden away in PKCS#11 v2.01, section 11.9. OpenSSL's default DSA
+PKCS#8 private key format complies with this standard.
 
 =head1 BUGS
 

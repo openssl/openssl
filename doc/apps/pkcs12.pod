@@ -261,6 +261,17 @@ Although there are a large number of options most of them are very rarely
 used. For PKCS#12 file parsing only B<-in> and B<-out> need to be used
 for PKCS#12 file creation B<-export> and B<-name> are also used.
 
+If none of the B<-clcerts>, B<-cacerts> or B<-nocerts> options are present
+then all certificates will be output in the order they appear in the input
+PKCS#12 files. There is no guarantee that the first certificate present is
+the one corresponding to the private key. Certain software which requires
+a private key and certificate and assumes the first certificate in the
+file is the one corresponding to the private key: this may not always
+be the case. Using the B<-clcerts> option will solve this problem by only
+outputing the certificate corresponding to the private key. If the CA
+certificates are required then they can be output to a separate file using
+the B<-nokeys -cacerts> options to just output CA certificates.
+
 The B<-keypbe> and B<-certpbe> algorithms allow the precise encryption
 algorithms for private keys and certificates to be specified. Normally
 the defaults are fine but occasionally software can't handle triple DES

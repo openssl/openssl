@@ -88,7 +88,7 @@ read the output file password from the environment variable B<var>.
 These options encrypt the private key with the DES, triple DES, or the 
 IDEA ciphers respectively before outputting it. A pass phrase is prompted for.
 If none of these options is specified the key is written in plain text. This
-means that using the B<rsa> utility to read in an encrypted key with no
+means that using the B<dsa> utility to read in an encrypted key with no
 encryption option can be used to remove the pass phrase from a key, or by
 setting the encryption options it can be use to add or change the pass phrase.
 These options can only be used with PEM format output files.
@@ -107,8 +107,8 @@ this option prints out the value of the public key component of the key.
 
 =item B<-pubin>
 
-by default a private key is input file with this option a public key is input
-instead.
+by default a private key is read from the input file: with this option a
+public key is read instead.
 
 =item B<-pubout>
 
@@ -124,6 +124,11 @@ The PEM private key format uses the header and footer lines:
 
  -----BEGIN DSA PRIVATE KEY-----
  -----END DSA PRIVATE KEY-----
+
+The PEM public key format uses the header and footer lines:
+
+ -----BEGIN PUBLIC KEY-----
+ -----END PUBLIC KEY-----
 
 =head1 EXAMPLES
 
