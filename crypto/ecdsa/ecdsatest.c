@@ -52,6 +52,33 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ *
+ * Portions of the attached software ("Contribution") are developed by 
+ * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
+ *
+ * The Contribution is licensed pursuant to the OpenSSL open source
+ * license provided above.
+ *
+ * In addition, Sun covenants to all licensees who provide a reciprocal
+ * covenant with respect to their own patents if any, not to sue under
+ * current and future patent claims necessarily infringed by the making,
+ * using, practicing, selling, offering for sale and/or otherwise
+ * disposing of the Contribution as delivered hereunder 
+ * (or portions thereof), provided that such covenant shall not apply:
+ *  1) for code that a licensee deletes from the Contribution;
+ *  2) separates from the Contribution; or
+ *  3) for infringements caused by:
+ *       i) the modification of the Contribution or
+ *      ii) the combination of the Contribution with other software or
+ *          devices where such combination causes the infringement.
+ *
+ * The elliptic curve binary polynomial software is originally written by 
+ * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -520,149 +547,63 @@ int main(void)
 	OPENSSL_free(dgst);
 	dgst = NULL;
 
+	for (i=0; i<ECDSA_NIST_TESTS; i++)
+		if (!RAND_bytes(digest[i], 20)) goto err;
 
+ 	BIO_printf(bio_err, "\n");
+
+/* Macro for each test */
+#define ECDSA_GROUP_TEST(text, curve) \
+ 	BIO_printf(bio_err, "Testing sign & verify with %s : \n", text); \
+	EC_KEY_free(ecdsa); \
+	if ((ecdsa = EC_KEY_new()) == NULL) goto err; \
+	if ((ecdsa->group = EC_GROUP_new_by_name(curve)) == NULL) goto err; \
+	if (!EC_KEY_generate_key(ecdsa)) goto err; \
+        tim = clock(); \
+        for (i=0; i<ECDSA_NIST_TESTS; i++) \
+                if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err; \
+        tim = clock() - tim; \
+	tim_d = (double)tim / CLOCKS_PER_SEC; \
+        BIO_printf(bio_err, "%d x ECDSA_do_sign()   in %.2f"UNIT" => average time for ECDSA_do_sign()   %.4f"UNIT"\n" \
+		, ECDSA_NIST_TESTS, tim_d, tim_d / ECDSA_NIST_TESTS); \
+	tim = clock(); \
+	for (i=0; i<ECDSA_NIST_TESTS; i++) \
+		if (!ECDSA_do_verify(digest[i], 20, signatures[i], ecdsa)) goto err; \
+	tim = clock() - tim; \
+	tim_d = (double)tim / CLOCKS_PER_SEC; \
+	BIO_printf(bio_err, "%d x ECDSA_do_verify() in %.2f"UNIT" => average time for ECDSA_do_verify() %.4f"UNIT"\n" \
+                , ECDSA_NIST_TESTS, tim_d, tim_d/ECDSA_NIST_TESTS); \
+	for (i=0; i<ECDSA_NIST_TESTS; i++) \
+	{ \
+		ECDSA_SIG_free(signatures[i]); \
+		signatures[i] = NULL; \
+	}
+	
 	/* NIST PRIME CURVES TESTS */
-	/* EC_GROUP_NIST_PRIME_192 */
-	for (i=0; i<ECDSA_NIST_TESTS; i++)
-		if (!RAND_bytes(digest[i], 20)) goto err;	
+	ECDSA_GROUP_TEST("NIST Prime-Curve P-192", EC_GROUP_NIST_PRIME_192);
+	ECDSA_GROUP_TEST("NIST Prime-Curve P-224", EC_GROUP_NIST_PRIME_224);
+	ECDSA_GROUP_TEST("NIST Prime-Curve P-256", EC_GROUP_NIST_PRIME_256);
+	ECDSA_GROUP_TEST("NIST Prime-Curve P-384", EC_GROUP_NIST_PRIME_384);
+	ECDSA_GROUP_TEST("NIST Prime-Curve P-521", EC_GROUP_NIST_PRIME_521);
+	/* NIST BINARY CURVES TESTS */
+	ECDSA_GROUP_TEST("NIST Binary-Curve K-163", EC_GROUP_NIST_CHAR2_K163);
+	ECDSA_GROUP_TEST("NIST Binary-Curve B-163", EC_GROUP_NIST_CHAR2_B163);
+	ECDSA_GROUP_TEST("NIST Binary-Curve K-233", EC_GROUP_NIST_CHAR2_K233);
+	ECDSA_GROUP_TEST("NIST Binary-Curve B-233", EC_GROUP_NIST_CHAR2_B233);
+	ECDSA_GROUP_TEST("NIST Binary-Curve K-283", EC_GROUP_NIST_CHAR2_K283);
+	ECDSA_GROUP_TEST("NIST Binary-Curve B-283", EC_GROUP_NIST_CHAR2_B283);
+	ECDSA_GROUP_TEST("NIST Binary-Curve K-409", EC_GROUP_NIST_CHAR2_K409);
+	ECDSA_GROUP_TEST("NIST Binary-Curve B-409", EC_GROUP_NIST_CHAR2_B409);
+	ECDSA_GROUP_TEST("NIST Binary-Curve K-571", EC_GROUP_NIST_CHAR2_K571);
+	ECDSA_GROUP_TEST("NIST Binary-Curve B-571", EC_GROUP_NIST_CHAR2_B571);
+#undef ECDSA_GROUP_TEST
 
- 	BIO_printf(bio_err, "\nTesting sign & verify with NIST Prime-Curve P-192 : \n");
-	EC_KEY_free(ecdsa);
-	if ((ecdsa = EC_KEY_new()) == NULL) goto err;
-	if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_192)) 
-		== NULL) goto err;
-	if (!EC_KEY_generate_key(ecdsa)) goto err;
-        tim = clock();
-        for (i=0; i<ECDSA_NIST_TESTS; i++)
-                if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
-        tim = clock() - tim;
-	tim_d = (double)tim / CLOCKS_PER_SEC;
-        BIO_printf(bio_err, "%d x ECDSA_do_sign()   in %.2f"UNIT" => average time for ECDSA_do_sign()   %.4f"UNIT"\n"
-		, ECDSA_NIST_TESTS, tim_d, tim_d / ECDSA_NIST_TESTS);
-	tim = clock();
-	for (i=0; i<ECDSA_NIST_TESTS; i++)
-		if (!ECDSA_do_verify(digest[i], 20, signatures[i], ecdsa)) goto err;
-	tim = clock() - tim;
-	tim_d = (double)tim / CLOCKS_PER_SEC;
-	BIO_printf(bio_err, "%d x ECDSA_do_verify() in %.2f"UNIT" => average time for ECDSA_do_verify() %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, tim_d, tim_d/ECDSA_NIST_TESTS);
-	for (i=0; i<ECDSA_NIST_TESTS; i++)
-	{
-		ECDSA_SIG_free(signatures[i]);
-		signatures[i] = NULL;
-	}
-
-	/* EC_GROUP_NIST_PRIME_224 */
-	BIO_printf(bio_err, "Testing sign & verify with NIST Prime-Curve P-224 : \n");
-        EC_KEY_free(ecdsa);
-        if ((ecdsa = EC_KEY_new()) == NULL) goto err;
-        if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_224)) == NULL) goto err;
-        if (!EC_KEY_generate_key(ecdsa)) goto err;
-        tim = clock();
-        for (i=0; i<ECDSA_NIST_TESTS; i++)
-                if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
-        tim = clock() - tim;
-        tim_d = (double)tim / CLOCKS_PER_SEC;
-        BIO_printf(bio_err, "%d x ECDSA_do_sign()   in %.2f"UNIT" => average time for ECDSA_do_sign()   %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, tim_d, tim_d / ECDSA_NIST_TESTS);
-        tim = clock();
-        for (i=0; i<ECDSA_NIST_TESTS; i++)
-                if (!ECDSA_do_verify(digest[i], 20, signatures[i], ecdsa)) goto err;
-        tim = clock() - tim;
-        tim_d = (double)tim / CLOCKS_PER_SEC;
-        BIO_printf(bio_err, "%d x ECDSA_do_verify() in %.2f"UNIT" => average time for ECDSA_do_verify() %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, tim_d, tim_d/ECDSA_NIST_TESTS);
-	for (i=0; i<ECDSA_NIST_TESTS; i++)
-	{
-		ECDSA_SIG_free(signatures[i]);
-		signatures[i] = NULL;
-	}
-
-	/* EC_GROUP_NIST_PRIME_256 */
-        BIO_printf(bio_err, "Testing sign & verify with NIST Prime-Curve P-256 : \n");
-        EC_KEY_free(ecdsa);
-        if ((ecdsa = EC_KEY_new()) == NULL) goto err;
-        if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_256)) == NULL) goto err;
-        if (!EC_KEY_generate_key(ecdsa)) goto err;
-        tim = clock();
-        for (i=0; i<ECDSA_NIST_TESTS; i++)
-                if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
-        tim = clock() - tim;
-        tim_d = (double)tim / CLOCKS_PER_SEC;
-        BIO_printf(bio_err, "%d x ECDSA_do_sign()   in %.2f"UNIT" => average time for ECDSA_do_sign()   %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, tim_d, tim_d / ECDSA_NIST_TESTS);
-        tim = clock();
-        for (i=0; i<ECDSA_NIST_TESTS; i++)
-                if (!ECDSA_do_verify(digest[i], 20, signatures[i], ecdsa)) goto err;
-        tim = clock() - tim;
-        tim_d = (double)tim / CLOCKS_PER_SEC;
-        BIO_printf(bio_err, "%d x ECDSA_do_verify() in %.2f"UNIT" => average time for ECDSA_do_verify() %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, tim_d, tim_d/ECDSA_NIST_TESTS);
-	for (i=0; i<ECDSA_NIST_TESTS; i++)
-	{
-		ECDSA_SIG_free(signatures[i]);
-		signatures[i] = NULL;
-	}
-
-	/* EC_GROUP_NIST_PRIME_384 */
-        BIO_printf(bio_err, "Testing sign & verify with NIST Prime-Curve P-384 : \n");
-        EC_KEY_free(ecdsa);
-        if ((ecdsa = EC_KEY_new()) == NULL) goto err;
-        if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_384)) == NULL) goto err;
-        if (!EC_KEY_generate_key(ecdsa)) goto err;
-        tim = clock();
-        for (i=0; i<ECDSA_NIST_TESTS; i++)
-                if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
-        tim = clock() - tim;
-        tim_d = (double)tim / CLOCKS_PER_SEC;
-        BIO_printf(bio_err, "%d x ECDSA_do_sign()   in %.2f"UNIT" => average time for ECDSA_do_sign()   %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, tim_d, tim_d / ECDSA_NIST_TESTS);
-        tim = clock();
-        for (i=0; i<ECDSA_NIST_TESTS; i++)
-                if (!ECDSA_do_verify(digest[i], 20, signatures[i], ecdsa)) goto err;
-        tim = clock() - tim;
-        tim_d = (double)tim / CLOCKS_PER_SEC;
-        BIO_printf(bio_err, "%d x ECDSA_do_verify() in %.2f"UNIT" => average time for ECDSA_do_verify() %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, tim_d, tim_d/ECDSA_NIST_TESTS);
-	for (i=0; i<ECDSA_NIST_TESTS; i++)
-	{
-		ECDSA_SIG_free(signatures[i]);
-		signatures[i] = NULL;
-	}
-
-	/* EC_GROUP_NIST_PRIME_521 */
-        BIO_printf(bio_err, "Testing sign & verify with NIST Prime-Curve P-521 : \n");
-        EC_KEY_free(ecdsa);
-        if ((ecdsa = EC_KEY_new()) == NULL) goto err;
-        if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_521)) == NULL) goto err;
-        if (!EC_KEY_generate_key(ecdsa)) goto err;
-        tim = clock();
-        for (i=0; i<ECDSA_NIST_TESTS; i++)
-                if ((signatures[i] = ECDSA_do_sign(digest[i], 20, ecdsa)) == NULL) goto err;
-        tim = clock() - tim;
-        tim_d = (double)tim / CLOCKS_PER_SEC;
-        BIO_printf(bio_err, "%d x ECDSA_do_sign()   in %.2f"UNIT" => average time for ECDSA_do_sign()   %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, tim_d, tim_d / ECDSA_NIST_TESTS);
-        tim = clock();
-        for (i=0; i<ECDSA_NIST_TESTS; i++)
-                if (!ECDSA_do_verify(digest[i], 20, signatures[i], ecdsa)) goto err;
-        tim = clock() - tim;
-        tim_d = (double)tim / CLOCKS_PER_SEC;
-        BIO_printf(bio_err, "%d x ECDSA_do_verify() in %.2f"UNIT" => average time for ECDSA_do_verify() %.4f"UNIT"\n"
-                , ECDSA_NIST_TESTS, tim_d, tim_d/ECDSA_NIST_TESTS);
 	EC_KEY_free(ecdsa);
 	ecdsa = NULL;
-	for (i=0; i<ECDSA_NIST_TESTS; i++)
-	{
-		ECDSA_SIG_free(signatures[i]);
-		signatures[i] = NULL;
-	}
-
 	OPENSSL_free(buffer);
 	buffer = NULL;
 	EVP_PKEY_free(pkey);
 	pkey = NULL;
-	ecdsa = NULL;
 	
 	ret = 1;
 err:	if (!ret) 	
@@ -675,6 +616,7 @@ err:	if (!ret)
 	if (d)		BN_free(d);
 	if (dgst)	OPENSSL_free(dgst);
 	if (md_ctx)	EVP_MD_CTX_destroy(md_ctx);
+	if (pkey)	EVP_PKEY_free(pkey);
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_state(0);
 	ERR_free_strings();

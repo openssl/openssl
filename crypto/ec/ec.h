@@ -386,6 +386,7 @@ EC_KEY *EC_KEY_new(void);
 void EC_KEY_free(EC_KEY *);
 EC_KEY *EC_KEY_copy(EC_KEY *, const EC_KEY *);
 EC_KEY *EC_KEY_dup(const EC_KEY *);
+int EC_KEY_up_ref(EC_KEY *);
 
 /* EC_KEY_generate_key() creates a ec private (public) key */
 int EC_KEY_generate_key(EC_KEY *);

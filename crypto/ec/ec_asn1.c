@@ -57,6 +57,7 @@
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
+#include <string.h>
 
 /* some structures needed for the asn1 encoding */
 typedef struct x9_62_fieldid_st {

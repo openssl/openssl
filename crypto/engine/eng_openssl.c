@@ -55,6 +55,11 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECDH support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 
 #include <stdio.h>
@@ -108,6 +113,12 @@ static int bind_helper(ENGINE *e)
 #endif
 #ifndef OPENSSL_NO_DSA
 			|| !ENGINE_set_DSA(e, DSA_get_default_method())
+#endif
+#ifndef OPENSSL_NO_ECDH
+			|| !ENGINE_set_ECDH(e, ECDH_OpenSSL())
+#endif
+#ifndef OPENSSL_NO_ECDSA
+			|| !ENGINE_set_ECDSA(e, ECDSA_OpenSSL())
 #endif
 #ifndef OPENSSL_NO_DH
 			|| !ENGINE_set_DH(e, DH_get_default_method())

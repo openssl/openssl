@@ -55,6 +55,11 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * Binary polynomial ECC support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #include <stdio.h>
 #include "cryptlib.h"
@@ -333,10 +338,21 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 			goto err;
 			}
 
-		if (!EC_GROUP_get_curve_GFp(x, p, a, b, ctx))
+		if (EC_METHOD_get_field_type(EC_GROUP_method_of(x)) == NID_X9_62_prime_field) 
 			{
-			reason = ERR_R_EC_LIB;
-			goto err;
+			if (!EC_GROUP_get_curve_GFp(x, p, a, b, ctx))
+				{
+				reason = ERR_R_EC_LIB;
+				goto err;
+				}
+			}
+		else
+			{
+			if (!EC_GROUP_get_curve_GF2m(x, p, a, b, ctx))
+				{
+				reason = ERR_R_EC_LIB;
+				goto err;
+				}
 			}
 
 		if ((point = EC_GROUP_get0_generator(x)) == NULL)

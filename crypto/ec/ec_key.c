@@ -55,9 +55,15 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * Portions originally developed by SUN MICROSYSTEMS, INC., and 
+ * contributed to the OpenSSL project.
+ */
 
 #include "ec_lcl.h"
 #include <openssl/err.h>
+#include <string.h>
 
 EC_KEY *EC_KEY_new(void)
 	{
@@ -208,6 +214,22 @@ EC_KEY *EC_KEY_dup(const EC_KEY *eckey)
 		}
 
 	return ret;
+	}
+
+int EC_KEY_up_ref(EC_KEY *r)
+	{
+	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_EC);
+#ifdef REF_PRINT
+	REF_PRINT("EC_KEY",r);
+#endif
+#ifdef REF_CHECK
+	if (i < 2)
+		{
+		fprintf(stderr, "EC_KEY_up, bad reference count\n");
+		abort();
+		}
+#endif
+	return ((i > 1) ? 1 : 0);
 	}
 
 int EC_KEY_generate_key(EC_KEY *eckey)

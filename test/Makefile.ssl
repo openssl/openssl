@@ -34,6 +34,7 @@ LIBSSL= -L.. -lssl
 BNTEST=		bntest
 ECTEST=		ectest
 ECDSATEST=	ecdsatest
+ECDHTEST=	ecdhtest
 EXPTEST=	exptest
 IDEATEST=	ideatest
 SHATEST=	shatest
@@ -61,7 +62,7 @@ EVPTEST=	evp_test
 
 TESTS=		alltests
 
-EXE=	$(BNTEST) $(ECTEST)  $(ECDSATEST) $(IDEATEST) \
+EXE=	$(BNTEST) $(ECTEST)  $(ECDSATEST) $(ECDHTEST) $(IDEATEST) \
 	$(MD2TEST)  $(MD4TEST) $(MD5TEST) $(HMACTEST) \
 	$(RC2TEST) $(RC4TEST) $(RC5TEST) \
 	$(DESTEST) $(SHATEST) $(SHA1TEST) $(MDC2TEST) $(RMDTEST) \
@@ -71,7 +72,7 @@ EXE=	$(BNTEST) $(ECTEST)  $(ECDSATEST) $(IDEATEST) \
 
 # $(METHTEST)
 
-OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(IDEATEST).o \
+OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(MD2TEST).o $(MD4TEST).o $(MD5TEST).o \
 	$(HMACTEST).o \
 	$(RC2TEST).o $(RC4TEST).o $(RC5TEST).o \
@@ -79,7 +80,7 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(IDEATEST).o \
 	$(RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o \
 	$(EVPTEST).o
-SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(IDEATEST).c \
+SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c \
 	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c \
@@ -130,7 +131,7 @@ alltests.chooser: \
 	test_des test_idea test_sha test_md4 test_md5 test_hmac \
 	test_md2 test_mdc2 \
 	test_rmd test_rc2 test_rc4 test_rc5 test_bf test_cast test_rd \
-	test_rand test_bn test_ec test_ecdsa \
+	test_rand test_bn test_ec test_ecdsa test_ecdh \
 	test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ca test_engine test_evp test_ssl
@@ -229,6 +230,10 @@ test_ec:
 test_ecdsa:
 	@echo 'test ecdsa'
 	./$(ECDSATEST)
+
+test_ecdh:
+	@echo 'test ecdh'
+	./$(ECDHTEST)
 
 test_verify:
 	@echo "The following command should have some OK's and some failures"
@@ -372,6 +377,9 @@ $(EVPTEST): $(EVPTEST).o $(DLIBCRYPTO)
 $(ECDSATEST): $(ECDSATEST).o $(DLIBCRYPTO)
 	$(CC) -o $(ECDSATEST) $(CFLAGS) $(ECDSATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
 	
+$(ECDHTEST): $(ECDHTEST).o $(DLIBCRYPTO)
+	$(CC) -o $(ECDHTEST) $(CFLAGS) $(ECDHTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
+
 #$(RDTEST).o: $(RDTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(RDTEST).c
 
@@ -466,6 +474,21 @@ ectest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 ectest.o: ../include/openssl/rand.h ../include/openssl/rsa.h
 ectest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 ectest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h ectest.c
+ecdhtest.o: ../include/openssl/bio.h ../include/openssl/bn.h
+ecdhtest.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
+ecdhtest.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+ecdhtest.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+ecdhtest.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+ecdhtest.o: ../include/openssl/engine.h ../include/openssl/err.h
+ecdhtest.o: ../include/openssl/evp.h ../include/openssl/lhash.h
+ecdhtest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+ecdhtest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+ecdhtest.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
+ecdhtest.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+ecdhtest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+ecdhtest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+ecdhtest.o: ../include/openssl/ui.h ../include/openssl/x509.h
+ecdhtest.o: ../include/openssl/x509_vfy.h ecdhtest.c
 enginetest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 enginetest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 enginetest.o: ../include/openssl/crypto.h ../include/openssl/dh.h

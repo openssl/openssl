@@ -55,6 +55,11 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECDH support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #include <openssl/crypto.h>
 #include "cryptlib.h"
@@ -323,6 +328,9 @@ static void engine_cpy(ENGINE *dest, const ENGINE *src)
 #endif
 #ifndef OPENSSL_NO_DH
 	dest->dh_meth = src->dh_meth;
+#endif
+#ifndef OPENSSL_NO_ECDH
+	dest->ecdh_meth = src->ecdh_meth;
 #endif
 #ifndef OPENSSL_NO_ECDSA
 	dest->ecdsa_meth = src->ecdsa_meth;

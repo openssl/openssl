@@ -747,7 +747,20 @@ PROCESS_ARGS:
 				$depflags .= "-DOPENSSL_NO_MDC2 ";
 				$openssl_algorithm_defines .= "#define OPENSSL_NO_MDC2\n";
 				}
-			if ($algo eq "EC" || $algo eq "SHA" || $algo eq "SHA1")
+			if ($algo eq "EC")
+				{
+				push @skip, "ecdsa";
+				push @skip, "ecdh";
+				$options .= " no-ecdsa";
+				$options .= " no-ecdh";
+				$flags .= "-DOPENSSL_NO_ECDSA ";
+				$flags .= "-DOPENSSL_NO_ECDH ";
+				$depflags .= "-DOPENSSL_NO_ECDSA ";
+				$depflags .= "-DOPENSSL_NO_ECDH ";
+				$openssl_algorithm_defines .= "#define OPENSSL_NO_ECDSA\n";
+				$openssl_algorithm_defines .= "#define OPENSSL_NO_ECDH\n";
+				}
+			if ($algo eq "SHA" || $algo eq "SHA1")
 				{
 				push @skip, "ecdsa";
 				$options .= " no-ecdsa";

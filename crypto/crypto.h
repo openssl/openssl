@@ -55,6 +55,11 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECDH support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #ifndef HEADER_CRYPTO_H
 #define HEADER_CRYPTO_H
@@ -128,7 +133,8 @@ extern "C" {
 #define	CRYPTO_LOCK_UI			30
 #define CRYPTO_LOCK_ECDSA               31
 #define CRYPTO_LOCK_EC			32
-#define	CRYPTO_NUM_LOCKS		33
+#define CRYPTO_LOCK_ECDH			33
+#define	CRYPTO_NUM_LOCKS		34
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2
@@ -236,6 +242,7 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
 #define CRYPTO_EX_INDEX_X509		10
 #define CRYPTO_EX_INDEX_UI		11
 #define CRYPTO_EX_INDEX_ECDSA		12
+#define CRYPTO_EX_INDEX_ECDH		13
 
 /* Dynamically assigned indexes start from this value (don't use directly, use
  * via CRYPTO_ex_data_new_class). */

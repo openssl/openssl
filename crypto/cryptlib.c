@@ -55,6 +55,11 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECDH support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -105,7 +110,8 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"ui",
 	"ecdsa",
 	"ec",
-#if CRYPTO_NUM_LOCKS != 33
+	"ecdh",
+#if CRYPTO_NUM_LOCKS != 34
 # error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 	};

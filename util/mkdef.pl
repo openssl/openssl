@@ -84,7 +84,7 @@ my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
 			 "RIPEMD",
-			 "MDC2", "RSA", "DSA", "DH", "EC", "ECDSA", "HMAC", "AES",
+			 "MDC2", "RSA", "DSA", "DH", "EC", "ECDH", "ECDSA", "HMAC", "AES",
 			 # Envelope "algorithms"
 			 "EVP", "X509", "ASN1_TYPEDEFS",
 			 # Helper "algorithms"
@@ -107,7 +107,7 @@ my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
 my $no_cast;
 my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
 my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
-my $no_ec; my $no_ecdsa;
+my $no_ec; my $no_ecdsa; my $no_ecdh;
 my $no_fp_api;
 
 foreach (@ARGV, split(/ /, $options))
@@ -165,6 +165,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-dh$/)       { $no_dh=1; }
 	elsif (/^no-ec$/)       { $no_ec=1; }
 	elsif (/^no-ecdsa$/)	{ $no_ecdsa=1; }
+	elsif (/^no-ecdh$/) 	{ $no_ecdh=1; }
 	elsif (/^no-hmac$/)	{ $no_hmac=1; }
 	elsif (/^no-aes$/)	{ $no_aes=1; }
 	elsif (/^no-evp$/)	{ $no_evp=1; }
@@ -235,6 +236,7 @@ $crypto.=" crypto/dsa/dsa.h" ; # unless $no_dsa;
 $crypto.=" crypto/dh/dh.h" ; # unless $no_dh;
 $crypto.=" crypto/ec/ec.h" ; # unless $no_ec;
 $crypto.=" crypto/ecdsa/ecdsa.h" ; # unless $no_ecdsa;
+$crypto.=" crypto/ecdh/ecdh.h" ; # unless $no_ecdh;
 $crypto.=" crypto/hmac/hmac.h" ; # unless $no_hmac;
 
 $crypto.=" crypto/engine/engine.h";
@@ -1044,6 +1046,7 @@ sub is_valid
 			if ($keyword eq "DH" && $no_dh) { return 0; }
 			if ($keyword eq "EC" && $no_ec) { return 0; }
 			if ($keyword eq "ECDSA" && $no_ecdsa) { return 0; }
+			if ($keyword eq "ECDH" && $no_ecdh) { return 0; }
 			if ($keyword eq "HMAC" && $no_hmac) { return 0; }
 			if ($keyword eq "AES" && $no_aes) { return 0; }
 			if ($keyword eq "EVP" && $no_evp) { return 0; }

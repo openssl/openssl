@@ -55,6 +55,11 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECDH support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #ifndef HEADER_X509_H
 #define HEADER_X509_H
@@ -87,6 +92,10 @@
 
 #ifndef OPENSSL_NO_ECDSA
 #include <openssl/ecdsa.h>
+#endif
+
+#ifndef OPENSSL_NO_ECDH
+#include <openssl/ecdh.h>
 #endif
 
 #ifndef OPENSSL_NO_DH

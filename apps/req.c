@@ -369,16 +369,7 @@ int MAIN(int argc, char **argv)
 				BIO_free(in);
 				in=NULL;
 				
-				{
-				BIGNUM *order = BN_new();
-				
-				if (!order)
-					goto end;
-				if (!EC_GROUP_get_order(ec_params->group, order, NULL))
-					goto end;
-				newkey = BN_num_bits(order);
-				BN_free(order);
-				}
+				newkey = EC_GROUP_get_degree(ec_params->group);
 
 				}
 			else

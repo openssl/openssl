@@ -4,6 +4,12 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Add ECDH engine support.
+     [Nils Gura and Douglas Stebila (Sun Microsystems Laboratories)]
+
+  *) Add ECDH in new directory crypto/ecdh/.
+     [Douglas Stebila (Sun Microsystems Laboratories)]
+
   *) Let BN_rand_range() abort with an error after 100 iterations
      without success (which indicates a broken PRNG).
      [Bodo Moeller]
@@ -214,7 +220,8 @@
      - X509_PUBKEY_get (crypto/asn1/x_pubkey.c) and
        d2i_PublicKey (crypto/asn1/d2i_pu.c) have been modified to make
        them suitable for ECDSA where domain parameters must be
-       extracted before the specific public key.
+       extracted before the specific public key;
+     - ECDSA engine support has been added.
      [Nils Larsch <nla@trustcenter.de>]
 
   *) Include some named elliptic curves, and add OIDs from X9.62,
