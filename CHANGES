@@ -4,6 +4,10 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Make it possible to inhibit symlinking of shared libraries in
+     Makefile.shared, for Cygwin's sake.
+     [Richard Levitte]
+
   *) Extend the BIGNUM API by creating new macros that behave like
      functions
 
@@ -314,6 +318,11 @@ TODO: bug: pad  x  with leading zeros if necessary
      [Nils Larsch <nla@trustcenter.de, Bodo Moeller]
  
  Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
+
+  *) Change the DLL names for Cygwin to cygcrypto-x.y.z.dll and
+     cygssl-x.y.z.dll, where x, y and z are the major, minor and
+     edit numbers of the version.
+     [Corinna Vinschen <vinschen@redhat.com> and Richard Levitte]
 
   *) Introduce safe string copy and catenation functions
      (BUF_strlcpy() and BUF_strlcat()).
