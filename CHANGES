@@ -4,6 +4,10 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) crypto/err.c locking bugfix: Use write locks (CRYPTO_w_[un]lock),
+     not read locks (CRYPTO_r_[un]lock).
+     [Bodo Moeller]
+
   *) A first attempt at creating official support for shared
      libraries through configuration.  I've kept it so the
      default is static libraries only, and the OpenSSL programs
