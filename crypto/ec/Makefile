@@ -23,11 +23,11 @@ TEST=ectest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	ec_lib.c ecp_smpl.c ecp_mont.c ecp_recp.c ecp_nist.c ec_cvt.c ec_mult.c\
+LIBSRC=	ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c\
 	ec_err.c ec_curve.c ec_check.c ec_print.c ec_asn1.c ec_key.c\
 	ec2_smpl.c ec2_smpt.c ec2_mult.c
 
-LIBOBJ=	ec_lib.o ecp_smpl.o ecp_mont.o ecp_recp.o ecp_nist.o ec_cvt.o ec_mult.o\
+LIBOBJ=	ec_lib.o ecp_smpl.o ecp_mont.o ecp_nist.o ec_cvt.o ec_mult.o\
 	ec_err.o ec_curve.o ec_check.o ec_print.o ec_asn1.o ec_key.o\
 	ec2_smpl.o ec2_mult.o
 
@@ -187,13 +187,6 @@ ecp_nist.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
 ecp_nist.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ecp_nist.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ecp_nist.o: ../../include/openssl/symhacks.h ec_lcl.h ecp_nist.c
-ecp_recp.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-ecp_recp.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-ecp_recp.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ecp_recp.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
-ecp_recp.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ecp_recp.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ecp_recp.o: ../../include/openssl/symhacks.h ec_lcl.h ecp_recp.c
 ecp_smpl.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ecp_smpl.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 ecp_smpl.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

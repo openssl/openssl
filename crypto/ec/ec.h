@@ -123,9 +123,6 @@ typedef struct ec_point_st EC_POINT;
 const EC_METHOD *EC_GFp_simple_method(void);
 const EC_METHOD *EC_GFp_mont_method(void);
 const EC_METHOD *EC_GFp_nist_method(void);
-#if 0
-const EC_METHOD *EC_GFp_recp_method(void); /* TODO */
-#endif
 
 /* EC_METHOD for curves over GF(2^m).
  */
