@@ -64,12 +64,16 @@
 #include <openssl/ssl.h>
 #include "apps.h"
 
+/* Maximum leeway in validity period: default 5 minutes */
+#define MAX_VALIDITY_PERIOD	(5 * 60)
+
 static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
 				STACK_OF(OCSP_CERTID) *ids);
 static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, X509 *issuer,
 				STACK_OF(OCSP_CERTID) *ids);
 static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
-				STACK *names, STACK_OF(OCSP_CERTID) *ids);
+				STACK *names, STACK_OF(OCSP_CERTID) *ids,
+				long nsec, long maxage);
 
 #undef PROG
 #define PROG ocsp_main
@@ -94,6 +98,7 @@ int MAIN(int argc, char **argv)
 	BIO *cbio = NULL, *derbio = NULL;
 	BIO *out = NULL;
 	int req_text = 0, resp_text = 0;
+	long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
 	char *CAfile = NULL, *CApath = NULL;
 	X509_STORE *store = NULL;
 	SSL_CTX *ctx = NULL;
@@ -247,6 +252,38 @@ int MAIN(int argc, char **argv)
 				}
 			else badarg = 1;
 			}
+		else if (!strcmp (*args, "-validity_period"))
+			{
+			if (args[1])
+				{
+				args++;
+				nsec = atol(*args);
+				if (nsec < 0)
+					{
+					BIO_printf(bio_err,
+						"Illegal validity period %s\n",
+						*args);
+					badarg = 1;
+					}
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp (*args, "-status_age"))
+			{
+			if (args[1])
+				{
+				args++;
+				maxage = atol(*args);
+				if (maxage < 0)
+					{
+					BIO_printf(bio_err,
+						"Illegal validity age %s\n",
+						*args);
+					badarg = 1;
+					}
+				}
+			else badarg = 1;
+			}
 		 else if (!strcmp(*args, "-signkey"))
 			{
 			if (args[1])
@@ -356,6 +393,8 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-CApath dir        trusted certificates directory\n");
 		BIO_printf (bio_err, "-CAfile file       trusted certificates file\n");
 		BIO_printf (bio_err, "-VAfile file       validator certificates file\n");
+		BIO_printf (bio_err, "-validity_period n maximum validity discrepancy in seconds\n");
+		BIO_printf (bio_err, "-status_age n      maximum status age in seconds\n");
 		BIO_printf (bio_err, "-noverify          don't verify response at all\n");
 		BIO_printf (bio_err, "-verify_certs file additional certificates to search for signer\n");
 		BIO_printf (bio_err, "-trust_other       don't verify additional certificates\n");
@@ -564,7 +603,7 @@ int MAIN(int argc, char **argv)
 
 		}
 
-	if (!print_ocsp_summary(out, bs, req, reqnames, ids))
+	if (!print_ocsp_summary(out, bs, req, reqnames, ids, nsec, maxage))
 		goto end;
 
 	ret = 0;
@@ -652,7 +691,8 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, X509 *issuer,
 	}
 
 static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
-					STACK *names, STACK_OF(OCSP_CERTID) *ids)
+					STACK *names, STACK_OF(OCSP_CERTID) *ids,
+					long nsec, long maxage)
 	{
 	OCSP_CERTID *id;
 	char *name;
@@ -676,6 +716,15 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 			{
 			BIO_puts(out, "ERROR: No Status found.\n");
 			continue;
+			}
+
+		/* Check validity: if invalid write to output BIO so we
+		 * know which response this refers to.
+		 */
+		if (!OCSP_check_validity(thisupd, nextupd, nsec, maxage))
+			{
+			BIO_puts(out, "WARNING: Status times invalid.\n");
+			ERR_print_errors(out);
 			}
 		BIO_printf(out, "%s\n", OCSP_cert_status_str(status));
 

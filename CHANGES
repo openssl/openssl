@@ -3,6 +3,17 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add OCSP_check_validity() function to check the validity of OCSP
+     responses. OCSP responses are prepared in real time and may only
+     be a few seconds old. Simply checking that the current time lies
+     between thisUpdate and nextUpdate max reject otherwise valid responses
+     caused by either OCSP responder or client clock innacuracy. Instead
+     we allow thisUpdate and nextUpdate to fall within a certain period of
+     the current time. The age of the response can also optionally be
+     checked. Two new options -validity_period and -status_age added to
+     ocsp utility.
+     [Steve Henson]
+
   *) If signature or public key algorithm is unrecognized print out its
      OID rather that just UNKOWN.
      [Steve Henson]

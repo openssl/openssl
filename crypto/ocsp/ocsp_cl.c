@@ -62,6 +62,7 @@
  */
 
 #include <stdio.h>
+#include <time.h>
 #include <cryptlib.h>
 #include <openssl/objects.h>
 #include <openssl/rand.h>
@@ -259,8 +260,9 @@ int OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
 				ASN1_GENERALIZEDTIME **nextupd)
 	{
 	int ret;
-	OCSP_CERTSTATUS *cst = single->certStatus;
+	OCSP_CERTSTATUS *cst;
 	if(!single) return -1;
+	cst = single->certStatus;
 	ret = cst->type;
 	if (ret == V_OCSP_CERTSTATUS_REVOKED)
 		{
@@ -278,7 +280,7 @@ int OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
 	return ret;
 	}
 
-/* This function combines the previous ones: look a certificate ID and
+/* This function combines the previous ones: look up a certificate ID and
  * if found extract status information. Return 0 is successful.
  */
 
@@ -299,4 +301,70 @@ int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
 	return 1;
 	}
 
+/* Check validity of thisUpdate and nextUpdate fields. It is possible that the request will
+ * take a few seconds to process and/or the time wont be totally accurate. Therefore to avoid
+ * rejecting otherwise valid time we allow the times to be within 'nsec' of the current time.
+ * Also to avoid accepting very old responses without a nextUpdate field an optional maxage
+ * parameter specifies the maximum age the thisUpdate field can be.
+ */
 
+int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd, ASN1_GENERALIZEDTIME *nextupd, long nsec, long maxsec)
+	{
+	int ret = 1;
+	time_t t_now, t_tmp;
+	time(&t_now);
+	/* Check thisUpdate is valid and not more than nsec in the future */
+	if (!ASN1_GENERALIZEDTIME_check(thisupd))
+		{
+		OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_ERROR_IN_THISUPDATE_FIELD);
+		ret = 0;
+		}
+	else 
+		{
+			t_tmp = t_now + nsec;
+			if (X509_cmp_time(thisupd, &t_tmp) > 0)
+			{
+			OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_STATUS_NOT_YET_VALID);
+			ret = 0;
+			}
+
+		/* If maxsec specified check thisUpdate is not more than maxsec in the past */
+		if (maxsec >= 0)
+			{
+			t_tmp = t_now - maxsec;
+			if (X509_cmp_time(thisupd, &t_tmp) < 0)
+				{
+				OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_STATUS_TOO_OLD);
+				ret = 0;
+				}
+			}
+		}
+		
+
+	if (!nextupd) return ret;
+
+	/* Check nextUpdate is valid and not more than nsec in the past */
+	if (!ASN1_GENERALIZEDTIME_check(nextupd))
+		{
+		OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_ERROR_IN_NEXTUPDATE_FIELD);
+		ret = 0;
+		}
+	else 
+		{
+		t_tmp = t_now - nsec;
+		if (X509_cmp_time(nextupd, &t_tmp) < 0)
+			{
+			OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_STATUS_EXPIRED);
+			ret = 0;
+			}
+		}
+
+	/* Also don't allow nextUpdate to precede thisUpdate */
+	if (ASN1_STRING_cmp(nextupd, thisupd) < 0)
+		{
+		OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE);
+		ret = 0;
+		}
+
+	return ret;
+	}
