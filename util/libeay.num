@@ -1868,3 +1868,4 @@ des_rw_mode                             2458	EXIST::VARIABLE:DES
 RSA_PKCS1_RSAref                        2459	EXIST:RSAREF:FUNCTION:RSA
 X509_keyid_set1                         2460	EXIST::FUNCTION:
 BIO_next                                2461	EXIST::FUNCTION:
+DSO_METHOD_vms                          2462	EXIST::FUNCTION:
