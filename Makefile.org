@@ -261,7 +261,7 @@ do_linux-shared:
 	done
 
 # This assumes that GNU utilities are *not* used
-do_true64-shared:
+do_tru64-shared:
 	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -no_archive -o lib$$i.so \
 		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
