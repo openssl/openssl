@@ -742,6 +742,7 @@ PROCESS_ARGS:
 			$openssl_algorithm_defines .= "#define OPENSSL_NO_$algo\n";
 			if ($algo eq "RIJNDAEL")
 				{
+				push @skip, "aes";
 				$flags .= "-DOPENSSL_NO_AES ";
 				$depflags .= "-DOPENSSL_NO_AES ";
 				$openssl_algorithm_defines .= "#define OPENSSL_NO_AES\n";
