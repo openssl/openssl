@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/x509v3.h>
+#include <openssl/x509_vfy.h>
 
 
 static void x509v3_cache_extensions(X509 *x);
@@ -255,16 +256,18 @@ int X509_PURPOSE_get_trust(X509_PURPOSE *xp)
 	return xp->trust;
 }
 
-#ifndef NO_SHA
 static void x509v3_cache_extensions(X509 *x)
 {
 	BASIC_CONSTRAINTS *bs;
 	ASN1_BIT_STRING *usage;
 	ASN1_BIT_STRING *ns;
 	STACK_OF(ASN1_OBJECT) *extusage;
+	
 	int i;
 	if(x->ex_flags & EXFLAG_SET) return;
+#ifndef NO_SHA
 	X509_digest(x, EVP_sha1(), x->sha1_hash, NULL);
+#endif
 	/* Does subject name match issuer ? */
 	if(!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x)))
 			 x->ex_flags |= EXFLAG_SS;
@@ -328,9 +331,10 @@ static void x509v3_cache_extensions(X509 *x)
 		x->ex_flags |= EXFLAG_NSCERT;
 		ASN1_BIT_STRING_free(ns);
 	}
+	x->skid =X509_get_ext_d2i(x, NID_subject_key_identifier, NULL, NULL);
+	x->akid =X509_get_ext_d2i(x, NID_authority_key_identifier, NULL, NULL);
 	x->ex_flags |= EXFLAG_SET;
 }
-#endif
 
 /* CA checks common to all purposes
  * return codes:
@@ -470,3 +474,60 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
 	return 1;
 }
+
+/* Various checks to see if one certificate issued the second.
+ * This can be used to prune a set of possible issuer certificates
+ * which have been looked up using some simple method such as by
+ * subject name.
+ * These are:
+ * 1. Check issuer_name(subject) == subject_name(issuer)
+ * 2. If akid(subject) exists check it matches issuer
+ * 3. If key_usage(issuer) exists check it supports certificate signing
+ * returns 0 for OK, positive for reason for mismatch, reasons match
+ * codes for X509_verify_cert()
+ */
+
+int X509_check_issued(X509 *issuer, X509 *subject)
+{
+	if(X509_NAME_cmp(X509_get_subject_name(issuer),
+			X509_get_issuer_name(subject)))
+				return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
+	x509v3_cache_extensions(issuer);
+	x509v3_cache_extensions(subject);
+	if(subject->akid) {
+		/* Check key ids (if present) */
+		if(subject->akid->keyid && issuer->skid &&
+		 ASN1_OCTET_STRING_cmp(subject->akid->keyid, issuer->skid) )
+				return X509_V_ERR_AKID_SKID_MISMATCH;
+		/* Check serial number */
+		if(subject->akid->serial &&
+			ASN1_INTEGER_cmp(X509_get_serialNumber(issuer),
+						subject->akid->serial))
+				return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
+		/* Check issuer name */
+		if(subject->akid->issuer) {
+			/* Ugh, for some peculiar reason AKID includes
+			 * SEQUENCE OF GeneralName. So look for a DirName.
+			 * There may be more than one but we only take any
+			 * notice of the first.
+			 */
+			STACK_OF(GENERAL_NAME) *gens;
+			GENERAL_NAME *gen;
+			X509_NAME *nm = NULL;
+			int i;
+			gens = subject->akid->issuer;
+			for(i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
+				gen = sk_GENERAL_NAME_value(gens, i);
+				if(gen->type == GEN_DIRNAME) {
+					nm = gen->d.dirn;
+					break;
+				}
+			}
+			if(nm && X509_NAME_cmp(nm, X509_get_issuer_name(issuer)))
+				return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
+		}
+	}
+	if(ku_reject(issuer, KU_KEY_CERT_SIGN)) return X509_V_ERR_KEYUSAGE_NO_CERTSIGN;
+	return X509_V_OK;
+}
+

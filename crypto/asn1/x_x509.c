@@ -61,6 +61,7 @@
 #include <openssl/evp.h>
 #include <openssl/asn1_mac.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 static int x509_meth_num = 0;
 static STACK_OF(CRYPTO_EX_DATA_FUNCS) *x509_meth = NULL;
@@ -114,12 +115,14 @@ X509 *X509_new(void)
 	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509);
-	ret->references=1;
 	ret->valid=0;
+	ret->references=1;
+	ret->name = NULL;
 	ret->ex_flags = 0;
 	ret->ex_pathlen = -1;
-	ret->name=NULL;
-	ret->aux=NULL;
+	ret->skid = NULL;
+	ret->akid = NULL;
+	ret->aux = NULL;
 	M_ASN1_New(ret->cert_info,X509_CINF_new);
 	M_ASN1_New(ret->sig_alg,X509_ALGOR_new);
 	M_ASN1_New(ret->signature,M_ASN1_BIT_STRING_new);
@@ -152,6 +155,8 @@ void X509_free(X509 *a)
 	X509_ALGOR_free(a->sig_alg);
 	M_ASN1_BIT_STRING_free(a->signature);
 	X509_CERT_AUX_free(a->aux);
+	ASN1_OCTET_STRING_free(a->skid);
+	AUTHORITY_KEYID_free(a->akid);
 
 	if (a->name != NULL) OPENSSL_free(a->name);
 	OPENSSL_free(a);

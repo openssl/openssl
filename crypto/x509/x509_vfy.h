@@ -131,6 +131,7 @@ typedef struct x509_object_st
 typedef struct x509_lookup_st X509_LOOKUP;
 
 DECLARE_STACK_OF(X509_LOOKUP)
+DECLARE_STACK_OF(X509_OBJECT)
 
 /* This is a static that defines the function interface */
 typedef struct x509_lookup_method_st
@@ -162,11 +163,7 @@ typedef struct x509_store_st
 	{
 	/* The following is a cache of trusted certs */
 	int cache; 	/* if true, stash any hits */
-#ifndef NO_LHASH
-	LHASH *certs;	/* cached certs; */ 
-#else
-	char *certs;
-#endif
+	STACK_OF(X509_OBJECT) *objs;	/* Cache of all objects */
 
 	/* These are external lookup methods */
 	STACK_OF(X509_LOOKUP) *get_cert_methods;
@@ -194,7 +191,7 @@ struct x509_lookup_st
 	X509_STORE *store_ctx;	/* who owns us */
 	};
 
-/* This is a temporary used when processing cert chains.  Since the
+/* This is a used when verifying cert chains.  Since the
  * gathering of the cert chain can take some time (and have to be
  * 'retried', this needs to be kept and passed around. */
 struct x509_store_state_st      /* X509_STORE_CTX */
@@ -207,6 +204,16 @@ struct x509_store_state_st      /* X509_STORE_CTX */
 	STACK_OF(X509) *untrusted;	/* chain of X509s - untrusted - passed in */
 	int purpose;		/* purpose to check untrusted certificates */
 	int trust;		/* trust setting to check */
+	time_t	check_time;	/* time to make verify at */
+	unsigned long flags;	/* Various verify flags */
+	void *other_ctx;	/* Other info for use with get_issuer() */
+
+	/* Callbacks for various operations */
+	int (*verify)(X509_STORE_CTX *ctx);	/* called to verify a certificate */
+	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);		/* error callback */
+	int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);	/* get issuers cert from ctx */
+	int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer); /* check issued */
+	int (*cleanup)(X509_STORE_CTX *ctx);
 
 	/* The following is built up */
 	int depth;		/* how far to go looking up certs */
@@ -218,6 +225,7 @@ struct x509_store_state_st      /* X509_STORE_CTX */
 	int error_depth;
 	int error;
 	X509 *current_cert;
+	X509 *current_issuer;	/* cert currently being tested as valid issuer */
 
 	CRYPTO_EX_DATA ex_data;
 	};
@@ -268,9 +276,19 @@ struct x509_store_state_st      /* X509_STORE_CTX */
 #define		X509_V_ERR_INVALID_PURPOSE			26
 #define		X509_V_ERR_CERT_UNTRUSTED			27
 #define		X509_V_ERR_CERT_REJECTED			28
+/* These are 'informational' when looking for issuer cert */
+#define		X509_V_ERR_SUBJECT_ISSUER_MISMATCH		29
+#define		X509_V_ERR_AKID_SKID_MISMATCH			30
+#define		X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH		31
+#define		X509_V_ERR_KEYUSAGE_NO_CERTSIGN			32
 
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50
+
+/* Certificate verify flags */
+
+#define	X509_V_FLAG_CB_ISSUER_CHECK		0x1	/* Send issuer+subject checks to verify_cb */
+#define	X509_V_FLAG_USE_CHECK_TIME		0x2	/* Use check time instead of current time */
 
 		  /* These functions are being redefined in another directory,
 		     and clash when the linker is case-insensitive, so let's
@@ -287,18 +305,23 @@ struct x509_store_state_st      /* X509_STORE_CTX */
 #define X509v3_add_standard_extensions oX509v3_add_standard_extensions
 #endif
 
-#ifndef NO_LHASH
-X509_OBJECT *X509_OBJECT_retrieve_by_subject(LHASH *h,int type,X509_NAME *name);
-#endif
+int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, int type,
+	     X509_NAME *name);
+X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,int type,X509_NAME *name);
+X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h, X509_OBJECT *x);
 void X509_OBJECT_up_ref_count(X509_OBJECT *a);
 void X509_OBJECT_free_contents(X509_OBJECT *a);
 X509_STORE *X509_STORE_new(void );
 void X509_STORE_free(X509_STORE *v);
 
 X509_STORE_CTX *X509_STORE_CTX_new(void);
+
+int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+
 void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store,
 			 X509 *x509, STACK_OF(X509) *chain);
+void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
 
 X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m);
