@@ -269,7 +269,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
 				*p = 0;
 				ntmp = strip_spaces(q);
 				q = p + 1;
-#ifdef DEBUG
+#if 0
 				printf("%s\n", ntmp);
 #endif
 				if(!ntmp) {
@@ -285,7 +285,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
 				state = HDR_NAME;
 				*p = 0;
 				vtmp = strip_spaces(q);
-#ifdef DEBUG
+#if 0
 				printf("%s\n", ntmp);
 #endif
 				if(!vtmp) {
@@ -302,7 +302,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
 
 	if(state == HDR_VALUE) {
 		vtmp = strip_spaces(q);
-#ifdef DEBUG
+#if 0
 		printf("%s=%s\n", ntmp, vtmp);
 #endif
 		if(!vtmp) {
@@ -312,7 +312,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
 		X509V3_add_value(ntmp, vtmp, &values);
 	} else {
 		ntmp = strip_spaces(q);
-#ifdef DEBUG
+#if 0
 		printf("%s\n", ntmp);
 #endif
 		if(!ntmp) {
