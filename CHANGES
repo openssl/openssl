@@ -4,6 +4,9 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Add alert descriptions for TLSv1 to SSL_alert_desc_string[_long]().
+     [Lutz Jaenicke]
+
   *) Fix buggy behaviour of BIO_get_num_renegotiates() and BIO_ctrl()
      for BIO_C_GET_WRITE_BUF_SIZE ("Stephen Hinton" <shinton@netopia.com>).
      [Lutz Jaenicke]
