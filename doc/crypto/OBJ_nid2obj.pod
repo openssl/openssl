@@ -101,7 +101,7 @@ Create an object for B<commonName>:
  ASN1_OBJECT *o;
  o = OBJ_nid2obj(NID_commonName);
 
-Check is an object is B<commonName>
+Check if an object is B<commonName>
 
  if (OBJ_obj2nid(obj) == NID_commonName)
 	/* Do something */
@@ -129,14 +129,14 @@ than enough to handle any OID encountered in practice.
 
 =head1 RETURN VALUES
 
-OBJ_nid2obj() returns an ASN1_OBJECT structure or B<NULL> is an
+OBJ_nid2obj() returns an B<ASN1_OBJECT> structure or B<NULL> is an
 error occurred.
 
 OBJ_nid2ln() and OBJ_nid2sn() returns a valid string or B<NULL>
 on error.
 
 OBJ_obj2nid(), OBJ_ln2nid(), OBJ_sn2nid() and OBJ_txt2nid() return
-a NID or NID_undef on error.
+a NID or B<NID_undef> on error.
 
 =head1 SEE ALSO
 
