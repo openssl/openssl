@@ -163,7 +163,7 @@ When choosing a cipher, use the server's preferences instead of the client
 preferences. When not set, the SSL server will always follow the clients
 preferences. When set, the SSLv3/TLSv1 server will choose following its
 own preferences. Because of the different protocol, for SSLv2 the server
-will send his list of preferences to the client and the client chooses.
+will send its list of preferences to the client and the client chooses.
 
 =item SSL_OP_PKCS1_CHECK_1
 
