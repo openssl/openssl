@@ -68,6 +68,15 @@ int main ()
   int		i;
   SHA512_CTX	ctx;
 
+#ifdef OPENSSL_IA32_SSE2
+    { extern int OPENSSL_ia32cap;
+      char      *env;
+
+	if (env=getenv("OPENSSL_ia32cap"))
+	    OPENSSL_ia32cap = strtol (env,NULL,0);
+    }
+#endif
+
     fprintf(stdout,"Testing SHA-512 ");
 
     SHA512("abc",3,md);
@@ -92,10 +101,17 @@ int main ()
 	fprintf(stdout,"."); fflush(stdout);
 
     SHA512_Init(&ctx);
-    for (i=0;i<1000000;i+=64)
+    for (i=0;i<1000000;i+=288)
 	SHA512_Update(&ctx, "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
+			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 			    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
-			    (1000000-i)<64?1000000-i:64);
+			    (1000000-i)<288?1000000-i:288);
     SHA512_Final(md,&ctx);
 
     if (memcmp(md,app_c3,sizeof(app_c3)))
