@@ -66,7 +66,7 @@ Call SSL_get_error() with the return value B<ret> to find out the reason.
 
 L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_connect(3)|SSL_connect(3)>,
 L<SSL_accept(3)|SSL_accept(3)>, L<SSL_set_shutdown(3)|SSL_set_shutdown(3)>,
-L<SSL_clear(3)|SSL_clear(3), L<SSL_free(3)|SSL_free(3)>,
+L<SSL_clear(3)|SSL_clear(3)>, L<SSL_free(3)|SSL_free(3)>,
 L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>
 
 =cut
