@@ -644,7 +644,7 @@ static int pid_cmp(ERR_STATE *a, ERR_STATE *b)
 
 void ERR_remove_state(unsigned long pid)
 	{
-	ERR_STATE *p,tmp;
+	ERR_STATE *p = NULL,tmp;
 
 	if (thread_hash == NULL)
 		return;
