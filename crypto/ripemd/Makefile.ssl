@@ -10,7 +10,7 @@ INCLUDES=
 CFLAG=-g
 INSTALLTOP=/usr/local/ssl
 MAKE=           make -f Makefile.ssl
-MAKEDEPEND=     makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=       Makefile.ssl
 AR=             ar r
 
@@ -102,3 +102,5 @@ clean:
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+rmd_dgst.o: ripemd.h rmd_locl.h rmdconst.h ripemd.h rmd_locl.h rmdconst.h

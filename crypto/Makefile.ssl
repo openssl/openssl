@@ -10,7 +10,7 @@ INCLUDES=	-I.. -I../../include
 CFLAG=		-g
 INSTALLTOP=	/usr/local/ssl
 MAKE=           make -f Makefile.ssl
-MAKEDEPEND=     makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=       Makefile.ssl
 RM=             /bin/rm -f
 AR=		ar r
@@ -124,7 +124,7 @@ depend:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i; echo "making depend in $$i..."; \
-	$(MAKE) MAKEFILE='${MAKEFILE}' INCLUDES='${INCLUDES}' MAKEDEPEND='${MAKEDEPEND}' depend ); \
+	$(MAKE) MAKEFILE='${MAKEFILE}' INCLUDES='${INCLUDES}' depend ); \
 	done;
 
 clean:
@@ -160,3 +160,15 @@ errgen:
 
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+cpt_err.o: ../include/err.h ../include/stack.h crypto.h ../include/bio.h
+cryptlib.o: ../include/buffer.h ../include/e_os.h ../include/err.h
+cryptlib.o: ../include/stack.h cryptlib.h crypto.h date.h ../include/bio.h
+cversion.o: ../include/buffer.h ../include/e_os.h ../include/err.h
+cversion.o: ../include/stack.h cryptlib.h crypto.h date.h ../include/bio.h
+ex_data.o: ../include/buffer.h ../include/e_os.h ../include/err.h
+ex_data.o: ../include/lhash.h ../include/stack.h cryptlib.h crypto.h
+mem.o: ../include/bio.h ../include/buffer.h ../include/e_os.h ../include/err.h
+mem.o: ../include/lhash.h ../include/stack.h cryptlib.h crypto.h
+tmdiff.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
+tmdiff.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h tmdiff.h

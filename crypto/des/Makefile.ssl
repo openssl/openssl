@@ -10,7 +10,7 @@ INCLUDES=
 CFLAG=-g
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 DES_ENC=	des_enc.o fcrypt_b.o
@@ -138,3 +138,12 @@ clean:
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+cbc_cksm.o: des.h des_locl.h des.h des_locl.h des.h des_locl.h des.h des_locl.h
+cfb_enc.o: des.h des_locl.h des.h des_locl.h des.h des_locl.h des.h des_locl.h
+ecb_enc.o: spr.h des.h des_locl.h des.h des_locl.h des.h des.h des_locl.h
+fcrypt.o: des_locl.h des.h des_locl.h des.h des_locl.h des.h des_locl.h des.h
+ofb_enc.o: des_locl.h des.h des_locl.h des.h des_locl.h des.h des_locl.h des.h
+read2pwd.o: des_locl.h des.h des_locl.h des.h des_locl.h des_ver.h rpc_des.h
+set_key.o: des.h des_locl.h podd.h sk.h des.h des_locl.h des.h des_locl.h des.h
+xcbc_enc.o: des_locl.h

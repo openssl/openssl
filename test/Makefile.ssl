@@ -10,7 +10,7 @@ CFLAG=		-g
 INSTALLTOP=	/usr/local/ssl
 MAKEFILE=	Makefile.ssl
 MAKE=		make -f $(MAKEFILE)
-MAKEDEPEND=	makedepend -f$(MAKEFILE)
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 
 PEX_LIBS=
 EX_LIBS= #-lnsl -lsocket
@@ -292,3 +292,42 @@ $(SSLTEST): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
 	$(CC) -o $(SSLTEST) $(CFLAGS) $(SSLTEST).o $(PEX_LIBS) $(LIBSSL) $(LIBCRYPTO) $(EX_LIBS)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+bftest.o: ../include/blowfish.h ../include/asn1.h ../include/bio.h
+bntest.o: ../include/blowfish.h ../include/bn.h ../include/cast.h
+bntest.o: ../include/crypto.h ../include/des.h ../include/dh.h ../include/dsa.h
+bntest.o: ../include/e_os.h ../include/err.h ../include/evp.h ../include/idea.h
+bntest.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+bntest.o: ../include/objects.h ../include/pkcs7.h ../include/rand.h
+bntest.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+bntest.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+bntest.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h
+casttest.o: ../include/cast.h ../include/des.h ../include/bio.h ../include/bn.h
+dhtest.o: ../include/crypto.h ../include/dh.h ../include/stack.h
+dsatest.o: ../include/bio.h ../include/bn.h ../include/crypto.h
+dsatest.o: ../include/dsa.h ../include/err.h ../include/rand.h
+dsatest.o: ../include/stack.h ../include/bio.h ../include/bn.h
+exptest.o: ../include/crypto.h ../include/err.h ../include/rand.h
+exptest.o: ../include/stack.h ../include/asn1.h ../include/bio.h
+hmactest.o: ../include/blowfish.h ../include/bn.h ../include/cast.h
+hmactest.o: ../include/crypto.h ../include/des.h ../include/dh.h
+hmactest.o: ../include/dsa.h ../include/evp.h ../include/hmac.h
+hmactest.o: ../include/idea.h ../include/md2.h ../include/md5.h
+hmactest.o: ../include/mdc2.h ../include/objects.h ../include/rc2.h
+hmactest.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+hmactest.o: ../include/rsa.h ../include/sha.h ../include/stack.h
+ideatest.o: ../include/idea.h ../include/md2.h ../include/md5.h
+mdc2test.o: ../include/des.h ../include/mdc2.h ../include/rand.h
+rc2test.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+rmdtest.o: ../include/ripemd.h ../include/sha.h ../include/sha.h
+ssltest.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
+ssltest.o: ../include/bn.h ../include/buffer.h ../include/cast.h
+ssltest.o: ../include/crypto.h ../include/des.h ../include/dh.h
+ssltest.o: ../include/dsa.h ../include/e_os.h ../include/err.h ../include/evp.h
+ssltest.o: ../include/idea.h ../include/lhash.h ../include/md2.h
+ssltest.o: ../include/md5.h ../include/mdc2.h ../include/objects.h
+ssltest.o: ../include/pkcs7.h ../include/rc2.h ../include/rc4.h
+ssltest.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h
+ssltest.o: ../include/sha.h ../include/ssl.h ../include/ssl2.h
+ssltest.o: ../include/ssl23.h ../include/ssl3.h ../include/stack.h
+ssltest.o: ../include/tls1.h ../include/x509.h ../include/x509_vfy.h

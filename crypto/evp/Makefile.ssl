@@ -9,7 +9,7 @@ INCLUDES= -I.. -I../../include
 CFLAG=-g
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -111,3 +111,505 @@ $(ERRC).c: $(ERR).err
 	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+bio_b64.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+bio_b64.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+bio_b64.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+bio_b64.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+bio_b64.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+bio_b64.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+bio_b64.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+bio_b64.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+bio_b64.o: evp.h ../../include/asn1.h ../../include/bio.h
+bio_enc.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+bio_enc.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+bio_enc.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+bio_enc.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+bio_enc.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+bio_enc.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+bio_enc.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+bio_enc.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+bio_md.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+bio_md.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+bio_md.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+bio_md.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+bio_md.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+bio_md.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+bio_md.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+bio_md.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+c_all.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+c_all.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+c_all.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+c_all.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+c_all.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+c_all.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+c_all.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+c_all.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+c_all.o: evp.h ../../include/asn1.h ../../include/bio.h
+digest.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+digest.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+digest.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+digest.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+digest.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+digest.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+digest.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+digest.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+e_cbc_3d.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+e_cbc_3d.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+e_cbc_3d.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+e_cbc_3d.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+e_cbc_3d.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+e_cbc_3d.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+e_cbc_3d.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+e_cbc_3d.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+e_cbc_bf.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+e_cbc_bf.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+e_cbc_bf.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+e_cbc_bf.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+e_cbc_bf.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+e_cbc_bf.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+e_cbc_bf.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+e_cbc_bf.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+e_cbc_bf.o: evp.h ../../include/asn1.h ../../include/bio.h
+e_cbc_c.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+e_cbc_c.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+e_cbc_c.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+e_cbc_c.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+e_cbc_c.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+e_cbc_c.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+e_cbc_c.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+e_cbc_c.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+e_cbc_d.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+e_cbc_d.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+e_cbc_d.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+e_cbc_d.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+e_cbc_d.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+e_cbc_d.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+e_cbc_d.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+e_cbc_d.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+e_cbc_i.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+e_cbc_i.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+e_cbc_i.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+e_cbc_i.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+e_cbc_i.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+e_cbc_i.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+e_cbc_i.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+e_cbc_i.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+e_cbc_i.o: evp.h ../../include/asn1.h ../../include/bio.h
+e_cbc_r2.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+e_cbc_r2.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+e_cbc_r2.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+e_cbc_r2.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+e_cbc_r2.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+e_cbc_r2.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+e_cbc_r2.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+e_cbc_r2.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+e_cbc_r5.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+e_cbc_r5.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+e_cbc_r5.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+e_cbc_r5.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+e_cbc_r5.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+e_cbc_r5.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+e_cbc_r5.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+e_cbc_r5.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+e_cfb_3d.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+e_cfb_3d.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+e_cfb_3d.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+e_cfb_3d.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+e_cfb_3d.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+e_cfb_3d.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+e_cfb_3d.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+e_cfb_3d.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+e_cfb_3d.o: evp.h ../../include/asn1.h ../../include/bio.h
+e_cfb_bf.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+e_cfb_bf.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+e_cfb_bf.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+e_cfb_bf.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+e_cfb_bf.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+e_cfb_bf.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+e_cfb_bf.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+e_cfb_bf.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+e_cfb_c.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+e_cfb_c.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+e_cfb_c.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+e_cfb_c.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+e_cfb_c.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+e_cfb_c.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+e_cfb_c.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+e_cfb_c.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+e_cfb_d.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+e_cfb_d.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+e_cfb_d.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+e_cfb_d.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+e_cfb_d.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+e_cfb_d.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+e_cfb_d.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+e_cfb_d.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+e_cfb_d.o: evp.h ../../include/asn1.h ../../include/bio.h
+e_cfb_i.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+e_cfb_i.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+e_cfb_i.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+e_cfb_i.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+e_cfb_i.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+e_cfb_i.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+e_cfb_i.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+e_cfb_i.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+e_cfb_r2.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+e_cfb_r2.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+e_cfb_r2.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+e_cfb_r2.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+e_cfb_r2.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+e_cfb_r2.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+e_cfb_r2.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+e_cfb_r2.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+e_cfb_r5.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+e_cfb_r5.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+e_cfb_r5.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+e_cfb_r5.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+e_cfb_r5.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+e_cfb_r5.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+e_cfb_r5.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+e_cfb_r5.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+e_cfb_r5.o: evp.h ../../include/asn1.h ../../include/bio.h
+e_ecb_3d.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+e_ecb_3d.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+e_ecb_3d.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+e_ecb_3d.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+e_ecb_3d.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+e_ecb_3d.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+e_ecb_3d.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+e_ecb_3d.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+e_ecb_bf.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+e_ecb_bf.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+e_ecb_bf.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+e_ecb_bf.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+e_ecb_bf.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+e_ecb_bf.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+e_ecb_bf.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+e_ecb_bf.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+e_ecb_c.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+e_ecb_c.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+e_ecb_c.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+e_ecb_c.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+e_ecb_c.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+e_ecb_c.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+e_ecb_c.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+e_ecb_c.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+e_ecb_c.o: evp.h ../../include/asn1.h ../../include/bio.h
+e_ecb_d.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+e_ecb_d.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+e_ecb_d.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+e_ecb_d.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+e_ecb_d.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+e_ecb_d.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+e_ecb_d.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+e_ecb_d.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+e_ecb_i.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+e_ecb_i.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+e_ecb_i.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+e_ecb_i.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+e_ecb_i.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+e_ecb_i.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+e_ecb_i.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+e_ecb_i.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+e_ecb_r2.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+e_ecb_r2.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+e_ecb_r2.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+e_ecb_r2.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+e_ecb_r2.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+e_ecb_r2.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+e_ecb_r2.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+e_ecb_r2.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+e_ecb_r2.o: evp.h ../../include/asn1.h ../../include/bio.h
+e_ecb_r5.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+e_ecb_r5.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+e_ecb_r5.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+e_ecb_r5.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+e_ecb_r5.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+e_ecb_r5.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+e_ecb_r5.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+e_ecb_r5.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+e_null.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+e_null.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+e_null.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+e_null.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+e_null.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+e_null.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+e_null.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+e_null.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+e_ofb_3d.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+e_ofb_3d.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+e_ofb_3d.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+e_ofb_3d.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+e_ofb_3d.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+e_ofb_3d.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+e_ofb_3d.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+e_ofb_3d.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+e_ofb_3d.o: evp.h ../../include/asn1.h ../../include/bio.h
+e_ofb_bf.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+e_ofb_bf.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+e_ofb_bf.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+e_ofb_bf.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+e_ofb_bf.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+e_ofb_bf.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+e_ofb_bf.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+e_ofb_bf.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+e_ofb_c.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+e_ofb_c.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+e_ofb_c.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+e_ofb_c.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+e_ofb_c.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+e_ofb_c.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+e_ofb_c.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+e_ofb_c.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+e_ofb_d.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+e_ofb_d.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+e_ofb_d.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+e_ofb_d.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+e_ofb_d.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+e_ofb_d.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+e_ofb_d.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+e_ofb_d.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+e_ofb_d.o: evp.h ../../include/asn1.h ../../include/bio.h
+e_ofb_i.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+e_ofb_i.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+e_ofb_i.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+e_ofb_i.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+e_ofb_i.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+e_ofb_i.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+e_ofb_i.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+e_ofb_i.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+e_ofb_r2.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+e_ofb_r2.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+e_ofb_r2.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+e_ofb_r2.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+e_ofb_r2.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+e_ofb_r2.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+e_ofb_r2.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+e_ofb_r2.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+e_ofb_r5.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+e_ofb_r5.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+e_ofb_r5.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+e_ofb_r5.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+e_ofb_r5.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+e_ofb_r5.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+e_ofb_r5.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+e_ofb_r5.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+e_ofb_r5.o: evp.h ../../include/asn1.h ../../include/bio.h
+e_rc4.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+e_rc4.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+e_rc4.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+e_rc4.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+e_rc4.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+e_rc4.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+e_rc4.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+e_rc4.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+e_xcbc_d.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+e_xcbc_d.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+e_xcbc_d.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+e_xcbc_d.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+e_xcbc_d.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+e_xcbc_d.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+e_xcbc_d.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+e_xcbc_d.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+encode.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+encode.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+encode.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+encode.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+encode.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+encode.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+encode.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+encode.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
+encode.o: evp.h ../../include/asn1.h ../../include/bio.h
+evp_enc.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+evp_enc.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+evp_enc.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+evp_enc.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+evp_enc.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+evp_enc.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+evp_enc.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+evp_enc.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+evp_err.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+evp_err.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+evp_err.o: ../../include/dsa.h ../../include/err.h ../../include/idea.h
+evp_err.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+evp_err.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
+evp_err.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+evp_err.o: ../../include/sha.h ../../include/stack.h ../crypto.h evp.h
+evp_key.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+evp_key.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+evp_key.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+evp_key.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+evp_key.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+evp_key.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
+evp_key.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+evp_key.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+evp_key.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+evp_key.o: ../crypto.h evp.h ../../include/asn1.h ../../include/bio.h
+evp_lib.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+evp_lib.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+evp_lib.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+evp_lib.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+evp_lib.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
+evp_lib.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+evp_lib.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+evp_lib.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+m_dss.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+m_dss.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+m_dss.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+m_dss.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+m_dss.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+m_dss.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+m_dss.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+m_dss.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
+m_dss.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h evp.h
+m_dss1.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+m_dss1.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+m_dss1.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+m_dss1.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+m_dss1.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+m_dss1.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
+m_dss1.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+m_dss1.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+m_dss1.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+m_dss1.o: ../crypto.h evp.h ../../include/asn1.h ../../include/bio.h
+m_md2.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+m_md2.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+m_md2.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+m_md2.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+m_md2.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+m_md2.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+m_md2.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+m_md2.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
+m_md2.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+m_md5.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+m_md5.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+m_md5.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+m_md5.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+m_md5.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+m_md5.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+m_md5.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+m_md5.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
+m_md5.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h evp.h
+m_mdc2.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+m_mdc2.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+m_mdc2.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+m_mdc2.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+m_mdc2.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+m_mdc2.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
+m_mdc2.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+m_mdc2.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+m_mdc2.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+m_mdc2.o: ../crypto.h evp.h ../../include/asn1.h ../../include/bio.h
+m_null.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+m_null.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+m_null.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+m_null.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+m_null.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+m_null.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+m_null.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+m_null.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
+m_null.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+m_ripemd.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+m_ripemd.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+m_ripemd.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+m_ripemd.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+m_ripemd.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+m_ripemd.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+m_ripemd.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+m_ripemd.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
+m_ripemd.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h evp.h
+m_sha.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+m_sha.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+m_sha.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+m_sha.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+m_sha.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+m_sha.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
+m_sha.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+m_sha.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+m_sha.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+m_sha.o: ../crypto.h evp.h ../../include/asn1.h ../../include/bio.h
+m_sha1.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+m_sha1.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+m_sha1.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+m_sha1.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+m_sha1.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+m_sha1.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+m_sha1.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+m_sha1.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
+m_sha1.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+names.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+names.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+names.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+names.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+names.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+names.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+names.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+names.o: ../../include/stack.h ../cryptlib.h ../crypto.h evp.h
+p_dec.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+p_dec.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+p_dec.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+p_dec.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+p_dec.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+p_dec.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rand.h
+p_dec.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+p_dec.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+p_dec.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
+p_dec.o: ../cryptlib.h ../crypto.h evp.h ../../include/asn1.h
+p_enc.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+p_enc.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+p_enc.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+p_enc.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+p_enc.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+p_enc.o: ../../include/pkcs7.h ../../include/rand.h ../../include/rc2.h
+p_enc.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+p_enc.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+p_enc.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+p_enc.o: ../crypto.h evp.h ../../include/asn1.h ../../include/asn1_mac.h
+p_lib.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+p_lib.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+p_lib.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+p_lib.o: ../../include/err.h ../../include/idea.h ../../include/md2.h
+p_lib.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
+p_lib.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
+p_lib.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+p_lib.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
+p_lib.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h evp.h
+p_open.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+p_open.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+p_open.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+p_open.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+p_open.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+p_open.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
+p_open.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+p_open.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+p_open.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+p_open.o: ../crypto.h evp.h ../../include/asn1.h ../../include/bio.h
+p_seal.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+p_seal.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+p_seal.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+p_seal.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+p_seal.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+p_seal.o: ../../include/rand.h ../../include/rc2.h ../../include/rc4.h
+p_seal.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
+p_seal.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
+p_seal.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h evp.h
+p_sign.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+p_sign.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+p_sign.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+p_sign.o: ../../include/e_os.h ../../include/err.h ../../include/idea.h
+p_sign.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+p_sign.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
+p_sign.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+p_sign.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+p_sign.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+p_sign.o: ../crypto.h evp.h ../../include/asn1.h ../../include/bio.h
+p_verify.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+p_verify.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
+p_verify.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
+p_verify.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+p_verify.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+p_verify.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+p_verify.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+p_verify.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
+p_verify.o: ../cryptlib.h ../crypto.h evp.h

@@ -9,7 +9,7 @@ INCLUDES= -I.. -I../../include
 CFLAG=-g
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -157,3 +157,48 @@ $(ERRC).c: $(ERR).err
 	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+bn_add.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+bn_add.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
+bn_add.o: bn.h bn_lcl.h ../../include/bio.h ../../include/buffer.h
+bn_asm.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
+bn_asm.o: ../cryptlib.h ../crypto.h bn.h bn_lcl.h ../../include/bio.h
+bn_blind.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
+bn_blind.o: ../../include/stack.h ../cryptlib.h ../crypto.h bn.h bn_lcl.h
+bn_div.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+bn_div.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
+bn_div.o: bn.h bn_lcl.h ../../include/err.h bn.h ../../include/bio.h
+bn_exp.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
+bn_exp.o: ../../include/stack.h ../cryptlib.h ../crypto.h bn.h bn_lcl.h
+bn_exp2.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+bn_exp2.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
+bn_exp2.o: bn.h bn_lcl.h ../../include/bio.h ../../include/buffer.h
+bn_gcd.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
+bn_gcd.o: ../cryptlib.h ../crypto.h bn.h bn_lcl.h ../../include/bio.h
+bn_lib.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
+bn_lib.o: ../../include/stack.h ../cryptlib.h ../crypto.h bn.h bn_lcl.h
+bn_mont.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+bn_mont.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
+bn_mont.o: bn.h bn_lcl.h ../../include/bio.h ../../include/buffer.h
+bn_mpi.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
+bn_mpi.o: ../cryptlib.h ../crypto.h bn.h bn_lcl.h ../../include/bio.h
+bn_mul.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
+bn_mul.o: ../../include/stack.h ../cryptlib.h ../crypto.h bn.h bn_lcl.h
+bn_prime.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+bn_prime.o: ../../include/err.h ../../include/rand.h ../../include/stack.h
+bn_prime.o: ../cryptlib.h ../crypto.h bn.h bn_lcl.h bn_prime.h
+bn_print.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+bn_print.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
+bn_print.o: bn.h bn_lcl.h ../../include/bio.h ../../include/buffer.h
+bn_rand.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
+bn_rand.o: ../../include/stack.h ../cryptlib.h ../crypto.h bn.h bn_lcl.h
+bn_recp.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+bn_recp.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
+bn_recp.o: bn.h bn_lcl.h ../../include/bio.h ../../include/buffer.h
+bn_shift.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
+bn_shift.o: ../cryptlib.h ../crypto.h bn.h bn_lcl.h ../../include/bio.h
+bn_sqr.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
+bn_sqr.o: ../../include/stack.h ../cryptlib.h ../crypto.h bn.h bn_lcl.h
+bn_word.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+bn_word.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
+bn_word.o: bn.h bn_lcl.h

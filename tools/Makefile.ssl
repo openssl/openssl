@@ -9,7 +9,7 @@ INCLUDES= -I.. -I../../include
 CFLAG=-g
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 
 CFLAGS= $(INCLUDES) $(CFLAG)

@@ -9,7 +9,7 @@ INCLUDES= -I../crypto -I../include
 CFLAG=-g
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -100,3 +100,367 @@ $(ERRC).c: $(ERR).err
 	perl ../crypto/err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+bio_ssl.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
+bio_ssl.o: ../include/bn.h ../include/buffer.h ../include/cast.h
+bio_ssl.o: ../include/crypto.h ../include/des.h ../include/dh.h
+bio_ssl.o: ../include/dsa.h ../include/err.h ../include/evp.h ../include/idea.h
+bio_ssl.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+bio_ssl.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+bio_ssl.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+bio_ssl.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+bio_ssl.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+bio_ssl.o: ssl2.h ssl23.h ssl3.h tls1.h ../include/asn1.h ../include/bio.h
+s23_clnt.o: ../include/blowfish.h ../include/bn.h ../include/buffer.h
+s23_clnt.o: ../include/cast.h ../include/comp.h ../include/crypto.h
+s23_clnt.o: ../include/des.h ../include/dh.h ../include/dsa.h ../include/e_os.h
+s23_clnt.o: ../include/err.h ../include/evp.h ../include/idea.h
+s23_clnt.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+s23_clnt.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+s23_clnt.o: ../include/rand.h ../include/rc2.h ../include/rc4.h
+s23_clnt.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h
+s23_clnt.o: ../include/sha.h ../include/stack.h ../include/x509.h
+s23_clnt.o: ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h
+s23_lib.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
+s23_lib.o: ../include/bn.h ../include/buffer.h ../include/cast.h
+s23_lib.o: ../include/comp.h ../include/crypto.h ../include/des.h
+s23_lib.o: ../include/dh.h ../include/dsa.h ../include/e_os.h ../include/err.h
+s23_lib.o: ../include/evp.h ../include/idea.h ../include/lhash.h
+s23_lib.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+s23_lib.o: ../include/objects.h ../include/pkcs7.h ../include/rc2.h
+s23_lib.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+s23_lib.o: ../include/rsa.h ../include/sha.h ../include/stack.h
+s23_lib.o: ../include/x509.h ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h
+s23_lib.o: ssl_locl.h tls1.h ../include/asn1.h ../include/bio.h
+s23_meth.o: ../include/blowfish.h ../include/bn.h ../include/buffer.h
+s23_meth.o: ../include/cast.h ../include/comp.h ../include/crypto.h
+s23_meth.o: ../include/des.h ../include/dh.h ../include/dsa.h ../include/e_os.h
+s23_meth.o: ../include/err.h ../include/evp.h ../include/idea.h
+s23_meth.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+s23_meth.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+s23_meth.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+s23_meth.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+s23_meth.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+s23_meth.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+s23_pkt.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+s23_pkt.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+s23_pkt.o: ../include/crypto.h ../include/des.h ../include/dh.h
+s23_pkt.o: ../include/dsa.h ../include/e_os.h ../include/err.h ../include/evp.h
+s23_pkt.o: ../include/idea.h ../include/lhash.h ../include/md2.h
+s23_pkt.o: ../include/md5.h ../include/mdc2.h ../include/objects.h
+s23_pkt.o: ../include/pkcs7.h ../include/rc2.h ../include/rc4.h
+s23_pkt.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h
+s23_pkt.o: ../include/sha.h ../include/stack.h ../include/x509.h
+s23_pkt.o: ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h
+s23_srvr.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
+s23_srvr.o: ../include/bn.h ../include/buffer.h ../include/cast.h
+s23_srvr.o: ../include/comp.h ../include/crypto.h ../include/des.h
+s23_srvr.o: ../include/dh.h ../include/dsa.h ../include/e_os.h ../include/err.h
+s23_srvr.o: ../include/evp.h ../include/idea.h ../include/lhash.h
+s23_srvr.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+s23_srvr.o: ../include/objects.h ../include/pkcs7.h ../include/rand.h
+s23_srvr.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+s23_srvr.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+s23_srvr.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+s23_srvr.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+s2_clnt.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+s2_clnt.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+s2_clnt.o: ../include/crypto.h ../include/des.h ../include/dh.h
+s2_clnt.o: ../include/dsa.h ../include/e_os.h ../include/err.h ../include/evp.h
+s2_clnt.o: ../include/idea.h ../include/lhash.h ../include/md2.h
+s2_clnt.o: ../include/md5.h ../include/mdc2.h ../include/objects.h
+s2_clnt.o: ../include/pkcs7.h ../include/rand.h ../include/rc2.h
+s2_clnt.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+s2_clnt.o: ../include/rsa.h ../include/sha.h ../include/stack.h
+s2_clnt.o: ../include/x509.h ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h
+s2_clnt.o: ssl_locl.h tls1.h ../include/asn1.h ../include/bio.h
+s2_enc.o: ../include/blowfish.h ../include/bn.h ../include/buffer.h
+s2_enc.o: ../include/cast.h ../include/comp.h ../include/crypto.h
+s2_enc.o: ../include/des.h ../include/dh.h ../include/dsa.h ../include/e_os.h
+s2_enc.o: ../include/err.h ../include/evp.h ../include/idea.h
+s2_enc.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+s2_enc.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+s2_enc.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+s2_enc.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+s2_enc.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+s2_enc.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+s2_lib.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+s2_lib.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+s2_lib.o: ../include/crypto.h ../include/des.h ../include/dh.h ../include/dsa.h
+s2_lib.o: ../include/e_os.h ../include/err.h ../include/evp.h ../include/idea.h
+s2_lib.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+s2_lib.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+s2_lib.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+s2_lib.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+s2_lib.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+s2_lib.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+s2_meth.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+s2_meth.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+s2_meth.o: ../include/crypto.h ../include/des.h ../include/dh.h
+s2_meth.o: ../include/dsa.h ../include/e_os.h ../include/err.h ../include/evp.h
+s2_meth.o: ../include/idea.h ../include/lhash.h ../include/md2.h
+s2_meth.o: ../include/md5.h ../include/mdc2.h ../include/objects.h
+s2_meth.o: ../include/pkcs7.h ../include/rc2.h ../include/rc4.h
+s2_meth.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h
+s2_meth.o: ../include/sha.h ../include/stack.h ../include/x509.h
+s2_meth.o: ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h
+s2_pkt.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
+s2_pkt.o: ../include/bn.h ../include/buffer.h ../include/cast.h
+s2_pkt.o: ../include/comp.h ../include/crypto.h ../include/des.h
+s2_pkt.o: ../include/dh.h ../include/dsa.h ../include/e_os.h ../include/err.h
+s2_pkt.o: ../include/evp.h ../include/idea.h ../include/lhash.h
+s2_pkt.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+s2_pkt.o: ../include/objects.h ../include/pkcs7.h ../include/rc2.h
+s2_pkt.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+s2_pkt.o: ../include/rsa.h ../include/sha.h ../include/stack.h
+s2_pkt.o: ../include/x509.h ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h
+s2_pkt.o: ssl_locl.h tls1.h ../include/asn1.h ../include/bio.h
+s2_srvr.o: ../include/blowfish.h ../include/bn.h ../include/buffer.h
+s2_srvr.o: ../include/cast.h ../include/comp.h ../include/crypto.h
+s2_srvr.o: ../include/des.h ../include/dh.h ../include/dsa.h ../include/e_os.h
+s2_srvr.o: ../include/err.h ../include/evp.h ../include/idea.h
+s2_srvr.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+s2_srvr.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+s2_srvr.o: ../include/rand.h ../include/rc2.h ../include/rc4.h ../include/rc5.h
+s2_srvr.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+s2_srvr.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+s2_srvr.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+s3_both.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+s3_both.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+s3_both.o: ../include/crypto.h ../include/des.h ../include/dh.h
+s3_both.o: ../include/dsa.h ../include/e_os.h ../include/err.h ../include/evp.h
+s3_both.o: ../include/idea.h ../include/lhash.h ../include/md2.h
+s3_both.o: ../include/md5.h ../include/mdc2.h ../include/objects.h
+s3_both.o: ../include/pkcs7.h ../include/rand.h ../include/rc2.h
+s3_both.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+s3_both.o: ../include/rsa.h ../include/sha.h ../include/stack.h
+s3_both.o: ../include/x509.h ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h
+s3_both.o: ssl_locl.h tls1.h ../include/asn1.h ../include/bio.h
+s3_clnt.o: ../include/blowfish.h ../include/bn.h ../include/buffer.h
+s3_clnt.o: ../include/cast.h ../include/comp.h ../include/crypto.h
+s3_clnt.o: ../include/des.h ../include/dh.h ../include/dsa.h ../include/e_os.h
+s3_clnt.o: ../include/err.h ../include/evp.h ../include/idea.h
+s3_clnt.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+s3_clnt.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+s3_clnt.o: ../include/rand.h ../include/rc2.h ../include/rc4.h ../include/rc5.h
+s3_clnt.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+s3_clnt.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+s3_clnt.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+s3_enc.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+s3_enc.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+s3_enc.o: ../include/crypto.h ../include/des.h ../include/dh.h ../include/dsa.h
+s3_enc.o: ../include/e_os.h ../include/err.h ../include/evp.h ../include/idea.h
+s3_enc.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+s3_enc.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+s3_enc.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+s3_enc.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+s3_enc.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+s3_enc.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+s3_lib.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+s3_lib.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+s3_lib.o: ../include/crypto.h ../include/des.h ../include/dh.h ../include/dsa.h
+s3_lib.o: ../include/e_os.h ../include/err.h ../include/evp.h ../include/idea.h
+s3_lib.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+s3_lib.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+s3_lib.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+s3_lib.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+s3_lib.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+s3_lib.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+s3_meth.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+s3_meth.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+s3_meth.o: ../include/crypto.h ../include/des.h ../include/dh.h
+s3_meth.o: ../include/dsa.h ../include/e_os.h ../include/err.h ../include/evp.h
+s3_meth.o: ../include/idea.h ../include/lhash.h ../include/md2.h
+s3_meth.o: ../include/md5.h ../include/mdc2.h ../include/objects.h
+s3_meth.o: ../include/pkcs7.h ../include/rc2.h ../include/rc4.h
+s3_meth.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h
+s3_meth.o: ../include/sha.h ../include/stack.h ../include/x509.h
+s3_meth.o: ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h
+s3_pkt.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
+s3_pkt.o: ../include/bn.h ../include/buffer.h ../include/cast.h
+s3_pkt.o: ../include/comp.h ../include/crypto.h ../include/des.h
+s3_pkt.o: ../include/dh.h ../include/dsa.h ../include/e_os.h ../include/err.h
+s3_pkt.o: ../include/evp.h ../include/idea.h ../include/lhash.h
+s3_pkt.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+s3_pkt.o: ../include/objects.h ../include/pkcs7.h ../include/rc2.h
+s3_pkt.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+s3_pkt.o: ../include/rsa.h ../include/sha.h ../include/stack.h
+s3_pkt.o: ../include/x509.h ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h
+s3_pkt.o: ssl_locl.h tls1.h ../include/asn1.h ../include/bio.h
+s3_srvr.o: ../include/blowfish.h ../include/bn.h ../include/buffer.h
+s3_srvr.o: ../include/cast.h ../include/comp.h ../include/crypto.h
+s3_srvr.o: ../include/des.h ../include/dh.h ../include/dsa.h ../include/e_os.h
+s3_srvr.o: ../include/err.h ../include/evp.h ../include/idea.h
+s3_srvr.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+s3_srvr.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+s3_srvr.o: ../include/rand.h ../include/rc2.h ../include/rc4.h ../include/rc5.h
+s3_srvr.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+s3_srvr.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+s3_srvr.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+ssl_algs.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+ssl_algs.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+ssl_algs.o: ../include/crypto.h ../include/des.h ../include/dh.h
+ssl_algs.o: ../include/dsa.h ../include/e_os.h ../include/err.h
+ssl_algs.o: ../include/evp.h ../include/idea.h ../include/lhash.h
+ssl_algs.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+ssl_algs.o: ../include/objects.h ../include/pkcs7.h ../include/rc2.h
+ssl_algs.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+ssl_algs.o: ../include/rsa.h ../include/sha.h ../include/stack.h
+ssl_algs.o: ../include/x509.h ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h
+ssl_algs.o: ssl_locl.h tls1.h ../include/asn1.h ../include/asn1_mac.h
+ssl_asn1.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+ssl_asn1.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+ssl_asn1.o: ../include/crypto.h ../include/des.h ../include/dh.h
+ssl_asn1.o: ../include/dsa.h ../include/e_os.h ../include/err.h
+ssl_asn1.o: ../include/evp.h ../include/idea.h ../include/lhash.h
+ssl_asn1.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+ssl_asn1.o: ../include/objects.h ../include/pkcs7.h ../include/rc2.h
+ssl_asn1.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+ssl_asn1.o: ../include/rsa.h ../include/sha.h ../include/stack.h
+ssl_asn1.o: ../include/x509.h ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h
+ssl_asn1.o: ssl_locl.h tls1.h ../include/asn1.h ../include/bio.h
+ssl_cert.o: ../include/blowfish.h ../include/bn.h ../include/buffer.h
+ssl_cert.o: ../include/cast.h ../include/comp.h ../include/crypto.h
+ssl_cert.o: ../include/des.h ../include/dh.h ../include/dsa.h ../include/e_os.h
+ssl_cert.o: ../include/err.h ../include/evp.h ../include/idea.h
+ssl_cert.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+ssl_cert.o: ../include/mdc2.h ../include/objects.h ../include/pem.h
+ssl_cert.o: ../include/pkcs7.h ../include/rc2.h ../include/rc4.h
+ssl_cert.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h
+ssl_cert.o: ../include/sha.h ../include/stack.h ../include/x509.h
+ssl_cert.o: ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h
+ssl_ciph.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
+ssl_ciph.o: ../include/bn.h ../include/buffer.h ../include/cast.h
+ssl_ciph.o: ../include/comp.h ../include/crypto.h ../include/des.h
+ssl_ciph.o: ../include/dh.h ../include/dsa.h ../include/e_os.h ../include/err.h
+ssl_ciph.o: ../include/evp.h ../include/idea.h ../include/lhash.h
+ssl_ciph.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+ssl_ciph.o: ../include/objects.h ../include/pkcs7.h ../include/rc2.h
+ssl_ciph.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+ssl_ciph.o: ../include/rsa.h ../include/sha.h ../include/stack.h
+ssl_ciph.o: ../include/x509.h ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h
+ssl_ciph.o: ssl_locl.h tls1.h ../include/asn1.h ../include/bio.h
+ssl_err.o: ../include/blowfish.h ../include/bn.h ../include/buffer.h
+ssl_err.o: ../include/cast.h ../include/crypto.h ../include/des.h
+ssl_err.o: ../include/dh.h ../include/dsa.h ../include/err.h ../include/evp.h
+ssl_err.o: ../include/idea.h ../include/lhash.h ../include/md2.h
+ssl_err.o: ../include/md5.h ../include/mdc2.h ../include/objects.h
+ssl_err.o: ../include/pkcs7.h ../include/rc2.h ../include/rc4.h
+ssl_err.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h
+ssl_err.o: ../include/sha.h ../include/stack.h ../include/x509.h
+ssl_err.o: ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h tls1.h
+ssl_err2.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
+ssl_err2.o: ../include/bn.h ../include/buffer.h ../include/cast.h
+ssl_err2.o: ../include/crypto.h ../include/des.h ../include/dh.h
+ssl_err2.o: ../include/dsa.h ../include/err.h ../include/evp.h
+ssl_err2.o: ../include/idea.h ../include/lhash.h ../include/md2.h
+ssl_err2.o: ../include/md5.h ../include/mdc2.h ../include/objects.h
+ssl_err2.o: ../include/pkcs7.h ../include/rc2.h ../include/rc4.h
+ssl_err2.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h
+ssl_err2.o: ../include/sha.h ../include/stack.h ../include/x509.h
+ssl_err2.o: ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h tls1.h
+ssl_lib.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
+ssl_lib.o: ../include/bn.h ../include/buffer.h ../include/cast.h
+ssl_lib.o: ../include/comp.h ../include/crypto.h ../include/des.h
+ssl_lib.o: ../include/dh.h ../include/dsa.h ../include/e_os.h ../include/err.h
+ssl_lib.o: ../include/evp.h ../include/idea.h ../include/lhash.h
+ssl_lib.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+ssl_lib.o: ../include/objects.h ../include/pkcs7.h ../include/rc2.h
+ssl_lib.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+ssl_lib.o: ../include/rsa.h ../include/sha.h ../include/stack.h
+ssl_lib.o: ../include/x509.h ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h
+ssl_lib.o: ssl_locl.h tls1.h ../include/asn1.h ../include/bio.h
+ssl_rsa.o: ../include/blowfish.h ../include/bn.h ../include/buffer.h
+ssl_rsa.o: ../include/cast.h ../include/comp.h ../include/crypto.h
+ssl_rsa.o: ../include/des.h ../include/dh.h ../include/dsa.h ../include/e_os.h
+ssl_rsa.o: ../include/err.h ../include/evp.h ../include/idea.h
+ssl_rsa.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+ssl_rsa.o: ../include/mdc2.h ../include/objects.h ../include/pem.h
+ssl_rsa.o: ../include/pkcs7.h ../include/rc2.h ../include/rc4.h
+ssl_rsa.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h
+ssl_rsa.o: ../include/sha.h ../include/stack.h ../include/x509.h
+ssl_rsa.o: ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h
+ssl_sess.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
+ssl_sess.o: ../include/bn.h ../include/buffer.h ../include/cast.h
+ssl_sess.o: ../include/comp.h ../include/crypto.h ../include/des.h
+ssl_sess.o: ../include/dh.h ../include/dsa.h ../include/e_os.h ../include/err.h
+ssl_sess.o: ../include/evp.h ../include/idea.h ../include/lhash.h
+ssl_sess.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+ssl_sess.o: ../include/objects.h ../include/pkcs7.h ../include/rand.h
+ssl_sess.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+ssl_sess.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+ssl_sess.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+ssl_sess.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+ssl_stat.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+ssl_stat.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+ssl_stat.o: ../include/crypto.h ../include/des.h ../include/dh.h
+ssl_stat.o: ../include/dsa.h ../include/e_os.h ../include/err.h
+ssl_stat.o: ../include/evp.h ../include/idea.h ../include/lhash.h
+ssl_stat.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+ssl_stat.o: ../include/objects.h ../include/pkcs7.h ../include/rc2.h
+ssl_stat.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+ssl_stat.o: ../include/rsa.h ../include/sha.h ../include/stack.h
+ssl_stat.o: ../include/x509.h ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h
+ssl_stat.o: ssl_locl.h tls1.h ../include/asn1.h ../include/bio.h
+ssl_txt.o: ../include/blowfish.h ../include/bn.h ../include/buffer.h
+ssl_txt.o: ../include/cast.h ../include/comp.h ../include/crypto.h
+ssl_txt.o: ../include/des.h ../include/dh.h ../include/dsa.h ../include/e_os.h
+ssl_txt.o: ../include/err.h ../include/evp.h ../include/idea.h
+ssl_txt.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+ssl_txt.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+ssl_txt.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+ssl_txt.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+ssl_txt.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+ssl_txt.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+t1_clnt.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+t1_clnt.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+t1_clnt.o: ../include/crypto.h ../include/des.h ../include/dh.h
+t1_clnt.o: ../include/dsa.h ../include/e_os.h ../include/err.h ../include/evp.h
+t1_clnt.o: ../include/idea.h ../include/lhash.h ../include/md2.h
+t1_clnt.o: ../include/md5.h ../include/mdc2.h ../include/objects.h
+t1_clnt.o: ../include/pkcs7.h ../include/rand.h ../include/rc2.h
+t1_clnt.o: ../include/rc4.h ../include/rc5.h ../include/ripemd.h
+t1_clnt.o: ../include/rsa.h ../include/sha.h ../include/stack.h
+t1_clnt.o: ../include/x509.h ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h
+t1_clnt.o: ssl_locl.h tls1.h ../include/asn1.h ../include/bio.h
+t1_enc.o: ../include/blowfish.h ../include/bn.h ../include/buffer.h
+t1_enc.o: ../include/cast.h ../include/comp.h ../include/crypto.h
+t1_enc.o: ../include/des.h ../include/dh.h ../include/dsa.h ../include/e_os.h
+t1_enc.o: ../include/err.h ../include/evp.h ../include/hmac.h ../include/idea.h
+t1_enc.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+t1_enc.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+t1_enc.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+t1_enc.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+t1_enc.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+t1_enc.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+t1_lib.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+t1_lib.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+t1_lib.o: ../include/crypto.h ../include/des.h ../include/dh.h ../include/dsa.h
+t1_lib.o: ../include/e_os.h ../include/err.h ../include/evp.h ../include/idea.h
+t1_lib.o: ../include/lhash.h ../include/md2.h ../include/md5.h
+t1_lib.o: ../include/mdc2.h ../include/objects.h ../include/pkcs7.h
+t1_lib.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+t1_lib.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+t1_lib.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+t1_lib.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h ../include/asn1.h
+t1_meth.o: ../include/bio.h ../include/blowfish.h ../include/bn.h
+t1_meth.o: ../include/buffer.h ../include/cast.h ../include/comp.h
+t1_meth.o: ../include/crypto.h ../include/des.h ../include/dh.h
+t1_meth.o: ../include/dsa.h ../include/e_os.h ../include/err.h ../include/evp.h
+t1_meth.o: ../include/idea.h ../include/lhash.h ../include/md2.h
+t1_meth.o: ../include/md5.h ../include/mdc2.h ../include/objects.h
+t1_meth.o: ../include/pkcs7.h ../include/rc2.h ../include/rc4.h
+t1_meth.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h
+t1_meth.o: ../include/sha.h ../include/stack.h ../include/x509.h
+t1_meth.o: ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h
+t1_srvr.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
+t1_srvr.o: ../include/bn.h ../include/buffer.h ../include/cast.h
+t1_srvr.o: ../include/comp.h ../include/crypto.h ../include/des.h
+t1_srvr.o: ../include/dh.h ../include/dsa.h ../include/e_os.h ../include/err.h
+t1_srvr.o: ../include/evp.h ../include/idea.h ../include/lhash.h
+t1_srvr.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
+t1_srvr.o: ../include/objects.h ../include/pkcs7.h ../include/rand.h
+t1_srvr.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
+t1_srvr.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
+t1_srvr.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
+t1_srvr.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h

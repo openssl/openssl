@@ -1,0 +1,11 @@
+#!/bin/sh
+# Do a makedepend, only leave out the standard headers
+# Written by Ben Laurie <ben@algroup.co.uk> 19 Jan 1999
+
+TOP=$1
+shift
+
+cp Makefile.ssl Makefile.save
+makedepend -f Makefile.ssl $@
+$TOP/util/clean-depend.pl < Makefile.ssl > Makefile.new
+mv Makefile.new Makefile.ssl

@@ -9,7 +9,7 @@ INCLUDES= -I../crypto -I../include
 CFLAG=-g
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -85,3 +85,9 @@ $(ERRC).c: $(ERR).err
 	perl ../crypto/err/err_genc.pl -s $(ERR).h $(ERRC).c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+rsar_err.o: ../crypto/crypto.h ../include/bn.h ../include/err.h
+rsar_err.o: ../include/rsa.h ../include/stack.h rsaref.h ../crypto/cryptlib.h
+rsaref.o: ../crypto/crypto.h ../include/bio.h ../include/bn.h
+rsaref.o: ../include/buffer.h ../include/e_os.h ../include/err.h
+rsaref.o: ../include/rand.h ../include/rsa.h ../include/stack.h rsaref.h

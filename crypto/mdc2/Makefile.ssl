@@ -9,7 +9,7 @@ INCLUDES=
 CFLAG=-g
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -78,3 +78,7 @@ clean:
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+mdc2_one.o: ../../include/bio.h ../../include/buffer.h ../../include/des.h
+mdc2_one.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
+mdc2_one.o: ../cryptlib.h ../crypto.h mdc2.h ../../include/des.h mdc2.h

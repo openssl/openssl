@@ -10,7 +10,7 @@ INCLUDES=
 CFLAG=-g
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -105,3 +105,6 @@ clean:
 errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+bf_cfb64.o: bf_locl.h blowfish.h bf_locl.h blowfish.h bf_locl.h blowfish.h
+bf_ofb64.o: bf_locl.h blowfish.h bf_locl.h bf_pi.h blowfish.h
