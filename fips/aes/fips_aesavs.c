@@ -23,7 +23,7 @@
 
 #define AES_BLOCK_SIZE 16
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 /*-----------------------------------------------*/
 
@@ -558,7 +558,7 @@ int do_mct(char *amode,
 		memcpy(ctext[0], ptext[j-1], AES_BLOCK_SIZE);
 		break;
 	    case CFB8:
-		for (n1 = 0, n2 = 15; n < 16; ++n1, --n2)
+		for (n1 = 0, n2 = 15; n1 < 16; ++n1, --n2)
 		    iv[i+1][n1] = ptext[j-n2][0];
 		ctext[0][0] = ptext[j-16][0];
 		break;
