@@ -90,7 +90,10 @@ static void AES_ctr128_inc(unsigned char *counter) {
 
 /* The input encrypted as though 128bit counter mode is being
  * used.  The extra state information to record how much of the
- * 128bit block we have used is contained in *num;
+ * 128bit block we have used is contained in *num, and the
+ * encrypted counter is kept in ecount_buf.  Both *num and
+ * ecount_buf must be initialised with zeros before the first
+ * call to AES_ctr128_encrypt().
  */
 void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned long length, const AES_KEY *key,
@@ -102,6 +105,7 @@ void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 	unsigned long l=length;
 
 	assert(in && out && key && counter && num);
+	assert(*num < AES_BLOCK_SIZE);
 
 	n = *num;
 
