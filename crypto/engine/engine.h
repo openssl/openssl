@@ -65,6 +65,7 @@
 #include <openssl/dh.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
+#include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {
