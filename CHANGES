@@ -5,6 +5,9 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) SPARC v8 assembler BIGNUM implementation.
+     [Andy Polyakov <appro@fy.chalmers.se>]
+
   *) Initial support for Certificate Policies extension: print works but
      setting doesn't work fully (yet). Also various additions to support
      the r2i method this extension will use.

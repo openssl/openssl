@@ -98,6 +98,9 @@ asm/bn86unix.cpp: asm/bn-586.pl
 asm/co86unix.cpp: asm/co-586.pl
 	(cd asm; $(PERL) co-586.pl cpp >co86unix.cpp )
 
+asm/sparcv8.o: asm/sparcv8.S
+	$(CC) -c -o asm/sparcv8.o asm/sparcv8.S
+
 # MIPS 64 bit assember 
 asm/mips3.o: asm/mips3.s
 	/usr/bin/as -mips3 -O2 -o asm/mips3.o asm/mips3.s            
