@@ -13,7 +13,7 @@
       o Fixes to make s_client, s_server work under Windows
       o Support for multiple fieldnames in SPKACs
       o New SPKAC command line utilty and associated library functions
-      o Options to allow passwords to be passed on command line or environment
+      o Options to allow passwords to be obtained from various sources
       o New public key PEM format and options to handle it
       o Many other fixes and enhancements to command line utilities
       o Usable certificate chain verification
@@ -22,10 +22,11 @@
       o Support of authority information access extension
       o Extensions in certificate requests
       o Simplified X509 name and attribute routines
-      o Initial incomplete support for international character sets
+      o Initial (incomplete) support for international character sets
       o New DH_METHOD, DSA_METHOD and enhanced RSA_METHOD
       o Read only memory BIOs and simplified creation function
       o TLS/SSL code now "tolerates" MS SGC
+      o Work around for Netscape client certificate hang bug.
       o RSA_NULL option that removes RSA patent code but keeps other
         RSA functionality
       o Memory leak detection now allows applications to add extra information

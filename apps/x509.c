@@ -126,17 +126,18 @@ static char *x509_usage[]={
 " -md2/-md5/-sha1/-mdc2 - digest to use\n",
 " -extfile        - configuration file with X509V3 extensions to add\n",
 " -extensions     - section from config file with X509V3 extensions to add\n",
+" -crlext         - delete extensions before signing and input certificate\n",
 NULL
 };
 
 static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx);
 static EVP_PKEY *load_key(char *file, int format, char *passin);
 static X509 *load_cert(char *file, int format);
-static int sign (X509 *x, EVP_PKEY *pkey,int days,const EVP_MD *digest,
+static int sign (X509 *x, EVP_PKEY *pkey,int days,int clrext, const EVP_MD *digest,
 						LHASH *conf, char *section);
 static int x509_certify (X509_STORE *ctx,char *CAfile,const EVP_MD *digest,
 			 X509 *x,X509 *xca,EVP_PKEY *pkey,char *serial,
-			 int create,int days, LHASH *conf, char *section);
+			 int create,int days, int clrext, LHASH *conf, char *section);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 static int reqfile=0;
 
@@ -159,7 +160,7 @@ int MAIN(int argc, char **argv)
 	char *alias=NULL;
 	int text=0,serial=0,hash=0,subject=0,issuer=0,startdate=0,enddate=0;
 	int noout=0,sign_flag=0,CA_flag=0,CA_createserial=0;
-	int trustout=0,clrtrust=0,clrreject=0,aliasout=0;
+	int trustout=0,clrtrust=0,clrreject=0,aliasout=0,clrext=0;
 	int C=0;
 	int x509req=0,days=DEF_DAYS,modulus=0,pubkey=0;
 	int pprint = 0;
@@ -364,6 +365,8 @@ int MAIN(int argc, char **argv)
 			aliasout= ++num;
 		else if (strcmp(*argv,"-CAcreateserial") == 0)
 			CA_createserial= ++num;
+		else if (strcmp(*argv,"-crlext") == 0)
+			clrext = 1;
 		else if ((md_alg=EVP_get_digestbyname(*argv + 1)))
 			{
 			/* ok */
@@ -764,7 +767,7 @@ bad:
 #endif
 
 				assert(need_rand);
-				if (!sign(x,Upkey,days,digest,
+				if (!sign(x,Upkey,days,clrext,digest,
 						 extconf, extsect)) goto end;
 				}
 			else if (CA_flag == i)
@@ -782,7 +785,7 @@ bad:
 				
 				assert(need_rand);
 				if (!x509_certify(ctx,CAfile,digest,x,xca,
-					CApkey, CAserial,CA_createserial,days,
+					CApkey, CAserial,CA_createserial,days, clrext,
 					extconf, extsect))
 					goto end;
 				}
@@ -881,7 +884,7 @@ end:
 
 static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 	     X509 *x, X509 *xca, EVP_PKEY *pkey, char *serialfile, int create,
-	     int days, LHASH *conf, char *section)
+	     int days, int clrext, LHASH *conf, char *section)
 	{
 	int ret=0;
 	BIO *io=NULL;
@@ -897,7 +900,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 	EVP_PKEY_free(upkey);
 
 	X509_STORE_CTX_init(&xsc,ctx,x,NULL);
-	buf=(char *)Malloc(EVP_PKEY_size(pkey)*2+
+	buf=Malloc(EVP_PKEY_size(pkey)*2+
 		((serialfile == NULL)
 			?(strlen(CAfile)+strlen(POSTFIX)+1)
 			:(strlen(serialfile)))+1);
@@ -1002,6 +1005,10 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 	if (X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days) == NULL)
 		goto end;
 
+	if(clrext) {
+		while(X509_get_ext_count(x) > 0) X509_delete_ext(x, 0);
+	}
+
 	if(conf) {
 		X509V3_CTX ctx2;
 		X509_set_version(x,2); /* version 3 certificate */
@@ -1077,23 +1084,11 @@ static EVP_PKEY *load_key(char *file, int format, char *passin)
 		perror(file);
 		goto end;
 		}
-#ifndef NO_RSA
-	if	(format == FORMAT_ASN1)
+	if (format == FORMAT_ASN1)
 		{
-		RSA *rsa;
-
-		rsa=d2i_RSAPrivateKey_bio(key,NULL);
-		if (rsa != NULL)
-			{
-			if ((pkey=EVP_PKEY_new()) != NULL)
-				EVP_PKEY_assign_RSA(pkey,rsa);
-			else
-				RSA_free(rsa);
-			}
+		pkey=d2i_PrivateKey_bio(key, NULL);
 		}
-	else
-#endif
-		if (format == FORMAT_PEM)
+	else if (format == FORMAT_PEM)
 		{
 		pkey=PEM_read_bio_PrivateKey(key,NULL,NULL,passin);
 		}
@@ -1196,7 +1191,7 @@ end:
 	}
 
 /* self sign */
-static int sign(X509 *x, EVP_PKEY *pkey, int days, const EVP_MD *digest, 
+static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest, 
 						LHASH *conf, char *section)
 	{
 
@@ -1218,6 +1213,9 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, const EVP_MD *digest,
 		goto err;
 
 	if (!X509_set_pubkey(x,pkey)) goto err;
+	if(clrext) {
+		while(X509_get_ext_count(x) > 0) X509_delete_ext(x, 0);
+	}
 	if(conf) {
 		X509V3_CTX ctx;
 		X509_set_version(x,2); /* version 3 certificate */
