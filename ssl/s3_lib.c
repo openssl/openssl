@@ -695,6 +695,10 @@ void ssl3_clear(SSL *s)
 		Free(s->s3->rrec.comp);
 		s->s3->rrec.comp=NULL;
 		}
+#ifndef NO_DH
+	if (s->s3->tmp.dh != NULL)
+		DH_free(s->s3->tmp.dh);
+#endif
 
 	rp=s->s3->rbuf.buf;
 	wp=s->s3->wbuf.buf;

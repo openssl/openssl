@@ -709,7 +709,6 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 	int al,i,j,n,ret;
 	SSL3_RECORD *rr;
 	void (*cb)()=NULL;
-	BIO *bio;
 
 	if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
 		if (!ssl3_setup_buffers(s))
@@ -988,9 +987,15 @@ start:
 		if (((s->state&SSL_ST_MASK) == SSL_ST_OK) &&
 			!(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS))
 			{
+#if 0 /* worked only because C operator preferences are not as expected (and
+       * because this is not really needed for clients except for detecting
+       * protocol violations): */
 			s->state=SSL_ST_BEFORE|(s->server)
 				?SSL_ST_ACCEPT
 				:SSL_ST_CONNECT;
+#else
+			s->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
+#endif
 			s->new_session=1;
 			}
 		n=s->handshake_func(s);
@@ -1001,17 +1006,30 @@ start:
 			return(-1);
 			}
 
+#if 1 /* probably nonsense (does not work with readahead),
+	   * but keep it for now anyway ... s_server relies on this */
+		{
+		BIO *bio;
 		/* In the case where we try to read application data
 		 * the first time, but we trigger an SSL handshake, we
 		 * return -1 with the retry option set.  I do this
 		 * otherwise renegotiation can cause nasty problems 
-		 * in the non-blocking world */
+		 * in the non-blocking world */ /* That's "non-non-blocking",
+		                                 * I guess? When receiving a
+		                                 * Hello Request, we have the
+		                                 * same problem (e.g. in s_client),
+		                                 * but it's really an application bug.
+		                                 */
 
 		s->rwstate=SSL_READING;
 		bio=SSL_get_rbio(s);
 		BIO_clear_retry_flags(bio);
 		BIO_set_retry_read(bio);
 		return(-1);
+		}
+#else
+		goto start;
+#endif		
 		}
 
 	switch (rr->type)
@@ -1041,7 +1059,7 @@ start:
 		 * but have application data.  If the library was
 		 * running inside ssl3_read() (i.e. in_read_app_data
 		 * is set) and it makes sense to read application data
-		 * at this point (session renegotation not yet started),
+		 * at this point (session renegotiation not yet started),
 		 * we will indulge it.
 		 */
 		if (s->s3->in_read_app_data &&

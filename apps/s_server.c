@@ -813,33 +813,47 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	width=s+1;
 	for (;;)
 		{
-		FD_ZERO(&readfds);
+		int read_from_terminal;
+		int read_from_sslcon;
+
+		read_from_terminal = 0;
+		read_from_sslcon = SSL_pending(con);
+
+		if (!read_from_sslcon)
+			{
+			FD_ZERO(&readfds);
 #ifndef WINDOWS
-		FD_SET(fileno(stdin),&readfds);
+			FD_SET(fileno(stdin),&readfds);
 #endif
-		FD_SET(s,&readfds);
-		/* Note: under VMS with SOCKETSHR the second parameter is
-		 * currently of type (int *) whereas under other systems
-		 * it is (void *) if you don't have a cast it will choke
-		 * the compiler: if you do have a cast then you can either
-		 * go for (int *) or (void *).
-		 */
+			FD_SET(s,&readfds);
+			/* Note: under VMS with SOCKETSHR the second parameter is
+			 * currently of type (int *) whereas under other systems
+			 * it is (void *) if you don't have a cast it will choke
+			 * the compiler: if you do have a cast then you can either
+			 * go for (int *) or (void *).
+			 */
 #ifdef WINDOWS
-		/* Under Windows we can't select on stdin: only
-		 * on sockets. As a workaround we timeout the select every
-		 * second and check for any keypress. In a proper Windows
-		 * application we wouldn't do this because it is inefficient.
-		 */
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
-		i=select(width,(void *)&readfds,NULL,NULL,&tv);
-		if((i < 0) || (!i && !_kbhit() ) )continue;
-		if(_kbhit())
+			/* Under Windows we can't select on stdin: only
+			 * on sockets. As a workaround we timeout the select every
+			 * second and check for any keypress. In a proper Windows
+			 * application we wouldn't do this because it is inefficient.
+			 */
+			tv.tv_sec = 1;
+			tv.tv_usec = 0;
+			i=select(width,(void *)&readfds,NULL,NULL,&tv);
+			if((i < 0) || (!i && !_kbhit() ) )continue;
+			if(_kbhit())
+				read_from_terminal = 1;
 #else
-  		i=select(width,(void *)&readfds,NULL,NULL,NULL);
-  		if (i <= 0) continue;
-  		if (FD_ISSET(fileno(stdin),&readfds))
+			i=select(width,(void *)&readfds,NULL,NULL,NULL);
+			if (i <= 0) continue;
+			if (FD_ISSET(fileno(stdin),&readfds))
+				read_from_terminal = 1;
 #endif
+			if (FD_ISSET(s,&readfds))
+				read_from_sslcon = 1;
+			}
+		if (read_from_terminal)
 			{
 			if (s_crlf)
 				{
@@ -952,7 +966,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				if (i <= 0) break;
 				}
 			}
-		if (FD_ISSET(s,&readfds))
+		if (read_from_sslcon)
 			{
 			if (!SSL_is_init_finished(con))
 				{

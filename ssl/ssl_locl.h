@@ -306,8 +306,8 @@ typedef struct cert_st
 	{
 	/* Current active set */
 	CERT_PKEY *key; /* ALWAYS points to an element of the pkeys array
-					 * Probably it would make more sense to store
-					 * an index, not a pointer. */
+			 * Probably it would make more sense to store
+			 * an index, not a pointer. */
  
 	/* The following masks are for the key and auth
 	 * algorithms that are supported by the certs below */

@@ -77,9 +77,9 @@ static int ssl3_send_server_hello(SSL *s);
 static int ssl3_send_server_key_exchange(SSL *s);
 static int ssl3_send_certificate_request(SSL *s);
 static int ssl3_send_server_done(SSL *s);
-static int ssl3_get_cert_verify(SSL *s);
 static int ssl3_get_client_key_exchange(SSL *s);
 static int ssl3_get_client_certificate(SSL *s);
+static int ssl3_get_cert_verify(SSL *s);
 static int ssl3_send_hello_request(SSL *s);
 
 static SSL_METHOD *ssl3_get_server_method(int ver)
@@ -154,7 +154,6 @@ int ssl3_accept(SSL *s)
 
 			if ((s->version>>8) != 3)
 				abort();
-			/* s->version=SSL3_VERSION; */
 			s->type=SSL_ST_ACCEPT;
 
 			if (s->init_buf == NULL)
@@ -539,7 +538,21 @@ static int ssl3_check_client_hello(SSL *s)
 		&ok);
 	if (!ok) return((int)n);
 	s->s3->tmp.reuse_message = 1;
-	if(s->s3->tmp.message_type == SSL3_MT_CLIENT_HELLO) return 2;
+	if (s->s3->tmp.message_type == SSL3_MT_CLIENT_HELLO)
+		{
+		/* Throw away what we have done so far in the current handshake,
+		 * which will now be aborted. (A full SSL_clear would be too much.)
+		 * I hope that tmp.dh is the only thing that may need to be cleared
+		 * when a handshake is not completed ... */
+#ifndef NO_DH
+		if (s->s3->tmp.dh != NULL)
+			{
+			DH_free(s->s3->tmp.dh);
+			s->s3->tmp.dh = NULL;
+			}
+#endif
+		return 2;
+		}
 	return 1;
 }
 
@@ -1300,31 +1313,6 @@ static int ssl3_get_client_key_exchange(SSL *s)
 
 		i=RSA_private_decrypt((int)n,p,p,rsa,RSA_PKCS1_PADDING);
 
-#if 0
-		/* If a bad decrypt, use a random master key */
-		if ((i != SSL_MAX_MASTER_KEY_LENGTH) ||
-			((p[0] != (s->client_version>>8)) ||
-			 (p[1] != (s->client_version & 0xff))))
-			{
-			int bad=1;
-
-			if ((i == SSL_MAX_MASTER_KEY_LENGTH) &&
-				(p[0] == (s->version>>8)) &&
-				(p[1] == 0))
-				{
-				if (s->options & SSL_OP_TLS_ROLLBACK_BUG)
-					bad=0;
-				}
-			if (bad)
-				{
-				p[0]=(s->version>>8);
-				p[1]=(s->version & 0xff);
-				RAND_pseudo_bytes(&(p[2]),SSL_MAX_MASTER_KEY_LENGTH-2);
-				i=SSL_MAX_MASTER_KEY_LENGTH;
-				}
-			/* else, an SSLeay bug, ssl only server, tls client */
-			}
-#else
 		if (i != SSL_MAX_MASTER_KEY_LENGTH)
 			{
 			al=SSL_AD_DECODE_ERROR;
@@ -1347,7 +1335,6 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		memset(p,0,i);
 		}
 	else
-#endif
 #ifndef NO_DH
 		if (l & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 		{
