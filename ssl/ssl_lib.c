@@ -1293,6 +1293,14 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 		return(NULL);
 		}
 
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && (meth->version < TLS1_VERSION))	
+		{
+		SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+		return NULL;
+		}
+#endif
+
 	if (SSL_get_ex_data_X509_STORE_CTX_idx() < 0)
 		{
 		SSLerr(SSL_F_SSL_CTX_NEW,SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
@@ -2158,16 +2166,7 @@ int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
 		const char *CApath)
 	{
 	int r;
-
-#ifdef OPENSSL_FIPS
-	if(ctx->method->version == TLS1_VERSION)
-	    FIPS_allow_md5(1);
-#endif
 	r=X509_STORE_load_locations(ctx->cert_store,CAfile,CApath);
-#ifdef OPENSSL_FIPS
-	if(ctx->method->version == TLS1_VERSION)
-	    FIPS_allow_md5(0);
-#endif
 	return r;
 	}
 #endif

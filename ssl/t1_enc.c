@@ -180,13 +180,7 @@ static void tls1_PRF(const EVP_MD *md5, const EVP_MD *sha1,
 	S2= &(sec[len]);
 	len+=(slen&1); /* add for odd, make longer */
 
-#ifdef OPENSSL_FIPS
-	FIPS_allow_md5(1);
-#endif
 	tls1_P_hash(md5 ,S1,len,label,label_len,out1,olen);
-#ifdef OPENSSL_FIPS
-	FIPS_allow_md5(0);
-#endif
 	tls1_P_hash(sha1,S2,len,label,label_len,out2,olen);
 
 	for (i=0; i<olen; i++)
@@ -664,13 +658,7 @@ int tls1_cert_verify_mac(SSL *s, EVP_MD_CTX *in_ctx, unsigned char *out)
 
 	EVP_MD_CTX_init(&ctx);
 	EVP_MD_CTX_copy_ex(&ctx,in_ctx);
-#ifdef OPENSSL_FIPS
-	FIPS_allow_md5(1);
-#endif
 	EVP_DigestFinal_ex(&ctx,out,&ret);
-#ifdef OPENSSL_FIPS
-	FIPS_allow_md5(0);
-#endif
 	EVP_MD_CTX_cleanup(&ctx);
 	return((int)ret);
 	}
@@ -689,13 +677,7 @@ int tls1_final_finish_mac(SSL *s, EVP_MD_CTX *in1_ctx, EVP_MD_CTX *in2_ctx,
 
 	EVP_MD_CTX_init(&ctx);
 	EVP_MD_CTX_copy_ex(&ctx,in1_ctx);
-#ifdef OPENSSL_FIPS
-	FIPS_allow_md5(1);
-#endif
 	EVP_DigestFinal_ex(&ctx,q,&i);
-#ifdef OPENSSL_FIPS
-	FIPS_allow_md5(0);
-#endif
 	q+=i;
 	EVP_MD_CTX_copy_ex(&ctx,in2_ctx);
 	EVP_DigestFinal_ex(&ctx,q,&i);

@@ -493,15 +493,7 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 	else
 		{
 #ifndef OPENSSL_NO_X509_VERIFY
-# ifdef OPENSSL_FIPS
-		if(s->version == TLS1_VERSION)
-			FIPS_allow_md5(1);
-# endif
 		i=X509_verify_cert(&ctx);
-# ifdef OPENSSL_FIPS
-		if(s->version == TLS1_VERSION)
-			FIPS_allow_md5(0);
-# endif
 #else
 		i=0;
 		ctx.error=X509_V_ERR_APPLICATION_VERIFICATION;

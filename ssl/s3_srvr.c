@@ -1220,16 +1220,8 @@ static int ssl3_send_server_key_exchange(SSL *s)
 					EVP_DigestUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
 					EVP_DigestUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
 					EVP_DigestUpdate(&md_ctx,&(d[4]),n);
-#ifdef OPENSSL_FIPS
-					if(s->version == TLS1_VERSION && num == 2)
-						FIPS_allow_md5(1);
-#endif
 					EVP_DigestFinal_ex(&md_ctx,q,
 						(unsigned int *)&i);
-#ifdef OPENSSL_FIPS
-					if(s->version == TLS1_VERSION && num == 2)
-						FIPS_allow_md5(0);
-#endif
 					q+=i;
 					j+=i;
 					}

@@ -644,6 +644,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	unsigned int n;
 
 	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	for (i=0; i<3; i++)
 		{
 		EVP_DigestInit_ex(&ctx,s->ctx->sha1, NULL);
