@@ -2119,7 +2119,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Clean old EAY MD5 hack from e_os.h.
      [Richard Levitte]
 
- Changes between 0.9.6g and 0.9.6h  [xx XXX xxxx]
+ Changes between 0.9.6g and 0.9.6h  [5 Dec 2002]
 
   *) New function OPENSSL_cleanse(), which is used to cleanse a section of
      memory from it's contents.  This is done with a counter that will
