@@ -4,8 +4,15 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) bn_dup_expand() has been deprecated, it was introduced in 0.9.7 and
+     remained unused and not that useful. A variety of other little bignum
+     tweaks and fixes have also been made continuing on from the audit (see
+     below).
+     [Geoff Thorpe]
+
   *) Constify all or almost all d2i, c2i, s2i and r2i functions, along with
      associated ASN1, EVP and SSL functions and old ASN1 macros.
+     [Richard Levitte]
 
   *) BN_zero() only needs to set 'top' and 'neg' to zero for correct results,
      and this should never fail. So the return value from the use of
