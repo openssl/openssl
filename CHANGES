@@ -4,6 +4,11 @@
 
  Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
 
+  *) Disable Heimdal support, since it hasn't been fully implemented.
+     Still give the possibility to force the use of Heimdal, but with
+     warnings and a request that patches get sent to openssl-dev.
+     [Richard Levitte]
+
   *) Add the VC-CE target, introduce the WINCE sysname, and add
      INSTALL.WCE and appropriate conditionals to make it build.
      [Steven Reddie <smr@essemer.com.au> via Richard Levitte]
