@@ -294,6 +294,15 @@
 #undef OCSP_crlID_new
 #define OCSP_crlID_new                          OCSP_crlID2_new
 
+#undef d2i_ECPARAMETERS
+#define d2i_ECPARAMETERS                        d2i_UC_ECPARAMETERS
+#undef i2d_ECPARAMETERS
+#define i2d_ECPARAMETERS                        i2d_UC_ECPARAMETERS
+#undef d2i_ECPKPARAMETERS
+#define d2i_ECPKPARAMETERS                      d2i_UC_ECPKPARAMETERS
+#undef i2d_ECPKPARAMETERS
+#define i2d_ECPKPARAMETERS                      i2d_UC_ECPKPARAMETERS
+
 /* These functions do not seem to exist!  However, I'm paranoid...
    Original command in x509v3.h:
    These functions are being redefined in another directory,
