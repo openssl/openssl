@@ -93,7 +93,7 @@ int ENGINE_register_ECDH(ENGINE *e)
 	{
 	if(e->ecdh_meth)
 		return engine_table_register(&ecdh_table,
-				&engine_unregister_all_ECDH, e, &dummy_nid, 1, 0);
+				engine_unregister_all_ECDH, e, &dummy_nid, 1, 0);
 	return 1;
 	}
 
@@ -109,7 +109,7 @@ int ENGINE_set_default_ECDH(ENGINE *e)
 	{
 	if(e->ecdh_meth)
 		return engine_table_register(&ecdh_table,
-				&engine_unregister_all_ECDH, e, &dummy_nid, 1, 0);
+				engine_unregister_all_ECDH, e, &dummy_nid, 1, 0);
 	return 1;
 	}
 

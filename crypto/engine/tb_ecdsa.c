@@ -78,7 +78,7 @@ int ENGINE_register_ECDSA(ENGINE *e)
 	{
 	if(e->ecdsa_meth)
 		return engine_table_register(&ecdsa_table,
-				&engine_unregister_all_ECDSA, e, &dummy_nid, 1, 0);
+				engine_unregister_all_ECDSA, e, &dummy_nid, 1, 0);
 	return 1;
 	}
 
@@ -94,7 +94,7 @@ int ENGINE_set_default_ECDSA(ENGINE *e)
 	{
 	if(e->ecdsa_meth)
 		return engine_table_register(&ecdsa_table,
-				&engine_unregister_all_ECDSA, e, &dummy_nid, 1, 0);
+				engine_unregister_all_ECDSA, e, &dummy_nid, 1, 0);
 	return 1;
 	}
 
