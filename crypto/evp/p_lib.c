@@ -117,7 +117,7 @@ int EVP_PKEY_size(EVP_PKEY *pkey)
 		if (pkey->type == EVP_PKEY_DSA)
 		return(DSA_size(pkey->pkey.dsa));
 #endif
-#ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_ECDSA
 		if (pkey->type == EVP_PKEY_EC)
 		return(ECDSA_size(pkey->pkey.eckey));
 #endif
