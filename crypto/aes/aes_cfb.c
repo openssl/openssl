@@ -155,3 +155,96 @@ void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 	*num=n;
 }
 
+/* This expects a single block of size nbits for both in and out. Note that
+   it corrupts any extra bits in the last byte of out */
+/* Untested, once it is working, it will be optimised */
+void AES_cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
+			    const int nbits,const AES_KEY *key,
+			    unsigned char *ivec,const int enc)
+    {
+    int n;
+    unsigned char ovec[AES_BLOCK_SIZE*2];
+
+    assert(in && out && key && ivec);
+    if(enc)
+	{
+	/* construct the new IV */
+	AES_encrypt(ivec,ovec,key);
+	/* encrypt the input */
+	for(n=0 ; n < (nbits+7)/8 ; ++n)
+	    out[n]=in[n]^ovec[n];
+	/* fill in the first half of the new IV with the current IV */
+	memcpy(ovec,ivec,AES_BLOCK_SIZE);
+	/* and put the ciphertext in the second half */
+	memcpy(ovec+AES_BLOCK_SIZE,out,(nbits+7)/8);
+	/* shift ovec left most of the bits... */
+	memmove(ovec,ovec+nbits/8,AES_BLOCK_SIZE+(nbits%8 ? 1 : 0));
+	/* now the remaining bits */
+	if(nbits%8 != 0)
+	    for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
+		{
+		ovec[n]<<=nbits%8;
+		ovec[n]|=ovec[n+1]>>(8-nbits%8);
+		}
+	/* finally, move it back into place */
+	memcpy(ivec,ovec,AES_BLOCK_SIZE);
+	}
+    else
+	{
+	/* construct the new IV in the first half of ovec */
+	AES_encrypt(ivec,ovec,key);
+	/* decrypt the input */
+	for(n=0 ; n < (nbits+7)/8 ; ++n)
+	    out[n]=in[n]^ovec[n];
+	/* fill in the first half of the new IV with the current IV */
+	memcpy(ovec,ivec,AES_BLOCK_SIZE);
+	/* append the ciphertext */
+	memcpy(ovec+AES_BLOCK_SIZE,in,(nbits+7)/8);
+	/* shift ovec left most of the bits... */
+	memmove(ovec,ovec+nbits/8,AES_BLOCK_SIZE+(nbits%8 ? 1 : 0));
+	/* now the remaining bits */
+	if(nbits%8 != 0)
+	    for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
+		{
+		ovec[n]<<=nbits%8;
+		ovec[n]|=ovec[n+1]>>(8-nbits%8);
+		}
+	/* finally, move it back into place */
+	memcpy(ivec,ovec,AES_BLOCK_SIZE);
+	}
+    /* it is not necessary to cleanse ovec, since the IV is not secret */
+    }
+
+/* N.B. This expects the input to be packed, MS bit first */
+void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
+		      const unsigned long length, const AES_KEY *key,
+		      unsigned char *ivec, int *num, const int enc)
+    {
+    unsigned int n;
+    unsigned char c[1],d[1];
+
+    assert(in && out && key && ivec && num);
+    assert(*num == 0);
+
+    memset(out,0,(length+7)/8);
+    for(n=0 ; n < length ; ++n)
+	{
+	c[0]=(in[n/8]&(1 << (7-n%8))) ? 0x80 : 0;
+	AES_cfbr_encrypt_block(c,d,1,key,ivec,enc);
+	out[n/8]=(out[n/8]&~(1 << (7-n%8)))|((d[0]&0x80) >> (n%8));
+	}
+    }
+
+void AES_cfb8_encrypt(const unsigned char *in, unsigned char *out,
+		      const unsigned long length, const AES_KEY *key,
+		      unsigned char *ivec, int *num, const int enc)
+    {
+    unsigned int n;
+
+    assert(in && out && key && ivec && num);
+    assert(*num == 0);
+
+    for(n=0 ; n < length ; ++n)
+	AES_cfbr_encrypt_block(&in[n],&out[n],8,key,ivec,enc);
+    }
+

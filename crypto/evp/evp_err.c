@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,6 +66,7 @@
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA EVP_str_functs[]=
 	{
+{ERR_PACK(0,EVP_F_AES_INIT_KEY,0),	"AES_INIT_KEY"},
 {ERR_PACK(0,EVP_F_D2I_PKEY,0),	"D2I_PKEY"},
 {ERR_PACK(0,EVP_F_ECDSA_PKEY2PKCS8,0),	"ECDSA_PKEY2PKCS8"},
 {ERR_PACK(0,EVP_F_EC_KEY_PKEY2PKCS8,0),	"EC_KEY_PKEY2PKCS8"},
@@ -103,6 +104,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 
 static ERR_STRING_DATA EVP_str_reasons[]=
 	{
+{EVP_R_AES_KEY_SETUP_FAILED              ,"aes key setup failed"},
 {EVP_R_ASN1_LIB                          ,"asn1 lib"},
 {EVP_R_BAD_BLOCK_LENGTH                  ,"bad block length"},
 {EVP_R_BAD_DECRYPT                       ,"bad decrypt"},

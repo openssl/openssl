@@ -62,9 +62,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 726
-#define NUM_SN 721
-#define NUM_LN 721
+#define NUM_NID 736
+#define NUM_SN 731
+#define NUM_LN 731
 #define NUM_OBJ 693
 
 static unsigned char lvalues[4882]={
@@ -1896,20 +1896,36 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_international_organizations,1,&(lvalues[4880]),0},
 {"Oakley-EC2N-3","ipsec3",NID_ipsec3,0,NULL},
 {"Oakley-EC2N-4","ipsec4",NID_ipsec4,0,NULL},
+{"AES-128-CFB1","aes-128-cfb1",NID_aes_128_cfb1,0,NULL},
+{"AES-192-CFB1","aes-192-cfb1",NID_aes_192_cfb1,0,NULL},
+{"AES-256-CFB1","aes-256-cfb1",NID_aes_256_cfb1,0,NULL},
+{"AES-128-CFB8","aes-128-cfb8",NID_aes_128_cfb8,0,NULL},
+{"AES-192-CFB8","aes-192-cfb8",NID_aes_192_cfb8,0,NULL},
+{"AES-256-CFB8","aes-256-cfb8",NID_aes_256_cfb8,0,NULL},
+{"DES-CFB1","des-cfb1",NID_des_cfb1,0,NULL},
+{"DES-CFB8","des-cfb8",NID_des_cfb8,0,NULL},
+{"DES-EDE3-CFB1","des-ede3-cfb1",NID_des_ede3_cfb1,0,NULL},
+{"DES-EDE3-CFB8","des-ede3-cfb8",NID_des_ede3_cfb8,0,NULL},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[364]),/* "AD_DVCS" */
 &(nid_objs[419]),/* "AES-128-CBC" */
 &(nid_objs[421]),/* "AES-128-CFB" */
+&(nid_objs[726]),/* "AES-128-CFB1" */
+&(nid_objs[729]),/* "AES-128-CFB8" */
 &(nid_objs[418]),/* "AES-128-ECB" */
 &(nid_objs[420]),/* "AES-128-OFB" */
 &(nid_objs[423]),/* "AES-192-CBC" */
 &(nid_objs[425]),/* "AES-192-CFB" */
+&(nid_objs[727]),/* "AES-192-CFB1" */
+&(nid_objs[730]),/* "AES-192-CFB8" */
 &(nid_objs[422]),/* "AES-192-ECB" */
 &(nid_objs[424]),/* "AES-192-OFB" */
 &(nid_objs[427]),/* "AES-256-CBC" */
 &(nid_objs[429]),/* "AES-256-CFB" */
+&(nid_objs[728]),/* "AES-256-CFB1" */
+&(nid_objs[731]),/* "AES-256-CFB8" */
 &(nid_objs[426]),/* "AES-256-ECB" */
 &(nid_objs[428]),/* "AES-256-OFB" */
 &(nid_objs[91]),/* "BF-CBC" */
@@ -1929,6 +1945,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[31]),/* "DES-CBC" */
 &(nid_objs[707]),/* "DES-CDMF" */
 &(nid_objs[30]),/* "DES-CFB" */
+&(nid_objs[732]),/* "DES-CFB1" */
+&(nid_objs[733]),/* "DES-CFB8" */
 &(nid_objs[29]),/* "DES-ECB" */
 &(nid_objs[32]),/* "DES-EDE" */
 &(nid_objs[43]),/* "DES-EDE-CBC" */
@@ -1937,6 +1955,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[33]),/* "DES-EDE3" */
 &(nid_objs[44]),/* "DES-EDE3-CBC" */
 &(nid_objs[61]),/* "DES-EDE3-CFB" */
+&(nid_objs[734]),/* "DES-EDE3-CFB1" */
+&(nid_objs[735]),/* "DES-EDE3-CFB8" */
 &(nid_objs[63]),/* "DES-EDE3-OFB" */
 &(nid_objs[45]),/* "DES-OFB" */
 &(nid_objs[80]),/* "DESX-CBC" */
@@ -2737,14 +2757,20 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[670]),/* "additional verification" */
 &(nid_objs[419]),/* "aes-128-cbc" */
 &(nid_objs[421]),/* "aes-128-cfb" */
+&(nid_objs[726]),/* "aes-128-cfb1" */
+&(nid_objs[729]),/* "aes-128-cfb8" */
 &(nid_objs[418]),/* "aes-128-ecb" */
 &(nid_objs[420]),/* "aes-128-ofb" */
 &(nid_objs[423]),/* "aes-192-cbc" */
 &(nid_objs[425]),/* "aes-192-cfb" */
+&(nid_objs[727]),/* "aes-192-cfb1" */
+&(nid_objs[730]),/* "aes-192-cfb8" */
 &(nid_objs[422]),/* "aes-192-ecb" */
 &(nid_objs[424]),/* "aes-192-ofb" */
 &(nid_objs[427]),/* "aes-256-cbc" */
 &(nid_objs[429]),/* "aes-256-cfb" */
+&(nid_objs[728]),/* "aes-256-cfb1" */
+&(nid_objs[731]),/* "aes-256-cfb8" */
 &(nid_objs[426]),/* "aes-256-ecb" */
 &(nid_objs[428]),/* "aes-256-ofb" */
 &(nid_objs[376]),/* "algorithm" */
@@ -2803,6 +2829,8 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[31]),/* "des-cbc" */
 &(nid_objs[707]),/* "des-cdmf" */
 &(nid_objs[30]),/* "des-cfb" */
+&(nid_objs[732]),/* "des-cfb1" */
+&(nid_objs[733]),/* "des-cfb8" */
 &(nid_objs[29]),/* "des-ecb" */
 &(nid_objs[32]),/* "des-ede" */
 &(nid_objs[43]),/* "des-ede-cbc" */
@@ -2811,6 +2839,8 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[33]),/* "des-ede3" */
 &(nid_objs[44]),/* "des-ede3-cbc" */
 &(nid_objs[61]),/* "des-ede3-cfb" */
+&(nid_objs[734]),/* "des-ede3-cfb1" */
+&(nid_objs[735]),/* "des-ede3-cfb8" */
 &(nid_objs[63]),/* "des-ede3-ofb" */
 &(nid_objs[45]),/* "des-ofb" */
 &(nid_objs[107]),/* "description" */

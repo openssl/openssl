@@ -90,7 +90,7 @@ static int cname##_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const uns
 }
 
 #define BLOCK_CIPHER_func_cfb(cname, cprefix, cbits, kstruct, ksched) \
-static int cname##_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl) \
+static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl) \
 {\
 	cprefix##_cfb##cbits##_encrypt(in, out, (long)inl, &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, &ctx->num, ctx->encrypt);\
 	return 1;\
@@ -127,7 +127,7 @@ BLOCK_CIPHER_def1(cname, cbc, cbc, CBC, kstruct, nid, block_size, key_len, \
 #define BLOCK_CIPHER_def_cfb(cname, kstruct, nid, key_len, \
 			     iv_len, cbits, flags, init_key, cleanup, \
 			     set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_def1(cname, cfb##cbits, cfb, CFB, kstruct, nid, 1, \
+BLOCK_CIPHER_def1(cname, cfb##cbits, cfb##cbits, CFB, kstruct, nid, 1, \
 		  key_len, iv_len, flags, init_key, cleanup, set_asn1, \
 		  get_asn1, ctrl)
 
@@ -225,3 +225,12 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 			  get_asn1, ctrl)
 
 #define EVP_C_DATA(kstruct, ctx)	((kstruct *)(ctx)->cipher_data)
+
+#define IMPLEMENT_CFBR(cipher,cprefix,kstruct,ksched,keysize,cbits,iv_len) \
+	BLOCK_CIPHER_func_cfb(cipher##_##keysize,cprefix,cbits,kstruct,ksched) \
+	BLOCK_CIPHER_def_cfb(cipher##_##keysize,kstruct, \
+			     NID_##cipher##_##keysize, keysize/8, iv_len, cbits, \
+			     0, cipher##_init_key, NULL, \
+			     EVP_CIPHER_set_asn1_iv, \
+			     EVP_CIPHER_get_asn1_iv, \
+			     NULL)

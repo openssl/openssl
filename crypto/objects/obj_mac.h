@@ -2319,6 +2319,46 @@
 #define NID_aes_256_cfb128		429
 #define OBJ_aes_256_cfb128		OBJ_aes,44L
 
+#define SN_aes_128_cfb1		"AES-128-CFB1"
+#define LN_aes_128_cfb1		"aes-128-cfb1"
+#define NID_aes_128_cfb1		726
+
+#define SN_aes_192_cfb1		"AES-192-CFB1"
+#define LN_aes_192_cfb1		"aes-192-cfb1"
+#define NID_aes_192_cfb1		727
+
+#define SN_aes_256_cfb1		"AES-256-CFB1"
+#define LN_aes_256_cfb1		"aes-256-cfb1"
+#define NID_aes_256_cfb1		728
+
+#define SN_aes_128_cfb8		"AES-128-CFB8"
+#define LN_aes_128_cfb8		"aes-128-cfb8"
+#define NID_aes_128_cfb8		729
+
+#define SN_aes_192_cfb8		"AES-192-CFB8"
+#define LN_aes_192_cfb8		"aes-192-cfb8"
+#define NID_aes_192_cfb8		730
+
+#define SN_aes_256_cfb8		"AES-256-CFB8"
+#define LN_aes_256_cfb8		"aes-256-cfb8"
+#define NID_aes_256_cfb8		731
+
+#define SN_des_cfb1		"DES-CFB1"
+#define LN_des_cfb1		"des-cfb1"
+#define NID_des_cfb1		732
+
+#define SN_des_cfb8		"DES-CFB8"
+#define LN_des_cfb8		"des-cfb8"
+#define NID_des_cfb8		733
+
+#define SN_des_ede3_cfb1		"DES-EDE3-CFB1"
+#define LN_des_ede3_cfb1		"des-ede3-cfb1"
+#define NID_des_ede3_cfb1		734
+
+#define SN_des_ede3_cfb8		"DES-EDE3-CFB8"
+#define LN_des_ede3_cfb8		"des-ede3-cfb8"
+#define NID_des_ede3_cfb8		735
+
 #define SN_hold_instruction_code		"holdInstructionCode"
 #define LN_hold_instruction_code		"Hold Instruction Code"
 #define NID_hold_instruction_code		430

@@ -85,7 +85,8 @@ static int des_ede_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			      const unsigned char *in, unsigned int inl)
 {
 	BLOCK_CIPHER_ecb_loop()
-		DES_ecb3_encrypt(in + i,out + i, 
+		DES_ecb3_encrypt((const_DES_cblock *)(in + i),
+				 (DES_cblock *)(out + i),
 				 &data(ctx)->ks1, &data(ctx)->ks2,
 				 &data(ctx)->ks3,
 				 ctx->encrypt);

@@ -723,3 +723,13 @@ joint_iso_itu_t		722
 international_organizations		723
 ipsec3		724
 ipsec4		725
+aes_128_cfb1		726
+aes_192_cfb1		727
+aes_256_cfb1		728
+aes_128_cfb8		729
+aes_192_cfb8		730
+aes_256_cfb8		731
+des_cfb1		732
+des_cfb8		733
+des_ede3_cfb1		734
+des_ede3_cfb8		735
