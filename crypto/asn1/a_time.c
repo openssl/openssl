@@ -113,7 +113,7 @@ ASN1_TIME *d2i_ASN1_TIME(ASN1_TIME **a, unsigned char **pp, long length)
 ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t)
 	{
 	struct tm *ts;
-#if defined(THREADS) && !defined(WIN32) && !defined(__CYGWIN32__)
+#if defined(THREADS) && !defined(WIN32) && !defined(__CYGWIN32__) && !defined(_DARWIN)
 	struct tm data;
 
 	gmtime_r(&t,&data);
