@@ -266,6 +266,9 @@ extern "C" {
 #    ifndef NO_SYS_TYPES_H
 #      include <sys/types.h>
 #    endif
+#    ifdef NeXT
+#      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP */
+#    endif
 
 #    define OPENSSL_CONF	"openssl.cnf"
 #    define SSLEAY_CONF		OPENSSL_CONF
