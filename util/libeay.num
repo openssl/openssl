@@ -1949,7 +1949,7 @@ ENGINE_get_RSA                          2517	EXIST::FUNCTION:
 OCSP_CERTSTATUS_new                     2518	EXIST::FUNCTION:
 OCSP_resp_find                          2519	EXIST::FUNCTION:
 BN_nnmod                                2520	EXIST::FUNCTION:
-EC_GFp_recp_method                      2521	EXIST::FUNCTION:
+EC_GFp_recp_method                      2521	NOEXIST::FUNCTION:
 OCSP_SERVICELOC_new                     2522	EXIST::FUNCTION:
 EC_POINT_set_affine_coordinates_GFp     2523	EXIST:!VMS:FUNCTION:
 EC_POINT_set_affine_coords_GFp          2523	EXIST:VMS:FUNCTION:
@@ -2005,7 +2005,7 @@ d2i_OCSP_SINGLERESP                     2560	EXIST::FUNCTION:
 EDIPARTYNAME_new                        2561	EXIST::FUNCTION:
 PKCS12_certbag2x509                     2562	EXIST::FUNCTION:
 d2i_EXTENDED_KEY_USAGE                  2563	EXIST::FUNCTION:
-EC_GFp_nist_method                      2564	EXIST::FUNCTION:
+EC_GFp_nist_method                      2564	NOEXIST::FUNCTION:
 X509_PUBKEY_it                          2565	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 X509_PUBKEY_it                          2565	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 PKCS7_ENCRYPT_it                        2566	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
