@@ -392,6 +392,7 @@ if [ "$GCCVER" != "" ]; then
 else
   CC=cc
 fi
+GCCVER=${GCCVER:-0}
 if [ "$SYSTEM" = "HP-UX" ];then
   # By default gcc is a ILP32 compiler (with long long == 64).
   GCC_BITS="32"
