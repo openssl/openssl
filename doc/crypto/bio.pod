@@ -20,7 +20,7 @@ connections and file I/O.
 
 There are two type of BIO, a source/sink BIO and a filter BIO.
 
-As its name implies a source/sink BIO is a source or sink of data,
+As its name implies a source/sink BIO is a source and/or sink of data,
 examples include a socket BIO and a file BIO.
 
 A filter BIO takes data from one BIO and passes it through to
