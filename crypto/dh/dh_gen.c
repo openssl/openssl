@@ -95,9 +95,10 @@ DH *DH_generate_parameters(int prime_len, int generator,
 	if (ret == NULL) goto err;
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
-	t1= &(ctx->bn[0]);
-	t2= &(ctx->bn[1]);
-	ctx->tos=2;
+	BN_CTX_start(ctx);
+	t1 = BN_CTX_get(ctx);
+	t2 = BN_CTX_get(ctx);
+	if (t1 == NULL || t2 == NULL) goto err;
 	
 	if (generator == DH_GENERATOR_2)
 		{
@@ -138,7 +139,11 @@ err:
 		ok=0;
 		}
 
-	if (ctx != NULL) BN_CTX_free(ctx);
+	if (ctx != NULL)
+		{
+		BN_CTX_end(ctx);
+		BN_CTX_free(ctx);
+		}
 	if (!ok && (ret != NULL))
 		{
 		DH_free(ret);

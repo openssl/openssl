@@ -304,43 +304,6 @@ BIGNUM *BN_new(void)
 	return(ret);
 	}
 
-
-BN_CTX *BN_CTX_new(void)
-	{
-	BN_CTX *ret;
-
-	ret=(BN_CTX *)Malloc(sizeof(BN_CTX));
-	if (ret == NULL)
-		{
-		BNerr(BN_F_BN_CTX_NEW,ERR_R_MALLOC_FAILURE);
-		return(NULL);
-		}
-
-	BN_CTX_init(ret);
-	ret->flags=BN_FLG_MALLOCED;
-	return(ret);
-	}
-
-void BN_CTX_init(BN_CTX *ctx)
-	{
-	memset(ctx,0,sizeof(BN_CTX));
-	ctx->tos=0;
-	ctx->flags=0;
-	}
-
-void BN_CTX_free(BN_CTX *c)
-	{
-	int i;
-
-	if(c == NULL)
-	    return;
-
-	for (i=0; i<BN_CTX_NUM; i++)
-		BN_clear_free(&(c->bn[i]));
-	if (c->flags & BN_FLG_MALLOCED)
-		Free(c);
-	}
-
 /* This is an internal function that should not be used in applications.
  * It ensures that 'b' has enough room for a 'bits' bit number.  It is
  * mostly used by the various BIGNUM routines.  If there is an error,

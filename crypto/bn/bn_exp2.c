@@ -35,15 +35,19 @@ int BN_mod_exp2_mont(BIGNUM *rr, BIGNUM *a1, BIGNUM *p1, BIGNUM *a2,
 		BNerr(BN_F_BN_MOD_EXP_MONT,BN_R_CALLED_WITH_EVEN_MODULUS);
 		return(0);
 		}
-	d= &(ctx->bn[ctx->tos++]);
-	r= &(ctx->bn[ctx->tos++]);
 	bits1=BN_num_bits(p1);
 	bits2=BN_num_bits(p2);
 	if ((bits1 == 0) && (bits2 == 0))
 		{
-		BN_one(r);
+		BN_one(rr);
 		return(1);
 		}
+
+	BN_CTX_start(ctx);
+	d = BN_CTX_get(ctx);
+	r = BN_CTX_get(ctx);
+	if (d == NULL || r == NULL) goto err;
+
 	bits=(bits1 > bits2)?bits1:bits2;
 
 	/* If this is not done, things will break in the montgomery
@@ -183,7 +187,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, BIGNUM *a1, BIGNUM *p1, BIGNUM *a2,
 	ret=1;
 err:
 	if ((in_mont == NULL) && (mont != NULL)) BN_MONT_CTX_free(mont);
-	ctx->tos-=2;
+	BN_CTX_end(ctx);
 	for (i=0; i<ts; i++)
 		{
 		for (j=0; j<ts; j++)

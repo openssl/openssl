@@ -72,7 +72,8 @@ int BN_mod_mul(BIGNUM *ret, BIGNUM *a, BIGNUM *b, const BIGNUM *m, BN_CTX *ctx)
 	bn_check_top(b);
 	bn_check_top(m);
 
-	t= &(ctx->bn[ctx->tos++]);
+	BN_CTX_start(ctx);
+	if ((t = BN_CTX_get(ctx)) == NULL) goto err;
 	if (a == b)
 		{ if (!BN_sqr(t,a,ctx)) goto err; }
 	else
@@ -80,7 +81,7 @@ int BN_mod_mul(BIGNUM *ret, BIGNUM *a, BIGNUM *b, const BIGNUM *m, BN_CTX *ctx)
 	if (!BN_mod(ret,t,m,ctx)) goto err;
 	r=1;
 err:
-	ctx->tos--;
+	BN_CTX_end(ctx);
 	return(r);
 	}
 
@@ -91,8 +92,10 @@ int BN_mod_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
 	int i,bits,ret=0;
 	BIGNUM *v,*tmp;
 
-	v= &(ctx->bn[ctx->tos++]);
-	tmp= &(ctx->bn[ctx->tos++]);
+	BN_CTX_start(ctx);
+	v = BN_CTX_get(ctx);
+	tmp = BN_CTX_get(ctx);
+	if (v == NULL || tmp == NULL) goto err;
 
 	if (BN_copy(v,a) == NULL) goto err;
 	bits=BN_num_bits(p);
@@ -113,7 +116,7 @@ int BN_mod_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
 		}
 	ret=1;
 err:
-	ctx->tos-=2;
+	BN_CTX_end(ctx);
 	return(ret);
 	}
 
@@ -122,15 +125,15 @@ err:
 /* this one works - simple but works */
 int BN_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BN_CTX *ctx)
 	{
-	int i,bits,ret=0,tos;
+	int i,bits,ret=0;
 	BIGNUM *v,*rr;
 
-	tos=ctx->tos;
-	v= &(ctx->bn[ctx->tos++]);
+	BN_CTX_start(ctx);
 	if ((r == a) || (r == p))
-		rr= &(ctx->bn[ctx->tos++]);
+		rr = BN_CTX_get(ctx);
 	else
-		rr=r;
+		rr = r;
+	if ((v = BN_CTX_get(ctx)) == NULL) goto err;
 
 	if (BN_copy(v,a) == NULL) goto err;
 	bits=BN_num_bits(p);
@@ -149,8 +152,8 @@ int BN_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BN_CTX *ctx)
 		}
 	ret=1;
 err:
-	ctx->tos=tos;
 	if (r != rr) BN_copy(r,rr);
+	BN_CTX_end(ctx);
 	return(ret);
 	}
 
@@ -193,7 +196,6 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	BIGNUM val[TABLE_SIZE];
 	BN_RECP_CTX recp;
 
-	aa= &(ctx->bn[ctx->tos++]);
 	bits=BN_num_bits(p);
 
 	if (bits == 0)
@@ -201,6 +203,10 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		BN_one(r);
 		return(1);
 		}
+
+	BN_CTX_start(ctx);
+	if ((aa = BN_CTX_get(ctx)) == NULL) goto err;
+
 	BN_RECP_CTX_init(&recp);
 	if (BN_RECP_CTX_set(&recp,m,ctx) <= 0) goto err;
 
@@ -289,7 +295,7 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		}
 	ret=1;
 err:
-	ctx->tos--;
+	BN_CTX_end(ctx);
 	for (i=0; i<ts; i++)
 		BN_clear_free(&(val[i]));
 	BN_RECP_CTX_free(&recp);
@@ -317,14 +323,16 @@ int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
 		BNerr(BN_F_BN_MOD_EXP_MONT,BN_R_CALLED_WITH_EVEN_MODULUS);
 		return(0);
 		}
-	d= &(ctx->bn[ctx->tos++]);
-	r= &(ctx->bn[ctx->tos++]);
 	bits=BN_num_bits(p);
 	if (bits == 0)
 		{
-		BN_one(r);
+		BN_one(rr);
 		return(1);
 		}
+	BN_CTX_start(ctx);
+	d = BN_CTX_get(ctx);
+	r = BN_CTX_get(ctx);
+	if (d == NULL || r == NULL) goto err;
 
 	/* If this is not done, things will break in the montgomery
 	 * part */
@@ -432,7 +440,7 @@ int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
 	ret=1;
 err:
 	if ((in_mont == NULL) && (mont != NULL)) BN_MONT_CTX_free(mont);
-	ctx->tos-=2;
+	BN_CTX_end(ctx);
 	for (i=0; i<ts; i++)
 		BN_clear_free(&(val[i]));
 	return(ret);
@@ -448,7 +456,6 @@ int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
 	BIGNUM *d;
 	BIGNUM val[TABLE_SIZE];
 
-	d= &(ctx->bn[ctx->tos++]);
 	bits=BN_num_bits(p);
 
 	if (bits == 0)
@@ -456,6 +463,9 @@ int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
 		BN_one(r);
 		return(1);
 		}
+
+	BN_CTX_start(ctx);
+	if ((d = BN_CTX_get(ctx)) == NULL) goto err;
 
 	BN_init(&(val[0]));
 	ts=1;
@@ -541,7 +551,7 @@ int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
 		}
 	ret=1;
 err:
-	ctx->tos--;
+	BN_CTX_end(ctx);
 	for (i=0; i<ts; i++)
 		BN_clear_free(&(val[i]));
 	return(ret);

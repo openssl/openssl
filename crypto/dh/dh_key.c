@@ -161,7 +161,8 @@ static int compute_key(unsigned char *key, BIGNUM *pub_key, DH *dh)
 	int ret= -1;
 
 	BN_CTX_init(&ctx);
-	tmp= &(ctx.bn[ctx.tos++]);
+	BN_CTX_start(&ctx);
+	tmp = BN_CTX_get(&ctx);
 	
 	if (dh->priv_key == NULL)
 		{
@@ -184,6 +185,7 @@ static int compute_key(unsigned char *key, BIGNUM *pub_key, DH *dh)
 
 	ret=BN_bn2bin(tmp,key);
 err:
+	BN_CTX_end(&ctx);
 	BN_CTX_free(&ctx);
 	return(ret);
 	}

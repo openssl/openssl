@@ -62,11 +62,12 @@
 #include "bn_lcl.h"
 
 /* The old slow way */
-#if 0
+#if 1
 int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 	   BN_CTX *ctx)
 	{
 	int i,nm,nd;
+	int ret = 0;
 	BIGNUM *D;
 
 	bn_check_top(m);
@@ -85,14 +86,17 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 		return(1);
 		}
 
-	D= &(ctx->bn[ctx->tos]);
-	if (dv == NULL) dv= &(ctx->bn[ctx->tos+1]);
-	if (rem == NULL) rem= &(ctx->bn[ctx->tos+2]);
+	BN_CTX_start(ctx);
+	D = BN_CTX_get(ctx);
+	if (dv == NULL) dv = BN_CTX_get(ctx);
+	if (rem == NULL) rem = BN_CTX_get(ctx);
+	if (D == NULL || dv == NULL || rem == NULL)
+		goto end;
 
 	nd=BN_num_bits(d);
 	nm=BN_num_bits(m);
-	if (BN_copy(D,d) == NULL) return(0);
-	if (BN_copy(rem,m) == NULL) return(0);
+	if (BN_copy(D,d) == NULL) goto end;
+	if (BN_copy(rem,m) == NULL) goto end;
 
 	/* The next 2 are needed so we can do a dv->d[0]|=1 later
 	 * since BN_lshift1 will only work once there is a value :-) */
@@ -100,21 +104,24 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 	bn_wexpand(dv,1);
 	dv->top=1;
 
-	if (!BN_lshift(D,D,nm-nd)) return(0);
+	if (!BN_lshift(D,D,nm-nd)) goto end;
 	for (i=nm-nd; i>=0; i--)
 		{
-		if (!BN_lshift1(dv,dv)) return(0);
+		if (!BN_lshift1(dv,dv)) goto end;
 		if (BN_ucmp(rem,D) >= 0)
 			{
 			dv->d[0]|=1;
-			if (!BN_usub(rem,rem,D)) return(0);
+			if (!BN_usub(rem,rem,D)) goto end;
 			}
 /* CAN IMPROVE (and have now :=) */
-		if (!BN_rshift1(D,D)) return(0);
+		if (!BN_rshift1(D,D)) goto end;
 		}
 	rem->neg=BN_is_zero(rem)?0:m->neg;
 	dv->neg=m->neg^d->neg;
-	return(1);
+	ret = 1;
+ end:
+	BN_CTX_end(ctx);
+	return(ret);
 	}
 
 #else
@@ -145,13 +152,15 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		return(1);
 		}
 
-	tmp= &(ctx->bn[ctx->tos]);
+	BN_CTX_start(ctx);
+	tmp=BN_CTX_get(ctx);
 	tmp->neg=0;
-	snum= &(ctx->bn[ctx->tos+1]);
-	sdiv= &(ctx->bn[ctx->tos+2]);
+	snum=BN_CTX_get(ctx);
+	sdiv=BN_CTX_get(ctx);
 	if (dv == NULL)
-		res= &(ctx->bn[ctx->tos+3]);
+		res=BN_CTX_get(ctx);
 	else	res=dv;
+	if (res == NULL) goto err;
 
 	/* First we normalise the numbers */
 	norm_shift=BN_BITS2-((BN_num_bits(divisor))%BN_BITS2);
@@ -329,8 +338,10 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		BN_rshift(rm,snum,norm_shift);
 		rm->neg=num->neg;
 		}
+	BN_CTX_end(ctx);
 	return(1);
 err:
+	BN_CX_end(ctx);
 	return(0);
 	}
 
@@ -346,22 +357,27 @@ int BN_mod(BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
 	if (BN_ucmp(m,d) < 0)
 		return((BN_copy(rem,m) == NULL)?0:1);
 
-	dv= &(ctx->bn[ctx->tos]);
+	BN_CTX_start(ctx);
+	dv=BN_CTX_get(ctx);
 
-	if (!BN_copy(rem,m)) return(0);
+	if (!BN_copy(rem,m)) goto err;
 
 	nm=BN_num_bits(rem);
 	nd=BN_num_bits(d);
-	if (!BN_lshift(dv,d,nm-nd)) return(0);
+	if (!BN_lshift(dv,d,nm-nd)) goto err;
 	for (i=nm-nd; i>=0; i--)
 		{
 		if (BN_cmp(rem,dv) >= 0)
 			{
-			if (!BN_sub(rem,rem,dv)) return(0);
+			if (!BN_sub(rem,rem,dv)) goto err;
 			}
-		if (!BN_rshift1(dv,dv)) return(0);
+		if (!BN_rshift1(dv,dv)) goto err;
 		}
+	BN_CTX_end(ctx);
 	return(1);
+ err:
+	BN_CTX_end(ctx);
+	return(0);
 #else
 	return(BN_div(NULL,rem,m,d,ctx));
 #endif

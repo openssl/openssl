@@ -72,9 +72,10 @@ int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
 	{
 	BIGNUM *tmp,*tmp2;
 
-        tmp= &(ctx->bn[ctx->tos]);
-        tmp2= &(ctx->bn[ctx->tos]);
-	ctx->tos+=2;
+	BN_CTX_start(ctx);
+	tmp = BN_CTX_get(ctx);
+	tmp2 = BN_CTX_get(ctx);
+	if (tmp == NULL || tmp2 == NULL) goto err;
 
 	bn_check_top(tmp);
 	bn_check_top(tmp2);
@@ -98,16 +99,20 @@ int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
 		}
 	/* reduce from aRR to aR */
 	if (!BN_from_montgomery(r,tmp,mont,ctx)) goto err;
-	ctx->tos-=2;
+	BN_CTX_end(ctx);
 	return(1);
 err:
 	return(0);
 	}
 
+#define BN_RECURSION_MONT
+
 int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
 	     BN_CTX *ctx)
 	{
 	int retn=0;
+	BN_CTX_start(ctx);
+
 #ifdef BN_RECURSION_MONT
 	if (mont->use_word)
 #endif
@@ -116,7 +121,7 @@ int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
 		BN_ULONG *ap,*np,*rp,n0,v,*nrp;
 		int al,nl,max,i,x,ri;
 
-		r= &(ctx->bn[ctx->tos]);
+		if ((r = BN_CTX_get(ctx)) == NULL) goto err;
 
 		if (!BN_copy(r,a)) goto err;
 		n= &(mont->N);
@@ -210,9 +215,9 @@ printf("word BN_from_montgomery %d * %d\n",nl,nl);
 		{
 		BIGNUM *t1,*t2;
 
-		t1=&(ctx->bn[ctx->tos]);
-		t2=&(ctx->bn[ctx->tos+1]);
-		ctx->tos+=2;
+		t1 = BN_CTX_get(ctx);
+		t2 = BN_CTX_get(ctx);
+		if (t1 == NULL || t2 == NULL) goto err;
 
 		if (!BN_copy(t1,a)) goto err;
 		BN_mask_bits(t1,mont->ri);
@@ -226,11 +231,11 @@ printf("word BN_from_montgomery %d * %d\n",nl,nl);
 
 		if (BN_ucmp(ret,&mont->N) >= 0)
 			BN_usub(ret,ret,&mont->N);
-		ctx->tos-=2;
 		retn=1;
 		}
 #endif
  err:
+	BN_CTX_end(ctx);
 	return(retn);
 	}
 

@@ -40,6 +40,7 @@ B<r> may be the same B<BIGNUM> as B<a> or B<b>.
 BN_sub() subtracts B<b> from B<a> and places the result in B<r> (C<r=a-b>).
 
 BN_mul() multiplies B<a> and B<b> and places the result in B<r> (C<r=a*b>).
+B<r> may be the same B<BIGNUM> as B<a> or B<b>.
 For multiplication by powers of 2, use L<BN_lshift(3)|BN_lshift(3)>.
 
 BN_div() divides B<a> by B<d> and places the result in B<dv> and the

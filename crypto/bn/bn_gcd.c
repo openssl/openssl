@@ -61,6 +61,7 @@
 #include "bn_lcl.h"
 
 static BIGNUM *euclid(BIGNUM *a, BIGNUM *b);
+
 int BN_gcd(BIGNUM *r, BIGNUM *in_a, BIGNUM *in_b, BN_CTX *ctx)
 	{
 	BIGNUM *a,*b,*t;
@@ -69,8 +70,10 @@ int BN_gcd(BIGNUM *r, BIGNUM *in_a, BIGNUM *in_b, BN_CTX *ctx)
 	bn_check_top(in_a);
 	bn_check_top(in_b);
 
-	a= &(ctx->bn[ctx->tos]);
-	b= &(ctx->bn[ctx->tos+1]);
+	BN_CTX_start(ctx);
+	a = BN_CTX_get(ctx);
+	b = BN_CTX_get(ctx);
+	if (a == NULL || b == NULL) goto err;
 
 	if (BN_copy(a,in_a) == NULL) goto err;
 	if (BN_copy(b,in_b) == NULL) goto err;
@@ -82,6 +85,7 @@ int BN_gcd(BIGNUM *r, BIGNUM *in_a, BIGNUM *in_b, BN_CTX *ctx)
 	if (BN_copy(r,t) == NULL) goto err;
 	ret=1;
 err:
+	BN_CTX_end(ctx);
 	return(ret);
 	}
 
@@ -142,20 +146,22 @@ err:
 /* solves ax == 1 (mod n) */
 BIGNUM *BN_mod_inverse(BIGNUM *in, BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
 	{
-	BIGNUM *A,*B,*X,*Y,*M,*D,*R;
+	BIGNUM *A,*B,*X,*Y,*M,*D,*R=NULL;
 	BIGNUM *T,*ret=NULL;
 	int sign;
 
 	bn_check_top(a);
 	bn_check_top(n);
 
-	A= &(ctx->bn[ctx->tos]);
-	B= &(ctx->bn[ctx->tos+1]);
-	X= &(ctx->bn[ctx->tos+2]);
-	D= &(ctx->bn[ctx->tos+3]);
-	M= &(ctx->bn[ctx->tos+4]);
-	Y= &(ctx->bn[ctx->tos+5]);
-	ctx->tos+=6;
+	BN_CTX_start(ctx);
+	A = BN_CTX_get(ctx);
+	B = BN_CTX_get(ctx);
+	X = BN_CTX_get(ctx);
+	D = BN_CTX_get(ctx);
+	M = BN_CTX_get(ctx);
+	Y = BN_CTX_get(ctx);
+	if (Y == NULL) goto err;
+
 	if (in == NULL)
 		R=BN_new();
 	else
@@ -198,7 +204,7 @@ BIGNUM *BN_mod_inverse(BIGNUM *in, BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
 	ret=R;
 err:
 	if ((ret == NULL) && (in == NULL)) BN_free(R);
-	ctx->tos-=6;
+	BN_CTX_end(ctx);
 	return(ret);
 	}
 

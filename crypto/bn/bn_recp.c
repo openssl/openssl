@@ -106,7 +106,8 @@ int BN_mod_mul_reciprocal(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_RECP_CTX *recp,
 	int ret=0;
 	BIGNUM *a;
 
-	a= &(ctx->bn[ctx->tos++]);
+	BN_CTX_start(ctx);
+	if ((a = BN_CTX_get(ctx)) == NULL) goto err;
 	if (y != NULL)
 		{
 		if (x == y)
@@ -120,33 +121,34 @@ int BN_mod_mul_reciprocal(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_RECP_CTX *recp,
 	BN_div_recp(NULL,r,a,recp,ctx);
 	ret=1;
 err:
-	ctx->tos--;
+	BN_CTX_end(ctx);
 	return(ret);
 	}
 
 int BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BN_RECP_CTX *recp,
 	     BN_CTX *ctx)
 	{
-	int i,j,tos,ret=0,ex;
+	int i,j,ret=0,ex;
 	BIGNUM *a,*b,*d,*r;
 
-	tos=ctx->tos;
-	a= &(ctx->bn[ctx->tos++]);
-	b= &(ctx->bn[ctx->tos++]);
+	BN_CTX_start(ctx);
+	a=BN_CTX_get(ctx);
+	b=BN_CTX_get(ctx);
 	if (dv != NULL)
 		d=dv;
 	else
-		d= &(ctx->bn[ctx->tos++]);
+		d=BN_CTX_get(ctx);
 	if (rem != NULL)
 		r=rem;
 	else
-		r= &(ctx->bn[ctx->tos++]);
+		r=BN_CTX_get(ctx);
+	if (a == NULL || b == NULL || d == NULL || r == NULL) goto err;
 
 	if (BN_ucmp(m,&(recp->N)) < 0)
 		{
 		BN_zero(d);
 		BN_copy(r,m);
-		ctx->tos=tos;
+		BN_CTX_end(ctx);
 		return(1);
 		}
 
@@ -200,7 +202,7 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BN_RECP_CTX *recp,
 	d->neg=m->neg^recp->N.neg;
 	ret=1;
 err:
-	ctx->tos=tos;
+	BN_CTX_end(ctx);
 	return(ret);
 	} 
 

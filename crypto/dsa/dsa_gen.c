@@ -116,14 +116,15 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 
 	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
 
-	r0= &(ctx2->bn[0]);
-	g= &(ctx2->bn[1]);
-	W= &(ctx2->bn[2]);
-	q= &(ctx2->bn[3]);
-	X= &(ctx2->bn[4]);
-	c= &(ctx2->bn[5]);
-	p= &(ctx2->bn[6]);
-	test= &(ctx2->bn[7]);
+	BN_CTX_start(ctx2);
+	r0 = BN_CTX_get(ctx2);
+	g = BN_CTX_get(ctx2);
+	W = BN_CTX_get(ctx2);
+	q = BN_CTX_get(ctx2);
+	X = BN_CTX_get(ctx2);
+	c = BN_CTX_get(ctx2);
+	p = BN_CTX_get(ctx2);
+	test = BN_CTX_get(ctx2);
 
 	BN_lshift(test,BN_value_one(),bits-1);
 
@@ -168,8 +169,6 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 
 			/* step 4 */
 			r = BN_is_prime_fasttest(q, DSS_prime_checks, callback, ctx3, cb_arg, seed_is_random);
-			if (ctx3->tos)
-				goto err;
 			if (r > 0)
 				break;
 			if (r != 0)
@@ -283,7 +282,11 @@ err:
 		if (h_ret != NULL) *h_ret=h;
 		}
 	if (ctx != NULL) BN_CTX_free(ctx);
-	if (ctx2 != NULL) BN_CTX_free(ctx2);
+	if (ctx2 != NULL)
+		{
+		BN_CTX_end(ctx2);
+		BN_CTX_free(ctx2);
+		}
 	if (ctx3 != NULL) BN_CTX_free(ctx3);
 	if (mont != NULL) BN_MONT_CTX_free(mont);
 	return(ok?ret:NULL);

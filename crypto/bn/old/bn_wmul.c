@@ -17,6 +17,7 @@ printf("bn_mull %d * %d\n",a->top,b->top);
 	bn_check_top(a);
 	bn_check_top(b);
 	bn_check_top(r);
+	BN_CTX_start(ctx);
 
 	al=a->top;
 	bl=b->top;
@@ -85,7 +86,7 @@ symetric:
 		j=BN_num_bits_word((BN_ULONG)al);
 		j=1<<(j-1);
 		k=j+j;
-		t= &(ctx->bn[ctx->tos]);
+		t = BN_CTX_get(ctx);
 		if (al == j) /* exact multiple */
 			{
 			bn_wexpand(t,k*2);
@@ -107,6 +108,7 @@ symetric:
 		r->top=top;
 		}
 end:
+	BN_CTX_end(ctx);
 	bn_fix_top(r);
 	return(1);
 	}

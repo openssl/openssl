@@ -585,10 +585,13 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 		}
 	top=al+bl;
 
+	BN_CTX_start(ctx);
 	if ((r == a) || (r == b))
-		rr= &(ctx->bn[ctx->tos+1]);
+		{
+		if ((rr = BN_CTX_get(ctx)) == NULL) goto err;
+		}
 	else
-		rr=r;
+		rr = r;
 
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
 	if (al == bl)
@@ -596,14 +599,14 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 #  ifdef BN_MUL_COMBA
 /*		if (al == 4)
 			{
-			if (bn_wexpand(rr,8) == NULL) return(0);
+			if (bn_wexpand(rr,8) == NULL) goto err;
 			rr->top=8;
 			bn_mul_comba4(rr->d,a->d,b->d);
 			goto end;
 			}
 		else */ if (al == 8)
 			{
-			if (bn_wexpand(rr,16) == NULL) return(0);
+			if (bn_wexpand(rr,16) == NULL) goto err;
 			rr->top=16;
 			bn_mul_comba8(rr->d,a->d,b->d);
 			goto end;
@@ -614,7 +617,7 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 		if (al < BN_MULL_SIZE_NORMAL)
 #endif
 			{
-			if (bn_wexpand(rr,top) == NULL) return(0);
+			if (bn_wexpand(rr,top) == NULL) goto err;
 			rr->top=top;
 			bn_mul_normal(rr->d,a->d,al,b->d,bl);
 			goto end;
@@ -627,7 +630,7 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 #ifdef BN_RECURSION
 	else if ((al < BN_MULL_SIZE_NORMAL) || (bl < BN_MULL_SIZE_NORMAL))
 		{
-		if (bn_wexpand(rr,top) == NULL) return(0);
+		if (bn_wexpand(rr,top) == NULL) goto err;
 		rr->top=top;
 		bn_mul_normal(rr->d,a->d,al,b->d,bl);
 		goto end;
@@ -653,7 +656,7 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 #endif
 
 	/* asymmetric and >= 4 */ 
-	if (bn_wexpand(rr,top) == NULL) return(0);
+	if (bn_wexpand(rr,top) == NULL) goto err;
 	rr->top=top;
 	bn_mul_normal(rr->d,a->d,al,b->d,bl);
 
@@ -666,7 +669,7 @@ symmetric:
 		j=BN_num_bits_word((BN_ULONG)al);
 		j=1<<(j-1);
 		k=j+j;
-		t= &(ctx->bn[ctx->tos]);
+		t = BN_CTX_get(ctx);
 		if (al == j) /* exact multiple */
 			{
 			bn_wexpand(t,k*2);
@@ -693,7 +696,11 @@ end:
 #endif
 	bn_fix_top(rr);
 	if (r != rr) BN_copy(r,rr);
+	BN_CTX_end(ctx);
 	return(1);
+err:
+	BN_CTX_end(ctx);
+	return(0);
 	}
 
 void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)

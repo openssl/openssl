@@ -245,6 +245,8 @@ typedef struct bignum_ctx
 	int tos;
 	BIGNUM bn[BN_CTX_NUM+1];
 	int flags;
+	int depth;
+	int pos[BN_CTX_NUM+1];
 	} BN_CTX;
 
 typedef struct bn_blinding_st
@@ -335,6 +337,9 @@ char *	BN_options(void);
 BN_CTX *BN_CTX_new(void);
 void	BN_CTX_init(BN_CTX *c);
 void	BN_CTX_free(BN_CTX *c);
+void	BN_CTX_start(BN_CTX *ctx);
+BIGNUM *BN_CTX_get(BN_CTX *ctx);
+void	BN_CTX_end(BN_CTX *ctx);
 int     BN_rand(BIGNUM *rnd, int bits, int top,int bottom);
 int     BN_pseudo_rand(BIGNUM *rnd, int bits, int top,int bottom);
 int	BN_num_bits(const BIGNUM *a);
@@ -463,6 +468,7 @@ int	BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *m,
 #define BN_F_BN_BLINDING_UPDATE				 103
 #define BN_F_BN_BN2DEC					 104
 #define BN_F_BN_BN2HEX					 105
+#define BN_F_BN_CTX_GET					 116
 #define BN_F_BN_CTX_NEW					 106
 #define BN_F_BN_DIV					 107
 #define BN_F_BN_EXPAND2					 108
@@ -484,6 +490,7 @@ int	BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *m,
 #define BN_R_INVALID_LENGTH				 106
 #define BN_R_NOT_INITIALIZED				 107
 #define BN_R_NO_INVERSE					 108
+#define BN_R_TOO_MANY_TEMPORARY_VARIABLES		 109
 
 #ifdef  __cplusplus
 }

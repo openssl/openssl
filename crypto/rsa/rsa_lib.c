@@ -269,19 +269,19 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 	if (rsa->blinding != NULL)
 		BN_BLINDING_free(rsa->blinding);
 
-	A= &(ctx->bn[0]);
-	ctx->tos++;
+	BN_CTX_start(ctx);
+	A = BN_CTX_get(ctx);
 	if (!BN_rand(A,BN_num_bits(rsa->n)-1,1,0)) goto err;
 	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
 
 	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,rsa->_method_mod_n))
 	    goto err;
 	rsa->blinding=BN_BLINDING_new(A,Ai,rsa->n);
-	ctx->tos--;
 	rsa->flags|=RSA_FLAG_BLINDING;
 	BN_free(Ai);
 	ret=1;
 err:
+	BN_CTX_end(ctx);
 	if (ctx != p_ctx) BN_CTX_free(ctx);
 	return(ret);
 	}

@@ -244,19 +244,23 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 	else
 		if ((ctx=BN_CTX_new()) == NULL)
 			goto err;
+	BN_CTX_start(ctx);
+
 	/* A := abs(a) */
 	if (a->neg)
 		{
-		BIGNUM *t = &(ctx->bn[ctx->tos++]);
+		BIGNUM *t;
+		if ((t = BN_CTX_get(ctx)) == NULL) goto err;
 		BN_copy(t, a);
 		t->neg = 0;
 		A = t;
 		}
 	else
 		A = a;
-	A1 = &(ctx->bn[ctx->tos++]);
-	A1_odd = &(ctx->bn[ctx->tos++]);
-	check = &(ctx->bn[ctx->tos++]);;
+	A1 = BN_CTX_get(ctx);
+	A1_odd = BN_CTX_get(ctx);
+	check = BN_CTX_get(ctx);
+	if (check == NULL) goto err;
 
 	/* compute A1 := A - 1 */
 	if (!BN_copy(A1, A))
@@ -305,14 +309,12 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 		}
 	ret=1;
 err:
-	if (ctx_passed != NULL)
+	if (ctx != NULL)
 		{
-		ctx_passed->tos -= 3; /* A1, A1_odd, check */
-		if (a != A)
-			--ctx_passed->tos; /* A */
+		BN_CTX_end(ctx);
+		if (ctx_passed == NULL)
+			BN_CTX_free(ctx);
 		}
-	else if (ctx != NULL)
-		BN_CTX_free(ctx);
 	if (mont != NULL)
 		BN_MONT_CTX_free(mont);
 
@@ -380,7 +382,8 @@ static int probable_prime_dh(BIGNUM *rnd, int bits, BIGNUM *add, BIGNUM *rem,
 	int i,ret=0;
 	BIGNUM *t1;
 
-	t1= &(ctx->bn[ctx->tos++]);
+	BN_CTX_start(ctx);
+	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
 
 	if (!BN_rand(rnd,bits,0,1)) goto err;
 
@@ -406,7 +409,7 @@ static int probable_prime_dh(BIGNUM *rnd, int bits, BIGNUM *add, BIGNUM *rem,
 		}
 	ret=1;
 err:
-	ctx->tos--;
+	BN_CTX_end(ctx);
 	return(ret);
 	}
 
@@ -414,12 +417,14 @@ static int probable_prime_dh_safe(BIGNUM *p, int bits, BIGNUM *padd,
 	     BIGNUM *rem, BN_CTX *ctx)
 	{
 	int i,ret=0;
-	BIGNUM *t1,*qadd=NULL,*q=NULL;
+	BIGNUM *t1,*qadd,*q;
 
 	bits--;
-	t1= &(ctx->bn[ctx->tos++]);
-	q= &(ctx->bn[ctx->tos++]);
-	qadd= &(ctx->bn[ctx->tos++]);
+	BN_CTX_start(ctx);
+	t1 = BN_CTX_get(ctx);
+	q = BN_CTX_get(ctx);
+	qadd = BN_CTX_get(ctx);
+	if (qadd == NULL) goto err;
 
 	if (!BN_rshift1(qadd,padd)) goto err;
 		
@@ -455,6 +460,6 @@ static int probable_prime_dh_safe(BIGNUM *p, int bits, BIGNUM *padd,
 		}
 	ret=1;
 err:
-	ctx->tos-=3;
+	BN_CTX_end(ctx);
 	return(ret);
 	}

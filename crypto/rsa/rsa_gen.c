@@ -74,11 +74,12 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
 	if (ctx == NULL) goto err;
 	ctx2=BN_CTX_new();
 	if (ctx2 == NULL) goto err;
-	r0= &(ctx->bn[0]);
-	r1= &(ctx->bn[1]);
-	r2= &(ctx->bn[2]);
-	r3= &(ctx->bn[3]);
-	ctx->tos+=4;
+	BN_CTX_start(ctx);
+	r0 = BN_CTX_get(ctx);
+	r1 = BN_CTX_get(ctx);
+	r2 = BN_CTX_get(ctx);
+	r3 = BN_CTX_get(ctx);
+	if (r3 == NULL) goto err;
 
 	bitsp=(bits+1)/2;
 	bitsq=bits-bitsp;
@@ -181,6 +182,7 @@ err:
 		RSAerr(RSA_F_RSA_GENERATE_KEY,ERR_LIB_BN);
 		ok=0;
 		}
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	BN_CTX_free(ctx2);
 	
