@@ -19,7 +19,14 @@ Ucert="certU.ss"
 
 echo
 echo "make a certificate request using 'req'"
-$reqcmd -config $CAconf -out $CAreq -keyout $CAkey -new #>err.ss
+
+if ../apps/openssl list-standard-commands | grep '^rsa$' >/dev/null; then
+  req_new='-new'
+else
+  req_new='-newkey dsa:../apps/dsa512.pem'
+fi
+
+$reqcmd -config $CAconf -out $CAreq -keyout $CAkey $req_new #>err.ss
 if [ $? != 0 ]; then
 	echo "error using 'req' to generate a certificate request"
 	exit 1
@@ -60,7 +67,7 @@ fi
 
 echo
 echo "make another certificate request using 'req'"
-$reqcmd -config $Uconf -out $Ureq -keyout $Ukey -new >err.ss
+$reqcmd -config $Uconf -out $Ureq -keyout $Ukey $req_new >err.ss
 if [ $? != 0 ]; then
 	echo "error using 'req' to generate a certificate request"
 	exit 1

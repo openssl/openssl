@@ -4,6 +4,9 @@
 
  Changes between 0.9.5 and 0.9.5a  [XX XXX 2000]
 
+  *) Update test suite so that 'make test' succeeds in 'no-rsa' configuration.
+     [Bodo Moeller]
+
   *) For SSL_[CTX_]set_tmp_dh, don't create a DH key if SSL_OP_SINGLE_DH_USE
      is set; it will be thrown away anyway because each handshake creates
      its own key.

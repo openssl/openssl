@@ -206,17 +206,21 @@ test_gen:
 	@echo "Generate and verify a certificate request"
 	@sh ./testgen
 
-test_ss:
+test_ss keyU.ss certU.ss certCA.ss:
 	@echo "Generate and certify a test certificate"
 	@sh ./testss
 
-test_ssl:
+test_ssl: keyU.ss certU.ss certCA.ss
 	@echo "test SSL protocol"
-	@sh ./testssl
+	@sh ./testssl keyU.ss certU.ss certCA.ss
 
 test_ca:
-	@echo "Generate and certify a test certificate via the 'ca' program"
-	@sh ./testca
+	@if ../apps/openssl list-standard-commands | grep '^rsa$$' >/dev/null; then \
+	  echo "Generate and certify a test certificate via the 'ca' program"; \
+	  sh ./testca; \
+	else \
+	  echo "skipping CA.sh test -- requires RSA"; \
+ 	fi
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff

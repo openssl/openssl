@@ -140,6 +140,7 @@ static void sv_usage(void)
 	fprintf(stderr," -CApath arg   - PEM format directory of CA's\n");
 	fprintf(stderr," -CAfile arg   - PEM format file of CA's\n");
 	fprintf(stderr," -cert arg     - Certificate file\n");
+	fprintf(stderr," -key arg      - Key file\n");
 	fprintf(stderr," -s_cert arg   - Just the server certificate file\n");
 	fprintf(stderr," -c_cert arg   - Just the client certificate file\n");
 	fprintf(stderr," -cipher arg   - The cipher list\n");
@@ -202,7 +203,9 @@ int main(int argc, char *argv[])
 	int client_auth=0;
 	int server_auth=0,i;
 	char *server_cert=TEST_SERVER_CERT;
+	char *server_key=NULL;
 	char *client_cert=TEST_CLIENT_CERT;
+	char *client_key=NULL;
 	SSL_CTX *s_ctx=NULL;
 	SSL_CTX *c_ctx=NULL;
 	SSL_METHOD *meth=NULL;
@@ -282,10 +285,25 @@ int main(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			server_cert= *(++argv);
 			}
+		else if	(strcmp(*argv,"-key") == 0)
+			{
+			if (--argc < 1) goto bad;
+			server_key= *(++argv);
+			}
+		else if	(strcmp(*argv,"-s_key") == 0)
+			{
+			if (--argc < 1) goto bad;
+			server_key= *(++argv);
+			}
 		else if	(strcmp(*argv,"-c_cert") == 0)
 			{
 			if (--argc < 1) goto bad;
 			client_cert= *(++argv);
+			}
+		else if	(strcmp(*argv,"-c_key") == 0)
+			{
+			if (--argc < 1) goto bad;
+			client_key= *(++argv);
 			}
 		else if	(strcmp(*argv,"-cipher") == 0)
 			{
@@ -416,8 +434,8 @@ bad:
 		{
 		ERR_print_errors(bio_err);
 		}
-	else if (!SSL_CTX_use_PrivateKey_file(s_ctx,server_cert,
-		SSL_FILETYPE_PEM))
+	else if (!SSL_CTX_use_PrivateKey_file(s_ctx,
+		(server_key?server_key:server_cert), SSL_FILETYPE_PEM))
 		{
 		ERR_print_errors(bio_err);
 		goto end;
@@ -427,7 +445,8 @@ bad:
 		{
 		SSL_CTX_use_certificate_file(c_ctx,client_cert,
 			SSL_FILETYPE_PEM);
-		SSL_CTX_use_PrivateKey_file(c_ctx,client_cert,
+		SSL_CTX_use_PrivateKey_file(c_ctx,
+			(client_key?client_key:client_cert),
 			SSL_FILETYPE_PEM);
 		}
 
