@@ -383,6 +383,7 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 	/* Check all untrusted certificates */
 	for (i = 0; i < ctx->last_untrusted; i++)
 		{
+		int ret;
 		x = sk_X509_value(ctx->chain, i);
 		if (!(ctx->flags & X509_V_FLAG_IGNORE_CRITICAL)
 			&& (x->ex_flags & EXFLAG_CRITICAL))
@@ -393,7 +394,10 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 			ok=cb(0,ctx);
 			if (!ok) goto end;
 			}
-		if (!X509_check_purpose(x, ctx->purpose, i))
+		ret = X509_check_purpose(x, ctx->purpose, i);
+		if ((ret == 0)
+			 || ((ctx->flags & X509_V_FLAG_X509_STRICT)
+				&& (ret != 1)))
 			{
 			if (i)
 				ctx->error = X509_V_ERR_INVALID_CA;
@@ -537,6 +541,14 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 
 	if(issuer)
 		{
+		/* Check for cRLSign bit if keyUsage present */
+		if ((issuer->ex_flags & EXFLAG_KUSAGE) &&
+			!(issuer->ex_kusage & KU_CRL_SIGN))
+			{
+			ctx->error = X509_V_ERR_KEYUSAGE_NO_CRL_SIGN;
+			ok = ctx->verify_cb(0, ctx);
+			if(!ok) goto err;
+			}
 
 		/* Attempt to get issuer certificate public key */
 		ikey = X509_get_pubkey(issuer);
@@ -611,17 +623,46 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 	{
 	int idx, ok;
 	X509_REVOKED rtmp;
+	STACK_OF(X509_EXTENSION) *exts;
+	X509_EXTENSION *ext;
 	/* Look for serial number of certificate in CRL */
 	rtmp.serialNumber = X509_get_serialNumber(x);
 	idx = sk_X509_REVOKED_find(crl->crl->revoked, &rtmp);
-	/* Not found: OK */
-	if(idx == -1) return 1;
-	/* Otherwise revoked: want something cleverer than
+	/* If found assume revoked: want something cleverer than
 	 * this to handle entry extensions in V2 CRLs.
 	 */
-	ctx->error = X509_V_ERR_CERT_REVOKED;
-	ok = ctx->verify_cb(0, ctx);
-	return ok;
+	if(idx >= 0)
+		{
+		ctx->error = X509_V_ERR_CERT_REVOKED;
+		ok = ctx->verify_cb(0, ctx);
+		if (!ok) return 0;
+		}
+
+	if (ctx->flags & X509_V_FLAG_IGNORE_CRITICAL)
+		return 1;
+
+	/* See if we have any critical CRL extensions: since we
+	 * currently don't handle any CRL extensions the CRL must be
+	 * rejected. 
+	 * This code accesses the X509_CRL structure directly: applications
+	 * shouldn't do this.
+	 */
+
+	exts = crl->crl->extensions;
+
+	for (idx = 0; idx < sk_X509_EXTENSION_num(exts); idx++)
+		{
+		ext = sk_X509_EXTENSION_value(exts, idx);
+		if (ext->critical > 0)
+			{
+			ctx->error =
+				X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION;
+			ok = ctx->verify_cb(0, ctx);
+			if(!ok) return 0;
+			break;
+			}
+		}
+	return 1;
 	}
 
 static int internal_verify(X509_STORE_CTX *ctx)

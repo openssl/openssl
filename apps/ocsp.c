@@ -68,19 +68,6 @@
 /* Maximum leeway in validity period: default 5 minutes */
 #define MAX_VALIDITY_PERIOD	(5 * 60)
 
-/* CA index.txt definitions */
-#define DB_type         0
-#define DB_exp_date     1
-#define DB_rev_date     2
-#define DB_serial       3       /* index - unique */
-#define DB_file         4       
-#define DB_name         5       /* index - unique for active */
-#define DB_NUMBER       6
-
-#define DB_TYPE_REV	'R'
-#define DB_TYPE_EXP	'E'
-#define DB_TYPE_VAL	'V'
-
 static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
 				STACK_OF(OCSP_CERTID) *ids);
 static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, X509 *issuer,
@@ -89,12 +76,12 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 				STACK *names, STACK_OF(OCSP_CERTID) *ids,
 				long nsec, long maxage);
 
-static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, TXT_DB *db,
+static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db,
 			X509 *ca, X509 *rcert, EVP_PKEY *rkey,
 			STACK_OF(X509) *rother, unsigned long flags,
 			int nmin, int ndays);
 
-static char **lookup_serial(TXT_DB *db, ASN1_INTEGER *ser);
+static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static BIO *init_responder(char *port);
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio, char *port);
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp);
@@ -143,7 +130,7 @@ int MAIN(int argc, char **argv)
 	X509 *rca_cert = NULL;
 	char *ridx_filename = NULL;
 	char *rca_filename = NULL;
-	TXT_DB *rdb = NULL;
+	CA_DB *rdb = NULL;
 	int nmin = 0, ndays = -1;
 
 	if (bio_err == NULL) bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
@@ -700,22 +687,9 @@ int MAIN(int argc, char **argv)
 
 	if (ridx_filename && !rdb)
 		{
-		BIO *db_bio = NULL;
-		db_bio = BIO_new_file(ridx_filename, "r");
-		if (!db_bio)
-			{
-			BIO_printf(bio_err, "Error opening index file %s\n", ridx_filename);
-			goto end;
-			}
-		rdb = TXT_DB_read(db_bio, DB_NUMBER);
-		BIO_free(db_bio);
-		if (!rdb)
-			{
-			BIO_printf(bio_err, "Error reading index file %s\n", ridx_filename);
-			goto end;
-			}
-		if (!make_serial_index(rdb))
-			goto end;
+		rdb = load_index(ridx_filename, NULL);
+		if (!rdb) goto end;
+		if (!index_index(rdb)) goto end;
 		}
 
 	if (rdb)
@@ -899,7 +873,7 @@ end:
 	X509_free(cert);
 	X509_free(rsigner);
 	X509_free(rca_cert);
-	TXT_DB_free(rdb);
+	free_index(rdb);
 	BIO_free_all(cbio);
 	BIO_free_all(acbio);
 	BIO_free(out);
@@ -1041,7 +1015,7 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 	}
 
 
-static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, TXT_DB *db,
+static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db,
 			X509 *ca, X509 *rcert, EVP_PKEY *rkey,
 			STACK_OF(X509) *rother, unsigned long flags,
 			int nmin, int ndays)
@@ -1133,7 +1107,7 @@ static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, TXT_DB *d
 
 	}
 
-static char **lookup_serial(TXT_DB *db, ASN1_INTEGER *ser)
+static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
 	{
 	int i;
 	BIGNUM *bn = NULL;
@@ -1146,7 +1120,7 @@ static char **lookup_serial(TXT_DB *db, ASN1_INTEGER *ser)
 		itmp = BN_bn2hex(bn);
 	row[DB_serial] = itmp;
 	BN_free(bn);
-	rrow=TXT_DB_get_by_index(db,DB_serial,row);
+	rrow=TXT_DB_get_by_index(db->db,DB_serial,row);
 	OPENSSL_free(itmp);
 	return rrow;
 	}

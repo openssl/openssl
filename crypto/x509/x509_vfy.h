@@ -304,17 +304,26 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 
 #define		X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER		33
 #define		X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION		34
+#define		X509_V_ERR_KEYUSAGE_NO_CRL_SIGN			35
+#define		X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION	36
 
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50
 
 /* Certificate verify flags */
 
-#define	X509_V_FLAG_CB_ISSUER_CHECK		0x1	/* Send issuer+subject checks to verify_cb */
-#define	X509_V_FLAG_USE_CHECK_TIME		0x2	/* Use check time instead of current time */
-#define	X509_V_FLAG_CRL_CHECK			0x4	/* Lookup CRLs */
-#define	X509_V_FLAG_CRL_CHECK_ALL		0x8	/* Lookup CRLs for whole chain */
-#define	X509_V_FLAG_IGNORE_CRITICAL		0x10	/* Ignore unhandled critical extensions */
+/* Send issuer+subject checks to verify_cb */
+#define	X509_V_FLAG_CB_ISSUER_CHECK		0x1
+/* Use check time instead of current time */
+#define	X509_V_FLAG_USE_CHECK_TIME		0x2
+/* Lookup CRLs */
+#define	X509_V_FLAG_CRL_CHECK			0x4
+/* Lookup CRLs for whole chain */
+#define	X509_V_FLAG_CRL_CHECK_ALL		0x8
+/* Ignore unhandled critical extensions */
+#define	X509_V_FLAG_IGNORE_CRITICAL		0x10
+/* Disable workarounds for broken certificates */
+#define	X509_V_FLAG_X509_STRICT			0x20
 
 int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, int type,
 	     X509_NAME *name);
