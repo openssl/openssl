@@ -431,7 +431,6 @@ int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 			CRYPTO_get_lock_name(type),
 			file,line);
 #endif
-		*pointer=ret;
 		}
 	else
 		{
