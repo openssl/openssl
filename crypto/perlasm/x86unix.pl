@@ -554,7 +554,7 @@ sub main'picmeup
 	addl	\$_GLOBAL_OFFSET_TABLE_+[.-1b],$regs{$dst}
 	movl	$sym\@GOT($regs{$dst}),$regs{$dst}
 #else
-	movl	\$$sym,$regs{$dst}
+	leal	$sym,$regs{$dst}
 #endif
 ___
 	push(@out,$tmp);
