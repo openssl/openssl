@@ -23,7 +23,7 @@ $	    tests := -
 	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,-
 	test_rand,test_bn,test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
-	test_ss,test_ssl,test_ca
+	test_ss,test_ca,test_ssl
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
 $
@@ -55,54 +55,55 @@ $ loop_tests:
 $	tests_e = f$element(tests_i,",",tests)
 $	tests_i = tests_i + 1
 $	if tests_e .eqs. "," then goto exit
-$	goto 'tests_e'
+$	gosub 'tests_e'
+$	goto loop_tests
 $
 $ test_des:
 $	mcr 'texe_dir''destest'
-$	goto loop_tests
+$	return
 $ test_idea:
 $	mcr 'texe_dir''ideatest'
-$	goto loop_tests
+$	return
 $ test_sha:
 $	mcr 'texe_dir''shatest'
 $	mcr 'texe_dir''sha1test'
-$	goto loop_tests
+$	return
 $ test_mdc2:
 $	mcr 'texe_dir''mdc2test'
-$	goto loop_tests
+$	return
 $ test_md5:
 $	mcr 'texe_dir''md5test'
-$	goto loop_tests
+$	return
 $ test_hmac:
 $	mcr 'texe_dir''hmactest'
-$	goto loop_tests
+$	return
 $ test_md2:
 $	mcr 'texe_dir''md2test'
-$	goto loop_tests
+$	return
 $ test_rmd:
 $	mcr 'texe_dir''rmdtest'
-$	goto loop_tests
+$	return
 $ test_bf:
 $	mcr 'texe_dir''bftest'
-$	goto loop_tests
+$	return
 $ test_cast:
 $	mcr 'texe_dir''casttest'
-$	goto loop_tests
+$	return
 $ test_rc2:
 $	mcr 'texe_dir''rc2test'
-$	goto loop_tests
+$	return
 $ test_rc4:
 $	mcr 'texe_dir''rc4test'
-$	goto loop_tests
+$	return
 $ test_rc5:
 $	mcr 'texe_dir''rc5test'
-$	goto loop_tests
+$	return
 $ test_rand:
 $	mcr 'texe_dir''randtest'
-$	goto loop_tests
+$	return
 $ test_enc:
 $	@testenc.com
-$	goto loop_tests
+$	return
 $ test_x509:
 $	define sys$error nla0:
 $	write sys$output "test normal x509v1 certificate"
@@ -112,35 +113,35 @@ $	@tx509.com v3-cert1.pem
 $	write sys$output "test second x509v3 certificate"
 $	@tx509.com v3-cert2.pem
 $	deassign sys$error
-$	goto loop_tests
+$	return
 $ test_rsa:
 $	define sys$error nla0:
 $	@trsa.com
 $	deassign sys$error
 $	mcr 'texe_dir''rsatest'
-$	goto loop_tests
+$	return
 $ test_crl:
 $	define sys$error nla0:
 $	@tcrl.com
 $	deassign sys$error
-$	goto loop_tests
+$	return
 $ test_sid:
 $	define sys$error nla0:
 $	@tsid.com
 $	deassign sys$error
-$	goto loop_tests
+$	return
 $ test_req:
 $	define sys$error nla0:
 $	@treq.com
 $	@treq.com testreq2.pem
 $	deassign sys$error
-$	goto loop_tests
+$	return
 $ test_pkcs7:
 $	define sys$error nla0:
 $	@tpkcs7.com
 $	@tpkcs7d.com
 $	deassign sys$error
-$	goto loop_tests
+$	return
 $ test_bn:
 $	write sys$output "starting big number library test, could take a while..."
 $	create bntest-vms.fdl
@@ -164,36 +165,56 @@ $	write sys$output "-- through sh or bash to verify that the bignum operations w
 $	write sys$output ""
 $	write sys$output "test a^b%c implementations"
 $	mcr 'texe_dir''exptest'
-$	goto loop_tests
+$	return
 $ test_verify:
 $	write sys$output "The following command should have some OK's and some failures"
 $	write sys$output "There are definitly a few expired certificates"
 $	@tverify.com
-$	goto loop_tests
+$	return
 $ test_dh:
 $	write sys$output "Generate a set of DH parameters"
 $	mcr 'texe_dir''dhtest'
-$	goto loop_tests
+$	return
 $ test_dsa:
 $	write sys$output "Generate a set of DSA parameters"
 $	mcr 'texe_dir''dsatest'
-$	goto loop_tests
+$	return
 $ test_gen:
 $	write sys$output "Generate and verify a certificate request"
 $	@testgen.com
-$	goto loop_tests
+$	return
+$ maybe_test_ss:
+$	testss_RDT = f$cvtime(f$file_attributes("testss.com","RDT"))
+$	if f$cvtime(f$file_attributes("keyU.ss","RDT")) .les. testss_RDT then -
+		goto test_ss
+$	if f$cvtime(f$file_attributes("certU.ss","RDT")) .les. testss_RDT then -
+		goto test_ss
+$	if f$cvtime(f$file_attributes("certCA.ss","RDT")) .les. testss_RDT then -
+		goto test_ss
+$	return
 $ test_ss:
 $	write sys$output "Generate and certify a test certificate"
 $	@testss.com
-$	goto loop_tests
+$	return
 $ test_ssl:
 $	write sys$output "test SSL protocol"
-$	@testssl.com
-$	goto loop_tests
+$	gosub maybe_test_ss
+$	@testssl.com keyU.ss certU.ss certCA.ss
+$	return
 $ test_ca:
-$	write sys$output "Generate and certify a test certificate via the 'ca' program"
-$	@testca.com
-$	goto loop_tests
+$	set noon
+$	define/user sys$output nla0:
+$	mcr 'exe_dir'openssl no-rsa
+$	save_severity=$SEVERITY
+$	set on
+$	if save_severity
+$	then
+$	    write sys$output "skipping CA.com test -- requires RSA"
+$	else
+$	    write sys$output "Generate and certify a test certificate via the 'ca' program"
+$	    @testca.com
+$	endif
+$	return
 $
 $
 $ exit:

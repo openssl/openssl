@@ -16,23 +16,35 @@ $	set on
 $
 $	write sys$output "generating certificate request"
 $
-$	write sys$output "There should be a 2 sequences of .'s and some +'s."
-$	write sys$output "There should not be more that at most 80 per line"
-$	write sys$output "This could take some time."
-$
 $	append/new nl: .rnd
 $	open/append random_file .rnd
 $	write random_file "string to make the random number generator think it has entropy"
 $	close random_file
 $
-$	mcr 'exe_dir'openssl req -config test.cnf -new -out testreq.pem
+$	set noon
+$	define/user sys$output nla0:
+$	mcr 'exe_dir'openssl no-rsa
+$	save_severity=$SEVERITY
+$	set on
+$	if save_severity
+$	then
+$	    req_new="-newkey dsa:[-.apps]dsa512.pem"
+$	else
+$	    req_new="-new"
+$	    write sys$output "There should be a 2 sequences of .'s and some +'s."
+$	    write sys$output "There should not be more that at most 80 per line"
+$	endif
+$
+$	write sys$output "This could take some time."
+$
+$	mcr 'exe_dir'openssl req -config test.cnf 'req_new' -out testreq.pem
 $	if $severity .ne. 1
 $	then
 $	    write sys$output "problems creating request"
 $	    exit 3
 $	endif
 $
-$	mcr 'exe_dir'openssl req -verify -in testreq.pem -noout
+$	mcr 'exe_dir'openssl req -config test.cnf -verify -in testreq.pem -noout
 $	if $severity .ne. 1
 $	then
 $	    write sys$output "signature on req is wrong"

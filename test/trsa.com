@@ -4,21 +4,16 @@ $	__arch := VAX
 $	if f$getsyi("cpu") .ge. 128 then __arch := AXP
 $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
-$	found_it := NO
-$	define/user sys$output trsa-standard-commands.
-$	mcr 'exe_dir'openssl list-standard-commands
-$	open/read f trsa-standard-commands.
-$ loop_standard_commands:
-$	read/end=loop_standard_commands_end f i
-$	if f$edit(i,"lowercase") .eqs. "rsa"
+$	set noon
+$	define/user sys$output nla0:
+$	mcr 'exe_dir'openssl no-rsa
+$	save_severity=$SEVERITY
+$	set on
+$	if save_severity
 $	then
-$	    found_it := YES
-$	    goto loop_standard_commands_end
+$	    write sys$output "skipping RSA conversion test"
+$	    exit
 $	endif
-$	goto loop_standard_commands
-$ loop_standard_commands_end:
-$	close f
-$	delete trsa-standard-commands.;*
 $
 $	cmd := mcr 'exe_dir'openssl rsa
 $
