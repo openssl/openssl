@@ -1,9 +1,9 @@
-/* crypto/engine/engine_all.c -*- mode: C; c-file-style: "eay" -*- */
+/* crypto/engine/eng_all.c -*- mode: C; c-file-style: "eay" -*- */
 /* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
  * project 2000.
  */
 /* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
