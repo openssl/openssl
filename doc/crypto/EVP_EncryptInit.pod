@@ -419,7 +419,7 @@ Encrypt a string using blowfish:
 	EVP_CIPHER_CTX ctx;
 	FILE *out;
 	EVP_CIPHER_CTX_init(&ctx);
-	EVP_EncryptInit_ex(&ctx, NULL, EVP_bf_cbc(), key, iv);
+	EVP_EncryptInit_ex(&ctx, EVP_bf_cbc(), NULL, key, iv);
 
 	if(!EVP_EncryptUpdate(&ctx, outbuf, &outlen, intext, strlen(intext)))
 		{
