@@ -10,7 +10,7 @@
       o Security: Fix Kerberos ciphersuite SSL/TLS handshaking bug
       o Security: Fix null-pointer assignment in do_change_cipher_spec()
       o Allow multiple active certificates with same subject in CA index
-      o Multiple X590 verification fixes
+      o Multiple X509 verification fixes
       o Speed up HMAC and other operations
 
   Major changes between OpenSSL 0.9.7b and OpenSSL 0.9.7c:
