@@ -76,17 +76,18 @@ unsigned char * PKCS12_pbe_crypt (X509_ALGOR *algor, const char *pass,
 	int outlen, i;
 	EVP_CIPHER_CTX ctx;
 
-	if(!(out = Malloc (inlen + 8))) {
-		PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-
 	/* Decrypt data */
         if (!EVP_PBE_CipherInit (algor->algorithm, pass, passlen,
 					 algor->parameter, &ctx, en_de)) {
 		PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR);
 		return NULL;
 	}
+
+	if(!(out = Malloc (inlen + EVP_CIPHER_CTX_block_size(&ctx)))) {
+		PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+
 	EVP_CipherUpdate (&ctx, out, &i, in, inlen);
 	outlen = i;
 	if(!EVP_CipherFinal (&ctx, out + i, &i)) {
