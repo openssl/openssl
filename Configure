@@ -599,7 +599,8 @@ sub bad_target
 	print STDERR "Usage: Configure [-Dxxx] [-Lxxx] [-lxxx] os/compiler\n";
 	print STDERR "pick os/compiler from:";
 	my $j=0;
-	foreach my $i (sort keys %table)
+	my $i;
+	foreach $i (sort keys %table)
 		{
 		print STDERR "\n" if ($j++ % 4) == 0;
 		printf(STDERR "%-18s ",$i);
@@ -617,5 +618,5 @@ sub Rename
 	    }
 	}
 
-sub file_new { local($a)=@_; $a =~ s/(\.[^.]+$|$)/.new/; $a; }
-sub file_old { local($a)=@_; $a =~ s/(\.[^.]+$|$)/.old/; $a; }
+sub file_new { my($a)=@_; $a =~ s/(\.[^.]+$|$)/.new/; $a; }
+sub file_old { my($a)=@_; $a =~ s/(\.[^.]+$|$)/.old/; $a; }
