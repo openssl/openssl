@@ -75,6 +75,7 @@ void ASN1_ENUMERATED_free(ASN1_ENUMERATED *x)
 int i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **pp)
 {
 	int len, ret;
+	if(!a) return 0;
 	len = i2c_ASN1_INTEGER(a, NULL);	
 	ret=ASN1_object_size(0,len,V_ASN1_ENUMERATED);
 	if(pp) {
