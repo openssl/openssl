@@ -46,9 +46,8 @@
      (both in crypto/Makefile.ssl for use by crypto/cversion.c) caused
      problems not only on Windows, but also on some Unix platforms.
      To avoid problematic command lines, these definitions are now in an
-     auto-generated file, which also defines DATE and thus replaces
-     crypto/date.h.  Standard "make" builds use crypto/buildinf.h,
-     mk1mf.pl builds use crypto/mk1mfinf.h (created by mk1mf.pl).
+     auto-generated file crypto/buildinf.h (created by crypto/Makefile.ssl
+     for standard "make" builds, by util/mk1mf.pl for "mk1mf" builds).
      [Bodo Moeller]
 
   *) MIPS III/IV assembler module is reimplemented.

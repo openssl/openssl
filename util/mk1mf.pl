@@ -404,11 +404,11 @@ EOF
     
 my $platform_cpp_symbol = "MK1MF_PLATFORM_$platform";
 $platform_cpp_symbol =~ s/-/_/;
-if (open(IN,"crypto/mk1mfinf.h"))
+if (open(IN,"crypto/buildinf.h"))
 	{
-	# Remove entry for this platform in existing file mk1mfinf.h.
+	# Remove entry for this platform in existing file buildinf.h.
 
-	my $old_mk1mfinf_h = "";
+	my $old_buildinf_h = "";
 	while (<IN>)
 		{
 		if (/^\#ifdef $platform_cpp_symbol$/)
@@ -417,21 +417,20 @@ if (open(IN,"crypto/mk1mfinf.h"))
 			}
 		else
 			{
-			$old_mk1mfinf_h .= $_;
+			$old_buildinf_h .= $_;
 			}
 		}
 	close(IN);
 
-	open(OUT,">crypto/mk1mfinf.h") || die "Can't open mk1mfinf.h";
-	print OUT $old_mk1mfinf_h;
+	open(OUT,">crypto/buildinf.h") || die "Can't open buildinf.h";
+	print OUT $old_buildinf_h;
 	close(OUT);
 	}
 
-open (OUT,">>crypto/mk1mfinf.h") || die "Can't open mk1mfinf.h";
+open (OUT,">>crypto/buildinf.h") || die "Can't open buildinf.h";
 printf OUT <<EOF;
 #ifdef $platform_cpp_symbol
-  /* auto-generated and updated by util/mk1mf.pl for crypto/cversion.c */
-  /* (used in place of crypto/buildinf.h by mk1mf builds) */
+  /* auto-generated/updated by util/mk1mf.pl for crypto/cversion.c */
   #define CFLAGS "$cc $cflags"
   #define PLATFORM "$platform"
 EOF

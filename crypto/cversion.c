@@ -61,11 +61,7 @@
 #include "cryptlib.h"
 #include <openssl/crypto.h>
 
-#ifdef MK1MF_BUILD
-# include "mk1mfinf.h"
-#else
-# include "buildinf.h"
-#endif
+#include "buildinf.h"
 
 const char *SSLeay_version(int t)
 	{
