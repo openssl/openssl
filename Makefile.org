@@ -270,9 +270,7 @@ do_gnu-shared:
 	done
 
 DETECT_GNU_LD=${CC} -v 2>&1 | grep '^gcc' >/dev/null 2>&1 && \
-	collect2=`gcc -print-prog-name=collect2 2>&1` && \
-	[ -n "$$collect2" ] && \
-	my_ld=`$$collect2 --help 2>&1 | grep Usage: | sed 's/^Usage: *\([^ ][^ ]*\).*/\1/'` && \
+	ld=`gcc -print-prog-name=ld 2>&1` && \
 	[ -n "$$my_ld" ] && \
 	$$my_ld -v 2>&1 | grep 'GNU ld' >/dev/null 2>&1
 
