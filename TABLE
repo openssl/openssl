@@ -172,7 +172,7 @@ $rc5_obj      =
 
 *** NetBSD-x86
 $cc           = gcc
-$cflags       = -DTERMIOS -D_ANSI_SOURCE -O3 -fomit-frame-pointer -m486 -Wall
+$cflags       = -DTERMIOS -O3 -fomit-frame-pointer -m486 -Wall
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 

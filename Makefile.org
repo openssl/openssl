@@ -298,7 +298,7 @@ util/libeay.num::
 util/ssleay.num::
 	perl util/mkdef.pl ssl update
 
-TABLE:
+TABLE: Configure
 	(echo 'Output of `Configure TABLE:'"'"; \
 	perl Configure TABLE) > TABLE
 
