@@ -15,10 +15,6 @@ MAKEFILE=       Makefile.ssl
 RM=             /bin/rm -f
 AR=		ar r
 
-MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
-MAKEFILE=	Makefile.ssl
-
 PEX_LIBS=
 EX_LIBS=
  
@@ -148,14 +144,19 @@ dclean:
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' dclean ); \
 	done;
 
-errors:
-	perl ./err/err_code.pl -conf err/ssleay.ec *.c */*.c ../ssl/*.c ../rsaref/*.c
+errors: errgen $(ERRC).c
+
+$(ERRC).c: $(ERR).err
 	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
 	perl err/err_genc.pl -s $(ERR).h $(ERRC).c
+
+errgen:
+	perl ./err/err_code.pl -conf err/ssleay.ec *.c */*.c ../ssl/*.c ../rsaref/*.c
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i; echo "making errors in $$i..."; \
 	$(MAKE) errors ); \
 	done;
+
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

@@ -113,7 +113,9 @@ dclean:
 clean:
 	/bin/rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-errors:
+errors: $(ERRC).c
+
+$(ERRC).c: $(ERR).err
 	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
 	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
 

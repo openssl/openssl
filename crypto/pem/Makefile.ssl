@@ -56,7 +56,7 @@ lib:	$(LIBOBJ)
 files:
 	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
-links:
+links: $(EXHEADER)
 	/bin/rm -f Makefile
 	$(TOP)/util/point.sh Makefile.ssl Makefile ;
 	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
@@ -88,7 +88,9 @@ dclean:
 clean:
 	/bin/rm -f $(CTX_SIZE) *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-errors:
+errors: $(ERRC).c
+
+$(ERRC).c: $(ERR).err
 	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).org # SPECIAL CASE .org
 	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
 	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
