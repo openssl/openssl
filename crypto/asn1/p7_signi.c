@@ -75,20 +75,20 @@ unsigned char **pp;
 	M_ASN1_I2D_len(a->version,i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(a->issuer_and_serial,i2d_PKCS7_ISSUER_AND_SERIAL);
 	M_ASN1_I2D_len(a->digest_alg,i2d_X509_ALGOR);
-	M_ASN1_I2D_len_IMP_set_opt(a->auth_attr,i2d_X509_ATTRIBUTE,0);
+	M_ASN1_I2D_len_IMP_SET_opt(a->auth_attr,i2d_X509_ATTRIBUTE,0);
 	M_ASN1_I2D_len(a->digest_enc_alg,i2d_X509_ALGOR);
 	M_ASN1_I2D_len(a->enc_digest,i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_len_IMP_set_opt(a->unauth_attr,i2d_X509_ATTRIBUTE,1);
+	M_ASN1_I2D_len_IMP_SET_opt(a->unauth_attr,i2d_X509_ATTRIBUTE,1);
 
 	M_ASN1_I2D_seq_total();
 
 	M_ASN1_I2D_put(a->version,i2d_ASN1_INTEGER);
 	M_ASN1_I2D_put(a->issuer_and_serial,i2d_PKCS7_ISSUER_AND_SERIAL);
 	M_ASN1_I2D_put(a->digest_alg,i2d_X509_ALGOR);
-	M_ASN1_I2D_put_IMP_set_opt(a->auth_attr,i2d_X509_ATTRIBUTE,0);
+	M_ASN1_I2D_put_IMP_SET_opt(a->auth_attr,i2d_X509_ATTRIBUTE,0);
 	M_ASN1_I2D_put(a->digest_enc_alg,i2d_X509_ALGOR);
 	M_ASN1_I2D_put(a->enc_digest,i2d_ASN1_OCTET_STRING);
-	M_ASN1_I2D_put_IMP_set_opt(a->unauth_attr,i2d_X509_ATTRIBUTE,1);
+	M_ASN1_I2D_put_IMP_SET_opt(a->unauth_attr,i2d_X509_ATTRIBUTE,1);
 
 	M_ASN1_I2D_finish();
 	}

@@ -86,13 +86,13 @@ unsigned char **pp;
 
 	M_ASN1_I2D_len(a->serialNumber,i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(a->revocationDate,i2d_ASN1_UTCTIME);
-	M_ASN1_I2D_len_SEQ_opt(a->extensions,i2d_X509_EXTENSION);
+	M_ASN1_I2D_len_SEQUENCE_opt(a->extensions,i2d_X509_EXTENSION);
 
 	M_ASN1_I2D_seq_total();
 
 	M_ASN1_I2D_put(a->serialNumber,i2d_ASN1_INTEGER);
 	M_ASN1_I2D_put(a->revocationDate,i2d_ASN1_UTCTIME);
-	M_ASN1_I2D_put_SEQ_opt(a->extensions,i2d_X509_EXTENSION);
+	M_ASN1_I2D_put_SEQUENCE_opt(a->extensions,i2d_X509_EXTENSION);
 
 	M_ASN1_I2D_finish();
 	}
@@ -133,8 +133,8 @@ unsigned char **pp;
 	M_ASN1_I2D_len(a->lastUpdate,i2d_ASN1_UTCTIME);
 	if (a->nextUpdate != NULL)
 		{ M_ASN1_I2D_len(a->nextUpdate,i2d_ASN1_UTCTIME); }
-	M_ASN1_I2D_len_SEQ_opt(a->revoked,i2d_X509_REVOKED);
-	M_ASN1_I2D_len_EXP_set_opt(a->extensions,i2d_X509_EXTENSION,0,
+	M_ASN1_I2D_len_SEQUENCE_opt(a->revoked,i2d_X509_REVOKED);
+	M_ASN1_I2D_len_EXP_SEQUENCE_opt(a->extensions,i2d_X509_EXTENSION,0,
 		V_ASN1_SEQUENCE,v1);
 
 	M_ASN1_I2D_seq_total();
@@ -148,8 +148,8 @@ unsigned char **pp;
 	M_ASN1_I2D_put(a->lastUpdate,i2d_ASN1_UTCTIME);
 	if (a->nextUpdate != NULL)
 		{ M_ASN1_I2D_put(a->nextUpdate,i2d_ASN1_UTCTIME); }
-	M_ASN1_I2D_put_SEQ_opt(a->revoked,i2d_X509_REVOKED);
-	M_ASN1_I2D_put_EXP_set_opt(a->extensions,i2d_X509_EXTENSION,0,
+	M_ASN1_I2D_put_SEQUENCE_opt(a->revoked,i2d_X509_REVOKED);
+	M_ASN1_I2D_put_EXP_SEQUENCE_opt(a->extensions,i2d_X509_EXTENSION,0,
 		V_ASN1_SEQUENCE,v1);
 
 	M_ASN1_I2D_finish();

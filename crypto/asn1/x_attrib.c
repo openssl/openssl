@@ -93,7 +93,7 @@ unsigned char **pp;
 		ret+=i2d_ASN1_OBJECT(a->object,p);
 		if (a->set)
 			ret+=i2d_ASN1_SET(a->value.set,p,i2d_ASN1_TYPE,
-				V_ASN1_SET,V_ASN1_UNIVERSAL);
+				V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
 		else
 			ret+=i2d_ASN1_TYPE(a->value.single,p);
 		if (k++) return(r);

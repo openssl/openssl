@@ -62,17 +62,43 @@
 
 /* ASN1err(ASN1_F_ASN1_TYPE_NEW,ERR_R_MALLOC_FAILURE);
  */
+typedef struct
+    {
+    unsigned char *pbData;
+    int cbData;
+    } MYBLOB;
 
-int i2d_ASN1_SET(a,pp,func,ex_tag,ex_class)
+/* SetBlobCmp
+ * This function compares two elements of SET_OF block
+ */
+static int SetBlobCmp(const void *elem1, const void *elem2 )
+    {
+    MYBLOB *b1 = (MYBLOB *)elem1;
+    MYBLOB *b2 = (MYBLOB *)elem2;
+    int r;
+
+    r = memcmp(b1->pbData, b2->pbData,
+	       b1->cbData < b2->cbData ? b1->cbData : b2->cbData);
+    if(r != 0)
+	return r;
+    return b1->cbData-b2->cbData;
+    }
+
+int i2d_ASN1_SET(a,pp,func,ex_tag,ex_class,is_set)
 STACK *a;
 unsigned char **pp;
 int (*func)();
 int ex_tag;
 int ex_class;
+int is_set;	/* if TRUE, then sort the contents (i.e. it isn't a SEQUENCE) */
+
 	{
 	int ret=0,r;
 	int i;
 	unsigned char *p;
+        unsigned char *pStart, *pTempMem;
+        MYBLOB *rgSetBlob;
+        int totSize;
 
 	if (a == NULL) return(0);
 	for (i=sk_num(a)-1; i>=0; i--)
@@ -82,12 +108,55 @@ int ex_class;
 
 	p= *pp;
 	ASN1_put_object(&p,1,ret,ex_tag,ex_class);
-	for (i=0; i<sk_num(a); i++)
-		func(sk_value(a,i),&p);
 
-	*pp=p;
-	return(r);
-	}
+/* Modified by gp@nsj.co.jp */
+	/* And then again by Ben */
+	/* And again by Steve */
+
+	if(!is_set || (sk_num(a) < 2))
+		{
+		for (i=0; i<sk_num(a); i++)
+                	func(sk_value(a,i),&p);
+
+		*pp=p;
+		return(r);
+		}
+
+        pStart  = p; /* Catch the beg of Setblobs*/
+        rgSetBlob = (MYBLOB *)Malloc( sk_num(a) * sizeof(MYBLOB)); /* In this array
+we will store the SET blobs */
+
+        for (i=0; i<sk_num(a); i++)
+	        {
+                rgSetBlob[i].pbData = p;  /* catch each set encode blob */
+                func(sk_value(a,i),&p);
+                rgSetBlob[i].cbData = p - rgSetBlob[i].pbData; /* Length of this
+SetBlob
+*/
+		}
+        *pp=p;
+        totSize = p - pStart; /* This is the total size of all set blobs */
+
+ /* Now we have to sort the blobs. I am using a simple algo.
+    *Sort ptrs *Copy to temp-mem *Copy from temp-mem to user-mem*/
+        qsort( rgSetBlob, sk_num(a), sizeof(MYBLOB), SetBlobCmp);
+        pTempMem = Malloc(totSize);
+
+/* Copy to temp mem */
+        p = pTempMem;
+        for(i=0; i<sk_num(a); ++i)
+		{
+                memcpy(p, rgSetBlob[i].pbData, rgSetBlob[i].cbData);
+                p += rgSetBlob[i].cbData;
+		}
+
+/* Copy back to user mem*/
+        memcpy(pStart, pTempMem, totSize);
+        Free(pTempMem);
+        Free(rgSetBlob);
+
+        return(r);
+        }
 
 STACK *d2i_ASN1_SET(a,pp,length,func,free_func,ex_tag,ex_class)
 STACK **a;

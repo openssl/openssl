@@ -430,8 +430,11 @@ int		i2d_ASN1_UTCTIME(ASN1_UTCTIME *a,unsigned char **pp);
 ASN1_UTCTIME *	d2i_ASN1_UTCTIME(ASN1_UTCTIME **a,unsigned char **pp,
 			long length);
 
+  /* for the is_set parameter to i2d_ASN1_SET */
+#define IS_SEQUENCE	0
+#define IS_SET		1
 int		i2d_ASN1_SET(STACK *a, unsigned char **pp,
-			int (*func)(), int ex_tag, int ex_class);
+			int (*func)(), int ex_tag, int ex_class, int is_set);
 STACK *		d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
 			char *(*func)(), void (*free_func)(),
 			int ex_tag, int ex_class);

@@ -76,8 +76,8 @@ unsigned char **pp;
 	M_ASN1_I2D_len_SET(a->recipientinfo,i2d_PKCS7_RECIP_INFO);
 	M_ASN1_I2D_len_SET(a->md_algs,i2d_X509_ALGOR);
 	M_ASN1_I2D_len(a->enc_data,i2d_PKCS7_ENC_CONTENT);
-	M_ASN1_I2D_len_IMP_set_opt(a->cert,i2d_X509,0);
-	M_ASN1_I2D_len_IMP_set_opt(a->crl,i2d_X509_CRL,1);
+	M_ASN1_I2D_len_IMP_SEQUENCE_opt(a->cert,i2d_X509,0);
+	M_ASN1_I2D_len_IMP_SET_opt(a->crl,i2d_X509_CRL,1);
 	M_ASN1_I2D_len_SET(a->signer_info,i2d_PKCS7_SIGNER_INFO);
 
 	M_ASN1_I2D_seq_total();
@@ -86,8 +86,8 @@ unsigned char **pp;
 	M_ASN1_I2D_put_SET(a->recipientinfo,i2d_PKCS7_RECIP_INFO);
 	M_ASN1_I2D_put_SET(a->md_algs,i2d_X509_ALGOR);
 	M_ASN1_I2D_put(a->enc_data,i2d_PKCS7_ENC_CONTENT);
-	M_ASN1_I2D_put_IMP_set_opt(a->cert,i2d_X509,0);
-	M_ASN1_I2D_put_IMP_set_opt(a->crl,i2d_X509_CRL,1);
+	M_ASN1_I2D_put_IMP_SEQUENCE_opt(a->cert,i2d_X509,0);
+	M_ASN1_I2D_put_IMP_SET_opt(a->crl,i2d_X509_CRL,1);
 	M_ASN1_I2D_put_SET(a->signer_info,i2d_PKCS7_SIGNER_INFO);
 
 	M_ASN1_I2D_finish();

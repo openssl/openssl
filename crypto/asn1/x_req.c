@@ -87,11 +87,11 @@ unsigned char **pp;
 	 */
 	if (a->req_kludge) 
 	        {
-	        M_ASN1_I2D_len_IMP_set_opt(a->attributes,i2d_X509_ATTRIBUTE,0);
+	        M_ASN1_I2D_len_IMP_SET_opt(a->attributes,i2d_X509_ATTRIBUTE,0);
 		}
 	else
 	        {
-	        M_ASN1_I2D_len_IMP_set(a->attributes,	i2d_X509_ATTRIBUTE,0);
+	        M_ASN1_I2D_len_IMP_SET(a->attributes,	i2d_X509_ATTRIBUTE,0);
 		}
 	
 	M_ASN1_I2D_seq_total();
@@ -107,11 +107,11 @@ unsigned char **pp;
 	 */
 	if (a->req_kludge)
 		{
-	        M_ASN1_I2D_put_IMP_set_opt(a->attributes,i2d_X509_ATTRIBUTE,0);
+	        M_ASN1_I2D_put_IMP_SET_opt(a->attributes,i2d_X509_ATTRIBUTE,0);
 		}
 	else
 		{
-	        M_ASN1_I2D_put_IMP_set(a->attributes,i2d_X509_ATTRIBUTE,0);
+	        M_ASN1_I2D_put_IMP_SET(a->attributes,i2d_X509_ATTRIBUTE,0);
 		}
 
 	M_ASN1_I2D_finish();
