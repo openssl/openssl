@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/05/11 00:52:39 $
+  ______________                           $Date: 1999/05/12 01:52:58 $
 
   DEVELOPMENT STATE
 
@@ -23,10 +23,8 @@
     o exptest and rsa_oaep_test fail with irix64-*
       (Don Badrak <dbadrak@geo.census.gov>: "Re: Problems to compile openssl
 	  on IRIX 6.2", openssl-users)
-    o BN_add test fails on Caldera OpenLinux 1.3
-      (Marc Christensen <Marc.Christensen@m.cc.utah.edu>
-	  "Compiles but fails big number test?", openssl-users)
- 
+    o const des_cblock problem
+
   AVAILABLE PATCHES
 
     o OCSP (titchenert@certco.com) 
