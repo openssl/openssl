@@ -215,11 +215,11 @@ test_ssl: keyU.ss certU.ss certCA.ss
 	@sh ./testssl keyU.ss certU.ss certCA.ss
 
 test_ca:
-	@if ../apps/openssl list-standard-commands | grep '^rsa$$' >/dev/null; then \
+	@if ../apps/openssl no-rsa; then \
+	  echo "skipping CA.sh test -- requires RSA"; \
+	else \
 	  echo "Generate and certify a test certificate via the 'ca' program"; \
 	  sh ./testca; \
-	else \
-	  echo "skipping CA.sh test -- requires RSA"; \
  	fi
 
 lint:

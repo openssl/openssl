@@ -13,12 +13,12 @@ echo "generating certificate request"
 
 echo "string to make the random number generator think it has entropy" >> ./.rnd
 
-if ../apps/openssl list-standard-commands | grep '^rsa$' >/dev/null; then
+if ../apps/openssl no-rsa; then
+  req_new='-newkey dsa:../apps/dsa512.pem'
+else
   req_new='-new'
   echo "There should be a 2 sequences of .'s and some +'s."
   echo "There should not be more that at most 80 per line"
-else
-  req_new='-newkey dsa:../apps/dsa512.pem'
 fi
 
 echo "This could take some time."

@@ -115,7 +115,9 @@ $ssltest -bio_pair -server_auth -client_auth $CA || exit 1
 echo test tls1 with 1024bit anonymous DH, multiple handshakes
 $ssltest -v -bio_pair -tls1 -cipher ADH -dhe1024dsa -num 10 -f -time || exit 1
 
-if ../apps/openssl list-standard-commands | grep '^rsa$' >/dev/null; then
+if ../apps/openssl no-rsa; then
+  echo skipping RSA tests
+else
   echo test tls1 with 1024bit RSA, no DHE, multiple handshakes
   ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -no_dhe -num 10 -f -time || exit 1
 

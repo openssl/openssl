@@ -233,6 +233,18 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 		{
 		ret=fp->func(argc,argv);
 		}
+	else if ((strncmp(argv[0],"no-",3)) == 0)
+		{
+		BIO *bio_stdout = BIO_new_fp(stdout,BIO_NOCLOSE);
+		f.name=argv[0]+3;
+		ret = (lh_retrieve(prog,&f) != NULL);
+		if (!ret)
+			BIO_printf(bio_stdout, "%s\n", argv[0]);
+		else
+			BIO_printf(bio_stdout, "%s\n", argv[0]+3);
+		BIO_free(bio_stdout);
+		goto end;
+		}
 	else if ((strcmp(argv[0],"quit") == 0) ||
 		(strcmp(argv[0],"q") == 0) ||
 		(strcmp(argv[0],"exit") == 0) ||

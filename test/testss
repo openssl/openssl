@@ -20,10 +20,10 @@ Ucert="certU.ss"
 echo
 echo "make a certificate request using 'req'"
 
-if ../apps/openssl list-standard-commands | grep '^rsa$' >/dev/null; then
-  req_new='-new'
-else
+if ../apps/openssl no-rsa; then
   req_new='-newkey dsa:../apps/dsa512.pem'
+else
+  req_new='-new'
 fi
 
 $reqcmd -config $CAconf -out $CAreq -keyout $CAkey $req_new #>err.ss

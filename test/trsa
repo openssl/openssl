@@ -3,10 +3,8 @@
 PATH=../apps:$PATH
 export PATH
 
-if ../apps/openssl list-standard-commands | grep '^rsa$' >/dev/null; then
-  echo openssl rsa command available
-else
-  echo openssl rsa command not available, skipping test
+if ../apps/openssl no-rsa; then
+  echo skipping rsa conversion test
   exit 0
 fi
 
