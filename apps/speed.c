@@ -959,22 +959,22 @@ int MAIN(int argc, char **argv)
 		}
 #endif
 
-	RAND_bytes(buf,30);
+	RAND_bytes(buf,36);
 #ifndef NO_RSA
 	for (j=0; j<RSA_NUM; j++)
 		{
+		int ret;
 		if (!rsa_doit[j]) continue;
-		rsa_num=RSA_private_encrypt(30,buf,buf2,rsa_key[j],
-			RSA_PKCS1_PADDING);
+		ret=RSA_sign(NID_md5_sha1, buf,36, buf2, &rsa_num, rsa_key[j]);
 		pkey_print_message("private","rsa",rsa_c[j][0],rsa_bits[j],
 			RSA_SECONDS);
 /*		RSA_blinding_on(rsa_key[j],NULL); */
 		Time_F(START);
 		for (count=0,run=1; COND(rsa_c[j][0]); count++)
 			{
-			rsa_num=RSA_private_encrypt(30,buf,buf2,rsa_key[j],
-				RSA_PKCS1_PADDING);
-			if (rsa_num <= 0)
+			ret=RSA_sign(NID_md5_sha1, buf,36, buf2, &rsa_num,
+								 rsa_key[j]);
+			if (ret <= 0)
 				{
 				BIO_printf(bio_err,"RSA private encrypt failure\n");
 				ERR_print_errors(bio_err);
@@ -989,18 +989,17 @@ int MAIN(int argc, char **argv)
 		rsa_count=count;
 
 #if 1
-		rsa_num2=RSA_public_decrypt(rsa_num,buf2,buf,rsa_key[j],
-			RSA_PKCS1_PADDING);
+		ret=RSA_verify(NID_md5_sha1, buf,36, buf2, rsa_num, rsa_key[j]);
 		pkey_print_message("public","rsa",rsa_c[j][1],rsa_bits[j],
 			RSA_SECONDS);
 		Time_F(START);
 		for (count=0,run=1; COND(rsa_c[j][1]); count++)
 			{
-			rsa_num2=RSA_public_decrypt(rsa_num,buf2,buf,rsa_key[j],
-				RSA_PKCS1_PADDING);
-			if (rsa_num2 <= 0)
+			ret=RSA_verify(NID_md5_sha1, buf,36, buf2, rsa_num,
+								rsa_key[j]);
+			if (ret <= 0)
 				{
-				BIO_printf(bio_err,"RSA public decrypt failure\n");
+				BIO_printf(bio_err,"RSA verify failure\n");
 				ERR_print_errors(bio_err);
 				count=1;
 				break;
