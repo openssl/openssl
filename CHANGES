@@ -40,21 +40,12 @@
  
  Changes between 0.9.6d and 0.9.7  [XX xxx 2002]
 
-     OpenSSL 0.9.6a/0.9.6b/0.9.6c/0.9.6d (bugfix releases, 5 Apr 2001,
-     9 July 2001, 21 Dec 2001, XX xxx 2002) and OpenSSL 0.9.7 were developed
-     in parallel, based on OpenSSL 0.9.6.  
-
-     Change log entries are tagged as follows:
-         -) applies to 0.9.6a/0.9.6b/0.9.6c/0.9.6d only
-         *) applies to 0.9.6a/0.9.6b/0.9.6c/0.9.6d and 0.9.7
-         +) applies to 0.9.7 only
-
-  +) Make object definitions compliant to LDAP (RFC2256): SN is the short
+  *) Make object definitions compliant to LDAP (RFC2256): SN is the short
      form for "surname", serialNumber has no short form (Michael Bell
      <michael.bell@rz.hu-berlin.de>).
      [Lutu Jaenicke]
 
-  +) Add an "init" command to the ENGINE config module and auto initialize
+  *) Add an "init" command to the ENGINE config module and auto initialize
      ENGINEs. Without any "init" command the ENGINE will be initialized 
      after all ctrl commands have been executed on it. If init=1 the 
      ENGINE is initailized at that point (ctrls before that point are run
@@ -62,7 +53,7 @@
      init=0 then the ENGINE will not be iniatialized at all.
      [Steve Henson]
 
-  +) Fix the 'app_verify_callback' interface so that the user-defined
+  *) Fix the 'app_verify_callback' interface so that the user-defined
      argument is actually passed to the callback: In the
      SSL_CTX_set_cert_verify_callback() prototype, the callback
      declaration has been changed from
@@ -78,10 +69,10 @@
      a dummy argument can be added to their callback functions.
      [D. K. Smetters <smetters@parc.xerox.com>]
 
-  +) Added the '4758cca' ENGINE to support IBM 4758 cards.
+  *) Added the '4758cca' ENGINE to support IBM 4758 cards.
      [Maurice Gittens <maurice@gittens.nl>, touchups by Geoff Thorpe]
 
-  +) Add and OPENSSL_LOAD_CONF define which will cause
+  *) Add and OPENSSL_LOAD_CONF define which will cause
      OpenSSL_add_all_algorithms() to load the openssl.cnf config file.
      This allows older applications to transparently support certain
      OpenSSL features: such as crypto acceleration and dynamic ENGINE loading.
@@ -90,11 +81,11 @@
      always load it have also been added.
      [Steve Henson]
 
-  +) Add the OFB, CFB and CTR (all with 128 bit feedback) to AES.
+  *) Add the OFB, CFB and CTR (all with 128 bit feedback) to AES.
      Adjust NIDs and EVP layer.
      [Stephen Sprunk <stephen@sprunk.org> and Richard Levitte]
 
-  +) Config modules support in openssl utility.
+  *) Config modules support in openssl utility.
 
      Most commands now load modules from the config file,
      though in a few (such as version) this isn't done 
@@ -106,35 +97,35 @@
      alternative file.
      [Steve Henson]
 
-  +) Move default behaviour from OPENSSL_config(). If appname is NULL
+  *) Move default behaviour from OPENSSL_config(). If appname is NULL
      use "openssl_conf" if filename is NULL use default openssl config file.
      [Steve Henson]
 
-  +) Add an argument to OPENSSL_config() to allow the use of an alternative
+  *) Add an argument to OPENSSL_config() to allow the use of an alternative
      config section name. Add a new flag to tolerate a missing config file
      and move code to CONF_modules_load_file().
      [Steve Henson]
 
-  +) Support for crypto accelerator cards from Accelerated Encryption
+  *) Support for crypto accelerator cards from Accelerated Encryption
      Processing, www.aep.ie.  (Use engine 'aep')
      The support was copied from 0.9.6c [engine] and adapted/corrected
      to work with the new engine framework.
      [AEP Inc. and Richard Levitte]
 
-  +) Support for SureWare crypto accelerator cards from Baltimore
+  *) Support for SureWare crypto accelerator cards from Baltimore
      Technologies.  (Use engine 'sureware')
      The support was copied from 0.9.6c [engine] and adapted
      to work with the new engine framework.
      [Richard Levitte]
 
-  +) Have the CHIL engine fork-safe (as defined by nCipher) and actually
+  *) Have the CHIL engine fork-safe (as defined by nCipher) and actually
      make the newer ENGINE framework commands for the CHIL engine work.
      [Toomas Kiisk <vix@cyber.ee> and Richard Levitte]
 
-  +) Make it possible to produce shared libraries on ReliantUNIX.
+  *) Make it possible to produce shared libraries on ReliantUNIX.
      [Robert Dahlem <Robert.Dahlem@ffm2.siemens.de> via Richard Levitte]
 
-  +) Add the configuration target debug-linux-ppro.
+  *) Add the configuration target debug-linux-ppro.
      Make 'openssl rsa' use the general key loading routines
      implemented in apps.c, and make those routines able to
      handle the key format FORMAT_NETSCAPE and the variant
@@ -144,15 +135,15 @@
  *) Fix a crashbug and a logic bug in hwcrhk_load_pubkey().
      [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
 
-  +) Add -keyform to rsautl, and document -engine.
+  *) Add -keyform to rsautl, and document -engine.
      [Richard Levitte, inspired by Toomas Kiisk <vix@cyber.ee>]
 
-  +) Change BIO_new_file (crypto/bio/bss_file.c) to use new
+  *) Change BIO_new_file (crypto/bio/bss_file.c) to use new
      BIO_R_NO_SUCH_FILE error code rather than the generic
      ERR_R_SYS_LIB error code if fopen() fails with ENOENT.
      [Ben Laurie]
 
-  +) Add new functions
+  *) Add new functions
           ERR_peek_last_error
           ERR_peek_last_error_line
           ERR_peek_last_error_line_data.
@@ -164,56 +155,34 @@
      still in the error queue.
      [Ben Laurie, Bodo Moeller]
         
-  +) default_algorithms option in ENGINE config module. This allows things
+  *) default_algorithms option in ENGINE config module. This allows things
      like:
      default_algorithms = ALL
      default_algorithms = RSA, DSA, RAND, CIPHERS, DIGESTS
      [Steve Henson]
 
-  +) Prelminary ENGINE config module.
+  *) Prelminary ENGINE config module.
      [Steve Henson]
 
-  +) New experimental application configuration code.
+  *) New experimental application configuration code.
      [Steve Henson]
 
-  +) Change the AES code to follow the same name structure as all other
+  *) Change the AES code to follow the same name structure as all other
      symmetric ciphers, and behave the same way.  Move everything to
      the directory crypto/aes, thereby obsoleting crypto/rijndael.
      [Stephen Sprunk <stephen@sprunk.org> and Richard Levitte]
 
-  -) OpenSSL 0.9.6c released [21 dec 2001]
-
-  +) SECURITY: remove unsafe setjmp/signal interaction from ui_openssl.c.
+  *) SECURITY: remove unsafe setjmp/signal interaction from ui_openssl.c.
      [Ben Laurie and Theo de Raadt]
 
-  +) Add option to output public keys in req command.
+  *) Add option to output public keys in req command.
      [Massimiliano Pala madwolf@openca.org]
 
-  -) [In 0.9.6c-engine release:]
-     Add support for Cryptographic Appliance's keyserver technology.
-     (Use engine 'keyclient')
-     [Cryptographic Appliances and Geoff Thorpe]
-
-  +) Use wNAFs in EC_POINTs_mul() for improved efficiency
+  *) Use wNAFs in EC_POINTs_mul() for improved efficiency
      (up to about 10% better than before for P-192 and P-224).
      [Bodo Moeller]
 
-  -) [In 0.9.6c-engine release:]
-     Add support for Broadcom crypto accelerator cards, backported
-     from 0.9.7.
-     [Broadcom, Nalin Dahyabhai <nalin@redhat.com>, Mark Cox]
-
-  -) [In 0.9.6c-engine release:]
-     Add support for SureWare crypto accelerator cards from 
-     Baltimore Technologies.  (Use engine 'sureware')
-     [Baltimore Technologies and Mark Cox]
-
-  -) [In 0.9.6c-engine release:]
-     Add support for crypto accelerator cards from Accelerated
-     Encryption Processing, www.aep.ie.  (Use engine 'aep')
-     [AEP Inc. and Mark Cox]
-
-  +) New functions/macros
+  *) New functions/macros
 
           SSL_CTX_set_msg_callback(ctx, cb)
           SSL_CTX_set_msg_callback_arg(ctx, arg)
@@ -240,7 +209,7 @@
      to enable a callback that displays all protocol messages.
      [Bodo Moeller]
 
-  +) Change the shared library support so shared libraries are built as
+  *) Change the shared library support so shared libraries are built as
      soon as the corresponding static library is finished, and thereby get
      openssl and the test programs linked against the shared library.
      This still only happens when the keyword "shard" has been given to
@@ -250,29 +219,29 @@
      backward binary compatibility is still not guaranteed.
      ["Maciej W. Rozycki" <macro@ds2.pg.gda.pl> and Richard Levitte]
 
-  +) Add support for Subject Information Access extension.
+  *) Add support for Subject Information Access extension.
      [Peter Sylvester <Peter.Sylvester@EdelWeb.fr>]
 
-  +) Make BUF_MEM_grow() behaviour more consistent: Initialise to zero
+  *) Make BUF_MEM_grow() behaviour more consistent: Initialise to zero
      additional bytes when new memory had to be allocated, not just
      when reusing an existing buffer.
      [Bodo Moeller]
 
-  +) New command line and configuration option 'utf8' for the req command.
+  *) New command line and configuration option 'utf8' for the req command.
      This allows field values to be specified as UTF8 strings.
      [Steve Henson]
 
-  +) Add -multi and -mr options to "openssl speed" - giving multiple parallel
+  *) Add -multi and -mr options to "openssl speed" - giving multiple parallel
      runs for the former and machine-readable output for the latter.
      [Ben Laurie]
 
-  +) Add '-noemailDN' option to 'openssl ca'.  This prevents inclusion
+  *) Add '-noemailDN' option to 'openssl ca'.  This prevents inclusion
      of the e-mail address in the DN (i.e., it will go into a certificate
      extension only).  The new configuration file option 'email_in_dn = no'
      has the same effect.
      [Massimiliano Pala madwolf@openca.org]
 
-  +) Change all functions with names starting with des_ to be starting
+  *) Change all functions with names starting with des_ to be starting
      with DES_ instead.  Add wrappers that are compatible with libdes,
      but are named _ossl_old_des_*.  Finally, add macros that map the
      des_* symbols to the corresponding _ossl_old_des_* if libdes
@@ -301,7 +270,7 @@
      default), and then completely removed.
      [Richard Levitte]
 
-  +) Test for certificates which contain unsupported critical extensions.
+  *) Test for certificates which contain unsupported critical extensions.
      If such a certificate is found during a verify operation it is 
      rejected by default: this behaviour can be overridden by either
      handling the new error X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION or
@@ -310,11 +279,11 @@
      particular extension is supported.
      [Steve Henson]
 
-  +) Modify the behaviour of EVP cipher functions in similar way to digests
+  *) Modify the behaviour of EVP cipher functions in similar way to digests
      to retain compatibility with existing code.
      [Steve Henson]
 
-  +) Modify the behaviour of EVP_DigestInit() and EVP_DigestFinal() to retain
+  *) Modify the behaviour of EVP_DigestInit() and EVP_DigestFinal() to retain
      compatibility with existing code. In particular the 'ctx' parameter does
      not have to be to be initialized before the call to EVP_DigestInit() and
      it is tidied up after a call to EVP_DigestFinal(). New function
@@ -327,15 +296,15 @@
      EVP_DigestFinal_ex() and EVP_MD_CTX_copy_ex().
      [Steve Henson]
 
-  +) Change ssl3_get_message (ssl/s3_both.c) and the functions using it
+  *) Change ssl3_get_message (ssl/s3_both.c) and the functions using it
      so that complete 'Handshake' protocol structures are kept in memory
      instead of overwriting 'msg_type' and 'length' with 'body' data.
      [Bodo Moeller]
 
-  +) Add an implementation of SSL_add_dir_cert_subjects_to_stack for Win32.
+  *) Add an implementation of SSL_add_dir_cert_subjects_to_stack for Win32.
      [Massimo Santin via Richard Levitte]
 
-  +) Major restructuring to the underlying ENGINE code. This includes
+  *) Major restructuring to the underlying ENGINE code. This includes
      reduction of linker bloat, separation of pure "ENGINE" manipulation
      (initialisation, etc) from functionality dealing with implementations
      of specific crypto iterfaces. This change also introduces integrated
@@ -357,15 +326,15 @@
      the new code.
      [Geoff Thorpe]
 
-  +) Change ASN1_GENERALIZEDTIME_check() to allow fractional seconds.
+  *) Change ASN1_GENERALIZEDTIME_check() to allow fractional seconds.
      [Steve Henson]
 
-  +) Change mkdef.pl to sort symbols that get the same entry number,
+  *) Change mkdef.pl to sort symbols that get the same entry number,
      and make sure the automatically generated functions ERR_load_*
      become part of libeay.num as well.
      [Richard Levitte]
 
-  +) New function SSL_renegotiate_pending().  This returns true once
+  *) New function SSL_renegotiate_pending().  This returns true once
      renegotiation has been requested (either SSL_renegotiate() call
      or HelloRequest/ClientHello receveived from the peer) and becomes
      false once a handshake has been completed.
@@ -375,31 +344,31 @@
      client has followed the request.)
      [Bodo Moeller]
 
-  +) New SSL option SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION.
+  *) New SSL option SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION.
      By default, clients may request session resumption even during
      renegotiation (if session ID contexts permit); with this option,
      session resumption is possible only in the first handshake.
      [Bodo Moeller]
 
-  +) Add some demos for certificate and certificate request creation.
+  *) Add some demos for certificate and certificate request creation.
      [Steve Henson]
 
-  +) Make maximum certificate chain size accepted from the peer application
+  *) Make maximum certificate chain size accepted from the peer application
      settable (SSL*_get/set_max_cert_list()), as proposed by
      "Douglas E. Engert" <deengert@anl.gov>.
      [Lutz Jaenicke]
 
-  +) Add support for shared libraries for Unixware-7
+  *) Add support for shared libraries for Unixware-7
      (Boyd Lynn Gerber <gerberb@zenez.com>).
      [Lutz Jaenicke]
 
-  +) Add a "destroy" handler to ENGINEs that allows structural cleanup to
+  *) Add a "destroy" handler to ENGINEs that allows structural cleanup to
      be done prior to destruction. Use this to unload error strings from
      ENGINEs that load their own error strings. NB: This adds two new API
      functions to "get" and "set" this destroy handler in an ENGINE.
      [Geoff Thorpe]
 
-  +) Alter all existing ENGINE implementations (except "openssl" and
+  *) Alter all existing ENGINE implementations (except "openssl" and
      "openbsd") to dynamically instantiate their own error strings. This
      makes them more flexible to be built both as statically-linked ENGINEs
      and self-contained shared-libraries loadable via the "dynamic" ENGINE.
@@ -407,7 +376,7 @@
      shared-libraries easier (see README.ENGINE).
      [Geoff Thorpe]
 
-  +) Add a "dynamic" ENGINE that provides a mechanism for binding ENGINE
+  *) Add a "dynamic" ENGINE that provides a mechanism for binding ENGINE
      implementations into applications that are completely implemented in
      self-contained shared-libraries. The "dynamic" ENGINE exposes control
      commands that can be used to configure what shared-library to load and
@@ -417,18 +386,18 @@
      (ie. how to use it, how to build "dynamic"-loadable ENGINEs, etc).
      [Geoff Thorpe]
 
-  +) Make it possible to unload ranges of ERR strings with a new
+  *) Make it possible to unload ranges of ERR strings with a new
      "ERR_unload_strings" function.
      [Geoff Thorpe]
 
-  +) Add a copy() function to EVP_MD.
+  *) Add a copy() function to EVP_MD.
      [Ben Laurie]
 
-  +) Make EVP_MD routines take a context pointer instead of just the
+  *) Make EVP_MD routines take a context pointer instead of just the
      md_data void pointer.
      [Ben Laurie]
 
-  +) Add flags to EVP_MD and EVP_MD_CTX. EVP_MD_FLAG_ONESHOT indicates
+  *) Add flags to EVP_MD and EVP_MD_CTX. EVP_MD_FLAG_ONESHOT indicates
      that the digest can only process a single chunk of data
      (typically because it is provided by a piece of
      hardware). EVP_MD_CTX_FLAG_ONESHOT indicates that the application
@@ -436,7 +405,7 @@
      framework needn't accumulate the data for oneshot drivers.
      [Ben Laurie]
 
-  +) As with "ERR", make it possible to replace the underlying "ex_data"
+  *) As with "ERR", make it possible to replace the underlying "ex_data"
      functions. This change also alters the storage and management of global
      ex_data state - it's now all inside ex_data.c and all "class" code (eg.
      RSA, BIO, SSL_CTX, etc) no longer stores its own STACKS and per-class
@@ -457,7 +426,7 @@
      has a return value to indicate success or failure.
      [Geoff Thorpe]
 
-  +) Make it possible to replace the underlying "ERR" functions such that the
+  *) Make it possible to replace the underlying "ERR" functions such that the
      global state (2 LHASH tables and 2 locks) is only used by the "default"
      implementation. This change also adds two functions to "get" and "set"
      the implementation prior to it being automatically set the first time
@@ -468,7 +437,7 @@
      application and not in its own statically linked copy of OpenSSL code.
      [Geoff Thorpe]
 
-  +) Give DH, DSA, and RSA types their own "**_up_ref()" function to increment
+  *) Give DH, DSA, and RSA types their own "**_up_ref()" function to increment
      reference counts. This performs normal REF_PRINT/REF_CHECK macros on
      the operation, and provides a more encapsulated way for external code
      (crypto/evp/ and ssl/) to do this. Also changed the evp and ssl code
@@ -477,20 +446,20 @@
      Also rename "DSO_up()" function to more descriptive "DSO_up_ref()".
      [Geoff Thorpe]
 
-  +) Add EVP test program.
+  *) Add EVP test program.
      [Ben Laurie]
 
-  +) Add symmetric cipher support to ENGINE. Expect the API to change!
+  *) Add symmetric cipher support to ENGINE. Expect the API to change!
      [Ben Laurie]
 
-  +) New CRL functions: X509_CRL_set_version(), X509_CRL_set_issuer_name()
+  *) New CRL functions: X509_CRL_set_version(), X509_CRL_set_issuer_name()
      X509_CRL_set_lastUpdate(), X509_CRL_set_nextUpdate(), X509_CRL_sort(),
      X509_REVOKED_set_serialNumber(), and X509_REVOKED_set_revocationDate().
      These allow a CRL to be built without having to access X509_CRL fields
      directly. Modify 'ca' application to use new functions.
      [Steve Henson]
 
-  +) Move SSL_OP_TLS_ROLLBACK_BUG out of the SSL_OP_ALL list of recommended
+  *) Move SSL_OP_TLS_ROLLBACK_BUG out of the SSL_OP_ALL list of recommended
      bug workarounds. Rollback attack detection is a security feature.
      The problem will only arise on OpenSSL servers when TLSv1 is not
      available (sslv3_server_method() or SSL_OP_NO_TLSv1).
@@ -498,7 +467,7 @@
      for their choice and can explicitly enable this option.
      [Bodo Moeller, Lutz Jaenicke]
 
-  +) Rationalise EVP so it can be extended: don't include a union of
+  *) Rationalise EVP so it can be extended: don't include a union of
      cipher/digest structures, add init/cleanup functions. This also reduces
      the number of header dependencies.
      Usage example:
@@ -513,7 +482,7 @@
 
      [Ben Laurie]
 
-  +) Make DES key schedule conform to the usual scheme, as well as
+  *) Make DES key schedule conform to the usual scheme, as well as
      correcting its structure. This means that calls to DES functions
      now have to pass a pointer to a des_key_schedule instead of a
      plain des_key_schedule (which was actually always a pointer
@@ -527,7 +496,7 @@
      (Note that a later change renames 'des_...' into 'DES_...'.)
      [Ben Laurie]
 
-  +) Initial reduction of linker bloat: the use of some functions, such as
+  *) Initial reduction of linker bloat: the use of some functions, such as
      PEM causes large amounts of unused functions to be linked in due to
      poor organisation. For example pem_all.c contains every PEM function
      which has a knock on effect of linking in large amounts of (unused)
@@ -535,24 +504,24 @@
      functions prevents this.
      [Steve Henson]
 
-  +) Cleanup of EVP macros.
+  *) Cleanup of EVP macros.
      [Ben Laurie]
 
-  +) Change historical references to {NID,SN,LN}_des_ede and ede3 to add the
+  *) Change historical references to {NID,SN,LN}_des_ede and ede3 to add the
      correct _ecb suffix.
      [Ben Laurie]
 
-  +) Add initial OCSP responder support to ocsp application. The
+  *) Add initial OCSP responder support to ocsp application. The
      revocation information is handled using the text based index
      use by the ca application. The responder can either handle
      requests generated internally, supplied in files (for example
      via a CGI script) or using an internal minimal server.
      [Steve Henson]
 
-  +) Add configuration choices to get zlib compression for TLS.
+  *) Add configuration choices to get zlib compression for TLS.
      [Richard Levitte]
 
-  +) Changes to Kerberos SSL for RFC 2712 compliance:
+  *) Changes to Kerberos SSL for RFC 2712 compliance:
      1.  Implemented real KerberosWrapper, instead of just using
          KRB5 AP_REQ message.  [Thanks to Simon Wilkinson <sxw@sxw.org.uk>]
      2.  Implemented optional authenticator field of KerberosWrapper.
@@ -565,15 +534,13 @@
       Jeffrey Altman <jaltman@columbia.edu>
       via Richard Levitte]
 
-  +) Cause 'openssl speed' to use fully hard-coded DSA keys as it
+  *) Cause 'openssl speed' to use fully hard-coded DSA keys as it
      already does with RSA. testdsa.h now has 'priv_key/pub_key'
      values for each of the key sizes rather than having just
      parameters (and 'speed' generating keys each time).
      [Geoff Thorpe]
 
-  -) OpenSSL 0.9.6b released [9 July 2001]
-
-  +) Speed up EVP routines.
+  *) Speed up EVP routines.
      Before:
 encrypt
 type              8 bytes     64 bytes    256 bytes   1024 bytes   8192 bytes
@@ -591,10 +558,10 @@ decrypt
 des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Ben Laurie]
 
-  +) Added the OS2-EMX target.
+  *) Added the OS2-EMX target.
      ["Brian Havard" <brianh@kheldar.apana.org.au> and Richard Levitte]
 
-  +) Rewrite apps to use NCONF routines instead of the old CONF. New functions
+  *) Rewrite apps to use NCONF routines instead of the old CONF. New functions
      to support NCONF routines in extension code. New function CONF_set_nconf()
      to allow functions which take an NCONF to also handle the old LHASH
      structure: this means that the old CONF compatible routines can be
@@ -602,16 +569,16 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      code. New function X509V3_add_ext_nconf_sk to add extensions to a stack.
      [Steve Henson]
 
-  +) Enhance the general user interface with mechanisms for inner control
+  *) Enhance the general user interface with mechanisms for inner control
      and with possibilities to have yes/no kind of prompts.
      [Richard Levitte]
 
-  +) Change all calls to low level digest routines in the library and
+  *) Change all calls to low level digest routines in the library and
      applications to use EVP. Add missing calls to HMAC_cleanup() and
      don't assume HMAC_CTX can be copied using memcpy().
      [Verdon Walker <VWalker@novell.com>, Steve Henson]
 
-  +) Add the possibility to control engines through control names but with
+  *) Add the possibility to control engines through control names but with
      arbitrary arguments instead of just a string.
      Change the key loaders to take a UI_METHOD instead of a callback
      function pointer.  NOTE: this breaks binary compatibility with earlier
@@ -620,35 +587,35 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      callback.
      [Richard Levitte]
 
-  +) Enhance the general user interface with mechanisms to better support
+  *) Enhance the general user interface with mechanisms to better support
      dialog box interfaces, application-defined prompts, the possibility
      to use defaults (for example default passwords from somewhere else)
      and interrupts/cancellations.
      [Richard Levitte]
 
-  +) Tidy up PKCS#12 attribute handling. Add support for the CSP name
+  *) Tidy up PKCS#12 attribute handling. Add support for the CSP name
      attribute in PKCS#12 files, add new -CSP option to pkcs12 utility.
      [Steve Henson]
 
-  +) Fix a memory leak in 'sk_dup()' in the case reallocation fails. (Also
+  *) Fix a memory leak in 'sk_dup()' in the case reallocation fails. (Also
      tidy up some unnecessarily weird code in 'sk_new()').
      [Geoff, reported by Diego Tartara <dtartara@novamens.com>]
 
-  +) Change the key loading routines for ENGINEs to use the same kind
+  *) Change the key loading routines for ENGINEs to use the same kind
      callback (pem_password_cb) as all other routines that need this
      kind of callback.
      [Richard Levitte]
 
-  +) Increase ENTROPY_NEEDED to 32 bytes, as Rijndael can operate with
+  *) Increase ENTROPY_NEEDED to 32 bytes, as Rijndael can operate with
      256 bit (=32 byte) keys. Of course seeding with more entropy bytes
      than this minimum value is recommended.
      [Lutz Jaenicke]
 
-  +) New random seeder for OpenVMS, using the system process statistics
+  *) New random seeder for OpenVMS, using the system process statistics
      that are easily reachable.
      [Richard Levitte]
 
-  +) Windows apparently can't transparently handle global
+  *) Windows apparently can't transparently handle global
      variables defined in DLLs. Initialisations such as:
 
         const ASN1_ITEM *it = &ASN1_INTEGER_it;
@@ -659,12 +626,12 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      needed for static libraries under Win32.
      [Steve Henson]
 
-  +) New functions X509_PURPOSE_set() and X509_TRUST_set() to handle
+  *) New functions X509_PURPOSE_set() and X509_TRUST_set() to handle
      setting of purpose and trust fields. New X509_STORE trust and
      purpose functions and tidy up setting in other SSL functions.
      [Steve Henson]
 
-  +) Add copies of X509_STORE_CTX fields and callbacks to X509_STORE
+  *) Add copies of X509_STORE_CTX fields and callbacks to X509_STORE
      structure. These are inherited by X509_STORE_CTX when it is 
      initialised. This allows various defaults to be set in the
      X509_STORE structure (such as flags for CRL checking and custom
@@ -679,7 +646,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      applications.
      [Steve Henson]
 
-  +) Initial CRL based revocation checking. If the CRL checking flag(s)
+  *) Initial CRL based revocation checking. If the CRL checking flag(s)
      are set then the CRL is looked up in the X509_STORE structure and
      its validity and signature checked, then if the certificate is found
      in the CRL the verify fails with a revoked error.
@@ -694,7 +661,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      handling.
      [Steve Henson]
 
-  +) Add a general user interface API (crypto/ui/).  This is designed
+  *) Add a general user interface API (crypto/ui/).  This is designed
      to replace things like des_read_password and friends (backward
      compatibility functions using this new API are provided).
      The purpose is to remove prompting functions from the DES code
@@ -702,11 +669,11 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      a window system and the like.
      [Richard Levitte]
 
-  +) Add "ex_data" support to ENGINE so implementations can add state at a
+  *) Add "ex_data" support to ENGINE so implementations can add state at a
      per-structure level rather than having to store it globally.
      [Geoff]
 
-  +) Make it possible for ENGINE structures to be copied when retrieved by
+  *) Make it possible for ENGINE structures to be copied when retrieved by
      ENGINE_by_id() if the ENGINE specifies a new flag: ENGINE_FLAGS_BY_ID_COPY.
      This causes the "original" ENGINE structure to act like a template,
      analogous to the RSA vs. RSA_METHOD type of separation. Because of this
@@ -718,12 +685,12 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      ENGINE structure.
      [Geoff]
 
-  +) Fix ASN1 decoder when decoding type ANY and V_ASN1_OTHER: since this
+  *) Fix ASN1 decoder when decoding type ANY and V_ASN1_OTHER: since this
      needs to match any other type at all we need to manually clear the
      tag cache.
      [Steve Henson]
 
-  +) Changes to the "openssl engine" utility to include;
+  *) Changes to the "openssl engine" utility to include;
      - verbosity levels ('-v', '-vv', and '-vvv') that provide information
        about an ENGINE's available control commands.
      - executing control commands from command line arguments using the
@@ -733,7 +700,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 	 openssl engine chil -pre FORK_CHECK:0 -pre SO_PATH:/lib/test.so
      [Geoff]
 
-  +) New dynamic control command support for ENGINEs. ENGINEs can now
+  *) New dynamic control command support for ENGINEs. ENGINEs can now
      declare their own commands (numbers), names (strings), descriptions,
      and input types for run-time discovery by calling applications. A
      subset of these commands are implicitly classed as "executable"
@@ -752,20 +719,20 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      control over shared-library paths without source code alterations.
      [Geoff]
 
-  +) Changed all ENGINE implementations to dynamically allocate their
+  *) Changed all ENGINE implementations to dynamically allocate their
      ENGINEs rather than declaring them statically. Apart from this being
      necessary with the removal of the ENGINE_FLAGS_MALLOCED distinction,
      this also allows the implementations to compile without using the
      internal engine_int.h header.
      [Geoff]
 
-  +) Minor adjustment to "rand" code. RAND_get_rand_method() now returns a
+  *) Minor adjustment to "rand" code. RAND_get_rand_method() now returns a
      'const' value. Any code that should be able to modify a RAND_METHOD
      should already have non-const pointers to it (ie. they should only
      modify their own ones).
      [Geoff]
 
-  +) Made a variety of little tweaks to the ENGINE code.
+  *) Made a variety of little tweaks to the ENGINE code.
      - "atalla" and "ubsec" string definitions were moved from header files
        to C code. "nuron" string definitions were placed in variables
        rather than hard-coded - allowing parameterisation of these values
@@ -787,7 +754,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
        ctrl(), key-load functions, etc) to take an (ENGINE*) parameter.
      [Geoff]
 
-  +) Implement binary inversion algorithm for BN_mod_inverse in addition
+  *) Implement binary inversion algorithm for BN_mod_inverse in addition
      to the algorithm using long division.  The binary algorithm can be
      used only if the modulus is odd.  On 32-bit systems, it is faster
      only for relatively small moduli (roughly 20-30% for 128-bit moduli,
@@ -797,28 +764,15 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      for moduli up to 2048 bits.
      [Bodo Moeller]
 
-  -) OpenSSL 0.9.6a released [5 Apr 2001]
-
-  +) Rewrite CHOICE field setting in ASN1_item_ex_d2i(). The old code
+  *) Rewrite CHOICE field setting in ASN1_item_ex_d2i(). The old code
      could not support the combine flag in choice fields.
      [Steve Henson]
 
-  -) Fix for asn1_GetSequence() for indefinite length constructed data.
-     If SEQUENCE is length is indefinite just set c->slen to the total
-     amount of data available.
-     [Steve Henson, reported by shige@FreeBSD.org]
-     [This change does not apply to 0.9.7.]
-
-  -) Fix PKCS#7 decode routines so they correctly update the length
-     after reading an EOC for the EXPLICIT tag.
-     [Steve Henson]
-     [This change does not apply to 0.9.7.]
-
-  +) Add a 'copy_extensions' option to the 'ca' utility. This copies
+  *) Add a 'copy_extensions' option to the 'ca' utility. This copies
      extensions from a certificate request to the certificate.
      [Steve Henson]
 
-  +) Allow multiple 'certopt' and 'nameopt' options to be separated
+  *) Allow multiple 'certopt' and 'nameopt' options to be separated
      by commas. Add 'namopt' and 'certopt' options to the 'ca' config
      file: this allows the display of the certificate about to be
      signed to be customised, to allow certain fields to be included
@@ -827,7 +781,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      and couldn't display additional details such as extensions.
      [Steve Henson]
 
-  +) Function EC_POINTs_mul for multiple scalar multiplication
+  *) Function EC_POINTs_mul for multiple scalar multiplication
      of an arbitrary number of elliptic curve points
           \sum scalars[i]*points[i],
      optionally including the generator defined for the EC_GROUP:
@@ -838,7 +792,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      generator).
      [Bodo Moeller]
 
-  +) First EC_METHODs for curves over GF(p):
+  *) First EC_METHODs for curves over GF(p):
 
      EC_GFp_simple_method() uses the basic BN_mod_mul and BN_mod_sqr
      operations and provides various method functions that can also
@@ -851,7 +805,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      implementation directly derived from source code provided by
      Lenka Fibikova <fibikova@exp-math.uni-essen.de>]
 
-  +) Framework for elliptic curves (crypto/ec/ec.h, crypto/ec/ec_lcl.h,
+  *) Framework for elliptic curves (crypto/ec/ec.h, crypto/ec/ec_lcl.h,
      crypto/ec/ec_lib.c):
 
      Curves are EC_GROUP objects (with an optional group generator)
@@ -864,32 +818,32 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      than GF(p), some functions are limited to that for now.
      [Bodo Moeller]
 
-  +) Add the -HTTP option to s_server.  It is similar to -WWW, but requires
+  *) Add the -HTTP option to s_server.  It is similar to -WWW, but requires
      that the file contains a complete HTTP response.
      [Richard Levitte]
 
-  +) Add the ec directory to mkdef.pl and mkfiles.pl. In mkdef.pl
+  *) Add the ec directory to mkdef.pl and mkfiles.pl. In mkdef.pl
      change the def and num file printf format specifier from "%-40sXXX"
      to "%-39s XXX". The latter will always guarantee a space after the
      field while the former will cause them to run together if the field
      is 40 of more characters long.
      [Steve Henson]
 
-  +) Constify the cipher and digest 'method' functions and structures
+  *) Constify the cipher and digest 'method' functions and structures
      and modify related functions to take constant EVP_MD and EVP_CIPHER
      pointers.
      [Steve Henson]
 
-  +) Hide BN_CTX structure details in bn_lcl.h instead of publishing them
+  *) Hide BN_CTX structure details in bn_lcl.h instead of publishing them
      in <openssl/bn.h>.  Also further increase BN_CTX_NUM to 32.
      [Bodo Moeller]
 
-  +) Modify EVP_Digest*() routines so they now return values. Although the
+  *) Modify EVP_Digest*() routines so they now return values. Although the
      internal software routines can never fail additional hardware versions
      might.
      [Steve Henson]
 
-  +) Clean up crypto/err/err.h and change some error codes to avoid conflicts:
+  *) Clean up crypto/err/err.h and change some error codes to avoid conflicts:
 
      Previously ERR_R_FATAL was too small and coincided with ERR_LIB_PKCS7
      (= ERR_R_PKCS7_LIB); it is now 64 instead of 32.
@@ -907,11 +861,11 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      Add new error code 'ERR_R_INTERNAL_ERROR'.
      [Bodo Moeller]
 
-  +) Don't overuse locks in crypto/err/err.c: For data retrieval, CRYPTO_r_lock
+  *) Don't overuse locks in crypto/err/err.c: For data retrieval, CRYPTO_r_lock
      suffices.
      [Bodo Moeller]
 
-  +) New option '-subj arg' for 'openssl req' and 'openssl ca'.  This
+  *) New option '-subj arg' for 'openssl req' and 'openssl ca'.  This
      sets the subject name for a new request or supersedes the
      subject name in a given request. Formats that can be parsed are
           'CN=Some Name, OU=myOU, C=IT'
@@ -921,7 +875,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      Add options '-batch' and '-verbose' to 'openssl req'.
      [Massimiliano Pala <madwolf@hackmasters.net>]
 
-  +) Introduce the possibility to access global variables through
+  *) Introduce the possibility to access global variables through
      functions on platform were that's the best way to handle exporting
      global variables in shared libraries.  To enable this functionality,
      one must configure with "EXPORT_VAR_AS_FN" or defined the C macro
@@ -955,19 +909,19 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      lexicographically to avoid constant rewrites).
      [Richard Levitte]
 
-  +) In BN_div() keep a copy of the sign of 'num' before writing the
+  *) In BN_div() keep a copy of the sign of 'num' before writing the
      result to 'rm' because if rm==num the value will be overwritten
      and produce the wrong result if 'num' is negative: this caused
      problems with BN_mod() and BN_nnmod().
      [Steve Henson]
 
-  +) Function OCSP_request_verify(). This checks the signature on an
+  *) Function OCSP_request_verify(). This checks the signature on an
      OCSP request and verifies the signer certificate. The signer
      certificate is just checked for a generic purpose and OCSP request
      trust settings.
      [Steve Henson]
 
-  +) Add OCSP_check_validity() function to check the validity of OCSP
+  *) Add OCSP_check_validity() function to check the validity of OCSP
      responses. OCSP responses are prepared in real time and may only
      be a few seconds old. Simply checking that the current time lies
      between thisUpdate and nextUpdate max reject otherwise valid responses
@@ -978,17 +932,17 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      ocsp utility.
      [Steve Henson]
 
-  +) If signature or public key algorithm is unrecognized print out its
+  *) If signature or public key algorithm is unrecognized print out its
      OID rather that just UNKNOWN.
      [Steve Henson]
 
-  +) Change OCSP_cert_to_id() to tolerate a NULL subject certificate and
+  *) Change OCSP_cert_to_id() to tolerate a NULL subject certificate and
      OCSP_cert_id_new() a NULL serialNumber. This allows a partial certificate
      ID to be generated from the issuer certificate alone which can then be
      passed to OCSP_id_issuer_cmp().
      [Steve Henson]
 
-  +) New compilation option ASN1_ITEM_FUNCTIONS. This causes the new
+  *) New compilation option ASN1_ITEM_FUNCTIONS. This causes the new
      ASN1 modules to export functions returning ASN1_ITEM pointers
      instead of the ASN1_ITEM structures themselves. This adds several
      new macros which allow the underlying ASN1 function/structure to
@@ -1000,7 +954,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      functions returning pointers to structures is not.
      [Steve Henson]
 
-  +) Add support for overriding the generation of SSL/TLS session IDs.
+  *) Add support for overriding the generation of SSL/TLS session IDs.
      These callbacks can be registered either in an SSL_CTX or per SSL.
      The purpose of this is to allow applications to control, if they wish,
      the arbitrary values chosen for use as session IDs, particularly as it
@@ -1009,13 +963,13 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      to use such a feature) has been added to "s_server".
      [Geoff Thorpe, Lutz Jaenicke]
 
-  +) Modify mkdef.pl to recognise and parse preprocessor conditionals
+  *) Modify mkdef.pl to recognise and parse preprocessor conditionals
      of the form '#if defined(...) || defined(...) || ...' and
      '#if !defined(...) && !defined(...) && ...'.  This also avoids
      the growing number of special cases it was previously handling.
      [Richard Levitte]
 
-  +) Make all configuration macros available for application by making
+  *) Make all configuration macros available for application by making
      sure they are available in opensslconf.h, by giving them names starting
      with "OPENSSL_" to avoid conflicts with other packages and by making
      sure e_os2.h will cover all platform-specific cases together with
@@ -1028,34 +982,34 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      what is available.
      [Richard Levitte]
 
-  +) New option -set_serial to 'req' and 'x509' this allows the serial
+  *) New option -set_serial to 'req' and 'x509' this allows the serial
      number to use to be specified on the command line. Previously self
      signed certificates were hard coded with serial number 0 and the 
      CA options of 'x509' had to use a serial number in a file which was
      auto incremented.
      [Steve Henson]
 
-  +) New options to 'ca' utility to support V2 CRL entry extensions.
+  *) New options to 'ca' utility to support V2 CRL entry extensions.
      Currently CRL reason, invalidity date and hold instruction are
      supported. Add new CRL extensions to V3 code and some new objects.
      [Steve Henson]
 
-  +) New function EVP_CIPHER_CTX_set_padding() this is used to
+  *) New function EVP_CIPHER_CTX_set_padding() this is used to
      disable standard block padding (aka PKCS#5 padding) in the EVP
      API, which was previously mandatory. This means that the data is
      not padded in any way and so the total length much be a multiple
      of the block size, otherwise an error occurs.
      [Steve Henson]
 
-  +) Initial (incomplete) OCSP SSL support.
+  *) Initial (incomplete) OCSP SSL support.
      [Steve Henson]
 
-  +) New function OCSP_parse_url(). This splits up a URL into its host,
+  *) New function OCSP_parse_url(). This splits up a URL into its host,
      port and path components: primarily to parse OCSP URLs. New -url
      option to ocsp utility.
      [Steve Henson]
 
-  +) New nonce behavior. The return value of OCSP_check_nonce() now 
+  *) New nonce behavior. The return value of OCSP_check_nonce() now 
      reflects the various checks performed. Applications can decide
      whether to tolerate certain situations such as an absent nonce
      in a response when one was present in a request: the ocsp application
@@ -1064,53 +1018,48 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      the request is nonce-less.
      [Steve Henson]
 
-  -) Fix X509_NAME bug which produced incorrect encoding if X509_NAME
-     was empty.
-     [Steve Henson]
-     [This change does not apply to 0.9.7.]
-
-  +) Disable stdin buffering in load_cert (apps/apps.c) so that no certs are
+  *) Disable stdin buffering in load_cert (apps/apps.c) so that no certs are
      skipped when using openssl x509 multiple times on a single input file,
      e.g. "(openssl x509 -out cert1; openssl x509 -out cert2) <certs".
      [Bodo Moeller]
 
-  +) Make ASN1_UTCTIME_set_string() and ASN1_GENERALIZEDTIME_set_string()
+  *) Make ASN1_UTCTIME_set_string() and ASN1_GENERALIZEDTIME_set_string()
      set string type: to handle setting ASN1_TIME structures. Fix ca
      utility to correctly initialize revocation date of CRLs.
      [Steve Henson]
 
-  +) New option SSL_OP_CIPHER_SERVER_PREFERENCE allows the server to override
+  *) New option SSL_OP_CIPHER_SERVER_PREFERENCE allows the server to override
      the clients preferred ciphersuites and rather use its own preferences.
      Should help to work around M$ SGC (Server Gated Cryptography) bug in
      Internet Explorer by ensuring unchanged hash method during stepup.
      (Also replaces the broken/deactivated SSL_OP_NON_EXPORT_FIRST option.)
      [Lutz Jaenicke]
 
-  +) Make mkdef.pl recognise all DECLARE_ASN1 macros, change rijndael
+  *) Make mkdef.pl recognise all DECLARE_ASN1 macros, change rijndael
      to aes and add a new 'exist' option to print out symbols that don't
      appear to exist.
      [Steve Henson]
 
-  +) Additional options to ocsp utility to allow flags to be set and
+  *) Additional options to ocsp utility to allow flags to be set and
      additional certificates supplied.
      [Steve Henson]
 
-  +) Add the option -VAfile to 'openssl ocsp', so the user can give the
+  *) Add the option -VAfile to 'openssl ocsp', so the user can give the
      OCSP client a number of certificate to only verify the response
      signature against.
      [Richard Levitte]
 
-  +) Update Rijndael code to version 3.0 and change EVP AES ciphers to
+  *) Update Rijndael code to version 3.0 and change EVP AES ciphers to
      handle the new API. Currently only ECB, CBC modes supported. Add new
      AES OIDs. Add TLS AES ciphersuites as described in the "AES Ciphersuites
      for TLS" draft-ietf-tls-ciphersuite-03.txt.
      [Ben Laurie, Steve Henson]
 
-  +) New function OCSP_copy_nonce() to copy nonce value (if present) from
+  *) New function OCSP_copy_nonce() to copy nonce value (if present) from
      request to response.
      [Steve Henson]
 
-  +) Functions for OCSP responders. OCSP_request_onereq_count(),
+  *) Functions for OCSP responders. OCSP_request_onereq_count(),
      OCSP_request_onereq_get0(), OCSP_onereq_get0_id() and OCSP_id_get0_info()
      extract information from a certificate request. OCSP_response_create()
      creates a response and optionally adds a basic response structure.
@@ -1123,38 +1072,32 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      (converts ASN1_TIME to GeneralizedTime).
      [Steve Henson]
 
-  +) Various new functions. EVP_Digest() combines EVP_Digest{Init,Update,Final}()
+  *) Various new functions. EVP_Digest() combines EVP_Digest{Init,Update,Final}()
      in a single operation. X509_get0_pubkey_bitstr() extracts the public_key
      structure from a certificate. X509_pubkey_digest() digests the public_key
      contents: this is used in various key identifiers. 
      [Steve Henson]
 
-  +) Make sk_sort() tolerate a NULL argument.
+  *) Make sk_sort() tolerate a NULL argument.
      [Steve Henson reported by Massimiliano Pala <madwolf@comune.modena.it>]
 
-  +) New OCSP verify flag OCSP_TRUSTOTHER. When set the "other" certificates
+  *) New OCSP verify flag OCSP_TRUSTOTHER. When set the "other" certificates
      passed by the function are trusted implicitly. If any of them signed the
      response then it is assumed to be valid and is not verified.
      [Steve Henson]
 
-  -) Make the CRL encoding routines work with empty SEQUENCE OF. The
-     macros previously used would not encode an empty SEQUENCE OF
-     and break the signature.
-     [Steve Henson]
-     [This change does not apply to 0.9.7.]
-
-  +) In PKCS7_set_type() initialise content_type in PKCS7_ENC_CONTENT
+  *) In PKCS7_set_type() initialise content_type in PKCS7_ENC_CONTENT
      to data. This was previously part of the PKCS7 ASN1 code. This
      was causing problems with OpenSSL created PKCS#12 and PKCS#7 structures.
      [Steve Henson, reported by Kenneth R. Robinette
 				<support@securenetterm.com>]
 
-  +) Add CRYPTO_push_info() and CRYPTO_pop_info() calls to new ASN1
+  *) Add CRYPTO_push_info() and CRYPTO_pop_info() calls to new ASN1
      routines: without these tracing memory leaks is very painful.
      Fix leaks in PKCS12 and PKCS7 routines.
      [Steve Henson]
 
-  +) Make X509_time_adj() cope with the new behaviour of ASN1_TIME_new().
+  *) Make X509_time_adj() cope with the new behaviour of ASN1_TIME_new().
      Previously it initialised the 'type' argument to V_ASN1_UTCTIME which
      effectively meant GeneralizedTime would never be used. Now it
      is initialised to -1 but X509_time_adj() now has to check the value
@@ -1163,7 +1106,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Steve Henson, reported by Kenneth R. Robinette
 				<support@securenetterm.com>]
 
-  +) Fixes to BN_to_ASN1_INTEGER when bn is zero. This would previously
+  *) Fixes to BN_to_ASN1_INTEGER when bn is zero. This would previously
      result in a zero length in the ASN1_INTEGER structure which was
      not consistent with the structure when d2i_ASN1_INTEGER() was used
      and would cause ASN1_INTEGER_cmp() to fail. Enhance s2i_ASN1_INTEGER()
@@ -1171,7 +1114,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      where it did not print out a minus for negative ASN1_INTEGER.
      [Steve Henson]
 
-  +) Add summary printout to ocsp utility. The various functions which
+  *) Add summary printout to ocsp utility. The various functions which
      convert status values to strings have been renamed to:
      OCSP_response_status_str(), OCSP_cert_status_str() and
      OCSP_crl_reason_str() and are no longer static. New options
@@ -1179,7 +1122,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      printout format cleaned up.
      [Steve Henson]
 
-  +) Add additional OCSP certificate checks. These are those specified
+  *) Add additional OCSP certificate checks. These are those specified
      in RFC2560. This consists of two separate checks: the CA of the
      certificate being checked must either be the OCSP signer certificate
      or the issuer of the OCSP signer certificate. In the latter case the
@@ -1189,7 +1132,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      in the OCSP_CERTID structures of the response.
      [Steve Henson]
 
-  +) Initial OCSP certificate verification added to OCSP_basic_verify()
+  *) Initial OCSP certificate verification added to OCSP_basic_verify()
      and related routines. This uses the standard OpenSSL certificate
      verify routines to perform initial checks (just CA validity) and
      to obtain the certificate chain. Then additional checks will be
@@ -1199,45 +1142,45 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      chains to that CA is an acceptable OCSP signing certificate.
      [Steve Henson]
 
-  +) New '-extfile ...' option to 'openssl ca' for reading X.509v3
+  *) New '-extfile ...' option to 'openssl ca' for reading X.509v3
      extensions from a separate configuration file.
      As when reading extensions from the main configuration file,
      the '-extensions ...' option may be used for specifying the
      section to use.
      [Massimiliano Pala <madwolf@comune.modena.it>]
 
-  +) New OCSP utility. Allows OCSP requests to be generated or
+  *) New OCSP utility. Allows OCSP requests to be generated or
      read. The request can be sent to a responder and the output
      parsed, outputed or printed in text form. Not complete yet:
      still needs to check the OCSP response validity.
      [Steve Henson]
 
-  +) New subcommands for 'openssl ca':
+  *) New subcommands for 'openssl ca':
      'openssl ca -status <serial>' prints the status of the cert with
      the given serial number (according to the index file).
      'openssl ca -updatedb' updates the expiry status of certificates
      in the index file.
      [Massimiliano Pala <madwolf@comune.modena.it>]
 
-  +) New '-newreq-nodes' command option to CA.pl.  This is like
+  *) New '-newreq-nodes' command option to CA.pl.  This is like
      '-newreq', but calls 'openssl req' with the '-nodes' option
      so that the resulting key is not encrypted.
      [Damien Miller <djm@mindrot.org>]
 
-  +) New configuration for the GNU Hurd.
+  *) New configuration for the GNU Hurd.
      [Jonathan Bartlett <johnnyb@wolfram.com> via Richard Levitte]
 
-  +) Initial code to implement OCSP basic response verify. This
+  *) Initial code to implement OCSP basic response verify. This
      is currently incomplete. Currently just finds the signer's
      certificate and verifies the signature on the response.
      [Steve Henson]
 
-  +) New SSLeay_version code SSLEAY_DIR to determine the compiled-in
+  *) New SSLeay_version code SSLEAY_DIR to determine the compiled-in
      value of OPENSSLDIR.  This is available via the new '-d' option
      to 'openssl version', and is also included in 'openssl version -a'.
      [Bodo Moeller]
 
-  +) Allowing defining memory allocation callbacks that will be given
+  *) Allowing defining memory allocation callbacks that will be given
      file name and line number information in additional arguments
      (a const char* and an int).  The basic functionality remains, as
      well as the original possibility to just replace malloc(),
@@ -1258,14 +1201,14 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      a conventional allocation function is enabled.
      [Richard Levitte, Bodo Moeller]
 
-  +) Finish off removing the remaining LHASH function pointer casts.
+  *) Finish off removing the remaining LHASH function pointer casts.
      There should no longer be any prototype-casting required when using
      the LHASH abstraction, and any casts that remain are "bugs". See
      the callback types and macros at the head of lhash.h for details
      (and "OBJ_cleanup" in crypto/objects/obj_dat.c as an example).
      [Geoff Thorpe]
 
-  +) Add automatic query of EGD sockets in RAND_poll() for the unix variant.
+  *) Add automatic query of EGD sockets in RAND_poll() for the unix variant.
      If /dev/[u]random devices are not available or do not return enough
      entropy, EGD style sockets (served by EGD or PRNGD) will automatically
      be queried.
@@ -1274,7 +1217,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      when enough entropy was collected without querying more sockets.
      [Lutz Jaenicke]
 
-  +) Change the Unix RAND_poll() variant to be able to poll several
+  *) Change the Unix RAND_poll() variant to be able to poll several
      random devices, as specified by DEVRANDOM, until a sufficient amount
      of data has been collected.   We spend at most 10 ms on each file
      (select timeout) and read in non-blocking mode.  DEVRANDOM now
@@ -1285,7 +1228,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      For VMS, there's a currently-empty rand_vms.c.
      [Richard Levitte]
 
-  +) Move OCSP client related routines to ocsp_cl.c. These
+  *) Move OCSP client related routines to ocsp_cl.c. These
      provide utility functions which an application needing
      to issue a request to an OCSP responder and analyse the
      response will typically need: as opposed to those which an
@@ -1307,7 +1250,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      validity of the nonce in an OCSP response.
      [Steve Henson]
 
-  +) Change function OCSP_request_add() to OCSP_request_add0_id().
+  *) Change function OCSP_request_add() to OCSP_request_add0_id().
      This doesn't copy the supplied OCSP_CERTID and avoids the
      need to free up the newly created id. Change return type
      to OCSP_ONEREQ to return the internal OCSP_ONEREQ structure.
@@ -1318,13 +1261,13 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      will be added elsewhere.
      [Steve Henson]
 
-  +) Update OCSP API. Remove obsolete extensions argument from
+  *) Update OCSP API. Remove obsolete extensions argument from
      various functions. Extensions are now handled using the new
      OCSP extension code. New simple OCSP HTTP function which 
      can be used to send requests and parse the response.
      [Steve Henson]
 
-  +) Fix the PKCS#7 (S/MIME) code to work with new ASN1. Two new
+  *) Fix the PKCS#7 (S/MIME) code to work with new ASN1. Two new
      ASN1_ITEM structures help with sign and verify. PKCS7_ATTR_SIGN
      uses the special reorder version of SET OF to sort the attributes
      and reorder them to match the encoded order. This resolves a long
@@ -1337,12 +1280,12 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      to produce the required SET OF.
      [Steve Henson]
 
-  +) Have mk1mf.pl generate the macros OPENSSL_BUILD_SHLIBCRYPTO and
+  *) Have mk1mf.pl generate the macros OPENSSL_BUILD_SHLIBCRYPTO and
      OPENSSL_BUILD_SHLIBSSL and use them appropriately in the header
      files to get correct declarations of the ASN.1 item variables.
      [Richard Levitte]
 
-  +) Rewrite of PKCS#12 code to use new ASN1 functionality. Replace many
+  *) Rewrite of PKCS#12 code to use new ASN1 functionality. Replace many
      PKCS#12 macros with real functions. Fix two unrelated ASN1 bugs:
      asn1_check_tlen() would sometimes attempt to use 'ctx' when it was
      NULL and ASN1_TYPE was not dereferenced properly in asn1_ex_c2i().
@@ -1350,49 +1293,49 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      ASN1_ITEM and no wrapper functions.
      [Steve Henson]
 
-  +) New functions or ASN1_item_d2i_fp() and ASN1_item_d2i_bio(). These
+  *) New functions or ASN1_item_d2i_fp() and ASN1_item_d2i_bio(). These
      replace the old function pointer based I/O routines. Change most of
      the *_d2i_bio() and *_d2i_fp() functions to use these.
      [Steve Henson]
 
-  +) Enhance mkdef.pl to be more accepting about spacing in C preprocessor
+  *) Enhance mkdef.pl to be more accepting about spacing in C preprocessor
      lines, recognice more "algorithms" that can be deselected, and make
      it complain about algorithm deselection that isn't recognised.
      [Richard Levitte]
 
-  +) New ASN1 functions to handle dup, sign, verify, digest, pack and
+  *) New ASN1 functions to handle dup, sign, verify, digest, pack and
      unpack operations in terms of ASN1_ITEM. Modify existing wrappers
      to use new functions. Add NO_ASN1_OLD which can be set to remove
      some old style ASN1 functions: this can be used to determine if old
      code will still work when these eventually go away.
      [Steve Henson]
 
-  +) New extension functions for OCSP structures, these follow the
+  *) New extension functions for OCSP structures, these follow the
      same conventions as certificates and CRLs.
      [Steve Henson]
 
-  +) New function X509V3_add1_i2d(). This automatically encodes and
+  *) New function X509V3_add1_i2d(). This automatically encodes and
      adds an extension. Its behaviour can be customised with various
      flags to append, replace or delete. Various wrappers added for
      certifcates and CRLs.
      [Steve Henson]
 
-  +) Fix to avoid calling the underlying ASN1 print routine when
+  *) Fix to avoid calling the underlying ASN1 print routine when
      an extension cannot be parsed. Correct a typo in the
      OCSP_SERVICELOC extension. Tidy up print OCSP format.
      [Steve Henson]
 
-  +) Make mkdef.pl parse some of the ASN1 macros and add apropriate
+  *) Make mkdef.pl parse some of the ASN1 macros and add apropriate
      entries for variables.
      [Steve Henson]
 
-  +) Add functionality to apps/openssl.c for detecting locking
+  *) Add functionality to apps/openssl.c for detecting locking
      problems: As the program is single-threaded, all we have
      to do is register a locking callback using an array for
      storing which locks are currently held by the program.
      [Bodo Moeller]
 
-  +) Use a lock around the call to CRYPTO_get_ex_new_index() in
+  *) Use a lock around the call to CRYPTO_get_ex_new_index() in
      SSL_get_ex_data_X509_STORE_idx(), which is used in
      ssl_verify_cert_chain() and thus can be called at any time
      during TLS/SSL handshakes so that thread-safety is essential.
@@ -1400,19 +1343,19 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      for multi-threaded use, so it probably should be abolished.
      [Bodo Moeller]
 
-  +) Added Broadcom "ubsec" ENGINE to OpenSSL.
+  *) Added Broadcom "ubsec" ENGINE to OpenSSL.
      [Broadcom, tweaked and integrated by Geoff Thorpe]
 
-  +) Move common extension printing code to new function
+  *) Move common extension printing code to new function
      X509V3_print_extensions(). Reorganise OCSP print routines and
      implement some needed OCSP ASN1 functions. Add OCSP extensions.
      [Steve Henson]
 
-  +) New function X509_signature_print() to remove duplication in some
+  *) New function X509_signature_print() to remove duplication in some
      print routines.
      [Steve Henson]
 
-  +) Add a special meaning when SET OF and SEQUENCE OF flags are both
+  *) Add a special meaning when SET OF and SEQUENCE OF flags are both
      set (this was treated exactly the same as SET OF previously). This
      is used to reorder the STACK representing the structure to match the
      encoding. This will be used to get round a problem where a PKCS7
@@ -1420,15 +1363,15 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      order did not reflect the encoded order.
      [Steve Henson]
 
-  +) Reimplement the OCSP ASN1 module using the new code.
+  *) Reimplement the OCSP ASN1 module using the new code.
      [Steve Henson]
 
-  +) Update the X509V3 code to permit the use of an ASN1_ITEM structure
+  *) Update the X509V3 code to permit the use of an ASN1_ITEM structure
      for its ASN1 operations. The old style function pointers still exist
      for now but they will eventually go away.
      [Steve Henson]
 
-  +) Merge in replacement ASN1 code from the ASN1 branch. This almost
+  *) Merge in replacement ASN1 code from the ASN1 branch. This almost
      completely replaces the old ASN1 functionality with a table driven
      encoder and decoder which interprets an ASN1_ITEM structure describing
      the ASN1 module. Compatibility with the existing ASN1 API (i2d,d2i) is
@@ -1436,61 +1379,61 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      has also been converted to the new form.
      [Steve Henson]
 
-  +) Change BN_mod_exp_recp so that negative moduli are tolerated
+  *) Change BN_mod_exp_recp so that negative moduli are tolerated
      (the sign is ignored).  Similarly, ignore the sign in BN_MONT_CTX_set
      so that BN_mod_exp_mont and BN_mod_exp_mont_word work
      for negative moduli.
      [Bodo Moeller]
 
-  +) Fix BN_uadd and BN_usub: Always return non-negative results instead
+  *) Fix BN_uadd and BN_usub: Always return non-negative results instead
      of not touching the result's sign bit.
      [Bodo Moeller]
 
-  +) BN_div bugfix: If the result is 0, the sign (res->neg) must not be
+  *) BN_div bugfix: If the result is 0, the sign (res->neg) must not be
      set.
      [Bodo Moeller]
 
-  +) Changed the LHASH code to use prototypes for callbacks, and created
+  *) Changed the LHASH code to use prototypes for callbacks, and created
      macros to declare and implement thin (optionally static) functions
      that provide type-safety and avoid function pointer casting for the
      type-specific callbacks.
      [Geoff Thorpe]
 
-  +) Added Kerberos Cipher Suites to be used with TLS, as written in
+  *) Added Kerberos Cipher Suites to be used with TLS, as written in
      RFC 2712.
      [Veers Staats <staatsvr@asc.hpc.mil>,
       Jeffrey Altman <jaltman@columbia.edu>, via Richard Levitte]
 
-  +) Reformat the FAQ so the different questions and answers can be divided
+  *) Reformat the FAQ so the different questions and answers can be divided
      in sections depending on the subject.
      [Richard Levitte]
 
-  +) Have the zlib compression code load ZLIB.DLL dynamically under
+  *) Have the zlib compression code load ZLIB.DLL dynamically under
      Windows.
      [Richard Levitte]
 
-  +) New function BN_mod_sqrt for computing square roots modulo a prime
+  *) New function BN_mod_sqrt for computing square roots modulo a prime
      (using the probabilistic Tonelli-Shanks algorithm unless
      p == 3 (mod 4)  or  p == 5 (mod 8),  which are cases that can
      be handled deterministically).
      [Lenka Fibikova <fibikova@exp-math.uni-essen.de>, Bodo Moeller]
 
-  +) Make BN_mod_inverse faster by explicitly handling small quotients
+  *) Make BN_mod_inverse faster by explicitly handling small quotients
      in the Euclid loop. (Speed gain about 20% for small moduli [256 or
      512 bits], about 30% for larger ones [1024 or 2048 bits].)
      [Bodo Moeller]
 
-  +) New function BN_kronecker.
+  *) New function BN_kronecker.
      [Bodo Moeller]
 
-  +) Fix BN_gcd so that it works on negative inputs; the result is
+  *) Fix BN_gcd so that it works on negative inputs; the result is
      positive unless both parameters are zero.
      Previously something reasonably close to an infinite loop was
      possible because numbers could be growing instead of shrinking
      in the implementation of Euclid's algorithm.
      [Bodo Moeller]
 
-  +) Fix BN_is_word() and BN_is_one() macros to take into account the
+  *) Fix BN_is_word() and BN_is_one() macros to take into account the
      sign of the number in question.
 
      Fix BN_is_word(a,w) to work correctly for w == 0.
@@ -1502,20 +1445,20 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      BN_is_one(), and BN_is_word().
      [Bodo Moeller]
 
-  +) New function BN_swap.
+  *) New function BN_swap.
      [Bodo Moeller]
 
-  +) Use BN_nnmod instead of BN_mod in crypto/bn/bn_exp.c so that
+  *) Use BN_nnmod instead of BN_mod in crypto/bn/bn_exp.c so that
      the exponentiation functions are more likely to produce reasonable
      results on negative inputs.
      [Bodo Moeller]
 
-  +) Change BN_mod_mul so that the result is always non-negative.
+  *) Change BN_mod_mul so that the result is always non-negative.
      Previously, it could be negative if one of the factors was negative;
      I don't think anyone really wanted that behaviour.
      [Bodo Moeller]
 
-  +) Move BN_mod_... functions into new file crypto/bn/bn_mod.c
+  *) Move BN_mod_... functions into new file crypto/bn/bn_mod.c
      (except for exponentiation, which stays in crypto/bn/bn_exp.c,
      and BN_mod_mul_reciprocal, which stays in crypto/bn/bn_recp.c)
      and add new functions:
@@ -1541,7 +1484,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      be reduced modulo  m.
      [Lenka Fibikova <fibikova@exp-math.uni-essen.de>, Bodo Moeller]
 
-  +) Remove a few calls to bn_wexpand() in BN_sqr() (the one in there
+  *) Remove a few calls to bn_wexpand() in BN_sqr() (the one in there
      was actually never needed) and in BN_mul().  The removal in BN_mul()
      required a small change in bn_mul_part_recursive() and the addition
      of the functions bn_cmp_part_words(), bn_sub_part_words() and
@@ -1550,7 +1493,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      differing sizes.
      [Richard Levitte]
 
-  +) In 'openssl passwd', verify passwords read from the terminal
+  *) In 'openssl passwd', verify passwords read from the terminal
      unless the '-salt' option is used (which usually means that
      verification would just waste user's time since the resulting
      hash is going to be compared with some given password hash)
@@ -1562,27 +1505,27 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      cause any problems.
      [Bodo Moeller]
 
-  +) Remove all references to RSAref, since there's no more need for it.
+  *) Remove all references to RSAref, since there's no more need for it.
      [Richard Levitte]
 
-  +) Make DSO load along a path given through an environment variable
+  *) Make DSO load along a path given through an environment variable
      (SHLIB_PATH) with shl_load().
      [Richard Levitte]
 
-  +) Constify the ENGINE code as a result of BIGNUM constification.
+  *) Constify the ENGINE code as a result of BIGNUM constification.
      Also constify the RSA code and most things related to it.  In a
      few places, most notable in the depth of the ASN.1 code, ugly
      casts back to non-const were required (to be solved at a later
      time)
      [Richard Levitte]
 
-  +) Make it so the openssl application has all engines loaded by default.
+  *) Make it so the openssl application has all engines loaded by default.
      [Richard Levitte]
 
-  +) Constify the BIGNUM routines a little more.
+  *) Constify the BIGNUM routines a little more.
      [Richard Levitte]
 
-  +) Add the following functions:
+  *) Add the following functions:
 
 	ENGINE_load_cswift()
 	ENGINE_load_chil()
@@ -1600,56 +1543,56 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      declarations (they differed!).
      [Richard Levitte]
 
-  +) 'openssl engine' can now list capabilities.
+  *) 'openssl engine' can now list capabilities.
      [Richard Levitte]
 
-  +) Better error reporting in 'openssl engine'.
+  *) Better error reporting in 'openssl engine'.
      [Richard Levitte]
 
-  +) Never call load_dh_param(NULL) in s_server.
+  *) Never call load_dh_param(NULL) in s_server.
      [Bodo Moeller]
 
-  +) Add engine application.  It can currently list engines by name and
+  *) Add engine application.  It can currently list engines by name and
      identity, and test if they are actually available.
      [Richard Levitte]
 
-  +) Improve RPM specification file by forcing symbolic linking and making
+  *) Improve RPM specification file by forcing symbolic linking and making
      sure the installed documentation is also owned by root.root.
      [Damien Miller <djm@mindrot.org>]
 
-  +) Give the OpenSSL applications more possibilities to make use of
+  *) Give the OpenSSL applications more possibilities to make use of
      keys (public as well as private) handled by engines.
      [Richard Levitte]
 
-  +) Add OCSP code that comes from CertCo.
+  *) Add OCSP code that comes from CertCo.
      [Richard Levitte]
 
-  +) Add VMS support for the Rijndael code.
+  *) Add VMS support for the Rijndael code.
      [Richard Levitte]
 
-  +) Added untested support for Nuron crypto accelerator.
+  *) Added untested support for Nuron crypto accelerator.
      [Ben Laurie]
 
-  +) Add support for external cryptographic devices.  This code was
+  *) Add support for external cryptographic devices.  This code was
      previously distributed separately as the "engine" branch.
      [Geoff Thorpe, Richard Levitte]
 
-  +) Rework the filename-translation in the DSO code. It is now possible to
+  *) Rework the filename-translation in the DSO code. It is now possible to
      have far greater control over how a "name" is turned into a filename
      depending on the operating environment and any oddities about the
      different shared library filenames on each system.
      [Geoff Thorpe]
 
-  +) Support threads on FreeBSD-elf in Configure.
+  *) Support threads on FreeBSD-elf in Configure.
      [Richard Levitte]
 
-  +) Fix for SHA1 assembly problem with MASM: it produces
+  *) Fix for SHA1 assembly problem with MASM: it produces
      warnings about corrupt line number information when assembling
      with debugging information. This is caused by the overlapping
      of two sections.
      [Bernd Matthes <mainbug@celocom.de>, Steve Henson]
 
-  +) NCONF changes.
+  *) NCONF changes.
      NCONF_get_number() has no error checking at all.  As a replacement,
      NCONF_get_number_e() is defined (_e for "error checking") and is
      promoted strongly.  The old NCONF_get_number is kept around for
@@ -1660,24 +1603,24 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      LDAP server.
      [Richard Levitte]
 
-  +) Fix for non blocking accept BIOs. Added new I/O special reason
+  *) Fix for non blocking accept BIOs. Added new I/O special reason
      BIO_RR_ACCEPT to cover this case. Previously use of accept BIOs
      with non blocking I/O was not possible because no retry code was
      implemented. Also added new SSL code SSL_WANT_ACCEPT to cover
      this case.
      [Steve Henson]
 
-  +) Added the beginnings of Rijndael support.
+  *) Added the beginnings of Rijndael support.
      [Ben Laurie]
 
-  +) Fix for bug in DirectoryString mask setting. Add support for
+  *) Fix for bug in DirectoryString mask setting. Add support for
      X509_NAME_print_ex() in 'req' and X509_print_ex() function
      to allow certificate printing to more controllable, additional
      'certopt' option to 'x509' to allow new printing options to be
      set.
      [Steve Henson]
 
-  +) Clean old EAY MD5 hack from e_os.h.
+  *) Clean old EAY MD5 hack from e_os.h.
      [Richard Levitte]
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx 2002]
