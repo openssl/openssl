@@ -1588,7 +1588,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		/* Note that the length is checked again below,
 		** after decryption
 		*/
-		if(enc.pms_length > sizeof pms)
+		if(enc_pms.length > sizeof pms)
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
 			       SSL_R_DATA_LENGTH_TOO_LONG);
