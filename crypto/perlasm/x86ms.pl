@@ -51,6 +51,16 @@ sub main'DWP
 	&get_mem("DWORD",@_);
 	}
 
+sub main'BC
+	{
+	return @_;
+	}
+
+sub main'DWC
+	{
+	return @_;
+	}
+
 sub main'stack_push
 	{
 	local($num)=@_;

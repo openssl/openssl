@@ -27,7 +27,14 @@ $label="L000";
 sub main'asm_init_output { @out=(); }
 sub main'asm_get_output { return(@out); }
 sub main'get_labels { return(@labels); }
-sub main'external_label { push(@labels,@_); push(@out, "EXTERN\t$_[0]"); }
+
+sub main'external_label
+{
+	push(@labels,@_);
+	foreach (@_) {
+		push(@out, "extern\t_$_\n");
+	}
+}
 
 sub main'LB
 	{
@@ -51,6 +58,16 @@ sub main'DWP
 	&get_mem("DWORD",@_);
 	}
 
+sub main'BC
+	{
+	return "BYTE @_";
+	}
+
+sub main'DWC
+	{
+	return "DWORD @_";
+	}
+
 sub main'stack_push
 	{
 	my($num)=@_;
@@ -69,7 +86,7 @@ sub get_mem
 	{
 	my($size,$addr,$reg1,$reg2,$idx)=@_;
 	my($t,$post);
-	my($ret)="[$size ";
+	my($ret)="[";
 	$addr =~ s/^\s+//;
 	if ($addr =~ /^(.+)\+(.+)$/)
 		{
@@ -192,7 +209,7 @@ sub using486
 
 sub main'file
 	{
-	push(@out, "segment .text");
+	push(@out, "segment .text\n");
 	}
 
 sub main'function_begin
@@ -201,7 +218,7 @@ sub main'function_begin
 
 	push(@labels,$func);
 	my($tmp)=<<"EOF";
-GLOBAL	_$func
+global	_$func
 _$func:
 	push	ebp
 	push	ebx
@@ -216,7 +233,7 @@ sub main'function_begin_B
 	{
 	my($func,$extra)=@_;
 	my($tmp)=<<"EOF";
-GLOBAL	_$func
+global	_$func
 _$func:
 EOF
 	push(@out,$tmp);

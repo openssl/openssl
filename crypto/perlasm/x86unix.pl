@@ -100,6 +100,16 @@ sub main'BP
 	return(&main'DWP(@_));
 	}
 
+sub main'BC
+	{
+	return @_;
+	}
+
+sub main'DWC
+	{
+	return @_;
+	}
+
 #sub main'BP
 #	{
 #	local($addr,$reg1,$reg2,$idx)=@_;

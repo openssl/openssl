@@ -44,15 +44,15 @@ sub des_encrypt3
 		 &mov("edi",&wparam(2));
 		 &mov("eax",&wparam(3));
 		}
-	&mov(&swtmp(2),	(($enc)?"1":"0"));
+	&mov(&swtmp(2),	(DWC(($enc)?"1":"0")));
 	&mov(&swtmp(1),	"eax");
 	&mov(&swtmp(0),	"ebx");
 	&call("des_encrypt2");
-	&mov(&swtmp(2),	(($enc)?"0":"1"));
+	&mov(&swtmp(2),	(DWC(($enc)?"0":"1")));
 	&mov(&swtmp(1),	"edi");
 	&mov(&swtmp(0),	"ebx");
 	&call("des_encrypt2");
-	&mov(&swtmp(2),	(($enc)?"1":"0"));
+	&mov(&swtmp(2),	(DWC(($enc)?"1":"0")));
 	&mov(&swtmp(1),	"esi");
 	&mov(&swtmp(0),	"ebx");
 	&call("des_encrypt2");

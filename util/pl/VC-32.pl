@@ -49,10 +49,14 @@ $lfile='/out:';
 
 $shlib_ex_obj="";
 $app_ex_obj="setargv.obj";
-
-$asm='ml /Cp /coff /c /Cx';
-$asm.=" /Zi" if $debug;
-$afile='/Fo';
+if ($nasm) {
+	$asm='nasmw -f win32';
+	$afile='-o ';
+} else {
+	$asm='ml /Cp /coff /c /Cx';
+	$asm.=" /Zi" if $debug;
+	$afile='/Fo';
+}
 
 $bn_asm_obj='';
 $bn_asm_src='';
