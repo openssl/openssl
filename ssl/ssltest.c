@@ -519,7 +519,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 				else
 					i = (int)cw_num;
 				r = BIO_write(c_ssl_bio, cbuf, i);
-				if (r == -1)
+				if (r < 0)
 					{
 					if (!BIO_should_retry(c_ssl_bio))
 						{
@@ -592,7 +592,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 				else
 					i = (int)sw_num;
 				r = BIO_write(s_ssl_bio, sbuf, i);
-				if (r == -1)
+				if (r < 0)
 					{
 					if (!BIO_should_retry(s_ssl_bio))
 						{
