@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/18 11:55:12 $
+  ______________                           $Date: 2000/09/18 13:35:05 $
 
   DEVELOPMENT STATE
 
@@ -55,6 +55,7 @@
 				Typo in Configure, -ldl should be -ldld [FIXED]
 			solaris-sparcv9-gcc (2.6/ultra5)- success
 			FreeBSD (2.2.5-RELEASE)		- success
+			solaris-sparcv9-cc (SunOS 5.7 SC3.0) - failed
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
