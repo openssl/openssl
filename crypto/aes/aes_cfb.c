@@ -137,7 +137,7 @@ void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 	} else {
 		while (l--) {
 			if (n == 0) {
-				AES_decrypt(ivec, ivec, key);
+				AES_encrypt(ivec, ivec, key);
 			}
 			c = *(in);
 			*(out++) = *(in++) ^ ivec[n];
