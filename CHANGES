@@ -4,6 +4,10 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Avoid infinite loop in ssl3_get_message (ssl/s3_both.c) if a
+     client receives HelloRequest while in a handshake.
+     [Bodo Moeller; bug noticed by Andy Schneider <andy.schneider@bjss.co.uk>]
+
   *) Bugfix in ssl3_accept (ssl/s3_srvr.c): Case SSL3_ST_SW_HELLO_REQ_C
      should end in 'break', not 'goto end' which circuments various
      cleanups done in state SSL_ST_OK.   But session related stuff
