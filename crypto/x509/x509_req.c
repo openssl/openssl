@@ -143,32 +143,33 @@ void X509_REQ_set_extension_nids(int *nids)
 }
 
 STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
-{
+	{
 	X509_ATTRIBUTE *attr;
-	STACK_OF(X509_ATTRIBUTE) *sk;
 	ASN1_TYPE *ext = NULL;
-	int i;
-	unsigned char *p;
-	if ((req == NULL) || (req->req_info == NULL))
+	int idx, *pnid;
+	const unsigned char *p;
+
+	if ((req == NULL) || (req->req_info == NULL) || !ext_nids)
 		return(NULL);
-	sk=req->req_info->attributes;
-        if (!sk) return NULL;
-	for(i = 0; i < sk_X509_ATTRIBUTE_num(sk); i++) {
-		attr = sk_X509_ATTRIBUTE_value(sk, i);
-		if(X509_REQ_extension_nid(OBJ_obj2nid(attr->object))) {
-			if(attr->single) ext = attr->value.single;
-			else if(sk_ASN1_TYPE_num(attr->value.set))
-				ext = sk_ASN1_TYPE_value(attr->value.set, 0);
-			break;
+	for (pnid = ext_nids; *pnid != NID_undef; pnid++)
+		{
+		idx = X509_REQ_get_attr_by_NID(req, *pnid, -1);
+		if (idx == -1)
+			continue;
+		attr = X509_REQ_get_attr(req, idx);
+		if(attr->single) ext = attr->value.single;
+		else if(sk_ASN1_TYPE_num(attr->value.set))
+			ext = sk_ASN1_TYPE_value(attr->value.set, 0);
+		break;
 		}
-	}
-	if(!ext || (ext->type != V_ASN1_SEQUENCE)) return NULL;
+	if(!ext || (ext->type != V_ASN1_SEQUENCE))
+		return NULL;
 	p = ext->value.sequence->data;
 	return d2i_ASN1_SET_OF_X509_EXTENSION(NULL, &p,
 			ext->value.sequence->length,
 			d2i_X509_EXTENSION, X509_EXTENSION_free,
 			V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
-}
+	}
 
 /* Add a STACK_OF extensions to a certificate request: allow alternative OIDs
  * in case we want to create a non standard one.
