@@ -22,10 +22,38 @@ Whether the operation succeeds or not, the SSL_SENT_SHUTDOWN flag is set and
 a currently open session is considered closed and good and will be kept in the
 session cache for further reuse.
 
-The behaviour of SSL_shutdown() depends on the underlying BIO. 
+The shutdown procedure consists of 2 steps: the sending of the "close notify"
+shutdown alert and the receipt ion of the peer's "close notify" shutdown
+alert:
+
+=over 4
+
+=item When the application is the first party to send the "close notify"
+alert, SSL_shutdown() will only send the alert and the set the
+SSL_SENT_SHUTDOWN flag (so that the session is considered good and will
+be kept in cache). SSL_shutdown() will then return with 0. In order to
+complete the shutdown handshake, SSL_shutdown() must be called again.
+The second call will make SSL_shutdown() wait for the peer's "close notify"
+shutdown alert. On success, the second call to SSL_shutdown() will return
+with 1.
+
+=item If the peer already sent the "close notify" alert B<and> it was
+already processed implicitly inside another call of e.g.
+B<SSL_read(3)|SSL_read(3)>, SSL_shutdown() will send the "close notify"
+alert and will immediately return with 1.
+
+=back
+
+It is therefore recommended, to check the return value of SSL_shutdown()
+and call SSL_shutdown() again, if the bidirectional shutdown is not yet
+complete (return value of the first call is 0). As the shutdown is not
+specially handled in the SSLv2 protocol, SSL_shutdown() will succeed on
+the first call.
+
+The behaviour of SSL_shutdown() additionally depends on the underlying BIO. 
 
 If the underlying BIO is B<blocking>, SSL_shutdown() will only return once the
-handshake has been finished or an error occurred.
+handshake step has been finished or an error occurred.
 
 If the underlying BIO is B<non-blocking>, SSL_shutdown() will also return
 when the underlying BIO could not satisfy the needs of SSL_shutdown()
@@ -46,19 +74,22 @@ The following return values can occur:
 
 =item 1
 
-The shutdown was successfully completed.
+The shutdown was successfully completed. The "close notify" alert was sent
+and the peer's "close notify" alert was received.
 
 =item 0
 
-The shutdown was not successful. Call SSL_get_error() with the return
-value B<ret> to find out the reason.
+The shutdown is not yet finished. Call SSL_shutdown() for a second time.
+The output of L<SSL_get_error(3)|SSL_get_error(3)> may be misleading, as an
+erroneous SSL_ERROR_SYSCALL may be flagged even though no error occurred.
 
 =item -1
 
 The shutdown was not successful because a fatal error occurred either
-at the protocol level or a connection failure occurred. It can also occur of
+at the protocol level or a connection failure occurred. It can also occur if
 action is need to continue the operation for non-blocking BIOs.
-Call SSL_get_error() with the return value B<ret> to find out the reason.
+Call L<SSL_get_error(3)|SSL_get_error(3)> with the return value B<ret>
+to find out the reason.
 
 =back
 
