@@ -150,7 +150,7 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 	return(0);
 	}
 
-int EVP_PKEY_copy_parameters(EVP_PKEY *to, EVP_PKEY *from)
+int EVP_PKEY_copy_parameters(EVP_PKEY *to, cpnst EVP_PKEY *from)
 	{
 	if (to->type != from->type)
 		{
@@ -198,7 +198,7 @@ err:
 	return(0);
 	}
 
-int EVP_PKEY_missing_parameters(EVP_PKEY *pkey)
+int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 	{
 #ifndef OPENSSL_NO_DSA
 	if (pkey->type == EVP_PKEY_DSA)
@@ -221,7 +221,7 @@ int EVP_PKEY_missing_parameters(EVP_PKEY *pkey)
 	return(0);
 	}
 
-int EVP_PKEY_cmp_parameters(EVP_PKEY *a, EVP_PKEY *b)
+int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 	{
 #ifndef OPENSSL_NO_DSA
 	if ((a->type == EVP_PKEY_DSA) && (b->type == EVP_PKEY_DSA))
@@ -237,7 +237,7 @@ int EVP_PKEY_cmp_parameters(EVP_PKEY *a, EVP_PKEY *b)
 	return(-1);
 	}
 
-int EVP_PKEY_cmp(EVP_PKEY *a, EVP_PKEY *b)
+int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 	{
 	if (a->type != b->type)
 		return -1;

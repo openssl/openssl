@@ -749,12 +749,12 @@ EVP_PKEY *	d2i_AutoPrivateKey(EVP_PKEY **a, unsigned char **pp,
 			long length);
 int		i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp);
 
-int EVP_PKEY_copy_parameters(EVP_PKEY *to,EVP_PKEY *from);
-int EVP_PKEY_missing_parameters(EVP_PKEY *pkey);
+int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from);
+int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey);
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey,int mode);
-int EVP_PKEY_cmp_parameters(EVP_PKEY *a,EVP_PKEY *b);
+int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
 
-int EVP_PKEY_cmp(EVP_PKEY *a,EVP_PKEY *b);
+int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b);
 
 int EVP_CIPHER_type(const EVP_CIPHER *ctx);
 
