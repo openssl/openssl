@@ -171,7 +171,6 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 		X509err(X509_F_X509_PUBKEY_SET,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
-  	/* Set number of unused bits to zero */
 	/* Set number of unused bits to zero */
 	pk->public_key->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
 	pk->public_key->flags|=ASN1_STRING_FLAG_BITS_LEFT;

@@ -209,7 +209,6 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 			ASN1err(ASN1_F_ASN1_UTCTIME_SET,ERR_R_MALLOC_FAILURE);
 			return(NULL);
 			}
-  		if (s->data != NULL)
 		if (s->data != NULL)
 			OPENSSL_free(s->data);
 		s->data=(unsigned char *)p;
