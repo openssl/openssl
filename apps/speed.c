@@ -133,6 +133,9 @@
 #ifndef OPENSSL_NO_DES
 #include <openssl/des_old.h>
 #endif
+#ifndef OPENSSL_NO_AES
+#include <openssl/aes.h>
+#endif
 #ifndef OPENSSL_NO_MD2
 #include <openssl/md2.h>
 #endif
@@ -219,16 +222,17 @@ static void print_result(int alg,int run_no,int count,double time_used);
 static int do_multi(int multi);
 #endif
 
-#define ALGOR_NUM	16
+#define ALGOR_NUM	19
 #define SIZE_NUM	5
 #define RSA_NUM		4
 #define DSA_NUM		3
 static const char *names[ALGOR_NUM]={
   "md2","mdc2","md4","md5","hmac(md5)","sha1","rmd160","rc4",
   "des cbc","des ede3","idea cbc",
-  "rc2 cbc","rc5-32/12 cbc","blowfish cbc","cast cbc"};
+  "rc2 cbc","rc5-32/12 cbc","blowfish cbc","cast cbc",
+  "aes-128 cbc","aes-192 cbc","aes-256 cbc"};
 static double results[ALGOR_NUM][SIZE_NUM];
-static int lengths[SIZE_NUM]={8,64,256,1024,8*1024};
+static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
 static double rsa_results[RSA_NUM][2];
 static double dsa_results[DSA_NUM][2];
 
@@ -396,10 +400,25 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_CAST
 	CAST_KEY cast_ks;
 #endif
-	static unsigned char key16[16]=
+	static const unsigned char key16[16]=
 		{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
 		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
-	unsigned char iv[8];
+	static const unsigned char key24[24]=
+		{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
+		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,
+		 0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34};
+	static const unsigned char key32[32]=
+		{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
+		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,
+		 0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,
+		 0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,0x56};
+#ifndef OPENSSL_NO_AES
+#define MAX_BLOCK_SIZE 128
+#else
+#define MAX_BLOCK_SIZE 64
+#endif
+	unsigned char DES_iv[8];
+	unsigned char iv[MAX_BLOCK_SIZE/8];
 #ifndef OPENSSL_NO_DES
 	DES_cblock *buf_as_des_cblock = NULL;
 	static des_cblock key ={0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0};
@@ -408,6 +427,9 @@ int MAIN(int argc, char **argv)
 	DES_key_schedule sch;
 	DES_key_schedule sch2;
 	DES_key_schedule sch3;
+#endif
+#ifndef OPENSSL_NO_AES
+	AES_KEY aes_ks1, aes_ks2, aes_ks3;
 #endif
 #define	D_MD2		0
 #define	D_MDC2		1
@@ -424,8 +446,11 @@ int MAIN(int argc, char **argv)
 #define	D_CBC_RC5	12
 #define	D_CBC_BF	13
 #define	D_CBC_CAST	14
-#define D_EVP		15
-	double d=0;
+#define D_CBC_128_AES	15
+#define D_CBC_192_AES	16
+#define D_CBC_256_AES	17
+#define D_EVP		18
+	double d=0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
 #define	R_DSA_512	0
 #define	R_DSA_1024	1
@@ -495,6 +520,7 @@ int MAIN(int argc, char **argv)
 		}
 
 	memset(c,0,sizeof(c));
+	memset(DES_iv,0,sizeof(DES_iv));
 	memset(iv,0,sizeof(iv));
 
 	for (i=0; i<ALGOR_NUM; i++)
@@ -628,6 +654,12 @@ int MAIN(int argc, char **argv)
 		else	if (strcmp(*argv,"des-ede3") == 0) doit[D_EDE3_DES]=1;
 		else
 #endif
+#ifndef OPENSSL_NO_AES
+			if (strcmp(*argv,"aes-128-cbc") == 0) doit[D_CBC_128_AES]=1;
+		else	if (strcmp(*argv,"aes-192-cbc") == 0) doit[D_CBC_192_AES]=1;
+		else	if (strcmp(*argv,"aes-256-cbc") == 0) doit[D_CBC_256_AES]=1;
+		else
+#endif
 #ifndef OPENSSL_NO_RSA
 #if 0 /* was: #ifdef RSAref */
 			if (strcmp(*argv,"rsaref") == 0) 
@@ -686,6 +718,15 @@ int MAIN(int argc, char **argv)
 			{
 			doit[D_CBC_DES]=1;
 			doit[D_EDE3_DES]=1;
+			}
+		else
+#endif
+#ifndef OPENSSL_NO_AES
+			if (strcmp(*argv,"aes") == 0)
+			{
+			doit[D_CBC_128_AES]=1;
+			doit[D_CBC_192_AES]=1;
+			doit[D_CBC_256_AES]=1;
 			}
 		else
 #endif
@@ -754,8 +795,12 @@ int MAIN(int argc, char **argv)
     !defined(OPENSSL_NO_BF) || !defined(OPENSSL_NO_RC5)
 			BIO_printf(bio_err,"\n");
 #endif
-
+#ifndef OPENSSL_NO_DES
 			BIO_printf(bio_err,"des-cbc  des-ede3 ");
+#endif
+#ifndef OPENSSL_NO_AES
+			BIO_printf(bio_err,"aes-128-cbc aes-192-cbc aes-256-cbc ");
+#endif
 #ifndef OPENSSL_NO_RC4
 			BIO_printf(bio_err,"rc4");
 #endif
@@ -778,6 +823,9 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_DES
 			BIO_printf(bio_err,"des      ");
 #endif
+#ifndef OPENSSL_NO_AES
+			BIO_printf(bio_err,"aes      ");
+#endif
 #ifndef OPENSSL_NO_RSA
 			BIO_printf(bio_err,"rsa      ");
 #endif
@@ -786,7 +834,7 @@ int MAIN(int argc, char **argv)
 #endif
 #if !defined(OPENSSL_NO_IDEA) || !defined(OPENSSL_NO_RC2) || \
     !defined(OPENSSL_NO_DES) || !defined(OPENSSL_NO_RSA) || \
-    !defined(OPENSSL_NO_BF)
+    !defined(OPENSSL_NO_BF) || !defined(OPENSSL_NO_AES)
 			BIO_printf(bio_err,"\n");
 #endif
 
@@ -872,6 +920,11 @@ int MAIN(int argc, char **argv)
 	DES_set_key_unchecked(&key,&sch);
 	DES_set_key_unchecked(&key2,&sch2);
 	DES_set_key_unchecked(&key3,&sch3);
+#endif
+#ifndef OPENSSL_NO_AES
+	AES_set_encrypt_key(key16,128,&aes_ks1);
+	AES_set_encrypt_key(key24,192,&aes_ks2);
+	AES_set_encrypt_key(key32,256,&aes_ks3);
 #endif
 #ifndef OPENSSL_NO_IDEA
 	idea_set_encrypt_key(key16,&idea_ks);
@@ -1067,7 +1120,7 @@ int MAIN(int argc, char **argv)
 
 		HMAC_CTX_init(&hctx);
 		HMAC_Init_ex(&hctx,(unsigned char *)"This is a key...",
-			     16,EVP_md5());
+			16,EVP_md5());
 
 		for (j=0; j<SIZE_NUM; j++)
 			{
@@ -1137,7 +1190,7 @@ int MAIN(int argc, char **argv)
 			Time_F(START);
 			for (count=0,run=1; COND(c[D_CBC_DES][j]); count++)
 				DES_ncbc_encrypt(buf,buf,lengths[j],&sch,
-						 &iv,DES_ENCRYPT);
+						 &DES_iv,DES_ENCRYPT);
 			d=Time_F(STOP);
 			print_result(D_CBC_DES,j,count,d);
 			}
@@ -1152,11 +1205,56 @@ int MAIN(int argc, char **argv)
 			for (count=0,run=1; COND(c[D_EDE3_DES][j]); count++)
 				DES_ede3_cbc_encrypt(buf,buf,lengths[j],
 						     &sch,&sch2,&sch3,
-						     &iv,DES_ENCRYPT);
+						     &DES_iv,DES_ENCRYPT);
 			d=Time_F(STOP);
 			print_result(D_EDE3_DES,j,count,d);
 			}
 		}
+#endif
+#ifndef OPENSSL_NO_AES
+	if (doit[D_CBC_128_AES])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_CBC_128_AES],c[D_CBC_128_AES][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_CBC_128_AES][j]); count++)
+				AES_cbc_encrypt(buf,buf,
+					(unsigned long)lengths[j],&aes_ks1,
+					iv,AES_ENCRYPT);
+			d=Time_F(STOP);
+			print_result(D_CBC_128_AES,j,count,d);
+			}
+		}
+	if (doit[D_CBC_192_AES])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_CBC_192_AES],c[D_CBC_192_AES][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_CBC_192_AES][j]); count++)
+				AES_cbc_encrypt(buf,buf,
+					(unsigned long)lengths[j],&aes_ks2,
+					iv,AES_ENCRYPT);
+			d=Time_F(STOP);
+			print_result(D_CBC_192_AES,j,count,d);
+			}
+		}
+	if (doit[D_CBC_256_AES])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_CBC_256_AES],c[D_CBC_256_AES][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_CBC_256_AES][j]); count++)
+				AES_cbc_encrypt(buf,buf,
+					(unsigned long)lengths[j],&aes_ks3,
+					iv,AES_ENCRYPT);
+			d=Time_F(STOP);
+			print_result(D_CBC_256_AES,j,count,d);
+			}
+		}
+
 #endif
 #ifndef OPENSSL_NO_IDEA
 	if (doit[D_CBC_IDEA])
@@ -1249,6 +1347,9 @@ int MAIN(int argc, char **argv)
 				int outl;
 
 				names[D_EVP]=OBJ_nid2ln(evp_cipher->nid);
+				/* -O3 -fschedule-insns messes up an
+				 * optimization here!  names[D_EVP]
+				 * somehow becomes NULL */
 				print_message(names[D_EVP],save_count,
 					lengths[j]);
 
@@ -1483,6 +1584,9 @@ show_res:
 #ifndef OPENSSL_NO_DES
 		printf("%s ",des_options());
 #endif
+#ifndef OPENSSL_NO_AES
+		printf("%s ",AES_options());
+#endif
 #ifndef OPENSSL_NO_IDEA
 		printf("%s ",idea_options());
 #endif
@@ -1502,7 +1606,7 @@ show_res:
 #endif
 #ifdef HZ
 #define as_string(s) (#s)
-		printf("HZ=%g", (double)HZ);
+		printf("HZ=%g", HZ);
 # ifdef _SC_CLK_TCK
 		printf(" [sysconf value]");
 # endif
