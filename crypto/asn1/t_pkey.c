@@ -479,7 +479,7 @@ int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 	unsigned char *buffer=NULL;
 	size_t	buf_len=0, i;
 	int     ret=0, reason=ERR_R_BIO_LIB;
-	BIGNUM  *pub_key=NULL;
+	BIGNUM  *pub_key=NULL, *order=NULL;
 	BN_CTX  *ctx=NULL;
  
 	if (!x || !x->group)
@@ -513,8 +513,12 @@ int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 		{
 		if (!BIO_indent(bp, off, 128))
 			goto err;
+		if ((order = BN_new()) == NULL)
+			goto err;
+		if (!EC_GROUP_get_order(x->group, order, NULL))
+			goto err;
 		if (BIO_printf(bp, "Private-Key: (%d bit)\n", 
-			BN_num_bits(x->priv_key)) <= 0) goto err;
+			BN_num_bits(order)) <= 0) goto err;
 		}
   
 	if ((x->priv_key != NULL) && !print(bp, "priv:", x->priv_key, 
@@ -531,6 +535,8 @@ err:
  		ECerr(EC_F_EC_KEY_PRINT, reason);
 	if (pub_key) 
 		BN_free(pub_key);
+	if (order)
+		BN_free(order);
 	if (ctx)
 		BN_CTX_free(ctx);
 	if (buffer != NULL)
