@@ -22,6 +22,9 @@
   *) MIPS assembler BIGNUM division bug fix. 
      [Andy Polyakov]
 
+  *) Disabled incorrect Alpha assembler code.
+     [Richard Levitte]
+
   *) Fix bug in PKCS#12 key generation routines. This was triggered
      if a 3DES key was generated with a 0 initial byte. Include
      PKCS12_BROKEN_KEYGEN compilation option to retain the old
