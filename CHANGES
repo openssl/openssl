@@ -4,6 +4,9 @@
 
  Changes between 0.9.7c and 0.9.7d  [xx XXX XXXX]
 
+  *) Print out GeneralizedTime and UTCTime in ASN1_STRING_print_ex().
+     [Peter Sylvester <Peter.Sylvester@EdelWeb.fr>]
+
   *) Use the correct content when signing type "other".
      [Steve Henson]
 

@@ -576,12 +576,12 @@ char *CONF_get1_default_config_file(void)
  * be used to parse comma separated lists for example.
  */
 
-int CONF_parse_list(const char *list, int sep, int nospc,
+int CONF_parse_list(const char *list_, int sep, int nospc,
 	int (*list_cb)(const char *elem, int len, void *usr), void *arg)
 	{
 	int ret;
 	const char *lstart, *tmpend, *p;
-	lstart = list;
+	lstart = list_;
 
 	for(;;)
 		{

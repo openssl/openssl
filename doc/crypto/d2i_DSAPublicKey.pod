@@ -9,6 +9,7 @@ and parsing functions.
 =head1 SYNOPSIS
 
  #include <openssl/dsa.h>
+ #include <openssl/x509.h>
 
  DSA * d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
 
@@ -35,8 +36,8 @@ and parsing functions.
 d2i_DSAPublicKey() and i2d_DSAPublicKey() decode and encode the DSA public key
 components structure.
 
-d2i_DSA_PUKEY() and i2d_DSA_PUKEY() decode and encode an DSA public key using a
-SubjectPublicKeyInfo (certificate public key) structure.
+d2i_DSA_PUBKEY() and i2d_DSA_PUBKEY() decode and encode an DSA public key using
+a SubjectPublicKeyInfo (certificate public key) structure.
 
 d2i_DSAPrivateKey(), i2d_DSAPrivateKey() decode and encode the DSA private key
 components.

@@ -287,8 +287,8 @@ a client and also echoes the request to standard output.
 	return 0;
  }
 
- BIO_puts(sbio, "HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n");
- BIO_puts(sbio, "<pre>\r\nConnection Established\r\nRequest headers:\r\n");
+ BIO_puts(sbio, "HTTP/1.0 200 OK\r\nContent-type: text/plain\r\n\r\n");
+ BIO_puts(sbio, "\r\nConnection Established\r\nRequest headers:\r\n");
  BIO_puts(sbio, "--------------------------------------------------\r\n");
 
  for(;;) {
@@ -301,7 +301,7 @@ a client and also echoes the request to standard output.
  }
 
  BIO_puts(sbio, "--------------------------------------------------\r\n");
- BIO_puts(sbio, "</pre>\r\n");
+ BIO_puts(sbio, "\r\n");
 
  /* Since there is a buffering BIO present we had better flush it */
  BIO_flush(sbio);

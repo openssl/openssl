@@ -50,7 +50,7 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all: buildinf.h lib subdirs shared
+all: shared
 
 buildinf.h: ../Makefile.ssl
 	( echo "#ifndef MK1MF_BUILD"; \
@@ -96,7 +96,7 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-shared:
+shared: buildinf.h lib subdirs
 	if [ -n "$(SHARED_LIBS)" ]; then \
 		(cd ..; $(MAKE) $(SHARED_LIB)); \
 	fi

@@ -1058,14 +1058,17 @@ ENGINE_load_cryptodev(void)
 
 	if (engine == NULL)
 		return;
-	if ((fd = get_dev_crypto()) < 0)
+	if ((fd = get_dev_crypto()) < 0) {
+		ENGINE_free(engine);
 		return;
+	}
 
 	/*
 	 * find out what asymmetric crypto algorithms we support
 	 */
 	if (ioctl(fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
 		close(fd);
+		ENGINE_free(engine);
 		return;
 	}
 	close(fd);
