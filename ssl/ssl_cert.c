@@ -371,7 +371,7 @@ err:
  * certs may have been added to \c stack.
  */
 
-int SSL_add_cert_file_to_stack(STACK *stack,const char *file)
+int SSL_add_file_cert_subjects_to_stack(STACK *stack,const char *file)
     {
     BIO *in;
     X509 *x=NULL;
@@ -385,7 +385,7 @@ int SSL_add_cert_file_to_stack(STACK *stack,const char *file)
 
     if (in == NULL)
 	{
-	SSLerr(SSL_F_SSL_ADD_CERT_FILE_TO_STACK,ERR_R_MALLOC_FAILURE);
+	SSLerr(SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK,ERR_R_MALLOC_FAILURE);
 	goto err;
 	}
 	
@@ -433,7 +433,7 @@ err:
 
 #ifndef WIN32
 
-int SSL_add_cert_dir_to_stack(STACK *stack,const char *dir)
+int SSL_add_dir_cert_subjects_to_stack(STACK *stack,const char *dir)
     {
     DIR *d=opendir(dir);
     struct dirent *dstruct;
@@ -441,7 +441,7 @@ int SSL_add_cert_dir_to_stack(STACK *stack,const char *dir)
     /* Note that a side effect is that the CAs will be sorted by name */
     if(!d)
 	{
-	SSLerr(SSL_F_SSL_ADD_CERT_DIR_TO_STACK,ERR_R_MALLOC_FAILURE);
+	SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,ERR_R_MALLOC_FAILURE);
 	return 0;
 	}
 
@@ -451,12 +451,12 @@ int SSL_add_cert_dir_to_stack(STACK *stack,const char *dir)
 
 	if(strlen(dir)+strlen(dstruct->d_name)+2 > sizeof buf)
 	    {
-	    SSLerr(SSL_F_SSL_ADD_CERT_DIR_TO_STACK,SSL_R_PATH_TOO_LONG);
+	    SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,SSL_R_PATH_TOO_LONG);
 	    return 0;
 	    }
 	
 	sprintf(buf,"%s/%s",dir,dstruct->d_name);
-	if(!SSL_add_cert_file_to_stack(stack,buf))
+	if(!SSL_add_file_cert_subjects_to_stack(stack,buf))
 	    return 0;
 	}
 

@@ -858,8 +858,10 @@ int	SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, char *file, int type);
 int	SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, char *file, int type);
 int	SSL_CTX_use_certificate_file(SSL_CTX *ctx, char *file, int type);
 STACK * SSL_load_client_CA_file(char *file);
-int	SSL_add_cert_file_to_stack(STACK *stackCAs,const char *file);
-int	SSL_add_cert_dir_to_stack(STACK *stackCAs,const char *dir);
+int	SSL_add_file_cert_subjects_to_stack(STACK *stackCAs,
+					    const char *file);
+int	SSL_add_dir_cert_subjects_to_stack(STACK *stackCAs,
+					   const char *dir);
 #endif
 
 void	ERR_load_SSL_strings(void );
@@ -1112,8 +1114,8 @@ int	SSL_CTX_use_RSAPrivateKey_file();
 int	SSL_CTX_use_PrivateKey_file();
 int	SSL_CTX_use_certificate_file();
 STACK * SSL_load_client_CA_file();
-int	SSL_add_cert_file_to_stack();
-int	SSL_add_cert_dir_to_stack();
+int	SSL_add_file_cert_subjects_to_stack();
+int	SSL_add_dir_cert_subjects_to_stack();
 #endif
 
 void	ERR_load_SSL_strings();
@@ -1348,8 +1350,8 @@ void SSL_set_tmp_dh_callback();
 #define SSL_F_SSL3_SETUP_KEY_BLOCK			 157
 #define SSL_F_SSL3_WRITE_BYTES				 158
 #define SSL_F_SSL3_WRITE_PENDING			 159
-#define SSL_F_SSL_ADD_CERT_DIR_TO_STACK			 215
-#define SSL_F_SSL_ADD_CERT_FILE_TO_STACK		 216
+#define SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK	 215
+#define SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK	 216
 #define SSL_F_SSL_BAD_METHOD				 160
 #define SSL_F_SSL_BYTES_TO_CIPHER_LIST			 161
 #define SSL_F_SSL_CERT_INSTANTIATE			 214
