@@ -69,7 +69,7 @@ extern "C" {
 
 #include <stdio.h>
 #include <openssl/opensslconf.h> /* DES_LONG */
-#include <openssl/e_os.h>	/* EXTERN */
+#include <openssl/e_os2.h>	/* EXTERN */
 
 #ifdef VMS
 #undef des_init_random_number_generator
@@ -138,9 +138,9 @@ typedef des_key_schedule bit_64;
 #define des_fixup_key_parity des_set_odd_parity
 #define des_check_key_parity check_parity
 
-EXTERN int des_check_key;	/* defaults to false */
-EXTERN int des_rw_mode;		/* defaults to DES_PCBC_MODE */
-EXTERN int des_set_weak_key_flag; /* set the weak key flag */
+OPENSSL_EXTERN int des_check_key;	/* defaults to false */
+OPENSSL_EXTERN int des_rw_mode;		/* defaults to DES_PCBC_MODE */
+OPENSSL_EXTERN int des_set_weak_key_flag; /* set the weak key flag */
 
 const char *des_options(void);
 void des_ecb3_encrypt(const des_cblock input, des_cblock output,
