@@ -136,19 +136,19 @@
 #if defined(USE_MD5_RAND)
 #define MD_DIGEST_LENGTH	MD5_DIGEST_LENGTH
 #define MD_Init(a)		EVP_DigestInit(a,EVP_md5())
-#define	MD(a,b,c)		EVP_Digest(a,b,c,EVP_md5())
+#define	MD(a,b,c)		EVP_Digest(a,b,c,NULL,EVP_md5())
 #elif defined(USE_SHA1_RAND)
 #define MD_DIGEST_LENGTH	SHA_DIGEST_LENGTH
 #define MD_Init(a)		EVP_DigestInit(a,EVP_sha1())
-#define	MD(a,b,c)		EVP_Digest(a,b,c,EVP_sha1())
+#define	MD(a,b,c)		EVP_Digest(a,b,c,NULL,EVP_sha1())
 #elif defined(USE_MDC2_RAND)
 #define MD_DIGEST_LENGTH	MDC2_DIGEST_LENGTH
 #define MD_Init(a)		EVP_DigestInit(a,EVP_mdc2())
-#define	MD(a,b,c)		EVP_Digest(a,b,c,EVP_mdc2())
+#define	MD(a,b,c)		EVP_Digest(a,b,c,NULL,EVP_mdc2())
 #elif defined(USE_MD2_RAND)
 #define MD_DIGEST_LENGTH	MD2_DIGEST_LENGTH
 #define MD_Init(a)		EVP_DigestInit(a,EVP_md2())
-#define	MD(a,b,c)		EVP_Digest(a,b,c,EVP_md2())
+#define	MD(a,b,c)		EVP_Digest(a,b,c,NULL,EVP_md2())
 #endif
 
 
