@@ -6,7 +6,7 @@
  Changes between 0.9.3 and 0.9.3a [?]  [xx May? 1999]
 
   *) Updated some demos.
-     [Sean O Riordain]
+     [Sean O Riordain, Wade Scholine]
 
   *) Add missing BIO_free at exit of pkcs12 application.
      [Wu Zhigang]
