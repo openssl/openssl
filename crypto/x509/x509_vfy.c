@@ -67,9 +67,11 @@
 #include <openssl/evp.h>
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/objects.h>
 
 static int null_callback(int ok,X509_STORE_CTX *e);
+static int check_chain_purpose(X509_STORE_CTX *ctx);
 static int internal_verify(X509_STORE_CTX *ctx);
 const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
 
@@ -290,6 +292,11 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		if (!ok) goto end;
 		}
 
+	/* We have the chain complete: now we need to check its purpose */
+	if(ctx->chain_purpose > 0) ok = check_chain_purpose(ctx);
+
+	if(!ok) goto end;
+
 	/* We may as well copy down any DSA parameters that are required */
 	X509_get_pubkey_parameters(NULL,ctx->chain);
 
@@ -307,6 +314,47 @@ end:
 	if (chain_ss != NULL) X509_free(chain_ss);
 	return(ok);
 	}
+
+/* Check a certificate chains extensions for consistency
+ * with the supplied purpose
+ */
+
+static int check_chain_purpose(X509_STORE_CTX *ctx)
+{
+#ifdef NO_CHAIN_VERIFY
+	return 1;
+#else
+	int i, ok=0;
+	X509 *x;
+	int (*cb)();
+	cb=ctx->ctx->verify_cb;
+	if (cb == NULL) cb=null_callback;
+	/* Check all untrusted certificates */
+	for(i = 0; i < ctx->last_untrusted; i++) {
+		x = sk_X509_value(ctx->chain, i);
+		if(!X509_check_purpose(x, ctx->chain_purpose, i)) {
+			if(i) ctx->error = X509_V_ERR_INVALID_CA;
+			else ctx->error = X509_V_ERR_INVALID_PURPOSE;
+			ctx->error_depth = i;
+			ctx->current_cert = x;
+			ok=cb(0,ctx);
+			if(!ok) goto end;
+		}
+		/* Check pathlen */
+		if((i > 1) && (x->ex_pathlen != -1)
+					&& (i > (x->ex_pathlen + 1))) {
+			ctx->error = X509_V_ERR_PATH_LENGTH_EXCEEDED;
+			ctx->error_depth = i;
+			ctx->current_cert = x;
+			ok=cb(0,ctx);
+			if(!ok) goto end;
+		}
+	}
+	ok = 1;
+	end:
+	return(ok);
+#endif
+}
 
 static int internal_verify(X509_STORE_CTX *ctx)
 	{
@@ -646,6 +694,16 @@ void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x)
 void X509_STORE_CTX_set_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 	{
 	ctx->untrusted=sk;
+	}
+
+void X509_STORE_CTX_chain_purpose(X509_STORE_CTX *ctx, int purpose)
+	{
+	ctx->chain_purpose = purpose;
+	}
+
+void X509_STORE_CTX_trust_purpose(X509_STORE_CTX *ctx, int purpose)
+	{
+	ctx->trust_purpose = purpose;
 	}
 
 IMPLEMENT_STACK_OF(X509)

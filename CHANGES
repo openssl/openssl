@@ -4,8 +4,21 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
-  *) Support for the authority information access extension. Not
-     very well tested yet.
+  *) Very preliminary certificate chain verify code. Currently just tests
+     the untrusted certificates for consistency with the verify purpose
+     (which is set when the X509_STORE_CTX structure is set up) and checks
+     the pathlength. Totally untested at present: needs some extra
+     functionality in the verify program first. There is a
+     NO_CHAIN_VERIFY compilation option to keep the old behaviour: this is
+     because when it is finally working it will reject chains with
+     invalid extensions whereas before it made no checks at all.
+
+     Also added X509_STORE_CTX_new() and X509_STORE_CTX_free() functions
+     which should be used for version portability: especially since the
+     verify structure is likely to change more often now.
+     [Steve Henson]
+
+  *) Support for the authority information access extension.
      [Steve Henson]
 
   *) Modify RSA and DSA PEM read routines to transparently handle

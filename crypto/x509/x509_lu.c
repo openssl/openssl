@@ -381,6 +381,17 @@ X509_OBJECT *X509_OBJECT_retrieve_by_subject(LHASH *h, int type,
 	return(tmp);
 	}
 
+X509_STORE_CTX *X509_STORE_CTX_new(void)
+{
+	return (X509_STORE_CTX *)Malloc(sizeof(X509_STORE_CTX));
+}
+
+void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
+{
+	X509_STORE_CTX_cleanup(ctx);
+	Free(ctx);
+}
+
 void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	     STACK_OF(X509) *chain)
 	{
@@ -389,6 +400,8 @@ void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	ctx->cert=x509;
 	ctx->untrusted=chain;
 	ctx->last_untrusted=0;
+	ctx->chain_purpose=0;
+	ctx->trust_purpose=0;
 	ctx->valid=0;
 	ctx->chain=NULL;
 	ctx->depth=9;
