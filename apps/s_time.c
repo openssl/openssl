@@ -109,10 +109,6 @@
 #include <sys/timeb.h>
 #endif
 
-#ifdef _AIX
-#include <sys/select.h>
-#endif
-
 #if defined(sun) || defined(__ultrix)
 #define _POSIX_SOURCE
 #include <limits.h>
