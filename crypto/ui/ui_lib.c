@@ -237,7 +237,7 @@ static int general_allocate_boolean(UI *ui,
 	return ret;
 	}
 
-/* Returns the index to the place in the stack or 0 for error.  Uses a
+/* Returns the index to the place in the stack or -1 for error.  Uses a
    direct reference to the prompt.  */
 int UI_add_input_string(UI *ui, const char *prompt, int flags,
 	char *result_buf, int minsize, int maxsize)
