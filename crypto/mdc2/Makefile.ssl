@@ -78,7 +78,11 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-mdc2_one.o: ../../include/bio.h ../../include/buffer.h ../../include/des.h
-mdc2_one.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-mdc2_one.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h mdc2.h
-mdc2dgst.o: ../../include/des.h ../opensslconf.h mdc2.h
+mdc2_one.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+mdc2_one.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+mdc2_one.o: ../../include/openssl/e_os.h ../../include/openssl/err.h
+mdc2_one.o: ../../include/openssl/mdc2.h ../../include/openssl/opensslconf.h
+mdc2_one.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
+mdc2_one.o: ../cryptlib.h
+mdc2dgst.o: ../../include/openssl/des.h ../../include/openssl/mdc2.h
+mdc2dgst.o: ../../include/openssl/opensslconf.h

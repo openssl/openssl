@@ -84,42 +84,66 @@ $(ERRC).c: $(ERR).err
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-dsa_asn1.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
-dsa_asn1.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
-dsa_asn1.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
-dsa_asn1.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
-dsa_asn1.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
-dsa_asn1.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
-dsa_asn1.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
-dsa_asn1.o: ../../include/ripemd.h ../../include/rsa.h
-dsa_asn1.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
-dsa_asn1.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-dsa_asn1.o: ../crypto.h ../opensslconf.h ../opensslv.h dsa.h
-dsa_err.o: ../../include/bn.h ../../include/err.h ../opensslconf.h dsa.h
-dsa_gen.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
-dsa_gen.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
-dsa_gen.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
-dsa_gen.o: ../opensslconf.h ../opensslv.h dsa.h
-dsa_key.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
-dsa_key.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
-dsa_key.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
-dsa_key.o: ../opensslconf.h ../opensslv.h dsa.h
-dsa_lib.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
-dsa_lib.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
-dsa_lib.o: ../../include/stack.h ../cryptlib.h ../crypto.h ../opensslconf.h
-dsa_lib.o: ../opensslv.h dsa.h
-dsa_sign.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
-dsa_sign.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
-dsa_sign.o: ../../include/rand.h ../../include/stack.h ../cryptlib.h
-dsa_sign.o: ../crypto.h ../opensslconf.h ../opensslv.h dsa.h
-dsa_vrf.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
-dsa_vrf.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
-dsa_vrf.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
-dsa_vrf.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
-dsa_vrf.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
-dsa_vrf.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
-dsa_vrf.o: ../../include/rand.h ../../include/rc2.h ../../include/rc4.h
-dsa_vrf.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
-dsa_vrf.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
-dsa_vrf.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-dsa_vrf.o: ../crypto.h ../opensslconf.h ../opensslv.h dsa.h
+dsa_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
+dsa_asn1.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
+dsa_asn1.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+dsa_asn1.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
+dsa_asn1.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+dsa_asn1.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+dsa_asn1.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+dsa_asn1.o: ../../include/openssl/idea.h ../../include/openssl/md2.h
+dsa_asn1.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+dsa_asn1.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+dsa_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
+dsa_asn1.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+dsa_asn1.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+dsa_asn1.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+dsa_asn1.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+dsa_asn1.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+dsa_asn1.o: ../cryptlib.h
+dsa_err.o: ../../include/openssl/bn.h ../../include/openssl/dsa.h
+dsa_err.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dsa_gen.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+dsa_gen.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dsa_gen.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+dsa_gen.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dsa_gen.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+dsa_gen.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+dsa_gen.o: ../cryptlib.h
+dsa_key.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+dsa_key.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dsa_key.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+dsa_key.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dsa_key.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+dsa_key.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+dsa_key.o: ../cryptlib.h
+dsa_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+dsa_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+dsa_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+dsa_lib.o: ../../include/openssl/e_os.h ../../include/openssl/err.h
+dsa_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+dsa_lib.o: ../../include/openssl/stack.h ../cryptlib.h
+dsa_sign.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+dsa_sign.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+dsa_sign.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+dsa_sign.o: ../../include/openssl/e_os.h ../../include/openssl/err.h
+dsa_sign.o: ../../include/openssl/opensslconf.h
+dsa_sign.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+dsa_sign.o: ../../include/openssl/stack.h ../cryptlib.h
+dsa_vrf.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
+dsa_vrf.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
+dsa_vrf.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+dsa_vrf.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
+dsa_vrf.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+dsa_vrf.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+dsa_vrf.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+dsa_vrf.o: ../../include/openssl/idea.h ../../include/openssl/md2.h
+dsa_vrf.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+dsa_vrf.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+dsa_vrf.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
+dsa_vrf.o: ../../include/openssl/rand.h ../../include/openssl/rc2.h
+dsa_vrf.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+dsa_vrf.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+dsa_vrf.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+dsa_vrf.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
+dsa_vrf.o: ../../include/openssl/x509_vfy.h ../cryptlib.h

@@ -158,18 +158,25 @@ errgen:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-cpt_err.o: ../include/err.h ../include/stack.h crypto.h opensslv.h
-cryptlib.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
-cryptlib.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h date.h
-cryptlib.o: opensslv.h
-cversion.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
-cversion.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h date.h
-cversion.o: opensslv.h
-ex_data.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
-ex_data.o: ../include/err.h ../include/lhash.h ../include/stack.h cryptlib.h
-ex_data.o: crypto.h opensslv.h
-mem.o: ../include/bio.h ../include/buffer.h ../include/e_os.h ../include/err.h
-mem.o: ../include/lhash.h ../include/stack.h cryptlib.h crypto.h opensslv.h
-tmdiff.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
-tmdiff.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h opensslv.h
-tmdiff.o: tmdiff.h
+cpt_err.o: ../include/openssl/crypto.h ../include/openssl/err.h
+cpt_err.o: ../include/openssl/opensslv.h ../include/openssl/stack.h
+cryptlib.o: ../include/openssl/bio.h ../include/openssl/buffer.h
+cryptlib.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
+cryptlib.o: ../include/openssl/err.h ../include/openssl/opensslv.h
+cryptlib.o: ../include/openssl/stack.h cryptlib.h
+cversion.o: ../include/openssl/bio.h ../include/openssl/buffer.h
+cversion.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
+cversion.o: ../include/openssl/err.h ../include/openssl/opensslv.h
+cversion.o: ../include/openssl/stack.h cryptlib.h
+ex_data.o: ../include/openssl/bio.h ../include/openssl/buffer.h
+ex_data.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
+ex_data.o: ../include/openssl/err.h ../include/openssl/lhash.h
+ex_data.o: ../include/openssl/opensslv.h ../include/openssl/stack.h cryptlib.h
+mem.o: ../include/openssl/bio.h ../include/openssl/buffer.h
+mem.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
+mem.o: ../include/openssl/err.h ../include/openssl/lhash.h
+mem.o: ../include/openssl/opensslv.h ../include/openssl/stack.h cryptlib.h
+tmdiff.o: ../include/openssl/bio.h ../include/openssl/buffer.h
+tmdiff.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
+tmdiff.o: ../include/openssl/err.h ../include/openssl/opensslv.h
+tmdiff.o: ../include/openssl/stack.h ../include/openssl/tmdiff.h cryptlib.h

@@ -104,8 +104,13 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-bf_cfb64.o: ../opensslconf.h bf_locl.h blowfish.h
-bf_ecb.o: ../opensslconf.h ../opensslv.h bf_locl.h blowfish.h
-bf_enc.o: ../opensslconf.h bf_locl.h blowfish.h
-bf_ofb64.o: ../opensslconf.h bf_locl.h blowfish.h
-bf_skey.o: ../opensslconf.h bf_locl.h bf_pi.h blowfish.h
+bf_cfb64.o: ../../include/openssl/blowfish.h
+bf_cfb64.o: ../../include/openssl/opensslconf.h bf_locl.h
+bf_ecb.o: ../../include/openssl/blowfish.h ../../include/openssl/opensslconf.h
+bf_ecb.o: ../../include/openssl/opensslv.h bf_locl.h
+bf_enc.o: ../../include/openssl/blowfish.h ../../include/openssl/opensslconf.h
+bf_enc.o: bf_locl.h
+bf_ofb64.o: ../../include/openssl/blowfish.h
+bf_ofb64.o: ../../include/openssl/opensslconf.h bf_locl.h
+bf_skey.o: ../../include/openssl/blowfish.h ../../include/openssl/opensslconf.h
+bf_skey.o: bf_locl.h bf_pi.h

@@ -86,34 +86,51 @@ $(ERRC).c: $(ERR).err
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-pk7_doit.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
-pk7_doit.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
-pk7_doit.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
-pk7_doit.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
-pk7_doit.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
-pk7_doit.o: ../../include/mdc2.h ../../include/objects.h ../../include/rand.h
-pk7_doit.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
-pk7_doit.o: ../../include/ripemd.h ../../include/rsa.h
-pk7_doit.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
-pk7_doit.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-pk7_doit.o: ../crypto.h ../opensslconf.h ../opensslv.h pkcs7.h
-pk7_lib.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
-pk7_lib.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
-pk7_lib.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
-pk7_lib.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
-pk7_lib.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
-pk7_lib.o: ../../include/mdc2.h ../../include/objects.h ../../include/rc2.h
-pk7_lib.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
-pk7_lib.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
-pk7_lib.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-pk7_lib.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h pkcs7.h
-pkcs7err.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
-pkcs7err.o: ../../include/bn.h ../../include/cast.h ../../include/des.h
-pkcs7err.o: ../../include/dh.h ../../include/dsa.h ../../include/err.h
-pkcs7err.o: ../../include/evp.h ../../include/idea.h ../../include/md2.h
-pkcs7err.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
-pkcs7err.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
-pkcs7err.o: ../../include/ripemd.h ../../include/rsa.h
-pkcs7err.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
-pkcs7err.o: ../../include/x509.h ../../include/x509_vfy.h ../crypto.h
-pkcs7err.o: ../opensslconf.h ../opensslv.h pkcs7.h
+pk7_doit.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+pk7_doit.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+pk7_doit.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
+pk7_doit.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+pk7_doit.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+pk7_doit.o: ../../include/openssl/e_os.h ../../include/openssl/err.h
+pk7_doit.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+pk7_doit.o: ../../include/openssl/md2.h ../../include/openssl/md5.h
+pk7_doit.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
+pk7_doit.o: ../../include/openssl/opensslconf.h
+pk7_doit.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
+pk7_doit.o: ../../include/openssl/rand.h ../../include/openssl/rc2.h
+pk7_doit.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+pk7_doit.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+pk7_doit.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+pk7_doit.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
+pk7_doit.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+pk7_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+pk7_lib.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+pk7_lib.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
+pk7_lib.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+pk7_lib.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+pk7_lib.o: ../../include/openssl/e_os.h ../../include/openssl/err.h
+pk7_lib.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+pk7_lib.o: ../../include/openssl/md2.h ../../include/openssl/md5.h
+pk7_lib.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
+pk7_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+pk7_lib.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
+pk7_lib.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+pk7_lib.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+pk7_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+pk7_lib.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
+pk7_lib.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+pkcs7err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+pkcs7err.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+pkcs7err.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
+pkcs7err.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+pkcs7err.o: ../../include/openssl/dsa.h ../../include/openssl/err.h
+pkcs7err.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+pkcs7err.o: ../../include/openssl/md2.h ../../include/openssl/md5.h
+pkcs7err.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
+pkcs7err.o: ../../include/openssl/opensslconf.h
+pkcs7err.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
+pkcs7err.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+pkcs7err.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+pkcs7err.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+pkcs7err.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+pkcs7err.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h

@@ -101,7 +101,9 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-sha1_one.o: sha.h
-sha1dgst.o: ../opensslv.h sha.h sha_locl.h
-sha_dgst.o: ../opensslv.h sha.h sha_locl.h
-sha_one.o: sha.h
+sha1_one.o: ../../include/openssl/sha.h
+sha1dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/sha.h
+sha1dgst.o: sha_locl.h
+sha_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/sha.h
+sha_dgst.o: sha_locl.h
+sha_one.o: ../../include/openssl/sha.h

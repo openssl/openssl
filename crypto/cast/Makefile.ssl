@@ -107,8 +107,9 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-c_cfb64.o: cast.h cast_lcl.h
-c_ecb.o: ../opensslv.h cast.h cast_lcl.h
-c_enc.o: cast.h cast_lcl.h
-c_ofb64.o: cast.h cast_lcl.h
-c_skey.o: cast.h cast_lcl.h cast_s.h
+c_cfb64.o: ../../include/openssl/cast.h cast_lcl.h
+c_ecb.o: ../../include/openssl/cast.h ../../include/openssl/opensslv.h
+c_ecb.o: cast_lcl.h
+c_enc.o: ../../include/openssl/cast.h cast_lcl.h
+c_ofb64.o: ../../include/openssl/cast.h cast_lcl.h
+c_skey.o: ../../include/openssl/cast.h cast_lcl.h cast_s.h

@@ -84,17 +84,29 @@ $(ERRC).c: $(ERR).err
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-dh_check.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
-dh_check.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-dh_check.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h dh.h
-dh_err.o: ../../include/bn.h ../../include/err.h ../opensslconf.h dh.h
-dh_gen.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
-dh_gen.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-dh_gen.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h dh.h
-dh_key.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
-dh_key.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
-dh_key.o: ../../include/stack.h ../cryptlib.h ../crypto.h ../opensslconf.h
-dh_key.o: ../opensslv.h dh.h
-dh_lib.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
-dh_lib.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-dh_lib.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h dh.h
+dh_check.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+dh_check.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dh_check.o: ../../include/openssl/dh.h ../../include/openssl/e_os.h
+dh_check.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dh_check.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
+dh_check.o: ../cryptlib.h
+dh_err.o: ../../include/openssl/bn.h ../../include/openssl/dh.h
+dh_err.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dh_gen.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+dh_gen.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dh_gen.o: ../../include/openssl/dh.h ../../include/openssl/e_os.h
+dh_gen.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dh_gen.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
+dh_gen.o: ../cryptlib.h
+dh_key.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+dh_key.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dh_key.o: ../../include/openssl/dh.h ../../include/openssl/e_os.h
+dh_key.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dh_key.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
+dh_key.o: ../../include/openssl/stack.h ../cryptlib.h
+dh_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+dh_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dh_lib.o: ../../include/openssl/dh.h ../../include/openssl/e_os.h
+dh_lib.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
+dh_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
+dh_lib.o: ../cryptlib.h

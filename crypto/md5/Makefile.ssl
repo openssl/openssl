@@ -102,5 +102,6 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-md5_dgst.o: ../opensslv.h md5.h md5_locl.h
-md5_one.o: md5.h md5_locl.h
+md5_dgst.o: ../../include/openssl/md5.h ../../include/openssl/opensslv.h
+md5_dgst.o: md5_locl.h
+md5_one.o: ../../include/openssl/md5.h md5_locl.h

@@ -93,14 +93,18 @@ $(ERRC).c: $(ERR).err
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-c_rle.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
-c_rle.o: ../../include/crypto.h ../../include/objects.h
-c_rle.o: ../../include/opensslv.h ../../include/stack.h ../opensslconf.h comp.h
-c_zlib.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
-c_zlib.o: ../../include/crypto.h ../../include/objects.h
-c_zlib.o: ../../include/opensslv.h ../../include/stack.h ../opensslconf.h
-c_zlib.o: comp.h
-comp_lib.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
-comp_lib.o: ../../include/crypto.h ../../include/objects.h
-comp_lib.o: ../../include/opensslv.h ../../include/stack.h ../opensslconf.h
-comp_lib.o: comp.h
+c_rle.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+c_rle.o: ../../include/openssl/bn.h ../../include/openssl/comp.h
+c_rle.o: ../../include/openssl/crypto.h ../../include/openssl/objects.h
+c_rle.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+c_rle.o: ../../include/openssl/stack.h
+c_zlib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+c_zlib.o: ../../include/openssl/bn.h ../../include/openssl/comp.h
+c_zlib.o: ../../include/openssl/crypto.h ../../include/openssl/objects.h
+c_zlib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+c_zlib.o: ../../include/openssl/stack.h
+comp_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+comp_lib.o: ../../include/openssl/bn.h ../../include/openssl/comp.h
+comp_lib.o: ../../include/openssl/crypto.h ../../include/openssl/objects.h
+comp_lib.o: ../../include/openssl/opensslconf.h
+comp_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h

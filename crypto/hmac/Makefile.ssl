@@ -78,11 +78,16 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-hmac.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
-hmac.o: ../../include/bn.h ../../include/cast.h ../../include/crypto.h
-hmac.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
-hmac.o: ../../include/evp.h ../../include/idea.h ../../include/md2.h
-hmac.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
-hmac.o: ../../include/opensslv.h ../../include/rc2.h ../../include/rc4.h
-hmac.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
-hmac.o: ../../include/sha.h ../../include/stack.h ../opensslconf.h hmac.h
+hmac.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+hmac.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+hmac.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
+hmac.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+hmac.o: ../../include/openssl/dsa.h ../../include/openssl/evp.h
+hmac.o: ../../include/openssl/hmac.h ../../include/openssl/idea.h
+hmac.o: ../../include/openssl/md2.h ../../include/openssl/md5.h
+hmac.o: ../../include/openssl/mdc2.h ../../include/openssl/objects.h
+hmac.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+hmac.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+hmac.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+hmac.o: ../../include/openssl/rsa.h ../../include/openssl/sha.h
+hmac.o: ../../include/openssl/stack.h

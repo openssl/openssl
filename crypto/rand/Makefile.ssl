@@ -78,7 +78,8 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-md_rand.o: ../../include/e_os.h ../../include/md5.h ../../include/stack.h
-md_rand.o: ../crypto.h ../opensslv.h rand.h
-rand_lib.o: rand.h
-randfile.o: ../../include/e_os.h rand.h
+md_rand.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+md_rand.o: ../../include/openssl/md5.h ../../include/openssl/opensslv.h
+md_rand.o: ../../include/openssl/rand.h ../../include/openssl/stack.h
+rand_lib.o: ../../include/openssl/rand.h
+randfile.o: ../../include/openssl/e_os.h ../../include/openssl/rand.h

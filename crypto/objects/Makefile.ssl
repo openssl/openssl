@@ -87,19 +87,27 @@ $(ERRC).c: $(ERR).err
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-o_names.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
-o_names.o: ../../include/crypto.h ../../include/lhash.h
-o_names.o: ../../include/opensslv.h ../../include/stack.h ../opensslconf.h
-o_names.o: objects.h
-obj_dat.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
-obj_dat.o: ../../include/buffer.h ../../include/crypto.h ../../include/e_os.h
-obj_dat.o: ../../include/err.h ../../include/lhash.h ../../include/opensslv.h
-obj_dat.o: ../../include/stack.h ../cryptlib.h ../opensslconf.h obj_dat.h
-obj_dat.o: objects.h
-obj_err.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
-obj_err.o: ../../include/crypto.h ../../include/err.h ../../include/opensslv.h
-obj_err.o: ../../include/stack.h ../opensslconf.h objects.h
-obj_lib.o: ../../include/asn1.h ../../include/bio.h ../../include/bn.h
-obj_lib.o: ../../include/buffer.h ../../include/crypto.h ../../include/e_os.h
-obj_lib.o: ../../include/err.h ../../include/lhash.h ../../include/opensslv.h
-obj_lib.o: ../../include/stack.h ../cryptlib.h ../opensslconf.h objects.h
+o_names.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+o_names.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+o_names.o: ../../include/openssl/lhash.h ../../include/openssl/objects.h
+o_names.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+o_names.o: ../../include/openssl/stack.h
+obj_dat.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+obj_dat.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+obj_dat.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+obj_dat.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+obj_dat.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+obj_dat.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
+obj_dat.o: ../cryptlib.h obj_dat.h
+obj_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+obj_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+obj_err.o: ../../include/openssl/err.h ../../include/openssl/objects.h
+obj_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+obj_err.o: ../../include/openssl/stack.h
+obj_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+obj_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+obj_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+obj_lib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+obj_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+obj_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
+obj_lib.o: ../cryptlib.h

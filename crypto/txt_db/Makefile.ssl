@@ -78,6 +78,8 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-txt_db.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
-txt_db.o: ../../include/err.h ../../include/lhash.h ../../include/stack.h
-txt_db.o: ../cryptlib.h ../crypto.h ../opensslv.h txt_db.h
+txt_db.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+txt_db.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+txt_db.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+txt_db.o: ../../include/openssl/opensslv.h ../../include/openssl/stack.h
+txt_db.o: ../../include/openssl/txt_db.h ../cryptlib.h

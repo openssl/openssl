@@ -78,5 +78,7 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-stack.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
-stack.o: ../../include/err.h ../cryptlib.h ../crypto.h ../opensslv.h stack.h
+stack.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+stack.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+stack.o: ../../include/openssl/err.h ../../include/openssl/opensslv.h
+stack.o: ../../include/openssl/stack.h ../cryptlib.h

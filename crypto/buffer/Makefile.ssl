@@ -84,7 +84,8 @@ $(ERRC).c: $(ERR).err
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-buf_err.o: ../../include/err.h buffer.h
-buffer.o: ../../include/bio.h ../../include/e_os.h ../../include/err.h
-buffer.o: ../../include/stack.h ../cryptlib.h ../crypto.h ../opensslv.h
-buffer.o: buffer.h
+buf_err.o: ../../include/openssl/buffer.h ../../include/openssl/err.h
+buffer.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+buffer.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+buffer.o: ../../include/openssl/err.h ../../include/openssl/opensslv.h
+buffer.o: ../../include/openssl/stack.h ../cryptlib.h

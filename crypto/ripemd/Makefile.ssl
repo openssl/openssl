@@ -102,5 +102,6 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-rmd_dgst.o: ../opensslv.h ripemd.h rmd_locl.h rmdconst.h
-rmd_one.o: ripemd.h rmd_locl.h rmdconst.h
+rmd_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ripemd.h
+rmd_dgst.o: rmd_locl.h rmdconst.h
+rmd_one.o: ../../include/openssl/ripemd.h rmd_locl.h rmdconst.h
