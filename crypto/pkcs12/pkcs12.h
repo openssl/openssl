@@ -278,6 +278,7 @@ ASN1_STRING *PKCS12_i2d_encrypt();
 PKCS12 *PKCS12_init();
 int PKCS12_key_gen_asc();
 int PKCS12_key_gen_uni();
+int PKCS12_PBE_keyivgen();
 int PKCS12_gen_mac();
 int PKCS12_verify_mac();
 int PKCS12_set_mac();

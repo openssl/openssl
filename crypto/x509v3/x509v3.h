@@ -511,6 +511,21 @@ NOTICEREF *NOTICEREF_new();
 NOTICEREF *d2i_NOTICEREF();
 void NOTICEREF_free();
 
+int i2d_CRL_DIST_POINTS();
+STACK_OF(DIST_POINT) *CRL_DIST_POINTS_new();
+void CRL_DIST_POINTS_free();
+STACK_OF(DIST_POINT) *d2i_CRL_DIST_POINTS();
+
+int i2d_DIST_POINT();
+DIST_POINT *DIST_POINT_new();
+DIST_POINT *d2i_DIST_POINT();
+void DIST_POINT_free();
+
+int i2d_DIST_POINT_NAME();
+DIST_POINT_NAME *DIST_POINT_NAME_new();
+void DIST_POINT_NAME_free();
+DIST_POINT_NAME *d2i_DIST_POINT_NAME();
+
 char * X509V3_get_string();
 STACK * X509V3_get_section();
 void X509V3_string_free();
@@ -518,6 +533,7 @@ void X509V3_section_free();
 void X509V3_set_ctx();
 
 int X509V3_add_value();
+int X509V3_add_value_uchar();
 int X509V3_add_value_bool();
 int X509V3_add_value_int();
 char *i2s_ASN1_INTEGER();

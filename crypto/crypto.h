@@ -318,6 +318,10 @@ int CRYPTO_add_lock();
 
 void CRYPTO_set_mem_functions();
 void CRYPTO_get_mem_functions();
+void CRYPTO_set_locked_mem_functions();
+void CRYPTO_get_locked_mem_functions();
+void *CRYPTO_malloc_locked();
+void CRYPTO_free_locked();
 void *CRYPTO_malloc();
 void *CRYPTO_realloc();
 void CRYPTO_free();

@@ -1117,6 +1117,7 @@ int	SSL_set_cipher_list();
 void	SSL_set_read_ahead();
 int	SSL_get_verify_mode();
 
+int	(*SSL_get_verify_callback())();
 void	SSL_set_verify();
 int	SSL_use_RSAPrivateKey();
 int	SSL_use_RSAPrivateKey_ASN1();

@@ -263,8 +263,10 @@ void ERR_set_error_data();
 
 unsigned long ERR_get_error();
 unsigned long ERR_get_error_line();
+unsigned long ERR_get_error_line_data();
 unsigned long ERR_peek_error();
 unsigned long ERR_peek_error_line();
+unsigned long ERR_peek_error_line_data();
 void ERR_clear_error();
 char *ERR_error_string();
 char *ERR_lib_error_string();

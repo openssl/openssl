@@ -226,6 +226,8 @@ int des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify);
 
 /* Extra functions from Mark Murray <mark@grondar.za> */
 void des_cblock_print_file(const des_cblock cb, FILE *fp);
+
+#ifdef FreeBSD
 /* The following functions are not in the normal unix build or the
  * SSLeay build.  When using the SSLeay build, use RAND_seed()
  * and RAND_bytes() instead. */
@@ -234,6 +236,7 @@ void des_init_random_number_generator(des_cblock *key);
 void des_set_random_generator_seed(des_cblock *key);
 void des_set_sequence_number(des_cblock new_sequence_number);
 void des_generate_random_block(des_cblock *block);
+#endif
 
 #else
 
