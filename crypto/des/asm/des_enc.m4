@@ -1433,14 +1433,30 @@ DES_decrypt3:
 	add	out0,%o7,out0			! pointer to .PIC.me.up
 
 #ifdef OPENSSL_PIC
+	! In case anybody wonders why this code is same for both ABI.
+	! To start with it's not. Do note LDPTR below. But of course
+	! you must be wondering why the rest of it doesn't contain
+	! things like %hh, %hm and %lm. Well, those are needed only
+	! if OpenSSL library *itself* will become larger than 4GB,
+	! which is not going to happen any time soon. 
 	sethi	%hi(DES_SPtrans),global1
 	or	global1,%lo(DES_SPtrans),global1
 	sethi	%hi(_GLOBAL_OFFSET_TABLE_-(.PIC.me.up-.)),out2
 	add	global1,out0,global1
 	add	out2,%lo(_GLOBAL_OFFSET_TABLE_-(.PIC.me.up-.)),out2
 	LDPTR	[out2+global1],global1
-#else
+#elif 0
 	setn	DES_SPtrans,out2,global1	! synthetic instruction !
+#elif defined(ABI64)
+	sethi	%hh(DES_SPtrans),out2
+	or	out2,%hm(DES_SPtrans),out2
+	sethi	%lm(DES_SPtrans),global1
+	or	global1,%lo(DES_SPtrans),global1
+	sllx	out2,32,out2
+	or	out2,global1,global1
+#else
+	sethi	%hi(DES_SPtrans),global1
+	or	global1,%lo(DES_SPtrans),global1
 #endif
 
 	retl
