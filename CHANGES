@@ -6,7 +6,7 @@
 
   *) Disable caching in BIO_gethostbyname(), directly use gethostbyname()
      instead.  BIO_gethostbyname() does not know what timeouts are
-     appropriate, so entries would stay in cache even when they hade
+     appropriate, so entries would stay in cache even when they have
      become invalid.
      [Bodo Moeller; problem pointed out by Rich Salz <rsalz@zolera.com>
 
