@@ -88,8 +88,8 @@ md_rand.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 md_rand.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 md_rand.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 md_rand.o: ../../include/openssl/symhacks.h md_rand.c rand_lcl.h
-rand_egd.o: ../../include/openssl/opensslconf.h ../../include/openssl/rand.h
-rand_egd.o: rand_egd.c
+rand_egd.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+rand_egd.o: ../../include/openssl/rand.h rand_egd.c
 rand_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 rand_err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 rand_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h

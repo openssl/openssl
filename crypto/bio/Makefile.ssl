@@ -96,7 +96,7 @@ b_dump.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 b_dump.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 b_dump.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 b_dump.o: ../cryptlib.h b_dump.c
-b_print.o: ../../e_os.h ../../include/openssl/bio.h
+b_print.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 b_print.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 b_print.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 b_print.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
