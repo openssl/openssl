@@ -179,10 +179,11 @@ char *argv[];
 		{
 		ASN1_UTCTIME *tm;
 		char *str1,*str2;
+		int rc;
 
 		si=sk_PKCS7_SIGNER_INFO_value(sk,i);
-		i=PKCS7_dataVerify(cert_store,&cert_ctx,p7bio,p7,si);
-		if (i <= 0)
+		rc=PKCS7_dataVerify(cert_store,&cert_ctx,p7bio,p7,si);
+		if (rc <= 0)
 			goto err;
 		printf("signer info\n");
 		if ((tm=get_signed_time(si)) != NULL)
