@@ -107,12 +107,17 @@ my %table=(
 "debug-levitte-linux-elf","gcc:-DRL_DEBUG -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wid-clash-31 -pipe::-D_REENTRANT:::",
 "dist",		"cc:-O::(unknown):::::",
 
-# Basic configs that should work on any box
+# Basic configs that should work on any (32 and less bit) box
 "gcc",		"gcc:-O3::(unknown)::BN_LLONG:::",
 "cc",		"cc:-O::(unknown):::::",
 
 #### Solaris x86 setups
-"solaris-x86-gcc","gcc:-O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN::-D_REENTRANT:-lsocket -lnsl:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_sol_asm",
+# -DNO_INLINE_ASM switches off inline assembler. We have to do it
+# here because whenever GNU C instantiates an assembler template it
+# surrounds it with #APP #NO_APP comment pair which (at least Solaris
+# 7_x86) /usr/ccs/bin/as fails to assemble with "Illegal mnemonic"
+# error message.
+"solaris-x86-gcc","gcc:-O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN -DNO_INLINE_ASM::-D_REENTRANT:-lsocket -lnsl:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_sol_asm",
 
 #### SPARC Solaris with GNU C setups
 "solaris-sparcv7-gcc","gcc:-O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",
@@ -176,16 +181,16 @@ my %table=(
 #   procedural analysis. As it has to be performed during the link
 #   stage the compiler leaves behind certain pseudo-code in lib*.a
 #   which might be release or even patch level specific. Generating
-#   the machine code and analyzing the *whole* program appears to be
-#   *extremely* memory demanding while the performance gain is
+#   the machine code for and analyzing the *whole* program appears
+#   to be *extremely* memory demanding while the performance gain is
 #   actually questionable. The situation is intensified by the default
 #   HP-UX data set size limit (infamous 'maxdsiz' tunable) of 64MB
 #   which is way too low for +O4. In other words, doesn't +O3 make
 #   more sense?
-# - Keep in mind that the compiler by default generates code suitable
-#   for execution on the host you're currently compiling at. If you
-#   intend to use it across various PA-RISC processors consider adding
-#   +Dportable.
+# - Keep in mind that the HP compiler by default generates code
+#   suitable for execution on the host you're currently compiling at.
+#   If the toolkit is ment to be used on various PA-RISC processors
+#   consider './config +Dportable'.
 # - +DD64 is chosen in favour of +DA2.0W because it's ment to be
 #   compatible with *future* releases.
 # - If you run ./Configure hpux-parisc-[g]cc manually don't forget to
@@ -239,6 +244,18 @@ my %table=(
 "FreeBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_PTR DES_RISC2:::",
 
 #### Alpha Linux with GNU C and Compaq C setups
+# Special notes:
+# - linux-alpha+bwx-gcc is ment to be used from ./config only. If you
+#   ought to run './Configure linux-alpha+bwx-gcc' manually, do
+#   complement the command line with -mcpu=ev56, -mcpu=ev6 or whatever
+#   which is appropriate.
+# - If you use ccc keep in mind that -fast implies -arch host and the
+#   compiler is free to issue instructions which gonna make elder CPU
+#   choke. If you wish to build "blended" toolkit, add -arch generic
+#   *after* -fast and invoke './Configure linux-alpha-ccc' manually.
+#
+#					<appro@fy.chalmers.se>
+#
 "linux-alpha-gcc","gcc:-O3 -DL_ENDIAN -DTERMIO::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_UNROLL:asm/alpha.o::",
 "linux-alpha+bwx-gcc","gcc:-O3 -DL_ENDIAN -DTERMIO::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:asm/alpha.o::",
 "linux-alpha-ccc","ccc:-fast -readonly_strings -DL_ENDIAN -DTERMIO::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL:asm/alpha.o::",

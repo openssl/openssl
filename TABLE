@@ -1634,7 +1634,7 @@ $rc5_obj      =
 
 *** solaris-x86-gcc
 $cc           = gcc
-$cflags       = -O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN
+$cflags       = -O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN -DNO_INLINE_ASM
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -lsocket -lnsl

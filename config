@@ -472,14 +472,17 @@ then
   sleep 5
   OUT=linux-sparcv8
 fi
-if [ "$OUT" = "i86pc-sun-solaris2" ]
-then
-  ASM=`as -V /dev/null 2>&1`
-  case "$ASM" in
-    GNU*) ;;
-    *) options="$options no-asm" ; echo "WARNING: You need the GNU assembler to use OpenSSL assembler code." ; echo "Sun as is not supported on Solaris x86." ;;
-  esac
-fi
+# To start with $OUT is never i86pc-sun-solaris2. Secondly why
+# ban *all* assembler implementation if it can't stand only one,
+# SHA-0 implementation.
+#if [ "$OUT" = "i86pc-sun-solaris2" ]
+#then
+#  ASM=`as -V /dev/null 2>&1`
+#  case "$ASM" in
+#    GNU*) ;;
+#    *) options="$options no-asm" ; echo "WARNING: You need the GNU assembler to use OpenSSL assembler code." ; echo "Sun as is not supported on Solaris x86." ;;
+#  esac
+#fi
 
 case "$GUESSOS" in
   i386-*) options="$options 386" ;;
