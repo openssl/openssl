@@ -80,17 +80,19 @@ LINK_SO=	\
 	$$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS ) && \
   $(SYMLINK_SO); ( $(DEBUG); rm -f lib$(LIBNAME).exp )
 SYMLINK_SO=	\
-	prev=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
-	if [ -n "$$SHLIB_COMPAT" ]; then \
-		for x in $$SHLIB_COMPAT; do \
-			( $(DEBUG); rm -f $$SHLIB$$x$$SHLIB_SUFFIX; \
-			  ln -s $$prev $$SHLIB$$x$$SHLIB_SUFFIX ); \
-			prev=$$SHLIB$$x$$SHLIB_SUFFIX; \
-		done; \
-	fi; \
-	if [ -n "$$SHLIB_SOVER" ]; then \
-		( $(DEBUG); rm -f $$SHLIB$$SHLIB_SUFFIX; \
-		  ln -s $$prev $$SHLIB$$SHLIB_SUFFIX ); \
+	if [ -n "$$INHIBIT_SYMLINKS" ]; then :; else \
+		prev=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
+		if [ -n "$$SHLIB_COMPAT" ]; then \
+			for x in $$SHLIB_COMPAT; do \
+				( $(DEBUG); rm -f $$SHLIB$$x$$SHLIB_SUFFIX; \
+				  ln -s $$prev $$SHLIB$$x$$SHLIB_SUFFIX ); \
+				prev=$$SHLIB$$x$$SHLIB_SUFFIX; \
+			done; \
+		fi; \
+		if [ -n "$$SHLIB_SOVER" ]; then \
+			( $(DEBUG); rm -f $$SHLIB$$SHLIB_SUFFIX; \
+			  ln -s $$prev $$SHLIB$$SHLIB_SUFFIX ); \
+		fi; \
 	fi
 
 LINK_SO_A=	SHOBJECTS="lib$(LIBNAME).a $(LIBEXTRAS)"; $(LINK_SO)
@@ -159,18 +161,22 @@ link_a.darwin:
 	$(LINK_SO_A)
 
 link_o.cygwin:
-	@ SHLIB=cyg$(LIBNAME).dll \
-	SHLIB_SUFFIX= \
+	@ $(CALC_VERSIONS); \
+	INHIBIT_SYMLINKS=yes; \
+	SHLIB=cyg$(LIBNAME) \
+	SHLIB_SUFFIX=.dll \
 	LIBDEPS="$(LIBDEPS) -lc" \
-	SHLIB_SOVER= \
+	SHLIB_SOVER=-$(LIBVERSION) \
 	ALLSYMSFLAGS='-Wl,--whole-archive' \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive' \
 	SHAREDFLAGS="-shared -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a" \
 	SHAREDCMD='${CC}'; \
 	$(LINK_SO_O)
 link_a.cygwin:
-	@ SHLIB=cyg$(LIBNAME).dll \
-	SHLIB_SUFFIX= \
+	@ $(CALC_VERSIONS); \
+	INHIBIT_SYMLINKS=yes; \
+	SHLIB=cyg$(LIBNAME) \
+	SHLIB_SUFFIX=.dll \
 	LIBDEPS="$(LIBDEPS) -lc" \
 	SHLIB_SOVER= \
 	ALLSYMSFLAGS='-Wl,--whole-archive' \
@@ -519,18 +525,19 @@ link_a.reliantunix:
 symlink.gnu symlink.solaris symlink.svr3 symlink.irix \
 symlink.aix symlink.reliantunix:
 	@ $(CALC_VERSIONS); \
-	SHLIB=lib$(LIBNAME).so \
+	SHLIB=lib$(LIBNAME).so; \
 	$(SYMLINK_SO)
 symlink.darwin:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME) \
-	SHLIB_SUFFIX=.dylib \
+	SHLIB_SUFFIX=.dylib; \
 	$(SYMLINK_SO)
-symlink.cygwin symlib.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
 symlink.hpux32 symlink.hpux64:
 	@ $(CALC_VERSIONS); \
-	SHLIB=lib$(LIBNAME).sl \
+	SHLIB=lib$(LIBNAME).sl; \
 	$(SYMLINK_SO)
+# The following lines means those specific architectures do no symlinks
+symlink.cygwin symlib.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
 
 # Compatibility targets
 link_o.bsd-gcc-shared link_o.linux-shared link_o.gnu-shared: link_o.gnu
