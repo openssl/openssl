@@ -42,6 +42,7 @@ B<openssl> B<s_server>
 [B<-WWW>]
 [B<-HTTP>]
 [B<-engine id>]
+[B<-id_prefix arg>]
 [B<-rand file(s)>]
 
 =head1 DESCRIPTION
@@ -208,6 +209,13 @@ specifying an engine (by it's unique B<id> string) will cause B<s_server>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
+
+=item B<-id_prefix arg>
+
+generate SSL/TLS session IDs prefixed by B<arg>. This is mostly useful
+for testing any SSL/TLS code (eg. proxies) that wish to deal with multiple
+servers, when each of which might be generating a unique range of session
+IDs (eg. with a certain prefix).
 
 =item B<-rand file(s)>
 

@@ -33,6 +33,7 @@ B<openssl> B<s_client>
 [B<-no_tls1>]
 [B<-bugs>]
 [B<-cipher cipherlist>]
+[B<-starttls protocol>]
 [B<-engine id>]
 [B<-rand file(s)>]
 
@@ -162,6 +163,12 @@ this allows the cipher list sent by the client to be modified. Although
 the server determines which cipher suite is used it should take the first
 supported cipher in the list sent by the client. See the B<ciphers>
 command for more information.
+
+=item B<-starttls protocol>
+
+send the protocol-specific message(s) to switch to TLS for communication.
+B<protocol> is a keyword for the intended protocol.  Currently, the only
+supported keyword is "smtp".
 
 =item B<-engine id>
 
