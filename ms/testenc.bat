@@ -1,6 +1,6 @@
-
+@echo off
 echo start testenc
-echo=off
+
 path=..\ms;%path%
 set ssleay=%1%
 set input=..\ms\testenc.bat

@@ -1,4 +1,4 @@
-echo=off
+@echo off
 set ssleay=%1%
 set tmp1=pem.out
 set cmp=fc.exe
