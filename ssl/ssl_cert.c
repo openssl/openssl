@@ -425,7 +425,7 @@ err:
  * \param stack the stack to append to.
  * \param dir the directory to append from. All files in this directory will be
  * examined as potential certs. Any that are acceptable to
- * SSL_add_cert_file_to_stack() that are not already in the stack will be
+ * SSL_add_dir_cert_subjects_to_stack() that are not already in the stack will be
  * included.
  * \return 1 for success, 0 for failure. Note that in the case of failure some
  * certs may have been added to \c stack.

@@ -189,10 +189,11 @@
      unsigned to signed types: this was killing the Win32 compile.
      [Steve Henson]
 
-  *) Add new certificate file to stack functions, SSL_add_cert_file_to_stack()
-     and SSL_add_cert_dir_to_stack(). These largely supplant
-     SSL_load_client_CA_file(), and can be used to add multiple certs easily to
-     a stack (usually this is then handed to SSL_CTX_set_client_CA_list()).
+  *) Add new certificate file to stack functions,
+     SSL_add_dir_cert_subjects_to_stack() and
+     SSL_add_file_cert_subjects_to_stack().  These largely supplant
+     SSL_load_client_CA_file(), and can be used to add multiple certs easily
+     to a stack (usually this is then handed to SSL_CTX_set_client_CA_list()).
      This means that Apache-SSL and similar packages don't have to mess around
      to add as many CAs as they want to the preferred list.
      [Ben Laurie]
