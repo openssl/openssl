@@ -240,13 +240,15 @@ typedef struct bignum_st
 
 /* Used for temp variables */
 #define BN_CTX_NUM	12
+#define BN_CTX_NUM_POS	12
 typedef struct bignum_ctx
 	{
 	int tos;
-	BIGNUM bn[BN_CTX_NUM+1];
+	BIGNUM bn[BN_CTX_NUM];
 	int flags;
 	int depth;
-	int pos[BN_CTX_NUM+1];
+	int pos[BN_CTX_NUM_POS];
+	int too_many;
 	} BN_CTX;
 
 typedef struct bn_blinding_st

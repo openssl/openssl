@@ -87,6 +87,7 @@ void BN_CTX_init(BN_CTX *ctx)
 	ctx->tos = 0;
 	ctx->flags = 0;
 	ctx->depth = 0;
+	ctx->too_many = 0;
 	for (i = 0; i < BN_CTX_NUM; i++)
 		BN_init(&(ctx->bn[i]));
 	}
