@@ -1,8 +1,0 @@
-If you specify a SSLv2 cipher, and the mode is SSLv23 and the server
-can talk SSLv3, it will claim there is no cipher since you should be
-using SSLv3.
-
-When tracing debug stuff, remember BIO_s_socket() is different to
-BIO_s_connect().
-
-BSD/OS assember is not working
