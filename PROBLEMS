@@ -38,3 +38,11 @@ may differ on your machine.
 As long as Apple doesn't fix the problem with ld, this problem building
 OpenSSL will remain as is.
 
+
+* Parallell make leads to errors
+
+While running tests, running a parallell make is a bad idea.  Many test
+scripts use the same name for output and input files, which means different
+will interfere with each other and lead to test failure.
+
+The solution is simple for now: don't run parallell make when testing.
