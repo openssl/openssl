@@ -282,12 +282,12 @@ static struct hostent *ghbn_dup(struct hostent *a)
 
 	j=strlen(a->h_name)+1;
 	if ((ret->h_name=Malloc(j)) == NULL) goto err;
-	memcpy((char *)ret->h_name,a->h_name,j+1);
+	memcpy((char *)ret->h_name,a->h_name,j);
 	for (i=0; a->h_aliases[i] != NULL; i++)
 		{
 		j=strlen(a->h_aliases[i])+1;
 		if ((ret->h_aliases[i]=Malloc(j)) == NULL) goto err;
-		memcpy(ret->h_aliases[i],a->h_aliases[i],j+1);
+		memcpy(ret->h_aliases[i],a->h_aliases[i],j);
 		}
 	ret->h_length=a->h_length;
 	ret->h_addrtype=a->h_addrtype;
