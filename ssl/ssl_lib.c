@@ -1846,8 +1846,6 @@ int ssl_init_wbio_buffer(SSL *s,int push)
 
 void ssl_free_wbio_buffer(SSL *s)
 	{
-	BIO *under;
-
 	if (s->bbio == NULL) return;
 
 	if (s->bbio == s->wbio)

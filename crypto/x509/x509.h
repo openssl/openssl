@@ -213,6 +213,8 @@ DECLARE_ASN1_SET_OF(X509_ATTRIBUTE)
 
 typedef struct X509_req_info_st
 	{
+	unsigned char *asn1;
+	int length;
 	ASN1_INTEGER *version;
 	X509_NAME *subject;
 	X509_PUBKEY *pubkey;

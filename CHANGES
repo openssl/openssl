@@ -4,6 +4,17 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add new PKCS#7 signing option PKCS7_NOSMIMECAP which 
+     excludes S/MIME capabilities.
+     [Steve Henson]
+
+  *) When a certificate request is read in keep a copy of the
+     original encoding of the signed data and use it when outputing
+     again. Signatures then use the original encoding rather than
+     a decoded, encoded version which may cause problems if the
+     request is improperly encoded.
+     [Steve Henson]
+
   *) For consistency with other BIO_puts implementations, call
      buffer_write(b, ...) directly in buffer_puts instead of calling
      BIO_write(b, ...).
