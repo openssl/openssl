@@ -126,7 +126,6 @@ static void MS_CALLBACK req_cb(int p,int n,void *arg);
 #endif
 static int req_check_len(int len,int min,int max);
 static int check_end(char *str, char *end);
-static int add_oid_section(LHASH *conf);
 #ifndef MONOLITH
 static char *default_config_file=NULL;
 static LHASH *config=NULL;
@@ -467,7 +466,7 @@ bad:
 				}
 			}
 		}
-		if(!add_oid_section(req_conf)) goto end;
+		if(!add_oid_section(bio_err, req_conf)) goto end;
 
 	if ((md_alg == NULL) &&
 		((p=CONF_get_string(req_conf,SECTION,"default_md")) != NULL))
@@ -1267,26 +1266,4 @@ static int check_end(char *str, char *end)
 	if(elen > slen) return 1;
 	tmp = str + slen - elen;
 	return strcmp(tmp, end);
-}
-
-static int add_oid_section(LHASH *conf)
-{	
-	char *p;
-	STACK_OF(CONF_VALUE) *sktmp;
-	CONF_VALUE *cnf;
-	int i;
-	if(!(p=CONF_get_string(conf,NULL,"oid_section"))) return 1;
-	if(!(sktmp = CONF_get_section(conf, p))) {
-		BIO_printf(bio_err, "problem loading oid section %s\n", p);
-		return 0;
-	}
-	for(i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
-		cnf = sk_CONF_VALUE_value(sktmp, i);
-		if(OBJ_create(cnf->value, cnf->name, cnf->name) == NID_undef) {
-			BIO_printf(bio_err, "problem creating object %s=%s\n",
-							 cnf->name, cnf->value);
-			return 0;
-		}
-	}
-	return 1;
 }

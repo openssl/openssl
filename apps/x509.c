@@ -543,12 +543,12 @@ bad:
 		EVP_PKEY_free(pkey);
 		}
 	else
-		x=load_cert(infile,informat);
+		x=load_cert(bio_err,infile,informat);
 
 	if (x == NULL) goto end;
 	if (CA_flag)
 		{
-		xca=load_cert(CAfile,CAformat);
+		xca=load_cert(bio_err,CAfile,CAformat);
 		if (xca == NULL) goto end;
 		}
 
@@ -787,7 +787,8 @@ bad:
 				BIO_printf(bio_err,"Getting Private key\n");
 				if (Upkey == NULL)
 					{
-					Upkey=load_key(keyfile,keyformat, passin);
+					Upkey=load_key(bio_err,
+						keyfile,keyformat, passin);
 					if (Upkey == NULL) goto end;
 					}
 #ifndef NO_DSA
@@ -804,7 +805,8 @@ bad:
 				BIO_printf(bio_err,"Getting CA Private Key\n");
 				if (CAkeyfile != NULL)
 					{
-					CApkey=load_key(CAkeyfile,CAkeyformat, passin);
+					CApkey=load_key(bio_err,
+						CAkeyfile,CAkeyformat, passin);
 					if (CApkey == NULL) goto end;
 					}
 #ifndef NO_DSA
@@ -830,7 +832,8 @@ bad:
 					}
 				else
 					{
-					pk=load_key(keyfile,FORMAT_PEM, passin);
+					pk=load_key(bio_err,
+						keyfile,FORMAT_PEM, passin);
 					if (pk == NULL) goto end;
 					}
 

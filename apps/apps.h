@@ -65,6 +65,7 @@
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
+#include <openssl/lhash.h>
 
 int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn);
 int app_RAND_write_file(const char *file, BIO *bio_e);
@@ -146,9 +147,10 @@ int chopup_args(ARGS *arg,char *buf, int *argc, char **argv[]);
 int dump_cert_text(BIO *out, X509 *x);
 #endif
 int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
-X509 *load_cert(char *file, int format);
-EVP_PKEY *load_key(char *file, int format, char *pass);
-STACK_OF(X509) *load_certs(char *file, int format);
+int add_oid_section(BIO *err, LHASH *conf);
+X509 *load_cert(BIO *err, char *file, int format);
+EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass);
+STACK_OF(X509) *load_certs(BIO *err, char *file, int format);
 
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1

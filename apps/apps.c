@@ -424,7 +424,29 @@ static char *app_get_pass(BIO *err, char *arg, int keepbio)
 	return BUF_strdup(tpass);
 }
 
-X509 *load_cert(char *file, int format)
+int add_oid_section(BIO *err, LHASH *conf)
+{	
+	char *p;
+	STACK_OF(CONF_VALUE) *sktmp;
+	CONF_VALUE *cnf;
+	int i;
+	if(!(p=CONF_get_string(conf,NULL,"oid_section"))) return 1;
+	if(!(sktmp = CONF_get_section(conf, p))) {
+		BIO_printf(err, "problem loading oid section %s\n", p);
+		return 0;
+	}
+	for(i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
+		cnf = sk_CONF_VALUE_value(sktmp, i);
+		if(OBJ_create(cnf->value, cnf->name, cnf->name) == NID_undef) {
+			BIO_printf(err, "problem creating object %s=%s\n",
+							 cnf->name, cnf->value);
+			return 0;
+		}
+	}
+	return 1;
+}
+
+X509 *load_cert(BIO *err, char *file, int format)
 	{
 	ASN1_HEADER *ah=NULL;
 	BUF_MEM *buf=NULL;
@@ -433,7 +455,7 @@ X509 *load_cert(char *file, int format)
 
 	if ((cert=BIO_new(BIO_s_file())) == NULL)
 		{
-		ERR_print_errors(bio_err);
+		ERR_print_errors(err);
 		goto end;
 		}
 
@@ -482,7 +504,7 @@ X509 *load_cert(char *file, int format)
 			(strncmp(NETSCAPE_CERT_HDR,(char *)ah->header->data,
 			ah->header->length) != 0))
 			{
-			BIO_printf(bio_err,"Error reading header on certificate\n");
+			BIO_printf(err,"Error reading header on certificate\n");
 			goto end;
 			}
 		/* header is ok, so now read the object */
@@ -504,14 +526,14 @@ X509 *load_cert(char *file, int format)
 		p12 = NULL;
 		}
 	else	{
-		BIO_printf(bio_err,"bad input format specified for input cert\n");
+		BIO_printf(err,"bad input format specified for input cert\n");
 		goto end;
 		}
 end:
 	if (x == NULL)
 		{
-		BIO_printf(bio_err,"unable to load certificate\n");
-		ERR_print_errors(bio_err);
+		BIO_printf(err,"unable to load certificate\n");
+		ERR_print_errors(err);
 		}
 	if (ah != NULL) ASN1_HEADER_free(ah);
 	if (cert != NULL) BIO_free(cert);
@@ -519,20 +541,20 @@ end:
 	return(x);
 	}
 
-EVP_PKEY *load_key(char *file, int format, char *pass)
+EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass)
 	{
 	BIO *key=NULL;
 	EVP_PKEY *pkey=NULL;
 
 	if (file == NULL)
 		{
-		BIO_printf(bio_err,"no keyfile specified\n");
+		BIO_printf(err,"no keyfile specified\n");
 		goto end;
 		}
 	key=BIO_new(BIO_s_file());
 	if (key == NULL)
 		{
-		ERR_print_errors(bio_err);
+		ERR_print_errors(err);
 		goto end;
 		}
 	if (BIO_read_filename(key,file) <= 0)
@@ -558,17 +580,17 @@ EVP_PKEY *load_key(char *file, int format, char *pass)
 		}
 	else
 		{
-		BIO_printf(bio_err,"bad input format specified for key\n");
+		BIO_printf(err,"bad input format specified for key\n");
 		goto end;
 		}
  end:
 	if (key != NULL) BIO_free(key);
 	if (pkey == NULL)
-		BIO_printf(bio_err,"unable to load Private Key\n");
+		BIO_printf(err,"unable to load Private Key\n");
 	return(pkey);
 	}
 
-STACK_OF(X509) *load_certs(char *file, int format)
+STACK_OF(X509) *load_certs(BIO *err, char *file, int format)
 	{
 	BIO *certs;
 	int i;
@@ -578,7 +600,7 @@ STACK_OF(X509) *load_certs(char *file, int format)
 
 	if((certs = BIO_new(BIO_s_file())) == NULL)
 		{
-		ERR_print_errors(bio_err);
+		ERR_print_errors(err);
 		goto end;
 		}
 
@@ -615,14 +637,14 @@ STACK_OF(X509) *load_certs(char *file, int format)
 		goto end;
 		}
 	else	{
-		BIO_printf(bio_err,"bad input format specified for input cert\n");
+		BIO_printf(err,"bad input format specified for input cert\n");
 		goto end;
 		}
 end:
 	if (othercerts == NULL)
 		{
-		BIO_printf(bio_err,"unable to load certificates\n");
-		ERR_print_errors(bio_err);
+		BIO_printf(err,"unable to load certificates\n");
+		ERR_print_errors(err);
 		}
 	if (allcerts) sk_X509_INFO_pop_free(allcerts, X509_INFO_free);
 	if (certs != NULL) BIO_free(certs);

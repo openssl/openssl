@@ -308,7 +308,7 @@ int MAIN(int argc, char **argv)
 		}
 		encerts = sk_X509_new_null();
 		while (*args) {
-			if(!(cert = load_cert(*args,FORMAT_PEM))) {
+			if(!(cert = load_cert(bio_err,*args,FORMAT_PEM))) {
 				BIO_printf(bio_err, "Can't read recipient certificate file %s\n", *args);
 				goto end;
 			}
@@ -319,14 +319,14 @@ int MAIN(int argc, char **argv)
 	}
 
 	if(signerfile && (operation == SMIME_SIGN)) {
-		if(!(signer = load_cert(signerfile,FORMAT_PEM))) {
+		if(!(signer = load_cert(bio_err,signerfile,FORMAT_PEM))) {
 			BIO_printf(bio_err, "Can't read signer certificate file %s\n", signerfile);
 			goto end;
 		}
 	}
 
 	if(certfile) {
-		if(!(other = load_certs(certfile,FORMAT_PEM))) {
+		if(!(other = load_certs(bio_err,certfile,FORMAT_PEM))) {
 			BIO_printf(bio_err, "Can't read certificate file %s\n", certfile);
 			ERR_print_errors(bio_err);
 			goto end;
@@ -334,7 +334,7 @@ int MAIN(int argc, char **argv)
 	}
 
 	if(recipfile && (operation == SMIME_DECRYPT)) {
-		if(!(recip = load_cert(recipfile,FORMAT_PEM))) {
+		if(!(recip = load_cert(bio_err,recipfile,FORMAT_PEM))) {
 			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", recipfile);
 			ERR_print_errors(bio_err);
 			goto end;
@@ -348,7 +348,7 @@ int MAIN(int argc, char **argv)
 	} else keyfile = NULL;
 
 	if(keyfile) {
-		if(!(key = load_key(keyfile, FORMAT_PEM, passin))) {
+		if(!(key = load_key(bio_err,keyfile, FORMAT_PEM, passin))) {
 			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", keyfile);
 			ERR_print_errors(bio_err);
 			goto end;
