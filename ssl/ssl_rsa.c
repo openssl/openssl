@@ -794,7 +794,7 @@ int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
 				ret = 0;
 				goto end;
 				}
-			/* Note that we must not free r if it was succesully
+			/* Note that we must not free r if it was successfully
 			 * added to the chain (while we must free the main
 			 * certificate, since its reference count is increased
 			 * by SSL_CTX_use_certificate). */
