@@ -269,8 +269,7 @@ ERR_STATE *ERR_get_state(void);
 
 #ifndef OPENSSL_NO_LHASH
 LHASH *ERR_get_string_table(void);
-LHASH *ERR_get_err_state_table(void); /* even less thread-safe than
-				       * ERR_get_string_table :-) */
+LHASH *ERR_get_err_state_table(void);
 #endif
 
 int ERR_get_next_error_library(void);
