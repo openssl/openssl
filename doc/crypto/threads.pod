@@ -17,14 +17,15 @@ CRYPTO_set_locking_callback, CRYPTO_set_id_callback - OpenSSL thread support
 
 
  /* struct CRYPTO_dynlock_value needs to be defined by the user */
- typedef struct CRYPTO_dynlock_value CRYPTO_dynlock;
+ struct CRYPTO_dynlock_value;
 
- void CRYPTO_set_dynlock_create_callback(CRYPTO_dynlock *(*dyn_create_function)
-	(char *file, int line));
+ void CRYPTO_set_dynlock_create_callback(struct CRYPTO_dynlock_value *
+	(*dyn_create_function)(char *file, int line));
  void CRYPTO_set_dynlock_lock_callback(void (*dyn_lock_function)
-	(int mode, CRYPTO_dynlock *l, const char *file, int line));
+	(int mode, struct CRYPTO_dynlock_value *l,
+	const char *file, int line));
  void CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)
-	(CRYPTO_dynlock *l, const char *file, int line));
+	(struct CRYPTO_dynlock_value *l, const char *file, int line));
 
  int CRYPTO_get_new_dynlockid(void);
 
@@ -114,6 +115,9 @@ You can find out if OpenSSL was configured with thread support:
  #else
    // no thread support
  #endif
+
+Also, dynamic locks are currently not used internally by OpenSSL, but
+may do so in the future.
 
 =head1 EXAMPLES
 
