@@ -2,8 +2,11 @@
  OpenSSL CHANGES
  _______________
 
-
  Changes between 0.9.3a and 0.9.4
+
+  *) Fix determination of Perl interpreter: A perl or perl5
+     _directory_ in $PATH was also accepted as the interpreter.
+     [Ralf S. Engelschall]
 
   *) Fix demos/sign/sign.c: well there wasn't anything strictly speaking
      wrong with it but it was very old and did things like calling
