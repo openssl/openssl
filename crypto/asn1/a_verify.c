@@ -142,6 +142,13 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signat
 		goto err;
 		}
 
+	if (!EVP_VerifyInit_ex(&ctx,type, NULL))
+		{
+		ASN1err(ASN1_F_ASN1_VERIFY,ERR_R_EVP_LIB);
+		ret=0;
+		goto err;
+		}
+
 	inl = ASN1_item_i2d(asn, &buf_in, it);
 	
 	if (buf_in == NULL)
@@ -150,12 +157,6 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signat
 		goto err;
 		}
 
-	if (!EVP_VerifyInit_ex(&ctx,type, NULL))
-		{
-		ASN1err(ASN1_F_ASN1_VERIFY,ERR_R_EVP_LIB);
-		ret=0;
-		goto err;
-		}
 	EVP_VerifyUpdate(&ctx,(unsigned char *)buf_in,inl);
 
 	OPENSSL_cleanse(buf_in,(unsigned int)inl);
