@@ -149,7 +149,7 @@ KSSL_CTX *kssl_ctx_new(void);
 KSSL_CTX *kssl_ctx_free(KSSL_CTX *kssl_ctx);
 void kssl_ctx_show(KSSL_CTX *kssl_ctx);
 krb5_error_code kssl_ctx_setprinc(KSSL_CTX *kssl_ctx, int which,
-        krb5_data *realm, krb5_data *entity);
+        krb5_data *realm, krb5_data *entity, int nentities);
 krb5_error_code	kssl_cget_tkt(KSSL_CTX *kssl_ctx,  krb5_data **enc_tktp,
         krb5_data *authenp, KSSL_ERR *kssl_err);
 krb5_error_code	kssl_sget_tkt(KSSL_CTX *kssl_ctx,  krb5_data *indata,

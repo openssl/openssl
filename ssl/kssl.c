@@ -1496,8 +1496,9 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
                         "bad ticket from krb5_rd_req.\n");
 		}
 	else if (kssl_ctx_setprinc(kssl_ctx, KSSL_CLIENT,
-                &krb5ticket->enc_part2->client->realm,
-                krb5ticket->enc_part2->client->data))
+		 &krb5ticket->enc_part2->client->realm,
+		 krb5ticket->enc_part2->client->data,
+		 krb5ticket->enc_part2->client->length))
                 {
 		kssl_err_set(kssl_err, SSL_R_KRB5_S_BAD_TICKET,
                         "kssl_ctx_setprinc() fails.\n");
@@ -1564,16 +1565,17 @@ kssl_ctx_free(KSSL_CTX *kssl_ctx)
         }
 
 
-/*	Given a (krb5_data *) entity (and optional realm),
+/*	Given an array of (krb5_data *) entity (and optional realm),
 **	set the plain (char *) client_princ or service_host member
 **	of the kssl_ctx struct.
 */
 krb5_error_code
 kssl_ctx_setprinc(KSSL_CTX *kssl_ctx, int which,
-        krb5_data *realm, krb5_data *entity)
+        krb5_data *realm, krb5_data *entity, int nentities)
         {
 	char	**princ;
 	int 	length;
+	int i;
 
 	if (kssl_ctx == NULL  ||  entity == NULL)  return KSSL_CTX_ERR;
 
@@ -1585,18 +1587,33 @@ kssl_ctx_setprinc(KSSL_CTX *kssl_ctx, int which,
 		}
 	if (*princ)  free(*princ);
 
-	length = entity->length + ((realm)? realm->length + 2: 1);
+	/* Add up all the entity->lengths */
+	length = 0;
+	for (i=0; i < nentities; i++)
+		{
+		length += entity[i].length;
+		}
+	/* Add in space for the '/' character(s) (if any) */
+	length += nentities-1;
+	/* Space for the ('@'+realm+NULL | NULL) */
+	length += ((realm)? realm->length + 2: 1);
+
 	if ((*princ = calloc(1, length)) == NULL)
 		return KSSL_CTX_ERR;
 	else
-                {
-		strncpy(*princ, entity->data, entity->length);
-		(*princ)[entity->length]='\0';
+		{
+		for (i = 0; i < nentities; i++)
+			{
+			strncat(*princ, entity[i].data, entity[i].length);
+			if (i < nentities-1)
+				{
+				strcat (*princ, "/");
+				}
+			}
 		if (realm)
                         {
 			strcat (*princ, "@");
 			(void) strncat(*princ, realm->data, realm->length);
-			(*princ)[entity->length+1+realm->length]='\0';
 			}
 		}
 

@@ -1263,7 +1263,13 @@ static int init_ssl_connection(SSL *con)
 	if (SSL_ctrl(con,SSL_CTRL_GET_FLAGS,0,NULL) &
 		TLS1_FLAGS_TLS_PADDING_BUG)
 		BIO_printf(bio_s_out,"Peer has incorrect TLSv1 block padding\n");
-
+#ifndef OPENSSL_NO_KRB5
+	if (con->kssl_ctx->client_princ != NULL)
+		{
+		BIO_printf(bio_s_out,"Kerberos peer principal is %s\n",
+			con->kssl_ctx->client_princ);
+		}
+#endif /* OPENSSL_NO_KRB5 */
 	return(1);
 	}
 
