@@ -108,7 +108,7 @@ static LHASH *amih=NULL; /* hash-table with those app_mem_info_st's
 typedef struct mem_st
 /* memory-block description */
 	{
-	char *addr;
+	void *addr;
 	int num;
 	const char *file;
 	int line;
@@ -221,7 +221,7 @@ long CRYPTO_dbg_get_options(void)
 
 static int mem_cmp(MEM *a, MEM *b)
 	{
-	return(a->addr - b->addr);
+	return((char *)a->addr - (char *)b->addr);
 	}
 
 static unsigned long mem_hash(MEM *a)
@@ -696,32 +696,6 @@ void CRYPTO_mem_leaks(BIO *b)
 #endif
 	}
 
-union void_fn_to_char_u
-	{
-	char *char_p;
-	void (*fn_p)();
-	};
-
-static void cb_leak(MEM *m, char *cb)
-	{
-	union void_fn_to_char_u mem_callback;
-
-	mem_callback.char_p=cb;
-	mem_callback.fn_p(m->order,m->file,m->line,m->num,m->addr);
-	}
-
-void CRYPTO_mem_leaks_cb(void (*cb)())
-	{
-	union void_fn_to_char_u mem_cb;
-
-	if (mh == NULL) return;
-	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
-	mem_cb.fn_p=cb;
-	lh_doall_arg(mh,(void (*)())cb_leak,mem_cb.char_p);
-	mem_cb.char_p=NULL;
-	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
-	}
-
 #ifndef NO_FP_API
 void CRYPTO_mem_leaks_fp(FILE *fp)
 	{
@@ -736,3 +710,21 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
 	}
 #endif
 
+
+
+/* FIXME: We really don't allow much to the callback.  For example, it has
+   no chance of reaching the info stack for the item it processes.  Should
+   it really be this way?  -- Richard Levitte */
+static void cb_leak(MEM *m,
+		    void (**cb)(unsigned long, const char *, int, int, void *))
+	{
+	(**cb)(m->order,m->file,m->line,m->num,m->addr);
+	}
+
+void CRYPTO_mem_leaks_cb(void (*cb)(unsigned long, const char *, int, int, void *))
+	{
+	if (mh == NULL) return;
+	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
+	lh_doall_arg(mh,(void (*)())cb_leak,(void *)&cb);
+	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
+	}
