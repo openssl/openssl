@@ -190,8 +190,8 @@ CERT *ssl_cert_dup(CERT *cert)
 #ifndef OPENSSL_NO_RSA
 	if (cert->rsa_tmp != NULL)
 		{
+		RSA_up(cert->rsa_tmp);
 		ret->rsa_tmp = cert->rsa_tmp;
-		CRYPTO_add(&ret->rsa_tmp->references, 1, CRYPTO_LOCK_RSA);
 		}
 	ret->rsa_tmp_cb = cert->rsa_tmp_cb;
 #endif

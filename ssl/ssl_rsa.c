@@ -170,7 +170,7 @@ int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 		return(0);
 		}
 
-	CRYPTO_add(&rsa->references,1,CRYPTO_LOCK_RSA);
+	RSA_up(rsa);
 	EVP_PKEY_assign_RSA(pkey,rsa);
 
 	ret=ssl_set_pkey(ssl->cert,pkey);
@@ -582,7 +582,7 @@ int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
 		return(0);
 		}
 
-	CRYPTO_add(&rsa->references,1,CRYPTO_LOCK_RSA);
+	RSA_up(rsa);
 	EVP_PKEY_assign_RSA(pkey,rsa);
 
 	ret=ssl_set_pkey(ctx->cert, pkey);
