@@ -158,7 +158,7 @@ int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
  * used and there may be more: so the list is configurable.
  */
 
-static int ext_nid_list[] = { NID_ms_ext_req, NID_ext_req, NID_undef};
+static int ext_nid_list[] = { NID_ext_req, NID_ms_ext_req, NID_undef};
 
 static int *ext_nids = ext_nid_list;
 
@@ -183,27 +183,27 @@ void X509_REQ_set_extension_nids(int *nids)
 }
 
 STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
-{
+	{
 	X509_ATTRIBUTE *attr;
-	STACK_OF(X509_ATTRIBUTE) *sk;
 	ASN1_TYPE *ext = NULL;
-	int i;
+	int idx, *pnid;
 	const unsigned char *p;
 
-	if ((req == NULL) || (req->req_info == NULL))
+	if ((req == NULL) || (req->req_info == NULL) || !ext_nids)
 		return(NULL);
-	sk=req->req_info->attributes;
-        if (!sk) return NULL;
-	for(i = 0; i < sk_X509_ATTRIBUTE_num(sk); i++) {
-		attr = sk_X509_ATTRIBUTE_value(sk, i);
-		if(X509_REQ_extension_nid(OBJ_obj2nid(attr->object))) {
-			if(attr->single) ext = attr->value.single;
-			else if(sk_ASN1_TYPE_num(attr->value.set))
-				ext = sk_ASN1_TYPE_value(attr->value.set, 0);
-			break;
+	for (pnid = ext_nids; *pnid != NID_undef; pnid++)
+		{
+		idx = X509_REQ_get_attr_by_NID(req, *pnid, -1);
+		if (idx == -1)
+			continue;
+		attr = X509_REQ_get_attr(req, idx);
+		if(attr->single) ext = attr->value.single;
+		else if(sk_ASN1_TYPE_num(attr->value.set))
+			ext = sk_ASN1_TYPE_value(attr->value.set, 0);
+		break;
 		}
-	}
-	if(!ext || (ext->type != V_ASN1_SEQUENCE)) return NULL;
+	if(!ext || (ext->type != V_ASN1_SEQUENCE))
+		return NULL;
 	p = ext->value.sequence->data;
 	return d2i_ASN1_SET_OF_X509_EXTENSION(NULL, &p,
 			ext->value.sequence->length,
