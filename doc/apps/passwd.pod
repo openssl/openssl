@@ -8,17 +8,22 @@ passwd - compute password hashes
 
 B<openssl passwd>
 [B<-crypt>]
+[B<-apr1>]
 [B<-salt string>]
+[B<-in file>]
+[B<-stdin>]
 [B<-quiet>]
 [B<-table>]
 {B<password>}
 
 =head1 DESCRIPTION
 
-The B<passwd> command computes the hashes of a list of passwords
-passed on the command line, or the hash of a password typed at run-time.
-Currently only the Unix standard algorithm B<crypt>
-is implemented.
+The B<passwd> command computes the hash of a password typed at
+run-time or the hash of each password in a list.  The password list is
+taken from the named file for option B<-in file>, from stdin for
+option B<-stdin>, and from the command line otherwise.
+The Unix standard algorithm B<crypt> and the MD5-based B<apr1> algorithm
+are available.
 
 =head1 OPTIONS
 
@@ -28,13 +33,25 @@ is implemented.
 
 Use the B<crypt> algorithm (default).
 
+=item B<-apr1>
+
+Use the B<apr1> algorithm.
+
 =item B<-salt string>
 
 Use the specified salt.
 
+=item B<-in file>
+
+Read passwords from B<file>.
+
+=item B<-stdin>
+
+Read passwords from B<stdin>.
+
 =item B<-quiet>
 
-Don't output warnings when passwords are truncated.
+Don't output warnings when passwords given at the command line are truncated.
 
 =item B<-table>
 
@@ -45,6 +62,8 @@ to each password hash.
 
 =head1 EXAMPLE
 
-B<openssl passwd -salt xx password> prints B<xxj31ZMTZzkVA>.
+B<openssl passwd -crypt -salt xx password> prints B<xxj31ZMTZzkVA>.
+
+B<openssl passwd -apr1 -salt xx password> prints B<$apr1$xx$2eRrCdRwKOfJOth0w31wR.>.
 
 =cut

@@ -1,6 +1,6 @@
 /* apps/passwd.c */
 
-#if !defined(NO_DES) /* && !defined(prerequisites of other algorithms) */
+#if !defined(NO_DES) || !defined(NO_MD5)
 
 #include <assert.h>
 #include <string.h>
@@ -12,9 +12,17 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
+#if defined NO_MD5 || defined CHARSET_EBCDIC
+# define NO_APR1
+#endif
+
 #ifndef NO_DES
 # include <openssl/des.h>
 #endif
+#ifndef NO_APR1
+# include <openssl/des.h>
+#endif
+
 
 #undef PROG
 #define PROG passwd_main
@@ -32,21 +40,32 @@ static unsigned const char cov_2char[64]={
 	0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A
 };
 
+static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
+	char *passwd, BIO *out, int quiet, int table, int reverse,
+	size_t pw_maxlen, int usecrypt, int useapr1);
+
 /* -crypt        - standard Unix password algorithm (default, only choice)
+ * -apr1         - MD5-based password algorithm
  * -salt string  - salt
+ * -in file      - read passwords from file
+ * -stdin        - read passwords from stdin
  * -quiet        - no warnings
  * -table        - format output as table
+ * -reverse      - switch table columns
  */
 
 int MAIN(int argc, char **argv)
 	{
 	int ret = 1;
-	char *salt = NULL, *passwd, **passwds = NULL;
+	char *infile = NULL;
+	int in_stdin = 0;
+	char *salt = NULL, *passwd = NULL, **passwds = NULL;
 	char *salt_malloc = NULL, *passwd_malloc = NULL;
-	BIO *out = NULL;
+	int pw_source_defined = 0;
+	BIO *in = NULL, *out = NULL;
 	int i, badopt, opt_done;
-	int passed_salt = 0, quiet = 0, table = 0;
-	int usecrypt = 0;
+	int passed_salt = 0, quiet = 0, table = 0, reverse = 0;
+	int usecrypt = 0, useapr1 = 0;
 	size_t pw_maxlen = 0;
 
 	apps_startup();
@@ -65,6 +84,8 @@ int MAIN(int argc, char **argv)
 		{
 		if (strcmp(argv[i], "-crypt") == 0)
 			usecrypt = 1;
+		else if (strcmp(argv[i], "-apr1") == 0)
+			useapr1 = 1;
 		else if (strcmp(argv[i], "-salt") == 0)
 			{
 			if ((argv[i+1] != NULL) && (salt == NULL))
@@ -72,121 +93,374 @@ int MAIN(int argc, char **argv)
 				passed_salt = 1;
 				salt = argv[++i];
 				}
-			else badopt = 1;
+			else
+				badopt = 1;
+			}
+		else if (strcmp(argv[i], "-in") == 0)
+			{
+			if ((argv[i+1] != NULL) && !pw_source_defined)
+				{
+				pw_source_defined = 1;
+				infile = argv[++i];
+				}
+			else
+				badopt = 1;
+			}
+		else if (strcmp(argv[i], "-stdin") == 0)
+			{
+			if (!pw_source_defined)
+				{
+				pw_source_defined = 1;
+				in_stdin = 1;
+				}
+			else
+				badopt = 1;
 			}
 		else if (strcmp(argv[i], "-quiet") == 0)
 			quiet = 1;
 		else if (strcmp(argv[i], "-table") == 0)
 			table = 1;
+		else if (strcmp(argv[i], "-reverse") == 0)
+			reverse = 1;
 		else if (argv[i][0] == '-')
 			badopt = 1;
-		else
-			/* non-option argument */
+		else if (!pw_source_defined)
+			/* non-option arguments, use as passwords */
 			{
+			pw_source_defined = 1;
 			passwds = &argv[i];
 			opt_done = 1;
 			}
+		else
+			badopt = 1;
 		}
 
-	if (usecrypt /* + algo2 + algo3 + ... */ == 0) /* use default */
+	if (!usecrypt && !useapr1) /* use default */
 		usecrypt = 1;
-	if (usecrypt /* + algo2 + algo3 */ > 1) /* conflict */
+	if (usecrypt + useapr1 > 1) /* conflict */
 		badopt = 1;
+
+	/* reject unsupported algorithms */
+#ifdef NO_DES
+	if (usecrypt) badopt = 1;
+#endif
+#ifdef NO_APR1
+	if (useapr1) badopt = 1;
+#endif
 
 	if (badopt) 
 		{
 		BIO_printf(bio_err, "Usage: passwd [options] [passwords]\n");
 		BIO_printf(bio_err, "where options are\n");
+#ifndef NO_DES
 		BIO_printf(bio_err, "-crypt             standard Unix password algorithm (default)\n");
+#endif
+#ifndef NO_APR1
+		BIO_printf(bio_err, "-apr1              MD5-based password algorithm\n");
+#endif
 		BIO_printf(bio_err, "-salt string       use provided salt\n");
+		BIO_printf(bio_err, "-in file           read passwords from file\n");
+		BIO_printf(bio_err, "-stdin             read passwords from stdin\n");
 		BIO_printf(bio_err, "-quiet             no warnings\n");
 		BIO_printf(bio_err, "-table             format output as table\n");
+		BIO_printf(bio_err, "-reverse           switch table columns\n");
 		
 		goto err;
 		}
 
+	if ((infile != NULL) || in_stdin)
+		{
+		in = BIO_new(BIO_s_file());
+		if (in == NULL)
+			goto err;
+		if (infile != NULL)
+			{
+			assert(in_stdin == 0);
+			if (BIO_read_filename(in, infile) <= 0)
+				goto err;
+			}
+		else
+			{
+			assert(in_stdin);
+			BIO_set_fp(in, stdin, BIO_NOCLOSE);
+			}
+		}
+	
 	if (usecrypt)
 		pw_maxlen = 8;
-	/* else if ... */
+	else if (useapr1)
+		pw_maxlen = 256; /* arbitrary limit, should be enough for most passwords */
 
 	if (passwds == NULL)
 		{
-		/* build a null-terminated list */
-		static char *passwds_static[2] = {NULL, NULL};
-		   
-		passwds = passwds_static;
-		passwd_malloc = Malloc(pw_maxlen + 1);
+		/* no passwords on the command line */
+		passwd = passwd_malloc = Malloc(pw_maxlen + 1);
 		if (passwd_malloc == NULL)
 			goto err;
-		if (EVP_read_pw_string(passwd_malloc, pw_maxlen + 1, "Password: ", 0) != 0)
-			goto err;
+		}
+
+	if ((in == NULL) && (passwds == NULL))
+		{
+		/* build a null-terminated list */
+		static char *passwds_static[2] = {NULL, NULL};
+		
+		passwds = passwds_static;
+		if (in == NULL)
+			if (EVP_read_pw_string(passwd_malloc, pw_maxlen + 1, "Password: ", 0) != 0)
+				goto err;
 		passwds[0] = passwd_malloc;
 		}
 
-	assert(passwds != NULL);
-	assert(*passwds != NULL);
-	
-	do /* loop over list of passwords */
+	if (in == NULL)
 		{
-		/* first make sure we have a salt */
-		if (!passed_salt)
-			{
-			if (usecrypt)
-				{
-				if (salt_malloc == NULL)
-					{
-					salt = salt_malloc = Malloc(3);
-					if (salt_malloc == NULL)
-						goto err;
-					}
-				if (RAND_pseudo_bytes((unsigned char *)salt, 2) < 0)
-					goto err;
-				salt[0] = cov_2char[salt[0] & 0x3f]; /* 6 bits */
-				salt[1] = cov_2char[salt[1] & 0x3f]; /* 6 bits */
-				salt[2] = 0;
-#ifdef CHARSET_EBCDIC
-				ascii2ebcdic(salt, salt, 2); /* des_crypt will convert
-				                              * back to ASCII */
-#endif
-				}
-			/* else if (algo2) ... */
-			}
+		assert(passwds != NULL);
+		assert(*passwds != NULL);
 		
-		assert(salt != NULL);
-
-		/* truncate password if necessary */
-		passwd = *passwds++;
-		if ((strlen(passwd) > pw_maxlen))
+		do /* loop over list of passwords */
 			{
-			if (!quiet)
-				BIO_printf(bio_err, "Warning: truncating password to %u characters\n", pw_maxlen);
-			passwd[pw_maxlen] = 0;
+			passwd = *passwds++;
+			if (!do_passwd(passed_salt, &salt, &salt_malloc, passwd, out,
+				quiet, table, reverse, pw_maxlen, usecrypt, useapr1))
+				goto err;
 			}
-		assert(strlen(passwd) <= pw_maxlen);
-		
-		/* now compute password hash */
-		if (usecrypt)
-			{
-			char *hash = des_crypt(passwd, salt);
-			if (table)
-				BIO_printf(out, "%s\t%s\n", passwd, hash);
-			else
-				BIO_printf(out, "%s\n", hash);
-			}
-		/* else if (algo2) { ... } else if (algo3) { ... } */
-		else
-			assert(0);
+		while (*passwds != NULL);
 		}
-	while (*passwds != NULL);
-	
+	else
+		/* in != NULL */
+		{
+		int done;
+
+		assert (passwd != NULL);
+		do
+			{
+			int r = BIO_gets(in, passwd, pw_maxlen + 1);
+			if (r > 0)
+				{
+				char *c = (strchr(passwd, '\n')) ;
+				if (c != NULL)
+					*c = 0; /* truncate at newline */
+				else
+					{
+					/* ignore rest of line */
+					char trash[BUFSIZ];
+					do
+						r = BIO_gets(in, trash, sizeof trash);
+					while ((r > 0) && (!strchr(trash, '\n')));
+					}
+				
+				if (!do_passwd(passed_salt, &salt, &salt_malloc, passwd, out,
+					quiet, table, reverse, pw_maxlen, usecrypt, useapr1))
+					goto err;
+				}
+			done = (r <= 0);
+			}
+		while (!done);
+		}
+
 err:
 	ERR_print_errors(bio_err);
 	if (salt_malloc)
 		Free(salt_malloc);
 	if (passwd_malloc)
 		Free(passwd_malloc);
+	if (in)
+		BIO_free(in);
 	if (out)
 		BIO_free(out);
 	EXIT(ret);
 	}
+
+
+#ifndef NO_APR1
+/* MD5-based password algorithm compatible to the one found in Apache
+ * (should probably be available as a library function;
+ * then the static buffer would not be acceptable) */
+static char *apr1_crypt(const char *passwd, const char *salt)
+	{
+	static char out_buf[6 + 9 + 24 + 2]; /* "$apr1$..salt..$.......md5hash..........\0" */
+	unsigned char buf[MD5_DIGEST_LENGTH];
+	char *salt_out;
+	int n, i;
+	MD5_CTX md;
+	size_t passwd_len, salt_len;
+
+	passwd_len = strlen(passwd);
+	strcpy(out_buf, "$apr1$");
+	strncat(out_buf, salt, 8);
+	assert(strlen(out_buf) <= 6 + 8); /* "$apr1$..salt.." */
+	salt_out = out_buf + 6;
+	salt_len = strlen(salt_out);
+	assert(salt_len <= 8);
+	
+	MD5_Init(&md);
+	MD5_Update(&md, passwd, passwd_len);
+	MD5_Update(&md, "$apr1$", 6);
+	MD5_Update(&md, salt_out, salt_len);
+	
+	 {
+		MD5_CTX md2;
+
+		MD5_Init(&md2);
+		MD5_Update(&md2, passwd, passwd_len);
+		MD5_Update(&md2, salt_out, salt_len);
+		MD5_Update(&md2, passwd, passwd_len);
+		MD5_Final(buf, &md2);
+	 }
+	for (i = passwd_len; i > sizeof buf; i -= sizeof buf)
+		MD5_Update(&md, buf, sizeof buf);
+	MD5_Update(&md, buf, i);
+	
+	n = passwd_len;
+	while (n)
+		{
+		MD5_Update(&md, (n & 1) ? "\0" : passwd, 1);
+		n >>= 1;
+		}
+	MD5_Final(buf, &md);
+
+	for (i = 0; i < 1000; i++)
+		{
+		MD5_CTX md2;
+
+		MD5_Init(&md2);
+		MD5_Update(&md2, (i & 1) ? (unsigned char *) passwd : buf,
+		                 (i & 1) ?               passwd_len : sizeof buf);
+		if (i % 3)
+			MD5_Update(&md2, salt_out, salt_len);
+		if (i % 7)
+			MD5_Update(&md2, passwd, passwd_len);
+		MD5_Update(&md2, (i & 1) ?        buf : (unsigned char *) passwd,
+		                 (i & 1) ? sizeof buf : passwd_len);
+		MD5_Final(buf, &md2);
+		}
+	
+	 {
+		/* transform buf into output string */
+	
+		unsigned char buf_perm[sizeof buf];
+		int dest, source;
+		char *output;
+
+		/* silly output permutation */
+		for (dest = 0, source = 0; dest < 14; dest++, source = (source + 6) % 17)
+			buf_perm[dest] = buf[source];
+		buf_perm[14] = buf[5];
+		buf_perm[15] = buf[11];
+		assert(16 == sizeof buf_perm);
+		
+		output = salt_out + salt_len;
+		assert(output == out_buf + strlen(out_buf));
+		
+		*output++ = '$';
+
+		for (i = 0; i < 15; i += 3)
+			{
+			*output++ = cov_2char[buf_perm[i+2] & 0x3f];
+			*output++ = cov_2char[((buf_perm[i+1] & 0xf) << 2) |
+				                  (buf_perm[i+2] >> 6)];
+			*output++ = cov_2char[((buf_perm[i] & 3) << 4) |
+				                  (buf_perm[i+1] >> 4)];
+			*output++ = cov_2char[buf_perm[i] >> 2];
+			}
+		assert(i == 15);
+		*output++ = cov_2char[buf_perm[i] & 0x3f];
+		*output++ = cov_2char[buf_perm[i] >> 6];
+		*output = 0;
+		assert(strlen(out_buf) < sizeof(out_buf));
+	 }
+
+	return out_buf;
+	}
 #endif
+
+
+static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
+	char *passwd, BIO *out,	int quiet, int table, int reverse,
+	size_t pw_maxlen, int usecrypt, int useapr1)
+	{
+	char *hash = NULL;
+
+	assert(salt_p != NULL);
+	assert(salt_malloc_p != NULL);
+
+	/* first make sure we have a salt */
+	if (!passed_salt)
+		{
+#ifndef NO_DES
+		if (usecrypt)
+			{
+			if (*salt_malloc_p == NULL)
+				{
+				*salt_p = *salt_malloc_p = Malloc(3);
+				if (*salt_malloc_p == NULL)
+					goto err;
+				}
+			if (RAND_pseudo_bytes((unsigned char *)*salt_p, 2) < 0)
+				goto err;
+			(*salt_p)[0] = cov_2char[(*salt_p)[0] & 0x3f]; /* 6 bits */
+			(*salt_p)[1] = cov_2char[(*salt_p)[1] & 0x3f]; /* 6 bits */
+			(*salt_p)[2] = 0;
+#ifdef CHARSET_EBCDIC
+			ascii2ebcdic(*salt_p, *salt_p, 2); /* des_crypt will convert
+			                                    * back to ASCII */
+#endif
+			}
+#endif /* !NO_DES */
+
+#ifndef NO_APR1
+		if (useapr1)
+			{
+			int i;
+			
+			if (*salt_malloc_p == NULL)
+				{
+				*salt_p = *salt_malloc_p = Malloc(9);
+				if (*salt_malloc_p == NULL)
+					goto err;
+				}
+			if (RAND_pseudo_bytes((unsigned char *)*salt_p, 8) < 0)
+				goto err;
+			
+			for (i = 0; i < 8; i++)
+				(*salt_p)[i] = cov_2char[(*salt_p)[i] & 0x3f]; /* 6 bits */
+			(*salt_p)[8] = 0;
+			}
+#endif /* !NO_APR1 */
+		}
+	
+	assert(*salt_p != NULL);
+	
+	/* truncate password if necessary */
+	if ((strlen(passwd) > pw_maxlen))
+		{
+		if (!quiet)
+			BIO_printf(bio_err, "Warning: truncating password to %u characters\n", pw_maxlen);
+		passwd[pw_maxlen] = 0;
+		}
+	assert(strlen(passwd) <= pw_maxlen);
+	
+	/* now compute password hash */
+#ifndef NO_DES
+	if (usecrypt)
+		hash = des_crypt(passwd, *salt_p);
+#endif
+#ifndef NO_APR1
+	if (useapr1)
+		hash = apr1_crypt(passwd, *salt_p);
+#endif
+	assert(hash != NULL);
+
+	if (table && !reverse)
+		BIO_printf(out, "%s\t%s\n", passwd, hash);
+	else if (table && reverse)
+		BIO_printf(out, "%s\t%s\n", hash, passwd);
+	else
+		BIO_printf(out, "%s\n", hash);
+	return 1;
+	
+err:
+	return 0;
+	}
+#endif
+
+

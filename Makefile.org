@@ -216,7 +216,7 @@ libclean:
 	rm -f *.a */lib */*/lib
 
 clean:
-	rm -f shlib/*.o *.o core a.out fluff *.map
+	rm -f shlib/*.o *.o core a.out fluff *.map rehash.time
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i && echo "making clean in $$i..." && \
@@ -259,8 +259,10 @@ dclean:
 	$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' dclean ) || exit 1; \
 	done;
 
-rehash:
+rehash: rehash.time
+rehash.time: certs
 	@(OPENSSL="`pwd`/apps/openssl"; export OPENSSL; sh tools/c_rehash certs)
+	touch .rehash.time
 
 test:   tests
 
@@ -326,18 +328,14 @@ dist:
 dist_pem_h:
 	(cd crypto/pem; $(MAKE) CC='${CC}' SDIRS='${SDIRS}' CFLAG='${CFLAG}' pem.h; $(MAKE) clean)
 
-install: all
+install: all install_docs
 	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/lib \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/private \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/lib \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man1 \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man3 \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man5 \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man7
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/lib
 	@for i in $(EXHEADER) ;\
 	do \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
@@ -355,6 +353,13 @@ install: all
 		$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 		chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
 	done
+
+install_docs:
+	@$(PERL) $(TOP)/util/mkdir-p.pl \
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man1 \
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man3 \
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man5 \
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man7
 	@echo installing man 1 and man 5
 	@for i in doc/apps/*.pod; do (cd `dirname $$i`; fn=`basename $$i .pod`; sec=`[ "$$fn" = "config" ] && echo 5 || echo 1`; ../../util/pod2man.pl --section=$$sec --center=OpenSSL --release=$(VERSION) `basename $$i` >  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man$$sec/`basename $$i .pod`.$$sec); done
 	@echo installing man 3 and man 7
