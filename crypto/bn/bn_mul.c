@@ -408,16 +408,22 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 		return;
 		}
 #  endif
-	if (n2 == 8)
+	/* Only call bn_mul_comba 8 if n2 == 8 and the
+	 * two arrays are complete [steve]
+	 */
+	if (n2 == 8 && dna == 0 && dnb == 0)
 		{
 		bn_mul_comba8(r,a,b);
 		return; 
 		}
 # endif /* BN_MUL_COMBA */
+	/* Else do normal multiply */
 	if (n2 < BN_MUL_RECURSIVE_SIZE_NORMAL)
 		{
-		/* This should not happen */
-		bn_mul_normal(r,a,n2,b,n2);
+		bn_mul_normal(r,a,n2+dna,b,n2+dnb);
+		if ((dna + dnb) < 0)
+			memset(&r[2*n2 + dna + dnb], 0,
+				sizeof(BN_ULONG) * -(dna + dnb));
 		return;
 		}
 	/* r=(a[0]-a[1])*(b[1]-b[0]) */
