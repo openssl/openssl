@@ -3,7 +3,7 @@
  * project 2000.
  */
 /* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,17 +66,33 @@
 #include <openssl/err.h>
 
 static int asn1_check_eoc(const unsigned char **in, long len);
-static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len, char inf, int tag, int aclass);
+
+static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len,
+				char inf, int tag, int aclass);
+
 static int collect_data(BUF_MEM *buf, const unsigned char **p, long plen);
-static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *inf, char *cst,
-			const unsigned char **in, long len, int exptag, int expclass, char opt, ASN1_TLC *ctx);
-static int asn1_template_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx);
-static int asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx);
-static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long len,
-					const ASN1_ITEM *it, int tag, int aclass, char opt, ASN1_TLC *ctx);
+
+static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
+				char *inf, char *cst,
+				const unsigned char **in, long len,
+				int exptag, int expclass, char opt,
+				ASN1_TLC *ctx);
+
+static int asn1_template_ex_d2i(ASN1_VALUE **pval,
+				const unsigned char **in, long len,
+				const ASN1_TEMPLATE *tt, char opt,
+				ASN1_TLC *ctx);
+static int asn1_template_noexp_d2i(ASN1_VALUE **val,
+				const unsigned char **in, long len,
+				const ASN1_TEMPLATE *tt, char opt,
+				ASN1_TLC *ctx);
+static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
+				const unsigned char **in, long len,
+				const ASN1_ITEM *it,
+				int tag, int aclass, char opt, ASN1_TLC *ctx);
 
 /* Table to convert tags to bit values, used for MSTRING type */
-static unsigned long tag2bit[32]={
+static unsigned long tag2bit[32] = {
 0,	0,	0,	B_ASN1_BIT_STRING,	/* tags  0 -  3 */
 B_ASN1_OCTET_STRING,	0,	0,		B_ASN1_UNKNOWN,/* tags  4- 7 */
 B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,/* tags  8-11 */
@@ -89,14 +105,14 @@ B_ASN1_UNIVERSALSTRING,B_ASN1_UNKNOWN,B_ASN1_BMPSTRING,B_ASN1_UNKNOWN, /* tags 2
 	};
 
 unsigned long ASN1_tag2bit(int tag)
-{
-	if((tag < 0) || (tag > 30)) return 0;
+	{
+	if ((tag < 0) || (tag > 30)) return 0;
 	return tag2bit[tag];
-}
+	}
 
 /* Macro to initialize and invalidate the cache */
 
-#define asn1_tlc_clear(c)	if(c) (c)->valid = 0
+#define asn1_tlc_clear(c)	if (c) (c)->valid = 0
 
 /* Decode an ASN1 item, this currently behaves just 
  * like a standard 'd2i' function. 'in' points to 
@@ -106,32 +122,36 @@ unsigned long ASN1_tag2bit(int tag)
  * case.
  */
 
-ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, const ASN1_ITEM *it)
-{
+ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval,
+		const unsigned char **in, long len, const ASN1_ITEM *it)
+	{
 	ASN1_TLC c;
 	ASN1_VALUE *ptmpval = NULL;
-	if(!pval) pval = &ptmpval;
+	if (!pval)
+		pval = &ptmpval;
 	asn1_tlc_clear(&c);
-	if(ASN1_item_ex_d2i(pval, in, len, it, -1, 0, 0, &c) > 0) 
+	if (ASN1_item_ex_d2i(pval, in, len, it, -1, 0, 0, &c) > 0) 
 		return *pval;
 	return NULL;
-}
+	}
 
-int ASN1_template_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, const ASN1_TEMPLATE *tt)
-{
+int ASN1_template_d2i(ASN1_VALUE **pval,
+		const unsigned char **in, long len, const ASN1_TEMPLATE *tt)
+	{
 	ASN1_TLC c;
 	asn1_tlc_clear(&c);
 	return asn1_template_ex_d2i(pval, in, len, tt, 0, &c);
-}
+	}
 
 
 /* Decode an item, taking care of IMPLICIT tagging, if any.
  * If 'opt' set and tag mismatch return -1 to handle OPTIONAL
  */
 
-int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, const ASN1_ITEM *it,
-				int tag, int aclass, char opt, ASN1_TLC *ctx)
-{
+int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
+			const ASN1_ITEM *it,
+			int tag, int aclass, char opt, ASN1_TLC *ctx)
+	{
 	const ASN1_TEMPLATE *tt, *errtt = NULL;
 	const ASN1_COMPAT_FUNCS *cf;
 	const ASN1_EXTERN_FUNCS *ef;
@@ -146,75 +166,103 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, cons
 	int otag;
 	int ret = 0;
 	ASN1_VALUE *pchval, **pchptr, *ptmpval;
-	if(!pval) return 0;
-	if(aux && aux->asn1_cb) asn1_cb = aux->asn1_cb;
+	if (!pval)
+		return 0;
+	if (aux && aux->asn1_cb)
+		asn1_cb = aux->asn1_cb;
 	else asn1_cb = 0;
 
-	switch(it->itype) {
-
+	switch(it->itype)
+		{
 		case ASN1_ITYPE_PRIMITIVE:
-		if(it->templates) {
-			/* tagging or OPTIONAL is currently illegal on an item template
-			 * because the flags can't get passed down. In practice this isn't
-			 * a problem: we include the relevant flags from the item template
-			 * in the template itself.
+		if (it->templates)
+			{
+			/* tagging or OPTIONAL is currently illegal on an item
+			 * template because the flags can't get passed down.
+			 * In practice this isn't a problem: we include the
+			 * relevant flags from the item template in the
+			 * template itself.
 			 */
-			if ((tag != -1) || opt) {
-				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_ILLEGAL_OPTIONS_ON_ITEM_TEMPLATE);
+			if ((tag != -1) || opt)
+				{
+				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+				ASN1_R_ILLEGAL_OPTIONS_ON_ITEM_TEMPLATE);
 				goto err;
-			}
-			return asn1_template_ex_d2i(pval, in, len, it->templates, opt, ctx);
+				}
+			return asn1_template_ex_d2i(pval, in, len,
+					it->templates, opt, ctx);
 		}
-		return asn1_d2i_ex_primitive(pval, in, len, it, tag, aclass, opt, ctx);
+		return asn1_d2i_ex_primitive(pval, in, len, it,
+						tag, aclass, opt, ctx);
 		break;
 
 		case ASN1_ITYPE_MSTRING:
 		p = *in;
 		/* Just read in tag and class */
-		ret = asn1_check_tlen(NULL, &otag, &oclass, NULL, NULL, &p, len, -1, 0, 1, ctx);
-		if(!ret) {
-			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+		ret = asn1_check_tlen(NULL, &otag, &oclass, NULL, NULL,
+						&p, len, -1, 0, 1, ctx);
+		if (!ret)
+			{
+			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+					ERR_R_NESTED_ASN1_ERROR);
 			goto err;
-		} 
+			}
+
 		/* Must be UNIVERSAL class */
-		if(oclass != V_ASN1_UNIVERSAL) {
+		if (oclass != V_ASN1_UNIVERSAL)
+			{
 			/* If OPTIONAL, assume this is OK */
-			if(opt) return -1;
-			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_MSTRING_NOT_UNIVERSAL);
+			if (opt) return -1;
+			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+					ASN1_R_MSTRING_NOT_UNIVERSAL);
 			goto err;
-		} 
+			}
 		/* Check tag matches bit map */
-		if(!(ASN1_tag2bit(otag) & it->utype)) {
+		if (!(ASN1_tag2bit(otag) & it->utype))
+			{
 			/* If OPTIONAL, assume this is OK */
-			if(opt) return -1;
-			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_MSTRING_WRONG_TAG);
+			if (opt)
+				return -1;
+			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+					ASN1_R_MSTRING_WRONG_TAG);
 			goto err;
-		} 
-		return asn1_d2i_ex_primitive(pval, in, len, it, otag, 0, 0, ctx);
+			}
+		return asn1_d2i_ex_primitive(pval, in, len,
+						it, otag, 0, 0, ctx);
 
 		case ASN1_ITYPE_EXTERN:
 		/* Use new style d2i */
 		ef = it->funcs;
-		return ef->asn1_ex_d2i(pval, in, len, it, tag, aclass, opt, ctx);
+		return ef->asn1_ex_d2i(pval, in, len,
+						it, tag, aclass, opt, ctx);
 
 		case ASN1_ITYPE_COMPAT:
 		/* we must resort to old style evil hackery */
 		cf = it->funcs;
 
 		/* If OPTIONAL see if it is there */
-		if(opt) {
+		if (opt)
+			{
 			int exptag;
 			p = *in;
-			if(tag == -1) exptag = it->utype;
+			if (tag == -1)
+				exptag = it->utype;
 			else exptag = tag;
-			/* Don't care about anything other than presence of expected tag */
-			ret = asn1_check_tlen(NULL, NULL, NULL, NULL, NULL, &p, len, exptag, aclass, 1, ctx);
-			if(!ret) {
-				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+			/* Don't care about anything other than presence
+			 * of expected tag */
+
+			ret = asn1_check_tlen(NULL, NULL, NULL, NULL, NULL,
+					&p, len, exptag, aclass, 1, ctx);
+			if (!ret)
+				{
+				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+					ERR_R_NESTED_ASN1_ERROR);
 				goto err;
+				}
+			if (ret == -1)
+				return -1;
 			}
-			if(ret == -1) return -1;
-		}
+
 		/* This is the old style evil hack IMPLICIT handling:
 		 * since the underlying code is expecting a tag and
 		 * class other than the one present we change the
@@ -230,64 +278,78 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, cons
 		 * buffer.
 		 */
 
-		if(tag != -1) {
+		if (tag != -1)
+			{
 			wp = *(unsigned char **)in;
 			imphack = *wp;
-			*wp = (unsigned char)((*p & V_ASN1_CONSTRUCTED) | it->utype);
-		}
+			*wp = (unsigned char)((*p & V_ASN1_CONSTRUCTED)
+								| it->utype);
+			}
 
 		ptmpval = cf->asn1_d2i(pval, in, len);
 
-		if(tag != -1) *wp = imphack;
+		if (tag != -1)
+			*wp = imphack;
 
-		if(ptmpval) return 1;
+		if (ptmpval)
+			return 1;
+
 		ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 
 
 		case ASN1_ITYPE_CHOICE:
-		if(asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it))
+		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it))
 				goto auxerr;
 
 		/* Allocate structure */
-		if(!*pval) {
-			if(!ASN1_item_ex_new(pval, it)) {
-				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
-				goto err;
+		if (!*pval && !ASN1_item_ex_new(pval, it))
+			{
+			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+						ERR_R_NESTED_ASN1_ERROR);
+			goto err;
 			}
-		}
 		/* CHOICE type, try each possibility in turn */
 		pchval = NULL;
 		p = *in;
-		for(i = 0, tt=it->templates; i < it->tcount; i++, tt++) {
+		for(i = 0, tt=it->templates; i < it->tcount; i++, tt++)
+			{
 			pchptr = asn1_get_field_ptr(pval, tt);
 			/* We mark field as OPTIONAL so its absence
 			 * can be recognised.
 			 */
 			ret = asn1_template_ex_d2i(pchptr, &p, len, tt, 1, ctx);
 			/* If field not present, try the next one */
-			if(ret == -1) continue;
+			if (ret == -1)
+				continue;
 			/* If positive return, read OK, break loop */
-			if(ret > 0) break;
+			if (ret > 0)
+				break;
 			/* Otherwise must be an ASN1 parsing error */
 			errtt = tt;
-			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+						ERR_R_NESTED_ASN1_ERROR);
 			goto err;
-		}
+			}
+
 		/* Did we fall off the end without reading anything? */
-		if(i == it->tcount) {
+		if (i == it->tcount)
+			{
 			/* If OPTIONAL, this is OK */
-			if(opt) {
+			if (opt)
+				{
 				/* Free and zero it */
 				ASN1_item_ex_free(pval, it);
 				return -1;
-			}
-			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_NO_MATCHING_CHOICE_TYPE);
+				}
+			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+					ASN1_R_NO_MATCHING_CHOICE_TYPE);
 			goto err;
-		}
+			}
+
 		asn1_set_choice_selector(pval, i, it);
 		*in = p;
-		if(asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it))
+		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it))
 				goto auxerr;
 		return 1;
 
@@ -297,179 +359,245 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, cons
 		tmplen = len;
 
 		/* If no IMPLICIT tagging set to SEQUENCE, UNIVERSAL */
-		if(tag == -1) {
+		if (tag == -1)
+			{
 			tag = V_ASN1_SEQUENCE;
 			aclass = V_ASN1_UNIVERSAL;
-		}
+			}
 		/* Get SEQUENCE length and update len, p */
-		ret = asn1_check_tlen(&len, NULL, NULL, &seq_eoc, &cst, &p, len, tag, aclass, opt, ctx);
-		if(!ret) {
-			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+		ret = asn1_check_tlen(&len, NULL, NULL, &seq_eoc, &cst,
+					&p, len, tag, aclass, opt, ctx);
+		if (!ret)
+			{
+			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+					ERR_R_NESTED_ASN1_ERROR);
 			goto err;
-		} else if(ret == -1) return -1;
-		if(aux && (aux->flags & ASN1_AFLG_BROKEN)) {
+			}
+		else if (ret == -1)
+			return -1;
+		if (aux && (aux->flags & ASN1_AFLG_BROKEN))
+			{
 			len = tmplen - (p - *in);
 			seq_nolen = 1;
-		} else seq_nolen = seq_eoc;	/* If indefinite we don't do a length check */
-		if(!cst) {
-			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_SEQUENCE_NOT_CONSTRUCTED);
-			goto err;
-		}
-
-		if(!*pval) {
-			if(!ASN1_item_ex_new(pval, it)) {
-				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
-				goto err;
 			}
-		}
-		if(asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it))
+		/* If indefinite we don't do a length check */
+		else seq_nolen = seq_eoc;
+		if (!cst)
+			{
+			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+				ASN1_R_SEQUENCE_NOT_CONSTRUCTED);
+			goto err;
+			}
+
+		if (!*pval && !!ASN1_item_ex_new(pval, it))
+			{
+			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+				ERR_R_NESTED_ASN1_ERROR);
+			goto err;
+			}
+
+		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it))
 				goto auxerr;
 
 		/* Get each field entry */
-		for(i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
+		for (i = 0, tt = it->templates; i < it->tcount; i++, tt++)
+			{
 			const ASN1_TEMPLATE *seqtt;
 			ASN1_VALUE **pseqval;
 			seqtt = asn1_do_adb(pval, tt, 1);
-			if(!seqtt) goto err;
+			if (!seqtt)
+				goto err;
 			pseqval = asn1_get_field_ptr(pval, seqtt);
 			/* Have we ran out of data? */
-			if(!len) break;
+			if (!len)
+				break;
 			q = p;
-			if(asn1_check_eoc(&p, len)) {
-				if(!seq_eoc) {
-					ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_UNEXPECTED_EOC);
+			if (asn1_check_eoc(&p, len))
+				{
+				if (!seq_eoc)
+					{
+					ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+							ASN1_R_UNEXPECTED_EOC);
 					goto err;
-				}
+					}
 				len -= p - q;
 				seq_eoc = 0;
 				q = p;
 				break;
-			}
-			/* This determines the OPTIONAL flag value. The field cannot
-			 * be omitted if it is the last of a SEQUENCE and there is
-			 * still data to be read. This isn't strictly necessary but
-			 * it increases efficiency in some cases.
+				}
+			/* This determines the OPTIONAL flag value. The field
+			 * cannot be omitted if it is the last of a SEQUENCE
+			 * and there is still data to be read. This isn't
+			 * strictly necessary but it increases efficiency in
+			 * some cases.
 			 */
-			if(i == (it->tcount - 1)) isopt = 0;
+			if (i == (it->tcount - 1))
+				isopt = 0;
 			else isopt = (char)(seqtt->flags & ASN1_TFLG_OPTIONAL);
-			/* attempt to read in field, allowing each to be OPTIONAL */
-			ret = asn1_template_ex_d2i(pseqval, &p, len, seqtt, isopt, ctx);
-			if(!ret) {
+			/* attempt to read in field, allowing each to be
+			 * OPTIONAL */
+
+			ret = asn1_template_ex_d2i(pseqval, &p, len,
+							seqtt, isopt, ctx);
+			if (!ret)
+				{
 				errtt = seqtt;
 				goto err;
-			} else if(ret == -1) {
-				/* OPTIONAL component absent. Free and zero the field
+				}
+			else if (ret == -1)
+				{
+				/* OPTIONAL component absent.
+				 * Free and zero the field.
 				 */
 				ASN1_template_free(pseqval, seqtt);
 				continue;
-			}
+				}
 			/* Update length */
 			len -= p - q;
-		}
+			}
+
 		/* Check for EOC if expecting one */
-		if(seq_eoc && !asn1_check_eoc(&p, len)) {
+		if (seq_eoc && !asn1_check_eoc(&p, len))
+			{
 			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_MISSING_EOC);
 			goto err;
-		}
+			}
 		/* Check all data read */
-		if(!seq_nolen && len) {
-			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_SEQUENCE_LENGTH_MISMATCH);
+		if (!seq_nolen && len)
+			{
+			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+					ASN1_R_SEQUENCE_LENGTH_MISMATCH);
 			goto err;
-		}
+			}
 
 		/* If we get here we've got no more data in the SEQUENCE,
 		 * however we may not have read all fields so check all
 		 * remaining are OPTIONAL and clear any that are.
 		 */
-		for(; i < it->tcount; tt++, i++) {
+		for (; i < it->tcount; tt++, i++)
+			{
 			const ASN1_TEMPLATE *seqtt;
 			seqtt = asn1_do_adb(pval, tt, 1);
-			if(!seqtt) goto err;
-			if(seqtt->flags & ASN1_TFLG_OPTIONAL) {
+			if (!seqtt)
+				goto err;
+			if (seqtt->flags & ASN1_TFLG_OPTIONAL)
+				{
 				ASN1_VALUE **pseqval;
 				pseqval = asn1_get_field_ptr(pval, seqtt);
 				ASN1_template_free(pseqval, seqtt);
-			} else {
+				}
+			else
+				{
 				errtt = seqtt;
-				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_FIELD_MISSING);
+				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+							ASN1_R_FIELD_MISSING);
 				goto err;
+				}
 			}
-		}
 		/* Save encoding */
-		if(!asn1_enc_save(pval, *in, p - *in, it)) goto auxerr;
+		if (!asn1_enc_save(pval, *in, p - *in, it))
+			goto auxerr;
 		*in = p;
-		if(asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it))
+		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it))
 				goto auxerr;
 		return 1;
 
 		default:
 		return 0;
-	}
+		}
 	auxerr:
 	ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_AUX_ERROR);
 	err:
 	ASN1_item_ex_free(pval, it);
-	if(errtt) ERR_add_error_data(4, "Field=", errtt->field_name, ", Type=", it->sname);
-	else ERR_add_error_data(2, "Type=", it->sname);
+	if (errtt)
+		ERR_add_error_data(4, "Field=", errtt->field_name,
+					", Type=", it->sname);
+	else
+		ERR_add_error_data(2, "Type=", it->sname);
 	return 0;
-}
+	}
 
-/* Templates are handled with two separate functions. One handles any EXPLICIT tag and the other handles the
- * rest.
+/* Templates are handled with two separate functions.
+ * One handles any EXPLICIT tag and the other handles the rest.
  */
 
-static int asn1_template_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long inlen, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx)
-{
+static int asn1_template_ex_d2i(ASN1_VALUE **val,
+				const unsigned char **in, long inlen,
+				const ASN1_TEMPLATE *tt, char opt,
+							ASN1_TLC *ctx)
+	{
 	int flags, aclass;
 	int ret;
 	long len;
 	const unsigned char *p, *q;
 	char exp_eoc;
-	if(!val) return 0;
+	if (!val)
+		return 0;
 	flags = tt->flags;
 	aclass = flags & ASN1_TFLG_TAG_CLASS;
 
 	p = *in;
 
 	/* Check if EXPLICIT tag expected */
-	if(flags & ASN1_TFLG_EXPTAG) {
+	if (flags & ASN1_TFLG_EXPTAG)
+		{
 		char cst;
-		/* Need to work out amount of data available to the inner content and where it
-		 * starts: so read in EXPLICIT header to get the info.
+		/* Need to work out amount of data available to the inner
+		 * content and where it starts: so read in EXPLICIT header to
+		 * get the info.
 		 */
-		ret = asn1_check_tlen(&len, NULL, NULL, &exp_eoc, &cst, &p, inlen, tt->tag, aclass, opt, ctx);
+		ret = asn1_check_tlen(&len, NULL, NULL, &exp_eoc, &cst,
+					&p, inlen, tt->tag, aclass, opt, ctx);
 		q = p;
-		if(!ret) {
-			ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+		if (!ret)
+			{
+			ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I,
+					ERR_R_NESTED_ASN1_ERROR);
 			return 0;
-		} else if(ret == -1) return -1;
-		if(!cst) {
-			ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I, ASN1_R_EXPLICIT_TAG_NOT_CONSTRUCTED);
+			}
+		else if (ret == -1)
+			return -1;
+		if (!cst)
+			{
+			ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I,
+					ASN1_R_EXPLICIT_TAG_NOT_CONSTRUCTED);
 			return 0;
-		}
+			}
 		/* We've found the field so it can't be OPTIONAL now */
 		ret = asn1_template_noexp_d2i(val, &p, len, tt, 0, ctx);
-		if(!ret) {
-			ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+		if (!ret)
+			{
+			ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I,
+					ERR_R_NESTED_ASN1_ERROR);
 			return 0;
-		}
+			}
 		/* We read the field in OK so update length */
 		len -= p - q;
-		if(exp_eoc) {
+		if (exp_eoc)
+			{
 			/* If NDEF we must have an EOC here */
-			if(!asn1_check_eoc(&p, len)) {
-				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I, ASN1_R_MISSING_EOC);
+			if (!asn1_check_eoc(&p, len))
+				{
+				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+						ASN1_R_MISSING_EOC);
 				goto err;
+				}
 			}
-		} else {
-			/* Otherwise we must hit the EXPLICIT tag end or its an error */
-			if(len) {
-				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I, ASN1_R_EXPLICIT_LENGTH_MISMATCH);
+		else
+			{
+			/* Otherwise we must hit the EXPLICIT tag end or its
+			 * an error */
+			if (len)
+				{
+				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+					ASN1_R_EXPLICIT_LENGTH_MISMATCH);
 				goto err;
+				}
 			}
 		}
-	} else 
-		return asn1_template_noexp_d2i(val, in, inlen, tt, opt, ctx);
+		else 
+			return asn1_template_noexp_d2i(val, in, inlen,
+								tt, opt, ctx);
 
 	*in = p;
 	return 1;
@@ -478,98 +606,145 @@ static int asn1_template_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long
 	ASN1_template_free(val, tt);
 	*val = NULL;
 	return 0;
-}
+	}
 
-static int asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx)
-{
+static int asn1_template_noexp_d2i(ASN1_VALUE **val,
+				const unsigned char **in, long len,
+				const ASN1_TEMPLATE *tt, char opt,
+				ASN1_TLC *ctx)
+	{
 	int flags, aclass;
 	int ret;
 	const unsigned char *p, *q;
-	if(!val) return 0;
+	if (!val)
+		return 0;
 	flags = tt->flags;
 	aclass = flags & ASN1_TFLG_TAG_CLASS;
 
 	p = *in;
 	q = p;
 
-	if(flags & ASN1_TFLG_SK_MASK) {
+	if (flags & ASN1_TFLG_SK_MASK)
+		{
 		/* SET OF, SEQUENCE OF */
 		int sktag, skaclass;
 		char sk_eoc;
 		/* First work out expected inner tag value */
-		if(flags & ASN1_TFLG_IMPTAG) {
+		if (flags & ASN1_TFLG_IMPTAG)
+			{
 			sktag = tt->tag;
 			skaclass = aclass;
-		} else {
+			}
+		else
+			{
 			skaclass = V_ASN1_UNIVERSAL;
-			if(flags & ASN1_TFLG_SET_OF) sktag = V_ASN1_SET;
-			else sktag = V_ASN1_SEQUENCE;
-		}
+			if (flags & ASN1_TFLG_SET_OF)
+				sktag = V_ASN1_SET;
+			else
+				sktag = V_ASN1_SEQUENCE;
+			}
 		/* Get the tag */
-		ret = asn1_check_tlen(&len, NULL, NULL, &sk_eoc, NULL, &p, len, sktag, skaclass, opt, ctx);
-		if(!ret) {
-			ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+		ret = asn1_check_tlen(&len, NULL, NULL, &sk_eoc, NULL,
+					&p, len, sktag, skaclass, opt, ctx);
+		if (!ret)
+			{
+			ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I,
+						ERR_R_NESTED_ASN1_ERROR);
 			return 0;
-		} else if(ret == -1) return -1;
-		if(!*val) *val = (ASN1_VALUE *)sk_new_null();
-		else {
+			}
+		else if (ret == -1)
+			return -1;
+		if (!*val)
+			*val = (ASN1_VALUE *)sk_new_null();
+		else
+			{
 			/* We've got a valid STACK: free up any items present */
 			STACK *sktmp = (STACK *)*val;
 			ASN1_VALUE *vtmp;
-			while(sk_num(sktmp) > 0) {
+			while(sk_num(sktmp) > 0)
+				{
 				vtmp = (ASN1_VALUE *)sk_pop(sktmp);
-				ASN1_item_ex_free(&vtmp, ASN1_ITEM_ptr(tt->item));
+				ASN1_item_ex_free(&vtmp,
+						ASN1_ITEM_ptr(tt->item));
+				}
 			}
-		}
 				
-		if(!*val) {
-			ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I, ERR_R_MALLOC_FAILURE);
+		if (!*val)
+			{
+			ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I,
+						ERR_R_MALLOC_FAILURE);
 			goto err;
-		}
+			}
+
 		/* Read as many items as we can */
-		while(len > 0) {
+		while(len > 0)
+			{
 			ASN1_VALUE *skfield;
 			q = p;
 			/* See if EOC found */
-			if(asn1_check_eoc(&p, len)) {
-				if(!sk_eoc) {
-					ASN1err(ASN1_F_ASN1_TEMPLATE_D2I, ASN1_R_UNEXPECTED_EOC);
+			if (asn1_check_eoc(&p, len))
+				{
+				if (!sk_eoc)
+					{
+					ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+							ASN1_R_UNEXPECTED_EOC);
 					goto err;
-				}
+					}
 				len -= p - q;
 				sk_eoc = 0;
 				break;
-			}
+				}
 			skfield = NULL;
-			if(!ASN1_item_ex_d2i(&skfield, &p, len, ASN1_ITEM_ptr(tt->item), -1, 0, 0, ctx)) {
-				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I, ERR_R_NESTED_ASN1_ERROR);
+			if (!ASN1_item_ex_d2i(&skfield, &p, len,
+						ASN1_ITEM_ptr(tt->item),
+						-1, 0, 0, ctx))
+				{
+				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+					ERR_R_NESTED_ASN1_ERROR);
 				goto err;
-			}
+				}
 			len -= p - q;
-			if(!sk_push((STACK *)*val, (char *)skfield)) {
-				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I, ERR_R_MALLOC_FAILURE);
+			if (!sk_push((STACK *)*val, (char *)skfield))
+				{
+				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+						ERR_R_MALLOC_FAILURE);
 				goto err;
+				}
 			}
-		}
-		if(sk_eoc) {
+		if (sk_eoc)
+			{
 			ASN1err(ASN1_F_ASN1_TEMPLATE_D2I, ASN1_R_MISSING_EOC);
 			goto err;
+			}
 		}
-	} else if(flags & ASN1_TFLG_IMPTAG) {
+	else if (flags & ASN1_TFLG_IMPTAG)
+		{
 		/* IMPLICIT tagging */
-		ret = ASN1_item_ex_d2i(val, &p, len, ASN1_ITEM_ptr(tt->item), tt->tag, aclass, opt, ctx);
-		if(!ret) {
-			ASN1err(ASN1_F_ASN1_TEMPLATE_D2I, ERR_R_NESTED_ASN1_ERROR);
+		ret = ASN1_item_ex_d2i(val, &p, len,
+			ASN1_ITEM_ptr(tt->item), tt->tag, aclass, opt, ctx);
+		if (!ret)
+			{
+			ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+						ERR_R_NESTED_ASN1_ERROR);
 			goto err;
-		} else if(ret == -1) return -1;
-	} else {
+			}
+		else if (ret == -1)
+			return -1;
+		}
+	else
+		{
 		/* Nothing special */
-		ret = ASN1_item_ex_d2i(val, &p, len, ASN1_ITEM_ptr(tt->item), -1, 0, opt, ctx);
-		if(!ret) {
-			ASN1err(ASN1_F_ASN1_TEMPLATE_D2I, ERR_R_NESTED_ASN1_ERROR);
+		ret = ASN1_item_ex_d2i(val, &p, len, ASN1_ITEM_ptr(tt->item),
+							-1, 0, opt, ctx);
+		if (!ret)
+			{
+			ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+					ERR_R_NESTED_ASN1_ERROR);
 			goto err;
-		} else if(ret == -1) return -1;
-	}
+			}
+		else if (ret == -1)
+			return -1;
+		}
 
 	*in = p;
 	return 1;
@@ -578,12 +753,13 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, l
 	ASN1_template_free(val, tt);
 	*val = NULL;
 	return 0;
-}
+	}
 
-static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen, 
-						const ASN1_ITEM *it,
-						int tag, int aclass, char opt, ASN1_TLC *ctx)
-{
+static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
+				const unsigned char **in, long inlen, 
+				const ASN1_ITEM *it,
+				int tag, int aclass, char opt, ASN1_TLC *ctx)
+	{
 	int ret = 0, utype;
 	long plen;
 	char cst, inf, free_cont = 0;
@@ -591,70 +767,100 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, lo
 	BUF_MEM buf;
 	const unsigned char *cont = NULL;
 	long len; 
-	if(!pval) {
+	if (!pval)
+		{
 		ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ASN1_R_ILLEGAL_NULL);
 		return 0; /* Should never happen */
-	}
+		}
 
-	if(it->itype == ASN1_ITYPE_MSTRING) {
+	if (it->itype == ASN1_ITYPE_MSTRING)
+		{
 		utype = tag;
 		tag = -1;
-	} else utype = it->utype;
+		}
+	else
+		utype = it->utype;
 
-	if(utype == V_ASN1_ANY) {
+	if (utype == V_ASN1_ANY)
+		{
 		/* If type is ANY need to figure out type from tag */
 		unsigned char oclass;
-		if(tag >= 0) {
-			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ASN1_R_ILLEGAL_TAGGED_ANY);
+		if (tag >= 0)
+			{
+			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+					ASN1_R_ILLEGAL_TAGGED_ANY);
 			return 0;
-		}
-		if(opt) {
-			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ASN1_R_ILLEGAL_OPTIONAL_ANY);
+			}
+		if (opt)
+			{
+			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+					ASN1_R_ILLEGAL_OPTIONAL_ANY);
 			return 0;
-		}
+			}
 		p = *in;
-		ret = asn1_check_tlen(NULL, &utype, &oclass, NULL, NULL, &p, inlen, -1, 0, 0, ctx);
-		if(!ret) {
-			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ERR_R_NESTED_ASN1_ERROR);
+		ret = asn1_check_tlen(NULL, &utype, &oclass, NULL, NULL,
+					&p, inlen, -1, 0, 0, ctx);
+		if (!ret)
+			{
+			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+					ERR_R_NESTED_ASN1_ERROR);
 			return 0;
+			}
+		if (oclass != V_ASN1_UNIVERSAL)
+			utype = V_ASN1_OTHER;
 		}
-		if(oclass != V_ASN1_UNIVERSAL) utype = V_ASN1_OTHER;
-	}
-	if(tag == -1) {
+	if (tag == -1)
+		{
 		tag = utype;
 		aclass = V_ASN1_UNIVERSAL;
-	}
+		}
 	p = *in;
 	/* Check header */
-	ret = asn1_check_tlen(&plen, NULL, NULL, &inf, &cst, &p, inlen, tag, aclass, opt, ctx);
-	if(!ret) {
+	ret = asn1_check_tlen(&plen, NULL, NULL, &inf, &cst,
+				&p, inlen, tag, aclass, opt, ctx);
+	if (!ret)
+		{
 		ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ERR_R_NESTED_ASN1_ERROR);
 		return 0;
-	} else if(ret == -1) return -1;
-	/* SEQUENCE, SET and "OTHER" are left in encoded form */
-	if((utype == V_ASN1_SEQUENCE) || (utype == V_ASN1_SET) || (utype == V_ASN1_OTHER)) {
-		/* Clear context cache for type OTHER because the auto clear when
-		 * we have a exact match wont work
-		 */
-		if(utype == V_ASN1_OTHER) {
-			asn1_tlc_clear(ctx);
-		/* SEQUENCE and SET must be constructed */
-		} else if(!cst) {
-			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ASN1_R_TYPE_NOT_CONSTRUCTED);
-			return 0;
 		}
+	else if (ret == -1)
+		return -1;
+	/* SEQUENCE, SET and "OTHER" are left in encoded form */
+	if ((utype == V_ASN1_SEQUENCE)
+		|| (utype == V_ASN1_SET) || (utype == V_ASN1_OTHER))
+		{
+		/* Clear context cache for type OTHER because the auto clear
+		 * when we have a exact match wont work
+		 */
+		if (utype == V_ASN1_OTHER)
+			{
+			asn1_tlc_clear(ctx);
+			}
+		/* SEQUENCE and SET must be constructed */
+		else if (!cst)
+			{
+			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+				ASN1_R_TYPE_NOT_CONSTRUCTED);
+			return 0;
+			}
 
 		cont = *in;
 		/* If indefinite length constructed find the real end */
-		if(inf) {
-			if(!asn1_collect(NULL, &p, plen, inf, -1, -1)) goto err;
+		if (inf)
+			{
+			if (!asn1_collect(NULL, &p, plen, inf, -1, -1))
+				 goto err;
 			len = p - cont;
-		} else {
+			}
+		else
+			{
 			len = p - cont + plen;
 			p += plen;
 			buf.data = NULL;
+			}
 		}
-	} else if(cst) {
+	else if (cst)
+		{
 		buf.length = 0;
 		buf.max = 0;
 		buf.data = NULL;
@@ -664,36 +870,43 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, lo
 		 * internally irrespective of the type. So instead just check
 		 * for UNIVERSAL class and ignore the tag.
 		 */
-		if(!asn1_collect(&buf, &p, plen, inf, -1, V_ASN1_UNIVERSAL)) goto err;
+		if (!asn1_collect(&buf, &p, plen, inf, -1, V_ASN1_UNIVERSAL))
+			goto err;
 		len = buf.length;
 		/* Append a final null to string */
-		if(!BUF_MEM_grow_clean(&buf, len + 1)) {
-			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ERR_R_MALLOC_FAILURE);
+		if (!BUF_MEM_grow_clean(&buf, len + 1))
+			{
+			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+						ERR_R_MALLOC_FAILURE);
 			return 0;
-		}
+			}
 		buf.data[len] = 0;
 		cont = (const unsigned char *)buf.data;
 		free_cont = 1;
-	} else {
+		}
+	else
+		{
 		cont = p;
 		len = plen;
 		p += plen;
-	}
+		}
 
 	/* We now have content length and type: translate into a structure */
-	if(!asn1_ex_c2i(pval, cont, len, utype, &free_cont, it)) goto err;
+	if (!asn1_ex_c2i(pval, cont, len, utype, &free_cont, it))
+		goto err;
 
 	*in = p;
 	ret = 1;
 	err:
-	if(free_cont && buf.data) OPENSSL_free(buf.data);
+	if (free_cont && buf.data) OPENSSL_free(buf.data);
 	return ret;
-}
+	}
 
 /* Translate ASN1 content octets into a structure */
 
-int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype, char *free_cont, const ASN1_ITEM *it)
-{
+int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
+			int utype, char *free_cont, const ASN1_ITEM *it)
+	{
 	ASN1_VALUE **opval = NULL;
 	ASN1_STRING *stmp;
 	ASN1_TYPE *typ = NULL;
@@ -701,43 +914,60 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype
 	const ASN1_PRIMITIVE_FUNCS *pf;
 	ASN1_INTEGER **tint;
 	pf = it->funcs;
-	if(pf && pf->prim_c2i) return pf->prim_c2i(pval, cont, len, utype, free_cont, it);
+
+	if (pf && pf->prim_c2i)
+		return pf->prim_c2i(pval, cont, len, utype, free_cont, it);
 	/* If ANY type clear type and set pointer to internal value */
-	if(it->utype == V_ASN1_ANY) {
-		if(!*pval) {
+	if (it->utype == V_ASN1_ANY)
+		{
+		if (!*pval)
+			{
 			typ = ASN1_TYPE_new();
 			*pval = (ASN1_VALUE *)typ;
-		} else typ = (ASN1_TYPE *)*pval;
-		if(utype != typ->type) ASN1_TYPE_set(typ, utype, NULL);
+			}
+		else
+			typ = (ASN1_TYPE *)*pval;
+
+		if (utype != typ->type)
+			ASN1_TYPE_set(typ, utype, NULL);
 		opval = pval;
 		pval = (ASN1_VALUE **)&typ->value.ptr;
-	}
-	switch(utype) {
+		}
+	switch(utype)
+		{
 		case V_ASN1_OBJECT:
-		if(!c2i_ASN1_OBJECT((ASN1_OBJECT **)pval, &cont, len)) goto err;
+		if (!c2i_ASN1_OBJECT((ASN1_OBJECT **)pval, &cont, len))
+			goto err;
 		break;
 
 		case V_ASN1_NULL:
-		if(len) {
-			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ASN1_R_NULL_IS_WRONG_LENGTH);
+		if (len)
+			{
+			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+						ASN1_R_NULL_IS_WRONG_LENGTH);
 			goto err;
-		}
+			}
 		*pval = (ASN1_VALUE *)1;
 		break;
 
 		case V_ASN1_BOOLEAN:
-		if(len != 1) {
-			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ASN1_R_BOOLEAN_IS_WRONG_LENGTH);
+		if (len != 1)
+			{
+			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+						ASN1_R_BOOLEAN_IS_WRONG_LENGTH);
 			goto err;
-		} else {
+			}
+		else
+			{
 			ASN1_BOOLEAN *tbool;
 			tbool = (ASN1_BOOLEAN *)pval;
 			*tbool = *cont;
-		}
+			}
 		break;
 
 		case V_ASN1_BIT_STRING:
-		if(!c2i_ASN1_BIT_STRING((ASN1_BIT_STRING **)pval, &cont, len)) goto err;
+		if (!c2i_ASN1_BIT_STRING((ASN1_BIT_STRING **)pval, &cont, len))
+			goto err;
 		break;
 
 		case V_ASN1_INTEGER:
@@ -745,7 +975,8 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype
 		case V_ASN1_ENUMERATED:
 		case V_ASN1_NEG_ENUMERATED:
 		tint = (ASN1_INTEGER **)pval;
-		if(!c2i_ASN1_INTEGER(tint, &cont, len)) goto err;
+		if (!c2i_ASN1_INTEGER(tint, &cont, len))
+			goto err;
 		/* Fixup type to match the expected form */
 		(*tint)->type = utype | ((*tint)->type & V_ASN1_NEG);
 		break;
@@ -769,46 +1000,58 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype
 		case V_ASN1_SEQUENCE:
 		default:
 		/* All based on ASN1_STRING and handled the same */
-		if(!*pval) {
+		if (!*pval)
+			{
 			stmp = ASN1_STRING_type_new(utype);
-			if(!stmp) {
-				ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ERR_R_MALLOC_FAILURE);
+			if (!stmp)
+				{
+				ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+							ERR_R_MALLOC_FAILURE);
 				goto err;
-			}
+				}
 			*pval = (ASN1_VALUE *)stmp;
-		} else {
+			}
+		else
+			{
 			stmp = (ASN1_STRING *)*pval;
 			stmp->type = utype;
-		}
+			}
 		/* If we've already allocated a buffer use it */
-		if(*free_cont) {
-			if(stmp->data) OPENSSL_free(stmp->data);
+		if (*free_cont)
+			{
+			if (stmp->data)
+				OPENSSL_free(stmp->data);
 			stmp->data = (unsigned char *)cont; /* UGLY CAST! RL */
 			stmp->length = len;
 			*free_cont = 0;
-		} else {
-			if(!ASN1_STRING_set(stmp, cont, len)) {
-				ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ERR_R_MALLOC_FAILURE);
+			}
+		else
+			{
+			if (!ASN1_STRING_set(stmp, cont, len))
+				{
+				ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+							ERR_R_MALLOC_FAILURE);
 				ASN1_STRING_free(stmp);	
 				*pval = NULL;
 				goto err;
+				}
 			}
-		}
 		break;
-	}
+		}
 	/* If ASN1_ANY and NULL type fix up value */
-	if(typ && utype==V_ASN1_NULL) typ->value.ptr = NULL;
+	if (typ && (utype == V_ASN1_NULL))
+		 typ->value.ptr = NULL;
 
 	ret = 1;
 	err:
-	if(!ret)
+	if (!ret)
 		{
 		ASN1_TYPE_free(typ);
 		if (opval)
 			*opval = NULL;
 		}
 	return ret;
-}
+	}
 
 /* This function collects the asn1 data from a constructred string
  * type into a buffer. The values of 'in' and 'len' should refer
@@ -818,78 +1061,96 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype
  * length constructed stuff.
  */
 
-static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len, char inf, int tag, int aclass)
-{
+static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len,
+				char inf, int tag, int aclass)
+	{
 	const unsigned char *p, *q;
 	long plen;
 	char cst, ininf;
 	p = *in;
 	inf &= 1;
-	/* If no buffer and not indefinite length constructed just pass over the encoded data */
-	if(!buf && !inf) {
+	/* If no buffer and not indefinite length constructed just pass over
+	 * the encoded data */
+	if (!buf && !inf)
+		{
 		*in += len;
 		return 1;
-	}
-	while(len > 0) {
+		}
+	while(len > 0)
+		{
 		q = p;
 		/* Check for EOC */
-		if(asn1_check_eoc(&p, len)) {
-			/* EOC is illegal outside indefinite length constructed form */
-			if(!inf) {
-				ASN1err(ASN1_F_ASN1_COLLECT, ASN1_R_UNEXPECTED_EOC);
+		if (asn1_check_eoc(&p, len))
+			{
+			/* EOC is illegal outside indefinite length
+			 * constructed form */
+			if (!inf)
+				{
+				ASN1err(ASN1_F_ASN1_COLLECT,
+					ASN1_R_UNEXPECTED_EOC);
 				return 0;
-			}
+				}
 			inf = 0;
 			break;
-		}
-		if(!asn1_check_tlen(&plen, NULL, NULL, &ininf, &cst, &p, len, tag, aclass, 0, NULL)) {
+			}
+
+		if (!asn1_check_tlen(&plen, NULL, NULL, &ininf, &cst, &p,
+					len, tag, aclass, 0, NULL))
+			{
 			ASN1err(ASN1_F_ASN1_COLLECT, ERR_R_NESTED_ASN1_ERROR);
 			return 0;
-		}
-		/* If indefinite length constructed update max length */
-		if(cst) {
-			if(!asn1_collect(buf, &p, plen, ininf, tag, aclass)) return 0;
-		} else {
-			if(!collect_data(buf, &p, plen)) return 0;
-		}
-		len -= p - q;
-	}
-	if(inf) {
-		ASN1err(ASN1_F_ASN1_COLLECT, ASN1_R_MISSING_EOC);
-		return 0;
-	}
-	*in = p;
-	return 1;
-}
+			}
 
-static int collect_data(BUF_MEM *buf, const unsigned char **p, long plen)
-{
-		int len;
-		if(buf) {
-			len = buf->length;
-			if(!BUF_MEM_grow_clean(buf, len + plen)) {
-				ASN1err(ASN1_F_COLLECT_DATA, ERR_R_MALLOC_FAILURE);
+		/* If indefinite length constructed update max length */
+		if (cst)
+			{
+			if (!asn1_collect(buf, &p, plen, ininf, tag, aclass))
 				return 0;
 			}
-			memcpy(buf->data + len, *p, plen);
+		else if (!collect_data(buf, &p, plen))
+			return 0;
+		len -= p - q;
 		}
-		*p += plen;
-		return 1;
-}
+	if (inf)
+		{
+		ASN1err(ASN1_F_ASN1_COLLECT, ASN1_R_MISSING_EOC);
+		return 0;
+		}
+	*in = p;
+	return 1;
+	}
+
+static int collect_data(BUF_MEM *buf, const unsigned char **p, long plen)
+	{
+	int len;
+	if (buf)
+		{
+		len = buf->length;
+		if (!BUF_MEM_grow_clean(buf, len + plen))
+			{
+			ASN1err(ASN1_F_COLLECT_DATA, ERR_R_MALLOC_FAILURE);
+			return 0;
+			}
+		memcpy(buf->data + len, *p, plen);
+		}
+	*p += plen;
+	return 1;
+	}
 
 /* Check for ASN1 EOC and swallow it if found */
 
 static int asn1_check_eoc(const unsigned char **in, long len)
-{
+	{
 	const unsigned char *p;
-	if(len < 2) return 0;
+	if (len < 2) return 0;
 	p = *in;
-	if(!p[0] && !p[1]) {
+	if (!p[0] && !p[1])
+		{
 		*in += 2;
 		return 1;
-	}
+		}
 	return 0;
-}
+	}
 
 /* Check an ASN1 tag and length: a bit like ASN1_get_object
  * but it sets the length for indefinite length constructed
@@ -898,9 +1159,12 @@ static int asn1_check_eoc(const unsigned char **in, long len)
  * header length just read.
  */
 
-static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *inf, char *cst,
-		const unsigned char **in, long len, int exptag, int expclass, char opt, ASN1_TLC *ctx)
-{
+static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
+				char *inf, char *cst,
+				const unsigned char **in, long len,
+				int exptag, int expclass, char opt,
+				ASN1_TLC *ctx)
+	{
 	int i;
 	int ptag, pclass;
 	long plen;
@@ -908,15 +1172,19 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *i
 	p = *in;
 	q = p;
 
-	if(ctx && ctx->valid) {
+	if (ctx && ctx->valid)
+		{
 		i = ctx->ret;
 		plen = ctx->plen;
 		pclass = ctx->pclass;
 		ptag = ctx->ptag;
 		p += ctx->hdrlen;
-	} else {
+		}
+	else
+		{
 		i = ASN1_get_object(&p, &plen, &ptag, &pclass, len);
-		if(ctx) {
+		if (ctx)
+			{
 			ctx->ret = i;
 			ctx->plen = plen;
 			ctx->pclass = pclass;
@@ -926,43 +1194,57 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *i
 			/* If definite length, and no error, length +
 			 * header can't exceed total amount of data available. 
 			 */
-			if(!(i & 0x81) && ((plen + ctx->hdrlen) > len)) {
-				ASN1err(ASN1_F_ASN1_CHECK_TLEN, ASN1_R_TOO_LONG);
+			if (!(i & 0x81) && ((plen + ctx->hdrlen) > len))
+				{
+				ASN1err(ASN1_F_ASN1_CHECK_TLEN,
+							ASN1_R_TOO_LONG);
 				asn1_tlc_clear(ctx);
 				return 0;
+				}
 			}
 		}
-	}
 
-	if(i & 0x80) {
+	if (i & 0x80)
+		{
 		ASN1err(ASN1_F_ASN1_CHECK_TLEN, ASN1_R_BAD_OBJECT_HEADER);
 		asn1_tlc_clear(ctx);
 		return 0;
-	}
-	if(exptag >= 0) {
-		if((exptag != ptag) || (expclass != pclass)) {
-			/* If type is OPTIONAL, not an error, but indicate missing
-			 * type.
+		}
+	if (exptag >= 0)
+		{
+		if ((exptag != ptag) || (expclass != pclass))
+			{
+			/* If type is OPTIONAL, not an error:
+			 * indicate missing type.
 			 */
-			if(opt) return -1;
+			if (opt) return -1;
 			asn1_tlc_clear(ctx);
 			ASN1err(ASN1_F_ASN1_CHECK_TLEN, ASN1_R_WRONG_TAG);
 			return 0;
-		}
-		/* We have a tag and class match, so assume we are going to do something with it */
+			}
+		/* We have a tag and class match:
+		 * assume we are going to do something with it */
 		asn1_tlc_clear(ctx);
-	}
+		}
 
-	if(i & 1) plen = len - (p - q);
+	if (i & 1)
+		plen = len - (p - q);
 
-	if(inf) *inf = i & 1;
+	if (inf)
+		*inf = i & 1;
 
-	if(cst) *cst = i & V_ASN1_CONSTRUCTED;
+	if (cst)
+		*cst = i & V_ASN1_CONSTRUCTED;
 
-	if(olen) *olen = plen;
-	if(oclass) *oclass = pclass;
-	if(otag) *otag = ptag;
+	if (olen)
+		*olen = plen;
+
+	if (oclass)
+		*oclass = pclass;
+
+	if (otag)
+		*otag = ptag;
 
 	*in = p;
 	return 1;
-}
+	}
