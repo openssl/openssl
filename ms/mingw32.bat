@@ -1,7 +1,7 @@
 @rem OpenSSL with Mingw32+GNU as
 @rem ---------------------------
 
-perl Configure Mingw32 %1 %2 %3 %4 %5 %6 %7 %8
+perl Configure mingw %1 %2 %3 %4 %5 %6 %7 %8
 
 @echo off
 

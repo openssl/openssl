@@ -506,10 +506,8 @@ my %table=(
 "BC-32","bcc32::::WIN32::BN_LLONG DES_PTR RC4_INDEX EXPORT_VAR_AS_FN::::::::::win32",
 "BC-16","bcc:::(unknown):WIN16::BN_LLONG DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 
-# Mingw32
-# (Note: the real CFLAGS for Windows builds are defined by util/mk1mf.pl
-# and its library files in util/pl/*)
-"Mingw32", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall:::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
+# MinGW
+"mingw", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -mno-cygwin -Wall:::MINGW32:-mno-cygwin -lwsock32 -lgdi32:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:win32::::.dll",
 
 # UWIN 
 "UWIN", "cc:-DTERMIOS -DL_ENDIAN -O -Wall:::UWIN::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
