@@ -251,7 +251,7 @@ int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm, const char
 	ret = 1;
 
 err:
-	if (!pnm) OPENSSL_free(nm);
+	if (!ret || !pnm) OPENSSL_free(nm);
 	OPENSSL_free(header);
 	if (!ret) OPENSSL_free(data);
 	return ret;
