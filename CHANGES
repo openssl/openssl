@@ -352,6 +352,20 @@ TODO: bug: pad  x  with leading zeros if necessary
  
  Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
 
+  *) The hw_ncipher.c engine requires dynamic locks.  Unfortunately, it
+     seems that in spite of existing for more than a year, no application
+     author has done anything to provide the necessary callbacks, which
+     means that this particular engine will not work properly anywhere.
+     This is a very unfortunate situation which forces us, in the name
+     of usability, to give the hw_ncipher.c a static lock, which is part
+     of libcrypto.
+     NOTE: This is for the 0.9.7 series ONLY.  This hack will never
+     appear in 0.9.8 or later.  We EXPECT application authors to have
+     dealt properly with this when 0.9.8 is released (unless we actually
+     make such changes in the libcrypto locking code that changes will
+     have to be made anyway).
+     [Richard Levitte]
+
   *) In asn1_d2i_read_bio() repeatedly call BIO_read() until all content
      octets have been read, EOF or an error occurs. Without this change
      some truncated ASN1 structures will not produce an error.
