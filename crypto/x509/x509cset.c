@@ -129,6 +129,7 @@ int X509_CRL_sort(X509_CRL *c)
 		r=sk_X509_REVOKED_value(c->crl->revoked,i);
 		r->sequence=i;
 		}
+	c->crl->enc.modified = 1;
 	return 1;
 	}
 

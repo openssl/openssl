@@ -130,6 +130,7 @@ int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev)
 		ASN1err(ASN1_F_X509_CRL_ADD0_REVOKED, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
+	inf->enc.modified = 1;
 	return 1;
 }
 
