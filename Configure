@@ -27,8 +27,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 # [no-]threads  [don't] try to create a library that is suitable for
 #               multithreaded applications (default is "threads" if we
 #               know how to do it)
-# [no-]shared	[don't] try to create shared libraries instead of static
-#		ones when possible.
+# [no-]shared	[don't] try to create shared libraries when supported.
 # no-asm        do not use assembler
 # no-dso        do not compile in any native shared-library methods. This
 #               will ensure that all methods just return NULL.

@@ -53,6 +53,12 @@
                 This will usually require additional system-dependent options!
                 See "Note on multi-threading" below.
 
+  no-shared     Don't try to create shared libraries.
+
+  shared        In addition to the usual static libraries, create shared
+                libraries on platforms where it's supported.  See "Note on
+                shared libraries" below.
+
   no-asm        Do not use assembler code.
 
   386           Use the 80386 instruction set only (the default x86 code is
@@ -253,3 +259,14 @@
  you can still use "no-threads" to suppress an annoying warning message
  from the Configure script.)
 
+
+ Note on shared libraries
+ ------------------------
+
+ For some systems, the OpenSSL Configure script knows what is needed to
+ build shared libraries for libcrypto and libssl.  On these systems,
+ the shared libraries are currently not created by default, but giving
+ the option "shared" will get them created.  This method supports Makefile
+ targets for shared library creation, like linux-shared.  Those targets
+ can currently be used on their own just as well, but this is expected
+ to change in future versions of OpenSSL.
