@@ -30,7 +30,7 @@ RAND_add() may be called with sensitive data such as user entered
 passwords. The seed values cannot be recovered from the PRNG output.
 
 OpenSSL makes sure that the PRNG state is unique for each thread. On
-systems that provide C</dev/random>, the randomness device is used
+systems that provide C</dev/urandom>, the randomness device is used
 to seed the PRNG transparently. However, on all other systems, the
 application is responsible for seeding the PRNG by calling RAND_add()
 or RAND_load_file(3).

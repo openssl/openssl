@@ -138,7 +138,7 @@ static int state_num=0,state_index=0;
 static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
 static long md_count[2]={0,0};
-static int entropy=0;
+static unsigned entropy=0;
 
 const char *RAND_version="RAND" OPENSSL_VERSION_PTEXT;
 
@@ -286,7 +286,8 @@ static void ssleay_rand_add(const void *buf, int num, int add)
 #ifndef THREADS	
 	assert(md_c[1] == md_count[1]);
 #endif
-	entropy += add;
+	if (entropy < ENTROPY_NEEDED)
+	    entropy += add;
 	}
 
 static void ssleay_rand_seed(const void *buf, int num)
