@@ -139,7 +139,8 @@ my %table=(
 "irix64-mips4-cc", "cc:-64 -mips4 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN:(unknown)::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG:::",
 
 # HPUX 9.X config.
-# Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or gcc.
+# Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or
+# egcs.  gcc 2.8.1 is also broken.
 "hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z:(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 "hpux-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3:(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 # HPUX 10.X config.  Supports threads.
