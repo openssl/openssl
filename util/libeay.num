@@ -2801,3 +2801,4 @@ BIO_indent                              3242	EXIST::FUNCTION:
 BUF_strlcpy                             3243	EXIST::FUNCTION:
 OpenSSLDie                              3244	EXIST::FUNCTION:
 OPENSSL_cleanse                         3245	EXIST::FUNCTION:
+ENGINE_setup_bsd_cryptodev              3246	EXIST:__FreeBSD__:FUNCTION:ENGINE
