@@ -29,7 +29,6 @@ LIBNAMES= 4758_cca aep atalla cryptodev cswift ncipher nuron sureware ubsec
 LIBSRC=	e_4758_cca.c \
 	e_aep.c \
 	e_atalla.c \
-	e_cryptodev.c \
 	e_cswift.c \
 	e_ncipher.c \
 	e_nuron.c \
@@ -38,7 +37,6 @@ LIBSRC=	e_4758_cca.c \
 LIBOBJ= e_4758_cca.o \
 	e_aep.o \
 	e_atalla.o \
-	e_cryptodev.o \
 	e_cswift.o \
 	e_ncipher.o \
 	e_nuron.o \
@@ -51,7 +49,6 @@ EXHEADER=
 HEADER=	e_4758_cca_err.c e_4758_cca_err.h \
 	e_aep_err.c e_aep_err.h \
 	e_atalla_err.c e_atalla_err.h \
-	e_cryptodev_err.c e_cryptodev_err.h \
 	e_cswift_err.c e_cswift_err.h \
 	e_ncipher_err.c e_ncipher_err.h \
 	e_nuron_err.c e_nuron_err.h \
@@ -176,27 +173,6 @@ e_atalla.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 e_atalla.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 e_atalla.o: ../include/openssl/ui.h e_atalla.c e_atalla_err.c
 e_atalla.o: e_atalla_err.h vendor_defns/atalla.h
-e_cryptodev.o: ../include/openssl/aes.h ../include/openssl/asn1.h
-e_cryptodev.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
-e_cryptodev.o: ../include/openssl/bn.h ../include/openssl/cast.h
-e_cryptodev.o: ../include/openssl/crypto.h ../include/openssl/des.h
-e_cryptodev.o: ../include/openssl/des_old.h ../include/openssl/dh.h
-e_cryptodev.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-e_cryptodev.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_cryptodev.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_cryptodev.o: ../include/openssl/err.h ../include/openssl/evp.h
-e_cryptodev.o: ../include/openssl/idea.h ../include/openssl/lhash.h
-e_cryptodev.o: ../include/openssl/md2.h ../include/openssl/md4.h
-e_cryptodev.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
-e_cryptodev.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_cryptodev.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_cryptodev.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
-e_cryptodev.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-e_cryptodev.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
-e_cryptodev.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_cryptodev.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_cryptodev.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
-e_cryptodev.o: ../include/openssl/ui_compat.h e_cryptodev.c
 e_cswift.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_cswift.o: ../include/openssl/bn.h ../include/openssl/crypto.h
 e_cswift.o: ../include/openssl/dh.h ../include/openssl/dsa.h
