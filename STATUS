@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/02/01 08:18:31 $
+  ______________                           $Date: 1999/02/10 09:47:05 $
 
   DEVELOPMENT STATE
 
@@ -25,6 +25,18 @@
         Folding in any changes that are in the C2Net code base that were
         not in the original SSLeay-0.9.1.b release.  Plus other minor
         tidying.
+
+    o Ralf is currently working on:
+        1. Support for SSL_set_default_verify_paths(),
+           SSL_load_verify_locations(), SSL_get_cert_store() and
+           SSL_set_cert_store() functions which work like their existing
+           SSL_CTX_xxx() variants but on a per connection basis. That's needed
+           to let us provide full-featured per-URL client verification in
+           mod_ssl or Apache-SSL.
+        2. The perl/ stuff to make it really work the first time ;-)
+        3. The new documentation set in PID format under doc/
+        4. More cleanups to get rid of obsolete/old/ugly files in the
+           source tree which are not really needed.
 
   NEEDS PATCH
 
