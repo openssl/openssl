@@ -1,7 +1,7 @@
 %define libmaj 0
 %define libmin 9
 %define librel 6
-%define librev g
+%define librev h
 Release: 1
 
 %define openssldir /var/ssl

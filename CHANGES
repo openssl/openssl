@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.6g and 0.9.6h  [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.6f and 0.9.6g  [9 Aug 2002]
 
   *) [In 0.9.6g-engine release:]
