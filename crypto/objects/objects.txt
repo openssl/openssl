@@ -2,7 +2,13 @@
 
 1			: ISO			: iso
 
+2			: JOINT-ISO-CCITT	: joint-iso-ccitt
+
 iso 2			: member-body		: ISO Member Body
+
+joint-iso-ccitt 5 1 5	: selected-attribute-types	: Selected Attribute Types
+
+selected-attribute-types 55	: clearance
 
 member-body 840		: ISO-US		: ISO US Member Body
 ISO-US 10040		: X9-57			: X9.57
@@ -332,6 +338,9 @@ id-pe 6			: aaControls
 id-pe 7			: sbqp-ipAddrBlock
 id-pe 8			: sbqp-autonomousSysNum
 id-pe 9			: sbqp-routerIdentifier
+id-pe 10		: ac-proxying
+!Cname sinfo-access
+id-pe 11		: subjectInfoAccess	: Subject Information Access
 
 # PKIX policyQualifiers for Internet policy qualifiers
 id-qt 1			: id-qt-cps		: Policy Qualifier CPS
@@ -436,7 +445,9 @@ id-aca 1		: id-aca-authenticationInfo
 id-aca 2		: id-aca-accessIdentity
 id-aca 3		: id-aca-chargingIdentity
 id-aca 4		: id-aca-group
+# attention : the following seems to be obsolete, replace by 'role'
 id-aca 5		: id-aca-role
+id-aca 6		: id-aca-encAttrs
 
 # qualified certificate statements
 id-qcs 1		: id-qcs-pkixQCSyntax-v1
@@ -530,6 +541,7 @@ X509 42			: G			: givenName
 X509 43			: I			: initials
 X509 45			: UID			: uniqueIdentifier
 X509 46			: dnQualifier		: dnQualifier
+X509 72			: role			: role
 
 X500 8			: X500algorithms	: directory services - algorithms
 X500algorithms 1 1	: RSA			: rsa
@@ -563,8 +575,14 @@ id-ce 31		: crlDistributionPoints	: X509v3 CRL Distribution Points
 id-ce 32		: certificatePolicies	: X509v3 Certificate Policies
 !Cname authority-key-identifier
 id-ce 35		: authorityKeyIdentifier : X509v3 Authority Key Identifier
+!Cname policy-constraints
+id-ce 36		: policyConstraints	: X509v3 Policy Constraints
 !Cname ext-key-usage
 id-ce 37		: extendedKeyUsage	: X509v3 Extended Key Usage
+!Cname target-information
+id-ce 55		: targetInformation	: X509v3 AC Targeting
+!Cname no-rev-avail
+id-ce 56		: noRevAvail		: X509v3 No Revocation Available
 
 !Cname netscape
 2 16 840 1 113730	: Netscape		: Netscape Communications Corp.
