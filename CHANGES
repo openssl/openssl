@@ -4,6 +4,12 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Disable caching in BIO_gethostbyname(), directly use gethostbyname()
+     instead.  BIO_gethostbyname() does not know what timeouts are
+     appropriate, so entries would stay in cache even when they hade
+     become invalid.
+     [Bodo Moeller; problem pointed out by Rich Salz <rsalz@zolera.com>
+
   *) Change ssl23_get_client_hello (ssl/s23_srvr.c) behaviour when
      faced with a pathologically small ClientHello fragment that does
      not contain client_version: Instead of aborting with an error,

@@ -345,18 +345,23 @@ static void ghbn_free(struct hostent *a)
 
 struct hostent *BIO_gethostbyname(const char *name)
 	{
+#if 1
+	/* Caching gethostbyname() results forever is wrong,
+	 * so we have to let the true gethostbyname() worry about this */
+	return gethostbyname(name);
+#else
 	struct hostent *ret;
 	int i,lowi=0,j;
 	unsigned long low= (unsigned long)-1;
 
-/*	return(gethostbyname(name)); */
 
-#if 0 /* It doesn't make sense to use locking here: The function interface
-	   * is not thread-safe, because threads can never be sure when
-	   * some other thread destroys the data they were given a pointer to.
-	   */
+#  if 0
+	/* It doesn't make sense to use locking here: The function interface
+	 * is not thread-safe, because threads can never be sure when
+	 * some other thread destroys the data they were given a pointer to.
+	 */
 	CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
-#endif
+#  endif
 	j=strlen(name);
 	if (j < 128)
 		{
@@ -384,20 +389,21 @@ struct hostent *BIO_gethostbyname(const char *name)
 		 * parameter is 'char *', instead of 'const char *'
 		 */
 		ret=gethostbyname(
-#ifndef CONST_STRICT
+#  ifndef CONST_STRICT
 		    (char *)
-#endif
+#  endif
 		    name);
 
 		if (ret == NULL)
 			goto end;
 		if (j > 128) /* too big to cache */
 			{
-#if 0 /* If we were trying to make this function thread-safe (which
-	   * is bound to fail), we'd have to give up in this case
-	   * (or allocate more memory). */
+#  if 0
+			/* If we were trying to make this function thread-safe (which
+			 * is bound to fail), we'd have to give up in this case
+			 * (or allocate more memory). */
 			ret = NULL;
-#endif
+#  endif
 			goto end;
 			}
 
@@ -421,11 +427,13 @@ struct hostent *BIO_gethostbyname(const char *name)
 		ghbn_cache[i].order=BIO_ghbn_miss+BIO_ghbn_hits;
 		}
 end:
-#if 0
+#  if 0
 	CRYPTO_w_unlock(CRYPTO_LOCK_GETHOSTBYNAME);
-#endif
+#  endif
 	return(ret);
+#endif
 	}
+
 
 int BIO_sock_init(void)
 	{
