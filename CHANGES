@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) In bntest.c don't call BN_rand with zero bits argument.
+     [Steve Henson, pointed out by Andrew W. Gray <agray@iconsinc.com>]
+
   *) BN_mul bugfix: In bn_mul_part_recursion() only the a>a[n] && b>b[n]
      case was implemented. This caused BN_div_recp() to fail occasionally.
      [Ulf Möller]

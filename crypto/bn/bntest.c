@@ -506,7 +506,7 @@ int test_mul(BIO *bp)
 
 	for (i=0; i<num0+num1; i++)
 		{
-		if (i < num1)
+		if (i <= num1)
 			{
 			BN_rand(&a,100,0,0);
 			BN_rand(&b,100,0,0);
