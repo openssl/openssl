@@ -354,7 +354,7 @@ install: all
 		chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
 	done
 	@echo installing man 1
-	@for i in doc/openssl.pod doc/man/*.pod ; \
+	@for i in doc/man/*.pod ; \
 	do pod2man --section=1 --date=`date +%Y-%m-%d` --center=OpenSSL \
 		 --release=$(VERSION) $$i > $(INSTALL_PREFIX)$(INSTALLTOP)/man/man1/`basename $$i .pod`.1; \
 	done
