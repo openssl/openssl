@@ -46,7 +46,8 @@ struct bio_bio_st
 {
 	BIO *peer;     /* NULL if buf == NULL.
 					* If peer != NULL, then peer->ptr is also a bio_bio_st,
-					* and its "peer" member points back to us. */
+					* and its "peer" member points back to us.
+					* peer != NULL iff init != 0 in the BIO. */
 	
 	/* This is for what we write (i.e. reading uses peer's struct): */
 	int closed;    /* valid iff peer != NULL */
@@ -223,6 +224,9 @@ static int bio_make_pair(BIO *bio1, BIO *bio2)
 	
 	b1->peer = bio2;
 	b2->peer = bio1;
+
+	bio1->init = 1;
+	bio2->init = 1;
 
 	return 1;
 	}
