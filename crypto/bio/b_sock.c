@@ -492,7 +492,7 @@ void BIO_sock_cleanup(void)
 
 #if !defined(OPENSSL_SYS_VMS) || __VMS_VER >= 70000000
 
-int BIO_socket_ioctl(int fd, long type, unsigned long *arg)
+int BIO_socket_ioctl(int fd, long type, void *arg)
 	{
 	int i;
 
@@ -742,7 +742,7 @@ int BIO_set_tcp_ndelay(int s, int on)
 int BIO_socket_nbio(int s, int mode)
 	{
 	int ret= -1;
-	unsigned long l;
+	int l;
 
 	l=mode;
 #ifdef FIONBIO
