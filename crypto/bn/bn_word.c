@@ -85,12 +85,17 @@ BN_ULONG BN_mod_word(const BIGNUM *a, BN_ULONG w)
 
 BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w)
 	{
-	BN_ULONG ret;
+	BN_ULONG ret = 0;
 	int i;
 
-	if (a->top == 0) return(0);
-	ret=0;
-	w&=BN_MASK2;
+	w &= BN_MASK2;
+
+	if (!w)
+		/* actually this an error (division by zero) */
+		return 0;
+	if (a->top == 0)
+		return 0;
+
 	for (i=a->top-1; i>=0; i--)
 		{
 		BN_ULONG l,d;
@@ -111,6 +116,11 @@ int BN_add_word(BIGNUM *a, BN_ULONG w)
 	BN_ULONG l;
 	int i;
 
+	w &= BN_MASK2;
+
+	if (!w)
+		return 1;
+
 	if (a->neg)
 		{
 		a->neg=0;
@@ -119,7 +129,6 @@ int BN_add_word(BIGNUM *a, BN_ULONG w)
 			a->neg=!(a->neg);
 		return(i);
 		}
-	w&=BN_MASK2;
 	if (bn_wexpand(a,a->top+1) == NULL) return(0);
 	i=0;
 	for (;;)
@@ -145,6 +154,11 @@ int BN_sub_word(BIGNUM *a, BN_ULONG w)
 	{
 	int i;
 
+	w &= BN_MASK2;
+
+	if (!w)
+		return 1;
+
 	if (BN_is_zero(a) || a->neg)
 		{
 		a->neg=0;
@@ -153,7 +167,6 @@ int BN_sub_word(BIGNUM *a, BN_ULONG w)
 		return(i);
 		}
 
-	w&=BN_MASK2;
 	if ((a->top == 1) && (a->d[0] < w))
 		{
 		a->d[0]=w-a->d[0];
