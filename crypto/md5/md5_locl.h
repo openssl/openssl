@@ -113,11 +113,11 @@ void md5_block_data_order (MD5_CTX *c, const void *p,int num);
 #define HASH_TRANSFORM		MD5_Transform
 #define HASH_FINAL		MD5_Final
 #define	HASH_MAKE_STRING(c,s)	do {	\
-	unsigned long l;		\
-	l=(c)->A; HOST_l2c(l,(s));	\
-	l=(c)->B; HOST_l2c(l,(s));	\
-	l=(c)->C; HOST_l2c(l,(s));	\
-	l=(c)->D; HOST_l2c(l,(s));	\
+	unsigned long ll;		\
+	ll=(c)->A; HOST_l2c(ll,(s));	\
+	ll=(c)->B; HOST_l2c(ll,(s));	\
+	ll=(c)->C; HOST_l2c(ll,(s));	\
+	ll=(c)->D; HOST_l2c(ll,(s));	\
 	} while (0)
 #define HASH_BLOCK_HOST_ORDER	md5_block_host_order
 #if !defined(L_ENDIAN) || defined(md5_block_data_order)

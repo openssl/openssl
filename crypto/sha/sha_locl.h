@@ -74,12 +74,12 @@
 #define HASH_CBLOCK             SHA_CBLOCK
 #define HASH_LBLOCK             SHA_LBLOCK
 #define HASH_MAKE_STRING(c,s)   do {	\
-	unsigned long l;		\
-	l=(c)->h0; HOST_l2c(l,(s));	\
-	l=(c)->h1; HOST_l2c(l,(s));	\
-	l=(c)->h2; HOST_l2c(l,(s));	\
-	l=(c)->h3; HOST_l2c(l,(s));	\
-	l=(c)->h4; HOST_l2c(l,(s));	\
+	unsigned long ll;		\
+	ll=(c)->h0; HOST_l2c(ll,(s));	\
+	ll=(c)->h1; HOST_l2c(ll,(s));	\
+	ll=(c)->h2; HOST_l2c(ll,(s));	\
+	ll=(c)->h3; HOST_l2c(ll,(s));	\
+	ll=(c)->h4; HOST_l2c(ll,(s));	\
 	} while (0)
 
 #if defined(SHA_0)

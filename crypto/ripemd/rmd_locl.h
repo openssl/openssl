@@ -95,12 +95,12 @@ void ripemd160_block_data_order (RIPEMD160_CTX *c, const void *p,int num);
 #define HASH_FINAL              RIPEMD160_Final
 #define HASH_BLOCK_HOST_ORDER   ripemd160_block_host_order
 #define	HASH_MAKE_STRING(c,s)	do {	\
-	unsigned long l;		\
-	l=(c)->A; HOST_l2c(l,(s));	\
-	l=(c)->B; HOST_l2c(l,(s));	\
-	l=(c)->C; HOST_l2c(l,(s));	\
-	l=(c)->D; HOST_l2c(l,(s));	\
-	l=(c)->E; HOST_l2c(l,(s));	\
+	unsigned long ll;		\
+	ll=(c)->A; HOST_l2c(ll,(s));	\
+	ll=(c)->B; HOST_l2c(ll,(s));	\
+	ll=(c)->C; HOST_l2c(ll,(s));	\
+	ll=(c)->D; HOST_l2c(ll,(s));	\
+	ll=(c)->E; HOST_l2c(ll,(s));	\
 	} while (0)
 #if !defined(L_ENDIAN) || defined(ripemd160_block_data_order)
 #define HASH_BLOCK_DATA_ORDER   ripemd160_block_data_order
