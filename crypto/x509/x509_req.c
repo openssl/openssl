@@ -147,7 +147,7 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
 	X509_ATTRIBUTE *attr;
 	ASN1_TYPE *ext = NULL;
 	int idx, *pnid;
-	const unsigned char *p;
+	unsigned char *p;
 
 	if ((req == NULL) || (req->req_info == NULL) || !ext_nids)
 		return(NULL);
