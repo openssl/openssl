@@ -623,6 +623,7 @@ $   WRITE SYS$OUTPUT "	",APPLICATION,".exe"
 $!
 $! Link The Program, Check To See If We Need To Link With RSAREF Or Not.
 $!
+$   ON ERROR THEN GOTO NEXT_APPLICATION
 $   IF (RSAREF.EQS."TRUE")
 $   THEN
 $!
