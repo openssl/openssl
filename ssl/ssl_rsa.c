@@ -82,7 +82,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
 	}
 
 #ifndef NO_STDIO
-int SSL_use_certificate_file(SSL *ssl, char *file, int type)
+int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
 	{
 	int j;
 	BIO *in;
@@ -253,7 +253,7 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 
 #ifndef NO_RSA
 #ifndef NO_STDIO
-int SSL_use_RSAPrivateKey_file(SSL *ssl, char *file, int type)
+int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type)
 	{
 	int j,ret=0;
 	BIO *in;
@@ -338,7 +338,7 @@ int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey)
 	}
 
 #ifndef NO_STDIO
-int SSL_use_PrivateKey_file(SSL *ssl, char *file, int type)
+int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
 	{
 	int j,ret=0;
 	BIO *in;
@@ -494,7 +494,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
 	}
 
 #ifndef NO_STDIO
-int SSL_CTX_use_certificate_file(SSL_CTX *ctx, char *file, int type)
+int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
 	{
 	int j;
 	BIO *in;
@@ -591,7 +591,7 @@ int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
 	}
 
 #ifndef NO_STDIO
-int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, char *file, int type)
+int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 	{
 	int j,ret=0;
 	BIO *in;
@@ -673,7 +673,7 @@ int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
 	}
 
 #ifndef NO_STDIO
-int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, char *file, int type)
+int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 	{
 	int j,ret=0;
 	BIO *in;

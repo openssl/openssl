@@ -75,7 +75,8 @@ typedef struct lookup_dir_st
 	int num_dirs_alloced;
 	} BY_DIR;
 
-static int dir_ctrl(X509_LOOKUP *ctx,int cmd,char *argp,long argl,char **ret);
+static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
+	char **ret);
 static int new_dir(X509_LOOKUP *lu);
 static void free_dir(X509_LOOKUP *lu);
 static int add_cert_dir(BY_DIR *ctx,const char *dir,int type);
@@ -100,7 +101,7 @@ X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
 	return(&x509_dir_lookup);
 	}
 
-static int dir_ctrl(X509_LOOKUP *ctx, int cmd, char *argp, long argl,
+static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 	     char **retp)
 	{
 	int ret=0;

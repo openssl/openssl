@@ -868,12 +868,12 @@ int	SSL_use_certificate(SSL *ssl, X509 *x);
 int	SSL_use_certificate_ASN1(SSL *ssl, unsigned char *d, int len);
 
 #ifndef NO_STDIO
-int	SSL_use_RSAPrivateKey_file(SSL *ssl, char *file, int type);
-int	SSL_use_PrivateKey_file(SSL *ssl, char *file, int type);
-int	SSL_use_certificate_file(SSL *ssl, char *file, int type);
-int	SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, char *file, int type);
-int	SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, char *file, int type);
-int	SSL_CTX_use_certificate_file(SSL_CTX *ctx, char *file, int type);
+int	SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type);
+int	SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type);
+int	SSL_use_certificate_file(SSL *ssl, const char *file, int type);
+int	SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type);
+int	SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type);
+int	SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type);
 int	SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file); /* PEM type */
 STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 int	SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
@@ -1018,7 +1018,8 @@ void SSL_set_shutdown(SSL *ssl,int mode);
 int SSL_get_shutdown(SSL *ssl);
 int SSL_version(SSL *ssl);
 int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx);
-int SSL_CTX_load_verify_locations(SSL_CTX *ctx,char *CAfile,char *CApath);
+int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
+	const char *CApath);
 SSL_SESSION *SSL_get_session(SSL *ssl);
 SSL_CTX *SSL_get_SSL_CTX(SSL *ssl);
 void SSL_set_info_callback(SSL *ssl,void (*cb)());

@@ -135,7 +135,8 @@ typedef struct x509_lookup_method_st
 	void (*free)(X509_LOOKUP *ctx);
 	int (*init)(X509_LOOKUP *ctx);
 	int (*shutdown)(X509_LOOKUP *ctx);
-	int (*ctrl)(X509_LOOKUP *ctx,int cmd,char *argc,long argl,char **ret);
+	int (*ctrl)(X509_LOOKUP *ctx,int cmd,const char *argc,long argl,
+			char **ret);
 	int (*get_by_subject)(X509_LOOKUP *ctx,int type,X509_NAME *name,
 			      X509_OBJECT *ret);
 	int (*get_by_issuer_serial)(X509_LOOKUP *ctx,int type,X509_NAME *name,
@@ -281,7 +282,8 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x);
 int X509_STORE_get_by_subject(X509_STORE_CTX *vs,int type,X509_NAME *name,
 	X509_OBJECT *ret);
 
-int X509_LOOKUP_ctrl(X509_LOOKUP *ctx,int cmd,char *argc,long argl,char **ret);
+int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
+	long argl, char **ret);
 
 #ifndef NO_STDIO
 int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type);
@@ -304,7 +306,7 @@ int X509_LOOKUP_shutdown(X509_LOOKUP *ctx);
 
 #ifndef NO_STDIO
 int	X509_STORE_load_locations (X509_STORE *ctx,
-		char *file, char *dir);
+		const char *file, const char *dir);
 int	X509_STORE_set_default_paths(X509_STORE *ctx);
 #endif
 

@@ -70,8 +70,8 @@
 
 #ifndef NO_STDIO
 
-static int by_file_ctrl(X509_LOOKUP *ctx,int cmd,char *argc,
-	long argl,char **ret);
+static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
+	long argl, char **ret);
 X509_LOOKUP_METHOD x509_file_lookup=
 	{
 	"Load file into cache",
@@ -91,7 +91,7 @@ X509_LOOKUP_METHOD *X509_LOOKUP_file(void)
 	return(&x509_file_lookup);
 	}
 
-static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, char *argp, long argl,
+static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 	     char **ret)
 	{
 	int ok=0,ok2=0;
