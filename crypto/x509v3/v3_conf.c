@@ -220,7 +220,7 @@ static int v3_check_generic(char **value)
 	return 1;
 }
 
-/* Create a generic extension: for now just handle RAW type */
+/* Create a generic extension: for now just handle DER type */
 static X509_EXTENSION *v3_generic_extension(const char *ext, char *value,
 	     int crit, int type)
 {
@@ -300,6 +300,30 @@ int X509V3_EXT_CRL_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section,
 		X509_EXTENSION_free(ext);
 	}
 	return 1;
+}
+
+/* Add extensions to certificate request */
+
+int X509V3_EXT_REQ_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section,
+	     X509_REQ *req)
+{
+	X509_EXTENSION *ext;
+	STACK_OF(X509_EXTENSION) *extlist = NULL;
+	STACK_OF(CONF_VALUE) *nval;
+	CONF_VALUE *val;	
+	int i;
+	if(!(nval = CONF_get_section(conf, section))) return 0;
+	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
+		val = sk_CONF_VALUE_value(nval, i);
+		if(!(ext = X509V3_EXT_conf(conf, ctx, val->name, val->value)))
+								return 0;
+		if(!extlist) extlist = sk_X509_EXTENSION_new_null();
+		sk_X509_EXTENSION_push(extlist, ext);
+	}
+	if(req) i = X509_REQ_add_extensions(req, extlist);
+	else i = 1;
+	sk_X509_EXTENSION_pop_free(extlist, X509_EXTENSION_free);
+	return i;
 }
 
 /* Config database functions */

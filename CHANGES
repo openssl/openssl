@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Allow certificate extensions to be added to certificate requests. These
+     are specified in a 'req_extensions' option of the req section of the
+     config file. They can be printed out with the -text option to req but
+     are otherwise ignored at present.
+     [Steve Henson]
+
   *) Fix a horrible bug in enc_read() in crypto/evp/bio_enc.c: if the first data
      read consists of only the final block it would not decrypted because
      EVP_CipherUpdate() would correctly report zero bytes had been decrypted.

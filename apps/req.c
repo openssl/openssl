@@ -82,6 +82,7 @@
 #define DISTINGUISHED_NAME	"distinguished_name"
 #define ATTRIBUTES	"attributes"
 #define V3_EXTENSIONS	"x509_extensions"
+#define REQ_EXTENSIONS	"req_extensions"
 
 #define DEFAULT_KEY_LENGTH	512
 #define MIN_KEY_LENGTH		384
@@ -142,6 +143,7 @@ int MAIN(int argc, char **argv)
 	int nodes=0,kludge=0;
 	char *infile,*outfile,*prog,*keyfile=NULL,*template=NULL,*keyout=NULL;
 	char *extensions = NULL;
+	char *req_exts = NULL;
 	EVP_CIPHER *cipher=NULL;
 	int modulus=0;
 	char *p;
@@ -438,6 +440,20 @@ bad:
 		}
 	}
 
+	req_exts = CONF_get_string(req_conf, SECTION, REQ_EXTENSIONS);
+	if(req_exts) {
+		/* Check syntax of file */
+		X509V3_CTX ctx;
+		X509V3_set_ctx_test(&ctx);
+		X509V3_set_conf_lhash(&ctx, req_conf);
+		if(!X509V3_EXT_add_conf(req_conf, &ctx, req_exts, NULL)) {
+			BIO_printf(bio_err,
+			 "Error Loading request extension section %s\n",
+								req_exts);
+			goto end;
+		}
+	}
+
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());
 	if ((in == NULL) || (out == NULL))
@@ -677,6 +693,22 @@ loop:
 			}
 		else
 			{
+			X509V3_CTX ext_ctx;
+
+			/* Set up V3 context struct */
+
+			X509V3_set_ctx(&ext_ctx, NULL, NULL, req, NULL, 0);
+			X509V3_set_conf_lhash(&ext_ctx, req_conf);
+
+			/* Add extensions */
+			if(req_exts && !X509V3_EXT_REQ_add_conf(req_conf, 
+				 	&ext_ctx, req_exts, req))
+			    {
+			    BIO_printf(bio_err,
+				       "Error Loading extension section %s\n",
+				       req_exts);
+			    goto end;
+			    }
 			if (!(i=X509_REQ_sign(req,pkey,digest)))
 				goto end;
 			}
