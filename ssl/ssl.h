@@ -1258,6 +1258,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL_CLEAR					 164
 #define SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD		 165
 #define SSL_F_SSL_CREATE_CIPHER_LIST			 166
+#define SSL_F_SSL_CTRL					 232
 #define SSL_F_SSL_CTX_CHECK_PRIVATE_KEY			 168
 #define SSL_F_SSL_CTX_NEW				 169
 #define SSL_F_SSL_CTX_SET_PURPOSE			 226

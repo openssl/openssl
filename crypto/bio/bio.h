@@ -624,6 +624,7 @@ int BIO_printf(BIO *bio, ...);
 #define BIO_F_BIO_SOCK_INIT				 112
 #define BIO_F_BIO_WRITE					 113
 #define BIO_F_BUFFER_CTRL				 114
+#define BIO_F_CONN_CTRL					 127
 #define BIO_F_CONN_STATE				 115
 #define BIO_F_FILE_CTRL					 116
 #define BIO_F_MEM_WRITE					 117
