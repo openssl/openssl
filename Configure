@@ -557,7 +557,7 @@ conflicts with other libraries.
 
 To compile programs that use the old form <foo.h>,
 usually an additional compiler option will suffice: E.g., add
-     -I/usr/local/include/openssl
+     -I/usr/local/ssl/include/openssl
 or
      -I$pwd/include/openssl
 to the CFLAGS in the Makefile of the program that you want to compile.
