@@ -82,12 +82,17 @@ directory.  The syntax is trhe following:
       RSAREF    compile using the RSAREF Library
       NORSAREF  compile without using RSAREF
 
-Note 1: The RSAREF libraries are NOT INCLUDED and you have to
-        download it from "ftp://ftp.rsa.com/rsaref".  You have to
-        get the ".tar-Z" file as the ".zip" file doesn't have the
-        directory structure stored.  You have to extract the file
-        into the [.RSAREF] directory as that is where the scripts
-        will look for the files.
+Note 0: The RASREF library IS NO LONGER NEEDED.  The RSA patent
+        expires September 20, 2000, and RSA Security chose to make
+        the algorithm public domain two weeks before that.
+
+Note 1: If you still want to use RSAREF, the library is NOT INCLUDED
+        and you have to download it.  RSA Security doesn't carry it
+        any more, but there are a number of places where you can find
+        it.  You have to get the ".tar-Z" file as the ".zip" file
+        doesn't have the directory structure stored.  You have to
+        extract the file into the [.RSAREF] directory as that is where
+        the scripts will look for the files.
 
 Note 2: I have never done this, so I've no idea if it works or not.
 
@@ -129,7 +134,7 @@ Currently, the logical names supported are:
                         used.  This is good to try if something doesn't work.
       OPENSSL_NO_'alg'  with value YES, the corresponding crypto algorithm
                         will not be implemented.  Supported algorithms to
-                        do this with are: RSA, DSA, DH, MD2, MD5, RIPEMD,
+                        do this with are: RSA, DSA, DH, MD2, MD4, MD5, RIPEMD,
                         SHA, DES, MDC2, CR2, RC4, RC5, IDEA, BF, CAST, HMAC,
                         SSL2.  So, for example, having the logical name
                         OPENSSL_NO_RSA with the value YES means that the
