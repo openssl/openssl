@@ -191,7 +191,7 @@ Cryptographic software needs a source of unpredictable data to work
 correctly.  Many open source operating systems provide a "randomness
 device" (/dev/urandom or /dev/random) that serves this purpose.
 All OpenSSL versions try to use /dev/urandom by default; starting with
-version 0.9.7, OpenSSL also tries /dev/random is /dev/urandom is not
+version 0.9.7, OpenSSL also tries /dev/random if /dev/urandom is not
 available.
 
 On other systems, applications have to call the RAND_add() or
