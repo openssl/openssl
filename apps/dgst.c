@@ -78,7 +78,7 @@ static HMAC_CTX hmac_ctx;
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
-	  const char *file,const char *hmac_key);
+	  const char *file,BIO *bmd,const char *hmac_key);
 
 int MAIN(int, char **);
 
@@ -331,15 +331,13 @@ int MAIN(int argc, char **argv)
 
 	/* we use md as a filter, reading from 'in' */
 	BIO_set_md(bmd,md);
-	if (hmac_key)
-		HMAC_Init(&hmac_ctx,hmac_key,strlen(hmac_key),md);
 	inp=BIO_push(bmd,in);
 
 	if (argc == 0)
 		{
 		BIO_set_fp(in,stdin,BIO_NOCLOSE);
 		err=do_fp(out, buf,inp,separator, out_bin, sigkey, sigbuf,
-			  siglen,"","(stdin)",hmac_key);
+			  siglen,"","(stdin)",bmd,hmac_key);
 		}
 	else
 		{
@@ -357,15 +355,15 @@ int MAIN(int argc, char **argv)
 				}
 			if(!out_bin)
 				{
-				size_t len = strlen(name)+strlen(argv[i])+(hmac_key ? 4 : 0)+5;
+				size_t len = strlen(name)+strlen(argv[i])+(hmac_key ? 5 : 0)+5;
 				tmp=tofree=OPENSSL_malloc(len);
 				BIO_snprintf(tmp,len,"%s%s(%s)= ",
-							 hmac_key ? "HMAC_" : "",name,argv[i]);
+							 hmac_key ? "HMAC-" : "",name,argv[i]);
 				}
 			else
 				tmp="";
 			r=do_fp(out,buf,inp,separator,out_bin,sigkey,sigbuf,
-				siglen,tmp,argv[i],hmac_key);
+				siglen,tmp,argv[i],bmd,hmac_key);
 			if(r)
 			    err=r;
 			if(tofree)
@@ -390,11 +388,21 @@ end:
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
-	  const char *file,const char *hmac_key)
+	  const char *file,BIO *bmd,const char *hmac_key)
 	{
 	int len;
 	int i;
+	EVP_MD_CTX *md_ctx;
 
+	if (hmac_key)
+		{
+		EVP_MD *md;
+
+		BIO_get_md(bmd,&md);
+		HMAC_Init(&hmac_ctx,hmac_key,strlen(hmac_key),md);
+		BIO_get_md_ctx(bmd,&md_ctx);
+		BIO_set_md_ctx(bmd,&hmac_ctx.md_ctx);
+		}
 	for (;;)
 		{
 		i=BIO_read(bp,(char *)buf,BUFSIZE);
@@ -438,11 +446,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			}
 		}
 	else if(hmac_key)
-		{
-		EVP_MD_CTX *ctx;
-		BIO_get_md_ctx(bp, &ctx);
 		HMAC_Final(&hmac_ctx,buf,&len);
-		}
 	else
 		len=BIO_gets(bp,(char *)buf,BUFSIZE);
 
@@ -458,6 +462,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			}
 		BIO_printf(out, "\n");
 		}
+	BIO_set_md_ctx(bmd,md_ctx);
 	return 0;
 	}
 

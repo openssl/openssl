@@ -1,4 +1,4 @@
-SHA1(fips_des_enc.c)= 41388beadcafe125a8025968ff91b7dc60b96c49
-SHA1(fips_des_selftest.c)= 1236ecc25bcbd5ad6af8c396426d6c7783cfe941
-SHA1(fips_set_key.c)= 1e3dc1e0d02f0ab4d8fdd5e1f4db284cad1510f4
-SHA1(fips_des_locl.h)= a4cf60ca32476a2483b3e4460ec9a19c0444fd20
+HMAC-SHA1(fips_des_enc.c)= ea89417ba58c148c3d72d29438cd0bedc2315f7f
+HMAC-SHA1(fips_des_selftest.c)= 65498d95dcb502f6b506dd8804771c3d0de17f81
+HMAC-SHA1(fips_set_key.c)= e55cabd0cbe5cd17710e11270d9594c0d7237064
+HMAC-SHA1(fips_des_locl.h)= 7053848e884df47f06de9f2248380b92e58ef4e5

@@ -347,6 +347,7 @@ typedef struct bio_f_buffer_ctx_struct
 #define BIO_C_NWRITE0				145
 #define BIO_C_NWRITE				146
 #define BIO_C_RESET_READ_REQUEST		147
+#define BIO_C_SET_MD_CTX			148
 
 
 #define BIO_set_app_data(s,arg)		BIO_set_ex_data(s,0,arg)

@@ -1,3 +1,3 @@
-SHA1(fips_aes_core.c)= 4cad001926dce3593181541ea19207256593171a
-SHA1(fips_aes_selftest.c)= 8f270e559d34a18b3771d7f0098b77dd7bf168c5
-SHA1(fips_aes_locl.h)= a3c01d9a4f9d5211e9e785852f6f1a2febfd73b6
+HMAC-SHA1(fips_aes_core.c)= 979e9a3084dc8e15d9f222bf721e6faccf6bcd18
+HMAC-SHA1(fips_aes_selftest.c)= 0bf32b515e2ee39332aa6563b45d7d44d88f4ed4
+HMAC-SHA1(fips_aes_locl.h)= ded58f0cda8cb967dc5f5f3a860601c0b8744623
