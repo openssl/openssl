@@ -211,6 +211,7 @@ static ERR_STRING_DATA ERR_str_reasons[]=
 
 {0,NULL},
 	};
+#endif
 
 
 /* Define the predeclared (but externally opaque) "ERR_FNS" type */
@@ -491,6 +492,7 @@ static int int_err_get_next_lib(void)
 	}
 
 
+#ifndef OPENSSL_NO_ERR
 #define NUM_SYS_STR_REASONS 127
 #define LEN_SYS_STR_REASON 32
 

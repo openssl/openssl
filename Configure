@@ -692,6 +692,11 @@ PROCESS_ARGS:
 			$flags .= "-DOPENSSL_NO_ASM ";
 			$openssl_other_defines .= "#define OPENSSL_NO_ASM\n";
 			}
+		elsif (/^no-err$/)
+		 	{
+			$flags .= "-DOPENSSL_NO_ERR ";
+			$openssl_other_defines .= "#define OPENSSL_NO_ERR\n";
+			}
 		elsif (/^no-hw-(.+)$/)
 			{
 			my $hw=$1;
