@@ -324,6 +324,9 @@ sub do_defs
 			TRUE		=> 1,
 		);
 		my $symhacking = $file eq $symhacksfile;
+		my @current_platforms = ();
+		my @current_algorithms = ();
+
 		while(<IN>) {
 			last if (/BEGIN ERROR CODES/);
 			if ($line ne '') {
@@ -402,57 +405,56 @@ sub do_defs
 				$rename{$s} = $a;
 			}
 			if (/^\#/) {
-				my @p = grep(!/^$/,
-					     map { $tag{$_} == 1 ? $_ :
-						       $tag{$_} == -1 ? "!".$_  : "" }
-					     @known_platforms);
-				my @a = grep(!/^$/,
-					     map { $tag{"NO_".$_} == -1 ? $_ : "" }
-					     @known_algorithms);
-				$def .= "#INFO:".join(',',@p).":".join(',',@a).";";
+				@current_platforms =
+				    grep(!/^$/,
+					 map { $tag{$_} == 1 ? $_ :
+						   $tag{$_} == -1 ? "!".$_  : "" }
+					 @known_platforms);
+				@current_algorithms =
+				    grep(!/^$/,
+					 map { $tag{"NO_".$_} == -1 ? $_ : "" }
+					 @known_algorithms);
+				$def .=
+				    "#INFO:"
+					.join(',',@current_platforms).":"
+					    .join(',',@current_algorithms).";";
 				next;
 			}
 			if (/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
 				next;
 			} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
-				$syms{"d2i_$3"} = 1;
-				$syms{"i2d_$3"} = 1;
-				$syms{"$2_it"} = 1;
-				$kind{"$2_it"} = "VARIABLE";
+				$def .= "int d2i_$3(void);";
+				$def .= "int i2d_$3(void);";
+				$def .= "OPENSSL_EXTERN int $2_it;";
 				next;
 			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS_fname\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
-				$syms{"d2i_$3"} = 1;
-				$syms{"i2d_$3"} = 1;
-				$syms{"$3_new"} = 1;
-				$syms{"$3_free"} = 1;
-				$syms{"$2_it"} = 1;
-				$kind{"$2_it"} = "VARIABLE";
+				$def .= "int d2i_$3(void);";
+				$def .= "int i2d_$3(void);";
+				$def .= "int $3_free(void);";
+				$def .= "int $3_new(void);";
+				$def .= "OPENSSL_EXTERN int $2_it;";
 			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS\s*\(\s*(\w*)\s*\)/ ||
 				/^\s*DECLARE_ASN1_FUNCTIONS_const\s*\(\s*(\w*)\s*\)/) {
-				$syms{"d2i_$1"} = 1;
-				$syms{"i2d_$1"} = 1;
-				$syms{"$1_new"} = 1;
-				$syms{"$1_free"} = 1;
-				$syms{"$1_it"} = 1;
-				$kind{"$1_it"} = "VARIABLE";
+				$def .= "int d2i_$1(void);";
+				$def .= "int i2d_$1(void);";
+				$def .= "int $1_free(void);";
+				$def .= "int $1_new(void);";
+				$def .= "OPENSSL_EXTERN int $1_it;";
 				next;
 			} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS_const\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
-				$syms{"d2i_$2"} = 1;
-				$syms{"i2d_$2"} = 1;
-				$syms{"$2_it"} = 1;
-				$kind{"$2_it"} = "VARIABLE";
+				$def .= "int d2i_$2(void);";
+				$def .= "int i2d_$2(void);";
+				$def .= "OPENSSL_EXTERN int $2_it;";
 				next;
 			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS_name\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
-				$syms{"d2i_$2"} = 1;
-				$syms{"i2d_$2"} = 1;
-				$syms{"$2_new"} = 1;
-				$syms{"$2_free"} = 1;
-				$syms{"$2_it"} = 1;
-				$kind{"$2_it"} = "VARIABLE";
+				$def .= "int d2i_$2(void);";
+				$def .= "int i2d_$2(void);";
+				$def .= "int $2_free(void);";
+				$def .= "int $2_new(void);";
+				$def .= "OPENSSL_EXTERN int $2_it;";
 				next;
 			} elsif (/^\s*DECLARE_ASN1_ITEM\s*\(\s*(\w*)\s*,(\w*)\s*\)/) {
-				$syms{"$1_it"} = 1;
-				$kind{"$1_it"} = "VARIABLE";
+				$def .= "OPENSSL_EXTERN int $1_it;";
 				next;
 			} elsif (/^\s*DECLARE_PKCS12_STACK_OF\s*\(\s*(\w*)\s*\)/) {
 				next;
@@ -461,65 +463,47 @@ sub do_defs
 			} elsif (/^DECLARE_PEM_rw\s*\(\s*(\w*)\s*,/ ||
 				 /^DECLARE_PEM_rw_cb\s*\(\s*(\w*)\s*,/ ) {
 				# Things not in Win16
-				$syms{"PEM_read_${1}"} = 1;
-				$platform{"PEM_read_${1}"} = "!WIN16";
-				$syms{"PEM_write_${1}"} = 1;
-				$platform{"PEM_write_${1}"} = "!WIN16";
+				$def .=
+				    "#INFO:"
+					.join(',',"!WIN16",@current_platforms).":"
+					    .join(',',@current_algorithms).";";
+				$def .= "int PEM_read_$1(void);";
+				$def .= "int PEM_write_$1(void);";
+				$def .=
+				    "#INFO:"
+					.join(',',@current_platforms).":"
+					    .join(',',@current_algorithms).";";
 				# Things that are everywhere
-				$syms{"PEM_read_bio_${1}"} = 1;
-				$syms{"PEM_write_bio_${1}"} = 1;
-				if ($1 eq "RSAPrivateKey" ||
-				    $1 eq "RSAPublicKey" ||
-				    $1 eq "RSA_PUBKEY") {
-					$algorithm{"PEM_read_${1}"} = "RSA";
-					$algorithm{"PEM_write_${1}"} = "RSA";
-					$algorithm{"PEM_read_bio_${1}"} = "RSA";
-					$algorithm{"PEM_write_bio_${1}"} = "RSA";
-				}
-				elsif ($1 eq "DSAPrivateKey" ||
-				       $1 eq "DSAparams" ||
-				       $1 eq "RSA_PUBKEY") {
-					$algorithm{"PEM_read_${1}"} = "DSA";
-					$algorithm{"PEM_write_${1}"} = "DSA";
-					$algorithm{"PEM_read_bio_${1}"} = "DSA";
-					$algorithm{"PEM_write_bio_${1}"} = "DSA";
-				}
-				elsif ($1 eq "DHparams") {
-					$algorithm{"PEM_read_${1}"} = "DH";
-					$algorithm{"PEM_write_${1}"} = "DH";
-					$algorithm{"PEM_read_bio_${1}"} = "DH";
-					$algorithm{"PEM_write_bio_${1}"} = "DH";
-				}
+				$def .= "int PEM_read_bio_$1(void);";
+				$def .= "int PEM_write_bio_$1(void);";
 			} elsif (/^DECLARE_PEM_write\s*\(\s*(\w*)\s*,/ ||
 				     /^DECLARE_PEM_write_cb\s*\(\s*(\w*)\s*,/ ) {
 				# Things not in Win16
-				$syms{"PEM_write_${1}"} = 1;
-				$platform{"PEM_write_${1}"} .= ",!WIN16";
+				$def .=
+				    "#INFO:"
+					.join(',',"!WIN16",@current_platforms).":"
+					    .join(',',@current_algorithms).";";
+				$def .= "int PEM_write_$1(void);";
+				$def .=
+				    "#INFO:"
+					.join(',',@current_platforms).":"
+					    .join(',',@current_algorithms).";";
 				# Things that are everywhere
-				$syms{"PEM_write_bio_${1}"} = 1;
-				if ($1 eq "RSAPrivateKey" ||
-				    $1 eq "RSAPublicKey" ||
-				    $1 eq "RSA_PUBKEY") {
-					$algorithm{"PEM_write_${1}"} = "RSA";
-					$algorithm{"PEM_write_bio_${1}"} = "RSA";
-				}
-				elsif ($1 eq "DSAPrivateKey" ||
-				       $1 eq "DSAparams" ||
-				       $1 eq "RSA_PUBKEY") {
-					$algorithm{"PEM_write_${1}"} = "DSA";
-					$algorithm{"PEM_write_bio_${1}"} = "DSA";
-				}
-				elsif ($1 eq "DHparams") {
-					$algorithm{"PEM_write_${1}"} = "DH";
-					$algorithm{"PEM_write_bio_${1}"} = "DH";
-				}
+				$def .= "int PEM_write_bio_$1(void);";
 			} elsif (/^DECLARE_PEM_read\s*\(\s*(\w*)\s*,/ ||
 				     /^DECLARE_PEM_read_cb\s*\(\s*(\w*)\s*,/ ) {
 				# Things not in Win16
-				$syms{"PEM_read_${1}"} = 1;
-				$platform{"PEM_read_${1}"} .= ",!WIN16";
+				$def .=
+				    "#INFO:"
+					.join(',',"!WIN16",@current_platforms).":"
+					    .join(',',@current_algorithms).";";
+				$def .= "int PEM_read_$1(void);";
+				$def .=
+				    "#INFO:"
+					.join(',',@current_platforms).":"
+					    .join(',',@current_algorithms).";";
 				# Things that are everywhere
-				$syms{"PEM_read_bio_${1}"} = 1;
+				$def .= "int PEM_read_bio_$1(void);";
 			} elsif (
 				($tag{'TRUE'} != -1)
 				&& ($tag{'CONST_STRICT'} != 1)
