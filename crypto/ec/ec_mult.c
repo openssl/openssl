@@ -171,7 +171,10 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len, B
 	}
 
 
-/* TODO: table should be optimised for the wNAF-based implementation */
+/* TODO: table should be optimised for the wNAF-based implementation,
+ *       sometimes smaller windows will give better performance
+ *       (thus the boundaries should be increased)
+ */
 #define EC_window_bits_for_scalar_size(b) \
 		((b) >= 2000 ? 6 : \
 		 (b) >=  800 ? 5 : \
