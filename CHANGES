@@ -5,6 +5,9 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) "linux-sparc64-gcc" configuration (ultrapenguin).
+     [Ray Miller <ray.miller@oucs.ox.ac.uk>]
+
   *) config now generates no-xxx options for missing ciphers.
      [Ulf Möller]
 
@@ -15,6 +18,7 @@
   *) Support BS2000/OSD-POSIX.
      [Martin Kraemer <Martin.Kraemer@MchP.Siemens.De>]
 
+>>>>>>> 1.252
   *) Make callbacks for key generation use void * instead of char *.
      [Ben Laurie]
 
@@ -24,7 +28,7 @@
   *) Additional typesafe stacks.
      [Ben Laurie]
 
-  *) New configuration variant "bsdi-elf-gcc" (BSD/OS 4.x).
+  *) New configuration variants "bsdi-elf-gcc" (BSD/OS 4.x).
      [Bodo Moeller]
 
 

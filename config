@@ -313,6 +313,7 @@ case "$GUESSOS" in
   alpha-*-linux2) OUT="alpha-gcc" ;;
   ppc-*-linux2) OUT="linux-ppc" ;;
   mips-*-linux?) OUT="linux-mips" ;;
+  sparc64-*-linux2) OUT="linux-sparc64-$CC" ;;
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux1) OUT="linux-aout" ;;
   sun4u-sun-solaris2) OUT="solaris-usparc-$CC" ;;
