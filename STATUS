@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/08/05 11:50:09 $
+  ______________                           $Date: 1999/08/08 10:19:48 $
 
   DEVELOPMENT STATE
 
@@ -14,9 +14,6 @@
     o  OpenSSL 0.9.1c: Released on December 23th, 1998
 
   RELEASE SHOWSTOPPERS
-
-    o internal_verify doesn't know about X509.v3 (basicConstraints
-      CA flag ...)
 
   AVAILABLE PATCHES
 
@@ -66,6 +63,9 @@
     o  "Sign the certificate?" - "n" creates empty certificate file
 
   OPEN ISSUES
+
+    o internal_verify doesn't know about X509.v3 (basicConstraints
+      CA flag ...)
 
     o  The Makefile hierarchy and build mechanism is still not a round thing:
 
