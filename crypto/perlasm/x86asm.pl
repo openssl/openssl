@@ -94,7 +94,7 @@ $tmp
 #undef SIZE
 #undef TYPE
 #define SIZE(a,b)
-#define TYPE(a,b)
+#define TYPE(a,b)	.def a; .scl 2; .type 32; .endef
 #endif /* __CYGWIN || __DJGPP */
 #endif
 

@@ -345,15 +345,15 @@ sub main'function_end
 	popl	%ebx
 	popl	%ebp
 	ret
-.${func}_end:
+.L_${func}_end:
 EOF
 	push(@out,$tmp);
 
 	if ($main'cpp)
-		{ push(@out,"\tSIZE($func,.${func}_end-$func)\n"); }
+		{ push(@out,"\tSIZE($func,.L_${func}_end-$func)\n"); }
 	elsif ($main'gaswin)
                 { $tmp=push(@out,"\t.align 4\n"); }
-	else	{ push(@out,"\t.size\t$func,.${func}_end-$func\n"); }
+	else	{ push(@out,"\t.size\t$func,.L_${func}_end-$func\n"); }
 	push(@out,".ident	\"$func\"\n");
 	$stack=0;
 	%label=();
