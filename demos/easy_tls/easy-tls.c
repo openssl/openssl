@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-file-style: "bsd" -*- */
 /*
  * easy-tls.c -- generic TLS proxy.
- * $Id: easy-tls.c,v 1.2.2.1 2002/02/28 10:55:00 bodo Exp $
+ * $Id: easy-tls.c,v 1.2.2.2 2002/03/05 09:06:57 bodo Exp $
  */
 /*
  (c) Copyright 1999 Bodo Moeller.  All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 static char const rcsid[] =
-"$Id: easy-tls.c,v 1.2.2.1 2002/02/28 10:55:00 bodo Exp $";
+"$Id: easy-tls.c,v 1.2.2.2 2002/03/05 09:06:57 bodo Exp $";
 
 #include <assert.h>
 #include <errno.h>
@@ -567,8 +567,13 @@ no_passphrase_callback(char *buf, int num, int w, void *arg)
     return -1;
 }
 
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L
 static int
 verify_dont_fail_cb(X509_STORE_CTX *c, void *unused_arg)
+#else
+static int
+verify_dont_fail_cb(X509_STORE_CTX *c)
+#endif
 {
     int i;
     
