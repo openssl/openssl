@@ -1,7 +1,7 @@
 echo=off
 set ssleay=%1%
 set tmp1=pem.out
-set cmp=perl ..\ms\cmp.pl
+set cmp=fc.exe
 
 call tpem.bat crl ..\test\testcrl.pem
 if errorlevel 1 goto err

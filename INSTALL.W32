@@ -48,7 +48,7 @@ perl util\mkdef.pl crypto ssl update
 
 then ms\do_ms should not give a warning any more. However the numbers that get
 assigned by this technique may not match those that eventually get assigned
-in the CVS tree: so you anything linked against this version of the library
+in the CVS tree: so anything linked against this version of the library
 may need to be recompiled.
 
 If you get errors about unresolved externals then this means that either you
@@ -86,8 +86,7 @@ to make a debugging version of the library.
 
 If you want to enable the NT specific features of OpenSSL (currently only
 the logging BIO) follow the instructions above but call the batch file
-do_nt.bat instead of do_ms.bat. If you do this then you will no longer be able
-to run the OpenSSL binaries under Windows 95 or 98.
+do_nt.bat instead of do_ms.bat.
 
 You can also build a static version of the library using the Makefile ms\nt.mak
 
