@@ -595,8 +595,10 @@ EOF
         fi ;;
   *-*-linux1) OUT="linux-aout" ;;
   sun4u*-*-solaris2)
-	OUT="solaris-sparcv9-$CC"
-	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
+	ISA=`(isalist) 2>/dev/null`
+	ISA64=`echo $ISA | grep sparcv9`
+	ISA=`set $ISA; echo $1`
+	OUT="solaris-$ISA-$CC" ;;
 	if [ "$ISA64" != "" ]; then
 	    if [ "$CC" = "cc" -a $CCVER -ge 50 ]; then
 		echo "WARNING! If you wish to build 64-bit library, then you have to"
