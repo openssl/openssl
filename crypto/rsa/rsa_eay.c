@@ -496,7 +496,7 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 			if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->q,ctx))
 				{
 				BN_MONT_CTX_free(bn_mont_ctx);
-					goto err;
+				goto err;
 				}
 			if (rsa->_method_mod_q == NULL) /* other thread may have finished first */
 				{
