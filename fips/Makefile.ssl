@@ -32,13 +32,13 @@ GENERAL=Makefile README fips-lib.com install.com
 
 LIB= $(TOP)/libcrypto.a
 SHARED_LIB= libcrypto$(SHLIB_EXT)
-LIBSRC=fips.c fips_err_wrapper.c
-LIBOBJ=fips.o fips_err_wrapper.o
+LIBSRC=fips.c fips_err_wrapper.c fips_err.c
+LIBOBJ=fips.o fips_err_wrapper.o fips_err.o
 
 SRC= $(LIBSRC)
 
 EXHEADER=fips.h
-HEADER=$(EXHEADER) fips_err.c
+HEADER=$(EXHEADER)
 EXE=openssl_fips_fingerprint
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
