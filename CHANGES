@@ -12,6 +12,37 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) In crypto/dh/dh_key.c, change generate_key() (the default
+     implementation of DH_generate_key()) so that a new key is
+     generated each time DH_generate_key() is used on a DH object.
+
+     Previously, DH_generate_key() did not change existing keys
+     -- but ssl/s3_srvr.c always expected it to do so (in effect,
+     SSL_OP_SINGLE_DH_USE was ignored in servers reusing the same SSL
+     object for multiple connections; however, each new SSL object
+     created from an SSL_CTX got its own key).
+     [Bodo Moeller]
+
+  *) In OpenSSL 0.9.6a and 0.9.6b, crypto/dh/dh_key.c ignored
+     dh->length and always used
+
+          BN_rand_range(priv_key, dh->p).
+
+     BN_rand_range() is not necessary for Diffie-Hellman, and this
+     specific range makes Diffie-Hellman unnecessarily inefficient if
+     dh->length (recommended exponent length) is much smaller than the
+     length of dh->p.  We could use BN_rand_range() if the order of
+     the subgroup was stored in the DH structure, but we only have
+     dh->length.
+
+     So switch back to
+
+          BN_rand(priv_key, l, ...)
+
+     where 'l' is dh->length if this is defined, or BN_num_bits(dh->p)-1
+     otherwise.
+     [Bodo Moeller]
+
   *) In
 
           RSA_eay_public_encrypt
