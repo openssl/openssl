@@ -66,6 +66,7 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p);
 static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
 static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
+static int do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
 
 X509V3_EXT_METHOD v3_alt[] = {
 { NID_subject_alt_name, 0, ASN1_ITEM_ref(GENERAL_NAMES),
@@ -452,6 +453,13 @@ if(!name_cmp(name, "email")) {
 		goto err;
 		}
 	type = GEN_IPADD;
+} else if(!name_cmp(name, "dirName")) {
+	type = GEN_DIRNAME;
+	if (!do_dirname(gen, value, ctx))
+		{
+		X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_DIRNAME_ERROR);
+		goto err;
+		}
 } else if(!name_cmp(name, "otherName")) {
 	if (!do_othername(gen, value, ctx))
 		{
@@ -506,4 +514,28 @@ static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
 	if (!gen->d.otherName->type_id)
 		return 0;
 	return 1;
+	}
+
+static int do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
+	{
+	int ret;
+	STACK_OF(CONF_VALUE) *sk;
+	X509_NAME *nm;
+	if (!(nm = X509_NAME_new()))
+		return 0;
+	sk = X509V3_get_section(ctx, value);
+	if (!sk)
+		{
+		X509V3err(X509V3_F_DO_DIRNAME,X509V3_R_SECTION_NOT_FOUND);
+		ERR_add_error_data(2, "section=", value);
+		X509_NAME_free(nm);
+		return 0;
+		}
+	/* FIXME: should allow other character types... */
+	ret = X509V3_NAME_from_section(nm, sk, MBSTRING_ASC);
+	if (!ret)
+		X509_NAME_free(nm);
+	gen->d.dirn = nm;
+		
+	return ret;
 	}

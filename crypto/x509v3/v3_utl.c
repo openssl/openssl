@@ -740,3 +740,38 @@ static int ipv6_hex(unsigned char *out, const char *in, int inlen)
 	return 1;
 	}
 
+
+int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
+						unsigned long chtype)
+	{
+	CONF_VALUE *v;
+	int i;
+	char *p, *type;
+	if (!nm)
+		return 0;
+
+	for (i = 0; i < sk_CONF_VALUE_num(dn_sk); i++)
+		{
+		v=sk_CONF_VALUE_value(dn_sk,i);
+		type=v->name;
+		/* Skip past any leading X. X: X, etc to allow for
+		 * multiple instances 
+		 */
+		for(p = type; *p ; p++) 
+#ifndef CHARSET_EBCDIC
+			if ((*p == ':') || (*p == ',') || (*p == '.'))
+#else
+			if ((*p == os_toascii[':']) || (*p == os_toascii[',']) || (*p == os_toascii['.']))
+#endif
+				{
+				p++;
+				if(*p) type = p;
+				break;
+				}
+		if (!X509_NAME_add_entry_by_txt(nm,type, chtype,
+				(unsigned char *) v->value,-1,-1,0))
+					return 0;
+
+		}
+	return 1;
+	}

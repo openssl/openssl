@@ -4,6 +4,10 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Support for directoryName in GeneralName related extensions
+     in config files.
+     [Steve Henson]
+
   *) Make it possible to link applications using Makefile.shared.
      Make that possible even when linking against static libraries!
      [Richard Levitte]

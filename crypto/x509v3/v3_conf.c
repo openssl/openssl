@@ -151,7 +151,7 @@ static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid,
 		}
 	else if(method->r2i)
 		{
-		if(!ctx->db)
+		if(!ctx->db || !ctx->db_meth)
 			{
 			X509V3err(X509V3_F_X509V3_EXT_CONF,X509V3_R_NO_CONFIG_DATABASE);
 			return NULL;
@@ -383,6 +383,11 @@ int X509V3_EXT_REQ_add_nconf(CONF *conf, X509V3_CTX *ctx, char *section,
 
 char * X509V3_get_string(X509V3_CTX *ctx, char *name, char *section)
 	{
+	if(!ctx->db || !ctx->db_meth || !ctx->db_meth->get_string)
+		{
+		X509V3err(X509V3_F_X509V3_GET_STRING,X509V3_R_OPERATION_NOT_DEFINED);
+		return NULL;
+		}
 	if (ctx->db_meth->get_string)
 			return ctx->db_meth->get_string(ctx->db, name, section);
 	return NULL;
@@ -390,6 +395,11 @@ char * X509V3_get_string(X509V3_CTX *ctx, char *name, char *section)
 
 STACK_OF(CONF_VALUE) * X509V3_get_section(X509V3_CTX *ctx, char *section)
 	{
+	if(!ctx->db || !ctx->db_meth || !ctx->db_meth->get_section)
+		{
+		X509V3err(X509V3_F_X509V3_GET_SECTION,X509V3_R_OPERATION_NOT_DEFINED);
+		return NULL;
+		}
 	if (ctx->db_meth->get_section)
 			return ctx->db_meth->get_section(ctx->db, section);
 	return NULL;

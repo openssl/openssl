@@ -1,6 +1,6 @@
 /* crypto/x509v3/v3err.c */
 /* ====================================================================
- * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,6 +68,7 @@ static ERR_STRING_DATA X509V3_str_functs[]=
 	{
 {ERR_PACK(0,X509V3_F_COPY_EMAIL,0),	"COPY_EMAIL"},
 {ERR_PACK(0,X509V3_F_COPY_ISSUER,0),	"COPY_ISSUER"},
+{ERR_PACK(0,X509V3_F_DO_DIRNAME,0),	"DO_DIRNAME"},
 {ERR_PACK(0,X509V3_F_DO_EXT_CONF,0),	"DO_EXT_CONF"},
 {ERR_PACK(0,X509V3_F_DO_EXT_I2D,0),	"DO_EXT_I2D"},
 {ERR_PACK(0,X509V3_F_HEX_TO_STRING,0),	"hex_to_string"},
@@ -104,6 +105,8 @@ static ERR_STRING_DATA X509V3_str_functs[]=
 {ERR_PACK(0,X509V3_F_X509V3_EXT_ADD_ALIAS,0),	"X509V3_EXT_add_alias"},
 {ERR_PACK(0,X509V3_F_X509V3_EXT_CONF,0),	"X509V3_EXT_conf"},
 {ERR_PACK(0,X509V3_F_X509V3_EXT_I2D,0),	"X509V3_EXT_i2d"},
+{ERR_PACK(0,X509V3_F_X509V3_GET_SECTION,0),	"X509V3_get_section"},
+{ERR_PACK(0,X509V3_F_X509V3_GET_STRING,0),	"X509V3_get_string"},
 {ERR_PACK(0,X509V3_F_X509V3_GET_VALUE_BOOL,0),	"X509V3_get_value_bool"},
 {ERR_PACK(0,X509V3_F_X509V3_PARSE_LIST,0),	"X509V3_parse_list"},
 {ERR_PACK(0,X509V3_F_X509_PURPOSE_ADD,0),	"X509_PURPOSE_add"},
@@ -117,6 +120,7 @@ static ERR_STRING_DATA X509V3_str_reasons[]=
 {X509V3_R_BAD_OBJECT                     ,"bad object"},
 {X509V3_R_BN_DEC2BN_ERROR                ,"bn dec2bn error"},
 {X509V3_R_BN_TO_ASN1_INTEGER_ERROR       ,"bn to asn1 integer error"},
+{X509V3_R_DIRNAME_ERROR                  ,"dirname error"},
 {X509V3_R_DUPLICATE_ZONE_ID              ,"duplicate zone id"},
 {X509V3_R_ERROR_CONVERTING_ZONE          ,"error converting zone"},
 {X509V3_R_ERROR_CREATING_EXTENSION       ,"error creating extension"},
@@ -152,7 +156,9 @@ static ERR_STRING_DATA X509V3_str_reasons[]=
 {X509V3_R_NO_PUBLIC_KEY                  ,"no public key"},
 {X509V3_R_NO_SUBJECT_DETAILS             ,"no subject details"},
 {X509V3_R_ODD_NUMBER_OF_DIGITS           ,"odd number of digits"},
+{X509V3_R_OPERATION_NOT_DEFINED          ,"operation not defined"},
 {X509V3_R_OTHERNAME_ERROR                ,"othername error"},
+{X509V3_R_SECTION_NOT_FOUND              ,"section not found"},
 {X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS   ,"unable to get issuer details"},
 {X509V3_R_UNABLE_TO_GET_ISSUER_KEYID     ,"unable to get issuer keyid"},
 {X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT    ,"unknown bit string argument"},
