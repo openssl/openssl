@@ -285,7 +285,7 @@ bad:
 			DSA *dsa;
 			
 			BIO_printf(bio_err,"Generating DSA parameters, %d bit long prime\n",num);
-	        dsa = DSA_generate_parameters(num, NULL, 0, NULL, NULL, dh_cb, bio_err);
+			dsa = DSA_generate_parameters(num, NULL, 0, NULL, NULL, dh_cb, bio_err);
 			if (dsa == NULL)
 				{
 				ERR_print_errors(bio_err);
