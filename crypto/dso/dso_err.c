@@ -116,6 +116,7 @@ static ERR_STRING_DATA DSO_str_reasons[]=
 {DSO_R_LOAD_FAILED                       ,"could not load the shared library"},
 {DSO_R_NAME_TRANSLATION_FAILED           ,"name translation failed"},
 {DSO_R_NO_FILENAME                       ,"no filename"},
+{DSO_R_NO_FILE_SPECIFICATION             ,"no file specification"},
 {DSO_R_NULL_HANDLE                       ,"a null shared library handle was used"},
 {DSO_R_SET_FILENAME_FAILED               ,"set filename failed"},
 {DSO_R_STACK_ERROR                       ,"the meth_data stack is corrupt"},

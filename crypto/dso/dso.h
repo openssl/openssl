@@ -345,6 +345,7 @@ void ERR_load_DSO_strings(void);
 #define DSO_R_LOAD_FAILED				 103
 #define DSO_R_NAME_TRANSLATION_FAILED			 109
 #define DSO_R_NO_FILENAME				 111
+#define DSO_R_NO_FILE_SPECIFICATION			 116
 #define DSO_R_NULL_HANDLE				 104
 #define DSO_R_SET_FILENAME_FAILED			 112
 #define DSO_R_STACK_ERROR				 105

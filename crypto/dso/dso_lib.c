@@ -394,7 +394,7 @@ char *DSO_merge(DSO *dso, const char *filespec1, const char *filespec2)
 	{
 	char *result = NULL;
 
-	if(dso == NULL || dir == NULL)
+	if(dso == NULL || filespec1 == NULL)
 		{
 		DSOerr(DSO_F_DSO_MERGE,ERR_R_PASSED_NULL_PARAMETER);
 		return(NULL);
@@ -403,7 +403,7 @@ char *DSO_merge(DSO *dso, const char *filespec1, const char *filespec2)
 		filespec1 = dso->filename;
 	if(filespec1 == NULL)
 		{
-		DSOerr(DSO_F_DSO_MERGE,DSO_R_NO_FILENAME);
+		DSOerr(DSO_F_DSO_MERGE,DSO_R_NO_FILE_SPECIFICATION);
 		return(NULL);
 		}
 	if((dso->flags & DSO_FLAG_NO_NAME_TRANSLATION) == 0)
