@@ -134,14 +134,13 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
  * generator and order */
 EC_GROUP *EC_GROUP_new_by_nid(const int nid);
 EC_GROUP *EC_GROUP_new_by_name(int name);
-/* Currently valid arguments to EC_GROUP_new_by_name()
- * (unfortunately some curves have no OIDs [and no NIDs]): */
+/* Currently valid arguments to EC_GROUP_new_by_name() */
 #define EC_GROUP_NO_CURVE		0
-#define EC_GROUP_NIST_PRIME_192		1
-#define EC_GROUP_NIST_PRIME_224		2
-#define EC_GROUP_NIST_PRIME_256		3
-#define EC_GROUP_NIST_PRIME_384		4
-#define EC_GROUP_NIST_PRIME_521		5
+#define EC_GROUP_NIST_PRIME_192		NID_secp192r1
+#define EC_GROUP_NIST_PRIME_224		NID_secp224r1
+#define EC_GROUP_NIST_PRIME_256		NID_secp256r1
+#define EC_GROUP_NIST_PRIME_384		NID_secp384r1
+#define EC_GROUP_NIST_PRIME_521		NID_secp521r1
 #define EC_GROUP_X9_62_PRIME_192V1	NID_X9_62_prime192v1
 #define EC_GROUP_X9_62_PRIME_192V2	NID_X9_62_prime192v2
 #define EC_GROUP_X9_62_PRIME_192V3	NID_X9_62_prime192v3
@@ -149,8 +148,21 @@ EC_GROUP *EC_GROUP_new_by_name(int name);
 #define EC_GROUP_X9_62_PRIME_239V2	NID_X9_62_prime239v2
 #define EC_GROUP_X9_62_PRIME_239V3	NID_X9_62_prime239v3
 #define EC_GROUP_X9_62_PRIME_256V1	NID_X9_62_prime256v1
-
-
+#define EC_GROUP_SECG_PRIME_112R1	NID_secp112r1
+#define EC_GROUP_SECG_PRIME_112R2	NID_secp112r2
+#define EC_GROUP_SECG_PRIME_128R1	NID_secp128r1
+#define EC_GROUP_SECG_PRIME_128R2	NID_secp128r2
+#define EC_GROUP_SECG_PRIME_160K1	NID_secp160k1
+#define EC_GROUP_SECG_PRIME_160R1	NID_secp160r1
+#define EC_GROUP_SECG_PRIME_160R2	NID_secp160r2
+#define EC_GROUP_SECG_PRIME_192K1	NID_secp192k1
+#define EC_GROUP_SECG_PRIME_192R1	NID_secp192r1
+#define EC_GROUP_SECG_PRIME_224K1	NID_secp224k1
+#define EC_GROUP_SECG_PRIME_224R1	NID_secp224r1
+#define EC_GROUP_SECG_PRIME_256K1	NID_secp256k1
+#define EC_GROUP_SECG_PRIME_256R1	NID_secp256r1
+#define EC_GROUP_SECG_PRIME_384R1	NID_secp384r1
+#define EC_GROUP_SECG_PRIME_521R1	NID_secp521r1
 
 EC_POINT *EC_POINT_new(const EC_GROUP *);
 void EC_POINT_free(EC_POINT *);

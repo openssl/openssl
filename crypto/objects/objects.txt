@@ -6,6 +6,10 @@
 
 iso 2			: member-body		: ISO Member Body
 
+iso 3			: identified-organization
+
+identified-organization 132	: certicom-arc
+
 joint-iso-ccitt 5 1 5	: selected-attribute-types	: Selected Attribute Types
 
 selected-attribute-types 55	: clearance
@@ -64,7 +68,46 @@ X9-62_primeCurve 7	 	: prime256v1
 !global
 X9-62_id-ecSigType 1		: ecdsa-with-SHA1
 
-
+# the following AsnOId are from the document 
+# "SEC 2: Recommended Elliptic Curve Domain Parameters"
+# from the Standarts for Efficient Cryptography Group
+# ( for more informations see : http://www.secg.org )
+!Alias secg_ellipticCurve certicom-arc 0
+# secg prime curves oids
+secg-ellipticCurve 6		: secp112r1
+secg-ellipticCurve 7		: secp112r2
+secg-ellipticCurve 28		: secp128r1
+secg-ellipticCurve 29		: secp128r2
+secg-ellipticCurve 9		: secp160k1
+secg-ellipticCurve 8		: secp160r1
+secg-ellipticCurve 30		: secp160r2
+secg-ellipticCurve 31		: secp192k1
+X9_62_prime192v1		: secp192r1
+secg-ellipticCurve 32		: secp224k1
+secg-ellipticCurve 33		: secp224r1
+secg-ellipticCurve 10		: secp256k1
+X9_62_prime256v1		: secp256r1
+secg-ellipticCurve 34		: secp384r1
+secg-ellipticCurve 35		: secp521r1
+# secg characteristic two curves oids
+secg-ellipticCurve 4		: sect113r1
+secg-ellipticCurve 5		: sect113r2
+secg-ellipticCurve 22		: sect131r1
+secg-ellipticCurve 23		: sect131r2
+secg-ellipticCurve 1		: sect163k1
+secg-ellipticCurve 2		: sect163r1
+secg-ellipticCurve 15		: sect163r2
+secg-ellipticCurve 24		: sect193r1
+secg-ellipticCurve 25		: sect193r2
+secg-ellipticCurve 26		: sect233k1
+secg-ellipticCurve 27		: sect233r1
+secg-ellipticCurve 3		: sect239k1
+secg-ellipticCurve 16		: sect283k1
+secg-ellipticCurve 17		: sect283r1
+secg-ellipticCurve 36		: sect409k1
+secg-ellipticCurve 37		: sect409r1
+secg-ellipticCurve 38		: sect571k1
+secg-ellipticCurve 39		: sect571r1
 
 ISO-US 113533 7 66 10	: CAST5-CBC		: cast5-cbc
 			: CAST5-ECB		: cast5-ecb

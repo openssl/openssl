@@ -257,6 +257,36 @@ int MAIN(int argc, char **argv)
 			curve_type = EC_GROUP_X9_62_PRIME_239V3;
 		else if (strcmp(*argv, "-X9_62_256v1") == 0)
 			curve_type = EC_GROUP_X9_62_PRIME_256V1;
+		else if (strcmp(*argv, "-SECG_PRIME_112R1") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_112R1;
+		else if (strcmp(*argv, "-SECG_PRIME_112R2") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_112R2;
+		else if (strcmp(*argv, "-SECG_PRIME_128R1") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_128R1;
+		else if (strcmp(*argv, "-SECG_PRIME_128R2") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_128R2;
+		else if (strcmp(*argv, "-SECG_PRIME_160K1") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_160K1;
+		else if (strcmp(*argv, "-SECG_PRIME_160R1") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_160R1;
+		else if (strcmp(*argv, "-SECG_PRIME_160R2") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_160R2;
+		else if (strcmp(*argv, "-SECG_PRIME_192K1") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_192K1;
+		else if (strcmp(*argv, "-SECG_PRIME_192R1") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_192R1;
+		else if (strcmp(*argv, "-SECG_PRIME_224K1") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_224K1;
+		else if (strcmp(*argv, "-SECG_PRIME_224R1") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_224R1;
+		else if (strcmp(*argv, "-SECG_PRIME_256K1") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_256K1;
+		else if (strcmp(*argv, "-SECG_PRIME_256R1") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_256R1;
+		else if (strcmp(*argv, "-SECG_PRIME_384R1") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_384R1;
+		else if (strcmp(*argv, "-SECG_PRIME_521R1") == 0)
+			curve_type = EC_GROUP_SECG_PRIME_521R1;
 		else if (strcmp(*argv, "-noout") == 0)
 			noout=1;
 		else

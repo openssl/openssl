@@ -4,7 +4,7 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
-  *) Add more X9.62 OIDs.
+  *) Add OIDs from X9.62 and SECG.
      [Nils Larsch <nla@trustcenter.de>]
 
   *) Add ECDSA in new directory crypto/ecdsa/.

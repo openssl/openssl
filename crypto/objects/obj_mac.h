@@ -87,6 +87,14 @@
 #define NID_member_body		182
 #define OBJ_member_body		OBJ_iso,2L
 
+#define SN_identified_organization		"identified-organization"
+#define NID_identified_organization		527
+#define OBJ_identified_organization		OBJ_iso,3L
+
+#define SN_certicom_arc		"certicom-arc"
+#define NID_certicom_arc		528
+#define OBJ_certicom_arc		OBJ_identified_organization,132L
+
 #define SN_selected_attribute_types		"selected-attribute-types"
 #define LN_selected_attribute_types		"Selected Attribute Types"
 #define NID_selected_attribute_types		394
@@ -277,6 +285,140 @@
 #define SN_ecdsa_with_SHA1		"ecdsa-with-SHA1"
 #define NID_ecdsa_with_SHA1		416
 #define OBJ_ecdsa_with_SHA1		OBJ_X9_62_id_ecSigType,1L
+
+#define OBJ_secg_ellipticCurve		OBJ_certicom_arc,0L
+
+#define SN_secp112r1		"secp112r1"
+#define NID_secp112r1		529
+#define OBJ_secp112r1		OBJ_secg_ellipticCurve,6L
+
+#define SN_secp112r2		"secp112r2"
+#define NID_secp112r2		530
+#define OBJ_secp112r2		OBJ_secg_ellipticCurve,7L
+
+#define SN_secp128r1		"secp128r1"
+#define NID_secp128r1		531
+#define OBJ_secp128r1		OBJ_secg_ellipticCurve,28L
+
+#define SN_secp128r2		"secp128r2"
+#define NID_secp128r2		532
+#define OBJ_secp128r2		OBJ_secg_ellipticCurve,29L
+
+#define SN_secp160k1		"secp160k1"
+#define NID_secp160k1		533
+#define OBJ_secp160k1		OBJ_secg_ellipticCurve,9L
+
+#define SN_secp160r1		"secp160r1"
+#define NID_secp160r1		534
+#define OBJ_secp160r1		OBJ_secg_ellipticCurve,8L
+
+#define SN_secp160r2		"secp160r2"
+#define NID_secp160r2		535
+#define OBJ_secp160r2		OBJ_secg_ellipticCurve,30L
+
+#define SN_secp192k1		"secp192k1"
+#define NID_secp192k1		536
+#define OBJ_secp192k1		OBJ_secg_ellipticCurve,31L
+
+#define SN_secp192r1		"secp192r1"
+#define NID_secp192r1		537
+#define OBJ_secp192r1		OBJ_X9_62_prime192v1
+
+#define SN_secp224k1		"secp224k1"
+#define NID_secp224k1		538
+#define OBJ_secp224k1		OBJ_secg_ellipticCurve,32L
+
+#define SN_secp224r1		"secp224r1"
+#define NID_secp224r1		539
+#define OBJ_secp224r1		OBJ_secg_ellipticCurve,33L
+
+#define SN_secp256k1		"secp256k1"
+#define NID_secp256k1		540
+#define OBJ_secp256k1		OBJ_secg_ellipticCurve,10L
+
+#define SN_secp256r1		"secp256r1"
+#define NID_secp256r1		541
+#define OBJ_secp256r1		OBJ_X9_62_prime256v1
+
+#define SN_secp384r1		"secp384r1"
+#define NID_secp384r1		542
+#define OBJ_secp384r1		OBJ_secg_ellipticCurve,34L
+
+#define SN_secp521r1		"secp521r1"
+#define NID_secp521r1		543
+#define OBJ_secp521r1		OBJ_secg_ellipticCurve,35L
+
+#define SN_sect113r1		"sect113r1"
+#define NID_sect113r1		544
+#define OBJ_sect113r1		OBJ_secg_ellipticCurve,4L
+
+#define SN_sect113r2		"sect113r2"
+#define NID_sect113r2		545
+#define OBJ_sect113r2		OBJ_secg_ellipticCurve,5L
+
+#define SN_sect131r1		"sect131r1"
+#define NID_sect131r1		546
+#define OBJ_sect131r1		OBJ_secg_ellipticCurve,22L
+
+#define SN_sect131r2		"sect131r2"
+#define NID_sect131r2		547
+#define OBJ_sect131r2		OBJ_secg_ellipticCurve,23L
+
+#define SN_sect163k1		"sect163k1"
+#define NID_sect163k1		548
+#define OBJ_sect163k1		OBJ_secg_ellipticCurve,1L
+
+#define SN_sect163r1		"sect163r1"
+#define NID_sect163r1		549
+#define OBJ_sect163r1		OBJ_secg_ellipticCurve,2L
+
+#define SN_sect163r2		"sect163r2"
+#define NID_sect163r2		550
+#define OBJ_sect163r2		OBJ_secg_ellipticCurve,15L
+
+#define SN_sect193r1		"sect193r1"
+#define NID_sect193r1		551
+#define OBJ_sect193r1		OBJ_secg_ellipticCurve,24L
+
+#define SN_sect193r2		"sect193r2"
+#define NID_sect193r2		552
+#define OBJ_sect193r2		OBJ_secg_ellipticCurve,25L
+
+#define SN_sect233k1		"sect233k1"
+#define NID_sect233k1		553
+#define OBJ_sect233k1		OBJ_secg_ellipticCurve,26L
+
+#define SN_sect233r1		"sect233r1"
+#define NID_sect233r1		554
+#define OBJ_sect233r1		OBJ_secg_ellipticCurve,27L
+
+#define SN_sect239k1		"sect239k1"
+#define NID_sect239k1		555
+#define OBJ_sect239k1		OBJ_secg_ellipticCurve,3L
+
+#define SN_sect283k1		"sect283k1"
+#define NID_sect283k1		556
+#define OBJ_sect283k1		OBJ_secg_ellipticCurve,16L
+
+#define SN_sect283r1		"sect283r1"
+#define NID_sect283r1		557
+#define OBJ_sect283r1		OBJ_secg_ellipticCurve,17L
+
+#define SN_sect409k1		"sect409k1"
+#define NID_sect409k1		558
+#define OBJ_sect409k1		OBJ_secg_ellipticCurve,36L
+
+#define SN_sect409r1		"sect409r1"
+#define NID_sect409r1		559
+#define OBJ_sect409r1		OBJ_secg_ellipticCurve,37L
+
+#define SN_sect571k1		"sect571k1"
+#define NID_sect571k1		560
+#define OBJ_sect571k1		OBJ_secg_ellipticCurve,38L
+
+#define SN_sect571r1		"sect571r1"
+#define NID_sect571r1		561
+#define OBJ_sect571r1		OBJ_secg_ellipticCurve,39L
 
 #define SN_cast5_cbc		"CAST5-CBC"
 #define LN_cast5_cbc		"cast5-cbc"
