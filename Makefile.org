@@ -814,7 +814,9 @@ install: all install_docs
 		if [ -f "$$i" ]; then \
 		(       echo installing $$i; \
 			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-			if ! egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
+			if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
+				: ; \
+			else \
 				$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
 			fi; \
 			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
