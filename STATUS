@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/03/29 17:50:11 $
+  ______________                           $Date: 1999/04/07 17:31:11 $
 
   DEVELOPMENT STATE
 
@@ -16,15 +16,14 @@
       (see posting "ALPHA error" in openssl-dev)
     o Undefined BN symbols in assembler stuff on Solaris
       (see posting "openssl-SNAP-19990308-2130 on Solaris-2.6 SC4" in openssl-dev)
+    o BN assembler code in r3000.s, mips*.s and pa-risc*.s is broken
 
   AVAILABLE PATCHES
 
-    o Solaris AS error (kenji@miyake.org)
+    o OCSP (titchenert@certco.com) 
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
-    o s3_lib.c - export clients (levitte@stacken.kth.se)
     o linux dynamic libs (colin@field.medicine.adelaide.edu.au)
     o MingW support (niklas@canit.se)
-    o crypto/des/enc_read.c bugfix (mike@cs.mun.ca)
 
   IN PROGRESS
 
