@@ -282,13 +282,13 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 		{
 		md[k] ^= local_md[k];
 		}
+	if (entropy < ENTROPY_NEEDED) /* stop counting when we have enough */
+	    entropy += add;
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 	
 #ifndef THREADS	
 	assert(md_c[1] == md_count[1]);
 #endif
-	if (entropy < ENTROPY_NEEDED) /* stop counting when we have enough */
-	    entropy += add;
 	}
 
 static void ssleay_rand_seed(const void *buf, int num)
@@ -318,8 +318,8 @@ static void ssleay_rand_initialize(void)
 	RAND_add(&l,sizeof(l),0);
 
 #ifdef DEVRANDOM
-	/* Use a random entropy pool device. Linux and FreeBSD have
-	 * this. Use /dev/urandom if you can as /dev/random will block
+	/* Use a random entropy pool device. Linux, FreeBSD and OpenBSD
+	 * have this. Use /dev/urandom if you can as /dev/random may block
 	 * if it runs out of random entries.  */
 
 	if ((fh = fopen(DEVRANDOM, "r")) != NULL)
@@ -388,6 +388,19 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 		ssleay_rand_initialize();
 
 	ok = (entropy >= ENTROPY_NEEDED);
+	if (!ok)
+		{
+		/* If the PRNG state is not yet unpredictable, then seeing
+		 * the PRNG output may help attackers to determine the new
+		 * state; thus we have to decrease the entropy estimate.
+		 * Once we've had enough initial seeding we don't bother to
+		 * adjust the entropy count, though, because we're not ambitious
+		 * to provide *information-theoretic* randomness.
+		 */
+		entropy -= num;
+		if (entropy < 0)
+			entropy = 0;
+		}
 
 	st_idx=state_index;
 	st_num=state_num;
