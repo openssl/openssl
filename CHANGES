@@ -4,9 +4,7 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
-  *) Rewrite ssl3_read_n (ssl/s3_pkt.c) avoiding a couple of bugs,
-     including a possible buffer overflow when the 'read_ahead'
-     flag is set.
+  *) Rewrite ssl3_read_n (ssl/s3_pkt.c) avoiding a couple of bugs.
      [Bodo Moeller]
 
   *) New function X509_CTX_rget_chain(), this returns the chain

@@ -293,7 +293,7 @@ again:
 			goto f_err;
 			}
 
-		s->rstate=SSL_ST_READ_BODY;
+		/* now s->rstate == SSL_ST_READ_BODY; */
 		}
 
 	/* get and decode the data */
