@@ -68,7 +68,7 @@
 #ifndef NO_HW
 #ifndef NO_HW_NCIPHER
 
-/* Attribution notice: nCipher har said several times that it's OK for
+/* Attribution notice: nCipher have said several times that it's OK for
  * us to implement a general interface to their boxes, and recently declared
  * their HWCryptoHook to be public, and therefore available for us to use.
  * Thanks, nCipher.
@@ -554,6 +554,12 @@ static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
 		goto err;
 		}
 	hptr = OPENSSL_malloc(sizeof(HWCryptoHook_RSAKeyHandle));
+	if (!hptr)
+		{
+		ENGINEerr(ENGINE_F_HWCRHK_LOAD_PRIVKEY,
+			ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
 	if (p_hwcrhk_RSALoadKey(hwcrhk_context, key_id, hptr,
 		&rmsg, NULL))
 		{
@@ -607,6 +613,8 @@ static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
  err:
 	if (res)
 		EVP_PKEY_free(res);
+	if (rtmp)
+		RSA_free(rtmp);
 	return NULL;
 	}
 
