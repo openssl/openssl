@@ -405,7 +405,6 @@ X509_STORE_CTX *ctx;
 		}
 	ok=1;
 end:
-	EVP_PKEY_free(pkey);
 	return(ok);
 	}
 
