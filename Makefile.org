@@ -314,10 +314,10 @@ Makefile.ssl: Makefile.org
 	@false
 
 libclean:
-	rm -f *.so *.so.* engines/*.so *.a */lib */*/lib
+	rm -f *.map *.so *.so.* engines/*.so *.a */lib */*/lib
 
-clean:
-	rm -f shlib/*.o *.o core a.out fluff *.map rehash.time testlog make.log cctest cctest.c
+clean:	libclean
+	rm -f shlib/*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
 	@for i in $(DIRS) ;\
 	do \
 	if [ -d "$$i" ]; then \
@@ -327,7 +327,7 @@ clean:
 	fi; \
 	done;
 	rm -f openssl.pc
-	rm -f *.a *.o speed.* *.map *.so .pure core
+	rm -f speed.* .pure
 	rm -f $(TARFILE)
 	@for i in $(ONEDIRS) ;\
 	do \
