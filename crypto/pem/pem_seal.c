@@ -112,7 +112,7 @@ int PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 	ret=npubk;
 err:
 	if (s != NULL) OPENSSL_free(s);
-	memset(key,0,EVP_MAX_KEY_LENGTH);
+	OPENSSL_cleanse(key,EVP_MAX_KEY_LENGTH);
 	return(ret);
 	}
 

@@ -145,7 +145,7 @@ static int ber_free(BIO *a)
 
 	if (a == NULL) return(0);
 	b=(BIO_BER_CTX *)a->ptr;
-	memset(a->ptr,0,sizeof(BIO_BER_CTX));
+	OPENSSL_cleanse(a->ptr,sizeof(BIO_BER_CTX));
 	OPENSSL_free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;

@@ -427,7 +427,7 @@ void doencryption(void)
 				k2[i-8]=k;
 			}
 		DES_set_key_unchecked(&k2,&ks2);
-		memset(k2,0,sizeof(k2));
+		OPENSSL_cleanse(k2,sizeof(k2));
 		}
 	else if (longk || flag3)
 		{
@@ -435,7 +435,7 @@ void doencryption(void)
 			{
 			DES_string_to_2keys(key,&kk,&k2);
 			DES_set_key_unchecked(&k2,&ks2);
-			memset(k2,0,sizeof(k2));
+			OPENSSL_cleanse(k2,sizeof(k2));
 			}
 		else
 			DES_string_to_key(key,&kk);
@@ -457,8 +457,8 @@ void doencryption(void)
 			}
 
 	DES_set_key_unchecked(&kk,&ks);
-	memset(key,0,sizeof(key));
-	memset(kk,0,sizeof(kk));
+	OPENSSL_cleanse(key,sizeof(key));
+	OPENSSL_cleanse(kk,sizeof(kk));
 	/* woops - A bug that does not showup under unix :-( */
 	memset(iv,0,sizeof(iv));
 	memset(iv2,0,sizeof(iv2));
@@ -666,18 +666,18 @@ void doencryption(void)
 		if (l) fclose(CKSUM_OUT);
 		}
 problems:
-	memset(buf,0,sizeof(buf));
-	memset(obuf,0,sizeof(obuf));
-	memset(&ks,0,sizeof(ks));
-	memset(&ks2,0,sizeof(ks2));
-	memset(iv,0,sizeof(iv));
-	memset(iv2,0,sizeof(iv2));
-	memset(kk,0,sizeof(kk));
-	memset(k2,0,sizeof(k2));
-	memset(uubuf,0,sizeof(uubuf));
-	memset(b,0,sizeof(b));
-	memset(bb,0,sizeof(bb));
-	memset(cksum,0,sizeof(cksum));
+	OPENSSL_cleanse(buf,sizeof(buf));
+	OPENSSL_cleanse(obuf,sizeof(obuf));
+	OPENSSL_cleanse(&ks,sizeof(ks));
+	OPENSSL_cleanse(&ks2,sizeof(ks2));
+	OPENSSL_cleanse(iv,sizeof(iv));
+	OPENSSL_cleanse(iv2,sizeof(iv2));
+	OPENSSL_cleanse(kk,sizeof(kk));
+	OPENSSL_cleanse(k2,sizeof(k2));
+	OPENSSL_cleanse(uubuf,sizeof(uubuf));
+	OPENSSL_cleanse(b,sizeof(b));
+	OPENSSL_cleanse(bb,sizeof(bb));
+	OPENSSL_cleanse(cksum,sizeof(cksum));
 	if (Exit) EXIT(Exit);
 	}
 

@@ -356,7 +356,7 @@ int MAIN(int argc, char **argv)
 end:
 	if (buf != NULL)
 		{
-		memset(buf,0,BUFSIZE);
+		OPENSSL_cleanse(buf,BUFSIZE);
 		OPENSSL_free(buf);
 		}
 	if (in != NULL) BIO_free(in);

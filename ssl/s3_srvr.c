@@ -1556,7 +1556,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		s->session->master_key_length=
 			s->method->ssl3_enc->generate_master_secret(s,
 				s->session->master_key,p,i);
-		memset(p,0,i);
+		OPENSSL_cleanse(p,i);
 		}
 	else
 #endif

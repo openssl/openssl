@@ -908,9 +908,9 @@ end:
 	if (con != NULL) SSL_free(con);
 	if (con2 != NULL) SSL_free(con2);
 	if (ctx != NULL) SSL_CTX_free(ctx);
-	if (cbuf != NULL) { memset(cbuf,0,BUFSIZZ); OPENSSL_free(cbuf); }
-	if (sbuf != NULL) { memset(sbuf,0,BUFSIZZ); OPENSSL_free(sbuf); }
-	if (mbuf != NULL) { memset(mbuf,0,BUFSIZZ); OPENSSL_free(mbuf); }
+	if (cbuf != NULL) { OPENSSL_cleanse(cbuf,BUFSIZZ); OPENSSL_free(cbuf); }
+	if (sbuf != NULL) { OPENSSL_cleanse(sbuf,BUFSIZZ); OPENSSL_free(sbuf); }
+	if (mbuf != NULL) { OPENSSL_cleanse(mbuf,BUFSIZZ); OPENSSL_free(mbuf); }
 	if (bio_c_out != NULL)
 		{
 		BIO_free(bio_c_out);

@@ -301,7 +301,7 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 		ctx->digest->cleanup(ctx);
 	if (ctx->digest && ctx->digest->ctx_size && ctx->md_data)
 		{
-		memset(ctx->md_data,0,ctx->digest->ctx_size);
+		OPENSSL_cleanse(ctx->md_data,ctx->digest->ctx_size);
 		OPENSSL_free(ctx->md_data);
 		}
 	if(ctx->engine)

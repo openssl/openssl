@@ -136,7 +136,7 @@ static int do_pk8pkey(BIO *bp, EVP_PKEY *x, int isder, int nid, const EVP_CIPHER
 			kstr = buf;
 		}
 		p8 = PKCS8_encrypt(nid, enc, kstr, klen, NULL, 0, 0, p8inf);
-		if(kstr == buf) memset(buf, 0, klen);
+		if(kstr == buf) OPENSSL_cleanse(buf, klen);
 		PKCS8_PRIV_KEY_INFO_free(p8inf);
 		if(isder) ret = i2d_PKCS8_bio(bp, p8);
 		else ret = PEM_write_bio_PKCS8(bp, p8);

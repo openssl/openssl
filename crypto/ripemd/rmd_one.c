@@ -70,7 +70,7 @@ unsigned char *RIPEMD160(const unsigned char *d, unsigned long n,
 	RIPEMD160_Init(&c);
 	RIPEMD160_Update(&c,d,n);
 	RIPEMD160_Final(md,&c);
-	memset(&c,0,sizeof(c)); /* security consideration */
+	OPENSSL_cleanse(&c,sizeof(c)); /* security consideration */
 	return(md);
 	}
 

@@ -211,7 +211,7 @@ static int ok_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 	EVP_MD_CTX_cleanup(&((BIO_OK_CTX *)a->ptr)->md);
-	memset(a->ptr,0,sizeof(BIO_OK_CTX));
+	OPENSSL_cleanse(a->ptr,sizeof(BIO_OK_CTX));
 	OPENSSL_free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;

@@ -96,7 +96,7 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
 	else
 		*siglen=i;
 
-	memset(s,0,(unsigned int)j+1);
+	OPENSSL_cleanse(s,(unsigned int)j+1);
 	OPENSSL_free(s);
 	return(ret);
 	}
@@ -139,7 +139,7 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
 		ret=1;
 err:
 	if (sig != NULL) M_ASN1_OCTET_STRING_free(sig);
-	memset(s,0,(unsigned int)siglen);
+	OPENSSL_cleanse(s,(unsigned int)siglen);
 	OPENSSL_free(s);
 	return(ret);
 	}

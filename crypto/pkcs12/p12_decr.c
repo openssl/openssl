@@ -136,7 +136,7 @@ void * PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
 	}
 #endif
 	ret = ASN1_item_d2i(NULL, &p, outlen, it);
-	if (zbuf) memset(out, 0, outlen);
+	if (zbuf) OPENSSL_cleanse(out, outlen);
 	if(!ret) PKCS12err(PKCS12_F_PKCS12_DECRYPT_D2I,PKCS12_R_DECODE_ERROR);
 	OPENSSL_free(out);
 	return ret;
@@ -168,7 +168,7 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor, const ASN1_ITEM *i
 		OPENSSL_free(in);
 		return NULL;
 	}
-	if (zbuf) memset(in, 0, inlen);
+	if (zbuf) OPENSSL_cleanse(in, inlen);
 	OPENSSL_free(in);
 	return oct;
 }

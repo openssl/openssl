@@ -615,7 +615,7 @@ int password_callback(char *buf, int bufsiz, int verify,
 
 		if (buff)
 			{
-			memset(buff,0,(unsigned int)bufsiz);
+			OPENSSL_cleanse(buff,(unsigned int)bufsiz);
 			OPENSSL_free(buff);
 			}
 
@@ -625,13 +625,13 @@ int password_callback(char *buf, int bufsiz, int verify,
 			{
 			BIO_printf(bio_err, "User interface error\n");
 			ERR_print_errors(bio_err);
-			memset(buf,0,(unsigned int)bufsiz);
+			OPENSSL_cleanse(buf,(unsigned int)bufsiz);
 			res = 0;
 			}
 		if (ok == -2)
 			{
 			BIO_printf(bio_err,"aborted!\n");
-			memset(buf,0,(unsigned int)bufsiz);
+			OPENSSL_cleanse(buf,(unsigned int)bufsiz);
 			res = 0;
 			}
 		UI_free(ui);

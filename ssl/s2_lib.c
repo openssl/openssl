@@ -308,7 +308,7 @@ void ssl2_free(SSL *s)
 	s2=s->s2;
 	if (s2->rbuf != NULL) OPENSSL_free(s2->rbuf);
 	if (s2->wbuf != NULL) OPENSSL_free(s2->wbuf);
-	memset(s2,0,sizeof *s2);
+	OPENSSL_cleanse(s2,sizeof *s2);
 	OPENSSL_free(s2);
 	s->s2=NULL;
 	}
