@@ -697,8 +697,8 @@ install: all install_docs
 			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
 			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
-		fi \
-	done
+		fi; \
+	done;
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		tmp="$(SHARED_LIBS)"; \
 		for i in $${tmp:-x}; \
@@ -715,7 +715,7 @@ install: all install_docs
 					cp $$i.a $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a; \
 					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a; \
 				fi ); \
-			fi \
+			fi; \
 		done; \
 		(	here="`pwd`"; \
 			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
