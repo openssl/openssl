@@ -69,7 +69,16 @@ static STACK *ssl_session_meth=NULL;
 
 SSL_SESSION *SSL_get_session(SSL *ssl)
 	{
-	return(ssl->session);
+	SSL_SESSION *sess;
+	/* Need to lock this all up rather than just use CRYPTO_add so that
+	 * somebody doesn't free ssl->session between when we check it's
+	 * non-null and when we up the reference count. */
+	CRYPTO_r_lock(CRYPTO_LOCK_SSL_SESSION);
+	sess = ssl->session;
+	if(sess)
+		sess->references++;
+	CRYPTO_r_unlock(CRYPTO_LOCK_SSL_SESSION);
+	return(sess);
 	}
 
 int SSL_SESSION_get_ex_new_index(long argl, char *argp, int (*new_func)(),

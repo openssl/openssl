@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Correctly increment the reference count in the SSL_SESSION pointer 
+     returned from SSL_get_session().
+     [Geoff Thorpe <geoff@eu.c2.net>]
+
   *) Fix for 'req': it was adding a null to request attributes.
      Also change the X509_LOOKUP and X509_INFO code to handle
      certificate auxiliary information.
