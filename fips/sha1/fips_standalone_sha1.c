@@ -56,9 +56,9 @@
 
 int FIPS_selftest_fail;
 
-#if 0
+#ifdef OPENSSL_FIPS
 
-static void hmac_init(SHA_CTX *md_ctx,SHA_CTX *i_ctx,SHA_CTX *o_ctx,
+static void hmac_init(SHA_CTX *md_ctx,SHA_CTX *o_ctx,
 		      const char *key)
     {
     int len=strlen(key);
@@ -68,11 +68,8 @@ static void hmac_init(SHA_CTX *md_ctx,SHA_CTX *i_ctx,SHA_CTX *o_ctx,
 
     if (len > SHA_CBLOCK)
 	{
-	/*	EVP_DigestInit_ex(&ctx->md_ctx,md, impl); */
 	SHA1_Init(md_ctx);
-	/*	EVP_DigestUpdate(&ctx->md_ctx,key,len); */
 	SHA1_Update(md_ctx,key,len);
-	/*	EVP_DigestFinal_ex(&(ctx->md_ctx),ctx->key,&ctx->key_length); */
 	SHA1_Final(keymd,md_ctx);
 	len=20;
 	}
@@ -82,32 +79,21 @@ static void hmac_init(SHA_CTX *md_ctx,SHA_CTX *i_ctx,SHA_CTX *o_ctx,
 
     for(i=0 ; i < HMAC_MAX_MD_CBLOCK ; i++)
 	pad[i]=0x36^keymd[i];
-    /*    EVP_DigestInit_ex(&ctx->i_ctx,md, impl); */
     SHA1_Init(md_ctx);
-    /*    EVP_DigestUpdate(&ctx->i_ctx,pad,EVP_MD_block_size(md)); */
     SHA1_Update(md_ctx,pad,SHA_CBLOCK);
 
     for(i=0 ; i < HMAC_MAX_MD_CBLOCK ; i++)
 	pad[i]=0x5c^keymd[i];
-    /*    EVP_DigestInit_ex(&ctx->o_ctx,md, impl); */
     SHA1_Init(o_ctx);
-    /*    EVP_DigestUpdate(&ctx->o_ctx,pad,EVP_MD_block_size(md)); */
     SHA1_Update(o_ctx,pad,SHA_CBLOCK);
-    /*    EVP_MD_CTX_copy_ex(&ctx->md_ctx,&ctx->i_ctx); */
-    /*    memcpy(md_ctx,i_ctx,sizeof *md_ctx); */
     }
 
 static void hmac_final(unsigned char *md,SHA_CTX *md_ctx,SHA_CTX *o_ctx)
     {
     unsigned char buf[20];
 
-    /*EVP_DigestFinal_ex(&ctx->md_ctx,buf,&i); */
     SHA1_Final(buf,md_ctx);
-    /*EVP_MD_CTX_copy_ex(&ctx->md_ctx,&ctx->o_ctx); */
-    /*    memcpy(md_ctx,o_ctx,sizeof *md_ctx); */
-    /*EVP_DigestUpdate(&ctx->md_ctx,buf,i); */
     SHA1_Update(o_ctx,buf,sizeof buf);
-    /*EVP_DigestFinal_ex(&ctx->md_ctx,md,len); */
     SHA1_Final(md,o_ctx);
     }
 
@@ -128,7 +114,7 @@ int main(int argc,char **argv)
     for(n=1 ; n < argc ; ++n)
 	{
 	FILE *f=fopen(argv[n],"rb");
-	SHA_CTX md_ctx,i_ctx,o_ctx;
+	SHA_CTX md_ctx,o_ctx;
 	unsigned char md[20];
 	int i;
 
@@ -138,7 +124,7 @@ int main(int argc,char **argv)
 	    exit(2);
 	    }
 
-	hmac_init(&md_ctx,&i_ctx,&o_ctx,key);
+	hmac_init(&md_ctx,&o_ctx,key);
 	for( ; ; )
 	    {
 	    char buf[1024];
