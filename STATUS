@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/04/13 00:58:49 $
+  ______________                           $Date: 1999/04/13 02:32:38 $
 
   DEVELOPMENT STATE
 
@@ -32,7 +32,7 @@
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
     o linux dynamic libs (colin@field.medicine.adelaide.edu.au)
     o MingW support (niklas@canit.se)
-    o SPARC v9, SPARC v8 assembler implementations of bn_asm.c
+    o SPARC v8 assembler implementations of bn_asm.c
       (appro@fy.chalmers.se)
 
   IN PROGRESS
