@@ -84,19 +84,22 @@ clean:
 
 c_rle.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 c_rle.o: ../../include/openssl/bn.h ../../include/openssl/comp.h
-c_rle.o: ../../include/openssl/crypto.h ../../include/openssl/obj_mac.h
+c_rle.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+c_rle.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
 c_rle.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 c_rle.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 c_rle.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 c_zlib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 c_zlib.o: ../../include/openssl/bn.h ../../include/openssl/comp.h
-c_zlib.o: ../../include/openssl/crypto.h ../../include/openssl/obj_mac.h
+c_zlib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+c_zlib.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
 c_zlib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 c_zlib.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 c_zlib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 comp_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 comp_lib.o: ../../include/openssl/bn.h ../../include/openssl/comp.h
-comp_lib.o: ../../include/openssl/crypto.h ../../include/openssl/obj_mac.h
+comp_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+comp_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
 comp_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 comp_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 comp_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h

@@ -556,6 +556,29 @@ nseq.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 nseq.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 nseq.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 nseq.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h
+ocsp.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+ocsp.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
+ocsp.o: ../include/openssl/buffer.h ../include/openssl/cast.h
+ocsp.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+ocsp.o: ../include/openssl/des.h ../include/openssl/dh.h
+ocsp.o: ../include/openssl/dsa.h ../include/openssl/e_os.h
+ocsp.o: ../include/openssl/e_os.h ../include/openssl/e_os2.h
+ocsp.o: ../include/openssl/engine.h ../include/openssl/err.h
+ocsp.o: ../include/openssl/evp.h ../include/openssl/idea.h
+ocsp.o: ../include/openssl/lhash.h ../include/openssl/md2.h
+ocsp.o: ../include/openssl/md4.h ../include/openssl/md5.h
+ocsp.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+ocsp.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
+ocsp.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+ocsp.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+ocsp.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
+ocsp.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+ocsp.o: ../include/openssl/rc5.h ../include/openssl/rd_fst.h
+ocsp.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
+ocsp.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+ocsp.o: ../include/openssl/sha.h ../include/openssl/stack.h
+ocsp.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
+ocsp.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h apps.h
 openssl.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 openssl.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 openssl.o: ../include/openssl/buffer.h ../include/openssl/cast.h
