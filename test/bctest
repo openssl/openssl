@@ -29,16 +29,29 @@ then
   echo "bc does not work.  Consider installing GNU bc." >&2
   echo "cat >/dev/null"
   exit 1
-else
-  # bc works, good.
-  # Now check if it knows the 'print' command.
-  if [ "OK" = "`bc 2>/dev/null <<\EOF
+fi
+
+
+# insert SCO bc test case here:
+if [ 0 != "`bc <<\EOF
+0
+EOF`" ]
+then
+  echo "bc does not work.  Consider installing GNU bc." >&2
+  echo "cat >/dev/null"
+  exit 1
+fi
+
+
+# bc works, good.
+# Now check if it knows the 'print' command.
+if [ "OK" = "`bc 2>/dev/null <<\EOF
 print \"OK\"
 EOF`" ]
-  then
+then
     echo "bc"
-  else
+else
     echo "sed 's/print.*//' | bc"
-  fi
-  exit 0
 fi
+
+exit 0
