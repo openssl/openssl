@@ -346,7 +346,9 @@ static char *apr1_crypt(const char *passwd, const char *salt)
 			buf_perm[dest] = buf[source];
 		buf_perm[14] = buf[5];
 		buf_perm[15] = buf[11];
+#ifndef PEDANTIC /* Unfortunately, this generates a "no effect" warning */
 		assert(16 == sizeof buf_perm);
+#endif
 		
 		output = salt_out + salt_len;
 		assert(output == out_buf + strlen(out_buf));

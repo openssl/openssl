@@ -410,8 +410,9 @@
  * Time for some action:-)
  */
 
-void HASH_UPDATE (HASH_CTX *c, const unsigned char *data, unsigned long len)
+void HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 	{
+	const unsigned char *data=data_;
 	register HASH_LONG * p;
 	register unsigned long l;
 	int sw,sc,ew,ec;
