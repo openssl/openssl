@@ -1,6 +1,6 @@
 /* crypto/ec/ec_mult.c */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,24 +68,22 @@
  */
 
 
-/* Determine the width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
+/* Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
  * This is an array  r[]  of values that are either zero or odd with an
  * absolute value less than  2^w  satisfying
  *     scalar = \sum_j r[j]*2^j
- * where at most one of any  w+1  consecutive digits is non-zero.
+ * where at most one of any  w+1  consecutive digits is non-zero
+ * with the exception that the most significant digit may be only
+ * w-1 zeros away from that next non-zero digit.
  */
-static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len, BN_CTX *ctx)
+static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 	{
-	BIGNUM *c;
+	int window_val;
 	int ok = 0;
 	signed char *r = NULL;
 	int sign = 1;
 	int bit, next_bit, mask;
 	size_t len = 0, j;
-	
-	BN_CTX_start(ctx);
-	c = BN_CTX_get(ctx);
-	if (c == NULL) goto err;
 	
 	if (w <= 0 || w > 7) /* 'signed char' can represent integers with absolute values less than 2^7 */
 		{
@@ -96,60 +94,84 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len, B
 	next_bit = bit << 1; /* at most 256 */
 	mask = next_bit - 1; /* at most 255 */
 
-	if (!BN_copy(c, scalar)) goto err;
-	if (c->neg)
+	if (scalar->neg)
 		{
 		sign = -1;
-		c->neg = 0;
 		}
 
-	len = BN_num_bits(c) + 1; /* wNAF may be one digit longer than binary representation */
-	r = OPENSSL_malloc(len);
+	len = BN_num_bits(scalar);
+	r = OPENSSL_malloc(len + 1); /* modified wNAF may be one digit longer than binary representation */
 	if (r == NULL) goto err;
 
-	j = 0;
-	while (!BN_is_zero(c))
+	if (scalar->d == NULL || scalar->top == 0)
 		{
-		int u = 0;
+		ECerr(EC_F_COMPUTE_WNAF, ERR_R_INTERNAL_ERROR);
+		goto err;
+		}
+	window_val = scalar->d[0] & mask;
+	j = 0;
+	while ((window_val != 0) || (j + w + 1 < len)) /* if j+w+1 >= len, window_val will not increase */
+		{
+		int digit = 0;
 
-		if (BN_is_odd(c)) 
+		/* 0 <= window_val <= 2^(w+1) */
+
+		if (window_val & 1)
 			{
-			if (c->d == NULL || c->top == 0)
+			/* 0 < window_val < 2^(w+1) */
+
+			if (window_val & bit)
+				{
+				digit = window_val - next_bit; /* -2^w < digit < 0 */
+
+#if 1 /* modified wNAF */
+				if (j + w + 1 >= len)
+					{
+					/* special case for generating modified wNAFs:
+					 * no new bits will be added into window_val,
+					 * so using a positive digit here will decrease
+					 * the total length of the representation */
+					
+					digit = window_val & (mask >> 1); /* 0 < digit < 2^w */
+					}
+#endif
+				}
+			else
+				{
+				digit = window_val; /* 0 < digit < 2^w */
+				}
+			
+			if (digit <= -bit || digit >= bit || !(digit & 1))
 				{
 				ECerr(EC_F_COMPUTE_WNAF, ERR_R_INTERNAL_ERROR);
 				goto err;
 				}
-			u = c->d[0] & mask;
-			if (u & bit)
-				{
-				u -= next_bit;
-				/* u < 0 */
-				if (!BN_add_word(c, -u)) goto err;
-				}
-			else
-				{
-				/* u > 0 */
-				if (!BN_sub_word(c, u)) goto err;
-				}
 
-			if (u <= -bit || u >= bit || !(u & 1) || c->neg)
+			window_val -= digit;
+
+			/* now window_val is 0 or 2^(w+1) in standard wNAF generation;
+			 * for modified window NAFs, it may also be 2^w
+			 */
+			if (window_val != 0 && window_val != next_bit && window_val != bit)
 				{
 				ECerr(EC_F_COMPUTE_WNAF, ERR_R_INTERNAL_ERROR);
 				goto err;
 				}
 			}
 
-		r[j++] = sign * u;
-		
-		if (BN_is_odd(c))
+		r[j++] = sign * digit;
+
+		window_val >>= 1;
+		window_val += bit * BN_is_bit_set(scalar, j + w);
+
+		if (window_val > next_bit)
 			{
 			ECerr(EC_F_COMPUTE_WNAF, ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
-		if (!BN_rshift1(c, c)) goto err;
 		}
 
-	if (j > len)
+	if (j > len + 1)
 		{
 		ECerr(EC_F_COMPUTE_WNAF, ERR_R_INTERNAL_ERROR);
 		goto err;
@@ -158,7 +180,6 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len, B
 	ok = 1;
 
  err:
-	BN_CTX_end(ctx);
 	if (!ok)
 		{
 		OPENSSL_free(r);
@@ -314,7 +335,7 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 			}
 
 		wNAF[i + 1] = NULL; /* make sure we always have a pivot */
-		wNAF[i] = compute_wNAF((i < num ? scalars[i] : scalar), wsize[i], &wNAF_len[i], ctx);
+		wNAF[i] = compute_wNAF((i < num ? scalars[i] : scalar), wsize[i], &wNAF_len[i]);
 		if (wNAF[i] == NULL) goto err;
 		if (wNAF_len[i] > max_len)
 			max_len = wNAF_len[i];
