@@ -125,7 +125,7 @@ depend:
 	done;
 
 clean:
-	rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f date.h *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i; echo "making clean in crypto/$$i..."; \
