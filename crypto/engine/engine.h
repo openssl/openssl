@@ -83,6 +83,9 @@ extern "C" {
 #define ENGINE_METHOD_ALL		(unsigned int)0xFFFF
 #define ENGINE_METHOD_NONE		(unsigned int)0x0000
 
+/* ENGINE flags that can be set by ENGINE_set_flags(). */
+/* #define ENGINE_FLAGS_MALLOCED	0x0001 */ /* Not used */
+
 /* These flags are used to tell the ctrl function what should be done.
  * All command numbers are shared between all engines, even if some don't
  * make sense to some engines.  In such a case, they do nothing but return

@@ -73,8 +73,8 @@
 extern "C" {
 #endif
 
-/* Bitwise OR-able values for the "flags" variable in ENGINE. */
-#define ENGINE_FLAGS_MALLOCED	0x0001
+/* NB: Bitwise OR-able values for the "flags" variable in ENGINE are now exposed
+ * in engine.h. */
 
 /* This is a structure for storing implementations of various crypto
  * algorithms and functions. */

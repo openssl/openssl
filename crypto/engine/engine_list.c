@@ -346,7 +346,6 @@ ENGINE *ENGINE_new(void)
 		return NULL;
 		}
 	memset(ret, 0, sizeof(ENGINE));
-	ret->flags = ENGINE_FLAGS_MALLOCED;
 	ret->struct_ref = 1;
 	return ret;
 	}
@@ -373,8 +372,7 @@ int ENGINE_free(ENGINE *e)
 		abort();
 		}
 #endif
-	if(e->flags & ENGINE_FLAGS_MALLOCED)
-		OPENSSL_free(e);
+	OPENSSL_free(e);
 	return 1;
 	}
 
