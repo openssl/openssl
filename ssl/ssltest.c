@@ -62,11 +62,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "openssl/e_os.h"
 
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -108,7 +110,7 @@ static int s_nbio=0;
 
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 
-int doit_biopair(SSL *s_ssl,SSL *c_ssl,long bytes);
+int doit_biopair(SSL *s_ssl,SSL *c_ssl,long bytes,clock_t *s_time,clock_t *c_time);
 int doit(SSL *s_ssl,SSL *c_ssl,long bytes);
 static void sv_usage(void)
 	{
@@ -143,6 +145,51 @@ static void sv_usage(void)
 	fprintf(stderr," -cipher arg   - The cipher list\n");
 	fprintf(stderr," -bio_pair     - Use BIO pairs\n");
 	fprintf(stderr," -f            - Test even cases that can't work\n");
+	fprintf(stderr," -time         - measure processor time used by client and server\n");
+	}
+
+static void print_details(SSL *c_ssl, const char *prefix)
+	{
+	SSL_CIPHER *ciph;
+	X509 *cert;
+		
+	ciph=SSL_get_current_cipher(c_ssl);
+	BIO_printf(bio_stdout,"%s%s, cipher %s %s",
+		prefix,
+		SSL_get_version(c_ssl),
+		SSL_CIPHER_get_version(ciph),
+		SSL_CIPHER_get_name(ciph));
+	cert=SSL_get_peer_certificate(c_ssl);
+	if (cert != NULL)
+		{
+		EVP_PKEY *pkey = X509_get_pubkey(cert);
+		if (pkey != NULL)
+			{
+			if (0) 
+				;
+#ifndef NO_RSA
+			else if (pkey->type == EVP_PKEY_RSA && pkey->pkey.rsa != NULL
+				&& pkey->pkey.rsa->n != NULL)
+				{
+				BIO_printf(bio_stdout, ", %d bit RSA",
+					BN_num_bits(pkey->pkey.rsa->n));
+				}
+#endif
+#ifndef NO_DSA
+			else if (pkey->type == EVP_PKEY_DSA && pkey->pkey.dsa != NULL
+				&& pkey->pkey.dsa->p != NULL)
+				{
+				BIO_printf(bio_stdout, ", %d bit DSA",
+					BN_num_bits(pkey->pkey.dsa->p));
+				}
+#endif
+			EVP_PKEY_free(pkey);
+			}
+		X509_free(cert);
+		}
+	/* The SSL API does not allow us to look at temporary RSA/DH keys,
+	 * otherwise we should print their lengths too */
+	BIO_printf(bio_stdout,"\n");
 	}
 
 int main(int argc, char *argv[])
@@ -162,12 +209,14 @@ int main(int argc, char *argv[])
 	SSL *c_ssl,*s_ssl;
 	int number=1,reuse=0;
 	long bytes=1L;
-	SSL_CIPHER *ciph;
 #ifndef NO_DH
 	DH *dh;
 	int dhe1024 = 0, dhe1024dsa = 0;
 #endif
 	int no_dhe = 0;
+	int print_time = 0;
+	clock_t s_time = 0, c_time = 0;
+
 	verbose = 0;
 	debug = 0;
 	cipher = 0;
@@ -261,6 +310,10 @@ int main(int argc, char *argv[])
 			{
 			force = 1;
 			}
+		else if	(strcmp(*argv,"-time") == 0)
+			{
+			print_time = 1;
+			}
 		else
 			{
 			fprintf(stderr,"unknown option %s\n",*argv);
@@ -279,13 +332,22 @@ bad:
 
 	if (!ssl2 && !ssl3 && !tls1 && number > 1 && !reuse && !force)
 		{
-		fprintf(stderr, "This case cannot work.  Use -f switch to perform "
-			"the test anyway\n"
-			"(and -d to see what happens, "
-			"and -bio_pair to really make it happen :-)\n"
-			"or add one of -ssl2, -ssl3, -tls1, -reuse to "
-			"avoid protocol mismatch.\n");
+		fprintf(stderr, "This case cannot work.  Use -f to perform "
+			"the test anyway (and\n-d to see what happens), "
+			"or add one of -ssl2, -ssl3, -tls1, -reuse\n"
+			"to avoid protocol mismatch.\n");
 		exit(1);
+		}
+
+	if (print_time)
+		{
+		if (!bio_pair)
+			{
+			fprintf(stderr, "Using BIO pair (-bio_pair)\n");
+			bio_pair = 1;
+			}
+		if (number < 50 && !force)
+			fprintf(stderr, "Warning: For accurate timings, use more connections (e.g. -num 1000)\n");
 		}
 
 /*	if (cipher == NULL) cipher=getenv("SSL_CIPHER"); */
@@ -405,21 +467,24 @@ bad:
 		{
 		if (!reuse) SSL_set_session(c_ssl,NULL);
 		if (bio_pair)
-			ret=doit_biopair(s_ssl,c_ssl,bytes);
+			ret=doit_biopair(s_ssl,c_ssl,bytes,&s_time,&c_time);
 		else
 			ret=doit(s_ssl,c_ssl,bytes);
 		}
 
 	if (!verbose)
 		{
-		ciph=SSL_get_current_cipher(c_ssl);
-		BIO_printf(bio_stdout,"Protocol %s, cipher %s, %s\n",
-			SSL_get_version(c_ssl),
-			SSL_CIPHER_get_version(ciph),
-			SSL_CIPHER_get_name(ciph));
+		print_details(c_ssl, "");
 		}
 	if ((number > 1) || (bytes > 1L))
 		BIO_printf(bio_stdout, "%d handshakes of %ld bytes done\n",number,bytes);
+	if (print_time)
+		{
+		BIO_printf(bio_stdout, "Approximate total server time: %6.2f s\n"
+			"Approximate total client time: %6.2f s\n",
+			(double)s_time/CLOCKS_PER_SEC,
+			(double)c_time/CLOCKS_PER_SEC);
+		}
 
 	SSL_free(s_ssl);
 	SSL_free(c_ssl);
@@ -438,12 +503,12 @@ end:
 	EXIT(ret);
 	}
 
-int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
+int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
+	clock_t *s_time, clock_t *c_time)
 	{
 	long cw_num = count, cr_num = count, sw_num = count, sr_num = count;
 	BIO *s_ssl_bio = NULL, *c_ssl_bio = NULL;
 	BIO *server = NULL, *server_io = NULL, *client = NULL, *client_io = NULL;
-	SSL_CIPHER *ciph;
 	int ret = 1;
 	
 	size_t bufsiz = 256; /* small buffer for testing */
@@ -516,6 +581,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 		
 			MS_STATIC char cbuf[1024*8];
 			int i, r;
+			clock_t c_clock = clock();
 
 			if (debug)
 				if (SSL_in_init(c_ssl))
@@ -582,6 +648,16 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 					cr_num -= r;
 					}
 				}
+
+			/* c_time and s_time increments will typically be very small
+			 * (depending on machine speed and clock tick intervals),
+			 * but sampling over a large number of connections should
+			 * result in fairly accurate figures.  We cannot guarantee
+			 * a lot, however -- if each connection lasts for exactly
+			 * one clock tick, it will be counted only for the client
+			 * or only for the server or even not at all.
+			 */
+			*c_time += (clock() - c_clock);
 			}
 
 			{
@@ -589,6 +665,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 		
 			MS_STATIC char sbuf[1024*8];
 			int i, r;
+			clock_t s_clock = clock();
 
 			if (debug)
 				if (SSL_in_init(s_ssl))
@@ -652,6 +729,8 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 					sr_num -= r;
 					}
 				}
+
+			*s_time += (clock() - s_clock);
 			}
 			
 			{
@@ -777,13 +856,9 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count)
 		}
 	while (cw_num > 0 || cr_num > 0 || sw_num > 0 || sr_num > 0);
 
-	ciph = SSL_get_current_cipher(c_ssl);
 	if (verbose)
-		fprintf(stdout,"DONE via BIO pair, protocol %s, cipher %s, %s\n",
-			SSL_get_version(c_ssl),
-			SSL_CIPHER_get_version(ciph),
-			SSL_CIPHER_get_name(ciph));
- end:
+		print_details(c_ssl, "DONE via BIO pair: ");
+end:
 	ret = 0;
 
  err:
@@ -827,7 +902,6 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 	int done=0;
 	int c_write,s_write;
 	int do_server=0,do_client=0;
-	SSL_CIPHER *ciph;
 
 	c_to_s=BIO_new(BIO_s_mem());
 	s_to_c=BIO_new(BIO_s_mem());
@@ -1077,12 +1151,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 		if ((done & S_DONE) && (done & C_DONE)) break;
 		}
 
-	ciph=SSL_get_current_cipher(c_ssl);
 	if (verbose)
-		fprintf(stdout,"DONE, protocol %s, cipher %s, %s\n",
-			SSL_get_version(c_ssl),
-			SSL_CIPHER_get_version(ciph),
-			SSL_CIPHER_get_name(ciph));
+		print_details(c_ssl, "DONE: ");
 	ret=0;
 err:
 	/* We have to set the BIO's to NULL otherwise they will be
