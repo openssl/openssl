@@ -110,9 +110,9 @@ specified.
 
 =item B<COMPLEMENTOFDEFAULT>
 
-the ciphers not enabled by default, currently being B<ADH>. This rule does not
-cover B<eNULL>, which is not included by B<ALL> and is therefore be handled by
-B<COMPLENETOFALL>.
+the ciphers included in B<ALL>, but not enabled by default. Currently
+this is B<ADH>. Note that this rule does not cover B<eNULL>, which is
+not included by B<ALL> (use B<COMPLEMENTOFALL> if necessary).
 
 =item B<ALL>
 
