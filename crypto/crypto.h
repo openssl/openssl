@@ -112,7 +112,8 @@ extern "C" {
 #define	CRYPTO_LOCK_READDIR		22
 #define	CRYPTO_LOCK_RSA_BLINDING	23
 #define	CRYPTO_LOCK_DH			24
-#define	CRYPTO_NUM_LOCKS		25
+#define	CRYPTO_LOCK_MALLOC2		25
+#define	CRYPTO_NUM_LOCKS		26
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2
@@ -301,6 +302,9 @@ void *CRYPTO_malloc(int num);
 void CRYPTO_free(void *);
 void *CRYPTO_realloc(void *addr,int num);
 void *CRYPTO_remalloc(void *addr,int num);
+
+int CRYPTO_add_info(const char *file, int line, const char *info);
+int CRYPTO_remove_info();
 
 void *CRYPTO_dbg_malloc(int num,const char *file,int line);
 void *CRYPTO_dbg_realloc(void *addr,int num,const char *file,int line);

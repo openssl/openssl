@@ -71,6 +71,7 @@
 /* static int mh_mode=CRYPTO_MEM_CHECK_ON; */
 /* #else */
 static int mh_mode=CRYPTO_MEM_CHECK_OFF;
+static unsigned long disabling_thread = 0;
 /* #endif */
 /* State CRYPTO_MEM_CHECK_ON exists only temporarily when the library
  * thinks that certain allocations should not be checked (e.g. the data
@@ -83,6 +84,18 @@ static int mh_mode=CRYPTO_MEM_CHECK_OFF;
  */
 
 static unsigned long order=0;
+
+static LHASH *amih=NULL;
+
+typedef struct app_mem_info_st
+	{	
+	unsigned long thread;
+	const char *file;
+	int line;
+	const char *info;
+	struct app_mem_info_st *next;
+	int references;
+	} APP_INFO;
 
 static LHASH *mh=NULL;
 
@@ -99,6 +112,7 @@ typedef struct mem_st
 #ifdef CRYPTO_MDEBUG_TIME
 	time_t time;
 #endif
+	APP_INFO *app_info;
 	} MEM;
 
 int CRYPTO_mem_ctrl(int mode)
@@ -111,18 +125,35 @@ int CRYPTO_mem_ctrl(int mode)
 	/* for applications: */
 	case CRYPTO_MEM_CHECK_ON: /* aka MemCheck_start() */
 		mh_mode = CRYPTO_MEM_CHECK_ON|CRYPTO_MEM_CHECK_ENABLE;
+		disabling_thread = 0;
 		break;
 	case CRYPTO_MEM_CHECK_OFF: /* aka MemCheck_stop() */
 		mh_mode = 0;
+		disabling_thread = 0;
 		break;
 
 	/* switch off temporarily (for library-internal use): */
 	case CRYPTO_MEM_CHECK_DISABLE: /* aka MemCheck_off() */
-		mh_mode&= ~CRYPTO_MEM_CHECK_ENABLE;
+		if (mh_mode & CRYPTO_MEM_CHECK_ON)
+			{
+			mh_mode&= ~CRYPTO_MEM_CHECK_ENABLE;
+			if (disabling_thread != CRYPTO_thread_id())
+				{
+				CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
+				disabling_thread=CRYPTO_thread_id();
+				}
+			}
 		break;
 	case CRYPTO_MEM_CHECK_ENABLE: /* aka MemCheck_on() */
-		if (mh_mode&CRYPTO_MEM_CHECK_ON)
+		if (mh_mode & CRYPTO_MEM_CHECK_ON)
+			{
 			mh_mode|=CRYPTO_MEM_CHECK_ENABLE;
+			if (disabling_thread != 0)
+				{
+				disabling_thread=0;
+				CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
+				}
+			}
 		break;
 
 	default:
@@ -131,6 +162,22 @@ int CRYPTO_mem_ctrl(int mode)
 	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
 	return(ret);
 	}
+
+static int is_MemCheck_On()
+	{
+	int ret = 0;
+
+	if (mh_mode & CRYPTO_MEM_CHECK_ON)
+		{
+		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
+
+		ret = (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
+			&& disabling_thread != CRYPTO_thread_id();
+
+		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+		}
+	return(ret);
+	}	
 
 static int mem_cmp(MEM *a, MEM *b)
 	{
@@ -144,6 +191,136 @@ static unsigned long mem_hash(MEM *a)
 	ret=(unsigned long)a->addr;
 
 	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
+	return(ret);
+	}
+
+static int app_info_cmp(APP_INFO *a, APP_INFO *b)
+	{
+	return(a->thread - b->thread);
+	}
+
+static unsigned long app_info_hash(APP_INFO *a)
+	{
+	unsigned long ret;
+
+	ret=(unsigned long)a->thread;
+
+	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
+	return(ret);
+	}
+
+static APP_INFO *free_info(APP_INFO *app_info)
+	{
+	APP_INFO *next;
+
+	if (app_info == NULL)
+		return NULL;
+
+	if (--(app_info->references) > 0)
+		return app_info;
+
+	app_info->references = 0;
+
+	next = app_info->next;
+	app_info->next = NULL;	/* Just to make sure */
+
+	Free(app_info);
+	if (next != app_info)
+		return free_info(next);
+	return NULL;
+	}
+		
+static APP_INFO *remove_info()
+	{
+	APP_INFO tmp;
+	APP_INFO *ret = NULL;
+
+	if (amih != NULL)
+		{
+		tmp.thread=CRYPTO_thread_id();
+		if ((ret=(APP_INFO *)lh_delete(amih,(char *)&tmp)) != NULL)
+			{
+			APP_INFO *next=ret->next;
+#ifdef LEVITTE_DEBUG
+			if (ret->thread != tmp.thread)
+				{
+				fprintf(stderr, "remove_info(): deleted info has other thread ID (%d) than the current thread (%d)!!!!\n",
+					ret->thread, tmp.thread);
+				abort();
+				}
+#endif
+			if (next != NULL)
+				{
+				lh_insert(amih,(char *)next);
+				}
+			free_info(ret);
+			}
+		}
+	return(ret);
+	}
+
+int CRYPTO_add_info(const char *file, int line, const char *info)
+	{
+	APP_INFO *ami, *amim;
+	int ret=0;
+
+	if (is_MemCheck_On())
+		{
+		MemCheck_off();
+
+		if ((ami = (APP_INFO *)Malloc(sizeof(APP_INFO))) == NULL)
+			{
+			ret=0;
+			goto err;
+			}
+		if (amih == NULL)
+			{
+			if ((amih=lh_new(app_info_hash,app_info_cmp)) == NULL)
+				{
+				Free(ami);
+				ret=0;
+				goto err;
+				}
+			}
+
+		ami->thread=CRYPTO_thread_id();
+		ami->file=file;
+		ami->line=line;
+		ami->info=info;
+		ami->references=1;
+		ami->next=NULL;
+
+		if ((amim=(APP_INFO *)lh_insert(amih,(char *)ami)) != NULL)
+			{
+#ifdef LEVITTE_DEBUG
+			if (ami->thread != amim->thread)
+				{
+				fprintf(stderr, "CRYPTO_add_info(): previous info has other thread ID (%d) than the current thread (%d)!!!!\n",
+					amim->thread, ami->thread);
+				abort();
+				}
+#endif
+			ami->next=amim;
+			}
+ err:
+		MemCheck_on();
+		}
+
+	return(ret);
+	}
+
+int CRYPTO_remove_info()
+	{
+	int ret=0;
+
+	if (is_MemCheck_On())
+		{
+		MemCheck_off();
+
+		ret=(remove_info() != NULL);
+
+		MemCheck_on();
+		}
 	return(ret);
 	}
 
@@ -213,11 +390,12 @@ void *CRYPTO_dbg_malloc(int num, const char *file, int line)
 	{
 	char *ret;
 	MEM *m,*mm;
+	APP_INFO tmp,*amim;
 
 	if ((ret=malloc_func(num)) == NULL)
 		return(NULL);
 
-	if (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
+	if (is_MemCheck_On())
 		{
 		MemCheck_off();
 		if ((m=(MEM *)Malloc(sizeof(MEM))) == NULL)
@@ -226,7 +404,6 @@ void *CRYPTO_dbg_malloc(int num, const char *file, int line)
 			MemCheck_on();
 			return(NULL);
 			}
-		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 		if (mh == NULL)
 			{
 			if ((mh=lh_new(mem_hash,mem_cmp)) == NULL)
@@ -254,13 +431,26 @@ void *CRYPTO_dbg_malloc(int num, const char *file, int line)
 #ifdef CRYPTO_MDEBUG_TIME
 		m->time=time(NULL);
 #endif
+
+		tmp.thread=CRYPTO_thread_id();
+		m->app_info=NULL;
+		if (amih != NULL
+		    && (amim=(APP_INFO *)lh_retrieve(amih,(char *)&tmp)) != NULL)
+			{
+			m->app_info = amim;
+			amim->references++;
+			}
+
 		if ((mm=(MEM *)lh_insert(mh,(char *)m)) != NULL)
 			{
 			/* Not good, but don't sweat it */
+			if (mm->app_info != NULL)
+				{
+				mm->app_info->references--;
+				}
 			Free(mm);
 			}
 err:
-		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
 		MemCheck_on();
 		}
 	return(ret);
@@ -270,15 +460,21 @@ void CRYPTO_dbg_free(void *addr)
 	{
 	MEM m,*mp;
 
-	if ((mh_mode & CRYPTO_MEM_CHECK_ENABLE) && (mh != NULL))
+	if (is_MemCheck_On() && (mh != NULL))
 		{
 		MemCheck_off();
-		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
+
 		m.addr=addr;
 		mp=(MEM *)lh_delete(mh,(char *)&m);
 		if (mp != NULL)
+			{
+			if (mp->app_info != NULL)
+				{
+				mp->app_info->references--;
+				}
 			Free(mp);
-		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+			}
+
 		MemCheck_on();
 		}
 	free_func(addr);
@@ -292,19 +488,20 @@ void *CRYPTO_dbg_realloc(void *addr, int num, const char *file, int line)
 	ret=realloc_func(addr,num);
 	if (ret == addr) return(ret);
 
-	if (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
+	if (is_MemCheck_On())
 		{
-		MemCheck_off();
 		if (ret == NULL) return(NULL);
+
+		MemCheck_off();
+
 		m.addr=addr;
-		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 		mp=(MEM *)lh_delete(mh,(char *)&m);
 		if (mp != NULL)
 			{
 			mp->addr=ret;
 			lh_insert(mh,(char *)mp);
 			}
-		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+
 		MemCheck_on();
 		}
 	return(ret);
@@ -335,9 +532,12 @@ typedef struct mem_leak_st
 static void print_leak(MEM *m, MEM_LEAK *l)
 	{
 	char buf[128];
+	APP_INFO *amip;
+	int ami_cnt;
 #ifdef CRYPTO_MDEBUG_TIME
 	struct tm *lcl;
 #endif
+	unsigned long ti;
 
 	if(m->addr == (char *)l->bio)
 	    return;
@@ -365,8 +565,49 @@ static void print_leak(MEM *m, MEM_LEAK *l)
 		m->num,(unsigned long)m->addr);
 
 	BIO_puts(l->bio,buf);
+	
 	l->chunks++;
 	l->bytes+=m->num;
+
+	amip=m->app_info;
+	ami_cnt=0;
+	if (amip)
+		ti=amip->thread;
+	while(amip && amip->thread == ti)
+		{
+		int buf_len;
+		int info_len;
+
+		ami_cnt++;
+		memset(buf,'>',ami_cnt);
+		sprintf(buf + ami_cnt,
+			"thread=%d, file=%s, line=%d, info=\"",
+			amip->thread, amip->file, amip->line);
+		buf_len=strlen(buf);
+		info_len=strlen(amip->info);
+		if (128 - buf_len - 3 < info_len)
+			{
+			memcpy(buf + buf_len, amip->info, 128 - buf_len - 3);
+			buf_len = 128 - 3;
+			}
+		else
+			{
+			strcpy(buf + buf_len, amip->info);
+			buf_len = strlen(buf);
+			}
+		sprintf(buf + buf_len, "\"\n");
+		
+		BIO_puts(l->bio,buf);
+
+		amip = amip->next;
+		}
+#ifdef LEVITTE_DEBUG
+	if (amip)
+		{
+		fprintf(stderr, "Thread switch detected i backtrace!!!!\n");
+		abort();
+		}
+#endif
 	}
 
 void CRYPTO_mem_leaks(BIO *b)
@@ -378,9 +619,9 @@ void CRYPTO_mem_leaks(BIO *b)
 	ml.bio=b;
 	ml.bytes=0;
 	ml.chunks=0;
-	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
+	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
 	lh_doall_arg(mh,(void (*)())print_leak,(char *)&ml);
-	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
 	if (ml.chunks != 0)
 		{
 		sprintf(buf,"%ld bytes leaked in %d chunks\n",
@@ -406,11 +647,11 @@ static void cb_leak(MEM *m, char *cb)
 void CRYPTO_mem_leaks_cb(void (*cb)())
 	{
 	if (mh == NULL) return;
-	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
+	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
 	mem_cb=cb;
 	lh_doall_arg(mh,(void (*)())cb_leak,(char *)mem_cb);
 	mem_cb=NULL;
-	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
 	}
 
 #ifndef NO_FP_API
