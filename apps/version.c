@@ -107,7 +107,7 @@ char **argv;
 	if (platform) printf("%s\n",SSLeay_version(SSLEAY_PLATFORM));
 	if (options) 
 		{
-		printf("options:");
+		printf("options:  ");
 		printf("%s ",BN_options());
 #ifndef NO_MD2
 		printf("%s ",MD2_options());

@@ -5,6 +5,9 @@
 
  Changes between 0.9.1c and 0.9.2
 
+  *) Make `openssl version' output lines consistent.
+     [Ralf S. Engelschall]
+
   *) Fix Win32 symbol export lists for BIO functions: Added
      BIO_get_ex_new_index, BIO_get_ex_num, BIO_get_ex_data and BIO_set_ex_data
      to ms/libeay{16,32}.def.

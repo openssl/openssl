@@ -70,34 +70,34 @@ int t;
 	if (t == SSLEAY_BUILT_ON)
 		{
 #ifdef DATE
-		static char buf[sizeof(DATE)+10];
+		static char buf[sizeof(DATE)+11];
 
-		sprintf(buf,"built on %s",DATE);
+		sprintf(buf,"built on: %s",DATE);
         	return(buf);
 #else
-		return("build date not available");
+		return("built on: date not available");
 #endif
 		}
 	if (t == SSLEAY_CFLAGS)
 		{
 #ifdef CFLAGS
-		static char buf[sizeof(CFLAGS)+10];
+		static char buf[sizeof(CFLAGS)+11];
 
-		sprintf(buf,"C flags:%s",CFLAGS);
+		sprintf(buf,"compiler: %s",CFLAGS);
 		return(buf);
 #else
-		return("C flags not available");
+		return("compiler: information not available");
 #endif
 		}
 	if (t == SSLEAY_PLATFORM)
 		{
 #ifdef PLATFORM
-		static char buf[sizeof(PLATFORM)+10];
+		static char buf[sizeof(PLATFORM)+11];
 
-		sprintf(buf,"Platform:%s",PLATFORM);
+		sprintf(buf,"platform: %s", PLATFORM);
 		return(buf);
 #else
-		return("Platform information not available");
+		return("platform: information not available");
 #endif
 		}
 	return("not available");
