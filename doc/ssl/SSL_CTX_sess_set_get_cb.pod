@@ -13,7 +13,7 @@ SSL_CTX_sess_set_new_cb, SSL_CTX_sess_set_remove_cb, SSL_CTX_sess_set_get_cb, SS
  void SSL_CTX_sess_set_remove_cb(SSL_CTX *ctx,
 	   void (*remove_session_cb)(SSL_CTX *ctx, SSL_SESSION *));
  void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx,
-	   SSL_SESSION (*get_session-cb)(SSL *, unsigned char *, int, int *));
+	   SSL_SESSION (*get_session_cb)(SSL *, unsigned char *, int, int *));
 
  int (*SSL_CTX_sess_get_new_cb(SSL_CTX *ctx))(struct ssl_st *ssl, SSL_SESSION *sess);
  void (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx))(struct ssl_ctx_st *ctx, SSL_SESSION *sess);
@@ -41,7 +41,7 @@ L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>).
 (SSL/TLS server only.)
 
 SSL_CTX_sess_get_new_cb(), SSL_CTX_sess_get_remove_cb(), and
-SSL_CTX_sess_get_get_cb() allow to retrieve the funtion pointers of the
+SSL_CTX_sess_get_get_cb() allow to retrieve the function pointers of the
 provided callback functions. If a callback function has not been set,
 the NULL pointer is returned.
 
@@ -56,7 +56,7 @@ The new_session_cb() is called, whenever a new session has been negotiated
 and session caching is enabled (see
 L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>).
 The new_session_cb() is passed the B<ssl> connection and the ssl session
-B<sess>. If the callback returns B<0>, the session will be immediatly
+B<sess>. If the callback returns B<0>, the session will be immediately
 removed again.
 
 The remove_session_cb() is called, whenever the SSL engine removes a session
@@ -75,6 +75,7 @@ SSL engine to increment the reference count of the SSL_SESSION object.
 =head1 SEE ALSO
 
 L<ssl(3)|ssl(3)>, L<d2i_SSL_SESSION(3)|d2i_SSL_SESSION(3)>,
-L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>
+L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>,
+L<SSL_CTX_flush_sessions(3)|<SSL_CTX_flush_sessions(3)>
 
 =cut
