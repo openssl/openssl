@@ -25,6 +25,7 @@
      many platforms, but is not correct.  As these functions are usually
      called by macros defined in OpenSSL header files, most source code
      should work without changes.
+     [Richard Levitte]
 
   *) <openssl/opensslconf.h> (which is created by Configure) now contains
      sections with information on -D... compiler switches used for
@@ -34,6 +35,7 @@
         #define OPENSSL_ALGORITHM_DEFINES
         #include <openssl/opensslconf.h>
      defines all pertinent NO_<algo> symbols, such as NO_IDEA, NO_RSA, etc.
+     [Richard Levitte, Ulf and Bodo Möller]
 
   *) Bugfix: Tolerate fragmentation and interleaving in the SSL 3/TLS
      record layer.
