@@ -2082,6 +2082,10 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  Changes between 0.9.6g and 0.9.6h  [xx XXX xxxx]
 
+  *) Change the default configuration reader to deal with last line not
+     being properly terminated.
+     [Richard Levitte]
+
   *) Change X509_NAME_cmp() so it applies the special rules on handling
      DN values that are of type PrintableString, as well as RDNs of type
      emailAddress where the value has the type ia5String.

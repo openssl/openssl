@@ -253,9 +253,9 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
 	section_sk=(STACK_OF(CONF_VALUE) *)sv->value;
 
 	bufnum=0;
+	again=0;
 	for (;;)
 		{
-		again=0;
 		if (!BUF_MEM_grow(buff,bufnum+CONFBUFSIZE))
 			{
 			CONFerr(CONF_F_CONF_LOAD_BIO,ERR_R_BUF_LIB);
@@ -266,7 +266,8 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
 		BIO_gets(in, p, CONFBUFSIZE-1);
 		p[CONFBUFSIZE-1]='\0';
 		ii=i=strlen(p);
-		if (i == 0) break;
+		if (i == 0 && !again) break;
+		again=0;
 		while (i > 0)
 			{
 			if ((p[i-1] != '\r') && (p[i-1] != '\n'))
@@ -276,7 +277,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
 			}
 		/* we removed some trailing stuff so there is a new
 		 * line on the end. */
-		if (i == ii)
+		if (ii && i == ii)
 			again=1; /* long line */
 		else
 			{
