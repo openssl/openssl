@@ -426,6 +426,7 @@ int MAIN(int argc, char **argv)
 		}
 	}
 	if(!keyidlen) {
+		ucert = NULL;
 		BIO_printf(bio_err, "No certificate matches private key\n");
 		goto export_end;
 	}
@@ -588,6 +589,7 @@ int MAIN(int argc, char **argv)
 	if (certs) sk_X509_pop_free(certs, X509_free);
 	if (safes) sk_PKCS7_pop_free(safes, PKCS7_free);
 	if (bags) sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
+	if (ucert) X509_free(ucert);
 
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_pop_info();
