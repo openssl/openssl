@@ -159,7 +159,7 @@ int ssl2_accept(SSL *s)
 	BUF_MEM *buf=NULL;
 	int ret= -1;
 	long num1;
-	void (*cb)()=NULL;
+	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int new_state,state;
 
 	RAND_add(&l,sizeof(l),0);

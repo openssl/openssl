@@ -1313,7 +1313,7 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ret->key_arg=NULL;
 	ret->s2->conn_id=NULL; */
 
-	ret->info_callback=0;
+	ret->info_callback=NULL;
 
 	ret->app_verify_callback=0;
 	ret->app_verify_arg=NULL;
@@ -2136,14 +2136,15 @@ int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
 	}
 #endif
 
-void SSL_set_info_callback(SSL *ssl,void (*cb)())
+void SSL_set_info_callback(SSL *ssl,
+			   void (*cb)(const SSL *ssl,int type,int val))
 	{
 	ssl->info_callback=cb;
 	}
 
-void (*SSL_get_info_callback(SSL *ssl))(void)
+void (*SSL_get_info_callback(SSL *ssl))(const SSL *ssl,int type,int val)
 	{
-	return((void (*)())ssl->info_callback);
+	return ssl->info_callback;
 	}
 
 int SSL_state(SSL *ssl)

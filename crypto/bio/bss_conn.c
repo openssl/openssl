@@ -95,7 +95,7 @@ typedef struct bio_connect_st
 	/* called when the connection is initially made
 	 *  callback(BIO,state,ret);  The callback should return
 	 * 'ret'.  state is for compatibility with the ssl info_callback */
-	int (*info_callback)();
+	int (*info_callback)(const BIO *bio,int state,int ret);
 	} BIO_CONNECT;
 
 static int conn_write(BIO *h, const char *buf, int num);
@@ -574,7 +574,8 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 		if (data->param_hostname)
 			BIO_set_conn_hostname(dbio,data->param_hostname);
 		BIO_set_nbio(dbio,data->nbio);
-                (void)BIO_set_info_callback(dbio,data->info_callback);
+		/* FIXME: the cast of the function seems unlikely to be a good idea */
+                (void)BIO_set_info_callback(dbio,(bio_info_cb *)data->info_callback);
 		}
 		break;
 	case BIO_CTRL_SET_CALLBACK:

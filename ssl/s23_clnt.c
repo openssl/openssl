@@ -100,7 +100,7 @@ int ssl23_connect(SSL *s)
 	{
 	BUF_MEM *buf;
 	unsigned long Time=time(NULL);
-	void (*cb)()=NULL;
+	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
 	int new_state,state;
 
@@ -440,7 +440,7 @@ static int ssl23_get_server_hello(SSL *s)
 		 (p[3] == 0) &&
 		 (p[4] == 2))
 		{
-		void (*cb)()=NULL;
+		void (*cb)(const SSL *ssl,int type,int val)=NULL;
 		int j;
 
 		/* An alert */

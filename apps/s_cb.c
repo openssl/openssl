@@ -253,7 +253,7 @@ long MS_CALLBACK bio_dump_cb(BIO *bio, int cmd, const char *argp, int argi,
 	return(ret);
 	}
 
-void MS_CALLBACK apps_ssl_info_callback(SSL *s, int where, int ret)
+void MS_CALLBACK apps_ssl_info_callback(const SSL *s, int where, int ret)
 	{
 	char *str;
 	int w;

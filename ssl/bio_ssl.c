@@ -486,7 +486,9 @@ static long ssl_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 		{
 	case BIO_CTRL_SET_CALLBACK:
 		{
-		SSL_set_info_callback(ssl,fp);
+		/* FIXME: setting this via a completely different prototype
+		   seems like a crap idea */
+		SSL_set_info_callback(ssl,(void (*)(const SSL *,int,int))fp);
 		}
 		break;
 	default:

@@ -578,7 +578,7 @@ struct ssl_ctx_st
 
 	/* Default values used when no per-SSL value is defined follow */
 
-	void (*info_callback)(); /* used if SSL's info_callback is NULL */
+	void (*info_callback)(const SSL *ssl,int type,int val); /* used if SSL's info_callback is NULL */
 
 	/* what we put in client cert requests */
 	STACK_OF(X509_NAME) *client_CA;
@@ -794,7 +794,7 @@ struct ssl_st
 	int verify_depth;
 	int (*verify_callback)(int ok,X509_STORE_CTX *ctx); /* fail if callback returns 0 */
 
-	void (*info_callback)(); /* optional informational callback */
+	void (*info_callback)(const SSL *ssl,int type,int val); /* optional informational callback */
 
 	int error;		/* error bytes to be written */
 	int error_code;		/* actual code */
@@ -1135,10 +1135,10 @@ int	SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 #endif
 
 void	SSL_load_error_strings(void );
-const char *SSL_state_string(SSL *s);
-const char *SSL_rstate_string(SSL *s);
-const char *SSL_state_string_long(SSL *s);
-const char *SSL_rstate_string_long(SSL *s);
+const char *SSL_state_string(const SSL *s);
+const char *SSL_rstate_string(const SSL *s);
+const char *SSL_state_string_long(const SSL *s);
+const char *SSL_rstate_string_long(const SSL *s);
 long	SSL_SESSION_get_time(SSL_SESSION *s);
 long	SSL_SESSION_set_time(SSL_SESSION *s, long t);
 long	SSL_SESSION_get_timeout(SSL_SESSION *s);
@@ -1289,8 +1289,9 @@ int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
 SSL_SESSION *SSL_get_session(SSL *ssl);
 SSL_SESSION *SSL_get1_session(SSL *ssl); /* obtain a reference count */
 SSL_CTX *SSL_get_SSL_CTX(SSL *ssl);
-void SSL_set_info_callback(SSL *ssl,void (*cb)());
-void (*SSL_get_info_callback(SSL *ssl))();
+void SSL_set_info_callback(SSL *ssl,
+			   void (*cb)(const SSL *ssl,int type,int val));
+void (*SSL_get_info_callback(SSL *ssl))(const SSL *ssl,int type,int val);
 int SSL_state(SSL *ssl);
 
 void SSL_set_verify_result(SSL *ssl,long v);

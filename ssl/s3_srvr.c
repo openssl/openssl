@@ -164,7 +164,7 @@ int ssl3_accept(SSL *s)
 	{
 	BUF_MEM *buf;
 	unsigned long l,Time=time(NULL);
-	void (*cb)()=NULL;
+	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	long num1;
 	int ret= -1;
 	int new_state,state,skip=0;

@@ -155,6 +155,6 @@ long MS_CALLBACK bio_dump_cb(BIO *bio, int cmd, const char *argp,
 	int argi, long argl, long ret);
 
 #ifdef HEADER_SSL_H
-void MS_CALLBACK apps_ssl_info_callback(SSL *s, int where, int ret);
+void MS_CALLBACK apps_ssl_info_callback(const SSL *s, int where, int ret);
 void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg);
 #endif

@@ -106,7 +106,7 @@ int ssl3_connect(SSL *s)
 	BUF_MEM *buf;
 	unsigned long Time=time(NULL),l;
 	long num1;
-	void (*cb)()=NULL;
+	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
 	int new_state,state,skip=0;;
 

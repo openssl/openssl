@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 
-const char *SSL_state_string_long(SSL *s)
+const char *SSL_state_string_long(const SSL *s)
 	{
 	const char *str;
 
@@ -199,7 +199,7 @@ default:	str="unknown state"; break;
 	return(str);
 	}
 
-const char *SSL_rstate_string_long(SSL *s)
+const char *SSL_rstate_string_long(const SSL *s)
 	{
 	const char *str;
 
@@ -213,7 +213,7 @@ const char *SSL_rstate_string_long(SSL *s)
 	return(str);
 	}
 
-const char *SSL_state_string(SSL *s)
+const char *SSL_state_string(const SSL *s)
 	{
 	const char *str;
 
@@ -487,7 +487,7 @@ const char *SSL_alert_desc_string_long(int value)
 	return(str);
 	}
 
-const char *SSL_rstate_string(SSL *s)
+const char *SSL_rstate_string(const SSL *s)
 	{
 	const char *str;
 
