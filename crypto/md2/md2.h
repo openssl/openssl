@@ -73,7 +73,7 @@ extern "C" {
 
 typedef struct MD2state_st
 	{
-	usigned int num;
+	unsigned int num;
 	unsigned char data[MD2_BLOCK];
 	MD2_INT cksm[MD2_BLOCK];
 	MD2_INT state[MD2_BLOCK];
