@@ -4,45 +4,25 @@
 
 #include <openssl/lhash.h>
 #include <openssl/objects.h>
-
-union cmp_fn_to_char_u
-	{
-	char *char_p;
-	int (*fn_p)(const char *, const char *);
-	};
-
-union hash_fn_to_char_u
-	{
-	char *char_p;
-	unsigned long (*fn_p)(const char *);
-	};
-
-union int_fn_to_char_u
-	{
-	char *char_p;
-	int (*fn_p)();
-	};
-
-union ulong_fn_to_char_u
-	{
-	char *char_p;
-	unsigned long (*fn_p)();
-	};
-
-union void_fn_to_char_u
-	{
-	char *char_p;
-	void (*fn_p)();
-	};
+#include <openssl/safestack.h>
 
 /* I use the ex_data stuff to manage the identifiers for the obj_name_types
  * that applications may define.  I only really use the free function field.
  */
 static LHASH *names_lh=NULL;
 static int names_type_num=OBJ_NAME_TYPE_NUM;
-static STACK *names_cmp=NULL;
-static STACK *names_hash=NULL;
-static STACK *names_free=NULL;
+
+typedef struct name_funcs_st
+	{
+	unsigned long (*hash_func)();
+	int (*cmp_func)();
+	void (*free_func)();
+	} NAME_FUNCS;
+
+DECLARE_STACK_OF(NAME_FUNCS)
+IMPLEMENT_STACK_OF(NAME_FUNCS)
+
+STACK_OF(NAME_FUNCS) *name_funcs_stack;
 
 static unsigned long obj_name_hash(OBJ_NAME *a);
 static int obj_name_cmp(OBJ_NAME *a,OBJ_NAME *b);
@@ -61,62 +41,57 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(), int (*cmp_func)(),
 	{
 	int ret;
 	int i;
-	union ulong_fn_to_char_u tmp_hash_func;
-	union int_fn_to_char_u tmp_cmp_func;
-	union void_fn_to_char_u tmp_free_func;
-	union cmp_fn_to_char_u tmp_strcmp;
-	union hash_fn_to_char_u tmp_lh_strhash;
+	NAME_FUNCS *name_funcs;
 
-	tmp_hash_func.fn_p = hash_func;
-	tmp_cmp_func.fn_p = cmp_func;
-	tmp_free_func.fn_p = free_func;
-	tmp_strcmp.fn_p = (int (*)(const char *, const char *))strcmp;
-	tmp_lh_strhash.fn_p = lh_strhash;
-
-	if (names_free == NULL)
+	if (name_funcs_stack == NULL)
 		{
 		MemCheck_off();
-		names_hash=sk_new_null();
-		names_cmp=sk_new_null();
-		names_free=sk_new_null();
+		name_funcs_stack=sk_NAME_FUNCS_new_null();
 		MemCheck_on();
 		}
-	if ((names_free == NULL) || (names_hash == NULL) || (names_cmp == NULL))
+	if ((name_funcs_stack == NULL))
 		{
 		/* ERROR */
 		return(0);
 		}
 	ret=names_type_num;
 	names_type_num++;
-	for (i=sk_num(names_free); i<names_type_num; i++)
+	for (i=sk_NAME_FUNCS_num(name_funcs_stack); i<names_type_num; i++)
 		{
 		MemCheck_off();
-		sk_push(names_hash,tmp_strcmp.char_p);
-		sk_push(names_cmp,tmp_lh_strhash.char_p);
-		sk_push(names_free,NULL);
+		name_funcs = Malloc(sizeof(NAME_FUNCS));
+		name_funcs->hash_func = lh_strhash;
+		name_funcs->cmp_func = strcmp;
+		name_funcs->free_func = 0; /* NULL is often declared to
+					    * ((void *)0), which according
+					    * to Compaq C is not really
+					    * compatible with a function
+					    * pointer.  -- Richard Levitte*/
+		sk_NAME_FUNCS_push(name_funcs_stack,name_funcs);
 		MemCheck_on();
 		}
+	name_funcs = sk_NAME_FUNCS_value(name_funcs_stack, ret);
 	if (hash_func != NULL)
-		sk_set(names_hash,ret,tmp_hash_func.char_p);
+		name_funcs->hash_func = hash_func;
 	if (cmp_func != NULL)
-		sk_set(names_cmp,ret,tmp_cmp_func.char_p);
+		name_funcs->cmp_func = cmp_func;
 	if (free_func != NULL)
-		sk_set(names_free,ret,tmp_free_func.char_p);
+		name_funcs->free_func = free_func;
 	return(ret);
 	}
 
 static int obj_name_cmp(OBJ_NAME *a, OBJ_NAME *b)
 	{
 	int ret;
-	union int_fn_to_char_u cmp;
 
 	ret=a->type-b->type;
 	if (ret == 0)
 		{
-		if ((names_cmp != NULL) && (sk_num(names_cmp) > a->type))
+		if ((name_funcs_stack != NULL)
+			&& (sk_NAME_FUNCS_num(name_funcs_stack) > a->type))
 			{
-			cmp.char_p=sk_value(names_cmp,a->type);
-			ret=cmp.fn_p(a->name,b->name);
+			ret=sk_NAME_FUNCS_value(name_funcs_stack,a->type)
+				->cmp_func(a->name,b->name);
 			}
 		else
 			ret=strcmp(a->name,b->name);
@@ -127,12 +102,11 @@ static int obj_name_cmp(OBJ_NAME *a, OBJ_NAME *b)
 static unsigned long obj_name_hash(OBJ_NAME *a)
 	{
 	unsigned long ret;
-	union ulong_fn_to_char_u hash;
 
-	if ((names_hash != NULL) && (sk_num(names_hash) > a->type))
+	if ((name_funcs_stack != NULL) && (sk_NAME_FUNCS_num(name_funcs_stack) > a->type))
 		{
-		hash.char_p=sk_value(names_hash,a->type);
-		ret=hash.fn_p(a->name);
+		ret=sk_NAME_FUNCS_value(name_funcs_stack,a->type)
+			->hash_func(a->name);
 		}
 	else
 		{
@@ -174,7 +148,6 @@ const char *OBJ_NAME_get(const char *name, int type)
 
 int OBJ_NAME_add(const char *name, int type, const char *data)
 	{
-	union void_fn_to_char_u f;
 	OBJ_NAME *onp,*ret;
 	int alias;
 
@@ -199,10 +172,14 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 	if (ret != NULL)
 		{
 		/* free things */
-		if ((names_free != NULL) && (sk_num(names_free) > ret->type))
+		if ((name_funcs_stack != NULL) && (sk_NAME_FUNCS_num(name_funcs_stack) > ret->type))
 			{
-			f.char_p=sk_value(names_free,ret->type);
-			f.fn_p(ret->name,ret->type,ret->data);
+			/* XXX: I'm not sure I understand why the free
+			 * function should get three arguments...
+			 * -- Richard Levitte
+			 */
+			sk_NAME_FUNCS_value(name_funcs_stack,ret->type)
+				->free_func(ret->name,ret->type,ret->data);
 			}
 		Free((char *)ret);
 		}
@@ -220,7 +197,6 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 int OBJ_NAME_remove(const char *name, int type)
 	{
 	OBJ_NAME on,*ret;
-	union void_fn_to_char_u f;
 
 	if (names_lh == NULL) return(0);
 
@@ -231,10 +207,14 @@ int OBJ_NAME_remove(const char *name, int type)
 	if (ret != NULL)
 		{
 		/* free things */
-		if ((names_free != NULL) && (sk_num(names_free) > type))
+		if ((name_funcs_stack != NULL) && (sk_NAME_FUNCS_num(name_funcs_stack) > ret->type))
 			{
-			f.char_p=sk_value(names_free,type);
-			f.fn_p(ret->name,ret->type,ret->data);
+			/* XXX: I'm not sure I understand why the free
+			 * function should get three arguments...
+			 * -- Richard Levitte
+			 */
+			sk_NAME_FUNCS_value(name_funcs_stack,ret->type)
+				->free_func(ret->name,ret->type,ret->data);
 			}
 		Free((char *)ret);
 		return(1);
@@ -256,6 +236,11 @@ static void names_lh_free(OBJ_NAME *onp, int type)
 		}
 	}
 
+static void name_funcs_free(NAME_FUNCS *ptr)
+	{
+	Free(ptr);
+	}
+
 void OBJ_NAME_cleanup(int type)
 	{
 	unsigned long down_load;
@@ -270,13 +255,9 @@ void OBJ_NAME_cleanup(int type)
 	if (type < 0)
 		{
 		lh_free(names_lh);
-		sk_free(names_hash);
-		sk_free(names_cmp);
-		sk_free(names_free);
+		sk_NAME_FUNCS_pop_free(name_funcs_stack,name_funcs_free);
 		names_lh=NULL;
-		names_hash=NULL;
-		names_cmp=NULL;
-		names_free=NULL;
+		name_funcs_stack = NULL;
 		}
 	else
 		names_lh->down_load=down_load;
