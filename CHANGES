@@ -2,9 +2,19 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7d and 0.9.7f  [XX xxx XXXX]
+ Changes between 0.9.7e and 0.9.7f  [XX xxx XXXX]
 
-  *)
+  *) Make an explicit check during certificate validation to see that
+     the CA setting in each certificate on the chain is correct.  As a
+     side effect always do the following basic checks on extensions,
+     not just when there's an associated purpose to the check:
+
+      - if there is an unhandled critical extension (unless the user
+        has chosen to ignore this fault)
+      - if the path length has been exceeded (if one is set at all)
+      - that certain extensions fit the associated purpose (if one has
+        been given)
+     [Richard Levitte]
 
  Changes between 0.9.7d and 0.9.7e  [25 Oct 2004]
 
