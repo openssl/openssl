@@ -180,7 +180,12 @@ test_pkcs7:
 
 test_bn:
 	@echo starting big number library test, could take a while...
-	@(./$(BNTEST)|bc) | awk '{ \
+# This *should* work:
+#	@(./$(BNTEST)|bc) | awk '{ \
+# Some broken bc's treat the pipe as a terminal :-(
+# By using a temporary file, errors detected by awk may be farther away from
+# the test that caused them; but even with the pipe there'd be some distance.
+	@(./$(BNTEST) >tmp.bntest; echo quit >>tmp.bntest; bc tmp.bntest) | awk '{ \
 if ($$0 != "0") {print "error"; exit(1); } \
 if (((NR+1)%64) == 0) print NR+1," tests done"; }'
 	@echo 'test a^b%c implementations'
@@ -226,7 +231,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff $(EXE) *.ss log
+	rm -f tmp.bntest *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff $(EXE) *.ss log
 
 $(DLIBSSL):
 	(cd ../ssl; $(MAKE))
