@@ -78,6 +78,103 @@ void RC4(RC4_KEY *key, unsigned long len, unsigned char *indata,
         y=key->y;     
         d=key->data; 
 
+#if defined(RC4_CHUNK) && (defined(L_ENDIAN) || defined(B_ENDIAN))
+	/*
+	 * The original reason for implementing this(*) was the fact that
+	 * pre-21164a Alpha CPUs don't have byte load/store instructions
+	 * and e.g. a byte store has to be done with 64-bit load, shift,
+	 * and, or and finally 64-bit store. Peaking data and operating
+	 * at natural word size made it possible to reduce amount of
+	 * instructions as well as to perform early read-ahead without
+	 * suffering from RAW (read-after-write) hazard. This resulted
+	 * in >40%(**) performance improvement (on 21064 box with gcc).
+	 * But it's not only Alpha users who win here:-) Thanks to the
+	 * early-n-wide read-ahead this implementation also exhibits
+	 * >40% speed-up on SPARC and almost 20% on MIPS.
+	 *
+	 * (*)	"this" means code which recognizes the case when input
+	 *	and output pointers appear to be aligned at natural CPU
+	 *	word boundary.
+	 * (**)	i.e. according to 'apps/openssl speed rc4' benchmark,
+	 *	crypto/rc4/rc4speed.c exhibits almost 70% speed-up.
+	 *
+	 *					<appro@fy.chalmers.se>
+	 */
+
+#define RC4_STEP	( \
+			x=(x+1) &0xff,	\
+			tx=d[x],	\
+			y=(tx+y)&0xff,	\
+			ty=d[y],	\
+			d[y]=tx,	\
+			d[x]=ty,	\
+			(RC4_CHUNK)d[(tx+ty)&0xff]\
+			)
+
+#if defined(L_ENDIAN)
+#  define SHFT(c)	((c)*8)
+#  define MASK(i)	(((RC4_CHUNK)-1)>>((sizeof(RC4_CHUNK)-(i))<<3))
+#  define SHINC		8
+#elif defined(B_ENDIAN)
+#  define SHFT(c)	((sizeof(RC4_CHUNK)-(c)-1)*8)
+#  define MASK(i)	(((RC4_CHUNK)-1)<<((sizeof(RC4_CHUNK)-(i))<<3))
+#  define SHINC		-8
+#else
+#  error "L_ENDIAN or B_ENDIAN *must* be defined!"
+#endif
+
+	if ( ( ((unsigned long)indata  & (sizeof(RC4_CHUNK)-1)) | 
+	       ((unsigned long)outdata & (sizeof(RC4_CHUNK)-1)) ) == 0
+	   ) {
+		RC4_CHUNK ichunk,cipher;
+
+		for (;len&-sizeof(RC4_CHUNK);len-=sizeof(RC4_CHUNK)) {
+			ichunk  = *(RC4_CHUNK *)indata;
+			cipher  = RC4_STEP<<SHFT(0);
+			cipher |= RC4_STEP<<SHFT(1);
+			cipher |= RC4_STEP<<SHFT(2);
+			cipher |= RC4_STEP<<SHFT(3);
+#ifdef RC4_CHUNK_IS_64_BIT
+			cipher |= RC4_STEP<<SHFT(4);
+			cipher |= RC4_STEP<<SHFT(5);
+			cipher |= RC4_STEP<<SHFT(6);
+			cipher |= RC4_STEP<<SHFT(7);
+#endif
+			*(RC4_CHUNK *)outdata = cipher^ichunk;
+			indata  += sizeof(RC4_CHUNK);
+			outdata += sizeof(RC4_CHUNK);
+		}
+		if (len) {
+			RC4_CHUNK mask,ochunk;
+
+			ichunk = *(RC4_CHUNK *)indata;
+			ochunk = *(RC4_CHUNK *)outdata;
+			cipher = 0;
+			i = SHFT(0);
+			mask = MASK(len);
+			switch (len) {
+#ifdef RC4_CHUNK_IS_64_BIT
+				case 7:	cipher  = RC4_STEP<<SHFT(0), i+=SHINC;
+				case 6:	cipher |= RC4_STEP<<i,	i+=SHINC;
+				case 5:	cipher |= RC4_STEP<<i,	i+=SHINC;
+				case 4:	cipher |= RC4_STEP<<i,	i+=SHINC;
+				case 3:	cipher |= RC4_STEP<<i,	i+=SHINC;
+#else
+				case 3:	cipher  = RC4_STEP<<SHFT(0), i+=SHINC;
+#endif
+				case 2:	cipher |= RC4_STEP<<i,	i+=SHINC;
+				case 1:	cipher |= RC4_STEP<<i,	i+=SHINC;
+				case 0: ; /* it's never the case, but it
+					     has to be here for ultrix? */
+			}
+			ochunk &= ~mask;
+			ochunk |= (cipher^ichunk) & mask;
+			*(RC4_CHUNK *)outdata = ochunk;
+		}
+	}
+	else
+#endif
+	{
 #define LOOP(in,out) \
 		x=((x+1)&0xff); \
 		tx=d[x]; \
@@ -126,6 +223,7 @@ void RC4(RC4_KEY *key, unsigned long len, unsigned char *indata,
 			RC4_LOOP(indata,outdata,6); if (--i == 0) break;
 			}
 		}               
+	}
 	key->x=x;     
 	key->y=y;
 	}
