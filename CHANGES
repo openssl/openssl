@@ -4,6 +4,12 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Add a configuration entry for OS/390 Unix.  The C compiler 'c89'
+     is called via tools/c89.sh because arguments have to be
+     rearranged (all '-L' options must appear before the first object
+     modules).
+     [Richard Shapiro <rshapiro@abinitio.com>]
+
   *) [In 0.9.6c-engine release:]
      Add support for Broadcom crypto accelerator cards, backported
      from 0.9.7.
