@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/08/08 11:45:56 $
+  ______________                           $Date: 1999/08/08 12:51:19 $
 
   DEVELOPMENT STATE
 
@@ -14,6 +14,7 @@
        for OpenSSL 0.9.4 before the tarball should be actually rolled:
            Votes: Ralf +1
                   Bodo +1 (also tested Mingw32)
+                  Steve +1 (also tested VC-WIN32, linux-elf)
 
     o  OpenSSL 0.9.3a: Released on May      29th, 1999
     o  OpenSSL 0.9.3:  Released on May      25th, 1999
