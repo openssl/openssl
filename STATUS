@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/04/25 07:46:35 $
+  ______________                           $Date: 2002/04/25 07:52:07 $
 
   DEVELOPMENT STATE
 
@@ -68,11 +68,17 @@
     o  inappropriate AlgorithmIdentifier used in S/MIME signatures
        (key type instead of signature algorithm)
 
+    o  AES ciphersuites are not (yet) official and should not be enabled
+       unless explicitly requested
+
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
 
     o  "OpenSSL STATUS" is never up-to-date.
 
   OPEN ISSUES
+
+    o  Do we want the EVP API changes in 0.9.7?
+       Can compatibility be improved?
 
     o  The Makefile hierarchy and build mechanism is still not a round thing:
 
