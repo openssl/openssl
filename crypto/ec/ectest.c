@@ -80,8 +80,6 @@ void timings(EC_GROUP *group, int simult, BN_CTX *ctx)
 	int i, j;
 	BIGNUM *s, *s0;
 	EC_POINT *P;
-	EC_POINT *points[1];
-	BIGNUM *scalars[1];
 		
 	s = BN_new();
 	s0 = BN_new();
@@ -97,9 +95,6 @@ void timings(EC_GROUP *group, int simult, BN_CTX *ctx)
 	if (P == NULL) ABORT;
 	EC_POINT_copy(P, EC_GROUP_get0_generator(group));
 
-	points[0] = P;
-	scalars[0] = s0;
-
 	clck = clock();
 	for (i = 0; i < 10; i++)
 		{
@@ -110,7 +105,7 @@ void timings(EC_GROUP *group, int simult, BN_CTX *ctx)
 			}
 		for (j = 0; j < 10; j++)
 			{
-			if (!EC_POINTs_mul(group, P, s, simult != 0, points, scalars, ctx)) ABORT;
+			if (!EC_POINT_mul(group, P, s, simult ? P : NULL, simult ? s0 : NULL, ctx)) ABORT;
 			}
 		fprintf(stdout, ".");
 		fflush(stdout);
@@ -322,12 +317,17 @@ int main(int argc, char *argv[])
 	if (!BN_hex2bn(&z, "07192B95FFC8DA78631011ED6B24CDD573F977A11E794811")) ABORT;
 	if (0 != BN_cmp(y, z)) ABORT;
 	
-	fprintf(stdout, "verify group order ... ");
+	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
 	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
-	if (!EC_POINTs_mul(group, Q, z, 0, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, "ok\n");
+	fprintf(stdout, ".");
+	fflush(stdout);
+	if (!EC_GROUP_precompute(group, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
+	fprintf(stdout, " ok\n");
 
 	if (!(P_192 = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT;
 	if (!EC_GROUP_copy(P_192, group)) ABORT;
@@ -357,13 +357,18 @@ int main(int argc, char *argv[])
 	if (!BN_hex2bn(&z, "BD376388B5F723FB4C22DFE6CD4375A05A07476444D5819985007E34")) ABORT;
 	if (0 != BN_cmp(y, z)) ABORT;
 	
-	fprintf(stdout, "verify group order ... ");
+	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
 	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
-	if (!EC_POINTs_mul(group, Q, z, 0, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, "ok\n");
-	
+	fprintf(stdout, ".");
+	fflush(stdout);
+	if (!EC_GROUP_precompute(group, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
+	fprintf(stdout, " ok\n");
+
 	if (!(P_224 = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT;
 	if (!EC_GROUP_copy(P_224, group)) ABORT;
 
@@ -393,13 +398,18 @@ int main(int argc, char *argv[])
 	if (!BN_hex2bn(&z, "4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5")) ABORT;
 	if (0 != BN_cmp(y, z)) ABORT;
 	
-	fprintf(stdout, "verify group order ... ");
+	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
 	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
-	if (!EC_POINTs_mul(group, Q, z, 0, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, "ok\n");
-	
+	fprintf(stdout, ".");
+	fflush(stdout);
+	if (!EC_GROUP_precompute(group, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
+	fprintf(stdout, " ok\n");
+
 	if (!(P_256 = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT;
 	if (!EC_GROUP_copy(P_256, group)) ABORT;
 
@@ -434,13 +444,18 @@ int main(int argc, char *argv[])
 		"7CE9DA3113B5F0B8C00A60B1CE1D7E819D7A431D7C90EA0E5F")) ABORT;
 	if (0 != BN_cmp(y, z)) ABORT;
 	
-	fprintf(stdout, "verify group order ... ");
+	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
 	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
-	if (!EC_POINTs_mul(group, Q, z, 0, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, "ok\n");
-	
+	fprintf(stdout, ".");
+	fflush(stdout);
+	if (!EC_GROUP_precompute(group, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
+	fprintf(stdout, " ok\n");
+
 	if (!(P_384 = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT;
 	if (!EC_GROUP_copy(P_384, group)) ABORT;
 
@@ -481,12 +496,17 @@ int main(int argc, char *argv[])
 		"7086A272C24088BE94769FD16650")) ABORT;
 	if (0 != BN_cmp(y, z)) ABORT;
 	
-	fprintf(stdout, "verify group order ... ");
+	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
 	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
-	if (!EC_POINTs_mul(group, Q, z, 0, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, "ok\n");
+	fprintf(stdout, ".");
+	fflush(stdout);
+	if (!EC_GROUP_precompute(group, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
+	fprintf(stdout, " ok\n");
 
 	if (!(P_521 = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT;
 	if (!EC_GROUP_copy(P_521, group)) ABORT;
@@ -505,17 +525,17 @@ int main(int argc, char *argv[])
 	if (!EC_POINT_is_at_infinity(group, R)) ABORT; /* R = P + 2Q */
 
 	{
-		EC_POINT *points[2];
-		BIGNUM *scalars[2];
+		const EC_POINT *points[3];
+		const BIGNUM *scalars[3];
 	
 		if (EC_POINT_is_at_infinity(group, Q)) ABORT;
+		points[0] = Q;
+		points[1] = Q;
+		points[2] = Q;
 
 		if (!BN_add(y, z, BN_value_one())) ABORT;
 		if (BN_is_odd(y)) ABORT;
 		if (!BN_rshift1(y, y)) ABORT;
-
-		points[0] = Q;
-		points[1] = Q;
 		scalars[0] = y; /* (group order + 1)/2,  so  y*Q + y*Q = Q */
 		scalars[1] = y;
 
@@ -534,20 +554,30 @@ int main(int argc, char *argv[])
 		if (!BN_pseudo_rand(y, BN_num_bits(y), 0, 0)) ABORT;
 		if (!BN_copy(z, y)) ABORT;
 		z->neg = 1;
-
-		points[0] = Q;
-		points[1] = Q;
 		scalars[0] = y;
-		scalars[1] = z;
+		scalars[1] = z; /* z = -y */
 
 		if (!EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx)) ABORT;
+		if (!EC_POINT_is_at_infinity(group, P)) ABORT;
+
+		fprintf(stdout, ".");
+		fflush(stdout);
+
+		if (!BN_pseudo_rand(x, BN_num_bits(y) - 1, 0, 0)) ABORT;
+		if (!BN_add(z, x, y)) ABORT;
+		z->neg = 1;
+		scalars[0] = x;
+		scalars[1] = y;
+		scalars[2] = z; /* z = -(x+y) */
+
+		if (!EC_POINTs_mul(group, P, NULL, 3, points, scalars, ctx)) ABORT;
 		if (!EC_POINT_is_at_infinity(group, P)) ABORT;
 
 		fprintf(stdout, " ok\n\n");
 	}
 
 
-#if 0
+#if 1
 	timings(P_192, 0, ctx);
 	timings(P_192, 1, ctx);
 	timings(P_224, 0, ctx);

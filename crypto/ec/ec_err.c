@@ -86,6 +86,7 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_PACK(0,EC_F_EC_GROUP_GET_EXTRA_DATA,0),	"EC_GROUP_get_extra_data"},
 {ERR_PACK(0,EC_F_EC_GROUP_GET_ORDER,0),	"EC_GROUP_get_order"},
 {ERR_PACK(0,EC_F_EC_GROUP_NEW,0),	"EC_GROUP_new"},
+{ERR_PACK(0,EC_F_EC_GROUP_PRECOMPUTE,0),	"EC_GROUP_precompute"},
 {ERR_PACK(0,EC_F_EC_GROUP_SET_CURVE_GFP,0),	"EC_GROUP_set_curve_GFp"},
 {ERR_PACK(0,EC_F_EC_GROUP_SET_EXTRA_DATA,0),	"EC_GROUP_set_extra_data"},
 {ERR_PACK(0,EC_F_EC_GROUP_SET_GENERATOR,0),	"EC_GROUP_set_generator"},
@@ -127,6 +128,7 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {EC_R_POINT_IS_NOT_ON_CURVE              ,"point is not on curve"},
 {EC_R_SLOT_FULL                          ,"slot full"},
 {EC_R_UNDEFINED_GENERATOR                ,"undefined generator"},
+{EC_R_UNKNOWN_ORDER                      ,"unknown order"},
 {0,NULL}
 	};
 

@@ -4,7 +4,11 @@
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
   *) Function EC_POINTs_mul for simultaneous scalar multiplication
-     of an arbitrary number of elliptic curve points.
+     of an arbitrary number of elliptic curve points, optionally
+     including the generator defined for the EC_GROUP.
+     EC_POINT_mul is a simple wrapper function for the typical case
+     that the point list has just one item (besides the optional
+     generator).
      [Bodo Moeller]
 
   *) First EC_METHODs for curves over GF(p):

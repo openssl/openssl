@@ -77,8 +77,8 @@
  *      scalar*generator
  * is included in the addition if scalar != NULL
  */
-int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, BIGNUM *scalar,
-	size_t num, EC_POINT *points[], BIGNUM *scalars[], BN_CTX *ctx)
+int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
 	{
 	BN_CTX *new_ctx = NULL;
 	EC_POINT *generator = NULL;
@@ -228,7 +228,7 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, BIGNUM *scalar,
 			{
 			if (wbits[i] == 0)
 				{
-				BIGNUM *s;
+				const BIGNUM *s;
 
 				s = i < num ? scalars[i] : scalar;
 
@@ -293,5 +293,61 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, BIGNUM *scalar,
 		{
 		OPENSSL_free(val_sub);
 		}
+	return ret;
+	}
+
+
+int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar, const EC_POINT *point, const BIGNUM *p_scalar, BN_CTX *ctx)
+	{
+	const EC_POINT *points[1];
+	const BIGNUM *scalars[1];
+
+	points[0] = point;
+	scalars[0] = p_scalar;
+
+	return EC_POINTs_mul(group, r, g_scalar, (point != NULL && p_scalar != NULL), points, scalars, ctx);
+	}
+
+
+int EC_GROUP_precompute(EC_GROUP *group, BN_CTX *ctx)
+	{
+	const EC_POINT *generator;
+	BN_CTX *new_ctx = NULL;
+	BIGNUM *order;
+	int ret = 0;
+
+	generator = EC_GROUP_get0_generator(group);
+	if (generator == NULL)
+		{
+		ECerr(EC_F_EC_GROUP_PRECOMPUTE, EC_R_UNDEFINED_GENERATOR);
+		return 0;
+		}
+
+	if (ctx == NULL)
+		{
+		ctx = new_ctx = BN_CTX_new();
+		if (ctx == NULL)
+			return 0;
+		}
+	
+	BN_CTX_start(ctx);
+	order = BN_CTX_get(ctx);
+	if (order == NULL) goto err;
+	
+	if (!EC_GROUP_get_order(group, order, ctx)) return 0;
+	if (BN_is_zero(order))
+		{
+		ECerr(EC_F_EC_GROUP_PRECOMPUTE, EC_R_UNKNOWN_ORDER);
+		goto err;
+		}
+
+	/* TODO */
+
+	ret = 1;
+	
+ err:
+	BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
 	return ret;
 	}

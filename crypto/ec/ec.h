@@ -160,7 +160,9 @@ int EC_POINT_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
 int EC_POINTs_make_affine(const EC_GROUP *, size_t num, EC_POINT *[], BN_CTX *);
 
 
-int EC_POINTs_mul(const EC_GROUP *, EC_POINT *r, BIGNUM *, size_t num, EC_POINT *[], BIGNUM *[], BN_CTX *);
+int EC_POINTs_mul(const EC_GROUP *, EC_POINT *r, const BIGNUM *, size_t num, const EC_POINT *[], const BIGNUM *[], BN_CTX *);
+int EC_POINT_mul(const EC_GROUP *, EC_POINT *r, const BIGNUM *, const EC_POINT *, const BIGNUM *, BN_CTX *);
+int EC_GROUP_precompute(EC_GROUP *, BN_CTX *);
 
 
 
@@ -193,6 +195,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GROUP_GET_EXTRA_DATA			 107
 #define EC_F_EC_GROUP_GET_ORDER				 141
 #define EC_F_EC_GROUP_NEW				 108
+#define EC_F_EC_GROUP_PRECOMPUTE			 142
 #define EC_F_EC_GROUP_SET_CURVE_GFP			 109
 #define EC_F_EC_GROUP_SET_EXTRA_DATA			 110
 #define EC_F_EC_GROUP_SET_GENERATOR			 111
@@ -231,6 +234,7 @@ void ERR_load_EC_strings(void);
 #define EC_R_POINT_IS_NOT_ON_CURVE			 107
 #define EC_R_SLOT_FULL					 108
 #define EC_R_UNDEFINED_GENERATOR			 113
+#define EC_R_UNKNOWN_ORDER				 114
 
 #ifdef  __cplusplus
 }
