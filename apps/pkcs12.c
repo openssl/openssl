@@ -558,7 +558,7 @@ int MAIN(int argc, char **argv)
 	CRYPTO_push_info("creating PKCS#12 structure");
 #endif
 
-	p12 = PKCS12_create(pass, name, key, ucert, certs,
+	p12 = PKCS12_create(cpass, name, key, ucert, certs,
 				key_pbe, cert_pbe, iter, -1, keytype);
 
 	if (!p12)
