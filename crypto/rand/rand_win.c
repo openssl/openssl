@@ -264,6 +264,7 @@ int RAND_poll(void)
 	 * This seeding method was proposed in Peter Gutmann, Software
 	 * Generation of Practically Strong Random Numbers,
 	 * http://www.usenix.org/publications/library/proceedings/sec98/gutmann.html
+     * revised version at http://www.cryptoengines.com/~peter/06_random.pdf
 	 * (The assignment of entropy estimates below is arbitrary, but based
 	 * on Peter's analysis the full poll appears to be safe. Additional
 	 * interactive seeding is encouraged.)
