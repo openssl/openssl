@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Added Broadcom "ubsec" ENGINE to OpenSSL.
+     [Broadcom, tweaked and integrated by Geoff Thorpe]
+
   *) Move common extension printing code to new function
      X509V3_print_extensions(). Reorganise OCSP print routines and
      implement some needed OCSP ASN1 functions.
