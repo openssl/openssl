@@ -77,6 +77,28 @@ static struct
     {
     DES_cblock key1;
     DES_cblock key2;
+    unsigned char plaintext[8];
+    unsigned char ciphertext[8];
+    } tests2[]=
+	{
+	{
+	{ 0x7c,0x4f,0x6e,0xf7,0xa2,0x04,0x16,0xec },
+	{ 0x0b,0x6b,0x7c,0x9e,0x5e,0x19,0xa7,0xc4 },
+	{ 0x06,0xa7,0xd8,0x79,0xaa,0xce,0x69,0xef },
+	{ 0x4c,0x11,0x17,0x55,0xbf,0xc4,0x4e,0xfd }
+	},
+	{
+	{ 0x5d,0x9e,0x01,0xd3,0x25,0xc7,0x3e,0x34 },
+	{ 0x01,0x16,0x7c,0x85,0x23,0xdf,0xe0,0x68 },
+	{ 0x9c,0x50,0x09,0x0f,0x5e,0x7d,0x69,0x7e },
+	{ 0xd2,0x0b,0x18,0xdf,0xd9,0x0d,0x9e,0xff },
+	}
+	};
+
+static struct
+    {
+    DES_cblock key1;
+    DES_cblock key2;
     DES_cblock key3;
     unsigned char plaintext[8];
     unsigned char ciphertext[8];
@@ -117,6 +139,28 @@ int FIPS_selftest_des()
 	    }
 	DES_ecb_encrypt(&tests[n].ciphertext,&buf,&key,0);
 	if(memcmp(buf,tests[n].plaintext,sizeof buf))
+	    {
+	    FIPSerr(FIPS_F_FIPS_SELFTEST_DES,FIPS_R_SELFTEST_FAILED);
+	    return 0;
+	    }
+	}
+
+    /* Encrypt/decrypt with 2-key 3DES and compare to known answers */
+    for(n=0 ; n < 2 ; ++n)
+	{
+	DES_key_schedule key1, key2;
+	unsigned char buf[8];
+
+	DES_set_key(&tests2[n].key1,&key1);
+	DES_set_key(&tests2[n].key2,&key2);
+	DES_ecb2_encrypt(tests2[n].plaintext,buf,&key1,&key2,1);
+	if(memcmp(buf,tests2[n].ciphertext,sizeof buf))
+	    {
+	    FIPSerr(FIPS_F_FIPS_SELFTEST_DES,FIPS_R_SELFTEST_FAILED);
+	    return 0;
+	    }
+	DES_ecb2_encrypt(tests2[n].ciphertext,buf,&key1,&key2,0);
+	if(memcmp(buf,tests2[n].plaintext,sizeof buf))
 	    {
 	    FIPSerr(FIPS_F_FIPS_SELFTEST_DES,FIPS_R_SELFTEST_FAILED);
 	    return 0;
