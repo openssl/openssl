@@ -70,7 +70,7 @@ static long buffer_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int buffer_new(BIO *h);
 static int buffer_free(BIO *data);
 static long buffer_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
-#define DEFAULT_BUFFER_SIZE	1024
+#define DEFAULT_BUFFER_SIZE	4096
 
 static BIO_METHOD methods_buffer=
 	{
