@@ -64,10 +64,10 @@
 
 
 #define EC_window_bits_for_scalar_size(b) \
-		((b) >= 1500 ? 6 : \
-		 (b) >=  550 ? 5 : \
-		 (b) >=  200 ? 4 : \
-		 (b) >=   55 ? 3 : \
+		((b) >= 2000 ? 6 : \
+		 (b) >=  800 ? 5 : \
+		 (b) >=  300 ? 4 : \
+		 (b) >=   70 ? 3 : \
 		 (b) >=   20 ? 2 : \
 		  1)
 /* For window size 'w' (w >= 2), we compute the odd multiples
@@ -126,17 +126,20 @@
  *     w = 1  if   12 >= b
  *
  * Note that neither table tries to take into account memory usage
- * (code locality etc.).  Actual timings with NIST curve P-192 and
- * 192-bit scalars show that  w = 3  (instead of 4) is preferrable;
- * and timings with NIST curve P-521 and 521-bit scalars show that
- * w = 4  (instead of 5) is preferrable.  So we round up all the
+ * (allocation overhead, code locality etc.).  Actual timings with
+ * NIST curves P-192, P-224, and P-256 with scalars of 192, 224,
+ * and 256 bits, respectively, show that  w = 3  (instead of 4) is
+ * preferrable; timings with NIST curve P-384 and 384-bit scalars
+ * confirm that  w = 4  is optimal for this case; and timings with
+ * NIST curve P-521 and 521-bit scalars show that  w = 4  (instead
+ * of 5) is preferrable.  So we generously round up all the
  * boundaries and use the following table:
  *
- *    w >= 6  if         b >= 1500
- *     w = 5  if 1499 >= b >=  550
- *     w = 4  if  549 >= b >=  200
- *     w = 3  if  199 >= b >=   55
- *     w = 2  if   54 >= b >=   20
+ *    w >= 6  if         b >= 2000
+ *     w = 5  if 1999 >= b >=  800
+ *     w = 4  if  799 >= b >=  300
+ *     w = 3  if  299 >= b >=   70
+ *     w = 2  if   69 >= b >=   20
  *     w = 1  if   19 >= b
  */
 
@@ -282,7 +285,7 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 			}
 		}
 
-#if 1 /* optional, maybe we should only do this if total_num > 1 */
+#if 1 /* optional; EC_window_bits_for_scalar_size assumes we do this step */
 	if (!EC_POINTs_make_affine(group, num_val, val, ctx)) goto err;
 #endif
 
