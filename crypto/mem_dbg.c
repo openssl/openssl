@@ -219,41 +219,39 @@ long CRYPTO_dbg_get_options(void)
 	return options;
 	}
 
-static int mem_cmp(MEM *a, MEM *b)
+/* static int mem_cmp(MEM *a, MEM *b) */
+static int mem_cmp(void *a_void, void *b_void)
 	{
-	return((char *)a->addr - (char *)b->addr);
+	return((char *)((MEM *)a_void)->addr - (char *)((MEM *)b_void)->addr);
 	}
 
-static unsigned long mem_hash(MEM *a)
+/* static unsigned long mem_hash(MEM *a) */
+static unsigned long mem_hash(void *a_void)
 	{
 	unsigned long ret;
 
-	ret=(unsigned long)a->addr;
+	ret=(unsigned long)((MEM *)a_void)->addr;
 
 	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
 	return(ret);
 	}
 
-static IMPLEMENT_LHASH_HASH_FN(mem_hash, MEM *)
-static IMPLEMENT_LHASH_COMP_FN(mem_cmp, MEM *)
-
-static int app_info_cmp(APP_INFO *a, APP_INFO *b)
+/* static int app_info_cmp(APP_INFO *a, APP_INFO *b) */
+static int app_info_cmp(void *a_void, void *b_void)
 	{
-	return(a->thread != b->thread);
+	return(((APP_INFO *)a_void)->thread != ((APP_INFO *)b_void)->thread);
 	}
 
-static unsigned long app_info_hash(APP_INFO *a)
+/* static unsigned long app_info_hash(APP_INFO *a) */
+static unsigned long app_info_hash(void *a_void)
 	{
 	unsigned long ret;
 
-	ret=(unsigned long)a->thread;
+	ret=(unsigned long)((APP_INFO *)a_void)->thread;
 
 	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
 	return(ret);
 	}
-
-static IMPLEMENT_LHASH_HASH_FN(app_info_hash, APP_INFO *)
-static IMPLEMENT_LHASH_COMP_FN(app_info_cmp, APP_INFO *)
 
 static APP_INFO *pop_info(void)
 	{
@@ -308,8 +306,7 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
 			}
 		if (amih == NULL)
 			{
-			if ((amih=lh_new(LHASH_HASH_FN(app_info_hash),
-					LHASH_COMP_FN(app_info_cmp))) == NULL)
+			if ((amih=lh_new(app_info_hash, app_info_cmp)) == NULL)
 				{
 				OPENSSL_free(ami);
 				ret=0;
@@ -401,8 +398,7 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 				}
 			if (mh == NULL)
 				{
-				if ((mh=lh_new(LHASH_HASH_FN(mem_hash),
-					LHASH_COMP_FN(mem_cmp))) == NULL)
+				if ((mh=lh_new(mem_hash, mem_cmp)) == NULL)
 					{
 					OPENSSL_free(addr);
 					OPENSSL_free(m);

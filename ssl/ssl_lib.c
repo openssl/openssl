@@ -1101,6 +1101,10 @@ int SSL_SESSION_cmp(SSL_SESSION *a,SSL_SESSION *b)
 	return(memcmp(a->session_id,b->session_id,a->session_id_length));
 	}
 
+/* These wrapper functions should remain rather than redeclaring
+ * SSL_SESSION_hash and SSL_SESSION_cmp for void* types and casting each
+ * variable. The reason is that the functions aren't static, they're exposed via
+ * ssl.h. */
 static IMPLEMENT_LHASH_HASH_FN(SSL_SESSION_hash, SSL_SESSION *)
 static IMPLEMENT_LHASH_COMP_FN(SSL_SESSION_cmp, SSL_SESSION *)
 

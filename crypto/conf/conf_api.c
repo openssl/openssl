@@ -70,11 +70,12 @@
 
 static void value_free_hash(CONF_VALUE *a, LHASH *conf);
 static void value_free_stack(CONF_VALUE *a,LHASH *conf);
-static unsigned long hash(CONF_VALUE *v);
-static int cmp_conf(CONF_VALUE *a,CONF_VALUE *b);
-
-static IMPLEMENT_LHASH_HASH_FN(hash, CONF_VALUE *)
-static IMPLEMENT_LHASH_COMP_FN(cmp_conf, CONF_VALUE *)
+/* We don't use function pointer casting or wrapper functions - but cast each
+ * callback parameter inside the callback functions. */
+/* static unsigned long hash(CONF_VALUE *v); */
+static unsigned long hash(void *v_void);
+/* static int cmp_conf(CONF_VALUE *a,CONF_VALUE *b); */
+static int cmp_conf(void *a_void,void *b_void);
 
 /* Up until OpenSSL 0.9.5a, this was get_section */
 CONF_VALUE *_CONF_get_section(CONF *conf, char *section)
@@ -184,8 +185,7 @@ int _CONF_new_data(CONF *conf)
 		return 0;
 		}
 	if (conf->data == NULL)
-		if ((conf->data = lh_new(LHASH_HASH_FN(hash),
-					LHASH_COMP_FN(cmp_conf))) == NULL)
+		if ((conf->data = lh_new(hash, cmp_conf)) == NULL)
 			{
 			return 0;
 			}
@@ -238,14 +238,19 @@ static void value_free_stack(CONF_VALUE *a, LHASH *conf)
 	OPENSSL_free(a);
 	}
 
-static unsigned long hash(CONF_VALUE *v)
+/* static unsigned long hash(CONF_VALUE *v) */
+static unsigned long hash(void *v_void)
 	{
+	CONF_VALUE *v = (CONF_VALUE *)v_void;
 	return((lh_strhash(v->section)<<2)^lh_strhash(v->name));
 	}
 
-static int cmp_conf(CONF_VALUE *a, CONF_VALUE *b)
+/* static int cmp_conf(CONF_VALUE *a, CONF_VALUE *b) */
+static int cmp_conf(void *a_void, void *b_void)
 	{
 	int i;
+	CONF_VALUE *a = (CONF_VALUE *)a_void;
+	CONF_VALUE *b = (CONF_VALUE *)b_void;
 
 	if (a->section != b->section)
 		{

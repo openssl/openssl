@@ -24,18 +24,20 @@ IMPLEMENT_STACK_OF(NAME_FUNCS)
 
 static STACK_OF(NAME_FUNCS) *name_funcs_stack;
 
-static unsigned long obj_name_hash(OBJ_NAME *a);
-static int obj_name_cmp(OBJ_NAME *a,OBJ_NAME *b);
+/* The LHASH callbacks now use the raw "void *" prototypes and do per-variable
+ * casting in the functions. This prevents function pointer casting without the
+ * need for macro-generated wrapper functions. */
 
-static IMPLEMENT_LHASH_HASH_FN(obj_name_hash, OBJ_NAME *)
-static IMPLEMENT_LHASH_COMP_FN(obj_name_cmp, OBJ_NAME *)
+/* static unsigned long obj_name_hash(OBJ_NAME *a); */
+static unsigned long obj_name_hash(void *a_void);
+/* static int obj_name_cmp(OBJ_NAME *a,OBJ_NAME *b); */
+static int obj_name_cmp(void *a_void,void *b_void);
 
 int OBJ_NAME_init(void)
 	{
 	if (names_lh != NULL) return(1);
 	MemCheck_off();
-	names_lh=lh_new(LHASH_HASH_FN(obj_name_hash),
-			LHASH_COMP_FN(obj_name_cmp));
+	names_lh=lh_new(obj_name_hash, obj_name_cmp);
 	MemCheck_on();
 	return(names_lh != NULL);
 	}
@@ -85,9 +87,12 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 	return(ret);
 	}
 
-static int obj_name_cmp(OBJ_NAME *a, OBJ_NAME *b)
+/* static int obj_name_cmp(OBJ_NAME *a, OBJ_NAME *b) */
+static int obj_name_cmp(void *a_void, void *b_void)
 	{
 	int ret;
+	OBJ_NAME *a = (OBJ_NAME *)a_void;
+	OBJ_NAME *b = (OBJ_NAME *)b_void;
 
 	ret=a->type-b->type;
 	if (ret == 0)
@@ -104,9 +109,11 @@ static int obj_name_cmp(OBJ_NAME *a, OBJ_NAME *b)
 	return(ret);
 	}
 
-static unsigned long obj_name_hash(OBJ_NAME *a)
+/* static unsigned long obj_name_hash(OBJ_NAME *a) */
+static unsigned long obj_name_hash(void *a_void)
 	{
 	unsigned long ret;
+	OBJ_NAME *a = (OBJ_NAME *)a_void;
 
 	if ((name_funcs_stack != NULL) && (sk_NAME_FUNCS_num(name_funcs_stack) > a->type))
 		{

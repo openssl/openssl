@@ -108,12 +108,14 @@ static int ln_cmp(const void *a, const void *b)
 	return(strcmp((*ap)->ln,(*bp)->ln));
 	}
 
-static unsigned long add_hash(ADDED_OBJ *ca)
+/* static unsigned long add_hash(ADDED_OBJ *ca) */
+static unsigned long add_hash(void *ca_void)
 	{
 	ASN1_OBJECT *a;
 	int i;
 	unsigned long ret=0;
 	unsigned char *p;
+	ADDED_OBJ *ca = (ADDED_OBJ *)ca_void;
 
 	a=ca->obj;
 	switch (ca->type)
@@ -142,10 +144,13 @@ static unsigned long add_hash(ADDED_OBJ *ca)
 	return(ret);
 	}
 
-static int add_cmp(ADDED_OBJ *ca, ADDED_OBJ *cb)
+/* static int add_cmp(ADDED_OBJ *ca, ADDED_OBJ *cb) */
+static int add_cmp(void *ca_void, void *cb_void)
 	{
 	ASN1_OBJECT *a,*b;
 	int i;
+	ADDED_OBJ *ca = (ADDED_OBJ *)ca_void;
+	ADDED_OBJ *cb = (ADDED_OBJ *)cb_void;
 
 	i=ca->type-cb->type;
 	if (i) return(i);
@@ -174,13 +179,10 @@ static int add_cmp(ADDED_OBJ *ca, ADDED_OBJ *cb)
 	return(1); /* should not get here */
 	}
 
-static IMPLEMENT_LHASH_HASH_FN(add_hash, ADDED_OBJ *)
-static IMPLEMENT_LHASH_COMP_FN(add_cmp, ADDED_OBJ *)
-
 static int init_added(void)
 	{
 	if (added != NULL) return(1);
-	added=lh_new(LHASH_HASH_FN(add_hash),LHASH_COMP_FN(add_cmp));
+	added=lh_new(add_hash,add_cmp);
 	return(added != NULL);
 	}
 

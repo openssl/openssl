@@ -73,8 +73,15 @@
 #include "s_apps.h"
 #include <openssl/err.h>
 
-static unsigned long MS_CALLBACK hash(FUNCTION *a);
-static int MS_CALLBACK cmp(FUNCTION *a,FUNCTION *b);
+/* The LHASH callbacks ("hash" & "cmp") have been replaced by functions with the
+ * base prototypes (we cast each variable inside the function to the required
+ * type of "FUNCTION*"). This removes the necessity for macro-generated wrapper
+ * functions. */
+
+/* static unsigned long MS_CALLBACK hash(FUNCTION *a); */
+static unsigned long MS_CALLBACK hash(void *a_void);
+/* static int MS_CALLBACK cmp(FUNCTION *a,FUNCTION *b); */
+static int MS_CALLBACK cmp(void *a_void,void *b_void);
 static LHASH *prog_init(void );
 static int do_cmd(LHASH *prog,int argc,char *argv[]);
 LHASH *config=NULL;
@@ -84,9 +91,6 @@ char *default_config_file=NULL;
 #ifdef MONOLITH
 BIO *bio_err=NULL;
 #endif
-
-static IMPLEMENT_LHASH_HASH_FN(hash,FUNCTION *)
-static IMPLEMENT_LHASH_COMP_FN(cmp,FUNCTION *)
 
 int main(int Argc, char *Argv[])
 	{
@@ -354,8 +358,7 @@ static LHASH *prog_init(void)
 	    ;
 	qsort(functions,i,sizeof *functions,SortFnByName);
 
-	if ((ret=lh_new(LHASH_HASH_FN(hash),
-			LHASH_COMP_FN(cmp))) == NULL)
+	if ((ret=lh_new(hash, cmp)) == NULL)
 		return(NULL);
 
 	for (f=functions; f->name != NULL; f++)
@@ -363,12 +366,15 @@ static LHASH *prog_init(void)
 	return(ret);
 	}
 
-static int MS_CALLBACK cmp(FUNCTION *a, FUNCTION *b)
+/* static int MS_CALLBACK cmp(FUNCTION *a, FUNCTION *b) */
+static int MS_CALLBACK cmp(void *a_void, void *b_void)
 	{
-	return(strncmp(a->name,b->name,8));
+	return(strncmp(((FUNCTION *)a_void)->name,
+			((FUNCTION *)b_void)->name,8));
 	}
 
-static unsigned long MS_CALLBACK hash(FUNCTION *a)
+/* static unsigned long MS_CALLBACK hash(FUNCTION *a) */
+static unsigned long MS_CALLBACK hash(void *a_void)
 	{
-	return(lh_strhash(a->name));
+	return(lh_strhash(((FUNCTION *)a_void)->name));
 	}

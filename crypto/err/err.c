@@ -123,17 +123,16 @@
 static LHASH *error_hash=NULL;
 static LHASH *thread_hash=NULL;
 
-static unsigned long err_hash(ERR_STRING_DATA *a);
-static int err_cmp(ERR_STRING_DATA *a, ERR_STRING_DATA *b);
-static unsigned long pid_hash(ERR_STATE *pid);
-static int pid_cmp(ERR_STATE *a,ERR_STATE *pid);
+/* static unsigned long err_hash(ERR_STRING_DATA *a); */
+static unsigned long err_hash(void *a_void);
+/* static int err_cmp(ERR_STRING_DATA *a, ERR_STRING_DATA *b); */
+static int err_cmp(void *a_void, void *b_void);
+/* static unsigned long pid_hash(ERR_STATE *pid); */
+static unsigned long pid_hash(void *pid_void);
+/* static int pid_cmp(ERR_STATE *a,ERR_STATE *pid); */
+static int pid_cmp(void *a_void,void *pid_void);
 static unsigned long get_error_values(int inc,const char **file,int *line,
 				      const char **data,int *flags);
-
-static IMPLEMENT_LHASH_HASH_FN(err_hash, ERR_STRING_DATA *)
-static IMPLEMENT_LHASH_COMP_FN(err_cmp, ERR_STRING_DATA *)
-static IMPLEMENT_LHASH_HASH_FN(pid_hash, ERR_STATE *)
-static IMPLEMENT_LHASH_COMP_FN(pid_cmp, ERR_STATE *)
 
 static void ERR_STATE_free(ERR_STATE *s);
 #ifndef NO_ERR
@@ -322,8 +321,7 @@ void ERR_load_strings(int lib, ERR_STRING_DATA *str)
 	if (error_hash == NULL)
 		{
 		CRYPTO_w_lock(CRYPTO_LOCK_ERR_HASH);
-		error_hash=lh_new(LHASH_HASH_FN(err_hash),
-				LHASH_COMP_FN(err_cmp));
+		error_hash=lh_new(err_hash, err_cmp);
 		if (error_hash == NULL)
 			{
 			CRYPTO_w_unlock(CRYPTO_LOCK_ERR_HASH);
@@ -627,28 +625,34 @@ const char *ERR_reason_error_string(unsigned long e)
 	return((p == NULL)?NULL:p->string);
 	}
 
-static unsigned long err_hash(ERR_STRING_DATA *a)
+/* static unsigned long err_hash(ERR_STRING_DATA *a) */
+static unsigned long err_hash(void *a_void)
 	{
 	unsigned long ret,l;
 
-	l=a->error;
+	l=((ERR_STRING_DATA *)a_void)->error;
 	ret=l^ERR_GET_LIB(l)^ERR_GET_FUNC(l);
 	return(ret^ret%19*13);
 	}
 
-static int err_cmp(ERR_STRING_DATA *a, ERR_STRING_DATA *b)
+/* static int err_cmp(ERR_STRING_DATA *a, ERR_STRING_DATA *b) */
+static int err_cmp(void *a_void, void *b_void)
 	{
-	return((int)(a->error-b->error));
+	return((int)(((ERR_STRING_DATA *)a_void)->error -
+			((ERR_STRING_DATA *)b_void)->error));
 	}
 
-static unsigned long pid_hash(ERR_STATE *a)
+/* static unsigned long pid_hash(ERR_STATE *a) */
+static unsigned long pid_hash(void *a_void)
 	{
-	return(a->pid*13);
+	return(((ERR_STATE *)a_void)->pid*13);
 	}
 
-static int pid_cmp(ERR_STATE *a, ERR_STATE *b)
+/* static int pid_cmp(ERR_STATE *a, ERR_STATE *b) */
+static int pid_cmp(void *a_void, void *b_void)
 	{
-	return((int)((long)a->pid - (long)b->pid));
+	return((int)((long)((ERR_STATE *)a_void)->pid -
+			(long)((ERR_STATE *)b_void)->pid));
 	}
 
 void ERR_remove_state(unsigned long pid)
@@ -713,8 +717,7 @@ ERR_STATE *ERR_get_state(void)
 		/* no entry yet in thread_hash for current thread -
 		 * thus, it may have changed since we last looked at it */
 		if (thread_hash == NULL)
-			thread_hash = lh_new(LHASH_HASH_FN(pid_hash),
-					LHASH_COMP_FN(pid_cmp));
+			thread_hash = lh_new(pid_hash, pid_cmp);
 		if (thread_hash == NULL)
 			thread_state_exists = 0; /* allocation error */
 		else
