@@ -850,7 +850,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 					
 					r = BIO_nwrite0(io1, &dataptr);
 					assert(r > 0);
-					if (r < num)
+					if (r < (int)num)
 						num = r;
 					r = BIO_read(io2, dataptr, (int)num);
 					if (r != (int)num) /* can't happen */
