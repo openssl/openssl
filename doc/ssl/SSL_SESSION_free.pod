@@ -8,7 +8,7 @@ SSL_SESSION_free - free an allocated SSL_SESSION structure
 
  #include <openssl/ssl.h>
 
- void *SSL_SESSION_free(SSL_SESSION *session);
+ void SSL_SESSION_free(SSL_SESSION *session);
 
 =head1 DESCRIPTION
 
