@@ -55,6 +55,60 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
+
 
 #include <stdio.h>
 #include "cryptlib.h"
@@ -611,11 +665,17 @@ err:
 
 int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
                          const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont)
-/* if we had BN_mod_exp_mont_2, we could even use windowing in it */
 	{
-	int b, bits, ret=0;
-	BIGNUM *d, *r, *t;
 	BN_MONT_CTX *mont = NULL;
+	int b, bits, ret=0;
+	BN_ULONG w, next_w;
+	BIGNUM *d, *r, *t;
+	BIGNUM *swap_tmp;
+#define BN_MOD_MUL_WORD(r, w, m) \
+		(BN_mul_word(r, (w)) && \
+		(BN_ucmp(r, (m)) >= 0 ? \
+			(BN_mod(t, r, m, ctx) && (swap_tmp = r, r = t, t = swap_tmp, 1)) : \
+			1))
 
 	bn_check_top(p);
 	bn_check_top(m);
@@ -656,26 +716,45 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 		}
 
 	if (!BN_to_montgomery(r, BN_value_one(), mont, ctx)) goto err;
-	for (b = bits-1; b >= 0; b--)
+
+	/* bits-1 >= 0 */
+
+	/* The result is accumulated in the product r*w. */
+	w = a; /* bit 'bits-1' of 'p' is always set */
+	for (b = bits-2; b >= 0; b--)
 		{
+		/* First, square r*w. */
+		next_w = w*w;
+		if ((next_w/w) != w) /* overflow */
+			{
+			if (!BN_MOD_MUL_WORD(r, w, m))
+				goto err;
+			next_w = 1;
+			}
+		w = next_w;
+		if (!BN_mod_mul_montgomery(r, r, r, mont, ctx))
+			goto err;
+
+		/* Second, multiply r*w by 'a' if exponent bit is set. */
 		if (BN_is_bit_set(p, b))
 			{
-			if (!BN_mul_word(r, a))
-				goto err;
-			if (BN_ucmp(r, m) >= 0)
+			next_w = w*a;
+			if ((next_w/a) != w) /* overflow */
 				{
-				if (!BN_mod(t, r, m, ctx))
+				if (!BN_MOD_MUL_WORD(r, w, m))
 					goto err;
-				{ BIGNUM *swap_tmp = r; r = t; t = swap_tmp; }
+				next_w = a;
 				}
-			}
-		
-		if (b > 0)
-			{
-			if (!BN_mod_mul_montgomery(r, r, r, mont, ctx))
-				goto err;
+			w = next_w;
 			}
 		}
+	/* Finally, set r:=r*w. */
+	if (w != 1)
+		{
+		if (!BN_MOD_MUL_WORD(r, w, m))
+			goto err;
+		}
+
 	BN_from_montgomery(rr, r, mont, ctx);
 	ret = 1;
 err:

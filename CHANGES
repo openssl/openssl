@@ -4,9 +4,8 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
-  *) New function BN_mod_exp_mont_word for small bases (roughly 20%
-     faster than BN_mod_exp_mont even though it does not use
-     windowing).
+  *) New function BN_mod_exp_mont_word for small bases (roughly 15-20%
+     faster than BN_mod_exp_mont).
      [Bodo Moeller]
 
   *) CygWin32 support.
