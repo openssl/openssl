@@ -161,7 +161,6 @@ static int init_ciphers=1;
 
 static void load_ciphers(void)
 	{
-	init_ciphers=0;
 	ssl_cipher_methods[SSL_ENC_DES_IDX]= 
 		EVP_get_cipherbyname(SN_des_cbc);
 	ssl_cipher_methods[SSL_ENC_3DES_IDX]=
@@ -185,6 +184,7 @@ static void load_ciphers(void)
 		EVP_get_digestbyname(SN_md5);
 	ssl_digest_methods[SSL_MD_SHA1_IDX]=
 		EVP_get_digestbyname(SN_sha1);
+	init_ciphers=0;
 	}
 
 int ssl_cipher_get_evp(SSL_SESSION *s, const EVP_CIPHER **enc,
