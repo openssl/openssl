@@ -124,13 +124,25 @@ int MAIN(int argc, char **argv)
 
 	lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_file());
 	if (lookup == NULL) abort();
-	if (!X509_LOOKUP_load_file(lookup,CAfile,X509_FILETYPE_PEM))
-		X509_LOOKUP_load_file(lookup,NULL,X509_FILETYPE_DEFAULT);
+	if (CAfile) {
+		i=X509_LOOKUP_load_file(lookup,CAfile,X509_FILETYPE_PEM);
+		if(!i) {
+			BIO_printf(bio_err, "Error loading file %s\n", CAfile);
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	} else X509_LOOKUP_load_file(lookup,NULL,X509_FILETYPE_DEFAULT);
 		
 	lookup=X509_STORE_add_lookup(cert_ctx,X509_LOOKUP_hash_dir());
 	if (lookup == NULL) abort();
-	if (!X509_LOOKUP_add_dir(lookup,CApath,X509_FILETYPE_PEM))
-		X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
+	if (CApath) {
+		i=X509_LOOKUP_add_dir(lookup,CApath,X509_FILETYPE_PEM);
+		if(!i) {
+			BIO_printf(bio_err, "Error loading directory %s\n", CApath);
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	} else X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
 
 
 	ERR_clear_error();

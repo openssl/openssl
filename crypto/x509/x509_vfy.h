@@ -306,6 +306,7 @@ int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
 #ifndef NO_STDIO
 int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type);
 int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type);
+int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type);
 #endif
 
 

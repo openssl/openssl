@@ -4,6 +4,50 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Modify RSA and DSA PEM read routines to transparently handle
+     PKCS#8 format private keys. New *_PUBKEY_* functions that handle
+     public keys in a format compatible with certificate
+     SubjectPublicKeyInfo structures. Unfortunately there were already
+     functions called *_PublicKey_* which used various odd formats so
+     these are retained for compatability: however the DSA variants were
+     never in a public release so they have been deleted. Changed dsa/rsa
+     utilities to handle the new format: note no releases ever handled public
+     keys so we should be OK.
+
+     The primary motivation for this change is to avoid the same fiasco
+     that dogs private keys: there are several incompatible private key
+     formats some of which are standard and some OpenSSL specific and
+     require various evil hacks to allow partial transparent handling and
+     even then it doesn't work with DER formats. Given the option anything
+     other than PKCS#8 should be dumped: but the other formats have to
+     stay in the name of compatability.
+
+     With public keys and the benefit of hindsight one standard format 
+     is used which works with EVP_PKEY, RSA or DSA structures: though
+     it clearly returns an error if you try to read the wrong kind of key.
+
+     Added a -pubkey option to the 'x509' utility to output the public key.
+     Also rename the EVP_PKEY_get_*() to EVP_PKEY_rget_*() and add
+     EVP_PKEY_rset_*() functions that do the same as the EVP_PKEY_assign_*()
+     except they up the reference count of the added key (they don't "swallow"
+     the supplied key).
+     [Steve Henson]
+
+  *) Fixes to crypto/x509/by_file.c the code to read in certificates and
+     CRLs would fail if the file contained no certificates or no CRLs:
+     added a new function to read in both types and return the number
+     read: this means that if none are read it will be an error. The
+     DER versions of the certificate and CRL reader would always fail
+     because it isn't possible to mix certificates and CRLs in DER format
+     without choking one or the other routine. Changed this to just read
+     a certificate: this is the best we can do. Also modified the code
+     in apps/verify.c to take notice of return codes: it was previously
+     attempting to read in certificates from NULL pointers and ignoring
+     any errors: this is one reason why the cert and CRL reader seemed
+     to work. It doesn't check return codes from the default certificate
+     routines: these may well fail if the certificates aren't installed.
+     [Steve Henson]
+
   *) Code to support otherName option in GeneralName.
      [Steve Henson]
 

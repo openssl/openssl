@@ -220,6 +220,11 @@ bad:
 
 	ERR_load_crypto_strings();
 
+	if(check && pubin) {
+		BIO_printf(bio_err, "Only private keys can be checked\n");
+		goto end;
+	}
+
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());
 	if ((in == NULL) || (out == NULL))
@@ -239,9 +244,9 @@ bad:
 			}
 		}
 
-	BIO_printf(bio_err,"read RSA private key\n");
+	BIO_printf(bio_err,"read RSA key\n");
 	if	(informat == FORMAT_ASN1) {
-		if (pubin) rsa=d2i_RSAPublicKey_bio(in,NULL);
+		if (pubin) rsa=d2i_RSA_PUBKEY_bio(in,NULL);
 		else rsa=d2i_RSAPrivateKey_bio(in,NULL);
 	}
 #ifndef NO_RC4
@@ -272,7 +277,7 @@ bad:
 		}
 #endif
 	else if (informat == FORMAT_PEM) {
-		if(pubin) rsa=PEM_read_bio_RSAPublicKey(in,NULL,NULL,NULL);
+		if(pubin) rsa=PEM_read_bio_RSA_PUBKEY(in,NULL,NULL,NULL);
 		else {
 			if(passin) rsa=PEM_read_bio_RSAPrivateKey(in,NULL,
 								key_cb,passin);
@@ -286,7 +291,7 @@ bad:
 		}
 	if (rsa == NULL)
 		{
-		BIO_printf(bio_err,"unable to load Key\n");
+		BIO_printf(bio_err,"unable to load key\n");
 		ERR_print_errors(bio_err);
 		goto end;
 		}
@@ -312,9 +317,9 @@ bad:
 
 	if (modulus)
 		{
-		fprintf(stdout,"Modulus=");
+		BIO_printf(out,"Modulus=");
 		BN_print(out,rsa->n);
-		fprintf(stdout,"\n");
+		BIO_printf(out,"\n");
 		}
 
 	if (check)
@@ -351,7 +356,7 @@ bad:
 		}
 	BIO_printf(bio_err,"writing RSA key\n");
 	if 	(outformat == FORMAT_ASN1) {
-		if(pubout || pubin) i=i2d_RSAPublicKey_bio(out,rsa);
+		if(pubout || pubin) i=i2d_RSA_PUBKEY_bio(out,rsa);
 		else i=i2d_RSAPrivateKey_bio(out,rsa);
 	}
 #ifndef NO_RC4
@@ -375,7 +380,7 @@ bad:
 #endif
 	else if (outformat == FORMAT_PEM) {
 		if(pubout || pubin)
-		    i=PEM_write_bio_RSAPublicKey(out,rsa);
+		    i=PEM_write_bio_RSA_PUBKEY(out,rsa);
 		else {
 			if(passout) i=PEM_write_bio_RSAPrivateKey(out,rsa,
 						enc,NULL,0,key_cb,passout);

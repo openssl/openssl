@@ -101,6 +101,7 @@ static char *x509_usage[]={
 " -purpose        - print out certificate purposes\n",
 " -dates          - both Before and After dates\n",
 " -modulus        - print the RSA key modulus\n",
+" -pubkey         - output the public key\n",
 " -fingerprint    - print the certificate fingerprint\n",
 " -alias          - output certificate alias\n",
 " -noout          - no certificate output\n",
@@ -161,7 +162,7 @@ int MAIN(int argc, char **argv)
 	int noout=0,sign_flag=0,CA_flag=0,CA_createserial=0;
 	int trustout=0,clrtrust=0,clrnotrust=0,aliasout=0;
 	int C=0;
-	int x509req=0,days=DEF_DAYS,modulus=0;
+	int x509req=0,days=DEF_DAYS,modulus=0,pubkey=0;
 	int pprint = 0;
 	char **pp;
 	X509_STORE *ctx=NULL;
@@ -324,6 +325,8 @@ int MAIN(int argc, char **argv)
 			serial= ++num;
 		else if (strcmp(*argv,"-modulus") == 0)
 			modulus= ++num;
+		else if (strcmp(*argv,"-pubkey") == 0)
+			pubkey= ++num;
 		else if (strcmp(*argv,"-x509toreq") == 0)
 			x509req= ++num;
 		else if (strcmp(*argv,"-text") == 0)
@@ -637,6 +640,21 @@ bad:
 #endif
 					BIO_printf(STDout,"Wrong Algorithm type");
 				BIO_printf(STDout,"\n");
+				EVP_PKEY_free(pkey);
+				}
+			else
+				if (pubkey == i)
+				{
+				EVP_PKEY *pkey;
+
+				pkey=X509_get_pubkey(x);
+				if (pkey == NULL)
+					{
+					BIO_printf(bio_err,"Error getting public key\n");
+					ERR_print_errors(bio_err);
+					goto end;
+					}
+				PEM_write_bio_PUBKEY(STDout, pkey);
 				EVP_PKEY_free(pkey);
 				}
 			else

@@ -613,10 +613,12 @@ RSA *d2i_RSAPrivateKey_fp(FILE *fp,RSA **rsa);
 int i2d_RSAPrivateKey_fp(FILE *fp,RSA *rsa);
 RSA *d2i_RSAPublicKey_fp(FILE *fp,RSA **rsa);
 int i2d_RSAPublicKey_fp(FILE *fp,RSA *rsa);
+RSA *d2i_RSA_PUBKEY_fp(FILE *fp,RSA **rsa);
+int i2d_RSA_PUBKEY_fp(FILE *fp,RSA *rsa);
 #endif
 #ifndef NO_DSA
-DSA *d2i_DSAPublicKey_fp(FILE *fp, DSA **dsa);
-int i2d_DSAPublicKey_fp(FILE *fp, DSA *dsa);
+DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa);
+int i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa);
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa);
 int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
 X509_SIG *d2i_PKCS8_fp(FILE *fp,X509_SIG **p8);
@@ -639,10 +641,12 @@ RSA *d2i_RSAPrivateKey_bio(BIO *bp,RSA **rsa);
 int i2d_RSAPrivateKey_bio(BIO *bp,RSA *rsa);
 RSA *d2i_RSAPublicKey_bio(BIO *bp,RSA **rsa);
 int i2d_RSAPublicKey_bio(BIO *bp,RSA *rsa);
+RSA *d2i_RSA_PUBKEY_bio(BIO *bp,RSA **rsa);
+int i2d_RSA_PUBKEY_bio(BIO *bp,RSA *rsa);
 #endif
 #ifndef NO_DSA
-DSA *d2i_DSAPublicKey_bio(BIO *bp, DSA **dsa);
-int i2d_DSAPublicKey_bio(BIO *bp, DSA *dsa);
+DSA *d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa);
+int i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa);
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa);
 int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
 #endif
@@ -703,7 +707,15 @@ int		X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_PUBKEY_get(X509_PUBKEY *key);
 int		X509_get_pubkey_parameters(EVP_PKEY *pkey,
 					   STACK_OF(X509) *chain);
-
+int		i2d_PUBKEY(EVP_PKEY *a,unsigned char **pp);
+EVP_PKEY *	d2i_PUBKEY(EVP_PKEY **a,unsigned char **pp,
+			long length);
+int		i2d_RSA_PUBKEY(RSA *a,unsigned char **pp);
+RSA *		d2i_RSA_PUBKEY(RSA **a,unsigned char **pp,
+			long length);
+int		i2d_DSA_PUBKEY(DSA *a,unsigned char **pp);
+DSA *		d2i_DSA_PUBKEY(DSA **a,unsigned char **pp,
+			long length);
 
 X509_SIG *	X509_SIG_new(void );
 void		X509_SIG_free(X509_SIG *a);
@@ -1028,6 +1040,7 @@ PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken);
 #define X509_F_X509_EXTENSION_CREATE_BY_NID		 108
 #define X509_F_X509_EXTENSION_CREATE_BY_OBJ		 109
 #define X509_F_X509_GET_PUBKEY_PARAMETERS		 110
+#define X509_F_X509_LOAD_CERT_CRL_FILE			 132
 #define X509_F_X509_LOAD_CERT_FILE			 111
 #define X509_F_X509_LOAD_CRL_FILE			 112
 #define X509_F_X509_NAME_ADD_ENTRY			 113

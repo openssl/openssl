@@ -108,6 +108,7 @@ extern "C" {
 #define PEM_STRING_X509_REQ	"CERTIFICATE REQUEST"
 #define PEM_STRING_X509_CRL	"X509 CRL"
 #define PEM_STRING_EVP_PKEY	"ANY PRIVATE KEY"
+#define PEM_STRING_PUBLIC	"PUBLIC KEY"
 #define PEM_STRING_RSA		"RSA PRIVATE KEY"
 #define PEM_STRING_RSA_PUBLIC	"RSA PUBLIC KEY"
 #define PEM_STRING_DSA		"DSA PRIVATE KEY"
@@ -549,6 +550,7 @@ DECLARE_PEM_rw(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO)
 DECLARE_PEM_rw_cb(RSAPrivateKey, RSA)
 
 DECLARE_PEM_rw(RSAPublicKey, RSA)
+DECLARE_PEM_rw(RSA_PUBKEY, RSA)
 
 #endif
 
@@ -556,7 +558,7 @@ DECLARE_PEM_rw(RSAPublicKey, RSA)
 
 DECLARE_PEM_rw_cb(DSAPrivateKey, DSA)
 
-DECLARE_PEM_rw(DSAPublicKey, DSA)
+DECLARE_PEM_rw(DSA_PUBKEY, DSA)
 
 DECLARE_PEM_rw(DSAparams, DSA)
 
@@ -569,6 +571,8 @@ DECLARE_PEM_rw(DHparams, DH)
 #endif
 
 DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
+
+DECLARE_PEM_rw(PUBKEY, EVP_PKEY);
 
 int PEM_write_bio_PKCS8PrivateKey(BIO *, EVP_PKEY *, const EVP_CIPHER *,
                                   char *, int, pem_password_cb *, void *);

@@ -232,10 +232,10 @@ bad:
 
 	BIO_printf(bio_err,"read DSA key\n");
 	if	(informat == FORMAT_ASN1) {
-		if(pubin) dsa=d2i_DSAPublicKey_bio(in,NULL);
+		if(pubin) dsa=d2i_DSA_PUBKEY_bio(in,NULL);
 		else dsa=d2i_DSAPrivateKey_bio(in,NULL);
 	} else if (informat == FORMAT_PEM) {
-		if(pubin) dsa=PEM_read_bio_DSAPublicKey(in,NULL, NULL, NULL);
+		if(pubin) dsa=PEM_read_bio_DSA_PUBKEY(in,NULL, NULL, NULL);
 		else {
 			if(passin) dsa=PEM_read_bio_DSAPrivateKey(in,NULL,
 								key_cb,passin);
@@ -282,11 +282,11 @@ bad:
 	if (noout) goto end;
 	BIO_printf(bio_err,"writing DSA key\n");
 	if 	(outformat == FORMAT_ASN1) {
-		if(pubin || pubout) i=i2d_DSAPublicKey_bio(out,dsa);
+		if(pubin || pubout) i=i2d_DSA_PUBKEY_bio(out,dsa);
 		else i=i2d_DSAPrivateKey_bio(out,dsa);
 	} else if (outformat == FORMAT_PEM) {
 		if(pubin || pubout)
-			i=PEM_write_bio_DSAPublicKey(out,dsa);
+			i=PEM_write_bio_DSA_PUBKEY(out,dsa);
 		else {
 			if(passout) i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,
 							NULL,0,key_cb, passout);
