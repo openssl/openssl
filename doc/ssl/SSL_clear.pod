@@ -44,6 +44,7 @@ The SSL_clear() operation was successful.
 
 L<SSL_new(3)|SSL_new(3)>, L<SSL_free(3)|SSL_free(3)>,
 L<SSL_shutdown(3)|SSL_shutdown(3)>, L<SSL_set_shutdown(3)|SSL_set_shutdown(3)>,
-L<SSL_CTX_set_options(3)|SSL_CTX_set_options(3)>, L<ssl(3)|ssl(3)>
+L<SSL_CTX_set_options(3)|SSL_CTX_set_options(3)>, L<ssl(3)|ssl(3)>,
+L<SSL_CTX_set_client_cert_cb(3)|SSL_CTX_set_client_cert_cb(3)>
 
 =cut
