@@ -104,22 +104,22 @@ int SHA512_Final (unsigned char *md, SHA512_CTX *c)
 	c->u.d[SHA_LBLOCK-2] = c->Nh;
 	c->u.d[SHA_LBLOCK-1] = c->Nl;
 #else
-	p[sizeof(c->u)-1]  = (c->Nl)&0xFF;
-	p[sizeof(c->u)-2]  = (c->Nl>>8)&0xFF;
-	p[sizeof(c->u)-3]  = (c->Nl>>16)&0xFF;
-	p[sizeof(c->u)-4]  = (c->Nl>>24)&0xFF;
-	p[sizeof(c->u)-5]  = (c->Nl>>32)&0xFF;
-	p[sizeof(c->u)-6]  = (c->Nl>>40)&0xFF;
-	p[sizeof(c->u)-7]  = (c->Nl>>48)&0xFF;
-	p[sizeof(c->u)-8]  = (c->Nl>>56)&0xFF;
-	p[sizeof(c->u)-9]  = (c->Nh)&0xFF;
-	p[sizeof(c->u)-10] = (c->Nh>>8)&0xFF;
-	p[sizeof(c->u)-11] = (c->Nh>>16)&0xFF;
-	p[sizeof(c->u)-12] = (c->Nh>>24)&0xFF;
-	p[sizeof(c->u)-13] = (c->Nh>>32)&0xFF;
-	p[sizeof(c->u)-14] = (c->Nh>>40)&0xFF;
-	p[sizeof(c->u)-15] = (c->Nh>>48)&0xFF;
-	p[sizeof(c->u)-16] = (c->Nh>>56)&0xFF;
+	p[sizeof(c->u)-1]  = (unsigned char)(c->Nl);
+	p[sizeof(c->u)-2]  = (unsigned char)(c->Nl>>8);
+	p[sizeof(c->u)-3]  = (unsigned char)(c->Nl>>16);
+	p[sizeof(c->u)-4]  = (unsigned char)(c->Nl>>24);
+	p[sizeof(c->u)-5]  = (unsigned char)(c->Nl>>32);
+	p[sizeof(c->u)-6]  = (unsigned char)(c->Nl>>40);
+	p[sizeof(c->u)-7]  = (unsigned char)(c->Nl>>48);
+	p[sizeof(c->u)-8]  = (unsigned char)(c->Nl>>56);
+	p[sizeof(c->u)-9]  = (unsigned char)(c->Nh);
+	p[sizeof(c->u)-10] = (unsigned char)(c->Nh>>8);
+	p[sizeof(c->u)-11] = (unsigned char)(c->Nh>>16);
+	p[sizeof(c->u)-12] = (unsigned char)(c->Nh>>24);
+	p[sizeof(c->u)-13] = (unsigned char)(c->Nh>>32);
+	p[sizeof(c->u)-14] = (unsigned char)(c->Nh>>40);
+	p[sizeof(c->u)-15] = (unsigned char)(c->Nh>>48);
+	p[sizeof(c->u)-16] = (unsigned char)(c->Nh>>56);
 #endif
 
 	sha512_block (c,p,1);
@@ -134,10 +134,14 @@ int SHA512_Final (unsigned char *md, SHA512_CTX *c)
 				{
 				SHA_LONG64 t = c->h[n];
 
-				*(md++)	= (t>>56)&0xFF;	*(md++)	= (t>>48)&0xFF;
-				*(md++)	= (t>>40)&0xFF;	*(md++)	= (t>>32)&0xFF;
-				*(md++)	= (t>>24)&0xFF;	*(md++)	= (t>>16)&0xFF;
-				*(md++)	= (t>>8)&0xFF;	*(md++)	= (t)&0xFF;
+				*(md++)	= (unsigned char)(t>>56);
+				*(md++)	= (unsigned char)(t>>48);
+				*(md++)	= (unsigned char)(t>>40);
+				*(md++)	= (unsigned char)(t>>32);
+				*(md++)	= (unsigned char)(t>>24);
+				*(md++)	= (unsigned char)(t>>16);
+				*(md++)	= (unsigned char)(t>>8);
+				*(md++)	= (unsigned char)(t);
 				}
 			break;
 		case SHA512_DIGEST_LENGTH:
@@ -145,10 +149,14 @@ int SHA512_Final (unsigned char *md, SHA512_CTX *c)
 				{
 				SHA_LONG64 t = c->h[n];
 
-				*(md++)	= (t>>56)&0xFF;	*(md++)	= (t>>48)&0xFF;
-				*(md++)	= (t>>40)&0xFF;	*(md++)	= (t>>32)&0xFF;
-				*(md++)	= (t>>24)&0xFF;	*(md++)	= (t>>16)&0xFF;
-				*(md++)	= (t>>8)&0xFF;	*(md++)	= (t)&0xFF;
+				*(md++)	= (unsigned char)(t>>56);
+				*(md++)	= (unsigned char)(t>>48);
+				*(md++)	= (unsigned char)(t>>40);
+				*(md++)	= (unsigned char)(t>>32);
+				*(md++)	= (unsigned char)(t>>24);
+				*(md++)	= (unsigned char)(t>>16);
+				*(md++)	= (unsigned char)(t>>8);
+				*(md++)	= (unsigned char)(t);
 				}
 			break;
 		/* ... as well as make sure md_len is not abused. */
