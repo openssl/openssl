@@ -4,7 +4,7 @@
 
 RSA_set_default_method, RSA_get_default_method, RSA_set_method,
 RSA_get_method, RSA_PKCS1_SSLeay, RSA_PKCS1_RSAref,
-RSA_PKCS1_null_method, RSA_flags, RSA_new_method - select RSA method
+RSA_null_method, RSA_flags, RSA_new_method - select RSA method
 
 =head1 SYNOPSIS
 

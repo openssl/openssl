@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BN_mod_mul_reciprocal, BN_RECP_CTX_new, BN_RECP_CTX_init,
+BN_mod_mul_reciprocal,  BN_div_recp, BN_RECP_CTX_new, BN_RECP_CTX_init,
 BN_RECP_CTX_free, BN_RECP_CTX_set - modular multiplication using
 reciprocal
 

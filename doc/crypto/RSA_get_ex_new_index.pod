@@ -17,14 +17,12 @@ RSA_get_ex_new_index, RSA_set_ex_data, RSA_get_ex_data - add application specifi
 
  void *RSA_get_ex_data(RSA *r, int idx);
 
- int new_func(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-					int idx, long argl, void *argp);
-
- void free_func(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-					int idx, long argl, void *argp);
-
- int dup_func(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from, void *from_d, 
-					int idx, long argl, void *argp);
+ typedef int new_func(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+		int idx, long argl, void *argp);
+ typedef void free_func(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+		int idx, long argl, void *argp);
+ typedef int dup_func(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from, void *from_d, 
+		int idx, long argl, void *argp);
 
 =head1 DESCRIPTION
 

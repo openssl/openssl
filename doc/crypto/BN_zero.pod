@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-BN_zero, BN_one, BN_set_word, BN_get_word - BIGNUM assignment operations
+BN_zero, BN_one, BN_value_one, BN_set_word, BN_get_word - BIGNUM assignment
+operations
 
 =head1 SYNOPSIS
 
