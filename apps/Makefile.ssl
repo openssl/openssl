@@ -13,7 +13,6 @@ OPENSSLDIR=	/usr/local/ssl
 MAKE=		make -f Makefile.ssl
 MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
-PERL=/usr/local/bin/perl
 RM=		rm -f
 
 PEX_LIBS=

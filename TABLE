@@ -2443,7 +2443,7 @@ $cc           = gcc
 $cflags       = -mv8 -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = 
+$lflags       = -ldl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $bn_obj       = asm/sparcv8.o
 $des_obj      = 
@@ -2454,11 +2454,11 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
 $shared_ldflag = 
-$shared_extension = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
 *** linux-sparcv9
@@ -2466,7 +2466,7 @@ $cc           = gcc
 $cflags       = -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DULTRASPARC -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$lflags       = 
+$lflags       = -ldl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $bn_obj       = asm/sparcv8plus.o
 $des_obj      = 
@@ -3058,6 +3058,29 @@ $shared_cflag = -KPIC
 $shared_ldflag = -xarch=v9
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = /usr/ccs/bin/ar rs
+
+*** solaris64-sparcv9-gcc31
+$cc           = gcc
+$cflags       = -mcpu=ultrasparc -m64 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DULTRASPARC
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = asm/md5-sparcv9.o
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
 
 *** sunos-gcc
 $cc           = gcc

@@ -33,7 +33,7 @@ EVP_PKEY * ReadPublicKey(const char *certfile)
 
   x509 = (X509 *)PEM_ASN1_read ((char *(*)())d2i_X509,
                                    PEM_STRING_X509,
-                                   fp, NULL, NULL);
+                                   fp, NULL, NULL, NULL);
 
   if (x509 == NULL) 
   {  
@@ -64,7 +64,7 @@ EVP_PKEY *ReadPrivateKey(const char *keyfile)
 	pkey = (EVP_PKEY*)PEM_ASN1_read ((char *(*)())d2i_PrivateKey,
                               PEM_STRING_EVP_PKEY,
                               fp,
-                              NULL, NULL);
+                              NULL, NULL, NULL);
 
 	fclose (fp);
 

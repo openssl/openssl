@@ -7,5 +7,5 @@ shift
 
 cp Makefile.ssl Makefile.save
 makedepend -f Makefile.ssl $@
-perl $TOP/util/clean-depend.pl < Makefile.ssl > Makefile.new
+${PERL} $TOP/util/clean-depend.pl < Makefile.ssl > Makefile.new
 mv Makefile.new Makefile.ssl
