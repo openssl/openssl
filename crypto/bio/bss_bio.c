@@ -205,7 +205,7 @@ static int bio_read(BIO *bio, char *buf, int size_)
  */
 /* WARNING: The non-copying interface is largely untested as of yet
  * and may contain bugs. */
-static size_t bio_nread0(BIO *bio, char **buf)
+static ssize_t bio_nread0(BIO *bio, char **buf)
 	{
 	struct bio_bio_st *b, *peer_b;
 	size_t num;
@@ -243,7 +243,7 @@ static size_t bio_nread0(BIO *bio, char **buf)
 	return num;
 	}
 
-static size_t bio_nread(BIO *bio, char **buf, size_t num)
+static ssize_t bio_nread(BIO *bio, char **buf, size_t num)
 	{
 	struct bio_bio_st *b, *peer_b;
 	size_t available;
