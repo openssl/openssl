@@ -157,19 +157,17 @@ void engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb)
 		sk_ENGINE_CLEANUP_ITEM_push(cleanup_stack, item);
 	}
 /* The API function that performs all cleanup */
+static void engine_cleanup_cb_free(ENGINE_CLEANUP_ITEM *item)
+	{
+	(*(item->cb))();
+	OPENSSL_free(cb);
+	}
 void ENGINE_cleanup(void)
 	{
 	if(int_cleanup_check(0))
 		{
-		int loop = 0, num = sk_ENGINE_CLEANUP_ITEM_num(cleanup_stack);
-		while(loop < num)
-			{
-			ENGINE_CLEANUP_ITEM *item = sk_ENGINE_CLEANUP_ITEM_value(
-					cleanup_stack, loop++);
-			(*(item->cb))();
-			OPENSSL_free(item);
-			}
-		sk_ENGINE_CLEANUP_ITEM_free(cleanup_stack);
+		sk_ENGINE_CLEANUP_ITEM_pop_free(cleanup_stack,
+			engine_cleanup_cb_free);
 		cleanup_stack = NULL;
 		}
 	/* FIXME: This should be handled (somehow) through RAND, eg. by it
