@@ -140,7 +140,7 @@ int BN_sub_word(BIGNUM *a, BN_ULONG w)
 	{
 	int i;
 
-	if (a->neg)
+	if (BN_is_zero(a) || a->neg)
 		{
 		a->neg=0;
 		i=BN_add_word(a,w);
