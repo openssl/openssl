@@ -111,7 +111,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pe
 		i=PEM_read_bio(bp,&name,&header,&data,&len);
 		if (i == 0)
 			{
-			error=ERR_GET_REASON(ERR_peek_error());
+			error=ERR_GET_REASON(ERR_peek_last_error());
 			if (error == PEM_R_NO_START_LINE)
 				{
 				ERR_clear_error();
