@@ -2221,3 +2221,4 @@ ASN1_STRING_TABLE_add                   2245
 CRYPTO_dbg_get_options                  2246
 AUTHORITY_INFO_ACCESS_new               2247
 CRYPTO_get_mem_debug_options            2248
+des_crypt                               2249

@@ -377,7 +377,6 @@ sub do_defs
 	# Prune the returned functions
 
         delete $funcs{"SSL_add_dir_cert_subjects_to_stack"};
-        delete $funcs{"des_crypt"};
         delete $funcs{"RSA_PKCS1_RSAref"} unless $rsaref;
 
 	if($W32) {

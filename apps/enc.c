@@ -92,7 +92,7 @@ int MAIN(int argc, char **argv)
 	int ret=1,inl;
 	unsigned char key[24],iv[MD5_DIGEST_LENGTH];
 	unsigned char salt[PKCS5_SALT_LEN];
-	char *str=NULL;
+	char *str=NULL, *passarg = NULL, *pass = NULL;
 	char *hkey=NULL,*hiv=NULL,*hsalt = NULL;
 	int enc=1,printkey=0,i,base64=0;
 	int debug=0,olb64=0,nosalt=0;
@@ -135,6 +135,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			outf= *(++argv);
+			}
+		else if (strcmp(*argv,"-pass") == 0)
+			{
+			if (--argc < 1) goto bad;
+			passarg= *(++argv);
 			}
 		else if	(strcmp(*argv,"-d") == 0)
 			enc=0;
@@ -226,7 +231,8 @@ int MAIN(int argc, char **argv)
 bad:
 			BIO_printf(bio_err,"options are\n");
 			BIO_printf(bio_err,"%-14s input file\n","-in <file>");
-			BIO_printf(bio_err,"%-14s output fileencrypt\n","-out <file>");
+			BIO_printf(bio_err,"%-14s output file\n","-out <file>");
+			BIO_printf(bio_err,"%-14s pass phrase source\n","-pass <arg>");
 			BIO_printf(bio_err,"%-14s encrypt\n","-e");
 			BIO_printf(bio_err,"%-14s decrypt\n","-d");
 			BIO_printf(bio_err,"%-14s base64 encode/decode, depending on encryption flag\n","-a/-base64");
@@ -370,6 +376,14 @@ bad:
 			goto end;
 			}
 		}
+
+	if(!str && passarg) {
+		if(!app_passwd(bio_err, passarg, NULL, &pass, NULL)) {
+			BIO_printf(bio_err, "Error getting password\n");
+			goto end;
+		}
+		str = pass;
+	}
 
 	if ((str == NULL) && (cipher != NULL) && (hkey == NULL))
 		{
@@ -573,6 +587,7 @@ end:
 	if (out != NULL) BIO_free(out);
 	if (benc != NULL) BIO_free(benc);
 	if (b64 != NULL) BIO_free(b64);
+	if(pass) Free(pass);
 	EXIT(ret);
 	}
 

@@ -9,6 +9,7 @@ enc - symmetric cipher routines
 B<openssl enc -ciphername>
 [B<-in filename>]
 [B<-out filename>]
+[B<-pass arg>]
 [B<-e>]
 [B<-d>]
 [B<-a>]
@@ -40,6 +41,11 @@ the input filename, standard input by default.
 =item B<-out filename>
 
 the output filename, standard output by default.
+
+=item B<-pass arg>
+
+the password source. For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 =item B<-salt>
 
@@ -73,11 +79,14 @@ if the B<-a> option is set then base64 process the data on one line.
 
 =item B<-k password>
 
-the password to derive the key from.
+the password to derive the key from. This is for compatibility with previous
+versions of OpenSSL. Superseded by the B<-pass> argument.
 
 =item B<-kfile filename>
 
-read the password to derive the key from the first line of B<filename>
+read the password to derive the key from the first line of B<filename>.
+This is for computability with previous versions of OpenSSL. Superseded by
+the B<-pass> argument.
 
 =item B<-S salt>
 
