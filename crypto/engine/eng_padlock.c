@@ -252,12 +252,20 @@ struct padlock_cipher_data
 };
 
 /*
+ * Essentially this variable belongs in thread local storage.
+ * Having this variable global on the other hand can only cause
+ * few bogus key reloads [if any at all on single-CPU system],
+ * so we accept the penatly...
+ */
+static volatile struct padlock_cipher_data *padlock_saved_context;
+
+/*
  * =======================================================
  * Inline assembler section(s).
  * =======================================================
  * Order of arguments is chosen to facilitate Windows port
  * using __fastcall calling convention. If you wish to add
- * more routines, keep in mind that in __fastcall first
+ * more routines, keep in mind that first __fastcall
  * argument is passed in %ecx and second - in %edx.
  * =======================================================
  */
@@ -367,16 +375,14 @@ padlock_reload_key(void)
  * This is heuristic key context tracing. At first one
  * believes that one should use atomic swap instructions,
  * but it's not actually necessary. Point is that if
- * saved_cdata was changed by another thread after we've
- * read it and before we compare it with cdata, our key
- * *shall* be reloaded upon thread context switch and
- * we are therefore set in either case...
+ * padlock_saved_context was changed by another thread
+ * after we've read it and before we compare it with cdata,
+ * our key *shall* be reloaded upon thread context switch
+ * and we are therefore set in either case...
  */
 static inline void
 padlock_verify_context(struct padlock_cipher_data *cdata)
 {
-	static struct padlock_cipher_data *saved_cdata;
-
 	asm volatile (
 	"pushfl\n"
 "	bt	$30,(%%esp)\n"
@@ -387,7 +393,8 @@ padlock_verify_context(struct padlock_cipher_data *cdata)
 "	popfl\n"
 "	sub	$4,%%esp\n"
 "1:	add	$4,%%esp"
-        :"+m"(saved_cdata) : "r"(saved_cdata), "r"(cdata) : "cc");
+	:"+m"(padlock_saved_context)
+	: "r"(padlock_saved_context), "r"(cdata) : "cc");
 }
 
 /* Template for padlock_xcrypt_* modes */
@@ -455,8 +462,8 @@ static void * __fastcall 		\
 	name (size_t cnt, void *cdata,	\
 	void *outp, const void *inp)	\
 {	_asm	mov	eax,edx		\
-	_asm	lea	ebx,[eax+16]	\
-	_asm	lea	edx,[eax+32]	\
+	_asm	lea	edx,[eax+16]	\
+	_asm	lea	ebx,[eax+32]	\
 	_asm	mov	edi,outp	\
 	_asm	mov	esi,inp		\
 	REP_XCRYPT(code)		\
@@ -479,15 +486,13 @@ padlock_reload_key(void)
 
 static void __fastcall
 padlock_verify_context(void *cdata)
-{	static void *saved_cdata;
-
-	_asm	{
+{	_asm	{
 		pushfd
 		bt	DWORD PTR[esp],30
 		jnc	skip
-		cmp	ecx,saved_cdata
+		cmp	ecx,padlock_saved_context
 		je	skip
-		mov	saved_cdata,ecx
+		mov	padlock_saved_context,ecx
 		popfd
 		sub	esp,4
 	skip:	add	esp,4
@@ -551,8 +556,7 @@ padlock_bswapl(void *key)
 		mov	esi,ecx
 		mov	edi,ecx
 		mov	ecx,60
-	up:
-		lodsd
+	up:	lodsd
 		bswap	eax
 		stosd
 		loop	up
@@ -834,7 +838,8 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 {
 	struct padlock_cipher_data *cdata;
 	const  void *inp;
-	char  *out, *iv;
+	char  *out;
+	void  *iv;
 	int    inp_misaligned, out_misaligned, realign_in_loop;
 	size_t chunk, allocated=0;
 
@@ -882,7 +887,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 	case EVP_CIPH_ECB_MODE:
 		do	{
 			if (inp_misaligned)
-				inp = memcpy(out, in_arg, chunk);
+				inp = memcpy(out, in_arg, chunk&~3);
 			else
 				inp = in_arg;
 			in_arg += chunk;
@@ -890,7 +895,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			padlock_xcrypt_ecb(chunk/AES_BLOCK_SIZE, cdata, out, inp);
 
 			if (out_misaligned)
-				out_arg = (char *)memcpy(out_arg, out, chunk) + chunk;
+				out_arg = (char *)memcpy(out_arg, out, chunk&~3) + chunk;
 			else
 				out     = out_arg+=chunk;
 
@@ -908,7 +913,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			chunk = PADLOCK_CHUNK;
 		cbc_shortcut: /* optimize for small input */
 			if (inp_misaligned)
-				inp = memcpy(out, in_arg, chunk);
+				inp = memcpy(out, in_arg, chunk&~3);
 			else
 				inp = in_arg;
 			in_arg += chunk;
@@ -916,7 +921,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			iv = padlock_xcrypt_cbc(chunk/AES_BLOCK_SIZE, cdata, out, inp);
 
 			if (out_misaligned)
-				out_arg = (char *)memcpy(out_arg, out, chunk) + chunk;
+				out_arg = (char *)memcpy(out_arg, out, chunk&~3) + chunk;
 			else
 				out     = out_arg+=chunk;
 
@@ -933,7 +938,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			chunk = PADLOCK_CHUNK;
 		cfb_shortcut: /* optimize for small input */
 			if (inp_misaligned)
-				inp = memcpy(out, in_arg, chunk);
+				inp = memcpy(out, in_arg, chunk&~3);
 			else
 				inp = in_arg;
 			in_arg += chunk;
@@ -941,7 +946,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			iv = padlock_xcrypt_cfb(chunk/AES_BLOCK_SIZE, cdata, out, inp);
 
 			if (out_misaligned)
-				out_arg = (char *)memcpy(out_arg, out, chunk) + chunk;
+				out_arg = (char *)memcpy(out_arg, out, chunk&~3) + chunk;
 			else
 				out     = out_arg+=chunk;
 
@@ -953,7 +958,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 		memcpy(cdata->iv, ctx->iv, AES_BLOCK_SIZE);
 		do	{
 			if (inp_misaligned)
-				inp = memcpy(out, in_arg, chunk);
+				inp = memcpy(out, in_arg, chunk&~3);
 			else
 				inp = in_arg;
 			in_arg += chunk;
@@ -961,7 +966,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			padlock_xcrypt_ofb(chunk/AES_BLOCK_SIZE, cdata, out, inp);
 
 			if (out_misaligned)
-				out_arg = (char *)memcpy(out_arg, out, chunk) + chunk;
+				out_arg = (char *)memcpy(out_arg, out, chunk&~3) + chunk;
 			else
 				out     = out_arg+=chunk;
 
