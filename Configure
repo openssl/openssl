@@ -583,7 +583,11 @@ if($IsWindows) {
 	printf OUT "#define DATE \"%s\"\n", scalar gmtime();
 	close(OUT);
 } else {
-	(system 'make -f Makefile.ssl links') == 0 or exit $?;
+	if ( $perl =~ /./ ) {
+		(system "make -f Makefile.ssl PERL=\'$perl\' links") == 0 or exit $?;
+	} else {
+		(system 'make -f Makefile.ssl links') == 0 or exit $?;
+	}
 	(system 'make depend') == 0 or exit $? if $depflags ne "";
 	&dofile("tools/c_rehash",$openssldir,'^DIR=',	'DIR=%s',);
 	&dofile("util/mk1mf.pl",$openssldir,
