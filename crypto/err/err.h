@@ -134,6 +134,7 @@ typedef struct err_state_st
 #define ERR_LIB_DSO		37
 #define ERR_LIB_ENGINE		38
 #define ERR_LIB_OCSP            39
+#define ERR_LIB_EC		40
 
 #define ERR_LIB_USER		128
 
@@ -165,6 +166,7 @@ typedef struct err_state_st
 #define DSOerr(f,r) ERR_PUT_error(ERR_LIB_DSO,(f),(r),ERR_file_name,__LINE__)
 #define ENGINEerr(f,r) ERR_PUT_error(ERR_LIB_ENGINE,(f),(r),ERR_file_name,__LINE__)
 #define OCSPerr(f,r) ERR_PUT_error(ERR_LIB_OCSP,(f),(r),ERR_file_name,__LINE__)
+#define ECerr(f,r)   ERR_PUT_error(ERR_LIB_EC,(f),(r),ERR_file_name,__LINE__)
 
 /* Borland C seems too stupid to be able to shift and do longs in
  * the pre-processor :-( */
@@ -215,6 +217,8 @@ typedef struct err_state_st
 #define ERR_R_PKCS12_LIB ERR_LIB_PKCS12
 #define ERR_R_DSO_LIB	ERR_LIB_DSO
 #define ERR_R_ENGINE_LIB ERR_LIB_ENGINE
+#define ERR_R_OCSP_LIB  ERR_LIB_OCSP
+#define ERR_R_EC_LIB	ERR_LIB_EC
 
 /* fatal error */
 #define	ERR_R_MALLOC_FAILURE			(1|ERR_R_FATAL)

@@ -17,7 +17,7 @@
 #include <openssl/bn.h>
 
 #include "../bn/bn_mont2.h" /* XXX */
-#include "ec.h"
+#include "ec2.h"
 
 
 EC_POINT *ECP_new()

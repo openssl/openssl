@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "ec.h"
+#include "ec2.h"
 
 
 

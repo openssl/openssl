@@ -955,7 +955,7 @@ speed.o: ../include/openssl/rijndael.h ../include/openssl/ripemd.h
 speed.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 speed.o: ../include/openssl/sha.h ../include/openssl/stack.h
 speed.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-speed.o: ../include/openssl/x509_vfy.h apps.h speed.c testdsa.h testrsa.h
+speed.o: ../include/openssl/x509_vfy.h ./testdsa.h ./testrsa.h apps.h speed.c
 spkac.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 spkac.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 spkac.o: ../include/openssl/buffer.h ../include/openssl/cast.h

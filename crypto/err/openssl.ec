@@ -1,6 +1,7 @@
 L ERR		NONE				NONE
 L CRYPTO	crypto/crypto.h			crypto/cpt_err.c
 L BN		crypto/bn/bn.h			crypto/bn/bn_err.c
+L EC		crypto/ec/ec.h			crypto/ec/ec_err.c
 L RSA		crypto/rsa/rsa.h		crypto/rsa/rsa_err.c
 L DSA		crypto/dsa/dsa.h		crypto/dsa/dsa_err.c
 L DSO		crypto/dso/dso.h		crypto/dso/dso_err.c
