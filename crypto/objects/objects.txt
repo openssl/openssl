@@ -151,6 +151,11 @@ pkcs1 2			: RSA-MD2		: md2WithRSAEncryption
 pkcs1 3			: RSA-MD4		: md4WithRSAEncryption
 pkcs1 4			: RSA-MD5		: md5WithRSAEncryption
 pkcs1 5			: RSA-SHA1		: sha1WithRSAEncryption
+# According to PKCS #1 version 2.1
+pkcs1 11		: RSA-SHA256		: sha256WithRSAEncryption
+pkcs1 12		: RSA-SHA384		: sha384WithRSAEncryption
+pkcs1 13		: RSA-SHA512		: sha512WithRSAEncryption
+pkcs1 14		: RSA-SHA224		: sha224WithRSAEncryption
 
 pkcs 3			: pkcs3
 pkcs3 1			:			: dhKeyAgreement
@@ -789,6 +794,13 @@ aes 44			: AES-256-CFB		: aes-256-cfb
 			: DES-CFB8		: des-cfb8
 			: DES-EDE3-CFB1		: des-ede3-cfb1
 			: DES-EDE3-CFB8		: des-ede3-cfb8
+
+# OIDs for SHA224, SHA256, SHA385 and SHA512, according to x9.84.
+!Alias nist_hashalgs nistAlgorithms 2
+nist_hashalgs 1		: SHA256		: sha256
+nist_hashalgs 2		: SHA384		: sha384
+nist_hashalgs 3		: SHA512		: sha512
+nist_hashalgs 4		: SHA224		: sha224
 
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code
