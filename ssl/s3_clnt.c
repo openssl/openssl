@@ -815,6 +815,7 @@ static int ssl3_get_server_certificate(SSL *s)
 		X509_free(s->session->peer);
 	CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
 	s->session->peer=x;
+	s->session->verify_result = s->verify_result;
 
 	x=NULL;
 	ret=1;

@@ -4,6 +4,12 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2000]
 
+  *) Store verify_result within SSL_SESSION also for client side to
+     avoid potential security hole. (Re-used sessions on the client side
+     always resulted in verify_result==X509_V_OK, not using the original
+     result of the server certificate verification.)
+     [Lutz Jaenicke]
+
   *) Disable ssl2_peek and ssl3_peek (i.e., both implementations
      of SSL_peek) because they both are completely broken.
      They will be fixed RSN by adding an additional 'peek' parameter
