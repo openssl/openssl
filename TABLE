@@ -886,11 +886,11 @@ $rc5_obj      =
 
 *** hpux10-brokencc
 $cc           = cc
-$cflags       = -DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z
+$cflags       = -DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
-$bn_ops       = DES_PTR DES_UNROLL DES_RISC1
+$bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
