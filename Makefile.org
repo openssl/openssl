@@ -348,6 +348,25 @@ do_solaris-shared:
 		done; \
 	fi
 
+# OpenServer 5 native compilers used
+do_svr3-shared:
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
+		  find . -name "*.o" -print > allobjs ; \
+		  OBJS= ; export OBJS ; \
+		  for obj in `ar t lib$$i.a` ; do \
+		    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
+		  done ; \
+		  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
+
 # UnixWare 7 and OpenUNIX 8 native compilers used
 do_svr5-shared:
 	if ${DETECT_GNU_LD}; then \

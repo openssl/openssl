@@ -463,9 +463,9 @@ my %table=(
 
 # SCO 5 - Ben Laurie <ben@algroup.co.uk> says the -O breaks the
 # SCO cc.
-"sco5-cc",  "cc:::(unknown)::-lsocket:${x86_gcc_des} ${x86_gcc_opts}:::", # des options?
+"sco5-cc",  "cc:-belf::(unknown)::-lsocket -lresolv -lnsl:${x86_gcc_des} ${x86_gcc_opts}::::::::::dlfcn:svr3-shared:-Kpic", # des options?
 "sco5-cc-pentium",  "cc:-Kpentium::(unknown)::-lsocket:${x86_gcc_des} ${x86_gcc_opts}:::", # des options?
-"sco5-gcc",  "gcc:-O3 -fomit-frame-pointer::(unknown)::-lsocket:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:::", # the SCO assembler doesn't seem to like our assembler files ...
+"sco5-gcc",  "gcc:-O3 -fomit-frame-pointer::(unknown)::-lsocket -lresolv -lnsl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:svr3-shared:-fPIC", # the SCO assembler doesn't seem to like our assembler files ...
 
 # Sinix/ReliantUNIX RM400
 # NOTE: The CDS++ Compiler up to V2.0Bsomething has the IRIX_CC_BUG optimizer problem. Better use -g  */
