@@ -72,7 +72,7 @@ $shared_ldflag =
 $shared_extension = 
 $ranlib       = 
 
-*** CygWin32
+*** Cygwin
 $cc           = gcc
 $cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
 $unistd       = 
@@ -96,7 +96,7 @@ $shared_ldflag = .dll
 $shared_extension = 
 $ranlib       = 
 
-*** CygWin32-pre1.3
+*** Cygwin-pre1.3
 $cc           = gcc
 $cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
 $unistd       = 
