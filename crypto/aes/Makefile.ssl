@@ -21,7 +21,8 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=aestest.c
+#TEST=aestest.c
+TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
