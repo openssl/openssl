@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/02/27 18:55:01 $
+  ______________                           $Date: 2000/02/27 19:06:27 $
 
   DEVELOPMENT STATE
 
@@ -23,7 +23,8 @@
                          FreeBSD 3.0-RELEASE  - test passed
                          OpenVMS V7.1/Alpha   - test passed
                          OpenVMS V7.2-1/Alpha - test passed
-                         OpenVMS V7.1/VAX     - test failed on BN (config prob)
+                         OpenVMS V7.2/VAX     - test failed (is corrected)
+                         OpenVMS V7.1/VAX     - test failed (is corrected)
 			 irix-mips3-cc        - test passed
 			 irix64-mips4-cc      - test passed
                        Proposed release time: Monday, February 28th 2000
