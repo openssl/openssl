@@ -438,7 +438,9 @@ static int get_server_hello(SSL *s)
 	 * cert, Free's it before we increment the reference count. */
 	CRYPTO_w_lock(CRYPTO_LOCK_X509);
 	s->session->peer=s->session->cert->key->x509;
-	CRYPTO_add(&s->session->peer->references,1,CRYPTO_LOCK_X509);
+	/* Shouldn't do this: already locked */
+	/*CRYPTO_add(&s->session->peer->references,1,CRYPTO_LOCK_X509);*/
+	s->session->peer->references++;
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509);
 
 	s->s2->conn_id_length=s->s2->tmp.conn_id_length;

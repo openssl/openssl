@@ -63,6 +63,7 @@
 
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx,SSL_SESSION *s);
+static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
 static int ssl_session_num=0;
 static STACK *ssl_session_meth=NULL;
 
@@ -304,8 +305,8 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 			while (SSL_CTX_sess_number(ctx) >
 				SSL_CTX_sess_get_cache_size(ctx))
 				{
-				if (!SSL_CTX_remove_session(ctx,
-					ctx->session_cache_tail))
+				if (!remove_session_lock(ctx,
+					ctx->session_cache_tail, 0))
 					break;
 				else
 					ctx->stats.sess_cache_full++;
@@ -317,13 +318,18 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 	}
 
 int SSL_CTX_remove_session(SSL_CTX *ctx, SSL_SESSION *c)
+{
+	return remove_session_lock(ctx, c, 1);
+}
+
+int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
 	{
 	SSL_SESSION *r;
 	int ret=0;
 
 	if ((c != NULL) && (c->session_id_length != 0))
 		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+		if(lck) CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
 		r=(SSL_SESSION *)lh_delete(ctx->sessions,(char *)c);
 		if (r != NULL)
 			{
@@ -331,7 +337,7 @@ int SSL_CTX_remove_session(SSL_CTX *ctx, SSL_SESSION *c)
 			SSL_SESSION_list_remove(ctx,c);
 			}
 
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+		if(lck) CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 
 		if (ret)
 			{
