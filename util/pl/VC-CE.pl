@@ -22,7 +22,7 @@ $inc_def="inc32";
 
 if ($debug)
 	{
-	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DOPENSSL_SYSNAME_WINCE -D_DEBUG -DL_ENDIAN -DWIN32_LEAN_AND_MEAN -DDEBUG -DDSO_WIN32";
+	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -D_DEBUG -DL_ENDIAN -DWIN32_LEAN_AND_MEAN -DDEBUG -DDSO_WIN32";
 	$lflags.=" /debug";
 	$mlflags.=' /debug';
 	}
