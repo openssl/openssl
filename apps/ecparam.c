@@ -52,6 +52,32 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ *
+ * Portions of the attached software ("Contribution") are developed by 
+ * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
+ *
+ * The Contribution is licensed pursuant to the OpenSSL open source
+ * license provided above.
+ *
+ * In addition, Sun covenants to all licensees who provide a reciprocal
+ * covenant with respect to their own patents if any, not to sue under
+ * current and future patent claims necessarily infringed by the making,
+ * using, practicing, selling, offering for sale and/or otherwise
+ * disposing of the Contribution as delivered hereunder 
+ * (or portions thereof), provided that such covenant shall not apply:
+ *  1) for code that a licensee deletes from the Contribution;
+ *  2) separates from the Contribution; or
+ *  3) for infringements caused by:
+ *       i) the modification of the Contribution or
+ *      ii) the combination of the Contribution with other software or
+ *          devices where such combination causes the infringement.
+ *
+ * The elliptic curve binary polynomial software is originally written by 
+ * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
+ *
+ */
 #ifndef OPENSSL_NO_ECDSA
 #include <assert.h>
 #include <stdio.h>
@@ -97,27 +123,74 @@
  * -engine e              - use engine e, possible a hardware device
  */
 
-static const char *curve_list[20] = {
-	"prime192v1       - NIST recommended curve over a 192 bit prime field",
-	"prime192v2       - 192 bit prime curve from the X9.62 draft",
-	"prime192v3       - 192 bit prime curve from the X9.62 draft",
-	"prime239v1       - 239 bit prime curve from the X9.62 draft",
-	"prime239v2       - 239 bit prime curve from the X9.62 draft",
-	"prime239v3       - 239 bit prime curve from the X9.62 draft", 
-	"prime256v1       - NIST recommended curve over a 256 bit prime field",
-	"secp112r1        - SECG recommended curve over a 112 bit prime field", 
-	"secp112r2        - SECG recommended curve over a 112 bit prime field", 
-	"secp128r1        - SECG recommended curve over a 128 bit prime field",
-	"secp128r2        - SECG recommended curve over a 128 bit prime field", 
-	"secp160k1        - SECG recommended curve over a 160 bit prime field", 
-	"secp160r1        - SECG recommended curve over a 160 bit prime field", 
-	"secp160r2        - SECG recommended curve over a 160 bit prime field", 
-	"secp192k1        - SECG recommended curve over a 192 bit prime field",
-	"secp224k1        - SECG recommended curve over a 224 bit prime field", 
-	"secp224r1        - NIST recommended curve over a 224 bit prime field", 
-	"secp256k1        - SECG recommended curve over a 256 bit prime field",
-	"secp384r1        - NIST recommended curve over a 384 bit prime field", 
-	"secp521r1        - NIST recommended curve over a 521 bit prime field"
+static const char *curve_list[67] = {
+	"prime192v1   - 192 bit prime curve from the X9.62 draft",
+	"prime192v2   - 192 bit prime curve from the X9.62 draft",
+	"prime192v3   - 192 bit prime curve from the X9.62 draft",
+	"prime239v1   - 239 bit prime curve from the X9.62 draft",
+	"prime239v2   - 239 bit prime curve from the X9.62 draft",
+	"prime239v3   - 239 bit prime curve from the X9.62 draft", 
+	"prime256v1   - 256 bit prime curve from the X9.62 draft", 
+	"secp112r1    - SECG recommended curve over a 112 bit prime field", 
+	"secp112r2    - SECG recommended curve over a 112 bit prime field", 
+	"secp128r1    - SECG recommended curve over a 128 bit prime field",
+	"secp128r2    - SECG recommended curve over a 128 bit prime field", 
+	"secp160k1    - SECG recommended curve over a 160 bit prime field", 
+	"secp160r1    - SECG recommended curve over a 160 bit prime field", 
+	"secp160r2    - SECG recommended curve over a 160 bit prime field", 
+	"secp192k1    - SECG recommended curve over a 192 bit prime field",
+	"prime192v1   - SECG recommended curve over a 192 bit prime field (aka secp192r1)",
+	"secp224k1    - SECG recommended curve over a 224 bit prime field", 
+	"secp224r1    - SECG/NIST recommended curve over a 224 bit prime field", 
+	"secp256k1    - SECG recommended curve over a 256 bit prime field",
+	"prime256v1   - SECG recommended curve over a 256 bit prime field (aka secp256r1)",
+	"secp384r1    - SECG/NIST recommended curve over a 384 bit prime field", 
+	"secp521r1    - SECG/NIST recommended curve over a 521 bit prime field",
+	"wap-wsg-idm-ecid-wtls6  - 112 bit prime curve from the WTLS standard",
+	"wap-wsg-idm-ecid-wtls8  - 112 bit prime curve from the WTLS standard",
+	"wap-wsg-idm-ecid-wtls7  - 160 bit prime curve from the WTLS standard",
+	"wap-wsg-idm-ecid-wtls9  - 160 bit prime curve from the WTLS standard",
+	"wap-wsg-idm-ecid-wtls12 - 224 bit prime curve from the WTLS standard",
+	"c2pnb163v1   - 163 bit binary curve from the X9.62 draft",
+	"c2pnb163v2   - 163 bit binary curve from the X9.62 draft",
+	"c2pnb163v3   - 163 bit binary curve from the X9.62 draft",
+	"c2pnb176v1   - 176 bit binary curve from the X9.62 draft",
+	"c2tnb191v1   - 191 bit binary curve from the X9.62 draft",
+	"c2tnb191v2   - 191 bit binary curve from the X9.62 draft",
+	"c2tnb191v3   - 191 bit binary curve from the X9.62 draft",
+	"c2pnb208w1   - 208 bit binary curve from the X9.62 draft",
+	"c2tnb239v1   - 239 bit binary curve from the X9.62 draft",
+	"c2tnb239v2   - 239 bit binary curve from the X9.62 draft",
+	"c2tnb239v3   - 239 bit binary curve from the X9.62 draft",
+	"c2pnb272w1   - 272 bit binary curve from the X9.62 draft",
+	"c2pnb304w1   - 304 bit binary curve from the X9.62 draft",
+	"c2tnb359v1   - 359 bit binary curve from the X9.62 draft",
+	"c2pnb368w1   - 368 bit binary curve from the X9.62 draft",
+	"c2tnb431r1   - 431 bit binary curve from the X9.62 draft",
+	"sect113r1    - SECG recommended curve over a 113 bit binary field",
+	"sect113r2    - SECG recommended curve over a 113 bit binary field",
+	"sect131r1    - SECG recommended curve over a 131 bit binary field",
+	"sect131r2    - SECG recommended curve over a 131 bit binary field",
+	"sect163k1    - SECG/NIST recommended curve over a 163 bit binary field",
+	"sect163r1    - SECG recommended curve over a 163 bit binary field",
+	"sect163r2    - SECG/NIST recommended curve over a 163 bit binary field",
+	"sect193r1    - SECG recommended curve over a 193 bit binary field",
+	"sect193r2    - SECG recommended curve over a 193 bit binary field",
+	"sect233k1    - SECG/NIST recommended curve over a 233 bit binary field",
+	"sect233r1    - SECG/NIST recommended curve over a 233 bit binary field",
+	"sect239k1    - SECG recommended curve over a 239 bit binary field",
+	"sect283k1    - SECG/NIST recommended curve over a 283 bit binary field",
+	"sect283r1    - SECG/NIST recommended curve over a 283 bit binary field",
+	"sect409k1    - SECG/NIST recommended curve over a 409 bit binary field",
+	"sect409r1    - SECG/NIST recommended curve over a 409 bit binary field",
+	"sect571k1    - SECG/NIST recommended curve over a 571 bit binary field",
+	"sect571r1    - SECG/NIST recommended curve over a 571 bit binary field",
+	"wap-wsg-idm-ecid-wtls1  - 113 bit binary curve from the WTLS standard",
+	"wap-wsg-idm-ecid-wtls4  - 113 bit binary curve from the WTLS standard",
+	"wap-wsg-idm-ecid-wtls3  - 163 bit binary curve from the WTLS standard",
+	"wap-wsg-idm-ecid-wtls5  - 163 bit binary curve from the WTLS standard",
+	"wap-wsg-idm-ecid-wtls10 - 233 bit binary curve from the WTLS standard",
+	"wap-wsg-idm-ecid-wtls11 - 233 bit binary curve from the WTLS standard"
 };
 
 static int ecparam_print_var(BIO *,BIGNUM *,const char *,int,unsigned char *);
