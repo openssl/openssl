@@ -261,6 +261,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_CIPHER_TABLE_SRC_ERROR            ,"cipher table src error"},
 {SSL_R_COMPRESSED_LENGTH_TOO_LONG        ,"compressed length too long"},
 {SSL_R_COMPRESSION_FAILURE               ,"compression failure"},
+{SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE,"compression id not within private range"},
 {SSL_R_COMPRESSION_LIBRARY_ERROR         ,"compression library error"},
 {SSL_R_CONNECTION_ID_IS_DIFFERENT        ,"connection id is different"},
 {SSL_R_CONNECTION_TYPE_NOT_SET           ,"connection type not set"},

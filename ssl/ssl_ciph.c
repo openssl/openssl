@@ -80,6 +80,10 @@ static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX]={
 	NULL,NULL,NULL,NULL,NULL,NULL,
 	};
 
+#define SSL_COMP_NULL_IDX	0
+#define SSL_COMP_ZLIB_IDX	1
+#define SSL_COMP_NUM_IDX	2
+
 static STACK_OF(SSL_COMP) *ssl_comp_methods=NULL;
 
 #define SSL_MD_MD5_IDX	0
@@ -185,6 +189,41 @@ static void load_ciphers(void)
 		EVP_get_digestbyname(SN_sha1);
 	}
 
+static int sk_comp_cmp(const SSL_COMP * const *a,
+			const SSL_COMP * const *b)
+	{
+	return((*a)->id-(*b)->id);
+	}
+
+static void load_builtin_compressions(void)
+	{
+	if (ssl_comp_methods == NULL)
+		{
+		SSL_COMP *comp = NULL;
+
+		MemCheck_off();
+		ssl_comp_methods=sk_SSL_COMP_new(sk_comp_cmp);
+		if (ssl_comp_methods != NULL)
+			{
+			comp=(SSL_COMP *)OPENSSL_malloc(sizeof(SSL_COMP));
+			if (comp != NULL)
+				{
+				comp->method=COMP_zlib();
+				if (comp->method
+					&& comp->method->type == NID_undef)
+					OPENSSL_free(comp);
+				else
+					{
+					comp->id=SSL_COMP_ZLIB_IDX;
+					comp->name=comp->method->name;
+					sk_SSL_COMP_push(ssl_comp_methods,comp);
+					}
+				}
+			}
+		MemCheck_on();
+		}
+	}
+
 int ssl_cipher_get_evp(SSL_SESSION *s, const EVP_CIPHER **enc,
 	     const EVP_MD **md, SSL_COMP **comp)
 	{
@@ -197,17 +236,12 @@ int ssl_cipher_get_evp(SSL_SESSION *s, const EVP_CIPHER **enc,
 		{
 		SSL_COMP ctmp;
 
-		if (s->compress_meth == 0)
-			*comp=NULL;
-		else if (ssl_comp_methods == NULL)
-			{
-			/* bad */
-			*comp=NULL;
-			}
-		else
-			{
+		load_builtin_compressions();
 
-			ctmp.id=s->compress_meth;
+		*comp=NULL;
+		ctmp.id=s->compress_meth;
+		if (ssl_comp_methods != NULL)
+			{
 			i=sk_SSL_COMP_find(ssl_comp_methods,&ctmp);
 			if (i >= 0)
 				*comp=sk_SSL_COMP_value(ssl_comp_methods,i);
@@ -1107,35 +1141,40 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 	return(NULL);
 	}
 
-static int sk_comp_cmp(const SSL_COMP * const *a,
-			const SSL_COMP * const *b)
-	{
-	return((*a)->id-(*b)->id);
-	}
-
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 	{
+	load_builtin_compressions();
 	return(ssl_comp_methods);
 	}
 
 int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	{
 	SSL_COMP *comp;
-	STACK_OF(SSL_COMP) *sk;
 
         if (cm == NULL || cm->type == NID_undef)
                 return 1;
+
+	/* According to draft-ietf-tls-compression-04.txt, the
+	   compression number ranges should be the following:
+
+	   0 to 63:    methods defined by the IETF
+	   64 to 192:  external party methods assigned by IANA
+	   193 to 255: reserved for private use */
+	if (id < 193 || id > 255)
+		{
+		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE);
+		return 0;
+		}
 
 	MemCheck_off();
 	comp=(SSL_COMP *)OPENSSL_malloc(sizeof(SSL_COMP));
 	comp->id=id;
 	comp->method=cm;
-	if (ssl_comp_methods == NULL)
-		sk=ssl_comp_methods=sk_SSL_COMP_new(sk_comp_cmp);
-	else
-		sk=ssl_comp_methods;
-	if ((sk == NULL) || !sk_SSL_COMP_push(sk,comp))
+	load_builtin_compressions();
+	if ((ssl_comp_methods == NULL)
+		|| !sk_SSL_COMP_push(ssl_comp_methods,comp))
 		{
+		OPENSSL_free(comp);
 		MemCheck_on();
 		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,ERR_R_MALLOC_FAILURE);
 		return(0);
