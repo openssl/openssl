@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Use better test patterns in bntest.
+     [Ulf Möller]
+
   *) Initialise "ex_data" member of RSA/DSA/DH structures prior to calling
      the method-specific "init()" handler. Also clean up ex_data after
      calling the method-specific "finish()" handler. Previously, this was
