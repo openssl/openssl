@@ -56,14 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
- *
- * Always modify rc2.org since rc2.h is automatically generated from
- * it during SSLeay configuration.
- *
- * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- */
-
 #ifndef HEADER_RC2_H
 #define HEADER_RC2_H
 
@@ -74,9 +66,7 @@ extern "C" {
 #define RC2_ENCRYPT	1
 #define RC2_DECRYPT	0
 
-/* I need to put in a mod for the alpha - eay */
-#define RC2_INT unsigned short
-
+#include "opensslconf.h" /* RC2_INT */
 #define RC2_BLOCK	8
 #define RC2_KEY_LENGTH	16
 

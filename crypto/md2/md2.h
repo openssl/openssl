@@ -1,4 +1,4 @@
-/* crypto/rc4/rc4_locl.org */
+/* crypto/md/md2.org */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,15 +56,41 @@
  * [including the GNU Public Licence.]
  */
 
-/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- *
- * Always modify bf_locl.org since bf_locl.h is automatically generated from
- * it during SSLeay configuration.
- *
- * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- */
+#ifndef HEADER_MD2_H
+#define HEADER_MD2_H
 
-/* if this is defined data[i] is used instead of *data, this is a %20
- * speedup on x86 */
-#undef RC4_INDEX
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
+#define MD2_DIGEST_LENGTH	16
+#define MD2_BLOCK       	16
+#include "opensslconf.h" /* MD2_INT */
+
+typedef struct MD2state_st
+	{
+	int num;
+	unsigned char data[MD2_BLOCK];
+	MD2_INT cksm[MD2_BLOCK];
+	MD2_INT state[MD2_BLOCK];
+	} MD2_CTX;
+
+#ifndef NOPROTO
+const char *MD2_options(void);
+void MD2_Init(MD2_CTX *c);
+void MD2_Update(MD2_CTX *c, register unsigned char *data, unsigned long len);
+void MD2_Final(unsigned char *md, MD2_CTX *c);
+unsigned char *MD2(unsigned char *d, unsigned long n,unsigned char *md);
+#else
+const char *MD2_options();
+void MD2_Init();
+void MD2_Update();
+void MD2_Final();
+unsigned char *MD2();
+#endif
+
+#ifdef  __cplusplus
+}
+#endif
+
+#endif

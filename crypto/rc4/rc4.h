@@ -56,14 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- *
- * Always modify rc4.org since rc4.h is automatically generated from
- * it during SSLeay configuration.
- *
- * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
- */
-
 #ifndef HEADER_RC4_H
 #define HEADER_RC4_H
 
@@ -71,9 +63,7 @@
 extern "C" {
 #endif
 
-/* using int types make the structure larger but make the code faster
- * on most boxes I have tested - up to %20 faster. */
-#define RC4_INT unsigned int
+#include "opensslconf.h" /* RC4_INT */
 
 typedef struct rc4_key_st
 	{

@@ -56,27 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
-/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- *
- * Always modify bf_locl.org since bf_locl.h is automatically generated from
- * it during SSLeay configuration.
- *
- * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- */
-
-/* Special defines which change the way the code is built depending on the
-   CPU and OS.  For SGI machines you can use _MIPS_SZLONG (32 or 64) to find
-   even newer MIPS CPU's, but at the moment one size fits all for
-   optimization options.  Older Sparc's work better with only UNROLL, but
-   there's no way to tell at compile time what it is you're running on */
-
-#if defined( sun )                    /* Newer Sparc's */
-#  define BF_PTR
-#elif defined( __ultrix )     /* Older MIPS */
-#  define BF_PTR
-#elif defined( __sgi )                /* Newer MIPS */
-#  define BF_PTR
-#endif /* Systems-specific speed defines */
+#ifndef _HEADER_BF_LOCL_H
+#define _HEADER_BF_LOCL_H
+#include "opensslconf.h" /* BF_PTR, BF_PTR2 */
 
 #undef c2l
 #define c2l(c,l)	(l =((unsigned long)(*((c)++)))    , \
@@ -169,14 +151,6 @@
 /* This is actually a big endian algorithm, the most significate byte
  * is used to lookup array 0 */
 
-/* use BF_PTR2 for intel boxes,
- * BF_PTR for sparc and MIPS/SGI
- * use nothing for Alpha and HP.
- */
-#if !defined(BF_PTR) && !defined(BF_PTR2)
-#undef BF_PTR
-#endif
-
 #define BF_M	0x3fc
 #define BF_0	22L
 #define BF_1	14L
@@ -227,4 +201,6 @@
 		S[0x0100+((int)(R>>16L)&0xff)])^ \
 		S[0x0200+((int)(R>> 8L)&0xff)])+ \
 		S[0x0300+((int)(R     )&0xff)])&0xffffffffL;
+#endif
+
 #endif

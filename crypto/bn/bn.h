@@ -56,25 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
-/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
- *
- * Always modify bn.org since bn.h is automatically generated from
- * it during SSLeay configuration.
- *
- * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- */
-
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
 
+#include "opensslconf.h"
+
 #ifdef  __cplusplus
 extern "C" {
-#endif
-
-#undef BN_LLONG
-
-#ifdef WIN32
-#define BN_LLONG /* This comment stops Configure mutilating things */
 #endif
 
 #define BN_MUL_COMBA
@@ -97,17 +85,6 @@ extern "C" {
 #if defined(MSDOS) || defined(WINDOWS) || defined(linux)
 #define BN_DIV2W
 #endif
-
-/* Only one for the following should be defined */
-/* The prime number generation stuff may not work when
- * EIGHT_BIT but I don't care since I've only used this mode
- * for debuging the bignum libraries */
-#undef SIXTY_FOUR_BIT_LONG
-#undef SIXTY_FOUR_BIT
-#define THIRTY_TWO_BIT
-#undef SIXTEEN_BIT
-#undef EIGHT_BIT
-
 
 /* assuming long is 64bit - this is the DEC Alpha
  * unsigned long long is only 64 bits :-(, don't define
@@ -138,7 +115,7 @@ extern "C" {
  * assember code :-).  Do NOT define BN_ULLONG.
  */
 #ifdef SIXTY_FOUR_BIT
-#undef BN_LLONG
+#define BN_LLONG
 /* #define BN_ULLONG	unsigned long long */
 #define BN_ULONG	unsigned long long
 #define BN_LONG		long long

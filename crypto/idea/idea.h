@@ -56,15 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- *
- * Always modify idea.org since idea.h is automatically generated from 
- * it during SSLeay configuration.
- *
- * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- */
-
-
 #ifndef HEADER_IDEA_H
 #define HEADER_IDEA_H
 
@@ -75,7 +66,7 @@ extern "C" {
 #define IDEA_ENCRYPT	1
 #define IDEA_DECRYPT	0
 
-#define IDEA_INT unsigned int
+#include "opensslconf.h" /* IDEA_INT */
 #define IDEA_BLOCK	8
 #define IDEA_KEY_LENGTH	16
 

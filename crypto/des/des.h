@@ -56,14 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
- *
- * Always modify des.org since des.h is automatically generated from
- * it during SSLeay configuration.
- *
- * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- */
-
 #ifndef HEADER_DES_H
 #define HEADER_DES_H
 
@@ -72,12 +64,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-
-/* If this is set to 'unsigned int' on a DEC Alpha, this gives about a
- * %20 speed up (longs are 8 bytes, int's are 4). */
-#ifndef DES_LONG
-#define DES_LONG unsigned long
-#endif
+#include "opensslconf.h" /* DES_LONG */
 
 typedef unsigned char des_cblock[8];
 typedef unsigned char *des_cblocks; /* Unfortunately there's no way to say that
@@ -145,12 +132,6 @@ extern int des_check_key;	/* defaults to false */
 extern int des_rw_mode;		/* defaults to DES_PCBC_MODE */
 extern int des_set_weak_key_flag; /* set the weak key flag */
 
-/* The next line is used to disable full ANSI prototypes, if your
- * compiler has problems with the prototypes, make sure this line always
- * evaluates to true :-) */
-#if defined(MSDOS) || defined(__STDC__)
-#undef NOPROTO
-#endif
 #ifndef NOPROTO
 const char *des_options(void);
 void des_ecb3_encrypt(const des_cblock input, des_cblock output,

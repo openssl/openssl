@@ -56,14 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
- *
- * Always modify pem.org since pem.h is automatically generated from
- * it during SSLeay configuration.
- *
- * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- */
-
 #ifndef HEADER_PEM_H
 #define HEADER_PEM_H
 

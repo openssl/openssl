@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/04/16 23:57:00 $
+  ______________                           $Date: 1999/04/21 17:30:41 $
 
   DEVELOPMENT STATE
 
@@ -14,12 +14,8 @@
 
     o Compilation warnings: ctype-related int vs. char
     o Compilation error: "unsigned long*" and "int*" under AIX
-    o Undefined BN symbols in assembler stuff on Solaris
-      (see posting "openssl-SNAP-19990308-2130 on Solaris-2.6 SC4" in openssl-dev)
-    o BN assembler code in r3000.s, mips*.s and pa-risc*.s is broken
     o BSD/OS: assembler functions must not have leading underscores
-    o Niels Poppe reports that RSA fails with alpha.s
-	o exptest fails with irix64-*
+	o exptest and rsa_oaep_test fail with irix64-*
       (Don Badrak <dbadrak@geo.census.gov>: "Re: Problems to compile openssl
 	  on IRIX 6.2", openssl-users)
     o BN_add test fails on Caldera OpenLinux 1.3
@@ -31,13 +27,10 @@
   AVAILABLE PATCHES
 
     o OCSP (titchenert@certco.com) 
-    o unsigned vs. non-unsigned (levitte@stacken.kth.se)
     o Install prefix for packagers (dharris@drh.net)
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
     o linux dynamic libs (colin@field.medicine.adelaide.edu.au)
     o MingW support (niklas@canit.se)
-    o SPARC v8 assembler implementations of bn_asm.c
-      (appro@fy.chalmers.se)
 
   IN PROGRESS
 
@@ -98,13 +91,6 @@
                       Configure and config. Or even let us use GNU Autoconf
                       itself. Then we can avoid a lot of those platform checks
                       which are currently in Configure.
-
-       2. The xxx.org -> xxx.h generation:
-          It's not obvious for which file xxx.org is the source.
-          Suggestion: Rename xxx.org to xxx.h.in (Autoconf style), this way
-                      one sees that xxx.h.in is the input for xxx.h
-
-          Status: Mark +1
 
     o  The installation under "make install" produces a very
        installation layout: $prefix/certs and $prefix/private dirs.  That's
