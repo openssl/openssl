@@ -652,7 +652,6 @@ long SSL_ctrl(SSL *s,int cmd,long larg,char *parg)
 	default:
 		return(s->method->ssl_ctrl(s,cmd,larg,parg));
 		}
-	return(0);
 	}
 
 long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,char *parg)
@@ -710,7 +709,6 @@ long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,char *parg)
 	default:
 		return(ctx->method->ssl_ctx_ctrl(ctx,cmd,larg,parg));
 		}
-	return(0);
 	}
 
 int ssl_cipher_id_cmp(SSL_CIPHER *a,SSL_CIPHER *b)

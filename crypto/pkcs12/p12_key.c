@@ -172,7 +172,6 @@ int PKCS12_key_gen_uni (unsigned char *pass, int passlen, unsigned char *salt,
 			} else BN_bn2bin (Ij, I + j);
 		}
 	}
-	return 0; /* This can't happen */
 }
 #ifdef DEBUG_KEYGEN
 void h__dump (unsigned char *p, int len)
