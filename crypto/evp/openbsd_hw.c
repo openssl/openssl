@@ -65,6 +65,10 @@
 static int fd;
 static int dev_failed;
 
+typedef struct session_op session_op;
+
+#define data(ctx) EVP_C_DATA(session_op,ctx)
+
 static void err(const char *str)
     {
     fprintf(stderr,"%s: errno %d\n",str,errno);
@@ -93,24 +97,19 @@ static int dev_crypto_init(EVP_CIPHER_CTX *ctx)
 	    }
 	close(cryptodev_fd);
 	}
-    if(!ctx->c.dev_crypto)
-	{
-	ctx->c.dev_crypto=OPENSSL_malloc(sizeof *ctx->c.dev_crypto);
-	memset(ctx->c.dev_crypto,'\0',sizeof *ctx->c.dev_crypto);
-	ctx->c.dev_crypto->key=OPENSSL_malloc(MAX_HW_KEY);
-	}
-    
+    assert(data(ctx));
+    memset(data(ctx),'\0',sizeof *data(ctx));
+    data(ctx)->key=OPENSSL_malloc(MAX_HW_KEY);
+
     return 1;
     }
 
 static int dev_crypto_cleanup(EVP_CIPHER_CTX *ctx)
     {
-    if(ioctl(fd,CIOCFSESSION,ctx->c.dev_crypto->ses) == -1)
+    if(ioctl(fd,CIOCFSESSION,data(ctx)->ses) == -1)
 	err("CIOCFSESSION failed");
 
-    OPENSSL_free(ctx->c.dev_crypto->key);
-    OPENSSL_free(ctx->c.dev_crypto);
-    ctx->c.dev_crypto=NULL;
+    OPENSSL_free(data(ctx)->key);
 
     return 1;
     }
@@ -126,13 +125,13 @@ static int dev_crypto_des_ede3_init_key(EVP_CIPHER_CTX *ctx,
 	ctx->cipher=EVP_des_ede3_cbc();
 	return ctx->cipher->init(ctx,key,iv,enc);
 	}
-    memcpy(ctx->c.dev_crypto->key,key,24);
+    memcpy(data(ctx)->key,key,24);
     
-    ctx->c.dev_crypto->cipher=CRYPTO_3DES_CBC;
-    ctx->c.dev_crypto->mac=0;
-    ctx->c.dev_crypto->keylen=24;
+    data(ctx)->cipher=CRYPTO_3DES_CBC;
+    data(ctx)->mac=0;
+    data(ctx)->keylen=24;
 
-    if (ioctl(fd,CIOCGSESSION,ctx->c.dev_crypto) == -1)
+    if (ioctl(fd,CIOCGSESSION,data(ctx)) == -1)
 	{
 	err("CIOCGSESSION failed");
 	/* fall back to using software... */
@@ -151,11 +150,11 @@ static int dev_crypto_des_ede3_cbc_cipher(EVP_CIPHER_CTX *ctx,
     struct crypt_op cryp;
     unsigned char lb[8];
 
-    assert(ctx->c.dev_crypto);
+    assert(data(ctx));
     assert(!dev_failed);
 
     memset(&cryp,'\0',sizeof cryp);
-    cryp.ses=ctx->c.dev_crypto->ses;
+    cryp.ses=data(ctx)->ses;
     cryp.op=ctx->encrypt ? COP_ENCRYPT : COP_DECRYPT;
     cryp.flags=0;
 #if 0
@@ -186,7 +185,7 @@ static int dev_crypto_des_ede3_cbc_cipher(EVP_CIPHER_CTX *ctx,
     return 1;
     }
 
-BLOCK_CIPHER_def_cbc(dev_crypto_des_ede3, des_ede,NID_des_ede3, 8, 24, 8,
+BLOCK_CIPHER_def_cbc(dev_crypto_des_ede3, session_op, NID_des_ede3, 8, 24, 8,
 		     0, dev_crypto_des_ede3_init_key,
 		     dev_crypto_cleanup, 
 		     EVP_CIPHER_set_asn1_iv,
