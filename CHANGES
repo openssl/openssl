@@ -120,9 +120,11 @@
 
      bntest.c has additional tests for binary polynomial arithmetic.
 
-     Two implementations for BN_GF2m_mod_div() are available (selected
-     at compile-time).  ...
-TBD ... OPENSSL_NO_SUN_DIV ...  --Bodo
+     Two implementations for BN_GF2m_mod_div() are available.
+     The default algorithm simply uses BN_GF2m_mod_inv() and
+     BN_GF2m_mod_mul().  The alternative algorithm is compiled in only
+     if OPENSSL_SUN_GF2M_DIV is defined (patent pending; read the
+     copyright notice in crypto/bn/bn_gf2m.c before enabling it).
 
      [Sheueling Chang Shantz and Douglas Stebila
      (Sun Microsystems Laboratories)]

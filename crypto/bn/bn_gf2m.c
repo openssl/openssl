@@ -613,7 +613,7 @@ int BN_GF2m_mod_inv_arr(BIGNUM *r, const BIGNUM *xx, const unsigned int p[], BN_
 	}
 
 
-#ifdef OPENSSL_NO_SUN_DIV
+#ifndef OPENSSL_SUN_GF2M_DIV
 /* Divide y by x, reduce modulo p, and store the result in r. r could be x 
  * or y, x could equal y.
  */
