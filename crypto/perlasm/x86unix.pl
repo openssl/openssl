@@ -142,7 +142,7 @@ sub main'adc	{ &out2("adcl",@_); }
 sub main'sub	{ &out2("subl",@_); }
 sub main'rotl	{ &out2("roll",@_); }
 sub main'rotr	{ &out2("rorl",@_); }
-sub main'exch	{ &out2("xchg",@_); }
+sub main'exch	{ &out2($_[0]=~/%[a-d][lh]/?"xchgb":"xchgl",@_); }
 sub main'cmp	{ &out2("cmpl",@_); }
 sub main'lea	{ &out2("leal",@_); }
 sub main'mul	{ &out1("mull",@_); }
@@ -173,7 +173,7 @@ sub main'not	{ &out1("notl",@_); }
 sub main'call	{ &out1("call",($_[0]=~/^\.L/?'':$under).$_[0]); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
-sub main'movz	{ &out2("movzb",@_); }
+sub main'movz	{ &out2("movzbl",@_); }
 
 # The bswapl instruction is new for the 486. Emulate if i386.
 sub main'bswap
