@@ -20,10 +20,7 @@
   $ make test
   $ make install
 
- [If any of these steps fails, see section Installation in Detail below.
- During "./config", you will see the message
-      c_rehash: rehashing skipped ('openssl' program not available).
- This is inevitable at that stage and does not indicate any error.]
+ [If any of these steps fails, see section Installation in Detail below.]
 
  This will build and install OpenSSL in the default location, which is (for
  historical reasons) /usr/local/ssl. If you want to install it anywhere else,
