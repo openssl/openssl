@@ -90,7 +90,9 @@ extern "C" {
  * be on.  Again this in only really a problem on machines
  * using "long long's", are 32bit, and are not using my assembler code. */
 #if defined(MSDOS) || defined(WINDOWS) || defined(WIN32) || defined(linux)
-#define BN_DIV2W
+# ifndef BN_DIV2W
+#  define BN_DIV2W
+# endif
 #endif
 
 /* assuming long is 64bit - this is the DEC Alpha
@@ -329,6 +331,7 @@ void	BN_CTX_end(BN_CTX *ctx);
 int     BN_rand(BIGNUM *rnd, int bits, int top,int bottom);
 int     BN_pseudo_rand(BIGNUM *rnd, int bits, int top,int bottom);
 int	BN_rand_range(BIGNUM *rnd, BIGNUM *range);
+int	BN_pseudo_rand_range(BIGNUM *rnd, BIGNUM *range);
 int	BN_num_bits(const BIGNUM *a);
 int	BN_num_bits_word(BN_ULONG);
 BIGNUM *BN_new(void);

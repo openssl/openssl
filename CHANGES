@@ -4,17 +4,197 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
-  *) Add support for Broadcom crypto accelerator cards, backported
+  *) [In 0.9.6c-engine release:]
+     Add support for Broadcom crypto accelerator cards, backported
      from 0.9.7.
      [Broadcom, Nalin Dahyabhai <nalin@redhat.com>, Mark Cox]
 
-  *) Add support for SureWare crypto accelerator cards from 
+  *) [In 0.9.6c-engine release:]
+     Add support for SureWare crypto accelerator cards from 
      Baltimore Technologies.  (Use engine 'sureware')
      [Baltimore Technologies and Mark Cox]
 
-  *) Add support for crypto accelerator cards from Accelerated
+  *) [In 0.9.6c-engine release:]
+     Add support for crypto accelerator cards from Accelerated
      Encryption Processing, www.aep.ie.  (Use engine 'aep')
      [AEP Inc. and Mark Cox]
+
+  *) Add a configuration entry for gcc on UnixWare.
+     [Gary Benson <gbenson@redhat.com>]
+
+  *) Change ssl/s2_clnt.c and ssl/s2_srvr.c so that received handshake
+     messages are stored in a single piece (fixed-length part and
+     variable-length part combined) and fix various bugs found on the way.
+     [Bodo Moeller]
+
+  *) Disable caching in BIO_gethostbyname(), directly use gethostbyname()
+     instead.  BIO_gethostbyname() does not know what timeouts are
+     appropriate, so entries would stay in cache even when they have
+     become invalid.
+     [Bodo Moeller; problem pointed out by Rich Salz <rsalz@zolera.com>
+
+  *) Change ssl23_get_client_hello (ssl/s23_srvr.c) behaviour when
+     faced with a pathologically small ClientHello fragment that does
+     not contain client_version: Instead of aborting with an error,
+     simply choose the highest available protocol version (i.e.,
+     TLS 1.0 unless it is disabled).  In practice, ClientHello
+     messages are never sent like this, but this change gives us
+     strictly correct behaviour at least for TLS.
+     [Bodo Moeller]
+
+  *) Fix SSL handshake functions and SSL_clear() such that SSL_clear()
+     never resets s->method to s->ctx->method when called from within
+     one of the SSL handshake functions.
+     [Bodo Moeller; problem pointed out by Niko Baric]
+
+  *) In ssl3_get_client_hello (ssl/s3_srvr.c), generate a fatal alert
+     (sent using the client's version number) if client_version is
+     smaller than the protocol version in use.  Also change
+     ssl23_get_client_hello (ssl/s23_srvr.c) to select TLS 1.0 if
+     the client demanded SSL 3.0 but only TLS 1.0 is enabled; then
+     the client will at least see that alert.
+     [Bodo Moeller]
+
+  *) Fix ssl3_get_message (ssl/s3_both.c) to handle message fragmentation
+     correctly.
+     [Bodo Moeller]
+
+  *) Avoid infinite loop in ssl3_get_message (ssl/s3_both.c) if a
+     client receives HelloRequest while in a handshake.
+     [Bodo Moeller; bug noticed by Andy Schneider <andy.schneider@bjss.co.uk>]
+
+  *) Bugfix in ssl3_accept (ssl/s3_srvr.c): Case SSL3_ST_SW_HELLO_REQ_C
+     should end in 'break', not 'goto end' which circuments various
+     cleanups done in state SSL_ST_OK.   But session related stuff
+     must be disabled for SSL_ST_OK in the case that we just sent a
+     HelloRequest.
+
+     Also avoid some overhead by not calling ssl_init_wbio_buffer()
+     before just sending a HelloRequest.
+     [Bodo Moeller, Eric Rescorla <ekr@rtfm.com>]
+
+  *) Fix ssl/s3_enc.c, ssl/t1_enc.c and ssl/s3_pkt.c so that we don't
+     reveal whether illegal block cipher padding was found or a MAC
+     verification error occured.  (Neither SSLerr() codes nor alerts
+     are directly visible to potential attackers, but the information
+     may leak via logfiles.)
+
+     Similar changes are not required for the SSL 2.0 implementation
+     because the number of padding bytes is sent in clear for SSL 2.0,
+     and the extra bytes are just ignored.  However ssl/s2_pkt.c
+     failed to verify that the purported number of padding bytes is in
+     the legal range.
+     [Bodo Moeller]
+
+  *) OpenUNIX-8 support (Boyd Lynn Gerber <gerberb@zenez.com>)
+     [Lutz Jaenicke]
+
+  *) Improve RSA_padding_check_PKCS1_OAEP() check again to avoid
+     'wristwatch attack' using huge encoding parameters (cf.
+     James H. Manger's CRYPTO 2001 paper).  Note that the
+     RSA_PKCS1_OAEP_PADDING case of RSA_private_decrypt() does not use
+     encoding parameters and hence was not vulnerable.
+     [Bodo Moeller]
+
+  *) BN_sqr() bug fix.
+     [Ulf Möller, reported by Jim Ellis <jim.ellis@cavium.com>]
+
+  *) Rabin-Miller test analyses assume uniformly distributed witnesses,
+     so use BN_pseudo_rand_range() instead of using BN_pseudo_rand()
+     followed by modular reduction.
+     [Bodo Moeller; pointed out by Adam Young <AYoung1@NCSUS.JNJ.COM>]
+
+  *) Add BN_pseudo_rand_range() with obvious functionality: BN_rand_range()
+     equivalent based on BN_pseudo_rand() instead of BN_rand().
+     [Bodo Moeller]
+
+  *) s3_srvr.c: allow sending of large client certificate lists (> 16 kB).
+     This function was broken, as the check for a new client hello message
+     to handle SGC did not allow these large messages.
+     (Tracked down by "Douglas E. Engert" <deengert@anl.gov>.)
+     [Lutz Jaenicke]
+
+  *) Add alert descriptions for TLSv1 to SSL_alert_desc_string[_long]().
+     [Lutz Jaenicke]
+
+  *) Fix buggy behaviour of BIO_get_num_renegotiates() and BIO_ctrl()
+     for BIO_C_GET_WRITE_BUF_SIZE ("Stephen Hinton" <shinton@netopia.com>).
+     [Lutz Jaenicke]
+
+  *) Rework the configuration and shared library support for Tru64 Unix.
+     The configuration part makes use of modern compiler features and
+     still retains old compiler behavior for those that run older versions
+     of the OS.  The shared library support part includes a variant that
+     uses the RPATH feature, and is available through the special
+     configuration target "alpha-cc-rpath", which will never be selected
+     automatically.
+     [Tim Mooney <mooney@dogbert.cc.ndsu.NoDak.edu> via Richard Levitte]
+
+  *) In ssl3_get_key_exchange (ssl/s3_clnt.c), call ssl3_get_message()
+     with the same message size as in ssl3_get_certificate_request().
+     Otherwise, if no ServerKeyExchange message occurs, CertificateRequest
+     messages might inadvertently be reject as too long.
+     [Petr Lampa <lampa@fee.vutbr.cz>]
+
+  *) Enhanced support for IA-64 Unix platforms (well, Linux and HP-UX).
+     [Andy Polyakov]
+
+  *) Modified SSL library such that the verify_callback that has been set
+     specificly for an SSL object with SSL_set_verify() is actually being
+     used. Before the change, a verify_callback set with this function was
+     ignored and the verify_callback() set in the SSL_CTX at the time of
+     the call was used. New function X509_STORE_CTX_set_verify_cb() introduced
+     to allow the necessary settings.
+     [Lutz Jaenicke]
+
+  *) Initialize static variable in crypto/dsa/dsa_lib.c and crypto/dh/dh_lib.c
+     explicitly to NULL, as at least on Solaris 8 this seems not always to be
+     done automatically (in contradiction to the requirements of the C
+     standard). This made problems when used from OpenSSH.
+     [Lutz Jaenicke]
+
+  *) In OpenSSL 0.9.6a and 0.9.6b, crypto/dh/dh_key.c ignored
+     dh->length and always used
+
+          BN_rand_range(priv_key, dh->p).
+
+     BN_rand_range() is not necessary for Diffie-Hellman, and this
+     specific range makes Diffie-Hellman unnecessarily inefficient if
+     dh->length (recommended exponent length) is much smaller than the
+     length of dh->p.  We could use BN_rand_range() if the order of
+     the subgroup was stored in the DH structure, but we only have
+     dh->length.
+
+     So switch back to
+
+          BN_rand(priv_key, l, ...)
+
+     where 'l' is dh->length if this is defined, or BN_num_bits(dh->p)-1
+     otherwise.
+     [Bodo Moeller]
+
+  *) In
+
+          RSA_eay_public_encrypt
+          RSA_eay_private_decrypt
+          RSA_eay_private_encrypt (signing)
+          RSA_eay_public_decrypt (signature verification)
+
+     (default implementations for RSA_public_encrypt,
+     RSA_private_decrypt, RSA_private_encrypt, RSA_public_decrypt),
+     always reject numbers >= n.
+     [Bodo Moeller]
+
+  *) In crypto/rand/md_rand.c, use a new short-time lock CRYPTO_LOCK_RAND2
+     to synchronize access to 'locking_thread'.  This is necessary on
+     systems where access to 'locking_thread' (an 'unsigned long'
+     variable) is not atomic.
+     [Bodo Moeller]
+
+  *) In crypto/rand/md_rand.c, set 'locking_thread' to current thread's ID
+     *before* setting the 'crypto_lock_rand' flag.  The previous code had
+     a race condition if 0 is a valid thread ID.
+     [Travis Vitek <vitek@roguewave.com>]
 
  Changes between 0.9.6a and 0.9.6b  [9 Jul 2001]
 
@@ -70,7 +250,7 @@
      [Ulf Möller, Bodo Möller]
 
   *) The countermeasure against Bleichbacher's attack on PKCS #1 v1.5
-     RSA encryption was accidentily removed in s3_srvr.c in OpenSSL 0.9.5
+     RSA encryption was accidentally removed in s3_srvr.c in OpenSSL 0.9.5
      when fixing the server behaviour for backwards-compatible 'client
      hello' messages.  (Note that the attack is impractical against
      SSL 3.0 and TLS 1.0 anyway because length and version checking
@@ -120,7 +300,7 @@
      combination of a flag and a thread ID variable.
      Otherwise while one thread is in ssleay_rand_bytes (which sets the
      flag), *other* threads can enter ssleay_add_bytes without obeying
-     the CRYPTO_LOCK_RAND lock (and may even illegaly release the lock
+     the CRYPTO_LOCK_RAND lock (and may even illegally release the lock
      that they do not hold after the first thread unsets add_do_not_lock).
      [Bodo Moeller]
 
@@ -762,7 +942,7 @@
      default is static libraries only, and the OpenSSL programs
      are always statically linked for now, but there are
      preparations for dynamic linking in place.
-     This has been tested on Linux and True64.
+     This has been tested on Linux and Tru64.
      [Richard Levitte]
 
   *) Randomness polling function for Win9x, as described in:

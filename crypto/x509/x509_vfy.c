@@ -911,6 +911,12 @@ void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, long flags, time_t t)
 	ctx->flags |= X509_V_FLAG_USE_CHECK_TIME;
 	}
 
+void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
+				  int (*verify_cb)(int, X509_STORE_CTX *))
+	{
+	ctx->verify_cb=verify_cb;
+	}
+
 IMPLEMENT_STACK_OF(X509)
 IMPLEMENT_ASN1_SET_OF(X509)
 

@@ -196,8 +196,14 @@ $   IF F$SEARCH("[.CRYPTO]OPENSSLCONF_H.IN") .NES. ""
 $   THEN
 $     TYPE [.CRYPTO]OPENSSLCONF_H.IN /OUTPUT=H_FILE:
 $   ELSE
-$     WRITE SYS$ERROR "Couldn't find a [.CRYPTO]OPENSSLCONF.H_IN.  Exiting!"
-$     EXIT 0
+$     ! For ODS-5
+$     IF F$SEARCH("[.CRYPTO]OPENSSLCONF.H.IN") .NES. ""
+$     THEN
+$       TYPE [.CRYPTO]OPENSSLCONF.H.IN /OUTPUT=H_FILE:
+$     ELSE
+$       WRITE SYS$ERROR "Couldn't find a [.CRYPTO]OPENSSLCONF.H_IN.  Exiting!"
+$       EXIT 0
+$     ENDIF
 $   ENDIF
 $ ENDIF
 $!

@@ -17,10 +17,10 @@ SSL_CTX_set_options, SSL_set_options, SSL_CTX_get_options, SSL_get_options - man
 =head1 DESCRIPTION
 
 SSL_CTX_set_options() adds the options set via bitmask in B<options> to B<ctx>.
-Options already set before are not cleared.
+Options already set before are not cleared!
 
 SSL_set_options() adds the options set via bitmask in B<options> to B<ssl>.
-Options already set before are not cleared.
+Options already set before are not cleared!
 
 SSL_CTX_get_options() returns the options set for B<ctx>.
 
@@ -32,7 +32,12 @@ The behaviour of the SSL library can be changed by setting several options.
 The options are coded as bitmasks and can be combined by a logical B<or>
 operation (|). Options can only be added but can never be reset.
 
-During a handshake, the option settings of the SSL object used. When
+SSL_CTX_set_options() and SSL_set_options() affect the (external)
+protocol behaviour of the SSL library. The (internal) behaviour of
+the API can be changed by using the similar
+L<SSL_CTX_set_modes(3)|SSL_CTX_set_modes(3)> and SSL_set_modes() functions.
+
+During a handshake, the option settings of the SSL object are used. When
 a new SSL object is created from a context using SSL_new(), the current
 option setting is copied. Changes to B<ctx> do not affect already created
 SSL objects. SSL_clear() does not affect the settings.
@@ -122,11 +127,27 @@ The following B<modifying> options are available:
 
 =item SSL_OP_SINGLE_DH_USE
 
-Always create a new key when using temporary DH parameters.
+Always create a new key when using temporary/ephemeral DH parameters
+(see L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>).
+This option must be used to prevent small subgroup attacks, when
+the DH parameters were not generated using "strong" primes
+(e.g. when using DSA-parameters, see L<dhparam(1)|dhparam(1)>).
+If "strong" primes were used, it is not strictly necessary to generate
+a new DH key during each handshake but it is also recommended.
+SSL_OP_SINGLE_DH_USE should therefore be enabled whenever
+temporary/ephemeral DH parameters are used.
 
 =item SSL_OP_EPHEMERAL_RSA
 
-Also use the temporary RSA key when doing RSA operations.
+Always use ephemeral (temporary) RSA key when doing RSA operations
+(see L<SSL_CTX_set_tmp_rsa_callback(3)|SSL_CTX_set_tmp_rsa_callback(3)>).
+According to the specifications this is only done, when a RSA key
+can only be used for signature operations (namely under export ciphers
+with restricted RSA keylength). By setting this option, ephemeral
+RSA keys are always used. This option breaks compatibility with the
+SSL/TLS specifications and may lead to interoperability problems with
+clients and should therefore never be used. Ciphers with EDH (ephemeral
+Diffie-Hellman) key exchange should be used instead.
 
 =item SSL_OP_PKCS1_CHECK_1
 
@@ -141,11 +162,6 @@ Also use the temporary RSA key when doing RSA operations.
 If we accept a netscape connection, demand a client cert, have a
 non-self-sighed CA which does not have it's CA in netscape, and the
 browser has a cert, it will crash/hang.  Works for 3.x and 4.xbeta 
-
-=item SSL_OP_NON_EXPORT_FIRST
-
-On servers try to use non-export (stronger) ciphers first. This option does
-not work under all circumstances (in the code it is declared "broken").
 
 =item SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG
 
@@ -174,7 +190,10 @@ SSL_CTX_get_options() and SSL_get_options() return the current bitmask.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>, L<SSL_clear(3)|SSL_clear(3)>
+L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>, L<SSL_clear(3)|SSL_clear(3)>,
+L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>,
+L<SSL_CTX_set_tmp_rsa_callback(3)|SSL_CTX_set_tmp_rsa_callback(3)>,
+L<dhparam(1)|dhparam(1)>
 
 =head1 HISTORY
 

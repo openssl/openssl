@@ -136,7 +136,7 @@ case SSL3_ST_CW_CERT_D:		str="SSLv3 write client certificate D"; break;
 case SSL3_ST_CW_KEY_EXCH_A:	str="SSLv3 write client key exchange A"; break;
 case SSL3_ST_CW_KEY_EXCH_B:	str="SSLv3 write client key exchange B"; break;
 case SSL3_ST_CW_CERT_VRFY_A:	str="SSLv3 write certificate verify A"; break;
-case SSL3_ST_CW_CERT_VRFY_B:	str="SSLv3 write certificate verify A"; break;
+case SSL3_ST_CW_CERT_VRFY_B:	str="SSLv3 write certificate verify B"; break;
 
 case SSL3_ST_CW_CHANGE_A:
 case SSL3_ST_SW_CHANGE_A:	str="SSLv3 write change cipher spec A"; break;
@@ -145,7 +145,7 @@ case SSL3_ST_SW_CHANGE_B:	str="SSLv3 write change cipher spec B"; break;
 case SSL3_ST_CW_FINISHED_A:	
 case SSL3_ST_SW_FINISHED_A:	str="SSLv3 write finished A"; break;
 case SSL3_ST_CW_FINISHED_B:	
-case SSL3_ST_SW_FINISHED_B:	str="SSLv3 write finished A"; break;
+case SSL3_ST_SW_FINISHED_B:	str="SSLv3 write finished B"; break;
 case SSL3_ST_CR_CHANGE_A:	
 case SSL3_ST_SR_CHANGE_A:	str="SSLv3 read change cipher spec A"; break;
 case SSL3_ST_CR_CHANGE_B:	
@@ -387,6 +387,18 @@ char *SSL_alert_desc_string(int value)
 	case SSL3_AD_CERTIFICATE_EXPIRED:	str="CE"; break;
 	case SSL3_AD_CERTIFICATE_UNKNOWN:	str="CU"; break;
 	case SSL3_AD_ILLEGAL_PARAMETER:		str="IP"; break;
+	case TLS1_AD_DECRYPTION_FAILED:		str="DC"; break;
+	case TLS1_AD_RECORD_OVERFLOW:		str="RO"; break;
+	case TLS1_AD_UNKNOWN_CA:		str="CA"; break;
+	case TLS1_AD_ACCESS_DENIED:		str="AD"; break;
+	case TLS1_AD_DECODE_ERROR:		str="DE"; break;
+	case TLS1_AD_DECRYPT_ERROR:		str="CY"; break;
+	case TLS1_AD_EXPORT_RESTRICTION:	str="ER"; break;
+	case TLS1_AD_PROTOCOL_VERSION:		str="PV"; break;
+	case TLS1_AD_INSUFFICIENT_SECURITY:	str="IS"; break;
+	case TLS1_AD_INTERNAL_ERROR:		str="IE"; break;
+	case TLS1_AD_USER_CANCELLED:		str="US"; break;
+	case TLS1_AD_NO_RENEGOTIATION:		str="NR"; break;
 	default:				str="UK"; break;
 		}
 	return(str);
@@ -433,6 +445,42 @@ char *SSL_alert_desc_string_long(int value)
 		break;
 	case SSL3_AD_ILLEGAL_PARAMETER:
 		str="illegal parameter";
+		break;
+	case TLS1_AD_DECRYPTION_FAILED:
+		str="decryption failed";
+		break;
+	case TLS1_AD_RECORD_OVERFLOW:
+		str="record overflow";
+		break;
+	case TLS1_AD_UNKNOWN_CA:
+		str="unknown CA";
+		break;
+	case TLS1_AD_ACCESS_DENIED:
+		str="access denied";
+		break;
+	case TLS1_AD_DECODE_ERROR:
+		str="decode error";
+		break;
+	case TLS1_AD_DECRYPT_ERROR:
+		str="decrypt error";
+		break;
+	case TLS1_AD_EXPORT_RESTRICTION:
+		str="export restriction";
+		break;
+	case TLS1_AD_PROTOCOL_VERSION:
+		str="protocol version";
+		break;
+	case TLS1_AD_INSUFFICIENT_SECURITY:
+		str="insufficient security";
+		break;
+	case TLS1_AD_INTERNAL_ERROR:
+		str="internal error";
+		break;
+	case TLS1_AD_USER_CANCELLED:
+		str="user canceled";
+		break;
+	case TLS1_AD_NO_RENEGOTIATION:
+		str="no renegotiation";
 		break;
 	default: str="unknown"; break;
 		}

@@ -231,7 +231,7 @@ static int ssl3_read_n(SSL *s, int n, int max, int extend)
 static int ssl3_get_record(SSL *s)
 	{
 	int ssl_major,ssl_minor,al;
-	int n,i,ret= -1;
+	int enc_err,n,i,ret= -1;
 	SSL3_RECORD *rr;
 	SSL_SESSION *sess;
 	unsigned char *p;
@@ -342,16 +342,23 @@ again:
 	/* decrypt in place in 'rr->input' */
 	rr->data=rr->input;
 
-	if (!s->method->ssl3_enc->enc(s,0))
+	enc_err = s->method->ssl3_enc->enc(s,0);
+	if (enc_err <= 0)
 		{
-		al=SSL_AD_DECRYPT_ERROR;
-		goto f_err;
+		if (enc_err == 0)
+			/* SSLerr() and ssl3_send_alert() have been called */
+			goto err;
+
+		/* otherwise enc_err == -1 */
+		goto decryption_failed_or_bad_record_mac;
 		}
+
 #ifdef TLS_DEBUG
 printf("dec %d\n",rr->length);
 { unsigned int z; for (z=0; z<rr->length; z++) printf("%02X%c",rr->data[z],((z+1)%16)?' ':'\n'); }
 printf("\n");
 #endif
+
 	/* r->length is now the compressed data plus mac */
 	if (	(sess == NULL) ||
 		(s->enc_read_ctx == NULL) ||
@@ -364,25 +371,30 @@ printf("\n");
 
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+extra+mac_size)
 			{
+#if 0 /* OK only for stream ciphers (then rr->length is visible from ciphertext anyway) */
 			al=SSL_AD_RECORD_OVERFLOW;
 			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_PRE_MAC_LENGTH_TOO_LONG);
 			goto f_err;
+#else
+			goto decryption_failed_or_bad_record_mac;
+#endif			
 			}
 		/* check the MAC for rr->input (it's in mac_size bytes at the tail) */
 		if (rr->length < mac_size)
 			{
+#if 0 /* OK only for stream ciphers */
 			al=SSL_AD_DECODE_ERROR;
 			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_LENGTH_TOO_SHORT);
 			goto f_err;
+#else
+			goto decryption_failed_or_bad_record_mac;
+#endif
 			}
 		rr->length-=mac_size;
 		i=s->method->ssl3_enc->mac(s,md,0);
 		if (memcmp(md,&(rr->data[rr->length]),mac_size) != 0)
 			{
-			al=SSL_AD_BAD_RECORD_MAC;
-			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_BAD_MAC_DECODE);
-			ret= -1;
-			goto f_err;
+			goto decryption_failed_or_bad_record_mac;
 			}
 		}
 
@@ -427,6 +439,15 @@ printf("\n");
 	if (rr->length == 0) goto again;
 
 	return(1);
+
+decryption_failed_or_bad_record_mac:
+	/* Separate 'decryption_failed' alert was introduced with TLS 1.0,
+	 * SSL 3.0 only has 'bad_record_mac'.  But unless a decryption
+	 * failure is directly visible from the ciphertext anyway,
+	 * we should not reveal which kind of error occured -- this
+	 * might become visible to an attacker (e.g. via logfile) */
+	al=SSL_AD_BAD_RECORD_MAC;
+	SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
 err:
@@ -1156,6 +1177,8 @@ void ssl3_send_alert(SSL *s, int level, int desc)
 	{
 	/* Map tls/ssl alert value to correct one */
 	desc=s->method->ssl3_enc->alert_value(desc);
+	if (s->version == SSL3_VERSION && desc == SSL_AD_PROTOCOL_VERSION)
+		desc = SSL_AD_HANDSHAKE_FAILURE; /* SSL 3.0 does not have protocol_version alerts */
 	if (desc < 0) return;
 	/* If a fatal one, remove from cache */
 	if ((level == 2) && (s->session != NULL))
@@ -1164,7 +1187,7 @@ void ssl3_send_alert(SSL *s, int level, int desc)
 	s->s3->alert_dispatch=1;
 	s->s3->send_alert[0]=level;
 	s->s3->send_alert[1]=desc;
-	if (s->s3->wbuf.left == 0) /* data still being written out */
+	if (s->s3->wbuf.left == 0) /* data still being written out? */
 		ssl3_dispatch_alert(s);
 	/* else data is still being written out, we will get written
 	 * some time in the future */
@@ -1183,9 +1206,9 @@ int ssl3_dispatch_alert(SSL *s)
 		}
 	else
 		{
-		/* If it is important, send it now.  If the message
-		 * does not get sent due to non-blocking IO, we will
-		 * not worry too much. */
+		/* Alert sent to BIO.  If it is important, flush it now.
+		 * If the message does not get sent due to non-blocking IO,
+		 * we will not worry too much. */
 		if (s->s3->send_alert[0] == SSL3_AL_FATAL)
 			(void)BIO_flush(s->wbio);
 

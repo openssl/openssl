@@ -68,6 +68,11 @@ if [ "x$XREL" != "x" ]; then
 	    4.2)
 		echo "whatever-whatever-unixware1"; exit 0
 		;;
+     OpenUNIX)
+		if [ "`echo x$VERSION | sed -e 's/\..*//'`" = "x8" ]; then
+		    echo "${MACHINE}-unknown-OpenUNIX${VERSION}"; exit 0
+		fi
+		;;
 	    5)
 		if [ "`echo x$VERSION | sed -e 's/\..*//'`" = "x7" ]; then
 		    echo "${MACHINE}-sco-unixware7"; exit 0
@@ -195,8 +200,23 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-whatever-openbsd"; exit 0
 	;;
 
+    OpenUNIX:*)
+	echo "${MACHINE}-unknown-OpenUNIX${VERSION}"; exit 0
+	;;
+
     OSF1:*:*:*alpha*)
-	echo "${MACHINE}-dec-osf"; exit 0
+	OSFMAJOR=`echo ${RELEASE}| sed -e 's/^V\([0-9]*\)\..*$/\1/'`
+	case "$OSFMAJOR" in
+	    4|5)
+		echo "${MACHINE}-dec-tru64"; exit 0
+		;;
+	    1|2|3)
+		echo "${MACHINE}-dec-osf"; exit 0
+		;;
+	    *)
+		echo "${MACHINE}-dec-osf"; exit 0
+		;;
+	esac
 	;;
 
     QNX:*)
@@ -485,7 +505,15 @@ case "$GUESSOS" in
   pmax*-*-openbsd) OUT="OpenBSD-mips" ;;
   *-*-openbsd) OUT="OpenBSD" ;;
   *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
-  *-*-osf) OUT="alpha-cc" ;;
+  *-*-osf) OUT="alphaold-cc" ;;
+  *-*-tru64) OUT="alpha-cc" ;;
+  *-*-OpenUNIX*)
+	if [ "$CC" = "gcc" ]; then
+	  OUT="OpenUNIX-8-gcc" 
+	else    
+	  OUT="OpenUNIX-8" 
+	fi
+	;;
   *-*-unixware7) OUT="unixware-7" ;;
   *-*-UnixWare7) OUT="unixware-7" ;;
   *-*-Unixware7) OUT="unixware-7" ;;
@@ -549,7 +577,7 @@ case "$GUESSOS" in
   i386-*) options="$options 386" ;;
 esac
 
-for i in bf cast des dh dsa hmac md2 md5 mdc2 rc2 rc4 rc5 ripemd rsa sha
+for i in bf cast des dh dsa hmac idea md2 md5 mdc2 rc2 rc4 rc5 ripemd rsa sha
 do
   if [ ! -d crypto/$i ]
   then

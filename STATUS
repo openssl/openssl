@@ -1,9 +1,11 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/04/05 17:48:02 $
+  ______________                           $Date: 2001/11/12 22:26:22 $
 
   DEVELOPMENT STATE
 
+    o  OpenSSL 0.9.7:  Under development...
+    o  OpenSSL 0.9.6b: Released on July       9th, 2001
     o  OpenSSL 0.9.6a: Released on April      5th, 2001
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
@@ -18,6 +20,11 @@
 
   AVAILABLE PATCHES
 
+    o IA-64 (a.k.a. Intel Itanium) public-key operation performance 
+      patch for Linux is available for download at
+      http://www.openssl.org/~appro/096b.linux-ia64.diff. As URL
+      suggests the patch is relative to OpenSSL 0.9.6b.
+
   IN PROGRESS
 
     o Steve is currently working on (in no particular order):
@@ -31,12 +38,13 @@
     o Geoff and Richard are currently working on:
 	ENGINE (the new code that gives hardware support among others).
     o Richard is currently working on:
+	UI (User Interface)
 	UTIL (a new set of library functions to support some higher level
 	      functionality that is currently missing).
 	Shared library support for VMS.
-	OCSP
 	Kerberos 5 authentication
 	Constification
+	OCSP
 
   NEEDS PATCH
 
@@ -49,13 +57,9 @@
     o  Whenever strncpy is used, make sure the resulting string is NULL-terminated
        or an error is reported
 
-  OPEN ISSUES
+    o  "OpenSSL STATUS" is never up-to-date.
 
-    o  crypto/ex_data.c is not really thread-safe and so must be used
-       with care (e.g., extra locking where necessary, or don't call
-       CRYPTO_get_ex_new_index once multiple threads exist).
-       The current API is not suitable for everything that it pretends
-       to offer.
+  OPEN ISSUES
 
     o  The Makefile hierarchy and build mechanism is still not a round thing:
 
@@ -99,4 +103,14 @@
 
   WISHES
 
-    o 
+    o  SRP in TLS.
+       [wished by:
+        Dj <derek@yo.net>, Tom Wu <tom@arcot.com>,
+        Tom Holroyd <tomh@po.crl.go.jp>]
+
+       See http://search.ietf.org/internet-drafts/draft-ietf-tls-srp-00.txt
+       as well as http://www-cs-students.stanford.edu/~tjw/srp/.
+
+       Tom Holroyd tells us there is a SRP patch for OpenSSH at
+       http://members.tripod.com/professor_tom/archives/, that could
+       be useful.

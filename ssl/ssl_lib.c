@@ -142,7 +142,7 @@ int SSL_clear(SSL *s)
 #if 1
 	/* Check to see if we were changed into a different method, if
 	 * so, revert back if we are not doing session-id reuse. */
-	if ((s->session == NULL) && (s->method != s->ctx->method))
+	if (!s->in_handshake && (s->session == NULL) && (s->method != s->ctx->method))
 		{
 		s->method->ssl_free(s);
 		s->method=s->ctx->method;
@@ -411,10 +411,27 @@ BIO *SSL_get_wbio(SSL *s)
 
 int SSL_get_fd(SSL *s)
 	{
+	return(SSL_get_rfd(s));
+	}
+
+int SSL_get_rfd(SSL *s)
+	{
 	int ret= -1;
 	BIO *b,*r;
 
 	b=SSL_get_rbio(s);
+	r=BIO_find_type(b,BIO_TYPE_DESCRIPTOR);
+	if (r != NULL)
+		BIO_get_fd(r,&ret);
+	return(ret);
+	}
+
+int SSL_get_wfd(SSL *s)
+	{
+	int ret= -1;
+	BIO *b,*r;
+
+	b=SSL_get_wbio(s);
 	r=BIO_find_type(b,BIO_TYPE_DESCRIPTOR);
 	if (r != NULL)
 		BIO_get_fd(r,&ret);
@@ -1276,8 +1293,6 @@ void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,int (*cb)(int, X509_STORE_CTX *))
 	{
 	ctx->verify_mode=mode;
 	ctx->default_verify_callback=cb;
-	/* This needs cleaning up EAY EAY EAY */
-	X509_STORE_set_verify_cb_func(ctx->cert_store,cb);
 	}
 
 void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth)

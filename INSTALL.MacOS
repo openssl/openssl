@@ -1,7 +1,7 @@
-OpenSSL - Port To The Macintosh
-===============================
+OpenSSL - Port To The Macintosh OS 9 or Earlier
+===============================================
 
-Thanks to Roy Wood <roy@centricsystems.ca> initial support for MacOS (pre
+Thanks to Roy Wood <roy@centricsystems.ca> initial support for Mac OS (pre
 X) is now provided. "Initial" means that unlike other platforms where you
 get an SDK and a "swiss army" openssl application, on Macintosh you only
 get one sample application which fetches a page over HTTPS(*) and dumps it
@@ -42,7 +42,7 @@ Installation procedure:
 	BSD sockets and some other POSIX APIs. The GUSI distribution is
 	expected to be found in the same directory as openssl source tree,
 	i.e. in the parent directory to the one where this very file,
-	namely INSTALL.MacOS. For more informations about GUSI, see
+	namely INSTALL.MacOS. For more information about GUSI, see
 	http://www.iis.ee.ethz.ch/~neeri/macintosh/gusi-qa.html
 
 Finally some essential comments from our generous contributor:-)

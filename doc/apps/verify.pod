@@ -200,13 +200,13 @@ the signature of the certificate is invalid. Unused.
 
 the certificate is not yet valid: the notBefore date is after the current time.
 
-=item B<10 X509_V_ERR_CRL_NOT_YET_VALID: CRL is not yet valid>
-
-the CRL is not yet valid. Unused.
-
-=item B<11 X509_V_ERR_CERT_HAS_EXPIRED: Certificate has expired>
+=item B<10 X509_V_ERR_CERT_HAS_EXPIRED: certificate has expired>
 
 the certificate has expired: that is the notAfter date is before the current time.
+
+=item B<11 X509_V_ERR_CRL_NOT_YET_VALID: CRL is not yet valid>
+
+the CRL is not yet valid. Unused.
 
 =item B<12 X509_V_ERR_CRL_HAS_EXPIRED: CRL has expired>
 

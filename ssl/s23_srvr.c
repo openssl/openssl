@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <stdio.h>
 #include <openssl/buffer.h>
@@ -112,8 +165,8 @@ int ssl23_accept(SSL *s)
 	else if (s->ctx->info_callback != NULL)
 		cb=s->ctx->info_callback;
 	
-	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s); 
 	s->in_handshake++;
+	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s); 
 
 	for (;;)
 		{
@@ -179,9 +232,9 @@ int ssl23_accept(SSL *s)
 			}
 		}
 end:
+	s->in_handshake--;
 	if (cb != NULL)
 		cb(s,SSL_CB_ACCEPT_EXIT,ret);
-	s->in_handshake--;
 	return(ret);
 	}
 
@@ -352,17 +405,22 @@ int ssl23_get_client_hello(SSL *s)
 			/* We must look at client_version inside the Client Hello message
 			 * to get the correct minor version.
 			 * However if we have only a pathologically small fragment of the
-			 * Client Hello message, this would be difficult, we'd have
-			 * to read at least one additional record to find out.
-			 * This doesn't usually happen in real life, so we just complain
-			 * for now.
-			 */
+			 * Client Hello message, this would be difficult, and we'd have
+			 * to read more records to find out.
+			 * No known SSL 3.0 client fragments ClientHello like this,
+			 * so we simply assume TLS 1.0 to avoid protocol version downgrade
+			 * attacks. */
 			if (p[3] == 0 && p[4] < 6)
 				{
+#if 0
 				SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_RECORD_TOO_SMALL);
 				goto err;
+#else
+				v[1] = TLS1_VERSION_MINOR;
+#endif
 				}
-			v[1]=p[10]; /* minor version according to client_version */
+			else
+				v[1]=p[10]; /* minor version according to client_version */
 			if (v[1] >= TLS1_VERSION_MINOR)
 				{
 				if (!(s->options & SSL_OP_NO_TLSv1))
@@ -376,10 +434,21 @@ int ssl23_get_client_hello(SSL *s)
 					type=3;
 					}
 				}
-			else if (!(s->options & SSL_OP_NO_SSLv3))
+			else
 				{
-				s->version=SSL3_VERSION;
-				type=3;
+				/* client requests SSL 3.0 */
+				if (!(s->options & SSL_OP_NO_SSLv3))
+					{
+					s->version=SSL3_VERSION;
+					type=3;
+					}
+				else if (!(s->options & SSL_OP_NO_TLSv1))
+					{
+					/* we won't be able to use TLS of course,
+					 * but this will send an appropriate alert */
+					s->version=TLS1_VERSION;
+					type=3;
+					}
 				}
 			}
 		else if ((strncmp("GET ", (char *)p,4) == 0) ||

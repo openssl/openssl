@@ -474,7 +474,8 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 		break;
 
 	case BIO_C_GET_WRITE_BUF_SIZE:
-		num = (long) b->size;
+		ret = (long) b->size;
+		break;
 
 	case BIO_C_MAKE_BIO_PAIR:
 		{

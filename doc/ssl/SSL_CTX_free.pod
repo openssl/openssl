@@ -24,6 +24,8 @@ the certificates and keys.
 
 SSL_CTX_free() does not provide diagnostic information.
 
+=head1 SEE ALSO
+
 L<SSL_CTX_new(3)|SSL_CTX_new(3)>, L<ssl(3)|ssl(3)>
 
 =cut

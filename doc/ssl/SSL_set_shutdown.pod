@@ -46,7 +46,10 @@ The shutdown state of the connection is used to determine the state of
 the ssl session. If the session is still open, when
 L<SSL_clear(3)|SSL_clear(3)> or L<SSL_free(3)|SSL_free(3)> is called,
 it is considered bad and removed according to RFC2246.
-The actual condition for a correctly closed session is SSL_SENT_SHUTDOWN.
+The actual condition for a correctly closed session is SSL_SENT_SHUTDOWN
+(according to the TLS RFC, it is acceptable to only send the "close notify"
+alert but to not wait for the peer's answer, when the underlying connection
+is closed).
 SSL_set_shutdown() can be used to set this state without sending a
 close alert to the peer (see L<SSL_shutdown(3)|SSL_shutdown(3)>).
 
@@ -63,6 +66,7 @@ SSL_get_shutdown() returns the current setting.
 =head1 SEE ALSO
 
 L<ssl(3)|ssl(3)>, L<SSL_shutdown(3)|SSL_shutdown(3)>,
+L<SSL_CTX_set_quiet_shutdown(3)|SSL_CTX_set_quiet_shutdown(3)>,
 L<SSL_clear(3)|SSL_clear(3)>, L<SSL_free(3)|SSL_free(3)>
 
 =cut

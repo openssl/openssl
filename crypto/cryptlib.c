@@ -90,6 +90,7 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"ssl_sess_cert",
 	"ssl",
 	"rand",
+	"rand2",
 	"debug_malloc",
 	"BIO",
 	"gethostbyname",
@@ -101,7 +102,7 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"dso",
 	"dynlock",
 	"engine",
-#if CRYPTO_NUM_LOCKS != 29
+#if CRYPTO_NUM_LOCKS != 30
 # error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 	};

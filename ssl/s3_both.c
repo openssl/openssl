@@ -383,7 +383,11 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 					 * if their format is correct. Does not count for
 					 * 'Finished' MAC. */
 					if (p[1] == 0 && p[2] == 0 &&p[3] == 0)
+						{
+						s->init_num = 0;
 						skip_message = 1;
+						}
+			
 			}
 		while (skip_message);
 
@@ -432,6 +436,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	/* next state (stn) */
 	p=(unsigned char *)s->init_buf->data;
 	n=s->s3->tmp.message_size;
+	n -= s->init_num;
 	while (n > 0)
 		{
 		i=ssl3_read_bytes(s,SSL3_RT_HANDSHAKE,&p[s->init_num],n,0);

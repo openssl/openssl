@@ -413,13 +413,10 @@ extern HINSTANCE _hInstance;
 #  endif
 #endif
 
-#if defined(THREADS) || defined(sun)
-#ifndef _REENTRANT
-#define _REENTRANT
-#endif
-#endif
-
 #if defined(sun) && !defined(__svr4__) && !defined(__SVR4)
+  /* include headers first, so our defines don't break it */
+#include <stdlib.h>
+#include <string.h>
   /* bcopy can handle overlapping moves according to SunOS 4.1.4 manpage */
 # define memmove(s1,s2,n) bcopy((s2),(s1),(n))
 # define strtoul(s,e,b) ((unsigned long int)strtol((s),(e),(b)))

@@ -79,7 +79,7 @@ static int (*default_trust)(int id, X509 *x, int flags) = obj_trust;
 static X509_TRUST trstandard[] = {
 {X509_TRUST_COMPAT, 0, trust_compat, "compatible", 0, NULL},
 {X509_TRUST_SSL_CLIENT, 0, trust_1oidany, "SSL Client", NID_client_auth, NULL},
-{X509_TRUST_SSL_SERVER, 0, trust_1oidany, "SSL Client", NID_server_auth, NULL},
+{X509_TRUST_SSL_SERVER, 0, trust_1oidany, "SSL Server", NID_server_auth, NULL},
 {X509_TRUST_EMAIL, 0, trust_1oidany, "S/MIME email", NID_email_protect, NULL},
 };
 

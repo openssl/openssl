@@ -225,12 +225,15 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 	BN_MONT_CTX *mont = NULL;
 	const BIGNUM *A = NULL;
 
+	if (BN_cmp(a, BN_value_one()) <= 0)
+		return 0;
+	
 	if (checks == BN_prime_checks)
 		checks = BN_prime_checks_for_size(BN_num_bits(a));
 
 	/* first look for small factors */
 	if (!BN_is_odd(a))
-		return(0);
+		return 0;
 	if (do_trial_division)
 		{
 		for (i = 1; i < NUMPRIMES; i++)
@@ -289,11 +292,8 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 	
 	for (i = 0; i < checks; i++)
 		{
-		if (!BN_pseudo_rand(check, BN_num_bits(A1), 0, 0))
+		if (!BN_pseudo_rand_range(check, A1))
 			goto err;
-		if (BN_cmp(check, A1) >= 0)
-			if (!BN_sub(check, check, A1))
-				goto err;
 		if (!BN_add_word(check, 1))
 			goto err;
 		/* now 1 <= check < A */

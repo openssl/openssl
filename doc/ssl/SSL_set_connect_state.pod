@@ -14,9 +14,9 @@ SSL_set_connect_state, SSL_get_accept_state - prepare SSL object to work in clie
 
 =head1 DESCRIPTION
 
-SSL_set_connect_state() B<ssl> to work in client mode.
+SSL_set_connect_state() sets B<ssl> to work in client mode.
 
-SSL_set_accept_state() B<ssl> to work in server mode.
+SSL_set_accept_state() sets B<ssl> to work in server mode.
 
 =head1 NOTES
 
@@ -27,12 +27,17 @@ server connections. (The method might have been changed with
 L<SSL_CTX_set_ssl_version(3)|SSL_CTX_set_ssl_version(3)> or
 SSL_set_ssl_method().)
 
-In order to successfully accomplish the handshake, the SSL routines need
-to know whether they should act in server or client mode. If the generic
-method was used, this is not clear from the method itself and must be set
-with either SSL_set_connect_state() or SSL_set_accept_state(). If these
-routines are not called, the default value set when L<SSL_new(3)|SSL_new(3)>
-is called is server mode.
+When beginning a new handshake, the SSL engine must know whether it must
+call the connect (client) or accept (server) routines. Even though it may
+be clear from the method chosen, whether client or server mode was
+requested, the handshake routines must be explicitly set.
+
+When using the L<SSL_connect(3)|SSL_connect(3)> or
+L<SSL_accept(3)|SSL_accept(3)> routines, the correct handshake
+routines are automatically set. When performing a transparent negotiation
+using L<SSL_write(3)|SSL_write(3)> or L<SSL_read(3)|SSL_read(3)>, the
+handshake routines must be explicitly set in advance using either
+SSL_set_connect_state() or SSL_set_accept_state().
 
 =head1 RETURN VALUES
 
@@ -42,6 +47,8 @@ information.
 =head1 SEE ALSO
 
 L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>, L<SSL_CTX_new(3)|SSL_CTX_new(3)>,
+L<SSL_connect(3)|SSL_connect(3)>, L<SSL_accept(3)|SSL_accept(3)>,
+L<SSL_write(3)|SSL_write(3)>, L<SSL_read(3)|SSL_read(3)>,
 L<SSL_CTX_set_ssl_version(3)|SSL_CTX_set_ssl_version(3)>
 
 =cut

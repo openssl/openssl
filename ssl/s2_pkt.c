@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -130,7 +130,7 @@ static int ssl2_read_internal(SSL *s, void *buf, int len, int peek)
 	unsigned char mac[MAX_MAC_SIZE];
 	unsigned char *p;
 	int i;
-	unsigned int mac_size=0;
+	unsigned int mac_size;
 
  ssl2_read_again:
 	if (SSL_in_init(s) && !s->in_handshake)
@@ -235,17 +235,25 @@ static int ssl2_read_internal(SSL *s, void *buf, int len, int peek)
 		/* Data portion */
 		if (s->s2->clear_text)
 			{
+			mac_size = 0;
 			s->s2->mac_data=p;
 			s->s2->ract_data=p;
-			s->s2->pad_data=NULL;
+			if (s->s2->padding)
+				{
+				SSLerr(SSL_F_SSL2_READ_INTERNAL,SSL_R_ILLEGAL_PADDING);
+				return(-1);
+				}
 			}
 		else
 			{
 			mac_size=EVP_MD_size(s->read_hash);
 			s->s2->mac_data=p;
 			s->s2->ract_data= &p[mac_size];
-			s->s2->pad_data= &p[mac_size+
-				s->s2->rlength-s->s2->padding];
+			if (s->s2->padding + mac_size > s->s2->rlength)
+				{
+				SSLerr(SSL_F_SSL2_READ_INTERNAL,SSL_R_ILLEGAL_PADDING);
+				return(-1);
+				}
 			}
 
 		s->s2->ract_data_length=s->s2->rlength;
@@ -593,10 +601,8 @@ static int do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len)
 	s->s2->wact_data= &(s->s2->wbuf[3+mac_size]);
 	/* we copy the data into s->s2->wbuf */
 	memcpy(s->s2->wact_data,buf,len);
-#ifdef PURIFY
 	if (p)
-		memset(&(s->s2->wact_data[len]),0,p);
-#endif
+		memset(&(s->s2->wact_data[len]),0,p); /* arbitrary padding */
 
 	if (!s->s2->clear_text)
 		{
@@ -645,27 +651,36 @@ int ssl2_part_read(SSL *s, unsigned long f, int i)
 	unsigned char *p;
 	int j;
 
-	/* check for error */
-	if ((s->init_num == 0) && (i >= 3))
-		{
-		p=(unsigned char *)s->init_buf->data;
-		if (p[0] == SSL2_MT_ERROR)
-			{
-			j=(p[1]<<8)|p[2];
-			SSLerr((int)f,ssl_mt_error(j));
-			}
-		}
-
 	if (i < 0)
 		{
 		/* ssl2_return_error(s); */
 		/* for non-blocking io,
-		 * this is not fatal */
+		 * this is not necessarily fatal */
 		return(i);
 		}
 	else
 		{
 		s->init_num+=i;
+
+		/* Check for error.  While there are recoverable errors,
+		 * this function is not called when those must be expected;
+		 * any error detected here is fatal. */
+		if (s->init_num >= 3)
+			{
+			p=(unsigned char *)s->init_buf->data;
+			if (p[0] == SSL2_MT_ERROR)
+				{
+				j=(p[1]<<8)|p[2];
+				SSLerr((int)f,ssl_mt_error(j));
+				s->init_num -= 3;
+				if (s->init_num > 0)
+					memmove(p, p+3, s->init_num);
+				}
+			}
+
+		/* If it's not an error message, we have some error anyway --
+		 * the message was shorter than expected.  This too is treated
+		 * as fatal (at least if SSL_get_error is asked for its opinion). */
 		return(0);
 		}
 	}
@@ -676,7 +691,9 @@ int ssl2_do_write(SSL *s)
 
 	ret=ssl2_write(s,&s->init_buf->data[s->init_off],s->init_num);
 	if (ret == s->init_num)
+		{
 		return(1);
+		}
 	if (ret < 0)
 		return(-1);
 	s->init_off+=ret;

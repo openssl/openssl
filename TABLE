@@ -352,6 +352,160 @@ $shared_cflag = -fPIC
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
+*** OpenUNIX
+$cc           = cc
+$cflags       = -O -DFILIO_H -Kalloca
+$unistd       = 
+$thread_cflag = -Kthread
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** OpenUNIX-8
+$cc           = cc
+$cflags       = -O -DFILIO_H -Kalloca
+$unistd       = 
+$thread_cflag = -Kthread
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** OpenUNIX-8-gcc
+$cc           = gcc
+$cflags       = -O -DFILIO_H -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = -pthread
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** OpenUNIX-8-gcc-shared
+$cc           = gcc
+$cflags       = -O3 -DFILIO_H -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = -pthread
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+$dso_scheme   = dlfcn
+$shared_target= svr5-shared
+$shared_cflag = -fPIC
+$shared_extension = 
+$ranlib       = 
+
+*** OpenUNIX-8-pentium
+$cc           = cc
+$cflags       = -O -DFILIO_H -Kalloca -Kpentium
+$unistd       = 
+$thread_cflag = -Kthread
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** OpenUNIX-8-pentium_pro
+$cc           = cc
+$cflags       = -O -DFILIO_H -Kalloca -Kpentium_pro
+$unistd       = 
+$thread_cflag = -Kthread
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** OpenUNIX-8-shared
+$cc           = cc
+$cflags       = -O -DFILIO_H -Kalloca
+$unistd       = 
+$thread_cflag = -Kthread
+$lflags       = -lsocket -lnsl
+$bn_ops       = MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= svr5-shared
+$shared_cflag = -Kpic
+$shared_extension = 
+$ranlib       = 
+
 *** ReliantUNIX
 $cc           = cc
 $cflags       = -KPIC -g -DSNI -DTERMIOS -DB_ENDIAN
@@ -640,9 +794,9 @@ $ranlib       =
 
 *** alpha-cc
 $cc           = cc
-$cflags       = -std1 -tune host -O4 -readonly_strings
+$cflags       = -std1 -tune host -fast -readonly_strings
 $unistd       = 
-$thread_cflag = (unknown)
+$thread_cflag = -pthread
 $lflags       = 
 $bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK
 $bn_obj       = 
@@ -656,6 +810,28 @@ $rmd160_obj   =
 $rc5_obj      = 
 $dso_scheme   = dlfcn
 $shared_target= tru64-shared
+$shared_cflag = 
+$shared_extension = .so
+$ranlib       = 
+
+*** alpha-cc-rpath
+$cc           = cc
+$cflags       = -std1 -tune host -fast -readonly_strings
+$unistd       = 
+$thread_cflag = -pthread
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= tru64-shared-rpath
 $shared_cflag = 
 $shared_extension = .so
 $ranlib       = 
@@ -677,7 +853,7 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= tru64-shared
+$shared_target= alpha-osf1-shared
 $shared_cflag = 
 $shared_extension = .so
 $ranlib       = 
@@ -685,6 +861,28 @@ $ranlib       =
 *** alpha164-cc
 $cc           = cc
 $cflags       = -std1 -tune host -fast -readonly_strings
+$unistd       = 
+$thread_cflag = -pthread
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= tru64-shared
+$shared_cflag = 
+$shared_extension = .so
+$ranlib       = 
+
+*** alphaold-cc
+$cc           = cc
+$cflags       = -std1 -tune host -O4 -readonly_strings
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -699,7 +897,7 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= tru64-shared
+$shared_target= alpha-osf1-shared
 $shared_cflag = 
 $shared_extension = .so
 $ranlib       = 
@@ -904,7 +1102,7 @@ $ranlib       =
 
 *** debug-bodo
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -DBIO_PAIR_DEBUG -g -m486 -pedantic -Wshadow -Wall
+$cflags       = -DL_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -DPEDANTIC -DBIO_PAIR_DEBUG -g -m486 -pedantic -Wshadow -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
@@ -926,7 +1124,7 @@ $ranlib       =
 
 *** debug-levitte-linux-elf
 $cc           = gcc
-$cflags       = -DUSE_ALLOCATING_PRINT -DRL_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wid-clash-31 -pipe
+$cflags       = -DUSE_ALLOCATING_PRINT -DRL_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DNO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -ggdb -g3 -m486 -pedantic -ansi -Wall -Wshadow -Wid-clash-31 -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = -ldl
@@ -1124,7 +1322,7 @@ $ranlib       =
 
 *** debug-ulf
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -g -O2 -m486 -Wall -Werror -Wshadow -pipe
+$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -O2 -m486 -Wall -Werror -Wshadow -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
@@ -1874,10 +2072,10 @@ $ranlib       =
 $cc           = gcc
 $cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
 $unistd       = 
-$thread_cflag = (unknown)
-$lflags       = 
-$bn_ops       = SIXTY_FOUR_BIT_LONG
-$bn_obj       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK RC4_CHAR
+$bn_obj       = asm/ia64.o
 $des_obj      = 
 $bf_obj       = 
 $md5_obj      = 
@@ -1886,10 +2084,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_extension = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
 *** linux-m68k
@@ -2726,6 +2924,28 @@ $dso_scheme   =
 $shared_target= 
 $shared_cflag = 
 $shared_extension = 
+$ranlib       = 
+
+*** unixware-7-gcc
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DFILIO_H -O3 -fomit-frame-pointer -m486 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = -lsocket -lnsl
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= gnu-shared
+$shared_cflag = -fPIC
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
 *** unixware-7-pentium

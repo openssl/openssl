@@ -461,6 +461,9 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 
 	X509_STORE_CTX_purpose_inherit(&ctx, i, s->purpose, s->trust);
 
+	if (s->verify_callback)
+		X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
+
 	if (s->ctx->app_verify_callback != NULL)
 		i=s->ctx->app_verify_callback(&ctx); /* should pass app_verify_arg */
 	else

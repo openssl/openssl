@@ -452,8 +452,8 @@ int tls1_enc(SSL *s, int send)
 			if (l == 0 || l%bs != 0)
 				{
 				SSLerr(SSL_F_TLS1_ENC,SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
-				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECRYPT_ERROR);
-				return(0);
+				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECRYPTION_FAILED);
+				return 0;
 				}
 			}
 		
@@ -476,17 +476,18 @@ int tls1_enc(SSL *s, int send)
 			 * All of them must have value 'padding_length'. */
 			if (i > (int)rec->length)
 				{
-				SSLerr(SSL_F_TLS1_ENC,SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
-				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECRYPTION_FAILED);
-				return(0);
+				/* Incorrect padding. SSLerr() and ssl3_alert are done
+				 * by caller: we don't want to reveal whether this is
+				 * a decryption error or a MAC verification failure
+				 * (see http://www.openssl.org/~bodo/tls-cbc.txt) */
+				return -1;
 				}
 			for (j=(int)(l-i); j<(int)l; j++)
 				{
 				if (rec->data[j] != ii)
 					{
-					SSLerr(SSL_F_TLS1_ENC,SSL_R_DECRYPTION_FAILED);
-					ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECRYPTION_FAILED);
-					return(0);
+					/* Incorrect padding */
+					return -1;
 					}
 				}
 			rec->length-=i;

@@ -20,6 +20,8 @@ Ucert="certU.ss"
 echo
 echo "make a certificate request using 'req'"
 
+echo "string to make the random number generator think it has entropy" >> ./.rnd
+
 if ../apps/openssl no-rsa; then
   req_new='-newkey dsa:../apps/dsa512.pem'
 else

@@ -1931,3 +1931,5 @@ DH_set_default_openssl_method           2519	EXIST::FUNCTION:DH
 ENGINE_get_DSA                          2520	EXIST::FUNCTION:
 ENGINE_get_ctrl_function                2521	EXIST::FUNCTION:
 ENGINE_set_ctrl_function                2522	EXIST::FUNCTION:
+BN_pseudo_rand_range                    2523	EXIST::FUNCTION:
+X509_STORE_CTX_set_verify_cb            2524	EXIST::FUNCTION:

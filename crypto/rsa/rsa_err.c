@@ -106,6 +106,7 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {RSA_R_DATA_GREATER_THAN_MOD_LEN         ,"data greater than mod len"},
 {RSA_R_DATA_TOO_LARGE                    ,"data too large"},
 {RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE       ,"data too large for key size"},
+{RSA_R_DATA_TOO_LARGE_FOR_MODULUS        ,"data too large for modulus"},
 {RSA_R_DATA_TOO_SMALL                    ,"data too small"},
 {RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE       ,"data too small for key size"},
 {RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY        ,"digest too big for rsa key"},

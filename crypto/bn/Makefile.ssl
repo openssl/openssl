@@ -124,6 +124,8 @@ asm/sparcv8plus-gcc27.o: asm/sparcv8plus.S
 	$(CC) $(ASFLAGS) -E asm/sparcv8plus.S | \
 		/usr/ccs/bin/as -xarch=v8plus - -o asm/sparcv8plus-gcc27.o
 
+asm/ia64.o: asm/ia64.S
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 

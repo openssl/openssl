@@ -111,8 +111,8 @@ err:
 	}
 
 /* read/writes from s->s2->mac_data using length for encrypt and 
- * decrypt.  It sets the s->s2->padding, s->[rw]length and
- * s->s2->pad_data ptr if we are encrypting */
+ * decrypt.  It sets s->s2->padding and s->[rw]length
+ * if we are encrypting */
 void ssl2_enc(SSL *s, int send)
 	{
 	EVP_CIPHER_CTX *ds;

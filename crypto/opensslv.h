@@ -44,13 +44,13 @@
  *
  *	libcrypto.so.0
  *
- * On True64 it works a little bit differently.  There, the shared library
- * version is stored in the file, and is actually a series of versions,
- * separated by colons.  The rightmost version present in the library when
- * linking an application is stored in the application to be matched at
- * run time.  When the application is run, a check is done to see if the
- * library version stored in the application matches any of the versions
- * in the version string of the library itself.
+ * On Tru64 and IRIX 6.x it works a little bit differently.  There, the
+ * shared library version is stored in the file, and is actually a series
+ * of versions, separated by colons.  The rightmost version present in the
+ * library when linking an application is stored in the application to be
+ * matched at run time.  When the application is run, a check is done to
+ * see if the library version stored in the application matches any of the
+ * versions in the version string of the library itself.
  * This version string can be constructed in any way, depending on what
  * kind of matching is desired.  However, to implement the same scheme as
  * the one used in the other unixen, all compatible versions, from lowest
@@ -73,7 +73,7 @@
  * However, it's nice and more understandable if it actually does.
  * The current library version is stored in the macro SHLIB_VERSION_NUMBER,
  * which is just a piece of text in the format "M.m.e" (Major, minor, edit).
- * For the sake of True64 and any other OS that behaves in similar ways,
+ * For the sake of Tru64, IRIX, and any other OS that behaves in similar ways,
  * we need to keep a history of version numbers, which is done in the
  * macro SHLIB_VERSION_HISTORY.  The numbers are separated by colons and
  * should only keep the versions that are binary compatible with the current.

@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -144,6 +144,7 @@ static int initialized=0;
 static unsigned int crypto_lock_rand = 0; /* may be set only when a thread
                                            * holds CRYPTO_LOCK_RAND
                                            * (to prevent double locking) */
+/* access to lockin_thread is synchronized by CRYPTO_LOCK_RAND2 */
 static unsigned long locking_thread = 0; /* valid iff crypto_lock_rand is set */
 
 
@@ -210,7 +211,14 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 	 */
 
 	/* check if we already have the lock */
-	do_not_lock = crypto_lock_rand && (locking_thread == CRYPTO_thread_id());
+	if (crypto_lock_rand)
+		{
+		CRYPTO_r_lock(CRYPTO_LOCK_RAND2);
+		do_not_lock = (locking_thread == CRYPTO_thread_id());
+		CRYPTO_r_unlock(CRYPTO_LOCK_RAND2);
+		}
+	else
+		do_not_lock = 0;
 
 	if (!do_not_lock) CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	st_idx=state_index;
@@ -361,8 +369,10 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 
 	/* prevent ssleay_rand_bytes() from trying to obtain the lock again */
-	crypto_lock_rand = 1;
+	CRYPTO_w_lock(CRYPTO_LOCK_RAND2);
 	locking_thread = CRYPTO_thread_id();
+	CRYPTO_w_unlock(CRYPTO_LOCK_RAND2);
+	crypto_lock_rand = 1;
 
 	if (!initialized)
 		{
@@ -435,7 +445,6 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 
 	/* before unlocking, we must clear 'crypto_lock_rand' */
 	crypto_lock_rand = 0;
-	locking_thread = 0;
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
 	while (num > 0)
@@ -521,15 +530,24 @@ static int ssleay_rand_status(void)
 
 	/* check if we already have the lock
 	 * (could happen if a RAND_poll() implementation calls RAND_status()) */
-	do_not_lock = crypto_lock_rand && (locking_thread == CRYPTO_thread_id());
+	if (crypto_lock_rand)
+		{
+		CRYPTO_r_lock(CRYPTO_LOCK_RAND2);
+		do_not_lock = (locking_thread == CRYPTO_thread_id());
+		CRYPTO_r_unlock(CRYPTO_LOCK_RAND2);
+		}
+	else
+		do_not_lock = 0;
 	
 	if (!do_not_lock)
 		{
 		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 		
 		/* prevent ssleay_rand_bytes() from trying to obtain the lock again */
-		crypto_lock_rand = 1;
+		CRYPTO_w_lock(CRYPTO_LOCK_RAND2);
 		locking_thread = CRYPTO_thread_id();
+		CRYPTO_w_unlock(CRYPTO_LOCK_RAND2);
+		crypto_lock_rand = 1;
 		}
 	
 	if (!initialized)
@@ -544,7 +562,6 @@ static int ssleay_rand_status(void)
 		{
 		/* before unlocking, we must clear 'crypto_lock_rand' */
 		crypto_lock_rand = 0;
-		locking_thread = 0;
 		
 		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 		}
