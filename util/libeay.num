@@ -3022,3 +3022,5 @@ GENERAL_SUBTREE_free                    3451	EXIST::FUNCTION:
 GENERAL_SUBTREE_new                     3452	EXIST::FUNCTION:
 EVP_PKEY_cmp                            3453	EXIST::FUNCTION:
 X509_REQ_check_private_key              3454	EXIST::FUNCTION:
+sk_find_ex                              3455	EXIST::FUNCTION:
+OBJ_bsearch_ex                          3456	EXIST::FUNCTION:
