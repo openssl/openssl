@@ -88,8 +88,8 @@ int MAIN(int argc, char **argv)
 	BIO *bmd=NULL;
 	BIO *out = NULL;
 	const char *name;
-#define PROG_NAME_SIZE  16
-	char pname[PROG_NAME_SIZE];
+#define PROG_NAME_SIZE  39
+	char pname[PROG_NAME_SIZE+1];
 	int separator=0;
 	int debug=0;
 	int keyform=FORMAT_PEM;
