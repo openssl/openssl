@@ -271,13 +271,7 @@ extern "C" {
 				     exit(__VMS_EXIT); \
 				     return(__VMS_EXIT); } while(0)
 #    else
-#      define EXIT(n)		do { int __VMS_EXIT = n; \
-                                     if (__VMS_EXIT == 0) \
-				       __VMS_EXIT = 1; \
-				     else \
-				       __VMS_EXIT = (n << 3) | 2; \
-                                     __VMS_EXIT |= 0x10000000; \
-				     return(__VMS_EXIT); } while(0)
+#      define EXIT(n)		return(n)
 #    endif
 #    define NO_SYS_PARAM_H
 #  else
