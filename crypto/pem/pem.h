@@ -502,7 +502,7 @@ int PEM_write_DSAPrivateKey(FILE *fp,DSA *x,const EVP_CIPHER *enc,
 int PEM_write_PrivateKey(FILE *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
 	unsigned char *kstr,int klen, pem_password_cb *);
 int PEM_write_PKCS8PrivateKey(FILE *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
-	unsigned char *kstr,int klen, pem_password_cb *);
+			      char *kstr,int klen, pem_password_cb *);
 int PEM_write_PKCS7(FILE *fp,PKCS7 *x);
 #ifndef NO_DH
 int PEM_write_DHparams(FILE *fp,DH *x);
@@ -553,7 +553,7 @@ int PEM_write_bio_DSAPrivateKey(BIO *fp,DSA *x,const EVP_CIPHER *enc,
 int PEM_write_bio_PrivateKey(BIO *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
         unsigned char *kstr,int klen, pem_password_cb *);
 int PEM_write_bio_PKCS8PrivateKey(BIO *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
-        unsigned char *kstr,int klen, pem_password_cb *);
+        char *kstr,int klen, pem_password_cb *);
 int PEM_write_bio_PKCS7(BIO *bp,PKCS7 *x);
 #ifndef NO_DH
 int PEM_write_bio_DHparams(BIO *bp,DH *x);

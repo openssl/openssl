@@ -75,6 +75,7 @@ const char *PEM_version="PEM" OPENSSL_VERSION_PTEXT;
 
 static int def_callback(char *buf, int num, int w);
 static int load_iv(unsigned char **fromp,unsigned char *to, int num);
+
 static int def_callback(char *buf, int num, int w)
 	{
 #ifdef NO_FP_API
@@ -749,7 +750,8 @@ err:
  */
 
 int PEM_write_bio_PKCS8PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
-             unsigned char *kstr, int klen, pem_password_cb *cb)
+				  char *kstr, int klen,
+				  pem_password_cb *cb)
 {
 	X509_SIG *p8;
 	PKCS8_PRIV_KEY_INFO *p8inf;
@@ -774,7 +776,7 @@ int PEM_write_bio_PKCS8PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
 			kstr = buf;
 		}
 		p8 = PKCS8_encrypt(-1, enc, kstr, klen, NULL, 0, 0, p8inf);
-		if(kstr == (unsigned char *)buf) memset(buf, 0, klen);
+		if(kstr == buf) memset(buf, 0, klen);
 		PKCS8_PRIV_KEY_INFO_free(p8inf);
 		ret = PEM_write_bio_PKCS8(bp, p8);
 		X509_SIG_free(p8);
@@ -787,7 +789,7 @@ int PEM_write_bio_PKCS8PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
 }
 
 int PEM_write_PKCS8PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
-             unsigned char *kstr, int klen, pem_password_cb *cb)
+			      char *kstr, int klen, pem_password_cb *cb)
 {
 	BIO *bp;
 	int ret;
