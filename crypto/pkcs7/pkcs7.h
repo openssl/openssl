@@ -62,9 +62,7 @@
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 
-#ifdef VMS
-#include <openssl/vms_idhacks.h>
-#endif
+#include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {
