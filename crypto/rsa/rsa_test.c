@@ -227,10 +227,6 @@ int main(int argc, char *argv[])
 
     for (v = 0; v < 3; v++)
 	{
-#if 1
-	key = RSA_generate_key(512*(v+1),3,0,0);
-	clen=RSA_size(key);
-#else
 	key = RSA_new();
 	switch (v) {
     case 0:
@@ -243,7 +239,6 @@ int main(int argc, char *argv[])
 	clen = key3(key, ctext_ex);
 	break;
 	}
-#endif
 
 	num = RSA_public_encrypt(plen, ptext_ex, ctext, key,
 				 RSA_PKCS1_PADDING);
