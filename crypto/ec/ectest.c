@@ -76,7 +76,7 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 } while (0)
 
 
-void timings(EC_GROUP *group, int simult, BN_CTX *ctx)
+void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
 	{
 	clock_t clck;
 	int i, j;
@@ -101,13 +101,13 @@ void timings(EC_GROUP *group, int simult, BN_CTX *ctx)
 	for (i = 0; i < 10; i++)
 		{
 		if (!BN_pseudo_rand(s, BN_num_bits(s), 0, 0)) ABORT;
-		if (simult)
+		if (multi)
 			{
 			if (!BN_pseudo_rand(s0, BN_num_bits(s), 0, 0)) ABORT;
 			}
 		for (j = 0; j < 10; j++)
 			{
-			if (!EC_POINT_mul(group, P, s, simult ? P : NULL, simult ? s0 : NULL, ctx)) ABORT;
+			if (!EC_POINT_mul(group, P, s, multi ? P : NULL, multi ? s0 : NULL, ctx)) ABORT;
 			}
 		fprintf(stdout, ".");
 		fflush(stdout);
@@ -130,7 +130,7 @@ void timings(EC_GROUP *group, int simult, BN_CTX *ctx)
 #endif
 
 	fprintf(stdout, "%i %s in %.2f " UNIT "\n", i*j,
-		simult ? "s*P+t*Q operations" : "point multiplications",
+		multi ? "s*P+t*Q operations" : "point multiplications",
 		(double)clck/CLOCKS_PER_SEC);
 	fprintf(stdout, "average: %.4f " UNIT "\n", (double)clck/(CLOCKS_PER_SEC*i*j));
 
@@ -551,7 +551,7 @@ int main(int argc, char *argv[])
 		scalars[0] = y; /* (group order + 1)/2,  so  y*Q + y*Q = Q */
 		scalars[1] = y;
 
-		fprintf(stdout, "simultaneous multiplication ...");
+		fprintf(stdout, "combined multiplication ...");
 		fflush(stdout);
 
 		/* z is still the group order */
