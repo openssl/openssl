@@ -74,6 +74,48 @@
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
+#ifndef OPENSSL_NO_MD2
+#include <openssl/md2.h>
+#endif
+#ifndef OPENSSL_NO_MD4
+#include <openssl/md4.h>
+#endif
+#ifndef OPENSSL_NO_MD5
+#include <openssl/md5.h>
+#endif
+#ifndef OPENSSL_NO_SHA
+#include <openssl/sha.h>
+#endif
+#ifndef OPENSSL_NO_RIPEMD
+#include <openssl/ripemd.h>
+#endif
+#ifndef OPENSSL_NO_DES
+#include <openssl/des.h>
+#endif
+#ifndef OPENSSL_NO_RC4
+#include <openssl/rc4.h>
+#endif
+#ifndef OPENSSL_NO_RC2
+#include <openssl/rc2.h>
+#endif
+#ifndef OPENSSL_NO_RC5
+#include <openssl/rc5.h>
+#endif
+#ifndef OPENSSL_NO_BF
+#include <openssl/blowfish.h>
+#endif
+#ifndef OPENSSL_NO_CAST
+#include <openssl/cast.h>
+#endif
+#ifndef OPENSSL_NO_IDEA
+#include <openssl/idea.h>
+#endif
+#ifndef OPENSSL_NO_MDC2
+#include <openssl/mdc2.h>
+#endif
+#ifndef OPENSSL_NO_AES
+#include <openssl/aes.h>
+#endif
 
 /*
 #define EVP_RC2_KEY_SIZE		16
@@ -90,6 +132,18 @@
 #define PKCS5_SALT_LEN			8
 /* Default PKCS#5 iteration count */
 #define PKCS5_DEFAULT_ITER		2048
+
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
+
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
+
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
+#endif
 
 #include <openssl/objects.h>
 
