@@ -181,7 +181,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	if (ctx->default_cert != NULL)
 		{
 		CRYPTO_add(&ctx->default_cert->references,1,
-			CRYPTO_LOCK_SSL_CERT);
+			   CRYPTO_LOCK_SSL_CERT);
 		s->cert=ctx->default_cert;
 		}
 	else
@@ -1042,7 +1042,10 @@ void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,int (*cb)(int, X509_STORE_CTX *))
 	X509_STORE_set_verify_cb_func(ctx->cert_store,cb);
 	}
 
-void ssl_set_cert_masks(CERT *c,SSL_CIPHER *cipher)
+/* Need default_cert to check for callbacks, for now (see comment in CERT
+   strucure)
+*/
+void ssl_set_cert_masks(CERT *c,CERT *default_cert,SSL_CIPHER *cipher)
 	{
 	CERT_PKEY *cpk;
 	int rsa_enc,rsa_tmp,rsa_sign,dh_tmp,dh_rsa,dh_dsa,dsa_sign;
@@ -1050,20 +1053,20 @@ void ssl_set_cert_masks(CERT *c,SSL_CIPHER *cipher)
 	int rsa_tmp_export,dh_tmp_export,kl;
 	unsigned long mask,emask;
 
-	if ((c == NULL) || (c->valid)) return;
+	if (c == NULL) return;
 
 	kl=SSL_C_EXPORT_PKEYLENGTH(cipher);
 
 #ifndef NO_RSA
-	rsa_tmp=(c->rsa_tmp != NULL || c->rsa_tmp_cb != NULL);
-	rsa_tmp_export=(c->rsa_tmp_cb != NULL ||
+	rsa_tmp=(c->rsa_tmp != NULL || default_cert->rsa_tmp_cb != NULL);
+	rsa_tmp_export=(default_cert->rsa_tmp_cb != NULL ||
 		(rsa_tmp && RSA_size(c->rsa_tmp)*8 <= kl));
 #else
 	rsa_tmp=rsa_tmp_export=0;
 #endif
 #ifndef NO_DH
-	dh_tmp=(c->dh_tmp != NULL || c->dh_tmp_cb != NULL);
-	dh_tmp_export=(c->dh_tmp_cb != NULL ||
+	dh_tmp=(c->dh_tmp != NULL || default_cert->dh_tmp_cb != NULL);
+	dh_tmp_export=(default_cert->dh_tmp_cb != NULL ||
 		(dh_tmp && DH_size(c->dh_tmp)*8 <= kl));
 #else
 	dh_tmp=dh_tmp_export=0;
@@ -1088,14 +1091,14 @@ void ssl_set_cert_masks(CERT *c,SSL_CIPHER *cipher)
 	emask=0;
 
 #ifdef CIPHER_DEBUG
-	printf("rt=%d dht=%d re=%d rs=%d ds=%d dhr=%d dhd=%d\n",
-		rsa_tmp,dh_tmp,
-		rsa_enc,rsa_sign,dsa_sign,dh_rsa,dh_dsa);
+	printf("rt=%d rte=%d dht=%d re=%d ree=%d rs=%d ds=%d dhr=%d dhd=%d\n",
+		rsa_tmp,rsa_tmp_export,dh_tmp,
+		rsa_enc,rsa_enc_export,rsa_sign,dsa_sign,dh_rsa,dh_dsa);
 #endif
 
 	if (rsa_enc || (rsa_tmp && rsa_sign))
 		mask|=SSL_kRSA;
-	if (rsa_enc_export || (rsa_tmp_export && rsa_sign))
+	if (rsa_enc_export || (rsa_tmp_export && (rsa_sign || rsa_enc)))
 		emask|=SSL_kRSA;
 
 #if 0
@@ -1150,7 +1153,7 @@ X509 *ssl_get_server_send_cert(SSL *s)
 	int i,export;
 
 	c=s->cert;
-	ssl_set_cert_masks(c,s->s3->tmp.new_cipher);
+	ssl_set_cert_masks(c,s->ctx->default_cert,s->s3->tmp.new_cipher);
 	alg=s->s3->tmp.new_cipher->algorithms;
 	export=SSL_IS_EXPORT(alg);
 	mask=export?c->export_mask:c->mask;

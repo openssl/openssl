@@ -275,6 +275,10 @@ typedef struct cert_st
 
 	RSA *rsa_tmp;
 	DH *dh_tmp;
+	/* FIXME: Although rsa_tmp and dh_tmp are properties of the cert,
+	   callbacks probably aren't, and besides only the context default
+	   cert's callbacks are actually used. Too close to a release to fix
+	   this now - Ben 6 Mar 1999 */
 	RSA *(*rsa_tmp_cb)(SSL *ssl,int export,int keysize);
 	DH *(*dh_tmp_cb)(SSL *ssl,int export,int keysize);
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
@@ -367,7 +371,7 @@ int ssl_undefined_function(SSL *s);
 X509 *ssl_get_server_send_cert(SSL *);
 EVP_PKEY *ssl_get_sign_pkey(SSL *,SSL_CIPHER *);
 int ssl_cert_type(X509 *x,EVP_PKEY *pkey);
-void ssl_set_cert_masks(CERT *c,SSL_CIPHER *cipher);
+void ssl_set_cert_masks(CERT *c,CERT *default_cert,SSL_CIPHER *cipher);
 STACK *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
 

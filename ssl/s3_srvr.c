@@ -945,7 +945,7 @@ SSL *s;
 			if ((rsa == NULL) && (s->ctx->default_cert->rsa_tmp_cb != NULL))
 				{
 				rsa=s->ctx->default_cert->rsa_tmp_cb(s,
-				      !SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
+				      SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
 				      SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher));
 				CRYPTO_add(&rsa->references,1,CRYPTO_LOCK_RSA);
 				cert->rsa_tmp=rsa;

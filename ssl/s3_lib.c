@@ -845,11 +845,20 @@ STACK *have,*pref;
 
 	sk_set_cmp_func(pref,ssl_cipher_ptr_id_cmp);
 
+#ifdef CIPHER_DEBUG
+	printf("Have:\n");
+	for(i=0 ; i < sk_num(pref) ; ++i)
+	    {
+	    c=(SSL_CIPHER *)sk_value(pref,i);
+	    printf("%p:%s\n",c,c->name);
+	    }
+#endif
+
 	for (i=0; i<sk_num(have); i++)
 		{
 		c=(SSL_CIPHER *)sk_value(have,i);
 
-		ssl_set_cert_masks(cert,c);
+		ssl_set_cert_masks(cert,s->ctx->default_cert,c);
 		mask=cert->mask;
 		emask=cert->export_mask;
 			
@@ -858,14 +867,16 @@ STACK *have,*pref;
 			{
 			ok=((alg & emask) == alg)?1:0;
 #ifdef CIPHER_DEBUG
-			printf("%d:[%08lX:%08lX]%s (export)\n",ok,alg,mask,c->name);
+			printf("%d:[%08lX:%08lX]%p:%s (export)\n",ok,alg,emask,
+			       c,c->name);
 #endif
 			}
 		else
 			{
 			ok=((alg & mask) == alg)?1:0;
 #ifdef CIPHER_DEBUG
-			printf("%d:[%08lX:%08lX]%s\n",ok,alg,mask,c->name);
+			printf("%d:[%08lX:%08lX]%p:%s\n",ok,alg,mask,c,
+			       c->name);
 #endif
 			}
 
