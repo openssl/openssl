@@ -448,11 +448,8 @@ bad:
 								"invalid hex salt value\n");
 							goto end;
 						}
-					} else if (RAND_bytes(salt, PKCS5_SALT_LEN) <= 0) {
-						BIO_printf(bio_err,
-							"prng not seeded\n");
+					} else if (RAND_pseudo_bytes(salt, PKCS5_SALT_LEN) <= 0)
 						goto end;
-					}
 					/* If -P option then don't bother writing */
 					if((printkey != 2)
 					   && (BIO_write(wbio,magic,
