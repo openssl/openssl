@@ -280,6 +280,11 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 			BIOerr(BIO_F_BIO_CTRL, BIO_R_IN_USE);
 			ret = 0;
 			}
+		else if (num == 0)
+			{
+			BIOerr(BIO_F_BIO_CTRL, BIO_R_INVALID_ARGUMENT);
+			ret = 0;
+			}
 		else
 			{
 			size_t new_size = num;

@@ -101,6 +101,7 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 {BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET,"error setting nbio on accepted socket"},
 {BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET,"error setting nbio on accept socket"},
 {BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET ,"gethostbyname addr is not af inet"},
+{BIO_R_INVALID_ARGUMENT                  ,"invalid argument"},
 {BIO_R_INVALID_IP_ADDRESS                ,"invalid ip address"},
 {BIO_R_IN_USE                            ,"in use"},
 {BIO_R_KEEPALIVE                         ,"keepalive"},
