@@ -1120,7 +1120,10 @@ static char **lookup_serial(TXT_DB *db, ASN1_INTEGER *ser)
 	char *itmp, *row[DB_NUMBER],**rrow;
 	for (i = 0; i < DB_NUMBER; i++) row[i] = NULL;
 	bn = ASN1_INTEGER_to_BN(ser,NULL);
-	itmp = BN_bn2hex(bn);
+	if (BN_is_zero(bn))
+		itmp = BUF_strdup("00");
+	else
+		itmp = BN_bn2hex(bn);
 	row[DB_serial] = itmp;
 	BN_free(bn);
 	rrow=TXT_DB_get_by_index(db,DB_serial,row);
