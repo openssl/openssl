@@ -737,8 +737,13 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
 	BIO *b;
 
 	if (mh == NULL) return;
+	/* Need to turn off memory checking when allocated BIOs ... especially
+	 * as we're creating them at a time when we're trying to check we've not
+	 * left anything un-free()'d!! */
+	MemCheck_off();
 	if ((b=BIO_new(BIO_s_file())) == NULL)
 		return;
+	MemCheck_on();
 	BIO_set_fp(b,fp,BIO_NOCLOSE);
 	CRYPTO_mem_leaks(b);
 	BIO_free(b);
