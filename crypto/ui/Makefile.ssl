@@ -83,8 +83,7 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-ui_compat.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-ui_compat.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
+ui_compat.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 ui_compat.o: ../../include/openssl/opensslconf.h
 ui_compat.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 ui_compat.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
@@ -111,3 +110,8 @@ ui_openssl.o: ../../include/openssl/opensslv.h
 ui_openssl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ui_openssl.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 ui_openssl.o: ../cryptlib.h ui_locl.h ui_openssl.c
+ui_util.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+ui_util.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+ui_util.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+ui_util.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+ui_util.o: ui_util.c

@@ -793,10 +793,10 @@ DES_pcbc_encrypt                        800	EXIST::FUNCTION:DES
 DES_quad_cksum                          801	EXIST::FUNCTION:DES
 DES_random_key                          802	EXIST::FUNCTION:DES
 _ossl_old_des_random_seed               803	EXIST::FUNCTION:DES
-des_read_2passwords                     804	EXIST::FUNCTION:DES
-des_read_password                       805	EXIST::FUNCTION:DES
-des_read_pw                             806	EXIST::FUNCTION:
-des_read_pw_string                      807	EXIST::FUNCTION:
+_ossl_old_des_read_2passwords           804	EXIST::FUNCTION:DES
+_ossl_old_des_read_password             805	EXIST::FUNCTION:DES
+_ossl_old_des_read_pw                   806	EXIST::FUNCTION:
+_ossl_old_des_read_pw_string            807	EXIST::FUNCTION:
 DES_set_key                             808	EXIST::FUNCTION:DES
 DES_set_odd_parity                      809	EXIST::FUNCTION:DES
 DES_string_to_2keys                     810	EXIST::FUNCTION:DES
@@ -2756,3 +2756,7 @@ ENGINE_add_conf_module                  3202	EXIST::FUNCTION:
 ERR_peek_last_error_line                3203	EXIST::FUNCTION:
 ERR_peek_last_error_line_data           3204	EXIST::FUNCTION:
 ERR_peek_last_error                     3205	EXIST::FUNCTION:
+DES_read_2passwords                     3206	EXIST::FUNCTION:DES
+DES_read_password                       3207	EXIST::FUNCTION:DES
+UI_UTIL_read_pw                         3208	EXIST::FUNCTION:
+UI_UTIL_read_pw_string                  3209	EXIST::FUNCTION:

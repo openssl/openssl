@@ -487,7 +487,8 @@ passwd.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
 passwd.o: ../include/openssl/rand.h ../include/openssl/rsa.h
 passwd.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 passwd.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-passwd.o: ../include/openssl/txt_db.h ../include/openssl/x509.h
+passwd.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
+passwd.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
 passwd.o: ../include/openssl/x509_vfy.h apps.h passwd.c
 pkcs12.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 pkcs12.o: ../include/openssl/bn.h ../include/openssl/buffer.h
@@ -735,6 +736,7 @@ speed.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
 speed.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 speed.o: ../include/openssl/sha.h ../include/openssl/stack.h
 speed.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
+speed.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
 speed.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h speed.c
 speed.o: testdsa.h testrsa.h
 spkac.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
@@ -780,6 +782,7 @@ version.o: ../include/openssl/pkcs7.h ../include/openssl/rc4.h
 version.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 version.o: ../include/openssl/sha.h ../include/openssl/stack.h
 version.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
+version.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
 version.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h
 version.o: version.c
 x509.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h

@@ -380,9 +380,12 @@ bntest.o: ../include/openssl/sha.h ../include/openssl/stack.h
 bntest.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 bntest.o: ../include/openssl/x509_vfy.h bntest.c
 casttest.o: ../include/openssl/cast.h casttest.c
-destest.o: ../include/openssl/des.h ../include/openssl/des_old.h
-destest.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
-destest.o: ../include/openssl/symhacks.h destest.c
+destest.o: ../include/openssl/crypto.h ../include/openssl/des.h
+destest.o: ../include/openssl/des_old.h ../include/openssl/e_os2.h
+destest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+destest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+destest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
+destest.o: ../include/openssl/ui_compat.h destest.c
 dhtest.o: ../include/openssl/bio.h ../include/openssl/bn.h
 dhtest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
 dhtest.o: ../include/openssl/e_os2.h ../include/openssl/err.h
@@ -482,7 +485,8 @@ mdc2test.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
 mdc2test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 mdc2test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 mdc2test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-mdc2test.o: ../include/openssl/symhacks.h mdc2test.c
+mdc2test.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
+mdc2test.o: ../include/openssl/ui_compat.h mdc2test.c
 randtest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h randtest.c
 rc2test.o: ../include/openssl/opensslconf.h ../include/openssl/rc2.h rc2test.c
 rc4test.o: ../include/openssl/opensslconf.h ../include/openssl/rc4.h rc4test.c
