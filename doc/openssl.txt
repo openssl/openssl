@@ -98,6 +98,15 @@ indicates which section contains the extensions. In the case of 'req' the
 extension section is used when the -x509 option is present to create a
 self signed root certificate.
 
+The 'x509' utility also supports extensions when it signs a certificate.
+The -config option is used to set the configuration file containing the
+extensions. In this case a line with:
+
+extensions = extension_section
+
+in the nameless (default) section is used. If no such line is include then
+it uses the default section.
+
 You can also add extensions to CRLs: a line
 
 crl_extensions = crl_extension_section
@@ -107,6 +116,17 @@ You can add any extension to a CRL but of the supported extensions only
 issuerAltName and authorityKeyIdentifier make any real sense. Note: these are
 CRL extensions NOT CRL *entry* extensions which cannot currently be generated.
 CRL entry extensions can be displayed.
+
+NB. At this time Netscape Communicator rejects V2 CRLs: to get an old V1 CRL
+you should comment out the crl_extensions line in the configuration file.
+
+As with all configuration files you can use the inbuilt environment expansion
+to allow the values to be passed in the environment. Therefore if you have
+several extension sections used for different purposes you can have a line:
+
+x509_extensions = $ENV::ENV_EXT
+
+and set the ENV_EXT environment variable before calling the relevant utility.
 
 EXTENSION SYNTAX.
 
@@ -298,7 +318,10 @@ This is a RAW extension. It attempts to display the contents of this extension:
 unfortuntately this extension is often improperly encoded.
 
 The certificate policies extension will rarely be used in practice: few
-software packages interpret it correctly or at all.
+software packages interpret it correctly or at all. IE5 does partially
+support this extension: but it needs the 'ia5org' option because it will
+only correctly support a broken encoding. Of the options below only the
+policy OID, explicitText and CPS options are displayed with IE5.
 
 All the fields of this extension can be set by using the appropriate syntax.
 
@@ -325,11 +348,13 @@ The value of the userNotice qualifier is specified in the relevant section. This
 section can include explicitText, organization and noticeNumbers options. 
 explicitText and organization are text strings, noticeNumbers is a comma
 separated list of numbers. The organization and noticeNumbers options (if
-included) must BOTH be present.
+included) must BOTH be present. If you use the userNotice option with IE5 then
+you need the 'ia5org' option at the top level to modify the encoding: otherwise
+it will not be interpreted properly.
 
 Example:
 
-certificatePolicies=1.2.3.4,1.5.6.7.8,@polsect
+certificatePolicies=ia5org,1.2.3.4,1.5.6.7.8,@polsect
 
 [polsect]
 
@@ -343,6 +368,10 @@ userNotice.1=@notice
 explicitText="Explicit Text Here"
 organization="Organisation Name"
 noticeNumbers=1,2,3,4
+
+TECHNICAL NOTE: the ia5org option changes the type of the 'organization' field,
+according to PKIX it should be of type DisplayText but Verisign uses an 
+IA5STRING and IE5 needs this too.
 
 Display only extensions.
 
@@ -374,7 +403,8 @@ private key and certificate pair.
 
 No special initialisation is needed for the internal PKCS#12 library: the 
 standard SSLeay_add_all_algorithms() is sufficient. If you do not wish to
-add all algorithms then you can manually initialise the PKCS#12 library with:
+add all algorithms (you should at least add SHA1 though) then you can manually
+initialise the PKCS#12 library with:
 
 PKSC12_PBE_add();
 

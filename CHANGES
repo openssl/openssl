@@ -5,6 +5,18 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Allow PKCS#12 password to be set from the command line or the
+     environment. Let 'ca' get its config file name from the environment
+     variables "OPENSSL_CONF" or "SSLEAY_CONF" (for consistency with 'req'
+     and 'x509').
+     [Steve Henson]
+
+  *) Allow certificate policies extension to use an IA5STRING for the
+     organization field. This is contrary to the PKIX definition but
+     VeriSign uses it and IE5 only recognises this form. Document 'x509'
+     extension option.
+     [Steve Henson]
+
   *) Add PEDANTIC compiler flag to allow compilation with gcc -pedantic,
      without disallowing inline assembler and the like for non-pedantic builds.
      [Ben Laurie]

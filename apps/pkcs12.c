@@ -105,7 +105,9 @@ int MAIN(int argc, char **argv)
     int cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
     int ret = 1;
     int macver = 1;
+    int noprompt = 0;
     STACK *canames = NULL;
+    char *cpass = NULL, *mpass = NULL;
 
     apps_startup();
 
@@ -170,6 +172,22 @@ int MAIN(int argc, char **argv)
 			args++;	
 			outfile = *args;
 		    } else badarg = 1;
+		} else if (!strcmp (*args, "-envpass")) {
+		    if (args[1]) {
+			args++;	
+			if(!(cpass = getenv(*args))) {
+				BIO_printf(bio_err,
+				 "Can't read environment variable %s\n", *args);
+				goto end;
+			}
+			noprompt = 1;
+		    } else badarg = 1;
+		} else if (!strcmp (*args, "-password")) {
+		    if (args[1]) {
+			args++;	
+			cpass = *args;
+		    	noprompt = 1;
+		    } else badarg = 1;
 		} else badarg = 1;
 
 	} else badarg = 1;
@@ -206,7 +224,15 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-descert      encrypt PKCS#12 certificates with triple DES (default RC2-40)\n");
 	BIO_printf (bio_err, "-keyex        set MS key exchange type\n");
 	BIO_printf (bio_err, "-keysig       set MS key signature type\n");
+	BIO_printf (bio_err, "-password p   set import/export password (NOT RECOMMENDED)\n");
+	BIO_printf (bio_err, "-envpass p    set import/export password from environment\n");
     	goto end;
+    }
+
+    if(cpass) mpass = cpass;
+    else {
+	cpass = pass;
+	mpass = macpass;
     }
 
     ERR_load_crypto_strings();
@@ -344,13 +370,14 @@ if (export_cert) {
 
 	if (canames) sk_free(canames);
 
-	if(EVP_read_pw_string (pass, 50, "Enter Export Password:", 1)) {
+	if(!noprompt &&
+		EVP_read_pw_string(pass, 50, "Enter Export Password:", 1)) {
 	    BIO_printf (bio_err, "Can't read Password\n");
 	    goto end;
         }
 	if (!twopass) strcpy(macpass, pass);
 	/* Turn certbags into encrypted authsafe */
-	authsafe = PKCS12_pack_p7encdata (cert_pbe, pass, -1, NULL, 0,
+	authsafe = PKCS12_pack_p7encdata (cert_pbe, cpass, -1, NULL, 0,
 								 iter, bags);
 	sk_pop_free(bags, PKCS12_SAFEBAG_free);
 
@@ -367,7 +394,7 @@ if (export_cert) {
 	EVP_PKEY_free(key);
 	if(keytype) PKCS8_add_keyusage(p8, keytype);
 	bag = PKCS12_MAKE_SHKEYBAG (NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
-			pass, -1, NULL, 0, iter, p8);
+			cpass, -1, NULL, 0, iter, p8);
 	PKCS8_PRIV_KEY_INFO_free(p8);
         if (name) PKCS12_add_friendlyname (bag, name, -1);
 	PKCS12_add_localkeyid (bag, keyid, keyidlen);
@@ -384,7 +411,7 @@ if (export_cert) {
 
 	sk_pop_free(safes, PKCS7_free);
 
-	PKCS12_set_mac (p12, macpass, -1, NULL, 0, maciter, NULL);
+	PKCS12_set_mac (p12, mpass, -1, NULL, 0, maciter, NULL);
 
 	i2d_PKCS12_bio (out, p12);
 
@@ -400,7 +427,7 @@ if (export_cert) {
 	goto end;
     }
 
-    if(EVP_read_pw_string (pass, 50, "Enter Import Password:", 0)) {
+    if(!noprompt && EVP_read_pw_string(pass, 50, "Enter Import Password:", 0)) {
 	BIO_printf (bio_err, "Can't read Password\n");
 	goto end;
     }
@@ -409,14 +436,14 @@ if (export_cert) {
 
     if (options & INFO) BIO_printf (bio_err, "MAC Iteration %ld\n", p12->mac->iter ? ASN1_INTEGER_get (p12->mac->iter) : 1);
     if(macver) {
-	if (!PKCS12_verify_mac (p12, macpass, -1)) {
+	if (!PKCS12_verify_mac (p12, mpass, -1)) {
 	    BIO_printf (bio_err, "Mac verify errror: invalid password?\n");
 	    ERR_print_errors (bio_err);
 	    goto end;
 	} else BIO_printf (bio_err, "MAC verified OK\n");
     }
 
-    if (!dump_certs_keys_p12 (out, p12, pass, -1, options)) {
+    if (!dump_certs_keys_p12 (out, p12, cpass, -1, options)) {
 	BIO_printf(bio_err, "Error outputting keys and certificates\n");
 	ERR_print_errors (bio_err);
 	goto end;

@@ -69,8 +69,8 @@ static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol, BIO
 static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *value);
 static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals, int indent);
 static void print_notice(BIO *out, USERNOTICE *notice, int indent);
-static POLICYINFO *policy_section(X509V3_CTX *ctx, STACK *polstrs);
-static POLICYQUALINFO *notice_section(X509V3_CTX *ctx, STACK *unot);
+static POLICYINFO *policy_section(X509V3_CTX *ctx, STACK *polstrs, int ia5org);
+static POLICYQUALINFO *notice_section(X509V3_CTX *ctx, STACK *unot, int ia5org);
 static STACK *nref_nos(STACK *nos);
 
 X509V3_EXT_METHOD v3_cpols = {
@@ -96,9 +96,10 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
 	ASN1_OBJECT *pobj;
 	STACK *vals;
 	CONF_VALUE *cnf;
-	int i;
+	int i, ia5org;
 	pols = sk_POLICYINFO_new_null();
 	vals =  X509V3_parse_list(value);
+	ia5org = 0;
 	for(i = 0; i < sk_num(vals); i++) {
 		cnf = (CONF_VALUE *)sk_value(vals, i);
 		if(cnf->value || !cnf->name ) {
@@ -107,7 +108,10 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
 			goto err;
 		}
 		pstr = cnf->name;
-		if(*pstr == '@') {
+		if(!strcmp(pstr,"ia5org")) {
+			ia5org = 1;
+			continue;
+		} else if(*pstr == '@') {
 			STACK *polsect;
 			polsect = X509V3_get_section(ctx, pstr + 1);
 			if(!polsect) {
@@ -116,7 +120,7 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
 				X509V3_conf_err(cnf);
 				goto err;
 			}
-			pol = policy_section(ctx, polsect);
+			pol = policy_section(ctx, polsect, ia5org);
 			X509V3_section_free(ctx, polsect);
 			if(!pol) goto err;
 		} else {
@@ -137,7 +141,7 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
 	return NULL;
 }
 
-static POLICYINFO *policy_section(X509V3_CTX *ctx, STACK *polstrs)
+static POLICYINFO *policy_section(X509V3_CTX *ctx, STACK *polstrs, int ia5org)
 {
 	int i;
 	CONF_VALUE *cnf;
@@ -179,7 +183,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx, STACK *polstrs)
 				X509V3_conf_err(cnf);
 				goto err;
 			}
-			qual = notice_section(ctx, unot);
+			qual = notice_section(ctx, unot, ia5org);
 			X509V3_section_free(ctx, unot);
 			if(!qual) goto err;
 			if(!sk_POLICYQUALINFO_push(pol->qualifiers, qual))
@@ -208,7 +212,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx, STACK *polstrs)
 	
 }
 
-static POLICYQUALINFO *notice_section(X509V3_CTX *ctx, STACK *unot)
+static POLICYQUALINFO *notice_section(X509V3_CTX *ctx, STACK *unot, int ia5org)
 {
 	int i;
 	CONF_VALUE *cnf;
@@ -230,7 +234,8 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx, STACK *unot)
 				if(!(nref = NOTICEREF_new())) goto merr;
 				not->noticeref = nref;
 			} else nref = not->noticeref;
-			nref->organization = ASN1_VISIBLESTRING_new();
+			if(ia5org) nref->organization = ASN1_IA5STRING_new();
+			else nref->organization = ASN1_VISIBLESTRING_new();
 			if(!ASN1_STRING_set(nref->organization, cnf->value,
 						 strlen(cnf->value))) goto merr;
 		} else if(!strcmp(cnf->name, "noticeNumbers")) {

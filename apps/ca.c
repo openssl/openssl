@@ -390,6 +390,8 @@ bad:
 	ERR_load_crypto_strings();
 
 	/*****************************************************************/
+	if (configfile == NULL) configfile = getenv("OPENSSL_CONF");
+	if (configfile == NULL) configfile = getenv("SSLEAY_CONF");
 	if (configfile == NULL)
 		{
 		/* We will just use 'buf[0]' as a temporary buffer.  */
