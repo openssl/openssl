@@ -62,7 +62,7 @@ asm/sx86-out.o: asm/sx86unix.cpp
 asm/sx86bsdi.o: asm/sx86unix.cpp
 	$(CPP) -DBSDI asm/sx86unix.cpp | sed 's/ :/:/' | as -o asm/sx86bsdi.o
 
-asm/sx86unix.cpp:
+asm/sx86unix.cpp: asm/sha1-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha1-586.pl cpp $(PROCESSOR) >sx86unix.cpp)
 
 files:

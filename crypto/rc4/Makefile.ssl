@@ -67,7 +67,7 @@ asm/rx86-out.o: asm/rx86unix.cpp
 asm/rx86bsdi.o: asm/rx86unix.cpp
 	$(CPP) -DBSDI asm/rx86unix.cpp | sed 's/ :/:/' | as -o asm/rx86bsdi.o
 
-asm/rx86unix.cpp: asm/rc4-586.pl
+asm/rx86unix.cpp: asm/rc4-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) rc4-586.pl cpp >rx86unix.cpp)
 
 files:

@@ -102,10 +102,10 @@ asm/bn86bsdi.o: asm/bn86unix.cpp
 asm/co86bsdi.o: asm/co86unix.cpp
 	$(CPP) -DBSDI asm/co86unix.cpp | sed 's/ :/:/' | as -o asm/co86bsdi.o
 
-asm/bn86unix.cpp: asm/bn-586.pl
+asm/bn86unix.cpp: asm/bn-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) bn-586.pl cpp >bn86unix.cpp )
 
-asm/co86unix.cpp: asm/co-586.pl
+asm/co86unix.cpp: asm/co-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) co-586.pl cpp >co86unix.cpp )
 
 asm/sparcv8.o: asm/sparcv8.S

@@ -65,7 +65,7 @@ asm/r586-out.o: asm/r586unix.cpp
 asm/r586bsdi.o: asm/r586unix.cpp
 	$(CPP) -DBSDI asm/r586unix.cpp | sed 's/ :/:/' | as -o asm/r586bsdi.o
 
-asm/r586unix.cpp:
+asm/r586unix.cpp: asm/rc5-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 	(cd asm; $(PERL) rc5-586.pl cpp >r586unix.cpp)
 
 files:
