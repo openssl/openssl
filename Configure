@@ -513,6 +513,9 @@ my %table=(
 "Cygwin-pre1.3", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown):CYGWIN32::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
 "Cygwin", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall:::CYGWIN32::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:win32:cygwin-shared:::.dll",
 
+# DJGPP
+"DJGPP", "gcc:-I/dev/env/DJDIR/watt32/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall:::MSDOS:-L$ENV{DJDIR}/watt32/lib -lwatt:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::",
+
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
 "ultrix-cc","cc:-std1 -O -Olimit 1000 -DL_ENDIAN::(unknown):::::::",
 "ultrix-gcc","gcc:-O3 -DL_ENDIAN::(unknown):::::::",
@@ -637,6 +640,7 @@ my $libs;
 my $target;
 my $options;
 my $symlink;
+my $make_depend=0;
 my %withargs=();
 
 my @argvcopy=@ARGV;
@@ -902,6 +906,7 @@ print "Configuring for $target\n";
 my $IsWindows=scalar grep /^$target$/,@WinTargets;
 
 $exe_ext=".exe" if ($target eq "Cygwin");
+$exe_ext=".exe" if ($target eq "DJGPP");
 $openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
 $prefix=$openssldir if $prefix eq "";
 
@@ -909,7 +914,7 @@ chop $openssldir if $openssldir =~ /\/$/;
 chop $prefix if $prefix =~ /\/$/;
 
 $openssldir=$prefix . "/ssl" if $openssldir eq "";
-$openssldir=$prefix . "/" . $openssldir if $openssldir !~ /^\//;
+$openssldir=$prefix . "/" . $openssldir if $openssldir !~ /(^\/|^[a-zA-Z]:[\\\/])/;
 
 
 print "IsWindows=$IsWindows\n";
@@ -1436,11 +1441,12 @@ if($IsWindows) {
 EOF
 	close(OUT);
 } else {
-	(system "make -f Makefile.ssl PERL=\'$perl\' links") == 0 or exit $?
-		if $symlink;
-	### (system 'make depend') == 0 or exit $? if $depflags ne "";
-	# Run "make depend" manually if you want to be able to delete
-	# the source code files of ciphers you left out.
+	my $make_command = "make -f Makefile.ssl PERL=\'$perl\'";
+	my $make_targets = "";
+	$make_targets .= " links" if $symlink;
+	$make_targets .= " depend" if $depflags ne "" && $make_depend;
+	(system $make_command.$make_targets) == 0 or exit $?
+		if $make_targets ne "";
 	if ( $perl =~ m@^/@) {
 	    &dofile("tools/c_rehash",$perl,'^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";');
 	    &dofile("apps/der_chop",$perl,'^#!/', '#!%s');
@@ -1450,7 +1456,16 @@ EOF
 	    &dofile("tools/c_rehash",'/usr/local/bin/perl','^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";');
 	    &dofile("apps/der_chop",'/usr/local/bin/perl','^#!/', '#!%s');
 	    &dofile("apps/CA.pl",'/usr/local/bin/perl','^#!/', '#!%s');
-	}	    
+	}
+	if ($depflags ne "" && !$make_depend) {
+		print <<EOF;
+
+Since you've disabled at least one algorithm, you need to do the following
+before building:
+
+	make depend
+EOF
+	}
 }
 
 print <<EOF;

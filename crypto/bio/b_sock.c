@@ -484,7 +484,11 @@ int BIO_socket_ioctl(int fd, long type, unsigned long *arg)
 	{
 	int i;
 
+#ifdef __DJGPP__
+	i=ioctlsocket(fd,type,(char *)arg);
+#else
 	i=ioctlsocket(fd,type,arg);
+#endif /* __DJGPP__ */
 	if (i < 0)
 		SYSerr(SYS_F_IOCTLSOCKET,get_last_socket_error());
 	return(i);

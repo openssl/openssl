@@ -1,0 +1,32 @@
+
+ 
+ INSTALLATION ON THE DOS PLATFORM WITH DJGPP
+ -------------------------------------------
+
+ Openssl has been ported to DOS, but only with long filename support. If
+ you wish to compile on native DOS with 8+3 filenames, you will have to
+ tweak the installation yourself, including renaming files with illegal
+ or duplicate names.
+
+ You should have a full DJGPP environment installed, including the
+ latest versions of DJGPP, GCC, BINUTILS, BASH, etc. This package
+ requires that PERL and BC also be installed.
+
+ All of these can be obtained from the usual DJGPP mirror sites, such as
+ "ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp". You also need to have
+ the WATT-32 networking package installed before you try to compile
+ openssl. This can be obtained from "http://www.bgnett.no/~giva/". The
+ Makefile assumes that the WATT-32 code is in directory "watt32" under
+ /dev/env/DJDIR.
+
+ To compile openssl, start your BASH shell. Then configure for DOS by
+ running "./Configure" with appropriate arguments. The basic syntax for
+ DOS is:
+ ./Configure no-threads --prefix=/dev/env/DJDIR DJGPP
+ 
+ You may run out of DPMI selectors when running in a DOS box under
+ Windows. If so, just close the BASH shell, go back to Windows, and
+ restart BASH. Then run "make" again.
+
+ Building openssl under DJGPP has been tested with DJGPP 2.03,
+ GCC 2.952, GCC 2.953, perl 5.005_02 and perl 5.006_01.

@@ -66,7 +66,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-#if defined(OPENSSL_NO_ASM) || !(defined(__i386) || defined(__i386__))/* Assembler implementation exists only for x86 */
+#if defined(OPENSSL_NO_ASM) || !(defined(__i386) || defined(__i386__)) || defined(__DJGPP__) /* Assembler implementation exists only for x86 */
 /* Here follows specialised variants of bn_add_words() and
    bn_sub_words().  They have the property performing operations on
    arrays of different sizes.  The sizes of those arrays is expressed through
