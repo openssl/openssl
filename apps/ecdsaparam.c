@@ -348,7 +348,7 @@ bad:
 	{
 		if ((ecdsa = ECDSA_new()) == NULL)
 			goto end;
-		ecdsa->group = EC_GROUP_get_group_by_name(curve_type);
+		ecdsa->group = EC_GROUP_new_by_name(curve_type);
 		if (named_curve)
 			ECDSA_set_parameter_flags(ecdsa, ECDSA_FLAG_NAMED_CURVE);
 	}

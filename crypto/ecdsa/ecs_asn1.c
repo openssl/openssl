@@ -502,7 +502,7 @@ ECDSA *ECDSA_ecparameters2ecdsa(const EC_PARAMETERS *params, ECDSA *ecdsa)
 			EC_GROUP_free(ret->group);
 		tmp = OBJ_obj2nid(params->value.named_curve);
 		ret->parameter_flags |= ECDSA_FLAG_NAMED_CURVE;
-		if ((ret->group = EC_GROUP_get_group_by_name(tmp)) == NULL)
+		if ((ret->group = EC_GROUP_new_by_name(tmp)) == NULL)
 		{
 			ECDSAerr(ECDSA_F_ECDSA_GET_ECDSA, ECDSA_R_EC_GROUP_NID2CURVE_FAILURE);
 			ECDSA_free(ret);

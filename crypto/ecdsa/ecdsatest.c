@@ -119,7 +119,7 @@ int set_p192_param(ECDSA *ecdsa)
 	if ((ctx = BN_CTX_new()) == NULL) goto err;
 	clear_ecdsa(ecdsa);
 	
-	if ((ecdsa->group = EC_GROUP_get_group_by_name(EC_GROUP_X9_62_PRIME_192V1)) == NULL)
+	if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_X9_62_PRIME_192V1)) == NULL)
 	{
 		BIO_printf(bio_err,"ECDSA_SET_GROUP_P_192_V1() failed \n");
 		goto err;
@@ -152,7 +152,7 @@ int set_p239_param(ECDSA *ecdsa)
 	if ((ctx = BN_CTX_new()) == NULL) goto err;
 	clear_ecdsa(ecdsa);
 	
-	if ((ecdsa->group = EC_GROUP_get_group_by_name(EC_GROUP_X9_62_PRIME_239V1)) == NULL)
+	if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_X9_62_PRIME_239V1)) == NULL)
 	{
 		BIO_printf(bio_err,"ECDSA_SET_GROUP_P_239_V1() failed \n");
 		goto err;
@@ -532,7 +532,7 @@ int main(void)
  	BIO_printf(bio_err, "\nTesting sign & verify with NIST Prime-Curve P-192 : \n");
 	ECDSA_free(ecdsa);
 	if ((ecdsa = ECDSA_new()) == NULL) goto err;
-	if ((ecdsa->group = EC_GROUP_get_group_by_name(EC_GROUP_NIST_PRIME_192)) == NULL) goto err;
+	if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_192)) == NULL) goto err;
 	if (!ECDSA_generate_key(ecdsa)) goto err;
         time = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
@@ -558,7 +558,7 @@ int main(void)
 	BIO_printf(bio_err, "Testing sign & verify with NIST Prime-Curve P-224 : \n");
         ECDSA_free(ecdsa);
         if ((ecdsa = ECDSA_new()) == NULL) goto err;
-        if ((ecdsa->group = EC_GROUP_get_group_by_name(EC_GROUP_NIST_PRIME_224)) == NULL) goto err;
+        if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_224)) == NULL) goto err;
         if (!ECDSA_generate_key(ecdsa)) goto err;
         time = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
@@ -584,7 +584,7 @@ int main(void)
         BIO_printf(bio_err, "Testing sign & verify with NIST Prime-Curve P-256 : \n");
         ECDSA_free(ecdsa);
         if ((ecdsa = ECDSA_new()) == NULL) goto err;
-        if ((ecdsa->group = EC_GROUP_get_group_by_name(EC_GROUP_NIST_PRIME_256)) == NULL) goto err;
+        if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_256)) == NULL) goto err;
         if (!ECDSA_generate_key(ecdsa)) goto err;
         time = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
@@ -610,7 +610,7 @@ int main(void)
         BIO_printf(bio_err, "Testing sign & verify with NIST Prime-Curve P-384 : \n");
         ECDSA_free(ecdsa);
         if ((ecdsa = ECDSA_new()) == NULL) goto err;
-        if ((ecdsa->group = EC_GROUP_get_group_by_name(EC_GROUP_NIST_PRIME_384)) == NULL) goto err;
+        if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_384)) == NULL) goto err;
         if (!ECDSA_generate_key(ecdsa)) goto err;
         time = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
@@ -636,7 +636,7 @@ int main(void)
         BIO_printf(bio_err, "Testing sign & verify with NIST Prime-Curve P-521 : \n");
         ECDSA_free(ecdsa);
         if ((ecdsa = ECDSA_new()) == NULL) goto err;
-        if ((ecdsa->group = EC_GROUP_get_group_by_name(EC_GROUP_NIST_PRIME_521)) == NULL) goto err;
+        if ((ecdsa->group = EC_GROUP_new_by_name(EC_GROUP_NIST_PRIME_521)) == NULL) goto err;
         if (!ECDSA_generate_key(ecdsa)) goto err;
         time = clock();
         for (i=0; i<ECDSA_NIST_TESTS; i++)
