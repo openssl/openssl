@@ -87,8 +87,8 @@ IMPLEMENT_AES_CIPHER(aes_192_ecb, aes_ecb, 24, 0, EVP_CIPH_ECB_MODE)
 IMPLEMENT_AES_CIPHER(aes_256_ecb, aes_ecb, 32, 0, EVP_CIPH_ECB_MODE)
 
 IMPLEMENT_AES_CIPHER(aes_128_cbc, aes_cbc, 16, 16, EVP_CIPH_CBC_MODE)
-IMPLEMENT_AES_CIPHER(aes_192_cbc, aes_cbc, 24, 24, EVP_CIPH_CBC_MODE)
-IMPLEMENT_AES_CIPHER(aes_256_cbc, aes_cbc, 32, 32, EVP_CIPH_CBC_MODE)
+IMPLEMENT_AES_CIPHER(aes_192_cbc, aes_cbc, 24, 16, EVP_CIPH_CBC_MODE)
+IMPLEMENT_AES_CIPHER(aes_256_cbc, aes_cbc, 32, 16, EVP_CIPH_CBC_MODE)
 
 static int aes_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		   const unsigned char *iv, int enc)
