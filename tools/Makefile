@@ -10,14 +10,12 @@ CFLAG=-g
 INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
-MAKE=		make -f Makefile.ssl
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile.ssl
+MAKEFILE=	Makefile
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-GENERAL=Makefile.ssl
 TEST=
 APPS= c_rehash
 MISC_APPS= c_hash c_info c_issuer c_name
@@ -39,10 +37,9 @@ install:
 	done;
 
 files:
-	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
 links:
-	@sh $(TOP)/util/point.sh Makefile.ssl Makefile
 
 lint:
 

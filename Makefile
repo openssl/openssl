@@ -192,8 +192,7 @@ FDIRS=	sha1 rand des aes dsa rsa
 # should be performed.
 TESTS = alltests
 
-MAKEFILE= Makefile.ssl
-MAKE=     make -f Makefile.ssl
+MAKEFILE= Makefile
 
 MANDIR=$(OPENSSLDIR)/man
 MAN1=1
@@ -224,7 +223,7 @@ HEADER=         e_os.h
 # When we're prepared to use shared libraries in the programs we link here
 # we might remove 'clean-shared' from the targets to perform at this stage
 
-all: Makefile.ssl sub_all openssl.pc
+all: Makefile sub_all openssl.pc
 
 sigs:	$(SIGS)
 libcrypto.sha1: libcrypto.a
@@ -598,7 +597,7 @@ do_reliantunix-shared:
 	libs="-l$$i $$libs"; \
 	done
 
-openssl.pc: Makefile.ssl
+openssl.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
 	    echo 'libdir=$${exec_prefix}/lib'; \
@@ -611,8 +610,8 @@ openssl.pc: Makefile.ssl
 	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(LIBKRB5) $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > openssl.pc
 
-Makefile.ssl: Makefile.org
-	@echo "Makefile.ssl is older than Makefile.org."
+Makefile: Makefile.org
+	@echo "Makefile is older than Makefile.org."
 	@echo "Reconfigure the source tree (via './config' or 'perl Configure'), please."
 	@false
 
@@ -642,7 +641,7 @@ makefile.one: files
 	sh util/do_ms.sh
 
 files:
-	$(PERL) $(TOP)/util/files.pl Makefile.ssl > $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile > $(TOP)/MINFO
 	@for i in $(DIRS) ;\
 	do \
 	if [ -d "$$i" ]; then \
@@ -652,7 +651,6 @@ files:
 	done;
 
 links:
-	@$(TOP)/util/point.sh Makefile.ssl Makefile
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
 	@for i in $(DIRS); do \

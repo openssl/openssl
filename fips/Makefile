@@ -11,10 +11,9 @@ CFLAG=		-g
 INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=	/usr/local/ssl
-MAKE=           make -f Makefile.ssl
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=       Makefile.ssl
+MAKEFILE=       Makefile
 RM=             rm -f
 AR=		ar r
 
@@ -66,7 +65,7 @@ sub_target:
 	done;
 
 files:
-	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 	@for i in $(FDIRS) ;\
 	do \
 	(cd $$i && echo "making 'files' in fips/$$i..." && \
@@ -74,7 +73,6 @@ files:
 	done;
 
 links:
-	@$(TOP)/util/point.sh Makefile.ssl Makefile
 	@$(PERL) $(TOP)/util/mklink.pl ../include/openssl $(EXHEADER)
 	@for i in $(FDIRS); do \
 	(cd $$i && echo "making links in fips/$$i..." && \

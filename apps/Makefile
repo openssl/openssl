@@ -1,5 +1,5 @@
 #
-#  apps/Makefile.ssl
+#  apps/Makefile
 #
 
 DIR=		apps
@@ -10,10 +10,9 @@ CFLAG=		-g -static
 INSTALL_PREFIX=
 INSTALLTOP=	/usr/local/ssl
 OPENSSLDIR=	/usr/local/ssl
-MAKE=		make -f Makefile.ssl
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile.ssl
+MAKEFILE=	Makefile
 PERL=		perl
 RM=		rm -f
 # KRB5 stuff
@@ -94,7 +93,7 @@ sreq.o: req.c
 	$(CC) -c $(INCLUDES) $(CFLAG) -o sreq.o req.c
 
 files:
-	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
 install:
 	@for i in $(EXE); \
@@ -121,7 +120,6 @@ tags:
 tests:
 
 links:
-	@sh $(TOP)/util/point.sh Makefile.ssl Makefile
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff

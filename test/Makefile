@@ -1,5 +1,5 @@
 #
-# test/Makefile.ssl
+# test/Makefile
 #
 
 DIR=		test
@@ -10,8 +10,7 @@ CFLAG=		-g
 INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=	/usr/local/ssl
-MAKEFILE=	Makefile.ssl
-MAKE=		make -f $(MAKEFILE)
+MAKEFILE=	Makefile
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 PERL=		perl
@@ -24,7 +23,7 @@ EX_LIBS= #-lnsl -lsocket
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-GENERAL=Makefile.ssl maketests.com \
+GENERAL=Makefile maketests.com \
 	tests.com testenc.com tx509.com trsa.com tcrl.com tsid.com treq.com \
 	tpkcs7.com tpkcs7d.com tverify.com testgen.com testss.com testssl.com \
 	testca.com VMSca-response.1 VMSca-response.2
@@ -105,10 +104,9 @@ all:	exe
 exe:	$(EXE) dummytest
 
 files:
-	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
 links:
-	@sh $(TOP)/util/point.sh Makefile.ssl Makefile
 
 generate: $(SRC)
 $(SRC):
