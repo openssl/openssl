@@ -589,7 +589,7 @@ int num;
 
 int SSL_write(s,buf,num)
 SSL *s;
-char *buf;
+const char *buf;
 int num;
 	{
 	if (s->shutdown & SSL_SENT_SHUTDOWN)
