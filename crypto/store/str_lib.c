@@ -970,7 +970,7 @@ BIGNUM *STORE_get_number(STORE *s, OPENSSL_ITEM attributes[])
 	return n;
 	}
 
-int STORE_delete_number(STORE *s, BIGNUM *data, OPENSSL_ITEM attributes[])
+int STORE_delete_number(STORE *s, OPENSSL_ITEM attributes[])
 	{
 	check_store(s,STORE_F_STORE_DELETE_NUMBER,
 		delete_object,STORE_R_NO_DELETE_NUMBER_FUNCTION);
@@ -979,6 +979,71 @@ int STORE_delete_number(STORE *s, BIGNUM *data, OPENSSL_ITEM attributes[])
 		{
 		STOREerr(STORE_F_STORE_DELETE_NUMBER,
 			STORE_R_FAILED_DELETING_NUMBER);
+		return 0;
+		}
+	return 1;
+	}
+
+int store_arbitrary(STORE *s, BUF_MEM *data, OPENSSL_ITEM attributes[])
+	{
+	STORE_OBJECT *object = STORE_OBJECT_new();
+	int i;
+
+	check_store(s,STORE_F_STORE_ARBITRARY,
+		store_object,STORE_R_NO_STORE_OBJECT_ARBITRARY_FUNCTION);
+
+	if (!object)
+		{
+		STOREerr(STORE_F_STORE_ARBITRARY,
+			ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+	
+	object->data.arbitrary = data;
+
+	i = s->meth->store_object(s, STORE_OBJECT_TYPE_ARBITRARY, object, attributes);
+
+	STORE_OBJECT_free(object);
+
+	if (!i)
+		{
+		STOREerr(STORE_F_STORE_ARBITRARY,
+			STORE_R_FAILED_STORING_ARBITRARY);
+		return 0;
+		}
+	return 1;
+	}
+
+BUF_MEM *STORE_get_arbitrary(STORE *s, OPENSSL_ITEM attributes[])
+	{
+	STORE_OBJECT *object;
+	BUF_MEM *b;
+
+	check_store(s,STORE_F_STORE_GET_ARBITRARY,
+		get_object,STORE_R_NO_GET_OBJECT_ARBITRARY_FUNCTION);
+
+	object = s->meth->get_object(s, STORE_OBJECT_TYPE_ARBITRARY, attributes);
+	if (!object || !object->data.arbitrary)
+		{
+		STOREerr(STORE_F_STORE_GET_ARBITRARY,
+			STORE_R_FAILED_GETTING_ARBITRARY);
+		return 0;
+		}
+	b = object->data.arbitrary;
+	object->data.arbitrary = NULL;
+	STORE_OBJECT_free(object);
+	return b;
+	}
+
+int STORE_delete_arbitrary(STORE *s, OPENSSL_ITEM attributes[])
+	{
+	check_store(s,STORE_F_STORE_DELETE_ARBITRARY,
+		delete_object,STORE_R_NO_DELETE_ARBITRARY_FUNCTION);
+
+	if (!s->meth->delete_object(s, STORE_OBJECT_TYPE_ARBITRARY, attributes))
+		{
+		STOREerr(STORE_F_STORE_DELETE_ARBITRARY,
+			STORE_R_FAILED_DELETING_ARBITRARY);
 		return 0;
 		}
 	return 1;
@@ -1007,6 +1072,9 @@ void STORE_OBJECT_free(STORE_OBJECT *data)
 		break;
 	case STORE_OBJECT_TYPE_NUMBER:
 		BN_free(data->data.number);
+		break;
+	case STORE_OBJECT_TYPE_ARBITRARY:
+		BUF_MEM_free(data->data.arbitrary);
 		break;
 		}
 	OPENSSL_free(data);
