@@ -70,6 +70,7 @@ void ENGINE_load_builtin_engines(void)
 	ENGINE_load_openssl();
 #endif
 	ENGINE_load_dynamic();
+#ifdef OPENSSL_NO_DYNAMIC_ENGINE
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_CSWIFT
 	ENGINE_load_cswift();
@@ -94,6 +95,7 @@ void ENGINE_load_builtin_engines(void)
 #endif
 #ifndef OPENSSL_NO_HW_4758_CCA
 	ENGINE_load_4758cca();
+#endif
 #endif
 #ifdef __OpenBSD__
 	ENGINE_load_cryptodev();
