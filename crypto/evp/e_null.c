@@ -69,7 +69,7 @@ static const EVP_CIPHER n_cipher=
 	{
 	NID_undef,
 	1,0,0,
-	0,
+	EVP_CIPH_FLAG_FIPS,
 	null_init_key,
 	null_cipher,
 	NULL,
