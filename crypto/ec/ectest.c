@@ -65,6 +65,7 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 
 
 #include <openssl/ec.h>
+#include <openssl/engine.h>
 #include <openssl/err.h>
 
 #define ABORT do { \
@@ -617,6 +618,7 @@ int main(int argc, char *argv[])
 	if (P_384) EC_GROUP_free(P_384);
 	if (P_521) EC_GROUP_free(P_521);
 
+	ENGINE_cleanup();
 	ERR_free_strings();
 	ERR_remove_state(0);
 	CRYPTO_mem_leaks_fp(stderr);

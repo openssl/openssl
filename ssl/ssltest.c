@@ -124,6 +124,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
+#include <openssl/engine.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #ifdef OPENSSL_SYS_WINDOWS
@@ -704,6 +705,7 @@ end:
 #ifndef OPENSSL_NO_RSA
 	free_tmp_rsa();
 #endif
+	ENGINE_cleanup();
 	ERR_free_strings();
 	ERR_remove_state(0);
 	EVP_cleanup();
