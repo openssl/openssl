@@ -75,21 +75,21 @@ print OUT "Compiler:         $cversion\n";
 print OUT "\n";
 
 print "Checking compiler...\n";
-if (open(TEST,">test.c")) {
+if (open(TEST,">cctest.c")) {
     print TEST "#include <stdio.h>\nmain(){printf(\"Hello world\\n\");}\n";
     close(TEST);
-    system("$cc -o cctest test.c");
+    system("$cc -o cctest cctest.c");
     if (`./cctest` !~ /Hello world/) {
 	print OUT "Compiler doesn't work.\n";
 	goto err;
     }
 } else {
-    print OUT "Can't create test.c\n";
+    print OUT "Can't create cctest.c\n";
 }
-if (open(TEST,">test.c")) {
+if (open(TEST,">cctest.c")) {
     print TEST "#include <openssl/opensslv.h>\nmain(){printf(OPENSSL_VERSION_TEXT);}\n";
     close(TEST);
-    system("$cc -o cctest -Iinclude test.c");
+    system("$cc -o cctest -Iinclude cctest.c");
     $cctest = `./cctest`;
     if ($cctest !~ /OpenSSL $version/) {
 	if ($cctest =~ /OpenSSL/) {
@@ -100,7 +100,7 @@ if (open(TEST,">test.c")) {
 	goto err;
     }
 } else {
-    print OUT "Can't create test.c\n";
+    print OUT "Can't create cctest.c\n";
 }
 
 print "Running make...\n";
