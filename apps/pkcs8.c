@@ -1,6 +1,6 @@
 /* pkcs8.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+ * project 1999-2004.
  */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
@@ -68,7 +68,7 @@
 int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
-{
+	{
 	ENGINE *e = NULL;
 	char **args, *infile = NULL, *outfile = NULL;
 	char *passargin = NULL, *passargout = NULL;
@@ -100,43 +100,70 @@ int MAIN(int argc, char **argv)
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_algorithms();
 	args = argv + 1;
-	while (!badarg && *args && *args[0] == '-') {
-		if (!strcmp(*args,"-v2")) {
-			if (args[1]) {
+	while (!badarg && *args && *args[0] == '-')
+		{
+		if (!strcmp(*args,"-v2"))
+			{
+			if (args[1])
+				{
 				args++;
 				cipher=EVP_get_cipherbyname(*args);
-				if(!cipher) {
+				if (!cipher)
+					{
 					BIO_printf(bio_err,
 						 "Unknown cipher %s\n", *args);
 					badarg = 1;
+					}
 				}
-			} else badarg = 1;
-		} else if (!strcmp(*args,"-v1")) {
-			if (args[1]) {
+			else
+				badarg = 1;
+			}
+		else if (!strcmp(*args,"-v1"))
+			{
+			if (args[1])
+				{
 				args++;
 				pbe_nid=OBJ_txt2nid(*args);
-				if(pbe_nid == NID_undef) {
+				if (pbe_nid == NID_undef)
+					{
 					BIO_printf(bio_err,
 						 "Unknown PBE algorithm %s\n", *args);
 					badarg = 1;
+					}
 				}
-			} else badarg = 1;
-		} else if (!strcmp(*args,"-inform")) {
-			if (args[1]) {
+			else
+				badarg = 1;
+			}
+		else if (!strcmp(*args,"-inform"))
+			{
+			if (args[1])
+				{
 				args++;
 				informat=str2fmt(*args);
-			} else badarg = 1;
-		} else if (!strcmp(*args,"-outform")) {
-			if (args[1]) {
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp(*args,"-outform"))
+			{
+			if (args[1])
+				{
 				args++;
 				outformat=str2fmt(*args);
-			} else badarg = 1;
-		} else if (!strcmp (*args, "-topk8")) topk8 = 1;
-		else if (!strcmp (*args, "-noiter")) iter = 1;
-		else if (!strcmp (*args, "-nocrypt")) nocrypt = 1;
-		else if (!strcmp (*args, "-nooct")) p8_broken = PKCS8_NO_OCTET;
-		else if (!strcmp (*args, "-nsdb")) p8_broken = PKCS8_NS_DB;
-		else if (!strcmp (*args, "-embed")) p8_broken = PKCS8_EMBEDDED_PARAM;
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp (*args, "-topk8"))
+			topk8 = 1;
+		else if (!strcmp (*args, "-noiter"))
+			iter = 1;
+		else if (!strcmp (*args, "-nocrypt"))
+			nocrypt = 1;
+		else if (!strcmp (*args, "-nooct"))
+			p8_broken = PKCS8_NO_OCTET;
+		else if (!strcmp (*args, "-nsdb"))
+			p8_broken = PKCS8_NS_DB;
+		else if (!strcmp (*args, "-embed"))
+			p8_broken = PKCS8_EMBEDDED_PARAM;
 		else if (!strcmp(*args,"-passin"))
 			{
 			if (!args[1]) goto bad;
@@ -154,21 +181,30 @@ int MAIN(int argc, char **argv)
 			engine= *(++args);
 			}
 #endif
-		else if (!strcmp (*args, "-in")) {
-			if (args[1]) {
+		else if (!strcmp (*args, "-in"))
+			{
+			if (args[1])
+				{
 				args++;
 				infile = *args;
-			} else badarg = 1;
-		} else if (!strcmp (*args, "-out")) {
-			if (args[1]) {
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp (*args, "-out"))
+			{
+			if (args[1])
+				{
 				args++;
 				outfile = *args;
-			} else badarg = 1;
-		} else badarg = 1;
+				}
+			else badarg = 1;
+			}
+		else badarg = 1;
 		args++;
-	}
+		}
 
-	if (badarg) {
+	if (badarg)
+		{
 		bad:
 		BIO_printf(bio_err, "Usage pkcs8 [options]\n");
 		BIO_printf(bio_err, "where options are\n");
@@ -189,164 +225,199 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
 #endif
-		return (1);
-	}
+		return 1;
+		}
 
 #ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
 #endif
 
-	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
+	if (!app_passwd(bio_err, passargin, passargout, &passin, &passout))
+		{
 		BIO_printf(bio_err, "Error getting passwords\n");
-		return (1);
-	}
+		return 1;
+		}
 
-	if ((pbe_nid == -1) && !cipher) pbe_nid = NID_pbeWithMD5AndDES_CBC;
+	if ((pbe_nid == -1) && !cipher)
+		pbe_nid = NID_pbeWithMD5AndDES_CBC;
 
-	if (infile) {
-		if (!(in = BIO_new_file(infile, "rb"))) {
+	if (infile)
+		{
+		if (!(in = BIO_new_file(infile, "rb")))
+			{
 			BIO_printf(bio_err,
 				 "Can't open input file %s\n", infile);
 			return (1);
+			}
 		}
-	} else in = BIO_new_fp (stdin, BIO_NOCLOSE);
+	else
+		in = BIO_new_fp (stdin, BIO_NOCLOSE);
 
-	if (outfile) {
-		if (!(out = BIO_new_file (outfile, "wb"))) {
+	if (outfile)
+		{
+		if (!(out = BIO_new_file (outfile, "wb")))
+			{
 			BIO_printf(bio_err,
 				 "Can't open output file %s\n", outfile);
 			return (1);
+			}
 		}
-	} else {
+	else
+		{
 		out = BIO_new_fp (stdout, BIO_NOCLOSE);
 #ifdef OPENSSL_SYS_VMS
-		{
+			{
 			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 			out = BIO_push(tmpbio, out);
-		}
+			}
 #endif
-	}
+		}
 	if (topk8)
 		{
 		BIO_free(in); /* Not needed in this section */
 		pkey = load_key(bio_err, infile, informat, 1,
 			passin, e, "key");
-		if (!pkey) {
+		if (!pkey)
+			{
 			BIO_free_all(out);
-			return (1);
-		}
-		if (!(p8inf = EVP_PKEY2PKCS8_broken(pkey, p8_broken))) {
+			return 1;
+			}
+		if (!(p8inf = EVP_PKEY2PKCS8_broken(pkey, p8_broken)))
+			{
 			BIO_printf(bio_err, "Error converting key\n");
 			ERR_print_errors(bio_err);
 			EVP_PKEY_free(pkey);
 			BIO_free_all(out);
-			return (1);
-		}
-		if(nocrypt) {
-			if(outformat == FORMAT_PEM) 
+			return 1;
+			}
+		if (nocrypt)
+			{
+			if (outformat == FORMAT_PEM) 
 				PEM_write_bio_PKCS8_PRIV_KEY_INFO(out, p8inf);
-			else if(outformat == FORMAT_ASN1)
+			else if (outformat == FORMAT_ASN1)
 				i2d_PKCS8_PRIV_KEY_INFO_bio(out, p8inf);
-			else {
+			else
+				{
 				BIO_printf(bio_err, "Bad format specified for key\n");
 				PKCS8_PRIV_KEY_INFO_free(p8inf);
 				EVP_PKEY_free(pkey);
 				BIO_free_all(out);
 				return (1);
+				}
 			}
-		} else {
-			if(passout) p8pass = passout;
-			else {
+		else
+			{
+			if (passout)
+				p8pass = passout;
+			else
+				{
 				p8pass = pass;
 				if (EVP_read_pw_string(pass, sizeof pass, "Enter Encryption Password:", 1))
-				{
+					{
 					PKCS8_PRIV_KEY_INFO_free(p8inf);
 					EVP_PKEY_free(pkey);
 					BIO_free_all(out);
 					return (1);
+					}
 				}
-			}
 			app_RAND_load_file(NULL, bio_err, 0);
 			if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
 					p8pass, strlen(p8pass),
-					NULL, 0, iter, p8inf))) {
+					NULL, 0, iter, p8inf)))
+				{
 				BIO_printf(bio_err, "Error encrypting key\n");
 				ERR_print_errors(bio_err);
 				PKCS8_PRIV_KEY_INFO_free(p8inf);
 				EVP_PKEY_free(pkey);
 				BIO_free_all(out);
 				return (1);
-			}
+				}
 			app_RAND_write_file(NULL, bio_err);
-			if(outformat == FORMAT_PEM) 
+			if (outformat == FORMAT_PEM) 
 				PEM_write_bio_PKCS8(out, p8);
-			else if(outformat == FORMAT_ASN1)
+			else if (outformat == FORMAT_ASN1)
 				i2d_PKCS8_bio(out, p8);
-			else {
+			else
+				{
 				BIO_printf(bio_err, "Bad format specified for key\n");
 				PKCS8_PRIV_KEY_INFO_free(p8inf);
 				EVP_PKEY_free(pkey);
 				BIO_free_all(out);
 				return (1);
-			}
+				}
 			X509_SIG_free(p8);
-		}
+			}
+
 		PKCS8_PRIV_KEY_INFO_free (p8inf);
 		EVP_PKEY_free(pkey);
 		BIO_free_all(out);
-		if(passin) OPENSSL_free(passin);
-		if(passout) OPENSSL_free(passout);
+		if (passin)
+			OPENSSL_free(passin);
+		if (passout)
+			OPENSSL_free(passout);
 		return (0);
-	}
+		}
 
-	if(nocrypt) {
-		if(informat == FORMAT_PEM) 
+	if (nocrypt)
+		{
+		if (informat == FORMAT_PEM) 
 			p8inf = PEM_read_bio_PKCS8_PRIV_KEY_INFO(in,NULL,NULL, NULL);
-		else if(informat == FORMAT_ASN1)
+		else if (informat == FORMAT_ASN1)
 			p8inf = d2i_PKCS8_PRIV_KEY_INFO_bio(in, NULL);
-		else {
+		else
+			{
 			BIO_printf(bio_err, "Bad format specified for key\n");
 			return (1);
+			}
 		}
-	} else {
-		if(informat == FORMAT_PEM) 
+	else
+		{
+		if (informat == FORMAT_PEM) 
 			p8 = PEM_read_bio_PKCS8(in, NULL, NULL, NULL);
-		else if(informat == FORMAT_ASN1)
+		else if (informat == FORMAT_ASN1)
 			p8 = d2i_PKCS8_bio(in, NULL);
-		else {
+		else
+			{
 			BIO_printf(bio_err, "Bad format specified for key\n");
 			return (1);
-		}
+			}
 
-		if (!p8) {
+		if (!p8)
+			{
 			BIO_printf (bio_err, "Error reading key\n");
 			ERR_print_errors(bio_err);
 			return (1);
-		}
-		if(passin) p8pass = passin;
-		else {
+			}
+		if (passin)
+			p8pass = passin;
+		else
+			{
 			p8pass = pass;
 			EVP_read_pw_string(pass, sizeof pass, "Enter Password:", 0);
-		}
+			}
 		p8inf = PKCS8_decrypt(p8, p8pass, strlen(p8pass));
 		X509_SIG_free(p8);
-	}
+		}
 
-	if (!p8inf) {
+	if (!p8inf)
+		{
 		BIO_printf(bio_err, "Error decrypting key\n");
 		ERR_print_errors(bio_err);
 		return (1);
-	}
+		}
 
-	if (!(pkey = EVP_PKCS82PKEY(p8inf))) {
+	if (!(pkey = EVP_PKCS82PKEY(p8inf)))
+		{
 		BIO_printf(bio_err, "Error converting key\n");
 		ERR_print_errors(bio_err);
 		return (1);
-	}
+		}
 	
-	if (p8inf->broken) {
+	if (p8inf->broken)
+		{
 		BIO_printf(bio_err, "Warning: broken key encoding: ");
-		switch (p8inf->broken) {
+		switch (p8inf->broken)
+			{
 			case PKCS8_NO_OCTET:
 			BIO_printf(bio_err, "No Octet String in PrivateKey\n");
 			break;
@@ -366,21 +437,24 @@ int MAIN(int argc, char **argv)
 	}
 	
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
-	if(outformat == FORMAT_PEM) 
+	if (outformat == FORMAT_PEM) 
 		PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL, passout);
-	else if(outformat == FORMAT_ASN1)
+	else if (outformat == FORMAT_ASN1)
 		i2d_PrivateKey_bio(out, pkey);
-	else {
+	else
+		{
 		BIO_printf(bio_err, "Bad format specified for key\n");
 			return (1);
-	}
+		}
 
 	end:
 	EVP_PKEY_free(pkey);
 	BIO_free_all(out);
 	BIO_free(in);
-	if(passin) OPENSSL_free(passin);
-	if(passout) OPENSSL_free(passout);
+	if (passin)
+		OPENSSL_free(passin);
+	if (passout)
+		OPENSSL_free(passout);
 
 	return (0);
-}
+	}
