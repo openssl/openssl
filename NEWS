@@ -5,6 +5,17 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.7 and OpenSSL 0.9.7a:
+
+      o Security: Important security related bugfixes.
+      o Enhanced compatibility with MIT Kerberos.
+      o Can be built without the ENGINE framework.
+      o IA32 assembler enhancements.
+      o Support for new platforms: FreeBSD/IA64 and FreeBSD/Sparc64.
+      o Configuration: the no-err option now works properly.
+      o SSL/TLS: now handles manual certificate chain building.
+      o SSL/TLS: certain session ID malfunctions corrected.
+
   Major changes between OpenSSL 0.9.6 and OpenSSL 0.9.7:
 
       o New library section OCSP.
@@ -50,6 +61,10 @@
       o SSL/TLS: allow more precise control of renegotiations and sessions.
       o SSL/TLS: add callback to retrieve SSL/TLS messages.
       o SSL/TLS: support AES cipher suites (RFC3268).
+
+  Major changes between OpenSSL 0.9.6h and OpenSSL 0.9.6i:
+
+      o Important security related bugfixes.
 
   Major changes between OpenSSL 0.9.6g and OpenSSL 0.9.6h:
 
