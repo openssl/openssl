@@ -617,6 +617,12 @@
 
  Changes between 0.9.7c and 0.9.7d  [xx XXX XXXX]
 
+  *) New md flag EVP_MD_CTX_FLAG_REUSE this allows md_data to be reused when
+     calling EVP_MD_CTX_copy_ex() to avoid calling OPENSSL_malloc(). Without
+     this HMAC (and other) operations are several times slower than OpenSSL
+     < 0.9.7.
+     [Steve Henson]
+
   *) Print out GeneralizedTime and UTCTime in ASN1_STRING_print_ex().
      [Peter Sylvester <Peter.Sylvester@EdelWeb.fr>]
 
