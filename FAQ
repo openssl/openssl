@@ -119,11 +119,6 @@ A number of Linux and *BSD distributions include OpenSSL.
 autoconf will probably be used in future OpenSSL versions. If it was
 less Unix-centric, it might have been used much earlier.
 
-libtool has repeatadly been reported by some members of the OpenSSL
-development and others to be a pain to use.  So far, those in the
-development team who have said anything about this have expressed
-a wish to avoid libtool for that reason.
-
 
 [LEGAL] =======================================================================
 
