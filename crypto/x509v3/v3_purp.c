@@ -441,8 +441,6 @@ static int check_ca(const X509 *x)
 		/* Older certificates could have Netscape-specific CA types */
 		else if (x->ex_flags & EXFLAG_NSCERT
 			 && x->ex_nscert & NS_ANY_CA) return 5;
-		/* 2 means "I don't know...", which is legal for V1 and V2 */
-		else if (x->ex_flags & EXFLAG_V1) return 2;
 		/* can this still be regarded a CA certificate?  I doubt it */
 		return 0;
 	}
