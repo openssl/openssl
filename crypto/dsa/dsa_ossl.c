@@ -181,7 +181,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	/* Get random k */
 	for (;;)
 		{
-		if (!BN_rand(&k, BN_num_bits(dsa->q), 1, 0)) goto err;
+		if (!BN_rand(&k, BN_num_bits(dsa->q), 0, 0)) goto err;
 		if (BN_cmp(&k,dsa->q) >= 0)
 			BN_sub(&k,&k,dsa->q);
 		if (!BN_is_zero(&k)) break;
