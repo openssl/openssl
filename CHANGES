@@ -11,6 +11,34 @@
          *) applies to 0.9.6a (/0.9.6b) and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Minor adjustment to "rand" code. RAND_get_rand_method() now returns a
+     'const' value. Any code that should be able to modify a RAND_METHOD
+     should already have non-const pointers to it (ie. they should only
+     modify their own ones).
+     [Geoff]
+
+  +) Made a variety of tweaks to the ENGINE code.
+     - "atalla" and "ubsec" string definitions were moved from header files
+       to C code. "nuron" string definitions were placed in variables
+       rather than hard-coded - allowing parameterisation of these values
+       later on via ctrl() commands.
+     - Removed unused "#if 0"'d code.
+     - Fixed engine list iteration code so it uses ENGINE_free() to release
+       structural references.
+     - Constified the RAND_METHOD element of ENGINE structures.
+     - Constified various get/set functions as appropriate and added
+       missing functions (including a catch-all ENGINE_cpy that duplicates
+       all ENGINE values onto a new ENGINE except reference counts/state).
+     - Removed NULL parameter checks in get/set functions. Setting a method
+       or function to NULL is a way of cancelling out a previously set
+       value.  Passing a NULL ENGINE parameter is just plain stupid anyway
+       and doesn't justify the extra error symbols and code.
+     - Deprecate the ENGINE_FLAGS_MALLOCED define and move the area for
+       flags from engine_int.h to engine.h.
+     - Changed prototypes for ENGINE handler functions (init(), finish(),
+       ctrl(), key-load functions, etc) to take an (ENGINE*) parameter.
+     [Geoff]
+
   *) Move 'if (!initialized) RAND_poll()' into regions protected by
      CRYPTO_LOCK_RAND.  This is not strictly necessary, but avoids
      having multiple threads call RAND_poll() concurrently.
