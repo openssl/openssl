@@ -121,17 +121,17 @@ void	DSA_SIG_free(DSA_SIG *a);
 int	i2d_DSA_SIG(DSA_SIG *a, unsigned char **pp);
 DSA_SIG * d2i_DSA_SIG(DSA_SIG **v, unsigned char **pp, long length);
 
-DSA_SIG * DSA_do_sign(unsigned char *dgst,int dlen,DSA *dsa);
-int	DSA_do_verify(unsigned char *dgst,int dgst_len,
-		DSA_SIG *sig,DSA *dsa);
+DSA_SIG * DSA_do_sign(const unsigned char *dgst,int dlen,DSA *dsa);
+int	DSA_do_verify(const unsigned char *dgst,int dgst_len,
+		      DSA_SIG *sig,DSA *dsa);
 
 DSA *	DSA_new(void);
 int	DSA_size(DSA *);
 	/* next 4 return -1 on error */
 int	DSA_sign_setup( DSA *dsa,BN_CTX *ctx_in,BIGNUM **kinvp,BIGNUM **rp);
-int	DSA_sign(int type,unsigned char *dgst,int dlen,
+int	DSA_sign(int type,const unsigned char *dgst,int dlen,
 		unsigned char *sig, unsigned int *siglen, DSA *dsa);
-int	DSA_verify(int type,unsigned char *dgst,int dgst_len,
+int	DSA_verify(int type,const unsigned char *dgst,int dgst_len,
 		unsigned char *sigbuf, int siglen, DSA *dsa);
 void	DSA_free (DSA *r);
 

@@ -238,7 +238,7 @@ static SXNET * sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 
 /* Add an id given the zone as an ASCII number */
 
-int SXNET_add_id_asc(SXNET **psx, char *zone, unsigned char *user,
+int SXNET_add_id_asc(SXNET **psx, char *zone, char *user,
 	     int userlen)
 {
 	ASN1_INTEGER *izone = NULL;
@@ -251,7 +251,7 @@ int SXNET_add_id_asc(SXNET **psx, char *zone, unsigned char *user,
 
 /* Add an id given the zone as an unsigned long */
 
-int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, unsigned char *user,
+int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, char *user,
 	     int userlen)
 {
 	ASN1_INTEGER *izone = NULL;
@@ -269,7 +269,7 @@ int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, unsigned char *user,
  * free it up afterwards.
  */
 
-int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, unsigned char *user,
+int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, char *user,
 	     int userlen)
 {
 	SXNET *sx = NULL;

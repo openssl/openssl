@@ -78,8 +78,8 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-i_cbc.o: idea.h idea_lcl.h
-i_cfb64.o: idea.h idea_lcl.h
-i_ecb.o: ../opensslv.h idea.h idea_lcl.h
-i_ofb64.o: idea.h idea_lcl.h
-i_skey.o: idea.h idea_lcl.h
+i_cbc.o: ../opensslconf.h idea.h idea_lcl.h
+i_cfb64.o: ../opensslconf.h idea.h idea_lcl.h
+i_ecb.o: ../opensslconf.h ../opensslv.h idea.h idea_lcl.h
+i_ofb64.o: ../opensslconf.h idea.h idea_lcl.h
+i_skey.o: ../opensslconf.h idea.h idea_lcl.h

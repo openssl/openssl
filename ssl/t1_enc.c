@@ -62,9 +62,9 @@
 #include "hmac.h"
 #include "ssl_locl.h"
 
-static void tls1_P_hash(const EVP_MD *md, unsigned char *sec, int sec_len,
-			unsigned char *seed, int seed_len, unsigned char *out,
-			int olen)
+static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
+			int sec_len, unsigned char *seed, int seed_len,
+			unsigned char *out, int olen)
 	{
 	int chunk,n;
 	unsigned int j;
@@ -107,12 +107,12 @@ static void tls1_P_hash(const EVP_MD *md, unsigned char *sec, int sec_len,
 	}
 
 static void tls1_PRF(const EVP_MD *md5, const EVP_MD *sha1,
-		     unsigned char *label, int label_len, unsigned char *sec,
-		     int slen, unsigned char *out1, unsigned char *out2,
-		     int olen)
+		     unsigned char *label, int label_len,
+		     const unsigned char *sec, int slen, unsigned char *out1,
+		     unsigned char *out2, int olen)
 	{
 	int len,i;
-	unsigned char *S1,*S2;
+	const unsigned char *S1,*S2;
 
 	len=slen/2;
 	S1=sec;
@@ -150,6 +150,7 @@ static void tls1_generate_key_block(SSL *s, unsigned char *km,
 
 int tls1_change_cipher_state(SSL *s, int which)
 	{
+	static const unsigned char empty[]="";
 	unsigned char *p,*key_block,*mac_secret;
 	unsigned char *exp_label,buf[TLS_MD_MAX_CONST_SIZE+
 		SSL3_RANDOM_SIZE*2];
@@ -296,8 +297,8 @@ printf("which = %04X\nmac key=",which);
 			p+=SSL3_RANDOM_SIZE;
 			memcpy(p,s->s3->server_random,SSL3_RANDOM_SIZE);
 			p+=SSL3_RANDOM_SIZE;
-			tls1_PRF(s->ctx->md5,s->ctx->sha1,
-				buf,(int)(p-buf),"",0,iv1,iv2,k*2);
+			tls1_PRF(s->ctx->md5,s->ctx->sha1,buf,p-buf,empty,0,
+				 iv1,iv2,k*2);
 			if (client_write)
 				iv=iv1;
 			else

@@ -101,8 +101,9 @@ PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG (PKCS8_PRIV_KEY_INFO *p8)
 
 /* Turn PKCS8 object into a shrouded keybag */
 
-PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG (pbe_nid, pass, passlen, salt, saltlen, iter, p8)int pbe_nid;
-unsigned char *pass;
+PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG (pbe_nid, pass, passlen, salt, saltlen, iter, p8)
+int pbe_nid;
+const char *pass;
 int passlen;
 unsigned char *salt;
 int saltlen;
@@ -151,7 +152,7 @@ PKCS7 *PKCS12_pack_p7data (STACK *sk)
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 encrypted data ContentInfo */
 
-PKCS7 *PKCS12_pack_p7encdata (int pbe_nid, unsigned char *pass, int passlen,
+PKCS7 *PKCS12_pack_p7encdata (int pbe_nid, const char *pass, int passlen,
 	     unsigned char *salt, int saltlen, int iter, STACK *bags)
 {
 	PKCS7 *p7;
@@ -184,7 +185,7 @@ PKCS7 *PKCS12_pack_p7encdata (int pbe_nid, unsigned char *pass, int passlen,
 	return p7;
 }
 
-X509_SIG *PKCS8_encrypt (int pbe_nid, unsigned char *pass, int passlen,
+X509_SIG *PKCS8_encrypt (int pbe_nid, const char *pass, int passlen,
 	     unsigned char *salt, int saltlen, int iter,
 	     PKCS8_PRIV_KEY_INFO *p8inf)
 {

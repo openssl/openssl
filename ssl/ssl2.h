@@ -162,7 +162,7 @@ typedef struct ssl2_ctx_st
 	 * args were passwd */
 	unsigned int wnum;	/* number of bytes sent so far */
 	int wpend_tot;
-	const char *wpend_buf;
+	const unsigned char *wpend_buf;
 
 	int wpend_off;	/* offset to data to write */
 	int wpend_len; 	/* number of bytes passwd to write */

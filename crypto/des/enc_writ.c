@@ -76,8 +76,8 @@
  *  -  This code cannot handle non-blocking sockets.
  */
 
-int des_enc_write(int fd, const char *buf, int len, des_key_schedule sched,
-	     des_cblock iv)
+int des_enc_write(int fd, const void *_buf, int len,
+		  des_key_schedule sched, des_cblock iv)
 	{
 #ifdef _LIBC
 	extern int srandom();
@@ -85,12 +85,12 @@ int des_enc_write(int fd, const char *buf, int len, des_key_schedule sched,
 	extern int random();
 	extern int write();
 #endif
-
+	const unsigned char *buf=_buf;
 	long rnum;
 	int i,j,k,outnum;
 	static unsigned char *outbuf=NULL;
 	unsigned char shortbuf[8];
-	char *p;
+	unsigned char *p;
 	const unsigned char *cp;
 	static int start=1;
 

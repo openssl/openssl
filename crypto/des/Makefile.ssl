@@ -136,35 +136,35 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-cbc_cksm.o: des.h des_locl.h
-cbc_enc.o: des.h des_locl.h
-cfb64ede.o: des.h des_locl.h
-cfb64enc.o: des.h des_locl.h
-cfb_enc.o: des.h des_locl.h
-des_enc.o: des.h des_locl.h
-ecb3_enc.o: des.h des_locl.h
-ecb_enc.o: ../opensslv.h des.h des_locl.h spr.h
-ede_cbcm_enc.o: des.h des_locl.h
+cbc_cksm.o: ../opensslconf.h des.h des_locl.h
+cbc_enc.o: ../opensslconf.h des.h des_locl.h
+cfb64ede.o: ../opensslconf.h des.h des_locl.h
+cfb64enc.o: ../opensslconf.h des.h des_locl.h
+cfb_enc.o: ../opensslconf.h des.h des_locl.h
+des_enc.o: ../opensslconf.h des.h des_locl.h
+ecb3_enc.o: ../opensslconf.h des.h des_locl.h
+ecb_enc.o: ../opensslconf.h ../opensslv.h des.h des_locl.h spr.h
+ede_cbcm_enc.o: ../opensslconf.h des.h des_locl.h
 enc_read.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
 enc_read.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
-enc_read.o: ../opensslv.h des.h des_locl.h
+enc_read.o: ../opensslconf.h ../opensslv.h des.h des_locl.h
 enc_writ.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
 enc_writ.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
-enc_writ.o: ../opensslv.h des.h des_locl.h
-fcrypt.o: des.h des.h des_locl.h des_locl.h
-fcrypt_b.o: des.h des_locl.h
-ofb64ede.o: des.h des_locl.h
-ofb64enc.o: des.h des_locl.h
-ofb_enc.o: des.h des_locl.h
-pcbc_enc.o: des.h des_locl.h
-qud_cksm.o: des.h des_locl.h
-rand_key.o: des.h des_locl.h
-read2pwd.o: des.h des_locl.h
+enc_writ.o: ../opensslconf.h ../opensslv.h des.h des_locl.h
+fcrypt.o: ../opensslconf.h ../opensslconf.h des.h des.h des_locl.h des_locl.h
+fcrypt_b.o: ../opensslconf.h des.h des_locl.h
+ofb64ede.o: ../opensslconf.h des.h des_locl.h
+ofb64enc.o: ../opensslconf.h des.h des_locl.h
+ofb_enc.o: ../opensslconf.h des.h des_locl.h
+pcbc_enc.o: ../opensslconf.h des.h des_locl.h
+qud_cksm.o: ../opensslconf.h des.h des_locl.h
+rand_key.o: ../opensslconf.h des.h des_locl.h
+read2pwd.o: ../opensslconf.h des.h des_locl.h
 read_pwd.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
 read_pwd.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
-read_pwd.o: ../opensslv.h des.h des_locl.h
-rpc_enc.o: des.h des_locl.h des_ver.h rpc_des.h
-set_key.o: des.h des_locl.h podd.h sk.h
-str2key.o: des.h des_locl.h
-supp.o: des.h des_locl.h
-xcbc_enc.o: des.h des_locl.h
+read_pwd.o: ../opensslconf.h ../opensslv.h des.h des_locl.h
+rpc_enc.o: ../opensslconf.h des.h des_locl.h des_ver.h rpc_des.h
+set_key.o: ../opensslconf.h des.h des_locl.h podd.h sk.h
+str2key.o: ../opensslconf.h des.h des_locl.h
+supp.o: ../opensslconf.h des.h des_locl.h
+xcbc_enc.o: ../opensslconf.h des.h des_locl.h

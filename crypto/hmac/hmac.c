@@ -60,7 +60,8 @@
 #include <string.h>
 #include "hmac.h"
 
-void HMAC_Init(HMAC_CTX *ctx, unsigned char *key, int len, const EVP_MD *md)
+void HMAC_Init(HMAC_CTX *ctx, const unsigned char *key, int len,
+	       const EVP_MD *md)
 	{
 	int i,j,reset=0;
 	unsigned char pad[HMAC_MAX_MD_CBLOCK];

@@ -441,10 +441,11 @@ static long ok_ctrl(BIO *b, int cmd, long num, char *ptr)
 	return(ret);
 	}
 
-static void longswap(char* ptr, int len)
+static void longswap(void *_ptr, int len)
 {
 #ifndef L_ENDIAN
 	int i;
+	char *ptr=_ptr;
 
 	for(i= 0;i < len;i+= 4){
 		*((unsigned long *)&(ptr[i]))= swapem(*((unsigned long *)&(ptr[i])));

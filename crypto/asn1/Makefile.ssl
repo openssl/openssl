@@ -122,13 +122,13 @@ $(ERRC).c: $(ERR).err
 
 a_bitstr.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_bitstr.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-a_bitstr.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_bitstr.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_bmp.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_bmp.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-a_bmp.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_bmp.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_bool.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_bool.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-a_bool.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_bool.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_bytes.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 a_bytes.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_bytes.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -138,7 +138,8 @@ a_bytes.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 a_bytes.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 a_bytes.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 a_bytes.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-a_bytes.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+a_bytes.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+a_bytes.o: asn1_mac.h
 a_d2i_fp.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 a_d2i_fp.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_d2i_fp.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -148,7 +149,8 @@ a_d2i_fp.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 a_d2i_fp.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 a_d2i_fp.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 a_d2i_fp.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-a_d2i_fp.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+a_d2i_fp.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+a_d2i_fp.o: asn1_mac.h
 a_digest.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 a_digest.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_digest.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -158,7 +160,7 @@ a_digest.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 a_digest.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 a_digest.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 a_digest.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-a_digest.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_digest.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_dup.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 a_dup.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_dup.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -168,13 +170,14 @@ a_dup.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 a_dup.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 a_dup.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 a_dup.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-a_dup.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+a_dup.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+a_dup.o: asn1_mac.h
 a_enum.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_enum.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-a_enum.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_enum.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_gentm.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_gentm.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-a_gentm.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_gentm.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_hdr.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 a_hdr.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_hdr.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -184,7 +187,8 @@ a_hdr.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 a_hdr.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 a_hdr.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 a_hdr.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-a_hdr.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+a_hdr.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+a_hdr.o: asn1_mac.h
 a_i2d_fp.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 a_i2d_fp.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_i2d_fp.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -194,10 +198,11 @@ a_i2d_fp.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 a_i2d_fp.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 a_i2d_fp.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 a_i2d_fp.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-a_i2d_fp.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+a_i2d_fp.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+a_i2d_fp.o: asn1_mac.h
 a_int.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_int.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-a_int.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_int.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_meth.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 a_meth.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_meth.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -207,17 +212,17 @@ a_meth.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 a_meth.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 a_meth.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 a_meth.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-a_meth.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_meth.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_object.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_object.o: ../../include/e_os.h ../../include/err.h ../../include/objects.h
-a_object.o: ../../include/stack.h ../cryptlib.h ../crypto.h ../opensslv.h
-a_object.o: asn1.h
+a_object.o: ../../include/stack.h ../cryptlib.h ../crypto.h ../opensslconf.h
+a_object.o: ../opensslv.h asn1.h
 a_octet.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_octet.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-a_octet.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_octet.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_print.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_print.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-a_print.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_print.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_set.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 a_set.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_set.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -227,7 +232,8 @@ a_set.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 a_set.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 a_set.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 a_set.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-a_set.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+a_set.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+a_set.o: asn1_mac.h
 a_sign.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 a_sign.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_sign.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -237,10 +243,10 @@ a_sign.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 a_sign.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 a_sign.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 a_sign.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-a_sign.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_sign.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_time.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_time.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-a_time.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_time.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_type.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 a_type.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_type.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -250,13 +256,14 @@ a_type.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 a_type.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 a_type.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 a_type.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-a_type.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+a_type.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+a_type.o: asn1_mac.h
 a_utctm.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_utctm.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-a_utctm.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_utctm.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_utf8.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_utf8.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-a_utf8.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_utf8.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_verify.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 a_verify.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_verify.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -266,11 +273,12 @@ a_verify.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 a_verify.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 a_verify.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 a_verify.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-a_verify.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+a_verify.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 a_vis.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_vis.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-a_vis.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
-asn1_err.o: ../../include/bn.h ../../include/err.h ../../include/stack.h asn1.h
+a_vis.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+asn1_err.o: ../../include/bn.h ../../include/err.h ../../include/stack.h
+asn1_err.o: ../opensslconf.h asn1.h
 asn1_lib.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 asn1_lib.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 asn1_lib.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -280,7 +288,8 @@ asn1_lib.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 asn1_lib.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 asn1_lib.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 asn1_lib.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-asn1_lib.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+asn1_lib.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+asn1_lib.o: asn1_mac.h
 asn1_par.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 asn1_par.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 asn1_par.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -290,10 +299,10 @@ asn1_par.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 asn1_par.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 asn1_par.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 asn1_par.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-asn1_par.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+asn1_par.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 asn_pack.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 asn_pack.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-asn_pack.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+asn_pack.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 d2i_dhp.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 d2i_dhp.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 d2i_dhp.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -303,7 +312,8 @@ d2i_dhp.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 d2i_dhp.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 d2i_dhp.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 d2i_dhp.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-d2i_dhp.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+d2i_dhp.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+d2i_dhp.o: asn1_mac.h
 d2i_dsap.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 d2i_dsap.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 d2i_dsap.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -313,7 +323,8 @@ d2i_dsap.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 d2i_dsap.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 d2i_dsap.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 d2i_dsap.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-d2i_dsap.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+d2i_dsap.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+d2i_dsap.o: asn1_mac.h
 d2i_pr.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 d2i_pr.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 d2i_pr.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -323,7 +334,7 @@ d2i_pr.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 d2i_pr.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 d2i_pr.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 d2i_pr.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-d2i_pr.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+d2i_pr.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 d2i_pu.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 d2i_pu.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 d2i_pu.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -333,7 +344,7 @@ d2i_pu.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 d2i_pu.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 d2i_pu.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 d2i_pu.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-d2i_pu.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+d2i_pu.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 d2i_r_pr.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 d2i_r_pr.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 d2i_r_pr.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -343,7 +354,8 @@ d2i_r_pr.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 d2i_r_pr.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 d2i_r_pr.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 d2i_r_pr.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-d2i_r_pr.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+d2i_r_pr.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+d2i_r_pr.o: asn1_mac.h
 d2i_r_pu.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 d2i_r_pu.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 d2i_r_pu.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -353,7 +365,8 @@ d2i_r_pu.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 d2i_r_pu.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 d2i_r_pu.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 d2i_r_pu.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-d2i_r_pu.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+d2i_r_pu.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+d2i_r_pu.o: asn1_mac.h
 d2i_s_pr.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 d2i_s_pr.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 d2i_s_pr.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -363,7 +376,8 @@ d2i_s_pr.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 d2i_s_pr.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 d2i_s_pr.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 d2i_s_pr.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-d2i_s_pr.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+d2i_s_pr.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+d2i_s_pr.o: asn1_mac.h
 d2i_s_pu.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 d2i_s_pu.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 d2i_s_pu.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -373,7 +387,8 @@ d2i_s_pu.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 d2i_s_pu.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 d2i_s_pu.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 d2i_s_pu.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-d2i_s_pu.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+d2i_s_pu.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+d2i_s_pu.o: asn1_mac.h
 evp_asn1.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 evp_asn1.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 evp_asn1.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -383,7 +398,8 @@ evp_asn1.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 evp_asn1.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 evp_asn1.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 evp_asn1.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-evp_asn1.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+evp_asn1.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+evp_asn1.o: asn1_mac.h
 f_enum.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 f_enum.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 f_enum.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -393,7 +409,7 @@ f_enum.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 f_enum.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 f_enum.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 f_enum.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-f_enum.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+f_enum.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 f_int.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 f_int.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 f_int.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -403,7 +419,7 @@ f_int.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 f_int.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 f_int.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 f_int.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-f_int.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+f_int.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 f_string.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 f_string.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 f_string.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -413,7 +429,7 @@ f_string.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 f_string.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 f_string.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 f_string.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-f_string.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+f_string.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 i2d_dhp.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 i2d_dhp.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 i2d_dhp.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -423,7 +439,8 @@ i2d_dhp.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 i2d_dhp.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 i2d_dhp.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 i2d_dhp.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-i2d_dhp.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+i2d_dhp.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+i2d_dhp.o: asn1_mac.h
 i2d_dsap.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 i2d_dsap.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 i2d_dsap.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -433,7 +450,8 @@ i2d_dsap.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 i2d_dsap.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 i2d_dsap.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 i2d_dsap.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-i2d_dsap.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+i2d_dsap.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+i2d_dsap.o: asn1_mac.h
 i2d_pr.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 i2d_pr.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 i2d_pr.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -442,7 +460,7 @@ i2d_pr.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
 i2d_pr.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
 i2d_pr.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 i2d_pr.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
-i2d_pr.o: ../opensslv.h asn1.h
+i2d_pr.o: ../opensslconf.h ../opensslv.h asn1.h
 i2d_pu.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 i2d_pu.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 i2d_pu.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -451,7 +469,7 @@ i2d_pu.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
 i2d_pu.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
 i2d_pu.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 i2d_pu.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
-i2d_pu.o: ../opensslv.h asn1.h
+i2d_pu.o: ../opensslconf.h ../opensslv.h asn1.h
 i2d_r_pr.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 i2d_r_pr.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 i2d_r_pr.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -461,7 +479,8 @@ i2d_r_pr.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 i2d_r_pr.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 i2d_r_pr.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 i2d_r_pr.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-i2d_r_pr.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+i2d_r_pr.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+i2d_r_pr.o: asn1_mac.h
 i2d_r_pu.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 i2d_r_pu.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 i2d_r_pu.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -471,7 +490,8 @@ i2d_r_pu.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 i2d_r_pu.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 i2d_r_pu.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 i2d_r_pu.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-i2d_r_pu.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+i2d_r_pu.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+i2d_r_pu.o: asn1_mac.h
 i2d_s_pr.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 i2d_s_pr.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 i2d_s_pr.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -481,7 +501,8 @@ i2d_s_pr.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 i2d_s_pr.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 i2d_s_pr.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 i2d_s_pr.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-i2d_s_pr.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+i2d_s_pr.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+i2d_s_pr.o: asn1_mac.h
 i2d_s_pu.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 i2d_s_pu.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 i2d_s_pu.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -491,7 +512,8 @@ i2d_s_pu.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 i2d_s_pu.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 i2d_s_pu.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 i2d_s_pu.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-i2d_s_pu.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+i2d_s_pu.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+i2d_s_pu.o: asn1_mac.h
 n_pkey.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 n_pkey.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 n_pkey.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -501,7 +523,8 @@ n_pkey.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 n_pkey.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 n_pkey.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 n_pkey.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-n_pkey.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+n_pkey.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+n_pkey.o: asn1_mac.h
 nsseq.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 nsseq.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
 nsseq.o: ../../include/dsa.h ../../include/err.h ../../include/evp.h
@@ -510,7 +533,8 @@ nsseq.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 nsseq.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 nsseq.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
 nsseq.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-nsseq.o: ../../include/x509_vfy.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+nsseq.o: ../../include/x509_vfy.h ../crypto.h ../opensslconf.h ../opensslv.h
+nsseq.o: asn1.h asn1_mac.h
 p5_pbe.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p5_pbe.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p5_pbe.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -520,8 +544,8 @@ p5_pbe.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rand.h
 p5_pbe.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 p5_pbe.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
 p5_pbe.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-p5_pbe.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslv.h
-p5_pbe.o: asn1.h asn1_mac.h
+p5_pbe.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslconf.h
+p5_pbe.o: ../opensslv.h asn1.h asn1_mac.h
 p5_pbev2.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p5_pbev2.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p5_pbev2.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -532,7 +556,7 @@ p5_pbev2.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 p5_pbev2.o: ../../include/ripemd.h ../../include/rsa.h
 p5_pbev2.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 p5_pbev2.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-p5_pbev2.o: ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p5_pbev2.o: ../crypto.h ../opensslconf.h ../opensslv.h asn1.h asn1_mac.h
 p7_dgst.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p7_dgst.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p7_dgst.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -542,7 +566,8 @@ p7_dgst.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 p7_dgst.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p7_dgst.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 p7_dgst.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-p7_dgst.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p7_dgst.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+p7_dgst.o: asn1_mac.h
 p7_enc.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p7_enc.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p7_enc.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -552,7 +577,8 @@ p7_enc.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 p7_enc.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p7_enc.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 p7_enc.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-p7_enc.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p7_enc.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+p7_enc.o: asn1_mac.h
 p7_enc_c.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p7_enc_c.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p7_enc_c.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -562,7 +588,8 @@ p7_enc_c.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 p7_enc_c.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p7_enc_c.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 p7_enc_c.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-p7_enc_c.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p7_enc_c.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+p7_enc_c.o: asn1_mac.h
 p7_evp.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p7_evp.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p7_evp.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -572,7 +599,8 @@ p7_evp.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 p7_evp.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p7_evp.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 p7_evp.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-p7_evp.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p7_evp.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+p7_evp.o: asn1_mac.h
 p7_i_s.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p7_i_s.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p7_i_s.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -582,7 +610,8 @@ p7_i_s.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 p7_i_s.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p7_i_s.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 p7_i_s.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-p7_i_s.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p7_i_s.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+p7_i_s.o: asn1_mac.h
 p7_lib.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p7_lib.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p7_lib.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -592,7 +621,8 @@ p7_lib.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 p7_lib.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p7_lib.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 p7_lib.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-p7_lib.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p7_lib.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+p7_lib.o: asn1_mac.h
 p7_recip.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p7_recip.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p7_recip.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -602,7 +632,8 @@ p7_recip.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 p7_recip.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p7_recip.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 p7_recip.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-p7_recip.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p7_recip.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+p7_recip.o: asn1_mac.h
 p7_s_e.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p7_s_e.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p7_s_e.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -612,7 +643,8 @@ p7_s_e.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 p7_s_e.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p7_s_e.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 p7_s_e.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-p7_s_e.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p7_s_e.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+p7_s_e.o: asn1_mac.h
 p7_signd.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p7_signd.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p7_signd.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -622,7 +654,8 @@ p7_signd.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 p7_signd.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p7_signd.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 p7_signd.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-p7_signd.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p7_signd.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+p7_signd.o: asn1_mac.h
 p7_signi.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p7_signi.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p7_signi.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -632,7 +665,8 @@ p7_signi.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 p7_signi.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p7_signi.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 p7_signi.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-p7_signi.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p7_signi.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+p7_signi.o: asn1_mac.h
 p8_pkey.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p8_pkey.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p8_pkey.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -642,7 +676,8 @@ p8_pkey.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 p8_pkey.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p8_pkey.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 p8_pkey.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-p8_pkey.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p8_pkey.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+p8_pkey.o: asn1_mac.h
 t_crl.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 t_crl.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 t_crl.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -652,11 +687,12 @@ t_crl.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 t_crl.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 t_crl.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 t_crl.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-t_crl.o: ../../include/x509v3.h ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+t_crl.o: ../../include/x509v3.h ../cryptlib.h ../crypto.h ../opensslconf.h
+t_crl.o: ../opensslv.h asn1.h
 t_pkey.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 t_pkey.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
 t_pkey.o: ../../include/err.h ../../include/rsa.h ../../include/stack.h
-t_pkey.o: ../cryptlib.h ../crypto.h ../opensslv.h
+t_pkey.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h
 t_req.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 t_req.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 t_req.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -666,7 +702,7 @@ t_req.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 t_req.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 t_req.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 t_req.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-t_req.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+t_req.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
 t_x509.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 t_x509.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 t_x509.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -676,7 +712,8 @@ t_x509.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 t_x509.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 t_x509.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 t_x509.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-t_x509.o: ../../include/x509v3.h ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
+t_x509.o: ../../include/x509v3.h ../cryptlib.h ../crypto.h ../opensslconf.h
+t_x509.o: ../opensslv.h asn1.h
 x_algor.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_algor.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_algor.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -686,7 +723,8 @@ x_algor.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_algor.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_algor.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_algor.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_algor.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_algor.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_algor.o: asn1_mac.h
 x_attrib.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_attrib.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_attrib.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -696,7 +734,8 @@ x_attrib.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_attrib.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_attrib.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_attrib.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_attrib.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_attrib.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_attrib.o: asn1_mac.h
 x_cinf.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_cinf.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_cinf.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -706,7 +745,8 @@ x_cinf.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_cinf.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_cinf.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_cinf.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_cinf.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_cinf.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_cinf.o: asn1_mac.h
 x_crl.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_crl.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_crl.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -716,7 +756,8 @@ x_crl.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_crl.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_crl.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_crl.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_crl.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_crl.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_crl.o: asn1_mac.h
 x_exten.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_exten.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_exten.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -726,7 +767,8 @@ x_exten.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_exten.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_exten.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_exten.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_exten.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_exten.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_exten.o: asn1_mac.h
 x_info.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_info.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_info.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -736,7 +778,8 @@ x_info.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_info.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_info.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_info.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_info.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_info.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_info.o: asn1_mac.h
 x_name.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_name.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_name.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -746,7 +789,8 @@ x_name.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_name.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_name.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_name.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_name.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_name.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_name.o: asn1_mac.h
 x_pkey.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_pkey.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_pkey.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -756,7 +800,8 @@ x_pkey.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_pkey.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_pkey.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_pkey.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_pkey.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_pkey.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_pkey.o: asn1_mac.h
 x_pubkey.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_pubkey.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_pubkey.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -766,7 +811,8 @@ x_pubkey.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_pubkey.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_pubkey.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_pubkey.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_pubkey.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_pubkey.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_pubkey.o: asn1_mac.h
 x_req.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_req.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_req.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -776,7 +822,8 @@ x_req.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_req.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_req.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_req.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_req.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_req.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_req.o: asn1_mac.h
 x_sig.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_sig.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_sig.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -786,7 +833,8 @@ x_sig.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_sig.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_sig.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_sig.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_sig.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_sig.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_sig.o: asn1_mac.h
 x_spki.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_spki.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_spki.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -796,7 +844,8 @@ x_spki.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_spki.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_spki.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_spki.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_spki.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_spki.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_spki.o: asn1_mac.h
 x_val.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_val.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_val.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -806,7 +855,8 @@ x_val.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_val.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_val.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_val.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_val.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_val.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_val.o: asn1_mac.h
 x_x509.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 x_x509.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 x_x509.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -816,4 +866,5 @@ x_x509.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 x_x509.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 x_x509.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 x_x509.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-x_x509.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+x_x509.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h asn1.h
+x_x509.o: asn1_mac.h

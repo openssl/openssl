@@ -65,7 +65,7 @@
 #include "rand.h"
 #include "asn1.h"
 
-DSA_SIG * DSA_do_sign(unsigned char *dgst, int dlen, DSA *dsa)
+DSA_SIG * DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	{
 	BIGNUM *kinv=NULL,*r=NULL,*s=NULL;
 	BIGNUM m;
@@ -132,7 +132,7 @@ err:
 
 /* unsigned char *sig:  out    */
 /* unsigned int *siglen:  out    */
-int DSA_sign(int type, unsigned char *dgst, int dlen, unsigned char *sig,
+int DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
 	     unsigned int *siglen, DSA *dsa)
 	{
 	DSA_SIG *s;

@@ -99,8 +99,8 @@ p12_add.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 p12_add.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 p12_add.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
 p12_add.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-p12_add.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslv.h
-p12_add.o: pkcs12.h
+p12_add.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslconf.h
+p12_add.o: ../opensslv.h pkcs12.h
 p12_attr.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 p12_attr.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 p12_attr.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -111,7 +111,7 @@ p12_attr.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 p12_attr.o: ../../include/ripemd.h ../../include/rsa.h
 p12_attr.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 p12_attr.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-p12_attr.o: ../crypto.h ../opensslv.h pkcs12.h
+p12_attr.o: ../crypto.h ../opensslconf.h ../opensslv.h pkcs12.h
 p12_bags.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
 p12_bags.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
 p12_bags.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
@@ -122,7 +122,7 @@ p12_bags.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
 p12_bags.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 p12_bags.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 p12_bags.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-p12_bags.o: ../crypto.h ../opensslv.h pkcs12.h
+p12_bags.o: ../crypto.h ../opensslconf.h ../opensslv.h pkcs12.h
 p12_crpt.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 p12_crpt.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 p12_crpt.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -133,7 +133,7 @@ p12_crpt.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 p12_crpt.o: ../../include/ripemd.h ../../include/rsa.h
 p12_crpt.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 p12_crpt.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-p12_crpt.o: ../crypto.h ../opensslv.h pkcs12.h
+p12_crpt.o: ../crypto.h ../opensslconf.h ../opensslv.h pkcs12.h
 p12_crt.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 p12_crt.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 p12_crt.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -143,8 +143,8 @@ p12_crt.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 p12_crt.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 p12_crt.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
 p12_crt.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-p12_crt.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslv.h
-p12_crt.o: pkcs12.h
+p12_crt.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslconf.h
+p12_crt.o: ../opensslv.h pkcs12.h
 p12_decr.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 p12_decr.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 p12_decr.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -155,7 +155,7 @@ p12_decr.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 p12_decr.o: ../../include/ripemd.h ../../include/rsa.h
 p12_decr.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 p12_decr.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-p12_decr.o: ../crypto.h ../opensslv.h pkcs12.h
+p12_decr.o: ../crypto.h ../opensslconf.h ../opensslv.h pkcs12.h
 p12_init.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 p12_init.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 p12_init.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -166,7 +166,7 @@ p12_init.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 p12_init.o: ../../include/ripemd.h ../../include/rsa.h
 p12_init.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 p12_init.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-p12_init.o: ../crypto.h ../opensslv.h pkcs12.h
+p12_init.o: ../crypto.h ../opensslconf.h ../opensslv.h pkcs12.h
 p12_key.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 p12_key.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 p12_key.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -176,8 +176,8 @@ p12_key.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 p12_key.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 p12_key.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
 p12_key.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-p12_key.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslv.h
-p12_key.o: pkcs12.h
+p12_key.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslconf.h
+p12_key.o: ../opensslv.h pkcs12.h
 p12_kiss.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 p12_kiss.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 p12_kiss.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -188,7 +188,7 @@ p12_kiss.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 p12_kiss.o: ../../include/ripemd.h ../../include/rsa.h
 p12_kiss.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 p12_kiss.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-p12_kiss.o: ../crypto.h ../opensslv.h pkcs12.h
+p12_kiss.o: ../crypto.h ../opensslconf.h ../opensslv.h pkcs12.h
 p12_lib.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
 p12_lib.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
 p12_lib.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
@@ -199,7 +199,7 @@ p12_lib.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
 p12_lib.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 p12_lib.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 p12_lib.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-p12_lib.o: ../crypto.h ../opensslv.h pkcs12.h
+p12_lib.o: ../crypto.h ../opensslconf.h ../opensslv.h pkcs12.h
 p12_mac.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
 p12_mac.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
 p12_mac.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
@@ -210,7 +210,7 @@ p12_mac.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
 p12_mac.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 p12_mac.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 p12_mac.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-p12_mac.o: ../crypto.h ../opensslv.h pkcs12.h
+p12_mac.o: ../crypto.h ../opensslconf.h ../opensslv.h pkcs12.h
 p12_mutl.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 p12_mutl.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 p12_mutl.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -221,7 +221,7 @@ p12_mutl.o: ../../include/pkcs7.h ../../include/rand.h ../../include/rc2.h
 p12_mutl.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p12_mutl.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 p12_mutl.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-p12_mutl.o: ../cryptlib.h ../crypto.h ../opensslv.h pkcs12.h
+p12_mutl.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h pkcs12.h
 p12_sbag.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
 p12_sbag.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
 p12_sbag.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
@@ -232,7 +232,7 @@ p12_sbag.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
 p12_sbag.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 p12_sbag.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 p12_sbag.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-p12_sbag.o: ../crypto.h ../opensslv.h pkcs12.h
+p12_sbag.o: ../crypto.h ../opensslconf.h ../opensslv.h pkcs12.h
 p12_utl.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 p12_utl.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 p12_utl.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -242,8 +242,8 @@ p12_utl.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 p12_utl.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 p12_utl.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
 p12_utl.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-p12_utl.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslv.h
-p12_utl.o: pkcs12.h
+p12_utl.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslconf.h
+p12_utl.o: ../opensslv.h pkcs12.h
 pk12err.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 pk12err.o: ../../include/bn.h ../../include/cast.h ../../include/des.h
 pk12err.o: ../../include/dh.h ../../include/dsa.h ../../include/err.h
@@ -253,4 +253,4 @@ pk12err.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
 pk12err.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 pk12err.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 pk12err.o: ../../include/x509.h ../../include/x509_vfy.h ../crypto.h
-pk12err.o: ../opensslv.h pkcs12.h
+pk12err.o: ../opensslconf.h ../opensslv.h pkcs12.h

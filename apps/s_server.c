@@ -76,8 +76,8 @@
 
 #ifndef NOPROTO
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export,int keylength);
-static int sv_body(char *hostname, int s, char *context);
-static int www_body(char *hostname, int s, char *context);
+static int sv_body(char *hostname, int s, unsigned char *context);
+static int www_body(char *hostname, int s, unsigned char *context);
 static void close_accept_socket(void );
 static void sv_usage(void);
 static int init_ssl_connection(SSL *s);
@@ -556,7 +556,7 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
 		SSL_CTX_sess_get_cache_size(ssl_ctx));
 	}
 
-static int sv_body(char *hostname, int s, char *context)
+static int sv_body(char *hostname, int s, unsigned char *context)
 	{
 	char *buf=NULL;
 	fd_set readfds;
@@ -586,7 +586,8 @@ static int sv_body(char *hostname, int s, char *context)
 	if (con == NULL) {
 		con=(SSL *)SSL_new(ctx);
 		if(context)
-		      SSL_set_session_id_context(con, context, strlen(context));
+		      SSL_set_session_id_context(con, context,
+						 strlen((char *)context));
 	}
 	SSL_clear(con);
 
@@ -871,7 +872,7 @@ static int load_CA(SSL_CTX *ctx, char *file)
 	}
 #endif
 
-static int www_body(char *hostname, int s, char *context)
+static int www_body(char *hostname, int s, unsigned char *context)
 	{
 	char *buf=NULL;
 	int ret=1;
@@ -904,7 +905,8 @@ static int www_body(char *hostname, int s, char *context)
 	if (!BIO_set_write_buffer_size(io,bufsize)) goto err;
 
 	if ((con=(SSL *)SSL_new(ctx)) == NULL) goto err;
-	if(context) SSL_set_session_id_context(con, context, strlen(context));
+	if(context) SSL_set_session_id_context(con, context,
+					       strlen((char *)context));
 
 	sbio=BIO_new_socket(s,BIO_NOCLOSE);
 	if (s_nbio_test)

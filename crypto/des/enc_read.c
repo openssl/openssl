@@ -84,8 +84,8 @@ int des_rw_mode=DES_PCBC_MODE;
  */
 
 
-int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
-	     des_cblock iv)
+int des_enc_read(int fd, void *buf, int len, des_key_schedule sched,
+		 des_cblock iv)
 	{
 	/* data to be unencrypted */
 	int net_num=0;
@@ -125,7 +125,7 @@ int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
 			 * with the number of bytes we have - should always
 			 * check the return value */
 			memcpy(buf,&(unnet[unnet_start]),
-				(unsigned int)unnet_left);
+			       unnet_left);
 			/* eay 26/08/92 I had the next 2 lines
 			 * reversed :-( */
 			i=unnet_left;
@@ -133,7 +133,7 @@ int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
 			}
 		else
 			{
-			memcpy(buf,&(unnet[unnet_start]),(unsigned int)len);
+			memcpy(buf,&(unnet[unnet_start]),len);
 			unnet_start+=len;
 			unnet_left-=len;
 			i=len;
@@ -184,9 +184,9 @@ int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
 			des_pcbc_encrypt(net,unnet,num,sched,iv,DES_DECRYPT);
 		else
 			des_cbc_encrypt(net,unnet,num,sched,iv,DES_DECRYPT);
-		memcpy(buf,unnet,(unsigned int)len);
+		memcpy(buf,unnet,len);
 		unnet_start=len;
-		unnet_left=(int)num-len;
+		unnet_left=num-len;
 
 		/* The following line is done because we return num
 		 * as the number of bytes read. */
@@ -211,7 +211,7 @@ int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
 
 			/* eay 26/08/92 fix a bug that returned more
 			 * bytes than you asked for (returned len bytes :-( */
-			memcpy(buf,tmpbuf,(unsigned int)num);
+			memcpy(buf,tmpbuf,num);
 			}
 		else
 			{
@@ -223,6 +223,6 @@ int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
 						DES_DECRYPT);
 			}
 		}
-	return((int)num);
+	return num;
 	}
 

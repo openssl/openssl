@@ -286,7 +286,7 @@ typedef struct ssl3_ctx_st
 	int wpend_tot;		/* number bytes written */
 	int wpend_type;
 	int wpend_ret;		/* number of bytes submitted */
-	const char *wpend_buf;
+	const unsigned char *wpend_buf;
 
 	/* used during startup, digest all incoming/outgoing packets */
 	EVP_MD_CTX finish_dgst1;
@@ -301,7 +301,7 @@ typedef struct ssl3_ctx_st
 	/* we alow one fatal and one warning alert to be outstanding,
 	 * send close alert via the warning alert */
 	int alert_dispatch;
-	char send_alert[2];
+	unsigned char send_alert[2];
 
 	/* This flag is set when we should renegotiate ASAP, basically when
 	 * there is no more data in the read or write buffers */

@@ -192,28 +192,47 @@ ASN1_seq_unpack((p12)->authsafes->d.data->data, \
 #ifndef NOPROTO
 PKCS12_SAFEBAG *PKCS12_pack_safebag(char *obj, int (*i2d)(), int nid1, int nid2);
 PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8);
-X509_SIG *PKCS8_encrypt(int pbe_nid, unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, PKCS8_PRIV_KEY_INFO *p8);
-PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, PKCS8_PRIV_KEY_INFO *p8);
+X509_SIG *PKCS8_encrypt(int pbe_nid, const char *pass, int passlen,
+			unsigned char *salt, int saltlen, int iter,
+			PKCS8_PRIV_KEY_INFO *p8);
+PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass,
+				     int passlen, unsigned char *salt,
+				     int saltlen, int iter,
+				     PKCS8_PRIV_KEY_INFO *p8);
 PKCS7 *PKCS12_pack_p7data(STACK *sk);
-PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, STACK *bags);
+PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
+			     unsigned char *salt, int saltlen, int iter,
+			     STACK *bags);
 int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, unsigned char *name, int namelen);
-int PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, unsigned char *name, int namelen);
-int PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag, unsigned char *name, int namelen);
+int PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, const char *name,
+				int namelen);
+int PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag, const unsigned char *name,
+				int namelen);
 int PKCS8_add_keyusage(PKCS8_PRIV_KEY_INFO *p8, int usage);
 ASN1_TYPE *PKCS12_get_attr_gen(STACK *attrs, int attr_nid);
 char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag);
-unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, unsigned char *pass, int passlen, unsigned char *in, int inlen, unsigned char **data, int *datalen, int en_de);
-char *PKCS12_decrypt_d2i(X509_ALGOR *algor, char *(*d2i)(), void (*free_func)(), unsigned char *pass, int passlen, ASN1_STRING *oct, int seq);
-ASN1_STRING *PKCS12_i2d_encrypt(X509_ALGOR *algor, int (*i2d)(), unsigned char *pass, int passlen, char *obj, int seq);
+unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
+				int passlen, unsigned char *in, int inlen,
+				unsigned char **data, int *datalen, int en_de);
+char *PKCS12_decrypt_d2i(X509_ALGOR *algor, char *(*d2i)(),
+			 void (*free_func)(), const char *pass, int passlen,
+			 ASN1_STRING *oct, int seq);
+ASN1_STRING *PKCS12_i2d_encrypt(X509_ALGOR *algor, int (*i2d)(),
+				const char *pass, int passlen, char *obj,
+				int seq);
 PKCS12 *PKCS12_init(int mode);
-int PKCS12_key_gen_asc(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int id, int iter, int n, unsigned char *out, const EVP_MD *md_type);
+int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
+		       int saltlen, int id, int iter, int n,
+		       unsigned char *out, const EVP_MD *md_type);
 int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int id, int iter, int n, unsigned char *out, const EVP_MD *md_type);
-int PKCS12_PBE_keyivgen(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, EVP_CIPHER *cipher, EVP_MD *md_type, unsigned char *key, unsigned char *iv);
-int PKCS12_gen_mac(PKCS12 *p12, unsigned char *pass, int passlen, unsigned char *mac, unsigned int *maclen);
-int PKCS12_verify_mac(PKCS12 *p12, unsigned char *pass, int passlen);
-int PKCS12_set_mac(PKCS12 *p12, unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, EVP_MD *md_type);
+int PKCS12_PBE_keyivgen(const char *pass, int passlen, unsigned char *salt, int saltlen, int iter, EVP_CIPHER *cipher, EVP_MD *md_type, unsigned char *key, unsigned char *iv);
+int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen, unsigned char *mac, unsigned int *maclen);
+int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen);
+int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
+		   unsigned char *salt, int saltlen, int iter,
+		   EVP_MD *md_type);
 int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen, EVP_MD *md_type);
-unsigned char *asc2uni(unsigned char *asc, unsigned char **uni, int *unilen);
+unsigned char *asc2uni(const char *asc, unsigned char **uni, int *unilen);
 char *uni2asc(unsigned char *uni, int unilen);
 int i2d_PKCS12_BAGS(PKCS12_BAGS *a, unsigned char **pp);
 PKCS12_BAGS *PKCS12_BAGS_new(void);
@@ -233,7 +252,8 @@ PKCS12_SAFEBAG *d2i_PKCS12_SAFEBAG(PKCS12_SAFEBAG **a, unsigned char **pp, long 
 void PKCS12_SAFEBAG_free(PKCS12_SAFEBAG *a);
 void ERR_load_PKCS12_strings(void);
 void PKCS12_PBE_add(void);
-int PKCS12_parse(PKCS12 *p12, char *pass, EVP_PKEY **pkey, X509 **cert, STACK **ca);
+int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
+		 STACK **ca);
 PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert, STACK *ca, int nid_key, int nid_cert, int iter, int mac_iter, int keytype);
 int i2d_PKCS12_bio(BIO *bp, PKCS12 *p12);
 int i2d_PKCS12_fp(FILE *fp, PKCS12 *p12);

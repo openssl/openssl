@@ -39,8 +39,8 @@ LIBOBJ= cryptlib.o mem.o cversion.o ex_data.o tmdiff.o $(ERRC).o
 
 SRC= $(LIBSRC)
 
-EXHEADER= crypto.h cryptall.h tmdiff.h opensslv.h
-HEADER=	cryptlib.h date.h opensslconf.h $(EXHEADER)
+EXHEADER= crypto.h cryptall.h tmdiff.h opensslv.h opensslconf.h
+HEADER=	cryptlib.h date.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

@@ -74,7 +74,7 @@ void h__dump (unsigned char *p, int len);
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
-int PKCS12_key_gen_asc (unsigned char *pass, int passlen, unsigned char *salt,
+int PKCS12_key_gen_asc (const char *pass, int passlen, unsigned char *salt,
 	     int saltlen, int id, int iter, int n, unsigned char *out,
 	     const EVP_MD *md_type)
 {

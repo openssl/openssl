@@ -70,8 +70,8 @@
 
 #ifndef NOPROTO
 static int read_n(SSL *s,unsigned int n,unsigned int max,unsigned int extend);
-static int do_ssl_write(SSL *s, const char *buf, unsigned int len);
-static int write_pending(SSL *s, const char *buf, unsigned int len);
+static int do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len);
+static int write_pending(SSL *s, const unsigned char *buf, unsigned int len);
 static int ssl_mt_error(int n);
 #else
 static int read_n();
@@ -96,7 +96,7 @@ int ssl2_peek(SSL *s, char *buf, int len)
 /* SSL_read -
  * This routine will return 0 to len bytes, decrypted etc if required.
  */
-int ssl2_read(SSL *s, char *buf, int len)
+int ssl2_read(SSL *s, void *buf, int len)
 	{
 	int n;
 	unsigned char mac[MAX_MAC_SIZE];
@@ -366,8 +366,9 @@ static int read_n(SSL *s, unsigned int n, unsigned int max,
 	return(n);
 	}
 
-int ssl2_write(SSL *s, const char *buf, int len)
+int ssl2_write(SSL *s, const void *_buf, int len)
 	{
+	const unsigned char *buf=_buf;
 	unsigned int n,tot;
 	int i;
 
@@ -412,7 +413,7 @@ int ssl2_write(SSL *s, const char *buf, int len)
 		}
 	}
 
-static int write_pending(SSL *s, const char *buf, unsigned int len)
+static int write_pending(SSL *s, const unsigned char *buf, unsigned int len)
 	{
 	int i;
 
@@ -457,7 +458,7 @@ static int write_pending(SSL *s, const char *buf, unsigned int len)
 		}
 	}
 
-static int do_ssl_write(SSL *s, const char *buf, unsigned int len)
+static int do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len)
 	{
 	unsigned int j,k,olen,p,mac_size,bs;
 	register unsigned char *pp;
@@ -612,8 +613,7 @@ int ssl2_do_write(SSL *s)
 	{
 	int ret;
 
-	ret=ssl2_write(s,(char *)&(s->init_buf->data[s->init_off]),
-		s->init_num);
+	ret=ssl2_write(s,&s->init_buf->data[s->init_off],s->init_num);
 	if (ret == s->init_num)
 		return(1);
 	if (ret < 0)

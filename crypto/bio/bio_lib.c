@@ -137,7 +137,7 @@ int BIO_free(BIO *a)
 	return(1);
 	}
 
-int BIO_read(BIO *b, char *out, int outl)
+int BIO_read(BIO *b, void *out, int outl)
 	{
 	int i;
 	long (*cb)();

@@ -68,7 +68,7 @@
  * Malloc'ed buffer
  */
 
-unsigned char * PKCS12_pbe_crypt (X509_ALGOR *algor, unsigned char *pass,
+unsigned char * PKCS12_pbe_crypt (X509_ALGOR *algor, const char *pass,
 	     int passlen, unsigned char *in, int inlen, unsigned char **data,
 	     int *datalen, int en_de)
 {
@@ -107,7 +107,7 @@ unsigned char * PKCS12_pbe_crypt (X509_ALGOR *algor, unsigned char *pass,
  */
 
 char * PKCS12_decrypt_d2i (X509_ALGOR *algor, char * (*d2i)(),
-	     void (*free_func)(), unsigned char *pass, int passlen,
+	     void (*free_func)(), const char *pass, int passlen,
 	     ASN1_OCTET_STRING *oct, int seq)
 {
 	unsigned char *out, *p;
@@ -115,7 +115,7 @@ char * PKCS12_decrypt_d2i (X509_ALGOR *algor, char * (*d2i)(),
 	int outlen;
 
 	if (!PKCS12_pbe_crypt (algor, pass, passlen, oct->data, oct->length,
-				 &out, &outlen, 0)) {
+			       &out, &outlen, 0)) {
 		PKCS12err(PKCS12_F_PKCS12_DECRYPT_D2I,PKCS12_R_PKCS12_PBE_CRYPT_ERROR);
 		return NULL;
 	}
@@ -147,7 +147,8 @@ char * PKCS12_decrypt_d2i (X509_ALGOR *algor, char * (*d2i)(),
  */
 
 ASN1_OCTET_STRING *PKCS12_i2d_encrypt (X509_ALGOR *algor, int (*i2d)(),
-	     unsigned char *pass, int passlen, char *obj, int seq)
+				       const char *pass, int passlen,
+				       char *obj, int seq)
 {
 	ASN1_OCTET_STRING *oct;
 	unsigned char *in, *p;

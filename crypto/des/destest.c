@@ -363,7 +363,7 @@ int main(int argc, char *argv[])
 	memcpy(iv3,cbc_iv,sizeof(cbc_iv));
 	memset(iv2,'\0',sizeof iv2);
 	des_ede3_cbcm_encrypt(cbc_out,cbc_in,i,ks,ks2,ks3,iv3,iv2,DES_DECRYPT);
-	if (memcmp(cbc_in,cbc_data,strlen(cbc_data)+1) != 0)
+	if (memcmp(cbc_in,cbc_data,strlen((char *)cbc_data)+1) != 0)
 		{
 		int n;
 
@@ -531,7 +531,7 @@ int main(int argc, char *argv[])
 
 	memcpy(iv3,cbc_iv,sizeof(cbc_iv));
 	des_ede3_cbc_encrypt(cbc_out,cbc_in,i,ks,ks2,ks3,iv3,DES_DECRYPT);
-	if (memcmp(cbc_in,cbc_data,strlen(cbc_data)+1) != 0)
+	if (memcmp(cbc_in,cbc_data,strlen((char *)cbc_data)+1) != 0)
 		{
 		printf("des_ede3_cbc_encrypt decrypt error\n");
 		err=1;
@@ -546,16 +546,16 @@ int main(int argc, char *argv[])
 		}
 	memset(cbc_out,0,40);
 	memset(cbc_in,0,40);
-	des_pcbc_encrypt(cbc_data,cbc_out,strlen(cbc_data)+1,ks,cbc_iv,
+	des_pcbc_encrypt(cbc_data,cbc_out,strlen((char *)cbc_data)+1,ks,cbc_iv,
 			 DES_ENCRYPT);
 	if (memcmp(cbc_out,pcbc_ok,32) != 0)
 		{
 		printf("pcbc_encrypt encrypt error\n");
 		err=1;
 		}
-	des_pcbc_encrypt(cbc_out,cbc_in,strlen(cbc_data)+1,ks,cbc_iv,
+	des_pcbc_encrypt(cbc_out,cbc_in,strlen((char *)cbc_data)+1,ks,cbc_iv,
 			 DES_DECRYPT);
-	if (memcmp(cbc_in,cbc_data,strlen(cbc_data)+1) != 0)
+	if (memcmp(cbc_in,cbc_data,strlen((char *)cbc_data)+1) != 0)
 		{
 		printf("pcbc_encrypt decrypt error\n");
 		err=1;
@@ -683,7 +683,7 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 
 	printf("Doing cbc_cksum\n");
 	des_key_sched(cbc_key,ks);
-	cs=des_cbc_cksum(cbc_data,cret,strlen(cbc_data),ks,cbc_iv);
+	cs=des_cbc_cksum(cbc_data,cret,strlen((char *)cbc_data),ks,cbc_iv);
 	if (cs != cbc_cksum_ret)
 		{
 		printf("bad return value (%08lX), should be %08lX\n",
@@ -701,7 +701,8 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 	   quad_cksum returns up to 4 groups of 8 bytes, this test gets it to
 	   produce 2 groups then treats them as 4 groups of 4 bytes.
 	   Ben 13 Feb 1999 */
-	cs=quad_cksum(cbc_data,(des_cblocks)qret,strlen(cbc_data),2,cbc_iv);
+	cs=quad_cksum(cbc_data,(des_cblocks)qret,strlen((char *)cbc_data),2,
+		      cbc_iv);
 
 	{ /* Big-endian fix */
 	static DES_LONG l=1;
@@ -763,14 +764,16 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 	for (i=0; i<4; i++)
 		{
 		printf(" %d",i);
-		des_ncbc_encrypt(&(cbc_out[i]),cbc_in,strlen(cbc_data)+1,ks,
+		des_ncbc_encrypt(&(cbc_out[i]),cbc_in,
+				 strlen((char *)cbc_data)+1,ks,
 				 cbc_iv,DES_ENCRYPT);
 		}
 	printf("\noutput word alignment test");
 	for (i=0; i<4; i++)
 		{
 		printf(" %d",i);
-		des_ncbc_encrypt(cbc_out,&(cbc_in[i]),strlen(cbc_data)+1,ks,
+		des_ncbc_encrypt(cbc_out,&(cbc_in[i]),
+				 strlen((char *)cbc_data)+1,ks,
 				 cbc_iv,DES_ENCRYPT);
 		}
 	printf("\n");

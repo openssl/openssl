@@ -395,7 +395,7 @@ typedef struct evp_Encode_Ctx_st
 	} EVP_ENCODE_CTX;
 
 /* Password based encryption function */
-typedef int (EVP_PBE_KEYGEN)(unsigned char *pass, int passlen,
+typedef int (EVP_PBE_KEYGEN)(const char *pass, int passlen,
          unsigned char *salt,  int saltlen, int iter, EVP_CIPHER *cipher,
                 EVP_MD *md, unsigned char *key, unsigned char *iv);
 

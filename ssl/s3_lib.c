@@ -992,7 +992,7 @@ int ssl3_shutdown(SSL *s)
 		return(0);
 	}
 
-int ssl3_write(SSL *s, const char *buf, int len)
+int ssl3_write(SSL *s, const void *buf, int len)
 	{
 	int ret,n;
 
@@ -1045,7 +1045,7 @@ int ssl3_write(SSL *s, const char *buf, int len)
 	return(ret);
 	}
 
-int ssl3_read(SSL *s, char *buf, int len)
+int ssl3_read(SSL *s, void *buf, int len)
 	{
 	int ret;
 	

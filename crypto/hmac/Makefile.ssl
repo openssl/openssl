@@ -85,4 +85,4 @@ hmac.o: ../../include/evp.h ../../include/idea.h ../../include/md2.h
 hmac.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
 hmac.o: ../../include/opensslv.h ../../include/rc2.h ../../include/rc4.h
 hmac.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
-hmac.o: ../../include/sha.h ../../include/stack.h hmac.h
+hmac.o: ../../include/sha.h ../../include/stack.h ../opensslconf.h hmac.h

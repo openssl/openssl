@@ -78,12 +78,12 @@ EVP_PBE_alg_add(NID_pbe_WithSHA1And40BitRC2_CBC, EVP_rc2_40_cbc(),
 					EVP_sha1(), PKCS12_PBE_keyivgen);
 }
 
-int PKCS12_PBE_keyivgen (unsigned char *pass, int passlen, unsigned char *salt,
+int PKCS12_PBE_keyivgen (const char *pass, int passlen, unsigned char *salt,
 	     int saltlen, int iter, EVP_CIPHER *cipher, EVP_MD *md,
 	     unsigned char *key, unsigned char *iv)
 {
 	if (!PKCS12_key_gen (pass, passlen, salt, saltlen, PKCS12_KEY_ID,
- 				iter, EVP_CIPHER_key_length(cipher), key, md)) {
+			     iter, EVP_CIPHER_key_length(cipher), key, md)) {
 		PKCS12err(PKCS12_F_PKCS12_PBE_KEYIVGEN,PKCS12_R_KEY_GEN_ERROR);
 		return 0;
 	}

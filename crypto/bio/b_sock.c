@@ -196,11 +196,11 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
 int BIO_sock_error(int sock)
 	{
 	int j,i;
-	unsigned int size;
+	int size;
 		 
 	size=sizeof(int);
 
-	i=getsockopt(sock,SOL_SOCKET,SO_ERROR,(char *)&j,&size);
+	i=getsockopt(sock,SOL_SOCKET,SO_ERROR,&j,&size);
 	if (i < 0)
 		return(1);
 	else
@@ -593,7 +593,7 @@ int BIO_accept(int sock, char **addr)
 	static struct sockaddr_in from;
 	unsigned long l;
 	unsigned short port;
-	unsigned int len;
+	int len;
 	char *p;
 
 	memset((char *)&from,0,sizeof(from));

@@ -182,9 +182,9 @@ void des_ede3_ofb64_encrypt(const unsigned char *in,unsigned char *out,
 void des_xwhite_in2out(const des_cblock des_key,const des_cblock in_white,
 		       des_cblock out_white);
 
-int des_enc_read(int fd,char *buf,int len,des_key_schedule sched,
+int des_enc_read(int fd,void *buf,int len,des_key_schedule sched,
 		 des_cblock iv);
-int des_enc_write(int fd,const char *buf,int len,des_key_schedule sched,
+int des_enc_write(int fd,const void *buf,int len,des_key_schedule sched,
 		  des_cblock iv);
 char *des_fcrypt(const char *buf,const char *salt, char *ret);
 #if defined(PERL5) || defined(__FreeBSD__)

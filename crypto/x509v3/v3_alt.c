@@ -127,15 +127,15 @@ STACK *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method, GENERAL_NAME *gen,
 		break;
 
 		case GEN_EMAIL:
-		X509V3_add_value("email",gen->d.ia5->data, &ret);
+		X509V3_add_value_uchar("email",gen->d.ia5->data, &ret);
 		break;
 
 		case GEN_DNS:
-		X509V3_add_value("DNS",gen->d.ia5->data, &ret);
+		X509V3_add_value_uchar("DNS",gen->d.ia5->data, &ret);
 		break;
 
 		case GEN_URI:
-		X509V3_add_value("URI",gen->d.ia5->data, &ret);
+		X509V3_add_value_uchar("URI",gen->d.ia5->data, &ret);
 		break;
 
 		case GEN_DIRNAME:

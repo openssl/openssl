@@ -183,9 +183,9 @@ typedef struct ssl_method_st
 	void (*ssl_free)(SSL *s);
 	int (*ssl_accept)(SSL *s);
 	int (*ssl_connect)(SSL *s);
-	int (*ssl_read)(SSL *s,char *buf,int len);
+	int (*ssl_read)(SSL *s,void *buf,int len);
 	int (*ssl_peek)(SSL *s,char *buf,int len);
-	int (*ssl_write)(SSL *s,const char *buf,int len);
+	int (*ssl_write)(SSL *s,const void *buf,int len);
 	int (*ssl_shutdown)(SSL *s);
 	int (*ssl_renegotiate)(SSL *s);
 	int (*ssl_renegotiate_check)(SSL *s);

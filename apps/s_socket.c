@@ -209,7 +209,7 @@ int init_client_ip(int *sock, unsigned char ip[4], int port)
 int nbio_sock_error(int sock)
 	{
 	int j,i;
-	unsigned int size;
+	int size;
 
 	size=sizeof(int);
 	i=getsockopt(sock,SOL_SOCKET,SO_ERROR,(char *)&j,&size);
@@ -360,7 +360,7 @@ int do_accept(int acc_sock, int *sock, char **host)
 	int ret,i;
 	struct hostent *h1,*h2;
 	static struct sockaddr_in from;
-	unsigned int len;
+	int len;
 /*	struct linger ling; */
 
 	if (!sock_init()) return(0);

@@ -106,7 +106,7 @@ bf_buff.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
 bf_buff.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
 bf_buff.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 bf_buff.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
-bf_buff.o: ../opensslv.h bio.h
+bf_buff.o: ../opensslconf.h ../opensslv.h bio.h
 bf_nbio.o: ../../include/asn1.h ../../include/blowfish.h ../../include/bn.h
 bf_nbio.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 bf_nbio.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -115,7 +115,7 @@ bf_nbio.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
 bf_nbio.o: ../../include/objects.h ../../include/rand.h ../../include/rc2.h
 bf_nbio.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 bf_nbio.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
-bf_nbio.o: ../cryptlib.h ../crypto.h ../opensslv.h bio.h
+bf_nbio.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h bio.h
 bf_null.o: ../../include/asn1.h ../../include/blowfish.h ../../include/bn.h
 bf_null.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 bf_null.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -124,7 +124,7 @@ bf_null.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
 bf_null.o: ../../include/objects.h ../../include/rc2.h ../../include/rc4.h
 bf_null.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 bf_null.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
-bf_null.o: ../opensslv.h bio.h
+bf_null.o: ../opensslconf.h ../opensslv.h bio.h
 bio_cb.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
 bio_cb.o: ../../include/stack.h ../cryptlib.h ../crypto.h ../opensslv.h bio.h
 bio_err.o: ../../include/err.h ../../include/stack.h ../crypto.h ../opensslv.h

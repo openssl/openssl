@@ -115,6 +115,8 @@ static unsigned char out_g[]={
 	0xc5,0x72,0xaf,0x53,0xe6,0xd7,0x88,0x02,
 	};
 
+static const unsigned char str1[]="12345678901234567890";
+
 static BIO *bio_err=NULL;
 
 int main(int argc, char **argv)
@@ -124,7 +126,7 @@ int main(int argc, char **argv)
 	unsigned char buf[256];
 	unsigned long h;
 	unsigned char sig[256];
-	int siglen;
+	unsigned int siglen;
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
@@ -179,8 +181,8 @@ int main(int argc, char **argv)
 		goto end;
 		}
 	DSA_generate_key(dsa);
-	DSA_sign(0, "12345678901234567890", 20, sig, &siglen, dsa);
-	if (DSA_verify(0, "12345678901234567890", 20, sig, siglen, dsa) == 1)
+	DSA_sign(0, str1, 20, sig, &siglen, dsa);
+	if (DSA_verify(0, str1, 20, sig, siglen, dsa) == 1)
 		ret=1;
 end:
 	if (!ret)

@@ -98,8 +98,8 @@ v3_akey.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 v3_akey.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 v3_akey.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
 v3_akey.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-v3_akey.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslv.h
-v3_akey.o: x509v3.h
+v3_akey.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslconf.h
+v3_akey.o: ../opensslv.h x509v3.h
 v3_alt.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_alt.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 v3_alt.o: ../../include/conf.h ../../include/des.h ../../include/dh.h
@@ -110,7 +110,7 @@ v3_alt.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 v3_alt.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 v3_alt.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 v3_alt.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-v3_alt.o: ../cryptlib.h ../crypto.h ../opensslv.h x509v3.h
+v3_alt.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h x509v3.h
 v3_bcons.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
 v3_bcons.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
 v3_bcons.o: ../../include/cast.h ../../include/conf.h ../../include/des.h
@@ -122,7 +122,7 @@ v3_bcons.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 v3_bcons.o: ../../include/ripemd.h ../../include/rsa.h
 v3_bcons.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 v3_bcons.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-v3_bcons.o: ../crypto.h ../opensslv.h x509v3.h
+v3_bcons.o: ../crypto.h ../opensslconf.h ../opensslv.h x509v3.h
 v3_bitst.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_bitst.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 v3_bitst.o: ../../include/conf.h ../../include/des.h ../../include/dh.h
@@ -133,7 +133,7 @@ v3_bitst.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 v3_bitst.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 v3_bitst.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 v3_bitst.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-v3_bitst.o: ../cryptlib.h ../crypto.h ../opensslv.h x509v3.h
+v3_bitst.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h x509v3.h
 v3_conf.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_conf.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 v3_conf.o: ../../include/conf.h ../../include/des.h ../../include/dh.h
@@ -144,7 +144,7 @@ v3_conf.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 v3_conf.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 v3_conf.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 v3_conf.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-v3_conf.o: ../cryptlib.h ../crypto.h ../opensslv.h x509v3.h
+v3_conf.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h x509v3.h
 v3_cpols.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
 v3_cpols.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
 v3_cpols.o: ../../include/cast.h ../../include/conf.h ../../include/des.h
@@ -156,7 +156,19 @@ v3_cpols.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 v3_cpols.o: ../../include/ripemd.h ../../include/rsa.h
 v3_cpols.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 v3_cpols.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-v3_cpols.o: ../crypto.h ../opensslv.h x509v3.h
+v3_cpols.o: ../crypto.h ../opensslconf.h ../opensslv.h x509v3.h
+v3_crld.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
+v3_crld.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+v3_crld.o: ../../include/cast.h ../../include/conf.h ../../include/des.h
+v3_crld.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+v3_crld.o: ../../include/err.h ../../include/evp.h ../../include/idea.h
+v3_crld.o: ../../include/lhash.h ../../include/md2.h ../../include/md5.h
+v3_crld.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+v3_crld.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+v3_crld.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
+v3_crld.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
+v3_crld.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslconf.h
+v3_crld.o: ../opensslv.h x509v3.h
 v3_enum.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_enum.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 v3_enum.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -166,8 +178,8 @@ v3_enum.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 v3_enum.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 v3_enum.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
 v3_enum.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-v3_enum.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslv.h
-v3_enum.o: x509v3.h
+v3_enum.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslconf.h
+v3_enum.o: ../opensslv.h x509v3.h
 v3_extku.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_extku.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 v3_extku.o: ../../include/conf.h ../../include/des.h ../../include/dh.h
@@ -178,7 +190,7 @@ v3_extku.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 v3_extku.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 v3_extku.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 v3_extku.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-v3_extku.o: ../cryptlib.h ../crypto.h ../opensslv.h x509v3.h
+v3_extku.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h x509v3.h
 v3_genn.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
 v3_genn.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
 v3_genn.o: ../../include/cast.h ../../include/conf.h ../../include/des.h
@@ -189,8 +201,8 @@ v3_genn.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 v3_genn.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 v3_genn.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
 v3_genn.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-v3_genn.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslv.h
-v3_genn.o: x509v3.h
+v3_genn.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslconf.h
+v3_genn.o: ../opensslv.h x509v3.h
 v3_ia5.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_ia5.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 v3_ia5.o: ../../include/conf.h ../../include/des.h ../../include/dh.h
@@ -201,7 +213,7 @@ v3_ia5.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 v3_ia5.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 v3_ia5.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 v3_ia5.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-v3_ia5.o: ../cryptlib.h ../crypto.h ../opensslv.h x509v3.h
+v3_ia5.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h x509v3.h
 v3_int.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_int.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 v3_int.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -211,8 +223,8 @@ v3_int.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 v3_int.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 v3_int.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
 v3_int.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-v3_int.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslv.h
-v3_int.o: x509v3.h
+v3_int.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslconf.h
+v3_int.o: ../opensslv.h x509v3.h
 v3_lib.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_lib.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 v3_lib.o: ../../include/conf.h ../../include/des.h ../../include/dh.h
@@ -223,7 +235,7 @@ v3_lib.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 v3_lib.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 v3_lib.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 v3_lib.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-v3_lib.o: ../cryptlib.h ../crypto.h ../opensslv.h x509v3.h
+v3_lib.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h x509v3.h
 v3_pku.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
 v3_pku.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
 v3_pku.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
@@ -234,7 +246,7 @@ v3_pku.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
 v3_pku.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 v3_pku.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 v3_pku.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-v3_pku.o: ../crypto.h ../opensslv.h x509v3.h
+v3_pku.o: ../crypto.h ../opensslconf.h ../opensslv.h x509v3.h
 v3_prn.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_prn.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 v3_prn.o: ../../include/conf.h ../../include/des.h ../../include/dh.h
@@ -245,7 +257,7 @@ v3_prn.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 v3_prn.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 v3_prn.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 v3_prn.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-v3_prn.o: ../cryptlib.h ../crypto.h ../opensslv.h x509v3.h
+v3_prn.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h x509v3.h
 v3_skey.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_skey.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 v3_skey.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -255,8 +267,8 @@ v3_skey.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 v3_skey.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 v3_skey.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
 v3_skey.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-v3_skey.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslv.h
-v3_skey.o: x509v3.h
+v3_skey.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h ../opensslconf.h
+v3_skey.o: ../opensslv.h x509v3.h
 v3_sxnet.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
 v3_sxnet.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
 v3_sxnet.o: ../../include/cast.h ../../include/conf.h ../../include/des.h
@@ -268,7 +280,7 @@ v3_sxnet.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 v3_sxnet.o: ../../include/ripemd.h ../../include/rsa.h
 v3_sxnet.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 v3_sxnet.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-v3_sxnet.o: ../crypto.h ../opensslv.h x509v3.h
+v3_sxnet.o: ../crypto.h ../opensslconf.h ../opensslv.h x509v3.h
 v3_utl.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_utl.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 v3_utl.o: ../../include/conf.h ../../include/des.h ../../include/dh.h
@@ -279,7 +291,7 @@ v3_utl.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
 v3_utl.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 v3_utl.o: ../../include/rsa.h ../../include/safestack.h ../../include/sha.h
 v3_utl.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-v3_utl.o: ../cryptlib.h ../crypto.h ../opensslv.h x509v3.h
+v3_utl.o: ../cryptlib.h ../crypto.h ../opensslconf.h ../opensslv.h x509v3.h
 v3err.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3err.o: ../../include/bn.h ../../include/cast.h ../../include/des.h
 v3err.o: ../../include/dh.h ../../include/dsa.h ../../include/err.h
@@ -289,4 +301,4 @@ v3err.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
 v3err.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 v3err.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 v3err.o: ../../include/x509.h ../../include/x509_vfy.h ../crypto.h
-v3err.o: ../opensslv.h x509v3.h
+v3err.o: ../opensslconf.h ../opensslv.h x509v3.h

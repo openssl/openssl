@@ -62,7 +62,7 @@
 
 /* Cheap and nasty Unicode stuff */
 
-unsigned char *asc2uni (unsigned char *asc, unsigned char **uni, int *unilen)
+unsigned char *asc2uni (const char *asc, unsigned char **uni, int *unilen)
 {
 	int ulen, i;
 	unsigned char *unitmp;

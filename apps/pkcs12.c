@@ -78,9 +78,9 @@ EVP_CIPHER *enc;
 
 #ifndef NOPROTO
 int get_cert_chain(X509 *cert, STACK **chain);
-int dump_certs_keys_p12(BIO *out, PKCS12 *p12, unsigned char *pass, int passlen, int options);
-int dump_certs_pkeys_bags(BIO *out, STACK *bags, unsigned char *pass, int passlen, int options);
-int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, unsigned char *pass, int passlen, int options);
+int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen, int options);
+int dump_certs_pkeys_bags(BIO *out, STACK *bags, char *pass, int passlen, int options);
+int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass, int passlen, int options);
 int print_attribs(BIO *out, STACK *attrlst, char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
 int alg_print(BIO *x, X509_ALGOR *alg);
@@ -274,7 +274,7 @@ if (export_cert) {
 	char *catmp;
 	int i, pmatch = 0;
 	unsigned char keyid[EVP_MAX_MD_SIZE];
-	int keyidlen;
+	unsigned int keyidlen;
 	/* Get private key so we can match it to a certificate */
 	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, NULL);
 	if (!inkey) BIO_reset(in);
@@ -452,7 +452,7 @@ int dump_cert_text (BIO *out, X509 *x)
         return 0;
 }
 
-int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, unsigned char *pass,
+int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 	     int passlen, int options)
 {
 	STACK *asafes, *bags;
@@ -485,7 +485,7 @@ int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, unsigned char *pass,
 	return 1;
 }
 
-int dump_certs_pkeys_bags (BIO *out, STACK *bags, unsigned char *pass,
+int dump_certs_pkeys_bags (BIO *out, STACK *bags, char *pass,
 	     int passlen, int options)
 {
 	int i;
@@ -497,7 +497,7 @@ int dump_certs_pkeys_bags (BIO *out, STACK *bags, unsigned char *pass,
 	return 1;
 }
 
-int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, unsigned char *pass,
+int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 	     int passlen, int options)
 {
 	EVP_PKEY *pkey;

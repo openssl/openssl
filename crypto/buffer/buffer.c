@@ -64,7 +64,7 @@ BUF_MEM *BUF_MEM_new(void)
 	{
 	BUF_MEM *ret;
 
-	ret=(BUF_MEM *)Malloc(sizeof(BUF_MEM));
+	ret=Malloc(sizeof(BUF_MEM));
 	if (ret == NULL)
 		{
 		BUFerr(BUF_F_BUF_MEM_NEW,ERR_R_MALLOC_FAILURE);
@@ -101,15 +101,15 @@ int BUF_MEM_grow(BUF_MEM *str, int len)
 		}
 	if (str->max >= len)
 		{
-		memset(&(str->data[str->length]),0,len-str->length);
+		memset(&str->data[str->length],0,len-str->length);
 		str->length=len;
 		return(len);
 		}
 	n=(len+3)/3*4;
 	if (str->data == NULL)
-		ret=(char *)Malloc(n);
+		ret=Malloc(n);
 	else
-		ret=(char *)Realloc(str->data,n);
+		ret=Realloc(str->data,n);
 	if (ret == NULL)
 		{
 		BUFerr(BUF_F_BUF_MEM_GROW,ERR_R_MALLOC_FAILURE);

@@ -63,9 +63,9 @@
 /* Simplified PKCS#12 routines */
 
 #ifndef NOPROTO
-static int parse_pk12( PKCS12 *p12, unsigned char *pass, int passlen, EVP_PKEY **pkey, X509 **cert, STACK **ca);
-static int parse_bags( STACK *bags, unsigned char *pass, int passlen, EVP_PKEY **pkey, X509 **cert, STACK **ca, ASN1_OCTET_STRING **keyid, char *keymatch);
-static int parse_bag( PKCS12_SAFEBAG *bag, unsigned char *pass, int passlen, EVP_PKEY **pkey, X509 **cert, STACK **ca, ASN1_OCTET_STRING **keyid, char *keymatch);
+static int parse_pk12( PKCS12 *p12, const char *pass, int passlen, EVP_PKEY **pkey, X509 **cert, STACK **ca);
+static int parse_bags( STACK *bags, const char *pass, int passlen, EVP_PKEY **pkey, X509 **cert, STACK **ca, ASN1_OCTET_STRING **keyid, char *keymatch);
+static int parse_bag( PKCS12_SAFEBAG *bag, const char *pass, int passlen, EVP_PKEY **pkey, X509 **cert, STACK **ca, ASN1_OCTET_STRING **keyid, char *keymatch);
 #else
 static int parse_pk12();
 static int parse_bags();
@@ -78,7 +78,7 @@ static int parse_bag();
  * passed unitialised.
  */
 
-int PKCS12_parse (PKCS12 *p12, char *pass, EVP_PKEY **pkey, X509 **cert,
+int PKCS12_parse (PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 	     STACK **ca)
 {
 
@@ -125,7 +125,7 @@ return 0;
 
 /* Parse the outer PKCS#12 structure */
 
-static int parse_pk12 (PKCS12 *p12, unsigned char *pass, int passlen,
+static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
 	     EVP_PKEY **pkey, X509 **cert, STACK **ca)
 {
 	STACK *asafes, *bags;
@@ -160,9 +160,9 @@ static int parse_pk12 (PKCS12 *p12, unsigned char *pass, int passlen,
 }
 
 
-static int parse_bags (STACK *bags, unsigned char *pass, int passlen,
-	     EVP_PKEY **pkey, X509 **cert, STACK **ca, ASN1_OCTET_STRING **keyid,
-	     char *keymatch)
+static int parse_bags (STACK *bags, const char *pass, int passlen,
+		       EVP_PKEY **pkey, X509 **cert, STACK **ca,
+		       ASN1_OCTET_STRING **keyid, char *keymatch)
 {
 	int i;
 	for (i = 0; i < sk_num (bags); i++) {
@@ -177,8 +177,9 @@ static int parse_bags (STACK *bags, unsigned char *pass, int passlen,
 #define MATCH_CERT 0x2
 #define MATCH_ALL  0x3
 
-static int parse_bag (PKCS12_SAFEBAG *bag, unsigned char *pass, int passlen,
-	     EVP_PKEY **pkey, X509 **cert, STACK **ca, ASN1_OCTET_STRING **keyid,
+static int parse_bag (PKCS12_SAFEBAG *bag, const char *pass, int passlen,
+		      EVP_PKEY **pkey, X509 **cert, STACK **ca,
+		      ASN1_OCTET_STRING **keyid,
 	     char *keymatch)
 {
 	PKCS8_PRIV_KEY_INFO *p8;

@@ -324,28 +324,29 @@ ASN1_STRING *ASN1_STRING_dup(ASN1_STRING *str)
 	return(ret);
 	}
 
-int ASN1_STRING_set(ASN1_STRING *str, unsigned char *data, int len)
+int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 	{
-	char *c;
+	unsigned char *c;
+	const char *data=_data;
 
 	if (len < 0)
 		{
 		if (data == NULL)
 			return(0);
 		else
-			len=strlen((char *)data);
+			len=strlen(data);
 		}
 	if ((str->length < len) || (str->data == NULL))
 		{
-		c=(char *)str->data;
+		c=str->data;
 		if (c == NULL)
-			str->data=(unsigned char *)Malloc(len+1);
+			str->data=Malloc(len+1);
 		else
-			str->data=(unsigned char *)Realloc(c,len+1);
+			str->data=Realloc(c,len+1);
 
 		if (str->data == NULL)
 			{
-			str->data=(unsigned char *)c;
+			str->data=c;
 			return(0);
 			}
 		}

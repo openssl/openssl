@@ -316,7 +316,7 @@ BIGNUM *BN_new(void);
 void	BN_init(BIGNUM *);
 void	BN_clear_free(BIGNUM *a);
 BIGNUM *BN_copy(BIGNUM *a, BIGNUM *b);
-BIGNUM *BN_bin2bn(unsigned char *s,int len,BIGNUM *ret);
+BIGNUM *BN_bin2bn(const unsigned char *s,int len,BIGNUM *ret);
 int	BN_bn2bin(BIGNUM *a, unsigned char *to);
 BIGNUM *BN_mpi2bn(unsigned char *s,int len,BIGNUM *ret);
 int	BN_bn2mpi(BIGNUM *a, unsigned char *to);

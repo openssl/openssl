@@ -299,9 +299,9 @@ SXNETID *d2i_SXNETID(SXNETID **a, unsigned char **pp, long length);
 SXNETID *SXNETID_new(void);
 void SXNETID_free(SXNETID *a);
 
-int SXNET_add_id_asc(SXNET **psx, char *zone, unsigned char *user, int userlen); 
-int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, unsigned char *user, int userlen); 
-int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, unsigned char *user, int userlen); 
+int SXNET_add_id_asc(SXNET **psx, char *zone, char *user, int userlen); 
+int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, char *user, int userlen); 
+int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, char *user, int userlen); 
 
 ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, char *zone);
 ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone);
@@ -395,6 +395,8 @@ void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
 				 X509_REQ *req, X509_CRL *crl, int flags);
 
 int X509V3_add_value(const char *name, const char *value, STACK **extlist);
+int X509V3_add_value_uchar(const char *name, const unsigned char *value,
+			   STACK **extlist);
 int X509V3_add_value_bool(const char *name, int asn1_bool, STACK **extlist);
 int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint, STACK **extlist);
 char * i2s_ASN1_INTEGER(X509V3_EXT_METHOD *meth, ASN1_INTEGER *aint);

@@ -591,7 +591,7 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
 				PEMerr(PEM_F_PEM_READ_BIO,ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
-			strncpy(nameB->data,&(buf[11]),(unsigned int)i-6);
+			memcpy(nameB->data,&(buf[11]),i-6);
 			nameB->data[i-6]='\0';
 			break;
 			}
@@ -616,7 +616,7 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
 			nohead=1;
 			break;
 			}
-		strncpy(&(headerB->data[hl]),buf,(unsigned int)i);
+		memcpy(&(headerB->data[hl]),buf,i);
 		headerB->data[hl+i]='\0';
 		hl+=i;
 		}
@@ -644,7 +644,7 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
 				PEMerr(PEM_F_PEM_READ_BIO,ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
-			strncpy(&(dataB->data[bl]),buf,(unsigned int)i);
+			memcpy(&(dataB->data[bl]),buf,i);
 			dataB->data[bl+i]='\0';
 			bl+=i;
 			if (end)
@@ -669,7 +669,7 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
 		}
 	i=strlen(nameB->data);
 	if (	(strncmp(buf,"-----END ",9) != 0) ||
-		(strncmp(nameB->data,&(buf[9]),(unsigned int)i) != 0) ||
+		(strncmp(nameB->data,&(buf[9]),i) != 0) ||
 		(strncmp(&(buf[9+i]),"-----\n",6) != 0))
 		{
 		PEMerr(PEM_F_PEM_READ_BIO,PEM_R_BAD_END_LINE);

@@ -80,7 +80,7 @@ typedef struct hmac_ctx_st
 
 #ifndef NOPROTO
 
-void HMAC_Init(HMAC_CTX *ctx, unsigned char *key, int len,
+void HMAC_Init(HMAC_CTX *ctx, const unsigned char *key, int len,
 	       const EVP_MD *md);
 void HMAC_Update(HMAC_CTX *ctx,unsigned char *key, int len);
 void HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);

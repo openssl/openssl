@@ -1,4 +1,4 @@
-/* p12_pbop.c */
+/* evp_pbe.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project 1999.
  */
@@ -74,7 +74,7 @@ EVP_MD *md;
 EVP_PBE_KEYGEN *keygen;
 } EVP_PBE_CTL;
 
-int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, unsigned char *pass, int passlen,
+int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	     unsigned char *salt, int saltlen, int iter, EVP_CIPHER_CTX *ctx,
 	     int en_de)
 {
@@ -95,7 +95,7 @@ int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, unsigned char *pass, int passlen,
 		ERR_add_error_data(2, "TYPE=", obj_tmp);
 		return 0;
 	}
-	if (passlen == -1) passlen = strlen(pass);
+	if (passlen == -1) passlen = strlen((char *)pass);
 	pbetmp = (EVP_PBE_CTL *)sk_value (pbe_algs, i);
 	i = (*pbetmp->keygen)(pass, passlen, salt, saltlen, iter,
 					 pbetmp->cipher, pbetmp->md, key, iv);
@@ -109,15 +109,15 @@ int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, unsigned char *pass, int passlen,
 
 /* Setup a PBE algorithm but take most parameters from AlgorithmIdentifier */
 
-int EVP_PBE_ALGOR_CipherInit (X509_ALGOR *algor, unsigned char *pass,
-	     int passlen, EVP_CIPHER_CTX *ctx, int en_de)
+int EVP_PBE_ALGOR_CipherInit (X509_ALGOR *algor, const char *pass,
+			      int passlen, EVP_CIPHER_CTX *ctx, int en_de)
 {
 	PBEPARAM *pbe;
 	int saltlen, iter;
 	unsigned char *salt, *pbuf;
 
 	/* Extract useful info from algor */
-	pbuf = (char *) algor->parameter->value.sequence->data;
+	pbuf = algor->parameter->value.sequence->data;
 	if (!(pbe = d2i_PBEPARAM (NULL, &pbuf,
 			 algor->parameter->value.sequence->length))) {
 		EVPerr(EVP_F_EVP_PBE_ALGOR_CIPHERINIT,EVP_R_DECODE_ERROR);

@@ -63,8 +63,8 @@
 #include "pkcs12.h"
 
 /* Generate a MAC */
-int PKCS12_gen_mac (PKCS12 *p12, unsigned char *pass, int passlen,
-	     unsigned char *mac, unsigned int *maclen)
+int PKCS12_gen_mac (PKCS12 *p12, const char *pass, int passlen,
+		    unsigned char *mac, unsigned int *maclen)
 {
 	const EVP_MD *md_type;
 	HMAC_CTX hmac;
@@ -92,7 +92,7 @@ int PKCS12_gen_mac (PKCS12 *p12, unsigned char *pass, int passlen,
 }
 
 /* Verify the mac */
-int PKCS12_verify_mac (PKCS12 *p12, unsigned char *pass, int passlen)
+int PKCS12_verify_mac (PKCS12 *p12, const char *pass, int passlen)
 {
 	unsigned char mac[EVP_MAX_MD_SIZE];
 	unsigned int maclen;
@@ -114,11 +114,12 @@ int PKCS12_verify_mac (PKCS12 *p12, unsigned char *pass, int passlen)
 
 /* Set a mac */
 
-int PKCS12_set_mac (PKCS12 *p12, unsigned char *pass, int passlen,
+int PKCS12_set_mac (PKCS12 *p12, const char *pass, int passlen,
 	     unsigned char *salt, int saltlen, int iter, EVP_MD *md_type)
 {
 	unsigned char mac[EVP_MAX_MD_SIZE];
-	int maclen;
+	unsigned int maclen;
+
 	if (!md_type) md_type = EVP_sha1();
 	if (PKCS12_setup_mac (p12, iter, salt, saltlen, md_type) ==
 				 	PKCS12_ERROR) {

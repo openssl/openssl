@@ -94,8 +94,9 @@
  */
 
 #ifndef NOPROTO
-static int do_ssl3_write(SSL *s, int type, const char *buf, unsigned int len);
-static int ssl3_write_pending(SSL *s, int type, const char *buf,
+static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
+			 unsigned int len);
+static int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 			      unsigned int len);
 static int ssl3_get_record(SSL *s);
 static int do_compress(SSL *ssl);
@@ -468,8 +469,9 @@ static int do_compress(SSL *ssl)
 /* Call this to write data
  * It will return <= 0 if not all data has been sent or non-blocking IO.
  */
-int ssl3_write_bytes(SSL *s, int type, const char *buf, int len)
+int ssl3_write_bytes(SSL *s, int type, const void *_buf, int len)
 	{
+	const unsigned char *buf=_buf;
 	unsigned int tot,n,nw;
 	int i;
 
@@ -513,8 +515,8 @@ int ssl3_write_bytes(SSL *s, int type, const char *buf, int len)
 		}
 	}
 
-static int do_ssl3_write(SSL *s, int type, const char *buf,
-	     unsigned int len)
+static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
+			 unsigned int len)
 	{
 	unsigned char *p,*plen;
 	int i,mac_size,clear=0;
@@ -628,8 +630,8 @@ err:
 	}
 
 /* if s->s3->wbuf.left != 0, we need to call this */
-static int ssl3_write_pending(SSL *s, int type, const char *buf,
-	     unsigned int len)
+static int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
+			      unsigned int len)
 	{
 	int i;
 
@@ -669,7 +671,7 @@ static int ssl3_write_pending(SSL *s, int type, const char *buf,
 		}
 	}
 
-int ssl3_read_bytes(SSL *s, int type, char *buf, int len)
+int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 	{
 	int al,i,j,n,ret;
 	SSL3_RECORD *rr;
@@ -1009,8 +1011,8 @@ int ssl3_do_write(SSL *s, int type)
 	{
 	int ret;
 
-	ret=ssl3_write_bytes(s,type,(char *)
-		&(s->init_buf->data[s->init_off]),s->init_num);
+	ret=ssl3_write_bytes(s,type,&s->init_buf->data[s->init_off],
+			     s->init_num);
 	if (ret == s->init_num)
 		return(1);
 	if (ret < 0) return(-1);
@@ -1043,7 +1045,7 @@ int ssl3_dispatch_alert(SSL *s)
 	void (*cb)()=NULL;
 
 	s->s3->alert_dispatch=0;
-	i=do_ssl3_write(s,SSL3_RT_ALERT,&(s->s3->send_alert[0]),2);
+	i=do_ssl3_write(s,SSL3_RT_ALERT,&s->s3->send_alert[0],2);
 	if (i <= 0)
 		{
 		s->s3->alert_dispatch=1;

@@ -471,7 +471,9 @@ void		ASN1_STRING_free(ASN1_STRING *a);
 ASN1_STRING *	ASN1_STRING_dup(ASN1_STRING *a);
 ASN1_STRING *	ASN1_STRING_type_new(int type );
 int 		ASN1_STRING_cmp(ASN1_STRING *a, ASN1_STRING *b);
-int 		ASN1_STRING_set(ASN1_STRING *str,unsigned char *data, int len);
+  /* Since this is used to store all sorts of things, via macros, for now, make
+     its data void * */
+int 		ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
 
 int		i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a,unsigned char **pp);
 ASN1_BIT_STRING *d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,unsigned char **pp,

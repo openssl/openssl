@@ -72,7 +72,7 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 	X509 *tcert;
 	int i;
 	unsigned char keyid[EVP_MAX_MD_SIZE];
-	int keyidlen;
+	unsigned int keyidlen;
 
 	/* Set defaults */
 	if(!nid_cert) nid_cert = NID_pbe_WithSHA1And40BitRC2_CBC;
@@ -115,7 +115,7 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 
 	/* Turn certbags into encrypted authsafe */
 	authsafe = PKCS12_pack_p7encdata (nid_cert, pass, -1, NULL, 0,
-								 iter, bags);
+					  iter, bags);
 	sk_pop_free(bags, PKCS12_SAFEBAG_free);
 
 	if (!authsafe) return NULL;
@@ -151,7 +151,8 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 
 	sk_pop_free(safes, PKCS7_free);
 
-	if(!PKCS12_set_mac (p12, pass, -1, NULL, 0, mac_iter, NULL)) return NULL;
+	if(!PKCS12_set_mac (p12, pass, -1, NULL, 0, mac_iter, NULL))
+	    return NULL;
 
 	return p12;
 

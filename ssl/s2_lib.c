@@ -393,7 +393,7 @@ void ssl2_return_error(SSL *s, int err)
 
 void ssl2_write_error(SSL *s)
 	{
-	char buf[3];
+	unsigned char buf[3];
 	int i,error;
 
 	buf[0]=SSL2_MT_ERROR;
