@@ -53,10 +53,10 @@
  *
  */
 
+#include <openssl/opensslconf.h>
+
 #ifndef HEADER_E_OS2_H
 #define HEADER_E_OS2_H
-
-#include <openssl/opensslconf.h> /* OPENSSL_UNISTD */
 
 #ifdef  __cplusplus
 extern "C" {
@@ -108,6 +108,9 @@ extern "C" {
 #if defined(OPENSSL_SYS_WIN16) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINNT)
 # undef OPENSSL_SYS_UNIX
 # define OPENSSL_SYS_WINDOWS
+# ifndef OPENSSL_SYS_MSDOS
+#  define OPENSSL_SYS_MSDOS
+# endif
 #endif
 
 /* -------------------------------- OpenVMS -------------------------------- */
