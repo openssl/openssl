@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/09/14 08:45:43 $
+  ______________                           $Date: 2001/09/25 10:30:15 $
 
   DEVELOPMENT STATE
 
@@ -50,6 +50,8 @@
 	OCSP
 
   NEEDS PATCH
+
+    o  'openssl speed' should include AES support (0.9.7-dev)
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
 
