@@ -411,8 +411,8 @@ my %table=(
 
 # Windows NT, Microsoft Visual C++ 4.0
 
-"VC-NT","cl::::WINNT::BN_LLONG RC4_INDEX ${x86_gcc_opts}::::::::::win32",
-"VC-WIN32","cl::::WIN32::BN_LLONG RC4_INDEX ${x86_gcc_opts}::::::::::win32",
+"VC-NT","cl::::WINNT::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}::::::::::win32",
+"VC-WIN32","cl::::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}::::::::::win32",
 "VC-WIN16","cl:::(unknown):WIN16::MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
 "VC-W31-16","cl:::(unknown):WIN16::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 "VC-W31-32","cl::::WIN16::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",

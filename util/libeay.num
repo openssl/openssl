@@ -2516,3 +2516,8 @@ UI_add_info_string                      2978	EXIST::FUNCTION:
 UI_get_result_minsize                   2979	EXIST::FUNCTION:
 UI_new                                  2980	EXIST::FUNCTION:
 UI_method_set_reader                    2981	EXIST::FUNCTION:
+X509_STORE_set_flags                    2982	EXIST::FUNCTION:
+X509_PURPOSE_set                        2983	EXIST::FUNCTION:
+X509_TRUST_set                          2984	EXIST::FUNCTION:
+X509_STORE_set_purpose                  2985	EXIST::FUNCTION:
+X509_STORE_set_trust                    2986	EXIST::FUNCTION:

@@ -994,7 +994,7 @@ sub is_valid
 			# EXPORT_VAR_AS_FUNCTION means that global variables
 			# will be represented as functions.  This currently
 			# only happens on VMS-VAX.
-			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && $VMSVAX) {
+			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && ($VMSVAX || $W32)) {
 				return 1;
 			}
 			return 0;
