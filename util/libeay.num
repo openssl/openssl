@@ -2463,3 +2463,14 @@ ASN1_OBJECT_it                          2927	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIA
 ASN1_OBJECT_it                          2927	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 OCSP_crlID_new                          2928	EXIST:!VMS,!WIN16:FUNCTION:
 OCSP_crlID2_new                         2928	EXIST:VMS,WIN16:FUNCTION:
+ENGINE_ctrl_cmd_string                  2929	EXIST::FUNCTION:
+ENGINE_get_cmd_defns                    2930	EXIST::FUNCTION:
+ENGINE_set_load_privkey_function        2931	EXIST::FUNCTION:
+ENGINE_cmd_is_executable                2932	EXIST::FUNCTION:
+ENGINE_set_load_pubkey_function         2933	EXIST::FUNCTION:
+ENGINE_get_load_pubkey_function         2934	EXIST::FUNCTION:
+ENGINE_set_cmd_defns                    2935	EXIST::FUNCTION:
+ENGINE_get_flags                        2936	EXIST::FUNCTION:
+ENGINE_cpy                              2937	EXIST::FUNCTION:
+ENGINE_set_flags                        2938	EXIST::FUNCTION:
+ENGINE_get_load_privkey_function        2939	EXIST::FUNCTION:
