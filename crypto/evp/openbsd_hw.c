@@ -47,20 +47,21 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/rsa.h>
+#include "evp_locl.h"
+
+/* check flag after OpenSSL headers to ensure make depend works */
+#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <crypto/cryptodev.h>
 #include <unistd.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/rsa.h>
-#include "evp_locl.h"
 #include <assert.h>
-
-/* check flag after headers to ensure make depend works */
-#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
 
 /* longest key supported in hardware */
 #define MAX_HW_KEY	24
