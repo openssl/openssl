@@ -679,6 +679,8 @@ id-ce 35		: authorityKeyIdentifier : X509v3 Authority Key Identifier
 id-ce 36		: policyConstraints	: X509v3 Policy Constraints
 !Cname ext-key-usage
 id-ce 37		: extendedKeyUsage	: X509v3 Extended Key Usage
+!Cname inhibit-any-policy
+id-ce 54		: inhibitAnyPolicy	: X509v3 Inhibit Any Policy
 !Cname target-information
 id-ce 55		: targetInformation	: X509v3 AC Targeting
 !Cname no-rev-avail

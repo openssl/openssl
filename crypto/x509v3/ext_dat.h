@@ -3,7 +3,7 @@
  * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,7 +65,7 @@ extern X509V3_EXT_METHOD v3_ocsp_nonce, v3_ocsp_accresp, v3_ocsp_acutoff;
 extern X509V3_EXT_METHOD v3_ocsp_crlid, v3_ocsp_nocheck, v3_ocsp_serviceloc;
 extern X509V3_EXT_METHOD v3_crl_hold;
 extern X509V3_EXT_METHOD v3_policy_mappings, v3_policy_constraints;
-extern X509V3_EXT_METHOD v3_name_constraints;
+extern X509V3_EXT_METHOD v3_name_constraints, v3_inhibit_anyp;
 
 /* This table will be searched using OBJ_bsearch so it *must* kept in
  * order of the ext_nid values.
@@ -111,7 +111,8 @@ static X509V3_EXT_METHOD *standard_exts[] = {
 &v3_crl_hold,
 #endif
 &v3_policy_mappings,
-&v3_name_constraints
+&v3_name_constraints,
+&v3_inhibit_anyp
 };
 
 /* Number of standard extensions */

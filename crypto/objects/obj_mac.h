@@ -2082,6 +2082,11 @@
 #define NID_ext_key_usage		126
 #define OBJ_ext_key_usage		OBJ_id_ce,37L
 
+#define SN_inhibit_any_policy		"inhibitAnyPolicy"
+#define LN_inhibit_any_policy		"X509v3 Inhibit Any Policy"
+#define NID_inhibit_any_policy		736
+#define OBJ_inhibit_any_policy		OBJ_id_ce,54L
+
 #define SN_target_information		"targetInformation"
 #define LN_target_information		"X509v3 AC Targeting"
 #define NID_target_information		402

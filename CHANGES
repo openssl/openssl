@@ -4,6 +4,9 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Support for inhibitAnyPolicy certificate extension.
+     [Steve Henson]
+
   *) An audit of the BIGNUM code is underway, for which debugging code is
      enabled when BN_DEBUG is defined. This makes stricter enforcements on what
      is considered valid when processing BIGNUMs, and causes execution to

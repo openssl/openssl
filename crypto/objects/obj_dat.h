@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 736
-#define NUM_SN 731
-#define NUM_LN 731
-#define NUM_OBJ 693
+#define NUM_NID 737
+#define NUM_SN 732
+#define NUM_LN 732
+#define NUM_OBJ 694
 
-static unsigned char lvalues[4882]={
+static unsigned char lvalues[4885]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -761,6 +761,7 @@ static unsigned char lvalues[4882]={
 0x00,                                        /* [4878] OBJ_itu_t */
 0x50,                                        /* [4879] OBJ_joint_iso_itu_t */
 0x67,                                        /* [4880] OBJ_international_organizations */
+0x55,0x1D,0x36,                              /* [4881] OBJ_inhibit_any_policy */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1906,6 +1907,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"DES-CFB8","des-cfb8",NID_des_cfb8,0,NULL},
 {"DES-EDE3-CFB1","des-ede3-cfb1",NID_des_ede3_cfb1,0,NULL},
 {"DES-EDE3-CFB8","des-ede3-cfb8",NID_des_ede3_cfb8,0,NULL},
+{"inhibitAnyPolicy","X509v3 Inhibit Any Policy",
+	NID_inhibit_any_policy,3,&(lvalues[4881]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2323,6 +2326,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[249]),/* "id-smime-spq-ets-sqt-uri" */
 &(nid_objs[527]),/* "identified-organization" */
 &(nid_objs[461]),/* "info" */
+&(nid_objs[736]),/* "inhibitAnyPolicy" */
 &(nid_objs[101]),/* "initials" */
 &(nid_objs[723]),/* "international-organizations" */
 &(nid_objs[142]),/* "invalidityDate" */
@@ -2736,6 +2740,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[89]),/* "X509v3 Certificate Policies" */
 &(nid_objs[140]),/* "X509v3 Delta CRL Indicator" */
 &(nid_objs[126]),/* "X509v3 Extended Key Usage" */
+&(nid_objs[736]),/* "X509v3 Inhibit Any Policy" */
 &(nid_objs[86]),/* "X509v3 Issuer Alternative Name" */
 &(nid_objs[83]),/* "X509v3 Key Usage" */
 &(nid_objs[720]),/* "X509v3 Name Constraints" */
@@ -3436,6 +3441,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[90]),/* OBJ_authority_key_identifier     2 5 29 35 */
 &(nid_objs[401]),/* OBJ_policy_constraints           2 5 29 36 */
 &(nid_objs[126]),/* OBJ_ext_key_usage                2 5 29 37 */
+&(nid_objs[736]),/* OBJ_inhibit_any_policy           2 5 29 54 */
 &(nid_objs[402]),/* OBJ_target_information           2 5 29 55 */
 &(nid_objs[403]),/* OBJ_no_rev_avail                 2 5 29 56 */
 &(nid_objs[577]),/* OBJ_set_ctype                    2 23 42 0 */
