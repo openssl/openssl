@@ -285,6 +285,7 @@ $       if alg_entry .eqs. "" then goto loop2
 $       if alg_entry .nes. ","
 $       then
 $         if alg_entry .eqs. "KRB5" then goto loop ! Special for now
+$	  if alg_entry .eqs. "STATIC_ENGINE" then goto loop ! Special for now
 $         if f$trnlnm("OPENSSL_NO_"+alg_entry) .nes. "" then goto loop
 $	  goto loop2
 $       endif
