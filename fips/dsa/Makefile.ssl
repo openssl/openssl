@@ -41,7 +41,7 @@ all:	check lib
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
+	@sleep 2; touch lib
 
 check:
 	TOP=`pwd`/$(TOP) ../fips_check_sha1 fingerprint.sha1 $(SRC) $(HEADER)
