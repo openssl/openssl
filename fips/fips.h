@@ -54,6 +54,7 @@
  * available even without -lfips.
  */
 extern int FIPS_mode;
+extern int FIPS_selftest_fail;
 extern void *FIPS_rand_check;
 struct dsa_st;
 
@@ -79,6 +80,9 @@ void ERR_load_FIPS_strings(void);
 /* Error codes for the FIPS functions. */
 
 /* Function codes. */
+#define FIPS_F_DSA_DO_SIGN				 111
+#define FIPS_F_DSA_DO_VERIFY				 112
+#define FIPS_F_DSA_GENERATE_PARAMETERS			 110
 #define FIPS_F_FIPS_CHECK_EXE				 106
 #define FIPS_F_FIPS_DSA_CHECK				 102
 #define FIPS_F_FIPS_MODE_SET				 105
@@ -88,6 +92,8 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_SELFTEST_RSA			 108
 #define FIPS_F_FIPS_SELFTEST_SHA1			 103
 #define FIPS_F_HASH_FINAL				 100
+#define FIPS_F_RSA_EAY_PUBLIC_ENCRYPT			 114
+#define FIPS_F_RSA_GENERATE_KEY				 113
 #define FIPS_F_SSLEAY_RAND_BYTES			 101
 
 /* Reason codes. */
@@ -95,6 +101,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_R_CANNOT_READ_EXE_DIGEST			 104
 #define FIPS_R_EXE_DIGEST_DOES_NOT_MATCH		 105
 #define FIPS_R_FIPS_MODE_ALREADY_SET			 102
+#define FIPS_R_FIPS_SELFTEST_FAILED			 106
 #define FIPS_R_NON_FIPS_METHOD				 100
 #define FIPS_R_SELFTEST_FAILED				 101
 

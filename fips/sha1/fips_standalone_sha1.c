@@ -52,6 +52,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int FIPS_selftest_fail;
+
 int main(int argc,char **argv)
     {
 #ifdef OPENSSL_FIPS

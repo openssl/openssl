@@ -125,6 +125,12 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	int i,reason=ERR_R_BN_LIB;
 	DSA_SIG *ret=NULL;
 
+	if(FIPS_selftest_fail)
+	    {
+	    FIPSerr(FIPS_F_DSA_DO_SIGN,FIPS_R_FIPS_SELFTEST_FAILED);
+	    return NULL;
+	    }
+
 	BN_init(&m);
 	BN_init(&xr);
 
@@ -258,11 +264,18 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	BIGNUM u1,u2,t1;
 	BN_MONT_CTX *mont=NULL;
 	int ret = -1;
+
 	if (!dsa->p || !dsa->q || !dsa->g)
 		{
 		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_MISSING_PARAMETERS);
 		return -1;
 		}
+
+	if(FIPS_selftest_fail)
+	    {
+	    FIPSerr(FIPS_F_DSA_DO_VERIFY,FIPS_R_FIPS_SELFTEST_FAILED);
+	    return -1;
+	    }
 
 	BN_init(&u1);
 	BN_init(&u2);

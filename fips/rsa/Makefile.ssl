@@ -84,7 +84,7 @@ clean:
 fips_rsa_eay.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_rsa_eay.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 fips_rsa_eay.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_rsa_eay.o: ../../include/openssl/lhash.h
+fips_rsa_eay.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
 fips_rsa_eay.o: ../../include/openssl/opensslconf.h
 fips_rsa_eay.o: ../../include/openssl/opensslv.h
 fips_rsa_eay.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
@@ -94,7 +94,7 @@ fips_rsa_eay.o: fips_rsa_eay.c
 fips_rsa_gen.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_rsa_gen.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 fips_rsa_gen.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_rsa_gen.o: ../../include/openssl/lhash.h
+fips_rsa_gen.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
 fips_rsa_gen.o: ../../include/openssl/opensslconf.h
 fips_rsa_gen.o: ../../include/openssl/opensslv.h
 fips_rsa_gen.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rsa.h

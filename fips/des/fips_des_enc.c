@@ -57,6 +57,7 @@
  */
 
 #include "fips_des_locl.h"
+#include <openssl/fips.h>
 
 #ifdef OPENSSL_FIPS
 
@@ -70,6 +71,12 @@ void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 	register int i;
 #endif
 	register DES_LONG *s;
+
+	if(FIPS_selftest_fail)
+	    {
+	    data[0]=data[1]=0;
+	    return;
+	    }
 
 	r=data[0];
 	l=data[1];
@@ -168,6 +175,12 @@ void DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 	register int i;
 #endif
 	register DES_LONG *s;
+
+	if(FIPS_selftest_fail)
+	    {
+	    data[0]=data[1]=0;
+	    return;
+	    }
 
 	r=data[0];
 	l=data[1];

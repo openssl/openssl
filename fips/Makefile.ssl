@@ -105,7 +105,14 @@ tests:
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' tests ); \
 	done;
 
-fips_test:
+top_fips_test_suite:
+	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=. TARGET=fips_test_suite sub_target)
+
+fips_test_suite: fips_test_suite.o $(TOP)/libcrypto.a
+	$(CC) $(CFLAGS) -o fips_test_suite fips_test_suite.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
+	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_test_suite || { rm fips_test_suite; false; }
+
+fips_test: top top_fips_test_suite
 	@for i in dsa sha1 aes des ; \
 	do \
 		(cd $$i && echo "making fips_test in fips/$$i..." && make fips_test) \
@@ -186,4 +193,10 @@ fips.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 fips.o: ../include/openssl/sha.h ../include/openssl/stack.h
 fips.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
 fips.o: ../include/openssl/ui_compat.h fips.c fips_locl.h
-fips_err_wrapper.o: ../include/openssl/opensslconf.h fips_err_wrapper.c
+fips_err_wrapper.o: ../include/openssl/bio.h ../include/openssl/crypto.h
+fips_err_wrapper.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+fips_err_wrapper.o: ../include/openssl/fips.h ../include/openssl/lhash.h
+fips_err_wrapper.o: ../include/openssl/opensslconf.h
+fips_err_wrapper.o: ../include/openssl/opensslv.h
+fips_err_wrapper.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+fips_err_wrapper.o: ../include/openssl/symhacks.h fips_err.h fips_err_wrapper.c

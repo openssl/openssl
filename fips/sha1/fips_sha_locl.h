@@ -61,6 +61,7 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/sha.h>
+#include <openssl/fips.h>
 
 #ifndef SHA_LONG_LOG2
 #define SHA_LONG_LOG2	2	/* default to 32 bits */
@@ -232,6 +233,9 @@ void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, int num)
 	SHA_LONG	XX[16];
 #endif
 
+	if(FIPS_selftest_fail)
+	    return;
+
 	A=c->h0;
 	B=c->h1;
 	C=c->h2;
@@ -356,6 +360,9 @@ void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, int num)
 #else
 	SHA_LONG	XX[16];
 #endif
+
+	if(FIPS_selftest_fail)
+	    return;
 
 	A=c->h0;
 	B=c->h1;

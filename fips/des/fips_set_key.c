@@ -63,9 +63,10 @@
  * 1.1 added norm_expand_bits
  * 1.0 First working version
  */
-#include "des_locl.h"
+#include "fips_des_locl.h"
+#include "../fips.h"
 
-#ifndef OPENSSL_FIPS
+#ifdef OPENSSL_FIPS
 
 OPENSSL_IMPLEMENT_GLOBAL(int,DES_check_key);	/* defaults to false */
 
@@ -332,6 +333,9 @@ int DES_set_key_checked(const_DES_cblock *key, DES_key_schedule *schedule)
 		return(-1);
 	if (DES_is_weak_key(key))
 		return(-2);
+	if (FIPS_selftest_fail)
+		return -3;
+
 	DES_set_key_unchecked(key, schedule);
 	return 0;
 	}
@@ -408,4 +412,4 @@ void des_fixup_key_parity(des_cblock *key)
 	}
 */
 
-#endif /* ndef OPENSSL_FIPS */
+#endif /* def OPENSSL_FIPS */

@@ -83,6 +83,8 @@
 #endif
 #ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
+#include <openssl/fips.h>
+#include <openssl/err.h>
 
 #ifdef OPENSSL_FIPS
 
@@ -106,6 +108,13 @@ DSA *DSA_generate_parameters(int bits,
 	unsigned int h=2;
 	DSA *ret=NULL;
 	unsigned char *seed_out=seed_in;
+
+	if(FIPS_selftest_fail)
+	    {
+	    FIPSerr(FIPS_F_DSA_GENERATE_PARAMETERS,
+		    FIPS_R_FIPS_SELFTEST_FAILED);
+	    goto err;
+	    }
 
 	if (bits < 512) bits=512;
 	bits=(bits+63)/64*64;

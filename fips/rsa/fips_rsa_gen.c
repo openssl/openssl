@@ -61,6 +61,7 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
+#include <openssl/fips.h>
 
 #ifdef OPENSSL_FIPS
 
@@ -72,6 +73,12 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
 	int bitsp,bitsq,ok= -1,n=0,i;
 	BN_CTX *ctx=NULL,*ctx2=NULL;
 
+	if(FIPS_selftest_fail)
+	    {
+	    FIPSerr(FIPS_F_RSA_GENERATE_KEY,FIPS_R_FIPS_SELFTEST_FAILED);
+	    return NULL;
+	    }
+	    
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
 	ctx2=BN_CTX_new();

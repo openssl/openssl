@@ -60,6 +60,7 @@
 #ifdef OPENSSL_FIPS
 
 int FIPS_md5_allowed;
+int FIPS_selftest_fail;
 
 int FIPS_selftest()
     {
@@ -124,13 +125,22 @@ int FIPS_mode_set(int onoff,const char *path)
 	{
 	unsigned char buf[24];
 
+	FIPS_selftest_fail=0;
+
 	/* Don't go into FIPS mode twice, just so we can do automagic
 	   seeding */
 	if(FIPS_mode)
+	    {
 	    FIPSerr(FIPS_F_FIPS_MODE_SET,FIPS_R_FIPS_MODE_ALREADY_SET);
+	    FIPS_selftest_fail=1;
+	    return 0;
+	    }
 
 	if(!FIPS_check_exe(path))
+	    {
+	    FIPS_selftest_fail=1;
 	    return 0;
+	    }
 
 	/* automagically seed PRNG if not already seeded */
 	if(!FIPS_rand_seeded())
@@ -143,10 +153,17 @@ int FIPS_mode_set(int onoff,const char *path)
 	/* now switch into FIPS mode */
 	FIPS_rand_check=&rand_fips_meth;
 	RAND_set_rand_method(&rand_fips_meth);
-	FIPS_mode=onoff;
-	return FIPS_selftest();
+	if(FIPS_selftest())
+	    FIPS_mode=1;
+	else
+	    {
+	    FIPS_selftest_fail=1;
+	    return 0;
+	    }
+	return 1;
 	}
-    FIPS_mode=onoff;
+    FIPS_mode=0;
+    FIPS_selftest_fail=0;
     return 1;
     }
 
@@ -160,6 +177,7 @@ void FIPS_allow_md5(int onoff)
 static void dummy()
     {
     FIPSerr(FIPS_F_HASH_FINAL,FIPS_F_NON_FIPS_METHOD);
+    FIPSerr(FIPS_F_HASH_FINAL,FIPS_R_FIPS_SELFTEST_FAILED);
     }
 #endif
 

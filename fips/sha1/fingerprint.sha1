@@ -1,4 +1,4 @@
 SHA1(fips_sha1dgst.c)= c197020b866c1ab32f1e30f5599592e14fcaa925
 SHA1(fips_sha1_selftest.c)= 55fef82fa5f4aec6b1359847fe50555ff77cec49
-SHA1(fips_sha_locl.h)= 677427c495b571991f013939ea7e5dea87828f8c
+SHA1(fips_sha_locl.h)= 623de315f9a7e320a19bce0fad25d4ca1ab085c3
 SHA1(fips_md32_common.h)= 4f41bcde24750b3b8c99a06bcba2fe06ff8db4d0

@@ -66,15 +66,20 @@
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA FIPS_str_functs[]=
 	{
+{ERR_PACK(0,FIPS_F_DSA_DO_SIGN,0),	"DSA_do_sign"},
+{ERR_PACK(0,FIPS_F_DSA_DO_VERIFY,0),	"DSA_do_verify"},
+{ERR_PACK(0,FIPS_F_DSA_GENERATE_PARAMETERS,0),	"DSA_generate_parameters"},
 {ERR_PACK(0,FIPS_F_FIPS_CHECK_EXE,0),	"FIPS_CHECK_EXE"},
 {ERR_PACK(0,FIPS_F_FIPS_DSA_CHECK,0),	"FIPS_dsa_check"},
 {ERR_PACK(0,FIPS_F_FIPS_MODE_SET,0),	"FIPS_mode_set"},
 {ERR_PACK(0,FIPS_F_FIPS_SELFTEST_AES,0),	"FIPS_selftest_aes"},
 {ERR_PACK(0,FIPS_F_FIPS_SELFTEST_DES,0),	"FIPS_selftest_des"},
-{ERR_PACK(0,FIPS_F_FIPS_SELFTEST_DSA,0),	"FIPS_SELFTEST_DSA"},
+{ERR_PACK(0,FIPS_F_FIPS_SELFTEST_DSA,0),	"FIPS_selftest_dsa"},
 {ERR_PACK(0,FIPS_F_FIPS_SELFTEST_RSA,0),	"FIPS_selftest_rsa"},
 {ERR_PACK(0,FIPS_F_FIPS_SELFTEST_SHA1,0),	"FIPS_selftest_sha1"},
 {ERR_PACK(0,FIPS_F_HASH_FINAL,0),	"HASH_FINAL"},
+{ERR_PACK(0,FIPS_F_RSA_EAY_PUBLIC_ENCRYPT,0),	"RSA_EAY_PUBLIC_ENCRYPT"},
+{ERR_PACK(0,FIPS_F_RSA_GENERATE_KEY,0),	"RSA_generate_key"},
 {ERR_PACK(0,FIPS_F_SSLEAY_RAND_BYTES,0),	"SSLEAY_RAND_BYTES"},
 {0,NULL}
 	};
@@ -85,6 +90,7 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 {FIPS_R_CANNOT_READ_EXE_DIGEST           ,"cannot read exe digest"},
 {FIPS_R_EXE_DIGEST_DOES_NOT_MATCH        ,"exe digest does not match"},
 {FIPS_R_FIPS_MODE_ALREADY_SET            ,"fips mode already set"},
+{FIPS_R_FIPS_SELFTEST_FAILED             ,"fips selftest failed"},
 {FIPS_R_NON_FIPS_METHOD                  ,"non fips method"},
 {FIPS_R_SELFTEST_FAILED                  ,"selftest failed"},
 {0,NULL}

@@ -61,6 +61,7 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
+#include <openssl/fips.h>
 
 #if !defined(RSA_NULL) && defined(OPENSSL_FIPS)
 
@@ -106,6 +107,13 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 
 	BN_init(&f);
 	BN_init(&ret);
+
+	if(FIPS_selftest_fail)
+		{
+		FIPSerr(FIPS_F_RSA_EAY_PUBLIC_ENCRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
+		goto err;
+		}
+
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	num=BN_num_bytes(rsa->n);
 	if ((buf=(unsigned char *)OPENSSL_malloc(num)) == NULL)

@@ -1,3 +1,4 @@
-SHA1(fips_des_enc.c)= 75389f527cc456178e6a2e35f82bf49f98fe3e90
+SHA1(fips_des_enc.c)= 41388beadcafe125a8025968ff91b7dc60b96c49
 SHA1(fips_des_selftest.c)= d81ee4db762d89cca749138a99100d342f195665
+SHA1(fips_set_key.c)= 1e3dc1e0d02f0ab4d8fdd5e1f4db284cad1510f4
 SHA1(fips_des_locl.h)= a4cf60ca32476a2483b3e4460ec9a19c0444fd20

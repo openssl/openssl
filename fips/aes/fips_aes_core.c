@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <openssl/aes.h>
 #include "fips_aes_locl.h"
+#include <openssl/fips.h>
 
 #ifdef OPENSSL_FIPS
 
@@ -737,6 +738,8 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 		return -1;
 	if (bits != 128 && bits != 192 && bits != 256)
 		return -2;
+	if(FIPS_selftest_fail)
+		return -3;
 
 	rk = key->rd_key;
 
