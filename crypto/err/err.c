@@ -720,7 +720,7 @@ static unsigned long get_error_values(int inc, int top, const char **file, int *
 
 	if (es->bottom == es->top) return 0;
 	if (top)
-		i=(es->bottom+1)%ERR_NUM_ERRORS; /* last error */
+		i=es->top;			 /* last error */
 	else
 		i=(es->bottom+1)%ERR_NUM_ERRORS; /* first error */
 
