@@ -62,9 +62,10 @@ struct bio_bio_st
 	size_t size;
 	char *buf;      /* "size" elements (if != NULL) */
 
-	size_t request; /* valid iff peer != NULL; 0 if len != 0;
+	size_t request; /* valid iff peer != NULL; 0 if len != 0,
 	                 * otherwise set by peer to number of bytes
-	                 * it (unsuccesfully) tried to read. */
+	                 * it (unsuccesfully) tried to read,
+	                 * never more than buffer space (size-len) warrants. */
 };
 
 static int bio_new(BIO *bio)
