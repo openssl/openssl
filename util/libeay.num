@@ -1304,13 +1304,12 @@ i2d_SXNETID                             1329
 d2i_SXNETID                             1330
 SXNETID_new                             1331
 SXNETID_free                            1332
-DSA_SIG_new								1333
-DSA_SIG_free							1334
-DSA_do_sign								1335
-DSA_do_verify							1336
-d2i_DSA_SIG								1337
-i2d_DSA_SIG								1338
-
+DSA_SIG_new                             1333
+DSA_SIG_free                            1334
+DSA_do_sign                             1335
+DSA_do_verify                           1336
+d2i_DSA_SIG                             1337
+i2d_DSA_SIG                             1338
 i2d_ASN1_VISIBLESTRING                  1339
 d2i_ASN1_VISIBLESTRING                  1340
 i2d_ASN1_UTF8STRING                     1341

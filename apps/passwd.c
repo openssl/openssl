@@ -20,7 +20,7 @@
 # include <openssl/des.h>
 #endif
 #ifndef NO_APR1
-# include <openssl/des.h>
+# include <openssl/md5.h>
 #endif
 
 
@@ -323,13 +323,13 @@ static char *apr1_crypt(const char *passwd, const char *salt)
 		MD5_CTX md2;
 
 		MD5_Init(&md2);
-		MD5_Update(&md2, (i & 1) ?     passwd : buf,
+		MD5_Update(&md2, (i & 1) ? (unsigned char *) passwd : buf,
 		                 (i & 1) ? passwd_len : sizeof buf);
 		if (i % 3)
 			MD5_Update(&md2, salt_out, salt_len);
 		if (i % 7)
 			MD5_Update(&md2, passwd, passwd_len);
-		MD5_Update(&md2, (i & 1) ?        buf : passwd,
+		MD5_Update(&md2, (i & 1) ? buf : (unsigned char *) passwd,
 		                 (i & 1) ? sizeof buf : passwd_len);
 		MD5_Final(buf, &md2);
 		}

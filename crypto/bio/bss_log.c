@@ -133,11 +133,10 @@ static int MS_CALLBACK slg_write(BIO *b, char *in, int inl)
 	char* buf= in;
 	char* pp;
 #if defined(WIN32)
-	LPTSTR lpszStrings[2];
+	LPCSTR lpszStrings[2];
 	WORD evtype= EVENTLOG_ERROR_TYPE;
 	int pid = _getpid();
 	char pidbuf[20];
-	int pidbufl;
 #else
 	int priority;
 #endif

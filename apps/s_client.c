@@ -508,6 +508,7 @@ re_start:
 			 * are any keypresses. Note: this is a hack, in a proper
 			 * Windows application we wouldn't do this.
 			 */
+			i=0;
 			if(!write_tty) {
 				if(read_tty) {
 					tv.tv_sec = 1;
