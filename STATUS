@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/02/27 17:56:54 $
+  ______________                           $Date: 2000/02/27 18:55:01 $
 
   DEVELOPMENT STATE
 
@@ -24,6 +24,8 @@
                          OpenVMS V7.1/Alpha   - test passed
                          OpenVMS V7.2-1/Alpha - test passed
                          OpenVMS V7.1/VAX     - test failed on BN (config prob)
+			 irix-mips3-cc        - test passed
+			 irix64-mips4-cc      - test passed
                        Proposed release time: Monday, February 28th 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
     o  OpenSSL 0.9.3a: Released on May      29th, 1999
