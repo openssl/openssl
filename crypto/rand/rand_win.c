@@ -525,11 +525,12 @@ void RAND_screen(void) /* function available for backward compatibility */
 /* feed timing information to the PRNG */
 static void readtimer(void)
 {
-	DWORD w, cyclecount;
+	DWORD w;
 	LARGE_INTEGER l;
 	static int have_perfc = 1;
 #ifndef __GNUC__
 	static int have_tsc = 1;
+	DWORD cyclecount;
 
 	if (have_tsc) {
 	  __try {
