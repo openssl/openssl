@@ -4,6 +4,9 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Add version info to Win32 DLLs.
+     [Peter 'Luna' Runestig" <peter@runestig.com>]
+
   *) Add new 'medium level' PKCS#12 API. Certificates and keys
      can be added using this API to created arbitrary PKCS#12
      files while avoiding the low level API.

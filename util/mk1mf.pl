@@ -288,6 +288,7 @@ SRC_D=$src_dir
 
 LINK=$link
 LFLAGS=$lflags
+RSC=$rsc
 
 BN_ASM_OBJ=$bn_asm_obj
 BN_ASM_SRC=$bn_asm_src
@@ -600,6 +601,18 @@ foreach (values %lib_nam)
 	$rules.=&do_compile_rule("\$(OBJ_D)",$lib_obj{$_},$lib);
 	}
 
+# hack to add version info on MSVC
+if (($platform eq "VC-WIN32") || ($platform eq "VC-NT")) {
+    $rules.= <<"EOF";
+\$(OBJ_D)\\\$(CRYPTO).res: ms\\version32.rc
+	\$(RSC) /fo"\$(OBJ_D)\\\$(CRYPTO).res" /d CRYPTO ms\\version32.rc
+
+\$(OBJ_D)\\\$(SSL).res: ms\\version32.rc
+	\$(RSC) /fo"\$(OBJ_D)\\\$(SSL).res" /d SSL ms\\version32.rc
+
+EOF
+}
+
 $defs.=&do_defs("T_EXE",$test,"\$(TEST_D)",$exep);
 foreach (split(/\s+/,$test))
 	{
@@ -754,6 +767,14 @@ sub do_defs
 
 		$Vars{$var}.="$t ";
 		$ret.=$t;
+		}
+	# hack to add version info on MSVC
+	if ($shlib && ($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
+		{
+		if ($var eq "CRYPTOOBJ")
+			{ $ret.="\$(OBJ_D)\\\$(CRYPTO).res "; }
+		elsif ($var eq "SSLOBJ")
+			{ $ret.="\$(OBJ_D)\\\$(SSL).res "; }
 		}
 	chop($ret);
 	$ret.="\n\n";

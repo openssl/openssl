@@ -32,6 +32,7 @@ $ofile="/Fo";
 
 # EXE linking stuff
 $link="link";
+$rsc="rc";
 $efile="/out:";
 $exep='.exe';
 if ($no_sock)
