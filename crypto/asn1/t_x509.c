@@ -158,6 +158,7 @@ int X509_print(BIO *bp, X509 *x)
 	if (pkey == NULL)
 		{
 		BIO_printf(bp,"%12sUnable to load Public Key\n","");
+		ERR_print_errors(bp);
 		}
 	else
 #ifndef NO_RSA
