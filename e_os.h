@@ -191,6 +191,14 @@ extern "C" {
 
 #if (defined(WINDOWS) || defined(MSDOS))
 
+#  ifdef __DJGPP__
+#    include <unistd.h>
+#    include <sys/stat.h>
+#    define _setmode setmode
+#    define _O_TEXT O_TEXT
+#    define _O_BINARY O_BINARY
+#  endif /* __DJGPP__ */
+
 #  ifndef S_IFDIR
 #    define S_IFDIR	_S_IFDIR
 #  endif
@@ -336,7 +344,7 @@ extern "C" {
 /*************/
 
 #ifdef USE_SOCKETS
-#  if defined(WINDOWS) || defined(MSDOS)
+#  if (defined(WINDOWS) || defined(MSDOS)) && !defined(__DJGPP__)
       /* windows world */
 
 #    ifdef OPENSSL_NO_SOCK
@@ -423,7 +431,9 @@ extern HINSTANCE _hInstance;
 #    define SSLeay_Write(a,b,c)    write((a),(b),(c))
 #    define SHUTDOWN(fd)    { shutdown((fd),0); closesocket((fd)); }
 #    define SHUTDOWN2(fd)   { shutdown((fd),2); closesocket((fd)); }
+#    ifndef INVALID_SOCKET
 #    define INVALID_SOCKET	(-1)
+#    endif /* INVALID_SOCKET */
 #  endif
 #endif
 

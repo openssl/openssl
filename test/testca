@@ -1,7 +1,11 @@
 #!/bin/sh
 
 SH="/bin/sh"
-PATH=../apps:$PATH
+if test "$OSTYPE" = msdosdjgpp; then
+    PATH=./apps\;../apps\;$PATH
+else
+    PATH=../apps:$PATH
+fi
 export SH PATH
 
 SSLEAY_CONFIG="-config CAss.cnf"

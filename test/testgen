@@ -6,7 +6,11 @@ CA=../certs/testca.pem
 
 /bin/rm -f $T.1 $T.2 $T.key
 
-PATH=../apps:$PATH;
+if test "$OSTYPE" = msdosdjgpp; then
+    PATH=../apps\;$PATH;
+else
+    PATH=../apps:$PATH;
+fi
 export PATH
 
 echo "generating certificate request"

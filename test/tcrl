@@ -1,6 +1,10 @@
 #!/bin/sh
 
-PATH=../apps:$PATH
+if test "$OSTYPE" = msdosdjgpp; then
+    PATH=../apps\;$PATH
+else
+    PATH=../apps:$PATH
+fi
 export PATH
 
 cmd='../apps/openssl crl'
