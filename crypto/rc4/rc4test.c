@@ -118,9 +118,7 @@ int main(int argc, char *argv[])
 	int j;
 	unsigned char *p;
 	RC4_KEY key;
-	unsigned char buf[512],obuf[512];
-
-	for (i=0; i<512; i++) buf[i]=0x01;
+	unsigned char obuf[512];
 
 	for (i=0; i<6; i++)
 		{
