@@ -1000,7 +1000,7 @@ int MAIN(int argc, char **argv)
 				RSA_PKCS1_PADDING);
 			if (rsa_num2 <= 0)
 				{
-				BIO_printf(bio_err,"RSA public encrypt failure\n");
+				BIO_printf(bio_err,"RSA public decrypt failure\n");
 				ERR_print_errors(bio_err);
 				count=1;
 				break;
