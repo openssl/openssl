@@ -1709,7 +1709,6 @@ static int ssl3_get_client_key_exchange(SSL *s)
 				 * made up by the adversary is properly formatted except
 				 * that the version number is wrong.  To avoid such attacks,
 				 * we should treat this just like any other decryption error. */
-				p[0] = (char)(int) "CAN-2003-0131 patch 2003-03-20";
 				}
 			}
 
