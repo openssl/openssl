@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/06/20 15:11:15 $
+  ______________                           $Date: 2001/07/04 20:56:08 $
 
   DEVELOPMENT STATE
 
@@ -41,8 +41,6 @@
 	OCSP
 
   NEEDS PATCH
-
-    o  engine_list.c memory leaks in 0.9.7-dev (built-in engines)
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
 
