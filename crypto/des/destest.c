@@ -789,7 +789,7 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 		{
 		/* XXX */
 		printf("des_xcbc_encrypt failed -- incorrest test values or buggy implementation?\n"
-			"Send e-mail to bugs@openssl.org if you do _not_ see this message :-)\n");
+			"Send e-mail to openssl-bugs@openssl.org if you do _not_ see this message :-)\n");
 		}
 	exit(err);
 	}
