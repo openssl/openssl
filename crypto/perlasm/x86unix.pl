@@ -526,7 +526,7 @@ sub main'file_end
 	if ($main'elf && grep {/%[x]*mm[0-7]/i} @out) {
 		local($tmp);
 
-		push (@out,"\n.comm\t".$under."OPENSSL_ia32cap,8,4\n");
+		push (@out,"\n.comm\t${under}OPENSSL_ia32cap_P,4,4\n");
 
 		push (@out,".section\t.init\n");
 		# One can argue that it's wasteful to craft every
@@ -536,7 +536,7 @@ sub main'file_end
 		#
 		# $1<<10 sets a reserved bit to signal that variable
 		# was initialized already...
-		&main'picmeup("edx","OPENSSL_ia32cap");
+		&main'picmeup("edx","OPENSSL_ia32cap_P");
 		$tmp=<<___;
 		cmpl	\$0,(%edx)
 		jne	1f
@@ -559,7 +559,6 @@ sub main'file_end
 		.word	0xa20f
 		orl	\$1<<10,%edx
 		movl	%edx,0(%edi)
-		movl	%ecx,4(%edi)
 		popl	%ebx
 		popl	%edi
 	.align	4
@@ -701,13 +700,32 @@ sub main'blindpop { &out1("popl",@_); }
 sub main'initseg
 	{
 	local($f)=@_;
+	local($tmp);
 	if ($main'elf)
 		{
-		local($tmp)=<<___;
-.pushsection	.init
+		$tmp=<<___;
+.section	.init
 	call	$under$f
-.popsection
 ___
-		push(@out,$tmp);
 		}
+	elsif ($main'coff)
+		{
+		$tmp=<<___;	# applies to both Cygwin and Mingw
+.section	.ctors
+.long	$under$f
+___
+		}
+	elsif ($main'aout)
+		{
+		$tmp=<<___;	# OpenBSD way...
+.text
+.globl	${under}_GLOBAL_\$I\$$f
+.align	2
+${under}_GLOBAL_\$I\$$f
+	jmp	$under$f
+___
+		}
+	push(@out,$tmp) if ($tmp);
 	}
+
+1;

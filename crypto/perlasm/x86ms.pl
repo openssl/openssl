@@ -170,8 +170,8 @@ sub main'nop	{ &out0("nop"); }
 sub main'test	{ &out2("test",@_); }
 sub main'bt	{ &out2("bt",@_); }
 sub main'leave	{ &out0("leave"); }
-sub main'cpuid	{ &out0("cpuid"); }
-sub main'rdtsc	{ &out0("rdtsc"); }
+sub main'cpuid  { &out0("DW\t0A20Fh"); }
+sub main'rdtsc  { &out0("DW\t0310Fh"); }
 
 # SSE2
 sub main'emms	{ &out0("emms"); }
@@ -329,7 +329,7 @@ sub main'file_end
 	{
 	# try to detect if SSE2 or MMX extensions were used...
 	if (grep {/xmm[0-7]\s*,/i} @out) {
-		grep {s/\.[3-7]86/\.786\n\t\.XMM/} @out;
+		grep {s/\.[3-7]86/\.686\n\t\.XMM/} @out;
 		}
 	elsif (grep {/mm[0-7]\s*,/i} @out) {
 		grep {s/\.[3-7]86/\.686\n\t\.MMX/} @out;
@@ -417,3 +417,18 @@ sub main'picmeup
 	}
 
 sub main'blindpop { &out1("pop",@_); }
+
+sub main'initseg 
+	{
+	local($f)=@_;
+	local($tmp)=<<___;
+OPTION	DOTNAME
+.CRT\$XIU	SEGMENT DWORD PUBLIC 'DATA'
+EXTRN	_$f:NEAR
+DD	_$f
+.CRT\$XIU	ENDS
+___
+	push(@out,$tmp);
+	}
+
+1;

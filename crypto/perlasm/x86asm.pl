@@ -18,7 +18,7 @@ sub main'asm_init
 	($type,$fn,$i386)=@_;
 	$filename=$fn;
 
-	$elf=$cpp=$coff=$aout=$win32=$netware=0;
+	$elf=$cpp=$coff=$aout=$win32=$netware=$mwerks=0;
 	if (	($type eq "elf"))
 		{ $elf=1; require "x86unix.pl"; }
 	elsif (	($type eq "a.out"))
@@ -32,9 +32,9 @@ sub main'asm_init
 	elsif (	($type eq "win32n"))
 		{ $win32=1; require "x86nasm.pl"; }
 	elsif (	($type eq "nw-nasm"))
-		{ $netware=1; require "x86nasm_nw.pl"; }
+		{ $netware=1; require "x86nasm.pl"; }
 	elsif (	($type eq "nw-mwasm"))
-		{ $netware=1; require "x86mwasm_nw.pl"; }
+		{ $netware=1; $mwerks=1; require "x86nasm.pl"; }
 	else
 		{
 		print STDERR <<"EOF";
