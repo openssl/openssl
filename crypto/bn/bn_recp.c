@@ -128,7 +128,7 @@ err:
 int BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BN_RECP_CTX *recp,
 	     BN_CTX *ctx)
 	{
-	int i,j,ret=0,ex;
+	int i,j,ret=0;
 	BIGNUM *a,*b,*d,*r;
 
 	BN_CTX_start(ctx);
@@ -158,40 +158,30 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, BIGNUM *m, BN_RECP_CTX *recp,
 	 *
 	 */
 	i=BN_num_bits(m);
-	if (i%2) i--;
 
-	j=recp->num_bits*2;
-	if (j > i)
-		{
-		i=j;
-		ex=0;
-		}
-	else
-		{
-		ex=(i-j)/2;
-		}
-
-	j=i/2;
+	j=recp->num_bits<<1;
+	if (j>i) i=j;
+	j>>=1;
 
 	if (i != recp->shift)
 		recp->shift=BN_reciprocal(&(recp->Nr),&(recp->N),
 			i,ctx);
 
-	if (!BN_rshift(a,m,j-ex)) goto err;
+	if (!BN_rshift(a,m,j)) goto err;
 	if (!BN_mul(b,a,&(recp->Nr),ctx)) goto err;
-	if (!BN_rshift(d,b,j+ex)) goto err;
+	if (!BN_rshift(d,b,i-j)) goto err;
 	d->neg=0;
 	if (!BN_mul(b,&(recp->N),d,ctx)) goto err;
 	if (!BN_usub(r,m,b)) goto err;
 	r->neg=0;
 
-	j=0;
 #if 1
+	j=0;
 	while (BN_ucmp(r,&(recp->N)) >= 0)
 		{
 		if (j++ > 2)
 			{
-#if 1
+#if 0
 			/* work around some bug:
 			   -1CC0E177F93042B29D309839F8019DB93404D7A395F1E162
 			   5383BF622A20B17E1BAA999336988B82B93F5FB77B55B4B68
