@@ -124,37 +124,52 @@ int ENGINE_free(ENGINE *e)
  * cleanup can register a "cleanup" callback here. That way we don't get linker
  * bloat by referring to all *possible* cleanups, but any linker bloat into code
  * "X" will cause X's cleanup function to end up here. */
-static STACK_OF(ENGINE_CLEANUP_CB) *cleanup_stack = NULL;
+static STACK_OF(ENGINE_CLEANUP_ITEM) *cleanup_stack = NULL;
 static int int_cleanup_check(int create)
 	{
 	if(cleanup_stack) return 1;
 	if(!create) return 0;
-	cleanup_stack = sk_ENGINE_CLEANUP_CB_new_null();
+	cleanup_stack = sk_ENGINE_CLEANUP_ITEM_new_null();
 	return (cleanup_stack ? 1 : 0);
+	}
+static ENGINE_CLEANUP_ITEM *int_cleanup_item(ENGINE_CLEANUP_CB *cb)
+	{
+	ENGINE_CLEANUP_ITEM *item = OPENSSL_malloc(sizeof(
+					ENGINE_CLEANUP_ITEM));
+	if(!item) return NULL;
+	item->cb = cb;
+	return item;
 	}
 void engine_cleanup_add_first(ENGINE_CLEANUP_CB *cb)
 	{
+	ENGINE_CLEANUP_ITEM *item;
 	if(!int_cleanup_check(1)) return;
-	sk_ENGINE_CLEANUP_CB_insert(cleanup_stack, cb, 0);
+	item = int_cleanup_item(cb);
+	if(item)
+		sk_ENGINE_CLEANUP_ITEM_insert(cleanup_stack, item, 0);
 	}
 void engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb)
 	{
+	ENGINE_CLEANUP_ITEM *item;
 	if(!int_cleanup_check(1)) return;
-	sk_ENGINE_CLEANUP_CB_push(cleanup_stack, cb);
+	item = int_cleanup_item(cb);
+	if(item)
+		sk_ENGINE_CLEANUP_ITEM_push(cleanup_stack, item);
 	}
 /* The API function that performs all cleanup */
 void ENGINE_cleanup(void)
 	{
 	if(int_cleanup_check(0))
 		{
-		int loop = 0, num = sk_ENGINE_CLEANUP_CB_num(cleanup_stack);
+		int loop = 0, num = sk_ENGINE_CLEANUP_ITEM_num(cleanup_stack);
 		while(loop < num)
 			{
-			ENGINE_CLEANUP_CB *cb = sk_ENGINE_CLEANUP_CB_value(
+			ENGINE_CLEANUP_ITEM *item = sk_ENGINE_CLEANUP_ITEM_value(
 					cleanup_stack, loop++);
-			(*cb)();
+			(*(item->cb))();
+			OPENSSL_free(item);
 			}
-		sk_ENGINE_CLEANUP_CB_free(cleanup_stack);
+		sk_ENGINE_CLEANUP_ITEM_free(cleanup_stack);
 		cleanup_stack = NULL;
 		}
 	/* FIXME: This should be handled (somehow) through RAND, eg. by it
