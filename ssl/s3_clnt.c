@@ -785,7 +785,7 @@ static int ssl3_get_server_certificate(SSL *s)
 	STACK_OF(X509) *sk=NULL;
 	SESS_CERT *sc;
 	EVP_PKEY *pkey=NULL;
-        int need_cert = 1; /* VRS: 0=> will allow null cert if auth == KRB5 */
+	int need_cert = 1; /* VRS: 0=> will allow null cert if auth == KRB5 */
 
 	n=ssl3_get_message(s,
 		SSL3_ST_CR_CERT_A,
@@ -860,10 +860,10 @@ static int ssl3_get_server_certificate(SSL *s)
 	i=ssl_verify_cert_chain(s,sk);
 	if ((s->verify_mode != SSL_VERIFY_NONE) && (!i)
 #ifndef OPENSSL_NO_KRB5
-                && (s->s3->tmp.new_cipher->algorithms & (SSL_MKEY_MASK|SSL_AUTH_MASK))
-                != (SSL_aKRB5|SSL_kKRB5)
+	        && (s->s3->tmp.new_cipher->algorithms & (SSL_MKEY_MASK|SSL_AUTH_MASK))
+	        != (SSL_aKRB5|SSL_kKRB5)
 #endif /* OPENSSL_NO_KRB5 */
-                )
+	        )
 		{
 		al=ssl_verify_alarm_type(s->verify_result);
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_CERTIFICATE_VERIFY_FAILED);
@@ -886,16 +886,16 @@ static int ssl3_get_server_certificate(SSL *s)
 
 	pkey=X509_get_pubkey(x);
 
-        /* VRS: allow null cert if auth == KRB5 */
-        need_cert =	((s->s3->tmp.new_cipher->algorithms
-			& (SSL_MKEY_MASK|SSL_AUTH_MASK))
-                        == (SSL_aKRB5|SSL_kKRB5))? 0: 1;
+	/* VRS: allow null cert if auth == KRB5 */
+	need_cert =	((s->s3->tmp.new_cipher->algorithms
+	                 & (SSL_MKEY_MASK|SSL_AUTH_MASK))
+	                 == (SSL_aKRB5|SSL_kKRB5))? 0: 1;
 
 #ifdef KSSL_DEBUG
 	printf("pkey,x = %p, %p\n", pkey,x);
 	printf("ssl_cert_type(x,pkey) = %d\n", ssl_cert_type(x,pkey));
 	printf("cipher, alg, nc = %s, %lx, %d\n", s->s3->tmp.new_cipher->name,
-                s->s3->tmp.new_cipher->algorithms, need_cert);
+	        s->s3->tmp.new_cipher->algorithms, need_cert);
 #endif    /* KSSL_DEBUG */
 
 	if (need_cert && ((pkey == NULL) || EVP_PKEY_missing_parameters(pkey)))
@@ -917,31 +917,31 @@ static int ssl3_get_server_certificate(SSL *s)
 		goto f_err;
 		}
 
-        if (need_cert)
-                {
-                sc->peer_cert_type=i;
-                CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
-                /* Why would the following ever happen?
-                 * We just created sc a couple of lines ago. */
-                if (sc->peer_pkeys[i].x509 != NULL)
-                        X509_free(sc->peer_pkeys[i].x509);
-                sc->peer_pkeys[i].x509=x;
-                sc->peer_key= &(sc->peer_pkeys[i]);
+	if (need_cert)
+		{
+		sc->peer_cert_type=i;
+		CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
+		/* Why would the following ever happen?
+		 * We just created sc a couple of lines ago. */
+		if (sc->peer_pkeys[i].x509 != NULL)
+			X509_free(sc->peer_pkeys[i].x509);
+		sc->peer_pkeys[i].x509=x;
+		sc->peer_key= &(sc->peer_pkeys[i]);
 
-                if (s->session->peer != NULL)
-                        X509_free(s->session->peer);
-                CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
-                s->session->peer=x;
-                }
-        else
-                {
-                sc->peer_cert_type=i;
-                sc->peer_key= NULL;
+		if (s->session->peer != NULL)
+			X509_free(s->session->peer);
+		CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
+		s->session->peer=x;
+		}
+	else
+		{
+		sc->peer_cert_type=i;
+		sc->peer_key= NULL;
 
-                if (s->session->peer != NULL)
-                        X509_free(s->session->peer);
-                s->session->peer=NULL;
-                }
+		if (s->session->peer != NULL)
+			X509_free(s->session->peer);
+		s->session->peer=NULL;
+		}
 	s->session->verify_result = s->verify_result;
 
 	x=NULL;
@@ -1584,7 +1584,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 	EVP_PKEY *pkey=NULL;
 #endif
 #ifndef OPENSSL_NO_KRB5
-        KSSL_ERR kssl_err;
+	KSSL_ERR kssl_err;
 #endif /* OPENSSL_NO_KRB5 */
 #ifndef OPENSSL_NO_ECDH
 	EC_KEY *clnt_ecdh = NULL;
@@ -1602,8 +1602,8 @@ static int ssl3_send_client_key_exchange(SSL *s)
 
 		l=s->s3->tmp.new_cipher->algorithms;
 
-                /* Fool emacs indentation */
-                if (0) {}
+		/* Fool emacs indentation */
+		if (0) {}
 #ifndef OPENSSL_NO_RSA
 		else if (l & SSL_kRSA)
 			{
@@ -1665,12 +1665,12 @@ static int ssl3_send_client_key_exchange(SSL *s)
 #endif
 #ifndef OPENSSL_NO_KRB5
 		else if (l & SSL_kKRB5)
-                        {
-                        krb5_error_code	krb5rc;
-                        KSSL_CTX	*kssl_ctx = s->kssl_ctx;
-                        /*  krb5_data	krb5_ap_req;  */
-                        krb5_data	*enc_ticket;
-                        krb5_data	authenticator, *authp = NULL;
+			{
+			krb5_error_code	krb5rc;
+			KSSL_CTX	*kssl_ctx = s->kssl_ctx;
+			/*  krb5_data	krb5_ap_req;  */
+			krb5_data	*enc_ticket;
+			krb5_data	authenticator, *authp = NULL;
 			EVP_CIPHER_CTX	ciph_ctx;
 			EVP_CIPHER	*enc = NULL;
 			unsigned char	iv[EVP_MAX_IV_LENGTH];
@@ -1682,8 +1682,8 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			EVP_CIPHER_CTX_init(&ciph_ctx);
 
 #ifdef KSSL_DEBUG
-                        printf("ssl3_send_client_key_exchange(%lx & %lx)\n",
-                                l, SSL_kKRB5);
+			printf("ssl3_send_client_key_exchange(%lx & %lx)\n",
+			        l, SSL_kKRB5);
 #endif	/* KSSL_DEBUG */
 
 			authp = NULL;
@@ -1691,37 +1691,37 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			if (KRB5SENDAUTH)  authp = &authenticator;
 #endif	/* KRB5SENDAUTH */
 
-                        krb5rc = kssl_cget_tkt(kssl_ctx, &enc_ticket, authp,
+			krb5rc = kssl_cget_tkt(kssl_ctx, &enc_ticket, authp,
 				&kssl_err);
 			enc = kssl_map_enc(kssl_ctx->enctype);
-                        if (enc == NULL)
-                            goto err;
+			if (enc == NULL)
+			    goto err;
 #ifdef KSSL_DEBUG
-                        {
-                        printf("kssl_cget_tkt rtn %d\n", krb5rc);
-                        if (krb5rc && kssl_err.text)
+			{
+			printf("kssl_cget_tkt rtn %d\n", krb5rc);
+			if (krb5rc && kssl_err.text)
 			  printf("kssl_cget_tkt kssl_err=%s\n", kssl_err.text);
-                        }
+			}
 #endif	/* KSSL_DEBUG */
 
-                        if (krb5rc)
-                                {
-                                ssl3_send_alert(s,SSL3_AL_FATAL,
+			if (krb5rc)
+				{
+				ssl3_send_alert(s,SSL3_AL_FATAL,
 						SSL_AD_HANDSHAKE_FAILURE);
-                                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 						kssl_err.reason);
-                                goto err;
-                                }
+				goto err;
+				}
 
 			/*  20010406 VRS - Earlier versions used KRB5 AP_REQ
 			**  in place of RFC 2712 KerberosWrapper, as in:
 			**
-                        **  Send ticket (copy to *p, set n = length)
-                        **  n = krb5_ap_req.length;
-                        **  memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
-                        **  if (krb5_ap_req.data)  
-                        **    kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
-                        **
+			**  Send ticket (copy to *p, set n = length)
+			**  n = krb5_ap_req.length;
+			**  memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
+			**  if (krb5_ap_req.data)  
+			**    kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
+			**
 			**  Now using real RFC 2712 KerberosWrapper
 			**  (Thanks to Simon Wilkinson <sxw@sxw.org.uk>)
 			**  Note: 2712 "opaque" types are here replaced
@@ -1786,14 +1786,14 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			p+=outl;
 			n+=outl + 2;
 
-                        s->session->master_key_length=
-                                s->method->ssl3_enc->generate_master_secret(s,
+			s->session->master_key_length=
+			        s->method->ssl3_enc->generate_master_secret(s,
 					s->session->master_key,
 					tmp_buf, sizeof tmp_buf);
 
 			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
 			OPENSSL_cleanse(epms, outl);
-                        }
+			}
 #endif
 #ifndef OPENSSL_NO_DH
 		else if (l & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
@@ -1928,7 +1928,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			clnt_ecdh->group = srvr_group;
 			if (ecdh_clnt_cert) 
 				{ 
-                                /* Reuse key info from our certificate
+				/* Reuse key info from our certificate
 				 * We only need our private key to perform
 				 * the ECDH computation.
 				 */
@@ -1945,25 +1945,25 @@ static int ssl3_send_client_key_exchange(SSL *s)
 					}
 				}
 
-                        /* use the 'p' output buffer for the ECDH key, but
-                         * make sure to clear it out afterwards
+			/* use the 'p' output buffer for the ECDH key, but
+			 * make sure to clear it out afterwards
 			 */
 
-                        n=ECDH_compute_key(p, srvr_ecpoint, clnt_ecdh);
+			n=ECDH_compute_key(p, srvr_ecpoint, clnt_ecdh);
 			if (n <= 0)
-                                {
-                                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, 
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, 
 				       ERR_R_ECDH_LIB);
-                                goto err;
+				goto err;
 				}
 
-                        /* generate master key from the result */
-                        s->session->master_key_length = s->method->ssl3_enc \
+			/* generate master key from the result */
+			s->session->master_key_length = s->method->ssl3_enc \
 			    -> generate_master_secret(s, 
 				s->session->master_key,
 				p, n);
 
-                        memset(p, 0, n); /* clean up */
+			memset(p, 0, n); /* clean up */
 
 			if (ecdh_clnt_cert) 
 				{
@@ -1999,7 +1999,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 				    encodedPoint, encoded_pt_len, bn_ctx);
 
 				*p = n; /* length of encoded point */
-                                /* Encoded point will be copied here */
+				/* Encoded point will be copied here */
 				p += 1; 
 				/* copy the point */
 				memcpy((unsigned char *)p, encodedPoint, n);
@@ -2012,7 +2012,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			if (encodedPoint != NULL) OPENSSL_free(encodedPoint);
 			if (clnt_ecdh != NULL) 
 				{
-                                 /* group is shared */
+				 /* group is shared */
 				 clnt_ecdh->group = NULL; 
 				 EC_KEY_free(clnt_ecdh);
 				}
@@ -2049,7 +2049,7 @@ err:
 		clnt_ecdh->group = NULL; 
 		EC_KEY_free(clnt_ecdh);
 		}
-        EVP_PKEY_free(srvr_pub_pkey);
+	EVP_PKEY_free(srvr_pub_pkey);
 #endif
 	return(-1);
 	}
