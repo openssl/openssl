@@ -178,6 +178,11 @@ extern "C" {
 # endif
 #endif
 
+/* ------------------------------- VxWorks --------------------------------- */
+#ifdef OPENSSL_SYSNAME_VXWORKS
+# define OPENSSL_SYS_VXWORKS
+#endif
+
 /**
  * That's it for OS-specific stuff
  *****************************************************************************/

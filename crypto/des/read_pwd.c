@@ -133,7 +133,7 @@
 #define SGTTY
 #endif
 
-#if defined(OPENSSL_SYS_VSWORKS)
+#if defined(OPENSSL_SYS_VXWORKS)
 #undef TERMIOS
 #undef TERMIO
 #undef SGTTY
@@ -274,7 +274,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 #ifdef OPENSSL_SYS_MSDOS
 	if ((tty=fopen("con","r")) == NULL)
 		tty=stdin;
-#elif defined(MAC_OS_pre_X) || defined(OPENSSL_SYS_VSWORKS)
+#elif defined(MAC_OS_pre_X) || defined(OPENSSL_SYS_VXWORKS)
 	tty=stdin;
 #else
 #ifndef OPENSSL_SYS_MPE

@@ -114,7 +114,7 @@ int RAND_egd_bytes(const char *path,int bytes)
 #include <sys/types.h>
 #include <sys/socket.h>
 #ifndef NO_SYS_UN_H
-# ifdef OPENSSL_SYS_VSWORKS
+# ifdef OPENSSL_SYS_VXWORKS
 #   include <streams/un.h>
 # else
 #   include <sys/un.h>

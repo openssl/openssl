@@ -485,6 +485,36 @@ extern char *sys_errlist[]; extern int sys_nerr;
 # define strcasecmp stricmp
 #endif
 
+/* vxworks */
+#if defined(OPENSSL_SYS_VXWORKS)
+#include <ioLib.h>
+#include <tickLib.h>
+#include <sysLib.h>
+
+#define TTY_STRUCT int
+
+#define sleep(a) taskDelay((a) * sysClkRateGet())
+#if defined(ioctlsocket)
+#undef ioctlsocket
+#endif
+#define ioctlsocket(a,b,c) ioctl((a),(b),*(c))
+
+#include <vxWorks.h>
+#include <sockLib.h>
+#include <taskLib.h>
+
+#define getpid taskIdSelf
+
+/* NOTE: these are implemented by helpers in database app!
+ * if the database is not linked, we need to implement them
+ * elswhere */
+struct hostent *gethostbyname(const char *name);
+struct hostent *gethostbyaddr(const char *addr, int length, int type);
+struct servent *getservbyname(const char *name, const char *proto);
+
+#endif
+/* end vxworks */
+
 #ifdef  __cplusplus
 }
 #endif
