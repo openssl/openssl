@@ -97,7 +97,7 @@ void fcrypt_body(DES_LONG *out, des_key_schedule ks, DES_LONG Eswap0,
 
 	for (j=0; j<25; j++)
 		{
-#ifdef DES_UNROLL
+#ifndef DES_UNROLL
 		register int i;
 
 		for (i=0; i<32; i+=8)
