@@ -299,7 +299,7 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item void B<SSL_CTX_set_cert_store>(SSL_CTX *ctx, X509_STORE *cs);
 
-=item void B<SSL_CTX_set_cert_verify_cb>(SSL_CTX *ctx, int (*cb)(SSL_CTX *), char *arg)
+=item void B<SSL_CTX_set_cert_verify_cb>(SSL_CTX *ctx, int (*cb)(), char *arg)
 
 =item int B<SSL_CTX_set_cipher_list>(SSL_CTX *ctx, char *str);
 
@@ -663,6 +663,7 @@ L<SSL_CTX_sess_set_cache_size(3)|SSL_CTX_sess_set_cache_size(3)>,
 L<SSL_CTX_sess_set_get_cb(3)|SSL_CTX_sess_set_get_cb(3)>,
 L<SSL_CTX_sessions(3)|SSL_CTX_sessions(3)>,
 L<SSL_CTX_set_cert_store(3)|SSL_CTX_set_cert_store(3)>,
+L<SSL_CTX_set_cert_verify_callback(3)|SSL_CTX_set_cert_verify_callback(3)>,
 L<SSL_CTX_set_cipher_list(3)|SSL_CTX_set_cipher_list(3)>,
 L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>,
 L<SSL_CTX_set_default_passwd_cb(3)|SSL_CTX_set_default_passwd_cb(3)>,
