@@ -63,11 +63,11 @@
  */
 
 #define NUM_NID 404
-#define NUM_SN 403
-#define NUM_LN 403
-#define NUM_OBJ 377
+#define NUM_SN 402
+#define NUM_LN 402
+#define NUM_OBJ 376
 
-static unsigned char lvalues[2949]={
+static unsigned char lvalues[2941]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -391,60 +391,59 @@ static unsigned char lvalues[2949]={
 0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x01,     /* [2583] OBJ_id_on_personalData */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x01,     /* [2591] OBJ_id_pda_dateOfBirth */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x02,     /* [2599] OBJ_id_pda_placeOfBirth */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x03,     /* [2607] OBJ_id_pda_pseudonym */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x04,     /* [2615] OBJ_id_pda_gender */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x05,     /* [2623] OBJ_id_pda_countryOfCitizenship */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x06,     /* [2631] OBJ_id_pda_countryOfResidence */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x01,     /* [2639] OBJ_id_aca_authenticationInfo */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x02,     /* [2647] OBJ_id_aca_accessIdentity */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x03,     /* [2655] OBJ_id_aca_chargingIdentity */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x04,     /* [2663] OBJ_id_aca_group */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x05,     /* [2671] OBJ_id_aca_role */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x0B,0x01,     /* [2679] OBJ_id_qcs_pkixQCSyntax_v1 */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x0C,0x01,     /* [2687] OBJ_id_cct_crs */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x0C,0x02,     /* [2695] OBJ_id_cct_PKIData */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x0C,0x03,     /* [2703] OBJ_id_cct_PKIResponse */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x03,     /* [2711] OBJ_ad_timeStamping */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x04,     /* [2719] OBJ_ad_dvcs */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x01,/* [2727] OBJ_id_pkix_OCSP_basic */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x02,/* [2736] OBJ_id_pkix_OCSP_Nonce */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x03,/* [2745] OBJ_id_pkix_OCSP_CrlID */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x04,/* [2754] OBJ_id_pkix_OCSP_acceptableResponses */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x05,/* [2763] OBJ_id_pkix_OCSP_noCheck */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x06,/* [2772] OBJ_id_pkix_OCSP_archiveCutoff */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x07,/* [2781] OBJ_id_pkix_OCSP_serviceLocator */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x08,/* [2790] OBJ_id_pkix_OCSP_extendedStatus */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x09,/* [2799] OBJ_id_pkix_OCSP_valid */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x0A,/* [2808] OBJ_id_pkix_OCSP_path */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x0B,/* [2817] OBJ_id_pkix_OCSP_trustRoot */
-0x2B,0x0E,0x03,0x02,                         /* [2826] OBJ_algorithm */
-0x2B,0x0E,0x03,0x02,0x0B,                    /* [2830] OBJ_rsaSignature */
-0x55,0x08,                                   /* [2835] OBJ_X500algorithms */
-0x2B,                                        /* [2837] OBJ_org */
-0x2B,0x06,                                   /* [2838] OBJ_dod */
-0x2B,0x06,0x01,                              /* [2840] OBJ_iana */
-0x2B,0x06,0x01,0x01,                         /* [2843] OBJ_Directory */
-0x2B,0x06,0x01,0x02,                         /* [2847] OBJ_Management */
-0x2B,0x06,0x01,0x03,                         /* [2851] OBJ_Experimental */
-0x2B,0x06,0x01,0x04,                         /* [2855] OBJ_Private */
-0x2B,0x06,0x01,0x05,                         /* [2859] OBJ_Security */
-0x2B,0x06,0x01,0x06,                         /* [2863] OBJ_SNMPv2 */
-0x2B,0x06,0x01,0x07,                         /* [2867] OBJ_Mail */
-0x01,                                        /* [2871] OBJ_Enterprises */
-0xBA,0x82,0x58,                              /* [2872] OBJ_dcObject */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x19,/* [2875] OBJ_domainComponent */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0D,/* [2885] OBJ_Domain */
-0x50,                                        /* [2895] OBJ_joint_iso_ccitt */
-0x55,0x01,0x05,                              /* [2896] OBJ_selected_attribute_types */
-0x55,0x01,0x05,0x37,                         /* [2899] OBJ_clearance */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x03,/* [2903] OBJ_md4WithRSAEncryption */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0A,     /* [2912] OBJ_ac_proxying */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0B,     /* [2920] OBJ_sinfo_access */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x06,     /* [2928] OBJ_id_aca_encAttrs */
-0x55,0x04,0x48,                              /* [2936] OBJ_role */
-0x55,0x1D,0x24,                              /* [2939] OBJ_policy_constraints */
-0x55,0x1D,0x37,                              /* [2942] OBJ_target_information */
-0x55,0x1D,0x38,                              /* [2945] OBJ_no_rev_avail */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x03,     /* [2607] OBJ_id_pda_gender */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x04,     /* [2615] OBJ_id_pda_countryOfCitizenship */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x09,0x05,     /* [2623] OBJ_id_pda_countryOfResidence */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x01,     /* [2631] OBJ_id_aca_authenticationInfo */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x02,     /* [2639] OBJ_id_aca_accessIdentity */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x03,     /* [2647] OBJ_id_aca_chargingIdentity */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x04,     /* [2655] OBJ_id_aca_group */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x05,     /* [2663] OBJ_id_aca_role */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x0B,0x01,     /* [2671] OBJ_id_qcs_pkixQCSyntax_v1 */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x0C,0x01,     /* [2679] OBJ_id_cct_crs */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x0C,0x02,     /* [2687] OBJ_id_cct_PKIData */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x0C,0x03,     /* [2695] OBJ_id_cct_PKIResponse */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x03,     /* [2703] OBJ_ad_timeStamping */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x04,     /* [2711] OBJ_ad_dvcs */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x01,/* [2719] OBJ_id_pkix_OCSP_basic */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x02,/* [2728] OBJ_id_pkix_OCSP_Nonce */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x03,/* [2737] OBJ_id_pkix_OCSP_CrlID */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x04,/* [2746] OBJ_id_pkix_OCSP_acceptableResponses */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x05,/* [2755] OBJ_id_pkix_OCSP_noCheck */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x06,/* [2764] OBJ_id_pkix_OCSP_archiveCutoff */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x07,/* [2773] OBJ_id_pkix_OCSP_serviceLocator */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x08,/* [2782] OBJ_id_pkix_OCSP_extendedStatus */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x09,/* [2791] OBJ_id_pkix_OCSP_valid */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x0A,/* [2800] OBJ_id_pkix_OCSP_path */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,0x0B,/* [2809] OBJ_id_pkix_OCSP_trustRoot */
+0x2B,0x0E,0x03,0x02,                         /* [2818] OBJ_algorithm */
+0x2B,0x0E,0x03,0x02,0x0B,                    /* [2822] OBJ_rsaSignature */
+0x55,0x08,                                   /* [2827] OBJ_X500algorithms */
+0x2B,                                        /* [2829] OBJ_org */
+0x2B,0x06,                                   /* [2830] OBJ_dod */
+0x2B,0x06,0x01,                              /* [2832] OBJ_iana */
+0x2B,0x06,0x01,0x01,                         /* [2835] OBJ_Directory */
+0x2B,0x06,0x01,0x02,                         /* [2839] OBJ_Management */
+0x2B,0x06,0x01,0x03,                         /* [2843] OBJ_Experimental */
+0x2B,0x06,0x01,0x04,                         /* [2847] OBJ_Private */
+0x2B,0x06,0x01,0x05,                         /* [2851] OBJ_Security */
+0x2B,0x06,0x01,0x06,                         /* [2855] OBJ_SNMPv2 */
+0x2B,0x06,0x01,0x07,                         /* [2859] OBJ_Mail */
+0x01,                                        /* [2863] OBJ_Enterprises */
+0xBA,0x82,0x58,                              /* [2864] OBJ_dcObject */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x19,/* [2867] OBJ_domainComponent */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0D,/* [2877] OBJ_Domain */
+0x50,                                        /* [2887] OBJ_joint_iso_ccitt */
+0x55,0x01,0x05,                              /* [2888] OBJ_selected_attribute_types */
+0x55,0x01,0x05,0x37,                         /* [2891] OBJ_clearance */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x03,/* [2895] OBJ_md4WithRSAEncryption */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0A,     /* [2904] OBJ_ac_proxying */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0B,     /* [2912] OBJ_sinfo_access */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x06,     /* [2920] OBJ_id_aca_encAttrs */
+0x55,0x04,0x48,                              /* [2928] OBJ_role */
+0x55,0x1D,0x24,                              /* [2931] OBJ_policy_constraints */
+0x55,0x1D,0x37,                              /* [2934] OBJ_target_information */
+0x55,0x1D,0x38,                              /* [2937] OBJ_no_rev_avail */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -998,85 +997,84 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[2591]),0},
 {"id-pda-placeOfBirth","id-pda-placeOfBirth",NID_id_pda_placeOfBirth,
 	8,&(lvalues[2599]),0},
-{"id-pda-pseudonym","id-pda-pseudonym",NID_id_pda_pseudonym,8,
-	&(lvalues[2607]),0},
-{"id-pda-gender","id-pda-gender",NID_id_pda_gender,8,&(lvalues[2615]),0},
+{NULL,NULL,NID_undef,0,NULL},
+{"id-pda-gender","id-pda-gender",NID_id_pda_gender,8,&(lvalues[2607]),0},
 {"id-pda-countryOfCitizenship","id-pda-countryOfCitizenship",
-	NID_id_pda_countryOfCitizenship,8,&(lvalues[2623]),0},
+	NID_id_pda_countryOfCitizenship,8,&(lvalues[2615]),0},
 {"id-pda-countryOfResidence","id-pda-countryOfResidence",
-	NID_id_pda_countryOfResidence,8,&(lvalues[2631]),0},
+	NID_id_pda_countryOfResidence,8,&(lvalues[2623]),0},
 {"id-aca-authenticationInfo","id-aca-authenticationInfo",
-	NID_id_aca_authenticationInfo,8,&(lvalues[2639]),0},
+	NID_id_aca_authenticationInfo,8,&(lvalues[2631]),0},
 {"id-aca-accessIdentity","id-aca-accessIdentity",
-	NID_id_aca_accessIdentity,8,&(lvalues[2647]),0},
+	NID_id_aca_accessIdentity,8,&(lvalues[2639]),0},
 {"id-aca-chargingIdentity","id-aca-chargingIdentity",
-	NID_id_aca_chargingIdentity,8,&(lvalues[2655]),0},
-{"id-aca-group","id-aca-group",NID_id_aca_group,8,&(lvalues[2663]),0},
-{"id-aca-role","id-aca-role",NID_id_aca_role,8,&(lvalues[2671]),0},
+	NID_id_aca_chargingIdentity,8,&(lvalues[2647]),0},
+{"id-aca-group","id-aca-group",NID_id_aca_group,8,&(lvalues[2655]),0},
+{"id-aca-role","id-aca-role",NID_id_aca_role,8,&(lvalues[2663]),0},
 {"id-qcs-pkixQCSyntax-v1","id-qcs-pkixQCSyntax-v1",
-	NID_id_qcs_pkixQCSyntax_v1,8,&(lvalues[2679]),0},
-{"id-cct-crs","id-cct-crs",NID_id_cct_crs,8,&(lvalues[2687]),0},
+	NID_id_qcs_pkixQCSyntax_v1,8,&(lvalues[2671]),0},
+{"id-cct-crs","id-cct-crs",NID_id_cct_crs,8,&(lvalues[2679]),0},
 {"id-cct-PKIData","id-cct-PKIData",NID_id_cct_PKIData,8,
-	&(lvalues[2695]),0},
+	&(lvalues[2687]),0},
 {"id-cct-PKIResponse","id-cct-PKIResponse",NID_id_cct_PKIResponse,8,
-	&(lvalues[2703]),0},
+	&(lvalues[2695]),0},
 {"ad_timestamping","AD Time Stamping",NID_ad_timeStamping,8,
-	&(lvalues[2711]),0},
-{"AD_DVCS","ad dvcs",NID_ad_dvcs,8,&(lvalues[2719]),0},
+	&(lvalues[2703]),0},
+{"AD_DVCS","ad dvcs",NID_ad_dvcs,8,&(lvalues[2711]),0},
 {"basicOCSPResponse","Basic OCSP Response",NID_id_pkix_OCSP_basic,9,
-	&(lvalues[2727]),0},
-{"Nonce","OCSP Nonce",NID_id_pkix_OCSP_Nonce,9,&(lvalues[2736]),0},
-{"CrlID","OCSP CRL ID",NID_id_pkix_OCSP_CrlID,9,&(lvalues[2745]),0},
+	&(lvalues[2719]),0},
+{"Nonce","OCSP Nonce",NID_id_pkix_OCSP_Nonce,9,&(lvalues[2728]),0},
+{"CrlID","OCSP CRL ID",NID_id_pkix_OCSP_CrlID,9,&(lvalues[2737]),0},
 {"acceptableResponses","Acceptable OCSP Responses",
-	NID_id_pkix_OCSP_acceptableResponses,9,&(lvalues[2754]),0},
-{"noCheck","noCheck",NID_id_pkix_OCSP_noCheck,9,&(lvalues[2763]),0},
+	NID_id_pkix_OCSP_acceptableResponses,9,&(lvalues[2746]),0},
+{"noCheck","noCheck",NID_id_pkix_OCSP_noCheck,9,&(lvalues[2755]),0},
 {"archiveCutoff","OCSP Archive Cutoff",NID_id_pkix_OCSP_archiveCutoff,
-	9,&(lvalues[2772]),0},
+	9,&(lvalues[2764]),0},
 {"serviceLocator","OCSP Service Locator",
-	NID_id_pkix_OCSP_serviceLocator,9,&(lvalues[2781]),0},
+	NID_id_pkix_OCSP_serviceLocator,9,&(lvalues[2773]),0},
 {"extendedStatus","Extended OCSP Status",
-	NID_id_pkix_OCSP_extendedStatus,9,&(lvalues[2790]),0},
-{"valid","valid",NID_id_pkix_OCSP_valid,9,&(lvalues[2799]),0},
-{"path","path",NID_id_pkix_OCSP_path,9,&(lvalues[2808]),0},
+	NID_id_pkix_OCSP_extendedStatus,9,&(lvalues[2782]),0},
+{"valid","valid",NID_id_pkix_OCSP_valid,9,&(lvalues[2791]),0},
+{"path","path",NID_id_pkix_OCSP_path,9,&(lvalues[2800]),0},
 {"trustRoot","Trust Root",NID_id_pkix_OCSP_trustRoot,9,
-	&(lvalues[2817]),0},
-{"algorithm","algorithm",NID_algorithm,4,&(lvalues[2826]),0},
-{"rsaSignature","rsaSignature",NID_rsaSignature,5,&(lvalues[2830]),0},
+	&(lvalues[2809]),0},
+{"algorithm","algorithm",NID_algorithm,4,&(lvalues[2818]),0},
+{"rsaSignature","rsaSignature",NID_rsaSignature,5,&(lvalues[2822]),0},
 {"X500algorithms","directory services - algorithms",
-	NID_X500algorithms,2,&(lvalues[2835]),0},
-{"ORG","org",NID_org,1,&(lvalues[2837]),0},
-{"DOD","dod",NID_dod,2,&(lvalues[2838]),0},
-{"IANA","iana",NID_iana,3,&(lvalues[2840]),0},
-{"directory","Directory",NID_Directory,4,&(lvalues[2843]),0},
-{"mgmt","Management",NID_Management,4,&(lvalues[2847]),0},
-{"experimental","Experimental",NID_Experimental,4,&(lvalues[2851]),0},
-{"private","Private",NID_Private,4,&(lvalues[2855]),0},
-{"security","Security",NID_Security,4,&(lvalues[2859]),0},
-{"snmpv2","SNMPv2",NID_SNMPv2,4,&(lvalues[2863]),0},
-{"mail","Mail",NID_Mail,4,&(lvalues[2867]),0},
-{"enterprises","Enterprises",NID_Enterprises,1,&(lvalues[2871]),0},
-{"dcobject","dcObject",NID_dcObject,3,&(lvalues[2872]),0},
-{"DC","domainComponent",NID_domainComponent,10,&(lvalues[2875]),0},
-{"domain","Domain",NID_Domain,10,&(lvalues[2885]),0},
+	NID_X500algorithms,2,&(lvalues[2827]),0},
+{"ORG","org",NID_org,1,&(lvalues[2829]),0},
+{"DOD","dod",NID_dod,2,&(lvalues[2830]),0},
+{"IANA","iana",NID_iana,3,&(lvalues[2832]),0},
+{"directory","Directory",NID_Directory,4,&(lvalues[2835]),0},
+{"mgmt","Management",NID_Management,4,&(lvalues[2839]),0},
+{"experimental","Experimental",NID_Experimental,4,&(lvalues[2843]),0},
+{"private","Private",NID_Private,4,&(lvalues[2847]),0},
+{"security","Security",NID_Security,4,&(lvalues[2851]),0},
+{"snmpv2","SNMPv2",NID_SNMPv2,4,&(lvalues[2855]),0},
+{"mail","Mail",NID_Mail,4,&(lvalues[2859]),0},
+{"enterprises","Enterprises",NID_Enterprises,1,&(lvalues[2863]),0},
+{"dcobject","dcObject",NID_dcObject,3,&(lvalues[2864]),0},
+{"DC","domainComponent",NID_domainComponent,10,&(lvalues[2867]),0},
+{"domain","Domain",NID_Domain,10,&(lvalues[2877]),0},
 {"JOINT-ISO-CCITT","joint-iso-ccitt",NID_joint_iso_ccitt,1,
-	&(lvalues[2895]),0},
+	&(lvalues[2887]),0},
 {"selected-attribute-types","Selected Attribute Types",
-	NID_selected_attribute_types,3,&(lvalues[2896]),0},
-{"clearance","clearance",NID_clearance,4,&(lvalues[2899]),0},
+	NID_selected_attribute_types,3,&(lvalues[2888]),0},
+{"clearance","clearance",NID_clearance,4,&(lvalues[2891]),0},
 {"RSA-MD4","md4WithRSAEncryption",NID_md4WithRSAEncryption,9,
-	&(lvalues[2903]),0},
-{"ac-proxying","ac-proxying",NID_ac_proxying,8,&(lvalues[2912]),0},
+	&(lvalues[2895]),0},
+{"ac-proxying","ac-proxying",NID_ac_proxying,8,&(lvalues[2904]),0},
 {"subjectInfoAccess","Subject Information Access",NID_sinfo_access,8,
-	&(lvalues[2920]),0},
+	&(lvalues[2912]),0},
 {"id-aca-encAttrs","id-aca-encAttrs",NID_id_aca_encAttrs,8,
-	&(lvalues[2928]),0},
-{"role","role",NID_role,3,&(lvalues[2936]),0},
+	&(lvalues[2920]),0},
+{"role","role",NID_role,3,&(lvalues[2928]),0},
 {"policyConstraints","X509v3 Policy Constraints",
-	NID_policy_constraints,3,&(lvalues[2939]),0},
+	NID_policy_constraints,3,&(lvalues[2931]),0},
 {"targetInformation","X509v3 AC Targeting",NID_target_information,3,
-	&(lvalues[2942]),0},
+	&(lvalues[2934]),0},
 {"noRevAvail","X509v3 No Revocation Available",NID_no_rev_avail,3,
-	&(lvalues[2945]),0},
+	&(lvalues[2937]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1311,7 +1309,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[348]),/* "id-pda-dateOfBirth" */
 &(nid_objs[351]),/* "id-pda-gender" */
 &(nid_objs[349]),/* "id-pda-placeOfBirth" */
-&(nid_objs[350]),/* "id-pda-pseudonym" */
 &(nid_objs[175]),/* "id-pe" */
 &(nid_objs[261]),/* "id-pkip" */
 &(nid_objs[258]),/* "id-pkix-mod" */
@@ -1703,7 +1700,6 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[348]),/* "id-pda-dateOfBirth" */
 &(nid_objs[351]),/* "id-pda-gender" */
 &(nid_objs[349]),/* "id-pda-placeOfBirth" */
-&(nid_objs[350]),/* "id-pda-pseudonym" */
 &(nid_objs[175]),/* "id-pe" */
 &(nid_objs[261]),/* "id-pkip" */
 &(nid_objs[258]),/* "id-pkix-mod" */
@@ -2090,10 +2086,9 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[347]),/* OBJ_id_on_personalData           1 3 6 1 5 5 7 8 1 */
 &(nid_objs[348]),/* OBJ_id_pda_dateOfBirth           1 3 6 1 5 5 7 9 1 */
 &(nid_objs[349]),/* OBJ_id_pda_placeOfBirth          1 3 6 1 5 5 7 9 2 */
-&(nid_objs[350]),/* OBJ_id_pda_pseudonym             1 3 6 1 5 5 7 9 3 */
-&(nid_objs[351]),/* OBJ_id_pda_gender                1 3 6 1 5 5 7 9 4 */
-&(nid_objs[352]),/* OBJ_id_pda_countryOfCitizenship  1 3 6 1 5 5 7 9 5 */
-&(nid_objs[353]),/* OBJ_id_pda_countryOfResidence    1 3 6 1 5 5 7 9 6 */
+&(nid_objs[351]),/* OBJ_id_pda_gender                1 3 6 1 5 5 7 9 3 */
+&(nid_objs[352]),/* OBJ_id_pda_countryOfCitizenship  1 3 6 1 5 5 7 9 4 */
+&(nid_objs[353]),/* OBJ_id_pda_countryOfResidence    1 3 6 1 5 5 7 9 5 */
 &(nid_objs[354]),/* OBJ_id_aca_authenticationInfo    1 3 6 1 5 5 7 10 1 */
 &(nid_objs[355]),/* OBJ_id_aca_accessIdentity        1 3 6 1 5 5 7 10 2 */
 &(nid_objs[356]),/* OBJ_id_aca_chargingIdentity      1 3 6 1 5 5 7 10 3 */

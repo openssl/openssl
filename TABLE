@@ -2477,10 +2477,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_ldflag = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $shared_extension = 
 $ranlib       = 
 
@@ -3319,6 +3319,29 @@ $unistd       =
 $thread_cflag = -Kthread
 $lflags       = -lsocket -lnsl
 $bn_ops       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** vxworks-ppc405
+$cc           = ccppc
+$cflags       = -g -msoft-float -mlongcall -DVXWORKS -DCPU=PPC405 -I$(WIND_BASE)/target/h
+$unistd       = 
+$thread_cflag = 
+$lflags       = -r
+$bn_ops       = 
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
