@@ -358,6 +358,7 @@ typedef struct ssl_method_st
  *	Cipher 			OCTET_STRING,	-- the 3 byte cipher ID
  *	Session_ID 		OCTET_STRING,	-- the Session ID
  *	Master_key 		OCTET_STRING,	-- the master key
+ *	KRB5_principal		OCTET_STRING	-- optional Kerberos principal
  *	Key_Arg [ 0 ] IMPLICIT	OCTET_STRING,	-- the optional Key argument
  *	Time [ 1 ] EXPLICIT	INTEGER,	-- optional Start Time
  *	Timeout [ 2 ] EXPLICIT	INTEGER,	-- optional Timeout ins seconds
