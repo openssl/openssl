@@ -95,7 +95,7 @@
 #error DES is disabled.
 #endif
 
-#ifndef HEADER_DES_H
+#ifndef HEADER_NEW_DES_H
 #error You must include des.h, not des_old.h directly.
 #endif
 
