@@ -236,7 +236,7 @@ int RAND_poll(void)
 		if (cursor)
 			{
 			/* cursor position */
-			cursor(buf);
+			cursor((PCURSORINFO)buf);
 			RAND_add(buf, sizeof(buf), 0);
 			}
 
