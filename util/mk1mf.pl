@@ -65,6 +65,7 @@ and [options] can be one of
 	no-err					- No error strings
 	dll/shlib				- Build shared libraries (MS)
 	debug					- Debug build
+        profile                                 - Profiling build
 	gcc					- Use Gcc (unix)
 	rsaref					- Build to require RSAref
 
@@ -217,9 +218,10 @@ $cflags.=" -DNO_SSL3" if $no_ssl3;
 $cflags.=" -DNO_ERR"  if $no_err;
 $cflags.=" -DRSAref"  if $rsaref ne "";
 
-if ($unix)
-	{ $cflags="$c_flags" if ($c_flags ne ""); }
-else	{ $cflags="$c_flags$cflags" if ($c_flags ne ""); }
+## if ($unix)
+##	{ $cflags="$c_flags" if ($c_flags ne ""); }
+##else
+	{ $cflags="$c_flags$cflags" if ($c_flags ne ""); }
 
 $ex_libs="$l_flags$ex_libs" if ($l_flags ne "");
 
@@ -878,6 +880,7 @@ sub read_options
 	elsif (/^rsaref$/)	{ $rsaref=1; }
 	elsif (/^gcc$/)		{ $gcc=1; }
 	elsif (/^debug$/)	{ $debug=1; }
+	elsif (/^profile$/)	{ $profile=1; }
 	elsif (/^shlib$/)	{ $shlib=1; }
 	elsif (/^dll$/)		{ $shlib=1; }
 	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }
