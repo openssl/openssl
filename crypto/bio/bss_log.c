@@ -262,7 +262,7 @@ static void xopenlog(BIO* bp, const char* name, int level)
 	VMS_OPC_target = level; 
 }
 
-statis void xsyslog(BIO *bp, int priority, const char *string)
+static void xsyslog(BIO *bp, int priority, const char *string)
 {
 	struct descriptor_s opc_dsc;
 	struct opcdef *opcdef_p;
