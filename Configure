@@ -557,7 +557,7 @@ else
 	my $def;
 	foreach $def (split ' ',$thread_cflag)
 		{
-		if ($def =~ s/^-D//)
+		if ($def =~ s/^-D// && $def !~ /^_/)
 			{
 			$thread_defines .= "#define $def\n";
 			}
