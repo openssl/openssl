@@ -328,6 +328,8 @@ int test_builtin(BIO *out)
 	/* now create and verify a signature for every curve */
 	for (n = 0; n < crv_len; n++)
 		{
+		unsigned char dirt, offset;
+
 		nid = curves[n].nid;
 		/* create new ecdsa key (== EC_KEY) */
 		if ((eckey = EC_KEY_new()) == NULL)
@@ -406,9 +408,10 @@ int test_builtin(BIO *out)
 			}
 		BIO_printf(out, ".");
 		BIO_flush(out);
-		/* modify signature */
-		signature[((int)signature[0])%sig_len] ^= 
-			signature[((int)signature[1])%sig_len];
+		/* modify a single byte of the signature */
+		offset = signature[10] % sig_len;
+		dirt   = signature[11];
+		signature[offset] ^= dirt ? dirt : 1; 
 		if (ECDSA_verify(0, digest, 20, signature, sig_len, eckey) == 1)
 			{
 			BIO_printf(out, " failed\n");
@@ -468,7 +471,9 @@ int main(void)
 	RAND_seed(rnd_seed, sizeof(rnd_seed));
 
 	/* the tests */
+#ifndef BN_DEBUG_RAND
 	if (!x9_62_tests(out))  goto err;
+#endif
 	if (!test_builtin(out)) goto err;
 	
 	ret = 1;
