@@ -236,6 +236,9 @@ clean-shared:
 			done; \
 		fi; \
 		( set -x; rm -f lib$$i$(SHLIB_EXT) ); \
+		if [ "$(PLATFORM)" = "CygWin32" ]; then \
+			( set -x; rm -f cyg$$i$(SHLIB_EXT) lib$$i$(SHLIB_EXT).a ); \
+		fi; \
 	done
 
 link-shared:
@@ -280,6 +283,15 @@ do_darwin-shared:
 		-install_name ${INSTALLTOP}/lib/lib$$i${SHLIB_EXT} ) || exit 1; \
 	libs="$$libs -l`basename $$i${SHLIB_EXT} .dylib`"; \
 	echo "" ; \
+	done
+
+do_cygwin-shared:
+	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	( set -x; ${CC}  -shared -o cyg$$i.dll \
+		-Wl,--whole-archive lib$$i.a \
+		-Wl,--out-implib,lib$$i.dll.a \
+		-Wl,--no-whole-archive $$libs ) || exit 1; \
+	libs="$$libs -l$$i"; \
 	done
 
 # This assumes that GNU utilities are *not* used
@@ -638,10 +650,18 @@ install: all install_docs
 		tmp="$(SHARED_LIBS)"; \
 		for i in $${tmp:-x}; \
 		do \
-			if [ -f "$$i" ]; then \
+			if [ -f "$$i" -o -f "$$i.a" ]; then \
 			(       echo installing $$i; \
-				cp -f $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-				chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
+				if [ "$(PLATFORM)" != "CygWin32" ]; then \
+					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
+					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+				else \
+					c=`echo $$i | sed 's/^lib/cyg/'`; \
+					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
+					chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
+					cp $$i.a $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a; \
+					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a; \
+				fi ); \
 			fi \
 		done; \
 		(	here="`pwd`"; \

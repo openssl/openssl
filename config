@@ -299,7 +299,11 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	;;
 
     CYGWIN*)
-	echo "${MACHINE}-whatever-cygwin32"; exit 0
+	case "$RELEASE" in
+	    [bB]*|1.0|1.[12].*)
+		echo "${MACHINE}-whatever-cygwin32_pre1.3"; exit 0
+	    *)
+		echo "${MACHINE}-whatever-cygwin32"; exit 0
 	;;
 
 esac
@@ -581,8 +585,8 @@ EOF
   # *-aix) OUT="aix-$CC" ;;
   # *-dgux) OUT="dgux" ;;
   mips-sony-newsos4) OUT="newsos4-gcc" ;;
-  *-*-cygwin32) OUT="CygWin32"
-		options="$options no-threads no-asm" ;;
+  *-*-cygwin32_pre1.3) OUT="CygWin32-pre1.3" ;;
+  *-*-cygwin32) OUT="CygWin32" ;;
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 
