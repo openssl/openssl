@@ -96,19 +96,111 @@
 extern "C" {
 #endif
 
-typedef unsigned char des_cblock[8];
-typedef struct des_ks_struct
+typedef unsigned char _ossl_old_des_cblock[8];
+typedef struct _ossl_old_des_ks_struct
 	{
 	union	{
-		des_cblock _;
+		_ossl_old_des_des_cblock _;
 		/* make sure things are correct size on machines with
 		 * 8 byte longs */
 		DES_LONG pad[2];
 		} ks;
-	} des_key_schedule[16];
+	} _ossl_old_des_key_schedule[16];
 
-/* Map all function names to _ossl_old_des_* form, so we avoid all
+#ifdef OPENSSL_DES_PRE_0_9_7_COMPATIBILITY
+#define des_cblock DES_cblock
+#define des_key_schedule DES_key_schedule
+#define des_ecb3_encrypt(i,o,k1,k2,k3,e)\
+	DES_ecb3_encrypt((i),(o),(k1),(k2),(k3),(e))
+#define des_ede3_cbc_encrypt(i,o,l,k1,k2,k3,iv,e)\
+	DES_ede3_cbc_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(e))
+#define des_ede3_cfb64_encrypt(i,o,l,k1,k2,k3,iv,n,e)\
+	DES_ede3_cfb64_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(e))
+#define des_ede3_ofb64_encrypt(i,o,l,k1,k2,k3,iv,n)\
+	DES_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k3),(iv),(n))
+#define des_options()\
+	DES_options()
+#define des_cbc_cksum(i,o,l,k,iv)\
+	DES_cbc_cksum((i),(o),(l),(k),(iv))
+#define des_cbc_encrypt(i,o,l,k,iv,e)\
+	DES_cbc_encrypt((i),(o),(l),(k),(iv),(e))
+#define des_ncbc_encrypt(i,o,l,k,iv,e)\
+	DES_ncbc_encrypt((i),(o),(l),(k),(iv),(e))
+#define des_xcbc_encrypt(i,o,l,k,iv,inw,outw,e)\
+	DES_xcbc_encrypt((i),(o),(l),(k),(iv),(inw),(outw),(e))
+#define des_cfb_encrypt(i,o,l,k,iv,e)\
+	DES_cfb_encrypt((i),(o),(l),(k),(iv),(e))
+#define des_ecb_encrypt(i,o,k,e)\
+	DES_ecb_encrypt((i),(o),(k),(e))
+#define des_encrypt(d,k,e)\
+	DES_encrypt((d),(k),(e))
+#define des_encrypt2(d,k,e)\
+	DES_encrypt2((d),(k),(e))
+#define des_encrypt3(d,k1,k2,k3)\
+	DES_encrypt3((d),(k1),(k2),(k3))
+#define des_decrypt3(d,k1,k2,k3)\
+	DES_decrypt3((d),(k1),(k2),(k3))
+#define des_xwhite_in2out(k,i,o)\
+	DES_xwhite_in2out((k),(i),(o))
+#define des_enc_read(f,b,l,k,iv)\
+	DES_enc_read((f),(b),(l),(k),(iv))
+#define des_enc_write(f,b,l,k,iv)\
+	DES_enc_write((f),(b),(l),(k),(iv))
+#define des_fcrypt(b,s,r)\
+	DES_fcrypt((b),(s),(r))
+#define des_crypt(b,s)\
+	DES_crypt((b),(s))
+#define des_ofb_encrypt(i,o,n,l,k,iv)\
+	DES_ofb_encrypt((i),(o),(n),(l),(k),(iv))
+#define des_pcbc_encrypt(i,o,l,k,iv,e)\
+	DES_pcbc_encrypt((i),(o),(l),(k),(iv),(e))
+#define des_quad_cksum(i,o,l,c,s)\
+	DES_quad_cksum((i),(o),(l),(c),(s))
+#define des_random_seed(k)\
+	DES_random_seed((k))
+#define des_random_key(r)\
+	DES_random_key((r))
+#define des_read_password(k,p,v) \
+	DES_read_password((k),(p),(v))
+#define des_read_2passwords(k1,k2,p,v) \
+	DES_read_2passwords((k1),(k2),(p),(v))
+#define des_set_odd_parity(k)\
+	DES_set_odd_parity((k))
+#define des_is_weak_key(k)\
+	DES_is_weak_key((k))
+#define des_set_key(k,ks)\
+	DES_set_key((k),(ks))
+#define des_key_sched(k,ks)\
+	DES_key_sched((k),(ks))
+#define des_string_to_key(s,k)\
+	DES_string_to_key((s),(k))
+#define des_string_to_2keys(s,k1,k2)\
+	DES_string_to_2keys((s),(k1),(k2))
+#define des_cfb64_encrypt(i,o,l,ks,iv,n,e)\
+	DES_cfb64_encrypt((i),(o),(l),(ks),(iv),(n),(e))
+#define des_ofb64_encrypt(i,o,l,ks,iv,n)\
+	DES_ofb64_encrypt((i),(o),(l),(ks),(iv),(n))
+		
+
+#define des_ecb2_encrypt(i,o,k1,k2,e) \
+	des_ecb3_encrypt((i),(o),(k1),(k2),(k1),(e))
+
+#define des_ede2_cbc_encrypt(i,o,l,k1,k2,iv,e) \
+	des_ede3_cbc_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(e))
+
+#define des_ede2_cfb64_encrypt(i,o,l,k1,k2,iv,n,e) \
+	des_ede3_cfb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n),(e))
+
+#define des_ede2_ofb64_encrypt(i,o,l,k1,k2,iv,n) \
+	des_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n))
+
+#define des_check_key DES_check_key
+#define des_rw_mode DES_rw_mode
+#else /* libdes compatibility */
+/* Map all symbol names to _ossl_old_des_* form, so we avoid all
    clashes with libdes */
+#define des_cblock _ossl_old_des_cblock
+#define des_key_schedule _ossl_old_des_key_schedule
 #define des_ecb3_encrypt(i,o,k1,k2,k3,e)\
 	_ossl_old_des_ecb3_encrypt((i),(o),(k1),(k2),(k3),(e))
 #define des_ede3_cbc_encrypt(i,o,l,k1,k2,k3,iv,e)\
@@ -197,76 +289,77 @@ typedef struct des_ks_struct
 
 #define des_check_key DES_check_key
 #define des_rw_mode DES_rw_mode
+#endif
 
 const char *_ossl_old_des_options(void);
-void _ossl_old_des_ecb3_encrypt(des_cblock *input,des_cblock *output,
-	des_key_schedule ks1,des_key_schedule ks2,
-	des_key_schedule ks3, int enc);
-DES_LONG _ossl_old_des_cbc_cksum(des_cblock *input,des_cblock *output,
-	long length,des_key_schedule schedule,des_cblock *ivec);
-void _ossl_old_des_cbc_encrypt(des_cblock *input,des_cblock *output,long length,
-	des_key_schedule schedule,des_cblock *ivec,int enc);
-void _ossl_old_des_ncbc_encrypt(des_cblock *input,des_cblock *output,long length,
-	des_key_schedule schedule,des_cblock *ivec,int enc);
-void _ossl_old_des_xcbc_encrypt(des_cblock *input,des_cblock *output,long length,
-	des_key_schedule schedule,des_cblock *ivec,
-	des_cblock *inw,des_cblock *outw,int enc);
+void _ossl_old_des_ecb3_encrypt(_ossl_old_des_cblock *input,_ossl_old_des_cblock *output,
+	_ossl_old_des_key_schedule ks1,_ossl_old_des_key_schedule ks2,
+	_ossl_old_des_key_schedule ks3, int enc);
+DES_LONG _ossl_old_des_cbc_cksum(_ossl_old_des_cblock *input,_ossl_old_des_cblock *output,
+	long length,_ossl_old_des_key_schedule schedule,_ossl_old_des_cblock *ivec);
+void _ossl_old_des_cbc_encrypt(_ossl_old_des_cblock *input,_ossl_old_des_cblock *output,long length,
+	_ossl_old_des_key_schedule schedule,_ossl_old_des_cblock *ivec,int enc);
+void _ossl_old_des_ncbc_encrypt(_ossl_old_des_cblock *input,_ossl_old_des_cblock *output,long length,
+	_ossl_old_des_key_schedule schedule,_ossl_old_des_cblock *ivec,int enc);
+void _ossl_old_des_xcbc_encrypt(_ossl_old_des_cblock *input,_ossl_old_des_cblock *output,long length,
+	_ossl_old_des_key_schedule schedule,_ossl_old_des_cblock *ivec,
+	_ossl_old_des_cblock *inw,_ossl_old_des_cblock *outw,int enc);
 void _ossl_old_des_cfb_encrypt(unsigned char *in,unsigned char *out,int numbits,
-	long length,des_key_schedule schedule,des_cblock *ivec,int enc);
-void _ossl_old_des_ecb_encrypt(des_cblock *input,des_cblock *output,
-	des_key_schedule ks,int enc);
-void _ossl_old_des_encrypt(DES_LONG *data,des_key_schedule ks, int enc);
-void _ossl_old_des_encrypt2(DES_LONG *data,des_key_schedule ks, int enc);
-void _ossl_old_des_encrypt3(DES_LONG *data, des_key_schedule ks1,
-	des_key_schedule ks2, des_key_schedule ks3);
-void _ossl_old_des_decrypt3(DES_LONG *data, des_key_schedule ks1,
-	des_key_schedule ks2, des_key_schedule ks3);
-void _ossl_old_des_ede3_cbc_encrypt(des_cblock *input, des_cblock *output, 
-	long length, des_key_schedule ks1, des_key_schedule ks2, 
-	des_key_schedule ks3, des_cblock *ivec, int enc);
+	long length,_ossl_old_des_key_schedule schedule,_ossl_old_des_cblock *ivec,int enc);
+void _ossl_old_des_ecb_encrypt(_ossl_old_des_cblock *input,_ossl_old_des_cblock *output,
+	_ossl_old_des_key_schedule ks,int enc);
+void _ossl_old_des_encrypt(DES_LONG *data,_ossl_old_des_key_schedule ks, int enc);
+void _ossl_old_des_encrypt2(DES_LONG *data,_ossl_old_des_key_schedule ks, int enc);
+void _ossl_old_des_encrypt3(DES_LONG *data, _ossl_old_des_key_schedule ks1,
+	_ossl_old_des_key_schedule ks2, _ossl_old_des_key_schedule ks3);
+void _ossl_old_des_decrypt3(DES_LONG *data, _ossl_old_des_key_schedule ks1,
+	_ossl_old_des_key_schedule ks2, _ossl_old_des_key_schedule ks3);
+void _ossl_old_des_ede3_cbc_encrypt(_ossl_old_des_cblock *input, _ossl_old_des_cblock *output, 
+	long length, _ossl_old_des_key_schedule ks1, _ossl_old_des_key_schedule ks2, 
+	_ossl_old_des_key_schedule ks3, _ossl_old_des_cblock *ivec, int enc);
 void _ossl_old_des_ede3_cfb64_encrypt(unsigned char *in, unsigned char *out,
-	long length, des_key_schedule ks1, des_key_schedule ks2,
-	des_key_schedule ks3, des_cblock *ivec, int *num, int enc);
+	long length, _ossl_old_des_key_schedule ks1, _ossl_old_des_key_schedule ks2,
+	_ossl_old_des_key_schedule ks3, _ossl_old_des_cblock *ivec, int *num, int enc);
 void _ossl_old_des_ede3_ofb64_encrypt(unsigned char *in, unsigned char *out,
-	long length, des_key_schedule ks1, des_key_schedule ks2,
-	des_key_schedule ks3, des_cblock *ivec, int *num);
+	long length, _ossl_old_des_key_schedule ks1, _ossl_old_des_key_schedule ks2,
+	_ossl_old_des_key_schedule ks3, _ossl_old_des_cblock *ivec, int *num);
 
-void _ossl_old_des_xwhite_in2out(des_cblock (*des_key), des_cblock (*in_white),
-	des_cblock (*out_white));
+void _ossl_old_des_xwhite_in2out(_ossl_old_des_cblock (*des_key), _ossl_old_des_cblock (*in_white),
+	_ossl_old_des_cblock (*out_white));
 
-int _ossl_old_des_enc_read(int fd,char *buf,int len,des_key_schedule sched,
-	des_cblock *iv);
-int _ossl_old_des_enc_write(int fd,char *buf,int len,des_key_schedule sched,
-	des_cblock *iv);
+int _ossl_old_des_enc_read(int fd,char *buf,int len,_ossl_old_des_key_schedule sched,
+	_ossl_old_des_cblock *iv);
+int _ossl_old_des_enc_write(int fd,char *buf,int len,_ossl_old_des_key_schedule sched,
+	_ossl_old_des_cblock *iv);
 char *_ossl_old_des_fcrypt(const char *buf,const char *salt, char *ret);
 char *_ossl_old_des_crypt(const char *buf,const char *salt);
 #if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT)
 char *_ossl_old_crypt(const char *buf,const char *salt);
 #endif
 void _ossl_old_des_ofb_encrypt(unsigned char *in,unsigned char *out,
-	int numbits,long length,des_key_schedule schedule,des_cblock *ivec);
-void _ossl_old_des_pcbc_encrypt(des_cblock *input,des_cblock *output,long length,
-	des_key_schedule schedule,des_cblock *ivec,int enc);
-DES_LONG _ossl_old_des_quad_cksum(des_cblock *input,des_cblock *output,
-	long length,int out_count,des_cblock *seed);
-void _ossl_old_des_random_seed(des_cblock key);
-void _ossl_old_des_random_key(des_cblock ret);
-int _ossl_old_des_read_password(des_cblock *key,const char *prompt,int verify);
-int _ossl_old_des_read_2passwords(des_cblock *key1,des_cblock *key2,
+	int numbits,long length,_ossl_old_des_key_schedule schedule,_ossl_old_des_cblock *ivec);
+void _ossl_old_des_pcbc_encrypt(_ossl_old_des_cblock *input,_ossl_old_des_cblock *output,long length,
+	_ossl_old_des_key_schedule schedule,_ossl_old_des_cblock *ivec,int enc);
+DES_LONG _ossl_old_des_quad_cksum(_ossl_old_des_cblock *input,_ossl_old_des_cblock *output,
+	long length,int out_count,_ossl_old_des_cblock *seed);
+void _ossl_old_des_random_seed(_ossl_old_des_cblock key);
+void _ossl_old_des_random_key(_ossl_old_des_cblock ret);
+int _ossl_old_des_read_password(_ossl_old_des_cblock *key,const char *prompt,int verify);
+int _ossl_old_des_read_2passwords(_ossl_old_des_cblock *key1,_ossl_old_des_cblock *key2,
 	const char *prompt,int verify);
-void _ossl_old_des_set_odd_parity(des_cblock *key);
-int _ossl_old_des_is_weak_key(des_cblock *key);
-int _ossl_old_des_set_key(des_cblock *key,des_key_schedule schedule);
-int _ossl_old_des_key_sched(des_cblock *key,des_key_schedule schedule);
-void _ossl_old_des_string_to_key(char *str,des_cblock *key);
-void _ossl_old_des_string_to_2keys(char *str,des_cblock *key1,des_cblock *key2);
+void _ossl_old_des_set_odd_parity(_ossl_old_des_cblock *key);
+int _ossl_old_des_is_weak_key(_ossl_old_des_cblock *key);
+int _ossl_old_des_set_key(_ossl_old_des_cblock *key,_ossl_old_des_key_schedule schedule);
+int _ossl_old_des_key_sched(_ossl_old_des_cblock *key,_ossl_old_des_key_schedule schedule);
+void _ossl_old_des_string_to_key(char *str,_ossl_old_des_cblock *key);
+void _ossl_old_des_string_to_2keys(char *str,_ossl_old_des_cblock *key1,_ossl_old_des_cblock *key2);
 void _ossl_old_des_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
-	des_key_schedule schedule, des_cblock *ivec, int *num, int enc);
+	_ossl_old_des_key_schedule schedule, _ossl_old_des_cblock *ivec, int *num, int enc);
 void _ossl_old_des_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
-	des_key_schedule schedule, des_cblock *ivec, int *num);
+	_ossl_old_des_key_schedule schedule, _ossl_old_des_cblock *ivec, int *num);
 
 /* The following definitions provide compatibility with the MIT Kerberos
- * library. The des_key_schedule structure is not binary compatible. */
+ * library. The _ossl_old_des_key_schedule structure is not binary compatible. */
 
 #define _KERBEROS_DES_H
 
