@@ -139,10 +139,10 @@ static void sv_usage(void)
 #endif
 	fprintf(stderr," -CApath arg   - PEM format directory of CA's\n");
 	fprintf(stderr," -CAfile arg   - PEM format file of CA's\n");
-	fprintf(stderr," -cert arg     - Certificate file\n");
-	fprintf(stderr," -key arg      - Key file\n");
-	fprintf(stderr," -s_cert arg   - Just the server certificate file\n");
-	fprintf(stderr," -c_cert arg   - Just the client certificate file\n");
+	fprintf(stderr," -cert arg     - Server certificate file\n");
+	fprintf(stderr," -key arg      - Server key file (default: same as -cert)\n");
+	fprintf(stderr," -c_cert arg   - Client certificate file\n");
+	fprintf(stderr," -c_key arg    - Client key file (default: same as -c_cert)\n");
 	fprintf(stderr," -cipher arg   - The cipher list\n");
 	fprintf(stderr," -bio_pair     - Use BIO pairs\n");
 	fprintf(stderr," -f            - Test even cases that can't work\n");
