@@ -398,6 +398,11 @@ bad:
 		SSL_CTX_set_verify(c_ctx,SSL_VERIFY_PEER,
 			verify_callback);
 		}
+	
+	{
+		int session_id_context = 0;
+		SSL_CTX_set_session_id_context(s_ctx, (void *)&session_id_context, sizeof session_id_context);
+	}
 
 	c_ssl=SSL_new(c_ctx);
 	s_ssl=SSL_new(s_ctx);

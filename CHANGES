@@ -4,6 +4,17 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) For servers, store verify_result in SSL_SESSION data structure
+     (and add it to external session representation).
+     This is needed when client certificate verifications fails,
+     but an application-provided verification callback (set by
+     SSL_CTX_set_cert_verify_callback) allows accepting the session
+     anyway (i.e. leaves x509_store_ctx->error != X509_V_OK
+     but returns 1): When the session is reused, we have to set
+     ssl->verify_result to the appropriate error code to avoid
+     security holes.
+     [Bodo Moeller, problem pointed out by Lutz Jaenicke]
+
   *) Fix a bug in the new PKCS#7 code: it didn't consider the
      case in PKCS7_dataInit() where the signed PKCS7 structure
      didn't contain any existing data because it was being created.

@@ -1627,6 +1627,7 @@ static int ssl3_get_client_certificate(SSL *s)
 	if (s->session->peer != NULL) /* This should not be needed */
 		X509_free(s->session->peer);
 	s->session->peer=sk_X509_shift(sk);
+	s->session->verify_result = s->verify_result;
 
 	/* With the current implementation, sess_cert will always be NULL
 	 * when we arrive here. */

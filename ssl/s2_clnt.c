@@ -445,7 +445,7 @@ static int get_server_hello(SSL *s)
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509);
 #else
 	s->session->peer = s->session->sess_cert->peer_key->x509;
-    /* peer_key->x509 has been set by ssl2_set_certificate. */
+	/* peer_key->x509 has been set by ssl2_set_certificate. */
 	CRYPTO_add(&s->session->peer->references, 1, CRYPTO_LOCK_X509);
 #endif
 

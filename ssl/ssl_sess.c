@@ -112,6 +112,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 		}
 	memset(ss,0,sizeof(SSL_SESSION));
 
+	ss->verify_result = 1; /* avoid 0 (= X509_V_OK) just in case */
 	ss->references=1;
 	ss->timeout=60*5+4; /* 5 minute timeout by default */
 	ss->time=time(NULL);
@@ -190,6 +191,7 @@ int ssl_get_new_session(SSL *s, int session)
 	ss->sid_ctx_length=s->sid_ctx_length;
 	s->session=ss;
 	ss->ssl_version=s->version;
+	ss->verify_result = X509_V_OK;
 
 	return(1);
 	}
@@ -320,6 +322,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 	if (s->session != NULL)
 		SSL_SESSION_free(s->session);
 	s->session=ret;
+	s->verify_result = s->session->verify_result;
 	return(1);
 
  err:

@@ -215,7 +215,8 @@ typedef struct ssl_method_st
  *	Timeout [ 2 ] EXPLICIT	INTEGER,	-- optional Timeout ins seconds
  *	Peer [ 3 ] EXPLICIT	X509,		-- optional Peer Certificate
  *	Session_ID_context [ 4 ] EXPLICIT OCTET_STRING,   -- the Session ID context
- *	Compression [5] IMPLICIT ASN1_OBJECT	-- compression OID XXXXX
+ *	Verify_result [ 5 ] EXPLICIT INTEGER    -- X509_V_... code for `Peer'
+ *	Compression [6] IMPLICIT ASN1_OBJECT	-- compression OID XXXXX
  *	}
  * Look in ssl/ssl_asn1.c for more details
  * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).
@@ -249,6 +250,9 @@ typedef struct ssl_session_st
 	 * (the latter is not enough as sess_cert is not retained
 	 * in the external representation of sessions, see ssl_asn1.c). */
 	X509 *peer;
+	/* when app_verify_callback accepts a session where the peer's certificate
+	 * is not ok, we must remember the error for session reuse: */
+	long verify_result; /* only for servers */
 
 	int references;
 	long timeout;

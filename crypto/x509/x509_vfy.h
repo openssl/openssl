@@ -234,6 +234,7 @@ struct x509_store_state_st      /* X509_STORE_CTX */
 		X509_LOOKUP_ctrl((x),X509_L_ADD_DIR,(name),(long)(type),NULL)
 
 #define		X509_V_OK					0
+/* illegal error (for uninitialized values, to avoid X509_V_OK): 1 */
 
 #define		X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT		2
 #define		X509_V_ERR_UNABLE_TO_GET_CRL			3

@@ -921,6 +921,7 @@ static int request_certificate(SSL *s)
 				X509_free(s->session->peer);
 			s->session->peer=x509;
 			CRYPTO_add(&x509->references,1,CRYPTO_LOCK_X509);
+			s->session->verify_result = s->verify_result;
 			ret=1;
 			goto end;
 			}

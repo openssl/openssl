@@ -60,6 +60,7 @@
 #include <stdlib.h>
 #include <openssl/asn1_mac.h>
 #include <openssl/objects.h>
+#include <openssl/x509.h>
 #include "ssl_locl.h"
 
 typedef struct ssl_session_asn1_st
@@ -73,14 +74,15 @@ typedef struct ssl_session_asn1_st
 	ASN1_OCTET_STRING key_arg;
 	ASN1_INTEGER time;
 	ASN1_INTEGER timeout;
+	ASN1_INTEGER verify_result;
 	} SSL_SESSION_ASN1;
 
 int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)
-	int v1=0,v2=0,v3=0,v4=0;
+	int v1=0,v2=0,v3=0,v4=0,v5=0;
 	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2];
-	unsigned char ibuf3[LSIZE2],ibuf4[LSIZE2];
+	unsigned char ibuf3[LSIZE2],ibuf4[LSIZE2],ibuf5[LSIZE2];
 	long l;
 	SSL_SESSION_ASN1 a;
 	M_ASN1_I2D_vars(in);
@@ -156,6 +158,14 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		ASN1_INTEGER_set(&(a.timeout),in->timeout);
 		}
 
+	if (in->verify_result != X509_V_OK)
+		{
+		a.verify_result.length=LSIZE2;
+		a.verify_result.type=V_ASN1_INTEGER;
+		a.verify_result.data=ibuf5;
+		ASN1_INTEGER_set(&a.verify_result,in->verify_result);
+		}
+
 	M_ASN1_I2D_len(&(a.version),		i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(&(a.ssl_version),	i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(&(a.cipher),		i2d_ASN1_OCTET_STRING);
@@ -170,6 +180,8 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->peer != NULL)
 		M_ASN1_I2D_len_EXP_opt(in->peer,i2d_X509,3,v3);
 	M_ASN1_I2D_len_EXP_opt(&a.session_id_context,i2d_ASN1_OCTET_STRING,4,v4);
+	if (in->verify_result != X509_V_OK)
+		M_ASN1_I2D_len_EXP_opt(&(a.verify_result),i2d_ASN1_INTEGER,5,v5);
 
 	M_ASN1_I2D_seq_total();
 
@@ -188,7 +200,8 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		M_ASN1_I2D_put_EXP_opt(in->peer,i2d_X509,3,v3);
 	M_ASN1_I2D_put_EXP_opt(&a.session_id_context,i2d_ASN1_OCTET_STRING,4,
 			       v4);
-
+	if (in->verify_result != X509_V_OK)
+		M_ASN1_I2D_put_EXP_opt(&a.verify_result,i2d_ASN1_INTEGER,5,v5);
 	M_ASN1_I2D_finish();
 	}
 
@@ -322,6 +335,15 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
 	else
 	    ret->sid_ctx_length=0;
 
+	ai.length=0;
+	M_ASN1_D2I_get_EXP_opt(aip,d2i_ASN1_INTEGER,5);
+	if (ai.data != NULL)
+		{
+		ret->verify_result=ASN1_INTEGER_get(aip);
+		Free(ai.data); ai.data=NULL; ai.length=0;
+		}
+	else
+		ret->verify_result=X509_V_OK;
+
 	M_ASN1_D2I_Finish(a,SSL_SESSION_free,SSL_F_D2I_SSL_SESSION);
 	}
-
