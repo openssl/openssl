@@ -445,7 +445,11 @@ EVP_PKEY *STORE_get_private_key(STORE *s, OPENSSL_ITEM attributes[],
 	REF_PRINT("EVP_PKEY",data);
 #endif
 	pkey = object->data.key;
-	STORE_OBJECT_free(object);TORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
+	STORE_OBJECT_free(object);
+	return pkey;
+	}
+
+int STORE_store_private_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[])
 	{
 	STORE_OBJECT *object = STORE_OBJECT_new();
