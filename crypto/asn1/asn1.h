@@ -70,6 +70,9 @@
 
 #include <openssl/symhacks.h>
 
+#include <openssl/e_os.h>
+#include <openssl/e_os2.h>
+
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
 # undef OPENSSL_EXTERN
 # define OPENSSL_EXTERN OPENSSL_EXPORT
