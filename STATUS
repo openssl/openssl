@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2003/02/19 12:33:52 $
+  ______________                           $Date: 2003/02/28 15:16:30 $
 
   DEVELOPMENT STATE
 
@@ -29,17 +29,7 @@
 
   RELEASE SHOWSTOPPERS
 
-    o [2002-11-21]
-      PR 343 mentions that scrubbing memory with 'memset(ptr, 0, n)' may
-      be optimized away in modern compilers.  This is definitely not good
-      and needs to be fixed immediately.  The formula to use is presented
-      in:
-
-      http://online.securityfocus.com/archive/82/297918/2002-10-27/2002-11-02/0
-
-      The problem report that mentions this is:
-
-      https://www.aet.TU-Cottbus.DE/rt2/Ticket/Display.html?id=343
+    o 
 
   AVAILABLE PATCHES
 
