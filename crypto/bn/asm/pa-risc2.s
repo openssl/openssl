@@ -1611,7 +1611,7 @@ bn_mul_comba4
 	.IMPORT	$global$,DATA
 	.SPACE	$TEXT$
 	.SUBSPA	$CODE$
-	.SUBSPA	$LIT$,QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=16
+	.SUBSPA	$LIT$,ACCESS=0x2c
 C$7
 	.ALIGN	8
 	.STRINGZ	"Division would overflow (%d)\n"
