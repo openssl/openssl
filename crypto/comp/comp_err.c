@@ -1,4 +1,4 @@
-/* lib//_err.c */
+/* crypto/comp/comp_err.c */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

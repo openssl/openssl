@@ -43,12 +43,12 @@ char *argv[];
 		ms_time_get(start);
 		for (i=0; i<num; i++)
 			{
-			//bn_mull(&r,&a,&b,&ctx);
-			//BN_sqr(&r,&a,&ctx);
+			/* bn_mull(&r,&a,&b,&ctx); */
+			/* BN_sqr(&r,&a,&ctx); */
 			BN_mod_exp_mont(&r,&a,&b,&c,&ctx,&mont);
 			}
 		ms_time_get(end);
-		d=ms_time_diff(start,end)/* *50/33 /**/;
+		d=ms_time_diff(start,end)/* *50/33 */;
 		printf("%5d bit:%6.2f %6d %6.4f %4d m_set(%5.4f)\n",size,
 			d,num,d/num,(int)((d/num)*mod),md/10.0);
 		num/=8;

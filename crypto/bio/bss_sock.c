@@ -385,7 +385,7 @@ int i;
 		err=get_last_sys_error();
 #endif
 
-#if defined(WINDOWS) && 0 /* more microsoft stupidity *//* perhaps not? Ben 4/1/99 */
+#if defined(WINDOWS) && 0 /* more microsoft stupidity? perhaps not? Ben 4/1/99 */
 		if ((i == -1) && (err == 0))
 			return(1);
 #endif

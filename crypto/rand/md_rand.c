@@ -346,13 +346,13 @@ int num;
  * <URL:http://www.microsoft.com/kb/developr/win_dk/q97193.htm>;
  * the original copyright message is:
  *
-//   (C) Copyright Microsoft Corp. 1993.  All rights reserved.
-//
-//   You have a royalty-free right to use, modify, reproduce and
-//   distribute the Sample Files (and/or any modified version) in
-//   any way you find useful, provided that you agree that
-//   Microsoft has no warranty obligations or liability for any
-//   Sample Application Files which are modified.
+ *   (C) Copyright Microsoft Corp. 1993.  All rights reserved.
+ *
+ *   You have a royalty-free right to use, modify, reproduce and
+ *   distribute the Sample Files (and/or any modified version) in
+ *   any way you find useful, provided that you agree that
+ *   Microsoft has no warranty obligations or liability for any
+ *   Sample Application Files which are modified.
  */
 /*
  * I have modified the loading of bytes via RAND_seed() mechanism since

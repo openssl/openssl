@@ -120,18 +120,18 @@ s0.max=bl.top; s1.max=bh.top;
 	t3.top=(t2.top > words)?words:t2.top;
 	t3.neg=t2.neg;
 t3.max=t3.top;
-// BN_print_fp(stdout,&s1); printf(" s1\n");
-// BN_print_fp(stdout,&t2); printf(" middle value\n");
-// BN_print_fp(stdout,&t3); printf(" low middle value\n");
+/* BN_print_fp(stdout,&s1); printf(" s1\n"); */
+/* BN_print_fp(stdout,&t2); printf(" middle value\n"); */
+/* BN_print_fp(stdout,&t3); printf(" low middle value\n"); */
 	BN_sub(&t1,&s1,&t3);
 
 	if (t1.neg)
 		{
-//printf("neg fixup\n"); //BN_print_fp(stdout,&t1); printf(" before\n");
+/*printf("neg fixup\n"); BN_print_fp(stdout,&t1); printf(" before\n"); */
 		BN_lshift(&t2,BN_value_one(),words*32);
 		BN_add(&t1,&t2,&t1);
 		BN_mask_bits(&t1,words*32);
-// BN_print_fp(stdout,&t1); printf(" after\n");
+/* BN_print_fp(stdout,&t1); printf(" after\n"); */
 		}
 	/* al*bl == high(al*bl)<<words+s0 */
 	BN_lshift(&t1,&t1,words*32);
