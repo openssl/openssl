@@ -122,14 +122,12 @@ A number of Linux and *BSD distributions include OpenSSL.
 autoconf will probably be used in future OpenSSL versions. If it was
 less Unix-centric, it might have been used much earlier.
 
-
 * What is an 'engine' version?
 
 With version 0.9.6 OpenSSL was extended to interface to external crypto
 hardware. This was realized in a special release '0.9.6-engine'. With
 version 0.9.7 (not yet released) the changes were merged into the main
 development line, so that the special release is no longer necessary.
-
 
 [LEGAL] =======================================================================
 
@@ -155,7 +153,7 @@ holders claim that you infringe on their rights if you use OpenSSL with
 their software on operating systems that don't normally include OpenSSL.
 
 If you develop open source software that uses OpenSSL, you may find it
-useful to choose an other license than the GPL, or state explicitely that
+useful to choose an other license than the GPL, or state explicitly that
 "This program is released under the GPL with the additional exemption that
 compiling, linking, and/or using OpenSSL is allowed."  If you are using
 GPL software developed by others, you may want to ask the copyright holder
@@ -195,7 +193,7 @@ environment variable HOME is set, then the seeding file is $HOME/.rnd.
 If neither RANDFILE nor HOME is set, versions up to OpenSSL 0.9.6 will
 use file .rnd in the current directory while OpenSSL 0.9.6a uses no
 default seeding file at all.  OpenSSL 0.9.6b and later will behave
-similarly to 0.9.6a, but will use a default of "C:" for HOME on
+similarly to 0.9.6a, but will use a default of "C:\" for HOME on
 Windows systems if the environment variable has not been set.
 
 If the default seeding file does not exist or is too short, the "PRNG
@@ -306,7 +304,7 @@ there is little point presenting a certificate which the server will
 reject.
 
 The solution is to add the relevant CA certificate to your servers "trusted
-CA list". How you do this depends on the server sofware in uses. You can
+CA list". How you do this depends on the server software in uses. You can
 print out the servers list of acceptable CAs using the OpenSSL s_client tool:
 
 openssl s_client -connect www.some.host:443 -prexit
@@ -532,44 +530,16 @@ OpenSSL_add_all_algorithms(). See the manual page for more information.
 
 * Why can't the OpenSSH configure script detect OpenSSL?
 
-There is a problem with OpenSSH 1.2.2p1, in that the configure script
-can't find the installed OpenSSL libraries.  The problem is actually
-a small glitch that is easily solved with the following patch to be
-applied to the OpenSSH distribution:
+Several reasons for problems with the automatic detection exist.
+OpenSSH requires at least version 0.9.5a of the OpenSSL libraries.
+Sometimes the distribution has installed an older version in the system
+locations that is detected instead of a new one installed. The OpenSSL
+library might have been compiled for another CPU or another mode (32/64 bits).
+Permissions might be wrong.
 
------ snip:start -----
---- openssh-1.2.2p1/configure.in.orig	Thu Mar 23 18:56:58 2000
-+++ openssh-1.2.2p1/configure.in	Thu Mar 23 18:55:05 2000
-@@ -152,10 +152,10 @@
- AC_MSG_CHECKING([for OpenSSL/SSLeay directory])
- for ssldir in "" $tryssldir /usr /usr/local/openssl /usr/lib/openssl /usr/local/ssl /usr/lib/ssl /usr/local /usr/pkg /opt /opt/openssl ; do
- 	if test ! -z "$ssldir" ; then
--		LIBS="$saved_LIBS -L$ssldir"
-+		LIBS="$saved_LIBS -L$ssldir/lib"
- 		CFLAGS="$CFLAGS -I$ssldir/include"
- 		if test "x$need_dash_r" = "x1" ; then
--			LIBS="$LIBS -R$ssldir"
-+			LIBS="$LIBS -R$ssldir/lib"
- 		fi
- 	fi
- 	LIBS="$LIBS -lcrypto"
---- openssh-1.2.2p1/configure.orig	Thu Mar 23 18:55:02 2000
-+++ openssh-1.2.2p1/configure	Thu Mar 23 18:57:08 2000
-@@ -1890,10 +1890,10 @@
- echo "configure:1891: checking for OpenSSL/SSLeay directory" >&5
- for ssldir in "" $tryssldir /usr /usr/local/openssl /usr/lib/openssl /usr/local/ssl /usr/lib/ssl /usr/local /usr/pkg /opt /opt/openssl ; do
- 	if test ! -z "$ssldir" ; then
--		LIBS="$saved_LIBS -L$ssldir"
-+		LIBS="$saved_LIBS -L$ssldir/lib"
- 		CFLAGS="$CFLAGS -I$ssldir/include"
- 		if test "x$need_dash_r" = "x1" ; then
--			LIBS="$LIBS -R$ssldir"
-+			LIBS="$LIBS -R$ssldir/lib"
- 		fi
- 	fi
- 	LIBS="$LIBS -lcrypto"
------ snip:end -----
-
+The general answer is to check the config.log file generated when running
+the OpenSSH configure script. It should contain the detailed information
+on why the OpenSSL library was not detected or considered incompatible.
 
 * Can I use OpenSSL's SSL library with non-blocking I/O?
 
@@ -588,7 +558,7 @@ SSL_write() will try to continue any pending handshake.
 * Why doesn't my server application receive a client certificate?
 
 Due to the TLS protocol definition, a client will only send a certificate,
-if explicitely asked by the server. Use the SSL_VERIFY_PEER flag of the
+if explicitly asked by the server. Use the SSL_VERIFY_PEER flag of the
 SSL_CTX_set_verify() function to enable the use of client certificates.
 
 
