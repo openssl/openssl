@@ -443,7 +443,11 @@ err:
 	if (line != NULL) *line=eline;
 	sprintf(btmp,"%ld",eline);
 	ERR_add_error_data(2,"line ",btmp);
-	if ((h != conf->data) && (conf->data != NULL)) CONF_free(conf->data);
+	if ((h != conf->data) && (conf->data != NULL))
+		{
+		CONF_free(conf->data);
+		conf->data=NULL;
+		}
 	if (v != NULL)
 		{
 		if (v->name != NULL) OPENSSL_free(v->name);
