@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include "des_locl.h"
+#include <openssl/rand.h>
 
 /*
  * WARNINGS:
@@ -80,9 +81,7 @@ int des_enc_write(int fd, const void *_buf, int len,
 		  des_key_schedule sched, des_cblock *iv)
 	{
 #ifdef _LIBC
-	extern int srandom();
 	extern unsigned long time();
-	extern int random();
 	extern int write();
 #endif
 	const unsigned char *buf=_buf;
@@ -104,7 +103,6 @@ int des_enc_write(int fd, const void *_buf, int len,
 	if (start)
 		{
 		start=0;
-		srandom(time(NULL));
 		}
 
 	/* lets recurse if we want to send the data in small chunks */
@@ -132,8 +130,7 @@ int des_enc_write(int fd, const void *_buf, int len,
 		{
 		cp=shortbuf;
 		memcpy(shortbuf,buf,len);
-		for (i=len; i<8; i++)
-			shortbuf[i]=random();
+		RAND_bytes(shortbuf+len, 8-len);
 		rnum=8;
 		}
 	else

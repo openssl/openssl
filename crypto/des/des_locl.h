@@ -73,6 +73,7 @@
 #ifndef MSDOS
 #if !defined(VMS) || defined(__DECC)
 #include OPENSSL_UNISTD
+#include <math.h>
 #endif
 #endif
 #include <openssl/des.h>
@@ -82,42 +83,10 @@
 #include <errno.h>
 #include <time.h>
 #include <io.h>
-#ifndef RAND
-#define RAND
-#endif
-#endif
-
-#ifdef VMS
-#ifndef __DECC
-#include <math.h>
-#define RAND
-#else
-#if __CRTL_VER < 70000000
-#define RAND
-#endif
-#endif
 #endif
 
 #if defined(__STDC__) || defined(VMS) || defined(M_XENIX) || defined(MSDOS)
 #include <string.h>
-#endif
-
-#ifndef RAND
-#define RAND
-#endif
-
-#ifdef linux
-#undef RAND
-#endif
-
-#ifdef MSDOS
-#define getpid() 2
-#define RAND
-#endif
-
-#ifdef RAND
-#define srandom(s) srand(s)
-#define random rand
 #endif
 
 #define ITERATIONS 16

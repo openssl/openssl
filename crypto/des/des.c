@@ -65,17 +65,12 @@
 #else /* VMS */
 #ifdef __DECC
 #include <unistd.h>
-#if __CRTL_VER < 70000000
-#define RAND
-#endif
 #else /* not __DECC */
 #include <math.h>
-#define RAND
 #endif /* __DECC */
 #endif /* VMS */
 #else
 #include <io.h>
-#define RAND
 #endif
 
 #include <time.h>
@@ -91,14 +86,10 @@
 #include <sys/stat.h>
 #endif
 #include <openssl/des.h>
+#include <openssl/rand.h>
 
 #if defined(__STDC__) || defined(VMS) || defined(M_XENIX) || defined(MSDOS)
 #include <string.h>
-#endif
-
-#ifdef RAND
-#define random rand
-#define srandom(s) srand(s)
 #endif
 
 void usage(void);
@@ -368,8 +359,6 @@ NULL
 void doencryption(void)
 	{
 #ifdef _LIBC
-	extern int srandom();
-	extern int random();
 	extern unsigned long time();
 #endif
 
@@ -494,9 +483,8 @@ void doencryption(void)
 			len=l-rem;
 			if (feof(DES_IN))
 				{
-				srandom((unsigned int)time(NULL));
 				for (i=7-rem; i>0; i--)
-					buf[l++]=random()&0xff;
+					RAND_bytes(buf + l++, 1);
 				buf[l++]=rem;
 				ex=1;
 				len+=rem;

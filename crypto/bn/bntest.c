@@ -104,8 +104,6 @@ int main(int argc, char *argv[])
 	BIO *out;
 	char *outfile=NULL;
 
-	srand((unsigned int)time(NULL));
-
 	argc--;
 	argv++;
 	while (argc >= 1)

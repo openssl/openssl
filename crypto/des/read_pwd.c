@@ -188,11 +188,7 @@ static int noecho_fgets(char *buf, int size, FILE *tty);
 #ifdef SIGACTION
  static struct sigaction savsig[NX509_SIG];
 #else
-# ifndef NOPROTO
   static void (*savsig[NX509_SIG])(int );
-# else
-  static void (*savsig[NX509_SIG])();
-# endif
 #endif
 static jmp_buf save;
 
