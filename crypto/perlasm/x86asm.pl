@@ -18,6 +18,11 @@ sub main'asm_init
 	($type,$fn)=@_;
 	$filename=$fn;
 
+	if ($ARGV[$#ARGV] eq "386")
+	{
+	$i386=1;
+	}
+
 	$cpp=$sol=$aout=$win32=0;
 	if (	($type eq "elf"))
 		{ require "x86unix.pl"; }
@@ -32,6 +37,8 @@ sub main'asm_init
 	else
 		{
 		print STDERR <<"EOF";
+Usage: $filename <target> [386]
+
 Pick one target type from
 	elf	- linux, FreeBSD etc
 	a.out	- old linux

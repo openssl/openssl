@@ -1,11 +1,5 @@
 #!/usr/local/bin/perl
 
-# Because the bswapl instruction is not supported for old assembers
-# (it was a new instruction for the 486), I've added .byte xxxx code
-# to put it in.
-# eric 24-Apr-1998
-#
-
 package x86unix;
 
 $label="L000";
@@ -158,11 +152,26 @@ sub main'dec	{ &out1("decl",@_); }
 sub main'inc	{ &out1("incl",@_); }
 sub main'push	{ &out1("pushl",@_); $stack+=4; }
 sub main'pop	{ &out1("popl",@_); $stack-=4; }
-sub main'bswap	{ &out1("bswapl",@_); }
 sub main'not	{ &out1("notl",@_); }
 sub main'call	{ &out1("call",$under.$_[0]); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
+
+# The bswapl instruction is new for the 486. Emulate if i386.
+sub main'bswap
+	{
+	if ($main'i386)
+		{
+		&main'comment("bswapl @_");
+		&main'exch(main'HB(@_),main'LB(@_));
+		&main'rotr(@_,16);
+		&main'exch(main'HB(@_),main'LB(@_));
+		}
+	else
+		{
+		&out1("bswapl",@_);
+		}
+	}
 
 sub out2
 	{
