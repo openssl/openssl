@@ -823,6 +823,7 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	if (tmp->top == BN_NIST_521_TOP)
 		tmp->d[BN_NIST_521_TOP-1]  &= BN_NIST_521_TOP_MASK;
 
+	bn_fix_top(tmp);
 	if (!BN_uadd(r, tmp, r))
 		return 0;
 	top = r->top;
@@ -838,6 +839,6 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	ret = 1;
 err:
 	BN_CTX_end(ctx);
-	
+
 	return ret;
 	}

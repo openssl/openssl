@@ -462,7 +462,6 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 			A[0]=0;
 		assert(A == &(b->d[b->dmax]));
 		}
-		
 	return b;
 	}
 
