@@ -222,7 +222,18 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	;;
 
     OSF1:*:*:*alpha*)
-	echo "${MACHINE}-dec-osf"; exit 0
+	OSFMAJOR=`echo ${RELEASE}| sed -e 's/^V\([0-9]*\)\..*$/\1/'`
+	case "$OSFMAJOR" in
+	    4|5)
+		echo "${MACHINE}-dec-tru64"; exit 0
+		;;
+	    1|2|3)
+		echo "${MACHINE}-dec-osf"; exit 0
+		;;
+	    *)
+		echo "${MACHINE}-dec-osf"; exit 0
+		;;
+	esac
 	;;
 
     QNX:*)
@@ -551,7 +562,8 @@ EOF
   pmax*-*-openbsd) OUT="OpenBSD-mips" ;;
   *-*-openbsd) OUT="OpenBSD" ;;
   *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
-  *-*-osf) OUT="alpha-cc" ;;
+  *-*-osf) OUT="alphaold-cc" ;;
+  *-*-tru64) OUT="alpha-cc" ;;
   *-*-unixware7) OUT="unixware-7" ;;
   *-*-UnixWare7) OUT="unixware-7" ;;
   *-*-Unixware7) OUT="unixware-7" ;;

@@ -301,12 +301,39 @@ my %table=(
 #### HP MPE/iX http://jazz.external.hp.com/src/openssl/
 "MPE/iX-gcc", "gcc:-D_ENDIAN -DBN_DIV2W -O3 -D_POSIX_SOURCE -D_SOCKET_SOURCE -I/SYSLOG/PUB::(unknown):MPE:-L/SYSLOG/PUB -lsyslog -lsocket -lcurses:BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 
-# Dec Alpha, OSF/1 - the alpha164-cc is the flags for a 21164A with
-# the new compiler
+# Dec Alpha, OSF/1 - the alpha164-cc is historical, for the conversion
+# from the older DEC C Compiler to the newer compiler.  It's now the
+# same as the preferred entry, alpha-cc.  If you are still using the
+# older compiler (you're at 3.x or earlier, or perhaps very early 4.x)
+# you should use `alphaold-cc'.
+#
+#	"What's in a name? That which we call a rose
+#	 By any other word would smell as sweet."
+#
+# - William Shakespeare, "Romeo & Juliet", Act II, scene II.
+#
+# For OSF/1 3.2b and earlier, and Digital UNIX 3.2c - 3.2g, with the
+# vendor compiler, use alphaold-cc.
+# For Digital UNIX 4.0 - 4.0e, with the vendor compiler, use alpha-cc.
+# For Tru64 UNIX 4.f - current, with the vendor compiler, use alpha-cc.
+#
+# There's also an alternate target available (which `config' will never
+# select) called alpha-cc-rpath.  This target builds an RPATH into the
+# shared libraries, which is very convenient on Tru64 since binaries
+# linked against that shared library will automatically inherit that RPATH,
+# and hence know where to look for the openssl libraries, even if they're in
+# an odd place.
+#
 # For gcc, the following gave a %50 speedup on a 164 over the 'DES_INT' version
-"alpha-gcc","gcc:-O3::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_RISC1:${alpha_asm}:dlfcn:tru64-shared::.so",
-"alpha-cc", "cc:-std1 -tune host -O4 -readonly_strings::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:tru64-shared::.so",
-"alpha164-cc", "cc:-std1 -tune host -fast -readonly_strings::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:tru64-shared::.so",
+#
+"alpha-gcc","gcc:-O3::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_RISC1:${alpha_asm}:dlfcn:alpha-osf1-shared::.so",
+"alphaold-cc", "cc:-std1 -tune host -O4 -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:alpha-osf1-shared::.so",
+"alpha164-cc", "cc:-std1 -tune host -fast -readonly_strings::-pthread::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:tru64-shared::.so",
+"alpha-cc", "cc:-std1 -tune host -fast -readonly_strings::-pthread::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:tru64-shared::.so",
+"alpha-cc-rpath", "cc:-std1 -tune host -fast -readonly_strings::-pthread::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:tru64-shared-rpath::.so",
+#
+# This probably belongs in a different section.
+#
 "FreeBSD-alpha","gcc:-DTERMIOS -O -fomit-frame-pointer::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_PTR DES_RISC2::::::::::dlfcn:bsd-gcc-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 #### Alpha Linux with GNU C and Compaq C setups

@@ -12,6 +12,15 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Rework the configuration and shared library support for Tru64 Unix.
+     The configuration part makes use of modern compiler features and
+     still retains old compiler behavior for those that run older versions
+     of the OS.  The shared library support part includes a variant that
+     uses the RPATH feature, and is available through the speciel
+     configuration target "alpha-cc-rpath", which will never be selected
+     automatically.
+     [Tim Mooney <mooney@dogbert.cc.ndsu.NoDak.edu> via Richard Levitte]
+
   *) In ssl3_get_key_exchange (ssl/s3_clnt.c), call ssl3_get_message()
      with the same message size as in ssl3_get_certificate_request().
      Otherwise, if no ServerKeyExchange message occurs, CertificateRequest
@@ -1978,7 +1987,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      default is static libraries only, and the OpenSSL programs
      are always statically linked for now, but there are
      preparations for dynamic linking in place.
-     This has been tested on Linux and True64.
+     This has been tested on Linux and Tru64.
      [Richard Levitte]
 
   *) Randomness polling function for Win9x, as described in:
