@@ -47,8 +47,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
@@ -60,6 +58,9 @@
 #include <openssl/rsa.h>
 #include "evp_locl.h"
 #include <assert.h>
+
+/* check flag after headers to ensure make depend works */
+#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
 
 /* longest key supported in hardware */
 #define MAX_HW_KEY	24
@@ -73,7 +74,7 @@ static int dev_failed;
 
 typedef struct session_op session_op;
 
-#define data(ctx) EVP_C_DATA(session_op,ctx)
+#define CDATA(ctx) EVP_C_DATA(session_op,ctx)
 
 static void err(const char *str)
     {
@@ -111,11 +112,10 @@ static int dev_crypto_init(session_op *ses)
 
 static int dev_crypto_cleanup(EVP_CIPHER_CTX *ctx)
     {
-    printf("Cleanup %d\n",data(ctx)->ses);
-    if(ioctl(fd,CIOCFSESSION,&data(ctx)->ses) == -1)
+    if(ioctl(fd,CIOCFSESSION,&CDATA(ctx)->ses) == -1)
 	err("CIOCFSESSION failed");
 
-    OPENSSL_free(data(ctx)->key);
+    OPENSSL_free(CDATA(ctx)->key);
 
     return 1;
     }
@@ -123,40 +123,23 @@ static int dev_crypto_cleanup(EVP_CIPHER_CTX *ctx)
 static int dev_crypto_init_key(EVP_CIPHER_CTX *ctx,int cipher,
 			       const unsigned char *key,int klen)
     {
-    if(!dev_crypto_init(data(ctx)))
+    if(!dev_crypto_init(CDATA(ctx)))
 	return 0;
 
-    data(ctx)->key=OPENSSL_malloc(MAX_HW_KEY);
+    CDATA(ctx)->key=OPENSSL_malloc(MAX_HW_KEY);
 
     assert(ctx->cipher->iv_len <= MAX_HW_IV);
 
-    memcpy(data(ctx)->key,key,klen);
+    memcpy(CDATA(ctx)->key,key,klen);
     
-    data(ctx)->cipher=cipher;
-    data(ctx)->keylen=klen;
+    CDATA(ctx)->cipher=cipher;
+    CDATA(ctx)->keylen=klen;
 
-    if (ioctl(fd,CIOCGSESSION,data(ctx)) == -1)
+    if (ioctl(fd,CIOCGSESSION,CDATA(ctx)) == -1)
 	{
 	err("CIOCGSESSION failed");
 	return 0;
 	}
-    printf("Init %d\n",data(ctx)->ses);
-    return 1;
-    }
-
-static int dev_crypto_init_digest(session_op *ses,int mac)
-    {
-    if(!dev_crypto_init(ses))
-	return 0;
-
-    ses->mac=mac;
-
-    if (ioctl(fd,CIOCGSESSION,ses) == -1)
-	{
-	err("CIOCGSESSION failed");
-	return 0;
-	}
-    printf("Init MAC %d\n",ses->ses);
     return 1;
     }
 
@@ -169,11 +152,11 @@ static int dev_crypto_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
     if(!inl)
 	return 1;
 
-    assert(data(ctx));
+    assert(CDATA(ctx));
     assert(!dev_failed);
 
     memset(&cryp,'\0',sizeof cryp);
-    cryp.ses=data(ctx)->ses;
+    cryp.ses=CDATA(ctx)->ses;
     cryp.op=ctx->encrypt ? COP_ENCRYPT : COP_DECRYPT;
     cryp.flags=0;
     cryp.len=inl;
@@ -281,54 +264,137 @@ static const EVP_CIPHER r4_cipher=
 const EVP_CIPHER *EVP_dev_crypto_rc4(void)
     { return &r4_cipher; }
 
-static int dev_crypto_md5_init(void *md_data)
-    { return dev_crypto_init_digest(md_data,CRYPTO_MD5); }
-
-static int dev_crypto_md5_update(void *md_data,const void *data,
-				 unsigned long len)
+typedef struct
     {
-    struct crypt_op cryp;
-    session_op *ses=md_data;
-    char buf[MD5_DIGEST_LENGTH];
+    session_op sess;
+    char *data;
+    int len;
+    unsigned char md[EVP_MAX_MD_SIZE];
+    } MD_DATA;
 
-    printf("update\n");
-    memset(&cryp,'\0',sizeof cryp);
-    cryp.ses=ses->ses;
-    cryp.len=len;
-    cryp.src=(caddr_t)data;
-    cryp.dst=buf;
+static int dev_crypto_init_digest(MD_DATA *md_data,int mac)
+    {
+    if(!dev_crypto_init(&md_data->sess))
+	return 0;
 
-    if(ioctl(fd, CIOCCRYPT, &cryp) == -1)
+    md_data->len=0;
+    md_data->data=NULL;
+
+    md_data->sess.mac=mac;
+
+    if (ioctl(fd,CIOCGSESSION,&md_data->sess) == -1)
 	{
-	err("CIOCCRYPT(MAC) failed");
-	abort();
+	err("CIOCGSESSION failed");
 	return 0;
 	}
-    printf("update done\n");
     return 1;
     }
 
-static int dev_crypto_md5_final(unsigned char *md,void *md_data)
+/* FIXME: if device can do chained MACs, then don't accumulate */
+/* FIXME: move accumulation to the framework */
+static int dev_crypto_md5_init(EVP_MD_CTX *ctx)
+    { return dev_crypto_init_digest(ctx->md_data,CRYPTO_MD5); }
+
+static int do_digest(int ses,unsigned char *md,const void *data,int len)
     {
     struct crypt_op cryp;
-    session_op *ses=md_data;
+    static unsigned char md5zero[16]=
+	{
+	0xd4,0x1d,0x8c,0xd9,0x8f,0x00,0xb2,0x04,
+	0xe9,0x80,0x09,0x98,0xec,0xf8,0x42,0x7e
+	};
 
-    printf("final\n");
+    /* some cards can't do zero length */
+    if(!len)
+	{
+	memcpy(md,md5zero,16);
+	return 1;
+	}
+
     memset(&cryp,'\0',sizeof cryp);
-    cryp.ses=ses->ses;
-    cryp.len=0;
+    cryp.ses=ses;
     cryp.op=COP_ENCRYPT;/* required to do the MAC rather than check it */
-    cryp.src=(caddr_t)md;
-    cryp.dst=(caddr_t)md;
+    cryp.len=len;
+    cryp.src=(caddr_t)data;
+    cryp.dst=(caddr_t)data; // FIXME!!!
+    cryp.mac=(caddr_t)md;
 
     if(ioctl(fd, CIOCCRYPT, &cryp) == -1)
 	{
-	err("CIOCCRYPT(MAC,final) failed");
-	abort();
-	return 0;
+	if(errno == EINVAL) /* buffer is misaligned */
+	    {
+	    char *dcopy;
+
+	    dcopy=OPENSSL_malloc(len);
+	    memcpy(dcopy,data,len);
+	    cryp.src=dcopy;
+	    cryp.dst=cryp.src; // FIXME!!!
+
+	    if(ioctl(fd, CIOCCRYPT, &cryp) == -1)
+		{
+		err("CIOCCRYPT(MAC2) failed");
+		abort();
+		return 0;
+		}
+	    OPENSSL_free(dcopy);
+	    }
+	else
+	    {
+	    err("CIOCCRYPT(MAC) failed");
+	    abort();
+	    return 0;
+	    }
+	}
+    printf("done\n");
+
+    return 1;
+    }
+
+static int dev_crypto_md5_update(EVP_MD_CTX *ctx,const void *data,
+				 unsigned long len)
+    {
+    MD_DATA *md_data=ctx->md_data;
+
+    if(ctx->flags&EVP_MD_CTX_FLAG_ONESHOT)
+	return do_digest(md_data->sess.ses,md_data->md,data,len);
+
+    md_data->data=OPENSSL_realloc(md_data->data,md_data->len+len);
+    memcpy(md_data->data+md_data->len,data,len);
+    md_data->len+=len;
+
+    return 1;
+    }	
+
+static int dev_crypto_md5_final(EVP_MD_CTX *ctx,unsigned char *md)
+    {
+    int ret;
+    MD_DATA *md_data=ctx->md_data;
+
+    if(ctx->flags&EVP_MD_CTX_FLAG_ONESHOT)
+	{
+	memcpy(md,md_data->md,MD5_DIGEST_LENGTH);
+	return 1;
 	}
 
-    printf("final done\n");
+    ret=do_digest(md_data->sess.ses,md,md_data->data,md_data->len);
+    OPENSSL_free(md_data->data);
+    md_data->data=NULL;
+    md_data->len=0;
+
+    return ret;
+    }
+
+static int dev_crypto_md5_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from)
+    {
+    const MD_DATA *from_md=from->md_data;
+    MD_DATA *to_md=to->md_data;
+
+    // How do we copy sessions?
+    assert(from->digest->flags&EVP_MD_FLAG_ONESHOT);
+
+    to_md->data=OPENSSL_malloc(from_md->len);
+    memcpy(to_md->data,from_md->data,from_md->len);
+
     return 1;
     }
 
@@ -337,17 +403,17 @@ static const EVP_MD md5_md=
     NID_md5,
     NID_md5WithRSAEncryption,
     MD5_DIGEST_LENGTH,
+    EVP_MD_FLAG_ONESHOT,	// XXX: set according to device info...
     dev_crypto_md5_init,
     dev_crypto_md5_update,
     dev_crypto_md5_final,
+    dev_crypto_md5_copy,
     EVP_PKEY_RSA_method,
     MD5_CBLOCK,
-    sizeof(session_op),
+    sizeof(MD_DATA),
     };
 
 const EVP_MD *EVP_dev_crypto_md5(void)
     { return &md5_md; }
 
-#else
-static void *dummy=&dummy;
 #endif

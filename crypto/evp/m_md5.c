@@ -64,14 +64,25 @@
 #include <openssl/x509.h>
 #include <openssl/md5.h>
 
+static int init(EVP_MD_CTX *ctx)
+	{ return MD5_Init(ctx->md_data); }
+
+static int update(EVP_MD_CTX *ctx,const void *data,unsigned long count)
+	{ return MD5_Update(ctx->md_data,data,count); }
+
+static int final(EVP_MD_CTX *ctx,unsigned char *md)
+	{ return MD5_Final(md,ctx->md_data); }
+
 static const EVP_MD md5_md=
 	{
 	NID_md5,
 	NID_md5WithRSAEncryption,
 	MD5_DIGEST_LENGTH,
-	MD5_Init,
-	MD5_Update,
-	MD5_Final,
+	0,
+	init,
+	update,
+	final,
+	NULL,
 	EVP_PKEY_RSA_method,
 	MD5_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(MD5_CTX),

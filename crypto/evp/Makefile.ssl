@@ -513,7 +513,15 @@ names.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 names.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
 names.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 names.o: ../cryptlib.h names.c
-openbsd_hw.o: openbsd_hw.c
+openbsd_hw.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+openbsd_hw.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+openbsd_hw.o: ../../include/openssl/e_os2.h ../../include/openssl/evp.h
+openbsd_hw.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+openbsd_hw.o: ../../include/openssl/opensslconf.h
+openbsd_hw.o: ../../include/openssl/opensslv.h ../../include/openssl/rsa.h
+openbsd_hw.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+openbsd_hw.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+openbsd_hw.o: evp_locl.h openbsd_hw.c
 p5_crpt.o: ../../e_os.h ../../include/openssl/asn1.h
 p5_crpt.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 p5_crpt.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

@@ -64,14 +64,25 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
+static int init(EVP_MD_CTX *ctx)
+	{ return RIPEMD160_Init(ctx->md_data); }
+
+static int update(EVP_MD_CTX *ctx,const void *data,unsigned long count)
+	{ return RIPEMD160_Update(ctx->md_data,data,count); }
+
+static int final(EVP_MD_CTX *ctx,unsigned char *md)
+	{ return RIPEMD160_Final(md,ctx->md_data); }
+
 static const EVP_MD ripemd160_md=
 	{
 	NID_ripemd160,
 	NID_ripemd160WithRSA,
 	RIPEMD160_DIGEST_LENGTH,
-	RIPEMD160_Init,
-	RIPEMD160_Update,
-	RIPEMD160_Final,
+	0,
+	init,
+	update,
+	final,
+	NULL,
 	EVP_PKEY_RSA_method,
 	RIPEMD160_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(RIPEMD160_CTX),

@@ -217,10 +217,13 @@ struct env_md_st
 	int type;
 	int pkey_type;
 	int md_size;
-	int (*init)();
-	int (*update)();
-	int (*final)();
+	unsigned long flags;
+	int (*init)(EVP_MD_CTX *ctx);
+	int (*update)(EVP_MD_CTX *ctx,const void *data,unsigned long count);
+	int (*final)(EVP_MD_CTX *ctx,unsigned char *md);
+	int (*copy)(EVP_MD_CTX *to,const EVP_MD_CTX *from);
 
+	/* FIXME: prototype these some day */
 	int (*sign)();
 	int (*verify)();
 	int required_pkey_type[5]; /*EVP_PKEY_xxx */
@@ -228,7 +231,8 @@ struct env_md_st
 	int ctx_size; /* how big does the ctx->md_data need to be */
 	} /* EVP_MD */;
 
-
+#define EVP_MD_FLAG_ONESHOT	0x0001 /* digest can only handle a single
+					* block */
 
 #define EVP_PKEY_NULL_method	NULL,NULL,{0,0,0,0}
 
@@ -254,11 +258,17 @@ struct env_md_st
 
 #endif /* !EVP_MD */
 
-typedef struct env_md_ctx_st
+struct env_md_ctx_st
 	{
 	const EVP_MD *digest;
+	unsigned long flags;
 	void *md_data;
-	} EVP_MD_CTX;
+	} /* EVP_MD_CTX */;
+
+/* values for EVP_MD_CTX flags */
+
+#define EVP_MD_CTX_FLAG_ONESHOT		0x0001 /* digest update will be called
+						* once only */
 
 struct evp_cipher_st
 	{
@@ -443,6 +453,7 @@ int	EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
 EVP_MD_CTX *EVP_MD_CTX_create(void);
 void	EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
 int     EVP_MD_CTX_copy(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
+#define EVP_MD_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
 #ifdef CRYPTO_MDEBUG
 int	EVP_DigestInit_dbg(EVP_MD_CTX *ctx, const EVP_MD *type,
 			   const char *file,int line);

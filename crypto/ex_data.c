@@ -226,9 +226,8 @@ static int ex_data_check(void)
 #define EX_DATA_CHECK(iffail) if(!ex_data && !ex_data_check()) {iffail}
 
 /* This "inner" callback is used by the callback function that follows it */
-static void def_cleanup_util_cb(void *a_void)
+static void def_cleanup_util_cb(CRYPTO_EX_DATA_FUNCS *v)
 	{
-	CRYPTO_EX_DATA_FUNCS *v = (CRYPTO_EX_DATA_FUNCS *)a_void;
 	OPENSSL_free(v);
 	}
 
@@ -499,7 +498,7 @@ int CRYPTO_ex_data_new_class(void)
 void CRYPTO_cleanup_all_ex_data(void)
 	{
 	IMPL_CHECK
-	return EX_IMPL(cleanup)();
+	EX_IMPL(cleanup)();
 	}
 
 /* Inside an existing class, get/register a new index. */
@@ -537,7 +536,7 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
 void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 	{
 	IMPL_CHECK
-	return EX_IMPL(free_ex_data)(class_index, obj, ad);
+	EX_IMPL(free_ex_data)(class_index, obj, ad);
 	}
 
 /* For a given CRYPTO_EX_DATA variable, set the value corresponding to a

@@ -64,14 +64,25 @@
 #include <openssl/x509.h>
 #include <openssl/md4.h>
 
+static int init(EVP_MD_CTX *ctx)
+	{ return MD4_Init(ctx->md_data); }
+
+static int update(EVP_MD_CTX *ctx,const void *data,unsigned long count)
+	{ return MD4_Update(ctx->md_data,data,count); }
+
+static int final(EVP_MD_CTX *ctx,unsigned char *md)
+	{ return MD4_Final(md,ctx->md_data); }
+
 static const EVP_MD md4_md=
 	{
 	NID_md4,
 	0,
 	MD4_DIGEST_LENGTH,
-	MD4_Init,
-	MD4_Update,
-	MD4_Final,
+	0,
+	init,
+	update,
+	final,
+	NULL,
 	EVP_PKEY_RSA_method,
 	MD4_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(MD4_CTX),

@@ -96,6 +96,7 @@ typedef int ASN1_NULL;
 typedef struct evp_cipher_st EVP_CIPHER;
 typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
 typedef struct env_md_st EVP_MD;
+typedef struct env_md_ctx_st EVP_MD_CTX;
 typedef struct evp_pkey_st EVP_PKEY;
 
 typedef struct x509_st X509;

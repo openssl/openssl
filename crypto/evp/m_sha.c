@@ -63,14 +63,25 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
+static int init(EVP_MD_CTX *ctx)
+	{ return SHA_Init(ctx->md_data); }
+
+static int update(EVP_MD_CTX *ctx,const void *data,unsigned long count)
+	{ return SHA_Update(ctx->md_data,data,count); }
+
+static int final(EVP_MD_CTX *ctx,unsigned char *md)
+	{ return SHA_Final(md,ctx->md_data); }
+
 static const EVP_MD sha_md=
 	{
 	NID_sha,
 	NID_shaWithRSAEncryption,
 	SHA_DIGEST_LENGTH,
-	SHA_Init,
-	SHA_Update,
-	SHA_Final,
+	0,
+	init,
+	update,
+	final,
+	NULL,
 	EVP_PKEY_RSA_method,
 	SHA_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA_CTX),

@@ -12,6 +12,21 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Add a copy() function to EVP_MD.
+     [Ben Laurie]
+
+  +) Make EVP_MD routines take a context pointer instead of just the
+     md_data voud pointer.
+     [Ben Laurie]
+
+  +) Add flags to EVP_MD and EVP_MD_CTX. EVP_MD_FLAG_ONESHOT indicates
+     that the digest can only process a single chunk of data
+     (typically because it is provided by a piece of
+     hardware). EVP_MD_CTX_FLAG_ONESHOT indicates that the application
+     is only going to provide a single chunk of data, and hence the
+     framework needn't accumulate the data for oneshot drivers.
+     [Ben Laurie]
+
   +) As with "ERR", make it possible to replace the underlying "ex_data"
      functions. This change also alters the storage and management of global
      ex_data state - it's now all inside ex_data.c and all "class" code (eg.

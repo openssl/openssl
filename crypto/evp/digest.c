@@ -84,29 +84,30 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 	{
 	if(ctx->digest != type)
 		{
-		if(ctx->md_data != NULL)
+		if(ctx->digest && ctx->digest->ctx_size)
 			OPENSSL_free(ctx->md_data);
 		ctx->digest=type;
+		if(type->ctx_size)
 #ifdef CRYPTO_MDEBUG
-		ctx->md_data=CRYPTO_malloc(type->ctx_size,file,line);
+			ctx->md_data=CRYPTO_malloc(type->ctx_size,file,line);
 #else
-		ctx->md_data=OPENSSL_malloc(type->ctx_size);
+			ctx->md_data=OPENSSL_malloc(type->ctx_size);
 #endif
 		}
-	return type->init(ctx->md_data);
+	return type->init(ctx);
 	}
 
 int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data,
 	     unsigned int count)
 	{
-	return ctx->digest->update(ctx->md_data,data,(unsigned long)count);
+	return ctx->digest->update(ctx,data,(unsigned long)count);
 	}
 
 /* The caller can assume that this removes any secret data from the context */
 int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	{
 	int ret;
-	ret=ctx->digest->final(md,ctx->md_data);
+	ret=ctx->digest->final(ctx,md);
 	if (size != NULL)
 		*size=ctx->digest->md_size;
 	/* FIXME: add a cleanup function to the ctx? */
@@ -120,11 +121,19 @@ int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         EVPerr(EVP_F_EVP_MD_CTX_COPY,EVP_R_INPUT_NOT_INITIALIZED);
 	return 0;
     }
+
     EVP_MD_CTX_cleanup(out);
     memcpy(out,in,sizeof *out);
-    out->md_data=OPENSSL_malloc(out->digest->ctx_size);
-    /* FIXME: we really need a per-MD copy function */
-    memcpy(out->md_data,in->md_data,out->digest->ctx_size);
+
+    if(out->digest->ctx_size)
+	{
+	out->md_data=OPENSSL_malloc(out->digest->ctx_size);
+	memcpy(out->md_data,in->md_data,out->digest->ctx_size);
+	}
+
+    if(out->digest->copy)
+	return out->digest->copy(out,in);
+
     return 1;
 }
 
@@ -135,6 +144,7 @@ int EVP_Digest(void *data, unsigned int count,
 	int ret;
 
 	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_set_flags(&ctx,EVP_MD_CTX_FLAG_ONESHOT);
 	ret=EVP_DigestInit(&ctx, type)
 	  && EVP_DigestUpdate(&ctx, data, count)
 	  && EVP_DigestFinal(&ctx, md, size);
@@ -155,7 +165,7 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 	/* Don't assume ctx->md_data was cleaned in EVP_Digest_Final,
 	 * because sometimes only copies of the context are ever finalised.
 	 */
-	if(ctx->md_data)
+	if(ctx->digest && ctx->digest->ctx_size && ctx->md_data)
 		{
 		memset(ctx->md_data,0,ctx->digest->ctx_size);
 		OPENSSL_free(ctx->md_data);
