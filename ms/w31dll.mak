@@ -118,8 +118,8 @@ HEADER=$(INCL_D)\cryptlib.h \
 	$(INCL_D)\bf_pi.h $(INCL_D)\bf_locl.h $(INCL_D)\cast_s.h \
 	$(INCL_D)\cast_lcl.h $(INCL_D)\bn_lcl.h $(INCL_D)\bn_prime.h \
 	$(INCL_D)\obj_dat.h $(INCL_D)\conf_lcl.h $(INCL_D)\ssl_locl.h \
-	$(INCL_D)\rsaref.h $(INCL_D)\apps.h $(INCL_D)\progs.h \
-	$(INCL_D)\s_apps.h $(INCL_D)\testdsa.h $(INCL_D)\testrsa.h
+	$(INCL_D)\apps.h $(INCL_D)\progs.h $(INCL_D)\s_apps.h \
+	$(INCL_D)\testdsa.h $(INCL_D)\testrsa.h
 
 EXHEADER=$(INC_D)\e_os.h \
 	$(INC_D)\crypto.h $(INC_D)\cryptall.h $(INC_D)\tmdiff.h \
@@ -136,7 +136,7 @@ EXHEADER=$(INC_D)\e_os.h \
 	$(INC_D)\x509_vfy.h $(INC_D)\conf.h $(INC_D)\txt_db.h \
 	$(INC_D)\pkcs7.h $(INC_D)\comp.h $(INC_D)\ssl.h \
 	$(INC_D)\ssl2.h $(INC_D)\ssl3.h $(INC_D)\ssl23.h \
-	$(INC_D)\tls1.h
+	$(INC_D)\tls1.h $(INC_D)\rsaref.h
 
 T_OBJ=$(OBJ_D)\md2test.obj \
 	$(OBJ_D)\md5test.obj $(OBJ_D)\shatest.obj $(OBJ_D)\sha1test.obj \
@@ -411,9 +411,6 @@ $(INCL_D)\conf_lcl.h: $(SRC_D)\crypto\conf\conf_lcl.h
 $(INCL_D)\ssl_locl.h: $(SRC_D)\ssl\ssl_locl.h
 	$(CP) $(SRC_D)\ssl\ssl_locl.h $(INCL_D)\ssl_locl.h
 
-$(INCL_D)\rsaref.h: $(SRC_D)\rsaref\rsaref.h
-	$(CP) $(SRC_D)\rsaref\rsaref.h $(INCL_D)\rsaref.h
-
 $(INCL_D)\apps.h: $(SRC_D)\apps\apps.h
 	$(CP) $(SRC_D)\apps\apps.h $(INCL_D)\apps.h
 
@@ -560,6 +557,9 @@ $(INC_D)\ssl23.h: $(SRC_D)\ssl\ssl23.h
 
 $(INC_D)\tls1.h: $(SRC_D)\ssl\tls1.h
 	$(CP) $(SRC_D)\ssl\tls1.h $(INC_D)\tls1.h
+
+$(INC_D)\rsaref.h: $(SRC_D)\rsaref\rsaref.h
+	$(CP) $(SRC_D)\rsaref\rsaref.h $(INC_D)\rsaref.h
 
 $(OBJ_D)\md2test.obj: $(SRC_D)\crypto\md2\md2test.c
 	$(CC) /Fo$(OBJ_D)\md2test.obj $(APP_CFLAGS) -c $(SRC_D)\crypto\md2\md2test.c
