@@ -38,16 +38,28 @@ the operation is not implemented in the specific BIO type.
 =head1 NOTES
 
 A 0 or -1 return is not necessarily an indication of an error. In
-particular when the source/sink is non-blocking or of a certain type (for
-example an SSL BIO can retry even if the underlying connection is blocking)
+particular when the source/sink is non-blocking or of a certain type
 it may merely be an indication that no data is currently available and that
-the application should retry the operation later. L<BIO_should_retry(3)|BIO_should_retry(3)>
-can be called to determine the precise cause.
+the application should retry the operation later.
+
+One technique sometimes used with blocking sockets is to use a system call
+(such as select(), poll() or eqivalent) to determine when data is available
+and then call read() to read the data. The eqivalent with BIOs (that is call
+select() on the underlying I/O structure and then call BIO_read() to
+read the data) should B<not> be used because a single call to BIO_read()
+can cause several reads (and writes in the case of SSL BIOs) on the underlying
+I/O structure and may block as a result. Instead select() (or equivalent)
+should be combined with non blocking I/O so successive reads will request
+a retry instead of blocking.
+
+See the L<BIO_should_retry(3)|BIO_should_retry(3)> for details of how to
+determine the cause of a retry and other I/O issues.
 
 If the BIO_gets() function is not supported by a BIO then it possible to
 work around this by adding a buffering BIO L<BIO_f_buffer(3)|BIO_f_buffer(3)>
 to the chain.
 
 =head1 SEE ALSO
+L<BIO_should_retry(3)|BIO_should_retry(3)>
 
 TBA
