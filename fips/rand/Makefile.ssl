@@ -34,7 +34,7 @@ HEADER=	$(EXHEADER)
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
 top:
-	(cd ../..; $(MAKE) DIRS=fips SDIRS=$(DIR) sub_all)
+	(cd $(TOP); $(MAKE) DIRS=fips SDIRS=$(DIR) sub_all)
 
 all:	check lib
 
@@ -51,9 +51,9 @@ files:
 
 links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
 
 install:
 	@for i in $(EXHEADER) ; \

@@ -35,7 +35,7 @@ HEADER=	$(EXHEADER) fips_sha_locl.h fips_md32_common.h
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
 top:
-	(cd ../..; $(MAKE) DIRS=fips SDIRS=$(DIR) sub_all)
+	(cd $(TOP); $(MAKE) DIRS=fips SDIRS=$(DIR) sub_all)
 
 all:	check_standalone check lib
 
@@ -59,9 +59,9 @@ files:
 
 links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
 
 install:
 	@for i in $(EXHEADER) ; \
@@ -76,11 +76,11 @@ tags:
 tests:
 
 top_fips_sha1test:
-	(cd ../..; $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_sha1test sub_target)
+	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_sha1test sub_target)
 
-fips_sha1test: fips_sha1test.o ../../libcrypto.a
-	$(CC) $(CFLAGS) -o fips_sha1test fips_sha1test.o ../../libcrypto.a
-	$(TOP)/fips/openssl_fips_fingerprint ../../libcrypto.a fips_sha1test
+fips_sha1test: fips_sha1test.o $(TOP)/libcrypto.a
+	$(CC) $(CFLAGS) -o fips_sha1test fips_sha1test.o $(TOP)/libcrypto.a
+	$(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_sha1test
 
 fips_test: top_fips_sha1test
 	-rm -rf ../testvectors/sha1/rsp

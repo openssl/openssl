@@ -34,7 +34,7 @@ HEADER=	$(EXHEADER)
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
 top:
-	(cd ../..; $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
+	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) sub_all)
 
 all:	check lib
 
@@ -51,9 +51,9 @@ files:
 
 links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
-	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
-	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
 
 install:
 	@for i in $(EXHEADER) ; \
@@ -68,11 +68,11 @@ tags:
 tests:
 
 top_fips_dssvs:
-	(cd ../..; $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_dssvs sub_target)
+	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_dssvs sub_target)
 
-fips_dssvs: fips_dssvs.o ../../libcrypto.a
-	$(CC) $(CFLAGS) -o fips_dssvs fips_dssvs.o ../../libcrypto.a
-	$(TOP)/fips/openssl_fips_fingerprint ../../libcrypto.a fips_dssvs
+fips_dssvs: fips_dssvs.o $(TOP)/libcrypto.a
+	$(CC) $(CFLAGS) -o fips_dssvs fips_dssvs.o $(TOP)/libcrypto.a
+	$(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_dssvs
 
 Q=../testvectors/dsa/req
 A=../testvectors/dsa/rsp
