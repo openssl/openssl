@@ -88,6 +88,7 @@
 #endif
 #include <openssl/des.h>
 #include <openssl/rand.h>
+#include <openssl/ui_compat.h>
 
 void usage(void);
 void doencryption(void);
