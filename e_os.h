@@ -301,6 +301,8 @@ extern "C" {
 #      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP
                          * (unless when compiling with -D_POSIX_SOURCE,
                          * which doesn't work for us) */
+#    endif
+#    if defined(NeXT) || defined(OPENSSL_SYS_NEWS4) || defined(OPENSSL_SYS_SUNOS)
 #      define ssize_t int /* ditto */
 #    endif
 #    ifdef NEWS4 /* setvbuf is missing on mips-sony-bsd */
