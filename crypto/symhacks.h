@@ -131,6 +131,8 @@
 #define X509_policy_tree_get0_user_policies	X509_pcy_tree_get0_usr_policies
 #undef X509_policy_node_get0_qualifiers
 #define X509_policy_node_get0_qualifiers	X509_pcy_node_get0_qualifiers
+#undef X509_STORE_CTX_get_explicit_policy
+#define X509_STORE_CTX_get_explicit_policy	X509_STORE_CTX_get_expl_policy
 
 /* Hack some long CRYPTO names */
 #undef CRYPTO_set_dynlock_destroy_callback
