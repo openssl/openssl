@@ -69,10 +69,10 @@ const EC_METHOD *EC_GFp_nist_method(void)
 	{
 	static const EC_METHOD ret = {
 		NID_X9_62_prime_field,
-		ec_GFp_nist_group_init,
-		ec_GFp_nist_group_finish,
-		ec_GFp_nist_group_clear_finish,
-		ec_GFp_nist_group_copy,
+		ec_GFp_simple_group_init,
+		ec_GFp_simple_group_finish,
+		ec_GFp_simple_group_clear_finish,
+		ec_GFp_simple_group_copy,
 		ec_GFp_nist_group_set_curve,
 		ec_GFp_simple_group_get_curve,
 		ec_GFp_simple_group_get_degree,
@@ -112,47 +112,6 @@ const EC_METHOD *EC_GFp_nist_method(void)
 #if BN_BITS2 == 64 && UINT_MAX != 4294967295UL && ULONG_MAX != 4294967295UL
 #define	NO_32_BIT_TYPE
 #endif
-
-int ec_GFp_nist_group_init(EC_GROUP *group)
-	{
-	int ok;
-
-	ok = ec_GFp_simple_group_init(group);
-	return ok;
-	}
-
-void ec_GFp_nist_group_finish(EC_GROUP *group)
-	{
-	BN_free(&group->field);
-	BN_free(&group->a);
-	BN_free(&group->b);
-	}
-
-void ec_GFp_nist_group_clear_finish(EC_GROUP *group)
-	{
-	BN_clear_free(&group->field);
-	BN_clear_free(&group->a);
-	BN_clear_free(&group->b);
-	}
-
-int ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src)
-	{
-	if (dest == NULL || src == NULL)
-		return 0;
-
-	if (!BN_copy(&dest->field, &src->field))
-		return 0;
-	if (!BN_copy(&dest->a, &src->a))
-		return 0;
-	if (!BN_copy(&dest->b, &src->b))
-		return 0;
-
-	dest->curve_name  = src->curve_name;
-
-	dest->a_is_minus3 = src->a_is_minus3;
-
-	return 1;
-	}
 
 
 int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
@@ -229,6 +188,7 @@ int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 	return ret;
 	}
 
+
 int ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 	const BIGNUM *b, BN_CTX *ctx)
 	{
@@ -253,6 +213,7 @@ err:
 		BN_CTX_free(ctx_new);
 	return ret;
 	}
+
 
 int ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 	BN_CTX *ctx)
