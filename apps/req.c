@@ -156,6 +156,7 @@ int MAIN(int argc, char **argv)
 	char *req_exts = NULL;
 	EVP_CIPHER *cipher=NULL;
 	int modulus=0;
+	char *inrand=NULL;
 	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
 	char *p;
@@ -238,6 +239,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			passargout= *(++argv);
+			}
+		else if (strcmp(*argv,"-rand") == 0)
+			{
+			if (--argc < 1) goto bad;
+			inrand= *(++argv);
 			}
 		else if (strcmp(*argv,"-newkey") == 0)
 			{
@@ -542,7 +548,12 @@ bad:
 
 	if (newreq && (pkey == NULL))
 		{
-		char *randfile = CONF_get_string(req_conf,SECTION,"RANDFILE");
+		char *randfile;
+
+		if (inrand)
+			randfile = inrand;
+		else
+			randfile = CONF_get_string(req_conf,SECTION,"RANDFILE");
 		app_RAND_load_file(randfile, bio_err, 0);
 	
 		if (newkey <= 0)
