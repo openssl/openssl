@@ -550,7 +550,7 @@ EOF
   ppc-apple-darwin*) OUT="darwin-ppc-cc" ;;
   i386-apple-darwin*) OUT="darwin-i386-cc" ;;
   sparc64-*-linux2)
-	echo "WARNING! If *know* that your GNU C supports 64-bit/V9 ABI"
+	echo "WARNING! If you *know* that your GNU C supports 64-bit/V9 ABI"
 	echo "         and wish to build 64-bit library, then you have to"
 	echo "         invoke './Configure linux64-sparcv9' *manually*."
 	if [ "$TEST" = "false" ]; then
