@@ -254,7 +254,7 @@ int time_it(int sec, PARMS *p)
 	for (;;)
 		{
 		if (verbose)
-			printf("timing %s for %d interactions\n",p->name,i);
+			printf("timing %s for %d iterations\n",p->name,i);
 
 		ms_time_get(start);
 		p->func(i,p);
@@ -271,7 +271,7 @@ int time_it(int sec, PARMS *p)
 			}
 		}
 	if (verbose)
-		printf("using %d interactions\n",i);
+		printf("using %d iterations\n",i);
 	return(i);
 	}
 
