@@ -54,4 +54,29 @@
  *
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <openssl/ec.h>
+#include <openssl/err.h>
+
+
+#define ABORT do { \
+	fprintf(stderr, "%s:%d: Error\n", __FILE__, __LINE__); \
+	ERR_print_errors_fp(stderr); \
+	exit(1); \
+} while (0)
+
+int main(int argc, char *argv[])
+	{	
+	EC_GROUP *group;
+
+	ERR_load_crypto_strings();
+
+#if 0
+	group = EC_GROUP_new(NULL);
+	if (!group) ABORT;
+#endif
+
+	return 0;
+	}
