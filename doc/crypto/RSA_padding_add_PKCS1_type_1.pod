@@ -90,7 +90,8 @@ RSA_padding_add_xxx().
 
 RSA_padding_check_xxx() verifies that the B<fl> bytes at B<f> contain
 a valid encoding for a B<rsa_len> byte RSA key in the respective
-encoding method and stores the recovered data of size B<tlen>
+encoding method and stores the recovered data of at most B<tlen> bytes
+(for B<RSA_NO_PADDING>: of size B<tlen>)
 at B<to>.
 
 For RSA_padding_xxx_OAEP(), B<p> points to the encoding parameter
