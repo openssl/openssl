@@ -100,7 +100,7 @@ sub check_file {
 
 sub link_hash_cert {
 		my $fname = $_[0];
-		my ($hash, $fprint) = `$openssl x509 -hash -fingerprint -noout -in $fname`;
+		my ($hash, $fprint) = `$openssl x509 -hash -fingerprint -noout -in "$fname"`;
 		chomp $hash;
 		chomp $fprint;
 		$fprint =~ s/^.*=//;
@@ -130,7 +130,7 @@ sub link_hash_cert {
 
 sub link_hash_crl {
 		my $fname = $_[0];
-		my ($hash, $fprint) = `$openssl crl -hash -fingerprint -noout -in $fname`;
+		my ($hash, $fprint) = `$openssl crl -hash -fingerprint -noout -in "$fname"`;
 		chomp $hash;
 		chomp $fprint;
 		$fprint =~ s/^.*=//;
