@@ -62,6 +62,48 @@
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 
+
+int EC_GROUP_get_basis_type(const EC_GROUP *group, unsigned int *k1, 
+	unsigned int *k2, unsigned int *k3)
+	{
+	int i = 0;
+
+	if (group == NULL)
+		return 0;
+
+	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) !=
+		NID_X9_62_characteristic_two_field)
+		/* everything else is currently not supported */
+		return 0;
+
+	while (group->poly[i] != 0)
+		i++;
+
+	if (i == 4)
+		{
+		if (k1)
+			*k1 = group->poly[3];
+		if (k2)
+			*k2 = group->poly[2];
+		if (k3)
+			*k3 = group->poly[1];
+
+		return NID_X9_62_ppBasis;
+		}
+	else if (i == 2)
+		{
+		if (k1)
+			*k1 = group->poly[1];
+
+		return NID_X9_62_tpBasis;
+		}
+	else
+		/* everything else is currently not supported */
+		return 0;
+	}
+
+
+
 /* some structures needed for the asn1 encoding */
 typedef struct x9_62_fieldid_st {
         ASN1_OBJECT *fieldType;

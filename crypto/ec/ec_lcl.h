@@ -89,6 +89,11 @@
 #include <openssl/ec.h>
 
 
+/* internal function: ec_group_index2nid() returns the NID of curve
+ * with the given index i from the internal curve list */
+int ec_group_index2nid(int i);
+
+
 /* Structure details are not part of the exported interface,
  * so all this may change in future versions. */
 

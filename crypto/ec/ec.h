@@ -191,12 +191,6 @@ const char *EC_GROUP_get0_comment(int nid);
  * with the given index i from the internal curve list */
 int ec_group_index2nid(int i);
 
-/* EC_GROUP_get_basis_type() returns the NID of the basis type
- * used to represent the field elements (in case of a pentanomial or trinomial
- * basis the coefficient are returned in the k? arguments) */
-int EC_GROUP_get_basis_type(const EC_GROUP *, unsigned int *k1,
-	unsigned int *k2, unsigned int *k3);
-
 
 /* EC_POINT functions */
 
@@ -261,6 +255,13 @@ int EC_GROUP_precompute_mult(EC_GROUP *, BN_CTX *);
 
 
 /* ASN1 stuff */
+
+/* EC_GROUP_get_basis_type() returns the NID of the basis type
+ * used to represent the field elements (in case of a pentanomial or trinomial
+ * basis the coefficient are returned in the k? arguments) */
+int EC_GROUP_get_basis_type(const EC_GROUP *, unsigned int *k1,
+	unsigned int *k2, unsigned int *k3);
+
 #define OPENSSL_EC_NAMED_CURVE	0x001
 
 typedef struct ecpk_parameters_st ECPKPARAMETERS;
