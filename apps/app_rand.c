@@ -162,7 +162,8 @@ long app_RAND_load_files(char *name)
 	char *p,*n;
 	int last;
 	long tot=0;
-
+    int egd;
+	
 	for (;;)
 		{
 		last=0;
@@ -173,7 +174,8 @@ long app_RAND_load_files(char *name)
 		name=p+1;
 		if (*n == '\0') break;
 
-		tot+=RAND_egd(n);
+        egd=RAND_egd(n);
+		if (egd > 0) tot+=egd;
 		tot+=RAND_load_file(n,1024L*1024L);
 		if (last) break;
 		}
