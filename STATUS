@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/08/12 06:53:17 $
+  ______________                           $Date: 2002/08/14 11:07:29 $
 
   DEVELOPMENT STATE
 
@@ -57,6 +57,9 @@
 	OCSP
 
   NEEDS PATCH
+
+    o  0.9.8-dev: COMPLEMENTOFALL and COMPLEMENTOFDEFAULT do not
+       handle ECCdraft cipher suites correctly.
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
 

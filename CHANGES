@@ -9,9 +9,6 @@
      the "ECCdraft" ciphersuite group alias can be used to select them.
      [Vipul Gupta and Sumit Gupta (Sun Microsystems Laboratories)]
 
-TODO: COMPLEMENTOFALL and COMPLEMENTOFDEFAULT do not handle ECCdraft
-cipher suites correctly.
-
   *) Add ECDH engine support.
      [Nils Gura and Douglas Stebila (Sun Microsystems Laboratories)]
 
