@@ -689,7 +689,7 @@ bad:
 			}
 
 		extensions=CONF_get_string(conf,section,ENV_EXTENSIONS);
-		if(!extensions) {
+		if(extensions) {
 
 			/* Check syntax of file */
 			if(!X509V3_EXT_add_conf(conf, NULL, extensions, NULL)) {
