@@ -123,16 +123,18 @@ extern BIO *bio_err;
 #    ifdef _O_BINARY
 #      define apps_startup() \
 		_fmode=_O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
-		OpenSSL_add_all_algorithms(); ENGINE_load_builtin_engines()
+		OpenSSL_add_all_algorithms(); ENGINE_load_builtin_engines(); \
+                setup_ui_method();
 #    else
 #      define apps_startup() \
 		_fmode=O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
-		OpenSSL_add_all_algorithms(); ENGINE_load_builtin_engines()
+		OpenSSL_add_all_algorithms(); ENGINE_load_builtin_engines(); \
+                setup_ui_method();
 #    endif
 #  else
 #    define apps_startup() \
 		do_pipe_sig(); OpenSSL_add_all_algorithms(); \
-		ENGINE_load_builtin_engines()
+		ENGINE_load_builtin_engines(); setup_ui_method();
 #  endif
 #endif
 
@@ -151,6 +153,8 @@ typedef struct pw_cb_data
 
 int password_callback(char *buf, int bufsiz, int verify,
 	PW_CB_DATA *cb_data);
+
+int setup_ui_method();
 
 int should_retry(int i);
 int args_from_file(char *file, int *argc, char **argv[]);

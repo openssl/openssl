@@ -69,6 +69,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
+#include <openssl/ui.h>
 #include <openssl/safestack.h>
 
 #ifdef OPENSSL_SYS_WINDOWS
@@ -86,6 +87,8 @@ typedef struct {
 	unsigned long flag;
 	unsigned long mask;
 } NAME_EX_TBL;
+
+static UI_METHOD *ui_method = NULL;
 
 static int set_table_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl);
 static int set_multi_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl);
@@ -369,13 +372,76 @@ int dump_cert_text (BIO *out, X509 *x)
         return 0;
 }
 
-int password_callback(char *buf, int bufsiz, int verify,
-	PW_CB_DATA *cb_data)
+static int ui_open(UI *ui)
 	{
-	int i,j;
-	char prompt[80];
+	return UI_method_get_opener(UI_OpenSSL())(ui);
+	}
+static int ui_read(UI *ui, UI_STRING *uis)
+	{
+	if (UI_get_input_flags(uis) & UI_INPUT_FLAG_DEFAULT_PWD
+		&& UI_get0_user_data(ui))
+		{
+		switch(UI_get_string_type(uis))
+			{
+		case UIT_PROMPT:
+		case UIT_VERIFY:
+			{
+			const char *password =
+				((PW_CB_DATA *)UI_get0_user_data(ui))->password;
+			if (password[0] != '\0')
+				{
+				UI_set_result(uis, password);
+				return 1;
+				}
+			}
+		default:
+			break;
+			}
+		}
+	return UI_method_get_reader(UI_OpenSSL())(ui, uis);
+	}
+static int ui_write(UI *ui, UI_STRING *uis)
+	{
+	if (UI_get_input_flags(uis) & UI_INPUT_FLAG_DEFAULT_PWD
+		&& UI_get0_user_data(ui))
+		{
+		switch(UI_get_string_type(uis))
+			{
+		case UIT_PROMPT:
+		case UIT_VERIFY:
+			{
+			const char *password =
+				((PW_CB_DATA *)UI_get0_user_data(ui))->password;
+			if (password[0] != '\0')
+				return 1;
+			}
+		default:
+			break;
+			}
+		}
+	return UI_method_get_writer(UI_OpenSSL())(ui, uis);
+	}
+static int ui_close(UI *ui)
+	{
+	return UI_method_get_closer(UI_OpenSSL())(ui);
+	}
+int setup_ui_method()
+	{
+	ui_method = UI_create_method("OpenSSL application user interface");
+	UI_method_set_opener(ui_method, ui_open);
+	UI_method_set_reader(ui_method, ui_read);
+	UI_method_set_writer(ui_method, ui_write);
+	UI_method_set_closer(ui_method, ui_close);
+	return 0;
+	}
+int password_callback(char *buf, int bufsiz, int verify,
+	PW_CB_DATA *cb_tmp)
+	{
+	UI *ui = NULL;
+	int res = 0;
 	const char *prompt_info = NULL;
 	const char *password = NULL;
+	PW_CB_DATA *cb_data = (PW_CB_DATA *)cb_tmp;
 
 	if (cb_data)
 		{
@@ -385,39 +451,74 @@ int password_callback(char *buf, int bufsiz, int verify,
 			prompt_info = cb_data->prompt_info;
 		}
 
-	if(password) {
-		i=strlen(password);
-		i=(i > bufsiz)?bufsiz:i;
-		memcpy(buf,password,i);
-		return(i);
-	}
-
-	if (EVP_get_pw_prompt())
-		BIO_snprintf(prompt, sizeof(prompt)-1, EVP_get_pw_prompt(),
-			prompt_info ? prompt_info : "");
-	else
-		BIO_snprintf(prompt, sizeof(prompt)-1,
-			"Enter pass phrase for %s:",
-			prompt_info ? prompt_info : "");
-
-	for (;;)
+	ui = UI_new_method(ui_method);
+	if (ui)
 		{
-		i=EVP_read_pw_string(buf,bufsiz,prompt,verify);
-		if (i != 0)
+		char errstring[80];
+		int errstring_added = 0;
+		int ok = 0;
+		char *buff = NULL;
+		int ui_flags = 0;
+		char *prompt = NULL;
+
+		prompt = UI_construct_prompt(ui, "pass phrase",
+			cb_data->prompt_info);
+
+		ui_flags |= UI_INPUT_FLAG_DEFAULT_PWD;
+
+		if (ok >= 0)
+			ok = UI_add_input_string(ui,prompt,ui_flags,buf,0,BUFSIZ-1);
+		if (ok >= 0 && verify)
+			{
+			buff = (char *)OPENSSL_malloc(bufsiz);
+			ok = UI_add_verify_string(ui,prompt,ui_flags,buff,0,BUFSIZ-1,
+				buf);
+			}
+		if (ok >= 0)
+			for(;;)
+				{
+				res = 0;
+				ok=UI_process(ui);
+				if (ok < 0)
+					break;
+				res=strlen(buf);
+				if (res < PW_MIN_LENGTH)
+					{
+					if (errstring_added == 0)
+						{
+						BIO_snprintf(errstring,
+							sizeof(errstring),
+"phrase is too short, needs to be at least %d chars\n", PW_MIN_LENGTH);
+						UI_add_error_string(ui,
+							errstring);
+						}
+					errstring_added = 1;
+					}
+				else
+					break;
+				}
+		if (buff)
+			{
+			memset(buf,0,(unsigned int)bufsiz);
+			OPENSSL_free(buff);
+			}
+
+		if (ok == -1)
+			{
+			BIO_printf(bio_err, "User interface error\n");
+			ERR_print_errors(bio_err);
+			memset(buf,0,(unsigned int)bufsiz);
+			res = 0;
+			}
+		if (ok == -2)
 			{
 			BIO_printf(bio_err,"aborted!\n");
 			memset(buf,0,(unsigned int)bufsiz);
-			return(-1);
+			res = 0;
 			}
-		j=strlen(buf);
-		if (j < PW_MIN_LENGTH)
-			{
-			BIO_printf(bio_err,"phrase is too short, needs to be at least %d chars\n",PW_MIN_LENGTH);
-			}
-		else
-			break;
+		UI_free(ui);
 		}
-	return(j);
+	return res;
 	}
 
 static char *app_get_pass(BIO *err, char *arg, int keepbio);
@@ -645,7 +746,7 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format,
 			BIO_printf(bio_err,"no engine specified\n");
 		else
 			pkey = ENGINE_load_private_key(e, file,
-				(pem_password_cb *)password_callback, &cb_data);
+				ui_method, &cb_data);
 		goto end;
 		}
 	key=BIO_new(BIO_s_file());
@@ -710,7 +811,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
 			BIO_printf(bio_err,"no engine specified\n");
 		else
 			pkey = ENGINE_load_public_key(e, file,
-				(pem_password_cb *)password_callback, &cb_data);
+				ui_method, &cb_data);
 		goto end;
 		}
 	key=BIO_new(BIO_s_file());
@@ -1054,9 +1155,7 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 			ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM,
 				0, err, 0);
 			}
-#if 0 /* not yet implemented but on it's way */
-                ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, UI_OpenSSL(), 0, 1);
-#endif
+                ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, ui_method, 0, 1);
 		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
 			{
 			BIO_printf(err,"can't use that engine\n");
