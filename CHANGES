@@ -49,6 +49,11 @@
          *) applies to 0.9.6a ... 0.9.6d and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Make object definitions compliant to LDAP (RFC2256): SN is the short
+     form for "surname", serialNumber has no short form (Michael Bell
+     <michael.bell@rz.hu-berlin.de>).
+     [Lutu Jaenicke]
+
   *) Fix DH_generate_parameters() so that it works for 'non-standard'
      generators, i.e. generators other than 2 and 5.  (Previously, the
      code did not properly initialise the 'add' and 'rem' values to
