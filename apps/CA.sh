@@ -27,14 +27,14 @@
 # tjh@cryptsoft.com
 #
 
-# default ssleay.cnf file has setup as per the following
+# default openssl.cnf file has setup as per the following
 # demoCA ... where everything is stored
 
 DAYS="-days 365"
-REQ="ssleay req $SSLEAY_CONFIG"
-CA="ssleay ca $SSLEAY_CONFIG"
-VERIFY="ssleay verify"
-X509="ssleay x509"
+REQ="openssl req $SSLEAY_CONFIG"
+CA="openssl ca $SSLEAY_CONFIG"
+VERIFY="openssl verify"
+X509="openssl x509"
 
 CATOP=./demoCA
 CAKEY=./cakey.pem

@@ -42,13 +42,13 @@ $md4_cmd="md4";
 $rsa_cmd="rsa -des -inform der ";
 
 # this was the 0.5.x way of doing things ...
-$cmd="ssleay asn1parse";
-$x509_cmd="ssleay x509";
-$crl_cmd="ssleay crl";
-$rc4_cmd="ssleay rc4";
-$md2_cmd="ssleay md2";
-$md4_cmd="ssleay md4";
-$rsa_cmd="ssleay rsa -des -inform der ";
+$cmd="openssl asn1parse";
+$x509_cmd="openssl x509";
+$crl_cmd="openssl crl";
+$rc4_cmd="openssl rc4";
+$md2_cmd="openssl md2";
+$md4_cmd="openssl md4";
+$rsa_cmd="openssl rsa -des -inform der ";
 
 &Getopts('vd:') || die "usage:$0 [-v] [-d num] file";
 $depth=($opt_d =~ /^\d+$/)?$opt_d:0;
