@@ -266,30 +266,35 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	}
 
 time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
-    {
-    struct tm tm;
-    int offset;
+	{
+	struct tm tm;
+	int offset;
 
-    memset(&tm,'\0',sizeof tm);
+	memset(&tm,'\0',sizeof tm);
 
 #define g2(p) (((p)[0]-'0')*10+(p)[1]-'0')
-    tm.tm_year=g2(s->data);
-    if(tm.tm_year < 50)
-	tm.tm_year+=100;
-    tm.tm_mon=g2(s->data+2)-1;
-    tm.tm_mday=g2(s->data+4);
-    tm.tm_hour=g2(s->data+6);
-    tm.tm_min=g2(s->data+8);
-    tm.tm_sec=g2(s->data+10);
-    if(s->data[12] == 'Z')
-	offset=0;
-    else
-	{
-	offset=g2(s->data+13)*60+g2(s->data+15);
-	if(s->data[12] == '-')
-	    offset= -offset;
-	}
+	tm.tm_year=g2(s->data);
+	if(tm.tm_year < 50)
+		tm.tm_year+=100;
+	tm.tm_mon=g2(s->data+2)-1;
+	tm.tm_mday=g2(s->data+4);
+	tm.tm_hour=g2(s->data+6);
+	tm.tm_min=g2(s->data+8);
+	tm.tm_sec=g2(s->data+10);
+	if(s->data[12] == 'Z')
+		offset=0;
+	else
+		{
+		offset=g2(s->data+13)*60+g2(s->data+15);
+		if(s->data[12] == '-')
+			offset= -offset;
+		}
 #undef g2
 
-    return timegm(&tm)-offset*60;
-    }
+	return timegm(&tm)-offset*60; /* FIXME: timegm is non-standard,
+	                               * typically we only have mktime (which
+	                               * interprets the struct tm according to
+								   * the current time zone setting).
+								   * Also time_t is inappropriate for general
+	                               * UTC times because it may a 32 bit type. */
+	}
