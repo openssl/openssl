@@ -240,9 +240,9 @@ typedef struct ssl3_state_st
 	/* storage for Alert/Handshake protocol data received but not
 	 * yet processed by ssl3_read_bytes: */
 	unsigned char alert_fragment[2];
-	int alert_fragment_len;
+	unsigned int alert_fragment_len;
 	unsigned char handshake_fragment[4];
-	int handshake_fragment_len;
+	unsigned int handshake_fragment_len;
 
 	/* partial write - check the numbers match */
 	unsigned int wnum;	/* number of bytes sent so far */

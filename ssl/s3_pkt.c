@@ -706,7 +706,8 @@ static int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
  */
 int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 	{
-	int al,i,j,n,ret;
+	int al,i,j,ret;
+	unsigned int n;
 	SSL3_RECORD *rr;
 	void (*cb)()=NULL;
 
@@ -803,11 +804,11 @@ start:
 		if (len <= 0) return(len);
 
 		if ((unsigned int)len > rr->length)
-			n=rr->length;
+			n = rr->length;
 		else
-			n=len;
+			n = (unsigned int)len;
 
-		memcpy(buf,&(rr->data[rr->off]),(unsigned int)n);
+		memcpy(buf,&(rr->data[rr->off]),n);
 		rr->length-=n;
 		rr->off+=n;
 		if (rr->length == 0)
@@ -826,9 +827,9 @@ start:
 	 * fill that so that we can process the data at a fixed place.
 	 */
 		{
-		int dest_maxlen = 0;
+		unsigned int dest_maxlen = 0;
 		unsigned char *dest = NULL;
-		int *dest_len = NULL;
+		unsigned int *dest_len = NULL;
 
 		if (rr->type == SSL3_RT_HANDSHAKE)
 			{
@@ -846,7 +847,7 @@ start:
 		if (dest_maxlen > 0)
 			{
 			n = dest_maxlen - *dest_len; /* available space in 'dest' */
-			if (rr->length < (unsigned int) n)
+			if (rr->length < n)
 				n = rr->length; /* available bytes */
 
 			/* now move 'n' bytes: */
@@ -920,8 +921,8 @@ start:
 
 	if (s->s3->alert_fragment_len >= 2)
 		{
-		i = s->s3->alert_fragment[0];
-		n = s->s3->alert_fragment[1];
+		int alert_level = s->s3->alert_fragment[0];
+		int alert_descr = s->s3->alert_fragment[1];
 
 		s->s3->alert_fragment_len = 0;
 
@@ -932,28 +933,27 @@ start:
 
 		if (cb != NULL)
 			{
-			j=(i<<8)|n;
-			cb(s,SSL_CB_READ_ALERT,j);
+			j = (alert_level << 8) | alert_descr;
+			cb(s, SSL_CB_READ_ALERT, j);
 			}
 
-		if (i == 1) /* warning */
+		if (alert_level == 1) /* warning */
 			{
-			s->s3->warn_alert=n;
-			if (n == SSL_AD_CLOSE_NOTIFY)
+			s->s3->warn_alert = alert_descr;
+			if (alert_descr == SSL_AD_CLOSE_NOTIFY)
 				{
-				s->shutdown|=SSL_RECEIVED_SHUTDOWN;
+				s->shutdown |= SSL_RECEIVED_SHUTDOWN;
 				return(0);
 				}
 			}
-		else if (i == 2) /* fatal */
+		else if (alert_level == 2) /* fatal */
 			{
 			char tmp[16];
 
 			s->rwstate=SSL_NOTHING;
-			s->s3->fatal_alert=n;
-			SSLerr(SSL_F_SSL3_READ_BYTES,
-				SSL_AD_REASON_OFFSET+n);
-			sprintf(tmp,"%d",n);
+			s->s3->fatal_alert = alert_descr;
+			SSLerr(SSL_F_SSL3_READ_BYTES, SSL_AD_REASON_OFFSET + alert_descr);
+			sprintf(tmp,"%d",alert_descr);
 			ERR_add_error_data(2,"SSL alert number ",tmp);
 			s->shutdown|=SSL_RECEIVED_SHUTDOWN;
 			SSL_CTX_remove_session(s->ctx,s->session);
@@ -1013,9 +1013,9 @@ start:
 #endif
 			s->new_session=1;
 			}
-		n=s->handshake_func(s);
-		if (n < 0) return(n);
-		if (n == 0)
+		i=s->handshake_func(s);
+		if (i < 0) return(i);
+		if (i == 0)
 			{
 			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_SSL_HANDSHAKE_FAILURE);
 			return(-1);
