@@ -9,7 +9,7 @@ s_client - SSL/TLS client program
 
 B<openssl> B<s_client>
 [B<-connect> host:port>]
-[B<-verify depth]
+[B<-verify depth>]
 [B<-cert filename>]
 [B<-key filename>]
 [B<-CApath directory>]
