@@ -571,3 +571,4 @@ mime_mhs_headings		570
 mime_mhs_bodies		571
 id_hex_partial_message		572
 id_hex_multipart_message		573
+generationQualifier		574

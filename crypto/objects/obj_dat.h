@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 574
-#define NUM_SN 569
-#define NUM_LN 569
-#define NUM_OBJ 543
+#define NUM_NID 575
+#define NUM_SN 570
+#define NUM_LN 570
+#define NUM_OBJ 544
 
-static unsigned char lvalues[4257]={
+static unsigned char lvalues[4260]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -611,6 +611,7 @@ static unsigned char lvalues[4257]={
 0x2B,0x06,0x01,0x07,0x01,0x02,               /* [4236] OBJ_mime_mhs_bodies */
 0x2B,0x06,0x01,0x07,0x01,0x01,0x01,          /* [4242] OBJ_id_hex_partial_message */
 0x2B,0x06,0x01,0x07,0x01,0x01,0x02,          /* [4249] OBJ_id_hex_multipart_message */
+0x55,0x04,0x2C,                              /* [4256] OBJ_generationQualifier */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1465,6 +1466,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_id_hex_partial_message,7,&(lvalues[4242]),0},
 {"id-hex-multipart-message","id-hex-multipart-message",
 	NID_id_hex_multipart_message,7,&(lvalues[4249]),0},
+{"generationQualifier","generationQualifier",NID_generationQualifier,
+	3,&(lvalues[4256]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1682,6 +1685,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[453]),/* "friendlyCountry" */
 &(nid_objs[490]),/* "friendlyCountryName" */
 &(nid_objs[156]),/* "friendlyName" */
+&(nid_objs[574]),/* "generationQualifier" */
 &(nid_objs[99]),/* "gn" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
 &(nid_objs[432]),/* "holdInstructionCallIssuer" */
@@ -2246,6 +2250,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[453]),/* "friendlyCountry" */
 &(nid_objs[490]),/* "friendlyCountryName" */
 &(nid_objs[156]),/* "friendlyName" */
+&(nid_objs[574]),/* "generationQualifier" */
 &(nid_objs[99]),/* "givenName" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
 &(nid_objs[486]),/* "homePostalAddress" */
@@ -2617,8 +2622,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[434]),/* OBJ_data                         0 9 */
 &(nid_objs[181]),/* OBJ_iso                          1 */
 &(nid_objs[182]),/* OBJ_member_body                  1 2 */
-&(nid_objs[379]),/* OBJ_org                          1 3 */
 &(nid_objs[527]),/* OBJ_identified_organization      1 3 */
+&(nid_objs[379]),/* OBJ_org                          1 3 */
 &(nid_objs[393]),/* OBJ_joint_iso_ccitt              2 */
 &(nid_objs[11]),/* OBJ_X500                         2 5 */
 &(nid_objs[380]),/* OBJ_dod                          1 3 6 */
@@ -2644,6 +2649,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[173]),/* OBJ_name                         2 5 4 41 */
 &(nid_objs[99]),/* OBJ_givenName                    2 5 4 42 */
 &(nid_objs[101]),/* OBJ_initials                     2 5 4 43 */
+&(nid_objs[574]),/* OBJ_generationQualifier          2 5 4 44 */
 &(nid_objs[568]),/* OBJ_x500UniqueIdentifier         2 5 4 45 */
 &(nid_objs[174]),/* OBJ_dnQualifier                  2 5 4 46 */
 &(nid_objs[400]),/* OBJ_role                         2 5 4 72 */

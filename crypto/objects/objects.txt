@@ -611,6 +611,7 @@ X509 13			: 			: description
 X509 41			: name			: name
 X509 42			: gn			: givenName
 X509 43			: 			: initials
+X509 44			: 			: generationQualifier
 X509 45			: 			: x500UniqueIdentifier
 X509 46			: dnQualifier		: dnQualifier
 X509 72			: role			: role
