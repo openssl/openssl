@@ -373,7 +373,8 @@ err:
  * certs may have been added to \c stack.
  */
 
-int SSL_add_file_cert_subjects_to_stack(STACK *stack,const char *file)
+int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
+					const char *file)
     {
     BIO *in;
     X509 *x=NULL;
@@ -381,7 +382,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK *stack,const char *file)
     int ret=1;
     int (*oldcmp)();
 
-    oldcmp=sk_set_cmp_func(stack,name_cmp);
+    oldcmp=sk_X509_NAME_set_cmp_func(stack,name_cmp);
 
     in=BIO_new(BIO_s_file_internal());
 
@@ -401,10 +402,10 @@ int SSL_add_file_cert_subjects_to_stack(STACK *stack,const char *file)
 	if ((xn=X509_get_subject_name(x)) == NULL) goto err;
 	xn=X509_NAME_dup(xn);
 	if (xn == NULL) goto err;
-	if (sk_find(stack,(char *)xn) >= 0)
+	if (sk_X509_NAME_find(stack,xn) >= 0)
 	    X509_NAME_free(xn);
 	else
-	    sk_push(stack,(char *)xn);
+	    sk_X509_NAME_push(stack,xn);
 	}
 
     if (0)
@@ -417,7 +418,7 @@ err:
     if(x != NULL)
 	X509_free(x);
 
-    sk_set_cmp_func(stack,oldcmp);
+    sk_X509_NAME_set_cmp_func(stack,oldcmp);
 
     return ret;
     }
@@ -435,7 +436,8 @@ err:
 
 #ifndef WIN32
 
-int SSL_add_dir_cert_subjects_to_stack(STACK *stack,const char *dir)
+int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
+				       const char *dir)
     {
     DIR *d=opendir(dir);
     struct dirent *dstruct;

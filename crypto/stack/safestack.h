@@ -76,7 +76,8 @@ int sk_##type##_find(STACK_OF(type) *sk,type *v); \
 type *sk_##type##_delete(STACK_OF(type) *sk,int n); \
 void sk_##type##_delete_ptr(STACK_OF(type) *sk,type *v); \
 int sk_##type##_insert(STACK_OF(type) *sk,type *v,int n); \
-void sk_##type##_set_cmp_func(STACK_OF(type) *sk,int (*cmp)(type **,type **)); \
+int (*sk_##type##_set_cmp_func(STACK_OF(type) *sk, \
+			       int (*cmp)(type **,type **)))(type **,type **); \
 STACK_OF(type) *sk_##type##_dup(STACK_OF(type) *sk); \
 void sk_##type##_pop_free(STACK_OF(type) *sk,void (*func)(type *)); \
 type *sk_##type##_shift(STACK_OF(type) *sk); \
@@ -107,8 +108,9 @@ void sk_##type##_delete_ptr(STACK_OF(type) *sk,type *v) \
     { sk_delete_ptr((STACK *)sk,(char *)v); } \
 int sk_##type##_insert(STACK_OF(type) *sk,type *v,int n) \
     { return sk_insert((STACK *)sk,(char *)v,n); } \
-void sk_##type##_set_cmp_func(STACK_OF(type) *sk,int (*cmp)(type **,type **)) \
-    { sk_set_cmp_func((STACK *)sk,cmp); } \
+int (*sk_##type##_set_cmp_func(STACK_OF(type) *sk, \
+			       int (*cmp)(type **,type **)))(type **,type **) \
+    { return (int (*)(type **,type **))sk_set_cmp_func((STACK *)sk,cmp); } \
 STACK_OF(type) *sk_##type##_dup(STACK_OF(type) *sk) \
     { return (STACK_OF(type) *)sk_dup((STACK *)sk); } \
 void sk_##type##_pop_free(STACK_OF(type) *sk,void (*func)(type *)) \

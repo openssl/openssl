@@ -876,9 +876,9 @@ int	SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, char *file, int type);
 int	SSL_CTX_use_certificate_file(SSL_CTX *ctx, char *file, int type);
 int	SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file); /* PEM type */
 STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
-int	SSL_add_file_cert_subjects_to_stack(STACK *stackCAs,
+int	SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					    const char *file);
-int	SSL_add_dir_cert_subjects_to_stack(STACK *stackCAs,
+int	SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					   const char *dir);
 #endif
 
