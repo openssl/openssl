@@ -3024,3 +3024,5 @@ EVP_PKEY_cmp                            3453	EXIST::FUNCTION:
 X509_REQ_check_private_key              3454	EXIST::FUNCTION:
 sk_find_ex                              3455	EXIST::FUNCTION:
 OBJ_bsearch_ex                          3456	EXIST::FUNCTION:
+BUF_memdup                              3457	EXIST::FUNCTION:
+BUF_strndup                             3458	EXIST::FUNCTION:
