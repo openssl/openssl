@@ -1909,14 +1909,17 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 			BIO_printf(bio_err,"\nemailAddress type needs to be of type IA5STRING\n");
 			goto err;
 			}
-		j=ASN1_PRINTABLE_type(str->data,str->length);
-		if (	((j == V_ASN1_T61STRING) &&
-			 (str->type != V_ASN1_T61STRING)) ||
-			((j == V_ASN1_IA5STRING) &&
-			 (str->type == V_ASN1_PRINTABLESTRING)))
+		if ((str->type != V_ASN1_BMPSTRING) && (str->type != V_ASN1_UTF8STRING))
 			{
-			BIO_printf(bio_err,"\nThe string contains characters that are illegal for the ASN.1 type\n");
-			goto err;
+			j=ASN1_PRINTABLE_type(str->data,str->length);
+			if (	((j == V_ASN1_T61STRING) &&
+				 (str->type != V_ASN1_T61STRING)) ||
+				((j == V_ASN1_IA5STRING) &&
+				 (str->type == V_ASN1_PRINTABLESTRING)))
+				{
+				BIO_printf(bio_err,"\nThe string contains characters that are illegal for the ASN.1 type\n");
+				goto err;
+				}
 			}
 
 		if (default_op)
