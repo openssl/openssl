@@ -105,6 +105,8 @@ my %table=(
 "solaris-usparc-sc4","cc:-xtarget=ultra -xarch=v8plus -Xa -xO5 -DB_ENDIAN:\
 	-lsocket -lnsl:\
 	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparc.o::",
+"solaris-sparc-sc4-pic","cc:-xO5 -Xa -DB_ENDIAN -KPIC:-lsocket -lnsl:\
+	BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparc.o::",
 
 # Sunos configs, assuming sparc for the gcc one.
 "sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST::DES_UNROLL:::",
