@@ -86,7 +86,7 @@ sub get_mem
 	{
 	my($size,$addr,$reg1,$reg2,$idx)=@_;
 	my($t,$post);
-	my($ret)="[";
+	my($ret)="$size [";
 	$addr =~ s/^\s+//;
 	if ($addr =~ /^(.+)\+(.+)$/)
 		{
@@ -177,6 +177,11 @@ sub out2
 	my($l,$t);
 
 	push(@out,"\t$name\t");
+	if ($name eq "lea")
+		{
+		$p1 =~ s/^[^\[]*\[/\[/;
+		$p2 =~ s/^[^\[]*\[/\[/;
+		}
 	$t=&conv($p1).",";
 	$l=length($t);
 	push(@out,$t);
