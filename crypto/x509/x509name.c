@@ -251,7 +251,7 @@ int set;
 	return(1);
 err:
 	if (new_name != NULL)
-		X509_NAME_ENTRY_free(ne);
+		X509_NAME_ENTRY_free(new_name);
 	return(0);
 	}
 
