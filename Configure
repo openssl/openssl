@@ -104,9 +104,7 @@ my $x86_elf_asm="asm/bn86-elf.o asm/co86-elf.o:asm/dx86-elf.o asm/yx86-elf.o:asm
 my $x86_out_asm="asm/bn86-out.o asm/co86-out.o:asm/dx86-out.o asm/yx86-out.o:asm/bx86-out.o:asm/mx86-out.o:asm/sx86-out.o:asm/cx86-out.o:asm/rx86-out.o:asm/rm86-out.o:asm/r586-out.o";
 my $x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:asm/bx86bsdi.o:asm/mx86bsdi.o:asm/sx86bsdi.o:asm/cx86bsdi.o:asm/rx86bsdi.o:asm/rm86bsdi.o:asm/r586bsdi.o";
 
-# There seems to be some kind of fault in asm/mips3.s
-#my $mips3_irix_asm="asm/mips3.o::::::::";
-my $mips3_irix_asm="::::::::";
+my $mips3_irix_asm="asm/mips3.o::::::::";
 # There seems to be boundary faults in asm/alpha.s.
 #my $alpha_asm="asm/alpha.o::::::::";
 my $alpha_asm="::::::::";
