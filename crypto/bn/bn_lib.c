@@ -489,6 +489,8 @@ BIGNUM *BN_dup(const BIGNUM *a)
 	{
 	BIGNUM *r;
 
+	if (a == NULL) return NULL;
+
 	bn_check_top(a);
 
 	r=BN_new();
