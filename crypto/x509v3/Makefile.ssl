@@ -239,6 +239,17 @@ v3_skey.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 v3_skey.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
 v3_skey.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
 v3_skey.o: ../cryptlib.h ../crypto.h ../opensslv.h x509v3.h
+v3_sxnet.o: ../../include/asn1.h ../../include/asn1_mac.h ../../include/bio.h
+v3_sxnet.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
+v3_sxnet.o: ../../include/cast.h ../../include/conf.h ../../include/des.h
+v3_sxnet.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+v3_sxnet.o: ../../include/err.h ../../include/evp.h ../../include/idea.h
+v3_sxnet.o: ../../include/lhash.h ../../include/md2.h ../../include/md5.h
+v3_sxnet.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+v3_sxnet.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+v3_sxnet.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+v3_sxnet.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
+v3_sxnet.o: ../cryptlib.h ../crypto.h ../opensslv.h x509v3.h
 v3_utl.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 v3_utl.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 v3_utl.o: ../../include/conf.h ../../include/des.h ../../include/dh.h

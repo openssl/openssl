@@ -285,6 +285,9 @@ asn1_par.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 asn1_par.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
 asn1_par.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
 asn1_par.o: ../crypto.h ../opensslv.h asn1.h
+asn_pack.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
+asn_pack.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
+asn_pack.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h
 d2i_dhp.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 d2i_dhp.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 d2i_dhp.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -502,6 +505,16 @@ nsseq.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 nsseq.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
 nsseq.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
 nsseq.o: ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p5_pbe.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+p5_pbe.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+p5_pbe.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+p5_pbe.o: ../../include/err.h ../../include/evp.h ../../include/idea.h
+p5_pbe.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+p5_pbe.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rand.h
+p5_pbe.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+p5_pbe.o: ../../include/ripemd.h ../../include/rsa.h ../../include/sha.h
+p5_pbe.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
+p5_pbe.o: ../cryptlib.h ../crypto.h ../opensslv.h asn1.h asn1_mac.h
 p7_dgst.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 p7_dgst.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 p7_dgst.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
@@ -602,6 +615,16 @@ p7_signi.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
 p7_signi.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
 p7_signi.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
 p7_signi.o: ../crypto.h ../opensslv.h asn1.h asn1_mac.h
+p8_pkey.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
+p8_pkey.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
+p8_pkey.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
+p8_pkey.o: ../../include/err.h ../../include/evp.h ../../include/idea.h
+p8_pkey.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
+p8_pkey.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
+p8_pkey.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+p8_pkey.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+p8_pkey.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+p8_pkey.o: ../crypto.h ../opensslv.h asn1.h asn1_mac.h
 t_crl.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 t_crl.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 t_crl.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
