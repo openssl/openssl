@@ -3179,3 +3179,6 @@ X509_policy_lib_init                    3607	EXIST::FUNCTION:
 asn1_const_Finish                       3608	EXIST::FUNCTION:
 X509_policy_check                       3609	EXIST::FUNCTION:
 AES_cfb1_encrypt                        3610	EXIST::FUNCTION:AES
+X509_STORE_CTX_set0_crls                3611	EXIST::FUNCTION:
+v2i_ASN1_BIT_STRING                     3612	EXIST::FUNCTION:
+i2v_ASN1_BIT_STRING                     3613	EXIST::FUNCTION:
