@@ -250,7 +250,7 @@ link-shared:
 		if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
 			tmp="$(SHARED_LIBS_LINK_EXTS)"; \
 			for j in $${tmp:-x}; do \
-				( set -x; ln -s -f $$prev lib$$i$$j ); \
+				( set -x; ln -f -s $$prev lib$$i$$j ); \
 				prev=lib$$i$$j; \
 			done; \
 		fi; \
@@ -259,7 +259,8 @@ link-shared:
 build-shared: clean-shared do_$(SHLIB_TARGET) link-shared
 
 do_bsd-gcc-shared: linux-shared
-do_linux-shared:
+do_linux-shared: do_gnu-shared
+do_gnu-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,-S,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
