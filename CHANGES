@@ -28,6 +28,9 @@
   *) MIPS assembler BIGNUM division bug fix. 
      [Andy Polyakov]
 
+  *) Disabled incorrect Alpha assembler code.
+     [Richard Levitte]
+
   *) Fix PKCS#7 decode routines so they correctly update the length
      after reading an EOC for the EXPLICIT tag.
      [Steve Henson]
