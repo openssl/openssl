@@ -1,4 +1,4 @@
-	.title	vax_bn_mul_add_word  unsigned multiply & add, 32*32+32+32=>64
+	.title	vax_bn_mul_add_words  unsigned multiply & add, 32*32+32+32=>64
 ;
 ; w.j.m. 15-jan-1999
 ;
@@ -59,7 +59,7 @@ w=16 ;(AP)	w	by value (input)
 	movl	r6,r0			; return c
 	ret
 
-	.title	vax_bn_mul_word  unsigned multiply & add, 32*32+32=>64
+	.title	vax_bn_mul_words  unsigned multiply & add, 32*32+32=>64
 ;
 ; w.j.m. 15-jan-1999
 ;
