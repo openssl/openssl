@@ -40,8 +40,6 @@ BIO).
 =head1 SEE ALSO
 
 L<BIO_ctrl(3)|BIO_ctrl(3)>,
-L<BIO_ctrl_get_read_request(3)|BIO_ctrl_get_read_request(3)>,
-L<BIO_ctrl_pending(3)|BIO_ctrl_pending(3)>,
 L<BIO_f_base64(3)|BIO_f_base64(3)>,
 L<BIO_f_cipher(3)|BIO_f_cipher(3)>, L<BIO_f_md(3)|BIO_f_md(3)>,
 L<BIO_f_null(3)|BIO_f_null(3)>, L<BIO_f_ssl(3)|BIO_f_ssl(3)>,
@@ -52,6 +50,5 @@ L<BIO_s_accept(3)|BIO_s_accept(3)>, L<BIO_s_bio(3)|BIO_s_bio(3)>,
 L<BIO_s_connect(3)|BIO_s_connect(3)>, L<BIO_s_fd(3)|BIO_s_fd(3)>,
 L<BIO_s_file(3)|BIO_s_file(3)>, L<BIO_s_mem(3)|BIO_s_mem(3)>,
 L<BIO_s_null(3)|BIO_s_null(3)>, L<BIO_s_socket(3)|BIO_s_socket(3)>,
-L<BIO_seek(3)|BIO_seek(3)>,
 L<BIO_set_callback(3)|BIO_set_callback(3)>,
 L<BIO_should_retry(3)|BIO_should_retry(3)>
