@@ -1,2 +1,3 @@
 lib
+obj_dat.h
 Makefile.save
