@@ -148,7 +148,6 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <setjmp.h>
 #include <errno.h>
 
 #ifdef OPENSSL_SYS_VMS		/* prototypes for sys$whatever */
@@ -256,7 +255,6 @@ static struct sigaction savsig[NX509_SIG];
 #else
 static void (*savsig[NX509_SIG])(int );
 #endif
-static jmp_buf save;
 
 #ifdef OPENSSL_SYS_VMS
 static struct IOSB iosb;
@@ -374,6 +372,8 @@ static void read_till_nl(FILE *in)
 		} while (strchr(buf,'\n') == NULL);
 	}
 
+static sig_atomic_t intr_signal;
+
 static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
 	{
 	static int ps;
@@ -383,29 +383,31 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
 	char *p;
 
 #ifndef OPENSSL_SYS_WIN16
-	if ((ok = setjmp(save)))
-		{
-		if (ok == 1) ok=0;
-		goto error;
-		}
+	intr_signal=0;
 	ok=0;
 	ps=0;
 
 	pushsig();
 	ps=1;
 
-	if (!echo) noecho_console(ui);
+	if (!echo && !noecho_console(ui))
+		goto error;
 	ps=2;
 
 	result[0]='\0';
 #ifdef OPENSSL_SYS_MSDOS
 	if (!echo)
+		{
 		noecho_fgets(result,maxsize,tty_in);
+		p=result; /* FIXME: noecho_fgets doesn't return errors */
+		}
 	else
-		fgets(result,maxsize,tty_in);
+		p=fgets(result,maxsize,tty_in);
 #else
-	fgets(result,maxsize,tty_in);
+	p=fgets(result,maxsize,tty_in);
 #endif
+	if(!p)
+		goto error;
 	if (feof(tty_in)) goto error;
 	if (ferror(tty_in)) goto error;
 	if ((p=(char *)strchr(result,'\n')) != NULL)
@@ -419,9 +421,11 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
 		ok=1;
 
 error:
+	if (intr_signal == SIGINT)
+		ok=-1;
 	if (!echo) fprintf(tty_out,"\n");
-	if (ps >= 2 && !echo)
-		echo_console(ui);
+	if (ps >= 2 && !echo && !echo_console(ui))
+		ok=0;
 
 	if (ps >= 1)
 		popsig();
@@ -602,17 +606,8 @@ static void popsig(void)
 
 static void recsig(int i)
 	{
-	switch(i)
-		{
-	case SIGINT:
-		longjmp(save,-1);
-		break;
-	default:
-		break;
-		}
-	longjmp(save,1);
+	intr_signal=i;
 	}
-
 
 /* Internal functions specific for Windows */
 #if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN16)
