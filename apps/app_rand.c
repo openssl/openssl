@@ -152,8 +152,8 @@ int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn)
 				BIO_printf(bio_e,"Consider setting the RANDFILE environment variable to point at a file that\n");
 				BIO_printf(bio_e,"'random' data can be kept in (the file will be overwritten).\n");
 				}
+			return 0;
 			}
-		return 0;
 		}
 	seeded = 1;
 	return 1;
