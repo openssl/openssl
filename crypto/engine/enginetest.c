@@ -56,6 +56,9 @@
  *
  */
 
+#define _XOPEN_SOURCE_EXTENDED	/* to get a proper declaration of strdup() */
+#define _XOPEN_SOURCE 500
+
 #include <stdio.h>
 #include <string.h>
 #include <openssl/engine.h>
