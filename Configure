@@ -1091,7 +1091,7 @@ if ($zlib)
 	{
 	$cflags = "-DZLIB $cflags";
 	$cflags = "-DZLIB_SHARED $cflags" if $zlib == 2;
-	$lflags = "$lflags -lz" if $zlib == 2;
+	$lflags = "$lflags -lz" if $zlib == 1;
 	}
 
 # You will find shlib_mark1 and shlib_mark2 explained in Makefile.org
