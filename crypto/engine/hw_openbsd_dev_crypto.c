@@ -80,4 +80,8 @@ ENGINE *ENGINE_openbsd_dev_crypto(void)
 	return engine;
 	}
 
-#endif /* defined(OPENSSL_OPENBSD_DEV_CRYPTO) */
+#else  /* !defined(OPENSSL_OPENBSD_DEV_CRYPTO) */
+
+static void *dummy=&dummy;
+
+#endif  /* !defined(OPENSSL_OPENBSD_DEV_CRYPTO) */

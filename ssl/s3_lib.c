@@ -1009,6 +1009,9 @@ void ssl3_clear(SSL *s)
 	rp=s->s3->rbuf.buf;
 	wp=s->s3->wbuf.buf;
 
+	EVP_MD_CTX_cleanup(&s->s3->finish_dgst1);
+	EVP_MD_CTX_cleanup(&s->s3->finish_dgst2);
+
 	memset(s->s3,0,sizeof *s->s3);
 	if (rp != NULL) s->s3->rbuf.buf=rp;
 	if (wp != NULL) s->s3->wbuf.buf=wp;

@@ -443,7 +443,13 @@ int	EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
 EVP_MD_CTX *EVP_MD_CTX_create(void);
 void	EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
 int     EVP_MD_CTX_copy(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
+#ifdef CRYPTO_MDEBUG
+int	EVP_DigestInit_dbg(EVP_MD_CTX *ctx, const EVP_MD *type,
+			   const char *file,int line);
+#define EVP_DigestInit(ctx,type) EVP_DigestInit_dbg(ctx,type,__FILE__,__LINE__)
+#else
 int	EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
+#endif
 int	EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d,
 			 unsigned int cnt);
 int	EVP_DigestFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);

@@ -75,13 +75,22 @@ EVP_MD_CTX *EVP_MD_CTX_create(void)
 	return ctx;
 	}
 
+#ifdef CRYPTO_MDEBUG
+int EVP_DigestInit_dbg(EVP_MD_CTX *ctx, const EVP_MD *type,const char *file,
+		       int line)
+#else
 int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
+#endif
 	{
 	if(ctx->digest != type)
 		{
 		OPENSSL_free(ctx->md_data);
 		ctx->digest=type;
+#ifdef CRYPTO_MDEBUG
+		ctx->md_data=CRYPTO_malloc(type->ctx_size,file,line);
+#else
 		ctx->md_data=OPENSSL_malloc(type->ctx_size);
+#endif
 		}
 	return type->init(ctx->md_data);
 	}
@@ -142,7 +151,12 @@ void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx)
 /* This call frees resources associated with the context */
 int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 	{
-	/* assume ctx->md_data was cleaned in EVP_Digest_Final */
+	/* Don't assume ctx->md_data was cleaned in EVP_Digest_Final,
+	 * because sometimes only copies of the context are ever finalised.
+	 */
+	if(ctx->md_data)
+	    memset(ctx->md_data,0,ctx->digest->ctx_size);
+
 	OPENSSL_free(ctx->md_data);
 	memset(ctx,'\0',sizeof *ctx);
 
