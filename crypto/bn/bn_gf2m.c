@@ -853,7 +853,7 @@ int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
  */
 int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p[], BN_CTX *ctx)
 	{
-	int ret = 0, i, count = 0;
+	int ret = 0, count = 0;
 	unsigned int j;
 	BIGNUM *a, *z, *rho, *w, *w2, *tmp;
 	
