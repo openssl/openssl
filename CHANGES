@@ -3,6 +3,16 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add additional OCSP certificate checks. These are those specified
+     in RFC2560. This consists of two separate checks: the CA of the
+     certificate being checked must either be the OCSP signer certificate
+     or the issuer of the OCSP signer certificate. In the latter case the
+     OCSP signer certificate must contain the OCSP signing extended key
+     usage. This check is performed by attempting to match the OCSP
+     signer or the OCSP signer CA to the issuerNameHash and issuerKeyHash
+     in the OCSP_CERTID structures of the response.
+     [Steve Henson]
+
   *) Initial OCSP certificate verification added to OCSP_basic_verify()
      and related routines. This uses the standard OpenSSL certificate
      verify routines to perform initial checks (just CA validity) and

@@ -420,6 +420,8 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "Response verify error (%d)\n", i);
 		ERR_print_errors(bio_err);
 		}
+	else
+		BIO_printf(bio_err, "Response verify OK\n");
 
 	ret = 0;
 

@@ -62,6 +62,10 @@
 static X509 *ocsp_find_signer(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 				X509_STORE *st, unsigned long flags);
 static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id);
+static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain, unsigned long flags);
+static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp, OCSP_CERTID **ret);
+static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid, STACK_OF(OCSP_SINGLERESP) *sresp);
+static int ocsp_check_delegated(X509 *x, int flags);
 
 /* Verify a basic response message */
 
@@ -78,7 +82,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 		OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
 		goto end;
 		}
-	if(!(flags & OCSP_NOSIGS))
+	if (!(flags & OCSP_NOSIGS))
 		{
 		EVP_PKEY *skey;
 		skey = X509_get_pubkey(signer);
@@ -90,7 +94,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 			goto end;
 			}
 		}
-	if(!(flags & OCSP_NOVERIFY))
+	if (!(flags & OCSP_NOVERIFY))
 		{
 		if(flags & OCSP_NOCHAIN)
 			X509_STORE_CTX_init(&ctx, st, signer, NULL);
@@ -115,15 +119,12 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 			goto end;
 			}
 		/* At this point we have a valid certificate chain
-		 * need to verify it against the OCSP criteria.
+		 * need to verify it against the OCSP issuer criteria.
 		 */
-#if 0
-		if(ocsp_check_issuer(bs, chain, flags))
-			{
-			ret = 1;
-			goto end;
-			}
-#endif
+		ret = ocsp_check_issuer(bs, chain, flags);
+
+		/* If fatal error or valid match then finish */
+		if (ret != 0) goto end;
 
 		/* Easy case: explicitly trusted. Get root CA and
 		 * check for explicit trust
@@ -172,16 +173,16 @@ static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id)
 	X509 *x;
 
 	/* Easy if lookup by name */
-	if(id->type == V_OCSP_RESPID_NAME)
+	if (id->type == V_OCSP_RESPID_NAME)
 		return X509_find_by_subject(certs, id->value.byName);
 
 	/* Lookup by key hash */
 
 	/* If key hash isn't SHA1 length then forget it */
-	if(id->value.byKey->length != SHA_DIGEST_LENGTH) return NULL;
+	if (id->value.byKey->length != SHA_DIGEST_LENGTH) return NULL;
 	keyhash = id->value.byKey->data;
 	/* Calculate hash of each key and compare */
-	for(i = 0; i < sk_X509_num(certs); i++)
+	for (i = 0; i < sk_X509_num(certs); i++)
 		{
 		x = sk_X509_value(certs, i);
 		key = x->cert_info->key->public_key;
@@ -195,3 +196,148 @@ static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id)
 	}
 
 
+static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain, unsigned long flags)
+	{
+	STACK_OF(OCSP_SINGLERESP) *sresp;
+	X509 *signer, *sca;
+	OCSP_CERTID *caid = NULL;
+	int i;
+	sresp = bs->tbsResponseData->responses;
+
+	if (sk_X509_num(chain) <= 0)
+		{
+		OCSPerr(OCSP_F_OCSP_CHECK_ISSUER, OCSP_R_NO_CERTIFICATES_IN_CHAIN);
+		return -1;
+		}
+
+	/* See if the issuer IDs match. */
+	i = ocsp_check_ids(sresp, &caid);
+
+	/* If ID mismatch or other error then return */
+	if (i <= 0) return i;
+
+	signer = sk_X509_value(chain, 0);
+	/* Check to see if OCSP responder CA matches request CA */
+	if (sk_X509_num(chain) > 1)
+		{
+		sca = sk_X509_value(chain, 1);
+		i = ocsp_match_issuerid(sca, caid, sresp);
+		if (i < 0) return i;
+		if (i)
+			{
+			/* We have a match, if extensions OK then success */
+			if (ocsp_check_delegated(signer, flags)) return 1;
+			return 0;
+			}
+		}
+
+	/* Otherwise check if OCSP request signed directly by request CA */
+	return ocsp_match_issuerid(signer, caid, sresp);
+	}
+
+
+/* Check the issuer certificate IDs for equality. If there is a mismatch with the same
+ * algorithm then there's no point trying to match any certificates against the issuer.
+ * If the issuer IDs all match then we just need to check equality against one of them.
+ */
+	
+static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp, OCSP_CERTID **ret)
+	{
+	OCSP_CERTID *tmpid, *cid;
+	int i, idcount;
+
+	idcount = sk_OCSP_SINGLERESP_num(sresp);
+	if (idcount <= 0)
+		{
+		OCSPerr(OCSP_F_OCSP_CHECK_IDS, OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA);
+		return -1;
+		}
+
+	cid = sk_OCSP_SINGLERESP_value(sresp, 0)->certId;
+
+	*ret = NULL;
+
+	for (i = 1; i < idcount; i++)
+		{
+		tmpid = sk_OCSP_SINGLERESP_value(sresp, 0)->certId;
+		/* Check to see if IDs match */
+		if (OCSP_id_issuer_cmp(cid, tmpid))
+			{
+			/* If algoritm mismatch let caller deal with it */
+			if (OBJ_cmp(tmpid->hashAlgorithm->algorithm,
+					cid->hashAlgorithm->algorithm))
+					return 2;
+			/* Else mismatch */
+			return 0;
+			}
+		}
+
+	/* All IDs match: only need to check one ID */
+	*ret = cid;
+	return 1;
+	}
+
+
+static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
+			STACK_OF(OCSP_SINGLERESP) *sresp)
+	{
+	/* If only one ID to match then do it */
+	if(cid)
+		{
+		const EVP_MD *dgst;
+		EVP_MD_CTX ctx;
+		X509_NAME *iname;
+		ASN1_BIT_STRING *ikey;
+		int mdlen;
+		unsigned char md[EVP_MAX_MD_SIZE];
+		if (!(dgst = EVP_get_digestbyobj(cid->hashAlgorithm->algorithm)))
+			{
+			OCSPerr(OCSP_F_OCSP_MATCH_ISSUERID, OCSP_R_UNKNOWN_MESSAGE_DIGEST);
+			return -1;
+			}
+
+		mdlen = EVP_MD_size(dgst);
+		if ((cid->issuerNameHash->length != mdlen) ||
+		   (cid->issuerKeyHash->length != mdlen))
+			return 0;
+		iname = X509_get_issuer_name(cert);
+		if (!X509_NAME_digest(iname, dgst, md, NULL))
+			return -1;
+		if (memcmp(md, cid->issuerNameHash->data, mdlen))
+			return 0;
+		ikey = cert->cert_info->key->public_key;
+
+		EVP_DigestInit(&ctx,dgst);
+		EVP_DigestUpdate(&ctx,ikey->data, ikey->length);
+		EVP_DigestFinal(&ctx,md,NULL);
+		if (memcmp(md, cid->issuerKeyHash->data, mdlen))
+			return 0;
+
+		return 1;
+
+		}
+	else
+		{
+		/* We have to match the whole lot */
+		int i, ret;
+		OCSP_CERTID *tmpid;
+		for (i = 0; i < sk_OCSP_SINGLERESP_num(sresp); i++)
+			{
+			tmpid = sk_OCSP_SINGLERESP_value(sresp, 0)->certId;
+			ret = ocsp_match_issuerid(cert, tmpid, NULL);
+			if (ret <= 0) return ret;
+			}
+		return 1;
+		}
+			
+	}
+
+static int ocsp_check_delegated(X509 *x, int flags)
+	{
+	X509_check_purpose(x, -1, 0);
+	if ((x->ex_flags & EXFLAG_XKUSAGE) &&
+	    (x->ex_xkusage & XKU_OCSP_SIGN))
+		return 1;
+	OCSPerr(OCSP_F_OCSP_CHECK_DELEGATED, OCSP_R_MISSING_OCSPSIGNING_USAGE);
+	return 0;
+	}
