@@ -5,12 +5,17 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Fix new 56-bit DES export ciphersuites: they were using 7 bytes instead of
+     8 of keying material. Merlin has also confirmed interop with this fix
+     between OpenSSL and Baltimore C/SSL 2.0 and J/SSL 2.0.
+     [Merlin Hughes <merlin@baltimore.ie>]
+
   *) Fix lots of warnings.
      [Richard Levitte <levitte@stacken.kth.se>]
  
   *) In add_cert_dir() in crypto/x509/by_dir.c, break out of the loop if
      the directory spec didn't end with a LIST_SEPARATOR_CHAR.
-	 [Richard Levitte <levitte@stacken.kth.se>]
+     [Richard Levitte <levitte@stacken.kth.se>]
  
   *) Fix problems with sizeof(long) == 8.
      [Andy Polyakov <appro@fy.chalmers.se>]

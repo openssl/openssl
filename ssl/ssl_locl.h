@@ -201,7 +201,8 @@
 #define SSL_C_IS_EXPORT(c)	SSL_IS_EXPORT((c)->algorithms)
 #define SSL_C_IS_EXPORT56(c)	SSL_IS_EXPORT56((c)->algorithms)
 #define SSL_C_IS_EXPORT40(c)	SSL_IS_EXPORT40((c)->algorithms)
-#define SSL_EXPORT_KEYLENGTH(a)	(SSL_IS_EXPORT40(a) ? 5 : 7)
+#define SSL_EXPORT_KEYLENGTH(a)	(SSL_IS_EXPORT40(a) ? 5 : \
+				 ((a)&SSL_ENC_MASK) == SSL_DES ? 8 : 7)
 #define SSL_EXPORT_PKEYLENGTH(a) (SSL_IS_EXPORT40(a) ? 512 : 1024)
 #define SSL_C_EXPORT_KEYLENGTH(c)	SSL_EXPORT_KEYLENGTH((c)->algorithms)
 #define SSL_C_EXPORT_PKEYLENGTH(c)	SSL_EXPORT_PKEYLENGTH((c)->algorithms)
