@@ -17,7 +17,8 @@
         a separate distribution.
       o New elliptic curve library section.
       o New AES (Rijndael) library section.
-      o Support for new platforms: Windows CE, Tandem OSS, A/UX, AIX 64-bit
+      o Support for new platforms: Windows CE, Tandem OSS, A/UX, AIX 64-bit,
+        Linux x86_64
       o Extended support for some platforms: VxWorks
       o Enhanced support for shared libraries.
       o Support for pkg-config.
@@ -42,6 +43,7 @@
       o SSL/TLS: allow optional cipher choice according to server's preference.
       o SSL/TLS: allow server to explicitly set new session ids.
       o SSL/TLS: support Kerberos cipher suites (RFC2712).
+	Only supports MIT Kerberos for now.
       o SSL/TLS: allow more precise control of renegotiations and sessions.
       o SSL/TLS: add callback to retrieve SSL/TLS messages.
       o SSL/TLS: support AES cipher suites (RFC3268).
