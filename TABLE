@@ -120,6 +120,30 @@ $shared_ldflag =
 $shared_extension = 
 $ranlib       = 
 
+*** DJGPP
+$cc           = gcc
+$cflags       = -I/dev/env/DJDIR/watt32/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall
+$unistd       = 
+$thread_cflag = 
+$sys_id       = MSDOS
+$lflags       = -L/watt32/lib -lwatt
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+
 *** FreeBSD
 $cc           = gcc
 $cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
@@ -786,6 +810,30 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** UWIN
+$cc           = cc
+$cflags       = -DTERMIOS -DL_ENDIAN -O -Wall
+$unistd       = 
+$thread_cflag = 
+$sys_id       = UWIN
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = win32
 $shared_target= 
 $shared_cflag = 
 $shared_ldflag = 

@@ -701,7 +701,7 @@ bn_mul_words                            707	EXIST::FUNCTION:
 BN_uadd                                 708	EXIST::FUNCTION:
 BN_usub                                 709	EXIST::FUNCTION:
 bn_sqr_words                            710	EXIST::FUNCTION:
-_ossl_old_crypt                         711	EXIST:!NeXT,!PERL5,!__FreeBSD__:FUNCTION:DES
+_ossl_old_crypt                         711	EXIST:!NeXT,!PERL5:FUNCTION:DES
 d2i_ASN1_BIT_STRING                     712	EXIST::FUNCTION:
 d2i_ASN1_BOOLEAN                        713	EXIST::FUNCTION:
 d2i_ASN1_HEADER                         714	EXIST::FUNCTION:
@@ -2780,3 +2780,7 @@ EVP_aes_128_cfb                         3222	EXIST::FUNCTION:AES
 EVP_aes_256_cfb                         3223	EXIST::FUNCTION:AES
 EVP_aes_128_ofb                         3224	EXIST::FUNCTION:AES
 EVP_aes_192_cfb                         3225	EXIST::FUNCTION:AES
+CONF_modules_free                       3226	EXIST::FUNCTION:
+NCONF_default                           3227	EXIST::FUNCTION:
+OPENSSL_no_config                       3228	EXIST::FUNCTION:
+NCONF_WIN32                             3229	EXIST::FUNCTION:
