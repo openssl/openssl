@@ -461,7 +461,7 @@ do_irix-shared:
 		  set -x; ${CC} ${SHARED_LDFLAGS} \
 			-shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			${WHOLELIB} $$libs ${EX_LIBS} -lc) || exit 1; \
+			$${WHOLELIB} $$libs ${EX_LIBS} -lc) || exit 1; \
 		libs="-l$$i $$libs"; \
 		done; \
 	fi
