@@ -6,9 +6,12 @@
 
   *) Implement binary inversion algorithm for BN_mod_inverse in addition
      to the algorithm using long divison.  The binary algorithm can be
-     used only if the modulus is odd.  It is faster only for relatively
-     small moduli (roughly 20% for 128-bit moduli, roughly 5% for 256-bit
-     moduli), so we use it only for moduli up to 400 bits.
+     used only if the modulus is odd.  On 32-bit systems, it is faster
+     only for relatively small moduli (roughly 20-30% for 128-bit moduli,
+     roughly 5-15% for 256-bit moduli), so we use it only for moduli
+     up to 450 bits.  In 64-bit environments, the binary algorithm
+     appears to be advantageous for much longer moduli; here we use it
+     for moduli up to 2048 bits.
      [Bodo Moeller]
 
   *) Change bctest again: '-x' expressions are not available in all
