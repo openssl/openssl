@@ -91,7 +91,7 @@ err_all.o: ../../include/mdc2.h ../../include/objects.h ../../include/pem.h
 err_all.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
 err_all.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 err_all.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-err_all.o: ../../include/x509_vfy.h ../crypto.h err.h
+err_all.o: ../../include/x509_vfy.h ../../include/x509v3.h ../crypto.h err.h
 err_prn.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
 err_prn.o: ../../include/lhash.h ../../include/stack.h ../cryptlib.h
 err_prn.o: ../crypto.h err.h
