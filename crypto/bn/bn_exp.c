@@ -169,12 +169,25 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	 * exponentiation using the reciprocal-based quick remaindering
 	 * algorithm is used.
 	 *
-	 * (For computations  a^p mod m  where  a, p, m  are of the same
-	 * length, BN_mod_exp_recp takes roughly 50 .. 70 % the time
-	 * required by the standard algorithm, and BN_mod_exp takes
-	 * about 33 .. 40 % of it.
-	 * [Timings obtained with expspeed.c on a AMD K6-2 platform under Linux,
-	 * with various OpenSSL debugging macros defined.  YMMV.])
+	 * (Timing obtained with expspeed.c [computations  a^p mod m
+	 * where  a, p, m  are of the same length: 256, 512, 1024, 2048,
+	 * 4096, 8192 bits], compared to the running time of the
+	 * standard algorithm:
+	 *
+	 *   BN_mod_exp_mont   33 .. 40 %  [AMD K6-2, Linux, debug configuration]
+         *                     55 .. 77 %  [UltraSparc processor, but
+	 *                                  debug-solaris-sparcv8-gcc conf.]
+	 * 
+	 *   BN_mod_exp_recp   50 .. 70 %  [AMD K6-2, Linux, debug configuration]
+	 *                     62 .. 118 % [UltraSparc, debug-solaris-sparcv8-gcc]
+	 *
+	 * On the Sparc, BN_mod_exp_recp was faster than BN_mod_exp_mont
+	 * at 2048 and more bits, but at 512 and 1024 bits, it was
+	 * slower even than the standard algorithm!
+	 *
+	 * "Real" timings [linux-elf, solaris-sparcv9-gcc configurations]
+	 * should be obtained when the new Montgomery reduction code
+	 * has been integrated into OpenSSL.)
 	 */
 
 #define MONT_MUL_MOD
