@@ -168,6 +168,7 @@ static X509_EXTENSION *do_ext_i2d(X509V3_EXT_METHOD *method, int ext_nid,
 	X509_EXTENSION *ext;
 	/* Convert internal representation to DER */
 	if(method->it) {
+		ext_der = NULL;
 		ext_len = ASN1_item_i2d(ext_struc, &ext_der, method->it);
 		if(ext_len < 0) goto merr;
 	} else {
