@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New function OCSP_copy_nonce() to copy nonce value (if present) from
+     request to response.
+     [Steve Henson]
+
   *) Functions for OCSP responders. OCSP_request_onereq_count(),
      OCSP_request_onereq_get0(), OCSP_onereq_get0_id() and OCSP_id_get0_info()
      extract information from a certificate request. OCSP_response_create()

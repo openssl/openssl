@@ -371,16 +371,20 @@ int OCSP_check_nonce(OCSP_REQUEST *req, OCSP_BASICRESP *bs)
 	return ret;
 	}
 
-X509_EXTENSION *OCSP_nonce_new(void *p, unsigned int len)
-        {
-	X509_EXTENSION *x=NULL;
-	if (!(x = X509_EXTENSION_new())) goto err;
-	if (!(x->object = OBJ_nid2obj(NID_id_pkix_OCSP_Nonce))) goto err;
-	if (!(ASN1_OCTET_STRING_set(x->value, p, len))) goto err;
-	return x;
-err:
-	if (x) X509_EXTENSION_free(x);
-	return NULL;
+/* Copy the nonce value (if any) from an OCSP request to 
+ * a response.
+ */
+
+int OCSP_copy_nonce(OCSP_BASICRESP *resp, OCSP_REQUEST *req)
+	{
+	X509_EXTENSION *req_ext;
+	int req_idx;
+	/* Check for nonce in request */
+	req_idx = OCSP_REQUEST_get_ext_by_NID(req, NID_id_pkix_OCSP_Nonce, -1);
+	/* If no nonce that's OK */
+	if (req_idx < 0) return 2;
+	req_ext = OCSP_REQUEST_get_ext(req, req_idx);
+	return OCSP_BASICRESP_add_ext(resp, req_ext, -1);
 	}
 
 X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim)
