@@ -729,7 +729,8 @@ bad:
 
 #ifndef OPENSSL_NO_RSA
 #if 1
-	SSL_CTX_set_tmp_rsa_callback(ctx,tmp_rsa_cb);
+	if (!no_tmp_rsa)
+		SSL_CTX_set_tmp_rsa_callback(ctx,tmp_rsa_cb);
 #else
 	if (!no_tmp_rsa && SSL_CTX_need_tmp_RSA(ctx))
 		{
