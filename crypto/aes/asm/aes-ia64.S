@@ -11,11 +11,13 @@
 // much M-ports as there're I-ports on Itanium 2]. By sacrificing few
 // registers for small constants (255, 24 and 16) to be used with
 // 'shr' and 'and' instructions I can achieve better ILP, Intruction
-// Level Parallelism, and performance. This code outperforms gcc
-// generated code by almost factor of 2 (two). Improvement over HP C
-// is not that impressive, 20%...
+// Level Parallelism, and performance. This code outperforms GCC 3.3
+// generated code by over factor of 2 (two), GCC 3.4 - by 70% and
+// HP C - by 40%. Measured best-case scenario, i.e. aligned
+// big-endian input, ECB timing on Itanium 2 is (18 + 13*rounds)
+// ticks per block, or 9.25 CPU cycles per byte for 128 bit key.
 
-.ident	"aes-ia64.S, version 1.0"
+.ident	"aes-ia64.S, version 1.1"
 .ident	"IA-64 ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
 .explicit
 .text
@@ -48,129 +50,44 @@ te0=r40;    te1=r41;    te2=r42;    te3=r43;
 # define ADDP	add
 #endif
 
-// Why is the key schedule sparse on 64-bit architectures? When/if we fix
-// it in C, these are the lines to modify accordingly.
+// This implies that AES_KEY comprises 32-bit key schedule elements
+// even on LP64 platforms.
 #ifndef	KSZ
-# define KSZ	8
-# define LDKEY	ld8
+# define KSZ	4
+# define LDKEY	ld4
 #endif
 
-// void AES_encrypt (const void *in,void *out,const AES_KEY *key);
-// measured timing on Itanium 2 is (48 + 14*rounds) cycles, or
-// 11.75 cycles per byte for 128 bit key...
-.global	AES_encrypt#
-.proc	AES_encrypt#
+.proc	_ia64_AES_encrypt#
+// Input:	rk0-rk1
+//		te0
+//		te3	as AES_KEY->rounds!!!
+//		s0-s3
+//		maskff,twenty4,sixteen
+// Output:	r16,r20,r24,r28 as s0-s3
+// Clobber:	r16-r31,rk0-rk1,r32-r43
 .align	32
-#if !defined(_HPUX_SOURCE)
-.skip	16
-#endif
-AES_encrypt:
-	.prologue
-	.fframe	0
-	.save	ar.pfs,r2
-	.save	ar.lc,r3
-{ .mii;	alloc	r2=ar.pfs,3,10,0,8
-	mov	r3=ar.lc	
-	mov	prsave=pr	};;
-
-	.body
-{ .mmi;	and	r40=3,r32
-	ADDP	r32=0,r32
-	mov	pr.rot=7<<16	};;
-#if defined(_HPUX_SOURCE)	// HPUX is big-endian, cut 15 cycles...
-{ .mib; cmp.ne	p6,p0=r40,r0
-	add	r41=4,r32		// 1st arg, borrow teN
-(p6)	br.dpnt.many	.Le_unaligned	};;
-
-{ .mmi;	ld4	r19=[r32],8
-	mov	r44=r33			// save 2nd arg
-	mov	twenty4=24	}
-{ .mmi;	ld4	r23=[r41],8
-	addl	te0=@ltoff(AES_Te#),gp
-	ADDP	r35=KSZ*60,r34	};;	// &AES_KEY->rounds, borrow s1
-{ .mmi;	ld8	te0=[te0]
-	ld4	r35=[r35]		// AES_KEY->rounds
-	ADDP	rk0=0,r34	}//;;	// 3rd arg
-{ .mmi;	ld4	r27=[r32]
-	ld4	r31=[r41]		
-	ADDP	rk1=KSZ,r34	};;
-
-{ .mfi; LDKEY	t0=[rk0],2*KSZ
-	mov	sixteen=16	}
-{ .mfi;	LDKEY	t1=[rk1],2*KSZ
-	mov	maskff=0xff	};;
-{ .mfi;	LDKEY	t2=[rk0],2*KSZ
-	add	te1=1024,te0	}
+_ia64_AES_encrypt:
+{ .mmi;	alloc	r16=ar.pfs,12,0,0,8
+	LDKEY	t0=[rk0],2*KSZ
+	mov	pr.rot=1<<16	}
+{ .mmi;	LDKEY	t1=[rk1],2*KSZ
+	add	te1=1024,te0
+	add	te3=-3,te3	};;
+{ .mib;	LDKEY	t2=[rk0],2*KSZ
+	mov	ar.ec=3		}
 { .mib;	LDKEY	t3=[rk1],2*KSZ
 	add	te2=2048,te0
-	br.many	.Le_common	};;
-#endif
-.Le_unaligned:
-{ .mfi;	ADDP	r40=0,r32		// 1st arg, borrow teN
-	ADDP	r41=1,r32	}
-{ .mfi;	ADDP	r42=2,r32
-	ADDP	r43=3,r32	};;
-{ .mmi;	ld1	r16=[r40],4
-	ld1	r17=[r41],4
-	mov	r44=r33		}//;;	// save 2nd arg
-{ .mmi;	ld1	r18=[r42],4
-	ld1	r19=[r43],4
-	ADDP	rk0=0,r34	};;	// 3rd arg
-{ .mmi;	ld1	r20=[r40],4
-	ld1	r21=[r41],4
-	ADDP	rk1=KSZ,r34	}//;;
-{ .mmi;	ld1	r22=[r42],4
-	ld1	r23=[r43],4
-	ADDP	r35=KSZ*60,r34	};;	// &AES_KEY->rounds, borrow s1
-{ .mmi;	ld1	r24=[r40],4
-	ld1	r25=[r41],4
-	mov	twenty4=24	}//;;
-{ .mmi;	ld1	r26=[r42],4
-	ld1	r27=[r43],4
-	mov	sixteen=16	};;
-{ .mmi;	ld1	r28=[r40]
-	ld1	r29=[r41]
-	mov	maskff=0xff	}//;;
-{ .mmi;	ld1	r30=[r42]
-	ld1	r31=[r43]
-	addl	te0=@ltoff(AES_Te#),gp	};;	// that was close...
+	brp.loop.imp	.Le_top,.Le_end-16	};;
 
-{ .mii;	ld8	te0=[te0]
-	dep	r19=r16,r19,24,8	//;;
-	dep	r23=r20,r23,24,8	}//;;
-{ .mii;	ld4	r35=[r35]		// AES_KEY->rounds
-	dep	r27=r24,r27,24,8	//;;
-	dep	r31=r28,r31,24,8	};;
-{ .mii;	LDKEY	t0=[rk0],2*KSZ
-	dep	r19=r17,r19,16,8	//;;
-	dep	r23=r21,r23,16,8	}//;;
-{ .mii;	LDKEY	t1=[rk1],2*KSZ
-	dep	r27=r25,r27,16,8	//;;
-	dep	r31=r29,r31,16,8	};;
-{ .mii;	LDKEY	t2=[rk0],2*KSZ
-	dep	r19=r18,r19,8,8		//;;
-	dep	r23=r22,r23,8,8		}//;;
-{ .mii;	LDKEY	t3=[rk1],2*KSZ
-	dep	r27=r26,r27,8,8		//;;
-	dep	r31=r30,r31,8,8		};;
-	
-{ .mib;	add	te1=1024,te0
-	add	te2=2048,te0	}
-.Le_common:
-{ .mib; add	te3=3072,te0
-	add	r35=-3,r35
-	brp.exit.imp	.Le_rounds_cexit,.Le_cexit_insn
-				};;
-{ .mii;	mov	ar.lc=r35		// borrowed s1
-	mov	ar.ec=3		};;
-
-{ .mfi;	xor	s0=r19,t0
-	xor	s1=r23,t1	}
-{ .mfi;	xor	s2=r27,t2
-	xor	s3=r31,t3	};;
+{ .mmi;	xor	s0=s0,t0
+	xor	s1=s1,t1
+	mov	ar.lc=te3	}
+{ .mmi;	xor	s2=s2,t2
+	xor	s3=s3,t3
+	add	te3=3072,te0	};;
 
 .align	32
-.Le_rounds:
+.Le_top:
 { .mmi;	(p0)	LDKEY	t0=[rk0],2*KSZ		// 0/0:rk[0]
 	(p0)	and	te33=s3,maskff		// 0/0:s3&0xff
 	(p0)	extr.u	te22=s2,8,8	}	// 0/0:s2>>8&0xff
@@ -219,103 +136,187 @@ AES_encrypt:
 	(p0)	and	te13=te13,maskff}	// 7/2:s3>>16&0xff
 { .mmi;	(p0)	ld4	te03=[te03]		// 7/3:te0[s3>>24]
 	(p0)	shladd	te32=te32,2,te3		// 7/3:te3+s2
-	(p16)	cmp.eq	p0,p18=r0,r0	};;	// 7/clear (p18)
+	(p0)	xor	t0=t0,te33	};;	// 7/0:
 { .mmi;	(p0)	ld4	te31=[te31]		// 8/2:te3[s1]
 	(p0)	shladd	te13=te13,2,te1		// 8/2:te1+s3>>16
-	(p17)	xor	t0=t0,te33	}	// 8/0:
+	(p0)	xor	t0=t0,te22	}	// 8/0:
 { .mmi;	(p0)	ld4	te32=[te32]		// 8/3:te3[s2]
 	(p0)	shladd	te10=te10,2,te1		// 8/3:te1+s0>>16
-	(p17)	xor	t1=t1,te30	};;	// 8/1:
+	(p0)	xor	t1=t1,te30	};;	// 8/1:
 { .mmi;	(p0)	ld4	te13=[te13]		// 9/2:te1[s3>>16]
-	(p17)	xor	t0=t0,te22		// 9/0:
-	(p18)	add	te0=4096,te0	}	// 9/
-.Le_cexit_insn:
-{ .mmb;	(p0)	ld4	te10=[te10]		// 9/3:te1[s0>>16]
-	(p17)	xor	t1=t1,te23		// 9/1:
-	br.cexit.spnt.few	.Le_rounds_cexit
-					};;
-{ .mmi;	(p18)	xor	s2=s2,te20		// 10/2:
-	(p18)	xor	s0=s0,te00		// 10/0:
-	(p19)	add	te1=3072,te1	}	// 10/
-{ .mmi;	(p18)	xor	s3=s3,te21		// 10/3:
-	(p18)	xor	s1=s1,te01		// 10/1:
-	(p19)	add	te2=2048,te2 	};;	// 10/
-{ .mfi;	(p18)	xor	s0=s0,te11		// 11/0:done!
-	(p18)	xor	s2=s2,te02	}	// 11/2:
-{ .mfi;	(p18)	xor	s1=s1,te12		// 11/1:done!
-	(p18)	xor	s3=s3,te03	};;	// 11/3:
-{ .mmi;	(p18)	xor	s2=s2,te31		// 12/2:
-	(p18)	xor	s3=s3,te32		// 12/3:
-	(p19)	add	te3=1024,te3	};;	// 12/
-{ .mib;	(p18)	xor	s2=s2,te13		// 13/2:done!
-	(p18)	xor	s3=s3,te10		// 13/3:done!
-	br	.Le_rounds	};;
+	(p0)	xor	t0=t0,te00		// 9/0:
+	(p0)	xor	t1=t1,te23	}	// 9/1:		
+{ .mmi;	(p0)	ld4	te10=[te10]		// 9/3:te1[s0>>16]
+	(p0)	xor	t2=t2,te20		// 9/2:
+	(p0)	xor	t3=t3,te21	};;	// 9/3:
+{ .mmi;	(p0)	xor	t0=t0,te11		// 10/0:done!
+	(p0)	xor	t1=t1,te01		// 10/1:
+	(p0)	xor	t2=t2,te02	}	// 10/2:
+{ .mmi;	(p0)	xor	t3=t3,te03		// 10/3:
+	(p16)	cmp.eq	p0,p17=r0,r0 	};;	// 10/clear (p17)
+{ .mmi;	(p0)	xor	t1=t1,te12		// 11/1:done!
+	(p0)	xor	t2=t2,te31		// 11/2:
+	(p0)	xor	t3=t3,te32	}	// 11/3:
+{ .mmi;	(p17)	add	te0=4096,te0		// 11/	
+	(p17)	add	te1=4096,te1	};;	// 11/
+{ .mib;	(p0)	xor	t2=t2,te13		// 12/2:done!
+	(p0)	xor	t3=t3,te10	}	// 12/3:done!
+{ .mib;	(p17)	add	te2=4096,te2		// 12/
+	(p17)	add	te3=4096,te3		// 12/
+	br.ctop.sptk	.Le_top		};;
+.Le_end:
+{ .mib;	mov	r16=s0
+	mov	r20=s1			}
+{ .mib;	mov	r24=s2
+	mov	r28=s3
+	br.ret.sptk	b6		};;
+.endp	_ia64_AES_encrypt#
+
+// void AES_encrypt (const void *in,void *out,const AES_KEY *key);
+.global	AES_encrypt#
+.proc	AES_encrypt#
+.align	32
+.skip	16
+AES_encrypt:
+	.prologue
+	.fframe	0
+	.save	ar.pfs,r2
+	.save	ar.lc,r3
+{ .mmi;	alloc	r2=ar.pfs,3,0,12,0
+	addl	out8=@ltoff(AES_Te#),gp
+	mov	r3=ar.lc		}
+{ .mmi;	and	out0=3,in0
+	ADDP	in0=0,in0
+	ADDP	out11=KSZ*60,in2	};;	// &AES_KEY->rounds
+
+	.body
+{ .mmi;	ld8	out8=[out8]			// Te0
+	ld4	out11=[out11]			// AES_KEY->rounds
+	mov	prsave=pr		}
+
+#if defined(_HPUX_SOURCE)	// HPUX is big-endian, cut 15+15 cycles...
+{ .mib; cmp.ne	p6,p0=out0,r0
+	add	out0=4,in0
+(p6)	br.dpnt.many	.Le_i_unaligned	};;
+
+{ .mmi;	ld4	out1=[in0],8		// s0
+	and	out9=3,in1
+	mov	twenty4=24		}
+{ .mmi;	ld4	out3=[out0],8		// s1
+	ADDP	rk0=0,in2
+	mov	sixteen=16		};;
+{ .mmi;	ld4	out5=[in0]		// s2
+	cmp.ne	p6,p0=out9,r0
+	mov	maskff=0xff		}
+{ .mmb;	ld4	out7=[out0]		// s3
+	ADDP	rk1=KSZ,in2
+	br.call.sptk.many	b6=_ia64_AES_encrypt	};;
+
+{ .mib;	ADDP	in0=4,in1
+	ADDP	in1=0,in1
+(p6)	br.spnt	.Le_o_unaligned		};;
+
+{ .mii;	mov	ar.pfs=r2
+	mov	ar.lc=r3		}
+{ .mmi;	st4	[in1]=r16,8		// s0
+	st4	[in0]=r20,8		// s1
+	mov	pr=prsave,0x1ffff	};;
+{ .mmb;	st4	[in1]=r24		// s2
+	st4	[in0]=r28		// s3
+	br.ret.sptk.many	b0	};;
+#endif
 
 .align	32
-.Le_rounds_cexit:
-{ .mfi;	xor	te00=te00,s0		// "s0"
-	xor	te11=te11,s0	}
-{ .mfi;	xor	te22=te22,s0
-	xor	te33=te33,s0	}
-{ .mib;	xor	te01=te01,s1		// "s1"
-	xor	te12=te12,s1	}
-{ .mib;	xor	te23=te23,s1
-	xor	te30=te30,s1	}
-{ .mfi;	xor	te02=te02,s2		// "s2"
-	xor	te13=te13,s2	}
-{ .mfi;	xor	te20=te20,s2
-	xor	te31=te31,s2	}
-{ .mib;	xor	te03=te03,s3		// "s3"
-	xor	te10=te10,s3	}
-{ .mib;	xor	te21=te21,s3
-	xor	te32=te32,s3	};;
+.Le_i_unaligned:
+{ .mmi;	add	out0=1,in0
+	add	out2=2,in0
+	add	out4=3,in0	};;
+{ .mmi;	ld1	r16=[in0],4
+	ld1	r17=[out0],4	}//;;
+{ .mmi;	ld1	r18=[out2],4
+	ld1	out1=[out4],4	};;	// s0
+{ .mmi;	ld1	r20=[in0],4
+	ld1	r21=[out0],4	}//;;
+{ .mmi;	ld1	r22=[out2],4
+	ld1	out3=[out4],4	};;	// s1
+{ .mmi;	ld1	r24=[in0],4
+	ld1	r25=[out0],4	}//;;
+{ .mmi;	ld1	r26=[out2],4
+	ld1	out5=[out4],4	};;	// s2
+{ .mmi;	ld1	r28=[in0]
+	ld1	r29=[out0]	}//;;
+{ .mmi;	ld1	r30=[out2]
+	ld1	out7=[out4]	};;	// s3
 
-{ .mii;	ADDP	r40=0,r44		// saved 2nd argument, snatch teN
-	extr.u	te22=te22,8,8
-	shr.u	te00=te00,twenty4	}//;;
-{ .mii;	ADDP	r41=1,r44
-	extr.u	te11=te11,16,8
-	shr.u	te01=te01,twenty4	}//;;
-{ .mii;	ADDP	r42=2,r44
-	extr.u	te23=te23,8,8
-	shr.u	te12=te12,sixteen	}//;;
-{ .mii;	ADDP	r43=3,r44
-	extr.u	te20=te20,8,8
-	shr.u	te02=te02,twenty4	};;
-{ .mii;	st1	[r43]=te33,4
-	extr.u	te13=te13,16,8
-	shr.u	te03=te03,twenty4	}//;;
-{ .mii;	st1	[r42]=te22,4
-	extr.u	te21=te21,8,8
-	shr.u	te10=te10,sixteen	}//;;
+{ .mii;
+	dep	out1=r16,out1,24,8	//;;
+	dep	out3=r20,out3,24,8	}//;;
+{ .mii;	ADDP	rk0=0,in2
+	dep	out5=r24,out5,24,8	//;;
+	dep	out7=r28,out7,24,8	};;
+{ .mii;	ADDP	rk1=KSZ,in2
+	dep	out1=r17,out1,16,8	//;;
+	dep	out3=r21,out3,16,8	}//;;
+{ .mii;	mov	twenty4=24
+	dep	out5=r25,out5,16,8	//;;
+	dep	out7=r29,out7,16,8	};;
+{ .mii;	mov	sixteen=16
+	dep	out1=r18,out1,8,8	//;;
+	dep	out3=r22,out3,8,8	}//;;
+{ .mii;	mov	maskff=0xff
+	dep	out5=r26,out5,8,8	//;;
+	dep	out7=r30,out7,8,8	};;
 
-{ .mmi;	st1	[r41]=te11,4
-	st1	[r40]=te00,4		};;
-{ .mmi;	st1	[r43]=te30,4
-	st1	[r42]=te23,4		}//;;
-{ .mmi;	st1	[r41]=te12,4
-	st1	[r40]=te01,4		};;
-{ .mmi;	st1	[r43]=te31,4
-	st1	[r42]=te20,4		}//;;
-{ .mmi;	st1	[r41]=te13,4
-	st1	[r40]=te02,4
-	mov	pr=prsave,0x1ffff	};;
-{ .mmi;	st1	[r43]=te32
-	st1	[r42]=te21
+{ .mib;	br.call.sptk.many	b6=_ia64_AES_encrypt	};;
+
+.Le_o_unaligned:
+{ .mii;	ADDP	out0=0,in1
+	extr.u	r17=r16,8,8			// s0
+	shr.u	r19=r16,twenty4		}//;;
+{ .mii;	ADDP	out1=1,in1
+	extr.u	r18=r16,16,8
+	shr.u	r23=r20,twenty4		}//;;	// s1
+{ .mii;	ADDP	out2=2,in1
+	extr.u	r21=r20,8,8
+	shr.u	r22=r20,sixteen	}//;;
+{ .mii;	ADDP	out3=3,in1
+	extr.u	r25=r24,8,8			// s2
+	shr.u	r27=r24,twenty4		};;
+{ .mii;	st1	[out3]=r16,4
+	extr.u	r26=r24,16,8
+	shr.u	r31=r28,twenty4	}//;;	// s3
+{ .mii;	st1	[out2]=r17,4
+	extr.u	r29=r28,8,8
+	shr.u	r30=r28,sixteen		}//;;
+
+{ .mmi;	st1	[out1]=r18,4
+	st1	[out0]=r19,4		};;
+{ .mmi;	st1	[out3]=r20,4
+	st1	[out2]=r21,4		}//;;
+{ .mmi;	st1	[out1]=r22,4
+	st1	[out0]=r23,4		};;
+{ .mmi;	st1	[out3]=r24,4
+	st1	[out2]=r25,4
+	mov	pr=prsave,0x1ffff	}//;;
+{ .mmi;	st1	[out1]=r26,4
+	st1	[out0]=r27,4
+	mov	ar.pfs=r2		};;
+{ .mmi;	st1	[out3]=r28
+	st1	[out2]=r29
 	mov	ar.lc=r3		}//;;
-{ .mmb;	st1	[r41]=te10
-	st1	[r40]=te03
+{ .mmb;	st1	[out1]=r30
+	st1	[out0]=r31
 	br.ret.sptk.many	b0	};;
 .endp	AES_encrypt#
 
-// AES_decrypt is autogenerated by the following script:
+// *AES_decrypt are autogenerated by the following script:
 #if 0
 #!/usr/bin/env perl
-print "// AES_decrypt is autogenerated by the following script:\n#if 0\n";
+print "// *AES_decrypt are autogenerated by the following script:\n#if 0\n";
 open(PROG,'<'.$0); while(<PROG>) { print; } close(PROG);
 print "#endif\n";
 while(<>) {
-	$process=1	if (/\.global\s+AES_encrypt/);
+	$process=1	if (/\.proc\s+_ia64_AES_encrypt/);
 	next		if (!$process);
 
 	#s/te00=s0/td00=s0/;	s/te00/td00/g;
@@ -349,119 +350,37 @@ while(<>) {
 	exit		if (/\.endp\s+AES_decrypt/);
 }
 #endif
-.global	AES_decrypt#
-.proc	AES_decrypt#
+.proc	_ia64_AES_decrypt#
+// Input:	rk0-rk1
+//		te0
+//		te3	as AES_KEY->rounds!!!
+//		s0-s3
+//		maskff,twenty4,sixteen
+// Output:	r16,r20,r24,r28 as s0-s3
+// Clobber:	r16-r31,rk0-rk1,r32-r43
 .align	32
-#if !defined(_HPUX_SOURCE)
-.skip	16
-#endif
-AES_decrypt:
-	.prologue
-	.fframe	0
-	.save	ar.pfs,r2
-	.save	ar.lc,r3
-{ .mii;	alloc	r2=ar.pfs,3,10,0,8
-	mov	r3=ar.lc	
-	mov	prsave=pr	};;
-
-	.body
-{ .mmi;	and	r40=3,r32
-	ADDP	r32=0,r32
-	mov	pr.rot=7<<16	};;
-#if defined(_HPUX_SOURCE)	// HPUX is big-endian, cut 15 cycles...
-{ .mib; cmp.ne	p6,p0=r40,r0
-	add	r41=4,r32		// 1st arg, borrow teN
-(p6)	br.dpnt.many	.Ld_unaligned	};;
-
-{ .mmi;	ld4	r19=[r32],8
-	mov	r44=r33			// save 2nd arg
-	mov	twenty4=24	}
-{ .mmi;	ld4	r23=[r41],8
-	addl	te0=@ltoff(AES_Td#),gp
-	ADDP	r35=KSZ*60,r34	};;	// &AES_KEY->rounds, borrow s1
-{ .mmi;	ld8	te0=[te0]
-	ld4	r35=[r35]		// AES_KEY->rounds
-	ADDP	rk0=0,r34	}//;;	// 3rd arg
-{ .mmi;	ld4	r27=[r32]
-	ld4	r31=[r41]		
-	ADDP	rk1=KSZ,r34	};;
-
-{ .mfi; LDKEY	t0=[rk0],2*KSZ
-	mov	sixteen=16	}
-{ .mfi;	LDKEY	t1=[rk1],2*KSZ
-	mov	maskff=0xff	};;
-{ .mfi;	LDKEY	t2=[rk0],2*KSZ
-	add	te1=1024,te0	}
+_ia64_AES_decrypt:
+{ .mmi;	alloc	r16=ar.pfs,12,0,0,8
+	LDKEY	t0=[rk0],2*KSZ
+	mov	pr.rot=1<<16	}
+{ .mmi;	LDKEY	t1=[rk1],2*KSZ
+	add	te1=1024,te0
+	add	te3=-3,te3	};;
+{ .mib;	LDKEY	t2=[rk0],2*KSZ
+	mov	ar.ec=3		}
 { .mib;	LDKEY	t3=[rk1],2*KSZ
 	add	te2=2048,te0
-	br.many	.Ld_common	};;
-#endif
-.Ld_unaligned:
-{ .mfi;	ADDP	r40=0,r32		// 1st arg, borrow teN
-	ADDP	r41=1,r32	}
-{ .mfi;	ADDP	r42=2,r32
-	ADDP	r43=3,r32	};;
-{ .mmi;	ld1	r16=[r40],4
-	ld1	r17=[r41],4
-	mov	r44=r33		}//;;	// save 2nd arg
-{ .mmi;	ld1	r18=[r42],4
-	ld1	r19=[r43],4
-	ADDP	rk0=0,r34	};;	// 3rd arg
-{ .mmi;	ld1	r20=[r40],4
-	ld1	r21=[r41],4
-	ADDP	rk1=KSZ,r34	}//;;
-{ .mmi;	ld1	r22=[r42],4
-	ld1	r23=[r43],4
-	ADDP	r35=KSZ*60,r34	};;	// &AES_KEY->rounds, borrow s1
-{ .mmi;	ld1	r24=[r40],4
-	ld1	r25=[r41],4
-	mov	twenty4=24	}//;;
-{ .mmi;	ld1	r26=[r42],4
-	ld1	r27=[r43],4
-	mov	sixteen=16	};;
-{ .mmi;	ld1	r28=[r40]
-	ld1	r29=[r41]
-	mov	maskff=0xff	}//;;
-{ .mmi;	ld1	r30=[r42]
-	ld1	r31=[r43]
-	addl	te0=@ltoff(AES_Td#),gp	};;	// that was close...
+	brp.loop.imp	.Ld_top,.Ld_end-16	};;
 
-{ .mii;	ld8	te0=[te0]
-	dep	r19=r16,r19,24,8	//;;
-	dep	r23=r20,r23,24,8	}//;;
-{ .mii;	ld4	r35=[r35]		// AES_KEY->rounds
-	dep	r27=r24,r27,24,8	//;;
-	dep	r31=r28,r31,24,8	};;
-{ .mii;	LDKEY	t0=[rk0],2*KSZ
-	dep	r19=r17,r19,16,8	//;;
-	dep	r23=r21,r23,16,8	}//;;
-{ .mii;	LDKEY	t1=[rk1],2*KSZ
-	dep	r27=r25,r27,16,8	//;;
-	dep	r31=r29,r31,16,8	};;
-{ .mii;	LDKEY	t2=[rk0],2*KSZ
-	dep	r19=r18,r19,8,8		//;;
-	dep	r23=r22,r23,8,8		}//;;
-{ .mii;	LDKEY	t3=[rk1],2*KSZ
-	dep	r27=r26,r27,8,8		//;;
-	dep	r31=r30,r31,8,8		};;
-	
-{ .mib;	add	te1=1024,te0
-	add	te2=2048,te0	}
-.Ld_common:
-{ .mib; add	te3=3072,te0
-	add	r35=-3,r35
-	brp.exit.imp	.Ld_rounds_cexit,.Ld_cexit_insn
-				};;
-{ .mii;	mov	ar.lc=r35		// borrowed s1
-	mov	ar.ec=3		};;
-
-{ .mfi;	xor	s0=r19,t0
-	xor	s1=r23,t1	}
-{ .mfi;	xor	s2=r27,t2
-	xor	s3=r31,t3	};;
+{ .mmi;	xor	s0=s0,t0
+	xor	s1=s1,t1
+	mov	ar.lc=te3	}
+{ .mmi;	xor	s2=s2,t2
+	xor	s3=s3,t3
+	add	te3=3072,te0	};;
 
 .align	32
-.Ld_rounds:
+.Ld_top:
 { .mmi;	(p0)	LDKEY	t0=[rk0],2*KSZ		// 0/0:rk[0]
 	(p0)	and	te31=s1,maskff		// 0/0:s3&0xff
 	(p0)	extr.u	te22=s2,8,8	}	// 0/0:s2>>8&0xff
@@ -510,92 +429,176 @@ AES_decrypt:
 	(p0)	and	te11=te11,maskff}	// 7/2:s3>>16&0xff
 { .mmi;	(p0)	ld4	te03=[te03]		// 7/3:te0[s3>>24]
 	(p0)	shladd	te30=te30,2,te3		// 7/3:te3+s2
-	(p16)	cmp.eq	p0,p18=r0,r0	};;	// 7/clear (p18)
+	(p0)	xor	t0=t0,te31	};;	// 7/0:
 { .mmi;	(p0)	ld4	te33=[te33]		// 8/2:te3[s1]
 	(p0)	shladd	te11=te11,2,te1		// 8/2:te1+s3>>16
-	(p17)	xor	t0=t0,te31	}	// 8/0:
+	(p0)	xor	t0=t0,te22	}	// 8/0:
 { .mmi;	(p0)	ld4	te30=[te30]		// 8/3:te3[s2]
 	(p0)	shladd	te12=te12,2,te1		// 8/3:te1+s0>>16
-	(p17)	xor	t1=t1,te32	};;	// 8/1:
+	(p0)	xor	t1=t1,te32	};;	// 8/1:
 { .mmi;	(p0)	ld4	te11=[te11]		// 9/2:te1[s3>>16]
-	(p17)	xor	t0=t0,te22		// 9/0:
-	(p18)	add	te0=4096,te0	}	// 9/
-.Ld_cexit_insn:
-{ .mmb;	(p0)	ld4	te12=[te12]		// 9/3:te1[s0>>16]
-	(p17)	xor	t1=t1,te23		// 9/1:
-	br.cexit.spnt.few	.Ld_rounds_cexit
-					};;
-{ .mmi;	(p18)	xor	s2=s2,te20		// 10/2:
-	(p18)	xor	s0=s0,te00		// 10/0:
-	(p19)	add	te1=3072,te1	}	// 10/
-{ .mmi;	(p18)	xor	s3=s3,te21		// 10/3:
-	(p18)	xor	s1=s1,te01		// 10/1:
-	(p19)	add	te2=2048,te2 	};;	// 10/
-{ .mfi;	(p18)	xor	s0=s0,te13		// 11/0:done!
-	(p18)	xor	s2=s2,te02	}	// 11/2:
-{ .mfi;	(p18)	xor	s1=s1,te10		// 11/1:done!
-	(p18)	xor	s3=s3,te03	};;	// 11/3:
-{ .mmi;	(p18)	xor	s2=s2,te33		// 12/2:
-	(p18)	xor	s3=s3,te30		// 12/3:
-	(p19)	add	te3=1024,te3	};;	// 12/
-{ .mib;	(p18)	xor	s2=s2,te11		// 13/2:done!
-	(p18)	xor	s3=s3,te12		// 13/3:done!
-	br	.Ld_rounds	};;
+	(p0)	xor	t0=t0,te00		// 9/0:
+	(p0)	xor	t1=t1,te23	}	// 9/1:		
+{ .mmi;	(p0)	ld4	te12=[te12]		// 9/3:te1[s0>>16]
+	(p0)	xor	t2=t2,te20		// 9/2:
+	(p0)	xor	t3=t3,te21	};;	// 9/3:
+{ .mmi;	(p0)	xor	t0=t0,te13		// 10/0:done!
+	(p0)	xor	t1=t1,te01		// 10/1:
+	(p0)	xor	t2=t2,te02	}	// 10/2:
+{ .mmi;	(p0)	xor	t3=t3,te03		// 10/3:
+	(p16)	cmp.eq	p0,p17=r0,r0 	};;	// 10/clear (p17)
+{ .mmi;	(p0)	xor	t1=t1,te10		// 11/1:done!
+	(p0)	xor	t2=t2,te33		// 11/2:
+	(p0)	xor	t3=t3,te30	}	// 11/3:
+{ .mmi;	(p17)	add	te0=4096,te0		// 11/	
+	(p17)	add	te1=4096,te1	};;	// 11/
+{ .mib;	(p0)	xor	t2=t2,te11		// 12/2:done!
+	(p0)	xor	t3=t3,te12	}	// 12/3:done!
+{ .mib;	(p17)	add	te2=4096,te2		// 12/
+	(p17)	add	te3=4096,te3		// 12/
+	br.ctop.sptk	.Ld_top		};;
+.Ld_end:
+{ .mib;	mov	r16=s0
+	mov	r20=s1			}
+{ .mib;	mov	r24=s2
+	mov	r28=s3
+	br.ret.sptk	b6		};;
+.endp	_ia64_AES_decrypt#
+
+// void AES_decrypt (const void *in,void *out,const AES_KEY *key);
+.global	AES_decrypt#
+.proc	AES_decrypt#
+.align	32
+.skip	16
+AES_decrypt:
+	.prologue
+	.fframe	0
+	.save	ar.pfs,r2
+	.save	ar.lc,r3
+{ .mmi;	alloc	r2=ar.pfs,3,0,12,0
+	addl	out8=@ltoff(AES_Td#),gp
+	mov	r3=ar.lc		}
+{ .mmi;	and	out0=3,in0
+	ADDP	in0=0,in0
+	ADDP	out11=KSZ*60,in2	};;	// &AES_KEY->rounds
+
+	.body
+{ .mmi;	ld8	out8=[out8]			// Te0
+	ld4	out11=[out11]			// AES_KEY->rounds
+	mov	prsave=pr		}
+
+#if defined(_HPUX_SOURCE)	// HPUX is big-endian, cut 15+15 cycles...
+{ .mib; cmp.ne	p6,p0=out0,r0
+	add	out0=4,in0
+(p6)	br.dpnt.many	.Ld_i_unaligned	};;
+
+{ .mmi;	ld4	out1=[in0],8		// s0
+	and	out9=3,in1
+	mov	twenty4=24		}
+{ .mmi;	ld4	out3=[out0],8		// s1
+	ADDP	rk0=0,in2
+	mov	sixteen=16		};;
+{ .mmi;	ld4	out5=[in0]		// s2
+	cmp.ne	p6,p0=out9,r0
+	mov	maskff=0xff		}
+{ .mmb;	ld4	out7=[out0]		// s3
+	ADDP	rk1=KSZ,in2
+	br.call.sptk.many	b6=_ia64_AES_decrypt	};;
+
+{ .mib;	ADDP	in0=4,in1
+	ADDP	in1=0,in1
+(p6)	br.spnt	.Ld_o_unaligned		};;
+
+{ .mii;	mov	ar.pfs=r2
+	mov	ar.lc=r3		}
+{ .mmi;	st4	[in1]=r16,8		// s0
+	st4	[in0]=r20,8		// s1
+	mov	pr=prsave,0x1ffff	};;
+{ .mmb;	st4	[in1]=r24		// s2
+	st4	[in0]=r28		// s3
+	br.ret.sptk.many	b0	};;
+#endif
 
 .align	32
-.Ld_rounds_cexit:
-{ .mfi;	xor	te00=te00,s0		// "s0"
-	xor	te13=te13,s0	}
-{ .mfi;	xor	te22=te22,s0
-	xor	te31=te31,s0	}
-{ .mib;	xor	te01=te01,s1		// "s1"
-	xor	te10=te10,s1	}
-{ .mib;	xor	te23=te23,s1
-	xor	te32=te32,s1	}
-{ .mfi;	xor	te02=te02,s2		// "s2"
-	xor	te11=te11,s2	}
-{ .mfi;	xor	te20=te20,s2
-	xor	te33=te33,s2	}
-{ .mib;	xor	te03=te03,s3		// "s3"
-	xor	te12=te12,s3	}
-{ .mib;	xor	te21=te21,s3
-	xor	te30=te30,s3	};;
+.Ld_i_unaligned:
+{ .mmi;	add	out0=1,in0
+	add	out2=2,in0
+	add	out4=3,in0	};;
+{ .mmi;	ld1	r16=[in0],4
+	ld1	r17=[out0],4	}//;;
+{ .mmi;	ld1	r18=[out2],4
+	ld1	out1=[out4],4	};;	// s0
+{ .mmi;	ld1	r20=[in0],4
+	ld1	r21=[out0],4	}//;;
+{ .mmi;	ld1	r22=[out2],4
+	ld1	out3=[out4],4	};;	// s1
+{ .mmi;	ld1	r24=[in0],4
+	ld1	r25=[out0],4	}//;;
+{ .mmi;	ld1	r26=[out2],4
+	ld1	out5=[out4],4	};;	// s2
+{ .mmi;	ld1	r28=[in0]
+	ld1	r29=[out0]	}//;;
+{ .mmi;	ld1	r30=[out2]
+	ld1	out7=[out4]	};;	// s3
 
-{ .mii;	ADDP	r40=0,r44		// saved 2nd argument, snatch teN
-	extr.u	te22=te22,8,8
-	shr.u	te00=te00,twenty4	}//;;
-{ .mii;	ADDP	r41=1,r44
-	extr.u	te13=te13,16,8
-	shr.u	te01=te01,twenty4	}//;;
-{ .mii;	ADDP	r42=2,r44
-	extr.u	te23=te23,8,8
-	shr.u	te10=te10,sixteen	}//;;
-{ .mii;	ADDP	r43=3,r44
-	extr.u	te20=te20,8,8
-	shr.u	te02=te02,twenty4	};;
-{ .mii;	st1	[r43]=te31,4
-	extr.u	te11=te11,16,8
-	shr.u	te03=te03,twenty4	}//;;
-{ .mii;	st1	[r42]=te22,4
-	extr.u	te21=te21,8,8
-	shr.u	te12=te12,sixteen	}//;;
+{ .mii;
+	dep	out1=r16,out1,24,8	//;;
+	dep	out3=r20,out3,24,8	}//;;
+{ .mii;	ADDP	rk0=0,in2
+	dep	out5=r24,out5,24,8	//;;
+	dep	out7=r28,out7,24,8	};;
+{ .mii;	ADDP	rk1=KSZ,in2
+	dep	out1=r17,out1,16,8	//;;
+	dep	out3=r21,out3,16,8	}//;;
+{ .mii;	mov	twenty4=24
+	dep	out5=r25,out5,16,8	//;;
+	dep	out7=r29,out7,16,8	};;
+{ .mii;	mov	sixteen=16
+	dep	out1=r18,out1,8,8	//;;
+	dep	out3=r22,out3,8,8	}//;;
+{ .mii;	mov	maskff=0xff
+	dep	out5=r26,out5,8,8	//;;
+	dep	out7=r30,out7,8,8	};;
 
-{ .mmi;	st1	[r41]=te13,4
-	st1	[r40]=te00,4		};;
-{ .mmi;	st1	[r43]=te32,4
-	st1	[r42]=te23,4		}//;;
-{ .mmi;	st1	[r41]=te10,4
-	st1	[r40]=te01,4		};;
-{ .mmi;	st1	[r43]=te33,4
-	st1	[r42]=te20,4		}//;;
-{ .mmi;	st1	[r41]=te11,4
-	st1	[r40]=te02,4
-	mov	pr=prsave,0x1ffff	};;
-{ .mmi;	st1	[r43]=te30
-	st1	[r42]=te21
+{ .mib;	br.call.sptk.many	b6=_ia64_AES_decrypt	};;
+
+.Ld_o_unaligned:
+{ .mii;	ADDP	out0=0,in1
+	extr.u	r17=r16,8,8			// s0
+	shr.u	r19=r16,twenty4		}//;;
+{ .mii;	ADDP	out1=1,in1
+	extr.u	r18=r16,16,8
+	shr.u	r23=r20,twenty4		}//;;	// s1
+{ .mii;	ADDP	out2=2,in1
+	extr.u	r21=r20,8,8
+	shr.u	r22=r20,sixteen	}//;;
+{ .mii;	ADDP	out3=3,in1
+	extr.u	r25=r24,8,8			// s2
+	shr.u	r27=r24,twenty4		};;
+{ .mii;	st1	[out3]=r16,4
+	extr.u	r26=r24,16,8
+	shr.u	r31=r28,twenty4	}//;;	// s3
+{ .mii;	st1	[out2]=r17,4
+	extr.u	r29=r28,8,8
+	shr.u	r30=r28,sixteen		}//;;
+
+{ .mmi;	st1	[out1]=r18,4
+	st1	[out0]=r19,4		};;
+{ .mmi;	st1	[out3]=r20,4
+	st1	[out2]=r21,4		}//;;
+{ .mmi;	st1	[out1]=r22,4
+	st1	[out0]=r23,4		};;
+{ .mmi;	st1	[out3]=r24,4
+	st1	[out2]=r25,4
+	mov	pr=prsave,0x1ffff	}//;;
+{ .mmi;	st1	[out1]=r26,4
+	st1	[out0]=r27,4
+	mov	ar.pfs=r2		};;
+{ .mmi;	st1	[out3]=r28
+	st1	[out2]=r29
 	mov	ar.lc=r3		}//;;
-{ .mmb;	st1	[r41]=te12
-	st1	[r40]=te03
+{ .mmb;	st1	[out1]=r30
+	st1	[out0]=r31
 	br.ret.sptk.many	b0	};;
 .endp	AES_decrypt#
 
@@ -863,71 +866,266 @@ AES_Te:	data4	0xc66363a5, 0xf87c7c84, 0xee777799, 0xf67b7b8d
 	data4	0x4141c382, 0x9999b029, 0x2d2d775a, 0x0f0f111e
 	data4	0xb0b0cb7b, 0x5454fca8, 0xbbbbd66d, 0x16163a2c
 // Te4:
-	data4	0x63636363, 0x7c7c7c7c, 0x77777777, 0x7b7b7b7b
-	data4	0xf2f2f2f2, 0x6b6b6b6b, 0x6f6f6f6f, 0xc5c5c5c5
-	data4	0x30303030, 0x01010101, 0x67676767, 0x2b2b2b2b
-	data4	0xfefefefe, 0xd7d7d7d7, 0xabababab, 0x76767676
-	data4	0xcacacaca, 0x82828282, 0xc9c9c9c9, 0x7d7d7d7d
-	data4	0xfafafafa, 0x59595959, 0x47474747, 0xf0f0f0f0
-	data4	0xadadadad, 0xd4d4d4d4, 0xa2a2a2a2, 0xafafafaf
-	data4	0x9c9c9c9c, 0xa4a4a4a4, 0x72727272, 0xc0c0c0c0
-	data4	0xb7b7b7b7, 0xfdfdfdfd, 0x93939393, 0x26262626
-	data4	0x36363636, 0x3f3f3f3f, 0xf7f7f7f7, 0xcccccccc
-	data4	0x34343434, 0xa5a5a5a5, 0xe5e5e5e5, 0xf1f1f1f1
-	data4	0x71717171, 0xd8d8d8d8, 0x31313131, 0x15151515
-	data4	0x04040404, 0xc7c7c7c7, 0x23232323, 0xc3c3c3c3
-	data4	0x18181818, 0x96969696, 0x05050505, 0x9a9a9a9a
-	data4	0x07070707, 0x12121212, 0x80808080, 0xe2e2e2e2
-	data4	0xebebebeb, 0x27272727, 0xb2b2b2b2, 0x75757575
-	data4	0x09090909, 0x83838383, 0x2c2c2c2c, 0x1a1a1a1a
-	data4	0x1b1b1b1b, 0x6e6e6e6e, 0x5a5a5a5a, 0xa0a0a0a0
-	data4	0x52525252, 0x3b3b3b3b, 0xd6d6d6d6, 0xb3b3b3b3
-	data4	0x29292929, 0xe3e3e3e3, 0x2f2f2f2f, 0x84848484
-	data4	0x53535353, 0xd1d1d1d1, 0x00000000, 0xedededed
-	data4	0x20202020, 0xfcfcfcfc, 0xb1b1b1b1, 0x5b5b5b5b
-	data4	0x6a6a6a6a, 0xcbcbcbcb, 0xbebebebe, 0x39393939
-	data4	0x4a4a4a4a, 0x4c4c4c4c, 0x58585858, 0xcfcfcfcf
-	data4	0xd0d0d0d0, 0xefefefef, 0xaaaaaaaa, 0xfbfbfbfb
-	data4	0x43434343, 0x4d4d4d4d, 0x33333333, 0x85858585
-	data4	0x45454545, 0xf9f9f9f9, 0x02020202, 0x7f7f7f7f
-	data4	0x50505050, 0x3c3c3c3c, 0x9f9f9f9f, 0xa8a8a8a8
-	data4	0x51515151, 0xa3a3a3a3, 0x40404040, 0x8f8f8f8f
-	data4	0x92929292, 0x9d9d9d9d, 0x38383838, 0xf5f5f5f5
-	data4	0xbcbcbcbc, 0xb6b6b6b6, 0xdadadada, 0x21212121
-	data4	0x10101010, 0xffffffff, 0xf3f3f3f3, 0xd2d2d2d2
-	data4	0xcdcdcdcd, 0x0c0c0c0c, 0x13131313, 0xecececec
-	data4	0x5f5f5f5f, 0x97979797, 0x44444444, 0x17171717
-	data4	0xc4c4c4c4, 0xa7a7a7a7, 0x7e7e7e7e, 0x3d3d3d3d
-	data4	0x64646464, 0x5d5d5d5d, 0x19191919, 0x73737373
-	data4	0x60606060, 0x81818181, 0x4f4f4f4f, 0xdcdcdcdc
-	data4	0x22222222, 0x2a2a2a2a, 0x90909090, 0x88888888
-	data4	0x46464646, 0xeeeeeeee, 0xb8b8b8b8, 0x14141414
-	data4	0xdededede, 0x5e5e5e5e, 0x0b0b0b0b, 0xdbdbdbdb
-	data4	0xe0e0e0e0, 0x32323232, 0x3a3a3a3a, 0x0a0a0a0a
-	data4	0x49494949, 0x06060606, 0x24242424, 0x5c5c5c5c
-	data4	0xc2c2c2c2, 0xd3d3d3d3, 0xacacacac, 0x62626262
-	data4	0x91919191, 0x95959595, 0xe4e4e4e4, 0x79797979
-	data4	0xe7e7e7e7, 0xc8c8c8c8, 0x37373737, 0x6d6d6d6d
-	data4	0x8d8d8d8d, 0xd5d5d5d5, 0x4e4e4e4e, 0xa9a9a9a9
-	data4	0x6c6c6c6c, 0x56565656, 0xf4f4f4f4, 0xeaeaeaea
-	data4	0x65656565, 0x7a7a7a7a, 0xaeaeaeae, 0x08080808
-	data4	0xbabababa, 0x78787878, 0x25252525, 0x2e2e2e2e
-	data4	0x1c1c1c1c, 0xa6a6a6a6, 0xb4b4b4b4, 0xc6c6c6c6
-	data4	0xe8e8e8e8, 0xdddddddd, 0x74747474, 0x1f1f1f1f
-	data4	0x4b4b4b4b, 0xbdbdbdbd, 0x8b8b8b8b, 0x8a8a8a8a
-	data4	0x70707070, 0x3e3e3e3e, 0xb5b5b5b5, 0x66666666
-	data4	0x48484848, 0x03030303, 0xf6f6f6f6, 0x0e0e0e0e
-	data4	0x61616161, 0x35353535, 0x57575757, 0xb9b9b9b9
-	data4	0x86868686, 0xc1c1c1c1, 0x1d1d1d1d, 0x9e9e9e9e
-	data4	0xe1e1e1e1, 0xf8f8f8f8, 0x98989898, 0x11111111
-	data4	0x69696969, 0xd9d9d9d9, 0x8e8e8e8e, 0x94949494
-	data4	0x9b9b9b9b, 0x1e1e1e1e, 0x87878787, 0xe9e9e9e9
-	data4	0xcececece, 0x55555555, 0x28282828, 0xdfdfdfdf
-	data4	0x8c8c8c8c, 0xa1a1a1a1, 0x89898989, 0x0d0d0d0d
-	data4	0xbfbfbfbf, 0xe6e6e6e6, 0x42424242, 0x68686868
-	data4	0x41414141, 0x99999999, 0x2d2d2d2d, 0x0f0f0f0f
-	data4	0xb0b0b0b0, 0x54545454, 0xbbbbbbbb, 0x16161616
-.size	AES_Te#,5*256*4	// HP-UX assembler fails to ".-AES_Te#"
+	data4	0x63000000, 0x7c000000, 0x77000000, 0x7b000000
+	data4	0xf2000000, 0x6b000000, 0x6f000000, 0xc5000000
+	data4	0x30000000, 0x01000000, 0x67000000, 0x2b000000
+	data4	0xfe000000, 0xd7000000, 0xab000000, 0x76000000
+	data4	0xca000000, 0x82000000, 0xc9000000, 0x7d000000
+	data4	0xfa000000, 0x59000000, 0x47000000, 0xf0000000
+	data4	0xad000000, 0xd4000000, 0xa2000000, 0xaf000000
+	data4	0x9c000000, 0xa4000000, 0x72000000, 0xc0000000
+	data4	0xb7000000, 0xfd000000, 0x93000000, 0x26000000
+	data4	0x36000000, 0x3f000000, 0xf7000000, 0xcc000000
+	data4	0x34000000, 0xa5000000, 0xe5000000, 0xf1000000
+	data4	0x71000000, 0xd8000000, 0x31000000, 0x15000000
+	data4	0x04000000, 0xc7000000, 0x23000000, 0xc3000000
+	data4	0x18000000, 0x96000000, 0x05000000, 0x9a000000
+	data4	0x07000000, 0x12000000, 0x80000000, 0xe2000000
+	data4	0xeb000000, 0x27000000, 0xb2000000, 0x75000000
+	data4	0x09000000, 0x83000000, 0x2c000000, 0x1a000000
+	data4	0x1b000000, 0x6e000000, 0x5a000000, 0xa0000000
+	data4	0x52000000, 0x3b000000, 0xd6000000, 0xb3000000
+	data4	0x29000000, 0xe3000000, 0x2f000000, 0x84000000
+	data4	0x53000000, 0xd1000000, 0x00000000, 0xed000000
+	data4	0x20000000, 0xfc000000, 0xb1000000, 0x5b000000
+	data4	0x6a000000, 0xcb000000, 0xbe000000, 0x39000000
+	data4	0x4a000000, 0x4c000000, 0x58000000, 0xcf000000
+	data4	0xd0000000, 0xef000000, 0xaa000000, 0xfb000000
+	data4	0x43000000, 0x4d000000, 0x33000000, 0x85000000
+	data4	0x45000000, 0xf9000000, 0x02000000, 0x7f000000
+	data4	0x50000000, 0x3c000000, 0x9f000000, 0xa8000000
+	data4	0x51000000, 0xa3000000, 0x40000000, 0x8f000000
+	data4	0x92000000, 0x9d000000, 0x38000000, 0xf5000000
+	data4	0xbc000000, 0xb6000000, 0xda000000, 0x21000000
+	data4	0x10000000, 0xff000000, 0xf3000000, 0xd2000000
+	data4	0xcd000000, 0x0c000000, 0x13000000, 0xec000000
+	data4	0x5f000000, 0x97000000, 0x44000000, 0x17000000
+	data4	0xc4000000, 0xa7000000, 0x7e000000, 0x3d000000
+	data4	0x64000000, 0x5d000000, 0x19000000, 0x73000000
+	data4	0x60000000, 0x81000000, 0x4f000000, 0xdc000000
+	data4	0x22000000, 0x2a000000, 0x90000000, 0x88000000
+	data4	0x46000000, 0xee000000, 0xb8000000, 0x14000000
+	data4	0xde000000, 0x5e000000, 0x0b000000, 0xdb000000
+	data4	0xe0000000, 0x32000000, 0x3a000000, 0x0a000000
+	data4	0x49000000, 0x06000000, 0x24000000, 0x5c000000
+	data4	0xc2000000, 0xd3000000, 0xac000000, 0x62000000
+	data4	0x91000000, 0x95000000, 0xe4000000, 0x79000000
+	data4	0xe7000000, 0xc8000000, 0x37000000, 0x6d000000
+	data4	0x8d000000, 0xd5000000, 0x4e000000, 0xa9000000
+	data4	0x6c000000, 0x56000000, 0xf4000000, 0xea000000
+	data4	0x65000000, 0x7a000000, 0xae000000, 0x08000000
+	data4	0xba000000, 0x78000000, 0x25000000, 0x2e000000
+	data4	0x1c000000, 0xa6000000, 0xb4000000, 0xc6000000
+	data4	0xe8000000, 0xdd000000, 0x74000000, 0x1f000000
+	data4	0x4b000000, 0xbd000000, 0x8b000000, 0x8a000000
+	data4	0x70000000, 0x3e000000, 0xb5000000, 0x66000000
+	data4	0x48000000, 0x03000000, 0xf6000000, 0x0e000000
+	data4	0x61000000, 0x35000000, 0x57000000, 0xb9000000
+	data4	0x86000000, 0xc1000000, 0x1d000000, 0x9e000000
+	data4	0xe1000000, 0xf8000000, 0x98000000, 0x11000000
+	data4	0x69000000, 0xd9000000, 0x8e000000, 0x94000000
+	data4	0x9b000000, 0x1e000000, 0x87000000, 0xe9000000
+	data4	0xce000000, 0x55000000, 0x28000000, 0xdf000000
+	data4	0x8c000000, 0xa1000000, 0x89000000, 0x0d000000
+	data4	0xbf000000, 0xe6000000, 0x42000000, 0x68000000
+	data4	0x41000000, 0x99000000, 0x2d000000, 0x0f000000
+	data4	0xb0000000, 0x54000000, 0xbb000000, 0x16000000
+// Te5:
+	data4	0x00630000, 0x007c0000, 0x00770000, 0x007b0000
+	data4	0x00f20000, 0x006b0000, 0x006f0000, 0x00c50000
+	data4	0x00300000, 0x00010000, 0x00670000, 0x002b0000
+	data4	0x00fe0000, 0x00d70000, 0x00ab0000, 0x00760000
+	data4	0x00ca0000, 0x00820000, 0x00c90000, 0x007d0000
+	data4	0x00fa0000, 0x00590000, 0x00470000, 0x00f00000
+	data4	0x00ad0000, 0x00d40000, 0x00a20000, 0x00af0000
+	data4	0x009c0000, 0x00a40000, 0x00720000, 0x00c00000
+	data4	0x00b70000, 0x00fd0000, 0x00930000, 0x00260000
+	data4	0x00360000, 0x003f0000, 0x00f70000, 0x00cc0000
+	data4	0x00340000, 0x00a50000, 0x00e50000, 0x00f10000
+	data4	0x00710000, 0x00d80000, 0x00310000, 0x00150000
+	data4	0x00040000, 0x00c70000, 0x00230000, 0x00c30000
+	data4	0x00180000, 0x00960000, 0x00050000, 0x009a0000
+	data4	0x00070000, 0x00120000, 0x00800000, 0x00e20000
+	data4	0x00eb0000, 0x00270000, 0x00b20000, 0x00750000
+	data4	0x00090000, 0x00830000, 0x002c0000, 0x001a0000
+	data4	0x001b0000, 0x006e0000, 0x005a0000, 0x00a00000
+	data4	0x00520000, 0x003b0000, 0x00d60000, 0x00b30000
+	data4	0x00290000, 0x00e30000, 0x002f0000, 0x00840000
+	data4	0x00530000, 0x00d10000, 0x00000000, 0x00ed0000
+	data4	0x00200000, 0x00fc0000, 0x00b10000, 0x005b0000
+	data4	0x006a0000, 0x00cb0000, 0x00be0000, 0x00390000
+	data4	0x004a0000, 0x004c0000, 0x00580000, 0x00cf0000
+	data4	0x00d00000, 0x00ef0000, 0x00aa0000, 0x00fb0000
+	data4	0x00430000, 0x004d0000, 0x00330000, 0x00850000
+	data4	0x00450000, 0x00f90000, 0x00020000, 0x007f0000
+	data4	0x00500000, 0x003c0000, 0x009f0000, 0x00a80000
+	data4	0x00510000, 0x00a30000, 0x00400000, 0x008f0000
+	data4	0x00920000, 0x009d0000, 0x00380000, 0x00f50000
+	data4	0x00bc0000, 0x00b60000, 0x00da0000, 0x00210000
+	data4	0x00100000, 0x00ff0000, 0x00f30000, 0x00d20000
+	data4	0x00cd0000, 0x000c0000, 0x00130000, 0x00ec0000
+	data4	0x005f0000, 0x00970000, 0x00440000, 0x00170000
+	data4	0x00c40000, 0x00a70000, 0x007e0000, 0x003d0000
+	data4	0x00640000, 0x005d0000, 0x00190000, 0x00730000
+	data4	0x00600000, 0x00810000, 0x004f0000, 0x00dc0000
+	data4	0x00220000, 0x002a0000, 0x00900000, 0x00880000
+	data4	0x00460000, 0x00ee0000, 0x00b80000, 0x00140000
+	data4	0x00de0000, 0x005e0000, 0x000b0000, 0x00db0000
+	data4	0x00e00000, 0x00320000, 0x003a0000, 0x000a0000
+	data4	0x00490000, 0x00060000, 0x00240000, 0x005c0000
+	data4	0x00c20000, 0x00d30000, 0x00ac0000, 0x00620000
+	data4	0x00910000, 0x00950000, 0x00e40000, 0x00790000
+	data4	0x00e70000, 0x00c80000, 0x00370000, 0x006d0000
+	data4	0x008d0000, 0x00d50000, 0x004e0000, 0x00a90000
+	data4	0x006c0000, 0x00560000, 0x00f40000, 0x00ea0000
+	data4	0x00650000, 0x007a0000, 0x00ae0000, 0x00080000
+	data4	0x00ba0000, 0x00780000, 0x00250000, 0x002e0000
+	data4	0x001c0000, 0x00a60000, 0x00b40000, 0x00c60000
+	data4	0x00e80000, 0x00dd0000, 0x00740000, 0x001f0000
+	data4	0x004b0000, 0x00bd0000, 0x008b0000, 0x008a0000
+	data4	0x00700000, 0x003e0000, 0x00b50000, 0x00660000
+	data4	0x00480000, 0x00030000, 0x00f60000, 0x000e0000
+	data4	0x00610000, 0x00350000, 0x00570000, 0x00b90000
+	data4	0x00860000, 0x00c10000, 0x001d0000, 0x009e0000
+	data4	0x00e10000, 0x00f80000, 0x00980000, 0x00110000
+	data4	0x00690000, 0x00d90000, 0x008e0000, 0x00940000
+	data4	0x009b0000, 0x001e0000, 0x00870000, 0x00e90000
+	data4	0x00ce0000, 0x00550000, 0x00280000, 0x00df0000
+	data4	0x008c0000, 0x00a10000, 0x00890000, 0x000d0000
+	data4	0x00bf0000, 0x00e60000, 0x00420000, 0x00680000
+	data4	0x00410000, 0x00990000, 0x002d0000, 0x000f0000
+	data4	0x00b00000, 0x00540000, 0x00bb0000, 0x00160000
+// Te6:
+	data4	0x00006300, 0x00007c00, 0x00007700, 0x00007b00
+	data4	0x0000f200, 0x00006b00, 0x00006f00, 0x0000c500
+	data4	0x00003000, 0x00000100, 0x00006700, 0x00002b00
+	data4	0x0000fe00, 0x0000d700, 0x0000ab00, 0x00007600
+	data4	0x0000ca00, 0x00008200, 0x0000c900, 0x00007d00
+	data4	0x0000fa00, 0x00005900, 0x00004700, 0x0000f000
+	data4	0x0000ad00, 0x0000d400, 0x0000a200, 0x0000af00
+	data4	0x00009c00, 0x0000a400, 0x00007200, 0x0000c000
+	data4	0x0000b700, 0x0000fd00, 0x00009300, 0x00002600
+	data4	0x00003600, 0x00003f00, 0x0000f700, 0x0000cc00
+	data4	0x00003400, 0x0000a500, 0x0000e500, 0x0000f100
+	data4	0x00007100, 0x0000d800, 0x00003100, 0x00001500
+	data4	0x00000400, 0x0000c700, 0x00002300, 0x0000c300
+	data4	0x00001800, 0x00009600, 0x00000500, 0x00009a00
+	data4	0x00000700, 0x00001200, 0x00008000, 0x0000e200
+	data4	0x0000eb00, 0x00002700, 0x0000b200, 0x00007500
+	data4	0x00000900, 0x00008300, 0x00002c00, 0x00001a00
+	data4	0x00001b00, 0x00006e00, 0x00005a00, 0x0000a000
+	data4	0x00005200, 0x00003b00, 0x0000d600, 0x0000b300
+	data4	0x00002900, 0x0000e300, 0x00002f00, 0x00008400
+	data4	0x00005300, 0x0000d100, 0x00000000, 0x0000ed00
+	data4	0x00002000, 0x0000fc00, 0x0000b100, 0x00005b00
+	data4	0x00006a00, 0x0000cb00, 0x0000be00, 0x00003900
+	data4	0x00004a00, 0x00004c00, 0x00005800, 0x0000cf00
+	data4	0x0000d000, 0x0000ef00, 0x0000aa00, 0x0000fb00
+	data4	0x00004300, 0x00004d00, 0x00003300, 0x00008500
+	data4	0x00004500, 0x0000f900, 0x00000200, 0x00007f00
+	data4	0x00005000, 0x00003c00, 0x00009f00, 0x0000a800
+	data4	0x00005100, 0x0000a300, 0x00004000, 0x00008f00
+	data4	0x00009200, 0x00009d00, 0x00003800, 0x0000f500
+	data4	0x0000bc00, 0x0000b600, 0x0000da00, 0x00002100
+	data4	0x00001000, 0x0000ff00, 0x0000f300, 0x0000d200
+	data4	0x0000cd00, 0x00000c00, 0x00001300, 0x0000ec00
+	data4	0x00005f00, 0x00009700, 0x00004400, 0x00001700
+	data4	0x0000c400, 0x0000a700, 0x00007e00, 0x00003d00
+	data4	0x00006400, 0x00005d00, 0x00001900, 0x00007300
+	data4	0x00006000, 0x00008100, 0x00004f00, 0x0000dc00
+	data4	0x00002200, 0x00002a00, 0x00009000, 0x00008800
+	data4	0x00004600, 0x0000ee00, 0x0000b800, 0x00001400
+	data4	0x0000de00, 0x00005e00, 0x00000b00, 0x0000db00
+	data4	0x0000e000, 0x00003200, 0x00003a00, 0x00000a00
+	data4	0x00004900, 0x00000600, 0x00002400, 0x00005c00
+	data4	0x0000c200, 0x0000d300, 0x0000ac00, 0x00006200
+	data4	0x00009100, 0x00009500, 0x0000e400, 0x00007900
+	data4	0x0000e700, 0x0000c800, 0x00003700, 0x00006d00
+	data4	0x00008d00, 0x0000d500, 0x00004e00, 0x0000a900
+	data4	0x00006c00, 0x00005600, 0x0000f400, 0x0000ea00
+	data4	0x00006500, 0x00007a00, 0x0000ae00, 0x00000800
+	data4	0x0000ba00, 0x00007800, 0x00002500, 0x00002e00
+	data4	0x00001c00, 0x0000a600, 0x0000b400, 0x0000c600
+	data4	0x0000e800, 0x0000dd00, 0x00007400, 0x00001f00
+	data4	0x00004b00, 0x0000bd00, 0x00008b00, 0x00008a00
+	data4	0x00007000, 0x00003e00, 0x0000b500, 0x00006600
+	data4	0x00004800, 0x00000300, 0x0000f600, 0x00000e00
+	data4	0x00006100, 0x00003500, 0x00005700, 0x0000b900
+	data4	0x00008600, 0x0000c100, 0x00001d00, 0x00009e00
+	data4	0x0000e100, 0x0000f800, 0x00009800, 0x00001100
+	data4	0x00006900, 0x0000d900, 0x00008e00, 0x00009400
+	data4	0x00009b00, 0x00001e00, 0x00008700, 0x0000e900
+	data4	0x0000ce00, 0x00005500, 0x00002800, 0x0000df00
+	data4	0x00008c00, 0x0000a100, 0x00008900, 0x00000d00
+	data4	0x0000bf00, 0x0000e600, 0x00004200, 0x00006800
+	data4	0x00004100, 0x00009900, 0x00002d00, 0x00000f00
+	data4	0x0000b000, 0x00005400, 0x0000bb00, 0x00001600
+// Te7:
+	data4	0x00000063, 0x0000007c, 0x00000077, 0x0000007b
+	data4	0x000000f2, 0x0000006b, 0x0000006f, 0x000000c5
+	data4	0x00000030, 0x00000001, 0x00000067, 0x0000002b
+	data4	0x000000fe, 0x000000d7, 0x000000ab, 0x00000076
+	data4	0x000000ca, 0x00000082, 0x000000c9, 0x0000007d
+	data4	0x000000fa, 0x00000059, 0x00000047, 0x000000f0
+	data4	0x000000ad, 0x000000d4, 0x000000a2, 0x000000af
+	data4	0x0000009c, 0x000000a4, 0x00000072, 0x000000c0
+	data4	0x000000b7, 0x000000fd, 0x00000093, 0x00000026
+	data4	0x00000036, 0x0000003f, 0x000000f7, 0x000000cc
+	data4	0x00000034, 0x000000a5, 0x000000e5, 0x000000f1
+	data4	0x00000071, 0x000000d8, 0x00000031, 0x00000015
+	data4	0x00000004, 0x000000c7, 0x00000023, 0x000000c3
+	data4	0x00000018, 0x00000096, 0x00000005, 0x0000009a
+	data4	0x00000007, 0x00000012, 0x00000080, 0x000000e2
+	data4	0x000000eb, 0x00000027, 0x000000b2, 0x00000075
+	data4	0x00000009, 0x00000083, 0x0000002c, 0x0000001a
+	data4	0x0000001b, 0x0000006e, 0x0000005a, 0x000000a0
+	data4	0x00000052, 0x0000003b, 0x000000d6, 0x000000b3
+	data4	0x00000029, 0x000000e3, 0x0000002f, 0x00000084
+	data4	0x00000053, 0x000000d1, 0x00000000, 0x000000ed
+	data4	0x00000020, 0x000000fc, 0x000000b1, 0x0000005b
+	data4	0x0000006a, 0x000000cb, 0x000000be, 0x00000039
+	data4	0x0000004a, 0x0000004c, 0x00000058, 0x000000cf
+	data4	0x000000d0, 0x000000ef, 0x000000aa, 0x000000fb
+	data4	0x00000043, 0x0000004d, 0x00000033, 0x00000085
+	data4	0x00000045, 0x000000f9, 0x00000002, 0x0000007f
+	data4	0x00000050, 0x0000003c, 0x0000009f, 0x000000a8
+	data4	0x00000051, 0x000000a3, 0x00000040, 0x0000008f
+	data4	0x00000092, 0x0000009d, 0x00000038, 0x000000f5
+	data4	0x000000bc, 0x000000b6, 0x000000da, 0x00000021
+	data4	0x00000010, 0x000000ff, 0x000000f3, 0x000000d2
+	data4	0x000000cd, 0x0000000c, 0x00000013, 0x000000ec
+	data4	0x0000005f, 0x00000097, 0x00000044, 0x00000017
+	data4	0x000000c4, 0x000000a7, 0x0000007e, 0x0000003d
+	data4	0x00000064, 0x0000005d, 0x00000019, 0x00000073
+	data4	0x00000060, 0x00000081, 0x0000004f, 0x000000dc
+	data4	0x00000022, 0x0000002a, 0x00000090, 0x00000088
+	data4	0x00000046, 0x000000ee, 0x000000b8, 0x00000014
+	data4	0x000000de, 0x0000005e, 0x0000000b, 0x000000db
+	data4	0x000000e0, 0x00000032, 0x0000003a, 0x0000000a
+	data4	0x00000049, 0x00000006, 0x00000024, 0x0000005c
+	data4	0x000000c2, 0x000000d3, 0x000000ac, 0x00000062
+	data4	0x00000091, 0x00000095, 0x000000e4, 0x00000079
+	data4	0x000000e7, 0x000000c8, 0x00000037, 0x0000006d
+	data4	0x0000008d, 0x000000d5, 0x0000004e, 0x000000a9
+	data4	0x0000006c, 0x00000056, 0x000000f4, 0x000000ea
+	data4	0x00000065, 0x0000007a, 0x000000ae, 0x00000008
+	data4	0x000000ba, 0x00000078, 0x00000025, 0x0000002e
+	data4	0x0000001c, 0x000000a6, 0x000000b4, 0x000000c6
+	data4	0x000000e8, 0x000000dd, 0x00000074, 0x0000001f
+	data4	0x0000004b, 0x000000bd, 0x0000008b, 0x0000008a
+	data4	0x00000070, 0x0000003e, 0x000000b5, 0x00000066
+	data4	0x00000048, 0x00000003, 0x000000f6, 0x0000000e
+	data4	0x00000061, 0x00000035, 0x00000057, 0x000000b9
+	data4	0x00000086, 0x000000c1, 0x0000001d, 0x0000009e
+	data4	0x000000e1, 0x000000f8, 0x00000098, 0x00000011
+	data4	0x00000069, 0x000000d9, 0x0000008e, 0x00000094
+	data4	0x0000009b, 0x0000001e, 0x00000087, 0x000000e9
+	data4	0x000000ce, 0x00000055, 0x00000028, 0x000000df
+	data4	0x0000008c, 0x000000a1, 0x00000089, 0x0000000d
+	data4	0x000000bf, 0x000000e6, 0x00000042, 0x00000068
+	data4	0x00000041, 0x00000099, 0x0000002d, 0x0000000f
+	data4	0x000000b0, 0x00000054, 0x000000bb, 0x00000016
+.size	AES_Te#,8*256*4	// HP-UX assembler fails to ".-AES_Te#"
 
 .align	64
 .global	AES_Td#
@@ -1192,68 +1390,263 @@ AES_Td:	data4	0x51f4a750, 0x7e416553, 0x1a17a4c3, 0x3a275e96
 	data4	0xa8017139, 0x0cb3de08, 0xb4e49cd8, 0x56c19064
 	data4	0xcb84617b, 0x32b670d5, 0x6c5c7448, 0xb85742d0
 // Td4:
-	data4	0x52525252, 0x09090909, 0x6a6a6a6a, 0xd5d5d5d5
-	data4	0x30303030, 0x36363636, 0xa5a5a5a5, 0x38383838
-	data4	0xbfbfbfbf, 0x40404040, 0xa3a3a3a3, 0x9e9e9e9e
-	data4	0x81818181, 0xf3f3f3f3, 0xd7d7d7d7, 0xfbfbfbfb
-	data4	0x7c7c7c7c, 0xe3e3e3e3, 0x39393939, 0x82828282
-	data4	0x9b9b9b9b, 0x2f2f2f2f, 0xffffffff, 0x87878787
-	data4	0x34343434, 0x8e8e8e8e, 0x43434343, 0x44444444
-	data4	0xc4c4c4c4, 0xdededede, 0xe9e9e9e9, 0xcbcbcbcb
-	data4	0x54545454, 0x7b7b7b7b, 0x94949494, 0x32323232
-	data4	0xa6a6a6a6, 0xc2c2c2c2, 0x23232323, 0x3d3d3d3d
-	data4	0xeeeeeeee, 0x4c4c4c4c, 0x95959595, 0x0b0b0b0b
-	data4	0x42424242, 0xfafafafa, 0xc3c3c3c3, 0x4e4e4e4e
-	data4	0x08080808, 0x2e2e2e2e, 0xa1a1a1a1, 0x66666666
-	data4	0x28282828, 0xd9d9d9d9, 0x24242424, 0xb2b2b2b2
-	data4	0x76767676, 0x5b5b5b5b, 0xa2a2a2a2, 0x49494949
-	data4	0x6d6d6d6d, 0x8b8b8b8b, 0xd1d1d1d1, 0x25252525
-	data4	0x72727272, 0xf8f8f8f8, 0xf6f6f6f6, 0x64646464
-	data4	0x86868686, 0x68686868, 0x98989898, 0x16161616
-	data4	0xd4d4d4d4, 0xa4a4a4a4, 0x5c5c5c5c, 0xcccccccc
-	data4	0x5d5d5d5d, 0x65656565, 0xb6b6b6b6, 0x92929292
-	data4	0x6c6c6c6c, 0x70707070, 0x48484848, 0x50505050
-	data4	0xfdfdfdfd, 0xedededed, 0xb9b9b9b9, 0xdadadada
-	data4	0x5e5e5e5e, 0x15151515, 0x46464646, 0x57575757
-	data4	0xa7a7a7a7, 0x8d8d8d8d, 0x9d9d9d9d, 0x84848484
-	data4	0x90909090, 0xd8d8d8d8, 0xabababab, 0x00000000
-	data4	0x8c8c8c8c, 0xbcbcbcbc, 0xd3d3d3d3, 0x0a0a0a0a
-	data4	0xf7f7f7f7, 0xe4e4e4e4, 0x58585858, 0x05050505
-	data4	0xb8b8b8b8, 0xb3b3b3b3, 0x45454545, 0x06060606
-	data4	0xd0d0d0d0, 0x2c2c2c2c, 0x1e1e1e1e, 0x8f8f8f8f
-	data4	0xcacacaca, 0x3f3f3f3f, 0x0f0f0f0f, 0x02020202
-	data4	0xc1c1c1c1, 0xafafafaf, 0xbdbdbdbd, 0x03030303
-	data4	0x01010101, 0x13131313, 0x8a8a8a8a, 0x6b6b6b6b
-	data4	0x3a3a3a3a, 0x91919191, 0x11111111, 0x41414141
-	data4	0x4f4f4f4f, 0x67676767, 0xdcdcdcdc, 0xeaeaeaea
-	data4	0x97979797, 0xf2f2f2f2, 0xcfcfcfcf, 0xcececece
-	data4	0xf0f0f0f0, 0xb4b4b4b4, 0xe6e6e6e6, 0x73737373
-	data4	0x96969696, 0xacacacac, 0x74747474, 0x22222222
-	data4	0xe7e7e7e7, 0xadadadad, 0x35353535, 0x85858585
-	data4	0xe2e2e2e2, 0xf9f9f9f9, 0x37373737, 0xe8e8e8e8
-	data4	0x1c1c1c1c, 0x75757575, 0xdfdfdfdf, 0x6e6e6e6e
-	data4	0x47474747, 0xf1f1f1f1, 0x1a1a1a1a, 0x71717171
-	data4	0x1d1d1d1d, 0x29292929, 0xc5c5c5c5, 0x89898989
-	data4	0x6f6f6f6f, 0xb7b7b7b7, 0x62626262, 0x0e0e0e0e
-	data4	0xaaaaaaaa, 0x18181818, 0xbebebebe, 0x1b1b1b1b
-	data4	0xfcfcfcfc, 0x56565656, 0x3e3e3e3e, 0x4b4b4b4b
-	data4	0xc6c6c6c6, 0xd2d2d2d2, 0x79797979, 0x20202020
-	data4	0x9a9a9a9a, 0xdbdbdbdb, 0xc0c0c0c0, 0xfefefefe
-	data4	0x78787878, 0xcdcdcdcd, 0x5a5a5a5a, 0xf4f4f4f4
-	data4	0x1f1f1f1f, 0xdddddddd, 0xa8a8a8a8, 0x33333333
-	data4	0x88888888, 0x07070707, 0xc7c7c7c7, 0x31313131
-	data4	0xb1b1b1b1, 0x12121212, 0x10101010, 0x59595959
-	data4	0x27272727, 0x80808080, 0xecececec, 0x5f5f5f5f
-	data4	0x60606060, 0x51515151, 0x7f7f7f7f, 0xa9a9a9a9
-	data4	0x19191919, 0xb5b5b5b5, 0x4a4a4a4a, 0x0d0d0d0d
-	data4	0x2d2d2d2d, 0xe5e5e5e5, 0x7a7a7a7a, 0x9f9f9f9f
-	data4	0x93939393, 0xc9c9c9c9, 0x9c9c9c9c, 0xefefefef
-	data4	0xa0a0a0a0, 0xe0e0e0e0, 0x3b3b3b3b, 0x4d4d4d4d
-	data4	0xaeaeaeae, 0x2a2a2a2a, 0xf5f5f5f5, 0xb0b0b0b0
-	data4	0xc8c8c8c8, 0xebebebeb, 0xbbbbbbbb, 0x3c3c3c3c
-	data4	0x83838383, 0x53535353, 0x99999999, 0x61616161
-	data4	0x17171717, 0x2b2b2b2b, 0x04040404, 0x7e7e7e7e
-	data4	0xbabababa, 0x77777777, 0xd6d6d6d6, 0x26262626
-	data4	0xe1e1e1e1, 0x69696969, 0x14141414, 0x63636363
-	data4	0x55555555, 0x21212121, 0x0c0c0c0c, 0x7d7d7d7d
-.size	AES_Td#,5*256*4	// HP-UX assembler fails to ".-AES_Td#"
+	data4	0x52000000, 0x09000000, 0x6a000000, 0xd5000000
+	data4	0x30000000, 0x36000000, 0xa5000000, 0x38000000
+	data4	0xbf000000, 0x40000000, 0xa3000000, 0x9e000000
+	data4	0x81000000, 0xf3000000, 0xd7000000, 0xfb000000
+	data4	0x7c000000, 0xe3000000, 0x39000000, 0x82000000
+	data4	0x9b000000, 0x2f000000, 0xff000000, 0x87000000
+	data4	0x34000000, 0x8e000000, 0x43000000, 0x44000000
+	data4	0xc4000000, 0xde000000, 0xe9000000, 0xcb000000
+	data4	0x54000000, 0x7b000000, 0x94000000, 0x32000000
+	data4	0xa6000000, 0xc2000000, 0x23000000, 0x3d000000
+	data4	0xee000000, 0x4c000000, 0x95000000, 0x0b000000
+	data4	0x42000000, 0xfa000000, 0xc3000000, 0x4e000000
+	data4	0x08000000, 0x2e000000, 0xa1000000, 0x66000000
+	data4	0x28000000, 0xd9000000, 0x24000000, 0xb2000000
+	data4	0x76000000, 0x5b000000, 0xa2000000, 0x49000000
+	data4	0x6d000000, 0x8b000000, 0xd1000000, 0x25000000
+	data4	0x72000000, 0xf8000000, 0xf6000000, 0x64000000
+	data4	0x86000000, 0x68000000, 0x98000000, 0x16000000
+	data4	0xd4000000, 0xa4000000, 0x5c000000, 0xcc000000
+	data4	0x5d000000, 0x65000000, 0xb6000000, 0x92000000
+	data4	0x6c000000, 0x70000000, 0x48000000, 0x50000000
+	data4	0xfd000000, 0xed000000, 0xb9000000, 0xda000000
+	data4	0x5e000000, 0x15000000, 0x46000000, 0x57000000
+	data4	0xa7000000, 0x8d000000, 0x9d000000, 0x84000000
+	data4	0x90000000, 0xd8000000, 0xab000000, 0x00000000
+	data4	0x8c000000, 0xbc000000, 0xd3000000, 0x0a000000
+	data4	0xf7000000, 0xe4000000, 0x58000000, 0x05000000
+	data4	0xb8000000, 0xb3000000, 0x45000000, 0x06000000
+	data4	0xd0000000, 0x2c000000, 0x1e000000, 0x8f000000
+	data4	0xca000000, 0x3f000000, 0x0f000000, 0x02000000
+	data4	0xc1000000, 0xaf000000, 0xbd000000, 0x03000000
+	data4	0x01000000, 0x13000000, 0x8a000000, 0x6b000000
+	data4	0x3a000000, 0x91000000, 0x11000000, 0x41000000
+	data4	0x4f000000, 0x67000000, 0xdc000000, 0xea000000
+	data4	0x97000000, 0xf2000000, 0xcf000000, 0xce000000
+	data4	0xf0000000, 0xb4000000, 0xe6000000, 0x73000000
+	data4	0x96000000, 0xac000000, 0x74000000, 0x22000000
+	data4	0xe7000000, 0xad000000, 0x35000000, 0x85000000
+	data4	0xe2000000, 0xf9000000, 0x37000000, 0xe8000000
+	data4	0x1c000000, 0x75000000, 0xdf000000, 0x6e000000
+	data4	0x47000000, 0xf1000000, 0x1a000000, 0x71000000
+	data4	0x1d000000, 0x29000000, 0xc5000000, 0x89000000
+	data4	0x6f000000, 0xb7000000, 0x62000000, 0x0e000000
+	data4	0xaa000000, 0x18000000, 0xbe000000, 0x1b000000
+	data4	0xfc000000, 0x56000000, 0x3e000000, 0x4b000000
+	data4	0xc6000000, 0xd2000000, 0x79000000, 0x20000000
+	data4	0x9a000000, 0xdb000000, 0xc0000000, 0xfe000000
+	data4	0x78000000, 0xcd000000, 0x5a000000, 0xf4000000
+	data4	0x1f000000, 0xdd000000, 0xa8000000, 0x33000000
+	data4	0x88000000, 0x07000000, 0xc7000000, 0x31000000
+	data4	0xb1000000, 0x12000000, 0x10000000, 0x59000000
+	data4	0x27000000, 0x80000000, 0xec000000, 0x5f000000
+	data4	0x60000000, 0x51000000, 0x7f000000, 0xa9000000
+	data4	0x19000000, 0xb5000000, 0x4a000000, 0x0d000000
+	data4	0x2d000000, 0xe5000000, 0x7a000000, 0x9f000000
+	data4	0x93000000, 0xc9000000, 0x9c000000, 0xef000000
+	data4	0xa0000000, 0xe0000000, 0x3b000000, 0x4d000000
+	data4	0xae000000, 0x2a000000, 0xf5000000, 0xb0000000
+	data4	0xc8000000, 0xeb000000, 0xbb000000, 0x3c000000
+	data4	0x83000000, 0x53000000, 0x99000000, 0x61000000
+	data4	0x17000000, 0x2b000000, 0x04000000, 0x7e000000
+	data4	0xba000000, 0x77000000, 0xd6000000, 0x26000000
+	data4	0xe1000000, 0x69000000, 0x14000000, 0x63000000
+	data4	0x55000000, 0x21000000, 0x0c000000, 0x7d000000
+// Td5:
+	data4	0x00520000, 0x00090000, 0x006a0000, 0x00d50000
+	data4	0x00300000, 0x00360000, 0x00a50000, 0x00380000
+	data4	0x00bf0000, 0x00400000, 0x00a30000, 0x009e0000
+	data4	0x00810000, 0x00f30000, 0x00d70000, 0x00fb0000
+	data4	0x007c0000, 0x00e30000, 0x00390000, 0x00820000
+	data4	0x009b0000, 0x002f0000, 0x00ff0000, 0x00870000
+	data4	0x00340000, 0x008e0000, 0x00430000, 0x00440000
+	data4	0x00c40000, 0x00de0000, 0x00e90000, 0x00cb0000
+	data4	0x00540000, 0x007b0000, 0x00940000, 0x00320000
+	data4	0x00a60000, 0x00c20000, 0x00230000, 0x003d0000
+	data4	0x00ee0000, 0x004c0000, 0x00950000, 0x000b0000
+	data4	0x00420000, 0x00fa0000, 0x00c30000, 0x004e0000
+	data4	0x00080000, 0x002e0000, 0x00a10000, 0x00660000
+	data4	0x00280000, 0x00d90000, 0x00240000, 0x00b20000
+	data4	0x00760000, 0x005b0000, 0x00a20000, 0x00490000
+	data4	0x006d0000, 0x008b0000, 0x00d10000, 0x00250000
+	data4	0x00720000, 0x00f80000, 0x00f60000, 0x00640000
+	data4	0x00860000, 0x00680000, 0x00980000, 0x00160000
+	data4	0x00d40000, 0x00a40000, 0x005c0000, 0x00cc0000
+	data4	0x005d0000, 0x00650000, 0x00b60000, 0x00920000
+	data4	0x006c0000, 0x00700000, 0x00480000, 0x00500000
+	data4	0x00fd0000, 0x00ed0000, 0x00b90000, 0x00da0000
+	data4	0x005e0000, 0x00150000, 0x00460000, 0x00570000
+	data4	0x00a70000, 0x008d0000, 0x009d0000, 0x00840000
+	data4	0x00900000, 0x00d80000, 0x00ab0000, 0x00000000
+	data4	0x008c0000, 0x00bc0000, 0x00d30000, 0x000a0000
+	data4	0x00f70000, 0x00e40000, 0x00580000, 0x00050000
+	data4	0x00b80000, 0x00b30000, 0x00450000, 0x00060000
+	data4	0x00d00000, 0x002c0000, 0x001e0000, 0x008f0000
+	data4	0x00ca0000, 0x003f0000, 0x000f0000, 0x00020000
+	data4	0x00c10000, 0x00af0000, 0x00bd0000, 0x00030000
+	data4	0x00010000, 0x00130000, 0x008a0000, 0x006b0000
+	data4	0x003a0000, 0x00910000, 0x00110000, 0x00410000
+	data4	0x004f0000, 0x00670000, 0x00dc0000, 0x00ea0000
+	data4	0x00970000, 0x00f20000, 0x00cf0000, 0x00ce0000
+	data4	0x00f00000, 0x00b40000, 0x00e60000, 0x00730000
+	data4	0x00960000, 0x00ac0000, 0x00740000, 0x00220000
+	data4	0x00e70000, 0x00ad0000, 0x00350000, 0x00850000
+	data4	0x00e20000, 0x00f90000, 0x00370000, 0x00e80000
+	data4	0x001c0000, 0x00750000, 0x00df0000, 0x006e0000
+	data4	0x00470000, 0x00f10000, 0x001a0000, 0x00710000
+	data4	0x001d0000, 0x00290000, 0x00c50000, 0x00890000
+	data4	0x006f0000, 0x00b70000, 0x00620000, 0x000e0000
+	data4	0x00aa0000, 0x00180000, 0x00be0000, 0x001b0000
+	data4	0x00fc0000, 0x00560000, 0x003e0000, 0x004b0000
+	data4	0x00c60000, 0x00d20000, 0x00790000, 0x00200000
+	data4	0x009a0000, 0x00db0000, 0x00c00000, 0x00fe0000
+	data4	0x00780000, 0x00cd0000, 0x005a0000, 0x00f40000
+	data4	0x001f0000, 0x00dd0000, 0x00a80000, 0x00330000
+	data4	0x00880000, 0x00070000, 0x00c70000, 0x00310000
+	data4	0x00b10000, 0x00120000, 0x00100000, 0x00590000
+	data4	0x00270000, 0x00800000, 0x00ec0000, 0x005f0000
+	data4	0x00600000, 0x00510000, 0x007f0000, 0x00a90000
+	data4	0x00190000, 0x00b50000, 0x004a0000, 0x000d0000
+	data4	0x002d0000, 0x00e50000, 0x007a0000, 0x009f0000
+	data4	0x00930000, 0x00c90000, 0x009c0000, 0x00ef0000
+	data4	0x00a00000, 0x00e00000, 0x003b0000, 0x004d0000
+	data4	0x00ae0000, 0x002a0000, 0x00f50000, 0x00b00000
+	data4	0x00c80000, 0x00eb0000, 0x00bb0000, 0x003c0000
+	data4	0x00830000, 0x00530000, 0x00990000, 0x00610000
+	data4	0x00170000, 0x002b0000, 0x00040000, 0x007e0000
+	data4	0x00ba0000, 0x00770000, 0x00d60000, 0x00260000
+	data4	0x00e10000, 0x00690000, 0x00140000, 0x00630000
+	data4	0x00550000, 0x00210000, 0x000c0000, 0x007d0000
+// Td6:
+	data4	0x00005200, 0x00000900, 0x00006a00, 0x0000d500
+	data4	0x00003000, 0x00003600, 0x0000a500, 0x00003800
+	data4	0x0000bf00, 0x00004000, 0x0000a300, 0x00009e00
+	data4	0x00008100, 0x0000f300, 0x0000d700, 0x0000fb00
+	data4	0x00007c00, 0x0000e300, 0x00003900, 0x00008200
+	data4	0x00009b00, 0x00002f00, 0x0000ff00, 0x00008700
+	data4	0x00003400, 0x00008e00, 0x00004300, 0x00004400
+	data4	0x0000c400, 0x0000de00, 0x0000e900, 0x0000cb00
+	data4	0x00005400, 0x00007b00, 0x00009400, 0x00003200
+	data4	0x0000a600, 0x0000c200, 0x00002300, 0x00003d00
+	data4	0x0000ee00, 0x00004c00, 0x00009500, 0x00000b00
+	data4	0x00004200, 0x0000fa00, 0x0000c300, 0x00004e00
+	data4	0x00000800, 0x00002e00, 0x0000a100, 0x00006600
+	data4	0x00002800, 0x0000d900, 0x00002400, 0x0000b200
+	data4	0x00007600, 0x00005b00, 0x0000a200, 0x00004900
+	data4	0x00006d00, 0x00008b00, 0x0000d100, 0x00002500
+	data4	0x00007200, 0x0000f800, 0x0000f600, 0x00006400
+	data4	0x00008600, 0x00006800, 0x00009800, 0x00001600
+	data4	0x0000d400, 0x0000a400, 0x00005c00, 0x0000cc00
+	data4	0x00005d00, 0x00006500, 0x0000b600, 0x00009200
+	data4	0x00006c00, 0x00007000, 0x00004800, 0x00005000
+	data4	0x0000fd00, 0x0000ed00, 0x0000b900, 0x0000da00
+	data4	0x00005e00, 0x00001500, 0x00004600, 0x00005700
+	data4	0x0000a700, 0x00008d00, 0x00009d00, 0x00008400
+	data4	0x00009000, 0x0000d800, 0x0000ab00, 0x00000000
+	data4	0x00008c00, 0x0000bc00, 0x0000d300, 0x00000a00
+	data4	0x0000f700, 0x0000e400, 0x00005800, 0x00000500
+	data4	0x0000b800, 0x0000b300, 0x00004500, 0x00000600
+	data4	0x0000d000, 0x00002c00, 0x00001e00, 0x00008f00
+	data4	0x0000ca00, 0x00003f00, 0x00000f00, 0x00000200
+	data4	0x0000c100, 0x0000af00, 0x0000bd00, 0x00000300
+	data4	0x00000100, 0x00001300, 0x00008a00, 0x00006b00
+	data4	0x00003a00, 0x00009100, 0x00001100, 0x00004100
+	data4	0x00004f00, 0x00006700, 0x0000dc00, 0x0000ea00
+	data4	0x00009700, 0x0000f200, 0x0000cf00, 0x0000ce00
+	data4	0x0000f000, 0x0000b400, 0x0000e600, 0x00007300
+	data4	0x00009600, 0x0000ac00, 0x00007400, 0x00002200
+	data4	0x0000e700, 0x0000ad00, 0x00003500, 0x00008500
+	data4	0x0000e200, 0x0000f900, 0x00003700, 0x0000e800
+	data4	0x00001c00, 0x00007500, 0x0000df00, 0x00006e00
+	data4	0x00004700, 0x0000f100, 0x00001a00, 0x00007100
+	data4	0x00001d00, 0x00002900, 0x0000c500, 0x00008900
+	data4	0x00006f00, 0x0000b700, 0x00006200, 0x00000e00
+	data4	0x0000aa00, 0x00001800, 0x0000be00, 0x00001b00
+	data4	0x0000fc00, 0x00005600, 0x00003e00, 0x00004b00
+	data4	0x0000c600, 0x0000d200, 0x00007900, 0x00002000
+	data4	0x00009a00, 0x0000db00, 0x0000c000, 0x0000fe00
+	data4	0x00007800, 0x0000cd00, 0x00005a00, 0x0000f400
+	data4	0x00001f00, 0x0000dd00, 0x0000a800, 0x00003300
+	data4	0x00008800, 0x00000700, 0x0000c700, 0x00003100
+	data4	0x0000b100, 0x00001200, 0x00001000, 0x00005900
+	data4	0x00002700, 0x00008000, 0x0000ec00, 0x00005f00
+	data4	0x00006000, 0x00005100, 0x00007f00, 0x0000a900
+	data4	0x00001900, 0x0000b500, 0x00004a00, 0x00000d00
+	data4	0x00002d00, 0x0000e500, 0x00007a00, 0x00009f00
+	data4	0x00009300, 0x0000c900, 0x00009c00, 0x0000ef00
+	data4	0x0000a000, 0x0000e000, 0x00003b00, 0x00004d00
+	data4	0x0000ae00, 0x00002a00, 0x0000f500, 0x0000b000
+	data4	0x0000c800, 0x0000eb00, 0x0000bb00, 0x00003c00
+	data4	0x00008300, 0x00005300, 0x00009900, 0x00006100
+	data4	0x00001700, 0x00002b00, 0x00000400, 0x00007e00
+	data4	0x0000ba00, 0x00007700, 0x0000d600, 0x00002600
+	data4	0x0000e100, 0x00006900, 0x00001400, 0x00006300
+	data4	0x00005500, 0x00002100, 0x00000c00, 0x00007d00
+// Td7:
+	data4	0x00000052, 0x00000009, 0x0000006a, 0x000000d5
+	data4	0x00000030, 0x00000036, 0x000000a5, 0x00000038
+	data4	0x000000bf, 0x00000040, 0x000000a3, 0x0000009e
+	data4	0x00000081, 0x000000f3, 0x000000d7, 0x000000fb
+	data4	0x0000007c, 0x000000e3, 0x00000039, 0x00000082
+	data4	0x0000009b, 0x0000002f, 0x000000ff, 0x00000087
+	data4	0x00000034, 0x0000008e, 0x00000043, 0x00000044
+	data4	0x000000c4, 0x000000de, 0x000000e9, 0x000000cb
+	data4	0x00000054, 0x0000007b, 0x00000094, 0x00000032
+	data4	0x000000a6, 0x000000c2, 0x00000023, 0x0000003d
+	data4	0x000000ee, 0x0000004c, 0x00000095, 0x0000000b
+	data4	0x00000042, 0x000000fa, 0x000000c3, 0x0000004e
+	data4	0x00000008, 0x0000002e, 0x000000a1, 0x00000066
+	data4	0x00000028, 0x000000d9, 0x00000024, 0x000000b2
+	data4	0x00000076, 0x0000005b, 0x000000a2, 0x00000049
+	data4	0x0000006d, 0x0000008b, 0x000000d1, 0x00000025
+	data4	0x00000072, 0x000000f8, 0x000000f6, 0x00000064
+	data4	0x00000086, 0x00000068, 0x00000098, 0x00000016
+	data4	0x000000d4, 0x000000a4, 0x0000005c, 0x000000cc
+	data4	0x0000005d, 0x00000065, 0x000000b6, 0x00000092
+	data4	0x0000006c, 0x00000070, 0x00000048, 0x00000050
+	data4	0x000000fd, 0x000000ed, 0x000000b9, 0x000000da
+	data4	0x0000005e, 0x00000015, 0x00000046, 0x00000057
+	data4	0x000000a7, 0x0000008d, 0x0000009d, 0x00000084
+	data4	0x00000090, 0x000000d8, 0x000000ab, 0x00000000
+	data4	0x0000008c, 0x000000bc, 0x000000d3, 0x0000000a
+	data4	0x000000f7, 0x000000e4, 0x00000058, 0x00000005
+	data4	0x000000b8, 0x000000b3, 0x00000045, 0x00000006
+	data4	0x000000d0, 0x0000002c, 0x0000001e, 0x0000008f
+	data4	0x000000ca, 0x0000003f, 0x0000000f, 0x00000002
+	data4	0x000000c1, 0x000000af, 0x000000bd, 0x00000003
+	data4	0x00000001, 0x00000013, 0x0000008a, 0x0000006b
+	data4	0x0000003a, 0x00000091, 0x00000011, 0x00000041
+	data4	0x0000004f, 0x00000067, 0x000000dc, 0x000000ea
+	data4	0x00000097, 0x000000f2, 0x000000cf, 0x000000ce
+	data4	0x000000f0, 0x000000b4, 0x000000e6, 0x00000073
+	data4	0x00000096, 0x000000ac, 0x00000074, 0x00000022
+	data4	0x000000e7, 0x000000ad, 0x00000035, 0x00000085
+	data4	0x000000e2, 0x000000f9, 0x00000037, 0x000000e8
+	data4	0x0000001c, 0x00000075, 0x000000df, 0x0000006e
+	data4	0x00000047, 0x000000f1, 0x0000001a, 0x00000071
+	data4	0x0000001d, 0x00000029, 0x000000c5, 0x00000089
+	data4	0x0000006f, 0x000000b7, 0x00000062, 0x0000000e
+	data4	0x000000aa, 0x00000018, 0x000000be, 0x0000001b
+	data4	0x000000fc, 0x00000056, 0x0000003e, 0x0000004b
+	data4	0x000000c6, 0x000000d2, 0x00000079, 0x00000020
+	data4	0x0000009a, 0x000000db, 0x000000c0, 0x000000fe
+	data4	0x00000078, 0x000000cd, 0x0000005a, 0x000000f4
+	data4	0x0000001f, 0x000000dd, 0x000000a8, 0x00000033
+	data4	0x00000088, 0x00000007, 0x000000c7, 0x00000031
+	data4	0x000000b1, 0x00000012, 0x00000010, 0x00000059
+	data4	0x00000027, 0x00000080, 0x000000ec, 0x0000005f
+	data4	0x00000060, 0x00000051, 0x0000007f, 0x000000a9
+	data4	0x00000019, 0x000000b5, 0x0000004a, 0x0000000d
+	data4	0x0000002d, 0x000000e5, 0x0000007a, 0x0000009f
+	data4	0x00000093, 0x000000c9, 0x0000009c, 0x000000ef
+	data4	0x000000a0, 0x000000e0, 0x0000003b, 0x0000004d
+	data4	0x000000ae, 0x0000002a, 0x000000f5, 0x000000b0
+	data4	0x000000c8, 0x000000eb, 0x000000bb, 0x0000003c
+	data4	0x00000083, 0x00000053, 0x00000099, 0x00000061
+	data4	0x00000017, 0x0000002b, 0x00000004, 0x0000007e
+	data4	0x000000ba, 0x00000077, 0x000000d6, 0x00000026
+	data4	0x000000e1, 0x00000069, 0x00000014, 0x00000063
+	data4	0x00000055, 0x00000021, 0x0000000c, 0x0000007d
+.size	AES_Td#,8*256*4	// HP-UX assembler fails to ".-AES_Td#"
