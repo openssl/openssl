@@ -56,9 +56,11 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef OPENSSL_NO_RIPEMD
 #include <stdio.h>
 #include "cryptlib.h"
+
+#ifndef OPENSSL_NO_RIPEMD
+
 #include <openssl/ripemd.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
