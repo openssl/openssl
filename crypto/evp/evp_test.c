@@ -229,7 +229,7 @@ static int test_cipher(const char *cipher,const unsigned char *key,int kn,
 
 static int test_digest(const char *digest,
 		       const unsigned char *plaintext,int pn,
-		       const unsigned char *ciphertext, int cn)
+		       const unsigned char *ciphertext, unsigned int cn)
     {
     const EVP_MD *d;
     EVP_MD_CTX ctx;

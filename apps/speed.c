@@ -218,12 +218,6 @@ static void print_result(int alg,int run_no,int count,double time_used);
 #ifdef HAVE_FORK
 static int do_multi(int multi);
 #endif
-#ifdef SIGALRM
-#if defined(__STDC__) || defined(sgi) || defined(_AIX)
-#define SIGRETTYPE void
-#else
-#define SIGRETTYPE int
-#endif 
 
 #define ALGOR_NUM	16
 #define SIZE_NUM	5
@@ -237,6 +231,13 @@ static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={8,64,256,1024,8*1024};
 static double rsa_results[RSA_NUM][2];
 static double dsa_results[DSA_NUM][2];
+
+#ifdef SIGALRM
+#if defined(__STDC__) || defined(sgi) || defined(_AIX)
+#define SIGRETTYPE void
+#else
+#define SIGRETTYPE int
+#endif 
 
 static SIGRETTYPE sig_done(int sig);
 static SIGRETTYPE sig_done(int sig)
@@ -893,9 +894,9 @@ int MAIN(int argc, char **argv)
 	do	{
 		long i;
 		count*=2;
-		Time_F(START,usertime);
+		Time_F(START);
 		for (i=count; i; i--)
-			des_ecb_encrypt(buf_as_des_cblock,buf_as_des_cblock,
+			DES_ecb_encrypt(buf_as_des_cblock,buf_as_des_cblock,
 				&sch,DES_ENCRYPT);
 		d=Time_F(STOP);
 		} while (d <3);
@@ -1441,7 +1442,9 @@ int MAIN(int argc, char **argv)
 		}
 	if (rnd_fake) RAND_cleanup();
 #endif
+#ifdef HAVE_FORK
 show_res:
+#endif
 	if(!mr)
 		{
 		fprintf(stdout,"%s\n",SSLeay_version(SSLEAY_VERSION));
