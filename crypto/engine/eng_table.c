@@ -134,7 +134,7 @@ static int int_table_check(ENGINE_TABLE **t, int create)
 
 /* Privately exposed (via eng_int.h) functions for adding and/or removing
  * ENGINEs from the implementation table */
-int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB cleanup,
+int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 		ENGINE *e, const int *nids, int num_nids, int setdefault)
 	{
 	int ret = 0, added = 0;
