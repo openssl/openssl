@@ -65,17 +65,15 @@
  * the second.  The second 12 bits will come from the 3rd and half the 4th
  * byte.
  */
-/* WARNING WARNING: this uses in and out in 8-byte chunks regardless of
- * length */
 /* Until Aug 1 2003 this function did not correctly implement CFB-r, so it
  * will not be compatible with any encryption prior to that date. Ben. */
 void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 		     long length, DES_key_schedule *schedule, DES_cblock *ivec,
 		     int enc)
 	{
-	register DES_LONG d0,d1,v0,v1,n=(numbits+7)/8;
+	register DES_LONG d0,d1,v0,v1;
 	register unsigned long l=length;
-	register int num=numbits;
+	register int num=numbits,n=(numbits+7)/8,i;
 	DES_LONG ti[2];
 	unsigned char *iv;
 	unsigned char ovec[16];
@@ -115,10 +113,10 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 				memmove(ovec,ovec+num/8,8+(num%8 ? 1 : 0));
 				/* now the remaining bits */
 				if(num%8 != 0)
-					for(n=0 ; n < 8 ; ++n)
+					for(i=0 ; i < 8 ; ++i)
 						{
-						ovec[n]<<=num%8;
-						ovec[n]|=ovec[n+1]>>(8-num%8);
+						ovec[i]<<=num%8;
+						ovec[i]|=ovec[i+1]>>(8-num%8);
 						}
 				iv=&ovec[0];
 				c2l(iv,v0);
@@ -153,10 +151,10 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 				memmove(ovec,ovec+num/8,8+(num%8 ? 1 : 0));
 				/* now the remaining bits */
 				if(num%8 != 0)
-					for(n=0 ; n < 8 ; ++n)
+					for(i=0 ; i < 8 ; ++i)
 						{
-						ovec[n]<<=num%8;
-						ovec[n]|=ovec[n+1]>>(8-num%8);
+						ovec[i]<<=num%8;
+						ovec[i]|=ovec[i+1]>>(8-num%8);
 						}
 				iv=&ovec[0];
 				c2l(iv,v0);

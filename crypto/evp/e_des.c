@@ -56,9 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef OPENSSL_NO_DES
 #include <stdio.h>
 #include "cryptlib.h"
+#ifndef OPENSSL_NO_DES
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include "evp_locl.h"
@@ -106,9 +106,8 @@ static int des_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			   const unsigned char *in, unsigned int inl)
     {
     unsigned int n;
-    unsigned char c[8],d[8]; /* DES_cfb_encrypt rudely overwrites the whole buffer*/
+    unsigned char c[1],d[1];
 
-    memset(out,0,(inl+7)/8);
     for(n=0 ; n < inl ; ++n)
 	{
 	c[0]=(in[n/8]&(1 << (7-n%8))) ? 0x80 : 0;
@@ -116,21 +115,14 @@ static int des_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			ctx->encrypt);
 	out[n/8]=(out[n/8]&~(0x80 >> (n%8)))|((d[0]&0x80) >> (n%8));
 	}
-
     return 1;
     }
 
 static int des_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			   const unsigned char *in, unsigned int inl)
     {
-    unsigned char *tmp; /* DES_cfb_encrypt rudely overwrites the whole buffer*/
-
-    tmp=alloca(inl+7);
-    memcpy(tmp,in,inl);
-    DES_cfb_encrypt(tmp,tmp,8,inl,ctx->cipher_data,(DES_cblock *)ctx->iv,
+    DES_cfb_encrypt(in,out,8,inl,ctx->cipher_data,(DES_cblock *)ctx->iv,
 		    ctx->encrypt);
-    memcpy(out,tmp,inl);
-
     return 1;
     }
 
