@@ -109,10 +109,10 @@
  *
  */
 
+#include "apps.h"
 #include <openssl/bio.h>
 #include <openssl/rand.h>
 
-#include "apps.h"
 
 static int seeded = 0;
 

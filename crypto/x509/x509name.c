@@ -175,27 +175,36 @@ int X509_NAME_add_entry_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int type,
 			unsigned char *bytes, int len, int loc, int set)
 {
 	X509_NAME_ENTRY *ne;
+	int ret;
 	ne = X509_NAME_ENTRY_create_by_OBJ(NULL, obj, type, bytes, len);
 	if(!ne) return 0;
-	return X509_NAME_add_entry(name, ne, loc, set);
+	ret = X509_NAME_add_entry(name, ne, loc, set);
+	X509_NAME_ENTRY_free(ne);
+	return ret;
 }
 
 int X509_NAME_add_entry_by_NID(X509_NAME *name, int nid, int type,
 			unsigned char *bytes, int len, int loc, int set)
 {
 	X509_NAME_ENTRY *ne;
+	int ret;
 	ne = X509_NAME_ENTRY_create_by_NID(NULL, nid, type, bytes, len);
 	if(!ne) return 0;
-	return X509_NAME_add_entry(name, ne, loc, set);
+	ret = X509_NAME_add_entry(name, ne, loc, set);
+	X509_NAME_ENTRY_free(ne);
+	return ret;
 }
 
 int X509_NAME_add_entry_by_txt(X509_NAME *name, char *field, int type,
 			unsigned char *bytes, int len, int loc, int set)
 {
 	X509_NAME_ENTRY *ne;
+	int ret;
 	ne = X509_NAME_ENTRY_create_by_txt(NULL, field, type, bytes, len);
 	if(!ne) return 0;
-	return X509_NAME_add_entry(name, ne, loc, set);
+	ret = X509_NAME_add_entry(name, ne, loc, set);
+	X509_NAME_ENTRY_free(ne);
+	return ret;
 }
 
 /* if set is -1, append to previous set, 0 'a new one', and 1,
@@ -267,6 +276,7 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_txt(X509_NAME_ENTRY **ne,
 		char *field, int type, unsigned char *bytes, int len)
 	{
 	ASN1_OBJECT *obj;
+	X509_NAME_ENTRY *nentry;
 
 	obj=OBJ_txt2obj(field, 0);
 	if (obj == NULL)
@@ -275,13 +285,16 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_txt(X509_NAME_ENTRY **ne,
 						X509_R_INVALID_FIELD_NAME);
 		return(NULL);
 		}
-	return(X509_NAME_ENTRY_create_by_OBJ(ne,obj,type,bytes,len));
+	nentry = X509_NAME_ENTRY_create_by_OBJ(ne,obj,type,bytes,len);
+	ASN1_OBJECT_free(obj);
+	return nentry;
 	}
 
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid,
 	     int type, unsigned char *bytes, int len)
 	{
 	ASN1_OBJECT *obj;
+	X509_NAME_ENTRY *nentry;
 
 	obj=OBJ_nid2obj(nid);
 	if (obj == NULL)
@@ -289,7 +302,9 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid,
 		X509err(X509_F_X509_NAME_ENTRY_CREATE_BY_NID,X509_R_UNKNOWN_NID);
 		return(NULL);
 		}
-	return(X509_NAME_ENTRY_create_by_OBJ(ne,obj,type,bytes,len));
+	nentry = X509_NAME_ENTRY_create_by_OBJ(ne,obj,type,bytes,len);
+	ASN1_OBJECT_free(obj);
+	return nentry;
 	}
 
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne,

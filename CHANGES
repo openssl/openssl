@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Fix the -revoke option in ca. It was freeing up memory twice,
+     leaking and not finding already revoked certificates.
+     [Steve Henson]
+
   *) Extensive changes to support certificate auxiliary information.
      This involves the use of X509_CERT_AUX structure and X509_AUX
      functions. An X509_AUX function such as PEM_read_X509_AUX()

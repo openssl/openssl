@@ -1169,13 +1169,6 @@ bad:
 	/*****************************************************************/
 	if (dorevoke)
 		{
-		in=BIO_new(BIO_s_file());
-		out=BIO_new(BIO_s_file());
-		if ((in == NULL) || (out == NULL))
-			{
-			ERR_print_errors(bio_err);
-			goto err;
-			}
 		if (infile == NULL) 
 			{
 			BIO_printf(bio_err,"no input files\n");
@@ -1183,19 +1176,22 @@ bad:
 			}
 		else
 			{
+			X509 *revcert;
 			if (BIO_read_filename(in,infile) <= 0)
 				{
 				perror(infile);
 				BIO_printf(bio_err,"error trying to load '%s' certificate\n",infile);
 				goto err;
 				}
-			x509=PEM_read_bio_X509(in,NULL,NULL,NULL);
-			if (x509 == NULL)
+			revcert=PEM_read_bio_X509(in,NULL,NULL,NULL);
+			if (revcert == NULL)
 				{
 				BIO_printf(bio_err,"unable to load '%s' certificate\n",infile);
 				goto err;
 				}
-			j=do_revoke(x509,db);
+			j=do_revoke(revcert,db);
+			if (j <= 0) goto err;
+			X509_free(revcert);
 
 			strncpy(buf[0],dbfile,BSIZE-4);
 			strcat(buf[0],".new");
@@ -1207,10 +1203,6 @@ bad:
 				}
 			j=TXT_DB_write(out,db);
 			if (j <= 0) goto err;
-			BIO_free(in);
-			BIO_free(out);
-			in=NULL;
-			out=NULL;
 			strncpy(buf[1],dbfile,BSIZE-4);
 			strcat(buf[1],".old");
 			if (rename(dbfile,buf[1]) < 0)
@@ -2143,20 +2135,26 @@ static int add_oid_section(LHASH *hconf)
 
 static int do_revoke(X509 *x509, TXT_DB *db)
 {
-	ASN1_UTCTIME *tm=NULL;
+	ASN1_UTCTIME *tm=NULL, *revtm=NULL;
 	char *row[DB_NUMBER],**rrow,**irow;
+	BIGNUM *bn = NULL;
 	int ok=-1,i;
 
 	for (i=0; i<DB_NUMBER; i++)
 		row[i]=NULL;
-	row[DB_name]=X509_NAME_oneline(x509->cert_info->subject,NULL,0);
-	row[DB_serial]=BN_bn2hex(ASN1_INTEGER_to_BN(x509->cert_info->serialNumber,NULL));
+	row[DB_name]=X509_NAME_oneline(X509_get_subject_name(x509),NULL,0);
+	bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(x509),NULL);
+	row[DB_serial]=BN_bn2hex(bn);
+	BN_free(bn);
 	if ((row[DB_name] == NULL) || (row[DB_serial] == NULL))
 		{
 		BIO_printf(bio_err,"Malloc failure\n");
 		goto err;
 		}
-	rrow=TXT_DB_get_by_index(db,DB_name,row);
+	/* We have to lookup by serial number because name lookup
+	 * skips revoked certs
+ 	 */
+	rrow=TXT_DB_get_by_index(db,DB_serial,row);
 	if (rrow == NULL)
 		{
 		BIO_printf(bio_err,"Adding Entry to DB for %s\n", row[DB_name]);
@@ -2207,16 +2205,15 @@ static int do_revoke(X509 *x509, TXT_DB *db)
 			}
 
 		/* Revoke Certificate */
-		do_revoke(x509,db);
+		ok = do_revoke(x509,db);
 
-		ok=1;
 		goto err;
 
 		}
-	else if (index_serial_cmp(row,rrow))
+	else if (index_name_cmp(row,rrow))
 		{
-		BIO_printf(bio_err,"ERROR:no same serial number %s\n",
-			   row[DB_serial]);
+		BIO_printf(bio_err,"ERROR:name does not match %s\n",
+			   row[DB_name]);
 		goto err;
 		}
 	else if (rrow[DB_type][0]=='R')
@@ -2228,12 +2225,14 @@ static int do_revoke(X509 *x509, TXT_DB *db)
 	else
 		{
 		BIO_printf(bio_err,"Revoking Certificate %s.\n", rrow[DB_serial]);
-		tm=X509_gmtime_adj(tm,0);
+		revtm = ASN1_UTCTIME_new();
+		revtm=X509_gmtime_adj(revtm,0);
 		rrow[DB_type][0]='R';
 		rrow[DB_type][1]='\0';
-		rrow[DB_rev_date]=(char *)Malloc(tm->length+1);
-		memcpy(rrow[DB_rev_date],tm->data,tm->length);
-		rrow[DB_rev_date][tm->length]='\0';
+		rrow[DB_rev_date]=(char *)Malloc(revtm->length+1);
+		memcpy(rrow[DB_rev_date],revtm->data,revtm->length);
+		rrow[DB_rev_date][revtm->length]='\0';
+		ASN1_UTCTIME_free(revtm);
 		}
 	ok=1;
 err:
@@ -2242,7 +2241,6 @@ err:
 		if (row[i] != NULL) 
 			Free(row[i]);
 		}
-	ASN1_UTCTIME_free(tm);
 	return(ok);
 }
 

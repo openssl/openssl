@@ -188,6 +188,7 @@ void ASN1_STRING_TABLE_cleanup(void)
 {
 	STACK_OF(ASN1_STRING_TABLE) *tmp;
 	tmp = stable;
+	if(!tmp) return;
 	stable = NULL;
 	sk_ASN1_STRING_TABLE_pop_free(tmp, st_free);
 }

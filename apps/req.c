@@ -845,6 +845,7 @@ end:
 	X509_free(x509ss);
 	X509V3_EXT_cleanup();
 	OBJ_cleanup();
+	ASN1_STRING_TABLE_cleanup();
 #ifndef NO_DSA
 	if (dsa_params != NULL) DSA_free(dsa_params);
 #endif

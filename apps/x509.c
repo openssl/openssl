@@ -268,6 +268,7 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			CAfile= *(++argv);
 			CA_flag= ++num;
+			need_rand = 1;
 			}
 		else if (strcmp(*argv,"-CAkey") == 0)
 			{
