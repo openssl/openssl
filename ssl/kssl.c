@@ -128,9 +128,19 @@
 #define krb5_decrypt_tkt_part    kssl_krb5_decrypt_tkt_part
 #define krb5_timeofday           kssl_krb5_timeofday
 #define krb5_rc_default           kssl_krb5_rc_default
+
+#ifndef krb5_rc_initialize
 #define krb5_rc_initialize   kssl_krb5_rc_initialize
+#endif
+
+#ifndef krb5_rc_get_lifespan
 #define krb5_rc_get_lifespan kssl_krb5_rc_get_lifespan
+#endif
+
+#ifndef krb5_rc_destroy
 #define krb5_rc_destroy      kssl_krb5_rc_destroy
+#endif
+
 #define valid_cksumtype      kssl_valid_cksumtype
 #define krb5_checksum_size   kssl_krb5_checksum_size
 #define krb5_kt_free_entry   kssl_krb5_kt_free_entry
@@ -933,7 +943,7 @@ kssl_err_set(KSSL_ERR *kssl_err, int reason, char *text)
 void
 print_krb5_data(char *label, krb5_data *kdata)
         {
-	unsigned int 	i;
+	int i;
 
 	printf("%s[%d] ", label, kdata->length);
 	for (i=0; i < kdata->length; i++)
@@ -978,7 +988,7 @@ print_krb5_authdata(char *label, krb5_authdata **adata)
 void
 print_krb5_keyblock(char *label, krb5_keyblock *keyblk)
         {
-	unsigned int 	i;
+	int i;
 
 	if (keyblk == NULL)
                 {
@@ -1010,8 +1020,7 @@ print_krb5_keyblock(char *label, krb5_keyblock *keyblk)
 void
 print_krb5_princ(char *label, krb5_principal_data *princ)
         {
-	unsigned int 	ui, uj;
-        int i;
+	int i, ui, uj;
 
 	printf("%s principal Realm: ", label);
 	if (princ == NULL)  return;
