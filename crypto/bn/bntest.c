@@ -75,7 +75,7 @@
 int test_add(BIO *bp);
 int test_sub(BIO *bp);
 int test_lshift1(BIO *bp);
-int test_lshift(BIO *bp,BN_CTX *ctx);
+int test_lshift(BIO *bp,BN_CTX *ctx,BIGNUM *a_);
 int test_rshift1(BIO *bp);
 int test_rshift(BIO *bp,BN_CTX *ctx);
 int test_div(BIO *bp,BN_CTX *ctx);
@@ -94,6 +94,9 @@ static int results=0;
 #define APPS_WIN16
 #include "bss_file.c"
 #endif
+
+static unsigned char lst1[]="\xC6\x4F\x43\x04\x2A\xEA\xCA\x6E\x58\x36\x80\x5B\xE8\xC9"
+"\x9B\x04\x5D\x48\x36\xC2\xFD\x16\xC9\x64\xF0";
 
 int main(int argc, char *argv[])
 	{
@@ -152,8 +155,13 @@ int main(int argc, char *argv[])
 	if (!test_lshift1(out)) goto err;
 	fflush(stdout);
 
+	fprintf(stderr,"test BN_lshift (fixed)\n");
+	if (!test_lshift(out,ctx,BN_bin2bn(lst1,sizeof(lst1)-1,NULL)))
+	    goto err;
+	fflush(stdout);
+
 	fprintf(stderr,"test BN_lshift\n");
-	if (!test_lshift(out,ctx)) goto err;
+	if (!test_lshift(out,ctx,NULL)) goto err;
 	fflush(stdout);
 
 	fprintf(stderr,"test BN_rshift1\n");
@@ -815,19 +823,24 @@ int test_exp(BIO *bp, BN_CTX *ctx)
 	return(1);
 	}
 
-int test_lshift(BIO *bp,BN_CTX *ctx)
+int test_lshift(BIO *bp,BN_CTX *ctx,BIGNUM *a_)
 	{
 	BIGNUM *a,*b,*c,*d;
 	int i;
 
-	a=BN_new();
 	b=BN_new();
 	c=BN_new();
 	d=BN_new();
 	BN_one(c);
 
-	BN_rand(a,200,0,0); /**/
-	a->neg=rand_neg();
+	if(a_)
+	    a=a_;
+	else
+	    {
+	    a=BN_new();
+	    BN_rand(a,200,0,0); /**/
+	    a->neg=rand_neg();
+	    }
 	for (i=0; i<70; i++)
 		{
 		BN_lshift(b,a,i+1);
@@ -849,6 +862,15 @@ int test_lshift(BIO *bp,BN_CTX *ctx)
 		if(!BN_is_zero(d))
 		    {
 		    BIO_puts(bp,"Left shift test failed!\n");
+		    BIO_puts(bp,"a=");
+		    BN_print(bp,a);
+		    BIO_puts(bp,"\nb=");
+		    BN_print(bp,b);
+		    BIO_puts(bp,"\nc=");
+		    BN_print(bp,c);
+		    BIO_puts(bp,"\nd=");
+		    BN_print(bp,d);
+		    BIO_puts(bp,"\n");
 		    return 0;
 		    }
 		}
