@@ -130,6 +130,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 		if(ef && ef->asn1_ex_free) ef->asn1_ex_free(pval, it);
 		break;
 
+		case ASN1_ITYPE_NDEF_SEQUENCE:
 		case ASN1_ITYPE_SEQUENCE:
 		if(asn1_do_lock(pval, -1, it) > 0) return;
 		if(asn1_cb) {

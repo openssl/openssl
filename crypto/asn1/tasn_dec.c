@@ -289,6 +289,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1
 				goto auxerr;
 		return 1;
 
+		case ASN1_ITYPE_NDEF_SEQUENCE:
 		case ASN1_ITYPE_SEQUENCE:
 		p = *in;
 		tmplen = len;

@@ -166,6 +166,9 @@ extern "C" {
 		#stname \
 	ASN1_ITEM_end(tname)
 
+#define ASN1_NDEF_SEQUENCE(tname) \
+	ASN1_SEQUENCE(tname)
+
 #define ASN1_SEQUENCE_cb(tname, cb) \
 	const static ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, 0}; \
 	ASN1_SEQUENCE(tname)
@@ -181,6 +184,18 @@ extern "C" {
 #define ASN1_SEQUENCE_enc(tname, enc, cb) \
 	const static ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_ENCODING, 0, 0, cb, offsetof(tname, enc)}; \
 	ASN1_SEQUENCE(tname)
+
+#define ASN1_NDEF_SEQUENCE_END(tname) \
+	;\
+	ASN1_ITEM_start(tname) \
+		ASN1_ITYPE_NDEF_SEQUENCE,\
+		V_ASN1_SEQUENCE,\
+		tname##_seq_tt,\
+		sizeof(tname##_seq_tt) / sizeof(ASN1_TEMPLATE),\
+		NULL,\
+		sizeof(tname),\
+		#tname \
+	ASN1_ITEM_end(tname)
 
 #define ASN1_BROKEN_SEQUENCE_END(stname) ASN1_SEQUENCE_END_ref(stname, stname)
 
@@ -353,6 +368,10 @@ extern "C" {
 #define ASN1_EXP_SEQUENCE_OF_OPT(stname, field, type, tag) \
 			ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_SEQUENCE_OF|ASN1_TFLG_OPTIONAL)
 
+/* EXPLICIT OPTIONAL using indefinite length constructed form */
+#define ASN1_NDEF_EXP_OPT(stname, field, type, tag) \
+			ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_OPTIONAL|ASN1_TFLG_NDEF)
+
 /* Macros for the ASN1_ADB structure */
 
 #define ASN1_ADB(name) \
@@ -518,6 +537,13 @@ struct ASN1_ADB_TABLE_st {
 
 #define ASN1_TFLG_COMBINE	(0x1<<10)
 
+/* This flag when present in a SEQUENCE OF, SET OF
+ * or EXPLICIT causes indefinite length constructed
+ * encoding to be used if required.
+ */
+
+#define ASN1_TFLG_NDEF		(0x1<<11)
+
 /* This is the actual ASN1 item itself */
 
 struct ASN1_ITEM_st {
@@ -570,19 +596,25 @@ const char *sname;		/* Structure name */
  * has a special meaning, it is used as a mask
  * of acceptable types using the B_ASN1 constants.
  *
+ * NDEF_SEQUENCE is the same as SEQUENCE except
+ * that it will use indefinite length constructed
+ * encoding if requested.
+ *
  */
 
-#define ASN1_ITYPE_PRIMITIVE	0x0
+#define ASN1_ITYPE_PRIMITIVE		0x0
 
-#define ASN1_ITYPE_SEQUENCE	0x1
+#define ASN1_ITYPE_SEQUENCE		0x1
 
-#define ASN1_ITYPE_CHOICE	0x2
+#define ASN1_ITYPE_CHOICE		0x2
 
-#define ASN1_ITYPE_COMPAT	0x3
+#define ASN1_ITYPE_COMPAT		0x3
 
-#define ASN1_ITYPE_EXTERN	0x4
+#define ASN1_ITYPE_EXTERN		0x4
 
-#define ASN1_ITYPE_MSTRING	0x5
+#define ASN1_ITYPE_MSTRING		0x5
+
+#define ASN1_ITYPE_NDEF_SEQUENCE	0x6
 
 /* Cache for ASN1 tag and length, so we
  * don't keep re-reading it for things
@@ -765,6 +797,12 @@ typedef struct ASN1_AUX_st {
 	int i2d_##fname(stname *a, unsigned char **out) \
 	{ \
 		return ASN1_item_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(itname));\
+	} 
+
+#define IMPLEMENT_ASN1_NDEF_FUNCTION(stname) \
+	int i2d_##stname##_NDEF(stname *a, unsigned char **out) \
+	{ \
+		return ASN1_item_ndef_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(stname));\
 	} 
 
 /* This includes evil casts to remove const: they will go away when full

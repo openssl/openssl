@@ -4,6 +4,17 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Extend ASN1 encoder to support indefinite length constructed
+     encoding. This can output sequences tags and octet strings in
+     this form. Modify pk7_asn1.c to support indefinite length
+     encoding. This is experimental and needs additional code to
+     be useful, such as an ASN1 bio and some enhanced streaming
+     PKCS#7 code.
+
+     Extend template encode functionality so that tagging is passed
+     down to the template encoder.
+     [Steve Henson]
+
   *) Let 'openssl req' fail if an argument to '-newkey' is not
      recognized instead of using RSA as a default.
      [Bodo Moeller]

@@ -203,11 +203,20 @@ void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
 			}
 		p += ttag;
 		}
-	if ((constructed == 2) && (length == 0))
-		*(p++)=0x80; /* der_put_length would output 0 instead */
+	if (constructed == 2)
+		*(p++)=0x80;
 	else
 		asn1_put_length(&p,length);
 	*pp=p;
+	}
+
+int ASN1_put_eoc(unsigned char **pp)
+	{
+	unsigned char *p = *pp;
+	*p++ = 0;
+	*p++ = 0;
+	*pp = p;
+	return 2;
 	}
 
 static void asn1_put_length(unsigned char **pp, int length)
@@ -247,8 +256,8 @@ int ASN1_object_size(int constructed, int length, int tag)
 			ret++;
 			}
 		}
-	if ((length == 0) && (constructed == 2))
-		ret+=2;
+	if (constructed == 2)
+		return ret + 3;
 	ret++;
 	if (length > 127)
 		{

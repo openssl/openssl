@@ -192,6 +192,11 @@ typedef struct asn1_object_st
 	} ASN1_OBJECT;
 
 #define ASN1_STRING_FLAG_BITS_LEFT 0x08 /* Set if 0x07 has bits left value */
+/* This indicates that the ASN1_STRING is not a real value but just a place
+ * holder for the location where indefinite length constructed data should
+ * be inserted in the memory buffer 
+ */
+#define ASN1_STRING_FLAG_NDEF 0x010 
 /* This is the base type that holds just about everything :-) */
 typedef struct asn1_string_st
 	{
@@ -279,6 +284,9 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 	type *d2i_##name(type **a, const unsigned char **in, long len); \
 	int i2d_##name(const type *a, unsigned char **out); \
 	DECLARE_ASN1_ITEM(name)
+
+#define	DECLARE_ASN1_NDEF_FUNCTION(name) \
+	int i2d_##name##_NDEF(name *a, unsigned char **out);
 
 #define DECLARE_ASN1_FUNCTIONS_const(name) \
 	name *name##_new(void); \
@@ -793,6 +801,8 @@ DECLARE_ASN1_FUNCTIONS(ASN1_UTCTIME)
 DECLARE_ASN1_FUNCTIONS(ASN1_GENERALIZEDTIME)
 DECLARE_ASN1_FUNCTIONS(ASN1_TIME)
 
+DECLARE_ASN1_ITEM(ASN1_OCTET_STRING_NDEF)
+
 ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s,time_t t);
 int ASN1_TIME_check(ASN1_TIME *t);
 ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZEDTIME **out);
@@ -849,6 +859,7 @@ int ASN1_get_object(unsigned char **pp, long *plength, int *ptag,
 int ASN1_check_infinite_end(unsigned char **p,long len);
 void ASN1_put_object(unsigned char **pp, int constructed, int length,
 	int tag, int xclass);
+int ASN1_put_eoc(unsigned char **pp);
 int ASN1_object_size(int constructed, int length, int tag);
 
 /* Used to implement other functions */
@@ -935,6 +946,7 @@ ASN1_VALUE *ASN1_item_new(const ASN1_ITEM *it);
 void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it);
 ASN1_VALUE * ASN1_item_d2i(ASN1_VALUE **val, unsigned char **in, long len, const ASN1_ITEM *it);
 int ASN1_item_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
+int ASN1_item_ndef_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
 
 void ASN1_add_oid_module(void);
 

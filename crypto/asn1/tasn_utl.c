@@ -102,7 +102,8 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
 {
 	const ASN1_AUX *aux;
 	int *lck, ret;
-	if(it->itype != ASN1_ITYPE_SEQUENCE) return 0;
+	if((it->itype != ASN1_ITYPE_SEQUENCE)
+	   && (it->itype != ASN1_ITYPE_NDEF_SEQUENCE)) return 0;
 	aux = it->funcs;
 	if(!aux || !(aux->flags & ASN1_AFLG_REFCOUNT)) return 0;
 	lck = offset2ptr(*pval, aux->ref_offset);
