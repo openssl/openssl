@@ -53,6 +53,7 @@ my @dirs = (
 "crypto/ocsp",
 "crypto/ui",
 "crypto/krb5",
+"crypto/store",
 "ssl",
 "apps",
 "test",
