@@ -351,6 +351,9 @@ extern HINSTANCE _hInstance;
 #ifdef sgi
 #define IRIX_CC_BUG	/* all version of IRIX I've tested (4.* 5.*) */
 #endif
+#ifdef SNI
+#define IRIX_CC_BUG	/* CDS++ up to V2.0Bsomething suffered from the same bug.*/
+#endif
 
 #ifdef NO_MD2
 #define MD2_Init MD2Init
