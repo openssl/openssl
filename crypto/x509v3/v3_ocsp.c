@@ -77,6 +77,7 @@ static int i2r_ocsp_nonce(X509V3_EXT_METHOD *method, void *nonce, BIO *out, int 
 
 static int i2r_ocsp_nocheck(X509V3_EXT_METHOD *method, void *nocheck, BIO *out, int indent);
 static void *s2i_ocsp_nocheck(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
+static int i2r_ocsp_serviceloc(X509V3_EXT_METHOD *method, void *in, BIO *bp, int ind);
 
 X509V3_EXT_METHOD v3_ocsp_crlid = {
 	NID_id_pkix_OCSP_CrlID, 0, &OCSP_CRLID_it,
@@ -114,6 +115,15 @@ X509V3_EXT_METHOD v3_ocsp_nocheck = {
 	0,s2i_ocsp_nocheck,
 	0,0,
 	i2r_ocsp_nocheck,0,
+	NULL
+};
+
+X509V3_EXT_METHOD v3_ocsp_serviceloc = {
+	NID_id_pkix_OCSP_serviceLocator, 0, &OCSP_SERVICELOC_it,
+	0,0,0,0,
+	0,0,
+	0,0,
+	i2r_ocsp_serviceloc,0,
 	NULL
 };
 
@@ -212,3 +222,25 @@ static void *s2i_ocsp_nocheck(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *
 {
 	return ASN1_NULL_new();
 }
+
+static int i2r_ocsp_serviceloc(X509V3_EXT_METHOD *method, void *in, BIO *bp, int ind)
+        {
+	int i;
+	OCSP_SERVICELOC *a = in;
+	ACCESS_DESCRIPTION *ad;
+
+        if (BIO_printf(bp, "%*ssIissuer: ", ind, "") <= 0) goto err;
+        if (X509_NAME_print_ex(bp, a->issuer, 0, XN_FLAG_ONELINE) <= 0) goto err;
+	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(a->locator); i++)
+	        {
+				ad = sk_ACCESS_DESCRIPTION_value(a->locator,i);
+				if (BIO_printf(bp, "\n%*s", (2*ind), "") <= 0) 
+					goto err;
+				if(i2a_ASN1_OBJECT(bp, ad->method) <= 0) goto err;
+				if(BIO_puts(bp, " - ") <= 0) goto err;
+				if(GENERAL_NAME_print(bp, ad->location) <= 0) goto err;
+		}
+	return 1;
+err:
+	return 0;
+	}
