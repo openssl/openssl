@@ -3010,3 +3010,13 @@ X509_REQ_print_ex                       3443	EXIST::FUNCTION:BIO
 EC_GROUP_get_pentanomial_basis          3444	EXIST::FUNCTION:EC
 EC_GROUP_get_trinomial_basis            3445	EXIST::FUNCTION:EC
 EC_get_builtin_curves                   3446	EXIST::FUNCTION:EC
+PKCS12_add_safe                         3447	EXIST::FUNCTION:
+PKCS12_add_safes                        3448	EXIST::FUNCTION:
+X509_keyid_get0                         3449	EXIST::FUNCTION:
+ASN1_OCTET_STRING_NDEF_it               3450	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
+ASN1_OCTET_STRING_NDEF_it               3450	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+ASN1_put_eoc                            3451	EXIST::FUNCTION:
+PKCS12_add_key                          3452	EXIST::FUNCTION:
+PKCS12_add_cert                         3453	EXIST::FUNCTION:
+ASN1_item_ndef_i2d                      3454	EXIST::FUNCTION:
+d2i_PKCS7_NDEF                          3455	EXIST::FUNCTION:
