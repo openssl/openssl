@@ -207,7 +207,7 @@ all: Makefile.ssl
 		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' SDIRS='${SDIRS}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
 	fi; \
 	done; \
-	if $$need_shlib && [ "$(SHLIB_TARGET)" != "" ]; then :; else \
+	if $$need_shlib && [ "$(SHLIB_MARK1)" != "" -o "$(SHLIB_MARK1)" != "" ]; then \
 		$(MAKE) $(SHARED_LIBS); \
 	fi
 
@@ -229,14 +229,22 @@ sub_all:
 		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
 	fi; \
 	done; \
-	if $$need_shlib && [ "$(SHLIB_TARGET)" != "" ]; then :; else \
+	if $$need_shlib && [ "$(SHLIB_MARK1)" != "" -o "$(SHLIB_MARK1)" != "" ]; then \
 		$(MAKE) $(SHARED_LIBS); \
 	fi
 
 libcrypto.so: libcrypto.a
-	$(MAKE) $(SHLIB_TARGET)
+	@if [ "$(SHLIB_TARGET)" != "" ]; then \
+		$(MAKE) SHLIBDIRS=crypto $(SHLIB_TARGET); \
+	else \
+		echo "There's no support for shared libraries on this platform" >&2; \
+	fi
 libssl.so: libcrypto.so libssl.a
-	$(MAKE) $(SHLIB_TARGET)
+	@if [ "$(SHLIB_TARGET)" != "" ]; then \
+		$(MAKE) SHLIBDIRS=ssl $(SHLIB_TARGET); \
+	else \
+		echo "There's no support for shared libraries on this platform" >&2; \
+	fi
 
 clean-shared:
 	for i in ${SHLIBDIRS}; do \

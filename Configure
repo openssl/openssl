@@ -639,14 +639,17 @@ if ($threads)
 		$openssl_thread_defines .= $thread_defines;
 	}
 
-if ($no_shared)
-	{
-	$shared_target = "";
-	$shared_cflag = "";
-	}
-else
+# You will find shlib_mark1 and shlib_mark2 explained in Makefile.org
+my $shared_mark1 = "";
+my $shared_mark2 = "";
+if ($shared_cflag ne "")
 	{
 	$cflags = "$shared_cflag $cflags";
+	if (!$no_shared)
+		{
+		$shared_mark1 = ".shlib-clean.";
+		$shared_mark2 = ".shlib.";
+		}
 	}
 
 #my ($bn1)=split(/\s+/,$bn_obj);
@@ -751,6 +754,8 @@ while (<IN>)
 	s/^RANLIB=.*/RANLIB= $ranlib/;
 	s/^PERL=.*/PERL= $perl/;
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
+	s/^SHLIB_MARK1=.*/SHLIB_MARK1=$shared_mark1/;
+	s/^SHLIB_MARK2=.*/SHLIB_MARK2=$shared_mark2/;
 	s/^LIBS=.*/LIBS=libcrypto\.so\* libssl\.so\*/ if (!$no_shared);
 	print OUT $_."\n";
 	}
