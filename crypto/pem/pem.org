@@ -482,6 +482,8 @@ int	PEM_ASN1_write_bio();
 int	PEM_SealInit();
 void	PEM_SealUpdate();
 int	PEM_SealFinal();
+void    PEM_SignInit();
+void    PEM_SignUpdate();
 int	PEM_SignFinal();
 
 void	ERR_load_PEM_strings();

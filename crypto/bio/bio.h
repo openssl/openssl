@@ -322,13 +322,6 @@ typedef struct bio_f_buffer_ctx_struct
 #define BIO_set_app_data(s,arg)		BIO_set_ex_data(s,0,(char *)arg)
 #define BIO_get_app_data(s)		BIO_get_ex_data(s,0)
 
-int BIO_get_ex_num(BIO *bio);
-int BIO_set_ex_data(BIO *bio,int idx,char *data);
-char *BIO_get_ex_data(BIO *bio,int idx);
-void BIO_set_ex_free_func(BIO *bio,int idx,void (*cb)());
-int BIO_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	int (*dup_func)(), void (*free_func)());
-
 /* BIO_s_connect() and BIO_s_socks4a_connect() */
 #define BIO_set_conn_hostname(b,name) BIO_ctrl(b,BIO_C_SET_CONNECT,0,(char *)name)
 #define BIO_set_conn_port(b,port) BIO_ctrl(b,BIO_C_SET_CONNECT,1,(char *)port)
@@ -445,6 +438,14 @@ int BIO_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 #endif
 
 #ifndef NOPROTO
+
+int BIO_get_ex_num(BIO *bio);
+int BIO_set_ex_data(BIO *bio,int idx,char *data);
+char *BIO_get_ex_data(BIO *bio,int idx);
+void BIO_set_ex_free_func(BIO *bio,int idx,void (*cb)());
+int BIO_get_ex_new_index(long argl, char *argp, int (*new_func)(),
+	int (*dup_func)(), void (*free_func)());
+
 #  if defined(WIN16) && defined(_WINDLL)
 BIO_METHOD *BIO_s_file_internal(void);
 BIO *BIO_new_file_internal(char *filename, char *mode);
@@ -461,6 +462,13 @@ BIO *BIO_new_fp(FILE *stream, int close_flag);
 #    define BIO_new_fp_internal		BIO_s_file
 #  endif /* FP_API */
 #else
+
+int BIO_get_ex_num();
+int BIO_set_ex_data();
+char *BIO_get_ex_data();
+void BIO_set_ex_free_func();
+int BIO_get_ex_new_index();
+
 #  if defined(WIN16) && defined(_WINDLL)
 BIO_METHOD *BIO_s_file_internal();
 BIO *BIO_new_file_internal();

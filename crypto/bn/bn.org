@@ -534,12 +534,16 @@ BN_MONT_CTX *BN_MONT_CTX_new();
 void BN_MONT_CTX_init();
 void BN_MONT_CTX_free();
 int BN_MONT_CTX_set();
+BN_MONT_CTX *BN_MONT_CTX_copy();
 
 BN_BLINDING *BN_BLINDING_new();
 void BN_BLINDING_free();
 int BN_BLINDING_update();
 int BN_BLINDING_convert();
 int BN_BLINDING_invert();
+
+void BN_set_params();
+int BN_get_params();
 
 void bn_mul_normal();
 void bn_mul_comba8();

@@ -149,8 +149,8 @@ extern "C" {
 
 #if !defined(WINNT)
 #define NO_SYSLOG
-#define NO_DIRENT
 #endif
+#define NO_DIRENT
 
 #endif
 

@@ -1219,3 +1219,13 @@ BIO_f_reliable                          1244
 PKCS7_dataFinal                         1245
 PKCS7_dataDecode                        1246
 X509V3_EXT_CRL_add_conf                 1247
+BN_set_params                           1248
+BN_get_params                           1249
+BIO_get_ex_num                          1250
+BIO_set_ex_free_func                    1251
+EVP_ripemd160                           1252
+ASN1_TIME_set                           1253
+i2d_AUTHORITY_KEYID                     1254
+d2i_AUTHORITY_KEYID                     1255
+AUTHORITY_KEYID_new                     1256
+AUTHORITY_KEYID_free                    1257

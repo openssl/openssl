@@ -694,6 +694,7 @@ EVP_MD *EVP_sha1();
 EVP_MD *EVP_dss();
 EVP_MD *EVP_dss1();
 EVP_MD *EVP_mdc2();
+EVP_MD *EVP_ripemd160();
 
 EVP_CIPHER *EVP_enc_null();
 EVP_CIPHER *EVP_des_ecb();
