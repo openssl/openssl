@@ -38,7 +38,7 @@ BIO_reset() attempts to change the file pointer to the start of file
 using fseek(stream, 0, 0).
 
 BIO_seek() sets the file pointer to position B<ofs> from start of file
-using lseek(stream, ofs, 0).
+using fseek(stream, ofs, 0).
 
 BIO_eof() calls feof().
 
@@ -105,7 +105,7 @@ Alternative technique:
  BIO *out;
  out = BIO_new(BIO_s_file());
  if(out == NULL) /* Error ... */
- if(!BIO_read_filename(out, "filename.txt")) /* Error ... */
+ if(!BIO_write_filename(out, "filename.txt")) /* Error ... */
  BIO_printf(out, "Hello World\n");
  BIO_free(out);
 
@@ -126,6 +126,13 @@ BIO_tell() returns the current file position.
 
 BIO_read_filename(), BIO_write_filename(),  BIO_append_filename() and
 BIO_rw_filename() return 1 for success or 0 for failure.
+
+=head1 BUGS
+
+BIO_reset() and BIO_seek() are implemented using fseek() on the underlying
+stream. The return value for fseek() is 0 for success or -1 if an error
+occurred this differs from other types of BIO which will typically return
+1 for success and a non positive value if an error occurred.
 
 =head1 SEE ALSO
 
