@@ -557,6 +557,14 @@ my $processor="";
 my $default_ranlib;
 my $perl;
 
+my $no_ssl2=0;
+my $no_ssl3=0;
+my $no_tls1=0;
+my $no_md5=0;
+my $no_sha=0;
+my $no_rsa=0;
+my $no_dh=0;
+
 $default_ranlib= &which("ranlib") or $default_ranlib="true";
 $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
   or $perl="perl";
@@ -637,6 +645,14 @@ PROCESS_ARGS:
 			{ $zlib=2; }
 		elsif (/^no-symlinks$/)
 			{ $symlink=0; }
+		elsif (/^no-ssl$/)
+			{ $no_ssl2 = $no_ssl3 = 1; }
+		elsif (/^no-ssl2$/)
+			{ $no_ssl2 = 1; }
+		elsif (/^no-ssl3$/)
+			{ $no_ssl3 = 1; }
+		elsif (/^no-tls1?$/)
+			{ $no_tls1 = 1; }
 		elsif (/^no-(.+)$/)
 			{
 			my $algo=$1;
@@ -658,6 +674,22 @@ PROCESS_ARGS:
 				$flags .= "-DOPENSSL_NO_MDC2 ";
 				$depflags .= "-DOPENSSL_NO_MDC2 ";
 				$openssl_algorithm_defines .= "#define OPENSSL_NO_MDC2\n";
+				}
+			if ($algo eq "MD5")
+				{
+				$no_md5 = 1;
+				}
+			if ($algo eq "SHA")
+				{
+				$no_sha = 1;
+				}
+			if ($algo eq "RSA")
+				{
+				$no_rsa = 1;
+				}
+			if ($algo eq "DH")
+				{
+				$no_dh = 1;
 				}
 			}
 		elsif (/^reconfigure/ || /^reconf/)
@@ -742,6 +774,39 @@ PROCESS_ARGS:
 		}
 	}
 }
+
+$no_ssl3=1 if ($no_md5 || $no_sha);
+$no_ssl3=1 if ($no_rsa && $no_dh);
+
+$no_ssl2=1 if ($no_md5);
+$no_ssl2=1 if ($no_rsa);
+
+$no_tls1=1 if ($no_md5 || $no_sha);
+$no_tls1=1 if ($no_dh);
+
+if ($no_ssl2)
+	{
+	push @skip,"SSL2";
+	$flags .= "-DOPENSSL_NO_SSL2 ";
+	$depflags .= "-DOPENSSL_NO_SSL2 ";
+	$openssl_algorithm_defines .= "#define OPENSSL_NO_SSL2\n";
+	}
+
+if ($no_ssl3)
+	{
+	push @skip,"SSL3";
+	$flags .= "-DOPENSSL_NO_SSL3 ";
+	$depflags .= "-DOPENSSL_NO_SSL3 ";
+	$openssl_algorithm_defines .= "#define OPENSSL_NO_SSL3\n";
+	}
+
+if ($no_tls1)
+	{
+	push @skip,"TLS1";
+	$flags .= "-DOPENSSL_NO_TLS1 ";
+	$depflags .= "-DOPENSSL_NO_TLS1 ";
+	$openssl_algorithm_defines .= "#define OPENSSL_NO_TLS1\n";
+	}
 
 if ($target eq "TABLE") {
 	foreach $target (sort keys %table) {
@@ -1010,7 +1075,7 @@ while (<IN>)
 	if ($sdirs) {
 		my $dir;
 		foreach $dir (@skip) {
-			s/ $dir / /;
+			s/([ 	])$dir /\1/;
 			}
 		}
 	$sdirs = 0 unless /\\$/;
