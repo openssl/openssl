@@ -240,14 +240,14 @@ long MS_CALLBACK bio_dump_cb(BIO *bio, int cmd, const char *argp, int argi,
 	if (cmd == (BIO_CB_READ|BIO_CB_RETURN))
 		{
 		BIO_printf(out,"read from %p [%p] (%d bytes => %ld (0x%lX))\n",
-			bio,argp,argi,ret,ret);
+ 			(void *)bio,argp,argi,ret,ret);
 		BIO_dump(out,argp,(int)ret);
 		return(ret);
 		}
 	else if (cmd == (BIO_CB_WRITE|BIO_CB_RETURN))
 		{
 		BIO_printf(out,"write to %p [%p] (%d bytes => %ld (0x%lX))\n",
-			bio,argp,argi,ret,ret);
+			(void *)bio,argp,argi,ret,ret);
 		BIO_dump(out,argp,(int)ret);
 		}
 	return(ret);
