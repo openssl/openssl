@@ -748,7 +748,7 @@ struct ssl_st
 #define SSL_ERROR_WANT_READ		2
 #define SSL_ERROR_WANT_WRITE		3
 #define SSL_ERROR_WANT_X509_LOOKUP	4
-#define SSL_ERROR_SYSCALL		5 /* look at errno */
+#define SSL_ERROR_SYSCALL		5 /* look at error stack/return value/errno */
 #define SSL_ERROR_ZERO_RETURN		6
 #define SSL_ERROR_WANT_CONNECT		7
 
