@@ -168,6 +168,8 @@ int ssl_get_new_session(SSL *s, int session)
 			CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 			if (r == NULL) break;
 			/* else - woops a session_id match */
+			/* XXX should also check external cache!
+			 * (But the probability of a collision is negligible, anyway...) */
 			}
 		}
 	else
