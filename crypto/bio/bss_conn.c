@@ -357,6 +357,9 @@ BIO_CONNECT *BIO_CONNECT_new()
 void BIO_CONNECT_free(a)
 BIO_CONNECT *a;
 	{
+	if(a == NULL)
+	    return;
+
 	if (a->param_hostname != NULL)
 		Free(a->param_hostname);
 	if (a->param_port != NULL)

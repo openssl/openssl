@@ -456,6 +456,9 @@ err:
 void ssl3_free(s)
 SSL *s;
 	{
+	if(s == NULL)
+	    return;
+
 	ssl3_cleanup_key_block(s);
 	if (s->s3->rbuf.buf != NULL)
 		Free(s->s3->rbuf.buf);

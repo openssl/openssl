@@ -363,6 +363,9 @@ SSL_SESSION *ss;
 	{
 	int i;
 
+	if(ss == NULL)
+	    return;
+
 	i=CRYPTO_add(&ss->references,-1,CRYPTO_LOCK_SSL_SESSION);
 #ifdef REF_PRINT
 	REF_PRINT("SSL_SESSION",ss);

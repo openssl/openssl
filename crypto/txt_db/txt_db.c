@@ -356,6 +356,9 @@ TXT_DB *db;
 	int i,n;
 	char **p,*max;
 
+	if(db == NULL)
+	    return;
+
 	if (db->index != NULL)
 		{
 		for (i=db->num_fields-1; i>=0; i--)

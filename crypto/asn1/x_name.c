@@ -263,6 +263,9 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_new()
 void X509_NAME_free(a)
 X509_NAME *a;
 	{
+	if(a == NULL)
+	    return;
+
 	BUF_MEM_free(a->bytes);
 	sk_pop_free(a->entries,X509_NAME_ENTRY_free);
 	Free((char *)a);

@@ -257,6 +257,9 @@ SSL *s;
 	{
 	SSL2_CTX *s2;
 
+	if(s == NULL)
+	    return;
+
 	s2=s->s2;
 	if (s2->rbuf != NULL) Free(s2->rbuf);
 	if (s2->wbuf != NULL) Free(s2->wbuf);

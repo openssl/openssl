@@ -259,6 +259,9 @@ X509_STORE *vfy;
 	STACK *sk;
 	X509_LOOKUP *lu;
 
+	if(vfy == NULL)
+	    return;
+
 	sk=vfy->get_cert_methods;
 	for (i=0; i<sk_num(sk); i++)
 		{

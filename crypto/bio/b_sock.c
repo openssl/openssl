@@ -310,6 +310,9 @@ struct hostent *a;
 	{
 	int i;
 
+	if(a == NULL)
+	    return;
+
 	if (a->h_aliases != NULL)
 		{
 		for (i=0; a->h_aliases[i] != NULL; i++)

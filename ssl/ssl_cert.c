@@ -105,6 +105,9 @@ CERT *c;
 	{
 	int i;
 
+	if(c == NULL)
+	    return;
+
 	i=CRYPTO_add(&c->references,-1,CRYPTO_LOCK_SSL_CERT);
 #ifdef REF_PRINT
 	REF_PRINT("CERT",c);

@@ -474,8 +474,7 @@ RSA *rsa;
 err:
 	BN_clear_free(&m1);
 	BN_clear_free(&r1);
-	if(ctx)
-	    BN_CTX_free(ctx);
+	BN_CTX_free(ctx);
 	return(ret);
 	}
 

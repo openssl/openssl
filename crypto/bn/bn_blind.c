@@ -90,6 +90,9 @@ err:
 void BN_BLINDING_free(r)
 BN_BLINDING *r;
 	{
+	if(r == NULL)
+	    return;
+
 	if (r->A  != NULL) BN_free(r->A );
 	if (r->Ai != NULL) BN_free(r->Ai);
 	Free(r);

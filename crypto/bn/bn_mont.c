@@ -289,6 +289,9 @@ BN_MONT_CTX *ctx;
 void BN_MONT_CTX_free(mont)
 BN_MONT_CTX *mont;
 	{
+	if(mont == NULL)
+	    return;
+
 	BN_free(&(mont->RR));
 	BN_free(&(mont->N));
 	BN_free(&(mont->Ni));

@@ -173,6 +173,9 @@ BIO_ACCEPT *BIO_ACCEPT_new()
 void BIO_ACCEPT_free(a)
 BIO_ACCEPT *a;
 	{
+	if(a == NULL)
+	    return;
+
 	if (a->param_addr != NULL) Free(a->param_addr);
 	if (a->addr != NULL) Free(a->addr);
 	if (a->bio_chain != NULL) BIO_free(a->bio_chain);

@@ -341,6 +341,9 @@ BN_CTX *c;
 	{
 	int i;
 
+	if(c == NULL)
+	    return;
+
 	for (i=0; i<BN_CTX_NUM; i++)
 		BN_clear_free(&(c->bn[i]));
 	if (c->flags & BN_FLG_MALLOCED)

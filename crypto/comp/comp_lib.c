@@ -33,6 +33,9 @@ COMP_CTX *ctx;
 	{
 	/* CRYPTO_free_ex_data(rsa_meth,(char *)ctx,&ctx->ex_data); */
 
+	if(ctx == NULL)
+	    return;
+
 	if (ctx->meth->finish != NULL)
 		ctx->meth->finish(ctx);
 

@@ -203,6 +203,9 @@ SSL *s;
 	{
 	int i;
 
+	if(s == NULL)
+	    return;
+
 	i=CRYPTO_add(&s->references,-1,CRYPTO_LOCK_SSL);
 #ifdef REF_PRINT
 	REF_PRINT("SSL",s);

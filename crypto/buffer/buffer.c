@@ -79,6 +79,9 @@ BUF_MEM *BUF_MEM_new()
 void BUF_MEM_free(a)
 BUF_MEM *a;
 	{
+	if(a == NULL)
+	    return;
+
 	if (a->data != NULL)
 		{
 		memset(a->data,0,(unsigned int)a->max);

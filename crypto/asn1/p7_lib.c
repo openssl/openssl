@@ -267,6 +267,9 @@ PKCS7 *a;
 void PKCS7_content_free(a)
 PKCS7 *a;
 	{
+	if(a == NULL)
+	    return;
+
 	if (a->asn1 != NULL) Free((char *)a->asn1);
 
 	if (a->d.ptr != NULL)
