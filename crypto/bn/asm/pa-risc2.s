@@ -747,8 +747,8 @@ bn_div_words
 	.PROC
 	.EXPORT	bn_div_words,ENTRY,PRIV_LEV=3,ARGW0=GR,ARGW1=GR,ARGW2=GR,ARGW3=GR,RTNVAL=GR,LONG_RETURN
 	.IMPORT	BN_num_bits_word,CODE
-	.IMPORT	__iob,DATA
-	.IMPORT	fprintf,CODE
+	;--- not PIC	.IMPORT	__iob,DATA
+	;--- not PIC	.IMPORT	fprintf,CODE
 	.IMPORT	abort,CODE
 	.IMPORT	$$div2U,MILLICODE
 	.CALLINFO CALLER,FRAME=144,ENTRY_GR=%r9,SAVE_RP,ARGS_SAVED,ORDERING_AWARE
@@ -844,12 +844,12 @@ $0006001A
         MOVIB,TR        2,%r8,$0006001C ;offset 0xa18
         EXTRD,U %r3,63,32,%r7   ;offset 0xa1c
 $D2
-        ADDIL   LR'__iob-$global$,%r27,%r1      ;offset 0xa20
-        LDIL    LR'C$7,%r21     ;offset 0xa24
-        LDO     RR'__iob-$global$+32(%r1),%r26  ;offset 0xa28
-        .CALL   ARGW0=GR,ARGW1=GR,ARGW2=GR,RTNVAL=GR    ;in=24,25,26;out=28;
-        B,L     fprintf,%r2     ;offset 0xa2c
-        LDO     RR'C$7(%r21),%r25       ;offset 0xa30
+        ;--- not PIC	ADDIL   LR'__iob-$global$,%r27,%r1      ;offset 0xa20
+        ;--- not PIC	LDIL    LR'C$7,%r21     ;offset 0xa24
+        ;--- not PIC	LDO     RR'__iob-$global$+32(%r1),%r26  ;offset 0xa28
+        ;--- not PIC	.CALL   ARGW0=GR,ARGW1=GR,ARGW2=GR,RTNVAL=GR    ;in=24,25,26;out=28;
+        ;--- not PIC	B,L     fprintf,%r2     ;offset 0xa2c
+        ;--- not PIC	LDO     RR'C$7(%r21),%r25       ;offset 0xa30
         .CALL           ;
         B,L     abort,%r2       ;offset 0xa34
         NOP             ;offset 0xa38
@@ -1605,14 +1605,14 @@ bn_mul_comba4
 	.PROCEND	
 
 
-	.SPACE	$TEXT$
-	.SUBSPA	$CODE$
-	.SPACE	$PRIVATE$,SORT=16
-	.IMPORT	$global$,DATA
-	.SPACE	$TEXT$
-	.SUBSPA	$CODE$
-	.SUBSPA	$LIT$,ACCESS=0x2c
-C$7
-	.ALIGN	8
-	.STRINGZ	"Division would overflow (%d)\n"
+;--- not PIC	.SPACE	$TEXT$
+;--- not PIC	.SUBSPA	$CODE$
+;--- not PIC	.SPACE	$PRIVATE$,SORT=16
+;--- not PIC	.IMPORT	$global$,DATA
+;--- not PIC	.SPACE	$TEXT$
+;--- not PIC	.SUBSPA	$CODE$
+;--- not PIC	.SUBSPA	$LIT$,ACCESS=0x2c
+;--- not PIC	C$7
+;--- not PIC	.ALIGN	8
+;--- not PIC	.STRINGZ	"Division would overflow (%d)\n"
 	.END
