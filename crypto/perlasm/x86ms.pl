@@ -92,7 +92,7 @@ sub get_mem
 		$reg2=&conv($1);
 		$addr="_$2";
 		}
-	elsif ($addr =~ /^[_a-zA-Z]/)
+	elsif ($addr =~ /^[_a-zA-Z]$/)
 		{
 		$addr="_$addr";
 		}
@@ -368,6 +368,12 @@ sub main'comment
 		}
 	}
 
+sub main'public_label
+	{
+	$label{$_[0]}="_$_[0]"	if (!defined($label{$_[0]}));
+	push(@out,"PUBLIC\t$label{$_[0]}\n");
+	}
+
 sub main'label
 	{
 	if (!defined($label{$_[0]}))
@@ -385,9 +391,17 @@ sub main'set_label
 		$label{$_[0]}="\$${label}${_[0]}";
 		$label++;
 		}
+	if ($_[1]!=0 && $_[1]>1)
+		{
+		main'align($_[1]);
+		}
 	if((defined $_[2]) && ($_[2] == 1))
 		{
 		push(@out,"$label{$_[0]}::\n");
+		}
+	elsif ($label{$_[0]} !~ /^\$/)
+		{
+		push(@out,"$label{$_[0]}\tLABEL PTR\n");
 		}
 	else
 		{

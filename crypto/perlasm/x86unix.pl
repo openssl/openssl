@@ -498,6 +498,12 @@ sub main'comment
 		}
 	}
 
+sub main'public_label
+	{
+	$label{$_[0]}="${under}${_[0]}"	if (!defined($label{$_[0]}));
+	push(@out,".globl\t$label{$_[0]}\n");
+	}
+
 sub main'label
 	{
 	if (!defined($label{$_[0]}))
