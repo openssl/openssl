@@ -137,6 +137,7 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 		ctx->digest=type;
 		if (type->ctx_size)
 			ctx->md_data=OPENSSL_malloc(type->ctx_size);
+		}
 	return type->init(ctx);
 	}
 
