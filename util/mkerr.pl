@@ -269,6 +269,7 @@ EOF
 	if($static) {
 		print OUT <<"EOF";
 ${staticloader}void ERR_load_${lib}_strings(void);
+
 EOF
 	} else {
 		print OUT <<"EOF";
@@ -276,6 +277,7 @@ ${staticloader}void ERR_load_${lib}_strings(void);
 ${staticloader}void ERR_unload_${lib}_strings(void);
 ${staticloader}void ERR_${lib}_error(int function, int reason, char *file, int line);
 #define ${lib}err(f,r) ERR_${lib}_error((f),(r),__FILE__,__LINE__)
+
 EOF
 	}
 	print OUT <<"EOF";

@@ -198,6 +198,7 @@ int CONF_parse_list(const char *list, int sep, int nospc,
  * made after this point may be overwritten when the script is next run.
  */
 void ERR_load_CONF_strings(void);
+
 /* Error codes for the CONF functions. */
 
 /* Function codes. */

@@ -625,6 +625,7 @@ typedef int (*dynamic_bind_engine)(ENGINE *e, const char *id,
  * made after this point may be overwritten when the script is next run.
  */
 void ERR_load_ENGINE_strings(void);
+
 /* Error codes for the ENGINE functions. */
 
 /* Function codes. */
