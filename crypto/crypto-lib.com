@@ -247,7 +247,8 @@ $ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
 	"f_enum,a_hdr,x_pkey,a_bool,x_exten,"+ -
 	"asn1_par,asn1_lib,asn1_err,a_meth,a_bytes,a_strnid,"+ -
 	"evp_asn1,asn_pack,p5_pbe,p5_pbev2,p8_pkey"
-$ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err"
+$ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err,"+ -
+	"pem_x509,pem_xaux,pem_oth,pem_pk8,pem_pkey"
 $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
 	"x509_obj,x509_req,x509spki,x509_vfy,"+ -
 	"x509_set,x509rset,x509_err,"+ -
@@ -257,14 +258,14 @@ $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
 $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 	"v3_prn,v3_utl,v3err,v3_genn,v3_alt,v3_skey,v3_akey,v3_pku,"+ -
 	"v3_int,v3_enum,v3_sxnet,v3_cpols,v3_crld,v3_purp,v3_info,"+ -
-	"v3_ocsp"
+	"v3_ocsp,v3_akeya"
 $ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def"
 $ LIB_TXT_DB = "txt_db"
 $ LIB_PKCS7 = "pk7_asn1,pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,"+ -
 	"pk7_mime"
 $ LIB_PKCS12 = "p12_add,p12_asn,p12_attr,p12_crpt,p12_crt,p12_decr,"+ -
 	"p12_init,p12_key,p12_kiss,p12_mutl,"+ -
-	"p12_utl,p12_npas,pk12err"
+	"p12_utl,p12_npas,pk12err,p12_p8d,p12_p8e"
 $ LIB_COMP = "comp_lib,"+ -
 	"c_rle,c_zlib"
 $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
