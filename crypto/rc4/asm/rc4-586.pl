@@ -1,6 +1,25 @@
 #!/usr/local/bin/perl
 
-# define for pentium pro friendly version
+# At some point it became apparent that the original SSLeay RC4
+# assembler implementation performs suboptimal on latest IA-32
+# microarchitectures. After re-tuning performance has changed as
+# following:
+#
+# Pentium	+0%
+# Pentium III	+17%
+# AMD		+52%(*)
+# P4		+180%(**)
+#
+# (*)	This number is actually a trade-off:-) It's possible to
+#	achieve	+72%, but at the cost of -48% off PIII performance.
+#	In other words code performing further 13% faster on AMD
+#	would perform almost 2 times slower on Intel PIII...
+#	For reference! This code delivers ~80% of rc4-amd64.pl
+#	performance on same Opteron machine.
+# (**)	This number requires compressed key schedule set up by
+#	RC4_set_key, see commentary section in rc4_skey.c for
+#	further details.
+#					<appro@fy.chalmers.se>
 
 push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
@@ -46,20 +65,16 @@ sub RC4_loop
 	# Moved out
 	# &mov(	$tx,		&DWP(0,$d,$x,4)) if $p < 0;
 
-	 &add(	$y,		$tx);
-	&and(	$y,		0xff);
-	 &inc(	$x);			# NEXT ROUND 
+	&add(	&LB($y),	&LB($tx));
+	 &inc(	&LB($x));			# NEXT ROUND
 	&mov(	$ty,		&DWP(0,$d,$y,4));
 	 # XXX
 	&mov(	&DWP(-4,$d,$x,4),$ty);			# AGI
 	 &add(	$ty,		$tx);
-	&and(	$x,		0xff);	# NEXT ROUND
-	 &and(	$ty,		0xff);
 	&mov(	&DWP(0,$d,$y,4),$tx);
-	 &nop();
-	&mov(	$ty,		&DWP(0,$d,$ty,4));
-	 &mov(	$tx,		&DWP(0,$d,$x,4)) if $p < 1; # NEXT ROUND
-	 # XXX
+	 &and(	$ty,		0xff);
+	&mov(	$tx,		&DWP(0,$d,$x,4)) if $p < 1; # NEXT ROUND
+	 &mov(	$ty,		&DWP(0,$d,$ty,4));
 
 	if (!$char)
 		{
@@ -99,19 +114,20 @@ sub RC4
 	&push("ebp");
 	 &push("ebx");
 	&push("esi");
-	 &push("edi");
+	 &xor(	$x,	$x);		# avoid partial register stalls
+	&push("edi");
+	 &xor(	$y,	$y);		# avoid partial register stalls
 	&mov(	$d,	&wparam(0));	# key
 	 &mov(	$in,	&wparam(2));
 
-	&mov(	$x,	&DWP(0,$d,"",1));
-	 &mov(	$y,	&DWP(4,$d,"",1));
+	&movb(	&LB($x),	&BP(0,$d,"",1));
+	 &movb(	&LB($y),	&BP(4,$d,"",1));
 
 	&mov(	$out,	&wparam(3));
-	 &inc(	$x);
+	 &inc(	&LB($x));
 
 	&stack_push(3);	# 3 temp variables
 	 &add(	$d,	8);
-	&and(	$x,		0xff);
 
 	# detect compressed schedule, see commentary section in rc4_skey.c...
 	&cmp(&DWP(256,$d),-1);
@@ -200,7 +216,7 @@ sub RC4
 	&set_label("finished");
 	&dec(	$x);
 	 &stack_pop(3);
-	&mov(	&DWP(-4,$d,"",0),$y);
+	&movb(	&BP(-4,$d,"",0),&LB($y));
 	 &movb(	&BP(-8,$d,"",0),&LB($x));
 
 	&function_end($name);
