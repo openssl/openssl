@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/02/27 19:58:16 $
+  ______________                           $Date: 2000/02/27 20:14:03 $
 
   DEVELOPMENT STATE
 
@@ -32,6 +32,7 @@
 			 solaris64-sparcv9-cc - test passed
 			 linux-alpha+bwx-ccc  - test passed
 			 linux-alpha-gcc (gcc 2.95.1) - test passed
+			 linux-elf            - test passed
                        Proposed release time: Monday, February 28th 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
     o  OpenSSL 0.9.3a: Released on May      29th, 1999
