@@ -207,7 +207,7 @@ makefile.one: files
 	$(PERL) util/mk1mf.pl >makefile.one; \
 	sh util/do_ms.sh
 
-files:  MINFO
+files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl > $(TOP)/MINFO
 	@for i in $(DIRS) ;\
 	do \
