@@ -27,10 +27,11 @@ organizationName_value          = Dodgy Brothers
 1.commonName			= Common Name (eg, YOUR name)
 1.commonName_value		= Brother 2
 
-[ v3_ee ]
+2.commonName			= Common Name (eg, YOUR name)
+2.commonName_value		= Proxy 1
+
+[ v3_proxy ]
+basicConstraints=CA:FALSE
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid,issuer:always
-basicConstraints = CA:false
-keyUsage = nonRepudiation, digitalSignature, keyEncipherment
-issuerAltName=issuer:copy
-
+proxyCertInfo=critical,language:id-ppl-anyLanguage,pathlen:1,policy:text:foo

@@ -274,17 +274,23 @@ test_gen:
 	@echo "Generate and verify a certificate request"
 	@$(SET_SO_PATHS); sh ./testgen
 
-test_ss keyU.ss certU.ss certCA.ss: testss
+test_ss keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
+		intP1.ss intP2.ss: testss
 	@echo "Generate and certify a test certificate"
 	@$(SET_SO_PATHS); sh ./testss
+	@cat certCA.ss certU.ss > intP1.ss
+	@cat certCA.ss certU.ss certP1.ss > intP2.ss
 
 test_engine: 
 	@echo "Manipulate the ENGINE structures"
 	$(SET_SO_PATHS); ./$(ENGINETEST)
 
-test_ssl: keyU.ss certU.ss certCA.ss
+test_ssl: keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
+		intP1.ss intP2.ss
 	@echo "test SSL protocol"
 	@$(SET_SO_PATHS); sh ./testssl keyU.ss certU.ss certCA.ss
+	@$(SET_SO_PATHS); sh ./testssl keyP1.ss certP1.ss intP1.ss
+	@$(SET_SO_PATHS); sh ./testssl keyP2.ss certP2.ss intP2.ss
 
 test_ca:
 	@$(SET_SO_PATHS); if ../apps/openssl no-rsa; then \

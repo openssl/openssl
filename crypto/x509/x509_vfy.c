@@ -389,6 +389,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 	int i, ok=0, must_be_ca;
 	X509 *x;
 	int (*cb)();
+	int proxy_path_length = 0;
 	cb=ctx->verify_cb;
 
 	/* must_be_ca can have 1 of 3 values:
@@ -472,7 +473,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 			}
 		/* Check pathlen */
 		if ((i > 1) && (x->ex_pathlen != -1)
-			   && (i > (x->ex_pathlen + 1)))
+			   && (i > (x->ex_pathlen + proxy_path_length + 1)))
 			{
 			ctx->error = X509_V_ERR_PATH_LENGTH_EXCEEDED;
 			ctx->error_depth = i;
@@ -480,8 +481,26 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 			ok=cb(0,ctx);
 			if (!ok) goto end;
 			}
-		/* The next certificate must be a CA */
-		must_be_ca = 1;
+		/* If this certificate is a proxy certificate, the next
+		   certificate must be another proxy certificate or a EE
+		   certificate.  If not, the next certificate must be a
+		   CA certificate.  */
+		if (x->ex_flags & EXFLAG_PROXY)
+			{
+			if (x->ex_pcpathlen != -1 && i > x->ex_pcpathlen)
+				{
+				ctx->error =
+					X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED;
+				ctx->error_depth = i;
+				ctx->current_cert = x;
+				ok=cb(0,ctx);
+				if (!ok) goto end;
+				}
+			proxy_path_length++;
+			must_be_ca = 0;
+			}
+		else
+			must_be_ca = 1;
 		}
 	ok = 1;
  end:

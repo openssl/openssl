@@ -4,6 +4,11 @@
 
  Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
 
+  *) Add processing of proxy certificates (see RFC 3820).  This work was
+     sponsored by KTH (The Royal Institute of Technology in Stockholm) and
+     EGEE (Enabling Grids for E-science in Europe).
+     [Richard Levitte]
+
   *) RC4 performance overhaul on modern architectures/implementations, such
      as Intel P4, IA-64 and AMD64.
      [Andy Polyakov]

@@ -743,3 +743,8 @@ sha512		742
 sha224		743
 ipsec3		744
 ipsec4		745
+id_ppl		746
+proxyCertInfo		747
+id_ppl_anyLanguage		748
+id_ppl_inheritAll		749
+Independent		750

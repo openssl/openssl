@@ -64,7 +64,7 @@ extern X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_crl_invdate;
 extern X509V3_EXT_METHOD v3_delta_crl, v3_cpols, v3_crld;
 extern X509V3_EXT_METHOD v3_ocsp_nonce, v3_ocsp_accresp, v3_ocsp_acutoff;
 extern X509V3_EXT_METHOD v3_ocsp_crlid, v3_ocsp_nocheck, v3_ocsp_serviceloc;
-extern X509V3_EXT_METHOD v3_crl_hold;
+extern X509V3_EXT_METHOD v3_crl_hold, v3_pci;
 extern X509V3_EXT_METHOD v3_policy_mappings, v3_policy_constraints;
 extern X509V3_EXT_METHOD v3_name_constraints, v3_inhibit_anyp;
 
@@ -112,6 +112,7 @@ static X509V3_EXT_METHOD *standard_exts[] = {
 #ifndef OPENSSL_NO_OCSP
 &v3_crl_hold,
 #endif
+&v3_pci,
 &v3_policy_mappings,
 &v3_name_constraints,
 &v3_inhibit_anyp

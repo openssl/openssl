@@ -280,6 +280,7 @@ struct x509_st
 	CRYPTO_EX_DATA ex_data;
 	/* These contain copies of various extension values */
 	long ex_pathlen;
+	long ex_pcpathlen;
 	unsigned long ex_flags;
 	unsigned long ex_kusage;
 	unsigned long ex_xkusage;
