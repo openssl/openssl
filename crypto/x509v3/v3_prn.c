@@ -178,7 +178,7 @@ int X509V3_extensions_print(BIO *bp, char *title, STACK_OF(X509_EXTENSION) *exts
 		ASN1_OBJECT *obj;
 		X509_EXTENSION *ex;
 		ex=sk_X509_EXTENSION_value(exts, i);
-		if (BIO_printf(bp,"%*s",indent, "") <= 0) return 0;
+		if (indent && BIO_printf(bp,"%*s",indent, "") <= 0) return 0;
 		obj=X509_EXTENSION_get_object(ex);
 		i2a_ASN1_OBJECT(bp,obj);
 		j=X509_EXTENSION_get_critical(ex);
