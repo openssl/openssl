@@ -195,6 +195,10 @@
 #define OPENSSL_add_all_algorithms_conf		OPENSSL_add_all_algo_conf
 
 /* Hack some long EC names */
+#undef EC_GROUP_set_point_conversion_form
+#define EC_GROUP_set_point_conversion_form	EC_GROUP_set_point_conv_form
+#undef EC_GROUP_get_point_conversion_form
+#define EC_GROUP_get_point_conversion_form	EC_GROUP_get_point_conv_form
 #undef EC_POINT_set_Jprojective_coordinates_GFp
 #define EC_POINT_set_Jprojective_coordinates_GFp \
                                                 EC_POINT_set_Jproj_coords_GFp
