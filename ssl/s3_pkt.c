@@ -603,7 +603,7 @@ static int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 /* XXXX */
 	if ((s->s3->wpend_tot > (int)len)
 		|| ((s->s3->wpend_buf != buf) &&
-			(!s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER))
+			!(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER))
 		|| (s->s3->wpend_type != type))
 		{
 		SSLerr(SSL_F_SSL3_WRITE_PENDING,SSL_R_BAD_WRITE_RETRY);

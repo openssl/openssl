@@ -412,7 +412,7 @@ static int write_pending(SSL *s, const unsigned char *buf, unsigned int len)
 	 * write */
 	if ((s->s2->wpend_tot > (int)len) ||
 		((s->s2->wpend_buf != buf) &&
-		 (!s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)))
+		 !(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)))
 		{
 		SSLerr(SSL_F_WRITE_PENDING,SSL_R_BAD_WRITE_RETRY);
 		return(-1);
