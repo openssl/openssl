@@ -4,6 +4,12 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Fix memory leaks in s3_clnt.c: All non-anonymous SSL3/TLS1 connections
+     without temporary keys kept an extra copy of the server key,
+     and connections with temporary keys did not free everything in case
+     of an error.
+     [Bodo Moeller]
+
   *) New function RSA_check_key and new openssl rsa option -check
      for verifying the consistency of RSA keys.
      [Ulf Moeller, Bodo Moeller]

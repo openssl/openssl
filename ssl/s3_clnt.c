@@ -1336,6 +1336,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 					goto err;
 					}
 				rsa=pkey->pkey.rsa;
+				EVP_PKEY_free(pkey);
 				}
 				
 			tmp_buf[0]=s->client_version>>8;

@@ -226,6 +226,9 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -no_ssl2      - Just disable SSLv2\n");
 	BIO_printf(bio_err," -no_ssl3      - Just disable SSLv3\n");
 	BIO_printf(bio_err," -no_tls1      - Just disable TLSv1\n");
+#ifndef NO_DH
+	BIO_printf(bio_err," -no_dhe       - Disable ephemeral DH\n");
+#endif
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatability\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
@@ -393,7 +396,7 @@ int MAIN(int argc, char *argv[])
 	int badop=0,bugs=0;
 	int ret=1;
 	int off=0;
-	int no_tmp_rsa=0,nocert=0;
+	int no_tmp_rsa=0,no_dhe=0,nocert=0;
 	int state=0;
 	SSL_METHOD *meth=NULL;
 #ifndef NO_DH
@@ -518,6 +521,8 @@ int MAIN(int argc, char *argv[])
 			{ bugs=1; }
 		else if	(strcmp(*argv,"-no_tmp_rsa") == 0)
 			{ no_tmp_rsa=1; }
+		else if	(strcmp(*argv,"-no_dhe") == 0)
+			{ no_dhe=1; }
 		else if	(strcmp(*argv,"-www") == 0)
 			{ www=1; }
 		else if	(strcmp(*argv,"-WWW") == 0)
@@ -620,21 +625,24 @@ bad:
 		}
 
 #ifndef NO_DH
-	/* EAY EAY EAY evil hack */
-	dh=load_dh_param();
-	if (dh != NULL)
+	if (!no_dhe)
 		{
-		BIO_printf(bio_s_out,"Setting temp DH parameters\n");
-		}
-	else
-		{
-		BIO_printf(bio_s_out,"Using default temp DH parameters\n");
-		dh=get_dh512();
-		}
-	(void)BIO_flush(bio_s_out);
+		/* EAY EAY EAY evil hack */
+		dh=load_dh_param();
+		if (dh != NULL)
+			{
+			BIO_printf(bio_s_out,"Setting temp DH parameters\n");
+			}
+		else
+			{
+			BIO_printf(bio_s_out,"Using default temp DH parameters\n");
+			dh=get_dh512();
+			}
+		(void)BIO_flush(bio_s_out);
 
-	SSL_CTX_set_tmp_dh(ctx,dh);
-	DH_free(dh);
+		SSL_CTX_set_tmp_dh(ctx,dh);
+		DH_free(dh);
+		}
 #endif
 	
 	if (!set_cert_stuff(ctx,s_cert_file,s_key_file))
