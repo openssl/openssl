@@ -1850,3 +1850,7 @@ BIO_nwrite                              1874
 X509_REQ_extension_nid                  1875
 BIO_nread                               1876
 X509_REQ_get_extesion_nids              1877
+BIO_nwrite0                             1878
+X509_REQ_add_extensions_nid             1879
+BIO_nread0                              1880
+X509_REQ_add_extensions                 1881

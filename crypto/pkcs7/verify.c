@@ -121,7 +121,7 @@ char *argv[];
 
 
 	/* Load the PKCS7 object from a file */
-	if ((p7=PEM_read_bio_PKCS7(data,NULL,NULL)) == NULL) goto err;
+	if ((p7=PEM_read_bio_PKCS7(data,NULL,NULL,NULL)) == NULL) goto err;
 
 	/* This stuff is being setup for certificate verification.
 	 * When using SSL, it could be replaced with a 

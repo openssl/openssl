@@ -98,7 +98,8 @@ char *argv[];
 			argc-=2;
 			argv+=2;
 			if (!(in=BIO_new_file(keyfile,"r"))) goto err;
-			if (!(x509=PEM_read_bio_X509(in,NULL,NULL))) goto err;
+			if (!(x509=PEM_read_bio_X509(in,NULL,NULL,NULL)))
+				goto err;
 			if(!recips) recips = sk_X509_new_null();
 			sk_X509_push(recips, x509);
 			BIO_free(in);

@@ -15,6 +15,7 @@ MAKE=		make -f Makefile.ssl
 MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
+RANLIB=		ranlib
 DES_ENC=	des_enc.o fcrypt_b.o
 # or use
 #DES_ENC=	dx86-elf.o yx86-elf.o

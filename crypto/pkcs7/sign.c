@@ -97,9 +97,9 @@ again:
 		BIO_set_fp(data,stdin,BIO_NOCLOSE);
 
 	if ((in=BIO_new_file("server.pem","r")) == NULL) goto err;
-	if ((x509=PEM_read_bio_X509(in,NULL,NULL)) == NULL) goto err;
+	if ((x509=PEM_read_bio_X509(in,NULL,NULL,NULL)) == NULL) goto err;
 	BIO_reset(in);
-	if ((pkey=PEM_read_bio_PrivateKey(in,NULL,NULL)) == NULL) goto err;
+	if ((pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,NULL)) == NULL) goto err;
 	BIO_free(in);
 
 	p7=PKCS7_new();

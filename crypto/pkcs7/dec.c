@@ -121,9 +121,10 @@ char *argv[];
 	}
 
         if ((in=BIO_new_file(keyfile,"r")) == NULL) goto err;
-        if ((x509=PEM_read_bio_X509(in,NULL,NULL)) == NULL) goto err;
+        if ((x509=PEM_read_bio_X509(in,NULL,NULL,NULL)) == NULL) goto err;
         BIO_reset(in);
-        if ((pkey=PEM_read_bio_PrivateKey(in,NULL,NULL)) == NULL) goto err;
+        if ((pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,NULL)) == NULL)
+		goto err;
         BIO_free(in);
 
 	if (pp == NULL)
@@ -131,7 +132,7 @@ char *argv[];
 
 
 	/* Load the PKCS7 object from a file */
-	if ((p7=PEM_read_bio_PKCS7(data,NULL,NULL)) == NULL) goto err;
+	if ((p7=PEM_read_bio_PKCS7(data,NULL,NULL,NULL)) == NULL) goto err;
 
 
 
