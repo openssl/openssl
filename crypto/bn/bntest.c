@@ -615,7 +615,7 @@ int test_mont(BIO *bp, BN_CTX *ctx)
 	BN_rand(&b,100,0,0); /**/
 	for (i=0; i<num2; i++)
 		{
-		int bits = (100%BN_BITS2+1)*BN_BITS2*i*BN_BITS2;
+		int bits = (200*(i+1))/num2;
 
 		if (bits == 0)
 			continue;
