@@ -334,19 +334,19 @@ demoCA/index.txt.
 
 Sign a certificate request:
 
-openssl ca -in req.pem -out newcert.pem
+ openssl ca -in req.pem -out newcert.pem
 
 Generate a CRL
 
-openssl ca -gencrl -out crl.pem
+ openssl ca -gencrl -out crl.pem
 
 Sign several requests:
 
-openssl ca -infiles req1.pem req2.pem req3.pem
+ openssl ca -infiles req1.pem req2.pem req3.pem
 
 Certify a Netscape SPKAC:
 
-openssl ca -spkac spkac.txt
+ openssl ca -spkac spkac.txt
 
 A sample SPKAC file (the SPKAC line has been truncated for clarity):
 

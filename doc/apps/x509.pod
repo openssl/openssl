@@ -336,46 +336,46 @@ line.
 
 Display the contents of a certificate:
 
-	openssl x509 -in cert.pem -noout -text
+ openssl x509 -in cert.pem -noout -text
 
 Display the certificate serial number:
 
-	openssl x509 -in cert.pem -noout -serial
+ openssl x509 -in cert.pem -noout -serial
 
 Display the certificate MD5 fingerprint:
 
-	openssl x509 -in cert.pem -noout -fingerprint
+ openssl x509 -in cert.pem -noout -fingerprint
 
 Display the certificate SHA1 fingerprint:
 
-	openssl x509 -sha1 -in cert.pem -noout -fingerprint
+ openssl x509 -sha1 -in cert.pem -noout -fingerprint
 
 Convert a certificate from PEM to DER format:
 
-	openssl x509 -in cert.pem -inform PEM -out cert.der -outform DER
+ openssl x509 -in cert.pem -inform PEM -out cert.der -outform DER
 
 Convert a certificate to a certificate request:
 
-	openssl x509 -x509toreq -in cert.pem -out req.pem -signkey key.pem
+ openssl x509 -x509toreq -in cert.pem -out req.pem -signkey key.pem
 
 Convert a certificate request into a self signed certificate using
 extensions for a CA:
 
-	openssl x509 -req -in careq.pem -config openssl.cnf -extensions v3_ca \
-		-signkey key.pem -out cacert.pem
+ openssl x509 -req -in careq.pem -config openssl.cnf -extensions v3_ca \
+	-signkey key.pem -out cacert.pem
 
 Sign a certificate request using the CA certificate above and add user
 certificate extensions:
 
-	openssl x509 -req -in req.pem -config openssl.cnf -extensions v3_usr \
-		-CA cacert.pem -CAkey key.pem -CAcreateserial
+ openssl x509 -req -in req.pem -config openssl.cnf -extensions v3_usr \
+	-CA cacert.pem -CAkey key.pem -CAcreateserial
 
 
 Set a certificate to be trusted for SSL client use and change set its alias to
 "Steve's Class 1 CA"
 
-	openssl x509 -in cert.pem -addtrust sslclient \
-		-alias "Steve's Class 1 CA" -out trust.pem
+ openssl x509 -in cert.pem -addtrust sslclient \
+	-alias "Steve's Class 1 CA" -out trust.pem
 
 =head1 NOTES
 

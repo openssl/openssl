@@ -248,24 +248,25 @@ the signers certificates.
 
 Create a cleartext signed message:
 
- openssl smime -sign -in message.txt -text -out mail.msg
-           -signer mycert.pem
+ openssl smime -sign -in message.txt -text -out mail.msg \
+	-signer mycert.pem
 
 Create and opaque signed message
 
- openssl smime -sign -in message.txt -text -out mail.msg -nodetach
-           -signer mycert.pem
+ openssl smime -sign -in message.txt -text -out mail.msg -nodetach \
+	-signer mycert.pem
 
 Create a signed message, include some additional certificates and
 read the private key from another file:
 
- openssl smime -sign -in in.txt -text -out mail.msg
-           -signer mycert.pem -inkey mykey.pem -certfile mycerts.pem
+ openssl smime -sign -in in.txt -text -out mail.msg \
+	-signer mycert.pem -inkey mykey.pem -certfile mycerts.pem
 
 Send a signed message under Unix directly to sendmail, including headers:
 
- openssl smime -sign -in in.txt -text -signer mycert.pem -from steve@openssl.org
-  -to someone@somewhere -subject "Signed message" | sendmail someone@somewhere
+ openssl smime -sign -in in.txt -text -signer mycert.pem \
+	-from steve@openssl.org -to someone@somewhere \
+	-subject "Signed message" | sendmail someone@somewhere
 
 Verify a message and extract the signer's certificate if successful:
 
@@ -273,14 +274,16 @@ Verify a message and extract the signer's certificate if successful:
 
 Send encrypted mail using triple DES:
 
- openssl smime -encrypt -in in.txt -from steve@openssl.org -to someone@somewhere
-   -subject "Encrypted message" -des3 user.pem -out mail.msg
+ openssl smime -encrypt -in in.txt -from steve@openssl.org \
+	-to someone@somewhere -subject "Encrypted message" \
+	-des3 user.pem -out mail.msg
 
 Sign and encrypt mail:
 
- openssl smime -sign -in ml.txt -signer my.pem -text | openssl -encrypt -out mail.msg 
-  -from steve@openssl.org -to someone@somewhere -subject "Signed and Encrypted message"
-  -des3 user.pem
+ openssl smime -sign -in ml.txt -signer my.pem -text \
+	| openssl -encrypt -out mail.msg \
+	-from steve@openssl.org -to someone@somewhere \
+	-subject "Signed and Encrypted message" -des3 user.pem
 
 Note: the encryption command does not include the B<-text> option because the message
 being encrypted already has MIME headers.

@@ -135,23 +135,23 @@ The PEM private key format uses the header and footer lines:
 
 To remove the pass phrase on an RSA private key:
 
-C<openssl rsa -in key.pem -out keyout.pem>
+ openssl rsa -in key.pem -out keyout.pem
 
 To encrypt a private key using triple DES:
 
-C<openssl rsa -in key.pem -des3 -out keyout.pem>
+ openssl rsa -in key.pem -des3 -out keyout.pem
 
 To convert a private key from PEM to DER format: 
 
-C<openssl rsa -in key.pem -outform DER -out keyout.der>
+ openssl rsa -in key.pem -outform DER -out keyout.der
 
 To print out the components of a private key to standard output:
 
-C<openssl rsa -in key.pem -text -noout>
+ openssl rsa -in key.pem -text -noout
 
 To just output the public part of a private key:
 
-C<openssl rsa -in key.pem -pubout -out pubkey.pem>
+ openssl rsa -in key.pem -pubout -out pubkey.pem
 
 =head1 SEE ALSO
 
