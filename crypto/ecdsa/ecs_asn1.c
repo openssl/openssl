@@ -439,7 +439,9 @@ ECDSA         *ECDSA_x9_62parameters2ecdsa(const X9_62_EC_PARAMETERS *params, EC
 		if ((point = EC_POINT_new(ret->group)) == NULL) goto err;
 	}
 	else OPENSSL_ECDSA_ABORT(ECDSA_R_WRONG_FIELD_IDENTIFIER)
-	if (params->curve->seed != NULL && params->curve->seed->data > 0)
+	/* FIXME!!!  It seems like the comparison of data with 0 isn't the
+	   intended thing. */
+	if (params->curve->seed != NULL && params->curve->seed->data != 0)
 	{
 		if (ret->seed != NULL)
 			OPENSSL_free(ret->seed);
