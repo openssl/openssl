@@ -127,8 +127,8 @@ static void fips_gettime(unsigned char buf[8])
 	}
     gettimeofday(&tv,NULL);
     assert(sizeof(long) == 4);
-    *(long *)&buf[0]=tv.tv_sec;
-    *(long *)&buf[4]=tv.tv_usec;
+    memcpy (&buf[0],&tv.tv_sec,4);
+    memcpy (&buf[4],&tv.tv_usec,4);
 
 #ifndef GETPID_IS_MEANINGLESS
     /* we mix in the PID to ensure that after a fork the children don't give
