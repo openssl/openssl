@@ -60,6 +60,7 @@ rsadsi 1		: pkcs			: RSA Data Security, Inc. PKCS
 pkcs 1			: pkcs1
 pkcs1 1			:			: rsaEncryption
 pkcs1 2			: RSA-MD2		: md2WithRSAEncryption
+pkcs1 3			: RSA-MD4		: md4WithRSAEncryption
 pkcs1 4			: RSA-MD5		: md5WithRSAEncryption
 pkcs1 5			: RSA-SHA1		: sha1WithRSAEncryption
 

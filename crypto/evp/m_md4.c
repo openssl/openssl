@@ -76,7 +76,7 @@ static int final(EVP_MD_CTX *ctx,unsigned char *md)
 static const EVP_MD md4_md=
 	{
 	NID_md4,
-	0,
+	NID_md4WithRSAEncryption,
 	MD4_DIGEST_LENGTH,
 	0,
 	init,
