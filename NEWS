@@ -70,6 +70,13 @@
       o SSL/TLS: add callback to retrieve SSL/TLS messages.
       o SSL/TLS: support AES cipher suites (RFC3268).
 
+  Major changes between OpenSSL 0.9.6i and OpenSSL 0.9.6j:
+
+      o Security: counter the Klima-Pokorny-Rosa extension of
+        Bleichbacher's attack 
+      o Security: make RSA blinding default.
+      o Build: shared library support fixes.
+
   Major changes between OpenSSL 0.9.6h and OpenSSL 0.9.6i:
 
       o Important security related bugfixes.
