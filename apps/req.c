@@ -175,7 +175,7 @@ int MAIN(int argc, char **argv)
 	char *passin = NULL, *passout = NULL;
 	char *p;
 	char *subj = NULL;
-	const EVP_MD *md_alg=NULL,*digest=EVP_md5();
+	const EVP_MD *md_alg=NULL,*digest;
 	unsigned long chtype = MBSTRING_ASC;
 #ifndef MONOLITH
 	char *to_free;
@@ -196,6 +196,13 @@ int MAIN(int argc, char **argv)
 	outfile=NULL;
 	informat=FORMAT_PEM;
 	outformat=FORMAT_PEM;
+
+#ifdef  OPENSSL_FIPS
+	if (FIPS_mode())
+		digest = EVP_sha1();
+	else
+#endif
+		digest = EVP_md5();
 
 	prog=argv[0];
 	argc--;
