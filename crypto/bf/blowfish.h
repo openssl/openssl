@@ -66,18 +66,10 @@ extern "C" {
 #define BF_ENCRYPT	1
 #define BF_DECRYPT	0
 
-/* If you make this 'unsigned int' the pointer variants will work on
- * the Alpha, otherwise they will not.  Strangly using the '8 byte'
- * BF_LONG and the default 'non-pointer' inner loop is the best configuration
- * for the Alpha */
-#if defined(__sgi)
-#  if (_MIPS_SZLONG==64)
-#    define BF_LONG unsigned int
-#  else
-#    define BF_LONG unsigned long
-#  endif
+#ifdef WIN16
+#define BF_LONG unsigned long
 #else
-#  define BF_LONG unsigned long
+#define BF_LONG unsigned int
 #endif
 
 #define BF_ROUNDS	16

@@ -74,20 +74,8 @@
 #  define BF_PTR
 #elif defined( __ultrix )     /* Older MIPS */
 #  define BF_PTR
-#elif defined( __osf1__ )     /* Alpha */
-  /* None */
-#elif defined ( _AIX )                /* RS6000 */
-  /* Unknown */
-#elif defined( __hpux )               /* HP-PA */
-  /* None */
-#elif defined( __aux )                /* 68K */
-  /* Unknown */
-#elif defined( __dgux )               /* 88K (but P6 in latest boxes) */
-  /* Unknown */
 #elif defined( __sgi )                /* Newer MIPS */
 #  define BF_PTR
-#elif defined( i386 )         /* x86 boxes, should be gcc */
-#elif defined( _MSC_VER )     /* x86 boxes, Visual C */
 #endif /* Systems-specific speed defines */
 
 #undef c2l
