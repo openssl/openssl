@@ -1379,10 +1379,9 @@ bad:
 			if (pp[DB_type][0] == DB_TYPE_REV)
 				{
 				if ((r=X509_REVOKED_new()) == NULL) goto err;
-				ASN1_STRING_set((ASN1_STRING *)
-					r->revocationDate,
-					(unsigned char *)pp[DB_rev_date],
-					strlen(pp[DB_rev_date]));
+				if (!ASN1_UTCTIME_set_string(r->revocationDate,
+					pp[DB_rev_date]))
+						goto err;
 				/* strcpy(r->revocationDate,pp[DB_rev_date]);*/
 
 				(void)BIO_reset(hex);

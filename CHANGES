@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Make ASN1_UTCTIME_set_string() and ASN1_GENERALIZEDTIME_set_string()
+     set string type: to handle setting ASN1_TIME structures. Fix ca
+     utility to correctly initialize revocation date of CRLs.
+     [Steve Henson]
+
   *) New option SSL_OP_CIPHER_SERVER_PREFERENCE allows the server to override
      the clients preferred ciphersuites and rather use its own preferences.
      Should help to work around M$ SGC (Server Gated Cryptography) bug in

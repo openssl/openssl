@@ -179,6 +179,7 @@ int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, char *str)
 			{
 			ASN1_STRING_set((ASN1_STRING *)s,
 				(unsigned char *)str,t.length);
+			s->type = V_ASN1_UTCTIME;
 			}
 		return(1);
 		}

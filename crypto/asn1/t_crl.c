@@ -112,7 +112,7 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
 
 	rev = X509_CRL_get_REVOKED(x);
 
-	if(sk_X509_REVOKED_num(rev))
+	if(sk_X509_REVOKED_num(rev) > 0)
 	    BIO_printf(out, "Revoked Certificates:\n");
 	else BIO_printf(out, "No Revoked Certificates.\n");
 
