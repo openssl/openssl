@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 #define MS_CALLBACK
 #endif
 
-static void MS_CALLBACK dsa_cb(int p, int n, char *arg);
+static void MS_CALLBACK dsa_cb(int p, int n, void *arg);
 
 /* seed, out_p, out_q, out_g are taken from the updated Appendix 5 to
  * FIPS PUB 186 and also appear in Appendix 5 to FIPS PIB 186-1 */
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 
 	BIO_printf(bio_err,"test generation of DSA parameters\n");
 
-	dsa=DSA_generate_parameters(512,seed,20,&counter,&h,dsa_cb,(char *)bio_err);
+	dsa=DSA_generate_parameters(512,seed,20,&counter,&h,dsa_cb,bio_err);
 
 	BIO_printf(bio_err,"seed\n");
 	for (i=0; i<20; i+=4)
@@ -209,7 +209,7 @@ end:
 	return(0);
 	}
 
-static void MS_CALLBACK dsa_cb(int p, int n, char *arg)
+static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
 	{
 	char c='*';
 	static int ok=0,num=0;
@@ -218,8 +218,8 @@ static void MS_CALLBACK dsa_cb(int p, int n, char *arg)
 	if (p == 1) c='+';
 	if (p == 2) { c='*'; ok++; }
 	if (p == 3) c='\n';
-	BIO_write((BIO *)arg,&c,1);
-	(void)BIO_flush((BIO *)arg);
+	BIO_write(arg,&c,1);
+	(void)BIO_flush(arg);
 
 	if (!ok && (p == 0) && (num > 1))
 		{

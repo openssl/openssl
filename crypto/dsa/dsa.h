@@ -182,7 +182,7 @@ DSA *	d2i_DSAPrivateKey(DSA **a, unsigned char **pp, long length);
 DSA * 	d2i_DSAparams(DSA **a, unsigned char **pp, long length);
 DSA *	DSA_generate_parameters(int bits, unsigned char *seed,int seed_len,
 		int *counter_ret, unsigned long *h_ret,void
-		(*callback)(),void *cb_arg);
+		(*callback)(int, int, void *),void *cb_arg);
 int	DSA_generate_key(DSA *a);
 int	i2d_DSAPublicKey(DSA *a, unsigned char **pp);
 int 	i2d_DSAPrivateKey(DSA *a, unsigned char **pp);

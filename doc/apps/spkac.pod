@@ -11,6 +11,7 @@ B<openssl> B<spkac>
 [B<-out filename>]
 [B<-key keyfile>]
 [B<-challenge string>]
+[B<-pubkey>]
 [B<-spkac spkacname>]
 [B<-spksect section>]
 [B<-noout>]
@@ -62,6 +63,11 @@ SPKAC. The default is the default section.
 
 don't output the text version of the SPKAC (not used if an
 SPKAC is being created).
+
+=item B<-pubkey>
+
+output the public key of an SPKAC (not used if an SPKAC is
+being created).
 
 =item B<-verify>
 

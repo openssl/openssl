@@ -79,11 +79,11 @@ int MAIN(int argc, char **argv)
 	{
 	int i,badops=0, ret = 1;
 	BIO *in = NULL,*out = NULL, *key = NULL;
-	int verify=0,noout=0;
+	int verify=0,noout=0,pubkey=0;
 	char *infile = NULL,*outfile = NULL,*prog;
 	char *spkac = "SPKAC", *spksect = "default", *spkstr = NULL;
 	char *challenge = NULL, *keyfile = NULL;
-	LHASH *conf;
+	LHASH *conf = NULL;
 	NETSCAPE_SPKI *spki = NULL;
 	EVP_PKEY *pkey = NULL;
 
@@ -128,6 +128,8 @@ int MAIN(int argc, char **argv)
 			}
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
+		else if (strcmp(*argv,"-pubkey") == 0)
+			pubkey=1;
 		else if (strcmp(*argv,"-verify") == 0)
 			verify=1;
 		else badops = 1;
@@ -138,13 +140,16 @@ int MAIN(int argc, char **argv)
 	if (badops)
 		{
 bad:
-		BIO_printf(bio_err,"%s [options] <infile >outfile\n",prog);
+		BIO_printf(bio_err,"%s [options]\n",prog);
 		BIO_printf(bio_err,"where options are\n");
-		BIO_printf(bio_err," -in arg       input file\n");
-		BIO_printf(bio_err," -out arg      output file\n");
-		BIO_printf(bio_err," -spkac arg    alternative SPKAC name\n");
-		BIO_printf(bio_err," -noout        don't print SPKAC\n");
-		BIO_printf(bio_err," -verify       verify SPKAC signature\n");
+		BIO_printf(bio_err," -in arg        input file\n");
+		BIO_printf(bio_err," -out arg       output file\n");
+		BIO_printf(bio_err," -key arg       create SPKAC using private key\n");
+		BIO_printf(bio_err," -challenge arg challenge string\n");
+		BIO_printf(bio_err," -spkac arg     alternative SPKAC name\n");
+		BIO_printf(bio_err," -noout         don't print SPKAC\n");
+		BIO_printf(bio_err," -pubkey        output public key\n");
+		BIO_printf(bio_err," -verify        verify SPKAC signature\n");
 		goto end;
 		}
 
@@ -180,6 +185,7 @@ bad:
 			goto end;
 		}
 		BIO_printf(out, "SPKAC=%s\n", spkstr);
+		Free(spkstr);
 		ret = 0;
 		goto end;
 	}
@@ -212,6 +218,7 @@ bad:
 	}
 
 	spki = NETSCAPE_SPKI_b64_decode(spkstr, -1);
+	
 	if(!spki) {
 		BIO_printf(bio_err, "Error loading SPKAC\n");
 		ERR_print_errors(bio_err);
@@ -228,11 +235,9 @@ bad:
 	}
 
 	if(!noout) NETSCAPE_SPKI_print(out, spki);
+	pkey = NETSCAPE_SPKI_get_pubkey(spki);
 	if(verify) {
-		EVP_PKEY *pktmp;
-		pktmp = NETSCAPE_SPKI_get_pubkey(spki);
-		i = NETSCAPE_SPKI_verify(spki, pktmp);
-		EVP_PKEY_free(pktmp);
+		i = NETSCAPE_SPKI_verify(spki, pkey);
 		if(i) BIO_printf(bio_err, "Signature OK\n");
 		else {
 			BIO_printf(bio_err, "Signature Failure\n");
@@ -240,15 +245,16 @@ bad:
 			goto end;
 		}
 	}
+	if(pubkey) PEM_write_bio_PUBKEY(out, pkey);
 
 	ret = 0;
 
 end:
+	CONF_free(conf);
 	NETSCAPE_SPKI_free(spki);
 	BIO_free(in);
 	BIO_free(out);
 	BIO_free(key);
 	EVP_PKEY_free(pkey);
-	if(spkstr) Free(spkstr);
 	EXIT(ret);
 	}

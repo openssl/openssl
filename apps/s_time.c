@@ -632,7 +632,7 @@ static SSL *doConnection(SSL *scon)
 	BIO_set_conn_hostname(conn,host);
 
 	if (scon == NULL)
-		serverCon=(SSL *)SSL_new(tm_ctx);
+		serverCon=SSL_new(tm_ctx);
 	else
 		{
 		serverCon=scon;

@@ -84,14 +84,23 @@ descriptions. For example, the function ssl23_read() reports a
 
  SSLerr(SSL_F_SSL23_READ, SSL_R_SSL_HANDSHAKE_FAILURE);
 
+Function and reason codes should consist of upper case characters,
+numbers and underscores only. The error file generation script translates
+function codes into function names by looking in the header files
+for an appropriate function name, if none is found it just uses
+the capitalized form such as "SSL23_READ" in the above example.
+
+The trailing section of a reason code (after the "_R_") is translated
+into lower case and and underscores changed to spaces.
+
 When you are using new function or reason codes, run B<make errors>.
 The necessary B<#define>s will then automatically be added to the
 sub-library's header file.
 
 Although a library will normally report errors using its own specific
-macro, a different macro is used. This is normally only done when a
-library wants to include ASN1 code which must user the ASN1 libraries
-error macro.
+XXXerr macro, another library's macro can be used. This is normally
+only done when a library wants to include ASN1 code which must use
+the ASN1err() macro.
 
 =head2 Adding new libraries
 

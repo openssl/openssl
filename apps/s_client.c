@@ -376,7 +376,7 @@ bad:
 		}
 
 
-	con=(SSL *)SSL_new(ctx);
+	con=SSL_new(ctx);
 /*	SSL_set_cipher_list(con,"RC4-MD5"); */
 
 re_start:

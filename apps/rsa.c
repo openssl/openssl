@@ -271,7 +271,7 @@ bad:
 				}
 			}
 		p=(unsigned char *)buf->data;
-		rsa=(RSA *)d2i_Netscape_RSA(NULL,&p,(long)size,NULL);
+		rsa=d2i_Netscape_RSA(NULL,&p,(long)size,NULL);
 		BUF_MEM_free(buf);
 		}
 #endif

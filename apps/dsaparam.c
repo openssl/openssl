@@ -84,7 +84,7 @@
  * -genkey
  */
 
-static void MS_CALLBACK dsa_cb(int p, int n, char *arg);
+static void MS_CALLBACK dsa_cb(int p, int n, void *arg);
 int MAIN(int argc, char **argv)
 	{
 	DSA *dsa=NULL;
@@ -225,8 +225,7 @@ bad:
 		assert(need_rand);
 		BIO_printf(bio_err,"Generating DSA parameters, %d bit long prime\n",num);
 	        BIO_printf(bio_err,"This could take some time\n");
-	        dsa=DSA_generate_parameters(num,NULL,0,NULL,NULL,
-			dsa_cb,(char *)bio_err);
+	        dsa=DSA_generate_parameters(num,NULL,0,NULL,NULL, dsa_cb,bio_err);
 		}
 	else if	(informat == FORMAT_ASN1)
 		dsa=d2i_DSAparams_bio(in,NULL);
@@ -350,7 +349,7 @@ end:
 	EXIT(ret);
 	}
 
-static void MS_CALLBACK dsa_cb(int p, int n, char *arg)
+static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
 	{
 	char c='*';
 
@@ -358,8 +357,8 @@ static void MS_CALLBACK dsa_cb(int p, int n, char *arg)
 	if (p == 1) c='+';
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
-	BIO_write((BIO *)arg,&c,1);
-	(void)BIO_flush((BIO *)arg);
+	BIO_write(arg,&c,1);
+	(void)BIO_flush(arg);
 #ifdef LINT
 	p=n;
 #endif

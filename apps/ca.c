@@ -200,7 +200,7 @@ static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			 char *enddate, int days, char *ext_sect,LHASH *conf,
 				int verbose);
 static int fix_data(int nid, int *type);
-static void write_new_certificate(BIO *bp, X509 *x, int output_der);
+static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial,
 	char *startdate, char *enddate, int days, int batch, int verbose,
@@ -247,6 +247,7 @@ int MAIN(int argc, char **argv)
 	char *enddate=NULL;
 	int days=0;
 	int batch=0;
+	int notext=0;
 	X509 *x509=NULL;
 	X509 *x=NULL;
 	BIO *in=NULL,*out=NULL,*Sout=NULL,*Cout=NULL;
@@ -357,6 +358,8 @@ EF_ALIGNMENT=0;
 			if (--argc < 1) goto bad;
 			outdir= *(++argv);
 			}
+		else if (strcmp(*argv,"-notext") == 0)
+			notext=1;
 		else if (strcmp(*argv,"-batch") == 0)
 			batch=1;
 		else if (strcmp(*argv,"-preserveDN") == 0)
@@ -984,8 +987,8 @@ bad:
 				perror(buf[2]);
 				goto err;
 				}
-			write_new_certificate(Cout,x, 0);
-			write_new_certificate(Sout,x, output_der);
+			write_new_certificate(Cout,x, 0, notext);
+			write_new_certificate(Sout,x, output_der, notext);
 			}
 
 		if (sk_num(cert_sk))
@@ -1893,17 +1896,16 @@ err:
 	return(ok);
 	}
 
-static void write_new_certificate(BIO *bp, X509 *x, int output_der)
+static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 	{
-	char *f;
-	char buf[256];
 
 	if (output_der)
 		{
 		(void)i2d_X509_bio(bp,x);
 		return;
 		}
-
+#if 0
+	/* ??? Not needed since X509_print prints all this stuff anyway */
 	f=X509_NAME_oneline(X509_get_issuer_name(x),buf,256);
 	BIO_printf(bp,"issuer :%s\n",f);
 
@@ -1913,10 +1915,9 @@ static void write_new_certificate(BIO *bp, X509 *x, int output_der)
 	BIO_puts(bp,"serial :");
 	i2a_ASN1_INTEGER(bp,x->cert_info->serialNumber);
 	BIO_puts(bp,"\n\n");
-	X509_print(bp,x);
-	BIO_puts(bp,"\n");
+#endif
+	if(!notext)X509_print(bp,x);
 	PEM_write_bio_X509(bp,x);
-	BIO_puts(bp,"\n");
 	}
 
 static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,

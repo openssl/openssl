@@ -26,6 +26,7 @@ B<openssl> B<ca>
 [B<-cert file>]
 [B<-in file>]
 [B<-out file>]
+[B<-notext>]
 [B<-outdir dir>]
 [B<-infiles>]
 [B<-spkac file>]
@@ -101,6 +102,10 @@ the 'ps' utility) this option should be used with caution.
 =item B<-verbose>
 
 this prints extra details about the operations being performed.
+
+=item B<-notext>
+
+don't output the text form of a certificate to the output file.
 
 =item B<-startdate date>
 

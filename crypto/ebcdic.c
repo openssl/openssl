@@ -210,4 +210,8 @@ ascii2ebcdic(void *dest, const void *srce, size_t count)
     return dest;
 }
 
-#endif /*CHARSET_EBCDIC*/
+#else /*CHARSET_EBCDIC*/
+#ifdef PEDANTIC
+static void *dummy=&dummy;
+#endif
+#endif

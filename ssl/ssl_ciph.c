@@ -313,7 +313,7 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 		int num_of_ciphers, unsigned long mask, CIPHER_ORDER *list,
 		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 	{
-	unsigned int i, list_num;
+	int i, list_num;
 	SSL_CIPHER *c;
 
 	/*

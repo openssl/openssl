@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Add a new -notext option to 'ca' and a -pubkey option to 'spkac'.
+     [Steve Henson]
+
   *) Use a less unusual form of the Miller-Rabin primality test (it used
      a binary algorithm for exponentiation integrated into the Miller-Rabin
      loop, our standard modexp algorithms are faster).

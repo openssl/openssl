@@ -782,7 +782,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 #endif
 
 	if (con == NULL) {
-		con=(SSL *)SSL_new(ctx);
+		con=SSL_new(ctx);
 		if(context)
 		      SSL_set_session_id_context(con, context,
 						 strlen((char *)context));
@@ -1150,7 +1150,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	/* lets make the output buffer a reasonable size */
 	if (!BIO_set_write_buffer_size(io,bufsize)) goto err;
 
-	if ((con=(SSL *)SSL_new(ctx)) == NULL) goto err;
+	if ((con=SSL_new(ctx)) == NULL) goto err;
 	if(context) SSL_set_session_id_context(con, context,
 					       strlen((char *)context));
 
