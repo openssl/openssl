@@ -72,6 +72,8 @@
 #else
 #include <syslog.h>
 #endif
+#else
+#include <process.h>
 #endif
 
 #include "cryptlib.h"
@@ -131,8 +133,11 @@ static int MS_CALLBACK slg_write(BIO *b, char *in, int inl)
 	char* buf= in;
 	char* pp;
 #if defined(WIN32)
-	LPTSTR lpszStrings[1];
+	LPTSTR lpszStrings[2];
 	WORD evtype= EVENTLOG_ERROR_TYPE;
+	int pid = _getpid();
+	char pidbuf[20];
+	int pidbufl;
 #else
 	int priority;
 #endif
@@ -156,10 +161,13 @@ static int MS_CALLBACK slg_write(BIO *b, char *in, int inl)
 		evtype= EVENTLOG_ERROR_TYPE;
 		pp= buf;
 	}
-	lpszStrings[0]= pp;
+
+	sprintf(pidbuf, "[%d] ", pid);
+	lpszStrings[0] = pidbuf;
+	lpszStrings[1] = pp;
 
 	if(b->ptr)
-		ReportEvent(b->ptr, evtype, 0, 1024, NULL, 1, 0,
+		ReportEvent(b->ptr, evtype, 0, 1024, NULL, 2, 0,
 				lpszStrings, NULL);
 #else
 	if(strncmp(buf, "ERR ", 4) == 0){
