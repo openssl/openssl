@@ -1035,13 +1035,13 @@ $shared_ldflag =
 $shared_extension = 
 $ranlib       = 
 
-*** cray-t3e
+*** cray-j90
 $cc           = cc
 $cflags       = -DBIT_FIELD_LIMITS -DTERMIOS
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
-$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT
+$bn_ops       = SIXTY_FOUR_BIT_LONG DES_INT
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
@@ -1058,13 +1058,13 @@ $shared_ldflag =
 $shared_extension = 
 $ranlib       = 
 
-*** cray-t90-cc
+*** cray-t3e
 $cc           = cc
 $cflags       = -DBIT_FIELD_LIMITS -DTERMIOS
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
-$bn_ops       = SIXTY_FOUR_BIT_LONG DES_INT
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
