@@ -55,8 +55,9 @@
      [Steve Henson]
 
   *) mk1mf.pl (used by Windows builds) did not properly read the
-     options set by Configure in the top level Makefile; typo fixed,
-     now "no-idea" etc. works as intended.
+     options set by Configure in the top level Makefile, and Configure
+     did not was not even able to write more than one option correctly.
+     Fixed, now "no-idea no-rc5 -DCRYPTO_MDEBUG" etc. works as intended.
      [Bodo Moeller]
 
   *) New functions CONF_load_bio() and CONF_load_fp() to allow a config
