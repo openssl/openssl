@@ -86,12 +86,10 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	{
 	BIGNUM *r0=NULL,*r1=NULL,*r2=NULL,*r3=NULL,*tmp;
 	int bitsp,bitsq,ok= -1,n=0;
-	BN_CTX *ctx=NULL,*ctx2=NULL;
+	BN_CTX *ctx=NULL;
 
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
-	ctx2=BN_CTX_new();
-	if (ctx2 == NULL) goto err;
 	BN_CTX_start(ctx);
 	r0 = BN_CTX_get(ctx);
 	r1 = BN_CTX_get(ctx);
@@ -183,7 +181,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 		goto err;
 		}
 */
-	if (!BN_mod_inverse(rsa->d,rsa->e,r0,ctx2)) goto err;	/* d */
+	if (!BN_mod_inverse(rsa->d,rsa->e,r0,ctx)) goto err;	/* d */
 
 	/* calculate d mod (p-1) */
 	if (!BN_mod(rsa->dmp1,rsa->d,r1,ctx)) goto err;
@@ -192,7 +190,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	if (!BN_mod(rsa->dmq1,rsa->d,r2,ctx)) goto err;
 
 	/* calculate inverse of q mod p */
-	if (!BN_mod_inverse(rsa->iqmp,rsa->q,rsa->p,ctx2)) goto err;
+	if (!BN_mod_inverse(rsa->iqmp,rsa->q,rsa->p,ctx)) goto err;
 
 	ok=1;
 err:
@@ -203,7 +201,6 @@ err:
 		}
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
-	BN_CTX_free(ctx2);
 
 	return ok;
 	}
