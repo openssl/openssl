@@ -855,18 +855,6 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 	if (X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days) == NULL)
 		goto end;
 
-	/* don't save DSA parameters in child if parent has them
-	 * and the parents and the childs are the same. */
-	upkey=X509_get_pubkey(x);
-	if (!EVP_PKEY_missing_parameters(pkey) &&
-		(EVP_PKEY_cmp_parameters(pkey,upkey) == 0))
-		{
-		EVP_PKEY_save_parameters(upkey,0);
-		/* Force a re-write */
-		X509_set_pubkey(x,upkey);
-		}
-	EVP_PKEY_free(upkey);
-
 	if(conf) {
 		X509V3_CTX ctx2;
 		X509_set_version(x,2); /* version 3 certificate */

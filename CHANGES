@@ -4,6 +4,21 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) The x509 application mishandled signing requests containing DSA
+     keys when the signing key was also DSA and the parameters didn't match.
+
+     It was supposed to omit the parameters when they matched the signing key:
+     the verifying software was then supposed to automatically use the CA's
+     parameters if they were absent from the end user certificate.
+
+     Omitting parameters is no longer recommended. The test was also
+     the wrong way round! This was probably due to unusual behaviour in
+     EVP_cmp_parameters() which returns 1 if the parameters match. 
+     This meant that parameters were omitted when they *didn't* match and
+     the certificate was useless. Certificates signed with 'ca' didn't have
+     this bug.
+     [Steve Henson, reported by Doug Erickson <Doug.Erickson@Part.NET>]
+
   *) Memory leak checking had some problems.  The interface is as follows:
      Applications can use
          CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON) aka MemCheck_start(),
