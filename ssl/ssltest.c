@@ -90,6 +90,10 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export,int keylength);
 #ifndef NO_DH
 static DH *get_dh512(void);
 #endif
+#ifndef NO_DSA
+static void MS_CALLBACK dsa_cb(int p, int n, void *arg);
+#endif
+
 static BIO *bio_err=NULL;
 static BIO *bio_stdout=NULL;
 
@@ -330,12 +334,12 @@ bad:
 			
 			if (verbose)
 				{
-				fprintf(stdout, "Creating 1024 bit DHE parameters ...");
-				fflush(stdout);
+				BIO_printf(bio_err, "Creating 1024 bit DHE parameters\n");
+				BIO_flush(bio_err);
 				}
 			
 			memcpy(seed, "Random String no. 12", 20);
-			dsa = DSA_generate_parameters(1024, seed, 20, NULL, NULL, 0, NULL);
+			dsa = DSA_generate_parameters(1024, seed, 20, NULL, NULL, dsa_cb, bio_err);
 			dh = DSA_dup_DH(dsa);	
 			DSA_free(dsa);
 			/* important: SSL_OP_SINGLE_DH_USE to avoid small subgroup attacks */
@@ -387,14 +391,14 @@ bad:
 
 	if (client_auth)
 		{
-		fprintf(stderr,"client authentication\n");
+		BIO_printf(bio_err,"client authentication\n");
 		SSL_CTX_set_verify(s_ctx,
 			SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
 			verify_callback);
 		}
 	if (server_auth)
 		{
-		fprintf(stderr,"server authentication\n");
+		BIO_printf(bio_err,"server authentication\n");
 		SSL_CTX_set_verify(c_ctx,SSL_VERIFY_PEER,
 			verify_callback);
 		}
@@ -419,13 +423,13 @@ bad:
 	if (!verbose)
 		{
 		ciph=SSL_get_current_cipher(c_ssl);
-		fprintf(stdout,"Protocol %s, cipher %s, %s\n",
+		BIO_printf(bio_stdout,"Protocol %s, cipher %s, %s\n",
 			SSL_get_version(c_ssl),
 			SSL_CIPHER_get_version(ciph),
 			SSL_CIPHER_get_name(ciph));
 		}
 	if ((number > 1) || (bytes > 1L))
-		printf("%d handshakes of %ld bytes done\n",number,bytes);
+		BIO_printf(bio_stdout, "%d handshakes of %ld bytes done\n",number,bytes);
 
 	SSL_free(s_ssl);
 	SSL_free(c_ssl);
@@ -1184,5 +1188,26 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 		(void)BIO_flush(bio_err);
 		}
 	return(rsa_tmp);
+	}
+#endif
+
+#ifndef NO_DSA
+static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
+	{
+	char c='*';
+	static int ok=0,num=0;
+
+	if (p == 0) { c='.'; num++; };
+	if (p == 1) c='+';
+	if (p == 2) { c='*'; ok++; }
+	if (p == 3) c='\n';
+	BIO_write(arg,&c,1);
+	(void)BIO_flush(arg);
+
+	if (!ok && (p == 0) && (num > 1))
+		{
+		BIO_printf((BIO *)arg,"error in dsatest\n");
+		exit(1);
+		}
 	}
 #endif
