@@ -384,15 +384,16 @@ err:
 	}
 
 /* This code was liberated and adapted from the commented-out code in
- * dsa_ossl.c but doesn't work (for me at least). So I need to work out
- * some mod_exp-based variant of BN_mod_exp2_mont ... for now we resort
- * to software which should only hurt DSA clients, or DSA servers doing
- * client-authentication. */
+ * dsa_ossl.c. Because of the unoptimised form of the Atalla acceleration
+ * (it doesn't have a CRT form for RSA), this function means that an
+ * Atalla system running with a DSA server certificate can handshake
+ * around 5 or 6 times faster/more than an equivalent system running with
+ * RSA. Just check out the "signs" statistics from the RSA and DSA parts
+ * of "openssl speed -engine atalla dsa1024 rsa1024". */
 static int atalla_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 		BIGNUM *p1, BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
 		BN_CTX *ctx, BN_MONT_CTX *in_mont)
 	{
-#if 0
 	BIGNUM t;
 	int to_return = 0;
  
@@ -401,15 +402,12 @@ static int atalla_dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
 	if (!atalla_mod_exp(rr,a1,p1,m,ctx)) goto end;
 	/* let t = a2 ^ p2 mod m */
 	if (!atalla_mod_exp(&t,a2,p2,m,ctx)) goto end;
-	/* let p1 = rr * t mod m */
-	if (!BN_mod_mul(p1,rr,&t,m,ctx)) goto end;
+	/* let rr = rr * t mod m */
+	if (!BN_mod_mul(rr,rr,&t,m,ctx)) goto end;
 	to_return = 1;
 end:
 	BN_free(&t);
 	return to_return;
-#else
-	return BN_mod_exp2_mont(rr, a1, p1, a2, p2, m, ctx, in_mont);
-#endif
 	}
 
 
