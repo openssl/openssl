@@ -92,6 +92,13 @@ int slen;
 		p+=i;
 		l=i;
 
+#ifdef WIN16
+		/* MSVC 1.5 does not clear the top bytes of the word unless
+		 * I do this.
+		 */
+		l&=0xffff;
+#endif
+
 		*(d++)=SSL3_MT_FINISHED;
 		l2n3(l,d);
 		s->init_num=(int)l+4;
@@ -234,6 +241,23 @@ X509 *x;
 			}
 
 		X509_STORE_CTX_cleanup(&xs_ctx);
+		}
+
+	/* Thwate special :-) */
+	if (s->ctx->extra_certs != NULL)
+	for (i=0; i<sk_num(s->ctx->extra_certs); i++)
+		{
+		x=(X509 *)sk_value(s->ctx->extra_certs,i);
+		n=i2d_X509(x,NULL);
+		if (!BUF_MEM_grow(buf,(int)(n+l+3)))
+			{
+			SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
+			return(0);
+			}
+		p=(unsigned char *)&(buf->data[l]);
+		l2n3(n,p);
+		i2d_X509(x,&p);
+		l+=n+3;
 		}
 
 	l-=7;

@@ -60,7 +60,7 @@
 #include "objects.h"
 #include "ssl_locl.h"
 
-char *ssl3_version_str="SSLv3 part of SSLeay 0.9.0b 29-Jun-1998";
+char *ssl3_version_str="SSLv3 part of SSLeay 0.9.1a 06-Jul-1998";
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers)/sizeof(SSL_CIPHER))
 
@@ -384,6 +384,7 @@ static SSL_METHOD SSLv3_data= {
 	ssl3_write,
 	ssl3_shutdown,
 	ssl3_renegotiate,
+	ssl3_renegotiate_check,
 	ssl3_ctrl,
 	ssl3_ctx_ctrl,
 	ssl3_get_cipher_by_char,
@@ -460,6 +461,8 @@ SSL *s;
 		Free(s->s3->rbuf.buf);
 	if (s->s3->wbuf.buf != NULL)
 		Free(s->s3->wbuf.buf);
+	if (s->s3->rrec.comp != NULL)
+		Free(s->s3->rrec.comp);
 #ifndef NO_DH
 	if (s->s3->tmp.dh != NULL)
 		DH_free(s->s3->tmp.dh);
@@ -486,6 +489,13 @@ SSL *s;
 	memset(s->s3,0,sizeof(SSL3_CTX));
 	if (rp != NULL) s->s3->rbuf.buf=rp;
 	if (wp != NULL) s->s3->wbuf.buf=wp;
+
+	if (s->s3->rrec.comp != NULL)
+		{
+		Free(s->s3->rrec.comp);
+		s->s3->rrec.comp=NULL;
+		}
+
 	s->packet_length=0;
 	s->s3->renegotiate=0;
 	s->s3->total_renegotiations=0;
@@ -519,6 +529,9 @@ char *parg;
 	case SSL_CTRL_GET_TOTAL_RENEGOTIATIONS:
 		ret=s->s3->total_renegotiations;
 		break;
+	case SSL_CTRL_GET_FLAGS:
+		ret=s->s3->flags;
+		break;
 	default:
 		break;
 		}
@@ -546,7 +559,7 @@ char *parg;
 			return(1);
 		else
 			return(0);
-		break;
+		/* break; */
 	case SSL_CTRL_SET_TMP_RSA:
 		{
 		RSA *rsa;
@@ -574,7 +587,7 @@ char *parg;
 			return(1);
 			}
 		}
-		break;
+		/* break; */
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		cert->rsa_tmp_cb=(RSA *(*)())parg;
 		break;
@@ -583,6 +596,7 @@ char *parg;
 	case SSL_CTRL_SET_TMP_DH:
 		{
 		DH *new=NULL,*dh;
+		int rret=0;
 
 		dh=(DH *)parg;
 		if (	((new=DHparams_dup(dh)) == NULL) ||
@@ -590,21 +604,31 @@ char *parg;
 			{
 			SSLerr(SSL_F_SSL3_CTX_CTRL,ERR_R_DH_LIB);
 			if (new != NULL) DH_free(new);
-			return(0);
 			}
 		else
 			{
 			if (cert->dh_tmp != NULL)
 				DH_free(cert->dh_tmp);
 			cert->dh_tmp=new;
-			return(1);
+			rret=1;
 			}
+		return(rret);
 		}
-		break;
+		/*break; */
 	case SSL_CTRL_SET_TMP_DH_CB:
 		cert->dh_tmp_cb=(DH *(*)())parg;
 		break;
 #endif
+	/* A Thwate special :-) */
+	case SSL_CTRL_EXTRA_CHAIN_CERT:
+		if (ctx->extra_certs == NULL)
+			{
+			if ((ctx->extra_certs=sk_new_null()) == NULL)
+				return(0);
+			}
+		sk_push(ctx->extra_certs,(char *)parg);
+		break;
+
 	default:
 		return(0);
 		}
@@ -743,28 +767,30 @@ unsigned char *p;
 #ifndef NO_DH
 	if (alg & (SSL_kDHr|SSL_kEDH))
 		{
-#ifndef NO_RSA
+#  ifndef NO_RSA
 		p[ret++]=SSL3_CT_RSA_FIXED_DH;
-#endif
-#ifndef NO_DSA
+#  endif
+#  ifndef NO_DSA
 		p[ret++]=SSL3_CT_DSS_FIXED_DH;
-#endif
+#  endif
 		}
 	if ((s->version == SSL3_VERSION) &&
 		(alg & (SSL_kEDH|SSL_kDHd|SSL_kDHr)))
 		{
-#ifndef NO_RSA
+#  ifndef NO_RSA
 		p[ret++]=SSL3_CT_RSA_EPHEMERAL_DH;
-#endif
-#ifndef NO_DSA
+#  endif
+#  ifndef NO_DSA
 		p[ret++]=SSL3_CT_DSS_EPHEMERAL_DH;
-#endif
+#  endif
 		}
 #endif /* !NO_DH */
 #ifndef NO_RSA
 	p[ret++]=SSL3_CT_RSA_SIGN;
 #endif
+#ifndef NO_DSA
 	p[ret++]=SSL3_CT_DSS_SIGN;
+#endif
 	return(ret);
 	}
 

@@ -63,7 +63,7 @@
 #include "sha.h"
 #include "sha_locl.h"
 
-char *SHA1_version="SHA1 part of SSLeay 0.9.0b 29-Jun-1998";
+char *SHA1_version="SHA1 part of SSLeay 0.9.1a 06-Jul-1998";
 
 /* Implemented from SHA-1 document - The Secure Hash Algorithm
  */
@@ -197,7 +197,7 @@ unsigned long len;
 	 */
 #if 1
 #if defined(B_ENDIAN) || defined(SHA1_ASM)
-	if ((((unsigned int)data)%sizeof(ULONG)) == 0)
+	if ((((unsigned long)data)%sizeof(ULONG)) == 0)
 		{
 		sw=len/SHA_CBLOCK;
 		if (sw)

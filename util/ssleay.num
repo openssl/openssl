@@ -154,3 +154,4 @@ TLSv1_server_method			171
 TLSv1_client_method			172
 BIO_new_buffer_ssl_connect		173
 BIO_new_ssl_connect			174
+SSL_get_ex_data_X509_STORE_CTX_idx	175

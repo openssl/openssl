@@ -141,6 +141,7 @@ char **argv;
 		X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
 
 
+	ERR_clear_error();
 	if (argc < 1) check(cert_ctx,NULL);
 	else
 		for (i=0; i<argc; i++)

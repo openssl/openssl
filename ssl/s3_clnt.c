@@ -430,7 +430,7 @@ SSL *s;
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_DONE,1);
 
 			goto end;
-			break;
+			/* break; */
 			
 		default:
 			SSLerr(SSL_F_SSL3_CONNECT,SSL_R_UNKNOWN_STATE);
@@ -478,7 +478,8 @@ SSL *s;
 	if (s->state == SSL3_ST_CW_CLNT_HELLO_A)
 		{
 		if ((s->session == NULL) ||
-			(s->session->ssl_version != s->version))
+			(s->session->ssl_version != s->version) ||
+			(s->session->not_resumable))
 			{
 			if (!ssl_get_new_session(s,0))
 				goto err;
@@ -488,7 +489,7 @@ SSL *s;
 		p=s->s3->client_random;
 		Time=time(NULL);			/* Time */
 		l2n(Time,p);
-		RAND_bytes(&(p[4]),SSL3_RANDOM_SIZE-sizeof(Time));
+		RAND_bytes(p,SSL3_RANDOM_SIZE-sizeof(Time));
 
 		/* Do the message type and length last */
 		d=p= &(buf[4]);
@@ -523,6 +524,7 @@ SSL *s;
 		p+=i;
 
 		/* hardwire in the NULL compression algorithm. */
+		/* COMPRESSION */
 		*(p++)=1;
 		*(p++)=0;
 		
@@ -643,6 +645,7 @@ SSL *s;
 	s->s3->tmp.new_cipher=c;
 
 	/* lets get the compression algorithm */
+	/* COMPRESSION */
 	j= *(p++);
 	if (j != 0)
 		{
@@ -771,7 +774,7 @@ SSL *s;
 
 	pkey=X509_get_pubkey(x);
 
-	if (EVP_PKEY_missing_parameters(pkey))
+	if ((pkey == NULL) || EVP_PKEY_missing_parameters(pkey))
 		{
 		x=NULL;
 		al=SSL3_AL_FATAL;
@@ -998,6 +1001,13 @@ SSL *s;
 		goto f_err;
 		}
 #endif
+	if (alg & SSL_aFZA)
+		{
+		al=SSL_AD_HANDSHAKE_FAILURE;
+		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER);
+		goto f_err;
+		}
+
 
 	/* p points to the next byte, there are 'n' bytes left */
 
@@ -1014,7 +1024,7 @@ SSL *s;
 			/* wrong packet length */
 			al=SSL_AD_DECODE_ERROR;
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_WRONG_SIGNATURE_LENGTH);
-			goto err;
+			goto f_err;
 			}
 
 #ifndef NO_RSA
@@ -1167,6 +1177,15 @@ SSL *s;
 
 	/* get the CA RDNs */
 	n2s(p,llen);
+#if 0
+{
+FILE *out;
+out=fopen("/tmp/vsign.der","w");
+fwrite(p,1,llen,out);
+fclose(out);
+}
+#endif
+
 	if ((llen+ctype_num+2+1) != n)
 		{
 		ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECODE_ERROR);
@@ -1286,7 +1305,7 @@ SSL *s;
 		if (l & SSL_kRSA)
 			{
 			RSA *rsa;
-			unsigned char tmp_buf[48];
+			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
 
 			if (s->session->cert->rsa_tmp != NULL)
 				rsa=s->session->cert->rsa_tmp;
@@ -1315,6 +1334,10 @@ SSL *s;
 				p+=2;
 			n=RSA_public_encrypt(SSL_MAX_MASTER_KEY_LENGTH,
 				tmp_buf,p,rsa,RSA_PKCS1_PADDING);
+#ifdef PKCS1_CHECK
+			if (s->options & SSL_OP_PKCS1_CHECK_1) p[1]++;
+			if (s->options & SSL_OP_PKCS1_CHECK_2) tmp_buf[0]=0x70;
+#endif
 			if (n <= 0)
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,SSL_R_BAD_RSA_ENCRYPT);
@@ -1331,8 +1354,8 @@ SSL *s;
 			s->session->master_key_length=
 				s->method->ssl3_enc->generate_master_secret(s,
 					s->session->master_key,
-					tmp_buf,48);
-			memset(tmp_buf,0,48);
+					tmp_buf,SSL_MAX_MASTER_KEY_LENGTH);
+			memset(tmp_buf,0,SSL_MAX_MASTER_KEY_LENGTH);
 			}
 		else
 #endif

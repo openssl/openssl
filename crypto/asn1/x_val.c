@@ -99,6 +99,7 @@ long length;
 X509_VAL *X509_VAL_new()
 	{
 	X509_VAL *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_VAL);
 	M_ASN1_New(ret->notBefore,ASN1_UTCTIME_new);

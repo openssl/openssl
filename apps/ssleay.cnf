@@ -4,6 +4,7 @@
 #
 
 RANDFILE		= $ENV::HOME/.rnd
+oid_file		= $ENV::HOME/.oid
 
 ####################################################################
 [ ca ]
@@ -89,6 +90,8 @@ commonName_max			= 64
 
 emailAddress			= Email Address
 emailAddress_max		= 40
+
+SET-ex3				= SET extension number 3
 
 [ req_attributes ]
 challengePassword		= A challenge password

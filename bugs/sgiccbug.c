@@ -7,6 +7,8 @@
 /* This compiler bug it present on IRIX 5.3, 5.1 and 4.0.5 (these are
  * the only versions of IRIX I have access to.
  * defining FIXBUG removes the bug.
+ * (bug is still present in IRIX 6.3 according to
+ * Gage <agage@forgetmenot.Mines.EDU>
  */
  
 /* Compare the output from

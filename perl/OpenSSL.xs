@@ -10,6 +10,7 @@ char *obj;
 		ret=sv_newmortal();
 	else
 		ret=newSViv(0);
+printf(">new_ref %d\n",type);
 	sv_setref_pv(ret,type,(void *)obj);
 	return(ret);
 	}
@@ -27,6 +28,7 @@ char *argp;
 fprintf(stderr,"ex_new %08X %s\n",obj,argp);
 	sv=sv_newmortal();
 	sv_setref_pv(sv,argp,(void *)obj);
+printf("%d>new_ref '%s'\n",sv,argp);
 	CRYPTO_set_ex_data(ad,idx,(char *)sv);
 	return(1);
 	}

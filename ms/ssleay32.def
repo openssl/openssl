@@ -12,6 +12,7 @@ EXPORTS
     BIO_new_buffer_ssl_connect         @173
     BIO_new_ssl                        @122
     BIO_new_ssl_connect                @174
+    BIO_proxy_ssl_copy_session_id      @123
     BIO_ssl_copy_session_id            @124
     BIO_ssl_shutdown                   @131
     ERR_load_SSL_strings               @1
@@ -89,6 +90,7 @@ EXPORTS
     SSL_get_default_timeout            @57
     SSL_get_error                      @58
     SSL_get_ex_data                    @151
+    SSL_get_ex_data_X509_STORE_CTX_idx @175
     SSL_get_ex_new_index               @169
     SSL_get_fd                         @59
     SSL_get_info_callback              @165

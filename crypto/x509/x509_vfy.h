@@ -245,7 +245,7 @@ X509_LOOKUP_METHOD *X509_LOOKUP_dir();
 
 #ifndef NOPROTO
 #ifdef HEADER_LHASH_H
-X509_OBJECT *X509_OBJECT_retrive_by_subject(LHASH *h,int type,X509_NAME *name);
+X509_OBJECT *X509_OBJECT_retrieve_by_subject(LHASH *h,int type,X509_NAME *name);
 #endif
 void X509_OBJECT_up_ref_count(X509_OBJECT *a);
 void X509_OBJECT_free_contents(X509_OBJECT *a);
@@ -313,7 +313,7 @@ void	X509_STORE_CTX_set_chain(X509_STORE_CTX *c,STACK /* X509 */ *sk);
 #else
 
 #ifdef HEADER_LHASH_H
-X509_OBJECT *X509_OBJECT_retrive_by_subject();
+X509_OBJECT *X509_OBJECT_retrieve_by_subject();
 #endif
 void X509_OBJECT_up_ref_count();
 void X509_OBJECT_free_contents();
@@ -359,6 +359,7 @@ int	X509_STORE_load_locations ();
 int	X509_STORE_set_default_paths();
 #endif
 
+int X509_STORE_CTX_get_ex_new_index();
 int	X509_STORE_CTX_set_ex_data();
 char *	X509_STORE_CTX_get_ex_data();
 int	X509_STORE_CTX_get_error();

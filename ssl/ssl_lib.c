@@ -61,7 +61,7 @@
 #include "lhash.h"
 #include "ssl_locl.h"
 
-char *SSL_version_str="SSLeay 0.9.0b 29-Jun-1998";
+char *SSL_version_str="SSLeay 0.9.1a 06-Jul-1998";
 
 static STACK *ssl_meth=NULL;
 static STACK *ssl_ctx_meth=NULL;
@@ -247,6 +247,11 @@ SSL *s;
 		}
 
 	ssl_clear_cipher_ctx(s);
+
+	if (s->expand != NULL)
+		COMP_CTX_free(s->expand);
+	if (s->compress != NULL)
+		COMP_CTX_free(s->compress);
 
 	if (s->cert != NULL) ssl_cert_free(s->cert);
 	/* Free up if allocated */
@@ -839,8 +844,11 @@ SSL_SESSION *a;
 	{
 	unsigned long l;
 
-	l=      (a->session_id[0]     )|(a->session_id[1]<< 8L)|
-		(a->session_id[2]<<16L)|(a->session_id[3]<<24L);
+	l=(unsigned long)
+		((unsigned int) a->session_id[0]     )|
+		((unsigned int) a->session_id[1]<< 8L)|
+		((unsigned long)a->session_id[2]<<16L)|
+		((unsigned long)a->session_id[3]<<24L);
 	return(l);
 	}
 
@@ -858,12 +866,18 @@ SSL_SESSION *b;
 SSL_CTX *SSL_CTX_new(meth)
 SSL_METHOD *meth;
 	{
-	SSL_CTX *ret;
+	SSL_CTX *ret=NULL;
 	
 	if (meth == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_NEW,SSL_R_NULL_SSL_METHOD_PASSED);
 		return(NULL);
+		}
+
+	if (SSL_get_ex_data_X509_STORE_CTX_idx() < 0)
+		{
+		SSLerr(SSL_F_SSL_CTX_NEW,SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
+		goto err;
 		}
 	ret=(SSL_CTX *)Malloc(sizeof(SSL_CTX));
 	if (ret == NULL)
@@ -956,6 +970,8 @@ SSL_METHOD *meth;
 
 	CRYPTO_new_ex_data(ssl_ctx_meth,(char *)ret,&ret->ex_data);
 
+	ret->extra_certs=NULL;
+
 	return(ret);
 err:
 	SSLerr(SSL_F_SSL_CTX_NEW,ERR_R_MALLOC_FAILURE);
@@ -1000,6 +1016,8 @@ SSL_CTX *a;
 		ssl_cert_free(a->default_cert);
 	if (a->client_CA != NULL)
 		sk_pop_free(a->client_CA,X509_NAME_free);
+	if (a->extra_certs != NULL)
+		sk_pop_free(a->extra_certs,X509_free);
 	Free((char *)a);
 	}
 
@@ -1341,7 +1359,9 @@ SSL *s;
 		SSLerr(SSL_F_SSL_DO_HANDSHAKE,SSL_R_CONNECTION_TYPE_NOT_SET);
 		return(-1);
 		}
-	if (s->s3->renegotiate) ssl3_renegotiate_check(s);
+
+	s->method->ssl_renegotiate_check(s);
+
 	if (SSL_in_init(s) || SSL_in_before(s))
 		{
 		ret=s->handshake_func(s);
@@ -1615,6 +1635,7 @@ SSL *ssl;
 	return(ssl->ctx);
 	}
 
+#ifndef NO_STDIO
 int SSL_CTX_set_default_verify_paths(ctx)
 SSL_CTX *ctx;
 	{
@@ -1628,6 +1649,7 @@ char *CApath;
 	{
 	return(X509_STORE_load_locations(ctx->cert_store,CAfile,CApath));
 	}
+#endif
 
 void SSL_set_info_callback(ssl,cb)
 SSL *ssl;
@@ -1639,7 +1661,7 @@ void (*cb)();
 void (*SSL_get_info_callback(ssl))()
 SSL *ssl;
 	{
-	return(ssl->info_callback);
+	return((void (*)())ssl->info_callback);
 	}
 
 int SSL_state(ssl)
@@ -1713,6 +1735,12 @@ SSL_CTX *s;
 int idx;
 	{
 	return(CRYPTO_get_ex_data(&s->ex_data,idx));
+	}
+
+int ssl_ok(s)
+SSL *s;
+	{
+	return(1);
 	}
 
 #if defined(_WINDLL) && defined(WIN16)

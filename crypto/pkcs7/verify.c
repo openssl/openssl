@@ -64,6 +64,7 @@
 int verify_callback(int ok, X509_STORE_CTX *ctx);
 
 BIO *bio_err=NULL;
+BIO *bio_out=NULL;
 
 main(argc,argv)
 int argc;
@@ -84,6 +85,7 @@ char *argv[];
 	STACK *sk;
 
 	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
+	bio_out=BIO_new_fp(stdout,BIO_NOCLOSE);
 	EVP_add_digest(EVP_md2());
 	EVP_add_digest(EVP_md5());
 	EVP_add_digest(EVP_sha1());
@@ -131,10 +133,10 @@ again:
 	X509_STORE_load_locations(cert_store,NULL,"../../certs");
 	X509_STORE_set_verify_cb_func(cert_store,verify_callback);
 
-	ERR_clear_errors();
+	ERR_clear_error();
 
 	/* We need to process the data */
-	if (PKCS7_get_detached(p7))
+	if ((PKCS7_get_detached(p7) || detached))
 		{
 		if (detached == NULL)
 			{
@@ -168,10 +170,27 @@ again:
 	/* Ok, first we need to, for each subject entry, see if we can verify */
 	for (i=0; i<sk_num(sk); i++)
 		{
+		ASN1_UTCTIME *tm;
+		char *str1,*str2;
+
 		si=(PKCS7_SIGNER_INFO *)sk_value(sk,i);
 		i=PKCS7_dataVerify(cert_store,&cert_ctx,p7bio,p7,si);
 		if (i <= 0)
 			goto err;
+		printf("signer info\n");
+		if ((tm=get_signed_time(si)) != NULL)
+			{
+			BIO_printf(bio_out,"Signed time:");
+			ASN1_UTCTIME_print(bio_out,tm);
+			ASN1_UTCTIME_free(tm);
+			BIO_printf(bio_out,"\n");
+			}
+		if (get_signed_seq2string(si,&str1,&str2))
+			{
+			BIO_printf(bio_out,"String 1 is %s\n",str1);
+			BIO_printf(bio_out,"String 2 is %s\n",str2);
+			}
+			
 		}
 
 	X509_STORE_free(cert_store);

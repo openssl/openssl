@@ -1,13 +1,13 @@
-echo=off
 
 echo start testenc
-path=..\ms;%path%
+path=p:\work\ssleay\ms;%path%
 set ssleay=%1%
-set input=..\ms\testenc.bat
-set tmp1=..\ms\cipher.out
-set out1=..\ms\clear.out
-set cmp=perl ..\ms\cmp.pl
+set input=p:\work\ssleay\ms\testenc.bat
+set tmp1=p:\work\ssleay\ms\cipher.out
+set out1=p:\work\ssleay\ms\clear.out
+set cmp=perl p:\work\ssleay\ms\cmp.pl
 
+cd
 call tenc.bat enc
 if errorlevel 1 goto err
 

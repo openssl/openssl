@@ -60,6 +60,8 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
+#define TABLE_SIZE	16
+
 /* slow but works */
 int BN_mod_mul(ret, a, b, m, ctx)
 BIGNUM *ret;
@@ -71,11 +73,15 @@ BN_CTX *ctx;
 	BIGNUM *t;
 	int r=0;
 
-	t=ctx->bn[ctx->tos++];
+	bn_check_top(a);
+	bn_check_top(b);
+	bn_check_top(m);
+
+	t= &(ctx->bn[ctx->tos++]);
 	if (a == b)
 		{ if (!BN_sqr(t,a,ctx)) goto err; }
 	else
-		{ if (!BN_mul(t,a,b)) goto err; }
+		{ if (!BN_mul(t,a,b,ctx)) goto err; }
 	if (!BN_mod(ret,t,m,ctx)) goto err;
 	r=1;
 err:
@@ -92,8 +98,8 @@ BN_CTX *ctx;
 	int i,bits,ret=0;
 	BIGNUM *v,*tmp;
 
-	v=ctx->bn[ctx->tos++];
-	tmp=ctx->bn[ctx->tos++];
+	v= &(ctx->bn[ctx->tos++]);
+	tmp= &(ctx->bn[ctx->tos++]);
 
 	if (BN_copy(v,a) == NULL) goto err;
 	bits=BN_num_bits(p);
@@ -108,7 +114,7 @@ BN_CTX *ctx;
 		if (!BN_mod(v,tmp,m,ctx)) goto err;
 		if (BN_is_bit_set(p,i))
 			{
-			if (!BN_mul(tmp,r,v)) goto err;
+			if (!BN_mul(tmp,r,v,ctx)) goto err;
 			if (!BN_mod(r,tmp,m,ctx)) goto err;
 			}
 		}
@@ -128,8 +134,8 @@ BN_CTX *ctx;
 	int i,bits,ret=0;
 	BIGNUM *v,*tmp;
 
-	v=ctx->bn[ctx->tos++];
-	tmp=ctx->bn[ctx->tos++];
+	v= &(ctx->bn[ctx->tos++]);
+	tmp= &(ctx->bn[ctx->tos++]);
 
 	if (BN_copy(v,a) == NULL) goto err;
 	bits=BN_num_bits(p);
@@ -143,7 +149,7 @@ BN_CTX *ctx;
 		if (!BN_sqr(tmp,v,ctx)) goto err;
 		if (BN_is_bit_set(p,i))
 			{
-			if (!BN_mul(tmp,r,v)) goto err;
+			if (!BN_mul(tmp,r,v,ctx)) goto err;
 			}
 		}
 	ret=1;
@@ -160,6 +166,10 @@ BIGNUM *m;
 BN_CTX *ctx;
 	{
 	int ret;
+
+	bn_check_top(a);
+	bn_check_top(p);
+	bn_check_top(m);
 
 #ifdef MONT_MUL_MOD
 	/* I have finally been able to take out this pre-condition of
@@ -189,13 +199,13 @@ BIGNUM *p;
 BIGNUM *m;
 BN_CTX *ctx;
 	{
-	int nb,i,j,bits,ret=0,wstart,wend,window,wvalue;
-	int start=1;
-	BIGNUM *d,*aa;
-	BIGNUM *val[16];
+	int i,j,bits,ret=0,wstart,wend,window,wvalue;
+	int start=1,ts=0;
+	BIGNUM *aa;
+	BIGNUM val[TABLE_SIZE];
+	BN_RECP_CTX recp;
 
-	d=ctx->bn[ctx->tos++];
-	aa=ctx->bn[ctx->tos++];
+	aa= &(ctx->bn[ctx->tos++]);
 	bits=BN_num_bits(p);
 
 	if (bits == 0)
@@ -203,12 +213,14 @@ BN_CTX *ctx;
 		BN_one(r);
 		return(1);
 		}
-	nb=BN_reciprocal(d,m,ctx);
-	if (nb == -1) goto err;
+	BN_RECP_CTX_init(&recp);
+	if (BN_RECP_CTX_set(&recp,m,ctx) <= 0) goto err;
 
-	val[0]=BN_new();
-	if (!BN_mod(val[0],a,m,ctx)) goto err;		/* 1 */
-	if (!BN_mod_mul_reciprocal(aa,val[0],val[0],m,d,nb,ctx))
+	BN_init(&(val[0]));
+	ts=1;
+
+	if (!BN_mod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
+	if (!BN_mod_mul_reciprocal(aa,&(val[0]),&(val[0]),&recp,ctx))
 		goto err;				/* 2 */
 
 	if (bits <= 17) /* This is probably 3 or 0x10001, so just do singles */
@@ -223,12 +235,11 @@ BN_CTX *ctx;
 	j=1<<(window-1);
 	for (i=1; i<j; i++)
 		{
-		val[i]=BN_new();
-		if (!BN_mod_mul_reciprocal(val[i],val[i-1],aa,m,d,nb,ctx))
+		BN_init(&val[i]);
+		if (!BN_mod_mul_reciprocal(&(val[i]),&(val[i-1]),aa,&recp,ctx))
 			goto err;
 		}
-	for (; i<16; i++)
-		val[i]=NULL;
+	ts=i;
 
 	start=1;	/* This is used to avoid multiplication etc
 			 * when there is only the value '1' in the
@@ -244,7 +255,7 @@ BN_CTX *ctx;
 		if (BN_is_bit_set(p,wstart) == 0)
 			{
 			if (!start)
-				if (!BN_mod_mul_reciprocal(r,r,r,m,d,nb,ctx))
+				if (!BN_mod_mul_reciprocal(r,r,r,&recp,ctx))
 				goto err;
 			if (wstart == 0) break;
 			wstart--;
@@ -274,12 +285,12 @@ BN_CTX *ctx;
 		if (!start)
 			for (i=0; i<j; i++)
 				{
-				if (!BN_mod_mul_reciprocal(r,r,r,m,d,nb,ctx))
+				if (!BN_mod_mul_reciprocal(r,r,r,&recp,ctx))
 					goto err;
 				}
 		
 		/* wvalue will be an odd number < 2^window */
-		if (!BN_mod_mul_reciprocal(r,r,val[wvalue>>1],m,d,nb,ctx))
+		if (!BN_mod_mul_reciprocal(r,r,&(val[wvalue>>1]),&recp,ctx))
 			goto err;
 
 		/* move the 'window' down further */
@@ -290,35 +301,40 @@ BN_CTX *ctx;
 		}
 	ret=1;
 err:
-	ctx->tos-=2;
-	for (i=0; i<16; i++)
-		if (val[i] != NULL) BN_clear_free(val[i]);
+	ctx->tos--;
+	for (i=0; i<ts; i++)
+		BN_clear_free(&(val[i]));
+	BN_RECP_CTX_free(&recp);
 	return(ret);
 	}
 /* #endif */
 
 /* #ifdef MONT_MUL_MOD */
-int BN_mod_exp_mont(r,a,p,m,ctx,in_mont)
-BIGNUM *r;
+int BN_mod_exp_mont(rr,a,p,m,ctx,in_mont)
+BIGNUM *rr;
 BIGNUM *a;
 BIGNUM *p;
 BIGNUM *m;
 BN_CTX *ctx;
 BN_MONT_CTX *in_mont;
 	{
-#define TABLE_SIZE	16
 	int i,j,bits,ret=0,wstart,wend,window,wvalue;
-	int start=1;
-	BIGNUM *d,*aa;
-	BIGNUM *val[TABLE_SIZE];
+	int start=1,ts=0;
+	BIGNUM *d,*aa,*r;
+	BIGNUM val[TABLE_SIZE];
 	BN_MONT_CTX *mont=NULL;
+
+	bn_check_top(a);
+	bn_check_top(p);
+	bn_check_top(m);
 
 	if (!(m->d[0] & 1))
 		{
 		BNerr(BN_F_BN_MOD_EXP_MONT,BN_R_CALLED_WITH_EVEN_MODULUS);
 		return(0);
 		}
-	d=ctx->bn[ctx->tos++];
+	d= &(ctx->bn[ctx->tos++]);
+	r= &(ctx->bn[ctx->tos++]);
 	bits=BN_num_bits(p);
 	if (bits == 0)
 		{
@@ -339,22 +355,23 @@ BN_MONT_CTX *in_mont;
 		if (!BN_MONT_CTX_set(mont,m,ctx)) goto err;
 		}
 
-	val[0]=BN_new();
+	BN_init(&val[0]);
+	ts=1;
 	if (BN_ucmp(a,m) >= 0)
 		{
-		BN_mod(val[0],a,m,ctx);
-		aa=val[0];
+		BN_mod(&(val[0]),a,m,ctx);
+		aa= &(val[0]);
 		}
 	else
 		aa=a;
-	if (!BN_to_montgomery(val[0],aa,mont,ctx)) goto err; /* 1 */
-	if (!BN_mod_mul_montgomery(d,val[0],val[0],mont,ctx)) goto err; /* 2 */
+	if (!BN_to_montgomery(&(val[0]),aa,mont,ctx)) goto err; /* 1 */
+	if (!BN_mod_mul_montgomery(d,&(val[0]),&(val[0]),mont,ctx)) goto err; /* 2 */
 
 	if (bits <= 20) /* This is probably 3 or 0x10001, so just do singles */
 		window=1;
-	else if (bits > 250)
+	else if (bits >= 256)
 		window=5;	/* max size of window */
-	else if (bits >= 120)
+	else if (bits >= 128)
 		window=4;
 	else
 		window=3;
@@ -362,12 +379,11 @@ BN_MONT_CTX *in_mont;
 	j=1<<(window-1);
 	for (i=1; i<j; i++)
 		{
-		val[i]=BN_new();
-		if (!BN_mod_mul_montgomery(val[i],val[i-1],d,mont,ctx))
+		BN_init(&(val[i]));
+		if (!BN_mod_mul_montgomery(&(val[i]),&(val[i-1]),d,mont,ctx))
 			goto err;
 		}
-	for (; i<TABLE_SIZE; i++)
-		val[i]=NULL;
+	ts=i;
 
 	start=1;	/* This is used to avoid multiplication etc
 			 * when there is only the value '1' in the
@@ -419,7 +435,7 @@ BN_MONT_CTX *in_mont;
 				}
 		
 		/* wvalue will be an odd number < 2^window */
-		if (!BN_mod_mul_montgomery(r,r,val[wvalue>>1],mont,ctx))
+		if (!BN_mod_mul_montgomery(r,r,&(val[wvalue>>1]),mont,ctx))
 			goto err;
 
 		/* move the 'window' down further */
@@ -428,13 +444,13 @@ BN_MONT_CTX *in_mont;
 		start=0;
 		if (wstart < 0) break;
 		}
-	BN_from_montgomery(r,r,mont,ctx);
+	BN_from_montgomery(rr,r,mont,ctx);
 	ret=1;
 err:
 	if ((in_mont == NULL) && (mont != NULL)) BN_MONT_CTX_free(mont);
-	ctx->tos--;
-	for (i=0; i<TABLE_SIZE; i++)
-		if (val[i] != NULL) BN_clear_free(val[i]);
+	ctx->tos-=2;
+	for (i=0; i<ts; i++)
+		BN_clear_free(&(val[i]));
 	return(ret);
 	}
 /* #endif */
@@ -447,12 +463,12 @@ BIGNUM *p;
 BIGNUM *m;
 BN_CTX *ctx;
 	{
-	int i,j,bits,ret=0,wstart,wend,window,wvalue;
+	int i,j,bits,ret=0,wstart,wend,window,wvalue,ts=0;
 	int start=1;
 	BIGNUM *d;
-	BIGNUM *val[16];
+	BIGNUM val[TABLE_SIZE];
 
-	d=ctx->bn[ctx->tos++];
+	d= &(ctx->bn[ctx->tos++]);
 	bits=BN_num_bits(p);
 
 	if (bits == 0)
@@ -461,9 +477,10 @@ BN_CTX *ctx;
 		return(1);
 		}
 
-	val[0]=BN_new();
-	if (!BN_mod(val[0],a,m,ctx)) goto err;		/* 1 */
-	if (!BN_mod_mul(d,val[0],val[0],m,ctx))
+	BN_init(&(val[0]));
+	ts=1;
+	if (!BN_mod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
+	if (!BN_mod_mul(d,&(val[0]),&(val[0]),m,ctx))
 		goto err;				/* 2 */
 
 	if (bits <= 17) /* This is probably 3 or 0x10001, so just do singles */
@@ -478,12 +495,11 @@ BN_CTX *ctx;
 	j=1<<(window-1);
 	for (i=1; i<j; i++)
 		{
-		val[i]=BN_new();
-		if (!BN_mod_mul(val[i],val[i-1],d,m,ctx))
+		BN_init(&(val[i]));
+		if (!BN_mod_mul(&(val[i]),&(val[i-1]),d,m,ctx))
 			goto err;
 		}
-	for (; i<16; i++)
-		val[i]=NULL;
+	ts=i;
 
 	start=1;	/* This is used to avoid multiplication etc
 			 * when there is only the value '1' in the
@@ -534,7 +550,7 @@ BN_CTX *ctx;
 				}
 		
 		/* wvalue will be an odd number < 2^window */
-		if (!BN_mod_mul(r,r,val[wvalue>>1],m,ctx))
+		if (!BN_mod_mul(r,r,&(val[wvalue>>1]),m,ctx))
 			goto err;
 
 		/* move the 'window' down further */
@@ -546,8 +562,8 @@ BN_CTX *ctx;
 	ret=1;
 err:
 	ctx->tos--;
-	for (i=0; i<16; i++)
-		if (val[i] != NULL) BN_clear_free(val[i]);
+	for (i=0; i<ts; i++)
+		BN_clear_free(&(val[i]));
 	return(ret);
 	}
 

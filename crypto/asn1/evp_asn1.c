@@ -135,7 +135,8 @@ int len;
 	return(1);
 	}
 
-/* we return the actual length... */
+/* we return the actual length..., num may be missing, in which
+ * case, set it to zero */
 int ASN1_TYPE_get_int_octetstring(a,num,data,max_len)
 ASN1_TYPE *a;
 long *num;

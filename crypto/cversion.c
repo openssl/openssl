@@ -66,7 +66,7 @@ char *SSLeay_version(t)
 int t;
 	{
 	if (t == SSLEAY_VERSION)
-		return("SSLeay 0.9.0b 29-Jun-1998");
+		return("SSLeay 0.9.1a 06-Jul-1998");
 	if (t == SSLEAY_BUILT_ON)
 		{
 #ifdef DATE
@@ -87,6 +87,17 @@ int t;
 		return(buf);
 #else
 		return("C flags not available");
+#endif
+		}
+	if (t == SSLEAY_PLATFORM)
+		{
+#ifdef PLATFORM
+		static char buf[sizeof(PLATFORM)+10];
+
+		sprintf(buf,"Platform:%s",PLATFORM);
+		return(buf);
+#else
+		return("Platform information not available");
 #endif
 		}
 	return("not available");

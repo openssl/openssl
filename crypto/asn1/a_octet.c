@@ -82,7 +82,7 @@ long length;
 		pp,length,V_ASN1_OCTET_STRING,V_ASN1_UNIVERSAL);
 	if (ret == NULL)
 		{
-		ASN1err(ASN1_F_D2I_ASN1_OCTET_STRING,ASN1_R_ERROR_STACK);
+		ASN1err(ASN1_F_D2I_ASN1_OCTET_STRING,ERR_R_NESTED_ASN1_ERROR);
 		return(NULL);
 		}
 	return(ret);

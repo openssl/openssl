@@ -1,0 +1,50 @@
+issuer= /C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority
+subject=/C=US/ST=New York/L=New York/O=Industrial Press Inc./CN=www.industrialpress.com
+Certificate:
+    Data:
+        Version: 1 (0x0)
+        Serial Number:
+            68:ae:14:a4:c9:9f:a9:f3:9a:23:cf:2f:15:19:b3:5a
+        Signature Algorithm: md5WithRSAEncryption
+        Issuer: C=US, O=RSA Data Security, Inc., OU=Secure Server Certification Authority
+        Validity
+            Not Before: May 18 00:00:00 1998 GMT
+            Not After : May 18 23:59:59 1999 GMT
+        Subject: C=US, ST=New York, L=New York, O=Industrial Press Inc., CN=www.industrialpress.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public Key: (1024 bit)
+                Modulus (1024 bit):
+                    00:aa:21:fd:c5:42:4d:1e:fa:82:99:a0:e8:9f:6e:
+                    d5:6a:52:5b:a9:32:f2:98:5d:f2:28:a5:81:c5:b3:
+                    83:2d:68:d7:ef:22:a3:7b:0a:2a:5a:1a:2d:68:40:
+                    11:23:a8:d7:3e:aa:26:53:ce:e0:15:4d:6d:1f:8a:
+                    ff:6e:0c:21:dc:59:94:30:ad:ea:a3:dd:97:3a:cb:
+                    f0:34:01:f3:5f:35:91:5d:03:49:9a:6e:78:83:61:
+                    75:45:4b:74:d2:98:18:88:ec:62:98:3b:1e:d6:df:
+                    51:2f:93:ce:08:31:1b:7d:7f:03:82:e8:2b:13:f5:
+                    b0:91:2d:85:ad:2a:1c:e7:f7
+                Exponent: 65537 (0x10001)
+    Signature Algorithm: md5WithRSAEncryption
+        8c:3b:7e:f1:74:12:d1:2f:ac:d4:bf:2d:8b:aa:02:05:30:fe:
+        d1:f4:14:b8:02:92:a2:8b:99:86:26:ff:24:7e:67:48:43:d9:
+        e3:ff:52:11:7e:8c:0c:26:57:ca:c7:b4:19:da:4c:ce:e8:37:
+        6d:d1:55:6d:a4:09:ff:2c:a2:21:9f:af:63:d8:b5:fb:9f:a5:
+        7b:5d:ed:ac:d4:15:af:96:24:25:a7:a7:43:76:f4:41:b4:05:
+        1d:49:38:50:b4:43:fe:1d:87:f5:fd:aa:e9:4c:f2:5b:aa:3e:
+        3a:e6:c3:67:92:81:b7:66:99:db:a6:58:07:0d:3d:56:d5
+-----BEGIN CERTIFICATE-----
+MIICTjCCAbsCEGiuFKTJn6nzmiPPLxUZs1owDQYJKoZIhvcNAQEEBQAwXzELMAkG
+A1UEBhMCVVMxIDAeBgNVBAoTF1JTQSBEYXRhIFNlY3VyaXR5LCBJbmMuMS4wLAYD
+VQQLEyVTZWN1cmUgU2VydmVyIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MB4XDTk4
+MDUxODAwMDAwMFoXDTk5MDUxODIzNTk1OVowdTELMAkGA1UEBhMCVVMxETAPBgNV
+BAgTCE5ldyBZb3JrMREwDwYDVQQHFAhOZXcgWW9yazEeMBwGA1UEChQVSW5kdXN0
+cmlhbCBQcmVzcyBJbmMuMSAwHgYDVQQDFBd3d3cuaW5kdXN0cmlhbHByZXNzLmNv
+bTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAqiH9xUJNHvqCmaDon27ValJb
+qTLymF3yKKWBxbODLWjX7yKjewoqWhotaEARI6jXPqomU87gFU1tH4r/bgwh3FmU
+MK3qo92XOsvwNAHzXzWRXQNJmm54g2F1RUt00pgYiOximDse1t9RL5POCDEbfX8D
+gugrE/WwkS2FrSoc5/cCAwEAATANBgkqhkiG9w0BAQQFAAN+AIw7fvF0EtEvrNS/
+LYuqAgUw/tH0FLgCkqKLmYYm/yR+Z0hD2eP/UhF+jAwmV8rHtBnaTM7oN23RVW2k
+Cf8soiGfr2PYtfufpXtd7azUFa+WJCWnp0N29EG0BR1JOFC0Q/4dh/X9qulM8luq
+Pjrmw2eSgbdmmdumWAcNPVbV
+-----END CERTIFICATE-----

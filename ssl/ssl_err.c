@@ -167,6 +167,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_PACK(0,SSL_F_SSL_USE_RSAPRIVATEKEY,0),	"SSL_use_RSAPrivateKey"},
 {ERR_PACK(0,SSL_F_SSL_USE_RSAPRIVATEKEY_ASN1,0),	"SSL_use_RSAPrivateKey_ASN1"},
 {ERR_PACK(0,SSL_F_SSL_USE_RSAPRIVATEKEY_FILE,0),	"SSL_use_RSAPrivateKey_file"},
+{ERR_PACK(0,SSL_F_SSL_VERIFY_CERT_CHAIN,0),	"SSL_VERIFY_CERT_CHAIN"},
 {ERR_PACK(0,SSL_F_SSL_WRITE,0),	"SSL_write"},
 {ERR_PACK(0,SSL_F_TLS1_CHANGE_CIPHER_STATE,0),	"TLS1_CHANGE_CIPHER_STATE"},
 {ERR_PACK(0,SSL_F_TLS1_ENC,0),	"TLS1_ENC"},
@@ -219,6 +220,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_CIPHER_TABLE_SRC_ERROR            ,"cipher table src error"},
 {SSL_R_COMPRESSED_LENGTH_TOO_LONG        ,"compressed length too long"},
 {SSL_R_COMPRESSION_FAILURE               ,"compression failure"},
+{SSL_R_COMPRESSION_LIBRARY_ERROR         ,"compression library error"},
 {SSL_R_CONNECTION_ID_IS_DIFFERENT        ,"connection id is different"},
 {SSL_R_CONNECTION_TYPE_NOT_SET           ,"connection type not set"},
 {SSL_R_DATA_BETWEEN_CCS_AND_FINISHED     ,"data between ccs and finished"},
@@ -269,6 +271,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_NO_PROTOCOLS_AVAILABLE            ,"no protocols available"},
 {SSL_R_NO_PUBLICKEY                      ,"no publickey"},
 {SSL_R_NO_SHARED_CIPHER                  ,"no shared cipher"},
+{SSL_R_NO_VERIFY_CALLBACK                ,"no verify callback"},
 {SSL_R_NULL_SSL_CTX                      ,"null ssl ctx"},
 {SSL_R_NULL_SSL_METHOD_PASSED            ,"null ssl method passed"},
 {SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED   ,"old session cipher not returned"},
@@ -316,6 +319,18 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_SSL_HANDSHAKE_FAILURE             ,"ssl handshake failure"},
 {SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS        ,"ssl library has no ciphers"},
 {SSL_R_SSL_SESSION_ID_IS_DIFFERENT       ,"ssl session id is different"},
+{SSL_R_TLSV1_ALERT_ACCESS_DENIED         ,"tlsv1 alert access denied"},
+{SSL_R_TLSV1_ALERT_DECODE_ERROR          ,"tlsv1 alert decode error"},
+{SSL_R_TLSV1_ALERT_DECRYPTION_FAILED     ,"tlsv1 alert decryption failed"},
+{SSL_R_TLSV1_ALERT_DECRYPT_ERROR         ,"tlsv1 alert decrypt error"},
+{SSL_R_TLSV1_ALERT_EXPORT_RESTRICION     ,"tlsv1 alert export restricion"},
+{SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY ,"tlsv1 alert insufficient security"},
+{SSL_R_TLSV1_ALERT_INTERNAL_ERROR        ,"tlsv1 alert internal error"},
+{SSL_R_TLSV1_ALERT_NO_RENEGOTIATION      ,"tlsv1 alert no renegotiation"},
+{SSL_R_TLSV1_ALERT_PROTOCOL_VERSION      ,"tlsv1 alert protocol version"},
+{SSL_R_TLSV1_ALERT_RECORD_OVERFLOW       ,"tlsv1 alert record overflow"},
+{SSL_R_TLSV1_ALERT_UNKNOWN_CA            ,"tlsv1 alert unknown ca"},
+{SSL_R_TLSV1_ALERT_USER_CANCLED          ,"tlsv1 alert user cancled"},
 {SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER,"tls client cert req with anon cipher"},
 {SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST,"tls peer did not respond with certificate list"},
 {SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG,"tls rsa encrypted value length is wrong"},
@@ -353,6 +368,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_WRONG_SSL_VERSION                 ,"wrong ssl version"},
 {SSL_R_WRONG_VERSION_NUMBER              ,"wrong version number"},
 {SSL_R_X509_LIB                          ,"x509 lib"},
+{SSL_R_X509_VERIFICATION_SETUP_PROBLEMS  ,"x509 verification setup problems"},
 {0,NULL},
 	};
 
@@ -362,8 +378,8 @@ void ERR_load_SSL_strings()
 	{
 	static int init=1;
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 #ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_SSL,SSL_str_functs);

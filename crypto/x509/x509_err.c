@@ -118,8 +118,8 @@ void ERR_load_X509_strings()
 	{
 	static int init=1;
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 #ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_X509,X509_str_functs);

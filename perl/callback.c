@@ -80,7 +80,7 @@ char *argp;
 	{
 	SV *sv;
 
-fprintf(stderr,"ex_new %08X %s\n",obj,argp);
+fprintf(stderr,"ex_new idx=%d %08X %s\n",idx,obj,argp);
 	sv=sv_newmortal();
 	sv_setref_pv(sv,argp,(void *)obj);
 	CRYPTO_set_ex_data(ad,idx,(char *)sv);

@@ -59,7 +59,7 @@
 #include "rc5.h"
 #include "rc5_locl.h"
 
-char *RC5_version="RC5 part of SSLeay 0.9.0b 29-Jun-1998";
+char *RC5_version="RC5 part of SSLeay 0.9.1a 06-Jul-1998";
 
 void RC5_32_ecb_encrypt(in, out, ks, encrypt)
 unsigned char *in;

@@ -167,6 +167,7 @@ int outl;
 		}
 
 	i=b->method->bread(b,out,outl);
+
 	if (i > 0) b->num_read+=(unsigned long)i;
 
 	if (cb != NULL)
@@ -204,9 +205,16 @@ int inl;
 		}
 
 	i=b->method->bwrite(b,in,inl);
+
 	if (i > 0) b->num_write+=(unsigned long)i;
 
-	if (cb != NULL)
+	/* This is evil and not thread safe.  If the BIO has been freed,
+	 * we must not call the callback.  The only way to be able to
+	 * determine this is the reference count which is now invalid since
+	 * the memory has been free()ed.
+	 */
+	if (b->references <= 0) abort();
+	if (cb != NULL) /* && (b->references >= 1)) */
 		i=(int)cb(b,BIO_CB_WRITE|BIO_CB_RETURN,in,inl,
 			0L,(long)i);
 	return(i);

@@ -111,7 +111,8 @@ struct tms {
 #include <sys/select.h>
 #endif
 
-#ifdef sun
+#if defined(sun) || defined(__ultrix)
+#define _POSIX_SOURCE
 #include <limits.h>
 #include <sys/param.h>
 #endif

@@ -109,7 +109,7 @@ int X509_LOOKUP_shutdown(ctx)
 X509_LOOKUP *ctx;
 	{
 	if (ctx->method == NULL) return(0);
-	if (ctx->method->init != NULL)
+	if (ctx->method->shutdown != NULL)
 		return(ctx->method->shutdown(ctx));
 	else
 		return(1);
@@ -318,7 +318,7 @@ X509_OBJECT *ret;
 	X509_OBJECT stmp,*tmp;
 	int i,j;
 
-	tmp=X509_OBJECT_retrive_by_subject(ctx->certs,type,name);
+	tmp=X509_OBJECT_retrieve_by_subject(ctx->certs,type,name);
 
 	if (tmp == NULL)
 		{
@@ -381,7 +381,7 @@ X509_OBJECT *a;
 		}
 	}
 
-X509_OBJECT *X509_OBJECT_retrive_by_subject(h,type,name)
+X509_OBJECT *X509_OBJECT_retrieve_by_subject(h,type,name)
 LHASH *h;
 int type;
 X509_NAME *name;

@@ -241,7 +241,7 @@ p5_SSL_sysread(ssl,in,num, ...)
 			if (offset < 0)
 				{
 				if (-offset > olen)
-					croad("Offset outside string");
+					croak("Offset outside string");
 				offset+=olen;
 				}
 			}

@@ -88,6 +88,7 @@ char *cb_arg;
 	unsigned char buf[SHA_DIGEST_LENGTH],buf2[SHA_DIGEST_LENGTH];
 	BIGNUM *r0,*W,*X,*c,*test;
 	BIGNUM *g=NULL,*q=NULL,*p=NULL;
+	BN_MONT_CTX *mont=NULL;
 	int k,n=0,i,b,m=0;
 	int counter=0;
 	BN_CTX *ctx=NULL,*ctx2=NULL;
@@ -100,20 +101,20 @@ char *cb_arg;
 	if ((seed_in != NULL) && (seed_len == 20))
 		memcpy(seed,seed_in,seed_len);
 
-	ctx=BN_CTX_new();
-	if (ctx == NULL) goto err;
-	ctx2=BN_CTX_new();
-	if (ctx2 == NULL) goto err;
-	ret=DSA_new();
-	if (ret == NULL) goto err;
-	r0=ctx2->bn[0];
-	g=ctx2->bn[1];
-	W=ctx2->bn[2];
-	q=ctx2->bn[3];
-	X=ctx2->bn[4];
-	c=ctx2->bn[5];
-	p=ctx2->bn[6];
-	test=ctx2->bn[7];
+	if ((ctx=BN_CTX_new()) == NULL) goto err;
+	if ((ctx2=BN_CTX_new()) == NULL) goto err;
+	if ((ret=DSA_new()) == NULL) goto err;
+
+	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
+
+	r0= &(ctx2->bn[0]);
+	g= &(ctx2->bn[1]);
+	W= &(ctx2->bn[2]);
+	q= &(ctx2->bn[3]);
+	X= &(ctx2->bn[4]);
+	c= &(ctx2->bn[5]);
+	p= &(ctx2->bn[6]);
+	test= &(ctx2->bn[7]);
 
 	BN_lshift(test,BN_value_one(),bits-1);
 
@@ -220,10 +221,12 @@ end:
         BN_div(r0,NULL,test,q,ctx);
 
 	BN_set_word(test,h);
+	BN_MONT_CTX_set(mont,p,ctx);
+
 	for (;;)
 		{
 		/* g=test^r0%p */
-		BN_mod_exp(g,test,r0,p,ctx);
+		BN_mod_exp_mont(g,test,r0,p,ctx,mont);
 		if (!BN_is_one(g)) break;
 		BN_add(test,test,BN_value_one());
 		h++;
@@ -246,8 +249,9 @@ err:
 		if (counter_ret != NULL) *counter_ret=counter;
 		if (h_ret != NULL) *h_ret=h;
 		}
-	BN_CTX_free(ctx);
-	BN_CTX_free(ctx2);
+	if (ctx != NULL) BN_CTX_free(ctx);
+	if (ctx != NULL) BN_CTX_free(ctx2);
+	if (mont != NULL) BN_MONT_CTX_free(mont);
 	return(ok?ret:NULL);
 	}
 
@@ -258,20 +262,22 @@ char *cb_arg;
 	{
 	int ok= -1,j,i,n;
 	BN_CTX *ctx=NULL,*ctx2=NULL;
-	BIGNUM *w_1,*b,*m,*z;
+	BIGNUM *w_1,*b,*m,*z,*tmp,*mont_1;
 	int a;
+	BN_MONT_CTX *mont=NULL;
 
 	if (!BN_is_bit_set(w,0)) return(0);
 
-	ctx=BN_CTX_new();
-	if (ctx == NULL) goto err;
-	ctx2=BN_CTX_new();
-	if (ctx2 == NULL) goto err;
+	if ((ctx=BN_CTX_new()) == NULL) goto err;
+	if ((ctx2=BN_CTX_new()) == NULL) goto err;
+	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
 
-	m=  ctx2->bn[2];
-	b=  ctx2->bn[3];
-	z=  ctx2->bn[4];
-	w_1=ctx2->bn[5];
+	m=   &(ctx2->bn[2]);
+	b=   &(ctx2->bn[3]);
+	z=   &(ctx2->bn[4]);
+	w_1= &(ctx2->bn[5]);
+	tmp= &(ctx2->bn[6]);
+	mont_1= &(ctx2->bn[7]);
 
 	/* step 1 */
 	n=50;
@@ -282,24 +288,30 @@ char *cb_arg;
 		;
 	if (!BN_rshift(m,w_1,a)) goto err;
 
+	BN_MONT_CTX_set(mont,w,ctx);
+	BN_to_montgomery(mont_1,BN_value_one(),mont,ctx);
+	BN_to_montgomery(w_1,w_1,mont,ctx);
 	for (i=1; i < n; i++)
 		{
 		/* step 3 */
 		BN_rand(b,BN_num_bits(w)-2/*-1*/,0,0);
-		BN_set_word(b,0x10001L);
+		/* BN_set_word(b,0x10001L); */
 
 		/* step 4 */
 		j=0;
-		if (!BN_mod_exp(z,b,m,w,ctx)) goto err;
+		if (!BN_mod_exp_mont(z,b,m,w,ctx,mont)) goto err;
+
+		if (!BN_to_montgomery(z,z,mont,ctx)) goto err;
 
 		/* step 5 */
 		for (;;)
 			{
-			if (((j == 0) && BN_is_one(z)) || (BN_cmp(z,w_1) == 0))
+			if (((j == 0) && (BN_cmp(z,mont_1) == 0)) ||
+				(BN_cmp(z,w_1) == 0))
 				break;
 
 			/* step 6 */
-			if ((j > 0) && BN_is_one(z))
+			if ((j > 0) && (BN_cmp(z,mont_1) == 0))
 				{
 				ok=0;
 				goto err;
@@ -312,7 +324,7 @@ char *cb_arg;
 				goto err;
 				}
 
-			if (!BN_mod_mul(z,z,z,w,ctx)) goto err;
+			if (!BN_mod_mul_montgomery(z,z,z,mont,ctx)) goto err;
 			if (callback != NULL) callback(1,j,cb_arg);
 			}
 		}

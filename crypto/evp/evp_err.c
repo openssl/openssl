@@ -72,6 +72,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_PACK(0,EVP_F_EVP_PKEY_NEW,0),	"EVP_PKEY_new"},
 {ERR_PACK(0,EVP_F_EVP_SIGNFINAL,0),	"EVP_SignFinal"},
 {ERR_PACK(0,EVP_F_EVP_VERIFYFINAL,0),	"EVP_VerifyFinal"},
+{ERR_PACK(0,EVP_F_RC2_MAGIC_TO_METH,0),	"RC2_MAGIC_TO_METH"},
 {0,NULL},
 	};
 
@@ -85,6 +86,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {EVP_R_NO_VERIFY_FUNCTION_CONFIGURED     ,"no verify function configured"},
 {EVP_R_PUBLIC_KEY_NOT_RSA                ,"public key not rsa"},
 {EVP_R_UNSUPPORTED_CIPHER                ,"unsupported cipher"},
+{EVP_R_UNSUPPORTED_KEY_SIZE              ,"unsupported key size"},
 {EVP_R_WRONG_FINAL_BLOCK_LENGTH          ,"wrong final block length"},
 {EVP_R_WRONG_PUBLIC_KEY_TYPE             ,"wrong public key type"},
 {0,NULL},
@@ -96,8 +98,8 @@ void ERR_load_EVP_strings()
 	{
 	static int init=1;
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 #ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_EVP,EVP_str_functs);

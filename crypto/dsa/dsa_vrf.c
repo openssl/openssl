@@ -85,52 +85,76 @@ DSA *dsa;
 	ASN1_CTX c;
 	unsigned char **pp= &sigbuf;
 	BN_CTX *ctx;
-	BIGNUM *r=NULL;
-	BIGNUM *t1=NULL,*t2=NULL;
-	BIGNUM *u1=NULL,*u2=NULL;
+	BIGNUM r,u1,u2,t1;
 	ASN1_INTEGER *bs=NULL;
+	BN_MONT_CTX *mont=NULL;
 	int ret = -1;
 
-	ctx=BN_CTX_new();
-	if (ctx == NULL) goto err;
+	if ((ctx=BN_CTX_new()) == NULL) goto err;
+	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
 
-	t1=BN_new();
-	t2=BN_new();
-	if (t1 == NULL || t2 == NULL) goto err;
+	BN_init(&u1);
+	BN_init(&u2);
+	BN_init(&r);
+	BN_init(&t1);
 
 	M_ASN1_D2I_Init();
 	M_ASN1_D2I_start_sequence();
         M_ASN1_D2I_get(bs,d2i_ASN1_INTEGER);
-        if ((r=BN_bin2bn(bs->data,bs->length,NULL)) == NULL) goto err_bn;
+        if ((BN_bin2bn(bs->data,bs->length,&r)) == NULL) goto err_bn;
         M_ASN1_D2I_get(bs,d2i_ASN1_INTEGER);
-        if ((u1=BN_bin2bn(bs->data,bs->length,NULL)) == NULL) goto err_bn;
+        if ((BN_bin2bn(bs->data,bs->length,&u1)) == NULL) goto err_bn;
 	if (!asn1_Finish(&c)) goto err;
 
 	/* Calculate W = inv(S) mod Q
 	 * save W in u2 */
-	if ((u2=BN_mod_inverse(u1,dsa->q,ctx)) == NULL) goto err_bn;
+	if ((BN_mod_inverse(&u2,&u1,dsa->q,ctx)) == NULL) goto err_bn;
 
 	/* save M in u1 */
-	if (BN_bin2bn(dgst,dgst_len,u1) == NULL) goto err_bn;
+	if (BN_bin2bn(dgst,dgst_len,&u1) == NULL) goto err_bn;
 
 	/* u1 = M * w mod q */
-	if (!BN_mod_mul(u1,u1,u2,dsa->q,ctx)) goto err_bn;
+	if (!BN_mod_mul(&u1,&u1,&u2,dsa->q,ctx)) goto err_bn;
 
 	/* u2 = r * w mod q */
-	if (!BN_mod_mul(u2,r,u2,dsa->q,ctx)) goto err_bn;
+	if (!BN_mod_mul(&u2,&r,&u2,dsa->q,ctx)) goto err_bn;
 
+	if ((dsa->method_mont_p == NULL) && (dsa->flags & DSA_FLAG_CACHE_MONT_P))
+		{
+		if ((dsa->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
+			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dsa->method_mont_p,
+				dsa->p,ctx)) goto err;
+		}
+	mont=(BN_MONT_CTX *)dsa->method_mont_p;
+
+#if 0
+	{
+	BIGNUM t2;
+
+	BN_init(&t2);
 	/* v = ( g^u1 * y^u2 mod p ) mod q */
 	/* let t1 = g ^ u1 mod p */
-	if (!BN_mod_exp(t1,dsa->g,u1,dsa->p,ctx)) goto err_bn;
+	if (!BN_mod_exp_mont(&t1,dsa->g,&u1,dsa->p,ctx,mont)) goto err_bn;
 	/* let t2 = y ^ u2 mod p */
-	if (!BN_mod_exp(t2,dsa->pub_key,u2,dsa->p,ctx)) goto err_bn;
+	if (!BN_mod_exp_mont(&t2,dsa->pub_key,&u2,dsa->p,ctx,mont)) goto err_bn;
 	/* let u1 = t1 * t2 mod p */
-	if (!BN_mod_mul(u1,t1,t2,dsa->p,ctx)) goto err_bn;
+	if (!BN_mod_mul(&u1,&t1,&t2,dsa->p,ctx)) goto err_bn;
+	BN_free(&t2);
+	}
 	/* let u1 = u1 mod q */
-	if (!BN_mod(u1,u1,dsa->q,ctx)) goto err_bn;
+	if (!BN_mod(&u1,&u1,dsa->q,ctx)) goto err_bn;
+#else
+	{
+	if (!BN_mod_exp2_mont(&t1,dsa->g,&u1,dsa->pub_key,&u2,dsa->p,ctx,mont))
+		goto err_bn;
+	/* BN_copy(&u1,&t1); */
+	/* let u1 = u1 mod q */
+	if (!BN_mod(&u1,&t1,dsa->q,ctx)) goto err_bn;
+	}
+#endif
 	/* V is now in u1.  If the signature is correct, it will be
 	 * equal to R. */
-	ret=(BN_ucmp(u1, r) == 0);
+	ret=(BN_ucmp(&u1, &r) == 0);
 	if (0)
 		{
 err: /* ASN1 error */
@@ -142,11 +166,10 @@ err_bn: /* BN error */
 		DSAerr(DSA_F_DSA_VERIFY,ERR_R_BN_LIB);
 		}
 	if (ctx != NULL) BN_CTX_free(ctx);
-	if (r != NULL) BN_free(r);
-	if (t1 != NULL) BN_free(t1);
-	if (t2 != NULL) BN_free(t2);
-	if (u1 != NULL) BN_free(u1);
-	if (u2 != NULL) BN_free(u2);
+	BN_free(&r);
+	BN_free(&u1);
+	BN_free(&u2);
+	BN_free(&t1);
 	if (bs != NULL) ASN1_BIT_STRING_free(bs);
 	return(ret);
 	}

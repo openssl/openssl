@@ -81,6 +81,7 @@ static unsigned long err_hash();
 static int err_cmp();
 static unsigned long pid_hash();
 static int pid_cmp();
+static unsigned long get_error_values();
 static void ERR_STATE_free();
 ERR_STATE *s;
 #endif
@@ -148,6 +149,14 @@ static ERR_STRING_DATA ERR_str_reasons[]=
 {ERR_R_PKCS7_LIB			,"PKCS7 lib"},
 {ERR_R_MALLOC_FAILURE			,"Malloc failure"},
 {ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED	,"called a fuction you should not call"},
+{ERR_R_PASSED_NULL_PARAMETER		,"passed a null parameter"},
+{ERR_R_NESTED_ASN1_ERROR		,"nested asn1 error"},
+{ERR_R_BAD_ASN1_OBJECT_HEADER		,"bad asn1 object header"},
+{ERR_R_BAD_GET_ASN1_OBJECT_CALL		,"bad get asn1 object call"},
+{ERR_R_EXPECTING_AN_ASN1_SEQUENCE	,"expecting an asn1 sequence"},
+{ERR_R_ASN1_LENGTH_MISMATCH		,"asn1 length mismatch"},
+{ERR_R_MISSING_ASN1_EOS			,"missing asn1 eos"},
+
 {0,NULL},
 	};
 #endif
@@ -539,7 +548,9 @@ ERR_STATE *ERR_get_state()
 		CRYPTO_w_lock(CRYPTO_LOCK_ERR);
 		if (thread_hash == NULL)
 			{
+			MemCheck_off();
 			thread_hash=lh_new(pid_hash,pid_cmp);
+			MemCheck_on();
 			CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 			if (thread_hash == NULL) return(&fallback);
 			}
@@ -618,20 +629,24 @@ VAR_ALIST
 	for (i=0; i<num; i++)
 		{
 		VAR_ARG(args,char *,a);
-		n+=strlen(a);
-		if (n > s)
+		/* ignore NULLs, thanks to Bob Beck <beck@obtuse.com> */
+		if (a != NULL)
 			{
-			s=n+20;
-			p=Realloc(str,s+1);
-			if (p == NULL)
+			n+=strlen(a);
+			if (n > s)
 				{
-				Free(str);
-				return;
+				s=n+20;
+				p=Realloc(str,s+1);
+				if (p == NULL)
+					{
+					Free(str);
+					return;
+					}
+				else
+					str=p;
 				}
-			else
-				str=p;
+			strcat(str,a);
 			}
-		strcat(str,a);
 		}
 	ERR_set_error_data(str,ERR_TXT_MALLOCED|ERR_TXT_STRING);
 

@@ -136,7 +136,11 @@ EVP_MD *type;
 	signature->data=buf_out;
 	buf_out=NULL;
 	signature->length=outl;
-
+	/* In the interests of compatability, I'll make sure that
+	 * the bit string has a 'not-used bits' value of 0
+	 */
+	signature->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
+	signature->flags|=ASN1_STRING_FLAG_BITS_LEFT;
 err:
 	memset(&ctx,0,sizeof(ctx));
 	if (buf_in != NULL)

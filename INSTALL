@@ -126,3 +126,8 @@ The examples for solaris and windows NT/95 are in the mt directory.
 have fun
 
 eric 25-Jun-1997
+
+IRIX 5.x will build as a 32 bit system with mips1 assember.
+IRIX 6.x will build as a 64 bit system with mips3 assember.  It conforms
+to n32 standards. In theory you can compile the 64 bit assember under
+IRIX 5.x but you will have to have the correct system software installed.

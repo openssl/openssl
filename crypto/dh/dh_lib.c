@@ -61,7 +61,7 @@
 #include "bn.h"
 #include "dh.h"
 
-char *DH_version="Diffie-Hellman part of SSLeay 0.9.0b 29-Jun-1998";
+char *DH_version="Diffie-Hellman part of SSLeay 0.9.1a 06-Jul-1998";
 
 DH *DH_new()
 	{
@@ -80,6 +80,8 @@ DH *DH_new()
 	ret->length=0;
 	ret->pub_key=NULL;
 	ret->priv_key=NULL;
+	ret->flags=DH_FLAG_CACHE_MONT_P;
+	ret->method_mont_p=NULL;
 	return(ret);
 	}
 
@@ -90,6 +92,8 @@ DH *r;
 	if (r->g != NULL) BN_clear_free(r->g);
 	if (r->pub_key != NULL) BN_clear_free(r->pub_key);
 	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
+	if (r->method_mont_p != NULL)
+		BN_MONT_CTX_free((BN_MONT_CTX *)r->method_mont_p);
 	Free(r);
 	}
 

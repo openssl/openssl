@@ -34,6 +34,7 @@
 	"ssl/ssl_lib.c",
 	"ssl/s2_lib.c",
 	"ssl/s3_lib.c",
+	"ssl/s23_lib.c",
 	"ssl/t1_lib.c",
 	"README",
 	);

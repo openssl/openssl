@@ -64,7 +64,20 @@
 #include "objects.h"
 
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
+#ifndef NO_OBJECT
 #include "obj_dat.h"
+#else
+/* You will have to load all the objects needed manually in the application */
+#define NUM_NID 0
+#define NUM_SN 0
+#define NUM_LN 0
+#define NUM_OBJ 0
+static unsigned char lvalues[1];
+static ASN1_OBJECT nid_objs[1];
+static ASN1_OBJECT *sn_objs[1];
+static ASN1_OBJECT *ln_objs[1];
+static ASN1_OBJECT *obj_objs[1];
+#endif
 
 #ifndef NOPROTO
 static int sn_cmp(ASN1_OBJECT **a, ASN1_OBJECT **b);
@@ -163,6 +176,7 @@ ADDED_OBJ *ca,*cb;
 	default:
 		abort();
 		}
+	return(1); /* should not get here */
 	}
 
 static int init_added()
@@ -177,7 +191,8 @@ ADDED_OBJ *a;
 	{
 	a->obj->nid=0;
 	a->obj->flags|=ASN1_OBJECT_FLAG_DYNAMIC|
-	                ASN1_OBJECT_FLAG_DYNAMIC_STRINGS;
+	                ASN1_OBJECT_FLAG_DYNAMIC_STRINGS|
+			ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 	}
 
 static void cleanup2(a)
@@ -247,7 +262,9 @@ ASN1_OBJECT *obj;
 				Free(aop);
 			}
 		}
-	o->flags&= ~(ASN1_OBJECT_FLAG_DYNAMIC|ASN1_OBJECT_FLAG_DYNAMIC_STRINGS);
+	o->flags&= ~(ASN1_OBJECT_FLAG_DYNAMIC|ASN1_OBJECT_FLAG_DYNAMIC_STRINGS|
+			ASN1_OBJECT_FLAG_DYNAMIC_DATA);
+
 	return(o->nid);
 err:
 	for (i=ADDED_DATA; i<=ADDED_NID; i++)
@@ -502,7 +519,7 @@ int OBJ_create_objects(in)
 BIO *in;
 	{
 	MS_STATIC char buf[512];
-	int i,num= -1;
+	int i,num=0;
 	char *o,*s,*l=NULL;
 
 	for (;;)
@@ -544,7 +561,7 @@ BIO *in;
 		if (!OBJ_create(o,s,l)) return(num);
 		num++;
 		}
-	return(num);
+	/* return(num); */
 	}
 
 int OBJ_create(oid,sn,ln)

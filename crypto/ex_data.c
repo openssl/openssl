@@ -72,20 +72,22 @@ int (*new_func)();
 int (*dup_func)();
 void (*free_func)();
 	{
+	int ret= -1;
 	CRYPTO_EX_DATA_FUNCS *a;
 
+	MemCheck_off();
 	if (*skp == NULL)
 		*skp=sk_new_null();
 	if (*skp == NULL)
 		{
 		CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX,ERR_R_MALLOC_FAILURE);
-		return(-1);
+		goto err;
 		}
 	a=(CRYPTO_EX_DATA_FUNCS *)Malloc(sizeof(CRYPTO_EX_DATA_FUNCS));
 	if (a == NULL)
 		{
 		CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX,ERR_R_MALLOC_FAILURE);
-		return(-1);
+		goto err;
 		}
 	a->argl=argl;
 	a->argp=argp;
@@ -98,10 +100,13 @@ void (*free_func)();
 			{
 			CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX,ERR_R_MALLOC_FAILURE);
 			Free(a);
-			return(-1);
+			goto err;
 			}
 		}
 	sk_value(*skp,idx)=(char *)a;
+	ret=idx;
+err:
+	MemCheck_on();
 	return(idx);
 	}
 

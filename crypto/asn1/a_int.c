@@ -279,7 +279,7 @@ ASN1_INTEGER *ai;
 		ret=ai;
 	if (ret == NULL)
 		{
-		ASN1err(ASN1_F_BN_TO_ASN1_INTEGER,ASN1_R_ERROR_STACK);
+		ASN1err(ASN1_F_BN_TO_ASN1_INTEGER,ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 		}
 	ret->type=V_ASN1_INTEGER;

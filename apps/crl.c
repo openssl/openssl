@@ -71,11 +71,6 @@
 #undef POSTFIX
 #define	POSTFIX	".rvk"
 
-#define FORMAT_UNDEF	0
-#define FORMAT_ASN1	1
-#define FORMAT_TEXT	2
-#define FORMAT_PEM	3
-
 static char *crl_usage[]={
 "usage: crl args\n",
 "\n",

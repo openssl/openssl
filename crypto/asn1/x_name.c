@@ -62,9 +62,9 @@
 #include "asn1_mac.h"
 
 /*
- * ASN1err(ASN1_F_D2I_X509_NAME,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_X509_NAME,ERR_R_ASN1_LENGTH_MISMATCH);
  * ASN1err(ASN1_F_X509_NAME_NEW,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
- * ASN1err(ASN1_F_D2I_X509_NAME_ENTRY,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_X509_NAME_ENTRY,ERR_R_ASN1_LENGTH_MISMATCH);
  * ASN1err(ASN1_F_X509_NAME_ENTRY_NEW,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
  */
 
@@ -213,7 +213,8 @@ long length;
 	for (;;)
 		{
 		if (M_ASN1_D2I_end_sequence()) break;
-		M_ASN1_D2I_get_set(ret->entries,d2i_X509_NAME_ENTRY);
+		M_ASN1_D2I_get_set(ret->entries,d2i_X509_NAME_ENTRY,
+			X509_NAME_ENTRY_free);
 		for (; idx < sk_num(ret->entries); idx++)
 			{
 			((X509_NAME_ENTRY *)sk_value(ret->entries,idx))->set=
@@ -234,9 +235,11 @@ long length;
 X509_NAME *X509_NAME_new()
 	{
 	X509_NAME *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_NAME);
-	if ((ret->entries=sk_new(NULL)) == NULL) goto err2;
+	if ((ret->entries=sk_new(NULL)) == NULL)
+		{ c.line=__LINE__; goto err2; }
 	M_ASN1_New(ret->bytes,BUF_MEM_new);
 	ret->modified=1;
 	return(ret);
@@ -246,6 +249,7 @@ X509_NAME *X509_NAME_new()
 X509_NAME_ENTRY *X509_NAME_ENTRY_new()
 	{
 	X509_NAME_ENTRY *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_NAME_ENTRY);
 /*	M_ASN1_New(ret->object,ASN1_OBJECT_new);*/

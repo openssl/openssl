@@ -1,3 +1,4 @@
+	Fixed the weak key values which were wrong :-(
 	Defining SIGACTION causes sigaction() to be used instead of signal().
 	SIGUSR1/SIGUSR2 are no longer mapped in the read tty stuff because it
 	can cause problems.  This should hopefully not affect normal

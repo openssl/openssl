@@ -148,7 +148,7 @@ unsigned char *ip;
 
 int BIO_get_port(str,port_ptr)
 char *str;
-short *port_ptr;
+unsigned short *port_ptr;
 	{
 	int i;
 	struct servent *s;
@@ -223,13 +223,13 @@ char *parg;
 		{
 	case BIO_GHBN_CTRL_HITS:
 		return(BIO_ghbn_hits);
-		break;
+		/* break; */
 	case BIO_GHBN_CTRL_MISSES:
 		return(BIO_ghbn_miss);
-		break;
+		/* break; */
 	case BIO_GHBN_CTRL_CACHE_SIZE:
 		return(GHBN_NUM);
-		break;
+		/* break; */
 	case BIO_GHBN_CTRL_GET_ENTRY:
 		if ((iarg >= 0) && (iarg <GHBN_NUM) &&
 			(ghbn_cache[iarg].order > 0))
@@ -241,7 +241,7 @@ char *parg;
 			return(1);
 			}
 		return(0);
-		break;
+		/* break; */
 	case BIO_GHBN_CTRL_FLUSH:
 		for (i=0; i<GHBN_NUM; i++)
 			ghbn_cache[i].order=0;
@@ -258,46 +258,51 @@ struct hostent *a;
 	struct hostent *ret;
 	int i,j;
 
-	ret=(struct hostent *)malloc(sizeof(struct hostent));
+	MemCheck_off();
+	ret=(struct hostent *)Malloc(sizeof(struct hostent));
 	if (ret == NULL) return(NULL);
 	memset(ret,0,sizeof(struct hostent));
 
 	for (i=0; a->h_aliases[i] != NULL; i++)
 		;
 	i++;
-	ret->h_aliases=(char **)malloc(sizeof(char *)*i);
+	ret->h_aliases=(char **)Malloc(sizeof(char *)*i);
 	memset(ret->h_aliases,0,sizeof(char *)*i);
 	if (ret == NULL) goto err;
 
 	for (i=0; a->h_addr_list[i] != NULL; i++)
 		;
 	i++;
-	ret->h_addr_list=(char **)malloc(sizeof(char *)*i);
+	ret->h_addr_list=(char **)Malloc(sizeof(char *)*i);
 	memset(ret->h_addr_list,0,sizeof(char *)*i);
 	if (ret->h_addr_list == NULL) goto err;
 
 	j=strlen(a->h_name)+1;
-	if ((ret->h_name=malloc(j)) == NULL) goto err;
-	memcpy((char *)ret->h_name,a->h_name,j);
+	if ((ret->h_name=Malloc(j)) == NULL) goto err;
+	memcpy((char *)ret->h_name,a->h_name,j+1);
 	for (i=0; a->h_aliases[i] != NULL; i++)
 		{
 		j=strlen(a->h_aliases[i])+1;
-		if ((ret->h_aliases[i]=malloc(j)) == NULL) goto err;
-		memcpy(ret->h_aliases[i],a->h_aliases[i],j);
+		if ((ret->h_aliases[i]=Malloc(j)) == NULL) goto err;
+		memcpy(ret->h_aliases[i],a->h_aliases[i],j+1);
 		}
 	ret->h_length=a->h_length;
 	ret->h_addrtype=a->h_addrtype;
 	for (i=0; a->h_addr_list[i] != NULL; i++)
 		{
-		if ((ret->h_addr_list[i]=malloc(a->h_length)) == NULL)
+		if ((ret->h_addr_list[i]=Malloc(a->h_length)) == NULL)
 			goto err;
 		memcpy(ret->h_addr_list[i],a->h_addr_list[i],a->h_length);
 		}
-	return(ret);
+	if (0)
+		{
 err:	
-	if (ret != NULL)
-		ghbn_free(ret);
-	return(NULL);
+		if (ret != NULL)
+			ghbn_free(ret);
+		ret=NULL;
+		}
+	MemCheck_on();
+	return(ret);
 	}
 
 static void ghbn_free(a)
@@ -308,17 +313,17 @@ struct hostent *a;
 	if (a->h_aliases != NULL)
 		{
 		for (i=0; a->h_aliases[i] != NULL; i++)
-			free(a->h_aliases[i]);
-		free(a->h_aliases);
+			Free(a->h_aliases[i]);
+		Free(a->h_aliases);
 		}
 	if (a->h_addr_list != NULL)
 		{
 		for (i=0; a->h_addr_list[i] != NULL; i++)
-			free(a->h_addr_list[i]);
-		free(a->h_addr_list);
+			Free(a->h_addr_list[i]);
+		Free(a->h_addr_list);
 		}
-	if (a->h_name != NULL) free((char *)a->h_name);
-	free(a);
+	if (a->h_name != NULL) Free((char *)a->h_name);
+	Free(a);
 	}
 
 struct hostent *BIO_gethostbyname(name)
@@ -467,16 +472,18 @@ unsigned char ip[4];
 	return(1);
 	}
 
-int BIO_get_accept_socket(host)
+int BIO_get_accept_socket(host,bind_mode)
 char *host;
+int bind_mode;
 	{
 	int ret=0;
-	struct sockaddr_in server;
-	int s= -1;
+	struct sockaddr_in server,client;
+	int s= -1,cs;
 	unsigned char ip[4];
 	short port;
 	char *str,*h,*p,*e;
 	unsigned long l;
+	int err_num;
 
 	if (!BIO_sock_init()) return(INVALID_SOCKET);
 
@@ -517,12 +524,13 @@ char *host;
 		if (!BIO_get_host_ip(h,&(ip[0]))) return(INVALID_SOCKET);
 		l=(unsigned long)
 			((unsigned long)ip[0]<<24L)|
-			((unsigned long)ip[0]<<16L)|
-			((unsigned long)ip[0]<< 8L)|
-			((unsigned long)ip[0]);
+			((unsigned long)ip[1]<<16L)|
+			((unsigned long)ip[2]<< 8L)|
+			((unsigned long)ip[3]);
 		server.sin_addr.s_addr=htonl(l);
 		}
 
+again:
 	s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
 	if (s == INVALID_SOCKET)
 		{
@@ -531,9 +539,45 @@ char *host;
 		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,BIO_R_UNABLE_TO_CREATE_SOCKET);
 		goto err;
 		}
+
+#ifdef SO_REUSEADDR
+	if (bind_mode == BIO_BIND_REUSEADDR)
+		{
+		int i=1;
+
+		ret=setsockopt(s,SOL_SOCKET,SO_REUSEADDR,(char *)&i,sizeof(i));
+		bind_mode=BIO_BIND_NORMAL;
+		}
+#endif
 	if (bind(s,(struct sockaddr *)&server,sizeof(server)) == -1)
 		{
-		SYSerr(SYS_F_BIND,get_last_socket_error());
+#ifdef SO_REUSEADDR
+		err_num=get_last_socket_error();
+		if ((bind_mode == BIO_BIND_REUSEADDR_IF_UNUSED) &&
+			(err_num == EADDRINUSE))
+			{
+			memcpy((char *)&client,(char *)&server,sizeof(server));
+			if (strcmp(h,"*") == 0)
+				client.sin_addr.s_addr=htonl(0x7F000001);
+			cs=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
+			if (cs != INVALID_SOCKET)
+				{
+				int ii;
+				ii=connect(cs,(struct sockaddr *)&client,
+					sizeof(client));
+				closesocket(cs);
+				if (ii == INVALID_SOCKET)
+					{
+					bind_mode=BIO_BIND_REUSEADDR;
+					closesocket(s);
+					goto again;
+					}
+				/* else error */
+				}
+			/* else error */
+			}
+#endif
+		SYSerr(SYS_F_BIND,err_num);
 		ERR_add_error_data(3,"port='",host,"'");
 		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,BIO_R_UNABLE_TO_BIND_SOCKET);
 		goto err;
@@ -550,11 +594,7 @@ err:
 	if (str != NULL) Free(str);
 	if ((ret == 0) && (s != INVALID_SOCKET))
 		{
-#ifdef WINDOWS
 		closesocket(s);
-#else
-		close(s);
-#endif
 		s= INVALID_SOCKET;
 		}
 	return(s);
@@ -626,3 +666,16 @@ int on;
 	}
 #endif
 
+int BIO_socket_nbio(s,mode)
+int s;
+int mode;
+	{
+	int ret= -1;
+	unsigned long l;
+
+	l=mode;
+#ifdef FIONBIO
+	ret=BIO_socket_ioctl(s,FIONBIO,&l);
+#endif
+	return(ret == 0);
+	}

@@ -60,8 +60,8 @@
 
 #undef SECONDS
 #define SECONDS		3	
-#define RSA_SECONDS	10	
-#define DSA_SECONDS	10	
+#define RSA_SECONDS	10
+#define DSA_SECONDS	10
 
 /* 11-Sep-92 Andrew Daviel   Support for Silicon Graphics IRIX added */
 /* 06-Apr-92 Luke Brennan    Support for VMS and add extra signal calls */
@@ -107,7 +107,8 @@ struct tms {
 #include <sys/timeb.h>
 #endif
 
-#ifdef sun
+#if defined(sun) || defined(__ultrix)
+#define _POSIX_SOURCE
 #include <limits.h>
 #include <sys/param.h>
 #endif
@@ -361,13 +362,19 @@ char **argv;
 	int pr_header=0;
 
 	apps_startup();
+#ifdef NO_DSA
+	memset(dsa_key,0,sizeof(dsa_key));
+#endif
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
+#ifndef NO_RSA
+	memset(rsa_key,0,sizeof(rsa_key));
 	for (i=0; i<RSA_NUM; i++)
 		rsa_key[i]=NULL;
+#endif
 
 	if ((buf=(unsigned char *)Malloc((int)BUFSIZE)) == NULL)
 		{
@@ -679,7 +686,7 @@ char **argv;
 			rsa_doit[i]=0;
 		else
 			{
-			if (rsa_c[i] == 0)
+			if (rsa_c[i][0] == 0)
 				{
 				rsa_c[i][0]=1;
 				rsa_c[i][1]=20;
@@ -969,6 +976,8 @@ char **argv;
 	for (j=0; j<RSA_NUM; j++)
 		{
 		if (!rsa_doit[j]) continue;
+		rsa_num=RSA_private_encrypt(30,buf,buf2,rsa_key[j],
+			RSA_PKCS1_PADDING);
 		pkey_print_message("private","rsa",rsa_c[j][0],rsa_bits[j],
 			RSA_SECONDS);
 /*		RSA_blinding_on(rsa_key[j],NULL); */
@@ -992,6 +1001,8 @@ char **argv;
 		rsa_count=count;
 
 #if 1
+		rsa_num2=RSA_public_decrypt(rsa_num,buf2,buf,rsa_key[j],
+			RSA_PKCS1_PADDING);
 		pkey_print_message("public","rsa",rsa_c[j][1],rsa_bits[j],
 			RSA_SECONDS);
 		Time_F(START);
@@ -1031,6 +1042,8 @@ char **argv;
 		if (!dsa_doit[j]) continue;
 		DSA_generate_key(dsa_key[j]);
 /*		DSA_sign_setup(dsa_key[j],NULL); */
+		rsa_num=DSA_sign(EVP_PKEY_DSA,buf,20,buf2,
+			&kk,dsa_key[j]);
 		pkey_print_message("sign","dsa",dsa_c[j][0],dsa_bits[j],
 			DSA_SECONDS);
 		Time_F(START);
@@ -1052,6 +1065,8 @@ char **argv;
 		dsa_results[j][0]=d/(double)count;
 		rsa_count=count;
 
+		rsa_num2=DSA_verify(EVP_PKEY_DSA,buf,20,buf2,
+			kk,dsa_key[j]);
 		pkey_print_message("verify","dsa",dsa_c[j][1],dsa_bits[j],
 			DSA_SECONDS);
 		Time_F(START);

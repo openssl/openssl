@@ -64,7 +64,7 @@
 #include "asn1_mac.h"
 
 /*
- * ASN1err(ASN1_F_D2I_DHPARAMS,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_DHPARAMS,ERR_R_ASN1_LENGTH_MISMATCH);
  * ASN1err(ASN1_F_I2D_DHPARAMS,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
  */
 
@@ -73,7 +73,7 @@ DH **a;
 unsigned char **pp;
 long length;
 	{
-	int i=ASN1_R_ERROR_STACK;
+	int i=ERR_R_NESTED_ASN1_ERROR;
 	ASN1_INTEGER *bs=NULL;
 	long v=0;
 	M_ASN1_D2I_vars(a,DH *,DH_new);

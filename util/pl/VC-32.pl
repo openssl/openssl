@@ -7,7 +7,7 @@ $crypto="libeay32";
 $RSAref="RSAref32";
 
 $o='\\';
-$cp='copy';
+$cp='"copy /b nul+ "';	# Timestamps get stuffed otherwise
 $rm='del';
 
 # C compiler stuff
@@ -22,7 +22,7 @@ $inc_def="inc32";
 
 if ($debug)
 	{
-	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DWINDOWS -DWIN32 -D_DEBUG -DL_ENDIAN";
+	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DWINDOWS -DWIN32 -D_DEBUG -DL_ENDIAN -DWIN32_LEAN_AND_MEAN -DDEBUG";
 	$lflags.=" /debug";
 	$mlflags.=' /debug';
 	}
@@ -53,8 +53,8 @@ $asm='ml /Cp /coff /c /Cx';
 $asm.=" /Zi" if $debug;
 $afile='/Fo';
 
-$bn_mulw_obj='';
-$bn_mulw_src='';
+$bn_asm_obj='';
+$bn_asm_src='';
 $des_enc_obj='';
 $des_enc_src='';
 $bf_enc_obj='';
@@ -62,8 +62,8 @@ $bf_enc_src='';
 
 if (!$no_asm)
 	{
-	$bn_mulw_obj='crypto\bn\asm\bn-win32.obj';
-	$bn_mulw_src='crypto\bn\asm\bn-win32.asm';
+	$bn_asm_obj='crypto\bn\asm\bn-win32.obj';
+	$bn_asm_src='crypto\bn\asm\bn-win32.asm';
 	$des_enc_obj='crypto\des\asm\d-win32.obj crypto\des\asm\y-win32.obj';
 	$des_enc_src='crypto\des\asm\d-win32.asm crypto\des\asm\y-win32.asm';
 	$bf_enc_obj='crypto\bf\asm\b-win32.obj';
@@ -91,6 +91,8 @@ if ($shlib)
 	$out_def="out32dll";
 	$tmp_def="tmp32dll";
 	}
+
+$cflags.=" /Fd$out_def";
 
 sub do_lib_rule
 	{

@@ -179,7 +179,7 @@ SSL *s;
 			ret=ssl23_get_server_hello(s);
 			if (ret >= 0) cb=NULL;
 			goto end;
-			break;
+			/* break; */
 
 		default:
 			SSLerr(SSL_F_SSL23_CONNECT,SSL_R_UNKNOWN_STATE);
@@ -443,7 +443,7 @@ SSL *s;
 			}
 
 		s->rwstate=SSL_NOTHING;
-		SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,1000+p[6]);
+		SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_AD_REASON_OFFSET+p[6]);
 		goto err;
 		}
 	else

@@ -268,7 +268,7 @@ SSL *s;
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_DONE,1);
 
 			goto end;
-			break;
+			/* break; */
 		default:
 			SSLerr(SSL_F_SSL2_CONNECT,SSL_R_UNKNOWN_STATE);
 			return(-1);
@@ -587,6 +587,11 @@ SSL *s;
 			SSLerr(SSL_F_CLIENT_MASTER_KEY,SSL_R_PUBLIC_KEY_ENCRYPT_ERROR);
 			return(-1);
 			}
+#ifdef PKCS1_CHECK
+		if (s->options & SSL_OP_PKCS1_CHECK_1) d[1]++;
+		if (s->options & SSL_OP_PKCS1_CHECK_2)
+			sess->master_key[clear]++;
+#endif
 		s2n(enc,p);
 		d+=enc;
 		karg=sess->key_arg_length;	

@@ -62,8 +62,8 @@
 #include "x509.h"
 
 /*
- * ASN1err(ASN1_F_PKCS7_SIGNED_NEW,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_PKCS7_SIGNED,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_PKCS7_SIGNED_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_PKCS7_SIGNED,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
 int i2d_PKCS7_SIGNED(a,pp)
@@ -101,11 +101,12 @@ long length;
 	M_ASN1_D2I_Init();
 	M_ASN1_D2I_start_sequence();
 	M_ASN1_D2I_get(ret->version,d2i_ASN1_INTEGER);
-	M_ASN1_D2I_get_set(ret->md_algs,d2i_X509_ALGOR);
+	M_ASN1_D2I_get_set(ret->md_algs,d2i_X509_ALGOR,X509_ALGOR_free);
 	M_ASN1_D2I_get(ret->contents,d2i_PKCS7);
-	M_ASN1_D2I_get_IMP_set_opt(ret->cert,d2i_X509,0);
-	M_ASN1_D2I_get_IMP_set_opt(ret->crl,d2i_X509_CRL,1);
-	M_ASN1_D2I_get_set(ret->signer_info,d2i_PKCS7_SIGNER_INFO);
+	M_ASN1_D2I_get_IMP_set_opt(ret->cert,d2i_X509,X509_free,0);
+	M_ASN1_D2I_get_IMP_set_opt(ret->crl,d2i_X509_CRL,X509_CRL_free,1);
+	M_ASN1_D2I_get_set(ret->signer_info,d2i_PKCS7_SIGNER_INFO,
+		PKCS7_SIGNER_INFO_free);
 
 	M_ASN1_D2I_Finish(a,PKCS7_SIGNED_free,ASN1_F_D2I_PKCS7_SIGNED);
 	}
@@ -113,6 +114,7 @@ long length;
 PKCS7_SIGNED *PKCS7_SIGNED_new()
 	{
 	PKCS7_SIGNED *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,PKCS7_SIGNED);
 	M_ASN1_New(ret->version,ASN1_INTEGER_new);

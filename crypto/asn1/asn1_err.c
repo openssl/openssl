@@ -87,7 +87,7 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 {ERR_PACK(0,ASN1_F_ASN1_VERIFY,0),	"ASN1_VERIFY"},
 {ERR_PACK(0,ASN1_F_BN_TO_ASN1_INTEGER,0),	"BN_to_ASN1_INTEGER"},
 {ERR_PACK(0,ASN1_F_D2I_ASN1_BIT_STRING,0),	"d2i_ASN1_BIT_STRING"},
-{ERR_PACK(0,ASN1_F_D2I_ASN1_BMPSTRING,0),	"D2I_ASN1_BMPSTRING"},
+{ERR_PACK(0,ASN1_F_D2I_ASN1_BMPSTRING,0),	"d2i_ASN1_BMPSTRING"},
 {ERR_PACK(0,ASN1_F_D2I_ASN1_BOOLEAN,0),	"d2i_ASN1_BOOLEAN"},
 {ERR_PACK(0,ASN1_F_D2I_ASN1_BYTES,0),	"d2i_ASN1_bytes"},
 {ERR_PACK(0,ASN1_F_D2I_ASN1_HEADER,0),	"d2i_ASN1_HEADER"},
@@ -191,7 +191,6 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 static ERR_STRING_DATA ASN1_str_reasons[]=
 	{
 {ASN1_R_BAD_CLASS                        ,"bad class"},
-{ASN1_R_BAD_GET_OBJECT                   ,"bad get object"},
 {ASN1_R_BAD_OBJECT_HEADER                ,"bad object header"},
 {ASN1_R_BAD_PASSWORD_READ                ,"bad password read"},
 {ASN1_R_BAD_PKCS7_CONTENT                ,"bad pkcs7 content"},
@@ -203,13 +202,12 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ASN1_R_BUFFER_TOO_SMALL                 ,"buffer too small"},
 {ASN1_R_DATA_IS_WRONG                    ,"data is wrong"},
 {ASN1_R_DECODING_ERROR                   ,"decoding error"},
-{ASN1_R_ERROR_STACK                      ,"error stack"},
+{ASN1_R_ERROR_PARSING_SET_ELEMENT        ,"error parsing set element"},
 {ASN1_R_EXPECTING_AN_INTEGER             ,"expecting an integer"},
 {ASN1_R_EXPECTING_AN_OBJECT              ,"expecting an object"},
 {ASN1_R_EXPECTING_AN_OCTET_STRING        ,"expecting an octet string"},
 {ASN1_R_EXPECTING_A_BIT_STRING           ,"expecting a bit string"},
 {ASN1_R_EXPECTING_A_BOOLEAN              ,"expecting a boolean"},
-{ASN1_R_EXPECTING_A_SEQUENCE             ,"expecting a sequence"},
 {ASN1_R_EXPECTING_A_UTCTIME              ,"expecting a utctime"},
 {ASN1_R_FIRST_NUM_TOO_LARGE              ,"first num too large"},
 {ASN1_R_HEADER_TOO_LONG                  ,"header too long"},
@@ -218,8 +216,6 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ASN1_R_INVALID_TIME_FORMAT              ,"invalid time format"},
 {ASN1_R_IV_TOO_LARGE                     ,"iv too large"},
 {ASN1_R_LENGTH_ERROR                     ,"length error"},
-{ASN1_R_LENGTH_MISMATCH                  ,"length mismatch"},
-{ASN1_R_MISSING_EOS                      ,"missing eos"},
 {ASN1_R_MISSING_SECOND_NUMBER            ,"missing second number"},
 {ASN1_R_NON_HEX_CHARACTERS               ,"non hex characters"},
 {ASN1_R_NOT_ENOUGH_DATA                  ,"not enough data"},
@@ -254,8 +250,8 @@ void ERR_load_ASN1_strings()
 	{
 	static int init=1;
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 #ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_ASN1,ASN1_str_functs);

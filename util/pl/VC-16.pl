@@ -84,8 +84,8 @@ $lfile='';
 $asm='ml /Cp /c /Cx';
 $afile='/Fo';
 
-$bn_mulw_obj='';
-$bn_mulw_src='';
+$bn_asm_obj='';
+$bn_asm_src='';
 $des_enc_obj='';
 $des_enc_src='';
 $bf_enc_obj='';
@@ -95,13 +95,13 @@ if (!$no_asm)
 	{
 	if ($asmbits == 32)
 		{
-		$bn_mulw_obj='crypto\bn\asm\x86w32.obj';
-		$bn_mulw_src='crypto\bn\asm\x86w32.asm';
+		$bn_asm_obj='crypto\bn\asm\x86w32.obj';
+		$bn_asm_src='crypto\bn\asm\x86w32.asm';
 		}
 	else
 		{
-		$bn_mulw_obj='crypto\bn\asm\x86w16.obj';
-		$bn_mulw_src='crypto\bn\asm\x86w16.asm';
+		$bn_asm_obj='crypto\bn\asm\x86w16.obj';
+		$bn_asm_src='crypto\bn\asm\x86w16.asm';
 		}
 	}
 

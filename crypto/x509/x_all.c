@@ -133,6 +133,13 @@ EVP_MD *md;
 		x->signature, (char *)x->spkac,pkey,md));
 	}
 
+X509_ATTRIBUTE *X509_ATTRIBUTE_dup(xa)
+X509_ATTRIBUTE *xa;
+	{
+	return((X509_ATTRIBUTE *)ASN1_dup((int (*)())i2d_X509_ATTRIBUTE,
+		(char *(*)())d2i_X509_ATTRIBUTE,(char *)xa));
+	}
+
 X509 *X509_dup(x509)
 X509 *x509;
 	{
@@ -420,6 +427,13 @@ DSA *dsa;
 	return(ASN1_i2d_bio(i2d_DSAPrivateKey,bp,(unsigned char *)dsa));
 	}
 #endif
+
+X509_ALGOR *X509_ALGOR_dup(xn)
+X509_ALGOR *xn;
+	{
+	return((X509_ALGOR *)ASN1_dup((int (*)())i2d_X509_ALGOR,
+	(char *(*)())d2i_X509_ALGOR,(char *)xn));
+	}
 
 X509_NAME *X509_NAME_dup(xn)
 X509_NAME *xn;

@@ -62,7 +62,7 @@
 #include "asn1_mac.h"
 
 /*
- * ASN1err(ASN1_F_D2I_X509_ATTRIBUTE,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_X509_ATTRIBUTE,ERR_R_ASN1_LENGTH_MISMATCH);
  * ASN1err(ASN1_F_X509_ATTRIBUTE_NEW,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
  * ASN1err(ASN1_F_I2D_X509_ATTRIBUTE,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
  */
@@ -115,7 +115,7 @@ long length;
 		(M_ASN1_next == (V_ASN1_CONSTRUCTED|V_ASN1_UNIVERSAL|V_ASN1_SET)))
 		{
 		ret->set=1;
-		M_ASN1_D2I_get_set(ret->value.set,d2i_ASN1_TYPE);
+		M_ASN1_D2I_get_set(ret->value.set,d2i_ASN1_TYPE,ASN1_TYPE_free);
 		}
 	else
 		{
@@ -126,12 +126,37 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_ATTRIBUTE_free,ASN1_F_D2I_X509_ATTRIBUTE);
 	}
 
+X509_ATTRIBUTE *X509_ATTRIBUTE_create(nid,atrtype,value)
+int nid;
+int atrtype;
+char *value;
+	{
+	X509_ATTRIBUTE *ret=NULL;
+	ASN1_TYPE *val=NULL;
+
+	if ((ret=X509_ATTRIBUTE_new()) == NULL)
+		return(NULL);
+	ret->object=OBJ_nid2obj(nid);
+	ret->set=1;
+	if ((ret->value.set=sk_new_null()) == NULL) goto err;
+	if ((val=ASN1_TYPE_new()) == NULL) goto err;
+	if (!sk_push(ret->value.set,(char *)val)) goto err;
+
+	ASN1_TYPE_set(val,atrtype,value);
+	return(ret);
+err:
+	if (ret != NULL) X509_ATTRIBUTE_free(ret);
+	if (val != NULL) ASN1_TYPE_free(val);
+	return(NULL);
+	}
+
 X509_ATTRIBUTE *X509_ATTRIBUTE_new()
 	{
 	X509_ATTRIBUTE *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_ATTRIBUTE);
-	M_ASN1_New(ret->object,ASN1_OBJECT_new);
+	ret->object=OBJ_nid2obj(NID_undef);
 	ret->set=0;
 	ret->value.ptr=NULL;
 	return(ret);

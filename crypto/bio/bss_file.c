@@ -214,12 +214,14 @@ char *ptr;
 
 	switch (cmd)
 		{
+	case BIO_C_FILE_SEEK:
 	case BIO_CTRL_RESET:
 		ret=(long)fseek(fp,num,0);
 		break;
 	case BIO_CTRL_EOF:
 		ret=(long)feof(fp);
 		break;
+	case BIO_C_FILE_TELL:
 	case BIO_CTRL_INFO:
 		ret=ftell(fp);
 		break;

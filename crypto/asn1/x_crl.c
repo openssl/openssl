@@ -62,12 +62,12 @@
 #include "x509.h"
 
 /*
- * ASN1err(ASN1_F_D2I_X509_CRL,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_X509_CRL_INFO,ASN1_R_EXPECTING_A_SEQUENCE);
- * ASN1err(ASN1_F_D2I_X509_REVOKED,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_CRL_NEW,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_CRL_INFO_NEW,ASN1_R_EXPECTING_A_SEQUENCE);
- * ASN1err(ASN1_F_X509_REVOKED_NEW,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_X509_CRL,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_X509_CRL_INFO,ERR_R_EXPECTING_AN_ASN1_SEQUENCE);
+ * ASN1err(ASN1_F_D2I_X509_REVOKED,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_X509_CRL_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_X509_CRL_INFO_NEW,ERR_R_EXPECTING_AN_ASN1_SEQUENCE);
+ * ASN1err(ASN1_F_X509_REVOKED_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
 #ifndef NOPROTO
@@ -108,7 +108,8 @@ long length;
 	M_ASN1_D2I_start_sequence();
 	M_ASN1_D2I_get(ret->serialNumber,d2i_ASN1_INTEGER);
 	M_ASN1_D2I_get(ret->revocationDate,d2i_ASN1_UTCTIME);
-	M_ASN1_D2I_get_seq_opt(ret->extensions,d2i_X509_EXTENSION);
+	M_ASN1_D2I_get_seq_opt(ret->extensions,d2i_X509_EXTENSION,
+		X509_EXTENSION_free);
 	M_ASN1_D2I_Finish(a,X509_REVOKED_free,ASN1_F_D2I_X509_REVOKED);
 	}
 
@@ -183,7 +184,7 @@ long length;
 		while (sk_num(ret->revoked))
 			X509_REVOKED_free((X509_REVOKED *)sk_pop(ret->revoked));
 		}
-	M_ASN1_D2I_get_seq_opt(ret->revoked,d2i_X509_REVOKED);
+	M_ASN1_D2I_get_seq_opt(ret->revoked,d2i_X509_REVOKED,X509_REVOKED_free);
 
 	if (ret->revoked != NULL)
 		{
@@ -203,7 +204,7 @@ long length;
 			}
 			
 		M_ASN1_D2I_get_EXP_set_opt(ret->extensions,d2i_X509_EXTENSION,
-			0,V_ASN1_SEQUENCE);
+			X509_EXTENSION_free,0,V_ASN1_SEQUENCE);
 		}
 
 	M_ASN1_D2I_Finish(a,X509_CRL_INFO_free,ASN1_F_D2I_X509_CRL_INFO);
@@ -248,6 +249,7 @@ long length;
 X509_REVOKED *X509_REVOKED_new()
 	{
 	X509_REVOKED *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_REVOKED);
 	M_ASN1_New(ret->serialNumber,ASN1_INTEGER_new);
@@ -260,6 +262,7 @@ X509_REVOKED *X509_REVOKED_new()
 X509_CRL_INFO *X509_CRL_INFO_new()
 	{
 	X509_CRL_INFO *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_CRL_INFO);
 	ret->version=NULL;
@@ -277,6 +280,7 @@ X509_CRL_INFO *X509_CRL_INFO_new()
 X509_CRL *X509_CRL_new()
 	{
 	X509_CRL *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_CRL);
 	ret->references=1;

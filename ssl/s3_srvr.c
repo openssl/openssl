@@ -1259,7 +1259,7 @@ SSL *s;
 		i=RSA_private_decrypt((int)n,p,p,rsa,RSA_PKCS1_PADDING);
 
 #if 1
-		/* If a bad decrypt, use a dud master key */
+		/* If a bad decrypt, use a random master key */
 		if ((i != SSL_MAX_MASTER_KEY_LENGTH) ||
 			((p[0] != (s->version>>8)) ||
 			 (p[1] != (s->version & 0xff))))

@@ -60,7 +60,7 @@
 #include "objects.h"
 #include "ssl_locl.h"
 
-char *tls1_version_str="TLSv1 part of SSLeay 0.9.0b 29-Jun-1998";
+char *tls1_version_str="TLSv1 part of SSLeay 0.9.1a 06-Jul-1998";
 
 #ifndef NO_PROTO
 static long tls1_default_timeout(void);
@@ -94,6 +94,7 @@ static SSL_METHOD TLSv1_data= {
 	ssl3_write,
 	ssl3_shutdown,
 	ssl3_renegotiate,
+	ssl3_renegotiate_check,
 	ssl3_ctrl,
 	ssl3_ctx_ctrl,
 	ssl3_get_cipher_by_char,

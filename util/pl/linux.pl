@@ -17,8 +17,8 @@ else
 
 if (!$no_asm)
 	{
-	$bn_mulw_obj='$(OBJ_D)/bn86-elf.o';
-	$bn_mulw_src='crypto/bn/asm/bn86unix.cpp';
+	$bn_asm_obj='$(OBJ_D)/bn86-elf.o';
+	$bn_asm_src='crypto/bn/asm/bn86unix.cpp';
 	$des_enc_obj='$(OBJ_D)/dx86-elf.o $(OBJ_D)/yx86-elf.o';
 	$des_enc_src='crypto/des/asm/dx86unix.cpp crypto/des/asm/yx86unix.cpp';
 	$bf_enc_obj='$(OBJ_D)/bx86-elf.o';
@@ -27,8 +27,12 @@ if (!$no_asm)
 	$cast_enc_src='crypto/cast/asm/cx86unix.cpp';
 	$rc4_enc_obj='$(OBJ_D)/rx86-elf.o';
 	$rc4_enc_src='crypto/rc4/asm/rx86unix.cpp';
+	$rc5_enc_obj='$(OBJ_D)/r586-elf.o';
+	$rc5_enc_src='crypto/rc5/asm/r586unix.cpp';
 	$md5_asm_obj='$(OBJ_D)/mx86-elf.o';
 	$md5_asm_src='crypto/md5/asm/mx86unix.cpp';
+	$rmd160_asm_obj='$(OBJ_D)/rm86-elf.o';
+	$rmd160_asm_src='crypto/ripemd/asm/rm86unix.cpp';
 	$sha1_asm_obj='$(OBJ_D)/sx86-elf.o';
 	$sha1_asm_src='crypto/sha/asm/sx86unix.cpp';
 	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM";
@@ -51,9 +55,9 @@ sub do_shlib_rule
 	$target =~ s/\//$o/g if $o ne '/';
 	($Name=$name) =~ tr/a-z/A-Z/;
 
-	$ret.="\$(LIB_D)$o$target: \$(${Name}OBJ)\n";
-	$ret.="\t\$(RM) \$(LIB_D)$o$target\n";
-	$ret.="\tgcc \${CFLAGS} -shared -Wl,-soname,$target -o \$(LIB_D)$o$target \$(${Name}OBJ)\n";
+	$ret.="$target: \$(${Name}OBJ)\n";
+	$ret.="\t\$(RM) target\n";
+	$ret.="\tgcc \${CFLAGS} -shared -Wl,-soname,$target -o $target \$(${Name}OBJ)\n";
 	($t=$target) =~ s/(^.*)\/[^\/]*$/$1/;
 	if ($so_name ne "")
 		{

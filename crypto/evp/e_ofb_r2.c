@@ -103,8 +103,8 @@ int enc;
 		memcpy(&(ctx->oiv[0]),iv,8);
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
-		RC2_set_key(&(ctx->c.rc2_ks),EVP_RC2_KEY_SIZE,key,
-			EVP_RC2_KEY_SIZE*8);
+		RC2_set_key(&(ctx->c.rc2_ks),EVP_CIPHER_CTX_key_length(ctx),
+			key,EVP_CIPHER_CTX_key_length(ctx)*8);
 	}
 
 static void rc2_ofb_cipher(ctx,out,in,inl)

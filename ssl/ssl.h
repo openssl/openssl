@@ -124,6 +124,7 @@ extern "C" {
 #define SSL_TXT_EXPORT		"EXPORT"
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
+#define SSL_TXT_TLSV1		"TLSv1"
 #define SSL_TXT_ALL		"ALL"
 
 /* 'DEFAULT' at the start of the cipher list insert the following string
@@ -178,6 +179,7 @@ typedef struct ssl_method_st
 	int (*ssl_write)();
 	int (*ssl_shutdown)();
 	int (*ssl_renegotiate)();
+	int (*ssl_renegotiate_check)();
 	long (*ssl_ctrl)();
 	long (*ssl_ctx_ctrl)();
 	SSL_CIPHER *(*get_cipher_by_char)();
@@ -190,11 +192,6 @@ typedef struct ssl_method_st
 	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
 	} SSL_METHOD;
 
-typedef struct ssl_compression_st
-	{
-	char *stuff;
-	} SSL_COMPRESSION;
-
 /* Lets make this into an ASN.1 type structure as follows
  * SSL_SESSION_ID ::= SEQUENCE {
  *	version 		INTEGER,	-- structure version number
@@ -206,6 +203,7 @@ typedef struct ssl_compression_st
  *	Time [ 1 ] EXPLICIT	INTEGER,	-- optional Start Time
  *	Timeout [ 2 ] EXPLICIT	INTEGER,	-- optional Timeout ins seconds
  *	Peer [ 3 ] EXPLICIT	X509,		-- optional Peer Certificate
+ *	Compression [4] IMPLICIT ASN1_OBJECT	-- compression OID XXXXX
  *	}
  * Look in ssl/ssl_asn1.c for more details
  * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).
@@ -237,8 +235,11 @@ typedef struct ssl_session_st
 	long timeout;
 	long time;
 
-	SSL_COMPRESSION *read_compression;
-	SSL_COMPRESSION *write_compression;
+#ifdef HEADER_COMP_H
+	COMP_CTX *compress_meth;
+#else
+	char *compress_meth;
+#endif
 
 	SSL_CIPHER *cipher;
 	unsigned long cipher_id;	/* when ASN.1 loaded, this
@@ -262,13 +263,17 @@ typedef struct ssl_session_st
 #define SSL_OP_MSIE_SSLV2_RSA_PADDING			0x00000040L
 #define SSL_OP_SSLEAY_080_CLIENT_DH_BUG			0x00000080L
 #define SSL_OP_TLS_D5_BUG				0x00000100L
-#define	SSL_OP_TLS_BLOCK_PADDING_BUG			0x00000200L
+#define SSL_OP_TLS_BLOCK_PADDING_BUG			0x00000200L
 
 /* If set, only use tmp_dh parameters once */
 #define SSL_OP_SINGLE_DH_USE				0x00100000L
 /* Set to also use the tmp_rsa key when doing RSA operations. */
 #define SSL_OP_EPHEMERAL_RSA				0x00200000L
 
+/* The next flag deliberatly changes the ciphertest, this is a check
+ * for the PKCS#1 attack */
+#define SSL_OP_PKCS1_CHECK_1				0x08000000L
+#define SSL_OP_PKCS1_CHECK_2				0x10000000L
 #define SSL_OP_NETSCAPE_CA_DN_BUG			0x20000000L
 #define SSL_OP_NON_EXPORT_FIRST 			0x40000000L
 #define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG		0x80000000L
@@ -385,6 +390,8 @@ typedef struct ssl_ctx_st
 	EVP_MD *rsa_md5;/* For SSLv2 - name is 'ssl2-md5' */
 	EVP_MD *md5;	/* For SSLv3/TLSv1 'ssl3-md5' */
 	EVP_MD *sha1;   /* For SSLv3/TLSv1 'ssl3->sha1' */
+
+	STACK *extra_certs;
 	} SSL_CTX;
 
 #define SSL_SESS_CACHE_OFF			0x0000
@@ -512,11 +519,19 @@ typedef struct ssl_st
 
 	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
 	EVP_MD *read_hash;			/* used for mac generation */
-	SSL_COMPRESSION *read_compression;	/* compression */
+#ifdef HEADER_COMP_H
+	COMP_CTX *expand;			/* uncompress */
+#else
+	char *expand;
+#endif
 
 	EVP_CIPHER_CTX *enc_write_ctx;		/* cryptographic state */
 	EVP_MD *write_hash;			/* used for mac generation */
-	SSL_COMPRESSION *write_compression;	/* compression */
+#ifdef HEADER_COMP_H
+	COMP_CTX *compress;			/* compression */
+#else
+	char *compress;	
+#endif
 
 	/* session info */
 
@@ -660,6 +675,7 @@ typedef struct ssl_st
 		PEM_STRING_SSL_SESSION,bp, (char *)x, NULL,NULL,0,NULL)
 #endif
 
+#define SSL_AD_REASON_OFFSET		1000
 /* These alert types are for SSLv3 and TLSv1 */
 #define SSL_AD_CLOSE_NOTIFY		SSL3_AD_CLOSE_NOTIFY
 #define SSL_AD_UNEXPECTED_MESSAGE	SSL3_AD_UNEXPECTED_MESSAGE /* fatal */
@@ -706,6 +722,9 @@ typedef struct ssl_st
 #define SSL_CTRL_GET_NUM_RENEGOTIATIONS		8
 #define SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS	9
 #define SSL_CTRL_GET_TOTAL_RENEGOTIATIONS	10
+#define SSL_CTRL_GET_FLAGS			11
+
+#define SSL_CTRL_EXTRA_CHAIN_CERT		11
 
 #define SSL_session_reused(ssl) \
 	SSL_ctrl((ssl),SSL_CTRL_GET_SESSION_REUSED,0,NULL)
@@ -724,13 +743,16 @@ typedef struct ssl_st
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
 
 /* For the next 2, the callbacks are 
- * RSA *tmp_rsa_cb(int export)
- * DH *tmp_dh_cb(int export)
+ * RSA *tmp_rsa_cb(SSL *ssl,int export)
+ * DH *tmp_dh_cb(SSL *ssl,int export)
  */
 #define SSL_CTX_set_tmp_rsa_callback(ctx,cb) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_RSA_CB,0,(char *)cb)
 #define SSL_CTX_set_tmp_dh_callback(ctx,dh) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,0,(char *)dh)
+
+#define SSL_CTX_add_extra_chain_cert(ctx,x509) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)
 
 #ifndef NOPROTO
 
@@ -944,6 +966,8 @@ char *SSL_CTX_get_ex_data(SSL_CTX *ssl,int idx);
 int SSL_CTX_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 	int (*dup_func)(), void (*free_func)());
 
+int SSL_get_ex_data_X509_STORE_CTX_idx(void );
+
 #else
 
 BIO_METHOD *BIO_f_ssl();
@@ -1120,6 +1144,7 @@ X509 *SSL_get_certificate();
 
 #ifdef this_is_for_mk1mf_pl
 EVP *SSL_get_privatekey();
+#endif
 
 void SSL_CTX_set_quiet_shutdown();
 int SSL_CTX_get_quiet_shutdown();
@@ -1133,7 +1158,7 @@ int SSL_CTX_load_verify_locations();
 SSL_SESSION *SSL_get_session();
 SSL_CTX *SSL_get_SSL_CTX();
 void SSL_set_info_callback();
-int (*SSL_get_info_callback())();
+void (*SSL_get_info_callback())();
 int SSL_state();
 void SSL_set_verify_result();
 long SSL_get_verify_result();
@@ -1150,7 +1175,9 @@ int SSL_CTX_set_ex_data();
 char *SSL_CTX_get_ex_data();
 int SSL_CTX_get_ex_new_index();
 
-#endif
+int SSL_get_ex_data_X509_STORE_CTX_idx();
+
+/* #endif */
 
 #endif
 
@@ -1262,11 +1289,12 @@ int SSL_CTX_get_ex_new_index();
 #define SSL_F_SSL_USE_RSAPRIVATEKEY			 201
 #define SSL_F_SSL_USE_RSAPRIVATEKEY_ASN1		 202
 #define SSL_F_SSL_USE_RSAPRIVATEKEY_FILE		 203
-#define SSL_F_SSL_WRITE					 204
-#define SSL_F_TLS1_CHANGE_CIPHER_STATE			 205
-#define SSL_F_TLS1_ENC					 206
-#define SSL_F_TLS1_SETUP_KEY_BLOCK			 207
-#define SSL_F_WRITE_PENDING				 208
+#define SSL_F_SSL_VERIFY_CERT_CHAIN			 204
+#define SSL_F_SSL_WRITE					 205
+#define SSL_F_TLS1_CHANGE_CIPHER_STATE			 206
+#define SSL_F_TLS1_ENC					 207
+#define SSL_F_TLS1_SETUP_KEY_BLOCK			 208
+#define SSL_F_WRITE_PENDING				 209
 
 /* Reason codes. */
 #define SSL_R_APP_DATA_IN_HANDSHAKE			 100
@@ -1311,83 +1339,85 @@ int SSL_CTX_get_ex_new_index();
 #define SSL_R_CIPHER_TABLE_SRC_ERROR			 139
 #define SSL_R_COMPRESSED_LENGTH_TOO_LONG		 140
 #define SSL_R_COMPRESSION_FAILURE			 141
-#define SSL_R_CONNECTION_ID_IS_DIFFERENT		 142
-#define SSL_R_CONNECTION_TYPE_NOT_SET			 143
-#define SSL_R_DATA_BETWEEN_CCS_AND_FINISHED		 144
-#define SSL_R_DATA_LENGTH_TOO_LONG			 145
-#define SSL_R_DECRYPTION_FAILED				 146
-#define SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG		 147
-#define SSL_R_DIGEST_CHECK_FAILED			 148
-#define SSL_R_ENCRYPTED_LENGTH_TOO_LONG			 149
-#define SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST		 150
-#define SSL_R_EXCESSIVE_MESSAGE_SIZE			 151
-#define SSL_R_EXTRA_DATA_IN_MESSAGE			 152
-#define SSL_R_GOT_A_FIN_BEFORE_A_CCS			 153
-#define SSL_R_HTTPS_PROXY_REQUEST			 154
-#define SSL_R_HTTP_REQUEST				 155
-#define SSL_R_INTERNAL_ERROR				 156
-#define SSL_R_INVALID_CHALLENGE_LENGTH			 157
-#define SSL_R_LENGTH_MISMATCH				 158
-#define SSL_R_LENGTH_TOO_SHORT				 159
-#define SSL_R_LIBRARY_HAS_NO_CIPHERS			 160
-#define SSL_R_MISSING_DH_DSA_CERT			 161
-#define SSL_R_MISSING_DH_KEY				 162
-#define SSL_R_MISSING_DH_RSA_CERT			 163
-#define SSL_R_MISSING_DSA_SIGNING_CERT			 164
-#define SSL_R_MISSING_EXPORT_TMP_DH_KEY			 165
-#define SSL_R_MISSING_EXPORT_TMP_RSA_KEY		 166
-#define SSL_R_MISSING_RSA_CERTIFICATE			 167
-#define SSL_R_MISSING_RSA_ENCRYPTING_CERT		 168
-#define SSL_R_MISSING_RSA_SIGNING_CERT			 169
-#define SSL_R_MISSING_TMP_DH_KEY			 170
-#define SSL_R_MISSING_TMP_RSA_KEY			 171
-#define SSL_R_MISSING_TMP_RSA_PKEY			 172
-#define SSL_R_MISSING_VERIFY_MESSAGE			 173
-#define SSL_R_NON_SSLV2_INITIAL_PACKET			 174
-#define SSL_R_NO_CERTIFICATES_RETURNED			 175
-#define SSL_R_NO_CERTIFICATE_ASSIGNED			 176
-#define SSL_R_NO_CERTIFICATE_RETURNED			 177
-#define SSL_R_NO_CERTIFICATE_SET			 178
-#define SSL_R_NO_CERTIFICATE_SPECIFIED			 179
-#define SSL_R_NO_CIPHERS_AVAILABLE			 180
-#define SSL_R_NO_CIPHERS_PASSED				 181
-#define SSL_R_NO_CIPHERS_SPECIFIED			 182
-#define SSL_R_NO_CIPHER_LIST				 183
-#define SSL_R_NO_CIPHER_MATCH				 184
-#define SSL_R_NO_CLIENT_CERT_RECEIVED			 185
-#define SSL_R_NO_COMPRESSION_SPECIFIED			 186
-#define SSL_R_NO_PRIVATEKEY				 187
-#define SSL_R_NO_PRIVATE_KEY_ASSIGNED			 188
-#define SSL_R_NO_PROTOCOLS_AVAILABLE			 189
-#define SSL_R_NO_PUBLICKEY				 190
-#define SSL_R_NO_SHARED_CIPHER				 191
-#define SSL_R_NULL_SSL_CTX				 192
-#define SSL_R_NULL_SSL_METHOD_PASSED			 193
-#define SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED		 194
-#define SSL_R_PACKET_LENGTH_TOO_LONG			 195
-#define SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE		 196
-#define SSL_R_PEER_ERROR				 197
-#define SSL_R_PEER_ERROR_CERTIFICATE			 198
-#define SSL_R_PEER_ERROR_NO_CERTIFICATE			 199
-#define SSL_R_PEER_ERROR_NO_CIPHER			 200
-#define SSL_R_PEER_ERROR_UNSUPPORTED_CERTIFICATE_TYPE	 201
-#define SSL_R_PRE_MAC_LENGTH_TOO_LONG			 202
-#define SSL_R_PROBLEMS_MAPPING_CIPHER_FUNCTIONS		 203
-#define SSL_R_PROTOCOL_IS_SHUTDOWN			 204
-#define SSL_R_PUBLIC_KEY_ENCRYPT_ERROR			 205
-#define SSL_R_PUBLIC_KEY_IS_NOT_RSA			 206
-#define SSL_R_PUBLIC_KEY_NOT_RSA			 207
-#define SSL_R_READ_BIO_NOT_SET				 208
-#define SSL_R_READ_WRONG_PACKET_TYPE			 209
-#define SSL_R_RECORD_LENGTH_MISMATCH			 210
-#define SSL_R_RECORD_TOO_LARGE				 211
-#define SSL_R_REQUIRED_CIPHER_MISSING			 212
-#define SSL_R_REUSE_CERT_LENGTH_NOT_ZERO		 213
-#define SSL_R_REUSE_CERT_TYPE_NOT_ZERO			 214
-#define SSL_R_REUSE_CIPHER_LIST_NOT_ZERO		 215
-#define SSL_R_SHORT_READ				 216
-#define SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE	 217
-#define SSL_R_SSL3_SESSION_ID_TOO_SHORT			 218
+#define SSL_R_COMPRESSION_LIBRARY_ERROR			 142
+#define SSL_R_CONNECTION_ID_IS_DIFFERENT		 143
+#define SSL_R_CONNECTION_TYPE_NOT_SET			 144
+#define SSL_R_DATA_BETWEEN_CCS_AND_FINISHED		 145
+#define SSL_R_DATA_LENGTH_TOO_LONG			 146
+#define SSL_R_DECRYPTION_FAILED				 147
+#define SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG		 148
+#define SSL_R_DIGEST_CHECK_FAILED			 149
+#define SSL_R_ENCRYPTED_LENGTH_TOO_LONG			 150
+#define SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST		 151
+#define SSL_R_EXCESSIVE_MESSAGE_SIZE			 152
+#define SSL_R_EXTRA_DATA_IN_MESSAGE			 153
+#define SSL_R_GOT_A_FIN_BEFORE_A_CCS			 154
+#define SSL_R_HTTPS_PROXY_REQUEST			 155
+#define SSL_R_HTTP_REQUEST				 156
+#define SSL_R_INTERNAL_ERROR				 157
+#define SSL_R_INVALID_CHALLENGE_LENGTH			 158
+#define SSL_R_LENGTH_MISMATCH				 159
+#define SSL_R_LENGTH_TOO_SHORT				 160
+#define SSL_R_LIBRARY_HAS_NO_CIPHERS			 161
+#define SSL_R_MISSING_DH_DSA_CERT			 162
+#define SSL_R_MISSING_DH_KEY				 163
+#define SSL_R_MISSING_DH_RSA_CERT			 164
+#define SSL_R_MISSING_DSA_SIGNING_CERT			 165
+#define SSL_R_MISSING_EXPORT_TMP_DH_KEY			 166
+#define SSL_R_MISSING_EXPORT_TMP_RSA_KEY		 167
+#define SSL_R_MISSING_RSA_CERTIFICATE			 168
+#define SSL_R_MISSING_RSA_ENCRYPTING_CERT		 169
+#define SSL_R_MISSING_RSA_SIGNING_CERT			 170
+#define SSL_R_MISSING_TMP_DH_KEY			 171
+#define SSL_R_MISSING_TMP_RSA_KEY			 172
+#define SSL_R_MISSING_TMP_RSA_PKEY			 173
+#define SSL_R_MISSING_VERIFY_MESSAGE			 174
+#define SSL_R_NON_SSLV2_INITIAL_PACKET			 175
+#define SSL_R_NO_CERTIFICATES_RETURNED			 176
+#define SSL_R_NO_CERTIFICATE_ASSIGNED			 177
+#define SSL_R_NO_CERTIFICATE_RETURNED			 178
+#define SSL_R_NO_CERTIFICATE_SET			 179
+#define SSL_R_NO_CERTIFICATE_SPECIFIED			 180
+#define SSL_R_NO_CIPHERS_AVAILABLE			 181
+#define SSL_R_NO_CIPHERS_PASSED				 182
+#define SSL_R_NO_CIPHERS_SPECIFIED			 183
+#define SSL_R_NO_CIPHER_LIST				 184
+#define SSL_R_NO_CIPHER_MATCH				 185
+#define SSL_R_NO_CLIENT_CERT_RECEIVED			 186
+#define SSL_R_NO_COMPRESSION_SPECIFIED			 187
+#define SSL_R_NO_PRIVATEKEY				 188
+#define SSL_R_NO_PRIVATE_KEY_ASSIGNED			 189
+#define SSL_R_NO_PROTOCOLS_AVAILABLE			 190
+#define SSL_R_NO_PUBLICKEY				 191
+#define SSL_R_NO_SHARED_CIPHER				 192
+#define SSL_R_NO_VERIFY_CALLBACK			 193
+#define SSL_R_NULL_SSL_CTX				 194
+#define SSL_R_NULL_SSL_METHOD_PASSED			 195
+#define SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED		 196
+#define SSL_R_PACKET_LENGTH_TOO_LONG			 197
+#define SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE		 198
+#define SSL_R_PEER_ERROR				 199
+#define SSL_R_PEER_ERROR_CERTIFICATE			 200
+#define SSL_R_PEER_ERROR_NO_CERTIFICATE			 201
+#define SSL_R_PEER_ERROR_NO_CIPHER			 202
+#define SSL_R_PEER_ERROR_UNSUPPORTED_CERTIFICATE_TYPE	 203
+#define SSL_R_PRE_MAC_LENGTH_TOO_LONG			 204
+#define SSL_R_PROBLEMS_MAPPING_CIPHER_FUNCTIONS		 205
+#define SSL_R_PROTOCOL_IS_SHUTDOWN			 206
+#define SSL_R_PUBLIC_KEY_ENCRYPT_ERROR			 207
+#define SSL_R_PUBLIC_KEY_IS_NOT_RSA			 208
+#define SSL_R_PUBLIC_KEY_NOT_RSA			 209
+#define SSL_R_READ_BIO_NOT_SET				 210
+#define SSL_R_READ_WRONG_PACKET_TYPE			 211
+#define SSL_R_RECORD_LENGTH_MISMATCH			 212
+#define SSL_R_RECORD_TOO_LARGE				 213
+#define SSL_R_REQUIRED_CIPHER_MISSING			 214
+#define SSL_R_REUSE_CERT_LENGTH_NOT_ZERO		 215
+#define SSL_R_REUSE_CERT_TYPE_NOT_ZERO			 216
+#define SSL_R_REUSE_CIPHER_LIST_NOT_ZERO		 217
+#define SSL_R_SHORT_READ				 218
+#define SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE	 219
+#define SSL_R_SSL3_SESSION_ID_TOO_SHORT			 220
 #define SSL_R_SSLV3_ALERT_BAD_CERTIFICATE		 1042
 #define SSL_R_SSLV3_ALERT_BAD_RECORD_MAC		 1020
 #define SSL_R_SSLV3_ALERT_CERTIFICATE_EXPIRED		 1045
@@ -1397,54 +1427,67 @@ int SSL_CTX_get_ex_new_index();
 #define SSL_R_SSLV3_ALERT_HANDSHAKE_FAILURE		 1040
 #define SSL_R_SSLV3_ALERT_ILLEGAL_PARAMETER		 1047
 #define SSL_R_SSLV3_ALERT_NO_CERTIFICATE		 1041
-#define SSL_R_SSLV3_ALERT_PEER_ERROR_CERTIFICATE	 219
-#define SSL_R_SSLV3_ALERT_PEER_ERROR_NO_CERTIFICATE	 220
-#define SSL_R_SSLV3_ALERT_PEER_ERROR_NO_CIPHER		 221
-#define SSL_R_SSLV3_ALERT_PEER_ERROR_UNSUPPORTED_CERTIFICATE_TYPE 222
+#define SSL_R_SSLV3_ALERT_PEER_ERROR_CERTIFICATE	 221
+#define SSL_R_SSLV3_ALERT_PEER_ERROR_NO_CERTIFICATE	 222
+#define SSL_R_SSLV3_ALERT_PEER_ERROR_NO_CIPHER		 223
+#define SSL_R_SSLV3_ALERT_PEER_ERROR_UNSUPPORTED_CERTIFICATE_TYPE 224
 #define SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE		 1010
-#define SSL_R_SSLV3_ALERT_UNKNOWN_REMOTE_ERROR_TYPE	 223
+#define SSL_R_SSLV3_ALERT_UNKNOWN_REMOTE_ERROR_TYPE	 225
 #define SSL_R_SSLV3_ALERT_UNSUPPORTED_CERTIFICATE	 1043
-#define SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION	 224
-#define SSL_R_SSL_HANDSHAKE_FAILURE			 225
-#define SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS		 226
-#define SSL_R_SSL_SESSION_ID_IS_DIFFERENT		 227
-#define SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER	 228
-#define SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST 229
-#define SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG	 230
-#define SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER		 231
-#define SSL_R_UNABLE_TO_DECODE_DH_CERTS			 232
-#define SSL_R_UNABLE_TO_EXTRACT_PUBLIC_KEY		 233
-#define SSL_R_UNABLE_TO_FIND_DH_PARAMETERS		 234
-#define SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS	 235
-#define SSL_R_UNABLE_TO_FIND_SSL_METHOD			 236
-#define SSL_R_UNABLE_TO_LOAD_SSL2_MD5_ROUTINES		 237
-#define SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES		 238
-#define SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES		 239
-#define SSL_R_UNEXPECTED_MESSAGE			 240
-#define SSL_R_UNEXPECTED_RECORD				 241
-#define SSL_R_UNKNOWN_ALERT_TYPE			 242
-#define SSL_R_UNKNOWN_CERTIFICATE_TYPE			 243
-#define SSL_R_UNKNOWN_CIPHER_RETURNED			 244
-#define SSL_R_UNKNOWN_CIPHER_TYPE			 245
-#define SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE			 246
-#define SSL_R_UNKNOWN_PKEY_TYPE				 247
-#define SSL_R_UNKNOWN_PROTOCOL				 248
-#define SSL_R_UNKNOWN_REMOTE_ERROR_TYPE			 249
-#define SSL_R_UNKNOWN_SSL_VERSION			 250
-#define SSL_R_UNKNOWN_STATE				 251
-#define SSL_R_UNSUPPORTED_CIPHER			 252
-#define SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM		 253
-#define SSL_R_UNSUPPORTED_PROTOCOL			 254
-#define SSL_R_UNSUPPORTED_SSL_VERSION			 255
-#define SSL_R_WRITE_BIO_NOT_SET				 256
-#define SSL_R_WRONG_CIPHER_RETURNED			 257
-#define SSL_R_WRONG_MESSAGE_TYPE			 258
-#define SSL_R_WRONG_NUMBER_OF_KEY_BITS			 259
-#define SSL_R_WRONG_SIGNATURE_LENGTH			 260
-#define SSL_R_WRONG_SIGNATURE_SIZE			 261
-#define SSL_R_WRONG_SSL_VERSION				 262
-#define SSL_R_WRONG_VERSION_NUMBER			 263
-#define SSL_R_X509_LIB					 264
+#define SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION	 226
+#define SSL_R_SSL_HANDSHAKE_FAILURE			 227
+#define SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS		 228
+#define SSL_R_SSL_SESSION_ID_IS_DIFFERENT		 229
+#define SSL_R_TLSV1_ALERT_ACCESS_DENIED			 1049
+#define SSL_R_TLSV1_ALERT_DECODE_ERROR			 1050
+#define SSL_R_TLSV1_ALERT_DECRYPTION_FAILED		 1021
+#define SSL_R_TLSV1_ALERT_DECRYPT_ERROR			 1051
+#define SSL_R_TLSV1_ALERT_EXPORT_RESTRICION		 1060
+#define SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY		 1071
+#define SSL_R_TLSV1_ALERT_INTERNAL_ERROR		 1080
+#define SSL_R_TLSV1_ALERT_NO_RENEGOTIATION		 1100
+#define SSL_R_TLSV1_ALERT_PROTOCOL_VERSION		 1070
+#define SSL_R_TLSV1_ALERT_RECORD_OVERFLOW		 1022
+#define SSL_R_TLSV1_ALERT_UNKNOWN_CA			 1048
+#define SSL_R_TLSV1_ALERT_USER_CANCLED			 1090
+#define SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER	 230
+#define SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST 231
+#define SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG	 232
+#define SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER		 233
+#define SSL_R_UNABLE_TO_DECODE_DH_CERTS			 234
+#define SSL_R_UNABLE_TO_EXTRACT_PUBLIC_KEY		 235
+#define SSL_R_UNABLE_TO_FIND_DH_PARAMETERS		 236
+#define SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS	 237
+#define SSL_R_UNABLE_TO_FIND_SSL_METHOD			 238
+#define SSL_R_UNABLE_TO_LOAD_SSL2_MD5_ROUTINES		 239
+#define SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES		 240
+#define SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES		 241
+#define SSL_R_UNEXPECTED_MESSAGE			 242
+#define SSL_R_UNEXPECTED_RECORD				 243
+#define SSL_R_UNKNOWN_ALERT_TYPE			 244
+#define SSL_R_UNKNOWN_CERTIFICATE_TYPE			 245
+#define SSL_R_UNKNOWN_CIPHER_RETURNED			 246
+#define SSL_R_UNKNOWN_CIPHER_TYPE			 247
+#define SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE			 248
+#define SSL_R_UNKNOWN_PKEY_TYPE				 249
+#define SSL_R_UNKNOWN_PROTOCOL				 250
+#define SSL_R_UNKNOWN_REMOTE_ERROR_TYPE			 251
+#define SSL_R_UNKNOWN_SSL_VERSION			 252
+#define SSL_R_UNKNOWN_STATE				 253
+#define SSL_R_UNSUPPORTED_CIPHER			 254
+#define SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM		 255
+#define SSL_R_UNSUPPORTED_PROTOCOL			 256
+#define SSL_R_UNSUPPORTED_SSL_VERSION			 257
+#define SSL_R_WRITE_BIO_NOT_SET				 258
+#define SSL_R_WRONG_CIPHER_RETURNED			 259
+#define SSL_R_WRONG_MESSAGE_TYPE			 260
+#define SSL_R_WRONG_NUMBER_OF_KEY_BITS			 261
+#define SSL_R_WRONG_SIGNATURE_LENGTH			 262
+#define SSL_R_WRONG_SIGNATURE_SIZE			 263
+#define SSL_R_WRONG_SSL_VERSION				 264
+#define SSL_R_WRONG_VERSION_NUMBER			 265
+#define SSL_R_X509_LIB					 266
+#define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS		 267
  
 #ifdef  __cplusplus
 }

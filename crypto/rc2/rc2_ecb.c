@@ -59,7 +59,7 @@
 #include "rc2.h"
 #include "rc2_locl.h"
 
-char *RC2_version="RC2 part of SSLeay 0.9.0b 29-Jun-1998";
+char *RC2_version="RC2 part of SSLeay 0.9.1a 06-Jul-1998";
 
 /* RC2 as implemented frm a posting from
  * Newsgroups: sci.crypt

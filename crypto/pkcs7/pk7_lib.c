@@ -98,7 +98,8 @@ char *parg;
 			
 		break;
 	default:
-		abort();
+		PKCS7err(PKCS7_F_PKCS7_CTRL,PKCS7_R_UNKNOWN_OPERATION);
+		ret=0;
 		}
 	return(ret);
 	}
@@ -172,12 +173,19 @@ int type;
 	case NID_pkcs7_signedAndEnveloped:
 		p7->type=obj;
 		if ((p7->d.signed_and_enveloped=PKCS7_SIGN_ENVELOPE_new())
-			== NULL)
-			goto err;
-		ASN1_INTEGER_set(p7->d.sign->version,1);
+			== NULL) goto err;
+		ASN1_INTEGER_set(p7->d.signed_and_enveloped->version,1);
+/*		p7->d.signed_and_enveloped->enc_data->content_type=
+			OBJ_nid2obj(NID_pkcs7_encrypted);*/
+			
+		break;
+	case NID_pkcs7_enveloped:
+		p7->type=obj;
+		if ((p7->d.enveloped=PKCS7_ENVELOPE_new())
+			== NULL) goto err;
+		ASN1_INTEGER_set(p7->d.enveloped->version,0);
 		break;
 	case NID_pkcs7_digest:
-	case NID_pkcs7_enveloped:
 	case NID_pkcs7_encrypted:
 	default:
 		PKCS7err(PKCS7_F_PKCS7_SET_TYPE,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
@@ -316,7 +324,10 @@ EVP_MD *dgst;
 	p7i->pkey=pkey;
 
 	/* Set the algorithms */
-	p7i->digest_alg->algorithm=OBJ_nid2obj(EVP_MD_type(dgst));
+	if (pkey->type == EVP_PKEY_DSA)
+		p7i->digest_alg->algorithm=OBJ_nid2obj(NID_sha1);
+	else	
+		p7i->digest_alg->algorithm=OBJ_nid2obj(EVP_MD_type(dgst));
 	p7i->digest_enc_alg->algorithm=OBJ_nid2obj(EVP_MD_pkey_type(dgst));
 
 #if 1
@@ -355,6 +366,10 @@ PKCS7 *p7;
 		{
 		return(p7->d.sign->signer_info);
 		}
+	else if (PKCS7_type_is_signedAndEnveloped(p7))
+		{
+		return(p7->d.signed_and_enveloped->signer_info);
+		}
 	else
 		return(NULL);
 	}
@@ -386,6 +401,9 @@ PKCS7_RECIP_INFO *ri;
 	case NID_pkcs7_signedAndEnveloped:
 		sk=	p7->d.signed_and_enveloped->recipientinfo;
 		break;
+	case NID_pkcs7_enveloped:
+		sk=	p7->d.enveloped->recipientinfo;
+		break;
 	default:
 		PKCS7err(PKCS7_F_PKCS7_ADD_RECIPIENT_INFO,PKCS7_R_WRONG_CONTENT_TYPE);
 		return(0);
@@ -406,6 +424,11 @@ X509 *x509;
 	ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
 	p7i->issuer_and_serial->serial=
 		ASN1_INTEGER_dup(X509_get_serialNumber(x509));
+
+	X509_ALGOR_free(p7i->key_enc_algor);
+	p7i->key_enc_algor=(X509_ALGOR *)ASN1_dup(i2d_X509_ALGOR,
+		(char *(*)())d2i_X509_ALGOR,
+		(char *)x509->cert_info->key->algor);
 
 	CRYPTO_add(&x509->references,1,CRYPTO_LOCK_X509);
 	p7i->cert=x509;
@@ -437,6 +460,9 @@ EVP_CIPHER *cipher;
 		{
 	case NID_pkcs7_signedAndEnveloped:
 		ec=p7->d.signed_and_enveloped->enc_data;
+		break;
+	case NID_pkcs7_enveloped:
+		ec=p7->d.enveloped->enc_data;
 		break;
 	default:
 		PKCS7err(PKCS7_F_PKCS7_SET_CIPHER,PKCS7_R_WRONG_CONTENT_TYPE);

@@ -105,7 +105,13 @@ again:
 	p7=PKCS7_new();
 	PKCS7_set_type(p7,NID_pkcs7_signed);
 	 
-	if (PKCS7_add_signature(p7,x509,pkey,EVP_sha1()) == NULL) goto err;
+	si=PKCS7_add_signature(p7,x509,pkey,EVP_sha1());
+	if (si == NULL) goto err;
+
+	/* Add some extra attributes */
+	if (!add_signed_time(si)) goto err;
+	if (!add_signed_string(si,"SIGNED STRING")) goto err;
+	if (!add_signed_seq2string(si,"STRING1","STRING2")) goto err;
 
 	/* we may want to add more */
 	PKCS7_add_certificate(p7,x509);
@@ -125,7 +131,7 @@ again:
 		BIO_write(p7bio,buf,i);
 		}
 
-	if (!PKCS7_dataSign(p7,p7bio)) goto err;
+	if (!PKCS7_dataFinal(p7,p7bio)) goto err;
 	BIO_free(p7bio);
 
 	PEM_write_PKCS7(stdout,p7);

@@ -80,7 +80,7 @@ static int null_callback();
 static int internal_verify();
 #endif
 
-char *X509_version="X509 part of SSLeay 0.9.0b 29-Jun-1998";
+char *X509_version="X509 part of SSLeay 0.9.1a 06-Jul-1998";
 static STACK *x509_store_ctx_method=NULL;
 static int x509_store_ctx_num=0;
 #if 0
@@ -285,7 +285,11 @@ X509_STORE_CTX *ctx;
 		ok=ctx->ctx->verify(ctx);
 	else
 		ok=internal_verify(ctx);
+	if (0)
+		{
 end:
+		X509_get_pubkey_parameters(NULL,ctx->chain);
+		}
 	if (sktmp != NULL) sk_free(sktmp);
 	if (chain_ss != NULL) X509_free(chain_ss);
 	return(ok);
@@ -434,7 +438,7 @@ ASN1_UTCTIME *ctm;
 		offset=((str[1]-'0')*10+(str[2]-'0'))*60;
 		offset+=(str[3]-'0')*10+(str[4]-'0');
 		if (*str == '-')
-			offset=-offset;
+			offset= -offset;
 		}
 	atm.type=V_ASN1_UTCTIME;
 	atm.length=sizeof(buff2);
@@ -507,51 +511,6 @@ STACK *chain;
 	if (pkey != NULL)
 		EVP_PKEY_copy_parameters(pkey,ktmp);
 	return(1);
-	}
-
-EVP_PKEY *X509_get_pubkey(x)
-X509 *x;
-	{
-	if ((x == NULL) || (x->cert_info == NULL))
-		return(NULL);
-	return(X509_PUBKEY_get(x->cert_info->key));
-	}
-
-int X509_check_private_key(x,k)
-X509 *x;
-EVP_PKEY *k;
-	{
-	EVP_PKEY *xk=NULL;
-	int ok=0;
-
-	xk=X509_get_pubkey(x);
-	if (xk->type != k->type) goto err;
-	switch (k->type)
-		{
-#ifndef NO_RSA
-	case EVP_PKEY_RSA:
-		if (BN_cmp(xk->pkey.rsa->n,k->pkey.rsa->n) != 0) goto err;
-		if (BN_cmp(xk->pkey.rsa->e,k->pkey.rsa->e) != 0) goto err;
-		break;
-#endif
-#ifndef NO_DSA
-	case EVP_PKEY_DSA:
-		if (BN_cmp(xk->pkey.dsa->pub_key,k->pkey.dsa->pub_key) != 0)
-			goto err;
-		break;
-#endif
-#ifndef NO_DH
-	case EVP_PKEY_DH:
-		/* No idea */
-		goto err;
-#endif
-	default:
-		goto err;
-		}
-
-	ok=1;
-err:
-	return(ok);
 	}
 
 int X509_STORE_add_cert(ctx,x)

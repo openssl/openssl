@@ -118,8 +118,8 @@ void ERR_load_RSAREF_strings()
 	{
 	static int init=1;
 
-	if (init);
-		{;
+	if (init)
+		{
 		init=0;
 #ifndef NO_ERR
 		ERR_load_strings(ERR_LIB_RSAREF,RSAREF_str_functs);

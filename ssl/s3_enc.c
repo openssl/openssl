@@ -136,7 +136,7 @@ int which;
 	unsigned char *ms,*key,*iv,*er1,*er2;
 	EVP_CIPHER_CTX *dd;
 	EVP_CIPHER *c;
-	SSL_COMPRESSION *comp;
+	COMP_METHOD *comp;
 	EVP_MD *m;
 	MD5_CTX md;
 	int exp,n,i,j,k;
@@ -155,7 +155,25 @@ int which;
 			goto err;
 		dd= s->enc_read_ctx;
 		s->read_hash=m;
-		s->read_compression=comp;
+		/* COMPRESS */
+		if (s->expand != NULL)
+			{
+			COMP_CTX_free(s->expand);
+			s->expand=NULL;
+			}
+		if (comp != NULL)
+			{
+			s->expand=COMP_CTX_new(comp);
+			if (s->expand == NULL)
+				{
+				SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE,SSL_R_COMPRESSION_LIBRARY_ERROR);
+				goto err2;
+				}
+			s->s3->rrec.comp=(unsigned char *)
+				Malloc(SSL3_RT_MAX_PLAIN_LENGTH);
+			if (s->s3->rrec.comp == NULL)
+				goto err;
+			}
 		memset(&(s->s3->read_sequence[0]),0,8);
 		mac_secret= &(s->s3->read_mac_secret[0]);
 		}
@@ -167,7 +185,21 @@ int which;
 			goto err;
 		dd= s->enc_write_ctx;
 		s->write_hash=m;
-		s->write_compression=comp;
+		/* COMPRESS */
+		if (s->compress != NULL)
+			{
+			COMP_CTX_free(s->compress);
+			s->compress=NULL;
+			}
+		if (comp != NULL)
+			{
+			s->compress=COMP_CTX_new(comp);
+			if (s->compress == NULL)
+				{
+				SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE,SSL_R_COMPRESSION_LIBRARY_ERROR);
+				goto err2;
+				}
+			}
 		memset(&(s->s3->write_sequence[0]),0,8);
 		mac_secret= &(s->s3->write_mac_secret[0]);
 		}
@@ -258,6 +290,11 @@ SSL *s;
 
 	s->s3->tmp.new_sym_enc=c;
 	s->s3->tmp.new_hash=hash;
+#ifdef ZLIB
+	s->s3->tmp.new_compression=COMP_zlib();
+#endif
+/*	s->s3->tmp.new_compression=COMP_rle(); */
+/*	s->session->compress_meth= xxxxx */
 
 	exp=(s->session->cipher->algorithms & SSL_EXPORT)?1:0;
 
@@ -302,35 +339,28 @@ int send;
 	unsigned long l;
 	int bs,i;
 	EVP_CIPHER *enc;
-	SSL_COMPRESSION *comp;
 
 	if (send)
 		{
 		ds=s->enc_write_ctx;
 		rec= &(s->s3->wrec);
 		if (s->enc_write_ctx == NULL)
-			{ enc=NULL; comp=NULL; }
+			enc=NULL;
 		else
-			{
 			enc=EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
-			comp=s->write_compression;
-			}
 		}
 	else
 		{
 		ds=s->enc_read_ctx;
 		rec= &(s->s3->rrec);
 		if (s->enc_read_ctx == NULL)
-			{ enc=NULL; comp=NULL; }
+			enc=NULL;
 		else
-			{
 			enc=EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
-			comp=s->read_compression;
-			}
 		}
 
 	if ((s->session == NULL) || (ds == NULL) ||
-		((enc == NULL) && (comp == NULL)))
+		(enc == NULL))
 		{
 		memcpy(rec->data,rec->input,rec->length);
 		rec->input=rec->data;
@@ -339,6 +369,8 @@ int send;
 		{
 		l=rec->length;
 		bs=EVP_CIPHER_block_size(ds->cipher);
+
+		/* COMPRESS */
 
 		/* This should be using (bs-1) and bs instead of 7 and 8 */
 		if ((bs != 1) && send)

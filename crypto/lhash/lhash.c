@@ -56,10 +56,15 @@
  * [including the GNU Public Licence.]
  */
 
-char *lh_version="lhash part of SSLeay 0.9.0b 29-Jun-1998";
+char *lh_version="lhash part of SSLeay 0.9.1a 06-Jul-1998";
 
 /* Code for dynamic hash table routines
  * Author - Eric Young v 2.0
+ *
+ * 2.2 eay - added #include "crypto.h" so the memory leak checking code is
+ *	     present. eay 18-Jun-98
+ *
+ * 2.1 eay - Added an 'error in last operation' flag. eay 6-May-98
  *
  * 2.0 eay - Fixed a bug that occured when using lh_delete
  *	     from inside lh_doall().  As entries were deleted,
@@ -94,6 +99,7 @@ char *lh_version="lhash part of SSLeay 0.9.0b 29-Jun-1998";
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "crypto.h"
 #include "lhash.h"
 
 #undef MIN_NODES 
@@ -126,9 +132,9 @@ int (*c)();
 	LHASH *ret;
 	int i;
 
-	if ((ret=(LHASH *)malloc(sizeof(LHASH))) == NULL)
+	if ((ret=(LHASH *)Malloc(sizeof(LHASH))) == NULL)
 		goto err0;
-	if ((ret->b=(LHASH_NODE **)malloc(sizeof(LHASH_NODE *)*MIN_NODES)) == NULL)
+	if ((ret->b=(LHASH_NODE **)Malloc(sizeof(LHASH_NODE *)*MIN_NODES)) == NULL)
 		goto err1;
 	for (i=0; i<MIN_NODES; i++)
 		ret->b[i]=NULL;
@@ -156,9 +162,10 @@ int (*c)();
 	ret->num_retrieve_miss=0;
 	ret->num_hash_comps=0;
 
+	ret->error=0;
 	return(ret);
 err1:
-	free((char *)ret);
+	Free((char *)ret);
 err0:
 	return(NULL);
 	}
@@ -175,12 +182,12 @@ LHASH *lh;
 		while (n != NULL)
 			{
 			nn=n->next;
-			free(n);
+			Free(n);
 			n=nn;
 			}
 		}
-	free((char *)lh->b);
-	free((char *)lh);
+	Free((char *)lh->b);
+	Free((char *)lh);
 	}
 
 char *lh_insert(lh, data)
@@ -191,6 +198,7 @@ char *data;
 	LHASH_NODE *nn,**rn;
 	char *ret;
 
+	lh->error=0;
 	if (lh->up_load <= (lh->num_items*LH_LOAD_MULT/lh->num_nodes))
 		expand(lh);
 
@@ -198,8 +206,11 @@ char *data;
 
 	if (*rn == NULL)
 		{
-		if ((nn=(LHASH_NODE *)malloc(sizeof(LHASH_NODE))) == NULL)
+		if ((nn=(LHASH_NODE *)Malloc(sizeof(LHASH_NODE))) == NULL)
+			{
+			lh->error++;
 			return(NULL);
+			}
 		nn->data=data;
 		nn->next=NULL;
 #ifndef NO_HASH_COMP
@@ -227,6 +238,7 @@ char *data;
 	LHASH_NODE *nn,**rn;
 	char *ret;
 
+	lh->error=0;
 	rn=getrn(lh,data,&hash);
 
 	if (*rn == NULL)
@@ -239,7 +251,7 @@ char *data;
 		nn= *rn;
 		*rn=nn->next;
 		ret=nn->data;
-		free((char *)nn);
+		Free((char *)nn);
 		lh->num_delete++;
 		}
 
@@ -259,6 +271,7 @@ char *data;
 	LHASH_NODE **rn;
 	char *ret;
 
+	lh->error=0;
 	rn=getrn(lh,data,&hash);
 
 	if (*rn == NULL)
@@ -342,11 +355,12 @@ LHASH *lh;
 	if ((lh->p) >= lh->pmax)
 		{
 		j=(int)lh->num_alloc_nodes*2;
-		n=(LHASH_NODE **)realloc((char *)lh->b,
+		n=(LHASH_NODE **)Realloc((char *)lh->b,
 			(unsigned int)sizeof(LHASH_NODE *)*j);
 		if (n == NULL)
 			{
 /*			fputs("realloc error in lhash",stderr); */
+			lh->error++;
 			lh->p=0;
 			return;
 			}
@@ -370,11 +384,12 @@ LHASH *lh;
 	lh->b[lh->p+lh->pmax-1]=NULL; /* 24/07-92 - eay - weird but :-( */
 	if (lh->p == 0)
 		{
-		n=(LHASH_NODE **)realloc((char *)lh->b,
+		n=(LHASH_NODE **)Realloc((char *)lh->b,
 			(unsigned int)(sizeof(LHASH_NODE *)*lh->pmax));
 		if (n == NULL)
 			{
 /*			fputs("realloc error in lhash",stderr); */
+			lh->error++;
 			return;
 			}
 		lh->num_contract_reallocs++;

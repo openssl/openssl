@@ -4,7 +4,7 @@
 # on the command line.
 #
 
-if [ "$SSLEAY"x = "x" -o ! -x $SSLEAY ]; then
+if [ "$SSLEAY"x = "x" -o ! -x "$SSLEAY" ]; then
 	SSLEAY='ssleay'
 	export SSLEAY
 fi

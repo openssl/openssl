@@ -72,8 +72,6 @@ int days;
 EVP_PKEY *pkey;
 	{
 	X509 *ret=NULL;
-	int er=1;
-	X509_REQ_INFO *ri=NULL;
 	X509_CINF *xi=NULL;
 	X509_NAME *xn;
 
@@ -84,13 +82,9 @@ EVP_PKEY *pkey;
 		}
 
 	/* duplicate the request */
-	ri=(X509_REQ_INFO *)ASN1_dup(i2d_X509_REQ_INFO,
-		(char *(*)())d2i_X509_REQ_INFO,(char *)r->req_info);
-	if (ri == NULL) goto err;
-
 	xi=ret->cert_info;
 
-	if (sk_num(ri->attributes) != 0)
+	if (sk_num(r->req_info->attributes) != 0)
 		{
 		if ((xi->version=ASN1_INTEGER_new()) == NULL) goto err;
 		if (!ASN1_INTEGER_set(xi->version,2)) goto err;
@@ -109,13 +103,11 @@ EVP_PKEY *pkey;
 
 	if (!X509_sign(ret,pkey,EVP_md5()))
 		goto err;
-	er=0;
-err:
-	if (er)
+	if (0)
 		{
+err:
 		X509_free(ret);
-		X509_REQ_INFO_free(ri);
-		return(NULL);
+		ret=NULL;
 		}
 	return(ret);
 	}

@@ -63,7 +63,7 @@
 #include "dsa.h"
 
 /*
- * ASN1err(ASN1_F_D2I_DSAPARAMS,ASN1_R_LENGTH_MISMATCH);
+ * ASN1err(ASN1_F_D2I_DSAPARAMS,ERR_R_ASN1_LENGTH_MISMATCH);
  */
 
 int i2d_DSAparams(a,pp)

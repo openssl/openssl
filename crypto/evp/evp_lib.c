@@ -97,7 +97,10 @@ ASN1_TYPE *type;
 		{
 		l=EVP_CIPHER_CTX_iv_length(c);
 		i=ASN1_TYPE_get_octetstring(type,c->oiv,l);
-		memcpy(c->iv,c->oiv,l);
+		if (i != l)
+			return(-1);
+		else if (i > 0)
+			memcpy(c->iv,c->oiv,l);
 		}
 	return(i);
 	}

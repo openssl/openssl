@@ -192,6 +192,12 @@ typedef struct err_state_st
 #define	ERR_R_MALLOC_FAILURE			(1|ERR_R_FATAL)
 #define	ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED	(2|ERR_R_FATAL)
 #define	ERR_R_PASSED_NULL_PARAMETER		(3|ERR_R_FATAL)
+#define ERR_R_NESTED_ASN1_ERROR			(4)
+#define ERR_R_BAD_ASN1_OBJECT_HEADER		(5)
+#define ERR_R_BAD_GET_ASN1_OBJECT_CALL		(6)
+#define ERR_R_EXPECTING_AN_ASN1_SEQUENCE	(7)
+#define ERR_R_ASN1_LENGTH_MISMATCH		(8)
+#define ERR_R_MISSING_ASN1_EOS			(9)
 
 typedef struct ERR_string_data_st
 	{

@@ -130,8 +130,10 @@ char *key_file;
 	{
 	if (cert_file != NULL)
 		{
+		/*
 		SSL *ssl;
 		X509 *x509;
+		*/
 
 		if (SSL_CTX_use_certificate_file(ctx,cert_file,
 			SSL_FILETYPE_PEM) <= 0)
@@ -149,6 +151,8 @@ char *key_file;
 			return(0);
 			}
 
+		/*
+		In theory this is no longer needed 
 		ssl=SSL_new(ctx);
 		x509=SSL_get_certificate(ssl);
 
@@ -156,6 +160,7 @@ char *key_file;
 			EVP_PKEY_copy_parameters(X509_get_pubkey(x509),
 				SSL_get_privatekey(ssl));
 		SSL_free(ssl);
+		*/
 
 		/* If we are using DSA, we can copy the parameters from
 		 * the private key */

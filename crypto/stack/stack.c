@@ -72,7 +72,7 @@
 #undef MIN_NODES
 #define MIN_NODES	4
 
-char *STACK_version="STACK part of SSLeay 0.9.0b 29-Jun-1998";
+char *STACK_version="STACK part of SSLeay 0.9.1a 06-Jul-1998";
 
 #ifndef NOPROTO
 #define	FP_ICC	(int (*)(const void *,const void *))

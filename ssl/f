@@ -1,40 +1,12 @@
-/* return the actual cipher being used */
-char *SSL_CIPHER_get_name(c)
-SSL_CIPHER *c;
-	{
-	if (c != NULL)
-		return(c->name);
-	return("UNKNOWN");
-	}
-
-/* number of bits for symetric cipher */
-int SSL_CIPHER_get_bits(c,alg_bits)
-SSL_CIPHER *c;
-int *alg_bits;
-	{
-	int ret=0,a=0;
-	EVP_CIPHER *enc;
-
-	if (c != NULL)
-		{
-		if (!ssl_cipher_get_evp(c,&enc,NULL))
-			return(0);
-
-		a=EVP_CIPHER_key_length(enc)*8;
-
-		if (s->session->cipher->algorithms & SSL_EXP)
-			{
-			if (c->algorithm2 & SSL2_CF_8_BYTE_ENC)
-				ret=64;
-			else
-				ret=40;
-			}
-		else
-			ret=a;
-		}
-
-	if (alg_bits != NULL) *alg_bits=a;
-	
-	return(ret);
-	}
-
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_DECRYPTION_FAILED);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_RECORD_OVERFLOW
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_UNKNOWN_CA);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_ACCESS_DENIED);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_DECODE_ERROR);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_DECRYPT_ERROR);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_EXPORT_RESTRICION);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_PROTOCOL_VERSION);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_INTERNAL_ERROR);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_USER_CANCLED);
+ * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_TLSV1_ALERT_NO_RENEGOTIATION);

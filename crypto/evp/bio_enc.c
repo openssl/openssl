@@ -298,6 +298,7 @@ char *ptr;
 	BIO_ENC_CTX *ctx,*dctx;
 	long ret=1;
 	int i;
+	EVP_CIPHER_CTX **c_ctx;
 
 	ctx=(BIO_ENC_CTX *)b->ptr;
 
@@ -364,7 +365,11 @@ again:
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		BIO_copy_next_retry(b);
 		break;
-
+	case BIO_C_GET_CIPHER_CTX:
+		c_ctx=(EVP_CIPHER_CTX **)ptr;
+		(*c_ctx)= &(ctx->cipher);
+		b->init=1;
+		break;
 	case BIO_CTRL_DUP:
 		dbio=(BIO *)ptr;
 		dctx=(BIO_ENC_CTX *)dbio->ptr;

@@ -361,6 +361,7 @@ end:
 
 	if (bio_stdout != NULL) BIO_free(bio_stdout);
 
+	ERR_free_strings();
 	ERR_remove_state(0);
 	EVP_cleanup();
 	CRYPTO_mem_leaks(bio_err);

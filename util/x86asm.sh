@@ -2,8 +2,8 @@
 
 echo Generating x86 assember
 echo Bignum
-(cd crypto/bn/asm; perl bn-586.pl cpp > bn86unix.cpp)
-(cd crypto/bn/asm; perl bn-586.pl win32 > bn-win32.asm)
+(cd crypto/bn/asm; perl x86.pl cpp > bn86unix.cpp)
+(cd crypto/bn/asm; perl x86.pl win32 > bn-win32.asm)
 
 echo DES
 (cd crypto/des/asm; perl des-586.pl cpp > dx86unix.cpp)

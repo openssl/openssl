@@ -106,7 +106,7 @@ long length;
 	default:
 		ASN1err(ASN1_F_D2I_PRIVATEKEY,ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
 		goto err;
-		break;
+		/* break; */
 		}
 	if (a != NULL) (*a)=ret;
 	return(ret);

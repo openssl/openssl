@@ -72,7 +72,7 @@ extern "C" {
 #if !defined(NO_SHA) || !defined(NO_SHA1)
 #include "sha.h"
 #endif
-#ifndef NO_RIPEMD
+#ifndef NO_RMD160
 #include "ripemd.h"
 #endif
 #ifndef NO_DES
@@ -183,7 +183,7 @@ typedef struct evp_pkey_st
  * This is required because for various smart-card perform the digest and
  * signing/verification on-board.  To handle this case, the specific
  * EVP_MD and EVP_PKEY_METHODs need to be closely associated.
- * When a PKEY is created, it will have a EVP_PKEY_METHOD ossociated with it.
+ * When a PKEY is created, it will have a EVP_PKEY_METHOD associated with it.
  * This can either be software or a token to provide the required low level
  * routines.
  */
@@ -296,7 +296,7 @@ typedef struct env_md_ctx_st
 #ifndef NO_MD5
 		MD5_CTX md5;
 #endif
-#ifndef NO_MD5
+#ifndef NO_RMD160
 		RIPEMD160_CTX ripemd160;
 #endif
 #if !defined(NO_SHA) || !defined(NO_SHA1)
@@ -445,8 +445,18 @@ typedef struct evp_Encode_Ctx_st
 #define BIO_get_md(b,mdp)		BIO_ctrl(b,BIO_C_GET_MD,0,(char *)mdp)
 #define BIO_get_md_ctx(b,mdcp)     BIO_ctrl(b,BIO_C_GET_MD_CTX,0,(char *)mdcp)
 #define BIO_get_cipher_status(b)	BIO_ctrl(b,BIO_C_GET_CIPHER_STATUS,0,NULL)
+#define BIO_get_cipher_ctx(b,c_pp)	BIO_ctrl(b,BIO_C_GET_CIPHER_CTX,0,(char *)c_pp)
 
 #define	EVP_Cipher(c,o,i,l)	(c)->cipher->do_cipher((c),(o),(i),(l))
+
+#define EVP_add_cipher_alias(n,alias) \
+	OBJ_NAME_add((alias),OBJ_NAME_TYPE_CIPHER_METH|OBJ_NAME_ALIAS,(n))
+#define EVP_add_digest_alias(n,alias) \
+	OBJ_NAME_add((alias),OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS,(n))
+#define EVP_delete_cipher_alias(alias) \
+	OBJ_NAME_remove(alias,OBJ_NAME_TYPE_CIPHER_METH|OBJ_NAME_ALIAS);
+#define EVP_delete_digest_alias(alias) \
+	OBJ_NAME_remove(alias,OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS);
 
 #ifndef NOPROTO
 
@@ -556,6 +566,7 @@ EVP_CIPHER *EVP_idea_cbc(void);
 EVP_CIPHER *EVP_rc2_ecb(void);
 EVP_CIPHER *EVP_rc2_cbc(void);
 EVP_CIPHER *EVP_rc2_40_cbc(void);
+EVP_CIPHER *EVP_rc2_64_cbc(void);
 EVP_CIPHER *EVP_rc2_cfb(void);
 EVP_CIPHER *EVP_rc2_ofb(void);
 EVP_CIPHER *EVP_bf_ecb(void);
@@ -577,8 +588,6 @@ void SSLeay_add_all_digests(void);
 
 int EVP_add_cipher(EVP_CIPHER *cipher);
 int EVP_add_digest(EVP_MD *digest);
-int EVP_add_alias(char *name,char *alias);
-int EVP_delete_alias(char *name);
 
 EVP_CIPHER *EVP_get_cipherbyname(char *name);
 EVP_MD *EVP_get_digestbyname(char *name);
@@ -705,6 +714,7 @@ EVP_CIPHER *EVP_idea_cbc();
 EVP_CIPHER *EVP_rc2_ecb();
 EVP_CIPHER *EVP_rc2_cbc();
 EVP_CIPHER *EVP_rc2_40_cbc();
+EVP_CIPHER *EVP_rc2_64_cbc();
 EVP_CIPHER *EVP_rc2_cfb();
 EVP_CIPHER *EVP_rc2_ofb();
 EVP_CIPHER *EVP_bf_ecb();
@@ -726,8 +736,6 @@ void SSLeay_add_all_digests();
 
 int EVP_add_cipher();
 int EVP_add_digest();
-int EVP_add_alias();
-int EVP_delete_alias();
 
 EVP_CIPHER *EVP_get_cipherbyname();
 EVP_MD *EVP_get_digestbyname();
@@ -773,6 +781,7 @@ int EVP_CIPHER_get_asn1_iv();
 #define EVP_F_EVP_PKEY_NEW				 106
 #define EVP_F_EVP_SIGNFINAL				 107
 #define EVP_F_EVP_VERIFYFINAL				 108
+#define EVP_F_RC2_MAGIC_TO_METH				 109
 
 /* Reason codes. */
 #define EVP_R_BAD_DECRYPT				 100
@@ -783,8 +792,9 @@ int EVP_CIPHER_get_asn1_iv();
 #define EVP_R_NO_VERIFY_FUNCTION_CONFIGURED		 105
 #define EVP_R_PUBLIC_KEY_NOT_RSA			 106
 #define EVP_R_UNSUPPORTED_CIPHER			 107
-#define EVP_R_WRONG_FINAL_BLOCK_LENGTH			 108
-#define EVP_R_WRONG_PUBLIC_KEY_TYPE			 109
+#define EVP_R_UNSUPPORTED_KEY_SIZE			 108
+#define EVP_R_WRONG_FINAL_BLOCK_LENGTH			 109
+#define EVP_R_WRONG_PUBLIC_KEY_TYPE			 110
  
 #ifdef  __cplusplus
 }

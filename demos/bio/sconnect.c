@@ -48,7 +48,7 @@ char *argv[];
 
 	/* Lets use a connect BIO under the SSL BIO */
 	out=BIO_new(BIO_s_connect());
-	BIO_set_hostname(out,host);
+	BIO_set_conn_hostname(out,host);
 	BIO_set_nbio(out,1);
 	out=BIO_push(ssl_bio,out);
 

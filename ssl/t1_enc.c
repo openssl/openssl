@@ -155,7 +155,7 @@ int num;
 	memcpy(p,s->s3->client_random,SSL3_RANDOM_SIZE);
 	p+=SSL3_RANDOM_SIZE;
 
-	tls1_PRF(s->ctx->md5,s->ctx->sha1,buf,p-buf,
+	tls1_PRF(s->ctx->md5,s->ctx->sha1,buf,(int)(p-buf),
 		s->session->master_key,s->session->master_key_length,
 		km,tmp,num);
 	}
@@ -175,7 +175,7 @@ int which;
 	int client_write;
 	EVP_CIPHER_CTX *dd;
 	EVP_CIPHER *c;
-	SSL_COMPRESSION *comp;
+	COMP_METHOD *comp;
 	EVP_MD *m;
 	int exp,n,i,j,k,exp_label_len;
 
@@ -193,7 +193,24 @@ int which;
 			goto err;
 		dd= s->enc_read_ctx;
 		s->read_hash=m;
-		s->read_compression=comp;
+		if (s->expand != NULL)
+			{
+			COMP_CTX_free(s->expand);
+			s->expand=NULL;
+			}
+		if (comp != NULL)
+			{
+			s->expand=COMP_CTX_new(comp);
+			if (s->expand == NULL)
+				{
+				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,SSL_R_COMPRESSION_LIBRARY_ERROR);
+				goto err2;
+				}
+			s->s3->rrec.comp=(unsigned char *)
+				Malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
+			if (s->s3->rrec.comp == NULL)
+				goto err;
+			}
 		memset(&(s->s3->read_sequence[0]),0,8);
 		mac_secret= &(s->s3->read_mac_secret[0]);
 		}
@@ -205,7 +222,20 @@ int which;
 			goto err;
 		dd= s->enc_write_ctx;
 		s->write_hash=m;
-		s->write_compression=comp;
+		if (s->compress != NULL)
+			{
+			COMP_CTX_free(s->compress);
+			s->compress=NULL;
+			}
+		if (comp != NULL)
+			{
+			s->compress=COMP_CTX_new(comp);
+			if (s->compress == NULL)
+				{
+				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,SSL_R_COMPRESSION_LIBRARY_ERROR);
+				goto err2;
+				}
+			}
 		memset(&(s->s3->write_sequence[0]),0,8);
 		mac_secret= &(s->s3->write_mac_secret[0]);
 		}
@@ -262,7 +292,7 @@ printf("which = %04X\nmac key=",which);
 		p+=SSL3_RANDOM_SIZE;
 		memcpy(p,s->s3->server_random,SSL3_RANDOM_SIZE);
 		p+=SSL3_RANDOM_SIZE;
-		tls1_PRF(s->ctx->md5,s->ctx->sha1,buf,p-buf,key,j,
+		tls1_PRF(s->ctx->md5,s->ctx->sha1,buf,(int)(p-buf),key,j,
 			tmp1,tmp2,EVP_CIPHER_key_length(c));
 		key=tmp1;
 
@@ -277,7 +307,7 @@ printf("which = %04X\nmac key=",which);
 			memcpy(p,s->s3->server_random,SSL3_RANDOM_SIZE);
 			p+=SSL3_RANDOM_SIZE;
 			tls1_PRF(s->ctx->md5,s->ctx->sha1,
-				buf,p-buf,"",0,iv1,iv2,k*2);
+				buf,(int)(p-buf),"",0,iv1,iv2,k*2);
 			if (client_write)
 				iv=iv1;
 			else
@@ -374,7 +404,6 @@ int send;
 	unsigned long l;
 	int bs,i,ii,j,k,n=0;
 	EVP_CIPHER *enc;
-	SSL_COMPRESSION *comp;
 
 	if (send)
 		{
@@ -383,12 +412,9 @@ int send;
 		ds=s->enc_write_ctx;
 		rec= &(s->s3->wrec);
 		if (s->enc_write_ctx == NULL)
-			{ enc=NULL; comp=NULL; }
+			enc=NULL;
 		else
-			{
 			enc=EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
-			comp=s->write_compression;
-			}
 		}
 	else
 		{
@@ -397,16 +423,13 @@ int send;
 		ds=s->enc_read_ctx;
 		rec= &(s->s3->rrec);
 		if (s->enc_read_ctx == NULL)
-			{ enc=NULL; comp=NULL; }
+			enc=NULL;
 		else
-			{
 			enc=EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
-			comp=s->read_compression;
-			}
 		}
 
 	if ((s->session == NULL) || (ds == NULL) ||
-		((enc == NULL) && (comp == NULL)))
+		(enc == NULL))
 		{
 		memcpy(rec->data,rec->input,rec->length);
 		rec->input=rec->data;
@@ -507,7 +530,7 @@ unsigned char *out;
 	EVP_DigestFinal(&ctx,q,&i);
 	q+=i;
 
-	tls1_PRF(s->ctx->md5,s->ctx->sha1,buf,q-buf,
+	tls1_PRF(s->ctx->md5,s->ctx->sha1,buf,(int)(q-buf),
 		s->session->master_key,s->session->master_key_length,
 		out,buf2,12);
 	memset(&ctx,0,sizeof(EVP_MD_CTX));
@@ -560,20 +583,20 @@ int send;
 
 #ifdef TLS_DEBUG
 printf("sec=");
-{int z; for (z=0; z<md_size; z++) printf("%02X ",mac_sec[z]); printf("\n"); }
+{unsigned int z; for (z=0; z<md_size; z++) printf("%02X ",mac_sec[z]); printf("\n"); }
 printf("seq=");
 {int z; for (z=0; z<8; z++) printf("%02X ",seq[z]); printf("\n"); }
 printf("buf=");
 {int z; for (z=0; z<5; z++) printf("%02X ",buf[z]); printf("\n"); }
 printf("rec=");
-{int z; for (z=0; z<rec->length; z++) printf("%02X ",buf[z]); printf("\n"); }
+{unsigned int z; for (z=0; z<rec->length; z++) printf("%02X ",buf[z]); printf("\n"); }
 #endif
 
 	for (i=7; i>=0; i--)
 		if (++seq[i]) break; 
 
 #ifdef TLS_DEBUG
-{int z; for (z=0; z<md_size; z++) printf("%02X ",md[z]); printf("\n"); }
+{unsigned int z; for (z=0; z<md_size; z++) printf("%02X ",md[z]); printf("\n"); }
 #endif
 	return(md_size);
 	}
