@@ -261,14 +261,9 @@ X9_62_EC_PARAMETERS *ECDSA_get_X9_62_EC_PARAMETERS(const ECDSA *ecdsa, X9_62_EC_
 	}
 	else
 		ret = param;
-	if (ecdsa->version == 1)
-		ret->version = NULL;
-	else
-	{
-		if (ret->version == NULL && (ret->version = ASN1_INTEGER_new()) == NULL)
-			OPENSSL_ECDSA_ABORT(ERR_R_MALLOC_FAILURE)
-		if (!ASN1_INTEGER_set(ret->version, (long)ecdsa->version)) goto err;
-	}
+	if (ret->version == NULL && (ret->version = ASN1_INTEGER_new()) == NULL)
+		OPENSSL_ECDSA_ABORT(ERR_R_MALLOC_FAILURE)
+	if (!ASN1_INTEGER_set(ret->version, (long)ecdsa->version)) goto err;
 	if ((ret->fieldID = ECDSA_get_X9_62_FIELDID(ecdsa, ret->fieldID)) == NULL)
 		OPENSSL_ECDSA_ABORT(ECDSA_R_ECDSA_GET_X9_62_FIELDID_FAILURE)
 	if ((ret->curve = ECDSA_get_X9_62_CURVE(ecdsa, ret->curve)) == NULL)
