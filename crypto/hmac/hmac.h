@@ -58,6 +58,8 @@
 #ifndef HEADER_HMAC_H
 #define HEADER_HMAC_H
 
+#include <openssl/opensslconf.h>
+
 #ifdef OPENSSL_NO_HMAC
 #error HMAC is disabled.
 #endif
