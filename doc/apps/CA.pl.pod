@@ -13,6 +13,7 @@ B<CA.pl>
 [B<-help>]
 [B<-newcert>]
 [B<-newreq>]
+[B<-newreq-nodes>]
 [B<-newca>]
 [B<-xsign>]
 [B<-sign>]
@@ -45,6 +46,10 @@ written to the file "newreq.pem".
 
 creates a new certificate request. The private key and request are
 written to the file "newreq.pem".
+
+=item B<-newreq-nowdes>
+
+is like B<-newreq> except that the private key will not be encrypted.
 
 =item B<-newca>
 

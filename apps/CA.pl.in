@@ -5,7 +5,7 @@
 #      things easier between now and when Eric is convinced to fix it :-)
 #
 # CA -newca ... will setup the right stuff
-# CA -newreq ... will generate a certificate request 
+# CA -newreq[-nodes] ... will generate a certificate request 
 # CA -sign ... will sign the generated request and output 
 #
 # At the end of that grab newreq.pem and newcert.pem (one has the key 
@@ -54,7 +54,7 @@ $RET = 0;
 
 foreach (@ARGV) {
 	if ( /^(-\?|-h|-help)$/ ) {
-	    print STDERR "usage: CA -newcert|-newreq|-newca|-sign|-verify\n";
+	    print STDERR "usage: CA -newcert|-newreq|-newreq-nodes|-newca|-sign|-verify\n";
 	    exit 0;
 	} elsif (/^-newcert$/) {
 	    # create a certificate
@@ -64,6 +64,11 @@ foreach (@ARGV) {
 	} elsif (/^-newreq$/) {
 	    # create a certificate request
 	    system ("$REQ -new -keyout newreq.pem -out newreq.pem $DAYS");
+	    $RET=$?;
+	    print "Request (and private key) is in newreq.pem\n";
+	} elsif (/^-newreq-nodes$/) {
+	    # create a certificate request
+	    system ("$REQ -new -nodes -keyout newreq.pem -out newreq.pem $DAYS");
 	    $RET=$?;
 	    print "Request (and private key) is in newreq.pem\n";
 	} elsif (/^-newca$/) {
@@ -143,7 +148,7 @@ foreach (@ARGV) {
 	    }
 	} else {
 	    print STDERR "Unknown arg $_\n";
-	    print STDERR "usage: CA -newcert|-newreq|-newca|-sign|-verify\n";
+	    print STDERR "usage: CA -newcert|-newreq|-newreq-nodes|-newca|-sign|-verify\n";
 	    exit 1;
 	}
 }

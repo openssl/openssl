@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New '-newreq-nodes' command option to CA.pl.  This is like
+     '-newreq', but calls 'openssl req' with the '-nodes' option
+     so that the resulting key is not encrypted.
+     [Damien Miller <djm@mindrot.org>]
+
   *) New configuration for the GNU Hurd.
      [Jonathan Bartlett <johnnyb@wolfram.com> via Richard Levitte]
 
