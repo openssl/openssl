@@ -93,7 +93,7 @@ int DH_set_method(DH *dh, const DH_METHOD *meth)
         dh->meth = meth;
         if (meth->init) meth->init(dh);
         return 1;
-}
+	}
 
 DH *DH_new(void)
 	{
