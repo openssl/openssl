@@ -127,6 +127,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/sha.h>
 
 #ifdef BN_DEBUG
 # define PREDICT
