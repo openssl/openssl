@@ -23,13 +23,13 @@ i2d_X509_fp - X509 encode and decode functions
 The X509 encode and decode routines encode and parse an
 B<X509> structure, which represents an X509 certificate.
 
-d2i_X509() attempts to decode B<len> bytes at B<*out>. If 
+d2i_X509() attempts to decode B<len> bytes at B<*in>. If 
 successful a pointer to the B<X509> structure is returned. If an error
 occurred then B<NULL> is returned. If B<px> is not B<NULL> then the
 returned structure is written to B<*px>. If B<*px> is not B<NULL>
 then it is assumed that B<*px> contains a valid B<X509>
 structure and an attempt is made to reuse it. If the call is
-successful B<*out> is incremented to the byte following the
+successful B<*in> is incremented to the byte following the
 parsed data.
 
 i2d_X509() encodes the structure pointed to by B<x> into DER format.
