@@ -71,6 +71,8 @@
 
 /* most of this code has been pilfered from my libdes speed.c program */
 
+#ifndef OPENSSL_NO_SPEED
+
 #undef SECONDS
 #define SECONDS		3	
 #define RSA_SECONDS	10
@@ -2578,4 +2580,5 @@ static int do_multi(int multi)
 		}
 	return 1;
 	}
+#endif
 #endif
