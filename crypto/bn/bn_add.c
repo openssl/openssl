@@ -175,7 +175,10 @@ BIGNUM *r;
 BIGNUM *a;
 BIGNUM *b;
 	{
-	int max,min,ret=1;
+	int max,min;
+#if 0
+	int ret=1;
+#endif
 	register BN_ULONG t1,t2,*ap,*bp,*rp;
 	int i,carry;
 #if defined(IRIX_CC_BUG) && !defined(LINT)
