@@ -1685,7 +1685,7 @@ $rc5_obj      =
 
 *** sunos-gcc
 $cc           = gcc
-$cflags       = -O3 -mv8
+$cflags       = -O3 -mv8 -Dssize_t=int
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
