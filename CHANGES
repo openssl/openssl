@@ -4,6 +4,13 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) RSA_get_default_method() will now cause a default
+     RSA_METHOD to be chosen if one doesn't exist already.
+     Previously this was only set during a call to RSA_new()
+     or RSA_new_method(NULL) meaning it was possible for
+     RSA_get_default_method() to return NULL.
+     [Geoff Thorpe]
+
   *) Added native name translation to the existing DSO code
      that will convert (if the flag to do so is set) filenames
      that are sufficiently small and have no path information
