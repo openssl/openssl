@@ -1,11 +1,12 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/03/20 09:22:04 $
+  ______________                           $Date: 2000/03/20 11:29:11 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.5a: Under development...
-                       0.9.5a-beta1 is available
+                       0.9.5a-beta1 is available.
+			VC-Win32 (MSVC6SP3, nasm)       - failed compilation
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
     o  OpenSSL 0.9.3a: Released on May      29th, 1999
