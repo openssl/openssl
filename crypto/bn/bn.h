@@ -617,15 +617,6 @@ BIGNUM *bn_dup_expand(const BIGNUM *a, int words);
  * defined. This not only improves external code, it provides more test
  * coverage for openssl's own code.
  */
-#define bn_correct_top(a) \
-        { \
-        BN_ULONG *ftl; \
-	if ((a)->top > 0) \
-		{ \
-		for (ftl= &((a)->d[(a)->top-1]); (a)->top > 0; (a)->top--) \
-		if (*(ftl--)) break; \
-		} \
-	}
 
 /* #define BN_DEBUG_RAND */
 
@@ -640,41 +631,53 @@ BIGNUM *bn_dup_expand(const BIGNUM *a, int words);
 int RAND_pseudo_bytes(unsigned char *buf,int num);
 #define BN_DEBUG_TRIX
 #endif
-#define bn_check_top(a) \
+#define bn_pollute(a) \
 	do { \
-		const BIGNUM *_tbignum = (a); \
-		assert((_tbignum->top == 0) || \
-				(_tbignum->d[_tbignum->top - 1] != 0)); \
-		if(_tbignum->top < _tbignum->dmax) { \
+		const BIGNUM *_bnum1 = (a); \
+		if(_bnum1->top < _bnum1->dmax) { \
 			/* We cast away const without the compiler knowing, any \
 			 * *genuinely* constant variables that aren't mutable \
 			 * wouldn't be constructed with top!=dmax. */ \
 			BN_ULONG *_not_const; \
-			memcpy(&_not_const, &_tbignum->d, sizeof(BN_ULONG*)); \
-			RAND_pseudo_bytes((unsigned char *)(_not_const + _tbignum->top), \
-				(_tbignum->dmax - _tbignum->top) * sizeof(BN_ULONG)); \
+			memcpy(&_not_const, &_bnum1->d, sizeof(BN_ULONG*)); \
+			RAND_pseudo_bytes((unsigned char *)(_not_const + _bnum1->top), \
+				(_bnum1->dmax - _bnum1->top) * sizeof(BN_ULONG)); \
 		} \
 	} while(0)
 #ifdef BN_DEBUG_TRIX
 #undef RAND_pseudo_bytes
 #endif
-#else /* !BN_DEBUG_RAND */
+#else
+#define bn_pollute(a)
+#endif
 #define bn_check_top(a) \
 	do { \
-		const BIGNUM *_tbignum = (a); \
-		assert((_tbignum->top == 0) || \
-				(_tbignum->d[_tbignum->top - 1] != 0)); \
+		const BIGNUM *_bnum2 = (a); \
+		assert((_bnum2->top == 0) || \
+				(_bnum2->d[_bnum2->top - 1] != 0)); \
+		bn_pollute(_bnum2); \
 	} while(0)
-#endif
 
 #define bn_fix_top(a)		bn_check_top(a)
 
 #else /* !BN_DEBUG */
 
+#define bn_pollute(a)
 #define bn_check_top(a)
 #define bn_fix_top(a)		bn_correct_top(a)
 
 #endif
+
+#define bn_correct_top(a) \
+        { \
+        BN_ULONG *ftl; \
+	if ((a)->top > 0) \
+		{ \
+		for (ftl= &((a)->d[(a)->top-1]); (a)->top > 0; (a)->top--) \
+		if (*(ftl--)) break; \
+		} \
+	bn_pollute(a); \
+	}
 
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
 BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
