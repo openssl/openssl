@@ -71,7 +71,7 @@ $ranlib       =
 
 *** Cygwin
 $cc           = gcc
-$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -m486 -Wall
+$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -march=486 -Wall
 $unistd       = 
 $thread_cflag = 
 $lflags       = 
@@ -853,7 +853,7 @@ $ranlib       =
 
 *** aix43-gcc
 $cc           = gcc
-$cflags       = -O3 -DAIX -DB_ENDIAN
+$cflags       = -O1 -DAIX -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -987,6 +987,29 @@ $shared_target= alpha-osf1-shared
 $shared_cflag = 
 $shared_ldflag = 
 $shared_extension = .so
+$ranlib       = 
+
+*** aux3-gcc
+$cc           = gcc
+$cflags       = -O2 -DTERMIO
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = -lbsd
+$bn_ops       = RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
 $ranlib       = 
 
 *** bsdi-elf-gcc
@@ -1259,10 +1282,10 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
+$shared_target= linux-shared
+$shared_cflag = -fPIC
 $shared_ldflag = 
-$shared_extension = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
 *** debug-linux-elf
@@ -3135,6 +3158,29 @@ $unistd       =
 $thread_cflag = (unknown)
 $lflags       = 
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL DES_PTR DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** tandem-c89
+$cc           = c89
+$cflags       = -Ww -D__TANDEM -D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED=1 -D_TANDEM_SOURCE -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = THIRTY_TWO_BIT
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
