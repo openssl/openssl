@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/04/29 21:51:00 $
+  ______________                           $Date: 1999/04/29 21:56:13 $
 
   DEVELOPMENT STATE
 
@@ -76,7 +76,6 @@
     o  broken demos
     o  salzr@certco.com (Rich Salz): Bug in X509_name_print
        <29E0A6D39ABED111A36000A0C99609CA2C2BA4@macertco-srv1.ma.certco.com>
-    o  Jean-Hugues ROYER <jhroyer@joher.com>: rsa_oaep.c with Watcom C
     o  $(PERL) in */Makefile.ssl
     o  "Sign the certificate?" - "n" creates empty certificate file
     o  dubious declaration of crypt() in des.h
