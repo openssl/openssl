@@ -291,7 +291,7 @@ my %table=(
 "ncr-scde","cc:-O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw::(unknown):-lsocket -lnsl:${x86_gcc_des} ${x86_gcc_opts}:::",
 
 # Linux on ARM
-"linux-elf-arm","gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::dlfcn",
+"linux-elf-arm","gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::::::::::dlfcn",
 
 # UnixWare 2.0
 "unixware-2.0","cc:-O -DFILIO_H::(unknown):-lsocket -lnsl:${x86_gcc_des} ${x86_gcc_opts}:::",

@@ -1404,6 +1404,24 @@ $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 
+*** linux-elf-arm
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = BN_LLONG
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+
 *** linux-ia64
 $cc           = gcc
 $cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall

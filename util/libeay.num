@@ -2369,3 +2369,4 @@ sk_BIO_pop                              2395
 sk_BIO_pop_free                         2396
 d2i_ASN1_SET_OF_PKCS7                   2397
 sk_ASN1_INTEGER_insert                  2398
+EVP_CIPHER_CTX_set_key_length           2399
