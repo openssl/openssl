@@ -210,6 +210,10 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences (only SSLv2)\n");
 	BIO_printf(bio_err," -cipher       - preferred cipher to use, use the 'openssl ciphers'\n");
 	BIO_printf(bio_err,"                 command to see what is available\n");
+	BIO_printf(bio_err," -starttls prot - use the STARTTLS command before starting TLS\n");
+	BIO_printf(bio_err,"                 for those protocols that support it, where\n");
+	BIO_printf(bio_err,"                 'prot' defines which one to assume.  Currently,\n");
+	BIO_printf(bio_err,"                 only \"smtp\" is supported.\n");
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 
@@ -223,7 +227,7 @@ int MAIN(int argc, char **argv)
 	SSL *con=NULL,*con2=NULL;
 	X509_STORE *store = NULL;
 	int s,k,width,state=0;
-	char *cbuf=NULL,*sbuf=NULL;
+	char *cbuf=NULL,*sbuf=NULL,*mbuf=NULL;
 	int cbuf_len,cbuf_off;
 	int sbuf_len,sbuf_off;
 	fd_set readfds,writefds;
@@ -237,6 +241,7 @@ int MAIN(int argc, char **argv)
 	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
 	SSL_CTX *ctx=NULL;
 	int ret=1,in_init=1,i,nbio_test=0;
+	int smtp_starttls = 0;
 	int prexit = 0, vflags = 0;
 	SSL_METHOD *meth=NULL;
 	BIO *sbio;
@@ -267,7 +272,8 @@ int MAIN(int argc, char **argv)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
 	if (	((cbuf=OPENSSL_malloc(BUFSIZZ)) == NULL) ||
-		((sbuf=OPENSSL_malloc(BUFSIZZ)) == NULL))
+		((sbuf=OPENSSL_malloc(BUFSIZZ)) == NULL) ||
+		((mbuf=OPENSSL_malloc(BUFSIZZ)) == NULL))
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
@@ -389,6 +395,15 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-nbio") == 0)
 			{ c_nbio=1; }
 #endif
+		else if	(strcmp(*argv,"-starttls") == 0)
+			{
+			if (--argc < 1) goto bad;
+			++argv;
+			if (strcmp(*argv,"smtp") == 0)
+				smtp_starttls = 1;
+			else
+				goto bad;
+			}
 		else if	(strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -552,6 +567,14 @@ re_start:
 	sbuf_len=0;
 	sbuf_off=0;
 
+	/* This is an ugly hack that does a lot of assumptions */
+	if (smtp_starttls)
+		{
+		BIO_read(sbio,mbuf,BUFSIZZ);
+		BIO_printf(sbio,"STARTTLS\r\n");
+		BIO_read(sbio,sbuf,BUFSIZZ);
+		}
+
 	for (;;)
 		{
 		FD_ZERO(&readfds);
@@ -570,6 +593,13 @@ re_start:
 				in_init=0;
 				print_stuff(bio_c_out,con,full_log);
 				if (full_log > 0) full_log--;
+
+				if (smtp_starttls)
+					{
+					BIO_printf(bio_err,"%s",mbuf);
+					/* We don't need to know any more */
+					smtp_starttls = 0;
+					}
 
 				if (reconnect)
 					{
@@ -861,6 +891,7 @@ end:
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (cbuf != NULL) { memset(cbuf,0,BUFSIZZ); OPENSSL_free(cbuf); }
 	if (sbuf != NULL) { memset(sbuf,0,BUFSIZZ); OPENSSL_free(sbuf); }
+	if (mbuf != NULL) { memset(mbuf,0,BUFSIZZ); OPENSSL_free(mbuf); }
 	if (bio_c_out != NULL)
 		{
 		BIO_free(bio_c_out);
