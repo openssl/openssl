@@ -4,6 +4,13 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) New function ASN1_mbstring_copy() this copies a string in either
+     ASCII, Unicode, Universal (4 bytes per character) or UTF8 format
+     into an ASN1_STRING type. A mask of permissible types is passed
+     and it chooses the "minimal" type to use or an error if not type
+     is suitable.
+     [Steve Henson]
+
   *) Add function equivalents to the various macros in asn1.h. The old
      macros are retained with an M_ prefix. Code inside the library can
      use the M_ macros. External code (including the openssl utility)

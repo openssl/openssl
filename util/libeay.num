@@ -1962,3 +1962,4 @@ ASN1_INTEGER_new                        1986
 i2d_DSAPublicKey_bio                    1987
 ASN1_STRING_length_set                  1988
 DIRECTORYSTRING_new                     1989
+ASN1_mbstring_copy                      1990
