@@ -727,7 +727,7 @@ static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		int out_state, int out_verify, int verify_mode,
 		unsigned int verify_depth)
 {
-	SSL_CTX *ctx, *ret = NULL;
+	SSL_CTX *ctx = NULL, *ret = NULL;
 	SSL_METHOD *meth;
 	ENGINE *e = NULL;
 

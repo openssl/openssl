@@ -82,14 +82,6 @@ int state_machine_set_SSL(state_machine_t *machine, SSL *ssl, int is_server)
 int state_machine_churn(state_machine_t *machine)
 {
 	unsigned int loop;
-	/* Do this loop twice to cover any dependencies about which precise
-	 * order of reads and writes is required. */
-	for(loop = 0; loop < 2; loop++) {
-		buffer_to_SSL(&machine->clean_in, machine->ssl);
-		buffer_to_BIO(&machine->dirty_in, machine->bio_intossl);
-		buffer_from_SSL(&machine->clean_out, machine->ssl);
-		buffer_from_BIO(&machine->dirty_out, machine->bio_fromssl);
-	}
 	if(machine->ssl == NULL) {
 		if(buffer_empty(&machine->clean_out))
 			/* Time to close this state-machine altogether */
@@ -97,6 +89,14 @@ int state_machine_churn(state_machine_t *machine)
 		else
 			/* Still buffered data on the clean side to go out */
 			return 1;
+	}
+	/* Do this loop twice to cover any dependencies about which precise
+	 * order of reads and writes is required. */
+	for(loop = 0; loop < 2; loop++) {
+		buffer_to_SSL(&machine->clean_in, machine->ssl);
+		buffer_to_BIO(&machine->dirty_in, machine->bio_intossl);
+		buffer_from_SSL(&machine->clean_out, machine->ssl);
+		buffer_from_BIO(&machine->dirty_out, machine->bio_fromssl);
 	}
 	/* We close on the SSL side if the info callback noticed some problems
 	 * or an SSL shutdown was underway and shutdown traffic had all been

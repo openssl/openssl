@@ -87,7 +87,7 @@ static unsigned int buffer_takedata(buffer_t *buf, unsigned char *ptr,
 
 int buffer_from_fd(buffer_t *buf, int fd)
 {
-	unsigned int toread = buffer_unused(buf);
+	int toread = buffer_unused(buf);
 	if(toread == 0)
 		/* Shouldn't be called in this case! */
 		abort();
@@ -101,7 +101,7 @@ int buffer_from_fd(buffer_t *buf, int fd)
 
 int buffer_to_fd(buffer_t *buf, int fd)
 {
-	unsigned int towrite = buffer_used(buf);
+	int towrite = buffer_used(buf);
 	if(towrite == 0)
 		/* Shouldn't be called in this case! */
 		abort();
