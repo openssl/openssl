@@ -430,9 +430,9 @@ skip_arg_loop:
 				{
 				int cap_size = 256;
 				char *cap_buf = NULL;
-#if 0 /* Awaiting EVP_[CIPHER|DIGEST] refit */
 				int k,n;
-#endif
+				const int *nids;
+				ENGINE_CIPHERS_PTR fn;
 
 				if (ENGINE_get_RSA(e) != NULL
 					&& !append_buf(&cap_buf, "RSA",
@@ -451,15 +451,16 @@ skip_arg_loop:
 						&cap_size, 256))
 					goto end;
 
-#if 0
-				n=ENGINE_cipher_num(e);
+				fn = ENGINE_get_ciphers(e);
+				if(!fn) goto skip_ciphers;
+				n = fn(e, NULL, &nids, 0);
 				for(k=0 ; k < n ; ++k)
 					if(!append_buf(&cap_buf,
-						       OBJ_nid2sn(ENGINE_get_cipher(e, k)->nid),
+						       OBJ_nid2sn(nids[k]),
 						       &cap_size, 256))
 						goto end;
-#endif
 
+skip_ciphers:
 				if (cap_buf && (*cap_buf != '\0'))
 					BIO_printf(bio_out, " [%s]", cap_buf);
 
