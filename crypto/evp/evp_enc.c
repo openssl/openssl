@@ -102,11 +102,13 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 		goto skip_to_init;
 	if (cipher)
 		{
-		/* Ensure an ENGINE left lying around from last time is cleared
+		/* Ensure a context left lying around from last time is cleared
 		 * (the previous check attempted to avoid this if the same
 		 * ENGINE and EVP_CIPHER could be used). */
-		if(ctx->engine)
-			ENGINE_finish(ctx->engine);
+		EVP_CIPHER_CTX_cleanup(ctx);
+
+		/* Restore encrypt field: it is zeroed by cleanup */
+		ctx->encrypt = enc;
 		if(impl)
 			{
 			if (!ENGINE_init(impl))
@@ -140,6 +142,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 			}
 		else
 			ctx->engine = NULL;
+
 		ctx->cipher=cipher;
 		ctx->cipher_data=OPENSSL_malloc(ctx->cipher->ctx_size);
 		ctx->key_len = cipher->key_len;
@@ -303,7 +306,6 @@ int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
 	int ret;
 	ret = EVP_EncryptFinal_ex(ctx, out, outl);
-	EVP_CIPHER_CTX_cleanup(ctx);
 	return ret;
 	}
 
@@ -314,14 +316,12 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	b=ctx->cipher->block_size;
 	if (b == 1)
 		{
-		EVP_CIPHER_CTX_cleanup(ctx);
 		*outl=0;
 		return 1;
 		}
 	bl=ctx->buf_len;
 	if (ctx->flags & EVP_CIPH_NO_PADDING)
 		{
-		EVP_CIPHER_CTX_cleanup(ctx);
 		if(bl)
 			{
 			EVPerr(EVP_F_EVP_ENCRYPTFINAL,EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
@@ -336,7 +336,6 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		ctx->buf[i]=n;
 	ret=ctx->cipher->do_cipher(ctx,out,ctx->buf,b);
 
-	EVP_CIPHER_CTX_cleanup(ctx);
 
 	if(ret)
 		*outl=b;
@@ -394,7 +393,6 @@ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
 	int ret;
 	ret = EVP_DecryptFinal_ex(ctx, out, outl);
-	EVP_CIPHER_CTX_cleanup(ctx);
 	return ret;
 	}
 
@@ -407,7 +405,6 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	b=ctx->cipher->block_size;
 	if (ctx->flags & EVP_CIPH_NO_PADDING)
 		{
-		EVP_CIPHER_CTX_cleanup(ctx);
 		if(ctx->buf_len)
 			{
 			EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
@@ -420,14 +417,12 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		{
 		if (ctx->buf_len || !ctx->final_used)
 			{
-			EVP_CIPHER_CTX_cleanup(ctx);
 			EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_WRONG_FINAL_BLOCK_LENGTH);
 			return(0);
 			}
 		n=ctx->final[b-1];
 		if (n > b)
 			{
-			EVP_CIPHER_CTX_cleanup(ctx);
 			EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_BAD_DECRYPT);
 			return(0);
 			}
@@ -435,7 +430,6 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 			{
 			if (ctx->final[--b] != n)
 				{
-				EVP_CIPHER_CTX_cleanup(ctx);
 				EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_BAD_DECRYPT);
 				return(0);
 				}
@@ -447,17 +441,21 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		}
 	else
 		*outl=0;
-	EVP_CIPHER_CTX_cleanup(ctx);
 	return(1);
 	}
 
 int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 	{
-	if ((c->cipher != NULL) && (c->cipher->cleanup != NULL))
+	if (c->cipher != NULL)
 		{
-		if(!c->cipher->cleanup(c)) return 0;
+		if(c->cipher->cleanup && !c->cipher->cleanup(c))
+			return 0;
+		/* Zero cipher context data */
+		if (c->cipher_data)
+			memset(c->cipher_data, 0, c->cipher->ctx_size);
 		}
-	OPENSSL_free(c->cipher_data);
+	if (c->cipher_data)
+		OPENSSL_free(c->cipher_data);
 	if (c->engine)
 		/* The EVP_CIPHER we used belongs to an ENGINE, release the
 		 * functional reference we held for this reason. */
