@@ -80,12 +80,12 @@ static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY(NETSCAPE_PKEY **a,unsigned char **pp, lo
 static NETSCAPE_PKEY *NETSCAPE_PKEY_new(void);
 static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *);
 
-int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)())
+int i2d_Netscape_RSA(const RSA *a, unsigned char **pp, int (*cb)())
 {
 	return i2d_RSA_NET(a, pp, cb, 0);
 }
 
-int i2d_RSA_NET(RSA *a, unsigned char **pp, int (*cb)(), int sgckey)
+int i2d_RSA_NET(const RSA *a, unsigned char **pp, int (*cb)(), int sgckey)
 	{
 	int i,j,l[6];
 	NETSCAPE_PKEY *pkey;
@@ -205,18 +205,18 @@ err:
 	}
 
 
-RSA *d2i_Netscape_RSA(RSA **a, unsigned char **pp, long length, int (*cb)())
+RSA *d2i_Netscape_RSA(RSA **a, const unsigned char **pp, long length, int (*cb)())
 {
 	return d2i_RSA_NET(a, pp, length, cb, 0);
 }
 
-RSA *d2i_RSA_NET(RSA **a, unsigned char **pp, long length, int (*cb)(), int sgckey)
+RSA *d2i_RSA_NET(RSA **a, const unsigned char **pp, long length, int (*cb)(), int sgckey)
 	{
 	RSA *ret=NULL;
 	ASN1_OCTET_STRING *os=NULL;
 	ASN1_CTX c;
 
-	c.pp=pp;
+	c.pp=(unsigned char **)pp; /* TMP UGLY CAST */
 	c.error=ASN1_R_DECODING_ERROR;
 
 	M_ASN1_D2I_Init();
@@ -231,7 +231,8 @@ RSA *d2i_RSA_NET(RSA **a, unsigned char **pp, long length, int (*cb)(), int sgck
 		}
 	M_ASN1_BIT_STRING_free(os);
 	c.q=c.p;
-	if ((ret=d2i_RSA_NET_2(a,&c.p,c.slen,cb, sgckey)) == NULL) goto err;
+	if ((ret=d2i_RSA_NET_2(a,(const unsigned char **)&c.p, /* TMP UGLY CAST */
+			       c.slen,cb, sgckey)) == NULL) goto err;
 	/* Note: some versions of IIS key files use length values that are
 	 * too small for the surrounding SEQUENCEs. This following line
 	 * effectively disable length checking.
@@ -241,13 +242,13 @@ RSA *d2i_RSA_NET(RSA **a, unsigned char **pp, long length, int (*cb)(), int sgck
 	M_ASN1_D2I_Finish(a,RSA_free,ASN1_F_D2I_NETSCAPE_RSA);
 	}
 
-RSA *d2i_Netscape_RSA_2(RSA **a, unsigned char **pp, long length,
+RSA *d2i_Netscape_RSA_2(RSA **a, const unsigned char **pp, long length,
 	     int (*cb)())
 {
 	return d2i_RSA_NET_2(a, pp, length, cb, 0);
 }
 
-RSA *d2i_RSA_NET_2(RSA **a, unsigned char **pp, long length,
+RSA *d2i_RSA_NET_2(RSA **a, const unsigned char **pp, long length,
 	     int (*cb)(), int sgckey)
 	{
 	NETSCAPE_PKEY *pkey=NULL;
@@ -261,7 +262,7 @@ RSA *d2i_RSA_NET_2(RSA **a, unsigned char **pp, long length,
 	ASN1_CTX c;
 
 	c.error=ERR_R_NESTED_ASN1_ERROR;
-	c.pp=pp;
+	c.pp=(unsigned char **)pp;
 
 	M_ASN1_D2I_Init();
 	M_ASN1_D2I_start_sequence();
@@ -310,7 +311,8 @@ RSA *d2i_RSA_NET_2(RSA **a, unsigned char **pp, long length,
 		}
 		
 	zz=pkey->private_key->data;
-	if ((ret=d2i_RSAPrivateKey(a,&zz,pkey->private_key->length)) == NULL)
+	if ((ret=d2i_RSAPrivateKey(a,(const unsigned char **)&zz, /* TMP UGLY CAST */
+		pkey->private_key->length)) == NULL)
 		{
 		ASN1err(ASN1_F_D2I_NETSCAPE_RSA_2,ASN1_R_UNABLE_TO_DECODE_RSA_KEY);
 		goto err;

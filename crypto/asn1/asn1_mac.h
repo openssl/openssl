@@ -76,8 +76,8 @@ extern "C" {
 	ASN1_CTX c; \
 	type ret=NULL; \
 	\
-	c.pp=pp; \
-	c.q= *pp; \
+	c.pp=(unsigned char **)pp; \
+	c.q= *(unsigned char **)pp; \
 	c.error=ERR_R_NESTED_ASN1_ERROR; \
 	if ((a == NULL) || ((*a) == NULL)) \
 		{ if ((ret=(type)func()) == NULL) \
@@ -85,13 +85,13 @@ extern "C" {
 	else	ret=(*a);
 
 #define M_ASN1_D2I_Init() \
-	c.p= *pp; \
+	c.p= *(unsigned char **)pp; \
 	c.max=(length == 0)?0:(c.p+length);
 
 #define M_ASN1_D2I_Finish_2(a) \
 	if (!asn1_Finish(&c)) \
 		{ c.line=__LINE__; goto err; } \
-	*pp=c.p; \
+	*(unsigned char **)pp=c.p; \
 	if (a != NULL) (*a)=ret; \
 	return(ret);
 
@@ -99,7 +99,7 @@ extern "C" {
 	M_ASN1_D2I_Finish_2(a); \
 err:\
 	ASN1_MAC_H_err((e),c.error,c.line); \
-	asn1_add_error(*pp,(int)(c.q- *pp)); \
+	asn1_add_error(*(unsigned char **)pp,(int)(c.q- *pp)); \
 	if ((ret != NULL) && ((a == NULL) || (*a != ret))) func(ret); \
 	return(NULL)
 

@@ -68,7 +68,7 @@
 #define d2i_ASN1_INTEGER d2i_ASN1_UINTEGER
 #endif
 
-RSA *d2i_RSAPublicKey(RSA **a, unsigned char **pp, long length)
+RSA *d2i_RSAPublicKey(RSA **a, const unsigned char **pp, long length)
 	{
 	int i=ASN1_R_PARSING;
 	ASN1_INTEGER *bs=NULL;

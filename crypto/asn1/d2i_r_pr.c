@@ -75,7 +75,7 @@ ASN1_METHOD *RSAPrivateKey_asn1_meth(void)
 	return(&method);
 	}
 
-RSA *d2i_RSAPrivateKey(RSA **a, unsigned char **pp, long length)
+RSA *d2i_RSAPrivateKey(RSA **a, const unsigned char **pp, long length)
 	{
 	int i=ASN1_R_PARSING;
 	ASN1_INTEGER *bs=NULL;

@@ -84,7 +84,8 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, unsigned char **pp,
 		{
 #ifndef NO_RSA
 	case EVP_PKEY_RSA:
-		if ((ret->pkey.rsa=d2i_RSAPublicKey(NULL,pp,length)) == NULL)
+		if ((ret->pkey.rsa=d2i_RSAPublicKey(NULL,
+			(const unsigned char **)pp,length)) == NULL) /* TMP UGLY CAST */
 			{
 			ASN1err(ASN1_F_D2I_PUBLICKEY,ERR_R_ASN1_LIB);
 			goto err;

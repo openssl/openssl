@@ -64,7 +64,7 @@
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
 
-int i2d_RSAPrivateKey(RSA *a, unsigned char **pp)
+int i2d_RSAPrivateKey(const RSA *a, unsigned char **pp)
 	{
 	BIGNUM *num[9];
 	unsigned char data[1];

@@ -74,7 +74,7 @@ static int print(BIO *fp,const char *str,BIGNUM *num,
 		unsigned char *buf,int off);
 #ifndef NO_RSA
 #ifndef NO_FP_API
-int RSA_print_fp(FILE *fp, RSA *x, int off)
+int RSA_print_fp(FILE *fp, const RSA *x, int off)
         {
         BIO *b;
         int ret;
@@ -91,7 +91,7 @@ int RSA_print_fp(FILE *fp, RSA *x, int off)
         }
 #endif
 
-int RSA_print(BIO *bp, RSA *x, int off)
+int RSA_print(BIO *bp, const RSA *x, int off)
 	{
 	char str[128];
 	const char *s;
