@@ -118,8 +118,9 @@ int BUF_MEM_grow(BUF_MEM *str, int len)
 	else
 		{
 		str->data=ret;
-		str->length=len;
 		str->max=n;
+		memset(&str->data[str->length],0,len-str->length);
+		str->length=len;
 		}
 	return(len);
 	}
