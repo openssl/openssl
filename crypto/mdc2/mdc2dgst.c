@@ -160,7 +160,8 @@ static void mdc2_body(MDC2_CTX *c, const unsigned char *in, size_t len)
 
 int MDC2_Final(unsigned char *md, MDC2_CTX *c)
 	{
-	int i,j;
+	unsigned int i;
+	int j;
 
 	i=c->num;
 	j=c->pad_type;

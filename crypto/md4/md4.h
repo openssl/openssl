@@ -101,7 +101,7 @@ typedef struct MD4state_st
 	MD4_LONG A,B,C,D;
 	MD4_LONG Nl,Nh;
 	MD4_LONG data[MD4_LBLOCK];
-	int num;
+	unsigned int num;
 	} MD4_CTX;
 
 int MD4_Init(MD4_CTX *c);

@@ -74,7 +74,7 @@ extern "C" {
  
 typedef struct mdc2_ctx_st
 	{
-	int num;
+	unsigned int num;
 	unsigned char data[MDC2_BLOCK];
 	DES_cblock h,hh;
 	int pad_type; /* either 1 or 2, default 1 */

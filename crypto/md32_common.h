@@ -77,7 +77,7 @@
  *			...
  *			HASH_LONG	Nl,Nh;
  *			HASH_LONG	data[HASH_LBLOCK];
- *			int		num;
+ *			unsigned int	num;
  *			...
  *			} HASH_CTX;
  * HASH_UPDATE
@@ -398,7 +398,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, size_t len)
 	const unsigned char *data=data_;
 	register HASH_LONG * p;
 	register HASH_LONG l;
-	unsigned int sw,sc,ew,ec;
+	size_t sw,sc,ew,ec;
 
 	if (len==0) return 1;
 
@@ -430,7 +430,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, size_t len)
 			}
 		else
 			{
-			c->num+=len;
+			c->num+=(unsigned int)len;
 			if ((sc+len) < 4) /* ugly, add char's to a word */
 				{
 				l=p[sw]; HOST_p_c2l_p(data,l,sc,len); p[sw]=l;
