@@ -14,7 +14,7 @@
 
   +) Move SSL_OP_TLS_ROLLBACK_BUG out of the SSL_OP_ALL list of recommended
      bug workarounds. Rollback attack detection is a security feature.
-     The problem will only arise on OpenSSL servers, when TLSv1 is not
+     The problem will only arise on OpenSSL servers when TLSv1 is not
      available (sslv3_server_method() or SSL_OP_NO_TLSv1).
      Software authors not wanting to support TLSv1 will have special reasons
      for their choice and can explicitly enable this option.
