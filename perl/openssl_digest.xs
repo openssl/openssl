@@ -27,9 +27,9 @@ p5_EVP_MD_new(...)
 		char *name;
 	PPCODE:
 		if ((items == 1) && SvPOK(ST(0)))
-			name=SvPV(ST(0),na);
+			name=SvPV_nolen(ST(0));
 		else if ((items == 2) && SvPOK(ST(1)))
-			name=SvPV(ST(1),na);
+			name=SvPV_nolen(ST(1));
 		else
 			croak("Usage: OpenSSL::MD::new(type)");
 		PUSHs(sv_newmortal());
@@ -45,8 +45,9 @@ datum
 p5_EVP_MD_name(ctx)
 	EVP_MD_CTX *ctx
 	CODE:
-		RETVAL.dptr=OBJ_nid2ln(EVP_MD_type(EVP_MD_CTX_type(ctx)));
+		RETVAL.dptr=OBJ_nid2ln(EVP_MD_CTX_type(ctx));
 		RETVAL.dsize=strlen(RETVAL.dptr);
+
 	OUTPUT:
 		RETVAL
 	

@@ -142,7 +142,7 @@ p5_BN_bn2bin(a)
 		i=BN_num_bytes(a)+2;
 		sv_setpvn(ST(0),"",1);
 		SvGROW(ST(0),i+1);
-		SvCUR_set(ST(0),BN_bn2bin(a,SvPV(ST(0),na)));
+		SvCUR_set(ST(0),BN_bn2bin(a,SvPV_nolen(ST(0))));
 
 void
 p5_BN_mpi2bn(a)
@@ -168,7 +168,7 @@ p5_BN_bn2mpi(a)
 		i=BN_bn2mpi(a,NULL);
 		sv_setpvn(ST(0),"",1);
 		SvGROW(ST(0),i+1);
-		SvCUR_set(ST(0),BN_bn2mpi(a,SvPV(ST(0),na)));
+		SvCUR_set(ST(0),BN_bn2mpi(a,SvPV_nolen(ST(0))));
 
 void
 p5_BN_hex2bn(a)
@@ -208,9 +208,9 @@ p5_BN_bn2hex(a)
 		RETVAL=newSVpv("",0);
 		i=strlen(ptr);
 		SvGROW(RETVAL,i+1);
-		memcpy(SvPV(RETVAL,na),ptr,i+1);
+		memcpy(SvPV_nolen(RETVAL),ptr,i+1);
 		SvCUR_set(RETVAL,i);
-		Free(ptr);
+		OPENSSL_free(ptr);
 	OUTPUT:
 		RETVAL
 
@@ -226,9 +226,9 @@ p5_BN_bn2dec(a)
 		RETVAL=newSVpv("",0);
 		i=strlen(ptr);
 		SvGROW(RETVAL,i+1);
-		memcpy(SvPV(RETVAL,na),ptr,i+1);
+		memcpy(SvPV_nolen(RETVAL),ptr,i+1);
 		SvCUR_set(RETVAL,i);
-		Free(ptr);
+		OPENSSL_free(ptr);
 	OUTPUT:
 		RETVAL
 

@@ -72,9 +72,9 @@ p5_SSL_CTX_new(...)
 	PPCODE:
 		pr_name("p5_SSL_CTX_new");
 		if ((items == 1) && SvPOK(ST(0)))
-			method=SvPV(ST(0),na);
+			method=SvPV_nolen(ST(0));
 		else if ((items == 2) && SvPOK(ST(1)))
-			method=SvPV(ST(1),na);
+			method=SvPV_nolen(ST(1));
 		else
 			croak("Usage: OpenSSL::SSL::CTX::new(type)");
 			
@@ -124,7 +124,7 @@ p5_SSL_CTX_use_PrivateKey_file(ctx,file,...)
 			croak("OpenSSL::SSL::CTX::use_PrivateKey_file(ssl_ctx,file[,type])");
 		if (items == 3)
 			{
-			ptr=SvPV(ST(2),na);
+			ptr=SvPV_nolen(ST(2));
 			if (strcmp(ptr,"der") == 0)
 				i=SSL_FILETYPE_ASN1;
 			else
@@ -148,7 +148,7 @@ p5_SSL_CTX_set_options(ctx,...)
 			{
 			if (!SvPOK(ST(i)))
 				croak("Usage: OpenSSL::SSL_CTX::set_options(ssl_ctx[,option,value]+)");
-			ptr=SvPV(ST(i),na);
+			ptr=SvPV_nolen(ST(i));
 			if (strcmp(ptr,"-info_callback") == 0)
 				{
 				SSL_CTX_set_info_callback(ctx,
@@ -325,7 +325,7 @@ p5_SSL_set_options(ssl,...)
 			{
 			if (!SvPOK(ST(i)))
 				croak("Usage: OpenSSL::SSL::set_options(ssl[,option,value]+)");
-			ptr=SvPV(ST(i),na);
+			ptr=SvPV_nolen(ST(i));
 			if (strcmp(ptr,"-info_callback") == 0)
 				{
 				SSL_set_info_callback(ssl,
@@ -477,7 +477,7 @@ p5_BIO_get_ssl(bio)
 			ret=sv_mortalcopy(ret);
 			}
 		else
-			ret= &sv_undef;
+			ret= &PL_sv_undef;
 		EXTEND(sp,1);
 		PUSHs(ret);
 

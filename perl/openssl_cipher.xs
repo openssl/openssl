@@ -20,9 +20,9 @@ p5_EVP_C_new(...)
 		char *name;
 	PPCODE:
 		if ((items == 1) && SvPOK(ST(0)))
-			name=SvPV(ST(0),na);
+			name=SvPV_nolen(ST(0));
 		else if ((items == 2) && SvPOK(ST(1)))
-			name=SvPV(ST(1),na);
+			name=SvPV_nolen(ST(1));
 		else
 			croak("Usage: OpenSSL::Cipher::new(type)");
 		PUSHs(sv_newmortal());
@@ -112,7 +112,7 @@ p5_EVP_C_cipher(ctx,in)
 	CODE:
 		RETVAL=newSVpv("",0);
 		SvGROW(RETVAL,in.dsize+EVP_CIPHER_CTX_block_size(ctx)+1);
-		EVP_Cipher(ctx,SvPV(RETVAL,na),in.dptr,in.dsize);
+		EVP_Cipher(ctx,SvPV_nolen(RETVAL),in.dptr,in.dsize);
 		SvCUR_set(RETVAL,in.dsize);
 	OUTPUT:
 		RETVAL
@@ -126,7 +126,7 @@ p5_EVP_C_update(ctx, in)
 	CODE:
 		RETVAL=newSVpv("",0);
 		SvGROW(RETVAL,in.dsize+EVP_CIPHER_CTX_block_size(ctx)+1);
-		EVP_CipherUpdate(ctx,SvPV(RETVAL,na),&i,in.dptr,in.dsize);
+		EVP_CipherUpdate(ctx,SvPV_nolen(RETVAL),&i,in.dptr,in.dsize);
 		SvCUR_set(RETVAL,i);
 	OUTPUT:
 		RETVAL
@@ -139,7 +139,7 @@ p5_EVP_C_final(ctx)
 	CODE:
 		RETVAL=newSVpv("",0);
 		SvGROW(RETVAL,EVP_CIPHER_CTX_block_size(ctx)+1);
-		if (!EVP_CipherFinal(ctx,SvPV(RETVAL,na),&i))
+		if (!EVP_CipherFinal(ctx,SvPV_nolen(RETVAL),&i))
 			sv_setpv(RETVAL,"BAD DECODE");
 		else
 			SvCUR_set(RETVAL,i);

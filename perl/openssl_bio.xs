@@ -32,7 +32,7 @@ p5_bio_callback(bio,state,parg,cmd,larg,ret)
         if ((state == BIO_CB_READ) || (state == BIO_CB_WRITE))
             XPUSHs(sv_2mortal(newSVpv(parg,larg)));
         else
-            XPUSHs(&sv_undef);
+            XPUSHs(&PL_sv_undef);
         /* ptr one */
         XPUSHs(sv_2mortal(newSViv(larg)));
         XPUSHs(sv_2mortal(newSViv(ret)));
@@ -129,9 +129,9 @@ p5_BIO_new(...)
     PPCODE:
         pr_name("p5_BIO_new");
         if ((items == 1) && SvPOK(ST(0)))
-            type = SvPV(ST(0),na);
+            type = SvPV_nolen(ST(0));
         else if ((items == 2) && SvPOK(ST(1)))
-            type = SvPV(ST(1),na);
+            type = SvPV_nolen(ST(1));
         else
             croak("Usage: OpenSSL::BIO::new(type)");
         EXTEND(sp,1);
@@ -314,7 +314,7 @@ p5_BIO_getline(bio)
         PUSHs(sv_newmortal());
         sv_setpvn(ST(0), "", 0);
         SvGROW(ST(0), 1024);
-        p=SvPV(ST(0), na);
+        p=SvPV_nolen(ST(0));
         i = BIO_gets(bio, p, 1024);
         if (i < 0) 
             i = 0;
@@ -370,7 +370,7 @@ p5_BIO_puts(bio, in)
     PREINIT:
         char *ptr;
     CODE:
-        ptr = SvPV(in,na);
+        ptr = SvPV_nolen(in);
         RETVAL = BIO_puts(bio, ptr);
     OUTPUT:
         RETVAL
