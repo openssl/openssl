@@ -573,6 +573,20 @@ int BIO_dump(BIO *b,const char *bytes,int len);
 int BIO_dump_indent(BIO *b,const char *bytes,int len,int indent);
 
 struct hostent *BIO_gethostbyname(const char *name);
+
+#ifdef OPENSSL_SYS_VMS
+/* For 64-bit API */
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __save
+#pragma __required_pointer_size 32
+#endif
+typedef unsigned long * UINT_L32p;
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __restore
+#endif
+#endif
+/* OPENSSL_SYS_VMS */
+
 /* We might want a thread-safe interface too:
  * struct hostent *BIO_gethostbyname_r(const char *name,
  *     struct hostent *result, void *buffer, size_t buflen);
@@ -581,8 +595,13 @@ struct hostent *BIO_gethostbyname(const char *name);
  * substructures; if the buffer does not suffice, NULL is returned
  * and an appropriate error code is set).
  */
+
 int BIO_sock_error(int sock);
+#ifdef OPENSSL_SYS_VMS
+int BIO_socket_ioctl(int fd, long type, UINT_L32p arg);
+#else
 int BIO_socket_ioctl(int fd, long type, unsigned long *arg);
+#endif
 int BIO_socket_nbio(int fd,int mode);
 int BIO_get_port(const char *str, unsigned short *port_ptr);
 int BIO_get_host_ip(const char *str, unsigned char *ip);

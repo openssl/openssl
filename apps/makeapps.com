@@ -44,11 +44,18 @@ $!  keywords:
 $!
 $!	UCX		for UCX
 $!	SOCKETSHR	for SOCKETSHR+NETLIB
+$!	TCPIP		for TCPIP (post UCX)
 $!
 $!  P5, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
 $!
 $!  P6, if defined, sets a choice of programs to compile.
 $!
+$!
+$!
+$! Define USER_CCFLAGS
+$!
+$ @[-]vms_build_info.com
+$ WRITE SYS$OUTPUT " Using USER_CCFLAGS = ", USER_CCFLAGS
 $!
 $! Define A TCP/IP Library That We Will Need To Link To.
 $! (That Is, If We Need To Link To One.)
@@ -98,15 +105,15 @@ $ WRITE SYS$OUTPUT "Compiling On A ",ARCH," Machine."
 $!
 $! Define The CRYPTO Library.
 $!
-$ CRYPTO_LIB := SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO.OLB
+$ CRYPTO_LIB := SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO'build_bits'.OLB
 $!
 $! Define The RSAREF Library.
 $!
-$ RSAREF_LIB := SYS$DISK:[-.'ARCH'.EXE.RSAREF]LIBRSAGLUE.OLB
+$ RSAREF_LIB := SYS$DISK:[-.'ARCH'.EXE.RSAREF]LIBRSAGLUE'build_bits'.OLB
 $!
 $! Define The SSL Library.
 $!
-$ SSL_LIB := SYS$DISK:[-.'ARCH'.EXE.SSL]LIBSSL.OLB
+$ SSL_LIB := SYS$DISK:[-.'ARCH'.EXE.SSL]LIBSSL'build_bits'.OLB
 $!
 $! Define The OBJ Directory.
 $!
@@ -122,6 +129,23 @@ $!
 $   CREATE/DIRECTORY 'OBJ_DIR'
 $!
 $! End The OBJ Directory Check.
+$!
+$ ENDIF
+$!
+$! Define The LIS Directory.
+$!
+$ LIS_DIR := SYS$DISK:[-.'ARCH'.LIS.APPS]
+$!
+$! Check To See If The OBJ Directory Exists.
+$!
+$ IF (F$PARSE(LIS_DIR).EQS."")
+$ THEN
+$!
+$!  It Dosen't Exist, So Create It.
+$!
+$   CREATE/DIRECTORY 'LIS_DIR'
+$!
+$! End The LIS Directory Check.
 $!
 $ ENDIF
 $!
@@ -155,13 +179,13 @@ $!
 $ LIB_FILES = "VERIFY;ASN1PARS;REQ;DGST;DH;DHPARAM;ENC;PASSWD;GENDH;ERRSTR;"+-
 	      "CA;PKCS7;CRL2P7;CRL;"+-
 	      "RSA;RSAUTL;DSA;DSAPARAM;"+-
-	      "X509;GENRSA;GENDSA;S_SERVER;S_CLIENT;SPEED;"+-
+	      "X509;GENRSA;GENDSA;TERM_SOCK;S_SERVER;S_CLIENT;SPEED;"+-
 	      "S_TIME;APPS;S_CB;S_SOCKET;APP_RAND;VERSION;SESS_ID;"+-
 	      "CIPHERS;NSEQ;PKCS12;PKCS8;SPKAC;SMIME;RAND;ENGINE;OCSP"
 $ APP_FILES := OPENSSL,'OBJ_DIR'VERIFY.OBJ,ASN1PARS.OBJ,REQ.OBJ,DGST.OBJ,DH.OBJ,DHPARAM.OBJ,ENC.OBJ,PASSWD.OBJ,GENDH.OBJ,ERRSTR.OBJ,-
 	       CA.OBJ,PKCS7.OBJ,CRL2P7.OBJ,CRL.OBJ,-
 	       RSA.OBJ,RSAUTL.OBJ,DSA.OBJ,DSAPARAM.OBJ,-
-	       X509.OBJ,GENRSA.OBJ,GENDSA.OBJ,S_SERVER.OBJ,S_CLIENT.OBJ,SPEED.OBJ,-
+	       X509.OBJ,GENRSA.OBJ,GENDSA.OBJ,TERM_SOCK.OBJ,S_SERVER.OBJ,S_CLIENT.OBJ,SPEED.OBJ,-
 	       S_TIME.OBJ,APPS.OBJ,S_CB.OBJ,S_SOCKET.OBJ,APP_RAND.OBJ,VERSION.OBJ,SESS_ID.OBJ,-
 	       CIPHERS.OBJ,NSEQ.OBJ,PKCS12.OBJ,PKCS8.OBJ,SPKAC.OBJ,SMIME.OBJ,RAND.OBJ,ENGINE.OBJ,OCSP.OBJ
 $ TCPIP_PROGRAMS = ",,"
@@ -234,6 +258,10 @@ $! Create The Object File Name.
 $!
 $ OBJECT_FILE = OBJ_DIR + FILE_NAME + ".OBJ"
 $!
+$! Create The Listing File Name.
+$!
+$ LIST_FILE = LIS_DIR + FILE_NAME + ".LIS"
+$!
 $! Create The Executable File Name.
 $!
 $ EXE_FILE = EXE_DIR + FILE_NAME + ".EXE"
@@ -247,7 +275,7 @@ $!
 $!  Tell The User That The File Dosen't Exist.
 $!
 $   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "The File ",SOURCE_FILE," Dosen't Exist."
+$   WRITE SYS$OUTPUT F$MESSAGE("%X10018290") + ".  The File ",SOURCE_FILE," Dosen't Exist."
 $   WRITE SYS$OUTPUT ""
 $!
 $!  Exit The Build.
@@ -272,9 +300,9 @@ $!
 $ ON ERROR THEN GOTO NEXT_FILE
 $ IF COMPILEWITH_CC2 - FILE_NAME .NES. COMPILEWITH_CC2
 $ THEN
-$   CC2/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$   CC2/OBJECT='OBJECT_FILE'/LIST='LIST_FILE'/MACHINE_CODE 'SOURCE_FILE'
 $ ELSE
-$   CC/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$   CC/OBJECT='OBJECT_FILE'/LIST='LIST_FILE'/MACHINE_CODE 'SOURCE_FILE'
 $ ENDIF
 $!
 $ ON WARNING THEN GOTO NEXT_FILE
@@ -304,10 +332,14 @@ $   THEN
 $!
 $!    Link With The RSAREF Library And A Specific TCP/IP Library.
 $!
-$     LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
+$     LINK /'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' /MAP='MAP_FILE' /FULL/CROSS -
 	  'OBJECT_FILE''EXTRA_OBJ', -
-          'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY,'RSAREF_LIB'/LIBRARY, -
-          'TCPIP_LIB','OPT_FILE'/OPTION
+          'SSL_LIB'/LIBRARY,-
+	  'CRYPTO_LIB'/LIBRARY, -
+	  'RSAREF_LIB'/LIBRARY, -
+          'TCPIP_LIB', -
+	  'OPT_FILE'/OPTION, -
+	  SYS$DISK:[-]SSL_IDENT.OPT/OPTION
 $!
 $!  Else...
 $!
@@ -315,10 +347,13 @@ $   ELSE
 $!
 $!    Link With The RSAREF Library And NO TCP/IP Library.
 $!
-$     LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
+$     LINK /'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' /MAP='MAP_FILE' /FULL/CROSS -
 	  'OBJECT_FILE''EXTRA_OBJ', -
-          'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY,'RSAREF_LIB'/LIBRARY, -
-          'OPT_FILE'/OPTION
+          'SSL_LIB'/LIBRARY, -
+	  'CRYPTO_LIB'/LIBRARY, -
+	  'RSAREF_LIB'/LIBRARY, -
+          'OPT_FILE'/OPTION, -
+	  SYS$DISK:[-]SSL_IDENT.OPT/OPTION
 $!
 $!  End The TCP/IP Library Check.
 $!
@@ -338,10 +373,14 @@ $   THEN
 $!
 $!    Don't Link With The RSAREF Routines And TCP/IP Library.
 $!
-$       LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
+$       LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' /MAP='MAP_FILE' /FULL/CROSS -
 	    'OBJECT_FILE''EXTRA_OBJ', -
-            'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY, -
-            'TCPIP_LIB','OPT_FILE'/OPTION
+            'SSL_LIB'/LIBRARY, -
+	    'CRYPTO_LIB'/LIBRARY, -
+            'TCPIP_LIB', -
+	    'OPT_FILE'/OPTION, -
+	  SYS$DISK:[-]SSL_IDENT.OPT/OPTION
+
 $!
 $!  Else...
 $!
@@ -349,10 +388,13 @@ $   ELSE
 $!
 $!    Don't Link With The RSAREF Routines And Link With A TCP/IP Library.
 $!
-$       LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
+$       LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' /MAP='MAP_FILE' /FULL/CROSS -
 	    'OBJECT_FILE''EXTRA_OBJ', -
-            'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY, -
-            'OPT_FILE'/OPTION
+            'SSL_LIB'/LIBRARY, -
+	    'CRYPTO_LIB'/LIBRARY, -
+            'OPT_FILE'/OPTION, -
+	  SYS$DISK:[-]SSL_IDENT.OPT/OPTION
+$!
 $!
 $!  End The TCP/IP Library Check.
 $!
@@ -488,6 +530,7 @@ $!
 $!  End The Option File Search.
 $!
 $   ENDIF
+$!
 $!
 $! End The DEC C Check.
 $!
@@ -838,12 +881,12 @@ $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
-           "/NOLIST/PREFIX=ALL" + -
+           "/PREFIX=ALL" + -
 	   "/INCLUDE=(SYS$DISK:[-])" + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_DECC_OPTIONS.OPT"
+$     OPT_FILE = "SYS$DISK:[]''arch'_DECC_OPTIONS.OPT"
 $!
 $!  End DECC Check.
 $!
@@ -870,7 +913,7 @@ $	WRITE SYS$OUTPUT "There is no VAX C on Alpha!"
 $	EXIT
 $     ENDIF
 $     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
-$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
+$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'" + -
 	   "/INCLUDE=(SYS$DISK:[-])" + CCEXTRAFLAGS
 $     CCDEFS = CCDEFS + ",""VAXC"""
 $!
@@ -880,7 +923,7 @@ $     DEFINE/NOLOG SYS SYS$COMMON:[SYSLIB]
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_VAXC_OPTIONS.OPT"
+$     OPT_FILE = "SYS$DISK:[]''arch'_VAXC_OPTIONS.OPT"
 $!
 $!  End VAXC Check
 $!
@@ -902,12 +945,12 @@ $!
 $!    Use GNU C...
 $!
 $     IF F$TYPE(GCC) .EQS. "" THEN GCC := GCC
-$     CC = GCC+"/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
+$     CC = GCC+"/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'" + -
 	   "/INCLUDE=(SYS$DISK:[-])" + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_GNUC_OPTIONS.OPT"
+$     OPT_FILE = "SYS$DISK:[]''arch'_GNUC_OPTIONS.OPT"
 $!
 $!  End The GNU C Check.
 $!
@@ -963,7 +1006,7 @@ $ ENDIF
 $!
 $! Time to check the contents, and to make sure we get the correct library.
 $!
-$ IF P4.EQS."SOCKETSHR" .OR. P4.EQS."MULTINET" .OR. P4.EQS."UCX"
+$ IF P4.EQS."SOCKETSHR" .OR. P4.EQS."MULTINET" .OR. P4.EQS."UCX" .OR. P4.EQS."TCPIP" .OR. P4.EQS."NONE"
 $ THEN
 $!
 $!  Check to see if SOCKETSHR was chosen
@@ -973,7 +1016,7 @@ $   THEN
 $!
 $!    Set the library to use SOCKETSHR
 $!
-$     TCPIP_LIB = "[-.VMS]SOCKETSHR_SHR.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]SOCKETSHR_SHR.OPT/OPT"
 $!
 $!    Done with SOCKETSHR
 $!
@@ -999,16 +1042,42 @@ $   THEN
 $!
 $!    Set the library to use UCX.
 $!
-$     TCPIP_LIB = "[-.VMS]UCX_SHR_DECC.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_DECC.OPT/OPT"
 $     IF F$TRNLNM("UCX$IPC_SHR") .NES. ""
 $     THEN
-$       TCPIP_LIB = "[-.VMS]UCX_SHR_DECC_LOG.OPT/OPT"
+$       TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_DECC_LOG.OPT/OPT"
 $     ELSE
 $       IF COMPILER .NES. "DECC" .AND. ARCH .EQS. "VAX" THEN -
-	  TCPIP_LIB = "[-.VMS]UCX_SHR_VAXC.OPT/OPT"
+	  TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_VAXC.OPT/OPT"
 $     ENDIF
 $!
 $!    Done with UCX
+$!
+$   ENDIF
+$!
+$!  Check to see if TCPIP (post UCX) was chosen
+$!
+$   IF P4.EQS."TCPIP"
+$   THEN
+$!
+$!    Set the library to use TCPIP.
+$!
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]TCPIP_SHR_DECC.OPT/OPT"
+$!
+$!    Done with TCPIP
+$!
+$   ENDIF
+$!
+$!  Check to see if NONE was chosen
+$!
+$   IF P4.EQS."NONE"
+$   THEN
+$!
+$!    Do not use TCPIP.
+$!
+$     TCPIP_LIB = ""
+$!
+$!    Done with TCPIP
 $!
 $   ENDIF
 $!
@@ -1031,6 +1100,7 @@ $   WRITE SYS$OUTPUT "The Option ",P4," Is Invalid.  The Valid Options Are:"
 $   WRITE SYS$OUTPUT ""
 $   WRITE SYS$OUTPUT "    SOCKETSHR  :  To link with SOCKETSHR TCP/IP library."
 $   WRITE SYS$OUTPUT "    UCX        :  To link with UCX TCP/IP library."
+$   WRITE SYS$OUTPUT "    TCPIP      :  To link with TCPIP (post UCX) TCP/IP library."
 $   WRITE SYS$OUTPUT ""
 $!
 $!  Time To EXIT.

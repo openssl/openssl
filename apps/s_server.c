@@ -144,6 +144,10 @@ typedef unsigned int u_int;
 #include <conio.h>
 #endif
 
+#ifdef OPENSSL_SYS_VMS
+#include "term_sock.h"
+#endif
+       
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
@@ -827,7 +831,7 @@ bad:
 			goto end;
 			}
 		RSA_free(rsa);
-		BIO_printf(bio_s_out,"\n");
+		BIO_printf(bio_s_out,"\n\n");
 		}
 #endif
 #endif
@@ -883,7 +887,7 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
 	BIO_printf(bio,"%4d session cache misses\n",SSL_CTX_sess_misses(ssl_ctx));
 	BIO_printf(bio,"%4d session cache timeouts\n",SSL_CTX_sess_timeouts(ssl_ctx));
 	BIO_printf(bio,"%4d callback cache hits\n",SSL_CTX_sess_cb_hits(ssl_ctx));
-	BIO_printf(bio,"%4d cache full overflows (%d allowed)\n",
+	BIO_printf(bio,"%4d cache full overflows (%d allowed)\n\n",
 		SSL_CTX_sess_cache_full(ssl_ctx),
 		SSL_CTX_sess_get_cache_size(ssl_ctx));
 	}
@@ -900,7 +904,12 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 #ifdef OPENSSL_SYS_WINDOWS
 	struct timeval tv;
 #endif
+#ifdef OPENSSL_SYS_VMS
+        int stdin_sock;
 
+        TerminalSocket (TERM_SOCK_CREATE, &stdin_sock);
+#endif
+         
 	if ((buf=OPENSSL_malloc(bufsize)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
@@ -959,7 +968,12 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		SSL_set_msg_callback_arg(con, bio_s_out);
 		}
 
-	width=s+1;
+#ifdef OPENSSL_SYS_VMS
+        if (stdin_sock > s)
+            width = stdin_sock + 1;
+        else
+#endif
+        width=s+1;
 	for (;;)
 		{
 		int read_from_terminal;
@@ -972,7 +986,11 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 			{
 			FD_ZERO(&readfds);
 #ifndef OPENSSL_SYS_WINDOWS
+#ifdef OPENSSL_SYS_VMS
+                        FD_SET(stdin_sock,&readfds);
+#else
 			FD_SET(fileno(stdin),&readfds);
+#endif
 #endif
 			FD_SET(s,&readfds);
 			/* Note: under VMS with SOCKETSHR the second parameter is
@@ -996,8 +1014,12 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 #else
 			i=select(width,(void *)&readfds,NULL,NULL,NULL);
 			if (i <= 0) continue;
-			if (FD_ISSET(fileno(stdin),&readfds))
-				read_from_terminal = 1;
+#ifdef OPENSSL_SYS_VMS
+                        if (FD_ISSET(stdin_sock,&readfds))
+#else
+                        if (FD_ISSET(fileno(stdin),&readfds))
+#endif
+                                read_from_terminal = 1;
 #endif
 			if (FD_ISSET(s,&readfds))
 				read_from_sslcon = 1;
@@ -1008,7 +1030,11 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				{
 				int j, lf_num;
 
-				i=read(fileno(stdin), buf, bufsize/2);
+#ifdef OPENSSL_SYS_VMS
+                                i=recv(stdin_sock, buf, bufsize/2, 0);
+#else
+                                i=read(fileno(stdin), buf, bufsize/2);
+#endif
 				lf_num = 0;
 				/* both loops are skipped when i <= 0 */
 				for (j = 0; j < i; j++)
@@ -1027,7 +1053,11 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				assert(lf_num == 0);
 				}
 			else
-				i=read(fileno(stdin),buf,bufsize);
+#ifdef OPENSSL_SYS_VMS
+                                i=recv(stdin_sock,buf,bufsize, 0);
+#else
+                                i=read(fileno(stdin),buf,bufsize);
+#endif
 			if (!s_quiet)
 				{
 				if ((i <= 0) || (buf[0] == 'Q'))
@@ -1096,7 +1126,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				case SSL_ERROR_WANT_WRITE:
 				case SSL_ERROR_WANT_READ:
 				case SSL_ERROR_WANT_X509_LOOKUP:
-					BIO_printf(bio_s_out,"Write BLOCK\n");
+					BIO_printf(bio_s_out,"Write BLOCK\n\n");
 					break;
 				case SSL_ERROR_SYSCALL:
 				case SSL_ERROR_SSL:
@@ -1106,7 +1136,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 					goto err;
 					/* break; */
 				case SSL_ERROR_ZERO_RETURN:
-					BIO_printf(bio_s_out,"DONE\n");
+					BIO_printf(bio_s_out,"DONE\n\n");
 					ret=1;
 					goto err;
 					}
@@ -1144,12 +1174,13 @@ again:
 #endif
 					write(fileno(stdout),buf,
 						(unsigned int)i);
+					BIO_printf(bio_s_out,"\n");
 					if (SSL_pending(con)) goto again;
 					break;
 				case SSL_ERROR_WANT_WRITE:
 				case SSL_ERROR_WANT_READ:
 				case SSL_ERROR_WANT_X509_LOOKUP:
-					BIO_printf(bio_s_out,"Read BLOCK\n");
+					BIO_printf(bio_s_out,"Read BLOCK\n\n");
 					break;
 				case SSL_ERROR_SYSCALL:
 				case SSL_ERROR_SSL:
@@ -1181,6 +1212,9 @@ err:
 		}
 	if (ret >= 0)
 		BIO_printf(bio_s_out,"ACCEPT\n");
+#ifdef OPENSSL_SYS_VMS
+        TerminalSocket (TERM_SOCK_DELETE, &stdin_sock);
+#endif
 	return(ret);
 	}
 
@@ -1238,7 +1272,7 @@ static int init_ssl_connection(SSL *con)
 	if (SSL_get_shared_ciphers(con,buf,BUFSIZ) != NULL)
 		BIO_printf(bio_s_out,"Shared ciphers:%s\n",buf);
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
-	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");
+	BIO_printf(bio_s_out,"CIPHER is %s\n\n",(str != NULL)?str:"(NONE)");
 	if (con->hit) BIO_printf(bio_s_out,"Reused session-id\n");
 	if (SSL_ctrl(con,SSL_CTRL_GET_FLAGS,0,NULL) &
 		TLS1_FLAGS_TLS_PADDING_BUG)
@@ -1394,7 +1428,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				}
 			else
 				{
-				BIO_printf(bio_s_out,"read R BLOCK\n");
+				BIO_printf(bio_s_out,"read R BLOCK\n\n");
 #ifndef OPENSSL_SYS_MSDOS
 				sleep(1);
 #endif
@@ -1620,7 +1654,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 							goto write_error;
 						else
 							{
-							BIO_printf(bio_s_out,"rwrite W BLOCK\n");
+							BIO_printf(bio_s_out,"rwrite W BLOCK\n\n");
 							}
 						}
 					else

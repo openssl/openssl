@@ -11,7 +11,11 @@ $	    WRITE SYS$OUTPUT "First argument missing."
 $	    WRITE SYS$OUTPUT "Should be the directory where you want things installed."
 $	    EXIT
 $	ENDIF
-$
+$!
+$! Define some VMS specific symbols.
+$!
+$ @[-]vms_build_info
+$!
 $	ROOT = F$PARSE(P1,"[]A.;0",,,"SYNTAX_ONLY,NO_CONCEAL") - "A.;0"
 $	ROOT_DEV = F$PARSE(ROOT,,,"DEVICE","SYNTAX_ONLY")
 $	ROOT_DIR = F$PARSE(ROOT,,,"DIRECTORY","SYNTAX_ONLY") -
@@ -39,8 +43,13 @@ $	IF F$PARSE("WRK_SSLAEXE:") .EQS. "" THEN -
 	   CREATE/DIR/LOG WRK_SSLAEXE:
 $
 $	EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,kssl.h
-$	E_EXE := ssl_task
-$	LIBS := LIBSSL
+$	if build_bits .eqs. "32"
+$       then
+$	   E_EXE := ssl_task,ssl$libssl_shr'build_bits'
+$	else
+$	   E_EXE := ssl_task,ssl$libssl_shr
+$	endif
+$	LIBS := LIBSSL'build_bits'
 $
 $	VEXE_DIR := [-.VAX.EXE.SSL]
 $	AEXE_DIR := [-.AXP.EXE.SSL]
@@ -79,22 +88,10 @@ $	THEN
 $	  COPY 'VEXE_DIR''E'.OLB WRK_SSLVLIB:'E'.OLB/log
 $	  SET FILE/PROT=W:RE WRK_SSLVLIB:'E'.OLB
 $	ENDIF
-$	! Preparing for the time when we have shareable images
-$	IF F$SEARCH(VEXE_DIR+E+".EXE") .NES. ""
-$	THEN
-$	  COPY 'VEXE_DIR''E'.EXE WRK_SSLVLIB:'E'.EXE/log
-$	  SET FILE/PROT=W:RE WRK_SSLVLIB:'E'.EXE
-$	ENDIF
 $	IF F$SEARCH(AEXE_DIR+E+".OLB") .NES. ""
 $	THEN
 $	  COPY 'AEXE_DIR''E'.OLB WRK_SSLALIB:'E'.OLB/log
 $	  SET FILE/PROT=W:RE WRK_SSLALIB:'E'.OLB
-$	ENDIF
-$	! Preparing for the time when we have shareable images
-$	IF F$SEARCH(AEXE_DIR+E+".EXE") .NES. ""
-$	THEN
-$	  COPY 'AEXE_DIR''E'.EXE WRK_SSLALIB:'E'.EXE/log
-$	  SET FILE/PROT=W:RE WRK_SSLALIB:'E'.EXE
 $	ENDIF
 $	SET ON
 $	GOTO LOOP_LIB

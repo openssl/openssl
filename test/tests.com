@@ -7,27 +7,53 @@ $	__here = f$parse(f$parse("A.;",__proc) - "A.;","[]A.;") - "A.;"
 $	__save_default = f$environment("default")
 $	__arch := VAX
 $	if f$getsyi("cpu") .ge. 128 then __arch := AXP
+$!
+$ show time
+$!
+$ arch_name = f$edit(f$getsyi("arch_name"),"UPCASE")
+$!
+$ if p2 .eqs. "" then p2 := REGRESSION
+$ if p2 .eqs. "REGRESSION"
+$ then
 $	texe_dir := sys$disk:[-.'__arch'.exe.test]
 $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
+$ else
+$	texe_dir := ssl$root:[test]
+$	exe_dir  := ssl$root:['arch_name'_EXE]
+$ endif
+$!
 $
 $	set default '__here'
 $	on control_y then goto exit
-$	on error then goto exit
+$!
+$! Try to run through as many tests as possible
+$! rather than exit out on the first error.
+$!
+$!	on error then goto exit
 $
 $	if p1 .nes. ""
 $	then
 $	    tests = p1
 $	else
+$	   if p2 .eqs. "REGRESSION"
+$	   then
+$	      tests := -
+		test_des,test_idea,test_sha,test_md4,test_md5,test_hmac,-
+		test_md2,test_mdc2,-
+		test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,-
+		test_rand,test_bn,test_enc,test_x509,test_rsa,test_crl,test_sid,-
+		test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
+		test_ss,test_ca,test_ssl
+$	   else
 $	    tests := -
-	test_des,test_idea,test_sha,test_md4,test_md5,test_hmac,-
-	test_md2,test_mdc2,-
-	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,test_rd,-
-	test_rand,test_bn,test_ec,test_enc,test_x509,test_rsa,test_crl,test_sid,-
-	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
-	test_ss,test_ca,test_engine,test_ssl,test_evp
-$	endif
+		test_des,test_idea,test_sha,test_md4,test_md5,test_hmac,-
+		test_md2,test_mdc2,-
+		test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,-
+		test_rand,test_bn,test_enc,test_dh,test_dsa
+$	   endif ! if p2
+$	endif ! if p1
 $	tests = f$edit(tests,"COLLAPSE")
-$
+$!
 $	BNTEST :=	bntest
 $	ECTEST :=	ectest
 $	EXPTEST :=	exptest
@@ -60,6 +86,9 @@ $ loop_tests:
 $	tests_e = f$element(tests_i,",",tests)
 $	tests_i = tests_i + 1
 $	if tests_e .eqs. "," then goto exit
+$       write sys$output " "
+$       write sys$output " Executing ''tests_e' ... "
+$       write sys$output " "
 $	gosub 'tests_e'
 $	goto loop_tests
 $
@@ -243,4 +272,5 @@ $
 $
 $ exit:
 $	set default '__save_default'
+$ show time
 $	exit

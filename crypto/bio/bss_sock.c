@@ -64,6 +64,20 @@
 #include "cryptlib.h"
 #include <openssl/bio.h>
 
+#ifdef OPENSSL_SYS_VMS
+/* For 64-bit API */
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __save
+#pragma __required_pointer_size 32
+#endif
+typedef char * char_32p;
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __restore
+#endif
+
+#endif
+
+
 static int sock_write(BIO *h, const char *buf, int num);
 static int sock_read(BIO *h, char *buf, int size);
 static int sock_puts(BIO *h, const char *str);
@@ -129,10 +143,43 @@ static int sock_read(BIO *b, char *out, int outl)
 	{
 	int ret=0;
 
+#ifdef OPENSSL_SYS_VMS
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __save
+#pragma __required_pointer_size 32
+
+	char_32p out32;
+
+	out32 = (char_32p)_malloc32(outl*sizeof(char_32p));  	/* changed for 64-bit */
+	_memset32(out32, 0, outl*sizeof(char_32p));		/* changed for 64-bit */
+	memcpy(out32,out,outl);					/* changed for 64-bit */
+
+#pragma __required_pointer_size __restore
+#endif
+#endif
+
+#ifdef OPENSSL_SYS_VMS
+# if __INITIAL_POINTER_SIZE == 64
+	if (out32 != NULL)
+# else
 	if (out != NULL)
+# endif
+#else
+	if (out != NULL)
+#endif
 		{
 		clear_socket_error();
+#ifdef OPENSSL_SYS_VMS
+#  if __INITIAL_POINTER_SIZE == 64
+		ret=readsocket(b->num,out32,outl);
+		memcpy(out,out32,outl);
+		free(out32);
+#  else
 		ret=readsocket(b->num,out,outl);
+#  endif		
+#else
+		ret=readsocket(b->num,out,outl);
+#endif
 		BIO_clear_retry_flags(b);
 		if (ret <= 0)
 			{
@@ -146,9 +193,34 @@ static int sock_read(BIO *b, char *out, int outl)
 static int sock_write(BIO *b, const char *in, int inl)
 	{
 	int ret;
-	
+
+#ifdef OPENSSL_SYS_VMS
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __save
+#pragma __required_pointer_size 32
+
+        char_32p in32;
+
+        in32 = (char_32p)_malloc32(inl*sizeof(char_32p));     /* changed for 64-bit */
+        _memset32(in32, 0, inl*sizeof(char_32p));             /* changed for 64-bit */
+        memcpy(in32,in,inl);                                 /* changed for 64-bit */
+
+#pragma __required_pointer_size __restore
+#endif
+#endif
+
 	clear_socket_error();
-	ret=writesocket(b->num,in,inl);
+
+#ifdef OPENSSL_SYS_VMS
+#  if __INITIAL_POINTER_SIZE == 64
+                ret=writesocket(b->num,in32,inl);
+		free(in32);
+#  else
+                ret=writesocket(b->num,in,inl);
+#  endif
+#else
+                ret=writesocket(b->num,in,inl);
+#endif
 	BIO_clear_retry_flags(b);
 	if (ret <= 0)
 		{

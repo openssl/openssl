@@ -1,6 +1,9 @@
 /* crypto/rand/rand_vms.c -*- mode:C; c-file-style: "eay" -*- */
 /* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
  * project 2000.
+ * RAND_poll() written by Taka Shinagawa <takaaki.shinagawa@compaq.com>
+ * for the OpenSSL project.
+ */
  */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
@@ -56,13 +59,76 @@
  *
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
 #if defined(OPENSSL_SYS_VMS)
+#define __NEW_STARLET 1
+#define NUM_OF_ITEMS 11
 
+#include <efndef.h>
 #include <descrip.h>
 #include <jpidef.h>
+
+#ifdef __alpha
+#include <iledef.h>
+#include <iosbdef.h>
+#else
+typedef struct _ile3 {                 /* Copied from ILEDEF.H for Alpha   */
+#pragma __nomember_alignment
+    unsigned short int ile3$w_length;   /* Length of buffer in bytes        */
+    unsigned short int ile3$w_code;     /* Item code value                  */
+    void *ile3$ps_bufaddr;              /* Buffer address                   */
+    unsigned short int *ile3$ps_retlen_addr; /* Address of word for returned length */
+    } ILE3;
+
+typedef struct _iosb {                 /* Copied from IOSBDEF.H for Alpha  */
+#pragma __nomember_alignment
+    __union  {
+        __struct  {
+            unsigned short int iosb$w_status; /* Final I/O status           */
+            __union  {
+                __struct  {             /* 16-bit byte count variant        */
+                    unsigned short int iosb$w_bcnt; /* 16-bit byte count    */
+                    __union  {
+                        unsigned int iosb$l_dev_depend; /* 32-bit device dependent info */
+                        unsigned int iosb$l_pid; /* 32-bit pid              */
+                        } iosb$r_l;
+                    } iosb$r_bcnt_16;
+                __struct  {             /* 32-bit byte count variant        */
+                    unsigned int iosb$l_bcnt; /* 32-bit byte count (unaligned) */
+                    unsigned short int iosb$w_dev_depend_high; /* 16-bit device dependent info */
+                    } iosb$r_bcnt_32;
+                } iosb$r_devdepend;
+            } iosb$r_io_64;
+        __struct  {
+            __union  {
+                unsigned int iosb$l_getxxi_status; /* Final GETxxI status   */
+                unsigned int iosb$l_reg_status; /* Final $Registry status   */
+                } iosb$r_l_status;
+            unsigned int iosb$l_reserved; /* Reserved field                 */
+            } iosb$r_get_64;
+        } iosb$r_io_get;
+    } IOSB;
+
+#if !defined(__VAXC)
+#define iosb$w_status iosb$r_io_get.iosb$r_io_64.iosb$w_status
+#define iosb$w_bcnt iosb$r_io_get.iosb$r_io_64.iosb$r_devdepend.iosb$r_bcnt_16.iosb$w_bcnt
+#define iosb$r_l        iosb$r_io_get.iosb$r_io_64.iosb$r_devdepend.iosb$r_bcnt_16.iosb$r_l
+#define iosb$l_dev_depend iosb$r_l.iosb$l_dev_depend
+#define iosb$l_pid iosb$r_l.iosb$l_pid
+#define iosb$l_bcnt iosb$r_io_get.iosb$r_io_64.iosb$r_devdepend.iosb$r_bcnt_32.iosb$l_bcnt
+#define iosb$w_dev_depend_high iosb$r_io_get.iosb$r_io_64.iosb$r_devdepend.iosb$r_bcnt_32.iosb$w_dev_depend_high
+#define iosb$l_getxxi_status iosb$r_io_get.iosb$r_get_64.iosb$r_l_status.iosb$l_getxxi_status
+#define iosb$l_reg_status iosb$r_io_get.iosb$r_get_64.iosb$r_l_status.iosb$l_reg_status
+#endif          /* #if !defined(__VAXC) */
+
+#endif                                 /* End of IOSBDEF */
+
+#include <syidef.h>
 #include <ssdef.h>
 #include <starlet.h>
 #ifdef __DECC
@@ -76,25 +142,30 @@ static struct items_data_st
 		{ { 4, JPI$_BUFIO },
 		  { 4, JPI$_CPUTIM },
 		  { 4, JPI$_DIRIO },
+		  { 4, JPI$_IMAGECOUNT },
+		  { 8, JPI$_LAST_LOGIN_I },
 		  { 8, JPI$_LOGINTIM },
 		  { 4, JPI$_PAGEFLTS },
 		  { 4, JPI$_PID },
+		  { 4, JPI$_PPGCNT },
 		  { 4, JPI$_WSSIZE },
+		  { 4, JPI$_WSPEAK },
+		  { 4, JPI$_FINALEXC },
 		  { 0, 0 }
 		};
 		  
 int RAND_poll(void)
 	{
-	long pid, iosb[2];
+	IOSB iosb;
+	long pid;
 	int status = 0;
-	struct
-		{
-		short length, code;
-		long *buffer;
-		int *retlen;
-		} item[32], *pitem;
-	unsigned char data_buffer[256];
-	short total_length = 0;
+#if __INITIAL_POINTER_SIZE == 64
+	ILEB_64 item[32], *pitem;
+#else
+	ILE3 item[32], *pitem;
+#endif
+	int data_buffer[256];
+	int total_length = 0;
 	struct items_data_st *pitems_data;
 
 	pitems_data = items_data;
@@ -103,15 +174,33 @@ int RAND_poll(void)
 	/* Setup */
 	while (pitems_data->length)
 		{
-		pitem->length = pitems_data->length;
-		pitem->code = pitems_data->code;
-		pitem->buffer = (long *)data_buffer[total_length];
-		pitem->retlen = 0;
-		total_length += pitems_data->length;
+#if __INITIAL_POINTER_SIZE == 64
+
+		pitem->ileb_64$w_mbo = 1;
+		pitem->ileb_64$w_code = pitems_data->code;
+		pitem->ileb_64$l_mbmo = -1;
+                pitem->ileb_64$q_length = pitems_data->length;
+                pitem->ileb_64$pq_bufaddr = &data_buffer[total_length];
+                pitem->ileb_64$pq_retlen_addr = (unsigned __int64 *)&length;
+		
+                total_length += pitems_data->length/4;
+#else
+                pitem->ile3$w_length = (short)pitems_data->length;
+                pitem->ile3$w_code = (short)pitems_data->code;
+                pitem->ile3$ps_bufaddr = &data_buffer[total_length];
+                pitem->ile3$ps_retlen_addr = &length;
+               
+		total_length += pitems_data->length/4;
+#endif
 		pitems_data++;
 		pitem++;
 		}
-	pitem->length = pitem->code = 0;
+	/* Last item of the item list is null terminated */
+#if __INITIAL_POINTER_SIZE == 64
+	pitem->ileb_64$q_length = pitem->ileb_64$w_code = 0;
+#else
+	pitem->ile3$w_length = pitem->ile3$w_code = 0;
+#endif
 
 	/*
 	 * Scan through all the processes in the system and add entropy with
@@ -119,17 +208,49 @@ int RAND_poll(void)
 	 * However, view the information as only half trustable.
 	 */
 	pid = -1;			/* search context */
-	while ((status = sys$getjpiw(0, &pid,  0, item, iosb, 0, 0))
+	while ((status = sys$getjpiw(EFN$C_ENF, &pid,  0, item, iosb, 0, 0))
 		!= SS$_NOMOREPROC)
 		{
 		if (status == SS$_NORMAL)
 			{
-			RAND_add(data_buffer, total_length, total_length/2);
+			int i;
+			int tmp_length;
+
+			for(i = 0; i < total_length; i++)
+				{
+				unsigned int sys_time[2];
+
+				sys$gettim(sys_time);
+				srand(sys_time[0]*data_buffer[0]*data_buffer[1]+i);
+				if(i==(total_length-1)) /* for JPI$_FINALEXC */
+					{
+					long int *ptr = (long *)data_buffer[i];
+					tmp_length = 0;
+
+					for(j=0; j<4; j++)
+						{
+						data_buffer[i+j] = ptr[j];
+						/* OK to use rand() just
+						   to scramble the seed */
+						data_buffer[i+j] ^=
+							(sys_time ^ rand());
+						tmp_length++;
+						}
+					}
+				else
+					{
+					/* OK to use rand() just
+					   to scramble the seed */
+					data_buffer[i] ^= (sys_time ^ rand());
+					}
+				}
+			total_length += (tmp_length - 1);
+
+			/* size of seed is total_length*4 bytes (64bytes) */
+			RAND_add(data_buffer, total_length, total_length*2);
 			}
 		}
-	sys$gettim(iosb);
-	RAND_add((unsigned char *)iosb, sizeof(iosb), sizeof(iosb)/2);
-	return 1;
+	return RAND_status();
 }
 
 #endif

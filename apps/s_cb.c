@@ -239,16 +239,18 @@ long MS_CALLBACK bio_dump_cb(BIO *bio, int cmd, const char *argp, int argi,
 
 	if (cmd == (BIO_CB_READ|BIO_CB_RETURN))
 		{
-		BIO_printf(out,"read from %08X [%08lX] (%d bytes => %ld (0x%X))\n",
+		BIO_printf(out,"read from %08X [%08lX] (%d bytes => %ld (0x%X))\n\n",
 			bio,argp,argi,ret,ret);
 		BIO_dump(out,argp,(int)ret);
+		BIO_printf(out,"\n");
 		return(ret);
 		}
 	else if (cmd == (BIO_CB_WRITE|BIO_CB_RETURN))
 		{
-		BIO_printf(out,"write to %08X [%08lX] (%d bytes => %ld (0x%X))\n",
+		BIO_printf(out,"write to %08X [%08lX] (%d bytes => %ld (0x%X))\n\n",
 			bio,argp,argi,ret,ret);
 		BIO_dump(out,argp,(int)ret);
+		BIO_printf(out,"\n");
 		}
 	return(ret);
 	}
@@ -266,7 +268,7 @@ void MS_CALLBACK apps_ssl_info_callback(const SSL *s, int where, int ret)
 
 	if (where & SSL_CB_LOOP)
 		{
-		BIO_printf(bio_err,"%s:%s\n",str,SSL_state_string_long(s));
+		BIO_printf(bio_err,"%s:%s\n\n",str,SSL_state_string_long(s));
 		}
 	else if (where & SSL_CB_ALERT)
 		{

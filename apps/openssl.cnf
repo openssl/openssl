@@ -6,7 +6,15 @@
 # This definition stops the following lines choking if HOME isn't
 # defined.
 HOME			= .
-RANDFILE		= $ENV::HOME/.rnd
+
+#
+# From the instructions at http://www.free.lp.se/openssl/docs/openssl3.html#ss3.1,
+# change the value of RANDFILE.  Also moved definition of dir up since RANDFILE
+# depends on it.
+#
+#RANDFILE               = $ENV::HOME/.rnd
+dir             = SSLROOT:[000000       # Where everything is kept
+RANDFILE                = $dir.private]RANDFILE.;
 
 # Extra OBJECT IDENTIFIER info:
 #oid_file		= $ENV::HOME/.oid
@@ -33,8 +41,12 @@ default_ca	= CA_default		# The default ca section
 
 ####################################################################
 [ CA_default ]
-
-dir		= ./demoCA		# Where everything is kept
+#
+# From the instructions at http://www.free.lp.se/openssl/docs/openssl3.html#ss3.1,
+# change the value of dir.
+#
+#dir            = sys\$disk:[.demoCA    # Where everything is kept
+dir             = SSLROOT:[000000       # Where everything is kept
 certs		= $dir/certs		# Where the issued certs are kept
 crl_dir		= $dir/crl		# Where the issued crl are kept
 database	= $dir/index.txt	# database index file.
@@ -174,6 +186,11 @@ basicConstraints=CA:FALSE
 
 # and for everything including object signing:
 # nsCertType = client, email, objsign
+#
+# From the instructions at http://www.free.lp.se/openssl/docs/openssl3.html#ss3.1,
+# include server in the nsCertType.
+#
+nsCertType = client, email, objsign, server
 
 # This is typical in keyUsage for a client certificate.
 # keyUsage = nonRepudiation, digitalSignature, keyEncipherment

@@ -75,6 +75,9 @@
 #undef FIONBIO
 #endif
 
+#if(defined(OPENSSL_SYS_VMS))
+#include <iodef.h>
+#endif
 
 typedef struct bio_connect_st
 	{
@@ -97,6 +100,13 @@ typedef struct bio_connect_st
 	 * 'ret'.  state is for compatibility with the ssl info_callback */
 	int (*info_callback)(const BIO *bio,int state,int ret);
 	} BIO_CONNECT;
+
+struct iosb /* i/o status block */
+	{
+    	unsigned short status;              /* i/o completion status */
+    	unsigned short bytcnt;              /* bytes transferred if read/write */
+    	void *details;                      /* address of buffer or parameter */
+	};
 
 static int conn_write(BIO *h, const char *buf, int num);
 static int conn_read(BIO *h, char *buf, int size);
@@ -404,32 +414,68 @@ static int conn_read(BIO *b, char *out, int outl)
 	int ret=0;
 	BIO_CONNECT *data;
 
+#ifdef OPENSSL_SYS_VMS
+	int sts;
+	struct iosb *iosb;
+
+	iosb = malloc(sizeof(iosb));
+#endif
+
 	data=(BIO_CONNECT *)b->ptr;
 	if (data->state != BIO_CONN_S_OK)
 		{
 		ret=conn_state(b,data);
 		if (ret <= 0)
-				return(ret);
+			return(ret);
 		}
 
 	if (out != NULL)
 		{
 		clear_socket_error();
+
+#ifndef OPENSSL_SYS_VMS
 		ret=readsocket(b->num,out,outl);
+#else
+		sts = SYS$QIOW(
+				0,
+                		decc$get_sdc(b->num),
+                		IO$_READVBLK,
+                		iosb,
+                		0,
+                		0,
+                		out,
+                		outl,
+                		0,0,0,0);
+#endif		
 		BIO_clear_retry_flags(b);
-		if (ret <= 0)
-			{
-			if (BIO_sock_should_retry(ret))
-				BIO_set_retry_read(b);
-			}
-		}
+
+#ifdef OPENSSL_SYS_VMS
+		if (sts != 1 || iosb->status != 1)  /* SYS$QIOW failed */
+                        {
+                        if (BIO_sock_should_retry(ret))
+                                BIO_set_retry_read(b);
+                        }
+		else
+			ret = outl;
+
+		free(iosb);
+#endif		
+                }
+
 	return(ret);
 	}
 
 static int conn_write(BIO *b, const char *in, int inl)
 	{
-	int ret;
+	int ret = 0;
 	BIO_CONNECT *data;
+
+#ifdef OPENSSL_SYS_VMS
+	int sts;
+	struct iosb *iosb;
+
+        iosb = malloc(sizeof(iosb));
+#endif
 
 	data=(BIO_CONNECT *)b->ptr;
 	if (data->state != BIO_CONN_S_OK)
@@ -439,13 +485,34 @@ static int conn_write(BIO *b, const char *in, int inl)
 		}
 
 	clear_socket_error();
+
+#ifndef OPENSSL_SYS_VMS
 	ret=writesocket(b->num,in,inl);
-	BIO_clear_retry_flags(b);
-	if (ret <= 0)
-		{
-		if (BIO_sock_should_retry(ret))
-			BIO_set_retry_write(b);
-		}
+#else
+	sts = SYS$QIOW(
+               		0,
+                 	decc$get_sdc(b->num),
+             		IO$_WRITEVBLK,
+             		iosb,
+                  	0,
+               		0,
+                	in,
+                 	inl,
+              		0,0,0,0);
+#endif
+       	BIO_clear_retry_flags(b);
+
+#ifdef OPENSSL_SYS_VMS
+    	if (sts != 1 || iosb->status != 1)  /* SYS$QIO failed */
+      		{
+      		if (BIO_sock_should_retry(ret))
+                BIO_set_retry_read(b);
+        	}
+	else
+		ret = inl;
+
+	free(iosb);
+#endif
 	return(ret);
 	}
 

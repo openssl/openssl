@@ -3,8 +3,8 @@
 # This is mostly being used for generation of certificate requests.
 #
 
-RANDFILE		= $ENV::HOME/.rnd
-oid_file		= $ENV::HOME/.oid
+RANDFILE		= ${ENV::HOME}/.rnd
+oid_file		= ${ENV::HOME}/.oid
 oid_section		= new_oids
 
 # To use this configuration file with the "-extfile" option of the
@@ -29,17 +29,17 @@ default_ca	= CA_default		# The default ca section
 ####################################################################
 [ CA_default ]
 
-dir		= sys\$disk:[.demoCA	# Where everything is kept
-certs		= $dir.certs]		# Where the issued certs are kept
-crl_dir		= $dir.crl]		# Where the issued crl are kept
-database	= $dir]index.txt	# database index file.
-new_certs_dir	= $dir.newcerts]	# default place for new certs.
+dir		= ssl$root:[000000		# Where everything is kept
+certs		= ${dir}.certs]			# Where the issued certs are kept
+crl_dir		= ${dir}.certs]			# Where the issued crl are kept
+database	= ${dir}.private]index.txt	# database index file.
+new_certs_dir	= ${dir}.certs]			# default place for new certs.
 
-certificate	= $dir]cacert.pem 	# The CA certificate
-serial		= $dir]serial.		# The current serial number
-crl		= $dir]crl.pem 		# The current CRL
-private_key	= $dir.private]cakey.pem# The private key
-RANDFILE	= $dir.private].rand	# private random number file
+certificate	= ${dir}]cacert.pem		# The CA certificate
+serial		= ${dir}.private]serial.txt	# The current serial number
+crl		= ${dir}]crl.pem 		# The current CRL
+private_key	= ${dir}.private]cakey.pem	# The private key
+RANDFILE	= ${dir}.private].rand		# private random number file
 
 x509_extensions	= usr_cert		# The extentions to add to the cert
 
@@ -60,8 +60,8 @@ policy		= policy_match
 # For the CA policy
 [ policy_match ]
 countryName		= match
-stateOrProvinceName	= match
-organizationName	= match
+stateOrProvinceName	= supplied
+organizationName	= supplied
 organizationalUnitName	= optional
 commonName		= supplied
 emailAddress		= optional

@@ -49,10 +49,16 @@ $!  P5, if defined, sets a TCP/IP library to use, through one of the following
 $!  keywords:
 $!
 $!	UCX		for UCX
+$!	TCPIP		for TCPIP (post UCX)
 $!	SOCKETSHR	for SOCKETSHR+NETLIB
 $!
 $!  P6, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
 $!
+$!
+$! Define USER_CCFLAGS
+$!
+$ @[-]vms_build_info.com
+$ WRITE SYS$OUTPUT " Using USER_CCFLAGS = ", USER_CCFLAGS
 $!
 $! Define A TCP/IP Library That We Will Need To Link To.
 $! (That Is, If We Need To Link To One.)
@@ -109,9 +115,27 @@ $! End The Architecture Specific OBJ Directory Check.
 $!
 $ ENDIF
 $!
+$! Define The LIS Directory.
+$!
+$ LIS_DIR := SYS$DISK:[-.'ARCH'.LIS.SSL]
+$!
+$! Check To See If The Architecture Specific LIS Directory Exists.
+$!
+$ IF (F$PARSE(LIS_DIR).EQS."")
+$ THEN
+$!
+$!  It Dosen't Exist, So Create It.
+$!
+$   CREATE/DIR 'LIS_DIR'
+$!
+$! End The Architecture Specific LIS Directory Check.
+$!
+$ ENDIF
+$!
 $! Define The EXE Directory.
 $!
 $ EXE_DIR := SYS$DISK:[-.'ARCH'.EXE.SSL]
+$ CRYPTO_EXE_DIR := SYS$DISK:[-.'ARCH'.EXE.CRYPTO]
 $!
 $! Check To See If The Architecture Specific Directory Exists.
 $!
@@ -128,15 +152,15 @@ $ ENDIF
 $!
 $! Define The Library Name.
 $!
-$ SSL_LIB := 'EXE_DIR'LIBSSL.OLB
+$ SSL_LIB := 'EXE_DIR'LIBSSL'build_bits'.OLB
 $!
 $! Define The CRYPTO-LIB We Are To Use.
 $!
-$ CRYPTO_LIB := SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO.OLB
+$ CRYPTO_LIB := SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO'build_bits'.OLB
 $!
 $! Define The RSAREF-LIB We Are To Use.
 $!
-$ RSAREF_LIB := SYS$DISK:[-.'ARCH'.EXE.RSAREF]LIBRSAGLUE.OLB
+$ RSAREF_LIB := SYS$DISK:[-.'ARCH'.EXE.RSAREF]LIBRSAGLUE'build_bits'.OLB
 $!
 $! Check To See What We Are To Do.
 $!
@@ -222,6 +246,10 @@ $! Create The Source File Name.
 $!
 $ SOURCE_FILE = "SYS$DISK:[]" + FILE_NAME + ".C"
 $!
+$! Create The Listing File Name.
+$!
+$ LIST_FILE = LIS_DIR + FILE_NAME + ".LIS"
+$!
 $! Create The Object File Name.
 $!
 $ OBJECT_FILE = OBJ_DIR + FILE_NAME + ".OBJ"
@@ -235,7 +263,7 @@ $!
 $!  Tell The User That The File Dosen't Exist.
 $!
 $   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "The File ",SOURCE_FILE," Dosen't Exist."
+$   WRITE SYS$OUTPUT F$MESSAGE("%X10018290") + ".  The File ",SOURCE_FILE," Dosen't Exist."
 $   WRITE SYS$OUTPUT ""
 $!
 $!  Exit The Build.
@@ -253,7 +281,7 @@ $!
 $! Compile The File.
 $!
 $ ON ERROR THEN GOTO NEXT_FILE
-$ CC/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$ CC/OBJECT='OBJECT_FILE'/LIST='LIST_FILE'/MACHINE_CODE 'SOURCE_FILE'
 $!
 $! Add It To The Library.
 $!
@@ -296,7 +324,7 @@ $!
 $!  Tell The User That The File Dosen't Exist.
 $!
 $   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "The File SSL_TASK.C Dosen't Exist."
+$   WRITE SYS$OUTPUT F$MESSAGE("%X10018290") + ".  The File SSL_TASK.C Dosen't Exist."
 $   WRITE SYS$OUTPUT ""
 $!
 $!  Exit The Build.
@@ -325,12 +353,31 @@ $!
 $   IF (TCPIP_LIB.NES."")
 $   THEN
 $!
-$!    Link With The RSAREF Library And A Specific TCP/IP Library.
+$!    Link With The RSAREF Library And A Specific TCP/IP Library...
 $!
 $     LINK/'DEBUGGER'/'TRACEBACK'/EXE='EXE_DIR'SSL_TASK.EXE -
+	  /MAP='LIS_DIR'SSL_TASK.MAP /FULL/CROSS -
           'OBJ_DIR'SSL_TASK.OBJ, -
-	  'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY,'RSAREF_LIB'/LIBRARY, -
-	  'TCPIP_LIB','OPT_FILE'/OPTION
+	  'SSL_LIB'/LIBRARY, -
+	  'CRYPTO_LIB'/LIBRARY, -
+	  'RSAREF_LIB'/LIBRARY, -
+	  'TCPIP_LIB','OPT_FILE'/OPTION, -
+	  SYS$DISK:[-]SSL_IDENT.OPT/OPTION
+$!
+$!
+$!  Create the CRYPTO Shareable Image
+$!!     LINK/'DEBUGGER'/'TRACEBACK'/SHARE='CRYPTO_EXE_DIR'LIBCRYPTO.EXE -
+$!!!          /MAP='LIS_DIR'LIBCRYPTO.MAP /FULL/CROSS -
+$!!!        'CRYPTO_LIB'/LIBRARY, -
+$!!!	'CRYPTO_EXE_DIR'LIBCRYPTO.OPT/OPTION
+$!
+$!
+$!  Create the SSL Shareable Image	
+$!!     LINK/'DEBUGGER'/'TRACEBACK'/SHARE='EXE_DIR'LIBSSL.EXE -
+$!!!	  /MAP='LIS_DIR'LIBSSL.MAP /FULL/CROSS -
+$!!!	'RSAREF_LIB'/LIBRARY, -
+$!!!	'EXE_DIR'LIBSSL.OPT/OPTION
+$!      !!!!!!!! 'TCPIP_LIB','OPT_SHARE_FILE'/OPTION
 $!
 $!  Else...
 $!
@@ -339,10 +386,26 @@ $!
 $!    Link With The RSAREF Library And NO TCP/IP Library.
 $!
 $     LINK/'DEBUGGER'/'TRACEBACK'/EXE='EXE_DIR'SSL_TASK.EXE -
+	  /MAP='LIS_DIR'SSL_TASK.MAP /FULL/CROSS -
           'OBJ_DIR'SSL_TASK.OBJ, -
 	  'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY,'RSAREF_LIB'/LIBRARY, -
-	  'OPT_FILE'/OPTION
+	  'OPT_FILE'/OPTION, -
+	  SYS$DISK:[-]SSL_IDENT.OPT/OPTION
 $!
+$!
+$!  Create the CRYPTO Shareable Image
+$!!     LINK/'DEBUGGER'/'TRACEBACK'/SHARE='CRYPTO_EXE_DIR'LIBCRYPTO.EXE -
+$!!!          /MAP='LIS_DIR'LIBCRYPTO.MAP /FULL/CROSS -
+$!!!        'CRYPTO_LIB'/LIBRARY, -
+$!!!        'CRYPTO_EXE_DIR'LIBCRYPTO.OPT/OPTION
+$!
+$!
+$!  Create the SSL Shareable Image
+$!!     LINK/'DEBUGGER'/'TRACEBACK'/SHARE='EXE_DIR'LIBSSL.EXE -
+$!!!          /MAP='LIS_DIR'LIBSSL.MAP /FULL/CROSS -
+$!!!        'RSAREF_LIB'/LIBRARY, -
+$!!!        'EXE_DIR'LIBSSL.OPT/OPTION
+$!      !!!!!!!! 'TCPIP_LIB','OPT_SHARE_FILE'/OPTION
 $!  End The TCP/IP Library Check.
 $!
 $   ENDIF
@@ -362,9 +425,28 @@ $!
 $!    Don't Link With The RSAREF Routines And TCP/IP Library.
 $!
 $     LINK/'DEBUGGER'/'TRACEBACK'/EXE='EXE_DIR'SSL_TASK.EXE -
+	  /MAP='LIS_DIR'SSL_TASK.MAP /FULL/CROSS -
           'OBJ_DIR'SSL_TASK.OBJ, -
 	  'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY, -
-          'TCPIP_LIB','OPT_FILE'/OPTION
+          'TCPIP_LIB','OPT_FILE'/OPTION, -
+	  SYS$DISK:[-]SSL_IDENT.OPT/OPTION
+$!
+$!
+$!  Create the CRYPTO Shareable Image
+$!!     LINK/'DEBUGGER'/'TRACEBACK'/SHARE='CRYPTO_EXE_DIR'LIBCRYPTO.EXE -
+$!!!          /MAP='LIS_DIR'LIBCRYPTO.MAP /FULL/CROSS -
+$!!!        'CRYPTO_LIB'/LIBRARY, -
+$!!!        'CRYPTO_EXE_DIR'LIBCRYPTO.OPT/OPTION
+$!
+$!
+$!  Create the SSL Shareable Image
+$!!     LINK/'DEBUGGER'/'TRACEBACK'/SHARE='EXE_DIR'LIBSSL.EXE -
+$!!!          /MAP='LIS_DIR'LIBSSL.MAP /FULL/CROSS -
+$!!!        'RSAREF_LIB'/LIBRARY, -
+$!!!	'TCPIP_LIB', -
+$!!!        'EXE_DIR'LIBSSL.OPT/OPTION
+$!      !!!!!!!! 'TCPIP_LIB','OPT_SHARE_FILE'/OPTION
+$!
 $!
 $!  Else...
 $!
@@ -373,9 +455,26 @@ $!
 $!    Don't Link With The RSAREF Routines And Link With A TCP/IP Library.
 $!
 $     LINK/'DEBUGGER'/'TRACEBACK'/EXE='EXE_DIR'SSL_TASK.EXE -
+	  /MAP='LIS_DIR'SSL_TASK.MAP /FULL/CROSS -
           'OBJ_DIR'SSL_TASK.OBJ,-
-	  'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY, -
-          'OPT_FILE'/OPTION
+	  'SSL_LIB'/LIBRARY, -
+	  'CRYPTO_LIB'/LIBRARY, -
+          'OPT_FILE'/OPTION, -
+	  SYS$DISK:[-]SSL_IDENT.OPT/OPTION
+$!
+$!
+$!  Create the CRYPTO Shareable Image
+$!     LINK/'DEBUGGER'/'TRACEBACK'/SHARE='CRYPTO_EXE_DIR'LIBCRYPTO.EXE -
+$!!!          /MAP='LIS_DIR'LIBCRYPTO.MAP /FULL/CROSS -
+$!!!        'CRYPTO_LIB'/LIBRARY, -
+$!!!        'CRYPTO_EXE_DIR'LIBCRYPTO.OPT/OPTION
+$!
+$!
+$!  Create the SSL Shareable Image
+$!!     LINK/'DEBUGGER'/'TRACEBACK'/SHARE='EXE_DIR'LIBSSL.EXE -
+$!!!          /MAP='LIS_DIR'LIBSSL.MAP /FULL/CROSS -
+$!!!        'EXE_DIR'LIBSSL.OPT/OPTION
+$!      !!!!!!!! 'TCPIP_LIB','OPT_SHARE_FILE'/OPTION
 $!
 $!  End The TCP/IP Library Check.
 $!
@@ -929,7 +1028,7 @@ $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
-           "/NOLIST/PREFIX=ALL" + -
+           "/PREFIX=ALL" + -
 	   "/INCLUDE=(SYS$DISK:[-.CRYPTO],SYS$DISK:[-])" + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
@@ -962,7 +1061,7 @@ $	WRITE SYS$OUTPUT "There is no VAX C on Alpha!"
 $	EXIT
 $     ENDIF
 $     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
-$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
+$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'" + -
 	   "/INCLUDE=(SYS$DISK:[-.CRYPTO],SYS$DISK:[-])" + CCEXTRAFLAGS
 $     CCDEFS = CCDEFS + ",""VAXC"""
 $!
@@ -973,6 +1072,7 @@ $!
 $!    Define The Linker Options File Name.
 $!
 $     OPT_FILE = "SYS$DISK:[]VAX_VAXC_OPTIONS.OPT"
+$     OPT_SHARE_FILE = "SYS$DISK:[]VAX_VAXC_OPTIONS_SHARE.OPT"
 $!
 $!  End VAXC Check
 $!
@@ -994,12 +1094,13 @@ $!
 $!    Use GNU C...
 $!
 $     IF F$TYPE(GCC) .EQS. "" THEN GCC := GCC
-$     CC = GCC+"/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
+$     CC = GCC+"/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'" + -
 	   "/INCLUDE=(SYS$DISK:[-.CRYPTO],SYS$DISK:[-])" + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
 $     OPT_FILE = "SYS$DISK:[]VAX_GNUC_OPTIONS.OPT"
+$     OPT_SHARE_FILE = "SYS$DISK:[]VAX_GNUC_OPTIONS_SHARE.OPT"
 $!
 $!  End The GNU C Check.
 $!
@@ -1087,7 +1188,7 @@ $ ENDIF
 $!
 $! Time to check the contents, and to make sure we get the correct library.
 $!
-$ IF P5.EQS."SOCKETSHR" .OR. P5.EQS."MULTINET" .OR. P5.EQS."UCX"
+$ IF P5.EQS."SOCKETSHR" .OR. P5.EQS."MULTINET" .OR. P5.EQS."UCX" .OR. P5.EQS."TCPIP" .OR. P5.EQS."NONE"
 $ THEN
 $!
 $!  Check to see if SOCKETSHR was chosen
@@ -1097,7 +1198,7 @@ $   THEN
 $!
 $!    Set the library to use SOCKETSHR
 $!
-$     TCPIP_LIB = "[-.VMS]SOCKETSHR_SHR.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]SOCKETSHR_SHR.OPT/OPT"
 $!
 $!    Done with SOCKETSHR
 $!
@@ -1123,16 +1224,42 @@ $   THEN
 $!
 $!    Set the library to use UCX.
 $!
-$     TCPIP_LIB = "[-.VMS]UCX_SHR_DECC.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_DECC.OPT/OPT"
 $     IF F$TRNLNM("UCX$IPC_SHR") .NES. ""
 $     THEN
-$       TCPIP_LIB = "[-.VMS]UCX_SHR_DECC_LOG.OPT/OPT"
+$       TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_DECC_LOG.OPT/OPT"
 $     ELSE
 $       IF COMPILER .NES. "DECC" .AND. ARCH .EQS. "VAX" THEN -
-	  TCPIP_LIB = "[-.VMS]UCX_SHR_VAXC.OPT/OPT"
+	  TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_VAXC.OPT/OPT"
 $     ENDIF
 $!
 $!    Done with UCX
+$!
+$   ENDIF
+$!
+$!  Check to see if TCPIP was chosen
+$!
+$   IF P5.EQS."TCPIP"
+$   THEN
+$!
+$!    Set the library to use TCPIP (post UCX).
+$!
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]TCPIP_SHR_DECC.OPT/OPT"
+$!
+$!    Done with TCPIP
+$!
+$   ENDIF
+$!
+$!  Check to see if NONE was chosen
+$!
+$   IF P5.EQS."NONE"
+$   THEN
+$!
+$!    Do not use a TCPIP library.
+$!
+$     TCPIP_LIB = ""
+$!
+$!    Done with NONE
 $!
 $   ENDIF
 $!
@@ -1151,6 +1278,7 @@ $   WRITE SYS$OUTPUT "The Option ",P5," Is Invalid.  The Valid Options Are:"
 $   WRITE SYS$OUTPUT ""
 $   WRITE SYS$OUTPUT "    SOCKETSHR  :  To link with SOCKETSHR TCP/IP library."
 $   WRITE SYS$OUTPUT "    UCX        :  To link with UCX TCP/IP library."
+$   WRITE SYS$OUTPUT "    TCPIP      :  To link with TCPIP (post UCX) TCP/IP library."
 $   WRITE SYS$OUTPUT ""
 $!
 $!  Time To EXIT.

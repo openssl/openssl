@@ -141,6 +141,10 @@ typedef unsigned int u_int;
 #endif
 
 
+#ifdef OPENSSL_SYS_VMS
+#include "term_sock.h"
+#endif
+      
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
@@ -250,6 +254,10 @@ int MAIN(int argc, char **argv)
 	ENGINE *e=NULL;
 #ifdef OPENSSL_SYS_WINDOWS
 	struct timeval tv;
+#endif
+#ifdef OPENSSL_SYS_VMS
+        int stdin_sock;
+        TerminalSocket (TERM_SOCK_CREATE, &stdin_sock);
 #endif
 
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
@@ -436,10 +444,10 @@ bad:
 	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
 		&& !RAND_status())
 		{
-		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
+		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n\n");
 		}
 	if (inrand != NULL)
-		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
+		BIO_printf(bio_err,"%ld semi-random bytes loaded\n\n",
 			app_RAND_load_files(inrand));
 
 	if (bio_c_out == NULL)
@@ -516,7 +524,7 @@ re_start:
 		SHUTDOWN(s);
 		goto end;
 		}
-	BIO_printf(bio_c_out,"CONNECTED(%08X)\n",s);
+	BIO_printf(bio_c_out,"CONNECTED(%08X)\n\n",s);
 
 #ifdef FIONBIO
 	if (c_nbio)
@@ -557,6 +565,11 @@ re_start:
 	SSL_set_connect_state(con);
 
 	/* ok, lets connect */
+#ifdef OPENSSL_SYS_VMS
+        if (stdin_sock > SSL_get_fd(con))
+            width=stdin_sock+1;
+        else
+#endif
 	width=SSL_get_fd(con)+1;
 
 	read_tty=1;
@@ -623,8 +636,12 @@ re_start:
 #ifndef OPENSSL_SYS_WINDOWS
 			if (tty_on)
 				{
-				if (read_tty)  FD_SET(fileno(stdin),&readfds);
-				if (write_tty) FD_SET(fileno(stdout),&writefds);
+#ifdef OPENSSL_SYS_VMS
+                                if (read_tty)  FD_SET(stdin_sock,&readfds);
+#else
+                                if (read_tty)  FD_SET(fileno(stdin),&readfds);
+                                if (write_tty) FD_SET(fileno(stdout),&writefds);
+#endif
 				}
 			if (read_ssl)
 				FD_SET(SSL_get_fd(con),&readfds);
@@ -746,7 +763,7 @@ re_start:
 				goto shut;
 				}
 			}
-#ifdef OPENSSL_SYS_WINDOWS
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_VMS)
 		/* Assume Windows can always write */
 		else if (!ssl_pending && write_tty)
 #else
@@ -805,7 +822,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				read_tty=0;
 				break;
 			case SSL_ERROR_WANT_READ:
-				BIO_printf(bio_c_out,"read R BLOCK\n");
+				BIO_printf(bio_c_out,"read R BLOCK\n\n");
 				write_tty=0;
 				read_ssl=1;
 				if ((read_tty == 0) && (write_ssl == 0))
@@ -830,14 +847,22 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 #ifdef OPENSSL_SYS_WINDOWS
 		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
 #else
-		else if (FD_ISSET(fileno(stdin),&readfds))
+#ifdef OPENSSL_SYS_VMS
+                else if (FD_ISSET(stdin_sock,&readfds))
+#else
+                else if (FD_ISSET(fileno(stdin),&readfds))
+#endif
 #endif
 			{
 			if (crlf)
 				{
 				int j, lf_num;
 
-				i=read(fileno(stdin),cbuf,BUFSIZZ/2);
+#ifdef OPENSSL_SYS_VMS
+                                i=recv(stdin_sock,cbuf,BUFSIZZ/2,0);
+#else
+                                i=read(fileno(stdin),cbuf,BUFSIZZ/2);
+#endif
 				lf_num = 0;
 				/* both loops are skipped when i <= 0 */
 				for (j = 0; j < i; j++)
@@ -856,7 +881,11 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				assert(lf_num == 0);
 				}
 			else
-				i=read(fileno(stdin),cbuf,BUFSIZZ);
+#ifdef OPENSSL_SYS_VMS
+                                i=recv(stdin_sock,cbuf,BUFSIZZ,0);
+#else
+                                i=read(fileno(stdin),cbuf,BUFSIZZ);
+#endif
 
 			if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q')))
 				{
@@ -901,6 +930,9 @@ end:
 		bio_c_out=NULL;
 		}
 	apps_shutdown();
+#ifdef OPENSSL_SYS_VMS
+        TerminalSocket (TERM_SOCK_DELETE, &stdin_sock);
+#endif
 	EXIT(ret);
 	}
 
@@ -934,7 +966,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 				BIO_printf(bio,"%2d s:%s\n",i,buf);
 				X509_NAME_oneline(X509_get_issuer_name(
 					sk_X509_value(sk,i)),buf,BUFSIZ);
-				BIO_printf(bio,"   i:%s\n",buf);
+				BIO_printf(bio,"   i:%s\n\n",buf);
 				if (c_showcerts)
 					PEM_write_bio_X509(bio,sk_X509_value(sk,i));
 				}
@@ -1008,7 +1040,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		}
 	BIO_printf(bio,((s->hit)?"---\nReused, ":"---\nNew, "));
 	c=SSL_get_current_cipher(s);
-	BIO_printf(bio,"%s, Cipher is %s\n",
+	BIO_printf(bio,"%s, Cipher is %s\n\n",
 		SSL_CIPHER_get_version(c),
 		SSL_CIPHER_get_name(c));
 	if (peer != NULL) {
@@ -1019,7 +1051,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		EVP_PKEY_free(pktmp);
 	}
 	SSL_SESSION_print(bio,SSL_get_session(s));
-	BIO_printf(bio,"---\n");
+	BIO_printf(bio,"---\n\n");
 	if (peer != NULL)
 		X509_free(peer);
 	/* flush, or debugging output gets mixed with http response */

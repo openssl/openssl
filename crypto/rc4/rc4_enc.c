@@ -119,9 +119,13 @@ void RC4(RC4_KEY *key, unsigned long len, const unsigned char *indata,
 			d[x]=ty,	\
 			(RC4_CHUNK)d[(tx+ty)&0xff]\
 			)
-
+#ifdef OPENSSL_SYS_VMS
+        if ( ( ((unsigned long long)indata  & (sizeof(RC4_CHUNK)-1)) |
+               ((unsigned long long)outdata & (sizeof(RC4_CHUNK)-1)) ) == 0 )	
+#else
 	if ( ( ((unsigned long)indata  & (sizeof(RC4_CHUNK)-1)) | 
 	       ((unsigned long)outdata & (sizeof(RC4_CHUNK)-1)) ) == 0 )
+#endif
 		{
 		RC4_CHUNK ichunk,otp;
 		const union { long one; char little; } is_endian = {1};

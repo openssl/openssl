@@ -86,6 +86,17 @@ static int wsa_init_done=0;
 static unsigned long BIO_ghbn_hits=0L;
 static unsigned long BIO_ghbn_miss=0L;
 
+/* For 64-bit API */
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __save
+#pragma __required_pointer_size 32
+#endif
+typedef char ** char_32pp;
+typedef char * char_32p;
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __restore
+#endif
+
 #define GHBN_NUM	4
 static struct ghbn_cache_st
 	{
@@ -282,18 +293,34 @@ static struct hostent *ghbn_dup(struct hostent *a)
 	for (i=0; a->h_aliases[i] != NULL; i++)
 		;
 	i++;
+#ifdef OPENSSL_SYS_VMS
+	ret->h_aliases = (char_32pp)_malloc32(i*sizeof(char_32p));  /* changed for both 32-bit & 64-bit */
+#else
 	ret->h_aliases = (char **)OPENSSL_malloc(i*sizeof(char *));
+#endif
 	if (ret->h_aliases == NULL)
 		goto err;
+#ifdef OPENSSL_SYS_VMS
+	_memset32(ret->h_aliases, 0, i*sizeof(char_32p)); /* changed for both 32-bit & 64-bit */
+#else
 	memset(ret->h_aliases, 0, i*sizeof(char *));
+#endif
 
 	for (i=0; a->h_addr_list[i] != NULL; i++)
 		;
 	i++;
+#ifdf OPENSSL_SYS_VMS
+	ret->h_addr_list=(char_32pp)_malloc32(i*sizeof(char_32p)); /* changed for both 32-bit & 64-bit */
+#else
 	ret->h_addr_list=(char **)OPENSSL_malloc(i*sizeof(char *));
+#endif
 	if (ret->h_addr_list == NULL)
 		goto err;
+#ifdef OPENSSL_SYS_VMS
+	_memset32(ret->h_addr_list, 0, i*sizeof(char_32p)); /* changed for both 32-bit & 64-bit */
+#else
 	memset(ret->h_addr_list, 0, i*sizeof(char *));
+#endif
 
 	j=strlen(a->h_name)+1;
 	if ((ret->h_name=OPENSSL_malloc(j)) == NULL) goto err;
@@ -301,15 +328,24 @@ static struct hostent *ghbn_dup(struct hostent *a)
 	for (i=0; a->h_aliases[i] != NULL; i++)
 		{
 		j=strlen(a->h_aliases[i])+1;
+#ifdef OPENSSL_SYS_VMS
+		if ((ret->h_aliases[i]=(char_32p)_malloc32(j)) == NULL) goto err;  /* changed for both 32-bit & 64-bit */
+#else
 		if ((ret->h_aliases[i]=OPENSSL_malloc(j)) == NULL) goto err;
+#endif
 		memcpy(ret->h_aliases[i],a->h_aliases[i],j);
 		}
 	ret->h_length=a->h_length;
 	ret->h_addrtype=a->h_addrtype;
 	for (i=0; a->h_addr_list[i] != NULL; i++)
 		{
+#ifdef OPENSSL_SYS_VMS
+		if ((ret->h_addr_list[i]=(char_32p)_malloc32(a->h_length)) == NULL)  /* changed for both 32-bit & 64-bit */
+			goto err;
+#else
 		if ((ret->h_addr_list[i]=OPENSSL_malloc(a->h_length)) == NULL)
 			goto err;
+#endif
 		memcpy(ret->h_addr_list[i],a->h_addr_list[i],a->h_length);
 		}
 	if (0)
@@ -332,15 +368,27 @@ static void ghbn_free(struct hostent *a)
 
 	if (a->h_aliases != NULL)
 		{
+#ifdef OPENSSL_SYS_VMS
+		for (i=0; a->h_aliases[i] != NULL; i++)
+			free(a->h_aliases[i]);
+		free(a->h_aliases);
+#else
 		for (i=0; a->h_aliases[i] != NULL; i++)
 			OPENSSL_free(a->h_aliases[i]);
 		OPENSSL_free(a->h_aliases);
+#endif
 		}
 	if (a->h_addr_list != NULL)
 		{
+#ifdef OPENSSL_SYS_VMS
+		for (i=0; a->h_addr_list[i] != NULL; i++)
+			free(a->h_addr_list[i]);
+		free(a->h_addr_list);
+#else
 		for (i=0; a->h_addr_list[i] != NULL; i++)
 			OPENSSL_free(a->h_addr_list[i]);
 		OPENSSL_free(a->h_addr_list);
+#endif
 		}
 	if (a->h_name != NULL) OPENSSL_free(a->h_name);
 	OPENSSL_free(a);
@@ -480,7 +528,7 @@ void BIO_sock_cleanup(void)
 
 #if !defined(OPENSSL_SYS_VMS) || __VMS_VER >= 70000000
 
-int BIO_socket_ioctl(int fd, long type, unsigned long *arg)
+int BIO_socket_ioctl(int fd, long type, UINT_L32p arg)  /* changed for 64-bit API */
 	{
 	int i;
 

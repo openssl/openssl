@@ -75,6 +75,7 @@
 #  include <descrip.h>
 #  include <lib$routines.h>
 #  include <starlet.h>
+#  include <stdlib.h>
 #elif defined(__ultrix)
 #  include <sys/syslog.h>
 #elif !defined(MSDOS) && !defined(OPENSSL_SYS_VXWORKS) && !defined(NO_SYSLOG) /* Unix */
@@ -326,12 +327,29 @@ static void xopenlog(BIO* bp, char* name, int level)
 static void xsyslog(BIO *bp, int priority, const char *string)
 {
 	struct dsc$descriptor_s opc_dsc;
-	struct opcdef *opcdef_p;
-	char buf[10240];
+
+
+/* For 64-bit API */
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __save
+#pragma __required_pointer_size 32
+#endif
+        struct opcdef *opcdef_p;
+        typedef char * char_32p;
+        typedef struct opcdef * OPCDEF_TYPE_P;
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __restore
+#endif
+
+        char_32p buf;
+	const int bufsize = 10240;
+
 	unsigned int len;
         struct dsc$descriptor_s buf_dsc;
 	$DESCRIPTOR(fao_cmd, "!AZ: !AZ");
 	char *priority_tag;
+
+	buf = (char_32p)_malloc32(bufsize);
 
 	switch (priority)
 	  {
@@ -353,7 +371,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 	lib$sys_fao(&fao_cmd, &len, &buf_dsc, priority_tag, string);
 
 	/* we know there's an 8 byte header.  That's documented */
-	opcdef_p = (struct opcdef *) OPENSSL_malloc(8 + len);
+	opcdef_p = (OPCDEF_TYPE_P) OPENSSL_malloc(8 + len);
 	opcdef_p->opc$b_ms_type = OPC$_RQ_RQST;
 	memcpy(opcdef_p->opc$z_ms_target_classes, &VMS_OPC_target, 3);
 	opcdef_p->opc$l_ms_rqstid = 0;
@@ -361,12 +379,13 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 
 	opc_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
 	opc_dsc.dsc$b_class = DSC$K_CLASS_S;
-	opc_dsc.dsc$a_pointer = (char *)opcdef_p;
+	opc_dsc.dsc$a_pointer = (char_32p)opcdef_p;
 	opc_dsc.dsc$w_length = len + 8;
 
 	sys$sndopr(opc_dsc, 0);
 
 	OPENSSL_free(opcdef_p);
+	free(buf);
 }
 
 static void xcloselog(BIO* bp)

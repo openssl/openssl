@@ -11,7 +11,11 @@ $	    WRITE SYS$OUTPUT "First argument missing."
 $	    WRITE SYS$OUTPUT "Should be the directory where you want things installed."
 $	    EXIT
 $	ENDIF
-$
+$!
+$! Define some VMS specific symbols.
+$!
+$	@[-]vms_build_info
+$!
 $	ROOT = F$PARSE(P1,"[]A.;0",,,"SYNTAX_ONLY,NO_CONCEAL") - "A.;0"
 $	ROOT_DEV = F$PARSE(ROOT,,,"DEVICE","SYNTAX_ONLY")
 $	ROOT_DIR = F$PARSE(ROOT,,,"DIRECTORY","SYNTAX_ONLY") -
@@ -20,15 +24,21 @@ $	ROOT = ROOT_DEV + "[" + ROOT_DIR
 $
 $	DEFINE/NOLOG WRK_SSLROOT 'ROOT'.] /TRANS=CONC
 $	DEFINE/NOLOG WRK_SSLVLIB WRK_SSLROOT:[VAX_LIB]
+$	DEFINE/NOLOG WRK_SSLVEXE WRK_SSLROOT:[VAX_EXE]
 $	DEFINE/NOLOG WRK_SSLALIB WRK_SSLROOT:[ALPHA_LIB]
+$	DEFINE/NOLOG WRK_SSLAEXE WRK_SSLROOT:[ALPHA_EXE]
 $	DEFINE/NOLOG WRK_SSLINCLUDE WRK_SSLROOT:[INCLUDE]
 $
 $	IF F$PARSE("WRK_SSLROOT:[000000]") .EQS. "" THEN -
 	   CREATE/DIR/LOG WRK_SSLROOT:[000000]
 $	IF F$PARSE("WRK_SSLVLIB:") .EQS. "" THEN -
 	   CREATE/DIR/LOG WRK_SSLVLIB:
+$	IF F$PARSE("WRK_SSLVEXE:") .EQS. "" THEN -
+	   CREATE/DIR/LOG WRK_SSLVEXE:
 $	IF F$PARSE("WRK_SSLALIB:") .EQS. "" THEN -
 	   CREATE/DIR/LOG WRK_SSLALIB:
+$	IF F$PARSE("WRK_SSLAEXE:") .EQS. "" THEN -
+	   CREATE/DIR/LOG WRK_SSLAEXE:
 $	IF F$PARSE("WRK_SSLINCLUDE:") .EQS. "" THEN -
 	   CREATE/DIR/LOG WRK_SSLINCLUDE:
 $
@@ -82,7 +92,18 @@ $	EXHEADER_COMP := comp.h
 $	EXHEADER_OCSP := ocsp.h
 $	EXHEADER_UI := ui.h,ui_compat.h
 $	EXHEADER_KRB5 := krb5_asn.h
-$	LIBS := LIBCRYPTO
+$!
+$! We can combine the .OLBs and .EXEs under LIBS
+$! since the two pieces of LOOP_* code are smart
+$! enough to check for the existance of the file
+$! before trying to copy it.
+$!
+$ if "''build_bits'" .eqs. "32"
+$ then
+$	LIBS := LIBCRYPTO'build_bits',SSL$LIBCRYPTO_SHR'build_bits'
+$ else
+$	LIBS := LIBCRYPTO'build_bits',SSL$LIBCRYPTO_SHR
+$ endif
 $
 $	VEXE_DIR := [-.VAX.EXE.CRYPTO]
 $	AEXE_DIR := [-.AXP.EXE.CRYPTO]
@@ -117,8 +138,8 @@ $	ENDIF
 $	! Preparing for the time when we have shareable images
 $	IF F$SEARCH(VEXE_DIR+E+".EXE") .NES. ""
 $	THEN
-$	  COPY 'VEXE_DIR''E'.EXE WRK_SSLVLIB:'E'.EXE/log
-$	  SET FILE/PROT=W:RE WRK_SSLVLIB:'E'.EXE
+$	  COPY 'VEXE_DIR''E'.EXE WRK_SSLVEXE:'E'.EXE/log
+$	  SET FILE/PROT=W:RE WRK_SSLVEXE:'E'.EXE
 $	ENDIF
 $	IF F$SEARCH(AEXE_DIR+E+".OLB") .NES. ""
 $	THEN
@@ -128,8 +149,8 @@ $	ENDIF
 $	! Preparing for the time when we have shareable images
 $	IF F$SEARCH(AEXE_DIR+E+".EXE") .NES. ""
 $	THEN
-$	  COPY 'AEXE_DIR''E'.EXE WRK_SSLALIB:'E'.EXE/log
-$	  SET FILE/PROT=W:RE WRK_SSLALIB:'E'.EXE
+$	  COPY 'AEXE_DIR''E'.EXE WRK_SSLAEXE:'E'.EXE/log
+$	  SET FILE/PROT=W:RE WRK_SSLAEXE:'E'.EXE
 $	ENDIF
 $	SET ON
 $	GOTO LOOP_LIB

@@ -1,0 +1,259 @@
+--
+--      CPQ-AXPVMS-SSL-T0100--1.PCSI$DESCRIPTION
+--
+--      KSG00141     Kevin Greaney		21-Jun-2001
+--	Using the ENCRYPT file as a template, create a 
+--	.PCSI$DESCRIPTION file for the OpenSSL port.
+--
+--
+--  First, make sure we are running on correct operating system.
+--
+product CPQ AXPVMS SSL T1.0 full ;
+    if (not <software DEC AXPVMS VMS version minimum V7.2>) ;
+        error NOAXPVMS;
+    end if;
+
+--
+--  Now, perform the installation.
+--
+--
+-- Define the SSL root logical name.  This is done by
+-- SSL$PCSI.COM.  It defines SSL$ROOT to be the 
+-- equivalence name of the PCSI$DESTINATION logical when
+-- installing, and deassigns the logical when removing.
+
+    execute 
+	install "@pcsi$destination:[ssl.com]ssl$pcsi.com install" 
+	remove "@pcsi$destination:[ssl.com]ssl$pcsi.com remove";
+
+--
+-- SSL$STARTUP.COM defines a handfull of logicals and
+-- then executes SSL$SYSTARTUP.COM.
+--
+-- SSL$SHUTDOWN deassigns the logicals defined in the
+-- startup file and then executes SSL$SYSHUTDOWN.COM 
+--
+-- Note : If this kit is installed to a disk other than
+--	  the system disk, these two files will not end
+--	  up on the system disk.  They will have to be
+--	  moved over manually.
+
+    execute 
+	start "@sys$startup:ssl$startup.com" 
+	stop "@sys$startup:ssl$shutdown.com";
+
+--
+--  Now, perform the testing, if it was requested.
+--
+-- Find out if the IVP should be run ...
+-- Note : If the user specified /NOTEST on the command
+--        line, the user will still be asked about running
+--	  the IVP, but no matter what they answer, the IVP
+--	  will NOT be run.  This is because /NOTEST
+--	  overrides the option here.
+
+    option run_ivp default yes;
+       execute test "@pcsi$destination:[systest]ssl$ivp.com/output=pcsi$destination:[systest]ssl$ivp.log";
+    end option;
+--
+    information POST_INSTALL phase after with helptext;
+    information RELEASE_NOTES phase after ;
+    information START_INSTRUCTION phase after ;
+--    information REINSTALL_PROBLEM phase after ;
+
+--
+--  And finally, define where all the files should be placed.
+--
+    directory [ssl] ;
+    file [ssl.com]ssl$pcsi.com protection private;
+--
+    file [syshlp]ssl010.release_notes release notes;
+
+    if (<software DEC AXPVMS VMS>) ;
+       directory [ssl.alpha_exe] ;
+
+       file [ssl.alpha_exe]ca.com ;
+       file [ssl.alpha_exe]openssl.exe ;
+       file [ssl.alpha_exe]ssl_task.exe ;
+--
+    end if;
+
+    if (<software DEC VAXVMS VMS>) ;
+       directory [ssl.vax_exe] ;
+       file [ssl.vax_exe]ca.com;
+--
+       directory [ssl.vax_lib] ;
+
+    end if;
+
+    file [syslib]ssl$libssl_shr.exe ;    
+    file [syslib]ssl$libcrypto_shr.exe ;    
+
+    file [syslib]ssl$libssl_shr32.exe ;    
+    file [syslib]ssl$libcrypto_shr32.exe ;    
+
+    file [ssl.alpha_exe]ssl$hostname.exe;
+    file [ssl.alpha_exe]ssl$hostaddr.exe;
+--
+    directory [ssl.conf] ;
+
+    file [ssl]openssl.cnf ;
+    file [ssl]openssl-vms.cnf ;
+
+--
+    directory [ssl.certs] ;
+--
+    directory [syshlp.examples.ssl] ;
+
+    file [syshlp.examples.ssl]ssl$bio_cli.c ;
+    file [syshlp.examples.ssl]ssl$bio_serv.c ;
+    file [syshlp.examples.ssl]ssl$cli_sess_renego.c ;
+    file [syshlp.examples.ssl]ssl$cli_sess_renego_cli_ver.c ;
+    file [syshlp.examples.ssl]ssl$cli_sess_reuse.c ;
+    file [syshlp.examples.ssl]ssl$cli_sess_reuse_cli_ver.c ;
+    file [syshlp.examples.ssl]ssl$cli_verify_client.c ;
+    file [syshlp.examples.ssl]ssl$serv_sess_renego.c ;
+    file [syshlp.examples.ssl]ssl$serv_sess_renego_cli_ver.c ;
+    file [syshlp.examples.ssl]ssl$serv_sess_reuse.c ;
+    file [syshlp.examples.ssl]ssl$serv_sess_reuse_cli_ver.c ;
+    file [syshlp.examples.ssl]ssl$serv_verify_client.c ;
+    file [syshlp.examples.ssl]ssl$simple_cli.c ;
+    file [syshlp.examples.ssl]ssl$simple_serv.c ;
+    file [syshlp.examples.ssl]ssl$examples_setup.com ;
+
+--
+    directory [ssl.include] ;
+--
+    file [ssl.include]asn1.h ;
+    file [ssl.include]asn1_mac.h;
+    file [ssl.include]bio.h;
+    file [ssl.include]blowfish.h;
+    file [ssl.include]bn.h;
+    file [ssl.include]buffer.h;
+    file [ssl.include]cast.h;
+    file [ssl.include]comp.h;
+    file [ssl.include]conf.h;
+    file [ssl.include]conf_api.h;
+    file [ssl.include]crypto.h;
+    file [ssl.include]des.h;
+    file [ssl.include]dh.h;
+    file [ssl.include]dsa.h;
+    file [ssl.include]dso.h;
+    file [ssl.include]ebcdic.h;
+    file [ssl.include]engine.h;
+    file [ssl.include]err.h;
+    file [ssl.include]evp.h;
+    file [ssl.include]e_os.h;
+    file [ssl.include]e_os2.h;
+    file [ssl.include]hmac.h;
+    file [ssl.include]idea.h;
+    file [ssl.include]lhash.h;
+    file [ssl.include]md2.h;
+    file [ssl.include]md4.h;
+    file [ssl.include]md5.h;
+    file [ssl.include]mdc2.h;
+    file [ssl.include]objects.h;
+    file [ssl.include]obj_mac.h;
+    file [ssl.include]opensslconf.h;
+    file [ssl.include]opensslv.h;
+    file [ssl.include]pem.h;
+    file [ssl.include]pem2.h;
+    file [ssl.include]pkcs12.h;
+    file [ssl.include]pkcs7.h;
+    file [ssl.include]rand.h;
+    file [ssl.include]rc2.h;
+    file [ssl.include]rc4.h;
+    file [ssl.include]rc5.h;
+    file [ssl.include]ripemd.h;
+    file [ssl.include]rsa.h;
+    file [ssl.include]safestack.h;
+    file [ssl.include]sha.h;
+    file [ssl.include]ssl.h;
+    file [ssl.include]ssl2.h;
+    file [ssl.include]ssl23.h;
+    file [ssl.include]ssl3.h;
+    file [ssl.include]stack.h;
+    file [ssl.include]symhacks.h;
+    file [ssl.include]tls1.h;
+    file [ssl.include]tmdiff.h;
+    file [ssl.include]txt_db.h;
+    file [ssl.include]x509.h;
+    file [ssl.include]x509v3.h;
+    file [ssl.include]x509_vfy.h;
+--
+    directory [ssl.lib] ;
+--
+    directory [ssl.private] ;
+
+    file [ssl.private]randfile.;
+--
+    directory [ssl.test] ;
+
+    file [ssl.test]tcrl.com;
+    file [ssl.test]testca.com; 
+    file [ssl.test]testenc.com; 
+    file [ssl.test]testgen.com; 
+    file [ssl.test]testss.com; 
+    file [ssl.test]testssl.com; 
+    file [ssl.test]tests_share.com; 
+    file [ssl.test]tpkcs7.com; 
+    file [ssl.test]tpkcs7d.com; 
+    file [ssl.test]treq.com; 
+    file [ssl.test]trsa.com; 
+    file [ssl.test]tsid.com; 
+    file [ssl.test]tverify.com; 
+    file [ssl.test]tx509.com;
+--
+    file [ssl.test]bftest.exe; 
+    file [ssl.test]bntest.exe; 
+    file [ssl.test]casttest.exe; 
+    file [ssl.test]destest.exe;
+    file [ssl.test]dhtest.exe; 
+    file [ssl.test]dsatest.exe; 
+    file [ssl.test]exptest.exe; 
+    file [ssl.test]hmactest.exe;
+    file [ssl.test]ideatest.exe; 
+    file [ssl.test]md2test.exe; 
+    file [ssl.test]md4test.exe; 
+    file [ssl.test]md5test.exe;
+    file [ssl.test]mdc2test.exe; 
+    file [ssl.test]randtest.exe; 
+    file [ssl.test]rc2test.exe; 
+    file [ssl.test]rc4test.exe;
+    file [ssl.test]rc5test.exe; 
+    file [ssl.test]rmdtest.exe; 
+    file [ssl.test]rsa_test.exe; 
+    file [ssl.test]sha1test.exe;
+    file [ssl.test]shatest.exe; 
+    file [ssl.test]ssltest.exe;
+--
+    file [systest]ssl$ivp.com;
+--
+    directory [ssl.com] ;
+
+    file [sys$startup]ssl$startup.com;
+    file [sys$startup]ssl$shutdown.com;
+
+    file [ssl.com]ssl$systartup.com;
+    file [ssl.com]ssl$syshutdown.com;
+    file [ssl.com]ssl$utils.com;
+--
+    file [ssl.com]ssl$auth_cert.com;
+    file [ssl.com]ssl$auto_cert.com;
+    file [ssl.com]ssl$cert_tool.com;
+    file [ssl.com]ssl$conf_util.com;
+    file [ssl.com]ssl$draw_box.com;
+    file [ssl.com]ssl$exit_cmd.tpu;
+    file [ssl.com]ssl$fill_box.com;
+    file [ssl.com]ssl$hash_cert.com;
+    file [ssl.com]ssl$init_env.com;
+    file [ssl.com]ssl$init_term.com;
+    file [ssl.com]ssl$pick_file.com;
+    file [ssl.com]ssl$rem_env.com;
+    file [ssl.com]ssl$rqst_cert.com;
+    file [ssl.com]ssl$self_cert.com;
+    file [ssl.com]ssl$show_file.com;
+    file [ssl.com]ssl$sign_cert.com;
+    file [ssl.com]ssl$view_cert.com;
+--
+end product ;

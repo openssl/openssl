@@ -40,6 +40,16 @@ $!
 $!  P4, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
 $!
 $!
+$! Define USER_CCFLAGS
+$!
+$ write sys$output " "
+$ write sys$output " Now running in DES-LIB.COM. "
+$ write sys$output " "
+$!
+$ @[-]vms_build_info.com
+$ WRITE SYS$OUTPUT " Using USER_CCFLAGS = ", USER_CCFLAGS
+$!
+$!
 $! Make sure we know what architecture we run on.
 $!
 $!
@@ -89,6 +99,23 @@ $! End The Architecture Specific OBJ Directory Check.
 $!
 $ ENDIF
 $!
+$! Define The LIS Directory Name.
+$!
+$ LIS_DIR := SYS$DISK:[--.'ARCH'.LIS.CRYPTO.DES]
+$!
+$! Check To See If The Architecture Specific LIS Directory Exists.
+$!
+$ IF (F$PARSE(LIS_DIR).EQS."")
+$ THEN
+$!
+$!  It Dosen't Exist, So Create It.
+$!
+$   CREATE/DIR 'LIS_DIR'
+$!
+$! End The Architecture Specific LIS Directory Check.
+$!
+$ ENDIF
+$!
 $! Define The EXE Directory Name.
 $!
 $ EXE_DIR :== SYS$DISK:[--.'ARCH'.EXE.CRYPTO.DES]
@@ -108,7 +135,7 @@ $ ENDIF
 $!
 $! Define The Library Name.
 $!
-$ LIB_NAME := 'EXE_DIR'LIBDES.OLB
+$ LIB_NAME := 'EXE_DIR'LIBDES'build_bits'.OLB
 $!
 $! Check To See What We Are To Do.
 $!
@@ -167,6 +194,12 @@ $ LIB_DES = "set_key,ecb_enc,cbc_enc,"+ -
 		"des_enc,fcrypt_b,read2pwd,"+ -
 		"fcrypt,xcbc_enc,read_pwd,rpc_enc,cbc_cksm,supp"
 $!
+$! Setup exceptional compilations
+$!
+$ COMPILEWITH_CC3 = ""
+$ COMPILEWITH_CC4 = ",read_pwd,"
+$ COMPILEWITH_CC5 = ""
+$!
 $!  Define A File Counter And Set It To "0".
 $!
 $ FILE_COUNTER = 0
@@ -197,6 +230,10 @@ $ WRITE SYS$OUTPUT "	",FILE_NAME,".C"
 $!
 $! Create The Object File Name.
 $!
+$ LIST_FILE = LIS_DIR + FILE_NAME + "." + ARCH + "LIS"
+$!
+$! Create The Object File Name.
+$!
 $ OBJECT_FILE = OBJ_DIR + FILE_NAME + "." + ARCH + "OBJ"
 $ ON WARNING THEN GOTO NEXT_FILE
 $!
@@ -222,7 +259,28 @@ $!
 $! Compile The File.
 $!
 $ ON ERROR THEN GOTO NEXT_FILE
-$ CC/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$ FILE_NAME0 = F$ELEMENT(0,".",FILE_NAME)
+$ IF FILE_NAME - ".mar" .NES. FILE_NAME
+$ THEN
+$   MACRO/OBJECT='OBJECT_FILE'/LIST='LIST_FILE' 'SOURCE_FILE'
+$ ELSE
+$   IF COMPILEWITH_CC3 - FILE_NAME0 .NES. COMPILEWITH_CC3
+$   THEN
+$     CC3/OBJECT='OBJECT_FILE'/LIST='LIST_FILE'/MACHINE_CODE 'SOURCE_FILE'
+$   ELSE
+$     IF COMPILEWITH_CC4 - FILE_NAME0 .NES. COMPILEWITH_CC4
+$     THEN
+$       CC4/OBJECT='OBJECT_FILE'/LIST='LIST_FILE'/MACHINE_CODE 'SOURCE_FILE'
+$     ELSE
+$       IF COMPILEWITH_CC5 - FILE_NAME0 .NES. COMPILEWITH_CC5
+$       THEN
+$         CC5/OBJECT='OBJECT_FILE'/LIST='LIST_FILE'/MACHINE_CODE 'SOURCE_FILE'
+$       ELSE
+$         CC/OBJECT='OBJECT_FILE'/LIST='LIST_FILE'/MACHINE_CODE 'SOURCE_FILE'
+$       ENDIF
+$     ENDIF
+$   ENDIF
+$ ENDIF
 $!
 $! Add It To The Library.
 $!
@@ -290,7 +348,9 @@ $!
 $! Link The DESTEST Program.
 $!
 $ LINK/'DEBUGGER'/'TRACEBACK'/CONTIGUOUS/EXE='EXE_DIR'DESTEST.EXE -
-      'OBJ_DIR'DESTEST.OBJ,'LIB_NAME'/LIBRARY,'OPT_FILE'/OPTION
+      /MAP='LIS_DIR'DESTEST.MAP /FULL/CROSS -
+      'OBJ_DIR'DESTEST.OBJ,'LIB_NAME'/LIBRARY, -
+      'OPT_FILE'/OPTION, SYS$DISK:[--]SSL_IDENT.OPT/OPTION
 $!
 $! All Done, Time To Return.
 $!
@@ -338,7 +398,9 @@ $!
 $! Link The SPEED Program.
 $!
 $ LINK/'DEBUGGER'/'TRACEBACK'/CONTIGUOUS/EXE='EXE_DIR'SPEED.EXE -
-      'OBJ_DIR'SPEED.OBJ,'LIB_NAME'/LIBRARY,'OPT_FILE'/OPTION
+      /MAP='LIS_DIR'SPEED.MAP /FULL/CROSS -
+      'OBJ_DIR'SPEED.OBJ,'LIB_NAME'/LIBRARY, -
+      'OPT_FILE'/OPTION, SYS$DISK:[--]SSL_IDENT.OPT/OPTION
 $!
 $! All Done, Time To Return.
 $!
@@ -386,7 +448,9 @@ $!
 $! Link The RPW Program.
 $!
 $ LINK/'DEBUGGER'/'TRACEBACK'/CONTIGUOUS/EXE='EXE_DIR'RPW.EXE -
-      'OBJ_DIR'RPW.OBJ,'LIB_NAME'/LIBRARY,'OPT_FILE'/OPTION
+      /MAP='LIS_DIR'RPW.MAP /FULL/CROSS -
+      'OBJ_DIR'RPW.OBJ,'LIB_NAME'/LIBRARY, -
+      'OPT_FILE'/OPTION, SYS$DISK:[--]SSL_IDENT.OPT/OPTION
 $!
 $! All Done, Time To Return.
 $!
@@ -435,8 +499,10 @@ $!
 $! Link The DES Program.
 $!
 $ LINK/'DEBUGGER'/'TRACEBACK'/CONTIGUOUS/EXE='EXE_DIR'DES.EXE -
+      /MAP='LIS_DIR'DES.MAP /FULL/CROSS -
       'OBJ_DIR'DES.OBJ,'OBJ_DIR'CBC3_ENC.OBJ,-
-      'LIB_NAME'/LIBRARY,'OPT_FILE'/OPTION
+      'LIB_NAME'/LIBRARY, -
+      'OPT_FILE'/OPTION, SYS$DISK:[--]SSL_IDENT.OPT/OPTION
 $!
 $! All Done, Time To Return.
 $!
@@ -484,7 +550,9 @@ $!
 $! Link The DES_OPTS Program.
 $!
 $ LINK/'DEBUGGER'/'TRACEBACK'/CONTIGUOUS/EXE='EXE_DIR'DES_OPTS.EXE -
-      'OBJ_DIR'DES_OPTS.OBJ,'LIB_NAME'/LIBRARY,'OPT_FILE'/OPTION
+      /MAP='LIS_DIR'DES_OPTS.MAP /FULL/CROSS -
+      'OBJ_DIR'DES_OPTS.OBJ,'LIB_NAME'/LIBRARY, -
+      'OPT_FILE'/OPTION, SYS$DISK:[--]SSL_IDENT.OPT/OPTION
 $!
 $! All Done, Time To Return.
 $!
@@ -850,7 +918,7 @@ $ CCDEFS = ""
 $ IF F$TYPE(USER_CCDEFS) .NES. "" THEN CCDEFS = USER_CCDEFS
 $ CCEXTRAFLAGS = ""
 $ IF F$TYPE(USER_CCFLAGS) .NES. "" THEN CCEXTRAFLAGS = USER_CCFLAGS
-$ CCDISABLEWARNINGS = ""
+$ CCDISABLEWARNINGS = "LONGLONGTYPE,LONGLONGSUFX,DOLLARID"
 $ IF F$TYPE(USER_CCDISABLEWARNINGS) .NES. "" THEN -
 	CCDISABLEWARNINGS = USER_CCDISABLEWARNINGS
 $!
@@ -878,7 +946,7 @@ $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
-           "/NOLIST/PREFIX=ALL" + CCEXTRAFLAGS
+           "/PREFIX=ALL" + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
@@ -910,7 +978,7 @@ $	WRITE SYS$OUTPUT "There is no VAX C on Alpha!"
 $	EXIT
 $     ENDIF
 $     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
-$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST" + CCEXTRAFLAGS
+$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'" + CCEXTRAFLAGS
 $     CCDEFS = """VAXC""," + CCDEFS
 $!
 $!    Define <sys> As SYS$COMMON:[SYSLIB]
@@ -940,7 +1008,7 @@ $     WRITE SYS$OUTPUT "Using GNU 'C' Compiler."
 $!
 $!    Use GNU C...
 $!
-$     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + CCEXTRAFLAGS
+$     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'" + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!

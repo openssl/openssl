@@ -1,0 +1,25 @@
+
+      Compaq SSL for OpenVMS Alpha
+
+      Field Test Release Notes
+
+      February 2002
+
+      Based on OpenSSL 0.9.6B
+
+      Compaq SSL T1.0 for OpenVMS Alpha
+      CPQ-AXPVMS-SSL-T0100--1.PCSI-DCX-AXPEXE
+
+      ----------------------------------------------
+
+      Compaq is pleased to provide you with the first release of Compaq
+      SSL for OpenVMS Alpha.  Compaq SSL (Secure Sockets Layer)
+      is based on the 0.9.6B release from the Open Group.  See
+      http://www.openssl.org for more information about OpenSSL.
+
+      Documentation for this kit, including installation and configuration
+      information, release notes, a programming tutorial and API reference,
+      is included in "Open Source Security for OpenVMS Alpha
+      Volume 2: SSL" in HTML, PDF, and PostScript format. This document
+      is included on the OpenVMS field test documentation CD-ROM.
+

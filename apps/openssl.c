@@ -138,6 +138,18 @@ static unsigned long MS_CALLBACK hash(const void *a_void);
 /* static int MS_CALLBACK cmp(FUNCTION *a,FUNCTION *b); */
 static int MS_CALLBACK cmp(const void *a_void,const void *b_void);
 static LHASH *prog_init(void );
+
+#ifdef OPENSSL_SYS_VMS
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __save
+#pragma __required_pointer_size 32
+#endif
+typedef char ** Argv_32;
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __restore
+#endif
+#endif
+
 static int do_cmd(LHASH *prog,int argc,char *argv[]);
 CONF *config=NULL;
 char *default_config_file=NULL;
@@ -212,7 +224,11 @@ static void lock_dbg_cb(int mode, int type, const char *file, int line)
 	}
 
 
+#ifdef OPENSSL_SYS_VMS
+int main(int Argc, Argv_32 argv32)
+#else
 int main(int Argc, char *Argv[])
+#endif
 	{
 	ARGS arg;
 #define PROG_NAME_SIZE	39
@@ -222,8 +238,16 @@ int main(int Argc, char *Argv[])
 	int n,i,ret=0;
 	int argc;
 	char **argv,*p;
+
+#ifdef OPENSSL_SYS_VMS
+#if __INITIAL_POINTER_SIZE == 64
+	char **argv64;
+#endif
+#endif
+
 	LHASH *prog=NULL;
 	long errline;
+	int loop;  /* For checking if it's first round in the OpenSSL commandline loop */
  
 	arg.data=NULL;
 	arg.count=0;
@@ -284,14 +308,23 @@ int main(int Argc, char *Argv[])
 	prog=prog_init();
 
 	/* first check the program name */
+#ifdef OPENSSL_SYS_VMS
+	program_name(argv32[0],pname,PROG_NAME_SIZE);
+#else
 	program_name(Argv[0],pname,PROG_NAME_SIZE);
+#endif
 
 	f.name=pname;
 	fp=(FUNCTION *)lh_retrieve(prog,&f);
 	if (fp != NULL)
 		{
+#ifdef OPENSSL_SYS_VMS
+		argv32[0]=pname;
+		ret=fp->func(Argc,argv32);
+#else
 		Argv[0]=pname;
 		ret=fp->func(Argc,Argv);
+#endif
 		goto end;
 		}
 
@@ -300,14 +333,32 @@ int main(int Argc, char *Argv[])
 	if (Argc != 1)
 		{
 		Argc--;
+#ifdef OPENSSL_SYS_VMS
+		argv32++;
+ #if __INITIAL_POINTER_SIZE == 64
+		argv64=(char **)_malloc64(sizeof(char *)*Argc);  /* memory allocation in 64-bit address */
+
+        	for (i=0;i<Argc;i++)
+        	{
+                	argv64[i]=argv32[i];  /* copying 32-bit Argv to 64-bit argv*/
+        	}
+
+		ret=do_cmd(prog,Argc,argv64);
+		free(argv64);
+ #else
+		ret=do_cmd(prog,Argc,argv32);
+ #endif
+#else
 		Argv++;
 		ret=do_cmd(prog,Argc,Argv);
+#endif
+
 		if (ret < 0) ret=0;
 		goto end;
 		}
 
 	/* ok, lets enter the old 'OpenSSL>' mode */
-	
+	loop=0;
 	for (;;)
 		{
 		ret=0;
@@ -319,7 +370,14 @@ int main(int Argc, char *Argv[])
 			p[0]='\0';
 			if (i++)
 				prompt=">";
-			else	prompt="OpenSSL> ";
+			else 
+			   if(loop == 0){  /* first round in this loop*/
+				prompt="OpenSSL> ";
+				loop++;
+			   }
+			   else 
+				prompt="\nOpenSSL> ";
+
 			fputs(prompt,stdout);
 			fflush(stdout);
 			fgets(p,n,stdin);
@@ -368,6 +426,7 @@ end:
 #define LIST_STANDARD_COMMANDS "list-standard-commands"
 #define LIST_MESSAGE_DIGEST_COMMANDS "list-message-digest-commands"
 #define LIST_CIPHER_COMMANDS "list-cipher-commands"
+
 
 static int do_cmd(LHASH *prog, int argc, char *argv[])
 	{

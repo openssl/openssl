@@ -77,6 +77,16 @@ DSO_METHOD *DSO_METHOD_vms(void)
 #else
 #pragma message disable DOLLARID
 
+/* For 64-bit API */
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __save
+#pragma __required_pointer_size 32
+#endif
+typedef char * char_32p;
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __restore
+#endif
+
 static int vms_load(DSO *dso);
 static int vms_unload(DSO *dso);
 static void *vms_bind_var(DSO *dso, const char *symname);
@@ -205,11 +215,11 @@ static int vms_load(DSO *dso)
 	p->filename_dsc.dsc$w_length = strlen(p->filename);
 	p->filename_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
 	p->filename_dsc.dsc$b_class = DSC$K_CLASS_S;
-	p->filename_dsc.dsc$a_pointer = p->filename;
+	p->filename_dsc.dsc$a_pointer = (char_32p)p->filename;  /* changed for 64-bit API*/
 	p->imagename_dsc.dsc$w_length = strlen(p->imagename);
 	p->imagename_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
 	p->imagename_dsc.dsc$b_class = DSC$K_CLASS_S;
-	p->imagename_dsc.dsc$a_pointer = p->imagename;
+	p->imagename_dsc.dsc$a_pointer = (char_32p)p->imagename;  /* changed for 64-bit API*/
 
 	if(!sk_push(dso->meth_data, (char *)p))
 		{
@@ -291,7 +301,7 @@ void vms_bind_sym(DSO *dso, const char *symname, void **sym)
 	symname_dsc.dsc$w_length = strlen(symname);
 	symname_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
 	symname_dsc.dsc$b_class = DSC$K_CLASS_S;
-	symname_dsc.dsc$a_pointer = (char *)symname; /* The cast is needed */
+	symname_dsc.dsc$a_pointer = (char_32p)symname; /* The cast is needed */ /* changed for 64-bit API*/
 
 	if((dso == NULL) || (symname == NULL))
 		{

@@ -485,17 +485,17 @@ bad:
 			else
 				memset(str,0,strlen(str));
 			}
-		if ((hiv != NULL) && !set_hex(hiv,iv,sizeof iv))
-			{
-			BIO_printf(bio_err,"invalid hex iv value\n");
-			goto end;
-			}
 		if ((hiv == NULL) && (str == NULL))
 			{
 			/* No IV was explicitly set and no IV was generated
 			 * during EVP_BytesToKey. Hence the IV is undefined,
 			 * making correct decryption impossible. */
 			BIO_printf(bio_err, "iv undefined\n");
+			goto end;
+			}
+		if ((hiv != NULL) && !set_hex(hiv,iv,sizeof iv))
+			{
+			BIO_printf(bio_err,"invalid hex iv value\n");
 			goto end;
 			}
 		if ((hkey != NULL) && !set_hex(hkey,key,sizeof key))

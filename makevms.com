@@ -1,3 +1,14 @@
+$ set verify
+$ set process/priv=all
+$!
+$ arch_name = f$getsyi("arch_name")
+$ node_name = f$getsyi("nodename")
+$ version = f$getsyi("version")
+$ cpu = f$getsyi("cpu")
+$!
+$ write sys$output " "
+$ write sys$output "   ", node_name, " is running ", version, " on a ", arch_name, "(CPU=", cpu, ")"
+$ write sys$output " "
 $!
 $! MAKEVMS.COM
 $! Original Author:  UNKNOWN
@@ -65,6 +76,9 @@ $!
 $! P6, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
 $!
 $!
+$!
+$ EXIT_STATUS = 1
+$!
 $! Check if we're in a batch job, and make sure we get to 
 $! the directory this script is in
 $!
@@ -74,6 +88,13 @@ $   COMNAME=F$ENVIRONMENT("PROCEDURE")
 $   COMPATH=F$PARSE("A.;",COMNAME) - "A.;"
 $   SET DEF 'COMPATH'
 $ ENDIF
+$!
+$!
+$! Define USER_CCFLAGS
+$!
+$ @vms_build_info.com
+$ WRITE SYS$OUTPUT " Using USER_CCFLAGS = ", USER_CCFLAGS
+$!
 $!
 $! Check Which Architecture We Are Using.
 $!
@@ -99,6 +120,15 @@ $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
 $ GOSUB CHECK_OPTIONS
+$!
+$!
+$! Determine the version number.
+$!
+$ GOSUB read_version_info
+$!
+$! Create the Ident options file.
+$!
+$ GOSUB CREATE_OPT_FILE
 $!
 $! Check To See What We Are To Do.
 $!
@@ -156,6 +186,14 @@ $!  Build The [.xxx.EXE.APPS] OpenSSL Application Utilities.
 $!
 $   GOSUB APPS
 $!
+$!  Build The [.VMS.CERT_TOOL] OpenSSL Certificate Utility.
+$!
+$   GOSUB CERT_UTIL
+$!
+$!  Build the shareable images - LIBSSL & LIBCRYPTO.
+$!
+$ @mkshared
+$!
 $! Else...
 $!
 $ ELSE
@@ -168,7 +206,7 @@ $ ENDIF
 $!
 $! Time To EXIT.
 $!
-$ EXIT
+$ GOTO CLEAN_UP_PATH
 $!
 $! Rebuild The "[.CRYPTO]OPENSSLCONF.H" file.
 $!
@@ -255,7 +293,8 @@ $     THEN
 $       TYPE [.CRYPTO]OPENSSLCONF.H.IN /OUTPUT=H_FILE:
 $     ELSE
 $       WRITE SYS$ERROR "Couldn't find a [.CRYPTO]OPENSSLCONF.H_IN.  Exiting!"
-$       EXIT 0
+$       EXIT_STATUS = 0
+$       GOTO ERROR_PATH
 $     ENDIF
 $   ENDIF
 $ ENDIF
@@ -359,7 +398,7 @@ $ TIME = F$TIME()
 $!
 $! Write The [.CRYPTO]BUILDINF.H File.
 $!
-$ WRITE H_FILE "#define CFLAGS """" /* Not filled in for now */"
+$ WRITE H_FILE "#define CFLAGS ""''USER_CCFLAGS'"" /* Not filled in for now, but I'll take a crack at it.  KSG */"
 $ WRITE H_FILE "#define PLATFORM ""VMS"""
 $ WRITE H_FILE "#define DATE ""''TIME'"" "
 $!
@@ -377,7 +416,7 @@ $ SOFTLINKS:
 $!
 $! Tell The User We Are Partly Rebuilding The [.TEST] Directory.
 $!
-$ WRITE SYS$OUTPUT "Rebuilding The '[.APPS]MD5.C' And '[.APPS]RMD160.C' Files."
+$ WRITE SYS$OUTPUT "Rebuilding The '[.APPS]MD4.C & MD5.C' And '[.APPS]RMD160.C' Files."
 $!
 $ DELETE SYS$DISK:[.APPS]MD4.C;*,MD5.C;*,RMD160.C;*
 $!
@@ -737,7 +776,7 @@ $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
 $!
-$     EXIT
+$     GOTO CLEAN_UP_PATH
 $!
 $!  End The Valid Argument Check.
 $!
@@ -785,7 +824,7 @@ $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
 $!
-$     EXIT
+$     GOTO CLEAN_UP_PATH
 $!
 $!  End The Valid Arguemnt Check.
 $!
@@ -832,7 +871,7 @@ $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
 $!
-$     EXIT
+$     GOTO CLEAN_UP_PATH
 $!
 $!  End The Valid Arguement Check.
 $!
@@ -989,7 +1028,7 @@ $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
 $!
-$     EXIT
+$     GOTO CLEAN_UP_PATH
 $!
 $!  End The Valid Arguement Check.
 $!
@@ -1001,7 +1040,7 @@ $ ENDIF
 $!
 $! Time to check the contents of P5, and to make sure we get the correct library.
 $!
-$ IF P5.EQS."SOCKETSHR" .OR. P5.EQS."MULTINET" .OR. P5.EQS."UCX"
+$ IF P5.EQS."SOCKETSHR" .OR. P5.EQS."MULTINET" .OR. P5.EQS."UCX" .OR. P5.EQS."TCPIP" .OR. P5.EQS."NONE"
 $ THEN
 $!
 $!  Check to see if SOCKETSHR was chosen
@@ -1055,6 +1094,40 @@ $!    Done with UCX
 $!
 $   ENDIF
 $!
+$!  Check to see if TCPIP was chosen
+$!
+$   IF P5.EQS."TCPIP"
+$   THEN
+$!
+$!    Set the library to use TCPIP (post UCX).
+$!
+$     TCPIP_LIB = "[-.VMS]TCPIP_SHR_DECC.OPT/OPT"
+$!
+$!    Tell the user
+$!
+$     WRITE SYS$OUTPUT "Using TCPIP (post UCX) for TCP/IP"
+$!
+$!    Done with TCPIP
+$!
+$   ENDIF
+$!
+$!  Check to see if NONE was chosen
+$!
+$   IF P5.EQS."NONE"
+$   THEN
+$!
+$!    Do not use a TCPIP library.
+$!
+$     TCPIP_LIB = ""
+$!
+$!    Tell the user
+$!
+$     WRITE SYS$OUTPUT "A specific TCPIP library will not be used."
+$!
+$!    Done with NONE.
+$!
+$   ENDIF
+$!
 $!  Set the TCPIP_TYPE symbol
 $!
 $   TCPIP_TYPE = P5
@@ -1076,12 +1149,23 @@ $     WRITE SYS$OUTPUT "The Option ",P5," Is Invalid.  The Valid Options Are:"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "    SOCKETSHR  :  To link with SOCKETSHR TCP/IP library."
 $     WRITE SYS$OUTPUT "    UCX        :  To link with UCX TCP/IP library."
+$     WRITE SYS$OUTPUT "    TCPIP      :  To link with TCPIP TCP/IP (post UCX) library."
+$     WRITE SYS$OUTPUT "    NONE       :  To not link with a specific TCP/IP library."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
 $!
-$     EXIT
+$     GOTO CLEAN_UP_PATH
 $   ELSE
+$!
+$! If TCPIP is not defined, then hardcode it to make
+$! it clear that no TCPIP is desired.
+$!
+$     IF P5 .EQS. ""
+$     THEN
+$       TCPIP_LIB = ""
+$       TCPIP_TYPE = "NONE"
+$     ENDIF
 $!
 $!    Set the TCPIP_TYPE symbol
 $!
@@ -1129,3 +1213,98 @@ $!
 $!  Time To RETURN...
 $!
 $ RETURN
+$!
+$! Build The OpenVMS Certicate Utility images.
+$!
+$ CERT_UTIL:
+$!
+$! Tell The User What We Are Doing.
+$!
+$ WRITE SYS$OUTPUT ""
+$ WRITE SYS$OUTPUT "Building OpenSSL Certificate Utility Applications."
+$!
+$! Go To The [.VMS.CERT_TOOL] Directory.
+$!
+$!
+$ SET DEFAULT SYS$DISK:[.VMS.CERT_TOOL]
+$!
+$! Build The Application Programs.
+$!
+$ CC HOSTADDR/PREFIX_LIBRARY_ENTRIES=(ALL_ENTRIES)
+$ LINK /EXE=SSL$HOSTADDR.EXE HOSTADDR, SYS$DISK:[--]SSL_IDENT/OPT
+$!
+$ CC HOSTNAME/PREFIX_LIBRARY_ENTRIES=(ALL_ENTRIES)
+$ LINK /EXE=SSL$HOSTNAME.EXE HOSTNAME, SYS$DISK:[--]SSL_IDENT/OPT
+$!
+$! Go Back To The Main Directory.
+$!
+$ SET DEFAULT [--]
+$!
+$! That's All, Time To RETURN.
+$!
+$ RETURN
+$!
+$!
+$! Create the identification options file.
+$! This options file is used to identify the
+$! images with the appropriate version numbers,
+$! build ident, and symbol matching.
+$!
+$ CREATE_OPT_FILE:
+$ open/write opt_ident ssl_ident.opt
+$ write opt_ident "identification=""OpenSSL ",libverstr,"""
+$ write opt_ident "build_ident=""",build_ident,"_",build_platform,"_",build_bits,""" "
+$ write opt_ident "GSMATCH=",libvmatch,",",libver
+$ close opt_ident
+$ RETURN
+$!
+$!
+$! The version number reader
+$!
+$read_version_info:
+$   libver = ""
+$   open/read vf [.CRYPTO]OPENSSLV.H
+$   loop_rvi:
+$     read/err=endloop_rvi/end=endloop_rvi vf rvi_line
+$     if rvi_line - "SHLIB_VERSION_NUMBER """ .eqs. rvi_line then -
+        goto loop_rvi
+$     libverstr = f$element(1,"""",rvi_line)
+$     libvmajor = f$element(0,".",libverstr)
+$     libvminor = f$element(1,".",libverstr)
+$     libvedit = f$element(2,".",libverstr)
+$     libvpatch = f$cvui(0,8,f$extract(1,1,libvedit)+"@")-f$cvui(0,8,"@")
+$     libvedit = f$extract(0,1,libvedit)
+$     libver = f$string(f$int(libvmajor)*100)+","+-
+        f$string(f$int(libvminor)*100+f$int(libvedit)*10+f$int(libvpatch))
+$     if libvmajor .eqs. "0"
+$     then
+$       libvmatch = "EQUAL"
+$     else
+$       ! Starting with the 1.0 release, backward compatibility should be
+$       ! kept, so switch over to the following
+$       libvmatch = "LEQUAL"
+$     endif
+$   endloop_rvi:
+$   close vf
+$   return
+$!
+$!
+$ ERROR_PATH:
+$!
+$!
+$!
+$ CLEAN_UP_PATH:
+$!
+$ DEASSIGN/JOB OPENSSL_NO_IDEA
+$ DEASSIGN/JOB OPENSSL_NO_RC5
+$!
+$! Make sure that everyone can access the files.
+$!
+$ @set_acls
+$!
+$!
+$ EXIT_PATH:
+$!
+$ BUILD_IDENT = f$extract(f$locate(".BUILD",f$environment("default"))+1,10,f$environment("default"))
+$ MAIL nl: /SUB="OPENSSL ''build_ident' is done." smtp%"greaney@star.zko.dec.com",smtp%"Takaaki.Shinagawa@compaq.com"
+$!

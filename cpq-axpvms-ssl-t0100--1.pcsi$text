@@ -1,0 +1,82 @@
+=product CPQ AXPVMS SSL T1.0 full
+1 'PRODUCT
+=prompt SSL for OpenVMS Alpha T1.0 (Based on OpenSSL 0.9.6B).
+SSL for OpenVMS provides a toolkit that implements SSL V2/V3, TLS V1,
+and a general purpose cryptography library.
+
+1 'PRODUCER
+
+1 'NOTICE
+=prompt (c) Compaq Computer Corporation 2002. All rights reserved.
+
+COMPAQ Registered in U.S. Patent and Trademark Office.
+
+Confidential computer software. Valid license from Compaq or
+authorized sublicensor required for possession, use or copying.
+Consistent with FAR 12.211 and 12.212, Commercial Computer Software,
+Computer Software Documentation, and Technical Data for Commercial
+Items are licensed to the U.S. Government under vendor's standard
+commercial license.
+
+This software is installable on OpenVMS processors using the POLYCENTER
+Software Installation utility.
+
+IMPORTANT LEGAL NOTICE:
+
+        Exports of this product are subject to U.S. Export Administration
+        Regulations pertaining to encryption items and may require that 
+        individual export authorization be obtained from the U.S. 
+        Department of Commerce.
+
+1 START_INSTRUCTION
+=prompt @SYS$STARTUP:SSL$STARTUP.COM should be run at system startup.
+Once the installation is complete, adding the following line to
+SYS$MANAGER:SYSTARTUP_VMS.COM will define the SSL$ logicals 
+in the SYSTEM logical name table:
+
+        $ @SYS$STARTUP:SSL$STARTUP.COM "/SYSTEM"
+
+It is also possible to have the logicals placed in other logical 
+name tables - EXEC,USER, etc - by replacing the SYSTEM parameter
+above with the alternate table name.
+
+
+1 RELEASE_NOTES
+=prompt Refer to SYS$HELP:SSL010.RELEASE_NOTES for more information.
+The SSL product release notes contain up to date information regarding 
+bug fixes, known problems, and general installation information.
+
+1 RUN_IVP
+=prompt Run the installation verification procedure (IVP)?
+This option determines if the installation verification
+procedure will be run as part of the installation.  The procedure 
+should take few minutes to run, depending on the processor
+speed.  If it is not run during the installation, then it
+should be run as part of the post installation procedure.
+
+1 POST_INSTALL
+=prompt There are post installation activities that need to be performed.
+This includes things like defining logical names and running SSL$UTIL.COM 
+to define some foreign symbols, and running the IVP if it was not done
+as part of the installation.  Refer the to Release Notes for more 
+information about activities that should be performed once the installation 
+has finished.  
+
+SSL has created the following directory structure in
+PCSI$DESTINATION, which defaults to SYS$SYSDEVICE:[VMS$COMMON]:
+
+ [SSL] - 
+ [SSL.ALPHA_EXE] - Contains the images for the Alpha platform. 
+ [SSL.ALPHA_LIB] - Contains the .OLBs for the Alpha platform. 
+ [SSL.CERTS] -     Directory to hold certificates 
+ [SSL.COM] -	   Directory to hold the various command procedures.
+ [SSL.CONF] -	   Contains the configuration files.
+ [SSL.INCLUDE] -   Contains the C Header (.H) files.
+ [SSL.PRIVATE] -   Files specifically for SSL use such as RANDFILE.
+ [SSL.TEST] -	   Contains the files used during the IVP.
+
+ 
+1 NOAXPVMS
+=prompt Minimum OpenVMS Alpha software not found on system, abort installation
+This kit requires a minimum OpenVMS Alpha version of V7.2.
+

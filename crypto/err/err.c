@@ -122,6 +122,11 @@
 static void err_load_strings(int lib, ERR_STRING_DATA *str);
 
 static void ERR_STATE_free(ERR_STATE *s);
+
+#ifdef _VMS
+void ExtractProgName (char *,char **);
+#endif
+
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA ERR_str_libraries[]=
 	{
@@ -642,7 +647,11 @@ void ERR_put_error(int lib, int func, int reason, const char *file,
 	if (es->top == es->bottom)
 		es->bottom=(es->bottom+1)%ERR_NUM_ERRORS;
 	es->err_buffer[es->top]=ERR_PACK(lib,func,reason);
+#ifdef _VMS
+	ExtractProgName ((char *)file, (char **)&es->err_file[es->top]);
+#else
 	es->err_file[es->top]=file;
+#endif
 	es->err_line[es->top]=line;
 	err_clear_data(es,es->top);
 	}
