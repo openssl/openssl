@@ -75,7 +75,7 @@
      'wristwatch attack' using huge encoding parameters (cf.
      James H. Manger's CRYPTO 2001 paper).  Note that the
      RSA_PKCS1_OAEP_PADDING case of RSA_private_decrypt() does not use
-     encoding paramters and hence was not vulnerable.
+     encoding parameters and hence was not vulnerable.
      [Bodo Moeller]
 
   *) BN_sqr() bug fix.
@@ -87,7 +87,7 @@
      [Bodo Moeller; pointed out by Adam Young <AYoung1@NCSUS.JNJ.COM>]
 
   *) Add BN_pseudo_rand_range() with obvious functionality: BN_rand_range()
-     requivalent based on BN_pseudo_rand() instead of BN_rand().
+     equivalent based on BN_pseudo_rand() instead of BN_rand().
      [Bodo Moeller]
 
   *) s3_srvr.c: allow sending of large client certificate lists (> 16 kB).
@@ -107,7 +107,7 @@
      The configuration part makes use of modern compiler features and
      still retains old compiler behavior for those that run older versions
      of the OS.  The shared library support part includes a variant that
-     uses the RPATH feature, and is available through the speciel
+     uses the RPATH feature, and is available through the special
      configuration target "alpha-cc-rpath", which will never be selected
      automatically.
      [Tim Mooney <mooney@dogbert.cc.ndsu.NoDak.edu> via Richard Levitte]
@@ -127,7 +127,7 @@
      [Lutz Jaenicke]
 
   *) Initialize static variable in crypto/dsa/dsa_lib.c and crypto/dh/dh_lib.c
-     explicitely to NULL, as at least on Solaris 8 this seems not always to be
+     explicitly to NULL, as at least on Solaris 8 this seems not always to be
      done automatically (in contradiction to the requirements of the C
      standard). This made problems when used from OpenSSH.
      [Lutz Jaenicke]
@@ -229,7 +229,7 @@
      [Ulf Möller, Bodo Möller]
 
   *) The countermeasure against Bleichbacher's attack on PKCS #1 v1.5
-     RSA encryption was accidentily removed in s3_srvr.c in OpenSSL 0.9.5
+     RSA encryption was accidentally removed in s3_srvr.c in OpenSSL 0.9.5
      when fixing the server behaviour for backwards-compatible 'client
      hello' messages.  (Note that the attack is impractical against
      SSL 3.0 and TLS 1.0 anyway because length and version checking
@@ -279,7 +279,7 @@
      combination of a flag and a thread ID variable.
      Otherwise while one thread is in ssleay_rand_bytes (which sets the
      flag), *other* threads can enter ssleay_add_bytes without obeying
-     the CRYPTO_LOCK_RAND lock (and may even illegaly release the lock
+     the CRYPTO_LOCK_RAND lock (and may even illegally release the lock
      that they do not hold after the first thread unsets add_do_not_lock).
      [Bodo Moeller]
 
