@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/03/13 21:39:34 $
+  ______________                           $Date: 2001/03/14 06:57:16 $
 
   DEVELOPMENT STATE
 
@@ -16,6 +16,13 @@
 		Missing line in ms/32all.bat:
 			perl util\mkfiles.pl >MINFO
 		[CORRECTED]
+		In randfile.c, line 214, signed and unsigned int are mixed.
+		In s_client.c and s_server.c, RAND_status() needs to get
+		declared (#include <oenssl/rand.h>)
+	OpenVMS (any version)			- FAILED [normal+engine]
+		Missing istructions in building script.
+	AIX 4.3					- FAILED [engine]
+		Needs -DDSO_DLFCN and -DHAVE_DLFCN_H to work.
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
     o  OpenSSL 0.9.5:  Released on February  28th, 2000
