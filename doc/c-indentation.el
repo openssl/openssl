@@ -14,13 +14,12 @@
 ; Apparently statement blocks that are not introduced by a statement
 ; such as "if" and that are not the body of a function cannot
 ; be handled too well by CC mode with this indentation style,
-; so you have to indent them manually.
-' 
+; so you have to indent them manually (you can use C-q tab).
+; 
 ; For suggesting improvements, please send e-mail to bodo@openssl.org.
 
 (c-add-style "eay"
-	     '((c-tab-always-indent . nil)
-	       (c-basic-offset . 8)
+	     '((c-basic-offset . 8)
 	       (c-comment-only-line-offset . 0)
 	       (c-hanging-braces-alist)
 	       (c-offsets-alist	. ((defun-open . +)
