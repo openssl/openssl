@@ -146,6 +146,8 @@ int MAIN(int argc, char **argv)
 				}
 			else if (strcmp(*argv,"-help") == 0)
 				goto end;
+			else if (strcmp(*argv,"-ignore_critical") == 0)
+				vflags |= X509_V_FLAG_IGNORE_CRITICAL;
 			else if (strcmp(*argv,"-issuer_checks") == 0)
 				vflags |= X509_V_FLAG_CB_ISSUER_CHECK;
 			else if (strcmp(*argv,"-crl_check") == 0)
@@ -343,6 +345,7 @@ static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 		if (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ok=1;
 		if (ctx->error == X509_V_ERR_CRL_HAS_EXPIRED) ok=1;
 		if (ctx->error == X509_V_ERR_CRL_NOT_YET_VALID) ok=1;
+		if (ctx->error == X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION) ok=1;
 		}
 	if (!v_verbose)
 		ERR_clear_error();

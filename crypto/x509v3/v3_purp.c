@@ -1,9 +1,9 @@
 /* v3_purp.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+ * project 2001.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -266,12 +266,51 @@ int X509_PURPOSE_get_trust(X509_PURPOSE *xp)
 	return xp->trust;
 }
 
+static int nid_cmp(int *a, int *b)
+	{
+	return *a - *b;
+	}
+
+int X509_supported_extension(X509_EXTENSION *ex)
+	{
+	/* This table is a list of the NIDs of supported extensions:
+	 * that is those which are used by the verify process. If
+	 * an extension is critical and doesn't appear in this list
+	 * then the verify process will normally reject the certificate.
+	 * The list must be kept in numerical order because it will be
+	 * searched using bsearch.
+	 */
+
+	static int supported_nids[] = {
+		NID_netscape_cert_type, /* 71 */
+        	NID_key_usage,		/* 83 */
+		NID_subject_alt_name,	/* 85 */
+		NID_basic_constraints,	/* 87 */
+        	NID_ext_key_usage	/* 126 */
+	};
+
+	int ex_nid;
+
+	ex_nid = OBJ_obj2nid(X509_EXTENSION_get_object(ex));
+
+	if (ex_nid == NID_undef) 
+		return 0;
+
+	if (OBJ_bsearch((char *)&ex_nid, (char *)supported_nids,
+		sizeof(supported_nids)/sizeof(int), sizeof(int),
+		(int (*)(const void *, const void *))nid_cmp))
+		return 1;
+	return 0;
+	}
+ 
+
 static void x509v3_cache_extensions(X509 *x)
 {
 	BASIC_CONSTRAINTS *bs;
 	ASN1_BIT_STRING *usage;
 	ASN1_BIT_STRING *ns;
 	EXTENDED_KEY_USAGE *extusage;
+	X509_EXTENSION *ex;
 	
 	int i;
 	if(x->ex_flags & EXFLAG_SET) return;
@@ -352,6 +391,17 @@ static void x509v3_cache_extensions(X509 *x)
 	}
 	x->skid =X509_get_ext_d2i(x, NID_subject_key_identifier, NULL, NULL);
 	x->akid =X509_get_ext_d2i(x, NID_authority_key_identifier, NULL, NULL);
+	for (i = 0; i < X509_get_ext_count(x); i++)
+		{
+		ex = X509_get_ext(x, i);
+		if (!X509_EXTENSION_get_critical(ex))
+			continue;
+		if (!X509_supported_extension(ex))
+			{
+			x->ex_flags |= EXFLAG_CRITICAL;
+			break;
+			}
+		}
 	x->ex_flags |= EXFLAG_SET;
 }
 

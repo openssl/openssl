@@ -12,6 +12,15 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Test for certificates which contain unsupported critical extensions.
+     If such a certificate is found during a verify operation it is 
+     rejected by default: this behaviour can be overridden by either
+     handling the new error X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION or
+     by setting the verify flag X509_V_FLAG_IGNORE_CRITICAL. A new function
+     X509_supported_extension() has also been added which returns 1 if a
+     particular extension is supported.
+     [Steve Henson]
+
   +) New functions/macros
 
           SSL_CTX_set_msg_callback(ctx, cb)

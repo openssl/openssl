@@ -324,6 +324,7 @@ DECLARE_ASN1_SET_OF(POLICYINFO)
 #define EXFLAG_V1		0x40
 #define EXFLAG_INVALID		0x80
 #define EXFLAG_SET		0x100
+#define EXFLAG_CRITICAL		0x200
 
 #define KU_DIGITAL_SIGNATURE	0x0080
 #define KU_NON_REPUDIATION	0x0040
@@ -528,6 +529,7 @@ int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
 int X509V3_extensions_print(BIO *out, char *title, STACK_OF(X509_EXTENSION) *exts, unsigned long flag, int indent);
 
 int X509_check_purpose(X509 *x, int id, int ca);
+int X509_supported_extension(X509_EXTENSION *ex);
 int X509_PURPOSE_set(int *p, int purpose);
 int X509_check_issued(X509 *issuer, X509 *subject);
 int X509_PURPOSE_get_count(void);

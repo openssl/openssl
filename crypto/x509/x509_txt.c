@@ -144,6 +144,9 @@ const char *X509_verify_cert_error_string(long n)
 	case X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER:
 		return("unable to get CRL issuer certificate");
 
+	case X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION:
+		return("unhandled critical extension");
+
 	default:
 		sprintf(buf,"error number %ld",n);
 		return(buf);

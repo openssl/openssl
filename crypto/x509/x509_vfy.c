@@ -384,6 +384,15 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 	for (i = 0; i < ctx->last_untrusted; i++)
 		{
 		x = sk_X509_value(ctx->chain, i);
+		if (!(ctx->flags & X509_V_FLAG_IGNORE_CRITICAL)
+			&& (x->ex_flags & EXFLAG_CRITICAL))
+			{
+			ctx->error = X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION;
+			ctx->error_depth = i;
+			ctx->current_cert = x;
+			ok=cb(0,ctx);
+			if (!ok) goto end;
+			}
 		if (!X509_check_purpose(x, ctx->purpose, i))
 			{
 			if (i)
@@ -720,8 +729,6 @@ static int internal_verify(X509_STORE_CTX *ctx)
 			ok=(*cb)(0,ctx);
 			if (!ok) goto end;
 			}
-
-		/* CRL CHECK */
 
 		/* The last error (if any) is still in the error value */
 		ctx->current_cert=xs;
