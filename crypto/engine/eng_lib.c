@@ -160,7 +160,7 @@ void engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb)
 static void engine_cleanup_cb_free(ENGINE_CLEANUP_ITEM *item)
 	{
 	(*(item->cb))();
-	OPENSSL_free(cb);
+	OPENSSL_free(item);
 	}
 void ENGINE_cleanup(void)
 	{
