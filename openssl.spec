@@ -7,7 +7,7 @@ Release: 1
 %define openssldir /var/ssl
 
 Summary: Secure Sockets Layer and cryptography libraries and tools
-Name: openssl
+Name: openssl-engine
 Version: %{libmaj}.%{libmin}.%{librel}
 #Version: %{libmaj}.%{libmin}.%{librel}%{librev}
 Source0: ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
@@ -38,7 +38,7 @@ libraries and tools.
 %package devel
 Summary: Secure Sockets Layer and cryptography static libraries and headers
 Group: Development/Libraries
-Requires: openssl
+Requires: openssl-engine
 %description devel
 The OpenSSL Project is a collaborative effort to develop a robust,
 commercial-grade, fully featured, and Open Source toolkit implementing the
@@ -59,7 +59,7 @@ static libraries and header files required when developing applications.
 %package doc
 Summary: OpenSSL miscellaneous files
 Group: Documentation
-Requires: openssl
+Requires: openssl-engine
 %description doc
 The OpenSSL Project is a collaborative effort to develop a robust,
 commercial-grade, fully featured, and Open Source toolkit implementing the
@@ -88,13 +88,16 @@ documentation and POD files from which the man pages were produced.
 perl util/perlpath.pl /usr/bin/perl
 
 %ifarch i386 i486 i586 i686
-./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-elf shared
+./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-elf
+#!#./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-elf shared
 %endif
 %ifarch ppc
-./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-ppc shared
+./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-ppc
+#!#./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-ppc shared
 %endif
 %ifarch alpha
-./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha shared
+./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha
+#!#./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha shared
 %endif
 LD_LIBRARY_PATH=`pwd` make
 LD_LIBRARY_PATH=`pwd` make rehash
@@ -118,15 +121,15 @@ ln -s /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay
 
 # Install shared libs
 install -m644 libcrypto.a $RPM_BUILD_ROOT/usr/lib
-install -m755 libcrypto.so.%{libmaj}.%{libmin}.%{librel} $RPM_BUILD_ROOT/usr/lib
+#!#install -m755 libcrypto.so.%{libmaj}.%{libmin}.%{librel} $RPM_BUILD_ROOT/usr/lib
 install -m644 libssl.a $RPM_BUILD_ROOT/usr/lib
-install -m755 libssl.so.%{libmaj}.%{libmin}.%{librel} $RPM_BUILD_ROOT/usr/lib
+#!#install -m755 libssl.so.%{libmaj}.%{libmin}.%{librel} $RPM_BUILD_ROOT/usr/lib
 (
 	cd $RPM_BUILD_ROOT/usr/lib
-	ln -s libcrypto.so.%{libmaj}.%{libmin}.%{librel} libcrypto.so.%{libmaj}
-	ln -s libcrypto.so.%{libmaj}.%{libmin}.%{librel} libcrypto.so
-	ln -s libssl.so.%{libmaj}.%{libmin}.%{librel} libssl.so.%{libmaj}
-	ln -s libssl.so.%{libmaj}.%{libmin}.%{librel} libssl.so
+	#!#ln -s libcrypto.so.%{libmaj}.%{libmin}.%{librel} libcrypto.so.%{libmaj}
+	#!#ln -s libcrypto.so.%{libmaj}.%{libmin}.%{librel} libcrypto.so
+	#!#ln -s libssl.so.%{libmaj}.%{libmin}.%{librel} libssl.so.%{libmaj}
+	#!#ln -s libssl.so.%{libmaj}.%{libmin}.%{librel} libssl.so
 )
 
 %clean
@@ -137,7 +140,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc CHANGES CHANGES.SSLeay LICENSE NEWS README
 
 %attr(0755,root,root) /usr/bin/*
-%attr(0755,root,root) /usr/lib/*.so*
+#!#%attr(0755,root,root) /usr/lib/*.so*
 %attr(0755,root,root) %{openssldir}/misc/*
 %attr(0644,root,root) /usr/man/man[157]/*
 
