@@ -69,8 +69,9 @@ typedef struct _tunala_world_t {
 static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		const char *CAfile, const char *cert, const char *key,
 		const char *dcert, const char *dkey, const char *cipher_list,
-		const char *dh_file, const char *dh_special, int out_state,
-		int out_verify, int verify_mode, unsigned int verify_depth);
+		const char *dh_file, const char *dh_special, int ctx_options,
+		int out_state, int out_verify, int verify_mode,
+		unsigned int verify_depth);
 static void selector_init(tunala_selector_t *selector);
 static void selector_add_listener(tunala_selector_t *selector, int fd);
 static void selector_add_tunala(tunala_selector_t *selector, tunala_item_t *t);
@@ -100,11 +101,12 @@ static int def_server_mode = 0;
 static const char *def_cipher_list = NULL;
 static const char *def_dh_file = NULL;
 static const char *def_dh_special = NULL;
+static int def_ctx_options = 0;
+static int def_verify_mode = 0;
+static unsigned int def_verify_depth = 10;
 static int def_out_state = 0;
 static unsigned int def_out_verify = 0;
 static int def_out_totals = 0;
-static int def_verify_mode = 0;
-static unsigned int def_verify_depth = 10;
 
 static const char *helpstring =
 "\n'Tunala' (A tunneler with a New Zealand accent)\n"
@@ -122,13 +124,16 @@ static const char *helpstring =
 " -cipher <list>         (specifies cipher list to use)\n"
 " -dh_file <path>        (a PEM file containing DH parameters to use)\n"
 " -dh_special <NULL|generate|standard> (see below: def=NULL)\n"
-" -out_state             (prints SSL handshake states)\n"
-" -out_verify <0|1|2|3>  (prints certificate verification states: def=1)\n"
-" -out_totals            (prints out byte-totals when a tunnel closes)\n"
+" -no_ssl2               (disable SSLv2)\n"
+" -no_ssl3               (disable SSLv3)\n"
+" -no_tls1               (disable TLSv1)\n"
 " -v_peer                (verify the peer certificate)\n"
 " -v_strict              (do not continue if peer doesn't authenticate)\n"
 " -v_once                (no verification in renegotiates)\n"
 " -v_depth <num>         (limit certificate chain depth, default = 10)\n"
+" -out_state             (prints SSL handshake states)\n"
+" -out_verify <0|1|2|3>  (prints certificate verification states: def=1)\n"
+" -out_totals            (prints out byte-totals when a tunnel closes)\n"
 " -<h|help|?>            (displays this help screen)\n"
 "Notes:\n"
 "(1) It is recommended to specify a cert+key when operating as an SSL server.\n"
@@ -292,11 +297,12 @@ int main(int argc, char *argv[])
 	const char *cipher_list = def_cipher_list;
 	const char *dh_file = def_dh_file;
 	const char *dh_special = def_dh_special;
+	int ctx_options = def_ctx_options;
+	int verify_mode = def_verify_mode;
+	unsigned int verify_depth = def_verify_depth;
 	int out_state = def_out_state;
 	unsigned int out_verify = def_out_verify;
 	int out_totals = def_out_totals;
-	int verify_mode = def_verify_mode;
-	unsigned int verify_depth = def_verify_depth;
 
 /* Parse command-line arguments */
 next_arg:
@@ -404,18 +410,14 @@ next_arg:
 			if(!parse_dh_special(*argv, &dh_special))
 				return 1;
 			goto next_arg;
-		} else if(strcmp(*argv, "-out_state") == 0) {
-			out_state = 1;
+		} else if(strcmp(*argv, "-no_ssl2") == 0) {
+			ctx_options |= SSL_OP_NO_SSLv2;
 			goto next_arg;
-		} else if(strcmp(*argv, "-out_verify") == 0) {
-			if(argc < 2)
-				return usage("-out_verify requires an argument", 0);
-			argc--; argv++;
-			if(!parse_verify_level(*argv, &out_verify))
-				return 1;
+		} else if(strcmp(*argv, "-no_ssl3") == 0) {
+			ctx_options |= SSL_OP_NO_SSLv3;
 			goto next_arg;
-		} else if(strcmp(*argv, "-out_totals") == 0) {
-			out_totals = 1;
+		} else if(strcmp(*argv, "-no_tls1") == 0) {
+			ctx_options |= SSL_OP_NO_TLSv1;
 			goto next_arg;
 		} else if(strcmp(*argv, "-v_peer") == 0) {
 			verify_mode |= SSL_VERIFY_PEER;
@@ -433,6 +435,19 @@ next_arg:
 			if(!parse_verify_depth(*argv, &verify_depth))
 				return 1;
 			goto next_arg;
+		} else if(strcmp(*argv, "-out_state") == 0) {
+			out_state = 1;
+			goto next_arg;
+		} else if(strcmp(*argv, "-out_verify") == 0) {
+			if(argc < 2)
+				return usage("-out_verify requires an argument", 0);
+			argc--; argv++;
+			if(!parse_verify_level(*argv, &out_verify))
+				return 1;
+			goto next_arg;
+		} else if(strcmp(*argv, "-out_totals") == 0) {
+			out_totals = 1;
+			goto next_arg;
 		} else if((strcmp(*argv, "-h") == 0) ||
 				(strcmp(*argv, "-help") == 0) ||
 				(strcmp(*argv, "-?") == 0)) {
@@ -449,8 +464,8 @@ next_arg:
 	/* Create the SSL_CTX */
 	if((world.ssl_ctx = initialise_ssl_ctx(server_mode, engine_id,
 			cacert, cert, key, dcert, dkey, cipher_list, dh_file,
-			dh_special, out_state, out_verify, verify_mode,
-			verify_depth)) == NULL)
+			dh_special, ctx_options, out_state, out_verify,
+			verify_mode, verify_depth)) == NULL)
 		return err_str1("initialise_ssl_ctx(engine_id=%s) failed",
 			(engine_id == NULL) ? "NULL" : engine_id);
 	err_str1("initialise_ssl_ctx(engine_id=%s) succeeded",
@@ -680,8 +695,9 @@ do_it:
 static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		const char *CAfile, const char *cert, const char *key,
 		const char *dcert, const char *dkey, const char *cipher_list,
-		const char *dh_file, const char *dh_special, int out_state,
-		int out_verify, int verify_mode, unsigned int verify_depth)
+		const char *dh_file, const char *dh_special, int ctx_options,
+		int out_state, int out_verify, int verify_mode,
+		unsigned int verify_depth)
 {
 	SSL_CTX *ctx, *ret = NULL;
 	SSL_METHOD *meth;
@@ -746,6 +762,9 @@ static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 	/* dh_file & dh_special */
 	if((dh_file || dh_special) && !ctx_set_dh(ctx, dh_file, dh_special))
 		goto err;
+
+	/* ctx_options */
+	SSL_CTX_set_options(ctx, ctx_options);
 
 	/* out_state (output of SSL handshake states to screen). */
 	if(out_state)
