@@ -4,6 +4,19 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Change the ENGINE framework to automatically load engines
+     dynamically from specific directories unless they could be
+     found to already be built in or loaded.  Move all the
+     current engines except for the cryptodev one to a new
+     directory engines/.
+     The engines in engines/ are built as shared libraries if
+     the "shared" options was given to ./Configure or ./config.
+     Otherwise, they are inserted in libcrypto.a.
+     /usr/local/ssl/engines is the default directory for dynamic
+     engines, but that can be overriden with the environment
+     variable OPENSSL_ENGINES.
+     [Geoff Thorpe and Richard Levitte]
+
   *) Add Makefile.shared, a helper makefile to build shared
      libraries.  Addapt Makefile.org.
      [Richard Levitte]
