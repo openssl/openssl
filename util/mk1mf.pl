@@ -62,6 +62,7 @@ and [options] can be one of
 	just-ssl				- remove all non-ssl keys/digest
 	no-asm 					- No x86 asm
 	no-krb5					- No KRB5
+	no-ec					- No EC
 	nasm 					- Use NASM for x86 asm
 	gaswin					- Use GNU as with Mingw32
 	no-socks				- No socket code
@@ -224,7 +225,8 @@ $cflags.=" -DOPENSSL_NO_SOCK" if $no_sock;
 $cflags.=" -DOPENSSL_NO_SSL2" if $no_ssl2;
 $cflags.=" -DOPENSSL_NO_SSL3" if $no_ssl3;
 $cflags.=" -DOPENSSL_NO_ERR"  if $no_err;
-$cflags.=" -DOPENSSL_NO_KRB5"  if $no_krb5;
+$cflags.=" -DOPENSSL_NO_KRB5" if $no_krb5;
+$cflags.=" -DOPENSSL_NO_EC"   if $no_ec;
 #$cflags.=" -DRSAref"  if $rsaref ne "";
 
 ## if ($unix)
@@ -882,6 +884,7 @@ sub read_options
 	elsif (/^no-err$/)	{ $no_err=1; }
 	elsif (/^no-sock$/)	{ $no_sock=1; }
 	elsif (/^no-krb5$/)	{ $no_krb5=1; }
+	elsif (/^no-ec$/)	{ $no_ec=1; }
 
 	elsif (/^just-ssl$/)	{ $no_rc2=$no_idea=$no_des=$no_bf=$no_cast=1;
 				  $no_md2=$no_sha=$no_mdc2=$no_dsa=$no_dh=1;
