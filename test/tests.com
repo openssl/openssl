@@ -159,7 +159,7 @@ RECORD
 $	create/fdl=bntest-vms.fdl bntest-vms.sh
 $	open/append foo bntest-vms.sh
 $	type/output=foo: sys$input:
-<< __FOO__ sh -c "`sh ./bctest`" | $(PERL) -e '$$i=0; while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $$1";} elsif (!/^0$$/) {die "\nFailed! bc: $$_";} else {print STDERR "."; $$i++;}} print STDERR "\n$$i tests passed\n"'
+<< __FOO__ sh -c "`sh ./bctest`" | perl -e '$i=0; while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $1";} elsif (!/^0$/) {die "\nFailed! bc: $_";} else {print STDERR "."; $i++;}} print STDERR "\n$i tests passed\n"'
 $	define/user sys$output bntest-vms.tmp
 $	mcr 'texe_dir''bntest'
 $	copy bntest-vms.tmp foo:
@@ -167,8 +167,9 @@ $	delete bntest-vms.tmp;*
 $	type/output=foo: sys$input:
 __FOO__
 $	close foo
-$	write sys$output "-- copy the [.test]bntest-vms.sh file to a Unix system and run it"
-$	write sys$output "-- through sh or bash to verify that the bignum operations went well."
+$	write sys$output "-- copy the [.test]bntest-vms.sh and [.test]bctest files to a Unix system and"
+$	write sys$output "-- run bntest-vms.sh through sh or bash to verify that the bignum operations"
+$	write sys$output "-- went well."
 $	write sys$output ""
 $	write sys$output "test a^b%c implementations"
 $	mcr 'texe_dir''exptest'
