@@ -1434,8 +1434,8 @@ DES_decrypt3:
 
 #ifdef OPENSSL_PIC
 	! In case anybody wonders why this code is same for both ABI.
-	! To start with it's not. Do note LDPTR below. But of course
-	! you must be wondering why the rest of it doesn't contain
+	! To start with it is not. Do note LDPTR below. But of course
+	! you must be wondering why the rest of it does not contain
 	! things like %hh, %hm and %lm. Well, those are needed only
 	! if OpenSSL library *itself* will become larger than 4GB,
 	! which is not going to happen any time soon. 
