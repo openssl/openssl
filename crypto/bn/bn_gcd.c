@@ -330,7 +330,7 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 		}
 	else
 		{
-		/* general inversion algorithm (less efficient than binary inversion) */
+		/* general inversion algorithm */
 
 		while (!BN_is_zero(B))
 			{
