@@ -59,6 +59,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/dso.h>
@@ -509,7 +510,7 @@ static int ubsec_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		ENGINEerr(ENGINE_F_UBSEC_MOD_EXP, ENGINE_R_BN_EXPAND_FAIL);
 		goto err;
 		}
-	bzero(r->d, BN_num_bytes(m));
+	memset(r->d, 0, BN_num_bytes(m));
 
 	if ((fd = p_UBSEC_ubsec_open(UBSEC_KEY_DEVICE_NAME)) <= 0) 
 	        {
