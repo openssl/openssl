@@ -9,6 +9,7 @@ OpenSSL  -  Frequently Asked Questions
 * Where can I get a compiled version of OpenSSL?
 * Why aren't tools like 'autoconf' and 'libtool' used?
 * What is an 'engine' version?
+* How do I check the authenticity of the OpenSSL distribution?
 
 [LEGAL] Legal questions
 
@@ -135,6 +136,19 @@ With version 0.9.6 OpenSSL was extended to interface to external crypto
 hardware. This was realized in a special release '0.9.6-engine'. With
 version 0.9.7 (not yet released) the changes were merged into the main
 development line, so that the special release is no longer necessary.
+
+* How do I check the authenticity of the OpenSSL distribution?
+
+We provide MD5 digests and ASC signatures of each tarball.
+Use MD5 to check that a tarball from a mirror site is identical:
+
+   md5sum TARBALL | awk '{print $1;}' | cmp - TARBALL.md5
+
+You can check authenticity using pgp or gpg. You need the OpenSSL team
+member public key used to sign it (download it from a key server). Then
+just do:
+
+   pgp TARBALL.asc
 
 [LEGAL] =======================================================================
 
