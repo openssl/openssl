@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -117,7 +117,7 @@
 #include "ssl_locl.h"
 
 static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
-			 unsigned int len);
+			 unsigned int len, int create_empty_fragment);
 static int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 			      unsigned int len);
 static int ssl3_get_record(SSL *s);
@@ -162,9 +162,7 @@ static int ssl3_read_n(SSL *s, int n, int max, int extend)
 
 	{
 		/* avoid buffer overflow */
-		int max_max = SSL3_RT_MAX_PACKET_SIZE - s->packet_length;
-		if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
-			max_max += SSL3_RT_MAX_EXTRA;
+		int max_max = s->s3->rbuf.len - s->packet_length;
 		if (max > max_max)
 			max = max_max;
 	}
@@ -247,14 +245,20 @@ static int ssl3_get_record(SSL *s)
 		extra=SSL3_RT_MAX_EXTRA;
 	else
 		extra=0;
+	if (extra != (s->s3->rbuf.len - SSL3_RT_MAX_PACKET_SIZE))
+		{
+		/* actually likely an application error: SLS_OP_MICROSOFT_BIG_SSLV3_BUFFER
+		 * set after ssl3_setup_buffers() was done */
+		SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
+		return -1;
+		}
 
 again:
 	/* check if we have the header */
 	if (	(s->rstate != SSL_ST_READ_BODY) ||
 		(s->packet_length < SSL3_RT_HEADER_LENGTH)) 
 		{
-		n=ssl3_read_n(s,SSL3_RT_HEADER_LENGTH,
-			SSL3_RT_MAX_PACKET_SIZE,0);
+		n=ssl3_read_n(s, SSL3_RT_HEADER_LENGTH, s->s3->rbuf.len, 0);
 		if (n <= 0) return(n); /* error or non-blocking */
 		s->rstate=SSL_ST_READ_BODY;
 
@@ -509,7 +513,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 		if (i == 0)
 			{
 			SSLerr(SSL_F_SSL3_WRITE_BYTES,SSL_R_SSL_HANDSHAKE_FAILURE);
-			return(-1);
+			return -1;
 			}
 		}
 
@@ -521,18 +525,22 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 		else
 			nw=n;
 
-		i=do_ssl3_write(s,type,&(buf[tot]),nw);
+		i=do_ssl3_write(s, type, &(buf[tot]), nw, 0);
 		if (i <= 0)
 			{
 			s->s3->wnum=tot;
-			return(i);
+			return i;
 			}
 
 		if ((i == (int)n) ||
 			(type == SSL3_RT_APPLICATION_DATA &&
 			 (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE)))
 			{
-			return(tot+i);
+			/* next chunk of data should get another prepended empty fragment
+			 * in ciphersuites with known-IV weakness: */
+			s->s3->empty_fragment_done = 0;
+			
+			return tot+i;
 			}
 
 		n-=i;
@@ -541,15 +549,16 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 	}
 
 static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
-			 unsigned int len)
+			 unsigned int len, int create_empty_fragment)
 	{
 	unsigned char *p,*plen;
 	int i,mac_size,clear=0;
+	int prefix_len = 0;
 	SSL3_RECORD *wr;
 	SSL3_BUFFER *wb;
 	SSL_SESSION *sess;
 
-	/* first check is there is a SSL3_RECORD still being written
+	/* first check if there is a SSL3_BUFFER still being written
 	 * out.  This will happen with non blocking IO */
 	if (s->s3->wbuf.left != 0)
 		return(ssl3_write_pending(s,type,buf,len));
@@ -563,7 +572,8 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 		/* if it went, fall through and send more stuff */
 		}
 
-	if (len == 0) return(len);
+	if (len == 0 && !create_empty_fragment)
+		return 0;
 
 	wr= &(s->s3->wrec);
 	wb= &(s->s3->wbuf);
@@ -579,16 +589,44 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	else
 		mac_size=EVP_MD_size(s->write_hash);
 
-	p=wb->buf;
+	/* 'create_empty_fragment' is true only when this function calls itself */
+	if (!clear && !create_empty_fragment && !s->s3->empty_fragment_done)
+		{
+		/* countermeasure against known-IV weakness in CBC ciphersuites
+		 * (see http://www.openssl.org/~bodo/tls-cbc.txt) */
+
+		if (s->s3->need_empty_fragments && type == SSL3_RT_APPLICATION_DATA)
+			{
+			/* recursive function call with 'create_empty_fragment' set;
+			 * this prepares and buffers the data for an empty fragment
+			 * (these 'prefix_len' bytes are sent out later
+			 * together with the actual payload) */
+			prefix_len = do_ssl3_write(s, type, buf, 0, 1);
+			if (prefix_len <= 0)
+				goto err;
+
+			if (s->s3->wbuf.len < prefix_len + SSL3_RT_MAX_PACKET_SIZE)
+				{
+				/* insufficient space */
+				SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
+			}
+		
+		s->s3->empty_fragment_done = 1;
+		}
+
+	p = wb->buf + prefix_len;
 
 	/* write the header */
+
 	*(p++)=type&0xff;
 	wr->type=type;
 
 	*(p++)=(s->version>>8);
 	*(p++)=s->version&0xff;
 
-	/* record where we are to write out packet length */
+	/* field where we are to write out packet length */
 	plen=p; 
 	p+=2;
 
@@ -639,19 +677,28 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	wr->type=type; /* not needed but helps for debugging */
 	wr->length+=SSL3_RT_HEADER_LENGTH;
 
-	/* Now lets setup wb */
-	wb->left=wr->length;
-	wb->offset=0;
+	if (create_empty_fragment)
+		{
+		/* we are in a recursive call;
+		 * just return the length, don't write out anything here
+		 */
+		return wr->length;
+		}
 
+	/* now let's set up wb */
+	wb->left = prefix_len + wr->length;
+	wb->offset = 0;
+
+	/* memorize arguments so that ssl3_write_pending can detect bad write retries later */
 	s->s3->wpend_tot=len;
 	s->s3->wpend_buf=buf;
 	s->s3->wpend_type=type;
 	s->s3->wpend_ret=len;
 
 	/* we now just need to write the buffer */
-	return(ssl3_write_pending(s,type,buf,len));
+	return ssl3_write_pending(s,type,buf,len);
 err:
-	return(-1);
+	return -1;
 	}
 
 /* if s->s3->wbuf.left != 0, we need to call this */
@@ -1124,7 +1171,7 @@ start:
 					)
 				))
 			{
-			s->s3->in_read_app_data=0;
+			s->s3->in_read_app_data=2;
 			return(-1);
 			}
 		else
@@ -1210,7 +1257,7 @@ int ssl3_dispatch_alert(SSL *s)
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 
 	s->s3->alert_dispatch=0;
-	i=do_ssl3_write(s,SSL3_RT_ALERT,&s->s3->send_alert[0],2);
+	i = do_ssl3_write(s, SSL3_RT_ALERT, &s->s3->send_alert[0], 2, 0);
 	if (i <= 0)
 		{
 		s->s3->alert_dispatch=1;

@@ -727,7 +727,7 @@ static int ssl3_get_client_hello(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_NO_CIPHERS_SPECIFIED);
 		goto f_err;
 		}
-	if ((i+p) > (d+n))
+	if ((p+i) >= (d+n))
 		{
 		/* not enough data */
 		al=SSL_AD_DECODE_ERROR;
@@ -784,6 +784,13 @@ static int ssl3_get_client_hello(SSL *s)
 
 	/* compression */
 	i= *(p++);
+	if ((p+i) > (d+n))
+		{
+		/* not enough data */
+		al=SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_LENGTH_MISMATCH);
+		goto f_err;
+		}
 	q=p;
 	for (j=0; j<i; j++)
 		{
@@ -831,7 +838,7 @@ static int ssl3_get_client_hello(SSL *s)
 	/* TLS does not mind if there is extra stuff */
 	if (s->version == SSL3_VERSION)
 		{
-		if (p > (d+n))
+		if (p < (d+n))
 			{
 			/* wrong number of bytes,
 			 * there could be more to follow */
