@@ -788,10 +788,10 @@ padlock_aes_init_key (EVP_CIPHER_CTX *ctx, const unsigned char *key,
 				AES_set_encrypt_key(key, key_len, &cdata->ks);
 			else
 				AES_set_decrypt_key(key, key_len, &cdata->ks);
-
-			/* OpenSSL internal functions use byte-swapped extended key. */
+#ifndef AES_ASM
+			/* OpenSSL C functions use byte-swapped extended key. */
 			padlock_bswapl(&cdata->ks);
-
+#endif
 			cdata->cword.b.keygen = 1;
 			break;
 
