@@ -71,8 +71,6 @@ print OUT "Target:           $platform\n";
 print OUT "Compiler:         $cversion\n";
 print OUT "\n";
 
-goto err;
-
 print "Checking compiler...\n";
 if (open(TEST,">test.c")) {
     print TEST "#include <stdio.h>\nmain(){printf(\"Hello world\\n\");}\n";
