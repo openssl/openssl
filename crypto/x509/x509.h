@@ -167,6 +167,9 @@ typedef struct X509_extension_st
 	void (*ex_free)();		/* clear argp stuff */
 	} X509_EXTENSION;
 
+DECLARE_STACK_OF(X509_EXTENSION)
+DECLARE_ASN1_SET_OF(X509_EXTENSION)
+
 /* a sequence of these are used */
 typedef struct x509_attributes_st
 	{
@@ -211,7 +214,7 @@ typedef struct x509_cinf_st
 	X509_PUBKEY *key;
 	ASN1_BIT_STRING *issuerUID;		/* [ 1 ] optional in v2 */
 	ASN1_BIT_STRING *subjectUID;		/* [ 2 ] optional in v2 */
-	STACK /* X509_EXTENSION */ *extensions;	/* [ 3 ] optional in v3 */
+	STACK_OF(X509_EXTENSION) *extensions;	/* [ 3 ] optional in v3 */
 	} X509_CINF;
 
 typedef struct x509_st
@@ -231,7 +234,7 @@ typedef struct X509_revoked_st
 	{
 	ASN1_INTEGER *serialNumber;
 	ASN1_UTCTIME *revocationDate;
-	STACK /* optional X509_EXTENSION */ *extensions;
+	STACK_OF(X509_EXTENSION) /* optional */ *extensions;
 	int sequence; /* load sequence */
 	} X509_REVOKED;
 
@@ -243,7 +246,7 @@ typedef struct X509_crl_info_st
 	ASN1_UTCTIME *lastUpdate;
 	ASN1_UTCTIME *nextUpdate;
 	STACK /* X509_REVOKED */ *revoked;
-	STACK /* [0] X509_EXTENSION */ *extensions;
+	STACK_OF(X509_EXTENSION) /* [0] */ *extensions;
 	} X509_CRL_INFO;
 
 typedef struct X509_crl_st
@@ -810,13 +813,17 @@ int 		X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
 ASN1_OBJECT *	X509_NAME_ENTRY_get_object(X509_NAME_ENTRY *ne);
 ASN1_STRING *	X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne);
 
-int		X509v3_get_ext_count(STACK *x);
-int		X509v3_get_ext_by_NID(STACK *x, int nid, int lastpos);
-int		X509v3_get_ext_by_OBJ(STACK *x,ASN1_OBJECT *obj,int lastpos);
-int		X509v3_get_ext_by_critical(STACK *x, int crit, int lastpos);
-X509_EXTENSION *X509v3_get_ext(STACK *x, int loc);
-X509_EXTENSION *X509v3_delete_ext(STACK *x, int loc);
-STACK *		X509v3_add_ext(STACK **x, X509_EXTENSION *ex, int loc);
+int		X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x);
+int		X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x,
+				      int nid, int lastpos);
+int		X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *x,
+				      ASN1_OBJECT *obj,int lastpos);
+int		X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *x,
+					   int crit, int lastpos);
+X509_EXTENSION *X509v3_get_ext(const STACK_OF(X509_EXTENSION) *x, int loc);
+X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc);
+STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
+					 X509_EXTENSION *ex, int loc);
 
 int		X509_get_ext_count(X509 *x);
 int		X509_get_ext_by_NID(X509 *x, int nid, int lastpos);

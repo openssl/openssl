@@ -64,13 +64,14 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
-int X509v3_get_ext_count(STACK *x)
+int X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x)
 	{
 	if (x == NULL) return(0);
-	return(sk_num(x));
+	return(sk_X509_EXTENSION_num(x));
 	}
 
-int X509v3_get_ext_by_NID(STACK *x, int nid, int lastpos)
+int X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid,
+			  int lastpos)
 	{
 	ASN1_OBJECT *obj;
 
@@ -79,7 +80,8 @@ int X509v3_get_ext_by_NID(STACK *x, int nid, int lastpos)
 	return(X509v3_get_ext_by_OBJ(x,obj,lastpos));
 	}
 
-int X509v3_get_ext_by_OBJ(STACK *sk, ASN1_OBJECT *obj, int lastpos)
+int X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk, ASN1_OBJECT *obj,
+			  int lastpos)
 	{
 	int n;
 	X509_EXTENSION *ex;
@@ -88,17 +90,18 @@ int X509v3_get_ext_by_OBJ(STACK *sk, ASN1_OBJECT *obj, int lastpos)
 	lastpos++;
 	if (lastpos < 0)
 		lastpos=0;
-	n=sk_num(sk);
+	n=sk_X509_EXTENSION_num(sk);
 	for ( ; lastpos < n; lastpos++)
 		{
-		ex=(X509_EXTENSION *)sk_value(sk,lastpos);
+		ex=sk_X509_EXTENSION_value(sk,lastpos);
 		if (OBJ_cmp(ex->object,obj) == 0)
 			return(lastpos);
 		}
 	return(-1);
 	}
 
-int X509v3_get_ext_by_critical(STACK *sk, int crit, int lastpos)
+int X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int crit,
+			       int lastpos)
 	{
 	int n;
 	X509_EXTENSION *ex;
@@ -107,10 +110,10 @@ int X509v3_get_ext_by_critical(STACK *sk, int crit, int lastpos)
 	lastpos++;
 	if (lastpos < 0)
 		lastpos=0;
-	n=sk_num(sk);
+	n=sk_X509_EXTENSION_num(sk);
 	for ( ; lastpos < n; lastpos++)
 		{
-		ex=(X509_EXTENSION *)sk_value(sk,lastpos);
+		ex=sk_X509_EXTENSION_value(sk,lastpos);
 		if (	(ex->critical && crit) ||
 			(!ex->critical && !crit))
 			return(lastpos);
@@ -118,45 +121,46 @@ int X509v3_get_ext_by_critical(STACK *sk, int crit, int lastpos)
 	return(-1);
 	}
 
-X509_EXTENSION *X509v3_get_ext(STACK *x, int loc)
+X509_EXTENSION *X509v3_get_ext(const STACK_OF(X509_EXTENSION) *x, int loc)
 	{
-	if ((x == NULL) || (sk_num(x) <= loc) || (loc < 0))
-		return(NULL);
+	if (x == NULL || sk_X509_EXTENSION_num(x) <= loc || loc < 0)
+		return NULL;
 	else
-		return((X509_EXTENSION *)sk_value(x,loc));
+		return sk_X509_EXTENSION_value(x,loc);
 	}
 
-X509_EXTENSION *X509v3_delete_ext(STACK *x, int loc)
+X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc)
 	{
 	X509_EXTENSION *ret;
 
-	if ((x == NULL) || (sk_num(x) <= loc) || (loc < 0))
+	if (x == NULL || sk_X509_EXTENSION_num(x) <= loc || loc < 0)
 		return(NULL);
-	ret=(X509_EXTENSION *)sk_delete(x,loc);
+	ret=sk_X509_EXTENSION_delete(x,loc);
 	return(ret);
 	}
 
-STACK *X509v3_add_ext(STACK **x, X509_EXTENSION *ex, int loc)
+STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
+					 X509_EXTENSION *ex, int loc)
 	{
 	X509_EXTENSION *new_ex=NULL;
 	int n;
-	STACK *sk=NULL;
+	STACK_OF(X509_EXTENSION) *sk=NULL;
 
 	if ((x != NULL) && (*x == NULL))
 		{
-		if ((sk=sk_new_null()) == NULL)
+		if ((sk=sk_X509_EXTENSION_new_null()) == NULL)
 			goto err;
 		}
 	else
 		sk= *x;
 
-	n=sk_num(sk);
+	n=sk_X509_EXTENSION_num(sk);
 	if (loc > n) loc=n;
 	else if (loc < 0) loc=n;
 
 	if ((new_ex=X509_EXTENSION_dup(ex)) == NULL)
 		goto err2;
-	if (!sk_insert(sk,(char *)new_ex,loc))
+	if (!sk_X509_EXTENSION_insert(sk,new_ex,loc))
 		goto err;
 	if ((x != NULL) && (*x == NULL))
 		*x=sk;
@@ -165,7 +169,7 @@ err:
 	X509err(X509_F_X509V3_ADD_EXT,ERR_R_MALLOC_FAILURE);
 err2:
 	if (new_ex != NULL) X509_EXTENSION_free(new_ex);
-	if (sk != NULL) sk_free(sk);
+	if (sk != NULL) sk_X509_EXTENSION_free(sk);
 	return(NULL);
 	}
 

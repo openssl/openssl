@@ -170,3 +170,5 @@ int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc)
 	return(X509v3_add_ext(&(x->extensions),ex,loc) != NULL);
 	}
 
+IMPLEMENT_STACK_OF(X509_EXTENSION)
+IMPLEMENT_ASN1_SET_OF(X509_EXTENSION)

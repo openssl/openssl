@@ -67,8 +67,8 @@ typedef struct stack_st_##type	\
 STACK_OF(type) *sk_##type##_new(int (*cmp)(type **,type **)); \
 STACK_OF(type) *sk_##type##_new_null(void); \
 void sk_##type##_free(STACK_OF(type) *sk); \
-int sk_##type##_num(STACK_OF(type) *sk); \
-type *sk_##type##_value(STACK_OF(type) *sk,int n); \
+int sk_##type##_num(const STACK_OF(type) *sk); \
+type *sk_##type##_value(const STACK_OF(type) *sk,int n); \
 type *sk_##type##_set(STACK_OF(type) *sk,int n,type *v); \
 void sk_##type##_zero(STACK_OF(type) *sk); \
 int sk_##type##_push(STACK_OF(type) *sk,type *v); \
@@ -89,9 +89,9 @@ STACK_OF(type) *sk_##type##_new_null() \
     { return (STACK_OF(type) *)sk_new_null(); } \
 void sk_##type##_free(STACK_OF(type) *sk) \
     { sk_free((STACK *)sk); } \
-int sk_##type##_num(STACK_OF(type) *sk) \
-    { return sk_num((STACK *)sk); } \
-type *sk_##type##_value(STACK_OF(type) *sk,int n) \
+int sk_##type##_num(const STACK_OF(type) *sk) \
+    { return sk_num((const STACK *)sk); } \
+type *sk_##type##_value(const STACK_OF(type) *sk,int n) \
     { return (type *)sk_value((STACK *)sk,n); } \
 type *sk_##type##_set(STACK_OF(type) *sk,int n,type *v) \
     { return (type *)(sk_value((STACK *)sk,n)=(char *)v); } \

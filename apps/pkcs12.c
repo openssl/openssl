@@ -638,8 +638,8 @@ int print_attribs (BIO *out, STACK *attrlst, char *name)
 			BIO_printf(out, ": ");
 		} else BIO_printf(out, "%s: ", OBJ_nid2ln(attr_nid));
 
-		if(sk_num(attr->value.set)) {
-			av = (ASN1_TYPE *)sk_value(attr->value.set, 0);
+		if(sk_ASN1_TYPE_num(attr->value.set)) {
+			av = sk_ASN1_TYPE_value(attr->value.set, 0);
 			switch(av->type) {
 				case V_ASN1_BMPSTRING:
         			value = uni2asc(av->value.bmpstring->data,

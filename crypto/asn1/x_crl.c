@@ -69,13 +69,15 @@ int i2d_X509_REVOKED(X509_REVOKED *a, unsigned char **pp)
 
 	M_ASN1_I2D_len(a->serialNumber,i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(a->revocationDate,i2d_ASN1_TIME);
-	M_ASN1_I2D_len_SEQUENCE_opt(a->extensions,i2d_X509_EXTENSION);
+	M_ASN1_I2D_len_SEQUENCE_opt_type(X509_EXTENSION,a->extensions,
+					 i2d_X509_EXTENSION);
 
 	M_ASN1_I2D_seq_total();
 
 	M_ASN1_I2D_put(a->serialNumber,i2d_ASN1_INTEGER);
 	M_ASN1_I2D_put(a->revocationDate,i2d_ASN1_TIME);
-	M_ASN1_I2D_put_SEQUENCE_opt(a->extensions,i2d_X509_EXTENSION);
+	M_ASN1_I2D_put_SEQUENCE_opt_type(X509_EXTENSION,a->extensions,
+					 i2d_X509_EXTENSION);
 
 	M_ASN1_I2D_finish();
 	}
@@ -89,8 +91,8 @@ X509_REVOKED *d2i_X509_REVOKED(X509_REVOKED **a, unsigned char **pp,
 	M_ASN1_D2I_start_sequence();
 	M_ASN1_D2I_get(ret->serialNumber,d2i_ASN1_INTEGER);
 	M_ASN1_D2I_get(ret->revocationDate,d2i_ASN1_TIME);
-	M_ASN1_D2I_get_seq_opt(ret->extensions,d2i_X509_EXTENSION,
-		X509_EXTENSION_free);
+	M_ASN1_D2I_get_seq_opt_type(X509_EXTENSION,ret->extensions,
+				    d2i_X509_EXTENSION,X509_EXTENSION_free);
 	M_ASN1_D2I_Finish(a,X509_REVOKED_free,ASN1_F_D2I_X509_REVOKED);
 	}
 
@@ -113,8 +115,9 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 	if (a->nextUpdate != NULL)
 		{ M_ASN1_I2D_len(a->nextUpdate,i2d_ASN1_TIME); }
 	M_ASN1_I2D_len_SEQUENCE_opt(a->revoked,i2d_X509_REVOKED);
-	M_ASN1_I2D_len_EXP_SEQUENCE_opt(a->extensions,i2d_X509_EXTENSION,0,
-		V_ASN1_SEQUENCE,v1);
+	M_ASN1_I2D_len_EXP_SEQUENCE_opt_type(X509_EXTENSION,a->extensions,
+					     i2d_X509_EXTENSION,0,
+					     V_ASN1_SEQUENCE,v1);
 
 	M_ASN1_I2D_seq_total();
 
@@ -128,8 +131,9 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 	if (a->nextUpdate != NULL)
 		{ M_ASN1_I2D_put(a->nextUpdate,i2d_ASN1_UTCTIME); }
 	M_ASN1_I2D_put_SEQUENCE_opt(a->revoked,i2d_X509_REVOKED);
-	M_ASN1_I2D_put_EXP_SEQUENCE_opt(a->extensions,i2d_X509_EXTENSION,0,
-		V_ASN1_SEQUENCE,v1);
+	M_ASN1_I2D_put_EXP_SEQUENCE_opt_type(X509_EXTENSION,a->extensions,
+					     i2d_X509_EXTENSION,0,
+					     V_ASN1_SEQUENCE,v1);
 
 	M_ASN1_I2D_finish();
 	}
@@ -185,13 +189,15 @@ X509_CRL_INFO *d2i_X509_CRL_INFO(X509_CRL_INFO **a, unsigned char **pp,
 		{
 		if (ret->extensions != NULL)
 			{
-			while (sk_num(ret->extensions))
-				X509_EXTENSION_free((X509_EXTENSION *)
-				sk_pop(ret->extensions));
+			while (sk_X509_EXTENSION_num(ret->extensions))
+				X509_EXTENSION_free(
+				sk_X509_EXTENSION_pop(ret->extensions));
 			}
 			
-		M_ASN1_D2I_get_EXP_set_opt(ret->extensions,d2i_X509_EXTENSION,
-			X509_EXTENSION_free,0,V_ASN1_SEQUENCE);
+		M_ASN1_D2I_get_EXP_set_opt_type(X509_EXTENSION,ret->extensions,
+						d2i_X509_EXTENSION,
+						X509_EXTENSION_free,0,
+						V_ASN1_SEQUENCE);
 		}
 
 	M_ASN1_D2I_Finish(a,X509_CRL_INFO_free,ASN1_F_D2I_X509_CRL_INFO);
@@ -253,7 +259,7 @@ X509_CRL_INFO *X509_CRL_INFO_new(void)
 	M_ASN1_New(ret->lastUpdate,ASN1_UTCTIME_new);
 	ret->nextUpdate=NULL;
 	M_ASN1_New(ret->revoked,sk_new_null);
-	M_ASN1_New(ret->extensions,sk_new_null);
+	M_ASN1_New(ret->extensions,sk_X509_EXTENSION_new_null);
 	ret->revoked->comp=(int (*)())X509_REVOKED_cmp;
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_CRL_INFO_NEW);
@@ -278,8 +284,8 @@ void X509_REVOKED_free(X509_REVOKED *a)
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->serialNumber);
 	ASN1_UTCTIME_free(a->revocationDate);
-	sk_pop_free(a->extensions,X509_EXTENSION_free);
-	Free((char *)a);
+	sk_X509_EXTENSION_pop_free(a->extensions,X509_EXTENSION_free);
+	Free(a);
 	}
 
 void X509_CRL_INFO_free(X509_CRL_INFO *a)
@@ -292,8 +298,8 @@ void X509_CRL_INFO_free(X509_CRL_INFO *a)
 	if (a->nextUpdate)
 		ASN1_UTCTIME_free(a->nextUpdate);
 	sk_pop_free(a->revoked,X509_REVOKED_free);
-	sk_pop_free(a->extensions,X509_EXTENSION_free);
-	Free((char *)a);
+	sk_X509_EXTENSION_pop_free(a->extensions,X509_EXTENSION_free);
+	Free(a);
 	}
 
 void X509_CRL_free(X509_CRL *a)
@@ -318,7 +324,7 @@ void X509_CRL_free(X509_CRL *a)
 	X509_CRL_INFO_free(a->crl);
 	X509_ALGOR_free(a->sig_alg);
 	ASN1_BIT_STRING_free(a->signature);
-	Free((char *)a);
+	Free(a);
 	}
 
 static int X509_REVOKED_cmp(X509_REVOKED **a, X509_REVOKED **b)

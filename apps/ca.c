@@ -1721,7 +1721,8 @@ again2:
 		/* Free the current entries if any, there should not
 		 * be any I belive */
 		if (ci->extensions != NULL)
-			sk_pop_free(ci->extensions,X509_EXTENSION_free);
+			sk_X509_EXTENSION_pop_free(ci->extensions,
+						   X509_EXTENSION_free);
 
 		ci->extensions = NULL;
 

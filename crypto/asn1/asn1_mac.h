@@ -175,6 +175,10 @@ err:\
 	if ((a != NULL) && (sk_num(a) != 0)) \
 		M_ASN1_I2D_put_SEQUENCE(a,f);
 
+#define M_ASN1_I2D_put_SEQUENCE_opt_type(type,a,f) \
+	if ((a != NULL) && (sk_##type##_num(a) != 0)) \
+		M_ASN1_I2D_put_SEQUENCE_type(type,a,f);
+
 #define M_ASN1_D2I_get_IMP_set_opt(b,func,free_func,tag) \
 	if ((c.slen != 0) && \
 		(M_ASN1_next == \
@@ -205,6 +209,11 @@ err:\
 	if ((c.slen != 0) && (M_ASN1_next == (V_ASN1_UNIVERSAL| \
 		V_ASN1_CONSTRUCTED|V_ASN1_SEQUENCE)))\
 		{ M_ASN1_D2I_get_seq(r,func,free_func); }
+
+#define M_ASN1_D2I_get_seq_opt_type(type,r,func,free_func) \
+	if ((c.slen != 0) && (M_ASN1_next == (V_ASN1_UNIVERSAL| \
+		V_ASN1_CONSTRUCTED|V_ASN1_SEQUENCE)))\
+		{ M_ASN1_D2I_get_seq_type(type,r,func,free_func); }
 
 #define M_ASN1_D2I_get_IMP_set(r,func,free_func,x) \
 		M_ASN1_D2I_get_imp_set(r,func,free_func,\
@@ -286,6 +295,32 @@ err:\
 		c.slen-=(c.p-c.q); \
 		}
 
+#define M_ASN1_D2I_get_EXP_set_opt_type(type,r,func,free_func,tag,b) \
+	if ((c.slen != 0) && (M_ASN1_next == \
+		(V_ASN1_CONSTRUCTED|V_ASN1_CONTEXT_SPECIFIC|tag))) \
+		{ \
+		int Tinf,Ttag,Tclass; \
+		long Tlen; \
+		\
+		c.q=c.p; \
+		Tinf=ASN1_get_object(&c.p,&Tlen,&Ttag,&Tclass,c.slen); \
+		if (Tinf & 0x80) \
+			{ c.error=ERR_R_BAD_ASN1_OBJECT_HEADER; \
+			c.line=__LINE__; goto err; } \
+		if (Tinf == (V_ASN1_CONSTRUCTED+1)) \
+					Tlen = c.slen - (c.p - c.q) - 2; \
+		if (d2i_ASN1_SET_OF_##type(&(r),&c.p,Tlen,func, \
+			free_func,b,V_ASN1_UNIVERSAL) == NULL) \
+			{ c.line=__LINE__; goto err; } \
+		if (Tinf == (V_ASN1_CONSTRUCTED+1)) { \
+			Tlen = c.slen - (c.p - c.q); \
+			if(!ASN1_check_infinite_end(&c.p, Tlen)) \
+				{ c.error=ERR_R_MISSING_ASN1_EOS; \
+				c.line=__LINE__; goto err; } \
+		}\
+		c.slen-=(c.p-c.q); \
+		}
+
 /* New macros */
 #define M_ASN1_New_Malloc(ret,type) \
 	if ((ret=(type *)Malloc(sizeof(type))) == NULL) \
@@ -328,6 +363,10 @@ err:\
 #define M_ASN1_I2D_len_SEQUENCE_opt(a,f) \
 		if ((a != NULL) && (sk_num(a) != 0)) \
 			M_ASN1_I2D_len_SEQUENCE(a,f);
+
+#define M_ASN1_I2D_len_SEQUENCE_opt_type(type,a,f) \
+		if ((a != NULL) && (sk_##type##_num(a) != 0)) \
+			M_ASN1_I2D_len_SEQUENCE_type(type,a,f);
 
 #define M_ASN1_I2D_len_IMP_SET(a,f,x) \
 		ret+=i2d_ASN1_SET(a,NULL,f,x,V_ASN1_CONTEXT_SPECIFIC,IS_SET);
@@ -380,6 +419,15 @@ err:\
 			{ \
 			v=i2d_ASN1_SET(a,NULL,f,tag,V_ASN1_UNIVERSAL, \
 				       IS_SEQUENCE); \
+			ret+=ASN1_object_size(1,v,mtag); \
+			}
+
+#define M_ASN1_I2D_len_EXP_SEQUENCE_opt_type(type,a,f,mtag,tag,v) \
+		if ((a != NULL) && (sk_##type##_num(a) != 0))\
+			{ \
+			v=i2d_ASN1_SET_OF_##type(a,NULL,f,tag, \
+						 V_ASN1_UNIVERSAL, \
+						 IS_SEQUENCE); \
 			ret+=ASN1_object_size(1,v,mtag); \
 			}
 
@@ -455,6 +503,14 @@ err:\
 			{ \
 			ASN1_put_object(&p,1,v,mtag,V_ASN1_CONTEXT_SPECIFIC); \
 			i2d_ASN1_SET(a,&p,f,tag,V_ASN1_UNIVERSAL,IS_SEQUENCE); \
+			}
+
+#define M_ASN1_I2D_put_EXP_SEQUENCE_opt_type(type,a,f,mtag,tag,v) \
+		if ((a != NULL) && (sk_##type##_num(a) != 0)) \
+			{ \
+			ASN1_put_object(&p,1,v,mtag,V_ASN1_CONTEXT_SPECIFIC); \
+			i2d_ASN1_SET_OF_##type(a,&p,f,tag,V_ASN1_UNIVERSAL, \
+					       IS_SEQUENCE); \
 			}
 
 #define M_ASN1_I2D_seq_total() \
