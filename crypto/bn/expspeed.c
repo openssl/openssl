@@ -60,15 +60,27 @@
 
 /* most of this code has been pilfered from my libdes speed.c program */
 
-#define BASENUM	10000
+#define BASENUM	5000
 #define NUM_START 0
 
 
 /* determine timings for modexp, gcd, or modular inverse */
-#undef TEST_EXP
+#define TEST_EXP
 #undef TEST_GCD
-#define TEST_KRON
+#undef TEST_KRON
 #undef TEST_INV
+#undef TEST_SQRT
+#define P_MOD_64 9 /* least significant 6 bits for prime to be used for BN_sqrt timings */
+
+#if defined(TEST_EXP) + defined(TEST_GCD) + defined(TEST_KRON) + defined(TEST_INV) +defined(TEST_SQRT) != 1
+#  error "choose one test"
+#endif
+
+#if defined(TEST_INV) || defined(TEST_SQRT)
+#  define C_PRIME
+static void genprime_cb(int p, int n, void *arg);
+#endif
+
 
 
 #undef PROG
@@ -182,26 +194,17 @@ static int mul_c[NUM_SIZES]={8*8*8*8*8*8,8*8*8*8*8,8*8*8*8,8*8*8,8*8,8,1};
 
 #define RAND_SEED(string) { const char str[] = string; RAND_seed(string, sizeof str); }
 
-static void genprime_cb(int p, int n, void *arg)
-	{
-	char c='*';
-
-	if (p == 0) c='.';
-	if (p == 1) c='+';
-	if (p == 2) c='*';
-	if (p == 3) c='\n';
-	putc(c, stderr);
-	fflush(stderr);
-	(void)n;
-	(void)arg;
-	}
-
 void do_mul_exp(BIGNUM *r,BIGNUM *a,BIGNUM *b,BIGNUM *c,BN_CTX *ctx); 
 
 int main(int argc, char **argv)
 	{
 	BN_CTX *ctx;
 	BIGNUM *a,*b,*c,*r;
+
+#if 1
+	if (!CRYPTO_set_mem_debug_functions(0,0,0,0,0))
+		abort();
+#endif
 
 	ctx=BN_CTX_new();
 	a=BN_new();
@@ -223,34 +226,48 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 	double tm;
 	long num;
 
-#if defined(TEST_EXP) + defined(TEST_GCD) + defined(TEST_KRON) + defined(TEST_INV) != 1
-#  error "choose one test"
-#endif
-
-#ifdef TEST_INV
-#  define C_PRIME
-#endif
-
 	num=BASENUM;
 	for (i=NUM_START; i<NUM_SIZES; i++)
 		{
 #ifdef C_PRIME
-		if (!BN_generate_prime(c,sizes[i],0,NULL,NULL,genprime_cb,NULL)) goto err;
+#  ifdef TEST_SQRT
+		if (!BN_set_word(a, 64)) goto err;
+		if (!BN_set_word(b, P_MOD_64)) goto err;
+#    define ADD a
+#    define REM b
+#  else
+#    define ADD NULL
+#    define REM NULL
+#  endif
+		if (!BN_generate_prime(c,sizes[i],0,ADD,REM,genprime_cb,NULL)) goto err;
 		putc('\n', stderr);
 		fflush(stderr);
 #endif
 
-		Time_F(START);
 		for (k=0; k<num; k++)
 			{
 			if (k%50 == 0) /* Average over num/50 different choices of random numbers. */
 				{
 				if (!BN_pseudo_rand(a,sizes[i],1,0)) goto err;
+
 				if (!BN_pseudo_rand(b,sizes[i],1,0)) goto err;
+
 #ifndef C_PRIME
 				if (!BN_pseudo_rand(c,sizes[i],1,1)) goto err;
 #endif
+
+#ifdef TEST_SQRT				
+				if (!BN_mod_sqr(a,a,c,ctx)) goto err;
+				if (!BN_mod_sqr(b,b,c,ctx)) goto err;
+#else
+				if (!BN_nnmod(a,a,c,ctx)) goto err;
+				if (!BN_nnmod(b,b,c,ctx)) goto err;
+#endif
+
+				if (k == 0)
+					Time_F(START);
 				}
+
 #if defined(TEST_EXP)
 			if (!BN_mod_exp(r,a,b,c,ctx)) goto err;
 #elif defined(TEST_GCD)
@@ -261,9 +278,12 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 			if (-2 == BN_kronecker(a,b,ctx)) goto err;
 			if (-2 == BN_kronecker(b,c,ctx)) goto err;
 			if (-2 == BN_kronecker(c,a,ctx)) goto err;
-#else /* TEST_INV */
+#elif defined(TEST_INV)
 			if (!BN_mod_inverse(r,a,c,ctx)) goto err;
 			if (!BN_mod_inverse(r,b,c,ctx)) goto err;
+#else /* TEST_SQRT */
+			if (!BN_mod_sqrt(r,a,c,ctx)) goto err;
+			if (!BN_mod_sqrt(r,b,c,ctx)) goto err;
 #endif
 			}
 		tm=Time_F(STOP);
@@ -274,10 +294,16 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 			"3*gcd %4d %4d %4d"
 #elif defined(TEST_KRON)
 			"3*kronecker %4d %4d %4d"
-#else /* TEST_INV */
+#elif defined(TEST_INV)
 			"2*inv %4d %4d mod %4d"
+#else /* TEST_SQRT */
+			"2*sqrt [prime == %d (mod 64)] %4d %4d mod %4d"
 #endif
-			" -> %8.3fms %5.1f (%ld)\n",sizes[i],sizes[i],sizes[i],tm*1000.0/num,tm*mul_c[i]/num, num);
+			" -> %8.3fms %5.1f (%ld)\n",
+#ifdef TEST_SQRT
+			P_MOD_64,
+#endif
+			sizes[i],sizes[i],sizes[i],tm*1000.0/num,tm*mul_c[i]/num, num);
 		num/=7;
 		if (num <= 0) num=1;
 		}
@@ -287,3 +313,19 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 	ERR_print_errors_fp(stderr);
 	}
 
+
+#ifdef C_PRIME
+static void genprime_cb(int p, int n, void *arg)
+	{
+	char c='*';
+
+	if (p == 0) c='.';
+	if (p == 1) c='+';
+	if (p == 2) c='*';
+	if (p == 3) c='\n';
+	putc(c, stderr);
+	fflush(stderr);
+	(void)n;
+	(void)arg;
+	}
+#endif
