@@ -19,7 +19,7 @@ $cc='gcc';
 if ($debug)
 	{ $cflags="-g2 -ggdb"; }
 else
-	{ $cflags="-O3 -fomit-frame-pointer"; }
+	{ $cflags="-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall"; }
 
 $obj='.o';
 $ofile='-o ';
