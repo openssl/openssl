@@ -382,7 +382,7 @@ EOF
 #include $hincf
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA ${lib}_str_functs[]=
 	{
 EOF
@@ -432,7 +432,7 @@ void ERR_load_${lib}_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_${lib},${lib}_str_functs);
 		ERR_load_strings(ERR_LIB_${lib},${lib}_str_reasons);
 #endif
@@ -468,7 +468,7 @@ void ERR_load_${lib}_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(${lib}_lib_error_code,${lib}_str_functs);
 		ERR_load_strings(${lib}_lib_error_code,${lib}_str_reasons);
 #endif
