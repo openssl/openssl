@@ -1063,9 +1063,9 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	if ((sk == NULL) || !sk_SSL_COMP_push(sk,comp))
 		{
 		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,ERR_R_MALLOC_FAILURE);
-		return(0);
+		return(1);
 		}
 	else
-		return(1);
+		return(0);
 	}
 
