@@ -655,8 +655,10 @@ L<SSL_CTX_get_ex_new_index(3)|SSL_CTX_get_ex_new_index(3)>,
 L<SSL_CTX_get_verify_mode(3)|SSL_CTX_get_verify_mode(3)>,
 L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
 L<SSL_CTX_new(3)|SSL_CTX_new(3)>,
+L<SSL_CTX_sess_set_get_cb(3)|SSL_CTX_sess_set_get_cb(3)>,
 L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>,
 L<SSL_CTX_set_default_passwd_cb(3)|SSL_CTX_set_default_passwd_cb(3)>,
+L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>,
 L<SSL_CTX_set_session_id_context(3)|SSL_CTX_set_session_id_context(3)>,
 L<SSL_CTX_set_ssl_version(3)|SSL_CTX_set_ssl_version(3)>,
 L<SSL_CTX_set_verify(3)|SSL_CTX_set_verify(3)>,
@@ -679,7 +681,8 @@ L<SSL_set_fd(3)|SSL_set_fd(3)>, L<SSL_pending(3)|SSL_pending(3)>,
 L<SSL_set_session(3)|SSL_set_session(3)>,
 L<SSL_shutdown(3)|SSL_shutdown(3)>, L<SSL_write(3)|SSL_write(3)>,
 L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>,
-L<SSL_SESSION_get_ex_new_index(3)|SSL_SESSION_get_ex_new_index(3)>
+L<SSL_SESSION_get_ex_new_index(3)|SSL_SESSION_get_ex_new_index(3)>,
+L<d2i_SSL_SESSION(3)|d2i_SSL_SESSION(3)>
 
 =head1 HISTORY
 
