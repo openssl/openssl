@@ -1767,7 +1767,7 @@ DSO_new                                 2259	EXIST::FUNCTION:
 DSO_new_method                          2260	EXIST::FUNCTION:
 DSO_free                                2261	EXIST::FUNCTION:
 DSO_flags                               2262	EXIST::FUNCTION:
-DSO_up                                  2263	EXIST::FUNCTION:
+DSO_up_ref                              2263	EXIST::FUNCTION:
 DSO_set_default_method                  2264	EXIST::FUNCTION:
 DSO_get_default_method                  2265	EXIST::FUNCTION:
 DSO_get_method                          2266	EXIST::FUNCTION:
@@ -2638,7 +2638,7 @@ X509_CRL_sort                           3086	EXIST::FUNCTION:
 X509_REVOKED_set_revocationDate         3087	EXIST::FUNCTION:
 EVP_dev_crypto_md5                      3088	EXIST::FUNCTION:DES
 X509_CRL_set_issuer_name                3089	EXIST::FUNCTION:
-DSA_up                                  3090	EXIST::FUNCTION:DSA
+DSA_up_ref                              3090	EXIST::FUNCTION:DSA
 ENGINE_get_cipher                       3091	EXIST::FUNCTION:
 ENGINE_add_cipher                       3092	EXIST::FUNCTION:
 X509_CRL_set_nextUpdate                 3093	EXIST::FUNCTION:

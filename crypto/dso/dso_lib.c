@@ -179,11 +179,11 @@ int DSO_flags(DSO *dso)
 	}
 
 
-int DSO_up(DSO *dso)
+int DSO_up_ref(DSO *dso)
 	{
 	if (dso == NULL)
 		{
-		DSOerr(DSO_F_DSO_UP,ERR_R_PASSED_NULL_PARAMETER);
+		DSOerr(DSO_F_DSO_UP_REF,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
 

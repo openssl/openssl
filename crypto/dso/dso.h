@@ -187,7 +187,7 @@ DSO *	DSO_new(void);
 DSO *	DSO_new_method(DSO_METHOD *method);
 int	DSO_free(DSO *dso);
 int	DSO_flags(DSO *dso);
-int	DSO_up(DSO *dso);
+int	DSO_up_ref(DSO *dso);
 long	DSO_ctrl(DSO *dso, int cmd, long larg, void *parg);
 
 /* This function sets the DSO's name_converter callback. If it is non-NULL,
@@ -293,7 +293,7 @@ void ERR_load_DSO_strings(void);
 #define DSO_F_DSO_NEW_METHOD				 113
 #define DSO_F_DSO_SET_FILENAME				 129
 #define DSO_F_DSO_SET_NAME_CONVERTER			 122
-#define DSO_F_DSO_UP					 114
+#define DSO_F_DSO_UP_REF				 114
 #define DSO_F_VMS_BIND_VAR				 115
 #define DSO_F_VMS_LOAD					 116
 #define DSO_F_VMS_UNLOAD				 117
