@@ -4,9 +4,13 @@
 
  Changes between 0.9.6e and 0.9.7  [XX xxx 2002]
 
-  *) Add cipher selection rules COMPLEMENTOFALL and COMPLENENTOFDEFAULT
+  *) Add cipher selection rules COMPLEMENTOFALL and COMPLEMENTOFDEFAULT
      to allow version independent disabling of normally unselected ciphers,
      which may be activated as a side-effect of selecting a single cipher.
+
+     (E.g., cipher list string "RSA" enables ciphersuites that are left
+     out of "ALL" because they do not provide symmetric encryption.
+     "RSA:!COMPLEMEMENTOFALL" avoids these unsafe ciphersuites.)
      [Lutz Jaenicke, Bodo Moeller]
 
   *) Add appropriate support for separate platform-dependent build
