@@ -565,7 +565,7 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
                     s->kssl_ctx->client_princ = (char *)malloc(session->krb5_client_princ_len + 1);
                     memcpy(s->kssl_ctx->client_princ,session->krb5_client_princ,
                             session->krb5_client_princ_len);
-                    s->kssl_ctx->client_princ[session->krb5_client_princ_len] = '/0';
+                    s->kssl_ctx->client_princ[session->krb5_client_princ_len] = '\0';
                 }
 #endif /* OPENSSL_NO_KRB5 */
 
