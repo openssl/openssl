@@ -55,6 +55,11 @@
  
  Changes between 0.9.6d and 0.9.7  [XX xxx 2002]
 
+  *) Check the values of dna and dnb in bn_mul_recursive before calling
+     bn_mul_comba (a non zero value means the a or b arrays do not contain
+     n2 elements) and fallback to bn_mul_normal if either is not zero.
+     [Steve Henson]
+
   *) Fix escaping of non-ASCII characters when using the -subj option
      of the "openssl req" command line tool. (Robert Joop <joop@fokus.gmd.de>)
      [Lutz Jaenicke]
