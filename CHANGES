@@ -3,6 +3,13 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add the ec directory to mkdef.pl and mkfiles.pl. In mkdef.pl
+     change the def and num file printf format specifier from "%-40sXXX"
+     to "%-39s XXX". The latter will always guarantee a space after the
+     field while the former will cause them to run together if the field
+     is 40 of more characters long.
+     [Steve Henson]
+
   *) Constify the cipher and digest 'method' functions and structures
      and modify related functions to take constant EVP_MD and EVP_CIPHER
      pointers.

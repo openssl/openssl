@@ -82,7 +82,7 @@ my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
 			 "RIPEMD",
-			 "MDC2", "RSA", "DSA", "DH", "HMAC", "AES",
+			 "MDC2", "RSA", "DSA", "DH", "EC", "HMAC", "AES",
 			 # Envelope "algorithms"
 			 "EVP", "X509", "ASN1_TYPEDEFS",
 			 # Helper "algorithms"
@@ -105,6 +105,7 @@ my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
 my $no_cast;
 my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
 my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
+my $no_ec;
 my $no_fp_api;
 
 foreach (@ARGV, split(/ /, $options))
@@ -153,6 +154,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-rsa$/)      { $no_rsa=1; }
 	elsif (/^no-dsa$/)      { $no_dsa=1; }
 	elsif (/^no-dh$/)       { $no_dh=1; }
+	elsif (/^no-ec$/)       { $no_ec=1; }
 	elsif (/^no-hmac$/)	{ $no_hmac=1; }
 	elsif (/^no-aes$/)	{ $no_aes=1; }
 	elsif (/^no-evp$/)	{ $no_evp=1; }
@@ -213,6 +215,7 @@ $crypto.=" crypto/bn/bn.h";
 $crypto.=" crypto/rsa/rsa.h" unless $no_rsa;
 $crypto.=" crypto/dsa/dsa.h" unless $no_dsa;
 $crypto.=" crypto/dh/dh.h" unless $no_dh;
+$crypto.=" crypto/ec/ec.h" unless $no_ec;
 $crypto.=" crypto/hmac/hmac.h" unless $no_hmac;
 
 $crypto.=" crypto/engine/engine.h";
@@ -1131,9 +1134,9 @@ EOF
 				}
 				$prev = $s2;	# To warn about duplicates...
 				if($v) {
-					printf OUT "    %s%-40s@%-8d DATA\n",($W32)?"":"_",$s2,$n;
+					printf OUT "    %s%-39s @%-8d DATA\n",($W32)?"":"_",$s2,$n;
 				} else {
-					printf OUT "    %s%-40s@%d\n",($W32)?"":"_",$s2,$n;
+					printf OUT "    %s%-39s @%d\n",($W32)?"":"_",$s2,$n;
 				}
 			}
 		}
@@ -1241,12 +1244,12 @@ sub rewrite_numbers
 			if !defined($i) || $i eq "" || !defined($syms{$sym});
 		my $s2 = $sym;
 		$s2 =~ s/\{[0-9]+\}$//;
-		printf OUT "%s%-40s%d\t%s\n","",$s2,$n,$i;
+		printf OUT "%s%-39s %d\t%s\n","",$s2,$n,$i;
 		if (exists $r{$sym}) {
 			(my $s, $i) = split /\\/,$r{$sym};
 			my $s2 = $s;
 			$s2 =~ s/\{[0-9]+\}$//;
-			printf OUT "%s%-40s%d\t%s\n","",$s2,$n,$i;
+			printf OUT "%s%-39s %d\t%s\n","",$s2,$n,$i;
 		}
 	}
 }
@@ -1278,11 +1281,11 @@ sub update_numbers
 			$new_syms++;
 			my $s2 = $s;
 			$s2 =~ s/\{[0-9]+\}$//;
-			printf OUT "%s%-40s%d\t%s\n","",$s2, ++$start_num,$i;
+			printf OUT "%s%-39s %d\t%s\n","",$s2, ++$start_num,$i;
 			if (exists $r{$s}) {
 				($s, $i) = split /\\/,$r{$s};
 				$s =~ s/\{[0-9]+\}$//;
-				printf OUT "%s%-40s%d\t%s\n","",$s, $start_num,$i;
+				printf OUT "%s%-39s %d\t%s\n","",$s, $start_num,$i;
 			}
 		}
 	}

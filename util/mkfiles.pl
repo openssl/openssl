@@ -29,6 +29,7 @@ my @dirs = (
 "crypto/dsa",
 "crypto/dso",
 "crypto/dh",
+"crypto/ec",
 "crypto/buffer",
 "crypto/bio",
 "crypto/stack",
