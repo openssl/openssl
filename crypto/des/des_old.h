@@ -161,6 +161,10 @@ typedef struct des_ks_struct
 	_ossl_old_des_random_seed((k))
 #define des_random_key(r)\
 	_ossl_old_des_random_key((r))
+#define des_read_password(k,p,v) \
+	_ossl_old_des_read_password((k),(p),(v))
+#define des_read_2passwords(k1,k2,p,v) \
+	_ossl_old_des_read_2passwords((k1),(k2),(p),(v))
 #define des_set_odd_parity(k)\
 	_ossl_old_des_set_odd_parity((k))
 #define des_is_weak_key(k)\
@@ -247,6 +251,9 @@ DES_LONG _ossl_old_des_quad_cksum(des_cblock *input,des_cblock *output,
 	long length,int out_count,des_cblock *seed);
 void _ossl_old_des_random_seed(des_cblock key);
 void _ossl_old_des_random_key(des_cblock ret);
+int _ossl_old_des_read_password(des_cblock *key,const char *prompt,int verify);
+int _ossl_old_des_read_2passwords(des_cblock *key1,des_cblock *key2,
+	const char *prompt,int verify);
 void _ossl_old_des_set_odd_parity(des_cblock *key);
 int _ossl_old_des_is_weak_key(des_cblock *key);
 int _ossl_old_des_set_key(des_cblock *key,des_key_schedule schedule);
@@ -295,5 +302,8 @@ void _ossl_old_des_ofb64_encrypt(unsigned char *in, unsigned char *out, long len
 #ifdef  __cplusplus
 }
 #endif
+
+/* for DES_read_pw_string et al */
+#include <openssl/ui_compat.h>
 
 #endif

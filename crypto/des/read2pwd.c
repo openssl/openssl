@@ -1,4 +1,57 @@
 /* crypto/des/read2pwd.c */
+/* ====================================================================
+ * Copyright (c) 2001-2002 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,41 +109,29 @@
  * [including the GNU Public Licence.]
  */
 
-#include "des_locl.h"
+#include <openssl/des.h>
 #include <openssl/ui.h>
 
-int des_read_password(des_cblock *key, const char *prompt, int verify)
+int DES_read_password(DES_cblock *key, const char *prompt, int verify)
 	{
 	int ok;
 	char buf[BUFSIZ],buff[BUFSIZ];
-	UI *ui;
 
-	ui = UI_new();
-	UI_add_input_string(ui,prompt,0,buf,0,BUFSIZ-1);
-	if (verify)
-		UI_add_verify_string(ui,prompt,0,buff,0,BUFSIZ-1,buf);
-	if ((ok=UI_process(ui)) == 0)
-		des_string_to_key(buf,key);
-	UI_free(ui);
+	if ((ok=UI_UTIL_read_pw(buf,buff,BUFSIZ,prompt,verify)) == 0)
+		DES_string_to_key(buf,key);
 	memset(buf,0,BUFSIZ);
 	memset(buff,0,BUFSIZ);
 	return(ok);
 	}
 
-int des_read_2passwords(des_cblock *key1, des_cblock *key2, const char *prompt,
+int DES_read_2passwords(DES_cblock *key1, DES_cblock *key2, const char *prompt,
 	     int verify)
 	{
 	int ok;
 	char buf[BUFSIZ],buff[BUFSIZ];
-	UI *ui;
 
-	ui = UI_new();
-	UI_add_input_string(ui,prompt,0,buf,0,BUFSIZ-1);
-	if (verify)
-		UI_add_verify_string(ui,prompt,0,buff,0,BUFSIZ-1,buf);
-	if ((ok=UI_process(ui)) == 0)
-		des_string_to_2keys(buf,key1,key2);
-	UI_free(ui);
+	if ((ok=UI_UTIL_read_pw(buf,buff,BUFSIZ,prompt,verify)) == 0)
+		DES_string_to_2keys(buf,key1,key2);
 	memset(buf,0,BUFSIZ);
 	memset(buff,0,BUFSIZ);
 	return(ok);

@@ -223,6 +223,16 @@ void _ossl_old_des_random_key(des_cblock ret)
 	{
 	DES_random_key((DES_cblock *)ret);
 	}
+int _ossl_old_des_read_password(des_cblock *key, const char *prompt,
+				int verify)
+	{
+	return DES_read_password(key, prompt, verify);
+	}
+int _ossl_old_des_read_2passwords(des_cblock *key1, des_cblock *key2,
+	const char *prompt, int verify)
+	{
+	return DES_read_2passwords(key1, key2, prompt, verify);
+	}
 void _ossl_old_des_set_odd_parity(des_cblock *key)
 	{
 	DES_set_odd_parity(key);

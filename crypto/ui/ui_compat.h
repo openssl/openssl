@@ -61,9 +61,6 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/ui.h>
-#ifndef OPENSSL_NO_DES
-#include <openssl/des.h>
-#endif
 
 #ifdef  __cplusplus
 extern "C" {
@@ -72,14 +69,13 @@ extern "C" {
 /* The following functions were previously part of the DES section,
    and are provided here for backward compatibility reasons. */
 
-#ifndef OPENSSL_NO_DES
-int des_read_password(DES_cblock *key,const char *prompt,int verify);
-int des_read_2passwords(DES_cblock *key1,DES_cblock *key2,
-	const char *prompt,int verify);
-#endif
+#define des_read_pw_string(b,l,p,v) \
+	_ossl_old_des_read_pw_string((b),(l),(p),(v))
+#define des_read_pw(b,bf,s,p,v) \
+	_ossl_old_des_read_pw_string((b),(bf),(s),(p),(v))
 
-int des_read_pw_string(char *buf,int length,const char *prompt,int verify);
-int des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify);
+int _ossl_old_des_read_pw_string(char *buf,int length,const char *prompt,int verify);
+int _ossl_old_des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify);
 
 #ifdef  __cplusplus
 }
