@@ -9,15 +9,6 @@
  *
  */
 
-#ifdef WIN32
-typedef unsigned __int8 uint8_t;
-typedef unsigned __int16 uint16_t;
-typedef unsigned __int32 uint32_t;
-typedef unsigned __int64 uint64_t;
-#else
-#include <inttypes.h>
-#endif
-
 /*Successful return value*/
 #define AEP_R_OK                                0x00000000
 
@@ -85,30 +76,29 @@ typedef unsigned __int64 uint64_t;
  */
 
 /* an unsigned 8-bit value */
-typedef uint8_t				AEP_U8;
+typedef unsigned char				AEP_U8;
 
 /* an unsigned 8-bit character */
-typedef char				AEP_CHAR;
+typedef char					AEP_CHAR;
 
 /* a BYTE-sized Boolean flag */
-typedef AEP_U8				AEP_BBOOL;
+typedef AEP_U8					AEP_BBOOL;
 
 /*Unsigned value, at least 16 bits long*/
-typedef uint16_t		  	AEP_U16;
+typedef unsigned short				AEP_U16;
 
 /* an unsigned value, at least 32 bits long */
-typedef uint32_t			AEP_U32;
+#ifdef SIXTY_FOUR_BIT_LONG
+typedef unsigned int				AEP_U32;
+#else
+typedef unsigned long				AEP_U32;
+#endif
 
-/*#if defined(AEP_Win32)*/
-/* 64 bit unsigned value */
-/*typedef unsigned _int64		AEP_U64;*/
-
-/*#elif defined(AEP_GENERIC)*/
-/* 64 bit unsigned value */
-/*typedef unsigned long long	AEP_U64;*/
-/*#endif*/
-
-typedef uint64_t			AEP_U64;
+#ifdef SIXTY_FOUR_BIT_LONG
+typedef unsigned long				AEP_U64;
+#else
+typedef struct { unsigned long l1, l2; }	AEP_U64;
+#endif
 
 /* at least 32 bits; each bit is a Boolean flag */
 typedef AEP_U32			AEP_FLAGS;
@@ -164,11 +154,11 @@ AEP_RV ConvertAEPBigNum(void* ArbBigNum, AEP_U32 BigNumSize, unsigned char* AEP_
 typedef unsigned int t_AEP_OpenConnection(unsigned int *phConnection);
 
 typedef unsigned int t_AEP_ModExp(unsigned int hConnection, void *a, void *p,
-                                  void *n, void *r,uint64_t *tranid);
+                                  void *n, void *r,AEP_U64 *tranid);
 
 typedef unsigned int t_AEP_ModExpCrt(unsigned int hConnection,void *a, void *p,
                                   void *q, void *dmp1, void *dmq1,void *iqmp,
-						  void *r,uint64_t *tranid);
+						  void *r,AEP_U64 *tranid);
 
 typedef unsigned int t_AEP_GenRandom(AEP_CONNECTION_HNDL             hConnection,
                 AEP_U32                                 Len,
