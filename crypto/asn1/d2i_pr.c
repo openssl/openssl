@@ -112,3 +112,26 @@ err:
 	return(NULL);
 	}
 
+/* This works like d2i_PrivateKey() except it automatically works out the type */
+
+EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, unsigned char **pp,
+	     long length)
+{
+	STACK_OF(ASN1_TYPE) *inkey;
+	unsigned char *p;
+	int keytype;
+	p = *pp;
+	/* Dirty trick: read in the ASN1 data into a STACK_OF(ASN1_TYPE):
+	 * by analysing it we can determine the passed structure: this
+	 * assumes the input is surrounded by an ASN1 SEQUENCE.
+	 */
+	inkey = d2i_ASN1_SET_OF_ASN1_TYPE(NULL, &p, length, d2i_ASN1_TYPE, 
+			ASN1_TYPE_free, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
+	/* Since we only need to discern "traditional format" RSA and DSA
+	 * keys we can just count the elements.
+         */
+	if(sk_ASN1_TYPE_num(inkey) == 6) keytype = EVP_PKEY_DSA;
+	else keytype = EVP_PKEY_RSA;
+	sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
+	return d2i_PrivateKey(keytype, a, pp, length);
+}

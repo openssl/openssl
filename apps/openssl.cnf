@@ -7,7 +7,9 @@
 # defined.
 HOME			= .
 RANDFILE		= $ENV::HOME/.rnd
-oid_file		= $ENV::HOME/.oid
+
+# Extra OBJECT IDENTIFIER info:
+#oid_file		= $ENV::HOME/.oid
 oid_section		= new_oids
 
 # To use this configuration file with the "-extfile" option of the

@@ -140,7 +140,7 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-envpassin") == 0)
 			{
 			if (--argc < 1) goto bad;
-				if(!(passin= getenv(*(++argv))))
+			if(!(passin= getenv(*(++argv))))
 				{
 				BIO_printf(bio_err,
 				 "Can't read environment variable %s\n",
@@ -151,14 +151,13 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-envpassout") == 0)
 			{
 			if (--argc < 1) goto bad;
-				if(!(passout= getenv(*(++argv))))
+			if(!(passout= getenv(*(++argv))))
 				{
 				BIO_printf(bio_err,
 				 "Can't read environment variable %s\n",
 								*argv);
 				badops = 1;
 				}
-			argv++;
 			}
 		else if (strcmp(*argv,"-passout") == 0)
 			{

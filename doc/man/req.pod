@@ -11,7 +11,11 @@ B<openssl> B<req>
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
+[B<-passin password>]
+[B<-envpassin var>]
 [B<-out filename>]
+[B<-passout password>]
+[B<-envpassout var>]
 [B<-text>]
 [B<-noout>]
 [B<-verify>]
@@ -59,10 +63,28 @@ This specifies the input filename to read a request from or standard input
 if this option is not specified. A request is only read if the creation
 options (B<-new> and B<-newkey>) are not specified.
 
+=item B<-passin password>
+
+the input file password. Since certain utilities like "ps" make the command line
+visible this option should be used with caution.
+
+=item B<-envpassin var>
+
+read the input file password from the environment variable B<var>.
+
 =item B<-out filename>
 
 This specifies the output filename to write to or standard output by
 default.
+
+=item B<-passout password>
+
+the output file password. Since certain utilities like "ps" make the command line
+visible this option should be used with caution.
+
+=item B<-envpassout var>
+
+read the output file password from the environment variable B<var>.
 
 =item B<-text>
 
@@ -269,7 +291,7 @@ consists of lines of the form:
 	fieldName_min= 2
 	fieldName_max= 4
 
-"fieldName" is the field name being used, for example commonName.
+"fieldName" is the field name being used, for example commonName (or CN).
 The "prompt" string is used to ask the user to enter the relvant
 details. If the user enters nothing then the default value is used if no
 default value is present then the field is omitted. A field can

@@ -2158,3 +2158,4 @@ d2i_PrivateKey_fp                       2182
 i2d_PrivateKey_bio                      2183
 X509_reject_clear                       2184
 X509_TRUST_set_default                  2185
+d2i_AutoPrivateKey                      2186

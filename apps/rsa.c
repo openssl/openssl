@@ -161,7 +161,6 @@ int MAIN(int argc, char **argv)
 								*argv);
 				badops = 1;
 				}
-			argv++;
 			}
 		else if (strcmp(*argv,"-passout") == 0)
 			{

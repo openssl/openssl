@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add a function 'd2i_AutoPrivateKey()' this will automatically decide
+     if a DER encoded private key is RSA or DSA traditional format. Changed
+     d2i_PrivateKey_bio() to use it. This is only needed for the "traditional"
+     format DER encoded private key. Newer code should use PKCS#8 format which
+     has the key type encoded in the ASN1 structure. Added DER private key
+     support to pkcs8 application.
+     [Steve Henson]
+
   *) SSL 3/TLS 1 servers now don't request certificates when an anonymous
      ciphersuites has been selected (as required by the SSL 3/TLS 1
      specifications).  Exception: When SSL_VERIFY_FAIL_IF_NO_PEER_CERT
@@ -36,7 +44,7 @@
      check for an object with the same NID as the passed id. Functions can
      be provided to override either the default behaviour or the behaviour
      for a given id. SSL client, server and email already have functions
-     in place for compatability: they check the NID and also return "trusted"
+     in place for compatibility: they check the NID and also return "trusted"
      if the certificate is self signed.
      [Steve Henson]
 

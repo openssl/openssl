@@ -237,14 +237,13 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-envpassout") == 0)
 			{
 			if (--argc < 1) goto bad;
-				if(!(passout= getenv(*(++argv))))
+			if(!(passout= getenv(*(++argv))))
 				{
 				BIO_printf(bio_err,
 				 "Can't read environment variable %s\n",
 								*argv);
 				badops = 1;
 				}
-			argv++;
 			}
 		else if (strcmp(*argv,"-passout") == 0)
 			{
@@ -527,10 +526,9 @@ bad:
 			goto end;
 			}
 
-/*		if (keyform == FORMAT_ASN1)
-			rsa=d2i_RSAPrivateKey_bio(in,NULL);
-		else */
-		if (keyform == FORMAT_PEM)
+		if (keyform == FORMAT_ASN1)
+			pkey=d2i_PrivateKey_bio(in,NULL);
+		else if (keyform == FORMAT_PEM)
 			{
 			pkey=PEM_read_bio_PrivateKey(in,NULL,PEM_cb,passin);
 			}

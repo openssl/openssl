@@ -632,6 +632,8 @@ int		i2d_PublicKey(EVP_PKEY *a, unsigned char **pp);
 
 EVP_PKEY *	d2i_PrivateKey(int type,EVP_PKEY **a, unsigned char **pp,
 			long length);
+EVP_PKEY *	d2i_AutoPrivateKey(EVP_PKEY **a, unsigned char **pp,
+			long length);
 int		i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp);
 
 int EVP_PKEY_copy_parameters(EVP_PKEY *to,EVP_PKEY *from);

@@ -486,17 +486,10 @@ int i2d_PrivateKey_fp(FILE *fp, EVP_PKEY *pkey)
 	return(ASN1_i2d_fp(i2d_PrivateKey,fp,(unsigned char *)pkey));
 	}
 
-EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, int type, EVP_PKEY **a)
+EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
 {
-	BIO *bp;
-	EVP_PKEY *ret;
-	if(!(bp = BIO_new_fp(fp, BIO_NOCLOSE))) {
-		ASN1err(ASN1_F_D2I_PRIVATEKEY_FP,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	ret = d2i_PrivateKey_bio(bp, type, a);
-	BIO_free(bp);
-	return ret;
+	return((EVP_PKEY *)ASN1_d2i_fp((char *(*)())EVP_PKEY_new,
+		(char *(*)())d2i_AutoPrivateKey, (fp),(unsigned char **)(a)));
 }
 
 #endif
@@ -531,50 +524,8 @@ int i2d_PrivateKey_bio(BIO *bp, EVP_PKEY *pkey)
 	return(ASN1_i2d_bio(i2d_PrivateKey,bp,(unsigned char *)pkey));
 	}
 
-EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, int type, EVP_PKEY **a)
+EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
 	{
-	EVP_PKEY *ret;
-
-	if ((a == NULL) || (*a == NULL))
-		{
-		if ((ret=EVP_PKEY_new()) == NULL)
-			{
-			ASN1err(ASN1_F_D2I_PRIVATEKEY_BIO,ERR_R_EVP_LIB);
-			return(NULL);
-			}
-		}
-	else	ret= *a;
-
-	ret->save_type=type;
-	ret->type=EVP_PKEY_type(type);
-	switch (ret->type)
-		{
-#ifndef NO_RSA
-	case EVP_PKEY_RSA:
-		if ((ret->pkey.rsa=d2i_RSAPrivateKey_bio(bp,NULL)) == NULL)
-			{
-			ASN1err(ASN1_F_D2I_PRIVATEKEY_BIO,ERR_R_ASN1_LIB);
-			goto err;
-			}
-		break;
-#endif
-#ifndef NO_DSA
-	case EVP_PKEY_DSA:
-		if ((ret->pkey.dsa=d2i_DSAPrivateKey_bio(bp, NULL)) == NULL)
-			{
-			ASN1err(ASN1_F_D2I_PRIVATEKEY_BIO,ERR_R_ASN1_LIB);
-			goto err;
-			}
-		break;
-#endif
-	default:
-		ASN1err(ASN1_F_D2I_PRIVATEKEY_BIO,ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
-		goto err;
-		/* break; */
-		}
-	if (a != NULL) (*a)=ret;
-	return(ret);
-err:
-	if ((ret != NULL) && ((a == NULL) || (*a != ret))) EVP_PKEY_free(ret);
-	return(NULL);
+	return((EVP_PKEY *)ASN1_d2i_bio((char *(*)())EVP_PKEY_new,
+		(char *(*)())d2i_AutoPrivateKey, (bp),(unsigned char **)(a)));
 	}
