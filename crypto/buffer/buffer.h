@@ -63,6 +63,7 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
 #include <sys/types.h>
 
 typedef struct buf_mem_st
