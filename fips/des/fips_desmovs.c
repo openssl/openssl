@@ -31,7 +31,7 @@ int DESTest(EVP_CIPHER_CTX *ctx,
 	    char *amode, int akeysz, unsigned char *aKey, 
 	    unsigned char *iVec, 
 	    int dir,  /* 0 = decrypt, 1 = encrypt */
-	    unsigned char *plaintext, unsigned char *ciphertext, int len)
+	    unsigned char *out, unsigned char *in, int len)
     {
     const EVP_CIPHER *cipher = NULL;
     int ret = 1;
@@ -91,25 +91,12 @@ int DESTest(EVP_CIPHER_CTX *ctx,
 		printf("Didn't handle mode %d\n",kt);
 		exit(1);
 		}
-	    if (dir)
-		{ /* encrypt */
-		if(!EVP_CipherInit(ctx, cipher, aKey, iVec, AES_ENCRYPT))
-		    {
-		    ERR_print_errors_fp(stderr);
-		    exit(1);
-		    }
-		  
-		EVP_Cipher(ctx, ciphertext, (unsigned char*)plaintext, len);
+	    if(!EVP_CipherInit(ctx, cipher, aKey, iVec, dir))
+		{
+		ERR_print_errors_fp(stderr);
+		exit(1);
 		}
-	    else
-		{ /* decrypt */
-		if(!EVP_CipherInit(ctx, cipher, aKey, iVec, AES_DECRYPT))
-		    {
-		    ERR_print_errors_fp(stderr);
-		    exit(1);
-		    }
-		EVP_Cipher(ctx, (unsigned char*)plaintext, ciphertext, len);
-		}
+	    EVP_Cipher(ctx, out, in, len);
 	    }
 	}
     return ret;
@@ -210,6 +197,14 @@ void PrintValue(char *tag, unsigned char *val, int len)
 #endif
     }
 
+void DebugValue(char *tag, unsigned char *val, int len)
+    {
+    char obuf[2048];
+    int olen;
+    olen = bin2hex(val, len, obuf);
+    printf("%s = %.*s\n", tag, olen, obuf);
+    }
+
 void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode)
     {
     char obuf[2048];
@@ -226,10 +221,25 @@ void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode)
 #endif
     }
 
+void shiftin(unsigned char *dst,unsigned char *src,int nbits)
+    {
+    int n;
+
+    /* move the bytes... */
+    memmove(dst,dst+nbits/8,8-nbits/8);
+    /* append new data */
+    memcpy(dst+8-nbits/8,src,(nbits+7)/8);
+    /* left shift the bits */
+    if(nbits%8)
+	for(n=0 ; n < 8 ; ++n)
+	    dst[n]=(dst[n] << (nbits%8))|(dst[n+1] >> (8-nbits%8));
+    }	
+
 /*-----------------------------------------------*/
 char *t_tag[2] = {"PLAINTEXT", "CIPHERTEXT"};
 char *t_mode[6] = {"CBC","ECB","OFB","CFB1","CFB8","CFB64"};
-enum Mode {CBC, ECB, OFB, CFB1, CFB8, CFB128};
+enum Mode {CBC, ECB, OFB, CFB1, CFB8, CFB64};
+int Sizes[6]={64,0,64,1,8,64};
 enum XCrypt {XDECRYPT, XENCRYPT};
 
 void do_mct(char *amode, 
@@ -238,6 +248,7 @@ void do_mct(char *amode,
 	    FILE *rfp)
     {
     int i,imode;
+    unsigned char nk[16]; // double size to make the bitshift easier
 
     for (imode=0 ; imode < 6 ; ++imode)
 	if(!strcmp(amode,t_mode[imode]))
@@ -253,6 +264,7 @@ void do_mct(char *amode,
 	int j;
 	int n;
 	EVP_CIPHER_CTX ctx;
+	unsigned char old_iv[8];
 
 	fprintf(rfp,"\nCOUNT = %d\n",i);
 	OutputValue("KEY",akey,akeysz/8,rfp,0);
@@ -260,33 +272,37 @@ void do_mct(char *amode,
 	    OutputValue("IV",ivec,8,rfp,0);
 	OutputValue(t_tag[dir^1],text,len,rfp,imode == CFB1);
 
+	/* compensate for endianness */
+	if(imode == CFB1)
+	    text[0]<<=7;
 
 	for(j=0 ; j < 10000 ; ++j)
 	    {
-	    unsigned char in[8];
-
-	    if(imode == ECB)
-		memcpy(in,text,8);
-	    else
-		for(n=0 ; n < 8 ; ++n)
-		    in[n]=text[n]^ivec[n];
-		
 	    if(j == 0)
-		DESTest(&ctx,amode,akeysz,akey,ivec,dir,text,text,len);
-	    else
-		EVP_Cipher(&ctx,text,text,len);
-	    if(imode != ECB)
 		{
-		unsigned char tmp[8];
-
-		memcpy(tmp,text,8);
-		memcpy(text,ivec,8);
-		memcpy(ivec,tmp,8);
+		memcpy(old_iv,ivec,8);
+		DESTest(&ctx,amode,akeysz,akey,ivec,dir,text,text,len);
 		}
+	    else
+		{
+		memcpy(old_iv,ctx.iv,8);
+		EVP_Cipher(&ctx,text,text,len);
+		}
+	    if(j == 9999)
+		{
+		OutputValue(t_tag[dir],text,len,rfp,imode == CFB1);
+		//		memcpy(ivec,text,8);
+		}
+	    //	    DebugValue("iv",ctx.iv,8);
+	    /* accumulate material for the next key */
+	    shiftin(nk,text,Sizes[imode]);
+	    //	    DebugValue("nk",nk,8);
+	    if(imode == CFB1 || imode == CFB8 || imode == CBC)
+		memcpy(text,old_iv,8);
 	    }
-	OutputValue(t_tag[dir],ivec,len,rfp,imode == CFB1);
 	for(n=0 ; n < 8 ; ++n)
-	    akey[n]^=ivec[n];
+	    akey[n]^=nk[n];
+	memcpy(ivec,ctx.iv,8);
 	}
     }
     
@@ -512,9 +528,10 @@ int proc_file(char *rqfile)
 		    }
 		else
 		    {
+		    assert(dir == 1);
 		    ret = DESTest(&ctx, amode, akeysz, aKey, iVec, 
 				  dir,  /* 0 = decrypt, 1 = encrypt */
-				  plaintext, ciphertext, len);
+				  ciphertext, plaintext, len);
 		    OutputValue("CIPHERTEXT",ciphertext,len,rfp,
 				!strcmp(amode,"CFB1"));
 		    }
@@ -550,6 +567,7 @@ int proc_file(char *rqfile)
 		    }
 		else
 		    {
+		    assert(dir == 0);
 		    ret = DESTest(&ctx, amode, akeysz, aKey, iVec, 
 				  dir,  /* 0 = decrypt, 1 = encrypt */
 				  plaintext, ciphertext, len);
