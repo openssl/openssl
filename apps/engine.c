@@ -520,4 +520,12 @@ end:
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
+#else
+
+# if PEDANTIC
+
+void *dummy=&dummy;
+
+# endif
+
 #endif
