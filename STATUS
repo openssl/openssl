@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/02/20 13:20:32 $
+  ______________                           $Date: 2002/02/20 17:40:33 $
 
   DEVELOPMENT STATE
 
@@ -67,10 +67,6 @@
     o  'openssl speed' should include AES support (0.9.7-dev)
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
-
-    o  OpenSSL_0_9_6-stable:
-       #include <openssl/e_os.h> in exported header files is illegal since
-       e_os.h is suitable only for library-internal use.
 
     o  Whenever strncpy is used, make sure the resulting string is NULL-terminated
        or an error is reported
