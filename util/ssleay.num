@@ -169,7 +169,7 @@ SSL_add_file_cert_subjects_to_stack     185	EXIST:!VMS:FUNCTION:STDIO
 SSL_add_file_cert_subjs_to_stk          185	EXIST:VMS:FUNCTION:STDIO
 SSL_set_tmp_rsa_callback                186	EXIST::FUNCTION:RSA
 SSL_set_tmp_dh_callback                 187	EXIST::FUNCTION:DH
-SSL_add_dir_cert_subjects_to_stack      188	EXIST:!VMS,!WIN32:FUNCTION:STDIO
+SSL_add_dir_cert_subjects_to_stack      188	EXIST:!VMS:FUNCTION:STDIO
 SSL_add_dir_cert_subjs_to_stk           188	NOEXIST::FUNCTION:
 SSL_set_session_id_context              189	EXIST::FUNCTION:
 SSL_CTX_use_certificate_chain_file      222	EXIST:!VMS:FUNCTION:STDIO

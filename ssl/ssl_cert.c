@@ -781,7 +781,7 @@ err:
 #endif
 #endif
 
-#else
+#else /* OPENSSL_SYS_WIN32 */
 
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 				       const char *dir)
