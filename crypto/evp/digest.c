@@ -189,7 +189,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 			ctx->md_data=OPENSSL_malloc(type->ctx_size);
 		}
 skip_to_init:
-	return type->init(ctx);
+	return ctx->digest->init(ctx);
 	}
 
 int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data,
