@@ -1,0 +1,42 @@
+# CAVS 2.0
+# Config Info for : "OpenSSL_3Key_TDES"
+# TDES Multi block Message Test for CFB1
+# State : Encrypt and Decrypt
+# Tue Jun 24 02:55:56 PM
+
+[ENCRYPT]
+
+COUNT = 0
+KEY1 = b6bf54fb7c91b59d
+KEY2 = e58a49f76bfb2ce6
+KEY3 = 4a7638ce709862e5
+IV = ef2f7405e7726d1c
+PLAINTEXT = 1
+CIPHERTEXT = 0
+
+COUNT = 1
+KEY1 = 5d75971c31b3e06b
+KEY2 = 5794084f08eafdd3
+KEY3 = 89da540837b351b9
+IV = 9e641ff6cde4bb0f
+PLAINTEXT = 00
+CIPHERTEXT = 11
+
+[DECRYPT]
+
+COUNT = 0
+KEY1 = 047a75a81957ef5e
+KEY2 = badafbd09b7f8320
+KEY3 = 02e9dac89e736bd0
+IV = fafe0ac957fd091c
+CIPHERTEXT = 1
+PLAINTEXT = 1
+
+COUNT = 1
+KEY1 = 806146f7f826aed5
+KEY2 = c7d6e69eb3f716a1
+KEY3 = 4fab327315343ba2
+IV = 921af86d8ca529a3
+CIPHERTEXT = 00
+PLAINTEXT = 00
+
