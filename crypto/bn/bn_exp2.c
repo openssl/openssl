@@ -176,7 +176,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 		}
 	else
 		a_mod_m = a1;
-	if (BN_is_zero(&(val1[0])))
+	if (BN_is_zero(a_mod_m))
 		{
 		ret = BN_zero(rr);
 		goto err;
@@ -211,7 +211,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 		}
 	else
 		a_mod_m = a2;
-	if (BN_is_zero(&(val2[0])))
+	if (BN_is_zero(a_mod_m))
 		{
 		ret = BN_zero(rr);
 		goto err;
