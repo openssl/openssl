@@ -68,9 +68,9 @@ files:
 
 links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
-	@$(TOP)/util/mklink.sh ../../include/openssl $(EXHEADER)
-	@$(TOP)/util/mklink.sh ../../test $(TEST)
-	@$(TOP)/util/mklink.sh ../../apps $(APPS)
+	@$(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
+	@$(TOP)/util/mklink.pl ../../test $(TEST)
+	@$(TOP)/util/mklink.pl ../../apps $(APPS)
 
 install:
 	@for i in $(EXHEADER) ; \
