@@ -5,6 +5,17 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.7a and OpenSSL 0.9.7b:
+
+      o Security: counter the Klima-Pokorny-Rosa extension of
+        Bleichbacher's attack 
+      o Security: make RSA blinding default.
+      o Configuration: Irix fixes, AIX fixes, better mingw support.
+      o Support for new platforms: linux-ia64-ecc.
+      o Build: shared library support fixes.
+      o ASN.1: treat domainComponent correctly.
+      o Documentation: fixes and additions.
+
   Major changes between OpenSSL 0.9.7 and OpenSSL 0.9.7a:
 
       o Security: Important security related bugfixes.
