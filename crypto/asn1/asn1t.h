@@ -375,6 +375,14 @@ struct ASN1_ADB_TABLE_st {
 /* Field is a SEQUENCE OF */
 #define ASN1_TFLG_SEQUENCE_OF	(0x2 << 1)
 
+/* Special case: this refers to a SET OF that
+ * will be sorted into DER order when encoded *and*
+ * the corresponding STACK will be modified to match
+ * the new order.
+ */
+#define ASN1_TFLG_SET_ORDER	(0x3 << 1)
+
+/* Mask for SET OF or SEQUENCE OF */
 #define ASN1_TFLG_SK_MASK	(0x3 << 1)
 
 /* These flags mean the tag should be taken from the

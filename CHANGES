@@ -3,6 +3,14 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add a special meaning when SET OF and SEQUENCE OF flags are both
+     set (this was treated exactly the same as SET OF previously). This
+     is used to reorder the STACK representing the structure to match the
+     encoding. This will be used to get round a problem where a PKCS7
+     structure which was signed could not be verified because the STACK
+     order did not reflect the encoded order.
+     [Steve Henson]
+
   *) Reimplement the OCSP ASN1 module using the new code.
      [Steve Henson]
 
