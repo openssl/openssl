@@ -28,12 +28,21 @@ RSA_check_key() returns 1 if B<rsa> is a valid RSA key, and 0 otherwise.
 If the key is invalid or an error occurred, the reason code can be
 obtained using L<ERR_get_error(3)|ERR_get_error(3)>.
 
+=head1 NOTES
+
+RSA_check_key() can only check soft keys.  If given hard keys, i.e. keys
+that were retreived from an ENGINE (with ENGINE_load_private_key()),
+RSA_check_key() will always return 0, as if the key was invalid.  The
+reason is that the private components B<p>, B<q> and B<d> are normally
+not available to OpenSSL for hard keys, and the checks can therefore not
+be done.
+
 =head1 SEE ALSO
 
 L<rsa(3)|rsa(3)>, L<err(3)|err(3)>
 
 =head1 HISTORY
 
-RSA_check() appeared in OpenSSL 0.9.4.
+RSA_check_key() appeared in OpenSSL 0.9.4.
 
 =cut
