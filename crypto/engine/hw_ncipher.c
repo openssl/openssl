@@ -215,12 +215,14 @@ static int get_pass(const char *prompt_info,
 	HWCryptoHook_PassphraseContext *ppctx,
 	HWCryptoHook_CallerContext *cactx);
 #endif
+
+static BIO *logstream = NULL;
 static void log_message(void *logstream, const char *message);
 
 /* Stuff to pass to the HWCryptoHook library */
 static HWCryptoHook_InitInfo hwcrhk_globals = {
 	0,			/* Flags */
-	NULL,			/* logstream */
+	&logstream,		/* logstream */
 	sizeof(BN_ULONG),	/* limbsize */
 	0,			/* mslimb first: false for BNs */
 	-1,			/* msbyte first: use native */
@@ -232,10 +234,10 @@ static HWCryptoHook_InitInfo hwcrhk_globals = {
 	   Currently, the support in OpenSSL is just not good enough,
 	   so this part is currently skipped, but worked on. */
 	sizeof(HWCryptoHook_Mutex),
-	0, /* hwcrhk_mutex_init, */
-	0, /* hwcrhk_mutex_lock, */
-	0, /* hwcrhk_mutex_unlock, */
-	0, /* hwcrhk_mutex_destroy, */
+	hwcrhk_mutex_init,
+	hwcrhk_mutex_lock,
+	hwcrhk_mutex_unlock,
+	hwcrhk_mutex_destroy,
 
 	/* The next few are condvar stuff: we write wrapper functions
 	   round the OS functions.  Currently not implemented and not
@@ -259,7 +261,7 @@ static HWCryptoHook_InitInfo hwcrhk_globals = {
 
 /* As this is only ever called once, there's no need for locking
  * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_hwcrhk()
+ENGINE *ENGINE_ncipher()
 	{
 	RSA_METHOD *meth1;
 	DH_METHOD *meth2;
@@ -295,13 +297,13 @@ static int hndidx = -1;	/* Index for KM handle.  Not really used yet. */
 
 /* These are the function pointers that are (un)set when the library has
  * successfully (un)loaded. */
-HWCryptoHook_Init_t *p_hwcrhk_Init = NULL;
-HWCryptoHook_Finish_t *p_hwcrhk_Finish = NULL;
-HWCryptoHook_ModExp_t *p_hwcrhk_ModExp = NULL;
-HWCryptoHook_RSA_t *p_hwcrhk_RSA = NULL;
-HWCryptoHook_RandomBytes_t *p_hwcrhk_RandomBytes = NULL;
-HWCryptoHook_RSAUnloadKey_t *p_hwcrhk_RSAUnloadKey = NULL;
-HWCryptoHook_ModExpCRT_t *p_hwcrhk_ModExpCRT = NULL;
+static HWCryptoHook_Init_t *p_hwcrhk_Init = NULL;
+static HWCryptoHook_Finish_t *p_hwcrhk_Finish = NULL;
+static HWCryptoHook_ModExp_t *p_hwcrhk_ModExp = NULL;
+static HWCryptoHook_RSA_t *p_hwcrhk_RSA = NULL;
+static HWCryptoHook_RandomBytes_t *p_hwcrhk_RandomBytes = NULL;
+static HWCryptoHook_RSAUnloadKey_t *p_hwcrhk_RSAUnloadKey = NULL;
+static HWCryptoHook_ModExpCRT_t *p_hwcrhk_ModExpCRT = NULL;
 
 /* Used in the DSO operations. */
 static const char *HWCRHK_LIBNAME = "nfhwcrhk";
@@ -724,8 +726,11 @@ static void hwcrhk_mutex_destroy(HWCryptoHook_Mutex *mt)
 
 static void log_message(void *logstream, const char *message)
 	{
-	ENGINEerr(ENGINE_F_LOG_MESSAGE,ENGINE_R_HWCRYPTOHOOK_REPORTS);
-	ERR_add_error_data(1,message);
+	BIO *lstream = NULL;
+	if (logstream)
+		lstream=*(BIO **)logstream;
+	if (lstream)
+		BIO_write(lstream, message, strlen(message));
 	}
 
 #endif /* HW_NCIPHER */
