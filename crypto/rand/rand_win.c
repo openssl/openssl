@@ -211,7 +211,7 @@ int RAND_poll(void)
         osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
         GetVersionEx( &osverinfo ) ;
 
-#ifdef OPENSSL_SYS_WINCE
+#if defined(OPENSSL_SYS_WINCE) && WCEPLATFORM!=MS_HPC_PRO
 	/* poll the CryptoAPI PRNG */
 	/* The CryptoAPI returns sizeof(buf) bytes of randomness */
 	if (CryptAcquireContext(&hProvider, 0, 0, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))

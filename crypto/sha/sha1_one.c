@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <openssl/sha.h>
+#include <openssl/crypto.h>
 
 #ifndef OPENSSL_NO_SHA1
 unsigned char *SHA1(const unsigned char *d, unsigned long n, unsigned char *md)

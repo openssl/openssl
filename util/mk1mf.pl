@@ -273,6 +273,17 @@ $defs= <<"EOF";
 # The one monster makefile better suits building in non-unix
 # environments.
 
+EOF
+
+if ($platform eq "VC-CE")
+	{
+	$defs.= <<"EOF";
+!INCLUDE <\$(WCECOMPAT)/wcedefs.mak>
+
+EOF
+	}
+
+$defs.= <<"EOF";
 INSTALLTOP=$INSTALLTOP
 
 # Set your compiler options

@@ -230,9 +230,6 @@ extern "C" {
 #  include <fcntl.h>
 
 #  ifdef OPENSSL_SYS_WINCE
-#    include <stdio_extras.h>
-#    include <stdlib_extras.h>
-#    include <string_extras.h>
 #    include <winsock_extras.h>
 #  endif
 
