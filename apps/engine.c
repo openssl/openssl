@@ -72,9 +72,10 @@
 
 static char *engine_usage[]={
 "usage: engine opts [engine ...]\n",
-" -v[v[v]]    - verbose mode, for each engine, list its 'control commands'\n",
+" -v[v[v[v]]] - verbose mode, for each engine, list its 'control commands'\n",
 "               -vv will additionally display each command's description\n",
 "               -vvv will also add the input flags for each command\n",
+"               -vvvv will also show internal input flags\n",
 " -c          - for each engine, also list the capabilities\n",
 " -t          - for each engine, check that they are really available\n",
 " -pre <cmd>  - runs command 'cmd' against the ENGINE before any attempts\n",
@@ -135,8 +136,20 @@ static int util_flags(BIO *bio_out, unsigned int flags, const char *indent)
 		BIO_printf(bio_out, "<no flags>\n");
 		return 1;
 		}
+        /* If the object is internal, mark it in a way that shows instead of
+         * having it part of all the other flags, even if it really is. */
+	if(flags & ENGINE_CMD_FLAG_INTERNAL)
+		{
+		BIO_printf(bio_out, "[Internal] ");
+		}
+
 	if(flags & ENGINE_CMD_FLAG_NUMERIC)
 		{
+		if(started)
+			{
+			BIO_printf(bio_out, "|");
+			err = 1;
+			}
 		BIO_printf(bio_out, "NUMERIC");
 		started = 1;
 		}
@@ -167,7 +180,8 @@ static int util_flags(BIO *bio_out, unsigned int flags, const char *indent)
 	/* Check for unknown flags */
 	flags = flags & ~ENGINE_CMD_FLAG_NUMERIC &
 			~ENGINE_CMD_FLAG_STRING &
-			~ENGINE_CMD_FLAG_NO_INPUT;
+			~ENGINE_CMD_FLAG_NO_INPUT &
+			~ENGINE_CMD_FLAG_INTERNAL;
 	if(flags)
 		{
 		if(started) BIO_printf(bio_out, "|");
@@ -205,60 +219,63 @@ static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent
 		goto err;
 	do {
 		int len;
-		/* Get the command name */
-		if((len = ENGINE_ctrl(e, ENGINE_CTRL_GET_NAME_LEN_FROM_CMD, num,
-					NULL, NULL)) <= 0)
-			goto err;
-		if((name = OPENSSL_malloc(len + 1)) == NULL)
-			goto err;
-		if(ENGINE_ctrl(e, ENGINE_CTRL_GET_NAME_FROM_CMD, num, name,
-					NULL) <= 0)
-			goto err;
-		/* Get the command description */
-		if((len = ENGINE_ctrl(e, ENGINE_CTRL_GET_DESC_LEN_FROM_CMD, num,
-					NULL, NULL)) < 0)
-			goto err;
-		if(len > 0)
-			{
-			if((desc = OPENSSL_malloc(len + 1)) == NULL)
-				goto err;
-			if(ENGINE_ctrl(e, ENGINE_CTRL_GET_DESC_FROM_CMD, num, desc,
-						NULL) <= 0)
-				goto err;
-			}
 		/* Get the command input flags */
 		if((flags = ENGINE_ctrl(e, ENGINE_CTRL_GET_CMD_FLAGS, num,
 					NULL, NULL)) < 0)
 			goto err;
-		/* Now decide on the output */
-		if(xpos == 0)
-			/* Do an indent */
-			xpos = BIO_printf(bio_out, indent);
-		else
-			/* Otherwise prepend a ", " */
-			xpos += BIO_printf(bio_out, ", ");
-		if(verbose == 1)
-			{
-			/* We're just listing names, comma-delimited */
-			if((xpos > (int)strlen(indent)) &&
+                if (!(flags & ENGINE_CMD_FLAG_INTERNAL) || verbose >= 4)
+                        {
+                        /* Get the command name */
+                        if((len = ENGINE_ctrl(e, ENGINE_CTRL_GET_NAME_LEN_FROM_CMD, num,
+                                NULL, NULL)) <= 0)
+                                goto err;
+                        if((name = OPENSSL_malloc(len + 1)) == NULL)
+                                goto err;
+                        if(ENGINE_ctrl(e, ENGINE_CTRL_GET_NAME_FROM_CMD, num, name,
+                                NULL) <= 0)
+                                goto err;
+                        /* Get the command description */
+                        if((len = ENGINE_ctrl(e, ENGINE_CTRL_GET_DESC_LEN_FROM_CMD, num,
+                                NULL, NULL)) < 0)
+                                goto err;
+                        if(len > 0)
+                                {
+                                if((desc = OPENSSL_malloc(len + 1)) == NULL)
+                                        goto err;
+                                if(ENGINE_ctrl(e, ENGINE_CTRL_GET_DESC_FROM_CMD, num, desc,
+                                        NULL) <= 0)
+                                        goto err;
+                                }
+                        /* Now decide on the output */
+                        if(xpos == 0)
+                                /* Do an indent */
+                                xpos = BIO_printf(bio_out, indent);
+                        else
+                                /* Otherwise prepend a ", " */
+                                xpos += BIO_printf(bio_out, ", ");
+                        if(verbose == 1)
+                                {
+                                /* We're just listing names, comma-delimited */
+                                if((xpos > (int)strlen(indent)) &&
 					(xpos + (int)strlen(name) > line_wrap))
-				{
-				BIO_printf(bio_out, "\n");
-				xpos = BIO_printf(bio_out, indent);
-				}
-			xpos += BIO_printf(bio_out, "%s", name);
-			}
-		else
-			{
-			/* We're listing names plus descriptions */
-			BIO_printf(bio_out, "%s: %s\n", name,
-				(desc == NULL) ? "<no description>" : desc);
-			/* ... and sometimes input flags */
-			if((verbose == 3) && !util_flags(bio_out, flags,
-							indent))
-				goto err;
-			xpos = 0;
-			}
+                                        {
+                                        BIO_printf(bio_out, "\n");
+                                        xpos = BIO_printf(bio_out, indent);
+                                        }
+                                xpos += BIO_printf(bio_out, "%s", name);
+                                }
+                        else
+                                {
+                                /* We're listing names plus descriptions */
+                                BIO_printf(bio_out, "%s: %s\n", name,
+                                        (desc == NULL) ? "<no description>" : desc);
+                                /* ... and sometimes input flags */
+                                if((verbose >= 3) && !util_flags(bio_out, flags,
+                                        indent))
+                                        goto err;
+                                xpos = 0;
+                                }
+                        }
 		OPENSSL_free(name); name = NULL;
 		if(desc) { OPENSSL_free(desc); desc = NULL; }
 		/* Move to the next command */
@@ -355,7 +372,7 @@ int MAIN(int argc, char **argv)
 			{
 			if(strspn(*argv + 1, "v") < strlen(*argv + 1))
 				goto skip_arg_loop;
-			if((verbose=strlen(*argv + 1)) > 3)
+			if((verbose=strlen(*argv + 1)) > 4)
 				goto skip_arg_loop;
 			}
 		else if (strcmp(*argv,"-c") == 0)
