@@ -160,6 +160,7 @@ static int FIPS_check_exe(const char *path)
 	}
     fclose(f);
     HMAC_Final(&hmac,mdbuf,&n);
+    HMAC_CTX_cleanup(&hmac);
     BIO_snprintf(p2,sizeof p2,sha1_fmt,path);
     f=fopen(p2,"rb");
     if(!f || fread(buf,1,20,f) != 20)
