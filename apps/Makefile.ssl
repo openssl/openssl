@@ -476,6 +476,24 @@ pkcs7.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
 pkcs7.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 pkcs7.o: ../include/openssl/sha.h ../include/openssl/stack.h
 pkcs7.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h progs.h
+pkcs8.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+pkcs8.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
+pkcs8.o: ../include/openssl/buffer.h ../include/openssl/cast.h
+pkcs8.o: ../include/openssl/crypto.h ../include/openssl/des.h
+pkcs8.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+pkcs8.o: ../include/openssl/e_os.h ../include/openssl/e_os2.h
+pkcs8.o: ../include/openssl/err.h ../include/openssl/evp.h
+pkcs8.o: ../include/openssl/idea.h ../include/openssl/md2.h
+pkcs8.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
+pkcs8.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+pkcs8.o: ../include/openssl/opensslv.h ../include/openssl/pem.h
+pkcs8.o: ../include/openssl/pem2.h ../include/openssl/pkcs12.h
+pkcs8.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
+pkcs8.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+pkcs8.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+pkcs8.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+pkcs8.o: ../include/openssl/stack.h ../include/openssl/x509.h
+pkcs8.o: ../include/openssl/x509_vfy.h apps.h progs.h
 req.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 req.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 req.o: ../include/openssl/buffer.h ../include/openssl/cast.h

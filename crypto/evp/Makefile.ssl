@@ -943,6 +943,23 @@ names.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 names.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 names.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 names.o: ../cryptlib.h
+p5_crpt.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+p5_crpt.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+p5_crpt.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
+p5_crpt.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+p5_crpt.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+p5_crpt.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
+p5_crpt.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+p5_crpt.o: ../../include/openssl/idea.h ../../include/openssl/md2.h
+p5_crpt.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+p5_crpt.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+p5_crpt.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
+p5_crpt.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+p5_crpt.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+p5_crpt.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+p5_crpt.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+p5_crpt.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+p5_crpt.o: ../cryptlib.h
 p_dec.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 p_dec.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 p_dec.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h

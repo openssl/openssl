@@ -142,13 +142,14 @@ pem_lib.o: ../../include/openssl/idea.h ../../include/openssl/md2.h
 pem_lib.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
 pem_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 pem_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/pem.h
-pem_lib.o: ../../include/openssl/pem2.h ../../include/openssl/pkcs7.h
-pem_lib.o: ../../include/openssl/rand.h ../../include/openssl/rc2.h
-pem_lib.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
-pem_lib.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
-pem_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-pem_lib.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
-pem_lib.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+pem_lib.o: ../../include/openssl/pem2.h ../../include/openssl/pkcs12.h
+pem_lib.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+pem_lib.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+pem_lib.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+pem_lib.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+pem_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+pem_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pem_lib.o: ../cryptlib.h
 pem_seal.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 pem_seal.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 pem_seal.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h

@@ -86,6 +86,7 @@ extern "C" {
 #define BIO_TYPE_NBIO_TEST	(16|0x0200)		/* server proxy BIO */
 #define BIO_TYPE_NULL_FILTER	(17|0x0200)
 #define BIO_TYPE_BER		(18|0x0200)		/* BER -> bin filter */
+#define BIO_TYPE_BIO		(19|0x0400)		/* (half a) BIO pair */
 
 #define BIO_TYPE_DESCRIPTOR	0x0100	/* socket, fd, connect or accept */
 #define BIO_TYPE_FILTER		0x0200
@@ -240,7 +241,7 @@ typedef struct bio_st
 	int flags;	/* extra storage */
 	int retry_reason;
 	int num;
-	char *ptr;
+	void *ptr;
 	struct bio_st *next_bio;	/* used by filter BIOs */
 	struct bio_st *prev_bio;	/* used by filter BIOs */
 	int references;
@@ -497,6 +498,7 @@ BIO_METHOD *BIO_s_connect(void);
 BIO_METHOD *BIO_s_accept(void);
 BIO_METHOD *BIO_s_fd(void);
 BIO_METHOD *BIO_s_log(void);
+BIO_METHOD *BIO_s_bio(void);
 BIO_METHOD *BIO_s_null(void);
 BIO_METHOD *BIO_f_null(void);
 BIO_METHOD *BIO_f_buffer(void);
@@ -551,6 +553,7 @@ int BIO_printf(BIO *bio, ...);
 #define BIO_F_BIO_GET_ACCEPT_SOCKET			 105
 #define BIO_F_BIO_GET_HOST_IP				 106
 #define BIO_F_BIO_GET_PORT				 107
+#define BIO_F_BIO_MAKE_PAIR				 121
 #define BIO_F_BIO_NEW					 108
 #define BIO_F_BIO_NEW_FILE				 109
 #define BIO_F_BIO_PUTS					 110
@@ -574,6 +577,7 @@ int BIO_printf(BIO *bio, ...);
 #define BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET	 106
 #define BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET		 107
 #define BIO_R_INVALID_IP_ADDRESS			 108
+#define BIO_R_IN_USE					 123
 #define BIO_R_KEEPALIVE					 109
 #define BIO_R_NBIO_CONNECT_ERROR			 110
 #define BIO_R_NO_ACCEPT_PORT_SPECIFIED			 111
