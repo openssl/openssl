@@ -319,6 +319,6 @@ end:
 	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free_all(out);
 	if (dh != NULL) DH_free(dh);
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 #endif

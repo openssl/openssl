@@ -121,5 +121,5 @@ int MAIN(int argc, char **argv)
 			ret++;
 			}
 		}
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}

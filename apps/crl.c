@@ -364,7 +364,7 @@ end:
 		X509_STORE_CTX_cleanup(&ctx);
 		X509_STORE_free(store);
 	}
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static X509_CRL *load_crl(char *infile, int format)

@@ -775,7 +775,7 @@ end:
 		BIO_free(bio_c_out);
 		bio_c_out=NULL;
 		}
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 

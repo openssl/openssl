@@ -909,7 +909,7 @@ end:
 #ifndef NO_DSA
 	if (dsa_params != NULL) DSA_free(dsa_params);
 #endif
-	EXIT(ex);
+	OPENSSL_EXIT(ex);
 	}
 
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, int attribs)

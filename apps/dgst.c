@@ -335,7 +335,7 @@ end:
 	EVP_PKEY_free(sigkey);
 	if(sigbuf) OPENSSL_free(sigbuf);
 	if (bmd != NULL) BIO_free(bmd);
-	EXIT(err);
+	OPENSSL_EXIT(err);
 	}
 
 void do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,

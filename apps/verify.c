@@ -213,7 +213,7 @@ end:
 	if (cert_ctx != NULL) X509_STORE_free(cert_ctx);
 	sk_X509_pop_free(untrusted, X509_free);
 	sk_X509_pop_free(trusted, X509_free);
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose)

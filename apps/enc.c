@@ -604,7 +604,7 @@ end:
 	if (benc != NULL) BIO_free(benc);
 	if (b64 != NULL) BIO_free(b64);
 	if(pass) OPENSSL_free(pass);
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 int set_hex(char *in, unsigned char *out, int size)

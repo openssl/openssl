@@ -128,5 +128,5 @@ int MAIN(int argc, char **argv)
 		}
 	if (cflags)  printf("%s\n",SSLeay_version(SSLEAY_CFLAGS));
 end:
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}

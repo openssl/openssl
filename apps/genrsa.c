@@ -224,7 +224,7 @@ err:
 	if(passout) OPENSSL_free(passout);
 	if (ret != 0)
 		ERR_print_errors(bio_err);
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static void MS_CALLBACK genrsa_cb(int p, int n, void *arg)

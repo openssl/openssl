@@ -328,6 +328,6 @@ end:
 	if (at != NULL) ASN1_TYPE_free(at);
 	if (osk != NULL) sk_free(osk);
 	OBJ_cleanup();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 

@@ -144,5 +144,5 @@ err:
 	ERR_print_errors(bio_err);
 	if (out)
 		BIO_free_all(out);
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}

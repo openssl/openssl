@@ -184,7 +184,7 @@ end:
 		ERR_print_errors(bio_err);
 	if (out != NULL) BIO_free_all(out);
 	if (dh != NULL) DH_free(dh);
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static void MS_CALLBACK dh_cb(int p, int n, void *arg)

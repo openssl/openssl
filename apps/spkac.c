@@ -288,5 +288,5 @@ end:
 	BIO_free(key);
 	EVP_PKEY_free(pkey);
 	if(passin) OPENSSL_free(passin);
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}

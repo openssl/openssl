@@ -1280,7 +1280,7 @@ err:
 	X509_CRL_free(crl);
 	CONF_free(conf);
 	OBJ_cleanup();
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static void lookup_fail(char *name, char *tag)

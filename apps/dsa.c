@@ -293,6 +293,6 @@ end:
 	if(dsa != NULL) DSA_free(dsa);
 	if(passin) OPENSSL_free(passin);
 	if(passout) OPENSSL_free(passout);
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 #endif

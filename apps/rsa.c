@@ -389,7 +389,7 @@ end:
 	if(rsa != NULL) RSA_free(rsa);
 	if(passin) OPENSSL_free(passin);
 	if(passout) OPENSSL_free(passout);
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 #else /* !NO_RSA */
 

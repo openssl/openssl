@@ -961,7 +961,7 @@ end:
 	sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
 	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
 	if (passin) OPENSSL_free(passin);
-	EXIT(ret);
+	OPENSSL_EXIT(ret);
 	}
 
 static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,

@@ -1412,7 +1412,7 @@ end:
 		if (dsa_key[i] != NULL)
 			DSA_free(dsa_key[i]);
 #endif
-	EXIT(mret);
+	OPENSSL_EXIT(mret);
 	}
 
 static void print_message(char *s, long num, int length)
