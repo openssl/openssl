@@ -226,8 +226,14 @@ bad:
 		l+=rsa->e->d[i];
 		}
 	BIO_printf(bio_err,"e is %ld (0x%lX)\n",l,l);
-	if (!PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,0,NULL, passout))
+	{
+	PW_CB_DATA cb_data;
+	cb_data.password = passout;
+	cb_data.prompt_info = outfile;
+	if (!PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,0,
+		(pem_password_cb *)password_callback,&cb_data))
 		goto err;
+	}
 
 	ret=0;
 err:
