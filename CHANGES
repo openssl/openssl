@@ -4,8 +4,21 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) The obj_dat.pl script was messing up the sorting of object
+     names. The reason was that it compared the quoted version
+     of strings as a result "OCSP" > "OCSP Signing" because
+     " > SPACE. Changed script to store unquoted versions of
+     names and add quotes on output. It was also omitting some
+     names from the lookup table if they were given a default
+     value (that is if SN is missing it is given the same
+     value as LN and vice versa), these are now added on the
+     grounds that if an object has a name we should be able to
+     look it up. Finally added warning output when duplicate
+     short or long names are found.
+     [Steve Henson]
+
   *) Changes needed for Tandem NSK.
-     [Scott Uroff scott@xpro.com]
+     [Scott Uroff scott@xypro.com]
 
   *) Fix SSL 2.0 rollback checking: Due to an off-by-one error in
      RSA_padding_check_SSLv23(), special padding was never detected

@@ -320,8 +320,7 @@ id-kp 6			: ipsecTunnel		: IPSec Tunnel
 id-kp 7			: ipsecUser		: IPSec User
 !Cname time-stamp
 id-kp 8			: timeStamping		: Time Stamping
-#??? According to PKIX, id-kp 9 is temporalDataAuthority
-#??? I've no idea where OCSP-sign comes from -- Richard Levitte
+# From OCSP spec RFC2560
 !Cname OCSP-sign
 id-kp 9			: OCSPSigning		: OCSP Signing
 id-kp 10		: DVCS			: dvcs
