@@ -452,6 +452,7 @@ if (export_cert) {
     PKCS12_free(p12);
     ret = 0;
     end:
+    BIO_free(out);
     EXIT(ret);
 }
 
