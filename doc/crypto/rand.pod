@@ -106,13 +106,16 @@ working hash function ('md') and a counter ('count').
 Whenever seed data is added, it is inserted into the 'state' as
 follows.
 
-The input is chopped up into units of 16 bytes (or less for the last
-block).  Each of these blocks is run through the hash function.  The
-data passed to the hash function is the current 'md', the same number
-of bytes from the 'state' (the location determined by in incremented
-looping index) as the current 'block' and the new key data 'block'.
-The result of this is kept in 'md' and also xored into the 'state' at
-the same locations that were used as input into the hash function.  I
+The input is chopped up into units of 16 bytes (or less for
+the last block).  Each of these blocks is run through the hash
+function as follows:  The data passed to the hash function
+is the current 'md', the same number of bytes from the 'state'
+(the location determined by in incremented looping index) as
+the current 'block', the new key data 'block', and 'count'
+(which is incremented after each use).
+The result of this is kept in 'md' and also xored into the
+'state' at the same locations that were used as input into the
+hash function. I
 believe this system addresses points 1 (hash function; currently
 SHA-1), 3 (the 'state'), 4 (via the 'md'), 5 (by the use of a hash
 function and xor).

@@ -188,7 +188,7 @@ static void ssleay_rand_add(const void *buf, int num, int add)
 	 *
 	 * The input is chopped up into units of 16 bytes (or less for
 	 * the last block).  Each of these blocks is run through the hash
-	 * function as follow:  The data passed to the hash function
+	 * function as follows:  The data passed to the hash function
 	 * is the current 'md', the same number of bytes from the 'state'
 	 * (the location determined by in incremented looping index) as
 	 * the current 'block', the new key data 'block', and 'count'
