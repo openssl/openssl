@@ -13,6 +13,9 @@
      Add options '-batch' and '-verbose' to 'openssl req'.
      [Massimiliano Pala <madwolf@hackmasters.net>]
 
+  *) Make it possible to reuse SSLv2 sessions.
+     [Richard Levitte]
+
   *) Introduce the possibility to access global variables through
      functions on platform were that's the best way to handle exporting
      global variables in shared libraries.  To enable this functionality,
