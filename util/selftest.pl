@@ -138,13 +138,6 @@ if (/no-/)
     goto err;
 }
 
-if (`echo 4+1 | bc` != 5 || (system("sh test/bctest >/dev/null") >> 8) != 0)
-{
-    print OUT "Can't run bc! Test skipped.\n";
-    print OUT $not_our_fault;
-    goto err;
-}
-
 print "Running make test...\n";
 if (system("make test 2>&1 | tee maketest.log") > 255)
  {
