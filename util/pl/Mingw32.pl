@@ -66,12 +66,12 @@ $lfile='';
 
 $asm='as';
 $afile='-o ';
-$bn_asm_obj="";
-$bn_asm_src="";
-$des_enc_obj="";
-$des_enc_src="";
-$bf_enc_obj="";
-$bf_enc_src="";
+#$bn_asm_obj="";
+#$bn_asm_src="";
+#$des_enc_obj="";
+#$des_enc_src="";
+#$bf_enc_obj="";
+#$bf_enc_src="";
 
 sub do_lib_rule
 	{
