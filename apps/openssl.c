@@ -229,6 +229,10 @@ int main(int Argc, char *Argv[])
 	arg.data=NULL;
 	arg.count=0;
 
+	if (bio_err == NULL)
+		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
+			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
+
 	if (getenv("OPENSSL_DEBUG_MEMORY") != NULL) /* if not defined, use compiled-in library defaults */
 		{
 		if (!(0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off")))
@@ -252,10 +256,6 @@ int main(int Argc, char *Argv[])
 		}
 
 	apps_startup();
-
-	if (bio_err == NULL)
-		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	/* Lets load up our environment a little */
 	p=getenv("OPENSSL_CONF");
