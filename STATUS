@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/04/25 06:29:31 $
+  ______________                           $Date: 2002/04/25 07:46:55 $
 
   DEVELOPMENT STATE
 
@@ -66,7 +66,7 @@
        in X.509 signatures
 
     o  inappropriate AlgorithmIdentifier used in S/MIME signatures
-       (key type rather than not signature algorithm)
+       (key type instead of signature algorithm)
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
 
