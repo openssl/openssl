@@ -150,7 +150,7 @@ int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type)
 			x=PEM_read_bio_X509_AUX(in,NULL,NULL,NULL);
 			if (x == NULL)
 				{
-				if ((ERR_GET_REASON(ERR_peek_error()) ==
+				if ((ERR_GET_REASON(ERR_peek_last_error()) ==
 					PEM_R_NO_START_LINE) && (count > 0))
 					{
 					ERR_clear_error();
@@ -217,7 +217,7 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 			x=PEM_read_bio_X509_CRL(in,NULL,NULL,NULL);
 			if (x == NULL)
 				{
-				if ((ERR_GET_REASON(ERR_peek_error()) ==
+				if ((ERR_GET_REASON(ERR_peek_last_error()) ==
 					PEM_R_NO_START_LINE) && (count > 0))
 					{
 					ERR_clear_error();
