@@ -103,8 +103,9 @@ clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-fips_des_enc.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-fips_des_enc.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
+fips_des_enc.o: ../../e_os.h ../../include/openssl/crypto.h
+fips_des_enc.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+fips_des_enc.o: ../../include/openssl/e_os2.h
 fips_des_enc.o: ../../include/openssl/opensslconf.h
 fips_des_enc.o: ../../include/openssl/opensslv.h
 fips_des_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
