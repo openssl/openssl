@@ -366,7 +366,7 @@ rehash.time: certs
 		export OPENSSL OPENSSL_DEBUG_MEMORY; \
 		LD_LIBRARY_PATH="`pwd`"; DYLD_LIBRARY_PATH="`pwd`"; SHLIB_PATH="`pwd`"; LIBPATH="`pwd`"; \
 		if [ "$(PLATFORM)" = "DJGPP" ]; then PATH="`pwd`\;$$PATH";  \
-		elif [ "$(PLATFORM)" != "Cygwin" ];  then PATH="`pwd`:$$PATH"; fi; \
+		elif [ "$(PLATFORM)" = "Cygwin" ]; then PATH="`pwd`:$$PATH"; fi; \
 		export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
 		$(PERL) tools/c_rehash certs)
 	touch rehash.time
@@ -378,7 +378,7 @@ tests: rehash
 	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' TESTS='${TESTS}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}' TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on tests );
 	@LD_LIBRARY_PATH="`pwd`"; DYLD_LIBRARY_PATH="`pwd`"; SHLIB_PATH="`pwd`"; LIBPATH="`pwd`"; \
 		if [ "$(PLATFORM)" = "DJGPP" ]; then PATH="`pwd`\;$$PATH";  \
-		elif [ "$(PLATFORM)" != "Cygwin" ];  then PATH="`pwd`:$$PATH"; fi; \
+		elif [ "$(PLATFORM)" = "Cygwin" ]; then PATH="`pwd`:$$PATH"; fi; \
 		export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
 		apps/openssl version -a
 

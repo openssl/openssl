@@ -151,7 +151,7 @@ $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	-(cd ..; OPENSSL="`pwd`/apps/openssl"; export OPENSSL; \
 		LIBPATH="`pwd`"; LD_LIBRARY_PATH="`pwd`"; DYLD_LIBRARY_PATH="`pwd`"; SHLIB_PATH="`pwd`"; \
 		if [ "$(PLATFORM)" = "DJGPP" ]; then PATH="`pwd`\;$$PATH";  \
-		elif [ "$(PLATFORM)" != "Cygwin" ];  then PATH="`pwd`:$$PATH"; fi; \
+		elif [ "$(PLATFORM)" = "Cygwin" ]; then PATH="`pwd`:$$PATH"; fi; \
 		export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
 		$(PERL) tools/c_rehash certs)
 
