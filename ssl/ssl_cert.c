@@ -825,7 +825,6 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 err:	
 	FindClose(hFind);
 err_noclose:
-	if (d) closedir(d);
 	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
 	return ret;
 	}
