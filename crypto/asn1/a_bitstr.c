@@ -201,7 +201,6 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 			return 0;
 			}
   		if (w+1-a->length > 0) memset(c+a->length, 0, w+1-a->length);
-		if (w+1-a->length > 0) memset(c+a->length, 0, w+1-a->length);
 		a->data=c;
 		a->length=w+1;
 	}
