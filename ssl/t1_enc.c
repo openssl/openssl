@@ -180,9 +180,10 @@ int tls1_change_cipher_state(SSL *s, int which)
 	const EVP_CIPHER *c;
 	const SSL_COMP *comp;
 	const EVP_MD *m;
-	int _exp,n,i,j,k,exp_label_len,cl;
+	int is_export,n,i,j,k,exp_label_len,cl;
+	int reuse_dd = 0;
 
-	_exp=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
+	is_export=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	c=s->s3->tmp.new_sym_enc;
 	m=s->s3->tmp.new_hash;
 	comp=s->s3->tmp.new_compression;
@@ -205,9 +206,9 @@ int tls1_change_cipher_state(SSL *s, int which)
 
 	if (which & SSL3_CC_READ)
 		{
-		if ((s->enc_read_ctx == NULL) &&
-			((s->enc_read_ctx=(EVP_CIPHER_CTX *)
-			OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
+		if (s->enc_read_ctx != NULL)
+			reuse_dd = 1;
+		else if ((s->enc_read_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
 		dd= s->enc_read_ctx;
 		s->read_hash=m;
@@ -235,6 +236,10 @@ int tls1_change_cipher_state(SSL *s, int which)
 		}
 	else
 		{
+		if (s->enc_write_ctx != NULL)
+			reuse_dd = 1;
+		else if ((s->enc_write_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
+			goto err;
 		if ((s->enc_write_ctx == NULL) &&
 			((s->enc_write_ctx=(EVP_CIPHER_CTX *)
 			OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
@@ -259,13 +264,15 @@ int tls1_change_cipher_state(SSL *s, int which)
 		mac_secret= &(s->s3->write_mac_secret[0]);
 		}
 
+	if (reuse_dd)
+		EVP_CIPHER_CTX_cleanup(dd);
 	EVP_CIPHER_CTX_init(dd);
 
 	p=s->s3->tmp.key_block;
 	i=EVP_MD_size(m);
 	cl=EVP_CIPHER_key_length(c);
-	j=_exp ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
-		  cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
+	j=is_export ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
+	               cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
 	/* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
 	k=EVP_CIPHER_iv_length(c);
 	er1= &(s->s3->client_random[0]);
@@ -302,7 +309,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 printf("which = %04X\nmac key=",which);
 { int z; for (z=0; z<i; z++) printf("%02X%c",ms[z],((z+1)%16)?' ':'\n'); }
 #endif
-	if (_exp)
+	if (is_export)
 		{
 		/* In here I set both the read and write key/iv to the
 		 * same value since only the correct one will be used :-).

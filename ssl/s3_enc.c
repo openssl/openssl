@@ -147,6 +147,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 	const EVP_MD *m;
 	EVP_MD_CTX md;
 	int exp,n,i,j,k,cl;
+	int reuse_dd = 0;
 
 	exp=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	c=s->s3->tmp.new_sym_enc;
@@ -159,9 +160,9 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
 	if (which & SSL3_CC_READ)
 		{
-		if ((s->enc_read_ctx == NULL) &&
-			((s->enc_read_ctx=(EVP_CIPHER_CTX *)
-			OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
+		if (s->enc_read_ctx != NULL)
+			reuse_dd = 1;
+		else if ((s->enc_read_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
 		dd= s->enc_read_ctx;
 		s->read_hash=m;
@@ -190,9 +191,9 @@ int ssl3_change_cipher_state(SSL *s, int which)
 		}
 	else
 		{
-		if ((s->enc_write_ctx == NULL) &&
-			((s->enc_write_ctx=(EVP_CIPHER_CTX *)
-			OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
+		if (s->enc_write_ctx != NULL)
+			reuse_dd = 1;
+		else if ((s->enc_write_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
 		dd= s->enc_write_ctx;
 		s->write_hash=m;
@@ -215,6 +216,8 @@ int ssl3_change_cipher_state(SSL *s, int which)
 		mac_secret= &(s->s3->write_mac_secret[0]);
 		}
 
+	if (reuse_dd)
+		EVP_CIPHER_CTX_cleanup(dd);
 	EVP_CIPHER_CTX_init(dd);
 
 	p=s->s3->tmp.key_block;
