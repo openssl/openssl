@@ -332,6 +332,7 @@ sub do_defs
 
 	foreach $file (split(/\s+/,$symhacksfile." ".$files))
 		{
+		print STDERR "DEBUG: starting on $file:\n" if $debug;
 		open(IN,"<$file") || die "unable to open $file:$!\n";
 		my $line = "", my $def= "";
 		my %tag = (
@@ -400,7 +401,7 @@ sub do_defs
 
 		print STDERR "DEBUG: parsing ----------\n" if $debug;
 		while(<IN>) {
-			last if (/BEGIN ERROR CODES/);
+			last if (/\/\* Error codes for the \w+ functions\. \*\//);
 			if ($line ne '') {
 				$_ = $line . $_;
 				$line = '';
@@ -785,14 +786,18 @@ sub do_defs
 			if (/^\#INFO:([^:]*):(.*)$/) {
 				$plats = $1;
 				$algs = $2;
+				print STDERR "DEBUG: found info on platforms ($plats) and algorithms ($algs)\n" if $debug;
 				next;
 			} elsif (/^\s*OPENSSL_EXTERN\s.*?(\w+(\{[0-9]+\})?)(\[[0-9]*\])*\s*$/) {
 				$s = $1;
 				$k = "VARIABLE";
+				print STDERR "DEBUG: found external variable $s\n" if $debug;
 			} elsif (/\(\*(\w*(\{[0-9]+\})?)\([^\)]+/) {
 				$s = $1;
+				print STDERR "DEBUG: found ANSI C function $s\n" if $debug;
 			} elsif (/\w+\W+(\w+)\W*\(\s*\)$/s) {
 				# K&R C
+				print STDERR "DEBUG: found K&R C function $s\n" if $debug;
 				next;
 			} elsif (/\w+\W+\w+(\{[0-9]+\})?\W*\(.*\)$/s) {
 				while (not /\(\)$/s) {
@@ -802,6 +807,7 @@ sub do_defs
 				s/\(void\)//;
 				/(\w+(\{[0-9]+\})?)\W*\(\)/s;
 				$s = $1;
+				print STDERR "DEBUG: found function $s\n" if $debug;
 			} elsif (/\(/ and not (/=/)) {
 				print STDERR "File $file: cannot parse: $_;\n";
 				next;
@@ -1244,7 +1250,10 @@ sub rewrite_numbers
 		$syms{$n} = 1;
 	}
 
-	my @s=sort { &parse_number($nums{$a},"n") <=> &parse_number($nums{$b},"n") } keys %nums;
+	my @s=sort {
+	    &parse_number($nums{$a},"n") <=> &parse_number($nums{$b},"n")
+	    || $a cmp $b
+	} keys %nums;
 	foreach $sym (@s) {
 		(my $n, my $i) = split /\\/, $nums{$sym};
 		next if defined($i) && $i =~ /^.*?:.*?:\w+\(\w+\)/;

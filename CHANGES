@@ -12,6 +12,11 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Change mkdef.pl to sort symbols that get the same entry number,
+     and make sure the automatically generated functions ERR_load_*
+     become part of libeay.num as well.
+     [Richard Levitte]
+
   *) Avoid infinite loop in ssl3_get_message (ssl/s3_both.c) if a
      client receives HelloRequest while in a handshake.
      [Bodo Moeller; bug noticed by Andy Schneider <andy.schneider@bjss.co.uk>]
