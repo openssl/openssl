@@ -215,6 +215,7 @@ BUILD_CMD=if echo " $(DIRS) " | grep " $$i " >/dev/null 2>/dev/null; then \
 		$(MAKE) $$i; \
 	fi; fi
 
+sub_all: build_all
 build_all: build_libs build_apps build_tests build_tools
 
 build_libs: build_crypto build_ssl
