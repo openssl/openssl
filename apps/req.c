@@ -500,7 +500,7 @@ bad:
 	p = CONF_get_string(req_conf, SECTION, STRING_MASK);
 
 	if(p && !ASN1_STRING_set_default_mask_asc(p)) {
-		BIO_printf(bio_err, "Invalid global string mask setting %s", p);
+		BIO_printf(bio_err, "Invalid global string mask setting %s\n", p);
 		goto end;
 	}
 
