@@ -25,6 +25,7 @@ CAST_ENC=c_enc.o
 #CAST_ENC=asm/cx86bdsi.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG)
 
 GENERAL=Makefile
 TEST=casttest.c
