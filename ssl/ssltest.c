@@ -158,6 +158,10 @@ static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export,int keylength);
 static void free_tmp_rsa(void);
 #endif
+static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg);
+#define APP_CALLBACK "Test Callback Argument"
+static char *app_verify_arg = APP_CALLBACK;
+
 #ifndef OPENSSL_NO_DH
 static DH *get_dh512(void);
 static DH *get_dh1024(void);
@@ -336,6 +340,7 @@ int main(int argc, char *argv[])
 	int tls1=0,ssl2=0,ssl3=0,ret=1;
 	int client_auth=0;
 	int server_auth=0,i;
+	int app_verify=0;
 	char *server_cert=TEST_SERVER_CERT;
 	char *server_key=NULL;
 	char *client_cert=TEST_CLIENT_CERT;
@@ -489,6 +494,10 @@ int main(int argc, char *argv[])
 			{
 			comp = COMP_RLE;
 			}
+		else if	(strcmp(*argv,"-app_verify") == 0)
+			{
+			app_verify = 1;
+			}
 		else
 			{
 			fprintf(stderr,"unknown option %s\n",*argv);
@@ -640,12 +649,20 @@ bad:
 		SSL_CTX_set_verify(s_ctx,
 			SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
 			verify_callback);
+		if (app_verify) 
+			{
+			SSL_CTX_set_cert_verify_callback(s_ctx, app_verify_callback, app_verify_arg);
+			}
 		}
 	if (server_auth)
 		{
 		BIO_printf(bio_err,"server authentication\n");
 		SSL_CTX_set_verify(c_ctx,SSL_VERIFY_PEER,
 			verify_callback);
+		if (app_verify) 
+			{
+			SSL_CTX_set_cert_verify_callback(s_ctx, app_verify_callback, app_verify_arg);
+			}
 		}
 	
 	{
@@ -1428,6 +1445,25 @@ static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 		case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
 			ok=1;
 			}
+		}
+
+	return(ok);
+	}
+
+static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
+	{
+	char *s = NULL,buf[256];
+	int ok=1;
+
+	fprintf(stderr, "In app_verify_callback, allowing cert. ");
+	fprintf(stderr, "Arg is: %s\n", (char *)arg);
+	fprintf(stderr, "Finished printing do we have a context? 0x%x a cert? 0x%x\n",
+			(unsigned int)ctx, (unsigned int)ctx->cert);
+	if (ctx->cert)
+		s=X509_NAME_oneline(X509_get_subject_name(ctx->cert),buf,256);
+	if (s != NULL)
+		{
+			fprintf(stderr,"cert depth=%d %s\n",ctx->error_depth,buf);
 		}
 
 	return(ok);

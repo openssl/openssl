@@ -116,6 +116,9 @@ $ssltest -bio_pair -client_auth $CA $extra || exit 1
 echo test sslv2/sslv3 with both client and server authentication via BIO pair
 $ssltest -bio_pair -server_auth -client_auth $CA $extra || exit 1
 
+echo test sslv2/sslv3 with both client and server authentication via BIO pair and app verify
+$ssltest -bio_pair -server_auth -client_auth -app_verify $CA $extra || exit 1
+
 #############################################################################
 
 echo test tls1 with 1024bit anonymous DH, multiple handshakes

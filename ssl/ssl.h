@@ -607,8 +607,10 @@ struct ssl_ctx_st
 	int references;
 
 	/* if defined, these override the X509_verify_cert() calls */
-	int (*app_verify_callback)();
-	char *app_verify_arg; /* never used; should be void * */
+	int (*app_verify_callback)(X509_STORE_CTX *, void *);
+	void *app_verify_arg;
+	/* before OpenSSL 0.9.7, 'app_verify_arg' was ignored
+	 * ('app_verify_callback' was called with just one argument) */
 
 	/* Default password callback. */
 	pem_password_cb *default_passwd_callback;
@@ -1232,7 +1234,7 @@ int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int,X509_STORE_CTX *);
 void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,
 			int (*callback)(int, X509_STORE_CTX *));
 void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth);
-void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx, int (*cb)(),char *arg);
+void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx, int (*cb)(X509_STORE_CTX *,void *), void *arg);
 #ifndef OPENSSL_NO_RSA
 int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
 #endif

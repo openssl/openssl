@@ -13,6 +13,22 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Fix the 'app_verify_callback' interface so that the user-defined
+     argument is actually passed to the callback: In the
+     SSL_CTX_set_cert_verify_callback() prototype, the callback
+     declaration has been changed from
+          int (*cb)()
+     into
+          int (*cb)(X509_STORE_CTX *,void *);
+     in ssl_verify_cert_chain (ssl/ssl_cert.c), the call
+          i=s->ctx->app_verify_callback(&ctx)
+     has been changed into
+          i=s->ctx->app_verify_callback(&ctx, s->ctx->app_verify_arg).
+
+     To update applications using SSL_CTX_set_cert_verify_callback(),
+     a dummy argument can be added to their callback functions.
+     [D. K. Smetters <smetters@parc.xerox.com>]
+
   +) Added the '4758cca' ENGINE to support IBM 4758 cards.
      [Maurice Gittens <maurice@gittens.nl>, touchups by Geoff Thorpe]
 
