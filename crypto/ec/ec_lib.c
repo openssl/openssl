@@ -112,6 +112,8 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 
 void EC_GROUP_free(EC_GROUP *group)
 	{
+	if (!group) return;
+
 	if (group->meth->group_finish != 0)
 		group->meth->group_finish(group);
 
@@ -128,6 +130,8 @@ void EC_GROUP_free(EC_GROUP *group)
 
 void EC_GROUP_clear_free(EC_GROUP *group)
 	{
+	if (!group) return;
+
 	if (group->meth->group_clear_finish != 0)
 		group->meth->group_clear_finish(group);
 	else if (group->meth != NULL && group->meth->group_finish != 0)
@@ -408,6 +412,8 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
 
 void EC_POINT_free(EC_POINT *point)
 	{
+	if (!point) return;
+
 	if (point->meth->point_finish != 0)
 		point->meth->point_finish(point);
 	OPENSSL_free(point);
@@ -416,6 +422,8 @@ void EC_POINT_free(EC_POINT *point)
 
 void EC_POINT_clear_free(EC_POINT *point)
 	{
+	if (!point) return;
+
 	if (point->meth->point_clear_finish != 0)
 		point->meth->point_clear_finish(point);
 	else if (point->meth != NULL && point->meth->point_finish != 0)
