@@ -63,6 +63,7 @@ SSL_get_shutdown() returns the current setting.
 =head1 SEE ALSO
 
 L<ssl(3)|ssl(3)>, L<SSL_shutdown(3)|SSL_shutdown(3)>,
+L<SSL_CTX_set_quiet_shutdown(3)|SSL_CTX_set_quiet_shutdown(3)>,
 L<SSL_clear(3)|SSL_clear(3)>, L<SSL_free(3)|SSL_free(3)>
 
 =cut
