@@ -129,7 +129,7 @@ X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt,
 	}
 	pbe->salt->length = saltlen;
 	if (salt) memcpy (pbe->salt->data, salt, saltlen);
-	else if (RAND_bytes (pbe->salt->data, saltlen) <= 0)
+	else if (RAND_pseudo_bytes (pbe->salt->data, saltlen) <= 0)
 		return NULL;
 
 	if (!(astype = ASN1_TYPE_new())) {
