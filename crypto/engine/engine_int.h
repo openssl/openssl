@@ -66,8 +66,6 @@
 extern "C" {
 #endif
 
-#define ENGINE_REF_COUNT_DEBUG
-
 /* If we compile with this symbol defined, then both reference counts in the
  * ENGINE structure will be monitored with a line of output on stderr for each
  * change. This prints the engine's pointer address (truncated to unsigned int),
@@ -77,7 +75,7 @@ extern "C" {
 #ifdef ENGINE_REF_COUNT_DEBUG
 
 #define engine_ref_debug(e, isfunct, diff) \
-	fprintf(stderr, "blargle: %08x %s from %d to %d (%s:%d)\n", \
+	fprintf(stderr, "engine: %08x %s from %d to %d (%s:%d)\n", \
 		(unsigned int)(e), (isfunct ? "funct" : "struct"), \
 		((isfunct) ? ((e)->funct_ref - (diff)) : ((e)->struct_ref - (diff))), \
 		((isfunct) ? (e)->funct_ref : (e)->struct_ref), \
