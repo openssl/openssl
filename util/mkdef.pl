@@ -60,7 +60,7 @@ my $crypto_num= "util/libeay.num";
 my $ssl_num=    "util/ssleay.num";
 
 my $do_update = 0;
-my $do_rewrite = 0;
+my $do_rewrite = 1;
 my $do_crypto = 0;
 my $do_ssl = 0;
 my $do_ctest = 0;
@@ -243,7 +243,7 @@ $crypto.=" crypto/x509v3/x509v3.h";
 $crypto.=" crypto/rand/rand.h";
 $crypto.=" crypto/comp/comp.h" ; # unless $no_comp;
 $crypto.=" crypto/ocsp/ocsp.h";
-$crypto.=" crypto/ui/ui.h";
+$crypto.=" crypto/ui/ui.h crypto/ui/ui_compat.h";
 $crypto.=" crypto/tmdiff.h";
 
 my $symhacks="crypto/symhacks.h";
@@ -259,7 +259,6 @@ if ($do_ssl == 1) {
 	if ($do_rewrite == 1) {
 		open(OUT, ">$ssl_num");
 		&rewrite_numbers(*OUT,"SSLEAY",*ssl_list,@ssl_symbols);
-		close OUT;
 	} else {
 		open(OUT, ">>$ssl_num");
 	}
