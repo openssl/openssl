@@ -104,6 +104,7 @@ int i2d_PKCS7(PKCS7 *a, unsigned char **pp)
 			M_ASN1_I2D_len(a->d.encrypted,i2d_PKCS7_ENCRYPT);
 			break;
 		default:
+			M_ASN1_I2D_len(a->d.other,i2d_ASN1_TYPE);
 			break;
 			}
 		}
@@ -138,6 +139,7 @@ int i2d_PKCS7(PKCS7 *a, unsigned char **pp)
 			M_ASN1_I2D_put(a->d.encrypted,i2d_PKCS7_ENCRYPT);
 			break;
 		default:
+			M_ASN1_I2D_put(a->d.other,i2d_ASN1_TYPE);
 			break;
 			}
 		M_ASN1_I2D_INF_seq_end();
@@ -189,6 +191,7 @@ int i2d_PKCS7(PKCS7 *a, unsigned char **pp)
 			M_ASN1_I2D_len(a->d.encrypted,i2d_PKCS7_ENCRYPT);
 			break;
 		default:
+			M_ASN1_I2D_len(a->d.other,i2d_ASN1_TYPE);
 			break;
 			}
 		/* Work out explicit tag content size */
@@ -228,6 +231,7 @@ int i2d_PKCS7(PKCS7 *a, unsigned char **pp)
 			M_ASN1_I2D_put(a->d.encrypted,i2d_PKCS7_ENCRYPT);
 			break;
 		default:
+			M_ASN1_I2D_put(a->d.other,i2d_ASN1_TYPE);
 			break;
 			}
 		}
@@ -298,10 +302,8 @@ PKCS7 *d2i_PKCS7(PKCS7 **a, unsigned char **pp, long length)
 			M_ASN1_D2I_get(ret->d.encrypted,d2i_PKCS7_ENCRYPT);
 			break;
 		default:
-			c.error=ASN1_R_BAD_PKCS7_TYPE;
-			c.line=__LINE__;
-			goto err;
-			/* break; */
+			M_ASN1_D2I_get(ret->d.other,d2i_ASN1_TYPE);
+			break;
 			}
 		if (Tinf == (1|V_ASN1_CONSTRUCTED))
 			{
@@ -378,7 +380,7 @@ void PKCS7_content_free(PKCS7 *a)
 			PKCS7_ENCRYPT_free(a->d.encrypted);
 			break;
 		default:
-			/* MEMORY LEAK */
+			ASN1_TYPE_free(a->d.other);
 			break;
 			}
 		}

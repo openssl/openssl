@@ -210,6 +210,9 @@ typedef struct pkcs7_st
 
 		/* NID_pkcs7_encrypted */
 		PKCS7_ENCRYPT *encrypted;
+
+		/* Anything else */
+		ASN1_TYPE *other;
 		} d;
 	} PKCS7;
 
