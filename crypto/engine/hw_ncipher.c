@@ -1059,14 +1059,14 @@ static int hwcrhk_mutex_init(HWCryptoHook_Mutex* mt,
 	{
 	mt->lockid = CRYPTO_get_new_dynlockid();
 	if (mt->lockid == 0)
-		return 0;
-	return 1;
+		return -1;
+	return 0;
 	}
 
 static int hwcrhk_mutex_lock(HWCryptoHook_Mutex *mt)
 	{
 	CRYPTO_w_lock(mt->lockid);
-	return 1;
+	return 0;
 	}
 
 void hwcrhk_mutex_unlock(HWCryptoHook_Mutex * mt)
