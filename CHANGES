@@ -4,6 +4,9 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Add more X9.62 OIDs.
+     [Nils Larsch <nla@trustcenter.de>]
+
   *) Add ECDSA in new directory crypto/ecdsa/.
 
      Add applications 'openssl ecdsaparam' and 'openssl ecdsa'

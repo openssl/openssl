@@ -136,6 +136,22 @@
 #define NID_X9_62_characteristic_two_field		407
 #define OBJ_X9_62_characteristic_two_field		OBJ_X9_62_id_fieldType,2L
 
+#define SN_X9_62_id_characteristic_two_basis		"id-characteristic-two-basis"
+#define NID_X9_62_id_characteristic_two_basis		503
+#define OBJ_X9_62_id_characteristic_two_basis		OBJ_X9_62_characteristic_two_field,3L
+
+#define SN_X9_62_onBasis		"onBasis"
+#define NID_X9_62_onBasis		504
+#define OBJ_X9_62_onBasis		OBJ_X9_62_id_characteristic_two_basis,1L
+
+#define SN_X9_62_tpBasis		"tpBasis"
+#define NID_X9_62_tpBasis		505
+#define OBJ_X9_62_tpBasis		OBJ_X9_62_id_characteristic_two_basis,2L
+
+#define SN_X9_62_ppBasis		"ppBasis"
+#define NID_X9_62_ppBasis		506
+#define OBJ_X9_62_ppBasis		OBJ_X9_62_id_characteristic_two_basis,3L
+
 #define OBJ_X9_62_id_publicKeyType		OBJ_ansi_X9_62,2L
 
 #define SN_X9_62_id_ecPublicKey		"id-ecPublicKey"
@@ -145,6 +161,86 @@
 #define OBJ_X9_62_ellipticCurve		OBJ_ansi_X9_62,3L
 
 #define OBJ_X9_62_c_TwoCurve		OBJ_X9_62_ellipticCurve,0L
+
+#define SN_X9_62_c2pnb163v1		"c2pnb163v1"
+#define NID_X9_62_c2pnb163v1		507
+#define OBJ_X9_62_c2pnb163v1		OBJ_X9_62_c_TwoCurve,1L
+
+#define SN_X9_62_c2pnb163v2		"c2pnb163v2"
+#define NID_X9_62_c2pnb163v2		508
+#define OBJ_X9_62_c2pnb163v2		OBJ_X9_62_c_TwoCurve,2L
+
+#define SN_X9_62_c2pnb163v3		"c2pnb163v3"
+#define NID_X9_62_c2pnb163v3		509
+#define OBJ_X9_62_c2pnb163v3		OBJ_X9_62_c_TwoCurve,3L
+
+#define SN_X9_62_c2pnb176v1		"c2pnb176v1"
+#define NID_X9_62_c2pnb176v1		510
+#define OBJ_X9_62_c2pnb176v1		OBJ_X9_62_c_TwoCurve,4L
+
+#define SN_X9_62_c2tnb191v1		"c2tnb191v1"
+#define NID_X9_62_c2tnb191v1		511
+#define OBJ_X9_62_c2tnb191v1		OBJ_X9_62_c_TwoCurve,5L
+
+#define SN_X9_62_c2tnb191v2		"c2tnb191v2"
+#define NID_X9_62_c2tnb191v2		512
+#define OBJ_X9_62_c2tnb191v2		OBJ_X9_62_c_TwoCurve,6L
+
+#define SN_X9_62_c2tnb191v3		"c2tnb191v3"
+#define NID_X9_62_c2tnb191v3		513
+#define OBJ_X9_62_c2tnb191v3		OBJ_X9_62_c_TwoCurve,7L
+
+#define SN_X9_62_c2onb191v4		"c2onb191v4"
+#define NID_X9_62_c2onb191v4		514
+#define OBJ_X9_62_c2onb191v4		OBJ_X9_62_c_TwoCurve,8L
+
+#define SN_X9_62_c2onb191v5		"c2onb191v5"
+#define NID_X9_62_c2onb191v5		515
+#define OBJ_X9_62_c2onb191v5		OBJ_X9_62_c_TwoCurve,9L
+
+#define SN_X9_62_c2pnb208w1		"c2pnb208w1"
+#define NID_X9_62_c2pnb208w1		516
+#define OBJ_X9_62_c2pnb208w1		OBJ_X9_62_c_TwoCurve,10L
+
+#define SN_X9_62_c2tnb239v1		"c2tnb239v1"
+#define NID_X9_62_c2tnb239v1		517
+#define OBJ_X9_62_c2tnb239v1		OBJ_X9_62_c_TwoCurve,11L
+
+#define SN_X9_62_c2tnb239v2		"c2tnb239v2"
+#define NID_X9_62_c2tnb239v2		518
+#define OBJ_X9_62_c2tnb239v2		OBJ_X9_62_c_TwoCurve,12L
+
+#define SN_X9_62_c2tnb239v3		"c2tnb239v3"
+#define NID_X9_62_c2tnb239v3		519
+#define OBJ_X9_62_c2tnb239v3		OBJ_X9_62_c_TwoCurve,13L
+
+#define SN_X9_62_c2onb239v4		"c2onb239v4"
+#define NID_X9_62_c2onb239v4		520
+#define OBJ_X9_62_c2onb239v4		OBJ_X9_62_c_TwoCurve,14L
+
+#define SN_X9_62_c2onb239v5		"c2onb239v5"
+#define NID_X9_62_c2onb239v5		521
+#define OBJ_X9_62_c2onb239v5		OBJ_X9_62_c_TwoCurve,15L
+
+#define SN_X9_62_c2pnb272w1		"c2pnb272w1"
+#define NID_X9_62_c2pnb272w1		522
+#define OBJ_X9_62_c2pnb272w1		OBJ_X9_62_c_TwoCurve,16L
+
+#define SN_X9_62_c2pnb304w1		"c2pnb304w1"
+#define NID_X9_62_c2pnb304w1		523
+#define OBJ_X9_62_c2pnb304w1		OBJ_X9_62_c_TwoCurve,17L
+
+#define SN_X9_62_c2tnb359v1		"c2tnb359v1"
+#define NID_X9_62_c2tnb359v1		524
+#define OBJ_X9_62_c2tnb359v1		OBJ_X9_62_c_TwoCurve,18L
+
+#define SN_X9_62_c2pnb368w1		"c2pnb368w1"
+#define NID_X9_62_c2pnb368w1		525
+#define OBJ_X9_62_c2pnb368w1		OBJ_X9_62_c_TwoCurve,19L
+
+#define SN_X9_62_c2tnb431r1		"c2tnb431r1"
+#define NID_X9_62_c2tnb431r1		526
+#define OBJ_X9_62_c2tnb431r1		OBJ_X9_62_c_TwoCurve,20L
 
 #define OBJ_X9_62_primeCurve		OBJ_X9_62_ellipticCurve,1L
 

@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 503
-#define NUM_SN 501
-#define NUM_LN 501
-#define NUM_OBJ 475
+#define NUM_NID 527
+#define NUM_SN 525
+#define NUM_LN 525
+#define NUM_OBJ 499
 
-static unsigned char lvalues[3837]={
+static unsigned char lvalues[4032]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -543,6 +543,30 @@ static unsigned char lvalues[3837]={
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x36,/* [3806] OBJ_dITRedirect */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x37,/* [3816] OBJ_audio */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x38,/* [3826] OBJ_documentPublisher */
+0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,     /* [3836] OBJ_X9_62_id_characteristic_two_basis */
+0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,0x01,/* [3844] OBJ_X9_62_onBasis */
+0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,0x02,/* [3853] OBJ_X9_62_tpBasis */
+0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,0x03,/* [3862] OBJ_X9_62_ppBasis */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x01,     /* [3871] OBJ_X9_62_c2pnb163v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x02,     /* [3879] OBJ_X9_62_c2pnb163v2 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x03,     /* [3887] OBJ_X9_62_c2pnb163v3 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x04,     /* [3895] OBJ_X9_62_c2pnb176v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x05,     /* [3903] OBJ_X9_62_c2tnb191v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x06,     /* [3911] OBJ_X9_62_c2tnb191v2 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x07,     /* [3919] OBJ_X9_62_c2tnb191v3 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x08,     /* [3927] OBJ_X9_62_c2onb191v4 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x09,     /* [3935] OBJ_X9_62_c2onb191v5 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0A,     /* [3943] OBJ_X9_62_c2pnb208w1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0B,     /* [3951] OBJ_X9_62_c2tnb239v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0C,     /* [3959] OBJ_X9_62_c2tnb239v2 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0D,     /* [3967] OBJ_X9_62_c2tnb239v3 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0E,     /* [3975] OBJ_X9_62_c2onb239v4 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x0F,     /* [3983] OBJ_X9_62_c2onb239v5 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x10,     /* [3991] OBJ_X9_62_c2pnb272w1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x11,     /* [3999] OBJ_X9_62_c2pnb304w1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x12,     /* [4007] OBJ_X9_62_c2tnb359v1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x13,     /* [4015] OBJ_X9_62_c2pnb368w1 */
+0x2A,0x86,0x48,0xCE,0x3D,0x03,0x00,0x14,     /* [4023] OBJ_X9_62_c2tnb431r1 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1315,6 +1339,31 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"audio","audio",NID_audio,10,&(lvalues[3816]),0},
 {"documentPublisher","documentPublisher",NID_documentPublisher,10,
 	&(lvalues[3826]),0},
+{"id-characteristic-two-basis","id-characteristic-two-basis",
+	NID_X9_62_id_characteristic_two_basis,8,&(lvalues[3836]),0},
+{"onBasis","onBasis",NID_X9_62_onBasis,9,&(lvalues[3844]),0},
+{"tpBasis","tpBasis",NID_X9_62_tpBasis,9,&(lvalues[3853]),0},
+{"ppBasis","ppBasis",NID_X9_62_ppBasis,9,&(lvalues[3862]),0},
+{"c2pnb163v1","c2pnb163v1",NID_X9_62_c2pnb163v1,8,&(lvalues[3871]),0},
+{"c2pnb163v2","c2pnb163v2",NID_X9_62_c2pnb163v2,8,&(lvalues[3879]),0},
+{"c2pnb163v3","c2pnb163v3",NID_X9_62_c2pnb163v3,8,&(lvalues[3887]),0},
+{"c2pnb176v1","c2pnb176v1",NID_X9_62_c2pnb176v1,8,&(lvalues[3895]),0},
+{"c2tnb191v1","c2tnb191v1",NID_X9_62_c2tnb191v1,8,&(lvalues[3903]),0},
+{"c2tnb191v2","c2tnb191v2",NID_X9_62_c2tnb191v2,8,&(lvalues[3911]),0},
+{"c2tnb191v3","c2tnb191v3",NID_X9_62_c2tnb191v3,8,&(lvalues[3919]),0},
+{"c2onb191v4","c2onb191v4",NID_X9_62_c2onb191v4,8,&(lvalues[3927]),0},
+{"c2onb191v5","c2onb191v5",NID_X9_62_c2onb191v5,8,&(lvalues[3935]),0},
+{"c2pnb208w1","c2pnb208w1",NID_X9_62_c2pnb208w1,8,&(lvalues[3943]),0},
+{"c2tnb239v1","c2tnb239v1",NID_X9_62_c2tnb239v1,8,&(lvalues[3951]),0},
+{"c2tnb239v2","c2tnb239v2",NID_X9_62_c2tnb239v2,8,&(lvalues[3959]),0},
+{"c2tnb239v3","c2tnb239v3",NID_X9_62_c2tnb239v3,8,&(lvalues[3967]),0},
+{"c2onb239v4","c2onb239v4",NID_X9_62_c2onb239v4,8,&(lvalues[3975]),0},
+{"c2onb239v5","c2onb239v5",NID_X9_62_c2onb239v5,8,&(lvalues[3983]),0},
+{"c2pnb272w1","c2pnb272w1",NID_X9_62_c2pnb272w1,8,&(lvalues[3991]),0},
+{"c2pnb304w1","c2pnb304w1",NID_X9_62_c2pnb304w1,8,&(lvalues[3999]),0},
+{"c2tnb359v1","c2tnb359v1",NID_X9_62_c2tnb359v1,8,&(lvalues[4007]),0},
+{"c2pnb368w1","c2pnb368w1",NID_X9_62_c2pnb368w1,8,&(lvalues[4015]),0},
+{"c2tnb431r1","c2tnb431r1",NID_X9_62_c2tnb431r1,8,&(lvalues[4023]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1468,6 +1517,26 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[365]),/* "basicOCSPResponse" */
 &(nid_objs[285]),/* "biometricInfo" */
 &(nid_objs[494]),/* "buildingName" */
+&(nid_objs[514]),/* "c2onb191v4" */
+&(nid_objs[515]),/* "c2onb191v5" */
+&(nid_objs[520]),/* "c2onb239v4" */
+&(nid_objs[521]),/* "c2onb239v5" */
+&(nid_objs[507]),/* "c2pnb163v1" */
+&(nid_objs[508]),/* "c2pnb163v2" */
+&(nid_objs[509]),/* "c2pnb163v3" */
+&(nid_objs[510]),/* "c2pnb176v1" */
+&(nid_objs[516]),/* "c2pnb208w1" */
+&(nid_objs[522]),/* "c2pnb272w1" */
+&(nid_objs[523]),/* "c2pnb304w1" */
+&(nid_objs[525]),/* "c2pnb368w1" */
+&(nid_objs[511]),/* "c2tnb191v1" */
+&(nid_objs[512]),/* "c2tnb191v2" */
+&(nid_objs[513]),/* "c2tnb191v3" */
+&(nid_objs[517]),/* "c2tnb239v1" */
+&(nid_objs[518]),/* "c2tnb239v2" */
+&(nid_objs[519]),/* "c2tnb239v3" */
+&(nid_objs[524]),/* "c2tnb359v1" */
+&(nid_objs[526]),/* "c2tnb431r1" */
 &(nid_objs[483]),/* "cNAMERecord" */
 &(nid_objs[179]),/* "caIssuers" */
 &(nid_objs[443]),/* "caseIgnoreIA5StringSyntax" */
@@ -1541,6 +1610,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[362]),/* "id-cct-PKIResponse" */
 &(nid_objs[360]),/* "id-cct-crs" */
 &(nid_objs[81]),/* "id-ce" */
+&(nid_objs[503]),/* "id-characteristic-two-basis" */
 &(nid_objs[263]),/* "id-cmc" */
 &(nid_objs[334]),/* "id-cmc-addExtensions" */
 &(nid_objs[346]),/* "id-cmc-confirmCertAcceptance" */
@@ -1732,6 +1802,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[73]),/* "nsRevocationUrl" */
 &(nid_objs[139]),/* "nsSGC" */
 &(nid_objs[77]),/* "nsSslServerName" */
+&(nid_objs[504]),/* "onBasis" */
 &(nid_objs[491]),/* "organizationalStatus" */
 &(nid_objs[475]),/* "otherMailbox" */
 &(nid_objs[489]),/* "pagerTelephoneNumber" */
@@ -1764,6 +1835,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[151]),/* "pkcs8ShroudedKeyBag" */
 &(nid_objs[47]),/* "pkcs9" */
 &(nid_objs[401]),/* "policyConstraints" */
+&(nid_objs[506]),/* "ppBasis" */
 &(nid_objs[406]),/* "prime-field" */
 &(nid_objs[409]),/* "prime192v1" */
 &(nid_objs[410]),/* "prime192v2" */
@@ -1810,6 +1882,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[459]),/* "textEncodedORAddress" */
 &(nid_objs[293]),/* "textNotice" */
 &(nid_objs[133]),/* "timeStamping" */
+&(nid_objs[505]),/* "tpBasis" */
 &(nid_objs[375]),/* "trustRoot" */
 &(nid_objs[436]),/* "ucl" */
 &(nid_objs[102]),/* "uniqueIdentifier" */
@@ -1943,6 +2016,26 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[92]),/* "bf-ecb" */
 &(nid_objs[94]),/* "bf-ofb" */
 &(nid_objs[494]),/* "buildingName" */
+&(nid_objs[514]),/* "c2onb191v4" */
+&(nid_objs[515]),/* "c2onb191v5" */
+&(nid_objs[520]),/* "c2onb239v4" */
+&(nid_objs[521]),/* "c2onb239v5" */
+&(nid_objs[507]),/* "c2pnb163v1" */
+&(nid_objs[508]),/* "c2pnb163v2" */
+&(nid_objs[509]),/* "c2pnb163v3" */
+&(nid_objs[510]),/* "c2pnb176v1" */
+&(nid_objs[516]),/* "c2pnb208w1" */
+&(nid_objs[522]),/* "c2pnb272w1" */
+&(nid_objs[523]),/* "c2pnb304w1" */
+&(nid_objs[525]),/* "c2pnb368w1" */
+&(nid_objs[511]),/* "c2tnb191v1" */
+&(nid_objs[512]),/* "c2tnb191v2" */
+&(nid_objs[513]),/* "c2tnb191v3" */
+&(nid_objs[517]),/* "c2tnb239v1" */
+&(nid_objs[518]),/* "c2tnb239v2" */
+&(nid_objs[519]),/* "c2tnb239v3" */
+&(nid_objs[524]),/* "c2tnb359v1" */
+&(nid_objs[526]),/* "c2tnb431r1" */
 &(nid_objs[483]),/* "cNAMERecord" */
 &(nid_objs[443]),/* "caseIgnoreIA5StringSyntax" */
 &(nid_objs[108]),/* "cast5-cbc" */
@@ -2031,6 +2124,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[362]),/* "id-cct-PKIResponse" */
 &(nid_objs[360]),/* "id-cct-crs" */
 &(nid_objs[81]),/* "id-ce" */
+&(nid_objs[503]),/* "id-characteristic-two-basis" */
 &(nid_objs[263]),/* "id-cmc" */
 &(nid_objs[334]),/* "id-cmc-addExtensions" */
 &(nid_objs[346]),/* "id-cmc-confirmCertAcceptance" */
@@ -2209,6 +2303,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[488]),/* "mobileTelephoneNumber" */
 &(nid_objs[481]),/* "nSRecord" */
 &(nid_objs[173]),/* "name" */
+&(nid_objs[504]),/* "onBasis" */
 &(nid_objs[379]),/* "org" */
 &(nid_objs[17]),/* "organizationName" */
 &(nid_objs[491]),/* "organizationalStatus" */
@@ -2254,6 +2349,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[22]),/* "pkcs7-signedData" */
 &(nid_objs[151]),/* "pkcs8ShroudedKeyBag" */
 &(nid_objs[47]),/* "pkcs9" */
+&(nid_objs[506]),/* "ppBasis" */
 &(nid_objs[406]),/* "prime-field" */
 &(nid_objs[409]),/* "prime192v1" */
 &(nid_objs[410]),/* "prime192v2" */
@@ -2312,6 +2408,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[459]),/* "textEncodedORAddress" */
 &(nid_objs[293]),/* "textNotice" */
 &(nid_objs[106]),/* "title" */
+&(nid_objs[505]),/* "tpBasis" */
 &(nid_objs[436]),/* "ucl" */
 &(nid_objs[ 0]),/* "undefined" */
 &(nid_objs[102]),/* "uniqueIdentifier" */
@@ -2454,6 +2551,27 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 5]),/* OBJ_rc4                          1 2 840 113549 3 4 */
 &(nid_objs[44]),/* OBJ_des_ede3_cbc                 1 2 840 113549 3 7 */
 &(nid_objs[120]),/* OBJ_rc5_cbc                      1 2 840 113549 3 8 */
+&(nid_objs[503]),/* OBJ_X9_62_id_characteristic_two_basis 1 2 840 10045 1 2 3 */
+&(nid_objs[507]),/* OBJ_X9_62_c2pnb163v1             1 2 840 10045 3 0 1 */
+&(nid_objs[508]),/* OBJ_X9_62_c2pnb163v2             1 2 840 10045 3 0 2 */
+&(nid_objs[509]),/* OBJ_X9_62_c2pnb163v3             1 2 840 10045 3 0 3 */
+&(nid_objs[510]),/* OBJ_X9_62_c2pnb176v1             1 2 840 10045 3 0 4 */
+&(nid_objs[511]),/* OBJ_X9_62_c2tnb191v1             1 2 840 10045 3 0 5 */
+&(nid_objs[512]),/* OBJ_X9_62_c2tnb191v2             1 2 840 10045 3 0 6 */
+&(nid_objs[513]),/* OBJ_X9_62_c2tnb191v3             1 2 840 10045 3 0 7 */
+&(nid_objs[514]),/* OBJ_X9_62_c2onb191v4             1 2 840 10045 3 0 8 */
+&(nid_objs[515]),/* OBJ_X9_62_c2onb191v5             1 2 840 10045 3 0 9 */
+&(nid_objs[516]),/* OBJ_X9_62_c2pnb208w1             1 2 840 10045 3 0 10 */
+&(nid_objs[517]),/* OBJ_X9_62_c2tnb239v1             1 2 840 10045 3 0 11 */
+&(nid_objs[518]),/* OBJ_X9_62_c2tnb239v2             1 2 840 10045 3 0 12 */
+&(nid_objs[519]),/* OBJ_X9_62_c2tnb239v3             1 2 840 10045 3 0 13 */
+&(nid_objs[520]),/* OBJ_X9_62_c2onb239v4             1 2 840 10045 3 0 14 */
+&(nid_objs[521]),/* OBJ_X9_62_c2onb239v5             1 2 840 10045 3 0 15 */
+&(nid_objs[522]),/* OBJ_X9_62_c2pnb272w1             1 2 840 10045 3 0 16 */
+&(nid_objs[523]),/* OBJ_X9_62_c2pnb304w1             1 2 840 10045 3 0 17 */
+&(nid_objs[524]),/* OBJ_X9_62_c2tnb359v1             1 2 840 10045 3 0 18 */
+&(nid_objs[525]),/* OBJ_X9_62_c2pnb368w1             1 2 840 10045 3 0 19 */
+&(nid_objs[526]),/* OBJ_X9_62_c2tnb431r1             1 2 840 10045 3 0 20 */
 &(nid_objs[409]),/* OBJ_X9_62_prime192v1             1 2 840 10045 3 1 1 */
 &(nid_objs[410]),/* OBJ_X9_62_prime192v2             1 2 840 10045 3 1 2 */
 &(nid_objs[411]),/* OBJ_X9_62_prime192v3             1 2 840 10045 3 1 3 */
@@ -2605,6 +2723,9 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[188]),/* OBJ_SMIME                        1 2 840 113549 1 9 16 */
 &(nid_objs[156]),/* OBJ_friendlyName                 1 2 840 113549 1 9 20 */
 &(nid_objs[157]),/* OBJ_localKeyID                   1 2 840 113549 1 9 21 */
+&(nid_objs[504]),/* OBJ_X9_62_onBasis                1 2 840 10045 1 2 3 1 */
+&(nid_objs[505]),/* OBJ_X9_62_tpBasis                1 2 840 10045 1 2 3 2 */
+&(nid_objs[506]),/* OBJ_X9_62_ppBasis                1 2 840 10045 1 2 3 3 */
 &(nid_objs[417]),/* OBJ_ms_csp_name                  1 3 6 1 4 1 311 17 1 */
 &(nid_objs[91]),/* OBJ_bf_cbc                       1 3 6 1 4 1 3029 1 2 */
 &(nid_objs[315]),/* OBJ_id_regCtrl_regToken          1 3 6 1 5 5 7 5 1 1 */

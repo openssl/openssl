@@ -24,12 +24,34 @@ ISO-US 10045		: ansi-X9-62		: ANSI X9.62
 !Alias id-fieldType ansi-X9-62 1
 X9-62_id-fieldType 1		: prime-field
 X9-62_id-fieldType 2		: characteristic-two-field
-# ... characteristic-two-field OID subtree
+X9-62_characteristic-two-field 3 : id-characteristic-two-basis
+X9-62_id-characteristic-two-basis 1 : onBasis
+X9-62_id-characteristic-two-basis 2 : tpBasis
+X9-62_id-characteristic-two-basis 3 : ppBasis
 !Alias id-publicKeyType ansi-X9-62 2
 X9-62_id-publicKeyType 1	: id-ecPublicKey
 !Alias ellipticCurve ansi-X9-62 3
 !Alias c-TwoCurve X9-62_ellipticCurve 0
-# ... characteristic 2 curve OIDs
+X9-62_c-TwoCurve 1		: c2pnb163v1
+X9-62_c-TwoCurve 2		: c2pnb163v2
+X9-62_c-TwoCurve 3		: c2pnb163v3
+X9-62_c-TwoCurve 4		: c2pnb176v1
+X9-62_c-TwoCurve 5		: c2tnb191v1
+X9-62_c-TwoCurve 6		: c2tnb191v2
+X9-62_c-TwoCurve 7		: c2tnb191v3
+X9-62_c-TwoCurve 8		: c2onb191v4
+X9-62_c-TwoCurve 9		: c2onb191v5
+X9-62_c-TwoCurve 10		: c2pnb208w1
+X9-62_c-TwoCurve 11		: c2tnb239v1
+X9-62_c-TwoCurve 12		: c2tnb239v2
+X9-62_c-TwoCurve 13		: c2tnb239v3
+X9-62_c-TwoCurve 14		: c2onb239v4
+X9-62_c-TwoCurve 15		: c2onb239v5
+X9-62_c-TwoCurve 16		: c2pnb272w1
+X9-62_c-TwoCurve 17		: c2pnb304w1
+X9-62_c-TwoCurve 18		: c2tnb359v1
+X9-62_c-TwoCurve 19		: c2pnb368w1
+X9-62_c-TwoCurve 20		: c2tnb431r1
 !Alias primeCurve X9-62_ellipticCurve 1
 X9-62_primeCurve 1	 	: prime192v1
 X9-62_primeCurve 2	 	: prime192v2
