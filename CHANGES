@@ -4,6 +4,12 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Various changes to make Win32 compile work: 
+     1. Casts to avoid "loss of data" warnings in p5_crpt2.c
+     2. Change unsigned int to int in b_dump.c to avoid "signed/unsigned
+        comparison" warnings.
+     3. Add sk_<TYPE>_sort to DEF file generator and do make update.
+
   *) Add a debugging option to PKCS#5 v2 key generation function: when
      you #define DEBUG_PKCS5V2 passwords, salts, iteration counts and
      derived keys are printed to stderr.

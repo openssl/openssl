@@ -92,10 +92,10 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
 		/* We are unlikely to ever use more than 256 blocks (5120 bits!)
 		 * but just in case...
 		 */
-		itmp[0] = (i >> 24) & 0xff;
-		itmp[1] = (i >> 16) & 0xff;
-		itmp[2] = (i >> 8) & 0xff;
-		itmp[3] = i & 0xff;
+		itmp[0] = (unsigned char)((i >> 24) & 0xff);
+		itmp[1] = (unsigned char)((i >> 16) & 0xff);
+		itmp[2] = (unsigned char)((i >> 8) & 0xff);
+		itmp[3] = (unsigned char)(i & 0xff);
 		HMAC_Init(&hctx, pass, passlen, EVP_sha1());
 		HMAC_Update(&hctx, salt, saltlen);
 		HMAC_Update(&hctx, itmp, 4);

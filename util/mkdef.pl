@@ -237,6 +237,7 @@ sub do_defs
 				$funcs{"sk_${1}_pop_free"} = 1;
 				$funcs{"sk_${1}_shift"} = 1;
 				$funcs{"sk_${1}_pop"} = 1;
+				$funcs{"sk_${1}_sort"} = 1;
 			} elsif ($safe_stack_def &&
 				/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
 				$funcs{"d2i_ASN1_SET_OF_${1}"} = 1;

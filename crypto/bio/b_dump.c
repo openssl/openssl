@@ -71,7 +71,7 @@ int BIO_dump(BIO *bio, const char *s, int len)
 {
   int ret=0;
   char buf[160+1],tmp[20];
-  unsigned int i,j,rows,trunc;
+  int i,j,rows,trunc;
   unsigned char ch;
 
   trunc=0;
