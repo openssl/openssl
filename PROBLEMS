@@ -40,3 +40,19 @@ scripts use the same name for output and input files, which means different
 will interfere with each other and lead to test failure.
 
 The solution is simple for now: don't run parallell make when testing.
+
+
+* Bugs in gcc 3.0 triggered
+
+According to a problem report, there are bugs in gcc 3.0 that are
+triggered by some of the code in OpenSSL, more specifically in
+PEM_get_EVP_CIPHER_INFO().  The triggering code is the following:
+
+	header+=11;
+	if (*header != '4') return(0); header++;
+	if (*header != ',') return(0); header++;
+
+What happens is that gcc might optimize a little too agressively, and
+you end up with an extra incrementation when *header != '4'.
+
+We recommend that you upgrade gcc to as high a 3.x version as you can.

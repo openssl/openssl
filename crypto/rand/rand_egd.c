@@ -59,7 +59,7 @@
 /* Query the EGD <URL: http://www.lothar.com/tech/crypto/>.
  */
 
-#if defined(WIN32) || defined(MSDOS) || defined(VMS) || defined(__VMS)
+#if defined(WIN32) || defined(MSDOS) || defined(VMS) || defined(__VMS) || defined(VXWORKS)
 int RAND_egd(const char *path)
 	{
 	return(-1);

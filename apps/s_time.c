@@ -116,6 +116,11 @@
 #include <sys/param.h>
 #endif
 
+#ifdef VXWORKS
+#include <tickLib.h>
+#undef SIGALRM
+#endif
+
 /* The following if from times(3) man page.  It may need to be changed
 */
 #ifndef HZ

@@ -1284,7 +1284,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			else
 				{
 				BIO_printf(bio_s_out,"read R BLOCK\n");
-#ifndef MSDOS
+#if !defined(MSDOS) && !defined(VXWORKS)
 				sleep(1);
 #endif
 				continue;

@@ -105,6 +105,11 @@
 #include <windows.h>
 #endif
 
+#ifdef VXWORKS
+#include <tickLib.h>
+#include <drv/timer/timerDev.h>
+#endif
+
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ
 # ifndef CLK_TCK
