@@ -59,6 +59,7 @@ and [options] can be one of
 	just-ssl				- remove all non-ssl keys/digest
 	no-asm 					- No x86 asm
 	nasm 					- Use NASM for x86 asm
+	gaswin					- Use GNU as with Mingw32
 	no-socks				- No socket code
 	no-err					- No error strings
 	dll/shlib				- Build shared libraries (MS)
@@ -850,6 +851,7 @@ sub read_options
 	elsif (/^no-hmac$/)	{ $no_hmac=1; }
 	elsif (/^no-asm$/)	{ $no_asm=1; }
 	elsif (/^nasm$/)	{ $nasm=1; }
+	elsif (/^gaswin$/)	{ $gaswin=1; }
 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
 	elsif (/^no-ssl3$/)	{ $no_ssl3=1; }
 	elsif (/^no-err$/)	{ $no_err=1; }

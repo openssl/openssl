@@ -292,6 +292,8 @@ EOF
 	push(@out,$tmp);
 	if ($main'cpp)
 		{ $tmp=push(@out,"\tTYPE($func,\@function)\n"); }
+	elsif ($main'gaswin)
+		{ $tmp=push(@out,"\t.def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
 	else	{ $tmp=push(@out,"\t.type\t$func,\@function\n"); }
 	push(@out,"$func:\n");
 	$tmp=<<"EOF";
@@ -320,6 +322,8 @@ EOF
 	push(@out,$tmp);
 	if ($main'cpp)
 		{ push(@out,"\tTYPE($func,\@function)\n"); }
+	elsif ($main'gaswin)
+		{ $tmp=push(@out,"\t.def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
 	else	{ push(@out,"\t.type	$func,\@function\n"); }
 	push(@out,"$func:\n");
 	$stack=4;
@@ -342,6 +346,8 @@ EOF
 	push(@out,$tmp);
 	if ($main'cpp)
 		{ push(@out,"\tSIZE($func,.${func}_end-$func)\n"); }
+	elsif ($main'gaswin)
+                { $tmp=push(@out,"\t.align 4\n"); }
 	else	{ push(@out,"\t.size\t$func,.${func}_end-$func\n"); }
 	push(@out,".ident	\"$func\"\n");
 	$stack=0;
@@ -371,6 +377,8 @@ sub main'function_end_B
 	push(@out,".L_${func}_end:\n");
 	if ($main'cpp)
 		{ push(@out,"\tSIZE($func,.L_${func}_end-$func)\n"); }
+        elsif ($main'gaswin)
+                { push(@out,"\t.align 4\n"); }
 	else	{ push(@out,"\t.size\t$func,.L_${func}_end-$func\n"); }
 	push(@out,".ident	\"desasm.pl\"\n");
 	$stack=0;

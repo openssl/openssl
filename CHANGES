@@ -4,6 +4,9 @@
 
  Changes between 0.9.5 and 0.9.6  [XX XXX 2000]
 
+  *) Assembler module support for Mingw32.
+     [Ulf Möller]
+
   *) Shared library support for HPUX (in shlib/).
      [Lutz Jaenicke <Lutz.Jaenicke@aet.TU-Cottbus.DE> and Anonymous]
 
