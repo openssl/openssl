@@ -706,8 +706,8 @@ static int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
  */
 int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 	{
-	int al,i,j,ret;
-	unsigned int n;
+	int al,j,ret;
+	unsigned int i,n;
 	SSL3_RECORD *rr;
 	void (*cb)()=NULL;
 
