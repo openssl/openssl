@@ -355,8 +355,8 @@ typedef struct evp_cipher_ctx_st
 		struct
 			{
 			des_key_schedule ks;/* key schedule */
-			C_Block inw;
-			C_Block outw;
+			des_cblock inw;
+			des_cblock outw;
 			} desx_cbc;
 		struct
 			{

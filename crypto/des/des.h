@@ -87,15 +87,11 @@ typedef /* const */ unsigned char const_des_cblock[8];
 typedef struct des_ks_struct
 	{
 	union	{
-		des_cblock _;
+		des_cblock cblock;
 		/* make sure things are correct size on machines with
 		 * 8 byte longs */
-		DES_LONG pad[2];
+		DES_LONG deslong[2];
 		} ks;
-#if defined _
-# error "_ is defined, but some strange definition the DES library cannot handle that."
-#endif
-#define _	ks._
 	int weak_key;
 	} des_key_schedule[16];
 
@@ -120,7 +116,6 @@ typedef struct des_ks_struct
 #define des_ede2_ofb64_encrypt(i,o,l,k1,k2,iv,n) \
 	des_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n))
 
-#define C_Block des_cblock
 #define Key_schedule des_key_schedule
 #ifdef KERBEROS
 #define ENCRYPT DES_ENCRYPT
