@@ -103,6 +103,8 @@ static void engine_def_check_util(ENGINE **def, ENGINE *val)
 	*def = val;
 	val->struct_ref++;
 	val->funct_ref++;
+	engine_ref_debug(val, 0, 1)
+	engine_ref_debug(val, 1, 1)
 	}
 
 /* In a slight break with convention - this static function must be
@@ -176,6 +178,8 @@ int ENGINE_init(ENGINE *e)
 		 * structural reference. */
 		e->struct_ref++;
 		e->funct_ref++;
+		engine_ref_debug(e, 0, 1)
+		engine_ref_debug(e, 1, 1)
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	return to_return;
@@ -192,43 +196,38 @@ int ENGINE_finish(ENGINE *e)
 		return 0;
 		}
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
-	if((e->funct_ref == 1) && e->finish)
-#if 0
-		/* This is the last functional reference and the engine
-		 * requires cleanup so we do it now. */
-		to_return = e->finish();
-	if(to_return)
-		{
-		/* Cleanup the functional reference which is also a
-		 * structural reference. */
-		e->struct_ref--;
-		e->funct_ref--;
-		}
-	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-#else
-		/* I'm going to deliberately do a convoluted version of this
-		 * piece of code because we don't want "finish" functions
-		 * being called inside a locked block of code, if at all
-		 * possible. I'd rather have this call take an extra couple
-		 * of ticks than have throughput serialised on a externally-
-		 * provided callback function that may conceivably never come
-		 * back. :-( */
+	/* Reduce the functional reference count here so if it's the terminating
+	 * case, we can release the lock safely and call the finish() handler
+	 * without risk of a race. We get a race if we leave the count until
+	 * after and something else is calling "finish" at the same time -
+	 * there's a chance that both threads will together take the count from
+	 * 2 to 0 without either calling finish(). */
+	e->funct_ref--;
+	engine_ref_debug(e, 1, -1)
+	if((e->funct_ref == 0) && e->finish)
 		{
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-		/* CODE ALERT: This *IS* supposed to be "=" and NOT "==" :-) */
-		if((to_return = e->finish(e)))
+		if(!(to_return = e->finish(e)))
 			{
-			CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
-			/* Cleanup the functional reference which is also a
-			 * structural reference. */
-			e->struct_ref--;
-			e->funct_ref--;
-			CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+			ENGINEerr(ENGINE_F_ENGINE_FINISH,ENGINE_R_FINISH_FAILED);
+			return 0;
 			}
 		}
 	else
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+#ifdef REF_CHECK
+	if(e->funct_ref < 0)
+		{
+		fprintf(stderr,"ENGINE_finish, bad functional reference count\n");
+		abort();
+		}
 #endif
+	/* Release the structural reference too */
+	if(!ENGINE_free(e))
+		{
+		ENGINEerr(ENGINE_F_ENGINE_FINISH,ENGINE_R_FINISH_FAILED);
+		return 0;
+		}
 	return to_return;
 	}
 
@@ -620,8 +619,8 @@ static ENGINE *engine_get_default_type(ENGINE_TYPE t)
 		ret = engine_def_bn_mod_exp; break;
 	case ENGINE_TYPE_BN_MOD_EXP_CRT:
 		ret = engine_def_bn_mod_exp_crt; break;
-        default:
-                break;
+	default:
+		break;
 		}
 	/* Unforunately we can't do this work outside the lock with a
 	 * call to ENGINE_init() because that would leave a race
@@ -630,6 +629,8 @@ static ENGINE *engine_get_default_type(ENGINE_TYPE t)
 		{
 		ret->struct_ref++;
 		ret->funct_ref++;
+		engine_ref_debug(ret, 0, 1)
+		engine_ref_debug(ret, 1, 1)
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	return ret;
@@ -675,12 +676,6 @@ static int engine_set_default_type(ENGINE_TYPE t, ENGINE *e)
 	{
 	ENGINE *old = NULL;
 
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_SET_DEFAULT_TYPE,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
 	/* engine_def_check is lean and mean and won't replace any
 	 * prior default engines ... so we must ensure that it is always
 	 * the first function to get to touch the default values. */
@@ -688,7 +683,7 @@ static int engine_set_default_type(ENGINE_TYPE t, ENGINE *e)
 	/* Attempt to get a functional reference (we need one anyway, but
 	 * also, 'e' may be just a structural reference being passed in so
 	 * this call may actually be the first). */
-	if(!ENGINE_init(e))
+	if(e && !ENGINE_init(e))
 		{
 		ENGINEerr(ENGINE_F_ENGINE_SET_DEFAULT_TYPE,
 			ENGINE_R_INIT_FAILED);
@@ -721,8 +716,8 @@ static int engine_set_default_type(ENGINE_TYPE t, ENGINE *e)
 	case ENGINE_TYPE_BN_MOD_EXP_CRT:
 		old = engine_def_bn_mod_exp_crt;
 		engine_def_bn_mod_exp_crt = e; break;
-        default:
-                break;
+	default:
+		break;
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	/* If we've replaced a previous value, then we need to remove the
@@ -797,6 +792,34 @@ int ENGINE_set_default(ENGINE *e, unsigned int flags)
 		return 0;
 	if((flags & ENGINE_METHOD_BN_MOD_EXP_CRT) && e->bn_mod_exp_crt &&
 			!ENGINE_set_default_BN_mod_exp_crt(e))
+		return 0;
+	return 1;
+	}
+
+int ENGINE_clear_defaults(void)
+	{
+	/* If the defaults haven't even been set yet, don't bother. Any kind of
+	 * "cleanup" has a kind of implicit race-condition if another thread is
+	 * trying to keep going, so we don't address that with locking. The
+	 * first ENGINE_set_default_*** call will actually *create* a standard
+	 * set of default ENGINEs (including init() and functional reference
+	 * counts aplenty) before the rest of this function undoes them all. So
+	 * save some hassle ... */
+	if(!engine_def_flag)
+		return 1;
+	if((0 == 1) ||
+#ifndef OPENSSL_NO_RSA
+			!ENGINE_set_default_RSA(NULL) ||
+#endif
+#ifndef OPENSSL_NO_DSA
+			!ENGINE_set_default_DSA(NULL) ||
+#endif
+#ifndef OPENSSL_NO_DH
+			!ENGINE_set_default_DH(NULL) ||
+#endif
+			!ENGINE_set_default_RAND(NULL) ||
+			!ENGINE_set_default_BN_mod_exp(NULL) ||
+			!ENGINE_set_default_BN_mod_exp_crt(NULL))
 		return 0;
 	return 1;
 	}

@@ -139,6 +139,7 @@ static int engine_list_add(ENGINE *e)
 	/* Having the engine in the list assumes a structural
 	 * reference. */
 	e->struct_ref++;
+	engine_ref_debug(e, 0, 1)
 	/* However it came to be, e is the last item in the list. */
 	engine_list_tail = e;
 	e->next = NULL;
@@ -177,6 +178,7 @@ static int engine_list_remove(ENGINE *e)
 		engine_list_tail = e->prev;
 	/* remove our structural reference. */
 	e->struct_ref--;
+	engine_ref_debug(e, 0, -1)
 	return 1;
 	}
 
@@ -187,13 +189,24 @@ static int engine_list_remove(ENGINE *e)
  * as it will generate errors itself. */
 static int engine_internal_check(void)
 	{
+	int toret = 1;
+	ENGINE *def_engine;
 	if(engine_list_flag)
 		return 1;
 	/* This is our first time up, we need to populate the list
 	 * with our statically compiled-in engines. */
-	if(!engine_list_add(ENGINE_openssl()))
-		return 0;
-	engine_list_flag = 1;
+	def_engine = ENGINE_openssl();
+	if(!engine_list_add(def_engine))
+		toret = 0;
+	else
+		engine_list_flag = 1;
+#if 0
+	ENGINE_free(def_engine);
+#else
+	/* We can't ENGINE_free() because the lock's already held */
+	def_engine->struct_ref--;
+	engine_ref_debug(def_engine, 0, -1)
+#endif
 	return 1;
 	}
 
@@ -207,7 +220,10 @@ ENGINE *ENGINE_get_first(void)
 		{
 		ret = engine_list_head;
 		if(ret)
+			{
 			ret->struct_ref++;
+			engine_ref_debug(ret, 0, 1)
+			}
 		}
 	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
 	return ret;
@@ -221,7 +237,10 @@ ENGINE *ENGINE_get_last(void)
 		{
 		ret = engine_list_tail;
 		if(ret)
+			{
 			ret->struct_ref++;
+			engine_ref_debug(ret, 0, 1)
+			}
 		}
 	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
 	return ret;
@@ -240,8 +259,11 @@ ENGINE *ENGINE_get_next(ENGINE *e)
 	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
 	ret = e->next;
 	if(ret)
+		{
 		/* Return a valid structural refernce to the next ENGINE */
 		ret->struct_ref++;
+		engine_ref_debug(ret, 0, 1)
+		}
 	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
 	/* Release the structural reference to the previous ENGINE */
 	ENGINE_free(e);
@@ -259,8 +281,11 @@ ENGINE *ENGINE_get_prev(ENGINE *e)
 	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
 	ret = e->prev;
 	if(ret)
+		{
 		/* Return a valid structural reference to the next ENGINE */
 		ret->struct_ref++;
+		engine_ref_debug(ret, 0, 1)
+		}
 	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
 	/* Release the structural reference to the previous ENGINE */
 	ENGINE_free(e);
@@ -349,7 +374,10 @@ ENGINE *ENGINE_by_id(const char *id)
 					}
 				}
 			else
+				{
 				iterator->struct_ref++;
+				engine_ref_debug(iterator, 0, 1)
+				}
 			}
 		}
 	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
@@ -371,6 +399,7 @@ ENGINE *ENGINE_new(void)
 		}
 	memset(ret, 0, sizeof(ENGINE));
 	ret->struct_ref = 1;
+	engine_ref_debug(ret, 0, 1)
 	CRYPTO_new_ex_data(engine_ex_data_stack, ret, &ret->ex_data);
 	return ret;
 	}
@@ -386,14 +415,12 @@ int ENGINE_free(ENGINE *e)
 		return 0;
 		}
 	i = CRYPTO_add(&e->struct_ref,-1,CRYPTO_LOCK_ENGINE);
-#ifdef REF_PRINT
-	REF_PRINT("ENGINE",e);
-#endif
+	engine_ref_debug(e, 0, -1)
 	if (i > 0) return 1;
 #ifdef REF_CHECK
 	if (i < 0)
 		{
-		fprintf(stderr,"ENGINE_free, bad reference count\n");
+		fprintf(stderr,"ENGINE_free, bad structural reference count\n");
 		abort();
 		}
 #endif
@@ -422,18 +449,21 @@ void *ENGINE_get_ex_data(const ENGINE *e, int idx)
 	}
 
 void ENGINE_cleanup(void)
-        {
-        ENGINE *iterator = engine_list_head;
+	{
+	ENGINE *iterator = engine_list_head;
 
-        while(iterator != NULL)
-                {
-                ENGINE_remove(iterator);
-                ENGINE_free(iterator);
-                iterator = engine_list_head;
-                }
-        engine_list_flag = 0;
-        return;
-        }
+	while(iterator != NULL)
+		{
+		ENGINE_remove(iterator);
+		iterator = engine_list_head;
+		}
+	engine_list_flag = 0;
+	/* Also unset any "default" ENGINEs that may have been set up (a default
+	 * constitutes a functional reference on an ENGINE and there's one for
+	 * each algorithm). */
+	ENGINE_clear_defaults();
+	return;
+	}
 
 int ENGINE_set_id(ENGINE *e, const char *id)
 	{
@@ -465,7 +495,7 @@ int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth)
 	e->rsa_meth = rsa_meth;
 	return 1;
 #else
-        return 0;
+	return 0;
 #endif
 	}
 
@@ -475,7 +505,7 @@ int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth)
 	e->dsa_meth = dsa_meth;
 	return 1;
 #else
-        return 0;
+	return 0;
 #endif
 	}
 
@@ -485,7 +515,7 @@ int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth)
 	e->dh_meth = dh_meth;
 	return 1;
 #else
-        return 0;
+	return 0;
 #endif
 	}
 

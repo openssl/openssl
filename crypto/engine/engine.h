@@ -363,8 +363,12 @@ int ENGINE_cpy(ENGINE *dest, const ENGINE *src);
 int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 		CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
-/* Cleans the internal engine structure.  This should only be used when the
- * application is about to exit. */
+/* Cleans the internal engine list. This should only be used when the
+ * application is about to exit or restart operation (the next operation
+ * requiring the ENGINE list will re-initialise it with defaults). NB: Dynamic
+ * ENGINEs will only truly unload (including any allocated data or loaded
+ * shared-libraries) if all remaining references are released too - so keys,
+ * certificates, etc all need to be released for an in-use ENGINE to unload. */
 void ENGINE_cleanup(void);
 
 /* These return values from within the ENGINE structure. These can be useful
@@ -444,6 +448,12 @@ int ENGINE_set_default_BN_mod_exp_crt(ENGINE *e);
 /* The combination "set" - the flags are bitwise "OR"d from the
  * ENGINE_METHOD_*** defines above. */
 int ENGINE_set_default(ENGINE *e, unsigned int flags);
+
+/* This function resets all the internal "default" ENGINEs (there's one for each
+ * of the various algorithms) to NULL, releasing any references as appropriate.
+ * This function is called as part of the ENGINE_cleanup() function, so there's
+ * no need to call both (although no harm is done). */
+int ENGINE_clear_defaults(void);
 
 /* Obligatory error function. */
 void ERR_load_ENGINE_strings(void);

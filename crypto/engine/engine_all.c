@@ -62,12 +62,14 @@
 
 static int engine_add(ENGINE *e)
 	{
+	int toret = 1;
 	if (!ENGINE_by_id(ENGINE_get_id(e)))
 		{
 		(void)ERR_get_error();
-		return ENGINE_add(e);
+		toret = ENGINE_add(e);
 		}
-	return 1;
+	ENGINE_free(e);
+	return toret;
 	}
 
 void ENGINE_load_cswift(void)
