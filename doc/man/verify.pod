@@ -60,8 +60,8 @@ print extra information about the operations being performed.
 =item B<->
 
 marks the last option. All arguments following this are assumed to be
-certificate files.
-
+certificate files. This is useful if the first certificate filename begins
+with a B<->.
 
 =item B<certificates>
 
@@ -102,7 +102,7 @@ consistency with the supplied purpose. If the B<-purpose> option is not included
 then no checks are done. The supplied or "leaf" certificate must have extensions
 compatible with the supplied purpose and all other certificates must also be valid
 CA certificates. The precise extensions required are described in more detail in
-the B<CERTIFICATE EXTENSIONS> section.
+the B<CERTIFICATE EXTENSIONS> section of the B<x509> utility.
 
 The third operation is to check the trust settings on the root CA. The root
 CA should be trusted for the supplied purpose. For compatability with previous
@@ -117,9 +117,154 @@ point.
 If all operations complete successfully then certificate is considered valid. If
 any operation fails then the certificate is not valid.
 
-=head1 CERTIFICATE EXTENSIONS
+=head1 DIAGNOSTICS
 
-...to be added...
+When a verify operation fails the output messages can be somewhat cryptic. The
+general form of the error message is:
+
+ server.pem: /C=AU/ST=Queensland/O=CryptSoft Pty Ltd/CN=Test CA (1024 bit)
+ error 24 at 1 depth lookup:invalid CA certificate
+
+The first line contains the name of the certificate being verified followed by
+the subject name of the certificate. The second line contains the error number
+and the depth. The depth is number of the certificate being verified when a
+problem was detected starting with zero for the certificate being verified itself
+then 1 for the CA that signed the certificate and so on. Finally a text version
+of the error number is presented.
+
+An exhaustive list of the error codes and messages is shown below, this also
+includes the name of the error code as defined in the header file x509_vfy.h
+Some of the error codes are defined but never returned: these are described
+as "unused".
+
+=over 4
+
+=item B<0 X509_V_OK: ok>
+
+the operation was successful.
+
+=item B<2 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: unable to get issuer certificate>
+
+the issuer certificate could not be found: this occurs if the issuer certificate
+of an untrusted certificate cannot be found.
+
+=item B<3 X509_V_ERR_UNABLE_TO_GET_CRL unable to get certificate CRL>
+
+the CRL of a certificate could not be found. Unused.
+
+=item B<4 X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE: unable to decrypt certificate's signature>
+
+the certificate signature could not be decrypted. This means that the actual signature value
+could not be determined rather than it not matching the expected value, this is only
+meaningful for RSA keys.
+
+=item B<5 X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE: unable to decrypt CRL's's signature>
+
+the CRL signature could not be decrypted: this means that the actual signature value
+could not be determined rather than it not matching the expected value. Unused.
+
+=item B<6 X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY: unable to decode issuer public key>
+
+the public key in the certificate SubjectPublicKeyInfo could not be read.
+
+=item B<7 X509_V_ERR_CERT_SIGNATURE_FAILURE: certificate signature failure>
+
+the signature of the certificate is invalid.
+
+=item B<8 X509_V_ERR_CRL_SIGNATURE_FAILURE: CRL signature failure>
+
+the signature of the certificate is invalid. Unused.
+
+=item B<9 X509_V_ERR_CERT_NOT_YET_VALID: certificate is not yet valid>
+
+the certificate is not yet valid: the notBefore date is after the current time.
+
+=item B<10 X509_V_ERR_CRL_NOT_YET_VALID: CRL is not yet valid>
+
+the CRL is not yet valid. Unused.
+
+=item B<11 X509_V_ERR_CERT_HAS_EXPIRED: Certificate has expired>
+
+the certificate has expired: that is the notAfter date is before the current time.
+
+=item B<12 X509_V_ERR_CRL_HAS_EXPIRED: CRL has expired>
+
+the CRL has expired. Unused.
+
+=item B<13 X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD: format error in certificate's notBefore field>
+
+the certificate notBefore field contains an invalid time.
+
+=item B<14 X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD: format error in certificate's notAfter field>
+
+the certificate notAfter field contains an invalid time.
+
+=item B<15 X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD: format error in CRL's lastUpdate field>
+
+the CRL lastUpdate field contains an invalid time. Unused.
+
+=item B<16 X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD: format error in CRL's nextUpdate field>
+
+the CRL nextUpdate field contains an invalid time. Unused.
+
+=item B<17 X509_V_ERR_OUT_OF_MEM: out of memory>
+
+an error occured trying to allocate memory. This should never happen.
+
+=item B<18 X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT: self signed certificate>
+
+the passed certificate is self signed and the same certificate cannot be found in the list of
+trusted certificates.
+
+=item B<19 X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN: self signed certificate in certificate chain>
+
+the certificate chain could be built up using the untrusted certificates but the root could not
+be found locally.
+
+=item B<20 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY: unable to get local issuer certificate>
+
+the issuer certificate of a locally looked up certificate could not be found. This normally means
+the list of trusted certificates is not complete.
+
+=item B<21 X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE: unable to verify the first certificate>
+
+no signatures could be verified because the chain contains only one certificate and it is not
+self signed.
+
+=item B<22 X509_V_ERR_CERT_CHAIN_TOO_LONG: certificate chain too long>
+
+the certificate chain length is greater than the supplied maximum depth. Unused.
+
+=item B<23 X509_V_ERR_CERT_REVOKED: certificate revoked>
+
+the certificate has been revoked. Unused.
+
+=item B<24 X509_V_ERR_INVALID_CA: invalid CA certificate>
+
+a CA certificate is invalid. Either it is not a CA or its extensions are not consistent
+with the supplied purpose.
+
+=item B<25 X509_V_ERR_PATH_LENGTH_EXCEEDED: path length constraint exceeded>
+
+the basicConstraints pathlength parameter has been exceeded.
+
+=item B<26 X509_V_ERR_INVALID_PURPOSE: unsupported certificate purpose>
+
+the supplied certificate cannot be used for the specified purpose.
+
+=item B<27 X509_V_ERR_CERT_UNTRUSTED: certificate not trusted>
+
+the root CA is not marked as trusted for the specified purpose.
+
+=item B<28 X509_V_ERR_CERT_REJECTED: certificate rejected>
+
+the root CA is marked to reject the specified purpose.
+
+=item B<50 X509_V_ERR_APPLICATION_VERIFICATION: application verification failure>
+
+an application specific error. Unused.
+
+=back
 
 =head1 SEE ALSO
 
