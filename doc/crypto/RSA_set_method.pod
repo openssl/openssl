@@ -3,13 +3,12 @@
 =head1 NAME
 
 RSA_set_default_method, RSA_get_default_method, RSA_set_method,
-RSA_get_method, RSA_PKCS1_SSLeay,
-RSA_null_method, RSA_flags, RSA_new_method - select RSA method
+RSA_get_method, RSA_PKCS1_SSLeay, RSA_null_method, RSA_flags,
+RSA_new_method - select RSA method
 
 =head1 SYNOPSIS
 
  #include <openssl/rsa.h>
- #include <openssl/engine.h>
 
  void RSA_set_default_method(const RSA_METHOD *meth);
 
@@ -21,11 +20,13 @@ RSA_null_method, RSA_flags, RSA_new_method - select RSA method
 
  RSA_METHOD *RSA_PKCS1_SSLeay(void);
 
+ RSA_METHOD *RSA_PKCS1_RSAref(void);
+
  RSA_METHOD *RSA_null_method(void);
 
  int RSA_flags(const RSA *rsa);
 
- RSA *RSA_new_method(ENGINE *engine);
+ RSA *RSA_new_method(RSA_METHOD *method);
 
 =head1 DESCRIPTION
 
@@ -69,6 +70,12 @@ RSA_new_method() allocates and initializes an RSA structure so that
 B<engine> will be used for the RSA operations. If B<engine> is NULL, the
 default ENGINE for RSA operations is used, and if no default ENGINE is set,
 the RSA_METHOD controlled by RSA_set_default_method() is used.
+
+RSA_flags() returns the B<flags> that are set for B<rsa>'s current method.
+
+RSA_new_method() allocates and initializes an B<RSA> structure so that
+B<method> will be used for the RSA operations. If B<method> is B<NULL>,
+the default method is used.
 
 =head1 THE RSA_METHOD STRUCTURE
 
