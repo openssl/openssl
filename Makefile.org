@@ -504,9 +504,10 @@ SHAREDCMD=$(CC)
 do_aix-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; \
-	  ld -r -o $$i.o $(ALLSYMSFLAG) lib$$i.a && \
+	  ld -r -o lib$$i.o $(ALLSYMSFLAG) lib$$i.a && \
 	  ( nm -Pg lib$$i.o | grep ' [BD] ' | cut -f1 -d' ' > lib$$i.exp; \
-	    $(SHAREDCMD) $(SHAREDFLAG) -o lib$$i.so lib$$i.o \
+	    $(SHAREDCMD) $(SHAREDFLAGS) \
+		-o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib$$i.o \
 		$$libs ${EX_LIBS} ) ) \
 	|| exit 1; \
 	libs="$$libs -l$$i"; \
