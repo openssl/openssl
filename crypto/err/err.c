@@ -992,7 +992,7 @@ void ERR_add_error_data(int num, ...)
 				if (p == NULL)
 					{
 					OPENSSL_free(str);
-					return;
+					goto err;
 					}
 				else
 					str=p;
@@ -1002,5 +1002,6 @@ void ERR_add_error_data(int num, ...)
 		}
 	ERR_set_error_data(str,ERR_TXT_MALLOCED|ERR_TXT_STRING);
 
+err:
 	va_end(args);
 	}
