@@ -241,14 +241,14 @@ h=4 ;(AP)	h	by value (input)
 l=8 ;(AP)	l	by value (input)
 d=12 ;(AP)	d	by value (input)
 
-aprim=r5
-a2=r6
-a20=r6
-a21=r7
-bprim=r8
-b2=r9
-qprim=r10	; initially used as q''
-rprim=r11	; initially used as r''
+;aprim=r5
+;a2=r6
+;a20=r6
+;a21=r7
+;bprim=r8
+;b2=r9
+;qprim=r10	; initially used as q''
+;rprim=r11	; initially used as r''
 
 
 	.psect	code,nowrt
@@ -258,58 +258,58 @@ rprim=r11	; initially used as r''
 	movl	h(ap),r3
 	movl	d(ap),r4
 
-	movl	#0,aprim
-	movl	#0,bprim
+	movl	#0,r5
+	movl	#0,r8
 	movl	#0,r0
 
-	rotl	#-1,r2,a20	; a20 = l >> 1 (almost)
-	rotl	#-1,r3,a21	; a21 = h >> 1 (almost)
-	rotl	#-1,r4,b2	; b2 = d >> 1 (almost)
+	rotl	#-1,r2,r6	; a20 = l >> 1 (almost)
+	rotl	#-1,r3,r7	; a21 = h >> 1 (almost)
+	rotl	#-1,r4,r9	; b2 = d >> 1 (almost)
 
-	tstl	a20
+	tstl	r6
 	bgeq	1$
-	xorl2	#^X80000000,a20	; fixup a20 so highest bit is 0
-	incl	aprim		; a' = 1
+	xorl2	#^X80000000,r6	; fixup a20 so highest bit is 0
+	incl	r5		; a' = 1
 1$:
-	tstl	a21
+	tstl	r7
 	bgeq	2$
-	xorl2	#^X80000000,a20	; fixup a20 so highest bit is 1,
+	xorl2	#^X80000000,r6	; fixup a20 so highest bit is 1,
 				; since that's what was lowest in a21
-	xorl2	#^X80000000,a21	; fixup a21 so highest bit is 1
+	xorl2	#^X80000000,r7	; fixup a21 so highest bit is 1
 2$:
-	tstl	b2
+	tstl	r9
 	bgeq	666$		; Uh-oh, the divisor is 0...
-	bgrt	3$
-	xorl2	#^X80000000,b2	; fixup b2 so highest bit is 1
-	incl	bprim
+	bgtr	3$
+	xorl2	#^X80000000,r9	; fixup b2 so highest bit is 1
+	incl	r8
 3$:
-	tstl	b2
+	tstl	r9
 	bneq	4$		; if b2 is 0, we know that bprim is 1
-	tstl	a21
+	tstl	r7
 	bneq	666$		; if higher half isn't 0, we overflow
-	movl	r0,a20		; otherwise, we have our result
+	movl	r0,r6		; otherwise, we have our result
 	brb	42$
 4$:
-	ediv	b2,a2,qprim,rprim
+	ediv	r9,r6,r10,r11
 
-	tstl	bprim
+	tstl	r8
 	bneq	5$		; If b' != 0, go to the other part
-;	addl3	rprim,rprim,r1
-;	addl2	aprim,r1
+;	addl3	r11,r11,r1
+;	addl2	r5,r1
 	brb	42$
 5$:
-	ash	#1,rprim,rprim
-	subl2	qprim,rprim
-	addl2	aprim,rprim
+	ashl	#1,r11,r11
+	subl2	r10,r11
+	addl2	r5,r11
 	bgeq	7$
 6$:
-	decl	qprim
-	addl2	r4,rprim
+	decl	r10
+	addl2	r4,r11
 	blss	6$
 7$:
-;	movl	rprim,r1
+;	movl	r11,r1
 42$:
-	movl	qprim,r0
+	movl	r10,r0
 666$:
 	ret
 
@@ -345,11 +345,11 @@ n=16 ;(AP)	n	by value (input)
 
 0$:
 	movl	(r3)+,r6	; carry untouched
-	addwc	(r4)+,r6	; carry used and touched
+	adwc	(r4)+,r6	; carry used and touched
 	movl	r6,(r2)+	; carry untouched
 	sobgtr	r5,0$		; carry untouched
 
-	addwc	#0,r0
+	adwc	#0,r0
 666$:
 	ret
 
@@ -389,7 +389,7 @@ n=16 ;(AP)	n	by value (input)
 	movl	r6,(r2)+	; carry untouched
 	sobgtr	r5,0$		; carry untouched
 
-	addwc	#0,r0
+	adwc	#0,r0
 666$:
 	ret
 
