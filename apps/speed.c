@@ -1261,7 +1261,7 @@ int MAIN(int argc, char **argv)
 			{
 			BIO_printf(bio_err,"RSA verify failure.  No RSA verify will be done.\n");
 			ERR_print_errors(bio_err);
-			dsa_doit[j] = 0;
+			rsa_doit[j] = 0;
 			}
 		else
 			{
