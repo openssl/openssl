@@ -65,24 +65,24 @@ $bf_enc_src='';
 
 if (!$no_asm)
 	{
-	$bn_mulw_obj='crypto\bn\asm\bn-win32.obj';
-	$bn_mulw_src='crypto\bn\asm\bn-win32.asm';
-	$des_enc_obj='crypto\des\asm\d-win32.obj crypto\des\asm\y-win32.obj';
-	$des_enc_src='crypto\des\asm\d-win32.asm crypto\des\asm\y-win32.asm';
-	$bf_enc_obj='crypto\bf\asm\b-win32.obj';
-	$bf_enc_src='crypto\bf\asm\b-win32.asm';
-	$cast_enc_obj='crypto\cast\asm\c-win32.obj';
-	$cast_enc_src='crypto\cast\asm\c-win32.asm';
-	$rc4_enc_obj='crypto\rc4\asm\r4-win32.obj';
-	$rc4_enc_src='crypto\rc4\asm\r4-win32.asm';
-	$rc5_enc_obj='crypto\rc5\asm\r5-win32.obj';
-	$rc5_enc_src='crypto\rc5\asm\r5-win32.asm';
-	$md5_asm_obj='crypto\md5\asm\m5-win32.obj';
-	$md5_asm_src='crypto\md5\asm\m5-win32.asm';
-	$sha1_asm_obj='crypto\sha\asm\s1-win32.obj';
-	$sha1_asm_src='crypto\sha\asm\s1-win32.asm';
-	$rmd160_asm_obj='crypto\ripemd\asm\rm-win32.obj';
-	$rmd160_asm_src='crypto\ripemd\asm\rm-win32.asm';
+	$bn_mulw_obj='crypto\bn\asm\bn_win32.obj';
+	$bn_mulw_src='crypto\bn\asm\bn_win32.asm';
+	$des_enc_obj='crypto\des\asm\d_win32.obj crypto\des\asm\y_win32.obj';
+	$des_enc_src='crypto\des\asm\d_win32.asm crypto\des\asm\y_win32.asm';
+	$bf_enc_obj='crypto\bf\asm\b_win32.obj';
+	$bf_enc_src='crypto\bf\asm\b_win32.asm';
+	$cast_enc_obj='crypto\cast\asm\c_win32.obj';
+	$cast_enc_src='crypto\cast\asm\c_win32.asm';
+	$rc4_enc_obj='crypto\rc4\asm\r4_win32.obj';
+	$rc4_enc_src='crypto\rc4\asm\r4_win32.asm';
+	$rc5_enc_obj='crypto\rc5\asm\r5_win32.obj';
+	$rc5_enc_src='crypto\rc5\asm\r5_win32.asm';
+	$md5_asm_obj='crypto\md5\asm\m5_win32.obj';
+	$md5_asm_src='crypto\md5\asm\m5_win32.asm';
+	$sha1_asm_obj='crypto\sha\asm\s1_win32.obj';
+	$sha1_asm_src='crypto\sha\asm\s1_win32.asm';
+	$rmd160_asm_obj='crypto\ripemd\asm\rm_win32.obj';
+	$rmd160_asm_src='crypto\ripemd\asm\rm_win32.asm';
 	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM -DRMD160_ASM";
 	}
 
