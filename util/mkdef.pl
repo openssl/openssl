@@ -472,7 +472,7 @@ sub do_defs
 					push(@tag,$1);
 					$tag{$1}=-1;
 				}
-			} elsif (/^\#\s*ifdef\s+(.*)/) {
+			} elsif (/^\#\s*ifdef\s+(\S*)/) {
 				push(@tag,"-");
 				push(@tag,$1);
 				$tag{$1}=1;
