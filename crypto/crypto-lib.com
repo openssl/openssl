@@ -187,7 +187,7 @@ $ LIB_DES = "set_key,ecb_enc,cbc_enc,"+ -
 	"enc_read,enc_writ,ofb64enc,"+ -
 	"ofb_enc,str2key,pcbc_enc,qud_cksm,rand_key,"+ -
 	"des_enc,fcrypt_b,"+ -
-	"fcrypt,xcbc_enc,rpc_enc,cbc_cksm,"+
+	"fcrypt,xcbc_enc,rpc_enc,cbc_cksm,"+ -
 	"ede_cbcm_enc,des_old,read2pwd"
 $ LIB_RC2 = "rc2_ecb,rc2_skey,rc2_cbc,rc2cfb64,rc2ofb64"
 $ LIB_RC4 = "rc4_skey,rc4_enc"
