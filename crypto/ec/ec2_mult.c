@@ -315,7 +315,8 @@ int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
 	{
 	BN_CTX *new_ctx = NULL;
-	int ret = 0, i;
+	int ret = 0;
+	size_t i;
 	EC_POINT *p=NULL;
 
 	if (ctx == NULL)
