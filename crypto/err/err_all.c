@@ -64,9 +64,6 @@
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
-#if 0 /* was: #ifdef RSAref */
-#include <openssl/rsaref.h>
-#endif
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
@@ -93,32 +90,30 @@ void ERR_load_crypto_strings(void)
 	if (done) return;
 	done=1;
 #ifndef OPENSSL_NO_ERR
-	ERR_load_ASN1_strings();
-	ERR_load_BN_strings();
-	ERR_load_BUF_strings();
-	ERR_load_BIO_strings();
-	ERR_load_CONF_strings();
+	ERR_load_ERR_strings(); /* include error strings for SYSerr */
+	ERR_load_BN_strings()
 #ifndef OPENSSL_NO_RSA
-#if 0 /* was: #ifdef RSAref */
-	ERR_load_RSAREF_strings();
-#else
 	ERR_load_RSA_strings();
-#endif
 #endif
 #ifndef OPENSSL_NO_DH
 	ERR_load_DH_strings();
 #endif
+	ERR_load_EVP_strings();
+	ERR_load_BUF_strings();
+	ERR_load_OBJ_strings();
+	ERR_load_PEM_strings();
 #ifndef OPENSSL_NO_DSA
 	ERR_load_DSA_strings();
 #endif
-	ERR_load_ERR_strings();
-	ERR_load_EVP_strings();
-	ERR_load_OBJ_strings();
-	ERR_load_PEM_strings();
 	ERR_load_X509_strings();
-	ERR_load_X509V3_strings();
+	ERR_load_ASN1_strings();
+	ERR_load_CONF_strings();
 	ERR_load_CRYPTO_strings();
-	ERR_load_PKCS7_strings();
+	ERR_load_EC_strings();
+	/* skip ERR_load_SSL_strings() because it is not in this library */
+	ERR_load_BIO_strings();
+	ERR_load_PKCS7_strings();	
+	ERR_load_X509V3_strings();
 	ERR_load_PKCS12_strings();
 	ERR_load_RAND_strings();
 	ERR_load_DSO_strings();
