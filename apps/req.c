@@ -1189,7 +1189,9 @@ char *end;
 	slen = strlen(str);
 	if(elen > slen) return 1;
 	tmp = str + slen - elen;
-fprintf(stderr, "Matching %s, %s %s\n", str, end, tmp);
+#ifdef DEBUG
+	fprintf(stderr, "Matching %s, %s %s\n", str, end, tmp);
+#endif
 	return strcmp(tmp, end);
 }
 
