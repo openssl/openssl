@@ -725,6 +725,13 @@
 
  Changes between 0.9.7d and 0.9.7e  [XX xxx XXXX]
 
+  *) Avoid a race condition when CRLs are checked in a multi threaded 
+     environment. This would happen due to the reordering of the revoked
+     entries during signature checking and serial number lookup. Now the
+     encoding is cached and the serial number sort performed under a lock.
+     Add new STACK function sk_is_sorted().
+     [Steve Henson]
+
   *) Add Delta CRL to the extension code.
      [Steve Henson]
 

@@ -332,3 +332,10 @@ void sk_sort(STACK *st)
 		st->sorted=1;
 		}
 	}
+
+int sk_is_sorted(const STACK *st)
+	{
+	if (st)
+		return 1;
+	return st->sorted;
+	}
