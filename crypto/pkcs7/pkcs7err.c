@@ -105,6 +105,7 @@ static ERR_STRING_DATA PKCS7_str_reasons[]=
 {PKCS7_R_ERROR_SETTING_CIPHER            ,"error setting cipher"},
 {PKCS7_R_INTERNAL_ERROR                  ,"internal error"},
 {PKCS7_R_INVALID_MIME_TYPE               ,"invalid mime type"},
+{PKCS7_R_INVALID_NULL_POINTER            ,"invalid null pointer"},
 {PKCS7_R_MIME_NO_CONTENT_TYPE            ,"mime no content type"},
 {PKCS7_R_MIME_PARSE_ERROR                ,"mime parse error"},
 {PKCS7_R_MIME_SIG_PARSE_ERROR            ,"mime sig parse error"},

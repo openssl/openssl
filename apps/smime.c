@@ -136,6 +136,8 @@ int MAIN(int argc, char **argv)
 				flags &= ~PKCS7_DETACHED;
 		else if (!strcmp (*args, "-binary"))
 				flags |= PKCS7_BINARY;
+		else if (!strcmp (*args, "-nosigs"))
+				flags |= PKCS7_NOSIGS;
 		else if (!strcmp (*args, "-to")) {
 			if (args[1]) {
 				args++;
@@ -224,6 +226,13 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-rc2-40        encrypt with RC2-40\n");
 		BIO_printf (bio_err, "-rc2-64        encrypt with RC2-64\n");
 		BIO_printf (bio_err, "-rc2-128       encrypt with RC2-128\n");
+		BIO_printf (bio_err, "-nointern      don't search certificates in message for signer\n");
+		BIO_printf (bio_err, "-nosigs        don't verify message signature\n");
+		BIO_printf (bio_err, "-noverify      don't verify signers certificate\n");
+		BIO_printf (bio_err, "-nocerts       don't include signers certificate when signing\n");
+		BIO_printf (bio_err, "-nodetach      use opaque signing\n");
+		BIO_printf (bio_err, "-noattr        don't include any signed attributes\n");
+		BIO_printf (bio_err, "-binary        don't translate message to text\n");
 		BIO_printf (bio_err, "-in file       input file\n");
 		BIO_printf (bio_err, "-certfile file other certificates file\n");
 		BIO_printf (bio_err, "-signer file   signer certificate file\n");
@@ -235,6 +244,8 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-from ad       from address\n");
 		BIO_printf (bio_err, "-subject s     subject\n");
 		BIO_printf (bio_err, "-text          include or delete text MIME headers\n");
+		BIO_printf (bio_err, "-CApath dir    trusted certificates directory\n");
+		BIO_printf (bio_err, "-CAfile file   trusted certificates file\n");
 		BIO_printf (bio_err, "cert.pem       recipient certificate(s)\n");
 		goto end;
 	}
@@ -319,6 +330,7 @@ int MAIN(int argc, char **argv)
 		if(!(store = setup_verify(CAfile, CApath))) goto end;
 
 	ret = 3;
+
 	if(operation == SMIME_ENCRYPT) {
 		p7 = PKCS7_encrypt(encerts, in, cipher, flags);
 	} else if(operation == SMIME_SIGN) {
@@ -327,34 +339,35 @@ int MAIN(int argc, char **argv)
 	} else {
 		if(!(p7 = SMIME_read_PKCS7(in, &indata))) {
 			BIO_printf(bio_err, "Error reading S/MIME message\n");
-			ret = 4;
 			goto end;
 		}
 	}
-			
+
 	if(!p7) {
 		BIO_printf(bio_err, "Error creating PKCS#7 structure\n");
 		goto end;
 	}
 
+	ret = 4;
 	if(operation == SMIME_DECRYPT) {
-		if(!PKCS7_decrypt(p7, key, recip, out, flags))
+		if(!PKCS7_decrypt(p7, key, recip, out, flags)) {
 			BIO_printf(bio_err, "Error decrypting PKCS#7 structure\n");
-		else ret = 0;
+			goto end;
+		}
 	} else if(operation == SMIME_VERIFY) {
 		STACK_OF(X509) *signers;
 		signers = PKCS7_iget_signers(p7, other, flags);
 		if(PKCS7_verify(p7, other, store, indata, out, flags)) {
 			BIO_printf(bio_err, "Verification Successful\n");
-			ret = 0;
 		} else {
 			BIO_printf(bio_err, "Verification Failure\n");
-			ret = 5;
+			goto end;
 		}
 		if(!save_certs(signerfile, signers)) {
 			BIO_printf(bio_err, "Error writing signers to %s\n",
 								signerfile);
-			ret = 2;
+			ret = 5;
+			goto end;
 		}
 		sk_X509_free(signers);
 	} else if(operation == SMIME_PK7OUT) {
@@ -365,6 +378,7 @@ int MAIN(int argc, char **argv)
 		if(subject) BIO_printf(out, "Subject: %s\n", subject);
 		SMIME_write_PKCS7(out, p7, in, flags);
 	}
+	ret = 0;
 end:
 	if(ret) ERR_print_errors(bio_err);
 	sk_X509_pop_free(encerts, X509_free);
