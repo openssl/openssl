@@ -217,7 +217,6 @@ int des_set_key(const_des_cblock *key,des_key_schedule *schedule);
 int des_key_sched(const_des_cblock *key,des_key_schedule *schedule);
 int des_set_key_checked(const_des_cblock *key,des_key_schedule *schedule);
 void des_set_key_unchecked(const_des_cblock *key,des_key_schedule *schedule);
-void des_release_key(des_key_schedule *schedule);
 void des_string_to_key(const char *str,des_cblock *key);
 void des_string_to_2keys(const char *str,des_cblock *key1,des_cblock *key2);
 void des_cfb64_encrypt(const unsigned char *in,unsigned char *out,long length,
