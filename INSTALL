@@ -7,7 +7,7 @@
  To install OpenSSL, you will need:
 
   * Perl 5
-  * ANSI C compiler
+  * an ANSI C compiler
   * a supported Unix operating system
 
  Quick Start
@@ -17,7 +17,6 @@
 
   $ ./config                  [if this fails, go to step 1b below]
   $ make
-  $ make rehash
   $ make test
   $ make install
 
@@ -75,7 +74,8 @@
        $ ./Configure linux-elf [--prefix=DIR] [--openssldir=OPENSSLDIR]
 
      If your system is not available, you will have to edit the Configure
-     program and add the correct configuration for your system.
+     program and add the correct configuration for your system. The
+     generic configurations "cc" or "gcc" should usually work.
 
      Configure creates the Makefile.ssl from Makefile.org and defines
      various macros in crypto/opensslconf.h (generated from
@@ -91,11 +91,7 @@
 
   3. After a successful build, the libraries should be tested. Run:
 
-       $ make rehash
        $ make test
-
-     (The first line makes the test certificates in the "certs" directory
-     accessable via an hash name, which is required for some of the tests).
 
   4. If everything tests ok, install OpenSSL with
 
