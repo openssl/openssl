@@ -378,13 +378,18 @@ int ssl3_setup_key_block(SSL *s)
 
 	ret = ssl3_generate_key_block(s,p,num);
 
-	/* enable vulnerability countermeasure for CBC ciphers with
-	 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt) */
-	s->s3->need_empty_fragments = 1;
+	if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
+		{
+		/* enable vulnerability countermeasure for CBC ciphers with
+		 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt)
+		 */
+		s->s3->need_empty_fragments = 1;
+
 #ifndef OPENSSL_NO_RC4
-	if ((s->session->cipher != NULL) && ((s->session->cipher->algorithms & SSL_ENC_MASK) == SSL_RC4))
-		s->s3->need_empty_fragments = 0;
+		if ((s->session->cipher != NULL) && ((s->session->cipher->algorithms & SSL_ENC_MASK) == SSL_RC4))
+			s->s3->need_empty_fragments = 0;
 #endif
+		}
 
 	return ret;
 		
