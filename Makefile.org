@@ -263,11 +263,7 @@ tags:
 	done;
 
 errors:
-	@for i in $(DIRS) ;\
-	do \
-	(cd $$i && echo "making errors in $$i..." && \
-	$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' errors ) || exit 1; \
-	done;
+	perl util/mkerr.pl -static -recurse
 
 tar:
 	@gtar --no-recursion -cvf - \

@@ -74,8 +74,6 @@ dclean:
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-errors:
-
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 md2_dgst.o: ../../include/openssl/md2.h ../../include/openssl/opensslconf.h

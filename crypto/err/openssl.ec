@@ -1,28 +1,27 @@
-L ERR		NONE
-L CRYPTO	crypto.err
-L BN		bn/bn.err
-L RSA		rsa/rsa.err
-L DSA		dsa/dsa.err
-L DH		dh/dh.err
-L EVP		evp/evp.err
-L BUF		buffer/buffer.err
-L BIO		bio/bio.err
-L OBJ		objects/objects.err
-L PEM		pem/pem.err
-L X509		x509/x509.err
-L X509V3	x509v3/x509v3.err
-L METH		meth/meth.err
-L ASN1		asn1/asn1.err
-L CONF		conf/conf.err
-L PROXY		proxy/proxy.err
-L PKCS7		pkcs7/pkcs7.err
-L PKCS12	pkcs12/pkcs12.err
-L RSAREF	../rsaref/rsaref.err
-L SSL		../ssl/ssl.err
-L SSL2		../ssl/ssl2.err
-L SSL3		../ssl/ssl3.err
-L SSL23		../ssl/ssl23.err
-L COMP		comp/comp.err
+L ERR		NONE				NONE
+L CRYPTO	crypto/crypto.h			crypto/cpt_err.c
+L BN		crypto/bn/bn.h			crypto/bn/bn_err.c
+L RSA		crypto/rsa/rsa.h		crypto/rsa/rsa_err.c
+L DSA		crypto/dsa/dsa.h		crypto/dsa/dsa_err.c
+L DH		crypto/dh/dh.h			crypto/dh/dh_err.c
+L EVP		crypto/evp/evp.h		crypto/evp/evp_err.c
+L BUF		crypto/buffer/buffer.h		crypto/buffer/buf_err.c
+L BIO		crypto/bio/bio.h		crypto/bio/bio_err.c
+L OBJ		crypto/objects/objects.h	crypto/objects/obj_err.c
+L PEM		crypto/pem/pem.h		crypto/pem/pem_err.c
+L X509		crypto/x509/x509.h		crypto/x509/x509_err.c
+L NONE		crypto/x509/x509_vfy.h		NONE
+L X509V3	crypto/x509v3/x509v3.h		crypto/x509v3/v3err.c
+#L METH		crypto/meth/meth.h		crypto/meth/meth_err.c
+L ASN1		crypto/asn1/asn1.h		crypto/asn1/asn1_err.c
+L CONF		crypto/conf/conf.h		crypto/conf/conf_err.c
+#L PROXY		crypto/proxy/proxy.h		crypto/proxy/proxy_err.c
+L PKCS7		crypto/pkcs7/pkcs7.h		crypto/pkcs7/pkcs7err.c
+L PKCS12	crypto/pkcs12/pkcs12.h		crypto/pkcs12/pk12err.c
+L RSAREF	rsaref/rsaref.h			rsaref/rsar_err.c
+L SSL		ssl/ssl.h			ssl/ssl_err.c
+L COMP		crypto/comp/comp.h		crypto/comp/comp_err.c
+
 
 F RSAREF_F_RSA_BN2BIN
 F RSAREF_F_RSA_PRIVATE_DECRYPT

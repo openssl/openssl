@@ -97,8 +97,6 @@ dclean:
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
 
-errors:
-
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 sha1_one.o: ../../include/openssl/sha.h

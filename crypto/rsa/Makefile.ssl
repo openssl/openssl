@@ -78,12 +78,6 @@ dclean:
 clean:
 	rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-errors: $(ERRC).c
-
-$(ERRC).c: $(ERR).err $(ERR).h
-	$(PERL) $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
-	$(PERL) ../err/err_genc.pl -s $(ERR).h $(ERRC).c
-
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 rsa_eay.o: ../../include/openssl/bio.h ../../include/openssl/bn.h

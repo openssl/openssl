@@ -141,21 +141,6 @@ dclean:
 	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' dclean ); \
 	done;
 
-errors: errgen $(ERRC).c
-
-$(ERRC).c: $(ERR).err
-	$(PERL) $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
-	$(PERL) err/err_genc.pl -s $(ERR).h $(ERRC).c
-
-errgen:
-	$(PERL) ./err/err_code.pl -conf err/ssleay.ec *.c */*.c ../ssl/*.c ../rsaref/*.c
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i; echo "making errors in crypto/$$i..."; \
-	$(MAKE) errors ); \
-	done;
-
-
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 cpt_err.o: ../include/openssl/crypto.h ../include/openssl/err.h

@@ -71,6 +71,8 @@ void ERR_load__strings(void)
 		{
 		init=0;
 #ifndef NO_ERR
+		ERR_load_strings(ERR_LIB_COMP,COMP_str_functs);
+		ERR_load_strings(ERR_LIB_COMP,COMP_str_reasons);
 #endif
 
 		}

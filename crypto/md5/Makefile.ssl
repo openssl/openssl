@@ -98,8 +98,6 @@ dclean:
 clean:
 	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-errors:
-
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 md5_dgst.o: ../../include/openssl/md5.h ../../include/openssl/opensslv.h

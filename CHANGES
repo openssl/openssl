@@ -5,6 +5,17 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Complete rewrite of the error code script(s). It is all now handled
+     by one script at the top level which handles error code gathering,
+     header rewriting and C source file generation. It should be much better
+     than the old method: it now uses a modified version of Ulf's parser to
+     read the ANSI prototypes in all header files (thus the old K&R definitions
+     aren't needed for error creation any more) and do a better job of
+     translating function codes into names. The old 'ASN1 error code imbedded
+     in a comment' is no longer necessary and it doesn't use .err files which
+     have now been deleted.
+     [Steve Henson]
+
   *) Change #include filenames from <foo.h> to <openssl/foo.h>.
      [Bodo Moeller]
 

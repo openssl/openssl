@@ -132,8 +132,6 @@ dclean:
 clean:
 	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-errors:
-
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 cbc_cksm.o: ../../include/openssl/des.h ../../include/openssl/opensslconf.h

@@ -103,8 +103,6 @@ dclean:
 clean:
 	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-errors:
-
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 c_cfb64.o: ../../include/openssl/cast.h cast_lcl.h

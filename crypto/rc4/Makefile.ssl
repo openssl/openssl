@@ -102,8 +102,6 @@ dclean:
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
 
-errors:
-
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 rc4_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc4.h
