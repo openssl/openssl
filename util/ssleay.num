@@ -157,3 +157,10 @@ BIO_new_ssl_connect			174
 SSL_get_ex_data_X509_STORE_CTX_idx	175
 SSL_CTX_set_tmp_dh_callback		176
 SSL_CTX_set_tmp_rsa_callback		177
+SSL_CTX_set_timeout                     178
+SSL_CTX_get_timeout                     179
+SSL_CTX_get_cert_store                  180
+SSL_CTX_set_cert_store                  181
+SSL_want                                182
+SSL_library_init                        183
+SSL_COMP_add_compression_method         184

@@ -90,7 +90,7 @@ X509_CRL *x;
         }
 #endif
 
-void X509_CRL_print(out, x)
+int X509_CRL_print(out, x)
 BIO *out;
 X509_CRL *x;
 {
@@ -153,6 +153,7 @@ X509_CRL *x;
 	}
 	BIO_write(out,"\n",1);
 
+	return 1;
 
 }
 
