@@ -228,7 +228,7 @@ static void bn_GF2m_mul_1x1(BN_ULONG *r1, BN_ULONG *r0, const BN_ULONG a, const 
 	BN_ULONG tab[16], top3b = a >> 61;
 	register BN_ULONG a1, a2, a4, a8;
 
-	a1 = a & (0x1FFFFFFFFFFFFFFF); a2 = a1 << 1; a4 = a2 << 1; a8 = a4 << 1;
+	a1 = a & (0x1FFFFFFFFFFFFFFFULL); a2 = a1 << 1; a4 = a2 << 1; a8 = a4 << 1;
 
 	tab[ 0] = 0;     tab[ 1] = a1;       tab[ 2] = a2;       tab[ 3] = a1^a2;
 	tab[ 4] = a4;    tab[ 5] = a1^a4;    tab[ 6] = a2^a4;    tab[ 7] = a1^a2^a4;
