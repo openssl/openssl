@@ -70,13 +70,13 @@ void des_3cbc_encrypt(des_cblock *input, des_cblock *output, long length,
 	if (enc == DES_ENCRYPT)
 		{
 		des_cbc_encrypt((unsigned char*)input,
-				(unsigned char*)output,length,ks1,iv1,enc);
+				(unsigned char*)output,length,&ks1,iv1,enc);
 		if (length >= sizeof(des_cblock))
 			memcpy(niv1,output[off],sizeof(des_cblock));
 		des_cbc_encrypt((unsigned char*)output,
-				(unsigned char*)output,l8,ks2,iv1,!enc);
+				(unsigned char*)output,l8,&ks2,iv1,!enc);
 		des_cbc_encrypt((unsigned char*)output,
-				(unsigned char*)output,l8,ks1,iv2,enc);
+				(unsigned char*)output,l8,&ks1,iv2,enc);
 		if (length >= sizeof(des_cblock))
 			memcpy(niv2,output[off],sizeof(des_cblock));
 		}
@@ -85,13 +85,13 @@ void des_3cbc_encrypt(des_cblock *input, des_cblock *output, long length,
 		if (length >= sizeof(des_cblock))
 			memcpy(niv2,input[off],sizeof(des_cblock));
 		des_cbc_encrypt((unsigned char*)input,
-				(unsigned char*)output,l8,ks1,iv2,enc);
+				(unsigned char*)output,l8,&ks1,iv2,enc);
 		des_cbc_encrypt((unsigned char*)output,
-				(unsigned char*)output,l8,ks2,iv1,!enc);
+				(unsigned char*)output,l8,&ks2,iv1,!enc);
 		if (length >= sizeof(des_cblock))
 			memcpy(niv1,output[off],sizeof(des_cblock));
 		des_cbc_encrypt((unsigned char*)output,
-				(unsigned char*)output,length,ks1,iv1,enc);
+				(unsigned char*)output,length,&ks1,iv1,enc);
 		}
 	memcpy(*iv1,niv1,sizeof(des_cblock));
 	memcpy(*iv2,niv2,sizeof(des_cblock));
