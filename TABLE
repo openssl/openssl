@@ -367,7 +367,7 @@ $unistd       =
 $thread_cflag = (unknown)
 $sys_id       = 
 $lflags       = 
-$bn_ops       = BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL
+$bn_ops       = BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
@@ -408,14 +408,62 @@ $shared_ldflag =
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
-*** OpenBSD-mips
+*** OpenBSD-hppa
 $cc           = gcc
-$cflags       = -O2 -DL_ENDIAN
+$cflags       = -DTERMIOS -O3 -fomit-frame-pointer
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
-$lflags       = BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR
-$bn_ops       = 
+$lflags       = 
+$bn_ops       = BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_ldflag = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$shared_extension = 
+$ranlib       = 
+
+*** OpenBSD-i386
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-out.o asm/co86-out.o
+$des_obj      = asm/dx86-out.o asm/yx86-out.o
+$bf_obj       = asm/bx86-out.o
+$md5_obj      = asm/mx86-out.o
+$sha1_obj     = asm/sx86-out.o
+$cast_obj     = asm/cx86-out.o
+$rc4_obj      = asm/rx86-out.o
+$rmd160_obj   = asm/rm86-out.o
+$rc5_obj      = asm/r586-out.o
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
+*** OpenBSD-m68k
+$cc           = gcc
+$cflags       = -DTERMIOS -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = 
+$bn_ops       = BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
@@ -432,23 +480,143 @@ $shared_ldflag =
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
-*** OpenBSD-x86
+*** OpenBSD-m88k
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -m486
+$cflags       = -DTERMIOS -O3 -fomit-frame-pointer
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
 $lflags       = 
-$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
-$bn_obj       = asm/bn86-out.o asm/co86-out.o
-$des_obj      = asm/dx86-out.o asm/yx86-out.o
-$bf_obj       = asm/bx86-out.o
-$md5_obj      = asm/mx86-out.o
-$sha1_obj     = asm/sx86-out.o
-$cast_obj     = asm/cx86-out.o
-$rc4_obj      = asm/rx86-out.o
-$rmd160_obj   = asm/rm86-out.o
-$rc5_obj      = asm/r586-out.o
+$bn_ops       = BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
+*** OpenBSD-mips
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = 
+$bn_ops       = BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL DES_RISC2
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
+*** OpenBSD-powerpc
+$cc           = gcc
+$cflags       = -DTERMIOS -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = 
+$bn_ops       = BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
+*** OpenBSD-sparc
+$cc           = gcc
+$cflags       = -DTERMIOS -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = 
+$bn_ops       = BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
+*** OpenBSD-sparc64
+$cc           = gcc
+$cflags       = -DB_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2 BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= bsd-gcc-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
+*** OpenBSD-vax
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = 
+$bn_ops       = BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
 $dso_scheme   = dlfcn
 $shared_target= bsd-gcc-shared
 $shared_cflag = -fPIC
@@ -1056,14 +1224,14 @@ $shared_ldflag =
 $shared_extension = 
 $ranlib       = 
 
-*** cray-t3e
+*** cray-j90
 $cc           = cc
 $cflags       = -DBIT_FIELD_LIMITS -DTERMIOS
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = CRAY
 $lflags       = 
-$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT
+$bn_ops       = SIXTY_FOUR_BIT_LONG DES_INT
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
@@ -1080,14 +1248,14 @@ $shared_ldflag =
 $shared_extension = 
 $ranlib       = 
 
-*** cray-t90-cc
+*** cray-t3e
 $cc           = cc
 $cflags       = -DBIT_FIELD_LIMITS -DTERMIOS
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = CRAY
 $lflags       = 
-$bn_ops       = SIXTY_FOUR_BIT_LONG DES_INT
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
