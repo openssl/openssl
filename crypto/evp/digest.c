@@ -84,7 +84,8 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 	{
 	if(ctx->digest != type)
 		{
-		OPENSSL_free(ctx->md_data);
+		if(ctx->md_data != NULL)
+			OPENSSL_free(ctx->md_data);
 		ctx->digest=type;
 #ifdef CRYPTO_MDEBUG
 		ctx->md_data=CRYPTO_malloc(type->ctx_size,file,line);
@@ -155,9 +156,10 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 	 * because sometimes only copies of the context are ever finalised.
 	 */
 	if(ctx->md_data)
-	    memset(ctx->md_data,0,ctx->digest->ctx_size);
-
-	OPENSSL_free(ctx->md_data);
+		{
+		memset(ctx->md_data,0,ctx->digest->ctx_size);
+		OPENSSL_free(ctx->md_data);
+		}
 	memset(ctx,'\0',sizeof *ctx);
 
 	return 1;
