@@ -368,7 +368,8 @@ $ ELSE
 $!
 $!  Else, Check To See If OPT_PHASE Has A Valid Arguement.
 $!
-$   IF ("," + ACCEPT_PHASE + ",") - ("," + OPT_PHASE + ",")
+$   IF ("," + ACCEPT_PHASE + ",") - ("," + OPT_PHASE + ",") -
+       .EQS. ("," + ACCEPT_PHASE + ",")
 $   THEN
 $!
 $!    A Valid Arguement.
@@ -384,9 +385,9 @@ $!
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "The option ",OPT_PHASE," is invalid.  The valid options are:"
 $     WRITE SYS$OUTPUT ""
-$     IF ("," + ACCEPT_PHASE + ",") - ",ALL," -
+$     IF ("," + ACCEPT_PHASE + ",") - ",ALL," THEN -
 	WRITE SYS$OUTPUT "    ALL      :  just build everything."
-$     IF ("," + ACCEPT_PHASE + ",") - ",ENGINES," -
+$     IF ("," + ACCEPT_PHASE + ",") - ",ENGINES," THEN -
 	WRITE SYS$OUTPUT "    ENGINES  :  to compile just the [.xxx.EXE.ENGINES]*.EXE hareable images."
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT " where 'xxx' stands for:"
