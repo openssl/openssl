@@ -141,6 +141,11 @@ static long md_count[2]={0,0};
 static double entropy=0;
 static int initialized=0;
 
+/* This should be set to 1 only when ssleay_rand_add() is called inside
+   an already locked state, so it doesn't try to lock and thereby cause
+   a hang.  And it should always be reset back to 0 before unlocking. */
+static int add_do_not_lock=0;
+
 #ifdef PREDICT
 int rand_predictable=0;
 #endif
@@ -201,7 +206,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
          * hash function.
 	 */
 
-	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+	if (!add_do_not_lock) CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	st_idx=state_index;
 
 	/* use our own copies of the counters so that even
@@ -233,7 +238,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 
 	md_count[1] += (num / MD_DIGEST_LENGTH) + (num % MD_DIGEST_LENGTH > 0);
 
-	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+	if (!add_do_not_lock) CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
 	for (i=0; i<num; i+=MD_DIGEST_LENGTH)
 		{
@@ -275,7 +280,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 		}
 	memset((char *)&m,0,sizeof(m));
 
-	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+	if (!add_do_not_lock) CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	/* Don't just copy back local_md into md -- this could mean that
 	 * other thread's seeding remains without effect (except for
 	 * the incremented counter).  By XORing it we keep at least as
@@ -286,7 +291,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 		}
 	if (entropy < ENTROPY_NEEDED) /* stop counting when we have enough */
 	    entropy += add;
-	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+	if (!add_do_not_lock) CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 	
 #ifndef THREADS	
 	assert(md_c[1] == md_count[1]);
@@ -345,6 +350,8 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 		RAND_poll();
 
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+	add_do_not_lock = 1;	/* Since we call ssleay_rand_add while in
+				   this locked state. */
 
 	initialized = 1;
 	if (!stirred_pool)
@@ -409,6 +416,9 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	 * are now ours (but other threads may use them too) */
 
 	md_count[0] += 1;
+
+	add_do_not_lock = 0;	/* If this would ever be forgotten, we can
+				   expect any evil god to eat our souls. */
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
 	while (num > 0)
