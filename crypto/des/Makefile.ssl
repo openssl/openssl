@@ -156,6 +156,8 @@ pcbc_enc.o: des.h des_locl.h
 qud_cksm.o: des.h des_locl.h
 rand_key.o: des.h des_locl.h
 read2pwd.o: des.h des_locl.h
+read_pwd.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+read_pwd.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
 read_pwd.o: des.h des_locl.h
 rpc_enc.o: des.h des_locl.h des_ver.h rpc_des.h
 set_key.o: des.h des_locl.h podd.h sk.h
