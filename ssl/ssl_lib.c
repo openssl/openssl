@@ -1247,8 +1247,12 @@ void SSL_CTX_free(SSL_CTX *a)
 		sk_X509_NAME_pop_free(a->client_CA,X509_NAME_free);
 	if (a->extra_certs != NULL)
 		sk_X509_pop_free(a->extra_certs,X509_free);
+#if 0 /* This should never be done, since it removes a global database */
 	if (a->comp_methods != NULL)
 		sk_SSL_COMP_pop_free(a->comp_methods,SSL_COMP_free);
+#else
+	a->comp_methods = NULL;
+#endif
 	OPENSSL_free(a);
 	}
 
