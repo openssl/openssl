@@ -12,6 +12,38 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) New functions/macros
+
+          SSL_CTX_set_msg_callback(ctx, cb)
+          SSL_CTX_set_msg_callback_arg(ctx, arg)
+          SSL_set_msg_callback(ssl, cb)
+          SSL_set_msg_callback_arg(ssl, arg)
+
+     to request calling a callback function
+
+          void cb(int write_p, int version, int content_type,
+                  const void *buf, size_t len, SSL *ssl, void *arg)
+
+     whenever a protocol message has been completely received
+     (write_p == 0) or sent (write_p == 1).  Here 'version' is the
+     protocol version  according to which the SSL library interprets
+     the current protocol message (SSL2_VERSION, SSL3_VERSION, or
+     TLS1_VERSION).  'content_type' is 0 in the case of SSL 2.0, or
+     the content type as defined in the SSL 3.0/TLS 1.0 protocol
+     specification (change_cipher_spec(20), alert(21), handshake(22)).
+     'buf' and 'len' point to the actual message, 'ssl' to the
+     SSL object, and 'arg' is the application-defined value set by
+     SSL[_CTX]_set_msg_callback_arg().
+
+     'openssl s_client' and 'openssl s_server' have new '-msg' options
+     to enable a callback that displays all protocol messages.
+     [Bodo Moeller]
+
+  *) Change ssl/s2_clnt.c and ssl/s2_srvr.c so that received handshake
+     messages are stored in a single piece (fixed-length part and
+     variable-length part combined) and fix various bugs found on the way.
+     [Bodo Moeller]
+
   +) Change the shared library support so shared libraries are built as
      soon as the corresponding static library is finished, and thereby get
      openssl and the test programs linked against the shared library.
@@ -85,38 +117,6 @@
      X509_supported_extension() has also been added which returns 1 if a
      particular extension is supported.
      [Steve Henson]
-
-  +) New functions/macros
-
-          SSL_CTX_set_msg_callback(ctx, cb)
-          SSL_CTX_set_msg_callback_arg(ctx, arg)
-          SSL_set_msg_callback(ssl, cb)
-          SSL_set_msg_callback_arg(ssl, arg)
-
-     to request calling a callback function
-
-          void cb(int write_p, int version, int content_type,
-                  const void *buf, size_t len, SSL *ssl, void *arg)
-
-     whenever a protocol message has been completely received
-     (write_p == 0) or sent (write_p == 1).  Here 'version' is the
-     protocol version  according to which the SSL library interprets
-     the current protocol message (SSL2_VERSION, SSL3_VERSION, or
-     TLS1_VERSION).  'content_type' is 0 in the case of SSL 2.0, or
-     the content type as defined in the SSL 3.0/TLS 1.0 protocol
-     specification (change_cipher_spec(20), alert(21), handshake(22)).
-     'buf' and 'len' point to the actual message, 'ssl' to the
-     SSL object, and 'arg' is the application-defined value set by
-     SSL[_CTX]_set_msg_callback_arg().
-
-     'openssl s_client' and 'openssl s_server' have new '-msg' options
-     to enable a callback that displays all protocol messages.
-     [Bodo Moeller]
-
-  *) Change ssl/s2_clnt.c and ssl/s3_srvr.c so that received handshake
-     messages are stored in a single piece (fixed-length part and
-     variable-length part combined) and fix various bugs found on the way.
-     [Bodo Moeller]
 
   *) In ssl3_get_client_hello (ssl/s3_srvr.c), generate a fatal alert
      (sent using the client's version number) if client_version is
