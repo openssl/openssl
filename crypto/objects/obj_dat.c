@@ -214,16 +214,12 @@ int OBJ_new_nid(int num)
 int OBJ_add_object(ASN1_OBJECT *obj)
 	{
 	ASN1_OBJECT *o;
-	ADDED_OBJ *ao[4],*aop;
+	ADDED_OBJ *ao[4]={NULL,NULL,NULL,NULL},*aop;
 	int i;
 
 	if (added == NULL)
 		if (!init_added()) return(0);
 	if ((o=OBJ_dup(obj)) == NULL) goto err;
-	ao[ADDED_DATA]=NULL;
-	ao[ADDED_SNAME]=NULL;
-	ao[ADDED_LNAME]=NULL;
-	ao[ADDED_NID]=NULL;
 	ao[ADDED_NID]=(ADDED_OBJ *)Malloc(sizeof(ADDED_OBJ));
 	if ((o->length != 0) && (obj->data != NULL))
 		ao[ADDED_DATA]=(ADDED_OBJ *)Malloc(sizeof(ADDED_OBJ));

@@ -153,12 +153,15 @@ int des_enc_write(int fd, const void *_buf, int len,
 		{
 		/* eay 26/08/92 I was not doing writing from where we
 		 * got upto. */
-		i=write(fd,&(outbuf[j]),outnum-j);
+		i=write(fd,(void *)&(outbuf[j]),outnum-j);
 		if (i == -1)
 			{
+#ifdef EINTR
 			if (errno == EINTR)
 				i=0;
-			else 	/* This is really a bad error - very bad
+			else
+#endif
+			        /* This is really a bad error - very bad
 				 * It will stuff-up both ends. */
 				return(-1);
 			}

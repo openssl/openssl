@@ -88,6 +88,8 @@ extern "C" {
 #  define NO_SYS_TYPES_H
 #  define NO_CHMOD
 #  define NO_SYSLOG
+#  undef  DEVRANDOM
+#  define GETPID_IS_MEANINGLESS
 # endif
 #endif
 
@@ -111,6 +113,10 @@ extern "C" {
 #  endif
 #endif
 
+#if defined(MSDOS) && !defined(GETPID_IS_MEANINGLESS)
+#  define GETPID_IS_MEANINGLESS
+#endif
+
 #ifdef WIN32
 #define get_last_sys_error()	GetLastError()
 #define clear_sys_error()	SetLastError(0)
@@ -128,7 +134,7 @@ extern "C" {
 #define readsocket(s,b,n)	recv((s),(b),(n),0)
 #define writesocket(s,b,n)	send((s),(b),(n),0)
 #define EADDRINUSE		WSAEADDRINUSE
-#elif MAC_OS_pre_X
+#elif defined(MAC_OS_pre_X)
 #define get_last_socket_error()	errno
 #define clear_socket_error()	errno=0
 #define closesocket(s)		MacSocket_close(s)
@@ -245,8 +251,10 @@ extern "C" {
 #    endif
 #  else
      /* !defined VMS */
-#    include OPENSSL_UNISTD
-#    include <sys/types.h>
+#    include OPENSLL_UNISTD
+#    ifndef NO_SYS_TYPES_H
+#      include <sys/types.h>
+#    endif
 
 #    define OPENSSL_CONF	"openssl.cnf"
 #    define SSLEAY_CONF		OPENSSL_CONF

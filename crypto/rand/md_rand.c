@@ -286,7 +286,7 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 	MD_CTX m;
 	static int init=1;
 	unsigned long l;
-#ifndef MSDOS
+#ifndef GETPID_IS_MEANINGLESS
 	pid_t curr_pid = getpid();
 #endif
 #ifdef DEVRANDOM
@@ -327,7 +327,7 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 		/* put in some default random data, we need more than
 		 * just this */
 		RAND_seed(&m,sizeof(m));
-#ifndef MSDOS
+#ifndef GETPID_IS_MEANINGLESS
 		l=curr_pid;
 		RAND_seed(&l,sizeof(l));
 		l=getuid();
@@ -386,7 +386,7 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 		j=(num >= MD_DIGEST_LENGTH/2)?MD_DIGEST_LENGTH/2:num;
 		num-=j;
 		MD_Init(&m);
-#ifndef MSDOS
+#ifndef GETPID_IS_MEANINGLESS
 		if (curr_pid) /* just in the first iteration to save time */
 			{
 			MD_Update(&m,(unsigned char*)&curr_pid,sizeof curr_pid);

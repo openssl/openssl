@@ -182,7 +182,12 @@
 # if defined(_MSC_VER)
 #  define ROTATE(a,n)	_lrotl(a,n)
 # elif defined(__MWERKS__)
-#  define ROTATE(a,n)	__rol(a,n)
+#  ifdef __POWERPC__
+#   defined ROTATE(a,n)	__rlwinm(a,n,0,31)
+#  else
+#   define ROTATE(a,n)	__rol(a,n)
+#  endif
+ B
 # elif defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM)
   /*
    * Some GNU C inline assembler templates. Note that these are
