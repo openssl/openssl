@@ -63,7 +63,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-int X509_issuer_and_serial_cmp(X509 *a, X509 *b)
+int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
 	{
 	int i;
 	X509_CINF *ai,*bi;
@@ -97,17 +97,17 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
 	}
 #endif
 	
-int X509_issuer_name_cmp(X509 *a, X509 *b)
+int X509_issuer_name_cmp(const X509 *a, const X509 *b)
 	{
 	return(X509_NAME_cmp(a->cert_info->issuer,b->cert_info->issuer));
 	}
 
-int X509_subject_name_cmp(X509 *a, X509 *b)
+int X509_subject_name_cmp(const X509 *a, const X509 *b)
 	{
 	return(X509_NAME_cmp(a->cert_info->subject,b->cert_info->subject));
 	}
 
-int X509_CRL_cmp(X509_CRL *a, X509_CRL *b)
+int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b)
 	{
 	return(X509_NAME_cmp(a->crl->issuer,b->crl->issuer));
 	}
@@ -139,19 +139,25 @@ unsigned long X509_subject_name_hash(X509 *x)
 
 #ifndef NO_SHA
 /* Compare two certificates: they must be identical for
- * this to work.
+ * this to work. NB: Although "cmp" operations are generally
+ * prototyped to take "const" arguments (eg. for use in
+ * STACKs), the way X509 handling is - these operations may
+ * involve ensuring the hashes are up-to-date and ensuring
+ * certain cert information is cached. So this is the point
+ * where the "depth-first" constification tree has to halt
+ * with an evil cast.
  */
-int X509_cmp(X509 *a, X509 *b)
+int X509_cmp(const X509 *a, const X509 *b)
 {
 	/* ensure hash is valid */
-	X509_check_purpose(a, -1, 0);
-	X509_check_purpose(b, -1, 0);
+	X509_check_purpose((X509 *)a, -1, 0);
+	X509_check_purpose((X509 *)b, -1, 0);
 
 	return memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
 }
 #endif
 
-int X509_NAME_cmp(X509_NAME *a, X509_NAME *b)
+int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 	{
 	int i,j;
 	X509_NAME_ENTRY *na,*nb;

@@ -69,7 +69,7 @@ static SSL_METHOD *ssl3_get_client_method(int ver);
 static int ssl3_client_hello(SSL *s);
 static int ssl3_get_server_hello(SSL *s);
 static int ssl3_get_certificate_request(SSL *s);
-static int ca_dn_cmp(X509_NAME **a,X509_NAME **b);
+static int ca_dn_cmp(const X509_NAME * const *a,const X509_NAME * const *b);
 static int ssl3_get_server_done(SSL *s);
 static int ssl3_send_client_verify(SSL *s);
 static int ssl3_send_client_certificate(SSL *s);
@@ -1275,7 +1275,7 @@ err:
 	return(ret);
 	}
 
-static int ca_dn_cmp(X509_NAME **a, X509_NAME **b)
+static int ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b)
 	{
 	return(X509_NAME_cmp(*a,*b));
 	}

@@ -4,6 +4,15 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) The STACK code has been cleaned up, and certain type declarations
+     that didn't make a lot of sense have been brought in line. This has
+     also involved a cleanup of sorts in safestack.h to more correctly
+     map type-safe stack functions onto their plain stack counterparts.
+     This work has also resulted in a variety of "const"ifications of
+     lots of the code, especially "_cmp" operations which should normally
+     be prototyped with "const" parameters anyway.
+     [Geoff Thorpe]
+
   *) When generating bytes for the first time in md_rand.c, 'stir the pool'
      by seeding with STATE_SIZE dummy bytes (with zero entropy count).
      (The PRNG state consists of two parts, the large pool 'state' and 'md',

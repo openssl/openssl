@@ -66,7 +66,8 @@
 
 static STACK_OF(X509V3_EXT_METHOD) *ext_list = NULL;
 
-static int ext_cmp(X509V3_EXT_METHOD **a, X509V3_EXT_METHOD **b);
+static int ext_cmp(const X509V3_EXT_METHOD * const *a,
+		const X509V3_EXT_METHOD * const *b);
 static void ext_list_free(X509V3_EXT_METHOD *ext);
 
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext)
@@ -82,7 +83,8 @@ int X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 	return 1;
 }
 
-static int ext_cmp(X509V3_EXT_METHOD **a, X509V3_EXT_METHOD **b)
+static int ext_cmp(const X509V3_EXT_METHOD * const *a,
+		const X509V3_EXT_METHOD * const *b)
 {
 	return ((*a)->ext_nid - (*b)->ext_nid);
 }

@@ -659,11 +659,14 @@ int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);
 
-int X509_digest(X509 *data,const EVP_MD *type,unsigned char *md,unsigned int *len);
-int X509_CRL_digest(X509_CRL *data,const EVP_MD *type,unsigned char *md,unsigned int *len);
-int X509_REQ_digest(X509_REQ *data,const EVP_MD *type,unsigned char *md,unsigned int *len);
-int X509_NAME_digest(X509_NAME *data,const EVP_MD *type,
-	unsigned char *md,unsigned int *len);
+int X509_digest(const X509 *data,const EVP_MD *type,
+		unsigned char *md, unsigned int *len);
+int X509_CRL_digest(const X509_CRL *data,const EVP_MD *type,
+		unsigned char *md, unsigned int *len);
+int X509_REQ_digest(const X509_REQ *data,const EVP_MD *type,
+		unsigned char *md, unsigned int *len);
+int X509_NAME_digest(const X509_NAME *data,const EVP_MD *type,
+		unsigned char *md, unsigned int *len);
 #endif
 
 #ifndef NO_FP_API
@@ -963,20 +966,20 @@ int X509_REQ_add1_attr_by_txt(X509_REQ *req,
 
 int		X509_check_private_key(X509 *x509,EVP_PKEY *pkey);
 
-int		X509_issuer_and_serial_cmp(X509 *a, X509 *b);
+int		X509_issuer_and_serial_cmp(const X509 *a, const X509 *b);
 unsigned long	X509_issuer_and_serial_hash(X509 *a);
 
-int		X509_issuer_name_cmp(X509 *a, X509 *b);
+int		X509_issuer_name_cmp(const X509 *a, const X509 *b);
 unsigned long	X509_issuer_name_hash(X509 *a);
 
-int		X509_subject_name_cmp(X509 *a,X509 *b);
+int		X509_subject_name_cmp(const X509 *a, const X509 *b);
 unsigned long	X509_subject_name_hash(X509 *x);
 
-int		X509_cmp (X509 *a, X509 *b);
-int		X509_NAME_cmp (X509_NAME *a, X509_NAME *b);
+int		X509_cmp(const X509 *a, const X509 *b);
+int		X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b);
 unsigned long	X509_NAME_hash(X509_NAME *x);
 
-int		X509_CRL_cmp(X509_CRL *a,X509_CRL *b);
+int		X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b);
 #ifndef NO_FP_API
 int		X509_print_fp(FILE *bp,X509 *x);
 int		X509_CRL_print_fp(FILE *bp,X509_CRL *x);

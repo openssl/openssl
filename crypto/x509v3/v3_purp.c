@@ -63,18 +63,19 @@
 
 static void x509v3_cache_extensions(X509 *x);
 
-static int ca_check(X509 *x);
-static int check_ssl_ca(X509 *x);
-static int check_purpose_ssl_client(X509_PURPOSE *xp, X509 *x, int ca);
-static int check_purpose_ssl_server(X509_PURPOSE *xp, X509 *x, int ca);
-static int check_purpose_ns_ssl_server(X509_PURPOSE *xp, X509 *x, int ca);
-static int purpose_smime(X509 *x, int ca);
-static int check_purpose_smime_sign(X509_PURPOSE *xp, X509 *x, int ca);
-static int check_purpose_smime_encrypt(X509_PURPOSE *xp, X509 *x, int ca);
-static int check_purpose_crl_sign(X509_PURPOSE *xp, X509 *x, int ca);
-static int no_check(X509_PURPOSE *xp, X509 *x, int ca);
+static int ca_check(const X509 *x);
+static int check_ssl_ca(const X509 *x);
+static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x, int ca);
+static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x, int ca);
+static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x, int ca);
+static int purpose_smime(const X509 *x, int ca);
+static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x, int ca);
+static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x, int ca);
+static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x, int ca);
+static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca);
 
-static int xp_cmp(X509_PURPOSE **a, X509_PURPOSE **b);
+static int xp_cmp(const X509_PURPOSE * const *a,
+		const X509_PURPOSE * const *b);
 static void xptable_free(X509_PURPOSE *p);
 
 static X509_PURPOSE xstandard[] = {
@@ -93,15 +94,19 @@ IMPLEMENT_STACK_OF(X509_PURPOSE)
 
 static STACK_OF(X509_PURPOSE) *xptable = NULL;
 
-static int xp_cmp(X509_PURPOSE **a, X509_PURPOSE **b)
+static int xp_cmp(const X509_PURPOSE * const *a,
+		const X509_PURPOSE * const *b)
 {
 	return (*a)->purpose - (*b)->purpose;
 }
 
+/* As much as I'd like to make X509_check_purpose use a "const" X509*
+ * I really can't because it does recalculate hashes and do other non-const
+ * things. */
 int X509_check_purpose(X509 *x, int id, int ca)
 {
 	int idx;
-	X509_PURPOSE *pt;
+	const X509_PURPOSE *pt;
 	if(!(x->ex_flags & EXFLAG_SET)) {
 		CRYPTO_w_lock(CRYPTO_LOCK_X509);
 		x509v3_cache_extensions(x);
@@ -153,7 +158,7 @@ int X509_PURPOSE_get_by_id(int purpose)
 }
 
 int X509_PURPOSE_add(int id, int trust, int flags,
-			int (*ck)(X509_PURPOSE *, X509 *, int),
+			int (*ck)(const X509_PURPOSE *, const X509 *, int),
 					char *name, char *sname, void *arg)
 {
 	int idx;
@@ -343,7 +348,7 @@ static void x509v3_cache_extensions(X509 *x)
 #define ns_reject(x, usage) \
 	(((x)->ex_flags & EXFLAG_NSCERT) && !((x)->ex_nscert & (usage)))
 
-static int ca_check(X509 *x)
+static int ca_check(const X509 *x)
 {
 	/* keyUsage if present should allow cert signing */
 	if(ku_reject(x, KU_KEY_CERT_SIGN)) return 0;
@@ -358,7 +363,7 @@ static int ca_check(X509 *x)
 }
 
 /* Check SSL CA: common checks for SSL client and server */
-static int check_ssl_ca(X509 *x)
+static int check_ssl_ca(const X509 *x)
 {
 	int ca_ret;
 	ca_ret = ca_check(x);
@@ -373,7 +378,7 @@ static int check_ssl_ca(X509 *x)
 }
 	
 
-static int check_purpose_ssl_client(X509_PURPOSE *xp, X509 *x, int ca)
+static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
 	if(xku_reject(x,XKU_SSL_CLIENT)) return 0;
 	if(ca) return check_ssl_ca(x);
@@ -384,7 +389,7 @@ static int check_purpose_ssl_client(X509_PURPOSE *xp, X509 *x, int ca)
 	return 1;
 }
 
-static int check_purpose_ssl_server(X509_PURPOSE *xp, X509 *x, int ca)
+static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
 	if(xku_reject(x,XKU_SSL_SERVER|XKU_SGC)) return 0;
 	if(ca) return check_ssl_ca(x);
@@ -397,7 +402,7 @@ static int check_purpose_ssl_server(X509_PURPOSE *xp, X509 *x, int ca)
 
 }
 
-static int check_purpose_ns_ssl_server(X509_PURPOSE *xp, X509 *x, int ca)
+static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
 	int ret;
 	ret = check_purpose_ssl_server(xp, x, ca);
@@ -408,7 +413,7 @@ static int check_purpose_ns_ssl_server(X509_PURPOSE *xp, X509 *x, int ca)
 }
 
 /* common S/MIME checks */
-static int purpose_smime(X509 *x, int ca)
+static int purpose_smime(const X509 *x, int ca)
 {
 	if(xku_reject(x,XKU_SMIME)) return 0;
 	if(ca) {
@@ -432,7 +437,7 @@ static int purpose_smime(X509 *x, int ca)
 	return 1;
 }
 
-static int check_purpose_smime_sign(X509_PURPOSE *xp, X509 *x, int ca)
+static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
 	int ret;
 	ret = purpose_smime(x, ca);
@@ -441,7 +446,7 @@ static int check_purpose_smime_sign(X509_PURPOSE *xp, X509 *x, int ca)
 	return ret;
 }
 
-static int check_purpose_smime_encrypt(X509_PURPOSE *xp, X509 *x, int ca)
+static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
 	int ret;
 	ret = purpose_smime(x, ca);
@@ -450,7 +455,7 @@ static int check_purpose_smime_encrypt(X509_PURPOSE *xp, X509 *x, int ca)
 	return ret;
 }
 
-static int check_purpose_crl_sign(X509_PURPOSE *xp, X509 *x, int ca)
+static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
 	if(ca) {
 		int ca_ret;
@@ -461,7 +466,7 @@ static int check_purpose_crl_sign(X509_PURPOSE *xp, X509 *x, int ca)
 	return 1;
 }
 
-static int no_check(X509_PURPOSE *xp, X509 *x, int ca)
+static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
 	return 1;
 }

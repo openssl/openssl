@@ -61,8 +61,10 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/x509.h>
 
-static int X509_REVOKED_cmp(X509_REVOKED **a,X509_REVOKED **b);
-static int X509_REVOKED_seq_cmp(X509_REVOKED **a,X509_REVOKED **b);
+static int X509_REVOKED_cmp(const X509_REVOKED * const *a,
+				const X509_REVOKED * const *b);
+static int X509_REVOKED_seq_cmp(const X509_REVOKED * const *a,
+				const X509_REVOKED * const *b);
 int i2d_X509_REVOKED(X509_REVOKED *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
@@ -100,7 +102,8 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 	{
 	int v1=0;
 	long l=0;
-	int (*old_cmp)(X509_REVOKED **,X509_REVOKED **);
+	int (*old_cmp)(const X509_REVOKED * const *,
+			const X509_REVOKED * const *);
 	M_ASN1_I2D_vars(a);
 	
 	old_cmp=sk_X509_REVOKED_set_cmp_func(a->revoked,X509_REVOKED_seq_cmp);
@@ -325,14 +328,16 @@ void X509_CRL_free(X509_CRL *a)
 	Free(a);
 	}
 
-static int X509_REVOKED_cmp(X509_REVOKED **a, X509_REVOKED **b)
+static int X509_REVOKED_cmp(const X509_REVOKED * const *a,
+			const X509_REVOKED * const *b)
 	{
 	return(ASN1_STRING_cmp(
 		(ASN1_STRING *)(*a)->serialNumber,
 		(ASN1_STRING *)(*b)->serialNumber));
 	}
 
-static int X509_REVOKED_seq_cmp(X509_REVOKED **a, X509_REVOKED **b)
+static int X509_REVOKED_seq_cmp(const X509_REVOKED * const *a,
+				const X509_REVOKED * const *b)
 	{
 	return((*a)->sequence-(*b)->sequence);
 	}

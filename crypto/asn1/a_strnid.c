@@ -65,7 +65,8 @@
 
 static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
 static void st_free(ASN1_STRING_TABLE *tbl);
-static int sk_table_cmp(ASN1_STRING_TABLE **a, ASN1_STRING_TABLE **b);
+static int sk_table_cmp(const ASN1_STRING_TABLE * const *a,
+			const ASN1_STRING_TABLE * const *b);
 static int table_cmp(ASN1_STRING_TABLE *a, ASN1_STRING_TABLE *b);
 
 
@@ -173,7 +174,8 @@ static ASN1_STRING_TABLE tbl_standard[] = {
 {NID_dnQualifier,		-1, -1, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK}
 };
 
-static int sk_table_cmp(ASN1_STRING_TABLE **a, ASN1_STRING_TABLE **b)
+static int sk_table_cmp(const ASN1_STRING_TABLE * const *a,
+			const ASN1_STRING_TABLE * const *b)
 {
 	return (*a)->nid - (*b)->nid;
 }

@@ -1037,7 +1037,8 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 	return(NULL);
 	}
 
-static int sk_comp_cmp(SSL_COMP **a,SSL_COMP **b)
+static int sk_comp_cmp(const SSL_COMP * const *a,
+			const SSL_COMP * const *b)
 	{
 	return((*a)->id-(*b)->id);
 	}
