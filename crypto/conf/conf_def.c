@@ -67,6 +67,7 @@
 #include "conf_def.h"
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+#include "cryptlib.h"
 
 static char *eat_ws(CONF *conf, char *p);
 static char *eat_alpha_numeric(CONF *conf, char *p);
@@ -208,12 +209,12 @@ static int def_load(CONF *conf, const char *name, long *line)
 static int def_load_bio(CONF *conf, BIO *in, long *line)
 	{
 #define BUFSIZE	512
-	char btmp[16];
 	int bufnum=0,i,ii;
 	BUF_MEM *buff=NULL;
 	char *s,*p,*end;
 	int again,n;
 	long eline=0;
+	char btmp[DECIMAL_SIZE(eline)+1];
 	CONF_VALUE *v=NULL,*tv;
 	CONF_VALUE *sv=NULL;
 	char *section=NULL,*buf;

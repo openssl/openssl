@@ -1764,7 +1764,13 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Clean old EAY MD5 hack from e_os.h.
      [Richard Levitte]
 
- Changes between 0.9.6d and 0.9.6e  [XX xxx XXXX]
+ Changes between 0.9.6d and 0.9.6e  [30 Jul 2002]
+
+  *) Add various sanity checks to asn1_get_length() to reject
+     the ASN1 length bytes if they exceed sizeof(long), will appear
+     negative or the content length exceeds the length of the
+     supplied buffer.
+     [Steve Henson, Adi Stav <stav@mercury.co.il>, James Yonan <jim@ntlp.com>]
 
   *) Fix cipher selection routines: ciphers without encryption had no flags
      for the cipher strength set and where therefore not handled correctly
@@ -1786,6 +1792,40 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      's_server'), so the new option is automatically set in many
      applications.
      [Bodo Moeller]
+
+  *) Changes in security patch:
+
+     Changes marked "(CHATS)" were sponsored by the Defense Advanced
+     Research Projects Agency (DARPA) and Air Force Research Laboratory,
+     Air Force Materiel Command, USAF, under agreement number
+     F30602-01-2-0537.
+
+  *) Add various sanity checks to asn1_get_length() to reject
+     the ASN1 length bytes if they exceed sizeof(long), will appear
+     negative or the content length exceeds the length of the
+     supplied buffer. (CAN-2002-0659)
+     [Steve Henson, Adi Stav <stav@mercury.co.il>, James Yonan <jim@ntlp.com>]
+
+  *) Assertions for various potential buffer overflows, not known to
+     happen in practice.
+     [Ben Laurie (CHATS)]
+
+  *) Various temporary buffers to hold ASCII versions of integers were
+     too small for 64 bit platforms. (CAN-2002-0655)
+     [Matthew Byng-Maddick <mbm@aldigital.co.uk> and Ben Laurie (CHATS)>
+
+  *) Remote buffer overflow in SSL3 protocol - an attacker could
+     supply an oversized master key in Kerberos-enabled versions.
+     (CAN-2002-0657)
+     [Ben Laurie (CHATS)]
+
+  *) Remote buffer overflow in SSL3 protocol - an attacker could
+     supply an oversized session ID to a client. (CAN-2002-0656)
+     [Ben Laurie (CHATS)]
+
+  *) Remote buffer overflow in SSL2 protocol - an attacker could
+     supply an oversized client master key. (CAN-2002-0656)
+     [Ben Laurie (CHATS)]
 
  Changes between 0.9.6c and 0.9.6d  [9 May 2002]
 

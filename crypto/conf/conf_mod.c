@@ -230,7 +230,7 @@ static int module_run(const CONF *cnf, char *name, char *value,
 		{
 		if (!(flags & CONF_MFLAGS_SILENT))
 			{
-			char rcode[10];
+			char rcode[DECIMAL_SIZE(ret)+1];
 			CONFerr(CONF_F_CONF_MODULES_LOAD, CONF_R_MODULE_INITIALIZATION_ERROR);
 			sprintf(rcode, "%-8d", ret);
 			ERR_add_error_data(6, "module=", name, ", value=", value, ", retcode=", rcode);

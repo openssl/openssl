@@ -123,6 +123,7 @@
 #include <openssl/x509.h>
 #include <openssl/krb5_asn.h>
 #include <openssl/md5.h>
+#include "cryptlib.h"
 
 static SSL_METHOD *ssl3_get_server_method(int ver);
 static int ssl3_get_client_hello(SSL *s);
@@ -964,6 +965,7 @@ static int ssl3_send_server_hello(SSL *s)
 			s->session->session_id_length=0;
 
 		sl=s->session->session_id_length;
+		die(sl <= sizeof s->session->session_id);
 		*(p++)=sl;
 		memcpy(p,s->session->session_id,sl);
 		p+=sl;
@@ -1559,8 +1561,8 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		EVP_CIPHER		*enc = NULL;
 		unsigned char		iv[EVP_MAX_IV_LENGTH];
 		unsigned char		pms[SSL_MAX_MASTER_KEY_LENGTH
-						+ EVP_MAX_IV_LENGTH + 1];
-		int 			padl, outl = sizeof(pms);
+                                               + EVP_MAX_BLOCK_LENGTH];
+		int                     padl, outl;
 		krb5_timestamp		authtime = 0;
 		krb5_ticket_times	ttimes;
 
@@ -1582,6 +1584,16 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		enc_pms.length = i;
 		enc_pms.data = (char *)p;
 		p+=enc_pms.length;
+
+		/* Note that the length is checked again below,
+		** after decryption
+		*/
+		if(enc.pms_length > sizeof pms)
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+			       SSL_R_DATA_LENGTH_TOO_LONG);
+			goto err;
+			}
 
 		if (n != enc_ticket.length + authenticator.length +
 						enc_pms.length + 6)
