@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Source code cleanups: use const where appropriate, eliminate casts,
+     use void * instead of char * in lhash.
+     [Ulf Möller] 
+
   *) Bugfix: ssl3_send_server_key_exchange was not restartable
      (the state was not changed to SSL3_ST_SW_KEY_EXCH_B, and because of
      this the server could overwrite ephemeral keys that the client
