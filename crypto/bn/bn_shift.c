@@ -200,13 +200,13 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
 
 	if (rb == 0)
 		{
-		for (i=j+1; i > 0; i--)
+		for (i=j; i != 0; i--)
 			*(t++)= *(f++);
 		}
 	else
 		{
 		l= *(f++);
-		for (i=1; i<j; i++)
+		for (i=j-1; i != 0; i--)
 			{
 			tmp =(l>>rb)&BN_MASK2;
 			l= *(f++);
@@ -214,7 +214,6 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
 			}
 		*(t++) =(l>>rb)&BN_MASK2;
 		}
-	*t=0;
 	bn_correct_top(r);
 	bn_check_top(r);
 	return(1);
