@@ -4,6 +4,26 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Modify the way the V3 extension code looks up extensions. This now
+     works in a similar way to the object code: we have some "standard"
+     extensions in a static table which is searched with OBJ_bsearch()
+     and the application can add dynamic ones if needed. The file
+     crypto/x509v3/ext_dat.h now has the info: this file needs to be
+     updated whenever a new extension is added to the core code and kept
+     in ext_nid order. There is a simple program 'tabtest.c' which checks
+     this. New extensions are not added too often so this file can readily
+     be maintained manually.
+
+     There are two big advantages in doing things this way. The extensions
+     can be looked up immediately and no longer need to be "added" using
+     X509V3_add_standard_extensions(): this function now does nothing.
+     [Side note: I get *lots* of email saying the extension code doesn't
+      work because people forget to call this function]
+     Also no dynamic allocation is done unless new extensions are added:
+     so if we don't add custom extensions there is no need to call
+     X509V3_EXT_cleanup().
+     [Steve Henson]
+
   *) Modify enc utility's salting as follows: make salting the default. Add a
      magic header, so unsalted files fail gracefully instead of just decrypting
      to garbage. This is because not salting is a big security hole, so people

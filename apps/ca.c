@@ -279,8 +279,6 @@ EF_ALIGNMENT=0;
 	key = NULL;
 	section = NULL;
 
-	X509V3_add_standard_extensions();
-
 	preserve=0;
 	msie_hack=0;
 	if (bio_err == NULL)
@@ -1239,7 +1237,6 @@ err:
 	X509_free(x509);
 	X509_CRL_free(crl);
 	CONF_free(conf);
-	X509V3_EXT_cleanup();
 	OBJ_cleanup();
 	EXIT(ret);
 	}

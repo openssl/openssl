@@ -62,6 +62,8 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
+#include "ext_dat.h"
+
 static STACK *ext_list = NULL;
 
 static int ext_cmp(X509V3_EXT_METHOD **a, X509V3_EXT_METHOD **b);
@@ -87,10 +89,15 @@ static int ext_cmp(X509V3_EXT_METHOD **a, X509V3_EXT_METHOD **b)
 
 X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
 {
-	X509V3_EXT_METHOD tmp;
+	X509V3_EXT_METHOD tmp, *t = &tmp, **ret;
 	int idx;
+	if(nid < 0) return NULL;
 	tmp.ext_nid = nid;
-	if(!ext_list || (tmp.ext_nid < 0) ) return NULL;
+	ret = (X509V3_EXT_METHOD **) OBJ_bsearch((char *)&t,
+			(char *)standard_exts, STANDARD_EXTENSION_COUNT,
+			sizeof(X509V3_EXT_METHOD *), (int (*)())ext_cmp);
+	if(ret) return *ret;
+	if(!ext_list) return NULL;
 	idx = sk_find(ext_list, (char *)&tmp);
 	if(idx == -1) return NULL;
 	return (X509V3_EXT_METHOD *)sk_value(ext_list, idx);
@@ -128,13 +135,10 @@ int X509V3_EXT_add_alias(int nid_to, int nid_from)
 	return 1;
 }
 
-static int added_exts = 0;
-
 void X509V3_EXT_cleanup(void)
 {
 	sk_pop_free(ext_list, ext_list_free);
 	ext_list = NULL;
-	added_exts = 0;
 }
 
 static void ext_list_free(X509V3_EXT_METHOD *ext)
@@ -142,31 +146,12 @@ static void ext_list_free(X509V3_EXT_METHOD *ext)
 	if(ext->ext_flags & X509V3_EXT_DYNAMIC) Free(ext);
 }
 
-extern X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
-extern X509V3_EXT_METHOD v3_pkey_usage_period, v3_sxnet, v3_info;
-extern X509V3_EXT_METHOD v3_ns_ia5_list[], v3_alt[], v3_skey_id, v3_akey_id;
-
-extern X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_cpols, v3_crld;
+/* Legacy function: we don't need to add standard extensions
+ * any more because they are now kept in ext_dat.h.
+ */
 
 int X509V3_add_standard_extensions(void)
 {
-	if(added_exts) return 1;
-	X509V3_EXT_add_list(v3_ns_ia5_list);
-	X509V3_EXT_add_list(v3_alt);
-	X509V3_EXT_add(&v3_bcons);
-	X509V3_EXT_add(&v3_nscert);
-	X509V3_EXT_add(&v3_key_usage);
-	X509V3_EXT_add(&v3_ext_ku);
-	X509V3_EXT_add(&v3_skey_id);
-	X509V3_EXT_add(&v3_akey_id);
-	X509V3_EXT_add(&v3_pkey_usage_period);
-	X509V3_EXT_add(&v3_crl_num);
-	X509V3_EXT_add(&v3_sxnet);
-	X509V3_EXT_add(&v3_info);
-	X509V3_EXT_add(&v3_crl_reason);
-	X509V3_EXT_add(&v3_cpols);
-	X509V3_EXT_add(&v3_crld);
-	added_exts = 1;
 	return 1;
 }
 

@@ -200,7 +200,6 @@ bad:
 		}
 
 	ERR_load_crypto_strings();
-	X509V3_add_standard_extensions();
 	x=load_crl(infile,informat);
 	if (x == NULL) { goto end; }
 
@@ -318,7 +317,6 @@ end:
 		X509_STORE_CTX_cleanup(&ctx);
 		X509_STORE_free(store);
 	}
-	X509V3_EXT_cleanup();
 	EXIT(ret);
 	}
 

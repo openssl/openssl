@@ -365,7 +365,6 @@ bad:
 		}
 
 	ERR_load_crypto_strings();
-	X509V3_add_standard_extensions();
 
 #ifndef MONOLITH
 	/* Lets load up our environment a little */
@@ -843,7 +842,6 @@ end:
 	EVP_PKEY_free(pkey);
 	X509_REQ_free(req);
 	X509_free(x509ss);
-	X509V3_EXT_cleanup();
 	OBJ_cleanup();
 	ASN1_STRING_TABLE_cleanup();
 #ifndef NO_DSA
