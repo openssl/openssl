@@ -280,7 +280,7 @@ $!
 $! Setup exceptional compilations
 $!
 $ COMPILEWITH_CC3 = ",bss_rtcp,"
-$ COMPILEWITH_CC4 = ",a_utctm,bss_log,"
+$ COMPILEWITH_CC4 = ",a_utctm,bss_log,o_time,"
 $ COMPILEWITH_CC5 = ",md2_dgst,md4_dgst,md5_dgst,mdc2dgst," + -
                     "sha_dgst,sha1dgst,rmd_dgst,bf_enc,"
 $!
