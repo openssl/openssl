@@ -128,21 +128,21 @@ RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth)
 	return mtmp;
 }
 #else
-RSA_METHOD *RSA_set_method(RSA *rsa, ENGINE *h)
+int RSA_set_method(RSA *rsa, ENGINE *h)
 {
 	ENGINE *mtmp;
-	RSA_METHOD *meth, *old_meth;
+	RSA_METHOD *meth;
 	mtmp = rsa->handle;
-	old_meth = ENGINE_get_RSA(mtmp);
+	meth = ENGINE_get_RSA(mtmp);
 	if (!ENGINE_init(h))
-		return NULL;
-	if (old_meth->finish) old_meth->finish(rsa);
+		return 0;
+	if (meth->finish) meth->finish(rsa);
 	rsa->handle = h;
 	meth = ENGINE_get_RSA(h);
 	if (meth->init) meth->init(rsa);
 	/* SHOULD ERROR CHECK THIS!!! */
 	ENGINE_finish(mtmp);
-	return old_meth;
+	return 1;
 }
 #endif
 

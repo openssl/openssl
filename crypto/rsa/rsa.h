@@ -197,7 +197,7 @@ RSA_METHOD *RSA_get_method(RSA *rsa);
 #if 0
 RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth);
 #else
-RSA_METHOD *RSA_set_method(RSA *rsa, struct engine_st *h);
+int RSA_set_method(RSA *rsa, struct engine_st *h);
 #endif
 
 /* This function needs the memory locking malloc callbacks to be installed */
