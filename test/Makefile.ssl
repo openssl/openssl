@@ -592,7 +592,7 @@ ecdsatest.o: ../include/openssl/sha.h ../include/openssl/stack.h
 ecdsatest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
 ecdsatest.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
 ecdsatest.o: ../include/openssl/x509_vfy.h ecdsatest.c
-ectest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+ectest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 ectest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
 ectest.o: ../include/openssl/dh.h ../include/openssl/dsa.h
 ectest.o: ../include/openssl/e_os2.h ../include/openssl/ec.h

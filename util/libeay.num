@@ -2977,3 +2977,13 @@ DSO_merge                               3412	EXIST::FUNCTION:
 EC_POINT_hex2point                      3413	EXIST::FUNCTION:EC
 BN_GF2m_mod_inv_arr                     3414	EXIST::FUNCTION:
 ENGINE_unregister_ECDSA                 3415	EXIST::FUNCTION:
+PEM_write_bio_X509_CERT_PAIR            3416	EXIST::FUNCTION:
+PEM_read_X509_CERT_PAIR                 3417	EXIST:!WIN16:FUNCTION:
+X509_CERT_PAIR_it                       3418	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
+X509_CERT_PAIR_it                       3418	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+X509_CERT_PAIR_free                     3419	EXIST::FUNCTION:
+i2d_X509_CERT_PAIR                      3420	EXIST::FUNCTION:
+X509_CERT_PAIR_new                      3421	EXIST::FUNCTION:
+PEM_write_X509_CERT_PAIR                3422	EXIST:!WIN16:FUNCTION:
+d2i_X509_CERT_PAIR                      3423	EXIST::FUNCTION:
+PEM_read_bio_X509_CERT_PAIR             3424	EXIST::FUNCTION:
