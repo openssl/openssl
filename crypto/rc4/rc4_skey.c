@@ -56,9 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
-#include "rc4.h"
+#include <openssl/rc4.h>
 #include "rc4_locl.h"
-#include "opensslv.h"
+#include <openssl/opensslv.h>
 
 const char *RC4_version="RC4" OPENSSL_VERSION_PTEXT;
 

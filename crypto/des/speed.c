@@ -98,7 +98,7 @@ struct tms {
 #include <sys/param.h>
 #endif
 
-#include "des.h"
+#include <openssl/des.h>
 
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ

@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include "crypto.h"
+#include <openssl/crypto.h>
 #include "cryptlib.h"
-#include "bio.h"
-#include "stack.h"
+#include <openssl/bio.h>
+#include <openssl/stack.h>
 
 static STACK *bio_meth=NULL;
 static int bio_meth_num=0;

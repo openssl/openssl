@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "rand.h"
+#include <openssl/rand.h>
 
 /* some FIPS 140-1 random number test */
 /* some simple tests */

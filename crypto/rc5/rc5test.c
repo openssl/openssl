@@ -62,7 +62,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "rc5.h"
+#include <openssl/rc5.h>
 
 unsigned char RC5key[5][16]={
 	{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,

@@ -63,9 +63,9 @@
 #include "apps.h"
 #undef NON_MAIN
 #undef USE_SOCKETS
-#include "err.h"
-#include "x509.h"
-#include "ssl.h"
+#include <openssl/err.h>
+#include <openssl/x509.h>
+#include <openssl/ssl.h>
 #include "s_apps.h"
 
 int verify_depth=0;

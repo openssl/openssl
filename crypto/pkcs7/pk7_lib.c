@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
 	{

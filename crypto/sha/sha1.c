@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "sha.h"
+#include <openssl/sha.h>
 
 #define BUFSIZE	1024*16
 

@@ -4,13 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "buffer.h"
-#include "crypto.h"
-#include "objects.h"
-#include "asn1.h"
-#include "evp.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/buffer.h>
+#include <openssl/crypto.h>
+#include <openssl/objects.h>
+#include <openssl/asn1.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 int mkit(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days);
 

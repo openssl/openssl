@@ -56,10 +56,10 @@
  * [including the GNU Public Licence.]
  */
 #include <stdio.h>
-#include "asn1.h"
-#include "bio.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 int verify_callback(int ok, X509_STORE_CTX *ctx);
 

@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "objects.h"
-#include "evp.h"
+#include <openssl/objects.h>
+#include <openssl/evp.h>
 
 void EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 	{

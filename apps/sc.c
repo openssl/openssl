@@ -64,10 +64,10 @@
 #define APPS_WIN16
 #endif
 #include "apps.h"
-#include "x509.h"
-#include "ssl.h"
-#include "err.h"
-#include "pem.h"
+#include <openssl/x509.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
 #include "s_apps.h"
 
 #ifdef WINDOWS

@@ -57,11 +57,11 @@
  */
 
 #include <stdio.h>
-#include "rand.h"
-#include "buffer.h"
-#include "objects.h"
+#include <openssl/rand.h>
+#include <openssl/buffer.h>
+#include <openssl/objects.h>
 #include "ssl_locl.h"
-#include "evp.h"
+#include <openssl/evp.h>
 
 #ifndef NOPROTO
 static SSL_METHOD *ssl2_get_client_method(int ver);

@@ -63,7 +63,7 @@
  * and things should work as expected */
 #include "cryptlib.h"
 
-#include "lhash.h"
+#include <openssl/lhash.h>
 
 #ifndef HEADER_BIO_H
 

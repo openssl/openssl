@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "md5_locl.h"
-#include "opensslv.h"
+#include <openssl/opensslv.h>
 
 char *MD5_version="MD5" OPENSSL_VERSION_PTEXT;
 

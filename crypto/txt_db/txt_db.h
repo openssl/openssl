@@ -63,8 +63,8 @@
 extern "C" {
 #endif
 
-#include "stack.h"
-#include "lhash.h"
+#include <openssl/stack.h>
+#include <openssl/lhash.h>
 
 #define DB_ERROR_OK			0
 #define DB_ERROR_MALLOC			1

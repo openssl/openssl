@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "ripemd.h"
+#include <openssl/ripemd.h>
 
 #define BUFSIZE	1024*16
 

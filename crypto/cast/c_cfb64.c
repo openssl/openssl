@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "cast.h"
+#include <openssl/cast.h>
 #include "cast_lcl.h"
 
 /* The input and output encrypted as though 64bit cfb mode is being

@@ -67,10 +67,10 @@
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
-#include "sha.h"
-#include "bn.h"
-#include "dsa.h"
-#include "rand.h"
+#include <openssl/sha.h>
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/rand.h>
 
 DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 	     int *counter_ret, unsigned long *h_ret, void (*callback)(),

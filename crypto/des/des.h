@@ -64,7 +64,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-#include "opensslconf.h" /* DES_LONG */
+#include <openssl/opensslconf.h> /* DES_LONG */
 
 typedef unsigned char des_cblock[8];
 typedef unsigned char *des_cblocks; /* Unfortunately there's no way to say that

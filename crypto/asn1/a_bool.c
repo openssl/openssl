@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1.h"
+#include <openssl/asn1.h>
 
 /* ASN1err(ASN1_F_D2I_ASN1_BOOLEAN,ASN1_R_EXPECTING_A_BOOLEAN);
  * ASN1err(ASN1_F_D2I_ASN1_BOOLEAN,ASN1_R_BOOLEAN_IS_WRONG_LENGTH);

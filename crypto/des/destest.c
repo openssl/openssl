@@ -70,7 +70,7 @@
 #include <io.h>
 #endif
 #include <string.h>
-#include "des.h"
+#include <openssl/des.h>
 
 #if defined(PERL5) || defined(__FreeBSD__)
 #define crypt(c,s) (des_crypt((c),(s)))

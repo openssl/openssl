@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "hmac.h"
+#include <openssl/hmac.h>
 
 struct test_st
 	{

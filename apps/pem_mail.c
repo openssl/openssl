@@ -57,12 +57,12 @@
  */
 
 #include <stdio.h>
-#include "rsa.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
-#include "err.h"
-#include "pem.h"
+#include <openssl/rsa.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
 #include "apps.h"
 
 #undef PROG

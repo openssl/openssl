@@ -56,8 +56,8 @@
  * [including the GNU Public Licence.]
  */
 #include <stdio.h>
-#include "err.h"
-#include "dh.h"
+#include <openssl/err.h>
+#include <openssl/dh.h>
 
 /* BEGIN ERROR CODES */
 #ifndef NO_ERR

@@ -63,7 +63,7 @@
 extern "C" {
 #endif
 
-#include "crypto.h"
+#include <openssl/crypto.h>
 
 /* These are the 'types' of BIOs */
 #define BIO_TYPE_NONE		0

@@ -74,13 +74,13 @@
 #include <ulocks.h>
 #include <sys/prctl.h>
 #endif
-#include "lhash.h"
-#include "crypto.h"
-#include "buffer.h"
+#include <openssl/lhash.h>
+#include <openssl/crypto.h>
+#include <openssl/buffer.h>
 #include "../e_os.h"
-#include "x509.h"
-#include "ssl.h"
-#include "err.h"
+#include <openssl/x509.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #ifdef NO_FP_API
 #define APPS_WIN16

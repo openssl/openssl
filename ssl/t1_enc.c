@@ -57,9 +57,9 @@
  */
 
 #include <stdio.h>
-#include "comp.h"
-#include "evp.h"
-#include "hmac.h"
+#include <openssl/comp.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include "ssl_locl.h"
 
 static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,

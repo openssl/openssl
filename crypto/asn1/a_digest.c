@@ -62,9 +62,9 @@
 #include <sys/stat.h>
 
 #include "cryptlib.h"
-#include "evp.h"
-#include "x509.h"
-#include "buffer.h"
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/buffer.h>
 
 int ASN1_digest(int (*i2d)(), EVP_MD *type, char *data, unsigned char *md,
 	     unsigned int *len)

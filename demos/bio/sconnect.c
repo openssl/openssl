@@ -9,8 +9,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include "err.h"
-#include "ssl.h"
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 extern int errno;
 

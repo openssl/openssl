@@ -59,11 +59,11 @@
 #include <stdio.h>
 #undef SSLEAY_MACROS
 #include "cryptlib.h"
-#include "bio.h"
-#include "evp.h"
-#include "x509.h"
-#include "pkcs7.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pkcs7.h>
+#include <openssl/pem.h>
 
 #ifndef NO_FP_API
 /* The X509 functions */

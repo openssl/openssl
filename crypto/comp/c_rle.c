@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "objects.h"
-#include "comp.h"
+#include <openssl/objects.h>
+#include <openssl/comp.h>
 
 static int rle_compress_block(COMP_CTX *ctx, unsigned char *out,
 	unsigned int olen, unsigned char *in, unsigned int ilen);

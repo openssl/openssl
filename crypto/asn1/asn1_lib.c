@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1.h"
-#include "asn1_mac.h"
+#include <openssl/asn1.h>
+#include <openssl/asn1_mac.h>
 
 #ifndef NOPROTO
 static int asn1_get_length(unsigned char **pp,int *inf,long *rl,int max);

@@ -61,12 +61,12 @@
 #include <string.h>
 #include <time.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "rsa.h"
-#include "evp.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/rsa.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #undef PROG
 #define PROG	rsa_main

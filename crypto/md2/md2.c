@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "md2.h"
+#include <openssl/md2.h>
 
 #define BUFSIZE	1024*16
 

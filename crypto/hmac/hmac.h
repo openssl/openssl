@@ -62,7 +62,7 @@
 extern "C" {
 #endif
 
-#include "evp.h"
+#include <openssl/evp.h>
 
 #define HMAC_MAX_MD_CBLOCK	64
 

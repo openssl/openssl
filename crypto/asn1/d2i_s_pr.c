@@ -60,10 +60,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "dsa.h"
-#include "objects.h"
-#include "asn1_mac.h"
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/objects.h>
+#include <openssl/asn1_mac.h>
 
 /*
  * ASN1err(ASN1_F_D2I_DSAPRIVATEKEY,ERR_R_ASN1_LENGTH_MISMATCH);

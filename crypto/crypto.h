@@ -63,8 +63,8 @@
 extern "C" {
 #endif
 
-#include "stack.h"
-#include "opensslv.h"
+#include <openssl/stack.h>
+#include <openssl/opensslv.h>
 
 /* Backward compatibility to SSLeay */
 /* This is more to be used to check the correct DLL is being used

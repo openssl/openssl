@@ -80,7 +80,7 @@
 #if defined(NOCONST)
 #define const
 #endif
-#include "des.h"
+#include <openssl/des.h>
 
 #if defined(__STDC__) || defined(VMS) || defined(M_XENIX) || defined(MSDOS)
 #include <string.h>

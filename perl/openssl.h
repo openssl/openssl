@@ -60,7 +60,7 @@ extern "C" {
 #endif
 
 #include "EXTERN.h"
-#include "perl.h"
+#include <openssl/perl.h>
 #include "XSUB.h"
 
 #ifdef __cplusplus
@@ -72,13 +72,13 @@ typedef struct datum_st {
     int dsize;
 } datum;
 
-#include "crypto.h"
-#include "buffer.h"
-#include "bio.h"
-#include "evp.h"
-#include "err.h"
-#include "x509.h"
-#include "ssl.h"
+#include <openssl/crypto.h>
+#include <openssl/buffer.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
+#include <openssl/x509.h>
+#include <openssl/ssl.h>
 
 #ifdef DEBUG
 #define pr_name(name)           printf("%s\n",name)

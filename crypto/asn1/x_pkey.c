@@ -58,9 +58,9 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
-#include "asn1_mac.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/asn1_mac.h>
 
 /* ASN1err(ASN1_F_D2I_X509_PKEY,ASN1_R_UNSUPPORTED_CIPHER); */
 /* ASN1err(ASN1_F_X509_PKEY_NEW,ASN1_R_IV_TOO_LARGE); */

@@ -78,9 +78,9 @@
 #ifdef NO_STDIO
 #define APPS_WIN16
 #endif
-#include "crypto.h"
-#include "rand.h"
-#include "err.h"
+#include <openssl/crypto.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
 
 #ifndef MSDOS
 #define TIMES
@@ -114,47 +114,47 @@ struct tms {
 #endif
 
 #ifndef NO_DES
-#include "des.h"
+#include <openssl/des.h>
 #endif
 #ifndef NO_MD2
-#include "md2.h"
+#include <openssl/md2.h>
 #endif
 #ifndef NO_MDC2
-#include "mdc2.h"
+#include <openssl/mdc2.h>
 #endif
 #ifndef NO_MD5
-#include "md5.h"
-#include "hmac.h"
-#include "evp.h"
+#include <openssl/md5.h>
+#include <openssl/hmac.h>
+#include <openssl/evp.h>
 #endif
 #ifndef NO_SHA1
-#include "sha.h"
+#include <openssl/sha.h>
 #endif
 #ifndef NO_RMD160
-#include "ripemd.h"
+#include <openssl/ripemd.h>
 #endif
 #ifndef NO_RC4
-#include "rc4.h"
+#include <openssl/rc4.h>
 #endif
 #ifndef NO_RC5
-#include "rc5.h"
+#include <openssl/rc5.h>
 #endif
 #ifndef NO_RC2
-#include "rc2.h"
+#include <openssl/rc2.h>
 #endif
 #ifndef NO_IDEA
-#include "idea.h"
+#include <openssl/idea.h>
 #endif
 #ifndef NO_BLOWFISH
-#include "blowfish.h"
+#include <openssl/blowfish.h>
 #endif
 #ifndef NO_CAST
-#include "cast.h"
+#include <openssl/cast.h>
 #endif
 #ifndef NO_RSA
-#include "rsa.h"
+#include <openssl/rsa.h>
 #endif
-#include "x509.h"
+#include <openssl/x509.h>
 #include "./testrsa.h"
 #ifndef NO_DSA
 #include "./testdsa.h"

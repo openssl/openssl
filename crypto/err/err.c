@@ -57,12 +57,12 @@
  */
 
 #include <stdio.h>
-#include "lhash.h"
-#include "crypto.h"
+#include <openssl/lhash.h>
+#include <openssl/crypto.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "err.h"
-#include "crypto.h"
+#include <openssl/buffer.h>
+#include <openssl/err.h>
+#include <openssl/crypto.h>
 
 
 static LHASH *error_hash=NULL;

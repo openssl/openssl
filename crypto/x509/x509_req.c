@@ -58,13 +58,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "evp.h"
-#include "asn1.h"
-#include "x509.h"
-#include "objects.h"
-#include "buffer.h"
-#include "pem.h"
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/asn1.h>
+#include <openssl/x509.h>
+#include <openssl/objects.h>
+#include <openssl/buffer.h>
+#include <openssl/pem.h>
 
 X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, EVP_MD *md)
 	{

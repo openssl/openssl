@@ -59,7 +59,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "x509v3.h"
+#include <openssl/x509v3.h>
 
 #ifndef NOPROTO
 static ASN1_OCTET_STRING *octet_string_new(void);

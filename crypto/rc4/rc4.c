@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "rc4.h"
+#include <openssl/rc4.h>
 
 char *usage[]={
 "usage: rc4 args\n",

@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "rc5.h"
+#include <openssl/rc5.h>
 #include "rc5_locl.h"
 
 void RC5_32_set_key(RC5_32_KEY *key, int len, unsigned char *data,

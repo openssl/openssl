@@ -59,8 +59,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "des.h"
-#include "mdc2.h"
+#include <openssl/des.h>
+#include <openssl/mdc2.h>
 
 #undef c2l
 #define c2l(c,l)	(l =((DES_LONG)(*((c)++)))    , \

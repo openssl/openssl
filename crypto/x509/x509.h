@@ -64,29 +64,29 @@
 extern "C" {
 #endif
 
-#include "stack.h"
-#include "asn1.h"
-#include "safestack.h"
+#include <openssl/stack.h>
+#include <openssl/asn1.h>
+#include <openssl/safestack.h>
 
 #ifndef NO_RSA
-#include "rsa.h"
+#include <openssl/rsa.h>
 #else
 #define RSA	long
 #endif
 
 #ifndef NO_DSA
-#include "dsa.h"
+#include <openssl/dsa.h>
 #else
 #define DSA	long
 #endif
 
 #ifndef NO_DH
-#include "dh.h"
+#include <openssl/dh.h>
 #else
 #define DH	long
 #endif
 
-#include "evp.h"
+#include <openssl/evp.h>
 
 #define X509_FILETYPE_PEM	1
 #define X509_FILETYPE_ASN1	2
@@ -362,8 +362,8 @@ typedef struct pkcs8_priv_key_info_st
         STACK *attributes;
         } PKCS8_PRIV_KEY_INFO;
 
-#include "x509_vfy.h"
-#include "pkcs7.h"
+#include <openssl/x509_vfy.h>
+#include <openssl/pkcs7.h>
 
 #ifdef SSLEAY_MACROS
 #define X509_verify(a,r) ASN1_verify((int (*)())i2d_X509_CINF,a->sig_alg,\

@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
-#include "bio.h"
+#include <openssl/bio.h>
 
 #ifndef NOPROTO
 static int mem_write(BIO *h,char *buf,int num);

@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
-#include "stack.h"
+#include <openssl/stack.h>
 
 int limit=16;
 

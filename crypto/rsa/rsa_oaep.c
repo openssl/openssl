@@ -6,10 +6,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "rsa.h"
-#include "sha.h"
-#include "rand.h"
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/sha.h>
+#include <openssl/rand.h>
 
 int MGF1(unsigned char *mask, long len, unsigned char *seed, long seedlen);
 

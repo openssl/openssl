@@ -63,9 +63,9 @@
 extern "C" {
 #endif
 
-#include "evp.h"
-#include "x509.h"
-#include "pem2.h"
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem2.h>
 
 #define PEM_OBJ_UNDEF		0
 #define PEM_OBJ_X509		1

@@ -59,7 +59,7 @@
 #ifndef HEADER_SSL3_H 
 #define HEADER_SSL3_H 
 
-#include "buffer.h"
+#include <openssl/buffer.h>
 
 #ifdef  __cplusplus
 extern "C" {

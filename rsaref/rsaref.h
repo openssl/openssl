@@ -59,7 +59,7 @@
 #ifndef HEADER_RSAREF_H
 #define HEADER_RSAREF_H
 
-#include "rsa.h"
+#include <openssl/rsa.h>
 
 /* RSAeuro */
 /*#define  RSAref_MAX_BITS		2048*/

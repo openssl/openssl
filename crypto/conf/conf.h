@@ -63,8 +63,8 @@
 extern "C" {
 #endif
 
-#include "stack.h"
-#include "lhash.h"
+#include <openssl/stack.h>
+#include <openssl/lhash.h>
 
 typedef struct
 	{

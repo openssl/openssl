@@ -57,11 +57,11 @@
  */
 
 #include <stdio.h>
-#include "bio.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 #include "ssl_locl.h"
 
 #ifndef NOPROTO

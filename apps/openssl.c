@@ -63,19 +63,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "bio.h"
-#include "crypto.h"
-#include "lhash.h"
-#include "conf.h"
-#include "x509.h"
-#include "pem.h"
-#include "ssl.h"
+#include <openssl/bio.h>
+#include <openssl/crypto.h>
+#include <openssl/lhash.h>
+#include <openssl/conf.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
 #define SSLEAY	/* turn off a few special case MONOLITH macros */
 #define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
 #define SSLEAY_SRC
 #include "apps.h"
 #include "s_apps.h"
-#include "err.h"
+#include <openssl/err.h>
 
 /*
 #ifdef WINDOWS

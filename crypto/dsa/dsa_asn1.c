@@ -2,9 +2,9 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "dsa.h"
-#include "asn1.h"
-#include "asn1_mac.h"
+#include <openssl/dsa.h>
+#include <openssl/asn1.h>
+#include <openssl/asn1_mac.h>
 
 DSA_SIG *DSA_SIG_new(void)
 {

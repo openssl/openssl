@@ -58,9 +58,9 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "lhash.h"
-#include "objects.h"
-#include "buffer.h"
+#include <openssl/lhash.h>
+#include <openssl/objects.h>
+#include <openssl/buffer.h>
 
 ASN1_OBJECT *OBJ_dup(ASN1_OBJECT *o)
 	{

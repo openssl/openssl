@@ -58,7 +58,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cryptlib.h"
-#include "tmdiff.h"
+#include <openssl/tmdiff.h>
 
 #ifdef TIMEB
 #undef WIN32

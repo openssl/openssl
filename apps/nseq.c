@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "pem.h"
-#include "err.h"
+#include <openssl/pem.h>
+#include <openssl/err.h>
 #include "apps.h"
 
 #undef PROG

@@ -60,11 +60,11 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "dsa.h"
-#include "rand.h"
-#include "asn1.h"
-#include "asn1_mac.h"
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/rand.h>
+#include <openssl/asn1.h>
+#include <openssl/asn1_mac.h>
 
 int DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 		  DSA *dsa)

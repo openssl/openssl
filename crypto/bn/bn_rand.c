@@ -60,7 +60,7 @@
 #include <time.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
-#include "rand.h"
+#include <openssl/rand.h>
 
 int BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
 	{

@@ -60,7 +60,7 @@
 #include <time.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
-#include "rand.h"
+#include <openssl/rand.h>
 
 /* The quick seive algorithm approach to weeding out primes is
  * Philip Zimmermann's, as implemented in PGP.  I have had a read of

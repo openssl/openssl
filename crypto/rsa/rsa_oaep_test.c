@@ -2,9 +2,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "e_os.h"
-#include "rsa.h"
-#include "err.h"
+#include <openssl/e_os.h>
+#include <openssl/rsa.h>
+#include <openssl/err.h>
 
 #define SetKey \
   key->n = BN_bin2bn(n, sizeof(n)-1, key->n); \

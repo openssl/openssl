@@ -60,15 +60,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 #ifdef NO_MD5
-#include "md5.h"
+#include <openssl/md5.h>
 #endif
-#include "pem.h"
+#include <openssl/pem.h>
 
 #ifndef NOPROTO
 int set_hex(char *in,unsigned char *out,int size);

@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "sha.h"
+#include <openssl/sha.h>
 
 #define SHA_0 /* FIPS 180 */
 #undef  SHA_1 /* FIPS 180-1 */

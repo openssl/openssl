@@ -56,8 +56,8 @@
  * [including the GNU Public Licence.]
  */
 #include <stdio.h>
-#include "err.h"
-#include "x509.h"
+#include <openssl/err.h>
+#include <openssl/x509.h>
 
 /* BEGIN ERROR CODES */
 #ifndef NO_ERR

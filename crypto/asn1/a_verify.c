@@ -62,11 +62,11 @@
 #include <sys/stat.h>
 
 #include "cryptlib.h"
-#include "bn.h"
-#include "x509.h"
-#include "objects.h"
-#include "buffer.h"
-#include "evp.h"
+#include <openssl/bn.h>
+#include <openssl/x509.h>
+#include <openssl/objects.h>
+#include <openssl/buffer.h>
+#include <openssl/evp.h>
 
 int ASN1_verify(int (*i2d)(), X509_ALGOR *a, ASN1_BIT_STRING *signature,
 	     char *data, EVP_PKEY *pkey)

@@ -59,8 +59,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "md2.h"
-#include "opensslv.h"
+#include <openssl/md2.h>
+#include <openssl/opensslv.h>
 
 const char *MD2_version="MD2" OPENSSL_VERSION_PTEXT;
 

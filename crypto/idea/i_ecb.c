@@ -56,9 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
-#include "idea.h"
+#include <openssl/idea.h>
 #include "idea_lcl.h"
-#include "opensslv.h"
+#include <openssl/opensslv.h>
 
 const char *IDEA_version="IDEA" OPENSSL_VERSION_PTEXT;
 

@@ -59,10 +59,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
-#include "bn.h"
-#include "rand.h"
-#include "err.h"
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
 #ifdef WINDOWS
 #include "../bio/bss_file.c"
 #endif

@@ -97,8 +97,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "crypto.h"
-#include "lhash.h"
+#include <openssl/crypto.h>
+#include <openssl/lhash.h>
 
 const char *lh_version="lhash" OPENSSL_VERSION_PTEXT;
 

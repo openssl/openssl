@@ -64,7 +64,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
-#include "asn1.h"
+#include <openssl/asn1.h>
 
 int i2d_ASN1_TIME(ASN1_TIME *a, unsigned char **pp)
 	{

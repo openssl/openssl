@@ -60,8 +60,8 @@
 #include <sys/types.h>
 #include <time.h>
 #include <string.h>
-#include "e_os.h"
-#include "crypto.h"
+#include <openssl/e_os.h>
+#include <openssl/crypto.h>
 
 #if !defined(USE_MD5_RAND) && !defined(USE_SHA1_RAND) && !defined(USE_MDC2_RAND) && !defined(USE_MD2_RAND)
 #ifndef NO_MD5
@@ -84,7 +84,7 @@ We need a message digest of some type
  */
 
 #if defined(USE_MD5_RAND)
-#include "md5.h"
+#include <openssl/md5.h>
 #define MD_DIGEST_LENGTH	MD5_DIGEST_LENGTH
 #define MD_CTX			MD5_CTX
 #define MD_Init(a)		MD5_Init(a)
@@ -92,7 +92,7 @@ We need a message digest of some type
 #define	MD_Final(a,b)		MD5_Final(a,b)
 #define	MD(a,b,c)		MD5(a,b,c)
 #elif defined(USE_SHA1_RAND)
-#include "sha.h"
+#include <openssl/sha.h>
 #define MD_DIGEST_LENGTH	SHA_DIGEST_LENGTH
 #define MD_CTX			SHA_CTX
 #define MD_Init(a)		SHA1_Init(a)
@@ -100,7 +100,7 @@ We need a message digest of some type
 #define	MD_Final(a,b)		SHA1_Final(a,b)
 #define	MD(a,b,c)		SHA1(a,b,c)
 #elif defined(USE_MDC2_RAND)
-#include "mdc2.h"
+#include <openssl/mdc2.h>
 #define MD_DIGEST_LENGTH	MDC2_DIGEST_LENGTH
 #define MD_CTX			MDC2_CTX
 #define MD_Init(a)		MDC2_Init(a)
@@ -108,7 +108,7 @@ We need a message digest of some type
 #define	MD_Final(a,b)		MDC2_Final(a,b)
 #define	MD(a,b,c)		MDC2(a,b,c)
 #elif defined(USE_MD2_RAND)
-#include "md2.h"
+#include <openssl/md2.h>
 #define MD_DIGEST_LENGTH	MD2_DIGEST_LENGTH
 #define MD_CTX			MD2_CTX
 #define MD_Init(a)		MD2_Init(a)
@@ -117,7 +117,7 @@ We need a message digest of some type
 #define	MD(a,b,c)		MD2(a,b,c)
 #endif
 
-#include "rand.h"
+#include <openssl/rand.h>
 
 /* #define NORAND	1 */
 /* #define PREDICT	1 */

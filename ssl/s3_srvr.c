@@ -59,11 +59,11 @@
 #define REUSE_CIPHER_BUG
 
 #include <stdio.h>
-#include "buffer.h"
-#include "rand.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
+#include <openssl/buffer.h>
+#include <openssl/rand.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 #include "ssl_locl.h"
 
 #define BREAK	break

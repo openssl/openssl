@@ -62,10 +62,10 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-#include "crypto.h"
-#include "tmdiff.h"
-#include "bn.h"
-#include "err.h"
+#include <openssl/crypto.h>
+#include <openssl/tmdiff.h>
+#include <openssl/bn.h>
+#include <openssl/err.h>
 
 #define DEFAULT_SIZE	512
 #define DEFAULT_TIME	3

@@ -59,8 +59,8 @@
  */
 
 #include <stdio.h>
-#include "objects.h"
-#include "lhash.h"
+#include <openssl/objects.h>
+#include <openssl/lhash.h>
 #include "ssl_locl.h"
 
 char *SSL_version_str=OPENSSL_VERSION_TEXT;

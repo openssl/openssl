@@ -58,11 +58,11 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/buffer.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #ifndef NO_FP_API
 STACK *PEM_X509_INFO_read(FILE *fp, STACK *sk, int (*cb)())

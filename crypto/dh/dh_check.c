@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "dh.h"
+#include <openssl/bn.h>
+#include <openssl/dh.h>
 
 /* Check that p is a strong prime and
  * if g is 2, 3 or 5, check that is is a suitable generator

@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
+#include <openssl/asn1_mac.h>
 
 /*
  *ASN1err(ASN1_F_PKCS8_PRIV_KEY_INFO_NEW,ASN1_R_DECODE_ERROR)

@@ -55,7 +55,7 @@
 #ifndef HEADER_SAFESTACK_H
 #define HEADER_SAFESTACK_H
 
-#include "stack.h"
+#include <openssl/stack.h>
 
 #define STACK_OF(type)	STACK_##type
 

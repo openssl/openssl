@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "objects.h"
-#include "evp.h"
-#include "asn1_mac.h"
-#include "x509.h"
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/asn1_mac.h>
+#include <openssl/x509.h>
 
 /* EVPerr(EVP_F_D2I_PKEY,EVP_R_UNSUPPORTED_CIPHER); */
 /* EVPerr(EVP_F_D2I_PKEY,EVP_R_IV_TOO_LARGE); */

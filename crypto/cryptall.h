@@ -59,52 +59,52 @@
 #ifndef HEADER_CRYPTOALL_H
 #define HEADER_CRYPTOALL_H
 
-#include "buffer.h"
-#include "stack.h"
-#include "lhash.h"
+#include <openssl/buffer.h>
+#include <openssl/stack.h>
+#include <openssl/lhash.h>
 
-#include "err.h"
+#include <openssl/err.h>
 
 #ifdef NO_MD2
 #include <md2.h>
 #else
-#include "md2.h"
+#include <openssl/md2.h>
 #endif
 #ifdef NO_MD5
 #include <md5.h>
 #else
-#include "md5.h"
+#include <openssl/md5.h>
 #endif
-#include "sha.h"
+#include <openssl/sha.h>
 
 #ifdef NO_DES
 #include <des.h>
 #else
-#include "des.h"
+#include <openssl/des.h>
 #endif
-#include "rc2.h"
-#include "rc4.h"
-#include "idea.h"
+#include <openssl/rc2.h>
+#include <openssl/rc4.h>
+#include <openssl/idea.h>
 
-#include "bn.h"
-#include "dh.h"
-#include "rsa.h"
-#include "dsa.h"
+#include <openssl/bn.h>
+#include <openssl/dh.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
 
-#include "rand.h"
-#include "conf.h"
-#include "txt_db.h"
+#include <openssl/rand.h>
+#include <openssl/conf.h>
+#include <openssl/txt_db.h>
 
-#include "err.h"
-#include "evp.h"
+#include <openssl/err.h>
+#include <openssl/evp.h>
 
 #include "meth.h"
-#include "x509.h"
-#include "pkcs7.h"
-#include "pem.h"
-#include "asn1.h"
-#include "objects.h"
+#include <openssl/x509.h>
+#include <openssl/pkcs7.h>
+#include <openssl/pem.h>
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
 
-#include "crypto.h"
+#include <openssl/crypto.h>
 
 #endif

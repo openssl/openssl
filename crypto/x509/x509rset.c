@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 
 int X509_REQ_set_version(X509_REQ *x, long version)
 	{

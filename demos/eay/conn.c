@@ -7,8 +7,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include "err.h"
-#include "bio.h"
+#include <openssl/err.h>
+#include <openssl/bio.h>
 #include "proxy.h"
 
 extern int errno;

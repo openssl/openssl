@@ -59,7 +59,7 @@
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
 
-#include "opensslconf.h"
+#include <openssl/opensslconf.h>
 
 #ifdef  __cplusplus
 extern "C" {

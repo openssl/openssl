@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1.h"
+#include <openssl/asn1.h>
 
 /* Support for ASN1 ENUMERATED type: based on a_int.c */
 

@@ -58,9 +58,9 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "rand.h"
-#include "dh.h"
+#include <openssl/bn.h>
+#include <openssl/rand.h>
+#include <openssl/dh.h>
 
 int DH_generate_key(DH *dh)
 	{

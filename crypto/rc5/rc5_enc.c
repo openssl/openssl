@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "rc5.h"
+#include <openssl/rc5.h>
 #include "rc5_locl.h"
 
 void RC5_32_cbc_encrypt(unsigned char *in, unsigned char *out, long length,

@@ -62,7 +62,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bio.h"
+#include <openssl/bio.h>
 
 int BIO_printf ( VAR_PLIST( BIO *, bio ) )
 VAR_ALIST

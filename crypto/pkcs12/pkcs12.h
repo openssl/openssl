@@ -63,8 +63,8 @@
 extern "C" {
 #endif
 
-#include "bio.h"
-#include "x509.h"
+#include <openssl/bio.h>
+#include <openssl/x509.h>
 
 #define PKCS12_KEY_ID	1
 #define PKCS12_IV_ID	2

@@ -12,8 +12,8 @@
 
 #include <stdio.h>
 #include <signal.h>
-#include "err.h"
-#include "ssl.h"
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #define CERT_FILE	"server.pem"
 

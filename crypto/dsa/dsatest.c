@@ -61,11 +61,11 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "crypto.h"
-#include "rand.h"
-#include "bio.h"
-#include "err.h"
-#include "dsa.h"
+#include <openssl/crypto.h>
+#include <openssl/rand.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/dsa.h>
 #ifdef WINDOWS
 #include "../bio/bss_file.c"
 #endif

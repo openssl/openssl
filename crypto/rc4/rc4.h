@@ -63,7 +63,7 @@
 extern "C" {
 #endif
 
-#include "opensslconf.h" /* RC4_INT */
+#include <openssl/opensslconf.h> /* RC4_INT */
 
 typedef struct rc4_key_st
 	{

@@ -58,11 +58,11 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "rsa.h"
-#include "objects.h"
-#include "asn1_mac.h"
-#include "evp.h"
-#include "x509.h"
+#include <openssl/rsa.h>
+#include <openssl/objects.h>
+#include <openssl/asn1_mac.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 
 
 #ifndef NO_RC4

@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
+#include <openssl/asn1_mac.h>
 
 /* ASN1err(ASN1_F_X509_VAL_NEW,ERR_R_MALLOC_FAILURE);
  * ASN1err(ASN1_F_X509_VAL_FREE,ERR_R_MALLOC_FAILURE);

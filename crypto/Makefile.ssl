@@ -69,7 +69,7 @@ files:
 
 links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
-	@$(TOP)/util/mklink.sh ../include $(EXHEADER)
+	@$(TOP)/util/mklink.sh ../include/openssl $(EXHEADER)
 	@$(TOP)/util/mklink.sh ../test $(TEST)
 	@$(TOP)/util/mklink.sh ../apps $(APPS)
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
@@ -100,8 +100,8 @@ tests:
 install:
 	@for i in $(EXHEADER) ;\
 	do \
-	(cp $$i $(INSTALLTOP)/include/$$i; \
-	chmod 644 $(INSTALLTOP)/include/$$i ); \
+	(cp $$i $(INSTALLTOP)/include/openssl/$$i; \
+	chmod 644 $(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 	@for i in $(SDIRS) ;\
 	do \

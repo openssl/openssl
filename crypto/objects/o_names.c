@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lhash.h"
-#include "objects.h"
+#include <openssl/lhash.h>
+#include <openssl/objects.h>
 
 /* I use the ex_data stuff to manage the identifiers for the obj_name_types
  * that applications may define.  I only really use the free function field.

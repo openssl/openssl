@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "pkcs12.h"
+#include <openssl/pkcs12.h>
 
 /* Simplified PKCS#12 routines */
 

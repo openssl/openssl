@@ -63,7 +63,7 @@
 extern "C" {
 #endif
 
-#include "des.h"
+#include <openssl/des.h>
 
 #define MDC2_BLOCK              8
 #define MDC2_DIGEST_LENGTH      16

@@ -60,10 +60,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "bio.h"
-#include "lhash.h"
-#include "err.h"
-#include "ssl.h"
+#include <openssl/bio.h>
+#include <openssl/lhash.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #undef PROG
 #define PROG	errstr_main

@@ -10,7 +10,7 @@
 #ifndef LOADKEYS_H_SEEN
 #define LOADKEYS_H_SEEN
 
-#include "evp.h"
+#include <openssl/evp.h>
 
 EVP_PKEY * ReadPublicKey(const char *certfile);
 EVP_PKEY *ReadPrivateKey(const char *keyfile);

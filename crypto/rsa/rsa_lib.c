@@ -57,11 +57,11 @@
  */
 
 #include <stdio.h>
-#include "crypto.h"
+#include <openssl/crypto.h>
 #include "cryptlib.h"
-#include "lhash.h"
-#include "bn.h"
-#include "rsa.h"
+#include <openssl/lhash.h>
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
 
 const char *RSA_version="RSA" OPENSSL_VERSION_PTEXT;
 

@@ -98,7 +98,7 @@ struct tms {
 #include <sys/param.h>
 #endif
 
-#include "cast.h"
+#include <openssl/cast.h>
 
 #define CAST_DEFAULT_OPTIONS
 

@@ -58,9 +58,9 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1.h"
-#include "asn1_mac.h"
-#include "x509v3.h"
+#include <openssl/asn1.h>
+#include <openssl/asn1_mac.h>
+#include <openssl/x509v3.h>
 
 #ifndef NOPROTO
 static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, PKEY_USAGE_PERIOD *usage, BIO *out, int indent);

@@ -58,9 +58,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "buffer.h"
-#include "bio.h"
-#include "lhash.h"
+#include <openssl/buffer.h>
+#include <openssl/bio.h>
+#include <openssl/lhash.h>
 #include "cryptlib.h"
 
 int CRYPTO_get_ex_new_index(int idx, STACK **skp, long argl, char *argp,

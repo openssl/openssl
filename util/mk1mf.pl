@@ -307,6 +307,7 @@ OUT_D=$out_dir
 TMP_D=$tmp_dir
 # The output directory for the header files
 INC_D=$inc_dir
+INCO_D=$inc_dir${o}openssl
 
 CP=$cp
 RM=$rm
@@ -365,7 +366,7 @@ LIBS_DEP=\$(O_CRYPTO) \$(O_RSAGLUE) \$(O_SSL)
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INC_D) headers lib exe
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers lib exe
 
 banner:
 $banner
@@ -382,6 +383,9 @@ $banner
 \$(LIB_D):
 	\$(MKDIR) \$(LIB_D)
 
+\$(INCO_D): \$(INC_D)
+	\$(MKDIR) \$(INC_D)${o}openssl
+
 \$(INC_D):
 	\$(MKDIR) \$(INC_D)
 
@@ -395,8 +399,9 @@ install:
 	\$(MKDIR) \$(INSTALLTOP)
 	\$(MKDIR) \$(INSTALLTOP)${o}bin
 	\$(MKDIR) \$(INSTALLTOP)${o}include
+	\$(MKDIR) \$(INSTALLTOP)${o}include${o}openssl
 	\$(MKDIR) \$(INSTALLTOP)${o}lib
-	\$(CP) \$(INC_D)${o}*.\[ch\] \$(INSTALLTOP)${o}include
+	\$(CP) \$(INCO_D)${o}*.\[ch\] \$(INSTALLTOP)${o}include${o}openssl
 	\$(CP) \$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin
 	\$(CP) \$(O_SSL) \$(INSTALLTOP)${o}lib
 	\$(CP) \$(O_CRYPTO) \$(INSTALLTOP)${o}lib
@@ -476,8 +481,8 @@ chop($h); $header=$h;
 $defs.=&do_defs("HEADER",$header,"\$(INCL_D)",".h");
 $rules.=&do_copy_rule("\$(INCL_D)",$header,".h");
 
-$defs.=&do_defs("EXHEADER",$exheader,"\$(INC_D)",".h");
-$rules.=&do_copy_rule("\$(INC_D)",$exheader,".h");
+$defs.=&do_defs("EXHEADER",$exheader,"\$(INCO_D)",".h");
+$rules.=&do_copy_rule("\$(INCO_D)",$exheader,".h");
 
 $defs.=&do_defs("T_OBJ",$test,"\$(OBJ_D)",$obj);
 $rules.=&do_compile_rule("\$(OBJ_D)",$test,"\$(APP_CFLAGS)");

@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "x509v3.h"
+#include <openssl/x509v3.h>
 
 static ASN1_ENUMERATED *asn1_enumerated_new();
 

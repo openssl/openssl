@@ -59,9 +59,9 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1.h"
-#include "conf.h"
-#include "x509v3.h"
+#include <openssl/asn1.h>
+#include <openssl/conf.h>
+#include <openssl/x509v3.h>
 
 #ifndef NOPROTO
 static STACK *v2i_ext_ku(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);

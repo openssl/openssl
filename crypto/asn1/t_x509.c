@@ -58,17 +58,17 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "bn.h"
+#include <openssl/buffer.h>
+#include <openssl/bn.h>
 #ifndef NO_RSA
-#include "rsa.h"
+#include <openssl/rsa.h>
 #endif
 #ifndef NO_DSA
-#include "dsa.h"
+#include <openssl/dsa.h>
 #endif
-#include "objects.h"
-#include "x509.h"
-#include "x509v3.h"
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 #ifndef NO_FP_API
 int X509_print_fp(FILE *fp, X509 *x)

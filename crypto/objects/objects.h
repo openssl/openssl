@@ -866,8 +866,8 @@ extern "C" {
 #define NID_id_qt_unotice	165
 #define OBJ_id_qt_unotice	OBJ_id_pkix,2L,2L
 
-#include "bio.h"
-#include "asn1.h"
+#include <openssl/bio.h>
+#include <openssl/asn1.h>
 
 #define	OBJ_NAME_TYPE_UNDEF		0x00
 #define	OBJ_NAME_TYPE_MD_METH		0x01

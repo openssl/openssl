@@ -63,7 +63,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "md5.h"
+#include <openssl/md5.h>
 
 #define ULONG	unsigned long
 #define UCHAR	unsigned char

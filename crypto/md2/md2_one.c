@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "md2.h"
+#include <openssl/md2.h>
 
 /* This is a separate file so that #defines in cryptlib.h can
  * map my MD functions to different names */

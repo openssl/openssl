@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "dsa.h"
+#include <openssl/dsa.h>
 
 #define TEST
 #define GENUINE_DSA

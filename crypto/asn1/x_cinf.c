@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
+#include <openssl/asn1_mac.h>
 
 /*
  * ASN1err(ASN1_F_D2I_X509_CINF,ERR_R_ASN1_LENGTH_MISMATCH);

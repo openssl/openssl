@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "conf.h"
-#include "asn1.h"
-#include "asn1_mac.h"
-#include "x509v3.h"
+#include <openssl/conf.h>
+#include <openssl/asn1.h>
+#include <openssl/asn1_mac.h>
+#include <openssl/x509v3.h>
 
 #ifndef NOPROTO
 static STACK *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, AUTHORITY_KEYID *akeyid, STACK *extlist);

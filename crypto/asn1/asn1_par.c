@@ -58,9 +58,9 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/buffer.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
 #ifndef NOPROTO
 static int asn1_print_info(BIO *bp, int tag, int xclass,int constructed,

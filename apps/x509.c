@@ -63,15 +63,15 @@
 #define APPS_WIN16
 #endif
 #include "apps.h"
-#include "bio.h"
-#include "asn1.h"
-#include "err.h"
-#include "bn.h"
-#include "evp.h"
-#include "x509.h"
-#include "x509v3.h"
-#include "objects.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/asn1.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/objects.h>
+#include <openssl/pem.h>
 
 #undef PROG
 #define PROG x509_main

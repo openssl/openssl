@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "asn1_mac.h"
-#include "err.h"
-#include "x509.h"
-#include "objects.h"
+#include <openssl/asn1_mac.h>
+#include <openssl/err.h>
+#include <openssl/x509.h>
+#include <openssl/objects.h>
 
 /* Netscape certificate sequence structure */
 

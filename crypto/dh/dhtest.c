@@ -62,10 +62,10 @@
 #ifdef WINDOWS
 #include "../bio/bss_file.c" 
 #endif
-#include "crypto.h"
-#include "bio.h"
-#include "bn.h"
-#include "dh.h"
+#include <openssl/crypto.h>
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/dh.h>
 
 #ifdef WIN16
 #define MS_CALLBACK	_far _loadds

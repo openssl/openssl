@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "blowfish.h"
+#include <openssl/blowfish.h>
 #include "bf_locl.h"
 
 /* The input and output encrypted as though 64bit ofb mode is being

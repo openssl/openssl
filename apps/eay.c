@@ -64,27 +64,27 @@
 #define USE_SOCKETS
 #include "../e_os.h"
 
-#include "bio.h"
-#include "stack.h"
-#include "lhash.h"
+#include <openssl/bio.h>
+#include <openssl/stack.h>
+#include <openssl/lhash.h>
 
-#include "err.h"
+#include <openssl/err.h>
 
-#include "bn.h"
+#include <openssl/bn.h>
 
-#include "evp.h"
+#include <openssl/evp.h>
 
-#include "rand.h"
-#include "conf.h"
-#include "txt_db.h"
+#include <openssl/rand.h>
+#include <openssl/conf.h>
+#include <openssl/txt_db.h>
 
-#include "err.h"
+#include <openssl/err.h>
 
-#include "x509.h"
-#include "pkcs7.h"
-#include "pem.h"
-#include "asn1.h"
-#include "objects.h"
+#include <openssl/x509.h>
+#include <openssl/pkcs7.h>
+#include <openssl/pem.h>
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
 
 #define MONOLITH
 

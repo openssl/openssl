@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "objects.h"
-#include "comp.h"
+#include <openssl/objects.h>
+#include <openssl/comp.h>
 
 COMP_METHOD *COMP_zlib(void );
 

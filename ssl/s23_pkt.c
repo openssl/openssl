@@ -59,8 +59,8 @@
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
-#include "evp.h"
-#include "buffer.h"
+#include <openssl/evp.h>
+#include <openssl/buffer.h>
 #include "ssl_locl.h"
 
 int ssl23_write_bytes(SSL *s)

@@ -63,8 +63,8 @@
 extern "C" {
 #endif
 
-#include "bn.h"
-#include "crypto.h"
+#include <openssl/bn.h>
+#include <openssl/crypto.h>
 
 typedef struct rsa_st RSA;
 

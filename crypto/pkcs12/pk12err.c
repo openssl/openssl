@@ -56,8 +56,8 @@
  * [including the GNU Public Licence.]
  */
 #include <stdio.h>
-#include "err.h"
-#include "pkcs12.h"
+#include <openssl/err.h>
+#include <openssl/pkcs12.h>
 
 /* BEGIN ERROR CODES */
 #ifndef NO_ERR

@@ -58,7 +58,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "hmac.h"
+#include <openssl/hmac.h>
 
 void HMAC_Init(HMAC_CTX *ctx, const unsigned char *key, int len,
 	       const EVP_MD *md)

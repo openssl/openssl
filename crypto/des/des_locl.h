@@ -70,9 +70,9 @@
 #ifndef MSDOS
 #include <unistd.h>
 #endif
-#include "des.h"
+#include <openssl/des.h>
 
-#include "opensslconf.h"
+#include <openssl/opensslconf.h>
 
 #ifdef MSDOS		/* Visual C++ 2.1 (Windows NT/95) */
 #include <stdlib.h>

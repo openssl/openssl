@@ -63,7 +63,7 @@
 extern "C" {
 #endif
 
-#include "safestack.h"
+#include <openssl/safestack.h>
 
 /* SSLeay version number for ASN.1 encoding of the session information */
 /* Version 0 - initial version
@@ -144,11 +144,11 @@ extern "C" {
 #define SSL_SENT_SHUTDOWN	1
 #define SSL_RECEIVED_SHUTDOWN	2
 
-#include "crypto.h"
-#include "lhash.h"
-#include "buffer.h"
-#include "bio.h"
-#include "x509.h"
+#include <openssl/crypto.h>
+#include <openssl/lhash.h>
+#include <openssl/buffer.h>
+#include <openssl/bio.h>
+#include <openssl/x509.h>
 
 #define SSL_FILETYPE_ASN1	X509_FILETYPE_ASN1
 #define SSL_FILETYPE_PEM	X509_FILETYPE_PEM
@@ -603,10 +603,10 @@ struct ssl_st
 				 * SSLv3/TLS rolback check */
 	};
 
-#include "ssl2.h"
-#include "ssl3.h"
-#include "tls1.h" /* This is mostly sslv3 with a few tweaks */
-#include "ssl23.h"
+#include <openssl/ssl2.h>
+#include <openssl/ssl3.h>
+#include <openssl/tls1.h> /* This is mostly sslv3 with a few tweaks */
+#include <openssl/ssl23.h>
 
 /* compatablity */
 #define SSL_set_app_data(s,arg)		(SSL_set_ex_data(s,0,(char *)arg))

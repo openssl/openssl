@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
+#include <openssl/evp.h>
 
 #define conv_bin2ascii(a)	(data_bin2ascii[(a)&0x3f])
 #define conv_ascii2bin(a)	(data_ascii2bin[(a)&0x7f])

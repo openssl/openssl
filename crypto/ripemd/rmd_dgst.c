@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "rmd_locl.h"
-#include "opensslv.h"
+#include <openssl/opensslv.h>
 
 char *RMD160_version="RIPE-MD160" OPENSSL_VERSION_PTEXT;
 

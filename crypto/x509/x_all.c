@@ -58,12 +58,12 @@
 
 #include <stdio.h>
 #undef SSLEAY_MACROS
-#include "stack.h"
+#include <openssl/stack.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "asn1.h"
-#include "evp.h"
-#include "x509.h"
+#include <openssl/buffer.h>
+#include <openssl/asn1.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 
 int X509_verify(X509 *a, EVP_PKEY *r)
 	{

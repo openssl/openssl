@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "dsa.h"
-#include "objects.h"
-#include "asn1_mac.h"
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/objects.h>
+#include <openssl/asn1_mac.h>
 
 /*
  * ASN1err(ASN1_F_I2D_DSAPRIVATEKEY,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);

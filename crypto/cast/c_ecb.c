@@ -56,9 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
-#include "cast.h"
+#include <openssl/cast.h>
 #include "cast_lcl.h"
-#include "opensslv.h"
+#include <openssl/opensslv.h>
 
 char *CAST_version="CAST" OPENSSL_VERSION_PTEXT;
 

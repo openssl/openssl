@@ -120,10 +120,10 @@
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "bio.h"
-#include "evp.h"
-#include "rand.h"
+#include <openssl/buffer.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
 
 #ifndef NOPROTO
 static int ok_write(BIO *h,char *buf,int num);

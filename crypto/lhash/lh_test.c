@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "lhash.h"
+#include <openssl/lhash.h>
 
 main()
 	{

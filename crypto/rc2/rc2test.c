@@ -62,7 +62,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "rc2.h"
+#include <openssl/rc2.h>
 
 unsigned char RC2key[4][16]={
 	{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,

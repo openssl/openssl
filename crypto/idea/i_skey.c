@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "idea.h"
+#include <openssl/idea.h>
 #include "idea_lcl.h"
 
 #ifndef NOPROTO

@@ -62,8 +62,8 @@
 extern "C" {
 #endif
 
-#include "bio.h"
-#include "x509.h"
+#include <openssl/bio.h>
+#include <openssl/x509.h>
 
 /* Forward reference */
 struct v3_ext_method;

@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "pkcs12.h"
+#include <openssl/pkcs12.h>
 
 PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 	     STACK *ca, int nid_key, int nid_cert, int iter, int mac_iter,

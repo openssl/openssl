@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <time.h>
-#include "rand.h"
+#include <openssl/rand.h>
 
 #ifdef NO_RAND
 static RAND_METHOD *rand_meth=NULL;

@@ -60,8 +60,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "evp.h"
-#include "crypto.h"
+#include <openssl/evp.h>
+#include <openssl/crypto.h>
 
 #undef PROG
 #define PROG	version_main

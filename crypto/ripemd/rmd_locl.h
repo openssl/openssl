@@ -58,7 +58,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "ripemd.h"
+#include <openssl/ripemd.h>
 
 #define ULONG	unsigned long
 #define UCHAR	unsigned char

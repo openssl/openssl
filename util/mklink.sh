@@ -12,6 +12,15 @@ shift
 
 here=`pwd`
 tmp=`dirname $from`
+prefix='..'
+
+while [ `basename $tmp`x != ..x -a `basename $tmp`x != .x ]
+do
+	prefix=../$prefix
+	tmp=`dirname $tmp`
+done
+
+to=''
 while [ "$tmp"x != "x" -a "$tmp"x != ".x" ]
 do
 	t=`basename $here`
@@ -19,7 +28,7 @@ do
 	to="/$t$to"
 	tmp=`dirname $tmp`
 done
-to=..$to
+to=$prefix$to
 
 if [ "$*"x != "x" ]; then
 	for i in $*

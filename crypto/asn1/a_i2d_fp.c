@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "asn1_mac.h"
+#include <openssl/buffer.h>
+#include <openssl/asn1_mac.h>
 
 #ifndef NO_FP_API
 int ASN1_i2d_fp(int (*i2d)(), FILE *out, unsigned char *x)

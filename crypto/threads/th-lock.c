@@ -74,13 +74,13 @@
 #include <ulocks.h>
 #include <sys/prctl.h>
 #endif
-#include "lhash.h"
-#include "crypto.h"
-#include "buffer.h"
-#include "e_os.h"
-#include "x509.h"
-#include "ssl.h"
-#include "err.h"
+#include <openssl/lhash.h>
+#include <openssl/crypto.h>
+#include <openssl/buffer.h>
+#include <openssl/e_os.h>
+#include <openssl/x509.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #ifndef NOPROTO
 int CRYPTO_thread_setup(void);

@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "tmdiff.h"
+#include <openssl/tmdiff.h>
 #include "bn_lcl.h"
 
 #define SIZE	256

@@ -59,11 +59,11 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1.h"
-#include "asn1_mac.h"
-#include "conf.h"
-#include "x509.h"
-#include "x509v3.h"
+#include <openssl/asn1.h>
+#include <openssl/asn1_mac.h>
+#include <openssl/conf.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 /* Test application to add extensions from a config file */
 

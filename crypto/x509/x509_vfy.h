@@ -63,8 +63,8 @@
 extern "C" {
 #endif
 
-#include "bio.h"
-#include "crypto.h"
+#include <openssl/bio.h>
+#include <openssl/crypto.h>
 
 /* Outer object */
 typedef struct x509_hash_dir_st

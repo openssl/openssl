@@ -60,12 +60,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "buffer.h"
-#include "err.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/buffer.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #undef SIZE
 #undef BSIZE

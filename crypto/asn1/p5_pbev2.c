@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
-#include "rand.h"
+#include <openssl/asn1_mac.h>
+#include <openssl/rand.h>
 
 /* PKCS#5 v2.0 password based encryption structures */
 

@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "conf.h"
-#include "asn1.h"
-#include "asn1_mac.h"
-#include "x509v3.h"
+#include <openssl/conf.h>
+#include <openssl/asn1.h>
+#include <openssl/asn1_mac.h>
+#include <openssl/x509v3.h>
 
 /* Certificate policies extension support: this one is a bit complex... */
 

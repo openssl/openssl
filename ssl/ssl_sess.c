@@ -57,8 +57,8 @@
  */
 
 #include <stdio.h>
-#include "lhash.h"
-#include "rand.h"
+#include <openssl/lhash.h>
+#include <openssl/rand.h>
 #include "ssl_locl.h"
 
 #ifndef NOPROTO

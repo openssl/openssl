@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "buffer.h"
+#include <openssl/buffer.h>
 #include "ssl_locl.h"
 
 #ifndef NO_FP_API

@@ -63,7 +63,7 @@
 extern "C" {
 #endif
 
-#include "bn.h"
+#include <openssl/bn.h>
 	
 #define DH_FLAG_CACHE_MONT_P	0x01
 

@@ -60,12 +60,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "e_os.h"
-#include "bio.h"
-#include "crypto.h"
-#include "x509.h"
-#include "ssl.h"
-#include "err.h"
+#include <openssl/e_os.h>
+#include <openssl/bio.h>
+#include <openssl/crypto.h>
+#include <openssl/x509.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 #ifdef WINDOWS
 #include "../crypto/bio/bss_file.c"
 #endif

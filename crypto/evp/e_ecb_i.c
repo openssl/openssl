@@ -60,8 +60,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
 #ifndef NOPROTO
 static void idea_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,

@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "asn1_mac.h"
+#include <openssl/buffer.h>
+#include <openssl/asn1_mac.h>
 
 #define HEADER_SIZE   8
 

@@ -57,8 +57,8 @@
  */
 
 #include <stdio.h>
-#include "objects.h"
-#include "comp.h"
+#include <openssl/objects.h>
+#include <openssl/comp.h>
 #include "ssl_locl.h"
 
 #define SSL_ENC_DES_IDX		0

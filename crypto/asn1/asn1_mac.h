@@ -63,9 +63,9 @@
 extern "C" {
 #endif
 
-#include "asn1.h"
-#include "x509.h"
-#include "pkcs7.h"
+#include <openssl/asn1.h>
+#include <openssl/x509.h>
+#include <openssl/pkcs7.h>
 
 #ifndef ASN1_MAC_ERR_LIB
 #define ASN1_MAC_ERR_LIB	ERR_LIB_ASN1

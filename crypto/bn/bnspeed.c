@@ -66,8 +66,8 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-#include "crypto.h"
-#include "err.h"
+#include <openssl/crypto.h>
+#include <openssl/err.h>
 
 #ifndef MSDOS
 #define TIMES
@@ -100,8 +100,8 @@ struct tms {
 #include <sys/param.h>
 #endif
 
-#include "bn.h"
-#include "x509.h"
+#include <openssl/bn.h>
+#include <openssl/x509.h>
 
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ

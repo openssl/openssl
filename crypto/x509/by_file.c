@@ -63,10 +63,10 @@
 #include <sys/stat.h>
 
 #include "cryptlib.h"
-#include "lhash.h"
-#include "buffer.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/lhash.h>
+#include <openssl/buffer.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #ifndef NO_STDIO
 

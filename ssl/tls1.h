@@ -59,7 +59,7 @@
 #ifndef HEADER_TLS1_H 
 #define HEADER_TLS1_H 
 
-#include "buffer.h"
+#include <openssl/buffer.h>
 
 #ifdef  __cplusplus
 extern "C" {

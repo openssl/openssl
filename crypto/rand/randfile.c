@@ -62,8 +62,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "e_os.h"
-#include "rand.h"
+#include <openssl/e_os.h>
+#include <openssl/rand.h>
 
 #undef BUFSIZE
 #define BUFSIZE	1024

@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "cryptlib.h"
-#include "buffer.h"
+#include <openssl/buffer.h>
 #include "bn_lcl.h"
 
 const static char *Hex="0123456789ABCDEF";

@@ -60,9 +60,9 @@
 #include <string.h>
 #undef  SHA_0
 #define SHA_1
-#include "sha.h"
+#include <openssl/sha.h>
 #include "sha_locl.h"
-#include "opensslv.h"
+#include <openssl/opensslv.h>
 
 char *SHA1_version="SHA1" OPENSSL_VERSION_PTEXT;
 

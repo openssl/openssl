@@ -62,7 +62,7 @@
 #include <errno.h>
 #define USE_SOCKETS
 #include "cryptlib.h"
-#include "bio.h"
+#include <openssl/bio.h>
 
 #ifndef BIO_FD
 #ifndef NOPROTO

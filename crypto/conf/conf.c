@@ -59,11 +59,11 @@
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
-#include "stack.h"
-#include "lhash.h"
-#include "conf.h"
-#include "buffer.h"
-#include "err.h"
+#include <openssl/stack.h>
+#include <openssl/lhash.h>
+#include <openssl/conf.h>
+#include <openssl/buffer.h>
+#include <openssl/err.h>
 
 #include "conf_lcl.h"
 

@@ -61,9 +61,9 @@
 #ifndef WIN32
 #include <dirent.h>
 #endif
-#include "objects.h"
-#include "bio.h"
-#include "pem.h"
+#include <openssl/objects.h>
+#include <openssl/bio.h>
+#include <openssl/pem.h>
 #include "ssl_locl.h"
 
 int SSL_get_ex_data_X509_STORE_CTX_idx(void)

@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "rsa.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
 int RSA_sign(int type, unsigned char *m, unsigned int m_len,
 	     unsigned char *sigret, unsigned int *siglen, RSA *rsa)

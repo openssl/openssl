@@ -58,9 +58,9 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "rand.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/rand.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
 static int add_attribute(STACK **sk, int nid, int atrtype, char *value);
 static ASN1_TYPE *get_attribute(STACK *sk, int nid);

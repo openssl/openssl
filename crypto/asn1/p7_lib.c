@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
-#include "objects.h"
+#include <openssl/asn1_mac.h>
+#include <openssl/objects.h>
 
 /* ASN1err(ASN1_F_D2I_PKCS7,ASN1_R_BAD_PKCS7_CONTENT);
  * ASN1err(ASN1_F_I2D_PKCS7,ASN1_R_BAD_PKCS7_TYPE);

@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "des.h"
+#include <openssl/des.h>
 
 int main(int argc, char *argv[])
 	{

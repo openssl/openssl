@@ -58,16 +58,16 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "bn.h"
+#include <openssl/buffer.h>
+#include <openssl/bn.h>
 #ifndef NO_RSA
-#include "rsa.h"
+#include <openssl/rsa.h>
 #endif
 #ifndef NO_DH
-#include "dh.h"
+#include <openssl/dh.h>
 #endif
 #ifndef NO_DSA
-#include "dsa.h"
+#include <openssl/dsa.h>
 #endif
 
 /* DHerr(DH_F_DHPARAMS_PRINT,ERR_R_MALLOC_FAILURE);

@@ -64,14 +64,14 @@
 #ifdef NO_STDIO
 #define APPS_WIN16
 #endif
-#include "lhash.h"
-#include "bn.h"
+#include <openssl/lhash.h>
+#include <openssl/bn.h>
 #define USE_SOCKETS
 #include "apps.h"
-#include "err.h"
-#include "pem.h"
-#include "x509.h"
-#include "ssl.h"
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+#include <openssl/ssl.h>
 #include "s_apps.h"
 
 #ifndef NOPROTO

@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "cast.h"
+#include <openssl/cast.h>
 
 #define FULL_TEST
 

@@ -66,7 +66,7 @@ extern "C" {
 #define RC2_ENCRYPT	1
 #define RC2_DECRYPT	0
 
-#include "opensslconf.h" /* RC2_INT */
+#include <openssl/opensslconf.h> /* RC2_INT */
 #define RC2_BLOCK	8
 #define RC2_KEY_LENGTH	16
 

@@ -63,8 +63,8 @@
 #define APPS_WIN16
 #endif
 #include "apps.h"
-#include "err.h"
-#include "ssl.h"
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #undef PROG
 #define PROG	ciphers_main

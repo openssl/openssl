@@ -60,12 +60,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #undef BUFSIZE
 #define BUFSIZE	1024*8

@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "conf.h"
+#include <openssl/conf.h>
 
 void print_conf(CONF_VALUE *cv);
 

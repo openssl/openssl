@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "bn.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/buffer.h>
+#include <openssl/bn.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
 #ifndef NO_FP_API
 int X509_REQ_print_fp(FILE *fp, X509_REQ *x)

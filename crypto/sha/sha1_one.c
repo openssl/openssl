@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "sha.h"
+#include <openssl/sha.h>
 
 unsigned char *SHA1(unsigned char *d, unsigned long n, unsigned char *md)
 	{

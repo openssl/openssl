@@ -59,8 +59,8 @@
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
-#include "evp.h"
-#include "buffer.h"
+#include <openssl/evp.h>
+#include <openssl/buffer.h>
 #include "ssl_locl.h"
 
 /* SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_PEER_ERROR_NO_CIPHER);

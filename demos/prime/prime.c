@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "bn.h"    
+#include <openssl/bn.h>    
 
 void callback(type,num)
 int type,num;

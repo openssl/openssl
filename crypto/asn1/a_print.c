@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1.h"
+#include <openssl/asn1.h>
 
 /* ASN1err(ASN1_F_D2I_ASN1_PRINT_TYPE,ASN1_R_WRONG_PRINTABLE_TYPE);
  * ASN1err(ASN1_F_D2I_ASN1_PRINT_TYPE,ASN1_R_TAG_VALUE_TOO_HIGH);

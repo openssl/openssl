@@ -64,16 +64,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "apps.h"
-#include "conf.h"
-#include "bio.h"
-#include "err.h"
-#include "bn.h"
-#include "txt_db.h"
-#include "evp.h"
-#include "x509.h"
-#include "x509v3.h"
-#include "objects.h"
-#include "pem.h"
+#include <openssl/conf.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/txt_db.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/objects.h>
+#include <openssl/pem.h>
 
 #ifndef W_OK
 #include <sys/file.h>

@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "rc4.h"
+#include <openssl/rc4.h>
 
 unsigned char keys[7][30]={
 	{8,0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef},

@@ -59,8 +59,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cryptlib.h"
-#include "x509.h"
-#include "rand.h"
+#include <openssl/x509.h>
+#include <openssl/rand.h>
 
 /* Extract a private key from a PKCS8 structure */
 

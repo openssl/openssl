@@ -64,8 +64,8 @@ extern "C" {
 #endif
 
 #include <time.h>
-#include "bn.h"
-#include "stack.h"
+#include <openssl/bn.h>
+#include <openssl/stack.h>
 
 #define V_ASN1_UNIVERSAL		0x00
 #define	V_ASN1_APPLICATION		0x40

@@ -75,8 +75,8 @@
 #endif
 
 #include "cryptlib.h"
-#include "buffer.h"
-#include "err.h"
+#include <openssl/buffer.h>
+#include <openssl/err.h>
 #ifndef NO_SYSLOG
 
 

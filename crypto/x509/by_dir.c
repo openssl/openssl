@@ -63,8 +63,8 @@
 #include <sys/stat.h>
 
 #include "cryptlib.h"
-#include "lhash.h"
-#include "x509.h"
+#include <openssl/lhash.h>
+#include <openssl/x509.h>
 
 typedef struct lookup_dir_st
 	{

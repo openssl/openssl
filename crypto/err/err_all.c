@@ -57,30 +57,30 @@
  */
 
 #include <stdio.h>
-#include "asn1.h"
-#include "bn.h"
-#include "buffer.h"
-#include "bio.h"
+#include <openssl/asn1.h>
+#include <openssl/bn.h>
+#include <openssl/buffer.h>
+#include <openssl/bio.h>
 #ifndef NO_RSA
-#include "rsa.h"
+#include <openssl/rsa.h>
 #endif
 #ifdef RSAref
-#include "rsaref.h"
+#include <openssl/rsaref.h>
 #endif
 #ifndef NO_DH
-#include "dh.h"
+#include <openssl/dh.h>
 #endif
 #ifndef NO_DSA
-#include "dsa.h"
+#include <openssl/dsa.h>
 #endif
-#include "evp.h"
-#include "objects.h"
-#include "pem2.h"
-#include "x509.h"
-#include "x509v3.h"
-#include "conf.h"
-#include "pkcs12.h"
-#include "err.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/pem2.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/conf.h>
+#include <openssl/pkcs12.h>
+#include <openssl/err.h>
 
 void ERR_load_crypto_strings(void)
 	{

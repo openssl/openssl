@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
-#include "pkcs12.h"
+#include <openssl/asn1_mac.h>
+#include <openssl/pkcs12.h>
 
 /*
  *ASN1err(ASN1_F_PKCS12_NEW,ASN1_R_DECODE_ERROR)

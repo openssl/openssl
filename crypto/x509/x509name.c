@@ -57,12 +57,12 @@
  */
 
 #include <stdio.h>
-#include "stack.h"
+#include <openssl/stack.h>
 #include "cryptlib.h"
-#include "asn1.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 
 int X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf, int len)
 	{

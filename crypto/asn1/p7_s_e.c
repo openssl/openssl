@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
-#include "x509.h"
+#include <openssl/asn1_mac.h>
+#include <openssl/x509.h>
 
 /*
  * ASN1err(ASN1_F_PKCS7_SIGN_ENVELOPE_NEW,ERR_R_ASN1_LENGTH_MISMATCH);

@@ -60,9 +60,9 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "dsa.h"
-#include "asn1.h"
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/asn1.h>
 
 const char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
 

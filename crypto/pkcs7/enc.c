@@ -56,9 +56,9 @@
  * [including the GNU Public Licence.]
  */
 #include <stdio.h>
-#include "bio.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 main(argc,argv)
 int argc;

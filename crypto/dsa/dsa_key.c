@@ -59,10 +59,10 @@
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
-#include "sha.h"
-#include "bn.h"
-#include "dsa.h"
-#include "rand.h"
+#include <openssl/sha.h>
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/rand.h>
 
 int DSA_generate_key(DSA *dsa)
 	{

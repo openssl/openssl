@@ -63,17 +63,17 @@
 #include <string.h>
 #include <errno.h>
 
-#include "e_os.h"
+#include <openssl/e_os.h>
 
-#include "buffer.h"
-#include "comp.h"
-#include "bio.h"
-#include "crypto.h"
-#include "evp.h"
-#include "stack.h"
-#include "x509.h"
-#include "err.h"
-#include "ssl.h"
+#include <openssl/buffer.h>
+#include <openssl/comp.h>
+#include <openssl/bio.h>
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/stack.h>
+#include <openssl/x509.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #define PKCS1_CHECK
 

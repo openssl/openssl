@@ -58,11 +58,11 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "bn.h"
-#include "objects.h"
-#include "x509.h"
-#include "x509v3.h"
+#include <openssl/buffer.h>
+#include <openssl/bn.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 #ifndef NOPROTO
 static void ext_print(BIO *out, X509_EXTENSION *ex);

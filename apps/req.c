@@ -64,16 +64,16 @@
 #define APPS_WIN16
 #endif
 #include "apps.h"
-#include "bio.h"
-#include "evp.h"
-#include "rand.h"
-#include "conf.h"
-#include "err.h"
-#include "asn1.h"
-#include "x509.h"
-#include "x509v3.h"
-#include "objects.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/conf.h>
+#include <openssl/err.h>
+#include <openssl/asn1.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/objects.h>
+#include <openssl/pem.h>
 
 #define SECTION		"req"
 

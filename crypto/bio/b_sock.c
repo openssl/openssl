@@ -63,7 +63,7 @@
 #include <errno.h>
 #define USE_SOCKETS
 #include "cryptlib.h"
-#include "bio.h"
+#include <openssl/bio.h>
 
 /*	BIOerr(BIO_F_WSASTARTUP,BIO_R_WSASTARTUP ); */
 

@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
+#include <openssl/evp.h>
 
 const char *EVP_version="EVP" OPENSSL_VERSION_PTEXT;
 

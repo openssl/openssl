@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
-#include "pkcs7.h"
+#include <openssl/pkcs7.h>
 
 int add_signed_time(PKCS7_SIGNER_INFO *si)
 	{

@@ -64,40 +64,40 @@ extern "C" {
 #endif
 
 #ifndef NO_MD2
-#include "md2.h"
+#include <openssl/md2.h>
 #endif
 #ifndef NO_MD5
-#include "md5.h"
+#include <openssl/md5.h>
 #endif
 #if !defined(NO_SHA) || !defined(NO_SHA1)
-#include "sha.h"
+#include <openssl/sha.h>
 #endif
 #ifndef NO_RMD160
-#include "ripemd.h"
+#include <openssl/ripemd.h>
 #endif
 #ifndef NO_DES
-#include "des.h"
+#include <openssl/des.h>
 #endif
 #ifndef NO_RC4
-#include "rc4.h"
+#include <openssl/rc4.h>
 #endif
 #ifndef NO_RC2
-#include "rc2.h"
+#include <openssl/rc2.h>
 #endif
 #ifndef NO_RC5
-#include "rc5.h"
+#include <openssl/rc5.h>
 #endif
 #ifndef NO_BLOWFISH
-#include "blowfish.h"
+#include <openssl/blowfish.h>
 #endif
 #ifndef NO_CAST
-#include "cast.h"
+#include <openssl/cast.h>
 #endif
 #ifndef NO_IDEA
-#include "idea.h"
+#include <openssl/idea.h>
 #endif
 #ifndef NO_MDC2
-#include "mdc2.h"
+#include <openssl/mdc2.h>
 #endif
 
 #define EVP_RC2_KEY_SIZE		16
@@ -110,24 +110,24 @@ extern "C" {
 #define EVP_MAX_IV_LENGTH		8
 
 #ifndef NO_RSA
-#include "rsa.h"
+#include <openssl/rsa.h>
 #else
 #define RSA	long
 #endif
 
 #ifndef NO_DSA
-#include "dsa.h"
+#include <openssl/dsa.h>
 #else
 #define DSA	long
 #endif
 
 #ifndef NO_DH
-#include "dh.h"
+#include <openssl/dh.h>
 #else
 #define DH	long
 #endif
 
-#include "objects.h"
+#include <openssl/objects.h>
 
 #define EVP_PK_RSA	0x0001
 #define EVP_PK_DSA	0x0002

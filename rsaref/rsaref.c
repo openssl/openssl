@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "rsa.h"
-#include "rsaref.h"
-#include "rand.h"
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/rsaref.h>
+#include <openssl/rand.h>
 
 /* 
  * RSAREFerr(RSAREF_F_RSA_REF_BN2BIN,RSAREF_R_CONTENT_ENCODING);

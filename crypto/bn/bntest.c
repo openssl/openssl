@@ -59,12 +59,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "e_os.h"
-#include "bio.h"
-#include "bn.h"
-#include "rand.h"
-#include "x509.h"
-#include "err.h"
+#include <openssl/e_os.h>
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/rand.h>
+#include <openssl/x509.h>
+#include <openssl/err.h>
 
 #ifdef WINDOWS
 #include "../bio/bss_file.c"

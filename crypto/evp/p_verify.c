@@ -58,9 +58,9 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
 int EVP_VerifyFinal(EVP_MD_CTX *ctx, unsigned char *sigbuf,
 	     unsigned int siglen, EVP_PKEY *pkey)

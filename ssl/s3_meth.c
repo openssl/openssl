@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "objects.h"
+#include <openssl/objects.h>
 #include "ssl_locl.h"
 
 #ifndef NOPROTO

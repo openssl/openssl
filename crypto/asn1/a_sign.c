@@ -62,11 +62,11 @@
 #include <sys/stat.h>
 
 #include "cryptlib.h"
-#include "bn.h"
-#include "evp.h"
-#include "x509.h"
-#include "objects.h"
-#include "buffer.h"
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/objects.h>
+#include <openssl/buffer.h>
 
 int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
 	     ASN1_BIT_STRING *signature, char *data, EVP_PKEY *pkey,

@@ -65,12 +65,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "apps.h"
-#include "err.h"
-#include "evp.h"
-#include "x509.h"
-#include "pkcs7.h"
-#include "pem.h"
-#include "objects.h"
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pkcs7.h>
+#include <openssl/pem.h>
+#include <openssl/objects.h>
 
 #ifndef NOPROTO
 static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile);

@@ -68,17 +68,17 @@ extern "C" {
 
 /* #ifdef FLAT_INC */
 
-#include "e_os.h"
-#include "crypto.h"
-#include "buffer.h" 
-#include "bio.h" 
-#include "err.h"
+#include <openssl/e_os.h>
+#include <openssl/crypto.h>
+#include <openssl/buffer.h> 
+#include <openssl/bio.h> 
+#include <openssl/err.h>
 
 /*
 #else
 
 #include "../e_os.h"
-#include "crypto.h"
+#include <openssl/crypto.h>
 #include "buffer/buffer.h"
 #include "bio/bio.h"
 #include "err/err.h"

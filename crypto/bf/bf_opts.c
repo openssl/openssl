@@ -98,7 +98,7 @@ struct tms {
 #include <sys/param.h>
 #endif
 
-#include "blowfish.h"
+#include <openssl/blowfish.h>
 
 #define BF_DEFAULT_OPTIONS
 

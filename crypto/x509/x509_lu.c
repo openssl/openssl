@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "lhash.h"
-#include "x509.h"
+#include <openssl/lhash.h>
+#include <openssl/x509.h>
 
 static STACK *x509_store_meth=NULL;
 static STACK *x509_store_ctx_meth=NULL;

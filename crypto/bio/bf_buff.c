@@ -59,8 +59,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
-#include "bio.h"
-#include "evp.h"
+#include <openssl/bio.h>
+#include <openssl/evp.h>
 
 #ifndef NOPROTO
 static int buffer_write(BIO *h,char *buf,int num);

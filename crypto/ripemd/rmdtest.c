@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "ripemd.h"
+#include <openssl/ripemd.h>
 
 char *test[]={
 	"",

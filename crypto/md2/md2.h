@@ -65,7 +65,7 @@ extern "C" {
 
 #define MD2_DIGEST_LENGTH	16
 #define MD2_BLOCK       	16
-#include "opensslconf.h" /* MD2_INT */
+#include <openssl/opensslconf.h> /* MD2_INT */
 
 typedef struct MD2state_st
 	{

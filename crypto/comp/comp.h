@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include "crypto.h"
+#include <openssl/crypto.h>
 
 typedef struct comp_method_st
 	{

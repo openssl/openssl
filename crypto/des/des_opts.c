@@ -98,7 +98,7 @@ struct tms {
 #include <sys/param.h>
 #endif
 
-#include "des.h"
+#include <openssl/des.h>
 #include "spr.h"
 
 #define DES_DEFAULT_OPTIONS

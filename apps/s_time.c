@@ -70,13 +70,13 @@
 #ifdef NO_STDIO
 #define APPS_WIN16
 #endif
-#include "x509.h"
-#include "ssl.h"
-#include "pem.h"
+#include <openssl/x509.h>
+#include <openssl/ssl.h>
+#include <openssl/pem.h>
 #define USE_SOCKETS
 #include "apps.h"
 #include "s_apps.h"
-#include "err.h"
+#include <openssl/err.h>
 #ifdef WIN32_STUFF
 #include "winmain.h"
 #include "wintext.h"

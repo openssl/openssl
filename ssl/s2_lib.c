@@ -57,8 +57,8 @@
  */
 
 #include <stdio.h>
-#include "rsa.h"
-#include "objects.h"
+#include <openssl/rsa.h>
+#include <openssl/objects.h>
 #include "ssl_locl.h"
 
 #ifndef NOPROTO

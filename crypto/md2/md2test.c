@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "md2.h"
+#include <openssl/md2.h>
 
 char *test[]={
 	"",

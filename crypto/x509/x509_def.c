@@ -60,8 +60,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "cryptlib.h"
-#include "crypto.h"
-#include "x509.h"
+#include <openssl/crypto.h>
+#include <openssl/x509.h>
 
 const char *X509_get_default_private_dir(void)
 	{ return(X509_PRIVATE_DIR); }

@@ -60,8 +60,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "cryptlib.h"
-#include "crypto.h"
-#include "x509.h"
+#include <openssl/crypto.h>
+#include <openssl/x509.h>
 
 #ifndef NO_STDIO
 int X509_STORE_set_default_paths(X509_STORE *ctx)

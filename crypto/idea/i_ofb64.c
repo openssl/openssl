@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "idea.h"
+#include <openssl/idea.h>
 #include "idea_lcl.h"
 
 /* The input and output encrypted as though 64bit ofb mode is being

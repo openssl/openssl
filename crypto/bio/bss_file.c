@@ -68,8 +68,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
-#include "bio.h"
-#include "err.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
 
 #if !defined(NO_STDIO)
 

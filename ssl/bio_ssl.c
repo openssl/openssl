@@ -60,10 +60,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "crypto.h"
-#include "bio.h"
-#include "err.h"
-#include "ssl.h"
+#include <openssl/crypto.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #ifndef NOPROTO
 static int ssl_write(BIO *h,char *buf,int num);
