@@ -83,6 +83,10 @@ Note 2: if you want to compile the crypto library only, please make sure
         you have at least done a @MAKEVMS DATE and a @MAKEVMS SOFTLINKS.
         A lot of things will break if you don't.
 
+Note 3: Alpha users will get a number of informational messages when
+        compiling the [.asm]vms.mar file in the BN (bignum) part of
+        the crypto library.  These can be safely ignored.
+
 Test:
 =====
 
@@ -105,6 +109,9 @@ Installation is easy, just do the following:
 <root> is the directory in which everything will be installed,
 subdirectories, libraries, header files, programs and startup command
 procedures.
+
+N.B.: INSTALL.COM builds a new directory structure, different from
+the directory tree where you have now build OpenSSL.
 
 In the [.VMS] subdirectory of the installation, you will find the
 following command procedures:
@@ -216,3 +223,23 @@ for further info.
 -- 
 Richard Levitte <richard@levitte.org>
 1999-03-09
+
+
+TODO:
+=====
+
+There are a few things that need to be worked out in the VMS version of
+OpenSSL, still:
+
+- Description files. ("Makefile's" :-))
+- Script code to link an already compiled build tree.
+- A VMSINSTALlable version (way in the future, unless someone else hacks).
+- shareable images (DLL for you Windows folks).
+
+There may be other things that I have missed and that may be desirable.
+Please send mail to <openssl-users@openssl.org> or to me directly if you
+have any ideas.
+
+--
+Richard Levitte <richard@levitte.org>
+1999-05-24

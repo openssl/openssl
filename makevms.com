@@ -47,6 +47,7 @@ $!	  VAXC	 For VAX C.
 $!	  DECC	 For DEC C.
 $!	  GNUC	 For GNU C.
 $!	  LINK   To only link the programs from existing object files.
+$!               (not yet implemented)
 $!
 $! If you don't speficy a compiler, it will try to determine which
 $! "C" compiler to use.
@@ -669,7 +670,7 @@ $ ELSE
 $!
 $!  Check To See If The User Entered A Valid Paramter.
 $!
-$   IF (P4.EQS."VAXC").OR.(P4.EQS."DECC").OR.(P4.EQS."GNUC").OR.(P4.EQS."LINK")
+$   IF (P4.EQS."VAXC").OR.(P4.EQS."DECC").OR.(P4.EQS."GNUC")!.OR.(P4.EQS."LINK")
 $   THEN
 $!
 $!    Check To See If The User Wanted To Just LINK.
