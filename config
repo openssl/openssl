@@ -311,7 +311,7 @@ else
 fi
 
 if [ "$SYSTEM" = "SunOS" ]; then
-  # assume output is "blah-blah C x.x"
+  # check for WorkShop C, expected output is "cc: blah-blah C x.x"
   CCVER=`(cc -V 2>&1) 2>/dev/null | \
   	egrep -e '^cc: .* C [0-9]\.[0-9]' | \
 	sed 's/.* C \([0-9]\)\.\([0-9]\).*/\1\2/'`
@@ -328,6 +328,19 @@ if [ "$SYSTEM" = "SunOS" ]; then
   fi
 fi
 
+if [ "${SYSTEM}-${MACHINE}" = "Linux-alpha" ]; then
+  # check for Compaq C, expected output is "blah-blah C Vx.x"
+  CCCVER=`(ccc -V 2>&1) 2>/dev/null | \
+	egrep -e '.* C V[0-9]\.[0-9]' | \
+	sed 's/.* C V\([0-9]\)\.\([0-9]\).*/\1\2/'`
+  CCCVER=${CCCVER:-0}
+  if [ $CCCVER -gt 60 ]; then
+    CC=ccc	# overrides gcc!!! well, ccc outperforms inoticeably
+		# only on hash routines and des, otherwise gcc (2.95)
+		# keeps along rather tight...
+  fi
+fi
+
 GCCVER=${GCCVER:-0}
 CCVER=${CCVER:-0}
 
@@ -340,9 +353,6 @@ echo Operating system: $GUESSOS
 # script above so we end up with values in vars but that would take
 # more time that I want to waste at the moment
 case "$GUESSOS" in
-  alpha-*-linux2) OUT="alpha-gcc" ;;
-  ppc-*-linux2) OUT="linux-ppc" ;;
-  mips-*-linux?) OUT="linux-mips" ;;
   mips2-sgi-irix)
 	CPU=`(hinv -t cpu) 2>/dev/null | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
 	CPU=${CPU:-0}
@@ -369,6 +379,22 @@ case "$GUESSOS" in
 	options="$options -mips4"
 	OUT="irix-mips3-$CC"
 	;;
+  alpha-*-linux2)
+        ISA=`awk '/cpu model/{print$4}' /proc/cpuinfo`
+	case ${ISA:-generic} in
+	*[67])	OUT="linux-alpha+bwx-$CC" ;;
+	*)	OUT="linux-alpha-$CC" ;;
+	esac
+	if [ "$CC" = "gcc" ]; then
+	    case ${ISA:-generic} in
+	    EV5|EV45)		options="$options -mcpu=ev5";;
+	    EV56|PCA56)		options="$options -mcpu=ev56";;
+	    EV6|EV67|PCA57)	options="$options -mcpu=ev6";;
+	    esac
+	fi
+	;;
+  mips-*-linux?) OUT="linux-mips" ;;
+  ppc-*-linux2) OUT="linux-ppc" ;;
   sparc64-*-linux2)
 	#Before we can uncomment following lines we have to wait at least
 	#till 64-bit glibc for SPARC is operational:-(

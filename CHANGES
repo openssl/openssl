@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Enhanced support for Alpha Linux is added. Now ./config checks if
+     the host supports BWX extension and if Compaq C is present on the
+     $PATH. Just exploiting of the BWX extention results in 20-30%
+     performance kick for some algorithms, e.g. DES and RC4 to mention
+     a couple. Compaq C in turn generates ~20% faster code for MD5 and
+     SHA1.
+     [Andy Polyakov]
+
   *) Add support for MS "fast SGC". This is arguably a violation of the
      SSL3/TLS protocol. Netscape SGC does two handshakes: the first with
      weak crypto and after checking the certificate is SGC a second one
