@@ -196,7 +196,7 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-whatever-bsdi"; exit 0
 	;;
 
-    FreeBSD:*)
+    FreeBSD:*:*:*386*)
         VERS=`echo ${RELEASE} | sed -e 's/[-(].*//'`
         MACH=`sysctl -n hw.model`
         ARCH='whatever'
@@ -205,7 +205,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
            *486*       ) MACH="i486"     ;;
            Pentium\ II*) MACH="i686"     ;;
            Pentium*    ) MACH="i586"     ;;
-           Alpha*      ) MACH="alpha"    ;;
            *           ) MACH="$MACHINE" ;;
         esac
         case ${MACH} in
@@ -213,6 +212,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
         esac
         echo "${MACH}-${ARCH}-freebsd${VERS}"; exit 0
         ;;
+
+    FreeBSD:*)
+	echo "${MACHINE}-whatever-freebsd"; exit 0
+	;;
 
     NetBSD:*:*:*386*)
         echo "`(/usr/sbin/sysctl -n hw.model || /sbin/sysctl -n hw.model) | sed 's,.*\(.\)86-class.*,i\186,'`-whatever-netbsd"; exit 0
@@ -640,6 +643,7 @@ EOF
   *86*-*-solaris2) OUT="solaris-x86-$CC" ;;
   *-*-sunos4) OUT="sunos-$CC" ;;
   alpha*-*-freebsd*) OUT="FreeBSD-alpha" ;;
+  sparc64-*-freebsd*) OUT="FreeBSD-sparc64" ;;
   *-freebsd[3-9]*) OUT="FreeBSD-elf" ;;
   *-freebsd[1-2]*) OUT="FreeBSD" ;;
   *86*-*-netbsd) OUT="NetBSD-x86" ;;

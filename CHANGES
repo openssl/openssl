@@ -352,7 +352,10 @@ TODO: bug: pad  x  with leading zeros if necessary
  
  Changes between 0.9.7 and 0.9.7a  [XX xxx 2003]
 
-  *) 
+  *) Add support for FreeBSD on sparc64.  As a consequence, support for
+     FreeBSD on non-x86 processors is separate from x86 processors on
+     the config script, much like the NetBSD support.
+     [Richard Levitte & Kris Kennaway <kris@obsecurity.org>]
 
  Changes between 0.9.6h and 0.9.7  [31 Dec 2002]
 
