@@ -12,7 +12,7 @@
       o Source cleanups: const correctness, type-safe stacks and ASN.1 SETs
       o Source tree cleanups: removed lots of obsolete files
       o Thawte SXNet, certificate policies and CRL distribution points
-	 extension support
+        extension support
       o Preliminary (experimental) S/MIME support
       o Support for ASN.1 UTF8String and VisibleString
       o Full integration of PKCS#12 code
