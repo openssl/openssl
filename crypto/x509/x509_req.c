@@ -156,9 +156,9 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
 	for(i = 0; i < sk_X509_ATTRIBUTE_num(sk); i++) {
 		attr = sk_X509_ATTRIBUTE_value(sk, i);
 		if(X509_REQ_extension_nid(OBJ_obj2nid(attr->object))) {
-			if(attr->set && sk_ASN1_TYPE_num(attr->value.set))
+			if(attr->single) ext = attr->value.single;
+			else if(sk_ASN1_TYPE_num(attr->value.set))
 				ext = sk_ASN1_TYPE_value(attr->value.set, 0);
-			else ext = attr->value.single;
 			break;
 		}
 	}
@@ -199,7 +199,7 @@ int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
 	if(!(attr->value.set = sk_ASN1_TYPE_new_null())) goto err;
 	if(!sk_ASN1_TYPE_push(attr->value.set, at)) goto err;
 	at = NULL;
-	attr->set = 1;
+	attr->single = 0;
 	attr->object = OBJ_nid2obj(nid);
 	if(!sk_X509_ATTRIBUTE_push(req->req_info->attributes, attr)) goto err;
 	return 1;

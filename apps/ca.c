@@ -1201,7 +1201,7 @@ bad:
 				if (!a2i_ASN1_INTEGER(hex,r->serialNumber,
 					buf[0],BSIZE)) goto err;
 
-				sk_X509_REVOKED_push(ci->revoked,r);
+				X509_CRL_add0_revoked(crl,r);
 				}
 			}
 		/* sort the data so it will be written in serial

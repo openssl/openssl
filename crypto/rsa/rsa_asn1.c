@@ -1,9 +1,9 @@
-/* a_null.c */
+/* rsa_asn1.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+ * project 2000.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,62 +58,54 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/asn1.h>
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/asn1t.h>
 
-/* ASN1 functions for NULL type. For compatibility with other ASN1 code
- * it returns a pointer to an "ASN1_NULL" structure. The new/free functions
- * don't need to do any allocating because nothing is stored in a NULL.
- */
+static ASN1_METHOD method={
+        (int (*)())  i2d_RSAPrivateKey,
+        (char *(*)())d2i_RSAPrivateKey,
+        (char *(*)())RSA_new,
+        (void (*)()) RSA_free};
 
-int i2d_ASN1_NULL(ASN1_NULL *a, unsigned char **pp)
+ASN1_METHOD *RSAPrivateKey_asn1_meth(void)
 	{
-	if(!a) return 0;
-	if (pp) ASN1_put_object(pp,0,0,V_ASN1_NULL,V_ASN1_UNIVERSAL);
-	return 2;
+	return(&method);
 	}
 
-ASN1_NULL *d2i_ASN1_NULL(ASN1_NULL **a, unsigned char **pp, long length)
-	{
-	ASN1_NULL *ret = NULL;
-	unsigned char *p;
-	long len;
-	int inf,tag,xclass;
-	int i=0;
-
-	p= *pp;
-	inf=ASN1_get_object(&p,&len,&tag,&xclass,length);
-	if (inf & 0x80)
-		{
-		i=ASN1_R_BAD_OBJECT_HEADER;
-		goto err;
-		}
-
-	if (tag != V_ASN1_NULL)
-		{
-		i=ASN1_R_EXPECTING_A_NULL;
-		goto err;
-		}
-
-	if (len != 0)
-		{
-		i=ASN1_R_NULL_IS_WRONG_LENGTH;
-		goto err;
-		}
-	ret=(ASN1_NULL *)1;
-	if (a != NULL) (*a)=ret;
-	*pp=p;
-	return(ret);
-err:
-	ASN1err(ASN1_F_D2I_ASN1_NULL,i);
-	return(ret);
+/* Override the default free and new methods */
+static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+	if(operation == ASN1_OP_NEW_PRE) {
+		*pval = (ASN1_VALUE *)RSA_new();
+		if(*pval) return 2;
+		return 0;
+	} else if(operation == ASN1_OP_FREE_PRE) {
+		RSA_free((RSA *)*pval);
+		*pval = NULL;
+		return 2;
 	}
-
-ASN1_NULL *ASN1_NULL_new(void)
-{
-	return (ASN1_NULL *)1;
+	return 1;
 }
 
-void ASN1_NULL_free(ASN1_NULL *a)
-{
-	return;
-}
+ASN1_SEQUENCE_cb(RSAPrivateKey, rsa_cb) = {
+	ASN1_SIMPLE(RSA, version, LONG),
+	ASN1_SIMPLE(RSA, n, BIGNUM),
+	ASN1_SIMPLE(RSA, e, BIGNUM),
+	ASN1_SIMPLE(RSA, d, BIGNUM),
+	ASN1_SIMPLE(RSA, p, BIGNUM),
+	ASN1_SIMPLE(RSA, q, BIGNUM),
+	ASN1_SIMPLE(RSA, dmp1, BIGNUM),
+	ASN1_SIMPLE(RSA, dmq1, BIGNUM),
+	ASN1_SIMPLE(RSA, iqmp, BIGNUM)
+} ASN1_SEQUENCE_END_cb(RSA, RSAPrivateKey);
+
+
+ASN1_SEQUENCE_cb(RSAPublicKey, rsa_cb) = {
+	ASN1_SIMPLE(RSA, n, BIGNUM),
+	ASN1_SIMPLE(RSA, e, BIGNUM),
+} ASN1_SEQUENCE_END_cb(RSA, RSAPublicKey);
+
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(RSA, RSAPrivateKey, RSAPrivateKey)
+
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(RSA, RSAPublicKey, RSAPublicKey)

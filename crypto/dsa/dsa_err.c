@@ -79,6 +79,7 @@ static ERR_STRING_DATA DSA_str_functs[]=
 {ERR_PACK(0,DSA_F_DSA_SIG_NEW,0),	"DSA_SIG_new"},
 {ERR_PACK(0,DSA_F_DSA_VERIFY,0),	"DSA_verify"},
 {ERR_PACK(0,DSA_F_I2D_DSA_SIG,0),	"i2d_DSA_SIG"},
+{ERR_PACK(0,DSA_F_SIG_CB,0),	"SIG_CB"},
 {0,NULL}
 	};
 

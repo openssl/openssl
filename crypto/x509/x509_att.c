@@ -283,7 +283,7 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, void *data, int
 	if(!(attr->value.set = sk_ASN1_TYPE_new_null())) goto err;
 	if(!(ttmp = ASN1_TYPE_new())) goto err;
 	if(!sk_ASN1_TYPE_push(attr->value.set, ttmp)) goto err;
-	attr->set = 1;
+	attr->single = 0;
 	ASN1_TYPE_set(ttmp, atype, stmp);
 	return 1;
 	err:
@@ -293,7 +293,7 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, void *data, int
 
 int X509_ATTRIBUTE_count(X509_ATTRIBUTE *attr)
 {
-	if(attr->set) return sk_ASN1_TYPE_num(attr->value.set);
+	if(!attr->single) return sk_ASN1_TYPE_num(attr->value.set);
 	if(attr->value.single) return 1;
 	return 0;
 }
@@ -321,6 +321,6 @@ ASN1_TYPE *X509_ATTRIBUTE_get0_type(X509_ATTRIBUTE *attr, int idx)
 {
 	if (attr == NULL) return(NULL);
 	if(idx >= X509_ATTRIBUTE_count(attr)) return NULL;
-	if(attr->set) return sk_ASN1_TYPE_value(attr->value.set, idx);
+	if(!attr->single) return sk_ASN1_TYPE_value(attr->value.set, idx);
 	else return attr->value.single;
 }

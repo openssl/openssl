@@ -261,7 +261,7 @@ static void x509v3_cache_extensions(X509 *x)
 	BASIC_CONSTRAINTS *bs;
 	ASN1_BIT_STRING *usage;
 	ASN1_BIT_STRING *ns;
-	STACK_OF(ASN1_OBJECT) *extusage;
+	EXTENDED_KEY_USAGE *extusage;
 	
 	int i;
 	if(x->ex_flags & EXFLAG_SET) return;
@@ -511,7 +511,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
 			 * There may be more than one but we only take any
 			 * notice of the first.
 			 */
-			STACK_OF(GENERAL_NAME) *gens;
+			GENERAL_NAMES *gens;
 			GENERAL_NAME *gen;
 			X509_NAME *nm = NULL;
 			int i;

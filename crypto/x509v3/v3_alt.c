@@ -61,10 +61,10 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-static STACK_OF(GENERAL_NAME) *v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
-static STACK_OF(GENERAL_NAME) *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
-static int copy_email(X509V3_CTX *ctx, STACK_OF(GENERAL_NAME) *gens);
-static int copy_issuer(X509V3_CTX *ctx, STACK_OF(GENERAL_NAME) *gens);
+static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
+static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
+static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens);
+static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
 X509V3_EXT_METHOD v3_alt[] = {
 { NID_subject_alt_name, 0,
 (X509V3_EXT_NEW)GENERAL_NAMES_new,
@@ -87,7 +87,7 @@ NULL, NULL, NULL},
 };
 
 STACK_OF(CONF_VALUE) *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method,
-		STACK_OF(GENERAL_NAME) *gens, STACK_OF(CONF_VALUE) *ret)
+		GENERAL_NAMES *gens, STACK_OF(CONF_VALUE) *ret)
 {
 	int i;
 	GENERAL_NAME *gen;
@@ -154,10 +154,10 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 	return ret;
 }
 
-static STACK_OF(GENERAL_NAME) *v2i_issuer_alt(X509V3_EXT_METHOD *method,
+static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
 				 X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 {
-	STACK_OF(GENERAL_NAME) *gens = NULL;
+	GENERAL_NAMES *gens = NULL;
 	CONF_VALUE *cnf;
 	int i;
 	if(!(gens = sk_GENERAL_NAME_new_null())) {
@@ -184,9 +184,9 @@ static STACK_OF(GENERAL_NAME) *v2i_issuer_alt(X509V3_EXT_METHOD *method,
 
 /* Append subject altname of issuer to issuer alt name of subject */
 
-static int copy_issuer(X509V3_CTX *ctx, STACK_OF(GENERAL_NAME) *gens)
+static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
 {
-	STACK_OF(GENERAL_NAME) *ialt;
+	GENERAL_NAMES *ialt;
 	GENERAL_NAME *gen;
 	X509_EXTENSION *ext;
 	int i;
@@ -219,10 +219,10 @@ static int copy_issuer(X509V3_CTX *ctx, STACK_OF(GENERAL_NAME) *gens)
 	
 }
 
-static STACK_OF(GENERAL_NAME) *v2i_subject_alt(X509V3_EXT_METHOD *method,
+static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
 				 X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 {
-	STACK_OF(GENERAL_NAME) *gens = NULL;
+	GENERAL_NAMES *gens = NULL;
 	CONF_VALUE *cnf;
 	int i;
 	if(!(gens = sk_GENERAL_NAME_new_null())) {
@@ -251,7 +251,7 @@ static STACK_OF(GENERAL_NAME) *v2i_subject_alt(X509V3_EXT_METHOD *method,
  * GENERAL_NAMES
  */
 
-static int copy_email(X509V3_CTX *ctx, STACK_OF(GENERAL_NAME) *gens)
+static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens)
 {
 	X509_NAME *nm;
 	ASN1_IA5STRING *email = NULL;
@@ -297,11 +297,11 @@ static int copy_email(X509V3_CTX *ctx, STACK_OF(GENERAL_NAME) *gens)
 	
 }
 
-STACK_OF(GENERAL_NAME) *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method,
+GENERAL_NAMES *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method,
 				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 {
 	GENERAL_NAME *gen;
-	STACK_OF(GENERAL_NAME) *gens = NULL;
+	GENERAL_NAMES *gens = NULL;
 	CONF_VALUE *cnf;
 	int i;
 	if(!(gens = sk_GENERAL_NAME_new_null())) {

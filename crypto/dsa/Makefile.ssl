@@ -81,7 +81,7 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-dsa_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
+dsa_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 dsa_asn1.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 dsa_asn1.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dsa_asn1.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h

@@ -22,12 +22,12 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= p12_add.c p12_attr.c p12_bags.c p12_crpt.c p12_crt.c p12_decr.c \
-	p12_init.c p12_key.c p12_kiss.c p12_lib.c p12_mac.c p12_mutl.c\
-	p12_sbag.c p12_utl.c p12_npas.c pk12err.c
-LIBOBJ= p12_add.o p12_attr.o p12_bags.o p12_crpt.o p12_crt.o p12_decr.o \
-	p12_init.o p12_key.o p12_kiss.o p12_lib.o p12_mac.o p12_mutl.o\
-	p12_sbag.o p12_utl.o p12_npas.o pk12err.o
+LIBSRC= p12_add.c p12_asn.c p12_attr.c p12_crpt.c p12_crt.c p12_decr.c \
+	p12_init.c p12_key.c p12_kiss.c p12_mutl.c\
+	p12_utl.c p12_npas.c pk12err.c
+LIBOBJ= p12_add.o p12_asn.o p12_attr.o p12_crpt.o p12_crt.o p12_decr.o \
+	p12_init.o p12_key.o p12_kiss.o p12_mutl.o\
+	p12_utl.o p12_npas.o pk12err.o
 
 SRC= $(LIBSRC)
 
@@ -105,6 +105,27 @@ p12_add.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 p12_add.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 p12_add.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 p12_add.o: ../../include/openssl/x509_vfy.h ../cryptlib.h
+p12_asn.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+p12_asn.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
+p12_asn.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+p12_asn.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
+p12_asn.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+p12_asn.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+p12_asn.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+p12_asn.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+p12_asn.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
+p12_asn.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
+p12_asn.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
+p12_asn.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+p12_asn.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs12.h
+p12_asn.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
+p12_asn.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+p12_asn.o: ../../include/openssl/rd_fst.h ../../include/openssl/rijndael.h
+p12_asn.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+p12_asn.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+p12_asn.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+p12_asn.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+p12_asn.o: ../cryptlib.h
 p12_attr.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 p12_attr.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 p12_attr.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -126,27 +147,6 @@ p12_attr.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 p12_attr.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 p12_attr.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 p12_attr.o: ../cryptlib.h
-p12_bags.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
-p12_bags.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
-p12_bags.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-p12_bags.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
-p12_bags.o: ../../include/openssl/des.h ../../include/openssl/dh.h
-p12_bags.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
-p12_bags.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-p12_bags.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
-p12_bags.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
-p12_bags.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
-p12_bags.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
-p12_bags.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-p12_bags.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs12.h
-p12_bags.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
-p12_bags.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
-p12_bags.o: ../../include/openssl/rd_fst.h ../../include/openssl/rijndael.h
-p12_bags.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
-p12_bags.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-p12_bags.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-p12_bags.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-p12_bags.o: ../cryptlib.h
 p12_crpt.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 p12_crpt.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 p12_crpt.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -271,48 +271,6 @@ p12_kiss.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 p12_kiss.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 p12_kiss.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 p12_kiss.o: ../cryptlib.h
-p12_lib.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
-p12_lib.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
-p12_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-p12_lib.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
-p12_lib.o: ../../include/openssl/des.h ../../include/openssl/dh.h
-p12_lib.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
-p12_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-p12_lib.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
-p12_lib.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
-p12_lib.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
-p12_lib.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
-p12_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-p12_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs12.h
-p12_lib.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
-p12_lib.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
-p12_lib.o: ../../include/openssl/rd_fst.h ../../include/openssl/rijndael.h
-p12_lib.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
-p12_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-p12_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-p12_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-p12_lib.o: ../cryptlib.h
-p12_mac.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
-p12_mac.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
-p12_mac.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-p12_mac.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
-p12_mac.o: ../../include/openssl/des.h ../../include/openssl/dh.h
-p12_mac.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
-p12_mac.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-p12_mac.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
-p12_mac.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
-p12_mac.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
-p12_mac.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
-p12_mac.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-p12_mac.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs12.h
-p12_mac.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
-p12_mac.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
-p12_mac.o: ../../include/openssl/rd_fst.h ../../include/openssl/rijndael.h
-p12_mac.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
-p12_mac.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-p12_mac.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-p12_mac.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-p12_mac.o: ../cryptlib.h
 p12_mutl.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 p12_mutl.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 p12_mutl.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -354,27 +312,6 @@ p12_npas.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 p12_npas.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 p12_npas.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 p12_npas.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-p12_sbag.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
-p12_sbag.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
-p12_sbag.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-p12_sbag.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
-p12_sbag.o: ../../include/openssl/des.h ../../include/openssl/dh.h
-p12_sbag.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
-p12_sbag.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-p12_sbag.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
-p12_sbag.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
-p12_sbag.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
-p12_sbag.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
-p12_sbag.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-p12_sbag.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs12.h
-p12_sbag.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
-p12_sbag.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
-p12_sbag.o: ../../include/openssl/rd_fst.h ../../include/openssl/rijndael.h
-p12_sbag.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
-p12_sbag.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-p12_sbag.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-p12_sbag.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-p12_sbag.o: ../cryptlib.h
 p12_utl.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 p12_utl.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 p12_utl.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h

@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/asn1.h>
-#include <openssl/asn1_mac.h>
+#include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
 /* Support for Thawte strong extranet extension */
@@ -90,94 +90,19 @@ NULL,
 NULL
 };
 
+ASN1_SEQUENCE(SXNETID) = {
+	ASN1_SIMPLE(SXNETID, zone, ASN1_INTEGER),
+	ASN1_SIMPLE(SXNETID, user, ASN1_OCTET_STRING)
+} ASN1_SEQUENCE_END(SXNETID);
 
-int i2d_SXNET(SXNET *a, unsigned char **pp)
-{
-	M_ASN1_I2D_vars(a);
+IMPLEMENT_ASN1_FUNCTIONS(SXNETID)
 
-	M_ASN1_I2D_len (a->version, i2d_ASN1_INTEGER);
-	M_ASN1_I2D_len_SEQUENCE_type (SXNETID, a->ids, i2d_SXNETID);
+ASN1_SEQUENCE(SXNET) = {
+	ASN1_SIMPLE(SXNET, version, ASN1_INTEGER),
+	ASN1_SEQUENCE_OF(SXNET, ids, SXNETID)
+} ASN1_SEQUENCE_END(SXNET);
 
-	M_ASN1_I2D_seq_total();
-
-	M_ASN1_I2D_put (a->version, i2d_ASN1_INTEGER);
-	M_ASN1_I2D_put_SEQUENCE_type (SXNETID, a->ids, i2d_SXNETID);
-
-	M_ASN1_I2D_finish();
-}
-
-SXNET *SXNET_new(void)
-{
-	SXNET *ret=NULL;
-	ASN1_CTX c;
-	M_ASN1_New_Malloc(ret, SXNET);
-	M_ASN1_New(ret->version,M_ASN1_INTEGER_new);
-	M_ASN1_New(ret->ids,sk_SXNETID_new_null);
-	return (ret);
-	M_ASN1_New_Error(ASN1_F_SXNET_NEW);
-}
-
-SXNET *d2i_SXNET(SXNET **a, unsigned char **pp, long length)
-{
-	M_ASN1_D2I_vars(a,SXNET *,SXNET_new);
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get (ret->version, d2i_ASN1_INTEGER);
-	M_ASN1_D2I_get_seq_type (SXNETID, ret->ids, d2i_SXNETID, SXNETID_free);
-	M_ASN1_D2I_Finish(a, SXNET_free, ASN1_F_D2I_SXNET);
-}
-
-void SXNET_free(SXNET *a)
-{
-	if (a == NULL) return;
-	M_ASN1_INTEGER_free(a->version);
-	sk_SXNETID_pop_free(a->ids, SXNETID_free);
-	OPENSSL_free (a);
-}
-
-int i2d_SXNETID(SXNETID *a, unsigned char **pp)
-{
-	M_ASN1_I2D_vars(a);
-
-	M_ASN1_I2D_len (a->zone, i2d_ASN1_INTEGER);
-	M_ASN1_I2D_len (a->user, i2d_ASN1_OCTET_STRING);
-
-	M_ASN1_I2D_seq_total();
-
-	M_ASN1_I2D_put (a->zone, i2d_ASN1_INTEGER);
-	M_ASN1_I2D_put (a->user, i2d_ASN1_OCTET_STRING);
-
-	M_ASN1_I2D_finish();
-}
-
-SXNETID *SXNETID_new(void)
-{
-	SXNETID *ret=NULL;
-	ASN1_CTX c;
-	M_ASN1_New_Malloc(ret, SXNETID);
-	ret->zone = NULL;
-	M_ASN1_New(ret->user,M_ASN1_OCTET_STRING_new);
-	return (ret);
-	M_ASN1_New_Error(ASN1_F_SXNETID_NEW);
-}
-
-SXNETID *d2i_SXNETID(SXNETID **a, unsigned char **pp, long length)
-{
-	M_ASN1_D2I_vars(a,SXNETID *,SXNETID_new);
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(ret->zone, d2i_ASN1_INTEGER);
-	M_ASN1_D2I_get(ret->user, d2i_ASN1_OCTET_STRING);
-	M_ASN1_D2I_Finish(a, SXNETID_free, ASN1_F_D2I_SXNETID);
-}
-
-void SXNETID_free(SXNETID *a)
-{
-	if (a == NULL) return;
-	M_ASN1_INTEGER_free(a->zone);
-	M_ASN1_OCTET_STRING_free(a->user);
-	OPENSSL_free (a);
-}
+IMPLEMENT_ASN1_FUNCTIONS(SXNET)
 
 static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
 	     int indent)

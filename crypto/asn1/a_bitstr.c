@@ -60,26 +60,8 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
-ASN1_BIT_STRING *ASN1_BIT_STRING_new(void)
-{ return M_ASN1_BIT_STRING_new(); }
-
-void ASN1_BIT_STRING_free(ASN1_BIT_STRING *x)
-{ M_ASN1_BIT_STRING_free(x); }
-
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
 { return M_ASN1_BIT_STRING_set(x, d, len); }
-
-int i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
-{
-	int len, ret;
-	len = i2c_ASN1_BIT_STRING(a, NULL);	
-	ret=ASN1_object_size(0,len,V_ASN1_BIT_STRING);
-	if(pp) {
-		ASN1_put_object(pp,0,len,V_ASN1_BIT_STRING,V_ASN1_UNIVERSAL);
-		i2c_ASN1_BIT_STRING(a, pp);	
-	}
-	return ret;
-}
 
 int i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	{
@@ -128,40 +110,6 @@ int i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	*pp=p;
 	return(ret);
 	}
-
-
-/* Convert DER encoded ASN1 BIT_STRING to ASN1_BIT_STRING structure */
-ASN1_BIT_STRING *d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, unsigned char **pp,
-	     long length)
-{
-	unsigned char *p;
-	long len;
-	int i;
-	int inf,tag,xclass;
-	ASN1_BIT_STRING *ret;
-
-	p= *pp;
-	inf=ASN1_get_object(&p,&len,&tag,&xclass,length);
-	if (inf & 0x80)
-		{
-		i=ASN1_R_BAD_OBJECT_HEADER;
-		goto err;
-		}
-
-	if (tag != V_ASN1_BIT_STRING)
-		{
-		i=ASN1_R_EXPECTING_A_BIT_STRING;
-		goto err;
-		}
-	if (len < 1) { i=ASN1_R_STRING_TOO_SHORT; goto err; }
-	ret = c2i_ASN1_BIT_STRING(a, &p, len);
-	if(ret) *pp = p;
-	return ret;
-err:
-	ASN1err(ASN1_F_D2I_ASN1_BIT_STRING,i);
-	return(NULL);
-
-}
 
 ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, unsigned char **pp,
 	     long len)

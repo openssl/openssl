@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Merge in replacement ASN1 code from the ASN1 branch. This almost
+     completely replaces the old ASN1 functionality.
+     [Steve Henson]
+
   *) Change BN_mod_exp_recp so that negative moduli are tolerated
      (the sign is ignored).  Similarly, ignore the sign in BN_MONT_CTX_set
      so that BN_mod_exp_mont and BN_mod_exp_mont_word work

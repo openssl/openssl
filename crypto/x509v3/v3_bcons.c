@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/asn1.h>
-#include <openssl/asn1_mac.h>
+#include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
@@ -80,51 +80,13 @@ NULL,NULL,
 NULL
 };
 
+ASN1_SEQUENCE(BASIC_CONSTRAINTS) = {
+	ASN1_OPT(BASIC_CONSTRAINTS, ca, ASN1_FBOOLEAN),
+	ASN1_OPT(BASIC_CONSTRAINTS, pathlen, ASN1_INTEGER)
+} ASN1_SEQUENCE_END(BASIC_CONSTRAINTS);
 
-int i2d_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS *a, unsigned char **pp)
-{
-	M_ASN1_I2D_vars(a);
-	if(a->ca) M_ASN1_I2D_len (a->ca, i2d_ASN1_BOOLEAN);
-	M_ASN1_I2D_len (a->pathlen, i2d_ASN1_INTEGER);
+IMPLEMENT_ASN1_FUNCTIONS(BASIC_CONSTRAINTS)
 
-	M_ASN1_I2D_seq_total();
-
-	if (a->ca) M_ASN1_I2D_put (a->ca, i2d_ASN1_BOOLEAN);
-	M_ASN1_I2D_put (a->pathlen, i2d_ASN1_INTEGER);
-	M_ASN1_I2D_finish();
-}
-
-BASIC_CONSTRAINTS *BASIC_CONSTRAINTS_new(void)
-{
-	BASIC_CONSTRAINTS *ret=NULL;
-	ASN1_CTX c;
-	M_ASN1_New_Malloc(ret, BASIC_CONSTRAINTS);
-	ret->ca = 0;
-	ret->pathlen = NULL;
-	return (ret);
-	M_ASN1_New_Error(ASN1_F_BASIC_CONSTRAINTS_NEW);
-}
-
-BASIC_CONSTRAINTS *d2i_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS **a,
-	     unsigned char **pp, long length)
-{
-	M_ASN1_D2I_vars(a,BASIC_CONSTRAINTS *,BASIC_CONSTRAINTS_new);
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	if((M_ASN1_next & (~V_ASN1_CONSTRUCTED)) ==
-		 (V_ASN1_UNIVERSAL|V_ASN1_BOOLEAN) ) {
-			M_ASN1_D2I_get_int (ret->ca, d2i_ASN1_BOOLEAN);
-	}
-	M_ASN1_D2I_get_opt (ret->pathlen, d2i_ASN1_INTEGER, V_ASN1_INTEGER);
-	M_ASN1_D2I_Finish(a, BASIC_CONSTRAINTS_free, ASN1_F_D2I_BASIC_CONSTRAINTS);
-}
-
-void BASIC_CONSTRAINTS_free(BASIC_CONSTRAINTS *a)
-{
-	if (a == NULL) return;
-	M_ASN1_INTEGER_free (a->pathlen);
-	OPENSSL_free (a);
-}
 
 static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
 	     BASIC_CONSTRAINTS *bcons, STACK_OF(CONF_VALUE) *extlist)

@@ -59,64 +59,41 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/objects.h>
-#include <openssl/asn1_mac.h>
+#include <openssl/asn1t.h>
 #include <openssl/x509.h>
 
-/* sequence */
-int i2d_X509_ATTRIBUTE(X509_ATTRIBUTE *a, unsigned char **pp)
-	{
-	int k=0;
-	int r=0,ret=0;
-	unsigned char **p=NULL;
+/* X509_ATTRIBUTE: this has the following form:
+ *
+ * typedef struct x509_attributes_st
+ *	{
+ *	ASN1_OBJECT *object;
+ *	int single;
+ *	union	{
+ *		char		*ptr;
+ * 		STACK_OF(ASN1_TYPE) *set;
+ * 		ASN1_TYPE	*single;
+ *		} value;
+ *	} X509_ATTRIBUTE;
+ *
+ * this needs some extra thought because the CHOICE type is
+ * merged with the main structure and because the value can
+ * be anything at all we *must* try the SET OF first because
+ * the ASN1_ANY type will swallow anything including the whole
+ * SET OF structure.
+ */
 
-	if (a == NULL) return(0);
+ASN1_CHOICE(X509_ATTRIBUTE_SET) = {
+	ASN1_SET_OF(X509_ATTRIBUTE, value.set, ASN1_ANY),
+	ASN1_SIMPLE(X509_ATTRIBUTE, value.single, ASN1_ANY)
+} ASN1_CHOICE_END_selector(X509_ATTRIBUTE, X509_ATTRIBUTE_SET, single);
 
-	p=NULL;
-	for (;;)
-		{
-		if (k)
-			{
-			r=ASN1_object_size(1,ret,V_ASN1_SEQUENCE);
-			if (pp == NULL) return(r);
-			p=pp;
-			ASN1_put_object(p,1,ret,V_ASN1_SEQUENCE,
-				V_ASN1_UNIVERSAL);
-			}
+ASN1_SEQUENCE(X509_ATTRIBUTE) = {
+	ASN1_SIMPLE(X509_ATTRIBUTE, object, ASN1_OBJECT),
+	/* CHOICE type merged with parent */
+	ASN1_EX_COMBINE(0, 0, X509_ATTRIBUTE_SET)
+} ASN1_SEQUENCE_END(X509_ATTRIBUTE);
 
-		ret+=i2d_ASN1_OBJECT(a->object,p);
-		if (a->set)
-			ret+=i2d_ASN1_SET_OF_ASN1_TYPE(a->value.set,p,i2d_ASN1_TYPE,
-				V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
-		else
-			ret+=i2d_ASN1_TYPE(a->value.single,p);
-		if (k++) return(r);
-		}
-	}
-
-X509_ATTRIBUTE *d2i_X509_ATTRIBUTE(X509_ATTRIBUTE **a, unsigned char **pp,
-	     long length)
-	{
-	M_ASN1_D2I_vars(a,X509_ATTRIBUTE *,X509_ATTRIBUTE_new);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(ret->object,d2i_ASN1_OBJECT);
-
-	if ((c.slen != 0) &&
-		(M_ASN1_next == (V_ASN1_CONSTRUCTED|V_ASN1_UNIVERSAL|V_ASN1_SET)))
-		{
-		ret->set=1;
-		M_ASN1_D2I_get_set_type(ASN1_TYPE,ret->value.set,d2i_ASN1_TYPE,
-					ASN1_TYPE_free);
-		}
-	else
-		{
-		ret->set=0;
-		M_ASN1_D2I_get(ret->value.single,d2i_ASN1_TYPE);
-		}
-
-	M_ASN1_D2I_Finish(a,X509_ATTRIBUTE_free,ASN1_F_D2I_X509_ATTRIBUTE);
-	}
+IMPLEMENT_ASN1_FUNCTIONS(X509_ATTRIBUTE)
 
 X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
 	{
@@ -126,7 +103,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
 	if ((ret=X509_ATTRIBUTE_new()) == NULL)
 		return(NULL);
 	ret->object=OBJ_nid2obj(nid);
-	ret->set=1;
+	ret->single=0;
 	if ((ret->value.set=sk_ASN1_TYPE_new_null()) == NULL) goto err;
 	if ((val=ASN1_TYPE_new()) == NULL) goto err;
 	if (!sk_ASN1_TYPE_push(ret->value.set,val)) goto err;
@@ -138,28 +115,3 @@ err:
 	if (val != NULL) ASN1_TYPE_free(val);
 	return(NULL);
 	}
-
-X509_ATTRIBUTE *X509_ATTRIBUTE_new(void)
-	{
-	X509_ATTRIBUTE *ret=NULL;
-	ASN1_CTX c;
-
-	M_ASN1_New_Malloc(ret,X509_ATTRIBUTE);
-	ret->object=OBJ_nid2obj(NID_undef);
-	ret->set=0;
-	ret->value.ptr=NULL;
-	return(ret);
-	M_ASN1_New_Error(ASN1_F_X509_ATTRIBUTE_NEW);
-	}
-	
-void X509_ATTRIBUTE_free(X509_ATTRIBUTE *a)
-	{
-	if (a == NULL) return;
-	ASN1_OBJECT_free(a->object);
-	if (a->set)
-		sk_ASN1_TYPE_pop_free(a->value.set,ASN1_TYPE_free);
-	else
-		ASN1_TYPE_free(a->value.single);
-	OPENSSL_free(a);
-	}
-

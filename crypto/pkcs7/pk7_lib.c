@@ -84,7 +84,11 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
 	case PKCS7_OP_GET_DETACHED_SIGNATURE:
 		if (nid == NID_pkcs7_signed)
 			{
-			ret=p7->detached;
+			if(!p7->d.sign  || !p7->d.sign->contents->d.ptr)
+				ret = 1;
+			else ret = 0;
+				
+			p7->detached = ret;
 			}
 		else
 			{
@@ -144,7 +148,7 @@ int PKCS7_set_type(PKCS7 *p7, int type)
 	{
 	ASN1_OBJECT *obj;
 
-	PKCS7_content_free(p7);
+	/*PKCS7_content_free(p7);*/
 	obj=OBJ_nid2obj(type); /* will not fail */
 
 	switch (type)

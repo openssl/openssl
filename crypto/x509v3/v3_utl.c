@@ -66,7 +66,7 @@
 
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char * const *a, const char * const *b);
-static STACK *get_email(X509_NAME *name, STACK_OF(GENERAL_NAME) *gens);
+static STACK *get_email(X509_NAME *name, GENERAL_NAMES *gens);
 static void str_free(void *str);
 static int append_ia5(STACK **sk, ASN1_IA5STRING *email);
 
@@ -439,7 +439,7 @@ static int sk_strcmp(const char * const *a, const char * const *b)
 
 STACK *X509_get1_email(X509 *x)
 {
-	STACK_OF(GENERAL_NAME) *gens;
+	GENERAL_NAMES *gens;
 	STACK *ret;
 	gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
 	ret = get_email(X509_get_subject_name(x), gens);
@@ -449,7 +449,7 @@ STACK *X509_get1_email(X509 *x)
 
 STACK *X509_REQ_get1_email(X509_REQ *x)
 {
-	STACK_OF(GENERAL_NAME) *gens;
+	GENERAL_NAMES *gens;
 	STACK_OF(X509_EXTENSION) *exts;
 	STACK *ret;
 	exts = X509_REQ_get_extensions(x);
@@ -461,7 +461,7 @@ STACK *X509_REQ_get1_email(X509_REQ *x)
 }
 
 
-static STACK *get_email(X509_NAME *name, STACK_OF(GENERAL_NAME) *gens)
+static STACK *get_email(X509_NAME *name, GENERAL_NAMES *gens)
 {
 	STACK *ret = NULL;
 	X509_NAME_ENTRY *ne;

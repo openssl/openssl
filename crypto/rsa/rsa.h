@@ -119,7 +119,7 @@ struct rsa_st
 	/* The first parameter is used to pickup errors where
 	 * this is passed instead of aEVP_PKEY, it is set to 0 */
 	int pad;
-	int version;
+	long version;
 #if 0
 	RSA_METHOD *meth;
 #else
@@ -236,7 +236,6 @@ int	RSA_print(BIO *bp, const RSA *r,int offset);
 
 int i2d_RSA_NET(const RSA *a, unsigned char **pp, int (*cb)(), int sgckey);
 RSA *d2i_RSA_NET(RSA **a, const unsigned char **pp, long length, int (*cb)(), int sgckey);
-RSA *d2i_RSA_NET_2(RSA **a, const unsigned char **pp, long length, int (*cb)(), int sgckey);
 
 int i2d_Netscape_RSA(const RSA *a, unsigned char **pp, int (*cb)());
 RSA *d2i_Netscape_RSA(RSA **a, const unsigned char **pp, long length, int (*cb)());

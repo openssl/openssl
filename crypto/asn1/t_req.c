@@ -145,13 +145,10 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 	if (BIO_puts(bp,str) <= 0) goto err;
 
 	sk=x->req_info->attributes;
-	if ((sk == NULL) || (sk_X509_ATTRIBUTE_num(sk) == 0))
+	if (sk_X509_ATTRIBUTE_num(sk) == 0)
 		{
-		if (!x->req_info->req_kludge)
-			{
-			sprintf(str,"%12sa0:00\n","");
-			if (BIO_puts(bp,str) <= 0) goto err;
-			}
+		sprintf(str,"%12sa0:00\n","");
+		if (BIO_puts(bp,str) <= 0) goto err;
 		}
 	else
 		{
@@ -170,7 +167,13 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 			if (BIO_puts(bp,str) <= 0) goto err;
 			if ((j=i2a_ASN1_OBJECT(bp,a->object)) > 0)
 			{
-			if (a->set)
+			if (a->single)
+				{
+				t=a->value.single;
+				type=t->type;
+				bs=t->value.bit_string;
+				}
+			else
 				{
 				ii=0;
 				count=sk_ASN1_TYPE_num(a->value.set);
@@ -178,12 +181,6 @@ get_next:
 				at=sk_ASN1_TYPE_value(a->value.set,ii);
 				type=at->type;
 				bs=at->value.asn1_string;
-				}
-			else
-				{
-				t=a->value.single;
-				type=t->type;
-				bs=t->value.bit_string;
 				}
 			}
 			for (j=25-j; j>0; j--)

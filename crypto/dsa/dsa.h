@@ -246,6 +246,7 @@ DH *DSA_dup_DH(const DSA *r);
 #define DSA_F_DSA_SIG_NEW				 109
 #define DSA_F_DSA_VERIFY				 108
 #define DSA_F_I2D_DSA_SIG				 111
+#define DSA_F_SIG_CB					 114
 
 /* Reason codes. */
 #define DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE		 100

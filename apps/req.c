@@ -752,8 +752,11 @@ loop:
 				}
 
 			i=make_REQ(req,pkey,!x509);
-			if (kludge >= 0)
-				req->req_info->req_kludge=kludge;
+			if ((kludge > 0) && !sk_X509_ATTRIBUTE_num(req->req_info->attributes))
+				{
+				sk_X509_ATTRIBUTE_free(req->req_info->attributes);
+				req->req_info->attributes = NULL;
+				}
 			if (!i)
 				{
 				BIO_printf(bio_err,"problems making Certificate Request\n");

@@ -1,97 +1,140 @@
-/* crypto/dsa/dsa_asn1.c */
+/* dsa_asn1.c */
+/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
+ * project 2000.
+ */
+/* ====================================================================
+ * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    licensing@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/dsa.h>
 #include <openssl/asn1.h>
-#include <openssl/asn1_mac.h>
+#include <openssl/asn1t.h>
 
-DSA_SIG *DSA_SIG_new(void)
+/* Override the default new methods */
+static int sig_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-	DSA_SIG *ret;
-
-	ret = OPENSSL_malloc(sizeof(DSA_SIG));
-	if (ret == NULL)
-		{
-		DSAerr(DSA_F_DSA_SIG_NEW,ERR_R_MALLOC_FAILURE);
-		return(NULL);
-		}
-	ret->r = NULL;
-	ret->s = NULL;
-	return(ret);
+	if(operation == ASN1_OP_NEW_PRE) {
+		DSA_SIG *sig;
+		sig = OPENSSL_malloc(sizeof(DSA_SIG));
+		sig->r = NULL;
+		sig->s = NULL;
+		*pval = (ASN1_VALUE *)sig;
+		if(sig) return 2;
+		DSAerr(DSA_F_SIG_CB, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+	return 1;
 }
 
-void DSA_SIG_free(DSA_SIG *r)
+ASN1_SEQUENCE_cb(DSA_SIG, sig_cb) = {
+	ASN1_SIMPLE(DSA_SIG, r, CBIGNUM),
+	ASN1_SIMPLE(DSA_SIG, s, CBIGNUM)
+} ASN1_SEQUENCE_END_cb(DSA_SIG, DSA_SIG);
+
+IMPLEMENT_ASN1_FUNCTIONS_const(DSA_SIG)
+
+/* Override the default free and new methods */
+static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-	if (r == NULL) return;
-	if (r->r) BN_clear_free(r->r);
-	if (r->s) BN_clear_free(r->s);
-	OPENSSL_free(r);
+	if(operation == ASN1_OP_NEW_PRE) {
+		*pval = (ASN1_VALUE *)DSA_new();
+		if(*pval) return 2;
+		return 0;
+	} else if(operation == ASN1_OP_FREE_PRE) {
+		DSA_free((DSA *)*pval);
+		*pval = NULL;
+		return 2;
+	}
+	return 1;
 }
 
-int i2d_DSA_SIG(const DSA_SIG *v, unsigned char **pp)
-{
-	int t=0,len;
-	ASN1_INTEGER rbs,sbs;
-	unsigned char *p;
+ASN1_SEQUENCE_cb(DSAPrivateKey, dsa_cb) = {
+	ASN1_SIMPLE(DSA, version, LONG),
+	ASN1_SIMPLE(DSA, p, BIGNUM),
+	ASN1_SIMPLE(DSA, q, BIGNUM),
+	ASN1_SIMPLE(DSA, g, BIGNUM),
+	ASN1_SIMPLE(DSA, pub_key, BIGNUM),
+	ASN1_SIMPLE(DSA, priv_key, BIGNUM)
+} ASN1_SEQUENCE_END_cb(DSA, DSAPrivateKey);
 
-	rbs.data=OPENSSL_malloc(BN_num_bits(v->r)/8+1);
-	if (rbs.data == NULL)
-		{
-		DSAerr(DSA_F_I2D_DSA_SIG, ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-	rbs.type=V_ASN1_INTEGER;
-	rbs.length=BN_bn2bin(v->r,rbs.data);
-	sbs.data=OPENSSL_malloc(BN_num_bits(v->s)/8+1);
-	if (sbs.data == NULL)
-		{
-		OPENSSL_free(rbs.data);
-		DSAerr(DSA_F_I2D_DSA_SIG, ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-	sbs.type=V_ASN1_INTEGER;
-	sbs.length=BN_bn2bin(v->s,sbs.data);
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPrivateKey, DSAPrivateKey)
 
-	len=i2d_ASN1_INTEGER(&rbs,NULL);
-	len+=i2d_ASN1_INTEGER(&sbs,NULL);
+ASN1_SEQUENCE_cb(DSAparams, dsa_cb) = {
+	ASN1_SIMPLE(DSA, p, BIGNUM),
+	ASN1_SIMPLE(DSA, q, BIGNUM),
+	ASN1_SIMPLE(DSA, g, BIGNUM),
+} ASN1_SEQUENCE_END_cb(DSA, DSAparams);
 
-	if (pp)
-		{
-		p=*pp;
-		ASN1_put_object(&p,1,len,V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);
-		i2d_ASN1_INTEGER(&rbs,&p);
-		i2d_ASN1_INTEGER(&sbs,&p);
-		}
-	t=ASN1_object_size(1,len,V_ASN1_SEQUENCE);
-	OPENSSL_free(rbs.data);
-	OPENSSL_free(sbs.data);
-	return(t);
-}
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAparams, DSAparams)
 
-DSA_SIG *d2i_DSA_SIG(DSA_SIG **a, const unsigned char **pp, long length)
-{
-	int i=ERR_R_NESTED_ASN1_ERROR;
-	ASN1_INTEGER *bs=NULL;
-	M_ASN1_D2I_vars(a,DSA_SIG *,DSA_SIG_new);
+/* DSA public key is a bit trickier... its effectively a CHOICE type
+ * decided by a field called write_params which can either write out
+ * just the public key as an INTEGER or the parameters and public key
+ * in a SEQUENCE
+ */
 
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(bs,d2i_ASN1_INTEGER);
-	if ((ret->r=BN_bin2bn(bs->data,bs->length,ret->r)) == NULL)
-		goto err_bn;
-	M_ASN1_D2I_get(bs,d2i_ASN1_INTEGER);
-	if ((ret->s=BN_bin2bn(bs->data,bs->length,ret->s)) == NULL)
-		goto err_bn;
-	M_ASN1_BIT_STRING_free(bs);
-	bs = NULL;
-	M_ASN1_D2I_Finish_2(a);
+ASN1_SEQUENCE(dsa_pub_internal) = {
+	ASN1_SIMPLE(DSA, pub_key, BIGNUM),
+	ASN1_SIMPLE(DSA, p, BIGNUM),
+	ASN1_SIMPLE(DSA, q, BIGNUM),
+	ASN1_SIMPLE(DSA, g, BIGNUM)
+} ASN1_SEQUENCE_END_name(DSA, dsa_pub_internal);
 
-err_bn:
-	i=ERR_R_BN_LIB;
-err:
-	DSAerr(DSA_F_D2I_DSA_SIG,i);
-	if ((ret != NULL) && ((a == NULL) || (*a != ret))) DSA_SIG_free(ret);
-	if (bs != NULL) M_ASN1_BIT_STRING_free(bs);
-	return(NULL);
-}
+ASN1_CHOICE_cb(DSAPublicKey, dsa_cb) = {
+	ASN1_SIMPLE(DSA, pub_key, BIGNUM),
+	ASN1_EX_COMBINE(0, 0, dsa_pub_internal)
+} ASN1_CHOICE_END_cb(DSA, DSAPublicKey, write_params);
+
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPublicKey, DSAPublicKey)

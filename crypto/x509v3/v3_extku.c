@@ -59,55 +59,36 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-static STACK_OF(ASN1_OBJECT) *v2i_ext_ku(X509V3_EXT_METHOD *method,
+static EXTENDED_KEY_USAGE *v2i_EXTENDED_KEY_USAGE(X509V3_EXT_METHOD *method,
 				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
-static STACK_OF(CONF_VALUE) *i2v_ext_ku(X509V3_EXT_METHOD *method,
-		STACK_OF(ASN1_OBJECT) *eku, STACK_OF(CONF_VALUE) *extlist);
+static STACK_OF(CONF_VALUE) *i2v_EXTENDED_KEY_USAGE(X509V3_EXT_METHOD *method,
+		EXTENDED_KEY_USAGE *eku, STACK_OF(CONF_VALUE) *extlist);
+
 X509V3_EXT_METHOD v3_ext_ku = {
 NID_ext_key_usage, 0,
-(X509V3_EXT_NEW)ext_ku_new,
-(X509V3_EXT_FREE)ext_ku_free,
-(X509V3_EXT_D2I)d2i_ext_ku,
-(X509V3_EXT_I2D)i2d_ext_ku,
+(X509V3_EXT_NEW)EXTENDED_KEY_USAGE_new,
+(X509V3_EXT_FREE)EXTENDED_KEY_USAGE_free,
+(X509V3_EXT_D2I)d2i_EXTENDED_KEY_USAGE,
+(X509V3_EXT_I2D)i2d_EXTENDED_KEY_USAGE,
 NULL, NULL,
-(X509V3_EXT_I2V)i2v_ext_ku,
-(X509V3_EXT_V2I)v2i_ext_ku,
+(X509V3_EXT_I2V)i2v_EXTENDED_KEY_USAGE,
+(X509V3_EXT_V2I)v2i_EXTENDED_KEY_USAGE,
 NULL,NULL,
 NULL
 };
 
-STACK_OF(ASN1_OBJECT) *ext_ku_new(void)
-{
-	return sk_ASN1_OBJECT_new_null();
-}
+ASN1_ITEM_TEMPLATE(EXTENDED_KEY_USAGE) = 
+	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, EXTENDED_KEY_USAGE, ASN1_OBJECT)
+ASN1_ITEM_TEMPLATE_END(EXTENDED_KEY_USAGE);
 
-void ext_ku_free(STACK_OF(ASN1_OBJECT) *eku)
-{
-	sk_ASN1_OBJECT_pop_free(eku, ASN1_OBJECT_free);
-	return;
-}
+IMPLEMENT_ASN1_FUNCTIONS(EXTENDED_KEY_USAGE)
 
-int i2d_ext_ku(STACK_OF(ASN1_OBJECT) *a, unsigned char **pp)
-{
-	return i2d_ASN1_SET_OF_ASN1_OBJECT(a, pp, i2d_ASN1_OBJECT,
-				V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL, IS_SEQUENCE);
-}
-
-STACK_OF(ASN1_OBJECT) *d2i_ext_ku(STACK_OF(ASN1_OBJECT) **a,
-					unsigned char **pp, long length)
-{
-	return d2i_ASN1_SET_OF_ASN1_OBJECT(a, pp, length, d2i_ASN1_OBJECT,
-			 ASN1_OBJECT_free, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
-}
-
-
-
-static STACK_OF(CONF_VALUE) *i2v_ext_ku(X509V3_EXT_METHOD *method,
-		STACK_OF(ASN1_OBJECT) *eku, STACK_OF(CONF_VALUE) *ext_list)
+static STACK_OF(CONF_VALUE) *i2v_EXTENDED_KEY_USAGE(X509V3_EXT_METHOD *method,
+		EXTENDED_KEY_USAGE *eku, STACK_OF(CONF_VALUE) *ext_list)
 {
 int i;
 ASN1_OBJECT *obj;
@@ -120,10 +101,10 @@ for(i = 0; i < sk_ASN1_OBJECT_num(eku); i++) {
 return ext_list;
 }
 
-static STACK_OF(ASN1_OBJECT) *v2i_ext_ku(X509V3_EXT_METHOD *method,
+static EXTENDED_KEY_USAGE *v2i_EXTENDED_KEY_USAGE(X509V3_EXT_METHOD *method,
 				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 {
-STACK_OF(ASN1_OBJECT) *extku;
+EXTENDED_KEY_USAGE *extku;
 char *extval;
 ASN1_OBJECT *objtmp;
 CONF_VALUE *val;

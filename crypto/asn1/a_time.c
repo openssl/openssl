@@ -64,14 +64,13 @@
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
-#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 
-ASN1_TIME *ASN1_TIME_new(void)
-{ return M_ASN1_TIME_new(); }
+IMPLEMENT_ASN1_MSTRING(ASN1_TIME, B_ASN1_TIME)
 
-void ASN1_TIME_free(ASN1_TIME *x)
-{ M_ASN1_TIME_free(x); }
+IMPLEMENT_ASN1_FUNCTIONS(ASN1_TIME)
 
+#if 0
 int i2d_ASN1_TIME(ASN1_TIME *a, unsigned char **pp)
 	{
 #ifdef CHARSET_EBCDIC
@@ -95,19 +94,7 @@ int i2d_ASN1_TIME(ASN1_TIME *a, unsigned char **pp)
 	ASN1err(ASN1_F_I2D_ASN1_TIME,ASN1_R_EXPECTING_A_TIME);
 	return -1;
 	}
-
-
-ASN1_TIME *d2i_ASN1_TIME(ASN1_TIME **a, unsigned char **pp, long length)
-	{
-	unsigned char tag;
-	tag = **pp & ~V_ASN1_CONSTRUCTED;
-	if(tag == (V_ASN1_UTCTIME|V_ASN1_UNIVERSAL))
-					 return d2i_ASN1_UTCTIME(a, pp, length);
-	if(tag == (V_ASN1_GENERALIZEDTIME|V_ASN1_UNIVERSAL))
-				return d2i_ASN1_GENERALIZEDTIME(a, pp, length);
-	ASN1err(ASN1_F_D2I_ASN1_TIME,ASN1_R_EXPECTING_A_TIME);
-	return(NULL);
-	}
+#endif
 
 
 ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t)

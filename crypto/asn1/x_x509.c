@@ -59,12 +59,73 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
-#include <openssl/asn1_mac.h>
+#include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 static int x509_meth_num = 0;
 static STACK_OF(CRYPTO_EX_DATA_FUNCS) *x509_meth = NULL;
+
+ASN1_SEQUENCE(X509_CINF) = {
+	ASN1_EXP_OPT(X509_CINF, version, ASN1_INTEGER, 0),
+	ASN1_SIMPLE(X509_CINF, serialNumber, ASN1_INTEGER),
+	ASN1_SIMPLE(X509_CINF, signature, X509_ALGOR),
+	ASN1_SIMPLE(X509_CINF, issuer, X509_NAME),
+	ASN1_SIMPLE(X509_CINF, validity, X509_VAL),
+	ASN1_SIMPLE(X509_CINF, subject, X509_NAME),
+	ASN1_SIMPLE(X509_CINF, key, X509_PUBKEY),
+	ASN1_IMP_OPT(X509_CINF, issuerUID, ASN1_BIT_STRING, 1),
+	ASN1_IMP_OPT(X509_CINF, subjectUID, ASN1_BIT_STRING, 2),
+	ASN1_EXP_SEQUENCE_OF_OPT(X509_CINF, extensions, X509_EXTENSION, 3)
+} ASN1_SEQUENCE_END(X509_CINF);
+
+IMPLEMENT_ASN1_FUNCTIONS(X509_CINF)
+/* X509 top level structure needs a bit of customisation */
+
+static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+	X509 *ret = (X509 *)*pval;
+
+	switch(operation) {
+
+		case ASN1_OP_NEW_POST:
+		ret->valid=0;
+		ret->name = NULL;
+		ret->ex_flags = 0;
+		ret->ex_pathlen = -1;
+		ret->skid = NULL;
+		ret->akid = NULL;
+		ret->aux = NULL;
+		CRYPTO_new_ex_data(x509_meth, ret, &ret->ex_data);
+		break;
+
+		case ASN1_OP_D2I_POST:
+		if (ret->name != NULL) OPENSSL_free(ret->name);
+		ret->name=X509_NAME_oneline(ret->cert_info->subject,NULL,0);
+		break;
+
+		case ASN1_OP_FREE_POST:
+		CRYPTO_free_ex_data(x509_meth,ret,&ret->ex_data);
+		X509_CERT_AUX_free(ret->aux);
+		ASN1_OCTET_STRING_free(ret->skid);
+		AUTHORITY_KEYID_free(ret->akid);
+
+		if (ret->name != NULL) OPENSSL_free(ret->name);
+		break;
+
+	}
+
+	return 1;
+
+}
+
+ASN1_SEQUENCE_ref(X509, x509_cb, CRYPTO_LOCK_X509) = {
+	ASN1_SIMPLE(X509, cert_info, X509_CINF),
+	ASN1_SIMPLE(X509, sig_alg, X509_ALGOR),
+	ASN1_SIMPLE(X509, signature, ASN1_BIT_STRING)
+} ASN1_SEQUENCE_END_ref(X509, X509);
+
+IMPLEMENT_ASN1_FUNCTIONS(X509)
 
 static ASN1_METHOD meth={
 	(int (*)())  i2d_X509,
@@ -75,91 +136,6 @@ static ASN1_METHOD meth={
 ASN1_METHOD *X509_asn1_meth(void)
 	{
 	return(&meth);
-	}
-
-int i2d_X509(X509 *a, unsigned char **pp)
-	{
-	M_ASN1_I2D_vars(a);
-
-	M_ASN1_I2D_len(a->cert_info,	i2d_X509_CINF);
-	M_ASN1_I2D_len(a->sig_alg,	i2d_X509_ALGOR);
-	M_ASN1_I2D_len(a->signature,	i2d_ASN1_BIT_STRING);
-
-	M_ASN1_I2D_seq_total();
-
-	M_ASN1_I2D_put(a->cert_info,	i2d_X509_CINF);
-	M_ASN1_I2D_put(a->sig_alg,	i2d_X509_ALGOR);
-	M_ASN1_I2D_put(a->signature,	i2d_ASN1_BIT_STRING);
-
-	M_ASN1_I2D_finish();
-	}
-
-X509 *d2i_X509(X509 **a, unsigned char **pp, long length)
-	{
-	M_ASN1_D2I_vars(a,X509 *,X509_new);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(ret->cert_info,d2i_X509_CINF);
-	M_ASN1_D2I_get(ret->sig_alg,d2i_X509_ALGOR);
-	M_ASN1_D2I_get(ret->signature,d2i_ASN1_BIT_STRING);
-	if (ret->name != NULL) OPENSSL_free(ret->name);
-	ret->name=X509_NAME_oneline(ret->cert_info->subject,NULL,0);
-
-	M_ASN1_D2I_Finish(a,X509_free,ASN1_F_D2I_X509);
-	}
-
-X509 *X509_new(void)
-	{
-	X509 *ret=NULL;
-	ASN1_CTX c;
-
-	M_ASN1_New_Malloc(ret,X509);
-	ret->valid=0;
-	ret->references=1;
-	ret->name = NULL;
-	ret->ex_flags = 0;
-	ret->ex_pathlen = -1;
-	ret->skid = NULL;
-	ret->akid = NULL;
-	ret->aux = NULL;
-	M_ASN1_New(ret->cert_info,X509_CINF_new);
-	M_ASN1_New(ret->sig_alg,X509_ALGOR_new);
-	M_ASN1_New(ret->signature,M_ASN1_BIT_STRING_new);
-	CRYPTO_new_ex_data(x509_meth, ret, &ret->ex_data);
-	return(ret);
-	M_ASN1_New_Error(ASN1_F_X509_NEW);
-	}
-
-void X509_free(X509 *a)
-	{
-	int i;
-
-	if (a == NULL) return;
-
-	i=CRYPTO_add(&a->references,-1,CRYPTO_LOCK_X509);
-#ifdef REF_PRINT
-	REF_PRINT("X509",a);
-#endif
-	if (i > 0) return;
-#ifdef REF_CHECK
-	if (i < 0)
-		{
-		fprintf(stderr,"X509_free, bad reference count\n");
-		abort();
-		}
-#endif
-
-	CRYPTO_free_ex_data(x509_meth,a,&a->ex_data);
-	X509_CINF_free(a->cert_info);
-	X509_ALGOR_free(a->sig_alg);
-	M_ASN1_BIT_STRING_free(a->signature);
-	X509_CERT_AUX_free(a->aux);
-	ASN1_OCTET_STRING_free(a->skid);
-	AUTHORITY_KEYID_free(a->akid);
-
-	if (a->name != NULL) OPENSSL_free(a->name);
-	OPENSSL_free(a);
 	}
 
 int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,

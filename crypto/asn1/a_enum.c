@@ -65,60 +65,6 @@
  * for comments on encoding see a_int.c
  */
 
-ASN1_ENUMERATED *ASN1_ENUMERATED_new(void)
-{ return M_ASN1_ENUMERATED_new(); }
-
-void ASN1_ENUMERATED_free(ASN1_ENUMERATED *x)
-{ M_ASN1_ENUMERATED_free(x); }
-
-
-int i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **pp)
-{
-	int len, ret;
-	if(!a) return 0;
-	len = i2c_ASN1_INTEGER(a, NULL);	
-	ret=ASN1_object_size(0,len,V_ASN1_ENUMERATED);
-	if(pp) {
-		ASN1_put_object(pp,0,len,V_ASN1_ENUMERATED,V_ASN1_UNIVERSAL);
-		i2c_ASN1_INTEGER(a, pp);	
-	}
-	return ret;
-}
-
-ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a, unsigned char **pp,
-	     long length)
-{
-	unsigned char *p;
-	long len;
-	int i;
-	int inf,tag,xclass;
-	ASN1_ENUMERATED *ret;
-
-	p= *pp;
-	inf=ASN1_get_object(&p,&len,&tag,&xclass,length);
-	if (inf & 0x80)
-		{
-		i=ASN1_R_BAD_OBJECT_HEADER;
-		goto err;
-		}
-
-	if (tag != V_ASN1_ENUMERATED)
-		{
-		i=ASN1_R_EXPECTING_AN_ENUMERATED;
-		goto err;
-		}
-	ret = c2i_ASN1_INTEGER(a, &p, len);
-	if(ret) {
-		ret->type = (V_ASN1_NEG & ret->type) | V_ASN1_ENUMERATED;
-		*pp = p;
-	}
-	return ret;
-err:
-	ASN1err(ASN1_F_D2I_ASN1_ENUMERATED,i);
-	return(NULL);
-
-}
-
 int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
 	{
 	int i,j,k;

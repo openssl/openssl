@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
-#include <openssl/asn1_mac.h>
+#include <openssl/asn1.h>
 #include <openssl/x509.h>
 
 X509_INFO *X509_INFO_new(void)

@@ -120,7 +120,6 @@ union {
 	ASN1_TYPE *other;
 }value;
 STACK_OF(X509_ATTRIBUTE) *attrib;
-ASN1_TYPE *rest;
 } PKCS12_SAFEBAG;
 
 DECLARE_STACK_OF(PKCS12_SAFEBAG)
@@ -249,24 +248,12 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt,
 					 int saltlen, EVP_MD *md_type);
 unsigned char *asc2uni(const char *asc, unsigned char **uni, int *unilen);
 char *uni2asc(unsigned char *uni, int unilen);
-int i2d_PKCS12_BAGS(PKCS12_BAGS *a, unsigned char **pp);
-PKCS12_BAGS *PKCS12_BAGS_new(void);
-PKCS12_BAGS *d2i_PKCS12_BAGS(PKCS12_BAGS **a, unsigned char **pp, long length);
-void PKCS12_BAGS_free(PKCS12_BAGS *a);
-int i2d_PKCS12(PKCS12 *a, unsigned char **pp);
-PKCS12 *d2i_PKCS12(PKCS12 **a, unsigned char **pp, long length);
-PKCS12 *PKCS12_new(void);
-void PKCS12_free(PKCS12 *a);
-int i2d_PKCS12_MAC_DATA(PKCS12_MAC_DATA *a, unsigned char **pp);
-PKCS12_MAC_DATA *PKCS12_MAC_DATA_new(void);
-PKCS12_MAC_DATA *d2i_PKCS12_MAC_DATA(PKCS12_MAC_DATA **a, unsigned char **pp,
-								 long length);
-void PKCS12_MAC_DATA_free(PKCS12_MAC_DATA *a);
-int i2d_PKCS12_SAFEBAG(PKCS12_SAFEBAG *a, unsigned char **pp);
-PKCS12_SAFEBAG *PKCS12_SAFEBAG_new(void);
-PKCS12_SAFEBAG *d2i_PKCS12_SAFEBAG(PKCS12_SAFEBAG **a, unsigned char **pp,
-								 long length);
-void PKCS12_SAFEBAG_free(PKCS12_SAFEBAG *a);
+
+DECLARE_ASN1_FUNCTIONS(PKCS12)
+DECLARE_ASN1_FUNCTIONS(PKCS12_MAC_DATA)
+DECLARE_ASN1_FUNCTIONS(PKCS12_SAFEBAG)
+DECLARE_ASN1_FUNCTIONS(PKCS12_BAGS)
+
 void ERR_load_PKCS12_strings(void);
 void PKCS12_PBE_add(void);
 int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,

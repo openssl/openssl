@@ -219,7 +219,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		}
 
 	if (bio == NULL) {
-		if (p7->detached)
+		if (PKCS7_is_detached(p7))
 			bio=BIO_new(BIO_s_null());
 		else {
 			if (PKCS7_type_is_signed(p7) &&
@@ -419,7 +419,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		}
 
 #if 1
-	if (p7->detached || (in_bio != NULL))
+	if (PKCS7_is_detached(p7) || (in_bio != NULL))
 		{
 		bio=in_bio;
 		}
@@ -606,7 +606,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			}
 		}
 
-	if (!p7->detached)
+	if (!PKCS7_is_detached(p7))
 		{
 		btmp=BIO_find_type(bio,BIO_TYPE_MEM);
 		if (btmp == NULL)
@@ -838,7 +838,7 @@ static ASN1_TYPE *get_attribute(STACK_OF(X509_ATTRIBUTE) *sk, int nid)
 		xa=sk_X509_ATTRIBUTE_value(sk,i);
 		if (OBJ_cmp(xa->object,o) == 0)
 			{
-			if (xa->set && sk_ASN1_TYPE_num(xa->value.set))
+			if (!xa->single && sk_ASN1_TYPE_num(xa->value.set))
 				return(sk_ASN1_TYPE_value(xa->value.set,0));
 			else
 				return(NULL);

@@ -92,7 +92,7 @@ int PKCS12_add_localkeyid (PKCS12_SAFEBAG *bag, unsigned char *name,
 		return 0;
 	}
 	sk_ASN1_TYPE_push (attrib->value.set,keyid);
-	attrib->set = 1;
+	attrib->single = 0;
 	if (!bag->attrib && !(bag->attrib = sk_X509_ATTRIBUTE_new_null ())) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_LOCALKEYID, ERR_R_MALLOC_FAILURE);
 		return 0;
@@ -134,7 +134,7 @@ int PKCS8_add_keyusage (PKCS8_PRIV_KEY_INFO *p8, int usage)
 		return 0;
 	}
 	sk_ASN1_TYPE_push (attrib->value.set,keyid);
-	attrib->set = 1;
+	attrib->single = 0;
 	if (!p8->attributes
 	    && !(p8->attributes = sk_X509_ATTRIBUTE_new_null ())) {
 		PKCS12err(PKCS12_F_PKCS8_ADD_KEYUSAGE, ERR_R_MALLOC_FAILURE);
@@ -201,7 +201,7 @@ int PKCS12_add_friendlyname_uni (PKCS12_SAFEBAG *bag,
 		return 0;
 	}
 	sk_ASN1_TYPE_push (attrib->value.set,fname);
-	attrib->set = 1;
+	attrib->single = 0;
 	if (!bag->attrib && !(bag->attrib = sk_X509_ATTRIBUTE_new_null ())) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME_UNI,
 							ERR_R_MALLOC_FAILURE);

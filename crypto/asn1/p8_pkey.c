@@ -58,70 +58,27 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/asn1_mac.h>
+#include <openssl/asn1t.h>
 #include <openssl/x509.h>
 
-int i2d_PKCS8_PRIV_KEY_INFO (PKCS8_PRIV_KEY_INFO *a, unsigned char **pp)
+/* Minor tweak to operation: zero private key data */
+static int pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-
-	M_ASN1_I2D_vars(a);
-
-	M_ASN1_I2D_len (a->version, i2d_ASN1_INTEGER);
-	M_ASN1_I2D_len (a->pkeyalg, i2d_X509_ALGOR);
-	M_ASN1_I2D_len (a->pkey, i2d_ASN1_TYPE);
-	M_ASN1_I2D_len_IMP_SET_opt_type (X509_ATTRIBUTE, a->attributes,
-					 i2d_X509_ATTRIBUTE, 0);
-	
-	M_ASN1_I2D_seq_total ();
-
-	M_ASN1_I2D_put (a->version, i2d_ASN1_INTEGER);
-	M_ASN1_I2D_put (a->pkeyalg, i2d_X509_ALGOR);
-	M_ASN1_I2D_put (a->pkey, i2d_ASN1_TYPE);
-	M_ASN1_I2D_put_IMP_SET_opt_type (X509_ATTRIBUTE, a->attributes,
-					 i2d_X509_ATTRIBUTE, 0);
-
-	M_ASN1_I2D_finish();
+	/* Since the structure must still be valid use ASN1_OP_FREE_PRE */
+	if(operation == ASN1_OP_FREE_PRE) {
+		PKCS8_PRIV_KEY_INFO *key = (PKCS8_PRIV_KEY_INFO *)*pval;
+		if (key->pkey->value.octet_string)
+		memset(key->pkey->value.octet_string->data,
+				 0, key->pkey->value.octet_string->length);
+	}
+	return 1;
 }
 
-PKCS8_PRIV_KEY_INFO *PKCS8_PRIV_KEY_INFO_new(void)
-{
-	PKCS8_PRIV_KEY_INFO *ret=NULL;
-	ASN1_CTX c;
-	M_ASN1_New_Malloc(ret, PKCS8_PRIV_KEY_INFO);
-	M_ASN1_New (ret->version, M_ASN1_INTEGER_new);
-	M_ASN1_New (ret->pkeyalg, X509_ALGOR_new);
-	M_ASN1_New (ret->pkey, ASN1_TYPE_new);
-	ret->attributes = NULL;
-	ret->broken = PKCS8_OK;
-	return (ret);
-	M_ASN1_New_Error(ASN1_F_PKCS8_PRIV_KEY_INFO_NEW);
-}
+ASN1_SEQUENCE_cb(PKCS8_PRIV_KEY_INFO, pkey_cb) = {
+	ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, version, ASN1_INTEGER),
+	ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, pkeyalg, X509_ALGOR),
+	ASN1_SIMPLE(PKCS8_PRIV_KEY_INFO, pkey, ASN1_ANY),
+	ASN1_IMP_SET_OF_OPT(PKCS8_PRIV_KEY_INFO, attributes, X509_ATTRIBUTE, 0)
+} ASN1_SEQUENCE_END_cb(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO);
 
-PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO(PKCS8_PRIV_KEY_INFO **a,
-	     unsigned char **pp, long length)
-{
-	M_ASN1_D2I_vars(a,PKCS8_PRIV_KEY_INFO *,PKCS8_PRIV_KEY_INFO_new);
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get (ret->version, d2i_ASN1_INTEGER);
-	M_ASN1_D2I_get (ret->pkeyalg, d2i_X509_ALGOR);
-	M_ASN1_D2I_get (ret->pkey, d2i_ASN1_TYPE);
-	M_ASN1_D2I_get_IMP_set_opt_type(X509_ATTRIBUTE, ret->attributes,
-					d2i_X509_ATTRIBUTE,
-					X509_ATTRIBUTE_free, 0);
-	M_ASN1_D2I_Finish(a, PKCS8_PRIV_KEY_INFO_free, ASN1_F_D2I_PKCS8_PRIV_KEY_INFO);
-}
-
-void PKCS8_PRIV_KEY_INFO_free (PKCS8_PRIV_KEY_INFO *a)
-{
-	if (a == NULL) return;
-	M_ASN1_INTEGER_free (a->version);
-	X509_ALGOR_free(a->pkeyalg);
-	/* Clear sensitive data */
-	if (a->pkey->value.octet_string)
-		memset (a->pkey->value.octet_string->data,
-				 0, a->pkey->value.octet_string->length);
-	ASN1_TYPE_free (a->pkey);
-	sk_X509_ATTRIBUTE_pop_free (a->attributes, X509_ATTRIBUTE_free);
-	OPENSSL_free (a);
-}
+IMPLEMENT_ASN1_FUNCTIONS(PKCS8_PRIV_KEY_INFO)
