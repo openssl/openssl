@@ -139,8 +139,14 @@ link_o.darwin:
 	LIBDEPS="$(LIBDEPS)" \
 	ALLSYMSFLAGS='-all_load' \
 	NOALLSYMSFLAGS='' \
-	SHAREDFLAGS="-dynamiclib -current_version $(LIBVERSION) -compatibility_version $$SHLIB_SOVER_NODOT" \
+	SHAREDFLAGS="-dynamiclib" \
 	SHAREDCMD='$(CC)'; \
+	if [ -n "$(LIBVERSION)" ]; then \
+		SHAREDFLAGS="$SHAREDFLAGS -current_version $(LIBVERSION)"; \
+	fi; \
+	if [ -n "$$SHLIB_SOVER_NODOT" ]; then \
+		SHAREDFLAGS="$SHAREDFLAGS -compatibility_version $$SHLIB_SOVER_NODOT"; \
+	fi; \
 	$(LINK_SO_O)
 link_a.darwin:
 	@ $(CALC_VERSIONS); \
@@ -149,8 +155,14 @@ link_a.darwin:
 	LIBDEPS="$(LIBDEPS)" \
 	ALLSYMSFLAGS='-all_load' \
 	NOALLSYMSFLAGS='' \
-	SHAREDFLAGS="-dynamiclib -current_version $(LIBVERSION) -compatibility_version $$SHLIB_SOVER_NODOT" \
+	SHAREDFLAGS="-dynamiclib" \
 	SHAREDCMD='$(CC)'; \
+	if [ -n "$(LIBVERSION)" ]; then \
+		SHAREDFLAGS="$SHAREDFLAGS -current_version $(LIBVERSION)"; \
+	fi; \
+	if [ -n "$$SHLIB_SOVER_NODOT" ]; then \
+		SHAREDFLAGS="$SHAREDFLAGS -compatibility_version $$SHLIB_SOVER_NODOT"; \
+	fi; \
 	$(LINK_SO_A)
 
 link_o.cygwin:
@@ -195,8 +207,11 @@ link_o.alpha-osf1:
 		SHLIB_SOVER= \
 		ALLSYMSFLAGS='-all' \
 		NOALLSYMSFLAGS='-none' \
-		SHAREDFLAGS="-shared -set_version \"$$SHLIB_HIST\"" \
+		SHAREDFLAGS="-shared" \
 		SHAREDCMD='$(CC)'; \
+		if [ -n "$$SHLIB_HIST" ]; then \
+			SHAREDFLAGS="$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
+		fi; \
 		$(LINK_SO_O); \
 	fi
 link_a.alpha-osf1:
@@ -220,8 +235,11 @@ link_a.alpha-osf1:
 		SHLIB_SOVER= \
 		ALLSYMSFLAGS='-all' \
 		NOALLSYMSFLAGS='-none' \
-		SHAREDFLAGS="-shared -set_version \"$$SHLIB_HIST\"" \
+		SHAREDFLAGS="-shared" \
 		SHAREDCMD='$(CC)'; \
+		if [ -n "$$SHLIB_HIST" ]; then \
+			SHAREDFLAGS="$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
+		fi; \
 		$(LINK_SO_A); \
 	fi
 
@@ -248,8 +266,11 @@ link_o.tru64:
 		SHLIB_SOVER= \
 		ALLSYMSFLAGS='-all' \
 		NOALLSYMSFLAGS='-none' \
-		SHAREDFLAGS="-shared -msym -set_version \"$$SHLIB_HIST\"" \
+		SHAREDFLAGS="-shared -msym" \
 		SHAREDCMD='$(CC)'; \
+		if [ -n "$$SHLIB_HIST" ]; then \
+			SHAREDFLAGS="$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
+		fi; \
 		$(LINK_SO_O); \
 	fi
 link_a.tru64:
@@ -273,8 +294,11 @@ link_a.tru64:
 		SHLIB_SOVER= \
 		ALLSYMSFLAGS='-all' \
 		NOALLSYMSFLAGS='-none' \
-		SHAREDFLAGS="-shared -msym -set_version \"$$SHLIB_HIST\"" \
+		SHAREDFLAGS="-shared -msym" \
 		SHAREDCMD='$(CC)'; \
+		if [ -n "$$SHLIB_HIST" ]; then \
+			SHAREDFLAGS="$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
+		fi; \
 		$(LINK_SO_A); \
 	fi
 
@@ -301,8 +325,11 @@ link_o.tru64-rpath:
 		SHLIB_SOVER= \
 		ALLSYMSFLAGS='-all' \
 		NOALLSYMSFLAGS='-none' \
-		SHAREDFLAGS="-shared -msym -rpath $(LIBRPATH) -set_version \"$$SHLIB_HIST\"" \
+		SHAREDFLAGS="-shared -msym -rpath $(LIBRPATH)" \
 		SHAREDCMD='$(CC)'; \
+		if [ -n "$$SHLIB_HIST" ]; then \
+			SHAREDFLAGS="$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
+		fi; \
 		$(LINK_SO_O); \
 	fi
 link_a.tru64-rpath:
@@ -326,8 +353,11 @@ link_a.tru64-rpath:
 		SHLIB_SOVER= \
 		ALLSYMSFLAGS='-all' \
 		NOALLSYMSFLAGS='-none' \
-		SHAREDFLAGS="-shared -msym -rpath $(LIBRPATH) -set_version \"$$SHLIB_HIST\"" \
+		SHAREDFLAGS="-shared -msym -rpath $(LIBRPATH)" \
 		SHAREDCMD='$(CC)'; \
+		if [ -n "$$SHLIB_HIST" ]; then \
+			SHAREDFLAGS="$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
+		fi; \
 		$(LINK_SO_A); \
 	fi
 
