@@ -553,8 +553,8 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-port num		 port to run responder on\n");
 		BIO_printf (bio_err, "-index file	 certificate status index file\n");
 		BIO_printf (bio_err, "-CA file		 CA certificate\n");
-		BIO_printf (bio_err, "-rsigner file	 responder certificate to sign requests with\n");
-		BIO_printf (bio_err, "-rkey file	 responder key to sign requests with\n");
+		BIO_printf (bio_err, "-rsigner file	 responder certificate to sign responses with\n");
+		BIO_printf (bio_err, "-rkey file	 responder key to sign responses with\n");
 		BIO_printf (bio_err, "-rother file	 other certificates to include in response\n");
 		BIO_printf (bio_err, "-resp_no_certs     don't include any certificates in response\n");
 		BIO_printf (bio_err, "-nmin n	 	 number of minutes before next update\n");
@@ -675,6 +675,18 @@ int MAIN(int argc, char **argv)
 		}
 
 	if (req_text && req) OCSP_REQUEST_print(out, req, 0);
+
+	if (reqout)
+		{
+		derbio = BIO_new_file(reqout, "wb");
+		if(!derbio)
+			{
+			BIO_printf(bio_err, "Error opening file %s\n", reqout);
+			goto end;
+			}
+		i2d_OCSP_REQUEST_bio(derbio, req);
+		BIO_free(derbio);
+		}
 
 	if (ridx_filename && (!rkey || !rsigner || !rca_cert))
 		{
@@ -809,6 +821,8 @@ int MAIN(int argc, char **argv)
 
 	if (!store)
 		store = setup_verify(bio_err, CAfile, CApath);
+	if (!store)
+		goto end;
 	if (verify_certfile)
 		{
 		verify_other = load_certs(bio_err, verify_certfile, FORMAT_PEM,

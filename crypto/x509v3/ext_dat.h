@@ -99,8 +99,8 @@ static X509V3_EXT_METHOD *standard_exts[] = {
 &v3_ocsp_nocheck,
 &v3_ocsp_acutoff,
 &v3_ocsp_serviceloc,
-&v3_crl_hold,
-&v3_sinfo
+&v3_sinfo,
+&v3_crl_hold
 };
 
 /* Number of standard extensions */
