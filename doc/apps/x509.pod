@@ -17,6 +17,8 @@ B<openssl> B<x509>
 [B<-out filename>]
 [B<-serial>]
 [B<-hash>]
+[B<-subject_hash>]
+[B<-issuer_hash>]
 [B<-subject>]
 [B<-issuer>]
 [B<-nameopt option>]
@@ -141,11 +143,19 @@ contained in the certificate.
 
 outputs the certificate serial number.
 
-=item B<-hash>
+=item B<-subject_hash>
 
 outputs the "hash" of the certificate subject name. This is used in OpenSSL to
 form an index to allow certificates in a directory to be looked up by subject
 name.
+
+=item B<-issuer_hash>
+
+outputs the "hash" of the certificate issuer name.
+
+=item B<-hash>
+
+synonym for "-hash" for backward compatibility reasons.
 
 =item B<-subject>
 
