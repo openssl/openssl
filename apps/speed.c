@@ -426,6 +426,7 @@ int MAIN(int argc, char **argv)
 	int pr_header=0;
 	int usertime=1;
 	const EVP_CIPHER *evp=NULL;
+	int decrypt=0;
 
 #ifndef TIMES
 	usertime=-1;
@@ -494,6 +495,12 @@ int MAIN(int argc, char **argv)
 				goto end;
 				}
 			doit[D_EVP]=1;
+			}
+		else if(argc > 0 && !strcmp(*argv,"-decrypt"))
+			{
+			argc--;
+			argv++;
+			decrypt=1;
 			}
 		else
 		if	((argc > 0) && (strcmp(*argv,"-engine") == 0))
@@ -1192,11 +1199,22 @@ int MAIN(int argc, char **argv)
 			names[D_EVP]=OBJ_nid2ln(evp->nid);
 			print_message(names[D_EVP],save_count,
 						  lengths[j]);
-			EVP_EncryptInit(&ctx,evp,key16,iv);
+			if(decrypt)
+				EVP_DecryptInit(&ctx,evp,key16,iv);
+			else
+				EVP_EncryptInit(&ctx,evp,key16,iv);
+				
 			Time_F(START,usertime);
-			for (count=0,run=1; COND(save_count*4*lengths[0]/lengths[j]); count++)
-			    EVP_EncryptUpdate(&ctx,buf,&outl,buf,lengths[j]);
-			EVP_EncryptFinal(&ctx,buf,&outl);
+			if(decrypt)
+				for (count=0,run=1; COND(save_count*4*lengths[0]/lengths[j]); count++)
+					EVP_DecryptUpdate(&ctx,buf,&outl,buf,lengths[j]);
+			else
+				for (count=0,run=1; COND(save_count*4*lengths[0]/lengths[j]); count++)
+					EVP_EncryptUpdate(&ctx,buf,&outl,buf,lengths[j]);
+			if(decrypt)
+				EVP_DecryptFinal(&ctx,buf,&outl);
+			else
+				EVP_EncryptFinal(&ctx,buf,&outl);
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 					   count,names[D_EVP],d);
