@@ -418,12 +418,22 @@ int main(int argc, char *argv[])
 			debug=1;
 		else if	(strcmp(*argv,"-reuse") == 0)
 			reuse=1;
-#ifndef OPENSSL_NO_DH
 		else if	(strcmp(*argv,"-dhe1024") == 0)
+			{
+#ifndef OPENSSL_NO_DH
 			dhe1024=1;
-		else if	(strcmp(*argv,"-dhe1024dsa") == 0)
-			dhe1024dsa=1;
+#else
+			fprintf(stderr,"ignoring -dhe1024, since I'm compiled without DH\n";
 #endif
+			}
+		else if	(strcmp(*argv,"-dhe1024dsa") == 0)
+			{
+#ifndef OPENSSL_NO_DH
+			dhe1024dsa=1;
+#else
+			fprintf(stderr,"ignoring -dhe1024, since I'm compiled without DH\n";
+#endif
+			}
 		else if	(strcmp(*argv,"-no_dhe") == 0)
 			no_dhe=1;
 		else if	(strcmp(*argv,"-no_ecdhe") == 0)
@@ -514,13 +524,16 @@ int main(int argc, char *argv[])
 			{
 			comp = COMP_RLE;
 			}
-#ifndef OPENSSL_NO_ECDH		
 		else if	(strcmp(*argv,"-named_curve") == 0)
 			{
 			if (--argc < 1) goto bad;
+#ifndef OPENSSL_NO_ECDH		
 			named_curve = *(++argv);
-			}
+#else
+			fprintf(stderr,"ignoring -named_curve, since I'm compiled without ECDH\n"
+			++argv;
 #endif
+			}
 		else if	(strcmp(*argv,"-app_verify") == 0)
 			{
 			app_verify = 1;
