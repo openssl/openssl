@@ -117,14 +117,14 @@ static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
 static EVP_PKEY *hwcrhk_load_pubkey(const char *key_id,
 	const char *passphrase);
 static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-	int index,long argl, void *argp);
+	int ind,long argl, void *argp);
 
 /* Interaction stuff */
 static int hwcrhk_get_pass(const char *prompt_info,
 	int *len_io, char *buf,
 	HWCryptoHook_PassphraseContext *ppctx,
 	HWCryptoHook_CallerContext *cactx);
-static void hwcrhk_log_message(void *logstream, const char *message);
+static void hwcrhk_log_message(void *logstr, const char *message);
 
 /* Our internal RSA_METHOD that we provide pointers to */
 static RSA_METHOD hwcrhk_rsa =
@@ -914,7 +914,7 @@ static int hwcrhk_rand_status(void)
 /* This cleans up an RSA KM key, called when ex_data is freed */
 
 static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-	int index,long argl, void *argp)
+	int ind,long argl, void *argp)
 {
 	char tempbuf[1024];
 	HWCryptoHook_ErrMsgBuf rmsg;
@@ -1001,13 +1001,13 @@ static int hwcrhk_get_pass(const char *prompt_info,
 	return 0;
 	}
 
-static void hwcrhk_log_message(void *logstream, const char *message)
+static void hwcrhk_log_message(void *logstr, const char *message)
 	{
 	BIO *lstream = NULL;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_BIO);
-	if (logstream)
-		lstream=*(BIO **)logstream;
+	if (logstr)
+		lstream=*(BIO **)logstr;
 	if (lstream)
 		{
 		BIO_write(lstream, message, strlen(message));
