@@ -21,7 +21,6 @@ B<openssl> B<smime>
 [B<-certfile file>]
 [B<-signer file>]
 [B<-recip  file>]
-[B<-in file>]
 [B<-inform SMIME|PEM|DER>]
 [B<-passin arg>]
 [B<-inkey file>]
