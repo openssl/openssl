@@ -2800,3 +2800,4 @@ BUF_strlcat                             3241	EXIST::FUNCTION:
 BIO_indent                              3242	EXIST::FUNCTION:
 BUF_strlcpy                             3243	EXIST::FUNCTION:
 OpenSSLDie                              3244	EXIST::FUNCTION:
+OPENSSL_cleanse                         3245	EXIST::FUNCTION:
