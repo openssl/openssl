@@ -1,4 +1,4 @@
-/* crypto/asn1/pkcs8.c */
+/* crypto/asn1/p8_key.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
