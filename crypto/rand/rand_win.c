@@ -726,8 +726,9 @@ int RAND_poll(void)
 
 #ifdef DEVRANDOM
 	return 1;
-#endif
+#else
 	return 0;
+#endif
 }
 
 #endif
