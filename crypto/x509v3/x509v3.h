@@ -292,7 +292,7 @@ DECLARE_ASN1_SET_OF(POLICYINFO)
 
 #define X509V3_set_ctx_test(ctx) \
 			X509V3_set_ctx(ctx, NULL, NULL, NULL, NULL, CTX_TEST)
-#define X509V3_set_ctx_nodb(ctx) ctx->db = NULL;
+#define X509V3_set_ctx_nodb(ctx) (ctx)->db = NULL;
 
 #define EXT_BITSTRING(nid, table) { nid, 0, ASN1_ITEM_ref(ASN1_BIT_STRING), \
 			0,0,0,0, \
