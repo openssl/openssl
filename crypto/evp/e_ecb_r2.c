@@ -63,9 +63,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void rc2_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int rc2_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void rc2_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int rc2_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER r2_ecb_cipher=
 	{
@@ -87,20 +87,21 @@ EVP_CIPHER *EVP_rc2_ecb(void)
 	return(&r2_ecb_cipher);
 	}
 	
-static void rc2_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int rc2_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	if (key != NULL)
 		RC2_set_key(&(ctx->c.rc2_ks),EVP_CIPHER_CTX_key_length(ctx),
 			key,EVP_CIPHER_key_length(ctx->cipher)*8);
+	return 1;
 	}
 
-static void rc2_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int rc2_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	unsigned int i;
 
-	if (inl < 8) return;
+	if (inl < 8) return 1;
 	inl-=8;
 	for (i=0; i<=inl; i+=8)
 		{
@@ -108,6 +109,7 @@ static void rc2_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			&(in[i]),&(out[i]),
 			&(ctx->c.rc2_ks),ctx->encrypt);
 		}
+	return 1;
 	}
 
 #endif

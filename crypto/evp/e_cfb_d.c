@@ -62,9 +62,9 @@
 #include <openssl/objects.h>
 
 #ifndef NO_DES
-static void des_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int des_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER d_cfb_cipher=
 	{
@@ -86,7 +86,7 @@ EVP_CIPHER *EVP_des_cfb(void)
 	return(&d_cfb_cipher);
 	}
 	
-static void des_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int des_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	des_cblock *deskey = (des_cblock *)key;
@@ -98,9 +98,10 @@ static void des_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (deskey != NULL)
 		des_set_key_unchecked(deskey,ctx->c.des_ks);
+	return 1;
 	}
 
-static void des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	des_cfb64_encrypt(
@@ -108,5 +109,6 @@ static void des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		(long)inl, ctx->c.des_ks,
 		(des_cblock *)&(ctx->iv[0]),
 		&ctx->num,ctx->encrypt);
+	return 1;
 	}
 #endif

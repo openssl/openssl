@@ -63,9 +63,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void idea_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int idea_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER i_ecb_cipher=
 	{
@@ -87,7 +87,7 @@ EVP_CIPHER *EVP_idea_ecb(void)
 	return(&i_ecb_cipher);
 	}
 	
-static void idea_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int idea_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	if (key != NULL)
@@ -104,20 +104,22 @@ static void idea_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 				sizeof(IDEA_KEY_SCHEDULE));
 			}
 		}
+	return 1;
 	}
 
-static void idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	unsigned int i;
 
-	if (inl < 8) return;
+	if (inl < 8) return 1;
 	inl-=8;
 	for (i=0; i<=inl; i+=8)
 		{
 		idea_ecb_encrypt(
 			&(in[i]),&(out[i]),&(ctx->c.idea_ks));
 		}
+	return 1;
 	}
 
 #endif

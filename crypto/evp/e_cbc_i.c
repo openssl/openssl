@@ -63,9 +63,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void idea_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int idea_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void idea_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int idea_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER i_cbc_cipher=
 	{
@@ -87,7 +87,7 @@ EVP_CIPHER *EVP_idea_cbc(void)
 	return(&i_cbc_cipher);
 	}
 	
-static void idea_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int idea_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	if (iv != NULL)
@@ -107,15 +107,17 @@ static void idea_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 				sizeof(IDEA_KEY_SCHEDULE));
 			}
 		}
+	return 1;
 	}
 
-static void idea_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int idea_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	idea_cbc_encrypt(
 		in,out,(long)inl,
 		&(ctx->c.idea_ks),&(ctx->iv[0]),
 		ctx->encrypt);
+	return 1;
 	}
 
 #endif

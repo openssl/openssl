@@ -62,9 +62,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void bf_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int bf_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void bf_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int bf_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER bfish_ofb_cipher=
 	{
@@ -86,7 +86,7 @@ EVP_CIPHER *EVP_bf_ofb(void)
 	return(&bfish_ofb_cipher);
 	}
 	
-static void bf_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int bf_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	ctx->num=0;
@@ -96,9 +96,10 @@ static void bf_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
 		BF_set_key(&(ctx->c.bf_ks),EVP_CIPHER_CTX_key_length(ctx),key);
+	return 1;
 	}
 
-static void bf_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int bf_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	BF_ofb64_encrypt(
@@ -106,6 +107,7 @@ static void bf_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		(long)inl, &(ctx->c.bf_ks),
 		&(ctx->iv[0]),
 		&ctx->num);
+	return 1;
 	}
 
 #endif

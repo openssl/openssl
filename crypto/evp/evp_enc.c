@@ -69,34 +69,29 @@ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 	/* ctx->cipher=NULL; */
 	}
 
-void EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *data,
+int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *data,
 	     unsigned char *key, unsigned char *iv, int enc)
 	{
-	if (enc)
-		EVP_EncryptInit(ctx,data,key,iv);
-	else	
-		EVP_DecryptInit(ctx,data,key,iv);
+	if (enc) return EVP_EncryptInit(ctx,data,key,iv);
+	else return EVP_DecryptInit(ctx,data,key,iv);
 	}
 
-void EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
+int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	     unsigned char *in, int inl)
 	{
 	if (ctx->encrypt)
-		EVP_EncryptUpdate(ctx,out,outl,in,inl);
-	else	EVP_DecryptUpdate(ctx,out,outl,in,inl);
+		return EVP_EncryptUpdate(ctx,out,outl,in,inl);
+	else	return EVP_DecryptUpdate(ctx,out,outl,in,inl);
 	}
 
 int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
 	if (ctx->encrypt)
-		{
-		EVP_EncryptFinal(ctx,out,outl);
-		return(1);
-		}
+		return EVP_EncryptFinal(ctx,out,outl);
 	else	return(EVP_DecryptFinal(ctx,out,outl));
 	}
 
-void EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+int EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     unsigned char *key, unsigned char *iv)
 	{
 	if (cipher != NULL)
@@ -104,12 +99,13 @@ void EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 		ctx->cipher=cipher;
 		ctx->key_len = cipher->key_len;
 		}
-	ctx->cipher->init(ctx,key,iv,1);
+	if(!ctx->cipher->init(ctx,key,iv,1)) return 0;
 	ctx->encrypt=1;
 	ctx->buf_len=0;
+	return 1;
 	}
 
-void EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+int EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     unsigned char *key, unsigned char *iv)
 	{
 	if (cipher != NULL)
@@ -117,13 +113,14 @@ void EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 		ctx->cipher=cipher;
 		ctx->key_len = cipher->key_len;
 		}
-	ctx->cipher->init(ctx,key,iv,0);
+	if(!ctx->cipher->init(ctx,key,iv,0)) return 0;
 	ctx->encrypt=0;
 	ctx->buf_len=0;
+	return 1;
 	}
 
 
-void EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
+int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	     unsigned char *in, int inl)
 	{
 	int i,j,bl;
@@ -131,20 +128,20 @@ void EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	i=ctx->buf_len;
 	bl=ctx->cipher->block_size;
 	*outl=0;
-	if ((inl == 0) && (i != bl)) return;
+	if ((inl == 0) && (i != bl)) return 1;
 	if (i != 0)
 		{
 		if (i+inl < bl)
 			{
 			memcpy(&(ctx->buf[i]),in,inl);
 			ctx->buf_len+=inl;
-			return;
+			return 1;
 			}
 		else
 			{
 			j=bl-i;
 			if (j != 0) memcpy(&(ctx->buf[i]),in,j);
-			ctx->cipher->do_cipher(ctx,out,ctx->buf,bl);
+			if(!ctx->cipher->do_cipher(ctx,out,ctx->buf,bl)) return 0;
 			inl-=j;
 			in+=j;
 			out+=bl;
@@ -155,16 +152,17 @@ void EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	inl-=i;
 	if (inl > 0)
 		{
-		ctx->cipher->do_cipher(ctx,out,in,inl);
+		if(!ctx->cipher->do_cipher(ctx,out,in,inl)) return 0;
 		*outl+=inl;
 		}
 
 	if (i != 0)
 		memcpy(ctx->buf,&(in[inl]),i);
 	ctx->buf_len=i;
+	return 1;
 	}
 
-void EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
 	int i,n,b,bl;
 
@@ -172,24 +170,25 @@ void EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	if (b == 1)
 		{
 		*outl=0;
-		return;
+		return 1;
 		}
 	bl=ctx->buf_len;
 	n=b-bl;
 	for (i=bl; i<b; i++)
 		ctx->buf[i]=n;
-	ctx->cipher->do_cipher(ctx,out,ctx->buf,b);
+	if(!ctx->cipher->do_cipher(ctx,out,ctx->buf,b)) return 0;
 	*outl=b;
+	return 1;
 	}
 
-void EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
+int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	     unsigned char *in, int inl)
 	{
 	int b,bl,n;
 	int keep_last=0;
 
 	*outl=0;
-	if (inl == 0) return;
+	if (inl == 0) return 1;
 
 	b=ctx->cipher->block_size;
 	if (b > 1)
@@ -204,13 +203,13 @@ void EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 				memcpy(&(ctx->buf[bl]),in,inl);
 				ctx->buf_len=b;
 				*outl=0;
-				return;
+				return 1;
 				}
 			keep_last=1;
 			inl-=b; /* don't do the last block */
 			}
 		}
-	EVP_EncryptUpdate(ctx,out,outl,in,inl);
+	if(!EVP_EncryptUpdate(ctx,out,outl,in,inl)) return 0;
 
 	/* if we have 'decrypted' a multiple of block size, make sure
 	 * we have a copy of this last block */
@@ -225,6 +224,7 @@ void EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 #endif
 		ctx->buf_len=b;
 		}
+	return 1;
 	}
 
 int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -241,7 +241,7 @@ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 			EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_WRONG_FINAL_BLOCK_LENGTH);
 			return(0);
 			}
-		EVP_EncryptUpdate(ctx,ctx->buf,&n,ctx->buf,0);
+		if(!EVP_EncryptUpdate(ctx,ctx->buf,&n,ctx->buf,0)) return 0;
 		if (n != b)
 			return(0);
 		n=ctx->buf[b-1];
@@ -268,11 +268,14 @@ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	return(1);
 	}
 
-void EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
+int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 	{
 	if ((c->cipher != NULL) && (c->cipher->cleanup != NULL))
-		c->cipher->cleanup(c);
+		{
+		if(!c->cipher->cleanup(c)) return 0;
+		}
 	memset(c,0,sizeof(EVP_CIPHER_CTX));
+	return 1;
 	}
 
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)

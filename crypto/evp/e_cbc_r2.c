@@ -63,9 +63,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void rc2_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int rc2_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void rc2_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int rc2_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static int rc2_meth_to_magic(const EVP_CIPHER *e);
 static EVP_CIPHER *rc2_magic_to_meth(int i);
@@ -136,7 +136,7 @@ EVP_CIPHER *EVP_rc2_40_cbc(void)
 	return(&r2_40_cbc_cipher);
 	}
 	
-static void rc2_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int rc2_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	if (iv != NULL)
@@ -145,15 +145,17 @@ static void rc2_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	if (key != NULL)
 		RC2_set_key(&(ctx->c.rc2_ks),EVP_CIPHER_CTX_key_length(ctx),
 			key,EVP_CIPHER_key_length(ctx->cipher)*8);
+	return 1;
 	}
 
-static void rc2_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int rc2_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	RC2_cbc_encrypt(
 		in,out,(long)inl,
 		&(ctx->c.rc2_ks),&(ctx->iv[0]),
 		ctx->encrypt);
+	return 1;
 	}
 
 static int rc2_meth_to_magic(const EVP_CIPHER *e)

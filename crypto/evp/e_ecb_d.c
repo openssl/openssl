@@ -62,9 +62,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void des_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int des_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER d_ecb_cipher=
 	{
@@ -86,23 +86,24 @@ EVP_CIPHER *EVP_des_ecb(void)
 	return(&d_ecb_cipher);
 	}
 	
-static void des_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int des_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	des_cblock *deskey = (des_cblock *)key;
 
 	if (deskey != NULL)
 		des_set_key_unchecked(deskey,ctx->c.des_ks);
+	return 1;
 	}
 
-static void des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	unsigned int i;
 	des_cblock *output  /* = (des_cblock *)out */;
 	des_cblock *input   /* = (des_cblock *)in */; 
 
-	if (inl < 8) return;
+	if (inl < 8) return 1;
 	inl-=8;
 	for (i=0; i<=inl; i+=8)
 		{
@@ -116,5 +117,6 @@ static void des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		/* output++; */
 		/* input++; */
 		}
+	return 1;
 	}
 #endif

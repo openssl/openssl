@@ -9,9 +9,15 @@
      support added for variable key length ciphers via the
      EVP_CIPHER_CTX_set_key_length() function. Other cipher specific
      parameters will be added later via the new catchall 'ctrl' function.
-     New functionality allows removal of S/MIME code RC2 hack. Still needs
-     support in other library functions, also need to add return codes to
-     some EVP functions.
+     New functionality allows removal of S/MIME code RC2 hack.
+
+     Still needs support in other library functions, and allow parameter
+     setting for algorithms like RC2, RC5.
+
+     Change lots of functions like EVP_EncryptUpdate() to now return a
+     value: although software versions of the algorithms cannot fail
+     any installed hardware versions can.
+
      [Steve Henson]
 
   *) Implement SSL_OP_TLS_ROLLBACK_BUG: In ssl3_get_client_key_exchange, if

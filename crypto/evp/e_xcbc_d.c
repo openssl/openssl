@@ -62,9 +62,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void desx_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int desx_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER d_xcbc_cipher=
 	{
@@ -86,7 +86,7 @@ EVP_CIPHER *EVP_desx_cbc(void)
 	return(&d_xcbc_cipher);
 	}
 	
-static void desx_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int desx_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	des_cblock *deskey = (des_cblock *)key;
@@ -100,9 +100,10 @@ static void desx_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 		memcpy(&(ctx->c.desx_cbc.inw[0]),&(key[8]),8);
 		memcpy(&(ctx->c.desx_cbc.outw[0]),&(key[16]),8);
 		}
+	return 1;
 	}
 
-static void desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	des_xcbc_encrypt(in,out,inl,ctx->c.desx_cbc.ks,
@@ -110,5 +111,6 @@ static void desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		&ctx->c.desx_cbc.inw,
 		&ctx->c.desx_cbc.outw,
 		ctx->encrypt);
+	return 1;
 	}
 #endif

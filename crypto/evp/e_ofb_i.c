@@ -63,9 +63,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void idea_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int idea_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void idea_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int idea_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER i_ofb_cipher=
 	{
@@ -87,7 +87,7 @@ EVP_CIPHER *EVP_idea_ofb(void)
 	return(&i_ofb_cipher);
 	}
 	
-static void idea_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int idea_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	ctx->num=0;
@@ -97,15 +97,17 @@ static void idea_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
 		idea_set_encrypt_key(key,&(ctx->c.idea_ks));
+	return 1;
 	}
 
-static void idea_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int idea_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	idea_ofb64_encrypt(
 		in,out,(long)inl,
 		&(ctx->c.idea_ks),&(ctx->iv[0]),
 		&ctx->num);
+	return 1;
 	}
 
 #endif

@@ -62,9 +62,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void bf_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int bf_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void bf_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int bf_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER bfish_cbc_cipher=
 	{
@@ -86,7 +86,7 @@ EVP_CIPHER *EVP_bf_cbc(void)
 	return(&bfish_cbc_cipher);
 	}
 	
-static void bf_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int bf_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	if (iv != NULL)
@@ -94,15 +94,17 @@ static void bf_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
 		BF_set_key(&(ctx->c.bf_ks),EVP_CIPHER_CTX_key_length(ctx),key);
+	return 1;
 	}
 
-static void bf_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int bf_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	BF_cbc_encrypt(
 		in,out,(long)inl,
 		&(ctx->c.bf_ks),&(ctx->iv[0]),
 		ctx->encrypt);
+	return 1;
 	}
 
 #endif

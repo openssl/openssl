@@ -63,9 +63,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void cast_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int cast_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void cast_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int cast_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER cast5_ecb_cipher=
 	{
@@ -87,19 +87,20 @@ EVP_CIPHER *EVP_cast5_ecb(void)
 	return(&cast5_ecb_cipher);
 	}
 	
-static void cast_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int cast_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	if (key != NULL)
 		CAST_set_key(&(ctx->c.cast_ks),EVP_CIPHER_CTX_key_length(ctx),key);
+	return 1;
 	}
 
-static void cast_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int cast_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	unsigned int i;
 
-	if (inl < 8) return;
+	if (inl < 8) return 1;
 	inl-=8;
 	for (i=0; i<=inl; i+=8)
 		{
@@ -107,6 +108,7 @@ static void cast_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			&(in[i]),&(out[i]),
 			&(ctx->c.cast_ks),ctx->encrypt);
 		}
+	return 1;
 	}
 
 #endif

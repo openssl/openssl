@@ -62,9 +62,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void bf_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int bf_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void bf_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int bf_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER bfish_ecb_cipher=
 	{
@@ -86,19 +86,20 @@ EVP_CIPHER *EVP_bf_ecb(void)
 	return(&bfish_ecb_cipher);
 	}
 	
-static void bf_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int bf_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	if (key != NULL)
 		BF_set_key(&(ctx->c.bf_ks),EVP_CIPHER_CTX_key_length(ctx),key);
+	return 1;
 	}
 
-static void bf_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int bf_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	unsigned int i;
 
-	if (inl < 8) return;
+	if (inl < 8) return 1;
 	inl-=8;
 	for (i=0; i<=inl; i+=8)
 		{
@@ -106,6 +107,7 @@ static void bf_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			&(in[i]),&(out[i]),
 			&(ctx->c.bf_ks),ctx->encrypt);
 		}
+	return 1;
 	}
 
 #endif

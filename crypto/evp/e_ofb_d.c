@@ -62,9 +62,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static void des_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int des_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
-static void des_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int des_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
 static EVP_CIPHER d_ofb_cipher=
 	{
@@ -86,7 +86,7 @@ EVP_CIPHER *EVP_des_ofb(void)
 	return(&d_ofb_cipher);
 	}
 	
-static void des_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+static int des_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	     unsigned char *iv, int enc)
 	{
 	des_cblock *deskey = (des_cblock *)key;
@@ -98,12 +98,14 @@ static void des_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (deskey != NULL)
 		des_set_key_unchecked(deskey,ctx->c.des_ks);
+	return 1;
 	}
 
-static void des_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int des_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	     unsigned char *in, unsigned int inl)
 	{
 	des_ofb64_encrypt(in,out,inl,ctx->c.des_ks,
 		(des_cblock *)&(ctx->iv[0]),&ctx->num);
+	return 1;
 	}
 #endif
