@@ -1,11 +1,12 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/11/19 09:34:34 $
+  ______________                           $Date: 2002/11/19 11:52:24 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.8:  Under development...
     o  OpenSSL 0.9.7-beta4: Released on November 19th, 2002
+       Debian GNU/Linux (kernel version 2.4.19, gcc 2.95.4)	- PASSED
     o  OpenSSL 0.9.7-beta3: Released on July 30th, 2002
     o  OpenSSL 0.9.7-beta2: Released on June 16th, 2002
     o  OpenSSL 0.9.7-beta1: Released on June  1st, 2002
