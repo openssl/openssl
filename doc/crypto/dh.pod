@@ -60,6 +60,6 @@ The B<DH> structure consists of several BIGNUM components.
 
 dhparam(1), bn(3), dsa(3), err(3), rand(3), rsa(3), DH_set_method(3),
 DH_new(3), DH_get_ex_new_index(3), DH_generate_parameters(3),
-DH_compute_key(3), d2i_DHparams(3), DHparams_print(3)
+DH_compute_key(3), d2i_DHparams(3), RSA_print(3)
 
 =cut

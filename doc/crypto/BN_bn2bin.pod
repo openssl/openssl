@@ -3,7 +3,7 @@
 =head1 NAME
 
 BN_bn2bin, BN_bin2bn, BN_bn2hex, BN_bn2dec, BN_hex2bn, BN_dec2bn,
-BN_print_fp, BN_print, BN_bn2mpi, BN_mpi2bn - Format conversions
+BN_print, BN_print_fp, BN_bn2mpi, BN_mpi2bn - Format conversions
 
 =head1 SYNOPSIS
 
@@ -17,8 +17,8 @@ BN_print_fp, BN_print, BN_bn2mpi, BN_mpi2bn - Format conversions
  int BN_hex2bn(BIGNUM **a, const char *str);
  int BN_dec2bn(BIGNUM **a, const char *str);
 
- int BN_print_fp(FILE *fp, BIGNUM *a);
  int BN_print(BIO *fp, const BIGNUM *a);
+ int BN_print_fp(FILE *fp, BIGNUM *a);
 
  int BN_bn2mpi(const BIGNUM *a, unsigned char *to);
  BIGNUM *BN_mpi2bn(unsigned char *s, int len, BIGNUM *ret);
@@ -44,8 +44,8 @@ B<BIGNUM> is created. If B<bn> is NULL, it only computes the number's
 length in hexadecimal digits. If the string starts with '-', the
 number is negative. BN_dec2bn() is the same using the decimal system.
 
-BN_print_fp() and BN_print() write the hexadecimal encoding of B<a>,
-with a leading '-' for negative numbers, to the B<FILE> or B<BIO>
+BN_print() and BN_print_fp() write the hexadecimal encoding of B<a>,
+with a leading '-' for negative numbers, to the B<BIO> or B<FILE>
 B<fp>.
 
 BN_bn2mpi() and BN_mpi2bn() convert B<BIGNUM>s from and to a format

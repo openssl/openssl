@@ -80,8 +80,8 @@ bn - Multiprecision integer arithmetics
  char *BN_bn2dec(const BIGNUM *a);
  int BN_hex2bn(BIGNUM **a, const char *str);
  int BN_dec2bn(BIGNUM **a, const char *str);
- int BN_print_fp(FILE *fp, BIGNUM *a);
  int BN_print(BIO *fp, const BIGNUM *a);
+ int BN_print_fp(FILE *fp, BIGNUM *a);
  int BN_bn2mpi(const BIGNUM *a, unsigned char *to);
  BIGNUM *BN_mpi2bn(unsigned char *s, int len, BIGNUM *ret);
 
