@@ -102,12 +102,7 @@ LD_LIBRARY_PATH=`pwd` make test
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make MANDIR=/usr/man INSTALL_PREFIX="$RPM_BUILD_ROOT" install
-
-# Rename manpages
-for x in $RPM_BUILD_ROOT/usr/man/man*/* 
-	do mv ${x} ${x}ssl
-done
+make MANDIR=/usr/man MANSUFFIX=ssl INSTALL_PREFIX="$RPM_BUILD_ROOT" install
 
 # Make backwards-compatibility symlink to ssleay
 ln -sf /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay
