@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-engine] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [fips] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-engine] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [fips] [debug] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -630,6 +630,7 @@ my $processor="";
 my $default_ranlib;
 my $perl;
 my $fips=0;
+my $debug=0;
 
 my $no_ssl2=0;
 my $no_ssl3=0;
@@ -808,6 +809,10 @@ PROCESS_ARGS:
 			$fips=1;
 			$openssl_other_defines.="#define OPENSSL_FIPS\n";
 		        }
+		elsif (/^debug$/)
+			{
+			$debug=1;
+			}
 		elsif (/^rsaref$/)
 			{
 			# No RSAref support any more since it's not needed.
@@ -1167,6 +1172,12 @@ if ($rmd160_obj =~ /\.o$/)
 	{
 #	$rmd160_obj=$rmd160_enc;
 	$cflags.=" -DRMD160_ASM";
+	}
+
+if ($debug)
+	{
+	$cflags.=" -g";
+	$cflags=~s/-fomit-frame-pointer//;
 	}
 
 # "Stringify" the C flags string.  This permits it to be made part of a string
