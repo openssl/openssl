@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New OCSP verify flag OCSP_TRUSTOTHER. When set the "other" certificates
+     passed by the function are trusted implicitly. If any of them signed the
+     reponse then it is assumed to be valid and is not verified.
+     [Steve Henson]
+
   *) Zero the premaster secret after deriving the master secret in
      DH ciphersuites.
      [Steve Henson]

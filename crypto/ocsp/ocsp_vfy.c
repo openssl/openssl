@@ -59,7 +59,7 @@
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
 
-static X509 *ocsp_find_signer(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
+static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 				X509_STORE *st, unsigned long flags);
 static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id);
 static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain, unsigned long flags);
@@ -76,12 +76,14 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 	STACK_OF(X509) *chain = NULL;
 	X509_STORE_CTX ctx;
 	int i, ret = 0;
-	signer = ocsp_find_signer(bs, certs, st, flags);
-	if (!signer)
+	ret = ocsp_find_signer(&signer, bs, certs, st, flags);
+	if (!ret)
 		{
 		OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
 		goto end;
 		}
+	if ((ret == 2) && (flags & OCSP_TRUSTOTHER))
+		flags |= OCSP_NOVERIFY;
 	if (!(flags & OCSP_NOSIGS))
 		{
 		EVP_PKEY *skey;
@@ -148,19 +150,26 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 	}
 
 
-static X509 *ocsp_find_signer(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
+static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 				X509_STORE *st, unsigned long flags)
 	{
 	X509 *signer;
 	OCSP_RESPID *rid = bs->tbsResponseData->responderId;
 	if ((signer = ocsp_find_signer_sk(certs, rid)))
-		return signer;
+		{
+		*psigner = signer;
+		return 2;
+		}
 	if(!(flags & OCSP_NOINTERN) &&
 	    (signer = ocsp_find_signer_sk(bs->certs, rid)))
-		return signer;
+		{
+		*psigner = signer;
+		return 1;
+		}
 	/* Maybe lookup from store if by subject name */
 
-	return NULL;
+	*psigner = NULL;
+	return 0;
 	}
 
 

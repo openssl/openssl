@@ -85,6 +85,7 @@ extern "C" {
 #define OCSP_NOCASIGN			0x40
 #define OCSP_NODELEGATED		0x80
 #define OCSP_NOCHECKS			0x100
+#define OCSP_TRUSTOTHER			0x200
 
 /*   CertID ::= SEQUENCE {
  *       hashAlgorithm            AlgorithmIdentifier,
