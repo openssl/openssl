@@ -806,7 +806,7 @@ static int set_table_opts(unsigned long *flags, const char *arg, const NAME_EX_T
 	} else c = 1;
 
 	for(ptbl = in_tbl; ptbl->name; ptbl++) {
-		if(!strcmp(arg, ptbl->name)) {
+		if(!strcasecmp(arg, ptbl->name)) {
 			*flags &= ~ptbl->mask;
 			if(c) *flags |= ptbl->flag;
 			else *flags &= ~ptbl->flag;
