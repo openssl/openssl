@@ -60,6 +60,7 @@
 #include <string.h>
 #include <errno.h>
 #ifdef VMS
+#pragma message disable DOLLARID
 #include <lib$routines.h>
 #include <libfisdef.h>
 #include <stsdef.h>
@@ -255,13 +256,13 @@ static int do_find_symbol(DSO_VMS_INTERNAL *ptr,
 			0, flags);
 	}
 
-static void *vms_bind_sym(DSO *dso, const char *symname)
+void vms_bind_sym(DSO *dso, const char *symname, void **sym)
 	{
 	DSO_VMS_INTERNAL *ptr;
-	void *sym = 0;
 	int status;
 	int flags = LIB$M_FIS_MIXEDCASE;
 	struct dsc$descriptor_s symname_dsc;
+	*sym = NULL;
 
 	symname_dsc.dsc$w_length = strlen(symname);
 	symname_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
@@ -271,24 +272,24 @@ static void *vms_bind_sym(DSO *dso, const char *symname)
 	if((dso == NULL) || (symname == NULL))
 		{
 		DSOerr(DSO_F_VMS_BIND_VAR,ERR_R_PASSED_NULL_PARAMETER);
-		return(NULL);
+		return;
 		}
 	if(sk_num(dso->meth_data) < 1)
 		{
 		DSOerr(DSO_F_VMS_BIND_VAR,DSO_R_STACK_ERROR);
-		return(NULL);
+		return;
 		}
 	ptr = (DSO_VMS_INTERNAL *)sk_value(dso->meth_data,
 		sk_num(dso->meth_data) - 1);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_VMS_BIND_VAR,DSO_R_NULL_HANDLE);
-		return(NULL);
+		return;
 		}
 
 	if(dso->flags & DSO_FLAG_UPCASE_SYMBOL) flags = 0;
 
-	status = do_find_symbol(ptr, &symname_dsc, &sym, flags);
+	status = do_find_symbol(ptr, &symname_dsc, sym, flags);
 
 	if(!$VMS_STATUS_SUCCESS(status))
 		{
@@ -300,6 +301,8 @@ static void *vms_bind_sym(DSO *dso, const char *symname)
 		errstring_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
 		errstring_dsc.dsc$b_class = DSC$K_CLASS_S;
 		errstring_dsc.dsc$a_pointer = errstring;
+
+		*sym = NULL;
 
 		status = sys$getmsg(status, &length, &errstring_dsc, 1, 0);
 
@@ -322,19 +325,23 @@ static void *vms_bind_sym(DSO *dso, const char *symname)
 					" in ", ptr->filename,
 					": ", errstring);
 			}
-		return(NULL);
+		return;
 		}
-	return(sym);
+	return;
 	}
 
 static void *vms_bind_var(DSO *dso, const char *symname)
 	{
-	return vms_bind_sym(dso, symname);
+	void *sym = 0;
+	vms_bind_sym(dso, symname, &sym);
+	return sym;
 	}
 
 static DSO_FUNC_TYPE vms_bind_func(DSO *dso, const char *symname)
 	{
-	return (DSO_FUNC_TYPE)vms_bind_sym(dso, symname);
+	DSO_FUNC_TYPE sym = 0;
+	vms_bind_sym(dso, symname, &sym);
+	return sym;
 	}
 
 static long vms_ctrl(DSO *dso, int cmd, long larg, void *parg)

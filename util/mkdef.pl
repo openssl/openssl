@@ -623,6 +623,9 @@ sub maybe_add_info {
 	}
 	if ($new_info) {
 		print STDERR "$new_info old symbols got an info update\n";
+		if (!$do_rewrite) {
+			print STDERR "You should do a rewrite to fix this.\n";
+		}
 	} else {
 		print STDERR "No old symbols needed info update\n";
 	}

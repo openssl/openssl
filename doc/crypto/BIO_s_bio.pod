@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BIO_s_bio, BIO_make_bio_pair, BIO_destroy_bio_pair, BIO_set_shutdown_wr, 
+BIO_s_bio, BIO_make_bio_pair, BIO_destroy_bio_pair, BIO_shutdown_wr, 
 BIO_set_write_buf_size, BIO_get_write_buf_size, BIO_new_bio_pair,
 BIO_get_write_guarantee, BIO_ctrl_get_write_guarantee, BIO_get_read_request,
 BIO_ctrl_get_read_request, BIO_ctrl_reset_read_request - BIO pair BIO
@@ -16,7 +16,7 @@ BIO_ctrl_get_read_request, BIO_ctrl_reset_read_request - BIO pair BIO
  #define BIO_make_bio_pair(b1,b2)   (int)BIO_ctrl(b1,BIO_C_MAKE_BIO_PAIR,0,b2)
  #define BIO_destroy_bio_pair(b)    (int)BIO_ctrl(b,BIO_C_DESTROY_BIO_PAIR,0,NULL)
 
- #define BIO_set_shutdown_wr(b) (int)BIO_ctrl(b, BIO_C_SHUTDOWN_WR, 0, NULL)
+ #define BIO_shutdown_wr(b) (int)BIO_ctrl(b, BIO_C_SHUTDOWN_WR, 0, NULL)
 
  #define BIO_set_write_buf_size(b,size) (int)BIO_ctrl(b,BIO_C_SET_WRITE_BUF_SIZE,size,NULL)
  #define BIO_get_write_buf_size(b,size) (size_t)BIO_ctrl(b,BIO_C_GET_WRITE_BUF_SIZE,size,NULL)
@@ -62,7 +62,7 @@ BIO_make_bio_pair() joins two separate BIOs into a connected pair.
 BIO_destroy_pair() destroys the association between two connected BIOs. Freeing
 up any half of the pair will automatically destroy the association.
 
-BIO_set_shutdown_wr() is used to close down a BIO B<b>. After this call no further
+BIO_shutdown_wr() is used to close down a BIO B<b>. After this call no further
 writes on BIO B<b> are allowed (they will return an error). Reads on the other
 half of the pair will return any pending data or EOF when all pending data has
 been read. 

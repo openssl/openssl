@@ -1876,7 +1876,8 @@ ENGINE_get_default_RSA                  2466	EXIST::FUNCTION:
 ENGINE_get_BN_mod_exp                   2467	EXIST::FUNCTION:
 DSA_get_default_openssl_method          2468	EXIST::FUNCTION:DSA
 ENGINE_set_DH                           2469	EXIST::FUNCTION:
-ENGINE_set_default_BN_mod_exp_crt       2470	EXIST::FUNCTION:
+ENGINE_set_default_BN_mod_exp_crt       2470	EXIST:!VMS:FUNCTION:
+ENGINE_set_def_BN_mod_exp_crt           2470	EXIST:VMS:FUNCTION:
 ENGINE_init                             2471	EXIST::FUNCTION:
 DH_get_default_openssl_method           2472	EXIST::FUNCTION:DH
 RSA_set_default_openssl_method          2473	EXIST::FUNCTION:RSA
@@ -1897,7 +1898,8 @@ ENGINE_get_RAND                         2487	EXIST::FUNCTION:
 ENGINE_get_first                        2488	EXIST::FUNCTION:
 ENGINE_by_id                            2489	EXIST::FUNCTION:
 ENGINE_set_finish_function              2490	EXIST::FUNCTION:
-ENGINE_get_default_BN_mod_exp_crt       2491	EXIST::FUNCTION:
+ENGINE_get_default_BN_mod_exp_crt       2491	EXIST:!VMS:FUNCTION:
+ENGINE_get_def_BN_mod_exp_crt           2491	EXIST:VMS:FUNCTION:
 RSA_get_default_openssl_method          2492	EXIST::FUNCTION:RSA
 ENGINE_set_RSA                          2493	EXIST::FUNCTION:
 ENGINE_load_private_key                 2494	EXIST::FUNCTION:

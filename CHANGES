@@ -4,6 +4,9 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) New BIO_shutdown_wr macro, which invokes the BIO_C_SHUTDOWN_WR
+     BIO_ctrl (for BIO pairs).
+
   *) Add DSO method for VMS.
      [Richard Levitte]
 
