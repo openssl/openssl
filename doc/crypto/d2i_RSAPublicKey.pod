@@ -9,6 +9,7 @@ d2i_Netscape_RSA - RSA public and private key encoding functions.
 =head1 SYNOPSIS
 
  #include <openssl/rsa.h>
+ #include <openssl/x509.h>
 
  RSA * d2i_RSAPublicKey(RSA **a, unsigned char **pp, long length);
 
@@ -31,8 +32,8 @@ d2i_Netscape_RSA - RSA public and private key encoding functions.
 d2i_RSAPublicKey() and i2d_RSAPublicKey() decode and encode a PKCS#1 RSAPublicKey
 structure.
 
-d2i_RSA_PUKEY() and i2d_RSA_PUKEY() decode and encode an RSA public key using a
-SubjectPublicKeyInfo (certificate public key) structure.
+d2i_RSA_PUBKEY() and i2d_RSA_PUBKEY() decode and encode an RSA public key using
+a SubjectPublicKeyInfo (certificate public key) structure.
 
 d2i_RSAPrivateKey(), i2d_RSAPrivateKey() decode and encode a PKCS#1 RSAPrivateKey
 structure.
