@@ -831,7 +831,7 @@ while (<IN>)
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
 	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
 	s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_CRYPTO) \$(SHARED_SSL)/ if (!$no_shared);
-	s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.so.\$(SHLIB_MAJOR) .so/ if (!$no_shared && $shared_extension !~ /^\.s[ol]$/);
+	s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.so.\$(SHLIB_MAJOR) .so/ if ($shared_extension ne "" && $shared_extension !~ /^\.s[ol]$/);
 	print OUT $_."\n";
 	}
 close(IN);
