@@ -1211,7 +1211,7 @@ static int hwcrhk_insert_card(const char *prompt_info,
                         BIO_snprintf(buf, sizeof(buf)-1,
                                 "Current card: \"%s\"\n", wrong_info);
                 ok = UI_dup_info_string(ui, buf);
-                if (ok && prompt_info)
+                if (ok >= 0 && prompt_info)
                         {
                         BIO_snprintf(buf, sizeof(buf)-1,
                                 "Insert card \"%s\"\n then hit <enter> or C<enter> to cancel\n", prompt_info);
@@ -1219,13 +1219,13 @@ static int hwcrhk_insert_card(const char *prompt_info,
                                 answer, 0, sizeof(answer)-1);
                         }
                 UI_add_user_data(ui, callback_data);
-                if (ok)
+                if (ok >= 0)
                         ok = UI_process(ui);
                 UI_free(ui);
 		/* If canceled input treat as 'cancel' */
 		if (ok == -2)
 			ok = 1;
-		else if(ok != 0)
+		else if(ok < 0)
 			ok = -1;
                 else if (answer[0] == 'c' || answer[0] == 'C')
                         ok = 1;
