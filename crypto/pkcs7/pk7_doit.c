@@ -101,6 +101,39 @@ static ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7)
 	return NULL;
 	}
 
+static int PKCS7_bio_add_digest(BIO **pbio, X509_ALGOR *alg)
+	{
+	BIO *btmp;
+	EVP_MD *md;
+	if ((btmp=BIO_new(BIO_f_md())) == NULL)
+		{
+		PKCS7err(PKCS7_F_PKCS7_DATAINIT,ERR_R_BIO_LIB);
+		goto err;
+		}
+
+	md=EVP_get_digestbyobj(xa->algorithm);
+	if (md == NULL)
+		{
+		PKCS7err(PKCS7_F_PKCS7_DATAINIT,PKCS7_R_UNKNOWN_DIGEST_TYPE);
+		goto err;
+		}
+
+	BIO_set_md(btmp,evp_md);
+	if (*pout == NULL)
+		*pout=btmp;
+	else
+		BIO_push(*pout,btmp);
+	btmp=NULL;
+
+	return 1;
+
+	err:
+	if (btmp)
+		BIO_free(btmp);
+	return 0;
+
+	}
+
 BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 	{
 	int i;
