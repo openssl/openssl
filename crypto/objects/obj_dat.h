@@ -67,7 +67,7 @@
 #define NUM_LN 402
 #define NUM_OBJ 376
 
-static unsigned char lvalues[2941]={
+static unsigned char lvalues[2951]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -429,21 +429,21 @@ static unsigned char lvalues[2941]={
 0x2B,0x06,0x01,0x05,                         /* [2851] OBJ_Security */
 0x2B,0x06,0x01,0x06,                         /* [2855] OBJ_SNMPv2 */
 0x2B,0x06,0x01,0x07,                         /* [2859] OBJ_Mail */
-0x01,                                        /* [2863] OBJ_Enterprises */
-0xBA,0x82,0x58,                              /* [2864] OBJ_dcObject */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x19,/* [2867] OBJ_domainComponent */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0D,/* [2877] OBJ_Domain */
-0x50,                                        /* [2887] OBJ_joint_iso_ccitt */
-0x55,0x01,0x05,                              /* [2888] OBJ_selected_attribute_types */
-0x55,0x01,0x05,0x37,                         /* [2891] OBJ_clearance */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x03,/* [2895] OBJ_md4WithRSAEncryption */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0A,     /* [2904] OBJ_ac_proxying */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0B,     /* [2912] OBJ_sinfo_access */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x06,     /* [2920] OBJ_id_aca_encAttrs */
-0x55,0x04,0x48,                              /* [2928] OBJ_role */
-0x55,0x1D,0x24,                              /* [2931] OBJ_policy_constraints */
-0x55,0x1D,0x37,                              /* [2934] OBJ_target_information */
-0x55,0x1D,0x38,                              /* [2937] OBJ_no_rev_avail */
+0x2B,0x06,0x01,0x04,0x01,                    /* [2863] OBJ_Enterprises */
+0x2B,0x06,0x01,0x04,0x01,0x8B,0x3A,0x82,0x58,/* [2868] OBJ_dcObject */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x19,/* [2877] OBJ_domainComponent */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0D,/* [2887] OBJ_Domain */
+0x50,                                        /* [2897] OBJ_joint_iso_ccitt */
+0x55,0x01,0x05,                              /* [2898] OBJ_selected_attribute_types */
+0x55,0x01,0x05,0x37,                         /* [2901] OBJ_clearance */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x03,/* [2905] OBJ_md4WithRSAEncryption */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0A,     /* [2914] OBJ_ac_proxying */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0B,     /* [2922] OBJ_sinfo_access */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x0A,0x06,     /* [2930] OBJ_id_aca_encAttrs */
+0x55,0x04,0x48,                              /* [2938] OBJ_role */
+0x55,0x1D,0x24,                              /* [2941] OBJ_policy_constraints */
+0x55,0x1D,0x37,                              /* [2944] OBJ_target_information */
+0x55,0x1D,0x38,                              /* [2947] OBJ_no_rev_avail */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1052,29 +1052,29 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"security","Security",NID_Security,4,&(lvalues[2851]),0},
 {"snmpv2","SNMPv2",NID_SNMPv2,4,&(lvalues[2855]),0},
 {"mail","Mail",NID_Mail,4,&(lvalues[2859]),0},
-{"enterprises","Enterprises",NID_Enterprises,1,&(lvalues[2863]),0},
-{"dcobject","dcObject",NID_dcObject,3,&(lvalues[2864]),0},
-{"DC","domainComponent",NID_domainComponent,10,&(lvalues[2867]),0},
-{"domain","Domain",NID_Domain,10,&(lvalues[2877]),0},
+{"enterprises","Enterprises",NID_Enterprises,5,&(lvalues[2863]),0},
+{"dcobject","dcObject",NID_dcObject,9,&(lvalues[2868]),0},
+{"DC","domainComponent",NID_domainComponent,10,&(lvalues[2877]),0},
+{"domain","Domain",NID_Domain,10,&(lvalues[2887]),0},
 {"JOINT-ISO-CCITT","joint-iso-ccitt",NID_joint_iso_ccitt,1,
-	&(lvalues[2887]),0},
+	&(lvalues[2897]),0},
 {"selected-attribute-types","Selected Attribute Types",
-	NID_selected_attribute_types,3,&(lvalues[2888]),0},
-{"clearance","clearance",NID_clearance,4,&(lvalues[2891]),0},
+	NID_selected_attribute_types,3,&(lvalues[2898]),0},
+{"clearance","clearance",NID_clearance,4,&(lvalues[2901]),0},
 {"RSA-MD4","md4WithRSAEncryption",NID_md4WithRSAEncryption,9,
-	&(lvalues[2895]),0},
-{"ac-proxying","ac-proxying",NID_ac_proxying,8,&(lvalues[2904]),0},
+	&(lvalues[2905]),0},
+{"ac-proxying","ac-proxying",NID_ac_proxying,8,&(lvalues[2914]),0},
 {"subjectInfoAccess","Subject Information Access",NID_sinfo_access,8,
-	&(lvalues[2912]),0},
+	&(lvalues[2922]),0},
 {"id-aca-encAttrs","id-aca-encAttrs",NID_id_aca_encAttrs,8,
-	&(lvalues[2920]),0},
-{"role","role",NID_role,3,&(lvalues[2928]),0},
+	&(lvalues[2930]),0},
+{"role","role",NID_role,3,&(lvalues[2938]),0},
 {"policyConstraints","X509v3 Policy Constraints",
-	NID_policy_constraints,3,&(lvalues[2931]),0},
+	NID_policy_constraints,3,&(lvalues[2941]),0},
 {"targetInformation","X509v3 AC Targeting",NID_target_information,3,
-	&(lvalues[2934]),0},
+	&(lvalues[2944]),0},
 {"noRevAvail","X509v3 No Revocation Available",NID_no_rev_avail,3,
-	&(lvalues[2937]),0},
+	&(lvalues[2947]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1889,7 +1889,6 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 
 static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 0]),/* OBJ_undef                        0 */
-&(nid_objs[389]),/* OBJ_Enterprises                   1 */
 &(nid_objs[181]),/* OBJ_iso                          1 */
 &(nid_objs[182]),/* OBJ_member_body                  1 2 */
 &(nid_objs[379]),/* OBJ_org                          1 3 */
@@ -1935,7 +1934,6 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[126]),/* OBJ_ext_key_usage                2 5 29 37 */
 &(nid_objs[402]),/* OBJ_target_information           2 5 29 55 */
 &(nid_objs[403]),/* OBJ_no_rev_avail                 2 5 29 56 */
-&(nid_objs[390]),/* OBJ_dcObject                      1466 344 */
 &(nid_objs[382]),/* OBJ_Directory                    1 3 6 1 1 */
 &(nid_objs[383]),/* OBJ_Management                   1 3 6 1 2 */
 &(nid_objs[384]),/* OBJ_Experimental                 1 3 6 1 3 */
@@ -1949,6 +1947,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[96]),/* OBJ_mdc2WithRSA                  2 5 8 3 100 */
 &(nid_objs[95]),/* OBJ_mdc2                         2 5 8 3 101 */
 &(nid_objs[184]),/* OBJ_X9_57                        1 2 840 10040 */
+&(nid_objs[389]),/* OBJ_Enterprises                  1 3 6 1 4 1 */
 &(nid_objs[104]),/* OBJ_md5WithRSA                   1 3 14 3 2 3 */
 &(nid_objs[29]),/* OBJ_des_ecb                      1 3 14 3 2 6 */
 &(nid_objs[31]),/* OBJ_des_cbc                      1 3 14 3 2 7 */
@@ -2142,6 +2141,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[188]),/* OBJ_SMIME                        1 2 840 113549 1 9 16 */
 &(nid_objs[156]),/* OBJ_friendlyName                 1 2 840 113549 1 9 20 */
 &(nid_objs[157]),/* OBJ_localKeyID                   1 2 840 113549 1 9 21 */
+&(nid_objs[390]),/* OBJ_dcObject                     1 3 6 1 4 1 1466 344 */
 &(nid_objs[91]),/* OBJ_bf_cbc                       1 3 6 1 4 1 3029 1 2 */
 &(nid_objs[315]),/* OBJ_id_regCtrl_regToken          1 3 6 1 5 5 7 5 1 1 */
 &(nid_objs[316]),/* OBJ_id_regCtrl_authenticator     1 3 6 1 5 5 7 5 1 2 */
