@@ -56,5 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
+#include <openssl/e_os2.h>
 OPENSSL_EXTERN char *DES_version;	/* SSLeay version string */
 OPENSSL_EXTERN char *libdes_version;	/* old libdes version string */

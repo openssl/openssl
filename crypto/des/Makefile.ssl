@@ -6,7 +6,7 @@ DIR=	des
 TOP=	../..
 CC=	cc
 CPP=	$(CC) -E
-INCLUDES=
+INCLUDES=-I../../include
 CFLAG=-g
 INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
@@ -58,6 +58,9 @@ lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB)
 	@touch lib
+
+des: des.o cbc3_enc.o lib
+	$(CC) $(CFLAGS) -o des des.o cbc3_enc.o $(LIB)
 
 # elf
 asm/dx86-elf.o: asm/dx86unix.cpp
