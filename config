@@ -114,8 +114,8 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-lynx-lynxos"; exit 0
 	;;
 
-    BSD/OS:4.*)
-	echo "${MACHINE}-whatever-bsdi4"; exit 0
+    BSD/OS:4.*)  # BSD/OS always says 386
+	echo "i486-whatever-bsdi4"; exit 0
 	;;
 
     BSD/386:*:*:*486*|BSD/OS:*:*:*:*486*)
