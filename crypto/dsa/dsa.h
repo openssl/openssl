@@ -156,6 +156,10 @@ int	DSA_do_verify(const unsigned char *dgst,int dgst_len,
 
 DSA_METHOD *DSA_OpenSSL(void);
 
+void        DSA_set_default_method(DSA_METHOD *);
+DSA_METHOD *DSA_get_default_method(void);
+DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *);
+
 DSA *	DSA_new(void);
 DSA *	DSA_new_method(DSA_METHOD *meth);
 int	DSA_size(DSA *);
