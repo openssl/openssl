@@ -14,7 +14,7 @@
  *
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -326,9 +326,10 @@ int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 		}
 
 	/* This implementation is more efficient than the wNAF implementation for 2
-	 * or fewer points.  Use the ec_wNAF_mul implementation for 3 or more points.
+	 * or fewer points.  Use the ec_wNAF_mul implementation for 3 or more points,
+	 * or if we can perform a fast multiplication based on precomputation.
 	 */
-	if ((scalar && (num > 1)) || (num > 2))
+	if ((scalar && (num > 1)) || (num > 2) || (num == 0 && EC_GROUP_have_precompute_mult(group)))
 		{
 		ret = ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
 		goto err;
@@ -364,12 +365,15 @@ int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	}
 
 
-/* Precomputation for point multiplication. */	
+/* Precomputation for point multiplication: fall back to wNAF methods
+ * because ec_GF2m_simple_mul() uses ec_wNAF_mul() if appropriate */
+
 int ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	{
-	/* There is no precomputation to do for Montgomery scalar multiplication but
-	 * since this implementation falls back to the wNAF multiplication for more than
-	 * two points, call the wNAF implementation's precompute.
-	 */
 	return ec_wNAF_precompute_mult(group, ctx);
-	}
+ 	}
+
+int ec_GF2m_have_precompute_mult(const EC_GROUP *group)
+	{
+	return ec_wNAF_have_precompute_mult(group);
+ 	}

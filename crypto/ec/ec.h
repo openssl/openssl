@@ -3,7 +3,7 @@
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -101,7 +101,7 @@ typedef struct ec_group_st
 	 -- field definition
 	 -- curve coefficients
 	 -- optional generator with associated information (order, cofactor)
-	 -- optional extra data (TODO: precomputed table for fast computation of multiples of generator)
+	 -- optional extra data (precomputed table for fast computation of multiples of generator)
 	 -- ASN1 stuff
 	*/
 	EC_GROUP;
@@ -241,7 +241,11 @@ int EC_POINTs_make_affine(const EC_GROUP *, size_t num, EC_POINT *[], BN_CTX *);
 
 int EC_POINTs_mul(const EC_GROUP *, EC_POINT *r, const BIGNUM *, size_t num, const EC_POINT *[], const BIGNUM *[], BN_CTX *);
 int EC_POINT_mul(const EC_GROUP *, EC_POINT *r, const BIGNUM *, const EC_POINT *, const BIGNUM *, BN_CTX *);
+
+/* EC_GROUP_precompute_mult() stores multiples of generator for faster point multiplication */
 int EC_GROUP_precompute_mult(EC_GROUP *, BN_CTX *);
+/* EC_GROUP_have_precompute_mult() reports whether such precomputation has been done */
+int EC_GROUP_have_precompute_mult(const EC_GROUP *);
 
 
 
@@ -403,7 +407,6 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GROUP_GET_CURVE_GF2M			 172
 #define EC_F_EC_GROUP_GET_CURVE_GFP			 130
 #define EC_F_EC_GROUP_GET_DEGREE			 173
-#define EC_F_EC_GROUP_GET_EXTRA_DATA			 107
 #define EC_F_EC_GROUP_GET_ORDER				 141
 #define EC_F_EC_GROUP_GET_PENTANOMIAL_BASIS		 193
 #define EC_F_EC_GROUP_GET_TRINOMIAL_BASIS		 194
@@ -444,6 +447,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP	 125
 #define EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP	 126
 #define EC_F_EC_POINT_SET_TO_INFINITY			 127
+#define EC_F_EC_PRE_COMP_DUP				 207
 #define EC_F_EC_WNAF_MUL				 187
 #define EC_F_EC_WNAF_PRECOMPUTE_MULT			 188
 #define EC_F_GFP_MONT_GROUP_SET_CURVE			 189
@@ -462,7 +466,6 @@ void ERR_load_EC_strings(void);
 #define EC_R_GROUP2PKPARAMETERS_FAILURE			 120
 #define EC_R_I2D_ECPKPARAMETERS_FAILURE			 121
 #define EC_R_INCOMPATIBLE_OBJECTS			 101
-#define EC_R_INTERNAL_ERROR				 132
 #define EC_R_INVALID_ARGUMENT				 112
 #define EC_R_INVALID_COMPRESSED_POINT			 110
 #define EC_R_INVALID_COMPRESSION_BIT			 109
@@ -473,12 +476,11 @@ void ERR_load_EC_strings(void);
 #define EC_R_INVALID_PRIVATE_KEY			 123
 #define EC_R_MISSING_PARAMETERS				 124
 #define EC_R_MISSING_PRIVATE_KEY			 125
-#define EC_R_NOT_A_NIST_PRIME			         135
-#define EC_R_NOT_A_SUPPORTED_NIST_PRIME	                 136
+#define EC_R_NOT_A_NIST_PRIME				 135
+#define EC_R_NOT_A_SUPPORTED_NIST_PRIME			 136
 #define EC_R_NOT_IMPLEMENTED				 126
 #define EC_R_NOT_INITIALIZED				 111
 #define EC_R_NO_FIELD_MOD				 133
-#define EC_R_NO_SUCH_EXTRA_DATA				 105
 #define EC_R_PASSED_NULL_PARAMETER			 134
 #define EC_R_PKPARAMETERS2GROUP_FAILURE			 127
 #define EC_R_POINT_AT_INFINITY				 106

@@ -3,7 +3,7 @@
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -136,11 +136,6 @@ struct ec_method_st {
 	int (*dbl)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
 	int (*invert)(const EC_GROUP *, EC_POINT *, BN_CTX *);
 
-	/* used by EC_POINTs_mul, EC_POINT_mul, EC_POINT_precompute_mult: */
-	int (*mul)(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-		size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
-	int (*precompute_mult)(EC_GROUP *group, BN_CTX *);
-
 	/* used by EC_POINT_is_at_infinity, EC_POINT_is_on_curve, EC_POINT_cmp: */
 	int (*is_at_infinity)(const EC_GROUP *, const EC_POINT *);
 	int (*is_on_curve)(const EC_GROUP *, const EC_POINT *, BN_CTX *);
@@ -149,6 +144,13 @@ struct ec_method_st {
 	/* used by EC_POINT_make_affine, EC_POINTs_make_affine: */
 	int (*make_affine)(const EC_GROUP *, EC_POINT *, BN_CTX *);
 	int (*points_make_affine)(const EC_GROUP *, size_t num, EC_POINT *[], BN_CTX *);
+
+	/* used by EC_POINTs_mul, EC_POINT_mul, EC_POINT_precompute_mult, EC_POINT_have_precompute_mult
+	 * (default implementations are used if the 'mul' pointer is 0): */
+	int (*mul)(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+		size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
+	int (*precompute_mult)(EC_GROUP *group, BN_CTX *);
+	int (*have_precompute_mult)(const EC_GROUP *group);
 
 
 	/* internal functions */
@@ -248,10 +250,13 @@ struct ec_point_st {
 
 
 
-/* method functions in ec_mult.c */
+/* method functions in ec_mult.c
+ * (ec_lib.c uses these as defaults if group->method->mul is 0 */
 int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
 int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *);
+int ec_wNAF_have_precompute_mult(const EC_GROUP *group);
+
 
 /* method functions in ecp_smpl.c */
 int ec_GFp_simple_group_init(EC_GROUP *);
@@ -363,3 +368,4 @@ int ec_GF2m_simple_field_div(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const
 int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
 int ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+int ec_GF2m_have_precompute_mult(const EC_GROUP *group);

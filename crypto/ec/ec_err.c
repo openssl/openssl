@@ -1,6 +1,6 @@
 /* crypto/ec/ec_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -122,7 +122,6 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_PACK(0,EC_F_EC_GROUP_GET_CURVE_GF2M,0),	"EC_GROUP_get_curve_GF2m"},
 {ERR_PACK(0,EC_F_EC_GROUP_GET_CURVE_GFP,0),	"EC_GROUP_get_curve_GFp"},
 {ERR_PACK(0,EC_F_EC_GROUP_GET_DEGREE,0),	"EC_GROUP_get_degree"},
-{ERR_PACK(0,EC_F_EC_GROUP_GET_EXTRA_DATA,0),	"EC_GROUP_get_extra_data"},
 {ERR_PACK(0,EC_F_EC_GROUP_GET_ORDER,0),	"EC_GROUP_get_order"},
 {ERR_PACK(0,EC_F_EC_GROUP_GET_PENTANOMIAL_BASIS,0),	"EC_GROUP_get_pentanomial_basis"},
 {ERR_PACK(0,EC_F_EC_GROUP_GET_TRINOMIAL_BASIS,0),	"EC_GROUP_get_trinomial_basis"},
@@ -163,6 +162,7 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_PACK(0,EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP,0),	"EC_POINT_set_compressed_coordinates_GFp"},
 {ERR_PACK(0,EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP,0),	"EC_POINT_set_Jprojective_coordinates_GFp"},
 {ERR_PACK(0,EC_F_EC_POINT_SET_TO_INFINITY,0),	"EC_POINT_set_to_infinity"},
+{ERR_PACK(0,EC_F_EC_PRE_COMP_DUP,0),	"EC_PRE_COMP_DUP"},
 {ERR_PACK(0,EC_F_EC_WNAF_MUL,0),	"ec_wNAF_mul"},
 {ERR_PACK(0,EC_F_EC_WNAF_PRECOMPUTE_MULT,0),	"ec_wNAF_precompute_mult"},
 {ERR_PACK(0,EC_F_GFP_MONT_GROUP_SET_CURVE,0),	"GFP_MONT_GROUP_SET_CURVE"},
@@ -184,7 +184,6 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {EC_R_GROUP2PKPARAMETERS_FAILURE         ,"group2pkparameters failure"},
 {EC_R_I2D_ECPKPARAMETERS_FAILURE         ,"i2d ecpkparameters failure"},
 {EC_R_INCOMPATIBLE_OBJECTS               ,"incompatible objects"},
-{EC_R_INTERNAL_ERROR                     ,"internal error"},
 {EC_R_INVALID_ARGUMENT                   ,"invalid argument"},
 {EC_R_INVALID_COMPRESSED_POINT           ,"invalid compressed point"},
 {EC_R_INVALID_COMPRESSION_BIT            ,"invalid compression bit"},
@@ -200,7 +199,6 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {EC_R_NOT_IMPLEMENTED                    ,"not implemented"},
 {EC_R_NOT_INITIALIZED                    ,"not initialized"},
 {EC_R_NO_FIELD_MOD                       ,"no field mod"},
-{EC_R_NO_SUCH_EXTRA_DATA                 ,"no such extra data"},
 {EC_R_PASSED_NULL_PARAMETER              ,"passed null parameter"},
 {EC_R_PKPARAMETERS2GROUP_FAILURE         ,"pkparameters2group failure"},
 {EC_R_POINT_AT_INFINITY                  ,"point at infinity"},

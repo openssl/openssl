@@ -3,7 +3,7 @@
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -503,7 +503,9 @@ void *EC_GROUP_get_extra_data(const EC_GROUP *group, void *(*extra_data_dup_func
 		|| (group->extra_data_free_func != extra_data_free_func)
 		|| (group->extra_data_clear_free_func != extra_data_clear_free_func))
 		{
+#if 0 /* this was an error in 0.9.7, but that does not make a lot of sense */
 		ECerr(EC_F_EC_GROUP_GET_EXTRA_DATA, EC_R_NO_SUCH_EXTRA_DATA);
+#endif
 		return NULL;
 		}
 
@@ -955,4 +957,59 @@ int EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 			}
 		}
 	return group->meth->points_make_affine(group, num, points, ctx);
+	}
+
+
+/* Functions for point multiplication.
+ *
+ * If group->meth->mul is 0, we use the wNAF-based implementations in ec_mult.c;
+ * otherwise we dispatch through methods.
+ */
+
+int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
+	{
+	if (group->meth->mul == 0)
+		/* use default */
+		return ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
+
+	return group->meth->mul(group, r, scalar, num, points, scalars, ctx);
+	}
+
+int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
+	const EC_POINT *point, const BIGNUM *p_scalar, BN_CTX *ctx)
+	{
+	/* just a convenient interface to EC_POINTs_mul() */
+
+	const EC_POINT *points[1];
+	const BIGNUM *scalars[1];
+
+	points[0] = point;
+	scalars[0] = p_scalar;
+
+	return EC_POINTs_mul(group, r, g_scalar, (point != NULL && p_scalar != NULL), points, scalars, ctx);
+	}
+
+int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
+	{
+	if (group->meth->mul == 0)
+		/* use default */
+		return ec_wNAF_precompute_mult(group, ctx);
+
+	if (group->meth->precompute_mult != 0)
+		return group->meth->precompute_mult(group, ctx);
+	else
+		return 1; /* nothing to do, so report success */
+	}
+
+int EC_GROUP_have_precompute_mult(const EC_GROUP *group)
+	{
+	if (group->meth->mul == 0)
+		/* use default */
+		return ec_wNAF_have_precompute_mult(group);
+
+	if (group->meth->have_precompute_mult != 0)
+		return group->meth->have_precompute_mult(group);
+	else
+		return 0; /* cannot tell whether precomputation has been performed */
 	}

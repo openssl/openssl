@@ -4,6 +4,14 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX xxxx]
 
+  *) In crypto/ec/ec_mult.c, implement fast point multiplication with
+     precomputation, based one wNAF splitting: EC_GROUP_precompute_mult()
+     will now compute a table of multiples of the generator that
+     makes subsequent invocations of EC_POINTs_mul() or EC_POINT_mul
+     faster (notably in the case of a single point multiplication,
+     scalar * generator).
+     [Nils Larsch, Bodo Moeller]
+
   *) IPv6 support for certificate extensions. The various extensions
      which use the IP:a.b.c.d can now take IPv6 addresses using the
      formats of RFC1884 2.2 . IPv6 addresses are now also displayed

@@ -141,13 +141,18 @@ bio_ok.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 bio_ok.o: ../cryptlib.h bio_ok.c
 c_all.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 c_all.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-c_all.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+c_all.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
+c_all.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+c_all.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+c_all.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
 c_all.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 c_all.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 c_all.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 c_all.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+c_all.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 c_all.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-c_all.o: ../../include/openssl/symhacks.h ../cryptlib.h c_all.c
+c_all.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+c_all.o: ../cryptlib.h c_all.c
 c_allc.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 c_allc.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 c_allc.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h

@@ -1933,6 +1933,9 @@ int MAIN(int argc, char **argv)
 				} 
 			else 
 				{
+#if 1
+				EC_GROUP_precompute_mult(ecdsa[j]->group, NULL);
+#endif
 				/* Perform ECDSA signature test */
 				EC_KEY_generate_key(ecdsa[j]);
 				ret = ECDSA_sign(0, buf, 20, ecdsasig, 

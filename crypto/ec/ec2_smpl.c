@@ -14,7 +14,7 @@
  *
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -99,13 +99,17 @@ const EC_METHOD *EC_GF2m_simple_method(void)
 		ec_GF2m_simple_add,
 		ec_GF2m_simple_dbl,
 		ec_GF2m_simple_invert,
-		ec_GF2m_simple_mul,
-		ec_GF2m_precompute_mult,
 		ec_GF2m_simple_is_at_infinity,
 		ec_GF2m_simple_is_on_curve,
 		ec_GF2m_simple_cmp,
 		ec_GF2m_simple_make_affine,
 		ec_GF2m_simple_points_make_affine,
+
+		/* the following three method functions are defined in ec2_mult.c */
+		ec_GF2m_simple_mul,
+		ec_GF2m_precompute_mult,
+		ec_GF2m_have_precompute_mult,
+
 		ec_GF2m_simple_field_mul,
 		ec_GF2m_simple_field_sqr,
 		ec_GF2m_simple_field_div,
