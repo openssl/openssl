@@ -454,9 +454,9 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 		{
 		if(c->cipher->cleanup && !c->cipher->cleanup(c))
 			return 0;
-		/* Zero cipher context data */
+		/* Cleanse cipher context data */
 		if (c->cipher_data)
-			memset(c->cipher_data, 0, c->cipher->ctx_size);
+			OPENSSL_cleanse(c->cipher_data, c->cipher->ctx_size);
 		}
 	if (c->cipher_data)
 		OPENSSL_free(c->cipher_data);
