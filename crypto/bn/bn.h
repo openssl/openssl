@@ -239,7 +239,7 @@ typedef struct bignum_st
 	} BIGNUM;
 
 /* Used for temp variables */
-#define BN_CTX_NUM	12
+#define BN_CTX_NUM	16
 #define BN_CTX_NUM_POS	12
 typedef struct bignum_ctx
 	{

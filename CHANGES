@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2000]
 
+  *) Increase BN_CTX_NUM (the number of BIGNUMs in a BN_CTX) to 16.
+     The previous value, 12, was not always sufficient for BN_mod_exp().
+     [Bodo Moeller]
+
   *) Fix typo in get_cert_by_subject() in by_dir.c
      [Jean-Marc Desperrier <jean-marc.desperrier@certplus.com>]
 
