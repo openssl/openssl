@@ -21,10 +21,12 @@
   * Microsoft MASM (aka "ml")
   * Free Netwide Assembler NASM.
 
- MASM was I believe distributed in the past with VC++ and it is also part of
- the MSDN SDKs. It is no longer distributed as part of VC++ and can be hard
- to get hold of. It can be purchased: see Microsoft's site for details at:
- http://www.microsoft.com/
+ MASM was at one point distributed with VC++. It is now distributed with some
+ Microsoft DDKs, for example the Windows NT 4.0 DDK and the Windows 98 DDK. If you
+ do not have either of these DDKs then you can just download the binaries for the
+ Windows 98 DDK and extract and rename the two files XXXXXml.exe and XXXXXml.err,
+ to ml.exe and ml.err and install somewhere on your PATH. Both DDKs can be downloaded
+ from the Microsoft developers site www.msdn.com.
 
  NASM is freely available. Version 0.98 was used during testing: other versions
  may also work. It is available from many places, see for example:
@@ -145,12 +147,16 @@
  assigned in the CVS tree: so anything linked against this version of the
  library may need to be recompiled.
 
- If you get errors about unresolved externals then this means that either you
- didn't read the note above about functions not having numbers assigned or
- someone forgot to add a function to the header file.
+ If you get errors about unresolved symbols there are several possible
+ causes.
 
- In this latter case check out the header file to see if the function is
- defined in the header file.
+ If this happens when the DLL is being linked and you have disabled some
+ ciphers then it is possible the DEF file generator hasn't removed all
+ the disabled symbols: the easiest solution is to edit the DEF files manually
+ to delete them. The DEF files are ms\libeay32.def ms\ssleay32.def.
+
+ Another cause is if you missed or ignored the errors about missing numbers
+ mentioned above.
 
  If you get warnings in the code then the compilation will halt.
 

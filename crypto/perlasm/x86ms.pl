@@ -341,7 +341,14 @@ sub main'set_label
 		$label{$_[0]}="${label}${_[0]}";
 		$label++;
 		}
-	push(@out,"$label{$_[0]}:\n");
+	if((defined $_[1]) && ($_[1] == 1))
+		{
+		push(@out,"$label{$_[0]}::\n");
+		}
+	else
+		{
+		push(@out,"$label{$_[0]}:\n");
+		}
 	}
 
 sub main'data_word
