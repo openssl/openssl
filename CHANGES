@@ -3,6 +3,19 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Avoid false positives in memory leak detection code (crypto/mem_dbg.c)
+     due to incorrect handling of multi-threading:
+
+     1. Fix timing glitch in the MemCheck_off() portion of CRYPTO_mem_ctrl().
+
+     2. Fix logical glitch in is_MemCheck_on() aka CRYPTO_is_mem_check_on().
+
+     3. Count how many times MemCheck_off() has been called so that
+        nested use can be treated correctly.  This also avoids 
+        inband-signalling in the previous code (which relied on the
+        assumption that thread ID 0 is impossible).
+     [Bodo Moeller]
+
   *) New options to 'ca' utility to support V2 CRL entry extensions.
      Currently CRL reason, invalidity date and hold instruction are
      supported. Add new CRL extensions to V3 code and some new objects.
