@@ -243,7 +243,7 @@ files:
 
 links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
-	@-mkdir -p include/openssl 2>/dev/null
+	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
 	@for i in $(DIRS); do \
 	(cd $$i && echo "making links in $$i..." && \
@@ -311,13 +311,13 @@ dist_pem_h:
 	(cd crypto/pem; $(MAKE) CC='${CC}' SDIRS='${SDIRS}' CFLAG='${CFLAG}' pem.h; $(MAKE) clean)
 
 install: all
-	@-mkdir -p $(INSTALL_PREFIX)$(INSTALLTOP)/bin 2>/dev/null
-	@-mkdir -p $(INSTALL_PREFIX)$(INSTALLTOP)/lib 2>/dev/null
-	@-mkdir -p $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl 2>/dev/null
-	@-mkdir -p $(INSTALL_PREFIX)$(OPENSSLDIR)/misc 2>/dev/null
-	@-mkdir -p $(INSTALL_PREFIX)$(OPENSSLDIR)/certs 2>/dev/null
-	@-mkdir -p $(INSTALL_PREFIX)$(OPENSSLDIR)/private 2>/dev/null
-	@-mkdir -p $(INSTALL_PREFIX)$(OPENSSLDIR)/lib 2>/dev/null
+	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin
+	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/lib
+	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl
+	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(OPENSSLDIR)/misc
+	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(OPENSSLDIR)/certs
+	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(OPENSSLDIR)/private
+	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(OPENSSLDIR)/lib
 	@for i in $(EXHEADER) ;\
 	do \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
