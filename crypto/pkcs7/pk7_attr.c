@@ -3,7 +3,7 @@
  * project 2001.
  */
 /* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2001-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -94,17 +94,18 @@ int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK_OF(X509_ALGOR) *cap)
 }
 
 STACK_OF(X509_ALGOR) *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si)
-{
+	{
 	ASN1_TYPE *cap;
 	unsigned char *p;
 	cap = PKCS7_get_signed_attribute(si, NID_SMIMECapabilities);
-	if (!cap) return NULL;
+	if (!cap || (cap->type != V_ASN1_SEQUENCE))
+		return NULL;
 	p = cap->value.sequence->data;
 	return d2i_ASN1_SET_OF_X509_ALGOR(NULL, &p,
 					  cap->value.sequence->length,
 					  d2i_X509_ALGOR, X509_ALGOR_free,
 					  V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
-}
+	}
 
 /* Basic smime-capabilities OID and optional integer arg */
 int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
