@@ -1,4 +1,4 @@
-/* $LP: LPlib/source/LPdir_unix.c,v 1.8 2004/07/19 16:34:39 _cvs_levitte Exp $ */
+/* $LP: LPlib/source/LPdir_unix.c,v 1.11 2004/09/23 22:07:22 _cvs_levitte Exp $ */
 /*
  * Copyright (c) 2004, Richard Levitte <richard@levitte.org>
  * All rights reserved.
@@ -11,18 +11,18 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stddef.h>
@@ -36,16 +36,30 @@
 #include "LPdir.h"
 #endif
 
-#if defined(NAME_MAX) && NAME_MAX<255
-/* HP-UX offers 14 for NAME_MAX, which is far from enough */
-# undef NAME_MAX
-# define NAME_MAX 255
+/* The POSIXly macro for the maximum number of characters in a file path
+   is NAME_MAX.  However, some operating systems use PATH_MAX instead.
+   Therefore, it seems natural to first check for PATH_MAX and use that,
+   and if it doesn't exist, use NAME_MAX. */
+#if defined(PATH_MAX)
+# define LP_ENTRY_SIZE PATH_MAX
+#elif defined(NAME_MAX)
+# define LP_ENTRY_SIZE NAME_MAX
+#endif
+
+/* Of course, there's the possibility that neither PATH_MAX nor NAME_MAX
+   exist.  It's also possible that NAME_MAX exists but is define to a
+   very small value (HP-UX offers 14), so we need to check if we got a
+   result, and if it meets a minimum standard, and create or change it
+   if not. */
+#if !defined(LP_ENTRY_SIZE) || LP_ENTRY_SIZE<255
+# undef LP_ENTRY_SIZE
+# define LP_ENTRY_SIZE 255
 #endif
 
 struct LP_dir_context_st
 {
   DIR *dir;
-  char entry_name[NAME_MAX+1];
+  char entry_name[LP_ENTRY_SIZE+1];
 };
 
 const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
