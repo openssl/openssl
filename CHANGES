@@ -5,8 +5,9 @@
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
   *) Addition of the command line parameter '-rand file' to 'openssl req'.
-     The given file takes precedence over the RANDFILE option in the
-     configuration file.
+     The given file adds to whatever has already been seeded into the
+     random pool through the RANDFILE configuration file option or
+     environment variable, or the default random state file.
      [Richard Levitte]
 
   *) mkstack.pl now sorts each macro group into lexical order.
