@@ -64,6 +64,7 @@
 #ifndef HEADER_X509_H
 #define HEADER_X509_H
 
+#include <openssl/e_os2.h>
 #include <openssl/symhacks.h>
 #ifndef OPENSSL_NO_BUFFER
 #include <openssl/buffer.h>
@@ -104,7 +105,6 @@
 #ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
 #endif
-#include <openssl/e_os2.h>
 #include <openssl/ossl_typ.h>
 
 #ifdef  __cplusplus
