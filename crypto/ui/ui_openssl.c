@@ -1,6 +1,6 @@
 /* crypto/ui/ui_openssl.c -*- mode:C; c-file-style: "eay" -*- */
-/* Written by Richard Levitte (levitte@stacken.kth.se) for the OpenSSL
- * project 2000.
+/* Written by Richard Levitte (levitte@stacken.kth.se) and others
+ * for the OpenSSL project 2000/2001.
  */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
@@ -261,7 +261,7 @@ static jmp_buf save;
 #ifdef OPENSSL_SYS_VMS
 static struct IOSB iosb;
 static $DESCRIPTOR(terminal,"TT");
-static long tty_orig[3], tty_new[3];
+static long tty_orig[3], tty_new[3]; /* XXX   Is there any guarantee that this will always suffice for the actual structures? */
 static long status;
 static unsigned short channel = 0;
 #else
@@ -269,7 +269,7 @@ static unsigned short channel = 0;
 static TTY_STRUCT tty_orig,tty_new;
 #endif
 #endif
-static FILE *tty;
+static FILE *tty_in, *tty_out;
 static int is_a_tty;
 
 /* Declare static functions */
@@ -309,44 +309,44 @@ static int read_string(UI *ui, UI_STRING *uis)
 	switch (UI_get_string_type(uis))
 		{
 	case UI_VERIFY_NOECHO:
-		fprintf(tty,"Verifying - %s",
+		fprintf(tty_out,"Verifying - %s",
 			UI_get0_output_string(uis));
-		fflush(tty);
+		fflush(tty_out);
 		if (read_string_inner(ui, uis, 0) == 0)
 			return 0;
 		if (strcmp(UI_get0_result_string(uis),
 			UI_get0_test_string(uis)) != 0)
 			{
-			fprintf(tty,"Verify failure\n");
-			fflush(tty);
+			fprintf(tty_out,"Verify failure\n");
+			fflush(tty_out);
 			return 0;
 			}
 		break;
 	case UI_VERIFY_ECHO:
-		fprintf(tty,"Verifying - %s",
+		fprintf(tty_out,"Verifying - %s",
 			UI_get0_output_string(uis));
-		fflush(tty);
+		fflush(tty_out);
 		if (read_string_inner(ui, uis, 1) == 0)
 			return 0;
 		if (strcmp(UI_get0_result_string(uis),
 			UI_get0_test_string(uis)) != 0)
 			{
-			fprintf(tty,"Verify failure\n");
-			fflush(tty);
+			fprintf(tty_out,"Verify failure\n");
+			fflush(tty_out);
 			return 0;
 			}
 		break;
 	case UI_STRING_NOECHO:
-		fputs(UI_get0_output_string(uis), tty);
-		fflush(tty);
+		fputs(UI_get0_output_string(uis), tty_out);
+		fflush(tty_out);
 		return read_string_inner(ui, uis, 0);
 	case UI_STRING_ECHO:
-		fputs(UI_get0_output_string(uis), tty);
-		fflush(tty);
+		fputs(UI_get0_output_string(uis), tty_out);
+		fflush(tty_out);
 		return read_string_inner(ui, uis, 1);
 	default:
-		fputs(UI_get0_output_string(uis), tty);
-		fflush(tty);
+		fputs(UI_get0_output_string(uis), tty_out);
+		fflush(tty_out);
 		break;
 		}
 	return 1;
@@ -393,21 +393,24 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo)
 		result[0]='\0';
 #ifdef OPENSSL_SYS_MSDOS
 		if (!echo)
-			noecho_fgets(result,maxsize,tty);
+			noecho_fgets(result,maxsize,tty_in);
 		else
+			fgets(result,maxsize,tty_in);
+#else
+		fgets(result,maxsize,tty_in);
 #endif
-			fgets(result,maxsize,tty);
-		if (feof(tty)) goto error;
-		if (ferror(tty)) goto error;
+		if (feof(tty_in)) goto error;
+		if (ferror(tty_in)) goto error;
 		if ((p=(char *)strchr(result,'\n')) != NULL)
 			*p='\0';
-		else	read_till_nl(tty);
+		else
+			read_till_nl(tty_in);
 		if (UI_set_result(uis, result) >= 0)
 			ok=1;
 		}
 
 error:
-	if (!echo) fprintf(tty,"\n");
+	if (!echo) fprintf(tty_out,"\n");
 	if (ps >= 2 && !echo)
 		echo_console(ui);
 
@@ -429,21 +432,18 @@ static int open_console(UI *ui)
 	CRYPTO_w_lock(CRYPTO_LOCK_UI);
 	is_a_tty = 1;
 
-#ifdef OPENSSL_SYS_MSDOS
-	/* For some bizarre reason this call to fopen() on Windows 
-         * fails if the mode is "w+" or "r+", whereas "w" works fine.
-	 */
-	if ((tty=fopen("con","w")) == NULL)
-		tty=stdin;
-#elif defined(OPENSSL_SYS_MACINTOSH_CLASSIC)
-	tty=stdin;
+#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC)
+	tty_in=stdin;
+	tty_out=stderr;
 #else
-	if ((tty=fopen("/dev/tty","w+")) == NULL)
-		tty=stdin;
+	if ((tty_in=fopen("/dev/tty","r")) == NULL)
+		tty_in=stdin;
+	if ((tty_out=fopen("/dev/tty","w")) == NULL)
+		tty_out=stderr;
 #endif
 
 #if defined(TTY_get) && !defined(VMS)
-	if (TTY_get(fileno(tty),&tty_orig) == -1)
+	if (TTY_get(fileno(tty_in),&tty_orig) == -1)
 		{
 #ifdef ENOTTY
 		if (errno == ENOTTY)
@@ -479,7 +479,7 @@ static int noecho_console(UI *ui)
 #endif
 
 #if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
-	if (is_a_tty && (TTY_set(fileno(tty),&tty_new) == -1))
+	if (is_a_tty && (TTY_set(fileno(tty_in),&tty_new) == -1))
 		return 0;
 #endif
 #ifdef OPENSSL_SYS_VMS
@@ -501,7 +501,7 @@ static int echo_console(UI *ui)
 #endif
 
 #if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
-	if (is_a_tty && (TTY_set(fileno(tty),&tty_new) == -1))
+	if (is_a_tty && (TTY_set(fileno(tty_in),&tty_new) == -1))
 		return 0;
 #endif
 #ifdef OPENSSL_SYS_VMS
@@ -517,7 +517,8 @@ static int echo_console(UI *ui)
 
 static int close_console(UI *ui)
 	{
-	if (stdin != tty) fclose(tty);
+	if (tty_in != stderr) fclose(tty_in);
+	if (tty_out != stderr) fclose(tty_out);
 #ifdef OPENSSL_SYS_VMS
 	status = sys$dassgn(channel);
 #endif
