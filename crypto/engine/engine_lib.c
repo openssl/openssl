@@ -230,17 +230,18 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	if(e->funct_ref == 0)
 		{
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
 			ENGINE_R_NOT_INITIALISED);
 		return 0;
 		}
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	if (!e->load_privkey)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
 			ENGINE_R_NO_LOAD_FUNCTION);
 		return 0;
 		}
-	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	pkey = e->load_privkey(key_id, passphrase);
 	if (!pkey)
 		{
@@ -265,17 +266,18 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	if(e->funct_ref == 0)
 		{
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
 			ENGINE_R_NOT_INITIALISED);
 		return 0;
 		}
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	if (!e->load_pubkey)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
 			ENGINE_R_NO_LOAD_FUNCTION);
 		return 0;
 		}
-	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	pkey = e->load_pubkey(key_id, passphrase);
 	if (!pkey)
 		{
