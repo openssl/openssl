@@ -91,12 +91,11 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-	ENGINE *e = NULL;
 	DSA *dsa=NULL;
 	int i,badops=0,text=0;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,noout=0,C=0,ret=1;
-	char *infile,*outfile,*prog,*inrand=NULL,*engine=NULL;
+	char *infile,*outfile,*prog,*inrand=NULL;
 	int numbits= -1,num,genkey=0;
 	int need_rand=0;
 
