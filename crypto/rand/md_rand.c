@@ -111,7 +111,7 @@
 
 #define ENTROPY_NEEDED 20  /* require 160 bits = 20 bytes of randomness */
 
-#ifndef MD_RAND_DEBUG
+#ifdef MD_RAND_DEBUG
 # ifndef NDEBUG
 #   define NDEBUG
 # endif
@@ -359,7 +359,7 @@ static void ssleay_rand_seed(const void *buf, int num)
 	ssleay_rand_add(buf, num, num);
 	}
 
-static void ssleay_rand_initialize(void)
+static void ssleay_rand_initialize(void) /* not exported in RAND_METHOD */
 	{
 	unsigned long l;
 #ifndef GETPID_IS_MEANINGLESS
@@ -606,142 +606,3 @@ static int ssleay_rand_status(void)
 
 	return ret;
 	}
-
-#ifdef WINDOWS
-#include <windows.h>
-#include <openssl/rand.h>
-
-int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
-        {
-        double add_entropy=0;
-        SYSTEMTIME t;
-
-        switch (iMsg)
-                {
-        case WM_KEYDOWN:
-                        {
-                        static WPARAM key;
-                        if (key != wParam)
-                                add_entropy = 0.05;
-                        key = wParam;
-                        }
-                        break;
-	case WM_MOUSEMOVE:
-                        {
-                        static int lastx,lasty,lastdx,lastdy;
-                        int x,y,dx,dy;
-
-                        x=LOWORD(lParam);
-                        y=HIWORD(lParam);
-                        dx=lastx-x;
-                        dy=lasty-y;
-                        if (dx != 0 && dy != 0 && dx-lastdx != 0 && dy-lastdy != 0)
-                                add_entropy=.2;
-                        lastx=x, lasty=y;
-                        lastdx=dx, lastdy=dy;
-                        }
-		break;
-		}
-
-        GetSystemTime(&t);
-        RAND_add(&iMsg, sizeof(iMsg), add_entropy);
-	RAND_add(&wParam, sizeof(wParam), 0);
-	RAND_add(&lParam, sizeof(lParam), 0);
-        RAND_add(&t, sizeof(t), 0);
-
-	return (RAND_status());
-	}
-
-/*****************************************************************************
- * Initialisation function for the SSL random generator.  Takes the contents
- * of the screen as random seed.
- *
- * Created 960901 by Gertjan van Oosten, gertjan@West.NL, West Consulting B.V.
- *
- * Code adapted from
- * <URL:http://www.microsoft.com/kb/developr/win_dk/q97193.htm>;
- * the original copyright message is:
- *
- *   (C) Copyright Microsoft Corp. 1993.  All rights reserved.
- *
- *   You have a royalty-free right to use, modify, reproduce and
- *   distribute the Sample Files (and/or any modified version) in
- *   any way you find useful, provided that you agree that
- *   Microsoft has no warranty obligations or liability for any
- *   Sample Application Files which are modified.
- */
-/*
- * I have modified the loading of bytes via RAND_seed() mechanism since
- * the original would have been very very CPU intensive since RAND_seed()
- * does an MD5 per 16 bytes of input.  The cost to digest 16 bytes is the same
- * as that to digest 56 bytes.  So under the old system, a screen of
- * 1024*768*256 would have been CPU cost of approximately 49,000 56 byte MD5
- * digests or digesting 2.7 mbytes.  What I have put in place would
- * be 48 16k MD5 digests, or effectively 48*16+48 MD5 bytes or 816 kbytes
- * or about 3.5 times as much.
- * - eric 
- */
-void RAND_screen(void)
-{
-  HDC		hScrDC;		/* screen DC */
-  HDC		hMemDC;		/* memory DC */
-  HBITMAP	hBitmap;	/* handle for our bitmap */
-  HBITMAP	hOldBitmap;	/* handle for previous bitmap */
-  BITMAP	bm;		/* bitmap properties */
-  unsigned int	size;		/* size of bitmap */
-  char		*bmbits;	/* contents of bitmap */
-  int		w;		/* screen width */
-  int		h;		/* screen height */
-  int		y;		/* y-coordinate of screen lines to grab */
-  int		n = 16;		/* number of screen lines to grab at a time */
-
-  /* Create a screen DC and a memory DC compatible to screen DC */
-  hScrDC = CreateDC("DISPLAY", NULL, NULL, NULL);
-  hMemDC = CreateCompatibleDC(hScrDC);
-
-  /* Get screen resolution */
-  w = GetDeviceCaps(hScrDC, HORZRES);
-  h = GetDeviceCaps(hScrDC, VERTRES);
-
-  /* Create a bitmap compatible with the screen DC */
-  hBitmap = CreateCompatibleBitmap(hScrDC, w, n);
-
-  /* Select new bitmap into memory DC */
-  hOldBitmap = SelectObject(hMemDC, hBitmap);
-
-  /* Get bitmap properties */
-  GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-  size = (unsigned int)bm.bmWidthBytes * bm.bmHeight * bm.bmPlanes;
-
-  bmbits = Malloc(size);
-  if (bmbits) {
-    /* Now go through the whole screen, repeatedly grabbing n lines */
-    for (y = 0; y < h-n; y += n)
-    	{
-	unsigned char md[MD_DIGEST_LENGTH];
-
-	/* Bitblt screen DC to memory DC */
-	BitBlt(hMemDC, 0, 0, w, n, hScrDC, 0, y, SRCCOPY);
-
-	/* Copy bitmap bits from memory DC to bmbits */
-	GetBitmapBits(hBitmap, size, bmbits);
-
-	/* Get the MD5 of the bitmap */
-	MD(bmbits,size,md);
-
-	/* Seed the random generator with the MD5 digest */
-	RAND_seed(md, MD_DIGEST_LENGTH);
-	}
-
-    Free(bmbits);
-  }
-
-  /* Select old bitmap back into memory DC */
-  hBitmap = SelectObject(hMemDC, hOldBitmap);
-
-  /* Clean up */
-  DeleteObject(hBitmap);
-  DeleteDC(hMemDC);
-  DeleteDC(hScrDC);
-}
-#endif
