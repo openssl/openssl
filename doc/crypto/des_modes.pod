@@ -204,8 +204,8 @@ just one key.
 =item *
 
 If the first and last key are the same, the key length is 112 bits.
-There are attacks that could reduce the key space to 55 bit's but it
-requires 2^56 blocks of memory.
+There are attacks that could reduce the effective key strength
+to only slightly more than 56 bits, but these require a lot of memory.
 
 =item *
 
