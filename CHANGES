@@ -10,11 +10,17 @@
      in ssl3_get_client_key_exchange (ssl/s3_srvr.c).
      [Bodo Moeller]
 
-  *) Turn on RSA blinding by default, to avoid a timing attack. Applications
-     that don't want it can call RSA_blinding_off(). They would be ill-advised
-     to do so in most cases. The automatic enabling can also be turned off
-     by defining OPENSSL_FORCE_NO_RSA_BLINDING at compile-time.
+  *) Turn on RSA blinding by default in the default implementation
+     to avoid a timing attack. Applications that don't want it can call
+     RSA_blinding_off() or use the new flag RSA_FLAG_NO_BLINDING.
+     They would be ill-advised to do so in most cases.
      [Ben Laurie, Steve Henson, Geoff Thorpe]
+
+  *) Change RSA blinding code so that it works when the PRNG is not
+     seeded (in this case, the secret RSA exponent is abused as
+     an unpredictable seed -- if it is not unpredictable, there
+     is no point in blinding anyway).
+     [Bodo Moeller]
 
  Changes between 0.9.6h and 0.9.6i  [19 Feb 2003]
 
