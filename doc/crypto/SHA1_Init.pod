@@ -23,7 +23,7 @@ be hashed (B<len> bytes at B<data>).
 SHA1_Final() places the message digest in B<md>, which must have space
 for SHA_DIGEST_LENGTH == 20 bytes of output, and erases the B<SHA_CTX>.
 
-When the entire message is available at one time, L<SHA1(3)|SHA(1)>
+When the entire message is available at one time, L<SHA1(3)|SHA(3)>
 can be used.
 
 =head1 RETURN VALUES
@@ -37,6 +37,6 @@ versions of SSLeay and OpenSSL.
 
 =head1 SEE ALSO
 
-sha(3), ripemd(3), SHA1(3)
+L<sha(3)|sha(3)>, L<ripemd(3)|ripemd(3)>, L<SHA1(3)|SHA1(3)>
 
 =cut

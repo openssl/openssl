@@ -31,6 +31,6 @@ Standard), ANSI X9.30
 
 =head1 SEE ALSO
 
-ripemd(3), SHA1(3), SHA1_Init(3)
+L<ripemd(3)|ripemd(3)>, L<SHA1(3)|SHA1(3)>, L<SHA1_Init(3)|SHA1_Init(3)>
 
 =cut

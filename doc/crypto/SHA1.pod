@@ -31,6 +31,6 @@ SHA1() is available in all versions of SSLeay and OpenSSL.
 
 =head1 SEE ALSO
 
-sha(3), ripemd(3), SHA1_Init(3)
+L<sha(3)|sha(3)>, L<ripemd(3)|ripemd(3)>, L<SHA1_Init(3)|SHA1_Init(3)>
 
 =cut
