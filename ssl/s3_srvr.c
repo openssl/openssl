@@ -982,7 +982,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 			dhp=cert->dh_tmp;
 			if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
 				dhp=s->cert->dh_tmp_cb(s,
-				      !SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
+				      SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
 				      SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher));
 			if (dhp == NULL)
 				{
@@ -1326,11 +1326,22 @@ static int ssl3_get_client_key_exchange(SSL *s)
 			goto f_err;
 			}
 
-		if ((p[0] != (s->client_version>>8)) || (p[1] != (s->client_version & 0xff)))
+		if (!((p[0] == (s->client_version>>8)) && (p[1] == (s->client_version & 0xff))))
 			{
-			al=SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
-			goto f_err;
+			/* The premaster secret must contain the same version number as the
+			 * ClientHello to detect version rollback attacks (strangely, the
+			 * protocol does not offer such protection for DH ciphersuites).
+			 * However, buggy clients exist that send the negotiated protocol
+			 * version instead if the servers does not support the requested
+			 * protocol version.
+			 * If SSL_OP_TLS_ROLLBACK_BUG is set, tolerate such clients. */
+			if (!((s->options & SSL_OP_TLS_ROLLBACK_BUG) &&
+				(p[0] == (s->version>>8)) && (p[1] == (s->version & 0xff))))
+				{
+				al=SSL_AD_DECODE_ERROR;
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
+				goto f_err;
+				}
 			}
 
 		s->session->master_key_length=

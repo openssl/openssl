@@ -4,6 +4,18 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Implement SSL_OP_TLS_ROLLBACK_BUG: In ssl3_get_client_key_exchange, if
+     this option is set, tolerate broken clients that send the negotiated
+     protocol version number instead of the requested protocol version
+     number.
+     [Bodo Moeller]
+
+  *) Call dh_tmp_cb (set by ..._TMP_DH_CB) with correct 'is_export' flag;
+     i.e. non-zero for export ciphersuites, zero otherwise.
+     Previous versions had this flag inverted, inconsistent with
+     rsa_tmp_cb (..._TMP_RSA_CB).
+     [Bodo Moeller; problem reported by Amit Chopra]
+
   *) Add missing DSA library text string. Work around for some IIS
      key files with invalid SEQUENCE encoding.
      [Steve Henson]
@@ -19,7 +31,7 @@
      [Steve Henson]
 
   *) Eliminate non-ANSI declarations in crypto.h and stack.h.
-	 [Ulf Möller]
+     [Ulf Möller]
 
   *) Fix for SSL server purpose checking. Server checking was
      rejecting certificates which had extended key usage present
@@ -86,12 +98,12 @@
 
      The new configuration file reading functions are:
 
-	NCONF_new, NCONF_free, NCONF_load, NCONF_load_fp, NCONF_load_bio,
-	NCONF_get_section, NCONF_get_string, NCONF_get_numbre
+        NCONF_new, NCONF_free, NCONF_load, NCONF_load_fp, NCONF_load_bio,
+        NCONF_get_section, NCONF_get_string, NCONF_get_numbre
 
-	NCONF_default, NCONF_WIN32
+        NCONF_default, NCONF_WIN32
 
-	NCONF_dump_fp, NCONF_dump_bio
+        NCONF_dump_fp, NCONF_dump_bio
 
      NCONF_default and NCONF_WIN32 are method (or "class") choosers,
      NCONF_new creates a new CONF object.  This works in the same way
@@ -757,11 +769,11 @@
 
      With these changes, a new set of functions and macros have appeared:
 
-       CRYPTO_set_mem_debug_functions()		[F]
-       CRYPTO_get_mem_debug_functions()		[F]
-       CRYPTO_dbg_set_options()			[F]
-       CRYPTO_dbg_get_options()			[F]
-       CRYPTO_malloc_debug_init()		[M]
+       CRYPTO_set_mem_debug_functions()	        [F]
+       CRYPTO_get_mem_debug_functions()         [F]
+       CRYPTO_dbg_set_options()	                [F]
+       CRYPTO_dbg_get_options()                 [F]
+       CRYPTO_malloc_debug_init()               [M]
 
      The memory debug functions are NULL by default, unless the library
      is compiled with CRYPTO_MDEBUG or friends is defined.  If someone
