@@ -3,4 +3,5 @@
  crypto.pod ...... Documentation of OpenSSL crypto.h+libcrypto.a
  ssl.pod ......... Documentation of OpenSSL ssl.h+libssl.a
  ssleay.txt ...... Assembled documentation files of ancestor SSLeay [obsolete}
-
+ ext-conf.txt .... Text documentation about configuring new extension code.
+ buffer.txt ...... Text documentation about the buffer library.

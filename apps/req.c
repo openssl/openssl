@@ -264,11 +264,10 @@ char **argv;
 						goto end;
 						}
 
-					/* This will 'disapear'
-					 * when we free xtmp */
 					dtmp=X509_get_pubkey(xtmp);
 					if (dtmp->type == EVP_PKEY_DSA)
 						dsa_params=DSAparams_dup(dtmp->pkey.dsa);
+					EVP_PKEY_free(dtmp);
 					X509_free(xtmp);
 					if (dsa_params == NULL)
 						{
@@ -437,6 +436,14 @@ bad:
 		}
 
 	extensions = CONF_get_string(req_conf, SECTION, V3_EXTENSIONS);
+	if(extensions) {
+		/* Check syntax of file */
+		if(!X509V3_EXT_check_conf(req_conf, extensions)) {
+			BIO_printf(bio_err,
+			 "Error Loading extension section %s\n", extensions);
+			goto end;
+		}
+	}
 
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());

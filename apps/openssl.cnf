@@ -35,6 +35,7 @@ private_key	= $dir/private/cakey.pem# The private key
 RANDFILE	= $dir/private/.rand	# private random number file
 
 x509_extensions	= usr_cert		# The extentions to add to the cert
+crl_extensions	= crl_ext		# Extensions to add to CRL
 default_days	= 365			# how long to certify for
 default_crl_days= 30			# how long before next CRL
 default_md	= md5			# which md to use.
@@ -188,3 +189,11 @@ issuerAltName=issuer:copy
 # 1.2.3.5=RAW:02:03
 # You can even override a supported extension:
 # basicConstraints= critical, RAW:30:03:01:01:FF
+
+[ crl_ext ]
+
+# CRL extensions.
+# Only issuerAltName and authorityKeyIdentifier make any sense in a CRL.
+
+issuerAltName=issuer:copy
+authorityKeyIdentifier=keyid:always,issuer:always

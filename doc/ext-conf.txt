@@ -14,8 +14,8 @@ PRINTING EXTENSIONS.
 
 Extension values are automatically printed out for supported extensions.
 
-x509 -in cert.pem -text
-crl -in crl.pem -text
+openssl x509 -in cert.pem -text
+openssl crl -in crl.pem -text
 
 will give information in the extension printout, for example:
 
@@ -42,6 +42,16 @@ x509_extensions = extension_section
 indicates which section contains the extensions. In the case of 'req' the
 extension section is used when the -x509 option is present to create a
 self signed root certificate.
+
+You can also add extensions to CRLs: a line
+
+crl_extensions = crl_extension_section
+
+will include extensions when the -gencrl option is used with the 'ca' utility.
+You can add any extension to a CRL but of the supported extensions only
+issuerAltName and authorityKeyIdentifier make any real sense. Note: these are
+CRL extensions NOT CRL *entry* extensions which cannot currently be generated.
+CRL entry extensions can be displayed.
 
 EXTENSION SYNTAX.
 

@@ -246,6 +246,7 @@ void X509V3_conf_free(CONF_VALUE *val);
 X509_EXTENSION *X509V3_EXT_conf_nid(LHASH *conf, X509V3_CTX *ctx, int ext_nid, char *value);
 X509_EXTENSION *X509V3_EXT_conf(LHASH *conf, X509V3_CTX *ctx, char *name, char *value);
 int X509V3_EXT_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section, X509 *cert);
+int X509V3_EXT_CRL_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section, X509_CRL *crl);
 int X509V3_EXT_check_conf(LHASH *conf, char *section);
 int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool);
 int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint);
@@ -326,6 +327,7 @@ char *i2s_ASN1_INTEGER();
 char * i2s_ASN1_ENUMERATED();
 char * i2s_ASN1_ENUMERATED_TABLE();
 int X509V3_EXT_add();
+int X509V3_EXT_CRL_add_conf();
 int X509V3_EXT_add_alias();
 void X509V3_EXT_cleanup();
 

@@ -105,6 +105,7 @@
 #define ENV_PRESERVE		"preserve"
 #define ENV_POLICY      	"policy"
 #define ENV_EXTENSIONS      	"x509_extensions"
+#define ENV_CRLEXT      	"crl_extensions"
 #define ENV_MSIE_HACK		"msie_hack"
 
 #define ENV_DATABASE		"database"
@@ -236,6 +237,7 @@ char **argv;
 	char *outdir=NULL;
 	char *serialfile=NULL;
 	char *extensions=NULL;
+	char *crl_ext=NULL;
 	BIGNUM *serial=NULL;
 	char *startdate=NULL;
 	int days=0;
@@ -966,6 +968,17 @@ bad:
 	/*****************************************************************/
 	if (gencrl)
 		{
+		crl_ext=CONF_get_string(conf,section,ENV_CRLEXT);
+		if(crl_ext) {
+			/* Check syntax of file */
+			if(!X509V3_EXT_check_conf(conf, crl_ext)) {
+				BIO_printf(bio_err,
+				 "Error Loading CRL extension section %s\n",
+								 crl_ext);
+				ret = 1;
+				goto err;
+			}
+		}
 		if ((hex=BIO_new(BIO_s_mem())) == NULL) goto err;
 
 		if (!crldays && !crlhours)
@@ -1042,6 +1055,23 @@ bad:
 #endif
 			dgst=EVP_md5();
 		    }
+
+		/* Add any extensions asked for */
+
+		if(crl_ext) {
+		    X509V3_CTX crlctx;
+		    if (ci->version == NULL)
+		    if ((ci->version=ASN1_INTEGER_new()) == NULL) goto err;
+		    ASN1_INTEGER_set(ci->version,1); /* version 2 CRL */
+		    crlctx.crl = crl;
+		    crlctx.issuer_cert = x509;
+		    crlctx.subject_cert = NULL;
+		    crlctx.subject_req = NULL;
+		    crlctx.flags = 0;
+
+		    if(!X509V3_EXT_CRL_add_conf(conf, &crlctx,
+						 crl_ext, crl)) goto err;
+		}
 
 		if (!X509_CRL_sign(crl,pkey,dgst)) goto err;
 

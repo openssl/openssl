@@ -110,8 +110,11 @@ again:
 
 	/* Add some extra attributes */
 	if (!add_signed_time(si)) goto err;
+#if 0
+	/* Since these are made up attributes lets leave them out */
 	if (!add_signed_string(si,"SIGNED STRING")) goto err;
 	if (!add_signed_seq2string(si,"STRING1","STRING2")) goto err;
+#endif
 
 	/* we may want to add more */
 	PKCS7_add_certificate(p7,x509);

@@ -264,6 +264,29 @@ X509 *cert;
 	return 1;
 }
 
+/* Same as above but for a CRL */
+
+int X509V3_EXT_CRL_add_conf(conf, ctx, section, crl)
+LHASH *conf;
+X509V3_CTX *ctx;
+char *section;
+X509_CRL *crl;
+{
+	X509_EXTENSION *ext;
+	STACK *nval;
+	CONF_VALUE *val;	
+	int i;
+	if(!(nval = CONF_get_section(conf, section))) return 0;
+	for(i = 0; i < sk_num(nval); i++) {
+		val = (CONF_VALUE *)sk_value(nval, i);
+		if(!(ext = X509V3_EXT_conf(conf, ctx, val->name, val->value)))
+								return 0;
+		if(crl) X509_CRL_add_ext(crl, ext, -1);
+		X509_EXTENSION_free(ext);
+	}
+	return 1;
+}
+
 /* Just check syntax of config file as far as possible */
 int X509V3_EXT_check_conf(conf, section)
 LHASH *conf;
