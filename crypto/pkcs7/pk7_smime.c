@@ -115,12 +115,16 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		}
 #ifndef NO_DES
 		PKCS7_simple_smimecap (smcap, NID_des_ede3_cbc, -1);
+#endif
+#ifndef NO_RC2
+		PKCS7_simple_smimecap (smcap, NID_rc2_cbc, 128);
+		PKCS7_simple_smimecap (smcap, NID_rc2_cbc, 64);
+#endif
+#ifndef NO_DES
 		PKCS7_simple_smimecap (smcap, NID_des_cbc, -1);
 #endif
 #ifndef NO_RC2
 		PKCS7_simple_smimecap (smcap, NID_rc2_cbc, 40);
-		PKCS7_simple_smimecap (smcap, NID_rc2_cbc, 128);
-		PKCS7_simple_smimecap (smcap, NID_rc2_cbc, 64);
 #endif
 		PKCS7_add_attrib_smimecap (si, smcap);
 		sk_pop_free(smcap, X509_ALGOR_free);
@@ -152,7 +156,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 
 	if(!p7) {
 		PKCS7err(PKCS7_F_PKCS7_VERIFY,PKCS7_R_INVALID_NULL_POINTER);
-		return NULL;
+		return 0;
 	}
 
 	if(!PKCS7_type_is_signed(p7)) {

@@ -4,6 +4,12 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Some S/MIME fixes. The OID for SMIMECapabilities was wrong, the
+     ordering of SMIMECapabilities wasn't in "strength order" and there
+     was a missing NULL in the AlgorithmIdentifier for the SHA1 signature
+     algorithm.
+     [Steve Henson]
+
   *) Some ASN1 types with illegal zero length encoding (INTEGER,
      ENUMERATED and OBJECT IDENTIFIER) choked the ASN1 routines.
      [Frans Heymans <fheymans@isaserver.be>, modified by Steve Henson]

@@ -876,7 +876,7 @@ extern "C" {
 #define SN_SMIMECapabilities		"SMIME-CAPS"
 #define LN_SMIMECapabilities		"S/MIME Capabilities"
 #define NID_SMIMECapabilities		167
-#define OBJ_SMIMECapabilities		OBJ_id_pkcs9,15L
+#define OBJ_SMIMECapabilities		OBJ_pkcs9,15L
 
 #define LN_pbeWithMD2AndRC2_CBC		"pbeWithMD2AndRC2-CBC"
 #define NID_pbeWithMD2AndRC2_CBC	168

@@ -66,7 +66,7 @@
 #define NUM_LN 175
 #define NUM_OBJ 152
 
-static unsigned char lvalues[1057]={
+static unsigned char lvalues[1065]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -205,20 +205,20 @@ static unsigned char lvalues[1057]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x07,     /* [933] OBJ_hmacWithSHA1 */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x01,     /* [941] OBJ_id_qt_cps */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x02,     /* [949] OBJ_id_qt_unotice */
-0x0F,                                        /* [957] OBJ_SMIMECapabilities */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x04,/* [958] OBJ_pbeWithMD2AndRC2_CBC */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x06,/* [967] OBJ_pbeWithMD5AndRC2_CBC */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0A,/* [976] OBJ_pbeWithSHA1AndDES_CBC */
-0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x02,0x01,0x0E,/* [985] OBJ_ms_ext_req */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x0E,/* [995] OBJ_ext_req */
-0x55,0x04,0x29,                              /* [1004] OBJ_name */
-0x55,0x04,0x2E,                              /* [1007] OBJ_dnQualifier */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,          /* [1010] OBJ_id_pe */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,          /* [1017] OBJ_id_ad */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x01,     /* [1024] OBJ_info_access */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,     /* [1032] OBJ_ad_OCSP */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x02,     /* [1040] OBJ_ad_ca_issuers */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x09,     /* [1048] OBJ_OCSP_sign */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x0F,/* [957] OBJ_SMIMECapabilities */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x04,/* [966] OBJ_pbeWithMD2AndRC2_CBC */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x06,/* [975] OBJ_pbeWithMD5AndRC2_CBC */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0A,/* [984] OBJ_pbeWithSHA1AndDES_CBC */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x02,0x01,0x0E,/* [993] OBJ_ms_ext_req */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x0E,/* [1003] OBJ_ext_req */
+0x55,0x04,0x29,                              /* [1012] OBJ_name */
+0x55,0x04,0x2E,                              /* [1015] OBJ_dnQualifier */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,          /* [1018] OBJ_id_pe */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,          /* [1025] OBJ_id_ad */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x01,     /* [1032] OBJ_info_access */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x01,     /* [1040] OBJ_ad_OCSP */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x02,     /* [1048] OBJ_ad_ca_issuers */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x09,     /* [1056] OBJ_OCSP_sign */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -453,26 +453,26 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"id-qt-unotice","Policy Qualifier User Notice",NID_id_qt_unotice,8,
 	&(lvalues[949]),0},
 {"RC2-64-CBC","rc2-64-cbc",NID_rc2_64_cbc,0,NULL},
-{"SMIME-CAPS","S/MIME Capabilities",NID_SMIMECapabilities,1,
+{"SMIME-CAPS","S/MIME Capabilities",NID_SMIMECapabilities,9,
 	&(lvalues[957]),0},
 {"pbeWithMD2AndRC2-CBC","pbeWithMD2AndRC2-CBC",
-	NID_pbeWithMD2AndRC2_CBC,9,&(lvalues[958]),0},
+	NID_pbeWithMD2AndRC2_CBC,9,&(lvalues[966]),0},
 {"pbeWithMD5AndRC2-CBC","pbeWithMD5AndRC2-CBC",
-	NID_pbeWithMD5AndRC2_CBC,9,&(lvalues[967]),0},
+	NID_pbeWithMD5AndRC2_CBC,9,&(lvalues[975]),0},
 {"pbeWithSHA1AndDES-CBC","pbeWithSHA1AndDES-CBC",
-	NID_pbeWithSHA1AndDES_CBC,9,&(lvalues[976]),0},
+	NID_pbeWithSHA1AndDES_CBC,9,&(lvalues[984]),0},
 {"msExtReq","Microsoft Extension Request",NID_ms_ext_req,10,
-	&(lvalues[985]),0},
-{"extReq","Extension Request",NID_ext_req,9,&(lvalues[995]),0},
-{"name","name",NID_name,3,&(lvalues[1004]),0},
-{"dnQualifier","dnQualifier",NID_dnQualifier,3,&(lvalues[1007]),0},
-{"id-pe","id-pe",NID_id_pe,7,&(lvalues[1010]),0},
-{"id-ad","id-ad",NID_id_ad,7,&(lvalues[1017]),0},
+	&(lvalues[993]),0},
+{"extReq","Extension Request",NID_ext_req,9,&(lvalues[1003]),0},
+{"name","name",NID_name,3,&(lvalues[1012]),0},
+{"dnQualifier","dnQualifier",NID_dnQualifier,3,&(lvalues[1015]),0},
+{"id-pe","id-pe",NID_id_pe,7,&(lvalues[1018]),0},
+{"id-ad","id-ad",NID_id_ad,7,&(lvalues[1025]),0},
 {"authorityInfoAccess","Authority Information Access",NID_info_access,
-	8,&(lvalues[1024]),0},
-{"OCSP","OCSP",NID_ad_OCSP,8,&(lvalues[1032]),0},
-{"caIssuers","CA Issuers",NID_ad_ca_issuers,8,&(lvalues[1040]),0},
-{"OCSP Signing","OCSP Signing",NID_OCSP_sign,8,&(lvalues[1048]),0},
+	8,&(lvalues[1032]),0},
+{"OCSP","OCSP",NID_ad_OCSP,8,&(lvalues[1040]),0},
+{"caIssuers","CA Issuers",NID_ad_ca_issuers,8,&(lvalues[1048]),0},
+{"OCSP Signing","OCSP Signing",NID_OCSP_sign,8,&(lvalues[1056]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -786,7 +786,6 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 
 static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 0]),/* OBJ_undef                        0 */
-&(nid_objs[167]),/* OBJ_SMIMECapabilities             15 */
 &(nid_objs[11]),/* OBJ_X500                         2 5 */
 &(nid_objs[12]),/* OBJ_X509                         2 5 4 */
 &(nid_objs[81]),/* OBJ_ld_ce                        2 5 29 */
@@ -904,6 +903,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[55]),/* OBJ_pkcs9_unstructuredAddress    1 2 840 113549 1 9 8 */
 &(nid_objs[56]),/* OBJ_pkcs9_extCertAttributes      1 2 840 113549 1 9 9 */
 &(nid_objs[172]),/* OBJ_ext_req                      1 2 840 113549 1 9 14 */
+&(nid_objs[167]),/* OBJ_SMIMECapabilities            1 2 840 113549 1 9 15 */
 &(nid_objs[156]),/* OBJ_friendlyName                 1 2 840 113549 1 9  20 */
 &(nid_objs[157]),/* OBJ_localKeyID                   1 2 840 113549 1 9  21 */
 &(nid_objs[71]),/* OBJ_netscape_cert_type           2 16 840 1 113730 1 1 */

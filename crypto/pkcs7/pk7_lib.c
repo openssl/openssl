@@ -227,8 +227,13 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
 		}
 	if (!j) /* we need to add another algorithm */
 		{
-		alg=X509_ALGOR_new();
+		if(!(alg=X509_ALGOR_new())
+			|| !(alg->parameter = ASN1_TYPE_new())) {
+			PKCS7err(PKCS7_F_PKCS7_ADD_SIGNER,ERR_R_MALLOC_FAILURE);
+			return(0);
+		}
 		alg->algorithm=OBJ_nid2obj(nid);
+		alg->parameter->type = V_ASN1_NULL;
 		sk_X509_ALGOR_push(md_sk,alg);
 		}
 
