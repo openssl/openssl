@@ -698,7 +698,7 @@ bad:
 			if(strlen(localhost) == sizeof localhost-1)
 				{
 				BIO_printf(bio_err,"localhost name too long\n");
-				got end;
+				goto end;
 				}
 			kssl_ctx_setstring(c_ssl->kssl_ctx, KSSL_SERVER,
                                 localhost);
