@@ -4,6 +4,12 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Made it possible to reconfigure with just the configuration
+     argument "reconf" or "reconfigure".  The command line arguments
+     are stored in Makefile.ssl in the variable CONFIGURE_ARGS,
+     and are retrieved from there when reconfiguring.
+     [Richard Levitte]
+
   *) MD4 implemented.
      [Assar Westerlund <assar@assaris.sics.se>, Richard Levitte]
 
