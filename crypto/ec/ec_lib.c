@@ -120,6 +120,7 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 		group->meth->group_clear_finish(group);
 	else if (group->meth != NULL && group->meth->group_finish != 0)
 		group->meth->group_finish(group);
+	memset(point, 0, sizeof *group);
 	OPENSSL_free(group);
 	}
 
@@ -206,6 +207,7 @@ void EC_POINT_clear_free(EC_POINT *point)
 		point->meth->point_clear_finish(point);
 	else if (point->meth != NULL && point->meth->point_finish != 0)
 		point->meth->point_finish(point);
+	memset(point, 0, sizeof *point);
 	OPENSSL_free(point);
 	}
 
