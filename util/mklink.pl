@@ -18,10 +18,10 @@
 my $from = shift;
 my @files = @ARGV;
 
-my @from_path = split(/\//, $from);
+my @from_path = split(/[\\\/]/, $from);
 my $pwd = `pwd`;
 chop($pwd);
-my @pwd_path = split(/\//, $pwd);
+my @pwd_path = split(/[\\\/]/, $pwd);
 
 my @to_path = ();
 
@@ -54,7 +54,16 @@ foreach $file (@files) {
     if ($symlink_exists) {
 	symlink("$to/$file", "$from/$file") or $err = " [$!]";
     } else {
-	system ("cp", "$file", "$from/$file") and $err = " [$!]";
+	unlink "$from/$file"; 
+	open (OLD, "<$file") or die "Can't open $file: $!";
+	open (NEW, ">$from/$file") or die "Can't open $from/$file: $!";
+	binmode(OLD);
+	binmode(NEW);
+	while (<OLD>) {
+	    print NEW $_;
+	}
+	close (OLD) or die "Can't close $file: $!";
+	close (NEW) or die "Can't close $from/$file: $!";
     }
     print $file . " => $from/$file$err\n";
 }
