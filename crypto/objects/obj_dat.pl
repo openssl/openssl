@@ -164,7 +164,13 @@ foreach (sort obj_cmp @a)
 	}
 
 print OUT <<'EOF';
-/* lib/obj/obj_dat.h */
+/* crypto/objects/obj_dat.h */
+
+/* THIS FILE IS GENERATED FROM objects.h by obj_dat.pl via the
+ * following command:
+ * perl obj_dat.pl objects.h obj_dat.h
+ */
+
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -220,11 +226,6 @@ print OUT <<'EOF';
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
- */
-
-/* THIS FILE IS GENERATED FROM Objects.h by obj_dat.pl via the
- * following command:
- * perl obj_dat.pl objects.h obj_dat.h
  */
 
 EOF
