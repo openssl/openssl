@@ -236,22 +236,12 @@ typedef struct x509_cinf_st
  * the end of the certificate itself
  */
 
-/* Bit values for trust/reject */
-
-#define X509_TRUST_BIT_ALL			0
-#define X509_TRUST_BIT_SSL_CLIENT		1
-#define X509_TRUST_BIT_SSL_SERVER		2
-#define X509_TRUST_BIT_EMAIL			3
-#define X509_TRUST_BIT_OBJECT_SIGN		4
-
-
 typedef struct x509_cert_aux_st
 	{
-	ASN1_BIT_STRING *trust;			/* trusted uses */
-	ASN1_BIT_STRING *reject;		/* rejected uses */
-	STACK_OF(ASN1_OBJECT) *othertrust;	/* extra uses */
-	STACK_OF(ASN1_OBJECT) *otherreject;	/* extra rejected uses */
+	STACK_OF(ASN1_OBJECT) *trust;		/* trusted uses */
+	STACK_OF(ASN1_OBJECT) *reject;		/* rejected uses */
 	ASN1_UTF8STRING *alias;			/* "friendly name" */
+	ASN1_OCTET_STRING *keyid;		/* key id of private key */
 	ASN1_TYPE *other;			/* other unspecified info */
 	} X509_CERT_AUX;
 
@@ -830,13 +820,11 @@ X509_CERT_AUX *	d2i_X509_CERT_AUX(X509_CERT_AUX **a,unsigned char **pp,
 								long length);
 int X509_alias_set(X509 *x, unsigned char *name, int len);
 unsigned char * X509_alias_get(X509 *x, int *len);
-int X509_trust_set_bit(X509 *x, int bit, int value);
-int X509_reject_set_bit(X509 *x, int bit, int value);
-int X509_add_trust_object(X509 *x, ASN1_OBJECT *obj);
-int X509_add_reject_object(X509 *x, ASN1_OBJECT *obj);
-
-int X509_trust_set_bit_asc(X509 *x, char *str, int value);
-int X509_reject_set_bit_asc(X509 *x, char *str, int value);
+int (*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int);
+int X509_radd_trust_object(X509 *x, ASN1_OBJECT *obj);
+int X509_radd_reject_object(X509 *x, ASN1_OBJECT *obj);
+void X509_trust_clear(X509 *x);
+void X509_reject_clear(X509 *x);
 
 X509_REVOKED *	X509_REVOKED_new(void);
 void		X509_REVOKED_free(X509_REVOKED *a);

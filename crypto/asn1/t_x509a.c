@@ -65,73 +65,37 @@
 /* X509_CERT_AUX and string set routines
  */
 
-static BIT_STRING_BITNAME tbits[] = {
-{X509_TRUST_BIT_ALL, "All Purposes", "all"},
-{X509_TRUST_BIT_SSL_CLIENT, "SSL client", "sslclient"},
-{X509_TRUST_BIT_SSL_SERVER, "SSL server", "sslserver"},
-{X509_TRUST_BIT_EMAIL, "S/MIME email", "email"},
-{X509_TRUST_BIT_OBJECT_SIGN, "Object Signing", "objsign"},
-{-1, NULL, NULL}
-};
-
-int X509_trust_set_bit_asc(X509 *x, char *str, int value)
-{
-	int bitnum;
-	bitnum = ASN1_BIT_STRING_num_asc(str, tbits);
-	if(bitnum < 0) return 0;
-	if(x) return X509_trust_set_bit(x, bitnum, value);
-	return 1;
-}
-
-int X509_reject_set_bit_asc(X509 *x, char *str, int value)
-{
-	int bitnum;
-	bitnum = ASN1_BIT_STRING_num_asc(str, tbits);
-	if(bitnum < 0) return 0;
-	if(x) return X509_reject_set_bit(x, bitnum, value);
-	return 1;
-}
-
-
 int X509_CERT_AUX_print(BIO *out, X509_CERT_AUX *aux, int indent)
 {
 	char oidstr[80], first;
 	int i;
 	if(!aux) return 1;
 	if(aux->trust) {
-		BIO_printf(out, "%*sTrusted Uses:\n", indent, "");
-		ASN1_BIT_STRING_name_print(out, aux->trust, tbits, indent + 2);
+		first = 1;
+		BIO_printf(out, "%*sTrusted Uses:\n%*s",
+						indent, "", indent + 2, "");
+		for(i = 0; i < sk_ASN1_OBJECT_num(aux->trust); i++) {
+			if(!first) BIO_puts(out, ", ");
+			else first = 0;
+			OBJ_obj2txt(oidstr, 80,
+				sk_ASN1_OBJECT_value(aux->trust, i), 0);
+			BIO_puts(out, oidstr);
+		}
+		BIO_puts(out, "\n");
 	} else BIO_printf(out, "%*sNo Trusted Uses.\n", indent, "");
 	if(aux->reject) {
-		BIO_printf(out, "%*sRejected Uses:\n", indent, "");
-		ASN1_BIT_STRING_name_print(out, aux->reject, tbits, indent + 2);
+		first = 1;
+		BIO_printf(out, "%*sRejected Uses:\n%*s",
+						indent, "", indent + 2, "");
+		for(i = 0; i < sk_ASN1_OBJECT_num(aux->reject); i++) {
+			if(!first) BIO_puts(out, ", ");
+			else first = 0;
+			OBJ_obj2txt(oidstr, 80,
+				sk_ASN1_OBJECT_value(aux->reject, i), 0);
+			BIO_puts(out, oidstr);
+		}
+		BIO_puts(out, "\n");
 	} else BIO_printf(out, "%*sNo Rejected Uses.\n", indent, "");
-	if(aux->othertrust) {
-		first = 1;
-		BIO_printf(out, "%*sOther Trusted Uses:\n%*s",
-						indent, "", indent + 2, "");
-		for(i = 0; i < sk_ASN1_OBJECT_num(aux->othertrust); i++) {
-			if(!first) BIO_puts(out, ", ");
-			else first = 0;
-			OBJ_obj2txt(oidstr, 80,
-				sk_ASN1_OBJECT_value(aux->othertrust, i), 0);
-			BIO_puts(out, oidstr);
-		}
-		BIO_puts(out, "\n");
-	}
-	if(aux->otherreject) {
-		first = 1;
-		BIO_printf(out, "%*sOther Rejected Uses:\n%*s",
-						indent, "", indent + 2, "");
-		for(i = 0; i < sk_ASN1_OBJECT_num(aux->otherreject); i++) {
-			if(!first) BIO_puts(out, ", ");
-			else first = 0;
-			OBJ_obj2txt(oidstr, 80,
-				sk_ASN1_OBJECT_value(aux->otherreject, i), 0);
-			BIO_puts(out, oidstr);
-		}
-		BIO_puts(out, "\n");
-	}
 	if(aux->alias) BIO_printf(out, "%*sAlias: %s\n", indent, "",
 							aux->alias->data);
 	return 1;

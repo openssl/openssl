@@ -1900,7 +1900,7 @@ sk_ASN1_STRING_TABLE_value              1924
 ACCESS_DESCRIPTION_new                  1925
 X509_CERT_AUX_free                      1926
 d2i_ACCESS_DESCRIPTION                  1927
-X509_PURPOSE_add_standard               1928
+X509_trust_clear                        1928
 sk_X509_PURPOSE_value                   1929
 sk_X509_PURPOSE_zero                    1930
 X509_TRUST_add                          1931
@@ -2054,7 +2054,7 @@ X509_trust_set_bit                      2078
 sk_X509_PURPOSE_delete_ptr              2079
 ASN1_BIT_STRING_free                    2080
 PEM_read_bio_RSA_PUBKEY                 2081
-X509_add_reject_object                  2082
+X509_radd_reject_object                 2082
 X509_check_trust                        2083
 sk_X509_TRUST_new_null                  2084
 sk_ACCESS_DESCRIPTION_new_null          2085
@@ -2112,7 +2112,7 @@ ASN1_STRING_length_set                  2136
 DIRECTORYSTRING_new                     2137
 sk_ASN1_STRING_TABLE_new                2138
 sk_X509_TRUST_delete                    2139
-X509_add_trust_object                   2140
+X509_radd_trust_object                  2140
 PKCS12_newpass                          2141
 SMIME_write_PKCS7                       2142
 SMIME_read_PKCS7                        2143
@@ -2156,3 +2156,5 @@ i2d_PrivateKey_fp                       2180
 d2i_PrivateKey_bio                      2181
 d2i_PrivateKey_fp                       2182
 i2d_PrivateKey_bio                      2183
+X509_reject_clear                       2184
+X509_TRUST_set_default                  2185

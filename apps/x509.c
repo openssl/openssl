@@ -146,15 +146,16 @@ int MAIN(int argc, char **argv)
 	int ret=1;
 	X509_REQ *req=NULL;
 	X509 *x=NULL,*xca=NULL;
+	ASN1_OBJECT *objtmp;
 	EVP_PKEY *Upkey=NULL,*CApkey=NULL;
 	int i,num,badops=0;
 	BIO *out=NULL;
 	BIO *STDout=NULL;
-	STACK *trust = NULL, *reject = NULL;
+	STACK_OF(ASN1_OBJECT) *trust = NULL, *reject = NULL;
 	int informat,outformat,keyformat,CAformat,CAkeyformat;
 	char *infile=NULL,*outfile=NULL,*keyfile=NULL,*CAfile=NULL;
 	char *CAkeyfile=NULL,*CAserial=NULL;
-	char *alias=NULL, *trstr=NULL;
+	char *alias=NULL;
 	int text=0,serial=0,hash=0,subject=0,issuer=0,startdate=0,enddate=0;
 	int noout=0,sign_flag=0,CA_flag=0,CA_createserial=0;
 	int trustout=0,clrtrust=0,clrreject=0,aliasout=0;
@@ -297,27 +298,25 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-addtrust") == 0)
 			{
 			if (--argc < 1) goto bad;
-			trstr= *(++argv);
-			if(!X509_trust_set_bit_asc(NULL, trstr, 0)) {
+			if(!(objtmp = OBJ_txt2obj(*(++argv), 0))) {
 				BIO_printf(bio_err,
-					"Unknown trust value %s\n", trstr);
+					"Invalid trust object value %s\n", *argv);
 				goto bad;
 			}
-			if(!trust) trust = sk_new_null();
-			sk_push(trust, trstr);
+			if(!trust) trust = sk_ASN1_OBJECT_new_null();
+			sk_ASN1_OBJECT_push(trust, objtmp);
 			trustout = 1;
 			}
 		else if (strcmp(*argv,"-addreject") == 0)
 			{
 			if (--argc < 1) goto bad;
-			trstr= *(++argv);
-			if(!X509_reject_set_bit_asc(NULL, trstr, 0)) {
+			if(!(objtmp = OBJ_txt2obj(*(++argv), 0))) {
 				BIO_printf(bio_err,
-					"Unknown trust value %s\n", trstr);
+					"Invalid reject object value %s\n", *argv);
 				goto bad;
 			}
-			if(!reject) reject = sk_new_null();
-			sk_push(reject, trstr);
+			if(!reject) reject = sk_ASN1_OBJECT_new_null();
+			sk_ASN1_OBJECT_push(reject, objtmp);
 			trustout = 1;
 			}
 		else if (strcmp(*argv,"-setalias") == 0)
@@ -521,15 +520,9 @@ bad:
 		X509_gmtime_adj(X509_get_notBefore(x),0);
 	        X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days);
 
-#if 0
-		X509_PUBKEY_free(ci->key);
-		ci->key=req->req_info->pubkey;
-	        req->req_info->pubkey=NULL;
-#else
 		pkey = X509_REQ_get_pubkey(req);
 		X509_set_pubkey(x,pkey);
 		EVP_PKEY_free(pkey);
-#endif
 		}
 	else
 		x=load_cert(infile,informat);
@@ -566,23 +559,21 @@ bad:
 
 	if(alias) X509_alias_set(x, (unsigned char *)alias, -1);
 
-	if(clrtrust) X509_trust_set_bit(x, -1, 0);
-	if(clrreject) X509_reject_set_bit(x, -1, 0);
+	if(clrtrust) X509_trust_clear(x);
+	if(clrreject) X509_reject_clear(x);
 
 	if(trust) {
-		for(i = 0; i < sk_num(trust); i++) {
-			trstr = sk_value(trust, i);
-			X509_trust_set_bit_asc(x, trstr, 1);
+		for(i = 0; i < sk_ASN1_OBJECT_num(trust); i++) {
+			objtmp = sk_ASN1_OBJECT_value(trust, i);
+			X509_radd_trust_object(x, objtmp);
 		}
-		sk_free(trust);
 	}
 
 	if(reject) {
-		for(i = 0; i < sk_num(reject); i++) {
-			trstr = sk_value(reject, i);
-			X509_reject_set_bit_asc(x, trstr, 1);
+		for(i = 0; i < sk_ASN1_OBJECT_num(reject); i++) {
+			objtmp = sk_ASN1_OBJECT_value(reject, i);
+			X509_radd_reject_object(x, objtmp);
 		}
-		sk_free(reject);
 	}
 
 	if (num)
@@ -887,6 +878,8 @@ end:
 	EVP_PKEY_free(Upkey);
 	EVP_PKEY_free(CApkey);
 	X509_REQ_free(rq);
+	sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
+	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
 	EXIT(ret);
 	}
 

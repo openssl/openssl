@@ -4,6 +4,19 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Simplify the trust setting structure and code. Now we just have
+     two sequences of OIDs for trusted and rejected settings. These will
+     typically have values the same as the extended key usage extension
+     and any application specific purposes.
+
+     The trust checking code now has a default behaviour: it will just
+     check for an object with the same NID as the passed id. Functions can
+     be provided to override either the default behaviour or the behaviour
+     for a given id. SSL client, server and email already have functions
+     in place for compatability: they check the NID and also return "trusted"
+     if the certificate is self signed.
+     [Steve Henson]
+
   *) Add d2i,i2d bio/fp functions for PrivateKey: these convert the
      traditional format into an EVP_PKEY structure.
      [Steve Henson]

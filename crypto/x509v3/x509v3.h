@@ -542,7 +542,6 @@ char *X509_PURPOSE_iget_name(X509_PURPOSE *xp);
 char *X509_PURPOSE_iget_sname(X509_PURPOSE *xp);
 int X509_PURPOSE_get_trust(X509_PURPOSE *xp);
 void X509_PURPOSE_cleanup(void);
-void X509_PURPOSE_add_standard(void);
 int X509_PURPOSE_get_id(X509_PURPOSE *);
 
 /* BEGIN ERROR CODES */

@@ -64,8 +64,11 @@
 static int tr_cmp(X509_TRUST **a, X509_TRUST **b);
 static void trtable_free(X509_TRUST *p);
 
-static int trust_1bit(X509_TRUST *trust, X509 *x, int flags);
+static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags);
 static int trust_any(X509_TRUST *trust, X509 *x, int flags);
+
+static int obj_trust(int id, X509 *x, int flags);
+static int (*default_trust)(int id, X509 *x, int flags) = obj_trust;
 
 /* WARNING: the following table should be kept in order of trust
  * and without any gaps so we can just subtract the minimum trust
@@ -74,10 +77,9 @@ static int trust_any(X509_TRUST *trust, X509 *x, int flags);
 
 static X509_TRUST trstandard[] = {
 {X509_TRUST_ANY, 0, trust_any, "Any", 0, NULL},
-{X509_TRUST_SSL_CLIENT, 0, trust_1bit, "SSL Client", X509_TRUST_BIT_SSL_CLIENT, NULL},
-{X509_TRUST_SSL_SERVER, 0, trust_1bit, "SSL Client", X509_TRUST_BIT_SSL_SERVER, NULL},
-{X509_TRUST_EMAIL, 0, trust_1bit, "S/MIME email", X509_TRUST_BIT_EMAIL, NULL},
-{X509_TRUST_OBJECT_SIGN, 0, trust_1bit, "Object Signing", X509_TRUST_BIT_OBJECT_SIGN, NULL},
+{X509_TRUST_SSL_CLIENT, 0, trust_1oidany, "SSL Client", NID_client_auth, NULL},
+{X509_TRUST_SSL_SERVER, 0, trust_1oidany, "SSL Client", NID_server_auth, NULL},
+{X509_TRUST_EMAIL, 0, trust_1oidany, "S/MIME email", NID_email_protect, NULL},
 };
 
 #define X509_TRUST_COUNT	(sizeof(trstandard)/sizeof(X509_TRUST))
@@ -91,12 +93,22 @@ static int tr_cmp(X509_TRUST **a, X509_TRUST **b)
 	return (*a)->trust - (*b)->trust;
 }
 
+int (*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int)
+{
+int (*oldtrust)(int , X509 *, int);
+oldtrust = default_trust;
+default_trust = trust;
+return oldtrust;
+}
+
+
 int X509_check_trust(X509 *x, int id, int flags)
 {
 	X509_TRUST *pt;
 	int idx;
 	if(id == -1) return 1;
-	if(!(idx = X509_TRUST_get_by_id(id))) return 0;
+	if(!(idx = X509_TRUST_get_by_id(id)))
+			return default_trust(id, x, flags);
 	pt = X509_TRUST_iget(idx);
 	return pt->check_trust(pt, x, flags);
 }
@@ -212,26 +224,37 @@ int X509_TRUST_get_trust(X509_TRUST *xp)
 	return xp->trust;
 }
 
-static int trust_1bit(X509_TRUST *trust, X509 *x, int flags)
+static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags)
 {
-	X509_CERT_AUX *ax;
-	ax = x->aux;
-	if(ax) {
-		if(ax->reject
-			&& ( ASN1_BIT_STRING_get_bit(ax->reject, X509_TRUST_BIT_ALL)
-			|| ASN1_BIT_STRING_get_bit(ax->reject, trust->arg1)))
-							return X509_TRUST_REJECTED;
-		if(ax->trust && (ASN1_BIT_STRING_get_bit(ax->trust, X509_TRUST_BIT_ALL)
-			|| ASN1_BIT_STRING_get_bit(ax->trust, trust->arg1)))
-							return X509_TRUST_TRUSTED;
-		return X509_TRUST_UNTRUSTED;
-	}
+	if(x->aux) return obj_trust(trust->arg1, x, flags);
 	/* we don't have any trust settings: for compatability
 	 * we return trusted if it is self signed
 	 */
 	X509_check_purpose(x, -1, 0);
 	if(x->ex_flags & EXFLAG_SS) return X509_TRUST_TRUSTED;
 	else return X509_TRUST_UNTRUSTED;
+}
+
+static int obj_trust(int id, X509 *x, int flags)
+{
+	ASN1_OBJECT *obj;
+	int i;
+	X509_CERT_AUX *ax;
+	ax = x->aux;
+	if(!ax) return X509_TRUST_UNTRUSTED;
+	if(ax->reject) {
+		for(i = 0; i < sk_ASN1_OBJECT_num(ax->reject); i++) {
+			obj = sk_ASN1_OBJECT_value(ax->reject, i);
+			if(OBJ_obj2nid(obj) == id) return X509_TRUST_REJECTED;
+		}
+	}	
+	if(ax->trust) {
+		for(i = 0; i < sk_ASN1_OBJECT_num(ax->trust); i++) {
+			obj = sk_ASN1_OBJECT_value(ax->trust, i);
+			if(OBJ_obj2nid(obj) == id) return X509_TRUST_TRUSTED;
+		}
+	}
+	return X509_TRUST_UNTRUSTED;
 }
 
 static int trust_any(X509_TRUST *trust, X509 *x, int flags)
