@@ -60,7 +60,7 @@
 #include <string.h>
 #include "cryptlib.h"
 #include <openssl/crypto.h>
-#include "date.h"
+#include "buildinf.h"
 
 const char *SSLeay_version(int t)
 	{

@@ -60,7 +60,6 @@
 #include <string.h>
 #include "cryptlib.h"
 #include <openssl/crypto.h>
-#include "date.h"
 
 #if defined(WIN32) || defined(WIN16)
 static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
