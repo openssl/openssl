@@ -97,11 +97,10 @@ void main ()
 
   err = SSL_write (ssl, "Hello World!", strlen("Hello World!"));  CHK_SSL(err);
   
-  SSL_shutdown (ssl);  /* send SSL/TLS close_notify */
-  
   err = SSL_read (ssl, buf, sizeof(buf) - 1);                     CHK_SSL(err);
   buf[err] = '\0';
   printf ("Got %d chars:'%s'\n", err, buf);
+  SSL_shutdown (ssl);  /* send SSL/TLS close_notify */
 
   /* Clean up. */
 
