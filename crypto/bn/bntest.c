@@ -163,7 +163,6 @@ int main(int argc, char *argv[])
 	if (!results)
 		BIO_puts(out,"obase=16\nibase=16\n");
 
-#if 0
 	message(out,"BN_add");
 	if (!test_add(out)) goto err;
 	BIO_flush(out);
@@ -220,7 +219,6 @@ int main(int argc, char *argv[])
 	message(out,"BN_mont");
 	if (!test_mont(out,ctx)) goto err;
 	BIO_flush(out);
-#endif
 
 	message(out,"BN_mod_exp");
 	if (!test_mod_exp(out,ctx)) goto err;
@@ -812,8 +810,6 @@ int test_mod_exp(BIO *bp, BN_CTX *ctx)
 		{
 		BN_rand(a,20+i*5,0,0); /**/
 		BN_rand(b,2+i,0,0); /**/
-
-		BN_kronecker(a,b,ctx);
 
 		if (!BN_mod_exp(d,a,b,c,ctx))
 			return(00);
