@@ -66,9 +66,7 @@
   memcpy(c, ctext_ex, sizeof(ctext_ex) - 1); \
   return (sizeof(ctext_ex) - 1);
 
-static int setrsakey(RSA *key, unsigned char *c)
-    {
-    static unsigned char n[] =
+static unsigned char n[] =
 "\x00\xBB\xF8\x2F\x09\x06\x82\xCE\x9C\x23\x38\xAC\x2B\x9D\xA8\x71"
 "\xF7\x36\x8D\x07\xEE\xD4\x10\x43\xA4\x40\xD6\xB6\xF0\x74\x54\xF5"
 "\x1F\xB8\xDF\xBA\xAF\x03\x5C\x02\xAB\x61\xEA\x48\xCE\xEB\x6F\xCD"
@@ -79,6 +77,9 @@ static int setrsakey(RSA *key, unsigned char *c)
 "\x7F\xE2\x53\x72\x98\xCA\x2A\x8F\x59\x46\xF8\xE5\xFD\x09\x1D\xBD"
 "\xCB";
 
+
+static int setrsakey(RSA *key, unsigned char *c)
+    {
     static unsigned char e[] = "\x11";
 
     static unsigned char d[] =
@@ -136,6 +137,11 @@ static int setrsakey(RSA *key, unsigned char *c)
 "\x24\xd3\x75\x3e\x39\xd1\x14\xc6\x33\xce\xd6\xee\x20\x47\xec\xe4";
 
     SetKey;
+    }
+
+void FIPS_corrupt_rsa()
+    {
+    n[0]++;
     }
 
 int FIPS_selftest_rsa()

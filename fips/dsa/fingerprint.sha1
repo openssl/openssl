@@ -1,3 +1,3 @@
 HMAC-SHA1(fips_dsa_ossl.c)= 1295b5241620e1d5449aaeeb7084b181fc197003
 HMAC-SHA1(fips_dsa_gen.c)= e347a0c5b19cdcde37c73f6abcdc52c794d5dd4e
-HMAC-SHA1(fips_dsa_selftest.c)= 5a42b699e44b68e765fd6a1e9bcc2b923512a198
+HMAC-SHA1(fips_dsa_selftest.c)= a3de5feb989e7bfb15478318feab1f035e700933

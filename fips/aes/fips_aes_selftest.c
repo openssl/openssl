@@ -70,6 +70,11 @@ static struct
 	},
 	};
 
+void FIPS_corrupt_aes()
+    {
+    tests[0].key[0]++;
+    }
+
 int FIPS_selftest_aes()
     {
     int n;

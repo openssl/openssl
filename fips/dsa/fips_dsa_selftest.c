@@ -100,6 +100,11 @@ static unsigned char out_g[]={
 
 static const unsigned char str1[]="12345678901234567890";
 
+void FIPS_corrupt_dsa()
+    {
+    ++seed[0];
+    }
+
 int FIPS_selftest_dsa()
     {
     DSA *dsa=NULL;

@@ -57,7 +57,7 @@
 static struct
     {
     DES_cblock key;
-    DES_cblock plaintext;
+    unsigned char plaintext[8];
     unsigned char ciphertext[8];
     } tests[]=
 	{
@@ -119,6 +119,11 @@ static struct
 	{ 0x11,0x25,0xb0,0x35,0xbe,0xa0,0x82,0x86 },
 	},
 	};
+
+void FIPS_corrupt_des()
+    {
+    tests[0].plaintext[0]++;
+    }
 
 int FIPS_selftest_des()
     {

@@ -71,6 +71,11 @@ static unsigned char ret[][SHA_DIGEST_LENGTH]=
       0x4a,0xa1,0xf9,0x51,0x29,0xe5,0xe5,0x46,0x70,0xf1 },
     };
 
+void FIPS_corrupt_sha1()
+    {
+    ret[0][0]++;
+    }
+
 int FIPS_selftest_sha1()
     {
     int n;
