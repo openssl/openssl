@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/03/22 22:13:16 $
+  ______________                           $Date: 2001/03/30 20:54:12 $
 
   DEVELOPMENT STATE
 
@@ -59,6 +59,8 @@
 		Too many -L when linking the application "openssl"
 		[CORRECTED]
 	Solaris 7 (solaris-sparcv9-cc)		- PASSED [engine]
+
+                       Beta 3 released on March 30th, 2001
 
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
     o  OpenSSL 0.9.5a: Released on April      1st, 2000
