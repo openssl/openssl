@@ -20,8 +20,6 @@
 # Be as similar to the output of config.guess/config.sub
 # as possible.
 
-set -x
-
 PREFIX=""
 SUFFIX=""
 TEST="false"
