@@ -458,12 +458,20 @@ BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
 		if (a)
 			{
 			r = BN_new();
-			r->top = b->top;
-			r->dmax = words;
-			r->neg = b->neg;
-			r->d = a;
+			if (r)
+				{
+				r->top = b->top;
+				r->dmax = words;
+				r->neg = b->neg;
+				r->d = a;
+				}
+			else
+				{
+				/* r == NULL, BN_new failure */
+				OPENSSL_free(a);
+				}
 			}
-		/* Otherwise, there was an error in allocation in
+		/* If a == NULL, there was an error in allocation in
 		   internal_bn_expand(), and NULL should be returned */
 		}
 	else
