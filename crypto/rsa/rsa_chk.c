@@ -1,4 +1,4 @@
-/* crypto/rsa/rsa_chck.c  -*- Mode: C; c-file-style: "eay" -*- */
+/* crypto/rsa/rsa_chk.c  -*- Mode: C; c-file-style: "eay" -*- */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -68,6 +68,7 @@ int RSA_check_key(RSA *key)
 	if (i == NULL || j == NULL || k == NULL || l == NULL ||
 		m == NULL || ctx == NULL)
 		{
+		ret = 0;
 		RSAerr(RSA_F_RSA_CHECK_KEY, ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
