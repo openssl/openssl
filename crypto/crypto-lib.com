@@ -250,7 +250,7 @@ $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
 	"x509_set,x509cset,x509rset,x509_err,"+ -
 	"x509name,x509_v3,x509_ext,x509_att,"+ -
 	"x509type,x509_lu,x_all,x509_txt,"+ -
-	"x509_trs,by_file,by_dir"
+	"x509_trs,by_file,by_dir,x509_vpm"
 $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 	"v3_prn,v3_utl,v3err,v3_genn,v3_alt,v3_skey,v3_akey,v3_pku,"+ -
 	"v3_int,v3_enum,v3_sxnet,v3_cpols,v3_crld,v3_purp,v3_info,"+ -
