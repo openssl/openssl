@@ -1226,15 +1226,16 @@ int	i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 				a->conv_form, NULL, 0, NULL);
 
 		if (tmp_len > buf_len)
-			buffer = OPENSSL_realloc(buffer, tmp_len);
-		if (buffer == NULL)
 			{
-			ECerr(EC_F_I2D_ECPRIVATEKEY,
-				ERR_R_MALLOC_FAILURE);
-			goto err;
+			unsigned char *tmp_buffer = OPENSSL_realloc(buffer, tmp_len);
+			if (!tmp_buffer)
+				{
+				ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+			buffer = tmp_buffer;
+			buf_len = tmp_len;
 			}
-
-		buf_len = tmp_len;
 
 		if (!EC_POINT_point2oct(a->group, a->pub_key, 
 			a->conv_form, buffer, buf_len, NULL))
