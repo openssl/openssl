@@ -171,7 +171,7 @@ BASENAME=       openssl
 NAME=           $(BASENAME)-$(VERSION)
 TARFILE=        $(NAME).tar
 WTARFILE=       $(NAME)-win.tar
-EXHEADER=       e_os2.h
+EXHEADER=       e_os.h e_os2.h
 HEADER=         e_os.h
 
 all: Makefile.ssl

@@ -59,11 +59,7 @@
 #ifndef HEADER_APPS_H
 #define HEADER_APPS_H
 
-#ifndef FLAT_INC
-# include "../e_os.h"
-#else
-# include "e_os.h"
-#endif
+#include "openssl/e_os.h"
 
 #include <openssl/buffer.h>
 #include <openssl/bio.h>

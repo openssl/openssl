@@ -60,11 +60,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef FLAT_INC
-# include "../e_os.h"
-#else
-# include "e_os.h"
-#endif
+#include "openssl/e_os.h"
 
 #include <openssl/bio.h>
 #include <openssl/bn.h>
