@@ -126,6 +126,9 @@ static ERR_STRING_DATA ENGINE_str_functs[]=
 {ERR_PACK(0,ENGINE_F_HWCRHK_RAND_BYTES,0),	"HWCRHK_RAND_BYTES"},
 {ERR_PACK(0,ENGINE_F_HWCRHK_RSA_MOD_EXP,0),	"HWCRHK_RSA_MOD_EXP"},
 {ERR_PACK(0,ENGINE_F_LOG_MESSAGE,0),	"LOG_MESSAGE"},
+{ERR_PACK(0,ENGINE_F_NURON_FINISH,0),	"NURON_FINISH"},
+{ERR_PACK(0,ENGINE_F_NURON_INIT,0),	"NURON_INIT"},
+{ERR_PACK(0,ENGINE_F_NURON_MOD_EXP,0),	"NURON_MOD_EXP"},
 {0,NULL}
 	};
 
@@ -139,6 +142,8 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_CONFLICTING_ENGINE_ID          ,"conflicting engine id"},
 {ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED   ,"ctrl command not implemented"},
 {ENGINE_R_DSO_FAILURE                    ,"DSO failure"},
+{ENGINE_R_DSO_FUNCTION_NOT_FOUND         ,"dso function not found"},
+{ENGINE_R_DSO_NOT_FOUND                  ,"dso not found"},
 {ENGINE_R_ENGINE_IS_NOT_IN_LIST          ,"engine is not in the list"},
 {ENGINE_R_FAILED_LOADING_PRIVATE_KEY     ,"failed loading private key"},
 {ENGINE_R_FAILED_LOADING_PUBLIC_KEY      ,"failed loading public key"},
@@ -154,7 +159,7 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_NO_CONTROL_FUNCTION            ,"no control function"},
 {ENGINE_R_NO_KEY                         ,"no key"},
 {ENGINE_R_NO_LOAD_FUNCTION               ,"no load function"},
-{ENGINE_R_NO_REFERENCE			 ,"no reference"},
+{ENGINE_R_NO_REFERENCE                   ,"no reference"},
 {ENGINE_R_NO_SUCH_ENGINE                 ,"no such engine"},
 {ENGINE_R_NO_UNLOAD_FUNCTION             ,"no unload function"},
 {ENGINE_R_PROVIDE_PARAMETERS             ,"provide parameters"},

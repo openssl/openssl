@@ -151,6 +151,10 @@ ENGINE *ENGINE_ncipher();
 ENGINE *ENGINE_atalla();
 #endif /* !NO_HW_ATALLA */
 
+#ifndef NO_HW_NURON
+ENGINE *ENGINE_nuron();
+#endif /* !NO_HW_NURON */
+
 #endif /* !NO_HW */
 
 #ifdef  __cplusplus
