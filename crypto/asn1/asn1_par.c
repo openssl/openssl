@@ -108,6 +108,8 @@ int indent;
 		p="BOOLEAN";
 	else if (tag == V_ASN1_INTEGER)
 		p="INTEGER";
+	else if (tag == V_ASN1_ENUMERATED)
+		p="ENUMERATED";
 	else if (tag == V_ASN1_BIT_STRING)
 		p="BIT STRING";
 	else if (tag == V_ASN1_OCTET_STRING)
@@ -370,6 +372,38 @@ int indent;
 						goto end;
 					}
 				ASN1_INTEGER_free(bs);
+				}
+			else if (tag == V_ASN1_ENUMERATED)
+				{
+				ASN1_ENUMERATED *bs;
+				int i;
+
+				opp=op;
+				bs=d2i_ASN1_ENUMERATED(NULL,&opp,len+hl);
+				if (bs != NULL)
+					{
+					if (BIO_write(bp,":",1) <= 0) goto end;
+					if (bs->type == V_ASN1_NEG_ENUMERATED)
+						if (BIO_write(bp,"-",1) <= 0)
+							goto end;
+					for (i=0; i<bs->length; i++)
+						{
+						if (BIO_printf(bp,"%02X",
+							bs->data[i]) <= 0)
+							goto end;
+						}
+					if (bs->length == 0)
+						{
+						if (BIO_write(bp,"00",2) <= 0)
+							goto end;
+						}
+					}
+				else
+					{
+					if (BIO_write(bp,"BAD ENUMERATED",11) <= 0)
+						goto end;
+					}
+				ASN1_ENUMERATED_free(bs);
 				}
 
 			if (!nl) 

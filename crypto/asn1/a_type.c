@@ -89,6 +89,10 @@ unsigned char **pp;
 	case V_ASN1_NEG_INTEGER:
 		r=i2d_ASN1_INTEGER(a->value.integer,pp);
 		break;
+	case V_ASN1_ENUMERATED:
+	case V_ASN1_NEG_ENUMERATED:
+		r=i2d_ASN1_ENUMERATED(a->value.enumerated,pp);
+		break;
 	case V_ASN1_BIT_STRING:
 		r=i2d_ASN1_BIT_STRING(a->value.bit_string,pp);
 		break;
@@ -175,6 +179,11 @@ long length;
 	case V_ASN1_INTEGER:
 		if ((ret->value.integer=
 			d2i_ASN1_INTEGER(NULL,&p,max-p)) == NULL)
+			goto err;
+		break;
+	case V_ASN1_ENUMERATED:
+		if ((ret->value.enumerated=
+			d2i_ASN1_ENUMERATED(NULL,&p,max-p)) == NULL)
 			goto err;
 		break;
 	case V_ASN1_BIT_STRING:
@@ -309,6 +318,8 @@ ASN1_TYPE *a;
 			break;
 		case V_ASN1_INTEGER:
 		case V_ASN1_NEG_INTEGER:
+		case V_ASN1_ENUMERATED:
+		case V_ASN1_NEG_ENUMERATED:
 		case V_ASN1_BIT_STRING:
 		case V_ASN1_OCTET_STRING:
 		case V_ASN1_SEQUENCE:

@@ -89,7 +89,8 @@ extern "C" {
 #define V_ASN1_OBJECT_DESCRIPTOR	7
 #define V_ASN1_EXTERNAL			8
 #define V_ASN1_REAL			9
-#define V_ASN1_ENUMERATED		10	/* microsoft weirdness */
+#define V_ASN1_ENUMERATED		10
+#define V_ASN1_NEG_ENUMERATED		(10+0x100)
 #define V_ASN1_SEQUENCE			16
 #define V_ASN1_SET			17
 #define V_ASN1_NUMERICSTRING		18	/**/
@@ -168,6 +169,7 @@ typedef struct asn1_string_st
 
 #ifndef DEBUG
 #define ASN1_INTEGER		ASN1_STRING
+#define ASN1_ENUMERATED		ASN1_STRING
 #define ASN1_BIT_STRING		ASN1_STRING
 #define ASN1_OCTET_STRING	ASN1_STRING
 #define ASN1_PRINTABLESTRING	ASN1_STRING
@@ -181,6 +183,7 @@ typedef struct asn1_string_st
 #define ASN1_BMPSTRING		ASN1_STRING
 #else
 typedef struct asn1_string_st ASN1_INTEGER;
+typedef struct asn1_string_st ASN1_ENUMERATED;
 typedef struct asn1_string_st ASN1_BIT_STRING;
 typedef struct asn1_string_st ASN1_OCTET_STRING;
 typedef struct asn1_string_st ASN1_PRINTABLESTRING;
@@ -202,6 +205,7 @@ typedef struct asn1_type_st
 		ASN1_STRING *		asn1_string;
 		ASN1_OBJECT *		object;
 		ASN1_INTEGER *		integer;
+		ASN1_ENUMERATED *	enumerated;
 		ASN1_BIT_STRING *	bit_string;
 		ASN1_OCTET_STRING *	octet_string;
 		ASN1_PRINTABLESTRING *	printablestring;
@@ -261,6 +265,17 @@ typedef struct asn1_header_st
 /* ASN1_INTEGER_get() is a function, also see ASN1_INTEGER_to_BN() */
 /* i2d_ASN1_INTEGER() is a function */
 /* d2i_ASN1_INTEGER() is a function */
+
+#define ASN1_ENUMERATED_new()	(ASN1_ENUMERATED *)\
+		ASN1_STRING_type_new(V_ASN1_ENUMERATED)
+#define ASN1_ENUMERATED_free(a)		ASN1_STRING_free((ASN1_STRING *)a)
+#define ASN1_ENUMERATED_dup(a) (ASN1_ENUMERATED *)ASN1_STRING_dup((ASN1_STRING *)a)
+#define ASN1_ENUMERATED_cmp(a,b)	ASN1_STRING_cmp(\
+		(ASN1_STRING *)a,(ASN1_STRING *)b)
+/* ASN1_ENUMERATED_set() is a function, also see BN_to_ASN1_ENUMERATED() */
+/* ASN1_ENUMERATED_get() is a function, also see ASN1_ENUMERATED_to_BN() */
+/* i2d_ASN1_ENUMERATED() is a function */
+/* d2i_ASN1_ENUMERATED() is a function */
 
 #define ASN1_OCTET_STRING_new()	(ASN1_OCTET_STRING *)\
 		ASN1_STRING_type_new(V_ASN1_OCTET_STRING)
@@ -414,6 +429,10 @@ int		i2d_ASN1_INTEGER(ASN1_INTEGER *a,unsigned char **pp);
 ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a,unsigned char **pp,
 			long length);
 
+int		i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a,unsigned char **pp);
+ASN1_ENUMERATED *d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a,unsigned char **pp,
+			long length);
+
 int ASN1_UTCTIME_check(ASN1_UTCTIME *a);
 ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s,time_t t);
 int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, char *str); 
@@ -465,6 +484,8 @@ STACK *		d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
 #ifdef HEADER_BIO_H
 int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp,ASN1_INTEGER *bs,char *buf,int size);
+int i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a);
+int a2i_ASN1_ENUMERATED(BIO *bp,ASN1_ENUMERATED *bs,char *buf,int size);
 int i2a_ASN1_OBJECT(BIO *bp,ASN1_OBJECT *a);
 int a2i_ASN1_STRING(BIO *bp,ASN1_STRING *bs,char *buf,int size);
 int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type);
@@ -479,6 +500,11 @@ int ASN1_INTEGER_set(ASN1_INTEGER *a, long v);
 long ASN1_INTEGER_get(ASN1_INTEGER *a);
 ASN1_INTEGER *BN_to_ASN1_INTEGER(BIGNUM *bn, ASN1_INTEGER *ai);
 BIGNUM *ASN1_INTEGER_to_BN(ASN1_INTEGER *ai,BIGNUM *bn);
+
+int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v);
+long ASN1_ENUMERATED_get(ASN1_ENUMERATED *a);
+ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai);
+BIGNUM *ASN1_ENUMERATED_to_BN(ASN1_ENUMERATED *ai,BIGNUM *bn);
 
 /* General */
 /* given a string, return the correct type, max is the maximum length */
@@ -572,6 +598,8 @@ int		i2d_ASN1_BOOLEAN();
 int 		d2i_ASN1_BOOLEAN();
 int		i2d_ASN1_INTEGER();
 ASN1_INTEGER *d2i_ASN1_INTEGER();
+int		i2d_ASN1_ENUMERATED();
+ASN1_INTEGER *d2i_ASN1_ENUMERATED();
 int ASN1_UTCTIME_check();
 ASN1_UTCTIME *ASN1_UTCTIME_set();
 int ASN1_UTCTIME_set_string();
@@ -600,6 +628,10 @@ int ASN1_INTEGER_set();
 long ASN1_INTEGER_get();
 ASN1_INTEGER *BN_to_ASN1_INTEGER();
 BIGNUM *ASN1_INTEGER_to_BN();
+int ASN1_ENUMERATED_set();
+long ASN1_ENUMERATED_get();
+ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED();
+BIGNUM *ASN1_ENUMERATED_to_BN();
 int ASN1_PRINTABLE_type();
 int i2d_ASN1_bytes();
 ASN1_STRING *d2i_ASN1_bytes();
@@ -624,6 +656,8 @@ int ASN1_STRING_print();
 int ASN1_parse();
 int i2a_ASN1_INTEGER();
 int a2i_ASN1_INTEGER();
+int i2a_ASN1_ENUMERATED();
+int a2i_ASN1_ENUMERATED();
 int i2a_ASN1_OBJECT();
 int i2t_ASN1_OBJECT();
 int a2i_ASN1_STRING();
@@ -662,6 +696,8 @@ ASN1_BMPSTRING *d2i_ASN1_BMPSTRING();
 #define ASN1_F_ASN1_D2I_BIO				 104
 #define ASN1_F_ASN1_D2I_FP				 105
 #define ASN1_F_ASN1_DUP					 106
+#define ASN1_F_ASN1_ENUMERATED_SET			 232
+#define ASN1_F_ASN1_ENUMERATED_TO_BN			 233
 #define ASN1_F_ASN1_GENERALIZEDTIME_NEW			 222
 #define ASN1_F_ASN1_GET_OBJECT				 107
 #define ASN1_F_ASN1_HEADER_NEW				 108
@@ -679,11 +715,13 @@ ASN1_BMPSTRING *d2i_ASN1_BMPSTRING();
 #define ASN1_F_ASN1_UTCTIME_NEW				 120
 #define ASN1_F_ASN1_VERIFY				 121
 #define ASN1_F_BASIC_CONSTRAINTS_NEW			 226
+#define ASN1_F_BN_TO_ASN1_ENUMERATED			 234
 #define ASN1_F_BN_TO_ASN1_INTEGER			 122
 #define ASN1_F_D2I_ASN1_BIT_STRING			 123
 #define ASN1_F_D2I_ASN1_BMPSTRING			 124
 #define ASN1_F_D2I_ASN1_BOOLEAN				 125
 #define ASN1_F_D2I_ASN1_BYTES				 126
+#define ASN1_F_D2I_ASN1_ENUMERATED			 235
 #define ASN1_F_D2I_ASN1_GENERALIZEDTIME			 223
 #define ASN1_F_D2I_ASN1_HEADER				 127
 #define ASN1_F_D2I_ASN1_INTEGER				 128
@@ -802,6 +840,7 @@ ASN1_BMPSTRING *d2i_ASN1_BMPSTRING();
 #define ASN1_R_DATA_IS_WRONG				 110
 #define ASN1_R_DECODING_ERROR				 111
 #define ASN1_R_ERROR_PARSING_SET_ELEMENT		 112
+#define ASN1_R_EXPECTING_AN_ENUMERATED			 154
 #define ASN1_R_EXPECTING_AN_INTEGER			 113
 #define ASN1_R_EXPECTING_AN_OBJECT			 114
 #define ASN1_R_EXPECTING_AN_OCTET_STRING		 115
