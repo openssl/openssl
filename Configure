@@ -949,8 +949,10 @@ my $ranlib = $fields[$idx_ranlib];
 my $arflags = $fields[$idx_arflags];
 
 my $no_shared_warn=0;
+my $no_user_cflags=0;
 
-$cflags="$flags$cflags" if ($flags ne "");
+if ($flags ne "")	{ $cflags="$flags$cflags"; }
+else			{ $no_user_cflags=1;       }
 
 # Kerberos settings.  The flavor must be provided from outside, either through
 # the script "config" or manually.
@@ -1048,10 +1050,17 @@ if ($thread_cflag ne "(unknown)" && !$no_threads)
 	# If we know how to do it, support threads by default.
 	$threads = 1;
 	}
-if ($thread_cflag eq "(unknown)")
+if ($thread_cflag eq "(unknown)" && $threads)
 	{
-	# If the user asked for "threads", hopefully they also provided
-	# any system-dependent compiler options that are necessary.
+	# If the user asked for "threads", [s]he is also expected to
+	# provide any system-dependent compiler options that are
+	# necessary.
+	if ($no_user_cflags)
+		{
+		print "You asked for multi-threading support, but didn't\n";
+		print "provide any system-specific compiler options\n";
+		exit(1);
+		}
 	$thread_cflags="-DOPENSSL_THREADS $cflags" ;
 	$thread_defines .= "#define OPENSSL_THREADS\n";
 	}
@@ -1084,7 +1093,7 @@ if (!$no_shared)
 
 if ($threads)
 	{
-	#$cflags=$thread_cflags;
+	$cflags=$thread_cflags;
 	$openssl_thread_defines .= $thread_defines;
 	}
 
