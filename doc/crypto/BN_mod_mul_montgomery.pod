@@ -80,6 +80,11 @@ BN_MONT_CTX_init() and BN_MONT_CTX_free() have no return values.
 For the other functions, 1 is returned for success, 0 on error.
 The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
 
+=head1 WARNING
+
+The inputs must be reduced modulo B<m>, otherwise the result will be
+outside the expected range.
+
 =head1 SEE ALSO
 
 L<bn(3)|bn(3)>, L<err(3)|err(3)>, L<BN_add(3)|BN_add(3)>,
