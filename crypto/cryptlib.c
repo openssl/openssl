@@ -539,6 +539,38 @@ const char *CRYPTO_get_lock_name(int type)
 		return(sk_value(app_locks,type-CRYPTO_NUM_LOCKS));
 	}
 
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
+
+unsigned long  OPENSSL_ia32cap=0;
+unsigned long *OPENSSL_ia32cap_loc() { return &OPENSSL_ia32cap; }
+
+#if !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
+#define OPENSSL_CPUID_SETUP
+void OPENSSL_cpuid_setup()
+{ static int trigger=0;
+  unsigned long OPENSSL_ia32_cpuid();
+  char *env;
+
+    if (trigger)	return;
+
+    trigger=1;
+    if ((env=getenv("OPENSSL_ia32cap")))
+	OPENSSL_ia32cap = strtoul(env,NULL,0)|(1<<10);
+    else
+	OPENSSL_ia32cap = OPENSSL_ia32_cpuid()|(1<<10);
+    /*
+     * |(1<<10) sets a reserved bit to signal that variable
+     * was initialized already... This is to avoid interference
+     * with cpuid snippets in ELF .init segment.
+     */
+}
+#endif
+
+#endif
+#if !defined(OPENSSL_CPUID_SETUP)
+void OPENSSL_cpuid_setup() {}
+#endif
+
 #ifdef _DLL
 #ifdef OPENSSL_SYS_WIN32
 
@@ -551,6 +583,7 @@ BOOL WINAPI DLLEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason,
 	switch(fdwReason)
 		{
 	case DLL_PROCESS_ATTACH:
+		OPENSSL_cpuid_setup();
 		break;
 	case DLL_THREAD_ATTACH:
 		break;

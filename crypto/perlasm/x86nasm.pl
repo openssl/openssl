@@ -169,6 +169,8 @@ sub main'jno	{ &out1("jno NEAR",@_); }
 
 sub main'push	{ &out1("push",@_); $stack+=4; }
 sub main'pop	{ &out1("pop",@_); $stack-=4; }
+sub main'pushf	{ &out0("pushf"); $stack+=4; }
+sub main'popf	{ &out0("popf"); $stack-=4; }
 sub main'bswap	{ &out1("bswap",@_); &using486(); }
 sub main'not	{ &out1("not",@_); }
 sub main'call	{ &out1("call",($_[0]=~/^\$L/?'':'_').$_[0]); }
@@ -177,6 +179,8 @@ sub main'nop	{ &out0("nop"); }
 sub main'test	{ &out2("test",@_); }
 sub main'bt	{ &out2("bt",@_); }
 sub main'leave	{ &out0("leave"); }
+sub main'cpuid	{ &out0("cpuid"); }
+sub main'rdtsc	{ &out0("rdtsc"); }
 
 # SSE2
 sub main'emms	{ &out0("emms"); }

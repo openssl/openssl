@@ -199,6 +199,8 @@ sub main'nop	{ &out0("nop"); }
 sub main'test	{ &out2("testl",@_); }
 sub main'bt	{ &out2("btl",@_); }
 sub main'leave	{ &out0("leave"); }
+sub main'cpuid	{ &out0(".word\t0xa20f"); }
+sub main'rdtsc	{ &out0(".word\t0x310f"); }
 
 # SSE2
 sub main'emms	{ &out0("emms"); }
@@ -519,11 +521,14 @@ sub main'file_end
 		# SSE/MMX module with this snippet... Well, it's 72
 		# bytes long and for the moment we have two modules.
 		# Let's argue when we have 7 modules or so...
+		#
+		# $1<<10 sets a reserved bit to signal that variable
+		# was initialized already...
 		&main'picmeup("edx","OPENSSL_ia32cap");
 		$tmp=<<___;
 		cmpl	\$0,(%edx)
 		jne	1f
-		movl	\$1,(%edx)
+		movl	\$1<<10,(%edx)
 		pushf
 		popl	%eax
 		movl	%eax,%ecx
@@ -539,12 +544,13 @@ sub main'file_end
 		pushl	%ebx
 		movl	%edx,%edi
 		movl	\$1,%eax
-		cpuid
-		orl	\$1,%edx
+		.word	0xa20f
+		orl	\$1<<10,%edx
 		movl	%edx,0(%edi)
 		movl	%ecx,4(%edi)
 		popl	%ebx
 		popl	%edi
+	.align	4
 	1:
 ___
 		push (@out,$tmp);
@@ -675,3 +681,17 @@ ___
 	}
 
 sub main'blindpop { &out1("popl",@_); }
+
+sub main'initseg
+	{
+	local($f)=@_;
+	if ($main'elf)
+		{
+		local($tmp)=<<___;
+.pushsection	.init
+	call	$under$f
+.popsection
+___
+		push(@out,$tmp);
+		}
+	}
