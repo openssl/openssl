@@ -155,9 +155,9 @@ int MAIN(int argc, char **argv)
 #endif
 		else if (!strcmp (*args, "-des3")) enc = EVP_des_ede3_cbc();
 #ifndef OPENSSL_NO_AES
-		else if (!strcmp(*argv,"-aes128")) enc=EVP_aes_128_cbc();
-		else if (!strcmp(*argv,"-aes192")) enc=EVP_aes_192_cbc();
-		else if (!strcmp(*argv,"-aes256")) enc=EVP_aes_256_cbc();
+		else if (!strcmp(*args,"-aes128")) enc=EVP_aes_128_cbc();
+		else if (!strcmp(*args,"-aes192")) enc=EVP_aes_192_cbc();
+		else if (!strcmp(*args,"-aes256")) enc=EVP_aes_256_cbc();
 #endif
 		else if (!strcmp (*args, "-noiter")) iter = 1;
 		else if (!strcmp (*args, "-maciter"))

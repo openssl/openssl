@@ -133,11 +133,11 @@ int MAIN(int argc, char **argv)
 				cipher = EVP_rc2_64_cbc();
 #endif
 #ifndef OPENSSL_NO_AES
-		else if (!strcmp(*argv,"-aes128") == 0)
+		else if (!strcmp(*args,"-aes128"))
 				cipher = EVP_aes_128_cbc();
-		else if (!strcmp(*argv,"-aes192") == 0)
+		else if (!strcmp(*args,"-aes192"))
 				cipher = EVP_aes_192_cbc();
-		else if (!strcmp(*argv,"-aes256") == 0)
+		else if (!strcmp(*args,"-aes256"))
 				cipher = EVP_aes_256_cbc();
 #endif
 		else if (!strcmp (*args, "-text")) 
