@@ -292,7 +292,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 				st_idx=0;
 			}
 		}
-	memset((char *)&m,0,sizeof(m));
+	OPENSSL_cleanse((char *)&m,sizeof(m));
 
 	if (!do_not_lock) CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	/* Don't just copy back local_md into md -- this could mean that
@@ -493,7 +493,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	MD_Final(md,&m);
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
-	memset(&m,0,sizeof(m));
+	OPENSSL_cleanse(&m,sizeof(m));
 	if (ok)
 		return(1);
 	else

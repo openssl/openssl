@@ -99,14 +99,15 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
 	case EVP_PKEY_RSA:
 		ret|=EVP_PKS_RSA;
 		break;
-	case EVP_PKS_DSA:
+	case EVP_PKEY_DSA:
 		ret|=EVP_PKS_DSA;
 		break;
 	default:
 		break;
 		}
 
-	if (EVP_PKEY_size(pk) <= 512)
+	if (EVP_PKEY_size(pk) <= 512/8)	/* /8 because it's 512 bits we look
+					   for, not bytes */
 		ret|=EVP_PKT_EXP;
 	if(pkey==NULL) EVP_PKEY_free(pk);
 	return(ret);

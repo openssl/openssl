@@ -102,7 +102,7 @@ int RAND_egd(const char *path)
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
-	if (strlen(path) > sizeof(addr.sun_path))
+	if (strlen(path) >= sizeof(addr.sun_path))
 		return (-1);
 	strcpy(addr.sun_path,path);
 	len = offsetof(struct sockaddr_un, sun_path) + strlen(path);
@@ -134,7 +134,7 @@ int RAND_egd_bytes(const char *path,int bytes)
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
-	if (strlen(path) > sizeof(addr.sun_path))
+	if (strlen(path) >= sizeof(addr.sun_path))
 		return (-1);
 	strcpy(addr.sun_path,path);
 	len = offsetof(struct sockaddr_un, sun_path) + strlen(path);
