@@ -154,6 +154,7 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_NO_CONTROL_FUNCTION            ,"no control function"},
 {ENGINE_R_NO_KEY                         ,"no key"},
 {ENGINE_R_NO_LOAD_FUNCTION               ,"no load function"},
+{ENGINE_R_NO_REFERENCE			 ,"no reference"},
 {ENGINE_R_NO_SUCH_ENGINE                 ,"no such engine"},
 {ENGINE_R_NO_UNLOAD_FUNCTION             ,"no unload function"},
 {ENGINE_R_PROVIDE_PARAMETERS             ,"provide parameters"},

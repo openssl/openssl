@@ -296,9 +296,9 @@ int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 		return 0;
 		}
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
-	if(e->funct_ref == 0)
+	if(e->struct_ref == 0)
 		{
-		ENGINEerr(ENGINE_F_ENGINE_CTRL,ENGINE_R_NOT_INITIALISED);
+		ENGINEerr(ENGINE_F_ENGINE_CTRL,ENGINE_R_NO_REFERENCE);
 		return 0;
 		}
 	if (!e->ctrl)
