@@ -5,6 +5,28 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Create a duplicate of the SSL_CTX's CERT in SSL_new instead of
+     copying pointers.  The cert_st handling is changed by this in
+     various ways (and thus what used to be known as ctx->default_cert
+     is now called ctx->cert, since we don't resort to s->ctx->[default_]cert
+     any longer when s->cert does not give us what we need).
+     ssl_cert_instantiate becomes obsolete by this change.
+     As soon as we've got the new code right (possibly it already is?),
+     we have solved a couple of bugs of the earlier code where s->cert
+     was used as if it could not have been shared with other SSL structures.
+
+     Note that using the SSL API in certain dirty ways now will result
+     in different behaviour than observed with earlier library versions:
+     Changing settings for an SSL_CTX *ctx after having done s = SSL_new(ctx)
+     does not influence s as it used to.
+     
+     Projected further changes:
+     In order to clean up things more thoroughly, inside SSL_SESSION
+     we should not use CERT any longer, but a new structure SESS_CERT
+     that holds per-session data, and CERT should hold only those
+     values that can have meaningful defaults in an SSL_CTX.
+     [Bodo Moeller]
+
   *) New function X509V3_EXT_i2d() to create an X509_EXTENSION structure
      from the internal representation. Various PKCS#7 fixes: remove some
      evil casts and set the enc_dig_alg field properly based on the signing

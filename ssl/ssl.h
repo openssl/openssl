@@ -392,7 +392,7 @@ struct ssl_ctx_st
 /**/	char *app_verify_arg;
 
 	/* default values to use in SSL structures */
-/**/	struct cert_st /* CERT */ *default_cert;
+/**/	struct cert_st /* CERT */ *cert;
 /**/	int read_ahead;
 /**/	int verify_mode;
 /**/	int verify_depth;
@@ -1159,6 +1159,8 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK	 216
 #define SSL_F_SSL_BAD_METHOD				 160
 #define SSL_F_SSL_BYTES_TO_CIPHER_LIST			 161
+#define SSL_F_SSL_CERT_DUP				 221
+#define SSL_F_SSL_CERT_INST				 222
 #define SSL_F_SSL_CERT_INSTANTIATE			 214
 #define SSL_F_SSL_CERT_NEW				 162
 #define SSL_F_SSL_CHECK_PRIVATE_KEY			 163
@@ -1279,6 +1281,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_INVALID_CHALLENGE_LENGTH			 158
 #define SSL_R_LENGTH_MISMATCH				 159
 #define SSL_R_LENGTH_TOO_SHORT				 160
+#define SSL_R_LIBRARY_BUG				 274
 #define SSL_R_LIBRARY_HAS_NO_CIPHERS			 161
 #define SSL_R_MISSING_DH_DSA_CERT			 162
 #define SSL_R_MISSING_DH_KEY				 163

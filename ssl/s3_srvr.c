@@ -268,11 +268,6 @@ int ssl3_accept(SSL *s)
 					CRYPTO_add(&s->cert->references,1,CRYPTO_LOCK_SSL_CERT);
 					s->session->cert=s->cert;
 					}
-				else
-					{
-					CRYPTO_add(&s->ctx->default_cert->references,1,CRYPTO_LOCK_SSL_CERT);
-					s->session->cert=s->ctx->default_cert;
-					}
 				}
 			ct=s->session->cert;
 
@@ -913,9 +908,9 @@ static int ssl3_send_server_key_exchange(SSL *s)
 		if (type & SSL_kRSA)
 			{
 			rsa=cert->rsa_tmp;
-			if ((rsa == NULL) && (s->ctx->default_cert->rsa_tmp_cb != NULL))
+			if ((rsa == NULL) && (s->cert->rsa_tmp_cb != NULL))
 				{
-				rsa=s->ctx->default_cert->rsa_tmp_cb(s,
+				rsa=s->cert->rsa_tmp_cb(s,
 				      SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
 				      SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher));
 				CRYPTO_add(&rsa->references,1,CRYPTO_LOCK_RSA);
@@ -937,8 +932,8 @@ static int ssl3_send_server_key_exchange(SSL *s)
 			if (type & SSL_kEDH)
 			{
 			dhp=cert->dh_tmp;
-			if ((dhp == NULL) && (cert->dh_tmp_cb != NULL))
-				dhp=cert->dh_tmp_cb(s,
+			if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
+				dhp=s->cert->dh_tmp_cb(s,
 				      !SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
 				      SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher));
 			if (dhp == NULL)
@@ -1215,9 +1210,9 @@ static int ssl3_get_client_key_exchange(SSL *s)
 			if ((s->session->cert != NULL) &&
 				(s->session->cert->rsa_tmp != NULL))
 				rsa=s->session->cert->rsa_tmp;
-			else if ((s->ctx->default_cert != NULL) &&
-				(s->ctx->default_cert->rsa_tmp != NULL))
-				rsa=s->ctx->default_cert->rsa_tmp;
+			else if ((s->cert != NULL) &&
+				(s->cert->rsa_tmp != NULL))
+				rsa=s->cert->rsa_tmp;
 			/* Don't do a callback because rsa_tmp should
 			 * be sent already */
 			if (rsa == NULL)
@@ -1653,16 +1648,6 @@ static int ssl3_get_client_certificate(SSL *s)
 		X509_free(s->session->peer);
 	s->session->peer=sk_X509_shift(sk);
 
-	/* FIXME: s->session->cert could be a SSL_CTX's struct cert_st!
-	 * struct cert_st is used for too many purposes.  It makes
-	 * sense to use the same structure in both SSL_CTX and SSL,
-	 * but then don't put any per-connection data in it. */
-#if 0 /* This could become a workaround, but it would still be utterly ugly */
-	if (!ssl_cert_instantiate(&s->cert, s->ctx->default_cert)) 
-		{
-		handle the error;
-		}
-#endif
 	s->session->cert->cert_chain=sk;
 
 	sk=NULL;

@@ -584,7 +584,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, char *parg)
 #endif
 		0)
 		{
-		if (!ssl_cert_instantiate(&s->cert, s->ctx->default_cert)) 
+		if (!ssl_cert_inst(&s->cert))
 		    	{
 			SSLerr(SSL_F_SSL3_CTRL, ERR_R_MALLOC_FAILURE);
 			return(0);
@@ -677,7 +677,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 	{
 	CERT *cert;
 
-	cert=ctx->default_cert;
+	cert=ctx->cert;
 
 	switch (cmd)
 		{
@@ -841,11 +841,8 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *have,
 	CERT *cert;
 	unsigned long alg,mask,emask;
 
-	/* Lets see which ciphers we can supported */
-	if (s->cert != NULL)
-		cert=s->cert;
-	else
-		cert=s->ctx->default_cert;
+	/* Let's see which ciphers we can support */
+	cert=s->cert;
 
 	sk_SSL_CIPHER_set_cmp_func(pref,ssl_cipher_ptr_id_cmp);
 
@@ -862,7 +859,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *have,
 		{
 		c=sk_SSL_CIPHER_value(have,i);
 
-		ssl_set_cert_masks(cert,s->ctx->default_cert,c);
+		ssl_set_cert_masks(cert,c);
 		mask=cert->mask;
 		emask=cert->export_mask;
 			

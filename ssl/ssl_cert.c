@@ -55,6 +55,54 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ */
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -104,6 +152,132 @@ CERT *ssl_cert_new(void)
 	return(ret);
 	}
 
+CERT *ssl_cert_dup(CERT *cert)
+	{
+	CERT *ret;
+	int i;
+
+	ret = (CERT *)Malloc(sizeof(CERT));
+	if (ret == NULL)
+		{
+		SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
+		return(NULL);
+		}
+
+	memset(ret, 0, sizeof(CERT));
+
+	ret->cert_type = cert->cert_type;
+
+	ret->key = &ret->pkeys[cert->key - &cert->pkeys[0]];
+	/* or ret->key = ret->pkeys + (cert->key - cert->pkeys),
+	 * if you find that more readable */
+
+	ret->valid = cert->valid;
+	ret->mask = cert->mask;
+	ret->export_mask = cert->export_mask;
+
+#ifndef NO_RSA
+	if (cert->rsa_tmp != NULL)
+		{
+		ret->rsa_tmp = cert->rsa_tmp;
+		CRYPTO_add(&ret->rsa_tmp->references, 1, CRYPTO_LOCK_RSA);
+		}
+	ret->rsa_tmp_cb = cert->rsa_tmp_cb;
+#endif
+
+#ifndef NO_DH
+	if (cert->dh_tmp != NULL)
+		{
+		/* DH parameters don't have a reference count (and cannot
+		 * reasonably be shared anyway, as the secret exponent may
+		 * be created just when it is needed -- earlier library
+		 * versions did not pay attention to this) */
+		ret->dh_tmp = DHparams_dup(cert->dh_tmp);
+		if (ret->dh_tmp == NULL)
+			{
+			SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_DH_LIB);
+			goto err;
+			}
+		}
+	ret->dh_tmp_cb = cert->dh_tmp_cb;
+#endif
+
+	for (i = 0; i < SSL_PKEY_NUM; i++)
+		{
+		if (cert->pkeys[i].x509 != NULL)
+			{
+			ret->pkeys[i].x509 = cert->pkeys[i].x509;
+			CRYPTO_add(&ret->pkeys[i].x509->references, 1,
+				CRYPTO_LOCK_X509);
+			}
+		
+		if (cert->pkeys[i].privatekey != NULL)
+			{
+			ret->pkeys[i].privatekey = cert->pkeys[i].privatekey;
+			CRYPTO_add(&ret->pkeys[i].privatekey->references, 1,
+				CRYPTO_LOCK_EVP_PKEY);
+
+			switch(i) 
+				{
+				/* If there was anything special to do for
+				 * certain types of keys, we'd do it here.
+				 * (Nothing at the moment, I think.) */
+
+			case SSL_PKEY_RSA_ENC:
+			case SSL_PKEY_RSA_SIGN:
+				/* We have an RSA key. */
+				break;
+				
+			case SSL_PKEY_DSA_SIGN:
+				/* We have a DSA key. */
+				break;
+				
+			case SSL_PKEY_DH_RSA:
+			case SSL_PKEY_DH_DSA:
+				/* We have a DH key. */
+				break;
+				
+			default:
+				/* Can't happen. */
+				SSLerr(SSL_F_SSL_CERT_DUP, SSL_R_LIBRARY_BUG);
+				}
+			}
+		}
+	
+
+	/* ret->cert_chain should not exist: that's pure per-connection data.
+	 * Anyway, we never use this function when it is non-NULL,
+	 * so we just don't look at it. */
+
+	/* ret->extra_certs *should* exist, but currently the own certificate
+	 * chain is held inside SSL_CTX */
+
+	ret->references=1;
+
+	return(ret);
+	
+err:
+#ifndef NO_RSA
+	if (ret->rsa_tmp != NULL)
+		RSA_free(ret->rsa_tmp);
+#endif
+#ifndef NO_DH
+	if (ret->dh_tmp != NULL)
+		DH_free(ret->dh_tmp);
+#endif
+
+	for (i = 0; i < SSL_PKEY_NUM; i++)
+		{
+		if (ret->pkeys[i].x509 != NULL)
+			X509_free(ret->pkeys[i].x509);
+		if (ret->pkeys[i].privatekey != NULL)
+			EVP_PKEY_free(ret->pkeys[i].privatekey);
+		}
+
+	return NULL;
+	}
+
+
 void ssl_cert_free(CERT *c)
 	{
 	int i;
@@ -147,6 +321,32 @@ void ssl_cert_free(CERT *c)
 	Free(c);
 	}
 
+#if 1
+int ssl_cert_inst(CERT **o)
+	{
+	/* Create a CERT if there isn't already one
+	 * (which cannot really happen, as it is initially created in
+	 * SSL_CTX_new; but the earlier code usually allows for that one
+	 * being non-existant, so we follow that behaviour, as it might
+	 * turn out that there actually is a reason for it.). */
+	 
+	if (o == NULL) 
+		{
+		SSLerr(SSL_F_SSL_CERT_INST, ERR_R_PASSED_NULL_PARAMETER);
+		return(0);
+		}
+	if (*o == NULL)
+		{
+		if ((*o = ssl_cert_new()) == NULL)
+			{
+			SSLerr(SSL_F_SSL_CERT_INST, ERR_R_MALLOC_FAILURE);
+			return(0);
+			}
+		}
+	return(1);
+	}
+
+#else /* Not needed any longer: SSL's always have their own copy */
 int ssl_cert_instantiate(CERT **o, CERT *d)
 	{
 	CERT *n;
@@ -167,6 +367,7 @@ int ssl_cert_instantiate(CERT **o, CERT *d)
 	*o = n;
 	return(1);
 	}
+#endif
 
 int ssl_set_cert_type(CERT *c,int type)
 	{

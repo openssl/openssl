@@ -178,14 +178,24 @@ SSL *SSL_new(SSL_CTX *ctx)
 	if (s == NULL) goto err;
 	memset(s,0,sizeof(SSL));
 
-	if (ctx->default_cert != NULL)
+	if (ctx->cert != NULL)
 		{
-		CRYPTO_add(&ctx->default_cert->references,1,
-			   CRYPTO_LOCK_SSL_CERT);
-		s->cert=ctx->default_cert;
+		/* Earlier library versions used to copy the pointer to
+		 * the CERT, not its contents; only when setting new
+		 * parameters for the per-SSL copy, ssl_cert_new would be
+		 * called (and the direct reference to the per-SSL_CTX
+		 * settings would be lost, but those still were indirectly
+		 * accessed for various purposes, and for that reason they
+		 * used to be known as s->ctx->default_cert).
+		 * Now we don't look at the SSL_CTX's CERT after having
+		 * duplicated it once. */
+
+		s->cert = ssl_cert_dup(ctx->cert);
+		if (s->cert == NULL)
+			goto err;
 		}
 	else
-		s->cert=NULL;
+		s->cert=NULL; /* Cannot really happen (see SSL_CTX_new) */
 	s->sid_ctx_length=ctx->sid_ctx_length;
 	memcpy(&s->sid_ctx,&ctx->sid_ctx,sizeof(s->sid_ctx));
 	s->verify_mode=ctx->verify_mode;
@@ -199,11 +209,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->method=ctx->method;
 
 	if (!s->method->ssl_new(s))
-		{
-		SSL_CTX_free(ctx);
-		Free(s);
 		goto err;
-		}
 
 	s->quiet_shutdown=ctx->quiet_shutdown;
 	s->references=1;
@@ -215,6 +221,14 @@ SSL *SSL_new(SSL_CTX *ctx)
 
 	return(s);
 err:
+	if (s != NULL)
+		{
+		if (s->cert != NULL)
+			ssl_cert_free(s->cert);
+		if (s->ctx != NULL)
+			SSL_CTX_free(s->ctx); /* decrement reference count */
+		Free(s);
+		}
 	SSLerr(SSL_F_SSL_NEW,ERR_R_MALLOC_FAILURE);
 	return(NULL);
 	}
@@ -538,18 +552,18 @@ void SSL_copy_session_id(SSL *t,SSL *f)
 int SSL_CTX_check_private_key(SSL_CTX *ctx)
 	{
 	if (	(ctx == NULL) ||
-		(ctx->default_cert == NULL) ||
-		(ctx->default_cert->key->x509 == NULL))
+		(ctx->cert == NULL) ||
+		(ctx->cert->key->x509 == NULL))
 		{
 		SSLerr(SSL_F_SSL_CTX_CHECK_PRIVATE_KEY,SSL_R_NO_CERTIFICATE_ASSIGNED);
 		return(0);
 		}
-	if 	(ctx->default_cert->key->privatekey == NULL)
+	if 	(ctx->cert->key->privatekey == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_CHECK_PRIVATE_KEY,SSL_R_NO_PRIVATE_KEY_ASSIGNED);
 		return(0);
 		}
-	return(X509_check_private_key(ctx->default_cert->key->x509, ctx->default_cert->key->privatekey));
+	return(X509_check_private_key(ctx->cert->key->x509, ctx->cert->key->privatekey));
 	}
 
 /* Fix this function so that it takes an optional type parameter */
@@ -977,7 +991,7 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ret->verify_mode=SSL_VERIFY_NONE;
 	ret->verify_depth=-1; /* Don't impose a limit (but x509_lu.c does) */
 	ret->default_verify_callback=NULL;
-	if ((ret->default_cert=ssl_cert_new()) == NULL)
+	if ((ret->cert=ssl_cert_new()) == NULL)
 		goto err;
 
 	ret->default_passwd_callback=NULL;
@@ -1064,8 +1078,8 @@ void SSL_CTX_free(SSL_CTX *a)
 		sk_SSL_CIPHER_free(a->cipher_list);
 	if (a->cipher_list_by_id != NULL)
 		sk_SSL_CIPHER_free(a->cipher_list_by_id);
-	if (a->default_cert != NULL)
-		ssl_cert_free(a->default_cert);
+	if (a->cert != NULL)
+		ssl_cert_free(a->cert);
 	if (a->client_CA != NULL)
 		sk_X509_NAME_pop_free(a->client_CA,X509_NAME_free);
 	if (a->extra_certs != NULL)
@@ -1099,10 +1113,7 @@ void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth)
 	ctx->verify_depth=depth;
 	}
 
-/* Need default_cert to check for callbacks, for now (see comment in CERT
-   strucure)
-*/
-void ssl_set_cert_masks(CERT *c,CERT *default_cert,SSL_CIPHER *cipher)
+void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	{
 	CERT_PKEY *cpk;
 	int rsa_enc,rsa_tmp,rsa_sign,dh_tmp,dh_rsa,dh_dsa,dsa_sign;
@@ -1115,15 +1126,15 @@ void ssl_set_cert_masks(CERT *c,CERT *default_cert,SSL_CIPHER *cipher)
 	kl=SSL_C_EXPORT_PKEYLENGTH(cipher);
 
 #ifndef NO_RSA
-	rsa_tmp=(c->rsa_tmp != NULL || default_cert->rsa_tmp_cb != NULL);
-	rsa_tmp_export=(default_cert->rsa_tmp_cb != NULL ||
+	rsa_tmp=(c->rsa_tmp != NULL || c->rsa_tmp_cb != NULL);
+	rsa_tmp_export=(c->rsa_tmp_cb != NULL ||
 		(rsa_tmp && RSA_size(c->rsa_tmp)*8 <= kl));
 #else
 	rsa_tmp=rsa_tmp_export=0;
 #endif
 #ifndef NO_DH
-	dh_tmp=(c->dh_tmp != NULL || default_cert->dh_tmp_cb != NULL);
-	dh_tmp_export=(default_cert->dh_tmp_cb != NULL ||
+	dh_tmp=(c->dh_tmp != NULL || c->dh_tmp_cb != NULL);
+	dh_tmp_export=(c->dh_tmp_cb != NULL ||
 		(dh_tmp && DH_size(c->dh_tmp)*8 <= kl));
 #else
 	dh_tmp=dh_tmp_export=0;
@@ -1210,7 +1221,7 @@ X509 *ssl_get_server_send_cert(SSL *s)
 	int i,export;
 
 	c=s->cert;
-	ssl_set_cert_masks(c,s->ctx->default_cert,s->s3->tmp.new_cipher);
+	ssl_set_cert_masks(c, s->s3->tmp.new_cipher);
 	alg=s->s3->tmp.new_cipher->algorithms;
 	export=SSL_IS_EXPORT(alg);
 	mask=export?c->export_mask:c->mask;

@@ -255,7 +255,9 @@ typedef struct cert_st
 	int cert_type;
 
 	/* Current active set */
-	CERT_PKEY *key;
+	CERT_PKEY *key; /* ALWAYS points to an element of the pkeys array
+					 * Probably it would make more sense to store
+					 * an index, not a pointer. */
 
 	/* The following masks are for the key and auth
 	 * algorithms that are supported by the certs below */
@@ -275,7 +277,7 @@ typedef struct cert_st
 
 	STACK_OF(X509) *cert_chain; /* XXX should only exist in sess_cert_st */
 
-	int references; /* XXX should only exist in sess_cert_st */
+	int references; /* XXX will finally always be 1 */
 	} CERT;
 
 
@@ -345,7 +347,12 @@ SSL_METHOD *sslv3_base_method(void);
 void ssl_clear_cipher_ctx(SSL *s);
 int ssl_clear_bad_session(SSL *s);
 CERT *ssl_cert_new(void);
+CERT *ssl_cert_dup(CERT *cert);
+#if 1
+int ssl_cert_inst(CERT **o);
+#else
 int ssl_cert_instantiate(CERT **o, CERT *d);
+#endif
 void ssl_cert_free(CERT *c);
 int ssl_set_cert_type(CERT *c, int type);
 int ssl_get_new_session(SSL *s, int session);
@@ -367,7 +374,7 @@ int ssl_undefined_function(SSL *s);
 X509 *ssl_get_server_send_cert(SSL *);
 EVP_PKEY *ssl_get_sign_pkey(SSL *,SSL_CIPHER *);
 int ssl_cert_type(X509 *x,EVP_PKEY *pkey);
-void ssl_set_cert_masks(CERT *c,CERT *default_cert,SSL_CIPHER *cipher);
+void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher);
 STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
 
