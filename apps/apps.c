@@ -542,7 +542,7 @@ int password_callback(char *buf, int bufsiz, int verify,
 		char *prompt = NULL;
 
 		prompt = UI_construct_prompt(ui, "pass phrase",
-			cb_data->prompt_info);
+			prompt_info);
 
 		ui_flags |= UI_INPUT_FLAG_DEFAULT_PWD;
 		UI_ctrl(ui, UI_CTRL_PRINT_ERRORS, 1, 0, 0);
