@@ -216,13 +216,13 @@ static ERR_STRING_DATA ERR_str_reasons[]=
 struct st_ERR_FNS
 	{
 	/* Works on the "error_hash" string table */
-	LHASH *(*cb_err_get)(void);
+	LHASH *(*cb_err_get)(int create);
 	void (*cb_err_del)(void);
 	ERR_STRING_DATA *(*cb_err_get_item)(const ERR_STRING_DATA *);
 	ERR_STRING_DATA *(*cb_err_set_item)(ERR_STRING_DATA *);
 	ERR_STRING_DATA *(*cb_err_del_item)(ERR_STRING_DATA *);
 	/* Works on the "thread_hash" error-state table */
-	LHASH *(*cb_thread_get)(void);
+	LHASH *(*cb_thread_get)(int create);
 	ERR_STATE *(*cb_thread_get_item)(const ERR_STATE *);
 	ERR_STATE *(*cb_thread_set_item)(ERR_STATE *);
 	void (*cb_thread_del_item)(const ERR_STATE *);
@@ -231,12 +231,12 @@ struct st_ERR_FNS
 	};
 
 /* Predeclarations of the "err_defaults" functions */
-static LHASH *int_err_get(void);
+static LHASH *int_err_get(int create);
 static void int_err_del(void);
 static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *);
 static ERR_STRING_DATA *int_err_set_item(ERR_STRING_DATA *);
 static ERR_STRING_DATA *int_err_del_item(ERR_STRING_DATA *);
-static LHASH *int_thread_get(void);
+static LHASH *int_thread_get(int create);
 static ERR_STATE *int_thread_get_item(const ERR_STATE *);
 static ERR_STATE *int_thread_set_item(ERR_STATE *);
 static void int_thread_del_item(const ERR_STATE *);
@@ -323,13 +323,17 @@ static unsigned long get_error_values(int inc,const char **file,int *line,
 
 /* The internal functions used in the "err_defaults" implementation */
 
-static LHASH *int_err_get(void)
+static LHASH *int_err_get(int create)
 	{
 	LHASH *ret = NULL;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-	if (!int_error_hash)
+	if (!int_error_hash && create)
+		{
+		CRYPTO_push_info("int_err_get (err.c)");
 		int_error_hash = lh_new(err_hash, err_cmp);
+		CRYPTO_pop_info();
+		}
 	if (int_error_hash)
 		ret = int_error_hash;
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
@@ -354,7 +358,7 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 	LHASH *hash;
 
 	err_fns_check();
-	hash = ERRFN(err_get)();
+	hash = ERRFN(err_get)(0);
 	if (!hash)
 		return NULL;
 
@@ -371,7 +375,7 @@ static ERR_STRING_DATA *int_err_set_item(ERR_STRING_DATA *d)
 	LHASH *hash;
 
 	err_fns_check();
-	hash = ERRFN(err_get)();
+	hash = ERRFN(err_get)(1);
 	if (!hash)
 		return NULL;
 
@@ -388,7 +392,7 @@ static ERR_STRING_DATA *int_err_del_item(ERR_STRING_DATA *d)
 	LHASH *hash;
 
 	err_fns_check();
-	hash = ERRFN(err_get)();
+	hash = ERRFN(err_get)(0);
 	if (!hash)
 		return NULL;
 
@@ -399,13 +403,17 @@ static ERR_STRING_DATA *int_err_del_item(ERR_STRING_DATA *d)
 	return p;
 	}
 
-static LHASH *int_thread_get(void)
+static LHASH *int_thread_get(int create)
 	{
 	LHASH *ret = NULL;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-	if (!int_thread_hash)
+	if (!int_thread_hash && create)
+		{
+		CRYPTO_push_info("int_thread_get (err.c)");
 		int_thread_hash = lh_new(pid_hash, pid_cmp);
+		CRYPTO_pop_info();
+		}
 	if (int_thread_hash)
 		ret = int_thread_hash;
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
@@ -418,7 +426,7 @@ static ERR_STATE *int_thread_get_item(const ERR_STATE *d)
 	LHASH *hash;
 
 	err_fns_check();
-	hash = ERRFN(thread_get)();
+	hash = ERRFN(thread_get)(0);
 	if (!hash)
 		return NULL;
 
@@ -435,7 +443,7 @@ static ERR_STATE *int_thread_set_item(ERR_STATE *d)
 	LHASH *hash;
 
 	err_fns_check();
-	hash = ERRFN(thread_get)();
+	hash = ERRFN(thread_get)(1);
 	if (!hash)
 		return NULL;
 
@@ -452,7 +460,7 @@ static void int_thread_del_item(const ERR_STATE *d)
 	LHASH *hash;
 
 	err_fns_check();
-	hash = ERRFN(thread_get)();
+	hash = ERRFN(thread_get)(0);
 	if (!hash)
 		return;
 
@@ -800,13 +808,13 @@ char *ERR_error_string(unsigned long e, char *ret)
 LHASH *ERR_get_string_table(void)
 	{
 	err_fns_check();
-	return ERRFN(err_get)();
+	return ERRFN(err_get)(0);
 	}
 
 LHASH *ERR_get_err_state_table(void)
 	{
 	err_fns_check();
-	return ERRFN(thread_get)();
+	return ERRFN(thread_get)(0);
 	}
 
 const char *ERR_lib_error_string(unsigned long e)
