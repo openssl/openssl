@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/07/17 14:39:26 $
+  ______________                           $Date: 2001/09/11 12:20:20 $
 
   DEVELOPMENT STATE
 
@@ -57,13 +57,9 @@
     o  Whenever strncpy is used, make sure the resulting string is NULL-terminated
        or an error is reported
 
-  OPEN ISSUES
+    o  "OpenSSL STATUS" is never up-to-date.
 
-    o  crypto/ex_data.c is not really thread-safe and so must be used
-       with care (e.g., extra locking where necessary, or don't call
-       CRYPTO_get_ex_new_index once multiple threads exist).
-       The current API is not suitable for everything that it pretends
-       to offer.
+  OPEN ISSUES
 
     o  The Makefile hierarchy and build mechanism is still not a round thing:
 
