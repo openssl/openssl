@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/05/12 01:52:58 $
+  ______________                           $Date: 1999/05/14 11:48:31 $
 
   DEVELOPMENT STATE
 
@@ -131,14 +131,6 @@
       or similar.
 
   WISHES
-
-    o  Damien Miller:
-       "How about making the each of the locations compile-time defined. I
-       would like to (for example) put binaries in /usr/bin, configuration
-       data, certs and keys in /etc/openssl/certs and /etc/openssl/keys, etc.
-       This would also be a great boon to binary package makers.  The
-       SSLeay-0.9.1b RPM already includes some patches which do some of this.
-       I can forward them if you wish."
 
     o  Mats Nilsson <mats.nilsson@xware.se>:
        "Add reference counting to all substructures of X509 etc. For instance,
