@@ -166,7 +166,7 @@ $!     TCPIP_PROGRAMS = ",S_SERVER,S_CLIENT,SESS_ID,CIPHERS,S_TIME,"
 $!
 $! Setup exceptional compilations
 $!
-$ COMPILEWITH_CC2 = ",S_SOCKET,S_SERVER,S_CLIENT,"
+$ COMPILEWITH_CC2 = ",S_SERVER,S_CLIENT,"
 $!
 $ PHASE := LIB
 $!
