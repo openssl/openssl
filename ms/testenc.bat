@@ -1,12 +1,12 @@
 
 echo start testenc
 echo=off
-path=d:\openssl\ms;%path%
+path=..\ms;%path%
 set ssleay=%1%
-set input=d:\openssl\ms\testenc.bat
-set tmp1=d:\openssl\ms\cipher.out
-set out1=d:\openssl\ms\clear.out
-set cmp=perl d:\openssl\ms\cmp.pl
+set input=..\ms\testenc.bat
+set tmp1=..\ms\cipher.out
+set out1=..\ms\clear.out
+set cmp=perl ..\ms\cmp.pl
 
 cd
 call tenc.bat enc
