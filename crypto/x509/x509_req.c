@@ -118,7 +118,7 @@ EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req)
  * used and there may be more: so the list is configurable.
  */
 
-static int ext_nid_list[] = { NID_ms_ext_req, NID_ext_req, NID_undef};
+static int ext_nid_list[] = { NID_ext_req, NID_ms_ext_req, NID_undef};
 
 static int *ext_nids = ext_nid_list;
 
