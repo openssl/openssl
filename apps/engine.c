@@ -99,7 +99,7 @@ static int append_buf(char **buf, char *s, int *size, int step)
 	if (**buf != '\0')
 		l += 2;		/* ", " */
 
-	if (strlen(*buf) + strlen(s) >= *size)
+	if (strlen(*buf) + strlen(s) >= (unsigned int)*size)
 		{
 		*size += step;
 		*buf = OPENSSL_realloc(*buf, *size);

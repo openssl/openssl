@@ -99,7 +99,7 @@ close(IN);
 my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
 my $no_cast;
 my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
-my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes;
+my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
 my $no_fp_api;
 
 foreach (@ARGV, split(/ /, $options))
@@ -150,6 +150,7 @@ foreach (@ARGV, split(/ /, $options))
 	#elsif (/^no-locking$/)	{ $no_locking=1; }
 	elsif (/^no-comp$/)	{ $no_comp=1; }
 	elsif (/^no-dso$/)	{ $no_dso=1; }
+	elsif (/^no-krb5$/)	{ $no_krb5=1; }
 	}
 
 
@@ -738,8 +739,8 @@ sub print_test_file
 	foreach $sym (@symbols) {
 		(my $s, my $i) = $sym =~ /^(.*?)\\(.*)$/;
 		if ($s ne $prev) {
-			if (!defined($nums{$sym})) {
-				printf STDERR "Warning: $sym does not have a number assigned\n"
+			if (!defined($nums{$s})) {
+				printf STDERR "Warning: $s does not have a number assigned\n"
 						if(!$do_update);
 			} else {
 				$n=$nums{$s};
@@ -838,6 +839,7 @@ EOF
 			    && (!@a || (!$no_dh || !grep(/^DH$/,@a)))
 			    && (!@a || (!$no_hmac || !grep(/^HMAC$/,@a)))
 			    && (!@a || (!$no_aes || !grep(/^AES$/,@a)))
+			    && (!@a || (!$no_krb5 || !grep(/^KRB5$/,@a)))
 			    && (!@a || (!$no_fp_api || !grep(/^FP_API$/,@a)))
 			    ) {
 				if($v) {

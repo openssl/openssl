@@ -214,9 +214,6 @@ int RSA_set_method(RSA *rsa, struct engine_st *engine);
 /* This function needs the memory locking malloc callbacks to be installed */
 int RSA_memory_lock(RSA *r);
 
-/* If you have RSAref compiled in. */
-const RSA_METHOD *RSA_PKCS1_RSAref(void);
-
 /* these are the actual SSLeay RSA functions */
 const RSA_METHOD *RSA_PKCS1_SSLeay(void);
 
@@ -240,9 +237,6 @@ RSA *d2i_RSA_NET(RSA **a, const unsigned char **pp, long length, int (*cb)(), in
 
 int i2d_Netscape_RSA(const RSA *a, unsigned char **pp, int (*cb)());
 RSA *d2i_Netscape_RSA(RSA **a, const unsigned char **pp, long length, int (*cb)());
-/* Naughty internal function required elsewhere, to handle a MS structure
- * that is the same as the netscape one :-) */
-RSA *d2i_Netscape_RSA_2(RSA **a, const unsigned char **pp, long length, int (*cb)());
 
 /* The following 2 functions sign and verify a X509_SIG ASN1 object
  * inside PKCS#1 padded RSA encryption */
