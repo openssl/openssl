@@ -419,10 +419,10 @@ static inline void *name(size_t cnt,		\
 }
 
 /* Generate all functions with appropriate opcodes */
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_ecb, ".byte 0xf3,0x0f,0xa7,0xc8");	/* rep xcryptecb */
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_cbc, ".byte 0xf3,0x0f,0xa7,0xd0");	/* rep xcryptcbc */
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_cfb, ".byte 0xf3,0x0f,0xa7,0xe0");	/* rep xcryptcfb */
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_ofb, ".byte 0xf3,0x0f,0xa7,0xe8");	/* rep xcryptofb */
+PADLOCK_XCRYPT_ASM(padlock_xcrypt_ecb, ".byte 0xf3,0x0f,0xa7,0xc8")	/* rep xcryptecb */
+PADLOCK_XCRYPT_ASM(padlock_xcrypt_cbc, ".byte 0xf3,0x0f,0xa7,0xd0")	/* rep xcryptcbc */
+PADLOCK_XCRYPT_ASM(padlock_xcrypt_cfb, ".byte 0xf3,0x0f,0xa7,0xe0")	/* rep xcryptcfb */
+PADLOCK_XCRYPT_ASM(padlock_xcrypt_ofb, ".byte 0xf3,0x0f,0xa7,0xe8")	/* rep xcryptofb */
 
 /* The RNG call itself */
 static inline unsigned int
@@ -648,7 +648,7 @@ static int padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			      const unsigned char *in, unsigned int nbytes);
 
-#define NEAREST_ALIGNED(ptr) ( (char *)(ptr) +		\
+#define NEAREST_ALIGNED(ptr) ( (unsigned char *)(ptr) +		\
 	( (0x10 - ((size_t)(ptr) & 0x0F)) & 0x0F )	)
 #define ALIGNED_CIPHER_DATA(ctx) ((struct padlock_cipher_data *)\
 	NEAREST_ALIGNED(ctx->cipher_data))
@@ -869,7 +869,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 {
 	struct padlock_cipher_data *cdata;
 	const  void *inp;
-	char  *out;
+	unsigned char  *out;
 	void  *iv;
 	int    inp_misaligned, out_misaligned, realign_in_loop;
 	size_t chunk, allocated=0;
