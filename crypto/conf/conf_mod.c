@@ -348,21 +348,26 @@ static int module_init(CONF_MODULE *pmod, char *name, char *value, CONF *cnf)
 		}
 
 	if (initialized_modules == NULL)
+		{
 		initialized_modules = sk_CONF_IMODULE_new_null();
-
-	if (!initialized_modules)
-		goto err;
+		if (!initialized_modules)
+			{
+			CONFerr(CONF_F_MODULE_INIT, ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+		}
 
 	if (!sk_CONF_IMODULE_push(initialized_modules, imod))
+		{
+		CONFerr(CONF_F_MODULE_INIT, ERR_R_MALLOC_FAILURE);
 		goto err;
+		}
 
 	pmod->links++;
 
 	return ret;
 
 	err:
-
-	CONFerr(CONF_F_MODULE_INIT, ERR_R_MALLOC_FAILURE);
 
 	/* We've started the module so we'd better finish it */
 	if (pmod->finish && init_called)
