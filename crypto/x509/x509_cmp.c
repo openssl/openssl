@@ -204,14 +204,14 @@ unsigned long X509_NAME_hash(X509_NAME *x)
 
 	i=i2d_X509_NAME(x,NULL);
 	if (i > sizeof(str))
-		p=Malloc(i);
+		p=OPENSSL_malloc(i);
 	else
 		p=str;
 
 	pp=p;
 	i2d_X509_NAME(x,&pp);
 	MD5((unsigned char *)p,i,&(md[0]));
-	if (p != str) Free(p);
+	if (p != str) OPENSSL_free(p);
 
 	ret=(	((unsigned long)md[0]     )|((unsigned long)md[1]<<8L)|
 		((unsigned long)md[2]<<16L)|((unsigned long)md[3]<<24L)

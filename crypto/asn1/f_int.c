@@ -160,15 +160,15 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 		if (num+i > slen)
 			{
 			if (s == NULL)
-				sp=(unsigned char *)Malloc(
+				sp=(unsigned char *)OPENSSL_malloc(
 					(unsigned int)num+i*2);
 			else
-				sp=(unsigned char *)Realloc(s,
+				sp=(unsigned char *)OPENSSL_realloc(s,
 					(unsigned int)num+i*2);
 			if (sp == NULL)
 				{
 				ASN1err(ASN1_F_A2I_ASN1_INTEGER,ERR_R_MALLOC_FAILURE);
-				if (s != NULL) Free(s);
+				if (s != NULL) OPENSSL_free(s);
 				goto err;
 				}
 			s=sp;

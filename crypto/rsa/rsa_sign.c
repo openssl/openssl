@@ -115,7 +115,7 @@ int RSA_sign(int type, unsigned char *m, unsigned int m_len,
 		return(0);
 		}
 	if(type != NID_md5_sha1) {
-		s=(unsigned char *)Malloc((unsigned int)j+1);
+		s=(unsigned char *)OPENSSL_malloc((unsigned int)j+1);
 		if (s == NULL)
 			{
 			RSAerr(RSA_F_RSA_SIGN,ERR_R_MALLOC_FAILURE);
@@ -132,7 +132,7 @@ int RSA_sign(int type, unsigned char *m, unsigned int m_len,
 
 	if(type != NID_md5_sha1) {
 		memset(s,0,(unsigned int)j+1);
-		Free(s);
+		OPENSSL_free(s);
 	}
 	return(ret);
 	}
@@ -153,7 +153,7 @@ int RSA_verify(int dtype, unsigned char *m, unsigned int m_len,
 	if(rsa->flags & RSA_FLAG_SIGN_VER)
 	    return rsa->meth->rsa_verify(dtype, m, m_len, sigbuf, siglen, rsa);
 
-	s=(unsigned char *)Malloc((unsigned int)siglen);
+	s=(unsigned char *)OPENSSL_malloc((unsigned int)siglen);
 	if (s == NULL)
 		{
 		RSAerr(RSA_F_RSA_VERIFY,ERR_R_MALLOC_FAILURE);
@@ -215,7 +215,7 @@ int RSA_verify(int dtype, unsigned char *m, unsigned int m_len,
 err:
 	if (sig != NULL) X509_SIG_free(sig);
 	memset(s,0,(unsigned int)siglen);
-	Free(s);
+	OPENSSL_free(s);
 	return(ret);
 	}
 

@@ -99,7 +99,7 @@ int RSA_print(BIO *bp, RSA *x, int off)
 	int i,ret=0;
 
 	i=RSA_size(x);
-	m=(unsigned char *)Malloc((unsigned int)i+10);
+	m=(unsigned char *)OPENSSL_malloc((unsigned int)i+10);
 	if (m == NULL)
 		{
 		RSAerr(RSA_F_RSA_PRINT,ERR_R_MALLOC_FAILURE);
@@ -133,7 +133,7 @@ int RSA_print(BIO *bp, RSA *x, int off)
 	if (!print(bp,"coefficient:",x->iqmp,m,off)) goto err;
 	ret=1;
 err:
-	if (m != NULL) Free(m);
+	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
 #endif /* NO_RSA */
@@ -176,7 +176,7 @@ int DSA_print(BIO *bp, DSA *x, int off)
 		i=BN_num_bytes(bn)*2;
 	else
 		i=256;
-	m=(unsigned char *)Malloc((unsigned int)i+10);
+	m=(unsigned char *)OPENSSL_malloc((unsigned int)i+10);
 	if (m == NULL)
 		{
 		DSAerr(DSA_F_DSA_PRINT,ERR_R_MALLOC_FAILURE);
@@ -204,7 +204,7 @@ int DSA_print(BIO *bp, DSA *x, int off)
 	if ((x->g != NULL) && !print(bp,"G:   ",x->g,m,off)) goto err;
 	ret=1;
 err:
-	if (m != NULL) Free(m);
+	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
 #endif /* !NO_DSA */
@@ -284,7 +284,7 @@ int DHparams_print(BIO *bp, DH *x)
 	int reason=ERR_R_BUF_LIB,i,ret=0;
 
 	i=BN_num_bytes(x->p);
-	m=(unsigned char *)Malloc((unsigned int)i+10);
+	m=(unsigned char *)OPENSSL_malloc((unsigned int)i+10);
 	if (m == NULL)
 		{
 		reason=ERR_R_MALLOC_FAILURE;
@@ -307,7 +307,7 @@ int DHparams_print(BIO *bp, DH *x)
 err:
 		DHerr(DH_F_DHPARAMS_PRINT,reason);
 		}
-	if (m != NULL) Free(m);
+	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
 #endif
@@ -337,7 +337,7 @@ int DSAparams_print(BIO *bp, DSA *x)
 	int reason=ERR_R_BUF_LIB,i,ret=0;
 
 	i=BN_num_bytes(x->p);
-	m=(unsigned char *)Malloc((unsigned int)i+10);
+	m=(unsigned char *)OPENSSL_malloc((unsigned int)i+10);
 	if (m == NULL)
 		{
 		reason=ERR_R_MALLOC_FAILURE;
@@ -352,7 +352,7 @@ int DSAparams_print(BIO *bp, DSA *x)
 	if (!print(bp,"g:",x->g,m,4)) goto err;
 	ret=1;
 err:
-	if (m != NULL) Free(m);
+	if (m != NULL) OPENSSL_free(m);
 	DSAerr(DSA_F_DSAPARAMS_PRINT,reason);
 	return(ret);
 	}

@@ -160,7 +160,7 @@ static int MS_CALLBACK slg_write(BIO *b, const char *in, int inl)
 	char* pp;
 	int priority;
 
-	if((buf= (char *)Malloc(inl+ 1)) == NULL){
+	if((buf= (char *)OPENSSL_malloc(inl+ 1)) == NULL){
 		return(0);
 	}
 	strncpy(buf, in, inl);
@@ -182,7 +182,7 @@ static int MS_CALLBACK slg_write(BIO *b, const char *in, int inl)
 
 	xsyslog(b, priority, pp);
 
-	Free(buf);
+	OPENSSL_free(buf);
 	return(ret);
 	}
 
@@ -294,7 +294,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 	lib$sys_fao(&fao_cmd, &len, &buf_dsc, priority_tag, string);
 
 	/* we know there's an 8 byte header.  That's documented */
-	opcdef_p = (struct opcdef *) Malloc(8 + len);
+	opcdef_p = (struct opcdef *) OPENSSL_malloc(8 + len);
 	opcdef_p->opc$b_ms_type = OPC$_RQ_RQST;
 	memcpy(opcdef_p->opc$z_ms_target_classes, &VMS_OPC_target, 3);
 	opcdef_p->opc$l_ms_rqstid = 0;
@@ -307,7 +307,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 
 	sys$sndopr(opc_dsc, 0);
 
-	Free(opcdef_p);
+	OPENSSL_free(opcdef_p);
 }
 
 static void xcloselog(BIO* bp)

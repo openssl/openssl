@@ -696,7 +696,7 @@ bad:
 				BIO_printf(STDout,"/* issuer :%s */\n",buf);
 
 				z=i2d_X509(x,NULL);
-				m=Malloc(z);
+				m=OPENSSL_malloc(z);
 
 				d=(unsigned char *)m;
 				z=i2d_X509_NAME(X509_get_subject_name(x),&d);
@@ -734,7 +734,7 @@ bad:
 				if (y%16 != 0) BIO_printf(STDout,"\n");
 				BIO_printf(STDout,"};\n");
 
-				Free(m);
+				OPENSSL_free(m);
 				}
 			else if (text == i)
 				{
@@ -917,7 +917,7 @@ end:
 	X509_REQ_free(rq);
 	sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
 	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
-	if(passin) Free(passin);
+	if(passin) OPENSSL_free(passin);
 	EXIT(ret);
 	}
 
@@ -939,7 +939,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 	EVP_PKEY_free(upkey);
 
 	X509_STORE_CTX_init(&xsc,ctx,x,NULL);
-	buf=Malloc(EVP_PKEY_size(pkey)*2+
+	buf=OPENSSL_malloc(EVP_PKEY_size(pkey)*2+
 		((serialfile == NULL)
 			?(strlen(CAfile)+strlen(POSTFIX)+1)
 			:(strlen(serialfile)))+1);
@@ -1062,7 +1062,7 @@ end:
 	X509_STORE_CTX_cleanup(&xsc);
 	if (!ret)
 		ERR_print_errors(bio_err);
-	if (buf != NULL) Free(buf);
+	if (buf != NULL) OPENSSL_free(buf);
 	if (bs != NULL) ASN1_INTEGER_free(bs);
 	if (io != NULL)	BIO_free(io);
 	if (serial != NULL) BN_free(serial);

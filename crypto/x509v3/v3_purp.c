@@ -171,17 +171,17 @@ int X509_PURPOSE_add(int id, int trust, int flags,
 	idx = X509_PURPOSE_get_by_id(id);
 	/* Need a new entry */
 	if(idx == -1) {
-		if(!(ptmp = Malloc(sizeof(X509_PURPOSE)))) {
+		if(!(ptmp = OPENSSL_malloc(sizeof(X509_PURPOSE)))) {
 			X509V3err(X509V3_F_X509_PURPOSE_ADD,ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		ptmp->flags = X509_PURPOSE_DYNAMIC;
 	} else ptmp = X509_PURPOSE_get0(idx);
 
-	/* Free existing name if dynamic */
+	/* OPENSSL_free existing name if dynamic */
 	if(ptmp->flags & X509_PURPOSE_DYNAMIC_NAME) {
-		Free(ptmp->name);
-		Free(ptmp->sname);
+		OPENSSL_free(ptmp->name);
+		OPENSSL_free(ptmp->sname);
 	}
 	/* dup supplied name */
 	ptmp->name = BUF_strdup(name);
@@ -220,10 +220,10 @@ static void xptable_free(X509_PURPOSE *p)
 	if (p->flags & X509_PURPOSE_DYNAMIC) 
 		{
 		if (p->flags & X509_PURPOSE_DYNAMIC_NAME) {
-			Free(p->name);
-			Free(p->sname);
+			OPENSSL_free(p->name);
+			OPENSSL_free(p->sname);
 		}
-		Free(p);
+		OPENSSL_free(p);
 		}
 	}
 

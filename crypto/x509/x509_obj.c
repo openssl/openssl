@@ -91,7 +91,7 @@ int i;
 	    if(b)
 		{
 		buf=b->data;
-		Free(b);
+		OPENSSL_free(b);
 		}
 	    strncpy(buf,"NO X509_NAME",len);
 	    return buf;
@@ -210,7 +210,7 @@ int i;
 	if (b != NULL)
 		{
 		p=b->data;
-		Free(b);
+		OPENSSL_free(b);
 		}
 	else
 		p=buf;

@@ -105,7 +105,7 @@ int i2d_DHparams(DH *a, unsigned char **pp)
 	ASN1_put_object(&p,1,tot,V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);
 
 	bs.type=V_ASN1_INTEGER;
-	bs.data=(unsigned char *)Malloc(max+4);
+	bs.data=(unsigned char *)OPENSSL_malloc(max+4);
 	if (bs.data == NULL)
 		{
 		ASN1err(ASN1_F_I2D_DHPARAMS,ERR_R_MALLOC_FAILURE);
@@ -118,7 +118,7 @@ int i2d_DHparams(DH *a, unsigned char **pp)
 		bs.length=BN_bn2bin(num[i],bs.data);
 		i2d_ASN1_INTEGER(&bs,&p);
 		}
-	Free(bs.data);
+	OPENSSL_free(bs.data);
 	ret=t;
 err:
 	if (num[2] != NULL) BN_free(num[2]);

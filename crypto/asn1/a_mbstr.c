@@ -183,7 +183,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 		dest = *out;
 		if(dest->data) {
 			dest->length = 0;
-			Free(dest->data);
+			OPENSSL_free(dest->data);
 			dest->data = NULL;
 		}
 		dest->type = str_type;
@@ -228,7 +228,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 		cpyfunc = cpy_utf8;
 		break;
 	}
-	if(!(p = Malloc(outlen + 1))) {
+	if(!(p = OPENSSL_malloc(outlen + 1))) {
 		ASN1_STRING_free(dest);
 		ASN1err(ASN1_F_ASN1_MBSTRING_COPY,ERR_R_MALLOC_FAILURE);
 		return -1;

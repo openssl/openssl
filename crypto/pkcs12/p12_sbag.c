@@ -226,7 +226,7 @@ void PKCS12_SAFEBAG_free (PKCS12_SAFEBAG *a)
 
 	ASN1_OBJECT_free (a->type);
 	sk_X509_ATTRIBUTE_pop_free (a->attrib, X509_ATTRIBUTE_free);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 IMPLEMENT_STACK_OF(PKCS12_SAFEBAG)

@@ -104,6 +104,6 @@ void X509_VAL_free(X509_VAL *a)
 	if (a == NULL) return;
 	M_ASN1_TIME_free(a->notBefore);
 	M_ASN1_TIME_free(a->notAfter);
-	Free(a);
+	OPENSSL_free(a);
 	}
 

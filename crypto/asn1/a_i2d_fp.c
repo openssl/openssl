@@ -86,7 +86,7 @@ int ASN1_i2d_bio(int (*i2d)(), BIO *out, unsigned char *x)
 	int i,j=0,n,ret=1;
 
 	n=i2d(x,NULL);
-	b=(char *)Malloc(n);
+	b=(char *)OPENSSL_malloc(n);
 	if (b == NULL)
 		{
 		ASN1err(ASN1_F_ASN1_I2D_BIO,ERR_R_MALLOC_FAILURE);
@@ -108,6 +108,6 @@ int ASN1_i2d_bio(int (*i2d)(), BIO *out, unsigned char *x)
 		j+=i;
 		n-=i;
 		}
-	Free(b);
+	OPENSSL_free(b);
 	return(ret);
 	}

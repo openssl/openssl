@@ -286,7 +286,7 @@ void X509_REVOKED_free(X509_REVOKED *a)
 	M_ASN1_INTEGER_free(a->serialNumber);
 	M_ASN1_UTCTIME_free(a->revocationDate);
 	sk_X509_EXTENSION_pop_free(a->extensions,X509_EXTENSION_free);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 void X509_CRL_INFO_free(X509_CRL_INFO *a)
@@ -300,7 +300,7 @@ void X509_CRL_INFO_free(X509_CRL_INFO *a)
 		M_ASN1_UTCTIME_free(a->nextUpdate);
 	sk_X509_REVOKED_pop_free(a->revoked,X509_REVOKED_free);
 	sk_X509_EXTENSION_pop_free(a->extensions,X509_EXTENSION_free);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 void X509_CRL_free(X509_CRL *a)
@@ -325,7 +325,7 @@ void X509_CRL_free(X509_CRL *a)
 	X509_CRL_INFO_free(a->crl);
 	X509_ALGOR_free(a->sig_alg);
 	M_ASN1_BIT_STRING_free(a->signature);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 static int X509_REVOKED_cmp(const X509_REVOKED * const *a,

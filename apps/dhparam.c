@@ -432,10 +432,10 @@ bad:
 
 		len=BN_num_bytes(dh->p);
 		bits=BN_num_bits(dh->p);
-		data=(unsigned char *)Malloc(len);
+		data=(unsigned char *)OPENSSL_malloc(len);
 		if (data == NULL)
 			{
-			perror("Malloc");
+			perror("OPENSSL_malloc");
 			goto end;
 			}
 		printf("#ifndef HEADER_DH_H\n"
@@ -472,7 +472,7 @@ bad:
 		if (dh->length)
 			printf("\tdh->length = %d;\n", dh->length);
 		printf("\treturn(dh);\n\t}\n");
-		Free(data);
+		OPENSSL_free(data);
 		}
 
 

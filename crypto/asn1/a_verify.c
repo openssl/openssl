@@ -88,7 +88,7 @@ int ASN1_verify(int (*i2d)(), X509_ALGOR *a, ASN1_BIT_STRING *signature,
 		}
 	
 	inl=i2d(data,NULL);
-	buf_in=Malloc((unsigned int)inl);
+	buf_in=OPENSSL_malloc((unsigned int)inl);
 	if (buf_in == NULL)
 		{
 		ASN1err(ASN1_F_ASN1_VERIFY,ERR_R_MALLOC_FAILURE);
@@ -101,7 +101,7 @@ int ASN1_verify(int (*i2d)(), X509_ALGOR *a, ASN1_BIT_STRING *signature,
 	EVP_VerifyUpdate(&ctx,(unsigned char *)buf_in,inl);
 
 	memset(buf_in,0,(unsigned int)inl);
-	Free(buf_in);
+	OPENSSL_free(buf_in);
 
 	if (EVP_VerifyFinal(&ctx,(unsigned char *)signature->data,
 			(unsigned int)signature->length,pkey) <= 0)

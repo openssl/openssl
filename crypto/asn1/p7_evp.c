@@ -114,6 +114,6 @@ void PKCS7_ENVELOPE_free(PKCS7_ENVELOPE *a)
 	M_ASN1_INTEGER_free(a->version);
 	sk_PKCS7_RECIP_INFO_pop_free(a->recipientinfo,PKCS7_RECIP_INFO_free);
 	PKCS7_ENC_CONTENT_free(a->enc_data);
-	Free(a);
+	OPENSSL_free(a);
 	}
 

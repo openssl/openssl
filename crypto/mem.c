@@ -252,8 +252,8 @@ void CRYPTO_free(void *str)
 
 void *CRYPTO_remalloc(void *a, int num, const char *file, int line)
 	{
-	if (a != NULL) Free(a);
-	a=(char *)Malloc(num);
+	if (a != NULL) OPENSSL_free(a);
+	a=(char *)OPENSSL_malloc(num);
 	return(a);
 	}
 

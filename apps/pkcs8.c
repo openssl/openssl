@@ -254,8 +254,8 @@ int MAIN(int argc, char **argv)
 		PKCS8_PRIV_KEY_INFO_free (p8inf);
 		EVP_PKEY_free(pkey);
 		BIO_free(out);
-		if(passin) Free(passin);
-		if(passout) Free(passout);
+		if(passin) OPENSSL_free(passin);
+		if(passout) OPENSSL_free(passout);
 		return (0);
 	}
 
@@ -338,8 +338,8 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY_free(pkey);
 	BIO_free(out);
 	BIO_free(in);
-	if(passin) Free(passin);
-	if(passout) Free(passout);
+	if(passin) OPENSSL_free(passin);
+	if(passout) OPENSSL_free(passout);
 
 	return (0);
 }

@@ -111,7 +111,7 @@ ASN1_STRING *d2i_ASN1_type_bytes(ASN1_STRING **a, unsigned char **pp,
 
 	if (len != 0)
 		{
-		s=(unsigned char *)Malloc((int)len+1);
+		s=(unsigned char *)OPENSSL_malloc((int)len+1);
 		if (s == NULL)
 			{
 			i=ERR_R_MALLOC_FAILURE;
@@ -124,7 +124,7 @@ ASN1_STRING *d2i_ASN1_type_bytes(ASN1_STRING **a, unsigned char **pp,
 	else
 		s=NULL;
 
-	if (ret->data != NULL) Free(ret->data);
+	if (ret->data != NULL) OPENSSL_free(ret->data);
 	ret->length=(int)len;
 	ret->data=s;
 	ret->type=tag;
@@ -218,8 +218,8 @@ ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, unsigned char **pp, long length,
 			{
 			if ((ret->length < len) || (ret->data == NULL))
 				{
-				if (ret->data != NULL) Free(ret->data);
-				s=(unsigned char *)Malloc((int)len + 1);
+				if (ret->data != NULL) OPENSSL_free(ret->data);
+				s=(unsigned char *)OPENSSL_malloc((int)len + 1);
 				if (s == NULL)
 					{
 					i=ERR_R_MALLOC_FAILURE;
@@ -235,7 +235,7 @@ ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, unsigned char **pp, long length,
 		else
 			{
 			s=NULL;
-			if (ret->data != NULL) Free(ret->data);
+			if (ret->data != NULL) OPENSSL_free(ret->data);
 			}
 
 		ret->length=(int)len;
@@ -310,14 +310,14 @@ static int asn1_collate_primitive(ASN1_STRING *a, ASN1_CTX *c)
 	if (!asn1_Finish(c)) goto err;
 
 	a->length=num;
-	if (a->data != NULL) Free(a->data);
+	if (a->data != NULL) OPENSSL_free(a->data);
 	a->data=(unsigned char *)b.data;
 	if (os != NULL) ASN1_STRING_free(os);
 	return(1);
 err:
 	ASN1err(ASN1_F_ASN1_COLLATE_PRIMITIVE,c->error);
 	if (os != NULL) ASN1_STRING_free(os);
-	if (b.data != NULL) Free(b.data);
+	if (b.data != NULL) OPENSSL_free(b.data);
 	return(0);
 	}
 

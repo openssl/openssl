@@ -77,7 +77,7 @@ STACK *ASN1_seq_unpack(unsigned char *buf, int len, char *(*d2i)(),
 }
 
 /* Turn a STACK structures into an ASN1 encoded SEQUENCE OF structure in a
- * Malloc'ed buffer
+ * OPENSSL_malloc'ed buffer
  */
 
 unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(), unsigned char **buf,
@@ -90,7 +90,7 @@ unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(), unsigned char **buf,
 		ASN1err(ASN1_F_ASN1_SEQ_PACK,ASN1_R_ENCODE_ERROR);
 		return NULL;
 	}
-	if (!(safe = Malloc (safelen))) {
+	if (!(safe = OPENSSL_malloc (safelen))) {
 		ASN1err(ASN1_F_ASN1_SEQ_PACK,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -134,7 +134,7 @@ ASN1_STRING *ASN1_pack_string (void *obj, int (*i2d)(), ASN1_STRING **oct)
 		ASN1err(ASN1_F_ASN1_PACK_STRING,ASN1_R_ENCODE_ERROR);
 		return NULL;
 	}
-	if (!(p = Malloc (octmp->length))) {
+	if (!(p = OPENSSL_malloc (octmp->length))) {
 		ASN1err(ASN1_F_ASN1_PACK_STRING,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}

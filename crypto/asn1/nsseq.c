@@ -114,5 +114,5 @@ void NETSCAPE_CERT_SEQUENCE_free (NETSCAPE_CERT_SEQUENCE *a)
 	ASN1_OBJECT_free(a->type);
 	if(a->certs)
 	    sk_X509_pop_free(a->certs, X509_free);
-	Free (a);
+	OPENSSL_free (a);
 }

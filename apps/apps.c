@@ -91,8 +91,8 @@ int args_from_file(char *file, int *argc, char **argv[])
 	*argv=NULL;
 
 	len=(unsigned int)stbuf.st_size;
-	if (buf != NULL) Free(buf);
-	buf=(char *)Malloc(len+1);
+	if (buf != NULL) OPENSSL_free(buf);
+	buf=(char *)OPENSSL_malloc(len+1);
 	if (buf == NULL) return(0);
 
 	len=fread(buf,1,len,fp);
@@ -102,8 +102,8 @@ int args_from_file(char *file, int *argc, char **argv[])
 	i=0;
 	for (p=buf; *p; p++)
 		if (*p == '\n') i++;
-	if (arg != NULL) Free(arg);
-	arg=(char **)Malloc(sizeof(char *)*(i*2));
+	if (arg != NULL) OPENSSL_free(arg);
+	arg=(char **)OPENSSL_malloc(sizeof(char *)*(i*2));
 
 	*argv=arg;
 	num=0;
@@ -266,7 +266,7 @@ int chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 	if (arg->count == 0)
 		{
 		arg->count=20;
-		arg->data=(char **)Malloc(sizeof(char *)*arg->count);
+		arg->data=(char **)OPENSSL_malloc(sizeof(char *)*arg->count);
 		}
 	for (i=0; i<arg->count; i++)
 		arg->data[i]=NULL;
@@ -285,7 +285,7 @@ int chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 		if (num >= arg->count)
 			{
 			arg->count+=20;
-			arg->data=(char **)Realloc(arg->data,
+			arg->data=(char **)OPENSSL_realloc(arg->data,
 				sizeof(char *)*arg->count);
 			if (argc == 0) return(0);
 			}

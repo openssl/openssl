@@ -223,7 +223,7 @@ int X509_print(BIO *bp, X509 *x)
 	ret=1;
 err:
 	if (str != NULL) ASN1_STRING_free(str);
-	if (m != NULL) Free(m);
+	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
 

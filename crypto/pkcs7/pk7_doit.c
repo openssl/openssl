@@ -189,7 +189,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			EVP_PKEY_free(pkey);
 			if (max < jj) max=jj;
 			}
-		if ((tmp=(unsigned char *)Malloc(max)) == NULL)
+		if ((tmp=(unsigned char *)OPENSSL_malloc(max)) == NULL)
 			{
 			PKCS7err(PKCS7_F_PKCS7_DATAINIT,ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -203,12 +203,12 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			if (jj <= 0)
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATAINIT,ERR_R_EVP_LIB);
-				Free(tmp);
+				OPENSSL_free(tmp);
 				goto err;
 				}
 			M_ASN1_OCTET_STRING_set(ri->enc_key,tmp,jj);
 			}
-		Free(tmp);
+		OPENSSL_free(tmp);
 		memset(key, 0, keylen);
 
 		if (out == NULL)
@@ -374,7 +374,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		}
 
 		jj=EVP_PKEY_size(pkey);
-		tmp=(unsigned char *)Malloc(jj+10);
+		tmp=(unsigned char *)OPENSSL_malloc(jj+10);
 		if (tmp == NULL)
 			{
 			PKCS7err(PKCS7_F_PKCS7_DATADECODE,ERR_R_MALLOC_FAILURE);
@@ -456,7 +456,7 @@ err:
 		out=NULL;
 		}
 	if (tmp != NULL)
-		Free(tmp);
+		OPENSSL_free(tmp);
 	return(out);
 	}
 
@@ -578,13 +578,13 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				x=i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,NULL,
 					   i2d_X509_ATTRIBUTE,
 					   V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
-				pp=(unsigned char *)Malloc(x);
+				pp=(unsigned char *)OPENSSL_malloc(x);
 				p=pp;
 				i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,&p,
 				           i2d_X509_ATTRIBUTE,
 					   V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
 				EVP_SignUpdate(&ctx_tmp,pp,x);
-				Free(pp);
+				OPENSSL_free(pp);
 				pp=NULL;
 				}
 
@@ -627,7 +627,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			(unsigned char *)buf_mem->data,buf_mem->length);
 #endif
 		}
-	if (pp != NULL) Free(pp);
+	if (pp != NULL) OPENSSL_free(pp);
 	pp=NULL;
 
 	ret=1;
@@ -772,13 +772,13 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 		 */
 		i=i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,NULL,i2d_X509_ATTRIBUTE,
 			V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SEQUENCE);
-		pp=Malloc(i);
+		pp=OPENSSL_malloc(i);
 		p=pp;
 		i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,&p,i2d_X509_ATTRIBUTE,
 			V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SEQUENCE);
 		EVP_VerifyUpdate(&mdc_tmp,pp,i);
 
-		Free(pp);
+		OPENSSL_free(pp);
 		}
 
 	os=si->enc_digest;

@@ -165,7 +165,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 							break;
 							}
 					if (c->param_port != NULL)
-						Free(c->param_port);
+						OPENSSL_free(c->param_port);
 					c->param_port=BUF_strdup(p);
 					}
 				}
@@ -322,7 +322,7 @@ BIO_CONNECT *BIO_CONNECT_new(void)
 	{
 	BIO_CONNECT *ret;
 
-	if ((ret=(BIO_CONNECT *)Malloc(sizeof(BIO_CONNECT))) == NULL)
+	if ((ret=(BIO_CONNECT *)OPENSSL_malloc(sizeof(BIO_CONNECT))) == NULL)
 		return(NULL);
 	ret->state=BIO_CONN_S_BEFORE;
 	ret->param_hostname=NULL;
@@ -344,10 +344,10 @@ void BIO_CONNECT_free(BIO_CONNECT *a)
 	    return;
 
 	if (a->param_hostname != NULL)
-		Free(a->param_hostname);
+		OPENSSL_free(a->param_hostname);
 	if (a->param_port != NULL)
-		Free(a->param_port);
-	Free(a);
+		OPENSSL_free(a->param_port);
+	OPENSSL_free(a);
 	}
 
 BIO_METHOD *BIO_s_connect(void)
@@ -507,13 +507,13 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 			if (num == 0)
 				{
 				if (data->param_hostname != NULL)
-					Free(data->param_hostname);
+					OPENSSL_free(data->param_hostname);
 				data->param_hostname=BUF_strdup(ptr);
 				}
 			else if (num == 1)
 				{
 				if (data->param_port != NULL)
-					Free(data->param_port);
+					OPENSSL_free(data->param_port);
 				data->param_port=BUF_strdup(ptr);
 				}
 			else if (num == 2)
@@ -524,7 +524,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 				sprintf(buf,"%d.%d.%d.%d",
 					p[0],p[1],p[2],p[3]);
 				if (data->param_hostname != NULL)
-					Free(data->param_hostname);
+					OPENSSL_free(data->param_hostname);
 				data->param_hostname=BUF_strdup(buf);
 				memcpy(&(data->ip[0]),ptr,4);
 				}
@@ -534,7 +534,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 				sprintf(buf,"%d",*(int *)ptr);
 				if (data->param_port != NULL)
-					Free(data->param_port);
+					OPENSSL_free(data->param_port);
 				data->param_port=BUF_strdup(buf);
 				data->port= *(int *)ptr;
 				}

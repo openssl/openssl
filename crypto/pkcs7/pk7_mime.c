@@ -641,7 +641,7 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
 			}
 		}
 	} else tmpval = NULL;
-	mhdr = (MIME_HEADER *) Malloc(sizeof(MIME_HEADER));
+	mhdr = (MIME_HEADER *) OPENSSL_malloc(sizeof(MIME_HEADER));
 	if(!mhdr) return NULL;
 	mhdr->name = tmpname;
 	mhdr->value = tmpval;
@@ -670,7 +670,7 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 		if(!tmpval) return 0;
 	} else tmpval = NULL;
 	/* Parameter values are case sensitive so leave as is */
-	mparam = (MIME_PARAM *) Malloc(sizeof(MIME_PARAM));
+	mparam = (MIME_PARAM *) OPENSSL_malloc(sizeof(MIME_PARAM));
 	if(!mparam) return 0;
 	mparam->param_name = tmpname;
 	mparam->param_value = tmpval;
@@ -714,17 +714,17 @@ static MIME_PARAM *mime_param_find(MIME_HEADER *hdr, char *name)
 
 static void mime_hdr_free(MIME_HEADER *hdr)
 {
-	if(hdr->name) Free(hdr->name);
-	if(hdr->value) Free(hdr->value);
+	if(hdr->name) OPENSSL_free(hdr->name);
+	if(hdr->value) OPENSSL_free(hdr->value);
 	if(hdr->params) sk_MIME_PARAM_pop_free(hdr->params, mime_param_free);
-	Free(hdr);
+	OPENSSL_free(hdr);
 }
 
 static void mime_param_free(MIME_PARAM *param)
 {
-	if(param->param_name) Free(param->param_name);
-	if(param->param_value) Free(param->param_value);
-	Free(param);
+	if(param->param_name) OPENSSL_free(param->param_name);
+	if(param->param_value) OPENSSL_free(param->param_value);
+	OPENSSL_free(param);
 }
 
 /* Check for a multipart boundary. Returns:

@@ -109,7 +109,7 @@ void NETSCAPE_SPKAC_free(NETSCAPE_SPKAC *a)
 	if (a == NULL) return;
 	X509_PUBKEY_free(a->pubkey);
 	M_ASN1_IA5STRING_free(a->challenge);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 int i2d_NETSCAPE_SPKI(NETSCAPE_SPKI *a, unsigned char **pp)
@@ -161,6 +161,6 @@ void NETSCAPE_SPKI_free(NETSCAPE_SPKI *a)
 	NETSCAPE_SPKAC_free(a->spkac);
 	X509_ALGOR_free(a->sig_algor);
 	M_ASN1_BIT_STRING_free(a->signature);
-	Free(a);
+	OPENSSL_free(a);
 	}
 

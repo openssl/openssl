@@ -90,7 +90,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(), int (*cmp_func)(),
 	for (i=sk_NAME_FUNCS_num(name_funcs_stack); i<names_type_num; i++)
 		{
 		MemCheck_off();
-		name_funcs = Malloc(sizeof(NAME_FUNCS));
+		name_funcs = OPENSSL_malloc(sizeof(NAME_FUNCS));
 		name_funcs->hash_func = lh_strhash;
 		name_funcs->cmp_func = (int (*)())strcmp;
 		name_funcs->free_func = 0; /* NULL is often declared to
@@ -187,7 +187,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 	alias=type&OBJ_NAME_ALIAS;
 	type&= ~OBJ_NAME_ALIAS;
 
-	onp=(OBJ_NAME *)Malloc(sizeof(OBJ_NAME));
+	onp=(OBJ_NAME *)OPENSSL_malloc(sizeof(OBJ_NAME));
 	if (onp == NULL)
 		{
 		/* ERROR */
@@ -212,7 +212,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 			sk_NAME_FUNCS_value(name_funcs_stack,ret->type)
 				->free_func(ret->name,ret->type,ret->data);
 			}
-		Free(ret);
+		OPENSSL_free(ret);
 		}
 	else
 		{
@@ -247,7 +247,7 @@ int OBJ_NAME_remove(const char *name, int type)
 			sk_NAME_FUNCS_value(name_funcs_stack,ret->type)
 				->free_func(ret->name,ret->type,ret->data);
 			}
-		Free(ret);
+		OPENSSL_free(ret);
 		return(1);
 		}
 	else
@@ -269,7 +269,7 @@ static void names_lh_free(OBJ_NAME *onp, int type)
 
 static void name_funcs_free(NAME_FUNCS *ptr)
 	{
-	Free(ptr);
+	OPENSSL_free(ptr);
 	}
 
 void OBJ_NAME_cleanup(int type)

@@ -69,7 +69,7 @@ BN_CTX *BN_CTX_new(void)
 	{
 	BN_CTX *ret;
 
-	ret=(BN_CTX *)Malloc(sizeof(BN_CTX));
+	ret=(BN_CTX *)OPENSSL_malloc(sizeof(BN_CTX));
 	if (ret == NULL)
 		{
 		BNerr(BN_F_BN_CTX_NEW,ERR_R_MALLOC_FAILURE);
@@ -102,7 +102,7 @@ void BN_CTX_free(BN_CTX *ctx)
 	for (i=0; i < BN_CTX_NUM; i++)
 		BN_clear_free(&(ctx->bn[i]));
 	if (ctx->flags & BN_FLG_MALLOCED)
-		Free(ctx);
+		OPENSSL_free(ctx);
 	}
 
 void BN_CTX_start(BN_CTX *ctx)

@@ -112,7 +112,7 @@ void X509_PUBKEY_free(X509_PUBKEY *a)
 	X509_ALGOR_free(a->algor);
 	M_ASN1_BIT_STRING_free(a->public_key);
 	if (a->pkey != NULL) EVP_PKEY_free(a->pkey);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
@@ -156,14 +156,14 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 		dsa->write_params=0;
 		ASN1_TYPE_free(a->parameter);
 		i=i2d_DSAparams(dsa,NULL);
-		p=(unsigned char *)Malloc(i);
+		p=(unsigned char *)OPENSSL_malloc(i);
 		pp=p;
 		i2d_DSAparams(dsa,&pp);
 		a->parameter=ASN1_TYPE_new();
 		a->parameter->type=V_ASN1_SEQUENCE;
 		a->parameter->value.sequence=ASN1_STRING_new();
 		ASN1_STRING_set(a->parameter->value.sequence,p,i);
-		Free(p);
+		OPENSSL_free(p);
 		}
 	else
 #endif
@@ -173,7 +173,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 		}
 
 	if ((i=i2d_PublicKey(pkey,NULL)) <= 0) goto err;
-	if ((s=(unsigned char *)Malloc(i+1)) == NULL) goto err;
+	if ((s=(unsigned char *)OPENSSL_malloc(i+1)) == NULL) goto err;
 	p=s;
 	i2d_PublicKey(pkey,&p);
 	if (!M_ASN1_BIT_STRING_set(pk->public_key,s,i)) goto err;
@@ -181,7 +181,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 	pk->public_key->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
 	pk->public_key->flags|=ASN1_STRING_FLAG_BITS_LEFT;
 
-	Free(s);
+	OPENSSL_free(s);
 
 #if 0
 	CRYPTO_add(&pkey->references,1,CRYPTO_LOCK_EVP_PKEY);

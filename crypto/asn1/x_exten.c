@@ -134,6 +134,6 @@ void X509_EXTENSION_free(X509_EXTENSION *a)
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->object);
 	M_ASN1_OCTET_STRING_free(a->value);
-	Free(a);
+	OPENSSL_free(a);
 	}
 

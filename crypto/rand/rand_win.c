@@ -252,7 +252,7 @@ void RAND_screen(void)
   GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
   size = (unsigned int)bm.bmWidthBytes * bm.bmHeight * bm.bmPlanes;
 
-  bmbits = Malloc(size);
+  bmbits = OPENSSL_malloc(size);
   if (bmbits) {
     /* Now go through the whole screen, repeatedly grabbing n lines */
     for (y = 0; y < h-n; y += n)
@@ -272,7 +272,7 @@ void RAND_screen(void)
 	RAND_seed(md, MD_DIGEST_LENGTH);
 	}
 
-    Free(bmbits);
+    OPENSSL_free(bmbits);
   }
 
   /* Select old bitmap back into memory DC */

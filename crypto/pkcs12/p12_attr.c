@@ -157,7 +157,7 @@ int PKCS12_add_friendlyname_asc (PKCS12_SAFEBAG *bag, const char *name,
 		return 0;
 	}
 	ret = PKCS12_add_friendlyname_uni (bag, uniname, unilen);
-	Free(uniname);
+	OPENSSL_free(uniname);
 	return ret;
 }
 	
@@ -181,7 +181,7 @@ int PKCS12_add_friendlyname_uni (PKCS12_SAFEBAG *bag,
 							ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	if (!(bmp->data = Malloc (namelen))) {
+	if (!(bmp->data = OPENSSL_malloc (namelen))) {
 		PKCS12err(PKCS12_F_PKCS12_ADD_FRIENDLYNAME_UNI,
 							ERR_R_MALLOC_FAILURE);
 		return 0;

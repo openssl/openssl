@@ -94,7 +94,7 @@ STACK *sk_dup(STACK *sk)
 	char **s;
 
 	if ((ret=sk_new(sk->comp)) == NULL) goto err;
-	s=(char **)Realloc((char *)ret->data,
+	s=(char **)OPENSSL_realloc((char *)ret->data,
 		(unsigned int)sizeof(char *)*sk->num_alloc);
 	if (s == NULL) goto err;
 	ret->data=s;
@@ -114,9 +114,9 @@ STACK *sk_new(int (*c)(const char * const *, const char * const *))
 	STACK *ret;
 	int i;
 
-	if ((ret=(STACK *)Malloc(sizeof(STACK))) == NULL)
+	if ((ret=(STACK *)OPENSSL_malloc(sizeof(STACK))) == NULL)
 		goto err0;
-	if ((ret->data=(char **)Malloc(sizeof(char *)*MIN_NODES)) == NULL)
+	if ((ret->data=(char **)OPENSSL_malloc(sizeof(char *)*MIN_NODES)) == NULL)
 		goto err1;
 	for (i=0; i<MIN_NODES; i++)
 		ret->data[i]=NULL;
@@ -126,7 +126,7 @@ STACK *sk_new(int (*c)(const char * const *, const char * const *))
 	ret->sorted=0;
 	return(ret);
 err1:
-	Free(ret);
+	OPENSSL_free(ret);
 err0:
 	return(NULL);
 	}
@@ -138,7 +138,7 @@ int sk_insert(STACK *st, char *data, int loc)
 	if(st == NULL) return 0;
 	if (st->num_alloc <= st->num+1)
 		{
-		s=(char **)Realloc((char *)st->data,
+		s=(char **)OPENSSL_realloc((char *)st->data,
 			(unsigned int)sizeof(char *)*st->num_alloc*2);
 		if (s == NULL)
 			return(0);
@@ -287,8 +287,8 @@ void sk_pop_free(STACK *st, void (*func)(void *))
 void sk_free(STACK *st)
 	{
 	if (st == NULL) return;
-	if (st->data != NULL) Free(st->data);
-	Free(st);
+	if (st->data != NULL) OPENSSL_free(st->data);
+	OPENSSL_free(st);
 	}
 
 int sk_num(const STACK *st)

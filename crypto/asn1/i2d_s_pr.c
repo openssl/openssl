@@ -104,7 +104,7 @@ int i2d_DSAPrivateKey(DSA *a, unsigned char **pp)
 
 	i2d_ASN1_INTEGER(&bs,&p);
 
-	bs.data=(unsigned char *)Malloc(max+4);
+	bs.data=(unsigned char *)OPENSSL_malloc(max+4);
 	if (bs.data == NULL)
 		{
 		ASN1err(ASN1_F_I2D_DSAPRIVATEKEY,ERR_R_MALLOC_FAILURE);
@@ -116,7 +116,7 @@ int i2d_DSAPrivateKey(DSA *a, unsigned char **pp)
 		bs.length=BN_bn2bin(num[i],bs.data);
 		i2d_ASN1_INTEGER(&bs,&p);
 		}
-	Free(bs.data);
+	OPENSSL_free(bs.data);
 	*pp=p;
 	return(t);
 	}

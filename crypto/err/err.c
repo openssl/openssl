@@ -228,7 +228,7 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 
 static void build_SYS_str_reasons()
 	{
-	/* Malloc cannot be used here, use static storage instead */
+	/* OPENSSL_malloc cannot be used here, use static storage instead */
 	static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
 	int i;
 
@@ -265,7 +265,7 @@ static void build_SYS_str_reasons()
 	if (((p)->err_data[i] != NULL) && \
 		(p)->err_data_flags[i] & ERR_TXT_MALLOCED) \
 		{  \
-		Free((p)->err_data[i]); \
+		OPENSSL_free((p)->err_data[i]); \
 		(p)->err_data[i]=NULL; \
 		} \
 	(p)->err_data_flags[i]=0;
@@ -281,7 +281,7 @@ static void ERR_STATE_free(ERR_STATE *s)
 		{
 		err_clear_data(s,i);
 		}
-	Free(s);
+	OPENSSL_free(s);
 	}
 
 void ERR_load_ERR_strings(void)
@@ -685,7 +685,7 @@ ERR_STATE *ERR_get_state(void)
 	/* ret == the error state, if NULL, make a new one */
 	if (ret == NULL)
 		{
-		ret=(ERR_STATE *)Malloc(sizeof(ERR_STATE));
+		ret=(ERR_STATE *)OPENSSL_malloc(sizeof(ERR_STATE));
 		if (ret == NULL) return(&fallback);
 		ret->pid=pid;
 		ret->top=0;
@@ -755,7 +755,7 @@ void ERR_add_error_data(int num, ...)
 	char *str,*p,*a;
 
 	s=64;
-	str=Malloc(s+1);
+	str=OPENSSL_malloc(s+1);
 	if (str == NULL) return;
 	str[0]='\0';
 
@@ -771,10 +771,10 @@ void ERR_add_error_data(int num, ...)
 			if (n > s)
 				{
 				s=n+20;
-				p=Realloc(str,s+1);
+				p=OPENSSL_realloc(str,s+1);
 				if (p == NULL)
 					{
-					Free(str);
+					OPENSSL_free(str);
 					return;
 					}
 				else

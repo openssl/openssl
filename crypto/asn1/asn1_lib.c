@@ -335,9 +335,9 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 		{
 		c=str->data;
 		if (c == NULL)
-			str->data=Malloc(len+1);
+			str->data=OPENSSL_malloc(len+1);
 		else
-			str->data=Realloc(c,len+1);
+			str->data=OPENSSL_realloc(c,len+1);
 
 		if (str->data == NULL)
 			{
@@ -365,7 +365,7 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
 	{
 	ASN1_STRING *ret;
 
-	ret=(ASN1_STRING *)Malloc(sizeof(ASN1_STRING));
+	ret=(ASN1_STRING *)OPENSSL_malloc(sizeof(ASN1_STRING));
 	if (ret == NULL)
 		{
 		ASN1err(ASN1_F_ASN1_STRING_TYPE_NEW,ERR_R_MALLOC_FAILURE);
@@ -381,8 +381,8 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
 void ASN1_STRING_free(ASN1_STRING *a)
 	{
 	if (a == NULL) return;
-	if (a->data != NULL) Free(a->data);
-	Free(a);
+	if (a->data != NULL) OPENSSL_free(a->data);
+	OPENSSL_free(a);
 	}
 
 int ASN1_STRING_cmp(ASN1_STRING *a, ASN1_STRING *b)

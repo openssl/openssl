@@ -23,7 +23,7 @@ int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK_OF(X509_ALGOR) *cap)
 	len=i2d_ASN1_SET_OF_X509_ALGOR(cap,NULL,i2d_X509_ALGOR,
 				       V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL,
 				       IS_SEQUENCE);
-	if(!(pp=(unsigned char *)Malloc(len))) {
+	if(!(pp=(unsigned char *)OPENSSL_malloc(len))) {
 		PKCS7err(PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -38,7 +38,7 @@ int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK_OF(X509_ALGOR) *cap)
 		PKCS7err(PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	Free (pp);
+	OPENSSL_free (pp);
         return PKCS7_add_signed_attribute(si, NID_SMIMECapabilities,
 							V_ASN1_SEQUENCE, seq);
 }

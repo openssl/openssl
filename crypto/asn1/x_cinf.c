@@ -196,6 +196,6 @@ void X509_CINF_free(X509_CINF *a)
 	M_ASN1_BIT_STRING_free(a->issuerUID);
 	M_ASN1_BIT_STRING_free(a->subjectUID);
 	sk_X509_EXTENSION_pop_free(a->extensions,X509_EXTENSION_free);
-	Free(a);
+	OPENSSL_free(a);
 	}
 

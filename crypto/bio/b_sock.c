@@ -267,14 +267,14 @@ static struct hostent *ghbn_dup(struct hostent *a)
 	int i,j;
 
 	MemCheck_off();
-	ret=(struct hostent *)Malloc(sizeof(struct hostent));
+	ret=(struct hostent *)OPENSSL_malloc(sizeof(struct hostent));
 	if (ret == NULL) return(NULL);
 	memset(ret,0,sizeof(struct hostent));
 
 	for (i=0; a->h_aliases[i] != NULL; i++)
 		;
 	i++;
-	ret->h_aliases = (char **)Malloc(i*sizeof(char *));
+	ret->h_aliases = (char **)OPENSSL_malloc(i*sizeof(char *));
 	if (ret->h_aliases == NULL)
 		goto err;
 	memset(ret->h_aliases, 0, i*sizeof(char *));
@@ -282,25 +282,25 @@ static struct hostent *ghbn_dup(struct hostent *a)
 	for (i=0; a->h_addr_list[i] != NULL; i++)
 		;
 	i++;
-	ret->h_addr_list=(char **)Malloc(i*sizeof(char *));
+	ret->h_addr_list=(char **)OPENSSL_malloc(i*sizeof(char *));
 	if (ret->h_addr_list == NULL)
 		goto err;
 	memset(ret->h_addr_list, 0, i*sizeof(char *));
 
 	j=strlen(a->h_name)+1;
-	if ((ret->h_name=Malloc(j)) == NULL) goto err;
+	if ((ret->h_name=OPENSSL_malloc(j)) == NULL) goto err;
 	memcpy((char *)ret->h_name,a->h_name,j);
 	for (i=0; a->h_aliases[i] != NULL; i++)
 		{
 		j=strlen(a->h_aliases[i])+1;
-		if ((ret->h_aliases[i]=Malloc(j)) == NULL) goto err;
+		if ((ret->h_aliases[i]=OPENSSL_malloc(j)) == NULL) goto err;
 		memcpy(ret->h_aliases[i],a->h_aliases[i],j);
 		}
 	ret->h_length=a->h_length;
 	ret->h_addrtype=a->h_addrtype;
 	for (i=0; a->h_addr_list[i] != NULL; i++)
 		{
-		if ((ret->h_addr_list[i]=Malloc(a->h_length)) == NULL)
+		if ((ret->h_addr_list[i]=OPENSSL_malloc(a->h_length)) == NULL)
 			goto err;
 		memcpy(ret->h_addr_list[i],a->h_addr_list[i],a->h_length);
 		}
@@ -325,17 +325,17 @@ static void ghbn_free(struct hostent *a)
 	if (a->h_aliases != NULL)
 		{
 		for (i=0; a->h_aliases[i] != NULL; i++)
-			Free(a->h_aliases[i]);
-		Free(a->h_aliases);
+			OPENSSL_free(a->h_aliases[i]);
+		OPENSSL_free(a->h_aliases);
 		}
 	if (a->h_addr_list != NULL)
 		{
 		for (i=0; a->h_addr_list[i] != NULL; i++)
-			Free(a->h_addr_list[i]);
-		Free(a->h_addr_list);
+			OPENSSL_free(a->h_addr_list[i]);
+		OPENSSL_free(a->h_addr_list);
 		}
-	if (a->h_name != NULL) Free(a->h_name);
-	Free(a);
+	if (a->h_name != NULL) OPENSSL_free(a->h_name);
+	OPENSSL_free(a);
 	}
 
 struct hostent *BIO_gethostbyname(const char *name)
@@ -628,7 +628,7 @@ again:
 		}
 	ret=1;
 err:
-	if (str != NULL) Free(str);
+	if (str != NULL) OPENSSL_free(str);
 	if ((ret == 0) && (s != INVALID_SOCKET))
 		{
 		closesocket(s);
@@ -667,7 +667,7 @@ int BIO_accept(int sock, char **addr)
 	port=ntohs(from.sin_port);
 	if (*addr == NULL)
 		{
-		if ((p=Malloc(24)) == NULL)
+		if ((p=OPENSSL_malloc(24)) == NULL)
 			{
 			BIOerr(BIO_F_BIO_ACCEPT,ERR_R_MALLOC_FAILURE);
 			goto end;

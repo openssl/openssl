@@ -82,7 +82,7 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char *ek,
 	}
 
 	size=RSA_size(priv->pkey.rsa);
-	key=(unsigned char *)Malloc(size+2);
+	key=(unsigned char *)OPENSSL_malloc(size+2);
 	if (key == NULL)
 		{
 		/* ERROR */
@@ -102,7 +102,7 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char *ek,
 	ret=1;
 err:
 	if (key != NULL) memset(key,0,size);
-	Free(key);
+	OPENSSL_free(key);
 	return(ret);
 	}
 

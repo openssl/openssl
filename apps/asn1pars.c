@@ -108,7 +108,7 @@ int MAIN(int argc, char **argv)
 	argv++;
 	if ((osk=sk_new_null()) == NULL)
 		{
-		BIO_printf(bio_err,"Malloc failure\n");
+		BIO_printf(bio_err,"Memory allocation failure\n");
 		goto end;
 		}
 	while (argc >= 1)

@@ -108,9 +108,9 @@ int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
 			}
 		}
 	inl=i2d(data,NULL);
-	buf_in=(unsigned char *)Malloc((unsigned int)inl);
+	buf_in=(unsigned char *)OPENSSL_malloc((unsigned int)inl);
 	outll=outl=EVP_PKEY_size(pkey);
-	buf_out=(unsigned char *)Malloc((unsigned int)outl);
+	buf_out=(unsigned char *)OPENSSL_malloc((unsigned int)outl);
 	if ((buf_in == NULL) || (buf_out == NULL))
 		{
 		outl=0;
@@ -129,7 +129,7 @@ int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
 		ASN1err(ASN1_F_ASN1_SIGN,ERR_R_EVP_LIB);
 		goto err;
 		}
-	if (signature->data != NULL) Free(signature->data);
+	if (signature->data != NULL) OPENSSL_free(signature->data);
 	signature->data=buf_out;
 	buf_out=NULL;
 	signature->length=outl;
@@ -141,8 +141,8 @@ int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
 err:
 	memset(&ctx,0,sizeof(ctx));
 	if (buf_in != NULL)
-		{ memset((char *)buf_in,0,(unsigned int)inl); Free(buf_in); }
+		{ memset((char *)buf_in,0,(unsigned int)inl); OPENSSL_free(buf_in); }
 	if (buf_out != NULL)
-		{ memset((char *)buf_out,0,outll); Free(buf_out); }
+		{ memset((char *)buf_out,0,outll); OPENSSL_free(buf_out); }
 	return(outl);
 	}

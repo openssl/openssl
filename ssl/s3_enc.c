@@ -150,7 +150,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 		{
 		if ((s->enc_read_ctx == NULL) &&
 			((s->enc_read_ctx=(EVP_CIPHER_CTX *)
-			Malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
+			OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
 			goto err;
 		dd= s->enc_read_ctx;
 		s->read_hash=m;
@@ -170,7 +170,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 				}
 			if (s->s3->rrec.comp == NULL)
 				s->s3->rrec.comp=(unsigned char *)
-					Malloc(SSL3_RT_MAX_PLAIN_LENGTH);
+					OPENSSL_malloc(SSL3_RT_MAX_PLAIN_LENGTH);
 			if (s->s3->rrec.comp == NULL)
 				goto err;
 			}
@@ -181,7 +181,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 		{
 		if ((s->enc_write_ctx == NULL) &&
 			((s->enc_write_ctx=(EVP_CIPHER_CTX *)
-			Malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
+			OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
 			goto err;
 		dd= s->enc_write_ctx;
 		s->write_hash=m;
@@ -300,7 +300,7 @@ int ssl3_setup_key_block(SSL *s)
 
 	ssl3_cleanup_key_block(s);
 
-	if ((p=Malloc(num)) == NULL)
+	if ((p=OPENSSL_malloc(num)) == NULL)
 		goto err;
 
 	s->s3->tmp.key_block_length=num;
@@ -320,7 +320,7 @@ void ssl3_cleanup_key_block(SSL *s)
 		{
 		memset(s->s3->tmp.key_block,0,
 			s->s3->tmp.key_block_length);
-		Free(s->s3->tmp.key_block);
+		OPENSSL_free(s->s3->tmp.key_block);
 		s->s3->tmp.key_block=NULL;
 		}
 	s->s3->tmp.key_block_length=0;

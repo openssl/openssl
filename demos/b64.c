@@ -177,11 +177,11 @@ bad:
 		if (verbose) BIO_printf(bio_err,"bufsize=%d\n",bsize);
 		}
 
-	strbuf=Malloc(SIZE);
-	buff=(unsigned char *)Malloc(EVP_ENCODE_LENGTH(bsize));
+	strbuf=OPENSSL_malloc(SIZE);
+	buff=(unsigned char *)OPENSSL_malloc(EVP_ENCODE_LENGTH(bsize));
 	if ((buff == NULL) || (strbuf == NULL))
 		{
-		BIO_printf(bio_err,"Malloc failure\n");
+		BIO_printf(bio_err,"OPENSSL_malloc failure\n");
 		goto end;
 		}
 
@@ -259,8 +259,8 @@ bad:
 		BIO_printf(bio_err,"bytes written:%8ld\n",BIO_number_written(out));
 		}
 end:
-	if (strbuf != NULL) Free(strbuf);
-	if (buff != NULL) Free(buff);
+	if (strbuf != NULL) OPENSSL_free(strbuf);
+	if (buff != NULL) OPENSSL_free(buff);
 	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free(out);
 	if (benc != NULL) BIO_free(benc);

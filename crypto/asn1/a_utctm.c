@@ -248,10 +248,10 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	p=(char *)s->data;
 	if ((p == NULL) || (s->length < 14))
 		{
-		p=Malloc(20);
+		p=OPENSSL_malloc(20);
 		if (p == NULL) return(NULL);
 		if (s->data != NULL)
-			Free(s->data);
+			OPENSSL_free(s->data);
 		s->data=(unsigned char *)p;
 		}
 

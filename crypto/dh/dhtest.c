@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 	BIO_puts(out,"\n");
 
 	alen=DH_size(a);
-	abuf=(unsigned char *)Malloc(alen);
+	abuf=(unsigned char *)OPENSSL_malloc(alen);
 	aout=DH_compute_key(abuf,b->pub_key,a);
 
 	BIO_puts(out,"key1 =");
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
 	BIO_puts(out,"\n");
 
 	blen=DH_size(b);
-	bbuf=(unsigned char *)Malloc(blen);
+	bbuf=(unsigned char *)OPENSSL_malloc(blen);
 	bout=DH_compute_key(bbuf,a->pub_key,b);
 
 	BIO_puts(out,"key2 =");
@@ -170,8 +170,8 @@ int main(int argc, char *argv[])
 	else
 		ret=0;
 err:
-	if (abuf != NULL) Free(abuf);
-	if (bbuf != NULL) Free(bbuf);
+	if (abuf != NULL) OPENSSL_free(abuf);
+	if (bbuf != NULL) OPENSSL_free(bbuf);
 	if(b != NULL) DH_free(b);
 	if(a != NULL) DH_free(a);
 	BIO_free(out);

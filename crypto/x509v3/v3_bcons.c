@@ -123,7 +123,7 @@ void BASIC_CONSTRAINTS_free(BASIC_CONSTRAINTS *a)
 {
 	if (a == NULL) return;
 	M_ASN1_INTEGER_free (a->pathlen);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,

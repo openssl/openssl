@@ -193,9 +193,9 @@ ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a, unsigned char **pp,
 		goto err;
 		}
 
-	/* We must Malloc stuff, even for 0 bytes otherwise it
+	/* We must OPENSSL_malloc stuff, even for 0 bytes otherwise it
 	 * signifies a missing NULL parameter. */
-	s=(unsigned char *)Malloc((int)len+1);
+	s=(unsigned char *)OPENSSL_malloc((int)len+1);
 	if (s == NULL)
 		{
 		i=ERR_R_MALLOC_FAILURE;
@@ -248,7 +248,7 @@ ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a, unsigned char **pp,
 		memcpy(s,p,(int)len);
 	}
 
-	if (ret->data != NULL) Free(ret->data);
+	if (ret->data != NULL) OPENSSL_free(ret->data);
 	ret->data=s;
 	ret->length=(int)len;
 	if (a != NULL) (*a)=ret;
@@ -297,9 +297,9 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, unsigned char **pp,
 		goto err;
 		}
 
-	/* We must Malloc stuff, even for 0 bytes otherwise it
+	/* We must OPENSSL_malloc stuff, even for 0 bytes otherwise it
 	 * signifies a missing NULL parameter. */
-	s=(unsigned char *)Malloc((int)len+1);
+	s=(unsigned char *)OPENSSL_malloc((int)len+1);
 	if (s == NULL)
 		{
 		i=ERR_R_MALLOC_FAILURE;
@@ -317,7 +317,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, unsigned char **pp,
 		p+=len;
 	}
 
-	if (ret->data != NULL) Free(ret->data);
+	if (ret->data != NULL) OPENSSL_free(ret->data);
 	ret->data=s;
 	ret->length=(int)len;
 	if (a != NULL) (*a)=ret;
@@ -340,8 +340,8 @@ int ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
 	if (a->length < (sizeof(long)+1))
 		{
 		if (a->data != NULL)
-			Free(a->data);
-		if ((a->data=(unsigned char *)Malloc(sizeof(long)+1)) != NULL)
+			OPENSSL_free(a->data);
+		if ((a->data=(unsigned char *)OPENSSL_malloc(sizeof(long)+1)) != NULL)
 			memset((char *)a->data,0,sizeof(long)+1);
 		}
 	if (a->data == NULL)
@@ -416,7 +416,7 @@ ASN1_INTEGER *BN_to_ASN1_INTEGER(BIGNUM *bn, ASN1_INTEGER *ai)
 	else ret->type=V_ASN1_INTEGER;
 	j=BN_num_bits(bn);
 	len=((j == 0)?0:((j/8)+1));
-	ret->data=(unsigned char *)Malloc(len+4);
+	ret->data=(unsigned char *)OPENSSL_malloc(len+4);
 	ret->length=BN_bn2bin(bn,ret->data);
 	return(ret);
 err:

@@ -246,7 +246,7 @@ void X509_NAME_free(X509_NAME *a)
 
 	BUF_MEM_free(a->bytes);
 	sk_X509_NAME_ENTRY_pop_free(a->entries,X509_NAME_ENTRY_free);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 void X509_NAME_ENTRY_free(X509_NAME_ENTRY *a)
@@ -254,7 +254,7 @@ void X509_NAME_ENTRY_free(X509_NAME_ENTRY *a)
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->object);
 	M_ASN1_BIT_STRING_free(a->value);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 int X509_NAME_set(X509_NAME **xn, X509_NAME *name)

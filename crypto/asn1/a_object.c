@@ -222,8 +222,8 @@ ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, unsigned char **pp,
 		}
 	if ((ret->data == NULL) || (ret->length < len))
 		{
-		if (ret->data != NULL) Free(ret->data);
-		ret->data=(unsigned char *)Malloc(len ? (int)len : 1);
+		if (ret->data != NULL) OPENSSL_free(ret->data);
+		ret->data=(unsigned char *)OPENSSL_malloc(len ? (int)len : 1);
 		ret->flags|=ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 		if (ret->data == NULL)
 			{ i=ERR_R_MALLOC_FAILURE; goto err; }
@@ -249,7 +249,7 @@ ASN1_OBJECT *ASN1_OBJECT_new(void)
 	{
 	ASN1_OBJECT *ret;
 
-	ret=(ASN1_OBJECT *)Malloc(sizeof(ASN1_OBJECT));
+	ret=(ASN1_OBJECT *)OPENSSL_malloc(sizeof(ASN1_OBJECT));
 	if (ret == NULL)
 		{
 		ASN1err(ASN1_F_ASN1_OBJECT_NEW,ERR_R_MALLOC_FAILURE);
@@ -270,19 +270,19 @@ void ASN1_OBJECT_free(ASN1_OBJECT *a)
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS)
 		{
 #ifndef CONST_STRICT /* disable purely for compile-time strict const checking. Doing this on a "real" compile will cause memory leaks */
-		if (a->sn != NULL) Free((void *)a->sn);
-		if (a->ln != NULL) Free((void *)a->ln);
+		if (a->sn != NULL) OPENSSL_free((void *)a->sn);
+		if (a->ln != NULL) OPENSSL_free((void *)a->ln);
 #endif
 		a->sn=a->ln=NULL;
 		}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_DATA)
 		{
-		if (a->data != NULL) Free(a->data);
+		if (a->data != NULL) OPENSSL_free(a->data);
 		a->data=NULL;
 		a->length=0;
 		}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC)
-		Free(a);
+		OPENSSL_free(a);
 	}
 
 ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,

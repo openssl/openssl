@@ -808,7 +808,7 @@ bad:
 			{
 			if ((f=BN_bn2hex(serial)) == NULL) goto err;
 			BIO_printf(bio_err,"next serial number is %s\n",f);
-			Free(f);
+			OPENSSL_free(f);
 			}
 
 		if ((attribs=CONF_get_section(conf,policy)) == NULL)
@@ -819,7 +819,7 @@ bad:
 
 		if ((cert_sk=sk_X509_new_null()) == NULL)
 			{
-			BIO_printf(bio_err,"Malloc failure\n");
+			BIO_printf(bio_err,"Memory allocation failure\n");
 			goto err;
 			}
 		if (spkac_file != NULL)
@@ -836,7 +836,7 @@ bad:
 				if (!BN_add_word(serial,1)) goto err;
 				if (!sk_X509_push(cert_sk,x))
 					{
-					BIO_printf(bio_err,"Malloc failure\n");
+					BIO_printf(bio_err,"Memory allocation failure\n");
 					goto err;
 					}
 				if (outfile)
@@ -860,7 +860,7 @@ bad:
 				if (!BN_add_word(serial,1)) goto err;
 				if (!sk_X509_push(cert_sk,x))
 					{
-					BIO_printf(bio_err,"Malloc failure\n");
+					BIO_printf(bio_err,"Memory allocation failure\n");
 					goto err;
 					}
 				}
@@ -879,7 +879,7 @@ bad:
 				if (!BN_add_word(serial,1)) goto err;
 				if (!sk_X509_push(cert_sk,x))
 					{
-					BIO_printf(bio_err,"Malloc failure\n");
+					BIO_printf(bio_err,"Memory allocation failure\n");
 					goto err;
 					}
 				}
@@ -898,7 +898,7 @@ bad:
 				if (!BN_add_word(serial,1)) goto err;
 				if (!sk_X509_push(cert_sk,x))
 					{
-					BIO_printf(bio_err,"Malloc failure\n");
+					BIO_printf(bio_err,"Memory allocation failure\n");
 					goto err;
 					}
 				}
@@ -1580,7 +1580,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	/* Ok, now we check the 'policy' stuff. */
 	if ((subject=X509_NAME_new()) == NULL)
 		{
-		BIO_printf(bio_err,"Malloc failure\n");
+		BIO_printf(bio_err,"Memory allocation failure\n");
 		goto err;
 		}
 
@@ -1678,7 +1678,7 @@ again2:
 					{
 					if (push != NULL)
 						X509_NAME_ENTRY_free(push);
-					BIO_printf(bio_err,"Malloc failure\n");
+					BIO_printf(bio_err,"Memory allocation failure\n");
 					goto err;
 					}
 				}
@@ -1700,7 +1700,7 @@ again2:
 	row[DB_serial]=BN_bn2hex(serial);
 	if ((row[DB_name] == NULL) || (row[DB_serial] == NULL))
 		{
-		BIO_printf(bio_err,"Malloc failure\n");
+		BIO_printf(bio_err,"Memory allocation failure\n");
 		goto err;
 		}
 
@@ -1841,32 +1841,32 @@ again2:
 		goto err;
 
 	/* We now just add it to the database */
-	row[DB_type]=(char *)Malloc(2);
+	row[DB_type]=(char *)OPENSSL_malloc(2);
 
 	tm=X509_get_notAfter(ret);
-	row[DB_exp_date]=(char *)Malloc(tm->length+1);
+	row[DB_exp_date]=(char *)OPENSSL_malloc(tm->length+1);
 	memcpy(row[DB_exp_date],tm->data,tm->length);
 	row[DB_exp_date][tm->length]='\0';
 
 	row[DB_rev_date]=NULL;
 
 	/* row[DB_serial] done already */
-	row[DB_file]=(char *)Malloc(8);
+	row[DB_file]=(char *)OPENSSL_malloc(8);
 	/* row[DB_name] done already */
 
 	if ((row[DB_type] == NULL) || (row[DB_exp_date] == NULL) ||
 		(row[DB_file] == NULL))
 		{
-		BIO_printf(bio_err,"Malloc failure\n");
+		BIO_printf(bio_err,"Memory allocation failure\n");
 		goto err;
 		}
 	strcpy(row[DB_file],"unknown");
 	row[DB_type][0]='V';
 	row[DB_type][1]='\0';
 
-	if ((irow=(char **)Malloc(sizeof(char *)*(DB_NUMBER+1))) == NULL)
+	if ((irow=(char **)OPENSSL_malloc(sizeof(char *)*(DB_NUMBER+1))) == NULL)
 		{
-		BIO_printf(bio_err,"Malloc failure\n");
+		BIO_printf(bio_err,"Memory allocation failure\n");
 		goto err;
 		}
 
@@ -1886,7 +1886,7 @@ again2:
 	ok=1;
 err:
 	for (i=0; i<DB_NUMBER; i++)
-		if (row[i] != NULL) Free(row[i]);
+		if (row[i] != NULL) OPENSSL_free(row[i]);
 
 	if (CAname != NULL)
 		X509_NAME_free(CAname);
@@ -2137,7 +2137,7 @@ static int do_revoke(X509 *x509, TXT_DB *db)
 	BN_free(bn);
 	if ((row[DB_name] == NULL) || (row[DB_serial] == NULL))
 		{
-		BIO_printf(bio_err,"Malloc failure\n");
+		BIO_printf(bio_err,"Memory allocation failure\n");
 		goto err;
 		}
 	/* We have to lookup by serial number because name lookup
@@ -2149,33 +2149,33 @@ static int do_revoke(X509 *x509, TXT_DB *db)
 		BIO_printf(bio_err,"Adding Entry to DB for %s\n", row[DB_name]);
 
 		/* We now just add it to the database */
-		row[DB_type]=(char *)Malloc(2);
+		row[DB_type]=(char *)OPENSSL_malloc(2);
 
 		tm=X509_get_notAfter(x509);
-		row[DB_exp_date]=(char *)Malloc(tm->length+1);
+		row[DB_exp_date]=(char *)OPENSSL_malloc(tm->length+1);
 		memcpy(row[DB_exp_date],tm->data,tm->length);
 		row[DB_exp_date][tm->length]='\0';
 
 		row[DB_rev_date]=NULL;
 
 		/* row[DB_serial] done already */
-		row[DB_file]=(char *)Malloc(8);
+		row[DB_file]=(char *)OPENSSL_malloc(8);
 
 		/* row[DB_name] done already */
 
 		if ((row[DB_type] == NULL) || (row[DB_exp_date] == NULL) ||
 			(row[DB_file] == NULL))
 			{
-			BIO_printf(bio_err,"Malloc failure\n");
+			BIO_printf(bio_err,"Memory allocation failure\n");
 			goto err;
 			}
 		strcpy(row[DB_file],"unknown");
 		row[DB_type][0]='V';
 		row[DB_type][1]='\0';
 
-		if ((irow=(char **)Malloc(sizeof(char *)*(DB_NUMBER+1))) == NULL)
+		if ((irow=(char **)OPENSSL_malloc(sizeof(char *)*(DB_NUMBER+1))) == NULL)
 			{
-			BIO_printf(bio_err,"Malloc failure\n");
+			BIO_printf(bio_err,"Memory allocation failure\n");
 			goto err;
 			}
 
@@ -2218,7 +2218,7 @@ static int do_revoke(X509 *x509, TXT_DB *db)
 		revtm=X509_gmtime_adj(revtm,0);
 		rrow[DB_type][0]='R';
 		rrow[DB_type][1]='\0';
-		rrow[DB_rev_date]=(char *)Malloc(revtm->length+1);
+		rrow[DB_rev_date]=(char *)OPENSSL_malloc(revtm->length+1);
 		memcpy(rrow[DB_rev_date],revtm->data,revtm->length);
 		rrow[DB_rev_date][revtm->length]='\0';
 		ASN1_UTCTIME_free(revtm);
@@ -2228,7 +2228,7 @@ err:
 	for (i=0; i<DB_NUMBER; i++)
 		{
 		if (row[i] != NULL) 
-			Free(row[i]);
+			OPENSSL_free(row[i]);
 		}
 	return(ok);
 }

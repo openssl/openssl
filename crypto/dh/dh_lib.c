@@ -96,7 +96,7 @@ DH *DH_new(void)
 DH *DH_new_method(DH_METHOD *meth)
 	{
 	DH *ret;
-	ret=(DH *)Malloc(sizeof(DH));
+	ret=(DH *)OPENSSL_malloc(sizeof(DH));
 
 	if (ret == NULL)
 		{
@@ -122,7 +122,7 @@ DH *DH_new_method(DH_METHOD *meth)
 	ret->flags=ret->meth->flags;
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
-		Free(ret);
+		OPENSSL_free(ret);
 		ret=NULL;
 		}
 	else
@@ -155,11 +155,11 @@ void DH_free(DH *r)
 	if (r->g != NULL) BN_clear_free(r->g);
 	if (r->q != NULL) BN_clear_free(r->q);
 	if (r->j != NULL) BN_clear_free(r->j);
-	if (r->seed) Free(r->seed);
+	if (r->seed) OPENSSL_free(r->seed);
 	if (r->counter != NULL) BN_clear_free(r->counter);
 	if (r->pub_key != NULL) BN_clear_free(r->pub_key);
 	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
-	Free(r);
+	OPENSSL_free(r);
 	}
 
 int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,

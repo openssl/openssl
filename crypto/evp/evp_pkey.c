@@ -308,7 +308,7 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 
 	p8->pkeyalg->algorithm = OBJ_nid2obj(NID_dsa);
 	len = i2d_DSAparams (pkey->pkey.dsa, NULL);
-	if (!(p = Malloc(len))) {
+	if (!(p = OPENSSL_malloc(len))) {
 		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 		PKCS8_PRIV_KEY_INFO_free (p8);
 		return 0;
@@ -317,7 +317,7 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	i2d_DSAparams (pkey->pkey.dsa, &q);
 	params = ASN1_STRING_new();
 	ASN1_STRING_set(params, p, len);
-	Free(p);
+	OPENSSL_free(p);
 	/* Get private key into integer */
 	if (!(prkey = BN_to_ASN1_INTEGER (pkey->pkey.dsa->priv_key, NULL))) {
 		EVPerr(EVP_F_EVP_PKEY2PKCS8,EVP_R_ENCODE_ERROR);

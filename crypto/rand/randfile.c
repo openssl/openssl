@@ -172,7 +172,7 @@ int RAND_write_file(const char *file)
 	{
 	char *tmpf;
 
-	tmpf = Malloc(strlen(file) + 4);  /* to add ";-1" and a nul */
+	tmpf = OPENSSL_malloc(strlen(file) + 4);  /* to add ";-1" and a nul */
 	if (tmpf)
 		{
 		strcpy(tmpf, file);

@@ -129,7 +129,7 @@ int CRYPTO_get_new_lockid(char *name)
 		return(0);
 	i=sk_push(app_locks,str);
 	if (!i)
-		Free(str);
+		OPENSSL_free(str);
 	else
 		i+=CRYPTO_NUM_LOCKS; /* gap of one :-) */
 	return(i);

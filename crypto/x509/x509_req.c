@@ -83,7 +83,7 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 	ri=ret->req_info;
 
 	ri->version->length=1;
-	ri->version->data=(unsigned char *)Malloc(1);
+	ri->version->data=(unsigned char *)OPENSSL_malloc(1);
 	if (ri->version->data == NULL) goto err;
 	ri->version->data[0]=0; /* version == 0 */
 
@@ -188,7 +188,7 @@ int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
 	/* Generate encoding of extensions */
 	len = i2d_ASN1_SET_OF_X509_EXTENSION(exts, NULL, i2d_X509_EXTENSION,
 			V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL, IS_SEQUENCE);
-	if(!(p = Malloc(len))) goto err;
+	if(!(p = OPENSSL_malloc(len))) goto err;
 	q = p;
 	i2d_ASN1_SET_OF_X509_EXTENSION(exts, &q, i2d_X509_EXTENSION,
 			V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL, IS_SEQUENCE);
@@ -204,7 +204,7 @@ int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
 	if(!sk_X509_ATTRIBUTE_push(req->req_info->attributes, attr)) goto err;
 	return 1;
 	err:
-	if(p) Free(p);
+	if(p) OPENSSL_free(p);
 	X509_ATTRIBUTE_free(attr);
 	ASN1_TYPE_free(at);
 	return 0;

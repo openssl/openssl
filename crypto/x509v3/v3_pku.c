@@ -121,7 +121,7 @@ void PKEY_USAGE_PERIOD_free(PKEY_USAGE_PERIOD *a)
 	if (a == NULL) return;
 	M_ASN1_GENERALIZEDTIME_free(a->notBefore);
 	M_ASN1_GENERALIZEDTIME_free(a->notAfter);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,

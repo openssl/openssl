@@ -156,7 +156,7 @@ static int rtcp_new(BIO *bi)
 	bi->init=1;
 	bi->num=0;
 	bi->flags = 0;
-	bi->ptr=Malloc(sizeof(struct rpc_ctx));
+	bi->ptr=OPENSSL_malloc(sizeof(struct rpc_ctx));
 	ctx = (struct rpc_ctx *) bi->ptr;
 	ctx->filled = 0;
 	ctx->pos = 0;
@@ -166,7 +166,7 @@ static int rtcp_new(BIO *bi)
 static int rtcp_free(BIO *a)
 {
 	if (a == NULL) return(0);
-	if ( a->ptr ) Free ( a->ptr );
+	if ( a->ptr ) OPENSSL_free ( a->ptr );
 	a->ptr = NULL;
 	return(1);
 }

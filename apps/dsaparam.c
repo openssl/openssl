@@ -260,10 +260,10 @@ bad:
 		bits_p=BN_num_bits(dsa->p);
 		bits_q=BN_num_bits(dsa->q);
 		bits_g=BN_num_bits(dsa->g);
-		data=(unsigned char *)Malloc(len+20);
+		data=(unsigned char *)OPENSSL_malloc(len+20);
 		if (data == NULL)
 			{
-			perror("Malloc");
+			perror("OPENSSL_malloc");
 			goto end;
 			}
 		l=BN_bn2bin(dsa->p,data);

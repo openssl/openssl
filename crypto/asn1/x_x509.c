@@ -102,7 +102,7 @@ X509 *d2i_X509(X509 **a, unsigned char **pp, long length)
 	M_ASN1_D2I_get(ret->cert_info,d2i_X509_CINF);
 	M_ASN1_D2I_get(ret->sig_alg,d2i_X509_ALGOR);
 	M_ASN1_D2I_get(ret->signature,d2i_ASN1_BIT_STRING);
-	if (ret->name != NULL) Free(ret->name);
+	if (ret->name != NULL) OPENSSL_free(ret->name);
 	ret->name=X509_NAME_oneline(ret->cert_info->subject,NULL,0);
 
 	M_ASN1_D2I_Finish(a,X509_free,ASN1_F_D2I_X509);
@@ -152,8 +152,8 @@ void X509_free(X509 *a)
 	M_ASN1_BIT_STRING_free(a->signature);
 	X509_CERT_AUX_free(a->aux);
 
-	if (a->name != NULL) Free(a->name);
-	Free(a);
+	if (a->name != NULL) OPENSSL_free(a->name);
+	OPENSSL_free(a);
 	}
 
 int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,

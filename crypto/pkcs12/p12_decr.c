@@ -65,7 +65,7 @@
 
 
 /* Encrypt/Decrypt a buffer based on password and algor, result in a
- * Malloc'ed buffer
+ * OPENSSL_malloc'ed buffer
  */
 
 unsigned char * PKCS12_pbe_crypt (X509_ALGOR *algor, const char *pass,
@@ -83,7 +83,7 @@ unsigned char * PKCS12_pbe_crypt (X509_ALGOR *algor, const char *pass,
 		return NULL;
 	}
 
-	if(!(out = Malloc (inlen + EVP_CIPHER_CTX_block_size(&ctx)))) {
+	if(!(out = OPENSSL_malloc (inlen + EVP_CIPHER_CTX_block_size(&ctx)))) {
 		PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -91,7 +91,7 @@ unsigned char * PKCS12_pbe_crypt (X509_ALGOR *algor, const char *pass,
 	EVP_CipherUpdate (&ctx, out, &i, in, inlen);
 	outlen = i;
 	if(!EVP_CipherFinal (&ctx, out + i, &i)) {
-		Free (out);
+		OPENSSL_free (out);
 		PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,PKCS12_R_PKCS12_CIPHERFINAL_ERROR);
 		return NULL;
 	}
@@ -139,7 +139,7 @@ char * PKCS12_decrypt_d2i (X509_ALGOR *algor, char * (*d2i)(),
 	else ret = d2i(NULL, &p, outlen);
 	if (seq & 2) memset(out, 0, outlen);
 	if(!ret) PKCS12err(PKCS12_F_PKCS12_DECRYPT_D2I,PKCS12_R_DECODE_ERROR);
-	Free (out);
+	OPENSSL_free (out);
 	return ret;
 }
 
@@ -166,7 +166,7 @@ ASN1_OCTET_STRING *PKCS12_i2d_encrypt (X509_ALGOR *algor, int (*i2d)(),
 		PKCS12err(PKCS12_F_PKCS12_I2D_ENCRYPT,PKCS12_R_ENCODE_ERROR);
 		return NULL;
 	}
-	if (!(in = Malloc (inlen))) {
+	if (!(in = OPENSSL_malloc (inlen))) {
 		PKCS12err(PKCS12_F_PKCS12_I2D_ENCRYPT,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -177,10 +177,10 @@ ASN1_OCTET_STRING *PKCS12_i2d_encrypt (X509_ALGOR *algor, int (*i2d)(),
 	if (!PKCS12_pbe_crypt (algor, pass, passlen, in, inlen, &oct->data,
 				 &oct->length, 1)) {
 		PKCS12err(PKCS12_F_PKCS12_I2D_ENCRYPT,PKCS12_R_ENCRYPT_ERROR);
-		Free(in);
+		OPENSSL_free(in);
 		return NULL;
 	}
-	Free (in);
+	OPENSSL_free (in);
 	return oct;
 }
 

@@ -95,7 +95,7 @@ int des_enc_write(int fd, const void *_buf, int len,
 
 	if (outbuf == NULL)
 		{
-		outbuf=Malloc(BSIZE+HDRSIZE);
+		outbuf=OPENSSL_malloc(BSIZE+HDRSIZE);
 		if (outbuf == NULL) return(-1);
 		}
 	/* If we are sending less than 8 bytes, the same char will look

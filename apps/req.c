@@ -878,8 +878,8 @@ end:
 	EVP_PKEY_free(pkey);
 	X509_REQ_free(req);
 	X509_free(x509ss);
-	if(passargin && passin) Free(passin);
-	if(passargout && passout) Free(passout);
+	if(passargin && passin) OPENSSL_free(passin);
+	if(passargout && passout) OPENSSL_free(passout);
 	OBJ_cleanup();
 #ifndef NO_DSA
 	if (dsa_params != NULL) DSA_free(dsa_params);

@@ -345,15 +345,15 @@ bad:
 
 		i=1;
 		size=i2d_Netscape_RSA(rsa,NULL,NULL);
-		if ((p=(unsigned char *)Malloc(size)) == NULL)
+		if ((p=(unsigned char *)OPENSSL_malloc(size)) == NULL)
 			{
-			BIO_printf(bio_err,"Malloc failure\n");
+			BIO_printf(bio_err,"Memory allocation failure\n");
 			goto end;
 			}
 		pp=p;
 		i2d_Netscape_RSA(rsa,&p,NULL);
 		BIO_write(out,(char *)pp,size);
-		Free(pp);
+		OPENSSL_free(pp);
 		}
 #endif
 	else if (outformat == FORMAT_PEM) {
@@ -376,8 +376,8 @@ end:
 	if(in != NULL) BIO_free(in);
 	if(out != NULL) BIO_free(out);
 	if(rsa != NULL) RSA_free(rsa);
-	if(passin) Free(passin);
-	if(passout) Free(passout);
+	if(passin) OPENSSL_free(passin);
+	if(passout) OPENSSL_free(passout);
 	EXIT(ret);
 	}
 #else /* !NO_RSA */

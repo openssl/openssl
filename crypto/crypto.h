@@ -281,16 +281,17 @@ int CRYPTO_is_mem_check_on(void);
 #define MemCheck_off()	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE)
 #define is_MemCheck_on() CRYPTO_is_mem_check_on()
 
-#define Malloc(num)	CRYPTO_malloc((int)num,__FILE__,__LINE__)
-#define Realloc(addr,num) \
+#define OPENSSL_malloc(num)	CRYPTO_malloc((int)num,__FILE__,__LINE__)
+#define OPENSSL_realloc(addr,num) \
 	CRYPTO_realloc((char *)addr,(int)num,__FILE__,__LINE__)
-#define Remalloc(addr,num) \
+#define OPENSSL_remalloc(addr,num) \
 	CRYPTO_remalloc((char **)addr,(int)num,__FILE__,__LINE__)
-#define FreeFunc	CRYPTO_free
-#define Free(addr)	CRYPTO_free(addr)
+#define OPENSSL_freeFunc	CRYPTO_free
+#define OPENSSL_free(addr)	CRYPTO_free(addr)
 
-#define Malloc_locked(num) CRYPTO_malloc_locked((int)num,__FILE__,__LINE__)
-#define Free_locked(addr) CRYPTO_free_locked(addr)
+#define OPENSSL_malloc_locked(num) \
+	CRYPTO_malloc_locked((int)num,__FILE__,__LINE__)
+#define OPENSSL_free_locked(addr) CRYPTO_free_locked(addr)
 
 
 /* Case insensiteve linking causes problems.... */

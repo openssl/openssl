@@ -211,7 +211,7 @@ end:
 	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free(out);
 	if (dsa != NULL) DSA_free(dsa);
-	if(passout) Free(passout);
+	if(passout) OPENSSL_free(passout);
 	EXIT(ret);
 	}
 #endif

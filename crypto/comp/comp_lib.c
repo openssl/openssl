@@ -8,7 +8,7 @@ COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
 	{
 	COMP_CTX *ret;
 
-	if ((ret=(COMP_CTX *)Malloc(sizeof(COMP_CTX))) == NULL)
+	if ((ret=(COMP_CTX *)OPENSSL_malloc(sizeof(COMP_CTX))) == NULL)
 		{
 		/* ZZZZZZZZZZZZZZZZ */
 		return(NULL);
@@ -17,7 +17,7 @@ COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
 	ret->meth=meth;
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
-		Free(ret);
+		OPENSSL_free(ret);
 		ret=NULL;
 		}
 #if 0
@@ -37,7 +37,7 @@ void COMP_CTX_free(COMP_CTX *ctx)
 	if (ctx->meth->finish != NULL)
 		ctx->meth->finish(ctx);
 
-	Free(ctx);
+	OPENSSL_free(ctx);
 	}
 
 int COMP_compress_block(COMP_CTX *ctx, unsigned char *out, int olen,

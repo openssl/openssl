@@ -64,14 +64,14 @@
 
 static const char *Hex="0123456789ABCDEF";
 
-/* Must 'Free' the returned data */
+/* Must 'OPENSSL_free' the returned data */
 char *BN_bn2hex(const BIGNUM *a)
 	{
 	int i,j,v,z=0;
 	char *buf;
 	char *p;
 
-	buf=(char *)Malloc(a->top*BN_BYTES*2+2);
+	buf=(char *)OPENSSL_malloc(a->top*BN_BYTES*2+2);
 	if (buf == NULL)
 		{
 		BNerr(BN_F_BN_BN2HEX,ERR_R_MALLOC_FAILURE);
@@ -99,7 +99,7 @@ err:
 	return(buf);
 	}
 
-/* Must 'Free' the returned data */
+/* Must 'OPENSSL_free' the returned data */
 char *BN_bn2dec(const BIGNUM *a)
 	{
 	int i=0,num;
@@ -110,8 +110,8 @@ char *BN_bn2dec(const BIGNUM *a)
 
 	i=BN_num_bits(a)*3;
 	num=(i/10+i/1000+3)+1;
-	bn_data=(BN_ULONG *)Malloc((num/BN_DEC_NUM+1)*sizeof(BN_ULONG));
-	buf=(char *)Malloc(num+3);
+	bn_data=(BN_ULONG *)OPENSSL_malloc((num/BN_DEC_NUM+1)*sizeof(BN_ULONG));
+	buf=(char *)OPENSSL_malloc(num+3);
 	if ((buf == NULL) || (bn_data == NULL))
 		{
 		BNerr(BN_F_BN_BN2DEC,ERR_R_MALLOC_FAILURE);
@@ -149,7 +149,7 @@ char *BN_bn2dec(const BIGNUM *a)
 			}
 		}
 err:
-	if (bn_data != NULL) Free(bn_data);
+	if (bn_data != NULL) OPENSSL_free(bn_data);
 	if (t != NULL) BN_free(t);
 	return(buf);
 	}

@@ -106,5 +106,5 @@ void PKCS12_MAC_DATA_free (PKCS12_MAC_DATA *a)
 	X509_SIG_free (a->dinfo);
 	M_ASN1_OCTET_STRING_free(a->salt);
 	M_ASN1_INTEGER_free(a->iter);
-	Free (a);
+	OPENSSL_free (a);
 }

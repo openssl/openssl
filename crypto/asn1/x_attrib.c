@@ -160,6 +160,6 @@ void X509_ATTRIBUTE_free(X509_ATTRIBUTE *a)
 		sk_ASN1_TYPE_pop_free(a->value.set,ASN1_TYPE_free);
 	else
 		ASN1_TYPE_free(a->value.single);
-	Free(a);
+	OPENSSL_free(a);
 	}
 

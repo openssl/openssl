@@ -105,7 +105,7 @@ static int ssl_new(BIO *bi)
 	{
 	BIO_SSL *bs;
 
-	bs=(BIO_SSL *)Malloc(sizeof(BIO_SSL));
+	bs=(BIO_SSL *)OPENSSL_malloc(sizeof(BIO_SSL));
 	if (bs == NULL)
 		{
 		BIOerr(BIO_F_SSL_NEW,ERR_R_MALLOC_FAILURE);
@@ -133,7 +133,7 @@ static int ssl_free(BIO *a)
 		a->flags=0;
 		}
 	if (a->ptr != NULL)
-		Free(a->ptr);
+		OPENSSL_free(a->ptr);
 	return(1);
 	}
 	

@@ -201,7 +201,7 @@ end:
 		config=NULL;
 		}
 	if (prog != NULL) lh_free(prog);
-	if (arg.data != NULL) Free(arg.data);
+	if (arg.data != NULL) OPENSSL_free(arg.data);
 	ERR_remove_state(0);
 
 	EVP_cleanup();

@@ -285,7 +285,7 @@ static int ebcdic_new(BIO *bi)
 {
 	EBCDIC_OUTBUFF *wbuf;
 
-	wbuf = (EBCDIC_OUTBUFF *)Malloc(sizeof(EBCDIC_OUTBUFF) + 1024);
+	wbuf = (EBCDIC_OUTBUFF *)OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + 1024);
 	wbuf->alloced = 1024;
 	wbuf->buff[0] = '\0';
 
@@ -299,7 +299,7 @@ static int ebcdic_free(BIO *a)
 {
 	if (a == NULL) return(0);
 	if (a->ptr != NULL)
-		Free(a->ptr);
+		OPENSSL_free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;
 	a->flags=0;
@@ -336,8 +336,8 @@ static int ebcdic_write(BIO *b, char *in, int inl)
 		num = num + num;  /* double the size */
 		if (num < inl)
 			num = inl;
-		Free(wbuf);
-		wbuf=(EBCDIC_OUTBUFF *)Malloc(sizeof(EBCDIC_OUTBUFF) + num);
+		OPENSSL_free(wbuf);
+		wbuf=(EBCDIC_OUTBUFF *)OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + num);
 
 		wbuf->alloced = num;
 		wbuf->buff[0] = '\0';
@@ -766,7 +766,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	struct timeval tv;
 #endif
 
-	if ((buf=Malloc(bufsize)) == NULL)
+	if ((buf=OPENSSL_malloc(bufsize)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto err;
@@ -1028,7 +1028,7 @@ err:
 	if (buf != NULL)
 		{
 		memset(buf,0,bufsize);
-		Free(buf);
+		OPENSSL_free(buf);
 		}
 	if (ret >= 0)
 		BIO_printf(bio_s_out,"ACCEPT\n");
@@ -1145,7 +1145,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	BIO *io,*ssl_bio,*sbio;
 	long total_bytes;
 
-	buf=Malloc(bufsize);
+	buf=OPENSSL_malloc(bufsize);
 	if (buf == NULL) return(0);
 	io=BIO_new(BIO_f_buffer());
 	ssl_bio=BIO_new(BIO_f_ssl());
@@ -1474,7 +1474,7 @@ err:
 	if (ret >= 0)
 		BIO_printf(bio_s_out,"ACCEPT\n");
 
-	if (buf != NULL) Free(buf);
+	if (buf != NULL) OPENSSL_free(buf);
 	if (io != NULL) BIO_free_all(io);
 /*	if (ssl_bio != NULL) BIO_free(ssl_bio);*/
 	return(ret);

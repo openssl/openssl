@@ -92,7 +92,7 @@ int MAIN(int argc, char **argv)
 
 	apps_startup();
 
-	if ((buf=(unsigned char *)Malloc(BUFSIZE)) == NULL)
+	if ((buf=(unsigned char *)OPENSSL_malloc(BUFSIZE)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
@@ -192,7 +192,7 @@ end:
 	if (buf != NULL)
 		{
 		memset(buf,0,BUFSIZE);
-		Free(buf);
+		OPENSSL_free(buf);
 		}
 	if (in != NULL) BIO_free(in);
 	if (bmd != NULL) BIO_free(bmd);
