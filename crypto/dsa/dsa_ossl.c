@@ -92,7 +92,7 @@ dsa_finish,
 NULL
 };
 
-DSA_METHOD *DSA_OpenSSL(void)
+const DSA_METHOD *DSA_OpenSSL(void)
 {
 	return &openssl_dsa_meth;
 }

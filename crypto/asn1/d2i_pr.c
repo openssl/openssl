@@ -94,7 +94,8 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, unsigned char **pp,
 #endif
 #ifndef NO_DSA
 	case EVP_PKEY_DSA:
-		if ((ret->pkey.dsa=d2i_DSAPrivateKey(NULL,pp,length)) == NULL)
+		if ((ret->pkey.dsa=d2i_DSAPrivateKey(NULL,
+			(const unsigned char **)pp,length)) == NULL) /* TMP UGLY CAST */
 			{
 			ASN1err(ASN1_F_D2I_PRIVATEKEY,ERR_R_ASN1_LIB);
 			goto err;

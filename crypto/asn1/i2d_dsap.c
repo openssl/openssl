@@ -63,7 +63,7 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/dsa.h>
 
-int i2d_DSAparams(DSA *a, unsigned char **pp)
+int i2d_DSAparams(const DSA *a, unsigned char **pp)
 	{
 	BIGNUM *num[3];
 	ASN1_INTEGER bs;

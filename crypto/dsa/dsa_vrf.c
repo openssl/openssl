@@ -80,7 +80,7 @@ int DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
  *     -1: error
  */
 int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
-	     unsigned char *sigbuf, int siglen, DSA *dsa)
+	     const unsigned char *sigbuf, int siglen, DSA *dsa)
 	{
 	DSA_SIG *s;
 	int ret=-1;

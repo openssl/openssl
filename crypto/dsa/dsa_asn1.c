@@ -29,7 +29,7 @@ void DSA_SIG_free(DSA_SIG *r)
 	OPENSSL_free(r);
 }
 
-int i2d_DSA_SIG(DSA_SIG *v, unsigned char **pp)
+int i2d_DSA_SIG(const DSA_SIG *v, unsigned char **pp)
 {
 	int t=0,len;
 	ASN1_INTEGER rbs,sbs;
@@ -69,7 +69,7 @@ int i2d_DSA_SIG(DSA_SIG *v, unsigned char **pp)
 	return(t);
 }
 
-DSA_SIG *d2i_DSA_SIG(DSA_SIG **a, unsigned char **pp, long length)
+DSA_SIG *d2i_DSA_SIG(DSA_SIG **a, const unsigned char **pp, long length)
 {
 	int i=ERR_R_NESTED_ASN1_ERROR;
 	ASN1_INTEGER *bs=NULL;

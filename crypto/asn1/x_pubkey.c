@@ -206,6 +206,7 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 	long j;
 	int type;
 	unsigned char *p;
+	const unsigned char *cp;
 #ifndef NO_DSA
 	X509_ALGOR *a;
 #endif
@@ -237,9 +238,9 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 		if (a->parameter->type == V_ASN1_SEQUENCE)
 			{
 			ret->pkey.dsa->write_params=0;
-			p=a->parameter->value.sequence->data;
+			cp=p=a->parameter->value.sequence->data;
 			j=a->parameter->value.sequence->length;
-			if (!d2i_DSAparams(&ret->pkey.dsa,&p,(long)j))
+			if (!d2i_DSAparams(&ret->pkey.dsa,&cp,(long)j))
 				goto err;
 			}
 		ret->save_parameters=1;

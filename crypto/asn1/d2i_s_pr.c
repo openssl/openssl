@@ -66,7 +66,7 @@
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
 
-DSA *d2i_DSAPrivateKey(DSA **a, unsigned char **pp, long length)
+DSA *d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length)
 	{
 	int i=ASN1_R_PARSING;
 	ASN1_INTEGER *bs=NULL;

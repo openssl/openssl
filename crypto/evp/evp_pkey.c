@@ -165,9 +165,9 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
 			goto dsaerr;
 		}
-		p = param->value.sequence->data;
+		cp = p = param->value.sequence->data;
 		plen = param->value.sequence->length;
-		if (!(dsa = d2i_DSAparams (NULL, &p, plen))) {
+		if (!(dsa = d2i_DSAparams (NULL, &cp, plen))) {
 			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
 			goto dsaerr;
 		}

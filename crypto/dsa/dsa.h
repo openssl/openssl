@@ -154,19 +154,19 @@ struct dsa_st
 
 DSA_SIG * DSA_SIG_new(void);
 void	DSA_SIG_free(DSA_SIG *a);
-int	i2d_DSA_SIG(DSA_SIG *a, unsigned char **pp);
-DSA_SIG * d2i_DSA_SIG(DSA_SIG **v, unsigned char **pp, long length);
+int	i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);
+DSA_SIG * d2i_DSA_SIG(DSA_SIG **v, const unsigned char **pp, long length);
 
 DSA_SIG * DSA_do_sign(const unsigned char *dgst,int dlen,DSA *dsa);
 int	DSA_do_verify(const unsigned char *dgst,int dgst_len,
 		      DSA_SIG *sig,DSA *dsa);
 
-DSA_METHOD *DSA_OpenSSL(void);
+const DSA_METHOD *DSA_OpenSSL(void);
 
-void        DSA_set_default_openssl_method(DSA_METHOD *);
-DSA_METHOD *DSA_get_default_openssl_method(void);
+void        DSA_set_default_openssl_method(const DSA_METHOD *);
+const DSA_METHOD *DSA_get_default_openssl_method(void);
 #if 0
-DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *);
+const DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *);
 #else
 int DSA_set_method(DSA *dsa, struct engine_st *engine);
 #endif
@@ -177,13 +177,13 @@ DSA *	DSA_new_method(DSA_METHOD *meth);
 #else
 DSA *	DSA_new_method(struct engine_st *engine);
 #endif
-int	DSA_size(DSA *);
+int	DSA_size(const DSA *);
 	/* next 4 return -1 on error */
 int	DSA_sign_setup( DSA *dsa,BN_CTX *ctx_in,BIGNUM **kinvp,BIGNUM **rp);
 int	DSA_sign(int type,const unsigned char *dgst,int dlen,
 		unsigned char *sig, unsigned int *siglen, DSA *dsa);
 int	DSA_verify(int type,const unsigned char *dgst,int dgst_len,
-		unsigned char *sigbuf, int siglen, DSA *dsa);
+		const unsigned char *sigbuf, int siglen, DSA *dsa);
 void	DSA_free (DSA *r);
 int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
@@ -192,24 +192,25 @@ void *DSA_get_ex_data(DSA *d, int idx);
 
 void	ERR_load_DSA_strings(void );
 
-DSA *	d2i_DSAPublicKey(DSA **a, unsigned char **pp, long length);
-DSA *	d2i_DSAPrivateKey(DSA **a, unsigned char **pp, long length);
-DSA * 	d2i_DSAparams(DSA **a, unsigned char **pp, long length);
-DSA *	DSA_generate_parameters(int bits, unsigned char *seed,int seed_len,
+DSA *	d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
+DSA *	d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length);
+DSA * 	d2i_DSAparams(DSA **a, const unsigned char **pp, long length);
+DSA *	DSA_generate_parameters(int bits,
+		unsigned char *seed,int seed_len,
 		int *counter_ret, unsigned long *h_ret,void
 		(*callback)(int, int, void *),void *cb_arg);
 int	DSA_generate_key(DSA *a);
-int	i2d_DSAPublicKey(DSA *a, unsigned char **pp);
-int 	i2d_DSAPrivateKey(DSA *a, unsigned char **pp);
-int	i2d_DSAparams(DSA *a,unsigned char **pp);
+int	i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
+int 	i2d_DSAPrivateKey(const DSA *a, unsigned char **pp);
+int	i2d_DSAparams(const DSA *a,unsigned char **pp);
 
 #ifndef NO_BIO
-int	DSAparams_print(BIO *bp, DSA *x);
-int	DSA_print(BIO *bp, DSA *x, int off);
+int	DSAparams_print(BIO *bp, const DSA *x);
+int	DSA_print(BIO *bp, const DSA *x, int off);
 #endif
 #ifndef NO_FP_API
-int	DSAparams_print_fp(FILE *fp, DSA *x);
-int	DSA_print_fp(FILE *bp, DSA *x, int off);
+int	DSAparams_print_fp(FILE *fp, const DSA *x);
+int	DSA_print_fp(FILE *bp, const DSA *x, int off);
 #endif
 
 #define DSS_prime_checks 50
@@ -221,7 +222,7 @@ int	DSA_print_fp(FILE *bp, DSA *x, int off);
 #ifndef NO_DH
 /* Convert DSA structure (key or just parameters) into DH structure
  * (be careful to avoid small subgroup attacks when using this!) */
-DH *DSA_dup_DH(DSA *r);
+DH *DSA_dup_DH(const DSA *r);
 #endif
 
 /* BEGIN ERROR CODES */

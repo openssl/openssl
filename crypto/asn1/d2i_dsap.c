@@ -68,7 +68,7 @@
 #define d2i_ASN1_INTEGER d2i_ASN1_UINTEGER
 #endif
 
-DSA *d2i_DSAparams(DSA **a, unsigned char **pp, long length)
+DSA *d2i_DSAparams(DSA **a, const unsigned char **pp, long length)
 	{
 	int i=ERR_R_NESTED_ASN1_ERROR;
 	ASN1_INTEGER *bs=NULL;

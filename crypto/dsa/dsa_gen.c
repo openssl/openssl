@@ -79,7 +79,8 @@
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 
-DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
+DSA *DSA_generate_parameters(int bits,
+		unsigned char *seed_in, int seed_len,
 		int *counter_ret, unsigned long *h_ret,
 		void (*callback)(int, int, void *),
 		void *cb_arg)

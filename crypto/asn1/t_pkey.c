@@ -140,7 +140,7 @@ err:
 
 #ifndef NO_DSA
 #ifndef NO_FP_API
-int DSA_print_fp(FILE *fp, DSA *x, int off)
+int DSA_print_fp(FILE *fp, const DSA *x, int off)
 	{
 	BIO *b;
 	int ret;
@@ -157,7 +157,7 @@ int DSA_print_fp(FILE *fp, DSA *x, int off)
 	}
 #endif
 
-int DSA_print(BIO *bp, DSA *x, int off)
+int DSA_print(BIO *bp, const DSA *x, int off)
 	{
 	char str[128];
 	unsigned char *m=NULL;
@@ -314,7 +314,7 @@ err:
 
 #ifndef NO_DSA
 #ifndef NO_FP_API
-int DSAparams_print_fp(FILE *fp, DSA *x)
+int DSAparams_print_fp(FILE *fp, const DSA *x)
         {
         BIO *b;
         int ret;
@@ -331,7 +331,7 @@ int DSAparams_print_fp(FILE *fp, DSA *x)
         }
 #endif
 
-int DSAparams_print(BIO *bp, DSA *x)
+int DSAparams_print(BIO *bp, const DSA *x)
 	{
 	unsigned char *m=NULL;
 	int reason=ERR_R_BUF_LIB,i,ret=0;

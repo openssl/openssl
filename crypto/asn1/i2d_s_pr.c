@@ -64,7 +64,7 @@
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
 
-int i2d_DSAPrivateKey(DSA *a, unsigned char **pp)
+int i2d_DSAPrivateKey(const DSA *a, unsigned char **pp)
 	{
 	BIGNUM *num[6];
 	unsigned char data[1];

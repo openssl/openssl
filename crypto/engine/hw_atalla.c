@@ -170,8 +170,8 @@ static ENGINE engine_atalla =
  * (indeed - the lock will already be held by our caller!!!) */
 ENGINE *ENGINE_atalla()
 	{
-	RSA_METHOD *meth1;
-	DSA_METHOD *meth2;
+	const RSA_METHOD *meth1;
+	const DSA_METHOD *meth2;
 	DH_METHOD *meth3;
 
 	/* We know that the "PKCS1_SSLeay()" functions hook properly

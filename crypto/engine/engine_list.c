@@ -442,7 +442,7 @@ int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth)
 	return 1;
 	}
 
-int ENGINE_set_DSA(ENGINE *e, DSA_METHOD *dsa_meth)
+int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth)
 	{
 	if((e == NULL) || (dsa_meth == NULL))
 		{
@@ -571,7 +571,7 @@ const RSA_METHOD *ENGINE_get_RSA(ENGINE *e)
 	return e->rsa_meth;
 	}
 
-DSA_METHOD *ENGINE_get_DSA(ENGINE *e)
+const DSA_METHOD *ENGINE_get_DSA(ENGINE *e)
 	{
 	if(e == NULL)
 		{

@@ -67,11 +67,11 @@
 
 const char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
 
-static DSA_METHOD *default_DSA_method;
+static const DSA_METHOD *default_DSA_method;
 static int dsa_meth_num = 0;
 static STACK_OF(CRYPTO_EX_DATA_FUNCS) *dsa_meth = NULL;
 
-void DSA_set_default_openssl_method(DSA_METHOD *meth)
+void DSA_set_default_openssl_method(const DSA_METHOD *meth)
 {
 	ENGINE *e;
 	/* We'll need to notify the "openssl" ENGINE of this
@@ -90,7 +90,7 @@ void DSA_set_default_openssl_method(DSA_METHOD *meth)
 		}
 }
 
-DSA_METHOD *DSA_get_default_openssl_method(void)
+const DSA_METHOD *DSA_get_default_openssl_method(void)
 {
 	if(!default_DSA_method) default_DSA_method = DSA_OpenSSL();
 	return default_DSA_method;
@@ -115,7 +115,7 @@ DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *meth)
 int DSA_set_method(DSA *dsa, ENGINE *engine)
 	{
 	ENGINE *mtmp;
-	DSA_METHOD *meth;
+	const DSA_METHOD *meth;
 	mtmp = dsa->engine;
 	meth = ENGINE_get_DSA(mtmp);
 	if (!ENGINE_init(engine))
@@ -137,7 +137,7 @@ DSA *DSA_new_method(DSA_METHOD *meth)
 DSA *DSA_new_method(ENGINE *engine)
 #endif
 	{
-	DSA_METHOD *meth;
+	const DSA_METHOD *meth;
 	DSA *ret;
 
 	ret=(DSA *)OPENSSL_malloc(sizeof(DSA));
@@ -186,7 +186,7 @@ DSA *DSA_new_method(ENGINE *engine)
 
 void DSA_free(DSA *r)
 	{
-	DSA_METHOD *meth;
+	const DSA_METHOD *meth;
 	int i;
 
 	if (r == NULL) return;
@@ -220,7 +220,7 @@ void DSA_free(DSA *r)
 	OPENSSL_free(r);
 	}
 
-int DSA_size(DSA *r)
+int DSA_size(const DSA *r)
 	{
 	int ret,i;
 	ASN1_INTEGER bs;
@@ -258,7 +258,7 @@ void *DSA_get_ex_data(DSA *d, int idx)
 	}
 
 #ifndef NO_DH
-DH *DSA_dup_DH(DSA *r)
+DH *DSA_dup_DH(const DSA *r)
 	{
 	/* DSA has p, q, g, optional pub_key, optional priv_key.
 	 * DH has p, optional length, g, optional pub_key, optional priv_key.

@@ -64,7 +64,7 @@
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
 
-int i2d_DSAPublicKey(DSA *a, unsigned char **pp)
+int i2d_DSAPublicKey(const DSA *a, unsigned char **pp)
 	{
 	BIGNUM *num[4];
 	ASN1_INTEGER bs;

@@ -291,7 +291,7 @@ static HWCryptoHook_InitInfo hwcrhk_globals = {
  * (indeed - the lock will already be held by our caller!!!) */
 ENGINE *ENGINE_ncipher()
 	{
-	RSA_METHOD *meth1;
+	const RSA_METHOD *meth1;
 	DH_METHOD *meth2;
 
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
