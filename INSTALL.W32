@@ -152,17 +152,17 @@
  GNU C (Cygwin)
  --------------
 
- Cygwin provides a bash shell and GNU tools environment running on
- NT 4.0, Windows 9x and Windows 2000. Consequently, a make of OpenSSL
- with Cygwin is closer to a GNU bash environment such as Linux rather
- than other W32 makes that are based on a single makefile approach.
- Cygwin implements Posix/Unix calls through cygwin1.dll, and is
- contrasted to Mingw32 which links dynamically to msvcrt.dll or
- crtdll.dll.
+ Cygwin provides a bash shell and GNU tools environment running
+ on NT 4.0, Windows 9x, Windows ME, Windows 2000, and Windows XP.
+ Consequently, a make of OpenSSL with Cygwin is closer to a GNU
+ bash environment such as Linux than to other W32 makes which are
+ based on a single makefile approach. Cygwin implements Posix/Unix
+ calls through cygwin1.dll, and is contrasted to Mingw32 which links
+ dynamically to msvcrt.dll or crtdll.dll.
 
  To build OpenSSL using Cygwin:
 
- * Install Cygwin (see http://sourceware.cygnus.com/cygwin)
+ * Install Cygwin (see http://cygwin.com/)
 
  * Install Perl and ensure it is in the path (recent Cygwin perl 
    (version 5.6.1-2 of the latter has been reported to work) or
@@ -188,13 +188,9 @@
  stripping of carriage returns. To avoid this ensure that a binary
  mount is used, e.g. mount -b c:\somewhere /home.
 
- As of version 1.1.1 Cygwin is relatively unstable in its handling
- of cr/lf issues. These make procedures succeeded with versions 1.1 and
- the snapshot 20000524 (Slow!).
-
- "bc" is not provided in the Cygwin distribution.  This causes a
+ "bc" is not provided in older Cygwin distribution.  This causes a
  non-fatal error in "make test" but is otherwise harmless.  If
- desired, GNU bc can be built with Cygwin without change.
+ desired and needed, GNU bc can be built with Cygwin without change.
 
 
  Installation
