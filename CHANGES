@@ -9,6 +9,13 @@
      BIO_dump_indent() are added.
      [Richard Levitte]
 
+  *) New functions ASN1_STRING_print_ex() and X509_NAME_print_ex()
+     these print out strings and name structures based on various
+     flags including RFC2253 support and proper handling of
+     multibyte characters. Added options to the 'x509' utility 
+     to allow the various flags to be set.
+     [Steve Henson]
+
   *) Various fixes to use ASN1_TIME instead of ASN1_UTCTIME.
      Also change the functions X509_cmp_current_time() and
      X509_gmtime_adj() work with an ASN1_TIME structure,

@@ -653,3 +653,83 @@ end:
 	return(othercerts);
 	}
 
+typedef struct {
+	char *name;
+	unsigned long flag;
+	unsigned long mask;
+} NAME_EX_TBL;
+
+int set_name_ex(unsigned long *flags, const char *arg)
+{
+	char c;
+	const NAME_EX_TBL *ptbl, ex_tbl[] = {
+		{ "esc_2253", ASN1_STRFLGS_ESC_2253, 0},
+		{ "esc_ctrl", ASN1_STRFLGS_ESC_CTRL, 0},
+		{ "esc_msb", ASN1_STRFLGS_ESC_MSB, 0},
+		{ "use_quote", ASN1_STRFLGS_ESC_QUOTE, 0},
+		{ "utf8", ASN1_STRFLGS_UTF8_CONVERT, 0},
+		{ "no_type", ASN1_STRFLGS_IGNORE_TYPE, 0},
+		{ "show_name", ASN1_STRFLGS_SHOW_NAME, 0},
+		{ "dump_all", ASN1_STRFLGS_DUMP_ALL, 0},
+		{ "dump_nostr", ASN1_STRFLGS_DUMP_UNKNOWN, 0},
+		{ "dump_der", ASN1_STRFLGS_DUMP_DER, 0},
+		{ "compat", XN_FLAG_COMPAT, 0xffffffffL},
+		{ "sep_comma_plus", XN_FLAG_SEP_COMMA_PLUS, XN_FLAG_SEP_MASK},
+		{ "sep_comma_plus_space", XN_FLAG_SEP_CPLUS_SPC, XN_FLAG_SEP_MASK},
+		{ "sep_semi_plus_space", XN_FLAG_SEP_SPLUS_SPC, XN_FLAG_SEP_MASK},
+		{ "sep_multiline", XN_FLAG_SEP_MULTILINE, XN_FLAG_SEP_MASK},
+		{ "dn_rev", XN_FLAG_DN_REV, 0},
+		{ "nofname", XN_FLAG_FN_NONE, XN_FLAG_FN_MASK},
+		{ "sname", XN_FLAG_FN_SN, XN_FLAG_FN_MASK},
+		{ "lname", XN_FLAG_FN_LN, XN_FLAG_FN_MASK},
+		{ "oid", XN_FLAG_FN_OID, XN_FLAG_FN_MASK},
+		{ "space_eq", XN_FLAG_SPC_EQ, 0},
+		{ "dump_unknown", XN_FLAG_DUMP_UNKNOWN_FIELDS, 0},
+		{ "RFC2253", XN_FLAG_RFC2253, 0xffffffffL},
+		{ "oneline", XN_FLAG_ONELINE, 0xffffffffL},
+		{ "multiline", XN_FLAG_MULTILINE, 0xffffffffL},
+		{ NULL, 0, 0}
+	};
+
+	c = arg[0];
+
+	if(c == '-') {
+		c = 0;
+		arg++;
+	} else if (c == '+') {
+		c = 1;
+		arg++;
+	} else c = 1;
+
+	for(ptbl = ex_tbl; ptbl->name; ptbl++) {
+		if(!strcmp(arg, ptbl->name)) {
+			*flags &= ~ptbl->mask;
+			if(c) *flags |= ptbl->flag;
+			else *flags &= ~ptbl->flag;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags)
+{
+	char buf[256];
+	char mline = 0;
+	int indent = 0;
+	if(title) BIO_puts(out, title);
+	if((lflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
+		mline = 1;
+		indent = 4;
+	}
+	if(lflags == XN_FLAG_COMPAT) {
+		X509_NAME_oneline(nm,buf,256);
+		BIO_puts(out,buf);
+		BIO_puts(out, "\n");
+	} else {
+		if(mline) BIO_puts(out, "\n");
+		X509_NAME_print_ex(out, nm, indent, lflags);
+		BIO_puts(out, "\n");
+	}
+}
+

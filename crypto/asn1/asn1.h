@@ -259,6 +259,85 @@ typedef int ASN1_BOOLEAN;
 
 typedef int ASN1_NULL;
 
+/* Parameters used by ASN1_STRING_print_ex() */
+
+/* These determine which characters to escape:
+ * RFC2253 special characters, control characters and
+ * MSB set characters
+ */
+
+#define ASN1_STRFLGS_ESC_2253		1
+#define ASN1_STRFLGS_ESC_CTRL		2
+#define ASN1_STRFLGS_ESC_MSB		4
+
+
+/* This flag determines how we do escaping: normally
+ * RC2253 backslash only, set this to use backslash and
+ * quote.
+ */
+
+#define ASN1_STRFLGS_ESC_QUOTE		8
+
+
+/* These three flags are internal use only. */
+
+/* Character is a valid PrintableString character */
+#define CHARTYPE_PRINTABLESTRING	0x10
+/* Character needs escaping if it is the first character */
+#define CHARTYPE_FIRST_ESC_2253		0x20
+/* Character needs escaping if it is the last character */
+#define CHARTYPE_LAST_ESC_2253		0x40
+
+/* NB the internal flags are safely reused below by flags
+ * handled at the top level.
+ */
+
+/* If this is set we convert all character strings
+ * to UTF8 first 
+ */
+
+#define ASN1_STRFLGS_UTF8_CONVERT	0x10
+
+/* If this is set we don't attempt to interpret content:
+ * just assume all strings are 1 byte per character. This
+ * will produce some pretty odd looking output!
+ */
+
+#define ASN1_STRFLGS_IGNORE_TYPE	0x20
+
+/* If this is set we include the string type in the output */
+#define ASN1_STRFLGS_SHOW_NAME		0x40
+
+/* This determines which strings to display and which to
+ * 'dump' (hex dump of content octets or DER encoding). We can
+ * only dump non character strings or everything. If we
+ * don't dump 'unknown' they are interpreted as character
+ * strings with 1 octet per character and are subject to
+ * the usual escaping options.
+ */
+
+#define ASN1_STRFLGS_DUMP_ALL		0x80
+#define ASN1_STRFLGS_DUMP_UNKNOWN	0x100
+
+/* These determine what 'dumping' does, we can dump the
+ * content octets or the DER encoding: both use the
+ * RFC2253 #XXXXX notation.
+ */
+
+#define ASN1_STRFLGS_DUMP_DER		0x200
+
+/* All the string flags consistent with RFC2253,
+ * escaping control characters isn't essential in
+ * RFC2253 but it is advisable anyway.
+ */
+
+#define ASN1_STRFLGS_RFC2253	(ASN1_STRFLGS_ESC_2253 | \
+				ASN1_STRFLGS_ESC_CTRL | \
+				ASN1_STRFLGS_ESC_MSB | \
+				ASN1_STRFLGS_UTF8_CONVERT | \
+				ASN1_STRFLGS_DUMP_UNKNOWN | \
+				ASN1_STRFLGS_DUMP_DER)
+
 DECLARE_STACK_OF(ASN1_INTEGER)
 DECLARE_ASN1_SET_OF(ASN1_INTEGER)
 
@@ -727,6 +806,7 @@ char *ASN1_dup(int (*i2d)(),char *(*d2i)(),char *x);
 #ifndef NO_FP_API
 char *ASN1_d2i_fp(char *(*xnew)(),char *(*d2i)(),FILE *fp,unsigned char **x);
 int ASN1_i2d_fp(int (*i2d)(),FILE *out,unsigned char *x);
+int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
 #endif
 
 #ifndef NO_BIO
@@ -736,6 +816,7 @@ int ASN1_UTCTIME_print(BIO *fp,ASN1_UTCTIME *a);
 int ASN1_GENERALIZEDTIME_print(BIO *fp,ASN1_GENERALIZEDTIME *a);
 int ASN1_TIME_print(BIO *fp,ASN1_TIME *a);
 int ASN1_STRING_print(BIO *bp,ASN1_STRING *v);
+int ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags);
 int ASN1_parse(BIO *bp,unsigned char *pp,long len,int indent);
 int ASN1_parse_dump(BIO *bp,unsigned char *pp,long len,int indent,int dump);
 #endif

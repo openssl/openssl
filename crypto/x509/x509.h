@@ -320,6 +320,61 @@ DECLARE_STACK_OF(X509_TRUST)
 #define X509_TRUST_REJECTED	2
 #define X509_TRUST_UNTRUSTED	3
 
+/* Flags specific to X509_NAME_print_ex() */	
+
+/* The field separator information */
+
+#define XN_FLAG_SEP_MASK	(0xf << 16)
+
+#define XN_FLAG_COMPAT		0		/* Traditional SSLeay: use old X509_NAME_print */
+#define XN_FLAG_SEP_COMMA_PLUS	(1 << 16)	/* RFC2253 ,+ */
+#define XN_FLAG_SEP_CPLUS_SPC	(2 << 16)	/* ,+ spaced: more readable */
+#define XN_FLAG_SEP_SPLUS_SPC	(3 << 16)	/* ;+ spaced */
+#define XN_FLAG_SEP_MULTILINE	(4 << 16)	/* One line per field */
+
+#define XN_FLAG_DN_REV		(1 << 20)	/* Reverse DN order */
+
+/* How the field name is shown */
+
+#define XN_FLAG_FN_MASK		(0x3 << 21)
+
+#define XN_FLAG_FN_NONE		0		/* No field names */
+#define XN_FLAG_FN_SN		(1 << 21)	/* Object short name */
+#define XN_FLAG_FN_LN		(2 << 21)	/* Object long name */
+#define XN_FLAG_FN_OID		(3 << 21)	/* Always use OIDs */
+
+#define XN_FLAG_SPC_EQ		(1 << 23)	/* Put spaces round '=' */
+
+/* This determines if we dump fields we don't recognise:
+ * RFC2253 requires this.
+ */
+
+#define XN_FLAG_DUMP_UNKNOWN_FIELDS (1 << 24)
+
+/* Complete set of RFC2253 flags */
+
+#define XN_FLAG_RFC2253 (ASN1_STRFLGS_RFC2253 | \
+			XN_FLAG_SEP_COMMA_PLUS | \
+			XN_FLAG_DN_REV | \
+			XN_FLAG_FN_SN | \
+			XN_FLAG_DUMP_UNKNOWN_FIELDS)
+
+/* readable oneline form */
+
+#define XN_FLAG_ONELINE (ASN1_STRFLGS_RFC2253 | \
+			ASN1_STRFLGS_ESC_QUOTE | \
+			XN_FLAG_SEP_CPLUS_SPC | \
+			XN_FLAG_SPC_EQ | \
+			XN_FLAG_FN_SN)
+
+/* readable multiline form */
+
+#define XN_FLAG_MULTILINE (ASN1_STRFLGS_ESC_CTRL | \
+			ASN1_STRFLGS_ESC_MSB | \
+			XN_FLAG_SEP_MULTILINE | \
+			XN_FLAG_SPC_EQ | \
+			XN_FLAG_FN_LN)
+
 typedef struct X509_revoked_st
 	{
 	ASN1_INTEGER *serialNumber;
@@ -975,10 +1030,12 @@ int		X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b);
 int		X509_print_fp(FILE *bp,X509 *x);
 int		X509_CRL_print_fp(FILE *bp,X509_CRL *x);
 int		X509_REQ_print_fp(FILE *bp,X509_REQ *req);
+int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent, unsigned long flags);
 #endif
 
 #ifndef NO_BIO
 int		X509_NAME_print(BIO *bp, X509_NAME *name, int obase);
+int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent, unsigned long flags);
 int		X509_print(BIO *bp,X509 *x);
 int		X509_CERT_AUX_print(BIO *bp,X509_CERT_AUX *x, int indent);
 int		X509_CRL_print(BIO *bp,X509_CRL *x);
