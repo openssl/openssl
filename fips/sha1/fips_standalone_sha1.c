@@ -52,6 +52,7 @@
 
 int main(int argc,char **argv)
     {
+#ifdef FIPS
     int n;
 
     if(argc < 2)
@@ -97,5 +98,6 @@ int main(int argc,char **argv)
 	    printf("%02x",md[i]);
 	printf("\n");
 	}
+#endif
     return 0;
     }

@@ -836,7 +836,9 @@ int main(int argc, char **argv)
   exit(0);
   */
 
+#ifdef FIPS
   FIPS_mode_set(1);
+#endif
   ERR_load_crypto_strings();
   if (argc > 1)
     {

@@ -143,8 +143,9 @@ int main(int argc, char **argv)
 	unsigned char sig[256];
 	unsigned int siglen;
 
+#ifdef FIPS
 	FIPS_mode_set(1);
-
+#endif
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 

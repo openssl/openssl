@@ -70,7 +70,11 @@ const char *SHA1_version="SHA1" OPENSSL_VERSION_PTEXT;
 
 #include "fips_sha_locl.h"
 
-#endif /* def FIPS */
+#else /* ndef FIPS */
+
+static void *dummy=&dummy;
+
+#endif /* ndef FIPS */
 
 #endif
 
