@@ -4,6 +4,11 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) For consistency with other BIO_puts implementations, call
+     buffer_write(b, ...) directly in buffer_puts instead of calling
+     BIO_write(b, ...).
+     [Peter.Sylvester@EdelWeb.fr]
+
   *) Fix BN_mul_word for the case where the word is 0. (We have to use
      BN_zero, we may not return a BIGNUM with an array consisting of
      words set to zero.)
