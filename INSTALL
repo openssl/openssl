@@ -120,6 +120,72 @@
                       for private key files.
 
 
+  NOTE: The header files used to reside directly in the include
+  directory, but have now been moved to include/openssl so that
+  OpenSSL can co-exist with other libraries which use some of the
+  same filenames.  This means that applications that use OpenSSL
+  should now use C preprocessor directives of the form
+
+       #include <openssl/ssl.h>
+
+  instead of "#include <ssl.h>", which was used with library versions
+  up to OpenSSL 0.9.2b.
+
+  If you install a new version of OpenSSL over an old library version,
+  you should delete the old header files in the include directory.
+
+  Compatibility issues:
+
+  *  COMPILING existing applications
+
+     To compile an application that uses old filenames -- e.g.
+     "#include <ssl.h>" --, it will usually be enough to find
+     the CFLAGS definition in the application's Makefile and
+     add a C option such as
+
+          -I/usr/local/ssl/include/openssl
+
+     to it.
+
+     But don't delete the existing -I option that points to
+     the ..../include directory!  Otherwise, OpenSSL header files
+     could not #include each other.
+
+  *  WRITING applications
+
+     To write an application that is able to handle both the new
+     and the old directory layout, so that it can still be compiled
+     with library versions up to OpenSSL 0.9.2b without bothering
+     the user, you can proceed as follows:
+
+     -  Always use the new filename of OpenSSL header files,
+        e.g. #include <openssl/ssl.h>.
+
+     -  Create a directory "incl" that contains only a symbolic
+        link named "openssl", which points to the "include" directory
+        of OpenSSL.
+        For example, your application's Makefile might contain the
+        following rule, if OPENSSLDIR is a pathname (absolute or
+        relative) of the directory where OpenSSL resides:
+
+        incl/openssl:
+        	-mkdir incl
+        	cd $(OPENSSLDIR) # Check whether the directory really exists
+        	-ln -s `cd $(OPENSSLDIR); pwd`/include incl/openssl
+
+        You will have to add "incl/openssl" to the dependencies
+        of those C files that include some OpenSSL header file.
+
+     -  Add "-Iincl" to your CFLAGS.
+
+     With these additions, the OpenSSL header files will be available
+     under both name variants if an old library version is used:
+     Your application can reach them under names like <openssl/foo.h>,
+     while the header files still are able to #include each other
+     with names of the form <foo.h>.
+
+
+
 --------------------------------------------------------------------------------
 The orignal Unix build instructions from SSLeay follow. 
 Note: some of this may be out of date and no longer applicable
