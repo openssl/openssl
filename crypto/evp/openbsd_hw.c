@@ -190,5 +190,6 @@ BLOCK_CIPHER_def_cbc(dev_crypto_des_ede3, des_ede,NID_des_ede3, 8, 24, 8,
 		     EVP_CIPHER_set_asn1_iv,
 		     EVP_CIPHER_get_asn1_iv,
 		     NULL)
-
+#else
+static void *dummy=&dummy;
 #endif
