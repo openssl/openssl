@@ -215,7 +215,7 @@ BN_ULONG bn_add_part_words(BN_ULONG *r,
 	BN_ULONG c, l, t;
 
 	assert(cl >= 0);
-	c = bn_sub_words(r, a, b, cl);
+	c = bn_add_words(r, a, b, cl);
 
 	if (dl == 0)
 		return c;
