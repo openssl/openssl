@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) rand_win.c fix for Borland C.
+     [Ulf Möller]
+ 
   *) BN_rshift bugfix for n == 0.
      [Bodo Moeller]
 
