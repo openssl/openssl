@@ -322,7 +322,7 @@ char *NCONF_get_string(CONF *conf,char *group,char *name)
                         CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
 		return NULL;
 		}
-
+	return NULL;
 	}
 
 long NCONF_get_number(CONF *conf,char *group,char *name)
