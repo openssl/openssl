@@ -862,7 +862,7 @@ start:
 		{
 		al=SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_DATA_BETWEEN_CCS_AND_FINISHED);
-		goto err;
+		goto f_err;
 		}
 
 	/* If the other end has shut down, throw anything we read away
@@ -969,7 +969,7 @@ start:
 			{
 			al=SSL_AD_DECODE_ERROR;
 			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_BAD_HELLO_REQUEST);
-			goto err;
+			goto f_err;
 			}
 
 		if (s->msg_callback)
@@ -1080,9 +1080,9 @@ start:
 		if (	(rr->length != 1) || (rr->off != 0) ||
 			(rr->data[0] != SSL3_MT_CCS))
 			{
-			i=SSL_AD_ILLEGAL_PARAMETER;
+			al=SSL_AD_ILLEGAL_PARAMETER;
 			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_BAD_CHANGE_CIPHER_SPEC);
-			goto err;
+			goto f_err;
 			}
 
 		rr->length=0;
