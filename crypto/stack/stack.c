@@ -285,7 +285,7 @@ int sk_num(const STACK *st)
 	return st->num;
 }
 
-char *sk_value(STACK *st, int i)
+char *sk_value(const STACK *st, int i)
 {
 	if(st == NULL) return NULL;
 	return st->data[i];

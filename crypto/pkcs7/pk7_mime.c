@@ -74,6 +74,7 @@ char *param_name;			/* Param name e.g. "micalg" */
 char *param_value;			/* Param value e.g. "sha1" */
 } MIME_PARAM;
 
+DECLARE_STACK_OF(MIME_PARAM)
 IMPLEMENT_STACK_OF(MIME_PARAM)
 
 typedef struct {
@@ -82,6 +83,7 @@ char *value;				/* Value of line e.g. "text/plain" */
 STACK_OF(MIME_PARAM) *params;		/* Zero or more parameters */
 } MIME_HEADER;
 
+DECLARE_STACK_OF(MIME_HEADER)
 IMPLEMENT_STACK_OF(MIME_HEADER)
 
 static int B64_write_PKCS7(BIO *bio, PKCS7 *p7);
