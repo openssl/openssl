@@ -8,14 +8,14 @@
  * <URL: http://www.shoup.net/papers/oaep.ps.Z>
  * for problems with the security proof for the
  * original OAEP scheme, which EME-OAEP is based on.
- *
- * Note that for RSA OAEP a security proof in the
- * random oracle model *does* exist if 160 < log_2(N/e);
- * cf. section 7.2 ("But RSA-OAEP with exponent 3 is
- * provably secure") of Shoup's paper.  (The slight
- * differences between the OAEP definition used by Shoup
- * and OAEP as defined in RFC 2437 should not affect
- * this result.)
+ * 
+ * A new proof can be found in E. Fujisaki, T. Okamoto,
+ * D. Pointcheval, J. Stern, "RSA-OEAP is Still Alive!",
+ * Dec. 2000, <URL: http://eprint.iacr.org/2000/061/>.
+ * The new proof has stronger requirements for the
+ * underlying permutation: "partial-one-wayness" instead
+ * of one-wayness.  For the RSA function, this is
+ * an equivalent notion.
  */
 
 
