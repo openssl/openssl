@@ -139,7 +139,7 @@ int which;
 	COMP_METHOD *comp;
 	EVP_MD *m;
 	MD5_CTX md;
-	int exp,n,i,j,k;
+	int exp,n,i,j,k,cl;
 
 	exp=(s->s3->tmp.new_cipher->algorithms & SSL_EXPORT)?1:0;
 	c=s->s3->tmp.new_sym_enc;
@@ -208,8 +208,9 @@ int which;
 
 	p=s->s3->tmp.key_block;
 	i=EVP_MD_size(m);
-	/* Should be 	j=exp?min(5,EVP_CIPHER_key_length(c)):EVP_CIPHER_key_length(c); ?? - Ben 30/12/98 */
-	j=(exp)?5:EVP_CIPHER_key_length(c);
+	cl=EVP_CIPHER_key_length(c);
+	j=exp ? (cl < 5 ? cl : 5) : cl;
+	/* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
 	k=EVP_CIPHER_iv_length(c);
 	if (	(which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
 		(which == SSL3_CHANGE_CIPHER_SERVER_READ))

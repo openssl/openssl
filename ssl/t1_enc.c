@@ -177,7 +177,7 @@ int which;
 	EVP_CIPHER *c;
 	COMP_METHOD *comp;
 	EVP_MD *m;
-	int exp,n,i,j,k,exp_label_len;
+	int exp,n,i,j,k,exp_label_len,cl;
 
 	exp=(s->s3->tmp.new_cipher->algorithms & SSL_EXPORT)?1:0;
 	c=s->s3->tmp.new_sym_enc;
@@ -244,7 +244,9 @@ int which;
 
 	p=s->s3->tmp.key_block;
 	i=EVP_MD_size(m);
-	j=(exp)?5:EVP_CIPHER_key_length(c);
+	cl=EVP_CIPHER_key_length(c);
+	j=exp ? (cl < 5 ? cl : 5) : cl;
+	/* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
 	k=EVP_CIPHER_iv_length(c);
 	er1= &(s->s3->client_random[0]);
 	er2= &(s->s3->server_random[0]);
