@@ -1908,7 +1908,6 @@ ASN1_mbstring_copy                      1937
 ASN1_UTF8STRING_new                     1938
 sk_ACCESS_DESCRIPTION_set               1939
 sk_X509_PURPOSE_pop                     1940
-DSA_get_default_method                  1941
 sk_X509_PURPOSE_push                    1942
 sk_X509_PURPOSE_delete                  1943
 sk_X509_PURPOSE_num                     1944
@@ -1956,7 +1955,6 @@ i2d_RSA_PUBKEY_bio                      1985
 ASN1_BIT_STRING_num_asc                 1986
 i2d_PUBKEY                              1987
 ASN1_UTCTIME_free                       1988
-DSA_set_default_method                  1989
 X509_PURPOSE_get_by_id                  1990
 sk_X509_TRUST_push                      1991
 sk_ASN1_STRING_TABLE_sort               1992
@@ -2412,3 +2410,5 @@ ENGINE_set_default_DH                   2441
 ENGINE_new                              2442
 DH_get_default_openssl_method           2443
 DH_set_default_openssl_method           2444
+DSA_get_default_openssl_method          2445
+DSA_set_default_openssl_method          2446
