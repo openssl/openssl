@@ -109,6 +109,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <string.h>
 #include <openssl/des.h>
 #include <openssl/ui.h>
 
