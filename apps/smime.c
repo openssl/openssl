@@ -505,9 +505,9 @@ int MAIN(int argc, char **argv)
 	} else if(operation == SMIME_VERIFY) {
 		STACK_OF(X509) *signers;
 		if(PKCS7_verify(p7, other, store, indata, out, flags)) {
-			BIO_printf(bio_err, "Verification Successful\n");
+			BIO_printf(bio_err, "Verification successful\n");
 		} else {
-			BIO_printf(bio_err, "Verification Failure\n");
+			BIO_printf(bio_err, "Verification failure\n");
 			goto end;
 		}
 		signers = PKCS7_get0_signers(p7, other, flags);
