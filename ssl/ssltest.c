@@ -109,6 +109,12 @@
  *
  */
 
+#define _XOPEN_SOURCE 600	/* Or gethostname won't be declared properly
+				   on Linux and GNU platforms. */
+#define _XOPEN_SOURCE_EXTENDED	/* Or gethostname won't be declared properly
+				   on Compaq platforms (at least with DEC C).
+				*/
+
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
@@ -130,6 +136,8 @@
 #ifdef OPENSSL_SYS_WINDOWS
 #include <winsock.h>
 #include "../crypto/bio/bss_file.c"
+#else
+#include OPENSSL_UNISTD
 #endif
 
 #ifdef OPENSSL_SYS_VMS
