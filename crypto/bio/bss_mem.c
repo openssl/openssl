@@ -89,6 +89,26 @@ BIO_METHOD *BIO_s_mem(void)
 	return(&mem_method);
 	}
 
+BIO *BIO_new_mem_buf(void *buf, int len)
+{
+	BIO *ret;
+	BUF_MEM *b;
+	if (!buf) {
+		BIOerr(BIO_F_BIO_NEW_MEM_BUF,BIO_R_NULL_PARAMETER);
+		return NULL;
+	}
+	if(len == -1) len = strlen(buf);
+	if(!(ret = BIO_new(BIO_s_mem())) ) return NULL;
+	b = (BUF_MEM *)ret->ptr;
+	b->data = buf;
+	b->length = len;
+	b->max = len;
+	ret->flags |= BIO_FLAGS_MEM_RDONLY;
+	/* Since this is static data retrying wont help */
+	ret->num = 0;
+	return ret;
+}
+
 static int mem_new(BIO *bi)
 	{
 	BUF_MEM *b;
@@ -109,7 +129,10 @@ static int mem_free(BIO *a)
 		{
 		if ((a->init) && (a->ptr != NULL))
 			{
-			BUF_MEM_free((BUF_MEM *)a->ptr);
+			BUF_MEM *b;
+			b = (BUF_MEM *)a->ptr;
+			if(a->flags & BIO_FLAGS_MEM_RDONLY) b->data = NULL;
+			BUF_MEM_free(b);
 			a->ptr=NULL;
 			}
 		}
@@ -126,17 +149,18 @@ static int mem_read(BIO *b, char *out, int outl)
 	bm=(BUF_MEM *)b->ptr;
 	BIO_clear_retry_flags(b);
 	ret=(outl > bm->length)?bm->length:outl;
-	if ((out != NULL) && (ret > 0))
-		{
+	if ((out != NULL) && (ret > 0)) {
 		memcpy(out,bm->data,ret);
 		bm->length-=ret;
 		/* memmove(&(bm->data[0]),&(bm->data[ret]), bm->length); */
-		from=(char *)&(bm->data[ret]);
-		to=(char *)&(bm->data[0]);
-		for (i=0; i<bm->length; i++)
-			to[i]=from[i];
+		if(b->flags & BIO_FLAGS_MEM_RDONLY) bm->data += ret;
+		else {
+			from=(char *)&(bm->data[ret]);
+			to=(char *)&(bm->data[0]);
+			for (i=0; i<bm->length; i++)
+				to[i]=from[i];
 		}
-	else if (bm->length == 0)
+	} else if (bm->length == 0)
 		{
 		if (b->num != 0)
 			BIO_set_retry_read(b);
@@ -158,6 +182,11 @@ static int mem_write(BIO *b, char *in, int inl)
 		goto end;
 		}
 
+	if(b->flags & BIO_FLAGS_MEM_RDONLY) {
+		BIOerr(BIO_F_MEM_WRITE,BIO_R_WRITE_TO_READ_ONLY_BIO);
+		goto end;
+	}
+
 	BIO_clear_retry_flags(b);
 	blen=bm->length;
 	if (BUF_MEM_grow(bm,blen+inl) != (blen+inl))
@@ -178,9 +207,15 @@ static long mem_ctrl(BIO *b, int cmd, long num, char *ptr)
 	switch (cmd)
 		{
 	case BIO_CTRL_RESET:
-		if (bm->data != NULL)
-			memset(bm->data,0,bm->max);
-		bm->length=0;
+		if (bm->data != NULL) {
+			/* For read only case reset to the start again */
+			if(b->flags & BIO_FLAGS_MEM_RDONLY) 
+					bm->data -= bm->max - bm->length;
+			else {
+				memset(bm->data,0,bm->max);
+				bm->length=0;
+			}
+		}
 		break;
 	case BIO_CTRL_EOF:
 		ret=(long)(bm->length == 0);

@@ -147,6 +147,11 @@ extern "C" {
 
 #define BIO_FLAGS_BASE64_NO_NL	0x100
 
+/* This is used with memory BIOs: it means we shouldn't free up or change the
+ * data in any way.
+ */
+#define BIO_FLAGS_MEM_RDONLY	0x200
+
 #define BIO_set_flags(b,f) ((b)->flags|=(f))
 #define BIO_get_flags(b) ((b)->flags)
 #define BIO_set_retry_special(b) \
@@ -526,6 +531,7 @@ long _far _loadds BIO_debug_callback(BIO *bio,int cmd,const char *argp,int argi,
 #endif
 
 BIO_METHOD *BIO_s_mem(void);
+BIO *BIO_new_mem_buf(void *buf, int len);
 BIO_METHOD *BIO_s_socket(void);
 BIO_METHOD *BIO_s_connect(void);
 BIO_METHOD *BIO_s_accept(void);
@@ -604,6 +610,7 @@ int BIO_printf(BIO *bio, ...);
 #define BIO_F_BIO_MAKE_PAIR				 121
 #define BIO_F_BIO_NEW					 108
 #define BIO_F_BIO_NEW_FILE				 109
+#define BIO_F_BIO_NEW_MEM_BUF				 126
 #define BIO_F_BIO_NREAD					 123
 #define BIO_F_BIO_NREAD0				 124
 #define BIO_F_BIO_NWRITE				 125
@@ -645,6 +652,7 @@ int BIO_printf(BIO *bio, ...);
 #define BIO_R_UNABLE_TO_LISTEN_SOCKET			 119
 #define BIO_R_UNINITIALIZED				 120
 #define BIO_R_UNSUPPORTED_METHOD			 121
+#define BIO_R_WRITE_TO_READ_ONLY_BIO			 126
 #define BIO_R_WSASTARTUP				 122
 
 #ifdef  __cplusplus

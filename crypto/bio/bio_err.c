@@ -77,6 +77,7 @@ static ERR_STRING_DATA BIO_str_functs[]=
 {ERR_PACK(0,BIO_F_BIO_MAKE_PAIR,0),	"BIO_MAKE_PAIR"},
 {ERR_PACK(0,BIO_F_BIO_NEW,0),	"BIO_new"},
 {ERR_PACK(0,BIO_F_BIO_NEW_FILE,0),	"BIO_new_file"},
+{ERR_PACK(0,BIO_F_BIO_NEW_MEM_BUF,0),	"BIO_new_mem_buf"},
 {ERR_PACK(0,BIO_F_BIO_NREAD,0),	"BIO_nread"},
 {ERR_PACK(0,BIO_F_BIO_NREAD0,0),	"BIO_nread0"},
 {ERR_PACK(0,BIO_F_BIO_NWRITE,0),	"BIO_nwrite"},
@@ -121,6 +122,7 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 {BIO_R_UNABLE_TO_LISTEN_SOCKET           ,"unable to listen socket"},
 {BIO_R_UNINITIALIZED                     ,"uninitialized"},
 {BIO_R_UNSUPPORTED_METHOD                ,"unsupported method"},
+{BIO_R_WRITE_TO_READ_ONLY_BIO            ,"write to read only bio"},
 {BIO_R_WSASTARTUP                        ,"wsastartup"},
 {0,NULL}
 	};

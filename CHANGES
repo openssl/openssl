@@ -4,6 +4,18 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add a new flag to memory BIOs, BIO_FLAG_MEM_RDONLY. This marks the BIO
+     as "read only": it can't be written to and the buffer it points to will
+     not be freed. Reading from a read only BIO is much more efficient than
+     a normal memory BIO. This was added because there are several times when
+     an area of memory needs to be read from a BIO. The previous method was
+     to create a memory BIO and write the data to it, this results in two
+     copies of the data and an O(n^2) reading algorithm. There is a new
+     function BIO_new_mem_buf() which creates a read only memory BIO from
+     an area of memory. Also modified the PKCS#7 routines to use read only
+     memory BIOSs.
+     [Steve Henson]
+
   *) Bugfix: ssl23_get_client_hello did not work properly when called in
      state SSL23_ST_SR_CLNT_HELLO_B, i.e. when the first 7 bytes of
      a SSLv2-compatible client hello for SSLv3 or TLSv1 could be read,

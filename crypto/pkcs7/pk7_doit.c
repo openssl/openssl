@@ -216,30 +216,22 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		btmp=NULL;
 		}
 
-	if (bio == NULL) /* ??????????? */
-		{
+	if (bio == NULL) {
 		if (p7->detached)
 			bio=BIO_new(BIO_s_null());
-		else
-			{
-			bio=BIO_new(BIO_s_mem());
-			/* We need to set this so that when we have read all
-			 * the data, the encrypt BIO, if present, will read
-			 * EOF and encode the last few bytes */
-			BIO_set_mem_eof_return(bio,0);
-
+		else {
 			if (PKCS7_type_is_signed(p7) &&
-				PKCS7_type_is_data(p7->d.sign->contents))
-				{
+				PKCS7_type_is_data(p7->d.sign->contents)) {
 				ASN1_OCTET_STRING *os;
-
 				os=p7->d.sign->contents->d.data;
-				if (os->length > 0)
-					BIO_write(bio,(char *)os->data,
-						os->length);
-				}
+				if (os->length > 0) bio = 
+					BIO_new_mem_buf(os->data, os->length);
+			} else {
+				bio=BIO_new(BIO_s_mem());
+				BIO_set_mem_eof_return(bio,0);
 			}
 		}
+	}
 	BIO_push(out,bio);
 	bio=NULL;
 	if (0)
@@ -430,6 +422,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		}
 	else 
 		{
+#if 0
 		bio=BIO_new(BIO_s_mem());
 		/* We need to set this so that when we have read all
 		 * the data, the encrypt BIO, if present, will read
@@ -438,6 +431,14 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 
 		if (data_body->length > 0)
 			BIO_write(bio,(char *)data_body->data,data_body->length);
+#else
+		if (data_body->length > 0)
+		      bio = BIO_new_mem_buf(data_body->data,data_body->length);
+		else {
+			bio=BIO_new(BIO_s_mem());
+			BIO_set_mem_eof_return(bio,0);
+		}
+#endif
 		}
 	BIO_push(out,bio);
 	bio=NULL;
@@ -611,8 +612,17 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			goto err;
 			}
 		BIO_get_mem_ptr(btmp,&buf_mem);
+		/* Mark the BIO read only then we can use its copy of the data
+		 * instead of making an extra copy.
+		 */
+		BIO_set_flags(btmp, BIO_FLAGS_MEM_RDONLY);
+		BIO_set_mem_eof_return(btmp, 0);
+		os->data = (unsigned char *)buf_mem->data;
+		os->length = buf_mem->length;
+#if 0
 		ASN1_OCTET_STRING_set(os,
 			(unsigned char *)buf_mem->data,buf_mem->length);
+#endif
 		}
 	if (pp != NULL) Free(pp);
 	pp=NULL;
