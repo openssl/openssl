@@ -4,6 +4,8 @@
  * according to the OpenSSL license [found in ../../LICENSE].
  * ====================================================================
  */
+#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA256)
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -311,3 +313,5 @@ void HASH_BLOCK_HOST_ORDER (SHA256_CTX *ctx, const void *in, size_t num)
 
 void HASH_BLOCK_DATA_ORDER (SHA256_CTX *ctx, const void *in, size_t num)
 {   sha256_block (ctx,in,num,0);   }
+
+#endif /* OPENSSL_NO_SHA256 */

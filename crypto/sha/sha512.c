@@ -4,6 +4,7 @@
  * according to the OpenSSL license [found in ../../LICENSE].
  * ====================================================================
  */
+#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA512)
 /*
  * IMPLEMENTATION NOTES.
  *
@@ -344,7 +345,7 @@ static const SHA_LONG64 K512[80] = {
 #define Ch(x,y,z)	(((x) & (y)) ^ ((~(x)) & (z)))
 #define Maj(x,y,z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 
-#if defined(OPENSSL_IA32_SSE2) && !defined(OPENSSL_NO_ASM)
+#if defined(OPENSSL_IA32_SSE2) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
 #define	GO_FOR_SSE2(ctx,in,num)		do {		\
 	extern int	OPENSSL_ia32cap;		\
 	void		sha512_block_sse2(void *,const void *,size_t);	\
@@ -490,3 +491,5 @@ static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
 #endif
 
 #endif /* SHA512_ASM */
+
+#endif /* OPENSSL_NO_SHA512 */
