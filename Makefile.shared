@@ -67,7 +67,7 @@ CALC_VERSIONS=	\
 			SHLIB_SOVER_NODOT=$$v \
 			SHLIB_SOVER=.$$v; \
 			if [ -n "$$prev" ]; then \
-				SHLIB_COMPAT=$$SHLIB_COMPAT .$$prev; \
+				SHLIB_COMPAT="$$SHLIB_COMPAT .$$prev"; \
 			fi; \
 			prev=$$v; \
 		done; \
@@ -81,7 +81,7 @@ LINK_SO=	\
   $(SYMLINK_SO); ( $(DEBUG); rm -f lib$(LIBNAME).exp )
 SYMLINK_SO=	\
 	prev=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
-	if [ -n "$$SHLIB_COMPAT"]; then \
+	if [ -n "$$SHLIB_COMPAT" ]; then \
 		for x in $$SHLIB_COMPAT; do \
 			( $(DEBUG); rm -f $$SHLIB$$x$$SHLIB_SUFFIX; \
 			  ln -s $$prev $$SHLIB$$x$$SHLIB_SUFFIX ); \
@@ -115,7 +115,7 @@ link_o.gnu:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so \
 	SHLIB_SUFFIX= \
-	LIBDEPS="$(LIBDEPS)" \
+	LIBDEPS="$(LIBDEPS) -lc" \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive' \
 	SHAREDFLAGS="-shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX" \
 	SHAREDCMD='$(CC)'; \
@@ -124,7 +124,7 @@ link_a.gnu:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so \
 	SHLIB_SUFFIX= \
-	LIBDEPS="$(LIBDEPS)" \
+	LIBDEPS="$(LIBDEPS) -lc" \
 	ALLSYMSFLAGS='-Wl,--whole-archive' \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive' \
 	SHAREDFLAGS="-shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX" \
@@ -136,7 +136,7 @@ link_o.darwin:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME) \
 	SHLIB_SUFFIX=.dylib \
-	LIBDEPS="$(LIBDEPS)" \
+	LIBDEPS="$(LIBDEPS) -lc" \
 	ALLSYMSFLAGS='-all_load' \
 	NOALLSYMSFLAGS='' \
 	SHAREDFLAGS="-dynamiclib" \
@@ -152,7 +152,7 @@ link_a.darwin:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME) \
 	SHLIB_SUFFIX=.dylib \
-	LIBDEPS="$(LIBDEPS)" \
+	LIBDEPS="$(LIBDEPS) -lc" \
 	ALLSYMSFLAGS='-all_load' \
 	NOALLSYMSFLAGS='' \
 	SHAREDFLAGS="-dynamiclib" \
@@ -168,7 +168,7 @@ link_a.darwin:
 link_o.cygwin:
 	@ SHLIB=cyg$(LIBNAME).dll \
 	SHLIB_SUFFIX= \
-	LIBDEPS="$(LIBDEPS)" \
+	LIBDEPS="$(LIBDEPS) -lc" \
 	SHLIB_SOVER= \
 	ALLSYMSFLAGS='-Wl,--whole-archive' \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive' \
@@ -178,7 +178,7 @@ link_o.cygwin:
 link_a.cygwin:
 	@ SHLIB=cyg$(LIBNAME).dll \
 	SHLIB_SUFFIX= \
-	LIBDEPS="$(LIBDEPS)" \
+	LIBDEPS="$(LIBDEPS) -lc" \
 	SHLIB_SOVER= \
 	ALLSYMSFLAGS='-Wl,--whole-archive' \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive' \
@@ -188,7 +188,7 @@ link_a.cygwin:
 
 link_o.alpha-osf1:
 	@ if ${DETECT_GNU_LD}; then \
-		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
 			LIBVERSION=$(LIBVERSION) \
@@ -197,7 +197,7 @@ link_o.alpha-osf1:
 	else \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
-		LIBDEPS="$(LIBDEPS)" \
+		LIBDEPS="$(LIBDEPS) -lc" \
 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
@@ -216,7 +216,7 @@ link_o.alpha-osf1:
 	fi
 link_a.alpha-osf1:
 	@ if ${DETECT_GNU_LD}; then \
-		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
 			LIBVERSION=$(LIBVERSION) \
@@ -225,7 +225,7 @@ link_a.alpha-osf1:
 	else \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
-		LIBDEPS="$(LIBDEPS)" \
+		LIBDEPS="$(LIBDEPS) -lc" \
 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
@@ -247,7 +247,7 @@ link_a.alpha-osf1:
 # option passed to the linker.
 link_o.tru64:
 	@ if ${DETECT_GNU_LD}; then \
-		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
 			LIBVERSION=$(LIBVERSION) \
@@ -256,7 +256,7 @@ link_o.tru64:
 	else \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
-		LIBDEPS="$(LIBDEPS)" \
+		LIBDEPS="$(LIBDEPS) -lc" \
 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
@@ -275,7 +275,7 @@ link_o.tru64:
 	fi
 link_a.tru64:
 	@ if ${DETECT_GNU_LD}; then \
-		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
 			LIBVERSION=$(LIBVERSION) \
@@ -284,7 +284,7 @@ link_a.tru64:
 	else \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
-		LIBDEPS="$(LIBDEPS)" \
+		LIBDEPS="$(LIBDEPS) -lc" \
 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
@@ -306,7 +306,7 @@ link_a.tru64:
 # -rpath ${LIBRPATH} passed to the linker.
 link_o.tru64-rpath:
 	@ if ${DETECT_GNU_LD}; then \
-		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
 			LIBVERSION=$(LIBVERSION) \
@@ -315,7 +315,7 @@ link_o.tru64-rpath:
 	else \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
-		LIBDEPS="$(LIBDEPS)" \
+		LIBDEPS="$(LIBDEPS) -lc" \
 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
@@ -334,7 +334,7 @@ link_o.tru64-rpath:
 	fi
 link_a.tru64-rpath:
 	@ if ${DETECT_GNU_LD}; then \
-		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
 			LIBVERSION=$(LIBVERSION) \
@@ -343,7 +343,7 @@ link_a.tru64-rpath:
 	else \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
-		LIBDEPS="$(LIBDEPS)" \
+		LIBDEPS="$(LIBDEPS) -lc" \
 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
@@ -362,8 +362,8 @@ link_a.tru64-rpath:
 	fi
 
 link_o.solaris:
-	if ${DETECT_GNU_LD}; then \
-		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
 			LIBVERSION="$(LIBVERSION)" \
@@ -373,7 +373,7 @@ link_o.solaris:
 		$(CALC_VERSIONS); \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
-		LIBDEPS="$(LIBDEPS)" \
+		LIBDEPS="$(LIBDEPS) -lc" \
 		ALLSYMSFLAGS='-z allextract' \
 		NOALLSYMSFLAGS='' \
 		SHAREDFLAGS='-G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX' \
@@ -381,8 +381,8 @@ link_o.solaris:
 		$(LINK_SO_O); \
 	fi
 link_a.solaris:
-	if ${DETECT_GNU_LD}; then \
-		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
 			LIBVERSION="$(LIBVERSION)" \
@@ -392,7 +392,7 @@ link_a.solaris:
 		$(CALC_VERSIONS); \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
-		LIBDEPS="$(LIBDEPS)" \
+		LIBDEPS="$(LIBDEPS) -lc" \
 		ALLSYMSFLAGS='-z allextract' \
 		NOALLSYMSFLAGS='' \
 		SHAREDFLAGS='-G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX' \
@@ -404,7 +404,7 @@ link_a.solaris:
 # UnixWare 7 and OpenUNIX 8 native compilers used
 link_o.svr3:
 	@ if ${DETECT_GNU_LD}; then \
-		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
 			LIBVERSION=$(LIBVERSION) \
@@ -414,7 +414,7 @@ link_o.svr3:
 		$(CALC_VERSIONS); \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
-		LIBDEPS="$(LIBDEPS)" \
+		LIBDEPS="$(LIBDEPS) -lc" \
 		ALLSYMSFLAGS='-z allextract' \
 		NOALLSYMSFLAGS='' \
 		SHAREDFLAGS='-G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX' \
@@ -423,7 +423,7 @@ link_o.svr3:
 	fi
 link_a.svr3:
 	@ if ${DETECT_GNU_LD}; then \
-		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
 			LIBVERSION=$(LIBVERSION) \
@@ -433,7 +433,7 @@ link_a.svr3:
 		$(CALC_VERSIONS); \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
-		LIBDEPS="$(LIBDEPS)" \
+		LIBDEPS="$(LIBDEPS) -lc" \
 		ALLSYMSFLAGS='-z allextract' \
 		NOALLSYMSFLAGS='' \
 		SHAREDFLAGS='-G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX' \
@@ -443,7 +443,7 @@ link_a.svr3:
 
 link_o.irix:
 	@ if ${DETECT_GNU_LD}; then \
-		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
 			LIBVERSION=$(LIBVERSION) \
@@ -453,7 +453,7 @@ link_o.irix:
 		$(CALC_VERSIONS); \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
-		LIBDEPS="$(LIBDEPS)" \
+		LIBDEPS="$(LIBDEPS) -lc" \
 		ALLSYMSFLAGS='-all' \
 		NOALLSYMSFLAGS='' \
 		SHAREDFLAGS='-shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX' \
@@ -462,7 +462,7 @@ link_o.irix:
 	fi
 link_a.irix:
 	@ if ${DETECT_GNU_LD}; then \
-		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
 			LIBVERSION=$(LIBVERSION) \
@@ -472,7 +472,7 @@ link_a.irix:
 		$(CALC_VERSIONS); \
 		SHLIB=lib$(LIBNAME).so \
 		SHLIB_SUFFIX= \
-		LIBDEPS="$(LIBDEPS)" \
+		LIBDEPS="$(LIBDEPS) -lc" \
 		ALLSYMSFLAGS='-all' \
 		NOALLSYMSFLAGS='' \
 		SHAREDFLAGS='-shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX' \
@@ -544,7 +544,7 @@ link_o.aix:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so \
 	SHLIB_SUFFIX= \
-	LIBDEPS="$(LIBDEPS)" \
+	LIBDEPS="$(LIBDEPS) -lc" \
 	ALLSYMSFLAGS='-bnogc' \
 	NOALLSYMSFLAGS='' \
 	SHAREDFLAGS='-G -bE:lib$(LIBNAME).exp -bM:SRE' \
@@ -554,7 +554,7 @@ link_a.aix:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so \
 	SHLIB_SUFFIX= \
-	LIBDEPS="$(LIBDEPS)" \
+	LIBDEPS="$(LIBDEPS) -lc" \
 	ALLSYMSFLAGS='-bnogc' \
 	NOALLSYMSFLAGS='' \
 	SHAREDFLAGS='-G -bE:lib$(LIBNAME).exp -bM:SRE' \
@@ -565,7 +565,7 @@ link_o.reliantunix:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so \
 	SHLIB_SUFFIX= \
-	LIBDEPS="$(LIBDEPS)" \
+	LIBDEPS="$(LIBDEPS) -lc" \
 	ALLSYMSFLAGS= \
 	NOALLSYMSFLAGS='' \
 	SHAREDFLAGS='-G' \
@@ -575,7 +575,7 @@ link_a.reliantunix:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so \
 	SHLIB_SUFFIX= \
-	LIBDEPS="$(LIBDEPS)" \
+	LIBDEPS="$(LIBDEPS) -lc" \
 	ALLSYMSFLAGS= \
 	NOALLSYMSFLAGS='' \
 	SHAREDFLAGS='-G' \
