@@ -109,7 +109,7 @@
  *
  */
 
-#define ENTROPY_NEEDED 16  /* require 128 bits = 16 bytes of randomness */
+#define ENTROPY_NEEDED 20  /* require 160 bits = 20 bytes of randomness */
 
 #ifndef MD_RAND_DEBUG
 # ifndef NDEBUG
@@ -411,6 +411,7 @@ static void ssleay_rand_initialize(void)
 
 static int ssleay_rand_bytes(unsigned char *buf, int num)
 	{
+	static volatile int stirred_pool = 0;
 	int i,j,k,st_num,st_idx;
 	int ok;
 	long md_c[2];
@@ -419,6 +420,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 #ifndef GETPID_IS_MEANINGLESS
 	pid_t curr_pid = getpid();
 #endif
+	int do_stir_pool = 0;
 
 #ifdef PREDICT
 	if (rand_predictable)
@@ -455,6 +457,9 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	if (!initialized)
 		ssleay_rand_initialize();
 
+	if (!stirred_pool)
+		do_stir_pool = 1;
+	
 	ok = (entropy >= ENTROPY_NEEDED);
 	if (!ok)
 		{
@@ -464,10 +469,40 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 		 * Once we've had enough initial seeding we don't bother to
 		 * adjust the entropy count, though, because we're not ambitious
 		 * to provide *information-theoretic* randomness.
+		 *
+		 * NOTE: This approach fails if the program forks before
+		 * we have enough entropy. Entropy should be collected
+		 * in a separate input pool and be transferred to the
+		 * output pool only when the entropy limit has been reached.
 		 */
 		entropy -= num;
 		if (entropy < 0)
 			entropy = 0;
+		}
+
+	if (do_stir_pool)
+		{
+		/* Our output function chains only half of 'md', so we better
+		 * make sure that the required entropy gets 'evenly distributed'
+		 * through 'state', our randomness pool.  The input function
+		 * (ssleay_rand_add) chains all of 'md', which makes it more
+		 * suitable for this purpose.
+		 */
+
+		int n = STATE_SIZE; /* so that the complete pool gets accessed */
+		while (n > 0)
+			{
+#if MD_DIGEST_LENGTH > 20
+# error "Please adjust DUMMY_SEED."
+#endif
+#define DUMMY_SEED "...................." /* at least MD_DIGEST_LENGTH */
+			/* Note that the seed does not matter, it's just that
+			 * ssleay_rand_add expects to have something to hash. */
+			ssleay_rand_add(DUMMY_SEED, MD_DIGEST_LENGTH, 0.0);
+			n -= MD_DIGEST_LENGTH;
+			}
+		if (ok)
+			stirred_pool = 1;
 		}
 
 	st_idx=state_index;

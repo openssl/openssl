@@ -4,6 +4,19 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) When generating bytes for the first time in md_rand.c, 'stir the pool'
+     by seeding with STATE_SIZE dummy bytes (with zero entropy count).
+     (The PRNG state consists of two parts, the large pool 'state' and 'md',
+     where all of 'md' is used each time the PRNG is used, but 'state'
+     is used only indexed by a cyclic counter. As entropy may not be
+     well distributed from the beginning, 'md' is important as a
+     chaining variable. However, the output function chains only half
+     of 'md', i.e. 80 bits.  ssleay_rand_add, on the other hand, chains
+     all of 'md', and seeding with STATE_SIZE dummy bytes will result
+     in all of 'state' being rewritten, with the new values depending
+     on virtually all of 'md'.  This overcomes the 80 bit limitation.)
+     [Bodo Moeller]
+
   *) In ssl/s2_clnt.c and ssl/s3_clnt.c, call ERR_clear_error() when
      the handshake is continued after ssl_verify_cert_chain();
      otherwise, if SSL_VERIFY_NONE is set, remaining error codes
