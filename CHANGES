@@ -4,6 +4,11 @@
 
  Changes between 0.9.7e and 0.9.8  [xx XXX xxxx]
 
+  *) Add a new engine to support VIA PadLock ACE extensions in the VIA C3
+     Nehemiah processors. These extensions support AES encryption in hardware
+     as well as RNG (though RNG support is currently disabled).
+     [Michal Ludvig <michal@logix.cz>, with help from Andy Polyakov]
+
   *) Deprecate BN_[get|set]_params() functions (they were ignored internally).
      [Geoff Thorpe]
 
