@@ -318,10 +318,26 @@ end:
 	return(ret);
 	}
 
+static int SortFnByName(const void *_f1,const void *_f2)
+    {
+    const FUNCTION *f1=_f1;
+    const FUNCTION *f2=_f2;
+
+    if(f1->type != f2->type)
+	return f1->type-f2->type;
+    return strcmp(f1->name,f2->name);
+    }
+
 static LHASH *prog_init()
 	{
 	LHASH *ret;
 	FUNCTION *f;
+	int i;
+
+	/* Purely so it looks nice when the user hits ? */
+	for(i=0,f=functions ; f->name != NULL ; ++f,++i)
+	    ;
+	qsort(functions,i,sizeof *functions,SortFnByName);
 
 	if ((ret=lh_new(hash,cmp)) == NULL) return(NULL);
 
