@@ -332,6 +332,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "mips-sony-newsos4"; exit 0;
 	;;
 
+    CYGWIN*)
+	echo "${MACHINE}-whatever-cygwin32"; exit 0
+	;;
+
 esac
 
 #
@@ -645,6 +649,8 @@ EOF
   # *-aix) OUT="aix-$CC" ;;
   # *-dgux) OUT="dgux" ;;
   mips-sony-newsos4) OUT="newsos4-gcc" ;;
+  *-*-cygwin32) OUT="CygWin32"
+		options="$options no-threads no-asm" ;;
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 
