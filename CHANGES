@@ -5,8 +5,8 @@
  Changes between 0.9.6d and 0.9.7  [XX xxx 2002]
 
   *) Make object definitions compliant to LDAP (RFC2256): SN is the short
-     form for "surname", serialNumber has no short form (Michael Bell
-     <michael.bell@rz.hu-berlin.de>).
+     form for "surname", serialNumber has no short form; some more OID
+     additions.(Michael Bell <michael.bell@rz.hu-berlin.de>)
      [Lutz Jaenicke]
 
   *) Add an "init" command to the ENGINE config module and auto initialize

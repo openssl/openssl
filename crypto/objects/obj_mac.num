@@ -500,3 +500,9 @@ personalSignature		499
 dITRedirect		500
 audio		501
 documentPublisher		502
+x500UniqueIdentifier		503
+mime_mhs		504
+mime_mhs_headings		505
+mime_mhs_bodies		506
+id_hex_partial_message		507
+id_hex_multipart_message		508
