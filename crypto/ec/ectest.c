@@ -84,6 +84,7 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 #include <openssl/engine.h>
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
+#include <openssl/objects.h>
 
 #define ABORT do { \
 	fflush(stdout); \
@@ -94,6 +95,7 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 
 void prime_field_tests(void);
 void char2_field_tests(void);
+void internal_curve_test(void);
 
 #if 0
 static void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
@@ -1139,6 +1141,60 @@ void char2_field_tests()
 
 	}
 
+void internal_curve_test(void)
+	{
+	EC_builtin_curve *curves = NULL;
+	size_t crv_len = 0, n = 0;
+	int    ok = 1;
+
+	crv_len = EC_get_builtin_curves(NULL, 0);
+
+	curves = OPENSSL_malloc(sizeof(EC_builtin_curve) * crv_len);
+
+	if (curves == NULL)
+		return;
+
+	if (!EC_get_builtin_curves(curves, crv_len))
+		{
+		OPENSSL_free(curves);
+		return;
+		}
+
+	fprintf(stdout, "testing internal curves: ");
+		
+	for (n = 0; n < crv_len; n++)
+		{
+		EC_GROUP *group = NULL;
+		int nid = curves[n].nid;
+		if ((group = EC_GROUP_new_by_nid(nid)) == NULL)
+			{
+			ok = 0;
+			fprintf(stdout, "\nEC_GROUP_new_by_nid() failed with"
+				" curve %s\n", OBJ_nid2sn(nid));
+			/* try next curve */
+			continue;
+			}
+		if (!EC_GROUP_check(group, NULL))
+			{
+			ok = 0;
+			fprintf(stdout, "\nEC_GROUP_check() failed with"
+				" curve %s\n", OBJ_nid2sn(nid));
+			EC_GROUP_free(group);
+			/* try the next curve */
+			continue;
+			}
+		fprintf(stdout, ".");
+		fflush(stdout);
+		EC_GROUP_free(group);
+		}
+	if (ok)
+		fprintf(stdout, " ok\n");
+	else
+		fprintf(stdout, " failed\n");
+	OPENSSL_free(curves);
+	return;
+	}
+
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 
 int main(int argc, char *argv[])
@@ -1163,6 +1219,8 @@ int main(int argc, char *argv[])
 	prime_field_tests();
 	puts("");
 	char2_field_tests();
+	/* test the internal curves */
+	internal_curve_test();
 
 	ENGINE_cleanup();
 	CRYPTO_cleanup_all_ex_data();
