@@ -269,6 +269,11 @@
  Note on shared libraries
  ------------------------
 
+ Shared library is currently an experimental feature.  The only reason to
+ have them would be to conserve memory on systems where several program
+ are using OpenSSL.  Binary backward compatibility can't be guaranteed
+ before OpenSSL version 1.0.
+
  For some systems, the OpenSSL Configure script knows what is needed to
  build shared libraries for libcrypto and libssl.  On these systems,
  the shared libraries are currently not created by default, but giving
