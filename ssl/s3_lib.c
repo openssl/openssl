@@ -1280,10 +1280,13 @@ int ssl3_read(SSL *s, void *buf, int len)
 
 int ssl3_peek(SSL *s, char *buf, int len)
 	{
+#if 1
+	SSLerr(SSL_F_SSL3_PEEK, SSL_R_FIXME); /* function is totally broken */
+	return -1;
+#else	
 	SSL3_RECORD *rr;
 	int n;
 
-/* FIXME */
 	rr= &(s->s3->rrec);
 	if ((rr->length == 0) || (rr->type != SSL3_RT_APPLICATION_DATA))
 		{
@@ -1299,6 +1302,7 @@ int ssl3_peek(SSL *s, char *buf, int len)
 		n=len;
 	memcpy(buf,&(rr->data[rr->off]),(unsigned int)n);
 	return(n);
+#endif
 	}
 
 int ssl3_renegotiate(SSL *s)

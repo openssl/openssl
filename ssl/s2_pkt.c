@@ -68,9 +68,12 @@ static int write_pending(SSL *s, const unsigned char *buf, unsigned int len);
 static int ssl_mt_error(int n);
 int ssl2_peek(SSL *s, char *buf, int len)
 	{
+#if 1
+	SSLerr(SSL_F_SSL2_PEEK, SSL_R_FIXME); /* function is totally broken */
+	return -1;
+#else
 	int ret;
 
-/* FIXME */
 	ret=ssl2_read(s,buf,len);
 	if (ret > 0)
 	        {
@@ -78,6 +81,7 @@ int ssl2_peek(SSL *s, char *buf, int len)
 		s->s2->ract_data-=ret;
 		}
 	return(ret);
+#endif
 	}
 
 /* SSL_read -
