@@ -57,9 +57,10 @@
  */
 
 /*
- * Details about Montgomery multiplication algorithms can be found at:
- * http://security.ece.orst.edu/publications.html, especially
- * http://security.ece.orst.edu/koc/papers/j37acmon.pdf
+ * Details about Montgomery multiplication algorithms can be found at
+ * http://security.ece.orst.edu/publications.html, e.g.
+ * http://security.ece.orst.edu/koc/papers/j37acmon.pdf and
+ * sections 3.8 and 4.2 in http://security.ece.orst.edu/koc/papers/r01rsasw.pdf
  */
 
 #include <stdio.h>
