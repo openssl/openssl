@@ -112,7 +112,7 @@ typedef struct pkcs7_signed_st
 	ASN1_INTEGER			*version;	/* version 1 */
 	STACK_OF(X509_ALGOR)		*md_algs;	/* md used */
 	STACK_OF(X509)			*cert;		/* [ 0 ] */
-	STACK /* X509_CRL */		*crl;		/* [ 1 ] */
+	STACK_OF(X509_CRL)		*crl;		/* [ 1 ] */
 	STACK /* PKCS7_SIGNER_INFO */	*signer_info;
 
 	struct pkcs7_st			*contents;
@@ -140,7 +140,7 @@ typedef struct pkcs7_signedandenveloped_st
 	ASN1_INTEGER			*version;	/* version 1 */
 	STACK_OF(X509_ALGOR)		*md_algs;	/* md used */
 	STACK_OF(X509)			*cert;		/* [ 0 ] */
-	STACK /* X509_CRL */		*crl;		/* [ 1 ] */
+	STACK_OF(X509_CRL)		*crl;		/* [ 1 ] */
 	STACK /* PKCS7_SIGNER_INFO */	*signer_info;
 
 	PKCS7_ENC_CONTENT		*enc_data;

@@ -262,7 +262,7 @@ int PKCS7_add_certificate(PKCS7 *p7, X509 *x509)
 int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
 	{
 	int i;
-	STACK **sk;
+	STACK_OF(X509_CRL) **sk;
 
 	i=OBJ_obj2nid(p7->type);
 	switch (i)
@@ -279,10 +279,10 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
 		}
 
 	if (*sk == NULL)
-		*sk=sk_new_null();
+		*sk=sk_X509_CRL_new_null();
 
 	CRYPTO_add(&crl->references,1,CRYPTO_LOCK_X509_CRL);
-	sk_push(*sk,(char *)crl);
+	sk_X509_CRL_push(*sk,crl);
 	return(1);
 	}
 

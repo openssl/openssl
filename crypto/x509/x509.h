@@ -275,6 +275,9 @@ typedef struct X509_crl_st
 	int references;
 	} X509_CRL;
 
+DECLARE_STACK_OF(X509_CRL)
+DECLARE_ASN1_SET_OF(X509_CRL)
+
 typedef struct private_key_st
 	{
 	int version;

@@ -92,7 +92,7 @@ int MAIN(int argc, char **argv)
 	PKCS7_SIGNED *p7s = NULL;
 	X509_CRL *crl=NULL;
 	STACK *certflst=NULL;
-	STACK *crl_stack=NULL;
+	STACK_OF(X509_CRL) *crl_stack=NULL;
 	STACK_OF(X509) *cert_stack=NULL;
 	int ret=1,nocrl=0;
 
@@ -213,11 +213,11 @@ bad:
 	p7s->contents->type=OBJ_nid2obj(NID_pkcs7_data);
 
 	if (!ASN1_INTEGER_set(p7s->version,1)) goto end;
-	if ((crl_stack=sk_new(NULL)) == NULL) goto end;
+	if ((crl_stack=sk_X509_CRL_new(NULL)) == NULL) goto end;
 	p7s->crl=crl_stack;
 	if (crl != NULL)
 		{
-		sk_push(crl_stack,(char *)crl);
+		sk_X509_CRL_push(crl_stack,crl);
 		crl=NULL; /* now part of p7 for Freeing */
 		}
 
