@@ -254,7 +254,7 @@ do_bsd-gcc-shared: linux-shared
 do_linux-shared:
 	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-Wl,-S,-soname=lib$$i.so.${SHLIB_MAJOR} \
+		-Wl,-S,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,--whole-archive lib$$i.a \
 		-Wl,--no-whole-archive $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -L. -l$$i"; \
@@ -273,7 +273,7 @@ do_tru64-shared:
 do_solaris-shared:
 	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-h lib$$i.so.${SHLIB_MAJOR} \
+		-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -L. -l$$i"; \
 	done
@@ -282,7 +282,7 @@ do_solaris-shared:
 do_irix-shared:
 	libs='${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC} -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-Wl,-soname,lib$$i.so.${SHLIB_MAJOR} \
+		-Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-all lib$$i.a $$libs ${EX_LIBS} -lc) || exit 1; \
 	libs="$$libs -L. -l$$i"; \
 	done
