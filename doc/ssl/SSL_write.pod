@@ -24,7 +24,10 @@ the SSL_write() operation. The behaviour of SSL_write() depends on the
 underlying BIO. 
 
 If the underlying BIO is B<blocking>, SSL_write() will only return, once the
-write operation has been finished or an error occurred.
+write operation has been finished or an error occurred, except when a
+renegotiation take place, in which case a SSL_ERROR_WANT_READ may occur. 
+This behaviour can be controlled with the SSL_MODE_AUTO_RETRY flag of the
+L<SSL_CTX_set_mode(3)|SSL_CTX_set_mode(3)> call.
 
 If the underlying BIO is B<non-blocking>, SSL_write() will also return,
 when the underlying BIO could not satisfy the needs of SSL_write()
@@ -71,6 +74,7 @@ return value B<ret> to find out the reason.
 =head1 SEE ALSO
 
 L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_read(3)|SSL_read(3)>,
+L<SSL_CTX_set_mode(3)|SSL_CTX_set_mode(3)>,
 L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>
 
 =cut
