@@ -265,7 +265,6 @@ int RSA_ref_public_decrypt(int len, unsigned char *from, unsigned char *to,
 		RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_DECRYPT,RSAREF_R_LEN);
 		goto err;
 		}
-		goto err;
 	if ((i=RSAPublicDecrypt(to,&outlen,from,len,&RSAkey)) != 0)
 		{
 		RSAREFerr(RSAREF_F_RSA_REF_PUBLIC_DECRYPT,i);
