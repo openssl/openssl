@@ -32,11 +32,12 @@ BIO_puts() attempts to write a null terminated string B<buf> to BIO B<b>
 
 All these functions return either the amount of data successfully read or
 written (if the return value is positive) or that no data was successfully
-read or written (if the result is zero or negative).
+read or written if the result is 0 or -1. If the return value is -2 then
+the operation is not implemented in the specific BIO type.
 
 =head1 NOTES
 
-A negative or zero return is not necessarily an indication of an error. In
+A 0 or -1 return is not necessarily an indication of an error. In
 particular when the source/sink is non-blocking or of a certain type (for
 example an SSL BIO can retry even if the underlying connection is blocking)
 it may merely be an indication that no data is currently available and that
