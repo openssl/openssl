@@ -8,30 +8,35 @@ EVP_VerifyInit, EVP_VerifyUpdate, EVP_VerifyFinal - EVP signature verification f
 
  #include <openssl/evp.h>
 
- void EVP_VerifyInit(EVP_MD_CTX *ctx, const EVP_MD *type);
- void EVP_VerifyUpdate(EVP_MD_CTX *ctx, const void *d, unsigned int cnt);
+ int EVP_VerifyInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
+ int EVP_VerifyUpdate(EVP_MD_CTX *ctx, const void *d, unsigned int cnt);
  int EVP_VerifyFinal(EVP_MD_CTX *ctx,unsigned char *sigbuf, unsigned int siglen,EVP_PKEY *pkey);
+
+ int EVP_VerifyInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 
 =head1 DESCRIPTION
 
 The EVP signature verification routines are a high level interface to digital
 signatures.
 
-EVP_VerifyInit() initializes a verification context B<ctx> to using digest
-B<type>: this will typically be supplied by a function such as EVP_sha1().
+EVP_VerifyInit_ex() sets up verification context B<ctx> to use digest
+B<type> from ENGINE B<impl>. B<ctx> must be initialized by calling
+EVP_MD_CTX_init() before calling this function.
 
 EVP_VerifyUpdate() hashes B<cnt> bytes of data at B<d> into the
 verification context B<ctx>. This function can be called several times on the
 same B<ctx> to include additional data.
 
 EVP_VerifyFinal() verifies the data in B<ctx> using the public key B<pkey>
-and against the B<siglen> bytes at B<sigbuf>. After calling EVP_VerifyFinal()
-no additional calls to EVP_VerifyUpdate() can be made, but EVP_VerifyInit()
-can be called to initialize a new verification operation.
+and against the B<siglen> bytes at B<sigbuf>.
+
+EVP_VerifyInit() initializes verification context B<ctx> to use the default
+implementation of digest B<type>.
 
 =head1 RETURN VALUES
 
-EVP_VerifyInit() and EVP_VerifyUpdate() do not return values.
+EVP_VerifyInit_ex() and EVP_VerifyUpdate() return 1 for success and 0 for
+failure.
 
 EVP_VerifyFinal() returns 1 for a correct signature, 0 for failure and -1 if some
 other error occurred.
@@ -49,11 +54,18 @@ digest algorithm must be used with the correct public key type. A list of
 algorithms and associated public key algorithms appears in 
 L<EVP_DigestInit(3)|EVP_DigestInit(3)>.
 
+The call to EVP_VerifyFinal() internally finalizes a copy of the digest context.
+This means that calls to EVP_VerifyUpdate() and EVP_VerifyFinal() can be called
+later to digest and verify additional data.
+
+Since only a copy of the digest context is ever finalized the context must
+be cleaned up after use by calling EVP_MD_CTX_cleanup() or a memory leak
+will occur.
+
 =head1 BUGS
 
-Several of the functions do not return values: maybe they should. Although the
-internal digest operations will never fail some future hardware based operations
-might.
+Older versions of this documentation wrongly stated that calls to 
+EVP_VerifyUpdate() could not be made after calling EVP_VerifyFinal().
 
 =head1 SEE ALSO
 
@@ -68,5 +80,7 @@ L<sha(3)|sha(3)>, L<digest(1)|digest(1)>
 
 EVP_VerifyInit(), EVP_VerifyUpdate() and EVP_VerifyFinal() are
 available in all versions of SSLeay and OpenSSL.
+
+EVP_VerifyInit_ex() was added in OpenSSL 0.9.7
 
 =cut
