@@ -2489,6 +2489,10 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Clean old EAY MD5 hack from e_os.h.
      [Richard Levitte]
 
+ Changes between 0.9.6j and 0.9.6k  [xx XXX 2003]
+
+  *) 
+
  Changes between 0.9.6i and 0.9.6j  [10 Apr 2003]
 
   *) Countermeasure against the Klima-Pokorny-Rosa extension of
