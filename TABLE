@@ -1275,6 +1275,31 @@ $shared_extension = .so
 $ranlib       = 
 $arflags      = 
 
+*** aux3-gcc
+$cc           = gcc
+$cflags       = -O2 -DTERMIO
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = AUX
+$lflags       = -lbsd
+$bn_ops       = RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+$arflags      = 
+
 *** bsdi-elf-gcc
 $cc           = gcc
 $cflags       = -DPERL5 -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
