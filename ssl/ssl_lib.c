@@ -299,16 +299,16 @@ int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB cb)
 	return 1;
 	}
 
-int SSL_CTX_has_matching_session_id(const SSL_CTX *ctx, const unsigned char *id,
+int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 				unsigned int id_len)
 	{
 	/* A quick examination of SSL_SESSION_hash and SSL_SESSION_cmp shows how
 	 * we can "construct" a session to give us the desired check - ie. to
 	 * find if there's a session in the hash table that would conflict with
 	 * any new session built out of this id/id_len and the ssl_version in
-	 * use by this SSL_CTX. */
+	 * use by this SSL. */
 	SSL_SESSION r, *p;
-	r.ssl_version = ctx->method->version;
+	r.ssl_version = ssl->version;
 	r.session_id_length = id_len;
 	memcpy(r.session_id, id, id_len);
 	/* NB: SSLv2 always uses a fixed 16-byte session ID, so even if a
@@ -324,7 +324,7 @@ int SSL_CTX_has_matching_session_id(const SSL_CTX *ctx, const unsigned char *id,
 		}
 
 	CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
-	p = (SSL_SESSION *)lh_retrieve(ctx->sessions, &r);
+	p = (SSL_SESSION *)lh_retrieve(ssl->ctx->sessions, &r);
 	CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 	return (p != NULL);
 	}

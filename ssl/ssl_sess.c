@@ -146,7 +146,7 @@ static int def_generate_session_id(const SSL *ssl, unsigned char *id,
 	unsigned int retry = 0;
 	do
 		RAND_pseudo_bytes(id, *id_len);
-	while(SSL_CTX_has_matching_session_id(ssl->ctx, id, *id_len) &&
+	while(SSL_has_matching_session_id(ssl, id, *id_len) &&
 		(++retry < MAX_SESS_ID_ATTEMPTS));
 	if(retry < MAX_SESS_ID_ATTEMPTS)
 		return 1;
@@ -240,7 +240,7 @@ int ssl_get_new_session(SSL *s, int session)
 		else
 			ss->session_id_length = tmp;
 		/* Finally, check for a conflict */
-		if(SSL_CTX_has_matching_session_id(s->ctx, ss->session_id,
+		if(SSL_has_matching_session_id(s, ss->session_id,
 						ss->session_id_length))
 			{
 			SSLerr(SSL_F_SSL_GET_NEW_SESSION,

@@ -391,7 +391,7 @@ typedef struct ssl_session_st
  * callbacks should themselves check if the id they generate is unique otherwise
  * the SSL handshake will fail with an error - callbacks can do this using the
  * 'ssl' value they're passed by;
- *      SSL_CTX_has_matching_session_id(ssl->ctx, id, *id_len)
+ *      SSL_has_matching_session_id(ssl, id, *id_len)
  * The length value passed in is set at the maximum size the session ID can be.
  * In SSLv2 this is 16 bytes, whereas SSLv3/TLSv1 it is 32 bytes. The callback
  * can alter this length to be less if desired, but under SSLv2 session IDs are
@@ -1054,7 +1054,7 @@ int	SSL_CTX_add_session(SSL_CTX *s, SSL_SESSION *c);
 int	SSL_CTX_remove_session(SSL_CTX *,SSL_SESSION *c);
 int	SSL_CTX_set_generate_session_id(SSL_CTX *, GEN_SESSION_CB);
 int	SSL_set_generate_session_id(SSL *, GEN_SESSION_CB);
-int	SSL_CTX_has_matching_session_id(const SSL_CTX *ctx, const unsigned char *id,
+int	SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 					unsigned int id_len);
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a,unsigned char **pp,long length);
 
