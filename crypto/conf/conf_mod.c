@@ -163,13 +163,25 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 int CONF_modules_load_file(const char *filename, const char *appname,
 			   unsigned long flags)
 	{
+	char *file;
 	CONF *conf = NULL;
 	int ret = 0;
 	conf = NCONF_new(NULL);
 	if (!conf)
 		goto err;
 
-	if (NCONF_load(conf, filename, NULL) <= 0)
+	if (filename == NULL)
+		{
+		file = CONF_get1_default_config_file();
+		if (!file)
+			goto err;
+		}
+	else
+		file = (char *)filename;
+	if (appname == NULL)
+		appname = "openssl_conf";
+
+	if (NCONF_load(conf, file, NULL) <= 0)
 		{
 		if ((flags & CONF_MFLAGS_IGNORE_MISSING_FILE) &&
 		  (ERR_GET_REASON(ERR_peek_last_error()) == CONF_R_NO_SUCH_FILE))
@@ -183,6 +195,8 @@ int CONF_modules_load_file(const char *filename, const char *appname,
 	ret = CONF_modules_load(conf, appname, flags);
 
 	err:
+	if (filename == NULL)
+		OPENSSL_free(file);
 	NCONF_free(conf);
 
 	return ret;

@@ -83,26 +83,14 @@ static int openssl_configured = 0;
 
 void OPENSSL_config(const char *config_name)
 	{
-	int err_exit = 0;
-	char *file;
 	if (openssl_configured)
 		return;
 
 	OPENSSL_load_builtin_modules();
 
-	file = CONF_get1_default_config_file();
-	if (!file)
-		return;
-	if (config_name == NULL)
-		config_name = "openssl_conf";
-
 	ERR_clear_error();
-	if (CONF_modules_load_file(file, config_name,
-			CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0)
-			err_exit = 1;
-
-	OPENSSL_free(file);
-	if (err_exit)
+	if (CONF_modules_load_file(NULL, NULL,
+					CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0)
 		{
 		BIO *bio_err;
 		ERR_load_crypto_strings();

@@ -13,6 +13,10 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Move default behaviour to CONF_modules_load_file(). Is appname is NULL
+     use "openssl_conf" if filename is NULL use default openssl config file.
+     [Steve Henson]
+
   +) Add an argument to OPENSSL_config() to allow the use of an alternative
      config section name. Add a new flag to tolerate a missing config file
      and move code to CONF_modules_load_file().
