@@ -66,14 +66,13 @@ Section 5 will tell you more on how to handle the certificate you
 received.
 
 
-4. Creating a self-signed certificate
+4. Creating a self-signed test certificate
 
 If you don't want to deal with another certificate authority, or just
-want to create a test certificate for yourself, or are setting up a
-certificate authority of your own, you may want to make the requested
-certificate a self-signed one.  This is similar to creating a
-certificate request, but creates a certificate instead of a
-certificate request (1095 is 3 years):
+want to create a test certificate for yourself.  This is similar to
+creating a certificate request, but creates a certificate instead of
+a certificate request.  This is NOT the recommended way to create a
+CA certificate, see ca.txt.
 
   openssl req -new -x509 -key privkey.pem -out cacert.pem -days 1095
 

@@ -30,7 +30,8 @@
 # default openssl.cnf file has setup as per the following
 # demoCA ... where everything is stored
 
-DAYS="-days 365"
+DAYS="-days 365"	# 1 year
+CADAYS="-days 1095"	# 3 years
 REQ="openssl req $SSLEAY_CONFIG"
 CA="openssl ca $SSLEAY_CONFIG"
 VERIFY="openssl verify"
@@ -38,6 +39,7 @@ X509="openssl x509"
 
 CATOP=./demoCA
 CAKEY=./cakey.pem
+CAREQ=./careq.pem
 CACERT=./cacert.pem
 
 for i
@@ -70,7 +72,7 @@ case $i in
 	mkdir ${CATOP}/crl 
 	mkdir ${CATOP}/newcerts
 	mkdir ${CATOP}/private
-	echo "01" > ${CATOP}/serial
+	echo "00" > ${CATOP}/serial
 	touch ${CATOP}/index.txt
     fi
     if [ ! -f ${CATOP}/private/$CAKEY ]; then
@@ -83,8 +85,11 @@ case $i in
 	    RET=$?
 	else
 	    echo "Making CA certificate ..."
-	    $REQ -new -x509 -keyout ${CATOP}/private/$CAKEY \
-			   -out ${CATOP}/$CACERT $DAYS
+	    $REQ -new -keyout ${CATOP}/private/$CAKEY \
+			   -out ${CATOP}/$CAREQ
+	    $CA -out ${CATOP}/$CACERT $CADAYS -batch \
+			   -keyfile ${CATOP}/private/$CAKEY -selfsign \
+			   -infiles ${CATOP}/$CAREQ 
 	    RET=$?
 	fi
     fi

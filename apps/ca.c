@@ -204,7 +204,7 @@ static int certify(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 		   BIGNUM *serial, char *subj, int email_dn, char *startdate,
 		   char *enddate, long days, int batch, char *ext_sect, CONF *conf,
 		   int verbose, unsigned long certopt, unsigned long nameopt,
-		   int default_op, int ext_copy);
+		   int default_op, int ext_copy, int selfsign);
 static int certify_cert(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
 			CA_DB *db, BIGNUM *serial, char *subj, int email_dn,
@@ -225,7 +225,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	int email_dn, char *startdate, char *enddate, long days, int batch,
        	int verbose, X509_REQ *req, char *ext_sect, CONF *conf,
 	unsigned long certopt, unsigned long nameopt, int default_op,
-	int ext_copy);
+	int ext_copy, int selfsign);
 static int do_revoke(X509 *x509, CA_DB *db, int ext, char *extval);
 static int get_certificate_status(const char *ser_status, CA_DB *db);
 static int do_updatedb(CA_DB *db);
@@ -292,7 +292,8 @@ int MAIN(int argc, char **argv)
 	unsigned long nameopt = 0, certopt = 0;
 	int default_op = 1;
 	int ext_copy = EXT_COPY_NONE;
-	X509 *x509=NULL;
+	int selfsign = 0;
+	X509 *x509=NULL, *x509p = NULL;
 	X509 *x=NULL;
 	BIO *in=NULL,*out=NULL,*Sout=NULL,*Cout=NULL;
 	char *dbfile=NULL;
@@ -406,6 +407,8 @@ EF_ALIGNMENT=0;
 			if (--argc < 1) goto bad;
 			certfile= *(++argv);
 			}
+		else if (strcmp(*argv,"-selfsign") == 0)
+			selfsign=1;
 		else if (strcmp(*argv,"-in") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -700,7 +703,7 @@ bad:
 	}
 
 	/*****************************************************************/
-	/* we definitely need a public key, so let's get it */
+	/* we definitely need a private key, so let's get it */
 
 	if ((keyfile == NULL) && ((keyfile=NCONF_get_string(conf,
 		section,ENV_PRIVATE_KEY)) == NULL))
@@ -728,22 +731,27 @@ bad:
 
 	/*****************************************************************/
 	/* we need a certificate */
-	if ((certfile == NULL) && ((certfile=NCONF_get_string(conf,
-		section,ENV_CERTIFICATE)) == NULL))
+	if (!selfsign || spkac_file || ss_cert_file || gencrl)
 		{
-		lookup_fail(section,ENV_CERTIFICATE);
-		goto err;
-		}
-	x509=load_cert(bio_err, certfile, FORMAT_PEM, NULL, e,
-		"CA certificate");
-	if (x509 == NULL)
-		goto err;
+		if ((certfile == NULL)
+			&& ((certfile=NCONF_get_string(conf,
+				     section,ENV_CERTIFICATE)) == NULL))
+			{
+			lookup_fail(section,ENV_CERTIFICATE);
+			goto err;
+			}
+		x509=load_cert(bio_err, certfile, FORMAT_PEM, NULL, e,
+			"CA certificate");
+		if (x509 == NULL)
+			goto err;
 
-	if (!X509_check_private_key(x509,pkey))
-		{
-		BIO_printf(bio_err,"CA certificate and CA private key do not match\n");
-		goto err;
+		if (!X509_check_private_key(x509,pkey))
+			{
+			BIO_printf(bio_err,"CA certificate and CA private key do not match\n");
+			goto err;
+			}
 		}
+	if (!selfsign) x509p = x509;
 
 	f=NCONF_get_string(conf,BASE_SECTION,ENV_PRESERVE);
 	if (f == NULL)
@@ -1175,10 +1183,10 @@ bad:
 		if (infile != NULL)
 			{
 			total++;
-			j=certify(&x,infile,pkey,x509,dgst,attribs,db,
+			j=certify(&x,infile,pkey,x509p,dgst,attribs,db,
 				serial,subj,email_dn,startdate,enddate,days,batch,
 				extensions,conf,verbose, certopt, nameopt,
-				default_op, ext_copy);
+				default_op, ext_copy, selfsign);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -1195,10 +1203,10 @@ bad:
 		for (i=0; i<argc; i++)
 			{
 			total++;
-			j=certify(&x,argv[i],pkey,x509,dgst,attribs,db,
+			j=certify(&x,argv[i],pkey,x509p,dgst,attribs,db,
 				serial,subj,email_dn,startdate,enddate,days,batch,
 				extensions,conf,verbose, certopt, nameopt,
-				default_op, ext_copy);
+				default_op, ext_copy, selfsign);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -1515,7 +1523,7 @@ err:
 	BN_free(serial);
 	free_index(db);
 	EVP_PKEY_free(pkey);
-	X509_free(x509);
+	if (x509) X509_free(x509);
 	X509_CRL_free(crl);
 	NCONF_free(conf);
 	OBJ_cleanup();
@@ -1533,7 +1541,7 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     BIGNUM *serial, char *subj, int email_dn, char *startdate, char *enddate,
 	     long days, int batch, char *ext_sect, CONF *lconf, int verbose,
 	     unsigned long certopt, unsigned long nameopt, int default_op,
-	     int ext_copy)
+	     int ext_copy, int selfsign)
 	{
 	X509_REQ *req=NULL;
 	BIO *in=NULL;
@@ -1558,6 +1566,12 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 
 	BIO_printf(bio_err,"Check that the request matches the signature\n");
 
+	if (selfsign && !X509_REQ_check_private_key(req,pkey))
+		{
+		BIO_printf(bio_err,"Certificate request and CA private key do not match\n");
+		ok=0;
+		goto err;
+		}
 	if ((pktmp=X509_REQ_get_pubkey(req)) == NULL)
 		{
 		BIO_printf(bio_err,"error unpacking public key\n");
@@ -1582,7 +1596,7 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj, email_dn,
 		startdate,enddate,days,batch,verbose,req,ext_sect,lconf,
-		certopt, nameopt, default_op, ext_copy);
+		certopt, nameopt, default_op, ext_copy, selfsign);
 
 err:
 	if (req != NULL) X509_REQ_free(req);
@@ -1636,7 +1650,7 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,email_dn,startdate,enddate,
 		days,batch,verbose,rreq,ext_sect,lconf, certopt, nameopt, default_op,
-		ext_copy);
+		ext_copy, 0);
 
 err:
 	if (rreq != NULL) X509_REQ_free(rreq);
@@ -1649,7 +1663,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	     int email_dn, char *startdate, char *enddate, long days, int batch,
 	     int verbose, X509_REQ *req, char *ext_sect, CONF *lconf,
 	     unsigned long certopt, unsigned long nameopt, int default_op,
-	     int ext_copy)
+	     int ext_copy, int selfsign)
 	{
 	X509_NAME *name=NULL,*CAname=NULL,*subject=NULL, *dn_subject=NULL;
 	ASN1_UTCTIME *tm,*tmptm;
@@ -1753,7 +1767,10 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		}
 
 	/* take a copy of the issuer name before we mess with it. */
-	CAname=X509_NAME_dup(x509->cert_info->subject);
+	if (selfsign)
+		CAname=X509_NAME_dup(name);
+	else
+		CAname=X509_NAME_dup(x509->cert_info->subject);
 	if (CAname == NULL) goto err;
 	str=str2=NULL;
 
@@ -1965,8 +1982,16 @@ again2:
 
 	if (BN_to_ASN1_INTEGER(serial,ci->serialNumber) == NULL)
 		goto err;
-	if (!X509_set_issuer_name(ret,X509_get_subject_name(x509)))
-		goto err;
+	if (selfsign)
+		{
+		if (!X509_set_issuer_name(ret,subject))
+			goto err;
+		}
+	else
+		{
+		if (!X509_set_issuer_name(ret,X509_get_subject_name(x509)))
+			goto err;
+		}
 
 	if (strcmp(startdate,"today") == 0)
 		X509_gmtime_adj(X509_get_notBefore(ret),0);
@@ -2001,7 +2026,10 @@ again2:
 		ci->extensions = NULL;
 
 		/* Initialize the context structure */
-		X509V3_set_ctx(&ctx, x509, ret, req, NULL, 0);
+		if (selfsign)
+			X509V3_set_ctx(&ctx, ret, ret, req, NULL, 0);
+		else
+			X509V3_set_ctx(&ctx, x509, ret, req, NULL, 0);
 
 		if (extconf)
 			{
@@ -2344,7 +2372,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	EVP_PKEY_free(pktmp);
 	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,email_dn,startdate,enddate,
 		   days,1,verbose,req,ext_sect,lconf, certopt, nameopt, default_op,
-			ext_copy);
+			ext_copy, 0);
 err:
 	if (req != NULL) X509_REQ_free(req);
 	if (parms != NULL) CONF_free(parms);

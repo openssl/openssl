@@ -4,6 +4,13 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Make it possible to create self-signed certificates with 'openssl ca'
+     in such a way that the self-signed certificate becomes part of the
+     CA database and uses the same mechanisms for serial number generation
+     as all other certificate signing.  The new flag '-selfsign' enables
+     this functionality.  Adapt CA.sh and CA.pl.in.
+     [Richard Levitte]
+
   *) Add functionality to check the public key of a certificate request
      against a given private.  This is useful to check that a certificate
      request can be signed by that key (self-signing).
