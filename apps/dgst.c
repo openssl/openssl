@@ -446,7 +446,10 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			}
 		}
 	else if(hmac_key)
+		{
 		HMAC_Final(&hmac_ctx,buf,&len);
+		HMAC_CTX_cleanup(&hmac_ctx);
+		}
 	else
 		len=BIO_gets(bp,(char *)buf,BUFSIZE);
 
