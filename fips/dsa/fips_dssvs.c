@@ -40,6 +40,15 @@ int hex2bin(const char *in, unsigned char *out)
     return n2;
     }
 
+BIGNUM *hex2bn(const char *in)
+    {
+    BIGNUM *p=BN_new();
+
+    BN_hex2bn(&p,in);
+
+    return p;
+    }
+
 int bin2hex(const unsigned char *in,int len,char *out)
     {
     int n1, n2;
@@ -206,6 +215,64 @@ void siggen()
 	}
     }
 
+void sigver()
+    {
+    DSA *dsa=NULL;
+    char buf[1024];
+    int nmod=0;
+    unsigned char hash[20];
+    DSA_SIG *sig=DSA_SIG_new();
+
+    while(fgets(buf,sizeof buf,stdin) != NULL)
+	{
+	if(!strncmp(buf,"[mod = ",7))
+	    {
+	    nmod=atoi(buf+7);
+	    if(dsa)
+		DSA_free(dsa);
+	    dsa=DSA_new();
+	    }
+	else if(!strncmp(buf,"P = ",4))
+	    dsa->p=hex2bn(buf+4);
+	else if(!strncmp(buf,"Q = ",4))
+	    dsa->q=hex2bn(buf+4);
+	else if(!strncmp(buf,"G = ",4))
+	    {
+	    dsa->g=hex2bn(buf+4);
+
+	    printf("[mod = %d]\n\n",nmod);
+	    pbn("P",dsa->p);
+	    pbn("Q",dsa->q);
+	    pbn("G",dsa->g);
+	    putc('\n',stdout);
+	    }
+	else if(!strncmp(buf,"Msg = ",6))
+	    {
+	    unsigned char msg[1024];
+	    int n;
+
+	    n=hex2bin(buf+6,msg);
+	    pv("Msg",msg,n);
+	    SHA1(msg,n,hash);
+	    }
+	else if(!strncmp(buf,"Y = ",4))
+	    dsa->pub_key=hex2bn(buf+4);
+	else if(!strncmp(buf,"R = ",4))
+	    sig->r=hex2bn(buf+4);
+	else if(!strncmp(buf,"S = ",4))
+	    {
+	    sig->s=hex2bn(buf+4);
+	
+	    pbn("Y",dsa->pub_key);
+	    pbn("R",sig->r);
+	    pbn("S",sig->s);
+	    printf("Result = %c\n",DSA_do_verify(hash,sizeof hash,sig,dsa)
+		   ? 'T' : 'F');
+	    putc('\n',stdout);
+	    }
+	}
+    }
+
 int main(int argc,char **argv)
     {
     if(argc != 2)
@@ -227,8 +294,8 @@ int main(int argc,char **argv)
 	keypair();
     else if(!strcmp(argv[1],"siggen"))
 	siggen();
-    //    else if(!strcmp(argv[1],"versig"))
-    //	versig();
+    else if(!strcmp(argv[1],"sigver"))
+	sigver();
     else
 	{
 	fprintf(stderr,"Don't know how to %s.\n",argv[1]);

@@ -1,0 +1,41 @@
+#  CAVS 3.0
+#  "PQGGen" information for "Open SSL DSA"
+#  Mod sizes selected: 512 576 640 704 768 832 896 960 1024
+#  Generated on Fri Apr 02 09:32:59 2004
+
+[mod = 512]
+
+N = 5
+
+[mod = 576]
+
+N = 5
+
+[mod = 640]
+
+N = 5
+
+[mod = 704]
+
+N = 5
+
+[mod = 768]
+
+N = 5
+
+[mod = 832]
+
+N = 5
+
+[mod = 896]
+
+N = 5
+
+[mod = 960]
+
+N = 5
+
+[mod = 1024]
+
+N = 5
+
