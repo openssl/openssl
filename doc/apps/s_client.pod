@@ -18,6 +18,7 @@ B<openssl> B<s_client>
 [B<-pause>]
 [B<-showcerts>]
 [B<-debug>]
+[B<-msg>]
 [B<-nbio_test>]
 [B<-state>]
 [B<-nbio>]
@@ -111,6 +112,10 @@ prints out the SSL session states.
 =item B<-debug>
 
 print extensive debugging information including a hex dump of all traffic.
+
+=item B<-msg>
+
+show all protocol messages with hex dump.
 
 =item B<-nbio_test>
 
