@@ -94,7 +94,7 @@ int MAIN(int argc, char **argv)
 	char *inf=NULL,*outf=NULL;
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
 #define PROG_NAME_SIZE  16
-        char pname[PROG_NAME_SIZE];
+	char pname[PROG_NAME_SIZE];
 
 	apps_startup();
 
@@ -103,7 +103,7 @@ int MAIN(int argc, char **argv)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	/* first check the program name */
-        program_name(argv[0],pname,PROG_NAME_SIZE);
+	program_name(argv[0],pname,PROG_NAME_SIZE);
 	if (strcmp(pname,"base64") == 0)
 		base64=1;
 

@@ -247,8 +247,8 @@ int WIN32_rename(char *from, char *to)
 	ret=MoveFileEx(from,to,MOVEFILE_REPLACE_EXISTING|MOVEFILE_COPY_ALLOWED);
 	return(ret?0:-1);
 #else
-        unlink(to);
-        return MoveFile(from, to);
+	unlink(to);
+	return MoveFile(from, to);
 #endif
 	}
 #endif

@@ -77,7 +77,7 @@ static SSL_METHOD SSLv23_data= {
 	ssl_undefined_function,
 	ssl_undefined_function,
 	ssl23_read,
-        (int (*)(struct ssl_st *, char *, int))ssl_undefined_function,
+	(int (*)(struct ssl_st *, char *, int))ssl_undefined_function,
 	ssl23_write,
 	ssl_undefined_function,
 	ssl_undefined_function,

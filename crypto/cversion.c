@@ -72,7 +72,7 @@ const char *SSLeay_version(int t)
 		static char buf[sizeof(DATE)+11];
 
 		sprintf(buf,"built on: %s",DATE);
-        	return(buf);
+		return(buf);
 #else
 		return("built on: date not available");
 #endif

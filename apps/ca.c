@@ -590,7 +590,7 @@ bad:
 		lookup_fail(section,ENV_DATABASE);
 		goto err;
 		}
-        if (BIO_read_filename(in,dbfile) <= 0)
+	if (BIO_read_filename(in,dbfile) <= 0)
 		{
 		perror(dbfile);
 		BIO_printf(bio_err,"unable to open '%s'\n",dbfile);
@@ -1126,65 +1126,65 @@ bad:
 	/*****************************************************************/
 	if (dorevoke)
 		{
-        	in=BIO_new(BIO_s_file());
-        	out=BIO_new(BIO_s_file());
-        	if ((in == NULL) || (out == NULL))
-                	{
-                	ERR_print_errors(bio_err);
-                	goto err;
-                	}
-        	if (infile == NULL) 
-                	{
-                	BIO_printf(bio_err,"no input files\n");
-                	goto err;
-                	}
+		in=BIO_new(BIO_s_file());
+		out=BIO_new(BIO_s_file());
+		if ((in == NULL) || (out == NULL))
+			{
+			ERR_print_errors(bio_err);
+			goto err;
+			}
+		if (infile == NULL) 
+			{
+			BIO_printf(bio_err,"no input files\n");
+			goto err;
+			}
 		else
 			{
-                	if (BIO_read_filename(in,infile) <= 0)
-                		{
-                        	perror(infile);
-                        	BIO_printf(bio_err,"error trying to load '%s' certificate\n",infile);
-                        	goto err;
-                		}
-                	x509=PEM_read_bio_X509(in,NULL,NULL);
-                	if (x509 == NULL)
-                		{
-                        	BIO_printf(bio_err,"unable to load '%s' certificate\n",infile);
+			if (BIO_read_filename(in,infile) <= 0)
+				{
+				perror(infile);
+				BIO_printf(bio_err,"error trying to load '%s' certificate\n",infile);
 				goto err;
-                		}
-                	j=do_revoke(x509,db);
+				}
+			x509=PEM_read_bio_X509(in,NULL,NULL);
+			if (x509 == NULL)
+				{
+				BIO_printf(bio_err,"unable to load '%s' certificate\n",infile);
+				goto err;
+				}
+			j=do_revoke(x509,db);
 
 			strncpy(buf[0],dbfile,BSIZE-4);
-                	strcat(buf[0],".new");
-                	if (BIO_write_filename(out,buf[0]) <= 0)
-                		{
-                        	perror(dbfile);
-                        	BIO_printf(bio_err,"unable to open '%s'\n",dbfile);
-                        	goto err;
-                		}
-                	j=TXT_DB_write(out,db);
-                	if (j <= 0) goto err;
-                	BIO_free(in);
-                	BIO_free(out);
-                	in=NULL;
-                	out=NULL;
-                	strncpy(buf[1],dbfile,BSIZE-4);
-                	strcat(buf[1],".old");
-                	if (rename(dbfile,buf[1]) < 0)
-                		{
-                        	BIO_printf(bio_err,"unable to rename %s to %s\n", dbfile, buf[1]);
-                        	perror("reason");
-                        	goto err;
-                		}
-	                if (rename(buf[0],dbfile) < 0)
-                		{
-                        	BIO_printf(bio_err,"unable to rename %s to %s\n", buf[0],dbfile);
-                        	perror("reason");
-                        	rename(buf[1],dbfile);
-                        	goto err;
-                		}
-                	BIO_printf(bio_err,"Data Base Updated\n"); 
-		        }
+			strcat(buf[0],".new");
+			if (BIO_write_filename(out,buf[0]) <= 0)
+				{
+				perror(dbfile);
+				BIO_printf(bio_err,"unable to open '%s'\n",dbfile);
+				goto err;
+				}
+			j=TXT_DB_write(out,db);
+			if (j <= 0) goto err;
+			BIO_free(in);
+			BIO_free(out);
+			in=NULL;
+			out=NULL;
+			strncpy(buf[1],dbfile,BSIZE-4);
+			strcat(buf[1],".old");
+			if (rename(dbfile,buf[1]) < 0)
+				{
+				BIO_printf(bio_err,"unable to rename %s to %s\n", dbfile, buf[1]);
+				perror("reason");
+				goto err;
+				}
+			if (rename(buf[0],dbfile) < 0)
+				{
+				BIO_printf(bio_err,"unable to rename %s to %s\n", buf[0],dbfile);
+				perror("reason");
+				rename(buf[1],dbfile);
+				goto err;
+				}
+			BIO_printf(bio_err,"Data Base Updated\n"); 
+			}
 		}
 	/*****************************************************************/
 	ret=0;
@@ -1707,7 +1707,7 @@ again2:
 			p="Valid";
 		else
 			p="\ninvalid type, Data base error\n";
-		BIO_printf(bio_err,"Type          :%s\n",p);;
+		BIO_printf(bio_err,"Type	  :%s\n",p);;
 		if (rrow[DB_type][0] == 'R')
 			{
 			p=rrow[DB_exp_date]; if (p == NULL) p="undef";
@@ -1805,8 +1805,8 @@ again2:
 
 #ifndef NO_DSA
 	if (pkey->type == EVP_PKEY_DSA) dgst=EVP_dss1();
-        pktmp=X509_get_pubkey(ret);
-        if (EVP_PKEY_missing_parameters(pktmp) &&
+	pktmp=X509_get_pubkey(ret);
+	if (EVP_PKEY_missing_parameters(pktmp) &&
 		!EVP_PKEY_missing_parameters(pkey))
 		EVP_PKEY_copy_parameters(pktmp,pkey);
 	EVP_PKEY_free(pktmp);
@@ -2110,106 +2110,106 @@ static int add_oid_section(LHASH *hconf)
 
 static int do_revoke(X509 *x509, TXT_DB *db)
 {
-        ASN1_UTCTIME *tm=NULL;
-        char *row[DB_NUMBER],**rrow,**irow;
-        int ok=-1,i;
+	ASN1_UTCTIME *tm=NULL;
+	char *row[DB_NUMBER],**rrow,**irow;
+	int ok=-1,i;
 
-        for (i=0; i<DB_NUMBER; i++)
-                row[i]=NULL;
-        row[DB_name]=X509_NAME_oneline(x509->cert_info->subject,NULL,0);
-        row[DB_serial]=BN_bn2hex(ASN1_INTEGER_to_BN(x509->cert_info->serialNumber,NULL));
-        if ((row[DB_name] == NULL) || (row[DB_serial] == NULL))
-                {
-                BIO_printf(bio_err,"Malloc failure\n");
-                goto err;
-                }
-        rrow=TXT_DB_get_by_index(db,DB_name,row);
-        if (rrow == NULL)
-                {
-                BIO_printf(bio_err,"Adding Entry to DB for %s\n", row[DB_name]);
+	for (i=0; i<DB_NUMBER; i++)
+		row[i]=NULL;
+	row[DB_name]=X509_NAME_oneline(x509->cert_info->subject,NULL,0);
+	row[DB_serial]=BN_bn2hex(ASN1_INTEGER_to_BN(x509->cert_info->serialNumber,NULL));
+	if ((row[DB_name] == NULL) || (row[DB_serial] == NULL))
+		{
+		BIO_printf(bio_err,"Malloc failure\n");
+		goto err;
+		}
+	rrow=TXT_DB_get_by_index(db,DB_name,row);
+	if (rrow == NULL)
+		{
+		BIO_printf(bio_err,"Adding Entry to DB for %s\n", row[DB_name]);
 
-                /* We now just add it to the database */
-                row[DB_type]=(char *)Malloc(2);
+		/* We now just add it to the database */
+		row[DB_type]=(char *)Malloc(2);
 
-                tm=X509_get_notAfter(x509);
-                row[DB_exp_date]=(char *)Malloc(tm->length+1);
-                memcpy(row[DB_exp_date],tm->data,tm->length);
-                row[DB_exp_date][tm->length]='\0';
+		tm=X509_get_notAfter(x509);
+		row[DB_exp_date]=(char *)Malloc(tm->length+1);
+		memcpy(row[DB_exp_date],tm->data,tm->length);
+		row[DB_exp_date][tm->length]='\0';
 
-                row[DB_rev_date]=NULL;
+		row[DB_rev_date]=NULL;
 
-                /* row[DB_serial] done already */
-                row[DB_file]=(char *)Malloc(8);
+		/* row[DB_serial] done already */
+		row[DB_file]=(char *)Malloc(8);
 
-                /* row[DB_name] done already */
+		/* row[DB_name] done already */
 
-                if ((row[DB_type] == NULL) || (row[DB_exp_date] == NULL) ||
-                        (row[DB_file] == NULL))
-                        {
-                        BIO_printf(bio_err,"Malloc failure\n");
-                        goto err;
-                        }
-                strcpy(row[DB_file],"unknown");
-                row[DB_type][0]='V';
-                row[DB_type][1]='\0';
+		if ((row[DB_type] == NULL) || (row[DB_exp_date] == NULL) ||
+			(row[DB_file] == NULL))
+			{
+			BIO_printf(bio_err,"Malloc failure\n");
+			goto err;
+			}
+		strcpy(row[DB_file],"unknown");
+		row[DB_type][0]='V';
+		row[DB_type][1]='\0';
 
-                if ((irow=(char **)Malloc(sizeof(char *)*(DB_NUMBER+1))) == NULL)
-                        {
-                        BIO_printf(bio_err,"Malloc failure\n");
-                        goto err;
-                        }
+		if ((irow=(char **)Malloc(sizeof(char *)*(DB_NUMBER+1))) == NULL)
+			{
+			BIO_printf(bio_err,"Malloc failure\n");
+			goto err;
+			}
 
-                for (i=0; i<DB_NUMBER; i++)
-                        {
-                        irow[i]=row[i];
-                        row[i]=NULL;
-                        }
-                irow[DB_NUMBER]=NULL;
+		for (i=0; i<DB_NUMBER; i++)
+			{
+			irow[i]=row[i];
+			row[i]=NULL;
+			}
+		irow[DB_NUMBER]=NULL;
 
-                if (!TXT_DB_insert(db,irow))
-                        {
-                        BIO_printf(bio_err,"failed to update database\n");
-                        BIO_printf(bio_err,"TXT_DB error number %ld\n",db->error);
-                        goto err;
-                        }
+		if (!TXT_DB_insert(db,irow))
+			{
+			BIO_printf(bio_err,"failed to update database\n");
+			BIO_printf(bio_err,"TXT_DB error number %ld\n",db->error);
+			goto err;
+			}
 
-                /* Revoke Certificate */
-                do_revoke(x509,db);
+		/* Revoke Certificate */
+		do_revoke(x509,db);
 
-                ok=1;
-                goto err;
+		ok=1;
+		goto err;
 
-                }
-        else if (index_serial_cmp(row,rrow))
-                {
-                BIO_printf(bio_err,"ERROR:no same serial number %s\n",
-                           row[DB_serial]);
-                goto err;
-                }
-        else if (rrow[DB_type][0]=='R')
-                {
-                BIO_printf(bio_err,"ERROR:Already revoked, serial number %s\n",
-                           row[DB_serial]);
-                goto err;
-                }
-        else
-                {
-                BIO_printf(bio_err,"Revoking Certificate %s.\n", rrow[DB_serial]);
-                tm=X509_gmtime_adj(tm,0);
-                rrow[DB_type][0]='R';
-                rrow[DB_type][1]='\0';
-                rrow[DB_rev_date]=(char *)Malloc(tm->length+1);
-                memcpy(rrow[DB_rev_date],tm->data,tm->length);
-                rrow[DB_rev_date][tm->length]='\0';
-                }
-        ok=1;
+		}
+	else if (index_serial_cmp(row,rrow))
+		{
+		BIO_printf(bio_err,"ERROR:no same serial number %s\n",
+			   row[DB_serial]);
+		goto err;
+		}
+	else if (rrow[DB_type][0]=='R')
+		{
+		BIO_printf(bio_err,"ERROR:Already revoked, serial number %s\n",
+			   row[DB_serial]);
+		goto err;
+		}
+	else
+		{
+		BIO_printf(bio_err,"Revoking Certificate %s.\n", rrow[DB_serial]);
+		tm=X509_gmtime_adj(tm,0);
+		rrow[DB_type][0]='R';
+		rrow[DB_type][1]='\0';
+		rrow[DB_rev_date]=(char *)Malloc(tm->length+1);
+		memcpy(rrow[DB_rev_date],tm->data,tm->length);
+		rrow[DB_rev_date][tm->length]='\0';
+		}
+	ok=1;
 err:
-        for (i=0; i<DB_NUMBER; i++)
-                {
-                if (row[i] != NULL) 
-                        Free(row[i]);
-                }
-        ASN1_UTCTIME_free(tm);
-        return(ok);
+	for (i=0; i<DB_NUMBER; i++)
+		{
+		if (row[i] != NULL) 
+			Free(row[i]);
+		}
+	ASN1_UTCTIME_free(tm);
+	return(ok);
 }
 

@@ -212,8 +212,8 @@ end:
 
 	/* We now need to gernerate g */
 	/* Set r0=(p-1)/q */
-        BN_sub(test,p,BN_value_one());
-        BN_div(r0,NULL,test,q,ctx);
+	BN_sub(test,p,BN_value_one());
+	BN_div(r0,NULL,test,q,ctx);
 
 	BN_set_word(test,h);
 	BN_MONT_CTX_set(mont,p,ctx);

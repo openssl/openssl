@@ -476,11 +476,11 @@ static int noecho_fgets(char *buf, int size, FILE *tty)
  * usually a CR so this can be trouble. No STDIO fix seems to work but
  * flushing the console appears to do the trick.
  */
-                {
-                        HANDLE inh;
-                        inh = GetStdHandle(STD_INPUT_HANDLE);
-                        FlushConsoleInputBuffer(inh);
-                }
+		{
+			HANDLE inh;
+			inh = GetStdHandle(STD_INPUT_HANDLE);
+			FlushConsoleInputBuffer(inh);
+		}
 #endif
 	return(strlen(buf));
 	}

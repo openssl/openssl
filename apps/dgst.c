@@ -83,7 +83,7 @@ int MAIN(int argc, char **argv)
 	BIO *bmd=NULL;
 	const char *name;
 #define PROG_NAME_SIZE  16
-        char pname[PROG_NAME_SIZE];
+	char pname[PROG_NAME_SIZE];
 	int separator=0;
 	int debug=0;
 
@@ -99,7 +99,7 @@ int MAIN(int argc, char **argv)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	/* first check the program name */
-        program_name(argv[0],pname,PROG_NAME_SIZE);
+	program_name(argv[0],pname,PROG_NAME_SIZE);
 
 	md=EVP_get_digestbyname(pname);
 

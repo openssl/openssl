@@ -601,7 +601,7 @@ void ERR_set_error_data(char *data, int flags)
 	}
 
 void ERR_add_error_data(int num, ...)
-        {
+	{
 	va_list args;
 	int i,n,s;
 	char *str,*p,*a;

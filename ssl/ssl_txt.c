@@ -62,20 +62,20 @@
 
 #ifndef NO_FP_API
 int SSL_SESSION_print_fp(FILE *fp, SSL_SESSION *x)
-        {
-        BIO *b;
-        int ret;
+	{
+	BIO *b;
+	int ret;
 
-        if ((b=BIO_new(BIO_s_file_internal())) == NULL)
+	if ((b=BIO_new(BIO_s_file_internal())) == NULL)
 		{
 		SSLerr(SSL_F_SSL_SESSION_PRINT_FP,ERR_R_BUF_LIB);
-                return(0);
+		return(0);
 		}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=SSL_SESSION_print(b,x);
-        BIO_free(b);
-        return(ret);
-        }
+	BIO_set_fp(b,fp,BIO_NOCLOSE);
+	ret=SSL_SESSION_print(b,x);
+	BIO_free(b);
+	return(ret);
+	}
 #endif
 
 int SSL_SESSION_print(BIO *bp, SSL_SESSION *x)

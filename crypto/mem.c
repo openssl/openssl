@@ -336,8 +336,8 @@ void CRYPTO_mem_leaks(BIO *b)
 
 #if 0
 	lh_stats_bio(mh,b);
-        lh_node_stats_bio(mh,b);
-        lh_node_usage_stats_bio(mh,b);
+	lh_node_stats_bio(mh,b);
+	lh_node_usage_stats_bio(mh,b);
 #endif
 	}
 

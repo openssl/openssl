@@ -122,10 +122,10 @@ extern BIO *bio_err;
 #endif
 
 typedef struct args_st
-        {
-        char **data;
+	{
+	char **data;
 	int count;
-        } ARGS;
+	} ARGS;
 
 int should_retry(int i);
 int args_from_file(char *file, int *argc, char **argv[]);

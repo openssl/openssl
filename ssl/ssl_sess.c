@@ -74,12 +74,12 @@ SSL_SESSION *SSL_get_session(SSL *ssl)
 
 int SSL_SESSION_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 	     int (*dup_func)(), void (*free_func)())
-        {
-        ssl_session_num++;
-        return(CRYPTO_get_ex_new_index(ssl_session_num-1,
+	{
+	ssl_session_num++;
+	return(CRYPTO_get_ex_new_index(ssl_session_num-1,
 		&ssl_session_meth,
-                argl,argp,new_func,dup_func,free_func));
-        }
+		argl,argp,new_func,dup_func,free_func));
+	}
 
 int SSL_SESSION_set_ex_data(SSL_SESSION *s, int idx, void *arg)
 	{

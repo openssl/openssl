@@ -1524,7 +1524,7 @@ SSL *SSL_dup(SSL *s)
 	{
 	STACK_OF(X509_NAME) *sk;
 	X509_NAME *xn;
-        SSL *ret;
+	SSL *ret;
 	int i;
 		 
 	if ((ret=SSL_new(SSL_get_SSL_CTX(s))) == NULL)
@@ -1674,9 +1674,9 @@ EVP_PKEY *SSL_get_privatekey(SSL *s)
 
 SSL_CIPHER *SSL_get_current_cipher(SSL *s)
 	{
-        if ((s->session != NULL) && (s->session->cipher != NULL))
-                return(s->session->cipher);
-        return(NULL);
+	if ((s->session != NULL) && (s->session->cipher != NULL))
+		return(s->session->cipher);
+	return(NULL);
 	}
 
 int ssl_init_wbio_buffer(SSL *s,int push)
@@ -1814,11 +1814,11 @@ long SSL_get_verify_result(SSL *ssl)
 
 int SSL_get_ex_new_index(long argl,char *argp,int (*new_func)(),
 			 int (*dup_func)(),void (*free_func)())
-        {
+	{
 	ssl_meth_num++;
 	return(CRYPTO_get_ex_new_index(ssl_meth_num-1,
 		&ssl_meth,argl,argp,new_func,dup_func,free_func));
-        }
+	}
 
 int SSL_set_ex_data(SSL *s,int idx,void *arg)
 	{
@@ -1832,11 +1832,11 @@ void *SSL_get_ex_data(SSL *s,int idx)
 
 int SSL_CTX_get_ex_new_index(long argl,char *argp,int (*new_func)(),
 			     int (*dup_func)(),void (*free_func)())
-        {
+	{
 	ssl_ctx_meth_num++;
 	return(CRYPTO_get_ex_new_index(ssl_ctx_meth_num-1,
 		&ssl_ctx_meth,argl,argp,new_func,dup_func,free_func));
-        }
+	}
 
 int SSL_CTX_set_ex_data(SSL_CTX *s,int idx,void *arg)
 	{

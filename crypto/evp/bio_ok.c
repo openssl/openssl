@@ -523,7 +523,7 @@ static void block_in(BIO* b)
 	{
 	BIO_OK_CTX *ctx;
 	EVP_MD_CTX *md;
-        long tl= 0;
+	long tl= 0;
 	unsigned char tmp[EVP_MAX_MD_SIZE];
 
 	ctx=(BIO_OK_CTX *)b->ptr;

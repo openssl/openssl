@@ -99,9 +99,9 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "Netscape certificate sequence utility\n");
 		BIO_printf (bio_err, "Usage nseq [options]\n");
 		BIO_printf (bio_err, "where options are\n");
-                BIO_printf (bio_err, "-in file  input file\n");
-                BIO_printf (bio_err, "-out file output file\n");
-                BIO_printf (bio_err, "-toseq    output NS Sequence file\n");
+		BIO_printf (bio_err, "-in file  input file\n");
+		BIO_printf (bio_err, "-out file output file\n");
+		BIO_printf (bio_err, "-toseq    output NS Sequence file\n");
 		EXIT(1);
 	}
 
@@ -160,15 +160,15 @@ end:
 
 static int dump_cert_text(BIO *out, X509 *x)
 {
-        char buf[256];
-        X509_NAME_oneline(X509_get_subject_name(x),buf,256);
-        BIO_puts(out,"subject=");
-        BIO_puts(out,buf);
+	char buf[256];
+	X509_NAME_oneline(X509_get_subject_name(x),buf,256);
+	BIO_puts(out,"subject=");
+	BIO_puts(out,buf);
 
-        X509_NAME_oneline(X509_get_issuer_name(x),buf,256);
-        BIO_puts(out,"\nissuer= ");
-        BIO_puts(out,buf);
-        BIO_puts(out,"\n");
-        return 0;
+	X509_NAME_oneline(X509_get_issuer_name(x),buf,256);
+	BIO_puts(out,"\nissuer= ");
+	BIO_puts(out,buf);
+	BIO_puts(out,"\n");
+	return 0;
 }
 

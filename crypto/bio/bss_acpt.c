@@ -292,7 +292,7 @@ static int acpt_read(BIO *b, char *out, int outl)
 	int ret=0;
 	BIO_ACCEPT *data;
 
-        BIO_clear_retry_flags(b);
+	BIO_clear_retry_flags(b);
 	data=(BIO_ACCEPT *)b->ptr;
 
 	while (b->next_bio == NULL)

@@ -71,14 +71,14 @@ int SSL_library_init(void)
 	EVP_add_cipher(EVP_idea_cbc());
 #endif
 #ifndef NO_RC4
-        EVP_add_cipher(EVP_rc4());
+	EVP_add_cipher(EVP_rc4());
 #endif  
 #ifndef NO_RC2
-        EVP_add_cipher(EVP_rc2_cbc());
+	EVP_add_cipher(EVP_rc2_cbc());
 #endif  
 
 #ifndef NO_MD2
-        EVP_add_digest(EVP_md2());
+	EVP_add_digest(EVP_md2());
 #endif
 #ifndef NO_MD5
 	EVP_add_digest(EVP_md5());
