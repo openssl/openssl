@@ -107,7 +107,7 @@ static const char rnd_seed[] = "string to make the random number generator think
 static void message(BIO *out, char *m)
 	{
 	fprintf(stderr, "test %s\n", m);
-#if defined(linux) || defined(FreeBSD) /* can we use GNU bc features? */
+#if defined(linux) || defined(__FreeBSD__) /* can we use GNU bc features? */
 	BIO_puts(out, "print \"test ");
 	BIO_puts(out, m);
 	BIO_puts(out, "\\n\"\n");
