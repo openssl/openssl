@@ -4,6 +4,13 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Make sure the default DSA_METHOD implementation only uses its
+     dsa_mod_exp() and/or bn_mod_exp() handlers if they are non-NULL,
+     and change its own handlers to be NULL so as to remove unnecessary
+     indirection. This lets alternative implementations fallback to the
+     default implementation more easily.
+     [Geoff Thorpe]
+
   *) Support for directoryName in GeneralName related extensions
      in config files.
      [Steve Henson]

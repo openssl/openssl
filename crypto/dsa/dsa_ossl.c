@@ -74,20 +74,14 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 		  DSA *dsa);
 static int dsa_init(DSA *dsa);
 static int dsa_finish(DSA *dsa);
-static int dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
-		BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx,
-		BN_MONT_CTX *in_mont);
-static int dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-				const BIGNUM *m, BN_CTX *ctx,
-				BN_MONT_CTX *m_ctx);
 
 static DSA_METHOD openssl_dsa_meth = {
 "OpenSSL DSA method",
 dsa_do_sign,
 dsa_sign_setup,
 dsa_do_verify,
-dsa_mod_exp,
-dsa_bn_mod_exp,
+NULL, /* dsa_mod_exp, */
+NULL, /* dsa_bn_mod_exp, */
 dsa_init,
 dsa_finish,
 0,
@@ -95,6 +89,41 @@ NULL,
 NULL,
 NULL
 };
+
+/* These macro wrappers replace attempts to use the dsa_mod_exp() and
+ * bn_mod_exp() handlers in the DSA_METHOD structure. We avoid the problem of
+ * having a the macro work as an expression by bundling an "err_instr". So;
+ * 
+ *     if (!dsa->meth->bn_mod_exp(dsa, r,dsa->g,&k,dsa->p,ctx,
+ *                 dsa->method_mont_p)) goto err;
+ *
+ * can be replaced by;
+ *
+ *     DSA_BN_MOD_EXP(goto err, dsa, r, dsa->g, &k, dsa->p, ctx,
+ *                 dsa->method_mont_p);
+ */
+
+#define DSA_MOD_EXP(err_instr,dsa,rr,a1,p1,a2,p2,m,ctx,in_mont) \
+	do { \
+	int _tmp_res53; \
+	if((dsa)->meth->dsa_mod_exp) \
+		_tmp_res53 = (dsa)->meth->dsa_mod_exp((dsa), (rr), (a1), (p1), \
+				(a2), (p2), (m), (ctx), (in_mont)); \
+	else \
+		_tmp_res53 = BN_mod_exp2_mont((rr), (a1), (p1), (a2), (p2), \
+				(m), (ctx), (in_mont)); \
+	if(!_tmp_res53) err_instr; \
+	} while(0)
+#define DSA_BN_MOD_EXP(err_instr,dsa,r,a,p,m,ctx,m_ctx) \
+	do { \
+	int _tmp_res53; \
+	if((dsa)->meth->bn_mod_exp) \
+		_tmp_res53 = (dsa)->meth->bn_mod_exp((dsa), (r), (a), (p), \
+				(m), (ctx), (m_ctx)); \
+	else \
+		_tmp_res53 = BN_mod_exp_mont((r), (a), (p), (m), (ctx), (m_ctx)); \
+	if(!_tmp_res53) err_instr; \
+	} while(0)
 
 const DSA_METHOD *DSA_OpenSSL(void)
 {
@@ -210,8 +239,8 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		}
 
 	/* Compute r = (g^k mod p) mod q */
-	if (!dsa->meth->bn_mod_exp(dsa, r,dsa->g,&k,dsa->p,ctx,
-		(BN_MONT_CTX *)dsa->method_mont_p)) goto err;
+	DSA_BN_MOD_EXP(goto err, dsa, r, dsa->g, &k, dsa->p, ctx,
+			(BN_MONT_CTX *)dsa->method_mont_p);
 	if (!BN_mod(r,r,dsa->q,ctx)) goto err;
 
 	/* Compute  part of 's = inv(k) (m + xr) mod q' */
@@ -289,31 +318,12 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 		}
 	mont=(BN_MONT_CTX *)dsa->method_mont_p;
 
-#if 0
-	{
-	BIGNUM t2;
 
-	BN_init(&t2);
-	/* v = ( g^u1 * y^u2 mod p ) mod q */
-	/* let t1 = g ^ u1 mod p */
-	if (!BN_mod_exp_mont(&t1,dsa->g,&u1,dsa->p,ctx,mont)) goto err;
-	/* let t2 = y ^ u2 mod p */
-	if (!BN_mod_exp_mont(&t2,dsa->pub_key,&u2,dsa->p,ctx,mont)) goto err;
-	/* let u1 = t1 * t2 mod p */
-	if (!BN_mod_mul(&u1,&t1,&t2,dsa->p,ctx)) goto err_bn;
-	BN_free(&t2);
-	}
-	/* let u1 = u1 mod q */
-	if (!BN_mod(&u1,&u1,dsa->q,ctx)) goto err;
-#else
-	{
-	if (!dsa->meth->dsa_mod_exp(dsa, &t1,dsa->g,&u1,dsa->pub_key,&u2,
-						dsa->p,ctx,mont)) goto err;
+	DSA_MOD_EXP(goto err, dsa, &t1, dsa->g, &u1, dsa->pub_key, &u2, dsa->p, ctx, mont);
 	/* BN_copy(&u1,&t1); */
 	/* let u1 = u1 mod q */
 	if (!BN_mod(&u1,&t1,dsa->q,ctx)) goto err;
-	}
-#endif
+
 	/* V is now in u1.  If the signature is correct, it will be
 	 * equal to R. */
 	ret=(BN_ucmp(&u1, sig->r) == 0);
@@ -340,16 +350,3 @@ static int dsa_finish(DSA *dsa)
 	return(1);
 }
 
-static int dsa_mod_exp(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
-		BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx,
-		BN_MONT_CTX *in_mont)
-{
-	return BN_mod_exp2_mont(rr, a1, p1, a2, p2, m, ctx, in_mont);
-}
-	
-static int dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-				const BIGNUM *m, BN_CTX *ctx,
-				BN_MONT_CTX *m_ctx)
-{
-	return BN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
-}
