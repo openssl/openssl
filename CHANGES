@@ -3,6 +3,16 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New option '-subj arg' for 'openssl req' and 'openssl ca'.  This
+     sets the subject name for a new request or supersedes the
+     subject name in a given request. Formats that can be parsed are
+          'CN=Some Name, OU=myOU, C=IT'
+     and
+          'CN=Some Name/OU=myOU/C=IT'.
+
+     Add options '-batch' and '-verbose' to 'openssl req'.
+     [Massimiliano Pala <madwolf@hackmasters.net>]
+
   *) Introduce the possibility to access global variables through
      functions on platform were that's the best way to handle exporting
      global variables in shared libraries.  To enable this functionality,

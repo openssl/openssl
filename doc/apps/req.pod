@@ -28,12 +28,15 @@ B<openssl> B<req>
 [B<-keyout filename>]
 [B<-[md5|sha1|md2|mdc2]>]
 [B<-config filename>]
+[B<-subj arg>]
 [B<-x509>]
 [B<-days n>]
 [B<-asn1-kludge>]
 [B<-newhdr>]
 [B<-extensions section>]
 [B<-reqexts section>]
+[B<-batch>]
+[B<-verbose>]
 
 =head1 DESCRIPTION
 
@@ -154,6 +157,11 @@ this allows an alternative configuration file to be specified,
 this overrides the compile time filename or any specified in
 the B<OPENSSL_CONF> environment variable.
 
+=item B<-subj arg>
+
+sets subject name for new request or supersedes the subject name
+when processing a request.
+
 =item B<-x509>
 
 this option outputs a self signed certificate instead of a certificate
@@ -195,6 +203,14 @@ It should be noted that very few CAs still require the use of this option.
 
 Adds the word B<NEW> to the PEM file header and footer lines on the outputed
 request. Some software (Netscape certificate server) and some CAs need this.
+
+=item B<-batch>
+
+non-interactive mode.
+
+=item B<-verbose>
+
+print extra details about the operations being performed.
 
 =back
 

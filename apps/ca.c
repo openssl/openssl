@@ -183,6 +183,7 @@ static char *ca_usage[]={
 " -batch          - Don't ask questions\n",
 " -msie_hack      - msie modifications to handle all those universal strings\n",
 " -revoke file    - Revoke a certificate (given in file)\n",
+" -subj arg       - Use arg instead of request's subject\n",
 " -extensions ..  - Extension section (override value in config file)\n",
 " -extfile file   - Configuration file with X509v3 extentions to add\n",
 " -crlexts ..     - CRL extension section (override value in config file)\n",
@@ -208,24 +209,25 @@ static BIGNUM *load_serial(char *serialfile);
 static int save_serial(char *serialfile, BIGNUM *serial);
 static int certify(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 		   const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,TXT_DB *db,
-		   BIGNUM *serial, char *startdate,char *enddate, int days,
-		   int batch, char *ext_sect, LHASH *conf,int verbose);
+		   BIGNUM *serial, char *subj, char *startdate,char *enddate,
+		   int days, int batch, char *ext_sect, LHASH *conf,int verbose);
 static int certify_cert(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
-			TXT_DB *db, BIGNUM *serial,char *startdate,
+			TXT_DB *db, BIGNUM *serial, char *subj, char *startdate,
 			char *enddate, int days, int batch, char *ext_sect,
 			LHASH *conf,int verbose);
 static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			 const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
-			 TXT_DB *db, BIGNUM *serial,char *startdate,
+			 TXT_DB *db, BIGNUM *serial,char *subj, char *startdate,
 			 char *enddate, int days, char *ext_sect,LHASH *conf,
 				int verbose);
 static int fix_data(int nid, int *type);
 static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
-	STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial,
+	STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial,char *subj,
 	char *startdate, char *enddate, int days, int batch, int verbose,
 	X509_REQ *req, char *ext_sect, LHASH *conf);
+static X509_NAME *do_subject(char *subject);
 static int do_revoke(X509 *x509, TXT_DB *db, int ext, char *extval);
 static int get_certificate_status(const char *ser_status, TXT_DB *db);
 static int do_updatedb(TXT_DB *db);
@@ -280,6 +282,7 @@ int MAIN(int argc, char **argv)
 	char *serialfile=NULL;
 	char *extensions=NULL;
 	char *extfile=NULL;
+	char *subj=NULL;
 	char *crl_ext=NULL;
 	int rev_type = REV_NONE;
 	char *rev_arg = NULL;
@@ -342,6 +345,12 @@ EF_ALIGNMENT=0;
 			{
 			if (--argc < 1) goto bad;
 			section= *(++argv);
+			}
+		else if (strcmp(*argv,"-subj") == 0)
+			{
+			if (--argc < 1) goto bad;
+			subj= *(++argv);
+			/* preserve=1; */
 			}
 		else if (strcmp(*argv,"-startdate") == 0)
 			{
@@ -719,7 +728,7 @@ bad:
 		lookup_fail(section,ENV_CERTIFICATE);
 		goto err;
 		}
-        if (BIO_read_filename(in,certfile) <= 0)
+	if (BIO_read_filename(in,certfile) <= 0)
 		{
 		perror(certfile);
 		BIO_printf(bio_err,"trying to load CA certificate\n");
@@ -771,7 +780,7 @@ bad:
 	       C routines to convert the directory syntax to Unixly, and give
 	       that to access().  However, time's too short to do that just
 	       now.
-            */
+	    */
 		if (access(outdir,R_OK|W_OK|X_OK) != 0)
 			{
 			BIO_printf(bio_err,"I am unable to access the %s directory\n",outdir);
@@ -902,9 +911,9 @@ bad:
 			{
 			BIO_printf(bio_err,"Malloc failure\n");
 			goto err;
-	        	}
+			}
 		else if (i == 0)
-	        	{
+			{
 			if (verbose) BIO_printf(bio_err,
 					"No entries found to mark expired\n"); 
 			}
@@ -987,7 +996,7 @@ bad:
 		/* We can have sections in the ext file */
 		if (!extensions && !(extensions = CONF_get_string(extconf, "default", "extensions")))
 			extensions = "default";
-                }
+		}
 
 	/*****************************************************************/
 	if (req || gencrl)
@@ -1138,7 +1147,7 @@ bad:
 			{
 			total++;
 			j=certify_spkac(&x,spkac_file,pkey,x509,dgst,attribs,db,
-				serial,startdate,enddate, days,extensions,conf,
+				serial,subj,startdate,enddate, days,extensions,conf,
 				verbose);
 			if (j < 0) goto err;
 			if (j > 0)
@@ -1162,7 +1171,7 @@ bad:
 			{
 			total++;
 			j=certify_cert(&x,ss_cert_file,pkey,x509,dgst,attribs,
-				db,serial,startdate,enddate,days,batch,
+				db,serial,subj,startdate,enddate,days,batch,
 				extensions,conf,verbose);
 			if (j < 0) goto err;
 			if (j > 0)
@@ -1181,7 +1190,7 @@ bad:
 			{
 			total++;
 			j=certify(&x,infile,pkey,x509,dgst,attribs,db,
-				serial,startdate,enddate,days,batch,
+				serial,subj,startdate,enddate,days,batch,
 				extensions,conf,verbose);
 			if (j < 0) goto err;
 			if (j > 0)
@@ -1200,7 +1209,7 @@ bad:
 			{
 			total++;
 			j=certify(&x,argv[i],pkey,x509,dgst,attribs,db,
-				serial,startdate,enddate,days,batch,
+				serial,subj,startdate,enddate,days,batch,
 				extensions,conf,verbose);
 			if (j < 0) goto err;
 			if (j > 0)
@@ -1674,7 +1683,7 @@ err:
 
 static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
-	     BIGNUM *serial, char *startdate, char *enddate, int days,
+	     BIGNUM *serial, char *subj, char *startdate, char *enddate, int days,
 	     int batch, char *ext_sect, LHASH *lconf, int verbose)
 	{
 	X509_REQ *req=NULL;
@@ -1722,7 +1731,7 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	else
 		BIO_printf(bio_err,"Signature ok\n");
 
-	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate, enddate,
+	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,startdate, enddate,
 		days,batch,verbose,req,ext_sect,lconf);
 
 err:
@@ -1733,7 +1742,7 @@ err:
 
 static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
-	     BIGNUM *serial, char *startdate, char *enddate, int days,
+	     BIGNUM *serial, char *subj, char *startdate, char *enddate, int days,
 	     int batch, char *ext_sect, LHASH *lconf, int verbose)
 	{
 	X509 *req=NULL;
@@ -1784,7 +1793,7 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	if ((rreq=X509_to_X509_REQ(req,NULL,EVP_md5())) == NULL)
 		goto err;
 
-	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,enddate,days,
+	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,startdate,enddate,days,
 		batch,verbose,rreq,ext_sect,lconf);
 
 err:
@@ -1795,7 +1804,7 @@ err:
 	}
 
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
-	     STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial,
+	     STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial, char *subj,
 	     char *startdate, char *enddate, int days, int batch, int verbose,
 	     X509_REQ *req, char *ext_sect, LHASH *lconf)
 	{
@@ -1824,7 +1833,21 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	for (i=0; i<DB_NUMBER; i++)
 		row[i]=NULL;
 
-	BIO_printf(bio_err,"The Subjects Distinguished Name is as follows\n");
+	if (subj)
+		{
+		X509_NAME *n = do_subject(subj);
+
+		if (!n)
+			{
+			ERR_print_errors(bio_err);
+			goto err;
+			}
+		X509_REQ_set_subject_name(req,n);
+		req->req_info->enc.modified = 1;
+		X509_NAME_free(n);
+		}
+
+	BIO_printf(bio_err,"The Subject's Distinguished Name is as follows\n");
 	name=X509_REQ_get_subject_name(req);
 	for (i=0; i<X509_NAME_entry_count(name); i++)
 		{
@@ -2288,7 +2311,7 @@ static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 
 static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     const EVP_MD *dgst, STACK_OF(CONF_VALUE) *policy, TXT_DB *db,
-	     BIGNUM *serial, char *startdate, char *enddate, int days,
+	     BIGNUM *serial, char *subj, char *startdate, char *enddate, int days,
 	     char *ext_sect, LHASH *lconf, int verbose)
 	{
 	STACK_OF(CONF_VALUE) *sk=NULL;
@@ -2423,7 +2446,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 
 	X509_REQ_set_pubkey(req,pktmp);
 	EVP_PKEY_free(pktmp);
-	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,startdate,enddate,
+	ok=do_body(xret,pkey,x509,dgst,policy,db,serial,subj,startdate,enddate,
 		   days,1,verbose,req,ext_sect,lconf);
 err:
 	if (req != NULL) X509_REQ_free(req);
@@ -2972,4 +2995,63 @@ int make_revoked(X509_REVOKED *rev, char *str)
 	ASN1_ENUMERATED_free(rtmp);
 
 	return ret;
+	}
+
+static X509_NAME *do_subject(char *subject)
+	{
+	X509_NAME *n = NULL;
+
+	int i, nid, ne_num=0;
+
+	char *ne_name = NULL;
+	char *ne_value = NULL;
+
+	char *tmp = NULL;
+	char *p[2];
+
+	char *str_list[256];
+       
+	p[0] = ",/";
+	p[1] = "=";
+
+	n = X509_NAME_new();
+
+	tmp = strtok(subject, p[0]);
+	while((tmp != NULL) && (ne_num < (sizeof str_list/sizeof *str_list)))
+		{
+		char *token = tmp;
+
+		while (token[0] == ' ')
+			token++;
+		str_list[ne_num] = token;
+
+		tmp = strtok(NULL, p[0]);
+		ne_num++;
+		}
+
+	for (i = 0; i < ne_num; i++)
+		{
+		ne_name  = strtok(str_list[i], p[1]);
+		ne_value = strtok(NULL, p[1]);
+
+		if ((nid=OBJ_txt2nid(ne_name)) == NID_undef)
+			{
+			BIO_printf(bio_err, "Subject Attribute %s has no known NID, skipped\n", ne_name);
+			continue;
+			}
+
+		if (ne_value == NULL)
+			{
+			BIO_printf(bio_err, "No value provided for Subject Attribute %s, skipped\n", ne_name);
+			continue;
+			}
+
+		if (!X509_NAME_add_entry_by_NID(n, nid, MBSTRING_ASC, (unsigned char*)ne_value, -1,-1,0))
+			{
+			X509_NAME_free(n);
+			return NULL;
+			}
+		}
+
+	return n;
 	}
