@@ -1,6 +1,6 @@
 /* crypto/bn/bn_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -77,6 +77,13 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_PACK(0,BN_F_BN_DIV,0),	"BN_div"},
 {ERR_PACK(0,BN_F_BN_EXPAND2,0),	"bn_expand2"},
 {ERR_PACK(0,BN_F_BN_EXPAND_INTERNAL,0),	"BN_EXPAND_INTERNAL"},
+{ERR_PACK(0,BN_F_BN_GF2M_MOD,0),	"BN_GF2m_mod"},
+{ERR_PACK(0,BN_F_BN_GF2M_MOD_DIV,0),	"BN_GF2m_mod_div"},
+{ERR_PACK(0,BN_F_BN_GF2M_MOD_EXP,0),	"BN_GF2m_mod_exp"},
+{ERR_PACK(0,BN_F_BN_GF2M_MOD_MUL,0),	"BN_GF2m_mod_mul"},
+{ERR_PACK(0,BN_F_BN_GF2M_MOD_SOLVE_QUAD,0),	"BN_GF2m_mod_solve_quad"},
+{ERR_PACK(0,BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR,0),	"BN_GF2m_mod_solve_quad_arr"},
+{ERR_PACK(0,BN_F_BN_GF2M_MOD_SQR,0),	"BN_GF2m_mod_sqr"},
 {ERR_PACK(0,BN_F_BN_MOD_EXP2_MONT,0),	"BN_mod_exp2_mont"},
 {ERR_PACK(0,BN_F_BN_MOD_EXP_MONT,0),	"BN_mod_exp_mont"},
 {ERR_PACK(0,BN_F_BN_MOD_EXP_MONT_WORD,0),	"BN_mod_exp_mont_word"},
@@ -105,6 +112,7 @@ static ERR_STRING_DATA BN_str_reasons[]=
 {BN_R_INVALID_LENGTH                     ,"invalid length"},
 {BN_R_INVALID_RANGE                      ,"invalid range"},
 {BN_R_NOT_A_SQUARE                       ,"not a square"},
+{BN_R_NOT_IMPLEMENTED                    ,"not implemented"},
 {BN_R_NOT_INITIALIZED                    ,"not initialized"},
 {BN_R_NO_INVERSE                         ,"no inverse"},
 {BN_R_P_IS_NOT_PRIME                     ,"p is not prime"},

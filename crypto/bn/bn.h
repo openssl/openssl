@@ -55,6 +55,32 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ *
+ * Portions of the attached software ("Contribution") are developed by 
+ * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
+ *
+ * The Contribution is licensed pursuant to the Eric Young open source
+ * license provided above.
+ *
+ * In addition, Sun covenants to all licensees who provide a reciprocal
+ * covenant with respect to their own patents if any, not to sue under
+ * current and future patent claims necessarily infringed by the making,
+ * using, practicing, selling, offering for sale and/or otherwise
+ * disposing of the Contribution as delivered hereunder 
+ * (or portions thereof), provided that such covenant shall not apply:
+ *  1) for code that a licensee deletes from the Contribution;
+ *  2) separates from the Contribution; or
+ *  3) for infringements caused by:
+ *       i) the modification of the Contribution or
+ *      ii) the combination of the  Contribution with other software or
+ *          devices where such combination causes the infringement.
+ *
+ * The binary polynomial arithmetic software is originally written by 
+ * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
+ *
+ */
 
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
@@ -453,6 +479,40 @@ int	BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 int	BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
 	BN_RECP_CTX *recp, BN_CTX *ctx);
 
+/* Functions for arithmetic over binary polynomials represented by BIGNUMs. 
+ *
+ * The BIGNUM::neg property of BIGNUMs representing binary polynomials is ignored.
+ *
+ * Note that input arguments are not const so that their bit arrays can
+ * be expanded to the appropriate size if needed.
+ */
+int	BN_GF2m_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b); /* r = a + b */
+#define BN_GF2m_sub(r, a, b) BN_GF2m_add(r, a, b)
+int	BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p); /* r = a mod p */
+int	BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p, BN_CTX *ctx); /* r = (a * b) mod p */
+int	BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx); /* r = (a * a) mod p */
+int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *b, const BIGNUM *p, BN_CTX *ctx); /* r = (1 / b) mod p */
+int BN_GF2m_mod_div(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p, BN_CTX *ctx); /* r = (a / b) mod p */
+int BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p, BN_CTX *ctx); /* r = (a ^ b) mod p */
+int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx); /* r = sqrt(a) mod p */
+int BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx); /* r^2 + r = a mod p */
+#define BN_GF2m_cmp(a, b) BN_ucmp((a), (b))
+/* Some functions allow for representation of the irreducible polynomials
+ * as an unsigned int[], say p.  The irreducible f(t) is then of the form:
+ *     t^p[0] + t^p[1] + ... + t^p[k]
+ * where m = p[0] > p[1] > ... > p[k] = 0.
+ */
+int	BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[]); /* r = a mod p */
+int	BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsigned int p[], BN_CTX *ctx); /* r = (a * b) mod p */
+int	BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_CTX *ctx); /* r = (a * a) mod p */
+int BN_GF2m_mod_inv_arr(BIGNUM *r, const BIGNUM *b, const unsigned int p[], BN_CTX *ctx); /* r = (1 / b) mod p */
+int BN_GF2m_mod_div_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsigned int p[], BN_CTX *ctx); /* r = (a / b) mod p */
+int BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsigned int p[], BN_CTX *ctx); /* r = (a ^ b) mod p */
+int BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_CTX *ctx); /* r = sqrt(a) mod p */
+int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_CTX *ctx); /* r^2 + r = a mod p */
+int BN_GF2m_poly2arr(const BIGNUM *a, unsigned int p[], int max);
+int BN_GF2m_arr2poly(const unsigned int p[], BIGNUM *a);
+
 /* library internal functions */
 
 #define bn_expand(a,bits) ((((((bits+BN_BITS2-1))/BN_BITS2)) <= (a)->dmax)?\
@@ -510,6 +570,13 @@ void ERR_load_BN_strings(void);
 #define BN_F_BN_DIV					 107
 #define BN_F_BN_EXPAND2					 108
 #define BN_F_BN_EXPAND_INTERNAL				 120
+#define BN_F_BN_GF2M_MOD				 126
+#define BN_F_BN_GF2M_MOD_DIV				 123
+#define BN_F_BN_GF2M_MOD_EXP				 127
+#define BN_F_BN_GF2M_MOD_MUL				 124
+#define BN_F_BN_GF2M_MOD_SOLVE_QUAD			 128
+#define BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR			 129
+#define BN_F_BN_GF2M_MOD_SQR				 125
 #define BN_F_BN_MOD_EXP2_MONT				 118
 #define BN_F_BN_MOD_EXP_MONT				 109
 #define BN_F_BN_MOD_EXP_MONT_WORD			 117
@@ -535,6 +602,7 @@ void ERR_load_BN_strings(void);
 #define BN_R_INVALID_LENGTH				 106
 #define BN_R_INVALID_RANGE				 115
 #define BN_R_NOT_A_SQUARE				 111
+#define BN_R_NOT_IMPLEMENTED				 116
 #define BN_R_NOT_INITIALIZED				 107
 #define BN_R_NO_INVERSE					 108
 #define BN_R_P_IS_NOT_PRIME				 112

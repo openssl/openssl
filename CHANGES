@@ -4,6 +4,58 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Add binary polynomial arithmetic software in crypto/bn/bn_gf2m.c.
+     Polynomials are represented as BIGNUMs (where the sign bit is not
+     used) in the following functions [macros]:  
+
+          BN_GF2m_add
+          BN_GF2m_sub             [= BN_GF2m_add]
+          BN_GF2m_mod             [wrapper for BN_GF2m_mod_arr]
+          BN_GF2m_mod_mul         [wrapper for BN_GF2m_mod_mul_arr]
+          BN_GF2m_mod_sqr         [wrapper for BN_GF2m_mod_sqr_arr]
+          BN_GF2m_mod_inv
+          BN_GF2m_mod_exp         [wrapper for BN_GF2m_mod_exp_arr]
+          BN_GF2m_mod_sqrt        [wrapper for BN_GF2m_mod_sqrt_arr]
+          BN_GF2m_mod_solve_quad  [wrapper for BN_GF2m_mod_solve_quad_arr]
+          BN_GF2m_cmp             [= BN_ucmp]
+
+     (Note that only the 'mod' functions are actually for fields GF(2^m).
+     BN_GF2m_add() is misnomer, but this is for the sake of consistency.)
+
+     For some functions, an the irreducible polynomial defining a
+     field can be given as an 'unsigned int[]' with strictly
+     decreasing elements giving the indices of those bits that are set;
+     i.e., p[] represents the polynomial
+          f(t) = t^p[0] + t^p[1] + ... + t^p[k]
+     where
+          p[0] > p[1] > ... > p[k] = 0.
+     This applies to the following functions:
+
+          BN_GF2m_mod_arr
+          BN_GF2m_mod_mul_arr
+          BN_GF2m_mod_sqr_arr
+          BN_GF2m_mod_inv_arr        [wrapper for BN_GF2m_mod_inv]
+          BN_GF2m_mod_div_arr        [wrapper for BN_GF2m_mod_div]
+          BN_GF2m_mod_exp_arr
+          BN_GF2m_mod_sqrt_arr
+          BN_GF2m_mod_solve_quad_arr
+          BN_GF2m_poly2arr
+          BN_GF2m_arr2poly
+
+     Conversion can be performed by the following functions:
+
+          BN_GF2m_poly2arr
+          BN_GF2m_arr2poly
+
+     bntest.c has additional tests for binary polynomial arithmetic.
+
+     Two implementations for BN_GF2m_mod_div() are available (selected
+     at compile-time).  ...
+TBD ... OPENSSL_NO_SUN_DIV ...  --Bodo
+
+     [Sheueling Chang Shantz and Douglas Stebila
+     (Sun Microsystems Laboratories)]
+
   *) Add more WAP/WTLS elliptic curve OIDs.
      [Douglas Stebila <douglas.stebila@sun.com>]
 
