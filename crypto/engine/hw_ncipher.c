@@ -91,11 +91,19 @@ static int hwcrhk_init(ENGINE *e);
 static int hwcrhk_finish(ENGINE *e);
 static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()); 
 
-/* Functions to handle mutexes */
+/* Functions to handle mutexes if have dynamic locks */
 static int hwcrhk_mutex_init(HWCryptoHook_Mutex*, HWCryptoHook_CallerContext*);
 static int hwcrhk_mutex_lock(HWCryptoHook_Mutex*);
 static void hwcrhk_mutex_unlock(HWCryptoHook_Mutex*);
 static void hwcrhk_mutex_destroy(HWCryptoHook_Mutex*);
+#if 1 /* This is a HACK which will disappear in 0.9.8 */
+/* Functions to handle mutexes if only have static locks */
+static int hwcrhk_static_mutex_init(HWCryptoHook_Mutex *m,
+                                    HWCryptoHook_CallerContext *c);
+static int hwcrhk_static_mutex_lock(HWCryptoHook_Mutex *m);
+static void hwcrhk_static_mutex_unlock(HWCryptoHook_Mutex *m);
+static void hwcrhk_static_mutex_destroy(HWCryptoHook_Mutex *m);
+#endif
 
 /* BIGNUM stuff */
 static int hwcrhk_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -573,9 +581,17 @@ static int hwcrhk_init(ENGINE *e)
 			}
 		else if (CRYPTO_get_locking_callback() != NULL)
 			{
-			HWCRHKerr(HWCRHK_F_HWCRHK_INIT,HWCRHK_R_LOCKING_MISSING);
+			HWCRHKerr(HWCRHK_F_HWCRHK_INIT,HWCRHK_R_DYNAMIC_LOCKING_MISSING);
 			ERR_add_error_data(1,"You HAVE to add dynamic locking callbacks via CRYPTO_set_dynlock_{create,lock,destroy}_callback()");
+#if 1 /* This is a HACK which will disappear in 0.9.8 */
+			hwcrhk_globals.maxmutexes    = 1; /* Only have one lock */
+			hwcrhk_globals.mutex_init    = hwcrhk_static_mutex_init;
+			hwcrhk_globals.mutex_acquire = hwcrhk_static_mutex_lock;
+			hwcrhk_globals.mutex_release = hwcrhk_static_mutex_unlock;
+			hwcrhk_globals.mutex_destroy = hwcrhk_static_mutex_destroy;
+#else
 			goto err;
+#endif
 			}
 		}
 
@@ -1179,6 +1195,26 @@ static void hwcrhk_mutex_unlock(HWCryptoHook_Mutex * mt)
 static void hwcrhk_mutex_destroy(HWCryptoHook_Mutex *mt)
 	{
 	CRYPTO_destroy_dynlockid(mt->lockid);
+	}
+
+/* Mutex upcalls to use if the application does not support dynamic locks */
+
+static int hwcrhk_static_mutex_init(HWCryptoHook_Mutex *m,
+	HWCryptoHook_CallerContext *c)
+	{
+	return 0;
+	}
+static int hwcrhk_static_mutex_lock(HWCryptoHook_Mutex *m)
+	{
+	CRYPTO_w_lock(CRYPTO_LOCK_HWCRHK);
+	return 0;
+	}
+static void hwcrhk_static_mutex_unlock(HWCryptoHook_Mutex *m)
+	{
+	CRYPTO_w_unlock(CRYPTO_LOCK_HWCRHK);
+	}
+static void hwcrhk_static_mutex_destroy(HWCryptoHook_Mutex *m)
+	{
 	}
 
 static int hwcrhk_get_pass(const char *prompt_info,

@@ -104,7 +104,8 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"dynlock",
 	"engine",
 	"ui",
-#if CRYPTO_NUM_LOCKS != 32
+	"hwcrhk",		/* This is a HACK which will disappear in 0.9.8 */
+#if CRYPTO_NUM_LOCKS != 33
 # error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 	};

@@ -127,7 +127,8 @@ extern "C" {
 #define CRYPTO_LOCK_DYNLOCK		29
 #define CRYPTO_LOCK_ENGINE		30
 #define CRYPTO_LOCK_UI			31
-#define CRYPTO_NUM_LOCKS		32
+#define CRYPTO_LOCK_HWCRHK		32 /* This is a HACK which will disappear in 0.9.8 */
+#define CRYPTO_NUM_LOCKS		33
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2

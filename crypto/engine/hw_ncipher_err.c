@@ -86,7 +86,7 @@ static ERR_STRING_DATA HWCRHK_str_reasons[]=
 {HWCRHK_R_CHIL_ERROR                     ,"chil error"},
 {HWCRHK_R_CTRL_COMMAND_NOT_IMPLEMENTED   ,"ctrl command not implemented"},
 {HWCRHK_R_DSO_FAILURE                    ,"dso failure"},
-{HWCRHK_R_LOCKING_MISSING                ,"locking missing"},
+{HWCRHK_R_DYNAMIC_LOCKING_MISSING        ,"dynamic locking missing"},
 {HWCRHK_R_MISSING_KEY_COMPONENTS         ,"missing key components"},
 {HWCRHK_R_NOT_INITIALISED                ,"not initialised"},
 {HWCRHK_R_NOT_LOADED                     ,"not loaded"},
