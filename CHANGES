@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add OCSP code that comes from CertCo.
+     [Richard Levitte]
+
   *) Add VMS support for the Rijndael code.
      [Richard Levitte]
 
