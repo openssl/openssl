@@ -579,6 +579,9 @@ void BN_swap(BIGNUM *a, BIGNUM *b)
 	BN_ULONG *tmp_d;
 	int tmp_top, tmp_dmax, tmp_neg;
 	
+	bn_check_top(a);
+	bn_check_top(b);
+
 	flags_old_a = a->flags;
 	flags_old_b = b->flags;
 
@@ -606,11 +609,11 @@ void BN_swap(BIGNUM *a, BIGNUM *b)
 
 void BN_clear(BIGNUM *a)
 	{
+	bn_check_top(a);
 	if (a->d != NULL)
 		memset(a->d,0,a->dmax*sizeof(a->d[0]));
 	a->top=0;
 	a->neg=0;
-	bn_check_top(a);
 	}
 
 BN_ULONG BN_get_word(const BIGNUM *a)
@@ -637,6 +640,7 @@ BN_ULONG BN_get_word(const BIGNUM *a)
 int BN_set_word(BIGNUM *a, BN_ULONG w)
 	{
 	int i,n;
+	bn_check_top(a);
 	if (bn_expand(a,(int)sizeof(BN_ULONG)*8) == NULL) return(0);
 
 	n=sizeof(BN_ULONG)/BN_BYTES;
@@ -670,6 +674,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 
 	if (ret == NULL) ret=BN_new();
 	if (ret == NULL) return(NULL);
+	bn_check_top(ret);
 	l=0;
 	n=len;
 	if (n == 0)
@@ -705,13 +710,13 @@ int BN_bn2bin(const BIGNUM *a, unsigned char *to)
 	int n,i;
 	BN_ULONG l;
 
+	bn_check_top(a);
 	n=i=BN_num_bytes(a);
 	while (i-- > 0)
 		{
 		l=a->d[i/BN_BYTES];
 		*(to++)=(unsigned char)(l>>(8*(i%BN_BYTES)))&0xff;
 		}
-	bn_check_top(a);
 	return(n);
 	}
 
