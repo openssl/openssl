@@ -134,7 +134,7 @@ extern "C" {
 #define SSL_TXT_SHA		"SHA"
 #define SSL_TXT_EXP40		"EXP"
 #define SSL_TXT_EXPORT		"EXPORT"
-#define SSL_TXT_EXP56		"EXP56"
+#define SSL_TXT_EXP56		"EXPORT56"
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"
