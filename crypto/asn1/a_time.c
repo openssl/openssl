@@ -152,7 +152,7 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZE
 	if (t->data[0] >= '5') strcpy(str, "19");
 	else strcpy(str, "20");
 
-	BUF_strlcat(str, (char *)t->data, t->length+2);
+	BUF_strlcat(str, (char *)t->data, t->length+3);	/* Include space for a '\0' */
 
 	return ret;
 	}
