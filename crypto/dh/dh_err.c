@@ -1,6 +1,6 @@
 /* crypto/dh/dh_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -77,6 +77,7 @@ static ERR_STRING_DATA DH_str_functs[]=
 
 static ERR_STRING_DATA DH_str_reasons[]=
 	{
+{DH_R_BAD_GENERATOR                      ,"bad generator"},
 {DH_R_NO_PRIVATE_VALUE                   ,"no private value"},
 {0,NULL}
 	};
