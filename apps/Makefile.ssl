@@ -22,6 +22,7 @@ LIBKRB5=
 
 PEX_LIBS=
 EX_LIBS= 
+EXE_EXT= 
 
 CFLAGS= -DMONOLITH $(INCLUDES) $(CFLAG)
 
@@ -36,7 +37,7 @@ PROGRAM= openssl
 
 SCRIPTS=CA.sh CA.pl der_chop
 
-EXE= $(PROGRAM)
+EXE= $(PROGRAM)$(EXE_EXT)
 
 E_EXE=	verify asn1pars req dgst dh dhparam enc passwd gendh errstr \
 	ca crl rsa rsautl dsa dsaparam \
@@ -81,7 +82,7 @@ top:
 
 all:	exe
 
-exe:	$(EXE)
+exe:	$(PROGRAM)
 
 req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 	$(CC) -o req $(CFLAG) sreq.o $(A_OBJ) $(RAND_OBJ) $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)

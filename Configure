@@ -455,6 +455,7 @@ my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
 
 my $prefix="";
 my $openssldir="";
+my $exe_ext="";
 my $install_prefix="";
 my $no_threads=0;
 my $no_shared=1;
@@ -681,6 +682,7 @@ print "Configuring for $target\n";
 
 my $IsWindows=scalar grep /^$target$/,@WinTargets;
 
+$exe_ext=".exe" if ($target eq "CygWin32");
 $openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
 $prefix=$openssldir if $prefix eq "";
 
@@ -923,6 +925,7 @@ while (<IN>)
 	s/^CFLAG=.*$/CFLAG= $cflags/;
 	s/^DEPFLAG=.*$/DEPFLAG= $depflags/;
 	s/^EX_LIBS=.*$/EX_LIBS= $lflags/;
+	s/^EXE_EXT=.*$/EXE_EXT= $exe_ext/;
 	s/^BN_ASM=.*$/BN_ASM= $bn_obj/;
 	s/^DES_ENC=.*$/DES_ENC= $des_obj/;
 	s/^BF_ENC=.*$/BF_ENC= $bf_obj/;

@@ -117,7 +117,12 @@ sub link_hash_cert {
 		}
 		$hash .= ".$suffix";
 		print "$fname => $hash\n";
-		symlink $fname, $hash;
+		$symlink_exists=eval {symlink("",""); 1};
+		if ($symlink_exists) {
+			symlink $fname, $hash;
+		} else {
+			system ("cp", $fname, $hash);
+		}
 		$hashlist{$hash} = $fprint;
 }
 
@@ -142,7 +147,12 @@ sub link_hash_crl {
 		}
 		$hash .= ".r$suffix";
 		print "$fname => $hash\n";
-		symlink $fname, $hash;
+		$symlink_exists=eval {symlink("",""); 1};
+		if ($symlink_exists) {
+			symlink $fname, $hash;
+		} else {
+			system ("cp", $fname, $hash);
+		}
 		$hashlist{$hash} = $fprint;
 }
 

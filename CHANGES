@@ -4,6 +4,13 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Change Configure and Makefiles to provide EXE_EXT, which will contain
+     the default extension for executables, if any.  Also, make the perl
+     scripts that use symlink() to test if it really exists and use "cp"
+     if it doesn't.  All this made OpenSSL compilable and installable in
+     CygWin.
+     [Richard Levitte]
+
   *) Rewrite CHOICE field setting in ASN1_item_ex_d2i(). The old code
      could not support the combine flag in choice fields.
      [Steve Henson]
