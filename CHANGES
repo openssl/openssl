@@ -4,6 +4,12 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Check the result of RSA-CRT (see D. Boneh, R. DeMillo, R. Lipton:
+     On the Importance of Eliminating Errors in Cryptographic
+	 Computations, J. Cryptology 14 (2001) 2, 101-119,
+	 http://theory.stanford.edu/~dabo/papers/faults.ps.gz).
+	 [Ulf Moeller]
+  
   *) MIPS assembler BIGNUM division bug fix. 
      [Andy Polyakov]
 
