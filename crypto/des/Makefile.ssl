@@ -68,25 +68,25 @@ des: des.o cbc3_enc.o lib
 # elf
 asm/dx86-elf.o: asm/dx86unix.cpp
 	$(CPP) -DELF	\
-		`(echo $(CFLAGS) | egrep -ie '-[fK]PIC') > /dev/null 2>&1 && echo -DPIC`\
+		`(echo $(CFLAGS) | egrep -ie '-[fK]PIC') > /dev/null 2>&1 && echo -DPIC; exit 0`\
 		-x c asm/dx86unix.cpp | as -o asm/dx86-elf.o
 
 asm/yx86-elf.o: asm/yx86unix.cpp
 	$(CPP) -DELF	\
-		`(echo $(CFLAGS) | egrep -ie '-[fK]PIC') > /dev/null 2>&1 && echo -DPIC`\
+		`(echo $(CFLAGS) | egrep -ie '-[fK]PIC') > /dev/null 2>&1 && echo -DPIC; exit 0`\
 		-x c asm/yx86unix.cpp | as -o asm/yx86-elf.o
 
 # solaris
 asm/dx86-sol.o: asm/dx86unix.cpp
 	$(CC) -E -DSOL	\
-		`(echo $(CFLAGS) | egrep -ie '-[fK]PIC') > /dev/null 2>&1 && echo -DPIC`\
+		`(echo $(CFLAGS) | egrep -ie '-[fK]PIC') > /dev/null 2>&1 && echo -DPIC; exit 0`\
 		asm/dx86unix.cpp | sed 's/^#.*//' > asm/dx86-sol.s
 	as -o asm/dx86-sol.o asm/dx86-sol.s
 	rm -f asm/dx86-sol.s
 
 asm/yx86-sol.o: asm/yx86unix.cpp
 	$(CC) -E -DSOL	\
-		`(echo $(CFLAGS) | egrep -ie '-[fK]PIC') > /dev/null 2>&1 && echo -DPIC`\
+		`(echo $(CFLAGS) | egrep -ie '-[fK]PIC') > /dev/null 2>&1 && echo -DPIC; exit 0`\
 		asm/yx86unix.cpp | sed 's/^#.*//' > asm/yx86-sol.s
 	as -o asm/yx86-sol.o asm/yx86-sol.s
 	rm -f asm/yx86-sol.s
