@@ -66,7 +66,8 @@
 
 static STACK_OF(X509V3_EXT_METHOD) *ext_list = NULL;
 
-static int ext_cmp(X509V3_EXT_METHOD **a, X509V3_EXT_METHOD **b);
+static int ext_cmp(const X509V3_EXT_METHOD * const *a,
+		const X509V3_EXT_METHOD * const *b);
 static void ext_list_free(X509V3_EXT_METHOD *ext);
 
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext)
@@ -82,7 +83,8 @@ int X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 	return 1;
 }
 
-static int ext_cmp(X509V3_EXT_METHOD **a, X509V3_EXT_METHOD **b)
+static int ext_cmp(const X509V3_EXT_METHOD * const *a,
+		const X509V3_EXT_METHOD * const *b)
 {
 	return ((*a)->ext_nid - (*b)->ext_nid);
 }
@@ -125,7 +127,7 @@ int X509V3_EXT_add_alias(int nid_to, int nid_from)
 		X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS,X509V3_R_EXTENSION_NOT_FOUND);
 		return 0;
 	}
-	if(!(tmpext = (X509V3_EXT_METHOD *)Malloc(sizeof(X509V3_EXT_METHOD)))) {
+	if(!(tmpext = (X509V3_EXT_METHOD *)OPENSSL_malloc(sizeof(X509V3_EXT_METHOD)))) {
 		X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -143,7 +145,7 @@ void X509V3_EXT_cleanup(void)
 
 static void ext_list_free(X509V3_EXT_METHOD *ext)
 {
-	if(ext->ext_flags & X509V3_EXT_DYNAMIC) Free(ext);
+	if(ext->ext_flags & X509V3_EXT_DYNAMIC) OPENSSL_free(ext);
 }
 
 /* Legacy function: we don't need to add standard extensions

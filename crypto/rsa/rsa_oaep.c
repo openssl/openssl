@@ -34,7 +34,7 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 	return (0);
 	}
     
-    dbmask = Malloc(emlen - SHA_DIGEST_LENGTH);
+    dbmask = OPENSSL_malloc(emlen - SHA_DIGEST_LENGTH);
     if (dbmask == NULL)
 	{
 	RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP, ERR_R_MALLOC_FAILURE);
@@ -66,7 +66,7 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
     for (i = 0; i < SHA_DIGEST_LENGTH; i++)
 	seed[i] ^= seedmask[i];
 
-    Free(dbmask);
+    OPENSSL_free(dbmask);
     return (1);
     }
 
@@ -86,7 +86,7 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	}
 
     dblen = num - SHA_DIGEST_LENGTH;
-    db = Malloc(dblen);
+    db = OPENSSL_malloc(dblen);
     if (db == NULL)
 	{
 	RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP, ERR_R_MALLOC_FAILURE);
@@ -128,7 +128,7 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 		memcpy(to, db + i, mlen);
 	    }
 	}
-    Free(db);
+    OPENSSL_free(db);
     return (mlen);
     }
 

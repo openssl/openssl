@@ -282,7 +282,7 @@ void ASN1_TYPE_free(ASN1_TYPE *a)
 	{
 	if (a == NULL) return;
 	ASN1_TYPE_component_free(a);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 int ASN1_TYPE_get(ASN1_TYPE *a)

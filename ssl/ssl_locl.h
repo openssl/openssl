@@ -423,8 +423,9 @@ void ssl_sess_cert_free(SESS_CERT *sc);
 int ssl_set_peer_cert_type(SESS_CERT *c, int type);
 int ssl_get_new_session(SSL *s, int session);
 int ssl_get_prev_session(SSL *s, unsigned char *session,int len);
-int ssl_cipher_id_cmp(SSL_CIPHER *a,SSL_CIPHER *b);
-int ssl_cipher_ptr_id_cmp(SSL_CIPHER **ap,SSL_CIPHER **bp);
+int ssl_cipher_id_cmp(const SSL_CIPHER *a,const SSL_CIPHER *b);
+int ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
+			const SSL_CIPHER * const *bp);
 STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 					       STACK_OF(SSL_CIPHER) **skp);
 int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p);

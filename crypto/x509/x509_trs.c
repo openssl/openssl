@@ -61,7 +61,8 @@
 #include <openssl/x509v3.h>
 
 
-static int tr_cmp(X509_TRUST **a, X509_TRUST **b);
+static int tr_cmp(const X509_TRUST * const *a,
+		const X509_TRUST * const *b);
 static void trtable_free(X509_TRUST *p);
 
 static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags);
@@ -88,7 +89,8 @@ IMPLEMENT_STACK_OF(X509_TRUST)
 
 static STACK_OF(X509_TRUST) *trtable = NULL;
 
-static int tr_cmp(X509_TRUST **a, X509_TRUST **b)
+static int tr_cmp(const X509_TRUST * const *a,
+		const X509_TRUST * const *b)
 {
 	return (*a)->trust - (*b)->trust;
 }
@@ -152,15 +154,15 @@ int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 	idx = X509_TRUST_get_by_id(id);
 	/* Need a new entry */
 	if(idx == -1) {
-		if(!(trtmp = Malloc(sizeof(X509_TRUST)))) {
+		if(!(trtmp = OPENSSL_malloc(sizeof(X509_TRUST)))) {
 			X509err(X509_F_X509_TRUST_ADD,ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		trtmp->flags = X509_TRUST_DYNAMIC;
 	} else trtmp = X509_TRUST_get0(idx);
 
-	/* Free existing name if dynamic */
-	if(trtmp->flags & X509_TRUST_DYNAMIC_NAME) Free(trtmp->name);
+	/* OPENSSL_free existing name if dynamic */
+	if(trtmp->flags & X509_TRUST_DYNAMIC_NAME) OPENSSL_free(trtmp->name);
 	/* dup supplied name */
 	if(!(trtmp->name = BUF_strdup(name))) {
 		X509err(X509_F_X509_TRUST_ADD,ERR_R_MALLOC_FAILURE);
@@ -196,8 +198,8 @@ static void trtable_free(X509_TRUST *p)
 	if (p->flags & X509_TRUST_DYNAMIC) 
 		{
 		if (p->flags & X509_TRUST_DYNAMIC_NAME)
-			Free(p->name);
-		Free(p);
+			OPENSSL_free(p->name);
+		OPENSSL_free(p);
 		}
 	}
 

@@ -213,7 +213,7 @@ void DIST_POINT_free(DIST_POINT *a)
 	DIST_POINT_NAME_free(a->distpoint);
 	M_ASN1_BIT_STRING_free(a->reasons);
 	sk_GENERAL_NAME_pop_free(a->CRLissuer, GENERAL_NAME_free);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 int i2d_DIST_POINT_NAME(DIST_POINT_NAME *a, unsigned char **pp)
@@ -256,7 +256,7 @@ void DIST_POINT_NAME_free(DIST_POINT_NAME *a)
 	if (a == NULL) return;
 	sk_X509_NAME_ENTRY_pop_free(a->relativename, X509_NAME_ENTRY_free);
 	sk_GENERAL_NAME_pop_free(a->fullname, GENERAL_NAME_free);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 DIST_POINT_NAME *d2i_DIST_POINT_NAME(DIST_POINT_NAME **a, unsigned char **pp,

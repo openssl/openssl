@@ -128,7 +128,7 @@ static int ber_new(BIO *bi)
 	{
 	BIO_BER_CTX *ctx;
 
-	ctx=(BIO_BER_CTX *)Malloc(sizeof(BIO_BER_CTX));
+	ctx=(BIO_BER_CTX *)OPENSSL_malloc(sizeof(BIO_BER_CTX));
 	if (ctx == NULL) return(0);
 
 	memset((char *)ctx,0,sizeof(BIO_BER_CTX));
@@ -146,7 +146,7 @@ static int ber_free(BIO *a)
 	if (a == NULL) return(0);
 	b=(BIO_BER_CTX *)a->ptr;
 	memset(a->ptr,0,sizeof(BIO_BER_CTX));
-	Free(a->ptr);
+	OPENSSL_free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;
 	a->flags=0;

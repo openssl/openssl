@@ -106,6 +106,6 @@ void PKCS7_ISSUER_AND_SERIAL_free(PKCS7_ISSUER_AND_SERIAL *a)
 	if (a == NULL) return;
 	X509_NAME_free(a->issuer);
 	M_ASN1_INTEGER_free(a->serial);
-	Free(a);
+	OPENSSL_free(a);
 	}
 

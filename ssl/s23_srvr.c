@@ -297,7 +297,7 @@ int ssl23_get_client_hello(SSL *s)
 					if (n <= 0) return(n);
 					p=s->packet;
 
-					if ((buf=Malloc(n)) == NULL)
+					if ((buf=OPENSSL_malloc(n)) == NULL)
 						{
 						SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,ERR_R_MALLOC_FAILURE);
 						goto err;
@@ -559,10 +559,10 @@ int ssl23_get_client_hello(SSL *s)
 		}
 	s->init_num=0;
 
-	if (buf != buf_space) Free(buf);
+	if (buf != buf_space) OPENSSL_free(buf);
 	s->first_packet=1;
 	return(SSL_accept(s));
 err:
-	if (buf != buf_space) Free(buf);
+	if (buf != buf_space) OPENSSL_free(buf);
 	return(-1);
 	}

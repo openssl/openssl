@@ -90,6 +90,7 @@ int  RAND_write_file(const char *file);
 const char *RAND_file_name(char *file,int num);
 int RAND_status(void);
 int RAND_egd(const char *path);
+int RAND_egd_bytes(const char *path,int bytes);
 void ERR_load_RAND_strings(void);
 
 #ifdef  __cplusplus

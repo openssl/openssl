@@ -428,6 +428,7 @@ case "$GUESSOS" in
 	sun4d)	OUT="linux-sparcv8" ;;
 	*)	OUT="linux-sparcv7" ;;
 	esac ;;
+  arm*-*-linux2) OUT="linux-elf-arm" ;;
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux1) OUT="linux-aout" ;;
   sun4u*-sun-solaris2)

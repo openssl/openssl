@@ -200,7 +200,7 @@ bad:
 			goto end;
 		}
 		BIO_printf(out, "SPKAC=%s\n", spkstr);
-		Free(spkstr);
+		OPENSSL_free(spkstr);
 		ret = 0;
 		goto end;
 	}
@@ -271,6 +271,6 @@ end:
 	BIO_free(out);
 	BIO_free(key);
 	EVP_PKEY_free(pkey);
-	if(passin) Free(passin);
+	if(passin) OPENSSL_free(passin);
 	EXIT(ret);
 	}

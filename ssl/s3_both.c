@@ -567,7 +567,7 @@ int ssl3_setup_buffers(SSL *s)
 			extra=SSL3_RT_MAX_EXTRA;
 		else
 			extra=0;
-		if ((p=Malloc(SSL3_RT_MAX_PACKET_SIZE+extra))
+		if ((p=OPENSSL_malloc(SSL3_RT_MAX_PACKET_SIZE+extra))
 			== NULL)
 			goto err;
 		s->s3->rbuf.buf=p;
@@ -575,7 +575,7 @@ int ssl3_setup_buffers(SSL *s)
 
 	if (s->s3->wbuf.buf == NULL)
 		{
-		if ((p=Malloc(SSL3_RT_MAX_PACKET_SIZE))
+		if ((p=OPENSSL_malloc(SSL3_RT_MAX_PACKET_SIZE))
 			== NULL)
 			goto err;
 		s->s3->wbuf.buf=p;

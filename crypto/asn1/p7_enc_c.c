@@ -115,6 +115,6 @@ void PKCS7_ENC_CONTENT_free(PKCS7_ENC_CONTENT *a)
 	ASN1_OBJECT_free(a->content_type);
 	X509_ALGOR_free(a->algorithm);
 	M_ASN1_OCTET_STRING_free(a->enc_data);
-	Free(a);
+	OPENSSL_free(a);
 	}
 

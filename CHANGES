@@ -4,10 +4,65 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
-  *) Remove lots of duplicated code from the EVP library. For example *every*
+  *) New function BN_mod_exp_mont_word for small bases (roughly 20%
+     faster than BN_mod_exp_mont even though it does not use
+     windowing).
+     [Bodo Moeller]
+
+  *) CygWin32 support.
+     [John Jarvie <jjarvie@newsguy.com>]
+
+  *) The type-safe stack code has been rejigged. It is now only compiled
+     in when OpenSSL is configured with the DEBUG_SAFESTACK option and
+     by default all type-specific stack functions are "#define"d back to
+     standard stack functions. This results in more streamlined output
+     but retains the type-safety checking possibilities of the original
+     approach.
+     [Geoff Thorpe]
+
+  *) The STACK code has been cleaned up, and certain type declarations
+     that didn't make a lot of sense have been brought in line. This has
+     also involved a cleanup of sorts in safestack.h to more correctly
+     map type-safe stack functions onto their plain stack counterparts.
+     This work has also resulted in a variety of "const"ifications of
+     lots of the code, especially "_cmp" operations which should normally
+     be prototyped with "const" parameters anyway.
+     [Geoff Thorpe]
+
+  *) When generating bytes for the first time in md_rand.c, 'stir the pool'
+     by seeding with STATE_SIZE dummy bytes (with zero entropy count).
+     (The PRNG state consists of two parts, the large pool 'state' and 'md',
+     where all of 'md' is used each time the PRNG is used, but 'state'
+     is used only indexed by a cyclic counter. As entropy may not be
+     well distributed from the beginning, 'md' is important as a
+     chaining variable. However, the output function chains only half
+     of 'md', i.e. 80 bits.  ssleay_rand_add, on the other hand, chains
+     all of 'md', and seeding with STATE_SIZE dummy bytes will result
+     in all of 'state' being rewritten, with the new values depending
+     on virtually all of 'md'.  This overcomes the 80 bit limitation.)
+     [Bodo Moeller]
+
+  *) In ssl/s2_clnt.c and ssl/s3_clnt.c, call ERR_clear_error() when
+     the handshake is continued after ssl_verify_cert_chain();
+     otherwise, if SSL_VERIFY_NONE is set, remaining error codes
+     can lead to 'unexplainable' connection aborts later.
+     [Bodo Moeller; problem tracked down by Lutz Jaenicke]
+
+  *) Major EVP API cipher revision.
+     Add hooks for extra EVP features. This allows various cipher
+     parameters to be set in the EVP interface. Support added for variable
+     key length ciphers via the EVP_CIPHER_CTX_set_key_length() function and
+     setting of RC2 and RC5 parameters.
+
+     Modify EVP_OpenInit() and EVP_SealInit() to cope with variable key length
+     ciphers.
+
+     Remove lots of duplicated code from the EVP library. For example *every*
      cipher init() function handles the 'iv' in the same way according to the
      cipher mode. They also all do nothing if the 'key' parameter is NULL and
      for CFB and OFB modes they zero ctx->num.
+
+     New functionality allows removal of S/MIME code RC2 hack.
 
      Most of the routines have the same form and so can be declared in terms
      of macros.
@@ -16,23 +71,6 @@
      all individual ciphers. If the cipher wants to handle IVs or keys
      differently it can set the EVP_CIPH_CUSTOM_IV or EVP_CIPH_ALWAYS_CALL_INIT
      flags.
-     [Steve Henson]
-
-  *) In ssl/s2_clnt.c and ssl/s3_clnt.c, call ERR_clear_error() when
-     the handshake is continued after ssl_verify_cert_chain();
-     otherwise, if SSL_VERIFY_NONE is set, remaining error codes
-     can lead to 'unexplainable' connection aborts later.
-     [Bodo Moeller; problem tracked down by Lutz Jaenicke]
-
-  *) EVP cipher enhancement. Add hooks for extra EVP features. This will allow
-     various cipher parameters to be set in the EVP interface. Initially
-     support added for variable key length ciphers via the
-     EVP_CIPHER_CTX_set_key_length() function. Other cipher specific
-     parameters will be added later via the new catchall 'ctrl' function.
-     New functionality allows removal of S/MIME code RC2 hack.
-
-     Still needs support in other library functions, and allow parameter
-     setting for algorithms like RC2, RC5.
 
      Change lots of functions like EVP_EncryptUpdate() to now return a
      value: although software versions of the algorithms cannot fail

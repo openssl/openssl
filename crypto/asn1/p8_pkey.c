@@ -123,5 +123,5 @@ void PKCS8_PRIV_KEY_INFO_free (PKCS8_PRIV_KEY_INFO *a)
 				 0, a->pkey->value.octet_string->length);
 	ASN1_TYPE_free (a->pkey);
 	sk_X509_ATTRIBUTE_pop_free (a->attributes, X509_ATTRIBUTE_free);
-	Free (a);
+	OPENSSL_free (a);
 }

@@ -143,7 +143,7 @@ void PKCS7_SIGNER_INFO_free(PKCS7_SIGNER_INFO *a)
 	sk_X509_ATTRIBUTE_pop_free(a->unauth_attr,X509_ATTRIBUTE_free);
 	if (a->pkey != NULL)
 		EVP_PKEY_free(a->pkey);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 IMPLEMENT_STACK_OF(PKCS7_SIGNER_INFO)

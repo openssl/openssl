@@ -72,7 +72,7 @@ BN_RECP_CTX *BN_RECP_CTX_new(void)
 	{
 	BN_RECP_CTX *ret;
 
-	if ((ret=(BN_RECP_CTX *)Malloc(sizeof(BN_RECP_CTX))) == NULL)
+	if ((ret=(BN_RECP_CTX *)OPENSSL_malloc(sizeof(BN_RECP_CTX))) == NULL)
 		return(NULL);
 
 	BN_RECP_CTX_init(ret);
@@ -88,7 +88,7 @@ void BN_RECP_CTX_free(BN_RECP_CTX *recp)
 	BN_free(&(recp->N));
 	BN_free(&(recp->Nr));
 	if (recp->flags & BN_FLG_MALLOCED)
-		Free(recp);
+		OPENSSL_free(recp);
 	}
 
 int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)

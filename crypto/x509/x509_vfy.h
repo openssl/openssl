@@ -128,6 +128,37 @@ typedef struct x509_object_st
 typedef struct x509_lookup_st X509_LOOKUP;
 
 DECLARE_STACK_OF(X509_LOOKUP)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_X509_LOOKUP_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_X509_LOOKUP_new_null() sk_new_null()
+	#define sk_X509_LOOKUP_free(a) sk_free(a)
+	#define sk_X509_LOOKUP_num(a) sk_num(a)
+	#define sk_X509_LOOKUP_value(a,b) ((X509_LOOKUP *) \
+		sk_value((a),(b)))
+	#define sk_X509_LOOKUP_set(a,b,c) ((X509_LOOKUP *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_X509_LOOKUP_zero(a) sk_zero(a)
+	#define sk_X509_LOOKUP_push(a,b) sk_push((a),(char *)(b))
+	#define sk_X509_LOOKUP_unshift(a,b) sk_unshift((a),(b))
+	#define sk_X509_LOOKUP_find(a,b) sk_find((a), (char *)(b))
+	#define sk_X509_LOOKUP_delete(a,b) ((X509_LOOKUP *) \
+		sk_delete((a),(b)))
+	#define sk_X509_LOOKUP_delete_ptr(a,b) ((X509_LOOKUP *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_X509_LOOKUP_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_X509_LOOKUP_set_cmp_func(a,b) ((int (*) \
+		(const X509_LOOKUP * const *,const X509_LOOKUP * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_X509_LOOKUP_dup(a) sk_dup(a)
+	#define sk_X509_LOOKUP_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_X509_LOOKUP_shift(a) ((X509_LOOKUP *)sk_shift(a))
+	#define sk_X509_LOOKUP_pop(a) ((X509_LOOKUP *)sk_pop(a))
+	#define sk_X509_LOOKUP_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 
 /* This is a static that defines the function interface */
 typedef struct x509_lookup_method_st

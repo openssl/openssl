@@ -139,8 +139,8 @@ int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)())
 		}
 
 	if (pkey->private_key->data != NULL)
-		Free(pkey->private_key->data);
-	if ((pkey->private_key->data=(unsigned char *)Malloc(l[0])) == NULL)
+		OPENSSL_free(pkey->private_key->data);
+	if ((pkey->private_key->data=(unsigned char *)OPENSSL_malloc(l[0])) == NULL)
 		{
 		ASN1err(ASN1_F_I2D_NETSCAPE_RSA,ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -148,7 +148,7 @@ int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)())
 	zz=pkey->private_key->data;
 	i2d_RSAPrivateKey(a,&zz);
 
-	if ((os2.data=(unsigned char *)Malloc(os2.length)) == NULL)
+	if ((os2.data=(unsigned char *)OPENSSL_malloc(os2.length)) == NULL)
 		{
 		ASN1err(ASN1_F_I2D_NETSCAPE_RSA,ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -182,7 +182,7 @@ int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)())
 	i2d_ASN1_OCTET_STRING(&os2,&p);
 	ret=l[5];
 err:
-	if (os2.data != NULL) Free(os2.data);
+	if (os2.data != NULL) OPENSSL_free(os2.data);
 	if (alg != NULL) X509_ALGOR_free(alg);
 	if (pkey != NULL) NETSCAPE_PKEY_free(pkey);
 	r=r;
@@ -338,7 +338,7 @@ static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *a)
 	M_ASN1_INTEGER_free(a->version);
 	X509_ALGOR_free(a->algor);
 	M_ASN1_OCTET_STRING_free(a->private_key);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 #endif /* NO_RC4 */

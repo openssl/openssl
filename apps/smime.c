@@ -443,7 +443,7 @@ end:
 	BIO_free(in);
 	BIO_free(indata);
 	BIO_free(out);
-	if(passin) Free(passin);
+	if(passin) OPENSSL_free(passin);
 	return (ret);
 }
 

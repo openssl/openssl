@@ -73,10 +73,16 @@ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     unsigned char *key, unsigned char *iv, int enc)
 	{
-	if(enc) enc = 1;
+	if(enc && (enc != -1)) enc = 1;
 	if (cipher) {
 		ctx->cipher=cipher;
 		ctx->key_len = cipher->key_len;
+		if(ctx->cipher->flags & EVP_CIPH_CTRL_INIT) {
+			if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL)) {
+				EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_INITIALIZATION_ERROR);
+				return 0;
+			}
+		}
 	} else if(!ctx->cipher) {
 		EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_NO_CIPHER_SET);
 		return 0;
@@ -108,7 +114,7 @@ int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	if(key || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT)) {
 		if(!ctx->cipher->init(ctx,key,iv,enc)) return 0;
 	}
-	ctx->encrypt=enc;
+	if(enc != -1) ctx->encrypt=enc;
 	ctx->buf_len=0;
 	return 1;
 	}
@@ -301,6 +307,8 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 	{
+	if(c->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH) 
+		return EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_KEY_LENGTH, keylen, NULL);
 	if(c->key_len == keylen) return 1;
 	if((keylen > 0) && (c->cipher->flags & EVP_CIPH_VARIABLE_LENGTH))
 		{
@@ -310,3 +318,24 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 	EVPerr(EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH,EVP_R_INVALID_KEY_LENGTH);
 	return 0;
 	}
+
+int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
+{
+	int ret;
+	if(!ctx->cipher) {
+		EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_NO_CIPHER_SET);
+		return 0;
+	}
+
+	if(!ctx->cipher->ctrl) {
+		EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_CTRL_NOT_IMPLEMENTED);
+		return 0;
+	}
+
+	ret = ctx->cipher->ctrl(ctx, type, arg, ptr);
+	if(ret == -1) {
+		EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
+		return 0;
+	}
+	return ret;
+}

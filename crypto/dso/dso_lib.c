@@ -100,7 +100,7 @@ DSO *DSO_new_method(DSO_METHOD *meth)
 		 * to stealing the "best available" method. Will fallback
 		 * to DSO_METH_null() in the worst case. */
 		default_DSO_meth = DSO_METHOD_openssl();
-	ret = (DSO *)Malloc(sizeof(DSO));
+	ret = (DSO *)OPENSSL_malloc(sizeof(DSO));
 	if(ret == NULL)
 		{
 		DSOerr(DSO_F_DSO_NEW_METHOD,ERR_R_MALLOC_FAILURE);
@@ -112,7 +112,7 @@ DSO *DSO_new_method(DSO_METHOD *meth)
 		{
 		/* sk_new doesn't generate any errors so we do */
 		DSOerr(DSO_F_DSO_NEW_METHOD,ERR_R_MALLOC_FAILURE);
-		Free(ret);
+		OPENSSL_free(ret);
 		return(NULL);
 		}
 	if(meth == NULL)
@@ -122,7 +122,7 @@ DSO *DSO_new_method(DSO_METHOD *meth)
 	ret->references = 1;
 	if((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
-		Free(ret);
+		OPENSSL_free(ret);
 		ret=NULL;
 		}
 	return(ret);
@@ -165,7 +165,7 @@ int DSO_free(DSO *dso)
 	
 	sk_free(dso->meth_data);
  
-	Free(dso);
+	OPENSSL_free(dso);
 	return(1);
 	}
 

@@ -104,7 +104,7 @@ void PBE2PARAM_free (PBE2PARAM *a)
 	if(a==NULL) return;
 	X509_ALGOR_free(a->keyfunc);
 	X509_ALGOR_free(a->encryption);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 int i2d_PBKDF2PARAM(PBKDF2PARAM *a, unsigned char **pp)
@@ -158,7 +158,7 @@ void PBKDF2PARAM_free (PBKDF2PARAM *a)
 	M_ASN1_INTEGER_free(a->iter);
 	M_ASN1_INTEGER_free(a->keylength);
 	X509_ALGOR_free(a->prf);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 /* Return an algorithm identifier for a PKCS#5 v2.0 PBE algorithm:
@@ -210,7 +210,7 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 	if(!(osalt = M_ASN1_OCTET_STRING_new())) goto merr;
 
 	if (!saltlen) saltlen = PKCS5_SALT_LEN;
-	if (!(osalt->data = Malloc (saltlen))) goto merr;
+	if (!(osalt->data = OPENSSL_malloc (saltlen))) goto merr;
 	osalt->length = saltlen;
 	if (salt) memcpy (osalt->data, salt, saltlen);
 	else if (RAND_pseudo_bytes (osalt->data, saltlen) < 0) goto merr;

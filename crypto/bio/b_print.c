@@ -792,11 +792,11 @@ doapr_outch(
     if (*buffer == NULL) {
 	if (*maxlen == 0)
 	    *maxlen = 1024;
-	*buffer = Malloc(*maxlen);
+	*buffer = OPENSSL_malloc(*maxlen);
     }
     while (*currlen >= *maxlen) {
 	*maxlen += 1024;
-	*buffer = Realloc(*buffer, *maxlen);
+	*buffer = OPENSSL_realloc(*buffer, *maxlen);
     }
     /* What to do if *buffer is NULL? */
     assert(*buffer != NULL);
@@ -834,7 +834,7 @@ int BIO_printf (BIO *bio, const char *format, ...)
 		ret=BIO_write(bio, hugebuf, (int)retlen);
 
 #ifdef USE_ALLOCATING_PRINT
-		Free(hugebuf);
+		OPENSSL_free(hugebuf);
 		}
 	CRYPTO_pop_info();
 #endif

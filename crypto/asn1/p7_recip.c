@@ -118,7 +118,7 @@ void PKCS7_RECIP_INFO_free(PKCS7_RECIP_INFO *a)
 	X509_ALGOR_free(a->key_enc_algor);
 	M_ASN1_OCTET_STRING_free(a->enc_key);
 	if (a->cert != NULL) X509_free(a->cert);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 IMPLEMENT_STACK_OF(PKCS7_RECIP_INFO)

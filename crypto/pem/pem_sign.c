@@ -82,7 +82,7 @@ int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 	int i,ret=0;
 	unsigned int m_len;
 
-	m=(unsigned char *)Malloc(EVP_PKEY_size(pkey)+2);
+	m=(unsigned char *)OPENSSL_malloc(EVP_PKEY_size(pkey)+2);
 	if (m == NULL)
 		{
 		PEMerr(PEM_F_PEM_SIGNFINAL,ERR_R_MALLOC_FAILURE);
@@ -96,7 +96,7 @@ int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 	ret=1;
 err:
 	/* ctx has been zeroed by EVP_SignFinal() */
-	if (m != NULL) Free(m);
+	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
 

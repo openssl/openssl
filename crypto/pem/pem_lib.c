@@ -242,9 +242,9 @@ char *PEM_ASN1_read_bio(char *(*d2i)(), const char *name, BIO *bp, char **x,
 			return(NULL);
 		}
 		if(check_pem(nm, name)) break;
-		Free(nm);
-		Free(header);
-		Free(data);
+		OPENSSL_free(nm);
+		OPENSSL_free(header);
+		OPENSSL_free(data);
 		}
 	if (!PEM_get_EVP_CIPHER_INFO(header,&cipher)) goto err;
 	if (!PEM_do_header(&cipher,data,&len,cb,u)) goto err;
@@ -289,9 +289,9 @@ p8err:
 	if (ret == NULL)
 		PEMerr(PEM_F_PEM_ASN1_READ_BIO,ERR_R_ASN1_LIB);
 err:
-	Free(nm);
-	Free(header);
-	Free(data);
+	OPENSSL_free(nm);
+	OPENSSL_free(header);
+	OPENSSL_free(data);
 	return(ret);
 	}
 
@@ -344,7 +344,7 @@ int PEM_ASN1_write_bio(int (*i2d)(), const char *name, BIO *bp, char *x,
 		goto err;
 		}
 	/* dzise + 8 bytes are needed */
-	data=(unsigned char *)Malloc((unsigned int)dsize+20);
+	data=(unsigned char *)OPENSSL_malloc((unsigned int)dsize+20);
 	if (data == NULL)
 		{
 		PEMerr(PEM_F_PEM_ASN1_WRITE_BIO,ERR_R_MALLOC_FAILURE);
@@ -405,7 +405,7 @@ err:
 	memset((char *)&ctx,0,sizeof(ctx));
 	memset(buf,0,PEM_BUFSIZE);
 	memset(data,0,(unsigned int)dsize);
-	Free(data);
+	OPENSSL_free(data);
 	return(ret);
 	}
 
@@ -583,7 +583,7 @@ int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 			goto err;
 		}
 
-	buf=(unsigned char *)Malloc(PEM_BUFSIZE*8);
+	buf=(unsigned char *)OPENSSL_malloc(PEM_BUFSIZE*8);
 	if (buf == NULL)
 		{
 		reason=ERR_R_MALLOC_FAILURE;
@@ -603,7 +603,7 @@ int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 		}
 	EVP_EncodeFinal(&ctx,buf,&outl);
 	if ((outl > 0) && (BIO_write(bp,(char *)buf,outl) != outl)) goto err;
-	Free(buf);
+	OPENSSL_free(buf);
 	if (	(BIO_write(bp,"-----END ",9) != 9) ||
 		(BIO_write(bp,name,nlen) != nlen) ||
 		(BIO_write(bp,"-----\n",6) != 6))
@@ -784,9 +784,9 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
 	*header=headerB->data;
 	*data=(unsigned char *)dataB->data;
 	*len=bl;
-	Free(nameB);
-	Free(headerB);
-	Free(dataB);
+	OPENSSL_free(nameB);
+	OPENSSL_free(headerB);
+	OPENSSL_free(dataB);
 	return(1);
 err:
 	BUF_MEM_free(nameB);

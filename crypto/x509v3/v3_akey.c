@@ -132,7 +132,7 @@ void AUTHORITY_KEYID_free(AUTHORITY_KEYID *a)
 	M_ASN1_OCTET_STRING_free(a->keyid);
 	sk_GENERAL_NAME_pop_free(a->issuer, GENERAL_NAME_free);
 	M_ASN1_INTEGER_free (a->serial);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
@@ -142,7 +142,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
 	if(akeyid->keyid) {
 		tmp = hex_to_string(akeyid->keyid->data, akeyid->keyid->length);
 		X509V3_add_value("keyid", tmp, &extlist);
-		Free(tmp);
+		OPENSSL_free(tmp);
 	}
 	if(akeyid->issuer) 
 		extlist = i2v_GENERAL_NAMES(NULL, akeyid->issuer, extlist);
@@ -150,7 +150,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
 		tmp = hex_to_string(akeyid->serial->data,
 						 akeyid->serial->length);
 		X509V3_add_value("serial", tmp, &extlist);
-		Free(tmp);
+		OPENSSL_free(tmp);
 	}
 	return extlist;
 }

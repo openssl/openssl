@@ -133,7 +133,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag, int indent)
 
 	err:
 		sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
-		if(value) Free(value);
+		if(value) OPENSSL_free(value);
 		method->ext_free(ext_str);
 		return ok;
 }

@@ -77,7 +77,7 @@ int CRYPTO_get_ex_new_index(int idx, STACK_OF(CRYPTO_EX_DATA_FUNCS) **skp, long 
 		CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
-	a=(CRYPTO_EX_DATA_FUNCS *)Malloc(sizeof(CRYPTO_EX_DATA_FUNCS));
+	a=(CRYPTO_EX_DATA_FUNCS *)OPENSSL_malloc(sizeof(CRYPTO_EX_DATA_FUNCS));
 	if (a == NULL)
 		{
 		CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX,ERR_R_MALLOC_FAILURE);
@@ -93,7 +93,7 @@ int CRYPTO_get_ex_new_index(int idx, STACK_OF(CRYPTO_EX_DATA_FUNCS) **skp, long 
 		if (!sk_CRYPTO_EX_DATA_FUNCS_push(*skp,NULL))
 			{
 			CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX,ERR_R_MALLOC_FAILURE);
-			Free(a);
+			OPENSSL_free(a);
 			goto err;
 			}
 		}

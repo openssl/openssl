@@ -167,7 +167,7 @@ static X509_EXTENSION *do_ext_i2d(X509V3_EXT_METHOD *method, int ext_nid,
 	X509_EXTENSION *ext;
 	/* Convert internal representation to DER */
 	ext_len = method->i2d(ext_struc, NULL);
-	if(!(ext_der = Malloc(ext_len))) goto merr;
+	if(!(ext_der = OPENSSL_malloc(ext_len))) goto merr;
 	p = ext_der;
 	method->i2d(ext_struc, &p);
 	if(!(ext_oct = M_ASN1_OCTET_STRING_new())) goto merr;
@@ -255,7 +255,7 @@ extension = X509_EXTENSION_create_by_OBJ(NULL, obj, crit, oct);
 err:
 ASN1_OBJECT_free(obj);
 M_ASN1_OCTET_STRING_free(oct);
-if(ext_der) Free(ext_der);
+if(ext_der) OPENSSL_free(ext_der);
 return extension;
 }
 

@@ -94,7 +94,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD *method
 		if(!ret) break;
 		vtmp = sk_CONF_VALUE_value(ret, i);
 		i2t_ASN1_OBJECT(objtmp, 80, desc->method);
-		ntmp = Malloc(strlen(objtmp) + strlen(vtmp->name) + 5);
+		ntmp = OPENSSL_malloc(strlen(objtmp) + strlen(vtmp->name) + 5);
 		if(!ntmp) {
 			X509V3err(X509V3_F_I2V_AUTHORITY_INFO_ACCESS,
 					ERR_R_MALLOC_FAILURE);
@@ -103,7 +103,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD *method
 		strcpy(ntmp, objtmp);
 		strcat(ntmp, " - ");
 		strcat(ntmp, vtmp->name);
-		Free(vtmp->name);
+		OPENSSL_free(vtmp->name);
 		vtmp->name = ntmp;
 		
 	}
@@ -140,7 +140,7 @@ static STACK_OF(ACCESS_DESCRIPTION) *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
 		ctmp.value = cnf->value;
 		if(!(acc->location = v2i_GENERAL_NAME(method, ctx, &ctmp)))
 								 goto err; 
-		if(!(objtmp = Malloc(objlen + 1))) {
+		if(!(objtmp = OPENSSL_malloc(objlen + 1))) {
 			X509V3err(X509V3_F_V2I_ACCESS_DESCRIPTION,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
@@ -150,10 +150,10 @@ static STACK_OF(ACCESS_DESCRIPTION) *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
 		if(!acc->method) {
 			X509V3err(X509V3_F_V2I_ACCESS_DESCRIPTION,X509V3_R_BAD_OBJECT);
 			ERR_add_error_data(2, "value=", objtmp);
-			Free(objtmp);
+			OPENSSL_free(objtmp);
 			goto err;
 		}
-		Free(objtmp);
+		OPENSSL_free(objtmp);
 
 	}
 	return ainfo;
@@ -204,7 +204,7 @@ void ACCESS_DESCRIPTION_free(ACCESS_DESCRIPTION *a)
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->method);
 	GENERAL_NAME_free(a->location);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 STACK_OF(ACCESS_DESCRIPTION) *AUTHORITY_INFO_ACCESS_new(void)

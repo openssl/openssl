@@ -234,7 +234,7 @@ BN_MONT_CTX *BN_MONT_CTX_new(void)
 	{
 	BN_MONT_CTX *ret;
 
-	if ((ret=(BN_MONT_CTX *)Malloc(sizeof(BN_MONT_CTX))) == NULL)
+	if ((ret=(BN_MONT_CTX *)OPENSSL_malloc(sizeof(BN_MONT_CTX))) == NULL)
 		return(NULL);
 
 	BN_MONT_CTX_init(ret);
@@ -260,7 +260,7 @@ void BN_MONT_CTX_free(BN_MONT_CTX *mont)
 	BN_free(&(mont->N));
 	BN_free(&(mont->Ni));
 	if (mont->flags & BN_FLG_MALLOCED)
-		Free(mont);
+		OPENSSL_free(mont);
 	}
 
 int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)

@@ -188,7 +188,7 @@ static void cleanup3(ADDED_OBJ *a)
 	{
 	if (--a->obj->nid == 0)
 		ASN1_OBJECT_free(a->obj);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 void OBJ_cleanup(void)
@@ -220,13 +220,13 @@ int OBJ_add_object(ASN1_OBJECT *obj)
 	if (added == NULL)
 		if (!init_added()) return(0);
 	if ((o=OBJ_dup(obj)) == NULL) goto err;
-	ao[ADDED_NID]=(ADDED_OBJ *)Malloc(sizeof(ADDED_OBJ));
+	ao[ADDED_NID]=(ADDED_OBJ *)OPENSSL_malloc(sizeof(ADDED_OBJ));
 	if ((o->length != 0) && (obj->data != NULL))
-		ao[ADDED_DATA]=(ADDED_OBJ *)Malloc(sizeof(ADDED_OBJ));
+		ao[ADDED_DATA]=(ADDED_OBJ *)OPENSSL_malloc(sizeof(ADDED_OBJ));
 	if (o->sn != NULL)
-		ao[ADDED_SNAME]=(ADDED_OBJ *)Malloc(sizeof(ADDED_OBJ));
+		ao[ADDED_SNAME]=(ADDED_OBJ *)OPENSSL_malloc(sizeof(ADDED_OBJ));
 	if (o->ln != NULL)
-		ao[ADDED_LNAME]=(ADDED_OBJ *)Malloc(sizeof(ADDED_OBJ));
+		ao[ADDED_LNAME]=(ADDED_OBJ *)OPENSSL_malloc(sizeof(ADDED_OBJ));
 
 	for (i=ADDED_DATA; i<=ADDED_NID; i++)
 		{
@@ -237,7 +237,7 @@ int OBJ_add_object(ASN1_OBJECT *obj)
 			aop=(ADDED_OBJ *)lh_insert(added,ao[i]);
 			/* memory leak, buit should not normally matter */
 			if (aop != NULL)
-				Free(aop);
+				OPENSSL_free(aop);
 			}
 		}
 	o->flags&= ~(ASN1_OBJECT_FLAG_DYNAMIC|ASN1_OBJECT_FLAG_DYNAMIC_STRINGS|
@@ -246,8 +246,8 @@ int OBJ_add_object(ASN1_OBJECT *obj)
 	return(o->nid);
 err:
 	for (i=ADDED_DATA; i<=ADDED_NID; i++)
-		if (ao[i] != NULL) Free(ao[i]);
-	if (o != NULL) Free(o);
+		if (ao[i] != NULL) OPENSSL_free(ao[i]);
+	if (o != NULL) OPENSSL_free(o);
 	return(NID_undef);
 	}
 
@@ -400,7 +400,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	/* Work out total size */
 	j = ASN1_object_size(0,i,V_ASN1_OBJECT);
 
-	if((buf=(unsigned char *)Malloc(j)) == NULL) return NULL;
+	if((buf=(unsigned char *)OPENSSL_malloc(j)) == NULL) return NULL;
 
 	p = buf;
 	/* Write out tag+length */
@@ -410,7 +410,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	
 	p=buf;
 	op=d2i_ASN1_OBJECT(NULL,&p,i);
-	Free(buf);
+	OPENSSL_free(buf);
 	return op;
 	}
 
@@ -631,7 +631,7 @@ int OBJ_create(char *oid, char *sn, char *ln)
 	i=a2d_ASN1_OBJECT(NULL,0,oid,-1);
 	if (i <= 0) return(0);
 
-	if ((buf=(unsigned char *)Malloc(i)) == NULL)
+	if ((buf=(unsigned char *)OPENSSL_malloc(i)) == NULL)
 		{
 		OBJerr(OBJ_F_OBJ_CREATE,OBJ_R_MALLOC_FAILURE);
 		return(0);
@@ -643,7 +643,7 @@ int OBJ_create(char *oid, char *sn, char *ln)
 	ok=OBJ_add_object(op);
 err:
 	ASN1_OBJECT_free(op);
-	Free(buf);
+	OPENSSL_free(buf);
 	return(ok);
 	}
 

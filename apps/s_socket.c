@@ -241,7 +241,7 @@ int do_server(int port, int *ret, int (*cb)(), char *context)
 			return(0);
 			}
 		i=(*cb)(name,sock, context);
-		if (name != NULL) Free(name);
+		if (name != NULL) OPENSSL_free(name);
 		SHUTDOWN2(sock);
 		if (i < 0)
 			{
@@ -372,9 +372,9 @@ redoit:
 		}
 	else
 		{
-		if ((*host=(char *)Malloc(strlen(h1->h_name)+1)) == NULL)
+		if ((*host=(char *)OPENSSL_malloc(strlen(h1->h_name)+1)) == NULL)
 			{
-			perror("Malloc");
+			perror("OPENSSL_malloc");
 			return(0);
 			}
 		strcpy(*host,h1->h_name);

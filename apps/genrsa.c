@@ -213,7 +213,7 @@ bad:
 err:
 	if (rsa != NULL) RSA_free(rsa);
 	if (out != NULL) BIO_free(out);
-	if(passout) Free(passout);
+	if(passout) OPENSSL_free(passout);
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	EXIT(ret);

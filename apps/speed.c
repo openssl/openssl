@@ -364,7 +364,7 @@ int MAIN(int argc, char **argv)
 		rsa_key[i]=NULL;
 #endif
 
-	if ((buf=(unsigned char *)Malloc((int)BUFSIZE)) == NULL)
+	if ((buf=(unsigned char *)OPENSSL_malloc((int)BUFSIZE)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
@@ -372,7 +372,7 @@ int MAIN(int argc, char **argv)
 #ifndef NO_DES
 	buf_as_des_cblock = (des_cblock *)buf;
 #endif
-	if ((buf2=(unsigned char *)Malloc((int)BUFSIZE)) == NULL)
+	if ((buf2=(unsigned char *)OPENSSL_malloc((int)BUFSIZE)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
@@ -1196,8 +1196,8 @@ int MAIN(int argc, char **argv)
 	mret=0;
 end:
 	ERR_print_errors(bio_err);
-	if (buf != NULL) Free(buf);
-	if (buf2 != NULL) Free(buf2);
+	if (buf != NULL) OPENSSL_free(buf);
+	if (buf2 != NULL) OPENSSL_free(buf2);
 #ifndef NO_RSA
 	for (i=0; i<RSA_NUM; i++)
 		if (rsa_key[i] != NULL)

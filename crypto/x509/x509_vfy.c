@@ -612,7 +612,7 @@ int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 	int ret=1;
 
 	if (x == NULL) return(0);
-	obj=(X509_OBJECT *)Malloc(sizeof(X509_OBJECT));
+	obj=(X509_OBJECT *)OPENSSL_malloc(sizeof(X509_OBJECT));
 	if (obj == NULL)
 		{
 		X509err(X509_F_X509_STORE_ADD_CERT,ERR_R_MALLOC_FAILURE);
@@ -630,7 +630,7 @@ int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 		{ /* oops, put it back */
 		lh_delete(ctx->certs,obj);
 		X509_OBJECT_free_contents(obj);
-		Free(obj);
+		OPENSSL_free(obj);
 		lh_insert(ctx->certs,r);
 		X509err(X509_F_X509_STORE_ADD_CERT,X509_R_CERT_ALREADY_IN_HASH_TABLE);
 		ret=0;
@@ -647,7 +647,7 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 	int ret=1;
 
 	if (x == NULL) return(0);
-	obj=(X509_OBJECT *)Malloc(sizeof(X509_OBJECT));
+	obj=(X509_OBJECT *)OPENSSL_malloc(sizeof(X509_OBJECT));
 	if (obj == NULL)
 		{
 		X509err(X509_F_X509_STORE_ADD_CRL,ERR_R_MALLOC_FAILURE);
@@ -665,7 +665,7 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 		{ /* oops, put it back */
 		lh_delete(ctx->certs,obj);
 		X509_OBJECT_free_contents(obj);
-		Free(obj);
+		OPENSSL_free(obj);
 		lh_insert(ctx->certs,r);
 		X509err(X509_F_X509_STORE_ADD_CRL,X509_R_CERT_ALREADY_IN_HASH_TABLE);
 		ret=0;

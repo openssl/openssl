@@ -1193,7 +1193,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 	ret=0;
 err:
 	/* We have to set the BIO's to NULL otherwise they will be
-	 * Free()ed twice.  Once when th s_ssl is SSL_free()ed and
+	 * OPENSSL_free()ed twice.  Once when th s_ssl is SSL_free()ed and
 	 * again when c_ssl is SSL_free()ed.
 	 * This is a hack required because s_ssl and c_ssl are sharing the same
 	 * BIO structure and SSL_set_bio() and SSL_free() automatically

@@ -65,7 +65,8 @@
 
 static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
 static void st_free(ASN1_STRING_TABLE *tbl);
-static int sk_table_cmp(ASN1_STRING_TABLE **a, ASN1_STRING_TABLE **b);
+static int sk_table_cmp(const ASN1_STRING_TABLE * const *a,
+			const ASN1_STRING_TABLE * const *b);
 static int table_cmp(ASN1_STRING_TABLE *a, ASN1_STRING_TABLE *b);
 
 
@@ -173,7 +174,8 @@ static ASN1_STRING_TABLE tbl_standard[] = {
 {NID_dnQualifier,		-1, -1, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK}
 };
 
-static int sk_table_cmp(ASN1_STRING_TABLE **a, ASN1_STRING_TABLE **b)
+static int sk_table_cmp(const ASN1_STRING_TABLE * const *a,
+			const ASN1_STRING_TABLE * const *b)
 {
 	return (*a)->nid - (*b)->nid;
 }
@@ -213,7 +215,7 @@ int ASN1_STRING_TABLE_add(int nid,
 		return 0;
 	}
 	if(!(tmp = ASN1_STRING_TABLE_get(nid))) {
-		tmp = Malloc(sizeof(ASN1_STRING_TABLE));
+		tmp = OPENSSL_malloc(sizeof(ASN1_STRING_TABLE));
 		if(!tmp) {
 			ASN1err(ASN1_F_ASN1_STRING_TABLE_ADD,
 							ERR_R_MALLOC_FAILURE);
@@ -241,7 +243,7 @@ void ASN1_STRING_TABLE_cleanup(void)
 
 static void st_free(ASN1_STRING_TABLE *tbl)
 {
-	if(tbl->flags & STABLE_FLAGS_MALLOC) Free(tbl);
+	if(tbl->flags & STABLE_FLAGS_MALLOC) OPENSSL_free(tbl);
 }
 
 IMPLEMENT_STACK_OF(ASN1_STRING_TABLE)

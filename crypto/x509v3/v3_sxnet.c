@@ -132,7 +132,7 @@ void SXNET_free(SXNET *a)
 	if (a == NULL) return;
 	M_ASN1_INTEGER_free(a->version);
 	sk_SXNETID_pop_free(a->ids, SXNETID_free);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 int i2d_SXNETID(SXNETID *a, unsigned char **pp)
@@ -176,7 +176,7 @@ void SXNETID_free(SXNETID *a)
 	if (a == NULL) return;
 	M_ASN1_INTEGER_free(a->zone);
 	M_ASN1_OCTET_STRING_free(a->user);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
@@ -192,7 +192,7 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
 		id = sk_SXNETID_value(sx->ids, i);
 		tmp = i2s_ASN1_INTEGER(NULL, id->zone);
 		BIO_printf(out, "\n%*sZone: %s, User: ", indent, "", tmp);
-		Free(tmp);
+		OPENSSL_free(tmp);
 		M_ASN1_OCTET_STRING_print(out, id->user);
 	}
 	return 1;

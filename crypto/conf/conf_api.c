@@ -107,9 +107,9 @@ int _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value)
 	if (v != NULL)
 		{
 		sk_CONF_VALUE_delete_ptr(ts,v);
-		Free(v->name);
-		Free(v->value);
-		Free(v);
+		OPENSSL_free(v->name);
+		OPENSSL_free(v->value);
+		OPENSSL_free(v);
 		}
 	return 1;
 	}
@@ -181,7 +181,7 @@ void _CONF_free_data(CONF *conf)
 	{
 	if (conf == NULL || conf->data == NULL) return;
 
-	conf->data->down_load=0; /* evil thing to make sure the 'Free()'
+	conf->data->down_load=0; /* evil thing to make sure the 'OPENSSL_free()'
 				  * works as expected */
 	lh_doall_arg(conf->data,(void (*)())value_free_hash,conf->data);
 
@@ -212,13 +212,13 @@ static void value_free_stack(CONF_VALUE *a, LHASH *conf)
 	for (i=sk_num(sk)-1; i>=0; i--)
 		{
 		vv=(CONF_VALUE *)sk_value(sk,i);
-		Free(vv->value);
-		Free(vv->name);
-		Free(vv);
+		OPENSSL_free(vv->value);
+		OPENSSL_free(vv->name);
+		OPENSSL_free(vv);
 		}
 	if (sk != NULL) sk_free(sk);
-	Free(a->section);
-	Free(a);
+	OPENSSL_free(a->section);
+	OPENSSL_free(a);
 	}
 
 static unsigned long hash(CONF_VALUE *v)
@@ -256,10 +256,10 @@ CONF_VALUE *_CONF_new_section(CONF *conf, char *section)
 
 	if ((sk=sk_new_null()) == NULL)
 		goto err;
-	if ((v=(CONF_VALUE *)Malloc(sizeof(CONF_VALUE))) == NULL)
+	if ((v=(CONF_VALUE *)OPENSSL_malloc(sizeof(CONF_VALUE))) == NULL)
 		goto err;
 	i=strlen(section)+1;
-	if ((v->section=(char *)Malloc(i)) == NULL)
+	if ((v->section=(char *)OPENSSL_malloc(i)) == NULL)
 		goto err;
 
 	memcpy(v->section,section,i);
@@ -279,7 +279,7 @@ err:
 	if (!ok)
 		{
 		if (sk != NULL) sk_free(sk);
-		if (v != NULL) Free(v);
+		if (v != NULL) OPENSSL_free(v);
 		v=NULL;
 		}
 	return(v);

@@ -116,6 +116,6 @@ void PKCS7_DIGEST_free(PKCS7_DIGEST *a)
 	X509_ALGOR_free(a->md);
 	PKCS7_free(a->contents);
 	M_ASN1_OCTET_STRING_free(a->digest);
-	Free(a);
+	OPENSSL_free(a);
 	}
 

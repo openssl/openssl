@@ -103,7 +103,7 @@ void PBEPARAM_free (PBEPARAM *a)
 	if(a==NULL) return;
 	M_ASN1_OCTET_STRING_free(a->salt);
 	M_ASN1_INTEGER_free (a->iter);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 /* Return an algorithm identifier for a PKCS#5 PBE algorithm */
@@ -123,7 +123,7 @@ X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt,
 	if(iter <= 0) iter = PKCS5_DEFAULT_ITER;
 	ASN1_INTEGER_set (pbe->iter, iter);
 	if (!saltlen) saltlen = PKCS5_SALT_LEN;
-	if (!(pbe->salt->data = Malloc (saltlen))) {
+	if (!(pbe->salt->data = OPENSSL_malloc (saltlen))) {
 		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}

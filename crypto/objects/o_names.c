@@ -20,6 +20,37 @@ typedef struct name_funcs_st
 	} NAME_FUNCS;
 
 DECLARE_STACK_OF(NAME_FUNCS)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_NAME_FUNCS_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_NAME_FUNCS_new_null() sk_new_null()
+	#define sk_NAME_FUNCS_free(a) sk_free(a)
+	#define sk_NAME_FUNCS_num(a) sk_num(a)
+	#define sk_NAME_FUNCS_value(a,b) ((NAME_FUNCS *) \
+		sk_value((a),(b)))
+	#define sk_NAME_FUNCS_set(a,b,c) ((NAME_FUNCS *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_NAME_FUNCS_zero(a) sk_zero(a)
+	#define sk_NAME_FUNCS_push(a,b) sk_push((a),(char *)(b))
+	#define sk_NAME_FUNCS_unshift(a,b) sk_unshift((a),(b))
+	#define sk_NAME_FUNCS_find(a,b) sk_find((a), (char *)(b))
+	#define sk_NAME_FUNCS_delete(a,b) ((NAME_FUNCS *) \
+		sk_delete((a),(b)))
+	#define sk_NAME_FUNCS_delete_ptr(a,b) ((NAME_FUNCS *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_NAME_FUNCS_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_NAME_FUNCS_set_cmp_func(a,b) ((int (*) \
+		(const NAME_FUNCS * const *,const NAME_FUNCS * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_NAME_FUNCS_dup(a) sk_dup(a)
+	#define sk_NAME_FUNCS_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_NAME_FUNCS_shift(a) ((NAME_FUNCS *)sk_shift(a))
+	#define sk_NAME_FUNCS_pop(a) ((NAME_FUNCS *)sk_pop(a))
+	#define sk_NAME_FUNCS_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 IMPLEMENT_STACK_OF(NAME_FUNCS)
 
 static STACK_OF(NAME_FUNCS) *name_funcs_stack;
@@ -59,7 +90,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(), int (*cmp_func)(),
 	for (i=sk_NAME_FUNCS_num(name_funcs_stack); i<names_type_num; i++)
 		{
 		MemCheck_off();
-		name_funcs = Malloc(sizeof(NAME_FUNCS));
+		name_funcs = OPENSSL_malloc(sizeof(NAME_FUNCS));
 		name_funcs->hash_func = lh_strhash;
 		name_funcs->cmp_func = (int (*)())strcmp;
 		name_funcs->free_func = 0; /* NULL is often declared to
@@ -156,7 +187,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 	alias=type&OBJ_NAME_ALIAS;
 	type&= ~OBJ_NAME_ALIAS;
 
-	onp=(OBJ_NAME *)Malloc(sizeof(OBJ_NAME));
+	onp=(OBJ_NAME *)OPENSSL_malloc(sizeof(OBJ_NAME));
 	if (onp == NULL)
 		{
 		/* ERROR */
@@ -181,7 +212,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 			sk_NAME_FUNCS_value(name_funcs_stack,ret->type)
 				->free_func(ret->name,ret->type,ret->data);
 			}
-		Free(ret);
+		OPENSSL_free(ret);
 		}
 	else
 		{
@@ -216,7 +247,7 @@ int OBJ_NAME_remove(const char *name, int type)
 			sk_NAME_FUNCS_value(name_funcs_stack,ret->type)
 				->free_func(ret->name,ret->type,ret->data);
 			}
-		Free(ret);
+		OPENSSL_free(ret);
 		return(1);
 		}
 	else
@@ -238,7 +269,7 @@ static void names_lh_free(OBJ_NAME *onp, int type)
 
 static void name_funcs_free(NAME_FUNCS *ptr)
 	{
-	Free(ptr);
+	OPENSSL_free(ptr);
 	}
 
 void OBJ_NAME_cleanup(int type)

@@ -107,5 +107,5 @@ void PKCS12_free (PKCS12 *a)
 	M_ASN1_INTEGER_free(a->version);
 	PKCS12_MAC_DATA_free (a->mac);
 	PKCS7_free (a->authsafes);
-	Free (a);
+	OPENSSL_free (a);
 }

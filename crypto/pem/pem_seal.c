@@ -84,7 +84,7 @@ int PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 		j=RSA_size(pubk[i]->pkey.rsa);
 		if (j > max) max=j;
 		}
-	s=(char *)Malloc(max*2);
+	s=(char *)OPENSSL_malloc(max*2);
 	if (s == NULL)
 		{
 		PEMerr(PEM_F_PEM_SEALINIT,ERR_R_MALLOC_FAILURE);
@@ -108,7 +108,7 @@ int PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 
 	ret=npubk;
 err:
-	if (s != NULL) Free(s);
+	if (s != NULL) OPENSSL_free(s);
 	memset(key,0,EVP_MAX_KEY_LENGTH);
 	return(ret);
 	}
@@ -151,7 +151,7 @@ int PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
 		}
 	i=RSA_size(priv->pkey.rsa);
 	if (i < 100) i=100;
-	s=(unsigned char *)Malloc(i*2);
+	s=(unsigned char *)OPENSSL_malloc(i*2);
 	if (s == NULL)
 		{
 		PEMerr(PEM_F_PEM_SEALFINAL,ERR_R_MALLOC_FAILURE);
@@ -172,7 +172,7 @@ int PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
 err:
 	memset((char *)&(ctx->md),0,sizeof(ctx->md));
 	memset((char *)&(ctx->cipher),0,sizeof(ctx->cipher));
-	if (s != NULL) Free(s);
+	if (s != NULL) OPENSSL_free(s);
 	return(ret);
 	}
 #else /* !NO_RSA */

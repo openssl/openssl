@@ -200,7 +200,7 @@ int MAIN(int argc, char **argv)
 
 		passwd_malloc_size = pw_maxlen + 2;
 		/* longer than necessary so that we can warn about truncation */
-		passwd = passwd_malloc = Malloc(passwd_malloc_size);
+		passwd = passwd_malloc = OPENSSL_malloc(passwd_malloc_size);
 		if (passwd_malloc == NULL)
 			goto err;
 		}
@@ -266,9 +266,9 @@ int MAIN(int argc, char **argv)
 err:
 	ERR_print_errors(bio_err);
 	if (salt_malloc)
-		Free(salt_malloc);
+		OPENSSL_free(salt_malloc);
 	if (passwd_malloc)
-		Free(passwd_malloc);
+		OPENSSL_free(passwd_malloc);
 	if (in)
 		BIO_free(in);
 	if (out)
@@ -399,7 +399,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 			{
 			if (*salt_malloc_p == NULL)
 				{
-				*salt_p = *salt_malloc_p = Malloc(3);
+				*salt_p = *salt_malloc_p = OPENSSL_malloc(3);
 				if (*salt_malloc_p == NULL)
 					goto err;
 				}
@@ -422,7 +422,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 			
 			if (*salt_malloc_p == NULL)
 				{
-				*salt_p = *salt_malloc_p = Malloc(9);
+				*salt_p = *salt_malloc_p = OPENSSL_malloc(9);
 				if (*salt_malloc_p == NULL)
 					goto err;
 				}

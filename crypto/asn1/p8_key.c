@@ -94,7 +94,7 @@ X509 *X509_KEY_new(void)
 	{
 	X509_KEY *ret=NULL;
 
-	M_ASN1_New_Malloc(ret,X509_KEY);
+	M_ASN1_New_OPENSSL_malloc(ret,X509_KEY);
 	ret->references=1;
 	ret->type=NID
 	M_ASN1_New(ret->cert_info,X509_CINF_new);
@@ -126,6 +126,6 @@ void X509_KEY_free(X509 *a)
 	X509_CINF_free(a->cert_info);
 	X509_ALGOR_free(a->sig_alg);
 	ASN1_BIT_STRING_free(a->signature);
-	Free(a);
+	OPENSSL_free(a);
 	}
 

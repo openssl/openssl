@@ -96,7 +96,7 @@ static int md_new(BIO *bi)
 	{
 	EVP_MD_CTX *ctx;
 
-	ctx=(EVP_MD_CTX *)Malloc(sizeof(EVP_MD_CTX));
+	ctx=(EVP_MD_CTX *)OPENSSL_malloc(sizeof(EVP_MD_CTX));
 	if (ctx == NULL) return(0);
 
 	bi->init=0;
@@ -108,7 +108,7 @@ static int md_new(BIO *bi)
 static int md_free(BIO *a)
 	{
 	if (a == NULL) return(0);
-	Free(a->ptr);
+	OPENSSL_free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;
 	a->flags=0;

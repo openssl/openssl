@@ -401,7 +401,7 @@ void POLICYINFO_free(POLICYINFO *a)
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->policyid);
 	sk_POLICYQUALINFO_pop_free(a->qualifiers, POLICYQUALINFO_free);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals,
@@ -451,7 +451,7 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
 			if(i) BIO_puts(out, ", ");
 			tmp = i2s_ASN1_INTEGER(NULL, num);
 			BIO_puts(out, tmp);
-			Free(tmp);
+			OPENSSL_free(tmp);
 		}
 		BIO_puts(out, "\n");
 	}
@@ -553,7 +553,7 @@ void POLICYQUALINFO_free(POLICYQUALINFO *a)
 	}
 	
 	ASN1_OBJECT_free(a->pqualid);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 int i2d_USERNOTICE(USERNOTICE *a, unsigned char **pp)
@@ -599,7 +599,7 @@ void USERNOTICE_free(USERNOTICE *a)
 	if (a == NULL) return;
 	NOTICEREF_free(a->noticeref);
 	M_DISPLAYTEXT_free(a->exptext);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 int i2d_NOTICEREF(NOTICEREF *a, unsigned char **pp)
@@ -653,7 +653,7 @@ void NOTICEREF_free(NOTICEREF *a)
 	if (a == NULL) return;
 	M_DISPLAYTEXT_free(a->organization);
 	sk_ASN1_INTEGER_pop_free(a->noticenos, ASN1_STRING_free);
-	Free (a);
+	OPENSSL_free (a);
 }
 
 IMPLEMENT_STACK_OF(POLICYQUALINFO)

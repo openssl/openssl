@@ -10,7 +10,7 @@ DSA_SIG *DSA_SIG_new(void)
 {
 	DSA_SIG *ret;
 
-	ret = Malloc(sizeof(DSA_SIG));
+	ret = OPENSSL_malloc(sizeof(DSA_SIG));
 	if (ret == NULL)
 		{
 		DSAerr(DSA_F_DSA_SIG_NEW,ERR_R_MALLOC_FAILURE);
@@ -26,7 +26,7 @@ void DSA_SIG_free(DSA_SIG *r)
 	if (r == NULL) return;
 	if (r->r) BN_clear_free(r->r);
 	if (r->s) BN_clear_free(r->s);
-	Free(r);
+	OPENSSL_free(r);
 }
 
 int i2d_DSA_SIG(DSA_SIG *v, unsigned char **pp)
@@ -35,7 +35,7 @@ int i2d_DSA_SIG(DSA_SIG *v, unsigned char **pp)
 	ASN1_INTEGER rbs,sbs;
 	unsigned char *p;
 
-	rbs.data=Malloc(BN_num_bits(v->r)/8+1);
+	rbs.data=OPENSSL_malloc(BN_num_bits(v->r)/8+1);
 	if (rbs.data == NULL)
 		{
 		DSAerr(DSA_F_I2D_DSA_SIG, ERR_R_MALLOC_FAILURE);
@@ -43,10 +43,10 @@ int i2d_DSA_SIG(DSA_SIG *v, unsigned char **pp)
 		}
 	rbs.type=V_ASN1_INTEGER;
 	rbs.length=BN_bn2bin(v->r,rbs.data);
-	sbs.data=Malloc(BN_num_bits(v->s)/8+1);
+	sbs.data=OPENSSL_malloc(BN_num_bits(v->s)/8+1);
 	if (sbs.data == NULL)
 		{
-		Free(rbs.data);
+		OPENSSL_free(rbs.data);
 		DSAerr(DSA_F_I2D_DSA_SIG, ERR_R_MALLOC_FAILURE);
 		return(0);
 		}
@@ -64,8 +64,8 @@ int i2d_DSA_SIG(DSA_SIG *v, unsigned char **pp)
 		i2d_ASN1_INTEGER(&sbs,&p);
 		}
 	t=ASN1_object_size(1,len,V_ASN1_SEQUENCE);
-	Free(rbs.data);
-	Free(sbs.data);
+	OPENSSL_free(rbs.data);
+	OPENSSL_free(sbs.data);
 	return(t);
 }
 

@@ -70,7 +70,7 @@ BIO *BIO_new(BIO_METHOD *method)
 	{
 	BIO *ret=NULL;
 
-	ret=(BIO *)Malloc(sizeof(BIO));
+	ret=(BIO *)OPENSSL_malloc(sizeof(BIO));
 	if (ret == NULL)
 		{
 		BIOerr(BIO_F_BIO_NEW,ERR_R_MALLOC_FAILURE);
@@ -78,7 +78,7 @@ BIO *BIO_new(BIO_METHOD *method)
 		}
 	if (!BIO_set(ret,method))
 		{
-		Free(ret);
+		OPENSSL_free(ret);
 		ret=NULL;
 		}
 	return(ret);
@@ -133,7 +133,7 @@ int BIO_free(BIO *a)
 
 	if ((a->method == NULL) || (a->method->destroy == NULL)) return(1);
 	ret=a->method->destroy(a);
-	Free(a);
+	OPENSSL_free(a);
 	return(1);
 	}
 

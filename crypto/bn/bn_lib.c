@@ -264,22 +264,22 @@ void BN_clear_free(BIGNUM *a)
 		{
 		memset(a->d,0,a->max*sizeof(a->d[0]));
 		if (!(BN_get_flags(a,BN_FLG_STATIC_DATA)))
-			Free(a->d);
+			OPENSSL_free(a->d);
 		}
 	i=BN_get_flags(a,BN_FLG_MALLOCED);
 	memset(a,0,sizeof(BIGNUM));
 	if (i)
-		Free(a);
+		OPENSSL_free(a);
 	}
 
 void BN_free(BIGNUM *a)
 	{
 	if (a == NULL) return;
 	if ((a->d != NULL) && !(BN_get_flags(a,BN_FLG_STATIC_DATA)))
-		Free(a->d);
+		OPENSSL_free(a->d);
 	a->flags|=BN_FLG_FREE; /* REMOVE? */
 	if (a->flags & BN_FLG_MALLOCED)
-		Free(a);
+		OPENSSL_free(a);
 	}
 
 void BN_init(BIGNUM *a)
@@ -291,7 +291,7 @@ BIGNUM *BN_new(void)
 	{
 	BIGNUM *ret;
 
-	if ((ret=(BIGNUM *)Malloc(sizeof(BIGNUM))) == NULL)
+	if ((ret=(BIGNUM *)OPENSSL_malloc(sizeof(BIGNUM))) == NULL)
 		{
 		BNerr(BN_F_BN_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
@@ -325,7 +325,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 			BNerr(BN_F_BN_EXPAND2,BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
 			return(NULL);
 			}
-		a=A=(BN_ULONG *)Malloc(sizeof(BN_ULONG)*(words+1));
+		a=A=(BN_ULONG *)OPENSSL_malloc(sizeof(BN_ULONG)*(words+1));
 		if (A == NULL)
 			{
 			BNerr(BN_F_BN_EXPAND2,ERR_R_MALLOC_FAILURE);
@@ -423,7 +423,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 				case 0:	; /* ultrix cc workaround, see above */
 				}
 #endif
-			Free(b->d);
+			OPENSSL_free(b->d);
 			}
 
 		b->d=a;

@@ -140,7 +140,7 @@ DSA *DSA_new_method(ENGINE *engine)
 	DSA_METHOD *meth;
 	DSA *ret;
 
-	ret=(DSA *)Malloc(sizeof(DSA));
+	ret=(DSA *)OPENSSL_malloc(sizeof(DSA));
 	if (ret == NULL)
 		{
 		DSAerr(DSA_F_DSA_NEW,ERR_R_MALLOC_FAILURE);
@@ -175,7 +175,7 @@ DSA *DSA_new_method(ENGINE *engine)
 	ret->flags=meth->flags;
 	if ((meth->init != NULL) && !meth->init(ret))
 		{
-		Free(ret);
+		OPENSSL_free(ret);
 		ret=NULL;
 		}
 	else
@@ -217,7 +217,7 @@ void DSA_free(DSA *r)
 	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
 	if (r->kinv != NULL) BN_clear_free(r->kinv);
 	if (r->r != NULL) BN_clear_free(r->r);
-	Free(r);
+	OPENSSL_free(r);
 	}
 
 int DSA_size(DSA *r)

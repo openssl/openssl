@@ -111,7 +111,7 @@ void X509_ALGOR_free(X509_ALGOR *a)
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->algorithm);
 	ASN1_TYPE_free(a->parameter);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 IMPLEMENT_STACK_OF(X509_ALGOR)

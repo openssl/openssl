@@ -140,6 +140,6 @@ void PKCS7_SIGN_ENVELOPE_free(PKCS7_SIGN_ENVELOPE *a)
 	sk_X509_pop_free(a->cert,X509_free);
 	sk_X509_CRL_pop_free(a->crl,X509_CRL_free);
 	sk_PKCS7_SIGNER_INFO_pop_free(a->signer_info,PKCS7_SIGNER_INFO_free);
-	Free(a);
+	OPENSSL_free(a);
 	}
 

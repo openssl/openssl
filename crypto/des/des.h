@@ -67,7 +67,6 @@
 #error <openssl/des.h> replaces <kerberos/des.h>.
 #endif
 
-#include <stdio.h>
 #include <openssl/opensslconf.h> /* DES_LONG */
 #include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
 

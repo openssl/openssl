@@ -145,7 +145,7 @@ BIO_ACCEPT *BIO_ACCEPT_new(void)
 	{
 	BIO_ACCEPT *ret;
 
-	if ((ret=(BIO_ACCEPT *)Malloc(sizeof(BIO_ACCEPT))) == NULL)
+	if ((ret=(BIO_ACCEPT *)OPENSSL_malloc(sizeof(BIO_ACCEPT))) == NULL)
 		return(NULL);
 
 	memset(ret,0,sizeof(BIO_ACCEPT));
@@ -159,10 +159,10 @@ void BIO_ACCEPT_free(BIO_ACCEPT *a)
 	if(a == NULL)
 	    return;
 
-	if (a->param_addr != NULL) Free(a->param_addr);
-	if (a->addr != NULL) Free(a->addr);
+	if (a->param_addr != NULL) OPENSSL_free(a->param_addr);
+	if (a->addr != NULL) OPENSSL_free(a->addr);
 	if (a->bio_chain != NULL) BIO_free(a->bio_chain);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 static void acpt_close_socket(BIO *bio)
@@ -355,7 +355,7 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
 				{
 				b->init=1;
 				if (data->param_addr != NULL)
-					Free(data->param_addr);
+					OPENSSL_free(data->param_addr);
 				data->param_addr=BUF_strdup(ptr);
 				}
 			else if (num == 1)

@@ -374,8 +374,8 @@ void doencryption(void)
 
 	if (buf == NULL)
 		{
-		if (    (( buf=Malloc(BUFSIZE+8)) == NULL) ||
-			((obuf=Malloc(BUFSIZE+8)) == NULL))
+		if (    (( buf=OPENSSL_malloc(BUFSIZE+8)) == NULL) ||
+			((obuf=OPENSSL_malloc(BUFSIZE+8)) == NULL))
 			{
 			fputs("Not enough memory\n",stderr);
 			Exit=10;

@@ -442,7 +442,8 @@ static int test(void)
 		{
 		BF_set_key(&key,n,key_test);
 		BF_ecb_encrypt(key_data,out,&key,BF_ENCRYPT);
-		if (memcmp(out,&(key_out[n-1][0]),8) != 0)
+		/* mips-sgi-irix6.5-gcc  vv  -mabi=64 bug workaround */
+		if (memcmp(out,&(key_out[i=n-1][0]),8) != 0)
 			{
 			printf("blowfish setkey error\n");
 			err=1;

@@ -116,7 +116,7 @@ int EVP_PBE_alg_add (int nid, EVP_CIPHER *cipher, EVP_MD *md,
 {
 	EVP_PBE_CTL *pbe_tmp;
 	if (!pbe_algs) pbe_algs = sk_new ((int (*)())pbe_cmp);
-	if (!(pbe_tmp = (EVP_PBE_CTL*) Malloc (sizeof(EVP_PBE_CTL)))) {
+	if (!(pbe_tmp = (EVP_PBE_CTL*) OPENSSL_malloc (sizeof(EVP_PBE_CTL)))) {
 		EVPerr(EVP_F_EVP_PBE_ALG_ADD,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -130,6 +130,6 @@ int EVP_PBE_alg_add (int nid, EVP_CIPHER *cipher, EVP_MD *md,
 
 void EVP_PBE_cleanup(void)
 {
-	sk_pop_free(pbe_algs, FreeFunc);
+	sk_pop_free(pbe_algs, OPENSSL_freeFunc);
 	pbe_algs = NULL;
 }

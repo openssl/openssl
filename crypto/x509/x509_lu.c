@@ -68,7 +68,7 @@ X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 	{
 	X509_LOOKUP *ret;
 
-	ret=(X509_LOOKUP *)Malloc(sizeof(X509_LOOKUP));
+	ret=(X509_LOOKUP *)OPENSSL_malloc(sizeof(X509_LOOKUP));
 	if (ret == NULL) return(NULL);
 
 	ret->init=0;
@@ -78,7 +78,7 @@ X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 	ret->store_ctx=NULL;
 	if ((method->new_item != NULL) && !method->new_item(ret))
 		{
-		Free(ret);
+		OPENSSL_free(ret);
 		return(NULL);
 		}
 	return(ret);
@@ -90,7 +90,7 @@ void X509_LOOKUP_free(X509_LOOKUP *ctx)
 	if (	(ctx->method != NULL) &&
 		(ctx->method->free != NULL))
 		ctx->method->free(ctx);
-	Free(ctx);
+	OPENSSL_free(ctx);
 	}
 
 int X509_LOOKUP_init(X509_LOOKUP *ctx)
@@ -197,7 +197,7 @@ X509_STORE *X509_STORE_new(void)
 	{
 	X509_STORE *ret;
 
-	if ((ret=(X509_STORE *)Malloc(sizeof(X509_STORE))) == NULL)
+	if ((ret=(X509_STORE *)OPENSSL_malloc(sizeof(X509_STORE))) == NULL)
 		return(NULL);
 	ret->certs=lh_new(x509_object_hash,x509_object_cmp);
 	ret->cache=1;
@@ -223,7 +223,7 @@ static void cleanup(X509_OBJECT *a)
 	else
 		abort();
 
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 void X509_STORE_free(X509_STORE *vfy)
@@ -247,7 +247,7 @@ void X509_STORE_free(X509_STORE *vfy)
 	CRYPTO_free_ex_data(x509_store_meth,vfy,&vfy->ex_data);
 	lh_doall(vfy->certs,cleanup);
 	lh_free(vfy->certs);
-	Free(vfy);
+	OPENSSL_free(vfy);
 	}
 
 X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
@@ -384,7 +384,7 @@ X509_OBJECT *X509_OBJECT_retrieve_by_subject(LHASH *h, int type,
 X509_STORE_CTX *X509_STORE_CTX_new(void)
 {
 	X509_STORE_CTX *ctx;
-	ctx = (X509_STORE_CTX *)Malloc(sizeof(X509_STORE_CTX));
+	ctx = (X509_STORE_CTX *)OPENSSL_malloc(sizeof(X509_STORE_CTX));
 	if(ctx) memset(ctx, 0, sizeof(X509_STORE_CTX));
 	return ctx;
 }
@@ -392,7 +392,7 @@ X509_STORE_CTX *X509_STORE_CTX_new(void)
 void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
 {
 	X509_STORE_CTX_cleanup(ctx);
-	Free(ctx);
+	OPENSSL_free(ctx);
 }
 
 void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,

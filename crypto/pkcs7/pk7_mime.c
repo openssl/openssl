@@ -74,6 +74,38 @@ char *param_name;			/* Param name e.g. "micalg" */
 char *param_value;			/* Param value e.g. "sha1" */
 } MIME_PARAM;
 
+DECLARE_STACK_OF(MIME_PARAM)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_MIME_PARAM_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_MIME_PARAM_new_null() sk_new_null()
+	#define sk_MIME_PARAM_free(a) sk_free(a)
+	#define sk_MIME_PARAM_num(a) sk_num(a)
+	#define sk_MIME_PARAM_value(a,b) ((MIME_PARAM *) \
+		sk_value((a),(b)))
+	#define sk_MIME_PARAM_set(a,b,c) ((MIME_PARAM *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_MIME_PARAM_zero(a) sk_zero(a)
+	#define sk_MIME_PARAM_push(a,b) sk_push((a),(char *)(b))
+	#define sk_MIME_PARAM_unshift(a,b) sk_unshift((a),(b))
+	#define sk_MIME_PARAM_find(a,b) sk_find((a), (char *)(b))
+	#define sk_MIME_PARAM_delete(a,b) ((MIME_PARAM *) \
+		sk_delete((a),(b)))
+	#define sk_MIME_PARAM_delete_ptr(a,b) ((MIME_PARAM *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_MIME_PARAM_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_MIME_PARAM_set_cmp_func(a,b) ((int (*) \
+		(const MIME_PARAM * const *,const MIME_PARAM * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_MIME_PARAM_dup(a) sk_dup(a)
+	#define sk_MIME_PARAM_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_MIME_PARAM_shift(a) ((MIME_PARAM *)sk_shift(a))
+	#define sk_MIME_PARAM_pop(a) ((MIME_PARAM *)sk_pop(a))
+	#define sk_MIME_PARAM_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 IMPLEMENT_STACK_OF(MIME_PARAM)
 
 typedef struct {
@@ -82,6 +114,38 @@ char *value;				/* Value of line e.g. "text/plain" */
 STACK_OF(MIME_PARAM) *params;		/* Zero or more parameters */
 } MIME_HEADER;
 
+DECLARE_STACK_OF(MIME_HEADER)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_MIME_HEADER_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_MIME_HEADER_new_null() sk_new_null()
+	#define sk_MIME_HEADER_free(a) sk_free(a)
+	#define sk_MIME_HEADER_num(a) sk_num(a)
+	#define sk_MIME_HEADER_value(a,b) ((MIME_HEADER *) \
+		sk_value((a),(b)))
+	#define sk_MIME_HEADER_set(a,b,c) ((MIME_HEADER *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_MIME_HEADER_zero(a) sk_zero(a)
+	#define sk_MIME_HEADER_push(a,b) sk_push((a),(char *)(b))
+	#define sk_MIME_HEADER_unshift(a,b) sk_unshift((a),(b))
+	#define sk_MIME_HEADER_find(a,b) sk_find((a), (char *)(b))
+	#define sk_MIME_HEADER_delete(a,b) ((MIME_HEADER *) \
+		sk_delete((a),(b)))
+	#define sk_MIME_HEADER_delete_ptr(a,b) ((MIME_HEADER *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_MIME_HEADER_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_MIME_HEADER_set_cmp_func(a,b) ((int (*) \
+		(const MIME_HEADER * const *,const MIME_HEADER * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_MIME_HEADER_dup(a) sk_dup(a)
+	#define sk_MIME_HEADER_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_MIME_HEADER_shift(a) ((MIME_HEADER *)sk_shift(a))
+	#define sk_MIME_HEADER_pop(a) ((MIME_HEADER *)sk_pop(a))
+	#define sk_MIME_HEADER_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 IMPLEMENT_STACK_OF(MIME_HEADER)
 
 static int B64_write_PKCS7(BIO *bio, PKCS7 *p7);
@@ -92,8 +156,10 @@ static char * strip_end(char *name);
 static MIME_HEADER *mime_hdr_new(char *name, char *value);
 static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value);
 static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio);
-static int mime_hdr_cmp(MIME_HEADER **a, MIME_HEADER **b);
-static int mime_param_cmp(MIME_PARAM **a, MIME_PARAM **b);
+static int mime_hdr_cmp(const MIME_HEADER * const *a,
+			const MIME_HEADER * const *b);
+static int mime_param_cmp(const MIME_PARAM * const *a,
+			const MIME_PARAM * const *b);
 static void mime_param_free(MIME_PARAM *param);
 static int mime_bound_check(char *line, int linelen, char *bound, int blen);
 static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret);
@@ -575,7 +641,7 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
 			}
 		}
 	} else tmpval = NULL;
-	mhdr = (MIME_HEADER *) Malloc(sizeof(MIME_HEADER));
+	mhdr = (MIME_HEADER *) OPENSSL_malloc(sizeof(MIME_HEADER));
 	if(!mhdr) return NULL;
 	mhdr->name = tmpname;
 	mhdr->value = tmpval;
@@ -604,7 +670,7 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 		if(!tmpval) return 0;
 	} else tmpval = NULL;
 	/* Parameter values are case sensitive so leave as is */
-	mparam = (MIME_PARAM *) Malloc(sizeof(MIME_PARAM));
+	mparam = (MIME_PARAM *) OPENSSL_malloc(sizeof(MIME_PARAM));
 	if(!mparam) return 0;
 	mparam->param_name = tmpname;
 	mparam->param_value = tmpval;
@@ -612,12 +678,14 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 	return 1;
 }
 
-static int mime_hdr_cmp(MIME_HEADER **a, MIME_HEADER **b)
+static int mime_hdr_cmp(const MIME_HEADER * const *a,
+			const MIME_HEADER * const *b)
 {
 	return(strcmp((*a)->name, (*b)->name));
 }
 
-static int mime_param_cmp(MIME_PARAM **a, MIME_PARAM **b)
+static int mime_param_cmp(const MIME_PARAM * const *a,
+			const MIME_PARAM * const *b)
 {
 	return(strcmp((*a)->param_name, (*b)->param_name));
 }
@@ -646,17 +714,17 @@ static MIME_PARAM *mime_param_find(MIME_HEADER *hdr, char *name)
 
 static void mime_hdr_free(MIME_HEADER *hdr)
 {
-	if(hdr->name) Free(hdr->name);
-	if(hdr->value) Free(hdr->value);
+	if(hdr->name) OPENSSL_free(hdr->name);
+	if(hdr->value) OPENSSL_free(hdr->value);
 	if(hdr->params) sk_MIME_PARAM_pop_free(hdr->params, mime_param_free);
-	Free(hdr);
+	OPENSSL_free(hdr);
 }
 
 static void mime_param_free(MIME_PARAM *param)
 {
-	if(param->param_name) Free(param->param_name);
-	if(param->param_value) Free(param->param_value);
-	Free(param);
+	if(param->param_name) OPENSSL_free(param->param_name);
+	if(param->param_value) OPENSSL_free(param->param_value);
+	OPENSSL_free(param);
 }
 
 /* Check for a multipart boundary. Returns:

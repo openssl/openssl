@@ -648,7 +648,7 @@ int ssl3_new(SSL *s)
 	{
 	SSL3_STATE *s3;
 
-	if ((s3=Malloc(sizeof *s3)) == NULL) goto err;
+	if ((s3=OPENSSL_malloc(sizeof *s3)) == NULL) goto err;
 	memset(s3,0,sizeof *s3);
 
 	s->s3=s3;
@@ -666,11 +666,11 @@ void ssl3_free(SSL *s)
 
 	ssl3_cleanup_key_block(s);
 	if (s->s3->rbuf.buf != NULL)
-		Free(s->s3->rbuf.buf);
+		OPENSSL_free(s->s3->rbuf.buf);
 	if (s->s3->wbuf.buf != NULL)
-		Free(s->s3->wbuf.buf);
+		OPENSSL_free(s->s3->wbuf.buf);
 	if (s->s3->rrec.comp != NULL)
-		Free(s->s3->rrec.comp);
+		OPENSSL_free(s->s3->rrec.comp);
 #ifndef NO_DH
 	if (s->s3->tmp.dh != NULL)
 		DH_free(s->s3->tmp.dh);
@@ -678,7 +678,7 @@ void ssl3_free(SSL *s)
 	if (s->s3->tmp.ca_names != NULL)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
 	memset(s->s3,0,sizeof *s->s3);
-	Free(s->s3);
+	OPENSSL_free(s->s3);
 	s->s3=NULL;
 	}
 
@@ -692,7 +692,7 @@ void ssl3_clear(SSL *s)
 
 	if (s->s3->rrec.comp != NULL)
 		{
-		Free(s->s3->rrec.comp);
+		OPENSSL_free(s->s3->rrec.comp);
 		s->s3->rrec.comp=NULL;
 		}
 #ifndef NO_DH

@@ -76,9 +76,10 @@ const char *STACK_version="Stack" OPENSSL_VERSION_PTEXT;
 
 #include <errno.h>
 
-int (*sk_set_cmp_func(STACK *sk, int (*c)(const void *,const void *)))(const void *, const void *)
+int (*sk_set_cmp_func(STACK *sk, int (*c)(const char * const *,const char * const *)))
+		(const char * const *, const char * const *)
 	{
-	int (*old)(const void *,const void *)=sk->comp;
+	int (*old)(const char * const *,const char * const *)=sk->comp;
 
 	if (sk->comp != c)
 		sk->sorted=0;
@@ -93,7 +94,7 @@ STACK *sk_dup(STACK *sk)
 	char **s;
 
 	if ((ret=sk_new(sk->comp)) == NULL) goto err;
-	s=(char **)Realloc((char *)ret->data,
+	s=(char **)OPENSSL_realloc((char *)ret->data,
 		(unsigned int)sizeof(char *)*sk->num_alloc);
 	if (s == NULL) goto err;
 	ret->data=s;
@@ -108,14 +109,14 @@ err:
 	return(NULL);
 	}
 
-STACK *sk_new(int (*c)(const void *, const void *))
+STACK *sk_new(int (*c)(const char * const *, const char * const *))
 	{
 	STACK *ret;
 	int i;
 
-	if ((ret=(STACK *)Malloc(sizeof(STACK))) == NULL)
+	if ((ret=(STACK *)OPENSSL_malloc(sizeof(STACK))) == NULL)
 		goto err0;
-	if ((ret->data=(char **)Malloc(sizeof(char *)*MIN_NODES)) == NULL)
+	if ((ret->data=(char **)OPENSSL_malloc(sizeof(char *)*MIN_NODES)) == NULL)
 		goto err1;
 	for (i=0; i<MIN_NODES; i++)
 		ret->data[i]=NULL;
@@ -125,7 +126,7 @@ STACK *sk_new(int (*c)(const void *, const void *))
 	ret->sorted=0;
 	return(ret);
 err1:
-	Free(ret);
+	OPENSSL_free(ret);
 err0:
 	return(NULL);
 	}
@@ -137,7 +138,7 @@ int sk_insert(STACK *st, char *data, int loc)
 	if(st == NULL) return 0;
 	if (st->num_alloc <= st->num+1)
 		{
-		s=(char **)Realloc((char *)st->data,
+		s=(char **)OPENSSL_realloc((char *)st->data,
 			(unsigned int)sizeof(char *)*st->num_alloc*2);
 		if (s == NULL)
 			return(0);
@@ -218,13 +219,24 @@ int sk_find(STACK *st, char *data)
 		}
 	sk_sort(st);
 	if (data == NULL) return(-1);
-	comp_func=st->comp;
+	/* This (and the "qsort" below) are the two places in OpenSSL
+	 * where we need to convert from our standard (type **,type **)
+	 * compare callback type to the (void *,void *) type required by
+	 * bsearch. However, the "data" it is being called(back) with are
+	 * not (type *) pointers, but the *pointers* to (type *) pointers,
+	 * so we get our extra level of pointer dereferencing that way. */
+	comp_func=(int (*)(const void *,const void *))(st->comp);
 	r=(char **)bsearch(&data,(char *)st->data,
 		st->num,sizeof(char *), comp_func);
 	if (r == NULL) return(-1);
 	i=(int)(r-st->data);
 	for ( ; i>0; i--)
-		if ((*st->comp)(&(st->data[i-1]),&data) < 0)
+		/* This needs a cast because the type being pointed to from
+		 * the "&" expressions are (char *) rather than (const char *).
+		 * For an explanation, read:
+		 * http://www.eskimo.com/~scs/C-faq/q11.10.html :-) */
+		if ((*st->comp)((const char * const *)&(st->data[i-1]),
+				(const char * const *)&data) < 0)
 			break;
 	return(i);
 	}
@@ -275,17 +287,17 @@ void sk_pop_free(STACK *st, void (*func)(void *))
 void sk_free(STACK *st)
 	{
 	if (st == NULL) return;
-	if (st->data != NULL) Free(st->data);
-	Free(st);
+	if (st->data != NULL) OPENSSL_free(st->data);
+	OPENSSL_free(st);
 	}
 
-int sk_num(STACK *st)
+int sk_num(const STACK *st)
 {
 	if(st == NULL) return -1;
 	return st->num;
 }
 
-char *sk_value(STACK *st, int i)
+char *sk_value(const STACK *st, int i)
 {
 	if(st == NULL) return NULL;
 	return st->data[i];
@@ -303,7 +315,12 @@ void sk_sort(STACK *st)
 	{
 	int (*comp_func)(const void *,const void *);
 
-	comp_func=st->comp;
+	/* same comment as in sk_find ... previously st->comp was declared
+	 * as a (void*,void*) callback type, but this made the population
+	 * of the callback pointer illogical - our callbacks compare
+	 * type** with type**, so we leave the casting until absolutely
+	 * necessary (ie. "now"). */
+	comp_func=(int (*)(const void *,const void *))(st->comp);
 	qsort(st->data,st->num,sizeof(char *), comp_func);
 	st->sorted=1;
 	}

@@ -80,11 +80,11 @@ int ssl2_enc_init(SSL *s, int client)
 
 	if ((s->enc_read_ctx == NULL) &&
 		((s->enc_read_ctx=(EVP_CIPHER_CTX *)
-		Malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
+		OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
 		goto err;
 	if ((s->enc_write_ctx == NULL) &&
 		((s->enc_write_ctx=(EVP_CIPHER_CTX *)
-		Malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
+		OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
 		goto err;
 
 	rs= s->enc_read_ctx;

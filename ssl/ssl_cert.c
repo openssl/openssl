@@ -143,7 +143,7 @@ CERT *ssl_cert_new(void)
 	{
 	CERT *ret;
 
-	ret=(CERT *)Malloc(sizeof(CERT));
+	ret=(CERT *)OPENSSL_malloc(sizeof(CERT));
 	if (ret == NULL)
 		{
 		SSLerr(SSL_F_SSL_CERT_NEW,ERR_R_MALLOC_FAILURE);
@@ -162,7 +162,7 @@ CERT *ssl_cert_dup(CERT *cert)
 	CERT *ret;
 	int i;
 
-	ret = (CERT *)Malloc(sizeof(CERT));
+	ret = (CERT *)OPENSSL_malloc(sizeof(CERT));
 	if (ret == NULL)
 		{
 		SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
@@ -331,7 +331,7 @@ void ssl_cert_free(CERT *c)
 			EVP_PKEY_free(c->pkeys[i].publickey);
 #endif
 		}
-	Free(c);
+	OPENSSL_free(c);
 	}
 
 int ssl_cert_inst(CERT **o)
@@ -367,7 +367,7 @@ SESS_CERT *ssl_sess_cert_new(void)
 	{
 	SESS_CERT *ret;
 
-	ret = Malloc(sizeof *ret);
+	ret = OPENSSL_malloc(sizeof *ret);
 	if (ret == NULL)
 		{
 		SSLerr(SSL_F_SSL_SESS_CERT_NEW, ERR_R_MALLOC_FAILURE);
@@ -426,7 +426,7 @@ void ssl_sess_cert_free(SESS_CERT *sc)
 		DH_free(sc->peer_dh_tmp);
 #endif
 
-	Free(sc);
+	OPENSSL_free(sc);
 	}
 
 int ssl_set_peer_cert_type(SESS_CERT *sc,int type)
@@ -568,7 +568,7 @@ int SSL_CTX_add_client_CA(SSL_CTX *ctx,X509 *x)
 	return(add_client_CA(&(ctx->client_CA),x));
 	}
 
-static int xname_cmp(X509_NAME **a,X509_NAME **b)
+static int xname_cmp(const X509_NAME * const *a, const X509_NAME * const *b)
 	{
 	return(X509_NAME_cmp(*a,*b));
 	}
@@ -649,7 +649,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 	X509 *x=NULL;
 	X509_NAME *xn=NULL;
 	int ret=1;
-	int (*oldcmp)(X509_NAME **a, X509_NAME **b);
+	int (*oldcmp)(const X509_NAME * const *a, const X509_NAME * const *b);
 	
 	oldcmp=sk_X509_NAME_set_cmp_func(stack,xname_cmp);
 	

@@ -104,7 +104,7 @@ void X509_SIG_free(X509_SIG *a)
 	if (a == NULL) return;
 	X509_ALGOR_free(a->algor);
 	M_ASN1_OCTET_STRING_free(a->digest);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 

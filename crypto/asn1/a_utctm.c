@@ -248,10 +248,10 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	p=(char *)s->data;
 	if ((p == NULL) || (s->length < 14))
 		{
-		p=Malloc(20);
+		p=OPENSSL_malloc(20);
 		if (p == NULL) return(NULL);
 		if (s->data != NULL)
-			Free(s->data);
+			OPENSSL_free(s->data);
 		s->data=(unsigned char *)p;
 		}
 
@@ -291,5 +291,12 @@ time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
 		}
 #undef g2
 
-	return mktime(&tm)-offset*60;
+	return mktime(&tm)-offset*60; /* FIXME: mktime assumes the current timezone
+	                               * instead of UTC, and unless we rewrite OpenSSL
+				       * in Lisp we cannot locally change the timezone
+				       * without possibly interfering with other parts
+	                               * of the program. timegm, which uses UTC, is
+				       * non-standard.
+	                               * Also time_t is inappropriate for general
+	                               * UTC times because it may a 32 bit type. */
 	}

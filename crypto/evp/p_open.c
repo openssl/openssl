@@ -76,8 +76,13 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char *ek,
 		goto err;
                 }
 
+	if(type) {	
+		EVP_CIPHER_CTX_init(ctx);
+		EVP_DecryptInit(ctx,type,NULL,NULL);
+	}
+
 	size=RSA_size(priv->pkey.rsa);
-	key=(unsigned char *)Malloc(size+2);
+	key=(unsigned char *)OPENSSL_malloc(size+2);
 	if (key == NULL)
 		{
 		/* ERROR */
@@ -87,18 +92,17 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char *ek,
 		}
 
 	i=EVP_PKEY_decrypt(key,ek,ekl,priv);
-	if (i != type->key_len)
+	if ((i <= 0) || !EVP_CIPHER_CTX_set_key_length(ctx, i))
 		{
 		/* ERROR */
 		goto err;
 		}
+	if(!EVP_DecryptInit(ctx,NULL,key,iv)) goto err;
 
-	EVP_CIPHER_CTX_init(ctx);
-	EVP_DecryptInit(ctx,type,key,iv);
 	ret=1;
 err:
 	if (key != NULL) memset(key,0,size);
-	Free(key);
+	OPENSSL_free(key);
 	return(ret);
 	}
 

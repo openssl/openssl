@@ -111,7 +111,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 	{
 	SSL_SESSION *ss;
 
-	ss=(SSL_SESSION *)Malloc(sizeof(SSL_SESSION));
+	ss=(SSL_SESSION *)OPENSSL_malloc(sizeof(SSL_SESSION));
 	if (ss == NULL)
 		{
 		SSLerr(SSL_F_SSL_SESSION_NEW,ERR_R_MALLOC_FAILURE);
@@ -310,7 +310,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 #if 0 /* This is way too late. */
 
 	/* If a thread got the session, then 'swaped', and another got
-	 * it and then due to a time-out decided to 'Free' it we could
+	 * it and then due to a time-out decided to 'OPENSSL_free' it we could
 	 * be in trouble.  So I'll increment it now, then double decrement
 	 * later - am I speaking rubbish?. */
 	CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
@@ -474,7 +474,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 	if (ss->peer != NULL) X509_free(ss->peer);
 	if (ss->ciphers != NULL) sk_SSL_CIPHER_free(ss->ciphers);
 	memset(ss,0,sizeof(*ss));
-	Free(ss);
+	OPENSSL_free(ss);
 	}
 
 int SSL_set_session(SSL *s, SSL_SESSION *session)

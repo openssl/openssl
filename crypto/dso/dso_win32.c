@@ -133,19 +133,19 @@ static int win32_load(DSO *dso, const char *filename)
 		DSOerr(DSO_F_WIN32_LOAD,DSO_R_LOAD_FAILED);
 		return(0);
 		}
-	p = (HINSTANCE *)Malloc(sizeof(HINSTANCE));
+	p = (HINSTANCE *)OPENSSL_malloc(sizeof(HINSTANCE));
 	if(p == NULL)
 		{
 		DSOerr(DSO_F_WIN32_LOAD,ERR_R_MALLOC_FAILURE);
-		FreeLibrary(h);
+		OPENSSL_freeLibrary(h);
 		return(0);
 		}
 	*p = h;
 	if(!sk_push(dso->meth_data, (char *)p))
 		{
 		DSOerr(DSO_F_WIN32_LOAD,DSO_R_STACK_ERROR);
-		FreeLibrary(h);
-		Free(p);
+		OPENSSL_freeLibrary(h);
+		OPENSSL_free(p);
 		return(0);
 		}
 	return(1);
@@ -167,7 +167,7 @@ static int win32_unload(DSO *dso)
 		DSOerr(DSO_F_WIN32_UNLOAD,DSO_R_NULL_HANDLE);
 		return(0);
 		}
-	if(!FreeLibrary(p))
+	if(!OPENSSL_freeLibrary(p))
 		{
 		DSOerr(DSO_F_WIN32_UNLOAD,DSO_R_UNLOAD_FAILED);
 		/* We should push the value back onto the stack in
@@ -176,7 +176,7 @@ static int win32_unload(DSO *dso)
 		return(0);
 		}
 	/* Cleanup */
-	Free(p);
+	OPENSSL_free(p);
 	return(1);
 	}
 

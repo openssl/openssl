@@ -178,7 +178,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 		{
 		if ((s->enc_read_ctx == NULL) &&
 			((s->enc_read_ctx=(EVP_CIPHER_CTX *)
-			Malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
+			OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
 			goto err;
 		dd= s->enc_read_ctx;
 		s->read_hash=m;
@@ -197,7 +197,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 				}
 			if (s->s3->rrec.comp == NULL)
 				s->s3->rrec.comp=(unsigned char *)
-					Malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
+					OPENSSL_malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
 			if (s->s3->rrec.comp == NULL)
 				goto err;
 			}
@@ -208,7 +208,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 		{
 		if ((s->enc_write_ctx == NULL) &&
 			((s->enc_write_ctx=(EVP_CIPHER_CTX *)
-			Malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
+			OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
 			goto err;
 		dd= s->enc_write_ctx;
 		s->write_hash=m;
@@ -355,9 +355,9 @@ int tls1_setup_key_block(SSL *s)
 
 	ssl3_cleanup_key_block(s);
 
-	if ((p1=(unsigned char *)Malloc(num)) == NULL)
+	if ((p1=(unsigned char *)OPENSSL_malloc(num)) == NULL)
 		goto err;
-	if ((p2=(unsigned char *)Malloc(num)) == NULL)
+	if ((p2=(unsigned char *)OPENSSL_malloc(num)) == NULL)
 		goto err;
 
 	s->s3->tmp.key_block_length=num;
@@ -374,7 +374,7 @@ printf("pre-master\n");
 #endif
 	tls1_generate_key_block(s,p1,p2,num);
 	memset(p2,0,num);
-	Free(p2);
+	OPENSSL_free(p2);
 #ifdef TLS_DEBUG
 printf("\nkey block\n");
 { int z; for (z=0; z<num; z++) printf("%02X%c",p1[z],((z+1)%16)?' ':'\n'); }

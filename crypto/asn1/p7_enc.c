@@ -106,6 +106,6 @@ void PKCS7_ENCRYPT_free(PKCS7_ENCRYPT *a)
 	if (a == NULL) return;
 	M_ASN1_INTEGER_free(a->version);
 	PKCS7_ENC_CONTENT_free(a->enc_data);
-	Free(a);
+	OPENSSL_free(a);
 	}
 

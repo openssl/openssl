@@ -115,5 +115,5 @@ void ASN1_HEADER_free(ASN1_HEADER *a)
 	M_ASN1_OCTET_STRING_free(a->header);
 	if (a->meth != NULL)
 		a->meth->destroy(a->data);
-	Free(a);
+	OPENSSL_free(a);
 	}

@@ -77,7 +77,7 @@ main()
 		if (buf[0] == '\0') break;
 		buf[256]='\0';
 		i=strlen(buf);
-		p=Malloc(i+1);
+		p=OPENSSL_malloc(i+1);
 		memcpy(p,buf,i+1);
 		lh_insert(conf,p);
 		}

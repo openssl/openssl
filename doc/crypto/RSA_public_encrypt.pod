@@ -47,7 +47,7 @@ Encrypting user data directly with RSA is insecure.
 =back
 
 B<flen> must be less than RSA_size(B<rsa>) - 11 for the PKCS #1 v1.5
-based padding modes, and less than RSA_size(B<rsa>) - 21 for
+based padding modes, and less than RSA_size(B<rsa>) - 41 for
 RSA_PKCS1_OAEP_PADDING. The random number generator must be seeded
 prior to calling RSA_public_encrypt().
 

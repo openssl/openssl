@@ -283,8 +283,8 @@ end:
 	if(in != NULL) BIO_free(in);
 	if(out != NULL) BIO_free(out);
 	if(dsa != NULL) DSA_free(dsa);
-	if(passin) Free(passin);
-	if(passout) Free(passout);
+	if(passin) OPENSSL_free(passin);
+	if(passout) OPENSSL_free(passout);
 	EXIT(ret);
 	}
 #endif

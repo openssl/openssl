@@ -146,11 +146,11 @@ static int new_dir(X509_LOOKUP *lu)
 	{
 	BY_DIR *a;
 
-	if ((a=(BY_DIR *)Malloc(sizeof(BY_DIR))) == NULL)
+	if ((a=(BY_DIR *)OPENSSL_malloc(sizeof(BY_DIR))) == NULL)
 		return(0);
 	if ((a->buffer=BUF_MEM_new()) == NULL)
 		{
-		Free(a);
+		OPENSSL_free(a);
 		return(0);
 		}
 	a->num_dirs=0;
@@ -168,11 +168,11 @@ static void free_dir(X509_LOOKUP *lu)
 
 	a=(BY_DIR *)lu->method_data;
 	for (i=0; i<a->num_dirs; i++)
-		if (a->dirs[i] != NULL) Free(a->dirs[i]);
-	if (a->dirs != NULL) Free(a->dirs);
-	if (a->dirs_type != NULL) Free(a->dirs_type);
+		if (a->dirs[i] != NULL) OPENSSL_free(a->dirs[i]);
+	if (a->dirs != NULL) OPENSSL_free(a->dirs);
+	if (a->dirs_type != NULL) OPENSSL_free(a->dirs_type);
 	if (a->buffer != NULL) BUF_MEM_free(a->buffer);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
@@ -204,9 +204,9 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 			if (ctx->num_dirs_alloced < (ctx->num_dirs+1))
 				{
 				ctx->num_dirs_alloced+=10;
-				pp=(char **)Malloc(ctx->num_dirs_alloced*
+				pp=(char **)OPENSSL_malloc(ctx->num_dirs_alloced*
 					sizeof(char *));
-				ip=(int *)Malloc(ctx->num_dirs_alloced*
+				ip=(int *)OPENSSL_malloc(ctx->num_dirs_alloced*
 					sizeof(int));
 				if ((pp == NULL) || (ip == NULL))
 					{
@@ -218,14 +218,14 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 				memcpy(ip,ctx->dirs_type,(ctx->num_dirs_alloced-10)*
 					sizeof(int));
 				if (ctx->dirs != NULL)
-					Free(ctx->dirs);
+					OPENSSL_free(ctx->dirs);
 				if (ctx->dirs_type != NULL)
-					Free(ctx->dirs_type);
+					OPENSSL_free(ctx->dirs_type);
 				ctx->dirs=pp;
 				ctx->dirs_type=ip;
 				}
 			ctx->dirs_type[ctx->num_dirs]=type;
-			ctx->dirs[ctx->num_dirs]=(char *)Malloc((unsigned int)len+1);
+			ctx->dirs[ctx->num_dirs]=(char *)OPENSSL_malloc((unsigned int)len+1);
 			if (ctx->dirs[ctx->num_dirs] == NULL) return(0);
 			strncpy(ctx->dirs[ctx->num_dirs],ss,(unsigned int)len);
 			ctx->dirs[ctx->num_dirs][len]='\0';

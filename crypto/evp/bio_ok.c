@@ -187,7 +187,7 @@ static int ok_new(BIO *bi)
 	{
 	BIO_OK_CTX *ctx;
 
-	ctx=(BIO_OK_CTX *)Malloc(sizeof(BIO_OK_CTX));
+	ctx=(BIO_OK_CTX *)OPENSSL_malloc(sizeof(BIO_OK_CTX));
 	if (ctx == NULL) return(0);
 
 	ctx->buf_len=0;
@@ -209,7 +209,7 @@ static int ok_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 	memset(a->ptr,0,sizeof(BIO_OK_CTX));
-	Free(a->ptr);
+	OPENSSL_free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;
 	a->flags=0;

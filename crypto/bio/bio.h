@@ -59,8 +59,10 @@
 #ifndef HEADER_BIO_H
 #define HEADER_BIO_H
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef NO_FP_API
+# include <stdio.h>
+#endif
+
 #include <openssl/crypto.h>
 
 #ifdef  __cplusplus
@@ -262,6 +264,37 @@ struct bio_st
 	};
 
 DECLARE_STACK_OF(BIO)
+/* This block of defines is updated by a perl script, please do not touch! */
+#ifndef DEBUG_SAFESTACK
+	#define sk_BIO_new(a) sk_new((int (*) \
+		(const char * const *, const char * const *))(a))
+	#define sk_BIO_new_null() sk_new_null()
+	#define sk_BIO_free(a) sk_free(a)
+	#define sk_BIO_num(a) sk_num(a)
+	#define sk_BIO_value(a,b) ((BIO *) \
+		sk_value((a),(b)))
+	#define sk_BIO_set(a,b,c) ((BIO *) \
+		sk_set((a),(b),(char *)(c)))
+	#define sk_BIO_zero(a) sk_zero(a)
+	#define sk_BIO_push(a,b) sk_push((a),(char *)(b))
+	#define sk_BIO_unshift(a,b) sk_unshift((a),(b))
+	#define sk_BIO_find(a,b) sk_find((a), (char *)(b))
+	#define sk_BIO_delete(a,b) ((BIO *) \
+		sk_delete((a),(b)))
+	#define sk_BIO_delete_ptr(a,b) ((BIO *) \
+		sk_delete_ptr((a),(char *)(b)))
+	#define sk_BIO_insert(a,b,c) sk_insert((a),(char *)(b),(c))
+	#define sk_BIO_set_cmp_func(a,b) ((int (*) \
+		(const BIO * const *,const BIO * const *)) \
+		sk_set_cmp_func((a),(int (*) \
+		(const char * const *, const char * const *))(b)))
+	#define sk_BIO_dup(a) sk_dup(a)
+	#define sk_BIO_pop_free(a,b) sk_pop_free((a),(void (*)(void *))(b))
+	#define sk_BIO_shift(a) ((BIO *)sk_shift(a))
+	#define sk_BIO_pop(a) ((BIO *)sk_pop(a))
+	#define sk_BIO_sort(a) sk_sort(a)
+#endif /* !DEBUG_SAFESTACK */
+/* End of perl script block, you may now edit :-) */
 
 typedef struct bio_f_buffer_ctx_struct
 	{
@@ -476,11 +509,6 @@ size_t BIO_ctrl_get_write_guarantee(BIO *b);
 size_t BIO_ctrl_get_read_request(BIO *b);
 int BIO_ctrl_reset_read_request(BIO *b);
 
-#ifdef NO_STDIO
-#define NO_FP_API
-#endif
-
-
 /* These two aren't currently implemented */
 /* int BIO_get_ex_num(BIO *bio); */
 /* void BIO_set_ex_free_func(BIO *bio,int idx,void (*cb)()); */
@@ -491,6 +519,7 @@ int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 unsigned long BIO_number_read(BIO *bio);
 unsigned long BIO_number_written(BIO *bio);
 
+# ifndef NO_FP_API
 #  if defined(WIN16) && defined(_WINDLL)
 BIO_METHOD *BIO_s_file_internal(void);
 BIO *BIO_new_file_internal(char *filename, char *mode);
@@ -506,6 +535,7 @@ BIO *BIO_new_fp(FILE *stream, int close_flag);
 #    define BIO_new_file_internal	BIO_new_file
 #    define BIO_new_fp_internal		BIO_s_file
 #  endif /* FP_API */
+# endif
 BIO *	BIO_new(BIO_METHOD *type);
 int	BIO_set(BIO *a,BIO_METHOD *type);
 int	BIO_free(BIO *a);

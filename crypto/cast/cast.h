@@ -82,7 +82,7 @@ typedef struct cast_key_st
 	} CAST_KEY;
 
  
-void CAST_set_key(CAST_KEY *key, int len, unsigned char *data);
+void CAST_set_key(CAST_KEY *key, int len, const unsigned char *data);
 void CAST_ecb_encrypt(const unsigned char *in,unsigned char *out,CAST_KEY *key,
 		      int enc);
 void CAST_encrypt(CAST_LONG *data,CAST_KEY *key);

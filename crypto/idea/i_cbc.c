@@ -47,7 +47,7 @@
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * OUT OF THE USE OF THIS  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
  * The licence and distribution terms for any publically available version or
@@ -59,7 +59,7 @@
 #include <openssl/idea.h>
 #include "idea_lcl.h"
 
-void idea_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
+void idea_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	     IDEA_KEY_SCHEDULE *ks, unsigned char *iv, int encrypt)
 	{
 	register unsigned long tin0,tin1;

@@ -70,7 +70,7 @@ const char *idea_options(void)
 		return("idea(short)");
 	}
 
-void idea_ecb_encrypt(unsigned char *in, unsigned char *out,
+void idea_ecb_encrypt(const unsigned char *in, unsigned char *out,
 	     IDEA_KEY_SCHEDULE *ks)
 	{
 	unsigned long l0,l1,d[2];

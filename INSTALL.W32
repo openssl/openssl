@@ -134,6 +134,52 @@
    > cd out
    > ..\ms\test
 
+ GNU C (CygWin32)
+ ---------------
+
+ CygWin32 provides a bash shell and GNU tools environment running on
+ NT 4.0, Windows 9x and Windows 2000. Consequently, a make of OpenSSL
+ with CygWin is closer to a GNU bash environment such as Linux rather
+ than other W32 makes that are based on a single makefile approach.
+ CygWin32 implements Posix/Unix calls through cygwin1.dll, and is
+ contrasted to Mingw32 which links dynamically to msvcrt.dll or
+ crtdll.dll.
+
+ To build OpenSSL using CygWin32:
+
+ * Install CygWin32 (see http://sourceware.cygnus.com/cygwin)
+
+ * Install Perl and ensure it is in the path
+
+ * Run the CygWin bash shell
+
+ * $ tar zxvf openssl-x.x.x.tar.gz
+   $ cd openssl-x.x.x
+   $ ./Configure no-threads CygWin32
+   [...]
+   $ make
+   [...]
+   $ make test
+   $ make install
+
+ This will create a default install in /usr/local/ssl.
+
+ CygWin32 Notes:
+
+ "make test" and normal file operations may fail in directories
+ mounted as text (i.e. mount -t c:\somewhere /home) due to CygWin
+ stripping of carriage returns. To avoid this ensure that a binary
+ mount is used, e.g. mount -b c:\somewhere /home.
+
+ As of version 1.1.1 CygWin32 is relatively unstable in its handling
+ of cr/lf issues. These make procedures succeeded with versions 1.1 and
+ the snapshot 20000524 (Slow!).
+
+ "bc" is not provided in the CygWin32 distribution.  This causes a
+ non-fatal error in "make test" but is otherwise harmless.  If
+ desired, GNU bc can be built with CygWin32 without change.
+
+
  Troubleshooting
  ---------------
 

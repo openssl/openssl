@@ -205,8 +205,8 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
-	if (	((cbuf=Malloc(BUFSIZZ)) == NULL) ||
-		((sbuf=Malloc(BUFSIZZ)) == NULL))
+	if (	((cbuf=OPENSSL_malloc(BUFSIZZ)) == NULL) ||
+		((sbuf=OPENSSL_malloc(BUFSIZZ)) == NULL))
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
@@ -551,7 +551,7 @@ re_start:
 					tv.tv_usec = 0;
 					i=select(width,(void *)&readfds,(void *)&writefds,
 						 NULL,&tv);
-					if(!i && (!_kbhit() || !read_tty) ) continue;
+					if(!i && (!((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0))) || !read_tty) ) continue;
 				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
 					 NULL,NULL);
 			}
@@ -717,7 +717,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 			}
 
 #ifdef WINDOWS
-		else if (_kbhit())
+		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
 #else
 		else if (FD_ISSET(fileno(stdin),&readfds))
 #endif
@@ -781,8 +781,8 @@ end:
 	if (con != NULL) SSL_free(con);
 	if (con2 != NULL) SSL_free(con2);
 	if (ctx != NULL) SSL_CTX_free(ctx);
-	if (cbuf != NULL) { memset(cbuf,0,BUFSIZZ); Free(cbuf); }
-	if (sbuf != NULL) { memset(sbuf,0,BUFSIZZ); Free(sbuf); }
+	if (cbuf != NULL) { memset(cbuf,0,BUFSIZZ); OPENSSL_free(cbuf); }
+	if (sbuf != NULL) { memset(sbuf,0,BUFSIZZ); OPENSSL_free(sbuf); }
 	if (bio_c_out != NULL)
 		{
 		BIO_free(bio_c_out);

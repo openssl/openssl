@@ -134,7 +134,7 @@ char *ms_time_new(void)
 	{
 	MS_TM *ret;
 
-	ret=(MS_TM *)Malloc(sizeof(MS_TM));
+	ret=(MS_TM *)OPENSSL_malloc(sizeof(MS_TM));
 	if (ret == NULL)
 		return(NULL);
 	memset(ret,0,sizeof(MS_TM));
@@ -147,7 +147,7 @@ char *ms_time_new(void)
 void ms_time_free(char *a)
 	{
 	if (a != NULL)
-		Free(a);
+		OPENSSL_free(a);
 	}
 
 void ms_time_get(char *a)

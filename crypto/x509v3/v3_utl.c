@@ -75,7 +75,7 @@ int X509V3_add_value(const char *name, const char *value,
 	char *tname = NULL, *tvalue = NULL;
 	if(name && !(tname = BUF_strdup(name))) goto err;
 	if(value && !(tvalue = BUF_strdup(value))) goto err;;
-	if(!(vtmp = (CONF_VALUE *)Malloc(sizeof(CONF_VALUE)))) goto err;
+	if(!(vtmp = (CONF_VALUE *)OPENSSL_malloc(sizeof(CONF_VALUE)))) goto err;
 	if(!*extlist && !(*extlist = sk_CONF_VALUE_new(NULL))) goto err;
 	vtmp->section = NULL;
 	vtmp->name = tname;
@@ -84,9 +84,9 @@ int X509V3_add_value(const char *name, const char *value,
 	return 1;
 	err:
 	X509V3err(X509V3_F_X509V3_ADD_VALUE,ERR_R_MALLOC_FAILURE);
-	if(vtmp) Free(vtmp);
-	if(tname) Free(tname);
-	if(tvalue) Free(tvalue);
+	if(vtmp) OPENSSL_free(vtmp);
+	if(tname) OPENSSL_free(tname);
+	if(tvalue) OPENSSL_free(tvalue);
 	return 0;
 }
 
@@ -101,10 +101,10 @@ int X509V3_add_value_uchar(const char *name, const unsigned char *value,
 void X509V3_conf_free(CONF_VALUE *conf)
 {
 	if(!conf) return;
-	if(conf->name) Free(conf->name);
-	if(conf->value) Free(conf->value);
-	if(conf->section) Free(conf->section);
-	Free(conf);
+	if(conf->name) OPENSSL_free(conf->name);
+	if(conf->value) OPENSSL_free(conf->value);
+	if(conf->section) OPENSSL_free(conf->section);
+	OPENSSL_free(conf);
 }
 
 int X509V3_add_value_bool(const char *name, int asn1_bool,
@@ -176,7 +176,7 @@ int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
 	if(!aint) return 1;
 	if(!(strtmp = i2s_ASN1_INTEGER(NULL, aint))) return 0;
 	ret = X509V3_add_value(name, strtmp, extlist);
-	Free(strtmp);
+	OPENSSL_free(strtmp);
 	return ret;
 }
 
@@ -298,11 +298,11 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(char *line)
 		}
 		X509V3_add_value(ntmp, NULL, &values);
 	}
-Free(linebuf);
+OPENSSL_free(linebuf);
 return values;
 
 err:
-Free(linebuf);
+OPENSSL_free(linebuf);
 sk_CONF_VALUE_pop_free(values, X509V3_conf_free);
 return NULL;
 
@@ -325,7 +325,7 @@ static char *strip_spaces(char *name)
 
 /* hex string utilities */
 
-/* Given a buffer of length 'len' return a Malloc'ed string with its
+/* Given a buffer of length 'len' return a OPENSSL_malloc'ed string with its
  * hex representation
  */
 
@@ -336,7 +336,7 @@ char *hex_to_string(unsigned char *buffer, long len)
 	int i;
 	static char hexdig[] = "0123456789ABCDEF";
 	if(!buffer || !len) return NULL;
-	if(!(tmp = Malloc(len * 3 + 1))) {
+	if(!(tmp = OPENSSL_malloc(len * 3 + 1))) {
 		X509V3err(X509V3_F_HEX_TO_STRING,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -362,14 +362,14 @@ unsigned char *string_to_hex(char *str, long *len)
 		X509V3err(X509V3_F_STRING_TO_HEX,X509V3_R_INVALID_NULL_ARGUMENT);
 		return NULL;
 	}
-	if(!(hexbuf = Malloc(strlen(str) >> 1))) goto err;
+	if(!(hexbuf = OPENSSL_malloc(strlen(str) >> 1))) goto err;
 	for(p = (unsigned char *)str, q = hexbuf; *p;) {
 		ch = *p++;
 		if(ch == ':') continue;
 		cl = *p++;
 		if(!cl) {
 			X509V3err(X509V3_F_STRING_TO_HEX,X509V3_R_ODD_NUMBER_OF_DIGITS);
-			Free(hexbuf);
+			OPENSSL_free(hexbuf);
 			return NULL;
 		}
 		if(isupper(ch)) ch = tolower(ch);
@@ -391,12 +391,12 @@ unsigned char *string_to_hex(char *str, long *len)
 	return hexbuf;
 
 	err:
-	if(hexbuf) Free(hexbuf);
+	if(hexbuf) OPENSSL_free(hexbuf);
 	X509V3err(X509V3_F_STRING_TO_HEX,ERR_R_MALLOC_FAILURE);
 	return NULL;
 
 	badhex:
-	Free(hexbuf);
+	OPENSSL_free(hexbuf);
 	X509V3err(X509V3_F_STRING_TO_HEX,X509V3_R_ILLEGAL_HEX_DIGIT);
 	return NULL;
 
