@@ -293,9 +293,9 @@
      * this trick on x86* platforms only, because these CPUs can fetch
      * unaligned data without raising an exception.
      */
-#   define HOST_c2l(c,l)	({ (l)=*((const unsigned int *)(c));	\
-				   asm ("bswapl %0":"=r"(l):"0"(l));	\
-				   (c)+=4; (l);				})
+#   define HOST_c2l(c,l)	({ unsigned int r=*((const unsigned int *)(c));	\
+				   asm ("bswapl %0":"=r"(r):"0"(r));	\
+				   (c)+=4; (l)=r;			})
 #   define HOST_l2c(l,c)	({ unsigned int r=(l);			\
 				   asm ("bswapl %0":"=r"(r):"0"(r));	\
 				   *((unsigned int *)(c))=r; (c)+=4; r;	})
