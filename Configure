@@ -501,7 +501,7 @@ my %table=(
 "VC-MSDOS","cl:::(unknown):MSDOS::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 
 # Borland C++ 4.5
-"BC-32","bcc32::::WIN32::BN_LLONG DES_PTR RC4_INDEX::::::::::win32",
+"BC-32","bcc32::::WIN32::BN_LLONG DES_PTR RC4_INDEX EXPORT_VAR_AS_FN::::::::::win32",
 "BC-16","bcc:::(unknown):WIN16::BN_LLONG DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 
 # Mingw32
