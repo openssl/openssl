@@ -554,21 +554,27 @@ $cflags="$flags$cflags" if ($flags ne "");
 # has support compiled in for them. Currently each method is enabled
 # by a define "DSO_<name>" ... we translate the "dso_scheme" config
 # string entry into using the following logic;
+my $dso_cflags;
 if (!$no_dso && $dso_scheme ne "")
 	{
 	$dso_scheme =~ tr/[a-z]/[A-Z]/;
 	if ($dso_scheme eq "DLFCN")
 		{
-		$cflags = "-DDSO_DLFCN -DHAVE_DLFCN_H $cflags";
+		$dso_cflags = "-DDSO_DLFCN -DHAVE_DLFCN_H";
+		$openssl_other_defines .= "#define DSO_DLFCN\n";
+		$openssl_other_defines .= "#define HAVE_DLFCN_H\n";
 		}
 	elsif ($dso_scheme eq "DLFCN_NO_H")
 		{
-		$cflags = "-DDSO_DLFCN $cflags";
+		$dso_cflags = "-DDSO_DLFCN";
+		$openssl_other_defines .= "#define DSO_DLFCN\n";
 		}
 	else
 		{
-		$cflags = "-DDSO_$dso_scheme $cflags";
+		$dso_cflags = "-DDSO_$dso_scheme";
+		$openssl_other_defines .= "#define DSO_$dso_scheme\n";
 		}
+	$cflags = "$dso_cflags $cflags";
 	}
 
 my $thread_cflags;
