@@ -280,8 +280,24 @@ t_swSimpleRequest *p_CSwift_SimpleRequest = NULL;
 t_swReleaseAccContext *p_CSwift_ReleaseAccContext = NULL;
 
 /* Used in the DSO operations. */
-static const char def_CSWIFT_LIBNAME[] = "swift";
-static const char *CSWIFT_LIBNAME = def_CSWIFT_LIBNAME;
+static const char *CSWIFT_LIBNAME = NULL;
+static const char *get_CSWIFT_LIBNAME(void)
+	{
+	if(CSWIFT_LIBNAME)
+		return CSWIFT_LIBNAME;
+	return "swift";
+	}
+static void free_CSWIFT_LIBNAME(void)
+	{
+	if(CSWIFT_LIBNAME)
+		OPENSSL_free((void*)CSWIFT_LIBNAME);
+	CSWIFT_LIBNAME = NULL;
+	}
+static long set_CSWIFT_LIBNAME(const char *name)
+	{
+	free_CSWIFT_LIBNAME();
+	return (((CSWIFT_LIBNAME = BUF_strdup(name)) != NULL) ? 1 : 0);
+	}
 static const char *CSWIFT_F1 = "swAcquireAccContext";
 static const char *CSWIFT_F2 = "swAttachKeyParam";
 static const char *CSWIFT_F3 = "swSimpleRequest";
@@ -313,6 +329,7 @@ static void release_context(SW_CONTEXT_HANDLE hac)
 /* Destructor (complements the "ENGINE_cswift()" constructor) */
 static int cswift_destroy(ENGINE *e)
 	{
+	free_CSWIFT_LIBNAME();
 	ERR_unload_CSWIFT_strings();
 	return 1;
 	}
@@ -332,7 +349,7 @@ static int cswift_init(ENGINE *e)
 		goto err;
 		}
 	/* Attempt to load libswift.so/swift.dll/whatever. */
-	cswift_dso = DSO_load(NULL, CSWIFT_LIBNAME, NULL, 0);
+	cswift_dso = DSO_load(NULL, get_CSWIFT_LIBNAME(), NULL, 0);
 	if(cswift_dso == NULL)
 		{
 		CSWIFTerr(CSWIFT_F_CSWIFT_INIT,CSWIFT_R_NOT_LOADED);
@@ -377,6 +394,7 @@ err:
 
 static int cswift_finish(ENGINE *e)
 	{
+	free_CSWIFT_LIBNAME();
 	if(cswift_dso == NULL)
 		{
 		CSWIFTerr(CSWIFT_F_CSWIFT_FINISH,CSWIFT_R_NOT_LOADED);
@@ -411,8 +429,7 @@ static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 			CSWIFTerr(CSWIFT_F_CSWIFT_CTRL,CSWIFT_R_ALREADY_LOADED);
 			return 0;
 			}
-		CSWIFT_LIBNAME = (const char *)p;
-		return 1;
+		return set_CSWIFT_LIBNAME((const char *)p);
 	default:
 		break;
 		}

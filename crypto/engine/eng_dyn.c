@@ -157,6 +157,10 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
 		dynamic_data_ctx *ctx = (dynamic_data_ctx *)ptr;
 		if(ctx->dynamic_dso)
 			DSO_free(ctx->dynamic_dso);
+		if(ctx->DYNAMIC_LIBNAME)
+			OPENSSL_free((void*)ctx->DYNAMIC_LIBNAME);
+		if(ctx->engine_id)
+			OPENSSL_free((void*)ctx->engine_id);
 		OPENSSL_free(ctx);
 		}
 	}
@@ -169,7 +173,7 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
 	{
 	dynamic_data_ctx *c;
 	c = OPENSSL_malloc(sizeof(dynamic_data_ctx));
-	if(!ctx)
+	if(!c)
 		{
 		ENGINEerr(ENGINE_F_SET_DATA_CTX,ERR_R_MALLOC_FAILURE);
 		return 0;
@@ -310,8 +314,13 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 		/* a NULL 'p' or a string of zero-length is the same thing */
 		if(p && (strlen((const char *)p) < 1))
 			p = NULL;
-		ctx->DYNAMIC_LIBNAME = (const char *)p;
-		return 1;
+		if(ctx->DYNAMIC_LIBNAME)
+			OPENSSL_free((void*)ctx->DYNAMIC_LIBNAME);
+		if(p)
+			ctx->DYNAMIC_LIBNAME = BUF_strdup(p);
+		else
+			ctx->DYNAMIC_LIBNAME = NULL;
+		return (ctx->DYNAMIC_LIBNAME ? 1 : 0);
 	case DYNAMIC_CMD_NO_VCHECK:
 		ctx->no_vcheck = ((i == 0) ? 0 : 1);
 		return 1;
@@ -319,8 +328,13 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 		/* a NULL 'p' or a string of zero-length is the same thing */
 		if(p && (strlen((const char *)p) < 1))
 			p = NULL;
-		ctx->engine_id = (const char *)p;
-		return 1;
+		if(ctx->engine_id)
+			OPENSSL_free((void*)ctx->engine_id);
+		if(p)
+			ctx->engine_id = BUF_strdup(p);
+		else
+			ctx->engine_id = NULL;
+		return (ctx->engine_id ? 1 : 0);
 	case DYNAMIC_CMD_LIST_ADD:
 		if((i < 0) || (i > 2))
 			{

@@ -304,7 +304,24 @@ static int max_key_len = 1024;  /* ??? */
  * symbol names to bind to. 
  */
 
-static const char *UBSEC_LIBNAME = "ubsec";
+static const char *UBSEC_LIBNAME = NULL;
+static const char *get_UBSEC_LIBNAME(void)
+	{
+	if(UBSEC_LIBNAME)
+		return UBSEC_LIBNAME;
+	return "ubsec";
+	}
+static void free_UBSEC_LIBNAME(void)
+	{
+	if(UBSEC_LIBNAME)
+		OPENSSL_free((void*)UBSEC_LIBNAME);
+	UBSEC_LIBNAME = NULL;
+	}
+static long set_UBSEC_LIBNAME(const char *name)
+	{
+	free_UBSEC_LIBNAME();
+	return (((UBSEC_LIBNAME = BUF_strdup(name)) != NULL) ? 1 : 0);
+	}
 static const char *UBSEC_F1 = "ubsec_bytes_to_bits";
 static const char *UBSEC_F2 = "ubsec_bits_to_bytes";
 static const char *UBSEC_F3 = "ubsec_open";
@@ -328,6 +345,7 @@ static const char *UBSEC_F13 = "ubsec_max_key_len_ioctl";
 /* Destructor (complements the "ENGINE_ubsec()" constructor) */
 static int ubsec_destroy(ENGINE *e)
 	{
+	free_UBSEC_LIBNAME();
 	ERR_unload_UBSEC_strings();
 	return 1;
 	}
@@ -364,7 +382,7 @@ static int ubsec_init(ENGINE *e)
 	/* 
 	 * Attempt to load libubsec.so/ubsec.dll/whatever. 
 	 */
-	ubsec_dso = DSO_load(NULL, UBSEC_LIBNAME, NULL, 0);
+	ubsec_dso = DSO_load(NULL, get_UBSEC_LIBNAME(), NULL, 0);
 	if(ubsec_dso == NULL)
 		{
 		UBSECerr(UBSEC_F_UBSEC_INIT, UBSEC_R_DSO_FAILURE);
@@ -459,6 +477,7 @@ err:
 
 static int ubsec_finish(ENGINE *e)
 	{
+	free_UBSEC_LIBNAME();
 	if(ubsec_dso == NULL)
 		{
 		UBSECerr(UBSEC_F_UBSEC_FINISH, UBSEC_R_NOT_LOADED);
@@ -508,8 +527,7 @@ static int ubsec_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 			UBSECerr(UBSEC_F_UBSEC_CTRL,UBSEC_R_ALREADY_LOADED);
 			return 0;
 			}
-		UBSEC_LIBNAME = (const char *)p;
-		return 1;
+		return set_UBSEC_LIBNAME((const char *)p);
 	default:
 		break;
 		}

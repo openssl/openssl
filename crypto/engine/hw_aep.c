@@ -71,6 +71,7 @@ typedef int pid_t;
 #include <openssl/crypto.h>
 #include <openssl/dso.h>
 #include <openssl/engine.h>
+#include <openssl/buffer.h>
 
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_AEP
@@ -363,7 +364,24 @@ static DSO *aep_dso = NULL;
 /* These are the static string constants for the DSO file name and the function
  * symbol names to bind to. 
 */
-static const char *AEP_LIBNAME = "aep";
+static const char *AEP_LIBNAME = NULL;
+static const char *get_AEP_LIBNAME(void)
+	{
+	if(AEP_LIBNAME)
+		return AEP_LIBNAME;
+	return "aep";
+	}
+static void free_AEP_LIBNAME(void)
+	{
+	if(AEP_LIBNAME)
+		OPENSSL_free((void*)AEP_LIBNAME);
+	AEP_LIBNAME = NULL;
+	}
+static long set_AEP_LIBNAME(const char *name)
+	{
+	free_AEP_LIBNAME();
+	return ((AEP_LIBNAME = BUF_strdup(name)) != NULL ? 1 : 0);
+	}
 
 static const char *AEP_F1    = "AEP_ModExp";
 static const char *AEP_F2    = "AEP_ModExpCrt";
@@ -412,7 +430,7 @@ static int aep_init(ENGINE *e)
 		}
 	/* Attempt to load libaep.so. */
 
-	aep_dso = DSO_load(NULL, AEP_LIBNAME, NULL, 0);
+	aep_dso = DSO_load(NULL, get_AEP_LIBNAME(), NULL, 0);
   
 	if(aep_dso == NULL)
 		{
@@ -474,6 +492,7 @@ static int aep_init(ENGINE *e)
 /* Destructor (complements the "ENGINE_aep()" constructor) */
 static int aep_destroy(ENGINE *e)
 	{
+	free_AEP_LIBNAME();
 	ERR_unload_AEPHK_strings();
 	return 1;
 	}
@@ -549,8 +568,7 @@ static int aep_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 				AEPHK_R_ALREADY_LOADED);
 			return 0;
 			}
-		AEP_LIBNAME = (const char *)p;
-		return 1;
+		return set_AEP_LIBNAME((const char*)p);
 	default:
 		break;
 		}
