@@ -171,19 +171,18 @@ extern "C" {
 
 #if defined(WINDOWS) || defined(MSDOS)
 
-#ifndef S_IFDIR
-#define S_IFDIR	_S_IFDIR
-#endif
+#  ifndef S_IFDIR
+#    define S_IFDIR	_S_IFDIR
+#  endif
 
-#ifndef S_IFMT
-#define S_IFMT	_S_IFMT
+#  ifndef S_IFMT
+#    define S_IFMT	_S_IFMT
+#  endif
 
-#if !defined(WINNT)
-#define NO_SYSLOG
-#endif
-#define NO_DIRENT
-
-#endif
+#  if !defined(WINNT)
+#    define NO_SYSLOG
+#  endif
+#  define NO_DIRENT
 
 #  ifdef WINDOWS
 #    include <windows.h>
@@ -195,29 +194,29 @@ extern "C" {
 #  include <io.h>
 #  include <fcntl.h>
 
-#if defined (__BORLANDC__)
-#define _setmode setmode
-#define _O_TEXT O_TEXT
-#define _O_BINARY O_BINARY
-#define _int64 __int64
-#define _kbhit kbhit
-#endif
+#  if defined (__BORLANDC__)
+#    define _setmode setmode
+#    define _O_TEXT O_TEXT
+#    define _O_BINARY O_BINARY
+#    define _int64 __int64
+#    define _kbhit kbhit
+#  endif
 
-#if defined(WIN16) && !defined(MONOLITH) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
-#  define EXIT(n) { if (n == 0) _wsetexit(_WINEXITNOPERSIST); return(n); }
-#else
-#  define EXIT(n)		return(n);
-#endif
+#  if defined(WIN16) && !defined(MONOLITH) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
+#    define EXIT(n) { if (n == 0) _wsetexit(_WINEXITNOPERSIST); return(n); }
+#  else
+#    define EXIT(n)		return(n);
+#  endif
 #  define LIST_SEPARATOR_CHAR ';'
-#ifndef X_OK
-#  define X_OK	0
-#endif
-#ifndef W_OK
-#  define W_OK	2
-#endif
-#ifndef R_OK
-#  define R_OK	4
-#endif
+#  ifndef X_OK
+#    define X_OK	0
+#  endif
+#  ifndef W_OK
+#    define W_OK	2
+#  endif
+#  ifndef R_OK
+#    define R_OK	4
+#  endif
 #  define OPENSSL_CONF	"openssl.cnf"
 #  define SSLEAY_CONF	OPENSSL_CONF
 #  define NUL_DEV	"nul"
