@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-dgst, md5, md2, sha1, sha, mdc2, ripemd160 - message digests
+dgst, md5, md4, md2, sha1, sha, mdc2, ripemd160 - message digests
 
 =head1 SYNOPSIS
 
 B<openssl> B<dgst> 
-[B<-md5|-md2|-sha1|-sha|-mdc2|-ripemd160|-dss1>]
+[B<-md5|-md4|-md2|-sha1|-sha|-mdc2|-ripemd160|-dss1>]
 [B<-c>]
 [B<-d>]
 [B<-hex>]
@@ -19,7 +19,7 @@ B<openssl> B<dgst>
 [B<-signature filename>]
 [B<file...>]
 
-[B<md5|md2|sha1|sha|mdc2|ripemd160>]
+[B<md5|md4|md2|sha1|sha|mdc2|ripemd160>]
 [B<-c>]
 [B<-d>]
 [B<file...>]
