@@ -585,6 +585,7 @@ EOF
   arm*-*-linux2) OUT="linux-elf-arm" ;;
   s390-*-linux2) OUT="linux-s390" ;;
   s390x-*-linux?) OUT="linux-s390x" ;;
+  x86_64-*-linux?) OUT="linux-x86_64" ;;
   *-*-linux2) OUT="linux-elf"
 	if [ "$GCCVER" -gt 28 ]; then
           if grep '^model.*Pentium' /proc/cpuinfo >/dev/null ; then
