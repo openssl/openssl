@@ -281,7 +281,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 	lib$sys_fao(&fao_cmd, &len, &buf_dsc, string);
 
 	/* we knoe there's an 8 byte header.  That's documented */
-	opcdef_p = (struct opcdef *) Malloc(8 + strlen(s));
+	opcdef_p = (struct opcdef *) Malloc(8 + strlen(string));
 	opcdef_p->opc$b_ms_type = OPC$_RQ_RQST;
 	opcdef_p->opc$b_ms_target = VMS_OPC_target;
 	memcpy(opcdef_p->opc$b_ms_target, &priority, 3);
@@ -290,10 +290,10 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 
 	opc_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
 	opc_dsc.dsc$b_class = DSC$K_CLASS_S;
-	opc_dsc.dsc$a_pointer = opcdef_p;
+	opc_dsc.dsc$a_pointer = (char *)opcdef_p;
 	opc_dsc.dsc$w_length = len + 8;
 
-	sys$sndopc(opc_dsc, 0);
+	sys$sndopr(opc_dsc, 0);
 
 	Free(opcdef_p);
 }
