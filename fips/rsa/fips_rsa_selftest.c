@@ -160,7 +160,7 @@ int FIPS_selftest_rsa()
 	"\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a"
 	"\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a\xbc"
 	"\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56\x78\x9a\xbc\xde";
-    int n;
+    int i;
 
     /* Perform pairwise consistency test by: ... */
 
@@ -169,19 +169,19 @@ int FIPS_selftest_rsa()
     /* ...1) apply public key to plaintext, resulting ciphertext must be
      * different
     */
-    n=RSA_public_encrypt(sizeof(original_ptext)-1,original_ptext,ctext,key,
+    i=RSA_public_encrypt(sizeof(original_ptext)-1,original_ptext,ctext,key,
 			 RSA_NO_PADDING);
-    if(n < 0)
+    if(i < 0)
 	{
 	ERR_print_errors_fp(stderr);
 	exit(1);
 	}
-    if(n != clen || memcmp(ctext,expected_ctext,n))
+    if(i != clen || memcmp(ctext,expected_ctext,i))
   	{
   	FIPSerr(FIPS_F_FIPS_SELFTEST_RSA,FIPS_R_SELFTEST_FAILED);
  	return 0;
  	}
-    if(!memcmp(ctext,original_ptext,n))
+    if(!memcmp(ctext,original_ptext,i))
   	{
   	FIPSerr(FIPS_F_FIPS_SELFTEST_RSA,FIPS_R_SELFTEST_FAILED);
  	return 0;
@@ -189,13 +189,13 @@ int FIPS_selftest_rsa()
     /* ...2) apply private key to ciphertext and compare result to
      *       original plaintext; results must be equal
     */
-    n=RSA_private_decrypt(n,ctext,ptext,key,RSA_NO_PADDING);
-    if(n < 0)
+    i=RSA_private_decrypt(i,ctext,ptext,key,RSA_NO_PADDING);
+    if(i < 0)
 	{
 	ERR_print_errors_fp(stderr);
 	exit(1);
 	}
-    if(n != sizeof(original_ptext)-1 || memcmp(ptext,original_ptext,n))
+    if(i != sizeof(original_ptext)-1 || memcmp(ptext,original_ptext,i))
 	{
 	FIPSerr(FIPS_F_FIPS_SELFTEST_RSA,FIPS_R_SELFTEST_FAILED);
 	return 0;

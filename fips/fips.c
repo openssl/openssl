@@ -79,10 +79,10 @@ int FIPS_selftest()
 
 static int FIPS_check_exe(const char *path)
     {
-    char buf[1024];
+    unsigned char buf[1024];
     char p2[PATH_MAX];
-    int n;
-    char mdbuf[EVP_MAX_MD_SIZE];
+    unsigned int n;
+    unsigned char mdbuf[EVP_MAX_MD_SIZE];
     FILE *f;
     static char key[]="etaonrishdlcupfm";
     HMAC_CTX hmac;
