@@ -584,6 +584,7 @@ EOF
   *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
   *-*-osf) OUT="alphaold-cc" ;;
   *-*-tru64) OUT="alpha-cc" ;;
+  *-*-OpenUNIX8*) OUT="OpenUNIX-8" ;;
   *-*-unixware7) OUT="unixware-7" ;;
   *-*-UnixWare7) OUT="unixware-7" ;;
   *-*-Unixware7) OUT="unixware-7" ;;
