@@ -370,7 +370,8 @@ do_svr3-shared:
 		  for obj in `ar t lib$$i.a` ; do \
 		    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
 		  done ; \
-		  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		  set -x; ${CC} ${SHARED_LDFLAGS} \
+			-G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
 		libs="$$libs -l$$i"; \
@@ -384,13 +385,15 @@ do_svr5-shared:
 	else \
 		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
+		  SHARE_FLAG='-G'; \
+		  (${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAG='-shared'; \
 		  find . -name "*.o" -print > allobjs ; \
 		  OBJS= ; export OBJS ; \
 		  for obj in `ar t lib$$i.a` ; do \
 		    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
 		  done ; \
 		  set -x; ${CC} ${SHARED_LDFLAGS} \
-			-G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			$${SHARE_FLAG} -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
 		libs="$$libs -l$$i"; \
