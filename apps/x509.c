@@ -1067,13 +1067,6 @@ static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile, int create
 		}
 	else
 		BUF_strlcpy(buf,serialfile,len);
-	serial=BN_new();
-	bs=ASN1_INTEGER_new();
-	if ((serial == NULL) || (bs == NULL))
-		{
-		ERR_print_errors(bio_err);
-		goto end;
-		}
 
 	serial = load_serial(buf, create, NULL);
 	if (serial == NULL) goto end;
