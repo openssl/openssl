@@ -13,6 +13,9 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Added the '4758cca' ENGINE to support IBM 4758 cards.
+     [Maurice Gittens <maurice@gittens.nl>, touchups by Geoff Thorpe]
+
   *) Fix bug in SSL_clear(): bad sessions were not removed (found by
      Yoram Zahavi <YoramZ@gilian.com>).
      [Lutz Jaenicke]
