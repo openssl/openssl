@@ -239,7 +239,6 @@ static double Time_F(int s)
 int MAIN(int argc, char **argv)
 	{
 	unsigned char *buf=NULL,*buf2=NULL;
-	des_cblock *buf_as_des_cblock = NULL;
 	int ret=1;
 #define ALGOR_NUM	14
 #define SIZE_NUM	5
@@ -286,6 +285,7 @@ int MAIN(int argc, char **argv)
 		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
 	unsigned char iv[8];
 #ifndef NO_DES
+	des_cblock *buf_as_des_cblock = NULL;
 	static des_cblock key ={0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0};
 	static des_cblock key2={0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
 	static des_cblock key3={0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34};
@@ -361,7 +361,9 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
 		}
+#ifndef NO_DES
 	buf_as_des_cblock = (des_cblock *)buf;
+#endif
 	if ((buf2=(unsigned char *)Malloc((int)BUFSIZE)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");

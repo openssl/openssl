@@ -56,8 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RIPEMD
 #include <stdio.h>
 #include "cryptlib.h"
+#include <openssl/ripemd.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
@@ -79,3 +81,4 @@ EVP_MD *EVP_ripemd160(void)
 	{
 	return(&ripemd160_md);
 	}
+#endif

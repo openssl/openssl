@@ -55,6 +55,7 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+#if !defined(NO_HMAC) && !defined(NO_SHA)
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/x509.h>
@@ -218,4 +219,4 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	PBKDF2PARAM_free(kdf);
 	return 0;
 }
-
+#endif

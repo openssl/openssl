@@ -365,7 +365,7 @@ case "$GUESSOS" in
   i386-*) options="$options 386" ;;
 esac
 
-for i in bf cast des dh dsa hmac md2 md5 mdc2 rc2 rc4 rc5 rsa sha
+for i in bf cast des dh dsa hmac md2 md5 mdc2 rc2 rc4 rc5 ripemd rsa sha
 do
   if [ ! -d crypto/$i ]
   then

@@ -56,6 +56,7 @@
  *
  */
 
+#ifndef NO_HMAC
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/hmac.h>
@@ -166,3 +167,4 @@ int PKCS12_setup_mac (PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
 	
 	return 1;
 }
+#endif
