@@ -82,7 +82,8 @@ static BN_ULONG BN_mont_inv(BIGNUM *a, int e, BN_CTX *ctx)
 	exp = 2;
 	mask = 3;
 	if((x = BN_dup(a)) == NULL) return 0;
-	if(!BN_mask_bits(x, e)) return 0;
+	if (x->top > e/BN_BITS2)
+		if(!BN_mask_bits(x, e)) return 0;
 
 	BN_CTX_start(ctx);
 	xy = BN_CTX_get(ctx);
@@ -138,6 +139,7 @@ int BN_mont_set(BIGNUM *p, BN_MONTGOMERY *mont, BN_CTX *ctx)
 	if (BN_copy(mont->p, p) == NULL);
 	
 	mont->p_inv_b_neg =  BN_mont_inv(p, BN_BITS2, ctx);
+	if (!mont->p_inv_b_neg) return 0;
 	mont->p_inv_b_neg = 0 - mont->p_inv_b_neg;
 
 	return 1;
@@ -267,16 +269,16 @@ int BN_mont_red(BIGNUM *y, BN_MONTGOMERY *mont)
 	}
 
 
-int BN_mont_mod_mul(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_MONTGOMERY *mont)
+int BN_mont_mod_mul(BIGNUM *r_, BIGNUM *x, BIGNUM *y, BN_MONTGOMERY *mont, BN_CTX *ctx)
 /* r = x * y mod p */
 /* r != x && r! = y !!! */
 	{
 	BN_ULONG c;
 	BIGNUM *p;
 	int i, j, max;
+	BIGNUM *r;
 
-	assert(r != x && r != y);
-	assert(r != NULL && x != NULL  && y != NULL && mont != NULL);
+	assert(r_!= NULL && x != NULL  && y != NULL && mont != NULL);
 	assert(mont->p != NULL);
 	assert(BN_cmp(x, mont->p) < 0);
 	assert(BN_cmp(y, mont->p) < 0);
@@ -289,6 +291,14 @@ int BN_mont_mod_mul(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_MONTGOMERY *mont)
 		return 1;
 		}
 
+	if (r_ == x || r_ == y)
+		{
+		BN_CTX_start(ctx);
+		r = BN_CTX_get(ctx);
+		}
+	else
+		r = r_;
+
 	p = mont->p;
 	max = mont->p_num_bytes;
 
@@ -296,7 +306,7 @@ int BN_mont_mod_mul(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_MONTGOMERY *mont)
 		the last one --- max + 3 --- is only as a backstop
 		for incorrect input 
 	*/
-	if (bn_wexpand(r, max + 3) == NULL) return 0;
+	if (bn_wexpand(r, max + 3) == NULL) goto err;
 	for (i = 0; i < max + 3; i++) r->d[i] = 0;
 	r->top = max + 2;
 
@@ -308,7 +318,7 @@ int BN_mont_mod_mul(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_MONTGOMERY *mont)
 		if (c)
 			{
 			if (((r->d[max] += c) & BN_MASK2) < c)
-				if (((r->d[max + 1] ++) & BN_MASK2) == 0) return 0;
+				if (((r->d[max + 1] ++) & BN_MASK2) == 0) goto err;
 			}
 		
 		/* r = (r + x_i * y) / b */
@@ -321,7 +331,7 @@ int BN_mont_mod_mul(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_MONTGOMERY *mont)
 				j = y->top;
 				while (((++ (r->d[j]) ) & BN_MASK2) == 0) 
 					j++;
-				if (j > max) return 0;
+				if (j > max) goto err;
 				}
 			}
 		r->d[max + 1] = 0;
@@ -342,8 +352,19 @@ int BN_mont_mod_mul(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_MONTGOMERY *mont)
 
 	if (BN_cmp(r, mont->p) >= 0) 
 		{
-		if (!BN_sub(r, r, mont->p)) return 0;
+		if (!BN_sub(r, r, mont->p)) goto err;
+		}
+
+	if (r != r_)
+		{
+		if (!BN_copy(r_, r)) goto err;
+		BN_CTX_end(ctx);
 		}
 
 	return 1;
+
+ err:
+	if (r != r_)
+		BN_CTX_end(ctx);
+	return 0;
 	}

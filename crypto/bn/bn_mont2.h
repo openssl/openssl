@@ -31,6 +31,6 @@ int BN_to_mont(BIGNUM *x, BN_MONTGOMERY *mont, BN_CTX *ctx);
 void BN_mont_clear_free(BN_MONTGOMERY *mont);
 int BN_mont_set(BIGNUM *p, BN_MONTGOMERY *mont, BN_CTX *ctx);
 int BN_mont_red(BIGNUM *y, BN_MONTGOMERY *mont);
-int BN_mont_mod_mul(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_MONTGOMERY *mont);
+int BN_mont_mod_mul(BIGNUM *r, BIGNUM *x, BIGNUM *y, BN_MONTGOMERY *mont, BN_CTX *);
 
 #endif
