@@ -80,7 +80,8 @@ EVP_CIPHER *enc;
 
 int get_cert_chain(X509 *cert, STACK_OF(X509) **chain);
 int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen, int options, char *pempass);
-int dump_certs_pkeys_bags(BIO *out, STACK *bags, char *pass, int passlen, int options, char *pempass);
+int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags, char *pass,
+			  int passlen, int options, char *pempass);
 int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass, int passlen, int options, char *pempass);
 int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst, char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
@@ -360,7 +361,8 @@ int MAIN(int argc, char **argv)
 
     if (export_cert) {
 	EVP_PKEY *key;
-	STACK *bags, *safes;
+	STACK_OF(PKCS12_SAFEBAG) *bags;
+	STACK *safes;
 	PKCS12_SAFEBAG *bag;
 	PKCS8_PRIV_KEY_INFO *p8;
 	PKCS7 *authsafe;
@@ -405,7 +407,7 @@ int MAIN(int argc, char **argv)
 		goto end;
 	}
 	
-	bags = sk_new (NULL);
+	bags = sk_PKCS12_SAFEBAG_new (NULL);
 
 	/* Add any more certificates asked for */
 	if (certsin) {
@@ -445,7 +447,7 @@ int MAIN(int argc, char **argv)
 			PKCS12_add_localkeyid(bag, keyid, keyidlen);
 		} else if((catmp = sk_shift(canames))) 
 				PKCS12_add_friendlyname(bag, catmp, -1);
-		sk_push(bags, (char *)bag);
+		sk_PKCS12_SAFEBAG_push(bags, bag);
 	}
 	sk_X509_pop_free(certs, X509_free);
 	if (canames) sk_free(canames);
@@ -459,7 +461,7 @@ int MAIN(int argc, char **argv)
 	/* Turn certbags into encrypted authsafe */
 	authsafe = PKCS12_pack_p7encdata(cert_pbe, cpass, -1, NULL, 0,
 								 iter, bags);
-	sk_pop_free(bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
+	sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
 
 	if (!authsafe) {
 		ERR_print_errors (bio_err);
@@ -477,11 +479,11 @@ int MAIN(int argc, char **argv)
 	PKCS8_PRIV_KEY_INFO_free(p8);
         if (name) PKCS12_add_friendlyname (bag, name, -1);
 	PKCS12_add_localkeyid (bag, keyid, keyidlen);
-	bags = sk_new(NULL);
-	sk_push (bags, (char *)bag);
+	bags = sk_PKCS12_SAFEBAG_new(NULL);
+	sk_PKCS12_SAFEBAG_push (bags, bag);
 	/* Turn it into unencrypted safe bag */
 	authsafe = PKCS12_pack_p7data (bags);
-	sk_pop_free(bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
+	sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
 	sk_push (safes, (char *)authsafe);
 
 	p12 = PKCS12_init (NID_pkcs7_data);
@@ -571,7 +573,8 @@ int MAIN(int argc, char **argv)
 int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 	     int passlen, int options, char *pempass)
 {
-	STACK *asafes, *bags;
+	STACK *asafes;
+	STACK_OF(PKCS12_SAFEBAG) *bags;
 	int i, bagnid;
 	PKCS7 *p7;
 	if (!( asafes = M_PKCS12_unpack_authsafes (p12))) return 0;
@@ -592,23 +595,25 @@ int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 		if (!bags) return 0;
 	    	if (!dump_certs_pkeys_bags (out, bags, pass, passlen, 
 						 options, pempass)) {
-			sk_pop_free (bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
+			sk_PKCS12_SAFEBAG_pop_free (bags, PKCS12_SAFEBAG_free);
 			return 0;
 		}
-		sk_pop_free (bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
+		sk_PKCS12_SAFEBAG_pop_free (bags, PKCS12_SAFEBAG_free);
 	}
 	sk_pop_free (asafes, (void(*)(void *)) PKCS7_free);
 	return 1;
 }
 
-int dump_certs_pkeys_bags (BIO *out, STACK *bags, char *pass,
-	     int passlen, int options, char *pempass)
+int dump_certs_pkeys_bags (BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,
+			   char *pass, int passlen, int options, char *pempass)
 {
 	int i;
-	for (i = 0; i < sk_num (bags); i++) {
+	for (i = 0; i < sk_PKCS12_SAFEBAG_num (bags); i++) {
 		if (!dump_certs_pkeys_bag (out,
-			 (PKCS12_SAFEBAG *)sk_value (bags, i), pass, passlen,
-					 	options, pempass)) return 0;
+					   sk_PKCS12_SAFEBAG_value (bags, i),
+					   pass, passlen,
+					   options, pempass))
+		    return 0;
 	}
 	return 1;
 }

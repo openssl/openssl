@@ -57,13 +57,14 @@
 
 #include <openssl/stack.h>
 
-#define STACK_OF(type)	STACK_##type
+#define STACK_OF(type) struct stack_st_##type
+#define PREDECLARE_STACK_OF(type) STACK_OF(type);
 
 #define DECLARE_STACK_OF(type) \
-typedef struct stack_st_##type	\
+STACK_OF(type) \
     { \
     STACK stack; \
-    } STACK_OF(type); \
+    }; \
 STACK_OF(type) *sk_##type##_new(int (*cmp)(type **,type **)); \
 STACK_OF(type) *sk_##type##_new_null(void); \
 void sk_##type##_free(STACK_OF(type) *sk); \

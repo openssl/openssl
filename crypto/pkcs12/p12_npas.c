@@ -66,7 +66,8 @@
 /* PKCS#12 password change routine */
 
 static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass);
-static int newpass_bags(STACK *bags, char *oldpass,  char *newpass);
+static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, char *oldpass,
+			char *newpass);
 static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass);
 static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen);
 
@@ -104,12 +105,14 @@ return 1;
 
 static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 {
-	STACK *asafes, *newsafes, *bags;
+	STACK *asafes, *newsafes;
+	STACK_OF(PKCS12_SAFEBAG) *bags;
 	int i, bagnid, pbe_nid, pbe_iter, pbe_saltlen;
 	PKCS7 *p7, *p7new;
 	ASN1_OCTET_STRING *p12_data_tmp = NULL, *macnew = NULL;
 	unsigned char mac[EVP_MAX_MD_SIZE];
 	unsigned int maclen;
+
 	if (!(asafes = M_PKCS12_unpack_authsafes(p12))) return 0;
 	if(!(newsafes = sk_new(NULL))) return 0;
 	for (i = 0; i < sk_num (asafes); i++) {
@@ -127,7 +130,7 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 			return 0;
 		}
 	    	if (!newpass_bags(bags, oldpass, newpass)) {
-			sk_pop_free(bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
+			sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
 			sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
 			return 0;
 		}
@@ -135,7 +138,7 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 		if (bagnid == NID_pkcs7_data) p7new = PKCS12_pack_p7data(bags);
 		else p7new = PKCS12_pack_p7encdata(pbe_nid, newpass, -1, NULL,
 						 pbe_saltlen, pbe_iter, bags);
-		sk_pop_free(bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
+		sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
 		if(!p7new) {
 			sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
 			return 0;
@@ -169,12 +172,14 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 }
 
 
-static int newpass_bags(STACK *bags, char *oldpass,  char *newpass)
+static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, char *oldpass,
+			char *newpass)
 {
 	int i;
-	for (i = 0; i < sk_num(bags); i++) {
-		if (!newpass_bag((PKCS12_SAFEBAG *)sk_value(bags, i),
-						 oldpass, newpass)) return 0;
+	for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
+		if (!newpass_bag(sk_PKCS12_SAFEBAG_value(bags, i),
+				 oldpass, newpass))
+		    return 0;
 	}
 	return 1;
 }

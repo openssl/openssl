@@ -65,9 +65,10 @@
 static int parse_pk12( PKCS12 *p12, const char *pass, int passlen,
 		EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca);
 
-static int parse_bags( STACK *bags, const char *pass, int passlen,
-		EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca,
-		ASN1_OCTET_STRING **keyid, char *keymatch);
+static int parse_bags( STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
+		       int passlen, EVP_PKEY **pkey, X509 **cert,
+		       STACK_OF(X509) **ca, ASN1_OCTET_STRING **keyid,
+		       char *keymatch);
 
 static int parse_bag( PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 			EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca,
@@ -146,7 +147,8 @@ int PKCS12_parse (PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
 	     EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca)
 {
-	STACK *asafes, *bags;
+	STACK *asafes;
+	STACK_OF(PKCS12_SAFEBAG) *bags;
 	int i, bagnid;
 	PKCS7 *p7;
 	ASN1_OCTET_STRING *keyid = NULL;
@@ -166,11 +168,11 @@ static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
 		}
 	    	if (!parse_bags(bags, pass, passlen, pkey, cert, ca,
 							 &keyid, &keymatch)) {
-			sk_pop_free(bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
+			sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
 			sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
 			return 0;
 		}
-		sk_pop_free(bags, (void(*)(void *)) PKCS12_SAFEBAG_free);
+		sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
 	}
 	sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
 	if (keyid) M_ASN1_OCTET_STRING_free(keyid);
@@ -178,13 +180,14 @@ static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
 }
 
 
-static int parse_bags (STACK *bags, const char *pass, int passlen,
-		       EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca,
-		       ASN1_OCTET_STRING **keyid, char *keymatch)
+static int parse_bags (STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
+		       int passlen, EVP_PKEY **pkey, X509 **cert,
+		       STACK_OF(X509) **ca, ASN1_OCTET_STRING **keyid,
+		       char *keymatch)
 {
 	int i;
-	for (i = 0; i < sk_num(bags); i++) {
-		if (!parse_bag((PKCS12_SAFEBAG *)sk_value (bags, i),
+	for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
+		if (!parse_bag(sk_PKCS12_SAFEBAG_value (bags, i),
 			 pass, passlen, pkey, cert, ca, keyid,
 							 keymatch)) return 0;
 	}

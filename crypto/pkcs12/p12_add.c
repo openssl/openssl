@@ -125,7 +125,7 @@ PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG (int pbe_nid, const char *pass,
 }
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 data Contentinfo */
-PKCS7 *PKCS12_pack_p7data (STACK *sk)
+PKCS7 *PKCS12_pack_p7data (STACK_OF(PKCS12_SAFEBAG) *sk)
 {
 	PKCS7 *p7;
 	if (!(p7 = PKCS7_new())) {
@@ -138,8 +138,9 @@ PKCS7 *PKCS12_pack_p7data (STACK *sk)
 		return NULL;
 	}
 	
-	if (!ASN1_seq_pack(sk, i2d_PKCS12_SAFEBAG, &p7->d.data->data,
-					&p7->d.data->length)) {
+	if (!ASN1_seq_pack_PKCS12_SAFEBAG(sk, i2d_PKCS12_SAFEBAG,
+					  &p7->d.data->data,
+					  &p7->d.data->length)) {
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, PKCS12_R_CANT_PACK_STRUCTURE);
 		return NULL;
 	}
@@ -149,7 +150,8 @@ PKCS7 *PKCS12_pack_p7data (STACK *sk)
 /* Turn a stack of SAFEBAGS into a PKCS#7 encrypted data ContentInfo */
 
 PKCS7 *PKCS12_pack_p7encdata (int pbe_nid, const char *pass, int passlen,
-	     unsigned char *salt, int saltlen, int iter, STACK *bags)
+			      unsigned char *salt, int saltlen, int iter,
+			      STACK_OF(PKCS12_SAFEBAG) *bags)
 {
 	PKCS7 *p7;
 	X509_ALGOR *pbe;
