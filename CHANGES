@@ -13,6 +13,10 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Add information about CygWin32 1.3 and on, and preserve proper
+     configuration for the versions before that.
+     [Corinna Vinschen <vinschen@redhat.com> and Richard Levitte]
+
   *) Make removal from session cache (SSL_CTX_remove_session()) more robust:
      check whether we deal with a copy of a session and do not delete from
      the cache in this case. Problem reported by "Izhar Shoshani Levi"
