@@ -240,7 +240,7 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 	/* From  B = a mod |n|,  A = |n|  it follows that
 	 *
 	 *      0 <= B < A,
-	 *           X*a  ==  B   (mod |n|),
+	 *      sign*X*a  ==  B   (mod |n|),
 	 *     -sign*Y*a  ==  A   (mod |n|).
 	 */
 
@@ -250,7 +250,7 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 
 		/*
 		 *      0 < B < A,
-		 * (*)       X*a  ==  B   (mod |n|),
+		 * (*)  sign*X*a  ==  B   (mod |n|),
 		 *     -sign*Y*a  ==  A   (mod |n|)
 		 */
 
@@ -314,15 +314,15 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 		 * i.e.
 		 *      -sign*Y*a - D*A  ==  B    (mod |n|).
 		 * Similarly, (*) translates into
-		 *      X*a  ==  A          (mod |n|).
+		 *       sign*X*a  ==  A          (mod |n|).
 		 *
 		 * Thus,
-		 *      -sign*Y*a - D*X*a  ==  B  (mod |n|),
+		 *  -sign*Y*a - D*sign*X*a  ==  B  (mod |n|),
 		 * i.e.
-		 *      -sign*(Y + D*X)*a  ==  B  (mod |n|).
+		 *       -sign*(Y + D*X)*a  ==  B  (mod |n|).
 		 *
 		 * So if we set  (X, Y, sign) := (Y + D*X, X, -sign),  we arrive back at
-		 *            X*a  ==  B   (mod |n|),
+		 *       sign*X*a  ==  B   (mod |n|),
 		 *      -sign*Y*a  ==  A   (mod |n|).
 		 * Note that  X  and  Y  stay non-negative all the time.
 		 */
@@ -361,7 +361,7 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 		}
 
 	/*
-	 * The while loop ends when
+	 * The while loop (Euclid's algorithm) ends when
 	 *      A == gcd(a,n);
 	 * we have
 	 *      -sign*Y*a  ==  A  (mod |n|),
