@@ -208,7 +208,8 @@ static int def_load(CONF *conf, const char *name, long *line)
 
 static int def_load_bio(CONF *conf, BIO *in, long *line)
 	{
-#define BUFSIZE	512
+/* The macro BUFSIZE conflicts with a system macro in VxWorks */
+#define CONFBUFSIZE	512
 	int bufnum=0,i,ii;
 	BUF_MEM *buff=NULL;
 	char *s,*p,*end;
@@ -255,15 +256,15 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
 	for (;;)
 		{
 		again=0;
-		if (!BUF_MEM_grow(buff,bufnum+BUFSIZE))
+		if (!BUF_MEM_grow(buff,bufnum+CONFBUFSIZE))
 			{
 			CONFerr(CONF_F_CONF_LOAD_BIO,ERR_R_BUF_LIB);
 			goto err;
 			}
 		p= &(buff->data[bufnum]);
 		*p='\0';
-		BIO_gets(in, p, BUFSIZE-1);
-		p[BUFSIZE-1]='\0';
+		BIO_gets(in, p, CONFBUFSIZE-1);
+		p[CONFBUFSIZE-1]='\0';
 		ii=i=strlen(p);
 		if (i == 0) break;
 		while (i > 0)

@@ -65,7 +65,7 @@
 #undef TIMES
 #endif
 
-#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_VMS) || defined(__DECC) && !defined(OPENSSL_SYS_MACOSX) && !defined(OPENSSL_SYS_VXWORKS)
+#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32) && !(defined(OPENSSL_SYS_VMS) || defined(__DECC)) && !defined(OPENSSL_SYS_MACOSX) && !defined(OPENSSL_SYS_VXWORKS)
 # define TIMES
 #endif
 
@@ -121,7 +121,7 @@ typedef struct ms_tm
 	HANDLE thread_id;
 	FILETIME ms_win32;
 #  else
-#    ifdef OPENSSL_SYS_VSWORKS
+#    ifdef OPENSSL_SYS_VXWORKS
           unsigned long ticks;
 #    else
 	struct timeb ms_timeb;
@@ -163,7 +163,7 @@ void ms_time_get(char *a)
 #  ifdef OPENSSL_SYS_WIN32
 	GetThreadTimes(tm->thread_id,&tmpa,&tmpb,&tmpc,&(tm->ms_win32));
 #  else
-#    ifdef OPENSSL_SYS_VSWORKS
+#    ifdef OPENSSL_SYS_VXWORKS
         tm->ticks = tickGet();
 #    else
 	ftime(&tm->ms_timeb);
@@ -197,7 +197,7 @@ double ms_time_diff(char *ap, char *bp)
 	ret=((double)(lb-la))/1e7;
 	}
 # else
-#  ifdef OPENSSL_SYS_VSWORKS
+#  ifdef OPENSSL_SYS_VXWORKS
         ret = (double)(b->ticks - a->ticks) / (double)sysClkRateGet();
 #  else
 	ret=	 (double)(b->ms_timeb.time-a->ms_timeb.time)+
@@ -222,7 +222,7 @@ int ms_time_cmp(char *ap, char *bp)
 	d =(b->ms_win32.dwHighDateTime&0x000fffff)*10+b->ms_win32.dwLowDateTime/1e7;
 	d-=(a->ms_win32.dwHighDateTime&0x000fffff)*10+a->ms_win32.dwLowDateTime/1e7;
 # else
-#  ifdef OPENSSL_SYS_VSWORKS
+#  ifdef OPENSSL_SYS_VXWORKS
         d = (b->ticks - a->ticks);
 #  else
 	d=	 (double)(b->ms_timeb.time-a->ms_timeb.time)+

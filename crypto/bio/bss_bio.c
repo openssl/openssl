@@ -34,7 +34,7 @@
 #include "e_os.h"
 
 /* VxWorks defines SSIZE_MAX with an empty value causing compile errors */
-#if defined(OPENSSL_SYS_VSWORKS)
+#if defined(OPENSSL_SYS_VXWORKS)
 # undef SSIZE_MAX
 #endif
 #ifndef SSIZE_MAX
