@@ -363,7 +363,9 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 const BIGNUM *BN_value_one(void);
 char *	BN_options(void);
 BN_CTX *BN_CTX_new(void);
+#ifndef OPENSSL_NO_DEPRECATED
 void	BN_CTX_init(BN_CTX *c);
+#endif
 void	BN_CTX_free(BN_CTX *c);
 void	BN_CTX_start(BN_CTX *ctx);
 BIGNUM *BN_CTX_get(BN_CTX *ctx);

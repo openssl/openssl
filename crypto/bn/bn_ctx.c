@@ -54,9 +54,10 @@
  *
  */
 
-#ifndef BN_CTX_DEBUG
-# undef NDEBUG /* avoid conflicting definitions */
-# define NDEBUG
+#if !defined(BN_CTX_DEBUG) && !defined(BN_DEBUG)
+#ifndef NDEBUG
+#define NDEBUG
+#endif
 #endif
 
 #include <stdio.h>
@@ -65,6 +66,37 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
+/* BN_CTX structure details */
+#define BN_CTX_NUM	32
+#define BN_CTX_NUM_POS	12
+struct bignum_ctx
+	{
+	int tos;
+	BIGNUM bn[BN_CTX_NUM];
+	int flags;
+	int depth;
+	int pos[BN_CTX_NUM_POS];
+	int too_many;
+	};
+
+#ifndef OPENSSL_NO_DEPRECATED
+void BN_CTX_init(BN_CTX *ctx)
+#else
+static void BN_CTX_init(BN_CTX *ctx)
+#endif
+	{
+#if 0 /* explicit version */
+	int i;
+	ctx->tos = 0;
+	ctx->flags = 0;
+	ctx->depth = 0;
+	ctx->too_many = 0;
+	for (i = 0; i < BN_CTX_NUM; i++)
+		BN_init(&(ctx->bn[i]));
+#else
+	memset(ctx, 0, sizeof *ctx);
+#endif
+	}
 
 BN_CTX *BN_CTX_new(void)
 	{
@@ -80,21 +112,6 @@ BN_CTX *BN_CTX_new(void)
 	BN_CTX_init(ret);
 	ret->flags=BN_FLG_MALLOCED;
 	return(ret);
-	}
-
-void BN_CTX_init(BN_CTX *ctx)
-	{
-#if 0 /* explicit version */
-	int i;
-	ctx->tos = 0;
-	ctx->flags = 0;
-	ctx->depth = 0;
-	ctx->too_many = 0;
-	for (i = 0; i < BN_CTX_NUM; i++)
-		BN_init(&(ctx->bn[i]));
-#else
-	memset(ctx, 0, sizeof *ctx);
-#endif
 	}
 
 void BN_CTX_free(BN_CTX *ctx)

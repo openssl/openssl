@@ -4,6 +4,12 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) BN_CTX_init() has been deprecated, as BN_CTX is an opaque structure
+     that can only be obtained through BN_CTX_new() (which implicitly
+     initialises it). The presence of this function only made it possible
+     to overwrite an existing structure (and cause memory leaks).
+     [Geoff Thorpe]
+
   *) Because of the callback-based approach for implementing LHASH as a
      template type, lh_insert() adds opaque objects to hash-tables and
      lh_doall() or lh_doall_arg() are typically used with a destructor callback
