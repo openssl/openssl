@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.7b and 0.9.7c  [xx XXX 2003]
+
+  *) 
+
  Changes between 0.9.7a and 0.9.7b  [10 Apr 2003]
 
   *) Countermeasure against the Klima-Pokorny-Rosa extension of
