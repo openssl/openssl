@@ -1033,7 +1033,7 @@ void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 
 #else /* !OPENSSL_NO_KRB5 */
 
-#ifdef PEDANTIC
+#if defined(PEDANTIC) || defined(OPENSSL_SYS_VMS)
 static int dummy=(int)&dummy;
 #endif
 
