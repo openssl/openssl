@@ -1602,7 +1602,7 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	if (rsa_enc || rsa_sign)
 		{
 		mask|=SSL_aRSA;
-		mask|=SSL_aRSA;
+		emask|=SSL_aRSA;
 		}
 
 	if (dsa_sign)
