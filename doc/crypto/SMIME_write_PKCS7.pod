@@ -30,17 +30,19 @@ If the B<PKCS7_TEXT> flag is set MIME headers for type B<text/plain>
 are added to the content, this only makes sense if B<PKCS7_DETACHED>
 is also set.
 
-If cleartext signing is being used then the data must be read twice:
-once to compute the signature in PKCS7_sign() and once to output the
-S/MIME message.
+If the B<PKCS7_PARTSIGN> flag is set the signed data is finalized
+and output along with the content. This flag should only be set
+if B<PKCS7_DETACHED> is also set and the previous call to PKCS7_sign()
+also set these flags.
+
+If cleartext signing is being used and B<PKCS7_PARTSIGN> not set then
+the data must be read twice: once to compute the signature in PKCS7_sign()
+and once to output the S/MIME message.
 
 =head1 BUGS
 
 SMIME_write_PKCS7() always base64 encodes PKCS#7 structures, there
 should be an option to disable this.
-
-There should really be a way to produce cleartext signing using only
-a single pass of the data.
 
 =head1 RETURN VALUES
 

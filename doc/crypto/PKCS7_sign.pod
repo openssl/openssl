@@ -51,6 +51,24 @@ If present the SMIMECapabilities attribute indicates support for the following
 algorithms: triple DES, 128 bit RC2, 64 bit RC2, DES and 40 bit RC2. If any
 of these algorithms is disabled then it will not be included.
 
+If the flags B<PKCS7_PARTSIGN> is set then the returned B<PKCS7> structure
+is just initialized ready to perform the signing operation. The signing
+is however B<not> performed and the data to be signed is not read from
+the B<data> parameter. Signing is deferred until after the data has been
+written. In this way data can be signed in a single pass. Currently the
+flag B<PKCS7_DETACHED> B<must> also be set.
+
+=head1 NOTES
+
+Currently the flag B<PKCS7_PARTSIGN> is only supported for detached
+data. If this flag is set the returned B<PKCS7> structure is B<not>
+complete and outputting its contents via a function that does not
+properly finalize the B<PKCS7> structure will give unpredictable 
+results.
+
+At present only the SMIME_write_PKCS7() function properly finalizes the
+structure.
+
 =head1 BUGS
 
 PKCS7_sign() is somewhat limited. It does not support multiple signers, some
@@ -64,10 +82,6 @@ signed due to memory restraints. There should be a way to sign data without
 having to hold it all in memory, this would however require fairly major
 revisions of the OpenSSL ASN1 code.
 
-Clear text signing does not store the content in memory but the way PKCS7_sign()
-operates means that two passes of the data must typically be made: one to compute
-the signatures and a second to output the data along with the signature. There
-should be a way to process the data with only a single pass.
 
 =head1 RETURN VALUES
 
@@ -81,5 +95,7 @@ L<ERR_get_error(3)|ERR_get_error(3)>, L<PKCS7_verify(3)|PKCS7_verify(3)>
 =head1 HISTORY
 
 PKCS7_sign() was added to OpenSSL 0.9.5
+
+The B<PKCS7_PARTSIGN> flag was added in OpenSSL 0.9.8
 
 =cut
