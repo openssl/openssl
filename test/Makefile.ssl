@@ -131,7 +131,7 @@ SET_SO_PATHS=LIBPATH="`cd ..; pwd`"; LD_LIBRARY_PATH="$$LIBPATH"; DYLD_LIBRARY_P
 alltests: \
 	test_des test_idea test_sha test_md4 test_md5 test_hmac \
 	test_md2 test_mdc2 \
-	test_rmd test_rc2 test_rc4 test_rc5 test_bf test_cast test_rd \
+	test_rmd test_rc2 test_rc4 test_rc5 test_bf test_cast test_aes \
 	test_rand test_bn test_ec test_ecdsa test_ecdh \
 	test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
@@ -274,9 +274,9 @@ test_ca:
 	  sh ./testca; \
  	fi
 
-test_rd: #$(RDTEST)
+test_aes: #$(AESTEST)
 #	@echo "test Rijndael"
-#	$(SET_SO_PATHS); ./$(RDTEST)
+#	$(SET_SO_PATHS); ./$(AESTEST)
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
@@ -493,14 +493,14 @@ $(ECDHTEST): $(ECDHTEST).o $(DLIBCRYPTO)
 	  $(CC) -o $(ECDHTEST) $(CFLAGS) $(ECDHTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 
-#$(RDTEST).o: $(RDTEST).c
-#	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(RDTEST).c
+#$(AESTEST).o: $(AESTEST).c
+#	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
 
-#$(RDTEST): $(RDTEST).o $(DLIBCRYPTO)
+#$(AESTEST): $(AESTEST).o $(DLIBCRYPTO)
 #	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-#	  $(CC) -o $(RDTEST) $(CFLAGS) $(RDTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+#	  $(CC) -o $(AESTEST) $(CFLAGS) $(AESTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 #	else \
-#	  $(CC) -o $(RDTEST) $(CFLAGS) $(RDTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
+#	  $(CC) -o $(AESTEST) $(CFLAGS) $(AESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 #	fi
 
 dummytest: dummytest.o $(DLIBCRYPTO)
