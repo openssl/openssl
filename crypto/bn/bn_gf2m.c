@@ -288,6 +288,9 @@ int	BN_GF2m_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	int i;
 	const BIGNUM *at, *bt;
 
+	bn_check_top(a);
+	bn_check_top(b);
+
 	if (a->top < b->top) { at = b; bt = a; }
 	else { at = a; bt = b; }
 
@@ -322,7 +325,9 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[])
 	int j, k;
 	int n, dN, d0, d1;
 	BN_ULONG zz, *z;
-	
+
+	bn_check_top(a);
+
 	if (!p[0])
 		/* reduction mod 1 => return 0 */
 		return BN_zero(r);
@@ -397,7 +402,6 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[])
 		}
 
 	bn_correct_top(r);
-	
 	return 1;
 	}
 
@@ -412,6 +416,8 @@ int	BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p)
 	int ret = 0;
 	const int max = BN_num_bits(p);
 	unsigned int *arr=NULL;
+	bn_check_top(a);
+	bn_check_top(p);
 	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
@@ -421,7 +427,7 @@ int	BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p)
 		}
 	ret = BN_GF2m_mod_arr(r, a, arr);
 	bn_check_top(r);
-  err:
+err:
 	if (arr) OPENSSL_free(arr);
 	return ret;
 	}
@@ -435,12 +441,14 @@ int	BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsig
 	int zlen, i, j, k, ret = 0;
 	BIGNUM *s;
 	BN_ULONG x1, x0, y1, y0, zz[4];
-	
+
+	bn_check_top(a);
+	bn_check_top(b);
+
 	if (a == b)
 		{
 		return BN_GF2m_mod_sqr_arr(r, a, p, ctx);
 		}
-	
 
 	BN_CTX_start(ctx);
 	if ((s = BN_CTX_get(ctx)) == NULL) goto err;
@@ -469,10 +477,9 @@ int	BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsig
 		ret = 1;
 	bn_check_top(r);
 
-  err:
+err:
 	BN_CTX_end(ctx);
 	return ret;
-	
 	}
 
 /* Compute the product of two polynomials a and b, reduce modulo p, and store
@@ -487,6 +494,9 @@ int	BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p
 	int ret = 0;
 	const int max = BN_num_bits(p);
 	unsigned int *arr=NULL;
+	bn_check_top(a);
+	bn_check_top(b);
+	bn_check_top(p);
 	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
@@ -496,7 +506,7 @@ int	BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p
 		}
 	ret = BN_GF2m_mod_mul_arr(r, a, b, arr, ctx);
 	bn_check_top(r);
-  err:
+err:
 	if (arr) OPENSSL_free(arr);
 	return ret;
 	}
@@ -507,7 +517,8 @@ int	BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_C
 	{
 	int i, ret = 0;
 	BIGNUM *s;
-	
+
+	bn_check_top(a);
 	BN_CTX_start(ctx);
 	if ((s = BN_CTX_get(ctx)) == NULL) return 0;
 	if (!bn_wexpand(s, 2 * a->top)) goto err;
@@ -523,7 +534,7 @@ int	BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_C
 	if (!BN_GF2m_mod_arr(r, s, p)) goto err;
 	bn_check_top(r);
 	ret = 1;
-  err:
+err:
 	BN_CTX_end(ctx);
 	return ret;
 	}
@@ -539,6 +550,9 @@ int	BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	int ret = 0;
 	const int max = BN_num_bits(p);
 	unsigned int *arr=NULL;
+
+	bn_check_top(a);
+	bn_check_top(p);
 	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
@@ -548,7 +562,7 @@ int	BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		}
 	ret = BN_GF2m_mod_sqr_arr(r, a, arr, ctx);
 	bn_check_top(r);
-  err:
+err:
 	if (arr) OPENSSL_free(arr);
 	return ret;
 	}
@@ -563,6 +577,9 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	{
 	BIGNUM *b, *c, *u, *v, *tmp;
 	int ret = 0;
+
+	bn_check_top(a);
+	bn_check_top(p);
 
 	BN_CTX_start(ctx);
 	
@@ -608,7 +625,7 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	bn_check_top(r);
 	ret = 1;
 
-  err:
+err:
   	BN_CTX_end(ctx);
 	return ret;
 	}
@@ -624,6 +641,7 @@ int BN_GF2m_mod_inv_arr(BIGNUM *r, const BIGNUM *xx, const unsigned int p[], BN_
 	BIGNUM *field;
 	int ret = 0;
 
+	bn_check_top(xx);
 	BN_CTX_start(ctx);
 	if ((field = BN_CTX_get(ctx)) == NULL) goto err;
 	if (!BN_GF2m_arr2poly(p, field)) goto err;
@@ -631,7 +649,7 @@ int BN_GF2m_mod_inv_arr(BIGNUM *r, const BIGNUM *xx, const unsigned int p[], BN_
 	ret = BN_GF2m_mod_inv(r, xx, field, ctx);
 	bn_check_top(r);
 
-  err:
+err:
 	BN_CTX_end(ctx);
 	return ret;
 	}
@@ -645,7 +663,11 @@ int BN_GF2m_mod_div(BIGNUM *r, const BIGNUM *y, const BIGNUM *x, const BIGNUM *p
 	{
 	BIGNUM *xinv = NULL;
 	int ret = 0;
-	
+
+	bn_check_top(y);
+	bn_check_top(x);
+	bn_check_top(p);
+
 	BN_CTX_start(ctx);
 	xinv = BN_CTX_get(ctx);
 	if (xinv == NULL) goto err;
@@ -655,7 +677,7 @@ int BN_GF2m_mod_div(BIGNUM *r, const BIGNUM *y, const BIGNUM *x, const BIGNUM *p
 	bn_check_top(r);
 	ret = 1;
 
-  err:
+err:
 	BN_CTX_end(ctx);
 	return ret;
 	}
@@ -670,6 +692,10 @@ int BN_GF2m_mod_div(BIGNUM *r, const BIGNUM *y, const BIGNUM *x, const BIGNUM *p
 	{
 	BIGNUM *a, *b, *u, *v;
 	int ret = 0;
+
+	bn_check_top(y);
+	bn_check_top(x);
+	bn_check_top(p);
 
 	BN_CTX_start(ctx);
 	
@@ -724,7 +750,7 @@ int BN_GF2m_mod_div(BIGNUM *r, const BIGNUM *y, const BIGNUM *x, const BIGNUM *p
 	bn_check_top(r);
 	ret = 1;
 
-  err:
+err:
   	BN_CTX_end(ctx);
 	return ret;
 	}
@@ -742,6 +768,9 @@ int BN_GF2m_mod_div_arr(BIGNUM *r, const BIGNUM *yy, const BIGNUM *xx, const uns
 	BIGNUM *field;
 	int ret = 0;
 
+	bn_check_top(yy);
+	bn_check_top(xx);
+
 	BN_CTX_start(ctx);
 	if ((field = BN_CTX_get(ctx)) == NULL) goto err;
 	if (!BN_GF2m_arr2poly(p, field)) goto err;
@@ -749,7 +778,7 @@ int BN_GF2m_mod_div_arr(BIGNUM *r, const BIGNUM *yy, const BIGNUM *xx, const uns
 	ret = BN_GF2m_mod_div(r, yy, xx, field, ctx);
 	bn_check_top(r);
 
-  err:
+err:
 	BN_CTX_end(ctx);
 	return ret;
 	}
@@ -763,13 +792,15 @@ int	BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsig
 	{
 	int ret = 0, i, n;
 	BIGNUM *u;
-	
+
+	bn_check_top(a);
+	bn_check_top(b);
+
 	if (BN_is_zero(b))
 		return(BN_one(r));
 
 	if (BN_abs_is_word(b, 1))
 		return (BN_copy(r, a) != NULL);
-	
 
 	BN_CTX_start(ctx);
 	if ((u = BN_CTX_get(ctx)) == NULL) goto err;
@@ -787,10 +818,8 @@ int	BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsig
 		}
 	if (!BN_copy(r, u)) goto err;
 	bn_check_top(r);
-
 	ret = 1;
-
-  err:
+err:
 	BN_CTX_end(ctx);
 	return ret;
 	}
@@ -807,6 +836,9 @@ int BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p
 	int ret = 0;
 	const int max = BN_num_bits(p);
 	unsigned int *arr=NULL;
+	bn_check_top(a);
+	bn_check_top(b);
+	bn_check_top(p);
 	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
@@ -816,7 +848,7 @@ int BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p
 		}
 	ret = BN_GF2m_mod_exp_arr(r, a, b, arr, ctx);
 	bn_check_top(r);
-  err:
+err:
 	if (arr) OPENSSL_free(arr);
 	return ret;
 	}
@@ -830,10 +862,12 @@ int	BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_
 	int ret = 0;
 	BIGNUM *u;
 
+	bn_check_top(a);
+
 	if (!p[0])
 		/* reduction mod 1 => return 0 */
 		return BN_zero(r);
-	
+
 	BN_CTX_start(ctx);
 	if ((u = BN_CTX_get(ctx)) == NULL) goto err;
 	
@@ -842,7 +876,7 @@ int	BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_
 	ret = BN_GF2m_mod_exp_arr(r, a, u, p, ctx);
 	bn_check_top(r);
 
-  err:
+err:
 	BN_CTX_end(ctx);
 	return ret;
 	}
@@ -859,6 +893,8 @@ int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	int ret = 0;
 	const int max = BN_num_bits(p);
 	unsigned int *arr=NULL;
+	bn_check_top(a);
+	bn_check_top(p);
 	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
@@ -868,7 +904,7 @@ int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		}
 	ret = BN_GF2m_mod_sqrt_arr(r, a, arr, ctx);
 	bn_check_top(r);
-  err:
+err:
 	if (arr) OPENSSL_free(arr);
 	return ret;
 	}
@@ -881,6 +917,8 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p
 	int ret = 0, count = 0;
 	unsigned int j;
 	BIGNUM *a, *z, *rho, *w, *w2, *tmp;
+
+	bn_check_top(a_);
 
 	if (!p[0])
 		/* reduction mod 1 => return 0 */
@@ -950,7 +988,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p
 
 	ret = 1;
 
-  err:
+err:
 	BN_CTX_end(ctx);
 	return ret;
 	}
@@ -966,6 +1004,8 @@ int BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *
 	int ret = 0;
 	const int max = BN_num_bits(p);
 	unsigned int *arr=NULL;
+	bn_check_top(a);
+	bn_check_top(p);
 	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) *
 						max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
@@ -976,7 +1016,7 @@ int BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *
 		}
 	ret = BN_GF2m_mod_solve_quad_arr(r, a, arr, ctx);
 	bn_check_top(r);
-  err:
+err:
 	if (arr) OPENSSL_free(arr);
 	return ret;
 	}
@@ -1025,6 +1065,7 @@ int BN_GF2m_arr2poly(const unsigned int p[], BIGNUM *a)
 	{
 	int i;
 
+	bn_check_top(a);
 	BN_zero(a);
 	for (i = 0; p[i] != 0; i++)
 		{
@@ -1032,7 +1073,7 @@ int BN_GF2m_arr2poly(const unsigned int p[], BIGNUM *a)
 		}
 	BN_set_bit(a, 0);
 	bn_check_top(a);
-	
+
 	return 1;
 	}
 
