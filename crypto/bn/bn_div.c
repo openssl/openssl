@@ -185,6 +185,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	BN_ULONG d0,d1;
 	int num_n,div_n;
 
+	bn_check_top(dv);
+	bn_check_top(rm);
 	bn_check_top(num);
 	bn_check_top(divisor);
 
@@ -233,7 +235,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	wnum.dmax= snum->dmax - loop; /* so we don't step out of bounds */
 
 	/* Get the top 2 words of sdiv */
-	/* i=sdiv->top; */
+	/* div_n=sdiv->top; */
 	d0=sdiv->d[div_n-1];
 	d1=(div_n == 1)?0:sdiv->d[div_n-2];
 
