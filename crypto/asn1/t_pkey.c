@@ -420,8 +420,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 		if (is_char_two)
 			{
 			/* print the 'short name' of the base type OID */
-			int basis_type = EC_GROUP_get_basis_type(x, NULL,
-				NULL, NULL);
+			int basis_type = EC_GROUP_get_basis_type(x);
 			if (basis_type == 0)
 				goto err;
 

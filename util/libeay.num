@@ -3007,3 +3007,5 @@ EC_GROUP_get0_comment                   3440	EXIST::FUNCTION:EC
 ec_group_index2nid                      3441	EXIST::FUNCTION:EC
 EC_GROUP_get_basis_type                 3442	EXIST::FUNCTION:EC
 X509_REQ_print_ex                       3443	EXIST::FUNCTION:BIO
+EC_GROUP_get_pentanomial_basis          3444	EXIST::FUNCTION:EC
+EC_GROUP_get_trinomial_basis            3445	EXIST::FUNCTION:EC

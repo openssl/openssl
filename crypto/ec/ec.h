@@ -257,9 +257,10 @@ int EC_GROUP_precompute_mult(EC_GROUP *, BN_CTX *);
 /* ASN1 stuff */
 
 /* EC_GROUP_get_basis_type() returns the NID of the basis type
- * used to represent the field elements (in case of a pentanomial or trinomial
- * basis the coefficient are returned in the k? arguments) */
-int EC_GROUP_get_basis_type(const EC_GROUP *, unsigned int *k1,
+ * used to represent the field elements */
+int EC_GROUP_get_basis_type(const EC_GROUP *);
+int EC_GROUP_get_trinomial_basis(const EC_GROUP *, unsigned int *k);
+int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1, 
 	unsigned int *k2, unsigned int *k3);
 
 #define OPENSSL_EC_NAMED_CURVE	0x001
@@ -372,6 +373,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_ASN1_PARAMETERS2GROUP			 157
 #define EC_F_EC_ASN1_PKPARAMETERS2GROUP			 158
 #define EC_F_EC_GF2M_SIMPLE_GROUP_CHECK_DISCRIMINANT	 159
+#define EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE		 195
 #define EC_F_EC_GF2M_SIMPLE_OCT2POINT			 160
 #define EC_F_EC_GF2M_SIMPLE_POINT2OCT			 161
 #define EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES 162
@@ -405,6 +407,8 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GROUP_GET_DEGREE			 173
 #define EC_F_EC_GROUP_GET_EXTRA_DATA			 107
 #define EC_F_EC_GROUP_GET_ORDER				 141
+#define EC_F_EC_GROUP_GET_PENTANOMIAL_BASIS		 193
+#define EC_F_EC_GROUP_GET_TRINOMIAL_BASIS		 194
 #define EC_F_EC_GROUP_GROUP2NID				 147
 #define EC_F_EC_GROUP_NEW				 108
 #define EC_F_EC_GROUP_NEW_BY_NID			 174
@@ -481,6 +485,7 @@ void ERR_load_EC_strings(void);
 #define EC_R_UNDEFINED_ORDER				 128
 #define EC_R_UNKNOWN_GROUP				 129
 #define EC_R_UNKNOWN_ORDER				 114
+#define EC_R_UNSUPPORTED_FIELD				 131
 #define EC_R_WRONG_ORDER				 130
 
 #ifdef  __cplusplus

@@ -200,7 +200,11 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
 	/* group->field */
 	if (!BN_copy(&group->field, p)) goto err;
 	i = BN_GF2m_poly2arr(&group->field, group->poly, 5);
-	if ((i != 5) && (i != 3)) goto err;
+	if ((i != 5) && (i != 3))
+		{
+		ECerr(EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE, EC_R_UNSUPPORTED_FIELD);
+		goto err;
+		}
 
 	/* group->a */
 	if (!BN_GF2m_mod_arr(&group->a, a, group->poly)) goto err;

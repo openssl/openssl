@@ -83,6 +83,7 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_PACK(0,EC_F_EC_ASN1_PARAMETERS2GROUP,0),	"EC_ASN1_PARAMETERS2GROUP"},
 {ERR_PACK(0,EC_F_EC_ASN1_PKPARAMETERS2GROUP,0),	"EC_ASN1_PKPARAMETERS2GROUP"},
 {ERR_PACK(0,EC_F_EC_GF2M_SIMPLE_GROUP_CHECK_DISCRIMINANT,0),	"ec_GF2m_simple_group_check_discriminant"},
+{ERR_PACK(0,EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE,0),	"ec_GF2m_simple_group_set_curve"},
 {ERR_PACK(0,EC_F_EC_GF2M_SIMPLE_OCT2POINT,0),	"ec_GF2m_simple_oct2point"},
 {ERR_PACK(0,EC_F_EC_GF2M_SIMPLE_POINT2OCT,0),	"ec_GF2m_simple_point2oct"},
 {ERR_PACK(0,EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES,0),	"ec_GF2m_simple_point_get_affine_coordinates"},
@@ -116,6 +117,8 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_PACK(0,EC_F_EC_GROUP_GET_DEGREE,0),	"EC_GROUP_get_degree"},
 {ERR_PACK(0,EC_F_EC_GROUP_GET_EXTRA_DATA,0),	"EC_GROUP_get_extra_data"},
 {ERR_PACK(0,EC_F_EC_GROUP_GET_ORDER,0),	"EC_GROUP_get_order"},
+{ERR_PACK(0,EC_F_EC_GROUP_GET_PENTANOMIAL_BASIS,0),	"EC_GROUP_get_pentanomial_basis"},
+{ERR_PACK(0,EC_F_EC_GROUP_GET_TRINOMIAL_BASIS,0),	"EC_GROUP_get_trinomial_basis"},
 {ERR_PACK(0,EC_F_EC_GROUP_GROUP2NID,0),	"EC_GROUP_GROUP2NID"},
 {ERR_PACK(0,EC_F_EC_GROUP_NEW,0),	"EC_GROUP_new"},
 {ERR_PACK(0,EC_F_EC_GROUP_NEW_BY_NID,0),	"EC_GROUP_new_by_nid"},
@@ -195,6 +198,7 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {EC_R_UNDEFINED_ORDER                    ,"undefined order"},
 {EC_R_UNKNOWN_GROUP                      ,"unknown group"},
 {EC_R_UNKNOWN_ORDER                      ,"unknown order"},
+{EC_R_UNSUPPORTED_FIELD                  ,"unsupported field"},
 {EC_R_WRONG_ORDER                        ,"wrong order"},
 {0,NULL}
 	};

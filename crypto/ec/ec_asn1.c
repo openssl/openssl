@@ -63,13 +63,9 @@
 #include <openssl/objects.h>
 
 
-int EC_GROUP_get_basis_type(const EC_GROUP *group, unsigned int *k1, 
-	unsigned int *k2, unsigned int *k3)
+int EC_GROUP_get_basis_type(const EC_GROUP *group)
 	{
-	int i = 0;
-
-	if (group == NULL)
-		return 0;
+	int i=0;
 
 	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) !=
 		NID_X9_62_characteristic_two_field)
@@ -80,26 +76,53 @@ int EC_GROUP_get_basis_type(const EC_GROUP *group, unsigned int *k1,
 		i++;
 
 	if (i == 4)
-		{
-		if (k1)
-			*k1 = group->poly[3];
-		if (k2)
-			*k2 = group->poly[2];
-		if (k3)
-			*k3 = group->poly[1];
-
 		return NID_X9_62_ppBasis;
-		}
 	else if (i == 2)
-		{
-		if (k1)
-			*k1 = group->poly[1];
-
 		return NID_X9_62_tpBasis;
-		}
 	else
 		/* everything else is currently not supported */
 		return 0;
+	}
+
+int EC_GROUP_get_trinomial_basis(const EC_GROUP *group, unsigned int *k)
+	{
+	if (group == NULL)
+		return 0;
+
+	if (EC_GROUP_method_of(group)->group_set_curve != ec_GF2m_simple_group_set_curve
+	    || !((group->poly[0] != 0) && (group->poly[1] != 0) && (group->poly[2] == 0)))
+		{
+		ECerr(EC_F_EC_GROUP_GET_TRINOMIAL_BASIS, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+
+	if (k)
+		*k = group->poly[1];
+
+	return 1;
+	}
+
+int EC_GROUP_get_pentanomial_basis(const EC_GROUP *group, unsigned int *k1,
+	unsigned int *k2, unsigned int *k3)
+	{
+	if (group == NULL)
+		return 0;
+
+	if (EC_GROUP_method_of(group)->group_set_curve != ec_GF2m_simple_group_set_curve
+	    || !((group->poly[0] != 0) && (group->poly[1] != 0) && (group->poly[2] != 0) && (group->poly[3] != 0) && (group->poly[4] == 0)))
+		{
+		ECerr(EC_F_EC_GROUP_GET_PENTANOMIAL_BASIS, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+
+	if (k1)
+		*k1 = group->poly[3];
+	if (k2)
+		*k2 = group->poly[2];
+	if (k3)
+		*k3 = group->poly[1];
+
+	return 1;
 	}
 
 
@@ -323,7 +346,6 @@ static X9_62_FIELDID *ec_asn1_group2field(const EC_GROUP *group,
 	else	/* nid == NID_X9_62_characteristic_two_field */
 		{
 		int		field_type;
-		unsigned int	k1, k2, k3;
 
 		char_two = X9_62_CHARACTERISTIC_TWO_new();
 		if (char_two == NULL)
@@ -334,7 +356,7 @@ static X9_62_FIELDID *ec_asn1_group2field(const EC_GROUP *group,
 	
 		char_two->m = (long)EC_GROUP_get_degree(group);
 
-		field_type = EC_GROUP_get_basis_type(group, &k1, &k2, &k3);
+		field_type = EC_GROUP_get_basis_type(group);
 
 		if (field_type == 0)
 			{
@@ -350,6 +372,11 @@ static X9_62_FIELDID *ec_asn1_group2field(const EC_GROUP *group,
 
 		if (field_type == NID_X9_62_tpBasis)
 			{
+			unsigned int k;
+
+			if (!EC_GROUP_get_trinomial_basis(group, &k))
+				goto err;
+
 			char_two->parameters->type = V_ASN1_INTEGER;
 			char_two->parameters->value.integer = 
 				ASN1_INTEGER_new();
@@ -359,7 +386,7 @@ static X9_62_FIELDID *ec_asn1_group2field(const EC_GROUP *group,
 					ERR_R_ASN1_LIB);
 				goto err;
 				}
-			if (!ASN1_INTEGER_set(char_two->parameters->value.integer, (long)k1))
+			if (!ASN1_INTEGER_set(char_two->parameters->value.integer, (long)k))
 				{
 				ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS,
 					ERR_R_ASN1_LIB);
@@ -368,6 +395,11 @@ static X9_62_FIELDID *ec_asn1_group2field(const EC_GROUP *group,
 			}
 		else if (field_type == NID_X9_62_ppBasis)
 			{
+			unsigned int k1, k2, k3;
+
+			if (!EC_GROUP_get_pentanomial_basis(group, &k1, &k2, &k3))
+				goto err;
+
 			penta = X9_62_PENTANOMIAL_new();
 			/* set k? values */
 			penta->k1 = (long)k1;
