@@ -10,10 +10,15 @@ use strict;
 
 # see INSTALL for instructions.
 #
-# Configure options:
+# Usage: Configure [-Dxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-asm] [rsaref]
+#         [386] platform[:flags]
+#
+# Options:
 # rsaref        use RSAref
 # no-asm        do not use assembler
 # 386           generate 80386 code
+# -D, -L, -l, -f, -K: compiler options are passed through 
+# 
 # -DRSAref	build to use RSAref
 # -DNO_IDEA	build with no IDEA algorithm
 # -DNO_RC4	build with no RC4 algorithm
@@ -710,7 +715,7 @@ exit(0);
 
 sub bad_target
 	{
-	print STDERR "Usage: Configure [-Dxxx] [-Lxxx] [-lxxx] os/compiler\n";
+	print STDERR "Usage: Configure [-Dxxx] [-Lxxx] [-lxxx] [no-asm] [rsaref] os/compiler\n";
 	print STDERR "pick os/compiler from:";
 	my $j=0;
 	my $i;
