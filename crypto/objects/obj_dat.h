@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 718
-#define NUM_SN 713
-#define NUM_LN 713
-#define NUM_OBJ 687
+#define NUM_NID 720
+#define NUM_SN 715
+#define NUM_LN 715
+#define NUM_OBJ 689
 
-static unsigned char lvalues[4869]={
+static unsigned char lvalues[4876]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -755,6 +755,8 @@ static unsigned char lvalues[4869]={
 0x67,0x2B,0x0D,0x04,0x0C,                    /* [4843] OBJ_wap_wsg_idm_ecid_wtls12 */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x14,0x02,0x02,/* [4848] OBJ_ms_smartcard_login */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x14,0x02,0x03,/* [4858] OBJ_ms_upn */
+0x55,0x1D,0x20,0x00,                         /* [4868] OBJ_any_policy */
+0x55,0x1D,0x21,                              /* [4872] OBJ_policy_mapping */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1879,6 +1881,9 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	10,&(lvalues[4848]),0},
 {"msUPN","Microsoft Universal Principal Name",NID_ms_upn,10,
 	&(lvalues[4858]),0},
+{"anyPolicy","X509v3 Any Policy",NID_any_policy,4,&(lvalues[4868]),0},
+{"policyMapping","X509v3 Policy Mapping",NID_policy_mapping,3,
+	&(lvalues[4872]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2019,6 +2024,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[363]),/* "ad_timestamping" */
 &(nid_objs[376]),/* "algorithm" */
 &(nid_objs[405]),/* "ansi-X9-62" */
+&(nid_objs[718]),/* "anyPolicy" */
 &(nid_objs[370]),/* "archiveCutoff" */
 &(nid_objs[484]),/* "associatedDomain" */
 &(nid_objs[485]),/* "associatedName" */
@@ -2361,6 +2367,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[151]),/* "pkcs8ShroudedKeyBag" */
 &(nid_objs[47]),/* "pkcs9" */
 &(nid_objs[401]),/* "policyConstraints" */
+&(nid_objs[719]),/* "policyMapping" */
 &(nid_objs[506]),/* "ppBasis" */
 &(nid_objs[406]),/* "prime-field" */
 &(nid_objs[409]),/* "prime192v1" */
@@ -2679,6 +2686,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[375]),/* "Trust Root" */
 &(nid_objs[12]),/* "X509" */
 &(nid_objs[402]),/* "X509v3 AC Targeting" */
+&(nid_objs[718]),/* "X509v3 Any Policy" */
 &(nid_objs[90]),/* "X509v3 Authority Key Identifier" */
 &(nid_objs[87]),/* "X509v3 Basic Constraints" */
 &(nid_objs[103]),/* "X509v3 CRL Distribution Points" */
@@ -2691,6 +2699,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[83]),/* "X509v3 Key Usage" */
 &(nid_objs[403]),/* "X509v3 No Revocation Available" */
 &(nid_objs[401]),/* "X509v3 Policy Constraints" */
+&(nid_objs[719]),/* "X509v3 Policy Mapping" */
 &(nid_objs[84]),/* "X509v3 Private Key Usage Period" */
 &(nid_objs[85]),/* "X509v3 Subject Alternative Name" */
 &(nid_objs[82]),/* "X509v3 Subject Key Identifier" */
@@ -3365,6 +3374,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[140]),/* OBJ_delta_crl                    2 5 29 27 */
 &(nid_objs[103]),/* OBJ_crl_distribution_points      2 5 29 31 */
 &(nid_objs[89]),/* OBJ_certificate_policies         2 5 29 32 */
+&(nid_objs[719]),/* OBJ_policy_mapping               2 5 29 33 */
 &(nid_objs[90]),/* OBJ_authority_key_identifier     2 5 29 35 */
 &(nid_objs[401]),/* OBJ_policy_constraints           2 5 29 36 */
 &(nid_objs[126]),/* OBJ_ext_key_usage                2 5 29 37 */
@@ -3389,6 +3399,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[19]),/* OBJ_rsa                          2 5 8 1 1 */
 &(nid_objs[96]),/* OBJ_mdc2WithRSA                  2 5 8 3 100 */
 &(nid_objs[95]),/* OBJ_mdc2                         2 5 8 3 101 */
+&(nid_objs[718]),/* OBJ_any_policy                   2 5 29 32 0 */
 &(nid_objs[583]),/* OBJ_setct_PANData                2 23 42 0 0 */
 &(nid_objs[584]),/* OBJ_setct_PANToken               2 23 42 0 1 */
 &(nid_objs[585]),/* OBJ_setct_PANOnly                2 23 42 0 2 */

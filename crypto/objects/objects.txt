@@ -662,6 +662,10 @@ id-ce 27		: deltaCRL		: X509v3 Delta CRL Indicator
 id-ce 31		: crlDistributionPoints	: X509v3 CRL Distribution Points
 !Cname certificate-policies
 id-ce 32		: certificatePolicies	: X509v3 Certificate Policies
+!Cname any-policy
+certificate-policies 0	: anyPolicy		: X509v3 Any Policy
+!Cname policy-mapping
+id-ce 33		: policyMapping		: X509v3 Policy Mapping
 !Cname authority-key-identifier
 id-ce 35		: authorityKeyIdentifier : X509v3 Authority Key Identifier
 !Cname policy-constraints
