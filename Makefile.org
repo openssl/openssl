@@ -335,6 +335,49 @@ do_hpux64-shared:
 		+forceload lib$$i.a -ldl -lc ) || exit 1; \
 	done
 
+# The following method is said to work on all platforms.  Tests will
+# determine if that's how it's gong to be used.
+# This assumes that for all but GNU systems, GNU utilities are *not* used.
+# ALLSYMSFLAGS would be:
+#  GNU systems: --whole-archive
+#  Tru64 Unix:  -all
+#  Solaris:     -z allextract
+#  Irix:        -all
+#  HP/UX-32bit: -Fl
+#  HP/UX-64bit: +forceload
+#  AIX:		-bnogc
+# SHAREDFLAGS would be:
+#  GNU systems: -shared -Wl,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+#  Tru64 Unix:  -shared \
+#		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}"
+#  Solaris:     -G -h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+#  Irix:        -shared -Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+#  HP/UX-32bit: +vnocompatwarnings -b -z +s \
+#		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}
+#  HP/UX-64bit: -b -z +h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}
+#  AIX:		-bE:lib$$i.exp -bM:SRE
+# SHAREDCMD would be:
+#  GNU systems: $(CC)
+#  Tru64 Unix:  $(CC)
+#  Solaris:     $(CC)
+#  Irix:        $(CC)
+#  HP/UX-32bit: /usr/ccs/bin/ld
+#  HP/UX-64bit: /usr/ccs/bin/ld
+#  AIX:		$(CC)
+ALLSYMSFLAG=-bnogc
+SHAREDFLAGS=-bE:lib$$i.exp -bM:SRE
+SHAREDCMD=$(CC)
+do_aix-shared:
+	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	( set -x; \
+	  ld -r -o $$i.o $(ALLSYMSFLAG) lib$$i.a && \
+	  ( nm -Pg lib$$i.o | grep ' [BD] ' | cut -f1 -d' ' > lib$$i.exp; \
+	    $(SHAREDCMD) $(SHAREDFLAG) -o lib$$i.so lib$$i.o \
+		$$libs ${EX_LIBS} ) ) \
+	|| exit 1; \
+	libs="$$libs -l$$i"; \
+	done
+
 Makefile.ssl: Makefile.org
 	@echo "Makefile.ssl is older than Makefile.org."
 	@echo "Reconfigure the source tree (via './config' or 'perl Configure'), please."
