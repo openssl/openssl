@@ -62,9 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "ssl_locl.h"
-#ifndef OPENSSL_NO_KRB5
 #include "kssl_lcl.h"
-#endif
 #include <openssl/md5.h>
 
 static SSL_METHOD *ssl3_get_client_method(int ver);

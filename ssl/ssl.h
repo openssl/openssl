@@ -70,9 +70,7 @@
 #ifndef OPENSSL_NO_X509
 #include <openssl/x509.h>
 #endif
-#ifndef OPENSSL_NO_KRB5
 #include <openssl/kssl.h>
-#endif
 #include <openssl/safestack.h>
 #include <openssl/symhacks.h>
 

@@ -67,7 +67,7 @@
 */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_KRB5
+
 #define _XOPEN_SOURCE /* glibc2 needs this to declare strptime() */
 #include <time.h>
 #include <string.h>
@@ -76,6 +76,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/krb5_asn.h>
+
+#ifndef OPENSSL_NO_KRB5
 
 /* 
  * When OpenSSL is built on Windows, we do not want to require that

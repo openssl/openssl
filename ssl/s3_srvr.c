@@ -121,9 +121,7 @@
 #include <openssl/x509.h>
 #include <openssl/krb5_asn.h>
 #include "ssl_locl.h"
-#ifndef OPENSSL_NO_KRB5
 #include "kssl_lcl.h"
-#endif /* OPENSSL_NO_KRB5 */
 #include <openssl/md5.h>
 
 static SSL_METHOD *ssl3_get_server_method(int ver);
