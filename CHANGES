@@ -436,6 +436,17 @@ TODO: bug: pad  x  with leading zeros if necessary
 
  Changes between 0.9.7 and 0.9.7a  [XX xxx 2003]
 
+  *) Make the no-err option work as intended.  The intention with no-err
+     is not to have the whole error stack handling routines removed from
+     libcrypto, it's only intended to remove all the function name and
+     reason texts, thereby removing some of the footprint that may not
+     be interesting if those errors aren't displayed anyway.
+
+     NOTE: it's still possible for any application or module to have it's
+     own set of error texts inserted.  The routines are there, just not
+     used by default when no-err is given.
+     [Richard Levitte]
+
   *) Add support for FreeBSD on IA64.
      [dirk.meyer@dinoex.sub.org via Richard Levitte, resolves #454]
 
