@@ -5,8 +5,7 @@
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
   *) BN_mul bugfix: In bn_mul_part_recursion() only the a>a[n] && b>b[n]
-     case was implemented. This caused BN_div_recp() to fail occasionally
-     on 32 bit machines.
+     case was implemented. This caused BN_div_recp() to fail occasionally.
      [Ulf Möller]
 
   *) Add an optional second argument to the set_label() in the perl
