@@ -280,7 +280,7 @@ int MAIN(int argc, char **argv)
 		}
 		siglen = BIO_read(sigbio, sigbuf, siglen);
 		BIO_free(sigbio);
-		if(siglen <= 0) {
+		if(siglen == 0) {
 			BIO_printf(bio_err, "Error reading signature file %s\n",
 								sigfile);
 			ERR_print_errors(bio_err);
