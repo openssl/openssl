@@ -66,7 +66,7 @@
   memcpy(c, ctext_ex, sizeof(ctext_ex) - 1); \
   return (sizeof(ctext_ex) - 1);
 
-static int setkey(RSA *key, unsigned char *c)
+static int setrsakey(RSA *key, unsigned char *c)
     {
     static unsigned char n[] =
 "\x00\xBB\xF8\x2F\x09\x06\x82\xCE\x9C\x23\x38\xAC\x2B\x9D\xA8\x71"
@@ -157,7 +157,7 @@ int FIPS_selftest_rsa()
     int n;
 
     key=RSA_new();
-    clen=setkey(key,expected_ctext);
+    clen=setrsakey(key,expected_ctext);
     n=RSA_public_encrypt(sizeof(original_ptext)-1,original_ptext,ctext,key,
 			 RSA_NO_PADDING);
     if(n < 0)
