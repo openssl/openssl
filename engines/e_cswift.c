@@ -86,6 +86,8 @@
 #define CSWIFT_LIB_NAME "cswift engine"
 #include "e_cswift_err.c"
 
+#define DECIMAL_SIZE(type)	((sizeof(type)*8+2)/3+1)
+
 static int cswift_destroy(ENGINE *e);
 static int cswift_init(ENGINE *e);
 static int cswift_finish(ENGINE *e);
