@@ -151,6 +151,30 @@ ASN1_INTEGER *a;
 	return strtmp;
 }
 
+ASN1_INTEGER *s2i_ASN1_INTEGER(method, value)
+X509V3_EXT_METHOD *method;
+char *value;
+{
+	BIGNUM *bn = NULL;
+	ASN1_INTEGER *aint;
+	bn = BN_new();
+	if(!value) {
+		X509V3err(X509V3_F_S2I_ASN1_INTEGER,X509V3_R_INVALID_NULL_VALUE);
+		return 0;
+	}
+	if(!BN_dec2bn(&bn, value)) {
+		X509V3err(X509V3_F_S2I_ASN1_INTEGER,X509V3_R_BN_DEC2BN_ERROR);
+		return 0;
+	}
+
+	if(!(aint = BN_to_ASN1_INTEGER(bn, NULL))) {
+		X509V3err(X509V3_F_S2I_ASN1_INTEGER,X509V3_R_BN_TO_ASN1_INTEGER_ERROR);
+		return 0;
+	}
+	BN_free(bn);
+	return aint;
+}
+
 int X509V3_add_value_int(name, aint, extlist)
 char *name;
 ASN1_INTEGER *aint;
@@ -183,7 +207,7 @@ int *asn1_bool;
 		return 1;
 	}
 	err:
-	X509V3err(X509V3_F_X509V3_VALUE_GET_BOOL,X509V3_R_INVALID_BOOLEAN_STRING);
+	X509V3err(X509V3_F_X509V3_GET_VALUE_BOOL,X509V3_R_INVALID_BOOLEAN_STRING);
 	X509V3_conf_err(value);
 	return 0;
 }
@@ -192,25 +216,12 @@ int X509V3_get_value_int(value, aint)
 CONF_VALUE *value;
 ASN1_INTEGER **aint;
 {
-	BIGNUM *bn = NULL;
-	bn = BN_new();
-	if(!value->value) {
-		X509V3err(X509V3_F_X509V3_GET_VALUE_INT,X509V3_R_INVALID_NULL_VALUE);
+	ASN1_INTEGER *itmp;
+	if(!(itmp = s2i_ASN1_INTEGER(NULL, value->value))) {
 		X509V3_conf_err(value);
 		return 0;
 	}
-	if(!BN_dec2bn(&bn, value->value)) {
-		X509V3err(X509V3_F_X509V3_GET_VALUE_INT,X509V3_R_BN_DEC2BN_ERROR);
-		X509V3_conf_err(value);
-		return 0;
-	}
-
-	if(!(*aint = BN_to_ASN1_INTEGER(bn, NULL))) {
-		X509V3err(X509V3_F_X509V3_GET_VALUE_INT,X509V3_R_BN_TO_ASN1_INTEGER_ERROR);
-		X509V3_conf_err(value);
-		return 0;
-	}
-	BN_free(bn);
+	*aint = itmp;
 	return 1;
 }
 

@@ -11,6 +11,8 @@ $ssl_num=   "util/ssleay.num";
 
 $W32=1;
 $NT=0;
+# Set this to make typesafe STACK definitions appear in DEF
+$safe_stack_def = 1;
 foreach (@ARGV)
 	{
 	$W32=1 if $_ eq "32";
@@ -179,7 +181,33 @@ sub do_defs
 			$t=undef;
 			if (/^extern .*;$/)
 				{ $t=&do_extern($name,$_); }
-			elsif (	($tag{'NOPROTO'} == 1) &&
+			elsif ($safe_stack_def &&
+				/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/)
+				{
+				push(@ret,"sk_${1}_new");
+				push(@ret,"sk_${1}_new_null");
+				push(@ret,"sk_${1}_free");
+				push(@ret,"sk_${1}_num");
+				push(@ret,"sk_${1}_value");
+				push(@ret,"sk_${1}_set");
+				push(@ret,"sk_${1}_zero");
+				push(@ret,"sk_${1}_push");
+			#	push(@ret,"sk_${1}_pop");
+				push(@ret,"sk_${1}_find");
+				push(@ret,"sk_${1}_delete");
+				push(@ret,"sk_${1}_delete_ptr");
+				push(@ret,"sk_${1}_set_cmp_func");
+				push(@ret,"sk_${1}_dup");
+				push(@ret,"sk_${1}_pop_free");
+				push(@ret,"sk_${1}_shift");
+				}
+			elsif ($safe_stack_def &&
+				/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/)
+				{
+				push(@ret,"d2i_ASN1_SET_OF_${1}");
+				push(@ret,"i2d_ASN1_SET_OF_${1}");
+				}
+			elsif (($tag{'NOPROTO'} == 1) &&
 				($tag{'FreeBSD'} != 1) &&
 				(($W32 && ($tag{'WIN16'} != 1)) ||
 				 (!$W32 && ($tag{'WIN16'} != -1))) &&

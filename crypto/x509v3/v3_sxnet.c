@@ -65,8 +65,13 @@
 
 /* Support for Thawte strong extranet extension */
 
+#define SXNET_TEST
+
 #ifndef NOPROTO
 static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out, int indent);
+#ifdef SXNET_TEST
+static SXNET * sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
+#endif
 #else
 static int sxnet_i2r();
 #endif
@@ -78,7 +83,12 @@ SXNET_free,
 (X509V3_EXT_D2I)d2i_SXNET,
 i2d_SXNET,
 NULL, NULL,
-NULL, NULL,
+NULL, 
+#ifdef SXNET_TEST
+(X509V3_EXT_V2I)sxnet_v2i,
+#else
+NULL,
+#endif
 (X509V3_EXT_I2R)sxnet_i2r,
 NULL,
 NULL
@@ -114,8 +124,8 @@ SXNET *SXNET_new()
 	SXNET *ret=NULL;
 	ASN1_CTX c;
 	M_ASN1_New_Malloc(ret, SXNET);
-	ret->version = NULL;
-	ret->ids = NULL;
+	M_ASN1_New(ret->version,ASN1_INTEGER_new);
+	M_ASN1_New(ret->ids,sk_new_null);
 	return (ret);
 	M_ASN1_New_Error(ASN1_F_SXNET_NEW);
 }
@@ -141,8 +151,6 @@ SXNET *a;
 	sk_pop_free(a->ids, SXNETID_free);
 	Free ((char *)a);
 }
-
-
 
 int i2d_SXNETID(a,pp)
 SXNETID *a;
@@ -214,4 +222,159 @@ int indent;
 		ASN1_OCTET_STRING_print(out, id->user);
 	}
 	return 1;
+}
+
+#ifdef SXNET_TEST
+
+/* NBB: this is used for testing only. It should *not* be used for anything
+ * else because it will just take static IDs from the configuration file and
+ * they should really be separate values for each user.
+ */
+
+
+static SXNET * sxnet_v2i(method, ctx, nval)
+X509V3_EXT_METHOD *method;
+X509V3_CTX *ctx;
+STACK *nval;
+{
+	CONF_VALUE *cnf;
+	SXNET *sx = NULL;
+	int i;
+	for(i = 0; i < sk_num(nval); i++) {
+		cnf = (CONF_VALUE *)sk_value(nval, i);
+		if(!SXNET_add_id_asc(&sx, cnf->name, cnf->value, -1))
+								 return NULL;
+	}
+	return sx;
+}
+		
+	
+#endif
+
+/* Strong Extranet utility functions */
+
+/* Add an id given the zone as an ASCII number */
+
+int SXNET_add_id_asc(psx, zone, user, userlen)
+SXNET **psx;
+char *zone;
+unsigned char *user;
+int userlen;
+{
+	ASN1_INTEGER *izone = NULL;
+	if(!(izone = s2i_ASN1_INTEGER(NULL, zone))) {
+		X509V3err(X509V3_F_SXNET_ADD_ASC,X509V3_R_ERROR_CONVERTING_ZONE);
+		return 0;
+	}
+	return SXNET_add_id_INTEGER(psx, izone, user, userlen);
+}
+
+/* Add an id given the zone as an unsigned long */
+
+int SXNET_add_id_ulong(psx, lzone, user, userlen)
+SXNET **psx;
+unsigned long lzone;
+unsigned char *user;
+int userlen;
+{
+	ASN1_INTEGER *izone = NULL;
+	if(!(izone = ASN1_INTEGER_new()) || !ASN1_INTEGER_set(izone, lzone)) {
+		X509V3err(X509V3_F_SXNET_ADD_ID_ULONG,ERR_R_MALLOC_FAILURE);
+		ASN1_INTEGER_free(izone);
+		return 0;
+	}
+	return SXNET_add_id_INTEGER(psx, izone, user, userlen);
+	
+}
+
+/* Add an id given the zone as an ASN1_INTEGER.
+ * Note this version uses the passed integer and doesn't make a copy so don't
+ * free it up afterwards.
+ */
+
+int SXNET_add_id_INTEGER(psx, zone, user, userlen)
+SXNET **psx;
+ASN1_INTEGER *zone;
+unsigned char *user;
+int userlen;
+{
+	SXNET *sx = NULL;
+	SXNETID *id = NULL;
+	if(!psx || !zone || !user) {
+		X509V3err(X509V3_F_SXNET_ADD_ID_INTEGER,X509V3_R_INVALID_NULL_ARGUMENT);
+		return 0;
+	}
+	if(userlen == -1) userlen = strlen(user);
+	if(userlen > 64) {
+		X509V3err(X509V3_F_SXNET_ADD_ID_INTEGER,X509V3_R_USER_TOO_LONG);
+		return 0;
+	}
+	if(!*psx) {
+		if(!(sx = SXNET_new())) goto err;
+		if(!ASN1_INTEGER_set(sx->version, 0)) goto err;
+		*psx = sx;
+	} else sx = *psx;
+	if(SXNET_get_id_INTEGER(sx, zone)) {
+		X509V3err(X509V3_F_SXNET_ADD_ID_INTEGER,X509V3_R_DUPLICATE_ZONE_ID);
+		return 0;
+	}
+
+	if(!(id = SXNETID_new())) goto err;
+	if(userlen == -1) userlen = strlen(user);
+		
+	if(!ASN1_OCTET_STRING_set(id->user, user, userlen)) goto err;
+	if(!sk_push(sx->ids, (char *)id)) goto err;
+	id->zone = zone;
+	return 1;
+	
+	err:
+	X509V3err(X509V3_F_SXNET_ADD_ID_INTEGER,ERR_R_MALLOC_FAILURE);
+	SXNETID_free(id);
+	SXNET_free(sx);
+	*psx = NULL;
+	return 0;
+}
+
+ASN1_OCTET_STRING *SXNET_get_id_asc(sx, zone)
+SXNET *sx;
+char *zone;
+{
+	ASN1_INTEGER *izone = NULL;
+	ASN1_OCTET_STRING *oct;
+	if(!(izone = s2i_ASN1_INTEGER(NULL, zone))) {
+		X509V3err(X509V3_F_SXNET_GET_ID_ASC,X509V3_R_ERROR_CONVERTING_ZONE);
+		return NULL;
+	}
+	oct = SXNET_get_id_INTEGER(sx, izone);
+	ASN1_INTEGER_free(oct);
+	return oct;
+}
+
+ASN1_OCTET_STRING *SXNET_get_id_ulong(sx, lzone)
+SXNET *sx;
+unsigned long lzone;
+{
+	ASN1_INTEGER *izone = NULL;
+	ASN1_OCTET_STRING *oct;
+	if(!(izone = ASN1_INTEGER_new()) || !ASN1_INTEGER_set(izone, lzone)) {
+		X509V3err(X509V3_F_SXNET_GET_ID_ULONG,ERR_R_MALLOC_FAILURE);
+		ASN1_INTEGER_free(izone);
+		return NULL;
+	}
+	oct = SXNET_get_id_INTEGER(sx, izone);
+	ASN1_INTEGER_free(oct);
+	return oct;
+}
+
+ASN1_OCTET_STRING *SXNET_get_id_INTEGER(sx, zone)
+SXNET *sx;
+ASN1_INTEGER *zone;
+{
+	SXNETID *id;
+	int i;
+	for(i = 0; i < sk_num(sx->ids); i++) {
+		id = (SXNETID *)sk_value(sx->ids, i);
+		if(!ASN1_INTEGER_cmp(id->zone, zone)) return id->user;
+	}
+	return NULL;
 }

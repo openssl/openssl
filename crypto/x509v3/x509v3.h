@@ -235,6 +235,14 @@ SXNETID *d2i_SXNETID(SXNETID **a, unsigned char **pp, long length);
 SXNETID *SXNETID_new(void);
 void SXNETID_free(SXNETID *a);
 
+int SXNET_add_id_asc(SXNET **psx, char *zone, unsigned char *user, int userlen); 
+int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, unsigned char *user, int userlen); 
+int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, unsigned char *user, int userlen); 
+
+ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, char *zone);
+ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone);
+ASN1_OCTET_STRING *SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone);
+
 int i2d_AUTHORITY_KEYID(AUTHORITY_KEYID *a, unsigned char **pp);
 AUTHORITY_KEYID *d2i_AUTHORITY_KEYID(AUTHORITY_KEYID **a, unsigned char **pp, long length);
 AUTHORITY_KEYID *AUTHORITY_KEYID_new(void);
@@ -276,6 +284,7 @@ int X509V3_add_value(char *name, char *value, STACK **extlist);
 int X509V3_add_value_bool(char *name, int asn1_bool, STACK **extlist);
 int X509V3_add_value_int( char *name, ASN1_INTEGER *aint, STACK **extlist);
 char * i2s_ASN1_INTEGER(X509V3_EXT_METHOD *meth, ASN1_INTEGER *aint);
+ASN1_INTEGER * s2i_ASN1_INTEGER(X509V3_EXT_METHOD *meth, char *value);
 char * i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *meth, ASN1_ENUMERATED *aint);
 char * i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *meth, ASN1_ENUMERATED *aint);
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext);
@@ -319,6 +328,12 @@ int i2d_SXNETID();
 SXNETID *d2i_SXNETID();
 SXNETID *SXNETID_new();
 void SXNETID_free();
+int SXNET_add_id_asc();
+int SXNET_add_id_ulong();
+int SXNET_add_id_INTEGER();
+ASN1_OCTET_STRING *SXNET_get_id_asc();
+ASN1_OCTET_STRING *SXNET_get_id_ulong();
+ASN1_OCTET_STRING *SXNET_get_id_INTEGER();
 
 int i2d_AUTHORITY_KEYID();
 AUTHORITY_KEYID *d2i_AUTHORITY_KEYID();
@@ -359,6 +374,7 @@ int X509V3_add_value();
 int X509V3_add_value_bool();
 int X509V3_add_value_int();
 char *i2s_ASN1_INTEGER();
+ASN1_INTEGER * s2i_ASN1_INTEGER();
 char * i2s_ASN1_ENUMERATED();
 char * i2s_ASN1_ENUMERATED_TABLE();
 int X509V3_EXT_add();
@@ -391,10 +407,16 @@ int X509V3_EXT_print_fp();
 #define X509V3_F_I2S_ASN1_ENUMERATED			 121
 #define X509V3_F_I2S_ASN1_INTEGER			 120
 #define X509V3_F_S2I_ASN1_IA5STRING			 100
+#define X509V3_F_S2I_ASN1_INTEGER			 108
 #define X509V3_F_S2I_ASN1_OCTET_STRING			 112
 #define X509V3_F_S2I_ASN1_SKEY_ID			 114
 #define X509V3_F_S2I_S2I_SKEY_ID			 115
 #define X509V3_F_STRING_TO_HEX				 113
+#define X509V3_F_SXNET_ADD_ASC				 125
+#define X509V3_F_SXNET_ADD_ID_INTEGER			 126
+#define X509V3_F_SXNET_ADD_ID_ULONG			 127
+#define X509V3_F_SXNET_GET_ID_ASC			 128
+#define X509V3_F_SXNET_GET_ID_ULONG			 129
 #define X509V3_F_V2I_ASN1_BIT_STRING			 101
 #define X509V3_F_V2I_AUTHORITY_KEYID			 119
 #define X509V3_F_V2I_BASIC_CONSTRAINTS			 102
@@ -402,19 +424,20 @@ int X509V3_EXT_print_fp();
 #define X509V3_F_V2I_GENERAL_NAME			 117
 #define X509V3_F_V2I_GENERAL_NAMES			 118
 #define X509V3_F_V3_GENERIC_EXTENSION			 116
-#define X509V3_F_X509V3_ADD_EXT				 104
+#define X509V3_F_X509V3_EXT_ADD				 104
 #define X509V3_F_X509V3_ADD_VALUE			 105
 #define X509V3_F_X509V3_EXT_ADD_ALIAS			 106
 #define X509V3_F_X509V3_EXT_CONF			 107
-#define X509V3_F_X509V3_GET_VALUE_INT			 108
 #define X509V3_F_X509V3_PARSE_LIST			 109
-#define X509V3_F_X509V3_VALUE_GET_BOOL			 110
+#define X509V3_F_X509V3_GET_VALUE_BOOL			 110
 
 /* Reason codes. */
 #define X509V3_R_BAD_IP_ADDRESS				 118
 #define X509V3_R_BAD_OBJECT				 119
 #define X509V3_R_BN_DEC2BN_ERROR			 100
 #define X509V3_R_BN_TO_ASN1_INTEGER_ERROR		 101
+#define X509V3_R_DUPLICATE_ZONE_ID			 133
+#define X509V3_R_ERROR_CONVERTING_ZONE			 131
 #define X509V3_R_ERROR_IN_EXTENSION			 128
 #define X509V3_R_EXTENSION_NAME_ERROR			 115
 #define X509V3_R_EXTENSION_NOT_FOUND			 102
@@ -442,6 +465,7 @@ int X509V3_EXT_print_fp();
 #define X509V3_R_UNKNOWN_EXTENSION_NAME			 130
 #define X509V3_R_UNKNOWN_OPTION				 120
 #define X509V3_R_UNSUPPORTED_OPTION			 117
+#define X509V3_R_USER_TOO_LONG				 132
  
 #ifdef  __cplusplus
 }

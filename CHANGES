@@ -5,6 +5,10 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Various utility functions to handle SXNet extension. Modify mkdef.pl to
+     support typesafe stack.
+     [Steve Henson]
+
   *) Fix typo in SSL_[gs]et_options().
      [Nils Frostberg <nils@medcom.se>]
 

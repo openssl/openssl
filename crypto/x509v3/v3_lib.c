@@ -71,11 +71,11 @@ int X509V3_EXT_add(ext)
 X509V3_EXT_METHOD *ext;
 {
 	if(!ext_list && !(ext_list = sk_new(ext_cmp))) {
-		X509V3err(X509V3_F_X509V3_ADD_EXT,ERR_R_MALLOC_FAILURE);
+		X509V3err(X509V3_F_X509V3_EXT_ADD,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	if(!sk_push(ext_list, (char *)ext)) {
-		X509V3err(X509V3_F_X509V3_ADD_EXT,ERR_R_MALLOC_FAILURE);
+		X509V3err(X509V3_F_X509V3_EXT_ADD,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	return 1;
