@@ -69,7 +69,7 @@ void BF_set_key(BF_KEY *key, int len, const unsigned char *data)
 	const unsigned char *d,*end;
 
 
-	memcpy((char *)key,(char *)&bf_init,sizeof(BF_KEY));
+	memcpy(key,&bf_init,sizeof(BF_KEY));
 	p=key->P;
 
 	if (len > ((BF_ROUNDS+2)*4)) len=(BF_ROUNDS+2)*4;
