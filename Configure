@@ -770,6 +770,8 @@ EOF
 
 print <<EOF;
 
+Configured for $target.
+
 NOTE: OpenSSL header files were moved from <*.h> to <openssl/*.h>;
 see file INSTALL for hints on coping with compatibility problems.
 EOF
