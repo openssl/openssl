@@ -226,11 +226,11 @@ void ERR_load_EC_strings(void);
 #define EC_R_INVALID_FIELD				 103
 #define EC_R_INVALID_FORM				 104
 #define EC_R_NOT_INITIALIZED				 111
-#define EC_R_NO_GENERATOR_SET				 113
 #define EC_R_NO_SUCH_EXTRA_DATA				 105
 #define EC_R_POINT_AT_INFINITY				 106
 #define EC_R_POINT_IS_NOT_ON_CURVE			 107
 #define EC_R_SLOT_FULL					 108
+#define EC_R_UNDEFINED_GENERATOR			 113
 
 #ifdef  __cplusplus
 }

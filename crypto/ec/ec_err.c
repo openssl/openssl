@@ -122,11 +122,11 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {EC_R_INVALID_FIELD                      ,"invalid field"},
 {EC_R_INVALID_FORM                       ,"invalid form"},
 {EC_R_NOT_INITIALIZED                    ,"not initialized"},
-{EC_R_NO_GENERATOR_SET                   ,"no generator set"},
 {EC_R_NO_SUCH_EXTRA_DATA                 ,"no such extra data"},
 {EC_R_POINT_AT_INFINITY                  ,"point at infinity"},
 {EC_R_POINT_IS_NOT_ON_CURVE              ,"point is not on curve"},
 {EC_R_SLOT_FULL                          ,"slot full"},
+{EC_R_UNDEFINED_GENERATOR                ,"undefined generator"},
 {0,NULL}
 	};
 

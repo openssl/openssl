@@ -72,7 +72,7 @@
 	 	 (b) >  23 ? 3 : 1)
 
 /* Compute
- *      \sum scalar[i]*points[i]
+ *      \sum scalars[i]*points[i]
  * where
  *      scalar*generator
  * is included in the addition if scalar != NULL
@@ -103,7 +103,7 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, BIGNUM *scalar,
 		generator = EC_GROUP_get0_generator(group);
 		if (generator == NULL)
 			{
-			ECerr(EC_F_EC_POINTS_MUL, EC_R_NO_GENERATOR_SET);
+			ECerr(EC_F_EC_POINTS_MUL, EC_R_UNDEFINED_GENERATOR);
 			return 0;
 			}
 		}

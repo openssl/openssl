@@ -23,14 +23,14 @@
   *) Framework for elliptic curves (crypto/ec/ec.h, crypto/ec/ec_lcl.h,
      crypto/ec/ec_lib.c):
 
-     Curves are EC_GROUP objects (with an optional generator) based
-     on EC_METHODs that are built into the library.
+     Curves are EC_GROUP objects (with an optional group generator)
+     based on EC_METHODs that are built into the library.
 
      Points are EC_POINT objects based on EC_GROUP objects.
 
      Most of the framework would be able to handle curves over arbitrary
-     finite fields, but as there are no obvious types for GF(2^n),
-     some functions are limited to GF(p) for now.
+     finite fields, but as there are no obvious types for fields other
+     than GF(p), some functions are limited to that for now.
      [Bodo Moeller]
 
   *) Add the -HTTP option to s_server.  It is similar to -WWW, but requires
