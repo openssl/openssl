@@ -17,7 +17,6 @@ MAKEFILE=	Makefile.ssl
 AR=		ar r
 # KRB5 stuff
 KRB5_INCLUDES=
-LIBKRB5=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 

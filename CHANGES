@@ -352,6 +352,11 @@ TODO: bug: pad  x  with leading zeros if necessary
  
  Changes between 0.9.6h and 0.9.7  [XX xxx 2002]
 
+  *) Change the declaration of needed Kerberos libraries to use EX_LIBS
+     instead of the special (and badly supported) LIBKRB5.  LIBKRB5 is
+     removed entirely.
+     [Richard Levitte]
+
   *) The hw_ncipher.c engine requires dynamic locks.  Unfortunately, it
      seems that in spite of existing for more than a year, many application
      author have done nothing to provide the necessary callbacks, which
