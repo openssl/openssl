@@ -117,6 +117,7 @@
 
 #if defined(WIN32)
 #include <windows.h>
+#include <tchar.h>
 #endif
 
 #ifdef NeXT
@@ -831,7 +832,8 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 		if (wdir == NULL)
 			goto err_noclose;
 #ifndef OPENSSL_NO_MULTIBYTE
-		if (!MultiByteToWideChar(CP_ACP,0,dir,len_0,wdir,len_0))
+		if (!MultiByteToWideChar(CP_ACP,0,dir,len_0,
+					(WCHAR *)wdir,len_0))
 #endif
 			for (i=0;i<len_0;i++) wdir[i]=(TCHAR)dir[i];
 
@@ -866,7 +868,8 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 		if (sizeof(TCHAR) != sizeof(char))
 			{
 #ifndef OPENSSL_NO_MULTIBYTE
-			if (!WideCharToMultiByte(CP_ACP,0,fnam,flen_0,
+			if (!WideCharToMultiByte(CP_ACP,0,
+						(WCHAR *)fnam,flen_0,
 						slash,sizeof(buf)-len_0,
 						NULL,0))
 #endif
