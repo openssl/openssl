@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/21 21:00:19 $
+  ______________                           $Date: 2000/09/24 09:50:28 $
 
   DEVELOPMENT STATE
 
@@ -126,7 +126,7 @@
 				The USE_TOD fix needed to be applied.
 				There were warnings about -O3 triggering
 					known optimizer bugs on that
-					platform.
+					platform. [FIXED]
 			OpenBSD-x86 (2.7, gcc 2.95.2)		- success
 			alpha-cc (OSF1 V4.0)			- success
 			solaris-x86-gcc (5.8, gcc 2.95.2)	- success

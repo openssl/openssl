@@ -366,10 +366,6 @@ all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers lib exe
 banner:
 $banner
 
-# Generate perlasm output files
-%.cpp:
-	(cd \$(\@D)/..; PERL=perl make -f Makefile.ssl asm/\$(\@F))
-
 \$(TMP_D):
 	\$(MKDIR) \$(TMP_D)
 # NB: uncomment out these lines if BIN_D, TEST_D and LIB_D are different
@@ -617,6 +613,14 @@ $rules.= &do_lib_rule("\$(CRYPTOOBJ)","\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPT
 $rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
 
 print $defs;
+
+if ($platform eq "linux-elf") {
+    print <<"EOF";
+# Generate perlasm output files
+%.cpp:
+	(cd \$(\@D)/..; PERL=perl make -f Makefile.ssl asm/\$(\@F))
+EOF
+}
 print "###################################################################\n";
 print $rules;
 

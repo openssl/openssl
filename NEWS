@@ -15,6 +15,7 @@
       o MD4 now included.
       o Bugfix for SSL rollback padding check.
       o Support for external crypto device[1].
+      o Enhanced EVP interafce.
 
     [1] The support for external crypto devices is currently a separate
         distribution.  See the file README.ENGINE.
