@@ -1,11 +1,11 @@
 =pod
 
+=head1 NAME
+
 X509_NAME_ENTRY_get_object, X509_NAME_ENTRY_get_data,
 X509_NAME_ENTRY_set_object, X509_NAME_ENTRY_set_data,
 X509_NAME_ENTRY_create_by_txt, X509_NAME_ENTRY_create_by_NID,
 X509_NAME_ENTRY_create_by_OBJ - X509_NAME_ENTRY utility functions
-
-=head1 NAME
 
 =head1 SYNOPSIS
 
