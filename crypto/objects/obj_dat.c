@@ -512,26 +512,26 @@ int OBJ_create_objects(BIO *in)
 		i=BIO_gets(in,buf,512);
 		if (i <= 0) return(num);
 		buf[i-1]='\0';
-		if (!isalnum(buf[0])) return(num);
+		if (!isalnum((unsigned char)buf[0])) return(num);
 		o=s=buf;
-		while (isdigit(*s) || (*s == '.'))
+		while (isdigit((unsigned char)*s) || (*s == '.'))
 			s++;
 		if (*s != '\0')
 			{
 			*(s++)='\0';
-			while (isspace(*s))
+			while (isspace((unsigned char)*s))
 				s++;
 			if (*s == '\0')
 				s=NULL;
 			else
 				{
 				l=s;
-				while ((*l != '\0') && !isspace(*l))
+				while ((*l != '\0') && !isspace((unsigned char)*l))
 					l++;
 				if (*l != '\0')
 					{
 					*(l++)='\0';
-					while (isspace(*l))
+					while (isspace((unsigned char)*l))
 						l++;
 					if (*l == '\0') l=NULL;
 					}

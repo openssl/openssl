@@ -203,7 +203,7 @@ static int v3_check_critical(char **value)
 	char *p = *value;
 	if((strlen(p) < 9) || strncmp(p, "critical,", 9)) return 0;
 	p+=9;
-	while(isspace(*p)) p++;
+	while(isspace((unsigned char)*p)) p++;
 	*value = p;
 	return 1;
 }
@@ -214,7 +214,7 @@ static int v3_check_generic(char **value)
 	char *p = *value;
 	if((strlen(p) < 4) || strncmp(p, "RAW:,", 4)) return 0;
 	p+=4;
-	while(isspace(*p)) p++;
+	while(isspace((unsigned char)*p)) p++;
 	*value = p;
 	return 1;
 }
