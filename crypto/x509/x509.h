@@ -238,6 +238,7 @@ typedef struct x509_st
 	int valid;
 	int references;
 	char *name;
+	CRYPTO_EX_DATA ex_data;
 	} X509;
 
 DECLARE_STACK_OF(X509)
@@ -724,6 +725,10 @@ X509 *		X509_new(void);
 void		X509_free(X509 *a);
 int		i2d_X509(X509 *a,unsigned char **pp);
 X509 *		d2i_X509(X509 **a,unsigned char **pp,long length);
+int X509_get_ex_new_index(long argl, char *argp, int (*new_func)(),
+	     int (*dup_func)(), void (*free_func)());
+int X509_set_ex_data(X509 *r, int idx, char *arg);
+char *X509_get_ex_data(X509 *r, int idx);
 
 X509_REVOKED *	X509_REVOKED_new(void);
 void		X509_REVOKED_free(X509_REVOKED *a);

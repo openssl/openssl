@@ -62,6 +62,9 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/x509.h>
 
+static int x509_meth_num = 0;
+static STACK *x509_meth = NULL;
+
 static ASN1_METHOD meth={
 	(int (*)())  i2d_X509,
 	(char *(*)())d2i_X509,
@@ -117,6 +120,7 @@ X509 *X509_new(void)
 	M_ASN1_New(ret->cert_info,X509_CINF_new);
 	M_ASN1_New(ret->sig_alg,X509_ALGOR_new);
 	M_ASN1_New(ret->signature,ASN1_BIT_STRING_new);
+	CRYPTO_new_ex_data(x509_meth, (char *)ret, &ret->ex_data);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_NEW);
 	}
@@ -140,12 +144,30 @@ void X509_free(X509 *a)
 		}
 #endif
 
-	/* CRYPTO_free_ex_data(bio_meth,(char *)a,&a->ex_data); */
+	CRYPTO_free_ex_data(x509_meth,(char *)a,&a->ex_data);
 	X509_CINF_free(a->cert_info);
 	X509_ALGOR_free(a->sig_alg);
 	ASN1_BIT_STRING_free(a->signature);
 
 	if (a->name != NULL) Free(a->name);
 	Free((char *)a);
+	}
+
+int X509_get_ex_new_index(long argl, char *argp, int (*new_func)(),
+	     int (*dup_func)(), void (*free_func)())
+        {
+	x509_meth_num++;
+	return(CRYPTO_get_ex_new_index(x509_meth_num-1,
+		&x509_meth,argl,argp,new_func,dup_func,free_func));
+        }
+
+int X509_set_ex_data(X509 *r, int idx, char *arg)
+	{
+	return(CRYPTO_set_ex_data(&r->ex_data,idx,arg));
+	}
+
+char *X509_get_ex_data(X509 *r, int idx)
+	{
+	return(CRYPTO_get_ex_data(&r->ex_data,idx));
 	}
 

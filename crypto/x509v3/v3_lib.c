@@ -219,7 +219,7 @@ void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 	}
 	if(found_ex) {
 		/* Found it */
-		*crit = found_ex->critical;
+		if(crit) *crit = found_ex->critical;
 		return X509V3_EXT_d2i(found_ex);
 	}
 	

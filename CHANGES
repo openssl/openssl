@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add a CRYPTO_EX_DATA to X509 certificate structure and associated
+     functions.
+     [Steve Henson]
+
   *) New X509V3_{X509,CRL,REVOKED}_get_d2i() functions. These will search
      for, obtain and decode and extension and obtain its critical flag.
      This allows all the necessary extension code to be handled in a
