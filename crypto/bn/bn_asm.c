@@ -195,7 +195,7 @@ BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
 
 void bn_sqr_words(BN_ULONG *r, BN_ULONG *a, int n)
         {
-	assert(num >= 0);
+	assert(n >= 0);
 	if (n <= 0) return;
 	for (;;)
 		{
