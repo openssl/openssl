@@ -155,6 +155,7 @@ int password_callback(char *buf, int bufsiz, int verify,
 	PW_CB_DATA *cb_data);
 
 int setup_ui_method();
+void destroy_ui_method();
 
 int should_retry(int i);
 int args_from_file(char *file, int *argc, char **argv[]);

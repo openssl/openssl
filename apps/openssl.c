@@ -350,6 +350,7 @@ end:
 	ERR_free_strings();
 	
         ENGINE_cleanup();
+	destroy_ui_method();
 
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL)

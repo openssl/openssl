@@ -434,6 +434,14 @@ int setup_ui_method()
 	UI_method_set_closer(ui_method, ui_close);
 	return 0;
 	}
+void destroy_ui_method()
+	{
+	if(ui_method)
+		{
+		UI_destroy_method(ui_method);
+		ui_method = NULL;
+		}
+	}
 int password_callback(char *buf, int bufsiz, int verify,
 	PW_CB_DATA *cb_tmp)
 	{
