@@ -5,8 +5,13 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Install various scripts to $(OPENSSLDIR)/misc, not to
+     $(INSTALLTOP)/bin -- they shouldn't clutter directories
+     such as /usr/local/bin.
+     [Bodo Moeller]
+
   *) "make linux-shared" to build shared libraries.
-      [Niels Poppe <niels@netbox.org>]
+     [Niels Poppe <niels@netbox.org>]
 
   *) New Configure option no-<cipher> (rsa, idea, rc5, ...).
      [Ulf Möller]

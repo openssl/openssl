@@ -16,7 +16,8 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile.ssl
 TEST=
-APPS= c_hash c_info c_issuer c_name c_rehash
+APPS= c_rehash
+MISC_APPS= c_hash c_info c_issuer c_name
 
 all:
 
@@ -25,6 +26,10 @@ install:
 	do  \
 	(cp $$i $(INSTALLTOP)/bin/$$i; \
 	chmod 755 $(INSTALLTOP)/bin/$$i ); \
+	@for i in $(MISC_APPS) ; \
+	do  \
+	(cp $$i $(OPENSSLTOP)/misc/$$i; \
+	chmod 755 $(OPENSSLTOP)/misc/$$i ); \
 	done;
 
 files:
