@@ -4,6 +4,10 @@
 
  Changes between 0.9.7e and 0.9.7f  [XX xxx XXXX]
 
+  *) Back-port of selected performance improvements from development
+     branch, as well as improved support for PowerPC platforms.
+     [Andy Polyakov]
+
   *) Add lots of checks for memory allocation failure, error codes to indicate
      failure and freeing up memory if a failure occurs.
      [Nauticus Networks SSL Team <openssl@nauticusnet.com>, Steve Henson]
