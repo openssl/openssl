@@ -336,6 +336,7 @@ BN_CTX *BN_CTX_new(void);
 void	BN_CTX_init(BN_CTX *c);
 void	BN_CTX_free(BN_CTX *c);
 int     BN_rand(BIGNUM *rnd, int bits, int top,int bottom);
+int     BN_pseudo_rand(BIGNUM *rnd, int bits, int top,int bottom);
 int	BN_num_bits(const BIGNUM *a);
 int	BN_num_bits_word(BN_ULONG);
 BIGNUM *BN_new(void);
