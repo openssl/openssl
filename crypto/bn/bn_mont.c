@@ -113,7 +113,7 @@ BIGNUM *a;
 BN_MONT_CTX *mont;
 BN_CTX *ctx;
 	{
-#ifdef BN_RECURSION
+#ifdef BN_RECURSION_MONT
 	if (mont->use_word)
 #endif
 		{
@@ -212,7 +212,7 @@ printf("word BN_from_montgomery %d * %d\n",nl,nl);
 err1:
 		return(retn);
 		}
-#ifdef BN_RECURSION
+#ifdef BN_RECURSION_MONT
 	else /* bignum version */ 
 		{
 		BIGNUM *t1,*t2,*t3;
@@ -316,7 +316,7 @@ BN_CTX *ctx;
 	R= &(mont->RR);					/* grab RR as a temp */
 	BN_copy(&(mont->N),mod);			/* Set N */
 
-#ifdef BN_RECURSION
+#ifdef BN_RECURSION_MONT
 	if (mont->N.top < BN_MONT_CTX_SET_SIZE_WORD)
 #endif
 		{
@@ -364,7 +364,7 @@ BN_CTX *ctx;
 		BN_free(&Ri);
 		/* mod->top=z; */
 		}
-#ifdef BN_RECURSION
+#ifdef BN_RECURSION_MONT
 	else
 		{
 		mont->use_word=0;
