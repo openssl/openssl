@@ -494,3 +494,14 @@ char *BIO_get_ex_data(BIO *bio, int idx)
 	return(CRYPTO_get_ex_data(&(bio->ex_data),idx));
 	}
 
+unsigned long BIO_number_read(BIO *bio)
+{
+	if(bio) return bio->num_read;
+	return 0;
+}
+
+unsigned long BIO_number_written(BIO *bio)
+{
+	if(bio) return bio->num_write;
+	return 0;
+}

@@ -8,35 +8,35 @@ pkcs12 - PKCS#12 file utility
 =head1 SYNOPSIS
 
 B<openssl> B<pkcs12>
-B<-export>
-B<-chain>
-B<-inkey file>
-B<-certfile f>
-B<-name name>
-B<-caname name>
-B<-in  infile>
-B<-out outfile>
-B<-noout>
-B<-nomacver>
-B<-nocerts>
-B<-clcerts>
-B<-cacerts>
-B<-nokeys>
-B<-info>
-B<-des>
-B<-des3>
-B<-idea>
-B<-nodes>
-B<-noiter>
-B<-maciter>
-B<-twopass>
-B<-descert>
-B<-certpbe>
-B<-keypbe>
-B<-keyex>
-B<-keysig>
-B<-password pass>
-B<-envpass pass>
+[B<-export>]
+[B<-chain>]
+[B<-inkey filename>]
+[B<-certfile filename>]
+[B<-name name>]
+[B<-caname name>]
+[B<-in filename>]
+[B<-out filename>]
+[B<-noout>]
+[B<-nomacver>]
+[B<-nocerts>]
+[B<-clcerts>]
+[B<-cacerts>]
+[B<-nokeys>]
+[B<-info>]
+[B<-des>]
+[B<-des3>]
+[B<-idea>]
+[B<-nodes>]
+[B<-noiter>]
+[B<-maciter>]
+[B<-twopass>]
+[B<-descert>]
+[B<-certpbe>]
+[B<-keypbe>]
+[B<-keyex>]
+[B<-keysig>]
+[B<-password password>]
+[B<-envpass var>]
 
 =head1 DESCRIPTION
 

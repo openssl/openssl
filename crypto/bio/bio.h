@@ -283,9 +283,6 @@ typedef struct bio_f_buffer_ctx_struct
 #define BIO_CONN_S_NBIO			8
 /*#define BIO_CONN_get_param_hostname	BIO_ctrl */
 
-#define BIO_number_read(b)	((b)->num_read)
-#define BIO_number_written(b)	((b)->num_write)
-
 #define BIO_C_SET_CONNECT			100
 #define BIO_C_DO_STATE_MACHINE			101
 #define BIO_C_SET_NBIO				102
@@ -485,6 +482,8 @@ int BIO_set_ex_data(BIO *bio,int idx,char *data);
 char *BIO_get_ex_data(BIO *bio,int idx);
 int BIO_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 	int (*dup_func)(), void (*free_func)());
+unsigned long BIO_number_read(BIO *bio);
+unsigned long BIO_number_written(BIO *bio);
 
 #  if defined(WIN16) && defined(_WINDLL)
 BIO_METHOD *BIO_s_file_internal(void);

@@ -165,7 +165,7 @@ They only offer 56 bits of protection since they both use DES.
 
 These algorithms are not mentioned in the original PKCS#5 v1.5 specification
 but they use the same key derivation algorithm and are supported by some
-software. They are mentioned in PKCS#5 v1.5. They use either 64 bit RC2 or
+software. They are mentioned in PKCS#5 v2.0. They use either 64 bit RC2 or
 56 bit DES.
 
 =item B<PBE-SHA1-RC4-128 PBE-SHA1-RC4-40 PBE-SHA1-3DES PBE-SHA1-2DES PBE-SHA1-RC2-128 PBE-SHA1-RC2-40>

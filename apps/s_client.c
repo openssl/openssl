@@ -176,6 +176,7 @@ int MAIN(int argc, char **argv)
 	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
 	SSL_CTX *ctx=NULL;
 	int ret=1,in_init=1,i,nbio_test=0;
+	int prexit = 0;
 	SSL_METHOD *meth=NULL;
 	BIO *sbio;
 #ifdef WINDOWS
@@ -245,6 +246,8 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			cert_file= *(++argv);
 			}
+		else if	(strcmp(*argv,"-prexit") == 0)
+			prexit=1;
 		else if	(strcmp(*argv,"-crlf") == 0)
 			crlf=1;
 		else if	(strcmp(*argv,"-quiet") == 0)
@@ -735,6 +738,7 @@ shut:
 	SHUTDOWN(SSL_get_fd(con));
 	ret=0;
 end:
+	if(prexit) print_stuff(bio_c_out,con,1);
 	if (con != NULL) SSL_free(con);
 	if (con2 != NULL) SSL_free(con2);
 	if (ctx != NULL) SSL_CTX_free(ctx);
