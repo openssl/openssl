@@ -233,7 +233,7 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-CAkeyform") == 0)
 			{
 			if (--argc < 1) goto bad;
-			CAformat=str2fmt(*(++argv));
+			CAkeyformat=str2fmt(*(++argv));
 			}
 		else if (strcmp(*argv,"-days") == 0)
 			{
