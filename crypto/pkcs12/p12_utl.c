@@ -93,26 +93,50 @@ char *uni2asc (unsigned char *uni, int unilen)
 
 int i2d_PKCS12_bio(BIO *bp, PKCS12 *p12)
 {
-	return ASN1_i2d_bio((int(*)())i2d_PKCS12, bp, (unsigned char *)p12);
+	return ASN1_item_i2d_bio(&PKCS12_it, bp, p12);
 }
 
 #ifndef NO_FP_API
 int i2d_PKCS12_fp(FILE *fp, PKCS12 *p12)
 {
-	return ASN1_i2d_fp((int(*)())i2d_PKCS12, fp, (unsigned char *)p12);
+	return ASN1_item_i2d_fp(&PKCS12_it, fp, p12);
 }
 #endif
 
 PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12)
 {
-	return (PKCS12 *)ASN1_d2i_bio((char *(*)())PKCS12_new,
-         (char *(*)())d2i_PKCS12, bp, (unsigned char **)p12);
+	return ASN1_item_d2i_bio(&PKCS12_it, bp, p12);
 }
 #ifndef NO_FP_API
 PKCS12 *d2i_PKCS12_fp(FILE *fp, PKCS12 **p12)
 {
-        return (PKCS12 *)ASN1_d2i_fp((char *(*)())PKCS12_new, 
-         (char *(*)())d2i_PKCS12, fp, (unsigned char **)(p12));
+        return ASN1_item_d2i_fp(&PKCS12_it, fp, p12);
 }
 #endif
 
+PKCS12_SAFEBAG *PKCS12_x5092certbag(X509 *x509)
+{
+	return PKCS12_item_pack_safebag(x509, &X509_it,
+			NID_x509Certificate, NID_certBag);
+}
+
+PKCS12_SAFEBAG *PKCS12_x509crl2certbag(X509_CRL *crl)
+{
+	return PKCS12_item_pack_safebag(crl, &X509_CRL_it,
+			NID_x509Crl, NID_crlBag);
+}
+
+X509 *PKCS12_certbag2x509(PKCS12_SAFEBAG *bag)
+{
+	if(M_PKCS12_bag_type(bag) != NID_certBag) return NULL;
+	if(M_PKCS12_cert_bag_type(bag) != NID_x509Certificate) return NULL;
+	return ASN1_item_unpack(bag->value.bag->value.octet, &X509_it);
+}
+
+X509_CRL *PKCS12_certbag2x509crl(PKCS12_SAFEBAG *bag)
+{
+	if(M_PKCS12_bag_type(bag) != NID_crlBag) return NULL;
+	if(M_PKCS12_cert_bag_type(bag) != NID_x509Crl) return NULL;
+	return ASN1_item_unpack(bag->value.bag->value.octet,
+							&X509_CRL_it);
+}

@@ -225,6 +225,7 @@ DECLARE_PKCS12_STACK_OF(PKCS7)
 #define PKCS7_get_attributes(si)	((si)->unauth_attr)
 
 #define PKCS7_type_is_signed(a) (OBJ_obj2nid((a)->type) == NID_pkcs7_signed)
+#define PKCS7_type_is_encrypted(a) (OBJ_obj2nid((a)->type) == NID_pkcs7_encrypted)
 #define PKCS7_type_is_enveloped(a) (OBJ_obj2nid((a)->type) == NID_pkcs7_enveloped)
 #define PKCS7_type_is_signedAndEnveloped(a) \
 		(OBJ_obj2nid((a)->type) == NID_pkcs7_signedAndEnveloped)

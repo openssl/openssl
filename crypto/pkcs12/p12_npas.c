@@ -113,15 +113,15 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 	unsigned char mac[EVP_MAX_MD_SIZE];
 	unsigned int maclen;
 
-	if (!(asafes = M_PKCS12_unpack_authsafes(p12))) return 0;
+	if (!(asafes = PKCS12_unpack_authsafes(p12))) return 0;
 	if(!(newsafes = sk_PKCS7_new_null())) return 0;
 	for (i = 0; i < sk_PKCS7_num (asafes); i++) {
 		p7 = sk_PKCS7_value(asafes, i);
 		bagnid = OBJ_obj2nid(p7->type);
 		if (bagnid == NID_pkcs7_data) {
-			bags = M_PKCS12_unpack_p7data(p7);
+			bags = PKCS12_unpack_p7data(p7);
 		} else if (bagnid == NID_pkcs7_encrypted) {
-			bags = M_PKCS12_unpack_p7encdata(p7, oldpass, -1);
+			bags = PKCS12_unpack_p7encdata(p7, oldpass, -1);
 			alg_get(p7->d.encrypted->enc_data->algorithm,
 				&pbe_nid, &pbe_iter, &pbe_saltlen);
 		} else continue;
@@ -151,7 +151,7 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 
 	p12_data_tmp = p12->authsafes->d.data;
 	if(!(p12->authsafes->d.data = ASN1_OCTET_STRING_new())) goto saferr;
-	if(!M_PKCS12_pack_authsafes(p12, newsafes)) goto saferr;
+	if(!PKCS12_pack_authsafes(p12, newsafes)) goto saferr;
 
 	if(!PKCS12_gen_mac(p12, newpass, -1, mac, &maclen)) goto saferr;
 	if(!(macnew = ASN1_OCTET_STRING_new())) goto saferr;
@@ -194,7 +194,7 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass)
 
 	if(M_PKCS12_bag_type(bag) != NID_pkcs8ShroudedKeyBag) return 1;
 
-	if (!(p8 = M_PKCS12_decrypt_skey(bag, oldpass, -1))) return 0;
+	if (!(p8 = PKCS8_decrypt(bag->value.shkeybag, oldpass, -1))) return 0;
 	alg_get(bag->value.shkeybag->algor, &p8_nid, &p8_iter, &p8_saltlen);
 	if(!(p8new = PKCS8_encrypt(p8_nid, NULL, newpass, -1, NULL, p8_saltlen,
 						     p8_iter, p8))) return 0;

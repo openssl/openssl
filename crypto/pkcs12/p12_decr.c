@@ -68,7 +68,7 @@
  * OPENSSL_malloc'ed buffer
  */
 
-unsigned char * PKCS12_pbe_crypt (X509_ALGOR *algor, const char *pass,
+unsigned char * PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
 	     int passlen, unsigned char *in, int inlen, unsigned char **data,
 	     int *datalen, int en_de)
 {
@@ -103,20 +103,17 @@ unsigned char * PKCS12_pbe_crypt (X509_ALGOR *algor, const char *pass,
 }
 
 /* Decrypt an OCTET STRING and decode ASN1 structure 
- * if seq & 1 'obj' is a stack of structures to be encoded
- * if seq & 2 zero buffer after use
- * as a sequence.
+ * if zbuf set zero buffer after use.
  */
 
-char * PKCS12_decrypt_d2i (X509_ALGOR *algor, char * (*d2i)(),
-	     void (*free_func)(void *), const char *pass, int passlen,
-	     ASN1_OCTET_STRING *oct, int seq)
+void * PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
+	     const char *pass, int passlen, ASN1_OCTET_STRING *oct, int zbuf)
 {
 	unsigned char *out, *p;
-	char *ret;
+	void *ret;
 	int outlen;
 
-	if (!PKCS12_pbe_crypt (algor, pass, passlen, oct->data, oct->length,
+	if (!PKCS12_pbe_crypt(algor, pass, passlen, oct->data, oct->length,
 			       &out, &outlen, 0)) {
 		PKCS12err(PKCS12_F_PKCS12_DECRYPT_D2I,PKCS12_R_PKCS12_PBE_CRYPT_ERROR);
 		return NULL;
@@ -134,53 +131,41 @@ char * PKCS12_decrypt_d2i (X509_ALGOR *algor, char * (*d2i)(),
 		fclose(op);
 	}
 #endif
-	if (seq & 1) ret = (char *) d2i_ASN1_SET(NULL, &p, outlen, d2i,
-				free_func, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
-	else ret = d2i(NULL, &p, outlen);
-	if (seq & 2) memset(out, 0, outlen);
+	ret = ASN1_item_d2i(NULL, &p, outlen, it);
+	if (zbuf) memset(out, 0, outlen);
 	if(!ret) PKCS12err(PKCS12_F_PKCS12_DECRYPT_D2I,PKCS12_R_DECODE_ERROR);
-	OPENSSL_free (out);
+	OPENSSL_free(out);
 	return ret;
 }
 
 /* Encode ASN1 structure and encrypt, return OCTET STRING 
- * if 'seq' is non-zero 'obj' is a stack of structures to be encoded
- * as a sequence
+ * if zbuf set zero encoding.
  */
 
-ASN1_OCTET_STRING *PKCS12_i2d_encrypt (X509_ALGOR *algor, int (*i2d)(),
+ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor, const ASN1_ITEM *it,
 				       const char *pass, int passlen,
-				       char *obj, int seq)
+				       void *obj, int zbuf)
 {
 	ASN1_OCTET_STRING *oct;
-	unsigned char *in, *p;
+	unsigned char *in = NULL;
 	int inlen;
 	if (!(oct = M_ASN1_OCTET_STRING_new ())) {
 		PKCS12err(PKCS12_F_PKCS12_I2D_ENCRYPT,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	if (seq) inlen = i2d_ASN1_SET((STACK *)obj, NULL, i2d, V_ASN1_SEQUENCE,
-						 V_ASN1_UNIVERSAL, IS_SEQUENCE);
-	else inlen = i2d (obj, NULL);
-	if (!inlen) {
+	inlen = ASN1_item_i2d(obj, &in, it);
+	if (!in) {
 		PKCS12err(PKCS12_F_PKCS12_I2D_ENCRYPT,PKCS12_R_ENCODE_ERROR);
 		return NULL;
 	}
-	if (!(in = OPENSSL_malloc (inlen))) {
-		PKCS12err(PKCS12_F_PKCS12_I2D_ENCRYPT,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	p = in;
-	if (seq) i2d_ASN1_SET((STACK *)obj, &p, i2d, V_ASN1_SEQUENCE,
-						 V_ASN1_UNIVERSAL, IS_SEQUENCE);
-	else i2d (obj, &p);
-	if (!PKCS12_pbe_crypt (algor, pass, passlen, in, inlen, &oct->data,
+	if (!PKCS12_pbe_crypt(algor, pass, passlen, in, inlen, &oct->data,
 				 &oct->length, 1)) {
 		PKCS12err(PKCS12_F_PKCS12_I2D_ENCRYPT,PKCS12_R_ENCRYPT_ERROR);
 		OPENSSL_free(in);
 		return NULL;
 	}
-	OPENSSL_free (in);
+	if (zbuf) memset(in, 0, inlen);
+	OPENSSL_free(in);
 	return oct;
 }
 

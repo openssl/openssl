@@ -8,6 +8,14 @@
      files to get correct declarations of the ASN.1 item variables.
      [Richard Levitte]
 
+  *) Rewrite of PKCS#12 code to use new ASN1 functionality. Replace many
+     PKCS#12 macros with real functions. Fix two unrelated ASN1 bugs:
+     asn1_check_tlen() would sometimes attempt to use 'ctx' when it was
+     NULL and ASN1_TYPE was not dereferenced properly in asn1_ex_c2i().
+     New ASN1 macro: DECLARE_ASN1_ITEM() which just declares the relevant
+     ASN1_ITEM and no wrapper functions.
+     [Steve Henson]
+
   *) New functions or ASN1_item_d2i_fp() and ASN1_item_d2i_bio(). These
      replace the old function pointer based I/O routines. Change most of
      the *_d2i_bio() and *_d2i_fp() functions to use these.

@@ -325,7 +325,7 @@ int MAIN(int argc, char **argv)
 			p8pass = pass;
 			EVP_read_pw_string(pass, 50, "Enter Password:", 0);
 		}
-		p8inf = M_PKCS8_decrypt(p8, p8pass, strlen(p8pass));
+		p8inf = PKCS8_decrypt(p8, p8pass, strlen(p8pass));
 		X509_SIG_free(p8);
 	}
 

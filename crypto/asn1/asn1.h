@@ -63,6 +63,7 @@
 #ifndef NO_BIO
 #include <openssl/bio.h>
 #endif
+#include <openssl/e_os2.h>
 #include <openssl/bn.h>
 #include <openssl/stack.h>
 #include <openssl/safestack.h>
@@ -307,16 +308,20 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 #define	DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name) \
 	type *d2i_##name(type **a, unsigned char **in, long len); \
 	int i2d_##name(type *a, unsigned char **out); \
-	OPENSSL_EXTERN const ASN1_ITEM itname##_it;
+	DECLARE_ASN1_ITEM(itname)
 
 #define	DECLARE_ASN1_ENCODE_FUNCTIONS_const(type, name) \
 	type *d2i_##name(type **a, const unsigned char **in, long len); \
 	int i2d_##name(const type *a, unsigned char **out); \
-	OPENSSL_EXTERN const ASN1_ITEM name##_it;
+	DECLARE_ASN1_ITEM(name)
 
 #define DECLARE_ASN1_FUNCTIONS_const(name) \
 	name *name##_new(void); \
 	void name##_free(name *a);
+
+#define DECLARE_ASN1_ITEM(name) \
+	OPENSSL_EXTERN const ASN1_ITEM name##_it;
+
 
 /* Parameters used by ASN1_STRING_print_ex() */
 
@@ -863,9 +868,9 @@ STACK *ASN1_seq_unpack(unsigned char *buf, int len, char *(*d2i)(),
 unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(), unsigned char **buf,
 			     int *len );
 void *ASN1_unpack_string(ASN1_STRING *oct, char *(*d2i)());
-void *ASN1_unpack_item(ASN1_STRING *oct, const ASN1_ITEM *it);
+void *ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it);
 ASN1_STRING *ASN1_pack_string(void *obj, int (*i2d)(), ASN1_OCTET_STRING **oct);
-ASN1_STRING *ASN1_pack_item(void *obj, const ASN1_ITEM *it, ASN1_OCTET_STRING **oct);
+ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_OCTET_STRING **oct);
 
 void ASN1_STRING_set_default_mask(unsigned long mask);
 int ASN1_STRING_set_default_mask_asc(char *p);

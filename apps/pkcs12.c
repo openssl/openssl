@@ -521,7 +521,7 @@ int MAIN(int argc, char **argv)
 	for(i = 0; i < sk_X509_num(certs); i++) {
 		X509 *cert = NULL;
 		cert = sk_X509_value(certs, i);
-		bag = M_PKCS12_x5092certbag(cert);
+		bag = PKCS12_x5092certbag(cert);
 		/* If it matches private key set id */
 		if(cert == ucert) {
 			if(name) PKCS12_add_friendlyname(bag, name, -1);
@@ -592,9 +592,9 @@ int MAIN(int argc, char **argv)
 	CRYPTO_push_info("building pkcs12");
 #endif
 
-	p12 = PKCS12_init (NID_pkcs7_data);
+	p12 = PKCS12_init(NID_pkcs7_data);
 
-	M_PKCS12_pack_authsafes (p12, safes);
+	PKCS12_pack_authsafes(p12, safes);
 
 	sk_PKCS7_pop_free(safes, PKCS7_free);
 	safes = NULL;
@@ -702,20 +702,20 @@ int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 	int i, bagnid;
 	PKCS7 *p7;
 
-	if (!( asafes = M_PKCS12_unpack_authsafes (p12))) return 0;
+	if (!( asafes = PKCS12_unpack_authsafes(p12))) return 0;
 	for (i = 0; i < sk_PKCS7_num (asafes); i++) {
 		p7 = sk_PKCS7_value (asafes, i);
 		bagnid = OBJ_obj2nid (p7->type);
 		if (bagnid == NID_pkcs7_data) {
-			bags = M_PKCS12_unpack_p7data (p7);
+			bags = PKCS12_unpack_p7data(p7);
 			if (options & INFO) BIO_printf (bio_err, "PKCS7 Data\n");
 		} else if (bagnid == NID_pkcs7_encrypted) {
 			if (options & INFO) {
-				BIO_printf (bio_err, "PKCS7 Encrypted data: ");
-				alg_print (bio_err, 
+				BIO_printf(bio_err, "PKCS7 Encrypted data: ");
+				alg_print(bio_err, 
 					p7->d.encrypted->enc_data->algorithm);
 			}
-			bags = M_PKCS12_unpack_p7encdata (p7, pass, passlen);
+			bags = PKCS12_unpack_p7encdata(p7, pass, passlen);
 		} else continue;
 		if (!bags) return 0;
 	    	if (!dump_certs_pkeys_bags (out, bags, pass, passlen, 
@@ -770,7 +770,7 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 		}
 		if (options & NOKEYS) return 1;
 		print_attribs (out, bag->attrib, "Bag Attributes");
-		if (!(p8 = M_PKCS12_decrypt_skey (bag, pass, passlen)))
+		if (!(p8 = PKCS12_decrypt_skey(bag, pass, passlen)))
 				return 0;
 		if (!(pkey = EVP_PKCS82PKEY (p8))) return 0;
 		print_attribs (out, p8->attributes, "Key Attributes");
@@ -788,7 +788,7 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 		print_attribs (out, bag->attrib, "Bag Attributes");
 		if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate )
 								 return 1;
-		if (!(x509 = M_PKCS12_certbag2x509(bag))) return 0;
+		if (!(x509 = PKCS12_certbag2x509(bag))) return 0;
 		dump_cert_text (out, x509);
 		PEM_write_bio_X509 (out, x509);
 		X509_free(x509);

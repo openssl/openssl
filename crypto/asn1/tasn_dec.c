@@ -658,7 +658,7 @@ int asn1_ex_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, char
 		if(!*pval) {
 			typ = ASN1_TYPE_new();
 			*pval = (ASN1_VALUE *)typ;
-		} else typ = (ASN1_TYPE *)pval;
+		} else typ = (ASN1_TYPE *)*pval;
 		if(utype != typ->type) ASN1_TYPE_set(typ, utype, NULL);
 		pval = (ASN1_VALUE **)&typ->value.ptr;
 	}
@@ -865,14 +865,14 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *i
 			ctx->ptag = ptag;
 			ctx->hdrlen = p - q;
 			ctx->valid = 1;
-		}
-		/* If definite length, length + header can't exceed total
-		 * amount of data available.
-		 */
-		if(!(i & 1) && ((plen + ctx->hdrlen) > len)) {
-			ASN1err(ASN1_F_ASN1_CHECK_TLEN, ASN1_R_TOO_LONG);
-			asn1_tlc_clear(ctx);
-			return 0;
+			/* If definite length, length + header can't exceed total
+			 * amount of data available.
+			 */
+			if(!(i & 1) && ((plen + ctx->hdrlen) > len)) {
+				ASN1err(ASN1_F_ASN1_CHECK_TLEN, ASN1_R_TOO_LONG);
+				asn1_tlc_clear(ctx);
+				return 0;
+			}
 		}
 	}
 		

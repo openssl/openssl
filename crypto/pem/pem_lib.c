@@ -274,7 +274,7 @@ char *PEM_ASN1_read_bio(char *(*d2i)(), const char *name, BIO *bp, char **x,
 						PEM_R_BAD_PASSWORD_READ);
 				goto err;
 			}
-			p8inf = M_PKCS8_decrypt(p8, psbuf, klen);
+			p8inf = PKCS8_decrypt(p8, psbuf, klen);
 			X509_SIG_free(p8);
 			if(!p8inf) goto p8err;
 			ret = (char *)EVP_PKCS82PKEY(p8inf);
@@ -890,7 +890,7 @@ EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, vo
 		X509_SIG_free(p8);
 		return NULL;	
 	}
-	p8inf = M_PKCS8_decrypt(p8, psbuf, klen);
+	p8inf = PKCS8_decrypt(p8, psbuf, klen);
 	X509_SIG_free(p8);
 	if(!p8inf) return NULL;
 	ret = EVP_PKCS82PKEY(p8inf);

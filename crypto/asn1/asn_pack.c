@@ -149,7 +149,7 @@ ASN1_STRING *ASN1_pack_string(void *obj, int (*i2d)(), ASN1_STRING **oct)
 
 /* ASN1_ITEM versions of the above */
 
-ASN1_STRING *ASN1_pack_item(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
+ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 {
 	ASN1_STRING *octmp;
 
@@ -179,7 +179,7 @@ ASN1_STRING *ASN1_pack_item(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 
 /* Extract an ASN1 object from an ASN1_STRING */
 
-void *ASN1_unpack_item(ASN1_STRING *oct, const ASN1_ITEM *it)
+void *ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it)
 {
 	unsigned char *p;
 	void *ret;
