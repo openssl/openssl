@@ -12,6 +12,29 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Change the various "***_up()" functions, that increment reference
+     counts on the various structure types, to "***_up_ref()". The naming
+     is more consistent with existing code and generally a better choice.
+     [Bodo Moeller]
+
+  *) Alter all existing ENGINE implementations (except "openssl" and
+     "openbsd") to dynamically instantiate their own error strings. This
+     makes them more flexible to be built both as statically-linked ENGINEs
+     and self-contained shared-libraries loadable via the "dynamic" ENGINE.
+     Also, add stub code to each that makes building them as self-contained
+     shared-libraries easier (see README.ENGINE).
+     [Geoff Thorpe]
+
+  *) Add a "dynamic" ENGINE that provides a mechanism for binding ENGINE
+     implementations into applications that are completely implemented in
+     self-contained shared-libraries. The "dynamic" ENGINE exposes control
+     commands that can be used to configure what shared-library to load and
+     to control aspects of the way it is handled. Also, made an update to
+     the README.ENGINE file that brings its information up-to-date and
+     provides some information and instructions on the "dynamic" ENGINE
+     (ie. how to use it, how to build "dynamic"-loadable ENGINEs, etc).
+     [Geoff Thorpe]
+
   *) BN_sqr() bug fix.
      [Ulf Möller, reported by Jim Ellis <jim.ellis@cavium.com>]
 
