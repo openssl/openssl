@@ -56,6 +56,7 @@ my @dirs = (
 "fips/des",
 "fips/dsa",
 "fips/rand",
+"fips/rsa",
 "fips/sha1",
 "ssl",
 "apps",
