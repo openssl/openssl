@@ -222,7 +222,11 @@ X509_PUBKEY *key;
 
 	if (key == NULL) goto err;
 
-	if (key->pkey != NULL) return(key->pkey);
+	if (key->pkey != NULL)
+	    {
+	    CRYPTO_add(&key->pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
+	    return(key->pkey);
+	    }
 
 	if (key->public_key == NULL) goto err;
 
@@ -252,6 +256,7 @@ X509_PUBKEY *key;
 		}
 #endif
 	key->pkey=ret;
+	CRYPTO_add(&ret->references,1,CRYPTO_LOCK_EVP_PKEY);
 	return(ret);
 err:
 	if (ret != NULL)
