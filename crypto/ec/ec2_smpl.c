@@ -364,8 +364,11 @@ int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT 
 		}
 
 	if (!BN_copy(&point->X, x)) goto err;
+	point->X.neg = 0;
 	if (!BN_copy(&point->Y, y)) goto err;
+	point->Y.neg = 0;
 	if (!BN_copy(&point->Z, BN_value_one())) goto err;
+	point->Z.neg = 0;
 	point->Z_is_one = 1;
 	ret = 1;
 
@@ -396,10 +399,12 @@ int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_
 	if (x != NULL)
 		{
 		if (!BN_copy(x, &point->X)) goto err;
+		x->neg = 0;
 		}
 	if (y != NULL)
 		{
 		if (!BN_copy(y, &point->Y)) goto err;
+		y->neg = 0;
 		}
 	ret = 1;
 		
