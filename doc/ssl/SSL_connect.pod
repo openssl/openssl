@@ -51,7 +51,7 @@ The TLS/SSL handshake was not successful but was shut down controlled and
 by the specifications of the TLS/SSL protocol. Call SSL_get_error() with the
 return value B<ret> to find out the reason.
 
-=item -1
+=item E<lt>0
 
 The TLS/SSL handshake was not successful, because a fatal error occurred either
 at the protocol level or a connection failure occurred. The shutdown was
@@ -64,6 +64,6 @@ to find out the reason.
 =head1 SEE ALSO
 
 L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_accept(3)|SSL_accept(3)>,
-L<SSL_shutdown(3)|SSL_shutdown(3)>, L<ssl(3)|ssl(3)> , L<bio(3)|bio(3)>
+L<SSL_shutdown(3)|SSL_shutdown(3)>, L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>
 
 =cut
