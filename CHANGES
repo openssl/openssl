@@ -6,8 +6,8 @@
  Changes between 0.9.2b and 0.9.3
 
   *) New function SSL_CTX_set_session_id_context that allows to set a default
-     value (so that you don't need SSL_set_session_id_context for each connection
-     using the SSL_CTX).
+     value (so that you don't need SSL_set_session_id_context for each
+     connection using the SSL_CTX).
      [Bodo Moeller]
 
   *) OAEP decoding bug fix.
