@@ -325,7 +325,7 @@ int app_init(long mesgwin)
 	}
 #endif
 
-int MS_CALLBACK key_callback(char *buf, int len, int verify, void *key)
+int MS_CALLBACK key_cb(char *buf, int len, int verify, void *key)
 	{
 	int i;
 

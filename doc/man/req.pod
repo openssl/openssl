@@ -299,6 +299,8 @@ Additional object identifiers can be defined with the B<oid_file> or
 B<oid_section> options in the configuration file. Any additional fields
 will be treated as though they were a DirectoryString.
 
+=back
+
 =head1 EXAMPLES
 
 Examine and verify certificate request:

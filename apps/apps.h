@@ -142,7 +142,7 @@ int args_from_file(char *file, int *argc, char **argv[]);
 int str2fmt(char *s);
 void program_name(char *in,char *out,int size);
 int chopup_args(ARGS *arg,char *buf, int *argc, char **argv[]);
-int MS_CALLBACK key_callback(char *buf,int len,int verify,void *u);
+int MS_CALLBACK key_cb(char *buf,int len,int verify,void *u);
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1
 #define FORMAT_TEXT     2

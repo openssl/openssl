@@ -6,7 +6,7 @@ asn1parse - ASN.1 parsing tool
 
 =head1 SYNOPSIS
 
-=item B<openssl> B<asn1parse>
+B<openssl> B<asn1parse>
 [B<-inform PEM|DER>]
 [B<-in filename>]
 [B<-out filename>]

@@ -1,12 +1,12 @@
 =pod
 
-=head 1 NAME
+=head1 NAME
 
 version - print version information
 
 =head1 SYNOPSIS
 
-=item B<openssl version>
+B<openssl version>
 [B<-a>]
 [B<-v>]
 [B<-b>]

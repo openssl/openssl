@@ -534,7 +534,7 @@ bad:
 		pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,NULL);
 	else
 		{
-		pkey=PEM_read_bio_PrivateKey(in,NULL,key_callback,key);
+		pkey=PEM_read_bio_PrivateKey(in,NULL,key_cb,key);
 		memset(key,0,strlen(key));
 		}
 	if (pkey == NULL)
