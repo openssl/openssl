@@ -896,5 +896,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	BIO_printf(bio,"---\n");
 	if (peer != NULL)
 		X509_free(peer);
+	/* flush, or debugging output gets mixed with http response */
+	BIO_flush(bio);
 	}
 
