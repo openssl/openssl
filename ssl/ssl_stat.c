@@ -387,6 +387,18 @@ char *SSL_alert_desc_string(int value)
 	case SSL3_AD_CERTIFICATE_EXPIRED:	str="CE"; break;
 	case SSL3_AD_CERTIFICATE_UNKNOWN:	str="CU"; break;
 	case SSL3_AD_ILLEGAL_PARAMETER:		str="IP"; break;
+	case TLS1_AD_DECRYPTION_FAILED		str="DC"; break;
+	case TLS1_AD_RECORD_OVERFLOW		str="RO"; break;
+	case TLS1_AD_UNKNOWN_CA			str="CA"; break;
+	case TLS1_AD_ACCESS_DENIED		str="AD"; break;
+	case TLS1_AD_DECODE_ERROR		str="DE"; break;
+	case TLS1_AD_DECRYPT_ERROR		str="CY"; break;
+	case TLS1_AD_EXPORT_RESTRICTION		str="ER"; break;
+	case TLS1_AD_PROTOCOL_VERSION		str="PV"; break;
+	case TLS1_AD_INSUFFICIENT_SECURITY	str="IS"; break;
+	case TLS1_AD_INTERNAL_ERROR		str="IE"; break;
+	case TLS1_AD_USER_CANCELLED		str="US"; break;
+	case TLS1_AD_NO_RENEGOTIATION		str="NR"; break;
 	default:				str="UK"; break;
 		}
 	return(str);
@@ -433,6 +445,42 @@ char *SSL_alert_desc_string_long(int value)
 		break;
 	case SSL3_AD_ILLEGAL_PARAMETER:
 		str="illegal parameter";
+		break;
+	case TLS1_AD_DECRYPTION_FAILED
+		str="decryption failed";
+		break;
+	case TLS1_AD_RECORD_OVERFLOW
+		str="record overflow";
+		break;
+	case TLS1_AD_UNKNOWN_CA
+		str="unknown CA";
+		break;
+	case TLS1_AD_ACCESS_DENIED
+		str="access denied";
+		break;
+	case TLS1_AD_DECODE_ERROR
+		str="decode error";
+		break;
+	case TLS1_AD_DECRYPT_ERROR
+		str="decrypt error";
+		break;
+	case TLS1_AD_EXPORT_RESTRICTION
+		str="export restriction";
+		break;
+	case TLS1_AD_PROTOCOL_VERSION
+		str="protocol version";
+		break;
+	case TLS1_AD_INSUFFICIENT_SECURITY
+		str="insufficient security";
+		break;
+	case TLS1_AD_INTERNAL_ERROR
+		str="internal error";
+		break;
+	case TLS1_AD_USER_CANCELLED
+		str="user canceled";
+		break;
+	case TLS1_AD_NO_RENEGOTIATION
+		str="no renegotiation";
 		break;
 	default: str="unknown"; break;
 		}
