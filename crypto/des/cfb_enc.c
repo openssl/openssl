@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include "e_os.h"
 #include "des_locl.h"
 
 /* The input and output are loaded in multiples of 8 bits.
