@@ -2650,8 +2650,8 @@ EVP_dev_crypto_rc4                      3098	EXIST::FUNCTION:DES
 ENGINE_load_ciphers                     3099	EXIST::FUNCTION:
 ENGINE_get_cipher_by_name               3100	EXIST::FUNCTION:
 ENGINE_cipher_num                       3101	EXIST::FUNCTION:
-DH_up                                   3102	EXIST::FUNCTION:DH
-RSA_up                                  3103	EXIST::FUNCTION:RSA
+DH_up_ref                               3102	EXIST::FUNCTION:DH
+RSA_up_ref                              3103	EXIST::FUNCTION:RSA
 EVP_DigestInit_dbg                      3104	EXIST::FUNCTION:
 CRYPTO_cleanup_all_ex_data              3105	EXIST::FUNCTION:
 CRYPTO_set_ex_data_implementation       3106	EXIST::FUNCTION:

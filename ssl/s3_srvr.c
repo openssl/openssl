@@ -982,7 +982,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,SSL_R_ERROR_GENERATING_TMP_RSA_KEY);
 					goto f_err;
 				}
-				RSA_up(rsa);
+				RSA_up_ref(rsa);
 				cert->rsa_tmp=rsa;
 				}
 			if (rsa == NULL)

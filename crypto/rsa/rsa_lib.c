@@ -246,7 +246,7 @@ void RSA_free(RSA *r)
 	OPENSSL_free(r);
 	}
 
-int RSA_up(RSA *r)
+int RSA_up_ref(RSA *r)
 	{
 	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_RSA);
 #ifdef REF_PRINT
@@ -255,7 +255,7 @@ int RSA_up(RSA *r)
 #ifdef REF_CHECK
 	if (i < 2)
 		{
-		fprintf(stderr, "RSA_up, bad reference count\n");
+		fprintf(stderr, "RSA_up_ref, bad reference count\n");
 		abort();
 		}
 #endif
