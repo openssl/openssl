@@ -36,7 +36,7 @@ None of the functions return a value.
 
 =head1 NOTES
 
-A typical application will will call OpenSSL_add_all_algorithms() initially and
+A typical application will call OpenSSL_add_all_algorithms() initially and
 EVP_cleanup() before exiting.
 
 An application does not need to add algorithms to use them explicitly, for example

@@ -102,7 +102,7 @@
 
 		*) digest is initialized with random seed instead of 
 		standardized one.
-		*) same seed is written to ouput
+		*) same seed is written to output
 		*) well-known text is then hashed and the output 
 		of the digest is also written to output.
 
