@@ -124,6 +124,7 @@ static char *x509_usage[]={
 "                   missing, it is assumed to be in the CA file.\n",
 " -CAcreateserial - create serial number file if it does not exist\n",
 " -CAserial       - serial file\n",
+" -set_serial     - serial number to use\n",
 " -text           - print the certificate in text form\n",
 " -C              - print out C code forms\n",
 " -md2/-md5/-sha1/-mdc2 - digest to use\n",
@@ -141,7 +142,8 @@ static int sign (X509 *x, EVP_PKEY *pkey,int days,int clrext, const EVP_MD *dige
 						LHASH *conf, char *section);
 static int x509_certify (X509_STORE *ctx,char *CAfile,const EVP_MD *digest,
 			 X509 *x,X509 *xca,EVP_PKEY *pkey,char *serial,
-			 int create,int days, int clrext, LHASH *conf, char *section);
+			 int create,int days, int clrext, LHASH *conf, char *section,
+						ASN1_INTEGER *sno);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 static int reqfile=0;
 
@@ -155,6 +157,7 @@ int MAIN(int argc, char **argv)
 	X509 *x=NULL,*xca=NULL;
 	ASN1_OBJECT *objtmp;
 	EVP_PKEY *Upkey=NULL,*CApkey=NULL;
+	ASN1_INTEGER *sno = NULL;
 	int i,num,badops=0;
 	BIO *out=NULL;
 	BIO *STDout=NULL;
@@ -300,6 +303,12 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			CAserial= *(++argv);
+			}
+		else if (strcmp(*argv,"-set_serial") == 0)
+			{
+			if (--argc < 1) goto bad;
+			if (!(sno = s2i_ASN1_INTEGER(NULL, *(++argv))))
+				goto bad;
 			}
 		else if (strcmp(*argv,"-addtrust") == 0)
 			{
@@ -593,7 +602,12 @@ bad:
 		if ((x=X509_new()) == NULL) goto end;
 		ci=x->cert_info;
 
-		if (!ASN1_INTEGER_set(X509_get_serialNumber(x),0)) goto end;
+		if (sno)
+			{
+			if (!X509_set_serialNumber(x, sno))
+				goto end;
+			}
+		else if (!ASN1_INTEGER_set(X509_get_serialNumber(x),0)) goto end;
 		if (!X509_set_issuer_name(x,req->req_info->subject)) goto end;
 		if (!X509_set_subject_name(x,req->req_info->subject)) goto end;
 
@@ -890,7 +904,7 @@ bad:
 				assert(need_rand);
 				if (!x509_certify(ctx,CAfile,digest,x,xca,
 					CApkey, CAserial,CA_createserial,days, clrext,
-					extconf, extsect))
+					extconf, extsect, sno))
 					goto end;
 				}
 			else if (x509req == i)
@@ -1005,32 +1019,21 @@ end:
 	EVP_PKEY_free(Upkey);
 	EVP_PKEY_free(CApkey);
 	X509_REQ_free(rq);
+	ASN1_INTEGER_free(sno);
 	sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
 	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
 	if (passin) OPENSSL_free(passin);
 	EXIT(ret);
 	}
 
-static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
-	     X509 *x, X509 *xca, EVP_PKEY *pkey, char *serialfile, int create,
-	     int days, int clrext, LHASH *conf, char *section)
+static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
 	{
-	int ret=0;
-	BIO *io=NULL;
+	char *buf = NULL, *p;
 	MS_STATIC char buf2[1024];
-	char *buf=NULL,*p;
-	BIGNUM *serial=NULL;
-	ASN1_INTEGER *bs=NULL,bs2;
-	X509_STORE_CTX xsc;
-	EVP_PKEY *upkey;
-
-	upkey = X509_get_pubkey(xca);
-	EVP_PKEY_copy_parameters(upkey,pkey);
-	EVP_PKEY_free(upkey);
-
-	X509_STORE_CTX_init(&xsc,ctx,x,NULL);
-	buf=OPENSSL_malloc(EVP_PKEY_size(pkey)*2+
-		((serialfile == NULL)
+	ASN1_INTEGER *bs = NULL, bs2;
+	BIO *io = NULL;
+	BIGNUM *serial;
+	buf=OPENSSL_malloc( ((serialfile == NULL)
 			?(strlen(CAfile)+strlen(POSTFIX)+1)
 			:(strlen(serialfile)))+1);
 	if (buf == NULL) { BIO_printf(bio_err,"out of mem\n"); goto end; }
@@ -1109,7 +1112,34 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 	BIO_puts(io,"\n");
 	BIO_free(io);
 	io=NULL;
-	
+	return bs;
+
+	end:
+	BIO_free(io);
+	ASN1_INTEGER_free(bs);
+	BN_free(serial);
+	return NULL;
+
+	}
+
+static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
+	     X509 *x, X509 *xca, EVP_PKEY *pkey, char *serialfile, int create,
+	     int days, int clrext, LHASH *conf, char *section, ASN1_INTEGER *sno)
+	{
+	int ret=0;
+	ASN1_INTEGER *bs=NULL;
+	X509_STORE_CTX xsc;
+	EVP_PKEY *upkey;
+
+	upkey = X509_get_pubkey(xca);
+	EVP_PKEY_copy_parameters(upkey,pkey);
+	EVP_PKEY_free(upkey);
+
+	X509_STORE_CTX_init(&xsc,ctx,x,NULL);
+	if (sno) bs = sno;
+	else if (!(bs = load_serial(CAfile, serialfile, create)))
+		goto end;
+
 	if (!X509_STORE_add_cert(ctx,x)) goto end;
 
 	/* NOTE: this certificate can/should be self signed, unless it was
@@ -1154,10 +1184,7 @@ end:
 	X509_STORE_CTX_cleanup(&xsc);
 	if (!ret)
 		ERR_print_errors(bio_err);
-	if (buf != NULL) OPENSSL_free(buf);
-	if (bs != NULL) ASN1_INTEGER_free(bs);
-	if (io != NULL)	BIO_free(io);
-	if (serial != NULL) BN_free(serial);
+	if (!sno) ASN1_INTEGER_free(bs);
 	return ret;
 	}
 

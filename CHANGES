@@ -3,6 +3,13 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New option -set_serial to 'req' and 'x509' this allows the serial
+     number to use to be specified on the command line. Previously self
+     signed certificates were hard coded with serial number 0 and the 
+     CA options of 'x509' had to use a serial number in a file which was
+     auto incremented.
+     [Steve Henson]
+
   *) Avoid false positives in memory leak detection code (crypto/mem_dbg.c)
      due to incorrect handling of multi-threading:
 

@@ -297,7 +297,6 @@ int MAIN(int argc, char **argv)
 	const EVP_MD *dgst=NULL;
 	STACK_OF(CONF_VALUE) *attribs=NULL;
 	STACK_OF(X509) *cert_sk=NULL;
-	BIO *hex=NULL;
 #undef BSIZE
 #define BSIZE 256
 	MS_STATIC char buf[3][BSIZE];
@@ -829,6 +828,11 @@ bad:
 			}
 		p=pp[DB_serial];
 		j=strlen(p);
+		if (*p == '-')
+			{
+			p++;
+			j--;
+			}
 		if ((j&1) || (j < 2))
 			{
 			BIO_printf(bio_err,"entry %d: bad serial number length (%d)\n",i+1,j);
@@ -1383,7 +1387,6 @@ bad:
 				goto err;
 				}
 			}
-		if ((hex=BIO_new(BIO_s_mem())) == NULL) goto err;
 
 		if (!crldays && !crlhours)
 			{
@@ -1419,12 +1422,13 @@ bad:
 				j = make_revoked(r, pp[DB_rev_date]);
 				if (!j) goto err;
 				if (j == 2) crl_v2 = 1;
-				(void)BIO_reset(hex);
-				if (!BIO_puts(hex,pp[DB_serial]))
+				if (!BN_hex2bn(&serial, pp[DB_serial]))
 					goto err;
-				if (!a2i_ASN1_INTEGER(hex,r->serialNumber,
-					buf[0],BSIZE)) goto err;
-
+				r->serialNumber = BN_to_ASN1_INTEGER(serial, r->serialNumber);
+				BN_free(serial);
+				serial = NULL;
+				if (!r->serialNumber)
+					goto err;
 				X509_CRL_add0_revoked(crl,r);
 				}
 			}
@@ -1539,7 +1543,6 @@ bad:
 	/*****************************************************************/
 	ret=0;
 err:
-	BIO_free(hex);
 	BIO_free_all(Cout);
 	BIO_free_all(Sout);
 	BIO_free_all(out);
