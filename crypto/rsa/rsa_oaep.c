@@ -164,8 +164,10 @@ int MGF1(unsigned char *mask, long len,
 
     for (i = 0; outlen < len; i++)
 	{
-	cnt[0] = (i >> 24) & 255, cnt[1] = (i >> 16) & 255,
-	  cnt[2] = (i >> 8) & 255, cnt[3] = i & 255;
+	cnt[0] = (unsigned char)((i >> 24) & 255);
+	cnt[1] = (unsigned char)((i >> 16) & 255);
+	cnt[2] = (unsigned char)((i >> 8)) & 255;
+	cnt[3] = (unsigned char)(i & 255);
 	EVP_DigestInit(&c,EVP_sha1());
 	EVP_DigestUpdate(&c, seed, seedlen);
 	EVP_DigestUpdate(&c, cnt, 4);
