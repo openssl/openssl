@@ -65,7 +65,7 @@
 #include <sys/types.h>
 
 #ifndef FLAT_INC
-# include "../e_os.h"
+# include "../../e_os.h"
 #else
 # include "e_os.h"
 #endif
