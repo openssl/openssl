@@ -4,6 +4,11 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Add a debugging option to PKCS#5 v2 key generation function: when
+     you #define DEBUG_PKCS5V2 passwords, salts, iteration counts and
+     derived keys are printed to stderr.
+     [Steve Henson]
+
   *) Copy the flags in ASN1_STRING_dup().
      [Roman E. Pavlov <pre@mo.msk.ru>]
 

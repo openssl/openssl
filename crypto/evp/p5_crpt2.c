@@ -55,13 +55,19 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-#if !defined(NO_HMAC) && !defined(NO_SHA)
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/x509.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include "cryptlib.h"
+
+/* set this to print out info about the keygen algorithm */
+/* #define DEBUG_PKCS5V2 */
+
+#ifdef DEBUG_PKCS5V2
+	static void h__dump (const unsigned char *p, int len);
+#endif
 
 /* This is an implementation of PKCS#5 v2.0 password based encryption key
  * derivation function PBKDF2 using the only currently defined function HMAC
@@ -74,14 +80,15 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
 			   int keylen, unsigned char *out)
 {
 	unsigned char digtmp[SHA_DIGEST_LENGTH], *p, itmp[4];
-	int cplen, j, k;
+	int cplen, j, k, tkeylen;
 	unsigned long i = 1;
 	HMAC_CTX hctx;
 	p = out;
+	tkeylen = keylen;
 	if(passlen == -1) passlen = strlen(pass);
-	while(keylen) {
-		if(keylen > SHA_DIGEST_LENGTH) cplen = SHA_DIGEST_LENGTH;
-		else cplen = keylen;
+	while(tkeylen) {
+		if(tkeylen > SHA_DIGEST_LENGTH) cplen = SHA_DIGEST_LENGTH;
+		else cplen = tkeylen;
 		/* We are unlikely to ever use more than 256 blocks (5120 bits!)
 		 * but just in case...
 		 */
@@ -99,11 +106,20 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
 				 digtmp, SHA_DIGEST_LENGTH, digtmp, NULL);
 			for(k = 0; k < cplen; k++) p[k] ^= digtmp[k];
 		}
-		keylen-= cplen;
+		tkeylen-= cplen;
 		i++;
 		p+= cplen;
 	}
 	HMAC_cleanup(&hctx);
+#ifdef DEBUG_PKCS5V2
+	fprintf(stderr, "Password:\n");
+	h__dump (pass, passlen);
+	fprintf(stderr, "Salt:\n");
+	h__dump (salt, saltlen);
+	fprintf(stderr, "Iteration count %d\n", iter);
+	fprintf(stderr, "Key:\n");
+	h__dump (out, keylen);
+#endif
 	return 1;
 }
 
@@ -219,4 +235,12 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	PBKDF2PARAM_free(kdf);
 	return 0;
 }
+
+#ifdef DEBUG_PKCS5V2
+static void h__dump (const unsigned char *p, int len)
+{
+        for (; len --; p++) fprintf(stderr, "%02X ", *p);
+        fprintf(stderr, "\n");
+}
 #endif
+
