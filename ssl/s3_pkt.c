@@ -937,8 +937,6 @@ static int do_change_cipher_spec(SSL *s)
 	int i;
 	const char *sender;
 	int slen;
-	unsigned char *finish_md;
-	int *finish_md_len;
 
 	if (s->state & SSL_ST_ACCEPT)
 		i=SSL3_CHANGE_CIPHER_SERVER_READ;
@@ -961,21 +959,17 @@ static int do_change_cipher_spec(SSL *s)
 		{
 		sender=s->method->ssl3_enc->server_finished_label;
 		slen=s->method->ssl3_enc->server_finished_label_len;
-		finish_md = s->s3->tmp.server_finish_md;
-		finish_md_len = &s->s3->tmp.server_finish_md_len;
 		}
 	else
 		{
 		sender=s->method->ssl3_enc->client_finished_label;
 		slen=s->method->ssl3_enc->client_finished_label_len;
-		finish_md = s->s3->tmp.client_finish_md;
-		finish_md_len = &s->s3->tmp.client_finish_md_len;
 		}
 
-	*finish_md_len = s->method->ssl3_enc->final_finish_mac(s,
+	s->s3->tmp.peer_finish_md_len = s->method->ssl3_enc->final_finish_mac(s,
 		&(s->s3->finish_dgst1),
 		&(s->s3->finish_dgst2),
-		sender,slen,finish_md);
+		sender,slen,s->s3->tmp.peer_finish_md);
 
 	return(1);
 	}

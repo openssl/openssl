@@ -70,19 +70,6 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 	unsigned char *p,*d;
 	int i;
 	unsigned long l;
-	unsigned char *finish_md;
-	int *finish_md_len;
-
-	if (s->state & SSL_ST_ACCEPT)
-		{
-		finish_md = s->s3->tmp.server_finish_md;
-		finish_md_len = &s->s3->tmp.server_finish_md_len;
-		}
-	else
-		{
-		finish_md = s->s3->tmp.client_finish_md;
-		finish_md_len = &s->s3->tmp.client_finish_md_len;
-		}
 
 	if (s->state == a)
 		{
@@ -92,9 +79,9 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 		i=s->method->ssl3_enc->final_finish_mac(s,
 			&(s->s3->finish_dgst1),
 			&(s->s3->finish_dgst2),
-			sender,slen,finish_md);
-		*finish_md_len = i;
-		memcpy(p, finish_md, i);
+			sender,slen,s->s3->tmp.finish_md);
+		s->s3->tmp.finish_md_len = i;
+		memcpy(p, s->s3->tmp.finish_md, i);
 		p+=i;
 		l=i;
 
@@ -122,22 +109,9 @@ int ssl3_get_finished(SSL *s, int a, int b)
 	int al,i,ok;
 	long n;
 	unsigned char *p;
-	unsigned char *finish_md;
-	int *finish_md_len;
-
-	if (s->state & SSL_ST_ACCEPT)
-		{
-		finish_md = s->s3->tmp.client_finish_md;
-		finish_md_len = &s->s3->tmp.client_finish_md_len;
-		}
-	else
-		{
-		finish_md = s->s3->tmp.server_finish_md;
-		finish_md_len = &s->s3->tmp.server_finish_md_len;
-		}
 
 	/* the mac has already been generated when we received the
-	 * change cipher spec message and is in finish_md
+	 * change cipher spec message and is in s->s3->tmp.peer_finish_md
 	 */ 
 
 	n=ssl3_get_message(s,
@@ -158,9 +132,8 @@ int ssl3_get_finished(SSL *s, int a, int b)
 		}
 	s->s3->change_cipher_spec=0;
 
-	p=(unsigned char *)s->init_buf->data;
-
-	i=*finish_md_len;
+	p = (unsigned char *)s->init_buf->data;
+	i = s->s3->tmp.peer_finish_md_len;
 
 	if (i != n)
 		{
@@ -169,7 +142,7 @@ int ssl3_get_finished(SSL *s, int a, int b)
 		goto f_err;
 		}
 
-	if (memcmp(p, finish_md, i) != 0)
+	if (memcmp(p, s->s3->tmp.peer_finish_md, i) != 0)
 		{
 		al=SSL_AD_DECRYPT_ERROR;
 		SSLerr(SSL_F_SSL3_GET_FINISHED,SSL_R_DIGEST_CHECK_FAILED);
