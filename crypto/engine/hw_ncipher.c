@@ -1152,13 +1152,20 @@ static int hwcrhk_get_pass(const char *prompt_info,
                                 UI_INPUT_FLAG_DEFAULT_PWD,
 				buf,0,(*len_io) - 1);
                         UI_add_user_data(ui, callback_data);
-                        if (ok >= 0)
-                                ok=UI_process(ui);
+			UI_ctrl(ui, UI_CTRL_PRINT_ERRORS, 1, 0, 0);
+
+			if (ok >= 0)
+				do
+					{
+					ok=UI_process(ui);
+					}
+				while (ok < 0 && UI_ctrl(ui, UI_CTRL_IS_REDOABLE, 0, 0, 0));
+
                         if (ok >= 0)
                                 *len_io = strlen(buf);
 
-                        OPENSSL_free(prompt);
                         UI_free(ui);
+                        OPENSSL_free(prompt);
                         }
                 }
         else
@@ -1204,7 +1211,7 @@ static int hwcrhk_insert_card(const char *prompt_info,
 
         if (ui)
                 {
-                char answer[10];
+                char answer;
                 char buf[BUFSIZ];
 
                 if (wrong_info)
@@ -1214,22 +1221,22 @@ static int hwcrhk_insert_card(const char *prompt_info,
                 if (ok >= 0 && prompt_info)
                         {
                         BIO_snprintf(buf, sizeof(buf)-1,
-                                "Insert card \"%s\"\n then hit <enter> or C<enter> to cancel\n", prompt_info);
-                        ok = UI_dup_input_string(ui, buf, 1,
-                                answer, 0, sizeof(answer)-1);
+                                "Insert card \"%s\"", prompt_info);
+			ok = UI_dup_input_boolean(ui, buf,
+				"\n then hit <enter> or C<enter> to cancel\n",
+				"\r\n", "Cc", UI_INPUT_FLAG_ECHO, &answer);
                         }
                 UI_add_user_data(ui, callback_data);
+
                 if (ok >= 0)
                         ok = UI_process(ui);
                 UI_free(ui);
-		/* If canceled input treat as 'cancel' */
-		if (ok == -2)
-			ok = 1;
-		else if(ok < 0)
-			ok = -1;
-                else if (answer[0] == 'c' || answer[0] == 'C')
+
+                if (ok == -2 || (ok >= 0 && answer == 'C'))
                         ok = 1;
-		else 
+		else if (ok < 0)
+			ok = -1;
+		else
 			ok = 0;
                 }
         return ok;
