@@ -140,7 +140,7 @@ int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn)
 			if (consider_randfile) /* explanation does not apply when a file is explicitly named */
 				{
 				BIO_printf(bio_e,"Consider setting the RANDFILE environment variable to point at a file that\n");
-				BIO_printf(bio_e,"'random' data can be kept in.\n");
+				BIO_printf(bio_e,"'random' data can be kept in (the file will be overwritten).\n");
 				}
 			}
 		return 0;
