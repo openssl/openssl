@@ -284,7 +284,9 @@ DECLARE_STACK_OF(X509_TRUST)
 
 /* standard trust ids */
 
-#define X509_TRUST_ANY		1
+#define X509_TRUST_DEFAULT	-1	/* Only valid in purpose settings */
+
+#define X509_TRUST_COMPAT	1
 #define X509_TRUST_SSL_CLIENT	2
 #define X509_TRUST_SSL_SERVER	3
 #define X509_TRUST_EMAIL	4

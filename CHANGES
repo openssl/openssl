@@ -4,6 +4,18 @@
 
  Changes between 0.9.5 and 0.9.5a  [XX XXX 2000]
 
+  *) Add compatability options to the purpose and trust code. The
+     purpose X509_PURPOSE_ANY is "any purpose" which automatically
+     accepts a certificate or CA, this was the previous behaviour,
+     with all the associated security issues.
+
+     X509_TRUST_COMPAT is the old trust behaviour: only and
+     automatically trust self signed roots in certificate store. A
+     new trust setting X509_TRUST_DEFAULT is used to specify that
+     a purpose has no associated trust setting and it should instead
+     use the value in the default purpose.
+     [Steve Henson]
+
   *) Fix the PKCS#8 DSA private key code so it decodes keys again
      and fix a memory leak.
      [Steve Henson]

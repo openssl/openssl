@@ -71,6 +71,7 @@ static int purpose_smime(X509 *x, int ca);
 static int check_purpose_smime_sign(X509_PURPOSE *xp, X509 *x, int ca);
 static int check_purpose_smime_encrypt(X509_PURPOSE *xp, X509 *x, int ca);
 static int check_purpose_crl_sign(X509_PURPOSE *xp, X509 *x, int ca);
+static int no_check(X509_PURPOSE *xp, X509 *x, int ca);
 
 static int xp_cmp(X509_PURPOSE **a, X509_PURPOSE **b);
 static void xptable_free(X509_PURPOSE *p);
@@ -81,7 +82,8 @@ static X509_PURPOSE xstandard[] = {
 	{X509_PURPOSE_NS_SSL_SERVER, X509_TRUST_SSL_SERVER, 0, check_purpose_ns_ssl_server, "Netscape SSL server", "nssslserver", NULL},
 	{X509_PURPOSE_SMIME_SIGN, X509_TRUST_EMAIL, 0, check_purpose_smime_sign, "S/MIME signing", "smimesign", NULL},
 	{X509_PURPOSE_SMIME_ENCRYPT, X509_TRUST_EMAIL, 0, check_purpose_smime_encrypt, "S/MIME encryption", "smimeencrypt", NULL},
-	{X509_PURPOSE_CRL_SIGN, X509_TRUST_ANY, 0, check_purpose_crl_sign, "CRL signing", "crlsign", NULL},
+	{X509_PURPOSE_CRL_SIGN, X509_TRUST_COMPAT, 0, check_purpose_crl_sign, "CRL signing", "crlsign", NULL},
+	{X509_PURPOSE_ANY, X509_TRUST_DEFAULT, 0, no_check, "Any Purpose", "any", NULL},
 };
 
 #define X509_PURPOSE_COUNT (sizeof(xstandard)/sizeof(X509_PURPOSE))
@@ -452,5 +454,10 @@ static int check_purpose_crl_sign(X509_PURPOSE *xp, X509 *x, int ca)
 		else return 0;
 	}
 	if(ku_reject(x, KU_CRL_SIGN)) return 0;
+	return 1;
+}
+
+static int no_check(X509_PURPOSE *xp, X509 *x, int ca)
+{
 	return 1;
 }
