@@ -25,14 +25,18 @@
       o Initial (incomplete) support for international character sets
       o New DH_METHOD, DSA_METHOD and enhanced RSA_METHOD
       o Read only memory BIOs and simplified creation function
+      o TLS/SSL protocol bugfixes: Accept TLS 'client hello' in SSL 3.0
+        record; allow fragmentation and interleaving of handshake and other
+        data
       o TLS/SSL code now "tolerates" MS SGC
-      o Work around for Netscape client certificate hang bug.
+      o Work around for Netscape client certificate hang bug
       o RSA_NULL option that removes RSA patent code but keeps other
         RSA functionality
       o Memory leak detection now allows applications to add extra information
         via a per-thread stack
       o PRNG robustness improved
       o BIGNUM library bug fixes
+      o faster DSA parameter generation
       o Enhanced support for Alpha Linux
       o Experimental MacOS support
 
