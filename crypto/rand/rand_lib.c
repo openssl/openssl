@@ -63,8 +63,6 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
-#include <openssl/fips.h>
-#include <openssl/fips_rand.h>
 
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
@@ -87,15 +85,6 @@ int RAND_set_rand_method(const RAND_METHOD *meth)
 
 const RAND_METHOD *RAND_get_rand_method(void)
 	{
-#ifdef FIPS
-	if(FIPS_mode && default_RAND_meth != FIPS_rand_check)
-	    {
-	    RANDerr(RAND_F_RAND_GET_RAND_METHOD,RAND_R_NON_FIPS_METHOD);
-	    return 0;
-	    }
-#endif
-
-
 	if (!default_RAND_meth)
 		{
 #ifndef OPENSSL_NO_ENGINE

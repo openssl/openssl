@@ -1550,56 +1550,6 @@ $shared_extension =
 $ranlib       = 
 $arflags      = 
 
-*** debug-ben-fips
-$cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DFIPS -O2 -pedantic -Wall -Wshadow -Werror -pipe
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = 
-$lflags       = 
-$bn_ops       = 
-$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-
-*** debug-ben-fips-debug
-$cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DFIPS -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = 
-$lflags       = 
-$bn_ops       = 
-$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-
 *** debug-ben-openbsd
 $cc           = gcc
 $cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_OPENBSD_DEV_CRYPTO -DOPENSSL_NO_ASM -O2 -pedantic -Wall -Wshadow -Werror -pipe

@@ -85,7 +85,7 @@ static int des_ede_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			      const unsigned char *in, unsigned int inl)
 {
 	BLOCK_CIPHER_ecb_loop()
-		DES_ecb3_encrypt(in + i,out + i, 
+		DES_ecb3_encrypt((DES_cblock *)(in + i), (DES_cblock *)(out + i), 
 				 &data(ctx)->ks1, &data(ctx)->ks2,
 				 &data(ctx)->ks3,
 				 ctx->encrypt);
@@ -121,7 +121,7 @@ static int des_ede_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-static int des_ede_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int des_ede_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			      const unsigned char *in, unsigned int inl)
 {
 	DES_ede3_cfb64_encrypt(in, out, (long)inl, 
@@ -136,7 +136,7 @@ BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
 			EVP_CIPHER_get_asn1_iv,
 			NULL)
 
-#define des_ede3_cfb64_cipher des_ede_cfb64_cipher
+#define des_ede3_cfb_cipher des_ede_cfb_cipher
 #define des_ede3_ofb_cipher des_ede_ofb_cipher
 #define des_ede3_cbc_cipher des_ede_cbc_cipher
 #define des_ede3_ecb_cipher des_ede_ecb_cipher

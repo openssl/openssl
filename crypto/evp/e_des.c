@@ -92,47 +92,13 @@ static int des_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-static int des_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-			    const unsigned char *in, unsigned int inl)
+static int des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+			  const unsigned char *in, unsigned int inl)
 {
 	DES_cfb64_encrypt(in, out, (long)inl, ctx->cipher_data,
 			  (DES_cblock *)ctx->iv, &ctx->num, ctx->encrypt);
 	return 1;
 }
-
-/* Although we have a CFB-r implementation for DES, it doesn't pack the right
-   way, so wrap it here */
-static int des_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-			   const unsigned char *in, unsigned int inl)
-    {
-    unsigned int n;
-    unsigned char c[8],d[8]; /* DES_cfb_encrypt rudely overwrites the whole buffer*/
-
-    memset(out,0,(inl+7)/8);
-    for(n=0 ; n < inl ; ++n)
-	{
-	c[0]=(in[n/8]&(1 << (7-n%8))) ? 0x80 : 0;
-	DES_cfb_encrypt(c,d,1,1,ctx->cipher_data,(DES_cblock *)ctx->iv,
-			ctx->encrypt);
-	out[n/8]=(out[n/8]&~(0x80 >> (n%8)))|((d[0]&0x80) >> (n%8));
-	}
-
-    return 1;
-    }
-
-static int des_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-			   const unsigned char *in, unsigned int inl)
-    {
-    unsigned char *tmp; /* DES_cfb_encrypt rudely overwrites the whole buffer*/
-
-    tmp=alloca(inl);
-    memcpy(tmp,in,inl);
-    DES_cfb_encrypt(tmp,tmp,8,inl,ctx->cipher_data,(DES_cblock *)ctx->iv,
-		    ctx->encrypt);
-    memcpy(out,tmp,inl);
-
-    return 1;
-    }
 
 BLOCK_CIPHER_defs(des, DES_key_schedule, NID_des, 8, 8, 8, 64,
 			0, des_init_key, NULL,
@@ -140,13 +106,6 @@ BLOCK_CIPHER_defs(des, DES_key_schedule, NID_des, 8, 8, 8, 64,
 			EVP_CIPHER_get_asn1_iv,
 			NULL)
 
-BLOCK_CIPHER_def_cfb(des,DES_key_schedule,NID_des,8,8,1,0,des_init_key,NULL,
-		     EVP_CIPHER_set_asn1_iv,
-		     EVP_CIPHER_get_asn1_iv,NULL)
-
-BLOCK_CIPHER_def_cfb(des,DES_key_schedule,NID_des,8,8,8,0,des_init_key,NULL,
-		     EVP_CIPHER_set_asn1_iv,
-		     EVP_CIPHER_get_asn1_iv,NULL)
 
 static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			const unsigned char *iv, int enc)

@@ -64,17 +64,9 @@
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 #include <openssl/asn1.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-#include <openssl/fips.h>
 
 DSA_SIG * DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	{
-#ifdef FIPS
-	if(FIPS_mode && !FIPS_dsa_check(dsa))
-		return NULL;
-#endif
 	return dsa->meth->dsa_do_sign(dgst, dlen, dsa);
 	}
 
@@ -95,10 +87,6 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
 
 int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	{
-#ifdef FIPS
-	if(FIPS_mode && !FIPS_dsa_check(dsa))
-		return 0;
-#endif
 	return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp);
 	}
 
