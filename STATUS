@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/08/14 20:49:37 $
+  ______________                           $Date: 1999/09/20 23:34:01 $
 
   DEVELOPMENT STATE
 
@@ -15,6 +15,9 @@
 
   AVAILABLE PATCHES
 
+    o shared libraries <behnke@trustcenter.de>
+    o HP compiler flags <peter_huang@hp.com>
+    o Lennart Bang: test program patches
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
 
   IN PROGRESS
@@ -55,6 +58,7 @@
 
   NEEDS PATCH
 
+    o  Arne Ansper: d2i_ASN1_bytes bug
     o  base64 decoding bug (Ivan Nejgebauer)
     o  salzr@certco.com (Rich Salz): Bug in X509_name_print
        <29E0A6D39ABED111A36000A0C99609CA2C2BA4@macertco-srv1.ma.certco.com>
