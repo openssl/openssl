@@ -152,7 +152,7 @@ DH *DSA_dup_DH(DSA *r)
 	 * DH has p, optional length, g, optional pub_key, optional priv_key.
 	 */ 
 
-	DH *ret;
+	DH *ret = NULL;
 
 	if (r == NULL)
 		goto err;
