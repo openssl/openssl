@@ -1,6 +1,6 @@
 /* crypto/store/str_locl.h -*- mode:C; c-file-style: "eay" -*- */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
- * project 2001.
+ * project 2003.
  */
 /* ====================================================================
  * Copyright (c) 2003 The OpenSSL Project.  All rights reserved.
