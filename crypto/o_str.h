@@ -59,7 +59,7 @@
 #ifndef HEADER_O_STR_H
 #define HEADER_O_STR_H
 
-#include <string.h>
+#include <stddef.h>		/* to get size_t */
 
 int OPENSSL_strcasecmp(const char *str1, const char *str2);
 int OPENSSL_strncasecmp(const char *str1, const char *str2, size_t n);
