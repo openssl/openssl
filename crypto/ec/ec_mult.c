@@ -87,6 +87,7 @@ typedef struct ec_pre_comp_st {
 	EC_POINT **points;     /* array with pre-calculated multiples of generator:
 	                        * 'num' pointers to EC_POINT objects followed by a NULL */
 	size_t num;            /* numblocks * 2^(w-1) */
+	int references;
 } EC_PRE_COMP;
  
 /* functions to manage EC_PRE_COMP within the EC_GROUP extra_data framework */
@@ -110,68 +111,39 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
 	ret->w = 4; /* default */
 	ret->points = NULL;
 	ret->num = 0;
+	ret->references = 1;
 	return ret;
 	}
 
 static void *ec_pre_comp_dup(void *src_)
 	{
-	const EC_PRE_COMP *src = src_;
-	EC_PRE_COMP *ret = NULL;
+	EC_PRE_COMP *src = src_;
 
-	ret = ec_pre_comp_new(src->group);
-	if (!ret)
-		return ret;
-	ret->blocksize = src->blocksize;
-	ret->numblocks = src->numblocks;
-	ret->w = src->w;
-	ret->num = 0;
+	/* no need to actually copy, these objects never change! */
 
-	if (src->points)
-		{
-		EC_POINT **src_var, **dest_var;
+	CRYPTO_add(&src->references, 1, CRYPTO_LOCK_EC_PRE_COMP);
 
-		ret->points = (EC_POINT **)OPENSSL_malloc((src->num + 1) * sizeof(EC_POINT *));
-		if (!ret->points)
-			{
-			ec_pre_comp_free(ret);
-			return NULL;
-			}
-
-		for (dest_var = ret->points, src_var = src->points; *src_var != NULL; src_var++, dest_var++)
-			{
-			*dest_var = EC_POINT_dup(*src_var, src->group);
-			if (*dest_var == NULL)
-				{
-				ec_pre_comp_free(ret);
-				return NULL;
-				}
-			ret->num++;
-			}
-
-		ret->points[ret->num] = NULL;
-		if (ret->num != src->num)
-			{
-			ec_pre_comp_free(ret);
-			ECerr(EC_F_EC_PRE_COMP_DUP, ERR_R_INTERNAL_ERROR);
-			return NULL;
-			}
-		}
-
-	return ret;
+	return src_;
 	}
 
 static void ec_pre_comp_free(void *pre_)
 	{
+	int i;
 	EC_PRE_COMP *pre = pre_;
 
 	if (!pre)
 		return;
+
+	i = CRYPTO_add(&pre->references, -1, CRYPTO_LOCK_EC_PRE_COMP);
+	if (i > 0)
+		return;
+
 	if (pre->points)
 		{
-		EC_POINT **var;
+		EC_POINT **p;
 
-		for (var = pre->points; *var != NULL; var++)
-			EC_POINT_free(*var);
+		for (p = pre->points; *p != NULL; p++)
+			EC_POINT_free(*p);
 		OPENSSL_free(pre->points);
 		}
 	OPENSSL_free(pre);
@@ -179,10 +151,16 @@ static void ec_pre_comp_free(void *pre_)
 
 static void ec_pre_comp_clear_free(void *pre_)
 	{
+	int i;
 	EC_PRE_COMP *pre = pre_;
 
 	if (!pre)
 		return;
+
+	i = CRYPTO_add(&pre->references, -1, CRYPTO_LOCK_EC_PRE_COMP);
+	if (i > 0)
+		return;
+
 	if (pre->points)
 		{
 		EC_POINT **p;
@@ -363,7 +341,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	EC_POINT **val = NULL; /* precomputation */
 	EC_POINT **v;
 	EC_POINT ***val_sub = NULL; /* pointers to sub-arrays of 'val' or 'pre_comp->points' */
-	EC_PRE_COMP *pre_comp = NULL;
+	const EC_PRE_COMP *pre_comp = NULL;
 	int num_scalar = 0; /* flag: will be set to 1 if 'scalar' must be treated like other scalars,
 	                     * i.e. precomputation is not available */
 	int ret = 0;
@@ -761,13 +739,14 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	BIGNUM *order;
 	size_t i, bits, w, pre_points_per_block, blocksize, numblocks, num;
 	EC_POINT **points = NULL;
-	EC_PRE_COMP *pre_comp, *new_pre_comp = NULL;
+	EC_PRE_COMP *pre_comp;
 	int ret = 0;
 
-	pre_comp = EC_GROUP_get_extra_data(group, ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free);
-	if (pre_comp == NULL)
-		if ((pre_comp = new_pre_comp = ec_pre_comp_new(group)) == NULL)
-			return 0;
+	/* if there is an old EC_PRE_COMP object, throw it away */
+	EC_GROUP_free_extra_data(group, ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free);
+
+	if ((pre_comp = ec_pre_comp_new(group)) == NULL)
+		return 0;
 
 	generator = EC_GROUP_get0_generator(group);
 	if (generator == NULL)
@@ -888,32 +867,22 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	pre_comp->blocksize = blocksize;
 	pre_comp->numblocks = numblocks;
 	pre_comp->w = w;
-	if (pre_comp->points)
-		{
-		EC_POINT **p;
-
-		for (p = pre_comp->points; *p != NULL; p++)
-			EC_POINT_free(*p);
-		OPENSSL_free(pre_comp->points);
-		}
 	pre_comp->points = points;
 	points = NULL;
 	pre_comp->num = num;
 
-	if (new_pre_comp)
-		{
-		if (!EC_GROUP_set_extra_data(group, new_pre_comp, ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free))
-			goto err;
-		new_pre_comp = NULL;
-		}
+	if (!EC_GROUP_set_extra_data(group, pre_comp,
+		ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free))
+		goto err;
+	pre_comp = NULL;
 
 	ret = 1;
  err:
 	BN_CTX_end(ctx);
 	if (new_ctx != NULL)
 		BN_CTX_free(new_ctx);
-	if (new_pre_comp)
-		ec_pre_comp_free(new_pre_comp);
+	if (pre_comp)
+		ec_pre_comp_free(pre_comp);
 	if (points)
 		{
 		EC_POINT **p;

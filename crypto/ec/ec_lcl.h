@@ -167,6 +167,13 @@ struct ec_method_st {
 	int (*field_set_to_one)(const EC_GROUP *, BIGNUM *r, BN_CTX *);
 } /* EC_METHOD */;
 
+typedef struct ec_extra_data_st {
+	struct ec_extra_data_st *next;
+	void *data;
+	void *(*dup_func)(void *);
+	void (*free_func)(void *);
+	void (*clear_free_func)(void *);
+} EC_EXTRA_DATA; /* used in EC_GROUP */
 
 struct ec_group_st {
 	const EC_METHOD *meth;
@@ -181,10 +188,7 @@ struct ec_group_st {
 	unsigned char *seed; /* optional seed for parameters (appears in ASN1) */
 	size_t seed_len;
 
-	void *extra_data;
-	void *(*extra_data_dup_func)(void *);
-	void (*extra_data_free_func)(void *);
-	void (*extra_data_clear_free_func)(void *);
+	EC_EXTRA_DATA *extra_data; /* linked list */
 
 	/* The following members are handled by the method functions,
 	 * even if they appear generic */
@@ -224,14 +228,17 @@ struct ec_group_st {
  * (with visibility limited to 'package' level for now).
  * We use the function pointers as index for retrieval; this obviates
  * global ex_data-style index tables.
- * (Currently, we have one slot only, but is is possible to extend this
- * if necessary.) */
-int EC_GROUP_set_extra_data(EC_GROUP *, void *extra_data, void *(*extra_data_dup_func)(void *),
-	void (*extra_data_free_func)(void *), void (*extra_data_clear_free_func)(void *));
-void *EC_GROUP_get_extra_data(const EC_GROUP *, void *(*extra_data_dup_func)(void *),
-	void (*extra_data_free_func)(void *), void (*extra_data_clear_free_func)(void *));
-void EC_GROUP_free_extra_data(EC_GROUP *);
-void EC_GROUP_clear_free_extra_data(EC_GROUP *);
+ */
+int EC_GROUP_set_extra_data(EC_GROUP *, void *data,
+	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
+void *EC_GROUP_get_extra_data(const EC_GROUP *,
+	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
+void EC_GROUP_free_extra_data(EC_GROUP*,
+	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
+void EC_GROUP_clear_free_extra_data(EC_GROUP*,
+	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
+void EC_GROUP_free_all_extra_data(EC_GROUP *);
+void EC_GROUP_clear_free_all_extra_data(EC_GROUP *);
 
 
 
