@@ -1,4 +1,4 @@
-/* crypto/evp/c_all.c */
+/* crypto/evp/c_allc.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,4 +144,6 @@ void OpenSSL_add_all_ciphers(void)
 	EVP_add_cipher_alias(SN_rc5_cbc,"rc5");
 	EVP_add_cipher_alias(SN_rc5_cbc,"RC5");
 #endif
+	PKCS12_PBE_add();
+	PKCS5_PBE_add();
 	}

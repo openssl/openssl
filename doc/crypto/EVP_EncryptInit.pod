@@ -67,7 +67,7 @@ to (inl + cipher_block_size - 1) so B<outl> should contain sufficient
 room.  The actual number of bytes written is placed in B<outl>.
 
 EVP_EncryptFinal() encrypts the "final" data, that is any data that
-remains in a partial block. It uses standard block padding (aka PKCS
+remains in a partial block. It uses L<standard block padding|/NOTES> (aka PKCS
 padding). The encrypted final data is written to B<out> which should
 have sufficient space for one cipher block. The number of bytes written
 is placed in B<outl>. After this function is called the encryption operation
@@ -117,7 +117,9 @@ length for all ciphers.
 EVP_CIPHER_type() and EVP_CIPHER_CTX_type() return the type of the passed
 cipher or context. This "type" is the actual NID of the cipher OBJECT
 IDENTIFIER as such it ignores the cipher parameters and 40 bit RC2 and
-128 bit RC2 have the same NID.
+128 bit RC2 have the same NID. If the cipher does not have an object
+identifier or does not have ASN1 support this function will return
+B<NID_undef>.
 
 EVP_CIPHER_CTX_cipher() returns the B<EVP_CIPHER> structure when passed
 an B<EVP_CIPHER_CTX> structure.
@@ -167,6 +169,14 @@ length.
 
 EVP_CIPHER_iv_length() and EVP_CIPHER_CTX_iv_length() return the IV
 length or zero if the cipher does not use an IV.
+
+EVP_CIPHER_type() and EVP_CIPHER_CTX_type() return the NID of the cipher's
+OBJECT IDENTIFIER or NID_undef if it has no defined OBJECT IDENTIFIER.
+
+EVP_CIPHER_CTX_cipher() returns an B<EVP_CIPHER> structure.
+
+EVP_CIPHER_param_to_asn1() and EVP_CIPHER_asn1_to_param() return 1 for 
+success or zero for failure.
 
 =head1 NOTES
 

@@ -1,4 +1,4 @@
-/* crypto/evp/c_all.c */
+/* crypto/evp/c_alld.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,6 +97,4 @@ void OpenSSL_add_all_digests(void)
 	EVP_add_digest_alias(SN_ripemd160,"ripemd");
 	EVP_add_digest_alias(SN_ripemd160,"rmd160");
 #endif
-	PKCS12_PBE_add();
-	PKCS5_PBE_add();
 	}
