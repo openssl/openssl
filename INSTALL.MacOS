@@ -32,17 +32,17 @@ Installation procedure:
         to 42, change appropriately.
 (**)	If you use SUNtar, then it might have already unbinhexed the files
 	in question.
-(***)	The project file was saved with CW Pro 5.3. If you have earlier
+(***)	The project file was saved with CW Pro 5.3. If you have an earlier
 	version and it refuses to open it, then download
 	http://www.openssl.org/~appro/OpenSSL.mcp.xml and import it
 	overwriting the original OpenSSL.mcp.
-(****)	Other targets are work in progress. If you feel like giving 'em a
+(****)	Other targets are works in progress. If you feel like giving 'em a
 	shot, then you should know that OpenSSL* and Lib* targets are
 	supposed to be built with the GUSI, MacOS library which mimics
 	BSD sockets and some other POSIX APIs. The GUSI distribution is
-	expected to be found in the same directory as openssl source tree,
-	i.e. in the parent directory to the one where this very file,
-	namely INSTALL.MacOS. For more informations about GUSI, see
+	expected to be found in the same directory as the openssl source tree,
+	i.e., in the parent directory to the one where this very file,
+	namely INSTALL.MacOS, resides. For more information about GUSI, see
 	http://www.iis.ee.ethz.ch/~neeri/macintosh/gusi-qa.html
 
 Finally some essential comments from our generous contributor:-)

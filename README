@@ -107,8 +107,8 @@
  only be used with RSA Security's permission. 
 
  The IDEA algorithm is patented by Ascom in Austria, France, Germany, Italy,
- Japan, Netherlands, Spain, Sweden, Switzerland, UK and the USA.  They should
- be contacted if that algorithm is to be used, their web page is
+ Japan, the Netherlands, Spain, Sweden, Switzerland, UK and the USA.  They
+ should be contacted if that algorithm is to be used; their web page is
  http://www.ascom.ch/.
 
  INSTALLATION
@@ -119,8 +119,8 @@
  INSTALL.VMS.
 
  Read the documentation in the doc/ directory.  It is quite rough, but it
- lists the functions, you will probably have to look at the code to work out
- how to used them. Look at the example programs.
+ lists the functions; you will probably have to look at the code to work out
+ how to use them. Look at the example programs.
 
  SUPPORT 
  -------
