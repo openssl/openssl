@@ -80,8 +80,8 @@ OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, char *path, OCSP_REQUEST *req)
 	int len, retcode;
 	static char req_txt[] =
 "POST %s HTTP/1.0\r\n\
-Content-Type:application/ocsp-request\r\n\
-Content-length: %d\r\n\r\n";
+Content-Type: application/ocsp-request\r\n\
+Content-Length: %d\r\n\r\n";
 
 	len = i2d_OCSP_REQUEST(req, NULL);
 	if(BIO_printf(b, req_txt, path, len) < 0) {

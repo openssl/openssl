@@ -245,7 +245,7 @@ int X509_NAME_set(X509_NAME **xn, X509_NAME *name)
 	{
 	X509_NAME *in;
 
-	if (*xn == NULL) return(0);
+	if (!xn || !name) return(0);
 
 	if (*xn != name)
 		{
