@@ -207,7 +207,7 @@ OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp)
 		return NULL;
 		}
 
-	return ASN1_item_unpack(rb->response, &OCSP_BASICRESP_it);
+	return ASN1_item_unpack(rb->response, ASN1_ITEM_rptr(OCSP_BASICRESP));
 	}
 
 /* Return number of OCSP_SINGLERESP reponses present in

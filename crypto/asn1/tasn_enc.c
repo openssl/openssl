@@ -240,7 +240,7 @@ int ASN1_template_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_TEMPLAT
 		skcontlen = 0;
 		for(i = 0; i < sk_ASN1_VALUE_num(sk); i++) {
 			skitem = sk_ASN1_VALUE_value(sk, i);
-			skcontlen += ASN1_item_ex_i2d(&skitem, NULL, tt->item, -1, 0);
+			skcontlen += ASN1_item_ex_i2d(&skitem, NULL, ASN1_ITEM_ptr(tt->item), -1, 0);
 		}
 		sklen = ASN1_object_size(1, skcontlen, sktag);
 		/* If EXPLICIT need length of surrounding tag */
@@ -257,7 +257,7 @@ int ASN1_template_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_TEMPLAT
 		/* SET or SEQUENCE and IMPLICIT tag */
 		ASN1_put_object(out, 1, skcontlen, sktag, skaclass);
 		/* And finally the stuff itself */
-		asn1_set_seq_out(sk, out, skcontlen, tt->item, isset);
+		asn1_set_seq_out(sk, out, skcontlen, ASN1_ITEM_ptr(tt->item), isset);
 
 		return ret;
 	}
@@ -265,23 +265,23 @@ int ASN1_template_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_TEMPLAT
 	if(flags & ASN1_TFLG_EXPTAG) {
 		/* EXPLICIT tagging */
 		/* Find length of tagged item */
-		i = ASN1_item_ex_i2d(pval, NULL, tt->item, -1, 0);
+		i = ASN1_item_ex_i2d(pval, NULL, ASN1_ITEM_ptr(tt->item), -1, 0);
 		if(!i) return 0;
 		/* Find length of EXPLICIT tag */
 		ret = ASN1_object_size(1, i, tt->tag);
 		if(out) {
 			/* Output tag and item */
 			ASN1_put_object(out, 1, i, tt->tag, aclass);
-			ASN1_item_ex_i2d(pval, out, tt->item, -1, 0);
+			ASN1_item_ex_i2d(pval, out, ASN1_ITEM_ptr(tt->item), -1, 0);
 		}
 		return ret;
 	}
 	if(flags & ASN1_TFLG_IMPTAG) {
 		/* IMPLICIT tagging */
-		return ASN1_item_ex_i2d(pval, out, tt->item, tt->tag, aclass);
+		return ASN1_item_ex_i2d(pval, out, ASN1_ITEM_ptr(tt->item), tt->tag, aclass);
 	}
 	/* Nothing special: treat as normal */
-	return ASN1_item_ex_i2d(pval, out, tt->item, -1, 0);
+	return ASN1_item_ex_i2d(pval, out, ASN1_ITEM_ptr(tt->item), -1, 0);
 }
 
 /* Temporary structure used to hold DER encoding of items for SET OF */

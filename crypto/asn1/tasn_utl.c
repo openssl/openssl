@@ -209,7 +209,7 @@ const ASN1_TEMPLATE *asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt, int
 	if(!(tt->flags & ASN1_TFLG_ADB_MASK)) return tt;
 
 	/* Else ANY DEFINED BY ... get the table */
-	adb = tt->item;
+	adb = ASN1_ADB_ptr(tt->item);
 
 	/* Get the selector field */
 	sfld = offset2ptr(*pval, adb->offset);

@@ -138,7 +138,7 @@ PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk)
 		return NULL;
 	}
 	
-	if (!ASN1_item_pack(sk, &PKCS12_SAFEBAGS_it, &p7->d.data)) {
+	if (!ASN1_item_pack(sk, ASN1_ITEM_rptr(PKCS12_SAFEBAGS), &p7->d.data)) {
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, PKCS12_R_CANT_PACK_STRUCTURE);
 		return NULL;
 	}
@@ -149,7 +149,7 @@ PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk)
 STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7data(PKCS7 *p7)
 {
 	if(!PKCS7_type_is_data(p7)) return NULL;
-	return ASN1_item_unpack(p7->d.data, &PKCS12_SAFEBAGS_it);
+	return ASN1_item_unpack(p7->d.data, ASN1_ITEM_rptr(PKCS12_SAFEBAGS));
 }
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 encrypted data ContentInfo */
@@ -177,7 +177,7 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
 	p7->d.encrypted->enc_data->algorithm = pbe;
 	M_ASN1_OCTET_STRING_free(p7->d.encrypted->enc_data->enc_data);
 	if (!(p7->d.encrypted->enc_data->enc_data =
-	PKCS12_item_i2d_encrypt(pbe, &PKCS12_SAFEBAGS_it, pass, passlen,
+	PKCS12_item_i2d_encrypt(pbe, ASN1_ITEM_rptr(PKCS12_SAFEBAGS), pass, passlen,
 				 bags, 1))) {
 		PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, PKCS12_R_ENCRYPT_ERROR);
 		return NULL;
@@ -190,7 +190,7 @@ STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass, i
 {
 	if(!PKCS7_type_is_encrypted(p7)) return NULL;
 	return PKCS12_item_decrypt_d2i(p7->d.encrypted->enc_data->algorithm,
-			           &PKCS12_SAFEBAGS_it,
+			           ASN1_ITEM_rptr(PKCS12_SAFEBAGS),
 				   pass, passlen,
 			           p7->d.encrypted->enc_data->enc_data, 1);
 }
@@ -217,7 +217,7 @@ X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
 	X509_ALGOR_free(p8->algor);
 	p8->algor = pbe;
 	M_ASN1_OCTET_STRING_free(p8->digest);
-	p8->digest = PKCS12_item_i2d_encrypt(pbe, &PKCS8_PRIV_KEY_INFO_it,
+	p8->digest = PKCS12_item_i2d_encrypt(pbe, ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO),
 					pass, passlen, p8inf, 1);
 	if(!p8->digest) {
 		PKCS12err(PKCS12_F_PKCS8_ENCRYPT, PKCS12_R_ENCRYPT_ERROR);
@@ -233,7 +233,7 @@ X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
 
 PKCS8_PRIV_KEY_INFO *PKCS8_decrypt(X509_SIG *p8, const char *pass, int passlen)
 {
-	return PKCS12_item_decrypt_d2i(p8->algor, &PKCS8_PRIV_KEY_INFO_it, pass,
+	return PKCS12_item_decrypt_d2i(p8->algor, ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO), pass,
 					passlen, p8->digest, 1);
 }
 
@@ -245,7 +245,7 @@ PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(PKCS12_SAFEBAG *bag, const char *pass,
 
 int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes) 
 {
-	if(ASN1_item_pack(safes, &PKCS12_AUTHSAFES_it,
+	if(ASN1_item_pack(safes, ASN1_ITEM_rptr(PKCS12_AUTHSAFES),
 		&p12->authsafes->d.data)) 
 			return 1;
 	return 0;
@@ -253,5 +253,5 @@ int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes)
 
 STACK_OF(PKCS7) *PKCS12_unpack_authsafes(PKCS12 *p12)
 {
-	return ASN1_item_unpack(p12->authsafes->d.data, &PKCS12_AUTHSAFES_it);
+	return ASN1_item_unpack(p12->authsafes->d.data, ASN1_ITEM_rptr(PKCS12_AUTHSAFES));
 }

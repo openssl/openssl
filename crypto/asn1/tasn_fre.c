@@ -167,11 +167,12 @@ void ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 		for(i = 0; i < sk_ASN1_VALUE_num(sk); i++) {
 			ASN1_VALUE *vtmp;
 			vtmp = sk_ASN1_VALUE_value(sk, i);
-			asn1_item_combine_free(&vtmp, tt->item, 0);
+			asn1_item_combine_free(&vtmp, ASN1_ITEM_ptr(tt->item), 0);
 		}
 		sk_ASN1_VALUE_free(sk);
 		*pval = NULL;
-	} else asn1_item_combine_free(pval, tt->item, tt->flags & ASN1_TFLG_COMBINE);
+	} else asn1_item_combine_free(pval, ASN1_ITEM_ptr(tt->item),
+						tt->flags & ASN1_TFLG_COMBINE);
 }
 
 void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)

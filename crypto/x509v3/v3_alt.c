@@ -66,14 +66,14 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens);
 static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
 X509V3_EXT_METHOD v3_alt[] = {
-{ NID_subject_alt_name, 0, &GENERAL_NAMES_it,
+{ NID_subject_alt_name, 0, ASN1_ITEM_ref(GENERAL_NAMES),
 0,0,0,0,
 0,0,
 (X509V3_EXT_I2V)i2v_GENERAL_NAMES,
 (X509V3_EXT_V2I)v2i_subject_alt,
 NULL, NULL, NULL},
 
-{ NID_issuer_alt_name, 0, &GENERAL_NAMES_it,
+{ NID_issuer_alt_name, 0, ASN1_ITEM_ref(GENERAL_NAMES),
 0,0,0,0,
 0,0,
 (X509V3_EXT_I2V)i2v_GENERAL_NAMES,

@@ -61,7 +61,7 @@
 #include <openssl/x509v3.h>
 
 X509V3_EXT_METHOD v3_crl_num = { 
-NID_crl_number, 0, &ASN1_INTEGER_it,
+NID_crl_number, 0, ASN1_ITEM_ref(ASN1_INTEGER),
 0,0,0,0,
 (X509V3_EXT_I2S)i2s_ASN1_INTEGER,
 0,

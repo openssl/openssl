@@ -106,7 +106,7 @@ OCSP_RESPONSE *OCSP_response_create(int status, OCSP_BASICRESP *bs)
 	if (!bs) return rsp;
 	if (!(rsp->responseBytes = OCSP_RESPBYTES_new())) goto err;
 	rsp->responseBytes->responseType = OBJ_nid2obj(NID_id_pkix_OCSP_basic);
-	if (!ASN1_item_pack(bs, &OCSP_BASICRESP_it, &rsp->responseBytes->response))
+	if (!ASN1_item_pack(bs, ASN1_ITEM_rptr(OCSP_BASICRESP), &rsp->responseBytes->response))
 				goto err;
 	return rsp;
 err:

@@ -234,7 +234,7 @@ static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 int ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
-	const ASN1_ITEM *it = tt->item;
+	const ASN1_ITEM *it = ASN1_ITEM_ptr(tt->item);
 	int ret;
 	if(tt->flags & ASN1_TFLG_OPTIONAL) {
 		asn1_template_clear(pval, tt);
@@ -277,7 +277,7 @@ void asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 	if(tt->flags & (ASN1_TFLG_ADB_MASK|ASN1_TFLG_SK_MASK)) 
 		*pval = NULL;
 	else
-		asn1_item_clear(pval, tt->item);
+		asn1_item_clear(pval, ASN1_ITEM_ptr(tt->item));
 }
 
 

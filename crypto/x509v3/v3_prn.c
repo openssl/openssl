@@ -116,7 +116,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int inde
 	if(!(method = X509V3_EXT_get(ext)))
 		return unknown_ext_print(out, ext, flag, indent, 0);
 	p = ext->value->data;
-	if(method->it) ext_str = ASN1_item_d2i(NULL, &p, ext->value->length, method->it);
+	if(method->it) ext_str = ASN1_item_d2i(NULL, &p, ext->value->length, ASN1_ITEM_ptr(method->it));
 	else ext_str = method->d2i(NULL, &p, ext->value->length);
 
 	if(!ext_str) return unknown_ext_print(out, ext, flag, indent, 1);
@@ -156,7 +156,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int inde
 	err:
 		sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
 		if(value) OPENSSL_free(value);
-		if(method->it) ASN1_item_free(ext_str, method->it);
+		if(method->it) ASN1_item_free(ext_str, ASN1_ITEM_ptr(method->it));
 		else method->ext_free(ext_str);
 		return ok;
 }

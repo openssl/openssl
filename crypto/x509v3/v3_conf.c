@@ -153,7 +153,7 @@ static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid,
 	}
 
 	ext  = do_ext_i2d(method, ext_nid, crit, ext_struc);
-	if(method->it) ASN1_item_free(ext_struc, method->it);
+	if(method->it) ASN1_item_free(ext_struc, ASN1_ITEM_ptr(method->it));
 	else method->ext_free(ext_struc);
 	return ext;
 
@@ -169,7 +169,7 @@ static X509_EXTENSION *do_ext_i2d(X509V3_EXT_METHOD *method, int ext_nid,
 	/* Convert internal representation to DER */
 	if(method->it) {
 		ext_der = NULL;
-		ext_len = ASN1_item_i2d(ext_struc, &ext_der, method->it);
+		ext_len = ASN1_item_i2d(ext_struc, &ext_der, ASN1_ITEM_ptr(method->it));
 		if(ext_len < 0) goto merr;
 	} else {
 		unsigned char *p;

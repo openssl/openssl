@@ -321,9 +321,79 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 	name *name##_new(void); \
 	void name##_free(name *a);
 
+
+/* The following macros and typedefs allow an ASN1_ITEM
+ * to be embedded in a structure and referenced. Since
+ * the ASN1_ITEM pointers need to be globally accessible
+ * (possibly from shared libraries) they may exist in
+ * different forms. On platforms that support it the
+ * ASN1_ITEM structure itself will be globally exported.
+ * Other platforms will export a function that returns
+ * an ASN1_ITEM pointer.
+ *
+ * To handle both cases transparently the macros below
+ * should be used instead of hard coding an ASN1_ITEM
+ * pointer in a structure.
+ *
+ * The structure will look like this:
+ *
+ * typedef struct SOMETHING_st {
+ *      ...
+ *      ASN1_ITEM_EXP *iptr;
+ *      ...
+ * } SOMETHING; 
+ *
+ * It would be initialised as e.g.:
+ *
+ * SOMETHING somevar = {...,ASN1_ITEM_ref(X509),...};
+ *
+ * and the actual pointer extracted with:
+ *
+ * const ASN1_ITEM *it = ASN1_ITEM_ptr(somevar.iptr);
+ *
+ * Finally an ASN1_ITEM pointer can be extracted from an
+ * appropriate reference with: ASN1_ITEM_rptr(X509). This
+ * would be used when a function takes an ASN1_ITEM * argument.
+ *
+ */
+
+#ifndef ASN1_ITEM_FUNCTIONS
+
+/* ASN1_ITEM pointer exported type */
+typedef const ASN1_ITEM ASN1_ITEM_EXP;
+
+/* Macro to obtain ASN1_ITEM pointer from exported type */
+#define ASN1_ITEM_ptr(iptr) (iptr)
+
+/* Macro to include ASN1_ITEM pointer from base type */
+#define ASN1_ITEM_ref(iptr) (&(iptr##_it))
+
+#define ASN1_ITEM_rptr(ref) (&(ref##_it))
+
 #define DECLARE_ASN1_ITEM(name) \
 	OPENSSL_EXTERN const ASN1_ITEM name##_it;
 
+#else
+
+/* Platforms that can't easily handle shared global variables are declared
+ * as functions returning ASN1_ITEM pointers.
+ */
+
+/* ASN1_ITEM pointer exported type */
+typedef const ASN1_ITEM * ASN1_ITEM_EXP(void);
+
+/* Macro to obtain ASN1_ITEM pointer from exported type */
+#define ASN1_ITEM_ptr(iptr) (iptr())
+
+/* Macro to include ASN1_ITEM pointer from base type */
+#define ASN1_ITEM_ref(iptr) (iptr##_it)
+
+#define ASN1_ITEM_rptr(ref) (ref##_it())
+
+#define DECLARE_ASN1_ITEM(name) \
+	const ASN1_ITEM * name##_it(void);
+
+#endif
 
 /* Parameters used by ASN1_STRING_print_ex() */
 

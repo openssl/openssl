@@ -483,7 +483,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val, unsigned char **in, long le
 			ASN1_VALUE *vtmp;
 			while(sk_num(sktmp) > 0) {
 				vtmp = (ASN1_VALUE *)sk_pop(sktmp);
-				ASN1_item_ex_free(&vtmp, tt->item);
+				ASN1_item_ex_free(&vtmp, ASN1_ITEM_ptr(tt->item));
 			}
 		}
 				
@@ -506,7 +506,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val, unsigned char **in, long le
 				break;
 			}
 			skfield = NULL;
-			if(!ASN1_item_ex_d2i(&skfield, &p, len, tt->item, -1, 0, 0, ctx)) {
+			if(!ASN1_item_ex_d2i(&skfield, &p, len, ASN1_ITEM_ptr(tt->item), -1, 0, 0, ctx)) {
 				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I, ERR_R_NESTED_ASN1_ERROR);
 				goto err;
 			}
@@ -522,14 +522,14 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val, unsigned char **in, long le
 		}
 	} else if(flags & ASN1_TFLG_IMPTAG) {
 		/* IMPLICIT tagging */
-		ret = ASN1_item_ex_d2i(val, &p, len, tt->item, tt->tag, aclass, opt, ctx);
+		ret = ASN1_item_ex_d2i(val, &p, len, ASN1_ITEM_ptr(tt->item), tt->tag, aclass, opt, ctx);
 		if(!ret) {
 			ASN1err(ASN1_F_ASN1_TEMPLATE_D2I, ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 		} else if(ret == -1) return -1;
 	} else {
 		/* Nothing special */
-		ret = ASN1_item_ex_d2i(val, &p, len, tt->item, -1, 0, opt, ctx);
+		ret = ASN1_item_ex_d2i(val, &p, len, ASN1_ITEM_ptr(tt->item), -1, 0, opt, ctx);
 		if(!ret) {
 			ASN1err(ASN1_F_ASN1_TEMPLATE_D2I, ERR_R_NESTED_ASN1_ERROR);
 			goto err;

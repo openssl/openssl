@@ -89,7 +89,7 @@ struct v3_ext_method {
 int ext_nid;
 int ext_flags;
 /* If this is set the following four fields are ignored */
-const ASN1_ITEM *it;
+ASN1_ITEM_EXP *it;
 /* Old style ASN1 calls */
 X509V3_EXT_NEW ext_new;
 X509V3_EXT_FREE ext_free;
@@ -294,7 +294,7 @@ DECLARE_ASN1_SET_OF(POLICYINFO)
 			X509V3_set_ctx(ctx, NULL, NULL, NULL, NULL, CTX_TEST)
 #define X509V3_set_ctx_nodb(ctx) ctx->db = NULL;
 
-#define EXT_BITSTRING(nid, table) { nid, 0, &ASN1_BIT_STRING_it, \
+#define EXT_BITSTRING(nid, table) { nid, 0, ASN1_ITEM_ref(ASN1_BIT_STRING), \
 			0,0,0,0, \
 			0,0, \
 			(X509V3_EXT_I2V)i2v_ASN1_BIT_STRING, \
@@ -302,7 +302,7 @@ DECLARE_ASN1_SET_OF(POLICYINFO)
 			NULL, NULL, \
 			table}
 
-#define EXT_IA5STRING(nid) { nid, 0, &ASN1_IA5STRING_it, \
+#define EXT_IA5STRING(nid) { nid, 0, ASN1_ITEM_ref(ASN1_IA5STRING), \
 			0,0,0,0, \
 			(X509V3_EXT_I2S)i2s_ASN1_IA5STRING, \
 			(X509V3_EXT_S2I)s2i_ASN1_IA5STRING, \

@@ -574,7 +574,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				/* Now sign the attributes */
 				EVP_SignInit(&ctx_tmp,md_tmp);
 				alen = ASN1_item_i2d((ASN1_VALUE *)sk,&abuf,
-							&PKCS7_ATTR_SIGN_it);
+							ASN1_ITEM_rptr(PKCS7_ATTR_SIGN));
 				if(!abuf) goto err;
 				EVP_SignUpdate(&ctx_tmp,abuf,alen);
 				OPENSSL_free(abuf);
@@ -756,7 +756,7 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 		EVP_VerifyInit(&mdc_tmp,EVP_get_digestbynid(md_type));
 
 		alen = ASN1_item_i2d((ASN1_VALUE *)sk, &abuf,
-						&PKCS7_ATTR_VERIFY_it);
+						ASN1_ITEM_rptr(PKCS7_ATTR_VERIFY));
 		EVP_VerifyUpdate(&mdc_tmp, abuf, alen);
 
 		OPENSSL_free(abuf);
