@@ -61,6 +61,12 @@
 
 #include <openssl/e_os2.h>
 
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
+#include <windows.h>
+#else
+#include <sys/types.h>
+#endif
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -91,7 +97,7 @@ void RAND_seed(const void *buf,int num);
 void RAND_add(const void *buf,int num,double entropy);
 int  RAND_load_file(const char *file,long max_bytes);
 int  RAND_write_file(const char *file);
-const char *RAND_file_name(char *file,int num);
+const char *RAND_file_name(char *file,size_t num);
 int RAND_status(void);
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes);
 int RAND_egd(const char *path);
@@ -99,23 +105,15 @@ int RAND_egd_bytes(const char *path,int bytes);
 void ERR_load_RAND_strings(void);
 int RAND_poll(void);
 
-#ifdef  __cplusplus
-}
-#endif
-
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
-#include <windows.h>
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 void RAND_screen(void);
 int RAND_event(UINT, WPARAM, LPARAM);
 
+#endif
+
 #ifdef  __cplusplus
 }
-#endif
 #endif
 
 /* BEGIN ERROR CODES */
