@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 	bio_stdout=BIO_new_fp(stdout,BIO_NOCLOSE);
 
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
 
 	argc--;
 	argv++;

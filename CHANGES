@@ -4,6 +4,11 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Fix memory leaks in DSA_do_sign and DSA_is_prime.
+     Also really enable memory leak checks in openssl.c and in some
+     test programs.
+     [Chad C. Mulligan, Bodo Moeller]
+
   *) Fix a bug in d2i_ASN1_INTEGER() and i2d_ASN1_INTEGER() which can mess
      up the length of negative integers. This has now been simplified to just
      store the length when it is first determined and use it later, rather
