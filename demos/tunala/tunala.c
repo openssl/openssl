@@ -68,8 +68,9 @@ typedef struct _tunala_world_t {
 
 static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		const char *CAfile, const char *cert, const char *key,
-		const char *cipher_list, int out_state, int out_verify,
-		int verify_mode);
+		const char *dcert, const char *dkey, const char *cipher_list,
+		int out_state, int out_verify, int verify_mode,
+		unsigned int verify_depth);
 static void selector_init(tunala_selector_t *selector);
 static void selector_add_listener(tunala_selector_t *selector, int fd);
 static void selector_add_tunala(tunala_selector_t *selector, tunala_item_t *t);
@@ -92,34 +93,40 @@ static int def_max_tunnels = 50;
 static const char *def_cacert = NULL;
 static const char *def_cert = NULL;
 static const char *def_key = NULL;
+static const char *def_dcert = NULL;
+static const char *def_dkey = NULL;
 static const char *def_engine_id = NULL;
 static int def_server_mode = 0;
 static const char *def_cipher_list = NULL;
 static int def_out_state = 0;
 static int def_out_verify = 0;
 static int def_verify_mode = 0;
+static unsigned int def_verify_depth = 10;
 
 static const char *helpstring =
-	"\n'Tunala' (A tunneler with a New Zealand accent)\n"
-	"Usage: tunala [options], where options are from;\n"
-	"    -listen [host:]<port>  (default = 127.0.0.1:8080)\n"
-	"    -proxy <host>:<port>   (default = 127.0.0.1:443)\n"
-	"    -maxtunnels <num>      (default = 50)\n"
-	"    -cacert <path|NULL>    (default = NULL)\n"
-	"    -cert <path|NULL>      (default = NULL)\n"
-	"    -key <path|NULL>       (default = whatever '-cert' is)\n"
-	"    -engine <id|NULL>      (default = NULL)\n"
-	"    -server <0|1>          (default = 0, ie. an SSL client)\n"
-	"    -cipher <list>         (specifies cipher list to use)\n"
-	"    -out_state             (prints SSL handshake states)\n"
-	"    -out_verify            (prints certificate verification states)\n"
-	"    -v_peer                (verify the peer certificate)\n"
-	"    -v_strict              (do not continue if peer validation fails)\n"
-	"    -v_once                (no verification in renegotiates)\n"
-	"    -<h|help|?>            (displays this help screen)\n"
-	"NB: It is recommended to specify a cert+key when operating as an\n"
-	"SSL server. If you only specify '-cert', the same file must\n"
-	"contain a matching private key.\n";
+"\n'Tunala' (A tunneler with a New Zealand accent)\n"
+"Usage: tunala [options], where options are from;\n"
+" -listen [host:]<port>  (default = 127.0.0.1:8080)\n"
+" -proxy <host>:<port>   (default = 127.0.0.1:443)\n"
+" -maxtunnels <num>      (default = 50)\n"
+" -cacert <path|NULL>    (default = NULL)\n"
+" -cert <path|NULL>      (default = NULL)\n"
+" -key <path|NULL>       (default = whatever '-cert' is)\n"
+" -dcert <path|NULL>     (usually for DSA, default = NULL)\n"
+" -dkey <path|NULL>      (usually for DSA, default = whatever '-dcert' is)\n"
+" -engine <id|NULL>      (default = NULL)\n"
+" -server <0|1>          (default = 0, ie. an SSL client)\n"
+" -cipher <list>         (specifies cipher list to use)\n"
+" -out_state             (prints SSL handshake states)\n"
+" -out_verify            (prints certificate verification states)\n"
+" -v_peer                (verify the peer certificate)\n"
+" -v_strict              (do not continue if peer doesn't authenticate)\n"
+" -v_once                (no verification in renegotiates)\n"
+" -v_depth <num>         (limit certificate chain depth, default = 10)\n"
+" -<h|help|?>            (displays this help screen)\n"
+"NB: It is recommended to specify a cert+key when operating as an\n"
+"SSL server. If you only specify '-cert', the same file must\n"
+"contain a matching private key.\n";
 
 static int usage(const char *errstr, int isunknownarg)
 {
@@ -173,6 +180,20 @@ static int parse_server_mode(const char *s, int *servermode)
 	return 1;
 }
 
+static int parse_verify_depth(const char *s, unsigned int *verify_depth)
+{
+	unsigned long l;
+	char *temp;
+	l = strtoul(s, &temp, 10);
+	if((temp == s) || (*temp != '\0') || (l < 1) || (l > 50)) {
+		fprintf(stderr, "Error, '%s' is an invalid value for "
+				"verify_depth\n", s);
+		return 0;
+	}
+	*verify_depth = (unsigned int)l;
+	return 1;
+}
+
 int main(int argc, char *argv[])
 {
 	unsigned int loop;
@@ -188,12 +209,15 @@ int main(int argc, char *argv[])
 	const char *cacert = def_cacert;
 	const char *cert = def_cert;
 	const char *key = def_key;
+	const char *dcert = def_dcert;
+	const char *dkey = def_dkey;
 	const char *engine_id = def_engine_id;
 	int server_mode = def_server_mode;
 	const char *cipher_list = def_cipher_list;
 	int out_state = def_out_state;
 	int out_verify = def_out_verify;
 	int verify_mode = def_verify_mode;
+	unsigned int verify_depth = def_verify_depth;
 
 /* Parse command-line arguments */
 next_arg:
@@ -245,6 +269,24 @@ next_arg:
 			else
 				key = *argv;
 			goto next_arg;
+		} else if(strcmp(*argv, "-dcert") == 0) {
+			if(argc < 2)
+				return usage("-dcert requires an argument", 0);
+			argc--; argv++;
+			if(strcmp(*argv, "NULL") == 0)
+				dcert = NULL;
+			else
+				dcert = *argv;
+			goto next_arg;
+		} else if(strcmp(*argv, "-dkey") == 0) {
+			if(argc < 2)
+				return usage("-dkey requires an argument", 0);
+			argc--; argv++;
+			if(strcmp(*argv, "NULL") == 0)
+				dkey = NULL;
+			else
+				dkey = *argv;
+			goto next_arg;
 		} else if(strcmp(*argv, "-engine") == 0) {
 			if(argc < 2)
 				return usage("-engine requires an argument", 0);
@@ -279,6 +321,13 @@ next_arg:
 		} else if(strcmp(*argv, "-v_once") == 0) {
 			verify_mode |= SSL_VERIFY_CLIENT_ONCE;
 			goto next_arg;
+		} else if(strcmp(*argv, "-v_depth") == 0) {
+			if(argc < 2)
+				return usage("-v_depth requires an argument", 0);
+			argc--; argv++;
+			if(!parse_verify_depth(*argv, &verify_depth))
+				return 1;
+			goto next_arg;
 		} else if((strcmp(*argv, "-h") == 0) ||
 				(strcmp(*argv, "-help") == 0) ||
 				(strcmp(*argv, "-?") == 0)) {
@@ -294,8 +343,8 @@ next_arg:
 	err_str0("ip_initialise succeeded");
 	/* Create the SSL_CTX */
 	if((world.ssl_ctx = initialise_ssl_ctx(server_mode, engine_id,
-			cacert, cert, key, cipher_list, out_state, out_verify,
-			verify_mode)) == NULL)
+			cacert, cert, key, dcert, dkey, cipher_list, out_state,
+			out_verify, verify_mode, verify_depth)) == NULL)
 		return err_str1("initialise_ssl_ctx(engine_id=%s) failed",
 			(engine_id == NULL) ? "NULL" : engine_id);
 	err_str1("initialise_ssl_ctx(engine_id=%s) succeeded",
@@ -380,17 +429,85 @@ main_loop:
 /* OpenSSL bits */
 /****************/
 
+static int ctx_set_cert(SSL_CTX *ctx, const char *cert, const char *key)
+{
+	FILE *fp = NULL;
+	X509 *x509 = NULL;
+	EVP_PKEY *pkey = NULL;
+	int toret = 0; /* Assume an error */
+
+	/* cert */
+	if(cert) {
+		if((fp = fopen(cert, "r")) == NULL) {
+			fprintf(stderr, "Error opening cert file '%s'\n", cert);
+			goto err;
+		}
+		if(!PEM_read_X509(fp, &x509, NULL, NULL)) {
+			fprintf(stderr, "Error reading PEM cert from '%s'\n",
+					cert);
+			goto err;
+		}
+		if(!SSL_CTX_use_certificate(ctx, x509)) {
+			fprintf(stderr, "Error, cert in '%s' can not be used\n",
+					cert);
+			goto err;
+		}
+		/* Clear the FILE* for reuse in the "key" code */
+		fclose(fp);
+		fp = NULL;
+		fprintf(stderr, "Info, operating with cert in '%s'\n", cert);
+		/* If a cert was given without matching key, we assume the same
+		 * file contains the required key. */
+		if(!key)
+			key = cert;
+	} else {
+		if(key)
+			fprintf(stderr, "Error, can't specify a key without a "
+					"corresponding certificate\n");
+		else
+			fprintf(stderr, "Error, ctx_set_cert called with "
+					"NULLs!\n");
+		goto err;
+	}
+	/* key */
+	if(key) {
+		if((fp = fopen(key, "r")) == NULL) {
+			fprintf(stderr, "Error opening key file '%s'\n", key);
+			goto err;
+		}
+		if(!PEM_read_PrivateKey(fp, &pkey, NULL, NULL)) {
+			fprintf(stderr, "Error reading PEM key from '%s'\n",
+					key);
+			goto err;
+		}
+		if(!SSL_CTX_use_PrivateKey(ctx, pkey)) {
+			fprintf(stderr, "Error, key in '%s' can not be used\n",
+					key);
+			goto err;
+		}
+		fprintf(stderr, "Info, operating with key in '%s'\n", key);
+	} else
+		fprintf(stderr, "Info, operating without a cert or key\n");
+	/* Success */
+	toret = 1; err:
+	if(x509)
+		X509_free(x509);
+	if(pkey)
+		EVP_PKEY_free(pkey);
+	if(fp)
+		fclose(fp);
+	return toret;
+}
+
 static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		const char *CAfile, const char *cert, const char *key,
-		const char *cipher_list, int out_state, int out_verify,
-		int verify_mode)
+		const char *dcert, const char *dkey, const char *cipher_list,
+		int out_state, int out_verify, int verify_mode,
+		unsigned int verify_depth)
 {
 	SSL_CTX *ctx, *ret = NULL;
 	SSL_METHOD *meth;
 	ENGINE *e = NULL;
-	FILE *fp = NULL;
-	X509 *x509 = NULL;
-	EVP_PKEY *pkey = NULL;
 
         OpenSSL_add_ssl_algorithms();
         SSL_load_error_strings();
@@ -429,54 +546,13 @@ static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		fprintf(stderr, "Error setting default verify paths\n");
 		goto err;
 	}
-	/* cert */
-	if(cert) {
-		if((fp = fopen(cert, "r")) == NULL) {
-			fprintf(stderr, "Error opening cert file '%s'\n", cert);
-			goto err;
-		}
-		if(!PEM_read_X509(fp, &x509, NULL, NULL)) {
-			fprintf(stderr, "Error reading PEM cert from '%s'\n",
-					cert);
-			goto err;
-		}
-		if(!SSL_CTX_use_certificate(ctx, x509)) {
-			fprintf(stderr, "Error, cert in '%s' can not be used\n",
-					cert);
-			goto err;
-		}
-		fprintf(stderr, "Info, operating with cert in '%s'\n", cert);
-		fclose(fp);
-		fp = NULL;
-		/* If a cert was given without matching key, we assume the same
-		 * file contains the required key. */
-		if(!key)
-			key = cert;
-	} else
-		if(key) {
-			fprintf(stderr, "Error, can't specify a key without a "
-					"corresponding certificate\n");
-			goto err;
-		}
-	/* key */
-	if(key) {
-		if((fp = fopen(key, "r")) == NULL) {
-			fprintf(stderr, "Error opening key file '%s'\n", key);
-			goto err;
-		}
-		if(!PEM_read_PrivateKey(fp, &pkey, NULL, NULL)) {
-			fprintf(stderr, "Error reading PEM key from '%s'\n",
-					key);
-			goto err;
-		}
-		if(!SSL_CTX_use_PrivateKey(ctx, pkey)) {
-			fprintf(stderr, "Error, key in '%s' can not be used\n",
-					key);
-			goto err;
-		}
-		fprintf(stderr, "Info, operating with key in '%s'\n", key);
-	} else
-		fprintf(stderr, "Info, operating without a cert or key\n");
+
+	/* cert and key */
+	if((cert || key) && !ctx_set_cert(ctx, cert, key))
+		goto err;
+	/* dcert and dkey */
+	if((dcert || dkey) && !ctx_set_cert(ctx, dcert, dkey))
+		goto err;
 
 	/* cipher_list */
 	if(cipher_list) {
@@ -493,11 +569,14 @@ static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 	if(out_state)
 		cb_ssl_info_set_output(stderr);
 
-	/* out_verify & verify_mode */
+	/* out_verify */
 	if(out_verify)
 		cb_ssl_verify_set_output(stderr);
 
-	/* Success! */
+	/* verify_depth */
+	cb_ssl_verify_set_depth(verify_depth);
+
+	/* Success! (includes setting verify_mode) */
 	SSL_CTX_set_info_callback(ctx, cb_ssl_info);
 	SSL_CTX_set_verify(ctx, verify_mode, cb_ssl_verify);
 	ret = ctx;
@@ -507,12 +586,6 @@ err:
 		if(ctx)
 			SSL_CTX_free(ctx);
 	}
-	if(fp)
-		fclose(fp);
-	if(x509)
-		X509_free(x509);
-	if(pkey)
-		EVP_PKEY_free(pkey);
 	return ret;
 }
 

@@ -7,8 +7,8 @@ static FILE *fp_cb_ssl_info = NULL;
 static FILE *fp_cb_ssl_verify = NULL;
 
 /* Other static rubbish (to mirror s_cb.c where required) */
-static int verify_depth = 10;
-static int verify_error = X509_V_OK;
+static int int_verify_depth = 10;
+static int int_verify_error = X509_V_OK;
 
 /* This function is largely borrowed from the one used in OpenSSL's "s_client"
  * and "s_server" utilities. */
@@ -61,13 +61,10 @@ int cb_ssl_verify(int ok, X509_STORE_CTX *ctx)
 	if(!ok) {
 		fprintf(fp_cb_ssl_verify,"verify error:num=%d:%s\n",err,
 			X509_verify_cert_error_string(err));
-		if(verify_depth >= depth) {
-			ok = 1;
-			verify_error = X509_V_OK;
-		} else {
-			ok=0;
-			verify_error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
-		}
+		if((int)int_verify_depth >= depth)
+			int_verify_error = err;
+		else
+			int_verify_error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
 	}
 	switch (ctx->error) {
 	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
@@ -95,6 +92,11 @@ int cb_ssl_verify(int ok, X509_STORE_CTX *ctx)
 void cb_ssl_verify_set_output(FILE *fp)
 {
 	fp_cb_ssl_verify = fp;
+}
+
+void cb_ssl_verify_set_depth(unsigned int verify_depth)
+{
+	int_verify_depth = verify_depth;
 }
 
 #endif /* !defined(NO_OPENSSL) */
