@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/21 17:11:52 $
+  ______________                           $Date: 2000/09/21 17:44:23 $
 
   DEVELOPMENT STATE
 
@@ -116,6 +116,14 @@
 			FreeBSD (2.2.5)				- failed
 				Only having USE_TOD made speed.c issue an
 					error. [FIXED]
+			FreeBSD-alpha (4.1, gcc 2.95.2)		- success
+				The USE_TOD fix needed to be applied.
+				There were warnings about -O3 triggering
+					known optimizer bugs on that
+					platform.
+			OpenBSD-x86 (2.7, gcc 2.95.2)		- success
+			alpha-cc (OSF1 V4.0)			- success
+			solaris-x86-gcc (5.8, gcc 2.95.2)	- success
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
