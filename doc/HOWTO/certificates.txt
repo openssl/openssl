@@ -1,0 +1,85 @@
+[DRAFT!]
+			HOWTO certificates
+
+How you handle certificates depend a great deal on what your role is.
+Your role can be one or several of:
+
+  - User of some client software
+  - User of some server software
+  - Certificate authority
+
+This file is for users who wish to get a certificate of their own.
+Certificate authorities should read ca.txt.
+
+In all the cases shown below, the standard configuration file, as
+compiled into openssl, will be used.  You may find it in /etc/,
+/usr/local/ssr/ or somewhere else.  The name is openssl.cnf, and
+is better described in another HOWTO [config.txt?].  If you want to
+use a different configuration file, use the argument '-config {file}'
+with the command shown below.
+
+
+Certificates are related to public key cryptography by containing a
+public key.  To be useful, there must be a corresponding private key
+somewhere.  With OpenSSL, public keys are easily derived from private
+keys, so before you create a certificate or a certificate request, you
+need to create a private key.
+
+Private keys are generated with 'openssl genrsa' if you want a RSA
+private key, or 'openssl gendsa' if you want a DSA private key.  More
+info on how to handle these commands are found in the manual pages for
+those commands or by running them with the argument '-h'.  For the
+sake of the description in this file, let's assume that the private
+key ended up in the file privkey.pem (which is the default in some
+cases).
+
+
+Let's start with the most normal way of getting a certificate.  Most
+often, you want or need to get a certificate from a certificate
+authority.  To handle that, the certificate authority needs a
+certificate request (or, as some certificate authorities like to put
+it, "certificate signing request", since that's exactly what they do,
+they sign it and give you the result back, thus making it authentic
+according to their policies) from you.  To generate a request, use the
+command 'openssl req' like this:
+
+  openssl req -new -key privkey.pem -out cert.csr
+
+Now, cert.csr can be sent to the certificate authority, if they can
+handle files in PEM format.  If not, use the extra argument '-outform'
+followed by the keyword for the format to use (see another HOWTO
+[formats.txt?]).  In some cases, that isn't sufficient and you will
+have to be more creative.
+
+When the certificate authority has then done the checks the need to
+do (and probably gotten payment from you), they will hand over your
+new certificate to you.
+
+
+[fill in on how to create a self-signed certificate]
+
+
+If you created everything yourself, or if the certificate authority
+was kind enough, your certificate is a raw DER thing in PEM format.
+Your key most definitely is if you have followed the examples above.
+However, some (most?) certificate authorities will encode them with
+things like PKCS7 or PKCS12, or something else.  Depending on your
+applications, this may be perfectly OK, it all depends on what they
+know how to decode.  If not, There are a number of OpenSSL tools to
+convert between some (most?) formats.
+
+So, depending on your application, you may have to convert your
+certificate and your key to various formats, most often also putting
+them together into one file.  The ways to do this is described in
+another HOWTO [formats.txt?], I will just mention the simplest case.
+In the case of a raw DER thing in PEM format, and assuming that's all
+right for yor applications, simply concatenating the certificate and
+the key into a new file and using that one should be enough.  With
+some applications, you don't even have to do that.
+
+
+By now, you have your cetificate and your private key and can start
+using the software that depend on it.
+
+-- 
+Richard Levitte
