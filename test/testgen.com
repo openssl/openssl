@@ -20,6 +20,11 @@ $	write sys$output "There should be a 2 sequences of .'s and some +'s."
 $	write sys$output "There should not be more that at most 80 per line"
 $	write sys$output "This could take some time."
 $
+$	append/new nl: .rnd
+$	open/append random_file .rnd
+$	write random_file "string to make the random number generator think it has entropy"
+$	close random_file
+$
 $	mcr 'exe_dir'openssl req -config test.cnf -new -out testreq.pem
 $	if $severity .ne. 1
 $	then
