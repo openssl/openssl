@@ -216,7 +216,9 @@ a filename containing a certificate to revoke.
 
 =item B<-subj arg>
 
-supersedes subject name given in the request
+supersedes subject name given in the request.
+The arg must be formatted as I</type0=value0/type1=value1/type2=...>,
+characters may be escaped by \ (backslash), no spaces are skipped.
 
 =item B<-crlexts section>
 
