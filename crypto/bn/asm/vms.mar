@@ -277,7 +277,7 @@ d=12 ;(AP)	d	by value (input)
 3$:     
 	tstl	r7
 	blss	4$
-	ashl	#1,r2,r2	; q = q << 1
+	ashl	#1,r2,r2	; if d' >= 0, q = q << 1
 4$:     
 	ashl	#1,r2,r2	; q = q << 1
 	rotl	#2,r3,r3	; r = r << 2
@@ -288,7 +288,7 @@ d=12 ;(AP)	d	by value (input)
 	tstl	r7
 	bgeq	5$
 	bitl	#1,r7
-	beql	5$		; if d < 0 && d & 1
+	beql	5$		; if d' < 0 && d' & 1
 	subl	r2,r3		;   [r',r] = [r',r] - q
 	sbwc	#0,r6
 45$:
