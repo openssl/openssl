@@ -655,7 +655,7 @@ tar:
 
 tar-snap:
 	@$(TAR) $(TARFLAGS) -cvf - \
-		`find * \! -path CVS/\* \! -path \*/CVS/\* \! -name CVS \! -name .cvsignore \! -name STATUS \! -name TABLE \! -name '*.o' \! -name '*.a' \! -name '*.so' \! -name '*.so.*'  \! -name 'openssl' \! -name '*test' \! -name '.#*' | sort` |\
+		`find * \! -path CVS/\* \! -path \*/CVS/\* \! -name CVS \! -name .cvsignore \! -name STATUS \! -name TABLE \! -name '*.o' \! -name '*.a' \! -name '*.so' \! -name '*.so.*'  \! -name 'openssl' \! -name '*test' \! -name '.#*' \! -name '*~' | sort` |\
 	tardy --user_number=0  --user_name=openssl \
 	      --group_number=0 --group_name=openssl \
 	      --prefix=openssl-$(VERSION) - > ../$(TARFILE);\
