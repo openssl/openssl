@@ -43,7 +43,8 @@ page.
 
 EVP_SealInit() returns -1 on error or B<npubk> if successful.
 
-EVP_SealUpdate() and EVP_SealFinal() do not return values.
+EVP_SealUpdate() and EVP_SealFinal() return 1 for success and 0 for
+failure.
 
 =head1 NOTES
 

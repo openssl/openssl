@@ -48,7 +48,7 @@ key length must match the fixed cipher length.
 EVP_OpenInit() returns -1 on error or a non zero integer (actually the
 recovered secret key size) if successful.
 
-EVP_OpenUpdate() does not return a value.
+EVP_OpenUpdate() returns 1 for success of 0 for failure.
 
 EVP_OpenFinal() returns 0 if the decrypt failed or 1 for success.
 
