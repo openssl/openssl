@@ -15,6 +15,7 @@ MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
+PERL=		perl
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
