@@ -231,6 +231,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->server=(ctx->method->ssl_accept == ssl_undefined_function)?0:1;
 	s->options=ctx->options;
 	s->mode=ctx->mode;
+	s->read_ahead=ctx->read_ahead; /* used to happen in SSL_clear */
 	SSL_clear(s);
 
 	CRYPTO_new_ex_data(ssl_meth,s,&s->ex_data);
