@@ -191,6 +191,9 @@ DSO_METHOD *DSO_METHOD_dl(void);
 /* If WIN32 is defined, use DLLs. If not, return NULL. */
 DSO_METHOD *DSO_METHOD_win32(void);
 
+/* If VMS is defined, use shared images. If not, return NULL. */
+DSO_METHOD *DSO_METHOD_vms(void);
+
 void ERR_load_DSO_strings(void);
 
 /* BEGIN ERROR CODES */
@@ -218,6 +221,10 @@ void ERR_load_DSO_strings(void);
 #define DSO_F_DSO_LOAD					 114
 #define DSO_F_DSO_NEW_METHOD				 115
 #define DSO_F_DSO_UP					 116
+#define DSO_F_VMS_BIND_VAR				 122
+#define DSO_F_VMS_CTRL					 123
+#define DSO_F_VMS_LOAD					 124
+#define DSO_F_VMS_UNLOAD				 125
 #define DSO_F_WIN32_BIND_FUNC				 117
 #define DSO_F_WIN32_BIND_VAR				 118
 #define DSO_F_WIN32_CTRL				 119
@@ -226,6 +233,7 @@ void ERR_load_DSO_strings(void);
 
 /* Reason codes. */
 #define DSO_R_CTRL_FAILED				 100
+#define DSO_R_FILENAME_TOO_BIG				 109
 #define DSO_R_FINISH_FAILED				 101
 #define DSO_R_LOAD_FAILED				 102
 #define DSO_R_NULL_HANDLE				 103

@@ -83,6 +83,10 @@ static ERR_STRING_DATA DSO_str_functs[]=
 {ERR_PACK(0,DSO_F_DSO_LOAD,0),	"DSO_load"},
 {ERR_PACK(0,DSO_F_DSO_NEW_METHOD,0),	"DSO_new_method"},
 {ERR_PACK(0,DSO_F_DSO_UP,0),	"DSO_up"},
+{ERR_PACK(0,DSO_F_VMS_BIND_VAR,0),	"VMS_BIND_VAR"},
+{ERR_PACK(0,DSO_F_VMS_CTRL,0),	"VMS_CTRL"},
+{ERR_PACK(0,DSO_F_VMS_LOAD,0),	"VMS_LOAD"},
+{ERR_PACK(0,DSO_F_VMS_UNLOAD,0),	"VMS_UNLOAD"},
 {ERR_PACK(0,DSO_F_WIN32_BIND_FUNC,0),	"WIN32_BIND_FUNC"},
 {ERR_PACK(0,DSO_F_WIN32_BIND_VAR,0),	"WIN32_BIND_VAR"},
 {ERR_PACK(0,DSO_F_WIN32_CTRL,0),	"WIN32_CTRL"},
@@ -94,6 +98,7 @@ static ERR_STRING_DATA DSO_str_functs[]=
 static ERR_STRING_DATA DSO_str_reasons[]=
 	{
 {DSO_R_CTRL_FAILED                       ,"control command failed"},
+{DSO_R_FILENAME_TOO_BIG                  ,"filename too big"},
 {DSO_R_FINISH_FAILED                     ,"cleanup method function failed"},
 {DSO_R_LOAD_FAILED                       ,"could not load the shared library"},
 {DSO_R_NULL_HANDLE                       ,"a null shared library handle was used"},

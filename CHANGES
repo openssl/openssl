@@ -4,6 +4,9 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add DSO method for VMS.
+     [Richard Levitte]
+
   *) Bug fix: Montgomery multiplication could produce results with the
      wrong sign.
      [Ulf Möller]
