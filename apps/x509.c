@@ -474,13 +474,18 @@ bad:
 			if (BIO_read_filename(in,infile) <= 0)
 				{
 				perror(infile);
+				BIO_free(in);
 				goto end;
 				}
 			}
 		req=PEM_read_bio_X509_REQ(in,NULL,NULL,NULL);
 		BIO_free(in);
 
-		if (req == NULL) { perror(infile); goto end; }
+		if (req == NULL)
+			{
+			ERR_print_errors(bio_err);
+			goto end;
+			}
 
 		if (	(req->req_info == NULL) ||
 			(req->req_info->pubkey == NULL) ||
