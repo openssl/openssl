@@ -149,7 +149,7 @@ extern X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
 extern X509V3_EXT_METHOD v3_pkey_usage_period, v3_sxnet;
 extern X509V3_EXT_METHOD v3_ns_ia5_list[], v3_alt[], v3_skey_id, v3_akey_id;
 
-extern X509V3_EXT_METHOD v3_crl_num, v3_crl_reason;
+extern X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_cpols;
 
 int X509V3_add_standard_extensions()
 {
@@ -165,6 +165,7 @@ int X509V3_add_standard_extensions()
 	X509V3_EXT_add(&v3_crl_num);
 	X509V3_EXT_add(&v3_sxnet);
 	X509V3_EXT_add(&v3_crl_reason);
+	X509V3_EXT_add(&v3_cpols);
 	return 1;
 }
 

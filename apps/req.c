@@ -438,7 +438,10 @@ bad:
 	extensions = CONF_get_string(req_conf, SECTION, V3_EXTENSIONS);
 	if(extensions) {
 		/* Check syntax of file */
-		if(!X509V3_EXT_check_conf(req_conf, extensions)) {
+		X509V3_CTX ctx;
+		X509V3_set_ctx_test(&ctx);
+		X509V3_set_conf_lhash(&ctx, req_conf);
+		if(!X509V3_EXT_add_conf(req_conf, &ctx, extensions, NULL)) {
 			BIO_printf(bio_err,
 			 "Error Loading extension section %s\n", extensions);
 			goto end;

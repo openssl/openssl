@@ -203,7 +203,7 @@ typedef struct NOTICEREF_st {
 } NOTICEREF;
 
 typedef struct USERNOTICE_st {
-	NOTICEREF *notref;
+	NOTICEREF *noticeref;
 	ASN1_STRING *exptext;
 } USERNOTICE;
 
@@ -217,10 +217,11 @@ typedef struct POLICYQUALINFO_st {
 } POLICYQUALINFO;
 
 DECLARE_STACK_OF(POLICYQUALINFO)
+DECLARE_ASN1_SET_OF(POLICYQUALINFO)
 
 typedef struct POLICYINFO_st {
 	ASN1_OBJECT *policyid;
-	STACK_OF(POLICYQUALINFO) qualifiers;
+	STACK_OF(POLICYQUALINFO) *qualifiers;
 } POLICYINFO;
 
 DECLARE_STACK_OF(POLICYINFO);
@@ -228,6 +229,10 @@ DECLARE_ASN1_SET_OF(POLICYINFO);
 
 #define X509V3_conf_err(val) ERR_add_error_data(6, "section:", val->section, \
 ",name:", val->name, ",value:", val->value);
+
+#define X509V3_set_ctx_test(ctx) \
+			X509V3_set_ctx(ctx, NULL, NULL, NULL, NULL, CTX_TEST)
+#define X509V3_set_ctx_nodb(ctx) ctx->db = NULL;
 
 #define EXT_BITSTRING(nid, table) { nid, 0, \
 			(X509V3_EXT_NEW)asn1_bit_string_new, ASN1_STRING_free, \
@@ -308,6 +313,32 @@ STACK *d2i_ext_ku(STACK **a, unsigned char **pp, long length);
 void ext_ku_free(STACK *a);
 STACK *ext_ku_new(void);
 
+int i2d_CERTIFICATEPOLICIES(STACK_OF(POLICYINFO) *a, unsigned char **pp);
+STACK_OF(POLICYINFO) *CERTIFICATEPOLICIES_new(void);
+void CERTIFICATEPOLICIES_free(STACK_OF(POLICYINFO) *a);
+STACK_OF(POLICYINFO) *d2i_CERTIFICATEPOLICIES(STACK_OF(POLICYINFO) **a, unsigned char **pp, long length);
+
+int i2d_POLICYINFO(POLICYINFO *a, unsigned char **pp);
+POLICYINFO *POLICYINFO_new(void);
+POLICYINFO *d2i_POLICYINFO(POLICYINFO **a, unsigned char **pp, long length);
+void POLICYINFO_free(POLICYINFO *a);
+
+int i2d_POLICYQUALINFO(POLICYQUALINFO *a, unsigned char **pp);
+POLICYQUALINFO *POLICYQUALINFO_new(void);
+POLICYQUALINFO *d2i_POLICYQUALINFO(POLICYQUALINFO **a, unsigned char **pp,
+								 long length);
+void POLICYQUALINFO_free(POLICYQUALINFO *a);
+
+int i2d_USERNOTICE(USERNOTICE *a, unsigned char **pp);
+USERNOTICE *USERNOTICE_new(void);
+USERNOTICE *d2i_USERNOTICE(USERNOTICE **a, unsigned char **pp, long length);
+void USERNOTICE_free(USERNOTICE *a);
+
+int i2d_NOTICEREF(NOTICEREF *a, unsigned char **pp);
+NOTICEREF *NOTICEREF_new(void);
+NOTICEREF *d2i_NOTICEREF(NOTICEREF **a, unsigned char **pp, long length);
+void NOTICEREF_free(NOTICEREF *a);
+
 #ifdef HEADER_CONF_H
 GENERAL_NAME *v2i_GENERAL_NAME(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, CONF_VALUE *cnf);
 void X509V3_conf_free(CONF_VALUE *val);
@@ -315,7 +346,6 @@ X509_EXTENSION *X509V3_EXT_conf_nid(LHASH *conf, X509V3_CTX *ctx, int ext_nid, c
 X509_EXTENSION *X509V3_EXT_conf(LHASH *conf, X509V3_CTX *ctx, char *name, char *value);
 int X509V3_EXT_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section, X509 *cert);
 int X509V3_EXT_CRL_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section, X509_CRL *crl);
-int X509V3_EXT_check_conf(LHASH *conf, char *section);
 int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool);
 int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint);
 void X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH *lhash);
@@ -323,8 +353,8 @@ void X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH *lhash);
 
 char * X509V3_get_string(X509V3_CTX *ctx, char *name, char *section);
 STACK * X509V3_get_section(X509V3_CTX *ctx, char *section);
-void X509V3_free_string(X509V3_CTX *ctx, char *str);
-void X509V3_free_section( X509V3_CTX *ctx, STACK *section);
+void X509V3_string_free(X509V3_CTX *ctx, char *str);
+void X509V3_section_free( X509V3_CTX *ctx, STACK *section);
 void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
 				 X509_REQ *req, X509_CRL *crl, int flags);
 
@@ -413,16 +443,40 @@ void X509V3_conf_free();
 X509_EXTENSION *X509V3_EXT_conf_nid();
 X509_EXTENSION *X509V3_EXT_conf();
 int X509V3_EXT_add_conf();
-int X509V3_EXT_check_conf();
 int X509V3_get_value_bool();
 int X509V3_get_value_int();
 void X509V3_set_conf_lhash();
 #endif
 
+int i2d_CERTIFICATEPOLICIES();
+STACK *CERTIFICATEPOLICIES_new();
+void CERTIFICATEPOLICIES_free();
+STACK *d2i_CERTIFICATEPOLICIES();
+
+int i2d_POLICYINFO();
+POLICYINFO *POLICYINFO_new();
+POLICYINFO *d2i_POLICYINFO();
+void POLICYINFO_free();
+
+int i2d_POLICYQUALINFO();
+POLICYQUALINFO *POLICYQUALINFO_new();
+POLICYQUALINFO *d2i_POLICYQUALINFO();
+void POLICYQUALINFO_free();
+
+int i2d_USERNOTICE();
+USERNOTICE *USERNOTICE_new();
+USERNOTICE *d2i_USERNOTICE();
+void USERNOTICE_free();
+
+int i2d_NOTICEREF();
+NOTICEREF *NOTICEREF_new();
+NOTICEREF *d2i_NOTICEREF();
+void NOTICEREF_free();
+
 char * X509V3_get_string();
 STACK * X509V3_get_section();
-void X509V3_free_string();
-void X509V3_free_section();
+void X509V3_string_free();
+void X509V3_section_free();
 void X509V3_set_ctx();
 
 int X509V3_add_value();
@@ -461,6 +515,7 @@ int X509V3_EXT_print_fp();
 #define X509V3_F_HEX_TO_STRING				 111
 #define X509V3_F_I2S_ASN1_ENUMERATED			 121
 #define X509V3_F_I2S_ASN1_INTEGER			 120
+#define X509V3_F_R2I_CERTPOL				 130
 #define X509V3_F_S2I_ASN1_IA5STRING			 100
 #define X509V3_F_S2I_ASN1_INTEGER			 108
 #define X509V3_F_S2I_ASN1_OCTET_STRING			 112
@@ -479,12 +534,12 @@ int X509V3_EXT_print_fp();
 #define X509V3_F_V2I_GENERAL_NAME			 117
 #define X509V3_F_V2I_GENERAL_NAMES			 118
 #define X509V3_F_V3_GENERIC_EXTENSION			 116
-#define X509V3_F_X509V3_EXT_ADD				 104
 #define X509V3_F_X509V3_ADD_VALUE			 105
+#define X509V3_F_X509V3_EXT_ADD				 104
 #define X509V3_F_X509V3_EXT_ADD_ALIAS			 106
 #define X509V3_F_X509V3_EXT_CONF			 107
-#define X509V3_F_X509V3_PARSE_LIST			 109
 #define X509V3_F_X509V3_GET_VALUE_BOOL			 110
+#define X509V3_F_X509V3_PARSE_LIST			 109
 
 /* Reason codes. */
 #define X509V3_R_BAD_IP_ADDRESS				 118
@@ -506,8 +561,11 @@ int X509V3_EXT_print_fp();
 #define X509V3_R_INVALID_NULL_NAME			 108
 #define X509V3_R_INVALID_NULL_VALUE			 109
 #define X509V3_R_INVALID_OBJECT_IDENTIFIER		 110
+#define X509V3_R_INVALID_POLICY_IDENTIFIER		 134
+#define X509V3_R_INVALID_SECTION			 135
 #define X509V3_R_ISSUER_DECODE_ERROR			 126
 #define X509V3_R_MISSING_VALUE				 124
+#define X509V3_R_NO_CONFIG_DATABASE			 136
 #define X509V3_R_NO_ISSUER_CERTIFICATE			 121
 #define X509V3_R_NO_ISSUER_DETAILS			 127
 #define X509V3_R_NO_PUBLIC_KEY				 114

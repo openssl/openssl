@@ -712,7 +712,10 @@ bad:
 		extensions=CONF_get_string(conf,section,ENV_EXTENSIONS);
 		if(extensions) {
 			/* Check syntax of file */
-			if(!X509V3_EXT_check_conf(conf, extensions)) {
+			X509V3_CTX ctx;
+			X509V3_set_ctx_test(&ctx);
+			X509V3_set_conf_lhash(&ctx, conf);
+			if(!X509V3_EXT_add_conf(conf, &ctx, extensions, NULL)) {
 				BIO_printf(bio_err,
 				 "Error Loading extension section %s\n",
 								 extensions);
@@ -984,7 +987,10 @@ bad:
 		crl_ext=CONF_get_string(conf,section,ENV_CRLEXT);
 		if(crl_ext) {
 			/* Check syntax of file */
-			if(!X509V3_EXT_check_conf(conf, crl_ext)) {
+			X509V3_CTX ctx;
+			X509V3_set_ctx_test(&ctx);
+			X509V3_set_conf_lhash(&ctx, conf);
+			if(!X509V3_EXT_add_conf(conf, &ctx, crl_ext, NULL)) {
 				BIO_printf(bio_err,
 				 "Error Loading CRL extension section %s\n",
 								 crl_ext);

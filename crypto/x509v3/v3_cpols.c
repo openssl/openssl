@@ -1,0 +1,544 @@
+/* v3_cpols.c */
+/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
+ * project 1999.
+ */
+/* ====================================================================
+ * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    licensing@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
+
+#include <stdio.h>
+#include "cryptlib.h"
+#include "conf.h"
+#include "asn1.h"
+#include "asn1_mac.h"
+#include "x509v3.h"
+
+/* Certificate policies extension support: this one is a bit complex... */
+
+static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol, BIO *out, int indent);
+static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *value);
+static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals, int indent);
+static void print_notice(BIO *out, USERNOTICE *notice, int indent);
+static POLICYINFO *policy_section(X509V3_CTX *ctx, STACK *polstrs);
+
+X509V3_EXT_METHOD v3_cpols = {
+NID_certificate_policies, 0,
+(X509V3_EXT_NEW)CERTIFICATEPOLICIES_new,
+CERTIFICATEPOLICIES_free,
+(X509V3_EXT_D2I)d2i_CERTIFICATEPOLICIES,
+i2d_CERTIFICATEPOLICIES,
+NULL, NULL,
+NULL, NULL,
+(X509V3_EXT_I2R)i2r_certpol,
+(X509V3_EXT_R2I)r2i_certpol,
+NULL
+};
+
+
+/*
+ * ASN1err(ASN1_F_POLICYINFO_NEW,ERR_R_MALLOC_FAILURE);
+ * ASN1err(ASN1_F_D2I_POLICYINFO,ERR_R_MALLOC_FAILURE);
+ * ASN1err(ASN1_F_POLICYQUALINFO_NEW,ERR_R_MALLOC_FAILURE);
+ * ASN1err(ASN1_F_D2I_POLICYQUALINFO,ERR_R_MALLOC_FAILURE);
+ * ASN1err(ASN1_F_USERNOTICE_NEW,ERR_R_MALLOC_FAILURE);
+ * ASN1err(ASN1_F_D2I_USERNOTICE,ERR_R_MALLOC_FAILURE);
+ * ASN1err(ASN1_F_NOTICEREF_NEW,ERR_R_MALLOC_FAILURE);
+ * ASN1err(ASN1_F_D2I_NOTICEREF,ERR_R_MALLOC_FAILURE);
+ */
+
+static STACK_OF(POLICYINFO) *r2i_certpol(method, ctx, value)
+X509V3_EXT_METHOD *method;
+X509V3_CTX *ctx;
+char *value;
+{
+	STACK_OF(POLICYINFO) *pols = NULL;
+	char *pstr;
+	POLICYINFO *pol;
+	ASN1_OBJECT *pobj;
+	STACK *vals;
+	CONF_VALUE *cnf;
+	int i;
+	pols = sk_POLICYINFO_new_null();
+	vals =  X509V3_parse_list(value);
+	for(i = 0; i < sk_num(vals); i++) {
+		cnf = (CONF_VALUE *)sk_value(vals, i);
+		if(cnf->value || !cnf->name ) {
+			X509V3err(X509V3_F_R2I_CERTPOL,X509V3_R_INVALID_POLICY_IDENTIFIER);
+			X509V3_conf_err(cnf);
+			goto err;
+		}
+		pstr = cnf->name;
+		if(*pstr == '@') {
+			STACK *polsect;
+			polsect = X509V3_get_section(ctx, pstr + 1);
+			if(!polsect) {
+				X509V3err(X509V3_F_R2I_CERTPOL,X509V3_R_INVALID_SECTION);
+
+				X509V3_conf_err(cnf);
+				goto err;
+			}
+			pol = policy_section(ctx, polsect);
+			X509V3_section_free(ctx, polsect);
+			if(!pol) goto err;
+		} else {
+			if(!(pobj = OBJ_txt2obj(cnf->name, 0))) {
+				X509V3err(X509V3_F_R2I_CERTPOL,X509V3_R_INVALID_OBJECT_IDENTIFIER);
+				X509V3_conf_err(cnf);
+				goto err;
+			}
+			pol = POLICYINFO_new();
+			pol->policyid = pobj;
+		}
+		sk_POLICYINFO_push(pols, pol);
+	}
+	sk_pop_free(vals, X509V3_conf_free);
+	return pols;
+	err:
+	sk_POLICYINFO_pop_free(pols, POLICYINFO_free);
+	return NULL;
+}
+
+static POLICYINFO *policy_section(ctx, polstrs)
+X509V3_CTX *ctx;
+STACK *polstrs;
+{
+	int i;
+	CONF_VALUE *cnf;
+	for(i = 0; i < sk_num(polstrs); i++) {
+		cnf = (CONF_VALUE *)sk_value(polstrs, i);
+	}
+	return NULL;
+}
+
+
+static int i2r_certpol(method, pol, out, indent)
+X509V3_EXT_METHOD *method;
+STACK_OF(POLICYINFO) *pol;
+BIO *out;
+int indent;
+{
+	int i;
+	POLICYINFO *pinfo;
+	/* First print out the policy OIDs */
+	for(i = 0; i < sk_POLICYINFO_num(pol); i++) {
+		pinfo = sk_POLICYINFO_value(pol, i);
+		BIO_printf(out, "%*sPolicy: ", indent, "");
+		i2a_ASN1_OBJECT(out, pinfo->policyid);
+		BIO_puts(out, "\n");
+		if(pinfo->qualifiers)
+			 print_qualifiers(out, pinfo->qualifiers, indent + 2);
+	}
+	return 1;
+}
+
+
+int i2d_CERTIFICATEPOLICIES(a, pp)
+STACK_OF(POLICYINFO) *a;
+unsigned char **pp;
+{
+
+return i2d_ASN1_SET_OF_POLICYINFO(a, pp, i2d_POLICYINFO, V_ASN1_SEQUENCE,
+                                                 V_ASN1_UNIVERSAL, IS_SEQUENCE);}
+
+STACK_OF(POLICYINFO) *CERTIFICATEPOLICIES_new()
+{
+	return sk_POLICYINFO_new_null();
+}
+
+void CERTIFICATEPOLICIES_free(a)
+STACK_OF(POLICYINFO) *a;
+{
+	sk_POLICYINFO_pop_free(a, POLICYINFO_free);
+}
+
+STACK_OF(POLICYINFO) *d2i_CERTIFICATEPOLICIES(a,pp,length)
+STACK_OF(POLICYINFO) **a;
+unsigned char **pp;
+long length;
+{
+return d2i_ASN1_SET_OF_POLICYINFO(a, pp, length, d2i_POLICYINFO,
+                         POLICYINFO_free, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
+
+}
+
+IMPLEMENT_STACK_OF(POLICYINFO)
+IMPLEMENT_ASN1_SET_OF(POLICYINFO)
+
+int i2d_POLICYINFO(a,pp)
+POLICYINFO *a;
+unsigned char **pp;
+{
+	M_ASN1_I2D_vars(a);
+
+	M_ASN1_I2D_len (a->policyid, i2d_ASN1_OBJECT);
+	M_ASN1_I2D_len_SEQUENCE_type(POLICYQUALINFO, a->qualifiers,
+							 i2d_POLICYQUALINFO);
+
+	M_ASN1_I2D_seq_total();
+
+	M_ASN1_I2D_put (a->policyid, i2d_ASN1_OBJECT);
+	M_ASN1_I2D_put_SEQUENCE_type(POLICYQUALINFO, a->qualifiers,
+							 i2d_POLICYQUALINFO);
+
+	M_ASN1_I2D_finish();
+}
+
+POLICYINFO *POLICYINFO_new()
+{
+	POLICYINFO *ret=NULL;
+	ASN1_CTX c;
+	M_ASN1_New_Malloc(ret, POLICYINFO);
+	ret->policyid = NULL;
+	ret->qualifiers = NULL;
+	return (ret);
+	M_ASN1_New_Error(ASN1_F_POLICYINFO_NEW);
+}
+
+POLICYINFO *d2i_POLICYINFO(a,pp,length)
+POLICYINFO **a;
+unsigned char **pp;
+long length;
+{
+	M_ASN1_D2I_vars(a,POLICYINFO *,POLICYINFO_new);
+	M_ASN1_D2I_Init();
+	M_ASN1_D2I_start_sequence();
+	M_ASN1_D2I_get(ret->policyid, d2i_ASN1_OBJECT);
+	if(!M_ASN1_D2I_end_sequence()) {
+		M_ASN1_D2I_get_seq_type (POLICYQUALINFO, ret->qualifiers,
+				 d2i_POLICYQUALINFO, POLICYQUALINFO_free);
+	}
+	M_ASN1_D2I_Finish(a, POLICYINFO_free, ASN1_F_D2I_POLICYINFO);
+}
+
+void POLICYINFO_free(a)
+POLICYINFO *a;
+{
+	if (a == NULL) return;
+	ASN1_OBJECT_free(a->policyid);
+	sk_POLICYQUALINFO_pop_free(a->qualifiers, POLICYQUALINFO_free);
+	Free (a);
+}
+
+static void print_qualifiers(out, quals, indent)
+BIO *out;
+STACK_OF(POLICYQUALINFO) *quals;
+int indent;
+{
+	POLICYQUALINFO *qualinfo;
+	int i;
+	for(i = 0; i < sk_POLICYQUALINFO_num(quals); i++) {
+		qualinfo = sk_POLICYQUALINFO_value(quals, i);
+		switch(OBJ_obj2nid(qualinfo->pqualid))
+		{
+			case NID_id_qt_cps:
+			BIO_printf(out, "%*sCPS: %s\n", indent, "",
+						qualinfo->d.cpsuri->data);
+			break;
+		
+			case NID_id_qt_unotice:
+			BIO_printf(out, "%*sUser Notice:\n", indent, "");
+			print_notice(out, qualinfo->d.usernotice, indent + 2);
+			break;
+
+			default:
+			BIO_printf(out, "%*sUnknown Qualifier: ",
+							 indent + 2, "");
+			
+			i2a_ASN1_OBJECT(out, qualinfo->pqualid);
+			BIO_puts(out, "\n");
+			break;
+		}
+	}
+}
+
+static void print_notice(out, notice, indent)
+BIO *out;
+USERNOTICE *notice;
+int indent;
+{
+	int i;
+	if(notice->noticeref) {
+		NOTICEREF *ref;
+		ref = notice->noticeref;
+		BIO_printf(out, "%*sOrganization: %s\n", indent, "",
+						 ref->organization->data);
+		BIO_printf(out, "%*sNumber%s: ", indent, "",
+				 (sk_num(ref->noticenos) > 1) ? "s" : "");
+		for(i = 0; i < sk_num(ref->noticenos); i++) {
+			ASN1_INTEGER *num;
+			char *tmp;
+			num = (ASN1_INTEGER *)sk_value(ref->noticenos, i);
+			if(i) BIO_puts(out, ", ");
+			tmp = i2s_ASN1_INTEGER(NULL, num);
+			BIO_puts(out, tmp);
+			Free(tmp);
+		}
+		BIO_puts(out, "\n");
+	}
+	if(notice->exptext)
+		BIO_printf(out, "%*sNotice Reference: %s\n", indent, "",
+							 notice->exptext->data);
+}
+		
+	
+
+int i2d_POLICYQUALINFO(a,pp)
+POLICYQUALINFO *a;
+unsigned char **pp;
+{
+	M_ASN1_I2D_vars(a);
+
+	M_ASN1_I2D_len (a->pqualid, i2d_ASN1_OBJECT);
+	switch(OBJ_obj2nid(a->pqualid)) {
+		case NID_id_qt_cps:
+		M_ASN1_I2D_len(a->d.cpsuri, i2d_ASN1_IA5STRING);
+		break;
+
+		case NID_id_qt_unotice:
+		M_ASN1_I2D_len(a->d.usernotice, i2d_USERNOTICE);
+		break;
+
+		default:
+		M_ASN1_I2D_len(a->d.other, i2d_ASN1_TYPE);
+		break;
+	}
+
+	M_ASN1_I2D_seq_total();
+
+	M_ASN1_I2D_put (a->pqualid, i2d_ASN1_OBJECT);
+	switch(OBJ_obj2nid(a->pqualid)) {
+		case NID_id_qt_cps:
+		M_ASN1_I2D_put(a->d.cpsuri, i2d_ASN1_IA5STRING);
+		break;
+
+		case NID_id_qt_unotice:
+		M_ASN1_I2D_put(a->d.usernotice, i2d_USERNOTICE);
+		break;
+
+		default:
+		M_ASN1_I2D_put(a->d.other, i2d_ASN1_TYPE);
+		break;
+	}
+
+	M_ASN1_I2D_finish();
+}
+
+POLICYQUALINFO *POLICYQUALINFO_new()
+{
+	POLICYQUALINFO *ret=NULL;
+	ASN1_CTX c;
+	M_ASN1_New_Malloc(ret, POLICYQUALINFO);
+	ret->pqualid = NULL;
+	ret->d.other = NULL;
+	return (ret);
+	M_ASN1_New_Error(ASN1_F_POLICYQUALINFO_NEW);
+}
+
+POLICYQUALINFO *d2i_POLICYQUALINFO(a,pp,length)
+POLICYQUALINFO **a;
+unsigned char **pp;
+long length;
+{
+	M_ASN1_D2I_vars(a,POLICYQUALINFO *,POLICYQUALINFO_new);
+	M_ASN1_D2I_Init();
+	M_ASN1_D2I_start_sequence();
+	M_ASN1_D2I_get (ret->pqualid, d2i_ASN1_OBJECT);
+	switch(OBJ_obj2nid(ret->pqualid)) {
+		case NID_id_qt_cps:
+		M_ASN1_D2I_get(ret->d.cpsuri, d2i_ASN1_IA5STRING);
+		break;
+
+		case NID_id_qt_unotice:
+		M_ASN1_D2I_get(ret->d.usernotice, d2i_USERNOTICE);
+		break;
+
+		default:
+		M_ASN1_D2I_get(ret->d.other, d2i_ASN1_TYPE);
+		break;
+	}
+	M_ASN1_D2I_Finish(a, POLICYQUALINFO_free, ASN1_F_D2I_POLICYQUALINFO);
+}
+
+void POLICYQUALINFO_free(a)
+POLICYQUALINFO *a;
+{
+	if (a == NULL) return;
+	switch(OBJ_obj2nid(a->pqualid)) {
+		case NID_id_qt_cps:
+		ASN1_IA5STRING_free(a->d.cpsuri);
+		break;
+
+		case NID_id_qt_unotice:
+		USERNOTICE_free(a->d.usernotice);
+		break;
+
+		default:
+		ASN1_TYPE_free(a->d.other);
+		break;
+	}
+	
+	ASN1_OBJECT_free(a->pqualid);
+	Free (a);
+}
+
+int i2d_USERNOTICE(a,pp)
+USERNOTICE *a;
+unsigned char **pp;
+{
+	M_ASN1_I2D_vars(a);
+
+	M_ASN1_I2D_len (a->noticeref, i2d_NOTICEREF);
+	M_ASN1_I2D_len (a->exptext, i2d_DISPLAYTEXT);
+
+	M_ASN1_I2D_seq_total();
+
+	M_ASN1_I2D_put (a->noticeref, i2d_NOTICEREF);
+	M_ASN1_I2D_put (a->exptext, i2d_DISPLAYTEXT);
+
+	M_ASN1_I2D_finish();
+}
+
+USERNOTICE *USERNOTICE_new()
+{
+	USERNOTICE *ret=NULL;
+	ASN1_CTX c;
+	M_ASN1_New_Malloc(ret, USERNOTICE);
+	ret->noticeref = NULL;
+	ret->exptext = NULL;
+	return (ret);
+	M_ASN1_New_Error(ASN1_F_USERNOTICE_NEW);
+}
+
+USERNOTICE *d2i_USERNOTICE(a,pp,length)
+USERNOTICE **a;
+unsigned char **pp;
+long length;
+{
+	M_ASN1_D2I_vars(a,USERNOTICE *,USERNOTICE_new);
+	M_ASN1_D2I_Init();
+	M_ASN1_D2I_start_sequence();
+	M_ASN1_D2I_get_opt(ret->noticeref, d2i_NOTICEREF, V_ASN1_SEQUENCE);
+	if (!M_ASN1_D2I_end_sequence()) {
+		M_ASN1_D2I_get(ret->exptext, d2i_DISPLAYTEXT);
+	}
+	M_ASN1_D2I_Finish(a, USERNOTICE_free, ASN1_F_D2I_USERNOTICE);
+}
+
+void USERNOTICE_free(a)
+USERNOTICE *a;
+{
+	if (a == NULL) return;
+	NOTICEREF_free(a->noticeref);
+	DISPLAYTEXT_free(a->exptext);
+	Free (a);
+}
+
+int i2d_NOTICEREF(a,pp)
+NOTICEREF *a;
+unsigned char **pp;
+{
+	M_ASN1_I2D_vars(a);
+
+	M_ASN1_I2D_len (a->organization, i2d_DISPLAYTEXT);
+	M_ASN1_I2D_len_SEQUENCE(a->noticenos, i2d_ASN1_INTEGER);
+
+	M_ASN1_I2D_seq_total();
+
+	M_ASN1_I2D_put (a->organization, i2d_DISPLAYTEXT);
+	M_ASN1_I2D_put_SEQUENCE(a->noticenos, i2d_ASN1_INTEGER);
+
+	M_ASN1_I2D_finish();
+}
+
+NOTICEREF *NOTICEREF_new()
+{
+	NOTICEREF *ret=NULL;
+	ASN1_CTX c;
+	M_ASN1_New_Malloc(ret, NOTICEREF);
+	ret->organization = NULL;
+	ret->noticenos = NULL;
+	return (ret);
+	M_ASN1_New_Error(ASN1_F_NOTICEREF_NEW);
+}
+
+NOTICEREF *d2i_NOTICEREF(a,pp,length)
+NOTICEREF **a;
+unsigned char **pp;
+long length;
+{
+	M_ASN1_D2I_vars(a,NOTICEREF *,NOTICEREF_new);
+	M_ASN1_D2I_Init();
+	M_ASN1_D2I_start_sequence();
+	/* This is to cope with some broken encodings that use IA5STRING for
+         * the organization field
+	 */
+	M_ASN1_D2I_get_opt(ret->organization, d2i_ASN1_IA5STRING,
+							 V_ASN1_IA5STRING);
+	if(!ret->organization) {
+		 M_ASN1_D2I_get(ret->organization, d2i_DISPLAYTEXT);
+	}
+	M_ASN1_D2I_get_seq(ret->noticenos, d2i_ASN1_INTEGER, ASN1_STRING_free);
+	M_ASN1_D2I_Finish(a, NOTICEREF_free, ASN1_F_D2I_NOTICEREF);
+}
+
+void NOTICEREF_free(a)
+NOTICEREF *a;
+{
+	if (a == NULL) return;
+	DISPLAYTEXT_free(a->organization);
+	sk_pop_free(a->noticenos, ASN1_STRING_free);
+	Free (a);
+}
+
+IMPLEMENT_STACK_OF(POLICYQUALINFO)
+IMPLEMENT_ASN1_SET_OF(POLICYQUALINFO)

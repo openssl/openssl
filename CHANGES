@@ -5,6 +5,11 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Initial support for Certificate Policies extension: print works but
+     setting doesn't work fully (yet). Also various additions to support
+     the r2i method this extension will use.
+     [Steve Henson]
+
   *) A lot of constification, and fix a bug in X509_NAME_oneline() that could
      return a const string when you are expecting an allocated buffer.
      [Ben Laurie]

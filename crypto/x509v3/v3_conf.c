@@ -149,6 +149,12 @@ char *value;	/* Value */
 		if(!ext_struc) return NULL;
 	} else if(method->s2i) {
 		if(!(ext_struc = method->s2i(method, ctx, value))) return NULL;
+	} else if(method->r2i) {
+		if(!ctx->db) {
+			X509V3err(X509V3_F_X509V3_EXT_CONF,X509V3_R_NO_CONFIG_DATABASE);
+			return NULL;
+		}
+		if(!(ext_struc = method->r2i(method, ctx, value))) return NULL;
 	} else {
 		X509V3err(X509V3_F_X509V3_EXT_CONF,X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED);
 		ERR_add_error_data(2, "name=", OBJ_nid2sn(ext_nid));
@@ -287,15 +293,6 @@ X509_CRL *crl;
 	return 1;
 }
 
-/* Just check syntax of config file as far as possible */
-int X509V3_EXT_check_conf(conf, section)
-LHASH *conf;
-char *section;
-{
-	static X509V3_CTX ctx_tst = { CTX_TEST, NULL, NULL, NULL, NULL };
-	return X509V3_EXT_add_conf(conf, &ctx_tst, section, NULL);
-}
-
 /* Config database functions */
 
 char * X509V3_get_string(ctx, name, section)
@@ -317,18 +314,20 @@ char *section;
 	return NULL;
 }
 
-void X509V3_free_string(ctx, str)
+void X509V3_string_free(ctx, str)
 X509V3_CTX *ctx;
 char *str;
 {
+	if(!str) return;
 	if(ctx->db_meth->free_string)
 			return ctx->db_meth->free_string(ctx->db, str);
 }
 
-void X509V3_free_section(ctx, section)
+void X509V3_section_free(ctx, section)
 X509V3_CTX *ctx;
 STACK *section;
 {
+	if(!section) return;
 	if(ctx->db_meth->free_section)
 			return ctx->db_meth->free_section(ctx->db, section);
 }
