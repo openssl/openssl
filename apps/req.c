@@ -383,8 +383,7 @@ bad:
 		BIO_printf(bio_err,"                the random number generator\n");
 		BIO_printf(bio_err," -newkey rsa:bits generate a new RSA key of 'bits' in size\n");
 		BIO_printf(bio_err," -newkey dsa:file generate a new DSA key, parameters taken from CA in 'file'\n");
-
-		BIO_printf(bio_err," -[digest]      Digest to sign with (md5, sha1, md2, mdc2)\n");
+		BIO_printf(bio_err," -[digest]      Digest to sign with (md5, sha1, md2, mdc2, md4)\n");
 		BIO_printf(bio_err," -config file   request template file.\n");
 		BIO_printf(bio_err," -new           new request.\n");
 		BIO_printf(bio_err," -x509          output a x509 structure instead of a cert. req.\n");
