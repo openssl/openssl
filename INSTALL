@@ -128,8 +128,11 @@
      the failure that aren't problems in OpenSSL itself (like missing
      standard headers).  If it is a problem with OpenSSL itself, please
      report the problem to <openssl-bugs@openssl.org> (note that your
-     message will be forwarded to a public mailing list).  Include the
-     output of "make report" in your message.
+     message will be recorded in the request tracker publicly readable
+     via http://www.openssl.org/rt2.html and will be forwarded to a public
+     mailing list). Include the output of "make report" in your message.
+     Please check out the request tracker. Maybe the bug was already
+     reported or has already been fixed.
 
      [If you encounter assembler error messages, try the "no-asm"
      configuration option as an immediate fix.]
@@ -147,7 +150,8 @@
      try removing any compiler optimization flags from the CFLAGS line
      in Makefile.ssl and run "make clean; make". Please send a bug
      report to <openssl-bugs@openssl.org>, including the output of
-     "make report".
+     "make report" in order to be added to the request tracker at
+     http://www.openssl.org/rt2.html.
 
   4. If everything tests ok, install OpenSSL with
 
