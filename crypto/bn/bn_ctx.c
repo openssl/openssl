@@ -112,8 +112,14 @@ void BN_CTX_start(BN_CTX *ctx)
 	ctx->depth++;
 	}
 
+
 BIGNUM *BN_CTX_get(BN_CTX *ctx)
 	{
+	/* Note: If BN_CTX_get is ever changed to allocate BIGNUMs dynamically,
+	 * make sure that if BN_CTX_get fails once it will return NULL again
+	 * until BN_CTX_end is called.  (This is so that callers have to check
+	 * only the last return value.)
+	 */
 	if (ctx->depth > BN_CTX_NUM_POS || ctx->tos >= BN_CTX_NUM)
 		{
 		if (!ctx->too_many)

@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Increase BN_CTX_NUM (the number of BIGNUMs in a BN_CTX) to 16.
+     The previous value, 12, was not always sufficient for BN_mod_exp().
+     [Bodo Moeller]
+
   *) Make DSO load along a path given through an environment variable
      (SHLIB_PATH) with shl_load().
      [Richard Levitte]
