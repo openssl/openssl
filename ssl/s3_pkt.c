@@ -604,7 +604,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 			if (prefix_len <= 0)
 				goto err;
 
-			if (s->s3->wbuf_len < prefix_len + SSL3_RT_MAX_PACKET_SIZE)
+			if (s->s3->wbuf_len < (size_t)prefix_len + SSL3_RT_MAX_PACKET_SIZE)
 				{
 				/* insufficient space */
 				SSLerr(SSL_F_DO_SSL3_WRITE, SSL_R_INTERNAL_ERROR);
