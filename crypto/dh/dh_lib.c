@@ -88,6 +88,7 @@ DH *DH_new()
 void DH_free(r)
 DH *r;
 	{
+	if(r == NULL) return;
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->g != NULL) BN_clear_free(r->g);
 	if (r->pub_key != NULL) BN_clear_free(r->pub_key);

@@ -183,7 +183,7 @@ EVP_PKEY *pkey;
 		goto err;
 		}
 
-	i=i2d_PublicKey(pkey,NULL);
+	if ((i=i2d_PublicKey(pkey,NULL)) <= 0) goto err;
 	if ((s=(unsigned char *)Malloc(i+1)) == NULL) goto err;
 	p=s;
 	i2d_PublicKey(pkey,&p);
