@@ -203,7 +203,7 @@ nsCertType (netscape certificate type) takes the flags: client, server, email,
 objsign, reserved, sslCA, emailCA, objCA.
 
 keyUsage (PKIX key usage) takes the flags: digitalSignature, nonRepudiation,
-keyEncipherment, dataEncipherment, keyAgreement, keyCertSign, cRLCertSign,
+keyEncipherment, dataEncipherment, keyAgreement, keyCertSign, cRLSign,
 encipherOnly, decipherOnly.
 
 For example:
