@@ -453,13 +453,14 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 	if ((b != NULL) && (b->top < b->dmax))
 		{
 		A = &(b->d[b->top]);
-		for (i=(words - b->top)>>3; i>0; i--,A+=8)
+		for (i=(b->dmax - b->top)>>3; i>0; i--,A+=8)
 			{
 			A[0]=0; A[1]=0; A[2]=0; A[3]=0;
 			A[4]=0; A[5]=0; A[6]=0; A[7]=0;
 			}
-		for (i=(words - b->top)&7; i>0; i--,A++)
+		for (i=(b->dmax - b->top)&7; i>0; i--,A++)
 			A[0]=0;
+		assert(A == &(b->d[b->dmax]));
 		}
 		
 	return b;
