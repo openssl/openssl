@@ -246,7 +246,10 @@ void CRYPTO_destroy_dynlockid(int i)
 	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
 	if (pointer)
+		{
 		dynlock_destroy_callback(pointer->data,__FILE__,__LINE__);
+		OPENSSL_free(pointer);
+		}
 	}
 
 struct CRYPTO_dynlock_value *CRYPTO_get_dynlock_value(int i)
