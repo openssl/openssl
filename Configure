@@ -169,11 +169,43 @@ my %table=(
 "irix64-mips4-gcc","gcc:-mabi=64 -mips4 -mmips-as -O3 -DTERMIOS -DB_ENDIAN -DBN_DIV3W::(unknown)::RC4_CHAR RC4_CHUNK DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG:asm/mips3.o::",
 "irix64-mips4-cc", "cc:-64 -mips4 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN -DBN_DIV3W::(unknown)::RC4_CHAR RC4_CHUNK DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG:asm/mips3.o::",
 
+#### Unified HP-UX ANSI C configs.
+# Special notes:
+# - Originally we were optimizing at +O4 level. It should be noted
+#   that the only difference between +O3 and +O4 is global inter-
+#   procedural analysis. As it has to be performed during the link
+#   stage the compiler leaves behind certain pseudo-code in lib*.a
+#   which might be release or even patch level specific. Generating
+#   the machine code and analyzing the *whole* program appears to be
+#   *extremely* memory demanding while the performance gain is
+#   actually questionable. The situation is intensified by the default
+#   HP-UX data set size limit (infamous 'maxdsiz' tunable) of 64MB
+#   which is way too low for +O4. In other words, doesn't +O3 make
+#   more sense?
+# - Keep in mind that the compiler by default generates code suitable
+#   for execution on the host you're currently compiling at. If you
+#   intend to use it across various PA-RISC processors consider adding
+#   +Dportable.
+# - +DD64 is chosen in favour of +DA2.0W because it's ment to be
+#   compatible with *future* releases.
+# - If you run ./Configure hpux-parisc-[g]cc manually don't forget to
+#   pass -D_REENTRANT on HP-UX 10 and later.
+# - -DMD32_XARRAY triggers workaround for compiler bug we ran into in
+#   32-bit message digests. (For the moment of this writing) HP C
+#   doesn't seem to "digest" too many local variables (they make "him"
+#   chew forever:-). For more details look-up MD32_XARRAY comment in
+#   crypto/sha/sha_lcl.h.
+#					<appro@fy.chalmers.se>
+#
+"hpux-parisc-cc","cc:-Ae +O3 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux-parisc-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W::::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux64-parisc-cc","cc:-Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:::",
+
 # HPUX 9.X config.
 # Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or
 # egcs.  gcc 2.8.1 is also broken.
 
-"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z::(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 # If hpux-cc fails (e.g. during "make test"), try the next one; otherwise,
 # please report your OS and compiler version to the openssl-bugs@openssl.org
 # mailing list.
@@ -184,7 +216,7 @@ my %table=(
 "hpux-brokengcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown)::DES_PTR DES_UNROLL DES_RISC1:::",
 
 # HPUX 10.X config.  Supports threads.
-"hpux10-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux10-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z::-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 # If hpux10-cc fails, try this one (if still fails, try deleting BN_LLONG):
 "hpux10-brokencc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z::-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 
@@ -194,8 +226,9 @@ my %table=(
 
 # HPUX 11.X from www.globus.org.
 # Only works on PA-RISC 2.0 cpus, and not optimized.  Why?
-"hpux11-32bit-cc","cc:+DA2.0 -DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit::-D_REENTRANT::DES_PTR DES_UNROLL DES_RISC1:::",
-"hpux11-64bit-cc","cc:+DA2.0W -g -D_HPUX_SOURCE -Aa -Ae +ESlit::-D_REENTRANT::SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT :::",
+#"hpux11-32bit-cc","cc:+DA2.0 -DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit::-D_REENTRANT::DES_PTR DES_UNROLL DES_RISC1:::",
+#"hpux11-64bit-cc","cc:+DA2.0W -g -D_HPUX_SOURCE -Aa -Ae +ESlit::-D_REENTRANT::SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT :::",
+# Use unified settings above instead.
 
 # Dec Alpha, OSF/1 - the alpha164-cc is the flags for a 21164A with
 # the new compiler

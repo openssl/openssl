@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) HP-UX tune-up: new unified configs, HP C compiler bug workaround.
+     [Andy Polyakov]
+
   *) Add -rand argument to smime and pkcs12 applications and read/write
      of seed file.
      [Steve Henson]

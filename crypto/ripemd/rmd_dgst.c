@@ -85,14 +85,14 @@ void RIPEMD160_Init(RIPEMD160_CTX *c)
 #ifdef X
 #undef X
 #endif
-#define X(i)	X[(i)]
+#define X(i)	XX[i]
 void ripemd160_block_host_order (RIPEMD160_CTX *ctx, const void *p, int num)
 	{
-	const RIPEMD160_LONG *X=p;
+	const RIPEMD160_LONG *XX=p;
 	register unsigned long A,B,C,D,E;
 	register unsigned long a,b,c,d,e;
 
-	for (;num--;X+=HASH_LBLOCK)
+	for (;num--;XX+=HASH_LBLOCK)
 		{
 
 	A=ctx->A; B=ctx->B; C=ctx->C; D=ctx->D; E=ctx->E;
@@ -286,21 +286,20 @@ void ripemd160_block_host_order (RIPEMD160_CTX *ctx, const void *p, int num)
 #ifdef X
 #undef X
 #endif
-#define X(i)	X##i
 void ripemd160_block_data_order (RIPEMD160_CTX *ctx, const void *p, int num)
 	{
 	const unsigned char *data=p;
 	register unsigned long A,B,C,D,E;
 	unsigned long a,b,c,d,e,l;
-	RIPEMD160_LONG	 X0, X1, X2, X3, X4, X5, X6, X7,
-			 X8, X9,X10,X11,X12,X13,X14,X15;
-	/*
-	 * Originally the above was declared as RIPEMD160_LONG X[16];
-	 * The idea was to make RISC compilers to accomodate at
-	 * least part of X in the register bank. Unfortunately not
-	 * all compilers get this idea:-(
-	 *					<appro@fy.chalmers.se>
-	 */
+#ifndef MD32_XARRAY
+	/* See comment in crypto/sha/sha_locl.h for details. */
+	unsigned long	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
+			XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
+# define X(i)	XX##i
+#else
+	RIPEMD160_LONG	XX[16];
+# define X(i)	XX[i]
+#endif
 
 	for (;num--;)
 		{

@@ -449,8 +449,10 @@ case "$GUESSOS" in
   BS2000-siemens-sysv4) OUT="BS2000-OSD" ;;
   RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
   *-siemens-sysv4) OUT="SINIX" ;;
+  *-hpux1*)	OUT="hpux-parisc-$CC"
+		options="$options -D_REENTRANT" ;;
+  *-hpux)	OUT="hpux-parisc-$CC" ;;
   # these are all covered by the catchall below
-  # *-hpux*) OUT="hpux-$CC" ;;
   # *-aix) OUT="aix-$CC" ;;
   # *-dgux) OUT="dgux" ;;
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;

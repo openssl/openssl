@@ -200,18 +200,39 @@ void HASH_INIT (SHA_CTX *c)
 	(f)=xa+(e)+K_60_79+ROTATE((a),5)+F_60_79((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
+#ifdef X
+#undef X
+#endif
+#ifndef MD32_XARRAY
+  /*
+   * Originally X was an array. As it's automatic it's natural
+   * to expect RISC compiler to accomodate at least part of it in
+   * the register bank, isn't it? Unfortunately not all compilers
+   * "find" this expectation reasonable:-( On order to make such
+   * compilers generate better code I replace X[] with a bunch of
+   * X0, X1, etc. See the function body below...
+   *					<appro@fy.chalmers.se>
+   */
+# define X(i)	XX##i
+#else
+  /*
+   * However! Some compilers (most notably HP C) get overwhelmed by
+   * that many local variables so that we have to have the way to
+   * fall down to the original behavior.
+   */
+# define X(i)	XX[i]
+#endif
+
 #ifndef DONT_IMPLEMENT_BLOCK_HOST_ORDER
 void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, int num)
 	{
 	const SHA_LONG *W=d;
 	register unsigned long A,B,C,D,E,T;
-#ifdef SHA_XARRAY
-	SHA_LONG	X[16];
-# define X(i) X[(i)]
+#ifndef MD32_XARRAY
+	unsigned long	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
+			XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
 #else
-	unsigned long	 X0, X1, X2, X3, X4, X5, X6, X7,
-			 X8, X9,X10,X11,X12,X13,X14,X15;
-# define X(i) X##i
+	SHA_LONG	XX[16];
 #endif
 
 	A=c->h0;
@@ -332,13 +353,11 @@ void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, int num)
 	{
 	const unsigned char *data=p;
 	register unsigned long A,B,C,D,E,T,l;
-#ifdef SHA_XARRAY
-	SHA_LONG	X[16];
-# define X(i) X[(i)]
+#ifndef MD32_XARRAY
+	unsigned long	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
+			XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
 #else
-	unsigned long	 X0, X1, X2, X3, X4, X5, X6, X7,
-			 X8, X9,X10,X11,X12,X13,X14,X15;
-# define X(i) X##i
+	SHA_LONG	XX[16];
 #endif
 
 	A=c->h0;

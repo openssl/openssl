@@ -937,7 +937,7 @@ $rc5_obj      =
 
 *** hpux-cc
 $cc           = cc
-$cflags       = -DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z
+$cflags       = -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z
 $unistd       = 
 $thread_cflag = (unknown)
 $lflags       = 
@@ -957,6 +957,40 @@ $cc           = gcc
 $cflags       = -DB_ENDIAN -DBN_DIV2W -O3
 $unistd       = 
 $thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** hpux-parisc-cc
+$cc           = cc
+$cflags       = -Ae +O3 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY
+$unistd       = 
+$thread_cflag = 
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** hpux-parisc-gcc
+$cc           = gcc
+$cflags       = -O3 -DB_ENDIAN -DBN_DIV2W
+$unistd       = 
+$thread_cflag = 
 $lflags       = 
 $bn_ops       = BN_LLONG DES_PTR DES_UNROLL DES_RISC1
 $bn_obj       = 
@@ -1005,7 +1039,7 @@ $rc5_obj      =
 
 *** hpux10-cc
 $cc           = cc
-$cflags       = -DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z
+$cflags       = -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
@@ -1037,26 +1071,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 
-*** hpux11-32bit-cc
+*** hpux64-parisc-cc
 $cc           = cc
-$cflags       = +DA2.0 -DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit
-$unistd       = 
-$thread_cflag = -D_REENTRANT
-$lflags       = 
-$bn_ops       = DES_PTR DES_UNROLL DES_RISC1
-$bn_obj       = 
-$des_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-
-*** hpux11-64bit-cc
-$cc           = cc
-$cflags       = +DA2.0W -g -D_HPUX_SOURCE -Aa -Ae +ESlit
+$cflags       = -Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $lflags       = 
@@ -1418,6 +1435,23 @@ $unistd       =
 $thread_cflag = (unknown)
 $lflags       = -lsocket -lnsl
 $bn_ops       = 
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+
+*** rhapsody-ppc-cc
+$cc           = cc
+$cflags       = -O3 -DB_ENDIAN
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $bn_obj       = 
 $des_obj      = 
 $bf_obj       = 
