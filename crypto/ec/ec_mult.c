@@ -61,6 +61,8 @@
  * and contributed to the OpenSSL project.
  */
 
+#include <string.h>
+
 #include <openssl/err.h>
 
 #include "ec_lcl.h"
