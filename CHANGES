@@ -5,6 +5,9 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Make S/MIME samples compile (not yet tested).
+     [Ben Laurie]
+
   *) Additional typesafe stacks.
      [Ben Laurie]
 

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <openssl/pkcs7.h>
+#include <openssl/asn1_mac.h>
 
 int add_signed_time(PKCS7_SIGNER_INFO *si)
 	{
@@ -18,19 +18,16 @@ int add_signed_time(PKCS7_SIGNER_INFO *si)
 ASN1_UTCTIME *get_signed_time(PKCS7_SIGNER_INFO *si)
 	{
 	ASN1_TYPE *so;
-	ASN1_UTCTIME *ut;
 
 	so=PKCS7_get_signed_attribute(si,NID_pkcs9_signingTime);
 	if (so->type == V_ASN1_UTCTIME)
-		{
-		ut=so->value.utctime;
-		}
-	return(ut);
+	    return so->value.utctime;
+	return NULL;
 	}
 	
 static int signed_string_nid= -1;
 
-int add_signed_string(PKCS7_SIGNER_INFO *si, char *str)
+void add_signed_string(PKCS7_SIGNER_INFO *si, char *str)
 	{
 	ASN1_OCTET_STRING *os;
 
@@ -80,7 +77,7 @@ int add_signed_seq2string(PKCS7_SIGNER_INFO *si, char *str1, char *str2)
 	unsigned char *p;
 	ASN1_OCTET_STRING *os1,*os2;
 	ASN1_STRING *seq;
-	char *data;
+	unsigned char *data;
 	int i,total;
 
 	if (signed_seq2string_nid == -1)
@@ -178,19 +175,16 @@ X509_ATTRIBUTE *create_time(void)
 	return(ret);
 	}
 
-ASN1_UTCTIME *sk_get_time(STACK *sk)
+ASN1_UTCTIME *sk_get_time(STACK_OF(X509_ATTRIBUTE) *sk)
 	{
 	ASN1_TYPE *so;
-	ASN1_UTCTIME *ut;
 	PKCS7_SIGNER_INFO si;
 
 	si.auth_attr=sk;
 	so=PKCS7_get_signed_attribute(&si,NID_pkcs9_signingTime);
 	if (so->type == V_ASN1_UTCTIME)
-		{
-		ut=so->value.utctime;
-		}
-	return(ut);
+	    return so->value.utctime;
+	return NULL;
 	}
 	
 X509_ATTRIBUTE *create_string(char *str)
@@ -210,7 +204,7 @@ X509_ATTRIBUTE *create_string(char *str)
 	return(ret);
 	}
 
-int sk_get_string(STACK *sk, char *buf, int len)
+int sk_get_string(STACK_OF(X509_ATTRIBUTE) *sk, char *buf, int len)
 	{
 	ASN1_TYPE *so;
 	ASN1_OCTET_STRING *os;
@@ -247,7 +241,7 @@ X509_ATTRIBUTE *add_seq2string(PKCS7_SIGNER_INFO *si, char *str1, char *str2)
 	ASN1_OCTET_STRING *os1,*os2;
 	ASN1_STRING *seq;
 	X509_ATTRIBUTE *ret;
-	char *data;
+	unsigned char *data;
 	int i,total;
 
 	if (signed_seq2string_nid == -1)
@@ -280,7 +274,7 @@ X509_ATTRIBUTE *add_seq2string(PKCS7_SIGNER_INFO *si, char *str1, char *str2)
 	}
 
 /* For this case, I will malloc the return strings */
-int sk_get_seq2string(STACK *sk, char **str1, char **str2)
+int sk_get_seq2string(STACK_OF(X509_ATTRIBUTE) *sk, char **str1, char **str2)
 	{
 	ASN1_TYPE *so;
 	PKCS7_SIGNER_INFO si;

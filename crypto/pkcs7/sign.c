@@ -59,20 +59,20 @@
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/err.h>
 
-main(argc,argv)
+int main(argc,argv)
 int argc;
 char *argv[];
 	{
 	X509 *x509;
 	EVP_PKEY *pkey;
 	PKCS7 *p7;
-	PKCS7 *p7_data;
 	PKCS7_SIGNER_INFO *si;
 	BIO *in;
 	BIO *data,*p7bio;
 	char buf[1024*4];
-	int i,j;
+	int i;
 	int nodetach=0;
 
 	EVP_add_digest(EVP_md2());

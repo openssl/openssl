@@ -73,7 +73,7 @@ char *argv[];
 	int i;
 	int nodetach=1;
 	char *keyfile = NULL;
-	const EVP_CIPHER *cipher;
+	const EVP_CIPHER *cipher=NULL;
 
 	SSLeay_add_all_algorithms();
 

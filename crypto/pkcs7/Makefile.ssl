@@ -39,6 +39,20 @@ test:
 
 all:	lib
 
+testapps: enc dec sign verify
+
+enc: enc.o lib
+	$(CC) $(CFLAGS) -o enc enc.o $(LIB)
+
+dec: dec.o lib
+	$(CC) $(CFLAGS) -o dec dec.o $(LIB)
+
+sign: sign.o lib
+	$(CC) $(CFLAGS) -o sign sign.o $(LIB)
+
+verify: verify.o example.o lib
+	$(CC) $(CFLAGS) -o verify verify.o example.o $(LIB)
+
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB)

@@ -71,7 +71,7 @@ int main(argc,argv)
 int argc;
 char *argv[];
 	{
-	char *keyfile;
+	char *keyfile=NULL;
 	BIO *in;
 	EVP_PKEY *pkey;
 	X509 *x509;
@@ -83,7 +83,7 @@ char *argv[];
 	char buf[1024*4];
 	unsigned char *pp;
 	int i,printit=0;
-	STACK *sk;
+	STACK_OF(PKCS7_SIGNER_INFO) *sk;
 
 	SSLeay_add_all_algorithms();
 	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
@@ -175,9 +175,9 @@ char *argv[];
 		/* Ok, first we need to, for each subject entry,
 		 * see if we can verify */
 		ERR_clear_error();
-		for (i=0; i<sk_num(sk); i++)
+		for (i=0; i<sk_PKCS7_SIGNER_INFO_num(sk); i++)
 			{
-			si=(PKCS7_SIGNER_INFO *)sk_value(sk,i);
+			si=sk_PKCS7_SIGNER_INFO_value(sk,i);
 			i=PKCS7_dataVerify(cert_store,&cert_ctx,p7bio,p7,si);
 			if (i <= 0)
 				goto err;
