@@ -137,7 +137,7 @@ struct evp_pkey_st
 		} pkey;
 	int save_parameters;
 	STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
-	};
+	} /* EVP_PKEY */;
 
 #define EVP_PKEY_MO_SIGN	0x0001
 #define EVP_PKEY_MO_VERIFY	0x0002
@@ -226,7 +226,7 @@ struct env_md_st
 	int required_pkey_type[5]; /*EVP_PKEY_xxx */
 	int block_size;
 	int ctx_size; /* how big does the ctx->md_data need to be */
-	};
+	} /* EVP_MD */;
 
 
 

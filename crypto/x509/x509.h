@@ -126,7 +126,7 @@ struct X509_algor_st
 	{
 	ASN1_OBJECT *algorithm;
 	ASN1_TYPE *parameter;
-	};
+	} /* X509_ALGOR */;
 
 DECLARE_STACK_OF(X509_ALGOR)
 DECLARE_ASN1_SET_OF(X509_ALGOR)
@@ -172,7 +172,7 @@ struct X509_name_st
 	char *bytes;
 #endif
 	unsigned long hash; /* Keep the hash around for lookups */
-	};
+	} /* X509_NAME */;
 
 DECLARE_STACK_OF(X509_NAME)
 
@@ -272,7 +272,7 @@ struct x509_st
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif
 	X509_CERT_AUX *aux;
-	};
+	} /* X509 */;
 
 DECLARE_STACK_OF(X509)
 DECLARE_ASN1_SET_OF(X509)
@@ -419,7 +419,7 @@ struct X509_crl_st
 	X509_ALGOR *sig_alg;
 	ASN1_BIT_STRING *signature;
 	int references;
-	};
+	} /* X509_CRL */;
 
 DECLARE_STACK_OF(X509_CRL)
 DECLARE_ASN1_SET_OF(X509_CRL)

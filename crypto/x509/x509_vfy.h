@@ -188,7 +188,7 @@ struct x509_store_st
 	CRYPTO_EX_DATA ex_data;
 	int references;
 	int depth;		/* how deep to look (still unused -- X509_STORE_CTX's depth is used) */
-	};
+	} /* X509_STORE */;
 
 #define X509_STORE_set_depth(ctx,d)       ((ctx)->depth=(d))
 
