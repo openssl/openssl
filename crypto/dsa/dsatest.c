@@ -76,6 +76,7 @@
 #include <openssl/err.h>
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#include <openssl/e_os2.h>
 #endif
 
 #ifdef OPENSSL_NO_DSA

@@ -56,10 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef OPENSSL_NO_SHA
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
+#ifndef OPENSSL_NO_SHA
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
