@@ -135,7 +135,7 @@ static char *ca_usage[]={
 " -policy arg     - The CA 'policy' to support\n",
 " -keyfile arg    - PEM private key file\n",
 " -key arg        - key to decode the private key if it is encrypted\n",
-" -cert           - The CA certificate\n",
+" -cert file      - The CA certificate\n",
 " -in file        - The input PEM encoded certificate request(s)\n",
 " -out file       - Where to put the output file(s)\n",
 " -outdir dir     - Where to put output certificates\n",
