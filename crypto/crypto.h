@@ -113,7 +113,7 @@ extern "C" {
 #define CRYPTO_LOCK_SSL			16
 /* for binary compatibility between 0.9.6 minor versions,
  * reuse an existing lock (later version use a new one): */
-# define CRYPTO_LOCK_SSL_SESSION	CRYPTO_LOCK_SSL_CERT
+# define CRYPTO_LOCK_SSL_METHOD		CRYPTO_LOCK_SSL_CTX
 #define CRYPTO_LOCK_RAND		17
 #define CRYPTO_LOCK_RAND2		18
 #define CRYPTO_LOCK_MALLOC		19
