@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-BIO_s_file - FILE bio.
+BIO_s_file, BIO_new_file, BIO_new_fp, BIO_set_fp, BIO_get_fp,
+BIO_read_filename, BIO_write_filename, BIO_append_filename,
+BIO_rw_filename - FILE bio
 
 =head1 SYNOPSIS
 
@@ -14,9 +16,6 @@ BIO_s_file - FILE bio.
 
  BIO_set_fp(BIO *b,FILE *fp, int flags);
  BIO_get_fp(BIO *b,FILE **fpp);
-
- BIO_seek(BIO *b,int offset);
- int BIO_tell(BIO *b);
 
  int BIO_read_filename(BIO *b, char *name)
  int BIO_write_filename(BIO *b, char *name)
@@ -56,11 +55,6 @@ BIO_set_fp() set the fp of a file BIO to B<fp>. B<flags> has the same
 meaning as in BIO_new_fp(), it is a macro.
 
 BIO_get_fp() retrieves the fp of a file BIO, it is a macro.
-
-BIO_seek() is a macro that sets the position pointer to B<offset> bytes
-from the start of file.
-
-BIO_tell() returns the value of the position pointer.
 
 BIO_read_filename(), BIO_write_filename(), BIO_append_filename() and
 BIO_rw_filename() set the file BIO B<b> to use file B<name> for
@@ -117,14 +111,9 @@ occurred.
 BIO_set_fp() and BIO_get_fp() return 1 for success or 0 for failure
 (although the current implementation never return 0).
 
-BIO_seek() returns the same value as the underlying fseek() function:
-0 for success or -1 for failure.
-
-BIO_tell() returns the current file position.
-
 BIO_read_filename(), BIO_write_filename(),  BIO_append_filename() and
 BIO_rw_filename() return 1 for success or 0 for failure.
 
 =head1 SEE ALSO
 
-TBA
+L<BIO_seek(3)|BIO_seek(3)>, L<BIO_tell(3)|BIO_tell(3)>, TBA

@@ -2,16 +2,13 @@
 
 =head1 NAME
 
-BIO_s_fd - file descriptor BIO
+BIO_s_fd, BIO_set_fd, BIO_get_fd, BIO_new_fd - file descriptor BIO
 
 =head1 SYNOPSIS
 
  #include <openssl/bio.h>
 
  BIO_METHOD *	BIO_s_fd(void);
-
- #define BIO_seek(b,ofs)	(int)BIO_ctrl(b,BIO_C_FILE_SEEK,ofs,NULL)
- #define BIO_tell(b)		(int)BIO_ctrl(b,BIO_C_FILE_TELL,0,NULL)
 
  #define BIO_set_fd(b,fd,c)	BIO_int_ctrl(b,BIO_C_SET_FD,c,fd)
  #define BIO_get_fd(b,c)	BIO_ctrl(b,BIO_C_GET_FD,0,(char *)c)
@@ -31,11 +28,6 @@ file descriptor when the BIO is freed.
 
 BIO_reset() attempts to change the file pointer to the start of file
 using lseek(fd, 0, 0).
-
-BIO_seek() sets the file pointer to position B<ofs> from start of file
-using lseek(fd, ofs, 0).
-
-BIO_tell() returns the current file position by calling lseek(fd, 0, 1).
 
 BIO_set_fd() sets the file descriptor of BIO B<b> to B<fd> and the close
 flag to B<c>.
@@ -85,4 +77,4 @@ This is a file descriptor BIO version of "Hello World":
 
 =head1 SEE ALSO
 
-TBA
+L<BIO_seek(3)|BIO_seek(3)>, L<BIO_tell(3)|BIO_tell(3)>, TBA

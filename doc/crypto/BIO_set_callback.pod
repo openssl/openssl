@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-BIO_set_callback, BIO_get_callback - BIO callback
+BIO_set_callback, BIO_get_callback, BIO_set_callback_arg, BIO_get_callback_arg,
+BIO_debug_callback - BIO callback functions
 
 =head1 SYNOPSIS
 

@@ -2,7 +2,10 @@
 
 =head1 NAME
 
-BIO_s_bio - BIO pair
+BIO_s_bio, BIO_make_bio_pair, BIO_destroy_bio_pair, BIO_set_write_buf_size,
+BIO_get_write_buf_size, BIO_new_bio_pair, BIO_get_write_guarantee,
+BIO_ctrl_get_write_guarantee, BIO_get_read_request, BIO_ctrl_get_read_request,
+BIO_ctrl_reset_read_request - BIO pair BIO
 
 =head1 SYNOPSIS
 
