@@ -117,6 +117,12 @@ the server determines which cipher suite is used it should take the first
 supported cipher in the list sent by the client.
 See the L<ciphers(1)|ciphers(1)> command for more information.
 
+=item B<-time length>
+
+specifies how long (in seconds) B<s_time> should establish connections and
+optionally transfer payload data from a server. Server and client performance
+and the link speed determine how many connections B<s_time> can establish.
+
 =back
 
 =head1 NOTES
@@ -127,7 +133,7 @@ To connect to an SSL HTTP server and get the default page the command
  openssl s_time -connect servername:443 -www / -CApath yourdir -CAfile yourfile.pem -cipher commoncipher [-ssl3]
 
 would typically be used (https uses port 443). 'commoncipher' is a cipher to
-which both client and server can agree, see the L<cipher(1)|cipher(1)> command
+which both client and server can agree, see the L<ciphers(1)|ciphers(1)> command
 for details.
 
 If the handshake fails then there are several possible causes, if it is
