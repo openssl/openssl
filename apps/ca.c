@@ -1686,7 +1686,7 @@ static BIGNUM *load_serial(char *serialfile)
 	ret=ASN1_INTEGER_to_BN(ai,NULL);
 	if (ret == NULL)
 		{
-		BIO_printf(bio_err,"error converting number from bin to BIGNUM");
+		BIO_printf(bio_err,"error converting number from bin to BIGNUM\n");
 		goto err;
 		}
 err:
