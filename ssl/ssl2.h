@@ -189,7 +189,7 @@ typedef struct ssl2_state_st
 	unsigned char *ract_data;
 	unsigned char *wact_data;
 	unsigned char *mac_data;
-	unsigned char *pad_data;
+	unsigned char *pad_data_UNUSED; /* only for binary compatibility with 0.9.6b */
 
 	unsigned char *read_key;
 	unsigned char *write_key;
