@@ -207,7 +207,7 @@ sub_all:
 	fi; \
 	done; \
 	if echo "$(DIRS)" | \
-	    grep '\(^\| \)\(crypto\|ssl\)\( \|$$\)' > /dev/null 2>&1 && \
+	    egrep '(^| )(crypto|ssl)( |$$)' > /dev/null 2>&1 && \
 	   [ -n "$(SHARED_LIBS)" ]; then \
 		$(MAKE) $(SHARED_LIBS); \
 	fi
