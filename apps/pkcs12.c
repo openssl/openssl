@@ -371,6 +371,8 @@ if (export_cert) {
 
 	if (canames) sk_free(canames);
 
+	/* if (!pmatch) ...?  What should happen here?  XXX */
+
 	if(!noprompt &&
 		EVP_read_pw_string(pass, 50, "Enter Export Password:", 1)) {
 	    BIO_printf (bio_err, "Can't read Password\n");
@@ -421,7 +423,7 @@ if (export_cert) {
 	ret = 0;
 	goto end;
 	
-}
+    }
 
     if (!(p12 = d2i_PKCS12_bio (in, NULL))) {
 	ERR_print_errors(bio_err);
