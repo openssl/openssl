@@ -77,7 +77,7 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
 
 	i=i2d_ASN1_OCTET_STRING(&sig,NULL);
 	j=RSA_size(rsa);
-	if ((i-RSA_PKCS1_PADDING) > j)
+	if (i > (j-RSA_PKCS1_PADDING_SIZE))
 		{
 		RSAerr(RSA_F_RSA_SIGN_ASN1_OCTET_STRING,RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
 		return(0);
