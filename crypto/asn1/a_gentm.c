@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
+#include "o_time.h"
 #include <openssl/asn1.h>
 
 #if 0
@@ -193,21 +194,17 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
 	{
 	char *p;
 	struct tm *ts;
-#if defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32)
 	struct tm data;
-#endif
 
 	if (s == NULL)
 		s=M_ASN1_GENERALIZEDTIME_new();
 	if (s == NULL)
 		return(NULL);
 
-#if defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32)
-	gmtime_r(&t,&data); /* should return &data, but doesn't on some systems, so we don't even look at the return value */
-	ts=&data;
-#else
-	ts=gmtime(&t);
-#endif
+	ts=OPENSSL_gmtime(&t, &data);
+	if (ts == NULL)
+		return(NULL);
+
 	p=(char *)s->data;
 	if ((p == NULL) || (s->length < 16))
 		{

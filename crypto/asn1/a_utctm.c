@@ -59,12 +59,8 @@
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
+#include "o_time.h"
 #include <openssl/asn1.h>
-#ifdef OPENSSL_SYS_VMS
-#include <descrip.h>
-#include <lnmdef.h>
-#include <starlet.h>
-#endif
 
 #if 0
 int i2d_ASN1_UTCTIME(ASN1_UTCTIME *a, unsigned char **pp)
@@ -191,59 +187,17 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	{
 	char *p;
 	struct tm *ts;
-#if defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32) && !defined(__CYGWIN32__)
-
 	struct tm data;
-#endif
 
 	if (s == NULL)
 		s=M_ASN1_UTCTIME_new();
 	if (s == NULL)
 		return(NULL);
 
-#if defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32) && !defined(__CYGWIN32__)
-	gmtime_r(&t,&data); /* should return &data, but doesn't on some systems, so we don't even look at the return value */
-	ts=&data;
-#else
-	ts=gmtime(&t);
-#endif
-#ifdef OPENSSL_SYS_VMS
+	ts=OPENSSL_gmtime(&t, &data);
 	if (ts == NULL)
-		{
-		static $DESCRIPTOR(tabnam,"LNM$DCL_LOGICAL");
-		static $DESCRIPTOR(lognam,"SYS$TIMEZONE_DIFFERENTIAL");
-		char result[256];
-		unsigned int reslen = 0;
-		struct {
-			short buflen;
-			short code;
-			void *bufaddr;
-			unsigned int *reslen;
-		} itemlist[] = {
-			{ 0, LNM$_STRING, 0, 0 },
-			{ 0, 0, 0, 0 },
-		};
-		int status;
+		return(NULL);
 
-		/* Get the value for SYS$TIMEZONE_DIFFERENTIAL */
-		itemlist[0].buflen = sizeof(result);
-		itemlist[0].bufaddr = result;
-		itemlist[0].reslen = &reslen;
-		status = sys$trnlnm(0, &tabnam, &lognam, 0, itemlist);
-		if (!(status & 1))
-			return NULL;
-		result[reslen] = '\0';
-
-		/* Get the numerical value of the equivalence string */
-		status = atoi(result);
-
-		/* and use it to move time to GMT */
-		t -= status;
-
-		/* then convert the result to the time structure */
-		ts=(struct tm *)localtime(&t);
-		}
-#endif
 	p=(char *)s->data;
 	if ((p == NULL) || (s->length < 14))
 		{
@@ -284,11 +238,7 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
 
 	t -= offset*60; /* FIXME: may overflow in extreme cases */
 
-#if defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32) && !defined(__CYGWIN32__)
-	{ struct tm data; gmtime_r(&t, &data); tm = &data; }
-#else
-	tm = gmtime(&t);
-#endif
+	{ struct tm data; tm = OPENSSL_gmtime(&t, &data); }
 	
 #define return_cmp(a,b) if ((a)<(b)) return -1; else if ((a)>(b)) return 1
 	year = g2(s->data);

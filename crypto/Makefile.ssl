@@ -35,13 +35,13 @@ SDIRS=	md2 md5 sha mdc2 hmac ripemd \
 GENERAL=Makefile README crypto-lib.com install.com
 
 LIB= $(TOP)/libcrypto.a
-LIBSRC=	cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c tmdiff.c cpt_err.c ebcdic.c uid.c
-LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o tmdiff.o cpt_err.o ebcdic.o uid.o
+LIBSRC=	cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c tmdiff.c cpt_err.c ebcdic.c uid.c o_time.c
+LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o tmdiff.o cpt_err.o ebcdic.o uid.o o_time.o
 
 SRC= $(LIBSRC)
 
 EXHEADER= crypto.h tmdiff.h opensslv.h opensslconf.h ebcdic.h symhacks.h
-HEADER=	cryptlib.h buildinf.h md32_common.h $(EXHEADER)
+HEADER=	cryptlib.h buildinf.h md32_common.h o_time.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
