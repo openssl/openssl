@@ -3146,3 +3146,4 @@ STORE_store_arbitrary                   3575	EXIST::FUNCTION:
 STORE_new_engine                        3576	EXIST::FUNCTION:
 ERR_set_mark                            3577	EXIST::FUNCTION:
 ERR_pop_to_mark                         3578	EXIST::FUNCTION:
+STORE_ATTR_INFO_in_range                3579	EXIST::FUNCTION:
