@@ -358,12 +358,6 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			if (!set_name_ex(&nmflag, *(++argv))) goto bad;
 			}
-		else if (strcmp(*argv,"-setalias") == 0)
-			{
-			if (--argc < 1) goto bad;
-			alias= *(++argv);
-			trustout = 1;
-			}
 #ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv,"-engine") == 0)
 			{
