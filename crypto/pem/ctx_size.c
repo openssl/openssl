@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include <string.h>
 #include "evp.h"
 
 int main(argc,argv)

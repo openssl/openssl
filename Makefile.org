@@ -157,7 +157,7 @@ SDIRS=  \
 	des rc2 rc4 rc5 idea bf cast \
 	bn rsa dsa dh \
 	buffer bio stack lhash rand err objects \
-	evp pem asn1 x509 x509v3 conf txt_db pkcs7 comp
+	evp asn1 pem x509 x509v3 conf txt_db pkcs7 comp
 
 # If you change the INSTALLTOP, make sure to also change the values
 # in crypto/location.h
