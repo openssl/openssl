@@ -4,6 +4,13 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Add configuration option to build on Linux on both big-endian and
+     little-endian MIPS.
+     [Ralf Baechle <ralf@uni-koblenz.de>]
+
+  *) Add the possibility to create shared libraries on HP-UX
+     [Richard Levitte]
+
   *) [In 0.9.6c-engine release:]
      Add support for Broadcom crypto accelerator cards, backported
      from 0.9.7.
@@ -558,13 +565,6 @@
      the full version number and not just 0.  This should mark the
      shared libraries as not backward compatible.  Of course, this should
      be changed again when we can guarantee backward binary compatibility.
-     [Richard Levitte]
-
-  *) Add configuration option to build on Linux on both big-endian and
-     little-endian MIPS.
-     [Ralf Baechle <ralf@uni-koblenz.de>]
-
-  *) Add the possibility to create shared libraries on HP-UX
      [Richard Levitte]
 
   *) Fix typo in get_cert_by_subject() in by_dir.c
