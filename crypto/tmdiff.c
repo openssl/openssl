@@ -228,6 +228,7 @@ int ms_time_cmp(char *ap, char *bp)
 	d=	 (double)(b->ms_timeb.time-a->ms_timeb.time)+
 		(((double)b->ms_timeb.millitm)-(double)a->ms_timeb.millitm)/1000.0;
 #  endif
+# endif
 #endif
 	if (d == 0.0)
 		ret=0;
