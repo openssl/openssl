@@ -242,20 +242,27 @@ OPENSSL_EXTERN int bn_limit_num_high;   /* (1<<bn_limit_bits_high) */
 OPENSSL_EXTERN int bn_limit_bits_mont;
 OPENSSL_EXTERN int bn_limit_num_mont;   /* (1<<bn_limit_bits_mont) */
 
-
 BIGNUM *bn_expand2(BIGNUM *b, int bits);
 
-#ifdef X86_ASM
-void bn_add_words(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,int num);
-#endif
+void bn_mul_normal(BN_ULONG *r,BN_ULONG *a,int na,BN_ULONG *b,int nb);
+void bn_mul_comba8(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b);
+void bn_mul_comba4(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b);
+void bn_sqr_normal(BN_ULONG *r, BN_ULONG *a, int n, BN_ULONG *tmp);
+void bn_sqr_comba8(BN_ULONG *r,BN_ULONG *a);
+void bn_sqr_comba4(BN_ULONG *r,BN_ULONG *a);
+int bn_cmp_words(BN_ULONG *a,BN_ULONG *b,int n);
+void bn_mul_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,int n2,BN_ULONG *t);
+void bn_mul_part_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,
+	int tn, int n,BN_ULONG *t);
+void bn_sqr_recursive(BN_ULONG *r,BN_ULONG *a, int n2, BN_ULONG *t);
+void bn_mul_low_normal(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b, int n);
+void bn_mul_low_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,int n2,
+	BN_ULONG *t);
+void bn_mul_high(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,BN_ULONG *l,int n2,
+	BN_ULONG *t);
 
 #ifdef  __cplusplus
 }
 #endif
 
 #endif
-
-void bn_mul_low_recursive(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,int n2,BN_ULONG *t);
-void bn_mul_high(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b,BN_ULONG *l,int n2, BN_ULONG *t);
-
-
