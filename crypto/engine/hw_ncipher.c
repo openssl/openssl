@@ -219,7 +219,7 @@ struct HWCryptoHook_CallerContextValue
     {mp.size = bn->max * sizeof(BN_ULONG); mp.buf = (unsigned char *)bn->d;}
 
 #if 0 /* Card and password management is not yet supported */
-/* HWCryptoHook callbacks.  insert_cart() and get_pass() are not yet
+/* HWCryptoHook callbacks.  insert_card() and get_pass() are not yet
    defined, because we haven't quite decided on the proper form yet.
    log_message() just adds an entry in the error stack.  I don't know
    if that's good or bad...  */
@@ -238,6 +238,7 @@ static pem_password_cb *password_callback = NULL;
 #if 0
 static void *password_callback_userdata = NULL;
 #endif
+static int disable_mutex_callbacks = 0;
 
 /* Stuff to pass to the HWCryptoHook library */
 static HWCryptoHook_InitInfo hwcrhk_globals = {
@@ -252,9 +253,10 @@ static HWCryptoHook_InitInfo hwcrhk_globals = {
 	/* The next few are mutex stuff: we write wrapper functions
 	   around the OS mutex functions.  We initialise them to 0
 	   here, and change that to actual function pointers in hwcrhk_init()
-	   if dynamic locks are support (that is, if the application
+	   if dynamic locks are supported (that is, if the application
 	   programmer has made sure of setting up callbacks bafore starting
-	   this engine). */
+	   this engine) *and* if disable_mutex_callbacks hasn't been set by
+	   a call to ENGINE_ctrl(ENGINE_CTRL_CHIL_NO_LOCKING). */
 	sizeof(HWCryptoHook_Mutex),
 	0,
 	0,
@@ -429,7 +431,8 @@ static int hwcrhk_init()
 
 	/* Check if the application decided to support dynamic locks,
 	   and if it does, use them. */
-	if (CRYPTO_get_dynlock_create_callback() != NULL &&
+	if (disable_mutex_callbacks == 0 &&
+		CRYPTO_get_dynlock_create_callback() != NULL &&
 		CRYPTO_get_dynlock_lock_callback() != NULL &&
 		CRYPTO_get_dynlock_destroy_callback() != NULL)
 		{
@@ -528,6 +531,30 @@ static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)())
 		password_callback = (pem_password_cb *)f;
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 		break;
+	/* this enables or disables the "SimpleForkCheck" flag used in the
+	 * initialisation structure. */
+	case ENGINE_CTRL_CHIL_SET_FORKCHECK:
+		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+		if(i)
+			hwcrhk_globals.flags |=
+				HWCryptoHook_InitFlags_SimpleForkCheck;
+		else
+			hwcrhk_globals.flags &=
+				~HWCryptoHook_InitFlags_SimpleForkCheck;
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+		break;
+	/* This will prevent the initialisation function from "installing"
+	 * the mutex-handling callbacks, even if they are available from
+	 * within the library (or were provided to the library from the
+	 * calling application). This is to remove any baggage for
+	 * applications not using multithreading. */
+	case ENGINE_CTRL_CHIL_NO_LOCKING:
+		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+		disable_mutex_callbacks = 1;
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+		break;
+
+	/* The command isn't understood by this engine */
 	default:
 		ENGINEerr(ENGINE_F_HWCRHK_CTRL,
 			ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED);

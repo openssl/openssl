@@ -88,7 +88,15 @@ extern "C" {
  * the error ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED. */
 #define ENGINE_CTRL_SET_LOGSTREAM		1
 #define ENGINE_CTRL_SET_PASSWORD_CALLBACK	2
-
+/* Flags specific to the nCipher "chil" engine */
+#define ENGINE_CTRL_CHIL_SET_FORKCHECK		100
+	/* Depending on the value of the (long)i argument, this sets or
+	 * unsets the SimpleForkCheck flag in the CHIL API to enable or
+	 * disable checking and workarounds for applications that fork().
+	 */
+#define ENGINE_CTRL_CHIL_NO_LOCKING		101
+	/* This prevents the initialisation function from providing mutex
+	 * callbacks to the nCipher library. */
 
 /* As we're missing a BIGNUM_METHOD, we need a couple of locally
  * defined function types that engines can implement. */
