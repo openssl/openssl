@@ -93,13 +93,13 @@ install:
 	(echo installing $$i; \
 	 cp $$i $(INSTALLTOP)/bin/$$i; \
 	 chmod 755 $(INSTALLTOP)/bin/$$i ); \
-	 done; \
+	 done;
 	@for i in $(SCRIPTS); \
 	do  \
 	(echo installing $$i; \
 	 cp $$i $(OPENSSLDIR)/misc/$$i; \
-	 chmod 755 $(INSTALLTOP)/misc/$$i ); \
-	 done; \
+	 chmod 755 $(OPENSSLDIR)/misc/$$i ); \
+	 done;
 	cp openssl.cnf $(OPENSSLDIR)/lib; \
 	chmod 644 $(OPENSSLDIR)/lib/openssl.cnf
 

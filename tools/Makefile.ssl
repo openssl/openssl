@@ -26,6 +26,7 @@ install:
 	do  \
 	(cp $$i $(INSTALLTOP)/bin/$$i; \
 	chmod 755 $(INSTALLTOP)/bin/$$i ); \
+	done;
 	@for i in $(MISC_APPS) ; \
 	do  \
 	(cp $$i $(OPENSSLTOP)/misc/$$i; \
