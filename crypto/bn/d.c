@@ -1,3 +1,5 @@
+/* unused */
+
 #include <stdio.h>
 #include <openssl/bio.h>
 #include "bn_lcl.h"
