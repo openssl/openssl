@@ -741,9 +741,9 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
 	 * as we're creating them at a time when we're trying to check we've not
 	 * left anything un-free()'d!! */
 	MemCheck_off();
-	if ((b=BIO_new(BIO_s_file())) == NULL)
-		return;
+	b = BIO_new(BIO_s_file());
 	MemCheck_on();
+	if(!b) return;
 	BIO_set_fp(b,fp,BIO_NOCLOSE);
 	CRYPTO_mem_leaks(b);
 	BIO_free(b);
