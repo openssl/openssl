@@ -397,6 +397,12 @@ BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
 	{
 	BIGNUM *r = NULL;
 
+	/* This function does not work if
+	 *      words <= b->dmax && top < words
+	 * because BN_dup() does not preserve 'dmax'!
+	 * (But bn_dup_expand() is not used anywhere yet.)
+	 */
+	
 	if (words > b->dmax)
 		{
 		BN_ULONG *a = bn_expand_internal(b, words);
