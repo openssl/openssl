@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Enhance bctest to search for a working bc along $PATH and print
+     it when found.
+     [Tim Rice <tim@multitalents.net> via Richard Levitte]
+
   *) Add a 'copy_extensions' option to the 'ca' utility. This copies
      extensions from a certificate request to the certificate.
      [Steve Henson]

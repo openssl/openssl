@@ -12,7 +12,8 @@
 
 
 # Test for SunOS 5.[78] bc bug (or missing bc)
-if [ 0 != "`bc <<\EOF
+SunOStest() {
+if [ 0 != "`${1} <<\EOF
 obase=16
 ibase=16
 a=AD88C418F31B3FC712D0425001D522B3AE9134FF3A98C13C1FCC1682211195406C1A6C66C6A\
@@ -28,15 +29,16 @@ b=DCE91E7D120B983EA9A104B5A96D634DD644C37657B1C7860B45E6838999B3DCE5A555583C6\
 (a/b)*b + (a%b) - a
 EOF`" ]
 then
-  echo "bc does not work.  Consider installing GNU bc." >&2
-  echo "cat >/dev/null"
-  exit 1
+#  echo "bc does not work.  Consider installing GNU bc." >&2
+#  echo "cat >/dev/null"
+  return 1
 fi
-
+}
 
 # Test for SCO bc bug.
+SCOtest() {
 if [ "0
-0" != "`bc <<\EOF
+0" != "`${1} <<\EOF
 obase=16
 ibase=16
 -FFDD63BA1A4648F0D804F8A1C66C53F0D2110590E8A3907EC73B4AEC6F15AC177F176F2274D2\
@@ -64,21 +66,46 @@ D97935A7E1A14AD209D6CF811F55C6DB83AA9E6DFECFCD6669DED7171EE22A40C6181615CAF3F\
 5296964
 EOF`" ]
 then
-  echo "bc does not work.  Consider installing GNU bc." >&2
-  echo "cat >/dev/null"
-  exit 1
+#  echo "bc does not work.  Consider installing GNU bc." >&2
+#  echo "cat >/dev/null"
+  return 1
 fi
+}
 
+#
+# Find the full pathname(s) of bc
+#
+findBc()
+{
+    IFS=:
+    for i in $PATH; do
+	eval  test -x $i/bc  -a  ! -d $i/bc && { echo $i/bc ; }
+    done
+}
 
+Printtest() {
 # bc works, good.
 # Now check if it knows the 'print' command.
-if [ "OK" = "`bc 2>/dev/null <<\EOF
+if [ "OK" = "`${1} 2>/dev/null <<\EOF
 print \"OK\"
 EOF`" ]
 then
-    echo "bc"
+    echo "${1}"
 else
-    echo "sed 's/print.*//' | bc"
+    echo "sed 's/print.*//' | ${1}"
 fi
 
 exit 0
+}
+
+for BC in `findBc`
+do
+	if SunOStest ${BC} && SCOtest ${BC}
+	then
+		Printtest ${BC}
+	fi
+done
+
+echo "bc does not work.  Consider installing GNU bc." >&2
+echo "cat >/dev/null"
+exit 1
