@@ -158,6 +158,7 @@ when the B<-x509> option is being used this specifies the number of
 days to certify the certificate for. The default is 30 days.
 
 =item B<-extensions section>
+
 =item B<-reqexts section>
 
 these options specify alternative sections to include certificate
