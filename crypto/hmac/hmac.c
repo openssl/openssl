@@ -61,7 +61,7 @@
 #include <openssl/hmac.h>
 
 void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
-		  const EVP_MD *md)
+		  const EVP_MD *md, ENGINE *impl)
 	{
 	int i,j,reset=0;
 	unsigned char pad[HMAC_MAX_MD_CBLOCK];
@@ -80,7 +80,7 @@ void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 		j=EVP_MD_block_size(md);
 		if (j < len)
 			{
-			EVP_DigestInit_ex(&ctx->md_ctx,md, NULL);
+			EVP_DigestInit_ex(&ctx->md_ctx,md, impl);
 			EVP_DigestUpdate(&ctx->md_ctx,key,len);
 			EVP_DigestFinal_ex(&(ctx->md_ctx),ctx->key,
 				&ctx->key_length);
@@ -99,12 +99,12 @@ void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 		{
 		for (i=0; i<HMAC_MAX_MD_CBLOCK; i++)
 			pad[i]=0x36^ctx->key[i];
-		EVP_DigestInit_ex(&ctx->i_ctx,md, NULL);
+		EVP_DigestInit_ex(&ctx->i_ctx,md, impl);
 		EVP_DigestUpdate(&ctx->i_ctx,pad,EVP_MD_block_size(md));
 
 		for (i=0; i<HMAC_MAX_MD_CBLOCK; i++)
 			pad[i]=0x5c^ctx->key[i];
-		EVP_DigestInit_ex(&ctx->o_ctx,md, NULL);
+		EVP_DigestInit_ex(&ctx->o_ctx,md, impl);
 		EVP_DigestUpdate(&ctx->o_ctx,pad,EVP_MD_block_size(md));
 		}
 	EVP_MD_CTX_copy_ex(&ctx->md_ctx,&ctx->i_ctx);
@@ -115,7 +115,7 @@ void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
 	{
 	if(key && md)
 	    HMAC_CTX_init(ctx);
-	HMAC_Init_ex(ctx,key,len,md);
+	HMAC_Init_ex(ctx,key,len,md, NULL);
 	}
 
 void HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len)
