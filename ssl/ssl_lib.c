@@ -193,7 +193,7 @@ int SSL_clear(SSL *s)
 #if 1
 	/* Check to see if we were changed into a different method, if
 	 * so, revert back if we are not doing session-id reuse. */
-	if ((s->session == NULL) && (s->method != s->ctx->method))
+	if (!s->in_handshake && (s->session == NULL) && (s->method != s->ctx->method))
 		{
 		s->method->ssl_free(s);
 		s->method=s->ctx->method;

@@ -118,8 +118,8 @@ int ssl2_connect(SSL *s)
 		cb=s->ctx->info_callback;
 
 	/* init things to blank */
-	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s);
 	s->in_handshake++;
+	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s);
 
 	for (;;)
 		{

@@ -12,6 +12,11 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Fix SSL handshake functions and SSL_clear() such that SSL_clear()
+     never resets s->method to s->ctx->method when called from within
+     one of the SSL handshake functions.
+     [Bodo Moeller; problem pointed out by Niko Baric]
+
   +) Test for certificates which contain unsupported critical extensions.
      If such a certificate is found during a verify operation it is 
      rejected by default: this behaviour can be overridden by either
