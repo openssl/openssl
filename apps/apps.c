@@ -310,9 +310,16 @@ void program_name(char *in, char *out, int size)
 
 	q=strrchr(p,'.');
 	if (q == NULL)
-		q = in+size;
-	strncpy(out,p,q-p);
-	out[q-p]='\0';
+		q = p + strlen(p);
+	strncpy(out,p,size-1);
+	if (q-p >= size)
+		{
+		out[size-1]='\0';
+		}
+	else
+		{
+		out[q-p]='\0';
+		}
 	}
 #else
 void program_name(char *in, char *out, int size)
