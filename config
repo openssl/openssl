@@ -181,14 +181,11 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 
     QNX:*)
 	case "$VERSION" in
-	    425)
-		echo "${MACHINE}-qssl-qnx4"
-		;;
-	    423)
-		echo "${MACHINE}-qssl-qnx32"
+	    4*)
+		echo "${MACHINE}-whatever-qnx4"
 		;;
 	    *)
-		echo "${MACHINE}-qssl-qnx"
+		echo "${MACHINE}-whatever-qnx"
 		;;
 	esac
 	exit 0
