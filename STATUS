@@ -1,13 +1,15 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/03/20 21:38:25 $
+  ______________                           $Date: 2000/03/21 11:40:33 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.5a: Under development...
                        0.9.5a-beta1 is available.
-			VC-Win32 (MSVC6SP3, nasm)       - failed compilation
-			FreeBSD-elf (i686-pc-freebsd3.2)- failed compilation
+                        sunos-gcc                       - failed compilation
+                        sco5-cc                         - bc fails in test
+			VC-Win32 (MSVC6SP3, nasm)       - failed (fixed) 
+			FreeBSD-elf (i686-pc-freebsd3.2)- failed (fixed)
 			HPUX (hpux-parisc-cc w/ +02)	- passed
 			OpenBSD-x86			- passed
 			solaris-sparcv9-cc		- passed
