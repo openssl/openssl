@@ -65,9 +65,9 @@
 
 
 /* determine timings for modexp, gcd, or modular inverse */
-#define TEST_EXP
+#undef TEST_EXP
 #undef TEST_GCD
-#undef TEST_KRON
+#define TEST_KRON
 #undef TEST_INV
 
 
@@ -80,6 +80,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 
 #if !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
 #define TIMES
@@ -179,7 +180,7 @@ static int sizes[NUM_SIZES]={128,256,512,1024,2048,4096,8192};
 static int mul_c[NUM_SIZES]={8*8*8*8*8*8,8*8*8*8*8,8*8*8*8,8*8*8,8*8,8,1};
 /*static int sizes[NUM_SIZES]={59,179,299,419,539}; */
 
-#define RAND_SEED(string) { const char str[] = string; RAND_seed(string, sizeof string); }
+#define RAND_SEED(string) { const char str[] = string; RAND_seed(string, sizeof str); }
 
 static void genprime_cb(int p, int n, void *arg)
 	{
@@ -213,6 +214,7 @@ int main(int argc, char **argv)
 		RAND_SEED("I demand a manual recount!");
 
 	do_mul_exp(r,a,b,c,ctx);
+	return 0;
 	}
 
 void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
@@ -275,7 +277,7 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 #else /* TEST_INV */
 			"2*inv %4d %4d mod %4d"
 #endif
-			" -> %8.3fms %5.1f (%d)\n",sizes[i],sizes[i],sizes[i],tm*1000.0/num,tm*mul_c[i]/num, num);
+			" -> %8.3fms %5.1f (%ld)\n",sizes[i],sizes[i],sizes[i],tm*1000.0/num,tm*mul_c[i]/num, num);
 		num/=7;
 		if (num <= 0) num=1;
 		}

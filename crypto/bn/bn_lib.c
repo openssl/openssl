@@ -357,6 +357,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 		}
 
 	/* Now need to zero any data between b->top and b->max */
+	/* XXX Why? */
 
 	A= &(a[b->top]);
 	for (i=(words - b->top)>>3; i>0; i--,A+=8)

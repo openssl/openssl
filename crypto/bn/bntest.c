@@ -981,9 +981,12 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 			goto err;
 			}
 
-		fprintf(stderr, "ok\n");
+		putc('.', stderr);
+		fflush(stderr);
 		}
 
+	putc('\n', stderr);
+	fflush(stderr);
 	ret = 1;
  err:
 	if (a != NULL) BN_free(a);

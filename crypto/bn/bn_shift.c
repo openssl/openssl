@@ -128,8 +128,8 @@ int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 	BN_ULONG l;
 
 	r->neg=a->neg;
-	if (bn_wexpand(r,a->top+(n/BN_BITS2)+1) == NULL) return(0);
 	nw=n/BN_BITS2;
+	if (bn_wexpand(r,a->top+nw+1) == NULL) return(0);
 	lb=n%BN_BITS2;
 	rb=BN_BITS2-lb;
 	f=a->d;
