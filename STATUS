@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/19 16:14:47 $
+  ______________                           $Date: 2000/09/20 15:15:37 $
 
   DEVELOPMENT STATE
 
@@ -75,6 +75,14 @@
 			irix-mips3-cc [engine] (Irix 6.2)	- success
 				One has to do the same as for OpenBSD in
 					speed.c [FIXED]
+			aix-cc (3.2.5, cc 1.3.0.44)		- success
+			aix-gcc (3.2.5, gcc 2.8.1)		- success
+				Both first failed to compiled due to ftime().
+					[FIXED]
+			alpha-cc (V4.0E)			- success
+			alpha-gcc (V4.0E, gcc 2.8.1)		- success
+			ultrix-cc (V4.5)			- success
+			ultrix-gcc (V4.5, gcc 2.8.1)		- success
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
