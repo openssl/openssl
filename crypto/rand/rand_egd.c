@@ -91,7 +91,7 @@ int RAND_egd(const char *path)
 	len = offsetof(struct sockaddr_un, sun_path) + strlen(path);
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (fd == -1) return (-1);
-	if (connect(fd, &addr, len) == -1) goto err;
+	if (connect(fd, (struct sockaddr *)&addr, len) == -1) goto err;
 	buf[0] = 1;
 	buf[1] = 255;
 	write(fd, buf, 2);
