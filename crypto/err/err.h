@@ -243,6 +243,7 @@ unsigned long ERR_get_error_line(const char **file,int *line);
 unsigned long ERR_get_error_line_data(const char **file,int *line,
 				      const char **data, int *flags);
 unsigned long ERR_peek_error(void );
+unsigned long ERR_peek_top_error(void);
 unsigned long ERR_peek_error_line(const char **file,int *line);
 unsigned long ERR_peek_error_line_data(const char **file,int *line,
 				       const char **data,int *flags);

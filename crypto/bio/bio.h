@@ -618,7 +618,6 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args);
  * made after this point may be overwritten when the script is next run.
  */
 void ERR_load_BIO_strings(void);
-
 /* Error codes for the BIO functions. */
 
 /* Function codes. */
@@ -673,6 +672,7 @@ void ERR_load_BIO_strings(void);
 #define BIO_R_NO_HOSTNAME_SPECIFIED			 112
 #define BIO_R_NO_PORT_DEFINED				 113
 #define BIO_R_NO_PORT_SPECIFIED				 114
+#define BIO_R_NO_SUCH_FILE				 128
 #define BIO_R_NULL_PARAMETER				 115
 #define BIO_R_TAG_MISMATCH				 116
 #define BIO_R_UNABLE_TO_BIND_SOCKET			 117

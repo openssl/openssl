@@ -100,6 +100,7 @@ static ERR_STRING_DATA CONF_str_reasons[]=
 {CONF_R_NO_CONF                          ,"no conf"},
 {CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE  ,"no conf or environment variable"},
 {CONF_R_NO_SECTION                       ,"no section"},
+{CONF_R_NO_SUCH_FILE                     ,"no such file"},
 {CONF_R_NO_VALUE                         ,"no value"},
 {CONF_R_UNABLE_TO_CREATE_NEW_SECTION     ,"unable to create new section"},
 {CONF_R_UNKNOWN_MODULE_NAME              ,"unknown module name"},

@@ -120,6 +120,7 @@ static ERR_STRING_DATA BIO_str_reasons[]=
 {BIO_R_NO_HOSTNAME_SPECIFIED             ,"no hostname specified"},
 {BIO_R_NO_PORT_DEFINED                   ,"no port defined"},
 {BIO_R_NO_PORT_SPECIFIED                 ,"no port specified"},
+{BIO_R_NO_SUCH_FILE                      ,"no such file"},
 {BIO_R_NULL_PARAMETER                    ,"null parameter"},
 {BIO_R_TAG_MISMATCH                      ,"tag mismatch"},
 {BIO_R_UNABLE_TO_BIND_SOCKET             ,"unable to bind socket"},

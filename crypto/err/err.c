@@ -679,6 +679,13 @@ unsigned long ERR_get_error_line_data(const char **file, int *line,
 unsigned long ERR_peek_error(void)
 	{ return(get_error_values(0,NULL,NULL,NULL,NULL)); }
 
+unsigned long ERR_peek_top_error(void)
+	{
+	ERR_STATE *es=ERR_get_state();
+
+	return es->err_buffer[es->top];
+	}
+
 unsigned long ERR_peek_error_line(const char **file,
 	     int *line)
 	{ return(get_error_values(0,file,line,NULL,NULL)); }

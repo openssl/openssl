@@ -96,12 +96,25 @@ static const char dev_crypto_name[] = "OpenBSD /dev/crypto";
 
 static long allow_misaligned;
 
-static int init_conf(CONF_IMODULE *md,const CONF *conf)
+#define DEV_CRYPTO_CMD_ALLOW_MISALIGNED		ENGINE_CMD_BASE
+static const ENGINE_CMD_DEFN dev_crypto_cmd_defns[]=
 	{
-	if(!NCONF_get_number(conf,CONF_imodule_get_value(md),"allow_misaligned",
-						 &allow_misaligned))
-		return 0;
-	printf("allow misaligned=%ld\n",allow_misaligned);
+	{ DEV_CRYPTO_CMD_ALLOW_MISALIGNED,
+	  "allow_misaligned",
+	  "Permit misaligned data to be used",
+	  ENGINE_CMD_FLAG_NUMERIC },
+	{ 0, NULL, NULL, 0 }
+	};
+
+static int dev_crypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+	{
+	switch(cmd)
+		{
+	case DEV_CRYPTO_CMD_ALLOW_MISALIGNED:
+		allow_misaligned=i;
+		printf("allow misaligned=%ld\n",allow_misaligned);
+		break;
+		}
 
 	return 1;
 	}
@@ -110,11 +123,12 @@ static ENGINE *engine_openbsd_dev_crypto(void)
 	{
 	ENGINE *engine=ENGINE_new();
 
-	CONF_module_add(dev_crypto_id,init_conf,NULL);
 	if(!ENGINE_set_id(engine, dev_crypto_id) ||
-			!ENGINE_set_name(engine, dev_crypto_name) ||
-			!ENGINE_set_ciphers(engine, dev_crypto_ciphers) ||
-			!ENGINE_set_digests(engine, dev_crypto_digests))
+	   !ENGINE_set_name(engine, dev_crypto_name) ||
+	   !ENGINE_set_ciphers(engine, dev_crypto_ciphers) ||
+	   !ENGINE_set_digests(engine, dev_crypto_digests) ||
+	   !ENGINE_set_ctrl_function(engine, dev_crypto_ctrl) ||
+	   !ENGINE_set_cmd_defns(engine, dev_crypto_cmd_defns))
 		{
 		ENGINE_free(engine);
 		return NULL;

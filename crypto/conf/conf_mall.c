@@ -92,9 +92,10 @@ void OPENSSL_config(void)
 	if (!file)
 		return;
 
-	ret = CONF_modules_load_file(file, "openssl_config", 0);
+	ret=CONF_modules_load_file(file, "openssl_config", 0) <= 0
+	  && ERR_GET_REASON(ERR_peek_top_error()) != CONF_R_NO_SUCH_FILE;
 	OPENSSL_free(file);
-	if (ret <= 0)
+	if (ret)
 		{
 		BIO *bio_err;
 		ERR_load_crypto_strings();
