@@ -64,7 +64,6 @@
 #include "x509.h"
 #include "objects.h"
 #include "buffer.h"
-#include "pem.h"
 
 X509 *X509_REQ_to_X509(r,days,pkey)
 X509_REQ *r;

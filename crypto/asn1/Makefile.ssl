@@ -230,11 +230,11 @@ a_sign.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_sign.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
 a_sign.o: ../../include/err.h ../../include/evp.h ../../include/idea.h
 a_sign.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
-a_sign.o: ../../include/objects.h ../../include/pem.h ../../include/pem2.h
-a_sign.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
-a_sign.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
-a_sign.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-a_sign.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h asn1.h
+a_sign.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
+a_sign.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+a_sign.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+a_sign.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+a_sign.o: ../crypto.h asn1.h
 a_time.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 a_time.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
 a_time.o: ../cryptlib.h ../crypto.h asn1.h
@@ -256,11 +256,11 @@ a_verify.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h
 a_verify.o: ../../include/dh.h ../../include/dsa.h ../../include/e_os.h
 a_verify.o: ../../include/err.h ../../include/evp.h ../../include/idea.h
 a_verify.o: ../../include/md2.h ../../include/md5.h ../../include/mdc2.h
-a_verify.o: ../../include/objects.h ../../include/pem.h ../../include/pem2.h
-a_verify.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
-a_verify.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
-a_verify.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h
-a_verify.o: ../../include/x509_vfy.h ../cryptlib.h ../crypto.h asn1.h
+a_verify.o: ../../include/objects.h ../../include/pkcs7.h ../../include/rc2.h
+a_verify.o: ../../include/rc4.h ../../include/rc5.h ../../include/ripemd.h
+a_verify.o: ../../include/rsa.h ../../include/sha.h ../../include/stack.h
+a_verify.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+a_verify.o: ../crypto.h asn1.h
 asn1_err.o: ../../include/bn.h ../../include/err.h ../../include/stack.h asn1.h
 asn1_lib.o: ../../include/bio.h ../../include/blowfish.h ../../include/bn.h
 asn1_lib.o: ../../include/buffer.h ../../include/cast.h ../../include/des.h

@@ -70,7 +70,6 @@
 #include "asn1.h"
 #include "x509.h"
 #include "objects.h"
-#include "pem.h"
 
 #ifndef NOPROTO
 static int null_callback(int ok,X509_STORE_CTX *e);

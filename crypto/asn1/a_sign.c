@@ -67,7 +67,6 @@
 #include "x509.h"
 #include "objects.h"
 #include "buffer.h"
-#include "pem.h"
 
 int ASN1_sign(i2d,algor1,algor2,signature,data,pkey,type)
 int (*i2d)();

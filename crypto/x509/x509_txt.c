@@ -68,7 +68,6 @@
 #include "asn1.h"
 #include "x509.h"
 #include "objects.h"
-#include "pem.h"
 
 char *X509_verify_cert_error_string(n)
 long n;

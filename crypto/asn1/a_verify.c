@@ -67,7 +67,6 @@
 #include "objects.h"
 #include "buffer.h"
 #include "evp.h"
-#include "pem.h"
 
 int ASN1_verify(i2d,a,signature,data,pkey)
 int (*i2d)();

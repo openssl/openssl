@@ -65,7 +65,6 @@
 #include "cryptlib.h"
 #include "lhash.h"
 #include "x509.h"
-#include "pem.h"
 
 typedef struct lookup_dir_st
 	{
