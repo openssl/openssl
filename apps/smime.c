@@ -530,9 +530,9 @@ int MAIN(int argc, char **argv)
 	} else if(operation == SMIME_PK7OUT) {
 		PEM_write_bio_PKCS7(out, p7);
 	} else {
-		if(to) BIO_printf(out, "To: %s\n", to);
-		if(from) BIO_printf(out, "From: %s\n", from);
-		if(subject) BIO_printf(out, "Subject: %s\n", subject);
+		if(to) BIO_printf(out, "To: %s\r\n", to);
+		if(from) BIO_printf(out, "From: %s\r\n", from);
+		if(subject) BIO_printf(out, "Subject: %s\r\n", subject);
 		if(outformat == FORMAT_SMIME) 
 			SMIME_write_PKCS7(out, p7, in, flags);
 		else if(outformat == FORMAT_PEM) 
