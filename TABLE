@@ -1952,16 +1952,16 @@ $arflags      =
 
 *** debug-solaris-sparcv9-gcc
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mcpu=ultrasparc -pedantic -ansi -Wall -Wshadow -Wno-long-long -D__EXTENSIONS__ -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
-$sys_id       = 
+$sys_id       = ULTRASPARC
 $lflags       = -lsocket -lnsl -ldl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $bn_obj       = asm/sparcv8plus.o
-$des_obj      = 
+$des_obj      = asm/des_enc-sparc.o fcrypt_b.o
 $bf_obj       = 
-$md5_obj      = 
+$md5_obj      = asm/md5-sparcv8plus.o
 $sha1_obj     = 
 $cast_obj     = 
 $rc4_obj      = 
