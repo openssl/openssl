@@ -413,12 +413,6 @@ extern HINSTANCE _hInstance;
 #  endif
 #endif
 
-#if defined(THREADS) || defined(sun)
-#ifndef _REENTRANT
-#define _REENTRANT
-#endif
-#endif
-
 #if defined(sun) && !defined(__svr4__) && !defined(__SVR4)
   /* include headers first, so our defines don't break it */
 #include <stdlib.h>
