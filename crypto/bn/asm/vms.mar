@@ -162,442 +162,236 @@ n=12 ;(AP)	n	by value (input)
 	movl	#1,r0			; return SS$_NORMAL
 	ret
 
-	.title	(generated)
+	.title	vax_bn_div_words  unsigned divide
+;
+; Richard Levitte 20-Nov-2000
+;
+; ULONG bn_div_words(ULONG h, ULONG l, ULONG d)
+; {
+;	return ((ULONG)((((ULLONG)h)<<32)|l) / (ULLONG)d);
+; }
+;
+; Using EDIV would be very easy, if it didn't do signed calculations.
+; Therefore, som extra things have to happen around it.  The way to
+; handle that is to shift all operands right one step (basically dividing
+; them by 2) and handle the different cases depending on what the lowest
+; bit of each operand was.
+;
+; To start with, let's define the following:
+;
+; a' = l & 1
+; a2 = <h,l> >> 1	# UNSIGNED shift!
+; b' = d & 1
+; b2 = d >> 1		# UNSIGNED shift!
+;
+; Now, use EDIV to calculate a quotient and a remainder:
+;
+; q'' = a2/b2
+; r'' = a2 - q''*b2
+;
+; If b' is 0, the quotient is already correct, we just need to adjust the
+; remainder:
+;
+; if (b' == 0)
+;   {
+;     r = 2*r'' + a'
+;     q = q''
+;   }
+;
+; If b' is 1, we need to do other adjustements.  The first thought is the
+; following (note that r' will not always have the right value, but an
+; adjustement follows further down):
+;
+; if (b' == 1)
+;   {
+;     q' = q''
+;     r' = a - q'*b
+;
+; However, one can note the folowing relationship:
+;
+;                         r'' = a2 - q''*b2
+;                  =>   2*r'' = 2*a2 - 2*q''*b2
+;                             = { a = 2*a2 + a', b = 2*b2 + b' = 2*b2 + 1,
+;                                 q' = q'' }
+;                             = a - a' - q'*(b - 1)
+;                             = a - q'*b - a' + q'
+;                             = r' - a' + q'
+;                  =>     r'  = 2*r'' - q' + a'
+;
+; This enables us to use r'' instead of discarding and calculating another
+; modulo:
+;
+; if (b' == 1)
+;   {
+;     q' = q''
+;     r' = (r'' << 1) - q' + a'
+;
+; Now, all we have to do is adjust r', because it might be < 0:
+;
+;     while (r' < 0)
+;       {
+;         r' = r' + b
+;         q' = q' - 1
+;       }
+;   }
+;
+; return q'
+
+h=4 ;(AP)	h	by value (input)
+l=8 ;(AP)	l	by value (input)
+d=12 ;(AP)	d	by value (input)
+
+aprim=r5
+a2=r6
+a20=r6
+a21=r7
+bprim=r8
+b2=r9
+qprim=r10	; initially used as q''
+rprim=r11	; initially used as r''
+
 
 	.psect	code,nowrt
 
-.entry	BN_DIV_WORDS,^m<r2,r3,r4,r5,r6,r7,r8,r9,r10>
-	subl2	#4,sp
+.entry	bn_div_words,^m<r2,r3,r4,r5,r6,r7,r8,r9,r10,r11>
+	movl	l(ap),r2
+	movl	h(ap),r3
+	movl	d(ap),r4
 
-	clrl	r9
-	movl	#2,r8
+	movl	#0,aprim
+	movl	#0,bprim
+	movl	#0,r0
 
-	tstl	12(ap)
-	bneq	noname.2
-	mnegl	#1,r10
-	brw	noname.3
-	tstl	r0
-	nop	
-noname.2:
+	rotl	#-1,r2,a20	; a20 = l >> 1 (almost)
+	rotl	#-1,r3,a21	; a21 = h >> 1 (almost)
+	rotl	#-1,r4,b2	; b2 = d >> 1 (almost)
 
-	pushl	12(ap)
-	calls	#1,BN_NUM_BITS_WORD
-	movl	r0,r7
+	tstl	a20
+	bgeq	1$
+	xorl2	#^X80000000,a20	; fixup a20 so highest bit is 0
+	incl	aprim		; a' = 1
+1$:
+	tstl	a21
+	bgeq	2$
+	xorl2	#^X80000000,a20	; fixup a20 so highest bit is 1,
+				; since that's what was lowest in a21
+	xorl2	#^X80000000,a21	; fixup a21 so highest bit is 1
+2$:
+	tstl	b2
+	bgeq	666$		; Uh-oh, the divisor is 0...
+	bgrt	3$
+	xorl2	#^X80000000,b2	; fixup b2 so highest bit is 1
+	incl	bprim
+3$:
+	tstl	b2
+	bneq	4$		; if b2 is 0, we know that bprim is 1
+	tstl	a21
+	bneq	666$		; if higher half isn't 0, we overflow
+	movl	r0,a20		; otherwise, we have our result
+	brb	42$
+4$:
+	ediv	b2,a2,qprim,rprim
 
-	cmpl	r7,#32
-	beql	noname.4
-	ashl	r7,#1,r2
-	cmpl	4(ap),r2
-	blequ	noname.4
-
-	pushl	r7
-	calls	#1,BN_DIV_WORDS_ABORT
-noname.4:
-
-	subl3	r7,#32,r7
-
-	movl	12(ap),r2
-	cmpl	4(ap),r2
-	blssu	noname.5
-	subl2	r2,4(ap)
-noname.5:
-
-	tstl	r7
-	beql	noname.6
-
-	ashl	r7,r2,12(ap)
-
-	ashl	r7,4(ap),r4
-	subl3	r7,#32,r3
-	subl3	r3,#32,r2
-	extzv	r3,r2,8(ap),r2
-	bisl3	r4,r2,4(ap)
-
-	ashl	r7,8(ap),8(ap)
-noname.6:
-
-	bicl3	#65535,12(ap),r2
-	extzv	#16,#16,r2,r5
-
-	bicl3	#-65536,12(ap),r6
-
-noname.7:
-
-	moval	4(ap),r2
-	movzwl	2(r2),r0
-	cmpl	r0,r5
-	bneq	noname.8
-
-	movzwl	#65535,r4
-	brb	noname.9
-noname.8:
-
-	clrl	r1
-	movl	(r2),r0
-	movl	r5,r2
-	bgeq	vcg.1
-	cmpl	r2,r0
-	bgtru	vcg.2
-	incl	r1
-	brb	vcg.2
-	nop	
-vcg.1:
-	ediv	r2,r0,r1,r0
-vcg.2:
-	movl	r1,r4
-noname.9:
-
-noname.10:
-
-	mull3	r5,r4,r0
-	subl3	r0,4(ap),r3
-
-	bicl3	#65535,r3,r0
-	bneq	noname.13
-	mull3	r6,r4,r2
-	ashl	#16,r3,r1
-	bicl3	#65535,8(ap),r0
-	extzv	#16,#16,r0,r0
-	addl2	r0,r1
-	cmpl	r2,r1
-	bgtru	noname.12
-noname.11:
-
-	brb	noname.13
-	nop	
-noname.12:
-
-	decl	r4
-	brb	noname.10
-noname.13:
-
-	mull3	r5,r4,r1
-
-	mull3	r6,r4,r0
-
-	extzv	#16,#16,r0,r3
-
-	ashl	#16,r0,r2
-	bicl3	#65535,r2,r0
-
-	addl2	r3,r1
-
-	moval	8(ap),r3
-	cmpl	(r3),r0
-	bgequ	noname.15
-	incl	r1
-noname.15:
-
-	subl2	r0,(r3)
-
-	cmpl	4(ap),r1
-	bgequ	noname.16
-
-	addl2	12(ap),4(ap)
-
-	decl	r4
-noname.16:
-
-	subl2	r1,4(ap)
-
-	decl	r8
-	beql	noname.18
-noname.17:
-
-	ashl	#16,r4,r9
-
-	ashl	#16,4(ap),r2
-	movzwl	2(r3),r0
-	bisl2	r0,r2
-	bicl3	#0,r2,4(ap)
-
-	bicl3	#-65536,(r3),r0
-	ashl	#16,r0,(r3)
-	brw	noname.7
-	nop	
-noname.18:
-
-	bisl2	r4,r9
-
-	movl	r9,r10
-
-noname.3:
-	movl	r10,r0
-	ret	
-	tstl	r0
-
+	tstl	bprim
+	bneq	5$		; If b' != 0, go to the other part
+;	addl3	rprim,rprim,r1
+;	addl2	aprim,r1
+	brb	42$
+5$:
+	ash	#1,rprim,rprim
+	subl2	qprim,rprim
+	addl2	aprim,rprim
+	bgeq	7$
+6$:
+	decl	qprim
+	addl2	r4,rprim
+	blss	6$
+7$:
+;	movl	rprim,r1
+42$:
+	movl	qprim,r0
+666$:
+	ret
 
+	.title	vax_bn_add_words  unsigned add of two arrays
+;
+; Richard Levitte 20-Nov-2000
+;
+; ULONG bn_add_words(ULONG r[], ULONG a[], ULONG b[], int n) {
+;	ULONG c = 0;
+;	int i;
+;	for (i = 0; i < n; i++) <c,r[i]> = a[i] + b[i] + c;
+;	return(c);
+; }
+
+r=4 ;(AP)	r	by reference (output)
+a=8 ;(AP)	a	by reference (input)
+b=12 ;(AP)	b	by reference (input)
+n=16 ;(AP)	n	by value (input)
+
+
 	.psect	code,nowrt
 
-.entry	BN_ADD_WORDS,^m<r2,r3,r4,r5,r6,r7>
+.entry	bn_add_words,^m<r2,r3,r4,r5,r6>
 
-	tstl	16(ap)
-	bgtr	noname.21
-	clrl	r7
-	brw	noname.22
-noname.21:
+	moval	@r(ap),r2
+	moval	@a(ap),r3
+	moval	@b(ap),r4
+	movl	n(ap),r5	; assumed >0 by C code
+	clrl	r0		; c
 
-	clrl	r4
+	tstl	r5		; carry = 0
+	bleq	666$
 
-	tstl	r0
-noname.23:
+0$:
+	movl	(r3)+,r6	; carry untouched
+	addwc	(r4)+,r6	; carry used and touched
+	movl	r6,(r2)+	; carry untouched
+	sobgtr	r5,0$		; carry untouched
 
-	movl	8(ap),r6
-	addl3	r4,(r6),r2
-
-	bicl2	#0,r2
-
-	clrl	r0
-	cmpl	r2,r4
-	bgequ	vcg.3
-	incl	r0
-vcg.3:
-	movl	r0,r4
-
-	movl	12(ap),r5
-	addl3	(r5),r2,r1
-	bicl2	#0,r1
-
-	clrl	r0
-	cmpl	r1,r2
-	bgequ	vcg.4
-	incl	r0
-vcg.4:
-	addl2	r0,r4
-
-	movl	4(ap),r3
-	movl	r1,(r3)
-
-	decl	16(ap)
-	bgtr	gen.1
-	brw	noname.25
-gen.1:
-noname.24:
-
-	addl3	r4,4(r6),r2
-
-	bicl2	#0,r2
-
-	clrl	r0
-	cmpl	r2,r4
-	bgequ	vcg.5
-	incl	r0
-vcg.5:
-	movl	r0,r4
-
-	addl3	4(r5),r2,r1
-	bicl2	#0,r1
-
-	clrl	r0
-	cmpl	r1,r2
-	bgequ	vcg.6
-	incl	r0
-vcg.6:
-	addl2	r0,r4
-
-	movl	r1,4(r3)
-
-	decl	16(ap)
-	bleq	noname.25
-noname.26:
-
-	addl3	r4,8(r6),r2
-
-	bicl2	#0,r2
-
-	clrl	r0
-	cmpl	r2,r4
-	bgequ	vcg.7
-	incl	r0
-vcg.7:
-	movl	r0,r4
-
-	addl3	8(r5),r2,r1
-	bicl2	#0,r1
-
-	clrl	r0
-	cmpl	r1,r2
-	bgequ	vcg.8
-	incl	r0
-vcg.8:
-	addl2	r0,r4
-
-	movl	r1,8(r3)
-
-	decl	16(ap)
-	bleq	noname.25
-noname.27:
-
-	addl3	r4,12(r6),r2
-
-	bicl2	#0,r2
-
-	clrl	r0
-	cmpl	r2,r4
-	bgequ	vcg.9
-	incl	r0
-vcg.9:
-	movl	r0,r4
-
-	addl3	12(r5),r2,r1
-	bicl2	#0,r1
-
-	clrl	r0
-	cmpl	r1,r2
-	bgequ	vcg.10
-	incl	r0
-vcg.10:
-	addl2	r0,r4
-
-	movl	r1,12(r3)
-
-	decl	16(ap)
-	bleq	noname.25
-noname.28:
-
-	addl3	#16,r6,8(ap)
-
-	addl3	#16,r5,12(ap)
-
-	addl3	#16,r3,4(ap)
-	brw	noname.23
-	tstl	r0
-noname.25:
-
-	movl	r4,r7
-
-noname.22:
-	movl	r7,r0
-	ret	
-	nop	
-
+	addwc	#0,r0
+666$:
+	ret
 
+	.title	vax_bn_sub_words  unsigned add of two arrays
+;
+; Richard Levitte 20-Nov-2000
+;
+; ULONG bn_sub_words(ULONG r[], ULONG a[], ULONG b[], int n) {
+;	ULONG c = 0;
+;	int i;
+;	for (i = 0; i < n; i++) <c,r[i]> = a[i] - b[i] - c;
+;	return(c);
+; }
 
-;r=4 ;(AP)
-;a=8 ;(AP)
-;b=12 ;(AP)
-;n=16 ;(AP)	n	by value (input)
+r=4 ;(AP)	r	by reference (output)
+a=8 ;(AP)	a	by reference (input)
+b=12 ;(AP)	b	by reference (input)
+n=16 ;(AP)	n	by value (input)
+
 
 	.psect	code,nowrt
 
-.entry	BN_SUB_WORDS,^m<r2,r3,r4,r5,r6,r7>
+.entry	bn_sub_words,^m<r2,r3,r4,r5,r6>
 
-	clrl	r6
+	moval	@r(ap),r2
+	moval	@a(ap),r3
+	moval	@b(ap),r4
+	movl	n(ap),r5	; assumed >0 by C code
+	clrl	r0		; c
 
-	tstl	16(ap)
-	bgtr	noname.31
-	clrl	r7
-	brw	noname.32
-	tstl	r0
-noname.31:
+	tstl	r5		; carry = 0
+	bleq	666$
 
-noname.33:
+0$:
+	movl	(r3)+,r6	; carry untouched
+	sbwc	(r4)+,r6	; carry used and touched
+	movl	r6,(r2)+	; carry untouched
+	sobgtr	r5,0$		; carry untouched
 
-	movl	8(ap),r5
-	movl	(r5),r1
-	movl	12(ap),r4
-	movl	(r4),r2
-
-	movl	4(ap),r3
-	subl3	r2,r1,r0
-	subl2	r6,r0
-	bicl3	#0,r0,(r3)
-
-	cmpl	r1,r2
-	beql	noname.34
-	clrl	r0
-	cmpl	r1,r2
-	bgequ	vcg.11
-	incl	r0
-vcg.11:
-	movl	r0,r6
-noname.34:
-
-	decl	16(ap)
-	bgtr	gen.2
-	brw	noname.36
-gen.2:
-noname.35:
-
-	movl	4(r5),r2
-	movl	4(r4),r1
-
-	subl3	r1,r2,r0
-	subl2	r6,r0
-	bicl3	#0,r0,4(r3)
-
-	cmpl	r2,r1
-	beql	noname.37
-	clrl	r0
-	cmpl	r2,r1
-	bgequ	vcg.12
-	incl	r0
-vcg.12:
-	movl	r0,r6
-noname.37:
-
-	decl	16(ap)
-	bleq	noname.36
-noname.38:
-
-	movl	8(r5),r1
-	movl	8(r4),r2
-
-	subl3	r2,r1,r0
-	subl2	r6,r0
-	bicl3	#0,r0,8(r3)
-
-	cmpl	r1,r2
-	beql	noname.39
-	clrl	r0
-	cmpl	r1,r2
-	bgequ	vcg.13
-	incl	r0
-vcg.13:
-	movl	r0,r6
-noname.39:
-
-	decl	16(ap)
-	bleq	noname.36
-noname.40:
-
-	movl	12(r5),r1
-	movl	12(r4),r2
-
-	subl3	r2,r1,r0
-	subl2	r6,r0
-	bicl3	#0,r0,12(r3)
-
-	cmpl	r1,r2
-	beql	noname.41
-	clrl	r0
-	cmpl	r1,r2
-	bgequ	vcg.14
-	incl	r0
-vcg.14:
-	movl	r0,r6
-noname.41:
-
-	decl	16(ap)
-	bleq	noname.36
-noname.42:
-
-	addl3	#16,r5,8(ap)
-
-	addl3	#16,r4,12(ap)
-
-	addl3	#16,r3,4(ap)
-	brw	noname.33
-	tstl	r0
-noname.36:
-
-	movl	r6,r7
-
-noname.32:
-	movl	r7,r0
-	ret	
-	nop	
-
+	addwc	#0,r0
+666$:
+	ret
 
 
 ;r=4 ;(AP)
@@ -6614,82 +6408,4 @@ noname.610:
 	ret	
 
 ; For now, the code below doesn't work, so I end this prematurely.
-.end
-
-	.title	vax_bn_div64	division 64/32=>32
-; 
-; r.l. 16-jan-1998
-;
-; unsigned int bn_div64(unsigned long h, unsigned long l, unsigned long d)
-;	return <h,l>/d;
-;
-
-	.psect	code,nowrt
-
-h=4 ;(AP)	by value (input)
-l=8 ;(AP)	by value (input)
-d=12 ;(AP)	by value (input)
-
-.entry	bn_div64,^m<r2,r3,r4,r5,r6,r7,r8,r9>
-
-	movl	l(ap),r2	; l
-	movl	h(ap),r3	; h
-	movl	d(ap),r4	; d
-	clrl	r5		; q
-	clrl	r6		; r
-
-	; Treat "negative" specially
-	tstl	r3
-	blss	30$
-
-	tstl	r4
-	beql	90$
-
-	ediv	r4,r2,r5,r6
-	bvs	666$
-
-	movl	r5,r0
-	ret
-
-30$:
-	; The theory here is to do some harmless shifting and a little
-	; bit of rounding (brackets are to designate when decimals are
-	; cut off):
-	;
-	;	result = 2 * [ ([<h,0>/2] + [d/2]) / d ] + [ l / d ]
-
-	movl	#0,r7
-	movl	r3,r8		; copy h
-	ashq	#-1,r7,r7	; [<h,0>/2] => <r8,r7>
-	bicl2	#^X80000000,r8	; Remove "sign"
-
-	movl	r4,r9		; copy d
-	ashl	#-1,r9,r9	; [d/2] => r9
-	bicl2	#^X80000000,r9	; Remove "sign"
-
-	addl2	r9,r7
-	adwc	#0,r8		; [<h,0>/2] + [d/2] => <r8,r7>
-
-	ediv	r4,r7,r5,r6	; [ ([<h,0>/2] + [d/2]) / d ] => <r5,r6>
-	bvs	666$
-
-	movl	#0,r6
-	ashq	#1,r5,r5	; 2 * [ ([<h,0>/2] + [d/2]) / d ] => r5
-
-	movl	#0,r3
-	ediv	r4,r2,r8,r9	; [ l / d ] => <r8,r9>
-
-	addl2	r8,r5		;
-	bcs	666$
-
-	movl	r5,r0
-	ret
-		
-90$:
-	movl	#-1,r0
-	ret
-
-666$:
-
-	
 .end
