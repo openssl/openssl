@@ -3,6 +3,18 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New compilation option ASN1_ITEM_FUNCTIONS. This causes the new
+     ASN1 modules to export functions returning ASN1_ITEM pointers
+     instead of the ASN1_ITEM structures themselves. This adds several
+     new macros which allow the underlying ASN1 function/structure to
+     be accessed transparently. As a result code should not use ASN1_ITEM
+     references directly (such as &X509_it) but instead use the relevant
+     macros (such as ASN1_ITEM_rptr(X509)). This option is to allow
+     use of the new ASN1 code on platforms where exporting structures
+     is problematical (for example in shared libraries) but exporting
+     functions returning pointers to structures is not.
+     [Steve Henson]
+
   *) Add support for overriding the generation of SSL/TLS session IDs.
      These callbacks can be registered either in an SSL_CTX or per SSL.
      The purpose of this is to allow applications to control, if they wish,
