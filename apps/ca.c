@@ -603,7 +603,6 @@ bad:
 			perror(outdir);
 			goto err;
 			}
-#endif
 
 		if (stat(outdir,&sb) != 0)
 			{
@@ -618,6 +617,7 @@ bad:
 			perror(outdir);
 			goto err;
 			}
+#endif
 #endif
 		}
 
