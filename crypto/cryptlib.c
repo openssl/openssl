@@ -95,7 +95,8 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"dh",
 	"debug_malloc2",
 	"dso",
-#if CRYPTO_NUM_LOCKS != 27
+	"engine",
+#if CRYPTO_NUM_LOCKS != 28
 # error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 	};

@@ -81,6 +81,7 @@
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/engine.h>
 
 #if !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
 #define TIMES
@@ -242,6 +243,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e;
 	unsigned char *buf=NULL,*buf2=NULL;
 	int mret=1;
 #define ALGOR_NUM	14
@@ -391,6 +393,26 @@ int MAIN(int argc, char **argv)
 	argv++;
 	while (argc)
 		{
+		if	((strcmp(*argv,"-engine") == 0) && (argc > 0))
+			{
+			argc--;
+			argv++;
+			if((e = ENGINE_by_id(*argv)) == NULL)
+				{
+				BIO_printf(bio_err,"invalid engine \"%s\"\n",
+					*argv);
+				goto end;
+				}
+			if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+				{
+				BIO_printf(bio_err,"can't use that engine\n");
+				goto end;
+				}
+			BIO_printf(bio_err,"engine \"%s\" set.\n", *argv);
+			/* Free our "structural" reference. */
+			ENGINE_free(e);
+			}
+		else
 #ifndef NO_MD2
 		if	(strcmp(*argv,"md2") == 0) doit[D_MD2]=1;
 		else
@@ -434,7 +456,7 @@ int MAIN(int argc, char **argv)
 #ifdef RSAref
 			if (strcmp(*argv,"rsaref") == 0) 
 			{
-			RSA_set_default_method(RSA_PKCS1_RSAref());
+			RSA_set_default_openssl_method(RSA_PKCS1_RSAref());
 			j--;
 			}
 		else
@@ -442,7 +464,7 @@ int MAIN(int argc, char **argv)
 #ifndef RSA_NULL
 			if (strcmp(*argv,"openssl") == 0) 
 			{
-			RSA_set_default_method(RSA_PKCS1_SSLeay());
+			RSA_set_default_openssl_method(RSA_PKCS1_SSLeay());
 			j--;
 			}
 		else
@@ -1173,6 +1195,7 @@ int MAIN(int argc, char **argv)
 #endif
 	mret=0;
 end:
+	ERR_print_errors(bio_err);
 	if (buf != NULL) Free(buf);
 	if (buf2 != NULL) Free(buf2);
 #ifndef NO_RSA

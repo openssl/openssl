@@ -52,11 +52,12 @@ DSATEST=	dsatest
 METHTEST=	methtest
 SSLTEST=	ssltest
 RSATEST=	rsa_test
+ENGINETEST=	enginetest
 
 EXE=	$(BNTEST) $(IDEATEST) $(MD2TEST)  $(MD5TEST) $(HMACTEST) \
 	$(RC2TEST) $(RC4TEST) $(RC5TEST) \
 	$(DESTEST) $(SHATEST) $(SHA1TEST) $(MDC2TEST) $(RMDTEST) \
-	$(RANDTEST) $(DHTEST) \
+	$(RANDTEST) $(DHTEST) $(ENGINETEST) \
 	$(BFTEST) $(CASTTEST) $(SSLTEST) $(EXPTEST) $(DSATEST) $(RSATEST)
 
 # $(METHTEST)
@@ -64,12 +65,12 @@ EXE=	$(BNTEST) $(IDEATEST) $(MD2TEST)  $(MD5TEST) $(HMACTEST) \
 OBJ=	$(BNTEST).o $(IDEATEST).o $(MD2TEST).o  $(MD5TEST).o $(HMACTEST).o \
 	$(RC2TEST).o $(RC4TEST).o $(RC5TEST).o \
 	$(DESTEST).o $(SHATEST).o $(SHA1TEST).o $(MDC2TEST).o $(RMDTEST).o \
-	$(RANDTEST).o $(DHTEST).o $(CASTTEST).o \
+	$(RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o
 SRC=	$(BNTEST).c $(IDEATEST).c $(MD2TEST).c  $(MD5TEST).c  $(HMACTEST).c \
 	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c \
 	$(DESTEST).c $(SHATEST).c $(SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
-	$(RANDTEST).c $(DHTEST).c $(CASTTEST).c \
+	$(RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
 	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c
 
 EXHEADER= 
@@ -307,6 +308,9 @@ $(METHTEST): $(METHTEST).o $(DLIBCRYPTO)
 $(SSLTEST): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
 	$(CC) -o $(SSLTEST) $(CFLAGS) $(SSLTEST).o $(PEX_LIBS) $(LIBSSL) $(LIBCRYPTO) $(EX_LIBS)
 
+$(ENGINETEST): $(ENGINETEST).o $(DLIBCRYPTO)
+	$(CC) -o $(ENGINETEST) $(CFLAGS) $(ENGINETEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 bftest.o: ../include/openssl/blowfish.h
@@ -340,6 +344,12 @@ dsatest.o: ../include/openssl/dsa.h ../include/openssl/err.h
 dsatest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 dsatest.o: ../include/openssl/rand.h ../include/openssl/safestack.h
 dsatest.o: ../include/openssl/stack.h
+enginetest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+enginetest.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+enginetest.o: ../include/openssl/engine.h ../include/openssl/err.h
+enginetest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+enginetest.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+enginetest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 exptest.o: ../include/openssl/bio.h ../include/openssl/bn.h
 exptest.o: ../include/openssl/crypto.h ../include/openssl/err.h
 exptest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
