@@ -4,7 +4,7 @@
 ; 
 ; This definition is for the "CC mode" package, which is the default
 ; mode for editing C source files in Emacs 20, not for the older
-; c-mode.el (which is the default in Emacs 19).
+; c-mode.el (which was the default in less recent releaes of Emacs 19).
 ;
 ; Copy the definition in your .emacs file or use M-x eval-buffer.
 ; To activate this indentation style, visit a C file, type
