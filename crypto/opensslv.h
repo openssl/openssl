@@ -26,7 +26,7 @@
  *  major minor fix final patch/beta)
  */
 #define OPENSSL_VERSION_NUMBER	0x00906012L
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.6a-beta2-dev [engine] XX xxx XXXX"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.6a-beta2 [engine] 21 Mar 2001"
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
 
