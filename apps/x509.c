@@ -122,7 +122,7 @@ static char *x509_usage[]={
 " -CAkey arg      - set the CA key, must be PEM format\n",
 "                   missing, it is assumed to be in the CA file.\n",
 " -CAcreateserial - create serial number file if it does not exist\n",
-" -CAserial       - serial file\n",
+" -CAserial arg   - serial file\n",
 " -set_serial     - serial number to use\n",
 " -text           - print the certificate in text form\n",
 " -C              - print out C code forms\n",
