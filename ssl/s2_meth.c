@@ -86,4 +86,10 @@ SSL_METHOD *SSLv2_method(void)
 		}
 	return(&SSLv2_data);
 	}
+#else /* !NO_RSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

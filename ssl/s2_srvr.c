@@ -966,4 +966,10 @@ static int ssl_rsa_private_decrypt(CERT *c, int len, unsigned char *from,
 		SSLerr(SSL_F_SSL_RSA_PRIVATE_DECRYPT,ERR_R_RSA_LIB);
 	return(i);
 	}
+#else /* !NO_RSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

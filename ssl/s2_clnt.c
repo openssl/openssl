@@ -974,4 +974,10 @@ end:
 	EVP_PKEY_free(pkey);
 	return(i);
 	}
+#else /* !NO_RSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

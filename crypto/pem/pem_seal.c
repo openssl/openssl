@@ -175,4 +175,10 @@ err:
 	if (s != NULL) Free(s);
 	return(ret);
 	}
+#else /* !NO_RSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

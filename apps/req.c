@@ -120,7 +120,9 @@ static int add_attribute_object(STACK_OF(X509_ATTRIBUTE) *n, char *text,
 				int max);
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 	int nid,int min,int max);
+#ifndef NO_RSA
 static void MS_CALLBACK req_cb(int p,int n,void *arg);
+#endif
 static int req_fix_data(int nid,int *type,int len,int min,int max);
 static int check_end(char *str, char *end);
 static int add_oid_section(LHASH *conf);
@@ -1403,6 +1405,7 @@ err:
 	return(0);
 	}
 
+#ifndef NO_RSA
 static void MS_CALLBACK req_cb(int p, int n, void *arg)
 	{
 	char c='*';
@@ -1417,6 +1420,7 @@ static void MS_CALLBACK req_cb(int p, int n, void *arg)
 	p=n;
 #endif
 	}
+#endif
 
 static int req_fix_data(int nid, int *type, int len, int min, int max)
 	{

@@ -298,4 +298,10 @@ err:
 	memset(&rnd,0,sizeof(rnd));
 	return(outlen);
 	}
+#else /* !NO_RSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

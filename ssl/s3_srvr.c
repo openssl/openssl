@@ -900,6 +900,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 	int j,num;
 	RSA *rsa;
 	unsigned char md_buf[MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH];
+	unsigned int u;
 #endif
 #ifndef NO_DH
 	DH *dh,*dhp;
@@ -907,7 +908,6 @@ static int ssl3_send_server_key_exchange(SSL *s)
 	EVP_PKEY *pkey;
 	unsigned char *p,*d;
 	int al,i;
-	unsigned int u;
 	unsigned long type;
 	int n;
 	CERT *cert;

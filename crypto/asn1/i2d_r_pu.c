@@ -109,4 +109,10 @@ int i2d_RSAPublicKey(RSA *a, unsigned char **pp)
 	*pp=p;
 	return(t);
 	}
+#else /* !NO_RSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

@@ -395,4 +395,10 @@ end:
 	if (rsa != NULL) RSA_free(rsa);
 	EXIT(ret);
 	}
+#else /* !NO_RSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

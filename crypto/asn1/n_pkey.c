@@ -338,4 +338,11 @@ static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *a)
 	}
 
 #endif /* NO_RC4 */
+
+#else /* !NO_RSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

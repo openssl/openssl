@@ -216,4 +216,10 @@ static void MS_CALLBACK genrsa_cb(int p, int n, void *arg)
 	p=n;
 #endif
 	}
+#else /* !NO_RSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

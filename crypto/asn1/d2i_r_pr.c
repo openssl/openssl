@@ -119,4 +119,10 @@ err:
 
 	return(NULL);
 	}
+#else /* !NO_RSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif
