@@ -545,10 +545,19 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	if (rsa->e && rsa->n)
 		{
 		if (!meth->bn_mod_exp(&vrfy,r0,rsa->e,rsa->n,ctx,NULL)) goto err;
-		if (BN_cmp(I, &vrfy) != 0)
-			{
+		/* If 'I' was greater than (or equal to) rsa->n, the operation
+		 * will be equivalent to using 'I mod n'. However, the result of
+		 * the verify will *always* be less than 'n' so we don't check
+		 * for absolute equality, just congruency. */
+		if (!BN_sub(&vrfy, &vrfy, I)) goto err;
+		if (!BN_mod(&vrfy, &vrfy, rsa->n, ctx)) goto err;
+		if (vrfy.neg)
+			if (!BN_add(&vrfy, &vrfy, rsa->n)) goto err;
+		if (!BN_is_zero(&vrfy))
+			/* 'I' and 'vrfy' aren't congruent mod n. Don't leak
+			 * miscalculated CRT output, just do a raw (slower)
+			 * mod_exp and return that instead. */
 			if (!meth->bn_mod_exp(r0,I,rsa->d,rsa->n,ctx,NULL)) goto err;
-			}
 		}
 	ret=1;
 err:
