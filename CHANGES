@@ -4,6 +4,12 @@
 
  Changes between 0.9.3a and 0.9.4  [xx Jul/Aug/...? 1999]
 
+  *) New function OBJ_obj2txt(buf, buf_len, a, no_name), this converts
+     an ASN1_OBJECT to a text string. If the "no_name" parameter is set then
+     it will always use the numerical form of the OID, even if it has a short
+     or long name.
+     [Steve Henson]
+
   *) Added an extra RSA flag: RSA_FLAG_EXT_PKEY. Previously the rsa_mod_exp
      method only got called if p,q,dmp1,dmq1,iqmp components were present,
      otherwise bn_mod_exp was called. In the case of hardware keys for example

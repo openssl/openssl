@@ -1842,3 +1842,4 @@ sk_POLICYQUALINFO_sort                  1866
 sk_X509_CRL_sort                        1867
 sk_DIST_POINT_sort                      1868
 RSA_check_key                           1869
+OBJ_obj2txt                             1870
