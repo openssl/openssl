@@ -5,6 +5,11 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Add to configuration table a new entry that can specify an alternative
+     name for unistd.h (for pre-POSIX systems); we need this for NeXTstep,
+     according to Mark Crispin <MRC@Panda.COM>.
+     [Bodo Moeller]
+
   *) DES CBC did not update the IV. Weird.
      [Ben Laurie]
 
@@ -27,6 +32,7 @@
 
   *) Instead of "mkdir -p", which is not fully portable, use new
      Perl script "util/mkdir-p.pl".
+     [Bodo Moeller]
 
   *) Rewrite the way password based encryption (PBE) is handled. It used to
      assume that the ASN1 AlgorithmIdentifier parameter was a PBEParameter
