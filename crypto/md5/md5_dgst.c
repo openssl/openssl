@@ -82,8 +82,9 @@ void MD5_Init(MD5_CTX *c)
 	}
 
 #ifndef md5_block_host_order
-void md5_block_host_order (MD5_CTX *c, const MD5_LONG *X, int num)
+void md5_block_host_order (MD5_CTX *c, const void *data, int num)
 	{
+	const MD5_LONG *X=data;
 	register unsigned long A,B,C,D;
 	/*
 	 * In case you wonder why A-D are declared as long and not
@@ -185,7 +186,7 @@ void md5_block_host_order (MD5_CTX *c, const MD5_LONG *X, int num)
 #endif
 
 #ifndef md5_block_data_order
-void md5_block_data_order (MD5_CTX *c, const unsigned char *data, int num)
+void md5_block_data_order (MD5_CTX *c, const void *data, int num)
 	{
 	register unsigned long A,B,C,D,l;
 	/*

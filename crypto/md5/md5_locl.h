@@ -73,8 +73,8 @@
 # endif
 #endif
 
-void md5_block_host_order (MD5_CTX *c, const MD5_LONG *p,int num);
-void md5_block_data_order (MD5_CTX *c, const unsigned char *p,int num);
+void md5_block_host_order (MD5_CTX *c, const void *p,int num);
+void md5_block_data_order (MD5_CTX *c, const void *p,int num);
 
 #if defined(__i386)
 /*
@@ -98,7 +98,7 @@ void md5_block_data_order (MD5_CTX *c, const unsigned char *p,int num);
  *
  *				<appro@fy.chalmers.se>
  */
-#define md5_block_data_order(c,p,num) md5_block_host_order((c),(const MD5_LONG *)(p),(num))
+#define md5_block_data_order md5_block_host_order
 #endif
 
 #define DATA_ORDER_IS_LITTLE_ENDIAN
