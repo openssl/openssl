@@ -630,6 +630,8 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 			int i, r;
 			clock_t c_clock = clock();
 
+			memset(cbuf, 0, sizeof(cbuf));
+
 			if (debug)
 				if (SSL_in_init(c_ssl))
 					printf("client waiting in SSL_connect - %s\n",
@@ -713,6 +715,8 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 			MS_STATIC char sbuf[1024*8];
 			int i, r;
 			clock_t s_clock = clock();
+
+			memset(sbuf, 0, sizeof(sbuf));
 
 			if (debug)
 				if (SSL_in_init(s_ssl))
@@ -956,6 +960,9 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 	int done=0;
 	int c_write,s_write;
 	int do_server=0,do_client=0;
+
+	memset(cbuf,0,sizeof(cbuf));
+	memset(sbuf,0,sizeof(sbuf));
 
 	c_to_s=BIO_new(BIO_s_mem());
 	s_to_c=BIO_new(BIO_s_mem());
