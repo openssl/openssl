@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/x509v3.h>
 
-static ASN1_ENUMERATED *asn1_enumerated_new();
+static ASN1_ENUMERATED *asn1_enumerated_new(void);
 
 static ENUMERATED_NAMES crl_reasons[] = {
 {0, "Unspecified", "unspecified"},

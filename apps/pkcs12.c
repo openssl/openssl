@@ -78,6 +78,7 @@ EVP_CIPHER *enc;
 #define CACERTS		0x10
 
 int get_cert_chain(X509 *cert, STACK **chain);
+int dump_cert_text (BIO *out, X509 *x);
 int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen, int options);
 int dump_certs_pkeys_bags(BIO *out, STACK *bags, char *pass, int passlen, int options);
 int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass, int passlen, int options);

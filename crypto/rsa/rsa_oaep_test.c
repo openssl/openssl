@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
   memcpy(c, ctext_ex, sizeof(ctext_ex) - 1); \
   return (sizeof(ctext_ex) - 1);
 
-int key1(RSA *key, unsigned char *c)
+static int key1(RSA *key, unsigned char *c)
     {
     unsigned char n[] =
 "\x00\xAA\x36\xAB\xCE\x88\xAC\xFD\xFF\x55\x52\x3C\x7F\xC4\x52\x3F"
@@ -74,7 +74,7 @@ int key1(RSA *key, unsigned char *c)
     SetKey;
     }
 
-int key2(RSA *key, unsigned char *c)
+static int key2(RSA *key, unsigned char *c)
     {
     unsigned char n[] =
 "\x00\xA3\x07\x9A\x90\xDF\x0D\xFD\x72\xAC\x09\x0C\xCC\x2A\x78\xB8"
@@ -119,7 +119,7 @@ int key2(RSA *key, unsigned char *c)
     SetKey;
     }
 
-int key3(RSA *key, unsigned char *c)
+static int key3(RSA *key, unsigned char *c)
     {
     unsigned char n[] =
 "\x00\xBB\xF8\x2F\x09\x06\x82\xCE\x9C\x23\x38\xAC\x2B\x9D\xA8\x71"
@@ -191,7 +191,7 @@ int key3(RSA *key, unsigned char *c)
     SetKey;
     }
 
-int pad_unknown(void)
+static int pad_unknown(void)
 {
     unsigned long l;
     while ((l = ERR_get_error()) != 0)

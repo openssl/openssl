@@ -900,6 +900,9 @@ PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken);
 
 /* Password based encryption routines */
 
+int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
+	     unsigned char *salt, int saltlen, int iter, EVP_CIPHER_CTX *ctx,
+	     int en_de);
 int EVP_PBE_ALGOR_CipherInit(X509_ALGOR *algor, const char *pass,
 			     int passlen, EVP_CIPHER_CTX *ctx, int en_de);
 int EVP_PBE_alg_add(int nid, EVP_CIPHER *cipher, EVP_MD *md,

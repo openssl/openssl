@@ -178,10 +178,10 @@
 			})
 #ifndef I386_ONLY
 #define Endian_Reverse32(a) \
-			{ register unsigned int l=(a);	\
+			{ register unsigned int ltmp=(a);	\
 				asm ("bswapl %0"	\
-				: "=r"(l) : "0"(l));	\
-			  (a)=l;			\
+				: "=r"(ltmp) : "0"(ltmp));	\
+			  (a)=ltmp;			\
 			}
 #endif
 #elif defined(__powerpc)
