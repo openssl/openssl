@@ -377,6 +377,13 @@ sub do_defs
 			}
 			if (/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
 				next;
+			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS_fname\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+				$syms{"d2i_$3"} = 1;
+				$syms{"i2d_$3"} = 1;
+				$syms{"$3_new"} = 1;
+				$syms{"$3_free"} = 1;
+				$syms{"$2_it"} = 1;
+				$kind{"$2_it"} = "VARIABLE";
 			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS\s*\(\s*(\w*)\s*\)/) {
 				$syms{"d2i_$1"} = 1;
 				$syms{"i2d_$1"} = 1;

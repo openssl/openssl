@@ -201,7 +201,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1
 		if(tag != -1) {
 			p = *in;
 			imphack = *p;
-			*p = (*p & V_ASN1_CONSTRUCTED) | it->utype;
+			*p = (unsigned char)((*p & V_ASN1_CONSTRUCTED) | it->utype);
 		}
 
 		ptmpval = cf->asn1_d2i(pval, in, len);
@@ -315,7 +315,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, unsigned char **in, long len, const ASN1
 			 * it increases efficiency in some cases.
 			 */
 			if(i == (it->tcount - 1)) isopt = 0;
-			else isopt = seqtt->flags & ASN1_TFLG_OPTIONAL;
+			else isopt = (char)(seqtt->flags & ASN1_TFLG_OPTIONAL);
 			/* attempt to read in field, allowing each to be OPTIONAL */
 			ret = asn1_template_ex_d2i(pseqval, &p, len, seqtt, isopt, ctx);
 			if(!ret) {

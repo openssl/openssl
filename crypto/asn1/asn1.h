@@ -292,12 +292,17 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 #define DECLARE_ASN1_FUNCTIONS_name(type, name) \
 	type *name##_new(void); \
 	void name##_free(type *a); \
-	DECLARE_ASN1_ENCODE_FUNCTIONS(type, name)
+	DECLARE_ASN1_ENCODE_FUNCTIONS(type, name, name)
 
-#define	DECLARE_ASN1_ENCODE_FUNCTIONS(type, name) \
+#define DECLARE_ASN1_FUNCTIONS_fname(type, itname, name) \
+	type *name##_new(void); \
+	void name##_free(type *a); \
+	DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name)
+
+#define	DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name) \
 	type *d2i_##name(type **a, unsigned char **in, long len); \
 	int i2d_##name(type *a, unsigned char **out); \
-	extern const ASN1_ITEM name##_it;
+	extern const ASN1_ITEM itname##_it;
 
 #define	DECLARE_ASN1_ENCODE_FUNCTIONS_const(type, name) \
 	type *d2i_##name(type **a, const unsigned char **in, long len); \
@@ -641,7 +646,7 @@ typedef struct BIT_STRING_BITNAME_st {
 #define IS_SEQUENCE	0
 #define IS_SET		1
 
-DECLARE_ASN1_FUNCTIONS(ASN1_TYPE)
+DECLARE_ASN1_FUNCTIONS_fname(ASN1_TYPE, ASN1_ANY, ASN1_TYPE)
 
 int ASN1_TYPE_get(ASN1_TYPE *a);
 void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value);

@@ -113,7 +113,6 @@ typedef struct des_ks_struct
 
 OPENSSL_EXTERN int des_check_key;	/* defaults to false */
 OPENSSL_EXTERN int des_rw_mode;		/* defaults to DES_PCBC_MODE */
-OPENSSL_EXTERN int des_set_weak_key_flag; /* set the weak key flag */
 
 const char *des_options(void);
 void des_ecb3_encrypt(const_des_cblock *input, des_cblock *output,

@@ -295,12 +295,12 @@ void OBJ_NAME_do_all_sorted(int type,void (*fn)(const OBJ_NAME *,void *arg),
 	d.n=0;
 	OBJ_NAME_do_all(type,do_all_sorted_fn,&d);
 
-	qsort(d.names,d.n,sizeof *d.names,do_all_sorted_cmp);
+	qsort((void *)d.names,d.n,sizeof *d.names,do_all_sorted_cmp);
 
 	for(n=0 ; n < d.n ; ++n)
 		fn(d.names[n],arg);
 
-	OPENSSL_free(d.names);
+	OPENSSL_free((void *)d.names);
 	}
 
 static int free_type;
