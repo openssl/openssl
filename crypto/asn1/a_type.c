@@ -315,6 +315,8 @@ static void ASN1_TYPE_component_free(ASN1_TYPE *a)
 		case V_ASN1_OBJECT:
 			ASN1_OBJECT_free(a->value.object);
 			break;
+		case V_ASN1_NULL:
+			break;
 		case V_ASN1_INTEGER:
 		case V_ASN1_NEG_INTEGER:
 		case V_ASN1_ENUMERATED:
