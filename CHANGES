@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Don't use getenv in library functions when run as setuid/setgid.
+     New function OPENSSL_issetugid().
+     [Ulf Moeller]
+
   *) Avoid false positives in memory leak detection code (crypto/mem_dbg.c)
      due to incorrect handling of multi-threading:
 
