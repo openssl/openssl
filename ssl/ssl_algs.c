@@ -63,7 +63,6 @@
 
 int SSL_library_init(void)
 	{
-	int k;
 
 #ifndef NO_DES
 	EVP_add_cipher(EVP_des_cbc());
@@ -78,9 +77,11 @@ int SSL_library_init(void)
 #ifndef NO_RC2
 	EVP_add_cipher(EVP_rc2_cbc());
 #endif
-	for(k=0 ; k < 2 ; ++k)
-	    EVP_add_cipher(EVP_rijndael_cbc(0,k));
-
+#ifndef NO_AES
+	EVP_add_cipher(EVP_aes_128_cbc());
+	EVP_add_cipher(EVP_aes_192_cbc());
+	EVP_add_cipher(EVP_aes_256_cbc());
+#endif
 #ifndef NO_MD2
 	EVP_add_digest(EVP_md2());
 #endif

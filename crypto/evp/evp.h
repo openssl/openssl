@@ -109,7 +109,7 @@
 #ifndef NO_MDC2
 #include <openssl/mdc2.h>
 #endif
-#ifndef NO_RIJNDAEL
+#ifndef NO_AES
 #include <openssl/rijndael.h>
 #endif
 
@@ -449,7 +449,7 @@ struct evp_cipher_ctx_st
 #ifndef NO_CAST
 		CAST_KEY cast_ks;/* key schedule */
 #endif
-#ifndef NO_RIJNDAEL
+#ifndef NO_AES
 		RIJNDAEL_KEY rijndael;
 #endif
 		} c;
@@ -705,9 +705,13 @@ EVP_CIPHER *EVP_rc5_32_12_16_ecb(void);
 EVP_CIPHER *EVP_rc5_32_12_16_cfb(void);
 EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 #endif
-#ifndef NO_RIJNDAEL
-EVP_CIPHER *EVP_rijndael_ecb(int nBlockLength,int nKeyLength);
-EVP_CIPHER *EVP_rijndael_cbc(int nBlockLength,int nKeyLength);
+#ifndef NO_AES
+EVP_CIPHER *EVP_aes_128_ecb(void);
+EVP_CIPHER *EVP_aes_128_cbc(void);
+EVP_CIPHER *EVP_aes_192_ecb(void);
+EVP_CIPHER *EVP_aes_192_cbc(void);
+EVP_CIPHER *EVP_aes_256_ecb(void);
+EVP_CIPHER *EVP_aes_256_cbc(void);
 #endif
 
 void OpenSSL_add_all_algorithms(void);

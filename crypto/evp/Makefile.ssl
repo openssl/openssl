@@ -24,7 +24,7 @@ APPS=
 LIB=$(TOP)/libcrypto.a
 LIBSRC= encode.c digest.c evp_enc.c evp_key.c \
 	e_des.c e_bf.c e_idea.c e_des3.c \
-	e_rc4.c e_rd.c names.c \
+	e_rc4.c e_aes.c names.c \
 	e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c \
 	m_null.c m_md2.c m_md4.c m_md5.c m_sha.c m_sha1.c \
 	m_dss.c m_dss1.c m_mdc2.c m_ripemd.c \
@@ -35,7 +35,7 @@ LIBSRC= encode.c digest.c evp_enc.c evp_key.c \
 
 LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o \
 	e_des.o e_bf.o e_idea.o e_des3.o \
-	e_rc4.o e_rd.o names.o \
+	e_rc4.o e_aes.o names.o \
 	e_xcbc_d.o e_rc2.o e_cast.o e_rc5.o \
 	m_null.o m_md2.o m_md4.o m_md5.o m_sha.o m_sha1.o \
 	m_dss.o m_dss1.o m_mdc2.o m_ripemd.o \
@@ -254,6 +254,23 @@ digest.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 digest.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 digest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 digest.o: ../cryptlib.h
+e_aes.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+e_aes.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+e_aes.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
+e_aes.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+e_aes.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
+e_aes.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+e_aes.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+e_aes.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
+e_aes.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
+e_aes.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
+e_aes.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+e_aes.o: ../../include/openssl/opensslv.h ../../include/openssl/rc2.h
+e_aes.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+e_aes.o: ../../include/openssl/rd_fst.h ../../include/openssl/rijndael.h
+e_aes.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+e_aes.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+e_aes.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 e_bf.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_bf.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 e_bf.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
@@ -425,23 +442,6 @@ e_rc5.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
 e_rc5.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 e_rc5.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 e_rc5.o: ../cryptlib.h evp_locl.h
-e_rd.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-e_rd.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
-e_rd.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
-e_rd.o: ../../include/openssl/des.h ../../include/openssl/dh.h
-e_rd.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
-e_rd.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-e_rd.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
-e_rd.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
-e_rd.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
-e_rd.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
-e_rd.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-e_rd.o: ../../include/openssl/opensslv.h ../../include/openssl/rc2.h
-e_rd.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
-e_rd.o: ../../include/openssl/rd_fst.h ../../include/openssl/rijndael.h
-e_rd.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
-e_rd.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-e_rd.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 e_xcbc_d.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_xcbc_d.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
 e_xcbc_d.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h

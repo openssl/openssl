@@ -591,22 +591,24 @@ enterprises 1466 344	: dcobject		: dcObject
 !Cname zlib-compression
 1 1 1 1 666 2		: ZLIB			: zlib compression
 
-# Rijndael
-			: RIJNDAEL-ECB-K128-B128: rijndael-ecb-k128-b128
-			: RIJNDAEL-ECB-K192-B128: rijndael-ecb-k192-b128
-			: RIJNDAEL-ECB-K256-B128: rijndael-ecb-k256-b128
-			: RIJNDAEL-ECB-K128-B192: rijndael-ecb-k128-b192
-			: RIJNDAEL-ECB-K192-B192: rijndael-ecb-k192-b192
-			: RIJNDAEL-ECB-K256-B192: rijndael-ecb-k256-b192
-			: RIJNDAEL-ECB-K128-B256: rijndael-ecb-k128-b256
-			: RIJNDAEL-ECB-K192-B256: rijndael-ecb-k192-b256
-			: RIJNDAEL-ECB-K256-B256: rijndael-ecb-k256-b256
-			: RD128-CBC-B128	: rd128-cbc-b128
-			: RD192-CBC-B128	: rd192-cbc-b128
-			: RD256-CBC-B128	: rd256-cbc-b128
-			: RD128-CBC-B192	: rd128-cbc-b192
-			: RD192-CBC-B192	: rd192-cbc-b192
-			: RD256-CBC-B192	: rd256-cbc-b192
-			: RD128-CBC-B256	: rd128-cbc-b256
-			: RD192-CBC-B256	: rd192-cbc-b256
-			: RD256-CBC-B256	: rd256-cbc-b256
+# AES aka Rijndael
+
+!Alias csor 2 16 840 1 101 3
+!Alias nistAlgorithms csor 4
+!Alias aes nistAlgorithms 1
+
+aes 1			: AES-128-ECB		: aes-128-ecb
+aes 2			: AES-128-CBC		: aes-128-cbc
+aes 3			: AES-128-OFB		: aes-128-ofb
+aes 4			: AES-128-CFB		: aes-128-cfb
+
+aes 21			: AES-192-ECB		: aes-192-ecb
+aes 22			: AES-192-CBC		: aes-192-cbc
+aes 23			: AES-192-OFB		: aes-192-ofb
+aes 24			: AES-192-CFB		: aes-192-cfb
+
+aes 41			: AES-256-ECB		: aes-256-ecb
+aes 42			: AES-256-CBC		: aes-256-cbc
+aes 43			: AES-256-OFB		: aes-256-ofb
+aes 44			: AES-256-CFB		: aes-256-cfb
+

@@ -20,10 +20,9 @@ RD_ENC=		rd_enc.o
 # or use
 #DES_ENC=	bx86-elf.o
 
-CFLAGS= -mpentiumpro $(INCLUDES) $(CFLAG) -DINTERMEDIATE_VALUE_KAT -DBINARY_KEY_MATERIAL -O3 -fexpensive-optimizations -funroll-loops -fforce-addr
+CFLAGS= -mpentiumpro $(INCLUDES) $(CFLAG) -O3 -fexpensive-optimizations -funroll-loops -fforce-addr
 
 GENERAL=Makefile
-#TEST=rijndael-test-fst.c table.128 table.192 table.256
 TEST=
 APPS=
 
@@ -85,4 +84,4 @@ clean:
 
 # DO NOT DELETE THIS LINE
 
-rd_fst.o: boxes-fst-corrected.dat rd_fst.h
+rd_fst.o: rd_fst.h

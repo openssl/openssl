@@ -68,10 +68,9 @@
 #define SSL_ENC_IDEA_IDX	4
 #define SSL_ENC_eFZA_IDX	5
 #define SSL_ENC_NULL_IDX	6
-#define SSL_ENC_RD128_IDX	7
-#define SSL_ENC_RD192_IDX	8
-#define SSL_ENC_RD256_IDX	9
-#define SSL_ENC_NUM_IDX		10
+#define SSL_ENC_AES128_IDX	7
+#define SSL_ENC_AES256_IDX	8
+#define SSL_ENC_NUM_IDX		9
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX]={
 	NULL,NULL,NULL,NULL,NULL,NULL,
@@ -127,7 +126,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_IDEA,0,SSL_IDEA,  0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_eNULL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_eFZA,0,SSL_eFZA,  0,0,0,0,SSL_ENC_MASK,0},
-	{0,SSL_TXT_RD,	0,SSL_RD,    0,0,0,0,SSL_ENC_MASK,0},
+	{0,SSL_TXT_AES,	0,SSL_AES,   0,0,0,0,SSL_ENC_MASK,0},
 
 	{0,SSL_TXT_MD5,	0,SSL_MD5,   0,0,0,0,SSL_MAC_MASK,0},
 	{0,SSL_TXT_SHA1,0,SSL_SHA1,  0,0,0,0,SSL_MAC_MASK,0},
@@ -167,12 +166,10 @@ static void load_ciphers(void)
 		EVP_get_cipherbyname(SN_rc2_cbc);
 	ssl_cipher_methods[SSL_ENC_IDEA_IDX]= 
 		EVP_get_cipherbyname(SN_idea_cbc);
-	ssl_cipher_methods[SSL_ENC_RD128_IDX]=
-	  EVP_get_cipherbyname(SN_rd128_cbc_b128);
-	ssl_cipher_methods[SSL_ENC_RD192_IDX]=
-	  EVP_get_cipherbyname(SN_rd192_cbc_b128);
-	ssl_cipher_methods[SSL_ENC_RD256_IDX]=
-	  EVP_get_cipherbyname(SN_rd256_cbc_b128);
+	ssl_cipher_methods[SSL_ENC_AES128_IDX]=
+	  EVP_get_cipherbyname(SN_aes_128_cbc);
+	ssl_cipher_methods[SSL_ENC_AES256_IDX]=
+	  EVP_get_cipherbyname(SN_aes_256_cbc);
 
 	ssl_digest_methods[SSL_MD_MD5_IDX]=
 		EVP_get_digestbyname(SN_md5);
@@ -233,12 +230,11 @@ int ssl_cipher_get_evp(SSL_SESSION *s, const EVP_CIPHER **enc,
 	case SSL_eNULL:
 		i=SSL_ENC_NULL_IDX;
 		break;
-	case SSL_RD:
+	case SSL_AES:
 		switch(c->alg_bits)
 			{
-		case 128: i=SSL_ENC_RD128_IDX; break;
-		case 192: i=SSL_ENC_RD192_IDX; break;
-		case 256: i=SSL_ENC_RD256_IDX; break;
+		case 128: i=SSL_ENC_AES128_IDX; break;
+		case 256: i=SSL_ENC_AES256_IDX; break;
 		default: i=-1; break;
 			}
 		break;
@@ -327,7 +323,7 @@ static unsigned long ssl_cipher_get_disabled(void)
 	mask |= (ssl_cipher_methods[SSL_ENC_RC2_IDX ] == NULL) ? SSL_RC2 :0;
 	mask |= (ssl_cipher_methods[SSL_ENC_IDEA_IDX] == NULL) ? SSL_IDEA:0;
 	mask |= (ssl_cipher_methods[SSL_ENC_eFZA_IDX] == NULL) ? SSL_eFZA:0;
-	mask |= (ssl_cipher_methods[SSL_ENC_RD128_IDX] == NULL) ? SSL_RD:0;
+	mask |= (ssl_cipher_methods[SSL_ENC_AES128_IDX] == NULL) ? SSL_AES:0;
 
 	mask |= (ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL) ? SSL_MD5 :0;
 	mask |= (ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL) ? SSL_SHA1:0;
@@ -999,13 +995,13 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_eNULL:
 		enc="None";
 		break;
-	case SSL_RD:
-		switch(cipher->strength_bits == 128)
+	case SSL_AES:
+		switch(cipher->strength_bits)
 			{
-		case 128: enc="Rijndael(128)"; break;
-		case 192: enc="Rijndael(192)"; break;
-		case 256: enc="Rijndael(256)"; break;
-		default: enc="Rijndael(???)"; break;
+		case 128: enc="AES(128)"; break;
+		case 192: enc="AES(192)"; break;
+		case 256: enc="AES(256)"; break;
+		default: enc="AES(???)"; break;
 			}
 		break;
 	default:

@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Update Rijndael code to version 3.0 and change EVP AES ciphers to
+     handle the new API. Currently only ECB, CBC modes supported. Add new
+     AES OIDs. Add TLS AES ciphersuites as described in the "AES Ciphersuites
+     for TLS" draft-ietf-tls-ciphersuite-03.txt.
+     [Ben Laurie, Steve Henson]
+
   *) In the NCONF_...-based implementations for CONF_... queries
      (crypto/conf/conf_lib.c), if the input LHASH is NULL, avoid using
      a temporary CONF structure with the data component set to NULL

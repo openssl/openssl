@@ -61,12 +61,12 @@
  * perl obj_dat.pl objects.h obj_dat.h
  */
 
-#define NUM_NID 417
-#define NUM_SN 410
-#define NUM_LN 410
-#define NUM_OBJ 366
+#define NUM_NID 406
+#define NUM_SN 404
+#define NUM_LN 404
+#define NUM_OBJ 378
 
-static unsigned char lvalues[2896]={
+static unsigned char lvalues[3004]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -433,6 +433,18 @@ static unsigned char lvalues[2896]={
 0xBA,0x82,0x58,                              /* [2872] OBJ_dcObject */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x19,/* [2875] OBJ_domainComponent */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x0D,/* [2885] OBJ_Domain */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x01,/* [2895] OBJ_aes_128_ecb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x02,/* [2904] OBJ_aes_128_cbc */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x03,/* [2913] OBJ_aes_128_ofb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x04,/* [2922] OBJ_aes_128_cfb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x15,/* [2931] OBJ_aes_192_ecb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x16,/* [2940] OBJ_aes_192_cbc */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x17,/* [2949] OBJ_aes_192_ofb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x18,/* [2958] OBJ_aes_192_cfb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x29,/* [2967] OBJ_aes_256_ecb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2A,/* [2976] OBJ_aes_256_cbc */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2B,/* [2985] OBJ_aes_256_ofb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2C,/* [2994] OBJ_aes_256_cfb */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1046,42 +1058,34 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"DC","domainComponent",NID_domainComponent,10,&(lvalues[2875]),0},
 {"domain","Domain",NID_Domain,10,&(lvalues[2885]),0},
 {NULL,NULL,NID_undef,0,NULL},
-{NULL,NULL,NID_undef,0,NULL},
-{NULL,NULL,NID_undef,0,NULL},
-{"RIJNDAEL-ECB-K128-B128","rijndael-ecb-k128-b128",
-	NID_rijndael_ecb_k128_b128,0,NULL},
-{"RIJNDAEL-ECB-K192-B128","rijndael-ecb-k192-b128",
-	NID_rijndael_ecb_k192_b128,0,NULL},
-{"RIJNDAEL-ECB-K256-B128","rijndael-ecb-k256-b128",
-	NID_rijndael_ecb_k256_b128,0,NULL},
-{"RIJNDAEL-ECB-K128-B192","rijndael-ecb-k128-b192",
-	NID_rijndael_ecb_k128_b192,0,NULL},
-{"RIJNDAEL-ECB-K192-B192","rijndael-ecb-k192-b192",
-	NID_rijndael_ecb_k192_b192,0,NULL},
-{"RIJNDAEL-ECB-K256-B192","rijndael-ecb-k256-b192",
-	NID_rijndael_ecb_k256_b192,0,NULL},
-{"RIJNDAEL-ECB-K128-B256","rijndael-ecb-k128-b256",
-	NID_rijndael_ecb_k128_b256,0,NULL},
-{"RIJNDAEL-ECB-K192-B256","rijndael-ecb-k192-b256",
-	NID_rijndael_ecb_k192_b256,0,NULL},
-{"RIJNDAEL-ECB-K256-B256","rijndael-ecb-k256-b256",
-	NID_rijndael_ecb_k256_b256,0,NULL},
-{NULL,NULL,NID_undef,0,NULL},
-{NULL,NULL,NID_undef,0,NULL},
-{NULL,NULL,NID_undef,0,NULL},
-{"RD128-CBC-B128","rd128-cbc-b128",NID_rd128_cbc_b128,0,NULL},
-{"RD192-CBC-B128","rd192-cbc-b128",NID_rd192_cbc_b128,0,NULL},
-{"RD256-CBC-B128","rd256-cbc-b128",NID_rd256_cbc_b128,0,NULL},
-{"RD128-CBC-B192","rd128-cbc-b192",NID_rd128_cbc_b192,0,NULL},
-{"RD192-CBC-B192","rd192-cbc-b192",NID_rd192_cbc_b192,0,NULL},
-{"RD256-CBC-B192","rd256-cbc-b192",NID_rd256_cbc_b192,0,NULL},
-{"RD128-CBC-B256","rd128-cbc-b256",NID_rd128_cbc_b256,0,NULL},
-{"RD192-CBC-B256","rd192-cbc-b256",NID_rd192_cbc_b256,0,NULL},
-{"RD256-CBC-B256","rd256-cbc-b256",NID_rd256_cbc_b256,0,NULL},
+{"AES-128-ECB","aes-128-ecb",NID_aes_128_ecb,9,&(lvalues[2895]),0},
+{"AES-128-CBC","aes-128-cbc",NID_aes_128_cbc,9,&(lvalues[2904]),0},
+{"AES-128-OFB","aes-128-ofb",NID_aes_128_ofb,9,&(lvalues[2913]),0},
+{"AES-128-CFB","aes-128-cfb",NID_aes_128_cfb,9,&(lvalues[2922]),0},
+{"AES-192-ECB","aes-192-ecb",NID_aes_192_ecb,9,&(lvalues[2931]),0},
+{"AES-192-CBC","aes-192-cbc",NID_aes_192_cbc,9,&(lvalues[2940]),0},
+{"AES-192-OFB","aes-192-ofb",NID_aes_192_ofb,9,&(lvalues[2949]),0},
+{"AES-192-CFB","aes-192-cfb",NID_aes_192_cfb,9,&(lvalues[2958]),0},
+{"AES-256-ECB","aes-256-ecb",NID_aes_256_ecb,9,&(lvalues[2967]),0},
+{"AES-256-CBC","aes-256-cbc",NID_aes_256_cbc,9,&(lvalues[2976]),0},
+{"AES-256-OFB","aes-256-ofb",NID_aes_256_ofb,9,&(lvalues[2985]),0},
+{"AES-256-CFB","aes-256-cfb",NID_aes_256_cfb,9,&(lvalues[2994]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[364]),/* "AD_DVCS" */
+&(nid_objs[395]),/* "AES-128-CBC" */
+&(nid_objs[397]),/* "AES-128-CFB" */
+&(nid_objs[394]),/* "AES-128-ECB" */
+&(nid_objs[396]),/* "AES-128-OFB" */
+&(nid_objs[399]),/* "AES-192-CBC" */
+&(nid_objs[401]),/* "AES-192-CFB" */
+&(nid_objs[398]),/* "AES-192-ECB" */
+&(nid_objs[400]),/* "AES-192-OFB" */
+&(nid_objs[403]),/* "AES-256-CBC" */
+&(nid_objs[405]),/* "AES-256-CFB" */
+&(nid_objs[402]),/* "AES-256-ECB" */
+&(nid_objs[404]),/* "AES-256-OFB" */
 &(nid_objs[91]),/* "BF-CBC" */
 &(nid_objs[93]),/* "BF-CFB" */
 &(nid_objs[92]),/* "BF-ECB" */
@@ -1167,24 +1171,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[122]),/* "RC5-CFB" */
 &(nid_objs[121]),/* "RC5-ECB" */
 &(nid_objs[123]),/* "RC5-OFB" */
-&(nid_objs[408]),/* "RD128-CBC-B128" */
-&(nid_objs[411]),/* "RD128-CBC-B192" */
-&(nid_objs[414]),/* "RD128-CBC-B256" */
-&(nid_objs[409]),/* "RD192-CBC-B128" */
-&(nid_objs[412]),/* "RD192-CBC-B192" */
-&(nid_objs[415]),/* "RD192-CBC-B256" */
-&(nid_objs[410]),/* "RD256-CBC-B128" */
-&(nid_objs[413]),/* "RD256-CBC-B192" */
-&(nid_objs[416]),/* "RD256-CBC-B256" */
-&(nid_objs[396]),/* "RIJNDAEL-ECB-K128-B128" */
-&(nid_objs[399]),/* "RIJNDAEL-ECB-K128-B192" */
-&(nid_objs[402]),/* "RIJNDAEL-ECB-K128-B256" */
-&(nid_objs[397]),/* "RIJNDAEL-ECB-K192-B128" */
-&(nid_objs[400]),/* "RIJNDAEL-ECB-K192-B192" */
-&(nid_objs[403]),/* "RIJNDAEL-ECB-K192-B256" */
-&(nid_objs[398]),/* "RIJNDAEL-ECB-K256-B128" */
-&(nid_objs[401]),/* "RIJNDAEL-ECB-K256-B192" */
-&(nid_objs[404]),/* "RIJNDAEL-ECB-K256-B256" */
 &(nid_objs[117]),/* "RIPEMD160" */
 &(nid_objs[124]),/* "RLE" */
 &(nid_objs[19]),/* "RSA" */
@@ -1580,6 +1566,18 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[287]),/* "ac-auditEntity" */
 &(nid_objs[288]),/* "ac-targeting" */
 &(nid_objs[364]),/* "ad dvcs" */
+&(nid_objs[395]),/* "aes-128-cbc" */
+&(nid_objs[397]),/* "aes-128-cfb" */
+&(nid_objs[394]),/* "aes-128-ecb" */
+&(nid_objs[396]),/* "aes-128-ofb" */
+&(nid_objs[399]),/* "aes-192-cbc" */
+&(nid_objs[401]),/* "aes-192-cfb" */
+&(nid_objs[398]),/* "aes-192-ecb" */
+&(nid_objs[400]),/* "aes-192-ofb" */
+&(nid_objs[403]),/* "aes-256-cbc" */
+&(nid_objs[405]),/* "aes-256-cfb" */
+&(nid_objs[402]),/* "aes-256-ecb" */
+&(nid_objs[404]),/* "aes-256-ofb" */
 &(nid_objs[376]),/* "algorithm" */
 &(nid_objs[91]),/* "bf-cbc" */
 &(nid_objs[93]),/* "bf-cfb" */
@@ -1855,24 +1853,6 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[122]),/* "rc5-cfb" */
 &(nid_objs[121]),/* "rc5-ecb" */
 &(nid_objs[123]),/* "rc5-ofb" */
-&(nid_objs[408]),/* "rd128-cbc-b128" */
-&(nid_objs[411]),/* "rd128-cbc-b192" */
-&(nid_objs[414]),/* "rd128-cbc-b256" */
-&(nid_objs[409]),/* "rd192-cbc-b128" */
-&(nid_objs[412]),/* "rd192-cbc-b192" */
-&(nid_objs[415]),/* "rd192-cbc-b256" */
-&(nid_objs[410]),/* "rd256-cbc-b128" */
-&(nid_objs[413]),/* "rd256-cbc-b192" */
-&(nid_objs[416]),/* "rd256-cbc-b256" */
-&(nid_objs[396]),/* "rijndael-ecb-k128-b128" */
-&(nid_objs[399]),/* "rijndael-ecb-k128-b192" */
-&(nid_objs[402]),/* "rijndael-ecb-k128-b256" */
-&(nid_objs[397]),/* "rijndael-ecb-k192-b128" */
-&(nid_objs[400]),/* "rijndael-ecb-k192-b192" */
-&(nid_objs[403]),/* "rijndael-ecb-k192-b256" */
-&(nid_objs[398]),/* "rijndael-ecb-k256-b128" */
-&(nid_objs[401]),/* "rijndael-ecb-k256-b192" */
-&(nid_objs[404]),/* "rijndael-ecb-k256-b256" */
 &(nid_objs[117]),/* "ripemd160" */
 &(nid_objs[119]),/* "ripemd160WithRSA" */
 &(nid_objs[19]),/* "rsa" */
@@ -2171,6 +2151,18 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[373]),/* OBJ_id_pkix_OCSP_valid           1 3 6 1 5 5 7 48 1 9 */
 &(nid_objs[374]),/* OBJ_id_pkix_OCSP_path            1 3 6 1 5 5 7 48 1 10 */
 &(nid_objs[375]),/* OBJ_id_pkix_OCSP_trustRoot       1 3 6 1 5 5 7 48 1 11 */
+&(nid_objs[394]),/* OBJ_aes_128_ecb                  2 16 840 1 101 3 4 1 1 */
+&(nid_objs[395]),/* OBJ_aes_128_cbc                  2 16 840 1 101 3 4 1 2 */
+&(nid_objs[396]),/* OBJ_aes_128_ofb                  2 16 840 1 101 3 4 1 3 */
+&(nid_objs[397]),/* OBJ_aes_128_cfb                  2 16 840 1 101 3 4 1 4 */
+&(nid_objs[398]),/* OBJ_aes_192_ecb                  2 16 840 1 101 3 4 1 21 */
+&(nid_objs[399]),/* OBJ_aes_192_cbc                  2 16 840 1 101 3 4 1 22 */
+&(nid_objs[400]),/* OBJ_aes_192_ofb                  2 16 840 1 101 3 4 1 23 */
+&(nid_objs[401]),/* OBJ_aes_192_cfb                  2 16 840 1 101 3 4 1 24 */
+&(nid_objs[402]),/* OBJ_aes_256_ecb                  2 16 840 1 101 3 4 1 41 */
+&(nid_objs[403]),/* OBJ_aes_256_cbc                  2 16 840 1 101 3 4 1 42 */
+&(nid_objs[404]),/* OBJ_aes_256_ofb                  2 16 840 1 101 3 4 1 43 */
+&(nid_objs[405]),/* OBJ_aes_256_cfb                  2 16 840 1 101 3 4 1 44 */
 &(nid_objs[71]),/* OBJ_netscape_cert_type           2 16 840 1 113730 1 1 */
 &(nid_objs[72]),/* OBJ_netscape_base_url            2 16 840 1 113730 1 2 */
 &(nid_objs[73]),/* OBJ_netscape_revocation_url      2 16 840 1 113730 1 3 */

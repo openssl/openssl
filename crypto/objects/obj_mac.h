@@ -1797,75 +1797,69 @@
 #define NID_zlib_compression		125
 #define OBJ_zlib_compression		1L,1L,1L,1L,666L,2L
 
-#define SN_rijndael_ecb_k128_b128		"RIJNDAEL-ECB-K128-B128"
-#define LN_rijndael_ecb_k128_b128		"rijndael-ecb-k128-b128"
-#define NID_rijndael_ecb_k128_b128		396
+#define OBJ_csor		2L,16L,840L,1L,101L,3L
 
-#define SN_rijndael_ecb_k192_b128		"RIJNDAEL-ECB-K192-B128"
-#define LN_rijndael_ecb_k192_b128		"rijndael-ecb-k192-b128"
-#define NID_rijndael_ecb_k192_b128		397
+#define OBJ_nistAlgorithms		OBJ_csor,4L
 
-#define SN_rijndael_ecb_k256_b128		"RIJNDAEL-ECB-K256-B128"
-#define LN_rijndael_ecb_k256_b128		"rijndael-ecb-k256-b128"
-#define NID_rijndael_ecb_k256_b128		398
+#define OBJ_aes		OBJ_nistAlgorithms,1L
 
-#define SN_rijndael_ecb_k128_b192		"RIJNDAEL-ECB-K128-B192"
-#define LN_rijndael_ecb_k128_b192		"rijndael-ecb-k128-b192"
-#define NID_rijndael_ecb_k128_b192		399
+#define SN_aes_128_ecb		"AES-128-ECB"
+#define LN_aes_128_ecb		"aes-128-ecb"
+#define NID_aes_128_ecb		394
+#define OBJ_aes_128_ecb		OBJ_aes,1L
 
-#define SN_rijndael_ecb_k192_b192		"RIJNDAEL-ECB-K192-B192"
-#define LN_rijndael_ecb_k192_b192		"rijndael-ecb-k192-b192"
-#define NID_rijndael_ecb_k192_b192		400
+#define SN_aes_128_cbc		"AES-128-CBC"
+#define LN_aes_128_cbc		"aes-128-cbc"
+#define NID_aes_128_cbc		395
+#define OBJ_aes_128_cbc		OBJ_aes,2L
 
-#define SN_rijndael_ecb_k256_b192		"RIJNDAEL-ECB-K256-B192"
-#define LN_rijndael_ecb_k256_b192		"rijndael-ecb-k256-b192"
-#define NID_rijndael_ecb_k256_b192		401
+#define SN_aes_128_ofb		"AES-128-OFB"
+#define LN_aes_128_ofb		"aes-128-ofb"
+#define NID_aes_128_ofb		396
+#define OBJ_aes_128_ofb		OBJ_aes,3L
 
-#define SN_rijndael_ecb_k128_b256		"RIJNDAEL-ECB-K128-B256"
-#define LN_rijndael_ecb_k128_b256		"rijndael-ecb-k128-b256"
-#define NID_rijndael_ecb_k128_b256		402
+#define SN_aes_128_cfb		"AES-128-CFB"
+#define LN_aes_128_cfb		"aes-128-cfb"
+#define NID_aes_128_cfb		397
+#define OBJ_aes_128_cfb		OBJ_aes,4L
 
-#define SN_rijndael_ecb_k192_b256		"RIJNDAEL-ECB-K192-B256"
-#define LN_rijndael_ecb_k192_b256		"rijndael-ecb-k192-b256"
-#define NID_rijndael_ecb_k192_b256		403
+#define SN_aes_192_ecb		"AES-192-ECB"
+#define LN_aes_192_ecb		"aes-192-ecb"
+#define NID_aes_192_ecb		398
+#define OBJ_aes_192_ecb		OBJ_aes,21L
 
-#define SN_rijndael_ecb_k256_b256		"RIJNDAEL-ECB-K256-B256"
-#define LN_rijndael_ecb_k256_b256		"rijndael-ecb-k256-b256"
-#define NID_rijndael_ecb_k256_b256		404
+#define SN_aes_192_cbc		"AES-192-CBC"
+#define LN_aes_192_cbc		"aes-192-cbc"
+#define NID_aes_192_cbc		399
+#define OBJ_aes_192_cbc		OBJ_aes,22L
 
-#define SN_rd128_cbc_b128		"RD128-CBC-B128"
-#define LN_rd128_cbc_b128		"rd128-cbc-b128"
-#define NID_rd128_cbc_b128		408
+#define SN_aes_192_ofb		"AES-192-OFB"
+#define LN_aes_192_ofb		"aes-192-ofb"
+#define NID_aes_192_ofb		400
+#define OBJ_aes_192_ofb		OBJ_aes,23L
 
-#define SN_rd192_cbc_b128		"RD192-CBC-B128"
-#define LN_rd192_cbc_b128		"rd192-cbc-b128"
-#define NID_rd192_cbc_b128		409
+#define SN_aes_192_cfb		"AES-192-CFB"
+#define LN_aes_192_cfb		"aes-192-cfb"
+#define NID_aes_192_cfb		401
+#define OBJ_aes_192_cfb		OBJ_aes,24L
 
-#define SN_rd256_cbc_b128		"RD256-CBC-B128"
-#define LN_rd256_cbc_b128		"rd256-cbc-b128"
-#define NID_rd256_cbc_b128		410
+#define SN_aes_256_ecb		"AES-256-ECB"
+#define LN_aes_256_ecb		"aes-256-ecb"
+#define NID_aes_256_ecb		402
+#define OBJ_aes_256_ecb		OBJ_aes,41L
 
-#define SN_rd128_cbc_b192		"RD128-CBC-B192"
-#define LN_rd128_cbc_b192		"rd128-cbc-b192"
-#define NID_rd128_cbc_b192		411
+#define SN_aes_256_cbc		"AES-256-CBC"
+#define LN_aes_256_cbc		"aes-256-cbc"
+#define NID_aes_256_cbc		403
+#define OBJ_aes_256_cbc		OBJ_aes,42L
 
-#define SN_rd192_cbc_b192		"RD192-CBC-B192"
-#define LN_rd192_cbc_b192		"rd192-cbc-b192"
-#define NID_rd192_cbc_b192		412
+#define SN_aes_256_ofb		"AES-256-OFB"
+#define LN_aes_256_ofb		"aes-256-ofb"
+#define NID_aes_256_ofb		404
+#define OBJ_aes_256_ofb		OBJ_aes,43L
 
-#define SN_rd256_cbc_b192		"RD256-CBC-B192"
-#define LN_rd256_cbc_b192		"rd256-cbc-b192"
-#define NID_rd256_cbc_b192		413
-
-#define SN_rd128_cbc_b256		"RD128-CBC-B256"
-#define LN_rd128_cbc_b256		"rd128-cbc-b256"
-#define NID_rd128_cbc_b256		414
-
-#define SN_rd192_cbc_b256		"RD192-CBC-B256"
-#define LN_rd192_cbc_b256		"rd192-cbc-b256"
-#define NID_rd192_cbc_b256		415
-
-#define SN_rd256_cbc_b256		"RD256-CBC-B256"
-#define LN_rd256_cbc_b256		"rd256-cbc-b256"
-#define NID_rd256_cbc_b256		416
+#define SN_aes_256_cfb		"AES-256-CFB"
+#define LN_aes_256_cfb		"aes-256-cfb"
+#define NID_aes_256_cfb		405
+#define OBJ_aes_256_cfb		OBJ_aes,44L
 
