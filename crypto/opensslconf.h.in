@@ -25,10 +25,24 @@
 #define RC2_INT unsigned int
 #endif
 
-#if defined(HEADER_RC4_H) && !defined(RC4_INT)
+#if defined(HEADER_RC4_H)
+#if !defined(RC4_INT)
 /* using int types make the structure larger but make the code faster
  * on most boxes I have tested - up to %20 faster. */
+/*
+ * I don't know what does "most" mean, but declaring "int" is a must on:
+ * - Intel P6 because partial register stalls are very expensive;
+ * - elder Alpha because it lacks byte load/store instructions;
+ */
 #define RC4_INT unsigned int
+#endif
+#if !defined(RC4_CHUNK)
+/*
+ * This enables code handling data aligned at natural CPU word
+ * boundary. See crypto/rc4/rc4_enc.c for further details.
+ */
+#undef RC4_CHUNK
+#endif
 #endif
 
 #if defined(HEADER_DES_H) && !defined(DES_LONG)
