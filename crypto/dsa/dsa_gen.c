@@ -326,6 +326,7 @@ err:
 	if (ok == -1) DSAerr(DSA_F_DSA_IS_PRIME,ERR_R_BN_LIB);
 	BN_CTX_free(ctx);
 	BN_CTX_free(ctx2);
+	BN_MONT_CTX_free(mont);
 	
 	return(ok);
 	}

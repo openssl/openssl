@@ -125,6 +125,8 @@ err:
 	if (ctx != NULL) BN_CTX_free(ctx);
 	BN_clear_free(&m);
 	BN_clear_free(&xr);
+	if (kinv != NULL) /* dsa->kinv is NULL now if we used it */
+	    BN_clear_free(kinv);
 	return(ret);
 	}
 
