@@ -424,9 +424,9 @@ $ SDIRS := ,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
    DES,RC2,RC4,RC5,IDEA,BF,CAST,-
    BN,EC,RSA,DSA,DH,DSO,ENGINE,RIJNDAEL,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,-
-   EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI
+   EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5
 $ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,-
-		types.h
+		ossl_typ.h
 $ EXHEADER_MD2 := md2.h
 $ EXHEADER_MD4 := md4.h
 $ EXHEADER_MD5 := md5.h
@@ -468,6 +468,7 @@ $ EXHEADER_PKCS12 := pkcs12.h
 $ EXHEADER_COMP := comp.h
 $ EXHEADER_OCSP := ocsp.h
 $ EXHEADER_UI := ui.h,ui_compat.h
+$ EXHEADER_KRB5 := krb5_asn.h
 $
 $ I = 0
 $ LOOP_SDIRS: 

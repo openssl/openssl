@@ -30,7 +30,7 @@ SDIRS=	md2 md5 sha mdc2 hmac ripemd \
 	des rc2 rc4 rc5 idea bf cast \
 	bn ec rsa dsa dh dso engine rijndael \
 	buffer bio stack lhash rand err objects \
-	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui
+	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5
 
 GENERAL=Makefile README crypto-lib.com install.com
 
@@ -41,7 +41,7 @@ LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o tmdiff.o cpt_err.o ebcdi
 SRC= $(LIBSRC)
 
 EXHEADER= crypto.h tmdiff.h opensslv.h opensslconf.h ebcdic.h symhacks.h \
-	types.h
+	ossl_typ.h
 HEADER=	cryptlib.h buildinf.h md32_common.h o_time.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
