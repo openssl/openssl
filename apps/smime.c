@@ -631,7 +631,7 @@ static X509_STORE *setup_verify(char *CAfile, char *CApath)
 	return NULL;
 }
 
-int save_certs(char *signerfile, STACK_OF(X509) *signers)
+static int save_certs(char *signerfile, STACK_OF(X509) *signers)
 {
 	int i;
 	BIO *tmp;
