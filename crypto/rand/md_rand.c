@@ -322,19 +322,20 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 #endif
 
 	/*
-	 * (Based on doc/ssleay.txt, section rand.doc:)
+	 * (Based on the rand(3) manpage:)
 	 *
-	 * For each group of 8 bytes (or less), we do the following,
+	 * For each group of 8 bytes (or less), we do the following:
 	 *
-	 * Input into MD5, the top 8 bytes from 'md', the byte that are
-	 * to be overwritten by the random bytes and bytes from the
+	 * Input into the hash function the top 8 bytes from 'md', the bytes
+	 * that are to be overwritten by the random bytes, and bytes from the
 	 * 'state' (incrementing looping index).  From this digest output
 	 * (which is kept in 'md'), the top (upto) 8 bytes are
 	 * returned to the caller and the bottom (upto) 8 bytes are xored
 	 * into the 'state'.
 	 * Finally, after we have finished 'num' random bytes for the
-	 * caller, 'count' (which is incremented) and the local and globl 'md'
-	 * are fed into MD5 and the results are kept in the global 'md'.
+	 * caller, 'count' (which is incremented) and the local and global 'md'
+	 * are fed into the hash function and the results are kept in the
+	 * global 'md'.
 	 */
 
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
