@@ -362,7 +362,7 @@ int MAIN(int argc, char **argv)
     if (export_cert) {
 	EVP_PKEY *key;
 	STACK_OF(PKCS12_SAFEBAG) *bags;
-	STACK *safes;
+	STACK_OF(PKCS7) *safes;
 	PKCS12_SAFEBAG *bag;
 	PKCS8_PRIV_KEY_INFO *p8;
 	PKCS7 *authsafe;
@@ -468,8 +468,8 @@ int MAIN(int argc, char **argv)
 		goto end;
 	}
 
-	safes = sk_new (NULL);
-	sk_push (safes, (char *)authsafe);
+	safes = sk_PKCS7_new (NULL);
+	sk_PKCS7_push (safes, authsafe);
 
 	/* Make a shrouded key bag */
 	p8 = EVP_PKEY2PKCS8 (key);
@@ -484,13 +484,13 @@ int MAIN(int argc, char **argv)
 	/* Turn it into unencrypted safe bag */
 	authsafe = PKCS12_pack_p7data (bags);
 	sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-	sk_push (safes, (char *)authsafe);
+	sk_PKCS7_push (safes, authsafe);
 
 	p12 = PKCS12_init (NID_pkcs7_data);
 
 	M_PKCS12_pack_authsafes (p12, safes);
 
-	sk_pop_free(safes, (void(*)(void *)) PKCS7_free);
+	sk_PKCS7_pop_free(safes, PKCS7_free);
 
 	PKCS12_set_mac (p12, mpass, -1, NULL, 0, maciter, NULL);
 
@@ -573,13 +573,14 @@ int MAIN(int argc, char **argv)
 int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 	     int passlen, int options, char *pempass)
 {
-	STACK *asafes;
+	STACK_OF(PKCS7) *asafes;
 	STACK_OF(PKCS12_SAFEBAG) *bags;
 	int i, bagnid;
 	PKCS7 *p7;
+
 	if (!( asafes = M_PKCS12_unpack_authsafes (p12))) return 0;
-	for (i = 0; i < sk_num (asafes); i++) {
-		p7 = (PKCS7 *) sk_value (asafes, i);
+	for (i = 0; i < sk_PKCS7_num (asafes); i++) {
+		p7 = sk_PKCS7_value (asafes, i);
 		bagnid = OBJ_obj2nid (p7->type);
 		if (bagnid == NID_pkcs7_data) {
 			bags = M_PKCS12_unpack_p7data (p7);
@@ -600,7 +601,7 @@ int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 		}
 		sk_PKCS12_SAFEBAG_pop_free (bags, PKCS12_SAFEBAG_free);
 	}
-	sk_pop_free (asafes, (void(*)(void *)) PKCS7_free);
+	sk_PKCS7_pop_free (asafes, PKCS7_free);
 	return 1;
 }
 

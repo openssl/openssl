@@ -105,7 +105,7 @@ return 1;
 
 static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 {
-	STACK *asafes, *newsafes;
+	STACK_OF(PKCS7) *asafes, *newsafes;
 	STACK_OF(PKCS12_SAFEBAG) *bags;
 	int i, bagnid, pbe_nid, pbe_iter, pbe_saltlen;
 	PKCS7 *p7, *p7new;
@@ -114,9 +114,9 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 	unsigned int maclen;
 
 	if (!(asafes = M_PKCS12_unpack_authsafes(p12))) return 0;
-	if(!(newsafes = sk_new(NULL))) return 0;
-	for (i = 0; i < sk_num (asafes); i++) {
-		p7 = (PKCS7 *) sk_value(asafes, i);
+	if(!(newsafes = sk_PKCS7_new(NULL))) return 0;
+	for (i = 0; i < sk_PKCS7_num (asafes); i++) {
+		p7 = sk_PKCS7_value(asafes, i);
 		bagnid = OBJ_obj2nid(p7->type);
 		if (bagnid == NID_pkcs7_data) {
 			bags = M_PKCS12_unpack_p7data(p7);
@@ -126,12 +126,12 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 				&pbe_nid, &pbe_iter, &pbe_saltlen);
 		} else continue;
 		if (!bags) {
-			sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
+			sk_PKCS7_pop_free(asafes, PKCS7_free);
 			return 0;
 		}
 	    	if (!newpass_bags(bags, oldpass, newpass)) {
 			sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-			sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
+			sk_PKCS7_pop_free(asafes, PKCS7_free);
 			return 0;
 		}
 		/* Repack bag in same form with new password */
@@ -140,12 +140,12 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 						 pbe_saltlen, pbe_iter, bags);
 		sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
 		if(!p7new) {
-			sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
+			sk_PKCS7_pop_free(asafes, PKCS7_free);
 			return 0;
 		}
-		sk_push(newsafes, (char *)p7new);
+		sk_PKCS7_push(newsafes, p7new);
 	}
-	sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
+	sk_PKCS7_pop_free(asafes, PKCS7_free);
 
 	/* Repack safe: save old safe in case of error */
 

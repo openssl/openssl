@@ -66,7 +66,7 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 {
 	PKCS12 *p12;
 	STACK_OF(PKCS12_SAFEBAG) *bags;
-	STACK *safes;
+	STACK_OF(PKCS7) *safes;
 	PKCS12_SAFEBAG *bag;
 	PKCS8_PRIV_KEY_INFO *p8;
 	PKCS7 *authsafe;
@@ -121,7 +121,8 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 
 	if (!authsafe) return NULL;
 
-	if(!(safes = sk_new (NULL)) || !sk_push(safes, (char *)authsafe)) {
+	if(!(safes = sk_PKCS7_new (NULL))
+	   || !sk_PKCS7_push(safes, authsafe)) {
 		PKCS12err(PKCS12_F_PKCS12_CREATE,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -142,7 +143,7 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 	/* Turn it into unencrypted safe bag */
 	if(!(authsafe = PKCS12_pack_p7data (bags))) return NULL;
 	sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-	if(!sk_push(safes, (char *)authsafe)) {
+	if(!sk_PKCS7_push(safes, authsafe)) {
 		PKCS12err(PKCS12_F_PKCS12_CREATE,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -151,7 +152,7 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 
 	if(!M_PKCS12_pack_authsafes (p12, safes)) return NULL;
 
-	sk_pop_free(safes, (void(*)(void *)) PKCS7_free);
+	sk_PKCS7_pop_free(safes, PKCS7_free);
 
 	if(!PKCS12_set_mac (p12, pass, -1, NULL, 0, mac_iter, NULL))
 	    return NULL;

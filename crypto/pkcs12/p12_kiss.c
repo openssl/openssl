@@ -147,15 +147,16 @@ int PKCS12_parse (PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
 	     EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca)
 {
-	STACK *asafes;
+	STACK_OF(PKCS7) *asafes;
 	STACK_OF(PKCS12_SAFEBAG) *bags;
 	int i, bagnid;
 	PKCS7 *p7;
 	ASN1_OCTET_STRING *keyid = NULL;
+
 	char keymatch = 0;
 	if (!( asafes = M_PKCS12_unpack_authsafes (p12))) return 0;
-	for (i = 0; i < sk_num (asafes); i++) {
-		p7 = (PKCS7 *) sk_value (asafes, i);
+	for (i = 0; i < sk_PKCS7_num (asafes); i++) {
+		p7 = sk_PKCS7_value (asafes, i);
 		bagnid = OBJ_obj2nid (p7->type);
 		if (bagnid == NID_pkcs7_data) {
 			bags = M_PKCS12_unpack_p7data (p7);
@@ -163,18 +164,18 @@ static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
 			bags = M_PKCS12_unpack_p7encdata (p7, pass, passlen);
 		} else continue;
 		if (!bags) {
-			sk_pop_free (asafes, (void(*)(void *)) PKCS7_free);
+			sk_PKCS7_pop_free (asafes, PKCS7_free);
 			return 0;
 		}
 	    	if (!parse_bags(bags, pass, passlen, pkey, cert, ca,
 							 &keyid, &keymatch)) {
 			sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-			sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
+			sk_PKCS7_pop_free(asafes, PKCS7_free);
 			return 0;
 		}
 		sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
 	}
-	sk_pop_free(asafes, (void(*)(void *)) PKCS7_free);
+	sk_PKCS7_pop_free(asafes, PKCS7_free);
 	if (keyid) M_ASN1_OCTET_STRING_free(keyid);
 	return 1;
 }

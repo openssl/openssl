@@ -66,27 +66,6 @@
 extern "C" {
 #endif
 
-#define DECLARE_PKCS12_STACK_OF(type) \
-STACK_OF(type) *PKCS12_decrypt_d2i_##type(struct X509_algor_st *algor, \
-				          type *(*d2i)(type **, \
-						       unsigned char **, \
-						       long), \
-					  void (*free_func)(type *), \
-					  const char *pass, int passlen, \
-					  ASN1_STRING *oct, int seq);
-
-#define IMPLEMENT_PKCS12_STACK_OF(type) \
-STACK_OF(type) *PKCS12_decrypt_d2i_##type(struct X509_algor_st *algor, \
-				          type *(*d2i)(type **, \
-						       unsigned char **, \
-						       long), \
-					  void (*free_func)(type *), \
-					  const char *pass, int passlen, \
-					  ASN1_STRING *oct, int seq) \
-    { return (STACK_OF(type) *)PKCS12_decrypt_d2i(algor,(char *(*)())d2i, \
-						  (void(*)(void *))free_func, \
-						  pass,passlen,oct,seq); }
-
 #define PKCS12_KEY_ID	1
 #define PKCS12_IV_ID	2
 #define PKCS12_MAC_ID	3
@@ -188,13 +167,12 @@ ASN1_seq_unpack_PKCS12_SAFEBAG ((p7)->d.data->data, p7->d.data->length, \
 			        d2i_PKCS12_SAFEBAG, PKCS12_SAFEBAG_free)
 
 #define M_PKCS12_pack_authsafes(p12, safes) \
-ASN1_seq_pack((safes), (int (*)())i2d_PKCS7,\
+ASN1_seq_pack_PKCS7((safes), i2d_PKCS7,\
 	&(p12)->authsafes->d.data->data, &(p12)->authsafes->d.data->length)
 
 #define M_PKCS12_unpack_authsafes(p12) \
-ASN1_seq_unpack((p12)->authsafes->d.data->data, \
-		(p12)->authsafes->d.data->length, (char *(*)())d2i_PKCS7, \
-							PKCS7_free)
+ASN1_seq_unpack_PKCS7((p12)->authsafes->d.data->data, \
+		(p12)->authsafes->d.data->length, d2i_PKCS7, PKCS7_free)
 
 #define M_PKCS12_unpack_p7encdata(p7, pass, passlen) \
 PKCS12_decrypt_d2i_PKCS12_SAFEBAG ((p7)->d.encrypted->enc_data->algorithm,\

@@ -92,6 +92,28 @@ extern "C" {
 #undef X509_NAME
 #endif
 
+  /* If placed in pkcs12.h, we end up with a circular depency with pkcs7.h */
+#define DECLARE_PKCS12_STACK_OF(type) \
+STACK_OF(type) *PKCS12_decrypt_d2i_##type(struct X509_algor_st *algor, \
+				          type *(*d2i)(type **, \
+						       unsigned char **, \
+						       long), \
+					  void (*free_func)(type *), \
+					  const char *pass, int passlen, \
+					  ASN1_STRING *oct, int seq);
+
+#define IMPLEMENT_PKCS12_STACK_OF(type) \
+STACK_OF(type) *PKCS12_decrypt_d2i_##type(struct X509_algor_st *algor, \
+				          type *(*d2i)(type **, \
+						       unsigned char **, \
+						       long), \
+					  void (*free_func)(type *), \
+					  const char *pass, int passlen, \
+					  ASN1_STRING *oct, int seq) \
+    { return (STACK_OF(type) *)PKCS12_decrypt_d2i(algor,(char *(*)())d2i, \
+						  (void(*)(void *))free_func, \
+						  pass,passlen,oct,seq); }
+
 #define X509_FILETYPE_PEM	1
 #define X509_FILETYPE_ASN1	2
 #define X509_FILETYPE_DEFAULT	3

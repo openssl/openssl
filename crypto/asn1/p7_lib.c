@@ -293,3 +293,5 @@ void PKCS7_content_free(PKCS7 *a)
 	a->d.ptr=NULL;
 	}
 
+IMPLEMENT_STACK_OF(PKCS7)
+IMPLEMENT_ASN1_SET_OF(PKCS7)
