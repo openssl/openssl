@@ -4,6 +4,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Rework the filename-translation in the DSO code. It is now possible to
+     have far greater control over how a "name" is turned into a filename
+     depending on the operating environment and any oddities about the
+     different shared library filenames on each system.
+     [Geoff Thorpe]
+
   *) Support threads on FreeBSD-elf in Configure.
      [Richard Levitte]
 
