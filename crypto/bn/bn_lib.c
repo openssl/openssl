@@ -616,55 +616,12 @@ void BN_clear(BIGNUM *a)
 
 BN_ULONG BN_get_word(const BIGNUM *a)
 	{
-	int i,n;
-	BN_ULONG ret=0;
-
-	n=BN_num_bytes(a);
-	if (n > (int)sizeof(BN_ULONG))
-		return(BN_MASK2);
-	for (i=a->top-1; i>=0; i--)
-		{
-#ifndef SIXTY_FOUR_BIT /* the data item > unsigned long */
-		ret<<=BN_BITS4; /* stops the compiler complaining */
-		ret<<=BN_BITS4;
-#else
-		ret=0;
-#endif
-		ret|=a->d[i];
-		}
-	return(ret);
+	if (a->top > 1)
+		return BN_MASK2;
+	else
+		return a->d[0];
 	}
 
-#if 0 /* a->d[0] is a BN_ULONG, w is a BN_ULONG, what's the big deal? */
-int BN_set_word(BIGNUM *a, BN_ULONG w)
-	{
-	int i,n;
-	bn_check_top(a);
-	if (bn_expand(a,(int)sizeof(BN_ULONG)*8) == NULL) return(0);
-
-	n=sizeof(BN_ULONG)/BN_BYTES;
-	a->neg=0;
-	a->top=0;
-	a->d[0]=(BN_ULONG)w&BN_MASK2;
-	if (a->d[0] != 0) a->top=1;
-	for (i=1; i<n; i++)
-		{
-		/* the following is done instead of
-		 * w>>=BN_BITS2 so compilers don't complain
-		 * on builds where sizeof(long) == BN_TYPES */
-#ifndef SIXTY_FOUR_BIT /* the data item > unsigned long */
-		w>>=BN_BITS4;
-		w>>=BN_BITS4;
-#else
-		w=0;
-#endif
-		a->d[i]=(BN_ULONG)w&BN_MASK2;
-		if (a->d[i] != 0) a->top=i+1;
-		}
-	bn_check_top(a);
-	return(1);
-	}
-#else
 int BN_set_word(BIGNUM *a, BN_ULONG w)
 	{
 	bn_check_top(a);
@@ -675,7 +632,6 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
 	bn_check_top(a);
 	return(1);
 	}
-#endif
 
 BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 	{
