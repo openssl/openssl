@@ -59,14 +59,14 @@ The handshake will be continued regardless of the verification result.
 
 B<Server mode:> the server sends a client certificate request to the client.
 The certificate returned (if any) is checked. If the verification process
-fails as indicated by B<verify_callback>, the TLS/SSL handshake is
+fails, the TLS/SSL handshake is
 immediately terminated with an alert message containing the reason for
 the verification failure.
 The behaviour can be controlled by the additional
 SSL_VERIFY_FAIL_IF_NO_PEER_CERT and SSL_VERIFY_CLIENT_ONCE flags.
 
 B<Client mode:> the server certificate is verified. If the verification process
-fails as indicated by B<verify_callback>, the TLS/SSL handshake is
+fails, the TLS/SSL handshake is
 immediately terminated with an alert message containing the reason for
 the verification failure. If no server certificate is sent, because an
 anonymous cipher is used, SSL_VERIFY_PEER is ignored.
@@ -91,6 +91,15 @@ B<Client mode:> ignored
 
 Exactly one of the B<mode> flags SSL_VERIFY_NONE and SSL_VERIFY_PEER must be
 set at any time.
+
+The actual verification procedure is performed either using the built-in
+verification procedure or using another application provided verification
+function set with
+L<SSL_CTX_set_cert_verify_callback(3)|SSL_CTX_set_cert_verify_callback(3)>.
+The following descriptions apply in the case of the built-in procedure. An
+application provided procedure also has access to the verify depth information
+and the verify_callback() function, but the way this information is used
+may be different.
 
 SSL_CTX_set_verify_depth() and SSL_set_verify_depth() set the limit up
 to which depth certificates in a chain are used during the verification
@@ -278,6 +287,7 @@ L<SSL_CTX_get_verify_mode(3)|SSL_CTX_get_verify_mode(3)>,
 L<SSL_get_verify_result(3)|SSL_get_verify_result(3)>,
 L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>,
 L<SSL_get_peer_certificate(3)|SSL_get_peer_certificate(3)>,
+L<SSL_CTX_set_cert_verify_callback(3)|SSL_CTX_set_cert_verify_callback(3)>,
 L<SSL_get_ex_data_X509_STORE_CTX_idx(3)|SSL_get_ex_data_X509_STORE_CTX_idx(3)>,
 L<SSL_get_ex_new_index(3)|SSL_get_ex_new_index(3)>
 
