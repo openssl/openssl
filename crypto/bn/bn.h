@@ -407,8 +407,7 @@ BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,BIGNUM *add,
 int	BN_is_prime(BIGNUM *p,int nchecks,void (*callback)(int,int,void *),
 		BN_CTX *ctx,void *cb_arg);
 int	BN_is_prime_fasttest(BIGNUM *p,int nchecks,
-		void (*callback)(int,int,void *),
-		BN_CTX *ctx,BN_CTX *ctx2,void *cb_arg,
+		void (*callback)(int,int,void *),BN_CTX *ctx,void *cb_arg,
 		int do_trial_division);
 void	ERR_load_BN_strings(void );
 

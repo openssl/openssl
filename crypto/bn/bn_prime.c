@@ -68,8 +68,8 @@
  */
 #include "bn_prime.h"
 
-static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx,BN_CTX *ctx2,
-	BN_MONT_CTX *mont);
+static int witness(BIGNUM *w, BIGNUM *a, BIGNUM *a1, BIGNUM *a1_odd, int k,
+	BN_CTX *ctx, BN_MONT_CTX *mont);
 static int probable_prime(BIGNUM *rnd, int bits);
 static int probable_prime_dh(BIGNUM *rnd, int bits,
 	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
@@ -83,13 +83,11 @@ BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe, BIGNUM *add,
 	BIGNUM t;
 	int found=0;
 	int i,j,c1=0;
-	BN_CTX *ctx,*ctx2=NULL;
+	BN_CTX *ctx;
 	int checks = BN_prime_checks_for_size(bits);
 
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
-	ctx2=BN_CTX_new();
-	if (ctx2 == NULL) goto err;
 	if (ret == NULL)
 		{
 		if ((rnd=BN_new()) == NULL) goto err;
@@ -121,7 +119,7 @@ loop:
 
 	if (!safe)
 		{
-		i=BN_is_prime_fasttest(rnd,checks,callback,ctx,ctx2,cb_arg,0);
+		i=BN_is_prime_fasttest(rnd,checks,callback,ctx,cb_arg,0);
 		if (i == -1) goto err;
 		if (i == 0) goto loop;
 		}
@@ -135,11 +133,11 @@ loop:
 
 		for (i=0; i<checks; i++)
 			{
-			j=BN_is_prime_fasttest(rnd,1,callback,ctx,ctx2,cb_arg,0);
+			j=BN_is_prime_fasttest(rnd,1,callback,ctx,cb_arg,0);
 			if (j == -1) goto err;
 			if (j == 0) goto loop;
 
-			j=BN_is_prime_fasttest(&t,1,callback,ctx,ctx2,cb_arg,0);
+			j=BN_is_prime_fasttest(&t,1,callback,ctx,cb_arg,0);
 			if (j == -1) goto err;
 			if (j == 0) goto loop;
 
@@ -153,26 +151,33 @@ err:
 	if (!found && (ret == NULL) && (rnd != NULL)) BN_free(rnd);
 	BN_free(&t);
 	if (ctx != NULL) BN_CTX_free(ctx);
-	if (ctx2 != NULL) BN_CTX_free(ctx2);
 	return(found ? rnd : NULL);
+	}
+
+int BN_is_prime(BIGNUM *a, int checks, void (*callback)(int,int,void *),
+	BN_CTX *ctx_passed, void *cb_arg)
+	{
+	return BN_is_prime_fasttest(a, checks, callback, ctx_passed, cb_arg, 0);
 	}
 
 int BN_is_prime_fasttest(BIGNUM *a, int checks,
 		void (*callback)(int,int,void *),
-		BN_CTX *ctx_passed, BN_CTX *ctx2_passed, void *cb_arg,
+		BN_CTX *ctx_passed, void *cb_arg,
 		int do_trial_division)
 	{
-	int i,j,ret= -1;
-	BIGNUM *check;
-	BN_CTX *ctx=NULL,*ctx2=NULL;
-	BN_MONT_CTX *mont=NULL;
+	int i, j, ret = -1;
+	int k;
+	BN_CTX *ctx = NULL;
+	BIGNUM *a1, *a1_odd, *check; /* taken from ctx */
+	BN_MONT_CTX *mont = NULL;
 
 	if (checks == BN_prime_checks)
-		{
-		int bits = BN_num_bits(a);
-		checks = BN_prime_checks_for_size(bits);
-		}
+		checks = BN_prime_checks_for_size(BN_num_bits(a));
 
+	if (a->neg) /* for now, refuse to handle negative numbers */
+		return -1;
+
+	/* first look for small factors */
 	if (!BN_is_odd(a))
 		return(0);
 	if (do_trial_division)
@@ -180,32 +185,55 @@ int BN_is_prime_fasttest(BIGNUM *a, int checks,
 		for (i = 1; i < NUMPRIMES; i++)
 			if (BN_mod_word(a, primes[i]) == 0) 
 				return 0;
-		if (callback != NULL) callback(1,-1,cb_arg);
+		if (callback != NULL) callback(1, -1, cb_arg);
 		}
 
 	if (ctx_passed != NULL)
-		ctx=ctx_passed;
+		ctx = ctx_passed;
 	else
-		if ((ctx=BN_CTX_new()) == NULL) goto err;
-	if (ctx2_passed != NULL)
-		ctx2=ctx2_passed;
-	else
-		if ((ctx2=BN_CTX_new()) == NULL) goto err;
+		if ((ctx=BN_CTX_new()) == NULL)
+			goto err;
+	a1 = &(ctx->bn[ctx->tos++]);
+	a1_odd = &(ctx->bn[ctx->tos++]);
+	check = &(ctx->bn[ctx->tos++]);;
 
-	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
-
-	check= &(ctx->bn[ctx->tos++]);
-
-	/* Setup the montgomery structure */
-	if (!BN_MONT_CTX_set(mont,a,ctx2)) goto err;
-
-	for (i=0; i<checks; i++)
+	/* compute a1 := a - 1 */
+	if (!BN_copy(a1, a))
+		goto err;
+	if (!BN_sub_word(a1, 1))
+		goto err;
+	if (BN_is_zero(a1))
 		{
-		if (!BN_pseudo_rand(check,BN_num_bits(a),0,0)) goto err;
-		if (BN_cmp(check, a) >= 0)
-			BN_sub(check, check, a);
-		if (BN_is_zero(check)) BN_one(check);
-		j=witness(check,a,ctx,ctx2,mont);
+		ret = 0;
+		goto err;
+		}
+
+	/* write  a1  as  a1_odd * 2^k */
+	k = 1;
+	while (!BN_is_bit_set(a1, k))
+		k++;
+	if (!BN_rshift(a1_odd, a1, k))
+		goto err;
+
+	/* Montgomery setup for computations mod a */
+	mont = BN_MONT_CTX_new();
+	if (mont == NULL)
+		goto err;
+	if (!BN_MONT_CTX_set(mont, a, ctx))
+		goto err;
+	
+	for (i = 0; i < checks; i++)
+		{
+		if (!BN_pseudo_rand(check, BN_num_bits(a1), 0, 0))
+			goto err;
+		if (BN_cmp(check, a1) >= 0)
+			if (!BN_sub(check, check, a1))
+				goto err;
+		if (!BN_add_word(check, 1))
+			goto err;
+		/* now 1 <= check < a */
+
+		j = witness(check, a, a1, a1_odd, k, ctx, mont);
 		if (j == -1) goto err;
 		if (j)
 			{
@@ -216,84 +244,38 @@ int BN_is_prime_fasttest(BIGNUM *a, int checks,
 		}
 	ret=1;
 err:
-	ctx->tos--;
-	if ((ctx_passed == NULL) && (ctx != NULL))
+	if (ctx_passed != NULL)
+		ctx_passed->tos -= 3; /* a1, a1_odd, check */
+	else if (ctx != NULL)
 		BN_CTX_free(ctx);
-	if ((ctx2_passed == NULL) && (ctx2 != NULL))
-		BN_CTX_free(ctx2);
-	if (mont != NULL) BN_MONT_CTX_free(mont);
-		
+	if (mont != NULL)
+		BN_MONT_CTX_free(mont);
+
 	return(ret);
 	}
 
-int BN_is_prime(BIGNUM *a, int checks, void (*callback)(int,int,void *),
-	BN_CTX *ctx_passed, void *cb_arg)
+static int witness(BIGNUM *w, BIGNUM *a, BIGNUM *a1, BIGNUM *a1_odd, int k,
+	BN_CTX *ctx, BN_MONT_CTX *mont)
 	{
-	return BN_is_prime_fasttest(a, checks, callback, ctx_passed, NULL, cb_arg, 0);
-	}
-
-static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx, BN_CTX *ctx2,
-	     BN_MONT_CTX *mont)
-	{
-	int k,i,ret= -1,good;
-	BIGNUM *d,*dd,*tmp,*d1,*d2,*n1;
-	BIGNUM *mont_one,*mont_n1,*mont_a;
-
-	d1= &(ctx->bn[ctx->tos]);
-	d2= &(ctx->bn[ctx->tos+1]);
-	n1= &(ctx->bn[ctx->tos+2]);
-	ctx->tos+=3;
-
-	mont_one= &(ctx2->bn[ctx2->tos]);
-	mont_n1= &(ctx2->bn[ctx2->tos+1]);
-	mont_a= &(ctx2->bn[ctx2->tos+2]);
-	ctx2->tos+=3;
-
-	d=d1;
-	dd=d2;
-	if (!BN_one(d)) goto err;
-	if (!BN_sub(n1,n,d)) goto err; /* n1=n-1; */
-	k=BN_num_bits(n1);
-
-	if (!BN_to_montgomery(mont_one,BN_value_one(),mont,ctx2)) goto err;
-	if (!BN_to_montgomery(mont_n1,n1,mont,ctx2)) goto err;
-	if (!BN_to_montgomery(mont_a,a,mont,ctx2)) goto err;
-
-	BN_copy(d,mont_one);
-	for (i=k-1; i>=0; i--)
+	if (!BN_mod_exp_mont(w, w, a1_odd, a, ctx, mont)) /* w := w^a1_odd mod a */
+		return -1;
+	if (BN_is_one(w))
+		return 0; /* probably prime */
+	if (BN_cmp(w, a1) == 0)
+		return 0; /* w == -1 (mod a),  'a' is probably prime */
+	while (--k)
 		{
-		if (	(BN_cmp(d,mont_one) != 0) &&
-			(BN_cmp(d,mont_n1) != 0))
-			good=1;
-		else
-			good=0;
-
-		BN_mod_mul_montgomery(dd,d,d,mont,ctx2);
-
-		if (good && (BN_cmp(dd,mont_one) == 0))
-			{
-			ret=1;
-			goto err;
-			}
-		if (BN_is_bit_set(n1,i))
-			{
-			BN_mod_mul_montgomery(d,dd,mont_a,mont,ctx2);
-			}
-		else
-			{
-			tmp=d;
-			d=dd;
-			dd=tmp;
-			}
+		if (!BN_mod_mul(w, w, w, a, ctx)) /* w := w^2 mod a */
+			return -1;
+		if (BN_is_one(w))
+			return 1; /* 'a' is composite, otherwise a previous 'w' would
+			           * have been == -1 (mod 'a') */
+		if (BN_cmp(w, a1) == 0)
+			return 0; /* w == -1 (mod a), 'a' is probably prime */
 		}
-	if (BN_cmp(d,mont_one) == 0)
-		i=0;
-	else	i=1;
-	ret=i;
-err:
-	ctx->tos-=3;
-	ctx2->tos-=3;
-	return(ret);
+	/* If we get here, 'w' is the (a-1)/2-th power of the original 'w',
+	 * and it is neither -1 nor +1 -- so 'a' cannot be prime */
+	return 1;
 	}
 
 static int probable_prime(BIGNUM *rnd, int bits)
@@ -411,76 +393,3 @@ err:
 	ctx->tos-=3;
 	return(ret);
 	}
-
-#if 0
-
-#define RECP_MUL_MOD
-
-static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx,
-		   BN_CTX *unused, BN_MONT_CTX *unused2)
-	{
-	int k,i,ret= -1;
-	BIGNUM *d,*dd,*tmp;
-	BIGNUM *d1,*d2,*x,*n1;
-	BN_RECP_CTX recp;
-
-	d1= &(ctx->bn[ctx->tos]);
-	d2= &(ctx->bn[ctx->tos+1]);
-	x=  &(ctx->bn[ctx->tos+2]);
-	n1= &(ctx->bn[ctx->tos+3]);
-	ctx->tos+=4;
-
-	d=d1;
-	dd=d2;
-	if (!BN_one(d)) goto err;
-	if (!BN_sub(n1,n,d)) goto err; /* n1=n-1; */
-	k=BN_num_bits(n1);
-
-	/* i=BN_num_bits(n); */
-#ifdef RECP_MUL_MOD
-	BN_RECP_CTX_init(&recp);
-	if (BN_RECP_CTX_set(&recp,n,ctx) <= 0) goto err;
-#endif
-
-	for (i=k-1; i>=0; i--)
-		{
-		if (BN_copy(x,d) == NULL) goto err;
-#ifndef RECP_MUL_MOD
-		if (!BN_mod_mul(dd,d,d,n,ctx)) goto err;
-#else
-		if (!BN_mod_mul_reciprocal(dd,d,d,&recp,ctx)) goto err;
-#endif
-		if (	BN_is_one(dd) &&
-			!BN_is_one(x) &&
-			(BN_cmp(x,n1) != 0))
-			{
-			ret=1;
-			goto err;
-			}
-		if (BN_is_bit_set(n1,i))
-			{
-#ifndef RECP_MUL_MOD
-			if (!BN_mod_mul(d,dd,a,n,ctx)) goto err;
-#else
-			if (!BN_mod_mul_reciprocal(d,dd,a,&recp,ctx)) goto err; 
-#endif
-			}
-		else
-			{
-			tmp=d;
-			d=dd;
-			dd=tmp;
-			}
-		}
-	if (BN_is_one(d))
-		i=0;
-	else	i=1;
-	ret=i;
-err:
-	ctx->tos-=4;
-#ifdef RECP_MUL_MOD
-	BN_RECP_CTX_free(&recp);
-#endif
-	return(ret);
-	}
-#endif

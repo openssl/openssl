@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Use a less unusual form of the Miller-Rabin primality test (it used
+     a binary algorithm for exponentiation integrated into the Miller-Rabin
+     loop, our standard modexp algorithms are faster).
+     [Bodo Moeller]
+
   *) Support for the EBCDIC character set completed.
      [Martin Kraemer <Martin.Kraemer@Mch.SNI.De>]
 

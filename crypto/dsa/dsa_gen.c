@@ -93,7 +93,7 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 	int k,n=0,i,b,m=0;
 	int counter=0;
 	int r=0;
-	BN_CTX *ctx=NULL,*ctx2=NULL,*ctx3=NULL,*ctx4=NULL;
+	BN_CTX *ctx=NULL,*ctx2=NULL,*ctx3=NULL;
 	unsigned int h=2;
 	DSA *ret=NULL;
 
@@ -111,7 +111,6 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	if ((ctx2=BN_CTX_new()) == NULL) goto err;
 	if ((ctx3=BN_CTX_new()) == NULL) goto err;
-	if ((ctx4=BN_CTX_new()) == NULL) goto err;
 	if ((ret=DSA_new()) == NULL) goto err;
 
 	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
@@ -167,7 +166,7 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 			if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,q)) goto err;
 
 			/* step 4 */
-			r = BN_is_prime_fasttest(q, DSS_prime_checks, callback, ctx3, ctx4, cb_arg, seed_is_random);
+			r = BN_is_prime_fasttest(q, DSS_prime_checks, callback, ctx3, cb_arg, seed_is_random);
 			if (r > 0)
 					break;
 			if (r != 0)
@@ -228,7 +227,7 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 			if (BN_cmp(p,test) >= 0)
 				{
 				/* step 11 */
-				r = BN_is_prime_fasttest(p, DSS_prime_checks, callback, ctx3, ctx4, cb_arg, 1);
+				r = BN_is_prime_fasttest(p, DSS_prime_checks, callback, ctx3, cb_arg, 1);
 				if (r > 0)
 						goto end; /* found it */
 				if (r != 0)
@@ -283,7 +282,6 @@ err:
 	if (ctx != NULL) BN_CTX_free(ctx);
 	if (ctx2 != NULL) BN_CTX_free(ctx2);
 	if (ctx3 != NULL) BN_CTX_free(ctx3);
-	if (ctx4 != NULL) BN_CTX_free(ctx4);
 	if (mont != NULL) BN_MONT_CTX_free(mont);
 	return(ok?ret:NULL);
 	}
