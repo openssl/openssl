@@ -677,7 +677,7 @@ install: all install_docs
 		done; \
 		(	here="`pwd`"; \
 			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-			make -f $$here/Makefile link-shared ); \
+			$(MAKE) -f $$here/Makefile link-shared ); \
 	fi
 
 install_docs:
