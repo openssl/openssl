@@ -793,7 +793,7 @@ char
 **	Return NULL for unknown or problematic (krb5_dk_encrypt) enctypes.
 **	Assume ENCTYPE_*_RAW (krb5_raw_encrypt) are OK.
 */
-EVP_CIPHER *
+const EVP_CIPHER *
 kssl_map_enc(krb5_enctype enctype)
         {
 	switch (enctype)
@@ -803,14 +803,14 @@ kssl_map_enc(krb5_enctype enctype)
 	case ENCTYPE_DES_CBC_MD4:
 	case ENCTYPE_DES_CBC_MD5:
 	case ENCTYPE_DES_CBC_RAW:
-				return (EVP_CIPHER *) EVP_des_cbc();
+				return EVP_des_cbc();
 				break;
 	case ENCTYPE_DES3_CBC_SHA1:		/*    EVP_des_ede3_cbc();  */
 	case ENCTYPE_DES3_CBC_SHA:
 	case ENCTYPE_DES3_CBC_RAW:
-				return (EVP_CIPHER *) EVP_des_ede3_cbc();
+				return EVP_des_ede3_cbc();
 				break;
-	default:                return (EVP_CIPHER *) NULL;
+	default:                return NULL;
 				break;
 		}
 	}
@@ -1221,8 +1221,7 @@ kssl_TKT2tkt(	/* IN     */	krb5_context	krb5context,
 
 	if (asn1ticket == NULL  ||  asn1ticket->realm == NULL  ||
 		asn1ticket->sname == NULL  || 
-		asn1ticket->sname->namestring == NULL  ||
-		asn1ticket->sname->namestring->num < 2)
+		sk_ASN1_GENERALSTRING_num(asn1ticket->sname->namestring) < 2)
 		{
 		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
 			"Null field in asn1ticket.\n");
@@ -1238,14 +1237,14 @@ kssl_TKT2tkt(	/* IN     */	krb5_context	krb5context,
 		return ENOMEM;		/*  or  KRB5KRB_ERR_GENERIC;	*/
 		}
 
-	gstr_svc  = (ASN1_GENERALSTRING*)asn1ticket->sname->namestring->data[0];
-	gstr_host = (ASN1_GENERALSTRING*)asn1ticket->sname->namestring->data[1];
+	gstr_svc  = sk_ASN1_GENERALSTRING_value(asn1ticket->sname->namestring, 0);
+	gstr_host = sk_ASN1_GENERALSTRING_value(asn1ticket->sname->namestring, 1);
 
 	if ((krb5rc = kssl_build_principal_2(krb5context,
 			&new5ticket->server,
-			asn1ticket->realm->length, asn1ticket->realm->data,
-			gstr_svc->length,  gstr_svc->data,
-			gstr_host->length, gstr_host->data)) != 0)
+			asn1ticket->realm->length, (char *)asn1ticket->realm->data,
+			gstr_svc->length,  (char *)gstr_svc->data,
+			gstr_host->length, (char *)gstr_host->data)) != 0)
 		{
 		free(new5ticket);
 		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
@@ -1965,7 +1964,7 @@ krb5_error_code  kssl_check_authent(
 	KRB5_AUTHENTBODY	*auth = NULL;
 	krb5_enctype		enctype;
 	EVP_CIPHER_CTX		ciph_ctx;
-	EVP_CIPHER		*enc = NULL;
+	const EVP_CIPHER	*enc = NULL;
 	unsigned char		iv[EVP_MAX_IV_LENGTH];
 	unsigned char		*p, *unenc_authent;
 	int 			padl, outl, unencbufsize;
