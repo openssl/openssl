@@ -89,7 +89,7 @@ extern "C" {
  * For machines with only one compiler (or shared libraries), this should
  * be on.  Again this in only really a problem on machines
  * using "long long's", are 32bit, and are not using my assembler code. */
-#if defined(MSDOS) || defined(WINDOWS) || defined(linux)
+#if defined(MSDOS) || defined(WINDOWS) || defined(WIN32) || defined(linux)
 #define BN_DIV2W
 #endif
 
