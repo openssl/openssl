@@ -4,6 +4,29 @@
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx XXXX]
 
+  *) Fix DH_generate_parameters() so that it works for 'non-standard'
+     generators, i.e. generators other than 2 and 5.  (Previously, the
+     code did not properly initialise the 'add' and 'rem' values to
+     BN_generate_prime().)
+
+     In the new general case, we do not insist that 'generator' is
+     actually a primitive root: This requirement is rather pointless;
+     a generator of the order-q subgroup is just as good, if not
+     better.
+     [Bodo Moeller]
+ 
+  *) Map new X509 verification errors to alerts. Discovered and submitted by
+     Tom Wu <tom@arcot.com>.
+     [Lutz Jaenicke]
+
+  *) Fix ssl3_pending() (ssl/s3_lib.c) to prevent SSL_pending() from
+     returning non-zero before the data has been completely received
+     when using non-blocking I/O.
+     [Bodo Moeller; problem pointed out by John Hughes]
+
+  *) Some of the ciphers missed the strength entry (SSL_LOW etc).
+     [Ben Laurie, Lutz Jaenicke]
+
   *) Fix bug in SSL_clear(): bad sessions were not removed (found by
      Yoram Zahavi <YoramZ@gilian.com>).
      [Lutz Jaenicke]

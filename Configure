@@ -406,7 +406,7 @@ my %table=(
 "aix43-gcc",  "gcc:-O3 -DAIX -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR::::::::::dlfcn:",
 
 #
-# Cray T90 (SDSC)
+# Cray T90 and similar (SDSC)
 # It's Big-endian, but the algorithms work properly when B_ENDIAN is NOT
 # defined.  The T90 ints and longs are 8 bytes long, and apparently the
 # B_ENDIAN code assumes 4 byte ints.  Fortunately, the non-B_ENDIAN and
@@ -416,7 +416,10 @@ my %table=(
 #'Taking the address of a bit field is not allowed. '
 #'An expression with bit field exists as the operand of "sizeof" '
 # (written by Wayne Schroeder <schroede@SDSC.EDU>)
-"cray-t90-cc", "cc: -DBIT_FIELD_LIMITS -DTERMIOS::(unknown)::SIXTY_FOUR_BIT_LONG DES_INT:::",
+#
+# j90 is considered the base machine type for unicos machines,
+# so this configuration is now called "cray-j90" ...
+"cray-j90", "cc: -DBIT_FIELD_LIMITS -DTERMIOS::(unknown)::SIXTY_FOUR_BIT_LONG DES_INT:::",
 
 #
 # Cray T3E (Research Center Juelich, beckman@acl.lanl.gov)

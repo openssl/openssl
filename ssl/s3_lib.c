@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -170,7 +170,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL3_TXT_ADH_RC4_128_MD5,
 	SSL3_CK_ADH_RC4_128_MD5,
 	SSL_kEDH |SSL_aNULL|SSL_RC4  |SSL_MD5 |SSL_SSLV3,
-	SSL_NOT_EXP,
+	SSL_NOT_EXP|SSL_MEDIUM,
 	0,
 	128,
 	128,
@@ -196,7 +196,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL3_TXT_ADH_DES_64_CBC_SHA,
 	SSL3_CK_ADH_DES_64_CBC_SHA,
 	SSL_kEDH |SSL_aNULL|SSL_DES  |SSL_SHA1|SSL_SSLV3,
-	SSL_NOT_EXP,
+	SSL_NOT_EXP|SSL_LOW,
 	0,
 	56,
 	56,
@@ -209,7 +209,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL3_TXT_ADH_DES_192_CBC_SHA,
 	SSL3_CK_ADH_DES_192_CBC_SHA,
 	SSL_kEDH |SSL_aNULL|SSL_3DES |SSL_SHA1|SSL_SSLV3,
-	SSL_NOT_EXP,
+	SSL_NOT_EXP|SSL_HIGH,
 	0,
 	168,
 	168,
@@ -518,7 +518,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL3_TXT_FZA_DMS_RC4_SHA,
 	SSL3_CK_FZA_DMS_RC4_SHA,
 	SSL_kFZA|SSL_aFZA |SSL_RC4  |SSL_SHA1|SSL_SSLV3,
-	SSL_NOT_EXP,
+	SSL_NOT_EXP|SSL_MEDIUM,
 	0,
 	128,
 	128,
@@ -612,7 +612,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	    TLS1_TXT_DHE_DSS_WITH_RC4_128_SHA,
 	    TLS1_CK_DHE_DSS_WITH_RC4_128_SHA,
 	    SSL_kEDH|SSL_aDSS|SSL_RC4|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP,
+	    SSL_NOT_EXP|SSL_MEDIUM,
 	    0,
 	    128,
 	    128,
@@ -693,6 +693,9 @@ SSL_CIPHER *ssl3_get_cipher(unsigned int u)
 
 int ssl3_pending(SSL *s)
 	{
+	if (s->rstate == SSL_ST_READ_BODY)
+		return 0;
+	
 	return (s->s3->rrec.type == SSL3_RT_APPLICATION_DATA) ? s->s3->rrec.length : 0;
 	}
 
