@@ -59,6 +59,8 @@
 #ifndef HEADER_DH_H
 #define HEADER_DH_H
 
+#include <openssl/e_os2.h>
+
 #ifdef OPENSSL_NO_DH
 #error DH is disabled.
 #endif
