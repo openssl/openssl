@@ -82,14 +82,15 @@ int BIO_printf (BIO *bio, ...)
 	va_list args;
 	char *format;
 	int ret;
+	size_t retlen;
 	MS_STATIC char hugebuf[1024*2]; /* 10k in one chunk is the limit */
 
 	va_start(args, bio);
 	format=va_arg(args, char *);
 
 	hugebuf[0]='\0';
-	dopr(hugebuf, sizeof(hugebuf), &ret, format, args);
-	ret=BIO_write(bio, hugebuf, ret);
+	dopr(hugebuf, sizeof(hugebuf), &retlen, format, args);
+	ret=BIO_write(bio, hugebuf, (int)retlen);
 
 	va_end(args);
 	return(ret);
