@@ -278,7 +278,6 @@ print out the servers list of acceptable CAs using the OpenSSL s_client tool:
 
 openssl s_client -connect www.some.host:443 -prexit
 
-[Note: The '-prexit' option appears in OpenSSL 0.9.8.]
 If your server only requests certificates on certain URLs then you may need
 to manually issue an HTTP GET command to get the list when s_client connects:
 
