@@ -102,6 +102,10 @@ B<openssl enc -ciphername>.
 
 A password will be prompted for to derive the key and IV if necessary.
 
+Some of the ciphers do not have large keys and others have security
+implications if not used correctly. A beginner is advised to just use
+a strong block cipher in CBC mode such as bf or des3.
+
 All the block ciphers use PKCS#5 padding also known as standard block
 padding: this allows a rudimentary integrity or password check to be
 performed. However since the chance of random data passing the test is
@@ -173,15 +177,43 @@ Blowfish and RC5 algorithms use a 128 bit key.
 
 =head1 EXAMPLES
 
-To be added....
+Just base64 encode a binary file:
+
+ openssl base64 -in file.bin -out file.b64
+
+Decode the same file
+
+ openssl base64 -d -in file.b64 -out file.bin 
+
+Encrypt a file using triple DES in CBC mode using a prompted password:
+
+ openssl des3 -in file.txt -out file.des3 
+
+Decrypt a file using a supplied password:
+
+ openssl des3 -d -in file.des3 -out file.txt -k mypassword
+
+Encrypt a file then base64 encode it (so it can be sent via mail for example)
+using Blowfish in CBC mode:
+
+ openssl bf -a -in file.txt -out file.bf
+
+Base64 decode a file then decrypt it:
+
+ openssl bf -d -a -in file.bf -out file.txt
+
+Decrypt some data using a supplied 40 bit RC4 key:
+
+ openssl rc4-40 -in file.rc4 -out file.txt -K 0102030405
 
 =head1 BUGS
 
 The B<-A> option when used with large files doesn't work properly.
 
 The key derivation algorithm used is compatible with the SSLeay algorithm. It
-is not very good: it uses unsalted MD5. There should be an option to allow a
-salt or iteration count to be included.
+is not very good: it uses unsalted MD5.
+
+There should be an option to allow a salt or iteration count to be included.
 
 Like the EVP library the B<enc> program only supports a fixed number of
 algorithms with certain parameters. So if, for example, you want to use RC2
