@@ -173,7 +173,7 @@ extern int EF_ALIGNMENT;
 
 static int add_oid_section(LHASH *conf);
 static void lookup_fail(char *name,char *tag);
-static int MS_CALLBACK key_callback(char *buf,int len,int verify);
+static int MS_CALLBACK key_callback(char *buf,int len,int verify,void *u);
 static unsigned long index_serial_hash(char **a);
 static int index_serial_cmp(char **a, char **b);
 static unsigned long index_name_hash(char **a);
@@ -1214,7 +1214,7 @@ static void lookup_fail(char *name, char *tag)
 	BIO_printf(bio_err,"variable lookup failed for %s::%s\n",name,tag);
 	}
 
-static int MS_CALLBACK key_callback(char *buf, int len, int verify)
+static int MS_CALLBACK key_callback(char *buf, int len, int verify, void *u)
 	{
 	int i;
 
