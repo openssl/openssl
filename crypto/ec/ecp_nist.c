@@ -55,7 +55,7 @@
 
 #include "ec_lcl.h"
 
-
+#if 0
 const EC_METHOD *EC_GFp_nist_method(void)
 	{
 	static const EC_METHOD ret = {
@@ -95,6 +95,7 @@ const EC_METHOD *EC_GFp_nist_method(void)
 
 	return &ret;
 	}
+#endif
 
 
 int ec_GFp_nist_group_init(EC_GROUP *group)
