@@ -62,19 +62,49 @@
 /* NOTE: CTR mode is big-endian.  The rest of the AES code
  * is endian-neutral. */
 
-/* increment counter (128-bit int) by 2^64 */
+/* increment counter (128-bit int) by 1 */
 static void AES_ctr128_inc(unsigned char *counter) {
 	unsigned long c;
 
-	/* Grab 3rd dword of counter and increment */
+	/* Grab bottom dword of counter and increment */
 #ifdef L_ENDIAN
-	c = GETU32(counter + 8);
+	c = GETU32(counter +  0);
 	c++;
-	PUTU32(counter + 8, c);
+	PUTU32(counter +  0, c);
 #else
-	c = GETU32(counter + 4);
+	c = GETU32(counter + 12);
 	c++;
-	PUTU32(counter + 4, c);
+	PUTU32(counter + 12, c);
+#endif
+
+	/* if no overflow, we're done */
+	if (c)
+		return;
+
+	/* Grab 1st dword of counter and increment */
+#ifdef L_ENDIAN
+	c = GETU32(counter +  4);
+	c++;
+	PUTU32(counter +  4, c);
+#else
+	c = GETU32(counter +  8);
+	c++;
+	PUTU32(counter +  8, c);
+#endif
+
+	/* if no overflow, we're done */
+	if (c)
+		return;
+
+	/* Grab 2nd dword of counter and increment */
+#ifdef L_ENDIAN
+	c = GETU32(counter +  8);
+	c++;
+	PUTU32(counter +  8, c);
+#else
+	c = GETU32(counter +  4);
+	c++;
+	PUTU32(counter +  4, c);
 #endif
 
 	/* if no overflow, we're done */
@@ -100,10 +130,16 @@ static void AES_ctr128_inc(unsigned char *counter) {
  * encrypted counter is kept in ecount_buf.  Both *num and
  * ecount_buf must be initialised with zeros before the first
  * call to AES_ctr128_encrypt().
+ *
+ * This algorithm assumes that the counter is in the x lower bits
+ * of the IV (ivec), and that the application has full control over
+ * overflow and the rest of the IV.  This implementation takes NO
+ * responsability for checking that the counter doesn't overflow
+ * into the rest of the IV when incremented.
  */
 void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned long length, const AES_KEY *key,
-	unsigned char counter[AES_BLOCK_SIZE],
+	unsigned char ivec[AES_BLOCK_SIZE],
 	unsigned char ecount_buf[AES_BLOCK_SIZE],
 	unsigned int *num) {
 
