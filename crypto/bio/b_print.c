@@ -56,6 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
+/* disable assert() unless BIO_DEBUG has been defined */
+#ifndef BIO_DEBUG
+# ifndef NDEBUG
+#  define NDEBUG
+# endif
+#endif
+
 /* 
  * Stolen from tjh's ssl/ssl_trc.c stuff.
  */
