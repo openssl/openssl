@@ -355,10 +355,16 @@ then
  GCCVERMAJOR="`echo $GCCVER | sed 's/.*version \([^.]*\).*/\1/`"
  GCCVERMINOR="`echo $GCCVER | sed 's/.*version[^.]*\.\([^.]*\).*/\1/`"
  echo "gcc version $GCCVERMAJOR.$GCCVERMINOR.x"
- if [ $GCCVERMAJOR$GCCVERMINOR -lt 28 ]
- then
-  OUT=solaris-usparc-oldgcc
- fi
+ case "$GCCVERMAJOR" in
+   egcs*)
+     ;;
+   *)
+     if [ $GCCVERMAJOR$GCCVERMINOR -lt 28 ]
+     then
+       OUT=solaris-usparc-oldgcc
+     fi
+     ;;
+  esac
 fi
 
 case "$GUESSOS" in
