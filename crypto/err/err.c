@@ -466,7 +466,15 @@ static unsigned long get_error_values(int inc, const char **file, int *line,
 			}
 		}
 
-	if (data != NULL)
+	if (data == NULL)
+		{
+		if (inc && (es->err_data[i] != NULL) && (es->err_data_flags[i] & ERR_TXT_MALLOCED))
+			{
+			OPENSSL_free(es->err_data[i]);
+			es->err_data[i] = NULL;
+			}
+		}
+	else
 		{
 		if (es->err_data[i] == NULL)
 			{

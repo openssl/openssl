@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix a memory leak in err.c: free err_data string if necessary.
+     [Bodo Moeller]
+
   *) Function EC_POINTs_mul for simultaneous scalar multiplication
      of an arbitrary number of elliptic curve points, optionally
      including the generator defined for the EC_GROUP.
