@@ -584,7 +584,7 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= true64-shared
+$shared_target= tru64-shared
 $shared_cflag = 
 $shared_extension = .so
 
@@ -605,7 +605,7 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= true64-shared
+$shared_target= tru64-shared
 $shared_cflag = 
 $shared_extension = .so
 
@@ -626,7 +626,7 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= true64-shared
+$shared_target= tru64-shared
 $shared_cflag = 
 $shared_extension = .so
 
@@ -1486,10 +1486,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
+$dso_scheme   = dlfcn
+$shared_target= irix-shared
 $shared_cflag = 
-$shared_extension = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** irix-gcc
 $cc           = gcc
@@ -1507,10 +1507,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
+$dso_scheme   = dlfcn
+$shared_target= irix-shared
 $shared_cflag = 
-$shared_extension = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** irix-mips3-cc
 $cc           = cc
@@ -1528,10 +1528,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
+$dso_scheme   = dlfcn
+$shared_target= irix-shared
 $shared_cflag = 
-$shared_extension = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** irix-mips3-gcc
 $cc           = gcc
@@ -1549,10 +1549,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
+$dso_scheme   = dlfcn
+$shared_target= irix-shared
 $shared_cflag = 
-$shared_extension = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** irix64-mips4-cc
 $cc           = cc
@@ -1570,10 +1570,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
+$dso_scheme   = dlfcn
+$shared_target= irix-shared
 $shared_cflag = 
-$shared_extension = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** irix64-mips4-gcc
 $cc           = gcc
@@ -1591,10 +1591,10 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
+$dso_scheme   = dlfcn
+$shared_target= irix-shared
 $shared_cflag = 
-$shared_extension = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-alpha+bwx-ccc
 $cc           = ccc
@@ -1786,6 +1786,27 @@ $shared_cflag =
 $shared_extension = 
 
 *** linux-mips
+$cc           = gcc
+$cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$unistd       = 
+$thread_cflag = (unknown)
+$lflags       = 
+$bn_ops       = BN_LLONG
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+
+*** linux-mipsel
 $cc           = gcc
 $cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
 $unistd       = 
