@@ -67,7 +67,7 @@ void pv(char *tag,const unsigned char *val,int len)
     int olen;
 
     olen=bin2hex(val,len,obuf);
-    printf("%s= %s\n", tag,obuf);
+    printf("%s = %s\n", tag,obuf);
     }
 
 void primes()
@@ -96,12 +96,13 @@ void pqg()
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
-	fputs(buf,stdout);
-	if(!strncmp(buf,"[mod=",5))
-	    nmod=atoi(buf+5);
-	else if(!strncmp(buf,"N= ",3))
+	if(!strncmp(buf,"[mod = ",7))
+	    nmod=atoi(buf+7);
+	else if(!strncmp(buf,"N = ",4))
 	    {
-	    int n=atoi(buf+3);
+	    int n=atoi(buf+4);
+
+	    printf("[mod = %d]\n\n",nmod);
 
 	    while(n--)
 		{
@@ -111,14 +112,18 @@ void pqg()
 		unsigned long h;
 
 		dsa=DSA_generate_parameters(nmod,seed,0,&counter,&h,NULL,NULL);
-		printf("P= %s\n",BN_bn2hex(dsa->p));
-		printf("Q= %s\n",BN_bn2hex(dsa->q));
-		printf("G= %s\n",BN_bn2hex(dsa->g));
+		printf("P = %s\n",BN_bn2hex(dsa->p));
+		printf("Q = %s\n",BN_bn2hex(dsa->q));
+		printf("G = %s\n",BN_bn2hex(dsa->g));
 		pv("Seed",seed,20);
-		printf("H= %lx\n",h);
-		printf("C= %d\n",counter);
+		printf("c = %d\n",counter);
+		printf("H = %lx\n",h);
+		putc('\n',stdout);
 		}
 	    }
+	else
+	    fputs(buf,stdout);
+
 	}
     }
 
@@ -139,6 +144,8 @@ int main(int argc,char **argv)
 	primes();
     else if(!strcmp(argv[1],"pqg"))
 	pqg();
+    //    else if(!strcmp(argv[1],"versig"))
+    //	versig();
     else
 	{
 	fprintf(stderr,"Don't know how to %s.\n",argv[1]);
