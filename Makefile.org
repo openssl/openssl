@@ -293,7 +293,7 @@ openssl.pc: Makefile.ssl
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: '; \
 	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(EX_LIBS)'; \
-	    echo 'Cflags: -I$${includedir}' ) > openssl.pc
+	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > openssl.pc
 
 Makefile.ssl: Makefile.org
 	@echo "Makefile.ssl is older than Makefile.org."
