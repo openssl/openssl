@@ -126,6 +126,7 @@ static unsigned char *ustrsep(char **p,const char *sep)
 static int test1_exit(int ec)
 	{
 	EXIT(ec);
+	return(0);		/* To keep some compilers quiet */
 	}
 
 static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
