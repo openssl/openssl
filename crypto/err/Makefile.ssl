@@ -87,7 +87,7 @@ err_all.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 err_all.o: ../../include/conf.h ../../include/des.h ../../include/dh.h
 err_all.o: ../../include/dsa.h ../../include/evp.h ../../include/idea.h
 err_all.o: ../../include/lhash.h ../../include/md2.h ../../include/md5.h
-err_all.o: ../../include/mdc2.h ../../include/objects.h ../../include/pem.h
+err_all.o: ../../include/mdc2.h ../../include/objects.h ../../include/pem2.h
 err_all.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
 err_all.o: ../../include/rc5.h ../../include/ripemd.h ../../include/rsa.h
 err_all.o: ../../include/sha.h ../../include/stack.h ../../include/x509.h

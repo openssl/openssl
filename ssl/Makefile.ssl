@@ -337,11 +337,11 @@ ssl_cert.o: ../include/comp.h ../include/crypto.h ../include/des.h
 ssl_cert.o: ../include/dh.h ../include/dsa.h ../include/e_os.h ../include/err.h
 ssl_cert.o: ../include/evp.h ../include/idea.h ../include/lhash.h
 ssl_cert.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
-ssl_cert.o: ../include/objects.h ../include/pem.h ../include/pkcs7.h
-ssl_cert.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
-ssl_cert.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
-ssl_cert.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
-ssl_cert.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h
+ssl_cert.o: ../include/objects.h ../include/pem.h ../include/pem2.h
+ssl_cert.o: ../include/pkcs7.h ../include/rc2.h ../include/rc4.h
+ssl_cert.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h
+ssl_cert.o: ../include/sha.h ../include/stack.h ../include/x509.h
+ssl_cert.o: ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h
 ssl_ciph.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
 ssl_ciph.o: ../include/bn.h ../include/buffer.h ../include/cast.h
 ssl_ciph.o: ../include/comp.h ../include/crypto.h ../include/des.h
@@ -390,11 +390,11 @@ ssl_rsa.o: ../include/comp.h ../include/crypto.h ../include/des.h
 ssl_rsa.o: ../include/dh.h ../include/dsa.h ../include/e_os.h ../include/err.h
 ssl_rsa.o: ../include/evp.h ../include/idea.h ../include/lhash.h
 ssl_rsa.o: ../include/md2.h ../include/md5.h ../include/mdc2.h
-ssl_rsa.o: ../include/objects.h ../include/pem.h ../include/pkcs7.h
-ssl_rsa.o: ../include/rc2.h ../include/rc4.h ../include/rc5.h
-ssl_rsa.o: ../include/ripemd.h ../include/rsa.h ../include/sha.h
-ssl_rsa.o: ../include/stack.h ../include/x509.h ../include/x509_vfy.h ssl.h
-ssl_rsa.o: ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h
+ssl_rsa.o: ../include/objects.h ../include/pem.h ../include/pem2.h
+ssl_rsa.o: ../include/pkcs7.h ../include/rc2.h ../include/rc4.h
+ssl_rsa.o: ../include/rc5.h ../include/ripemd.h ../include/rsa.h
+ssl_rsa.o: ../include/sha.h ../include/stack.h ../include/x509.h
+ssl_rsa.o: ../include/x509_vfy.h ssl.h ssl2.h ssl23.h ssl3.h ssl_locl.h tls1.h
 ssl_sess.o: ../include/asn1.h ../include/bio.h ../include/blowfish.h
 ssl_sess.o: ../include/bn.h ../include/buffer.h ../include/cast.h
 ssl_sess.o: ../include/comp.h ../include/crypto.h ../include/des.h

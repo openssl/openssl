@@ -75,7 +75,7 @@
 #endif
 #include "evp.h"
 #include "objects.h"
-#include "pem.h"
+#include "pem2.h"
 #include "x509.h"
 #include "x509v3.h"
 #include "conf.h"
