@@ -325,18 +325,18 @@ if (export_cert) {
 	/* If chaining get chain from user cert */
 	if (chain) {
         	int vret;
-		STACK *chain;
+		STACK *chain2;
 			
-		vret = get_cert_chain (ucert, &chain);
+		vret = get_cert_chain (ucert, &chain2);
 		if (vret) {
 			BIO_printf (bio_err, "Error %s getting chain.\n",
 					X509_verify_cert_error_string(vret));
 			goto end;
 		}
 		/* Exclude verified certificate */
-		for (i = 1; i < sk_num (chain) ; i++) 
-				 sk_push(certs, sk_value (chain, i));
-		sk_free(chain);
+		for (i = 1; i < sk_num (chain2) ; i++) 
+				 sk_push(certs, sk_value (chain2, i));
+		sk_free(chain2);
 			
     	}
 
