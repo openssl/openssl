@@ -62,7 +62,7 @@ AR=ar r
 RANLIB= ranlib
 PERL= perl
 TAR= tar
-TARFLAGS= --norecurse
+TARFLAGS= --no-recursion
 
 # Set BN_ASM to bn_asm.o if you want to use the C version
 BN_ASM= bn_asm.o
