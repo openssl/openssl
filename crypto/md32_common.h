@@ -484,7 +484,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 		if ((((unsigned long)data)%4) == 0)
 			{
 			/* data is properly aligned so that we can cast it: */
-			HASH_BLOCK_DATA_ORDER_ALIGNED (c,(HASH_LONG *)data,sw);
+			HASH_BLOCK_DATA_ORDER_ALIGNED (c,(const HASH_LONG *)data,sw);
 			sw*=HASH_CBLOCK;
 			data+=sw;
 			len-=sw;
@@ -532,7 +532,7 @@ void HASH_TRANSFORM (HASH_CTX *c, const unsigned char *data)
 #if defined(HASH_BLOCK_DATA_ORDER_ALIGNED)
 	if ((((unsigned long)data)%4) == 0)
 		/* data is properly aligned so that we can cast it: */
-		HASH_BLOCK_DATA_ORDER_ALIGNED (c,(HASH_LONG *)data,1);
+		HASH_BLOCK_DATA_ORDER_ALIGNED (c,(const HASH_LONG *)data,1);
 	else
 #if !defined(HASH_BLOCK_DATA_ORDER)
 		{
