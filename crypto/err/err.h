@@ -191,6 +191,7 @@ typedef struct err_state_st
 #define ERR_R_PROXY_LIB	ERR_LIB_PROXY
 #define ERR_R_BIO_LIB	ERR_LIB_BIO
 #define ERR_R_PKCS7_LIB	ERR_LIB_PKCS7
+#define ERR_R_PKCS12_LIB ERR_LIB_PKCS12
 
 /* fatal error */
 #define	ERR_R_MALLOC_FAILURE			(1|ERR_R_FATAL)

@@ -66,8 +66,6 @@ extern "C" {
 #include "bio.h"
 #include "x509.h"
 
-#define PKCS12_LIB_NAME	"PKCS12 library"
-
 #define PKCS12_KEY_ID	1
 #define PKCS12_IV_ID	2
 #define PKCS12_MAC_ID	3
@@ -93,26 +91,6 @@ extern "C" {
 #define KEY_EX	0x10
 #define KEY_SIG 0x80
 
-/* Various ASN1 macros */
-
-#ifndef M_ASN1_D2I_get_set_opt
-#define M_ASN1_D2I_get_set_opt(r,func) \
- 	if ((c.slen != 0) && (M_ASN1_next == (V_ASN1_UNIVERSAL| \
- 		V_ASN1_CONSTRUCTED|V_ASN1_SET)))\
- 		{ M_ASN1_D2I_get_set(r,func); }
-#endif
- 
-#ifndef M_ASN1_I2D_len_SET_opt
-#define M_ASN1_I2D_len_SET_opt(a,f) \
- 		if (a != NULL) M_ASN1_I2D_len_SET(a,f);
-#endif
-
-#ifndef M_ASN1_I2D_put_SET_opt
-#define M_ASN1_I2D_put_SET_opt(a,f) \
-		if (a != NULL) M_ASN1_I2D_put_SET(a,f);
-
-#endif
-
 typedef struct {
 X509_SIG *dinfo;
 ASN1_OCTET_STRING *salt;
@@ -124,9 +102,6 @@ ASN1_INTEGER *version;
 PKCS12_MAC_DATA *mac;
 PKCS7 *authsafes;
 } PKCS12;
-
-#define PKCS8_OK	0
-#define PKCS8_NO_OCTET	1
 
 typedef struct {
 ASN1_OBJECT *type;
@@ -220,13 +195,7 @@ obj = OBJ_nid2obj((nid));\
 }
 
 #ifndef NOPROTO
-int i2d_PKCS8_PRIV_KEY_INFO(PKCS8_PRIV_KEY_INFO *a, unsigned char **pp);
-PKCS8_PRIV_KEY_INFO *PKCS8_PRIV_KEY_INFO_new(void);
-PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO(PKCS8_PRIV_KEY_INFO **a, unsigned char **pp, long length);
-void PKCS8_PRIV_KEY_INFO_free(PKCS8_PRIV_KEY_INFO *a);
 PKCS12_SAFEBAG *PKCS12_pack_safebag(char *obj, int (*i2d)(), int nid1, int nid2);
-PKCS8_PRIV_KEY_INFO *PKEY2PKCS8(EVP_PKEY *pkey);
-EVP_PKEY *PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8);
 PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8);
 X509_SIG *PKCS8_encrypt(int pbe_nid, unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, PKCS8_PRIV_KEY_INFO *p8);
 PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, PKCS8_PRIV_KEY_INFO *p8);
@@ -242,7 +211,6 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, unsigned char *pass, int pass
 char *PKCS12_decrypt_d2i(X509_ALGOR *algor, char *(*d2i)(), void (*free_func)(), unsigned char *pass, int passlen, ASN1_STRING *oct, int seq);
 ASN1_STRING *PKCS12_i2d_encrypt(X509_ALGOR *algor, int (*i2d)(), unsigned char *pass, int passlen, char *obj, int seq);
 PKCS12 *PKCS12_init(int mode);
-X509_ALGOR *PKCS12_pbe_set(int alg, int iter, unsigned char *salt, int saltlen);
 int PKCS12_key_gen_asc(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int id, int iter, int n, unsigned char *out, EVP_MD *md_type);
 int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int id, int iter, int n, unsigned char *out, EVP_MD *md_type);
 int PKCS12_PBE_keyivgen(unsigned char *pass, int passlen, unsigned char *salt, int saltlen, int iter, EVP_CIPHER *cipher, EVP_MD *md_type, unsigned char *key, unsigned char *iv);
@@ -273,7 +241,6 @@ void PKCS12_SAFEBAG_free(PKCS12_SAFEBAG *a);
 void ERR_load_PKCS12_strings(void);
 void ERR_PKCS12_error(int function, int reason, char *file, int line);
 void PKCS12_add_obj(void);
-void PKCS12_lib_init(void);
 void PKCS12_PBE_add(void);
 int PKCS12_parse(PKCS12 *p12, char *pass, EVP_PKEY **pkey, X509 **cert, STACK **ca);
 PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert, STACK *ca, int nid_key, int nid_cert, int iter, int mac_iter, int keytype);
@@ -284,13 +251,7 @@ PKCS12 *d2i_PKCS12_fp(FILE *fp, PKCS12 **p12);
 
 #else
 
-int i2d_PKCS8_PRIV_KEY_INFO();
-PKCS8_PRIV_KEY_INFO *PKCS8_PRIV_KEY_INFO_new();
-PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO();
-void PKCS8_PRIV_KEY_INFO_free();
 PKCS12_SAFEBAG *PKCS12_pack_safebag();
-PKCS8_PRIV_KEY_INFO *PKEY2PKCS8();
-EVP_PKEY *PKCS82PKEY();
 PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG();
 X509_SIG *PKCS8_encrypt();
 PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG();
@@ -304,7 +265,6 @@ unsigned char *PKCS12_pbe_crypt();
 char *PKCS12_decrypt_d2i();
 ASN1_STRING *PKCS12_i2d_encrypt();
 PKCS12 *PKCS12_init();
-X509_ALGOR *PKCS12_pbe_set();
 int PKCS12_key_gen_asc();
 int PKCS12_key_gen_uni();
 int PKCS12_gen_mac();
@@ -333,7 +293,6 @@ void PKCS12_SAFEBAG_free();
 void ERR_load_PKCS12_strings();
 void ERR_PKCS12_error ();
 void PKCS12_add_obj();
-void PKCS12_lib_init();
 void PKCS12_PBE_add();
 int PKCS8_add_keyusage();
 ASN1_TYPE *PKCS12_get_attr_gen();

@@ -109,6 +109,7 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_BIO,0,0)		,"BIO routines"},
 {ERR_PACK(ERR_LIB_PKCS7,0,0)		,"PKCS7 routines"},
 {ERR_PACK(ERR_LIB_X509V3,0,0)		,"X509 V3 routines"},
+{ERR_PACK(ERR_LIB_PKCS12,0,0)		,"PKCS12 routines"},
 {0,NULL},
 	};
 
@@ -148,6 +149,7 @@ static ERR_STRING_DATA ERR_str_reasons[]=
 {ERR_R_PROXY_LIB			,"PROXY lib"},
 {ERR_R_BIO_LIB				,"BIO lib"},
 {ERR_R_PKCS7_LIB			,"PKCS7 lib"},
+{ERR_R_PKCS12_LIB			,"PKCS12 lib"},
 {ERR_R_MALLOC_FAILURE			,"Malloc failure"},
 {ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED	,"called a fuction you should not call"},
 {ERR_R_PASSED_NULL_PARAMETER		,"passed a null parameter"},

@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/03/23 14:48:59 $
+  ______________                           $Date: 1999/03/29 00:19:51 $
 
   DEVELOPMENT STATE
 
@@ -12,8 +12,6 @@
 
     o Compilation warnings: ctype-related int vs. char
     o Compilation error: "unsigned long*" and "int*" under AIX
-    o Why are NULL ciphers in front of the cipher spec?
-      (see my posting "Bug?!: Cipher Suite and NULL Ciphers" in openssl-dev)
     o A Linux alpha user reported: "alpha.s does not have bn_div_word()"
       (see posting "ALPHA error" in openssl-dev)
     o Undefined BN symbols in assembler stuff on Solaris
@@ -30,13 +28,10 @@
 
   IN PROGRESS
 
-    o Steve is currently working on:
-        X509 V3 extension code including:
-        1. Support for the more common PKIX extensions.
-        2. Proper (or at least usable) certificate chain verification.
-        3. Support in standard applications (req, x509, ca).
-        4. Documentation on how all the above works.
-        Next on the list is probably PKCS#12 integration.
+    o Steve is currently working on (in no particular order):
+        PKCS#12 code integration.
+        Proper (or at least usable) certificate chain verification.
+        Documentation on X509 V3 extension code.
 
     o Mark is currently working on:
         Folding in any changes that are in the C2Net code base that were

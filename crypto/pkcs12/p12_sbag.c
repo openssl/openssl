@@ -157,7 +157,7 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_new()
 	M_ASN1_New(ret->attrib, sk_new_null);
 	ret->rest=NULL;
 	return (ret);
-	M_ASN1_New_Error(PKCS12_F_PKCS12_SAFEBAG_NEW);
+	M_ASN1_New_Error(ASN1_F_PKCS12_SAFEBAG_NEW);
 }
 
 PKCS12_SAFEBAG *d2i_PKCS12_SAFEBAG(a,pp,length)
