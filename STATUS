@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/03/08 12:13:35 $
+  ______________                           $Date: 1999/03/08 12:39:41 $
 
   DEVELOPMENT STATE
 
@@ -51,7 +51,7 @@
               again for OpenSSL 0.9.3.
         2. The perl/ stuff to make it really work the first time ;-)
            => I'll investigate a few more hours for OpenSSL 0.9.2
-        3. The new documentation set in PID format under doc/
+        3. The new documentation set in POD format under doc/
            => I'll investigate a few more hours for OpenSSL 0.9.2
         4. More cleanups to get rid of obsolete/old/ugly files in the
            source tree which are not really needed.
