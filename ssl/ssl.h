@@ -472,6 +472,7 @@ struct ssl_ctx_st
  * defined, this will still get called. */
 #define SSL_SESS_CACHE_NO_INTERNAL_LOOKUP	0x0100
 
+  struct lhash_st *SSL_CTX_sessions(SSL_CTX *ctx);
 #define SSL_CTX_sess_number(ctx) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_NUMBER,0,NULL)
 #define SSL_CTX_sess_connect(ctx) \

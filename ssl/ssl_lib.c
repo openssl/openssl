@@ -798,6 +798,11 @@ long SSL_callback_ctrl(SSL *s, int cmd, void (*fp)())
 		}
 	}
 
+struct lhash_st *SSL_CTX_sessions(SSL_CTX *ctx)
+	{
+	return ctx->sessions;
+	}
+
 long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,char *parg)
 	{
 	long l;
