@@ -67,6 +67,18 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
 static int ssl_session_num=0;
 static STACK *ssl_session_meth=NULL;
 
+#if 1 /* traditional SSLeay behaviour */
+SSL_SESSION *SSL_get_session(SSL *ssl)
+	{
+	return(ssl->session);
+	}
+#else /* suggested change: increase reference counter so that a session
+       * can later be set in a new SSL object.
+       * Objections:
+       *   -- the modified function should have a new name (or old
+       *      applications, including s_client, leak memory);
+       *   -- the locking seems unnecessary given that SSL structures
+       *      usually cannot be safely shared between threads anyway. */
 SSL_SESSION *SSL_get_session(SSL *ssl)
 	{
 	SSL_SESSION *sess;
@@ -80,6 +92,7 @@ SSL_SESSION *SSL_get_session(SSL *ssl)
 	CRYPTO_r_unlock(CRYPTO_LOCK_SSL_SESSION);
 	return(sess);
 	}
+#endif
 
 int SSL_SESSION_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 	     int (*dup_func)(), void (*free_func)())
