@@ -53,6 +53,15 @@
                 This will usually require additional system-dependent options!
                 See "Note on multi-threading" below.
 
+  no-zlib       Don't try to build with support for zlib compression and
+                decompression.
+
+  zlib          Build with support for zlib compression/decompression.
+
+  zlib-dynamic  Like "zlib", but has OpenSSL load the zlib library dynamically
+                when needed.  This is only supported on systems where loading
+                of shared libraries is supported.
+
   no-shared     Don't try to create shared libraries.
 
   shared        In addition to the usual static libraries, create shared

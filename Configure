@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [no-threads] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx=vvv] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -25,13 +25,15 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 #
 # --with-krb5-dir  Declare where Kerberos 5 lives.  The libraries are expected
 #		to live in the subdirectory lib/ and the header files in
-#		include/.
-# --with-krb5-lib  Declare where the Kerberos 5 libraries live.
+#		include/.  A value is required.
+# --with-krb5-lib  Declare where the Kerberos 5 libraries live.  A value is
+#		required.
 #		(Default: KRB5_DIR/lib)
-# --with-krb5-include  Declare where the Kerberos 5 header files live.
+# --with-krb5-include  Declare where the Kerberos 5 header files live.  A
+#		value is required.
 #		(Default: KRB5_DIR/include)
 # --with-krb5-flavor  Declare what flavor of Kerberos 5 is used.  Currently
-#		supported values are "MIT" and "Heimdal".
+#		supported values are "MIT" and "Heimdal".  A value is required.
 #
 # no-hw-xxx     do not compile support for specific crypto hardware.
 #               Generic OpenSSL-style methods relating to this support
@@ -46,6 +48,9 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 # no-dso        do not compile in any native shared-library methods. This
 #               will ensure that all methods just return NULL.
 # no-krb5       do not compile in any KRB5 library or code.
+# [no-]zlib     [don't] compile support for zlib compression.
+# zlib-dynamic	Like "zlib", but the zlib library is expected to be a shared
+#		library and will be loaded in run-time by the OpenSSL library.
 # 386           generate 80386 code
 # no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
 # -<xxx> +<xxx> compiler options are passed through 
@@ -467,6 +472,7 @@ my $exe_ext="";
 my $install_prefix="";
 my $no_threads=0;
 my $no_shared=1;
+my $zlib=2;
 my $no_krb5=0;
 my $threads=0;
 my $no_asm=0;
@@ -567,6 +573,12 @@ PROCESS_ARGS:
 			{ $no_shared=1; }
 		elsif (/^shared$/)
 			{ $no_shared=0; }
+		elsif (/^no-zlib$/)
+			{ $zlib=0; }
+		elsif (/^zlib$/)
+			{ $zlib=1; }
+		elsif (/^zlib-dynamic$/)
+			{ $zlib=2; }
 		elsif (/^no-symlinks$/)
 			{ $symlink=0; }
 		elsif (/^no-(.+)$/)
@@ -827,8 +839,15 @@ if ($no_asm)
 
 if ($threads)
 	{
-		$cflags=$thread_cflags;
-		$openssl_thread_defines .= $thread_defines;
+	$cflags=$thread_cflags;
+	$openssl_thread_defines .= $thread_defines;
+	}
+
+if ($zlib)
+	{
+	$cflags = "-DZLIB $cflags";
+	$cflags = "-DZLIB_SHARED $cflags" if $zlib == 2;
+	$lflags = "$lflags -lz" if $zlib == 2;
 	}
 
 # You will find shlib_mark1 and shlib_mark2 explained in Makefile.org
