@@ -93,7 +93,9 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 # External "algorithms"
 			 "FP_API", "STDIO", "SOCK", "KRB5",
 			 # Engines
-			 "STATIC_ENGINE" );
+			 "STATIC_ENGINE",
+			 # Deprecated functions
+			 "DEPRECATED" );
 
 my $options="";
 open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
@@ -110,7 +112,7 @@ my $no_cast;
 my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
 my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
 my $no_ec; my $no_ecdsa; my $no_ecdh;
-my $no_fp_api; my $no_static_engine;
+my $no_fp_api; my $no_static_engine; my $no_deprecated;
 
 foreach (@ARGV, split(/ /, $options))
 	{
@@ -1065,6 +1067,7 @@ sub is_valid
 			if ($keyword eq "KRB5" && $no_krb5) { return 0; }
 			if ($keyword eq "FP_API" && $no_fp_api) { return 0; }
 			if ($keyword eq "STATIC_ENGINE" && $no_static_engine) { return 0; }
+			if ($keyword eq "DEPRECATED" && $no_deprecated) { return 0; }
 
 			# Nothing recognise as true
 			return 1;
