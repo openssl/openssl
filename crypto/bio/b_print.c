@@ -72,7 +72,7 @@
 
 #ifdef BN_LLONG
 # ifndef HAVE_LONG_LONG
-#  define HAVE_LONG_LONG
+#  define HAVE_LONG_LONG 1
 # endif
 #endif
 
