@@ -33,7 +33,7 @@ which can be used e.g. for descriptions of the certificates.
 The B<CAfile> is processed on execution of the SSL_CTX_load_verify_locations()
 function.
 
-If on an TLS/SSL server no special setting is perfomed using *client_CA_list()
+If on an TLS/SSL server no special setting is performed using *client_CA_list()
 functions, the certificates contained in B<CAfile> are listed to the client
 as available CAs during the TLS/SSL handshake.
 
@@ -64,7 +64,7 @@ failure.
 
 When building its own certificate chain, an OpenSSL client/server will
 try to fill in missing certificates from B<CAfile>/B<CApath>, if the
-certificate chain was not explicitely specified (see
+certificate chain was not explicitly specified (see
 L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>,
 L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>.
 

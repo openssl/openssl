@@ -53,7 +53,7 @@ Netscape-Commerce/1.12, when talking SSLv2, accepts a 32 byte
 challenge but then appears to only use 16 bytes when generating the
 encryption keys.  Using 16 bytes is ok but it should be ok to use 32.
 According to the SSLv3 spec, one should use 32 bytes for the challenge
-when opperating in SSLv2/v3 compatablity mode, but as mentioned above,
+when operating in SSLv2/v3 compatibility mode, but as mentioned above,
 this breaks this server so 16 bytes is the way to go.
 
 =item SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG

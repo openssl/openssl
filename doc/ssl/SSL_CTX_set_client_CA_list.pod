@@ -41,7 +41,7 @@ the CAs available using the B<CAfile> option in
 L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
 are sent.
 
-This list can be explicitely set using the SSL_CTX_set_client_CA_list() for
+This list can be explicitly set using the SSL_CTX_set_client_CA_list() for
 B<ctx> and SSL_set_client_CA_list() for the specific B<ssl>. The list
 specified overrides the previous setting. The CAs listed do not become
 trusted (B<list> only contains the names, not the complete certificates); use
@@ -74,7 +74,7 @@ The operation succeeded.
 
 =item 0
 
-A failure while manipulating the STACK_OF(X509_NAME) object occured or
+A failure while manipulating the STACK_OF(X509_NAME) object occurred or
 the X509_NAME could not be extracted from B<cacert>. Check the error stack
 to find out the reason.
 

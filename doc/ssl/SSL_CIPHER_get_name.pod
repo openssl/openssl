@@ -41,7 +41,7 @@ does use the full 128 bits (which would be returned for B<alg_bits>), of
 which however 88bits are fixed. The search space is hence only 40 bits.
 
 The string returned by SSL_CIPHER_description() in case of success consists
-of cleartext information seperated by one or more blanks in the following
+of cleartext information separated by one or more blanks in the following
 sequence:
 
 =over 4
@@ -65,7 +65,7 @@ B<DH/RSA>, B<DH/DSS>, B<Fortezza>.
 Authentication method: B<RSA>, B<DSS>, B<DH>, B<None>. None is the
 representation of anonymous ciphers.
 
-=item Enc=<symmectric encryption method>
+=item Enc=<symmetric encryption method>
 
 Encryption method with number of secret bits: B<DES(40)>, B<DES(56)>,
 B<3DES(168)>, B<RC4(40)>, B<RC4(56)>, B<RC4(64)>, B<RC4(128)>,
