@@ -36,6 +36,7 @@ unsigned long buffer_total_out(buffer_t *buf) {
  * it's not sure when they're called how it should be interpreted. Only the
  * higher-level "buffer_[to|from]_[fd|SSL|BIO]" functions should alter these
  * values. */
+#if 0 /* To avoid "unused" warnings */
 static unsigned int buffer_adddata(buffer_t *buf, const unsigned char *ptr,
 		unsigned int size)
 {
@@ -49,6 +50,21 @@ static unsigned int buffer_adddata(buffer_t *buf, const unsigned char *ptr,
 	buf->total_in += added;
 	return added;
 }
+
+static unsigned int buffer_tobuffer(buffer_t *to, buffer_t *from, int cap)
+{
+	unsigned int moved, tomove = from->used;
+	if((int)tomove > cap)
+		tomove = cap;
+	if(tomove == 0)
+		return 0;
+	moved = buffer_adddata(to, from->data, tomove);
+	if(moved == 0)
+		return 0;
+	buffer_takedata(from, NULL, moved);
+	return moved;
+}
+#endif
 
 static unsigned int buffer_takedata(buffer_t *buf, unsigned char *ptr,
 		unsigned int size)
@@ -65,20 +81,6 @@ static unsigned int buffer_takedata(buffer_t *buf, unsigned char *ptr,
 	if(buf->used > 0)
 		memmove(buf->data, buf->data + taken, buf->used);
 	return taken;
-}
-
-static unsigned int buffer_tobuffer(buffer_t *to, buffer_t *from, int cap)
-{
-	unsigned int moved, tomove = from->used;
-	if((int)tomove > cap)
-		tomove = cap;
-	if(tomove == 0)
-		return 0;
-	moved = buffer_adddata(to, from->data, tomove);
-	if(moved == 0)
-		return 0;
-	buffer_takedata(from, NULL, moved);
-	return moved;
 }
 
 #ifndef NO_IP
