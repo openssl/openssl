@@ -122,7 +122,15 @@ int MAIN(int argc, char **argv)
 
 	if (bio_out == NULL)
 		if ((bio_out=BIO_new(BIO_s_file())) != NULL)
+			{
 			BIO_set_fp(bio_out,stdout,BIO_NOCLOSE);
+#ifdef VMS
+			{
+			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+			bio_out = BIO_push(tmpbio, bio_out);
+			}
+#endif
+			}
 
 	informat=FORMAT_PEM;
 	outformat=FORMAT_PEM;
@@ -314,7 +322,15 @@ bad:
 		}
 
 	if (outfile == NULL)
+		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+		}
 	else
 		{
 		if (BIO_write_filename(out,outfile) <= 0)
@@ -340,8 +356,8 @@ bad:
 	if (!i) { BIO_printf(bio_err,"unable to write CRL\n"); goto end; }
 	ret=0;
 end:
-	BIO_free(out);
-	BIO_free(bio_out);
+	BIO_free_all(out);
+	BIO_free_all(bio_out);
 	bio_out=NULL;
 	X509_CRL_free(x);
 	if(store) {

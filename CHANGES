@@ -4,6 +4,22 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) On VMS, stdout may very well lead to a file that is written to
+     in a record-oriented fashion.  That means that every write() will
+     write a separate record, which will be read separately by the
+     programs trying to read from it.  This can be very confusing.
+
+     The solution is to put a BIO filter in the way that will buffer
+     text until a linefeed is reached, and then write everything a
+     line at a time, so every record written will be an actual line,
+     not chunks of lines and not (usually doesn't happen, but I've
+     seen it once) several lines in one record.  BIO_f_linebuffer() is
+     the answer.
+
+     Currently, it's a VMS-only method, because that's where it has
+     been tested well enough.
+     [Richard Levitte]
+
   *) Remove 'optimized' squaring variant in BN_mod_mul_montgomery,
      it can return incorrect results.
      (Note: The buggy variant was not enabled in OpenSSL 0.9.5a,

@@ -91,6 +91,7 @@ extern "C" {
 #define BIO_TYPE_NULL_FILTER	(17|0x0200)
 #define BIO_TYPE_BER		(18|0x0200)		/* BER -> bin filter */
 #define BIO_TYPE_BIO		(19|0x0400)		/* (half a) BIO pair */
+#define BIO_TYPE_LINEBUFFER	(20|0x0200)		/* filter */
 
 #define BIO_TYPE_DESCRIPTOR	0x0100	/* socket, fd, connect or accept */
 #define BIO_TYPE_FILTER		0x0200
@@ -554,6 +555,9 @@ BIO_METHOD *BIO_s_bio(void);
 BIO_METHOD *BIO_s_null(void);
 BIO_METHOD *BIO_f_null(void);
 BIO_METHOD *BIO_f_buffer(void);
+#ifdef VMS
+BIO_METHOD *BIO_f_linebuffer(void);
+#endif
 BIO_METHOD *BIO_f_nbio_test(void);
 /* BIO_METHOD *BIO_f_ber(void); */
 
@@ -640,6 +644,7 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args);
 #define BIO_F_CONN_CTRL					 127
 #define BIO_F_CONN_STATE				 115
 #define BIO_F_FILE_CTRL					 116
+#define BIO_F_LINEBUFFER_CTRL				 129
 #define BIO_F_MEM_READ					 128
 #define BIO_F_MEM_WRITE					 117
 #define BIO_F_SSL_NEW					 118

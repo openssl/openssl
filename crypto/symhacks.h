@@ -138,8 +138,8 @@
 #define SSL_CTX_set_default_passwd_cb_userdata  SSL_CTX_set_def_passwd_cb_ud
 
 /* Hack some long ENGINE names */
-#define ENGINE_get_default_BN_mod_exp_crt	ENGINE_get_def_BN_mod_exp_crt
-#define ENGINE_set_default_BN_mod_exp_crt	ENGINE_set_def_BN_mod_exp_crt
+#define ENGINE_get_default_BN_mod_exp_crt       ENGINE_get_def_BN_mod_exp_crt
+#define ENGINE_set_default_BN_mod_exp_crt       ENGINE_set_def_BN_mod_exp_crt
 
 #endif /* defined VMS */
 

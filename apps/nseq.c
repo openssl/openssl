@@ -119,8 +119,15 @@ int MAIN(int argc, char **argv)
 				 "Can't open output file %s\n", outfile);
 			goto end;
 		}
-	} else out = BIO_new_fp(stdout, BIO_NOCLOSE);
-
+	} else {
+		out = BIO_new_fp(stdout, BIO_NOCLOSE);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+	}
 	if (toseq) {
 		seq = NETSCAPE_CERT_SEQUENCE_new();
 		seq->certs = sk_X509_new_null();
@@ -152,7 +159,7 @@ int MAIN(int argc, char **argv)
 	ret = 0;
 end:
 	BIO_free(in);
-	BIO_free(out);
+	BIO_free_all(out);
 	NETSCAPE_CERT_SEQUENCE_free(seq);
 
 	EXIT(ret);

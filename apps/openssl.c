@@ -238,13 +238,19 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 	else if ((strncmp(argv[0],"no-",3)) == 0)
 		{
 		BIO *bio_stdout = BIO_new_fp(stdout,BIO_NOCLOSE);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		bio_stdout = BIO_push(tmpbio, bio_stdout);
+		}
+#endif
 		f.name=argv[0]+3;
 		ret = (lh_retrieve(prog,&f) != NULL);
 		if (!ret)
 			BIO_printf(bio_stdout, "%s\n", argv[0]);
 		else
 			BIO_printf(bio_stdout, "%s\n", argv[0]+3);
-		BIO_free(bio_stdout);
+		BIO_free_all(bio_stdout);
 		goto end;
 		}
 	else if ((strcmp(argv[0],"quit") == 0) ||
@@ -269,11 +275,17 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 		else /* strcmp(argv[0],LIST_CIPHER_COMMANDS) == 0 */
 			list_type = FUNC_TYPE_CIPHER;
 		bio_stdout = BIO_new_fp(stdout,BIO_NOCLOSE);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		bio_stdout = BIO_push(tmpbio, bio_stdout);
+		}
+#endif
 		
 		for (fp=functions; fp->name != NULL; fp++)
 			if (fp->type == list_type)
 				BIO_printf(bio_stdout, "%s\n", fp->name);
-		BIO_free(bio_stdout);
+		BIO_free_all(bio_stdout);
 		ret=0;
 		goto end;
 		}
