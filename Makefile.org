@@ -5,8 +5,14 @@
 VERSION=
 MAJOR=
 MINOR=
+SHLIB_VERSION_NUMBER=
+SHLIB_VERSION_HISTORY=
+SHLIB_MAJOR=
+SHLIB_MINOR=
 PLATFORM=dist
 OPTIONS=
+SHLIB_TARGET=
+
 # INSTALL_PREFIX is for package builders so that they can configure
 # for, say, /usr/ and yet have everything installed to /tmp/somedir/usr/.
 # Normally it is left empty.
@@ -142,7 +148,14 @@ RMD160_ASM_OBJ= asm/rm86-out.o
 #RMD160_ASM_OBJ= asm/rm86-out.o       # a.out, FreeBSD
 #RMD160_ASM_OBJ= asm/rm86bsdi.o       # bsdi
 
-DIRS=   crypto ssl rsaref apps test tools
+# To do special treatment, use "directory names" starting with a period.
+# When we're prepared to use shared libraries in the programs we link here
+# we might have SHLIB_MARK1 get the value ".shlib." and SHLIB_MARK2 be empty,
+# or have that configurable.
+SHLIB_MARK1=.shlib-clean.
+SHLIB_MARK2=.shlib.
+
+DIRS=   crypto ssl rsaref $(SHLIB_MARK1) apps test tools $(SHLIB_MARK2)
 SHLIBDIRS= crypto ssl
 
 # dirs in crypto to build
@@ -165,7 +178,8 @@ TOP=    .
 ONEDIRS=out tmp
 EDIRS=  times doc bugs util include certs ms shlib mt demos perl sf dep VMS
 WDIRS=  windows
-LIBS=   libcrypto.a libssl.a 
+LIBS=   libcrypto.a libssl.a
+SHARED_LIBS=libcrypto.so libssl.so
 
 GENERAL=        Makefile
 BASENAME=       openssl
@@ -176,36 +190,84 @@ EXHEADER=       e_os.h e_os2.h
 HEADER=         e_os.h
 
 all: Makefile.ssl
-	@for i in $(DIRS) ;\
+	@need_shlib=true; \
+	for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "making all in $$i..." && \
-	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' SDIRS='${SDIRS}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
-	done
-	-@# cd crypto; $(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' SDIRS='${SDIRS}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' testapps
-	-@# cd perl; $(PERL) Makefile.PL; make
+	if [ "$$i" = ".shlib-clean." ]; then \
+		if [ "$(SHLIB_TARGET)" != "" ]; then \
+			$(MAKE) clean-shared; \
+		fi; \
+	elif [ "$$i" = ".shlib." ]; then \
+		if [ "$(SHLIB_TARGET)" != "" ]; then \
+			$(MAKE) $(SHARED_LIBS); \
+		fi; \
+		need_shlib=false; \
+	else \
+		(cd $$i && echo "making all in $$i..." && \
+		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' SDIRS='${SDIRS}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
+	fi; \
+	done; \
+	if $$need_shlib && [ "$(SHLIB_TARGET)" != "" ]; then :; else \
+		$(MAKE) $(SHARED_LIBS); \
+	fi
 
 sub_all:
-	@for i in $(DIRS) ;\
+	@need_shlib=true; \
+	for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "making all in $$i..." && \
-	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
-	done;
+	if [ "$$i" = ".shlib-clean." ]; then \
+		if [ "$(SHLIB_TARGET)" != "" ]; then \
+			$(MAKE) clean-shared; \
+		fi; \
+	elif [ "$$i" = ".shlib." ]; then \
+		if [ "$(SHLIB_TARGET)" != "" ]; then \
+			$(MAKE) $(SHARED_LIBS); \
+		fi; \
+		need_shlib=false; \
+	else \
+		(cd $$i && echo "making all in $$i..." && \
+		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
+	fi; \
+	done; \
+	if $$need_shlib && [ "$(SHLIB_TARGET)" != "" ]; then :; else \
+		$(MAKE) $(SHARED_LIBS); \
+	fi
+
+libcrypto.so: libcrypto.a
+	$(MAKE) $(SHLIB_TARGET)
+libssl.so: libcrypto.so libssl.a
+	$(MAKE) $(SHLIB_TARGET)
+
+clean-shared:
+	for i in ${SHLIBDIRS}; do \
+	rm -f lib$$i.so \
+		lib$$i.so.${SHLIB_MAJOR} \
+		lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
+	done
 
 linux-shared:
-	for i in ${SHLIBDIRS}; do \
-	rm -f lib$$i.a lib$$i.so \
-		lib$$i.so.${MAJOR} lib$$i.so.${MAJOR}.${MINOR}; \
-	${MAKE} CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='-fPIC ${CFLAG}' SDIRS='${SDIRS}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' DIRS=$$i clean all || exit 1; \
-	( set -x; ${CC}  -shared -o lib$$i.so.${MAJOR}.${MINOR} \
-		-Wl,-S,-soname=lib$$i.so.${MAJOR} \
+	libs=; for i in ${SHLIBDIRS}; do \
+	rm -f lib$$i.so \
+		lib$$i.so.${SHLIB_MAJOR} \
+		lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
+	( set -x; ${CC}  -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-Wl,-S,-soname=lib$$i.so.${SHLIB_MAJOR} \
 		-Wl,--whole-archive lib$$i.a \
-		-Wl,--no-whole-archive -lc ) || exit 1; \
-	rm -f lib$$i.a; make -C $$i clean || exit 1 ;\
+		-Wl,--no-whole-archive -lc $$libs ) || exit 1; \
+	libs="$$libs -L. -l$$i"; \
+	( set -x; \
+		ln -s lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			lib$$i.so.${SHLIB_MAJOR}; \
+		ln -s lib$$i.so.${SHLIB_MAJOR} lib$$i.so ); \
 	done;
-	@set -x; \
-	for i in ${SHLIBDIRS}; do \
-	ln -s lib$$i.so.${MAJOR}.${MINOR} lib$$i.so.${MAJOR}; \
-	ln -s lib$$i.so.${MAJOR} lib$$i.so; \
+
+# This assumes that GNU utilities are *not* used
+true64-shared:
+	libs=; for i in ${SHLIBDIRS}; do \
+	( set -x; ${CC}  -shared -no_archive -o lib$$i.so \
+		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
+		-all lib$$i.a -none -lc $$libs ) || exit 1; \
+	libs="$$libs -L. -l$$i"; \
 	done;
 
 Makefile.ssl: Makefile.org
@@ -220,9 +282,11 @@ clean:
 	rm -f shlib/*.o *.o core a.out fluff *.map rehash.time testlog make.log cctest cctest.c
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "making clean in $$i..." && \
-	$(MAKE) SDIRS='${SDIRS}' clean ) || exit 1; \
-	rm -f $(LIBS); \
+	if echo "$$i" | grep -v '^\.'; then \
+		(cd $$i && echo "making clean in $$i..." && \
+		$(MAKE) SDIRS='${SDIRS}' clean ) || exit 1; \
+		rm -f $(LIBS); \
+	fi; \
 	done;
 	rm -f *.a *.o speed.* *.map *.so .pure core
 	rm -f $(TARFILE)
@@ -239,8 +303,10 @@ files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl > $(TOP)/MINFO
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "making 'files' in $$i..." && \
-	$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' files ) || exit 1; \
+	if echo "$$i" | grep -v '^\.'; then \
+		(cd $$i && echo "making 'files' in $$i..." && \
+		$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' files ) || exit 1; \
+	fi; \
 	done;
 
 links:
@@ -248,16 +314,20 @@ links:
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
 	@for i in $(DIRS); do \
-	(cd $$i && echo "making links in $$i..." && \
-	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PERL='${PERL}' links ) || exit 1; \
+	if echo "$$i" | grep -v '^\.'; then \
+		(cd $$i && echo "making links in $$i..." && \
+		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PERL='${PERL}' links ) || exit 1; \
+	fi; \
 	done;
 
 dclean:
 	rm -f *.bak
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "making dclean in $$i..." && \
-	$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' dclean ) || exit 1; \
+	if echo "$$i" | grep -v '^\.'; then \
+		(cd $$i && echo "making dclean in $$i..." && \
+		$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' dclean ) || exit 1; \
+	fi; \
 	done;
 
 rehash: rehash.time
@@ -278,22 +348,28 @@ report:
 depend:
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "making dependencies $$i..." && \
-	$(MAKE) SDIRS='${SDIRS}' DEPFLAG='${DEPFLAG}' depend ) || exit 1; \
+	if echo "$$i" | grep -v '^\.'; then \
+		(cd $$i && echo "making dependencies $$i..." && \
+		$(MAKE) SDIRS='${SDIRS}' DEPFLAG='${DEPFLAG}' depend ) || exit 1; \
+	fi; \
 	done;
 
 lint:
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "making lint $$i..." && \
-	$(MAKE) SDIRS='${SDIRS}' lint ) || exit 1; \
+	if echo "$$i" | grep -v '^\.'; then \
+		(cd $$i && echo "making lint $$i..." && \
+		$(MAKE) SDIRS='${SDIRS}' lint ) || exit 1; \
+	fi; \
 	done;
 
 tags:
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i && echo "making tags $$i..." && \
-	$(MAKE) SDIRS='${SDIRS}' tags ) || exit 1; \
+	if echo "$$i" | grep -v '^\.'; then \
+		(cd $$i && echo "making tags $$i..." && \
+		$(MAKE) SDIRS='${SDIRS}' tags ) || exit 1; \
+	fi; \
 	done;
 
 errors:
@@ -352,15 +428,19 @@ install: all install_docs
 	done;
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i; echo "installing $$i..."; \
-	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}' INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}' EX_LIBS='${EX_LIBS}' SDIRS='${SDIRS}' RANLIB='${RANLIB}' install ); \
+	if echo "$$i" | grep -v '^\.'; then \
+		(cd $$i; echo "installing $$i..."; \
+		$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}' INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}' EX_LIBS='${EX_LIBS}' SDIRS='${SDIRS}' RANLIB='${RANLIB}' install ); \
+	fi; \
 	done
 	@for i in $(LIBS) ;\
 	do \
-	(       echo installing $$i; \
-		cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-		$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
-		chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
+		if [ -f "$$i" ]; then \
+		(       echo installing $$i; \
+			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
+			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
+		fi \
 	done
 
 install_docs:

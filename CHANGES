@@ -4,6 +4,14 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) A first attempt at creating official support for shared
+     libraries through configuration.  I've kept it so the
+     default is static libraries only, and the OpenSSL programs
+     are always statically linked for now, but there are
+     preparations for dynamic linking in place.
+     This has been tested on Linux and True64.
+     [Richard Levitte]
+
   *) Randomness polling function for Win9x, as described in:
      Peter Gutmann, Software Generation of Practically Strong
      Random Numbers.

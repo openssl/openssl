@@ -27,6 +27,8 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 # [no-]threads  [don't] try to create a library that is suitable for
 #               multithreaded applications (default is "threads" if we
 #               know how to do it)
+# [no-]shared	[don't] try to create shared libraries instead of static
+#		ones when possible.
 # no-asm        do not use assembler
 # no-dso        do not compile in any native shared-library methods. This
 #               will ensure that all methods just return NULL.
@@ -91,7 +93,7 @@ my $x86_bsdi_asm="asm/bn86bsdi.o asm/co86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:as
 # -DB_ENDIAN slows things down on a sparc for md5, but helps sha1.
 # So the md5_locl.h file has an undef B_ENDIAN if sun is defined
 
-#config-string	$cc : $cflags : $unistd : $thread_cflag : $lflags : $bn_ops : $bn_obj : $des_obj : $bf_obj : $md5_obj : $sha1_obj : $cast_obj : $rc4_obj : $rmd160_obj : $rc5_obj : $dso_scheme
+#config-string	$cc : $cflags : $unistd : $thread_cflag : $lflags : $bn_ops : $bn_obj : $des_obj : $bf_obj : $md5_obj : $sha1_obj : $cast_obj : $rc4_obj : $rmd160_obj : $rc5_obj : $dso_scheme : $shared_target : $shared_cflag
 
 my %table=(
 #"b",		"${tcc}:${tflags}::${tlib}:${bits1}:${tbn_mul}::",
@@ -245,9 +247,9 @@ my %table=(
 # Dec Alpha, OSF/1 - the alpha164-cc is the flags for a 21164A with
 # the new compiler
 # For gcc, the following gave a %50 speedup on a 164 over the 'DES_INT' version
-"alpha-gcc","gcc:-O3::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_RISC1:asm/alpha.o:::::::::dlfcn",
-"alpha-cc", "cc:-std1 -tune host -O4 -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK:asm/alpha.o:::::::::dlfcn",
-"alpha164-cc", "cc:-std1 -tune host -fast -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK:asm/alpha.o::",
+"alpha-gcc","gcc:-O3::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_RISC1:asm/alpha.o:::::::::dlfcn:true64-shared",
+"alpha-cc", "cc:-std1 -tune host -O4 -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK:asm/alpha.o:::::::::dlfcn:true64-shared",
+"alpha164-cc", "cc:-std1 -tune host -fast -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK:asm/alpha.o:::::::::dlfcn:true64-shared",
 "FreeBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_PTR DES_RISC2:::",
 
 #### Alpha Linux with GNU C and Compaq C setups
@@ -273,7 +275,7 @@ my %table=(
 
 # The intel boxes :-), It would be worth seeing if bsdi-gcc can use the
 # bn86-elf.o file file since it is hand tweaked assembler.
-"linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::-D_REENTRANT:-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
+"linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::-D_REENTRANT:-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC",
 "debug-linux-elf","gcc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT:-lefence:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
 "debug-linux-elf-noefence","gcc:-DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
 "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
@@ -294,7 +296,7 @@ my %table=(
 "ncr-scde","cc:-O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw::(unknown):-lsocket -lnsl:${x86_gcc_des} ${x86_gcc_opts}:::",
 
 # Linux on ARM
-"linux-elf-arm","gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::::::::::dlfcn",
+"linux-elf-arm","gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::::::::::dlfcn:linux-shared:-fPIC",
 
 # UnixWare 2.0
 "unixware-2.0","cc:-O -DFILIO_H::(unknown):-lsocket -lnsl:${x86_gcc_des} ${x86_gcc_opts}:::",
@@ -394,6 +396,7 @@ my $prefix="";
 my $openssldir="";
 my $install_prefix="";
 my $no_threads=0;
+my $no_shared=1;
 my $threads=0;
 my $no_asm=0;
 my $no_dso=0;
@@ -451,6 +454,10 @@ foreach (@ARGV)
 		{ $no_threads=1; }
 	elsif (/^threads$/)
 		{ $threads=1; }
+	elsif (/^no-shared$/)
+		{ $no_shared=1; }
+	elsif (/^shared$/)
+		{ $no_shared=0; }
 	elsif (/^no-symlinks$/)
 		{ $symlink=0; }
 	elsif (/^no-(.+)$/)
@@ -557,8 +564,8 @@ $openssldir=$prefix . "/" . $openssldir if $openssldir !~ /^\//;
 print "IsWindows=$IsWindows\n";
 
 (my $cc,my $cflags,my $unistd,my $thread_cflag,my $lflags,my $bn_ops,my $bn_obj,my $des_obj,my $bf_obj,
- $md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj,my $dso_scheme)=
-	split(/\s*:\s*/,$table{$target} . ":" x 20 , -1);
+ $md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj,my $dso_scheme,my $shared_target,my $shared_cflag)=
+	split(/\s*:\s*/,$table{$target} . ":" x 21 , -1);
 $cflags="$flags$cflags" if ($flags ne "");
 
 # The DSO code currently always implements all functions so that no
@@ -632,6 +639,16 @@ if ($threads)
 		$openssl_thread_defines .= $thread_defines;
 	}
 
+if ($no_shared)
+	{
+	$shared_target = "";
+	$shared_cflag = "";
+	}
+else
+	{
+	$cflags = "$shared_cflag $cflags";
+	}
+
 #my ($bn1)=split(/\s+/,$bn_obj);
 #$bn1 = "" unless defined $bn1;
 #$bn1=$bn_asm unless ($bn1 =~ /\.o$/);
@@ -663,18 +680,31 @@ if ($rmd160_obj =~ /\.o$/)
 my $version = "unknown";
 my $major = "unknown";
 my $minor = "unknown";
+my $shlib_version_number = "unknown";
+my $shlib_version_history = "unknown";
+my $shlib_major = "unknown";
+my $shlib_minor = "unknown";
 
 open(IN,'<crypto/opensslv.h') || die "unable to read opensslv.h:$!\n";
 while (<IN>)
 	{
 	$version=$1 if /OPENSSL.VERSION.TEXT.*OpenSSL (\S+) /;
+	$shlib_version_number=$1 if /SHLIB_VERSION_NUMBER *"([^"]+)"/;
+	$shlib_version_history=$1 if /SHLIB_VERSION_HISTORY *"([^"]*)"/;
 	}
 close(IN);
+if ($shlib_version_history ne "") { $shlib_version_history .= ":"; }
 
 if ($version =~ /(^[0-9]*)\.([0-9\.]*)/)
 	{
 	$major=$1;
 	$minor=$2;
+	}
+
+if ($shlib_version_number =~ /(^[0-9]*)\.([0-9\.]*)/)
+	{
+	$shlib_major=$1;
+	$shlib_minor=$2;
 	}
 
 open(IN,'<Makefile.org') || die "unable to read Makefile.org:$!\n";
@@ -695,6 +725,10 @@ while (<IN>)
 	s/^VERSION=.*/VERSION=$version/;
 	s/^MAJOR=.*/MAJOR=$major/;
 	s/^MINOR=.*/MINOR=$minor/;
+	s/^SHLIB_VERSION_NUMBER=.*/SHLIB_VERSION_NUMBER=$shlib_version_number/;
+	s/^SHLIB_VERSION_HISTORY=.*/SHLIB_VERSION_HISTORY=$shlib_version_history/;
+	s/^SHLIB_MAJOR=.*/SHLIB_MAJOR=$shlib_major/;
+	s/^SHLIB_MINOR=.*/SHLIB_MINOR=$shlib_minor/;
 	s/^INSTALLTOP=.*$/INSTALLTOP=$prefix/;
 	s/^OPENSSLDIR=.*$/OPENSSLDIR=$openssldir/;
 	s/^INSTALL_PREFIX=.*$/INSTALL_PREFIX=$install_prefix/;
@@ -716,6 +750,8 @@ while (<IN>)
 	s/^PROCESSOR=.*/PROCESSOR= $processor/;
 	s/^RANLIB=.*/RANLIB= $ranlib/;
 	s/^PERL=.*/PERL= $perl/;
+	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
+	s/^LIBS=.*/LIBS=libcrypto\.so\* libssl\.so\*/ if (!$no_shared);
 	print OUT $_."\n";
 	}
 close(IN);
@@ -1024,5 +1060,7 @@ sub print_table_entry
 \$rmd160_obj   = $rmd160_obj
 \$rc5_obj      = $rc5_obj
 \$dso_scheme   = $dso_scheme
+\$shared_target= $shared_target
+\$shared_cflag = $shared_cflag
 EOF
 	}

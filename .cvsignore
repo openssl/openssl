@@ -11,3 +11,5 @@ maketest.log
 cctest
 cctest.c
 cctest.a
+libcrypto.so.*
+libssl.so.*
