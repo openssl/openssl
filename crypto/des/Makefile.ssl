@@ -199,7 +199,7 @@ read_pwd.o: ../../include/openssl/stack.h ../cryptlib.h des_locl.h
 rpc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 rpc_enc.o: ../../include/openssl/opensslconf.h des_locl.h des_ver.h rpc_des.h
 set_key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-set_key.o: ../../include/openssl/opensslconf.h des_locl.h podd.h sk.h
+set_key.o: ../../include/openssl/opensslconf.h des_locl.h
 str2key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 str2key.o: ../../include/openssl/opensslconf.h des_locl.h
 xcbc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h

@@ -2229,3 +2229,4 @@ RAND_status                             2254
 bn_dump1                                2255
 des_check_key_parity                    2256
 lh_num_items                            2257
+RAND_event                              2258
