@@ -930,6 +930,7 @@ static int ssl3_get_key_exchange(SSL *s)
 			goto err;
 			}
 		s->session->sess_cert->peer_rsa_tmp=rsa;
+		rsa=NULL;
 		}
 	else
 #endif
@@ -1114,6 +1115,14 @@ f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
 err:
 	EVP_PKEY_free(pkey);
+#ifndef NO_RSA
+	if (rsa != NULL)
+		RSA_free(rsa);
+#endif
+#ifndef NO_DH
+	if (dh != NULL)
+		DH_free(dh);
+#endif
 	return(-1);
 	}
 
