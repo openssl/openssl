@@ -31,7 +31,7 @@ when the underlying BIO could not satisfy the needs of SSL_write()
 to continue the operation. In this case a call to SSL_get_error() with the
 return value of SSL_write() will yield B<SSL_ERROR_WANT_READ> or
 B<SSL_ERROR_WANT_WRITE>. As at any time a re-negotiation is possible, a
-call to SSL_write() can also cause write operations! The calling process
+call to SSL_write() can also cause read operations! The calling process
 then must repeat the call after taking appropriate action to satisfy the
 needs of SSL_write(). The action depends on the underlying BIO. When using a
 non-blocking socket, nothing is to be done, but select() can be used to check
