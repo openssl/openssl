@@ -58,6 +58,7 @@ If any of the function is passed the NULL pointer for the session B<s>,
 =head1 SEE ALSO
 
 L<ssl(3)|ssl(3)>,
-L<SSL_CTX_set_timeout(3)|SSL_CTX_set_timeout(3)>
+L<SSL_CTX_set_timeout(3)|SSL_CTX_set_timeout(3)>,
+L<SSL_get_default_timeout(3)|SSL_get_default_timeout(3)>
 
 =cut
