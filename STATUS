@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/18 22:03:37 $
+  ______________                           $Date: 2000/09/19 15:55:43 $
 
   DEVELOPMENT STATE
 
@@ -60,6 +60,9 @@
 			hpux-parisc-gcc (10.20 w/ -ldld)	- success
 			hpux-parisc-cc [engine] (10.20 w/ -ldld)- success
 			hpux-parisc-gcc [endine] (10.20 w/ -ldld)- success
+			hpux-parisc2-cc				- success
+			hpux64-parisc2-cc			- success
+			hpux-parisc1_1-cc			- success
 				All hpux 10.20 targets succeeded provided -ldl
 					has been changed to -ldld.
 			solaris-sparcv9-gcc (2.6/ultra5)	- success
