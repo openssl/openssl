@@ -36,13 +36,21 @@
 # default openssl.cnf file has setup as per the following
 # demoCA ... where everything is stored
 
+my $openssl;
+if(defined $ENV{OPENSSL}) {
+	$openssl = $ENV{OPENSSL};
+} else {
+	$openssl = "openssl";
+	$ENV{OPENSSL} = $openssl;
+}
+
 $SSLEAY_CONFIG=$ENV{"SSLEAY_CONFIG"};
 $DAYS="-days 365";
-$REQ="openssl req $SSLEAY_CONFIG";
-$CA="openssl ca $SSLEAY_CONFIG";
-$VERIFY="openssl verify";
-$X509="openssl x509";
-$PKCS12="openssl pkcs12";
+$REQ="$openssl req $SSLEAY_CONFIG";
+$CA="$openssl ca $SSLEAY_CONFIG";
+$VERIFY="$openssl verify";
+$X509="$openssl x509";
+$PKCS12="$openssl pkcs12";
 
 $CATOP="./demoCA";
 $CAKEY="cakey.pem";

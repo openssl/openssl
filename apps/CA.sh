@@ -30,11 +30,13 @@
 # default openssl.cnf file has setup as per the following
 # demoCA ... where everything is stored
 
+if [ -z "$OPENSSL" ]; then OPENSSL=openssl; fi
+
 DAYS="-days 365"
-REQ="openssl req $SSLEAY_CONFIG"
-CA="openssl ca $SSLEAY_CONFIG"
-VERIFY="openssl verify"
-X509="openssl x509"
+REQ="$OPENSSL req $SSLEAY_CONFIG"
+CA="$OPENSSL ca $SSLEAY_CONFIG"
+VERIFY="$OPENSSL verify"
+X509="$OPENSSL x509"
 
 CATOP=./demoCA
 CAKEY=./cakey.pem

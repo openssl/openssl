@@ -11,6 +11,9 @@ export SH PATH
 SSLEAY_CONFIG="-config CAss.cnf"
 export SSLEAY_CONFIG
 
+OPENSSL="`pwd`/../util/shlib_wrap.sh openssl"
+export OPENSSL
+
 /bin/rm -fr demoCA
 $SH ../apps/CA.sh -newca <<EOF
 EOF

@@ -152,20 +152,9 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 		TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(EXE); \
 	fi
+	@for i in `ls ../*.dll 2>/dev/null`; do cp -p $$i .; done; exit 0;
 	-(cd ..; \
-	  OPENSSL="`pwd`/apps/$(EXE)"; export OPENSSL; \
-	  if [ -n "$(SHARED_LIBS)" ]; then \
-	    LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
-	    DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
-	    SHLIB_PATH="`pwd`:$$SHLIB_PATH"; \
-	    LIBPATH="`pwd`:$$LIBPATH"; \
-	    if [ "$(PLATFORM)" = "Cygwin" ]; then \
-	      PATH="`pwd`:$$PATH"; \
-	    fi; \
-	    LD_PRELOAD="`pwd`/libssl.so `pwd`/libcrypto.so"; \
-	    export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
-	    export LD_PRELOAD; \
-	  fi; \
+	  OPENSSL="`pwd`/util/opensslwrap.sh"; export OPENSSL; \
 	  $(PERL) tools/c_rehash certs)
 
 progs.h: progs.pl

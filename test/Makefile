@@ -124,21 +124,6 @@ tests:	exe apps $(TESTS)
 apps:
 	@(cd ..; $(MAKE) DIRS=apps all)
 
-SET_SO_PATHS=\
-	if [ -n "$(SHARED_LIBS)" ]; then \
-	  OSSL_LIBPATH="`cd ..; pwd`"; \
-	  LD_LIBRARY_PATH="$$OSSL_LIBPATH:$$LD_LIBRARY_PATH"; \
-	  DYLD_LIBRARY_PATH="$$OSSL_LIBPATH:$$DYLD_LIBRARY_PATH"; \
-	  SHLIB_PATH="$$OSSL_LIBPATH:$$SHLIB_PATH"; \
-	  LIBPATH="$$OSSL_LIBPATH:$$LIBPATH"; \
-	  if [ "$(PLATFORM)" = "Cygwin" ]; then \
-	    PATH="$${LIBPATH}:$$PATH"; \
-	  fi; \
-	  LD_PRELOAD="$$OSSL_LIBPATH/libssl.so $$OSSL_LIBPATH/libcrypto.so"; \
-	  export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
-	  export LD_PRELOAD; \
-	fi
-
 alltests: \
 	test_des test_idea test_sha test_md4 test_md5 test_hmac \
 	test_md2 test_mdc2 \
@@ -152,145 +137,145 @@ alltests: \
 fips_test_aes:
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 	  mkdir -p fips_aes_data/rsp; \
-	  $(SET_SO_PATHS); ./$(FIPS_AESTEST) -d fips_aes_data/list; \
+	  ../util/shlib_wrap.sh ./$(FIPS_AESTEST) -d fips_aes_data/list; \
 	fi
 
 test_evp:
-	$(SET_SO_PATHS); ./$(EVPTEST) evptests.txt
+	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
 
 test_des:
-	$(SET_SO_PATHS); ./$(DESTEST)
+	../util/shlib_wrap.sh ./$(DESTEST)
 
 test_idea:
-	$(SET_SO_PATHS); ./$(IDEATEST)
+	../util/shlib_wrap.sh ./$(IDEATEST)
 
 test_sha:
-	$(SET_SO_PATHS); ./$(SHATEST)
-	$(SET_SO_PATHS); ./$(SHA1TEST)
+	../util/shlib_wrap.sh ./$(SHATEST)
+	../util/shlib_wrap.sh ./$(SHA1TEST)
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  $(SET_SO_PATHS); ./$(FIPS_SHA1TEST) sha1vectors.txt | sed s/Strings/Hashes/ | cmp sha1hashes.txt - ; \
+	  ../util/shlib_wrap.sh ./$(FIPS_SHA1TEST) sha1vectors.txt | sed s/Strings/Hashes/ | cmp sha1hashes.txt - ; \
 	fi
 
 test_mdc2:
-	$(SET_SO_PATHS); ./$(MDC2TEST)
+	../util/shlib_wrap.sh ./$(MDC2TEST)
 
 test_md5:
-	$(SET_SO_PATHS); ./$(MD5TEST)
+	../util/shlib_wrap.sh ./$(MD5TEST)
 
 test_md4:
-	$(SET_SO_PATHS); ./$(MD4TEST)
+	../util/shlib_wrap.sh ./$(MD4TEST)
 
 test_hmac:
-	$(SET_SO_PATHS); ./$(HMACTEST)
+	../util/shlib_wrap.sh ./$(HMACTEST)
 
 test_md2:
-	$(SET_SO_PATHS); ./$(MD2TEST)
+	../util/shlib_wrap.sh ./$(MD2TEST)
 
 test_rmd:
-	$(SET_SO_PATHS); ./$(RMDTEST)
+	../util/shlib_wrap.sh ./$(RMDTEST)
 
 test_bf:
-	$(SET_SO_PATHS); ./$(BFTEST)
+	../util/shlib_wrap.sh ./$(BFTEST)
 
 test_cast:
-	$(SET_SO_PATHS); ./$(CASTTEST)
+	../util/shlib_wrap.sh ./$(CASTTEST)
 
 test_rc2:
-	$(SET_SO_PATHS); ./$(RC2TEST)
+	../util/shlib_wrap.sh ./$(RC2TEST)
 
 test_rc4:
-	$(SET_SO_PATHS); ./$(RC4TEST)
+	../util/shlib_wrap.sh ./$(RC4TEST)
 
 test_rc5:
-	$(SET_SO_PATHS); ./$(RC5TEST)
+	../util/shlib_wrap.sh ./$(RC5TEST)
 
 test_rand:
-	$(SET_SO_PATHS); ./$(RANDTEST)
+	../util/shlib_wrap.sh ./$(RANDTEST)
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  $(SET_SO_PATHS); ./$(FIPS_RANDTEST); \
+	  ../util/shlib_wrap.sh ./$(FIPS_RANDTEST); \
 	fi
 
 test_enc:
-	@$(SET_SO_PATHS); sh ./testenc
+	@sh ./testenc
 
 test_x509:
 	echo test normal x509v1 certificate
-	$(SET_SO_PATHS); sh ./tx509 2>/dev/null
+	sh ./tx509 2>/dev/null
 	echo test first x509v3 certificate
-	$(SET_SO_PATHS); sh ./tx509 v3-cert1.pem 2>/dev/null
+	sh ./tx509 v3-cert1.pem 2>/dev/null
 	echo test second x509v3 certificate
-	$(SET_SO_PATHS); sh ./tx509 v3-cert2.pem 2>/dev/null
+	sh ./tx509 v3-cert2.pem 2>/dev/null
 
 test_rsa:
-	@$(SET_SO_PATHS); sh ./trsa 2>/dev/null
-	$(SET_SO_PATHS); ./$(RSATEST)
+	@sh ./trsa 2>/dev/null
+	../util/shlib_wrap.sh ./$(RSATEST)
 
 test_crl:
-	@$(SET_SO_PATHS); sh ./tcrl 2>/dev/null
+	@sh ./tcrl 2>/dev/null
 
 test_sid:
-	@$(SET_SO_PATHS); sh ./tsid 2>/dev/null
+	@sh ./tsid 2>/dev/null
 
 test_req:
-	@$(SET_SO_PATHS); sh ./treq 2>/dev/null
-	@$(SET_SO_PATHS); sh ./treq testreq2.pem 2>/dev/null
+	@sh ./treq 2>/dev/null
+	@sh ./treq testreq2.pem 2>/dev/null
 
 test_pkcs7:
-	@$(SET_SO_PATHS); sh ./tpkcs7 2>/dev/null
-	@$(SET_SO_PATHS); sh ./tpkcs7d 2>/dev/null
+	@sh ./tpkcs7 2>/dev/null
+	@sh ./tpkcs7d 2>/dev/null
 
 test_bn:
 	@echo starting big number library test, could take a while...
-	@$(SET_SO_PATHS); ./$(BNTEST) >tmp.bntest
+	@../util/shlib_wrap.sh ./$(BNTEST) >tmp.bntest
 	@echo quit >>tmp.bntest
 	@echo "running bc"
 	@<tmp.bntest sh -c "`sh ./bctest ignore`" | $(PERL) -e '$$i=0; while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $$1";} elsif (!/^0$$/) {die "\nFailed! bc: $$_";} else {print STDERR "."; $$i++;}} print STDERR "\n$$i tests passed\n"'
 	@echo 'test a^b%c implementations'
-	$(SET_SO_PATHS); ./$(EXPTEST)
+	../util/shlib_wrap.sh ./$(EXPTEST)
 
 test_ec:
 	@echo 'test elliptic curves'
-	$(SET_SO_PATHS); ./$(ECTEST)
+	../util/shlib_wrap.sh ./$(ECTEST)
 
 test_verify:
 	@echo "The following command should have some OK's and some failures"
 	@echo "There are definitly a few expired certificates"
-	-$(SET_SO_PATHS); ../apps/openssl verify -CApath ../certs ../certs/*.pem
+	-../util/shlib_wrap.sh ../apps/openssl verify -CApath ../certs ../certs/*.pem
 
 test_dh:
 	@echo "Generate a set of DH parameters"
-	$(SET_SO_PATHS); ./$(DHTEST)
+	../util/shlib_wrap.sh ./$(DHTEST)
 
 test_dsa:
 	@echo "Generate a set of DSA parameters"
-	$(SET_SO_PATHS); ./$(DSATEST)
-	$(SET_SO_PATHS); ./$(DSATEST) -app2_1
+	../util/shlib_wrap.sh ./$(DSATEST)
+	../util/shlib_wrap.sh ./$(DSATEST) -app2_1
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  $(SET_SO_PATHS); ./$(FIPS_DSATEST); \
-	  $(SET_SO_PATHS); ./$(FIPS_DSATEST) -app2_1; \
+	  ../util/shlib_wrap.sh ./$(FIPS_DSATEST); \
+	  ../util/shlib_wrap.sh ./$(FIPS_DSATEST) -app2_1; \
 	fi
 
 test_gen:
 	@echo "Generate and verify a certificate request"
-	@$(SET_SO_PATHS); sh ./testgen
+	@sh ./testgen
 
 test_ss keyU.ss certU.ss certCA.ss: testss
 	@echo "Generate and certify a test certificate"
-	@$(SET_SO_PATHS); sh ./testss
+	@sh ./testss
 
 test_engine: 
 	@echo "Manipulate the ENGINE structures"
-	$(SET_SO_PATHS); ./$(ENGINETEST)
+	../util/shlib_wrap.sh ./$(ENGINETEST)
 
 test_ssl: keyU.ss certU.ss certCA.ss
 	@echo "test SSL protocol"
 	@if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  $(SET_SO_PATHS); sh ./testfipsssl keyU.ss certU.ss certCA.ss; \
+	  sh ./testfipsssl keyU.ss certU.ss certCA.ss; \
 	fi
-	@$(SET_SO_PATHS); sh ./testssl keyU.ss certU.ss certCA.ss
+	@sh ./testssl keyU.ss certU.ss certCA.ss
 
 test_ca:
-	@$(SET_SO_PATHS); if ../apps/openssl no-rsa; then \
+	@if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
 	  echo "skipping CA.sh test -- requires RSA"; \
 	else \
 	  echo "Generate and certify a test certificate via the 'ca' program"; \
@@ -299,7 +284,7 @@ test_ca:
 
 test_aes: #$(AESTEST)
 #	@echo "test Rijndael"
-#	$(SET_SO_PATHS); ./$(AESTEST)
+#	../util/shlib_wrap.sh ./$(AESTEST)
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
@@ -600,6 +585,7 @@ dummytest$(EXE_EXT): dummytest.o $(DLIBCRYPTO)
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	  $(CC) -o dummytest$(EXE_EXT) $(CFLAGS) dummytest.o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
+	@for i in `ls ../*.dll 2>/dev/null`; do cp -p $$i .; done; exit 0
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -13,9 +13,9 @@ fi
 
 ciphers="DHE-RSA-AES256-SHA:DHE-DSS-AES256-SHA:AES256-SHA:EDH-RSA-DES-CBC3-SHA:EDH-DSS-DES-CBC3-SHA:DES-CBC3-SHA:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA:AES128-SHA:EXP1024-DHE-DSS-DES-CBC-SHA:EXP1024-DES-CBC-SHA:EDH-RSA-DES-CBC-SHA:EDH-DSS-DES-CBC-SHA:DES-CBC-SHA:EXP-EDH-RSA-DES-CBC-SHA:EXP-EDH-DSS-DES-CBC-SHA:EXP-DES-CBC-SHA"
 
-ssltest="./ssltest -F -key $key -cert $cert -c_key $key -c_cert $cert -cipher $ciphers"
+ssltest="../util/shlib_wrap.sh ./ssltest -F -key $key -cert $cert -c_key $key -c_cert $cert -cipher $ciphers"
 
-if ../apps/openssl x509 -in $cert -text -noout | fgrep 'DSA Public Key' >/dev/null; then
+if ../util/shlib_wrap.sh ../apps/openssl x509 -in $cert -text -noout | fgrep 'DSA Public Key' >/dev/null; then
   dsa_cert=YES
 else
   dsa_cert=NO
@@ -89,24 +89,24 @@ $ssltest -bio_pair -server_auth -client_auth -app_verify $CA $extra || exit 1
 
 #############################################################################
 
-if ../apps/openssl no-dh; then
+if ../util/shlib_wrap.sh ../apps/openssl no-dh; then
   echo skipping anonymous DH tests
 else
   echo test tls1 with 1024bit anonymous DH, multiple handshakes
   $ssltest -v -bio_pair -tls1 -cipher ADH -dhe1024dsa -num 10 -f -time $extra || exit 1
 fi
 
-if ../apps/openssl no-rsa; then
+if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then
   echo skipping RSA tests
 else
   echo test tls1 with 1024bit RSA, no DHE, multiple handshakes
-  ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -no_dhe -num 10 -f -time $extra || exit 1
+  ../util/shlib_wrap.sh ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -no_dhe -num 10 -f -time $extra || exit 1
 
-  if ../apps/openssl no-dh; then
+  if ../util/shlib_wrap.sh ../apps/openssl no-dh; then
     echo skipping RSA+DHE tests
   else
     echo test tls1 with 1024bit RSA, 1024bit DHE, multiple handshakes
-    ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -dhe1024dsa -num 10 -f -time $extra || exit 1
+    ../util/shlib_wrap.sh ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -dhe1024dsa -num 10 -f -time $extra || exit 1
   fi
 fi
 

@@ -7,7 +7,7 @@ else
 fi
 export PATH
 
-cmd='../apps/openssl pkcs7'
+cmd='../util/shlib_wrap.sh ../apps/openssl pkcs7'
 
 if [ "$1"x != "x" ]; then
 	t=$1
