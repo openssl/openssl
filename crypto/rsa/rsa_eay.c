@@ -141,9 +141,24 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 	
 	if ((rsa->_method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
 		{
-		if ((rsa->_method_mod_n=BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set(rsa->_method_mod_n,rsa->n,ctx))
-			    goto err;
+		CRYPTO_w_lock(CRYPTO_LOCK_RSA);
+		if (rsa->_method_mod_n == NULL)
+			{
+			BN_MONT_CTX* bn_mont_ctx;
+			if ((bn_mont_ctx=BN_MONT_CTX_new()) == NULL)
+				{
+				CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
+				goto err;
+				}
+			if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->n,ctx))
+				{
+				BN_MONT_CTX_free(bn_mont_ctx);
+				CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
+				goto err;
+				}
+			rsa->_method_mod_n = bn_mont_ctx;
+			}
+		CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
 		}
 
 	if (!meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
@@ -378,9 +393,24 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 	/* do the decrypt */
 	if ((rsa->_method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
 		{
-		if ((rsa->_method_mod_n=BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set(rsa->_method_mod_n,rsa->n,ctx))
-			    goto err;
+		CRYPTO_w_lock(CRYPTO_LOCK_RSA);
+		if (rsa->_method_mod_n == NULL)
+			{
+			BN_MONT_CTX* bn_mont_ctx;
+			if ((bn_mont_ctx=BN_MONT_CTX_new()) == NULL)
+				{
+				CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
+				goto err;
+				}
+			if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->n,ctx))
+				{
+				BN_MONT_CTX_free(bn_mont_ctx);
+				CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
+				goto err;
+				}
+			rsa->_method_mod_n = bn_mont_ctx;
+			}
+		CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
 		}
 
 	if (!meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
@@ -432,17 +462,45 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 		{
 		if (rsa->_method_mod_p == NULL)
 			{
-			if ((rsa->_method_mod_p=BN_MONT_CTX_new()) != NULL)
-				if (!BN_MONT_CTX_set(rsa->_method_mod_p,rsa->p,
-						     ctx))
+			CRYPTO_w_lock(CRYPTO_LOCK_RSA);
+			if (rsa->_method_mod_p == NULL)
+				{
+				BN_MONT_CTX* bn_mont_ctx;
+				if ((bn_mont_ctx=BN_MONT_CTX_new()) == NULL)
+					{
+					CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
 					goto err;
+					}
+				if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->p,ctx))
+					{
+					BN_MONT_CTX_free(bn_mont_ctx);
+					CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
+					goto err;
+					}
+				rsa->_method_mod_p = bn_mont_ctx;
+				}
+				CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
 			}
 		if (rsa->_method_mod_q == NULL)
 			{
-			if ((rsa->_method_mod_q=BN_MONT_CTX_new()) != NULL)
-				if (!BN_MONT_CTX_set(rsa->_method_mod_q,rsa->q,
-						     ctx))
+			CRYPTO_w_lock(CRYPTO_LOCK_RSA);
+			if (rsa->_method_mod_q == NULL)
+				{
+				BN_MONT_CTX* bn_mont_ctx;
+				if ((bn_mont_ctx=BN_MONT_CTX_new()) == NULL)
+					{
+					CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
 					goto err;
+					}
+				if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->q,ctx))
+					{
+					BN_MONT_CTX_free(bn_mont_ctx);
+					CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
+					goto err;
+					}
+				rsa->_method_mod_q = bn_mont_ctx;
+				}
+			CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
 			}
 		}
 
