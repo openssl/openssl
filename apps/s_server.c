@@ -85,6 +85,10 @@ typedef unsigned int u_int;
 #include <openssl/ssl.h>
 #include "s_apps.h"
 
+#ifdef WINDOWS
+#include <conio.h>
+#endif
+
 #if (defined(VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
@@ -748,6 +752,9 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	unsigned long l;
 	SSL *con=NULL;
 	BIO *sbio;
+#ifdef WINDOWS
+	struct timeval tv;
+#endif
 
 	if ((buf=Malloc(bufsize)) == NULL)
 		{
@@ -807,9 +814,22 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		 * the compiler: if you do have a cast then you can either
 		 * go for (int *) or (void *).
 		 */
-		i=select(width,(void *)&readfds,NULL,NULL,NULL);
-		if (i <= 0) continue;
-		if (FD_ISSET(fileno(stdin),&readfds))
+#ifdef WINDOWS
+		/* Under Windows we can't select on stdin: only
+		 * on sockets. As a workaround we timeout the select every
+		 * second and check for any keypress. In a proper Windows
+		 * application we wouldn't do this because it is inefficient.
+		 */
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		i=select(width,(void *)&readfds,NULL,NULL,&tv);
+		if((i < 0) || (!i && !_kbhit() ) )continue;
+		if(_kbhit())
+#else
+  		i=select(width,(void *)&readfds,NULL,NULL,NULL);
+  		if (i <= 0) continue;
+  		if (FD_ISSET(fileno(stdin),&readfds))
+#endif
 			{
 			if (s_crlf)
 				{

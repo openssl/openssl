@@ -81,6 +81,11 @@ typedef unsigned int u_int;
 #include <openssl/pem.h>
 #include "s_apps.h"
 
+#ifdef WINDOWS
+#include <conio.h>
+#endif
+
+
 #if (defined(VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
@@ -173,7 +178,9 @@ int MAIN(int argc, char **argv)
 	int ret=1,in_init=1,i,nbio_test=0;
 	SSL_METHOD *meth=NULL;
 	BIO *sbio;
-	/*static struct timeval timeout={10,0};*/
+#ifdef WINDOWS
+	struct timeval tv;
+#endif
 
 #if !defined(NO_SSL2) && !defined(NO_SSL3)
 	meth=SSLv23_client_method();
@@ -465,12 +472,18 @@ re_start:
 				if (read_tty)  FD_SET(fileno(stdin),&readfds);
 				if (write_tty) FD_SET(fileno(stdout),&writefds);
 				}
-#endif
 			if (read_ssl)
 				FD_SET(SSL_get_fd(con),&readfds);
 			if (write_ssl)
 				FD_SET(SSL_get_fd(con),&writefds);
-
+#else
+			if(!tty_on || !write_tty) {
+				if (read_ssl)
+					FD_SET(SSL_get_fd(con),&readfds);
+				if (write_ssl)
+					FD_SET(SSL_get_fd(con),&writefds);
+			}
+#endif
 /*			printf("mode tty(%d %d%d) ssl(%d%d)\n",
 				tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
 
@@ -480,8 +493,28 @@ re_start:
 			 * will choke the compiler: if you do have a cast then
 			 * you can either go for (int *) or (void *).
 			 */
+#ifdef WINDOWS
+			/* Under Windows we make the assumption that we can
+			 * always write to the tty: therefore if we need to
+			 * write to the tty we just fall through. Otherwise
+			 * we timeout the select every second and see if there
+			 * are any keypresses. Note: this is a hack, in a proper
+			 * Windows application we wouldn't do this.
+			 */
+			if(!write_tty) {
+				if(read_tty) {
+					tv.tv_sec = 1;
+					tv.tv_usec = 0;
+					i=select(width,(void *)&readfds,(void *)&writefds,
+						 NULL,&tv);
+					if(!i && (!_kbhit() || !read_tty) ) continue;
+				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
+					 NULL,NULL);
+			}
+#else
 			i=select(width,(void *)&readfds,(void *)&writefds,
 				 NULL,NULL);
+#endif
 			if ( i < 0)
 				{
 				BIO_printf(bio_err,"bad select %d\n",
@@ -558,8 +591,12 @@ re_start:
 				goto shut;
 				}
 			}
-#ifndef WINDOWS
+#ifdef WINDOWS
+		/* Assume Windows can always write */
+		else if (!ssl_pending && write_tty)
+#else
 		else if (!ssl_pending && FD_ISSET(fileno(stdout),&writefds))
+#endif
 			{
 #ifdef CHARSET_EBCDIC
 			ascii2ebcdic(&(sbuf[sbuf_off]),&(sbuf[sbuf_off]),sbuf_len);
@@ -581,7 +618,6 @@ re_start:
 				write_tty=0;
 				}
 			}
-#endif
 		else if (ssl_pending || FD_ISSET(SSL_get_fd(con),&readfds))
 			{
 #ifdef RENEG
@@ -636,8 +672,11 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				}
 			}
 
-#ifndef WINDOWS
+#ifdef WINDOWS
+		else if (_kbhit())
+#else
 		else if (FD_ISSET(fileno(stdin),&readfds))
+#endif
 			{
 			if (crlf)
 				{
@@ -688,7 +727,6 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 			write_ssl=1;
 			read_tty=0;
 			}
-#endif
 		}
 shut:
 	SSL_shutdown(con);

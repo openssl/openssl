@@ -4,6 +4,19 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Ugly workaround to get s_client and s_server working under Windows. The
+     old code wouldn't work because it needed to select() on sockets and the
+     tty (for keypresses and to see if data could be written). Win32 only
+     supports select() on sockets so we select() with a 1s timeout on the
+     sockets and then see if any characters are waiting to be read, if none
+     are present then we retry, we also assume we can always write data to
+     the tty. This isn't nice because the code then blocks until we've
+     received a complete line of data and it is effectively polling the
+     keyboard at 1s intervals: however it's quite a bit better than not
+     working at all :-) A dedicated Windows application might handle this
+     with an event loop for example.
+     [Steve Henson]
+
   *) Enhance RSA_METHOD structure. Now there are two extra methods, rsa_sign
      and rsa_verify. When the RSA_FLAGS_SIGN_VER option is set these functions
      will be called when RSA_sign() and RSA_verify() are used. This is useful
