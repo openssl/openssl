@@ -1,17 +1,11 @@
 #!/bin/sh
 #
-# config - this is a merge of minarch and GuessOS from the Apache Group
-#          which then automatically runs Configure from SSLeay after
-#	   mapping the Apache names for OSs into SSLeay names
+# OpenSSL config: determine the operating system and run ./Configure
 #
-# 29-May-97 eay		Added no-asm option
-# 27-May-97 eay		Alpha linux mods
-# ??-May-97 eay		IRIX mods
-# 16-Sep-97 tjh		first cut of merged version
+# "config -h" for usage information.
 #
-# Tim Hudson
-# tjh@cryptsoft.com
-#
+#          this is a merge of minarch and GuessOS from the Apache Group.
+#          Originally written by Tim Hudson <tjh@cryptsoft.com>.
 
 # Original Apache Group comments on GuessOS
 
@@ -259,23 +253,20 @@ case "$i" in
 -d*) PREFIX="debug-";;
 -v*) VERBOSE="true";;
 -t*) TEST="true";;
--h*) cat <<EOF
-usage: config [options]
+-h*) TEST="true"; cat <<EOF
+Usage: config [options]
  -d	Add a debug- prefix to machine choice.
  -v	Verbose mode.
  -t	Test mode, do not run the Configure perl script.
  -h	This help.
 
 Any other text will be passed to the Configure perl script.
-Usefull options include
+Useful options include
  no-asm Build with no assember code.
  -Dxxx	Add xxx define to compilation.
  -Lxxx	Add xxx library include path to build.
  -lxxx	Add xxx library to build.
 
-eg, to build using RSAref, without assember, building to allow anon-DH
-ciphers and null encryption ciphers,
- config no-asm -DRSAref -DSSL_ALLOW_ADH -DSSL_ALLOW_ENULL -lrsaref
 EOF
 ;;
 *) options=$options" $i" ;;
@@ -326,6 +317,10 @@ case "$GUESSOS" in
   # *-aix) OUT="aix-$CC" ;;
   # *-dgux) OUT="dgux" ;;
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
+esac
+
+case "$GUESSOS" in
+  i386-*) options="$options 386" ;;
 esac
 
 if [ -z "$OUT" ]; then
