@@ -43,8 +43,8 @@
 #   EXPORT_VAR_AS_FUNCTION).  This script assumes renaming of symbols is found
 #   in the file crypto/symhacks.h.
 #   The semantics for the platforms is that every item is checked against the
-#   enviroment.  For the negative items ("!FOO"), if any of them is false
-#   (i.e. "FOO" is true) in the enviroment, the corresponding symbol can't be
+#   environment.  For the negative items ("!FOO"), if any of them is false
+#   (i.e. "FOO" is true) in the environment, the corresponding symbol can't be
 #   used.  For the positive itms, if all of them are false in the environment,
 #   the corresponding symbol can't be used.  Any combination of positive and
 #   negative items are possible, and of course leave room for some redundancy.
