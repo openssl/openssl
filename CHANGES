@@ -12,6 +12,9 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Add option to output public keys in req command.
+     [Massimiliano Pala madwolf@openca.org]
+
   *) Release CRYPTO_LOCK_DYNLOCK when CRYPTO_destroy_dynlockid()
      returns early because it has nothing to do.
      [Andy Schneider <andy.schneider@bjss.co.uk>]

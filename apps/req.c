@@ -106,6 +106,7 @@
  * -rand file(s) - load the file(s) into the PRNG.
  * -newkey	- make a key and a request.
  * -modulus	- print RSA modulus.
+ * -pubkey	- output Public Key.
  * -x509	- output a self signed X509 structure instead.
  * -asn1-kludge	- output new certificate request in a format that some CA's
  *		  require.  This format is wrong
@@ -159,7 +160,7 @@ int MAIN(int argc, char **argv)
 	long newkey = -1;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,verify=0,noout=0,text=0,keyform=FORMAT_PEM;
-	int nodes=0,kludge=0,newhdr=0,subject=0;
+	int nodes=0,kludge=0,newhdr=0,subject=0,pubkey=0;
 	char *infile,*outfile,*prog,*keyfile=NULL,*template=NULL,*keyout=NULL;
 	char *engine=NULL;
 	char *extensions = NULL;
@@ -217,6 +218,10 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			keyfile= *(++argv);
+			}
+		else if (strcmp(*argv,"-pubkey") == 0)
+			{
+			pubkey=1;
 			}
 		else if (strcmp(*argv,"-new") == 0)
 			{
@@ -412,6 +417,7 @@ bad:
 		BIO_printf(bio_err," -in arg        input file\n");
 		BIO_printf(bio_err," -out arg       output file\n");
 		BIO_printf(bio_err," -text          text form of request\n");
+		BIO_printf(bio_err," -pubkey        output public key\n");
 		BIO_printf(bio_err," -noout         do not output REQ\n");
 		BIO_printf(bio_err," -verify        verify signature on REQ\n");
 		BIO_printf(bio_err," -modulus       RSA modulus\n");
@@ -473,7 +479,8 @@ bad:
 		{
 		long errline;
 
-		BIO_printf(bio_err,"Using configuration from %s\n",template);
+		if( verbose )
+			BIO_printf(bio_err,"Using configuration from %s\n",template);
 		req_conf=NCONF_new(NULL);
 		i=NCONF_load(req_conf,template,&errline);
 		if (i == 0)
@@ -485,7 +492,8 @@ bad:
 	else
 		{
 		req_conf=config;
-		BIO_printf(bio_err,"Using configuration from %s\n",
+		if( verbose )
+			BIO_printf(bio_err,"Using configuration from %s\n",
 			default_config_file);
 		if (req_conf == NULL)
 			{
@@ -922,7 +930,7 @@ loop:
 			BIO_printf(bio_err,"verify OK\n");
 		}
 
-	if (noout && !text && !modulus && !subject)
+	if (noout && !text && !modulus && !subject && !pubkey)
 		{
 		ex=0;
 		goto end;
@@ -951,6 +959,20 @@ loop:
 			}
 		}
 
+	if (pubkey)
+		{
+		EVP_PKEY *tpubkey; 
+		tpubkey=X509_REQ_get_pubkey(req);
+		if (tpubkey == NULL)
+			{
+			BIO_printf(bio_err,"Error getting public key\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		PEM_write_bio_PUBKEY(out, tpubkey);
+		EVP_PKEY_free(tpubkey);
+		}
+
 	if (text)
 		{
 		if (x509)
@@ -969,24 +991,25 @@ loop:
 
 	if (modulus)
 		{
-		EVP_PKEY *pubkey;
+		EVP_PKEY *tpubkey;
 
 		if (x509)
-			pubkey=X509_get_pubkey(x509ss);
+			tpubkey=X509_get_pubkey(x509ss);
 		else
-			pubkey=X509_REQ_get_pubkey(req);
-		if (pubkey == NULL)
+			tpubkey=X509_REQ_get_pubkey(req);
+		if (tpubkey == NULL)
 			{
 			fprintf(stdout,"Modulus=unavailable\n");
 			goto end; 
 			}
 		fprintf(stdout,"Modulus=");
 #ifndef OPENSSL_NO_RSA
-		if (pubkey->type == EVP_PKEY_RSA)
-			BN_print(out,pubkey->pkey.rsa->n);
+		if (tpubkey->type == EVP_PKEY_RSA)
+			BN_print(out,tpubkey->pkey.rsa->n);
 		else
 #endif
 			fprintf(stdout,"Wrong Algorithm type");
+		EVP_PKEY_free(tpubkey);
 		fprintf(stdout,"\n");
 		}
 

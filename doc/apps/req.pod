@@ -15,6 +15,7 @@ B<openssl> B<req>
 [B<-out filename>]
 [B<-passout arg>]
 [B<-text>]
+[B<-pubkey>]
 [B<-noout>]
 [B<-verify>]
 [B<-modulus>]
@@ -86,6 +87,10 @@ see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 =item B<-text>
 
 prints out the certificate request in text form.
+
+=item B<-pubkey>
+
+outputs the public key.
 
 =item B<-noout>
 
