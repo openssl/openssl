@@ -3,6 +3,13 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New subcommands for 'openssl ca':
+     'openssl ca -status <serial>' prints the status of the cert with
+     the given serial number (according to the index file).
+     'openssl ca -updatedb' updates the expiry status of certificates
+     in the index file.
+     [Massimiliano Pala <madwolf@comune.modena.it>]
+
   *) New '-newreq-nodes' command option to CA.pl.  This is like
      '-newreq', but calls 'openssl req' with the '-nodes' option
      so that the resulting key is not encrypted.
