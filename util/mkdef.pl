@@ -13,6 +13,7 @@ my $do_update = 0;
 my $do_crypto = 0;
 my $do_ssl = 0;
 my $do_ctest = 0;
+my $do_ctestall = 0;
 my $rsaref = 0;
 
 my $W32=1;
@@ -49,6 +50,7 @@ foreach (@ARGV, split(/ /, $options))
 	$do_crypto=1 if $_ eq "crypto";
 	$do_update=1 if $_ eq "update";
 	$do_ctest=1 if $_ eq "ctest";
+	$do_ctestall=1 if $_ eq "ctestall";
 	$rsaref=1 if $_ eq "rsaref";
 	#$safe_stack_def=1 if $_ eq "-DDEBUG_SAFESTACK";
 
@@ -148,7 +150,7 @@ if($do_crypto == 1) {
 	close OUT;
 } 
 
-} elsif ($do_ctest) {
+} elsif ($do_ctest || $do_ctestall) {
 
 	print <<"EOF";
 
@@ -159,10 +161,10 @@ if($do_crypto == 1) {
 int main()
 {
 EOF
-	&print_test_file(*STDOUT,"SSLEAY",*ssl_list,@ssl_func)
+	&print_test_file(*STDOUT,"SSLEAY",*ssl_list,$do_ctestall,@ssl_func)
 		if $do_ssl == 1;
 
-	&print_test_file(*STDOUT,"LIBEAY",*crypto_list,@crypto_func)
+	&print_test_file(*STDOUT,"LIBEAY",*crypto_list,$do_ctestall,@crypto_func)
 		if $do_crypto == 1;
 
 	print "}\n";
@@ -417,22 +419,26 @@ sub do_defs
 
 sub print_test_file
 {
-	(*OUT,my $name,*nums,my @functions)=@_;
+	(*OUT,my $name,*nums,my $all,my @functions)=@_;
 	my $n = 1; my @e; my @r;
-	my $func;
+	my $func; my $prev = "";
 
+	push(@functions, keys %nums) if $all;
 	(@e)=grep(/^SSLeay/,@functions);
 	(@r)=grep(!/^SSLeay/,@functions);
 	@functions=((sort @e),(sort @r));
 
 	foreach $func (@functions) {
-		if (!defined($nums{$func})) {
-			printf STDERR "$func does not have a number assigned\n"
-					if(!$do_update);
-		} else {
-			$n=$nums{$func};
-			print OUT "\t$func();\n";
+		if ($func ne $prev) {
+			if (!defined($nums{$func})) {
+				printf STDERR "$func does not have a number assigned\n"
+				    if(!$do_update);
+			} else {
+				$n=$nums{$func};
+				print OUT "\t$func();\n";
+			}
 		}
+		$prev = $func;	# To avoid duplicates...
 	}
 }
 
