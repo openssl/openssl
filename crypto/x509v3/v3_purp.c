@@ -107,7 +107,7 @@ int X509_check_purpose(X509 *x, int id, int ca)
 	if(id == -1) return 1;
 	idx = X509_PURPOSE_get_by_id(id);
 	if(idx == -1) return -1;
-	pt = sk_X509_PURPOSE_value(xptable, idx);
+	pt = X509_PURPOSE_iget(idx);
 	return pt->check_purpose(pt, x, ca);
 }
 
