@@ -4,11 +4,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2001]
 
-     Both OpenSSL0.9.6a (bugfix release, 5 Apr 2001) and OpenSSL 0.9.7
+     Both OpenSSL 0.9.6a (bugfix release, 5 Apr 2001) and OpenSSL 0.9.7
      are based on OpenSSL 0.9.6.  
      Change log entries are tagged as follows:
-         -) applies to 0.9.6a only
-         *) applies to 0.9.6a and 0.9.7
+         -) applies to 0.9.6a (/0.9.6b) only
+         *) applies to 0.9.6a (/0.9.6b) and 0.9.7
          +) applies to 0.9.7 only
 
   +) Implement binary inversion algorithm for BN_mod_inverse in addition
@@ -21,7 +21,7 @@
      for moduli up to 2048 bits.
      [Bodo Moeller]
 
-  +) Change bctest again: '-x' expressions are not available in all
+  *) Change bctest again: '-x' expressions are not available in all
      versions of 'test'.
      [Bodo Moeller]
 
