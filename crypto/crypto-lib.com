@@ -214,7 +214,7 @@ $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"tb_rsa,tb_dsa,tb_dh,tb_rand,tb_cipher,tb_digest,"+ -
 	"eng_openssl,eng_dyn,"+ -
 	"hw_atalla,hw_cswift,hw_ncipher,hw_nuron,hw_ubsec,"+ -
-	"hw_openssl_dev_crypto"
+	"hw_openbsd_dev_crypto"
 $ LIB_RIJNDAEL = "rd_fst"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
