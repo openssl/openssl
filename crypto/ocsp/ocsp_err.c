@@ -67,10 +67,7 @@
 static ERR_STRING_DATA OCSP_str_functs[]=
 	{
 {ERR_PACK(0,OCSP_F_ASN1_STRING_ENCODE,0),	"ASN1_STRING_encode"},
-{ERR_PACK(0,OCSP_F_BASIC_RESPONSE_NEW,0),	"BASIC_RESPONSE_NEW"},
-{ERR_PACK(0,OCSP_F_BASIC_RESPONSE_VERIFY,0),	"BASIC_RESPONSE_VERIFY"},
 {ERR_PACK(0,OCSP_F_CERT_ID_NEW,0),	"CERT_ID_NEW"},
-{ERR_PACK(0,OCSP_F_CERT_STATUS_NEW,0),	"CERT_STATUS_NEW"},
 {ERR_PACK(0,OCSP_F_D2I_OCSP_NONCE,0),	"D2I_OCSP_NONCE"},
 {ERR_PACK(0,OCSP_F_OCSP_BASIC_ADD1_STATUS,0),	"OCSP_basic_add1_status"},
 {ERR_PACK(0,OCSP_F_OCSP_BASIC_SIGN,0),	"OCSP_basic_sign"},
@@ -78,42 +75,28 @@ static ERR_STRING_DATA OCSP_str_functs[]=
 {ERR_PACK(0,OCSP_F_OCSP_CHECK_DELEGATED,0),	"OCSP_CHECK_DELEGATED"},
 {ERR_PACK(0,OCSP_F_OCSP_CHECK_IDS,0),	"OCSP_CHECK_IDS"},
 {ERR_PACK(0,OCSP_F_OCSP_CHECK_ISSUER,0),	"OCSP_CHECK_ISSUER"},
-{ERR_PACK(0,OCSP_F_OCSP_CHECK_NONCE,0),	"OCSP_check_nonce"},
 {ERR_PACK(0,OCSP_F_OCSP_MATCH_ISSUERID,0),	"OCSP_MATCH_ISSUERID"},
 {ERR_PACK(0,OCSP_F_OCSP_REQUEST_SIGN,0),	"OCSP_request_sign"},
 {ERR_PACK(0,OCSP_F_OCSP_RESPONSE_GET1_BASIC,0),	"OCSP_response_get1_basic"},
 {ERR_PACK(0,OCSP_F_OCSP_SENDREQ_BIO,0),	"OCSP_sendreq_bio"},
 {ERR_PACK(0,OCSP_F_REQUEST_VERIFY,0),	"REQUEST_VERIFY"},
-{ERR_PACK(0,OCSP_F_RESPONSE_VERIFY,0),	"RESPONSE_VERIFY"},
-{ERR_PACK(0,OCSP_F_S2I_OCSP_NONCE,0),	"S2I_OCSP_NONCE"},
-{ERR_PACK(0,OCSP_F_V2I_OCSP_CRLID,0),	"V2I_OCSP_CRLID"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA OCSP_str_reasons[]=
 	{
 {OCSP_R_BAD_DATA                         ,"bad data"},
-{OCSP_R_BAD_TAG                          ,"bad tag"},
 {OCSP_R_CERTIFICATE_VERIFY_ERROR         ,"certificate verify error"},
 {OCSP_R_DIGEST_ERR                       ,"digest err"},
-{OCSP_R_FAILED_TO_OPEN                   ,"failed to open"},
-{OCSP_R_FAILED_TO_READ                   ,"failed to read"},
-{OCSP_R_FAILED_TO_STAT                   ,"failed to stat"},
 {OCSP_R_MISSING_OCSPSIGNING_USAGE        ,"missing ocspsigning usage"},
-{OCSP_R_MISSING_VALUE                    ,"missing value"},
-{OCSP_R_NONCE_MISSING_IN_RESPONSE        ,"nonce missing in response"},
-{OCSP_R_NONCE_VALUE_MISMATCH             ,"nonce value mismatch"},
 {OCSP_R_NOT_BASIC_RESPONSE               ,"not basic response"},
-{OCSP_R_NO_CERTIFICATE                   ,"no certificate"},
 {OCSP_R_NO_CERTIFICATES_IN_CHAIN         ,"no certificates in chain"},
 {OCSP_R_NO_CONTENT                       ,"no content"},
 {OCSP_R_NO_PUBLIC_KEY                    ,"no public key"},
 {OCSP_R_NO_RESPONSE_DATA                 ,"no response data"},
 {OCSP_R_NO_REVOKED_TIME                  ,"no revoked time"},
-{OCSP_R_NO_SIGNATURE                     ,"no signature"},
 {OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE,"private key does not match certificate"},
 {OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA,"response contains no revocation data"},
-{OCSP_R_REVOKED_NO_TIME                  ,"revoked no time"},
 {OCSP_R_ROOT_CA_NOT_TRUSTED              ,"root ca not trusted"},
 {OCSP_R_SERVER_READ_ERROR                ,"server read error"},
 {OCSP_R_SERVER_RESPONSE_ERROR            ,"server response error"},
@@ -121,11 +104,8 @@ static ERR_STRING_DATA OCSP_str_reasons[]=
 {OCSP_R_SERVER_WRITE_ERROR               ,"server write error"},
 {OCSP_R_SIGNATURE_FAILURE                ,"signature failure"},
 {OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND     ,"signer certificate not found"},
-{OCSP_R_UNEXPECTED_NONCE_IN_RESPONSE     ,"unexpected nonce in response"},
 {OCSP_R_UNKNOWN_MESSAGE_DIGEST           ,"unknown message digest"},
 {OCSP_R_UNKNOWN_NID                      ,"unknown nid"},
-{OCSP_R_UNSUPPORTED_OPTION               ,"unsupported option"},
-{OCSP_R_VALUE_ALREADY                    ,"value already"},
 {0,NULL}
 	};
 

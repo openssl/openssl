@@ -3,6 +3,15 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New nonce behavior. The return value of OCSP_check_nonce() now 
+     reflects the various checks performed. Applications can decide
+     whether to tolerate certain situations such as an absent nonce
+     in a response when one was present in a request: the ocsp application
+     just prints out a warning. New function OCSP_add1_basic_nonce()
+     this is to allow responders to include a nonce in a response even if
+     the request is nonce-less.
+     [Steve Henson]
+
   *) Use the cached encoding of an X509_NAME structure rather than
      copying it. This is apparently the reason for the libsafe "errors"
      but the code is actually correct.

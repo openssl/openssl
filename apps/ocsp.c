@@ -515,10 +515,15 @@ int MAIN(int argc, char **argv)
 
 	if (!noverify)
 		{
-		if (req && (OCSP_check_nonce(req, bs) <= 0))
+		if (req && ((i = OCSP_check_nonce(req, bs)) <= 0))
 			{
-			BIO_printf(bio_err, "Nonce Verify error\n");
-			goto end;
+			if (i == -1)
+				BIO_printf(bio_err, "WARNING: no nonce in response\n");
+			else
+				{
+				BIO_printf(bio_err, "Nonce Verify error\n");
+				goto end;
+				}
 			}
 
 		i = OCSP_basic_verify(bs, verify_other, store, verify_flags);

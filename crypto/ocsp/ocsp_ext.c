@@ -303,11 +303,11 @@ err:
 
 /* Nonce handling functions */
 
-/* Add a nonce to an OCSP request. A nonce can be specificed or if NULL
+/* Add a nonce to an extension stack. A nonce can be specificed or if NULL
  * a random nonce will be generated.
  */
 
-int OCSP_request_add1_nonce(OCSP_REQUEST *req, unsigned char *val, int len)
+static int ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts, unsigned char *val, int len)
 	{
 	unsigned char *tmpval;
 	ASN1_OCTET_STRING os;
@@ -321,7 +321,7 @@ int OCSP_request_add1_nonce(OCSP_REQUEST *req, unsigned char *val, int len)
 		}
 	os.data = tmpval;
 	os.length = len;
-	if(!OCSP_REQUEST_add1_ext_i2d(req, NID_id_pkix_OCSP_Nonce,
+	if(!X509V3_add1_i2d(exts, NID_id_pkix_OCSP_Nonce,
 			&os, 0, X509V3_ADD_REPLACE))
 				goto err;
 	ret = 1;
@@ -330,9 +330,34 @@ int OCSP_request_add1_nonce(OCSP_REQUEST *req, unsigned char *val, int len)
 	return ret;
 	}
 
-/* Check nonce validity in a request and response: the nonce
- * must be either absent in both or present and equal in both. 
+
+/* Add nonce to an OCSP request */
+
+int OCSP_request_add1_nonce(OCSP_REQUEST *req, unsigned char *val, int len)
+	{
+	return ocsp_add1_nonce(&req->tbsRequest->requestExtensions, val, len);
+	}
+
+/* Same as above but for a response */
+
+int OCSP_basic_add1_nonce(OCSP_BASICRESP *resp, unsigned char *val, int len)
+	{
+	return ocsp_add1_nonce(&resp->tbsResponseData->responseExtensions, val, len);
+	}
+
+/* Check nonce validity in a request and response.
+ * Return value reflects result:
+ *  1: nonces present and equal.
+ *  2: nonces both absent.
+ *  3: nonce present in response only.
+ *  0: nonces both present and not equal.
+ * -1: nonce in request only.
+ *
+ *  For most responders clients can check return > 0.
+ *  If responder doesn't handle nonces return != 0 may be
+ *  necessary. return == 0 is always an error.
  */
+
 int OCSP_check_nonce(OCSP_REQUEST *req, OCSP_BASICRESP *bs)
 	{
 	/*
@@ -343,32 +368,25 @@ int OCSP_check_nonce(OCSP_REQUEST *req, OCSP_BASICRESP *bs)
 	 * freed immediately anyway.
 	 */
 
-	int ret = 0, req_idx, resp_idx;
+	int req_idx, resp_idx;
 	X509_EXTENSION *req_ext, *resp_ext;
 	req_idx = OCSP_REQUEST_get_ext_by_NID(req, NID_id_pkix_OCSP_Nonce, -1);
 	resp_idx = OCSP_BASICRESP_get_ext_by_NID(bs, NID_id_pkix_OCSP_Nonce, -1);
-	/* If both absent its OK */
-	if((req_idx < 0) && (resp_idx < 0)) return 1;
+	/* Check both absent */
+	if((req_idx < 0) && (resp_idx < 0))
+		return 2;
+	/* Check in request only */
 	if((req_idx >= 0) && (resp_idx < 0))
-		{
-		OCSPerr(OCSP_F_OCSP_CHECK_NONCE, OCSP_R_NONCE_MISSING_IN_RESPONSE);
-		goto err;
-		}
+		return -1;
+	/* Check in response but not request */
 	if((req_idx < 0) && (resp_idx >= 0))
-		{
-		OCSPerr(OCSP_F_OCSP_CHECK_NONCE, OCSP_R_UNEXPECTED_NONCE_IN_RESPONSE);
-		goto err;
-		}
+		return 3;
+	/* Otherwise nonce in request and response so retrieve the extensions */
 	req_ext = OCSP_REQUEST_get_ext(req, req_idx);
 	resp_ext = OCSP_BASICRESP_get_ext(bs, resp_idx);
 	if(ASN1_OCTET_STRING_cmp(req_ext->value, resp_ext->value))
-		{
-		OCSPerr(OCSP_F_OCSP_CHECK_NONCE, OCSP_R_NONCE_VALUE_MISMATCH);
-		goto err;
-		}
-	ret = 1;
-	err:
-	return ret;
+		return 0;
+	return 1;
 	}
 
 /* Copy the nonce value (if any) from an OCSP request to 
