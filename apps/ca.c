@@ -1023,11 +1023,15 @@ bad:
 				}
 			}
 		else
-			dgst=EVP_md5();
+		    {
 #ifndef NO_DSA
-		if (pkey->type == EVP_PKEY_DSA) 
-		    dgst = EVP_dss1() ;
+		    if (pkey->type == EVP_PKEY_DSA) 
+			dgst=EVP_dss1();
+		    else
 #endif
+			dgst=EVP_md5();
+		    }
+
 		if (!X509_CRL_sign(crl,pkey,dgst)) goto err;
 
 		PEM_write_bio_X509_CRL(Sout,crl);
