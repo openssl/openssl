@@ -103,8 +103,8 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, unsigned char **pp,
 #endif
 #ifndef OPENSSL_NO_DSA
 	case EVP_PKEY_DSA:
-		if ((ret->pkey.dsa=d2i_DSAPublicKey(&(ret->pkey.dsa),
-			(const unsigned char **)pp,length)) == NULL) /* TMP UGLY CAST */
+		if (!d2i_DSAPublicKey(&(ret->pkey.dsa),
+			(const unsigned char **)pp,length)) /* TMP UGLY CAST */
 			{
 			ASN1err(ASN1_F_D2I_PUBLICKEY,ERR_R_ASN1_LIB);
 			goto err;
@@ -113,8 +113,8 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, unsigned char **pp,
 #endif
 #ifndef OPENSSL_NO_EC
 	case EVP_PKEY_EC:
-		if ((ret->pkey.eckey = o2i_ECPublicKey(&(ret->pkey.eckey),
-			(const unsigned char **)pp, length)) == NULL)
+		if (!o2i_ECPublicKey(&(ret->pkey.eckey),
+				     (const unsigned char **)pp, length))
 			{
 			ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
 			goto err;

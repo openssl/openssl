@@ -323,7 +323,7 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 
 	p=key->public_key->data;
         j=key->public_key->length;
-        if ((ret = d2i_PublicKey(type, &ret, &p, (long)j)) == NULL)
+        if (!d2i_PublicKey(type, &ret, &p, (long)j))
 		{
 		X509err(X509_F_X509_PUBKEY_GET, X509_R_ERR_ASN1_LIB);
 		goto err;
