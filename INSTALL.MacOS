@@ -10,8 +10,8 @@ guarantee that all algorithms are operational.
 
 Required software:
 
-- StuffIt Expander	(or any program capable to "unbinhex");
-- DropStuff w/EE	(or MacGzip and SUNtar);
+- StuffIt Expander 5.5 or later, alternatively MacGzip and SUNtar;
+- Scriptable Finder;
 - CodeWarrior Pro 5;
 
 Installation procedure:
@@ -19,21 +19,31 @@ Installation procedure:
 - fetch the source at ftp://ftp.openssl.org/ (well, you probably already
   did, huh?)
 - unpack the .tar.gz file:
-	- if you have DropStuff w/EE installed then just drag it over
-	  StuffIt Expander;
-	- otherwise process it first with MacGzip and then with SUNtar;
+	- if you have StuffIt Expander then just drag it over it;
+	- otherwise uncompress it with MacGzip and then unpack with SUNtar;
 - locate MacOS folder in OpenSSL source tree and open it;
-- if present (**) unbinhex mklinks.as.hqx and OpenSSL.mcp.hqx, do it
-  "in-place", i.e. unpacked files should end-up in the same folder;
-- double-click on mklinks.as;
-- open OpenSSL.mcp and build 'GetHTTPS PPC' target (the only one working
-  for the moment);
-- that's it;
+- unbinhex mklinks.as.hqx and OpenSSL.mcp.hqx if present (**), do it
+  "in-place", i.e. unpacked files should end-up in the very same folder;
+- execute mklinks.as;
+- open OpenSSL.mcp(***) and build 'GetHTTPS PPC' target(****);
+- that's it for now;
 
 (*)	URL is hardcoded into ./MacOS/GetHTTPS.src/GetHTTPS.cpp, lines 40
         to 42, change appropriately.
 (**)	If you use SUNtar, then it might have already unbinhexed the files
 	in question.
+(***)	The project file was saved with CW Pro 5.3. If you have earlier
+	version and it refuses to open it, then download
+	http://www.openssl.org/~appro/OpenSSL.mcp.xml and import it
+	overwriting the original OpenSSL.mcp.
+(****)	Other targets are work in progress. If you feel like giving 'em a
+	shot, then you should know that OpenSSL* and Lib* targets are
+	supposed to be built with the GUSI, MacOS library which mimics
+	BSD sockets and some other POSIX APIs. The GUSI distribution is
+	expected to be found in the same directory as openssl source tree,
+	i.e. in the parent directory to the one where this very file,
+	namely INSTALL.MacOS. For more informations about GUSI, see
+	http://www.iis.ee.ethz.ch/~neeri/macintosh/gusi-qa.html
 
 Finally some essential comments from our generous contributor:-)
 
