@@ -5,6 +5,8 @@
  Copyright (c) 1995-1998 Eric Young
  All rights reserved.
 
+ ....
+
  The OpenSSL Project is a collaborative effort to develop a robust,
  commercial-grade, fully featured, and Open Source toolkit implementing the
  Transport Layer Security (TLS v1) and Secure Sockets Layer (SSL v2/v3)
