@@ -266,7 +266,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 			((unsigned long)os.data[1]<< 8L)|
 			 (unsigned long)os.data[2];
 		}
-	else if ((ssl_version>>8) == 3)
+	else if ((ssl_version>>8) == SSL3_VERSION_MAJOR)
 		{
 		if (os.length != 2)
 			{
@@ -287,9 +287,9 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 	ret->cipher_id=id;
 
 	M_ASN1_D2I_get(ASN1_OCTET_STRING,osp,d2i_ASN1_OCTET_STRING);
-	if ((ssl_version>>8) == SSL3_VERSION)
+	if ((ssl_version>>8) == SSL3_VERSION_MAJOR)
 		i=SSL3_MAX_SSL_SESSION_ID_LENGTH;
-	else /* if (ssl_version == SSL2_VERSION) */
+	else /* if (ssl_version>>8 == SSL2_VERSION_MAJOR) */
 		i=SSL2_MAX_SSL_SESSION_ID_LENGTH;
 
 	if (os.length > i)
