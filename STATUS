@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/08/09 22:37:59 $
+  ______________                           $Date: 1999/08/14 20:49:37 $
 
   DEVELOPMENT STATE
 
@@ -55,6 +55,7 @@
 
   NEEDS PATCH
 
+    o  base64 decoding bug (Ivan Nejgebauer)
     o  salzr@certco.com (Rich Salz): Bug in X509_name_print
        <29E0A6D39ABED111A36000A0C99609CA2C2BA4@macertco-srv1.ma.certco.com>
     o  $(PERL) in */Makefile.ssl

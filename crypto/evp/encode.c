@@ -291,15 +291,15 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 
 		/* If we are at the end of input and it looks like a
 		 * line, process it. */
-		if (((i+1) == inl) && (((n&3) == 0) || eof))
+		if (((i+1) == inl) && (eof))
 			v=B64_EOF;
 
-		if ((v == B64_EOF) || (n >= 68))
+		if ((v == B64_EOF) || (n >= 64))
 			{
 			/* This is needed to work correctly on 64 byte input
 			 * lines.  We process the line and then need to
 			 * accept the '\n' */
-			if ((v != B64_EOF) && (n >= 68)) exp_nl=1;
+			if ((v != B64_EOF) && (n >= 64)) exp_nl=1;
 			tmp2=v;
 			if (n > 0)
 				{
