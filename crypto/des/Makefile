@@ -142,9 +142,9 @@ cbc_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 cbc_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 cbc_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 cbc_enc.o: ../../include/openssl/ui_compat.h cbc_enc.c des_locl.h ncbc_enc.c
-cfb64ede.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-cfb64ede.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
-cfb64ede.o: ../../include/openssl/opensslconf.h
+cfb64ede.o: ../../e_os.h ../../include/openssl/crypto.h
+cfb64ede.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+cfb64ede.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 cfb64ede.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 cfb64ede.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 cfb64ede.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
