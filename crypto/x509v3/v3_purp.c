@@ -3,7 +3,7 @@
  * project 2001.
  */
 /* ====================================================================
- * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2004 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -415,6 +415,7 @@ static void x509v3_cache_extensions(X509 *x)
  * 1 is a CA
  * 2 basicConstraints absent so "maybe" a CA
  * 3 basicConstraints absent but self signed V1.
+ * 4 basicConstraints absent but keyUsage present and keyCertSign asserted.
  */
 
 #define V1_ROOT (EXFLAG_V1|EXFLAG_SS)
@@ -436,7 +437,7 @@ static int ca_check(const X509 *x)
 	} else {
 		if((x->ex_flags & V1_ROOT) == V1_ROOT) return 3;
 		/* If key usage present it must have certSign so tolerate it */
-		else if (x->ex_flags & EXFLAG_KUSAGE) return 3;
+		else if (x->ex_flags & EXFLAG_KUSAGE) return 4;
 		else return 2;
 	}
 }
