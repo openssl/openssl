@@ -137,6 +137,7 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_SYS,0,0)		,"system library"},
 {ERR_PACK(ERR_LIB_BN,0,0)		,"bignum routines"},
 {ERR_PACK(ERR_LIB_RSA,0,0)		,"rsa routines"},
+{ERR_PACK(ERR_LIB_DSA,0,0)		,"dsa routines"},
 {ERR_PACK(ERR_LIB_DH,0,0)		,"Diffie-Hellman routines"},
 {ERR_PACK(ERR_LIB_EVP,0,0)		,"digital envelope routines"},
 {ERR_PACK(ERR_LIB_BUF,0,0)		,"memory buffer routines"},

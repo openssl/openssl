@@ -211,7 +211,11 @@ RSA *d2i_Netscape_RSA(RSA **a, unsigned char **pp, long length, int (*cb)())
 	M_ASN1_BIT_STRING_free(os);
 	c.q=c.p;
 	if ((ret=d2i_Netscape_RSA_2(a,&c.p,c.slen,cb)) == NULL) goto err;
-	c.slen-=(c.p-c.q);
+	/* Note: some versions of IIS key files use length values that are
+	 * too small for the surrounding SEQUENCEs. This following line
+	 * effectively disable length checking.
+	 */
+	c.slen = 0;
 
 	M_ASN1_D2I_Finish(a,RSA_free,ASN1_F_D2I_NETSCAPE_RSA);
 	}

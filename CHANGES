@@ -4,6 +4,10 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Add missing DSA library text string. Work around for some IIS
+     key files with invalid SEQUENCE encoding.
+     [Steve Henson]
+
   *) Add a document (doc/standards.txt) that list all kinds of standards
      and so on that are implemented in OpenSSL.
      [Richard Levitte]
