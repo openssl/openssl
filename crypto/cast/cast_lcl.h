@@ -56,12 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
+
+#include "e_os.h"
+
 #ifdef OPENSSL_SYS_WIN32
 #include <stdlib.h>
 #endif
 
-
-#include "e_os.h" /* OPENSSL_EXTERN */
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
 # undef OPENSSL_EXTERN
