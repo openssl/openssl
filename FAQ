@@ -10,6 +10,8 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the linker complain about undefined symbols?
 * Where can I get a compiled version of OpenSSL?
 * I've compiled a program under Windows and it crashes: why?
+* I've called <some function> and it fails, why?
+* I just get a load of numbers for the error output, what do they mean?
 * Why do I get errors about unknown algorithms?
 * How do I create certificates or certificate requests?
 * Why can't I create certificate requests?
@@ -170,6 +172,23 @@ This is usually because you've missed the comment in INSTALL.W32. You
 must link with the multithreaded DLL version of the VC++ runtime library
 otherwise the conflict will cause a program to crash: typically on the
 first BIO related read or write operation.
+
+
+* I've called <some function> and it fails, why?
+
+Before submitting a report or asking in one of the mailing lists you
+should try to determine the cause. In particular you should call
+ERR_print_errors() or ERR_print_errors_fp() after the failed call
+and see if the message helps. 
+
+
+* I just get a load of numbers for the error output, what do they mean?
+
+The actual format is described in the ERR_print_errors() manual page.
+You should call the function ERR_load_crypto_strings() before hand and
+the message will be output in text form. If you can't do this (for example
+it is a pre-compiled binary) you can use the errstr utility on the error
+code itself (the hex digits after the second colon).
 
 
 * Why do I get errors about unknown algorithms?
