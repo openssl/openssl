@@ -17,7 +17,12 @@ sub wanted
 	@a=<IN>;
 	close(IN);
 
-	$a[0]="#!$ARGV[0]/perl\n";
+	if (-d $ARGV[0]) {
+		$a[0]="#!$ARGV[0]/perl\n";
+	}
+	else {
+		$a[0]="#!$ARGV[0]\n";
+	}
 
 	# Playing it safe...
 	$new="$_.new";
