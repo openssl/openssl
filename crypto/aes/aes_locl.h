@@ -1,6 +1,6 @@
 /* crypto/aes/aes.h -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,6 +63,15 @@
 
 #if defined(__STDC__) || defined(OPENSSL_SYS_VMS) || defined(M_XENIX) || defined(OPENSSL_SYS_MSDOS)
 #include <string.h>
+#endif
+
+#ifdef _MSC_VER
+# define SWAP(x) (_lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00)
+# define GETU32(p) SWAP(*((u32 *)(p)))
+# define PUTU32(ct, st) { *((u32 *)(ct)) = SWAP((st)); }
+#else
+# define GETU32(pt) (((u32)(pt)[0] << 24) ^ ((u32)(pt)[1] << 16) ^ ((u32)(pt)[2] <<  8) ^ ((u32)(pt)[3]))
+# define PUTU32(ct, st) { (ct)[0] = (u8)((st) >> 24); (ct)[1] = (u8)((st) >> 16); (ct)[2] = (u8)((st) >>  8); (ct)[3] = (u8)(st); }
 #endif
 
 typedef unsigned long u32;

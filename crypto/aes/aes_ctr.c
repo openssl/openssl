@@ -1,4 +1,4 @@
-/* crypto/aes/aes_misc.c -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/aes/aes_ctr.c -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -49,16 +49,69 @@
  *
  */
 
-#include <openssl/opensslv.h>
+#include <assert.h>
 #include <openssl/aes.h>
 #include "aes_locl.h"
 
-const char *AES_version="AES" OPENSSL_VERSION_PTEXT;
+/* NOTE: CTR mode is big-endian.  The rest of the AES code
+ * is endian-neutral. */
 
-const char *AES_options(void) {
-#ifdef FULL_UNROLL
-        return "aes(full)";
-#else   
-        return "aes(partial)";
+/* increment counter (128-bit int) by 2^64 */
+static void AES_ctr128_inc(unsigned char *counter) {
+	unsigned long c;
+
+	/* Grab 3rd dword of counter and increment */
+#ifdef L_ENDIAN
+	c = GETU32(counter + 8);
+	c++;
+	PUTU32(counter + 8, c);
+#else
+	c = GETU32(counter + 4);
+	c++;
+	PUTU32(counter + 4, c);
 #endif
+
+	/* if no overflow, we're done */
+	if (c)
+		return;
+
+	/* Grab top dword of counter and increment */
+#ifdef L_ENDIAN
+	c = GETU32(counter + 12);
+	c++;
+	PUTU32(counter + 12, c);
+#else
+	c = GETU32(counter +  0);
+	c++;
+	PUTU32(counter +  0, c);
+#endif
+
+}
+
+/* The input encrypted as though 128bit counter mode is being
+ * used.  The extra state information to record how much of the
+ * 128bit block we have used is contained in *num;
+ */
+void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
+	const unsigned long length, const AES_KEY *key,
+	unsigned char *counter, unsigned int *num) {
+
+	unsigned int n;
+	unsigned long l=length;
+	unsigned char tmp[AES_BLOCK_SIZE];
+
+	assert(in && out && key && counter && num);
+
+	n = *num;
+
+	while (l--) {
+		if (n == 0) {
+			AES_ctr128_inc(counter);
+			AES_encrypt(counter, tmp, key);
+		}
+		*(out++) = *(in++) ^ tmp[n];
+		n = (n+1) % AES_BLOCK_SIZE;
+	}
+
+	*num=n;
 }

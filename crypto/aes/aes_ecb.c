@@ -1,6 +1,6 @@
 /* crypto/aes/aes_ecb.c -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
