@@ -329,7 +329,6 @@ PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, EVP_CIPHER *cipher,
 	BIO *p7bio = NULL;
 	int i;
 	X509 *x509;
-	char inbuf[4096];
 	static char txthdr[] = "Content-type: text/plain\r\n\r\n";
 	if(!(p7 = PKCS7_new())) {
 		PKCS7err(PKCS7_F_PKCS7_ENCRYPT,ERR_R_MALLOC_FAILURE);

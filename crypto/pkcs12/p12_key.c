@@ -104,13 +104,12 @@ int PKCS12_key_gen_uni (unsigned char *pass, int passlen, unsigned char *salt,
 #ifdef  DEBUG_KEYGEN
 	unsigned char *tmpout = out;
 	int tmpn = n;
-	BIO_printf (bio_err, "KEYGEN DEBUG\n");
-	BIO_printf (bio_err, "ID %d, ITER %d\n", id, iter);
-	BIO_printf (bio_err, "Password (length %d):\n", passlen);
-	h__dump (pass, passlen);
-	BIO_printf (bio_err, "Salt (length %d):\n", saltlen);
-	h__dump (salt, saltlen);
-	BIO_printf (bio_err, "ID %d, ITER %d\n\n", id, iter);
+	fprintf(stderr, "KEYGEN DEBUG\n");
+	fprintf(stderr, "ID %d, ITER %d\n", id, iter);
+	fprintf(stderr, "Password (length %d):\n", passlen);
+	h__dump(pass, passlen);
+	fprintf(stderr, "Salt (length %d):\n", saltlen);
+	h__dump(salt, saltlen);
 #endif
 	v = EVP_MD_block_size (md_type);
 	u = EVP_MD_size (md_type);
@@ -150,8 +149,8 @@ int PKCS12_key_gen_uni (unsigned char *pass, int passlen, unsigned char *salt,
 			BN_free (Ij);
 			BN_free (Bpl1);
 #ifdef DEBUG_KEYGEN
-			BIO_printf (bio_err, "Output KEY (length %d)\n", tmpn);
-			h__dump (tmpout, tmpn);
+			fprintf(stderr, "Output KEY (length %d)\n", tmpn);
+			h__dump(tmpout, tmpn);
 #endif
 			return 1;	
 		}
@@ -176,7 +175,7 @@ int PKCS12_key_gen_uni (unsigned char *pass, int passlen, unsigned char *salt,
 #ifdef DEBUG_KEYGEN
 void h__dump (unsigned char *p, int len)
 {
-	for (; len --; p++) BIO_printf (bio_err, "%02X", *p);
-	BIO_printf (bio_err, "\n");	
+	for (; len --; p++) fprintf(stderr, "%02X", *p);
+	fprintf(stderr, "\n");	
 }
 #endif
