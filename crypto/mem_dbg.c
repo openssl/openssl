@@ -106,7 +106,29 @@ typedef struct mem_st
 	APP_INFO *app_info;
 	} MEM;
 
-static int options = V_CRYPTO_MDEBUG_TIME | V_CRYPTO_MDEBUG_THREAD;
+
+#ifdef CRYPTO_MDEBUG_ALL
+# ifndef CRYPTO_MDEBUG_TIME
+#  define CRYPTO_MDEBUG_TIME
+# endif
+# ifndef CRYPTO_MDEBUG_THREAD
+#  define CRYPTO_MDEBUG_THREAD
+# endif
+#endif
+
+/* Get defaults that will depend on some macros defined elsewhere */
+#ifdef CRYPTO_MDEBUG_TIME
+#define DEF_V_CRYPTO_MDEBUG_TIME V_CRYPTO_MDEBUG_TIME
+#else
+#define DEF_V_CRYPTO_MDEBUG_TIME 0
+#endif
+#ifdef CRYPTO_MDEBUG_THREAD
+#define DEF_V_CRYPTO_MDEBUG_THREAD V_CRYPTO_MDEBUG_THREAD
+#else
+#define DEF_V_CRYPTO_MDEBUG_THREAD 0
+#endif
+
+static int options = DEF_V_CRYPTO_MDEBUG_TIME | DEF_V_CRYPTO_MDEBUG_THREAD;
 
 
 int CRYPTO_mem_ctrl(int mode)

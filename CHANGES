@@ -12,6 +12,12 @@
      memory debugging code.  OpenSSL already comes with code that finds
      memory leaks, but this gives people a chance to debug other memory
      problems.
+
+     This change means that a call `CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON)'
+     is no longer dependent on if the macro CRYPTO_MDEBUG or friends were
+     used when the OpenSSL libcrypto was built.  This is under debate and
+     may change back, but with another option to still get debugging even
+     if the library wasn't compiled that way.
      [Richard Levitte]
 
   *) Some S/MIME fixes. The OID for SMIMECapabilities was wrong, the

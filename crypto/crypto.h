@@ -149,6 +149,14 @@ extern "C" {
 #define CRYPTO_MEM_CHECK_ENABLE	0x2	/* a bit */
 #define CRYPTO_MEM_CHECK_DISABLE 0x3	/* an enume */
 
+/* The following are bit values to turn on or off options connected to the
+ * malloc checking functionality */
+
+/* Adds time to the memory checking information */
+#define V_CRYPTO_MDEBUG_TIME	0x1 /* a bit */
+/* Adds thread number to the memory checking information */
+#define V_CRYPTO_MDEBUG_THREAD	0x2 /* a bit */
+
 /*
 typedef struct crypto_mem_st
 	{
@@ -196,34 +204,12 @@ typedef struct crypto_ex_data_func_st
 #define CRYPTO_EX_INDEX_X509_STORE	4
 #define CRYPTO_EX_INDEX_X509_STORE_CTX	5
 
+
 /* This is the default callbacks, but we can have others as well */
 #define CRYPTO_malloc_init()	CRYPTO_set_mem_functions(\
 	(char *(*)())malloc,\
 	(char *(*)())realloc,\
 	(void (*)())free)
-
-
-
-#ifdef CRYPTO_MDEBUG_ALL
-# ifndef CRYPTO_MDEBUG_TIME
-#  define CRYPTO_MDEBUG_TIME
-# endif
-# ifndef CRYPTO_MDEBUG_THREAD
-#  define CRYPTO_MDEBUG_THREAD
-# endif
-#endif
-
-/* Magic to make sure we get correct values */
-#ifdef CRYPTO_MDEBUG_TIME
-#define V_CRYPTO_MDEBUG_TIME 1
-#else
-#define V_CRYPTO_MDEBUG_TIME 0
-#endif
-#ifdef CRYPTO_MDEBUG_THREAD
-#define V_CRYPTO_MDEBUG_THREAD 2
-#else
-#define V_CRYPTO_MDEBUG_THREAD 0
-#endif
 
 #define CRYPTO_malloc_debug_init()	do {\
 	CRYPTO_set_mem_debug_functions(\
@@ -232,10 +218,9 @@ typedef struct crypto_ex_data_func_st
 		(void (*)())CRYPTO_dbg_free,\
 		(void (*)())CRYPTO_dbg_set_options,\
 		(void (*)())CRYPTO_dbg_get_options);\
-	CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_TIME|V_CRYPTO_MDEBUG_THREAD);\
 	} while(0);
 
-#if defined CRYPTO_MDEBUG_TIME || defined CRYPTO_MDEBUG_THREAD
+#if defined CRYPTO_MDEBUG_ALL || defined CRYPTO_MDEBUG_TIME || defined CRYPTO_MDEBUG_THREAD
 # ifndef CRYPTO_MDEBUG /* avoid duplicate #define */
 #  define CRYPTO_MDEBUG
 # endif
@@ -329,7 +314,7 @@ int CRYPTO_remove_all_info(void);
  */
 void CRYPTO_dbg_malloc(void *addr,int num,const char *file,int line,int before_p);
 void CRYPTO_dbg_realloc(void *addr1,void *addr2,int num,const char *file,int line,int before_p);
-void CRYPTO_dbg_free(void *,int before_p);
+void CRYPTO_dbg_free(void *addr,int before_p);
 
 /* Tell the debugging code about options.  By default, the following values
  * apply:
