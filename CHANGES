@@ -12,6 +12,10 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Use wNAFs in EC_POINTs_mul() for improved efficiency (about 10%
+     better than before for single multiplications over P-192 or P-224).
+     [Bodo Moeller]
+
   -) [In 0.9.6c-engine release:]
      Add support for Broadcom crypto accelerator cards, backported
      from 0.9.7.
@@ -943,9 +947,12 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      don't write to the wrong index in ERR_set_error_data.
      [Bodo Moeller]
 
-  +) Function EC_POINTs_mul for simultaneous scalar multiplication
-     of an arbitrary number of elliptic curve points, optionally
-     including the generator defined for the EC_GROUP.
+  +) Function EC_POINTs_mul for multiple scalar multiplication
+     of an arbitrary number of elliptic curve points
+          \sum scalars[i]*points[i],
+     optionally including the generator defined for the EC_GROUP:
+          scalar*generator +  \sum scalars[i]*points[i].
+
      EC_POINT_mul is a simple wrapper function for the typical case
      that the point list has just one item (besides the optional
      generator).

@@ -66,6 +66,7 @@
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA EC_str_functs[]=
 	{
+{ERR_PACK(0,EC_F_COMPUTE_WNAF,0),	"COMPUTE_WNAF"},
 {ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_DECODE,0),	"ec_GFp_mont_field_decode"},
 {ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_ENCODE,0),	"ec_GFp_mont_field_encode"},
 {ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_MUL,0),	"ec_GFp_mont_field_mul"},

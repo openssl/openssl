@@ -177,6 +177,7 @@ void ERR_load_EC_strings(void);
 /* Error codes for the EC functions. */
 
 /* Function codes. */
+#define EC_F_COMPUTE_WNAF				 143
 #define EC_F_EC_GFP_MONT_FIELD_DECODE			 133
 #define EC_F_EC_GFP_MONT_FIELD_ENCODE			 134
 #define EC_F_EC_GFP_MONT_FIELD_MUL			 131
