@@ -8,13 +8,14 @@ rand - pseudo-random number generator
 
  #include <openssl/rand.h>
 
+ int  RAND_set_rand_engine(ENGINE *engine);
+
  int  RAND_bytes(unsigned char *buf, int num);
  int  RAND_pseudo_bytes(unsigned char *buf, int num);
 
  void RAND_seed(const void *buf, int num);
  void RAND_add(const void *buf, int num, int entropy);
  int  RAND_status(void);
- void RAND_screen(void);
 
  int  RAND_load_file(const char *file, long max_bytes);
  int  RAND_write_file(const char *file);
@@ -22,13 +23,30 @@ rand - pseudo-random number generator
 
  int  RAND_egd(const char *path);
 
- void RAND_set_rand_method(RAND_METHOD *meth);
- RAND_METHOD *RAND_get_rand_method(void);
+ void RAND_set_rand_method(const RAND_METHOD *meth);
+ const RAND_METHOD *RAND_get_rand_method(void);
  RAND_METHOD *RAND_SSLeay(void);
 
  void RAND_cleanup(void);
 
+ /* For Win32 only */
+ void RAND_screen(void);
+ int RAND_event(UINT, WPARAM, LPARAM);
+
 =head1 DESCRIPTION
+
+Since the introduction of the ENGINE API, the recommended way of controlling
+default implementations is by using the ENGINE API functions. The default
+B<RAND_METHOD>, as set by RAND_set_rand_method() and returned by
+RAND_get_rand_method(), is only used if no ENGINE has been set as the default
+"rand" implementation. Hence, these two functions are no longer the recommened
+way to control defaults.
+
+If an alternative B<RAND_METHOD> implementation is being used (either set
+directly or as provided by an ENGINE module), then it is entirely responsible
+for the generation and management of a cryptographically secure PRNG stream. The
+mechanisms described below relate solely to the software PRNG implementation
+built in to OpenSSL and used by default.
 
 These functions implement a cryptographically secure pseudo-random
 number generator (PRNG). It is used by other library functions for

@@ -24,6 +24,13 @@ functions.  The B<EVP_Digest>I<...> functions provide message digests.
 
 Algorithms are loaded with OpenSSL_add_all_algorithms(3).
 
+All the symmetric algorithms (ciphers) and digests can be replaced by ENGINE
+modules providing alternative implementations. If ENGINE implementations of
+ciphers or digests are registered as defaults, then the various EVP functions
+will automatically use those implementations automatically in preference to
+built in software implementations. For more information, consult the engine(3)
+man page.
+
 =head1 SEE ALSO
 
 L<EVP_DigestInit(3)|EVP_DigestInit(3)>,
@@ -32,6 +39,7 @@ L<EVP_OpenInit(3)|EVP_OpenInit(3)>,
 L<EVP_SealInit(3)|EVP_SealInit(3)>,
 L<EVP_SignInit(3)|EVP_SignInit(3)>,
 L<EVP_VerifyInit(3)|EVP_VerifyInit(3)>,
-L<OpenSSL_add_all_algorithms(3)|OpenSSL_add_all_algorithms(3)>
+L<OpenSSL_add_all_algorithms(3)|OpenSSL_add_all_algorithms(3)>,
+L<engine(3)|engine(3)>
 
 =cut

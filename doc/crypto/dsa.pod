@@ -12,13 +12,13 @@ dsa - Digital Signature Algorithm
  DSA *	DSA_new(void);
  void	DSA_free(DSA *dsa);
 
- int	DSA_size(DSA *dsa);
+ int	DSA_size(const DSA *dsa);
 
  DSA *	DSA_generate_parameters(int bits, unsigned char *seed,
                 int seed_len, int *counter_ret, unsigned long *h_ret,
 		void (*callback)(int, int, void *), void *cb_arg);
 
- DH *	DSA_dup_DH(DSA *r);
+ DH *	DSA_dup_DH(const DSA *r);
 
  int	DSA_generate_key(DSA *dsa);
 
@@ -27,13 +27,13 @@ dsa - Digital Signature Algorithm
  int	DSA_sign_setup(DSA *dsa, BN_CTX *ctx, BIGNUM **kinvp,
                 BIGNUM **rp);
  int	DSA_verify(int dummy, const unsigned char *dgst, int len,
-		unsigned char *sigbuf, int siglen, DSA *dsa);
+		const unsigned char *sigbuf, int siglen, DSA *dsa);
 
- void DSA_set_default_openssl_method(DSA_METHOD *meth);
- DSA_METHOD *DSA_get_default_openssl_method(void);
- int DSA_set_method(DSA *dsa, ENGINE *engine);
+ void DSA_set_default_method(const DSA_METHOD *meth);
+ const DSA_METHOD *DSA_get_default_method(void);
+ int DSA_set_method(DSA *dsa, const DSA_METHOD *meth);
  DSA *DSA_new_method(ENGINE *engine);
- DSA_METHOD *DSA_OpenSSL(void);
+ const DSA_METHOD *DSA_OpenSSL(void);
 
  int DSA_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 	     int (*dup_func)(), void (*free_func)());
@@ -42,7 +42,7 @@ dsa - Digital Signature Algorithm
 
  DSA_SIG *DSA_SIG_new(void);
  void	DSA_SIG_free(DSA_SIG *a);
- int	i2d_DSA_SIG(DSA_SIG *a, unsigned char **pp);
+ int	i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);
  DSA_SIG *d2i_DSA_SIG(DSA_SIG **v, unsigned char **pp, long length);
 
  DSA_SIG *DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
@@ -52,14 +52,14 @@ dsa - Digital Signature Algorithm
  DSA *	d2i_DSAPublicKey(DSA **a, unsigned char **pp, long length);
  DSA *	d2i_DSAPrivateKey(DSA **a, unsigned char **pp, long length);
  DSA * 	d2i_DSAparams(DSA **a, unsigned char **pp, long length);
- int	i2d_DSAPublicKey(DSA *a, unsigned char **pp);
- int 	i2d_DSAPrivateKey(DSA *a, unsigned char **pp);
- int	i2d_DSAparams(DSA *a,unsigned char **pp);
+ int	i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
+ int 	i2d_DSAPrivateKey(const DSA *a, unsigned char **pp);
+ int	i2d_DSAparams(const DSA *a,unsigned char **pp);
 
- int	DSAparams_print(BIO *bp, DSA *x);
- int	DSAparams_print_fp(FILE *fp, DSA *x);
- int	DSA_print(BIO *bp, DSA *x, int off);
- int	DSA_print_fp(FILE *bp, DSA *x, int off);
+ int	DSAparams_print(BIO *bp, const DSA *x);
+ int	DSAparams_print_fp(FILE *fp, const DSA *x);
+ int	DSA_print(BIO *bp, const DSA *x, int off);
+ int	DSA_print_fp(FILE *bp, const DSA *x, int off);
 
 =head1 DESCRIPTION
 
@@ -85,6 +85,14 @@ The B<DSA> structure consists of several BIGNUM components.
 
 In public keys, B<priv_key> is NULL.
 
+Note that DSA keys may use non-standard B<DSA_METHOD> implementations,
+either directly or by the use of B<ENGINE> modules. In some cases (eg. an
+ENGINE providing support for hardware-embedded keys), these BIGNUM values
+will not be used by the implementation or may be used for alternative data
+storage. For this reason, applications should generally avoid using DSA
+structure elements directly and instead use API functions to query or
+modify keys.
+
 =head1 CONFORMING TO
 
 US Federal Information Processing Standard FIPS 186 (Digital Signature
@@ -93,7 +101,8 @@ Standard, DSS), ANSI X9.30
 =head1 SEE ALSO
 
 L<bn(3)|bn(3)>, L<dh(3)|dh(3)>, L<err(3)|err(3)>, L<rand(3)|rand(3)>,
-L<rsa(3)|rsa(3)>, L<sha(3)|sha(3)>, L<DSA_new(3)|DSA_new(3)>,
+L<rsa(3)|rsa(3)>, L<sha(3)|sha(3)>, L<engine(3)|engine(3)>,
+L<DSA_new(3)|DSA_new(3)>,
 L<DSA_size(3)|DSA_size(3)>,
 L<DSA_generate_parameters(3)|DSA_generate_parameters(3)>,
 L<DSA_dup_DH(3)|DSA_dup_DH(3)>,

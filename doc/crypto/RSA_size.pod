@@ -8,7 +8,7 @@ RSA_size - get RSA modulus size
 
  #include <openssl/rsa.h>
 
- int RSA_size(RSA *rsa);
+ int RSA_size(const RSA *rsa);
 
 =head1 DESCRIPTION
 
