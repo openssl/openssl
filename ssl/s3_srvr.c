@@ -287,9 +287,19 @@ int ssl3_accept(SSL *s)
 
 		case SSL3_ST_SW_CERT_REQ_A:
 		case SSL3_ST_SW_CERT_REQ_B:
-			if (!(s->verify_mode & SSL_VERIFY_PEER) ||
+			if (/* don't request cert unless asked for it: */
+				!(s->verify_mode & SSL_VERIFY_PEER) ||
+				/* if SSL_VERIFY_CLIENT_ONCE is set,
+				 * don't request cert during re-negotiation: */
 				((s->session->peer != NULL) &&
-				 (s->verify_mode & SSL_VERIFY_CLIENT_ONCE)))
+				 (s->verify_mode & SSL_VERIFY_CLIENT_ONCE)) ||
+				/* never request cert in anonymous ciphersuites
+				 * (see section "Certificate request" in SSL 3 drafts
+				 * and in RFC 2246): */
+				((s->s3->tmp.new_cipher->algorithms & SSL_aNULL) &&
+				 /* ... except when the application insists on verification
+				  * (against the specs, but s3_clnt.c accepts this for SSL 3) */
+				 !(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)))
 				{
 				/* no cert request */
 				skip=1;
@@ -1531,7 +1541,7 @@ static int ssl3_get_client_certificate(SSL *s)
 			al=SSL_AD_HANDSHAKE_FAILURE;
 			goto f_err;
 			}
-		/* If tls asked for a client cert we must return a 0 list */
+		/* If tls asked for a client cert, the client must return a 0 list */
 		if ((s->version > SSL3_VERSION) && s->s3->tmp.cert_request)
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST);

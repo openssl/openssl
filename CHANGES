@@ -4,6 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) SSL 3/TLS 1 servers now don't request certificates when an anonymous
+     ciphersuites has been selected (as required by the SSL 3/TLS 1
+     specifications).  Exception: When SSL_VERIFY_FAIL_IF_NO_PEER_CERT
+     is set, we interpret this as a request to violate the specification
+     (the worst that can happen is a handshake failure, and 'correct'
+     behaviour would result in a handshake failure anyway).
+     [Bodo Moeller]
+
   *) In SSL_CTX_add_session, take into account that there might be multiple
      SSL_SESSION structures with the same session ID (e.g. when two threads
      concurrently obtain them from an external cache).
