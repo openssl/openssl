@@ -903,7 +903,7 @@ static int surewarehk_modexp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 						 (unsigned long *)p->d,
 						 a->top*sizeof(BN_ULONG),
 						 (unsigned long *)a->d,
-						 r->d);
+						 (unsigned long *)r->d);
 			surewarehk_error_handling(msg,ENGINE_F_SUREWAREHK_MOD_EXP,ret);
 			if (ret==1)
 			{
