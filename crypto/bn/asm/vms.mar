@@ -261,6 +261,7 @@ d=12 ;(AP)	d	by value (input)
 	movl	#0,r5
 	movl	#0,r8
 	movl	#0,r0
+;	movl	#0,r1
 
 	rotl	#-1,r2,r6	; a20 = l >> 1 (almost)
 	rotl	#-1,r3,r7	; a21 = h >> 1 (almost)
@@ -278,17 +279,17 @@ d=12 ;(AP)	d	by value (input)
 	xorl2	#^X80000000,r7	; fixup a21 so highest bit is 1
 2$:
 	tstl	r9
-	bgeq	666$		; Uh-oh, the divisor is 0...
+	beq	666$		; Uh-oh, the divisor is 0...
 	bgtr	3$
-	xorl2	#^X80000000,r9	; fixup b2 so highest bit is 1
-	incl	r8
+	xorl2	#^X80000000,r9	; fixup b2 so highest bit is 0
+	incl	r8		; b' = 1
 3$:
 	tstl	r9
-	bneq	4$		; if b2 is 0, we know that bprim is 1
-	tstl	r7
+	bneq	4$		; if b2 is 0, we know that b' is 1
+	tstl	r3
 	bneq	666$		; if higher half isn't 0, we overflow
-	movl	r0,r6		; otherwise, we have our result
-	brb	42$
+	movl	r2,r10		; otherwise, we have our result
+	brb	42$		; This is a success, really.
 4$:
 	ediv	r9,r6,r10,r11
 
