@@ -156,7 +156,7 @@ $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	if [ "$${shlib_target}" = "hpux-shared" -o "$${shlib_target}" = "darwin-shared" ] ; then \
+	if [ "$${shlib_target}" = "darwin-shared" ] ; then \
 	  LIBRARIES="$(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO)" ; \
 	else \
 	  LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
