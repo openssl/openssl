@@ -72,9 +72,10 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
       if (sizeof(TCHAR) != sizeof(char))
 	{
 	  TCHAR *wdir = NULL;
-	  size_t index = 0,len = strlen(direcory);
+	  /* len_0 denotes string length *with* trailing 0 */ 
+	  size_t index = 0,len_0 = strlen(direcory) + 1;
 
-	  wdir = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
+	  wdir = (TCHAR *)malloc(len_0 * sizeof(TCHAR));
 	  if (wdir == NULL)
 	    {
 	      free(*ctx);
@@ -84,9 +85,9 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
 	    }
 
 #ifdef LP_MULTIBYTE_AVAILABLE
-	  if (!MultiByteToWideChar(CP_ACP, 0, directory, len, wdir, len + 1))
+	  if (!MultiByteToWideChar(CP_ACP, 0, directory, len_0, wdir, len_0))
 #endif
-	    for (index = 0; index < strlen(directory) + 1; index++)
+	    for (index = 0; index < len_0; index++)
 	      wdir[index] = (TCHAR)directory[index];
 
 	  (*ctx)->handle = FindFirstFile(wdir, &(*ctx)->ctx);
@@ -115,16 +116,16 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
   if (sizeof(TCHAR) != sizeof(char))
     {
       TCHAR *wdir = (*ctx)->ctx.cFileName;
-      size_t index, len;
+      size_t index, len_0 = 0;
 
-      for (len = 0; wdir[len] && len < (sizeof((*ctx)->entry_name) - 1);)
-	len++;
+      while (wdir[len] && len < (sizeof((*ctx)->entry_name) - 1)) len_0++;
+      len_0++;
 
 #ifdef LP_MULTIBYTE_AVAILABLE
-      if (!WideCharToMultiByte(CP_ACP, 0, wdir, len, (*ctx)->entry_name,
-			       sizeof((*ctx)->entry_name) - 1, NULL, 0))
+      if (!WideCharToMultiByte(CP_ACP, 0, wdir, len_0, (*ctx)->entry_name,
+			       sizeof((*ctx)->entry_name), NULL, 0))
 #endif
-	for (index = 0; index < len; index++)
+	for (index = 0; index < len_0; index++)
 	  (*ctx)->entry_name[index] = (char)wdir[index];
     }
   else
