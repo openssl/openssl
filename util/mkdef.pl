@@ -314,6 +314,10 @@ sub do_defs
 	    		}
 
 			s/\/\*.*?\*\///gs;                   # ignore comments
+			if (/\/\*/) {                        # if we have part
+				$line = $_;                  # of a comment,
+				next;                        # continue reading
+			}
 			s/{[^{}]*}//gs;                      # ignore {} blocks
 			if (/^\#\s*ifndef (.*)/) {
 				push(@tag,$1);
