@@ -11,7 +11,7 @@ loop: while ($#primes < $num-1)
 	$p+=2;
 	$s=int(sqrt($p));
 
-	for ($i=0; $primes[$i]<=$s; $i++)
+	for ($i=0; defined($primes[$i]) && $primes[$i]<=$s; $i++)
 		{
 		next loop if (($p%$primes[$i]) == 0);
 		}

@@ -4,6 +4,14 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Fix prime generation loop in crypto/bn/bn_prime.pl by making
+     sure the loop does correctly stop and breaking ("division by zero")
+     modulus operations are not performed. The (pre-generated) prime
+     table crypto/bn/bn_prime.h was already correct, but it could not be
+     re-generated on some platforms because of the "division by zero"
+     situation in the script.
+     [Ralf S. Engelschall]
+
   *) Update support for ECC-based TLS ciphersuites according to
      draft-ietf-tls-ecc-03.txt: the KDF1 key derivation function with
      SHA-1 now is only used for "small" curves (where the
