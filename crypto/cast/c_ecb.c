@@ -63,13 +63,13 @@
 char *CAST_version="CAST" OPENSSL_VERSION_PTEXT;
 
 void CAST_ecb_encrypt(const unsigned char *in, unsigned char *out,
-		      CAST_KEY *ks, int _encrypt)
+		      CAST_KEY *ks, int enc)
 	{
 	CAST_LONG l,d[2];
 
 	n2l(in,l); d[0]=l;
 	n2l(in,l); d[1]=l;
-	if (_encrypt)
+	if (enc)
 		CAST_encrypt(d,ks);
 	else
 		CAST_decrypt(d,ks);

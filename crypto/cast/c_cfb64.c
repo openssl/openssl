@@ -66,7 +66,7 @@
 
 void CAST_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 			long length, CAST_KEY *schedule, unsigned char *ivec,
-			int *num, int _encrypt)
+			int *num, int enc)
 	{
 	register CAST_LONG v0,v1,t;
 	register int n= *num;
@@ -75,7 +75,7 @@ void CAST_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 	unsigned char *iv,c,cc;
 
 	iv=ivec;
-	if (_encrypt)
+	if (enc)
 		{
 		while (l--)
 			{
