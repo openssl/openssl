@@ -441,9 +441,9 @@ int ssl3_connect(SSL *s)
 		skip=0;
 		}
 end:
+	s->in_handshake--;
 	if (cb != NULL)
 		cb(s,SSL_CB_CONNECT_EXIT,ret);
-	s->in_handshake--;
 	return(ret);
 	}
 
