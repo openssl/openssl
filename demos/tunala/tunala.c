@@ -80,7 +80,7 @@ static int selector_select(tunala_selector_t *selector);
  * which case *newfd is populated. */
 static int selector_get_listener(tunala_selector_t *selector, int fd, int *newfd);
 static int tunala_world_new_item(tunala_world_t *world, int fd,
-		const unsigned char *ip, unsigned short port, int flipped);
+		const char *ip, unsigned short port, int flipped);
 static void tunala_world_del_item(tunala_world_t *world, unsigned int idx);
 static int tunala_item_io(tunala_selector_t *selector, tunala_item_t *item);
 
@@ -219,9 +219,7 @@ static int err_str1(const char *fmt, const char *str1)
 static int parse_max_tunnels(const char *s, unsigned int *maxtunnels)
 {
 	unsigned long l;
-	char *temp;
-	l = strtoul(s, &temp, 10);
-	if((temp == s) || (*temp != '\0') || (l < 1) || (l > 1024)) {
+	if(!int_strtoul(s, &l) || (l < 1) || (l > 1024)) {
 		fprintf(stderr, "Error, '%s' is an invalid value for "
 				"maxtunnels\n", s);
 		return 0;
@@ -233,9 +231,7 @@ static int parse_max_tunnels(const char *s, unsigned int *maxtunnels)
 static int parse_server_mode(const char *s, int *servermode)
 {
 	unsigned long l;
-	char *temp;
-	l = strtoul(s, &temp, 10);
-	if((temp == s) || (*temp != '\0') || (l > 1)) {
+	if(!int_strtoul(s, &l) || (l > 1)) {
 		fprintf(stderr, "Error, '%s' is an invalid value for the "
 				"server mode\n", s);
 		return 0;
@@ -258,9 +254,7 @@ static int parse_dh_special(const char *s, const char **dh_special)
 static int parse_verify_level(const char *s, unsigned int *verify_level)
 {
 	unsigned long l;
-	char *temp;
-	l = strtoul(s, &temp, 10);
-	if((temp == s) || (*temp != '\0') || (l > 3)) {
+	if(!int_strtoul(s, &l) || (l > 3)) {
 		fprintf(stderr, "Error, '%s' is an invalid value for "
 				"out_verify\n", s);
 		return 0;
@@ -272,9 +266,7 @@ static int parse_verify_level(const char *s, unsigned int *verify_level)
 static int parse_verify_depth(const char *s, unsigned int *verify_depth)
 {
 	unsigned long l;
-	char *temp;
-	l = strtoul(s, &temp, 10);
-	if((temp == s) || (*temp != '\0') || (l < 1) || (l > 50)) {
+	if(!int_strtoul(s, &l) || (l < 1) || (l > 50)) {
 		fprintf(stderr, "Error, '%s' is an invalid value for "
 				"verify_depth\n", s);
 		return 0;
@@ -299,7 +291,7 @@ int main(int argc, char *argv[])
 	int newfd;
 	tunala_world_t world;
 	tunala_item_t *t_item;
-	unsigned char *proxy_ip;
+	const char *proxy_ip;
 	unsigned short proxy_port;
 	/* Overridables */
 	const char *proxyhost = def_proxyhost;
@@ -527,7 +519,7 @@ main_loop:
 	switch(selector_select(&world.selector)) {
 	case -1:
 		fprintf(stderr, "selector_select returned a badness error.\n");
-		abort();
+		goto shouldnt_happen;
 	case 0:
 		fprintf(stderr, "Warn, selector_select returned 0 - signal??\n");
 		goto main_loop;
@@ -589,6 +581,7 @@ skip_totals:
 	}
 	goto main_loop;
 	/* Should never get here */
+shouldnt_happen:
 	abort();
 	return 1;
 }
@@ -736,6 +729,7 @@ static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 	if(meth == NULL)
 		goto err;
 	if(engine_id) {
+		ENGINE_load_builtin_engines();
 		if((e = ENGINE_by_id(engine_id)) == NULL) {
 			fprintf(stderr, "Error obtaining '%s' engine, openssl "
 					"errors follow\n", engine_id);
@@ -935,7 +929,7 @@ static int tunala_world_make_room(tunala_world_t *world)
 }
 
 static int tunala_world_new_item(tunala_world_t *world, int fd,
-		const unsigned char *ip, unsigned short port, int flipped)
+		const char *ip, unsigned short port, int flipped)
 {
 	tunala_item_t *item;
 	int newfd;

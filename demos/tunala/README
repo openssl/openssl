@@ -188,20 +188,16 @@ flags inside the Makefile. Likewise, if you want to tweak the building, it's
 best to try and do so in the makefile (eg. removing the debug flags and adding
 optimisation flags).
 
-Secondly, this code so far has only ever been built and run on Linux - network
-specifics are more than likely to create little glitches on other unixen,
-particularly Solaris in my experience. If you're not on Linux, please read the
-code wherever compilation flares up and try to make the necessary changes -
-usually the man-page associated with the relevant function is enough (eg. all
-that AF_INET/PF_INET stuff, subtlely different parameters to various
-IPv4-related functions like socket(), bind(), fcntl(), etc).
+Secondly, this code has mostly only been tested on Linux. However, some
+autoconf/etc support has been added and the code has been compiled on openbsd
+and solaris using that.
 
 Thirdly, if you are Win32, you probably need to do some *major* rewriting of
 ip.c to stand a hope in hell. Good luck, and please mail me the diff if you do
 this, otherwise I will take a look at another time. It can certainly be done,
 but it's very non-POSIXy.
 
-Type make.
+See the INSTALL document for details on building.
 
 Now, if you don't have an executable "tunala" compiled, go back to "First,...".
 Rinse and repeat.
@@ -217,8 +213,10 @@ In another console, type;
               -cert A-server.pem -server 1 -out_totals -v_peer -v_strict
 
 Now if you open another console and "telnet localhost 8080", you should be
-tunneled through to the telnet service on your local machine. Feel free to
-experiment :-)
+tunneled through to the telnet service on your local machine (if it's running -
+you could change it to port "22" and tunnel ssh instead if you so desired). When
+you logout of the telnet session, the tunnel should cleanly shutdown and show
+you some traffic stats in both consoles. Feel free to experiment. :-)
 
 Notes:
 

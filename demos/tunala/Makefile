@@ -11,14 +11,14 @@ RM=rm -f
 CC=gcc
 DEBUG_FLAGS=-g -ggdb3 -Wall -Wshadow
 INCLUDE_FLAGS=-I$(SSL_INCLUDEDIR)
-CFLAGS=$(DEBUG_FLAGS) $(INCLUDE_FLAGS)
+CFLAGS=$(DEBUG_FLAGS) $(INCLUDE_FLAGS) -DNO_CONFIG_H
 COMPILE=$(CC) $(CFLAGS) -c
 
 # Edit, particularly the "-ldl" if not building with "dlfcn" support
 LINK_FLAGS=-L$(SSL_LIBDIR) -lssl -lcrypto -ldl
 
-SRCS=buffer.c cb.c ip.c sm.c tunala.c
-OBJS=buffer.o cb.o ip.o sm.o tunala.o
+SRCS=buffer.c cb.c ip.c sm.c tunala.c breakage.c
+OBJS=buffer.o cb.o ip.o sm.o tunala.o breakage.o
 
 TARGETS=tunala
 

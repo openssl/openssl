@@ -17,13 +17,57 @@
 #ifndef _TUNALA_H
 #define _TUNALA_H
 
+/* pull in autoconf fluff */
+#ifndef NO_CONFIG_H
+#include "config.h"
+#else
+/* We don't have autoconf, we have to set all of these unless a tweaked Makefile
+ * tells us not to ... */
+/* headers */
+#ifndef NO_HAVE_SELECT
+#define HAVE_SELECT
+#endif
+#ifndef NO_HAVE_SOCKET
+#define HAVE_SOCKET
+#endif
+#ifndef NO_HAVE_UNISTD_H
+#define HAVE_UNISTD_H
+#endif
+#ifndef NO_HAVE_FCNTL_H
+#define HAVE_FCNTL_H
+#endif
+#ifndef NO_HAVE_LIMITS_H
+#define HAVE_LIMITS_H
+#endif
+/* features */
+#ifndef NO_HAVE_STRSTR
+#define HAVE_STRSTR
+#endif
+#ifndef NO_HAVE_STRTOUL
+#define HAVE_STRTOUL
+#endif
+#endif
+
+#if !defined(HAVE_SELECT) || !defined(HAVE_SOCKET)
+#error "can't build without some network basics like select() and socket()"
+#endif
+
+#include <stdlib.h>
 #ifndef NO_SYSTEM_H
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
 #include <netdb.h>
 #include <signal.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #endif /* !defined(NO_SYSTEM_H) */
 
@@ -143,20 +187,28 @@ int ip_initialise(void);
 /* ip is the 4-byte ip address (eg. 127.0.0.1 is {0x7F,0x00,0x00,0x01}), port is
  * the port to listen on (host byte order), and the return value is the
  * file-descriptor or -1 on error. */
-int ip_create_listener_split(const unsigned char *ip, unsigned short port);
+int ip_create_listener_split(const char *ip, unsigned short port);
 /* Same semantics as above. */
-int ip_create_connection_split(const unsigned char *ip, unsigned short port);
+int ip_create_connection_split(const char *ip, unsigned short port);
 /* Converts a string into the ip/port before calling the above */
 int ip_create_listener(const char *address);
 int ip_create_connection(const char *address);
 /* Just does a string conversion on its own. NB: If accept_all_ip is non-zero,
  * then the address string could be just a port. Ie. it's suitable for a
  * listening address but not a connecting address. */
-int ip_parse_address(const char *address, unsigned char **parsed_ip,
+int ip_parse_address(const char *address, const char **parsed_ip,
 		unsigned short *port, int accept_all_ip);
 /* Accepts an incoming connection through the listener. Assumes selects and
  * what-not have deemed it an appropriate thing to do. */
 int ip_accept_connection(int listen_fd);
 #endif /* !defined(NO_IP) */
+
+/* These functions wrap up things that can be portability hassles. */
+int int_strtoul(const char *str, unsigned long *val);
+#ifdef HAVE_STRSTR
+#define int_strstr strstr
+#else
+char *int_strstr(const char *haystack, const char *needle);
+#endif
 
 #endif /* !defined(_TUNALA_H) */

@@ -18,7 +18,7 @@ int ip_initialise(void)
 	return 1;
 }
 
-int ip_create_listener_split(const unsigned char *ip, unsigned short port)
+int ip_create_listener_split(const char *ip, unsigned short port)
 {
 	struct sockaddr_in in_addr;
 	int fd = -1;
@@ -36,7 +36,7 @@ int ip_create_listener_split(const unsigned char *ip, unsigned short port)
 	memcpy(&in_addr.sin_addr.s_addr, ip, 4);
 	in_addr.sin_port = htons(port);
 	/* Bind to the required port/address/interface */
-	if(bind(fd, &in_addr, sizeof(struct sockaddr_in)) != 0)
+	if(bind(fd, (struct sockaddr *)&in_addr, sizeof(struct sockaddr_in)) != 0)
 		goto err;
 	/* Start "listening" */
 	if(listen(fd, IP_LISTENER_BACKLOG) != 0)
@@ -48,7 +48,7 @@ err:
 	return -1;
 }
 
-int ip_create_connection_split(const unsigned char *ip, unsigned short port)
+int ip_create_connection_split(const char *ip, unsigned short port)
 {
 	struct sockaddr_in in_addr;
 	int flags, fd = -1;
@@ -65,7 +65,8 @@ int ip_create_connection_split(const unsigned char *ip, unsigned short port)
 	memcpy(&in_addr.sin_addr.s_addr, ip, 4);
 	in_addr.sin_port = htons(port);
 	/* Start a connect (non-blocking, in all likelihood) */
-	if((connect(fd, &in_addr, sizeof(struct sockaddr_in)) != 0) &&
+	if((connect(fd, (struct sockaddr *)&in_addr,
+			sizeof(struct sockaddr_in)) != 0) &&
 			(errno != EINPROGRESS))
 		goto err;
 	return fd;
@@ -75,17 +76,16 @@ err:
 	return -1;
 }
 
-static unsigned char all_local_ip[] = {0x00,0x00,0x00,0x00};
+static char all_local_ip[] = {0x00,0x00,0x00,0x00};
 
-int ip_parse_address(const char *address, unsigned char **parsed_ip,
+int ip_parse_address(const char *address, const char **parsed_ip,
 		unsigned short *parsed_port, int accept_all_ip)
 {
 	char buf[256];
 	struct hostent *lookup;
 	unsigned long port;
-	char *temp;
 	const char *ptr = strstr(address, ":");
-	unsigned char *ip = all_local_ip;
+	const char *ip = all_local_ip;
 
 	if(!ptr) {
 		/* We assume we're listening on all local interfaces and have
@@ -110,8 +110,7 @@ int ip_parse_address(const char *address, unsigned char **parsed_ip,
 determine_port:
 	if(strlen(ptr) < 1)
 		return 0;
-	port = strtoul(ptr, &temp, 10);
-	if((temp == ptr) || (*temp != '\0') || (port > 65535))
+	if(!int_strtoul(ptr, &port) || (port > 65535))
 		return 0;
 	*parsed_ip = ip;
 	*parsed_port = (unsigned short)port;
@@ -120,7 +119,7 @@ determine_port:
 
 int ip_create_listener(const char *address)
 {
-	unsigned char *ip;
+	const char *ip;
 	unsigned short port;
 
 	if(!ip_parse_address(address, &ip, &port, 1))
@@ -130,7 +129,7 @@ int ip_create_listener(const char *address)
 
 int ip_create_connection(const char *address)
 {
-	unsigned char *ip;
+	const char *ip;
 	unsigned short port;
 
 	if(!ip_parse_address(address, &ip, &port, 0))
