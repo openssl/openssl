@@ -129,11 +129,24 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 		goto err;
 	for (;;)
 		{
-		if(!BN_generate_prime_ex(rsa->q, bitsq, 0, NULL, NULL, cb))
+		/* When generating ridiculously small keys, we can get stuck
+		 * continually regenerating the same prime values. Check for
+		 * this and bail if it happens 3 times. */
+		unsigned int degenerate = 0;
+		do
+			{
+			if(!BN_generate_prime_ex(rsa->q, bitsq, 0, NULL, NULL, cb))
+				goto err;
+			} while((BN_cmp(rsa->p, rsa->q) == 0) && (++degenerate < 3));
+		if(degenerate == 3)
+			{
+			ok = 0; /* we set our own err */
+			RSAerr(RSA_F_RSA_GENERATE_KEY,RSA_R_KEY_SIZE_TOO_SMALL);
 			goto err;
+			}
 		if (!BN_sub(r2,rsa->q,BN_value_one())) goto err;
 		if (!BN_gcd(r1,r2,rsa->e,ctx)) goto err;
-		if (BN_is_one(r1) && (BN_cmp(rsa->p,rsa->q) != 0))
+		if (BN_is_one(r1))
 			break;
 		if(!BN_GENCB_call(cb, 2, n++))
 			goto err;
