@@ -380,7 +380,7 @@ int ENGINE_free(ENGINE *e)
 
 int ENGINE_set_id(ENGINE *e, const char *id)
 	{
-	if((e == NULL) || (id == NULL))
+	if(id == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_SET_ID,
 			ERR_R_PASSED_NULL_PARAMETER);
@@ -392,7 +392,7 @@ int ENGINE_set_id(ENGINE *e, const char *id)
 
 int ENGINE_set_name(ENGINE *e, const char *name)
 	{
-	if((e == NULL) || (name == NULL))
+	if(name == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_SET_NAME,
 			ERR_R_PASSED_NULL_PARAMETER);
@@ -404,230 +404,169 @@ int ENGINE_set_name(ENGINE *e, const char *name)
 
 int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth)
 	{
-	if((e == NULL) || (rsa_meth == NULL))
-		{
-		ENGINEerr(ENGINE_F_ENGINE_SET_RSA,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
 	e->rsa_meth = rsa_meth;
 	return 1;
 	}
 
 int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth)
 	{
-	if((e == NULL) || (dsa_meth == NULL))
-		{
-		ENGINEerr(ENGINE_F_ENGINE_SET_DSA,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
 	e->dsa_meth = dsa_meth;
 	return 1;
 	}
 
 int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth)
 	{
-	if((e == NULL) || (dh_meth == NULL))
-		{
-		ENGINEerr(ENGINE_F_ENGINE_SET_DH,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
 	e->dh_meth = dh_meth;
 	return 1;
 	}
 
-int ENGINE_set_RAND(ENGINE *e, RAND_METHOD *rand_meth)
+int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth)
 	{
-	if((e == NULL) || (rand_meth == NULL))
-		{
-		ENGINEerr(ENGINE_F_ENGINE_SET_RAND,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
 	e->rand_meth = rand_meth;
 	return 1;
 	}
 
 int ENGINE_set_BN_mod_exp(ENGINE *e, BN_MOD_EXP bn_mod_exp)
 	{
-	if((e == NULL) || (bn_mod_exp == NULL))
-		{
-		ENGINEerr(ENGINE_F_ENGINE_SET_BN_MOD_EXP,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
 	e->bn_mod_exp = bn_mod_exp;
 	return 1;
 	}
 
 int ENGINE_set_BN_mod_exp_crt(ENGINE *e, BN_MOD_EXP_CRT bn_mod_exp_crt)
 	{
-	if((e == NULL) || (bn_mod_exp_crt == NULL))
-		{
-		ENGINEerr(ENGINE_F_ENGINE_SET_BN_MOD_EXP_CRT,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
 	e->bn_mod_exp_crt = bn_mod_exp_crt;
 	return 1;
 	}
 
 int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f)
 	{
-	if((e == NULL) || (init_f == NULL))
-		{
-		ENGINEerr(ENGINE_F_ENGINE_SET_INIT_FUNCTION,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
 	e->init = init_f;
 	return 1;
 	}
 
 int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f)
 	{
-	if((e == NULL) || (finish_f == NULL))
-		{
-		ENGINEerr(ENGINE_F_ENGINE_SET_FINISH_FUNCTION,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
 	e->finish = finish_f;
 	return 1;
 	}
 
 int ENGINE_set_ctrl_function(ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f)
 	{
-	if((e == NULL) || (ctrl_f == NULL))
-		{
-		ENGINEerr(ENGINE_F_ENGINE_SET_CTRL_FUNCTION,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
 	e->ctrl = ctrl_f;
 	return 1;
 	}
 
-const char *ENGINE_get_id(ENGINE *e)
+int ENGINE_set_load_privkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpriv_f)
 	{
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_GET_ID,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
+	e->load_privkey = loadpriv_f;
+	return 1;
+	}
+
+int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f)
+	{
+	e->load_pubkey = loadpub_f;
+	return 1;
+	}
+
+int ENGINE_set_flags(ENGINE *e, int flags)
+	{
+	e->flags = flags;
+	return 1;
+	}
+
+int ENGINE_cpy(ENGINE *dest, const ENGINE *src)
+	{
+	if(ENGINE_set_id(dest, ENGINE_get_id(src)) &&
+			ENGINE_set_name(dest, ENGINE_get_name(src)) &&
+			ENGINE_set_RSA(dest, ENGINE_get_RSA(src)) &&
+			ENGINE_set_DSA(dest, ENGINE_get_DSA(src)) &&
+			ENGINE_set_DH(dest, ENGINE_get_DH(src)) &&
+			ENGINE_set_RAND(dest, ENGINE_get_RAND(src)) &&
+			ENGINE_set_BN_mod_exp(dest,
+					ENGINE_get_BN_mod_exp(src)) &&
+			ENGINE_set_BN_mod_exp_crt(dest,
+					ENGINE_get_BN_mod_exp_crt(src)) &&
+			ENGINE_set_init_function(dest,
+					ENGINE_get_init_function(src)) &&
+			ENGINE_set_finish_function(dest,
+					ENGINE_get_finish_function(src)) &&
+			ENGINE_set_ctrl_function(dest,
+					ENGINE_get_ctrl_function(src)) &&
+			ENGINE_set_load_privkey_function(dest,
+					ENGINE_get_load_privkey_function(src)) &&
+			ENGINE_set_load_pubkey_function(dest,
+					ENGINE_get_load_pubkey_function(src)) &&
+			ENGINE_set_flags(dest, ENGINE_get_flags(src)))
+		return 1;
+	return 0;
+	}
+
+const char *ENGINE_get_id(const ENGINE *e)
+	{
 	return e->id;
 	}
 
-const char *ENGINE_get_name(ENGINE *e)
+const char *ENGINE_get_name(const ENGINE *e)
 	{
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_GET_NAME,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
 	return e->name;
 	}
 
-const RSA_METHOD *ENGINE_get_RSA(ENGINE *e)
+const RSA_METHOD *ENGINE_get_RSA(const ENGINE *e)
 	{
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_GET_RSA,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return NULL;
-		}
 	return e->rsa_meth;
 	}
 
-const DSA_METHOD *ENGINE_get_DSA(ENGINE *e)
+const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e)
 	{
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_GET_DSA,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return NULL;
-		}
 	return e->dsa_meth;
 	}
 
-const DH_METHOD *ENGINE_get_DH(ENGINE *e)
+const DH_METHOD *ENGINE_get_DH(const ENGINE *e)
 	{
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_GET_DH,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return NULL;
-		}
 	return e->dh_meth;
 	}
 
-RAND_METHOD *ENGINE_get_RAND(ENGINE *e)
+const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e)
 	{
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_GET_RAND,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return NULL;
-		}
 	return e->rand_meth;
 	}
 
-BN_MOD_EXP ENGINE_get_BN_mod_exp(ENGINE *e)
+BN_MOD_EXP ENGINE_get_BN_mod_exp(const ENGINE *e)
 	{
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_GET_BN_MOD_EXP,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return NULL;
-		}
 	return e->bn_mod_exp;
 	}
 
-BN_MOD_EXP_CRT ENGINE_get_BN_mod_exp_crt(ENGINE *e)
+BN_MOD_EXP_CRT ENGINE_get_BN_mod_exp_crt(const ENGINE *e)
 	{
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_GET_BN_MOD_EXP_CRT,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return NULL;
-		}
 	return e->bn_mod_exp_crt;
 	}
 
-ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(ENGINE *e)
+ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e)
 	{
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_GET_INIT_FUNCTION,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return NULL;
-		}
 	return e->init;
 	}
 
-ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(ENGINE *e)
+ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e)
 	{
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_GET_FINISH_FUNCTION,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return NULL;
-		}
 	return e->finish;
 	}
 
-ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(ENGINE *e)
+ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(const ENGINE *e)
 	{
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_GET_CTRL_FUNCTION,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return NULL;
-		}
 	return e->ctrl;
 	}
 
+ENGINE_LOAD_KEY_PTR ENGINE_get_load_privkey_function(const ENGINE *e)
+	{
+	return e->load_privkey;
+	}
+
+ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e)
+	{
+	return e->load_pubkey;
+	}
+
+int ENGINE_get_flags(const ENGINE *e)
+	{
+	return e->flags;
+	}

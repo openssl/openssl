@@ -85,7 +85,7 @@ struct engine_st
 	const RSA_METHOD *rsa_meth;
 	const DSA_METHOD *dsa_meth;
 	const DH_METHOD *dh_meth;
-	RAND_METHOD *rand_meth;
+	const RAND_METHOD *rand_meth;
 	BN_MOD_EXP bn_mod_exp;
 	BN_MOD_EXP_CRT bn_mod_exp_crt;
 	int (*init)(void);

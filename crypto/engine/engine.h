@@ -117,19 +117,21 @@ typedef int (*BN_MOD_EXP_CRT)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *q, const BIGNUM *dmp1, const BIGNUM *dmq1,
 		const BIGNUM *iqmp, BN_CTX *ctx);
 
-/* Generic function pointer */
-typedef int (*ENGINE_GEN_FUNC_PTR)();
-/* Generic function pointer taking no arguments */
-typedef int (*ENGINE_GEN_INT_FUNC_PTR)(void);
-/* Specific control function pointer */
-typedef int (*ENGINE_CTRL_FUNC_PTR)(int cmd, long i, void *p, void (*f)());
-
 /* The list of "engine" types is a static array of (const ENGINE*)
  * pointers (not dynamic because static is fine for now and we otherwise
  * have to hook an appropriate load/unload function in to initialise and
  * cleanup). */
 struct engine_st;
 typedef struct engine_st ENGINE;
+
+/* Generic function pointer */
+typedef int (*ENGINE_GEN_FUNC_PTR)();
+/* Generic function pointer taking no arguments */
+typedef int (*ENGINE_GEN_INT_FUNC_PTR)(void);
+/* Specific control function pointer */
+typedef int (*ENGINE_CTRL_FUNC_PTR)(int cmd, long i, void *p, void (*f)());
+/* Generic load_key function pointer */
+typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(const char *key_id, const char *passphrase);
 
 /* STRUCTURE functions ... all of these functions deal with pointers to
  * ENGINE structures where the pointers have a "structural reference".
@@ -162,66 +164,48 @@ void ENGINE_load_nuron(void);
 void ENGINE_load_ubsec(void);
 void ENGINE_load_builtin_engines(void);
 
-/* These functions are useful for manufacturing new ENGINE
- * structures. They don't address reference counting at all -
- * one uses them to populate an ENGINE structure with personalised
- * implementations of things prior to using it directly or adding
- * it to the builtin ENGINE list in OpenSSL. These are also here
- * so that the ENGINE structure doesn't have to be exposed and
- * break binary compatibility!
- *
- * NB: I'm changing ENGINE_new to force the ENGINE structure to
- * be allocated from within OpenSSL. See the comment for
- * ENGINE_get_struct_size().
- */
-#if 0
-ENGINE *ENGINE_new(ENGINE *e);
-#else
+/* These functions are useful for manufacturing new ENGINE structures. They
+ * don't address reference counting at all - one uses them to populate an ENGINE
+ * structure with personalised implementations of things prior to using it
+ * directly or adding it to the builtin ENGINE list in OpenSSL. These are also
+ * here so that the ENGINE structure doesn't have to be exposed and break binary
+ * compatibility! */
 ENGINE *ENGINE_new(void);
-#endif
 int ENGINE_free(ENGINE *e);
 int ENGINE_set_id(ENGINE *e, const char *id);
 int ENGINE_set_name(ENGINE *e, const char *name);
 int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth);
 int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth);
 int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
-int ENGINE_set_RAND(ENGINE *e, RAND_METHOD *rand_meth);
+int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
 int ENGINE_set_BN_mod_exp(ENGINE *e, BN_MOD_EXP bn_mod_exp);
 int ENGINE_set_BN_mod_exp_crt(ENGINE *e, BN_MOD_EXP_CRT bn_mod_exp_crt);
 int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f);
 int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
 int ENGINE_set_ctrl_function(ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f);
+int ENGINE_set_load_privkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpriv_f);
+int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f);
+int ENGINE_set_flags(ENGINE *e, int flags);
+int ENGINE_cpy(ENGINE *dest, const ENGINE *src);
 
-/* These return values from within the ENGINE structure. These can
- * be useful with functional references as well as structural
- * references - it depends which you obtained. Using the result
- * for functional purposes if you only obtained a structural
- * reference may be problematic! */
-const char *ENGINE_get_id(ENGINE *e);
-const char *ENGINE_get_name(ENGINE *e);
-const RSA_METHOD *ENGINE_get_RSA(ENGINE *e);
-const DSA_METHOD *ENGINE_get_DSA(ENGINE *e);
-const DH_METHOD *ENGINE_get_DH(ENGINE *e);
-RAND_METHOD *ENGINE_get_RAND(ENGINE *e);
-BN_MOD_EXP ENGINE_get_BN_mod_exp(ENGINE *e);
-BN_MOD_EXP_CRT ENGINE_get_BN_mod_exp_crt(ENGINE *e);
-ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(ENGINE *e);
-ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(ENGINE *e);
-ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(ENGINE *e);
-
-/* ENGINE_new is normally passed a NULL in the first parameter because
- * the calling code doesn't have access to the definition of the ENGINE
- * structure (for good reason). However, if the caller wishes to use
- * its own memory allocation or use a static array, the following call
- * should be used to check the amount of memory the ENGINE structure
- * will occupy. This will make the code more future-proof.
- *
- * NB: I'm "#if 0"-ing this out because it's better to force the use of
- * internally allocated memory. See similar change in ENGINE_new().
- */
-#if 0
-int ENGINE_get_struct_size(void);
-#endif
+/* These return values from within the ENGINE structure. These can be useful
+ * with functional references as well as structural references - it depends
+ * which you obtained. Using the result for functional purposes if you only
+ * obtained a structural reference may be problematic! */
+const char *ENGINE_get_id(const ENGINE *e);
+const char *ENGINE_get_name(const ENGINE *e);
+const RSA_METHOD *ENGINE_get_RSA(const ENGINE *e);
+const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e);
+const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
+const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
+BN_MOD_EXP ENGINE_get_BN_mod_exp(const ENGINE *e);
+BN_MOD_EXP_CRT ENGINE_get_BN_mod_exp_crt(const ENGINE *e);
+ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e);
+ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
+ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(const ENGINE *e);
+ENGINE_LOAD_KEY_PTR ENGINE_get_load_privkey_function(const ENGINE *e);
+ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e);
+int ENGINE_get_flags(const ENGINE *e);
 
 /* FUNCTIONAL functions. These functions deal with ENGINE structures
  * that have (or will) be initialised for use. Broadly speaking, the
@@ -323,19 +307,8 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_CTRL				 142
 #define ENGINE_F_ENGINE_FINISH				 107
 #define ENGINE_F_ENGINE_FREE				 108
-#define ENGINE_F_ENGINE_GET_BN_MOD_EXP			 109
-#define ENGINE_F_ENGINE_GET_BN_MOD_EXP_CRT		 110
-#define ENGINE_F_ENGINE_GET_CTRL_FUNCTION		 144
-#define ENGINE_F_ENGINE_GET_DH				 111
-#define ENGINE_F_ENGINE_GET_DSA				 112
-#define ENGINE_F_ENGINE_GET_FINISH_FUNCTION		 145
-#define ENGINE_F_ENGINE_GET_ID				 113
-#define ENGINE_F_ENGINE_GET_INIT_FUNCTION		 146
-#define ENGINE_F_ENGINE_GET_NAME			 114
 #define ENGINE_F_ENGINE_GET_NEXT			 115
 #define ENGINE_F_ENGINE_GET_PREV			 116
-#define ENGINE_F_ENGINE_GET_RAND			 117
-#define ENGINE_F_ENGINE_GET_RSA				 118
 #define ENGINE_F_ENGINE_INIT				 119
 #define ENGINE_F_ENGINE_LIST_ADD			 120
 #define ENGINE_F_ENGINE_LIST_REMOVE			 121
@@ -343,18 +316,9 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_LOAD_PUBLIC_KEY			 151
 #define ENGINE_F_ENGINE_NEW				 122
 #define ENGINE_F_ENGINE_REMOVE				 123
-#define ENGINE_F_ENGINE_SET_BN_MOD_EXP			 124
-#define ENGINE_F_ENGINE_SET_BN_MOD_EXP_CRT		 125
-#define ENGINE_F_ENGINE_SET_CTRL_FUNCTION		 147
 #define ENGINE_F_ENGINE_SET_DEFAULT_TYPE		 126
-#define ENGINE_F_ENGINE_SET_DH				 127
-#define ENGINE_F_ENGINE_SET_DSA				 128
-#define ENGINE_F_ENGINE_SET_FINISH_FUNCTION		 148
 #define ENGINE_F_ENGINE_SET_ID				 129
-#define ENGINE_F_ENGINE_SET_INIT_FUNCTION		 149
 #define ENGINE_F_ENGINE_SET_NAME			 130
-#define ENGINE_F_ENGINE_SET_RAND			 131
-#define ENGINE_F_ENGINE_SET_RSA				 132
 #define ENGINE_F_ENGINE_UNLOAD_KEY			 152
 #define ENGINE_F_HWCRHK_CTRL				 143
 #define ENGINE_F_HWCRHK_FINISH				 135
