@@ -1,4 +1,4 @@
-	.title	vax_bn_mul_add_word  unsigned multiply & add, 32*32+32+32=>64
+	.title	vax_bn_mul_add_words  unsigned multiply & add, 32*32+32+32=>64
 ;
 ; w.j.m. 15-jan-1999
 ;
@@ -59,7 +59,7 @@ w=16 ;(AP)	w	by value (input)
 	movl	r6,r0			; return c
 	ret
 
-	.title	vax_bn_mul_word  unsigned multiply & add, 32*32+32=>64
+	.title	vax_bn_mul_words  unsigned multiply & add, 32*32+32=>64
 ;
 ; w.j.m. 15-jan-1999
 ;
@@ -172,145 +172,106 @@ n=12 ;(AP)	n	by value (input)
 ; }
 ;
 ; Using EDIV would be very easy, if it didn't do signed calculations.
-; Therefore, som extra things have to happen around it.  The way to
-; handle that is to shift all operands right one step (basically dividing
-; them by 2) and handle the different cases depending on what the lowest
-; bit of each operand was.
+; It doesn't accept a signed dividend, but accepts a signed divisor.
+; So, shifting down the dividend right one bit makes it positive, and
+; just makes us lose the lowest bit, which can be used afterwards as
+; an addition to the remainder.  All that needs to be done at the end
+; is a little bit of fiddling; shifting both quotient and remainder
+; one step to the left, and deal with the situation when the remainder
+; ends up being larger than the divisor.
 ;
-; To start with, let's define the following:
+; We end up doing something like this:
 ;
-; a' = l & 1
-; a2 = <h,l> >> 1	# UNSIGNED shift!
-; b' = d & 1
-; b2 = d >> 1		# UNSIGNED shift!
+; l'    = l & 1
+; [h,l] = [h,l] >> 1
+; [q,r] = floor([h,l] / d)
+; if (q < 0) q = -q	# Because EDIV thought d was negative
 ;
-; Now, use EDIV to calculate a quotient and a remainder:
+; Now, we need to adjust back by multiplying quotient and remainder with 2,
+; and add the bit that dropped out when dividing by 2:
 ;
-; q'' = a2/b2
-; r'' = a2 - q''*b2
+; r'    = r & 0x80000000
+; q     = q << 1
+; r     = (r << 1) + a'
 ;
-; If b' is 0, the quotient is already correct, we just need to adjust the
-; remainder:
+; And now, the final adjustment if the remainder happens to get larger than
+; the divisor:
 ;
-; if (b' == 0)
+; if (r')
 ;   {
-;     r = 2*r'' + a'
-;     q = q''
+;     r = r - d
+;     q = q + 1
+;   }
+; while (r > d)
+;   {
+;     r = r - d
+;     q = q + 1
 ;   }
 ;
-; If b' is 1, we need to do other adjustements.  The first thought is the
-; following (note that r' will not always have the right value, but an
-; adjustement follows further down):
-;
-; if (b' == 1)
-;   {
-;     q' = q''
-;     r' = a - q'*b
-;
-; However, one can note the folowing relationship:
-;
-;                         r'' = a2 - q''*b2
-;                  =>   2*r'' = 2*a2 - 2*q''*b2
-;                             = { a = 2*a2 + a', b = 2*b2 + b' = 2*b2 + 1,
-;                                 q' = q'' }
-;                             = a - a' - q'*(b - 1)
-;                             = a - q'*b - a' + q'
-;                             = r' - a' + q'
-;                  =>     r'  = 2*r'' - q' + a'
-;
-; This enables us to use r'' instead of discarding and calculating another
-; modulo:
-;
-; if (b' == 1)
-;   {
-;     q' = q''
-;     r' = (r'' << 1) - q' + a'
-;
-; Now, all we have to do is adjust r', because it might be < 0:
-;
-;     while (r' < 0)
-;       {
-;         r' = r' + b
-;         q' = q' - 1
-;       }
-;   }
-;
-; return q'
+; return q
 
 h=4 ;(AP)	h	by value (input)
 l=8 ;(AP)	l	by value (input)
 d=12 ;(AP)	d	by value (input)
 
-;aprim=r5
-;a2=r6
-;a20=r6
-;a21=r7
-;bprim=r8
-;b2=r9
-;qprim=r10	; initially used as q''
-;rprim=r11	; initially used as r''
+;lprim=r5
+;rprim=r6
 
 
 	.psect	code,nowrt
 
-.entry	bn_div_words,^m<r2,r3,r4,r5,r6,r7,r8,r9,r10,r11>
+.entry	bn_div_words,^m<r2,r3,r4,r5,r6>
 	movl	l(ap),r2
 	movl	h(ap),r3
 	movl	d(ap),r4
 
 	movl	#0,r5
-	movl	#0,r8
-	movl	#0,r0
-;	movl	#0,r1
+	movl	#0,r6
 
-	rotl	#-1,r2,r6	; a20 = l >> 1 (almost)
-	rotl	#-1,r3,r7	; a21 = h >> 1 (almost)
-	rotl	#-1,r4,r9	; b2 = d >> 1 (almost)
+	rotl	#-1,r2,r2	; l = l >> 1 (almost)
+	rotl	#-1,r3,r3	; h = h >> 1 (almost)
+
+	tstl	r2
+	bgeq	1$
+	xorl2	#^X80000000,r2	; fixup l so highest bit is 0
+	incl	r5		; l' = 1
+1$:
+	tstl	r3
+	bgeq	2$
+	xorl2	#^X80000000,r2	; fixup l so highest bit is 1,
+				; since that's what was lowest in h
+	xorl2	#^X80000000,r3	; fixup h so highest bit is 0
+2$:
+	tstl	r4
+	beql	666$		; Uh-oh, the divisor is 0...
+
+	ediv	r4,r2,r2,r3	; Do the actual division
+
+	tstl	r2
+	bgeq	3$
+	mnegl	r2,r2		; if q < 0, negate it
+3$:
+	tstl	r3
+	bgeq	4$
+	incl	r6		; since the high bit in r is set, set rprim
+4$:
+	ashl	#1,r2,r2
+	ashl	#1,r3,r3
+	addl	r5,r3
 
 	tstl	r6
-	bgeq	1$
-	xorl2	#^X80000000,r6	; fixup a20 so highest bit is 0
-	incl	r5		; a' = 1
-1$:
-	tstl	r7
-	bgeq	2$
-	xorl2	#^X80000000,r6	; fixup a20 so highest bit is 1,
-				; since that's what was lowest in a21
-	xorl2	#^X80000000,r7	; fixup a21 so highest bit is 1
-2$:
-	tstl	r9
-	beql	666$		; Uh-oh, the divisor is 0...
-	bgtr	3$
-	xorl2	#^X80000000,r9	; fixup b2 so highest bit is 0
-	incl	r8		; b' = 1
-3$:
-	tstl	r9
-	bneq	4$		; if b2 is 0, we know that b' is 1
-	tstl	r3
-	bneq	666$		; if higher half isn't 0, we overflow
-	movl	r2,r10		; otherwise, we have our result
-	brb	42$		; This is a success, really.
-4$:
-	ediv	r9,r6,r10,r11
-
-	tstl	r8
-	bneq	5$		; If b' != 0, go to the other part
-;	addl3	r11,r11,r1
-;	addl2	r5,r1
-	brb	42$
+	beql	5$
+	subl	r4,r3
+	incl	r2
 5$:
-	ashl	#1,r11,r11
-	subl2	r10,r11
-	addl2	r5,r11
-	bgeq	7$
-6$:
-	decl	r10
-	addl2	r4,r11
-	blss	6$
-7$:
-;	movl	r11,r1
+	cmpl	r3,r4
+	blequ	42$
+	subl	r4,r3
+	incl	r2
+	brb	5$	
 42$:
-	movl	r10,r0
+;	movl	r3,r1
+	movl	r2,r0
 666$:
 	ret
 
