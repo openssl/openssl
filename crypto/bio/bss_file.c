@@ -213,12 +213,29 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 		b->shutdown=(int)num&BIO_CLOSE;
 		b->ptr=(char *)ptr;
 		b->init=1;
-#if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS)
+#if defined(OPENSSL_SYS_WINDOWS)
+		if (num & BIO_FP_TEXT)
+			_setmode(fd,_O_TEXT);
+		else
+			_setmode(fd,_O_BINARY);
+#elif defined(OPENSSL_SYS_MSDOS)
+		{
+		int fd = fileno((FILE*)ptr);
 		/* Set correct text/binary mode */
 		if (num & BIO_FP_TEXT)
-			_setmode(fileno((FILE *)ptr),_O_TEXT);
+			_setmode(fd,_O_TEXT);
+		/* Dangerous to set stdin/stdout to raw (unless redirected) */
 		else
-			_setmode(fileno((FILE *)ptr),_O_BINARY);
+			{
+			if (fd == STDIN_FILENO || fd == STDOUT_FILENO)
+				{
+				if (isatty(fd) <= 0)
+					_setmode(fd,_O_BINARY);
+				}
+			else
+				_setmode(fd,_O_BINARY);
+			}
+		}
 #elif defined(OPENSSL_SYS_OS2)
 		if (num & BIO_FP_TEXT)
 			setmode(fileno((FILE *)ptr), O_TEXT);
