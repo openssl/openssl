@@ -335,6 +335,7 @@ void ERR_load_ENGINE_strings(void);
 
 /* Reason codes. */
 #define ENGINE_R_ALREADY_LOADED				 100
+#define ENGINE_R_BIO_WAS_FREED				 121
 #define ENGINE_R_BN_CTX_FULL				 101
 #define ENGINE_R_BN_EXPAND_FAIL				 102
 #define ENGINE_R_CONFLICTING_ENGINE_ID			 103

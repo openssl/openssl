@@ -127,6 +127,7 @@ hw_atalla.o: ../../include/openssl/opensslconf.h
 hw_atalla.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 hw_atalla.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 hw_atalla.o: ../../include/openssl/stack.h ../cryptlib.h engine_int.h
+hw_atalla.o: vendor_defns/atalla.h
 hw_cswift.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 hw_cswift.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 hw_cswift.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
@@ -137,6 +138,7 @@ hw_cswift.o: ../../include/openssl/opensslconf.h
 hw_cswift.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 hw_cswift.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 hw_cswift.o: ../../include/openssl/stack.h ../cryptlib.h engine_int.h
+hw_cswift.o: vendor_defns/cswift.h
 hw_ncipher.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 hw_ncipher.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 hw_ncipher.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
@@ -147,3 +149,4 @@ hw_ncipher.o: ../../include/openssl/opensslconf.h
 hw_ncipher.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 hw_ncipher.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 hw_ncipher.o: ../../include/openssl/stack.h ../cryptlib.h engine_int.h
+hw_ncipher.o: vendor_defns/hwcryptohook.h

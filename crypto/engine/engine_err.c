@@ -126,6 +126,7 @@ static ERR_STRING_DATA ENGINE_str_functs[]=
 static ERR_STRING_DATA ENGINE_str_reasons[]=
 	{
 {ENGINE_R_ALREADY_LOADED                 ,"already loaded"},
+{ENGINE_R_BIO_WAS_FREED                  ,"bio was freed"},
 {ENGINE_R_BN_CTX_FULL                    ,"BN_CTX full"},
 {ENGINE_R_BN_EXPAND_FAIL                 ,"bn_expand fail"},
 {ENGINE_R_CONFLICTING_ENGINE_ID          ,"conflicting engine id"},
