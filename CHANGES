@@ -4,6 +4,13 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Change Configure and Makefiles to provide EXE_EXT, which will contain
+     the default extension for executables, if any.  Also, make the perl
+     scripts that use symlink() to test if it really exists and use "cp"
+     if it doesn't.  All this made OpenSSL compilable and installable in
+     CygWin.
+     [Richard Levitte]
+
   *) Fix for asn1_GetSequence() for indefinite length constructed data.
      If SEQUENCE is length is indefinite just set c->slen to the total
      amount of data available.
