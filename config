@@ -403,7 +403,18 @@ else
   CC=cc
 fi
 GCCVER=${GCCVER:-0}
-
+if [ "$SYSTEM" = "HP-UX" ];then
+  # By default gcc is a ILP32 compiler (with long long == 64).
+  GCC_BITS="32"
+  if [ $GCCVER -ge 30 ]; then
+    # PA64 support only came in with gcc 3.0.x.
+    # We look for the preprocessor symbol __LP64__ indicating
+    # 64bit bit long and pointer.  sizeof(int) == 32 on HPUX64.
+    if gcc -v -E -x c /dev/null 2>&1 | grep __LP64__ > /dev/null; then
+      GCC_BITS="64"
+    fi
+  fi
+fi
 if [ "$SYSTEM" = "SunOS" ]; then
   if [ $GCCVER -ge 30 ]; then
     # 64-bit ABI isn't officially supported in gcc 3.0, but it appears
@@ -661,7 +672,16 @@ EOF
   RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
   *-siemens-sysv4) OUT="SINIX" ;;
   *-hpux1*)
-	OUT="hpux-parisc-$CC"
+	if [ $CC = "gcc" ];
+	then
+	  if [ $GCC_BITS = "64" ]; then
+	    OUT="hpux64-parisc-gcc"
+	  else
+	    OUT="hpux-parisc-gcc"
+	  fi
+	else
+	  OUT="hpux-parisc-$CC"
+	fi
 	KERNEL_BITS=`(getconf KERNEL_BITS) 2>/dev/null`
 	KERNEL_BITS=${KERNEL_BITS:-32}
 	CPU_VERSION=`(getconf CPU_VERSION) 2>/dev/null`
