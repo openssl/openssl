@@ -676,7 +676,7 @@ print "RC2 uses u$type[$rc2_int]\n" if $rc2_int != $def_int;
 print "BF_PTR used\n" if $bf_ptr == 1; 
 print "BF_PTR2 used\n" if $bf_ptr == 2; 
 
-system 'make links' if !$IsWindows;
+system 'make -f Makefile.ssl links' if !$IsWindows;
 
 exit(0);
 

@@ -16,7 +16,6 @@ Quick Start
 If you want to just get on with it, do:
 
   sh config                      [if this fails, go to step 1b below]
-  make -f Makefile.ssl links
   make
   make rehash
   make test
