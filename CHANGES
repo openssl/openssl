@@ -4,7 +4,9 @@
 
  Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
 
-  *)
+  *) Change bctest again: '-x' expressions are not available in all
+     versions of 'test'.
+     [Bodo Moeller]
 
  Changes between 0.9.6 and 0.9.6a  [5 Apr 2001]
 
