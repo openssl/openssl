@@ -1700,6 +1700,7 @@ int MAIN(int argc, char **argv)
 				else
 					EVP_EncryptFinal_ex(&ctx,buf,&outl);
 				d=Time_F(STOP);
+				EVP_CIPHER_CTX_cleanup(&ctx);
 				}
 			if (evp_md)
 				{
