@@ -2478,3 +2478,4 @@ ENGINE_cleanup                          2940	EXIST::FUNCTION:
 ENGINE_get_ex_new_index                 2941	EXIST::FUNCTION:
 ENGINE_get_ex_data                      2942	EXIST::FUNCTION:
 ENGINE_set_ex_data                      2943	EXIST::FUNCTION:
+ENGINE_clear_defaults                   2944	EXIST::FUNCTION:
