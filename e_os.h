@@ -390,6 +390,12 @@ extern HINSTANCE _hInstance;
 #  endif
 #endif
 
+#if defined(__ultrix)
+#  ifndef ssize_t
+#    define ssize_t int 
+#  endif
+#endif
+
 #if defined(THREADS) || defined(sun)
 #ifndef _REENTRANT
 #define _REENTRANT
