@@ -22,7 +22,7 @@ typedef struct name_funcs_st
 DECLARE_STACK_OF(NAME_FUNCS)
 IMPLEMENT_STACK_OF(NAME_FUNCS)
 
-STACK_OF(NAME_FUNCS) *name_funcs_stack;
+static STACK_OF(NAME_FUNCS) *name_funcs_stack;
 
 static unsigned long obj_name_hash(OBJ_NAME *a);
 static int obj_name_cmp(OBJ_NAME *a,OBJ_NAME *b);
