@@ -23,6 +23,14 @@ If there is already a session set inside B<ssl> (because it was set with
 SSL_set_session() before or because the same B<ssl> was already used for
 a connection), SSL_SESSION_free() will be called for that session.
 
+=head1 NOTES
+
+SSL_SESSION objects keep internal link information about the session cache
+list, when being inserted into one SSL_CTX object's session cache.
+One SSL_SESSION object, regardless of its reference count, must therefore
+only be used with one SSL_CTX object (and the SSL objects created
+from this SSL_CTX object).
+
 =head1 RETURN VALUES
 
 The following return values can occur:
@@ -42,6 +50,7 @@ The operation succeeded.
 =head1 SEE ALSO
 
 L<ssl(3)|ssl(3)>, L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>,
+L<SSL_get_session(3)|SSL_get_session(3)>,
 L<SSL_session_reused(3)|SSL_session_reused(3)>,
 L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>
 
