@@ -76,10 +76,24 @@
 #define NID_iso		181
 #define OBJ_iso		1L
 
+#define SN_joint_iso_ccitt		"JOINT-ISO-CCITT"
+#define LN_joint_iso_ccitt		"joint-iso-ccitt"
+#define NID_joint_iso_ccitt		493
+#define OBJ_joint_iso_ccitt		2L
+
 #define SN_member_body		"member-body"
 #define LN_member_body		"ISO Member Body"
 #define NID_member_body		182
 #define OBJ_member_body		OBJ_iso,2L
+
+#define SN_selected_attribute_types		"selected-attribute-types"
+#define LN_selected_attribute_types		"Selected Attribute Types"
+#define NID_selected_attribute_types		494
+#define OBJ_selected_attribute_types		OBJ_joint_iso_ccitt,5L,1L,5L
+
+#define SN_clearance		"clearance"
+#define NID_clearance		495
+#define OBJ_clearance		OBJ_selected_attribute_types,55L
 
 #define SN_ISO_US		"ISO-US"
 #define LN_ISO_US		"ISO US Member Body"
@@ -1027,6 +1041,15 @@
 #define NID_sbqp_routerIdentifier		292
 #define OBJ_sbqp_routerIdentifier		OBJ_id_pe,9L
 
+#define SN_ac_proxying		"ac-proxying"
+#define NID_ac_proxying		496
+#define OBJ_ac_proxying		OBJ_id_pe,10L
+
+#define SN_sinfo_access		"subjectInfoAccess"
+#define LN_sinfo_access		"Subject Information Access"
+#define NID_sinfo_access		497
+#define OBJ_sinfo_access		OBJ_id_pe,11L
+
 #define SN_id_qt_cps		"id-qt-cps"
 #define LN_id_qt_cps		"Policy Qualifier CPS"
 #define NID_id_qt_cps		164
@@ -1335,6 +1358,10 @@
 #define NID_id_aca_role		358
 #define OBJ_id_aca_role		OBJ_id_aca,5L
 
+#define SN_id_aca_encAttrs		"id-aca-encAttrs"
+#define NID_id_aca_encAttrs		498
+#define OBJ_id_aca_encAttrs		OBJ_id_aca,6L
+
 #define SN_id_qcs_pkixQCSyntax_v1		"id-qcs-pkixQCSyntax-v1"
 #define NID_id_qcs_pkixQCSyntax_v1		359
 #define OBJ_id_qcs_pkixQCSyntax_v1		OBJ_id_qcs,1L
@@ -1627,6 +1654,11 @@
 #define NID_dnQualifier		174
 #define OBJ_dnQualifier		OBJ_X509,46L
 
+#define SN_role		"role"
+#define LN_role		"role"
+#define NID_role		499
+#define OBJ_role		OBJ_X509,72L
+
 #define SN_X500algorithms		"X500algorithms"
 #define LN_X500algorithms		"directory services - algorithms"
 #define NID_X500algorithms		378
@@ -1716,10 +1748,25 @@
 #define NID_authority_key_identifier		90
 #define OBJ_authority_key_identifier		OBJ_id_ce,35L
 
+#define SN_policy_constraints		"policyConstraints"
+#define LN_policy_constraints		"X509v3 Policy Constraints"
+#define NID_policy_constraints		500
+#define OBJ_policy_constraints		OBJ_id_ce,36L
+
 #define SN_ext_key_usage		"extendedKeyUsage"
 #define LN_ext_key_usage		"X509v3 Extended Key Usage"
 #define NID_ext_key_usage		126
 #define OBJ_ext_key_usage		OBJ_id_ce,37L
+
+#define SN_target_information		"targetInformation"
+#define LN_target_information		"X509v3 AC Targeting"
+#define NID_target_information		501
+#define OBJ_target_information		OBJ_id_ce,55L
+
+#define SN_no_rev_avail		"noRevAvail"
+#define LN_no_rev_avail		"X509v3 No Revocation Available"
+#define NID_no_rev_avail		502
+#define OBJ_no_rev_avail		OBJ_id_ce,56L
 
 #define SN_netscape		"Netscape"
 #define LN_netscape		"Netscape Communications Corp."

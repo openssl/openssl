@@ -490,3 +490,13 @@ X9_62_prime239v3		489
 X9_62_prime256v1		490
 ecdsa_with_SHA1		491
 ms_csp_name		492
+joint_iso_ccitt		493
+selected_attribute_types		494
+clearance		495
+ac_proxying		496
+sinfo_access		497
+id_aca_encAttrs		498
+role		499
+policy_constraints		500
+target_information		501
+no_rev_avail		502
