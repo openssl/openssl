@@ -72,9 +72,9 @@
 #include "../bio/bss_file.c"
 #endif
 
-const num0 = 100; /* number of tests */
-const num1 = 50;  /* additional tests for some functions */
-const num2 = 5;   /* number of tests for slow functions */
+const int num0 = 100; /* number of tests */
+const int num1 = 50;  /* additional tests for some functions */
+const int num2 = 5;   /* number of tests for slow functions */
 
 int test_add(BIO *bp);
 int test_sub(BIO *bp);

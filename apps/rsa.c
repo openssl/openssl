@@ -201,8 +201,8 @@ bad:
 		BIO_printf(bio_err," -envpassin arg  environment variable containing input file pass phrase\n");
 		BIO_printf(bio_err," -in arg         input file\n");
 		BIO_printf(bio_err," -out arg        output file\n");
-		BIO_printf(bio_err," -passout arg    input file pass phrase\n");
-		BIO_printf(bio_err," -envpassout arg environment variable containing input file pass phrase\n");
+		BIO_printf(bio_err," -passout arg    output file pass phrase\n");
+		BIO_printf(bio_err," -envpassout arg environment variable containing output file pass phrase\n");
 		BIO_printf(bio_err," -des            encrypt PEM output with cbc des\n");
 		BIO_printf(bio_err," -des3           encrypt PEM output with ede cbc des using 168 bit key\n");
 #ifndef NO_IDEA

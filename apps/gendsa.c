@@ -79,6 +79,7 @@ int MAIN(int argc, char **argv)
 	int ret=1;
 	char *outfile=NULL;
 	char *inrand=NULL,*dsaparams=NULL;
+	char *passout = NULL;
 	BIO *out=NULL,*in=NULL;
 	EVP_CIPHER *enc=NULL;
 
@@ -97,6 +98,22 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
+			}
+		else if (strcmp(*argv,"-envpassout") == 0)
+			{
+			if (--argc < 1) goto bad;
+			if(!(passout= getenv(*(++argv))))
+				{
+				BIO_printf(bio_err,
+				 "Can't read environment variable %s\n",
+								*argv);
+				goto bad;
+				}
+			}
+		else if (strcmp(*argv,"-passout") == 0)
+			{
+			if (--argc < 1) goto bad;
+			passout= *(++argv);
 			}
 		else if (strcmp(*argv,"-rand") == 0)
 			{
@@ -188,7 +205,7 @@ bad:
 
 	app_RAND_write_file(NULL, bio_err);
 
-	if (!PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,NULL,NULL))
+	if (!PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,PEM_cb, passout))
 		goto end;
 	ret=0;
 end:

@@ -10,6 +10,8 @@ B<openssl> B<spkac>
 [B<-in filename>]
 [B<-out filename>]
 [B<-key keyfile>]
+[B<-passin password>]
+[B<-envpassin var>]
 [B<-challenge string>]
 [B<-pubkey>]
 [B<-spkac spkacname>]
@@ -43,6 +45,17 @@ default.
 create an SPKAC file using the private key in B<keyfile>. The
 B<-in>, B<-noout>, B<-spksect> and B<-verify> options are ignored if
 present.
+
+=item B<-passin password>
+
+the private key file password. Since certain utilities like "ps" make the
+command line visible this option should be used with caution. Ignored if
+the B<-key> argument is not used.
+
+=item B<-envpassin var>
+
+read the private key file password from the environment variable B<var>.
+Ignored if the B<-key> argument is not used.
 
 =item B<-challenge string>
 

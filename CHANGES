@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Add command line password options to the remaining applications.
+     [Steve Henson]
+
   *) Bug fix for BN_div_recp() for numerators with an even number of
      bits.
      [Ulf Möller]

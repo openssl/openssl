@@ -4,11 +4,12 @@
 
 genrsa - generate an RSA private key
 
-
 =head1 SYNOPSIS
 
 B<openssl> B<genrsa>
 [B<-out filename>]
+[B<-passout password>]
+[B<-envpassout var>]
 [B<-des>]
 [B<-des3>]
 [B<-idea>]
@@ -25,11 +26,26 @@ The B<genrsa> command generates an RSA private key.
 
 =over 4
 
+=item B<-out filename>
+
+the output filename. If this argument is not specified then standard output is
+used.  
+
+=item B<-passout password>
+
+the output file password. Since certain utilities like "ps" make the command line
+visible this option should be used with caution.
+
+=item B<-envpassout var>
+
+read the output file password from the environment variable B<var>.
+
 =item B<-des|-des3|-idea>
 
 These options encrypt the private key with the DES, triple DES, or the 
-IDEA ciphers respectively before outputting it. A pass phrase is prompted for.
-If none of these options is specified no encryption is used.
+IDEA ciphers respectively before outputting it. If none of these options is
+specified no encryption is used. If encryption is used a pass phrase is prompted
+for if it is not supplied via the B<-passout> or B<-envpassout> arguments.
 
 =item B<-F4|-3>
 

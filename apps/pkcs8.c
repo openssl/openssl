@@ -176,22 +176,22 @@ int MAIN(int argc, char **argv)
 		bad:
 		BIO_printf(bio_err, "Usage pkcs8 [options]\n");
 		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, "-in file   input file\n");
-		BIO_printf(bio_err, "-inform X  input format (DER or PEM)\n");
+		BIO_printf(bio_err, "-in file        input file\n");
+		BIO_printf(bio_err, "-inform X       input format (DER or PEM)\n");
 		BIO_printf(bio_err, "-passin arg     input file pass phrase\n");
 		BIO_printf(bio_err, "-envpassin arg  environment variable containing input file pass phrase\n");
-		BIO_printf(bio_err, "-outform X output format (DER or PEM)\n");
-		BIO_printf(bio_err, "-out file  output file\n");
-		BIO_printf(bio_err, "-passout arg    input file pass phrase\n");
-		BIO_printf(bio_err, "-envpassout arg environment variable containing input file pass phrase\n");
-		BIO_printf(bio_err, "-topk8     output PKCS8 file\n");
-		BIO_printf(bio_err, "-nooct     use (nonstandard) no octet format\n");
-		BIO_printf(bio_err, "-embed     use (nonstandard) embedded DSA parameters format\n");
-		BIO_printf(bio_err, "-nsdb      use (nonstandard) DSA Netscape DB format\n");
-		BIO_printf(bio_err, "-noiter    use 1 as iteration count\n");
-		BIO_printf(bio_err, "-nocrypt   use or expect unencrypted private key\n");
-		BIO_printf(bio_err, "-v2 alg    use PKCS#5 v2.0 and cipher \"alg\"\n");
-		BIO_printf(bio_err, "-v1 obj    use PKCS#5 v1.5 and cipher \"alg\"\n");
+		BIO_printf(bio_err, "-outform X      output format (DER or PEM)\n");
+		BIO_printf(bio_err, "-out file       output file\n");
+		BIO_printf(bio_err, "-passout arg    output file pass phrase\n");
+		BIO_printf(bio_err, "-envpassout arg environment variable containing outut file pass phrase\n");
+		BIO_printf(bio_err, "-topk8          output PKCS8 file\n");
+		BIO_printf(bio_err, "-nooct          use (nonstandard) no octet format\n");
+		BIO_printf(bio_err, "-embed          use (nonstandard) embedded DSA parameters format\n");
+		BIO_printf(bio_err, "-nsdb           use (nonstandard) DSA Netscape DB format\n");
+		BIO_printf(bio_err, "-noiter         use 1 as iteration count\n");
+		BIO_printf(bio_err, "-nocrypt        use or expect unencrypted private key\n");
+		BIO_printf(bio_err, "-v2 alg         use PKCS#5 v2.0 and cipher \"alg\"\n");
+		BIO_printf(bio_err, "-v1 obj         use PKCS#5 v1.5 and cipher \"alg\"\n");
 		return (1);
 	}
 

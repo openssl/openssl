@@ -80,7 +80,7 @@ int MAIN(int argc, char **argv)
 	int i,badops=0, ret = 1;
 	BIO *in = NULL,*out = NULL, *key = NULL;
 	int verify=0,noout=0,pubkey=0;
-	char *infile = NULL,*outfile = NULL,*prog;
+	char *infile = NULL,*outfile = NULL,*prog, *passin = NULL;
 	char *spkac = "SPKAC", *spksect = "default", *spkstr = NULL;
 	char *challenge = NULL, *keyfile = NULL;
 	LHASH *conf = NULL;
@@ -105,6 +105,22 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
+			}
+		else if (strcmp(*argv,"-passin") == 0)
+			{
+			if (--argc < 1) goto bad;
+			passin= *(++argv);
+			}
+		else if (strcmp(*argv,"-envpassin") == 0)
+			{
+			if (--argc < 1) goto bad;
+				if(!(passin= getenv(*(++argv))))
+				{
+				BIO_printf(bio_err,
+				 "Can't read environment variable %s\n",
+								*argv);
+				badops = 1;
+				}
 			}
 		else if (strcmp(*argv,"-key") == 0)
 			{
@@ -145,6 +161,8 @@ bad:
 		BIO_printf(bio_err," -in arg        input file\n");
 		BIO_printf(bio_err," -out arg       output file\n");
 		BIO_printf(bio_err," -key arg       create SPKAC using private key\n");
+		BIO_printf(bio_err," -passin arg    input file pass phrase\n");
+		BIO_printf(bio_err," -envpassin arg environment variable containing input file pass phrase\n");
 		BIO_printf(bio_err," -challenge arg challenge string\n");
 		BIO_printf(bio_err," -spkac arg     alternative SPKAC name\n");
 		BIO_printf(bio_err," -noout         don't print SPKAC\n");
@@ -163,7 +181,7 @@ bad:
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-		pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, NULL);
+		pkey = PEM_read_bio_PrivateKey(key, NULL, PEM_cb, passin);
 		if(!pkey) {
 			BIO_printf(bio_err, "Error reading private key\n");
 			ERR_print_errors(bio_err);

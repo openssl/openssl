@@ -37,6 +37,10 @@ B<openssl> B<pkcs12>
 [B<-keysig>]
 [B<-password password>]
 [B<-envpass var>]
+[B<-passin password>]
+[B<-envpassin var>]
+[B<-passout password>]
+[B<-envpassout var>]
 
 =head1 DESCRIPTION
 
@@ -64,14 +68,23 @@ by default.
 The filename to write certificates and private keys to, standard output by default.
 They are all written in PEM format.
 
-=item B<-pass password>
+=item B<-pass password>, B<-passin password>
 
-the PKCS#12 file password. Since certain utilities like "ps" make the command line
-visible this option should be used with caution.
+the PKCS#12 file (i.e. input file) password. Since certain utilities like "ps" make
+the command line visible this option should be used with caution.
 
-=item B<-envpass var>
+=item B<-envpass var>, B<-envpassin password>
 
 read the PKCS#12 file password from the environment variable B<var>.
+
+=item B<-passout password>
+
+pass phrase to encrypt any outputed private keys with. Since certain utilities like
+"ps" make the command line visible this option should be used with caution.
+
+=item B<-envpass var>, B<-envpassin password>
+
+read the outputed private keys file password from the environment variable B<var>.
 
 =item B<-noout>
 
@@ -169,14 +182,23 @@ used multiple times to specify names for all certificates in the order they
 appear. Netscape ignores friendly names on other certificates whereas MSIE
 displays them.
 
-=item B<-pass password>
+=item B<-pass password>, B<-passout password>
 
-the PKCS#12 file password. Since certain utilities like "ps" make the command line
-visible this option should be used with caution.
+the PKCS#12 file (i.e. output file) password. Since certain utilities like "ps"
+make the command line visible this option should be used with caution.
 
-=item B<-envpass var>
+=item B<-envpass var>, B<-envpassout var>
 
 read the PKCS#12 file password from the environment variable B<var>.
+
+=item B<-passin password>
+
+pass phrase to decrypt the input private key with. Since certain utilities like
+"ps" make the command line visible this option should be used with caution.
+
+=item B<-envpassin password>
+
+read the input private key file password from the environment variable B<var>.
 
 =item B<-chain>
 
@@ -276,9 +298,6 @@ Include some extra certificates:
 =head1 BUGS
 
 Some would argue that the PKCS#12 standard is one big bug :-)
-
-Need password options for the PEM files: this will probably be fixed before
-release.
 
 =head1 SEE ALSO
 

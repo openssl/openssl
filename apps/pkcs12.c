@@ -61,13 +61,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "apps.h"
 #include <openssl/crypto.h>
-#include <openssl/des.h>
-#include <openssl/pem.h>
 #include <openssl/err.h>
+#include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 
-#include "apps.h"
 #define PROG pkcs12_main
 
 EVP_CIPHER *enc;
@@ -80,9 +79,9 @@ EVP_CIPHER *enc;
 #define CACERTS		0x10
 
 int get_cert_chain(X509 *cert, STACK_OF(X509) **chain);
-int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen, int options);
-int dump_certs_pkeys_bags(BIO *out, STACK *bags, char *pass, int passlen, int options);
-int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass, int passlen, int options);
+int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen, int options, char *pempass);
+int dump_certs_pkeys_bags(BIO *out, STACK *bags, char *pass, int passlen, int options, char *pempass);
+int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass, int passlen, int options, char *pempass);
 int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst, char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
 int alg_print(BIO *x, X509_ALGOR *alg);
@@ -111,6 +110,7 @@ int MAIN(int argc, char **argv)
     int noprompt = 0;
     STACK *canames = NULL;
     char *cpass = NULL, *mpass = NULL;
+    char *passin = NULL, *passout = NULL;
 
     apps_startup();
 
@@ -198,6 +198,36 @@ int MAIN(int argc, char **argv)
 			args++;	
 			outfile = *args;
 		    } else badarg = 1;
+		} else if (!strcmp(*args,"-passin")) {
+		    if (args[1]) {
+			args++;	
+			passin = *args;
+		    } else badarg = 1;
+		} else if (!strcmp(*args,"-envpassin")) {
+		    if (args[1]) {
+			args++;	
+			if(!(passin= getenv(*args))) {
+				BIO_printf(bio_err,
+				 "Can't read environment variable %s\n",
+								*argv);
+				badarg = 1;
+			}
+		    } else badarg = 1;
+		} else if (!strcmp(*args,"-envpassout")) {
+		    if (args[1]) {
+			args++;	
+			if(!(passout= getenv(*args))) {
+				BIO_printf(bio_err,
+				 "Can't read environment variable %s\n",
+								*argv);
+				badarg = 1;
+			}
+		    } else badarg = 1;
+		} else if (!strcmp(*args,"-passout")) {
+		    if (args[1]) {
+			args++;	
+			passout = *args;
+		    } else badarg = 1;
 		} else if (!strcmp (*args, "-envpass")) {
 		    if (args[1]) {
 			args++;	
@@ -206,7 +236,6 @@ int MAIN(int argc, char **argv)
 				 "Can't read environment variable %s\n", *args);
 				goto end;
 			}
-			noprompt = 1;
 		    } else badarg = 1;
 		} else if (!strcmp (*args, "-password")) {
 		    if (args[1]) {
@@ -254,11 +283,22 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-keysig       set MS key signature type\n");
 	BIO_printf (bio_err, "-password p   set import/export password (NOT RECOMMENDED)\n");
 	BIO_printf (bio_err, "-envpass p    set import/export password from environment\n");
+	BIO_printf (bio_err, "-passin p     input file pass phrase\n");
+	BIO_printf (bio_err, "-envpassin p  environment variable containing input file pass phrase\n");
+	BIO_printf (bio_err, "-passout p    output file pass phrase\n");
+	BIO_printf (bio_err, "-envpassout p environment variable containing output file pass phrase\n");
     	goto end;
     }
 
-    if(cpass) mpass = cpass;
-    else {
+    if(!cpass) {
+    	if(export_cert) cpass = passout;
+    	else cpass = passin;
+    }
+
+    if(cpass) {
+	mpass = cpass;
+	noprompt = 1;
+    } else {
 	cpass = pass;
 	mpass = macpass;
     }
@@ -337,7 +377,7 @@ int MAIN(int argc, char **argv)
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_push_info("process -export_cert");
 #endif
-	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, NULL, NULL);
+	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, PEM_cb, passin);
 	if (!inkey) (void) BIO_reset(in);
 	else BIO_free(inkey);
 	if (!key) {
@@ -504,7 +544,7 @@ int MAIN(int argc, char **argv)
 #ifdef CRYPTO_MDEBUG
     CRYPTO_push_info("output keys and certificates");
 #endif
-    if (!dump_certs_keys_p12 (out, p12, cpass, -1, options)) {
+    if (!dump_certs_keys_p12 (out, p12, cpass, -1, options, passout)) {
 	BIO_printf(bio_err, "Error outputting keys and certificates\n");
 	ERR_print_errors (bio_err);
 	goto end;
@@ -524,7 +564,7 @@ int MAIN(int argc, char **argv)
 }
 
 int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
-	     int passlen, int options)
+	     int passlen, int options, char *pempass)
 {
 	STACK *asafes, *bags;
 	int i, bagnid;
@@ -546,7 +586,7 @@ int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 		} else continue;
 		if (!bags) return 0;
 	    	if (!dump_certs_pkeys_bags (out, bags, pass, passlen, 
-							 options)) {
+						 options, pempass)) {
 			sk_pop_free (bags, PKCS12_SAFEBAG_free);
 			return 0;
 		}
@@ -557,19 +597,19 @@ int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 }
 
 int dump_certs_pkeys_bags (BIO *out, STACK *bags, char *pass,
-	     int passlen, int options)
+	     int passlen, int options, char *pempass)
 {
 	int i;
 	for (i = 0; i < sk_num (bags); i++) {
 		if (!dump_certs_pkeys_bag (out,
 			 (PKCS12_SAFEBAG *)sk_value (bags, i), pass, passlen,
-					 		options)) return 0;
+					 	options, pempass)) return 0;
 	}
 	return 1;
 }
 
 int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
-	     int passlen, int options)
+	     int passlen, int options, char *pempass)
 {
 	EVP_PKEY *pkey;
 	PKCS8_PRIV_KEY_INFO *p8;
@@ -584,7 +624,7 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 		p8 = bag->value.keybag;
 		if (!(pkey = EVP_PKCS82PKEY (p8))) return 0;
 		print_attribs (out, p8->attributes, "Key Attributes");
-		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, NULL, NULL);
+		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, PEM_cb, pempass);
 		EVP_PKEY_free(pkey);
 	break;
 
@@ -600,7 +640,7 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 		if (!(pkey = EVP_PKCS82PKEY (p8))) return 0;
 		print_attribs (out, p8->attributes, "Key Attributes");
 		PKCS8_PRIV_KEY_INFO_free(p8);
-		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, NULL, NULL);
+		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, PEM_cb, pempass);
 		EVP_PKEY_free(pkey);
 	break;
 
@@ -623,7 +663,7 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 		if (options & INFO) BIO_printf (bio_err, "Safe Contents bag\n");
 		print_attribs (out, bag->attrib, "Bag Attributes");
 		return dump_certs_pkeys_bags (out, bag->value.safes, pass,
-							    passlen, options);
+							    passlen, options, pempass);
 					
 	default:
 		BIO_printf (bio_err, "Warning unsupported bag type: ");
