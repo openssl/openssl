@@ -156,8 +156,8 @@ union {
 #define M_PKCS12_decrypt_skey PKCS12_decrypt_skey
 #define M_PKCS8_decrypt PKCS8_decrypt
 
-#define M_PKCS12_bag_type(bag) OBJ_obj2nid(bag->type)
-#define M_PKCS12_cert_bag_type(bag) OBJ_obj2nid(bag->value.bag->type)
+#define M_PKCS12_bag_type(bg) OBJ_obj2nid((bg)->type)
+#define M_PKCS12_cert_bag_type(bg) OBJ_obj2nid((bg)->value.bag->type)
 #define M_PKCS12_crl_bag_type M_PKCS12_cert_bag_type
 
 #define PKCS12_get_attr(bag, attr_nid) \
