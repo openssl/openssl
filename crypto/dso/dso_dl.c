@@ -1,4 +1,4 @@
-/* dso_dl.c */
+/* dso_dl.c -*- mode:C; c-file-style: "eay" -*- */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -84,6 +84,7 @@ static int dl_finish(DSO *dso);
 static int dl_ctrl(DSO *dso, int cmd, long larg, void *parg);
 #endif
 static char *dl_name_converter(DSO *dso, const char *filename);
+static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2);
 
 static DSO_METHOD dso_meth_dl = {
 	"OpenSSL 'dl' shared library method",
@@ -98,6 +99,7 @@ static DSO_METHOD dso_meth_dl = {
 #endif
 	NULL, /* ctrl */
 	dl_name_converter,
+	dl_merger,
 	NULL, /* init */
 	NULL  /* finish */
 	};
@@ -236,6 +238,72 @@ static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname)
 		return(NULL);
 		}
 	return((DSO_FUNC_TYPE)sym);
+	}
+
+static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
+	{
+	char *merged;
+
+	if(!filespec1 && !filespec2)
+		{
+		DSOerr(DSO_F_DL_MERGER,
+				ERR_R_PASSED_NULL_PARAMETER);
+		return(NULL);
+		}
+	/* If the first file specification is a rooted path, it rules.
+	   same goes if the second file specification is missing. */
+	if (!filespec2 || filespec1[0] == '/')
+		{
+		merged = OPENSSL_malloc(strlen(filespec1) + 1);
+		if(!merged)
+			{
+			DSOerr(DSO_F_DL_MERGER,
+				ERR_R_MALLOC_FAILURE);
+			return(NULL);
+			}
+		strcpy(merged, filespec1);
+		}
+	/* If the first file specification is missing, the second one rules. */
+	else if (!filespec1)
+		{
+		merged = OPENSSL_malloc(strlen(filespec2) + 1);
+		if(!merged)
+			{
+			DSOerr(DSO_F_DL_MERGER,
+				ERR_R_MALLOC_FAILURE);
+			return(NULL);
+			}
+		strcpy(merged, filespec2);
+		}
+	else
+		/* This part isn't as trivial as it looks.  It assumes that
+		   the second file specification really is a directory, and
+		   makes no checks whatsoever.  Therefore, the result becomes
+		   the concatenation of filespec2 followed by a slash followed
+		   by filespec1. */
+		{
+		int spec2len, len;
+
+		spec2len = (filespec2 ? strlen(filespec2) : 0);
+		len = spec2len + (filespec1 ? strlen(filespec1) : 0);
+
+		if(filespec2 && filespec2[spec2len - 1] == '/')
+			{
+			spec2len--;
+			len--;
+			}
+		merged = OPENSSL_malloc(len + 2);
+		if(!merged)
+			{
+			DSOerr(DSO_F_DL_MERGER,
+				ERR_R_MALLOC_FAILURE);
+			return(NULL);
+			}
+		strcpy(merged, filespec2);
+		merged[spec2len] = '/';
+		strcpy(&merged[spec2len + 1], filespec1);
+		}
+	return(merged);
 	}
 
 /* This function is identical to the one in dso_dlfcn.c, but as it is highly

@@ -1,4 +1,4 @@
-/* dso_lib.c */
+/* dso_lib.c -*- mode:C; c-file-style: "eay" -*- */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -388,6 +388,33 @@ int DSO_set_filename(DSO *dso, const char *filename)
 		OPENSSL_free(dso->filename);
 	dso->filename = copied;
 	return(1);
+	}
+
+char *DSO_merge(DSO *dso, const char *filespec1, const char *filespec2)
+	{
+	char *result = NULL;
+
+	if(dso == NULL || dir == NULL)
+		{
+		DSOerr(DSO_F_DSO_MERGE,ERR_R_PASSED_NULL_PARAMETER);
+		return(NULL);
+		}
+	if(filespec1 == NULL)
+		filespec1 = dso->filename;
+	if(filespec1 == NULL)
+		{
+		DSOerr(DSO_F_DSO_MERGE,DSO_R_NO_FILENAME);
+		return(NULL);
+		}
+	if((dso->flags & DSO_FLAG_NO_NAME_TRANSLATION) == 0)
+		{
+		if(dso->merger != NULL)
+			result = dso->merger(dso, filespec1, filespec2);
+		else if(dso->meth->dso_merger != NULL)
+			result = dso->meth->dso_merger(dso,
+				filespec1, filespec2);
+		}
+	return(result);
 	}
 
 char *DSO_convert_filename(DSO *dso, const char *filename)

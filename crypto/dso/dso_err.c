@@ -1,6 +1,6 @@
 /* crypto/dso/dso_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,11 +69,13 @@ static ERR_STRING_DATA DSO_str_functs[]=
 {ERR_PACK(0,DSO_F_DLFCN_BIND_FUNC,0),	"DLFCN_BIND_FUNC"},
 {ERR_PACK(0,DSO_F_DLFCN_BIND_VAR,0),	"DLFCN_BIND_VAR"},
 {ERR_PACK(0,DSO_F_DLFCN_LOAD,0),	"DLFCN_LOAD"},
+{ERR_PACK(0,DSO_F_DLFCN_MERGER,0),	"DLFCN_MERGER"},
 {ERR_PACK(0,DSO_F_DLFCN_NAME_CONVERTER,0),	"DLFCN_NAME_CONVERTER"},
 {ERR_PACK(0,DSO_F_DLFCN_UNLOAD,0),	"DLFCN_UNLOAD"},
 {ERR_PACK(0,DSO_F_DL_BIND_FUNC,0),	"DL_BIND_FUNC"},
 {ERR_PACK(0,DSO_F_DL_BIND_VAR,0),	"DL_BIND_VAR"},
 {ERR_PACK(0,DSO_F_DL_LOAD,0),	"DL_LOAD"},
+{ERR_PACK(0,DSO_F_DL_MERGER,0),	"DL_MERGER"},
 {ERR_PACK(0,DSO_F_DL_NAME_CONVERTER,0),	"DL_NAME_CONVERTER"},
 {ERR_PACK(0,DSO_F_DL_UNLOAD,0),	"DL_UNLOAD"},
 {ERR_PACK(0,DSO_F_DSO_BIND_FUNC,0),	"DSO_bind_func"},
@@ -84,16 +86,19 @@ static ERR_STRING_DATA DSO_str_functs[]=
 {ERR_PACK(0,DSO_F_DSO_GET_FILENAME,0),	"DSO_get_filename"},
 {ERR_PACK(0,DSO_F_DSO_GET_LOADED_FILENAME,0),	"DSO_get_loaded_filename"},
 {ERR_PACK(0,DSO_F_DSO_LOAD,0),	"DSO_load"},
+{ERR_PACK(0,DSO_F_DSO_MERGE,0),	"DSO_merge"},
 {ERR_PACK(0,DSO_F_DSO_NEW_METHOD,0),	"DSO_new_method"},
 {ERR_PACK(0,DSO_F_DSO_SET_FILENAME,0),	"DSO_set_filename"},
 {ERR_PACK(0,DSO_F_DSO_SET_NAME_CONVERTER,0),	"DSO_set_name_converter"},
 {ERR_PACK(0,DSO_F_DSO_UP_REF,0),	"DSO_up_ref"},
 {ERR_PACK(0,DSO_F_VMS_BIND_VAR,0),	"VMS_BIND_VAR"},
 {ERR_PACK(0,DSO_F_VMS_LOAD,0),	"VMS_LOAD"},
+{ERR_PACK(0,DSO_F_VMS_MERGER,0),	"VMS_MERGER"},
 {ERR_PACK(0,DSO_F_VMS_UNLOAD,0),	"VMS_UNLOAD"},
 {ERR_PACK(0,DSO_F_WIN32_BIND_FUNC,0),	"WIN32_BIND_FUNC"},
 {ERR_PACK(0,DSO_F_WIN32_BIND_VAR,0),	"WIN32_BIND_VAR"},
 {ERR_PACK(0,DSO_F_WIN32_LOAD,0),	"WIN32_LOAD"},
+{ERR_PACK(0,DSO_F_WIN32_MERGER,0),	"WIN32_MERGER"},
 {ERR_PACK(0,DSO_F_WIN32_NAME_CONVERTER,0),	"WIN32_NAME_CONVERTER"},
 {ERR_PACK(0,DSO_F_WIN32_UNLOAD,0),	"WIN32_UNLOAD"},
 {0,NULL}
@@ -103,8 +108,11 @@ static ERR_STRING_DATA DSO_str_reasons[]=
 	{
 {DSO_R_CTRL_FAILED                       ,"control command failed"},
 {DSO_R_DSO_ALREADY_LOADED                ,"dso already loaded"},
+{DSO_R_EMPTY_FILE_STRUCTURE              ,"empty file structure"},
+{DSO_R_FAILURE                           ,"failure"},
 {DSO_R_FILENAME_TOO_BIG                  ,"filename too big"},
 {DSO_R_FINISH_FAILED                     ,"cleanup method function failed"},
+{DSO_R_INCORRECT_FILE_SYNTAX             ,"incorrect file syntax"},
 {DSO_R_LOAD_FAILED                       ,"could not load the shared library"},
 {DSO_R_NAME_TRANSLATION_FAILED           ,"name translation failed"},
 {DSO_R_NO_FILENAME                       ,"no filename"},

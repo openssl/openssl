@@ -1,4 +1,4 @@
-/* dso_win32.c */
+/* dso_win32.c -*- mode:C; c-file-style: "eay" -*- */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -83,6 +83,8 @@ static int win32_finish(DSO *dso);
 static long win32_ctrl(DSO *dso, int cmd, long larg, void *parg);
 #endif
 static char *win32_name_converter(DSO *dso, const char *filename);
+static char *win32_merger(DSO *dso, const char *filespec1,
+	const char *filespec2);
 
 static DSO_METHOD dso_meth_win32 = {
 	"OpenSSL 'win32' shared library method",
@@ -97,6 +99,7 @@ static DSO_METHOD dso_meth_win32 = {
 #endif
 	NULL, /* ctrl */
 	win32_name_converter,
+	win32_merger,
 	NULL, /* init */
 	NULL  /* finish */
 	};
@@ -246,6 +249,304 @@ static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname)
 		return(NULL);
 		}
 	return((DSO_FUNC_TYPE)sym);
+	}
+
+struct file_st
+	{
+	const char *node; int nodelen;
+	const char *device; int devicelen;
+	const char *predir; int predirlen;
+	const char *dir; int dirlen;
+	const char *file; int filelen;
+	}
+
+static struct file_st *win32_splitter(DSO *dso, const char *filename,
+	int assume_last_is_dir)
+	{
+	struct file_st *result = NULL;
+	enum { IN_NODE, IN_DEVICE, IN_FILE } position;
+	const char *start = filename;
+
+	if (!filename)
+		{
+		DSOerr(DSO_F_WIN32_MERGER,DSO_R_NO_FILENAME);
+		goto err;
+		}
+
+	result = OPENSSL_malloc(sizeof(struct file_st));
+	if(result == NULL)
+		{
+		DSOerr(DSO_F_WIN32_MERGER,
+			ERR_R_MALLOC_FAILURE);
+		return(NULL);
+		}
+
+	memset(result, 0, sizeof(struct file_st));
+	position = IN_DEVICE;
+
+	if(filename[0] == '\\' && filename[1] == '\\'
+		|| filename[0] == '/' && filename[1] == '/')
+		{
+		position = IN_NODE;
+		filename += 2;
+		start = filename;
+		result->node = start;
+		}
+
+	do
+		{
+		switch(filename[0])
+			{
+		case ':':
+			if(position != IN_DEVICE)
+				{
+				DSOerr(DSO_F_WIN32_MERGER,
+					DSO_R_INCORRECT_FILE_SYNTAX);
+				goto err;
+				}
+			result->device = start;
+			result->devicelen = filename - start;
+			position = IN_FILE;
+			start = ++filename;
+			result->dir = start;
+			break;
+		case '\\':
+		case '/':
+			if(position == IN_NODE)
+				{
+				result->nodelen = filename - start;
+				position = IN_FILE;
+				start = ++filename;
+				result->dir = start;
+				}
+			else
+				{
+				filename++;
+				result->dirlen += filename - start;
+				}
+			break;
+		case '\0':
+			if(position == IN_NODE)
+				{
+				result->nodelen = filename - start;
+				}
+			else
+				{
+				if(filename - start > 0)
+					{
+					if (assume_last_is_dir)
+						{
+						result->devicelen += filename - start;
+						}
+					else
+						{
+						result->file = start;
+						result->filelen = filename - start;
+						}
+					}
+				}
+			break;
+		default:
+			filename++;
+			break;
+			}
+		}
+	while(*filename);
+
+	if(!result->nodelen) result->node = NULL;
+	if(!result->devicelen) result->devicce = NULL;
+	if(!result->dirlen) result->dir = NULL;
+	if(!result->filelen) result->file = NULL;
+
+	return(result);
+	}
+
+static char *win32_joiner(DSO *dso, const file_st *file_split)
+	{
+	int len = 0, offset = 0;
+	char *result = NULL;
+	const char *start;
+
+	if(!file_split)
+		{
+		DSOerr(DSO_F_WIN32_MERGER,
+				ERR_R_PASSED_NULL_PARAMETER);
+		return(NULL);
+		}
+	if(file_split->node)
+		{
+		len += 2 + file_split->nodelen;	/* 2 for starting \\ */
+		if(file_split->predir || file_split->dir || file_split->file)
+			len++;	/* 1 for ending \ */
+		}
+	else if(file_split->device)
+		{
+		len += file_split->devicelen + 1; /* 1 for ending : */
+		}
+	len += file_split->predirlen;
+	if(file_split->predir && (file_split->dir || file_split->file))
+		{
+		len++;	/* 1 for ending \ */
+		}
+	len += file_split->dirlen;
+	if(file_split->dir && file_split->file)
+		{
+		len++;	/* 1 for ending \ */
+		}
+	len += file_split->filelen;
+
+	if(!len)
+		{
+		DSOerr(DSO_F_WIN32_MERGER, DSO_R_EMPTY_FILE_STRUCTURE);
+		return(NULL);
+		}
+
+	result = OPENSSL_malloc(len + 1);
+	if (!result)
+		{
+		DSOerr(DSO_F_WIN32_MERGER,
+			ERR_R_MALLOC_FAILURE);
+		return(NULL);
+		}
+
+	if(file_split->node)
+		{
+		strcpy(&result[offset], "\\\\"); offset += 2;
+		strncpy(&result[offset], file_split->node,
+			file_split->nodelen); offset += file_split->nodelen;
+		if(file_split->predir || file_split->dir || file_split->file)
+			{
+			result[offset] = '\\'; offset++;
+			}
+		}
+	else if(file_split->device)
+		{
+		strncpy(&result[offset], file_split->device,
+			file_split->devicelen); offset += file_split->devicelen;
+		result[offset] = ':'; offset++;
+		}
+	start = file_split->predir;
+	while(file_split->predirlen > (start - file_split->predir))
+		{
+		const char *end = strnchr(start, '/',
+			file_split->predirlen - (start - file_split->predir));
+		if(!end)
+			end = start
+				+ file_split->predirlen
+				- (start - file_split->predir);
+		strncpy(&result[offset], start,
+			end - start); offset += end - start;
+		result[offset] = '\\'; offset++;
+		start = end + 1;
+		}
+	if(file_split->predir && (file_split->dir || file_split->file))
+		{
+		result[offset] = '\\'; offset++;
+		}
+	start = file_split->dir;
+	while(file_split->dirlen > (start - file_split->dir))
+		{
+		const char *end = strnchr(start, '/',
+			file_split->dirlen - (start - file_split->dir));
+		if(!end)
+			end = start
+				+ file_split->dirlen
+				- (start - file_split->dir);
+		strncpy(&result[offset], start,
+			end - start); offset += end - start;
+		result[offset] = '\\'; offset++;
+		start = end + 1;
+		}
+	if(file_split->dir && file_split->file)
+		{
+		result[offset] = '\\'; offset++;
+		}
+	strncpy(&result[offset], file_split->file,
+		file_split->filelen); offset += file_split->filelen;
+	result[offset] = '\0';
+	return(result);
+	}
+
+static char *win32_merger(DSO *dso, const char *filespec1, const char *filespec2)
+	{
+	char *merged = NULL;
+	struct file_st *filespec1_split = NULL;
+	struct file_st *filespec2_split = NULL;
+
+	if(!filespec1 && !filespec2)
+		{
+		DSOerr(DSO_F_WIN32_MERGER,
+				ERR_R_PASSED_NULL_PARAMETER);
+		return(NULL);
+		}
+	if (!filespec2)
+		{
+		merged = OPENSSL_malloc(strlen(filespec1) + 1);
+		if(!merged)
+			{
+			DSOerr(DSO_F_WIN32_MERGER,
+				ERR_R_MALLOC_FAILURE);
+			return(NULL);
+			}
+		strcpy(merged, filespec1);
+		}
+	else if (!filespec1)
+		{
+		merged = OPENSSL_malloc(strlen(filespec2) + 1);
+		if(!merged)
+			{
+			DSOerr(DSO_F_WIN32_MERGER,
+				ERR_R_MALLOC_FAILURE);
+			return(NULL);
+			}
+		strcpy(merged, filespec2);
+		}
+	else
+		{
+		filespec1_split = win32_splitter(dso, filespec1, 1);
+		if (!filespec1_split)
+			{
+			DSOerr(DSO_F_WIN32_MERGER,
+				ERR_R_MALLOC_FAILURE);
+			return(NULL);
+			}
+		filespec2_split = win32_splitter(dso, filespec2, 0);
+		if (!filespec1_split)
+			{
+			DSOerr(DSO_F_WIN32_MERGER,
+				ERR_R_MALLOC_FAILURE);
+			OPENSSL_free(filespec1_split);
+			return(NULL);
+			}
+
+		/* Fill in into filespec1_split */
+		if (!filespec1_split->node && !filespec1_split->device)
+			{
+			filespec1_split->node = filespec2_split->node;
+			filespec1_split->nodelen = filespec2_split->nodelen;
+			filespec1_split->device = filespec2_split->device;
+			filespec1_split->devicelen = filespec2_split->devicelen;
+			}
+		if (!filespec1_split->dir)
+			{
+			filespec1_split->dir = filespec2_split->dir;
+			filespec1_split->dirlen = filespec2_split->dirlen;
+			}
+		else if (filespec1_split->dir[0] != '\\'
+			&& filespec1_split->dir[0] != '/')
+			{
+			filespec1_split->predir = filespec2_split->dir;
+			filespec1_split->predirlen = filespec2_split->dirlen;
+			}
+		if (!filespec1_split->file)
+			{
+			filespec1_split->file = filespec2_split->file;
+			filespec1_split->filelen = filespec2_split->filelen;
+			}
+
+		merged = win32_joiner(dso, filespec1_split);
+		}
+	return(merged);
 	}
 
 static char *win32_name_converter(DSO *dso, const char *filename)

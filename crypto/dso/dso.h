@@ -1,4 +1,4 @@
-/* dso.h */
+/* dso.h -*- mode:C; c-file-style: "eay" -*- */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -107,6 +107,22 @@ typedef struct dso_st DSO;
  * condition) or a newly allocated string containing the transformed form that
  * the caller will need to free with OPENSSL_free() when done. */
 typedef char* (*DSO_NAME_CONVERTER_FUNC)(DSO *, const char *);
+/* The function prototype used for method functions (or caller-provided
+ * callbacks) that merge two file specifications. They are passed a
+ * DSO structure pointer (or NULL if they are to be used independantly of
+ * a DSO object) and two file specifications to merge. They should
+ * either return NULL (if there is an error condition) or a newly allocated
+ * string containing the result of merging that the caller will need
+ * to free with OPENSSL_free() when done.
+ * Here, merging means that bits and pieces are taken from each of the
+ * file specifications and added together in whatever fashion that is
+ * sensible for the DSO method in question.  The only rule that really
+ * applies is that if the two specification contain pieces of the same
+ * type, the copy from the string string takes priority.  One could see
+ * it as the first specification is the one given by the user and the
+ * second being a bunch of defaults to add on if they're missing in the
+ * first. */
+typedef char* (*DSO_MERGER_FUNC)(DSO *, const char *, const char *);
 
 typedef struct dso_meth_st
 	{
@@ -140,6 +156,9 @@ typedef struct dso_meth_st
 	/* The default DSO_METHOD-specific function for converting filenames to
 	 * a canonical native form. */
 	DSO_NAME_CONVERTER_FUNC dso_name_converter;
+	/* The default DSO_METHOD-specific function for converting filenames to
+	 * a canonical native form. */
+	DSO_MERGER_FUNC dso_merger;
 
 	/* [De]Initialisation handlers. */
 	int (*init)(DSO *dso);
@@ -164,9 +183,13 @@ struct dso_st
 	 * don't touch meth_data! */
 	CRYPTO_EX_DATA ex_data;
 	/* If this callback function pointer is set to non-NULL, then it will
-	 * be used on DSO_load() in place of meth->dso_name_converter. NB: This
+	 * be used in DSO_load() in place of meth->dso_name_converter. NB: This
 	 * should normally set using DSO_set_name_converter(). */
 	DSO_NAME_CONVERTER_FUNC name_converter;
+	/* If this callback function pointer is set to non-NULL, then it will
+	 * be used in DSO_load() in place of meth->dso_merger. NB: This
+	 * should normally set using DSO_set_merger(). */
+	DSO_MERGER_FUNC merger;
 	/* This is populated with (a copy of) the platform-independant
 	 * filename used for this DSO. */
 	char *filename;
@@ -209,6 +232,11 @@ int	DSO_set_filename(DSO *dso, const char *filename);
  * caller-created DSO_METHODs can do the same thing. A non-NULL return value
  * will need to be OPENSSL_free()'d. */
 char	*DSO_convert_filename(DSO *dso, const char *filename);
+/* This function will invoke the DSO's merger callback to merge two file
+ * specifications, or if the callback isn't set it will instead use the
+ * DSO_METHOD's merger.  A non-NULL return value will need to be
+ * OPENSSL_free()'d. */
+char	*DSO_merge(DSO *dso, const char *filespec1, const char *filespec2);
 /* If the DSO is currently loaded, this returns the filename that it was loaded
  * under, otherwise it returns NULL. So it is also useful as a test as to
  * whether the DSO is currently loaded. NB: This will not necessarily return
@@ -273,11 +301,13 @@ void ERR_load_DSO_strings(void);
 #define DSO_F_DLFCN_BIND_FUNC				 100
 #define DSO_F_DLFCN_BIND_VAR				 101
 #define DSO_F_DLFCN_LOAD				 102
+#define DSO_F_DLFCN_MERGER				 130
 #define DSO_F_DLFCN_NAME_CONVERTER			 123
 #define DSO_F_DLFCN_UNLOAD				 103
 #define DSO_F_DL_BIND_FUNC				 104
 #define DSO_F_DL_BIND_VAR				 105
 #define DSO_F_DL_LOAD					 106
+#define DSO_F_DL_MERGER					 131
 #define DSO_F_DL_NAME_CONVERTER				 124
 #define DSO_F_DL_UNLOAD					 107
 #define DSO_F_DSO_BIND_FUNC				 108
@@ -288,24 +318,30 @@ void ERR_load_DSO_strings(void);
 #define DSO_F_DSO_GET_FILENAME				 127
 #define DSO_F_DSO_GET_LOADED_FILENAME			 128
 #define DSO_F_DSO_LOAD					 112
+#define DSO_F_DSO_MERGE					 132
 #define DSO_F_DSO_NEW_METHOD				 113
 #define DSO_F_DSO_SET_FILENAME				 129
 #define DSO_F_DSO_SET_NAME_CONVERTER			 122
 #define DSO_F_DSO_UP_REF				 114
 #define DSO_F_VMS_BIND_VAR				 115
 #define DSO_F_VMS_LOAD					 116
+#define DSO_F_VMS_MERGER				 133
 #define DSO_F_VMS_UNLOAD				 117
 #define DSO_F_WIN32_BIND_FUNC				 118
 #define DSO_F_WIN32_BIND_VAR				 119
 #define DSO_F_WIN32_LOAD				 120
+#define DSO_F_WIN32_MERGER				 134
 #define DSO_F_WIN32_NAME_CONVERTER			 125
 #define DSO_F_WIN32_UNLOAD				 121
 
 /* Reason codes. */
 #define DSO_R_CTRL_FAILED				 100
 #define DSO_R_DSO_ALREADY_LOADED			 110
+#define DSO_R_EMPTY_FILE_STRUCTURE			 113
+#define DSO_R_FAILURE					 114
 #define DSO_R_FILENAME_TOO_BIG				 101
 #define DSO_R_FINISH_FAILED				 102
+#define DSO_R_INCORRECT_FILE_SYNTAX			 115
 #define DSO_R_LOAD_FAILED				 103
 #define DSO_R_NAME_TRANSLATION_FAILED			 109
 #define DSO_R_NO_FILENAME				 111
