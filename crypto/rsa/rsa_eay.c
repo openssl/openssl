@@ -208,10 +208,10 @@ static int rsa_eay_blinding(RSA *rsa, BN_CTX *ctx)
 
 #define BLINDING_HELPER(rsa, ctx, err_instr) \
 	do { \
-		if(((rsa)->flags & RSA_FLAG_BLINDING) && \
-				((rsa)->blinding == NULL) && \
-				!rsa_eay_blinding(rsa, ctx)) \
-			err_instr \
+		if((!((rsa)->flags & RSA_FLAG_NO_BLINDING)) && \
+		    ((rsa)->blinding == NULL) && \
+		    !rsa_eay_blinding(rsa, ctx)) \
+		    err_instr \
 	} while(0)
 
 /* signing */
@@ -260,7 +260,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 
 	BLINDING_HELPER(rsa, ctx, goto err;);
 
-	if (rsa->flags & RSA_FLAG_BLINDING)
+	if (!(rsa->flags & RSA_FLAG_NO_BLINDING))
 		if (!BN_BLINDING_convert(&f,rsa->blinding,ctx)) goto err;
 
 	if ( (rsa->flags & RSA_FLAG_EXT_PKEY) ||
@@ -275,7 +275,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 		if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->d,rsa->n,ctx,NULL)) goto err;
 		}
 
-	if (rsa->flags & RSA_FLAG_BLINDING)
+	if (!(rsa->flags & RSA_FLAG_NO_BLINDING))
 		if (!BN_BLINDING_invert(&ret,rsa->blinding,ctx)) goto err;
 
 	/* put in leading 0 bytes if the number is less than the
@@ -339,7 +339,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 
 	BLINDING_HELPER(rsa, ctx, goto err;);
 
-	if (rsa->flags & RSA_FLAG_BLINDING)
+	if (!(rsa->flags & RSA_FLAG_NO_BLINDING))
 		if (!BN_BLINDING_convert(&f,rsa->blinding,ctx)) goto err;
 
 	/* do the decrypt */
@@ -356,7 +356,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 			goto err;
 		}
 
-	if (rsa->flags & RSA_FLAG_BLINDING)
+	if (!(rsa->flags & RSA_FLAG_NO_BLINDING))
 		if (!BN_BLINDING_invert(&ret,rsa->blinding,ctx)) goto err;
 
 	p=buf;
