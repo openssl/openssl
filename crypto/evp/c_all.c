@@ -189,4 +189,5 @@ void SSLeay_add_all_digests(void)
 	EVP_add_digest_alias(SN_ripemd160,"rmd160");
 #endif
 	PKCS12_PBE_add();
+	PKCS5_PBE_add();
 	}

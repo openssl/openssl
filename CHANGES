@@ -6,7 +6,8 @@
  Changes between 0.9.3a and 0.9.4
 
   *) Support for PKCS#5 v1.5 compatible password based encryption algorithms
-     and partial PKCS#8 functionality.
+     and partial PKCS#8 functionality. New 'pkcs8' application linked to
+     openssl.
      [Steve Henson]
 
   *) Introduce some semblance of const correctness to BN. Shame C doesn't
