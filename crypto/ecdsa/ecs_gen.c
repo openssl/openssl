@@ -78,4 +78,6 @@ ECDSA *ECDSA_generate_parameters(int bits,
 #ifdef  __cplusplus
 }
 #endif
+#else
+static void *dummy=&dummy;
 #endif

@@ -366,7 +366,7 @@ int _ossl_old_des_enc_write(int fd,char *buf,int len,_ossl_old_des_key_schedule 
 	_ossl_old_des_cblock *iv);
 char *_ossl_old_des_fcrypt(const char *buf,const char *salt, char *ret);
 char *_ossl_old_des_crypt(const char *buf,const char *salt);
-#if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT)
+#if !defined(PERL5) && !defined(NeXT)
 char *_ossl_old_crypt(const char *buf,const char *salt);
 #endif
 void _ossl_old_des_ofb_encrypt(unsigned char *in,unsigned char *out,
