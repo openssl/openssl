@@ -8,7 +8,7 @@ SSL_set_session - set a TLS/SSL session to be used during TLS/SSL connect
 
  #include <openssl/ssl.h>
 
- int *SSL_set_session(SSL *ssl, SSL_SESSION *session);
+ int SSL_set_session(SSL *ssl, SSL_SESSION *session);
 
 =head1 DESCRIPTION
 
