@@ -206,8 +206,11 @@ int ssl23_get_client_hello(SSL *s)
 	unsigned int i;
 	unsigned int csl,sil,cl;
 	int n=0,j;
-	int type=0,use_sslv2_strong=0;
+	int type=0;
 	int v[2];
+#ifndef NO_RSA
+	int use_sslv2_strong=0;
+#endif
 
 	if (s->state ==	SSL23_ST_SR_CLNT_HELLO_A)
 		{

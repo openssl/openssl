@@ -25,6 +25,7 @@ open(OUT,">$report") or die;
 print OUT "OpenSSL self-test report:\n\n";
 
 $uname=`uname -a`;
+$uname="??" if $uname eq "";
 
 $c=`sh config -t`;
 foreach $_ (split("\n",$c)) {
@@ -48,6 +49,7 @@ if (open(IN,"<Makefile.ssl")) {
 
 $cversion=`$cc -v 2>&1`;
 $cversion=`$cc -V 2>&1` if $cversion =~ "usage";
+$cversion=`$cc --version` if $cversion eq "";
 $cversion =~ s/Reading specs.*\n//;
 $cversion =~ s/usage.*\n//;
 chomp $cversion;
@@ -64,6 +66,7 @@ if (open(IN,"<CHANGES")) {
 
 print OUT "OpenSSL version:  $version\n";
 print OUT "Last change:      $last...\n";
+print OUT "Options:          $options\n" if $options ne "";
 print OUT "OS (uname):       $uname";
 print OUT "OS (config):      $os\n";
 print OUT "Target (default): $platform0\n";
@@ -117,6 +120,14 @@ if (system("make 2>&1 | tee make.log") > 255) {
     goto err;
 }
 
+$_=$options;
+s/no-asm//;
+if (/no-/)
+{
+    print OUT "Test skipped.\n";
+    goto err;
+}
+
 print "Running make test...\n";
 if (system("make test 2>&1 | tee make.log") > 255)
  {
@@ -153,8 +164,11 @@ close(OUT);
 print "\n";
 open(IN,"<$report") or die;
 while (<IN>) {
-    last if /$sep/;
+    if (/$sep/) {
+	print "[...]\n";
+	last;
+    }
     print;
 }
-print "Test report in file $report\n";
+print "\nTest report in file $report\n";
 

@@ -81,11 +81,13 @@ OPENSSL_GLOBAL SSL3_ENC_METHOD ssl3_undef_enc_method={
 	(int (*)(SSL *, EVP_MD_CTX *, EVP_MD_CTX *, const char*, int, unsigned char *))ssl_undefined_function
 	};
 
+#ifndef NO_RSA
 union rsa_fn_to_char_u
 	{
 	char *char_p;
 	RSA *(*fn_p)(SSL *, int, int);
 	};
+#endif
 
 union dh_fn_to_char_u
 	{

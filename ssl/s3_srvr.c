@@ -1326,7 +1326,6 @@ static int ssl3_get_client_key_exchange(SSL *s)
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
 			goto f_err;
 			}
-#endif
 
 		s->session->master_key_length=
 			s->method->ssl3_enc->generate_master_secret(s,
@@ -1335,6 +1334,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		memset(p,0,i);
 		}
 	else
+#endif
 #ifndef NO_DH
 		if (l & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 		{
