@@ -164,7 +164,7 @@ long app_RAND_load_files(char *name)
 	char *p,*n;
 	int last;
 	long tot=0;
-    int egd;
+	int egd;
 	
 	for (;;)
 		{

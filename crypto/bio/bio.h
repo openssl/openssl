@@ -507,7 +507,7 @@ int	BIO_set(BIO *a,BIO_METHOD *type);
 int	BIO_free(BIO *a);
 int	BIO_read(BIO *b, void *data, int len);
 int	BIO_gets(BIO *bp,char *buf, int size);
-int	BIO_write(BIO *b, const char *data, int len);
+int	BIO_write(BIO *b, const void *data, int len);
 int	BIO_puts(BIO *bp,const char *buf);
 long	BIO_ctrl(BIO *bp,int cmd,long larg,void *parg);
 long	BIO_callback_ctrl(BIO *bp,int cmd,void (*fp)());

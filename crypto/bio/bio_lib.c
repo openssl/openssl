@@ -169,7 +169,7 @@ int BIO_read(BIO *b, void *out, int outl)
 	return(i);
 	}
 
-int BIO_write(BIO *b, const char *in, int inl)
+int BIO_write(BIO *b, const void *in, int inl)
 	{
 	int i;
 	long (*cb)();
