@@ -1032,7 +1032,7 @@ static int request_certificate(SSL *s)
 	len = 6 + (unsigned long)s->s2->tmp.clen + (unsigned long)s->s2->tmp.rlen;
 	if (len > SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER)
 		{
-		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_MESSAGE_TOO_LONG);
+		SSLerr(SSL_F_REQUEST_CERTIFICATE,SSL_R_MESSAGE_TOO_LONG);
 		goto end;
 		}
 	j = (int)len - s->init_num;
