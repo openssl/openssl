@@ -46,12 +46,13 @@
  http://www.kernel.org/pub/software/devel/nasm/binaries/win32/
  The NASM binary nasmw.exe needs to be installed anywhere on your PATH.
 
- Firstly you should run Configure:
+ Firstly you should run Configure (to build a FIPS-certified variant of
+ OpenSSL, add the option "fips"):
 
  > perl Configure VC-WIN32
 
  Next you need to build the Makefiles and optionally the assembly language
- files:
+ files (to build a FIPS-certified variant of OpenSSL, add the argument "fips"):
 
  - If you are using MASM then run:
 
@@ -100,10 +101,12 @@
  Borland C++ builder 5
  ---------------------
 
- * Configure for building with Borland Builder:
+ * Configure for building with Borland Builder (to build a FIPS-certified
+   variant of OpenSSL, add the option "fips"):
    > perl Configure BC-32
 
- * Create the appropriate makefile
+ * Create the appropriate makefile (to build a FIPS-certified variant of
+   OpenSSL, add the argument "fips")
    > ms\do_nasm
 
  * Build
@@ -194,6 +197,8 @@
    occur, try
    > ms\mingw32 no-asm
    instead.
+   If you want to build a FIPS-certified variant of OpenSSL, add the argument
+   "fips"
 
    libcrypto.a and libssl.a are the static libraries. To use the DLLs,
    link with libeay32.a and libssl32.a instead.

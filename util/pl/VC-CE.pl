@@ -47,7 +47,7 @@ $shlibp=($shlib)?".dll":".lib";
 $lfile='/out:';
 
 $shlib_ex_obj="";
-#$app_ex_obj="setargv.obj";
+$app_ex_obj="";
 $app_ex_obj="";
 
 $bn_asm_obj='';

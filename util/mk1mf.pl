@@ -10,7 +10,7 @@ $OPTIONS="";
 $ssl_version="";
 $banner="\t\@echo Building OpenSSL";
 
-open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
+open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
     $ssl_version=$1 if (/^VERSION=(.*)$/);
     $OPTIONS=$1 if (/^OPTIONS=(.*)$/);
@@ -18,7 +18,7 @@ while(<IN>) {
 }
 close(IN);
 
-die "Makefile.ssl is not the toplevel Makefile!\n" if $ssl_version eq "";
+die "Makefile is not the toplevel Makefile!\n" if $ssl_version eq "";
 
 $infile="MINFO";
 
@@ -222,7 +222,7 @@ $cflags.=" -DOPENSSL_NO_SHA"  if $no_sha;
 $cflags.=" -DOPENSSL_NO_SHA1" if $no_sha1;
 $cflags.=" -DOPENSSL_NO_RIPEMD" if $no_ripemd;
 $cflags.=" -DOPENSSL_NO_MDC2" if $no_mdc2;
-$cflags.=" -DOPENSSL_NO_BF"  if $no_bf;
+$cflags.=" -DOPENSSL_NO_BF"   if $no_bf;
 $cflags.=" -DOPENSSL_NO_CAST" if $no_cast;
 $cflags.=" -DOPENSSL_NO_DES"  if $no_des;
 $cflags.=" -DOPENSSL_NO_RSA"  if $no_rsa;
@@ -236,6 +236,7 @@ $cflags.=" -DOPENSSL_NO_KRB5" if $no_krb5;
 $cflags.=" -DOPENSSL_NO_EC"   if $no_ec;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
+$cflags.=" -DOPENSSL_FIPS"    if $fips;
 #$cflags.=" -DRSAref"  if $rsaref ne "";
 
 ## if ($unix)
@@ -639,7 +640,7 @@ if ($platform eq "linux-elf") {
     print <<"EOF";
 # Generate perlasm output files
 %.cpp:
-	(cd \$(\@D)/..; PERL=perl make -f Makefile.ssl asm/\$(\@F))
+	(cd \$(\@D)/..; PERL=perl make -f Makefile asm/\$(\@F))
 EOF
 }
 print "###################################################################\n";
@@ -921,6 +922,7 @@ sub read_options
 				  $no_aes=1; }
 
 	elsif (/^rsaref$/)	{ }
+	elsif (/^fips$/)	{ $fips=1; }
 	elsif (/^gcc$/)		{ $gcc=1; }
 	elsif (/^debug$/)	{ $debug=1; }
 	elsif (/^profile$/)	{ $profile=1; }

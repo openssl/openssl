@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# Check the library fingerprint and generate an executable fingerprint, or
+# return an error
+
+lib=$1
+exe=$2
+
+# deal with the case where we're run from within the build and OpenSSL is
+# not yet installed.  Also, make sure LD_LIBRARY_PATH is properly set in
+# case shared libraries are built.
+if [ "X$TOP" != "X" ]
+then
+    PATH=$TOP/apps:$PATH
+    LD_LIBRARY_PATH=$TOP; export LD_LIBRARY_PATH
+else
+    LD_LIBRARY_PATH=.; export LD_LIBRARY_PATH
+fi
+
+elib=`echo $lib| sed 's/\//\\\\\//g'`
+echo "Checking library fingerprint for $lib"
+openssl sha1 -hmac etaonrishdlcupfm $lib | sed "s/$elib/libcrypto.a/" | diff ${lib%.a}.sha1 - || { echo "$libs fingerprint mismatch"; exit 1; }
+
+echo "Making fingerprint for $exe"
+openssl sha1 -hmac etaonrishdlcupfm -binary $exe > $exe.sha1

@@ -681,6 +681,19 @@ aes 43			: AES-256-OFB		: aes-256-ofb
 !Cname aes-256-cfb128
 aes 44			: AES-256-CFB		: aes-256-cfb
 
+# There are no OIDs for these modes...
+
+			: AES-128-CFB1		: aes-128-cfb1
+			: AES-192-CFB1		: aes-192-cfb1
+			: AES-256-CFB1		: aes-256-cfb1
+			: AES-128-CFB8		: aes-128-cfb8
+			: AES-192-CFB8		: aes-192-cfb8
+			: AES-256-CFB8		: aes-256-cfb8
+			: DES-CFB1		: des-cfb1
+			: DES-CFB8		: des-cfb8
+			: DES-EDE3-CFB1		: des-ede3-cfb1
+			: DES-EDE3-CFB8		: des-ede3-cfb8
+
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code
 id-ce 23		: holdInstructionCode	: Hold Instruction Code

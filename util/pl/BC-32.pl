@@ -62,7 +62,7 @@ $des_enc_src='';
 $bf_enc_obj='';
 $bf_enc_src='';
 
-if (!$no_asm)
+if (!$no_asm && !$fips)
 	{
 	$bn_mulw_obj='crypto\bn\asm\bn_win32.obj';
 	$bn_mulw_src='crypto\bn\asm\bn_win32.asm';

@@ -1,5 +1,5 @@
 openssl.pc
-Makefile.ssl
+Makefile
 MINFO
 makefile.one
 tmp
@@ -14,3 +14,4 @@ cctest.c
 cctest.a
 libcrypto.so.*
 libssl.so.*
+libcrypto.sha1

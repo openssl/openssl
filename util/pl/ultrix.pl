@@ -17,7 +17,7 @@ else
 
 $cflags.=" -std1 -DL_ENDIAN";
 
-if (!$no_asm)
+if (!$no_asm && !$fips)
 	{
 	$bn_asm_obj='$(OBJ_D)/mips1.o';
 	$bn_asm_src='crypto/bn/asm/mips1.s';

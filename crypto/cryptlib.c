@@ -66,6 +66,11 @@
 static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
 #endif
 
+#ifdef OPENSSL_FIPS
+int FIPS_mode;
+void *FIPS_rand_check;
+#endif /* def OPENSSL_FIPS */
+
 DECLARE_STACK_OF(CRYPTO_dynlock)
 IMPLEMENT_STACK_OF(CRYPTO_dynlock)
 

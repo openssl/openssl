@@ -79,7 +79,7 @@ my $OS2=0;
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "PERL5", "NeXT",
-			"EXPORT_VAR_AS_FUNCTION" );
+			"EXPORT_VAR_AS_FUNCTION", "OPENSSL_FIPS" );
 my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
@@ -94,7 +94,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "FP_API", "STDIO", "SOCK", "KRB5", "ENGINE", "HW" );
 
 my $options="";
-open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
+open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
     $options=$1 if (/^OPTIONS=(.*)$/);
 }
@@ -109,6 +109,7 @@ my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
 my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
 my $no_ec; my $no_engine; my $no_hw;
 my $no_fp_api;
+my $fips;
 
 foreach (@ARGV, split(/ /, $options))
 	{
@@ -129,6 +130,7 @@ foreach (@ARGV, split(/ /, $options))
 	}
 	$VMS=1 if $_ eq "VMS";
 	$OS2=1 if $_ eq "OS2";
+	$fips=1 if $_ eq "fips";
 
 	$do_ssl=1 if $_ eq "ssleay";
 	if ($_ eq "ssl") {
@@ -265,6 +267,7 @@ $crypto.=" crypto/ocsp/ocsp.h";
 $crypto.=" crypto/ui/ui.h crypto/ui/ui_compat.h";
 $crypto.=" crypto/krb5/krb5_asn.h";
 $crypto.=" crypto/tmdiff.h";
+$crypto.=" fips/fips.h fips/rand/fips_rand.h";
 
 my $symhacks="crypto/symhacks.h";
 
@@ -794,7 +797,7 @@ sub do_defs
 		}
 		close(IN);
 
-		my $algs;
+		my $algs = '';
 		my $plays;
 
 		print STDERR "DEBUG: postprocessing ----------\n" if $debug;
@@ -864,6 +867,7 @@ sub do_defs
 
 			$platform{$s} =
 			    &reduce_platforms((defined($platform{$s})?$platform{$s}.',':"").$p);
+			$algorithm{$s} = '' if !defined $algorithm{$s};
 			$algorithm{$s} .= ','.$a;
 
 			if (defined($variant{$s})) {
@@ -1028,6 +1032,9 @@ sub is_valid
 			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && ($VMSVAX || $W32 || $W16)) {
 				return 1;
 			}
+			if ($keyword eq "OPENSSL_FIPS" && $fips) {
+				return 1;
+			}
 			return 0;
 		} else {
 			# algorithms
@@ -1119,7 +1126,7 @@ sub print_test_file
 sub get_version {
    local *MF;
    my $v = '?';
-   open MF, 'Makefile.ssl' or return $v;
+   open MF, 'Makefile' or return $v;
    while (<MF>) {
      $v = $1, last if /^VERSION=(.*?)\s*$/;
    }

@@ -58,6 +58,8 @@
 
 #include "des_locl.h"
 
+#ifndef OPENSSL_FIPS
+
 void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 	{
 	register DES_LONG l,r,t,u;
@@ -287,7 +289,11 @@ void DES_decrypt3(DES_LONG *data, DES_key_schedule *ks1,
 	data[1]=r;
 	}
 
+#endif /* ndef OPENSSL_FIPS */
+
 #ifndef DES_DEFAULT_OPTIONS
+
+#if !defined(OPENSSL_FIPS) || !defined(I386_ONLY)
 
 #undef CBC_ENC_C__DONT_UPDATE_IV
 #include "ncbc_enc.c" /* DES_ncbc_encrypt */
@@ -403,5 +409,7 @@ void DES_ede3_cbc_encrypt(const unsigned char *input, unsigned char *output,
 	tin0=tin1=tout0=tout1=xor0=xor1=0;
 	tin[0]=tin[1]=0;
 	}
+
+#endif /* !defined(OPENSSL_FIPS) || !defined(I386_ONLY) */
 
 #endif /* DES_DEFAULT_OPTIONS */

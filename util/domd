@@ -11,7 +11,7 @@ if [ "$1" = "-MD" ]; then
 fi
 if [ "$MAKEDEPEND" = "" ]; then MAKEDEPEND=makedepend; fi
 
-cp Makefile.ssl Makefile.save
+cp Makefile Makefile.save
 # fake the presence of Kerberos
 touch $TOP/krb5.h
 if [ "$MAKEDEPEND" = "gcc" ]; then
@@ -20,15 +20,15 @@ if [ "$MAKEDEPEND" = "gcc" ]; then
 	if [ "$1" != "--" ]; then args="$args $1"; fi
 	shift
     done
-    sed -e '/^# DO NOT DELETE.*/,$d' < Makefile.ssl > Makefile.tmp
+    sed -e '/^# DO NOT DELETE.*/,$d' < Makefile > Makefile.tmp
     echo '# DO NOT DELETE THIS LINE -- make depend depends on it.' >> Makefile.tmp
     gcc -D OPENSSL_DOING_MAKEDEPEND -M $args >> Makefile.tmp
     ${PERL} $TOP/util/clean-depend.pl < Makefile.tmp > Makefile.new
     rm -f Makefile.tmp
 else
-    ${MAKEDEPEND} -D OPENSSL_DOING_MAKEDEPEND -f Makefile.ssl $@
-    ${PERL} $TOP/util/clean-depend.pl < Makefile.ssl > Makefile.new
+    ${MAKEDEPEND} -D OPENSSL_DOING_MAKEDEPEND -f Makefile $@
+    ${PERL} $TOP/util/clean-depend.pl < Makefile > Makefile.new
 fi
-mv Makefile.new Makefile.ssl
+mv Makefile.new Makefile
 # unfake the presence of Kerberos
 rm $TOP/krb5.h

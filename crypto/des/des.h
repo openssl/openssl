@@ -128,7 +128,7 @@ OPENSSL_DECLARE_GLOBAL(int,DES_rw_mode);	/* defaults to DES_PCBC_MODE */
 #define DES_rw_mode OPENSSL_GLOBAL_REF(DES_rw_mode)
 
 const char *DES_options(void);
-void DES_ecb3_encrypt(const_DES_cblock *input, DES_cblock *output,
+void DES_ecb3_encrypt(const unsigned char *input, unsigned char *output,
 		      DES_key_schedule *ks1,DES_key_schedule *ks2,
 		      DES_key_schedule *ks3, int enc);
 DES_LONG DES_cbc_cksum(const unsigned char *input,DES_cblock *output,
@@ -187,6 +187,10 @@ void DES_ede3_cfb64_encrypt(const unsigned char *in,unsigned char *out,
 			    long length,DES_key_schedule *ks1,
 			    DES_key_schedule *ks2,DES_key_schedule *ks3,
 			    DES_cblock *ivec,int *num,int enc);
+void DES_ede3_cfb_encrypt(const unsigned char *in,unsigned char *out,
+			  int numbits,long length,DES_key_schedule *ks1,
+			  DES_key_schedule *ks2,DES_key_schedule *ks3,
+			  DES_cblock *ivec,int enc);
 void DES_ede3_ofb64_encrypt(const unsigned char *in,unsigned char *out,
 			    long length,DES_key_schedule *ks1,
 			    DES_key_schedule *ks2,DES_key_schedule *ks3,

@@ -1,3 +1,4 @@
+rem use "fips" as the first argument to make a proper FIPS build.
 
 @echo off
 echo Generating x86 for NASM assember
@@ -57,14 +58,14 @@ cd ..\..\..
 echo on
 
 perl util\mkfiles.pl >MINFO
-rem perl util\mk1mf.pl VC-MSDOS no-sock >ms\msdos.mak
-rem perl util\mk1mf.pl VC-W31-32 >ms\w31.mak
-perl util\mk1mf.pl dll VC-W31-32 >ms\w31dll.mak
-perl util\mk1mf.pl nasm VC-WIN32 >ms\nt.mak
-perl util\mk1mf.pl dll nasm VC-WIN32 >ms\ntdll.mak
-perl util\mk1mf.pl nasm BC-NT >ms\bcb.mak
+rem perl util\mk1mf.pl no-sock %1 VC-MSDOS >ms\msdos.mak
+rem perl util\mk1mf.pl %1 VC-W31-32 >ms\w31.mak
+perl util\mk1mf.pl dll %1 VC-W31-32 >ms\w31dll.mak
+perl util\mk1mf.pl nasm %1 VC-WIN32 >ms\nt.mak
+perl util\mk1mf.pl dll nasm %1 VC-WIN32 >ms\ntdll.mak
+perl util\mk1mf.pl nasm %1 BC-NT >ms\bcb.mak
 
-perl util\mkdef.pl 16 libeay > ms\libeay16.def
-perl util\mkdef.pl 32 libeay > ms\libeay32.def
-perl util\mkdef.pl 16 ssleay > ms\ssleay16.def
-perl util\mkdef.pl 32 ssleay > ms\ssleay32.def
+perl util\mkdef.pl 16 libeay %1 > ms\libeay16.def
+perl util\mkdef.pl 32 libeay %1 > ms\libeay32.def
+perl util\mkdef.pl 16 ssleay %1 > ms\ssleay16.def
+perl util\mkdef.pl 32 ssleay %1 > ms\ssleay32.def

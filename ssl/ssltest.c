@@ -133,6 +133,7 @@
 #endif
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/fips.h>
 
 #define _XOPEN_SOURCE_EXTENDED	1 /* Or gethostname won't be declared properly
 				     on Compaq platforms (at least with DEC C).
@@ -198,6 +199,9 @@ static void sv_usage(void)
 	{
 	fprintf(stderr,"usage: ssltest [args ...]\n");
 	fprintf(stderr,"\n");
+#ifdef OPENSSL_FIPS
+	fprintf(stderr,"-F             - run test in FIPS mode\n");
+#endif
 	fprintf(stderr," -server_auth  - check server certificate\n");
 	fprintf(stderr," -client_auth  - do client authentication\n");
 	fprintf(stderr," -v            - more output\n");
@@ -369,6 +373,10 @@ int main(int argc, char *argv[])
 	clock_t s_time = 0, c_time = 0;
 	int comp = 0;
 	COMP_METHOD *cm = NULL;
+#ifdef OPENSSL_FIPS
+	int fips_mode=0;
+	const char *path=argv[0];
+#endif
 
 	verbose = 0;
 	debug = 0;
@@ -400,7 +408,16 @@ int main(int argc, char *argv[])
 
 	while (argc >= 1)
 		{
-		if	(strcmp(*argv,"-server_auth") == 0)
+		if(!strcmp(*argv,"-F"))
+			{
+#ifdef OPENSSL_FIPS
+			fips_mode=1;
+#else
+			fprintf(stderr,"not compiled with FIPS support, so exitting without running.\n");
+			exit(0);
+#endif
+			}
+		else if	(strcmp(*argv,"-server_auth") == 0)
 			server_auth=1;
 		else if	(strcmp(*argv,"-client_auth") == 0)
 			client_auth=1;
@@ -534,6 +551,7 @@ bad:
 		goto end;
 		}
 
+
 	if (!ssl2 && !ssl3 && !tls1 && number > 1 && !reuse && !force)
 		{
 		fprintf(stderr, "This case cannot work.  Use -f to perform "
@@ -542,6 +560,20 @@ bad:
 			"to avoid protocol mismatch.\n");
 		EXIT(1);
 		}
+
+#ifdef OPENSSL_FIPS
+	if(fips_mode)
+		{
+		if(!FIPS_mode_set(1,path))
+			{
+			ERR_load_crypto_strings();
+			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+			exit(1);
+			}
+		else
+			fprintf(stderr,"*** IN FIPS MODE ***\n");
+		}
+#endif
 
 	if (print_time)
 		{

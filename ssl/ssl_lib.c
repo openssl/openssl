@@ -121,6 +121,7 @@
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
 #include <openssl/x509v3.h>
+#include <openssl/fips.h>
 
 const char *SSL_version_str=OPENSSL_VERSION_TEXT;
 
@@ -2156,7 +2157,18 @@ int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx)
 int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
 		const char *CApath)
 	{
-	return(X509_STORE_load_locations(ctx->cert_store,CAfile,CApath));
+	int r;
+
+#ifdef OPENSSL_FIPS
+	if(ctx->method->version == TLS1_VERSION)
+	    FIPS_allow_md5(1);
+#endif
+	r=X509_STORE_load_locations(ctx->cert_store,CAfile,CApath);
+#ifdef OPENSSL_FIPS
+	if(ctx->method->version == TLS1_VERSION)
+	    FIPS_allow_md5(0);
+#endif
+	return r;
 	}
 #endif
 

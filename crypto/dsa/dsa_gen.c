@@ -80,6 +80,7 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
+#ifndef OPENSSL_FIPS
 DSA *DSA_generate_parameters(int bits,
 		unsigned char *seed_in, int seed_len,
 		int *counter_ret, unsigned long *h_ret,
@@ -293,4 +294,6 @@ err:
 	if (mont != NULL) BN_MONT_CTX_free(mont);
 	return(ok?ret:NULL);
 	}
-#endif
+#endif /* ndef OPENSSL_FIPS */
+#endif /* ndef OPENSSL_NO_SHA */
+

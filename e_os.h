@@ -510,11 +510,30 @@ extern char *sys_errlist[]; extern int sys_nerr;
 #define IRIX_CC_BUG	/* CDS++ up to V2.0Bsomething suffered from the same bug.*/
 #endif
 
+#if defined(OPENSSL_SYS_WINDOWS)
+#  define strcasecmp _stricmp
+#  define strncasecmp _strnicmp
+#elif defined(OPENSSL_SYS_VMS)
+/* VMS below version 7.0 doesn't have strcasecmp() */
+#  include <openssl/o_str.h>
+#  define strcasecmp OPENSSL_strcasecmp
+#  define strncasecmp OPENSSL_strncasecmp
+#elif defined(OPENSSL_SYS_OS2) && defined(__EMX__)
+#  define strcasecmp stricmp
+#  define strncasecmp strnicmp
+#else
+#  ifdef NO_STRINGS_H
+    int	strcasecmp();
+    int	strncasecmp();
+#  else
+#    include <strings.h>
+#  endif /* NO_STRINGS_H */
+#endif
+
 #if defined(OPENSSL_SYS_OS2) && defined(__EMX__)
 # include <io.h>
 # include <fcntl.h>
 # define NO_SYSLOG
-# define strcasecmp stricmp
 #endif
 
 /* vxworks */

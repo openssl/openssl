@@ -126,16 +126,6 @@
 #include <openssl/engine.h>
 #endif
 
-#ifdef OPENSSL_SYS_WINDOWS
-#define strcasecmp _stricmp
-#else
-#  ifdef NO_STRINGS_H
-    int	strcasecmp();
-#  else
-#    include <strings.h>
-#  endif /* NO_STRINGS_H */
-#endif
-
 #define NON_MAIN
 #include "apps.h"
 #undef NON_MAIN

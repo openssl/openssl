@@ -62,7 +62,7 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 
-#ifndef RSA_NULL
+#if !defined(RSA_NULL) && !defined(OPENSSL_FIPS)
 
 static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);

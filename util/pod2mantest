@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This script is used by test/Makefile.ssl to check whether a sane 'pod2man'
+# This script is used by test/Makefile to check whether a sane 'pod2man'
 # is installed.
 # ('make install' should not try to run 'pod2man' if it does not exist or if
 # it is a broken 'pod2man' version that is known to cause trouble. if we find

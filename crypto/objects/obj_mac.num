@@ -647,3 +647,13 @@ joint_iso_itu_t		646
 international_organizations		647
 ms_smartcard_login		648
 ms_upn		649
+aes_128_cfb1		650
+aes_192_cfb1		651
+aes_256_cfb1		652
+aes_128_cfb8		653
+aes_192_cfb8		654
+aes_256_cfb8		655
+des_cfb1		656
+des_cfb8		657
+des_ede3_cfb1		658
+des_ede3_cfb8		659

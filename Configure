@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-engine] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-engine] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [[no-]fips] [debug] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -135,11 +135,12 @@ my %table=(
 # Our development configs
 "purify",	"purify gcc:-g -DPURIFY -Wall::(unknown)::-lsocket -lnsl::::",
 "debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror::(unknown)::-lefence::::",
-"debug-ben",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::asm/bn86-elf.o asm/co86-elf.o",
+"debug-ben",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -O2 -Wall -Wshadow -Werror -pipe::(unknown)::::asm/bn86-elf.o asm/co86-elf.o",
 "debug-ben-openbsd","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_OPENBSD_DEV_CRYPTO -DOPENSSL_NO_ASM -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::",
 "debug-ben-openbsd-debug","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_OPENBSD_DEV_CRYPTO -DOPENSSL_NO_ASM -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::",
-"debug-ben-debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::::",
+"debug-ben-debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -g3 -O2 -Wall -Wshadow -Werror -pipe::(unknown)::::::",
 "debug-ben-strict",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe::(unknown)::::::",
+"debug-ben-fips-debug","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_FIPS -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::asm/bn86-elf.o asm/co86-elf.o",
 "debug-rse","cc:-DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
 "debug-bodo",	"gcc:-DL_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBIO_PAIR_DEBUG -DPEDANTIC -g -m486 -pedantic -Wshadow -Wall::-D_REENTRANT:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
 "debug-ulf",	"gcc:-DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -g -O2 -m486 -Wall -Werror -Wshadow -pipe::-D_REENTRANT:::${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
@@ -609,7 +610,7 @@ my $threads=0;
 my $no_asm=0;
 my $no_dso=0;
 my @skip=();
-my $Makefile="Makefile.ssl";
+my $Makefile="Makefile";
 my $des_locl="crypto/des/des_locl.h";
 my $des	="crypto/des/des.h";
 my $bn	="crypto/bn/bn.h";
@@ -621,6 +622,7 @@ my $rc2	="crypto/rc2/rc2.h";
 my $bf	="crypto/bf/bf_locl.h";
 my $bn_asm	="bn_asm.o";
 my $des_enc="des_enc.o fcrypt_b.o";
+my $fips_des_enc="fips_des_enc.o";
 my $bf_enc	="bf_enc.o";
 my $cast_enc="c_enc.o";
 my $rc4_enc="rc4_enc.o";
@@ -631,6 +633,8 @@ my $rmd160_obj="";
 my $processor="";
 my $default_ranlib;
 my $perl;
+my $fips=0;
+my $debug=0;
 
 my $no_ssl2=0;
 my $no_ssl3=0;
@@ -739,6 +743,8 @@ PROCESS_ARGS:
 			{ $no_ssl3 = 1; }
 		elsif (/^no-tls1?$/)
 			{ $no_tls1 = 1; }
+		elsif (/^no-fips$/)
+			{ $fips = 0; }
 		elsif (/^no-(.+)$/)
 			{
 			my $algo=$1;
@@ -804,6 +810,14 @@ PROCESS_ARGS:
 			}
 		elsif (/^386$/)
 			{ $processor=386; }
+		elsif (/^fips$/)
+			{
+			$fips=1;
+		        }
+		elsif (/^debug$/)
+			{
+			$debug=1;
+			}
 		elsif (/^rsaref$/)
 			{
 			# No RSAref support any more since it's not needed.
@@ -1139,12 +1153,20 @@ if ($ranlib eq "")
 
 $bn_obj = $bn_asm unless $bn_obj ne "";
 
-$des_obj=$des_enc	unless ($des_obj =~ /\.o$/);
+if ($fips)
+	{
+	$des_obj=$sha1_obj="";
+	$openssl_other_defines.="#define OPENSSL_FIPS\n";
+	}
+$des_obj=$des_enc	unless (!$fips && $des_obj =~ /\.o$/);
+my $fips_des_obj='asm/fips-dx86-elf.o';
+$fips_des_obj=$fips_des_enc unless $processor eq '386';
+my $fips_sha1_obj='asm/sx86-elf.o' if $processor eq '386';
 $bf_obj=$bf_enc		unless ($bf_obj =~ /\.o$/);
 $cast_obj=$cast_enc	unless ($cast_obj =~ /\.o$/);
 $rc4_obj=$rc4_enc	unless ($rc4_obj =~ /\.o$/);
 $rc5_obj=$rc5_enc	unless ($rc5_obj =~ /\.o$/);
-if ($sha1_obj =~ /\.o$/)
+if ($sha1_obj =~ /\.o$/ || $fips_sha1_obj =~ /\.o$/)
 	{
 #	$sha1_obj=$sha1_enc;
 	$cflags.=" -DSHA1_ASM";
@@ -1158,6 +1180,12 @@ if ($rmd160_obj =~ /\.o$/)
 	{
 #	$rmd160_obj=$rmd160_enc;
 	$cflags.=" -DRMD160_ASM";
+	}
+
+if ($debug)
+	{
+	$cflags.=" -g";
+	$cflags=~s/-fomit-frame-pointer//;
 	}
 
 # "Stringify" the C flags string.  This permits it to be made part of a string
@@ -1232,12 +1260,14 @@ while (<IN>)
 	s/^EXE_EXT=.*$/EXE_EXT= $exe_ext/;
 	s/^BN_ASM=.*$/BN_ASM= $bn_obj/;
 	s/^DES_ENC=.*$/DES_ENC= $des_obj/;
+	s/^FIPS_DES_ENC=.*$/FIPS_DES_ENC= $fips_des_obj/;
 	s/^BF_ENC=.*$/BF_ENC= $bf_obj/;
 	s/^CAST_ENC=.*$/CAST_ENC= $cast_obj/;
 	s/^RC4_ENC=.*$/RC4_ENC= $rc4_obj/;
 	s/^RC5_ENC=.*$/RC5_ENC= $rc5_obj/;
 	s/^MD5_ASM_OBJ=.*$/MD5_ASM_OBJ= $md5_obj/;
 	s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= $sha1_obj/;
+	s/^FIPS_SHA1_ASM_OBJ=.*$/FIPS_SHA1_ASM_OBJ= $fips_sha1_obj/;
 	s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= $rmd160_obj/;
 	s/^PROCESSOR=.*/PROCESSOR= $processor/;
 	s/^RANLIB=.*/RANLIB= $ranlib/;
@@ -1470,7 +1500,7 @@ if($IsWindows) {
 	printf OUT <<EOF;
 #ifndef MK1MF_BUILD
   /* auto-generated by Configure for crypto/cversion.c:
-   * for Unix builds, crypto/Makefile.ssl generates functional definitions;
+   * for Unix builds, crypto/Makefile generates functional definitions;
    * Windows builds (and other mk1mf builds) compile cversion.c with
    * -DMK1MF_BUILD and use definitions added to this file by util/mk1mf.pl. */
   #error "Windows builds (PLATFORM=$target) use mk1mf.pl-created Makefiles"
@@ -1478,7 +1508,7 @@ if($IsWindows) {
 EOF
 	close(OUT);
 } else {
-	my $make_command = "make -f Makefile.ssl PERL=\'$perl\'";
+	my $make_command = "make PERL=\'$perl\'";
 	my $make_targets = "";
 	$make_targets .= " links" if $symlink;
 	$make_targets .= " depend" if $depflags ne "" && $make_depend;
