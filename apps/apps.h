@@ -141,12 +141,6 @@ long app_RAND_load_files(char *file); /* `file' is a list of files to read,
 int WIN32_rename(char *oldname,char *newname);
 #endif
 
-/* VMS below version 7.0 doesn't have strcasecmp() */
-#ifdef OPENSSL_SYS_VMS
-#define strcasecmp(str1,str2) VMS_strcasecmp((str1),(str2))
-int VMS_strcasecmp(const char *str1, const char *str2);
-#endif
-
 #ifndef MONOLITH
 
 #define MAIN(a,v)	main(a,v)

@@ -56,10 +56,11 @@
  *
  */
 
-#include <ctype.h>
-#include <strings.h>
-#include "o_str.h"
+#include <o_str.h>
 #include <openssl/e_os2.h>
+
+#undef strncasecmp
+#undef strcasecmp
 
 int OPENSSL_strncasecmp(const char *str1, const char *str2, size_t n)
 	{
