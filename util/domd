@@ -17,7 +17,7 @@ if [ "$MAKEDEPEND" = "gcc" ]; then
     echo '# DO NOT DELETE THIS LINE -- make depend depends on it.' >> Makefile.tmp
     gcc -M $@ >> Makefile.tmp
     perl $TOP/util/clean-depend.pl < Makefile.tmp > Makefile.new
-    #cat Makefile.tmp > Makefile.new
+    rm -f Makefile.tmp
 else
     ${MAKEDEPEND} -f Makefile.ssl $@
     perl $TOP/util/clean-depend.pl < Makefile.ssl > Makefile.new
