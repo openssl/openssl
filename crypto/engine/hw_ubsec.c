@@ -231,6 +231,25 @@ static t_UBSEC_dsa_verify_ioctl *p_UBSEC_dsa_verify_ioctl = NULL;
 static t_UBSEC_math_accelerate_ioctl *p_UBSEC_math_accelerate_ioctl = NULL;
 static t_UBSEC_rng_ioctl *p_UBSEC_rng_ioctl = NULL;
 
+/* 
+ * These are the static string constants for the DSO file name and the function
+ * symbol names to bind to. 
+ */
+
+static const char *UBSEC_LIBNAME = "ubsec";
+static const char *UBSEC_F1 = "ubsec_bytes_to_bits";
+static const char *UBSEC_F2 = "ubsec_bits_to_bytes";
+static const char *UBSEC_F3 = "ubsec_open";
+static const char *UBSEC_F4 = "ubsec_close";
+static const char *UBSEC_F5 = "diffie_hellman_generate_ioctl";
+static const char *UBSEC_F6 = "diffie_hellman_agree_ioctl";
+static const char *UBSEC_F7 = "rsa_mod_exp_ioctl";
+static const char *UBSEC_F8 = "rsa_mod_exp_crt_ioctl";
+static const char *UBSEC_F9 = "dsa_sign_ioctl";
+static const char *UBSEC_F10 = "dsa_verify_ioctl";
+static const char *UBSEC_F11 = "math_accelerate_ioctl";
+static const char *UBSEC_F12 = "rng_ioctl";
+
 /* (de)initialisation functions. */
 static int ubsec_init()
 	{

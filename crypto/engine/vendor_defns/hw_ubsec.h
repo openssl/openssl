@@ -97,24 +97,3 @@ typedef int t_UBSEC_math_accelerate_ioctl(int fd, ubsec_MathCommand_t command,
 typedef int t_UBSEC_rng_ioctl(int fd, ubsec_RNGCommand_t command,
 	unsigned char *Result, int *Result_len);
 
-
-/* 
- * These are the static string constants for the DSO file name and the function
- * symbol names to bind to. 
- */
-
-#define UBSEC_LIBNAME "ubsec"
-
-#define UBSEC_F1 "ubsec_bytes_to_bits"
-#define UBSEC_F2 "ubsec_bits_to_bytes"
-#define UBSEC_F3 "ubsec_open"
-#define UBSEC_F4 "ubsec_close"
-#define UBSEC_F5 "diffie_hellman_generate_ioctl"
-#define UBSEC_F6 "diffie_hellman_agree_ioctl"
-#define UBSEC_F7 "rsa_mod_exp_ioctl"
-#define UBSEC_F8 "rsa_mod_exp_crt_ioctl"
-#define UBSEC_F9 "dsa_sign_ioctl"
-#define UBSEC_F10 "dsa_verify_ioctl"
-#define UBSEC_F11 "math_accelerate_ioctl"
-#define UBSEC_F12 "rng_ioctl"
-

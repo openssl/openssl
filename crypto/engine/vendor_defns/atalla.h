@@ -46,16 +46,3 @@ typedef int tfnASI_RSAPrivateKeyOpFn(RSAPrivateKey * rsaKey,
 					unsigned char *input,
 					unsigned int modulus_len);
 
-/* These are the static string constants for the DSO file name and the function
- * symbol names to bind to. Regrettably, the DSO name on *nix appears to be
- * "atasi.so" rather than something more consistent like "libatasi.so". At the
- * time of writing, I'm not sure what the file name on win32 is but clearly
- * native name translation is not possible (eg libatasi.so on *nix, and
- * atasi.dll on win32). For the purposes of testing, I have created a symbollic
- * link called "libatasi.so" so that we can use native name-translation - a
- * better solution will be needed. */
-static const char *ATALLA_LIBNAME = "atasi";
-static const char *ATALLA_F1 = "ASI_GetHardwareConfig";
-static const char *ATALLA_F2 = "ASI_RSAPrivateKeyOpFn";
-static const char *ATALLA_F3 = "ASI_GetPerformanceStatistics";
-
