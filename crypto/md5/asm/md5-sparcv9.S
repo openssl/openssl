@@ -87,11 +87,17 @@
 #endif
 
 .section        ".text",#alloc,#execinstr
+
 #if defined(__SUNPRO_C) && defined(__sparcv9)
   /* They've said -xarch=v9 at command line */
   .register	%g2,#scratch
   .register	%g3,#scratch
 # define	FRAME	-192
+#elif defined(__GNUC__) && defined(__arch64__)
+  /* They've said -m64 at command line */
+  .register     %g2,#scratch
+  .register     %g3,#scratch
+# define        FRAME   -192
 #else
 # define	FRAME	-96
 #endif
@@ -103,27 +109,15 @@ md5_block:
 	save	%sp,FRAME,%sp
 
 	ld	[Dptr],D
-#ifdef ASI_PRIMARY_LITTLE
-	mov	%asi,%o7	! How dare I? Well, I just do:-)
-#else
-	nop
-#endif
 	ld	[Cptr],C
-#ifdef ASI_PRIMARY_LITTLE
-	mov	ASI_PRIMARY_LITTLE,%asi
-#else
-	nop
-#endif
 	ld	[Bptr],B
-	nop
 	ld	[Aptr],A
-	nop
+#ifdef ASI_PRIMARY_LITTLE
+	rd	%asi,%o7	! How dare I? Well, I just do:-)
+	wr	%g0,ASI_PRIMARY_LITTLE,%asi
+#endif
 	LOAD	X(0),R0
-	nop
-	ba	.Lmd5_block_loop
-	nop
 
-.align	32
 .Lmd5_block_loop:
 
 !!!!!!!!Round 0
@@ -1026,7 +1020,7 @@ md5_block:
 	LOAD	X(0),R0
 
 #ifdef ASI_PRIMARY_LITTLE
-	mov	%o7,%asi
+	wr	%g0,%o7,%asi
 #endif
 	ret
 	restore	%g0,0,%o0
