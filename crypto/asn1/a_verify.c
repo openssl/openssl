@@ -71,6 +71,8 @@
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 
+#ifndef NO_ASN1_OLD
+
 int ASN1_verify(int (*i2d)(), X509_ALGOR *a, ASN1_BIT_STRING *signature,
 	     char *data, EVP_PKEY *pkey)
 	{
@@ -117,6 +119,8 @@ int ASN1_verify(int (*i2d)(), X509_ALGOR *a, ASN1_BIT_STRING *signature,
 err:
 	return(ret);
 	}
+
+#endif
 
 
 int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signature,

@@ -67,49 +67,49 @@
 
 int X509_verify(X509 *a, EVP_PKEY *r)
 	{
-	return(ASN1_verify((int (*)())i2d_X509_CINF,a->sig_alg,
+	return(ASN1_item_verify(&X509_CINF_it,a->sig_alg,
 		a->signature,(char *)a->cert_info,r));
 	}
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 	{
-	return( ASN1_verify((int (*)())i2d_X509_REQ_INFO,
+	return( ASN1_item_verify(&X509_REQ_INFO_it,
 		a->sig_alg,a->signature,(char *)a->req_info,r));
 	}
 
 int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r)
 	{
-	return(ASN1_verify((int (*)())i2d_X509_CRL_INFO,
+	return(ASN1_item_verify(&X509_CRL_INFO_it,
 		a->sig_alg, a->signature,(char *)a->crl,r));
 	}
 
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
 	{
-	return(ASN1_verify((int (*)())i2d_NETSCAPE_SPKAC,
+	return(ASN1_item_verify(&NETSCAPE_SPKAC_it,
 		a->sig_algor,a->signature, (char *)a->spkac,r));
 	}
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 	{
-	return(ASN1_sign((int (*)())i2d_X509_CINF, x->cert_info->signature,
+	return(ASN1_item_sign(&X509_CINF_it, x->cert_info->signature,
 		x->sig_alg, x->signature, (char *)x->cert_info,pkey,md));
 	}
 
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 	{
-	return(ASN1_sign((int (*)())i2d_X509_REQ_INFO,x->sig_alg, NULL,
+	return(ASN1_item_sign(&X509_REQ_INFO_it,x->sig_alg, NULL,
 		x->signature, (char *)x->req_info,pkey,md));
 	}
 
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md)
 	{
-	return(ASN1_sign((int (*)())i2d_X509_CRL_INFO,x->crl->sig_alg,
+	return(ASN1_item_sign(&X509_CRL_INFO_it,x->crl->sig_alg,
 		x->sig_alg, x->signature, (char *)x->crl,pkey,md));
 	}
 
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)
 	{
-	return(ASN1_sign((int (*)())i2d_NETSCAPE_SPKAC, x->sig_algor,NULL,
+	return(ASN1_item_sign(&NETSCAPE_SPKAC_it, x->sig_algor,NULL,
 		x->signature, (char *)x->spkac,pkey,md));
 	}
 
@@ -414,31 +414,31 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne)
 int X509_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
 	     unsigned int *len)
 	{
-	return(ASN1_digest((int (*)())i2d_X509,type,(char *)data,md,len));
+	return(ASN1_item_digest(&X509_it,type,(char *)data,md,len));
 	}
 
 int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type, unsigned char *md,
 	     unsigned int *len)
 	{
-	return(ASN1_digest((int (*)())i2d_X509_CRL,type,(char *)data,md,len));
+	return(ASN1_item_digest(&X509_CRL_it,type,(char *)data,md,len));
 	}
 
 int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type, unsigned char *md,
 	     unsigned int *len)
 	{
-	return(ASN1_digest((int (*)())i2d_X509_REQ,type,(char *)data,md,len));
+	return(ASN1_item_digest(&X509_REQ_it,type,(char *)data,md,len));
 	}
 
 int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type, unsigned char *md,
 	     unsigned int *len)
 	{
-	return(ASN1_digest((int (*)())i2d_X509_NAME,type,(char *)data,md,len));
+	return(ASN1_item_digest(&X509_NAME_it,type,(char *)data,md,len));
 	}
 
 int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data, const EVP_MD *type,
 	     unsigned char *md, unsigned int *len)
 	{
-	return(ASN1_digest((int (*)())i2d_PKCS7_ISSUER_AND_SERIAL,type,
+	return(ASN1_item_digest(&PKCS7_ISSUER_AND_SERIAL_it,type,
 		(char *)data,md,len));
 	}
 

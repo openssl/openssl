@@ -4,7 +4,10 @@
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
   *) New ASN1 functions to handle sign, verify, digest, pack and
-     unpack operations in terms of ASN1_ITEM.
+     unpack operations in terms of ASN1_ITEM. Modify existing wrappers
+     to use new functions. Add NO_ASN1_OLD which can be set to remove
+     some old style ASN1 functions: this can be used to determine if old
+     code will still work when these eventually go away.
      [Steve Henson]
 
   *) New extension functions for OCSP structures, these follow the

@@ -71,6 +71,8 @@
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 
+#ifndef NO_ASN1_OLD
+
 int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
 	     ASN1_BIT_STRING *signature, char *data, EVP_PKEY *pkey,
 	     const EVP_MD *type)
@@ -146,6 +148,8 @@ err:
 		{ memset((char *)buf_out,0,outll); OPENSSL_free(buf_out); }
 	return(outl);
 	}
+
+#endif
 
 int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	     ASN1_BIT_STRING *signature, void *asn, EVP_PKEY *pkey,
