@@ -1,0 +1,29 @@
+
+  OpenSSL STATUS                           Last modified at
+  ______________                           $Date: 1998/12/30 09:08:05 $
+
+  DEVELOPMENT STATE
+
+    o  OpenSSL 0.9.2:  Under development.
+    o  OpenSSL 0.9.1b: Released on December 23th, 1998
+
+  RELEASE SHOWSTOPPERS
+
+  AVAILABLE PATCHES
+
+  IN PROGRESS
+
+    o  Ben is folding in his patches
+
+    o  Ralf has ported Stephen's pkcs12 program to OpenSSL (the 
+       ASN.1 stuff Eric recently changed :-( ), but needs some
+       help from Stephen at two source locations.
+  
+    o  Ralf is currently working on the final www.openssl.org
+       website. It'll use no longer frames and will be both look
+       perfect in Netscape 4.x _AND_ Lynx 2.7.x. 
+
+  NEEDS PATCH
+
+  OPEN ISSUES
+
