@@ -63,7 +63,7 @@ extern "C" {
 #endif
 
 #ifdef NO_HMAC
-#error No HMAC support.
+#error HMAC is disabled.
 #endif
 
 #include <openssl/evp.h>
