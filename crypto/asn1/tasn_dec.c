@@ -611,8 +611,13 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, unsigned char **in, long inl
 	} else if(ret == -1) return -1;
 	/* SEQUENCE, SET and "OTHER" are left in encoded form */
 	if((utype == V_ASN1_SEQUENCE) || (utype == V_ASN1_SET) || (utype == V_ASN1_OTHER)) {
+		/* Clear context cache for type OTHER because the auto clear when
+		 * we have a exact match wont work
+		 */
+		if(utype == V_ASN1_OTHER) {
+			asn1_tlc_clear(ctx);
 		/* SEQUENCE and SET must be constructed */
-		if((utype != V_ASN1_OTHER) && !cst) {
+		} else if(!cst) {
 			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ASN1_R_TYPE_NOT_CONSTRUCTED);
 			return 0;
 		}
@@ -899,7 +904,7 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *i
 			}
 		}
 	}
-		
+
 	if(i & 0x80) {
 		ASN1err(ASN1_F_ASN1_CHECK_TLEN, ASN1_R_BAD_OBJECT_HEADER);
 		asn1_tlc_clear(ctx);
