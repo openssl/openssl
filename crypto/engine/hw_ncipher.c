@@ -105,6 +105,7 @@ static int hwcrhk_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 
 /* RAND stuff */
 static int hwcrhk_rand_bytes(unsigned char *buf, int num);
+static int hwcrhk_rand_status(void);
 
 /* KM stuff */
 static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
@@ -160,7 +161,7 @@ static RAND_METHOD hwcrhk_rand =
 	NULL,
 	NULL,
 	hwcrhk_rand_bytes,
-	NULL
+	hwcrhk_rand_status,
 	};
 
 /* Our ENGINE structure. */
@@ -543,7 +544,7 @@ static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
 	RSA *rtmp = NULL;
 	EVP_PKEY *res = NULL;
 	HWCryptoHook_MPI e, n;
-	HWCryptoHook_RSAKeyHandle hptr;
+	HWCryptoHook_RSAKeyHandle *hptr;
 	HWCryptoHook_ErrMsgBuf rmsg;
 
 	if(!hwcrhk_context)
@@ -552,7 +553,8 @@ static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
 			ENGINE_R_NOT_INITIALISED);
 		goto err;
 		}
-	if (p_hwcrhk_RSALoadKey(hwcrhk_context, key_id, &hptr,
+	hptr = OPENSSL_malloc(sizeof(HWCryptoHook_RSAKeyHandle));
+	if (p_hwcrhk_RSALoadKey(hwcrhk_context, key_id, hptr,
 		&rmsg, NULL))
 		{
 		ENGINEerr(ENGINE_F_HWCRHK_LOAD_PRIVKEY,
@@ -560,7 +562,7 @@ static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
 		ERR_add_error_data(1,rmsg.buf);
 		goto err;
 		}
-	if (!hptr)
+	if (!*hptr)
 		{
 		ENGINEerr(ENGINE_F_HWCRHK_LOAD_PRIVKEY,
 			ENGINE_R_NO_KEY);
@@ -573,7 +575,7 @@ static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
 	rtmp->flags |= RSA_FLAG_EXT_PKEY;
 	MPI2BN(rtmp->e, e);
 	MPI2BN(rtmp->n, n);
-	if (p_hwcrhk_RSAGetPublicKey(hptr, &n, &e, &rmsg)
+	if (p_hwcrhk_RSAGetPublicKey(*hptr, &n, &e, &rmsg)
 		!= HWCRYPTOHOOK_ERROR_MPISIZE)
 		{
 		ENGINEerr(ENGINE_F_HWCRHK_LOAD_PUBKEY,ENGINE_R_CHIL_ERROR);
@@ -586,7 +588,7 @@ static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
 	MPI2BN(rtmp->e, e);
 	MPI2BN(rtmp->n, n);
 
-	if (p_hwcrhk_RSAGetPublicKey(hptr, &n, &e, &rmsg))
+	if (p_hwcrhk_RSAGetPublicKey(*hptr, &n, &e, &rmsg))
 		{
 		ENGINEerr(ENGINE_F_HWCRHK_LOAD_PUBKEY,
 			ENGINE_R_CHIL_ERROR);
@@ -863,6 +865,11 @@ static int hwcrhk_rand_bytes(unsigned char *buf, int num)
 	to_return = 1;
  err:
 	return to_return;
+	}
+
+static int hwcrhk_rand_status(void)
+	{
+	return 1;
 	}
 
 /* This cleans up an RSA KM key, called when ex_data is freed */
