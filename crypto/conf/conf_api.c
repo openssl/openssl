@@ -67,7 +67,7 @@
 #include <string.h>
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
-#include "e_os.h"
+#include "openssl/e_os.h"
 
 static void value_free_hash(CONF_VALUE *a, LHASH *conf);
 static void value_free_stack(CONF_VALUE *a,LHASH *conf);

@@ -5,7 +5,7 @@
 DIR=	conf
 TOP=	../..
 CC=	cc
-INCLUDES= -I.. -I../.. -I../../include
+INCLUDES= -I../../include
 CFLAG=-g
 INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
