@@ -84,6 +84,7 @@ typedef struct store_method_st STORE_METHOD;
 
 /* Creators and destructor.   */
 STORE *STORE_new_method(const STORE_METHOD *method);
+STORE *STORE_new_engine(ENGINE *engine);
 void STORE_free(STORE *ui);
 
 
