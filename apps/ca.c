@@ -263,7 +263,7 @@ int MAIN(int argc, char **argv)
 	long l;
 	const EVP_MD *dgst=NULL;
 	STACK_OF(CONF_VALUE) *attribs=NULL;
-	STACK *cert_sk=NULL;
+	STACK_OF(X509) *cert_sk=NULL;
 	BIO *hex=NULL;
 #undef BSIZE
 #define BSIZE 256
@@ -817,7 +817,7 @@ bad:
 			goto err;
 			}
 
-		if ((cert_sk=sk_new_null()) == NULL)
+		if ((cert_sk=sk_X509_new_null()) == NULL)
 			{
 			BIO_printf(bio_err,"Malloc failure\n");
 			goto err;
@@ -834,7 +834,7 @@ bad:
 				total_done++;
 				BIO_printf(bio_err,"\n");
 				if (!BN_add_word(serial,1)) goto err;
-				if (!sk_push(cert_sk,(char *)x))
+				if (!sk_X509_push(cert_sk,x))
 					{
 					BIO_printf(bio_err,"Malloc failure\n");
 					goto err;
@@ -858,7 +858,7 @@ bad:
 				total_done++;
 				BIO_printf(bio_err,"\n");
 				if (!BN_add_word(serial,1)) goto err;
-				if (!sk_push(cert_sk,(char *)x))
+				if (!sk_X509_push(cert_sk,x))
 					{
 					BIO_printf(bio_err,"Malloc failure\n");
 					goto err;
@@ -877,7 +877,7 @@ bad:
 				total_done++;
 				BIO_printf(bio_err,"\n");
 				if (!BN_add_word(serial,1)) goto err;
-				if (!sk_push(cert_sk,(char *)x))
+				if (!sk_X509_push(cert_sk,x))
 					{
 					BIO_printf(bio_err,"Malloc failure\n");
 					goto err;
@@ -896,7 +896,7 @@ bad:
 				total_done++;
 				BIO_printf(bio_err,"\n");
 				if (!BN_add_word(serial,1)) goto err;
-				if (!sk_push(cert_sk,(char *)x))
+				if (!sk_X509_push(cert_sk,x))
 					{
 					BIO_printf(bio_err,"Malloc failure\n");
 					goto err;
@@ -907,7 +907,7 @@ bad:
 		 * and a data base and serial number that need
 		 * updating */
 
-		if (sk_num(cert_sk) > 0)
+		if (sk_X509_num(cert_sk) > 0)
 			{
 			if (!batch)
 				{
@@ -923,7 +923,7 @@ bad:
 					}
 				}
 
-			BIO_printf(bio_err,"Write out database with %d new entries\n",sk_num(cert_sk));
+			BIO_printf(bio_err,"Write out database with %d new entries\n",sk_X509_num(cert_sk));
 
 			strncpy(buf[0],serialfile,BSIZE-4);
 
@@ -955,12 +955,12 @@ bad:
 	
 		if (verbose)
 			BIO_printf(bio_err,"writing new certificates\n");
-		for (i=0; i<sk_num(cert_sk); i++)
+		for (i=0; i<sk_X509_num(cert_sk); i++)
 			{
 			int k;
 			unsigned char *n;
 
-			x=(X509 *)sk_value(cert_sk,i);
+			x=sk_X509_value(cert_sk,i);
 
 			j=x->cert_info->serialNumber->length;
 			p=(char *)x->cert_info->serialNumber->data;
@@ -999,7 +999,7 @@ bad:
 			write_new_certificate(Sout,x, output_der, notext);
 			}
 
-		if (sk_num(cert_sk))
+		if (sk_X509_num(cert_sk))
 			{
 			/* Rename the database and the serial file */
 			strncpy(buf[2],serialfile,BSIZE-4);
@@ -1233,7 +1233,7 @@ err:
 	BIO_free(out);
 	BIO_free(in);
 
-	sk_pop_free(cert_sk, (void(*)(void *)) X509_free);
+	sk_X509_pop_free(cert_sk,X509_free);
 
 	if (ret) ERR_print_errors(bio_err);
 	app_RAND_write_file(randfile, bio_err);
