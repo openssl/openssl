@@ -112,6 +112,7 @@
        private         Initially empty, this is the default location
                        for private key files.
        lib             Contains the OpenSSL configuration file "openssl.cnf".
+       misc            Various scripts.
 
      If you didn't chose a different installation prefix, lib also contains
      the library files themselves, and the following additional subdirectories
@@ -128,7 +129,7 @@
 
        $ make INSTALL_PREFIX=/tmp/package-root install
 
-     (or specify "-install_prefix=/tmp/package-root" as a configure
+     (or specify "--install_prefix=/tmp/package-root" as a configure
      option).  The specified prefix will be prepended to all
      installation target filenames.
 
