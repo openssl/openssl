@@ -761,6 +761,16 @@ int test_mod_mul(BIO *bp, BN_CTX *ctx)
 				BN_print(bp,b);
 				BIO_puts(bp," % ");
 				BN_print(bp,c);
+				if ((a->neg ^ b->neg) && !BN_is_zero(e))
+					{
+					/* If  (a*b) % c  is negative,  c  must be added
+					 * in order to obtain the normalized remainder
+					 * (new with OpenSSL 0.9.7, previous versions of
+					 * BN_mod_mul could generate negative results)
+					 */
+					BIO_puts(bp," + ");
+					BN_print(bp,c);
+					}
 				BIO_puts(bp," - ");
 				}
 			BN_print(bp,e);

@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <memory.h>
 
-#include "bn.h"
+#include <openssl/bn.h>
 
 #include "bn_modfs.h"
 #include "bn_mont2.h"
@@ -360,7 +360,7 @@ int ECP_normalize(EC_POINT *P, EC *E, BN_CTX *ctx)
 	if (ECP_is_norm(P)) return 1;
 	if (ECP_is_infty(P)) return 0;
 
-	if ((zm = BN_mod_inverse(P->Z, E->p, ctx)) == NULL) return 0;
+	if ((zm = BN_mod_inverse(P->Z, P->Z, E->p, ctx)) == NULL) return 0;
 
 	assert(!P->is_in_mont);
 
@@ -1015,7 +1015,7 @@ int ECP_mont_cmp(EC_POINT *P, EC_POINT *Q, BN_MONTGOMERY *mont, BN_CTX *ctx)
 	if (!BN_mont_mod_mul(n4, Q->Y, n0, mont, ctx)) goto err;	/* L4 = y_q * z_p^3 */
 
 
-	if (!BN_mont_mod_sub(n0, n1, n3, mont)) goto err;			/* L5 = L1 - L3 */
+	if (!BN_mod_sub_quick(n0, n1, n3, p)) goto err;			/* L5 = L1 - L3 */
 
 	if (!BN_is_zero(n0))
 	{
@@ -1023,7 +1023,7 @@ int ECP_mont_cmp(EC_POINT *P, EC_POINT *Q, BN_MONTGOMERY *mont, BN_CTX *ctx)
 		return 1;
 	}
 	
-	if (!BN_mont_mod_sub(n0, n2, n4, mont)) goto err;			/* L6 = L2 - L4 */
+	if (!BN_mod_sub_quick(n0, n2, n4, p)) goto err;			/* L6 = L2 - L4 */
 
 	if (!BN_is_zero(n0))
 	{
@@ -1085,33 +1085,33 @@ int ECP_mont_double(EC_POINT *R, EC_POINT *P, EC *E, BN_MONTGOMERY *mont, BN_CTX
 	if (!BN_mont_mod_mul(n2, n0, n0, mont, ctx)) goto err;
 	if (!BN_mont_mod_mul(n0, n2, E->A, mont, ctx)) goto err; 
 	if (!BN_mont_mod_mul(n1, P->X, P->X, mont, ctx)) goto err;
-	if (!BN_mont_mod_lshift1(n2, n1, mont)) goto err;
-	if (!BN_mont_mod_add(n1, n1, n2, mont)) goto err;
-	if (!BN_mont_mod_add(n1, n1, n0, mont)) goto err;		/* L1 = 3 * x^2 + a * z^4 */
+	if (!BN_mod_lshift1_quick(n2, n1, p)) goto err;
+	if (!BN_mod_add_quick(n1, n1, n2, p)) goto err;
+	if (!BN_mod_add_quick(n1, n1, n0, p)) goto err;		/* L1 = 3 * x^2 + a * z^4 */
 
 	/* Z */
 	if (!BN_mont_mod_mul(n0, P->Y, P->Z, mont, ctx)) goto err; 
-	if (!BN_mont_mod_lshift1(R->Z, n0, mont)) goto err;		/* Z = 2 * y * z */
+	if (!BN_mod_lshift1_quick(R->Z, n0, p)) goto err;		/* Z = 2 * y * z */
 
 	/* L2 */
 	if (!BN_mont_mod_mul(n3, P->Y, P->Y, mont, ctx)) goto err;
 	if (!BN_mont_mod_mul(n2, P->X, n3, mont, ctx)) goto err; 
-	if (!BN_mont_mod_lshift(n2, n2, 2, mont)) goto err;		/* L2 = 4 * x * y^2 */
+	if (!BN_mod_lshift_quick(n2, n2, 2, p)) goto err;		/* L2 = 4 * x * y^2 */
 
 	/* X */
-	if (!BN_mont_mod_lshift1(n0, n2, mont)) goto err; 
+	if (!BN_mod_lshift1_quick(n0, n2, p)) goto err; 
 	if (!BN_mont_mod_mul(R->X, n1, n1, mont, ctx)) goto err;
-	if (!BN_mont_mod_sub(R->X, R->X, n0, mont)) goto err;	/* X = L1^2 - 2 * L2 */
+	if (!BN_mod_sub_quick(R->X, R->X, n0, p)) goto err;	/* X = L1^2 - 2 * L2 */
 	
 	/* L3 */
 	if (!BN_mont_mod_mul(n0, n3, n3, mont, ctx)) goto err;
-	if (!BN_mont_mod_lshift(n3, n0, 3, mont)) goto err;		/* L3 = 8 * y^4 */
+	if (!BN_mod_lshift_quick(n3, n0, 3, p)) goto err;		/* L3 = 8 * y^4 */
 
 	
 	/* Y */
-	if (!BN_mont_mod_sub(n2, n2, R->X, mont)) goto err; 
+	if (!BN_mod_sub_quick(n2, n2, R->X, p)) goto err; 
 	if (!BN_mont_mod_mul(n0, n1, n2, mont, ctx)) goto err; 
-	if (!BN_mont_mod_sub(R->Y, n0, n3, mont)) goto err;		/* Y = L1 * (L2 - X) - L3 */
+	if (!BN_mod_sub_quick(R->Y, n0, n3, p)) goto err;		/* Y = L1 * (L2 - X) - L3 */
 
 	ctx->tos -= 4;
 	return 1;
@@ -1188,8 +1188,8 @@ int ECP_mont_add(EC_POINT *R, EC_POINT *P, EC_POINT *Q, EC *E, BN_MONTGOMERY *mo
 
 
 	/* L5; L6 */
-	if (!BN_mont_mod_sub(n5, n1, n3, mont)) goto err;			/* L5 = L1 - L3 */
-	if (!BN_mont_mod_sub(n6, n2, n4, mont)) goto err;			/*L6 = L2 - L4 */
+	if (!BN_mod_sub_quick(n5, n1, n3, p)) goto err;			/* L5 = L1 - L3 */
+	if (!BN_mod_sub_quick(n6, n2, n4, p)) goto err;			/*L6 = L2 - L4 */
 
 
 	/* pata */
@@ -1209,8 +1209,8 @@ int ECP_mont_add(EC_POINT *R, EC_POINT *P, EC_POINT *Q, EC *E, BN_MONTGOMERY *mo
 	}
 
 	/* L7; L8 */
-	if (!BN_mont_mod_add(n1, n1, n3, mont)) goto err;			/* L7 = L1 + L3 */
-	if (!BN_mont_mod_add(n2, n2, n4, mont)) goto err;			/* L8 = L2 + L4 */
+	if (!BN_mod_add_quick(n1, n1, n3, p)) goto err;			/* L7 = L1 + L3 */
+	if (!BN_mod_add_quick(n2, n2, n4, p)) goto err;			/* L8 = L2 + L4 */
 
 
 	/* Z */
@@ -1222,19 +1222,19 @@ int ECP_mont_add(EC_POINT *R, EC_POINT *P, EC_POINT *Q, EC *E, BN_MONTGOMERY *mo
 	if (!BN_mont_mod_mul(n0, n6, n6, mont, ctx)) goto err;
 	if (!BN_mont_mod_mul(n4, n5, n5, mont, ctx)) goto err;
 	if (!BN_mont_mod_mul(n3, n1, n4, mont, ctx)) goto err; 
-	if (!BN_mont_mod_sub(R->X, n0, n3, mont)) goto err;			/* X = L6^2 - L5^2 * L7 */
+	if (!BN_mod_sub_quick(R->X, n0, n3, p)) goto err;			/* X = L6^2 - L5^2 * L7 */
 
 	
 	/* L9 */
-	if (!BN_mont_mod_lshift1(n0, R->X, mont)) goto err;
-	if (!BN_mont_mod_sub(n3, n3, n0, mont)) goto err;			/* L9 = L5^2 * L7 - 2X */
+	if (!BN_mod_lshift1_quick(n0, R->X, p)) goto err;
+	if (!BN_mod_sub_quick(n3, n3, n0, p)) goto err;			/* L9 = L5^2 * L7 - 2X */
 
 
 	/* Y */
 	if (!BN_mont_mod_mul(n0, n3, n6, mont, ctx)) goto err; 
 	if (!BN_mont_mod_mul(n6, n4, n5, mont, ctx)) goto err; 
 	if (!BN_mont_mod_mul(n1, n2, n6, mont, ctx)) goto err; 
-	if (!BN_mont_mod_sub(n0, n0, n1, mont)) goto err;   
+	if (!BN_mod_sub_quick(n0, n0, n1, p)) goto err;   
 	if (!BN_mont_mod_mul(R->Y, n0, E->h, mont, ctx)) goto err;	/* Y = (L6 * L9 - L8 * L5^3) / 2 */
 
 

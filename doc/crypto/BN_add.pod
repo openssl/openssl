@@ -23,7 +23,7 @@ arithmetic operations on BIGNUMs
 
  int BN_mod(BIGNUM *rem, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
 
- int BN_nnmod(BIGNUM *rem, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
+ int BN_nnmod(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
 
  int BN_mod_add(BIGNUM *r, BIGNUM *a, BIGNUM *b, const BIGNUM *m,
          BN_CTX *ctx);
@@ -67,7 +67,8 @@ For division by powers of 2, use BN_rshift(3).
 
 BN_mod() corresponds to BN_div() with I<dv> set to B<NULL>.
 
-BN_nnmod() finds the non-negative remainder of I<a> divided by I<m>.
+BN_nnmod() reduces I<a> modulo I<m> and places the non-negative
+remainder in I<r>.
 
 BN_mod_add() adds I<a> to I<b> modulo I<m> and places the non-negative
 result in I<r>.

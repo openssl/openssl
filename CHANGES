@@ -20,13 +20,26 @@
      (except for exponentation, which stays in crypto/bn/bn_exp.c,
      and BN_mod_mul_reciprocal, which stays in crypto/bn/bn_recp.c)
      and add new functions:
+
           BN_nnmod
           BN_mod_sqr
           BN_mod_add
+          BN_mod_add_quick
           BN_mod_sub
+          BN_mod_sub_quick
+          BN_mod_lshift1
+          BN_mod_lshift1_quick
+          BN_mod_lshift
+          BN_mod_lshift_quick
+
      These functions always generate non-negative results.
+
      BN_nnmod otherwise is like BN_mod (if BN_mod computes a remainder  r
      such that  |m| < r < 0,  BN_nnmod will output  rem + |m|  instead).
+
+     BN_mod_XXX_quick(r, a, [b,] m) generates the same result as
+     BN_mod_XXX(r, a, [b,] m, ctx), but requires that  a  [and  b]
+     be reduced modulo  m.
      [Lenka Fibikova <fibikova@exp-math.uni-essen.de>, Bodo Moeller]
 
   *) Remove a few calls to bn_wexpand() in BN_sqr() (the one in there

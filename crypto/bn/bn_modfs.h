@@ -13,7 +13,7 @@
 #define HEADER_BN_MODFS_H
 
 
-#include "bn.h"
+#include <openssl/bn.h>
 
 
 int BN_legendre(BIGNUM *a, BIGNUM *p, BN_CTX *ctx);

@@ -14,7 +14,7 @@
 #define HEADER_EC_H
 
 
-#include "bn.h"
+#include <openssl/bn.h>
 #include "bn_mont2.h"
 
 typedef struct bn_ec_struct		/* E: y^2 = x^3 + Ax + B  (mod p) */
