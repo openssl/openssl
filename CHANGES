@@ -1775,6 +1775,12 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      length of the REQUEST-CERTIFICATE message is 18 .. 34, not 17 .. 33.
      [Zeev Lieber <zeev-l@yahoo.com>]
 
+  *) Undo an undocumented change introduced in 0.9.6e which caused
+     repeated calls to OpenSSL_add_all_ciphers() and 
+     OpenSSL_add_all_digests() to be ignored, even after calling
+     EVP_cleanup().
+     [Richard Levitte]
+
   *) Change the default configuration reader to deal with last line not
      being properly terminated.
      [Richard Levitte]
