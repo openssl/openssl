@@ -113,7 +113,7 @@
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN32_CYGWIN)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 #include <windows.h>
 #ifndef _WIN32_WINNT
 # define _WIN32_WINNT 0x0400

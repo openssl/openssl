@@ -4,7 +4,8 @@
 
  Changes between 0.9.7f and 0.9.7g  [XX xxx XXXX]
 
-  *)
+  *) Undo Cygwin change.
+     [Ulf Möller]
 
  Changes between 0.9.7e and 0.9.7f  [22 Mar 2005]
 
