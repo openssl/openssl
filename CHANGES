@@ -11,13 +11,49 @@
          *) applies to 0.9.6a (/0.9.6b) and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Changes to the "openssl engine" utility to include;
+     - verbosity levels ('-v', '-vv', and '-vvv') that provide information
+       about an ENGINE's available control commands.
+     - executing control commands from command line arguments using the
+       '-pre' and '-post' switches. '-post' is only used if '-t' is
+       specified and the ENGINE is successfully initialised. The syntax for
+       the individual commands are colon-separated, for example;
+	 openssl engine chil -pre FORK_CHECK:0 -pre SO_PATH:/lib/test.so
+     [Geoff]
+
+  +) New dynamic control command support for ENGINEs. ENGINEs can now
+     declare their own commands (numbers), names (strings), descriptions,
+     and input types for run-time discovery by calling applications. A
+     subset of these commands are implicitly classed as "executable"
+     depending on their input type, and only these can be invoked through
+     the new string-based API function ENGINE_ctrl_cmd_string(). (Eg. this
+     can be based on user input, config files, etc). The distinction is
+     that "executable" commands cannot return anything other than a boolean
+     result and can only support numeric or string input, whereas some
+     discoverable commands may only be for direct use through
+     ENGINE_ctrl(), eg. supporting the exchange of binary data, function
+     pointers, or other custom uses. The "executable" commands are to
+     support parameterisations of ENGINE behaviour that can be
+     unambiguously defined by ENGINEs and used consistently across any
+     OpenSSL-based application. Commands have been added to all the
+     existing hardware-supporting ENGINEs, noticeably "SO_PATH" to allow
+     control over shared-library paths without source code alterations.
+     [Geoff]
+
+  +) Changed all ENGINE implementations to dynamically allocate their
+     ENGINEs rather than declaring them statically. Apart from this being
+     necessary with the removal of the ENGINE_FLAGS_MALLOCED distinction,
+     this also allows the implementations to compile without using the
+     internal engine_int.h header.
+     [Geoff]
+
   +) Minor adjustment to "rand" code. RAND_get_rand_method() now returns a
      'const' value. Any code that should be able to modify a RAND_METHOD
      should already have non-const pointers to it (ie. they should only
      modify their own ones).
      [Geoff]
 
-  +) Made a variety of tweaks to the ENGINE code.
+  +) Made a variety of little tweaks to the ENGINE code.
      - "atalla" and "ubsec" string definitions were moved from header files
        to C code. "nuron" string definitions were placed in variables
        rather than hard-coded - allowing parameterisation of these values
