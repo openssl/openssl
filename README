@@ -2,7 +2,7 @@
  OpenSSL 0.9.2 31-Dec-1998
 
  Copyright (c) 1998 The OpenSSL Project
- Copyright (c) 1995-1998 Eric Young
+ Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
  All rights reserved.
 
  ....
@@ -95,27 +95,28 @@
      req     - Manipulate PKCS#10 certificate requests and also
                generate certificate requests.
      genrsa  - Generates an arbitrary sized RSA private key.
+     gendsa  - Generates DSA parameters.
      gendh   - Generates a set of Diffie-Hellman parameters, the prime
                will be a strong prime.
      ca      - Create certificates from PKCS#10 certificate requests.
                This program also maintains a database of certificates
                issued.
      verify  - Check x509 certificate signatures.
-     speed   - Benchmark SSLeay's ciphers.
+     speed   - Benchmark OpenSSL's ciphers.
      s_server- A test SSL server.
      s_client- A test SSL client.
      s_time  - Benchmark SSL performance of SSL server programs.
-     errstr  - Convert from SSLeay hex error codes to a readable form.
+     errstr  - Convert from OpenSSL hex error codes to a readable form.
+     nseq    - Netscape certificate sequence utility
         
 To install this package, read the INSTALL file.
 For the Microsoft world, read INSTALL.W32 file.
 
-For people in the USA, it is possible to compile SSLeay to use RSA Inc.'s
-public key library, RSAref.  From my understanding, it is claimed by RSA Inc.
-to be illegal to use my public key routines inside the USA.  Read
-doc/rsaref.doc on how to build with RSAref.
+For people in the USA, it is possible to compile OpenSSL to use RSA Inc.'s
+public key library, RSAref. Read doc/ssleay.txt under 'rsaref.doc' on how to
+build with RSAref.
 
 Read the documentation in the doc directory.  It is quite rough, but it lists
 the functions, you will probably have to look at the code to work out how to
-used them.  I will be working on documentation.  Look at the example programs.
+used them. Look at the example programs.
 
