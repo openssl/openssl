@@ -536,7 +536,7 @@ int X509_cmp_current_time(ASN1_UTCTIME *ctm)
 	atm.length=sizeof(buff2);
 	atm.data=(unsigned char *)buff2;
 
-	X509_gmtime_adj(&atm,-offset);
+	X509_gmtime_adj(&atm,-offset*60);
 
 	i=(buff1[0]-'0')*10+(buff1[1]-'0');
 	if (i < 50) i+=100; /* cf. RFC 2459 */
