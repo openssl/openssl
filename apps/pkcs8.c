@@ -236,7 +236,8 @@ int MAIN(int argc, char **argv)
 			if(passout) p8pass = passout;
 			else {
 				p8pass = pass;
-				EVP_read_pw_string(pass, 50, "Enter Encryption Password:", 1);
+				if (EVP_read_pw_string(pass, 50, "Enter Encryption Password:", 1))
+					return (1);
 			}
 			app_RAND_load_file(NULL, bio_err, 0);
 			if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
