@@ -209,6 +209,7 @@ sub main'cpuid	{ &out0(".byte\t0x0f,0xa2"); }
 sub main'rdtsc	{ &out0(".byte\t0x0f,0x31"); }
 sub main'halt	{ &out0("hlt"); }
 sub main'movz	{ &out2("movzbl",@_); }
+sub main'neg	{ &out1("negl",@_); }
 
 # SSE2
 sub main'emms	{ &out0("emms"); }

@@ -175,6 +175,7 @@ sub main'cpuid  { &out0("DW\t0A20Fh"); }
 sub main'rdtsc  { &out0("DW\t0310Fh"); }
 sub main'halt	{ &out0("hlt"); }
 sub main'movz	{ &out2("movzx",@_); }
+sub main'neg	{ &out1("neg",@_); }
 
 # SSE2
 sub main'emms	{ &out0("emms"); }
