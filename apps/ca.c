@@ -248,6 +248,7 @@ int MAIN(int argc, char **argv)
 	{
 	ENGINE *e = NULL;
 	char *key=NULL,*passargin=NULL;
+	int create_ser = 0;
 	int free_key = 0;
 	int total=0;
 	int total_done=0;
@@ -1108,7 +1109,7 @@ bad:
 			goto err;
 			}
 
-		if ((serial=load_serial(serialfile, 0, NULL)) == NULL)
+		if ((serial=load_serial(serialfile, create_ser, NULL)) == NULL)
 			{
 			BIO_printf(bio_err,"error while loading serial number\n");
 			goto err;

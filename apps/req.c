@@ -831,7 +831,9 @@ loop:
 				}
 			else
 				{
-				if (!ASN1_INTEGER_set(X509_get_serialNumber(x509ss),0L)) goto end;
+				if (!rand_serial(NULL,
+					X509_get_serialNumber(x509ss)))
+						goto end;
 				}
 
 			if (!X509_set_issuer_name(x509ss, X509_REQ_get_subject_name(req))) goto end;

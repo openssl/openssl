@@ -4,7 +4,14 @@
 
  Changes between 0.9.7d and 0.9.7e  [XX xxx XXXX]
 
-  *)
+  *) Reduce the chances of duplicate issuer name and serial numbers (in
+     violation of RFC3280) using the OpenSSL certificate creation utilities. 
+     This is done by creating a random 64 bit value for the initial serial
+     number when a serial number file is created or when a self signed
+     certificate is created using 'openssl req -x509'. The initial serial
+     number file is created using 'openssl x509 -next_serial' in CA.pl
+     rather than being initialized to 1.
+     [Steve Henson]
 
  Changes between 0.9.7c and 0.9.7d  [17 Mar 2004]
 
