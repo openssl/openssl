@@ -247,7 +247,8 @@ link-shared:
 		for i in $(SHLIBDIRS); do \
 			prev=lib$$i$(SHLIB_EXT); \
 			for j in $${tmp:-x}; do \
-				( set -x; ln -f -s $$prev lib$$i$$j ); \
+				( set -x; \
+				rm -f lib$$i$$j; ln -s $$prev lib$$i$$j ); \
 				prev=lib$$i$$j; \
 			done; \
 		done; \
@@ -676,7 +677,7 @@ install: all install_docs
 		done; \
 		(	here="`pwd`"; \
 			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-			make -f $$here/Makefile link-shared ); \
+			$(MAKE) -f $$here/Makefile link-shared ); \
 	fi
 
 install_docs:
@@ -685,22 +686,23 @@ install_docs:
 		$(INSTALL_PREFIX)$(MANDIR)/man3 \
 		$(INSTALL_PREFIX)$(MANDIR)/man5 \
 		$(INSTALL_PREFIX)$(MANDIR)/man7
-	@for i in doc/apps/*.pod; do \
+	@pod2man=`cd ../../util; ./pod2mantest ignore`; \
+	for i in doc/apps/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "config" ]; then sec=5; else sec=1; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
-		sh -c "$(PERL) `cd ../../util; ./pod2mantest ignore` \
+		sh -c "$(PERL) $$pod2man \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \
-	done
+	done; \
 	@for i in doc/crypto/*.pod doc/ssl/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "des_modes" ]; then sec=7; else sec=3; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
 		(cd `$(PERL) util/dirname.pl $$i`; \
-		sh -c "$(PERL) `cd ../../util; ./pod2mantest ignore` \
+		sh -c "$(PERL) $$pod2man \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/`basename $$i .pod`.$$sec; \

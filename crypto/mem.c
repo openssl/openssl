@@ -226,6 +226,9 @@ void *CRYPTO_realloc(void *str, int num, const char *file, int line)
 	{
 	void *ret = NULL;
 
+	if (str == NULL)
+		return CRYPTO_malloc(num, file, line);
+
 	if (realloc_debug_func != NULL)
 		realloc_debug_func(str, NULL, num, file, line, 0);
 	ret = realloc_func(str,num);

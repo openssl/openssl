@@ -4,7 +4,10 @@
 
  Changes between 0.9.6e and 0.9.6f  [XX xxx XXXX]
 
-  *)
+  *) Use proper error handling instead of 'assertions' in buffer
+     overflow checks added in 0.9.6e.  This prevents DoS (the
+     assertions could call abort()).
+     [Arne Ansper <arne@ats.cyber.ee>, Bodo Moeller]
 
  Changes between 0.9.6d and 0.9.6e  [30 Jul 2002]
 
@@ -28,7 +31,6 @@
      's_server'), so the new option is automatically set in many
      applications.
      [Bodo Moeller]
-
 
   *) Changes in security patch:
 

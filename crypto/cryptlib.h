@@ -93,10 +93,6 @@ extern "C" {
 #define DECIMAL_SIZE(type)     ((sizeof(type)*8+2)/3+1)
 #define HEX_SIZE(type)         ((sizeof(type)*2)
 
-/* die if we have to */
-void OpenSSLDie(const char *file,int line,const char *assertion);
-#define die(e)	((e) ? (void)0 : OpenSSLDie(__FILE__, __LINE__, #e))
-
 #ifdef  __cplusplus
 }
 #endif
