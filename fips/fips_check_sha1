@@ -5,4 +5,4 @@ shift
 
 egrep '^CFLAG=.*-DFIPS( |$)' $TOP/Makefile || exit 0
 
-$TOP/fips/sha1/fips_standalone_sha1 $@ | diff -u $FP -
+$TOP/fips/sha1/fips_standalone_sha1 $@ | diff -u $FP - || { echo; echo "*** Your source code does not match the FIPS certified source ***"; echo; exit 1; }
