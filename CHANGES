@@ -2,9 +2,9 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.3a and 0.9.4  [xx Aug 1999]
+ Changes between 0.9.3a and 0.9.4  [09 Aug 1999]
   
-  *) Install libRSAglue.a when OpenSSL is build with RSAref.
+  *) Install libRSAglue.a when OpenSSL is built with RSAref.
      [Ralf S. Engelschall]
 
   *) A few more ``#ifndef NO_FP_API / #endif'' pairs for consistency.
