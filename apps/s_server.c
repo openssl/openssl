@@ -108,7 +108,7 @@ static void sv_usage(void);
 static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp,SSL_CTX *ctx);
 #ifndef NO_DH
-static DH *load_dh_param(void );
+static DH *load_dh_param(char *dhfile);
 static DH *get_dh512(void);
 #endif
 #ifdef MONOLITH
@@ -159,8 +159,6 @@ static int accept_socket= -1;
 #define TEST_CERT	"server.pem"
 #undef PROG
 #define PROG		s_server_main
-
-#define DH_PARAM	"server.pem"
 
 extern int verify_depth;
 
@@ -217,10 +215,12 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -Verify arg   - turn on peer certificate verification, must have a cert.\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use, PEM format assumed\n");
 	BIO_printf(bio_err,"                 (default is %s)\n",TEST_CERT);
-	BIO_printf(bio_err," -key arg      - RSA file to use, PEM format assumed, in cert file if\n");
+	BIO_printf(bio_err," -key arg      - Private Key file to use, PEM format assumed, in cert file if\n");
 	BIO_printf(bio_err,"                 not specified (default is %s)\n",TEST_CERT);
 	BIO_printf(bio_err," -dcert arg    - second certificate file to use (usually for DSA)\n");
 	BIO_printf(bio_err," -dkey arg     - second private key file to use (usually for DSA)\n");
+	BIO_printf(bio_err," -dhparam arg  - DH parameter file to use, in cert file if not specified\n");
+	BIO_printf(bio_err,"                 or a default set of parameters is used\n");
 #ifdef FIONBIO
 	BIO_printf(bio_err," -nbio         - Run with non-blocking IO\n");
 #endif
@@ -406,6 +406,7 @@ int MAIN(int argc, char *argv[])
 	short port=PORT;
 	char *CApath=NULL,*CAfile=NULL;
 	char *context = NULL;
+	char *dhfile = NULL;
 	int badop=0,bugs=0;
 	int ret=1;
 	int off=0;
@@ -482,6 +483,11 @@ int MAIN(int argc, char *argv[])
 			{
 			if (--argc < 1) goto bad;
 			s_key_file= *(++argv);
+			}
+		else if	(strcmp(*argv,"-dhparam") == 0)
+			{
+			if (--argc < 1) goto bad;
+			dhfile = *(++argv);
 			}
 		else if	(strcmp(*argv,"-dcert") == 0)
 			{
@@ -643,8 +649,7 @@ bad:
 #ifndef NO_DH
 	if (!no_dhe)
 		{
-		/* EAY EAY EAY evil hack */
-		dh=load_dh_param();
+		dh=load_dh_param(dhfile ? dhfile : s_cert_file);
 		if (dh != NULL)
 			{
 			BIO_printf(bio_s_out,"Setting temp DH parameters\n");
@@ -1076,12 +1081,12 @@ static int init_ssl_connection(SSL *con)
 	}
 
 #ifndef NO_DH
-static DH *load_dh_param(void)
+static DH *load_dh_param(char *dhfile)
 	{
 	DH *ret=NULL;
 	BIO *bio;
 
-	if ((bio=BIO_new_file(DH_PARAM,"r")) == NULL)
+	if ((bio=BIO_new_file(dhfile,"r")) == NULL)
 		goto err;
 	ret=PEM_read_bio_DHparams(bio,NULL,NULL,NULL);
 err:
