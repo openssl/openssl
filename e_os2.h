@@ -141,7 +141,7 @@ extern "C" {
 
 /* --------------------------------- Unix ---------------------------------- */
 #ifdef OPENSSL_SYS_UNIX
-# if defined(linus) || defined(OPENSSL_SYSNAME_LINUX)
+# if defined(linux) || defined(OPENSSL_SYSNAME_LINUX)
 #  define OPENSSL_SYS_LINUX
 # endif
 # ifdef OPENSSL_SYSNAME_MPE
