@@ -156,7 +156,7 @@ RMD160_ASM_OBJ= asm/rm86-out.o
 KRB5_INCLUDES=
 LIBKRB5=
 
-DIRS=   crypto ssl apps test tools
+DIRS=   crypto ssl engines apps test tools
 SHLIBDIRS= crypto ssl
 
 # dirs in crypto to build
@@ -212,12 +212,14 @@ BUILD_CMD=if echo " $(DIRS) " | grep " $$i " >/dev/null 2>/dev/null; then \
 sub_all: build_all
 build_all: build_libs build_apps build_tests build_tools
 
-build_libs: build_crypto build_ssl
+build_libs: build_crypto build_ssl build_engines
 
 build_crypto:
 	@i=crypto; $(BUILD_CMD)
 build_ssl:
 	@i=ssl; $(BUILD_CMD)
+build_engines:
+	@i=engines; $(BUILD_CMD)
 build_apps:
 	@i=apps; $(BUILD_CMD)
 build_tests:
@@ -282,7 +284,7 @@ Makefile.ssl: Makefile.org
 	@false
 
 libclean:
-	rm -f *.so *.so.* *.a */lib */*/lib
+	rm -f *.so *.so.* engines/*.so *.a */lib */*/lib
 
 clean:
 	rm -f shlib/*.o *.o core a.out fluff *.map rehash.time testlog make.log cctest cctest.c
@@ -390,7 +392,7 @@ tags:
 
 errors:
 	$(PERL) util/mkerr.pl -recurse -write
-	(cd crypto/engine; $(MAKE) PERL=$(PERL) errors)
+	(cd engines; $(MAKE) PERL=$(PERL) errors)
 
 stacks:
 	$(PERL) util/mkstack.pl -write
@@ -448,6 +450,7 @@ install: all install_docs
 	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/lib \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/engines \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/private \
