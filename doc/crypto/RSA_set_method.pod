@@ -163,6 +163,6 @@ added in OpenSSL 0.9.4.
 RSA_set_default_openssl_method() and RSA_get_default_openssl_method()
 replaced RSA_set_default_method() and RSA_get_default_method() respectively,
 and RSA_set_method() and RSA_new_method() were altered to use B<ENGINE>s
-rather than B<DH_METHOD>s during development of OpenSSL 0.9.6.
+rather than B<RSA_METHOD>s during development of OpenSSL 0.9.6.
 
 =cut
