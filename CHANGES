@@ -2,7 +2,19 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7c and 0.9.7d  [xx XXX XXXX]
+ Changes between 0.9.7d and 0.9.7e  [XX xxx XXXX]
+
+  *)
+
+ Changes between 0.9.7c and 0.9.7d  [17 Mar 2004]
+
+  *) Fix null-pointer assignment in do_change_cipher_spec() revealed           
+     by using the Codenomicon TLS Test Tool (CAN-2004-0079)                    
+     [Joe Orton, Steve Henson]   
+
+  *) Fix flaw in SSL/TLS handshaking when using Kerberos ciphersuites
+     (CAN-2004-0112)
+     [Joe Orton, Steve Henson]   
 
   *) Make it possible to have multiple active certificates with the same
      subject in the CA index file.  This is done only if the keyword

@@ -1025,7 +1025,6 @@ end:
 static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile, int create)
 	{
 	char *buf = NULL, *p;
-	MS_STATIC char buf2[1024];
 	ASN1_INTEGER *bs = NULL;
 	BIGNUM *serial = NULL;
 	size_t len;

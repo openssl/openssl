@@ -471,6 +471,6 @@ is guaranteed to work.
 =head1 RETURN CODES
 
 The read routines return either a pointer to the structure read or NULL
-is an error occurred.
+if an error occurred.
 
 The write routines return 1 for success or 0 for failure.
