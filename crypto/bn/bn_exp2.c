@@ -123,6 +123,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	int r_is_one=1,ts1=0,ts2=0;
 	BIGNUM *d,*r;
 	const BIGNUM *a_mod_m;
+	/* TODO: BN_CTX??? */
 	BIGNUM val1[TABLE_SIZE], val2[TABLE_SIZE];
 	BN_MONT_CTX *mont=NULL;
 

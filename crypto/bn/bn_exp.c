@@ -361,6 +361,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	int start=1,ts=0;
 	BIGNUM *d,*r;
 	const BIGNUM *aa;
+	/* TODO: BN_CTX??? */
 	BIGNUM val[TABLE_SIZE];
 	BN_MONT_CTX *mont=NULL;
 
@@ -368,7 +369,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	bn_check_top(p);
 	bn_check_top(m);
 
-	if (!(m->d[0] & 1))
+	if (!BN_is_odd(m))
 		{
 		BNerr(BN_F_BN_MOD_EXP_MONT,BN_R_CALLED_WITH_EVEN_MODULUS);
 		return(0);
@@ -524,7 +525,7 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 	bn_check_top(p);
 	bn_check_top(m);
 
-	if (m->top == 0 || !(m->d[0] & 1))
+	if (!BN_is_odd(m))
 		{
 		BNerr(BN_F_BN_MOD_EXP_MONT_WORD,BN_R_CALLED_WITH_EVEN_MODULUS);
 		return(0);
@@ -640,13 +641,13 @@ err:
 
 
 /* The old fallback, simple version :-) */
-int BN_mod_exp_simple(BIGNUM *r,
-	const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
-	BN_CTX *ctx)
+int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+		const BIGNUM *m, BN_CTX *ctx)
 	{
 	int i,j,bits,ret=0,wstart,wend,window,wvalue,ts=0;
 	int start=1;
 	BIGNUM *d;
+	/* TODO: BN_CTX?? */
 	BIGNUM val[TABLE_SIZE];
 
 	bits=BN_num_bits(p);
