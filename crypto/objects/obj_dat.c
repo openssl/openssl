@@ -397,42 +397,57 @@ ASN1_OBJECT *a;
 	return((*op)->nid);
 	}
 
+/* Convert an object name into an ASN1_OBJECT
+ * if "noname" is not set then search for short and long names first.
+ * This will convert the "dotted" form into an object: unlike OBJ_txt2nid
+ * it can be used with any objects, not just registered ones.
+ */
+
+ASN1_OBJECT *OBJ_txt2obj(s, no_name)
+char *s;
+int no_name;
+	{
+	int nid = NID_undef;
+	ASN1_OBJECT *op=NULL;
+	unsigned char *buf,*p;
+	int i, j;
+
+	if(!no_name) {
+		if( ((nid = OBJ_sn2nid(s)) != NID_undef) ||
+			((nid = OBJ_ln2nid(s)) != NID_undef) ) 
+					return OBJ_nid2obj(nid);
+	}
+
+	/* Work out size of content octets */
+	i=a2d_ASN1_OBJECT(NULL,0,s,-1);
+	if (i <= 0) return NULL;
+	/* Work out total size */
+	j = ASN1_object_size(0,i,V_ASN1_OBJECT);
+
+	if((buf=(unsigned char *)Malloc(j)) == NULL) return NULL;
+
+	p = buf;
+	/* Write out tag+length */
+	ASN1_put_object(&p,0,i,V_ASN1_OBJECT,V_ASN1_UNIVERSAL);
+	/* Write out contents */
+	a2d_ASN1_OBJECT(p,i,s,-1);
+	
+	p=buf;
+	op=d2i_ASN1_OBJECT(NULL,&p,i);
+	Free(buf);
+	return op;
+	}
+
 int OBJ_txt2nid(s)
 char *s;
-	{
-	int ret;
-
-	ret=OBJ_sn2nid(s);
-	if (ret == NID_undef)
-		{
-		ret=OBJ_ln2nid(s);
-		if (ret == NID_undef)
-			{
-			ASN1_OBJECT *op=NULL;
-			unsigned char *buf,*p;
-			int i;
-
-			i=a2d_ASN1_OBJECT(NULL,0,s,-1);
-			if (i <= 0)
-				{
-				/* clear the error */
-				ERR_get_error();
-				return(0);
-				}
-
-			if ((buf=(unsigned char *)Malloc(i)) == NULL)
-				return(NID_undef);
-			a2d_ASN1_OBJECT(buf,i,s,-1);
-			p=buf;
-			op=d2i_ASN1_OBJECT(NULL,&p,i);
-			if (op == NULL) return(NID_undef);
-			ret=OBJ_obj2nid(op);
-			ASN1_OBJECT_free(op);
-			Free(buf);
-			}
-		}
-	return(ret);
-	}
+{
+	ASN1_OBJECT *obj;
+	int nid;
+	obj = OBJ_txt2obj(s, 0);
+	nid = OBJ_obj2nid(obj);
+	ASN1_OBJECT_free(obj);
+	return nid;
+}
 
 int OBJ_ln2nid(s)
 char *s;

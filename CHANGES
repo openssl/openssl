@@ -5,6 +5,14 @@
 
  Changes between 0.9.1c and 0.9.2
 
+  *) The function OBJ_txt2nid was broken. It was supposed to return a nid
+     based on a text string, looking up short and long names and finally
+     "dot" format. The "dot" format stuff didn't work. Added new function
+     OBJ_txt2obj to do the same but return an ASN1_OBJECT and rewrote 
+     OBJ_txt2nid to use it. OBJ_txt2obj can also return objects even if the
+     OID is not part of the table.
+     [Steve Henson]
+
   *) Add prototypes to X509 lookup/verify methods, fixing a bug in
      X509_LOOKUP_by_alias().
      [Ben Laurie]
