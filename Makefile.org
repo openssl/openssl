@@ -311,13 +311,13 @@ dist_pem_h:
 	(cd crypto/pem; $(MAKE) CC='${CC}' SDIRS='${SDIRS}' CFLAG='${CFLAG}' pem.h; $(MAKE) clean)
 
 install: all
-	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin
-	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/lib
-	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl
-	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(OPENSSLDIR)/misc
-	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(OPENSSLDIR)/certs
-	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(OPENSSLDIR)/private
-	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(OPENSSLDIR)/lib
+	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/lib \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/private \
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/lib
 	@for i in $(EXHEADER) ;\
 	do \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
