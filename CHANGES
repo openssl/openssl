@@ -4,6 +4,12 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) New X509_get1_email() and X509_REQ_get1_email() functions that return
+     a STACK of email addresses from a certificate or request, these look
+     in the subject name and the subject alternative name extensions and 
+     omit any duplicate addresses.
+     [Steve Henson]
+
   *) Re-implement BN_mod_exp2_mont using independent (and larger) windows.
      This makes DSA verification about 2 % faster.
      [Bodo Moeller]

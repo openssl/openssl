@@ -97,6 +97,7 @@ static char *x509_usage[]={
 " -hash           - print hash value\n",
 " -subject        - print subject DN\n",
 " -issuer         - print issuer DN\n",
+" -email          - print email address(es)\n",
 " -startdate      - notBefore field\n",
 " -enddate        - notAfter field\n",
 " -purpose        - print out certificate purposes\n",
@@ -161,7 +162,7 @@ int MAIN(int argc, char **argv)
 	char *CAkeyfile=NULL,*CAserial=NULL;
 	char *alias=NULL;
 	int text=0,serial=0,hash=0,subject=0,issuer=0,startdate=0,enddate=0;
-	int noout=0,sign_flag=0,CA_flag=0,CA_createserial=0;
+	int noout=0,sign_flag=0,CA_flag=0,CA_createserial=0,email=0;
 	int trustout=0,clrtrust=0,clrreject=0,aliasout=0,clrext=0;
 	int C=0;
 	int x509req=0,days=DEF_DAYS,modulus=0,pubkey=0;
@@ -327,6 +328,8 @@ int MAIN(int argc, char **argv)
 			}
 		else if (strcmp(*argv,"-C") == 0)
 			C= ++num;
+		else if (strcmp(*argv,"-email") == 0)
+			email= ++num;
 		else if (strcmp(*argv,"-serial") == 0)
 			serial= ++num;
 		else if (strcmp(*argv,"-modulus") == 0)
@@ -616,6 +619,15 @@ bad:
 				BIO_printf(STDout,"serial=");
 				i2a_ASN1_INTEGER(STDout,x->cert_info->serialNumber);
 				BIO_printf(STDout,"\n");
+				}
+			else if (email == i) 
+				{
+				int j;
+				STACK *emlst;
+				emlst = X509_get1_email(x);
+				for(j = 0; j < sk_num(emlst); j++)
+					BIO_printf(STDout, "%s\n", sk_value(emlst, j));
+				X509_email_free(emlst);
 				}
 			else if (aliasout == i)
 				{

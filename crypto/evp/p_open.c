@@ -68,18 +68,20 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char *ek,
 	{
 	unsigned char *key=NULL;
 	int i,size=0,ret=0;
-	
+
+	if(type) {	
+		EVP_CIPHER_CTX_init(ctx);
+		EVP_DecryptInit(ctx,type,NULL,NULL);
+	}
+
+	if(!priv) return 1;
+
 	if (priv->type != EVP_PKEY_RSA)
 		{
 		EVPerr(EVP_F_EVP_OPENINIT,EVP_R_PUBLIC_KEY_NOT_RSA);
 		ret= -1;
 		goto err;
                 }
-
-	if(type) {	
-		EVP_CIPHER_CTX_init(ctx);
-		EVP_DecryptInit(ctx,type,NULL,NULL);
-	}
 
 	size=RSA_size(priv->pkey.rsa);
 	key=(unsigned char *)OPENSSL_malloc(size+2);

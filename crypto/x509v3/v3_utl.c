@@ -65,6 +65,10 @@
 #include <openssl/x509v3.h>
 
 static char *strip_spaces(char *name);
+static int sk_strcmp(const char * const *a, const char * const *b);
+static STACK *get_email(X509_NAME *name, STACK_OF(GENERAL_NAME) *gens);
+static void str_free(void *str);
+static int append_ia5(STACK **sk, ASN1_IA5STRING *email);
 
 /* Add a CONF_VALUE name value pair to stack */
 
@@ -415,4 +419,87 @@ int name_cmp(const char *name, const char *cmp)
 	c = name[len];
 	if(!c || (c=='.')) return 0;
 	return 1;
+}
+
+static int sk_strcmp(const char * const *a, const char * const *b)
+{
+	return strcmp(*a, *b);
+}
+
+STACK *X509_get1_email(X509 *x)
+{
+	STACK_OF(GENERAL_NAME) *gens;
+	STACK *ret;
+	gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
+	ret = get_email(X509_get_subject_name(x), gens);
+	sk_GENERAL_NAME_pop_free(gens, GENERAL_NAME_free);
+	return ret;
+}
+
+STACK *X509_REQ_get1_email(X509_REQ *x)
+{
+	STACK_OF(GENERAL_NAME) *gens;
+	STACK_OF(X509_EXTENSION) *exts;
+	STACK *ret;
+	exts = X509_REQ_get_extensions(x);
+	gens = X509V3_get_d2i(exts, NID_subject_alt_name, NULL, NULL);
+	ret = get_email(X509_REQ_get_subject_name(x), gens);
+	sk_GENERAL_NAME_pop_free(gens, GENERAL_NAME_free);
+	sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+	return ret;
+}
+
+
+static STACK *get_email(X509_NAME *name, STACK_OF(GENERAL_NAME) *gens)
+{
+	STACK *ret = NULL;
+	X509_NAME_ENTRY *ne;
+	ASN1_IA5STRING *email;
+	GENERAL_NAME *gen;
+	int i;
+	/* Now add any email address(es) to STACK */
+	i = -1;
+	/* First supplied X509_NAME */
+	while((i = X509_NAME_get_index_by_NID(name,
+					 NID_pkcs9_emailAddress, i)) > 0) {
+		ne = X509_NAME_get_entry(name, i);
+		email = X509_NAME_ENTRY_get_data(ne);
+		if(!append_ia5(&ret, email)) return NULL;
+	}
+	for(i = 0; i < sk_GENERAL_NAME_num(gens); i++)
+	{
+		gen = sk_GENERAL_NAME_value(gens, i);
+		if(gen->type != GEN_EMAIL) continue;
+		if(!append_ia5(&ret, gen->d.ia5)) return NULL;
+	}
+	return ret;
+}
+
+static void str_free(void *str)
+{
+	OPENSSL_free(str);
+}
+
+static int append_ia5(STACK **sk, ASN1_IA5STRING *email)
+{
+	char *emtmp;
+	/* First some sanity checks */
+	if(email->type != V_ASN1_IA5STRING) return 1;
+	if(!email->data || !email->length) return 1;
+	if(!*sk) *sk = sk_new(sk_strcmp);
+	if(!*sk) return 0;
+	/* Don't add duplicates */
+	if(sk_find(*sk, (char *)email->data) != -1) return 1;
+	emtmp = BUF_strdup((char *)email->data);
+	if(!emtmp || !sk_push(*sk, emtmp)) {
+		X509_email_free(*sk);
+		*sk = NULL;
+		return 0;
+	}
+	return 1;
+}
+
+void X509_email_free(STACK *sk)
+{
+	sk_pop_free(sk, str_free);
 }

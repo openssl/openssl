@@ -59,6 +59,11 @@ but symmetric encryption is fast. So symmetric encryption is used for
 bulk encryption and the small random symmetric key used is transferred
 using public key encryption.
 
+It is possible to call EVP_SealInit() twice in the same way as
+EVP_EncryptInit(). The first call should have B<npubk> set to 0
+and (after setting any cipher paramaters) it should be called again
+with B<type> set to NULL.
+
 =head1 SEE ALSO
 
 L<evp(3)|evp(3)>,L<rand(3)|rand(3)>

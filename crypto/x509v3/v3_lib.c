@@ -215,7 +215,7 @@ void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 		if(crit) *crit = found_ex->critical;
 		return X509V3_EXT_d2i(found_ex);
 	}
-	
+
 	/* Extension not found */
 	if(idx) *idx = -1;
 	if(crit) *crit = -1;

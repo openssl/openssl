@@ -29,16 +29,28 @@ The IV is supplied in the B<iv> parameter.
 EVP_OpenUpdate() and EVP_OpenFinal() have exactly the same properties
 as the EVP_DecryptUpdate() and EVP_DecryptFinal() routines, as 
 documented on the L<EVP_EncryptInit(3)|EVP_EncryptInit(3)> manual
-page. 
+page.
+
+=head1 NOTES
+
+It is possible to call EVP_OpenInit() twice in the same way as
+EVP_DecryptInit(). The first call should have B<priv> set to NULL
+and (after setting any cipher paramaters) it should be called again
+with B<type> set to NULL.
+
+If the cipher passed in the B<type> parameter is a variable length
+cipher then the key length will be set to the value of the recovered
+key length. If the cipher is a fixed length cipher then the recovered
+key length must match the fixed cipher length.
 
 =head1 RETURN VALUES
 
-EVP_OpenInit() returns -1 on error or an non zero integer (actually the
+EVP_OpenInit() returns -1 on error or a non zero integer (actually the
 recovered secret key size) if successful.
 
-EVP_SealUpdate() does not return a value.
+EVP_OpenUpdate() does not return a value.
 
-EVP_SealFinal() returns 0 if the decrypt failed or 1 for success.
+EVP_OpenFinal() returns 0 if the decrypt failed or 1 for success.
 
 =head1 SEE ALSO
 
