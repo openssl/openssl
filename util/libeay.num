@@ -2475,3 +2475,6 @@ ENGINE_cpy                              2937	EXIST::FUNCTION:
 ENGINE_set_flags                        2938	EXIST::FUNCTION:
 ENGINE_get_load_privkey_function        2939	EXIST::FUNCTION:
 ENGINE_cleanup                          2940	EXIST::FUNCTION:
+ENGINE_get_ex_new_index                 2941	EXIST::FUNCTION:
+ENGINE_get_ex_data                      2942	EXIST::FUNCTION:
+ENGINE_set_ex_data                      2943	EXIST::FUNCTION:
