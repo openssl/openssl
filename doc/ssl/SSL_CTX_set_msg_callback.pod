@@ -69,6 +69,8 @@ The B<SSL> object that received or sent the message.
 The user-defined argument optionally defined by
 SSL_CTX_set_msg_callback_arg() or SSL_set_msg_callback_arg().
 
+=back
+
 =head1 NOTES
 
 Protocol messages are passed to the callback function after decryption
