@@ -337,16 +337,25 @@ be safely used.
 
 On some Alpha installations running True64 Unix and Compaq C, the compilation
 of crypto/sha/sha_dgst.c fails with the message 'Fatal:  Insufficient virtual
-memory to continue compilation.'  As far as the tests have shown, this is a
-compiler bug.  What happens is that it eats up resident memory (not the swap)
-until the current limit is reached and then dies with the error message given
-above.  The bug in question is clearly in the optimization code, because if
-one eliminates optimization completely (-O0), the compilation goes through
-(and the compiler consumes about 2MB of resident memory instead of 128MB or
-whatever one's limit is currently).  The very quick solution would be to
-compile everything with -O0 as optimization level, but that's not a very
-nice thing to do for those who expect to get the best result from OpenSSL.
-A bit more complicated solution is the following:
+memory to continue compilation.'  As far as the tests have shown, this may be
+a compiler bug.  What happens is that it eats up a lot of resident memory
+to build something, probably a table.  The problem is clearly in the
+optimization code, because if one eliminates optimization completely (-O0),
+the compilation goes through (and the compiler consumes about 2MB of resident
+memory instead of 240MB or whatever one's limit is currently).
+
+There are three options to solve this problem:
+
+1. set your current data segment size soft limit higher.  Experience shows
+that about 241000 kbytes seems to be enough on an AlphaServer DS10.  You do
+this with the command 'ulimit -Sd nnnnnn', where 'nnnnnn' is the number of
+kbytes to set the limit to.
+
+2. If you have a hard limit that is lower than what you need and you can't
+get it changed, you can compile all of OpenSSL with -O0 as optimization
+level.  This is however not a very nice thing to do for those who expect to
+get the best result from OpenSSL.  A bit more complicated solution is the
+following:
 
 ----- snip:start -----
   make DIRS=crypto SDIRS=sha "`grep '^CFLAG=' Makefile.ssl | \
