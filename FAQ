@@ -217,8 +217,11 @@ For Solaris 2.6, Tim Nibbe <tnibbe@sprint.net> and others have suggested
 installing the SUNski package from Sun patch 105710-01 (Sparc) which
 adds a /dev/random device and make sure it gets used, usually through
 $RANDFILE.  There are probably similar patches for the other Solaris
-versions.  However, be warned that /dev/random is usually a blocking
-device, which may have some effects on OpenSSL.
+versions.  An official statement from Sun with respect to /dev/random
+support can be found at
+  http://sunsolve.sun.com/pub-cgi/retrieve.pl?doc=fsrdb/27606&zone_32=SUNWski
+However, be warned that /dev/random is usually a blocking device, which
+may have some effects on OpenSSL.
 
 
 * Why do I get an "unable to write 'random state'" error message?
