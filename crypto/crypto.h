@@ -391,6 +391,9 @@ int CRYPTO_push_info_(const char *info, const char *file, int line);
 int CRYPTO_pop_info(void);
 int CRYPTO_remove_all_info(void);
 
+
+/* Default debugging functions (enabled by CRYPTO_malloc_debug_init() macro;
+ * used as default in CRYPTO_MDEBUG compilations): */
 /* The last argument has the following significance:
  *
  * 0:	called before the actual memory allocation has taken place
@@ -399,17 +402,17 @@ int CRYPTO_remove_all_info(void);
 void CRYPTO_dbg_malloc(void *addr,int num,const char *file,int line,int before_p);
 void CRYPTO_dbg_realloc(void *addr1,void *addr2,int num,const char *file,int line,int before_p);
 void CRYPTO_dbg_free(void *addr,int before_p);
-
 /* Tell the debugging code about options.  By default, the following values
  * apply:
  *
- * 0:	Clear all options.
- * 1:	Set the "Show Time" option.
- * 2:	Set the "Show Thread Number" option.
- * 3:	1 + 2
+ * 0:                           Clear all options.
+ * V_CRYPTO_MDEBUG_TIME (1):    Set the "Show Time" option.
+ * V_CRYPTO_MDEBUG_THREAD (2):  Set the "Show Thread Number" option.
+ * V_CRYPTO_MDEBUG_ALL (3):     1 + 2
  */
 void CRYPTO_dbg_set_options(long bits);
 long CRYPTO_dbg_get_options(void);
+
 
 #ifndef OPENSSL_NO_FP_API
 void CRYPTO_mem_leaks_fp(FILE *);
