@@ -71,7 +71,7 @@ information on the error.  If the error queue is empty
 (i.e. ERR_get_error() returns 0), B<ret> can be used to find out more
 about the error: If B<ret == 0>, an EOF was observed that violates
 the protocol.  If B<ret == -1>, the underlying B<BIO> reported an
-I/O error.  (For socket I/O on Unix systems, consult B<errno>.)
+I/O error (for socket I/O on Unix systems, consult B<errno> for details).
 
 =item SSL_ERROR_SSL
 
