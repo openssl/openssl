@@ -79,7 +79,7 @@ int main ()
 
     fprintf(stdout,"Testing SHA-512 ");
 
-    SHA512("abc",3,md);
+    SHA512((unsigned char *)"abc",3,md);
     if (memcmp(md,app_c1,sizeof(app_c1)))
     {	fflush(stdout);
 	fprintf(stderr,"\nTEST 1 of 3 failed.\n");
@@ -88,7 +88,7 @@ int main ()
     else
 	fprintf(stdout,"."); fflush(stdout);
 
-    SHA512("abcdefgh""bcdefghi""cdefghij""defghijk"
+    SHA512((unsigned char *)"abcdefgh""bcdefghi""cdefghij""defghijk"
 	   "efghijkl""fghijklm""ghijklmn""hijklmno"
 	   "ijklmnop""jklmnopq""klmnopqr""lmnopqrs"
 	   "mnopqrst""nopqrstu",112,md);
@@ -126,7 +126,7 @@ int main ()
 
     fprintf(stdout,"Testing SHA-384 ");
 
-    SHA384("abc",3,md);
+    SHA384((unsigned char *)"abc",3,md);
     if (memcmp(md,app_d1,sizeof(app_d1)))
     {	fflush(stdout);
 	fprintf(stderr,"\nTEST 1 of 3 failed.\n");
@@ -135,7 +135,7 @@ int main ()
     else
 	fprintf(stdout,"."); fflush(stdout);
 
-    SHA384("abcdefgh""bcdefghi""cdefghij""defghijk"
+    SHA384((unsigned char *)"abcdefgh""bcdefghi""cdefghij""defghijk"
 	   "efghijkl""fghijklm""ghijklmn""hijklmno"
 	   "ijklmnop""jklmnopq""klmnopqr""lmnopqrs"
 	   "mnopqrst""nopqrstu",112,md);

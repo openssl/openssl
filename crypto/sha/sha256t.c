@@ -52,7 +52,7 @@ int main ()
 
     fprintf(stdout,"Testing SHA-256 ");
 
-    SHA256("abc",3,md);
+    SHA256((unsigned char *)"abc",3,md);
     if (memcmp(md,app_b1,sizeof(app_b1)))
     {	fflush(stdout);
 	fprintf(stderr,"\nTEST 1 of 3 failed.\n");
@@ -61,7 +61,7 @@ int main ()
     else
 	fprintf(stdout,"."); fflush(stdout);
 
-    SHA256("abcdbcde""cdefdefg""efghfghi""ghijhijk"
+    SHA256((unsigned char *)"abcdbcde""cdefdefg""efghfghi""ghijhijk"
 	   "ijkljklm""klmnlmno""mnopnopq",56,md);
     if (memcmp(md,app_b2,sizeof(app_b2)))
     {	fflush(stdout);
@@ -90,7 +90,7 @@ int main ()
 
     fprintf(stdout,"Testing SHA-224 ");
 
-    SHA224("abc",3,md);
+    SHA224((unsigned char *)"abc",3,md);
     if (memcmp(md,addenum_1,sizeof(addenum_1)))
     {	fflush(stdout);
 	fprintf(stderr,"\nTEST 1 of 3 failed.\n");
@@ -99,7 +99,7 @@ int main ()
     else
 	fprintf(stdout,"."); fflush(stdout);
 
-    SHA224("abcdbcde""cdefdefg""efghfghi""ghijhijk"
+    SHA224((unsigned char *)"abcdbcde""cdefdefg""efghfghi""ghijhijk"
 	   "ijkljklm""klmnlmno""mnopnopq",56,md);
     if (memcmp(md,addenum_2,sizeof(addenum_2)))
     {	fflush(stdout);
