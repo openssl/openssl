@@ -1436,9 +1436,6 @@ static int www_body(char *hostname, int s, unsigned char *context)
 
 				switch (dot)
 					{
-				case 0:
-					dot = (e[0] == '/') ? 1 : 0;
-					break;
 				case 1:
 					dot = (e[0] == '.') ? 2 : 0;
 					break;
@@ -1449,6 +1446,8 @@ static int www_body(char *hostname, int s, unsigned char *context)
 					dot = (e[0] == '/') ? -1 : 0;
 					break;
 					}
+				if (dot == 0)
+					dot = (e[0] == '/') ? 1 : 0;
 				}
 			dot = (dot == 3) || (dot == -1); /* filename contains ".." component */
 
