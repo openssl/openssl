@@ -562,7 +562,7 @@ const char *OBJ_bsearch(const char *key, const char *base, int num, int size,
 const char *OBJ_bsearch_ex(const char *key, const char *base, int num,
 	int size, int (*cmp)(const void *, const void *), int flags)
 	{
-	int l,h,i,c;
+	int l,h,i=0,c=0;
 	const char *p = NULL;
 
 	if (num == 0) return(NULL);
