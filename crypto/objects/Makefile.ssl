@@ -14,6 +14,7 @@ MAKE=		make -f Makefile.ssl
 MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
+PERL=		perl
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
