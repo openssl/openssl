@@ -4,6 +4,11 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Change BN_mod_sqrt() so that it verifies that the input value
+     is really the square of the return value.  (Previously,
+     BN_mod_sqrt would show GIGO behaviour.)
+     [Bodo Moeller]
+
   *) Add named elliptic curves over binary fields from X9.62, SECG,
      and WAP/WTLS; add OIDs that were still missing.
 

@@ -705,8 +705,6 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *po
 			ECerr(EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES, ERR_R_BN_LIB);
 		goto err;
 		}
-	/* If tmp1 is not a square (i.e. there is no point on the curve with
-	 * our x), then y now is a nonsense value too */
 
 	if (y_bit != BN_is_odd(y))
 		{
@@ -720,6 +718,7 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *po
 			if (kron == 1)
 				ECerr(EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES, EC_R_INVALID_COMPRESSION_BIT);
 			else
+				/* BN_mod_sqrt() should have cought this error (not a square) */
 				ECerr(EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES, EC_R_INVALID_COMPRESSED_POINT);
 			goto err;
 			}

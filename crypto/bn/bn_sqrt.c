@@ -72,7 +72,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	BIGNUM *ret = in;
 	int err = 1;
 	int r;
-	BIGNUM *b, *q, *t, *x, *y;
+	BIGNUM *A, *b, *q, *t, *x, *y;
 	int e, i, j;
 	
 	if (!BN_is_odd(p) || BN_abs_is_word(p, 1))
@@ -120,6 +120,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 #endif
 
 	BN_CTX_start(ctx);
+	A = BN_CTX_get(ctx);
 	b = BN_CTX_get(ctx);
 	q = BN_CTX_get(ctx);
 	t = BN_CTX_get(ctx);
@@ -130,6 +131,9 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	if (ret == NULL)
 		ret = BN_new();
 	if (ret == NULL) goto end;
+
+	/* A = a mod p */
+	if (!BN_nnmod(A, a, p, ctx)) goto end;
 
 	/* now write  |p| - 1  as  2^e*q  where  q  is odd */
 	e = 1;
@@ -149,9 +153,9 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		if (!BN_rshift(q, p, 2)) goto end;
 		q->neg = 0;
 		if (!BN_add_word(q, 1)) goto end;
-		if (!BN_mod_exp(ret, a, q, p, ctx)) goto end;
+		if (!BN_mod_exp(ret, A, q, p, ctx)) goto end;
 		err = 0;
-		goto end;
+		goto vrfy;
 		}
 	
 	if (e == 2)
@@ -182,15 +186,8 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		 * November 1992.)
 		 */
 
-		/* make sure that  a  is reduced modulo p */
-		if (a->neg || BN_ucmp(a, p) >= 0)
-			{
-			if (!BN_nnmod(x, a, p, ctx)) goto end;
-			a = x; /* use x as temporary variable */
-			}
-
 		/* t := 2*a */
-		if (!BN_mod_lshift1_quick(t, a, p)) goto end;
+		if (!BN_mod_lshift1_quick(t, A, p)) goto end;
 
 		/* b := (2*a)^((|p|-5)/8) */
 		if (!BN_rshift(q, p, 3)) goto end;
@@ -205,12 +202,12 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		if (!BN_sub_word(t, 1)) goto end;
 
 		/* x = a*b*t */
-		if (!BN_mod_mul(x, a, b, p, ctx)) goto end;
+		if (!BN_mod_mul(x, A, b, p, ctx)) goto end;
 		if (!BN_mod_mul(x, x, t, p, ctx)) goto end;
 
 		if (!BN_copy(ret, x)) goto end;
 		err = 0;
-		goto end;
+		goto vrfy;
 		}
 	
 	/* e > 2, so we really have to use the Tonelli/Shanks algorithm.
@@ -297,7 +294,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	/* x := a^((q-1)/2) */
 	if (BN_is_zero(t)) /* special case: p = 2^e + 1 */
 		{
-		if (!BN_nnmod(t, a, p, ctx)) goto end;
+		if (!BN_nnmod(t, A, p, ctx)) goto end;
 		if (BN_is_zero(t))
 			{
 			/* special case: a == 0  (mod p) */
@@ -310,7 +307,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		}
 	else
 		{
-		if (!BN_mod_exp(x, a, t, p, ctx)) goto end;
+		if (!BN_mod_exp(x, A, t, p, ctx)) goto end;
 		if (BN_is_zero(x))
 			{
 			/* special case: a == 0  (mod p) */
@@ -322,10 +319,10 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 	/* b := a*x^2  (= a^q) */
 	if (!BN_mod_sqr(b, x, p, ctx)) goto end;
-	if (!BN_mod_mul(b, b, a, p, ctx)) goto end;
+	if (!BN_mod_mul(b, b, A, p, ctx)) goto end;
 	
 	/* x := a*x    (= a^((q+1)/2)) */
-	if (!BN_mod_mul(x, x, a, p, ctx)) goto end;
+	if (!BN_mod_mul(x, x, A, p, ctx)) goto end;
 
 	while (1)
 		{
@@ -342,7 +339,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 			{
 			if (!BN_copy(ret, x)) goto end;
 			err = 0;
-			goto end;
+			goto vrfy;
 			}
 
 
@@ -371,6 +368,22 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		if (!BN_mod_mul(x, x, t, p, ctx)) goto end;
 		if (!BN_mod_mul(b, b, y, p, ctx)) goto end;
 		e = i;
+		}
+
+ vrfy:
+	if (!err)
+		{
+		/* verify the result -- the input might have been not a square
+		 * (test added in 0.9.8) */
+		
+		if (!BN_mod_sqr(x, ret, p, ctx))
+			err = 1;
+		
+		if (!err && 0 != BN_cmp(x, A))
+			{
+			BNerr(BN_F_BN_MOD_SQRT, BN_R_NOT_A_SQUARE);
+			err = 1;
+			}
 		}
 
  end:
