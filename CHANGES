@@ -558,8 +558,8 @@
      [Bodo Moeller, Lutz Jaenicke]
 
   *) Rationalise EVP so it can be extended: don't include a union of
-     cipher/digest structures, add init/cleanup functions. This also reduces
-     the number of header dependencies.
+     cipher/digest structures, add init/cleanup functions for EVP_MD_CTX
+     (similar to those existing for EVP_CIPHER_CTX).
      Usage example:
 
          EVP_MD_CTX md;
