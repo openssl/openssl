@@ -106,7 +106,8 @@ static int dev_crypto_init(EVP_CIPHER_CTX *ctx)
 
 static int dev_crypto_cleanup(EVP_CIPHER_CTX *ctx)
     {
-    if(ioctl(fd,CIOCFSESSION,data(ctx)->ses) == -1)
+    fprintf(stderr,"clean up session %d\n",data(ctx)->ses);
+    if(ioctl(fd,CIOCFSESSION,&data(ctx)->ses) == -1)
 	err("CIOCFSESSION failed");
 
     OPENSSL_free(data(ctx)->key);
@@ -139,6 +140,7 @@ static int dev_crypto_des_ede3_init_key(EVP_CIPHER_CTX *ctx,
 	ctx->cipher=EVP_des_ede3_cbc();
 	return ctx->cipher->init(ctx,key,iv,enc);
 	}
+    fprintf(stderr,"created session %d\n",data(ctx)->ses);
     return 1;
     }
 
