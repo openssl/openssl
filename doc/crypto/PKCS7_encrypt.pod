@@ -29,6 +29,11 @@ RC2. These can be used by passing EVP_rc2_40_cbc() and EVP_rc2_64_cbc() respecti
 The algorithm passed in the B<cipher> parameter must support ASN1 encoding of its
 parameters. 
 
+Many browsers implement a "sign and encrypt" option which is simply an S/MIME 
+envelopedData containing an S/MIME signed message. This can be readily produced
+by storing the S/MIME signed message in a memory BIO and passing it to
+PKCS7_encrypt().
+
 The following flags can be passed in the B<flags> parameter.
 
 If the B<PKCS7_TEXT> flag is set MIME headers for type B<text/plain> are prepended
