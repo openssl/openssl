@@ -78,9 +78,11 @@
 #error EC is disabled.
 #endif
 
-#include <openssl/bn.h>
 #include <openssl/asn1.h>
 #include <openssl/symhacks.h>
+#ifndef OPENSSL_NO_DEPRECATED
+#include <openssl/bn.h>
+#endif
 
 #ifdef  __cplusplus
 extern "C" {

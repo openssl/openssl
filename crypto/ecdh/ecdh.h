@@ -75,9 +75,11 @@
 #error ECDH is disabled.
 #endif
 
-#include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/ossl_typ.h>
+#ifndef OPENSSL_NO_DEPRECATED
+#include <openssl/bn.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

@@ -64,9 +64,11 @@
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
-#include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/ossl_typ.h>
+#ifndef OPENSSL_NO_DEPRECATED
+#include <openssl/bn.h>
+#endif
 
 #ifdef OPENSSL_NO_RSA
 #error RSA is disabled.

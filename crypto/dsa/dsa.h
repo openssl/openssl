@@ -74,11 +74,11 @@
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
-#include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/ossl_typ.h>
 
 #ifndef OPENSSL_NO_DEPRECATED
+#include <openssl/bn.h>
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
 #endif

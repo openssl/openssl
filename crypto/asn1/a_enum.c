@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/asn1.h>
+#include <openssl/bn.h>
 
 /* 
  * Code for ENUMERATED type: identical to INTEGER apart from a different tag.

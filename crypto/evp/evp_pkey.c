@@ -63,6 +63,7 @@
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#include <openssl/bn.h>
 
 #ifndef OPENSSL_NO_DSA
 static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8inf, EVP_PKEY *pkey);

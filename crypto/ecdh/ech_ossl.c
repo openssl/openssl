@@ -77,6 +77,7 @@
 #include <openssl/err.h>
 #include <openssl/sha.h>
 #include <openssl/obj_mac.h>
+#include <openssl/bn.h>
 
 static int ecdh_compute_key(void *out, size_t len, const EC_POINT *pub_key, EC_KEY *ecdh,
                             void *(*KDF)(void *in, size_t inlen, void *out, size_t outlen));
