@@ -4,6 +4,22 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Add the ASN.1 structures and functions for CertificatePair, which
+     is defined as follows (according to X.509_4thEditionDraftV6.pdf):
+
+     CertificatePair ::= SEQUENCE {
+	forward		[0]	Certificate OPTIONAL,
+	reverse		[1]	Certificate OPTIONAL,
+	-- at least one of the pair shall be present -- }
+
+     Also implement the PEM functions to read and write certificate
+     pairs, and defined the PEM tag as "CERTIFICATE PAIR".
+
+     This needed to be defined, mostly for the sake of the LDAP
+     attribute crossCertificatePair, but may prove useful elsewhere as
+     well.
+     [Richard Levitte]
+
   *) Make it possible to inhibit symlinking of shared libraries in
      Makefile.shared, for Cygwin's sake.
      [Richard Levitte]
