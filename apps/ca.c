@@ -215,10 +215,10 @@ static char *section=NULL;
 static int preserve=0;
 static int msie_hack=0;
 
-static IMPLEMENT_LHASH_HASH_FN(index_serial_hash,const char **);
-static IMPLEMENT_LHASH_COMP_FN(index_serial_cmp,const char **);
-static IMPLEMENT_LHASH_HASH_FN(index_name_hash,const char **);
-static IMPLEMENT_LHASH_COMP_FN(index_name_cmp,const char **);
+static IMPLEMENT_LHASH_HASH_FN(index_serial_hash,const char **)
+static IMPLEMENT_LHASH_COMP_FN(index_serial_cmp,const char **)
+static IMPLEMENT_LHASH_HASH_FN(index_name_hash,const char **)
+static IMPLEMENT_LHASH_COMP_FN(index_name_cmp,const char **)
 
 
 int MAIN(int, char **);

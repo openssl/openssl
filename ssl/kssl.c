@@ -1030,5 +1030,11 @@ void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 #endif
 	}
 
-#endif	/* NO_KRB5	*/
+#else /* !NO_KRB5 */
+
+#ifdef PEDANTIC
+static int dummy=(int)&dummy;
+#endif
+
+#endif	/* !NO_KRB5	*/
 

@@ -85,8 +85,8 @@ char *default_config_file=NULL;
 BIO *bio_err=NULL;
 #endif
 
-static IMPLEMENT_LHASH_HASH_FN(hash,FUNCTION *);
-static IMPLEMENT_LHASH_COMP_FN(cmp,FUNCTION *);
+static IMPLEMENT_LHASH_HASH_FN(hash,FUNCTION *)
+static IMPLEMENT_LHASH_COMP_FN(cmp,FUNCTION *)
 
 int main(int Argc, char *Argv[])
 	{
