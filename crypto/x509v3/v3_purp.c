@@ -378,6 +378,10 @@ static void x509v3_cache_extensions(X509 *x)
 				case NID_time_stamp:
 				x->ex_xkusage |= XKU_TIMESTAMP;
 				break;
+
+				case NID_dvcs:
+				x->ex_xkusage |= XKU_DVCS;
+				break;
 			}
 		}
 		sk_ASN1_OBJECT_pop_free(extusage, ASN1_OBJECT_free);
