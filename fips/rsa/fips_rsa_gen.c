@@ -71,18 +71,14 @@ static int fips_check_rsa(RSA *rsa)
     int n;
     unsigned char ctext[256];
     unsigned char ptext[256];
+    /* The longest we can have with OAEP padding and a 512 bit key */
     static unsigned char original_ptext[] =
 	"\x01\x23\x45\x67\x89\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0"
-	"\x23\x45\x67\x89\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12"
-	"\x45\x67\x89\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34"
-	"\x67\x89\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56"
-	"\x01\x23\x45\x67\x89\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0"
-	"\x23\x45\x67\x89\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12"
-	"\x45\x67\x89\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34"
-	"\x67\x89\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0\x12\x34\x56";
+	"\x23\x45\x67\x89\xab\xcd";
 
+    /* this will fail for keys shorter than 512 bits */
     n=RSA_public_encrypt(sizeof(original_ptext)-1,original_ptext,ctext,rsa,
-			 RSA_NO_PADDING);
+			 RSA_PKCS1_OAEP_PADDING);
     if(n < 0)
 	{
 	ERR_print_errors_fp(stderr);
@@ -93,7 +89,7 @@ static int fips_check_rsa(RSA *rsa)
   	FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
  	return 0;
  	}
-    n=RSA_private_decrypt(n,ctext,ptext,rsa,RSA_NO_PADDING);
+    n=RSA_private_decrypt(n,ctext,ptext,rsa,RSA_PKCS1_OAEP_PADDING);
     if(n < 0)
 	{
 	ERR_print_errors_fp(stderr);
