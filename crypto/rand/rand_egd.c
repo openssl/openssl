@@ -70,6 +70,7 @@ int RAND_egd(const char *path)
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <memory.h>
 
 #ifndef offsetof
 #  define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
