@@ -191,6 +191,7 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	 */
 
 #define MONT_MUL_MOD
+#define MONT_EXP_WORD
 #define RECP_MUL_MOD
 
 #ifdef MONT_MUL_MOD
@@ -202,14 +203,14 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 
 	if (BN_is_odd(m))
 		{
+#  ifdef MONT_EXP_WORD
 		if (a->top == 1 && !a->neg)
 			{
 			BN_ULONG A = a->d[0];
-			if (m->top == 1)
-				A %= m->d[0]; /* make sure that A is reduced */
 			ret=BN_mod_exp_mont_word(r,A,p,m,ctx,NULL);
 			}
 		else
+#  endif
 			ret=BN_mod_exp_mont(r,a,p,m,ctx,NULL);
 		}
 	else
@@ -505,11 +506,14 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 	bn_check_top(p);
 	bn_check_top(m);
 
-	if (!(m->d[0] & 1))
+	if (m->top == 0 || !(m->d[0] & 1))
 		{
 		BNerr(BN_F_BN_MOD_EXP_MONT_WORD,BN_R_CALLED_WITH_EVEN_MODULUS);
 		return(0);
 		}
+	if (m->top == 1)
+		a %= m->d[0]; /* make sure that 'a' is reduced */
+
 	bits = BN_num_bits(p);
 	if (bits == 0)
 		{
@@ -642,8 +646,8 @@ int BN_mod_exp_simple(BIGNUM *r,
 	if (!BN_nnmod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
 	if (BN_is_zero(&(val[0])))
 		{
-		ret = BN_one(r);
-		return ret;
+		ret = BN_zero(r);
+		goto err;
 		}
 
 	window = BN_window_bits_for_exponent_size(bits);

@@ -140,13 +140,13 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	
 	/* e > 1, so we really have to use the Tonelli/Shanks algorithm.
 	 * First, find some  y  that is not a square. */
-	i = 1;
+	i = 2;
 	do
 		{
 		/* For efficiency, try small numbers first;
 		 * if this fails, try random numbers.
 		 */
-		if (i < 20)
+		if (i < 22)
 			{
 			if (!BN_set_word(y, i)) goto end;
 			}
@@ -171,7 +171,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 			goto end;
 			}
 		}
-	while (r == 1 && i++ < 80);
+	while (r == 1 && ++i < 82);
 	
 	if (r != -1)
 		{
