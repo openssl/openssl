@@ -101,7 +101,7 @@ static int e_gmp_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
 
 #ifndef OPENSSL_NO_RSA
 /* RSA stuff */
-static int e_gmp_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa);
+static int e_gmp_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
 static int e_gmp_rsa_finish(RSA *r);
 #endif
 
@@ -361,7 +361,7 @@ static int e_gmp_rsa_finish(RSA *rsa)
 	return 1;
 	}
 
-static int e_gmp_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa)
+static int e_gmp_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	{
 	E_GMP_RSA_CTX *hptr;
 	int to_return = 0;
