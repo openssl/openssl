@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/05/10 19:28:00 $
+  ______________                           $Date: 1999/05/10 23:56:11 $
 
   DEVELOPMENT STATE
 
@@ -19,7 +19,6 @@
 
   RELEASE SHOWSTOPPERS
 
-    o Compilation warnings: ctype-related int vs. char
     o BSD/OS: assembler functions must not have leading underscores
     o exptest and rsa_oaep_test fail with irix64-*
       (Don Badrak <dbadrak@geo.census.gov>: "Re: Problems to compile openssl
@@ -32,8 +31,6 @@
 
     o OCSP (titchenert@certco.com) 
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
-    o linux dynamic libs (colin@field.medicine.adelaide.edu.au)
-    o MingW support (niklas@canit.se)
 
   IN PROGRESS
 
@@ -77,7 +74,8 @@
     o  broken demos
     o  salzr@certco.com (Rich Salz): Bug in X509_name_print
        <29E0A6D39ABED111A36000A0C99609CA2C2BA4@macertco-srv1.ma.certco.com>
-    o  $(PERL) in */Makefile.ssl
+    o  Compilation warnings: ctype-related int vs. char
+	o  $(PERL) in */Makefile.ssl
     o  "Sign the certificate?" - "n" creates empty certificate file
     o  dubious declaration of crypt() in des.h
 
