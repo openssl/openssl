@@ -552,7 +552,8 @@ int tls1_enc(SSL *s, int send)
 				{
 				/* Incorrect padding. SSLerr() and ssl3_alert are done
 				 * by caller: we don't want to reveal whether this is
-				 * a decryption error or a MAC verification failure. */
+				 * a decryption error or a MAC verification failure
+				 * (see http://www.openssl.org/~bodo/tls-cbc.txt) */
 				return -1;
 				}
 			for (j=(int)(l-i); j<(int)l; j++)
