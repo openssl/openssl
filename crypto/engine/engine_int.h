@@ -165,6 +165,11 @@ ENGINE *ENGINE_sureware();
 /* Returns a structure of ubsec methods. */
 ENGINE *ENGINE_ubsec();
 #endif /* !NO_HW_UBSEC */
+
+#ifndef NO_HW_KEYCLIENT
+/* Returns a structure of keyclient methods. */
+ENGINE *ENGINE_keyclient();
+#endif /* !NO_HW_KEYCLIENT */
 #endif /* !NO_HW */
 
 #ifdef  __cplusplus
