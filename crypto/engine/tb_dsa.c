@@ -69,7 +69,7 @@ void ENGINE_unregister_DSA(ENGINE *e)
 	engine_table_unregister(&dsa_table, e);
 	}
 
-static void engine_unregister_all_DSA()
+static void engine_unregister_all_DSA(void)
 	{
 	engine_table_cleanup(&dsa_table);
 	}

@@ -69,7 +69,7 @@ void ENGINE_unregister_RAND(ENGINE *e)
 	engine_table_unregister(&rand_table, e);
 	}
 
-static void engine_unregister_all_RAND()
+static void engine_unregister_all_RAND(void)
 	{
 	engine_table_cleanup(&rand_table);
 	}

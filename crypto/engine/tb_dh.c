@@ -69,7 +69,7 @@ void ENGINE_unregister_DH(ENGINE *e)
 	engine_table_unregister(&dh_table, e);
 	}
 
-static void engine_unregister_all_DH()
+static void engine_unregister_all_DH(void)
 	{
 	engine_table_cleanup(&dh_table);
 	}

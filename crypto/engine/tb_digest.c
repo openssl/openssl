@@ -68,7 +68,7 @@ void ENGINE_unregister_digests(ENGINE *e)
 	engine_table_unregister(&digest_table, e);
 	}
 
-static void engine_unregister_all_digests()
+static void engine_unregister_all_digests(void)
 	{
 	engine_table_cleanup(&digest_table);
 	}

@@ -68,7 +68,7 @@ void ENGINE_unregister_ciphers(ENGINE *e)
 	engine_table_unregister(&cipher_table, e);
 	}
 
-static void engine_unregister_all_ciphers()
+static void engine_unregister_all_ciphers(void)
 	{
 	engine_table_cleanup(&cipher_table);
 	}

@@ -69,7 +69,7 @@ void ENGINE_unregister_RSA(ENGINE *e)
 	engine_table_unregister(&rsa_table, e);
 	}
 
-static void engine_unregister_all_RSA()
+static void engine_unregister_all_RSA(void)
 	{
 	engine_table_cleanup(&rsa_table);
 	}
