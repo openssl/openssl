@@ -4,6 +4,12 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Fix BN_rand_range bug pointed out by Dominikus Scherkl
+     <Dominikus.Scherkl@biodata.com>.  (The previous implementation
+     worked incorrectly for those cases where  range = 10..._2  and
+     3*range  is two bits longer than  range.)
+     [Bodo Moeller]
+
   *) Only add signing time to PKCS7 structures if it is not already
      present.
      [Steve Henson]
