@@ -564,14 +564,16 @@ EOF
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux1) OUT="linux-aout" ;;
   sun4u*-*-solaris2)
-	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
+	ISA=`(isalist) 2>/dev/null`
+	ISA64=`echo $ISA | grep sparcv9`
 	if [ "$ISA64" != "" -a "$CC" = "cc" -a $CCVER -ge 50 ]; then
 		echo "WARNING! If you wish to build 64-bit library, then you have to"
 		echo "         invoke './Configure solaris64-sparcv9-cc' *manually*."
 		echo "         Type return if you want to continue, Ctrl-C to abort."
 		read waste < /dev/tty
 	fi
-	OUT="solaris-sparcv9-$CC" ;;
+	ISA=`set $ISA; echo $1`
+	OUT="solaris-$ISA-$CC" ;;
   sun4m-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
   sun4d-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
   sun4*-*-solaris2)	OUT="solaris-sparcv7-$CC" ;;
