@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) MIPS assembler BIGNUM division bug fix. 
+     [Andy Polyakov]
+
   *) Fix PKCS#7 decode routines so they correctly update the length
      after reading an EOC for the EXPLICIT tag.
      [Steve Henson]
