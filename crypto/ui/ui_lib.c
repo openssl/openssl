@@ -100,7 +100,7 @@ UI *UI_new_method(const UI_METHOD *method)
 
 	ret->strings=NULL;
 	ret->user_data=NULL;
-	ret->ex_data=NULL;
+	CRYPTO_new_ex_data(ui_meth,ret,&ret->ex_data);
 	return ret;
 	}
 
