@@ -27,7 +27,7 @@
      current invocation of the inner loop.
      [Bodo Moeller]
 
-  *) New functions BN_is_prime_fasttest that optionally does trial
+  *) New function BN_is_prime_fasttest that optionally does trial
      division before starting the Rabin-Miller test and has
      an additional BN_CTX * argument (whereas BN_is_prime always
      has to allocate at least one BN_CTX).

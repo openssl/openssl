@@ -131,7 +131,7 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 		{
 		for (;;) /* find q */
 			{
-			int seed_is_random = 0;
+			int seed_is_random;
 
 			/* step 1 */
 			if (callback != NULL) callback(0,m++,cb_arg);
@@ -142,8 +142,10 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 				seed_is_random = 1;
 				}
 			else
-				/* use random seed if 'seed_in' turns out to be bad */
-				seed_len=0;
+				{
+				seed_is_random = 0;
+				seed_len=0; /* use random seed if 'seed_in' turns out to be bad*/
+				}
 			memcpy(buf,seed,SHA_DIGEST_LENGTH);
 			memcpy(buf2,seed,SHA_DIGEST_LENGTH);
 			/* precompute "SEED + 1" for step 7: */
