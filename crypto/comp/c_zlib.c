@@ -30,6 +30,7 @@ static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
 static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
 	unsigned int olen, unsigned char *in, unsigned int ilen);
 
+#if 0
 static int zlib_compress_block(COMP_CTX *ctx, unsigned char *out,
 	unsigned int olen, unsigned char *in, unsigned int ilen);
 static int zlib_expand_block(COMP_CTX *ctx, unsigned char *out,
@@ -48,6 +49,7 @@ static COMP_METHOD zlib_stateless_method={
 	NULL,
 	NULL,
 	};
+#endif
 
 static COMP_METHOD zlib_stateful_method={
 	NID_zlib_compression,
@@ -79,12 +81,18 @@ static COMP_METHOD zlib_stateful_method={
 #include <openssl/dso.h>
 
 /* Prototypes for built in stubs */
+#if 0
 static int stub_compress(Bytef *dest,uLongf *destLen,
 	const Bytef *source, uLong sourceLen);
+#endif
 static int stub_inflateEnd(z_streamp strm);
 static int stub_inflate(z_streamp strm, int flush);
 static int stub_inflateInit_(z_streamp strm, const char * version,
 	int stream_size);
+static int stub_deflateEnd(z_streamp strm);
+static int stub_deflate(z_streamp strm, int flush);
+static int stub_deflateInit_(z_streamp strm, int level,
+	const char * version, int stream_size);
 
 /* Function pointers */
 typedef int (Z_CALLCONV *compress_ft)(Bytef *dest,uLongf *destLen,
@@ -111,11 +119,9 @@ static DSO *zlib_dso = NULL;
 #define compress                stub_compress
 #define inflateEnd              stub_inflateEnd
 #define inflate                 stub_inflate
-#define inflateInit             stub_inflateInit
 #define inflateInit_            stub_inflateInit_
 #define deflateEnd              stub_deflateEnd
 #define deflate                 stub_deflate
-#define deflateInit             stub_deflateInit
 #define deflateInit_            stub_deflateInit_
 #endif /* ZLIB_SHARED */
 
@@ -152,7 +158,8 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	state->istream.next_out = Z_NULL;
 	state->istream.avail_in = 0;
 	state->istream.avail_out = 0;
-	err = inflateInit(&state->istream);
+	err = inflateInit_(&state->istream,
+		ZLIB_VERSION, sizeof(z_stream));
 	if (err != Z_OK)
 		goto err;
 
@@ -163,7 +170,8 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	state->ostream.next_out = Z_NULL;
 	state->ostream.avail_in = 0;
 	state->ostream.avail_out = 0;
-	err = deflateInit(&state->ostream,Z_DEFAULT_COMPRESSION);
+	err = deflateInit_(&state->ostream,Z_DEFAULT_COMPRESSION,
+		ZLIB_VERSION, sizeof(z_stream));
 	if (err != Z_OK)
 		goto err;
 
@@ -243,6 +251,7 @@ static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
 	return olen - state->istream.avail_out;
 	}
 
+#if 0
 static int zlib_compress_block(COMP_CTX *ctx, unsigned char *out,
 	unsigned int olen, unsigned char *in, unsigned int ilen)
 	{
@@ -319,7 +328,8 @@ static int zz_uncompress (Bytef *dest, uLongf *destLen, const Bytef *source,
     stream.zalloc = (alloc_func)0;
     stream.zfree = (free_func)0;
 
-    err = inflateInit(&stream);
+    err = inflateInit_(&stream,
+	    ZLIB_VERSION, sizeof(z_stream));
     if (err != Z_OK) return err;
 
     err = inflate(&stream, Z_FINISH);
@@ -332,6 +342,7 @@ static int zz_uncompress (Bytef *dest, uLongf *destLen, const Bytef *source,
     err = inflateEnd(&stream);
     return err;
 }
+#endif
 
 #endif
 
@@ -383,6 +394,7 @@ COMP_METHOD *COMP_zlib(void)
 	}
 
 #ifdef ZLIB_SHARED
+#if 0
 /* Stubs for each function to be dynamicly loaded */
 static int 
 stub_compress(Bytef *dest,uLongf *destLen,const Bytef *source, uLong sourceLen)
@@ -392,6 +404,7 @@ stub_compress(Bytef *dest,uLongf *destLen,const Bytef *source, uLong sourceLen)
 	else
 		return(Z_MEM_ERROR);
 	}
+#endif
 
 static int
 stub_inflateEnd(z_streamp strm)
@@ -443,7 +456,7 @@ stub_deflateInit_(z_streamp strm, int level,
 	const char * version, int stream_size)
 	{
 	if ( p_deflateInit_ )
-		return(p_deflateInit_(strm,version,stream_size));
+		return(p_deflateInit_(strm,level,version,stream_size));
 	else
 		return(Z_MEM_ERROR);
 	}
