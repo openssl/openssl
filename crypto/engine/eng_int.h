@@ -138,6 +138,11 @@ struct engine_st
 	const DSA_METHOD *dsa_meth;
 	const DH_METHOD *dh_meth;
 	const RAND_METHOD *rand_meth;
+	/* Cipher handling is via this callback */
+	ENGINE_CIPHERS_PTR ciphers;
+	/* Digest handling is via this callback */
+	ENGINE_DIGESTS_PTR digests;
+
 
 	ENGINE_GEN_INT_FUNC_PTR	destroy;
 
@@ -157,7 +162,7 @@ struct engine_st
 	 * simply to cope with (de)allocation of this structure. Hence,
 	 * running_ref <= struct_ref at all times. */
 	int funct_ref;
-	/* A place to store per-key data */
+	/* A place to store per-ENGINE data */
 	CRYPTO_EX_DATA ex_data;
 	/* Used to maintain the linked-list of engines. */
 	struct engine_st *prev;

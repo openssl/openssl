@@ -74,6 +74,7 @@
 #include <openssl/ui.h>
 #include <openssl/symhacks.h>
 #include <openssl/err.h>
+#include <openssl/types.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -96,8 +97,8 @@ typedef void DH_METHOD;
 #define ENGINE_METHOD_DSA		(unsigned int)0x0002
 #define ENGINE_METHOD_DH		(unsigned int)0x0004
 #define ENGINE_METHOD_RAND		(unsigned int)0x0008
-#define ENGINE_METHOD_BN_MOD_EXP	(unsigned int)0x0010
-#define ENGINE_METHOD_BN_MOD_EXP_CRT	(unsigned int)0x0020
+#define ENGINE_METHOD_CIPHERS		(unsigned int)0x0040
+#define ENGINE_METHOD_DIGESTS		(unsigned int)0x0080
 /* Obvious all-or-nothing cases. */
 #define ENGINE_METHOD_ALL		(unsigned int)0xFFFF
 #define ENGINE_METHOD_NONE		(unsigned int)0x0000
@@ -259,6 +260,20 @@ typedef int (*ENGINE_CTRL_FUNC_PTR)(ENGINE *, int, long, void *, void (*f)());
 /* Generic load_key function pointer */
 typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *,
 	UI_METHOD *ui_method, void *callback_data);
+/* These callback types are for an ENGINE's handler for cipher and digest logic.
+ * These handlers have these prototypes;
+ *   int foo(ENGINE *e, const EVP_CIPHER **cipher, const int **nids, int nid);
+ *   int foo(ENGINE *e, const EVP_MD **digest, const int **nids, int nid);
+ * Looking at how to implement these handlers in the case of cipher support, if
+ * the framework wants the EVP_CIPHER for 'nid', it will call;
+ *   foo(e, &p_evp_cipher, NULL, nid);    (return zero for failure)
+ * If the framework wants a list of supported 'nid's, it will call;
+ *   foo(e, NULL, &p_nids, 0); (returns number of 'nids' or -1 for error)
+ */
+/* Returns to a pointer to the array of supported cipher 'nid's. If the second
+ * parameter is non-NULL it is set to the size of the returned array. */
+typedef int (*ENGINE_CIPHERS_PTR)(ENGINE *, const EVP_CIPHER **, const int **, int);
+typedef int (*ENGINE_DIGESTS_PTR)(ENGINE *, const EVP_MD **, const int **, int);
 
 /* STRUCTURE functions ... all of these functions deal with pointers to ENGINE
  * structures where the pointers have a "structural reference". This means that
@@ -321,6 +336,14 @@ void ENGINE_register_all_DH(void);
 int ENGINE_register_RAND(ENGINE *e);
 void ENGINE_unregister_RAND(ENGINE *e);
 void ENGINE_register_all_RAND(void);
+
+int ENGINE_register_ciphers(ENGINE *e);
+void ENGINE_unregister_ciphers(ENGINE *e);
+void ENGINE_register_all_ciphers(void);
+
+int ENGINE_register_digests(ENGINE *e);
+void ENGINE_unregister_digests(ENGINE *e);
+void ENGINE_register_all_digests(void);
 
 /* These functions register all support from the above categories. Note, use of
  * these functions can result in static linkage of code your application may not
@@ -393,9 +416,10 @@ int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
 int ENGINE_set_ctrl_function(ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f);
 int ENGINE_set_load_privkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpriv_f);
 int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f);
+int ENGINE_set_ciphers(ENGINE *e, ENGINE_CIPHERS_PTR f);
+int ENGINE_set_digests(ENGINE *e, ENGINE_DIGESTS_PTR f);
 int ENGINE_set_flags(ENGINE *e, int flags);
 int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
-int ENGINE_add_cipher(ENGINE *e,const EVP_CIPHER *c);
 /* These functions (and the "get" function lower down) allow control over any
  * per-structure ENGINE data. */
 int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
@@ -424,6 +448,10 @@ ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
 ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(const ENGINE *e);
 ENGINE_LOAD_KEY_PTR ENGINE_get_load_privkey_function(const ENGINE *e);
 ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e);
+ENGINE_CIPHERS_PTR ENGINE_get_ciphers(const ENGINE *e);
+ENGINE_DIGESTS_PTR ENGINE_get_digests(const ENGINE *e);
+const EVP_CIPHER *ENGINE_get_cipher(ENGINE *e, int nid);
+const EVP_MD *ENGINE_get_digest(ENGINE *e, int nid);
 const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e);
 int ENGINE_get_flags(const ENGINE *e);
 void *ENGINE_get_ex_data(const ENGINE *e, int idx);
@@ -466,6 +494,10 @@ ENGINE *ENGINE_get_default_RSA(void);
 ENGINE *ENGINE_get_default_DSA(void);
 ENGINE *ENGINE_get_default_DH(void);
 ENGINE *ENGINE_get_default_RAND(void);
+/* These functions can be used to get a functional reference to perform
+ * ciphering or digesting corresponding to "nid". */
+ENGINE *ENGINE_get_cipher_engine(int nid);
+ENGINE *ENGINE_get_digest_engine(int nid);
 
 /* This sets a new default ENGINE structure for performing RSA
  * operations. If the result is non-zero (success) then the ENGINE
@@ -476,6 +508,8 @@ int ENGINE_set_default_RSA(ENGINE *e);
 int ENGINE_set_default_DSA(ENGINE *e);
 int ENGINE_set_default_DH(ENGINE *e);
 int ENGINE_set_default_RAND(ENGINE *e);
+int ENGINE_set_default_ciphers(ENGINE *e);
+int ENGINE_set_default_digests(ENGINE *e);
 
 /* The combination "set" - the flags are bitwise "OR"d from the
  * ENGINE_METHOD_*** defines above. As with the "ENGINE_register_complete()"
@@ -604,7 +638,9 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_CTRL_CMD_STRING			 171
 #define ENGINE_F_ENGINE_FINISH				 107
 #define ENGINE_F_ENGINE_FREE				 108
+#define ENGINE_F_ENGINE_GET_CIPHER			 185
 #define ENGINE_F_ENGINE_GET_DEFAULT_TYPE		 177
+#define ENGINE_F_ENGINE_GET_DIGEST			 186
 #define ENGINE_F_ENGINE_GET_NEXT			 115
 #define ENGINE_F_ENGINE_GET_PREV			 116
 #define ENGINE_F_ENGINE_INIT				 119
@@ -668,6 +704,8 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_REQUEST_FALLBACK			 118
 #define ENGINE_R_RSA_NOT_IMPLEMENTED			 141
 #define ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL		 122
+#define ENGINE_R_UNIMPLEMENTED_CIPHER			 146
+#define ENGINE_R_UNIMPLEMENTED_DIGEST			 147
 #define ENGINE_R_UNIT_FAILURE				 115
 #define ENGINE_R_VERSION_INCOMPATIBILITY		 145
 

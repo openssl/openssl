@@ -77,7 +77,9 @@ static ERR_STRING_DATA ENGINE_str_functs[]=
 {ERR_PACK(0,ENGINE_F_ENGINE_CTRL_CMD_STRING,0),	"ENGINE_ctrl_cmd_string"},
 {ERR_PACK(0,ENGINE_F_ENGINE_FINISH,0),	"ENGINE_finish"},
 {ERR_PACK(0,ENGINE_F_ENGINE_FREE,0),	"ENGINE_free"},
+{ERR_PACK(0,ENGINE_F_ENGINE_GET_CIPHER,0),	"ENGINE_get_cipher"},
 {ERR_PACK(0,ENGINE_F_ENGINE_GET_DEFAULT_TYPE,0),	"ENGINE_GET_DEFAULT_TYPE"},
+{ERR_PACK(0,ENGINE_F_ENGINE_GET_DIGEST,0),	"ENGINE_get_digest"},
 {ERR_PACK(0,ENGINE_F_ENGINE_GET_NEXT,0),	"ENGINE_get_next"},
 {ERR_PACK(0,ENGINE_F_ENGINE_GET_PREV,0),	"ENGINE_get_prev"},
 {ERR_PACK(0,ENGINE_F_ENGINE_INIT,0),	"ENGINE_init"},
@@ -144,6 +146,8 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_REQUEST_FALLBACK               ,"request fallback"},
 {ENGINE_R_RSA_NOT_IMPLEMENTED            ,"rsa not implemented"},
 {ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL    ,"size too large or too small"},
+{ENGINE_R_UNIMPLEMENTED_CIPHER           ,"unimplemented cipher"},
+{ENGINE_R_UNIMPLEMENTED_DIGEST           ,"unimplemented digest"},
 {ENGINE_R_UNIT_FAILURE                   ,"unit failure"},
 {ENGINE_R_VERSION_INCOMPATIBILITY        ,"version incompatibility"},
 {0,NULL}
