@@ -12,6 +12,12 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Disable caching in BIO_gethostbyname(), directly use gethostbyname()
+     instead.  BIO_gethostbyname() does not know what timeouts are
+     appropriate, so entries would stay in cache even when they hade
+     become invalid.
+     [Bodo Moeller; problem pointed out by Rich Salz <rsalz@zolera.com>
+
   +) New command line and configuration option 'utf8' for the req command.
      This allows field values to be specified as UTF8 strings.
      [Steve Henson]
