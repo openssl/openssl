@@ -100,6 +100,43 @@ const RSA_METHOD *RSA_PKCS1_SSLeay(void)
 	return(&rsa_pkcs1_eay_meth);
 	}
 
+/* Static helper to reduce oodles of code duplication. As a slight
+ * optimisation, the "MONT_HELPER() macro must be used as front-end to this
+ * function, to prevent unnecessary function calls - there is an initial test
+ * that is performed by the macro-generated code. */
+static int rsa_eay_mont_helper(BN_MONT_CTX **ptr, const BIGNUM *modulus, BN_CTX *ctx)
+	{
+	BN_MONT_CTX *bn_mont_ctx;
+	if((bn_mont_ctx = BN_MONT_CTX_new()) == NULL)
+		return 0;
+	if(!BN_MONT_CTX_set(bn_mont_ctx, modulus, ctx))
+		{
+		BN_MONT_CTX_free(bn_mont_ctx);
+		return 0;
+		}
+	if (*ptr == NULL) /* other thread may have finished first */
+		{
+		CRYPTO_w_lock(CRYPTO_LOCK_RSA);
+		if (*ptr == NULL) /* check again in the lock to stop races */
+			{
+			*ptr = bn_mont_ctx;
+			bn_mont_ctx = NULL;
+			}
+		CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
+		}
+	if (bn_mont_ctx)
+		BN_MONT_CTX_free(bn_mont_ctx);
+	return 1;
+	}
+/* Usage example;
+ *    MONT_HELPER(rsa, bn_ctx, p, rsa->flags & RSA_FLAG_CACHE_PRIVATE, goto err);
+ */
+#define MONT_HELPER(rsa, ctx, m, pre_cond, err_instr) \
+	if((pre_cond) && ((rsa)->_method_mod_##m == NULL) && \
+			!rsa_eay_mont_helper(&((rsa)->_method_mod_##m), \
+				(rsa)->m, (ctx))) \
+		err_instr
+
 static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
@@ -149,30 +186,8 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 		goto err;
 		}
 
-	if ((rsa->_method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
-		{
-		BN_MONT_CTX* bn_mont_ctx;
-		if ((bn_mont_ctx=BN_MONT_CTX_new()) == NULL)
-			goto err;
-		if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->n,ctx))
-			{
-			BN_MONT_CTX_free(bn_mont_ctx);
-			goto err;
-			}
-		if (rsa->_method_mod_n == NULL) /* other thread may have finished first */
-			{
-			CRYPTO_w_lock(CRYPTO_LOCK_RSA);
-			if (rsa->_method_mod_n == NULL)
-				{
-				rsa->_method_mod_n = bn_mont_ctx;
-				bn_mont_ctx = NULL;
-				}
-			CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
-			}
-		if (bn_mont_ctx)
-			BN_MONT_CTX_free(bn_mont_ctx);
-		}
-		
+	MONT_HELPER(rsa, ctx, n, rsa->flags & RSA_FLAG_CACHE_PUBLIC, goto err);
+
 	if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
 		rsa->_method_mod_n)) goto err;
 
@@ -418,31 +433,8 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 		goto err;
 		}
 
-	/* do the decrypt */
-	if ((rsa->_method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
-		{
-		BN_MONT_CTX* bn_mont_ctx;
-		if ((bn_mont_ctx=BN_MONT_CTX_new()) == NULL)
-			goto err;
-		if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->n,ctx))
-			{
-			BN_MONT_CTX_free(bn_mont_ctx);
-			goto err;
-			}
-		if (rsa->_method_mod_n == NULL) /* other thread may have finished first */
-			{
-			CRYPTO_w_lock(CRYPTO_LOCK_RSA);
-			if (rsa->_method_mod_n == NULL)
-				{
-				rsa->_method_mod_n = bn_mont_ctx;
-				bn_mont_ctx = NULL;
-				}
-			CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
-			}
-		if (bn_mont_ctx)
-			BN_MONT_CTX_free(bn_mont_ctx);
-		}
-		
+	MONT_HELPER(rsa, ctx, n, rsa->flags & RSA_FLAG_CACHE_PUBLIC, goto err);
+
 	if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
 		rsa->_method_mod_n)) goto err;
 
@@ -487,57 +479,10 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	BN_init(&vrfy);
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 
-	if (rsa->flags & RSA_FLAG_CACHE_PRIVATE)
-		{
-		if (rsa->_method_mod_p == NULL)
-			{
-			BN_MONT_CTX* bn_mont_ctx;
-			if ((bn_mont_ctx=BN_MONT_CTX_new()) == NULL)
-				goto err;
-			if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->p,ctx))
-				{
-				BN_MONT_CTX_free(bn_mont_ctx);
-				goto err;
-				}
-			if (rsa->_method_mod_p == NULL) /* other thread may have finished first */
-				{
-				CRYPTO_w_lock(CRYPTO_LOCK_RSA);
-				if (rsa->_method_mod_p == NULL)
-					{
-					rsa->_method_mod_p = bn_mont_ctx;
-					bn_mont_ctx = NULL;
-					}
-				CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
-				}
-			if (bn_mont_ctx)
-				BN_MONT_CTX_free(bn_mont_ctx);
-			}
+	MONT_HELPER(rsa, ctx, p, rsa->flags & RSA_FLAG_CACHE_PRIVATE, goto err);
+	MONT_HELPER(rsa, ctx, q, rsa->flags & RSA_FLAG_CACHE_PRIVATE, goto err);
+	MONT_HELPER(rsa, ctx, n, rsa->flags & RSA_FLAG_CACHE_PRIVATE, goto err);
 
-		if (rsa->_method_mod_q == NULL)
-			{
-			BN_MONT_CTX* bn_mont_ctx;
-			if ((bn_mont_ctx=BN_MONT_CTX_new()) == NULL)
-				goto err;
-			if (!BN_MONT_CTX_set(bn_mont_ctx,rsa->q,ctx))
-				{
-				BN_MONT_CTX_free(bn_mont_ctx);
-				goto err;
-				}
-			if (rsa->_method_mod_q == NULL) /* other thread may have finished first */
-				{
-				CRYPTO_w_lock(CRYPTO_LOCK_RSA);
-				if (rsa->_method_mod_q == NULL)
-					{
-					rsa->_method_mod_q = bn_mont_ctx;
-					bn_mont_ctx = NULL;
-					}
-				CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
-				}
-			if (bn_mont_ctx)
-				BN_MONT_CTX_free(bn_mont_ctx);
-			}
-		}
-		
 	if (!BN_mod(&r1,I,rsa->q,ctx)) goto err;
 	if (!rsa->meth->bn_mod_exp(&m1,&r1,rsa->dmq1,rsa->q,ctx,
 		rsa->_method_mod_q)) goto err;
@@ -568,7 +513,7 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 
 	if (rsa->e && rsa->n)
 		{
-		if (!rsa->meth->bn_mod_exp(&vrfy,r0,rsa->e,rsa->n,ctx,NULL)) goto err;
+		if (!rsa->meth->bn_mod_exp(&vrfy,r0,rsa->e,rsa->n,ctx,rsa->_method_mod_n)) goto err;
 		/* If 'I' was greater than (or equal to) rsa->n, the operation
 		 * will be equivalent to using 'I mod n'. However, the result of
 		 * the verify will *always* be less than 'n' so we don't check
