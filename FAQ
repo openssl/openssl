@@ -47,6 +47,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why do I get errors about unknown algorithms?
 * Why can't the OpenSSH configure script detect OpenSSL?
 * Can I use OpenSSL's SSL library with non-blocking I/O?
+* Why doesn't my server application receive a client certificate?
 
 ===============================================================================
 
@@ -517,6 +518,13 @@ is possible to send data.  One reason for this is that the peer may
 request a new TLS/SSL handshake at any time during the protocol,
 requiring a bi-directional message exchange; both SSL_read() and
 SSL_write() will try to continue any pending handshake.
+
+
+* Why doesn't my server application receive a client certificate?
+
+Due to the TLS protocol definition, a client will only send a certificate,
+if explicitely asked by the server. Use the SSL_VERIFY_PEER flag of the
+SSL_CTX_set_verify() function to enable the use of client certificates.
 
 
 ===============================================================================
