@@ -162,7 +162,7 @@ bad:
 		goto end;
 		}
 
-        e = ENGINE_setup(engine, bio_err);
+        e = setup_engine(bio_err, engine, 0);
 
 	if(!app_passwd(bio_err, NULL, passargout, NULL, &passout)) {
 		BIO_printf(bio_err, "Error getting password\n");

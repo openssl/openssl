@@ -232,7 +232,7 @@ bad:
 			}
 		}
 
-        e = ENGINE_setup(engine, bio_err);
+        e = setup_engine(bio_err, engine, 0);
 
 	if (need_rand)
 		{

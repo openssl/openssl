@@ -198,7 +198,7 @@ bad:
 
 	ERR_load_crypto_strings();
 
-        e = ENGINE_setup(engine, bio_err);
+        e = setup_engine(bio_err, engine, 0);
 
 	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");
