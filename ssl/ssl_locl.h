@@ -275,7 +275,7 @@ typedef struct cert_st
 
 	STACK_OF(X509) *cert_chain; /* XXX should only exist in sess_cert_st */
 
-	int references;
+	int references; /* XXX should only exist in sess_cert_st */
 	} CERT;
 
 
