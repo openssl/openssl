@@ -32,7 +32,7 @@ is:
 
 That is zero or more comma separated modifiers followed by a type
 followed by an optional colon and a value. The formats of B<type>,
-B<value> and B<modifier> is explained below.
+B<value> and B<modifier> are explained below.
 
 =head2 SUPPORTED TYPES
 
@@ -45,7 +45,7 @@ only the B<ASCII> format is permissible.
 
 This encodes a boolean type. The B<value> string is mandatory and
 should be B<TRUE> or B<FALSE>. Additionally B<TRUE>, B<true>, B<Y>,
-B<y>, B<YES>, B<yes>, B<FALSE> B<false>, B<N>, B<n>, B<NO> and B<no>
+B<y>, B<YES>, B<yes>, B<FALSE>, B<false>, B<N>, B<n>, B<NO> and B<no>
 are acceptable. 
 
 =item B<NULL>
@@ -106,8 +106,9 @@ contents of this structure. The format can be B<ASCII> or B<UTF8>.
 
 Formats the result as an ASN1 B<SEQUENCE> or B<SET> type. B<value>
 should be a section name which will contain the contents. The
-field names are ignored and the values are in the generated
-string format. If B<value> is absent the the content will be empty.
+field names in the section are ignored and the values are in the
+generated string format. If B<value> is absent then an empty SEQUENCE
+will be encoded.
 
 =back
 
@@ -135,10 +136,10 @@ the default is CONTEXT SPECIFIC.
 This is the same as B<EXPLICIT> except IMPLICIT tagging is used
 instead.
 
-=item B<OCTWRAP>, B<SEQWRAP>, B<BITWRAP>
+=item B<OCTWRAP>, B<SEQWRAP>, B<SETWRAP>, B<BITWRAP>
 
-The following structure is surrounded by an OCTET STRING, a SEQUENCE
-or a BIT STRING respectively. For a BIT STRING the number of unused
+The following structure is surrounded by an OCTET STRING, a SEQUENCE,
+a SET or a BIT STRING respectively. For a BIT STRING the number of unused
 bits is set to zero.
 
 =item B<FORMAT>

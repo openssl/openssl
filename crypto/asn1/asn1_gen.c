@@ -67,7 +67,8 @@
 #define ASN1_GEN_FLAG_BITWRAP	(ASN1_GEN_FLAG|4)
 #define ASN1_GEN_FLAG_OCTWRAP	(ASN1_GEN_FLAG|5)
 #define ASN1_GEN_FLAG_SEQWRAP	(ASN1_GEN_FLAG|6)
-#define ASN1_GEN_FLAG_FORMAT	(ASN1_GEN_FLAG|7)
+#define ASN1_GEN_FLAG_SETWRAP	(ASN1_GEN_FLAG|7)
+#define ASN1_GEN_FLAG_FORMAT	(ASN1_GEN_FLAG|8)
 
 #define ASN1_GEN_STR(str,val)	{str, sizeof(str) - 1, val}
 
@@ -335,6 +336,11 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
 			return -1;
 		break;
 
+		case ASN1_GEN_FLAG_SETWRAP:
+		if (!append_exp(arg, V_ASN1_SET, V_ASN1_UNIVERSAL, 1, 0, 1))
+			return -1;
+		break;
+
 		case ASN1_GEN_FLAG_BITWRAP:
 		if (!append_exp(arg, V_ASN1_BIT_STRING, V_ASN1_UNIVERSAL, 0, 1, 1))
 			return -1;
@@ -588,6 +594,8 @@ static int asn1_str2tag(const char *tagstr, int len)
 		ASN1_GEN_STR("OCTWRAP", ASN1_GEN_FLAG_OCTWRAP),
 		/* SEQUENCE wrapper */
 		ASN1_GEN_STR("SEQWRAP", ASN1_GEN_FLAG_SEQWRAP),
+		/* SET wrapper */
+		ASN1_GEN_STR("SETWRAP", ASN1_GEN_FLAG_SEQWRAP),
 		/* BIT STRING wrapper */
 		ASN1_GEN_STR("BITWRAP", ASN1_GEN_FLAG_BITWRAP),
 		ASN1_GEN_STR("FORM", ASN1_GEN_FLAG_FORMAT),
