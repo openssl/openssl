@@ -14,7 +14,7 @@
  *
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,12 +68,15 @@
  */
 
 
-#include "ecdh.h"
+#include <limits.h>
+
+#include <openssl/ecdh.h>
 #include <openssl/err.h>
 #include <openssl/sha.h>
 #include <openssl/obj_mac.h>
 
-static int ecdh_compute_key(unsigned char *key, const EC_POINT *pub_key, EC_KEY *ecdh);
+static int ecdh_compute_key(void *out, size_t len, const EC_POINT *pub_key, EC_KEY *ecdh,
+                            void *(*KDF)(void *in, size_t inlen, void *out, size_t outlen));
 
 static ECDH_METHOD openssl_ecdh_meth = {
 	"OpenSSL ECDH method",
@@ -95,15 +98,22 @@ const ECDH_METHOD *ECDH_OpenSSL(void)
 /* This implementation is based on the following primitives in the IEEE 1363 standard:
  *  - ECKAS-DH1
  *  - ECSVDP-DH
- *  - KDF1 with SHA-1
+ * Finally an optional KDF is applied.
  */
-static int ecdh_compute_key(unsigned char *key, const EC_POINT *pub_key, EC_KEY *ecdh)
+static int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
+                            void *(*KDF)(void *in, size_t inlen, void *out, size_t outlen))
 	{
 	BN_CTX *ctx;
 	EC_POINT *tmp=NULL;
 	BIGNUM *x=NULL, *y=NULL;
-	int ret= -1, len;
+	int ret= -1, buflen, len;
 	unsigned char *buf=NULL;
+
+	if (outlen > INT_MAX)
+		{
+		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_MALLOC_FAILURE); /* sort of, anyway */
+		return -1;
+		}
 
 	if ((ctx = BN_CTX_new()) == NULL) goto err;
 	BN_CTX_start(ctx);
@@ -145,26 +155,44 @@ static int ecdh_compute_key(unsigned char *key, const EC_POINT *pub_key, EC_KEY 
 			}
 		}
 
-	if ((buf = (unsigned char *)OPENSSL_malloc(sizeof(unsigned char) * BN_num_bytes(x))) == NULL) 
+	buflen = (EC_GROUP_get_degree(ecdh->group) + 7)/8;
+	len = BN_num_bytes(x);
+	if (len > buflen)
+		{
+		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_INTERNAL_ERROR);
+		goto err;
+		}
+	if ((buf = OPENSSL_malloc(buflen)) == NULL)
 		{
 		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 	
-	if ((len = BN_bn2bin(x,buf)) <= 0)
+	memset(buf, 0, buflen - len);
+	if (len != BN_bn2bin(x, buf + buflen - len))
 		{
 		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_BN_LIB);
 		goto err;
 		}
 
-	if ((SHA1(buf, len, key) == NULL))
+	if (KDF != 0)
 		{
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ECDH_R_SHA1_DIGEST_FAILED);
-		goto err;
+		if (KDF(buf, buflen, out, outlen) == NULL)
+			{
+			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ECDH_R_KDF_FAILED);
+			goto err;
+			}
+		ret = outlen;
+		}
+	else
+		{
+		/* no KDF, just copy as much as we can */
+		if (outlen > buflen)
+			outlen = buflen;
+		memcpy(out, buf, outlen);
+		ret = outlen;
 		}
 	
-	ret = 20;
-
 err:
 	if (tmp) EC_POINT_free(tmp);
 	if (ctx) BN_CTX_end(ctx);

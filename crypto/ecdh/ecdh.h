@@ -84,7 +84,8 @@ extern "C" {
 typedef struct ecdh_method 
 {
 	const char *name;
-	int (*compute_key)(unsigned char *key,const EC_POINT *pub_key, EC_KEY *ecdh);
+	int (*compute_key)(void *key, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
+	                   void *(*KDF)(void *in, size_t inlen, void *out, size_t outlen));
 #if 0
 	int (*init)(EC_KEY *eckey);
 	int (*finish)(EC_KEY *eckey);
@@ -118,9 +119,8 @@ void	  ECDH_set_default_method(const ECDH_METHOD *);
 const ECDH_METHOD *ECDH_get_default_method(void);
 int 	  ECDH_set_method(EC_KEY *, const ECDH_METHOD *);
 
-int	  ECDH_size(const EC_KEY *);
-int ECDH_compute_key(unsigned char *key,const EC_POINT *pub_key, EC_KEY *ecdh);
-
+int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
+                     void *(*KDF)(void *in, size_t inlen, void *out, size_t outlen));
 
 int 	  ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new 
 		*new_func, CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
@@ -141,9 +141,9 @@ void ERR_load_ECDH_strings(void);
 #define ECDH_F_ECDH_DATA_NEW				 101
 
 /* Reason codes. */
+#define ECDH_R_KDF_FAILED				 102
 #define ECDH_R_NO_PRIVATE_VALUE				 100
 #define ECDH_R_POINT_ARITHMETIC_FAILURE			 101
-#define ECDH_R_SHA1_DIGEST_FAILED			 102
 
 #ifdef  __cplusplus
 }

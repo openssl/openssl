@@ -73,9 +73,9 @@ static ERR_STRING_DATA ECDH_str_functs[]=
 
 static ERR_STRING_DATA ECDH_str_reasons[]=
 	{
+{ECDH_R_KDF_FAILED                       ,"KDF failed"},
 {ECDH_R_NO_PRIVATE_VALUE                 ,"no private value"},
 {ECDH_R_POINT_ARITHMETIC_FAILURE         ,"point arithmetic failure"},
-{ECDH_R_SHA1_DIGEST_FAILED               ,"sha1 digest failed"},
 {0,NULL}
 	};
 

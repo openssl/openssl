@@ -14,7 +14,7 @@
  *
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -79,6 +79,7 @@
 #include <openssl/ec.h>
 #include <openssl/objects.h>
 #include <openssl/rand.h>
+#include <openssl/sha.h>
 #include <openssl/err.h>
 
 #ifdef OPENSSL_NO_ECDH
@@ -101,6 +102,20 @@ static void MS_CALLBACK cb(int p, int n, void *arg);
 #endif
 
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
+
+
+static const int KDF1_SHA1_len = 20;
+static void *KDF1_SHA1(void *in, size_t inlen, void *out, size_t outlen)
+	{
+#ifndef OPENSSL_NO_SHA
+	if (outlen != SHA_DIGEST_LENGTH)
+		return NULL;
+	return SHA1(in, inlen, out);
+#else
+	return NULL;
+#endif
+	}
+
 
 int test_ecdh_curve(int , char *, BN_CTX *, BIO *);
 
@@ -180,9 +195,9 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 	BIO_flush(out);
 #endif
 
-	alen=ECDH_size(a);
+	alen=KDF1_SHA1_len;
 	abuf=(unsigned char *)OPENSSL_malloc(alen);
-	aout=ECDH_compute_key(abuf,b->pub_key,a);
+	aout=ECDH_compute_key(abuf,alen,b->pub_key,a,KDF1_SHA1);
 
 #ifdef NOISY
 	BIO_puts(out,"  key1 =");
@@ -197,9 +212,9 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 	BIO_flush(out);
 #endif
 
-	blen=ECDH_size(b);
+	blen=KDF1_SHA1_len;
 	bbuf=(unsigned char *)OPENSSL_malloc(blen);
-	bout=ECDH_compute_key(bbuf,a->pub_key,b);
+	bout=ECDH_compute_key(bbuf,blen,a->pub_key,b,KDF1_SHA1);
 
 #ifdef NOISY
 	BIO_puts(out,"  key2 =");

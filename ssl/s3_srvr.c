@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1577,6 +1577,19 @@ err:
 	return(-1);
 	}
 
+
+static const int KDF1_SHA1_len = 20;
+static void *KDF1_SHA1(void *in, size_t inlen, void *out, size_t outlen)
+	{
+#ifndef OPENSSL_NO_SHA
+	if (outlen != SHA_DIGEST_LENGTH)
+		return NULL;
+	return SHA1(in, inlen, out);
+#else
+	return NULL;
+#endif
+	}
+
 static int ssl3_get_client_key_exchange(SSL *s)
 	{
 	int i,al,ok;
@@ -2047,7 +2060,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
                         }
 
 		/* Compute the shared pre-master secret */
-                i = ECDH_compute_key(p, clnt_ecpoint, srvr_ecdh);
+                i = ECDH_compute_key(p, KDF1_SHA1_len, clnt_ecpoint, srvr_ecdh, KDF1_SHA1);
                 if (i <= 0)
                         {
                         SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,

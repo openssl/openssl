@@ -396,6 +396,20 @@ static double Time_F(int s)
 #endif
 	}
 
+
+static const int KDF1_SHA1_len = 20;
+static void *KDF1_SHA1(void *in, size_t inlen, void *out, size_t outlen)
+	{
+#ifndef OPENSSL_NO_SHA
+	if (outlen != SHA_DIGEST_LENGTH)
+		return NULL;
+	return SHA1(in, inlen, out);
+#else
+	return NULL;
+#endif
+	}
+
+
 int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
@@ -2065,12 +2079,12 @@ int MAIN(int argc, char **argv)
 					}
 				else
 					{
-					secret_size_a = ECDH_compute_key(secret_a, 
+					secret_size_a = ECDH_compute_key(secret_a, KDF1_SHA1_len,
 						ecdh_b[j]->pub_key,
-						ecdh_a[j]);
-					secret_size_b = ECDH_compute_key(secret_b, 
+						ecdh_a[j], KDF1_SHA1);
+					secret_size_b = ECDH_compute_key(secret_b, KDF1_SHA1_len,
 						ecdh_a[j]->pub_key,
-						ecdh_b[j]);
+						ecdh_b[j], KDF1_SHA1);
 					if (secret_size_a != secret_size_b) 
 						ecdh_checks = 0;
 					else
@@ -2099,9 +2113,9 @@ int MAIN(int argc, char **argv)
 					Time_F(START);
 					for (count=0,run=1; COND(ecdh_c[j][0]); count++)
 						{
-						ECDH_compute_key(secret_a, 
+						ECDH_compute_key(secret_a, KDF1_SHA1_len,
 						ecdh_b[j]->pub_key,
-						ecdh_a[j]);
+						ecdh_a[j], KDF1_SHA1);
 						}
 					d=Time_F(STOP);
 					BIO_printf(bio_err, mr ? "+R7:%ld:%d:%.2f\n" :"%ld %d-bit ECDH ops in %.2fs\n",

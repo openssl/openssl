@@ -14,7 +14,7 @@
  *
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,10 +70,11 @@
 #include "ecdh.h"
 #include <openssl/engine.h>
 
-int ECDH_compute_key(unsigned char *key, const EC_POINT *pub_key, EC_KEY *eckey)
+int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *eckey,
+                     void *(*KDF)(void *in, size_t inlen, void *out, size_t outlen))
 {
 	ECDH_DATA *ecdh = ecdh_check(eckey);
 	if (ecdh == NULL)
 		return 0;
-	return ecdh->meth->compute_key(key, pub_key, eckey);
+	return ecdh->meth->compute_key(out, outlen, pub_key, eckey, KDF);
 }

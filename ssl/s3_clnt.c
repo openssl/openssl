@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1574,6 +1574,19 @@ static int ssl3_get_server_done(SSL *s)
 	return(ret);
 	}
 
+
+static const int KDF1_SHA1_len = 20;
+static void *KDF1_SHA1(void *in, size_t inlen, void *out, size_t outlen)
+	{
+#ifndef OPENSSL_NO_SHA
+	if (outlen != SHA_DIGEST_LENGTH)
+		return NULL;
+	return SHA1(in, inlen, out);
+#else
+	return NULL;
+#endif
+	}
+
 static int ssl3_send_client_key_exchange(SSL *s)
 	{
 	unsigned char *p,*d;
@@ -1949,7 +1962,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 			 * make sure to clear it out afterwards
 			 */
 
-			n=ECDH_compute_key(p, srvr_ecpoint, clnt_ecdh);
+			n=ECDH_compute_key(p, KDF1_SHA1_len, srvr_ecpoint, clnt_ecdh, KDF1_SHA1);
 			if (n <= 0)
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, 

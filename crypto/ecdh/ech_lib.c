@@ -14,7 +14,7 @@
  *
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -200,12 +200,6 @@ static void ecdh_finish(EC_KEY *key)
 	{
 	if (key->meth_data && key->meth_data->finish == ecdh_finish)
 		ECDH_DATA_free((ECDH_DATA *)key->meth_data);
-	}
-
-
-int ECDH_size(const EC_KEY *ecdh)
-	{
-	return 20;
 	}
 
 
