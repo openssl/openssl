@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/05/30 14:59:14 $
+  ______________                           $Date: 2001/06/04 06:51:43 $
 
   DEVELOPMENT STATE
 
@@ -100,5 +100,7 @@
 
   WISHES
 
-    o  SRP
-       [wished by Dj <derek@yo.net> and Tom Wu <?@?>]
+    o  SRP in TLS.
+       See http://search.ietf.org/internet-drafts/draft-ietf-tls-srp-00.txt
+       as well as http://www-cs-students.stanford.edu/~tjw/srp/.
+       [wished by Dj <derek@yo.net> and Tom Wu <tom@arcot.com>]
