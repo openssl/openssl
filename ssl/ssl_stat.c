@@ -161,6 +161,7 @@ case SSL3_ST_SW_FLUSH:		str="SSLv3 flush data"; break;
 case SSL3_ST_SR_CLNT_HELLO_A:	str="SSLv3 read client hello A"; break;
 case SSL3_ST_SR_CLNT_HELLO_B:	str="SSLv3 read client hello B"; break;
 case SSL3_ST_SR_CLNT_HELLO_C:	str="SSLv3 read client hello C"; break;
+case SSL3_ST_SR_MS_SGC:		str="SSLv3 read second client hello (MS SGC)"; break;
 case SSL3_ST_SW_HELLO_REQ_A:	str="SSLv3 write hello request A"; break;
 case SSL3_ST_SW_HELLO_REQ_B:	str="SSLv3 write hello request B"; break;
 case SSL3_ST_SW_HELLO_REQ_C:	str="SSLv3 write hello request C"; break;

@@ -200,11 +200,12 @@ typedef struct crypto_ex_data_func_st
 #define CRYPTO_EX_INDEX_X509_STORE_CTX	5
 
 
-#if 0 /* unnecessary, it's the default and cannot be changed back later anyway */
-/* This is the default callbacks, but we can have others as well */
+/* This is the default callbacks, but we can have others as well:
+ * this is needed in Win32 where the application malloc and the
+ * library malloc may not be the same.
+ */
 #define CRYPTO_malloc_init()	CRYPTO_set_mem_functions(\
 	malloc, realloc, free)
-#endif
 
 #if defined CRYPTO_MDEBUG_ALL || defined CRYPTO_MDEBUG_TIME || defined CRYPTO_MDEBUG_THREAD
 # ifndef CRYPTO_MDEBUG /* avoid duplicate #define */

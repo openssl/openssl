@@ -70,6 +70,7 @@
 
 static SSL_METHOD *ssl3_get_server_method(int ver);
 static int ssl3_get_client_hello(SSL *s);
+static int ssl3_check_client_hello(SSL *s);
 static int ssl3_send_server_hello(SSL *s);
 static int ssl3_send_server_key_exchange(SSL *s);
 static int ssl3_send_certificate_request(SSL *s);
@@ -141,6 +142,7 @@ int ssl3_accept(SSL *s)
 			s->new_session=1;
 			/* s->state=SSL_ST_ACCEPT; */
 
+		case SSL3_ST_SR_MS_SGC:
 		case SSL_ST_BEFORE:
 		case SSL_ST_ACCEPT:
 		case SSL_ST_BEFORE|SSL_ST_ACCEPT:
@@ -184,8 +186,8 @@ int ssl3_accept(SSL *s)
 
 			if (s->state != SSL_ST_RENEGOTIATE)
 				{
+				if(s->state != SSL3_ST_SR_MS_SGC) ssl3_init_finished_mac(s);
 				s->state=SSL3_ST_SR_CLNT_HELLO_A;
-				ssl3_init_finished_mac(s);
 				s->ctx->stats.sess_accept++;
 				}
 			else
@@ -341,12 +343,18 @@ int ssl3_accept(SSL *s)
 
 		case SSL3_ST_SR_CERT_A:
 		case SSL3_ST_SR_CERT_B:
-			/* could be sent for a DH cert, even if we
-			 * have not asked for it :-) */
-			ret=ssl3_get_client_certificate(s);
-			if (ret <= 0) goto end;
-			s->init_num=0;
-			s->state=SSL3_ST_SR_KEY_EXCH_A;
+			/* Check for second client hello if MS SGC */
+			ret = ssl3_check_client_hello(s);
+			if(ret <= 0) goto end;
+			if(ret == 2) s->state = SSL3_ST_SR_MS_SGC;
+			else {
+				/* could be sent for a DH cert, even if we
+				 * have not asked for it :-) */
+				ret=ssl3_get_client_certificate(s);
+				if (ret <= 0) goto end;
+				s->init_num=0;
+				s->state=SSL3_ST_SR_KEY_EXCH_A;
+			}
 			break;
 
 		case SSL3_ST_SR_KEY_EXCH_A:
@@ -509,6 +517,23 @@ static int ssl3_send_hello_request(SSL *s)
 	/* SSL3_ST_SW_HELLO_REQ_B */
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
+
+static int ssl3_check_client_hello(SSL *s)
+	{
+	int ok;
+	long n;
+
+	n=ssl3_get_message(s,
+		SSL3_ST_SR_CERT_A,
+		SSL3_ST_SR_CERT_B,
+		-1,
+		SSL3_RT_MAX_PLAIN_LENGTH,
+		&ok);
+	if (!ok) return((int)n);
+	s->s3->tmp.reuse_message = 1;
+	if(s->s3->tmp.message_type == SSL3_MT_CLIENT_HELLO) return 2;
+	return 1;
+}
 
 static int ssl3_get_client_hello(SSL *s)
 	{

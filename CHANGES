@@ -4,6 +4,21 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add support for MS "fast SGC". This is arguably a violation of the
+     SSL3/TLS protocol. Netscape SGC does two handshakes: the first with
+     weak crypto and after checking the certificate is SGC a second one
+     with strong crypto. MS SGC stops the first handshake after receiving
+     the server certificate message and sends a second client hello. Since
+     a server will typically do all the time consuming operations before
+     expecting any further messages from the client (server key exchange
+     is the most expensive) there is little difference between the two.
+
+     To get OpenSSL to support MS SGC we have to permit a second client
+     hello message after we have sent server done. In addition we have to
+     reset the MAC if we do get this second client hello and include the
+     data just received.
+     [Steve Henson]
+
   *) Add a function 'd2i_AutoPrivateKey()' this will automatically decide
      if a DER encoded private key is RSA or DSA traditional format. Changed
      d2i_PrivateKey_bio() to use it. This is only needed for the "traditional"

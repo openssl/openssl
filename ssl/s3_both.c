@@ -293,6 +293,18 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 			}
+		if((mt < 0) && (*p == SSL3_MT_CLIENT_HELLO) &&
+					(st1 == SSL3_ST_SR_CERT_A) &&
+					(stn == SSL3_ST_SR_CERT_B))
+			{
+			/* At this point we have got an MS SGC second client
+			 * hello. We need to restart the mac and mac the data
+			 * currently received.
+			 */
+			ssl3_init_finished_mac(s);
+			ssl3_finish_mac(s, p + s->init_num, i);
+			}
+			
 		s->s3->tmp.message_type= *(p++);
 
 		n2l3(p,l);
