@@ -102,7 +102,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 	     const EVP_MD *md_type)
 {
 	unsigned char *B, *D, *I, *p, *Ai;
-	int Slen, Plen, Ilen;
+	int Slen, Plen, Ilen, Ijlen;
 	int i, j, u, v;
 	BIGNUM *Ij, *Bpl1;	/* These hold Ij and B + 1 */
 	EVP_MD_CTX ctx;
@@ -180,10 +180,17 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 			BN_bin2bn (I + j, v, Ij);
 			BN_add (Ij, Ij, Bpl1);
 			BN_bn2bin (Ij, B);
+			Ijlen = BN_num_bytes (Ij);
 			/* If more than 2^(v*8) - 1 cut off MSB */
-			if (BN_num_bytes (Ij) > v) {
+			if (Ijlen > v) {
 				BN_bn2bin (Ij, B);
 				memcpy (I + j, B + 1, v);
+#ifndef PKCS12_BROKEN_KEYGEN
+			/* If less than v bytes pad with zeroes */
+			} else if (Ijlen < v) {
+				memset(I + j, 0, v - Ijlen);
+				BN_bn2bin(Ij, I + j + v - Ijlen); 
+#endif
 			} else BN_bn2bin (Ij, I + j);
 		}
 	}

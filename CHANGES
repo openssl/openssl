@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fix bug in PKCS#12 key generation routines. This was triggered
+     if a 3DES key was generated with a 0 initial byte. Include
+     PKCS12_BROKEN_KEYGEN compilation option to retain the old
+     (but broken) behaviour.
+     [Steve Henson]
+
   *) Enhance bctest to search for a working bc along $PATH and print
      it when found.
      [Tim Rice <tim@multitalents.net> via Richard Levitte]
