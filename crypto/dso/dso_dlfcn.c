@@ -125,7 +125,11 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 #		endif
 #	endif
 #else
-#	define DLOPEN_FLAG RTLD_NOW /* Hope this works everywhere else */
+#	ifdef OPENSSL_SYS_SUNOS
+#		define DLOPEN_FLAG 1
+#	else
+#		define DLOPEN_FLAG RTLD_NOW /* Hope this works everywhere else */
+#	endif
 #endif
 
 /* For this DSO_METHOD, our meth_data STACK will contain;
