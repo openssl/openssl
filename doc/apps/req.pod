@@ -235,7 +235,8 @@ and long names are the same when this option is used.
 =item B<RANDFILE>
 
 This specifies a filename in which random number seed information is
-placed and read from. It is used for private key generation.
+placed and read from, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+It is used for private key generation.
 
 =item B<encrypt_key>
 

@@ -238,7 +238,8 @@ CA private key. Mandatory.
 
 =item B<RANDFILE>
 
-a file used to read and write random number seed information.
+a file used to read and write random number seed information, or
+an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
 
 =item B<default_days>
 
