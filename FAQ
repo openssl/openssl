@@ -189,18 +189,30 @@ for permission to use their software with OpenSSL.
 
 Cryptographic software needs a source of unpredictable data to work
 correctly.  Many open source operating systems provide a "randomness
-device" that serves this purpose.  On other systems, applications have
-to call the RAND_add() or RAND_seed() function with appropriate data
-before generating keys or performing public key encryption.
-(These functions initialize the pseudo-random number generator, PRNG.)
+device" (/dev/urandom or /dev/random) that serves this purpose.
+All OpenSSL versions try to use /dev/urandom by default; starting with
+version 0.9.7, OpenSSL also tries /dev/random is /dev/urandom is not
+available.
 
-Some broken applications do not do this.  As of version 0.9.5, the
-OpenSSL functions that need randomness report an error if the random
-number generator has not been seeded with at least 128 bits of
-randomness.  If this error occurs, please contact the author of the
-application you are using.  It is likely that it never worked
-correctly.  OpenSSL 0.9.5 and later make the error visible by refusing
-to perform potentially insecure encryption.
+On other systems, applications have to call the RAND_add() or
+RAND_seed() function with appropriate data before generating keys or
+performing public key encryption. (These functions initialize the
+pseudo-random number generator, PRNG.)  Some broken applications do
+not do this.  As of version 0.9.5, the OpenSSL functions that need
+randomness report an error if the random number generator has not been
+seeded with at least 128 bits of randomness.  If this error occurs and
+is not discussed in the documentation of the application you are
+using, please contact the author of that application; it is likely
+that it never worked correctly.  OpenSSL 0.9.5 and later make the
+error visible by refusing to perform potentially insecure encryption.
+
+If you are using Solaris 8, you can add /dev/urandom and /dev/random
+devices by installing patch 112438 (Sparc) or 112439 (x86), which are
+available via the Patchfinder at <URL: http://sunsolve.sun.com>
+(Solaris 9 includes these devices by default). For /dev/random support
+for earlier Solaris versions, see Sun's statement at
+<URL: http://sunsolve.sun.com/pub-cgi/retrieve.pl?doc=fsrdb/27606&zone_32=SUNWski>
+(the SUNWski package is available in patch 105710).
 
 On systems without /dev/urandom and /dev/random, it is a good idea to
 use the Entropy Gathering Demon (EGD); see the RAND_egd() manpage for
@@ -232,18 +244,6 @@ The $RANDFILE environment variable and $HOME/.rnd are only used by the
 OpenSSL command line tools. Applications using the OpenSSL library
 provide their own configuration options to specify the entropy source,
 please check out the documentation coming the with application.
-
-For Solaris 2.6, Tim Nibbe <tnibbe@sprint.net> and others have suggested
-installing the SUNski package from Sun patch 105710-01 (Sparc) which
-adds a /dev/random device and make sure it gets used, usually through
-$RANDFILE.  There are probably similar patches for the other Solaris
-versions.  An official statement from Sun with respect to /dev/random
-support can be found at
-  http://sunsolve.sun.com/pub-cgi/retrieve.pl?doc=fsrdb/27606&zone_32=SUNWski
-However, be warned that /dev/random is usually a blocking device, which
-may have some effects on OpenSSL.
-A third party /dev/random solution for Solaris is available at
-  http://www.cosy.sbg.ac.at/~andi/
 
 
 * Why do I get an "unable to write 'random state'" error message?
