@@ -345,9 +345,9 @@ typedef struct ssl3_comp_st
 	COMP_METHOD *method; /* The method :-) */
 	} SSL3_COMP;
 
-EXTERN SSL3_ENC_METHOD ssl3_undef_enc_method;
-EXTERN SSL_CIPHER ssl2_ciphers[];
-EXTERN SSL_CIPHER ssl3_ciphers[];
+OPENSSL_EXTERN SSL3_ENC_METHOD ssl3_undef_enc_method;
+OPENSSL_EXTERN SSL_CIPHER ssl2_ciphers[];
+OPENSSL_EXTERN SSL_CIPHER ssl3_ciphers[];
 
 #ifdef VMS
 #undef SSL_COMP_get_compression_methods
