@@ -944,7 +944,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	SSL_CIPHER *c;
 	X509_NAME *xn;
 	int j,i;
-	const COMP_METHOD *comp, *exp;
+	const COMP_METHOD *comp, *expansion;
 
 	if (full)
 		{
@@ -1048,11 +1048,11 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		EVP_PKEY_free(pktmp);
 	}
 	comp=SSL_get_current_compression(s);
-	exp=SSL_get_current_expansion(s);
+	expansion=SSL_get_current_expansion(s);
 	BIO_printf(bio,"Compression: %s\n",
 		comp ? SSL_COMP_get_name(comp) : "NONE");
 	BIO_printf(bio,"Expansion: %s\n",
-		exp ? SSL_COMP_get_name(exp) : "NONE");
+		expansion ? SSL_COMP_get_name(expansion) : "NONE");
 	SSL_SESSION_print(bio,SSL_get_session(s));
 	BIO_printf(bio,"---\n");
 	if (peer != NULL)

@@ -77,15 +77,15 @@ int BIO_dump_indent(BIO *bio, const char *s, int len, int indent)
 	{
 	int ret=0;
 	char buf[288+1],tmp[20],str[128+1];
-	int i,j,rows,trunc;
+	int i,j,rows,trc;
 	unsigned char ch;
 	int dump_width;
 	
-	trunc=0;
+	trc=0;
 	
 #ifdef TRUNCATE
 	for(; (len > 0) && ((s[len-1] == ' ') || (s[len-1] == '\0')); len--) 
-		trunc++;
+		trc++;
 #endif
 
 	if (indent < 0)
@@ -142,9 +142,9 @@ int BIO_dump_indent(BIO *bio, const char *s, int len, int indent)
 		ret+=BIO_write(bio,(char *)buf,strlen(buf));
 		}
 #ifdef TRUNCATE
-	if (trunc > 0)
+	if (trc > 0)
 		{
-		sprintf(buf,"%s%04x - <SPACES/NULS>\n",str,len+trunc);
+		sprintf(buf,"%s%04x - <SPACES/NULS>\n",str,len+trc);
 		ret+=BIO_write(bio,(char *)buf,strlen(buf));
 		}
 #endif
