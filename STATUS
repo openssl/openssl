@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/10/07 16:58:08 $
+  ______________                           $Date: 1999/10/30 19:09:01 $
 
   DEVELOPMENT STATE
 
@@ -16,7 +16,6 @@
   AVAILABLE PATCHES
 
     o shared libraries <behnke@trustcenter.de>
-    o Lennart Bang: test program patches
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
     o SMIME tool (demo), Sampo Kellomaki <sampo@iki.fi>
     o OCSP patch, Massimiliano Pala (madwolf@openca.org)
@@ -64,6 +63,7 @@
     o  Arne Ansper: d2i_ASN1_bytes bug
     o  salzr@certco.com (Rich Salz): Bug in X509_name_print
        <29E0A6D39ABED111A36000A0C99609CA2C2BA4@macertco-srv1.ma.certco.com>
+    o  NO_FP_API ("Andrija Antonijevic" <TheAntony@bigfoot.com>)
     o  $(PERL) in */Makefile.ssl
     o  "Sign the certificate?" - "n" creates empty certificate file
 
