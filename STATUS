@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/11 20:32:35 $
+  ______________                           $Date: 2000/09/11 22:02:07 $
 
   DEVELOPMENT STATE
 
@@ -10,6 +10,8 @@
 			OpenBSD-x86 2.7			- failed (ftime/TIMEB)
 			hpux-parisc-cc 10.20		- passed
 			hpux-parisc-gcc 10.20		- passed
+			hpux-gcc			- passed
+			hpux-brokengcc			- failed (BN_sqr)
 			linux-elf			- passed
 			Solaris [engine]		- failed (speed cswift)
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
