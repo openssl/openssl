@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) In copy_email() check for >= 0 as a return value for
+     X509_NAME_get_index_by_NID() since 0 is a valid index.
+     [Steve Henson reported by Massimiliano Pala <madwolf@opensca.org>]
+
   *) In BN_div() keep a copy of the sign of 'num' before writing the
      result to 'rm' because if rm==num the value will be overwritten
      and produce the wrong result if 'num' is negative: this caused

@@ -318,7 +318,7 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens)
 	/* Now add any email address(es) to STACK */
 	i = -1;
 	while((i = X509_NAME_get_index_by_NID(nm,
-					 NID_pkcs9_emailAddress, i)) > 0) {
+					 NID_pkcs9_emailAddress, i)) >= 0) {
 		ne = X509_NAME_get_entry(nm, i);
 		email = M_ASN1_IA5STRING_dup(X509_NAME_ENTRY_get_data(ne));
 		if(!email || !(gen = GENERAL_NAME_new())) {
