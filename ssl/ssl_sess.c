@@ -203,8 +203,9 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 		{
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 		ret=(SSL_SESSION *)lh_retrieve(s->ctx->sessions,(char *)&data);
-		/* don't allow other threads to steal it: */
-		CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
+		if (ret != NULL)
+		    /* don't allow other threads to steal it: */
+		    CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
 		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 		}
 
