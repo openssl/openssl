@@ -283,7 +283,7 @@ do_$(SHLIB_TARGET):
 		libs="$$libs -l$$i"; \
 	done
 
-openssl.pc:
+openssl.pc: Makefile.ssl
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
 	    echo 'libdir=$${exec_prefix}/lib'; \
