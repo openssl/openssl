@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "md5_locl.h"
 
-char *MD5_version="MD5 part of SSLeay/OpenSSL 0.9.1c 23-Dec-1998";
+char *MD5_version="MD5 part of OpenSSL 0.9.1c 23-Dec-1998";
 
 /* Implemented from RFC1321 The MD5 Message-Digest Algorithm
  */

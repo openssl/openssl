@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include "evp.h"
 
-char *EVP_version="EVP part of SSLeay/OpenSSL 0.9.1c 23-Dec-1998";
+char *EVP_version="EVP part of OpenSSL 0.9.1c 23-Dec-1998";
 
 void EVP_CIPHER_CTX_init(ctx)
 EVP_CIPHER_CTX *ctx;

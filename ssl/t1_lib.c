@@ -60,7 +60,7 @@
 #include "objects.h"
 #include "ssl_locl.h"
 
-char *tls1_version_str="TLSv1 part of SSLeay/OpenSSL 0.9.1c 23-Dec-1998";
+char *tls1_version_str="TLSv1 part of OpenSSL 0.9.1c 23-Dec-1998";
 
 #ifndef NO_PROTO
 static long tls1_default_timeout(void);

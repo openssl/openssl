@@ -64,7 +64,7 @@
  * CAMBRIDGE SECURITY WORKSHOP, CAMBRIDGE, U.K., DECEMBER 9-11, 1993)
  */
 
-char *BF_version="BlowFish part of SSLeay/OpenSSL 0.9.1c 23-Dec-1998";
+char *BF_version="BlowFish part of OpenSSL 0.9.1c 23-Dec-1998";
 
 char *BF_options()
 	{

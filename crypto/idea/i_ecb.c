@@ -59,7 +59,7 @@
 #include "idea.h"
 #include "idea_lcl.h"
 
-char *IDEA_version="IDEA part of SSLeay/OpenSSL 0.9.1c 23-Dec-1998";
+char *IDEA_version="IDEA part of OpenSSL 0.9.1c 23-Dec-1998";
 
 char *idea_options()
 	{

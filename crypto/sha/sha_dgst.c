@@ -63,7 +63,7 @@
 #include "sha.h"
 #include "sha_locl.h"
 
-char *SHA_version="SHA part of SSLeay/OpenSSL 0.9.1c 23-Dec-1998";
+char *SHA_version="SHA part of OpenSSL 0.9.1c 23-Dec-1998";
 
 /* Implemented from SHA-0 document - The Secure Hash Algorithm
  */

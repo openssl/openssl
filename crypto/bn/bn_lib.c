@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-char *BN_version="Big Number part of SSLeay/OpenSSL 0.9.1c 23-Dec-1998";
+char *BN_version="Big Number part of OpenSSL 0.9.1c 23-Dec-1998";
 
 /* For a 32 bit machine
  * 2 -   4 ==  128

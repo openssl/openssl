@@ -3,6 +3,8 @@
  _______________
 
 
+ Changes between 0.9.01c and 0.9.1d
+
  Changes between 0.9.01b and 0.9.1c
 
   *) Added OPENSSL_VERSION_NUMBER to crypto/crypto.h and 
@@ -18,7 +20,7 @@
 
   *) Incorporated the popular no-RSA/DSA-only patches 
      which allow to compile a RSA-free SSLeay.
-     [Interrader Ldt., Ralf S. Engelschall]
+     [Andrew Cooke / Interrader Ldt., Ralf S. Engelschall]
 
   *) Fixed nasty rehash problem under `make -f Makefile.ssl links'
      when "ssleay" is still not found.

@@ -61,7 +61,7 @@
 #include "lhash.h"
 #include "ssl_locl.h"
 
-char *SSL_version_str="SSLeay/OpenSSL 0.9.1c 23-Dec-1998";
+char *SSL_version_str="OpenSSL 0.9.1c 23-Dec-1998";
 
 static STACK *ssl_meth=NULL;
 static STACK *ssl_ctx_meth=NULL;
