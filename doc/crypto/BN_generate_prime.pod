@@ -62,17 +62,11 @@ prime.  The following tests are performed until one of them shows that
 B<a> is composite; if B<a> passes all these tests, it is considered
 prime.
 
-=over 4
-
-=item *
-
 BN_is_prime_fasttest(), when called with B<do_trial_division == 1>,
 first attempts trial division by a number of small primes;
 if no divisors are found by this test and B<callback> is not B<NULL>,
 B<callback(1, -1, cb_arg)> is called.
 If B<do_trial_division == 0>, this test is skipped.
-
-=item *
 
 Both BN_is_prime() and BN_is_prime_fasttest() perform a Miller-Rabin
 probabilistic primality test with B<checks> iterations. If
@@ -86,7 +80,6 @@ freeing the structure in a loop), or B<NULL>. For
 BN_is_prime_fasttest(), B<ctx2> is a second pre-allocated B<BN_CTX> or
 B<NULL> (lacking this parameter, BN_is_prime() always has to allocate
 an additional B<CN_CTX>).
-
 
 =head1 RETURN VALUES
 
