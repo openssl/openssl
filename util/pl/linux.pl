@@ -39,7 +39,7 @@ if (!$no_asm)
 	$rmd160_asm_src='crypto/ripemd/asm/rm86unix.cpp';
 	$sha1_asm_obj='$(OBJ_D)/sx86-elf.o';
 	$sha1_asm_src='crypto/sha/asm/sx86unix.cpp';
-	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM";
+	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM -DOPENSSL_BN_ASM_PART_WORDS";
 	}
 
 $cflags.=" -DTERMIO -DL_ENDIAN -m486 -Wall";

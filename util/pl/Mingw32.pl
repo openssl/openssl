@@ -43,7 +43,7 @@ if ($gaswin and !$no_asm)
         $rmd160_asm_src='crypto/ripemd/asm/rm-win32.s';
         $sha1_asm_obj='$(OBJ_D)\s1-win32.o';
         $sha1_asm_src='crypto/sha/asm/s1-win32.s';
-	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM";
+	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM -DOPENSSL_BN_ASM_PART_WORDS";
 	}
 
 
