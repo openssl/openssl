@@ -89,30 +89,41 @@ static int openssl_digests(ENGINE *e, const EVP_MD **digest,
 static const char *engine_openssl_id = "openssl";
 static const char *engine_openssl_name = "Software engine support";
 
+/* This internal function is used by ENGINE_openssl() and possibly by the
+ * "dynamic" ENGINE support too */
+static int bind_helper(ENGINE *e)
+	{
+	if(!ENGINE_set_id(e, engine_openssl_id)
+			|| !ENGINE_set_name(e, engine_openssl_name)
+#ifndef OPENSSL_NO_RSA
+			|| !ENGINE_set_RSA(e, RSA_get_default_method())
+#endif
+#ifndef OPENSSL_NO_DSA
+			|| !ENGINE_set_DSA(e, DSA_get_default_method())
+#endif
+#ifndef OPENSSL_NO_DH
+			|| !ENGINE_set_DH(e, DH_get_default_method())
+#endif
+			|| !ENGINE_set_RAND(e, RAND_SSLeay())
+#ifdef TEST_ENG_OPENSSL_RC4
+			|| !ENGINE_set_ciphers(e, openssl_ciphers)
+#endif
+#ifdef TEST_ENG_OPENSSL_SHA
+			|| !ENGINE_set_digests(e, openssl_digests)
+#endif
+			)
+		return 0;
+	/* If we add errors to this ENGINE, ensure the error handling is setup here */
+	/* openssl_load_error_strings(); */
+	return 1;
+	}
+
 static ENGINE *engine_openssl(void)
 	{
 	ENGINE *ret = ENGINE_new();
 	if(!ret)
 		return NULL;
-	if(!ENGINE_set_id(ret, engine_openssl_id)
-			|| !ENGINE_set_name(ret, engine_openssl_name)
-#ifndef OPENSSL_NO_RSA
-			|| !ENGINE_set_RSA(ret, RSA_get_default_method())
-#endif
-#ifndef OPENSSL_NO_DSA
-			|| !ENGINE_set_DSA(ret, DSA_get_default_method())
-#endif
-#ifndef OPENSSL_NO_DH
-			|| !ENGINE_set_DH(ret, DH_get_default_method())
-#endif
-			|| !ENGINE_set_RAND(ret, RAND_SSLeay())
-#ifdef TEST_ENG_OPENSSL_RC4
-			|| !ENGINE_set_ciphers(ret, openssl_ciphers)
-#endif
-#ifdef TEST_ENG_OPENSSL_SHA
-			|| !ENGINE_set_digests(ret, openssl_digests)
-#endif
-			)
+	if(!bind_helper(ret))
 		{
 		ENGINE_free(ret);
 		return NULL;
@@ -130,6 +141,21 @@ void ENGINE_load_openssl(void)
 	ENGINE_free(toadd);
 	ERR_clear_error();
 	}
+
+/* This stuff is needed if this ENGINE is being compiled into a self-contained
+ * shared-library. */
+#ifdef ENGINE_DYNAMIC_SUPPORT
+static int bind_fn(ENGINE *e, const char *id)
+	{
+	if(id && (strcmp(id, engine_openssl_id) != 0))
+		return 0;
+	if(!bind_helper(e))
+		return 0;
+	return 1;
+	}
+IMPLEMENT_DYNAMIC_CHECK_FN()
+IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
+#endif /* ENGINE_DYNAMIC_SUPPORT */
 
 #ifdef TEST_ENG_OPENSSL_RC4
 /* This section of code compiles an "alternative implementation" of two modes of
