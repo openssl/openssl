@@ -214,6 +214,11 @@ end:
 	return(0);
 	}
 
+static int cb_exit(int ec)
+	{
+	EXIT(ec);
+	}
+
 static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
 	{
 	char c='*';
@@ -229,7 +234,7 @@ static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
 	if (!ok && (p == 0) && (num > 1))
 		{
 		BIO_printf((BIO *)arg,"error in dsatest\n");
-		EXIT(1);
+		cb_exit(1);
 		}
 	}
 #endif
