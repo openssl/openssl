@@ -221,7 +221,8 @@ static int certify_cert(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			TXT_DB *db, BIGNUM *serial, char *subj, char *startdate,
 			char *enddate, int days, int batch, char *ext_sect,
 			LHASH *conf,int verbose, unsigned long certopt,
-			unsigned long nameopt, int default_op, int ext_copy);
+			unsigned long nameopt, int default_op, int ext_copy,
+			ENGINE *e);
 static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			 const EVP_MD *dgst,STACK_OF(CONF_VALUE) *policy,
 			 TXT_DB *db, BIGNUM *serial,char *subj, char *startdate,
@@ -703,18 +704,10 @@ bad:
 		lookup_fail(section,ENV_CERTIFICATE);
 		goto err;
 		}
-	if (BIO_read_filename(in,certfile) <= 0)
-		{
-		perror(certfile);
-		BIO_printf(bio_err,"trying to load CA certificate\n");
-		goto err;
-		}
-	x509=PEM_read_bio_X509(in,NULL,NULL,NULL);
+	x509=load_cert(bio_err, certfile, FORMAT_PEM, NULL, e,
+		"CA certificate");
 	if (x509 == NULL)
-		{
-		BIO_printf(bio_err,"unable to load CA certificate\n");
 		goto err;
-		}
 
 	if (!X509_check_private_key(x509,pkey))
 		{
@@ -1197,7 +1190,7 @@ bad:
 			j=certify_cert(&x,ss_cert_file,pkey,x509,dgst,attribs,
 				db,serial,subj,startdate,enddate,days,batch,
 				extensions,conf,verbose, certopt, nameopt,
-							default_op, ext_copy);
+				default_op, ext_copy, e);
 			if (j < 0) goto err;
 			if (j > 0)
 				{
@@ -1539,18 +1532,10 @@ bad:
 		else
 			{
 			X509 *revcert;
-			if (BIO_read_filename(in,infile) <= 0)
-				{
-				perror(infile);
-				BIO_printf(bio_err,"error trying to load '%s' certificate\n",infile);
-				goto err;
-				}
-			revcert=PEM_read_bio_X509(in,NULL,NULL,NULL);
+			revcert=load_cert(bio_err, infile, FORMAT_PEM,
+				NULL, e, infile);
 			if (revcert == NULL)
-				{
-				BIO_printf(bio_err,"unable to load '%s' certificate\n",infile);
 				goto err;
-				}
 			j=do_revoke(revcert,db, rev_type, rev_arg);
 			if (j <= 0) goto err;
 			X509_free(revcert);
@@ -1597,7 +1582,7 @@ err:
 	BIO_free_all(Cout);
 	BIO_free_all(Sout);
 	BIO_free_all(out);
-	BIO_free(in);
+	BIO_free_all(in);
 
 	sk_X509_pop_free(cert_sk,X509_free);
 
@@ -1610,6 +1595,7 @@ err:
 	X509_CRL_free(crl);
 	CONF_free(conf);
 	OBJ_cleanup();
+	apps_shutdown();
 	EXIT(ret);
 	}
 
@@ -1783,26 +1769,15 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     BIGNUM *serial, char *subj, char *startdate, char *enddate, int days,
 	     int batch, char *ext_sect, LHASH *lconf, int verbose,
 	     unsigned long certopt, unsigned long nameopt, int default_op,
-	     int ext_copy)
+	     int ext_copy, ENGINE *e)
 	{
 	X509 *req=NULL;
 	X509_REQ *rreq=NULL;
-	BIO *in=NULL;
 	EVP_PKEY *pktmp=NULL;
 	int ok= -1,i;
 
-	in=BIO_new(BIO_s_file());
-
-	if (BIO_read_filename(in,infile) <= 0)
-		{
-		perror(infile);
+	if ((req=load_cert(bio_err, infile, FORMAT_PEM, NULL, e, infile)) == NULL)
 		goto err;
-		}
-	if ((req=PEM_read_bio_X509(in,NULL,NULL,NULL)) == NULL)
-		{
-		BIO_printf(bio_err,"Error reading self signed certificate in %s\n",infile);
-		goto err;
-		}
 	if (verbose)
 		X509_print(bio_err,req);
 
@@ -1840,7 +1815,6 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 err:
 	if (rreq != NULL) X509_REQ_free(rreq);
 	if (req != NULL) X509_free(req);
-	if (in != NULL) BIO_free(in);
 	return(ok);
 	}
 
