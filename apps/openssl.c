@@ -237,10 +237,8 @@ end:
 	ERR_free_strings();
 
 #ifdef LEVITTE_DEBUG
-	{
 	/* Just to make sure I get a memory leak I can see :-) */
-	char *p = Malloc(1024);
-	}
+	(void)Malloc(1024);
 #endif
 
 	CRYPTO_mem_leaks(bio_err);
