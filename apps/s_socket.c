@@ -62,7 +62,13 @@
 #include <errno.h>
 #include <signal.h>
 
-#include <openssl/e_os2.h>
+#ifdef FLAT_INC
+#include "e_os.h"
+#else
+#include "../e_os.h"
+#endif
+
+#ifndef OPENSSL_NO_SOCK
 
 /* With IPv6, it looks like Digital has mixed up the proper order of
    recursive header file inclusion, resulting in the compiler complaining
@@ -553,3 +559,5 @@ static struct hostent *GetHostByName(char *name)
 		return(ret);
 		}
 	}
+
+#endif
