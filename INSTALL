@@ -29,7 +29,7 @@
 
  There are several options to ./config to customize the build:
 
-  -DRSAref  Build with RSADSI's RSAREF toolkit.
+  rsaref    Build with RSADSI's RSAREF toolkit.
   no-asm    Build with no assembler code.
   386       Use the 80386 instruction set only (the default x86 code is
             more efficient, but requires at least a 486).

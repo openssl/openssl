@@ -294,6 +294,11 @@ foreach (@ARGV)
 		{ $no_asm=1; }
 	elsif ($_ =~ /^386$/)
 		{ $processor=386; }
+	elsif ($_ =~ /^rsaref$/)
+		{
+		$libs.= "-lRSAglue -lrsaref ";
+		$flags.= "-DRSAref ";
+		}
 	elsif ($_ =~ /^-/)
 		{
 		if ($_ =~ /^-[lL](.*)$/)
