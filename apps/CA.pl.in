@@ -36,6 +36,7 @@
 # default openssl.cnf file has setup as per the following
 # demoCA ... where everything is stored
 
+$SSLEAY_CONFIG=$ENV{"SSLEAY_CONFIG"};
 $DAYS="-days 365";
 $REQ="openssl req $SSLEAY_CONFIG";
 $CA="openssl ca $SSLEAY_CONFIG";
