@@ -805,7 +805,9 @@ void *ASN1_item_dup(const ASN1_ITEM *it, void *x);
 
 #ifndef NO_FP_API
 char *ASN1_d2i_fp(char *(*xnew)(),char *(*d2i)(),FILE *fp,unsigned char **x);
+void *ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x);
 int ASN1_i2d_fp(int (*i2d)(),FILE *out,unsigned char *x);
+int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x);
 int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
 #endif
 
@@ -813,7 +815,9 @@ int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
 
 #ifndef NO_BIO
 char *ASN1_d2i_bio(char *(*xnew)(),char *(*d2i)(),BIO *bp,unsigned char **x);
+void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x);
 int ASN1_i2d_bio(int (*i2d)(),BIO *out,unsigned char *x);
+int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x);
 int ASN1_UTCTIME_print(BIO *fp,ASN1_UTCTIME *a);
 int ASN1_GENERALIZEDTIME_print(BIO *fp,ASN1_GENERALIZEDTIME *a);
 int ASN1_TIME_print(BIO *fp,ASN1_TIME *a);

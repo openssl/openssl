@@ -60,6 +60,8 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
+#ifndef NO_ASN1_OLD
+
 /* ASN1 packing and unpacking functions */
 
 /* Turn an ASN1 encoded SEQUENCE OF into a STACK of structures */
@@ -142,6 +144,8 @@ ASN1_STRING *ASN1_pack_string(void *obj, int (*i2d)(), ASN1_STRING **oct)
 	i2d (obj, &p);
 	return octmp;
 }
+
+#endif
 
 /* ASN1_ITEM versions of the above */
 

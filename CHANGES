@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New functions or ASN1_item_d2i_fp() and ASN1_item_d2i_bio(). These
+     replace the old function pointer based I/O routines. Change most of
+     the *_d2i_bio() and *_d2i_fp() functions to use these.
+     [Steve Henson]
+
   *) Enhance mkdef.pl to be more accepting about spacing in C preprocessor
      lines, recognice more "algorithms" that can be deselected, and make
      it complain about algorithm deselection that isn't recognised.
