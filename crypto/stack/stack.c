@@ -192,8 +192,7 @@ char *sk_delete(STACK *st, int loc)
 	char *ret;
 	int i,j;
 
-	if ((st == NULL) || (st->num == 0) || (loc < 0)
-					 || (loc >= st->num)) return(NULL);
+	if(!st || (loc < 0) || (loc >= st->num)) return NULL;
 
 	ret=st->data[loc];
 	if (loc != st->num-1)
@@ -313,7 +312,7 @@ char *sk_value(const STACK *st, int i)
 
 char *sk_set(STACK *st, int i, char *value)
 {
-	if(st == NULL) return NULL;
+	if(!st || (i < 0) || (i >= st->num)) return NULL;
 	return (st->data[i] = value);
 }
 
