@@ -68,7 +68,8 @@ typedef struct _tunala_world_t {
 
 static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		const char *CAfile, const char *cert, const char *key,
-		const char *cipher_list, int out_state);
+		const char *cipher_list, int out_state, int out_verify,
+		int verify_mode);
 static void selector_init(tunala_selector_t *selector);
 static void selector_add_listener(tunala_selector_t *selector, int fd);
 static void selector_add_tunala(tunala_selector_t *selector, tunala_item_t *t);
@@ -95,6 +96,8 @@ static const char *def_engine_id = NULL;
 static int def_server_mode = 0;
 static const char *def_cipher_list = NULL;
 static int def_out_state = 0;
+static int def_out_verify = 0;
+static int def_verify_mode = 0;
 
 static const char *helpstring =
 	"\n'Tunala' (A tunneler with a New Zealand accent)\n"
@@ -109,6 +112,10 @@ static const char *helpstring =
 	"    -server <0|1>          (default = 0, ie. an SSL client)\n"
 	"    -cipher <list>         (specifies cipher list to use)\n"
 	"    -out_state             (prints SSL handshake states)\n"
+	"    -out_verify            (prints certificate verification states)\n"
+	"    -v_peer                (verify the peer certificate)\n"
+	"    -v_strict              (do not continue if peer validation fails)\n"
+	"    -v_once                (no verification in renegotiates)\n"
 	"    -<h|help|?>            (displays this help screen)\n"
 	"NB: It is recommended to specify a cert+key when operating as an\n"
 	"SSL server. If you only specify '-cert', the same file must\n"
@@ -185,6 +192,8 @@ int main(int argc, char *argv[])
 	int server_mode = def_server_mode;
 	const char *cipher_list = def_cipher_list;
 	int out_state = def_out_state;
+	int out_verify = def_out_verify;
+	int verify_mode = def_verify_mode;
 
 /* Parse command-line arguments */
 next_arg:
@@ -258,6 +267,18 @@ next_arg:
 		} else if(strcmp(*argv, "-out_state") == 0) {
 			out_state = 1;
 			goto next_arg;
+		} else if(strcmp(*argv, "-out_verify") == 0) {
+			out_verify = 1;
+			goto next_arg;
+		} else if(strcmp(*argv, "-v_peer") == 0) {
+			verify_mode |= SSL_VERIFY_PEER;
+			goto next_arg;
+		} else if(strcmp(*argv, "-v_strict") == 0) {
+			verify_mode |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+			goto next_arg;
+		} else if(strcmp(*argv, "-v_once") == 0) {
+			verify_mode |= SSL_VERIFY_CLIENT_ONCE;
+			goto next_arg;
 		} else if((strcmp(*argv, "-h") == 0) ||
 				(strcmp(*argv, "-help") == 0) ||
 				(strcmp(*argv, "-?") == 0)) {
@@ -273,7 +294,8 @@ next_arg:
 	err_str0("ip_initialise succeeded");
 	/* Create the SSL_CTX */
 	if((world.ssl_ctx = initialise_ssl_ctx(server_mode, engine_id,
-			cacert, cert, key, cipher_list, out_state)) == NULL)
+			cacert, cert, key, cipher_list, out_state, out_verify,
+			verify_mode)) == NULL)
 		return err_str1("initialise_ssl_ctx(engine_id=%s) failed",
 			(engine_id == NULL) ? "NULL" : engine_id);
 	err_str1("initialise_ssl_ctx(engine_id=%s) succeeded",
@@ -360,7 +382,8 @@ main_loop:
 
 static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		const char *CAfile, const char *cert, const char *key,
-		const char *cipher_list, int out_state)
+		const char *cipher_list, int out_state, int out_verify,
+		int verify_mode)
 {
 	SSL_CTX *ctx, *ret = NULL;
 	SSL_METHOD *meth;
@@ -467,12 +490,16 @@ static SSL_CTX *initialise_ssl_ctx(int server_mode, const char *engine_id,
 		fprintf(stderr, "Info, operating with default cipher list\n");
 
 	/* out_state (output of SSL handshake states to screen). */
-	if(out_state) {
-		SSL_CTX_set_info_callback(ctx, cb_ssl_info);
+	if(out_state)
 		cb_ssl_info_set_output(stderr);
-	}
+
+	/* out_verify & verify_mode */
+	if(out_verify)
+		cb_ssl_verify_set_output(stderr);
 
 	/* Success! */
+	SSL_CTX_set_info_callback(ctx, cb_ssl_info);
+	SSL_CTX_set_verify(ctx, verify_mode, cb_ssl_verify);
 	ret = ctx;
 err:
 	if(!ret) {
