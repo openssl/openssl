@@ -87,10 +87,9 @@ err.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 err.o: ../cryptlib.h
 err_all.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-err_all.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
-err_all.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
-err_all.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-err_all.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+err_all.o: ../../include/openssl/blowfish.h ../../include/openssl/buffer.h
+err_all.o: ../../include/openssl/cast.h ../../include/openssl/conf.h
+err_all.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
 err_all.o: ../../include/openssl/dsa.h ../../include/openssl/dso.h
 err_all.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 err_all.o: ../../include/openssl/evp.h ../../include/openssl/idea.h

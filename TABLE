@@ -621,6 +621,29 @@ $shared_ldflag =
 $shared_extension = 
 $ranlib       = 
 
+*** UWIN
+$cc           = cc
+$cflags       = -DTERMIOS -DL_ENDIAN -O -Wall
+$unistd       = 
+$thread_cflag = 
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = win32
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+
 *** VC-MSDOS
 $cc           = cl
 $cflags       = 

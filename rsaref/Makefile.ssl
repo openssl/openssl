@@ -86,13 +86,13 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-rsar_err.o: ../include/openssl/bio.h ../include/openssl/bn.h
-rsar_err.o: ../include/openssl/crypto.h ../include/openssl/err.h
-rsar_err.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
-rsar_err.o: ../include/openssl/opensslv.h ../include/openssl/rsa.h
-rsar_err.o: ../include/openssl/rsaref.h ../include/openssl/safestack.h
-rsar_err.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-rsaref.o: ../crypto/cryptlib.h ../include/openssl/bio.h ../include/openssl/bn.h
+rsar_err.o: ../include/openssl/bio.h ../include/openssl/crypto.h
+rsar_err.o: ../include/openssl/err.h ../include/openssl/lhash.h
+rsar_err.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+rsar_err.o: ../include/openssl/rsa.h ../include/openssl/rsaref.h
+rsar_err.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+rsar_err.o: ../include/openssl/symhacks.h
+rsaref.o: ../crypto/cryptlib.h ../include/openssl/bio.h
 rsaref.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
 rsaref.o: ../include/openssl/e_os.h ../include/openssl/e_os2.h
 rsaref.o: ../include/openssl/err.h ../include/openssl/lhash.h

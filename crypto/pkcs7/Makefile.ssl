@@ -99,9 +99,8 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 pk7_attr.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-pk7_attr.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
-pk7_attr.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
-pk7_attr.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+pk7_attr.o: ../../include/openssl/blowfish.h ../../include/openssl/buffer.h
+pk7_attr.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
 pk7_attr.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 pk7_attr.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 pk7_attr.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
@@ -118,10 +117,9 @@ pk7_attr.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 pk7_attr.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 pk7_attr.o: ../../include/openssl/x509_vfy.h
 pk7_doit.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-pk7_doit.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
-pk7_doit.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
-pk7_doit.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-pk7_doit.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+pk7_doit.o: ../../include/openssl/blowfish.h ../../include/openssl/buffer.h
+pk7_doit.o: ../../include/openssl/cast.h ../../include/openssl/conf.h
+pk7_doit.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
 pk7_doit.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
 pk7_doit.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 pk7_doit.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
@@ -138,9 +136,8 @@ pk7_doit.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 pk7_doit.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 pk7_doit.o: ../../include/openssl/x509v3.h ../cryptlib.h
 pk7_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-pk7_lib.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
-pk7_lib.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
-pk7_lib.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+pk7_lib.o: ../../include/openssl/blowfish.h ../../include/openssl/buffer.h
+pk7_lib.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
 pk7_lib.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 pk7_lib.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 pk7_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
@@ -157,9 +154,8 @@ pk7_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 pk7_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 pk7_lib.o: ../cryptlib.h
 pk7_mime.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-pk7_mime.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
-pk7_mime.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
-pk7_mime.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+pk7_mime.o: ../../include/openssl/blowfish.h ../../include/openssl/buffer.h
+pk7_mime.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
 pk7_mime.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 pk7_mime.o: ../../include/openssl/e_os.h ../../include/openssl/e_os2.h
 pk7_mime.o: ../../include/openssl/err.h ../../include/openssl/evp.h
@@ -177,10 +173,9 @@ pk7_mime.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 pk7_mime.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 pk7_mime.o: ../cryptlib.h
 pk7_smime.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-pk7_smime.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
-pk7_smime.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
-pk7_smime.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-pk7_smime.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+pk7_smime.o: ../../include/openssl/blowfish.h ../../include/openssl/buffer.h
+pk7_smime.o: ../../include/openssl/cast.h ../../include/openssl/conf.h
+pk7_smime.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
 pk7_smime.o: ../../include/openssl/dsa.h ../../include/openssl/e_os.h
 pk7_smime.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 pk7_smime.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
@@ -198,9 +193,8 @@ pk7_smime.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 pk7_smime.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
 pk7_smime.o: ../cryptlib.h
 pkcs7err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-pkcs7err.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
-pkcs7err.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
-pkcs7err.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+pkcs7err.o: ../../include/openssl/blowfish.h ../../include/openssl/buffer.h
+pkcs7err.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
 pkcs7err.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 pkcs7err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 pkcs7err.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
