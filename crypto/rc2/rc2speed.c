@@ -102,9 +102,6 @@ extern int exit();
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ
 #ifndef CLK_TCK
-#ifndef VMS
-#define HZ	100.0
-#else /* VMS */
 #define HZ	100.0
 #endif
 #else /* CLK_TCK */

@@ -124,11 +124,7 @@
 */
 #ifndef HZ
 #ifndef CLK_TCK
-#ifndef VMS
 #define HZ      100.0
-#else /* VMS */
-#define HZ      100.0
-#endif
 #else /* CLK_TCK */
 #define HZ ((double)CLK_TCK)
 #endif

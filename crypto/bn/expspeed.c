@@ -106,11 +106,7 @@
 #ifndef HZ
 # ifndef CLK_TCK
 #  ifndef _BSD_CLK_TCK_ /* FreeBSD hack */
-#   ifndef VMS
-#    define HZ	100.0
-#   else /* VMS */
-#    define HZ	100.0
-#   endif
+#   define HZ	100.0
 #  else /* _BSD_CLK_TCK_ */
 #   define HZ ((double)_BSD_CLK_TCK_)
 #  endif
