@@ -168,7 +168,7 @@ command for more information.
 
 send the protocol-specific message(s) to switch to TLS for communication.
 B<protocol> is a keyword for the intended protocol.  Currently, the only
-supported keyword is "smtp".
+supported keywords are "smtp" and "pop3".
 
 =item B<-engine id>
 

@@ -221,7 +221,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -starttls prot - use the STARTTLS command before starting TLS\n");
 	BIO_printf(bio_err,"                 for those protocols that support it, where\n");
 	BIO_printf(bio_err,"                 'prot' defines which one to assume.  Currently,\n");
-	BIO_printf(bio_err,"                 only \"smtp\" is supported.\n");
+	BIO_printf(bio_err,"                 only \"smtp\" and \"pop3\" are supported.\n");
 #ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 #endif
@@ -251,7 +251,7 @@ int MAIN(int argc, char **argv)
 	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
 	SSL_CTX *ctx=NULL;
 	int ret=1,in_init=1,i,nbio_test=0;
-	int smtp_starttls = 0;
+	int starttls_proto = 0;
 	int prexit = 0, vflags = 0;
 	SSL_METHOD *meth=NULL;
 	BIO *sbio;
@@ -415,7 +415,9 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			++argv;
 			if (strcmp(*argv,"smtp") == 0)
-				smtp_starttls = 1;
+				starttls_proto = 1;
+			else if (strcmp(*argv,"pop3") == 0)
+				starttls_proto = 2;
 			else
 				goto bad;
 			}
@@ -587,10 +589,16 @@ re_start:
 	sbuf_off=0;
 
 	/* This is an ugly hack that does a lot of assumptions */
-	if (smtp_starttls)
+	if (starttls_proto == 1)
 		{
 		BIO_read(sbio,mbuf,BUFSIZZ);
 		BIO_printf(sbio,"STARTTLS\r\n");
+		BIO_read(sbio,sbuf,BUFSIZZ);
+		}
+	if (starttls_proto == 2)
+		{
+		BIO_read(sbio,mbuf,BUFSIZZ);
+		BIO_printf(sbio,"STLS\r\n");
 		BIO_read(sbio,sbuf,BUFSIZZ);
 		}
 
@@ -613,11 +621,11 @@ re_start:
 				print_stuff(bio_c_out,con,full_log);
 				if (full_log > 0) full_log--;
 
-				if (smtp_starttls)
+				if (starttls_proto)
 					{
 					BIO_printf(bio_err,"%s",mbuf);
 					/* We don't need to know any more */
-					smtp_starttls = 0;
+					starttls_proto = 0;
 					}
 
 				if (reconnect)
