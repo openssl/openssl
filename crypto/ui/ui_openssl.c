@@ -117,10 +117,14 @@
 
 #include <openssl/e_os2.h>
 
+/* need for #define _POSIX_C_SOURCE arises whenever you pass -ansi to gcc
+ * [maybe others?], because it masks interfaces not discussed in standard,
+ * sigaction and fileno included. -pedantic would be more appropriate for
+ * the intended purposes, but we can't prevent users from adding -ansi.
+ */
 #define _POSIX_C_SOURCE 1
 #include <signal.h>
 #include <stdio.h>
-#undef _POSIX_C_SOURCE
 #include <string.h>
 #include <errno.h>
 
