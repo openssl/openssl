@@ -12,7 +12,7 @@ $ssl_version="";
 open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
 while(<IN>) {
     $ssl_version=$1 if (/^VERSION=(.*)$/);
-    $options=$1 if (/^OPTIONS=(.*)$/);
+    $OPTIONS=$1 if (/^OPTIONS=(.*)$/);
     $INSTALLTOP=$1 if (/^INSTALLTOP=(.*$)/);
 }
 close(IN);
