@@ -89,6 +89,9 @@ extern "C" {
  * the error ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED. */
 #define ENGINE_CTRL_SET_LOGSTREAM		1
 #define ENGINE_CTRL_SET_PASSWORD_CALLBACK	2
+#define ENGINE_CTRL_HUP				3 /* Close and reinitialise any
+						     handles/connections etc. */
+
 /* Flags specific to the nCipher "chil" engine */
 #define ENGINE_CTRL_CHIL_SET_FORKCHECK		100
 	/* Depending on the value of the (long)i argument, this sets or
