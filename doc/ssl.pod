@@ -397,6 +397,10 @@ connection defined in the B<SSL> structure.
 
 =item int B<SSL_accept>(SSL *ssl);
 
+=item int B<SSL_add_dir_cert_subjects_to_stack>(STACK *stack, const char *dir);
+
+=item int B<SSL_add_file_cert_subjects_to_stack>(STACK *stack, const char *file);
+
 =item int B<SSL_add_client_CA>(SSL *ssl, X509 *x);
 
 =item char *B<SSL_alert_desc_string>(int value);
