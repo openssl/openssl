@@ -174,6 +174,9 @@ extern "C" {
 #  define OPENSSL_SYS_MACOSX_RHAPSODY
 #  define OPENSSL_SYS_MACOSX
 # endif
+# ifdef OPENSSL_SYSNAME_SUNOS
+#  define OPENSSL_SYS_SUNOS
+#endif
 # if defined(_CRAY) || defined(OPENSSL_SYSNAME_CRAY)
 #  define OPENSSL_SYS_CRAY
 # endif
