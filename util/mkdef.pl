@@ -65,6 +65,7 @@ $crypto.=" crypto/err/err.h";
 $crypto.=" crypto/pkcs7/pkcs7.h";
 $crypto.=" crypto/x509/x509.h";
 $crypto.=" crypto/x509/x509_vfy.h";
+$crypto.=" crypto/x509v3/x509v3.h";
 $crypto.=" crypto/rand/rand.h";
 $crypto.=" crypto/hmac/hmac.h";
 $crypto.=" crypto/comp/comp.h";

@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/01/30 12:06:16 $
+  ______________                           $Date: 1999/01/30 17:34:59 $
 
   DEVELOPMENT STATE
 
@@ -12,6 +12,14 @@
   AVAILABLE PATCHES
 
   IN PROGRESS
+
+    o Steve is currently working on:
+	X509 V3 extension code including:
+	1. Support for the more common PKIX extensions.
+	2. Proper (or at least usable) certificate chain verification.
+	3. Support in standard applications (req, x509, ca).
+	4. Documentation on how all the above works.
+	Next on the list is probably PKCS#12 integration.
 
   NEEDS PATCH
 
@@ -75,19 +83,15 @@
                to date.
                Paul +1
 
-    o  Ralf has ported Stephen's pkcs12 program to OpenSSL (the 
-       ASN.1 stuff Eric recently changed :-( ), but needs some help from
-       Stephen at two source locations.  Stephen itself also has ported his
-       internal pkcs12 0.53 version to OpenSSL, but thinks we still shouldn't
-       incorporate it into OpenSSL because it needs more cleanups. Ralf still
-       thinks pkcs12 should be incorporated better now than later because it's
-       nasty to not have it in the core - one always has to install it
-       manually and a lot of people use it. So, should we incorporate it?
-       BTW, we have to be carefully because of the pkcs12 license: There are
-       some things which don't match the OpenSSL license, so Stephen has to
-       change it for us when we want to incorporate the code.
-
-       Status: Ralf +1, Stephen -0
+    o The EVP and ASN1 stuff is a mess. Currently you have one EVP_CIPHER
+      structure for each cipher. This may make sense for things like DES but
+      for variable length ciphers like RC2 and RC4 it is NBG. Need a way to
+      use the EVP interface and set up the cipher parameters. The ASN1 stuff
+      is also foo wrt ciphers whose AlgorithmIdentifier has more than just
+      an IV in it (e.g. RC2, RC5). This also means that EVP_Seal and EVP_Open
+      don't work unless the key length matches the fixed value (some vendors
+      use a key length decided by the size of the RSA encrypted key and expect
+      RC2 to adapt).
 
   WISHES
 

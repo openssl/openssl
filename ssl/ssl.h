@@ -745,14 +745,6 @@ struct ssl_st
 #define SSL_CTX_set_tmp_dh(ctx,dh) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
 
-/* For the next 2, the callbacks are 
- * RSA *tmp_rsa_cb(SSL *ssl,int export)
- * DH *tmp_dh_cb(SSL *ssl,int export)
- */
-void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,
-				  RSA *(*cb)(SSL *ssl,int export));
-void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int export));
-
 #define SSL_CTX_add_extra_chain_cert(ctx,x509) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)
 
@@ -970,6 +962,14 @@ int SSL_CTX_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 
 int SSL_get_ex_data_X509_STORE_CTX_idx(void );
 
+/* For the next 2, the callbacks are 
+ * RSA *tmp_rsa_cb(SSL *ssl,int export)
+ * DH *tmp_dh_cb(SSL *ssl,int export)
+ */
+void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,
+				  RSA *(*cb)(SSL *ssl,int export));
+void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int export));
+
 #else
 
 BIO_METHOD *BIO_f_ssl();
@@ -1178,6 +1178,13 @@ char *SSL_CTX_get_ex_data();
 int SSL_CTX_get_ex_new_index();
 
 int SSL_get_ex_data_X509_STORE_CTX_idx();
+
+/* For the next 2, the callbacks are 
+ * RSA *tmp_rsa_cb(SSL *ssl,int export)
+ * DH *tmp_dh_cb(SSL *ssl,int export)
+ */
+void SSL_CTX_set_tmp_rsa_callback();
+void SSL_CTX_set_tmp_dh_callback();
 
 /* #endif */
 
