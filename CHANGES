@@ -12,8 +12,8 @@
   *) Use better test patterns in bntest.
      [Ulf Möller]
 
-  *) Added Kerberos Cipher Suites to be used with TLS, as written in RFC
-     2712.
+  *) Added Kerberos Cipher Suites to be used with TLS, as written in
+     RFC 2712.
      [Veers Staats <staatsvr@asc.hpc.mil>,
       Jeffrey Altman <jaltman@columbia.edu>, via Richard Levitte]
 
