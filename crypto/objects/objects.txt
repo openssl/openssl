@@ -439,7 +439,6 @@ id-pda 2		: id-pda-placeOfBirth
 id-pda 3		: id-pda-gender
 id-pda 4		: id-pda-countryOfCitizenship
 id-pda 5		: id-pda-countryOfResidence
-id-pda 6		: id-pda-pseudonym
 
 # attribute certificate attributes
 id-aca 1		: id-aca-authenticationInfo

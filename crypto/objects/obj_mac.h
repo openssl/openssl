@@ -1,4 +1,10 @@
-/* lib/obj/obj_mac.h */
+/* crypto/objects/obj_mac.h */
+
+/* THIS FILE IS GENERATED FROM objects.txt by objects.pl via the
+ * following command:
+ * perl objects.pl objects.txt obj_mac.num obj_mac.h
+ */
+
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,11 +62,6 @@
  * [including the GNU Public Licence.]
  */
 
-/* THIS FILE IS GENERATED FROM objects.txt by objects.pl via the
- * following command:
- * perl objects.pl objects.txt obj_mac.num obj_mac.h
- */
-
 #define SN_undef			"UNDEF"
 #define LN_undef			"undefined"
 #define NID_undef			0
@@ -68,7 +69,7 @@
 
 #define SN_ccitt		"CCITT"
 #define LN_ccitt		"ccitt"
-#define NID_ccitt		410
+#define NID_ccitt		404
 #define OBJ_ccitt		0L
 
 #define SN_iso		"ISO"
@@ -78,7 +79,7 @@
 
 #define SN_joint_iso_ccitt		"JOINT-ISO-CCITT"
 #define LN_joint_iso_ccitt		"joint-iso-ccitt"
-#define NID_joint_iso_ccitt		493
+#define NID_joint_iso_ccitt		393
 #define OBJ_joint_iso_ccitt		2L
 
 #define SN_member_body		"member-body"
@@ -88,11 +89,11 @@
 
 #define SN_selected_attribute_types		"selected-attribute-types"
 #define LN_selected_attribute_types		"Selected Attribute Types"
-#define NID_selected_attribute_types		494
+#define NID_selected_attribute_types		394
 #define OBJ_selected_attribute_types		OBJ_joint_iso_ccitt,5L,1L,5L
 
 #define SN_clearance		"clearance"
-#define NID_clearance		495
+#define NID_clearance		395
 #define OBJ_clearance		OBJ_selected_attribute_types,55L
 
 #define SN_ISO_US		"ISO-US"
@@ -122,23 +123,23 @@
 
 #define SN_ansi_X9_62		"ansi-X9-62"
 #define LN_ansi_X9_62		"ANSI X9.62"
-#define NID_ansi_X9_62		480
+#define NID_ansi_X9_62		405
 #define OBJ_ansi_X9_62		OBJ_ISO_US,10045L
 
 #define OBJ_X9_62_id_fieldType		OBJ_ansi_X9_62,1L
 
 #define SN_X9_62_prime_field		"prime-field"
-#define NID_X9_62_prime_field		481
+#define NID_X9_62_prime_field		406
 #define OBJ_X9_62_prime_field		OBJ_X9_62_id_fieldType,1L
 
 #define SN_X9_62_characteristic_two_field		"characteristic-two-field"
-#define NID_X9_62_characteristic_two_field		482
+#define NID_X9_62_characteristic_two_field		407
 #define OBJ_X9_62_characteristic_two_field		OBJ_X9_62_id_fieldType,2L
 
 #define OBJ_X9_62_id_publicKeyType		OBJ_ansi_X9_62,2L
 
 #define SN_X9_62_id_ecPublicKey		"id-ecPublicKey"
-#define NID_X9_62_id_ecPublicKey		483
+#define NID_X9_62_id_ecPublicKey		408
 #define OBJ_X9_62_id_ecPublicKey		OBJ_X9_62_id_publicKeyType,1L
 
 #define OBJ_X9_62_ellipticCurve		OBJ_ansi_X9_62,3L
@@ -148,37 +149,37 @@
 #define OBJ_X9_62_primeCurve		OBJ_X9_62_ellipticCurve,1L
 
 #define SN_X9_62_prime192v1		"prime192v1"
-#define NID_X9_62_prime192v1		484
+#define NID_X9_62_prime192v1		409
 #define OBJ_X9_62_prime192v1		OBJ_X9_62_primeCurve,1L
 
 #define SN_X9_62_prime192v2		"prime192v2"
-#define NID_X9_62_prime192v2		485
+#define NID_X9_62_prime192v2		410
 #define OBJ_X9_62_prime192v2		OBJ_X9_62_primeCurve,2L
 
 #define SN_X9_62_prime192v3		"prime192v3"
-#define NID_X9_62_prime192v3		486
+#define NID_X9_62_prime192v3		411
 #define OBJ_X9_62_prime192v3		OBJ_X9_62_primeCurve,3L
 
 #define SN_X9_62_prime239v1		"prime239v1"
-#define NID_X9_62_prime239v1		487
+#define NID_X9_62_prime239v1		412
 #define OBJ_X9_62_prime239v1		OBJ_X9_62_primeCurve,4L
 
 #define SN_X9_62_prime239v2		"prime239v2"
-#define NID_X9_62_prime239v2		488
+#define NID_X9_62_prime239v2		413
 #define OBJ_X9_62_prime239v2		OBJ_X9_62_primeCurve,5L
 
 #define SN_X9_62_prime239v3		"prime239v3"
-#define NID_X9_62_prime239v3		489
+#define NID_X9_62_prime239v3		414
 #define OBJ_X9_62_prime239v3		OBJ_X9_62_primeCurve,6L
 
 #define SN_X9_62_prime256v1		"prime256v1"
-#define NID_X9_62_prime256v1		490
+#define NID_X9_62_prime256v1		415
 #define OBJ_X9_62_prime256v1		OBJ_X9_62_primeCurve,7L
 
 #define OBJ_X9_62_id_ecSigType		OBJ_ansi_X9_62,4L
 
 #define SN_ecdsa_with_SHA1		"ecdsa-with-SHA1"
-#define NID_ecdsa_with_SHA1		491
+#define NID_ecdsa_with_SHA1		416
 #define OBJ_ecdsa_with_SHA1		OBJ_X9_62_id_ecSigType,1L
 
 #define SN_cast5_cbc		"CAST5-CBC"
@@ -227,7 +228,7 @@
 
 #define SN_md4WithRSAEncryption		"RSA-MD4"
 #define LN_md4WithRSAEncryption		"md4WithRSAEncryption"
-#define NID_md4WithRSAEncryption		503
+#define NID_md4WithRSAEncryption		396
 #define OBJ_md4WithRSAEncryption		OBJ_pkcs1,3L
 
 #define SN_md5WithRSAEncryption		"RSA-MD5"
@@ -660,7 +661,7 @@
 
 #define SN_ms_csp_name		"CSPName"
 #define LN_ms_csp_name		"Microsoft CSP Name"
-#define NID_ms_csp_name		492
+#define NID_ms_csp_name		417
 #define OBJ_ms_csp_name		1L,3L,6L,1L,4L,1L,311L,17L,1L
 
 #define OBJ_certTypes		OBJ_pkcs9,22L
@@ -1047,12 +1048,12 @@
 #define OBJ_sbqp_routerIdentifier		OBJ_id_pe,9L
 
 #define SN_ac_proxying		"ac-proxying"
-#define NID_ac_proxying		496
+#define NID_ac_proxying		397
 #define OBJ_ac_proxying		OBJ_id_pe,10L
 
 #define SN_sinfo_access		"subjectInfoAccess"
 #define LN_sinfo_access		"Subject Information Access"
-#define NID_sinfo_access		497
+#define NID_sinfo_access		398
 #define OBJ_sinfo_access		OBJ_id_pe,11L
 
 #define SN_id_qt_cps		"id-qt-cps"
@@ -1339,10 +1340,6 @@
 #define NID_id_pda_countryOfResidence		353
 #define OBJ_id_pda_countryOfResidence		OBJ_id_pda,5L
 
-#define SN_id_pda_pseudonym		"id-pda-pseudonym"
-#define NID_id_pda_pseudonym		350
-#define OBJ_id_pda_pseudonym		OBJ_id_pda,6L
-
 #define SN_id_aca_authenticationInfo		"id-aca-authenticationInfo"
 #define NID_id_aca_authenticationInfo		354
 #define OBJ_id_aca_authenticationInfo		OBJ_id_aca,1L
@@ -1364,7 +1361,7 @@
 #define OBJ_id_aca_role		OBJ_id_aca,5L
 
 #define SN_id_aca_encAttrs		"id-aca-encAttrs"
-#define NID_id_aca_encAttrs		498
+#define NID_id_aca_encAttrs		399
 #define OBJ_id_aca_encAttrs		OBJ_id_aca,6L
 
 #define SN_id_qcs_pkixQCSyntax_v1		"id-qcs-pkixQCSyntax-v1"
@@ -1661,7 +1658,7 @@
 
 #define SN_role		"role"
 #define LN_role		"role"
-#define NID_role		499
+#define NID_role		400
 #define OBJ_role		OBJ_X509,72L
 
 #define SN_X500algorithms		"X500algorithms"
@@ -1755,7 +1752,7 @@
 
 #define SN_policy_constraints		"policyConstraints"
 #define LN_policy_constraints		"X509v3 Policy Constraints"
-#define NID_policy_constraints		500
+#define NID_policy_constraints		401
 #define OBJ_policy_constraints		OBJ_id_ce,36L
 
 #define SN_ext_key_usage		"extendedKeyUsage"
@@ -1765,12 +1762,12 @@
 
 #define SN_target_information		"targetInformation"
 #define LN_target_information		"X509v3 AC Targeting"
-#define NID_target_information		501
+#define NID_target_information		402
 #define OBJ_target_information		OBJ_id_ce,55L
 
 #define SN_no_rev_avail		"noRevAvail"
 #define LN_no_rev_avail		"X509v3 No Revocation Available"
-#define NID_no_rev_avail		502
+#define NID_no_rev_avail		403
 #define OBJ_no_rev_avail		OBJ_id_ce,56L
 
 #define SN_netscape		"Netscape"
@@ -1918,148 +1915,148 @@
 
 #define SN_aes_128_ecb		"AES-128-ECB"
 #define LN_aes_128_ecb		"aes-128-ecb"
-#define NID_aes_128_ecb		394
+#define NID_aes_128_ecb		418
 #define OBJ_aes_128_ecb		OBJ_aes,1L
 
 #define SN_aes_128_cbc		"AES-128-CBC"
 #define LN_aes_128_cbc		"aes-128-cbc"
-#define NID_aes_128_cbc		395
+#define NID_aes_128_cbc		419
 #define OBJ_aes_128_cbc		OBJ_aes,2L
 
 #define SN_aes_128_ofb		"AES-128-OFB"
 #define LN_aes_128_ofb		"aes-128-ofb"
-#define NID_aes_128_ofb		396
+#define NID_aes_128_ofb		420
 #define OBJ_aes_128_ofb		OBJ_aes,3L
 
 #define SN_aes_128_cfb		"AES-128-CFB"
 #define LN_aes_128_cfb		"aes-128-cfb"
-#define NID_aes_128_cfb		397
+#define NID_aes_128_cfb		421
 #define OBJ_aes_128_cfb		OBJ_aes,4L
 
 #define SN_aes_192_ecb		"AES-192-ECB"
 #define LN_aes_192_ecb		"aes-192-ecb"
-#define NID_aes_192_ecb		398
+#define NID_aes_192_ecb		422
 #define OBJ_aes_192_ecb		OBJ_aes,21L
 
 #define SN_aes_192_cbc		"AES-192-CBC"
 #define LN_aes_192_cbc		"aes-192-cbc"
-#define NID_aes_192_cbc		399
+#define NID_aes_192_cbc		423
 #define OBJ_aes_192_cbc		OBJ_aes,22L
 
 #define SN_aes_192_ofb		"AES-192-OFB"
 #define LN_aes_192_ofb		"aes-192-ofb"
-#define NID_aes_192_ofb		400
+#define NID_aes_192_ofb		424
 #define OBJ_aes_192_ofb		OBJ_aes,23L
 
 #define SN_aes_192_cfb		"AES-192-CFB"
 #define LN_aes_192_cfb		"aes-192-cfb"
-#define NID_aes_192_cfb		401
+#define NID_aes_192_cfb		425
 #define OBJ_aes_192_cfb		OBJ_aes,24L
 
 #define SN_aes_256_ecb		"AES-256-ECB"
 #define LN_aes_256_ecb		"aes-256-ecb"
-#define NID_aes_256_ecb		402
+#define NID_aes_256_ecb		426
 #define OBJ_aes_256_ecb		OBJ_aes,41L
 
 #define SN_aes_256_cbc		"AES-256-CBC"
 #define LN_aes_256_cbc		"aes-256-cbc"
-#define NID_aes_256_cbc		403
+#define NID_aes_256_cbc		427
 #define OBJ_aes_256_cbc		OBJ_aes,42L
 
 #define SN_aes_256_ofb		"AES-256-OFB"
 #define LN_aes_256_ofb		"aes-256-ofb"
-#define NID_aes_256_ofb		404
+#define NID_aes_256_ofb		428
 #define OBJ_aes_256_ofb		OBJ_aes,43L
 
 #define SN_aes_256_cfb		"AES-256-CFB"
 #define LN_aes_256_cfb		"aes-256-cfb"
-#define NID_aes_256_cfb		405
+#define NID_aes_256_cfb		429
 #define OBJ_aes_256_cfb		OBJ_aes,44L
 
 #define SN_hold_instruction_code		"holdInstructionCode"
 #define LN_hold_instruction_code		"Hold Instruction Code"
-#define NID_hold_instruction_code		406
+#define NID_hold_instruction_code		430
 #define OBJ_hold_instruction_code		OBJ_id_ce,23L
 
 #define OBJ_holdInstruction		OBJ_X9_57,2L
 
 #define SN_hold_instruction_none		"holdInstructionNone"
 #define LN_hold_instruction_none		"Hold Instruction None"
-#define NID_hold_instruction_none		407
+#define NID_hold_instruction_none		431
 #define OBJ_hold_instruction_none		OBJ_holdInstruction,1L
 
 #define SN_hold_instruction_call_issuer		"holdInstructionCallIssuer"
 #define LN_hold_instruction_call_issuer		"Hold Instruction Call Issuer"
-#define NID_hold_instruction_call_issuer		408
+#define NID_hold_instruction_call_issuer		432
 #define OBJ_hold_instruction_call_issuer		OBJ_holdInstruction,2L
 
 #define SN_hold_instruction_reject		"holdInstructionReject"
 #define LN_hold_instruction_reject		"Hold Instruction Reject"
-#define NID_hold_instruction_reject		409
+#define NID_hold_instruction_reject		433
 #define OBJ_hold_instruction_reject		OBJ_holdInstruction,3L
 
 #define SN_data		"data"
-#define NID_data		411
+#define NID_data		434
 #define OBJ_data		OBJ_ccitt,9L
 
 #define SN_pss		"pss"
-#define NID_pss		412
+#define NID_pss		435
 #define OBJ_pss		OBJ_data,2342L
 
 #define SN_ucl		"ucl"
-#define NID_ucl		413
+#define NID_ucl		436
 #define OBJ_ucl		OBJ_pss,19200300L
 
 #define SN_pilot		"pilot"
-#define NID_pilot		414
+#define NID_pilot		437
 #define OBJ_pilot		OBJ_ucl,100L
 
 #define LN_pilotAttributeType		"pilotAttributeType"
-#define NID_pilotAttributeType		415
+#define NID_pilotAttributeType		438
 #define OBJ_pilotAttributeType		OBJ_pilot,1L
 
 #define LN_pilotAttributeSyntax		"pilotAttributeSyntax"
-#define NID_pilotAttributeSyntax		416
+#define NID_pilotAttributeSyntax		439
 #define OBJ_pilotAttributeSyntax		OBJ_pilot,3L
 
 #define LN_pilotObjectClass		"pilotObjectClass"
-#define NID_pilotObjectClass		417
+#define NID_pilotObjectClass		440
 #define OBJ_pilotObjectClass		OBJ_pilot,4L
 
 #define LN_pilotGroups		"pilotGroups"
-#define NID_pilotGroups		418
+#define NID_pilotGroups		441
 #define OBJ_pilotGroups		OBJ_pilot,10L
 
 #define LN_iA5StringSyntax		"iA5StringSyntax"
-#define NID_iA5StringSyntax		419
+#define NID_iA5StringSyntax		442
 #define OBJ_iA5StringSyntax		OBJ_pilotAttributeSyntax,4L
 
 #define LN_caseIgnoreIA5StringSyntax		"caseIgnoreIA5StringSyntax"
-#define NID_caseIgnoreIA5StringSyntax		420
+#define NID_caseIgnoreIA5StringSyntax		443
 #define OBJ_caseIgnoreIA5StringSyntax		OBJ_pilotAttributeSyntax,5L
 
 #define LN_pilotObject		"pilotObject"
-#define NID_pilotObject		421
+#define NID_pilotObject		444
 #define OBJ_pilotObject		OBJ_pilotObjectClass,3L
 
 #define LN_pilotPerson		"pilotPerson"
-#define NID_pilotPerson		422
+#define NID_pilotPerson		445
 #define OBJ_pilotPerson		OBJ_pilotObjectClass,4L
 
 #define SN_account		"account"
-#define NID_account		423
+#define NID_account		446
 #define OBJ_account		OBJ_pilotObjectClass,5L
 
 #define SN_document		"document"
-#define NID_document		424
+#define NID_document		447
 #define OBJ_document		OBJ_pilotObjectClass,6L
 
 #define SN_room		"room"
-#define NID_room		425
+#define NID_room		448
 #define OBJ_room		OBJ_pilotObjectClass,7L
 
 #define LN_documentSeries		"documentSeries"
-#define NID_documentSeries		426
+#define NID_documentSeries		449
 #define OBJ_documentSeries		OBJ_pilotObjectClass,9L
 
 #define SN_Domain		"domain"
@@ -2068,115 +2065,115 @@
 #define OBJ_Domain		OBJ_pilotObjectClass,13L
 
 #define LN_rFC822localPart		"rFC822localPart"
-#define NID_rFC822localPart		427
+#define NID_rFC822localPart		450
 #define OBJ_rFC822localPart		OBJ_pilotObjectClass,14L
 
 #define LN_dNSDomain		"dNSDomain"
-#define NID_dNSDomain		428
+#define NID_dNSDomain		451
 #define OBJ_dNSDomain		OBJ_pilotObjectClass,15L
 
 #define LN_domainRelatedObject		"domainRelatedObject"
-#define NID_domainRelatedObject		429
+#define NID_domainRelatedObject		452
 #define OBJ_domainRelatedObject		OBJ_pilotObjectClass,17L
 
 #define LN_friendlyCountry		"friendlyCountry"
-#define NID_friendlyCountry		430
+#define NID_friendlyCountry		453
 #define OBJ_friendlyCountry		OBJ_pilotObjectClass,18L
 
 #define LN_simpleSecurityObject		"simpleSecurityObject"
-#define NID_simpleSecurityObject		431
+#define NID_simpleSecurityObject		454
 #define OBJ_simpleSecurityObject		OBJ_pilotObjectClass,19L
 
 #define LN_pilotOrganization		"pilotOrganization"
-#define NID_pilotOrganization		432
+#define NID_pilotOrganization		455
 #define OBJ_pilotOrganization		OBJ_pilotObjectClass,20L
 
 #define LN_pilotDSA		"pilotDSA"
-#define NID_pilotDSA		433
+#define NID_pilotDSA		456
 #define OBJ_pilotDSA		OBJ_pilotObjectClass,21L
 
 #define LN_qualityLabelledData		"qualityLabelledData"
-#define NID_qualityLabelledData		434
+#define NID_qualityLabelledData		457
 #define OBJ_qualityLabelledData		OBJ_pilotObjectClass,22L
 
 #define SN_userid		"userid"
-#define NID_userid		435
+#define NID_userid		458
 #define OBJ_userid		OBJ_pilotAttributeType,1L
 
 #define LN_textEncodedORAddress		"textEncodedORAddress"
-#define NID_textEncodedORAddress		436
+#define NID_textEncodedORAddress		459
 #define OBJ_textEncodedORAddress		OBJ_pilotAttributeType,2L
 
 #define LN_rfc822Mailbox		"rfc822Mailbox"
-#define NID_rfc822Mailbox		437
+#define NID_rfc822Mailbox		460
 #define OBJ_rfc822Mailbox		OBJ_pilotAttributeType,3L
 
 #define SN_info		"info"
-#define NID_info		438
+#define NID_info		461
 #define OBJ_info		OBJ_pilotAttributeType,4L
 
 #define LN_favouriteDrink		"favouriteDrink"
-#define NID_favouriteDrink		439
+#define NID_favouriteDrink		462
 #define OBJ_favouriteDrink		OBJ_pilotAttributeType,5L
 
 #define LN_roomNumber		"roomNumber"
-#define NID_roomNumber		440
+#define NID_roomNumber		463
 #define OBJ_roomNumber		OBJ_pilotAttributeType,6L
 
 #define SN_photo		"photo"
-#define NID_photo		441
+#define NID_photo		464
 #define OBJ_photo		OBJ_pilotAttributeType,7L
 
 #define LN_userClass		"userClass"
-#define NID_userClass		442
+#define NID_userClass		465
 #define OBJ_userClass		OBJ_pilotAttributeType,8L
 
 #define SN_host		"host"
-#define NID_host		443
+#define NID_host		466
 #define OBJ_host		OBJ_pilotAttributeType,9L
 
 #define SN_manager		"manager"
-#define NID_manager		444
+#define NID_manager		467
 #define OBJ_manager		OBJ_pilotAttributeType,10L
 
 #define LN_documentIdentifier		"documentIdentifier"
-#define NID_documentIdentifier		445
+#define NID_documentIdentifier		468
 #define OBJ_documentIdentifier		OBJ_pilotAttributeType,11L
 
 #define LN_documentTitle		"documentTitle"
-#define NID_documentTitle		446
+#define NID_documentTitle		469
 #define OBJ_documentTitle		OBJ_pilotAttributeType,12L
 
 #define LN_documentVersion		"documentVersion"
-#define NID_documentVersion		447
+#define NID_documentVersion		470
 #define OBJ_documentVersion		OBJ_pilotAttributeType,13L
 
 #define LN_documentAuthor		"documentAuthor"
-#define NID_documentAuthor		448
+#define NID_documentAuthor		471
 #define OBJ_documentAuthor		OBJ_pilotAttributeType,14L
 
 #define LN_documentLocation		"documentLocation"
-#define NID_documentLocation		449
+#define NID_documentLocation		472
 #define OBJ_documentLocation		OBJ_pilotAttributeType,15L
 
 #define LN_homeTelephoneNumber		"homeTelephoneNumber"
-#define NID_homeTelephoneNumber		450
+#define NID_homeTelephoneNumber		473
 #define OBJ_homeTelephoneNumber		OBJ_pilotAttributeType,20L
 
 #define SN_secretary		"secretary"
-#define NID_secretary		451
+#define NID_secretary		474
 #define OBJ_secretary		OBJ_pilotAttributeType,21L
 
 #define LN_otherMailbox		"otherMailbox"
-#define NID_otherMailbox		452
+#define NID_otherMailbox		475
 #define OBJ_otherMailbox		OBJ_pilotAttributeType,22L
 
 #define LN_lastModifiedTime		"lastModifiedTime"
-#define NID_lastModifiedTime		453
+#define NID_lastModifiedTime		476
 #define OBJ_lastModifiedTime		OBJ_pilotAttributeType,23L
 
 #define LN_lastModifiedBy		"lastModifiedBy"
-#define NID_lastModifiedBy		454
+#define NID_lastModifiedBy		477
 #define OBJ_lastModifiedBy		OBJ_pilotAttributeType,24L
 
 #define SN_domainComponent		"DC"
@@ -2185,102 +2182,102 @@
 #define OBJ_domainComponent		OBJ_pilotAttributeType,25L
 
 #define LN_aRecord		"aRecord"
-#define NID_aRecord		455
+#define NID_aRecord		478
 #define OBJ_aRecord		OBJ_pilotAttributeType,26L
 
 #define LN_pilotAttributeType27		"pilotAttributeType27"
-#define NID_pilotAttributeType27		456
+#define NID_pilotAttributeType27		479
 #define OBJ_pilotAttributeType27		OBJ_pilotAttributeType,27L
 
 #define LN_mXRecord		"mXRecord"
-#define NID_mXRecord		457
+#define NID_mXRecord		480
 #define OBJ_mXRecord		OBJ_pilotAttributeType,28L
 
 #define LN_nSRecord		"nSRecord"
-#define NID_nSRecord		458
+#define NID_nSRecord		481
 #define OBJ_nSRecord		OBJ_pilotAttributeType,29L
 
 #define LN_sOARecord		"sOARecord"
-#define NID_sOARecord		459
+#define NID_sOARecord		482
 #define OBJ_sOARecord		OBJ_pilotAttributeType,30L
 
 #define LN_cNAMERecord		"cNAMERecord"
-#define NID_cNAMERecord		460
+#define NID_cNAMERecord		483
 #define OBJ_cNAMERecord		OBJ_pilotAttributeType,31L
 
 #define LN_associatedDomain		"associatedDomain"
-#define NID_associatedDomain		461
+#define NID_associatedDomain		484
 #define OBJ_associatedDomain		OBJ_pilotAttributeType,37L
 
 #define LN_associatedName		"associatedName"
-#define NID_associatedName		462
+#define NID_associatedName		485
 #define OBJ_associatedName		OBJ_pilotAttributeType,38L
 
 #define LN_homePostalAddress		"homePostalAddress"
-#define NID_homePostalAddress		463
+#define NID_homePostalAddress		486
 #define OBJ_homePostalAddress		OBJ_pilotAttributeType,39L
 
 #define LN_personalTitle		"personalTitle"
-#define NID_personalTitle		464
+#define NID_personalTitle		487
 #define OBJ_personalTitle		OBJ_pilotAttributeType,40L
 
 #define LN_mobileTelephoneNumber		"mobileTelephoneNumber"
-#define NID_mobileTelephoneNumber		465
+#define NID_mobileTelephoneNumber		488
 #define OBJ_mobileTelephoneNumber		OBJ_pilotAttributeType,41L
 
 #define LN_pagerTelephoneNumber		"pagerTelephoneNumber"
-#define NID_pagerTelephoneNumber		466
+#define NID_pagerTelephoneNumber		489
 #define OBJ_pagerTelephoneNumber		OBJ_pilotAttributeType,42L
 
 #define LN_friendlyCountryName		"friendlyCountryName"
-#define NID_friendlyCountryName		467
+#define NID_friendlyCountryName		490
 #define OBJ_friendlyCountryName		OBJ_pilotAttributeType,43L
 
 #define LN_organizationalStatus		"organizationalStatus"
-#define NID_organizationalStatus		468
+#define NID_organizationalStatus		491
 #define OBJ_organizationalStatus		OBJ_pilotAttributeType,45L
 
 #define LN_janetMailbox		"janetMailbox"
-#define NID_janetMailbox		469
+#define NID_janetMailbox		492
 #define OBJ_janetMailbox		OBJ_pilotAttributeType,46L
 
 #define LN_mailPreferenceOption		"mailPreferenceOption"
-#define NID_mailPreferenceOption		470
+#define NID_mailPreferenceOption		493
 #define OBJ_mailPreferenceOption		OBJ_pilotAttributeType,47L
 
 #define LN_buildingName		"buildingName"
-#define NID_buildingName		471
+#define NID_buildingName		494
 #define OBJ_buildingName		OBJ_pilotAttributeType,48L
 
 #define LN_dSAQuality		"dSAQuality"
-#define NID_dSAQuality		472
+#define NID_dSAQuality		495
 #define OBJ_dSAQuality		OBJ_pilotAttributeType,49L
 
 #define LN_singleLevelQuality		"singleLevelQuality"
-#define NID_singleLevelQuality		473
+#define NID_singleLevelQuality		496
 #define OBJ_singleLevelQuality		OBJ_pilotAttributeType,50L
 
 #define LN_subtreeMinimumQuality		"subtreeMinimumQuality"
-#define NID_subtreeMinimumQuality		474
+#define NID_subtreeMinimumQuality		497
 #define OBJ_subtreeMinimumQuality		OBJ_pilotAttributeType,51L
 
 #define LN_subtreeMaximumQuality		"subtreeMaximumQuality"
-#define NID_subtreeMaximumQuality		475
+#define NID_subtreeMaximumQuality		498
 #define OBJ_subtreeMaximumQuality		OBJ_pilotAttributeType,52L
 
 #define LN_personalSignature		"personalSignature"
-#define NID_personalSignature		476
+#define NID_personalSignature		499
 #define OBJ_personalSignature		OBJ_pilotAttributeType,53L
 
 #define LN_dITRedirect		"dITRedirect"
-#define NID_dITRedirect		477
+#define NID_dITRedirect		500
 #define OBJ_dITRedirect		OBJ_pilotAttributeType,54L
 
 #define SN_audio		"audio"
-#define NID_audio		478
+#define NID_audio		501
 #define OBJ_audio		OBJ_pilotAttributeType,55L
 
 #define LN_documentPublisher		"documentPublisher"
-#define NID_documentPublisher		479
+#define NID_documentPublisher		502
 #define OBJ_documentPublisher		OBJ_pilotAttributeType,56L
 
