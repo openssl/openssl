@@ -242,9 +242,9 @@ struct bignum_ctx
 
 #define bn_clear_top2max(a) \
 	{ \
-	int      index = (a)->dmax - (a)->top; \
+	int      ind = (a)->dmax - (a)->top; \
 	BN_ULONG *ftl = &(a)->d[(a)->top-1]; \
-	for (; index != 0; index--) \
+	for (; ind != 0; ind--) \
 		*(++ftl) = 0x0; \
 	}
 
