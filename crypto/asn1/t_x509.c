@@ -182,6 +182,8 @@ X509 *x;
 #endif
 		BIO_printf(bp,"%12sUnknown Public Key:\n","");
 
+	EVP_PKEY_free(pkey);
+
 	n=X509_get_ext_count(x);
 	if (n > 0)
 		{

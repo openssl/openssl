@@ -345,11 +345,13 @@ X509_STORE_CTX *ctx;
 				}
 			if (X509_verify(xs,pkey) <= 0)
 				{
+				EVP_PKEY_free(pkey);
 				ctx->error=X509_V_ERR_CERT_SIGNATURE_FAILURE;
 				ctx->current_cert=xs;
 				ok=(*cb)(0,ctx);
 				if (!ok) goto end;
 				}
+			EVP_PKEY_free(pkey);
 			pkey=NULL;
 
 			i=X509_cmp_current_time(X509_get_notBefore(xs));
@@ -403,6 +405,7 @@ X509_STORE_CTX *ctx;
 		}
 	ok=1;
 end:
+	EVP_PKEY_free(pkey);
 	return(ok);
 	}
 
@@ -492,6 +495,7 @@ STACK *chain;
 			break;
 		else
 			{
+			EVP_PKEY_free(ktmp);
 			ktmp=NULL;
 			}
 		}
@@ -506,10 +510,11 @@ STACK *chain;
 		{
 		ktmp2=X509_get_pubkey((X509 *)sk_value(chain,j));
 		EVP_PKEY_copy_parameters(ktmp2,ktmp);
+		EVP_PKEY_free(ktmp2);
 		}
 	
-	if (pkey != NULL)
-		EVP_PKEY_copy_parameters(pkey,ktmp);
+	if (pkey != NULL) EVP_PKEY_copy_parameters(pkey,ktmp);
+	EVP_PKEY_free(ktmp);
 	return(1);
 	}
 

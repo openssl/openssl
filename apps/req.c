@@ -663,7 +663,10 @@ loop:
 			}
 
 		i=X509_REQ_verify(req,pkey);
-		if (tmp) pkey=NULL;
+		if (tmp) {
+			EVP_PKEY_free(pkey);
+			pkey=NULL;
+		}
 
 		if (i < 0)
 			{

@@ -108,8 +108,9 @@ EVP_PKEY *pkey;
 		break;
 		}
 
-	if (EVP_PKEY_size(pkey) <= 512)
+	if (EVP_PKEY_size(pk) <= 512)
 		ret|=EVP_PKT_EXP;
+	if(pkey==NULL) EVP_PKEY_free(pk);
 	return(ret);
 	}
 

@@ -305,6 +305,7 @@ bad:
 		}
 
 	ERR_load_crypto_strings();
+	X509v3_add_netscape_extensions();
 
 	if (!X509_STORE_set_default_paths(ctx))
 		{
@@ -368,6 +369,7 @@ bad:
 	                goto end;
 	                }
 		i=X509_REQ_verify(req,pkey);
+		EVP_PKEY_free(pkey);
 		if (i < 0)
 			{
 			BIO_printf(bio_err,"Signature verification error\n");
@@ -481,6 +483,7 @@ bad:
 				else
 					BIO_printf(STDout,"Wrong Algorithm type");
 				BIO_printf(STDout,"\n");
+				EVP_PKEY_free(pkey);
 				}
 			else
 #endif
@@ -688,6 +691,7 @@ end:
 	if (Upkey != NULL) EVP_PKEY_free(Upkey);
 	if (CApkey != NULL) EVP_PKEY_free(CApkey);
 	if (rq != NULL) X509_REQ_free(rq);
+	X509v3_cleanup_extensions();
 	EXIT(ret);
 	}
 

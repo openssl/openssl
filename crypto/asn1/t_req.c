@@ -138,6 +138,8 @@ X509_REQ *x;
 #endif
 		BIO_printf(bp,"%12sUnknown Public Key:\n","");
 
+	EVP_PKEY_free(pkey);
+
 	/* may not be */
 	sprintf(str,"%8sAttributes:\n","");
 	if (BIO_puts(bp,str) <= 0) goto err;
