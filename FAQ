@@ -577,10 +577,10 @@ As of 0.9.7 assembler routines were overhauled for position independence
 of the machine code, which is essential for shared library support. For
 some reason OpenBSD is equipped with an out-of-date GNU assembler which
 finds the new code offensive. To work around the problem, configure with
-no-asm (and sacrifice a great deal of performance) or upgrade /usr/bin/as.
+no-asm (and sacrifice a great deal of performance) or patch your assembler
+according to <URL: http://www.openssl.org/~appro/gas-1.92.3.OpenBSD.patch>.
 For your convenience a pre-compiled replacement binary is provided at
-http://www.openssl.org/~appro/i386-openbsd3-as, which is compiled from
-binutils-2.8 released in 1997.
+<URL: http://www.openssl.org/~appro/gas-1.92.3.OpenBSD.bin>.
 
 [PROG] ========================================================================
 
