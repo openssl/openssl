@@ -231,6 +231,7 @@ X509_STORE *X509_STORE_new()
 	ret->verify_cb=NULL;
 	memset(&ret->ex_data,0,sizeof(CRYPTO_EX_DATA));
 	ret->references=1;
+	ret->depth=0;
 	return(ret);
 	}
 

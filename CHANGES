@@ -5,6 +5,11 @@
 
  Changes between 0.9.1c and 0.9.2
 
+  *) Make sure the already existing X509_STORE->depth variable is initialized
+     in X509_STORE_new(), but document the fact that this variable is still
+     unused in the certificate verification process.
+     [Ralf S. Engelschall]
+
   *) Fix the various library and apps files to free up pkeys obtained from
      EVP_PUBKEY_get() et al. Also allow x509.c to handle netscape extensions.
      [Steve Henson]
