@@ -79,6 +79,7 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-md2_dgst.o: md2.h ../../include/bio.h ../../include/buffer.h
-md2_one.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-md2_one.o: ../cryptlib.h ../crypto.h md2.h
+md2_dgst.o: md2.h
+md2_one.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+md2_one.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
+md2_one.o: md2.h

@@ -91,9 +91,10 @@ rsa_eay.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 rsa_eay.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
 rsa_eay.o: ../../include/stack.h ../cryptlib.h ../crypto.h rsa.h
 rsa_err.o: ../../include/bn.h ../../include/err.h ../../include/stack.h
-rsa_err.o: ../crypto.h rsa.h ../../include/bio.h ../../include/bn.h
-rsa_gen.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
-rsa_gen.o: ../../include/stack.h ../cryptlib.h ../crypto.h rsa.h
+rsa_err.o: ../crypto.h rsa.h
+rsa_gen.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
+rsa_gen.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
+rsa_gen.o: ../cryptlib.h ../crypto.h rsa.h
 rsa_lib.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 rsa_lib.o: ../../include/e_os.h ../../include/err.h ../../include/lhash.h
 rsa_lib.o: ../../include/stack.h ../cryptlib.h ../crypto.h rsa.h
@@ -112,16 +113,17 @@ rsa_saos.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
 rsa_saos.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 rsa_saos.o: ../../include/ripemd.h ../../include/sha.h ../../include/stack.h
 rsa_saos.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
-rsa_saos.o: ../crypto.h rsa.h ../../include/asn1.h ../../include/bio.h
-rsa_sign.o: ../../include/blowfish.h ../../include/bn.h ../../include/buffer.h
-rsa_sign.o: ../../include/cast.h ../../include/des.h ../../include/dh.h
-rsa_sign.o: ../../include/dsa.h ../../include/e_os.h ../../include/err.h
-rsa_sign.o: ../../include/evp.h ../../include/idea.h ../../include/md2.h
-rsa_sign.o: ../../include/md5.h ../../include/mdc2.h ../../include/objects.h
-rsa_sign.o: ../../include/pkcs7.h ../../include/rc2.h ../../include/rc4.h
-rsa_sign.o: ../../include/rc5.h ../../include/ripemd.h ../../include/sha.h
-rsa_sign.o: ../../include/stack.h ../../include/x509.h ../../include/x509_vfy.h
-rsa_sign.o: ../cryptlib.h ../crypto.h rsa.h ../../include/bio.h
-rsa_ssl.o: ../../include/bn.h ../../include/buffer.h ../../include/e_os.h
-rsa_ssl.o: ../../include/err.h ../../include/rand.h ../../include/stack.h
-rsa_ssl.o: ../cryptlib.h ../crypto.h rsa.h
+rsa_saos.o: ../crypto.h rsa.h
+rsa_sign.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
+rsa_sign.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
+rsa_sign.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
+rsa_sign.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
+rsa_sign.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
+rsa_sign.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
+rsa_sign.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
+rsa_sign.o: ../../include/ripemd.h ../../include/sha.h ../../include/stack.h
+rsa_sign.o: ../../include/x509.h ../../include/x509_vfy.h ../cryptlib.h
+rsa_sign.o: ../crypto.h rsa.h
+rsa_ssl.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
+rsa_ssl.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
+rsa_ssl.o: ../../include/stack.h ../cryptlib.h ../crypto.h rsa.h

@@ -102,4 +102,7 @@ errors:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-sha1_one.o: sha.h sha.h sha_locl.h sha.h sha_locl.h sha.h
+sha1_one.o: sha.h
+sha1dgst.o: sha.h sha_locl.h
+sha_dgst.o: sha.h sha_locl.h
+sha_one.o: sha.h

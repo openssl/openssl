@@ -87,7 +87,8 @@ $(ERRC).c: $(ERR).err
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 rsar_err.o: ../crypto/crypto.h ../include/bn.h ../include/err.h
-rsar_err.o: ../include/rsa.h ../include/stack.h rsaref.h ../crypto/cryptlib.h
-rsaref.o: ../crypto/crypto.h ../include/bio.h ../include/bn.h
-rsaref.o: ../include/buffer.h ../include/e_os.h ../include/err.h
-rsaref.o: ../include/rand.h ../include/rsa.h ../include/stack.h rsaref.h
+rsar_err.o: ../include/rsa.h ../include/stack.h rsaref.h
+rsaref.o: ../crypto/cryptlib.h ../crypto/crypto.h ../include/bio.h
+rsaref.o: ../include/bn.h ../include/buffer.h ../include/e_os.h
+rsaref.o: ../include/err.h ../include/rand.h ../include/rsa.h
+rsaref.o: ../include/stack.h rsaref.h

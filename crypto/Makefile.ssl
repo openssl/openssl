@@ -161,13 +161,14 @@ errgen:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-cpt_err.o: ../include/err.h ../include/stack.h crypto.h ../include/bio.h
-cryptlib.o: ../include/buffer.h ../include/e_os.h ../include/err.h
-cryptlib.o: ../include/stack.h cryptlib.h crypto.h date.h ../include/bio.h
-cversion.o: ../include/buffer.h ../include/e_os.h ../include/err.h
-cversion.o: ../include/stack.h cryptlib.h crypto.h date.h ../include/bio.h
-ex_data.o: ../include/buffer.h ../include/e_os.h ../include/err.h
-ex_data.o: ../include/lhash.h ../include/stack.h cryptlib.h crypto.h
+cpt_err.o: ../include/err.h ../include/stack.h crypto.h
+cryptlib.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
+cryptlib.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h date.h
+cversion.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
+cversion.o: ../include/err.h ../include/stack.h cryptlib.h crypto.h date.h
+ex_data.o: ../include/bio.h ../include/buffer.h ../include/e_os.h
+ex_data.o: ../include/err.h ../include/lhash.h ../include/stack.h cryptlib.h
+ex_data.o: crypto.h
 mem.o: ../include/bio.h ../include/buffer.h ../include/e_os.h ../include/err.h
 mem.o: ../include/lhash.h ../include/stack.h cryptlib.h crypto.h
 tmdiff.o: ../include/bio.h ../include/buffer.h ../include/e_os.h

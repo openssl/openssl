@@ -81,4 +81,5 @@ errors:
 
 mdc2_one.o: ../../include/bio.h ../../include/buffer.h ../../include/des.h
 mdc2_one.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-mdc2_one.o: ../cryptlib.h ../crypto.h mdc2.h ../../include/des.h mdc2.h
+mdc2_one.o: ../cryptlib.h ../crypto.h mdc2.h
+mdc2dgst.o: ../../include/des.h mdc2.h

@@ -87,12 +87,14 @@ $(ERRC).c: $(ERR).err
 
 dh_check.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 dh_check.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-dh_check.o: ../cryptlib.h ../crypto.h dh.h ../../include/err.h dh.h
+dh_check.o: ../cryptlib.h ../crypto.h dh.h
+dh_err.o: ../../include/err.h dh.h
 dh_gen.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 dh_gen.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
-dh_gen.o: ../cryptlib.h ../crypto.h dh.h ../../include/bio.h ../../include/bn.h
-dh_key.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
-dh_key.o: ../../include/rand.h ../../include/stack.h ../cryptlib.h ../crypto.h
-dh_key.o: dh.h ../../include/bio.h ../../include/bn.h ../../include/buffer.h
+dh_gen.o: ../cryptlib.h ../crypto.h dh.h
+dh_key.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
+dh_key.o: ../../include/e_os.h ../../include/err.h ../../include/rand.h
+dh_key.o: ../../include/stack.h ../cryptlib.h ../crypto.h dh.h
+dh_lib.o: ../../include/bio.h ../../include/bn.h ../../include/buffer.h
 dh_lib.o: ../../include/e_os.h ../../include/err.h ../../include/stack.h
 dh_lib.o: ../cryptlib.h ../crypto.h dh.h

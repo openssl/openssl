@@ -81,9 +81,10 @@ errors:
 
 md_rand.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
 md_rand.o: ../../include/err.h ../../include/md5.h ../../include/stack.h
-md_rand.o: ../cryptlib.h ../crypto.h rand.h ../../include/bio.h
-rand_lib.o: ../../include/buffer.h ../../include/e_os.h ../../include/err.h
-rand_lib.o: ../../include/stack.h ../cryptlib.h ../crypto.h rand.h
+md_rand.o: ../cryptlib.h ../crypto.h rand.h
+rand_lib.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
+rand_lib.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
+rand_lib.o: rand.h
 randfile.o: ../../include/bio.h ../../include/buffer.h ../../include/e_os.h
 randfile.o: ../../include/err.h ../../include/stack.h ../cryptlib.h ../crypto.h
 randfile.o: rand.h

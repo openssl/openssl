@@ -19,8 +19,8 @@ while(<STDIN>) {
     push @{$files{$file}},@deps;
 }
 
-my $len=0;
 foreach my $file (sort keys %files) {
+    my $len=0;
     foreach my $dep (sort @{$files{$file}}) {
 	$len=0 if $len+length($dep)+1 >= 80;
 	if($len == 0) {
