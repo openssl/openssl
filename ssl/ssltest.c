@@ -398,11 +398,14 @@ bad:
 		if (cm->type != NID_undef)
 			SSL_COMP_add_compression_method(comp, cm);
 		else
+			{
 			fprintf(stderr,
 				"Warning: %s compression not supported\n",
 				(comp == COMP_RLE ? "rle" :
 					(comp == COMP_ZLIB ? "zlib" :
 						"unknown")));
+			ERR_print_errors_fp(stderr);
+			}
 		}
 
 #if !defined(NO_SSL2) && !defined(NO_SSL3)
