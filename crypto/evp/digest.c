@@ -287,7 +287,7 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 	 * because sometimes only copies of the context are ever finalised.
 	 */
 	if (ctx->digest && ctx->digest->cleanup
-		&& !EVP_MD_CTX_test_flags(ctx,EVP_MD_CTX_FLAG_CLEANED))
+	    && !EVP_MD_CTX_test_flags(ctx,EVP_MD_CTX_FLAG_CLEANED))
 		ctx->digest->cleanup(ctx);
 	if (ctx->digest && ctx->digest->ctx_size && ctx->md_data)
 		{

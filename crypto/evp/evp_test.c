@@ -51,6 +51,7 @@
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/engine.h>
+#include <openssl/conf.h>
 
 static void hexdump(FILE *f,const char *title,const unsigned char *s,int l)
     {
@@ -309,6 +310,7 @@ int main(int argc,char **argv)
     OpenSSL_add_all_digests();
     /* Load all compiled-in ENGINEs */
     ENGINE_load_builtin_engines();
+    OPENSSL_config();
     /* Register all available ENGINE implementations of ciphers and digests.
      * This could perhaps be changed to "ENGINE_register_all_complete()"? */
     ENGINE_register_all_ciphers();

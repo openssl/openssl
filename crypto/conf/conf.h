@@ -93,9 +93,9 @@ struct conf_method_st
 	int (*destroy)(CONF *conf);
 	int (*destroy_data)(CONF *conf);
 	int (*load_bio)(CONF *conf, BIO *bp, long *eline);
-	int (*dump)(CONF *conf, BIO *bp);
-	int (*is_number)(CONF *conf, char c);
-	int (*to_int)(CONF *conf, char c);
+	int (*dump)(const CONF *conf, BIO *bp);
+	int (*is_number)(const CONF *conf, char c);
+	int (*to_int)(const CONF *conf, char c);
 	int (*load)(CONF *conf, const char *name, long *eline);
 	};
 
@@ -105,7 +105,7 @@ typedef struct conf_imodule_st CONF_IMODULE;
 typedef struct conf_module_st CONF_MODULE;
 
 /* DSO module function typedefs */
-typedef int conf_init_func(CONF_IMODULE *md, CONF *cnf);
+typedef int conf_init_func(CONF_IMODULE *md, const CONF *cnf);
 typedef void conf_finish_func(CONF_IMODULE *md);
 
 #define	CONF_MFLAGS_IGNORE_ERRORS	0x1
@@ -120,9 +120,9 @@ LHASH *CONF_load(LHASH *conf,const char *file,long *eline);
 LHASH *CONF_load_fp(LHASH *conf, FILE *fp,long *eline);
 #endif
 LHASH *CONF_load_bio(LHASH *conf, BIO *bp,long *eline);
-STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf,char *section);
-char *CONF_get_string(LHASH *conf,char *group,char *name);
-long CONF_get_number(LHASH *conf,char *group,char *name);
+STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf,const char *section);
+char *CONF_get_string(LHASH *conf,const char *group,const char *name);
+long CONF_get_number(LHASH *conf,const char *group,const char *name);
 void CONF_free(LHASH *conf);
 int CONF_dump_fp(LHASH *conf, FILE *out);
 int CONF_dump_bio(LHASH *conf, BIO *out);
@@ -153,11 +153,12 @@ int NCONF_load(CONF *conf,const char *file,long *eline);
 int NCONF_load_fp(CONF *conf, FILE *fp,long *eline);
 #endif
 int NCONF_load_bio(CONF *conf, BIO *bp,long *eline);
-STACK_OF(CONF_VALUE) *NCONF_get_section(CONF *conf,char *section);
-char *NCONF_get_string(CONF *conf,char *group,char *name);
-int NCONF_get_number_e(CONF *conf,char *group,char *name,long *result);
-int NCONF_dump_fp(CONF *conf, FILE *out);
-int NCONF_dump_bio(CONF *conf, BIO *out);
+STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf,const char *section);
+char *NCONF_get_string(const CONF *conf,const char *group,const char *name);
+int NCONF_get_number_e(const CONF *conf,const char *group,const char *name,
+		       long *result);
+int NCONF_dump_fp(const CONF *conf, FILE *out);
+int NCONF_dump_bio(const CONF *conf, BIO *out);
 
 #if 0 /* The following function has no error checking,
 	 and should therefore be avoided */
@@ -168,19 +169,21 @@ long NCONF_get_number(CONF *conf,char *group,char *name);
   
 /* Module functions */
 
-int CONF_modules_load(CONF *cnf, char *appname, unsigned long flags);
-int CONF_modules_load_file(char *filename, char *appname, unsigned long flags);
+int CONF_modules_load(const CONF *cnf, const char *appname,
+		      unsigned long flags);
+int CONF_modules_load_file(const char *filename, const char *appname,
+			   unsigned long flags);
 void CONF_modules_unload(int all);
 void CONF_modules_finish(void);
 int CONF_module_add(const char *name, conf_init_func *ifunc,
 		    conf_finish_func *ffunc);
 
-char *CONF_imodule_get_name(CONF_IMODULE *md);
-char *CONF_imodule_get_value(CONF_IMODULE *md);
-void *CONF_imodule_get_usr_data(CONF_IMODULE *md);
+const char *CONF_imodule_get_name(const CONF_IMODULE *md);
+const char *CONF_imodule_get_value(const CONF_IMODULE *md);
+void *CONF_imodule_get_usr_data(const CONF_IMODULE *md);
 void CONF_imodule_set_usr_data(CONF_IMODULE *md, void *usr_data);
-CONF_MODULE *CONF_imodule_get_module(CONF_IMODULE *md);
-unsigned long CONF_imodule_get_flags(CONF_IMODULE *md);
+CONF_MODULE *CONF_imodule_get_module(const CONF_IMODULE *md);
+unsigned long CONF_imodule_get_flags(const CONF_IMODULE *md);
 void CONF_imodule_set_flags(CONF_IMODULE *md, unsigned long flags);
 void *CONF_module_get_usr_data(CONF_MODULE *pmod);
 void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data);

@@ -108,16 +108,20 @@ static STACK_OF(CONF_IMODULE) *initialized_modules = NULL;
 
 static void module_free(CONF_MODULE *md);
 static void module_finish(CONF_IMODULE *imod);
-static int module_run(CONF *cnf, char *name, char *value, unsigned long flags);
+static int module_run(const CONF *cnf, char *name, char *value,
+					  unsigned long flags);
 static CONF_MODULE *module_add(DSO *dso, const char *name,
 			conf_init_func *ifunc, conf_finish_func *ffunc);
 static CONF_MODULE *module_find(char *name);
-static int module_init(CONF_MODULE *pmod, char *name, char *value, CONF *cnf);
-static CONF_MODULE *module_load_dso(CONF *cnf, char *name, char *value, unsigned long flags);
+static int module_init(CONF_MODULE *pmod, char *name, char *value,
+					   const CONF *cnf);
+static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value,
+									unsigned long flags);
 
 /* Main function: load modules from a CONF structure */
 
-int CONF_modules_load(CONF *cnf, char *appname, unsigned long flags)
+int CONF_modules_load(const CONF *cnf, const char *appname,
+		      unsigned long flags)
 	{
 	STACK_OF(CONF_VALUE) *values;
 	CONF_VALUE *vl;
@@ -155,7 +159,8 @@ int CONF_modules_load(CONF *cnf, char *appname, unsigned long flags)
 
 	}
 
-int CONF_modules_load_file(char *filename, char *appname, unsigned long flags)
+int CONF_modules_load_file(const char *filename, const char *appname,
+			   unsigned long flags)
 	{
 	CONF *conf = NULL;
 	int ret = 0;
@@ -174,7 +179,8 @@ int CONF_modules_load_file(char *filename, char *appname, unsigned long flags)
 	return ret;
 	}
 
-static int module_run(CONF *cnf, char *name, char *value, unsigned long flags)
+static int module_run(const CONF *cnf, char *name, char *value,
+		      unsigned long flags)
 	{
 	CONF_MODULE *md;
 	int ret;
@@ -212,7 +218,8 @@ static int module_run(CONF *cnf, char *name, char *value, unsigned long flags)
 	}
 
 /* Load a module from a DSO */
-static CONF_MODULE *module_load_dso(CONF *cnf, char *name, char *value, unsigned long flags)
+static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value,
+				    unsigned long flags)
 	{
 	DSO *dso = NULL;
 	conf_init_func *ifunc;
@@ -263,7 +270,7 @@ static CONF_MODULE *module_load_dso(CONF *cnf, char *name, char *value, unsigned
 
 /* add module to list */
 static CONF_MODULE *module_add(DSO *dso, const char *name,
-			conf_init_func *ifunc, conf_finish_func *ffunc)
+			       conf_init_func *ifunc, conf_finish_func *ffunc)
 	{
 	CONF_MODULE *tmod = NULL;
 	if (supported_modules == NULL)
@@ -318,7 +325,8 @@ static CONF_MODULE *module_find(char *name)
 	}
 
 /* initialize a module */
-static int module_init(CONF_MODULE *pmod, char *name, char *value, CONF *cnf)
+static int module_init(CONF_MODULE *pmod, char *name, char *value,
+		       const CONF *cnf)
 	{
 	int ret = 1;
 	int init_called = 0;
@@ -467,17 +475,17 @@ void CONF_modules_free(void)
 
 /* Utility functions */
 
-char *CONF_imodule_get_name(CONF_IMODULE *md)
+const char *CONF_imodule_get_name(const CONF_IMODULE *md)
 	{
 	return md->name;
 	}
 
-char *CONF_imodule_get_value(CONF_IMODULE *md)
+const char *CONF_imodule_get_value(const CONF_IMODULE *md)
 	{
 	return md->value;
 	}
 
-void *CONF_imodule_get_usr_data(CONF_IMODULE *md)
+void *CONF_imodule_get_usr_data(const CONF_IMODULE *md)
 	{
 	return md->usr_data;
 	}
@@ -487,12 +495,12 @@ void CONF_imodule_set_usr_data(CONF_IMODULE *md, void *usr_data)
 	md->usr_data = usr_data;
 	}
 
-CONF_MODULE *CONF_imodule_get_module(CONF_IMODULE *md)
+CONF_MODULE *CONF_imodule_get_module(const CONF_IMODULE *md)
 	{
 	return md->pmod;
 	}
 
-unsigned long CONF_imodule_get_flags(CONF_IMODULE *md)
+unsigned long CONF_imodule_get_flags(const CONF_IMODULE *md)
 	{
 	return md->flags;
 	}

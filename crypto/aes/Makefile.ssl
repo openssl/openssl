@@ -85,8 +85,12 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-aes_cbc.o: ../../include/openssl/aes.h aes_cbc.c aes_locl.h
-aes_core.o: ../../include/openssl/aes.h aes_core.c aes_locl.h
-aes_ecb.o: ../../include/openssl/aes.h aes_ecb.c aes_locl.h
-aes_misc.o: ../../include/openssl/aes.h ../../include/openssl/opensslv.h
-aes_misc.o: aes_locl.h aes_misc.c
+aes_cbc.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
+aes_cbc.o: ../../include/openssl/opensslconf.h aes_cbc.c aes_locl.h
+aes_core.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
+aes_core.o: ../../include/openssl/opensslconf.h aes_core.c aes_locl.h
+aes_ecb.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
+aes_ecb.o: ../../include/openssl/opensslconf.h aes_ecb.c aes_locl.h
+aes_misc.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
+aes_misc.o: ../../include/openssl/opensslconf.h
+aes_misc.o: ../../include/openssl/opensslv.h aes_locl.h aes_misc.c

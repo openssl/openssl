@@ -62,6 +62,7 @@
 #else
 #include "../evp/evp_locl.h"
 #endif
+#include <openssl/conf.h>
 
 #ifndef OPENSSL_OPENBSD_DEV_CRYPTO
 
@@ -93,10 +94,23 @@ static int dev_crypto_digests(ENGINE *e, const EVP_MD **digest,
 static const char dev_crypto_id[] = "openbsd_dev_crypto";
 static const char dev_crypto_name[] = "OpenBSD /dev/crypto";
 
+static long allow_misaligned;
+
+static int init_conf(CONF_IMODULE *md,const CONF *conf)
+	{
+	if(!NCONF_get_number(conf,CONF_imodule_get_value(md),"allow_misaligned",
+						 &allow_misaligned))
+		return 0;
+	printf("allow misaligned=%ld\n",allow_misaligned);
+
+	return 1;
+	}
+
 static ENGINE *engine_openbsd_dev_crypto(void)
 	{
 	ENGINE *engine=ENGINE_new();
 
+	CONF_module_add(dev_crypto_id,init_conf,NULL);
 	if(!ENGINE_set_id(engine, dev_crypto_id) ||
 			!ENGINE_set_name(engine, dev_crypto_name) ||
 			!ENGINE_set_ciphers(engine, dev_crypto_ciphers) ||
@@ -385,7 +399,7 @@ static int do_digest(int ses,unsigned char *md,const void *data,int len)
 
     if(ioctl(fd, CIOCCRYPT, &cryp) == -1)
 	{
-	if(errno == EINVAL) /* buffer is misaligned */
+	if(errno == EINVAL && allow_misaligned) /* buffer is misaligned */
 	    {
 	    char *dcopy;
 

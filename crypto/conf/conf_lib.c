@@ -137,7 +137,7 @@ LHASH *CONF_load_bio(LHASH *conf, BIO *bp,long *eline)
 	return NULL;
 	}
 
-STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf,char *section)
+STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf,const char *section)
 	{
 	if (conf == NULL)
 		{
@@ -151,7 +151,7 @@ STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf,char *section)
 		}
 	}
 
-char *CONF_get_string(LHASH *conf,char *group,char *name)
+char *CONF_get_string(LHASH *conf,const char *group,const char *name)
 	{
 	if (conf == NULL)
 		{
@@ -165,7 +165,7 @@ char *CONF_get_string(LHASH *conf,char *group,char *name)
 		}
 	}
 
-long CONF_get_number(LHASH *conf,char *group,char *name)
+long CONF_get_number(LHASH *conf,const char *group,const char *name)
 	{
 	int status;
 	long result = 0;
@@ -294,7 +294,7 @@ int NCONF_load_bio(CONF *conf, BIO *bp,long *eline)
 	return conf->meth->load_bio(conf, bp, eline);
 	}
 
-STACK_OF(CONF_VALUE) *NCONF_get_section(CONF *conf,char *section)
+STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf,const char *section)
 	{
 	if (conf == NULL)
 		{
@@ -311,7 +311,7 @@ STACK_OF(CONF_VALUE) *NCONF_get_section(CONF *conf,char *section)
 	return _CONF_get_section_values(conf, section);
 	}
 
-char *NCONF_get_string(CONF *conf,char *group,char *name)
+char *NCONF_get_string(const CONF *conf,const char *group,const char *name)
 	{
 	char *s = _CONF_get_string(conf, group, name);
 
@@ -327,10 +327,12 @@ char *NCONF_get_string(CONF *conf,char *group,char *name)
 		}
 	CONFerr(CONF_F_NCONF_GET_STRING,
 		CONF_R_NO_VALUE);
+	ERR_add_error_data(4,"group=",group," name=",name);
 	return NULL;
 	}
 
-int NCONF_get_number_e(CONF *conf,char *group,char *name,long *result)
+int NCONF_get_number_e(const CONF *conf,const char *group,const char *name,
+		       long *result)
 	{
 	char *str;
 
@@ -355,7 +357,7 @@ int NCONF_get_number_e(CONF *conf,char *group,char *name,long *result)
 	}
 
 #ifndef OPENSSL_NO_FP_API
-int NCONF_dump_fp(CONF *conf, FILE *out)
+int NCONF_dump_fp(const CONF *conf, FILE *out)
 	{
 	BIO *btmp;
 	int ret;
@@ -369,7 +371,7 @@ int NCONF_dump_fp(CONF *conf, FILE *out)
 	}
 #endif
 
-int NCONF_dump_bio(CONF *conf, BIO *out)
+int NCONF_dump_bio(const CONF *conf, BIO *out)
 	{
 	if (conf == NULL)
 		{

@@ -81,19 +81,20 @@ static unsigned long hash(const void *v_void);
 static int cmp_conf(const void *a_void,const void *b_void);
 
 /* Up until OpenSSL 0.9.5a, this was get_section */
-CONF_VALUE *_CONF_get_section(CONF *conf, char *section)
+CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section)
 	{
 	CONF_VALUE *v,vv;
 
 	if ((conf == NULL) || (section == NULL)) return(NULL);
 	vv.name=NULL;
-	vv.section=section;
+	vv.section=(char *)section;
 	v=(CONF_VALUE *)lh_retrieve(conf->data,&vv);
 	return(v);
 	}
 
 /* Up until OpenSSL 0.9.5a, this was CONF_get_section */
-STACK_OF(CONF_VALUE) *_CONF_get_section_values(CONF *conf, char *section)
+STACK_OF(CONF_VALUE) *_CONF_get_section_values(const CONF *conf,
+					       const char *section)
 	{
 	CONF_VALUE *v;
 
@@ -128,7 +129,7 @@ int _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value)
 	return 1;
 	}
 
-char *_CONF_get_string(CONF *conf, char *section, char *name)
+char *_CONF_get_string(const CONF *conf, const char *section, const char *name)
 	{
 	CONF_VALUE *v,vv;
 	char *p;
@@ -138,8 +139,8 @@ char *_CONF_get_string(CONF *conf, char *section, char *name)
 		{
 		if (section != NULL)
 			{
-			vv.name=name;
-			vv.section=section;
+			vv.name=(char *)name;
+			vv.section=(char *)section;
 			v=(CONF_VALUE *)lh_retrieve(conf->data,&vv);
 			if (v != NULL) return(v->value);
 			if (strcmp(section,"ENV") == 0)
@@ -149,7 +150,7 @@ char *_CONF_get_string(CONF *conf, char *section, char *name)
 				}
 			}
 		vv.section="default";
-		vv.name=name;
+		vv.name=(char *)name;
 		v=(CONF_VALUE *)lh_retrieve(conf->data,&vv);
 		if (v != NULL)
 			return(v->value);
@@ -273,7 +274,7 @@ static int cmp_conf(const void *a_void,const  void *b_void)
 	}
 
 /* Up until OpenSSL 0.9.5a, this was new_section */
-CONF_VALUE *_CONF_new_section(CONF *conf, char *section)
+CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
 	{
 	STACK *sk=NULL;
 	int ok=0,i;

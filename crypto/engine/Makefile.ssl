@@ -274,6 +274,7 @@ hw_nuron.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 hw_nuron.o: ../cryptlib.h hw_nuron.c
 hw_openbsd_dev_crypto.o: ../../include/openssl/asn1.h
 hw_openbsd_dev_crypto.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+hw_openbsd_dev_crypto.o: ../../include/openssl/conf.h
 hw_openbsd_dev_crypto.o: ../../include/openssl/crypto.h
 hw_openbsd_dev_crypto.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 hw_openbsd_dev_crypto.o: ../../include/openssl/e_os2.h

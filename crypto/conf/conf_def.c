@@ -83,9 +83,9 @@ static int def_destroy(CONF *conf);
 static int def_destroy_data(CONF *conf);
 static int def_load(CONF *conf, const char *name, long *eline);
 static int def_load_bio(CONF *conf, BIO *bp, long *eline);
-static int def_dump(CONF *conf, BIO *bp);
-static int def_is_number(CONF *conf, char c);
-static int def_to_int(CONF *conf, char c);
+static int def_dump(const CONF *conf, BIO *bp);
+static int def_is_number(const CONF *conf, char c);
+static int def_to_int(const CONF *conf, char c);
 
 const char *CONF_def_version="CONF_def" OPENSSL_VERSION_PTEXT;
 
@@ -716,18 +716,18 @@ static void dump_value(CONF_VALUE *a, BIO *out)
 
 static IMPLEMENT_LHASH_DOALL_ARG_FN(dump_value, CONF_VALUE *, BIO *)
 
-static int def_dump(CONF *conf, BIO *out)
+static int def_dump(const CONF *conf, BIO *out)
 	{
 	lh_doall_arg(conf->data, LHASH_DOALL_ARG_FN(dump_value), out);
 	return 1;
 	}
 
-static int def_is_number(CONF *conf, char c)
+static int def_is_number(const CONF *conf, char c)
 	{
 	return IS_NUMBER(conf,c);
 	}
 
-static int def_to_int(CONF *conf, char c)
+static int def_to_int(const CONF *conf, char c)
 	{
 	return c - '0';
 	}
