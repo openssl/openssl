@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Add "-rand" option also to s_client and s_server.
+     [Lutz Jaenicke]
+
   *) Fix CPU detection on Irix 6.x.
      [Kurt Hockenbury <khockenb@stevens-tech.edu> and
       "Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
@@ -149,9 +152,6 @@
      [Richard Levitte]
 
   *) Added several new manual pages for SSL_* function.
-     [Lutz Jaenicke]
-
-  *) Add "-rand" option also to s_client and s_server.
      [Lutz Jaenicke]
 
  Changes between 0.9.5a and 0.9.6  [24 Sep 2000]
