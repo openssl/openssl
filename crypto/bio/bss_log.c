@@ -257,7 +257,7 @@ static void xcloselog(BIO* bp)
 
 #elif defined(VMS)
 
-static int VMS_OPC_target = OPC$M_NM_NTWORK;
+static int VMS_OPC_target = LOG_DAEMON;
 
 static void xopenlog(BIO* bp, const char* name, int level)
 {
@@ -271,20 +271,32 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 	char buf[10240];
 	unsigned int len;
         struct dsc$descriptor_s buf_dsc;
-	$DESCRIPTOR(fao_cmd, "!AZ");
+	$DESCRIPTOR(fao_cmd, "!AZ: !AZ");
+	char *priority_tag;
+
+	switch (priority)
+	  {
+	  case LOG_EMERG: priority_tag = "Emergency"; break;
+	  case LOG_ALERT: priority_tag = "Alert"; break;
+	  case LOG_CRIT: priority_tag = "Critical"; break;
+	  case LOG_ERR: priority_tag = "Error"; break;
+	  case LOG_WARNING: priority_tag = "Warning"; break;
+	  case LOG_NOTICE: priority_tag = "Notice"; break;
+	  case LOG_INFO: priority_tag = "Info"; break;
+	  case LOG_DEBUG: priority_tag = "DEBUG"; break;
+	  }
 
 	buf_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
 	buf_dsc.dsc$b_class = DSC$K_CLASS_S;
 	buf_dsc.dsc$a_pointer = buf;
 	buf_dsc.dsc$w_length = sizeof(buf) - 1;
 
-	lib$sys_fao(&fao_cmd, &len, &buf_dsc, string);
+	lib$sys_fao(&fao_cmd, &len, &buf_dsc, priority_tag, string);
 
-	/* we knoe there's an 8 byte header.  That's documented */
-	opcdef_p = (struct opcdef *) Malloc(8 + strlen(string));
+	/* we know there's an 8 byte header.  That's documented */
+	opcdef_p = (struct opcdef *) Malloc(8 + len);
 	opcdef_p->opc$b_ms_type = OPC$_RQ_RQST;
-	opcdef_p->opc$b_ms_target = VMS_OPC_target;
-	memcpy(opcdef_p->opc$b_ms_target, &priority, 3);
+	memcpy(opcdef_p->opc$z_ms_target_classes, &VMS_OPC_target, 3);
 	opcdef_p->opc$l_ms_rqstid = 0;
 	memcpy(&opcdef_p->opc$l_ms_text, buf, len);
 
