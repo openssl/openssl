@@ -213,7 +213,7 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item int B<SSL_CTX_add_session>(SSL_CTX *ctx, SSL_SESSION *c);
 
-=item int B<SSL_CTX_check_private_key>(SSL_CTX *ctx);
+=item int B<SSL_CTX_check_private_key>(const SSL_CTX *ctx);
 
 =item long B<SSL_CTX_ctrl>(SSL_CTX *ctx, int cmd, long larg, char *parg);
 
@@ -225,23 +225,23 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item X509_STORE *B<SSL_CTX_get_cert_store>(SSL_CTX *ctx);
 
-=item STACK *B<SSL_CTX_get_client_CA_list>(SSL_CTX *ctx);
+=item STACK *B<SSL_CTX_get_client_CA_list>(const SSL_CTX *ctx);
 
 =item int (*B<SSL_CTX_get_client_cert_cb>(SSL_CTX *ctx))(SSL *ssl, X509 **x509, EVP_PKEY **pkey);
 
-=item char *B<SSL_CTX_get_ex_data>(SSL_CTX *s, int idx);
+=item char *B<SSL_CTX_get_ex_data>(const SSL_CTX *s, int idx);
 
 =item int B<SSL_CTX_get_ex_new_index>(long argl, char *argp, int (*new_func);(void), int (*dup_func)(void), void (*free_func)(void))
 
 =item void (*B<SSL_CTX_get_info_callback>(SSL_CTX *ctx))(SSL *ssl, int cb, int ret);
 
-=item int B<SSL_CTX_get_quiet_shutdown>(SSL_CTX *ctx);
+=item int B<SSL_CTX_get_quiet_shutdown>(const SSL_CTX *ctx);
 
 =item int B<SSL_CTX_get_session_cache_mode>(SSL_CTX *ctx);
 
-=item long B<SSL_CTX_get_timeout>(SSL_CTX *ctx);
+=item long B<SSL_CTX_get_timeout>(const SSL_CTX *ctx);
 
-=item int (*B<SSL_CTX_get_verify_callback>(SSL_CTX *ctx))(int ok, X509_STORE_CTX *ctx);
+=item int (*B<SSL_CTX_get_verify_callback>(const SSL_CTX *ctx))(int ok, X509_STORE_CTX *ctx);
 
 =item int B<SSL_CTX_get_verify_mode>(SSL_CTX *ctx);
 
@@ -383,27 +383,27 @@ sessions defined in the B<SSL_SESSION> structures.
 
 =over 4
 
-=item int B<SSL_SESSION_cmp>(SSL_SESSION *a, SSL_SESSION *b);
+=item int B<SSL_SESSION_cmp>(const SSL_SESSION *a, const SSL_SESSION *b);
 
 =item void B<SSL_SESSION_free>(SSL_SESSION *ss);
 
 =item char *B<SSL_SESSION_get_app_data>(SSL_SESSION *s);
 
-=item char *B<SSL_SESSION_get_ex_data>(SSL_SESSION *s, int idx);
+=item char *B<SSL_SESSION_get_ex_data>(const SSL_SESSION *s, int idx);
 
 =item int B<SSL_SESSION_get_ex_new_index>(long argl, char *argp, int (*new_func);(void), int (*dup_func)(void), void (*free_func)(void))
 
-=item long B<SSL_SESSION_get_time>(SSL_SESSION *s);
+=item long B<SSL_SESSION_get_time>(const SSL_SESSION *s);
 
-=item long B<SSL_SESSION_get_timeout>(SSL_SESSION *s);
+=item long B<SSL_SESSION_get_timeout>(const SSL_SESSION *s);
 
-=item unsigned long B<SSL_SESSION_hash>(SSL_SESSION *a);
+=item unsigned long B<SSL_SESSION_hash>(const SSL_SESSION *a);
 
 =item SSL_SESSION *B<SSL_SESSION_new>(void);
 
-=item int B<SSL_SESSION_print>(BIO *bp, SSL_SESSION *x);
+=item int B<SSL_SESSION_print>(BIO *bp, const SSL_SESSION *x);
 
-=item int B<SSL_SESSION_print_fp>(FILE *fp, SSL_SESSION *x);
+=item int B<SSL_SESSION_print_fp>(FILE *fp, const SSL_SESSION *x);
 
 =item void B<SSL_SESSION_set_app_data>(SSL_SESSION *s, char *a);
 
@@ -438,7 +438,7 @@ connection defined in the B<SSL> structure.
 
 =item char *B<SSL_alert_type_string_long>(int value);
 
-=item int B<SSL_check_private_key>(SSL *ssl);
+=item int B<SSL_check_private_key>(const SSL *ssl);
 
 =item void B<SSL_clear>(SSL *ssl);
 
@@ -446,7 +446,7 @@ connection defined in the B<SSL> structure.
 
 =item int B<SSL_connect>(SSL *ssl);
 
-=item void B<SSL_copy_session_id>(SSL *t, SSL *f);
+=item void B<SSL_copy_session_id>(SSL *t, const SSL *f);
 
 =item long B<SSL_ctrl>(SSL *ssl, int cmd, long larg, char *parg);
 
@@ -458,77 +458,77 @@ connection defined in the B<SSL> structure.
 
 =item void B<SSL_free>(SSL *ssl);
 
-=item SSL_CTX *B<SSL_get_SSL_CTX>(SSL *ssl);
+=item SSL_CTX *B<SSL_get_SSL_CTX>(const SSL *ssl);
 
 =item char *B<SSL_get_app_data>(SSL *ssl);
 
-=item X509 *B<SSL_get_certificate>(SSL *ssl);
+=item X509 *B<SSL_get_certificate>(const SSL *ssl);
 
-=item const char *B<SSL_get_cipher>(SSL *ssl);
+=item const char *B<SSL_get_cipher>(const SSL *ssl);
 
-=item int B<SSL_get_cipher_bits>(SSL *ssl, int *alg_bits);
+=item int B<SSL_get_cipher_bits>(const SSL *ssl, int *alg_bits);
 
-=item char *B<SSL_get_cipher_list>(SSL *ssl, int n);
+=item char *B<SSL_get_cipher_list>(const SSL *ssl, int n);
 
-=item char *B<SSL_get_cipher_name>(SSL *ssl);
+=item char *B<SSL_get_cipher_name>(const SSL *ssl);
 
-=item char *B<SSL_get_cipher_version>(SSL *ssl);
+=item char *B<SSL_get_cipher_version>(const SSL *ssl);
 
-=item STACK *B<SSL_get_ciphers>(SSL *ssl);
+=item STACK *B<SSL_get_ciphers>(const SSL *ssl);
 
-=item STACK *B<SSL_get_client_CA_list>(SSL *ssl);
+=item STACK *B<SSL_get_client_CA_list>(const SSL *ssl);
 
 =item SSL_CIPHER *B<SSL_get_current_cipher>(SSL *ssl);
 
-=item long B<SSL_get_default_timeout>(SSL *ssl);
+=item long B<SSL_get_default_timeout>(const SSL *ssl);
 
-=item int B<SSL_get_error>(SSL *ssl, int i);
+=item int B<SSL_get_error>(const SSL *ssl, int i);
 
-=item char *B<SSL_get_ex_data>(SSL *ssl, int idx);
+=item char *B<SSL_get_ex_data>(const SSL *ssl, int idx);
 
 =item int B<SSL_get_ex_data_X509_STORE_CTX_idx>(void);
 
 =item int B<SSL_get_ex_new_index>(long argl, char *argp, int (*new_func);(void), int (*dup_func)(void), void (*free_func)(void))
 
-=item int B<SSL_get_fd>(SSL *ssl);
+=item int B<SSL_get_fd>(const SSL *ssl);
 
-=item void (*B<SSL_get_info_callback>(SSL *ssl);)(void)
+=item void (*B<SSL_get_info_callback>(const SSL *ssl);)()
 
-=item STACK *B<SSL_get_peer_cert_chain>(SSL *ssl);
+=item STACK *B<SSL_get_peer_cert_chain>(const SSL *ssl);
 
-=item X509 *B<SSL_get_peer_certificate>(SSL *ssl);
+=item X509 *B<SSL_get_peer_certificate>(const SSL *ssl);
 
 =item EVP_PKEY *B<SSL_get_privatekey>(SSL *ssl);
 
-=item int B<SSL_get_quiet_shutdown>(SSL *ssl);
+=item int B<SSL_get_quiet_shutdown>(const SSL *ssl);
 
-=item BIO *B<SSL_get_rbio>(SSL *ssl);
+=item BIO *B<SSL_get_rbio>(const SSL *ssl);
 
-=item int B<SSL_get_read_ahead>(SSL *ssl);
+=item int B<SSL_get_read_ahead>(const SSL *ssl);
 
-=item SSL_SESSION *B<SSL_get_session>(SSL *ssl);
+=item SSL_SESSION *B<SSL_get_session>(const SSL *ssl);
 
-=item char *B<SSL_get_shared_ciphers>(SSL *ssl, char *buf, int len);
+=item char *B<SSL_get_shared_ciphers>(const SSL *ssl, char *buf, int len);
 
-=item int B<SSL_get_shutdown>(SSL *ssl);
+=item int B<SSL_get_shutdown>(const SSL *ssl);
 
 =item SSL_METHOD *B<SSL_get_ssl_method>(SSL *ssl);
 
-=item int B<SSL_get_state>(SSL *ssl);
+=item int B<SSL_get_state>(const SSL *ssl);
 
-=item long B<SSL_get_time>(SSL *ssl);
+=item long B<SSL_get_time>(const SSL *ssl);
 
-=item long B<SSL_get_timeout>(SSL *ssl);
+=item long B<SSL_get_timeout>(const SSL *ssl);
 
-=item int (*B<SSL_get_verify_callback>(SSL *ssl);)(void)
+=item int (*B<SSL_get_verify_callback>(const SSL *ssl))(int,X509_STORE_CTX *)
 
-=item int B<SSL_get_verify_mode>(SSL *ssl);
+=item int B<SSL_get_verify_mode>(const SSL *ssl);
 
-=item long B<SSL_get_verify_result>(SSL *ssl);
+=item long B<SSL_get_verify_result>(const SSL *ssl);
 
-=item char *B<SSL_get_version>(SSL *ssl);
+=item char *B<SSL_get_version>(const SSL *ssl);
 
-=item BIO *B<SSL_get_wbio>(SSL *ssl);
+=item BIO *B<SSL_get_wbio>(const SSL *ssl);
 
 =item int B<SSL_in_accept_init>(SSL *ssl);
 
@@ -550,7 +550,7 @@ connection defined in the B<SSL> structure.
 
 =item int B<SSL_peek>(SSL *ssl, void *buf, int num);
 
-=item int B<SSL_pending>(SSL *ssl);
+=item int B<SSL_pending>(const SSL *ssl);
 
 =item int B<SSL_read>(SSL *ssl, void *buf, int num);
 
@@ -610,11 +610,11 @@ connection defined in the B<SSL> structure.
 
 =item int B<SSL_shutdown>(SSL *ssl);
 
-=item int B<SSL_state>(SSL *ssl);
+=item int B<SSL_state>(const SSL *ssl);
 
-=item char *B<SSL_state_string>(SSL *ssl);
+=item char *B<SSL_state_string>(const SSL *ssl);
 
-=item char *B<SSL_state_string_long>(SSL *ssl);
+=item char *B<SSL_state_string_long>(const SSL *ssl);
 
 =item long B<SSL_total_renegotiations>(SSL *ssl);
 
@@ -636,17 +636,17 @@ connection defined in the B<SSL> structure.
 
 =item int B<SSL_use_certificate_file>(SSL *ssl, char *file, int type);
 
-=item int B<SSL_version>(SSL *ssl);
+=item int B<SSL_version>(const SSL *ssl);
 
-=item int B<SSL_want>(SSL *ssl);
+=item int B<SSL_want>(const SSL *ssl);
 
-=item int B<SSL_want_nothing>(SSL *ssl);
+=item int B<SSL_want_nothing>(const SSL *ssl);
 
-=item int B<SSL_want_read>(SSL *ssl);
+=item int B<SSL_want_read>(const SSL *ssl);
 
-=item int B<SSL_want_write>(SSL *ssl);
+=item int B<SSL_want_write>(const SSL *ssl);
 
-=item int B<SSL_want_x509_lookup>(s);
+=item int B<SSL_want_x509_lookup>(const SSL *ssl);
 
 =item int B<SSL_write>(SSL *ssl, const void *buf, int num);
 

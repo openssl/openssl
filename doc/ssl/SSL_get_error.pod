@@ -8,7 +8,7 @@ SSL_get_error - obtain result code for TLS/SSL I/O operation
 
  #include <openssl/ssl.h>
 
- int SSL_get_error(SSL *ssl, int ret);
+ int SSL_get_error(const SSL *ssl, int ret);
 
 =head1 DESCRIPTION
 

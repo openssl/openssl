@@ -8,11 +8,11 @@ SSL_want, SSL_want_nothing, SSL_want_read, SSL_want_write, SSL_want_x509_lookup 
 
  #include <openssl/ssl.h>
 
- int SSL_want(SSL *ssl);
- int SSL_want_nothing(SSL *ssl);
- int SSL_want_read(SSL *ssl);
- int SSL_want_write(SSL *ssl);
- int SSL_want_x509_lookup(SSL *ssl);
+ int SSL_want(const SSL *ssl);
+ int SSL_want_nothing(const SSL *ssl);
+ int SSL_want_read(const SSL *ssl);
+ int SSL_want_write(const SSL *ssl);
+ int SSL_want_x509_lookup(const SSL *ssl);
 
 =head1 DESCRIPTION
 

@@ -8,9 +8,9 @@ SSL_get_fd - get file descriptor linked to an SSL object
 
  #include <openssl/ssl.h>
 
- int SSL_get_fd(SSL *ssl);
- int SSL_get_rfd(SSL *ssl);
- int SSL_get_wfd(SSL *ssl);
+ int SSL_get_fd(const SSL *ssl);
+ int SSL_get_rfd(const SSL *ssl);
+ int SSL_get_wfd(const SSL *ssl);
 
 =head1 DESCRIPTION
 

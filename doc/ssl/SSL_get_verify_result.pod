@@ -8,7 +8,7 @@ SSL_get_verify_result - get result of peer certificate verification
 
  #include <openssl/ssl.h>
 
- long SSL_get_verify_result(SSL *ssl);
+ long SSL_get_verify_result(const SSL *ssl);
 
 =head1 DESCRIPTION
 

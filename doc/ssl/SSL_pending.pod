@@ -8,7 +8,7 @@ SSL_pending - obtain number of readable bytes buffered in an SSL object
 
  #include <openssl/ssl.h>
 
- int SSL_pending(SSL *ssl);
+ int SSL_pending(const SSL *ssl);
 
 =head1 DESCRIPTION
 

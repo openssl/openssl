@@ -8,8 +8,8 @@ SSL_state_string, SSL_state_string_long - get textual description of state of an
 
  #include <openssl/ssl.h>
 
- const char *SSL_state_string(SSL *ssl);
- const char *SSL_state_string_long(SSL *ssl);
+ const char *SSL_state_string(const SSL *ssl);
+ const char *SSL_state_string_long(const SSL *ssl);
 
 =head1 DESCRIPTION
 

@@ -9,10 +9,10 @@ SSL_CTX_set_info_callback, SSL_CTX_get_info_callback, SSL_set_info_callback, SSL
  #include <openssl/ssl.h>
 
  void SSL_CTX_set_info_callback(SSL_CTX *ctx, void (*callback)());
- void (*SSL_CTX_get_info_callback(SSL_CTX *ctx))();
+ void (*SSL_CTX_get_info_callback(const SSL_CTX *ctx))();
 
  void SSL_set_info_callback(SSL *ssl, void (*callback)());
- void (*SSL_get_info_callback(SSL *ssl))();
+ void (*SSL_get_info_callback(const SSL *ssl))();
 
 =head1 DESCRIPTION
 

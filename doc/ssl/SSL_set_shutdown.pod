@@ -10,7 +10,7 @@ SSL_set_shutdown, SSL_get_shutdown - manipulate shutdown state of an SSL connect
 
  void SSL_set_shutdown(SSL *ssl, int mode);
 
- int SSL_get_shutdown(SSL *ssl);
+ int SSL_get_shutdown(const SSL *ssl);
 
 =head1 DESCRIPTION
 
