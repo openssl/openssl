@@ -59,6 +59,9 @@
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
 
+#ifndef WIN16
+#include <stdio.h> /* FILE */
+#endif
 #include <openssl/opensslconf.h>
 
 #ifdef  __cplusplus

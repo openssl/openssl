@@ -679,6 +679,9 @@ char *ASN1_unpack_string(ASN1_STRING *oct, char *(*d2i)());
 ASN1_STRING *ASN1_pack_string(char *obj, int (*i2d)(), ASN1_OCTET_STRING **oct);
 
 #else
+#error "OpenSSL cannot be used with NOPROTO defined.  The NOPROTO sections in header files exist only for automatic parsing by certain utilities."
+/* Without this, highly uncomprehensible error messages can occur
+ * when compiling something with -DNOPROTO ... */
 
 ASN1_TYPE *	ASN1_TYPE_new();
 void		ASN1_TYPE_free();
