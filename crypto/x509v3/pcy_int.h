@@ -188,7 +188,8 @@ struct X509_POLICY_TREE_st
 
 /* Useful macros */
 
-#define node_critical(node) ((node)->data->flags & POLICY_DATA_FLAG_CRITICAL)
+#define node_data_critical(data) (data->flags & POLICY_DATA_FLAG_CRITICAL)
+#define node_critical(node) node_data_critical(node->data)
 
 /* Internal functions */
 
