@@ -56,7 +56,7 @@
 
   *) mk1mf.pl (used by Windows builds) did not properly read the
      options set by Configure in the top level Makefile, and Configure
-     did not was not even able to write more than one option correctly.
+     was not even able to write more than one option correctly.
      Fixed, now "no-idea no-rc5 -DCRYPTO_MDEBUG" etc. works as intended.
      [Bodo Moeller]
 
