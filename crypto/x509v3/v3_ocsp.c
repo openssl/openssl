@@ -63,11 +63,12 @@
 #include <openssl/ocsp.h>
 #include <openssl/x509v3.h>
 
-/* OCSP extensions.
+/* OCSP extensions and a couple of CRL entry extensions
  */
 
 static int i2r_ocsp_crlid(X509V3_EXT_METHOD *method, void *nonce, BIO *out, int indent);
 static int i2r_ocsp_acutoff(X509V3_EXT_METHOD *method, void *nonce, BIO *out, int indent);
+static int i2r_object(X509V3_EXT_METHOD *method, void *obj, BIO *out, int indent);
 
 static void *ocsp_nonce_new(void);
 static int i2d_ocsp_nonce(void *a, unsigned char **pp);
@@ -94,6 +95,24 @@ X509V3_EXT_METHOD v3_ocsp_acutoff = {
 	0,0,
 	0,0,
 	i2r_ocsp_acutoff,0,
+	NULL
+};
+
+X509V3_EXT_METHOD v3_crl_invdate = {
+	NID_invalidity_date, 0, &ASN1_GENERALIZEDTIME_it,
+	0,0,0,0,
+	0,0,
+	0,0,
+	i2r_ocsp_acutoff,0,
+	NULL
+};
+
+X509V3_EXT_METHOD v3_crl_hold = {
+	NID_hold_instruction_code, 0, &ASN1_OBJECT_it,
+	0,0,0,0,
+	0,0,
+	0,0,
+	i2r_object,0,
 	NULL
 };
 
@@ -160,6 +179,13 @@ static int i2r_ocsp_acutoff(X509V3_EXT_METHOD *method, void *cutoff, BIO *bp, in
 	return 1;
 }
 
+
+static int i2r_object(X509V3_EXT_METHOD *method, void *oid, BIO *bp, int ind)
+{
+	if (!BIO_printf(bp, "%*s", ind, "")) return 0;
+	if(!i2a_ASN1_OBJECT(bp, oid)) return 0;
+	return 1;
+}
 
 /* OCSP nonce. This is needs special treatment because it doesn't have
  * an ASN1 encoding at all: it just contains arbitrary data.

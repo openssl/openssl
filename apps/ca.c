@@ -74,6 +74,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
+#include <openssl/ocsp.h>
 #include <openssl/pem.h>
 #include <openssl/engine.h>
 
@@ -139,6 +140,14 @@
 #define DB_TYPE_REV	'R'
 #define DB_TYPE_EXP	'E'
 #define DB_TYPE_VAL	'V'
+
+/* Additional revocation information types */
+
+#define REV_NONE		0	/* No addditional information */
+#define REV_CRL_REASON		1	/* Value is CRL reason code */
+#define REV_HOLD		2	/* Value is hold instruction */
+#define REV_KEY_COMPROMISE	3	/* Value is cert key compromise time */
+#define REV_CA_COMPROMISE	4	/* Value is CA key compromise time */
 
 static char *ca_usage[]={
 "usage: ca args\n",
@@ -211,10 +220,12 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	STACK_OF(CONF_VALUE) *policy, TXT_DB *db, BIGNUM *serial,
 	char *startdate, char *enddate, int days, int batch, int verbose,
 	X509_REQ *req, char *ext_sect, LHASH *conf);
-static int do_revoke(X509 *x509, TXT_DB *db);
+static int do_revoke(X509 *x509, TXT_DB *db, int ext, char *extval);
 static int get_certificate_status(const char *ser_status, TXT_DB *db);
 static int do_updatedb(TXT_DB *db);
 static int check_time_format(char *str);
+char *make_revocation_str(int rev_type, char *rev_arg);
+int make_revoked(X509_REVOKED *rev, char *str);
 static LHASH *conf=NULL;
 static LHASH *extconf=NULL;
 static char *section=NULL;
@@ -264,6 +275,8 @@ int MAIN(int argc, char **argv)
 	char *extensions=NULL;
 	char *extfile=NULL;
 	char *crl_ext=NULL;
+	int rev_type = REV_NONE;
+	char *rev_arg = NULL;
 	BIGNUM *serial=NULL;
 	char *startdate=NULL;
 	char *enddate=NULL;
@@ -459,6 +472,30 @@ EF_ALIGNMENT=0;
 			{
 			if (--argc < 1) goto bad;
 			crl_ext= *(++argv);
+			}
+		else if (strcmp(*argv,"-crl_reason") == 0)
+			{
+			if (--argc < 1) goto bad;
+			rev_arg = *(++argv);
+			rev_type = REV_CRL_REASON;
+			}
+		else if (strcmp(*argv,"-crl_hold") == 0)
+			{
+			if (--argc < 1) goto bad;
+			rev_arg = *(++argv);
+			rev_type = REV_HOLD;
+			}
+		else if (strcmp(*argv,"-crl_compromise") == 0)
+			{
+			if (--argc < 1) goto bad;
+			rev_arg = *(++argv);
+			rev_type = REV_KEY_COMPROMISE;
+			}
+		else if (strcmp(*argv,"-crl_CA_compromise") == 0)
+			{
+			if (--argc < 1) goto bad;
+			rev_arg = *(++argv);
+			rev_type = REV_CA_COMPROMISE;
 			}
 		else if (strcmp(*argv,"-engine") == 0)
 			{
@@ -780,10 +817,9 @@ bad:
 			goto err;
 			}
 		if ((pp[DB_type][0] == DB_TYPE_REV) &&
-			!check_time_format(pp[DB_rev_date]))
+			!make_revoked(NULL, pp[DB_rev_date]))
 			{
-			BIO_printf(bio_err,"entry %d: invalid revocation date\n",
-				i+1);
+			BIO_printf(bio_err," in entry %d\n", i+1);
 			goto err;
 			}
 		if (!check_time_format(pp[DB_exp_date]))
@@ -1325,6 +1361,7 @@ bad:
 	/*****************************************************************/
 	if (gencrl)
 		{
+		int crl_v2 = 0;
 		if (!crl_ext)
 			{
 			crl_ext=CONF_get_string(conf,section,ENV_CRLEXT);
@@ -1379,11 +1416,9 @@ bad:
 			if (pp[DB_type][0] == DB_TYPE_REV)
 				{
 				if ((r=X509_REVOKED_new()) == NULL) goto err;
-				if (!ASN1_UTCTIME_set_string(r->revocationDate,
-					pp[DB_rev_date]))
-						goto err;
-				/* strcpy(r->revocationDate,pp[DB_rev_date]);*/
-
+				j = make_revoked(r, pp[DB_rev_date]);
+				if (!j) goto err;
+				if (j == 2) crl_v2 = 1;
 				(void)BIO_reset(hex);
 				if (!BIO_puts(hex,pp[DB_serial]))
 					goto err;
@@ -1429,12 +1464,17 @@ bad:
 			X509V3_CTX crlctx;
 			if (ci->version == NULL)
 				if ((ci->version=ASN1_INTEGER_new()) == NULL) goto err;
-			ASN1_INTEGER_set(ci->version,1); /* version 2 CRL */
 			X509V3_set_ctx(&crlctx, x509, NULL, NULL, crl, 0);
 			X509V3_set_conf_lhash(&crlctx, conf);
 
 			if (!X509V3_EXT_CRL_add_conf(conf, &crlctx,
 				crl_ext, crl)) goto err;
+			}
+		if (crl_ext || crl_v2)
+			{
+			if (ci->version == NULL)
+				if ((ci->version=ASN1_INTEGER_new()) == NULL) goto err;
+			ASN1_INTEGER_set(ci->version,1); /* version 2 CRL */
 			}
 
 		if (!X509_CRL_sign(crl,pkey,dgst)) goto err;
@@ -1464,7 +1504,7 @@ bad:
 				BIO_printf(bio_err,"unable to load '%s' certificate\n",infile);
 				goto err;
 				}
-			j=do_revoke(revcert,db);
+			j=do_revoke(revcert,db, rev_type, rev_arg);
 			if (j <= 0) goto err;
 			X509_free(revcert);
 
@@ -2409,10 +2449,11 @@ static int check_time_format(char *str)
 	return(ASN1_UTCTIME_check(&tm));
 	}
 
-static int do_revoke(X509 *x509, TXT_DB *db)
+static int do_revoke(X509 *x509, TXT_DB *db, int type, char *value)
 	{
-	ASN1_UTCTIME *tm=NULL, *revtm=NULL;
+	ASN1_UTCTIME *tm=NULL;
 	char *row[DB_NUMBER],**rrow,**irow;
+	char *rev_str = NULL;
 	BIGNUM *bn = NULL;
 	int ok=-1,i;
 
@@ -2481,7 +2522,7 @@ static int do_revoke(X509 *x509, TXT_DB *db)
 			}
 
 		/* Revoke Certificate */
-		ok = do_revoke(x509,db);
+		ok = do_revoke(x509,db, type, value);
 
 		goto err;
 
@@ -2501,14 +2542,15 @@ static int do_revoke(X509 *x509, TXT_DB *db)
 	else
 		{
 		BIO_printf(bio_err,"Revoking Certificate %s.\n", rrow[DB_serial]);
-		revtm = ASN1_UTCTIME_new();
-		revtm=X509_gmtime_adj(revtm,0);
+		rev_str = make_revocation_str(type, value);
+		if (!rev_str)
+			{
+			BIO_printf(bio_err, "Error in revocation arguments\n");
+			goto err;
+			}
 		rrow[DB_type][0]='R';
 		rrow[DB_type][1]='\0';
-		rrow[DB_rev_date]=(char *)OPENSSL_malloc(revtm->length+1);
-		memcpy(rrow[DB_rev_date],revtm->data,revtm->length);
-		rrow[DB_rev_date][revtm->length]='\0';
-		ASN1_UTCTIME_free(revtm);
+		rrow[DB_rev_date] = rev_str;
 		}
 	ok=1;
 err:
@@ -2678,4 +2720,246 @@ err:
 	OPENSSL_free(a_tm_s);
 
 	return (cnt);
+	}
+
+static char *crl_reasons[] = {
+	/* CRL reason strings */
+	"unspecified",
+	"keyCompromise",
+	"CACompromise",
+	"affiliationChanged",
+	"superseded", 
+	"cessationOfOperation",
+	"certificateHold",
+	"removeFromCRL",
+	/* Additional pseudo reasons */
+	"holdInstruction",
+	"keyTime",
+	"CAkeyTime"
+};
+
+#define NUM_REASONS (sizeof(crl_reasons) / sizeof(char *))
+
+/* Given revocation information convert to a DB string.
+ * The format of the string is:
+ * revtime[,reason,extra]. Where 'revtime' is the
+ * revocation time (the current time). 'reason' is the
+ * optional CRL reason and 'extra' is any additional
+ * argument
+ */
+
+char *make_revocation_str(int rev_type, char *rev_arg)
+	{
+	char *reason = NULL, *other = NULL, *str;
+	ASN1_OBJECT *otmp;
+	ASN1_UTCTIME *revtm = NULL;
+	int i;
+	switch (rev_type)
+		{
+	case REV_NONE:
+		break;
+
+	case REV_CRL_REASON:
+		for (i = 0; i < 8; i++)
+			{
+			if (!strcasecmp(rev_arg, crl_reasons[i]))
+				{
+				reason = crl_reasons[i];
+				break;
+				}
+			}
+		if (reason == NULL)
+			{
+			BIO_printf(bio_err, "Unknown CRL reason %s\n", rev_arg);
+			return NULL;
+			}
+		break;
+
+	case REV_HOLD:
+		/* Argument is an OID */
+
+		otmp = OBJ_txt2obj(rev_arg, 0);
+		ASN1_OBJECT_free(otmp);
+
+		if (otmp == NULL)
+			{
+			BIO_printf(bio_err, "Invalid object identifier %s\n", rev_arg);
+			return NULL;
+			}
+
+		reason = "holdInstruction";
+		other = rev_arg;
+		break;
+		
+	case REV_KEY_COMPROMISE:
+	case REV_CA_COMPROMISE:
+
+		/* Argument is the key compromise time  */
+		if (!ASN1_GENERALIZEDTIME_set_string(NULL, rev_arg))
+			{	
+			BIO_printf(bio_err, "Invalid time format %s. Need YYYYMMDDHHMMSSZ\n", rev_arg);
+			return NULL;
+			}
+		other = rev_arg;
+		if (rev_type == REV_KEY_COMPROMISE)
+			reason = "keyTime";
+		else 
+			reason = "CAkeyTime";
+
+		break;
+
+		}
+
+	revtm = X509_gmtime_adj(NULL, 0);
+
+	i = revtm->length + 1;
+
+	if (reason) i += strlen(reason) + 1;
+	if (other) i += strlen(other) + 1;
+
+	str = OPENSSL_malloc(i);
+
+	if (!str) return NULL;
+
+	strcpy(str, (char *)revtm->data);
+	if (reason)
+		{
+		strcat(str, ",");
+		strcat(str, reason);
+		}
+	if (other)
+		{
+		strcat(str, ",");
+		strcat(str, other);
+		}
+	ASN1_UTCTIME_free(revtm);
+	return str;
+	}
+
+/* Convert revocation field to X509_REVOKED entry 
+ * return code:
+ * 0 error
+ * 1 OK
+ * 2 OK and some extensions added (i.e. V2 CRL)
+ */
+
+int make_revoked(X509_REVOKED *rev, char *str)
+	{
+	char *tmp = NULL;
+	char *rtime_str, *reason_str = NULL, *arg_str = NULL, *p;
+	int reason_code = -1;
+	int i, ret = 0;
+	ASN1_OBJECT *hold = NULL;
+	ASN1_GENERALIZEDTIME *comp_time = NULL;
+	ASN1_ENUMERATED *rtmp = NULL;
+	tmp = BUF_strdup(str);
+
+	p = strchr(tmp, ',');
+
+	rtime_str = tmp;
+
+	if (p)
+		{
+		*p = '\0';
+		p++;
+		reason_str = p;
+		p = strchr(p, ',');
+		if (p)
+			{
+			*p = '\0';
+			arg_str = p + 1;
+			}
+		}
+
+	if (rev && !ASN1_UTCTIME_set_string(rev->revocationDate, rtime_str))
+		{
+		BIO_printf(bio_err, "invalid revocation date %s\n", rtime_str);
+		goto err;
+		}
+	if (reason_str)
+		{
+		for (i = 0; i < NUM_REASONS; i++)
+			{
+			if(!strcasecmp(reason_str, crl_reasons[i]))
+				{
+				reason_code = i;
+				break;
+				}
+			}
+		if (reason_code == OCSP_REVOKED_STATUS_NOSTATUS)
+			{
+			BIO_printf(bio_err, "invalid reason code %s\n", reason_str);
+			goto err;
+			}
+
+		if (reason_code == 7)
+			reason_code = OCSP_REVOKED_STATUS_REMOVEFROMCRL;
+		else if (reason_code == 8)		/* Hold instruction */
+			{
+			if (!arg_str)
+				{	
+				BIO_printf(bio_err, "missing hold instruction\n");
+				goto err;
+				}
+			reason_code = OCSP_REVOKED_STATUS_CERTIFICATEHOLD;
+			hold = OBJ_txt2obj(arg_str, 0);
+
+			if (!hold)
+				{
+				BIO_printf(bio_err, "invalid object identifier %s\n", arg_str);
+				goto err;
+				}
+			}
+		else if ((reason_code == 9) || (reason_code == 10))
+			{
+			if (!arg_str)
+				{	
+				BIO_printf(bio_err, "missing compromised time\n");
+				goto err;
+				}
+			comp_time = ASN1_GENERALIZEDTIME_new();
+			if (!ASN1_GENERALIZEDTIME_set_string(comp_time, arg_str))
+				{	
+				BIO_printf(bio_err, "invalid compromised time %s\n", arg_str);
+				goto err;
+				}
+			if (reason_code == 9)
+				reason_code = OCSP_REVOKED_STATUS_KEYCOMPROMISE;
+			else
+				reason_code = OCSP_REVOKED_STATUS_CACOMPROMISE;
+			}
+		}
+
+	if (rev && (reason_code != OCSP_REVOKED_STATUS_NOSTATUS))
+		{
+		rtmp = ASN1_ENUMERATED_new();
+		if (!rtmp || !ASN1_ENUMERATED_set(rtmp, reason_code))
+			goto err;
+		if (!X509_REVOKED_add1_ext_i2d(rev, NID_crl_reason, rtmp, 0, 0))
+			goto err;
+		}
+
+	if (rev && comp_time)
+		{
+		if (!X509_REVOKED_add1_ext_i2d(rev, NID_invalidity_date, comp_time, 0, 0))
+			goto err;
+		}
+	if (rev && hold)
+		{
+		if (!X509_REVOKED_add1_ext_i2d(rev, NID_hold_instruction_code, hold, 0, 0))
+			goto err;
+		}
+
+	if (reason_code != OCSP_REVOKED_STATUS_NOSTATUS)
+		ret = 2;
+	else ret = 1;
+
+	err:
+
+	if (tmp) OPENSSL_free(tmp);
+	ASN1_OBJECT_free(hold);
+	ASN1_GENERALIZEDTIME_free(comp_time);
+	ASN1_ENUMERATED_free(rtmp);
+
+	return ret;
 	}

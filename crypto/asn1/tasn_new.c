@@ -154,7 +154,12 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int 
 		if(asn1_cb) {
 			i = asn1_cb(ASN1_OP_NEW_PRE, pval, it);
 			if(!i) goto auxerr;
-			if(i==2) return 1;
+			if(i==2) {
+#ifdef CRYPTO_MDEBUG
+				if(it->sname) CRYPTO_pop_info();
+#endif
+				return 1;
+			}
 		}
 		if(!combine) {
 			*pval = OPENSSL_malloc(it->size);

@@ -612,3 +612,13 @@ aes 42			: AES-256-CBC		: aes-256-cbc
 aes 43			: AES-256-OFB		: aes-256-ofb
 aes 44			: AES-256-CFB		: aes-256-cfb
 
+# Hold instruction CRL entry extension
+!Cname hold-instruction-code
+id-ce 23		: holdInstructionCode	: Hold Instruction Code
+!Alias holdInstruction	X9-57 2
+!Cname hold-instruction-none
+holdInstruction 1	: holdInstructionNone	: Hold Instruction None
+!Cname hold-instruction-call-issuer
+holdInstruction 2	: holdInstructionCallIssuer : Hold Instruction Call Issuer
+!Cname hold-instruction-reject
+holdInstruction 3	: holdInstructionReject	: Hold Instruction Reject

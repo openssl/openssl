@@ -1863,3 +1863,25 @@
 #define NID_aes_256_cfb		405
 #define OBJ_aes_256_cfb		OBJ_aes,44L
 
+#define SN_hold_instruction_code		"holdInstructionCode"
+#define LN_hold_instruction_code		"Hold Instruction Code"
+#define NID_hold_instruction_code		406
+#define OBJ_hold_instruction_code		OBJ_id_ce,23L
+
+#define OBJ_holdInstruction		OBJ_X9_57,2L
+
+#define SN_hold_instruction_none		"holdInstructionNone"
+#define LN_hold_instruction_none		"Hold Instruction None"
+#define NID_hold_instruction_none		407
+#define OBJ_hold_instruction_none		OBJ_holdInstruction,1L
+
+#define SN_hold_instruction_call_issuer		"holdInstructionCallIssuer"
+#define LN_hold_instruction_call_issuer		"Hold Instruction Call Issuer"
+#define NID_hold_instruction_call_issuer		408
+#define OBJ_hold_instruction_call_issuer		OBJ_holdInstruction,2L
+
+#define SN_hold_instruction_reject		"holdInstructionReject"
+#define LN_hold_instruction_reject		"Hold Instruction Reject"
+#define NID_hold_instruction_reject		409
+#define OBJ_hold_instruction_reject		OBJ_holdInstruction,3L
+

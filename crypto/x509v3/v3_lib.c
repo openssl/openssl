@@ -276,7 +276,7 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
 
 	if(!ext) {
 		X509V3err(X509V3_F_X509V3_ADD_I2D, X509V3_R_ERROR_CREATING_EXTENSION);
-		return -1;
+		return 0;
 	}
 
 	/* If extension exists replace it.. */

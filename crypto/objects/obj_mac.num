@@ -403,3 +403,7 @@ aes_256_ecb		402
 aes_256_cbc		403
 aes_256_ofb		404
 aes_256_cfb		405
+hold_instruction_code		406
+hold_instruction_none		407
+hold_instruction_call_issuer		408
+hold_instruction_reject		409

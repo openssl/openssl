@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) New options to 'ca' utility to support V2 CRL entry extensions.
+     Currently CRL reason, invalidity date and hold instruction are
+     supported. Add new CRL extensions to V3 code and some new objects.
+     [Steve Henson]
+
   *) Add "-rand" option also to s_client and s_server.
      [Lutz Jaenicke]
 

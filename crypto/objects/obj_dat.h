@@ -61,12 +61,12 @@
  * perl obj_dat.pl objects.h obj_dat.h
  */
 
-#define NUM_NID 406
-#define NUM_SN 404
-#define NUM_LN 404
-#define NUM_OBJ 378
+#define NUM_NID 410
+#define NUM_SN 408
+#define NUM_LN 408
+#define NUM_OBJ 382
 
-static unsigned char lvalues[3004]={
+static unsigned char lvalues[3028]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -445,6 +445,10 @@ static unsigned char lvalues[3004]={
 0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2A,/* [2976] OBJ_aes_256_cbc */
 0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2B,/* [2985] OBJ_aes_256_ofb */
 0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2C,/* [2994] OBJ_aes_256_cfb */
+0x55,0x1D,0x17,                              /* [3003] OBJ_hold_instruction_code */
+0x2A,0x86,0x48,0xCE,0x38,0x02,0x01,          /* [3006] OBJ_hold_instruction_none */
+0x2A,0x86,0x48,0xCE,0x38,0x02,0x02,          /* [3013] OBJ_hold_instruction_call_issuer */
+0x2A,0x86,0x48,0xCE,0x38,0x02,0x03,          /* [3020] OBJ_hold_instruction_reject */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1070,6 +1074,14 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"AES-256-CBC","aes-256-cbc",NID_aes_256_cbc,9,&(lvalues[2976]),0},
 {"AES-256-OFB","aes-256-ofb",NID_aes_256_ofb,9,&(lvalues[2985]),0},
 {"AES-256-CFB","aes-256-cfb",NID_aes_256_cfb,9,&(lvalues[2994]),0},
+{"holdInstructionCode","Hold Instruction Code",
+	NID_hold_instruction_code,3,&(lvalues[3003]),0},
+{"holdInstructionNone","Hold Instruction None",
+	NID_hold_instruction_none,7,&(lvalues[3006]),0},
+{"holdInstructionCallIssuer","Hold Instruction Call Issuer",
+	NID_hold_instruction_call_issuer,7,&(lvalues[3013]),0},
+{"holdInstructionReject","Hold Instruction Reject",
+	NID_hold_instruction_reject,7,&(lvalues[3020]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1237,6 +1249,10 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[372]),/* "extendedStatus" */
 &(nid_objs[156]),/* "friendlyName" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
+&(nid_objs[408]),/* "holdInstructionCallIssuer" */
+&(nid_objs[406]),/* "holdInstructionCode" */
+&(nid_objs[407]),/* "holdInstructionNone" */
+&(nid_objs[409]),/* "holdInstructionReject" */
 &(nid_objs[266]),/* "id-aca" */
 &(nid_objs[355]),/* "id-aca-accessIdentity" */
 &(nid_objs[354]),/* "id-aca-authenticationInfo" */
@@ -1494,6 +1510,10 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[384]),/* "Experimental" */
 &(nid_objs[372]),/* "Extended OCSP Status" */
 &(nid_objs[172]),/* "Extension Request" */
+&(nid_objs[408]),/* "Hold Instruction Call Issuer" */
+&(nid_objs[406]),/* "Hold Instruction Code" */
+&(nid_objs[407]),/* "Hold Instruction None" */
+&(nid_objs[409]),/* "Hold Instruction Reject" */
 &(nid_objs[294]),/* "IPSec End System" */
 &(nid_objs[295]),/* "IPSec Tunnel" */
 &(nid_objs[296]),/* "IPSec User" */
@@ -1922,6 +1942,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[87]),/* OBJ_basic_constraints            2 5 29 19 */
 &(nid_objs[88]),/* OBJ_crl_number                   2 5 29 20 */
 &(nid_objs[141]),/* OBJ_crl_reason                   2 5 29 21 */
+&(nid_objs[406]),/* OBJ_hold_instruction_code        2 5 29 23 */
 &(nid_objs[142]),/* OBJ_invalidity_date              2 5 29 24 */
 &(nid_objs[140]),/* OBJ_delta_crl                    2 5 29 27 */
 &(nid_objs[103]),/* OBJ_crl_distribution_points      2 5 29 31 */
@@ -1964,6 +1985,9 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[127]),/* OBJ_id_pkix                      1 3 6 1 5 5 7 */
 &(nid_objs[119]),/* OBJ_ripemd160WithRSA             1 3 36 3 3 1 2 */
 &(nid_objs[ 2]),/* OBJ_pkcs                         1 2 840 113549 1 */
+&(nid_objs[407]),/* OBJ_hold_instruction_none        1 2 840 10040 2 1 */
+&(nid_objs[408]),/* OBJ_hold_instruction_call_issuer 1 2 840 10040 2 2 */
+&(nid_objs[409]),/* OBJ_hold_instruction_reject      1 2 840 10040 2 3 */
 &(nid_objs[116]),/* OBJ_dsa                          1 2 840 10040 4 1 */
 &(nid_objs[113]),/* OBJ_dsaWithSHA1                  1 2 840 10040 4 3 */
 &(nid_objs[258]),/* OBJ_id_pkix_mod                  1 3 6 1 5 5 7 0 */
