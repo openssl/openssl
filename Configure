@@ -467,9 +467,9 @@ my %table=(
 # and its library files in util/pl/*)
 "Mingw32", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
 
-# CygWin32
-"CygWin32-pre1.3", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -m486 -Wall::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
-"CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32:cygwin-shared::.dll",
+# Cygwin
+"Cygwin-pre1.3", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -m486 -Wall::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
+"Cygwin", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -m486 -Wall::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32:cygwin-shared::.dll",
 
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
 "ultrix-cc","cc:-std1 -O -Olimit 1000 -DL_ENDIAN::(unknown)::::::",
@@ -723,13 +723,17 @@ if ($target eq "LIST") {
 	exit 0;
 }
 
+if ($target =~ m/^CygWin32(-.*)$/) {
+	$target = "Cygwin".$1;
+}
+
 print "Configuring for $target\n";
 
 &usage if (!defined($table{$target}));
 
 my $IsWindows=scalar grep /^$target$/,@WinTargets;
 
-$exe_ext=".exe" if ($target eq "CygWin32");
+$exe_ext=".exe" if ($target eq "Cygwin");
 $openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
 $prefix=$openssldir if $prefix eq "";
 

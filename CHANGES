@@ -4,7 +4,7 @@
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx XXXX]
 
-  *) Add information about CygWin32 1.3 and on, and preserve proper
+  *) Add information about CygWin 1.3 and on, and preserve proper
      configuration for the versions before that.
      [Corinna Vinschen <vinschen@redhat.com> and Richard Levitte]
 

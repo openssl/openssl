@@ -236,7 +236,7 @@ clean-shared:
 			done; \
 		fi; \
 		( set -x; rm -f lib$$i$(SHLIB_EXT) ); \
-		if [ "$(PLATFORM)" = "CygWin32" ]; then \
+		if [ "$(PLATFORM)" = "Cygwin" ]; then \
 			( set -x; rm -f cyg$$i$(SHLIB_EXT) lib$$i$(SHLIB_EXT).a ); \
 		fi; \
 	done
@@ -652,7 +652,7 @@ install: all install_docs
 		do \
 			if [ -f "$$i" -o -f "$$i.a" ]; then \
 			(       echo installing $$i; \
-				if [ "$(PLATFORM)" != "CygWin32" ]; then \
+				if [ "$(PLATFORM)" != "Cygwin" ]; then \
 					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
 					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 				else \
