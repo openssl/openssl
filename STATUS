@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/03/10 14:53:54 $
+  ______________                           $Date: 1999/03/10 16:17:31 $
 
   DEVELOPMENT STATE
 
@@ -10,7 +10,7 @@
        - Already successfully tested platform:
          o  FreeBSD 2.2.7    Ben Laurie            OK
          o  FreeBSD 3.1      Ralf S. Engelschall   OK
-         o  Solaris 2.6      Ralf S. Engelschall   ctype warns, test fails in test_ssl
+         o  Solaris 2.6      Ralf S. Engelschall   OK except for ctype warns
          o  Linux RH 5.1     Steve Henson          OK
          o  Linux 2.0 RH 5.2 Ralf S. Engelschall   OK
          o  Linux 2.2 RH 5.2 Peter 'Luna' Altberg  OK
@@ -22,13 +22,14 @@
 
   RELEASE SHOWSTOPPERS
 
-    o `make test' still fails under Solaris 2.6 in the test_ssl target
     o Compilation warnings: ctype-related int vs. char
     o Compilation error: "unsigned long*" and "int*" under AIX
     o Why are NULL ciphers in front of the cipher spec?
       (see my posting "Bug?!: Cipher Suite and NULL Ciphers" in openssl-dev)
     o A Linux alpha user reported: "alpha.s does not have bn_div_word()"
       (see posting "ALPHA error" in openssl-dev)
+    o Undefined BN symbols in assembler stuff on Solaris
+      (see posting "openssl-SNAP-19990308-2130 on Solaris-2.6 SC4" in openssl-dev)
 
   AVAILABLE PATCHES
 
