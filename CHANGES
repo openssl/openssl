@@ -4,6 +4,11 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Fix PKCS#7 decode routines so they correctly update the length
+     after reading an EOC for the EXPLICIT tag.
+     [Steve Henson]
+     [This change does not apply to 0.9.7.]
+
   *) Fix bug in PKCS#12 key generation routines. This was triggered
      if a 3DES key was generated with a 0 initial byte. Include
      PKCS12_BROKEN_KEYGEN compilation option to retain the old
@@ -27,15 +32,6 @@
   *) In copy_email() check for >= 0 as a return value for
      X509_NAME_get_index_by_NID() since 0 is a valid index.
      [Steve Henson reported by Massimiliano Pala <madwolf@opensca.org>]
-
-  *) Use better test patterns in bntest.
-     [Ulf Möller]
-
-  *) Initialise "ex_data" member of RSA/DSA/DH structures prior to calling
-     the method-specific "init()" handler. Also clean up ex_data after
-     calling the method-specific "finish()" handler. Previously, this was
-     happening the other way round.
-     [Geoff Thorpe]
 
   *) Avoid coredump with unsupported or invalid public keys by checking if
      X509_get_pubkey() fails in PKCS7_verify(). Fix memory leak when
@@ -69,6 +65,7 @@
   *) Fix X509_NAME bug which produced incorrect encoding if X509_NAME
      was empty.
      [Steve Henson]
+     [This change does not apply to 0.9.7.]
 
   *) Use the cached encoding of an X509_NAME structure rather than
      copying it. This is apparently the reason for the libsafe "errors"
@@ -80,7 +77,7 @@
      Extend BN_[pseudo_]rand: As before, top=1 forces the highest two bits
      to be set and top=0 forces the highest bit to be set; top=-1 is new
      and leaves the highest bit random.
-     [Ulf Moeller]
+     [Ulf Moeller, Bodo Moeller]
 
   *) In the NCONF_...-based implementations for CONF_... queries
      (crypto/conf/conf_lib.c), if the input LHASH is NULL, avoid using
@@ -109,6 +106,7 @@
      macros previously used would not encode an empty SEQUENCE OF
      and break the signature.
      [Steve Henson]
+     [This change does not apply to 0.9.7.]
 
   *) Zero the premaster secret after deriving the master secret in
      DH ciphersuites.
@@ -161,10 +159,17 @@
   *) Fix a deadlock in CRYPTO_mem_leaks().
      [Bodo Moeller]
 
+  *) Use better test patterns in bntest.
+     [Ulf Möller]
+
   *) rand_win.c fix for Borland C.
      [Ulf Möller]
  
   *) BN_rshift bugfix for n == 0.
+     [Bodo Moeller]
+
+  *) Add a 'bctest' script that checks for some known 'bc' bugs
+     so that 'make test' does not abort just because 'bc' is broken.
      [Bodo Moeller]
 
   *) Store verify_result within SSL_SESSION also for client side to
@@ -189,9 +194,21 @@
      does the actual work for ssl3_read_internal.
      [Bodo Moeller]
 
+  *) Initialise "ex_data" member of RSA/DSA/DH structures prior to calling
+     the method-specific "init()" handler. Also clean up ex_data after
+     calling the method-specific "finish()" handler. Previously, this was
+     happening the other way round.
+     [Geoff Thorpe]
+
   *) Increase BN_CTX_NUM (the number of BIGNUMs in a BN_CTX) to 16.
      The previous value, 12, was not always sufficient for BN_mod_exp().
      [Bodo Moeller]
+
+  *) Make sure that shared libraries get the internal name engine with
+     the full version number and not just 0.  This should mark the
+     shared libraries as not backward compatible.  Of course, this should
+     be changed again when we can guarantee backward binary compatibility.
+     [Richard Levitte]
 
   *) Fix typo in get_cert_by_subject() in by_dir.c
      [Jean-Marc Desperrier <jean-marc.desperrier@certplus.com>]

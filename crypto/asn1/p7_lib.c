@@ -307,12 +307,14 @@ PKCS7 *d2i_PKCS7(PKCS7 **a, unsigned char **pp, long length)
 			}
 		if (Tinf == (1|V_ASN1_CONSTRUCTED))
 			{
+			c.q=c.p;
 			if (!ASN1_check_infinite_end(&c.p,c.slen))
 				{
 				c.error=ERR_R_MISSING_ASN1_EOS;
 				c.line=__LINE__;
 				goto err;
 				}
+			c.slen-=(c.p-c.q);
 			}
 		}
 	else

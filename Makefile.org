@@ -57,7 +57,7 @@ CC= gcc
 #CFLAG= -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized -DSHA1_ASM -DMD5_ASM -DRMD160_ASM
 CFLAG= -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall -DSHA1_ASM -DMD5_ASM -DRMD160_ASM
 DEPFLAG= 
-PEX_LIBS= -L. -L.. -L../.. -L../../..
+PEX_LIBS= 
 EX_LIBS= 
 AR=ar r
 RANLIB= ranlib
@@ -207,7 +207,7 @@ sub_all:
 	fi; \
 	done; \
 	if echo "$(DIRS)" | \
-	    grep '\(^\| \)\(crypto\|ssl\)\( \|$$\)' > /dev/null 2>&1 && \
+	    egrep '(^| )(crypto|ssl)( |$$)' > /dev/null 2>&1 && \
 	   [ -n "$(SHARED_LIBS)" ]; then \
 		$(MAKE) $(SHARED_LIBS); \
 	fi
@@ -242,7 +242,7 @@ link-shared:
 		if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
 			tmp="$(SHARED_LIBS_LINK_EXTS)"; \
 			for j in $${tmp:-x}; do \
-				( set -x; ln -s -f $$prev lib$$i$$j ); \
+				( set -x; ln -f -s $$prev lib$$i$$j ); \
 				prev=lib$$i$$j; \
 			done; \
 		fi; \
@@ -251,17 +251,18 @@ link-shared:
 build-shared: clean-shared do_$(SHLIB_TARGET) link-shared
 
 do_bsd-gcc-shared: linux-shared
-do_linux-shared:
+do_linux-shared: do_gnu-shared
+do_gnu-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-Wl,-S,-soname=lib$$i.so.${SHLIB_MAJOR} \
+		-Wl,-S,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,--whole-archive lib$$i.a \
 		-Wl,--no-whole-archive $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -l$$i"; \
 	done
 
 # This assumes that GNU utilities are *not* used
-do_true64-shared:
+do_tru64-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
 	( set -x; ${CC}  -shared -no_archive -o lib$$i.so \
 		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
@@ -272,8 +273,9 @@ do_true64-shared:
 # This assumes that GNU utilities are *not* used
 do_solaris-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-h lib$$i.so.${SHLIB_MAJOR} \
+	( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
+	  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
 	libs="$$libs -l$$i"; \
 	done
