@@ -208,7 +208,7 @@ int which;
 
 	p=s->s3->tmp.key_block;
 	i=EVP_MD_size(m);
-	// Should be 	j=exp?min(5,EVP_CIPHER_key_length(c)):EVP_CIPHER_key_length(c); ?? - Ben 30/12/98
+	/* Should be 	j=exp?min(5,EVP_CIPHER_key_length(c)):EVP_CIPHER_key_length(c); ?? - Ben 30/12/98 */
 	j=(exp)?5:EVP_CIPHER_key_length(c);
 	k=EVP_CIPHER_iv_length(c);
 	if (	(which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
