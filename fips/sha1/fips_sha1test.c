@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <openssl/sha.h>
 #include <openssl/err.h>
+#include <openssl/fips.h>
 
 #ifndef FIPS
 int main(int argc, char *argv[])
@@ -13,7 +14,6 @@ int main(int argc, char *argv[])
     return(0);
 }
 #else
-#include <openssl/fips.h>
 
 #define MAX_TEST_BITS 103432
 
