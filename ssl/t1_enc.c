@@ -483,13 +483,18 @@ printf("\nkey block\n");
 { int z; for (z=0; z<num; z++) printf("%02X%c",p1[z],((z+1)%16)?' ':'\n'); }
 #endif
 
-	/* enable vulnerability countermeasure for CBC ciphers with
-	 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt) */
-	s->s3->need_empty_fragments = 1;
+	if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
+		{
+		/* enable vulnerability countermeasure for CBC ciphers with
+		 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt)
+		 */
+		s->s3->need_empty_fragments = 1;
+
 #ifndef NO_RC4
-	if ((s->session->cipher != NULL) && ((s->session->cipher->algorithms & SSL_ENC_MASK) == SSL_RC4))
-		s->s3->need_empty_fragments = 0;
+		if ((s->session->cipher != NULL) && ((s->session->cipher->algorithms & SSL_ENC_MASK) == SSL_RC4))
+			s->s3->need_empty_fragments = 0;
 #endif
+		}
 		
 	return(1);
 err:

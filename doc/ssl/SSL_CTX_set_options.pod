@@ -100,14 +100,22 @@ doing a re-connect, always takes the first cipher in the cipher list.
 
 ...
 
+=item SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
+
+Disables a countermeasure against a SSL 3.0/TLS 1.0 protocol
+vulnerability affecting CBC ciphers, which cannot be handled by some
+broken SSL implementations.  This option has no effect for connections
+using other ciphers.
+
 =item SSL_OP_ALL
 
 All of the above bug workarounds.
 
 =back
 
-It is safe and recommended to use B<SSL_OP_ALL> to enable the bug workaround
-options.
+It is usually safe to use B<SSL_OP_ALL> to enable the bug workaround
+options if compatibility with somewhat broken implementations is
+desired.
 
 The following B<modifying> options are available:
 
@@ -218,5 +226,10 @@ OpenSSL 0.9.7.
 B<SSL_OP_TLS_ROLLBACK_BUG> has been added in OpenSSL 0.9.6 and was automatically
 enabled with B<SSL_OP_ALL>. As of 0.9.7, it is no longer included in B<SSL_OP_ALL>
 and must be explicitly set.
+
+B<SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS> has been added in OpenSSL 0.9.6e.
+Versions up to OpenSSL 0.9.6c do not include the countermeasure that
+can be disabled with this option (in OpenSSL 0.9.6d, it was always
+enabled).
 
 =cut

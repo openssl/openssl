@@ -429,6 +429,7 @@ typedef struct ssl_session_st
 	struct ssl_session_st *prev,*next;
 	} SSL_SESSION;
 
+
 #define SSL_OP_MICROSOFT_SESS_ID_BUG			0x00000001L
 #define SSL_OP_NETSCAPE_CHALLENGE_BUG			0x00000002L
 #define SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG		0x00000008L
@@ -439,6 +440,19 @@ typedef struct ssl_session_st
 #define SSL_OP_TLS_D5_BUG				0x00000100L
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x00000200L
 
+/* Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
+ * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
+ * the workaround is not needed.  Unfortunately some broken SSL/TLS
+ * implementations cannot handle it at all, which is why we include
+ * it in SSL_OP_ALL. */
+#define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS              0x00000800L /* added in 0.9.6e */
+
+/* SSL_OP_ALL: various bug workarounds that should be rather harmless.
+ *             This used to be 0x000FFFFFL before 0.9.7. */
+#define SSL_OP_ALL					0x00000FFFL
+
+/* As server, disallow session resumption on renegotiation */
+#define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
 /* If set, always create a new key when using tmp_dh parameters */
 #define SSL_OP_SINGLE_DH_USE				0x00100000L
 /* Set to always use the tmp_rsa key when doing RSA operations,
@@ -452,8 +466,10 @@ typedef struct ssl_session_st
  * (version 3.1) was announced in the client hello. Normally this is
  * forbidden to prevent version rollback attacks. */
 #define SSL_OP_TLS_ROLLBACK_BUG				0x00800000L
-/* As server, disallow session resumption on renegotiation */
-#define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x01000000L
+
+#define SSL_OP_NO_SSLv2					0x01000000L
+#define SSL_OP_NO_SSLv3					0x02000000L
+#define SSL_OP_NO_TLSv1					0x04000000L
 
 /* The next flag deliberately changes the ciphertest, this is a check
  * for the PKCS#1 attack */
@@ -461,11 +477,7 @@ typedef struct ssl_session_st
 #define SSL_OP_PKCS1_CHECK_2				0x10000000L
 #define SSL_OP_NETSCAPE_CA_DN_BUG			0x20000000L
 #define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG		0x40000000L
-#define SSL_OP_ALL					0x000FFFFFL
 
-#define SSL_OP_NO_SSLv2					0x01000000L
-#define SSL_OP_NO_SSLv3					0x02000000L
-#define SSL_OP_NO_TLSv1					0x04000000L
 
 /* Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
  * when just a single record has been written): */
@@ -478,6 +490,7 @@ typedef struct ssl_session_st
 /* Never bother the application with retries if the transport
  * is blocking: */
 #define SSL_MODE_AUTO_RETRY 0x00000004L
+
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
  * they cannot be used to clear bits. */

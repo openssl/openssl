@@ -421,6 +421,10 @@
      By default, clients may request session resumption even during
      renegotiation (if session ID contexts permit); with this option,
      session resumption is possible only in the first handshake.
+
+     SSL_OP_ALL is now 0x00000FFFL instead of 0x000FFFFFL.  This makes
+     more bits available for options that should not be part of
+     SSL_OP_ALL (such as SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION).
      [Bodo Moeller]
 
   *) Add some demos for certificate and certificate request creation.
@@ -1707,6 +1711,19 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Fix EVP_dsa_sha macro.
      [Nils Larsch]
+
+  *) New option
+          SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
+     for disabling the SSL 3.0/TLS 1.0 CBC vulnerability countermeasure
+     that was added in OpenSSL 0.9.6d.
+
+     As the countermeasure turned out to be incompatible with some
+     broken SSL implementations, the new option is part of SSL_OP_ALL.
+     SSL_OP_ALL is usually employed when compatibility with weird SSL
+     implementations is desired (e.g. '-bugs' option to 's_client' and
+     's_server'), so the new option is automatically set in many
+     applications.
+     [Bodo Moeller]
 
  Changes between 0.9.6c and 0.9.6d  [9 May 2002]
 
