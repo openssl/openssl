@@ -66,7 +66,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include <openssl/opensslconf.h>
+#include <openssl/e_os2.h>
 
 #if defined(OPENSSL_SYS_WIN32)
 #  include <process.h>

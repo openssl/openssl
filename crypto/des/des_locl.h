@@ -59,6 +59,8 @@
 #ifndef HEADER_DES_LOCL_H
 #define HEADER_DES_LOCL_H
 
+#include <openssl/e_os2.h>
+
 #if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16)
 #ifndef OPENSSL_SYS_MSDOS
 #define OPENSSL_SYS_MSDOS
@@ -67,8 +69,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_SYS_MSDOS
 #if !defined(OPENSSL_SYS_VMS) || defined(__DECC)

@@ -56,15 +56,16 @@
  * [including the GNU Public Licence.]
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <openssl/e_os2.h>
 #if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16) || defined(OPENSSL_SYS_WINDOWS)
 #ifndef OPENSSL_SYS_MSDOS
 #define OPENSSL_SYS_MSDOS
 #endif
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <openssl/opensslconf.h>
 #ifndef OPENSSL_SYS_MSDOS
 #if !defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_VMS_DECC)
 #include OPENSSL_UNISTD

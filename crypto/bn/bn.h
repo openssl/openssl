@@ -59,10 +59,10 @@
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
 
+#include <openssl/e_os2.h>
 #ifndef OPENSSL_NO_FP_API
 #include <stdio.h> /* FILE */
 #endif
-#include <openssl/opensslconf.h>
 
 #ifdef  __cplusplus
 extern "C" {
