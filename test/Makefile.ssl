@@ -13,7 +13,6 @@ INSTALLTOP=	/usr/local/ssl
 MAKEFILE=	Makefile.ssl
 MAKE=		make -f $(MAKEFILE)
 MAKEDEPEND=	$(TOP)/util/domd $(TOP)
-PERL=		perl
 
 PEX_LIBS=
 EX_LIBS= #-lnsl -lsocket
