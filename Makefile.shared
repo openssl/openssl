@@ -1,0 +1,577 @@
+#
+# Helper makefile to link shared libraries in a portable way.
+# This is much simpler than libtool, and hopefully not too error-prone.
+#
+# The following variables need to be set on the command line to build
+# properly
+
+# CC contains the current compiler.  This one MUST be defined
+CC=cc
+# LDFLAGS contains flags to be used when the temporary object file is
+# created.  SHARED_LDFLAGS contains flags to be used when the shared
+# library is created.
+LDFLAGS=
+SHARED_LDFLAGS=
+
+# LIBNAME contains just the name of thhe library, without prefix ("lib"
+# on Unix, "cyg" for certain forms under Cygwin...) or suffix (.a, .so,
+# .dll, ...).  This one MUST have a value when using this makefile.
+# For example, to build libfoo.so, you need to do the following:
+#LIBNAME=foo
+LIBNAME=
+
+# LIBEXTRAS contains extra modules to link together with the library.
+# For example, if a seond library, say libbar.a needs to be linked into
+# libfoo.so, you need to do the following:
+#LIBEXTRAS=libbar.a
+# Note that this MUST be used when using the link_o targets, to hold the
+# names of all object files that go into the target library.
+LIBEXTRAS=
+
+# LIBVERSION contains the current version of the library.
+# For example, to build libfoo.so.1.2, you need to do the following:
+#LIBVERSION=1.2
+LIBVERSION=
+
+# LIBCOMPATVERSIONS contains the compatibility versions (a list) of
+# the library.  They MUST be in decreasing order.
+# For example, if libfoo.so.1.2.1 is backward compatible with libfoo.so.1.2
+# and libfoo.so.1, you need to do the following:
+#LIBCOMPATVERSIONS=1.2 1
+# Note that on systems that use sonames, the last number will appear as
+# part of it.
+# It's also possible, for systems that support it (Tru64, for example),
+# to add extra compatibility info with more precision, by adding a second
+# list of versions, separated from the first with a semicolon, like this:
+#LIBCOMPATVERSIONS=1.2 1;1.2.0 1.1.2 1.1.1 1.1.0 1.0.0
+LIBCOMPATVERSIONS=
+
+# LIBDEPS contains all the flags necessary to cover all necessary
+# dependencies to other libraries.
+LIBDEPS=
+
+#------------------------------------------------------------------------------
+# The rest is private to this makefile.
+
+#DEBUG=:
+DEBUG=set -x
+
+top:
+	echo "Trying to use this makefile interactively?  Don't."
+
+CALC_VERSIONS=	\
+	SHLIB_COMPAT=; SHLIB_SOVER=; \
+	if [ -n "$(LIBVERSION) $(LIBCOMPATVERSIONS)" ]; then \
+		prev=""; \
+		for v in `echo "$(LIBVERSION) $(LIBCOMPATVERSIONS)" | cut -d';' -f1`; do \
+			SHLIB_SOVER=.$$v; \
+			if [ -n "$$prev" ]; then \
+				SHLIB_COMPAT=$$SHLIB_COMPAT .$$prev; \
+			fi; \
+			prev=$$v; \
+		done; \
+	fi
+
+LINK_SO=	\
+  ( $(DEBUG); \
+    nm -Pg $$SHOBJECTS | grep ' [BDT] ' | cut -f1 -d' ' > lib$(LIBNAME).exp; \
+    $$SHAREDCMD $(SHARED_LDFLAGS) $$SHAREDFLAGS -o $$SHLIB$$SHLIB_SOVER \
+	$$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS ) && \
+  $(SYMLINK_SO); ( $(DEBUG); rm -f lib$(LIBNAME).exp )
+SYMLINK_SO=	\
+	if [ -n "$$SHLIB_COMPAT"]; then \
+		prev=$$SHLIB$$SHLIB_SOVER; \
+		for x in $$SHLIB_COMPAT; do \
+			( $(DEBUG); rm -f $$SHLIB$$x; \
+			  ln -s $$prev $$SHLIB$$x ); \
+			prev=$$SHLIB$$x; \
+		done; \
+	fi
+LINK_SO_A=	SHOBJECTS="lib$(LIBNAME).a $(LIBEXTRAS)"; $(LINK_SO)
+LINK_SO_O=	SHOBJECTS="$(LIBEXTRAS)"; $(LINK_SO)
+LINK_SO_A_VIA_O=	\
+  SHOBJECTS=lib$(LIBNAME).o ALL=$$ALLSYMSFLAGS ALLSYMSFLAGS= NOALLSYMSFLAGS=; \
+  ( $(DEBUG); \
+    ld $(LDFLAGS) -r -o lib$(LIBNAME).o $$ALL lib$(LIBNAME).a $(LIBEXTRAS) ); \
+  $(LINK_SO) && rm -f $(LIBNAME).o
+LINK_SO_A_UNPACKED=	\
+  UNPACKDIR=link_tmp.$$$$; rm -rf $$UNPACKDIR; mkdir $$UNPACKDIR; \
+  (cd $$UNPACKDIR; ar x ../lib$(LIBNAME).a) && cp $(LIBEXTRAS) $$UNPACKDIR && \
+  SHOBJECTS=$$UNPACKDIR/*.o; \
+  $(LINK_SO) && rm -rf $$UNPACKDIR
+
+DETECT_GNU_LD=${CC} -v 2>&1 | grep '^gcc' >/dev/null 2>&1 && \
+	my_ld=`gcc -print-prog-name=ld 2>&1` && \
+	[ -n "$$my_ld" ] && \
+	$$my_ld -v 2>&1 | grep 'GNU ld' >/dev/null 2>&1
+
+link_o.gnu:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).so \
+	LIBDEPS="$(LIBDEPS)" \
+	NOALLSYMSFLAGS='-Wl,--no-whole-archive' \
+	SHAREDFLAGS="-shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER" \
+	SHAREDCMD='$(CC)'; \
+	$(LINK_SO_O)
+link_a.gnu:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).so \
+	LIBDEPS="$(LIBDEPS)" \
+	ALLSYMSFLAGS='-Wl,--whole-archive' \
+	NOALLSYMSFLAGS='-Wl,--no-whole-archive' \
+	SHAREDFLAGS="-shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER" \
+	SHAREDCMD='$(CC)'; \
+	$(LINK_SO_A)
+
+# For Darwin AKA Mac OS/X (dyld)
+link_o.darwin:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).dylib \
+	LIBDEPS="$(LIBDEPS)" \
+	ALLSYMSFLAGS='-all_load' \
+	NOALLSYMSFLAGS='' \
+	SHAREDFLAGS="-current_version $(LIBVERSION) -compatibility_version $$SHLIB_SOVER" \
+	SHAREDCMD='$(CC)'; \
+	$(LINK_SO_O)
+link_a.darwin:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME)$$SHLIB_SOVER.dylib \
+	LIBDEPS="$(LIBDEPS)" \
+	ALLSYMSFLAGS='-all_load' \
+	NOALLSYMSFLAGS='' \
+	SHAREDFLAGS="-dynamiclib -current_version $(LIBVERSION) -compatibility_version $$SHLIB_SOVER" \
+	SHAREDCMD='$(CC)'; \
+	$(LINK_SO_A)
+
+link_o.cygwin:
+	@ SHLIB=cyg$(LIBNAME).dll \
+	LIBDEPS="$(LIBDEPS)" \
+	SHLIB_SOVER= \
+	ALLSYMSFLAGS='-Wl,--whole-archive' \
+	NOALLSYMSFLAGS='-Wl,--no-whole-archive' \
+	SHAREDFLAGS="-shared -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a" \
+	SHAREDCMD='${CC}'; \
+	$(LINK_SO_O)
+link_a.cygwin:
+	@ SHLIB=cyg$(LIBNAME).dll \
+	LIBDEPS="$(LIBDEPS)" \
+	SHLIB_SOVER= \
+	ALLSYMSFLAGS='-Wl,--whole-archive' \
+	NOALLSYMSFLAGS='-Wl,--no-whole-archive' \
+	SHAREDFLAGS="-shared -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a" \
+	SHAREDCMD='${CC}'; \
+	$(LINK_SO_A)
+
+link_o.alpha-osf1:
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
+			LIBVERSION="$(LIBVERSION)"
+			LIBCOMPATVERSIONS="$(LIBCOMPATVERSIONS)" \
+			LIBDEPS="$(LIBDEPS)" link_o.gnu; \
+	else \
+		SHLIB=lib$(LIBNAME).so \
+		LIBDEPS="$(LIBDEPS)" \
+		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
+		if [ -n "$$SHLIB_HIST" ]; then \
+			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
+		else \
+			SHLIB_HIST="$(LIBVERSION)"; \
+		fi
+		SHLIB_SOVER= \
+		ALLSYMSFLAGS='-all' \
+		NOALLSYMSFLAGS='-none' \
+		SHAREDFLAGS="-shared -set_version \"$$SHLIB_HIST\"" \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO_O); \
+	fi
+link_a.alpha-osf1:
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
+			LIBVERSION="$(LIBVERSION)"
+			LIBCOMPATVERSIONS="$(LIBCOMPATVERSIONS)" \
+			LIBDEPS="$(LIBDEPS)" link_o.gnu; \
+	else \
+		SHLIB=lib$(LIBNAME).so \
+		LIBDEPS="$(LIBDEPS)" \
+		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
+		if [ -n "$$SHLIB_HIST" ]; then \
+			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
+		else \
+			SHLIB_HIST="$(LIBVERSION)"; \
+		fi
+		SHLIB_SOVER= \
+		ALLSYMSFLAGS='-all' \
+		NOALLSYMSFLAGS='-none' \
+		SHAREDFLAGS="-shared -set_version \"$$SHLIB_HIST\"" \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO_A); \
+	fi
+
+# The difference between alpha-osf1-shared and tru64-shared is the `-msym'
+# option passed to the linker.
+link_o.tru64:
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
+			LIBVERSION="$(LIBVERSION)"
+			LIBCOMPATVERSIONS="$(LIBCOMPATVERSIONS)" \
+			LIBDEPS="$(LIBDEPS)" link_o.gnu; \
+	else \
+		SHLIB=lib$(LIBNAME).so \
+		LIBDEPS="$(LIBDEPS)" \
+		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
+		if [ -n "$$SHLIB_HIST" ]; then \
+			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
+		else \
+			SHLIB_HIST="$(LIBVERSION)"; \
+		fi
+		SHLIB_SOVER= \
+		ALLSYMSFLAGS='-all' \
+		NOALLSYMSFLAGS='-none' \
+		SHAREDFLAGS="-shared -msym -set_version \"$$SHLIB_HIST\"" \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO_O); \
+	fi
+link_a.tru64:
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
+			LIBVERSION="$(LIBVERSION)"
+			LIBCOMPATVERSIONS="$(LIBCOMPATVERSIONS)" \
+			LIBDEPS="$(LIBDEPS)" link_o.gnu; \
+	else \
+		SHLIB=lib$(LIBNAME).so \
+		LIBDEPS="$(LIBDEPS)" \
+		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
+		if [ -n "$$SHLIB_HIST" ]; then \
+			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
+		else \
+			SHLIB_HIST="$(LIBVERSION)"; \
+		fi
+		SHLIB_SOVER= \
+		ALLSYMSFLAGS='-all' \
+		NOALLSYMSFLAGS='-none' \
+		SHAREDFLAGS="-shared -msym -set_version \"$$SHLIB_HIST\"" \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO_A); \
+	fi
+
+# The difference between tru64-shared and tru64-shared-rpath is the
+# -rpath ${LIBRPATH} passed to the linker.
+link_o.tru64-rpath:
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
+			LIBVERSION="$(LIBVERSION)"
+			LIBCOMPATVERSIONS="$(LIBCOMPATVERSIONS)" \
+			LIBDEPS="$(LIBDEPS)" link_o.gnu; \
+	else \
+		SHLIB=lib$(LIBNAME).so \
+		LIBDEPS="$(LIBDEPS)" \
+		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
+		if [ -n "$$SHLIB_HIST" ]; then \
+			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
+		else \
+			SHLIB_HIST="$(LIBVERSION)"; \
+		fi
+		SHLIB_SOVER= \
+		ALLSYMSFLAGS='-all' \
+		NOALLSYMSFLAGS='-none' \
+		SHAREDFLAGS="-shared -msym -rpath $(LIBRPATH) -set_version \"$$SHLIB_HIST\"" \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO_O); \
+	fi
+link_a.tru64-rpath:
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
+			LIBVERSION="$(LIBVERSION)"
+			LIBCOMPATVERSIONS="$(LIBCOMPATVERSIONS)" \
+			LIBDEPS="$(LIBDEPS)" link_o.gnu; \
+	else \
+		SHLIB=lib$(LIBNAME).so \
+		LIBDEPS="$(LIBDEPS)" \
+		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
+		if [ -n "$$SHLIB_HIST" ]; then \
+			SHLIB_HIST="$${SHLIB_HIST}:$(LIBVERSION)"; \
+		else \
+			SHLIB_HIST="$(LIBVERSION)"; \
+		fi
+		SHLIB_SOVER= \
+		ALLSYMSFLAGS='-all' \
+		NOALLSYMSFLAGS='-none' \
+		SHAREDFLAGS="-shared -msym -rpath $(LIBRPATH) -set_version \"$$SHLIB_HIST\"" \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO_A); \
+	fi
+
+link_o.solaris:
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
+			LIBVERSION="$(LIBVERSION)"
+			LIBCOMPATVERSIONS="$(LIBCOMPATVERSIONS)" \
+			LIBDEPS="$(LIBDEPS)" link_o.gnu; \
+	else \
+		$(CALC_VERSIONS); \
+		SHLIB=lib$(LIBNAME).so \
+		LIBDEPS="$(LIBDEPS)" \
+		ALLSYMSFLAGS='-z allextract' \
+		NOALLSYMSFLAGS='' \
+		SHAREDFLAGS='-G -h $$SHLIB$$SHLIB_SOVER' \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO_O); \
+	fi
+link_a.solaris:
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
+			LIBVERSION="$(LIBVERSION)"
+			LIBCOMPATVERSIONS="$(LIBCOMPATVERSIONS)" \
+			LIBDEPS="$(LIBDEPS)" link_o.gnu; \
+	else \
+		$(CALC_VERSIONS); \
+		SHLIB=lib$(LIBNAME).so \
+		LIBDEPS="$(LIBDEPS)" \
+		ALLSYMSFLAGS='-z allextract' \
+		NOALLSYMSFLAGS='' \
+		SHAREDFLAGS='-G -h $$SHLIB$$SHLIB_SOVER' \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO_A); \
+	fi
+
+# OpenServer 5 native compilers used
+# UnixWare 7 and OpenUNIX 8 native compilers used
+link_o.svr3:
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
+			LIBVERSION="$(LIBVERSION)"
+			LIBCOMPATVERSIONS="$(LIBCOMPATVERSIONS)" \
+			LIBDEPS="$(LIBDEPS)" link_o.gnu; \
+	else \
+		$(CALC_VERSIONS); \
+		SHLIB=lib$(LIBNAME).so \
+		LIBDEPS="$(LIBDEPS)" \
+		ALLSYMSFLAGS='-z allextract' \
+		NOALLSYMSFLAGS='' \
+		SHAREDFLAGS='-G -h $$SHLIB$$SHLIB_SOVER' \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO_O); \
+	fi
+link_a.svr3:
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
+			LIBVERSION="$(LIBVERSION)"
+			LIBCOMPATVERSIONS="$(LIBCOMPATVERSIONS)" \
+			LIBDEPS="$(LIBDEPS)" link_o.gnu; \
+	else \
+		$(CALC_VERSIONS); \
+		SHLIB=lib$(LIBNAME).so \
+		LIBDEPS="$(LIBDEPS)" \
+		ALLSYMSFLAGS='-z allextract' \
+		NOALLSYMSFLAGS='' \
+		SHAREDFLAGS='-G -h $$SHLIB$$SHLIB_SOVER' \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO_A_UNPACKED); \
+	fi
+
+link_o.irix:
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
+			LIBVERSION="$(LIBVERSION)"
+			LIBCOMPATVERSIONS="$(LIBCOMPATVERSIONS)" \
+			LIBDEPS="$(LIBDEPS)" link_o.gnu; \
+	else \
+		$(CALC_VERSIONS); \
+		SHLIB=lib$(LIBNAME).so \
+		LIBDEPS="$(LIBDEPS)" \
+		ALLSYMSFLAGS='-all' \
+		NOALLSYMSFLAGS='' \
+		SHAREDFLAGS='-shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER' \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO_O); \
+	fi
+link_a.irix:
+	@ if ${DETECT_GNU_LD}; then \
+		$(MAKE) -f $(SHARED_MAKEFILE) CC="$(CC)" LDFLAGS="$(LDFLAGS) \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME="$(LIBNAME)" LIBEXTRAS="$(LIBEXTRAS)" \
+			LIBVERSION="$(LIBVERSION)"
+			LIBCOMPATVERSIONS="$(LIBCOMPATVERSIONS)" \
+			LIBDEPS="$(LIBDEPS)" link_o.gnu; \
+	else \
+		$(CALC_VERSIONS); \
+		SHLIB=lib$(LIBNAME).so \
+		LIBDEPS="$(LIBDEPS)" \
+		ALLSYMSFLAGS='-all' \
+		NOALLSYMSFLAGS='' \
+		SHAREDFLAGS='-shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER' \
+		SHAREDCMD='$(CC)'; \
+		$(LINK_SO_A); \
+	fi
+
+# HP-UX includes the full pathname of libs we depend on, so we would get
+# ./libcrypto (with ./ as path information) compiled into libssl, hence
+# we omit the SHLIBDEPS. Applications must be linked with -lssl -lcrypto
+# anyway.
+# The object modules are loaded from lib$i.a using the undocumented -Fl
+# option.
+#
+# WARNING: Until DSO is fixed to support a search path, we support SHLIB_PATH
+#          by temporarily specifying "+s"!
+#
+link_o.hpux32:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).sl \
+	LIBDEPS="$(LIBDEPS) -lc" \
+	ALLSYMSFLAGS='-Fl' \
+	NOALLSYMSFLAGS='' \
+	SHAREDFLAGS='+vnocompatwarnings -b -z +s +h $$SHLIB$$SHLIB_SOVER' \
+	SHAREDCMD='/usr/ccs/bin/ld'; \
+	$(LINK_SO_O) && chmod a=rx $$SHLIB$$SHLIB_SOVER
+link_a.hpux32:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).sl \
+	LIBDEPS="$(LIBDEPS) -lc" \
+	ALLSYMSFLAGS='-Fl' \
+	NOALLSYMSFLAGS='' \
+	SHAREDFLAGS='+vnocompatwarnings -b -z +s +h $$SHLIB$$SHLIB_SOVER' \
+	SHAREDCMD='/usr/ccs/bin/ld'; \
+	$(LINK_SO_A) && chmod a=rx $$SHLIB$$SHLIB_SOVER
+
+# HP-UX includes the full pathname of libs we depend on, so we would get
+# ./libcrypto (with ./ as path information) compiled into libssl, hence
+# we omit the SHLIBDEPS. Applications must be linked with -lssl -lcrypto
+# anyway.
+#
+# HP-UX in 64bit mode has "+s" enabled by default; it will search for
+# shared libraries along LD_LIBRARY_PATH _and_ SHLIB_PATH.
+#
+link_o.hpux64:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).sl \
+	LIBDEPS="$(LIBDEPS) -lc" \
+	ALLSYMSFLAGS='+forceload' \
+	NOALLSYMSFLAGS='' \
+	SHAREDFLAGS='-b -z +h $$SHLIB$$SHLIB_SOVER' \
+	SHAREDCMD='/usr/ccs/bin/ld'; \
+	$(LINK_SO_O) && chmod a=rx $$SHLIB$$SHLIB_SOVER
+link_a.hpux64:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).sl \
+	LIBDEPS="$(LIBDEPS) -lc" \
+	ALLSYMSFLAGS='+forceload' \
+	NOALLSYMSFLAGS='' \
+	SHAREDFLAGS='-b -z +h $$SHLIB$$SHLIB_SOVER' \
+	SHAREDCMD='/usr/ccs/bin/ld'; \
+	$(LINK_SO_A) && chmod a=rx $$SHLIB$$SHLIB_SOVER
+
+link_o.aix:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).so \
+	LIBDEPS="$(LIBDEPS)" \
+	ALLSYMSFLAGS='-bnogc' \
+	NOALLSYMSFLAGS='' \
+	SHAREDFLAGS='-G -bE:lib$(LIBNAME).exp -bM:SRE' \
+	SHAREDCMD='$(CC)'; \
+	$(LINK_SO_O)
+link_a.aix:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).so \
+	LIBDEPS="$(LIBDEPS)" \
+	ALLSYMSFLAGS='-bnogc' \
+	NOALLSYMSFLAGS='' \
+	SHAREDFLAGS='-G -bE:lib$(LIBNAME).exp -bM:SRE' \
+	SHAREDCMD='$(CC)'; \
+	$(LINK_SO_A_VIA_O)
+
+link_o.reliantunix:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).so \
+	LIBDEPS="$(LIBDEPS)" \
+	ALLSYMSFLAGS= \
+	NOALLSYMSFLAGS='' \
+	SHAREDFLAGS='-G' \
+	SHAREDCMD='$(CC)'; \
+	$(LINK_SO_O)
+link_a.reliantunix:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).so \
+	LIBDEPS="$(LIBDEPS)" \
+	ALLSYMSFLAGS= \
+	NOALLSYMSFLAGS='' \
+	SHAREDFLAGS='-G' \
+	SHAREDCMD='$(CC)'; \
+	$(LINK_SO_A_UNPACKED)
+
+# Targets to build symbolic links when needed
+symlink.gnu symlink.darwin symlink.solaris symlink.svr3 symlink.irix \
+symlink.aix symlink.reliantunix:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).so \
+	$(SYMLINK_SO)
+symlink.cygwin symlib.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
+symlink.hpux32 symlink.hpux64:
+	@ $(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).sl \
+	$(SYMLINK_SO)
+
+# Compatibility targets
+link_o.bsd-gcc-shared link_o.linux-shared link_o.gnu-shared: link_o.gnu
+link_a.bsd-gcc-shared link_a.linux-shared link_a.gnu-shared: link_a.gnu
+symlink.bsd-gcc-shared symlink.linux-shared symlink.gnu-shared: symlink.gnu
+link_o.darwin-shared: link_o.darwin
+link_a.darwin-shared: link_a.darwin
+symlink.darwin-shared: symlink.darwin
+link_o.cygwin-shared: link_o.cygwin
+link_a.cygwin-shared: link_a.cygwin
+symlink.cygwin-shared: symlink.cygwin
+link_o.alpha-osf1-shared: link_o.alpha-osf1
+link_a.alpha-osf1-shared: link_a.alpha-osf1
+symlink.alpha-osf1-shared: symlink.alpha-osf1
+link_o.tru64-shared: link_o.tru64
+link_a.tru64-shared: link_a.tru64
+symlink.tru64-shared: symlink.tru64
+link_o.tru64-shared-rpath: link_o.tru64-rpath
+link_a.tru64-shared-rpath: link_a.tru64-rpath
+symlink.tru64-shared-rpath: symlink.tru64-rpath
+link_o.solaris-shared: link_o.solaris
+link_a.solaris-shared: link_a.solaris
+symlink.solaris-shared: symlink.solaris
+link_o.svr3-shared: link_o.svr3
+link_a.svr3-shared: link_a.svr3
+symlink.svr3-shared: symlink.svr3
+link_o.svr5-shared: link_o.svr3
+link_a.svr5-shared: link_a.svr3
+symlink.svr5-shared: symlink.svr3
+link_o.irix-shared: link_o.irix
+link_a.irix-shared: link_a.irix
+symlink.irix-shared: symlink.irix
+link_o.hpux-shared: link_o.hpux32
+link_a.hpux-shared: link_a.hpux32
+symlink.hpux-shared: symlink.hpux32
+link_o.hpux64-shared: link_o.hpux64
+link_a.hpux64-shared: link_a.hpux64
+symlink.hpux64-shared: symlink.hpux64
+link_o.aix-shared: link_o.aix
+link_a.aix-shared: link_a.aix
+symlink.aix-shared: symlink.aix
+link_o.reliantunix-shared: link_o.reliantunix
+link_a.reliantunix-shared: link_a.reliantunix
+symlink.reliantunix-shared: symlink.reliantunix

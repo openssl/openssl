@@ -156,11 +156,7 @@ RMD160_ASM_OBJ= asm/rm86-out.o
 KRB5_INCLUDES=
 LIBKRB5=
 
-# When we're prepared to use shared libraries in the programs we link here
-# we might set SHLIB_MARK to '$(SHARED_LIBS)'.
-SHLIB_MARK=
-
-DIRS=   crypto ssl $(SHLIB_MARK) apps test tools
+DIRS=   crypto ssl apps test tools
 SHLIBDIRS= crypto ssl
 
 # dirs in crypto to build
@@ -176,7 +172,8 @@ SDIRS=  \
 TESTS = alltests
 
 MAKEFILE= Makefile.ssl
-MAKE=     make -f Makefile.ssl
+NEWMAKE=  make
+MAKE=     $(NEWMAKE) -f Makefile.ssl
 
 MANDIR=$(OPENSSLDIR)/man
 MAN1=1
@@ -201,9 +198,6 @@ TARFILE=        $(NAME).tar
 WTARFILE=       $(NAME)-win.tar
 EXHEADER=       e_os2.h
 HEADER=         e_os.h
-
-# When we're prepared to use shared libraries in the programs we link here
-# we might remove 'clean-shared' from the targets to perform at this stage
 
 all: Makefile.ssl build_all
 
@@ -260,271 +254,26 @@ clean-shared:
 	done
 
 link-shared:
-	@if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
-		tmp="$(SHARED_LIBS_LINK_EXTS)"; \
-		for i in $(SHLIBDIRS); do \
-			prev=lib$$i$(SHLIB_EXT); \
-			for j in $${tmp:-x}; do \
-				( set -x; \
-				rm -f lib$$i$$j; ln -s $$prev lib$$i$$j ); \
-				prev=lib$$i$$j; \
-			done; \
-		done; \
-	fi
-
-build-shared: clean-shared do_$(SHLIB_TARGET) link-shared
-
-do_bsd-gcc-shared: do_gnu-shared
-do_linux-shared: do_gnu-shared
-do_gnu-shared:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; ${CC} ${SHARED_LDFLAGS} \
-		-shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-Wl,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-Wl,-Bsymbolic \
-		-Wl,--whole-archive lib$$i.a \
-		-Wl,--no-whole-archive $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -l$$i"; \
+	@ for i in ${SHLIBDIRS}; do \
+		$(NEWMAKE) -f Makefile.shared \
+			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
+			symlink.$(SHLIB_TARGET); \
+		libs="$$libs -l$$i"; \
 	done
 
-DETECT_GNU_LD=${CC} -v 2>&1 | grep '^gcc' >/dev/null 2>&1 && \
-	my_ld=`gcc -print-prog-name=ld 2>&1` && \
-	[ -n "$$my_ld" ] && \
-	$$my_ld -v 2>&1 | grep 'GNU ld' >/dev/null 2>&1
+build-shared: do_$(SHLIB_TARGET) link-shared
 
-# For Darwin AKA Mac OS/X (dyld)
-do_darwin-shared: 
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x ; ${CC} --verbose -dynamiclib -o lib$$i${SHLIB_EXT} \
-		lib$$i.a $$libs -all_load -current_version ${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-compatibility_version ${SHLIB_MAJOR}.`echo ${SHLIB_MINOR} | cut -d. -f1` \
-		-install_name ${INSTALLTOP}/lib/lib$$i${SHLIB_EXT} ) || exit 1; \
-	libs="$$libs -l`basename $$i${SHLIB_EXT} .dylib`"; \
-	echo "" ; \
-	done
-
-do_cygwin-shared:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; ${CC}  -shared -o cyg$$i.dll \
-		-Wl,-Bsymbolic \
-		-Wl,--whole-archive lib$$i.a \
-		-Wl,--out-implib,lib$$i.dll.a \
-		-Wl,--no-whole-archive $$libs ) || exit 1; \
-	libs="$$libs -l$$i"; \
-	done
-
-# This assumes that GNU utilities are *not* used
-do_alpha-osf1-shared:
-	if ${DETECT_GNU_LD}; then \
-		$(MAKE) do_gnu-shared; \
-	else \
-		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		( set -x; ${CC} ${SHARED_LDFLAGS} \
-			-shared -o lib$$i.so \
-			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
+do_$(SHLIB_TARGET):
+	@ libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		$(NEWMAKE) -f Makefile.shared \
+			CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
+			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
+			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
+			LIBDEPS="$$libs $(EX_LIBS)" \
+			link_a.$(SHLIB_TARGET); \
 		libs="$$libs -l$$i"; \
-		done; \
-	fi
-
-# This assumes that GNU utilities are *not* used
-# The difference between alpha-osf1-shared and tru64-shared is the `-msym'
-# option passed to the linker.
-do_tru64-shared:
-	if ${DETECT_GNU_LD}; then \
-		$(MAKE) do_gnu-shared; \
-	else \
-		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		( set -x; ${CC} ${SHARED_LDFLAGS} \
-			-shared -msym -o lib$$i.so \
-			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
-		libs="$$libs -l$$i"; \
-		done; \
-	fi
-
-# This assumes that GNU utilities are *not* used
-# The difference between tru64-shared and tru64-shared-rpath is the
-# -rpath ${INSTALLTOP}/lib passed to the linker.
-do_tru64-shared-rpath:
-	if ${DETECT_GNU_LD}; then \
-		$(MAKE) do_gnu-shared; \
-	else \
-		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		( set -x; ${CC} ${SHARED_LDFLAGS} \
-			-shared -msym -o lib$$i.so \
-			-rpath  ${INSTALLTOP}/lib \
-			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
-		libs="$$libs -l$$i"; \
-		done; \
-	fi
-
-
-# This assumes that GNU utilities are *not* used
-do_solaris-shared:
-	if ${DETECT_GNU_LD}; then \
-		$(MAKE) do_gnu-shared; \
-	else \
-		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
-		  set -x; ${CC} ${SHARED_LDFLAGS} \
-			-G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
-		libs="$$libs -l$$i"; \
-		done; \
-	fi
-
-# OpenServer 5 native compilers used
-do_svr3-shared:
-	if ${DETECT_GNU_LD}; then \
-		$(MAKE) do_gnu-shared; \
-	else \
-		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
-		  find . -name "*.o" -print > allobjs ; \
-		  OBJS= ; export OBJS ; \
-		  for obj in `ar t lib$$i.a` ; do \
-		    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
-		  done ; \
-		  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
-		libs="$$libs -l$$i"; \
-		done; \
-	fi
-
-# UnixWare 7 and OpenUNIX 8 native compilers used
-do_svr5-shared:
-	if ${DETECT_GNU_LD}; then \
-		$(MAKE) do_gnu-shared; \
-	else \
-		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
-		  find . -name "*.o" -print > allobjs ; \
-		  OBJS= ; export OBJS ; \
-		  for obj in `ar t lib$$i.a` ; do \
-		    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
-		  done ; \
-		  set -x; ${CC} ${SHARED_LDFLAGS} \
-			-G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
-		libs="$$libs -l$$i"; \
-		done; \
-	fi
-
-# This assumes that GNU utilities are *not* used
-do_irix-shared:
-	if ${DETECT_GNU_LD}; then \
-		$(MAKE) do_gnu-shared; \
-	else \
-		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		( set -x; ${CC} ${SHARED_LDFLAGS} \
-			-shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			-Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			-all lib$$i.a $$libs ${EX_LIBS} -lc) || exit 1; \
-		libs="$$libs -l$$i"; \
-		done; \
-	fi
-
-# This assumes that GNU utilities are *not* used
-# HP-UX includes the full pathname of libs we depend on, so we would get
-# ./libcrypto (with ./ as path information) compiled into libssl, hence
-# we omit the SHLIBDEPS. Applications must be linked with -lssl -lcrypto
-# anyway.
-# The object modules are loaded from lib$i.a using the undocumented -Fl
-# option.
-#
-# WARNING: Until DSO is fixed to support a search path, we support SHLIB_PATH
-#          by temporarily specifying "+s"!
-#
-do_hpux-shared:
-	for i in ${SHLIBDIRS}; do \
-	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
- 		+vnocompatwarnings \
-		-b -z +s \
-		-o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-Fl lib$$i.a -ldld -lc ) || exit 1; \
-	chmod a=rx lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
-	done
-
-# This assumes that GNU utilities are *not* used
-# HP-UX includes the full pathname of libs we depend on, so we would get
-# ./libcrypto (with ./ as path information) compiled into libssl, hence
-# we omit the SHLIBDEPS. Applications must be linked with -lssl -lcrypto
-# anyway.
-#
-# HP-UX in 64bit mode has "+s" enabled by default; it will search for
-# shared libraries along LD_LIBRARY_PATH _and_ SHLIB_PATH.
-#
-do_hpux64-shared:
-	for i in ${SHLIBDIRS}; do \
-	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
- 		-b -z \
-		-o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		+forceload lib$$i.a -ldl -lc ) || exit 1; \
-	chmod a=rx lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
-	done
-
-# The following method is said to work on all platforms.  Tests will
-# determine if that's how it's gong to be used.
-# This assumes that for all but GNU systems, GNU utilities are *not* used.
-# ALLSYMSFLAGS would be:
-#  GNU systems: --whole-archive
-#  Tru64 Unix:  -all
-#  Solaris:     -z allextract
-#  Irix:        -all
-#  HP/UX-32bit: -Fl
-#  HP/UX-64bit: +forceload
-#  AIX:		-bnogc
-# SHAREDFLAGS would be:
-#  GNU systems: -shared -Wl,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-#  Tru64 Unix:  -shared \
-#		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}"
-#  Solaris:     -G -h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-#  Irix:        -shared -Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-#  HP/UX-32bit: +vnocompatwarnings -b -z +s \
-#		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}
-#  HP/UX-64bit: -b -z +h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}
-#  AIX:		-G -bE:lib$$i.exp -bM:SRE
-# SHAREDCMD would be:
-#  GNU systems: $(CC)
-#  Tru64 Unix:  $(CC)
-#  Solaris:     $(CC)
-#  Irix:        $(CC)
-#  HP/UX-32bit: /usr/ccs/bin/ld
-#  HP/UX-64bit: /usr/ccs/bin/ld
-#  AIX:		$(CC)
-ALLSYMSFLAG=-bnogc
-SHAREDFLAGS=${SHARED_LDFLAGS} -G -bE:lib$$i.exp -bM:SRE
-SHAREDCMD=$(CC)
-do_aix-shared:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; \
-	  ld -r -o $$i.o $(ALLSYMSFLAG) lib$$i.a && \
-	  ( nm -Pg lib$$i.o | grep ' [BD] ' | cut -f1 -d' ' > lib$$i.exp; \
-	    $(SHAREDCMD) $(SHAREDFLAG) -o lib$$i.so lib$$i.o \
-		$$libs ${EX_LIBS} ) ) \
-	|| exit 1; \
-	libs="$$libs -l$$i"; \
-	done
-
-do_reliantunix-shared:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	tmpdir=/tmp/openssl.$$$$ ; rm -rf $$tmpdir ; \
-	( set -x; \
-	  ( Opwd=`pwd` ; mkdir $$tmpdir || exit 1; \
-	    cd $$tmpdir || exit 1 ; ar x $$Opwd/lib$$i.a ; \
-	    ${CC} -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} *.o \
-	  ) || exit 1; \
-	  cp $$tmpdir/lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} . ; \
-	) || exit 1; \
-	rm -rf $$tmpdir ; \
-	libs="$$libs -l$$i"; \
 	done
 
 Makefile.ssl: Makefile.org
@@ -533,7 +282,7 @@ Makefile.ssl: Makefile.org
 	@false
 
 libclean:
-	rm -f *.a */lib */*/lib
+	rm -f *.so *.so.* *.a */lib */*/lib
 
 clean:
 	rm -f shlib/*.o *.o core a.out fluff *.map rehash.time testlog make.log cctest cctest.c
@@ -748,8 +497,7 @@ install: all install_docs
 		done; \
 		(	here="`pwd`"; \
 			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-			set $(MAKE); \
-			$$1 -f $$here/Makefile link-shared ); \
+			$(NEWMAKE) -f $$here/Makefile link-shared ); \
 	fi
 
 install_docs:

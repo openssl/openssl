@@ -4,6 +4,10 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Add Makefile.shared, a helper makefile to build shared
+     libraries.  Addapt Makefile.org.
+     [Richard Levitte]
+
   *) Add version info to Win32 DLLs.
      [Peter 'Luna' Runestig" <peter@runestig.com>]
 
