@@ -109,7 +109,7 @@ void SHA_Init(SHA_CTX *c)
 	c->num=0;
 	}
 
-void SHA_Update(SHA_CTX *c, const register unsigned char *data,
+void SHA_Update(SHA_CTX *c, register const unsigned char *data,
 		unsigned long len)
 	{
 	register SHA_LONG *p;

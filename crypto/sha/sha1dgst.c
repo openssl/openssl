@@ -114,7 +114,7 @@ void SHA1_Init(SHA_CTX *c)
 	c->num=0;
 	}
 
-void SHA1_Update(SHA_CTX *c, const register unsigned char *data,
+void SHA1_Update(SHA_CTX *c, register const unsigned char *data,
 	     unsigned long len)
 	{
 	register SHA_LONG *p;

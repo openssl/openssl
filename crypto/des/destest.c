@@ -741,25 +741,25 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 	if (lqret[0] != 0x327eba8dL)
 		{
 		printf("quad_cksum error, out[0] %08lx is not %08lx\n",
-			(unsigned long)lqret[0],0x327eba8dL);
+			(unsigned long)lqret[0],0x327eba8dUL);
 		err=1;
 		}
 	if (lqret[1] != 0x201a49ccL)
 		{
 		printf("quad_cksum error, out[1] %08lx is not %08lx\n",
-			(unsigned long)lqret[1],0x201a49ccL);
+			(unsigned long)lqret[1],0x201a49ccUL);
 		err=1;
 		}
 	if (lqret[2] != 0x70d7a63aL)
 		{
 		printf("quad_cksum error, out[2] %08lx is not %08lx\n",
-			(unsigned long)lqret[2],0x70d7a63aL);
+			(unsigned long)lqret[2],0x70d7a63aUL);
 		err=1;
 		}
 	if (lqret[3] != 0x501c2c26L)
 		{
 		printf("quad_cksum error, out[3] %08lx is not %08lx\n",
-			(unsigned long)lqret[3],0x501c2c26L);
+			(unsigned long)lqret[3],0x501c2c26UL);
 		err=1;
 		}
 #endif
