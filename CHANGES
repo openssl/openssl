@@ -3,6 +3,36 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Function EC_POINTs_mul for simultaneous scalar multiplication
+     of an arbitrary number of elliptic curve points.
+     [Bodo Moeller]
+
+  *) First EC_METHODs for curves over GF(p):
+
+     EC_GFp_simple_method() uses the basic BN_mod_mul and BN_mod_sqr
+     operations and provides various method functions that can also
+     operate with faster implementations of modular arithmetic.     
+
+     EC_GFp_mont_method() reuses most functions that are part of
+     EC_GFp_simple_method, but uses Montgomery arithmetic.
+
+     [Bodo Moeller; point addition and point doubling
+     implementation directly derived from source code provided by
+     Lenka Fibikova <fibikova@exp-math.uni-essen.de>]
+
+  *) Framework for elliptic curves (crypto/ec/ec.h, crypto/ec/ec_lcl.h,
+     crypto/ec/ec_lib.c):
+
+     Curves are EC_GROUP objects (with an optional generator) based
+     on EC_METHODs that are built into the library.
+
+     Points are EC_POINT objects based on EC_GROUP objects.
+
+     Most of the framework would be able to handle curves over arbitrary
+     finite fields, but as there are no obvious types for GF(2^n),
+     some functions are limited to GF(p) for now.
+     [Bodo Moeller]
+
   *) Add the -HTTP option to s_server.  It is similar to -WWW, but requires
      that the file contains a complete HTTP response.
      [Richard Levitte]
@@ -27,7 +57,7 @@
      [Jeremy Cooper <jeremy@baymoo.org>]
 
   *) Hide BN_CTX structure details in bn_lcl.h instead of publishing them
-     in <openssl/bn.h>.  Also further increase BN_CTX_NUM to 24.
+     in <openssl/bn.h>.  Also further increase BN_CTX_NUM to 32.
      [Bodo Moeller]
 
   *) Modify EVP_Digest*() routines so they now return values. Although the

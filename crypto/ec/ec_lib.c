@@ -163,6 +163,12 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 	}
 
 
+const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *group)
+	{
+	return group->meth;
+	}
+
+
 int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	{
 	if (group->meth->group_set_curve_GFp == 0)
@@ -174,7 +180,7 @@ int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, co
 	}
 
 
-int EC_GROUP_get_curve_GFp(EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
+int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 	{
 	if (group->meth->group_get_curve_GFp == 0)
 		{
@@ -193,6 +199,39 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIG
 		return 0;
 		}
 	return group->meth->group_set_generator(group, generator, order, cofactor);
+	}
+
+
+EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group)
+	{
+	if (group->meth->group_get0_generator == 0)
+		{
+		ECerr(EC_F_EC_GROUP_GET0_GENERATOR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	return group->meth->group_get0_generator(group);
+	}
+
+
+int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
+	{
+	if (group->meth->group_get_order == 0)
+		{
+		ECerr(EC_F_EC_GROUP_GET_ORDER, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	return group->meth->group_get_order(group, order, ctx);
+	}
+
+
+int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
+	{
+	if (group->meth->group_get_cofactor == 0)
+		{
+		ECerr(EC_F_EC_GROUP_GET_COFACTOR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	return group->meth->group_get_cofactor(group, cofactor, ctx);
 	}
 
 
@@ -218,7 +257,7 @@ int EC_GROUP_set_extra_data(EC_GROUP *group, void *extra_data, void *(*extra_dat
 
 
 /* this has 'package' visibility */
-void *EC_GROUP_get_extra_data(EC_GROUP *group, void *(*extra_data_dup_func)(void *),
+void *EC_GROUP_get_extra_data(const EC_GROUP *group, void *(*extra_data_dup_func)(void *),
 	void (*extra_data_free_func)(void *), void (*extra_data_clear_free_func)(void *))
 	{
 	if ((group->extra_data_dup_func != extra_data_dup_func)
@@ -330,6 +369,12 @@ int EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
 	if (dest == src)
 		return 1;
 	return dest->meth->point_copy(dest, src);
+	}
+
+
+const EC_METHOD *EC_POINT_method_of(const EC_POINT *point)
+	{
+	return point->meth;
 	}
 
 
@@ -577,4 +622,25 @@ int EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 		return 0;
 		}
 	return group->meth->make_affine(group, point, ctx);
+	}
+
+
+int EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[], BN_CTX *ctx)
+	{
+	size_t i;
+
+	if (group->meth->points_make_affine == 0)
+		{
+		ECerr(EC_F_EC_POINTS_MAKE_AFFINE, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	for (i = 0; i < num; i++)
+		{
+		if (group->meth != points[i]->meth)
+			{
+			ECerr(EC_F_EC_POINTS_MAKE_AFFINE, EC_R_INCOMPATIBLE_OBJECTS);
+			return 0;
+			}
+		}
+	return group->meth->points_make_affine(group, num, points, ctx);
 	}

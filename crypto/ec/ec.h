@@ -94,38 +94,43 @@ typedef struct ec_point_st EC_POINT;
 /* EC_METHODs for curves over GF(p).
  * EC_GFp_simple_method provides the basis for the optimized methods.
  */
- 
 const EC_METHOD *EC_GFp_simple_method(void);
 const EC_METHOD *EC_GFp_mont_method(void);
-const EC_METHOD *EC_GFp_recp_method(void);
-const EC_METHOD *EC_GFp_nist_method(void);
+const EC_METHOD *EC_GFp_recp_method(void); /* TODO */
+const EC_METHOD *EC_GFp_nist_method(void); /* TODO */
 
 
 EC_GROUP *EC_GROUP_new(const EC_METHOD *);
-/* We don't have types for field specifications and field elements in general.
- * Otherwise we would declare
- *     int EC_GROUP_set_curve(EC_GROUP *, .....);
- */
 void EC_GROUP_free(EC_GROUP *);
 void EC_GROUP_clear_free(EC_GROUP *);
-int EC_GROUP_copy(EC_GROUP *, const EC_GROUP*);
+int EC_GROUP_copy(EC_GROUP *, const EC_GROUP *);
+
+const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *);
+	
+
+/* We don't have types for field specifications and field elements in general.
+ * Otherwise we could declare
+ *     int EC_GROUP_set_curve(EC_GROUP *, .....);
+ */
 int EC_GROUP_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-int EC_GROUP_get_curve_GFp(EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
+int EC_GROUP_get_curve_GFp(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
 
 /* EC_GROUP_new_GFp() calls EC_GROUP_new() and EC_GROUP_set_GFp()
  * after choosing an appropriate EC_METHOD */
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 
 int EC_GROUP_set_generator(EC_GROUP *, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor);
-EC_POINT *EC_group_get0_generator(EC_GROUP *);
-int EC_GROUP_get_order(EC_GROUP *, BIGNUM *order, BN_CTX *);
-int EC_GROUP_get_cofactor(EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
+EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *);
+int EC_GROUP_get_order(const EC_GROUP *, BIGNUM *order, BN_CTX *);
+int EC_GROUP_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 
 EC_POINT *EC_POINT_new(const EC_GROUP *);
 void EC_POINT_free(EC_POINT *);
 void EC_POINT_clear_free(EC_POINT *);
 int EC_POINT_copy(EC_POINT *, const EC_POINT *);
  
+const EC_METHOD *EC_POINT_method_of(const EC_POINT *);
+
 int EC_POINT_set_to_infinity(const EC_GROUP *, EC_POINT *);
 int EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *, EC_POINT *,
 	const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *);
@@ -152,10 +157,10 @@ int EC_POINT_is_on_curve(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 int EC_POINT_cmp(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
 
 int EC_POINT_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
+int EC_POINTs_make_affine(const EC_GROUP *, size_t num, EC_POINT *[], BN_CTX *);
 
 
-
-/* TODO: scalar multiplication */
+int EC_POINTs_mul(const EC_GROUP *, EC_POINT *r, BIGNUM *, size_t num, EC_POINT *[], BIGNUM *[], BN_CTX *);
 
 
 
@@ -177,16 +182,22 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GFP_SIMPLE_MAKE_AFFINE			 102
 #define EC_F_EC_GFP_SIMPLE_OCT2POINT			 103
 #define EC_F_EC_GFP_SIMPLE_POINT2OCT			 104
+#define EC_F_EC_GFP_SIMPLE_POINTS_MAKE_AFFINE		 137
 #define EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES_GFP 105
 #define EC_F_EC_GFP_SIMPLE_POINT_SET_AFFINE_COORDINATES_GFP 128
 #define EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES_GFP 129
 #define EC_F_EC_GROUP_COPY				 106
+#define EC_F_EC_GROUP_GET0_GENERATOR			 139
+#define EC_F_EC_GROUP_GET_COFACTOR			 140
 #define EC_F_EC_GROUP_GET_CURVE_GFP			 130
 #define EC_F_EC_GROUP_GET_EXTRA_DATA			 107
+#define EC_F_EC_GROUP_GET_ORDER				 141
 #define EC_F_EC_GROUP_NEW				 108
 #define EC_F_EC_GROUP_SET_CURVE_GFP			 109
 #define EC_F_EC_GROUP_SET_EXTRA_DATA			 110
 #define EC_F_EC_GROUP_SET_GENERATOR			 111
+#define EC_F_EC_POINTS_MAKE_AFFINE			 136
+#define EC_F_EC_POINTS_MUL				 138
 #define EC_F_EC_POINT_ADD				 112
 #define EC_F_EC_POINT_CMP				 113
 #define EC_F_EC_POINT_COPY				 114
@@ -208,12 +219,14 @@ void ERR_load_EC_strings(void);
 /* Reason codes. */
 #define EC_R_BUFFER_TOO_SMALL				 100
 #define EC_R_INCOMPATIBLE_OBJECTS			 101
+#define EC_R_INVALID_ARGUMENT				 112
 #define EC_R_INVALID_COMPRESSED_POINT			 110
 #define EC_R_INVALID_COMPRESSION_BIT			 109
 #define EC_R_INVALID_ENCODING				 102
 #define EC_R_INVALID_FIELD				 103
 #define EC_R_INVALID_FORM				 104
 #define EC_R_NOT_INITIALIZED				 111
+#define EC_R_NO_GENERATOR_SET				 113
 #define EC_R_NO_SUCH_EXTRA_DATA				 105
 #define EC_R_POINT_AT_INFINITY				 106
 #define EC_R_POINT_IS_NOT_ON_CURVE			 107

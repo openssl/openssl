@@ -120,7 +120,7 @@ extern "C" {
 
 
 /* Used for temp variables */
-#define BN_CTX_NUM	24
+#define BN_CTX_NUM	32
 #define BN_CTX_NUM_POS	12
 struct bignum_ctx
 	{

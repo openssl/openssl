@@ -71,16 +71,16 @@ struct ec_method_st {
 
 	/* used by EC_GROUP_set_curve_GFp and EC_GROUP_get_curve_GFp: */
 	int (*group_set_curve_GFp)(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-	int (*group_get_curve_GFp)(EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
+	int (*group_get_curve_GFp)(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
 
-	/* used by EC_GROUP_set_generator, EC_group_get0_generator,
+	/* used by EC_GROUP_set_generator, EC_GROUP_get0_generator,
 	 * EC_GROUP_get_order, EC_GROUP_get_cofactor:
 	 */
 	int (*group_set_generator)(EC_GROUP *, const EC_POINT *generator,
 	        const BIGNUM *order, const BIGNUM *cofactor);
-	EC_POINT *(*group_get0_generator)(EC_GROUP *);
-	int (*group_get_order)(EC_GROUP *, BIGNUM *order, BN_CTX *);
-	int (*group_get_cofactor)(EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
+	EC_POINT *(*group_get0_generator)(const EC_GROUP *);
+	int (*group_get_order)(const EC_GROUP *, BIGNUM *order, BN_CTX *);
+	int (*group_get_cofactor)(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 
 	/* used by EC_POINT_new, EC_POINT_free, EC_POINT_clear_free, EC_POINT_copy: */
 	int (*point_init)(EC_POINT *);
@@ -121,8 +121,9 @@ struct ec_method_st {
 	int (*is_on_curve)(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 	int (*point_cmp)(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
 
-	/* used by EC_POINT_make_affine: */
+	/* used by EC_POINT_make_affine, EC_POINTs_make_affine: */
 	int (*make_affine)(const EC_GROUP *, EC_POINT *, BN_CTX *);
+	int (*points_make_affine)(const EC_GROUP *, size_t num, EC_POINT *[], BN_CTX *);
 
 
 	/* internal functions */
@@ -135,6 +136,7 @@ struct ec_method_st {
 
 	int (*field_encode)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *); /* e.g. to Montgomery */
 	int (*field_decode)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *); /* e.g. from Montgomery */
+	int (*field_set_to_one)(const EC_GROUP *, BIGNUM *r, BN_CTX *);
 } /* EC_METHOD */;
 
 
@@ -164,7 +166,8 @@ struct ec_group_st {
 	EC_POINT *generator; /* optional */
 	BIGNUM order, cofactor;
 
-	void *field_data; /* method-specific (e.g., Montgomery structure) */
+	void *field_data1; /* method-specific (e.g., Montgomery structure) */
+	void *field_data2; /* method-specific */
 } /* EC_GROUP */;
 
 
@@ -176,7 +179,7 @@ struct ec_group_st {
  * if necessary.) */
 int EC_GROUP_set_extra_data(EC_GROUP *, void *extra_data, void *(*extra_data_dup_func)(void *),
 	void (*extra_data_free_func)(void *), void (*extra_data_clear_free_func)(void *));
-void *EC_GROUP_get_extra_data(EC_GROUP *, void *(*extra_data_dup_func)(void *),
+void *EC_GROUP_get_extra_data(const EC_GROUP *, void *(*extra_data_dup_func)(void *),
 	void (*extra_data_free_func)(void *), void (*extra_data_clear_free_func)(void *));
 void EC_GROUP_free_extra_data(EC_GROUP *);
 void EC_GROUP_clear_free_extra_data(EC_GROUP *);
@@ -204,12 +207,12 @@ void ec_GFp_simple_group_finish(EC_GROUP *);
 void ec_GFp_simple_group_clear_finish(EC_GROUP *);
 int ec_GFp_simple_group_copy(EC_GROUP *, const EC_GROUP *);
 int ec_GFp_simple_group_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-int ec_GFp_simple_group_get_curve_GFp(EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
+int ec_GFp_simple_group_get_curve_GFp(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
 int ec_GFp_simple_group_set_generator(EC_GROUP *, const EC_POINT *generator,
 	const BIGNUM *order, const BIGNUM *cofactor);
-EC_POINT *ec_GFp_simple_group_get0_generator(EC_GROUP *);
-int ec_GFp_simple_group_get_order(EC_GROUP *, BIGNUM *order, BN_CTX *);
-int ec_GFp_simple_group_get_cofactor(EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
+EC_POINT *ec_GFp_simple_group_get0_generator(const EC_GROUP *);
+int ec_GFp_simple_group_get_order(const EC_GROUP *, BIGNUM *order, BN_CTX *);
+int ec_GFp_simple_group_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 int ec_GFp_simple_point_init(EC_POINT *);
 void ec_GFp_simple_point_finish(EC_POINT *);
 void ec_GFp_simple_point_clear_finish(EC_POINT *);
@@ -236,6 +239,7 @@ int ec_GFp_simple_is_at_infinity(const EC_GROUP *, const EC_POINT *);
 int ec_GFp_simple_is_on_curve(const EC_GROUP *, const EC_POINT *, BN_CTX *);
 int ec_GFp_simple_cmp(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
 int ec_GFp_simple_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
+int ec_GFp_simple_points_make_affine(const EC_GROUP *, size_t num, EC_POINT *[], BN_CTX *);
 int ec_GFp_simple_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int ec_GFp_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 
@@ -250,6 +254,7 @@ int ec_GFp_mont_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BI
 int ec_GFp_mont_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 int ec_GFp_mont_field_encode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 int ec_GFp_mont_field_decode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
+int ec_GFp_mont_field_set_to_one(const EC_GROUP *, BIGNUM *r, BN_CTX *);
 
 
 /* method functions in ecp_recp.c */

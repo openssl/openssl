@@ -88,10 +88,12 @@ const EC_METHOD *EC_GFp_nist_method(void)
 		ec_GFp_simple_is_on_curve,
 		ec_GFp_simple_cmp,
 		ec_GFp_simple_make_affine,
+		ec_GFp_simple_points_make_affine,
 		ec_GFp_nist_field_mul,
 		ec_GFp_nist_field_sqr,
 		0 /* field_encode */,
-		0 /* field_decode */ };
+		0 /* field_decode */,
+		0 /* field_set_to_one */ };
 
 	return &ret;
 	}
@@ -103,7 +105,7 @@ int ec_GFp_nist_group_init(EC_GROUP *group)
 	int ok;
 
 	ok = ec_GFp_simple_group_init(group);
-	group->field_data = NULL;
+	group->field_data1 = NULL;
 	return ok;
 	}
 
