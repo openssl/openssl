@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
 
+  *) Add new function BN_rand_range(), and fix DSA_sign_setup() to prevent
+     Bleichenbacher's DSA attack.
+     [Ulf Moeller]
+
   *) In the NCONF_...-based implementations for CONF_... queries
      (crypto/conf/conf_lib.c), if the input LHASH is NULL, avoid using
      a temporary CONF structure with the data component set to NULL
