@@ -25,8 +25,8 @@
  * (Prior to 0.9.5a beta1, a different scheme was used: MMNNFFRBB for
  *  major minor fix final patch/beta)
  */
-#define OPENSSL_VERSION_NUMBER	0x0090602fL
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.6b [engine] 9 Jul 2001"
+#define OPENSSL_VERSION_NUMBER	0x00906030L
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.6c-dev [engine] XX xxx XXXX"
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
 
