@@ -219,6 +219,7 @@ int X509_print(BIO *bp, X509 *x)
 			((i+1) == n)?"":":") <= 0) goto err;
 		}
 	if (BIO_write(bp,"\n",1) != 1) goto err;
+	if (!X509_CERT_AUX_print(bp, x->aux, 0)) goto err;
 	ret=1;
 err:
 	if (str != NULL) ASN1_STRING_free(str);

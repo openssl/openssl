@@ -230,6 +230,30 @@ typedef struct x509_cinf_st
 	STACK_OF(X509_EXTENSION) *extensions;	/* [ 3 ] optional in v3 */
 	} X509_CINF;
 
+/* This stuff is certificate "auxiliary info"
+ * it contains details which are useful in certificate
+ * stores and databases. When used this is tagged onto
+ * the end of the certificate itself
+ */
+
+/* Bit values for trust/notrust */
+
+#define X509_TRUST_ALL			0
+#define X509_TRUST_SSL_CLIENT		1
+#define X509_TRUST_SSL_SERVER		2
+#define X509_TRUST_EMAIL		3
+#define X509_TRUST_OBJECT_SIGN		4
+
+typedef struct x509_cert_aux_st
+	{
+	ASN1_BIT_STRING *trust;			/* trusted uses */
+	ASN1_BIT_STRING *notrust;		/* rejected uses */
+	STACK_OF(ASN1_OBJECT) *othertrust;	/* extra uses */
+	STACK_OF(ASN1_OBJECT) *othernotrust;	/* extra rejected uses */
+	ASN1_UTF8STRING *alias;			/* "friendly name" */
+	ASN1_TYPE *other;			/* other unspecified info */
+	} X509_CERT_AUX;
+
 typedef struct x509_st
 	{
 	X509_CINF *cert_info;
@@ -245,6 +269,7 @@ typedef struct x509_st
 	unsigned long ex_kusage;
 	unsigned long ex_xkusage;
 	unsigned long ex_nscert;
+	X509_CERT_AUX *aux;
 	} X509;
 
 DECLARE_STACK_OF(X509)
@@ -735,6 +760,23 @@ int X509_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 	     int (*dup_func)(), void (*free_func)());
 int X509_set_ex_data(X509 *r, int idx, char *arg);
 char *X509_get_ex_data(X509 *r, int idx);
+int		i2d_X509_AUX(X509 *a,unsigned char **pp);
+X509 *		d2i_X509_AUX(X509 **a,unsigned char **pp,long length);
+
+X509_CERT_AUX *	X509_CERT_AUX_new(void);
+void		X509_CERT_AUX_free(X509_CERT_AUX *a);
+int		i2d_X509_CERT_AUX(X509_CERT_AUX *a,unsigned char **pp);
+X509_CERT_AUX *	d2i_X509_CERT_AUX(X509_CERT_AUX **a,unsigned char **pp,
+								long length);
+int X509_alias_set(X509 *x, unsigned char *name, int len);
+unsigned char * X509_alias_get(X509 *x, int *len);
+int X509_trust_set_bit(X509 *x, int bit, int value);
+int X509_notrust_set_bit(X509 *x, int bit, int value);
+int X509_add_trust_object(X509 *x, ASN1_OBJECT *obj);
+int X509_add_notrust_object(X509 *x, ASN1_OBJECT *obj);
+
+int X509_trust_set_bit_asc(X509 *x, char *str, int value);
+int X509_notrust_set_bit_asc(X509 *x, char *str, int value);
 
 X509_REVOKED *	X509_REVOKED_new(void);
 void		X509_REVOKED_free(X509_REVOKED *a);
@@ -840,6 +882,7 @@ int		X509_REQ_print_fp(FILE *bp,X509_REQ *req);
 #ifdef HEADER_BIO_H
 int		X509_NAME_print(BIO *bp, X509_NAME *name, int obase);
 int		X509_print(BIO *bp,X509 *x);
+int		X509_CERT_AUX_print(BIO *bp,X509_CERT_AUX *x, int indent);
 int		X509_CRL_print(BIO *bp,X509_CRL *x);
 int		X509_REQ_print(BIO *bp,X509_REQ *req);
 #endif

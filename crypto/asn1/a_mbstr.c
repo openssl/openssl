@@ -144,7 +144,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 	ASN1_STRING *dest;
 	unsigned char *p;
 	int nchar;
-	unsigned char strbuf[32];
+	char strbuf[32];
 	int (*cpyfunc)(unsigned long,void *) = NULL;
 	if(len == -1) len = strlen((const char *)in);
 	if(!mask) mask = dirstring_mask;

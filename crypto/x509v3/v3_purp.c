@@ -62,7 +62,7 @@
 
 
 static int x509_purpose_get_idx(int id);
-void x509v3_cache_extensions(X509 *x);
+static void x509v3_cache_extensions(X509 *x);
 
 static int ca_check(X509 *x);
 static int check_purpose_ssl_client(X509_PURPOSE *xp, X509 *x, int ca);
@@ -109,7 +109,7 @@ int X509_check_purpose(X509 *x, int id, int ca)
 	return pt->check_purpose(pt, x,ca);
 }
 			
-	
+
 
 
 static int x509_purpose_get_idx(int id)
@@ -191,7 +191,7 @@ char *X509_PURPOSE_get_name(X509_PURPOSE *xp)
 	return xp->purpose_name;
 }
 
-void x509v3_cache_extensions(X509 *x)
+static void x509v3_cache_extensions(X509 *x)
 {
 	BASIC_CONSTRAINTS *bs;
 	ASN1_BIT_STRING *usage;

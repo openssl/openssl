@@ -106,6 +106,20 @@ err:\
 #define M_ASN1_D2I_start_sequence() \
 	if (!asn1_GetSequence(&c,&length)) \
 		{ c.line=__LINE__; goto err; }
+/* Begin reading ASN1 without a surrounding sequence */
+#define M_ASN1_D2I_begin() \
+	c.slen = length;
+
+/* End reading ASN1 with no check on length */
+#define M_ASN1_D2I_Finish_nolen() \
+	*pp=c.p; \
+	if (a != NULL) (*a)=ret; \
+	return(ret); \
+err:\
+	ASN1_MAC_H_err((e),c.error,c.line); \
+	asn1_add_error(*pp,(int)(c.q- *pp)); \
+	if ((ret != NULL) && ((a == NULL) || (*a != ret))) func(ret); \
+	return(NULL)
 
 #define M_ASN1_D2I_end_sequence() \
 	(((c.inf&1) == 0)?(c.slen <= 0): \

@@ -102,8 +102,14 @@ static char *x509_usage[]={
 " -dates          - both Before and After dates\n",
 " -modulus        - print the RSA key modulus\n",
 " -fingerprint    - print the certificate fingerprint\n",
+" -alias          - output certificate alias\n",
 " -noout          - no certificate output\n",
-
+" -trustout       - output a \"trusted\" certificate\n",
+" -clrtrust       - clear all trusted purposes\n",
+" -clrnotrust     - clear all untrusted purposes\n",
+" -addtrust arg   - mark certificate as trusted for a given purpose\n",
+" -addnotrust arg - mark certificate as not trusted for a given purpose\n",
+" -setalias arg   - set certificate alias\n",
 " -days arg       - How long till expiry of a signed certificate - def 30 days\n",
 " -signkey arg    - self sign cert with arg\n",
 " -x509toreq      - output a certification request object\n",
@@ -146,11 +152,14 @@ int MAIN(int argc, char **argv)
 	int i,num,badops=0;
 	BIO *out=NULL;
 	BIO *STDout=NULL;
+	STACK *trust = NULL, *notrust = NULL;
 	int informat,outformat,keyformat,CAformat,CAkeyformat;
 	char *infile=NULL,*outfile=NULL,*keyfile=NULL,*CAfile=NULL;
 	char *CAkeyfile=NULL,*CAserial=NULL;
+	char *alias=NULL, *trstr=NULL;
 	int text=0,serial=0,hash=0,subject=0,issuer=0,startdate=0,enddate=0;
 	int noout=0,sign_flag=0,CA_flag=0,CA_createserial=0;
+	int trustout=0,clrtrust=0,clrnotrust=0,aliasout=0;
 	int C=0;
 	int x509req=0,days=DEF_DAYS,modulus=0;
 	int pprint = 0;
@@ -270,6 +279,44 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			CAserial= *(++argv);
 			}
+		else if (strcmp(*argv,"-addtrust") == 0)
+			{
+			if (--argc < 1) goto bad;
+			trstr= *(++argv);
+			if(!X509_trust_set_bit_asc(NULL, trstr, 0)) {
+				BIO_printf(bio_err,
+					"Unknown trust value %s\n", trstr);
+				goto bad;
+			}
+			if(!trust) trust = sk_new_null();
+			sk_push(trust, trstr);
+			trustout = 1;
+			}
+		else if (strcmp(*argv,"-addnotrust") == 0)
+			{
+			if (--argc < 1) goto bad;
+			trstr= *(++argv);
+			if(!X509_notrust_set_bit_asc(NULL, trstr, 0)) {
+				BIO_printf(bio_err,
+					"Unknown trust value %s\n", trstr);
+				goto bad;
+			}
+			if(!notrust) notrust = sk_new_null();
+			sk_push(notrust, trstr);
+			trustout = 1;
+			}
+		else if (strcmp(*argv,"-setalias") == 0)
+			{
+			if (--argc < 1) goto bad;
+			alias= *(++argv);
+			trustout = 1;
+			}
+		else if (strcmp(*argv,"-setalias") == 0)
+			{
+			if (--argc < 1) goto bad;
+			alias= *(++argv);
+			trustout = 1;
+			}
 		else if (strcmp(*argv,"-C") == 0)
 			C= ++num;
 		else if (strcmp(*argv,"-serial") == 0)
@@ -301,6 +348,14 @@ int MAIN(int argc, char **argv)
 			enddate= ++num;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout= ++num;
+		else if (strcmp(*argv,"-trustout") == 0)
+			trustout= 1;
+		else if (strcmp(*argv,"-clrtrust") == 0)
+			clrtrust= ++num;
+		else if (strcmp(*argv,"-clrnotrust") == 0)
+			clrnotrust= ++num;
+		else if (strcmp(*argv,"-alias") == 0)
+			aliasout= ++num;
 		else if (strcmp(*argv,"-CAcreateserial") == 0)
 			CA_createserial= ++num;
 		else if ((md_alg=EVP_get_digestbyname(&((*argv)[1]))) != NULL)
@@ -494,6 +549,27 @@ bad:
 			}
 		}
 
+	if(alias) X509_alias_set(x, (unsigned char *)alias, -1);
+
+	if(clrtrust) X509_trust_set_bit(x, -1, 0);
+	if(clrnotrust) X509_notrust_set_bit(x, -1, 0);
+
+	if(trust) {
+		for(i = 0; i < sk_num(trust); i++) {
+			trstr = sk_value(trust, i);
+			X509_trust_set_bit_asc(x, trstr, 1);
+		}
+		sk_free(trust);
+	}
+
+	if(notrust) {
+		for(i = 0; i < sk_num(notrust); i++) {
+			trstr = sk_value(notrust, i);
+			X509_notrust_set_bit_asc(x, trstr, 1);
+		}
+		sk_free(notrust);
+	}
+
 	if (num)
 		{
 		for (i=1; i<=num; i++)
@@ -515,6 +591,13 @@ bad:
 				BIO_printf(STDout,"serial=");
 				i2a_ASN1_INTEGER(STDout,x->cert_info->serialNumber);
 				BIO_printf(STDout,"\n");
+				}
+			else if (aliasout == i)
+				{
+				unsigned char *alstr;
+				alstr = X509_alias_get(x, NULL);
+				if(alstr) BIO_printf(STDout,"%s\n", alstr);
+				else BIO_puts(STDout,"<No Alias>\n");
 				}
 			else if (hash == i)
 				{
@@ -726,9 +809,10 @@ bad:
 
 	if 	(outformat == FORMAT_ASN1)
 		i=i2d_X509_bio(out,x);
-	else if (outformat == FORMAT_PEM)
-		i=PEM_write_bio_X509(out,x);
-	else if (outformat == FORMAT_NETSCAPE)
+	else if (outformat == FORMAT_PEM) {
+		if(trustout) i=PEM_write_bio_X509_AUX(out,x);
+		else i=PEM_write_bio_X509(out,x);
+	} else if (outformat == FORMAT_NETSCAPE)
 		{
 		ASN1_HEADER ah;
 		ASN1_OCTET_STRING os;
@@ -1070,7 +1154,7 @@ static X509 *load_cert(char *file, int format)
 		ah->data=NULL;
 		}
 	else if (format == FORMAT_PEM)
-		x=PEM_read_bio_X509(cert,NULL,NULL,NULL);
+		x=PEM_read_bio_X509_AUX(cert,NULL,NULL,NULL);
 	else	{
 		BIO_printf(bio_err,"bad input format specified for input cert\n");
 		goto end;

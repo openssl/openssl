@@ -136,12 +136,6 @@ typedef struct v3_ext_ctx X509V3_CTX;
 #define X509V3_EXT_CTX_DEP	0x2
 #define X509V3_EXT_MULTILINE	0x4
 
-typedef struct BIT_STRING_BITNAME_st {
-int bitnum;
-const char *lname;
-const char *sname;
-} BIT_STRING_BITNAME;
-
 typedef BIT_STRING_BITNAME ENUMERATED_NAMES;
 
 typedef struct BASIC_CONSTRAINTS_st {

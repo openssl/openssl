@@ -75,6 +75,7 @@ const char *PEM_version="PEM" OPENSSL_VERSION_PTEXT;
 
 static int def_callback(char *buf, int num, int w, void *userdata);
 static int load_iv(unsigned char **fromp,unsigned char *to, int num);
+static int check_pem(const char *nm, const char *name);
 
 static int def_callback(char *buf, int num, int w, void *userdata)
 	{
@@ -168,6 +169,43 @@ char *PEM_ASN1_read(char *(*d2i)(), const char *name, FILE *fp, char **x,
 	}
 #endif
 
+static int check_pem(const char *nm, const char *name)
+{
+	/* Normal matching nm and name */
+	if (!strcmp(nm,name)) return 1;
+
+	/* Make PEM_STRING_EVP_PKEY match any private key */
+
+	if(!strcmp(nm,PEM_STRING_PKCS8) &&
+		!strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
+
+	if(!strcmp(nm,PEM_STRING_PKCS8INF) &&
+		 !strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
+
+	if(!strcmp(nm,PEM_STRING_RSA) &&
+		!strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
+
+	if(!strcmp(nm,PEM_STRING_DSA) &&
+		 !strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
+
+	/* Permit older strings */
+
+	if(!strcmp(nm,PEM_STRING_X509_OLD) &&
+		!strcmp(name,PEM_STRING_X509)) return 1;
+
+	if(!strcmp(nm,PEM_STRING_X509_REQ_OLD) &&
+		!strcmp(name,PEM_STRING_X509_REQ)) return 1;
+
+	/* Allow normal certs to be read as trusted certs */
+	if(!strcmp(nm,PEM_STRING_X509) &&
+		!strcmp(name,PEM_STRING_X509_TRUSTED)) return 1;
+
+	if(!strcmp(nm,PEM_STRING_X509_OLD) &&
+		!strcmp(name,PEM_STRING_X509_TRUSTED)) return 1;
+
+	return 0;
+}
+
 char *PEM_ASN1_read_bio(char *(*d2i)(), const char *name, BIO *bp, char **x,
 	     pem_password_cb *cb, void *u)
 	{
@@ -185,21 +223,7 @@ char *PEM_ASN1_read_bio(char *(*d2i)(), const char *name, BIO *bp, char **x,
 				ERR_add_error_data(2, "Expecting: ", name);
 			return(NULL);
 		}
-		if (	(strcmp(nm,name) == 0) ||
-			((strcmp(nm,PEM_STRING_RSA) == 0) &&
-			 (strcmp(name,PEM_STRING_EVP_PKEY) == 0)) ||
-			((strcmp(nm,PEM_STRING_DSA) == 0) &&
-			 (strcmp(name,PEM_STRING_EVP_PKEY) == 0)) ||
-			((strcmp(nm,PEM_STRING_PKCS8) == 0) &&
-			 (strcmp(name,PEM_STRING_EVP_PKEY) == 0)) ||
-			((strcmp(nm,PEM_STRING_PKCS8INF) == 0) &&
-			 (strcmp(name,PEM_STRING_EVP_PKEY) == 0)) ||
-			((strcmp(nm,PEM_STRING_X509_OLD) == 0) &&
-			 (strcmp(name,PEM_STRING_X509) == 0)) ||
-			((strcmp(nm,PEM_STRING_X509_REQ_OLD) == 0) &&
-			 (strcmp(name,PEM_STRING_X509_REQ) == 0)) 
-			)
-			break;
+		if(check_pem(nm, name)) break;
 		Free(nm);
 		Free(header);
 		Free(data);

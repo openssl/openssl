@@ -311,6 +311,14 @@ typedef struct asn1_header_st
 	ASN1_METHOD *meth;
 	} ASN1_HEADER;
 
+/* This is used to contain a list of bit names */
+typedef struct BIT_STRING_BITNAME_st {
+	int bitnum;
+	const char *lname;
+	const char *sname;
+} BIT_STRING_BITNAME;
+
+
 #define M_ASN1_STRING_length(x)	((x)->length)
 #define M_ASN1_STRING_length_set(x, n)	((x)->length = (n))
 #define M_ASN1_STRING_type(x)	((x)->type)
@@ -531,6 +539,13 @@ int		ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d,
 int		ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
 int		ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n);
 
+#ifdef HEADER_BIO_H
+int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
+				BIT_STRING_BITNAME *tbl, int indent);
+#endif
+int ASN1_BIT_STRING_num_asc(char *name, BIT_STRING_BITNAME *tbl);
+int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, char *name, int value,
+				BIT_STRING_BITNAME *tbl);
 
 int		i2d_ASN1_BOOLEAN(int a,unsigned char **pp);
 int 		d2i_ASN1_BOOLEAN(int *a,unsigned char **pp,long length);
@@ -870,6 +885,7 @@ void ASN1_STRING_TABLE_cleanup(void);
 #define ASN1_F_D2I_X509					 159
 #define ASN1_F_D2I_X509_ALGOR				 160
 #define ASN1_F_D2I_X509_ATTRIBUTE			 161
+#define ASN1_F_D2I_X509_CERT_AUX			 285
 #define ASN1_F_D2I_X509_CINF				 162
 #define ASN1_F_D2I_X509_CRL				 163
 #define ASN1_F_D2I_X509_CRL_INFO			 164
@@ -933,6 +949,7 @@ void ASN1_STRING_TABLE_cleanup(void);
 #define ASN1_F_USERNOTICE_NEW				 275
 #define ASN1_F_X509_ALGOR_NEW				 202
 #define ASN1_F_X509_ATTRIBUTE_NEW			 203
+#define ASN1_F_X509_CERT_AUX_NEW			 286
 #define ASN1_F_X509_CINF_NEW				 204
 #define ASN1_F_X509_CRL_INFO_NEW			 205
 #define ASN1_F_X509_CRL_NEW				 206

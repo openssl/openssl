@@ -4,6 +4,22 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Extensive changes to support certificate auxiliary information.
+     This involves the use of X509_CERT_AUX structure and X509_AUX
+     functions. An X509_AUX function such as PEM_read_X509_AUX()
+     can still read in a certificate file in the usual way but it
+     will also read in any additional "auxiliary information". By
+     doing things this way a fair degree of compatability can be
+     retained: existing certificates can have this information added
+     using the new 'x509' options. 
+
+     Current auxiliary information includes an "alias" and some trust
+     settings. The trust settings will ultimately be used in enhanced
+     certificate chain verification routines: currently a certificate
+     can only be trusted if it is self signed and then it is trusted
+     for all purposes.
+     [Steve Henson]
+
   *) Fix assembler for Alpha (tested only on DEC OSF not Linux or *BSD).  The
      problem was that one of the replacement routines had not been working since
      SSLeay releases.  For now the offending routine has been replaced with
