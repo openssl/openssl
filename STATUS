@@ -1,11 +1,15 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/11 12:39:43 $
+  ______________                           $Date: 2000/09/11 16:36:14 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.6:  Under development (in release cycle)...
                        Proposed release date September 24, 2000
+                       0.9.6-beta1 is available:
+			OpenBSD-x86 2.7			- failed (ftime/TIMEB)
+			hpux-parisc-cc 10.20		- passed
+			hpux-parisc-gcc 10.20		- passed
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
