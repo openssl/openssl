@@ -455,7 +455,7 @@ simpleSecurityObject		454
 pilotOrganization		455
 pilotDSA		456
 qualityLabelledData		457
-userid		458
+userId		458
 textEncodedORAddress		459
 rfc822Mailbox		460
 info		461

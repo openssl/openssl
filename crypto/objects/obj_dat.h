@@ -498,7 +498,7 @@ static unsigned char lvalues[3837]={
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x14,/* [3356] OBJ_pilotOrganization */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x15,/* [3366] OBJ_pilotDSA */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x04,0x16,/* [3376] OBJ_qualityLabelledData */
-0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x01,/* [3386] OBJ_userid */
+0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x01,/* [3386] OBJ_userId */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x02,/* [3396] OBJ_textEncodedORAddress */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x03,/* [3406] OBJ_rfc822Mailbox */
 0x09,0x92,0x26,0x89,0x93,0xF2,0x2C,0x64,0x01,0x04,/* [3416] OBJ_info */
@@ -686,7 +686,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"G","givenName",NID_givenName,3,&(lvalues[535]),0},
 {"S","surname",NID_surname,3,&(lvalues[538]),0},
 {"I","initials",NID_initials,3,&(lvalues[541]),0},
-{"UID","uniqueIdentifier",NID_uniqueIdentifier,3,&(lvalues[544]),0},
+{"uniqueIdentifier","uniqueIdentifier",NID_uniqueIdentifier,3,
+	&(lvalues[544]),0},
 {"crlDistributionPoints","X509v3 CRL Distribution Points",
 	NID_crl_distribution_points,3,&(lvalues[547]),0},
 {"RSA-NP-MD5","md5WithRSA",NID_md5WithRSA,5,&(lvalues[550]),0},
@@ -1246,7 +1247,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"pilotDSA","pilotDSA",NID_pilotDSA,10,&(lvalues[3366]),0},
 {"qualityLabelledData","qualityLabelledData",NID_qualityLabelledData,
 	10,&(lvalues[3376]),0},
-{"userid","userid",NID_userid,10,&(lvalues[3386]),0},
+{"UID","userId",NID_userId,10,&(lvalues[3386]),0},
 {"textEncodedORAddress","textEncodedORAddress",
 	NID_textEncodedORAddress,10,&(lvalues[3396]),0},
 {"rfc822Mailbox","rfc822Mailbox",NID_rfc822Mailbox,10,&(lvalues[3406]),0},
@@ -1439,7 +1440,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[16]),/* "ST" */
 &(nid_objs[143]),/* "SXNetID" */
 &(nid_objs[106]),/* "T" */
-&(nid_objs[102]),/* "UID" */
+&(nid_objs[458]),/* "UID" */
 &(nid_objs[ 0]),/* "UNDEF" */
 &(nid_objs[11]),/* "X500" */
 &(nid_objs[378]),/* "X500algorithms" */
@@ -1811,10 +1812,10 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[133]),/* "timeStamping" */
 &(nid_objs[375]),/* "trustRoot" */
 &(nid_objs[436]),/* "ucl" */
+&(nid_objs[102]),/* "uniqueIdentifier" */
 &(nid_objs[55]),/* "unstructuredAddress" */
 &(nid_objs[49]),/* "unstructuredName" */
 &(nid_objs[465]),/* "userClass" */
-&(nid_objs[458]),/* "userid" */
 &(nid_objs[373]),/* "valid" */
 &(nid_objs[158]),/* "x509Certificate" */
 &(nid_objs[160]),/* "x509Crl" */
@@ -2317,7 +2318,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[55]),/* "unstructuredAddress" */
 &(nid_objs[49]),/* "unstructuredName" */
 &(nid_objs[465]),/* "userClass" */
-&(nid_objs[458]),/* "userid" */
+&(nid_objs[458]),/* "userId" */
 &(nid_objs[373]),/* "valid" */
 &(nid_objs[158]),/* "x509Certificate" */
 &(nid_objs[160]),/* "x509Crl" */
@@ -2647,7 +2648,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[78]),/* OBJ_netscape_comment             2 16 840 1 113730 1 13 */
 &(nid_objs[79]),/* OBJ_netscape_cert_sequence       2 16 840 1 113730 2 5 */
 &(nid_objs[139]),/* OBJ_ns_sgc                       2 16 840 1 113730 4 1 */
-&(nid_objs[458]),/* OBJ_userid                       0 9 2342 19200300 100 1 1 */
+&(nid_objs[458]),/* OBJ_userId                       0 9 2342 19200300 100 1 1 */
 &(nid_objs[459]),/* OBJ_textEncodedORAddress         0 9 2342 19200300 100 1 2 */
 &(nid_objs[460]),/* OBJ_rfc822Mailbox                0 9 2342 19200300 100 1 3 */
 &(nid_objs[461]),/* OBJ_info                         0 9 2342 19200300 100 1 4 */

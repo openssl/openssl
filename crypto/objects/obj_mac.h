@@ -1646,7 +1646,6 @@
 #define NID_initials		101
 #define OBJ_initials		OBJ_X509,43L
 
-#define SN_uniqueIdentifier		"UID"
 #define LN_uniqueIdentifier		"uniqueIdentifier"
 #define NID_uniqueIdentifier		102
 #define OBJ_uniqueIdentifier		OBJ_X509,45L
@@ -2096,9 +2095,10 @@
 #define NID_qualityLabelledData		457
 #define OBJ_qualityLabelledData		OBJ_pilotObjectClass,22L
 
-#define SN_userid		"userid"
-#define NID_userid		458
-#define OBJ_userid		OBJ_pilotAttributeType,1L
+#define SN_userId		"UID"
+#define LN_userId		"userId"
+#define NID_userId		458
+#define OBJ_userId		OBJ_pilotAttributeType,1L
 
 #define LN_textEncodedORAddress		"textEncodedORAddress"
 #define NID_textEncodedORAddress		459

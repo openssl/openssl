@@ -539,7 +539,7 @@ X509 13			: D			: description
 X509 41			: name			: name
 X509 42			: G			: givenName
 X509 43			: I			: initials
-X509 45			: UID			: uniqueIdentifier
+X509 45			: 			: uniqueIdentifier
 X509 46			: dnQualifier		: dnQualifier
 X509 72			: role			: role
 
@@ -695,7 +695,7 @@ pilotObjectClass 19	:			: simpleSecurityObject
 pilotObjectClass 20	:			: pilotOrganization
 pilotObjectClass 21	:			: pilotDSA
 pilotObjectClass 22	:			: qualityLabelledData
-pilotAttributeType 1	: userid
+pilotAttributeType 1	: UID			: userId
 pilotAttributeType 2	:			: textEncodedORAddress
 pilotAttributeType 3	:			: rfc822Mailbox
 pilotAttributeType 4	: info
