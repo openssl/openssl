@@ -60,7 +60,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef NO_RIPEMD
+#ifdef OPENSSL_NO_RIPEMD
 int main(int argc, char *argv[])
 {
     printf("No ripemd support\n");

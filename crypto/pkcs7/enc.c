@@ -128,7 +128,7 @@ char *argv[];
 	PKCS7_set_type(p7,NID_pkcs7_enveloped);
 #endif
 	if(!cipher)	{
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 		cipher = EVP_des_ede3_cbc();
 #else
 		fprintf(stderr, "No cipher selected\n");

@@ -60,7 +60,7 @@
 #include <string.h>
 #include <openssl/sha.h>
 
-#ifndef NO_SHA0
+#ifndef OPENSSL_NO_SHA0
 unsigned char *SHA(const unsigned char *d, unsigned long n, unsigned char *md)
 	{
 	SHA_CTX c;

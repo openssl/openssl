@@ -59,7 +59,7 @@
 #ifndef HEADER_IDEA_H
 #define HEADER_IDEA_H
 
-#ifdef NO_IDEA
+#ifdef OPENSSL_NO_IDEA
 #error IDEA is disabled.
 #endif
 

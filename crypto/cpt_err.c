@@ -63,7 +63,7 @@
 #include <openssl/crypto.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA CRYPTO_str_functs[]=
 	{
 {ERR_PACK(0,CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX,0),	"CRYPTO_get_ex_new_index"},
@@ -88,7 +88,7 @@ void ERR_load_CRYPTO_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_CRYPTO,CRYPTO_str_functs);
 		ERR_load_strings(ERR_LIB_CRYPTO,CRYPTO_str_reasons);
 #endif

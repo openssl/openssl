@@ -33,7 +33,7 @@
 #include <openssl/ssl.h>
 #endif /* !defined(NO_OPENSSL) */
 
-#ifndef NO_BUFFER
+#ifndef OPENSSL_NO_BUFFER
 /* This is the generic "buffer" type that is used when feeding the
  * state-machine. It's basically a FIFO with respect to the "adddata" &
  * "takedata" type functions that operate on it. */
@@ -106,10 +106,10 @@ void cb_ssl_verify_set_output(FILE *fp);
 void cb_ssl_verify_set_depth(unsigned int verify_depth);
 void cb_ssl_verify_set_level(unsigned int level);
 #endif /* !defined(NO_OPENSSL) */
-#endif /* !defined(NO_BUFFER) */
+#endif /* !defined(OPENSSL_NO_BUFFER) */
 
 #ifndef NO_TUNALA
-#ifdef NO_BUFFER
+#ifdef OPENSSL_NO_BUFFER
 #error "TUNALA section of tunala.h requires BUFFER support"
 #endif
 typedef struct _state_machine_t {

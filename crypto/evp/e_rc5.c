@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_RC5
+#ifndef OPENSSL_NO_RC5
 
 #include <stdio.h>
 #include "cryptlib.h"

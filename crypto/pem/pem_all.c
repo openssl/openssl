@@ -65,10 +65,10 @@
 #include <openssl/pkcs7.h>
 #include <openssl/pem.h>
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 static RSA *pkey_get_rsa(EVP_PKEY *key, RSA **rsa);
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 static DSA *pkey_get_dsa(EVP_PKEY *key, DSA **dsa);
 #endif
 
@@ -91,7 +91,7 @@ IMPLEMENT_PEM_rw(PKCS8, X509_SIG, PEM_STRING_PKCS8, X509_SIG)
 IMPLEMENT_PEM_rw(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO, PEM_STRING_PKCS8INF,
 							 PKCS8_PRIV_KEY_INFO)
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 
 /* We treat RSA or DSA private keys as a special case.
  *
@@ -123,7 +123,7 @@ RSA *PEM_read_bio_RSAPrivateKey(BIO *bp, RSA **rsa, pem_password_cb *cb,
 	return pkey_get_rsa(pktmp, rsa);
 }
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 
 RSA *PEM_read_RSAPrivateKey(FILE *fp, RSA **rsa, pem_password_cb *cb,
 								void *u)
@@ -141,7 +141,7 @@ IMPLEMENT_PEM_rw(RSA_PUBKEY, RSA, PEM_STRING_PUBLIC, RSA_PUBKEY)
 
 #endif
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 
 static DSA *pkey_get_dsa(EVP_PKEY *key, DSA **dsa)
 {
@@ -168,7 +168,7 @@ DSA *PEM_read_bio_DSAPrivateKey(BIO *bp, DSA **dsa, pem_password_cb *cb,
 IMPLEMENT_PEM_write_cb(DSAPrivateKey, DSA, PEM_STRING_DSA, DSAPrivateKey)
 IMPLEMENT_PEM_rw(DSA_PUBKEY, DSA, PEM_STRING_PUBLIC, DSA_PUBKEY)
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 
 DSA *PEM_read_DSAPrivateKey(FILE *fp, DSA **dsa, pem_password_cb *cb,
 								void *u)
@@ -184,7 +184,7 @@ IMPLEMENT_PEM_rw(DSAparams, DSA, PEM_STRING_DSAPARAMS, DSAparams)
 
 #endif
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 
 IMPLEMENT_PEM_rw(DHparams, DH, PEM_STRING_DHPARAMS, DHparams)
 

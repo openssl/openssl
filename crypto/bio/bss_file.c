@@ -71,7 +71,7 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 
-#if !defined(NO_STDIO)
+#if !defined(OPENSSL_NO_STDIO)
 
 static int MS_CALLBACK file_write(BIO *h, const char *buf, int num);
 static int MS_CALLBACK file_read(BIO *h, char *buf, int size);
@@ -303,7 +303,7 @@ static int MS_CALLBACK file_puts(BIO *bp, const char *str)
 	return(ret);
 	}
 
-#endif /* NO_STDIO */
+#endif /* OPENSSL_NO_STDIO */
 
 #endif /* HEADER_BSS_FILE_C */
 

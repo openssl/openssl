@@ -63,6 +63,7 @@ RANLIB= ranlib
 PERL= perl
 TAR= tar
 TARFLAGS= --no-recursion
+MAKEDEPPROG=makedepend
 
 # Set BN_ASM to bn_asm.o if you want to use the C version
 BN_ASM= bn_asm.o
@@ -195,7 +196,8 @@ BASENAME=       openssl
 NAME=           $(BASENAME)-$(VERSION)
 TARFILE=        $(NAME).tar
 WTARFILE=       $(NAME)-win.tar
-EXHEADER=       e_os.h e_os2.h
+EXHEADER=       e_os2.h
+LNHEADER=       e_os.h
 HEADER=         e_os.h
 
 # When we're prepared to use shared libraries in the programs we link here
@@ -373,7 +375,7 @@ files:
 links:
 	@$(TOP)/util/point.sh Makefile.ssl Makefile
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
-	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
+	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER) $(LNHEADER)
 	@for i in $(DIRS); do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making links in $$i..." && \
@@ -411,7 +413,7 @@ depend:
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making dependencies $$i..." && \
-		$(MAKE) SDIRS='${SDIRS}' DEPFLAG='${DEPFLAG}' depend ) || exit 1; \
+		$(MAKE) SDIRS='${SDIRS}' DEPFLAG='${DEPFLAG}' MAKEDEPPROG='${MAKEDEPPROG}' depend ) || exit 1; \
 	fi; \
 	done;
 

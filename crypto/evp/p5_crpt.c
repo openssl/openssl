@@ -67,35 +67,35 @@
 
 void PKCS5_PBE_add(void)
 {
-#ifndef NO_DES
-#  ifndef NO_MD5
+#ifndef OPENSSL_NO_DES
+#  ifndef OPENSSL_NO_MD5
 EVP_PBE_alg_add(NID_pbeWithMD5AndDES_CBC, EVP_des_cbc(), EVP_md5(),
 							 PKCS5_PBE_keyivgen);
 #  endif
-#  ifndef NO_MD2
+#  ifndef OPENSSL_NO_MD2
 EVP_PBE_alg_add(NID_pbeWithMD2AndDES_CBC, EVP_des_cbc(), EVP_md2(),
 							 PKCS5_PBE_keyivgen);
 #  endif
-#  ifndef NO_SHA
+#  ifndef OPENSSL_NO_SHA
 EVP_PBE_alg_add(NID_pbeWithSHA1AndDES_CBC, EVP_des_cbc(), EVP_sha1(),
 							 PKCS5_PBE_keyivgen);
 #  endif
 #endif
-#ifndef NO_RC2
-#  ifndef NO_MD5
+#ifndef OPENSSL_NO_RC2
+#  ifndef OPENSSL_NO_MD5
 EVP_PBE_alg_add(NID_pbeWithMD5AndRC2_CBC, EVP_rc2_64_cbc(), EVP_md5(),
 							 PKCS5_PBE_keyivgen);
 #  endif
-#  ifndef NO_MD2
+#  ifndef OPENSSL_NO_MD2
 EVP_PBE_alg_add(NID_pbeWithMD2AndRC2_CBC, EVP_rc2_64_cbc(), EVP_md2(),
 							 PKCS5_PBE_keyivgen);
 #  endif
-#  ifndef NO_SHA
+#  ifndef OPENSSL_NO_SHA
 EVP_PBE_alg_add(NID_pbeWithSHA1AndRC2_CBC, EVP_rc2_64_cbc(), EVP_sha1(),
 							 PKCS5_PBE_keyivgen);
 #  endif
 #endif
-#ifndef NO_HMAC
+#ifndef OPENSSL_NO_HMAC
 EVP_PBE_alg_add(NID_pbes2, NULL, NULL, PKCS5_v2_PBE_keyivgen);
 #endif
 }

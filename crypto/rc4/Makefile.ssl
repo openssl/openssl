@@ -12,7 +12,8 @@ INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	$(TOP)/util/domd $(TOP)
+MAKEDEPPROG=	makedepend
+MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -109,7 +110,7 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 rc4_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc4.h
-rc4_enc.o: rc4_locl.h
+rc4_enc.o: rc4_enc.c rc4_locl.h
 rc4_skey.o: ../../include/openssl/opensslconf.h
 rc4_skey.o: ../../include/openssl/opensslv.h ../../include/openssl/rc4.h
-rc4_skey.o: rc4_locl.h
+rc4_skey.o: rc4_locl.h rc4_skey.c

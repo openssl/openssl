@@ -109,7 +109,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 			}
 		}
 	else
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (pkey->type == EVP_PKEY_DSA)
 		{
 		unsigned char *pp;
@@ -170,7 +170,7 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 	int type;
 	unsigned char *p;
 	const unsigned char *cp;
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	X509_ALGOR *a;
 #endif
 
@@ -194,7 +194,7 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 		}
 	ret->save_parameters=0;
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	a=key->algor;
 	if (ret->type == EVP_PKEY_DSA)
 		{
@@ -253,7 +253,7 @@ int i2d_PUBKEY(EVP_PKEY *a, unsigned char **pp)
 /* The following are equivalents but which return RSA and DSA
  * keys
  */
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 RSA *d2i_RSA_PUBKEY(RSA **a, unsigned char **pp,
 	     long length)
 {
@@ -291,7 +291,7 @@ int i2d_RSA_PUBKEY(RSA *a, unsigned char **pp)
 }
 #endif
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 DSA *d2i_DSA_PUBKEY(DSA **a, unsigned char **pp,
 	     long length)
 {

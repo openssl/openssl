@@ -111,19 +111,19 @@ int MAIN(int argc, char **argv)
 		{
 		printf("options:  ");
 		printf("%s ",BN_options());
-#ifndef NO_MD2
+#ifndef OPENSSL_NO_MD2
 		printf("%s ",MD2_options());
 #endif
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 		printf("%s ",RC4_options());
 #endif
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 		printf("%s ",des_options());
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		printf("%s ",idea_options());
 #endif
-#ifndef NO_BF
+#ifndef OPENSSL_NO_BF
 		printf("%s ",BF_options());
 #endif
 		printf("\n");

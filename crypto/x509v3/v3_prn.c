@@ -220,7 +220,7 @@ static int unknown_ext_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, 
 }
 	
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int X509V3_EXT_print_fp(FILE *fp, X509_EXTENSION *ext, int flag, int indent)
 {
 	BIO *bio_tmp;

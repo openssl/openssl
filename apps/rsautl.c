@@ -56,7 +56,7 @@
  *
  */
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 
 #include "apps.h"
 #include <string.h>

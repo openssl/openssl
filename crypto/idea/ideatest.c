@@ -60,7 +60,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef NO_IDEA
+#ifdef OPENSSL_NO_IDEA
 int main(int argc, char *argv[])
 {
     printf("No IDEA support\n");

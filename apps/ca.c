@@ -1453,7 +1453,7 @@ bad:
 			}
 		else
 			{
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 			if (pkey->type == EVP_PKEY_DSA) 
 				dgst=EVP_dss1();
 			else
@@ -2179,7 +2179,7 @@ again2:
 		}
 
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	if (pkey->type == EVP_PKEY_DSA) dgst=EVP_dss1();
 	pktmp=X509_get_pubkey(ret);
 	if (EVP_PKEY_missing_parameters(pktmp) &&

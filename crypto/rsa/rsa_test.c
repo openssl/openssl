@@ -8,7 +8,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#ifdef NO_RSA
+#ifdef OPENSSL_NO_RSA
 int main(int argc, char *argv[])
 {
     printf("No RSA support\n");

@@ -61,6 +61,7 @@
 
 #include <openssl/bio.h>
 #include <openssl/x509.h>
+#include <openssl/e_os2.h>
 
 #include <openssl/symhacks.h>
 
@@ -68,7 +69,7 @@
 extern "C" {
 #endif
 
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 /* Under Win32 thes are defined in wincrypt.h */
 #undef PKCS7_ISSUER_AND_SERIAL
 #undef PKCS7_SIGNER_INFO
@@ -276,7 +277,7 @@ DECLARE_ASN1_FUNCTIONS(PKCS7_ISSUER_AND_SERIAL)
 #ifndef SSLEAY_MACROS
 int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,const EVP_MD *type,
 	unsigned char *md,unsigned int *len);
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 PKCS7 *d2i_PKCS7_fp(FILE *fp,PKCS7 **p7);
 int i2d_PKCS7_fp(FILE *fp,PKCS7 *p7);
 #endif

@@ -62,7 +62,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef NO_STDIO
+#ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif
 
@@ -95,7 +95,7 @@ typedef unsigned int u_int;
 #undef FIONBIO
 #endif
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 #endif
 static int sv_body(char *hostname, int s, unsigned char *context);
@@ -104,7 +104,7 @@ static void close_accept_socket(void );
 static void sv_usage(void);
 static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp,SSL_CTX *ctx);
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 static DH *load_dh_param(char *dhfile);
 static DH *get_dh512(void);
 #endif
@@ -120,7 +120,7 @@ static void s_server_init(void);
 # endif
 #endif
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 static unsigned char dh512_p[]={
 	0xDA,0x58,0x3C,0x16,0xD9,0x85,0x22,0x89,0xD0,0xE4,0xAF,0x75,
 	0x6F,0x4C,0xCA,0x92,0xDD,0x4B,0xE5,0x33,0xB8,0x04,0xFB,0x0F,
@@ -240,7 +240,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -no_ssl2      - Just disable SSLv2\n");
 	BIO_printf(bio_err," -no_ssl3      - Just disable SSLv3\n");
 	BIO_printf(bio_err," -no_tls1      - Just disable TLSv1\n");
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	BIO_printf(bio_err," -no_dhe       - Disable ephemeral DH\n");
 #endif
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatibility\n");
@@ -420,11 +420,11 @@ int MAIN(int argc, char *argv[])
 	ENGINE *e=NULL;
 	char *inrand=NULL;
 
-#if !defined(NO_SSL2) && !defined(NO_SSL3)
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_server_method();
-#elif !defined(NO_SSL3)
+#elif !defined(OPENSSL_NO_SSL3)
 	meth=SSLv3_server_method();
-#elif !defined(NO_SSL2)
+#elif !defined(OPENSSL_NO_SSL2)
 	meth=SSLv2_server_method();
 #endif
 
@@ -560,15 +560,15 @@ int MAIN(int argc, char *argv[])
 			{ off|=SSL_OP_NO_SSLv3; }
 		else if	(strcmp(*argv,"-no_tls1") == 0)
 			{ off|=SSL_OP_NO_TLSv1; }
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			{ meth=SSLv2_server_method(); }
 #endif
-#ifndef NO_SSL3
+#ifndef OPENSSL_NO_SSL3
 		else if	(strcmp(*argv,"-ssl3") == 0)
 			{ meth=SSLv3_server_method(); }
 #endif
-#ifndef NO_TLS1
+#ifndef OPENSSL_NO_TLS1
 		else if	(strcmp(*argv,"-tls1") == 0)
 			{ meth=TLSv1_server_method(); }
 #endif
@@ -620,7 +620,7 @@ bad:
 			}
 		}
 
-#if !defined(NO_RSA) || !defined(NO_DSA)
+#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA)
 	if (nocert)
 #endif
 		{
@@ -693,7 +693,7 @@ bad:
 		/* goto end; */
 		}
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	if (!no_dhe)
 		{
 		DH *dh=NULL;
@@ -727,7 +727,7 @@ bad:
 			goto end;
 		}
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #if 1
 	SSL_CTX_set_tmp_rsa_callback(ctx,tmp_rsa_cb);
 #else
@@ -838,13 +838,13 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 
 	if (con == NULL) {
 		con=SSL_new(ctx);
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
 		if ((con->kssl_ctx = kssl_ctx_new()) != NULL)
                         {
                         kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVICE, KRB5SVC);
                         kssl_ctx_setstring(con->kssl_ctx, KSSL_KEYTAB, KRB5KEYTAB);
                         }
-#endif	/* NO_KRB5 */
+#endif	/* OPENSSL_NO_KRB5 */
 		if(context)
 		      SSL_set_session_id_context(con, context,
 						 strlen((char *)context));
@@ -1158,7 +1158,7 @@ static int init_ssl_connection(SSL *con)
 	return(1);
 	}
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 static DH *load_dh_param(char *dhfile)
 	{
 	DH *ret=NULL;
@@ -1540,7 +1540,7 @@ err:
 	return(ret);
 	}
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	{
 	static RSA *rsa_tmp=NULL;

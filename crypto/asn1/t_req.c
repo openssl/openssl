@@ -64,7 +64,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
         {
         BIO *b;
@@ -117,7 +117,7 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 	if (BIO_puts(bp,str) <= 0) goto err;
 
 	pkey=X509_REQ_get_pubkey(x);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	if (pkey != NULL && pkey->type == EVP_PKEY_RSA)
 		{
 		BIO_printf(bp,"%12sRSA Public Key: (%d bit)\n","",
@@ -126,7 +126,7 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 		}
 	else 
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (pkey != NULL && pkey->type == EVP_PKEY_DSA)
 		{
 		BIO_printf(bp,"%12sDSA Public Key:\n","");

@@ -63,7 +63,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef NO_BF
+#ifdef OPENSSL_NO_BF
 int main(int argc, char *argv[])
 {
     printf("No BF support\n");

@@ -257,7 +257,7 @@ void *DSA_get_ex_data(DSA *d, int idx)
 	return(CRYPTO_get_ex_data(&d->ex_data,idx));
 	}
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 DH *DSA_dup_DH(const DSA *r)
 	{
 	/* DSA has p, q, g, optional pub_key, optional priv_key.

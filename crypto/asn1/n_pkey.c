@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/rsa.h>
@@ -67,7 +67,7 @@
 #include <openssl/x509.h>
 
 
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 
 typedef struct netscape_pkey_st
 	{
@@ -318,9 +318,9 @@ err:
 	return(ret);
 	}
 
-#endif /* NO_RC4 */
+#endif /* OPENSSL_NO_RC4 */
 
-#else /* !NO_RSA */
+#else /* !OPENSSL_NO_RSA */
 
 # if PEDANTIC
 static void *dummy=&dummy;

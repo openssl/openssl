@@ -64,7 +64,7 @@
 static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb);
 
 #ifndef NO_OLD_ASN1
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 
 char *ASN1_d2i_fp(char *(*xnew)(), char *(*d2i)(), FILE *in,
 	     unsigned char **x)
@@ -121,7 +121,7 @@ err:
 	return(ret);
 	}
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 void *ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x)
         {
         BIO *b;

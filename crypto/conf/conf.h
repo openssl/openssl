@@ -99,7 +99,7 @@ struct conf_method_st
 
 int CONF_set_default_method(CONF_METHOD *meth);
 LHASH *CONF_load(LHASH *conf,const char *file,long *eline);
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 LHASH *CONF_load_fp(LHASH *conf, FILE *fp,long *eline);
 #endif
 LHASH *CONF_load_bio(LHASH *conf, BIO *bp,long *eline);
@@ -131,7 +131,7 @@ void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
 int NCONF_load(CONF *conf,const char *file,long *eline);
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int NCONF_load_fp(CONF *conf, FILE *fp,long *eline);
 #endif
 int NCONF_load_bio(CONF *conf, BIO *bp,long *eline);

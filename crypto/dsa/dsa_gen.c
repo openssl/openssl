@@ -69,7 +69,7 @@
 #define HASH    SHA1
 #endif 
 
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 
 #include <stdio.h>
 #include <time.h>

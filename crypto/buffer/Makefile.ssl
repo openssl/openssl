@@ -11,7 +11,8 @@ INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	$(TOP)/util/domd $(TOP)
+MAKEDEPPROG=	makedepend
+MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -80,14 +81,15 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 buf_err.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-buf_err.o: ../../include/openssl/crypto.h ../../include/openssl/err.h
-buf_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslv.h
+buf_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+buf_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+buf_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 buf_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-buf_err.o: ../../include/openssl/symhacks.h
+buf_err.o: ../../include/openssl/symhacks.h buf_err.c
 buffer.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 buffer.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
 buffer.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 buffer.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 buffer.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 buffer.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-buffer.o: ../cryptlib.h
+buffer.o: ../cryptlib.h buffer.c

@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -121,13 +121,13 @@ int MAIN(int argc, char **argv)
 			}
 		else if (strcmp(*argv,"-") == 0)
 			goto bad;
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 		else if (strcmp(*argv,"-des") == 0)
 			enc=EVP_des_cbc();
 		else if (strcmp(*argv,"-des3") == 0)
 			enc=EVP_des_ede3_cbc();
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		else if (strcmp(*argv,"-idea") == 0)
 			enc=EVP_idea_cbc();
 #endif
@@ -146,11 +146,11 @@ int MAIN(int argc, char **argv)
 bad:
 		BIO_printf(bio_err,"usage: gendsa [args] dsaparam-file\n");
 		BIO_printf(bio_err," -out file - output the key to 'file'\n");
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 		BIO_printf(bio_err," -des      - encrypt the generated key with DES in cbc mode\n");
 		BIO_printf(bio_err," -des3     - encrypt the generated key with DES in ede cbc mode (168 bit key)\n");
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err," -idea     - encrypt the generated key with IDEA in cbc mode\n");
 #endif
 		BIO_printf(bio_err," -engine e - use engine e, possibly a hardware device.\n");

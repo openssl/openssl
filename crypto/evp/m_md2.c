@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_MD2
+#ifndef OPENSSL_NO_MD2
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>

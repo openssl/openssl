@@ -59,12 +59,13 @@
 #ifndef HEADER_BIO_H
 #define HEADER_BIO_H
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 # include <stdio.h>
 #endif
 #include <stdarg.h>
 
 #include <openssl/crypto.h>
+#include <openssl/e_os2.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -217,7 +218,7 @@ typedef struct bio_st BIO;
 
 typedef void bio_info_cb(struct bio_st *, int, const char *, int, long, long);
 
-#ifndef WIN16
+#ifndef OPENSSL_SYS_WIN16
 typedef struct bio_method_st
 	{
 	int type;
@@ -495,8 +496,8 @@ int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 unsigned long BIO_number_read(BIO *bio);
 unsigned long BIO_number_written(BIO *bio);
 
-# ifndef NO_FP_API
-#  if defined(WIN16) && defined(_WINDLL)
+# ifndef OPENSSL_NO_FP_API
+#  if defined(OPENSSL_SYS_WIN16) && defined(_WINDLL)
 BIO_METHOD *BIO_s_file_internal(void);
 BIO *BIO_new_file_internal(char *filename, char *mode);
 BIO *BIO_new_fp_internal(FILE *stream, int close_flag);
@@ -538,7 +539,7 @@ int BIO_nread(BIO *bio, char **buf, int num);
 int BIO_nwrite0(BIO *bio, char **buf);
 int BIO_nwrite(BIO *bio, char **buf, int num);
 
-#ifndef WIN16
+#ifndef OPENSSL_SYS_WIN16
 long BIO_debug_callback(BIO *bio,int cmd,const char *argp,int argi,
 	long argl,long ret);
 #else
@@ -557,7 +558,7 @@ BIO_METHOD *BIO_s_bio(void);
 BIO_METHOD *BIO_s_null(void);
 BIO_METHOD *BIO_f_null(void);
 BIO_METHOD *BIO_f_buffer(void);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 BIO_METHOD *BIO_f_linebuffer(void);
 #endif
 BIO_METHOD *BIO_f_nbio_test(void);

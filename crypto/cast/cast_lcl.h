@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 #include <stdlib.h>
 #endif
 
@@ -156,7 +156,7 @@
                          *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
                          *((c)++)=(unsigned char)(((l)     )&0xff))
 
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(OPENSSL_SYS_WIN32) && defined(_MSC_VER)
 #define ROTL(a,n)     (_lrotl(a,n))
 #else
 #define ROTL(a,n)     ((((a)<<(n))&0xffffffffL)|((a)>>(32-(n))))

@@ -63,7 +63,7 @@
 #include <openssl/asn1.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA ASN1_str_functs[]=
 	{
 {ERR_PACK(0,ASN1_F_A2D_ASN1_OBJECT,0),	"a2d_ASN1_OBJECT"},
@@ -300,7 +300,7 @@ void ERR_load_ASN1_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_ASN1,ASN1_str_functs);
 		ERR_load_strings(ERR_LIB_ASN1,ASN1_str_reasons);
 #endif

@@ -171,7 +171,7 @@ extern "C" {
 #define BN_MUL_LOW_RECURSIVE_SIZE_NORMAL	(32) /* 32 */
 #define BN_MONT_CTX_SET_SIZE_WORD		(64) /* 32 */
 
-#if !defined(NO_ASM) && !defined(NO_INLINE_ASM) && !defined(PEDANTIC)
+#if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) && !defined(PEDANTIC)
 /*
  * BN_UMULT_HIGH section.
  *
@@ -217,7 +217,7 @@ extern "C" {
 	ret;			})
 #  endif	/* compiler */
 # endif		/* cpu */
-#endif		/* NO_ASM */
+#endif		/* OPENSSL_NO_ASM */
 
 /*************************************************************
  * Using the long long type

@@ -72,47 +72,47 @@ static int engine_add(ENGINE *e)
 
 void ENGINE_load_cswift(void)
 	{
-#ifndef NO_HW
-#ifndef NO_HW_CSWIFT
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_CSWIFT
 	engine_add(ENGINE_cswift());
-#endif /* !NO_HW_CSWIFT */
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW_CSWIFT */
+#endif /* !OPENSSL_NO_HW */
 	}
 
 void ENGINE_load_chil(void)
 	{
-#ifndef NO_HW
-#ifndef NO_HW_CSWIFT
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_CSWIFT
 	engine_add(ENGINE_ncipher());
-#endif /* !NO_HW_CSWIFT */
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW_CSWIFT */
+#endif /* !OPENSSL_NO_HW */
 	}
 
 void ENGINE_load_atalla(void)
 	{
-#ifndef NO_HW
-#ifndef NO_HW_CSWIFT
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_CSWIFT
 	engine_add(ENGINE_atalla());
-#endif /* !NO_HW_CSWIFT */
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW_CSWIFT */
+#endif /* !OPENSSL_NO_HW */
 	}
 
 void ENGINE_load_nuron(void)
 	{
-#ifndef NO_HW
-#ifndef NO_HW_CSWIFT
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_CSWIFT
 	engine_add(ENGINE_nuron());
-#endif /* !NO_HW_CSWIFT */
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW_CSWIFT */
+#endif /* !OPENSSL_NO_HW */
 	}
 
 void ENGINE_load_ubsec(void)
 	{
-#ifndef NO_HW
-#ifndef NO_HW_UBSEC
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_UBSEC
 	engine_add(ENGINE_ubsec());
-#endif /* !NO_HW_UBSEC */
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW_UBSEC */
+#endif /* !OPENSSL_NO_HW */
 	}
 
 void ENGINE_load_builtin_engines(void)

@@ -60,17 +60,17 @@
 #include "cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/bn.h>
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int X509_print_fp(FILE *fp, X509 *x)
 	{
 	return X509_print_ex_fp(fp, x, XN_FLAG_COMPAT, X509_FLAG_COMPAT);
@@ -205,7 +205,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 			ERR_print_errors(bp);
 			}
 		else
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 		if (pkey->type == EVP_PKEY_RSA)
 			{
 			BIO_printf(bp,"%12sRSA Public Key: (%d bit)\n","",
@@ -214,7 +214,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 			}
 		else
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (pkey->type == EVP_PKEY_DSA)
 			{
 			BIO_printf(bp,"%12sDSA Public Key:\n","");

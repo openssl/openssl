@@ -63,12 +63,12 @@
  * and things should work as expected */
 #include "cryptlib.h"
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
 #include <openssl/lhash.h>
 
-#ifdef NO_BIO
+#ifdef OPENSSL_NO_BIO
 
 void lh_stats(LHASH *lh, FILE *out)
 	{
@@ -138,7 +138,7 @@ void lh_node_usage_stats(LHASH *lh, FILE *out)
 
 #else
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 void lh_stats(const LHASH *lh, FILE *fp)
 	{
 	BIO *bp;

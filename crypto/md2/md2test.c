@@ -60,7 +60,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef NO_MD2
+#ifdef OPENSSL_NO_MD2
 int main(int argc, char *argv[])
 {
     printf("No MD2 support\n");

@@ -60,7 +60,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef NO_MD5
+#ifdef OPENSSL_NO_MD5
 int main(int argc, char *argv[])
 {
     printf("No MD5 support\n");

@@ -63,7 +63,7 @@
 
 #ifndef NO_OLD_ASN1
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int ASN1_i2d_fp(int (*i2d)(), FILE *out, unsigned char *x)
         {
         BIO *b;
@@ -116,7 +116,7 @@ int ASN1_i2d_bio(int (*i2d)(), BIO *out, unsigned char *x)
 
 #endif
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x)
         {
         BIO *b;

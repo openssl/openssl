@@ -64,7 +64,7 @@
 #include <openssl/objects.h>
 
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
-#ifndef NO_OBJECT
+#ifndef OPENSSL_NO_OBJECT
 #include "obj_dat.h"
 #else
 /* You will have to load all the objects needed manually in the application */

@@ -265,7 +265,7 @@ static void x509v3_cache_extensions(X509 *x)
 	
 	int i;
 	if(x->ex_flags & EXFLAG_SET) return;
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 	X509_digest(x, EVP_sha1(), x->sha1_hash, NULL);
 #endif
 	/* Does subject name match issuer ? */

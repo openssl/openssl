@@ -65,8 +65,8 @@
 #include "engine_int.h"
 #include <openssl/engine.h>
 
-#ifndef NO_HW
-#ifndef NO_HW_NCIPHER
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_NCIPHER
 
 /* Attribution notice: nCipher have said several times that it's OK for
  * us to implement a general interface to their boxes, and recently declared
@@ -1016,5 +1016,5 @@ static void hwcrhk_log_message(void *logstr, const char *message)
 	CRYPTO_w_unlock(CRYPTO_LOCK_BIO);
 	}
 
-#endif /* !NO_HW_NCIPHER */
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW_NCIPHER */
+#endif /* !OPENSSL_NO_HW */

@@ -277,8 +277,8 @@ err:
 	return(0);
 	}
 
-#ifndef NO_BIO
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_BIO
+#ifndef OPENSSL_NO_FP_API
 int BN_print_fp(FILE *fp, const BIGNUM *a)
 	{
 	BIO *b;

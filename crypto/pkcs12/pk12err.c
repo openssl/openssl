@@ -63,7 +63,7 @@
 #include <openssl/pkcs12.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA PKCS12_str_functs[]=
 	{
 {ERR_PACK(0,PKCS12_F_PARSE_BAGS,0),	"PARSE_BAGS"},
@@ -130,7 +130,7 @@ void ERR_load_PKCS12_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_PKCS12,PKCS12_str_functs);
 		ERR_load_strings(ERR_LIB_PKCS12,PKCS12_str_reasons);
 #endif

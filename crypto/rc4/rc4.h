@@ -59,7 +59,7 @@
 #ifndef HEADER_RC4_H
 #define HEADER_RC4_H
 
-#ifdef NO_RC4
+#ifdef OPENSSL_NO_RC4
 #error RC4 is disabled.
 #endif
 

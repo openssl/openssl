@@ -127,7 +127,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 
 #else
 
-#if !defined(NO_ASM) && !defined(NO_INLINE_ASM) && !defined(PEDANTIC) && !defined(BN_DIV3W)
+#if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) \
+    && !defined(PEDANTIC) && !defined(BN_DIV3W)
 # if defined(__GNUC__) && __GNUC__>=2
 #  if defined(__i386)
    /*
@@ -151,7 +152,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 #  define REMAINDER_IS_ALREADY_CALCULATED
 #  endif /* __<cpu> */
 # endif /* __GNUC__ */
-#endif /* NO_ASM */
+#endif /* OPENSSL_NO_ASM */
 
 
 /* BN_div computes  dv := num / divisor,  rounding towards zero, and sets up
@@ -248,7 +249,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	for (i=0; i<loop-1; i++)
 		{
 		BN_ULONG q,l0;
-#if defined(BN_DIV3W) && !defined(NO_ASM)
+#if defined(BN_DIV3W) && !defined(OPENSSL_NO_ASM)
 		q=bn_div_3_words(wnump,d1,d0);
 #else
 		BN_ULONG n0,n1,rem=0;

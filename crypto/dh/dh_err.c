@@ -63,7 +63,7 @@
 #include <openssl/dh.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA DH_str_functs[]=
 	{
 {ERR_PACK(0,DH_F_DHPARAMS_PRINT,0),	"DHparams_print"},
@@ -90,7 +90,7 @@ void ERR_load_DH_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_DH,DH_str_functs);
 		ERR_load_strings(ERR_LIB_DH,DH_str_reasons);
 #endif

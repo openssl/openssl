@@ -59,7 +59,7 @@
 #ifndef HEADER_DES_LOCL_H
 #define HEADER_DES_LOCL_H
 
-#if defined(WIN32) || defined(WIN16)
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16)
 #ifndef MSDOS
 #define MSDOS
 #endif
@@ -160,7 +160,7 @@
 				} \
 			}
 
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(OPENSSL_SYS_WIN32) && defined(_MSC_VER)
 #define	ROTATE(a,n)	(_lrotr(a,n))
 #else
 #define	ROTATE(a,n)	(((a)>>(n))+((a)<<(32-(n))))

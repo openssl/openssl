@@ -63,7 +63,7 @@
 extern "C" {
 #endif
 
-#ifdef NO_MD5
+#ifdef OPENSSL_NO_MD5
 #error MD5 is disabled.
 #endif
 
@@ -74,9 +74,9 @@ extern "C" {
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
-#if defined(WIN16) || defined(__LP32__)
+#if defined(OPENSSL_SYS_WIN16) || defined(__LP32__)
 #define MD5_LONG unsigned long
-#elif defined(_CRAY) || defined(__ILP64__)
+#elif defined(OENSSL_SYS_CRAY) || defined(__ILP64__)
 #define MD5_LONG unsigned long
 #define MD5_LONG_LOG2 3
 /*

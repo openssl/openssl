@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/rand.h>
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
 #include <openssl/evp.h>

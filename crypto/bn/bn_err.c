@@ -63,7 +63,7 @@
 #include <openssl/bn.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA BN_str_functs[]=
 	{
 {ERR_PACK(0,BN_F_BN_BLINDING_CONVERT,0),	"BN_BLINDING_convert"},
@@ -122,7 +122,7 @@ void ERR_load_BN_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_BN,BN_str_functs);
 		ERR_load_strings(ERR_LIB_BN,BN_str_reasons);
 #endif

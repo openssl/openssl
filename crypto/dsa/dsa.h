@@ -65,16 +65,16 @@
 #ifndef HEADER_DSA_H
 #define HEADER_DSA_H
 
-#ifdef NO_DSA
+#ifdef OPENSSL_NO_DSA
 #error DSA is disabled.
 #endif
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
 #endif
 
@@ -204,11 +204,11 @@ int	i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
 int 	i2d_DSAPrivateKey(const DSA *a, unsigned char **pp);
 int	i2d_DSAparams(const DSA *a,unsigned char **pp);
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 int	DSAparams_print(BIO *bp, const DSA *x);
 int	DSA_print(BIO *bp, const DSA *x, int off);
 #endif
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int	DSAparams_print_fp(FILE *fp, const DSA *x);
 int	DSA_print_fp(FILE *bp, const DSA *x, int off);
 #endif
@@ -219,7 +219,7 @@ int	DSA_print_fp(FILE *bp, const DSA *x, int off);
 #define DSA_is_prime(n, callback, cb_arg) \
 	BN_is_prime(n, DSS_prime_checks, callback, NULL, cb_arg)
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 /* Convert DSA structure (key or just parameters) into DH structure
  * (be careful to avoid small subgroup attacks when using this!) */
 DH *DSA_dup_DH(const DSA *r);

@@ -60,7 +60,7 @@
 #define HEADER_ASN1_H
 
 #include <time.h>
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
 #include <openssl/e_os2.h>
@@ -699,7 +699,7 @@ int		ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d,
 int		ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
 int		ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n);
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
 				BIT_STRING_BITNAME *tbl, int indent);
 #endif
@@ -767,7 +767,7 @@ STACK *		d2i_ASN1_SET(STACK **a, unsigned char **pp, long length,
 			char *(*func)(), void (*free_func)(void *),
 			int ex_tag, int ex_class);
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp,ASN1_INTEGER *bs,char *buf,int size);
 int i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a);
@@ -820,7 +820,7 @@ char *ASN1_dup(int (*i2d)(),char *(*d2i)(),char *x);
 
 void *ASN1_item_dup(const ASN1_ITEM *it, void *x);
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 char *ASN1_d2i_fp(char *(*xnew)(),char *(*d2i)(),FILE *fp,unsigned char **x);
 void *ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x);
 int ASN1_i2d_fp(int (*i2d)(),FILE *out,unsigned char *x);
@@ -830,7 +830,7 @@ int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
 
 int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 char *ASN1_d2i_bio(char *(*xnew)(),char *(*d2i)(),BIO *bp,unsigned char **x);
 void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x);
 int ASN1_i2d_bio(int (*i2d)(),BIO *out,unsigned char *x);

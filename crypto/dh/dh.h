@@ -59,11 +59,11 @@
 #ifndef HEADER_DH_H
 #define HEADER_DH_H
 
-#ifdef NO_DH
+#ifdef OPENSSL_NO_DH
 #error DH is disabled.
 #endif
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
 #include <openssl/bn.h>
@@ -178,10 +178,10 @@ int	DH_generate_key(DH *dh);
 int	DH_compute_key(unsigned char *key,const BIGNUM *pub_key,DH *dh);
 DH *	d2i_DHparams(DH **a,const unsigned char **pp, long length);
 int	i2d_DHparams(const DH *a,unsigned char **pp);
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int	DHparams_print_fp(FILE *fp, const DH *x);
 #endif
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 int	DHparams_print(BIO *bp, const DH *x);
 #else
 int	DHparams_print(char *bp, const DH *x);

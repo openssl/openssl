@@ -63,7 +63,7 @@
 #include <openssl/pkcs7.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA PKCS7_str_functs[]=
 	{
 {ERR_PACK(0,PKCS7_F_B64_READ_PKCS7,0),	"B64_READ_PKCS7"},
@@ -152,7 +152,7 @@ void ERR_load_PKCS7_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_PKCS7,PKCS7_str_functs);
 		ERR_load_strings(ERR_LIB_PKCS7,PKCS7_str_reasons);
 #endif

@@ -60,7 +60,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#ifdef NO_STDIO
+#ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif
 #include "apps.h"
@@ -122,7 +122,7 @@ static int add_attribute_object(X509_REQ *req, char *text,
 				int max);
 static int add_DN_object(X509_NAME *n, char *text, char *def, char *value,
 	int nid,int min,int max);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 static void MS_CALLBACK req_cb(int p,int n,void *arg);
 #endif
 static int req_check_len(int len,int min,int max);
@@ -142,7 +142,7 @@ int MAIN(int, char **);
 int MAIN(int argc, char **argv)
 	{
 	ENGINE *e = NULL;
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	DSA *dsa_params=NULL;
 #endif
 	unsigned long nmflag = 0;
@@ -171,7 +171,7 @@ int MAIN(int argc, char **argv)
 #endif
 
 	req_conf = NULL;
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 	cipher=EVP_des_ede3_cbc();
 #endif
 	apps_startup();
@@ -269,7 +269,7 @@ int MAIN(int argc, char **argv)
 				newkey= atoi(p);
 				}
 			else
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 				if (strncmp("dsa:",p,4) == 0)
 				{
 				X509 *xtmp=NULL;
@@ -309,7 +309,7 @@ int MAIN(int argc, char **argv)
 				}
 			else 
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 				if (strncmp("dh:",p,4) == 0)
 				{
 				pkey_type=TYPE_DH;
@@ -663,7 +663,7 @@ bad:
 
 		if ((pkey=EVP_PKEY_new()) == NULL) goto end;
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 		if (pkey_type == TYPE_RSA)
 			{
 			if (!EVP_PKEY_assign_RSA(pkey,
@@ -673,7 +673,7 @@ bad:
 			}
 		else
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 			if (pkey_type == TYPE_DSA)
 			{
 			if (!DSA_generate_key(dsa_params)) goto end;
@@ -783,7 +783,7 @@ loop:
 			BIO_printf(bio_err,"you need to specify a private key\n");
 			goto end;
 			}
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (pkey->type == EVP_PKEY_DSA)
 			digest=EVP_dss1();
 #endif
@@ -960,7 +960,7 @@ loop:
 			goto end; 
 			}
 		fprintf(stdout,"Modulus=");
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 		if (pubkey->type == EVP_PKEY_RSA)
 			BN_print(out,pubkey->pkey.rsa->n);
 		else
@@ -1018,7 +1018,7 @@ end:
 	if(passargin && passin) OPENSSL_free(passin);
 	if(passargout && passout) OPENSSL_free(passout);
 	OBJ_cleanup();
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	if (dsa_params != NULL) DSA_free(dsa_params);
 #endif
 	EXIT(ex);
@@ -1375,7 +1375,7 @@ err:
 	return(0);
 	}
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 static void MS_CALLBACK req_cb(int p, int n, void *arg)
 	{
 	char c='*';

@@ -58,7 +58,7 @@
 #ifndef HEADER_HMAC_H
 #define HEADER_HMAC_H
 
-#ifdef NO_HMAC
+#ifdef OPENSSL_NO_HMAC
 #error HMAC is disabled.
 #endif
 

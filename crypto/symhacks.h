@@ -55,10 +55,12 @@
 #ifndef HEADER_SYMHACKS_H
 #define HEADER_SYMHACKS_H
 
+#include <openssl/e_os2.h>
+
 /* Hacks to solve the problem with linkers incapable of handling very long
    symbol names.  In the case of VMS, the limit is 31 characters on VMS for
    VAX. */
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 
 /* Hack a long name in crypto/asn1/a_mbstr.c */
 #undef ASN1_STRING_set_default_mask_asc
@@ -121,33 +123,64 @@
 #define X509_REVOKED_get_ext_by_critical	X509_REVOKED_get_ext_by_critic
 
 /* Hack some long CRYPTO names */
+#undef CRYPTO_set_dynlock_destroy_callback
 #define CRYPTO_set_dynlock_destroy_callback     CRYPTO_set_dynlock_destroy_cb
+#undef CRYPTO_set_dynlock_create_callback
 #define CRYPTO_set_dynlock_create_callback      CRYPTO_set_dynlock_create_cb
+#undef CRYPTO_set_dynlock_lock_callback
 #define CRYPTO_set_dynlock_lock_callback        CRYPTO_set_dynlock_lock_cb
+#undef CRYPTO_get_dynlock_lock_callback
 #define CRYPTO_get_dynlock_lock_callback        CRYPTO_get_dynlock_lock_cb
+#undef CRYPTO_get_dynlock_destroy_callback
 #define CRYPTO_get_dynlock_destroy_callback     CRYPTO_get_dynlock_destroy_cb
+#undef CRYPTO_get_dynlock_create_callback
 #define CRYPTO_get_dynlock_create_callback      CRYPTO_get_dynlock_create_cb
 
 /* Hack some long SSL names */
+#undef SSL_CTX_set_default_verify_paths
 #define SSL_CTX_set_default_verify_paths        SSL_CTX_set_def_verify_paths
+#undef SSL_get_ex_data_X509_STORE_CTX_idx
 #define SSL_get_ex_data_X509_STORE_CTX_idx      SSL_get_ex_d_X509_STORE_CTX_idx
+#undef SSL_add_file_cert_subjects_to_stack
 #define SSL_add_file_cert_subjects_to_stack     SSL_add_file_cert_subjs_to_stk
+#undef SSL_add_dir_cert_subjects_to_stack
 #define SSL_add_dir_cert_subjects_to_stack      SSL_add_dir_cert_subjs_to_stk
+#undef SSL_CTX_use_certificate_chain_file
 #define SSL_CTX_use_certificate_chain_file      SSL_CTX_use_cert_chain_file
+#undef SSL_CTX_set_cert_verify_callback
 #define SSL_CTX_set_cert_verify_callback        SSL_CTX_set_cert_verify_cb
+#undef SSL_CTX_set_default_passwd_cb_userdata
 #define SSL_CTX_set_default_passwd_cb_userdata  SSL_CTX_set_def_passwd_cb_ud
 
 /* Hack some long ENGINE names */
+#undef ENGINE_get_default_BN_mod_exp_crt
 #define ENGINE_get_default_BN_mod_exp_crt	ENGINE_get_def_BN_mod_exp_crt
+#undef ENGINE_set_default_BN_mod_exp_crt
 #define ENGINE_set_default_BN_mod_exp_crt	ENGINE_set_def_BN_mod_exp_crt
 
 #endif /* defined VMS */
 
 
 /* Case insensiteve linking causes problems.... */
-#if defined(WIN16) || defined(VMS)
+#if defined(OPENSSL_SYS_WIN16) || defined(OPENSSL_SYS_VMS)
 #undef ERR_load_CRYPTO_strings
 #define ERR_load_CRYPTO_strings			ERR_load_CRYPTOlib_strings
+
+/* These functions do not seem to exist!  However, I'm paranoid...
+   Original command in x509v3.h:
+   These functions are being redefined in another directory,
+   and clash when the linker is case-insensitive, so let's
+   hide them a little, by giving them an extra 'o' at the
+   beginning of the name... */
+#undef X509v3_cleanup_extensions
+#define X509v3_cleanup_extensions               oX509v3_cleanup_extensions
+#undef X509v3_add_extension
+#define X509v3_add_extension                    oX509v3_add_extension
+#undef X509v3_add_netscape_extensions
+#define X509v3_add_netscape_extensions          oX509v3_add_netscape_extensions
+#undef X509v3_add_standard_extensions
+#define X509v3_add_standard_extensions          oX509v3_add_standard_extensions
+
 #endif
 
 

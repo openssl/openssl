@@ -315,8 +315,8 @@ sub do_defs
 		open(IN,"<$file") || die "unable to open $file:$!\n";
 		my $line = "", my $def= "";
 		my %tag = (
-			(map { $_ => 0 } @known_platforms),
-			(map { "NO_".$_ => 0 } @known_algorithms),
+			(map { "OPENSSL_SYS_".$_ => 0 } @known_platforms),
+			(map { "OPENSSL_NO_".$_ => 0 } @known_algorithms),
 			NOPROTO		=> 0,
 			PERL5		=> 0,
 			_WINDLL		=> 0,
@@ -361,7 +361,7 @@ sub do_defs
 				push(@tag,$1);
 				$tag{$1}=1;
 			} elsif (/^\#\s*error\s+(\w+) is disabled\./) {
-				if ($tag[$#tag] eq "NO_".$1) {
+				if ($tag[$#tag] eq "OPENSSL_NO_".$1) {
 					$tag{$tag[$#tag]}=2;
 				}
 			} elsif (/^\#\s*endif/) {
@@ -373,7 +373,7 @@ sub do_defs
 					$tag{$tag[$#tag]}=0;
 				}
 				pop(@tag);
-				if ($oldtag =~ /^NO_([A-Z0-9_]+)$/) {
+				if ($oldtag =~ /^OPENSSL_NO_([A-Z0-9_]+)$/) {
 					$oldtag=$1;
 				} else {
 					$oldtag="";
@@ -398,21 +398,22 @@ sub do_defs
 				 && $symhacking) {
 				my $s = $1;
 				my $a =
-				    $2.":".join(",", grep(!/^$/,
-							  map { $tag{$_} == 1 ?
-								    $_ : "" }
-							  @known_platforms));
+				    $2.":".join(",",
+						grep(!/^$/,
+						     map { $tag{"OPENSSL_SYS_".$_} == 1 ?
+							       $_ : "" }
+						     @known_platforms));
 				$rename{$s} = $a;
 			}
 			if (/^\#/) {
 				@current_platforms =
 				    grep(!/^$/,
-					 map { $tag{$_} == 1 ? $_ :
-						   $tag{$_} == -1 ? "!".$_  : "" }
+					 map { $tag{"OPENSSL_SYS_".$_} == 1 ? $_ :
+						   $tag{"OPENSSL_SYS_".$_} == -1 ? "!".$_  : "" }
 					 @known_platforms);
 				@current_algorithms =
 				    grep(!/^$/,
-					 map { $tag{"NO_".$_} == -1 ? $_ : "" }
+					 map { $tag{"OPENSSL_NO_".$_} == -1 ? $_ : "" }
 					 @known_algorithms);
 				$def .=
 				    "#INFO:"
@@ -724,7 +725,7 @@ sub print_test_file
 		(my $s, my $i) = $sym =~ /^(.*?)\\(.*)$/;
 		if ($s ne $prev) {
 			if (!defined($nums{$s})) {
-				printf STDERR "Warning: $s does not have a number assigned\n"
+				print STDERR "Warning: $s does not have a number assigned\n"
 						if(!$do_update);
 			} else {
 				$n=$nums{$s};
@@ -938,6 +939,7 @@ sub rewrite_numbers
 	my @s=sort { &parse_number($nums{$a},"n") <=> &parse_number($nums{$b},"n") } keys %nums;
 	foreach $sym (@s) {
 		(my $n, my $i) = split /\\/, $nums{$sym};
+		#print STDERR "DEBUG: rewrite_numbers for sym = ",$sym,": i = ",$i,", n = ",$n,", rsym{sym} = ",$rsyms{$sym},"syms{sym} = ",$syms{$sym},"\n";
 		next if defined($i) && $i =~ /^.*?:.*?:\w+\(\w+\)/;
 		next if defined($rsyms{$sym});
 		$i="NOEXIST::FUNCTION:"

@@ -65,8 +65,8 @@
 #include "engine_int.h"
 #include <openssl/engine.h>
 
-#ifndef NO_HW
-#ifndef NO_HW_UBSEC
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_UBSEC
 
 #ifdef FLAT_INC
 #include "hw_ubsec.h"
@@ -670,5 +670,5 @@ static int ubsec_rand_status(void)
 	}
 #endif
 
-#endif /* !NO_HW_UBSEC */
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW_UBSEC */
+#endif /* !OPENSSL_NO_HW */

@@ -63,7 +63,7 @@
 #include <openssl/ocsp.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA OCSP_str_functs[]=
 	{
 {ERR_PACK(0,OCSP_F_ASN1_STRING_ENCODE,0),	"ASN1_STRING_encode"},
@@ -120,7 +120,7 @@ void ERR_load_OCSP_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_OCSP,OCSP_str_functs);
 		ERR_load_strings(ERR_LIB_OCSP,OCSP_str_reasons);
 #endif

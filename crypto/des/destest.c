@@ -64,17 +64,17 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef MSDOS
-#if !defined(VMS) || defined(__DECC)
 #include <openssl/opensslconf.h>
+#ifndef OPENSSL_SYS_MSDOS
+#if !defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_VMS_DECC)
 #include OPENSSL_UNISTD
-#endif /* VMS */
+#endif
 #else
 #include <io.h>
 #endif
 #include <string.h>
 
-#ifdef NO_DES
+#ifdef OPENSSL_NO_DES
 int main(int argc, char *argv[])
 {
     printf("No DES support\n");
@@ -348,7 +348,7 @@ int main(int argc, char *argv[])
 	int num;
 	char *str;
 
-#ifndef NO_DESCBCM
+#ifndef OPENSSL_NO_DESCBCM
 	printf("Doing cbcm\n");
 	if ((j=des_set_key_checked(&cbc_key,ks)) != 0)
 		{

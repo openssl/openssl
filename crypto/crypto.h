@@ -61,7 +61,7 @@
 
 #include <stdlib.h>
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 #include <stdio.h>
 #endif
 
@@ -131,7 +131,7 @@ extern "C" {
 #define CRYPTO_READ		4
 #define CRYPTO_WRITE		8
 
-#ifndef NO_LOCKING
+#ifndef OPENSSL_NO_LOCKING
 #ifndef CRYPTO_w_lock
 #define CRYPTO_w_lock(type)	\
 	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,__FILE__,__LINE__)
@@ -382,7 +382,7 @@ void CRYPTO_dbg_free(void *addr,int before_p);
 void CRYPTO_dbg_set_options(long bits);
 long CRYPTO_dbg_get_options(void);
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 void CRYPTO_mem_leaks_fp(FILE *);
 #endif
 void CRYPTO_mem_leaks(struct bio_st *bio);

@@ -67,19 +67,20 @@
 # undef OPENSSL_ALGORITHM_DEFINES
 #endif
 
-#ifndef NO_COMP
+#ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
 #endif
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
-#ifndef NO_X509
+#ifndef OPENSSL_NO_X509
 #include <openssl/x509.h>
 #endif
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
 #include <openssl/kssl.h>
 #endif
 #include <openssl/safestack.h>
+#include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -189,8 +190,8 @@ extern "C" {
 extern "C" {
 #endif
 
-#if (defined(NO_RSA) || defined(NO_MD5)) && !defined(NO_SSL2)
-#define NO_SSL2
+#if (defined(OPENSSL_NO_RSA) || defined(OPENSSL_NO_MD5)) && !defined(OPENSSL_NO_SSL2)
+#define OPENSSL_NO_SSL2
 #endif
 
 #define SSL_FILETYPE_ASN1	X509_FILETYPE_ASN1
@@ -394,7 +395,7 @@ typedef struct ssl_comp_st
 	{
 	int id;
 	char *name;
-#ifndef NO_COMP
+#ifndef OPENSSL_NO_COMP
 	COMP_METHOD *method;
 #else
 	char *method;
@@ -581,7 +582,7 @@ struct ssl_st
 	 * same.  This is so data can be read and written to different
 	 * handlers */
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 	BIO *rbio; /* used by SSL_read */
 	BIO *wbio; /* used by SSL_write */
 	BIO *bbio; /* used during session-id reuse to concatenate
@@ -645,7 +646,7 @@ struct ssl_st
 
 	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
 	const EVP_MD *read_hash;		/* used for mac generation */
-#ifndef NO_COMP
+#ifndef OPENSSL_NO_COMP
 	COMP_CTX *expand;			/* uncompress */
 #else
 	char *expand;
@@ -653,7 +654,7 @@ struct ssl_st
 
 	EVP_CIPHER_CTX *enc_write_ctx;		/* cryptographic state */
 	const EVP_MD *write_hash;		/* used for mac generation */
-#ifndef NO_COMP
+#ifndef OPENSSL_NO_COMP
 	COMP_CTX *compress;			/* compression */
 #else
 	char *compress;	
@@ -683,9 +684,9 @@ struct ssl_st
 	int error;		/* error bytes to be written */
 	int error_code;		/* actual code */
 
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
 	KSSL_CTX *kssl_ctx;     /* Kerberos 5 context */
-#endif	/* NO_KRB5 */
+#endif	/* OPENSSL_NO_KRB5 */
 
 	SSL_CTX *ctx;
 	/* set this flag to 1 and a sleep(1) is put into all SSL_read()
@@ -928,23 +929,7 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 #define SSL_CTX_add_extra_chain_cert(ctx,x509) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)
 
-/* VMS uses only 31 characters for symbols. */
-#ifdef VMS
-#undef SSL_CTX_set_cert_verify_callback
-#define SSL_CTX_set_cert_verify_callback SSL_CTX_set_cert_verify_cb
-#undef SSL_CTX_use_certificate_chain_file
-#define SSL_CTX_use_certificate_chain_file SSL_CTX_use_cert_chain_file
-#undef SSL_CTX_set_default_verify_paths
-#define SSL_CTX_set_default_verify_paths SSL_CTX_set_def_verify_paths
-#undef SSL_get_ex_data_X509_STORE_CTX_idx
-#define SSL_get_ex_data_X509_STORE_CTX_idx SSL_get_ex_data_X509_STOR_CTX_i
-#undef SSL_add_file_cert_subjects_to_stack
-#define SSL_add_file_cert_subjects_to_stack SSL_add_file_cert_sub_to_stack
-#undef SSL_add_dir_cert_subjects_to_stack
-#define SSL_add_dir_cert_subjects_to_stack SSL_add_dir_cert_sub_to_stack
-#endif
-
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);
 BIO *BIO_new_ssl(SSL_CTX *ctx,int client);
 BIO *BIO_new_ssl_connect(SSL_CTX *ctx);
@@ -976,12 +961,12 @@ const char  * SSL_get_cipher_list(SSL *s,int n);
 char *	SSL_get_shared_ciphers(SSL *s, char *buf, int len);
 int	SSL_get_read_ahead(SSL * s);
 int	SSL_pending(SSL *s);
-#ifndef NO_SOCK
+#ifndef OPENSSL_NO_SOCK
 int	SSL_set_fd(SSL *s, int fd);
 int	SSL_set_rfd(SSL *s, int fd);
 int	SSL_set_wfd(SSL *s, int fd);
 #endif
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 void	SSL_set_bio(SSL *s, BIO *rbio,BIO *wbio);
 BIO *	SSL_get_rbio(SSL *s);
 BIO *	SSL_get_wbio(SSL *s);
@@ -994,7 +979,7 @@ int	(*SSL_get_verify_callback(SSL *s))(int,X509_STORE_CTX *);
 void	SSL_set_verify(SSL *s, int mode,
 		       int (*callback)(int ok,X509_STORE_CTX *ctx));
 void	SSL_set_verify_depth(SSL *s, int depth);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 int	SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa);
 #endif
 int	SSL_use_RSAPrivateKey_ASN1(SSL *ssl, unsigned char *d, long len);
@@ -1003,7 +988,7 @@ int	SSL_use_PrivateKey_ASN1(int pk,SSL *ssl, unsigned char *d, long len);
 int	SSL_use_certificate(SSL *ssl, X509 *x);
 int	SSL_use_certificate_ASN1(SSL *ssl, unsigned char *d, int len);
 
-#ifndef NO_STDIO
+#ifndef OPENSSL_NO_STDIO
 int	SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type);
 int	SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type);
 int	SSL_use_certificate_file(SSL *ssl, const char *file, int type);
@@ -1033,10 +1018,10 @@ void	SSL_copy_session_id(SSL *to,SSL *from);
 SSL_SESSION *SSL_SESSION_new(void);
 unsigned long SSL_SESSION_hash(SSL_SESSION *a);
 int	SSL_SESSION_cmp(SSL_SESSION *a,SSL_SESSION *b);
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int	SSL_SESSION_print_fp(FILE *fp,SSL_SESSION *ses);
 #endif
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 int	SSL_SESSION_print(BIO *fp,SSL_SESSION *ses);
 #endif
 void	SSL_SESSION_free(SSL_SESSION *ses);
@@ -1052,10 +1037,6 @@ X509 *	SSL_get_peer_certificate(SSL *s);
 
 STACK_OF(X509) *SSL_get_peer_cert_chain(SSL *s);
 
-#ifdef VMS
-#define SSL_CTX_set_default_passwd_cb_userdata SSL_CTX_set_def_passwd_cb_ud
-#endif
-
 int SSL_CTX_get_verify_mode(SSL_CTX *ctx);
 int SSL_CTX_get_verify_depth(SSL_CTX *ctx);
 int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int,X509_STORE_CTX *);
@@ -1063,7 +1044,7 @@ void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,
 			int (*callback)(int, X509_STORE_CTX *));
 void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth);
 void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx, int (*cb)(),char *arg);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
 #endif
 int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, unsigned char *d, long len);
@@ -1214,7 +1195,7 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void );
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_READ_AHEAD,m,NULL)
 
      /* NB: the keylength is only applicable when is_export is true */
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,
 				  RSA *(*cb)(SSL *ssl,int is_export,
 					     int keylength));
@@ -1223,7 +1204,7 @@ void SSL_set_tmp_rsa_callback(SSL *ssl,
 				  RSA *(*cb)(SSL *ssl,int is_export,
 					     int keylength));
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
 				 DH *(*dh)(SSL *ssl,int is_export,
 					   int keylength));
@@ -1232,7 +1213,7 @@ void SSL_set_tmp_dh_callback(SSL *ssl,
 					   int keylength));
 #endif
 
-#ifndef NO_COMP
+#ifndef OPENSSL_NO_COMP
 int SSL_COMP_add_compression_method(int id,COMP_METHOD *cm);
 #else
 int SSL_COMP_add_compression_method(int id,char *cm);

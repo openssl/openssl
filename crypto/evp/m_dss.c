@@ -62,7 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 static EVP_MD dsa_md=
 	{
 	NID_dsaWithSHA,

@@ -63,11 +63,11 @@
 #ifndef HEADER_LHASH_H
 #define HEADER_LHASH_H
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 #include <stdio.h>
 #endif
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
 
@@ -79,7 +79,7 @@ typedef struct lhash_node_st
 	{
 	const void *data;
 	struct lhash_node_st *next;
-#ifndef NO_HASH_COMP
+#ifndef OPENSSL_NO_HASH_COMP
 	unsigned long hash;
 #endif
 	} LHASH_NODE;
@@ -180,13 +180,13 @@ void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, const void *arg);
 unsigned long lh_strhash(const char *c);
 unsigned long lh_num_items(const LHASH *lh);
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 void lh_stats(const LHASH *lh, FILE *out);
 void lh_node_stats(const LHASH *lh, FILE *out);
 void lh_node_usage_stats(const LHASH *lh, FILE *out);
 #endif
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 void lh_stats_bio(const LHASH *lh, BIO *out);
 void lh_node_stats_bio(const LHASH *lh, BIO *out);
 void lh_node_usage_stats_bio(const LHASH *lh, BIO *out);

@@ -64,7 +64,7 @@
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 void ERR_print_errors_fp(FILE *fp)
 	{
 	unsigned long l;

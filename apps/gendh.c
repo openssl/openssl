@@ -57,7 +57,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>

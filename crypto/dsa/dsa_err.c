@@ -63,7 +63,7 @@
 #include <openssl/dsa.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA DSA_str_functs[]=
 	{
 {ERR_PACK(0,DSA_F_D2I_DSA_SIG,0),	"d2i_DSA_SIG"},
@@ -98,7 +98,7 @@ void ERR_load_DSA_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_DSA,DSA_str_functs);
 		ERR_load_strings(ERR_LIB_DSA,DSA_str_reasons);
 #endif

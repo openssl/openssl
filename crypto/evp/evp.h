@@ -67,49 +67,49 @@
 # undef OPENSSL_ALGORITHM_DEFINES
 #endif
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
-#ifndef NO_MD2
+#ifndef OPENSSL_NO_MD2
 #include <openssl/md2.h>
 #endif
-#ifndef NO_MD4
+#ifndef OPENSSL_NO_MD4
 #include <openssl/md4.h>
 #endif
-#ifndef NO_MD5
+#ifndef OPENSSL_NO_MD5
 #include <openssl/md5.h>
 #endif
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
 #endif
-#ifndef NO_RIPEMD
+#ifndef OPENSSL_NO_RIPEMD
 #include <openssl/ripemd.h>
 #endif
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 #include <openssl/des.h>
 #endif
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 #include <openssl/rc4.h>
 #endif
-#ifndef NO_RC2
+#ifndef OPENSSL_NO_RC2
 #include <openssl/rc2.h>
 #endif
-#ifndef NO_RC5
+#ifndef OPENSSL_NO_RC5
 #include <openssl/rc5.h>
 #endif
-#ifndef NO_BF
+#ifndef OPENSSL_NO_BF
 #include <openssl/blowfish.h>
 #endif
-#ifndef NO_CAST
+#ifndef OPENSSL_NO_CAST
 #include <openssl/cast.h>
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 #include <openssl/idea.h>
 #endif
-#ifndef NO_MDC2
+#ifndef OPENSSL_NO_MDC2
 #include <openssl/mdc2.h>
 #endif
-#ifndef NO_AES
+#ifndef OPENSSL_NO_AES
 #include <openssl/rijndael.h>
 #endif
 
@@ -127,15 +127,15 @@
 /* Default PKCS#5 iteration count */
 #define PKCS5_DEFAULT_ITER		2048
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
 
@@ -175,13 +175,13 @@ typedef struct evp_pkey_st
 	int references;
 	union	{
 		char *ptr;
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 		struct rsa_st *rsa;	/* RSA */
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		struct dsa_st *dsa;	/* DSA */
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 		struct dh_st *dh;	/* DH */
 #endif
 		} pkey;
@@ -283,7 +283,7 @@ typedef struct env_md_st
 
 #define EVP_PKEY_NULL_method	NULL,NULL,{0,0,0,0}
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #define EVP_PKEY_DSA_method	DSA_sign,DSA_verify, \
 				{EVP_PKEY_DSA,EVP_PKEY_DSA2,EVP_PKEY_DSA3, \
 					EVP_PKEY_DSA4,0}
@@ -291,7 +291,7 @@ typedef struct env_md_st
 #define EVP_PKEY_DSA_method	EVP_PKEY_NULL_method
 #endif
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #define EVP_PKEY_RSA_method	RSA_sign,RSA_verify, \
 				{EVP_PKEY_RSA,EVP_PKEY_RSA2,0,0}
 #define EVP_PKEY_RSA_ASN1_OCTET_STRING_method \
@@ -310,22 +310,22 @@ typedef struct env_md_ctx_st
 	const EVP_MD *digest;
 	union	{
 		unsigned char base[4];
-#ifndef NO_MD2
+#ifndef OPENSSL_NO_MD2
 		MD2_CTX md2;
 #endif
-#ifndef NO_MD5
+#ifndef OPENSSL_NO_MD5
 		MD5_CTX md5;
 #endif
-#ifndef NO_MD4
+#ifndef OPENSSL_NO_MD4
 		MD4_CTX md4;
 #endif
-#ifndef NO_RIPEMD
+#ifndef OPENSSL_NO_RIPEMD
 		RIPEMD160_CTX ripemd160;
 #endif
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 		SHA_CTX sha;
 #endif
-#ifndef NO_MDC2
+#ifndef OPENSSL_NO_MDC2
 		MDC2_CTX mdc2;
 #endif
 		} md;
@@ -407,14 +407,14 @@ struct evp_cipher_ctx_st
 	unsigned long flags;	/* Various flags */
 	union
 		{
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 		struct
 			{
 			unsigned char key[EVP_RC4_KEY_SIZE];
 			RC4_KEY ks;	/* working key */
 			} rc4;
 #endif
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 		des_key_schedule des_ks;/* key schedule */
 		struct
 			{
@@ -429,30 +429,30 @@ struct evp_cipher_ctx_st
 			des_key_schedule ks3;/* key schedule (for ede3) */
 			} des_ede;
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		IDEA_KEY_SCHEDULE idea_ks;/* key schedule */
 #endif
-#ifndef NO_RC2
+#ifndef OPENSSL_NO_RC2
 		struct
 			{
 			int key_bits;	/* effective key bits */
 			RC2_KEY ks;/* key schedule */
 			} rc2;
 #endif
-#ifndef NO_RC5
+#ifndef OPENSSL_NO_RC5
 		struct
 			{
 			int rounds;	/* number of rounds */
 			RC5_32_KEY ks;/* key schedule */
 			} rc5;
 #endif
-#ifndef NO_BF
+#ifndef OPENSSL_NO_BF
 		BF_KEY bf_ks;/* key schedule */
 #endif
-#ifndef NO_CAST
+#ifndef OPENSSL_NO_CAST
 		CAST_KEY cast_ks;/* key schedule */
 #endif
-#ifndef NO_AES
+#ifndef OPENSSL_NO_AES
 		RIJNDAEL_KEY rijndael;
 #endif
 		} c;
@@ -476,17 +476,17 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 		ASN1_TYPE *param, EVP_CIPHER *cipher,
                 EVP_MD *md, int en_de);
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #define EVP_PKEY_assign_RSA(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA,\
 					(char *)(rsa))
 #endif
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #define EVP_PKEY_assign_DSA(pkey,dsa) EVP_PKEY_assign((pkey),EVP_PKEY_DSA,\
 					(char *)(dsa))
 #endif
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 #define EVP_PKEY_assign_DH(pkey,dh) EVP_PKEY_assign((pkey),EVP_PKEY_DH,\
 					(char *)(dh))
 #endif
@@ -626,7 +626,7 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
 int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *c, int pad);
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_md(void);
 BIO_METHOD *BIO_f_base64(void);
 BIO_METHOD *BIO_f_cipher(void);
@@ -636,29 +636,29 @@ void BIO_set_cipher(BIO *b,const EVP_CIPHER *c,unsigned char *k,
 #endif
 
 EVP_MD *EVP_md_null(void);
-#ifndef NO_MD2
+#ifndef OPENSSL_NO_MD2
 EVP_MD *EVP_md2(void);
 #endif
-#ifndef NO_MD4
+#ifndef OPENSSL_NO_MD4
 EVP_MD *EVP_md4(void);
 #endif
-#ifndef NO_MD5
+#ifndef OPENSSL_NO_MD5
 EVP_MD *EVP_md5(void);
 #endif
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 EVP_MD *EVP_sha(void);
 EVP_MD *EVP_sha1(void);
 EVP_MD *EVP_dss(void);
 EVP_MD *EVP_dss1(void);
 #endif
-#ifndef NO_MDC2
+#ifndef OPENSSL_NO_MDC2
 EVP_MD *EVP_mdc2(void);
 #endif
-#ifndef NO_RIPEMD
+#ifndef OPENSSL_NO_RIPEMD
 EVP_MD *EVP_ripemd160(void);
 #endif
 EVP_CIPHER *EVP_enc_null(void);		/* does nothing :-) */
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 EVP_CIPHER *EVP_des_ecb(void);
 EVP_CIPHER *EVP_des_ede(void);
 EVP_CIPHER *EVP_des_ede3(void);
@@ -673,17 +673,17 @@ EVP_CIPHER *EVP_des_ede_cbc(void);
 EVP_CIPHER *EVP_des_ede3_cbc(void);
 EVP_CIPHER *EVP_desx_cbc(void);
 #endif
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 EVP_CIPHER *EVP_rc4(void);
 EVP_CIPHER *EVP_rc4_40(void);
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 EVP_CIPHER *EVP_idea_ecb(void);
 EVP_CIPHER *EVP_idea_cfb(void);
 EVP_CIPHER *EVP_idea_ofb(void);
 EVP_CIPHER *EVP_idea_cbc(void);
 #endif
-#ifndef NO_RC2
+#ifndef OPENSSL_NO_RC2
 EVP_CIPHER *EVP_rc2_ecb(void);
 EVP_CIPHER *EVP_rc2_cbc(void);
 EVP_CIPHER *EVP_rc2_40_cbc(void);
@@ -691,25 +691,25 @@ EVP_CIPHER *EVP_rc2_64_cbc(void);
 EVP_CIPHER *EVP_rc2_cfb(void);
 EVP_CIPHER *EVP_rc2_ofb(void);
 #endif
-#ifndef NO_BF
+#ifndef OPENSSL_NO_BF
 EVP_CIPHER *EVP_bf_ecb(void);
 EVP_CIPHER *EVP_bf_cbc(void);
 EVP_CIPHER *EVP_bf_cfb(void);
 EVP_CIPHER *EVP_bf_ofb(void);
 #endif
-#ifndef NO_CAST
+#ifndef OPENSSL_NO_CAST
 EVP_CIPHER *EVP_cast5_ecb(void);
 EVP_CIPHER *EVP_cast5_cbc(void);
 EVP_CIPHER *EVP_cast5_cfb(void);
 EVP_CIPHER *EVP_cast5_ofb(void);
 #endif
-#ifndef NO_RC5
+#ifndef OPENSSL_NO_RC5
 EVP_CIPHER *EVP_rc5_32_12_16_cbc(void);
 EVP_CIPHER *EVP_rc5_32_12_16_ecb(void);
 EVP_CIPHER *EVP_rc5_32_12_16_cfb(void);
 EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 #endif
-#ifndef NO_AES
+#ifndef OPENSSL_NO_AES
 EVP_CIPHER *EVP_aes_128_ecb(void);
 EVP_CIPHER *EVP_aes_128_cbc(void);
 EVP_CIPHER *EVP_aes_192_ecb(void);
@@ -740,15 +740,15 @@ int		EVP_PKEY_type(int type);
 int		EVP_PKEY_bits(EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
 int 		EVP_PKEY_assign(EVP_PKEY *pkey,int type,char *key);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 int 		EVP_PKEY_set1_RSA(EVP_PKEY *pkey,RSA *key);
 RSA *		EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 int 		EVP_PKEY_set1_DSA(EVP_PKEY *pkey,DSA *key);
 DSA *		EVP_PKEY_get1_DSA(EVP_PKEY *pkey);
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 int 		EVP_PKEY_set1_DH(EVP_PKEY *pkey,DH *key);
 DH *		EVP_PKEY_get1_DH(EVP_PKEY *pkey);
 #endif

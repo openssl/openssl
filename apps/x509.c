@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef NO_STDIO
+#ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif
 #include "apps.h"
@@ -746,12 +746,12 @@ bad:
 					goto end;
 					}
 				BIO_printf(STDout,"Modulus=");
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 				if (pkey->type == EVP_PKEY_RSA)
 					BN_print(STDout,pkey->pkey.rsa->n);
 				else
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 				if (pkey->type == EVP_PKEY_DSA)
 					BN_print(STDout,pkey->pkey.dsa->pub_key);
 				else
@@ -877,7 +877,7 @@ bad:
 						keyfile,keyformat, passin, e);
 					if (Upkey == NULL) goto end;
 					}
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		                if (Upkey->type == EVP_PKEY_DSA)
 		                        digest=EVP_dss1();
 #endif
@@ -896,7 +896,7 @@ bad:
 						e);
 					if (CApkey == NULL) goto end;
 					}
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		                if (CApkey->type == EVP_PKEY_DSA)
 		                        digest=EVP_dss1();
 #endif

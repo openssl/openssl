@@ -57,7 +57,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

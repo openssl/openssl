@@ -75,7 +75,7 @@
 #include <string.h>
 #include <math.h>
 #include "apps.h"
-#ifdef NO_STDIO
+#ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif
 #include <openssl/crypto.h>
@@ -90,7 +90,7 @@
 #elif !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
 # define TIMES
 #endif
-#if !defined(_UNICOS) && !defined(__OpenBSD__) && !defined(sgi) && !defined(__FreeBSD__) && !(defined(__bsdi) || defined(__bsdi__)) && !defined(_AIX) && !defined(MPE) && !defined(__NetBSD__) /* FIXME */
+#if !defined(_UNICOS) && !defined(__OpenBSD__) && !defined(sgi) && !defined(__FreeBSD__) && !(defined(__bsdi) || defined(__bsdi__)) && !defined(_AIX) && !defined(OPENSSL_SYS_MPE) && !defined(__NetBSD__) /* FIXME */
 # define TIMEB
 #endif
 
@@ -128,55 +128,55 @@
 #include <sys/param.h>
 #endif
 
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 #include <openssl/des.h>
 #endif
-#ifndef NO_MD2
+#ifndef OPENSSL_NO_MD2
 #include <openssl/md2.h>
 #endif
-#ifndef NO_MDC2
+#ifndef OPENSSL_NO_MDC2
 #include <openssl/mdc2.h>
 #endif
-#ifndef NO_MD4
+#ifndef OPENSSL_NO_MD4
 #include <openssl/md4.h>
 #endif
-#ifndef NO_MD5
+#ifndef OPENSSL_NO_MD5
 #include <openssl/md5.h>
 #endif
-#ifndef NO_HMAC
+#ifndef OPENSSL_NO_HMAC
 #include <openssl/hmac.h>
 #endif
 #include <openssl/evp.h>
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
 #endif
-#ifndef NO_RIPEMD
+#ifndef OPENSSL_NO_RIPEMD
 #include <openssl/ripemd.h>
 #endif
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 #include <openssl/rc4.h>
 #endif
-#ifndef NO_RC5
+#ifndef OPENSSL_NO_RC5
 #include <openssl/rc5.h>
 #endif
-#ifndef NO_RC2
+#ifndef OPENSSL_NO_RC2
 #include <openssl/rc2.h>
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 #include <openssl/idea.h>
 #endif
-#ifndef NO_BF
+#ifndef OPENSSL_NO_BF
 #include <openssl/blowfish.h>
 #endif
-#ifndef NO_CAST
+#ifndef OPENSSL_NO_CAST
 #include <openssl/cast.h>
 #endif
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #include "./testrsa.h"
 #endif
 #include <openssl/x509.h>
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include "./testdsa.h"
 #endif
 
@@ -322,51 +322,51 @@ int MAIN(int argc, char **argv)
 #define DSA_NUM		3
 	long count,rsa_count,save_count=0;
 	int i,j,k;
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	unsigned rsa_num;
 #endif
-#ifndef NO_MD2
+#ifndef OPENSSL_NO_MD2
 	unsigned char md2[MD2_DIGEST_LENGTH];
 #endif
-#ifndef NO_MDC2
+#ifndef OPENSSL_NO_MDC2
 	unsigned char mdc2[MDC2_DIGEST_LENGTH];
 #endif
-#ifndef NO_MD4
+#ifndef OPENSSL_NO_MD4
 	unsigned char md4[MD4_DIGEST_LENGTH];
 #endif
-#ifndef NO_MD5
+#ifndef OPENSSL_NO_MD5
 	unsigned char md5[MD5_DIGEST_LENGTH];
 	unsigned char hmac[MD5_DIGEST_LENGTH];
 #endif
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 	unsigned char sha[SHA_DIGEST_LENGTH];
 #endif
-#ifndef NO_RIPEMD
+#ifndef OPENSSL_NO_RIPEMD
 	unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
 #endif
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 	RC4_KEY rc4_ks;
 #endif
-#ifndef NO_RC5
+#ifndef OPENSSL_NO_RC5
 	RC5_32_KEY rc5_ks;
 #endif
-#ifndef NO_RC2
+#ifndef OPENSSL_NO_RC2
 	RC2_KEY rc2_ks;
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 	IDEA_KEY_SCHEDULE idea_ks;
 #endif
-#ifndef NO_BF
+#ifndef OPENSSL_NO_BF
 	BF_KEY bf_ks;
 #endif
-#ifndef NO_CAST
+#ifndef OPENSSL_NO_CAST
 	CAST_KEY cast_ks;
 #endif
 	static unsigned char key16[16]=
 		{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
 		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
 	unsigned char iv[8];
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 	des_cblock *buf_as_des_cblock = NULL;
 	static des_cblock key ={0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0};
 	static des_cblock key2={0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
@@ -403,7 +403,7 @@ int MAIN(int argc, char **argv)
 #define	R_RSA_1024	1
 #define	R_RSA_2048	2
 #define	R_RSA_4096	3
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	RSA *rsa_key[RSA_NUM];
 	long rsa_c[RSA_NUM][2];
 	double rsa_results[RSA_NUM][2];
@@ -414,7 +414,7 @@ int MAIN(int argc, char **argv)
 		sizeof(test512),sizeof(test1024),
 		sizeof(test2048),sizeof(test4096)};
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	DSA *dsa_key[DSA_NUM];
 	long dsa_c[DSA_NUM][2];
 	double dsa_results[DSA_NUM][2];
@@ -433,7 +433,7 @@ int MAIN(int argc, char **argv)
 
 	apps_startup();
 	memset(results, 0, sizeof(results));
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	memset(dsa_key,0,sizeof(dsa_key));
 #endif
 
@@ -441,7 +441,7 @@ int MAIN(int argc, char **argv)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	memset(rsa_key,0,sizeof(rsa_key));
 	for (i=0; i<RSA_NUM; i++)
 		rsa_key[i]=NULL;
@@ -452,7 +452,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
 		}
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 	buf_as_des_cblock = (des_cblock *)buf;
 #endif
 	if ((buf2=(unsigned char *)OPENSSL_malloc((int)BUFSIZE)) == NULL)
@@ -526,33 +526,33 @@ int MAIN(int argc, char **argv)
 			j--;
 			}
 		else
-#ifndef NO_MD2
+#ifndef OPENSSL_NO_MD2
 		if	(strcmp(*argv,"md2") == 0) doit[D_MD2]=1;
 		else
 #endif
-#ifndef NO_MDC2
+#ifndef OPENSSL_NO_MDC2
 			if (strcmp(*argv,"mdc2") == 0) doit[D_MDC2]=1;
 		else
 #endif
-#ifndef NO_MD4
+#ifndef OPENSSL_NO_MD4
 			if (strcmp(*argv,"md4") == 0) doit[D_MD4]=1;
 		else
 #endif
-#ifndef NO_MD5
+#ifndef OPENSSL_NO_MD5
 			if (strcmp(*argv,"md5") == 0) doit[D_MD5]=1;
 		else
 #endif
-#ifndef NO_MD5
+#ifndef OPENSSL_NO_MD5
 			if (strcmp(*argv,"hmac") == 0) doit[D_HMAC]=1;
 		else
 #endif
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 			if (strcmp(*argv,"sha1") == 0) doit[D_SHA1]=1;
 		else
 			if (strcmp(*argv,"sha") == 0) doit[D_SHA1]=1;
 		else
 #endif
-#ifndef NO_RIPEMD
+#ifndef OPENSSL_NO_RIPEMD
 			if (strcmp(*argv,"ripemd") == 0) doit[D_RMD160]=1;
 		else
 			if (strcmp(*argv,"rmd160") == 0) doit[D_RMD160]=1;
@@ -560,16 +560,16 @@ int MAIN(int argc, char **argv)
 			if (strcmp(*argv,"ripemd160") == 0) doit[D_RMD160]=1;
 		else
 #endif
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 			if (strcmp(*argv,"rc4") == 0) doit[D_RC4]=1;
 		else 
 #endif
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 			if (strcmp(*argv,"des-cbc") == 0) doit[D_CBC_DES]=1;
 		else	if (strcmp(*argv,"des-ede3") == 0) doit[D_EDE3_DES]=1;
 		else
 #endif
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #if 0 /* was: #ifdef RSAref */
 			if (strcmp(*argv,"rsaref") == 0) 
 			{
@@ -586,7 +586,7 @@ int MAIN(int argc, char **argv)
 			}
 		else
 #endif
-#endif /* !NO_RSA */
+#endif /* !OPENSSL_NO_RSA */
 		     if (strcmp(*argv,"dsa512") == 0) dsa_doit[R_DSA_512]=2;
 		else if (strcmp(*argv,"dsa1024") == 0) dsa_doit[R_DSA_1024]=2;
 		else if (strcmp(*argv,"dsa2048") == 0) dsa_doit[R_DSA_2048]=2;
@@ -595,34 +595,34 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"rsa2048") == 0) rsa_doit[R_RSA_2048]=2;
 		else if (strcmp(*argv,"rsa4096") == 0) rsa_doit[R_RSA_4096]=2;
 		else
-#ifndef NO_RC2
+#ifndef OPENSSL_NO_RC2
 		     if (strcmp(*argv,"rc2-cbc") == 0) doit[D_CBC_RC2]=1;
 		else if (strcmp(*argv,"rc2") == 0) doit[D_CBC_RC2]=1;
 		else
 #endif
-#ifndef NO_RC5
+#ifndef OPENSSL_NO_RC5
 		     if (strcmp(*argv,"rc5-cbc") == 0) doit[D_CBC_RC5]=1;
 		else if (strcmp(*argv,"rc5") == 0) doit[D_CBC_RC5]=1;
 		else
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		     if (strcmp(*argv,"idea-cbc") == 0) doit[D_CBC_IDEA]=1;
 		else if (strcmp(*argv,"idea") == 0) doit[D_CBC_IDEA]=1;
 		else
 #endif
-#ifndef NO_BF
+#ifndef OPENSSL_NO_BF
 		     if (strcmp(*argv,"bf-cbc") == 0) doit[D_CBC_BF]=1;
 		else if (strcmp(*argv,"blowfish") == 0) doit[D_CBC_BF]=1;
 		else if (strcmp(*argv,"bf") == 0) doit[D_CBC_BF]=1;
 		else
 #endif
-#ifndef NO_CAST
+#ifndef OPENSSL_NO_CAST
 		     if (strcmp(*argv,"cast-cbc") == 0) doit[D_CBC_CAST]=1;
 		else if (strcmp(*argv,"cast") == 0) doit[D_CBC_CAST]=1;
 		else if (strcmp(*argv,"cast5") == 0) doit[D_CBC_CAST]=1;
 		else
 #endif
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 			if (strcmp(*argv,"des") == 0)
 			{
 			doit[D_CBC_DES]=1;
@@ -630,7 +630,7 @@ int MAIN(int argc, char **argv)
 			}
 		else
 #endif
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 			if (strcmp(*argv,"rsa") == 0)
 			{
 			rsa_doit[R_RSA_512]=1;
@@ -640,7 +640,7 @@ int MAIN(int argc, char **argv)
 			}
 		else
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 			if (strcmp(*argv,"dsa") == 0)
 			{
 			dsa_doit[R_DSA_512]=1;
@@ -652,77 +652,82 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"Error: bad option or value\n");
 			BIO_printf(bio_err,"\n");
 			BIO_printf(bio_err,"Available values:\n");
-#ifndef NO_MD2
+#ifndef OPENSSL_NO_MD2
 			BIO_printf(bio_err,"md2      ");
 #endif
-#ifndef NO_MDC2
+#ifndef OPENSSL_NO_MDC2
 			BIO_printf(bio_err,"mdc2     ");
 #endif
-#ifndef NO_MD4
+#ifndef OPENSSL_NO_MD4
 			BIO_printf(bio_err,"md4      ");
 #endif
-#ifndef NO_MD5
+#ifndef OPENSSL_NO_MD5
 			BIO_printf(bio_err,"md5      ");
-#ifndef NO_HMAC
+#ifndef OPENSSL_NO_HMAC
 			BIO_printf(bio_err,"hmac     ");
 #endif
 #endif
-#ifndef NO_SHA1
+#ifndef OPENSSL_NO_SHA1
 			BIO_printf(bio_err,"sha1     ");
 #endif
-#ifndef NO_RIPEMD160
+#ifndef OPENSSL_NO_RIPEMD160
 			BIO_printf(bio_err,"rmd160");
 #endif
-#if !defined(NO_MD2) || !defined(NO_MDC2) || !defined(NO_MD4) || !defined(NO_MD5) || !defined(NO_SHA1) || !defined(NO_RIPEMD160)
+#if !defined(OPENSSL_NO_MD2) || !defined(OPENSSL_NO_MDC2) || \
+    !defined(OPENSSL_NO_MD4) || !defined(OPENSSL_NO_MD5) || \
+    !defined(OPENSSL_NO_SHA1) || !defined(OPENSSL_NO_RIPEMD160)
 			BIO_printf(bio_err,"\n");
 #endif
 
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 			BIO_printf(bio_err,"idea-cbc ");
 #endif
-#ifndef NO_RC2
+#ifndef OPENSSL_NO_RC2
 			BIO_printf(bio_err,"rc2-cbc  ");
 #endif
-#ifndef NO_RC5
+#ifndef OPENSSL_NO_RC5
 			BIO_printf(bio_err,"rc5-cbc  ");
 #endif
-#ifndef NO_BF
+#ifndef OPENSSL_NO_BF
 			BIO_printf(bio_err,"bf-cbc");
 #endif
-#if !defined(NO_IDEA) || !defined(NO_RC2) || !defined(NO_BF) || !defined(NO_RC5)
+#if !defined(OPENSSL_NO_IDEA) || !defined(OPENSSL_NO_RC2) || \
+    !defined(OPENSSL_NO_BF) || !defined(OPENSSL_NO_RC5)
 			BIO_printf(bio_err,"\n");
 #endif
 
 			BIO_printf(bio_err,"des-cbc  des-ede3 ");
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 			BIO_printf(bio_err,"rc4");
 #endif
 			BIO_printf(bio_err,"\n");
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 			BIO_printf(bio_err,"rsa512   rsa1024  rsa2048  rsa4096\n");
 #endif
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 			BIO_printf(bio_err,"dsa512   dsa1024  dsa2048\n");
 #endif
 
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 			BIO_printf(bio_err,"idea     ");
 #endif
-#ifndef NO_RC2
+#ifndef OPENSSL_NO_RC2
 			BIO_printf(bio_err,"rc2      ");
 #endif
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 			BIO_printf(bio_err,"des      ");
 #endif
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 			BIO_printf(bio_err,"rsa      ");
 #endif
-#ifndef NO_BF
+#ifndef OPENSSL_NO_BF
 			BIO_printf(bio_err,"blowfish");
 #endif
-#if !defined(NO_IDEA) || !defined(NO_RC2) || !defined(NO_DES) || !defined(NO_RSA) || !defined(NO_BF)
+#if !defined(OPENSSL_NO_IDEA) || !defined(OPENSSL_NO_RC2) || \
+    !defined(OPENSSL_NO_DES) || !defined(OPENSSL_NO_RSA) || \
+    !defined(OPENSSL_NO_BF)
 			BIO_printf(bio_err,"\n");
 #endif
 
@@ -762,7 +767,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"program when this computer is idle.\n");
 		}
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	for (i=0; i<RSA_NUM; i++)
 		{
 		const unsigned char *p;
@@ -785,40 +790,40 @@ int MAIN(int argc, char **argv)
 		}
 #endif
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	dsa_key[0]=get_dsa512();
 	dsa_key[1]=get_dsa1024();
 	dsa_key[2]=get_dsa2048();
 #endif
 
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 	des_set_key_unchecked(&key,sch);
 	des_set_key_unchecked(&key2,sch2);
 	des_set_key_unchecked(&key3,sch3);
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 	idea_set_encrypt_key(key16,&idea_ks);
 #endif
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 	RC4_set_key(&rc4_ks,16,key16);
 #endif
-#ifndef NO_RC2
+#ifndef OPENSSL_NO_RC2
 	RC2_set_key(&rc2_ks,16,key16,128);
 #endif
-#ifndef NO_RC5
+#ifndef OPENSSL_NO_RC5
 	RC5_32_set_key(&rc5_ks,16,key16,12);
 #endif
-#ifndef NO_BF
+#ifndef OPENSSL_NO_BF
 	BF_set_key(&bf_ks,16,key16);
 #endif
-#ifndef NO_CAST
+#ifndef OPENSSL_NO_CAST
 	CAST_set_key(&cast_ks,16,key16);
 #endif
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	memset(rsa_c,0,sizeof(rsa_c));
 #endif
 #ifndef SIGALRM
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 	BIO_printf(bio_err,"First we calculate the approximate speed ...\n");
 	count=10;
 	do	{
@@ -872,7 +877,7 @@ int MAIN(int argc, char **argv)
 		c[D_CBC_BF][i]=c[D_CBC_BF][i-1]*l0/l1;
 		c[D_CBC_CAST][i]=c[D_CBC_CAST][i-1]*l0/l1;
 		}
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	rsa_c[R_RSA_512][0]=count/2000;
 	rsa_c[R_RSA_512][1]=count/400;
 	for (i=1; i<RSA_NUM; i++)
@@ -915,14 +920,14 @@ int MAIN(int argc, char **argv)
 #else
 /* not worth fixing */
 # error "You cannot disable DES on systems without SIGALRM."
-#endif /* NO_DES */
+#endif /* OPENSSL_NO_DES */
 #else
 #define COND(c)	(run)
 #define COUNT(d) (count)
 	signal(SIGALRM,sig_done);
 #endif /* SIGALRM */
 
-#ifndef NO_MD2
+#ifndef OPENSSL_NO_MD2
 	if (doit[D_MD2])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -938,7 +943,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_MDC2
+#ifndef OPENSSL_NO_MDC2
 	if (doit[D_MDC2])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -955,7 +960,7 @@ int MAIN(int argc, char **argv)
 		}
 #endif
 
-#ifndef NO_MD4
+#ifndef OPENSSL_NO_MD4
 	if (doit[D_MD4])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -972,7 +977,7 @@ int MAIN(int argc, char **argv)
 		}
 #endif
 
-#ifndef NO_MD5
+#ifndef OPENSSL_NO_MD5
 	if (doit[D_MD5])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -989,7 +994,7 @@ int MAIN(int argc, char **argv)
 		}
 #endif
 
-#if !defined(NO_MD5) && !defined(NO_HMAC)
+#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_HMAC)
 	if (doit[D_HMAC])
 		{
 		HMAC_CTX hctx;
@@ -1013,7 +1018,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 	if (doit[D_SHA1])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -1029,7 +1034,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_RIPEMD
+#ifndef OPENSSL_NO_RIPEMD
 	if (doit[D_RMD160])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -1045,7 +1050,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 	if (doit[D_RC4])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -1062,7 +1067,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 	if (doit[D_CBC_DES])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -1096,7 +1101,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 	if (doit[D_CBC_IDEA])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -1114,7 +1119,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_RC2
+#ifndef OPENSSL_NO_RC2
 	if (doit[D_CBC_RC2])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -1132,7 +1137,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_RC5
+#ifndef OPENSSL_NO_RC5
 	if (doit[D_CBC_RC5])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -1150,7 +1155,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_BF
+#ifndef OPENSSL_NO_BF
 	if (doit[D_CBC_BF])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -1168,7 +1173,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_CAST
+#ifndef OPENSSL_NO_CAST
 	if (doit[D_CBC_CAST])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -1210,7 +1215,7 @@ int MAIN(int argc, char **argv)
 		}
 
 	RAND_pseudo_bytes(buf,36);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	for (j=0; j<RSA_NUM; j++)
 		{
 		int ret;
@@ -1295,7 +1300,7 @@ int MAIN(int argc, char **argv)
 #endif
 
 	RAND_pseudo_bytes(buf,20);
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	if (RAND_status() != 1)
 		{
 		RAND_seed(rnd_seed, sizeof rnd_seed);
@@ -1390,19 +1395,19 @@ int MAIN(int argc, char **argv)
         fprintf(stdout,"%s\n",SSLeay_version(SSLEAY_BUILT_ON));
 	printf("options:");
 	printf("%s ",BN_options());
-#ifndef NO_MD2
+#ifndef OPENSSL_NO_MD2
 	printf("%s ",MD2_options());
 #endif
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 	printf("%s ",RC4_options());
 #endif
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 	printf("%s ",des_options());
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 	printf("%s ",idea_options());
 #endif
-#ifndef NO_BF
+#ifndef OPENSSL_NO_BF
 	printf("%s ",BF_options());
 #endif
 	fprintf(stdout,"\n%s\n",SSLeay_version(SSLEAY_CFLAGS));
@@ -1429,7 +1434,7 @@ int MAIN(int argc, char **argv)
 			}
 		fprintf(stdout,"\n");
 		}
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	j=1;
 	for (k=0; k<RSA_NUM; k++)
 		{
@@ -1445,7 +1450,7 @@ int MAIN(int argc, char **argv)
 		fprintf(stdout,"\n");
 		}
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	j=1;
 	for (k=0; k<DSA_NUM; k++)
 		{
@@ -1465,12 +1470,12 @@ end:
 	ERR_print_errors(bio_err);
 	if (buf != NULL) OPENSSL_free(buf);
 	if (buf2 != NULL) OPENSSL_free(buf2);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	for (i=0; i<RSA_NUM; i++)
 		if (rsa_key[i] != NULL)
 			RSA_free(rsa_key[i]);
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	for (i=0; i<DSA_NUM; i++)
 		if (dsa_key[i] != NULL)
 			DSA_free(dsa_key[i]);

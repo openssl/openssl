@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/rand.h>
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
 #include <openssl/evp.h>
@@ -71,12 +71,12 @@ int EVP_PKEY_decrypt(unsigned char *key, unsigned char *ek, int ekl,
 	{
 	int ret= -1;
 	
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	if (priv->type != EVP_PKEY_RSA)
 		{
 #endif
 		EVPerr(EVP_F_EVP_PKEY_DECRYPT,EVP_R_PUBLIC_KEY_NOT_RSA);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 		goto err;
                 }
 

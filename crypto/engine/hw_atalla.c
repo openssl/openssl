@@ -63,8 +63,8 @@
 #include "engine_int.h"
 #include <openssl/engine.h>
 
-#ifndef NO_HW
-#ifndef NO_HW_ATALLA
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_ATALLA
 
 #ifdef FLAT_INC
 #include "atalla.h"
@@ -441,5 +441,5 @@ static int atalla_mod_exp_dh(const DH *dh, BIGNUM *r,
 	return atalla_mod_exp(r, a, p, m, ctx);
 	}
 
-#endif /* !NO_HW_ATALLA */
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW_ATALLA */
+#endif /* !OPENSSL_NO_HW */

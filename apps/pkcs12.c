@@ -1,5 +1,5 @@
 /* pkcs12.c */
-#if !defined(NO_DES) && !defined(NO_SHA1)
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_SHA1)
 
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project 1999.
@@ -147,7 +147,7 @@ int MAIN(int argc, char **argv)
     			cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
 		else if (!strcmp (*args, "-export")) export_cert = 1;
 		else if (!strcmp (*args, "-des")) enc=EVP_des_cbc();
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		else if (!strcmp (*args, "-idea")) enc=EVP_idea_cbc();
 #endif
 		else if (!strcmp (*args, "-des3")) enc = EVP_des_ede3_cbc();
@@ -272,7 +272,7 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-info         give info about PKCS#12 structure.\n");
 	BIO_printf (bio_err, "-des          encrypt private keys with DES\n");
 	BIO_printf (bio_err, "-des3         encrypt private keys with triple DES (default)\n");
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 	BIO_printf (bio_err, "-idea         encrypt private keys with idea\n");
 #endif
 	BIO_printf (bio_err, "-nodes        don't encrypt private keys\n");

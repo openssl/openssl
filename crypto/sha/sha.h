@@ -59,11 +59,13 @@
 #ifndef HEADER_SHA_H
 #define HEADER_SHA_H
 
+#include <openssl/e_os2.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-#if defined(NO_SHA) || (defined(NO_SHA0) && defined(NO_SHA1))
+#if defined(OPENSSL_NO_SHA) || (defined(OPENSSL_NO_SHA0) && defined(OPENSSL_NO_SHA1))
 #error SHA is disabled.
 #endif
 
@@ -74,9 +76,9 @@ extern "C" {
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
-#if defined(WIN16) || defined(__LP32__)
+#if defined(OPENSSL_SYS_WIN16) || defined(__LP32__)
 #define SHA_LONG unsigned long
-#elif defined(_CRAY) || defined(__ILP64__)
+#elif defined(OPENSSL_SYS_CRAY) || defined(__ILP64__)
 #define SHA_LONG unsigned long
 #define SHA_LONG_LOG2 3
 #else
@@ -98,14 +100,14 @@ typedef struct SHAstate_st
 	int num;
 	} SHA_CTX;
 
-#ifndef NO_SHA0
+#ifndef OPENSSL_NO_SHA0
 void SHA_Init(SHA_CTX *c);
 void SHA_Update(SHA_CTX *c, const void *data, unsigned long len);
 void SHA_Final(unsigned char *md, SHA_CTX *c);
 unsigned char *SHA(const unsigned char *d, unsigned long n,unsigned char *md);
 void SHA_Transform(SHA_CTX *c, const unsigned char *data);
 #endif
-#ifndef NO_SHA1
+#ifndef OPENSSL_NO_SHA1
 void SHA1_Init(SHA_CTX *c);
 void SHA1_Update(SHA_CTX *c, const void *data, unsigned long len);
 void SHA1_Final(unsigned char *md, SHA_CTX *c);

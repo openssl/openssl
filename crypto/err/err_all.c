@@ -61,16 +61,16 @@
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
 #if 0 /* was: #ifdef RSAref */
 #include <openssl/rsaref.h>
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
 #include <openssl/evp.h>
@@ -92,23 +92,23 @@ void ERR_load_crypto_strings(void)
 
 	if (done) return;
 	done=1;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 	ERR_load_ASN1_strings();
 	ERR_load_BN_strings();
 	ERR_load_BUF_strings();
 	ERR_load_BIO_strings();
 	ERR_load_CONF_strings();
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #if 0 /* was: #ifdef RSAref */
 	ERR_load_RSAREF_strings();
 #else
 	ERR_load_RSA_strings();
 #endif
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	ERR_load_DH_strings();
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	ERR_load_DSA_strings();
 #endif
 	ERR_load_ERR_strings();

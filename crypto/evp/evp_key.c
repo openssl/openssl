@@ -86,7 +86,7 @@ char *EVP_get_pw_prompt(void)
  * this function will fail */
 int EVP_read_pw_string(char *buf, int len, const char *prompt, int verify)
 	{
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 	if ((prompt == NULL) && (prompt_string[0] != '\0'))
 		prompt=prompt_string;
 	return(des_read_pw_string(buf,len,prompt,verify));

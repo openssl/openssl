@@ -77,7 +77,7 @@ OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer)
 	X509_NAME *iname;
 	ASN1_INTEGER *serial;
 	ASN1_BIT_STRING *ikey;
-#ifndef NO_SHA1
+#ifndef OPENSSL_NO_SHA1
 	if(!dgst) dgst = EVP_sha1();
 #endif
 	iname = X509_get_issuer_name(subject);

@@ -369,7 +369,7 @@ static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 
 static int check_chain_purpose(X509_STORE_CTX *ctx)
 {
-#ifdef NO_CHAIN_VERIFY
+#ifdef OPENSSL_NO_CHAIN_VERIFY
 	return 1;
 #else
 	int i, ok=0;
@@ -411,7 +411,7 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 
 static int check_trust(X509_STORE_CTX *ctx)
 {
-#ifdef NO_CHAIN_VERIFY
+#ifdef OPENSSL_NO_CHAIN_VERIFY
 	return 1;
 #else
 	int i, ok;

@@ -197,7 +197,7 @@ void *lh_insert(LHASH *lh, const void *data)
 			}
 		nn->data=data;
 		nn->next=NULL;
-#ifndef NO_HASH_COMP
+#ifndef OPENSSL_NO_HASH_COMP
 		nn->hash=hash;
 #endif
 		*rn=nn;
@@ -318,7 +318,7 @@ static void expand(LHASH *lh)
 	
 	for (np= *n1; np != NULL; )
 		{
-#ifndef NO_HASH_COMP
+#ifndef OPENSSL_NO_HASH_COMP
 		hash=np->hash;
 #else
 		hash=lh->hash(np->data);
@@ -415,7 +415,7 @@ static LHASH_NODE **getrn(LHASH *lh, const void *data, unsigned long *rhash)
 	ret= &(lh->b[(int)nn]);
 	for (n1= *ret; n1 != NULL; n1=n1->next)
 		{
-#ifndef NO_HASH_COMP
+#ifndef OPENSSL_NO_HASH_COMP
 		lh->num_hash_comps++;
 		if (n1->hash != hash)
 			{

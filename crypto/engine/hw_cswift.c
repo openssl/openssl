@@ -63,8 +63,8 @@
 #include "engine_int.h"
 #include <openssl/engine.h>
 
-#ifndef NO_HW
-#ifndef NO_HW_CSWIFT
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_CSWIFT
 
 /* Attribution notice: Rainbow have generously allowed me to reproduce
  * the necessary definitions here from their API. This means the support
@@ -804,5 +804,5 @@ static int cswift_mod_exp_dh(const DH *dh, BIGNUM *r,
 	return cswift_mod_exp(r, a, p, m, ctx);
 	}
 
-#endif /* !NO_HW_CSWIFT */
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW_CSWIFT */
+#endif /* !OPENSSL_NO_HW */

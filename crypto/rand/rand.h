@@ -59,6 +59,8 @@
 #ifndef HEADER_RAND_H
 #define HEADER_RAND_H
 
+#include <openssl/e_os2.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -101,7 +103,7 @@ int RAND_poll(void);
 }
 #endif
 
-#if defined(WINDOWS) || defined(WIN32)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 #include <windows.h>
 
 #ifdef  __cplusplus

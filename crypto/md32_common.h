@@ -190,7 +190,7 @@
 #  else
 #   define ROTATE(a,n)	__rol(a,n)
 #  endif
-# elif defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM) && !defined(NO_INLINE_ASM)
+# elif defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
   /*
    * Some GNU C inline assembler templates. Note that these are
    * rotates by *constant* number of bits! But that's exactly
@@ -222,7 +222,7 @@
  * Engage compiler specific "fetch in reverse byte order"
  * intrinsic function if available.
  */
-# if defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM) && !defined(NO_INLINE_ASM)
+# if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
   /* some GNU C inline assembler templates by <appro@fy.chalmers.se> */
 #  if defined(__i386) && !defined(I386_ONLY)
 #   define BE_FETCH32(a)	({ register unsigned int l=(a);\
@@ -240,7 +240,7 @@
 			   l;				\
 			})
 
-#  elif defined(__sparc) && defined(ULTRASPARC)
+#  elif defined(__sparc) && defined(OPENSSL_SYS_ULTRASPARC)
 #  define LE_FETCH32(a)	({ register unsigned int l;		\
 				asm (				\
 				"lda [%1]#ASI_PRIMARY_LITTLE,%0"\

@@ -55,7 +55,7 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-#if !defined(NO_HMAC) && !defined(NO_SHA)
+#if !defined(OPENSSL_NO_HMAC) && !defined(OPENSSL_NO_SHA)
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/x509.h>

@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>

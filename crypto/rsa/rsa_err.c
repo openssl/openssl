@@ -63,7 +63,7 @@
 #include <openssl/rsa.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA RSA_str_functs[]=
 	{
 {ERR_PACK(0,RSA_F_MEMORY_LOCK,0),	"MEMORY_LOCK"},
@@ -139,7 +139,7 @@ void ERR_load_RSA_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_RSA,RSA_str_functs);
 		ERR_load_strings(ERR_LIB_RSA,RSA_str_reasons);
 #endif

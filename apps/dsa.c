@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -187,7 +187,7 @@ bad:
 		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err," -des            encrypt PEM output with cbc des\n");
 		BIO_printf(bio_err," -des3           encrypt PEM output with ede cbc des using 168 bit key\n");
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err," -idea           encrypt PEM output with cbc idea\n");
 #endif
 		BIO_printf(bio_err," -text           print the key in text\n");

@@ -120,7 +120,7 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 	case RSA_PKCS1_PADDING:
 		i=RSA_padding_add_PKCS1_type_2(buf,num,from,flen);
 		break;
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 	case RSA_PKCS1_OAEP_PADDING:
 	        i=RSA_padding_add_PKCS1_OAEP(buf,num,from,flen,NULL,0);
 		break;
@@ -329,7 +329,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 	case RSA_PKCS1_PADDING:
 		r=RSA_padding_check_PKCS1_type_2(to,num,buf,j,num);
 		break;
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
         case RSA_PKCS1_OAEP_PADDING:
 	        r=RSA_padding_check_PKCS1_OAEP(to,num,buf,j,num,NULL,0);
                 break;

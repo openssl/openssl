@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_CAST
+#ifndef OPENSSL_NO_CAST
 
 #include <stdio.h>
 #include "cryptlib.h"

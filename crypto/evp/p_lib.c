@@ -66,12 +66,12 @@
 static void EVP_PKEY_free_it(EVP_PKEY *x);
 int EVP_PKEY_bits(EVP_PKEY *pkey)
 	{
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	if (pkey->type == EVP_PKEY_RSA)
 		return(BN_num_bits(pkey->pkey.rsa->n));
 	else
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (pkey->type == EVP_PKEY_DSA)
 		return(BN_num_bits(pkey->pkey.dsa->p));
 #endif
@@ -82,12 +82,12 @@ int EVP_PKEY_size(EVP_PKEY *pkey)
 	{
 	if (pkey == NULL)
 		return(0);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	if (pkey->type == EVP_PKEY_RSA)
 		return(RSA_size(pkey->pkey.rsa));
 	else
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (pkey->type == EVP_PKEY_DSA)
 		return(DSA_size(pkey->pkey.dsa));
 #endif
@@ -96,7 +96,7 @@ int EVP_PKEY_size(EVP_PKEY *pkey)
 
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 	{
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	if (pkey->type == EVP_PKEY_DSA)
 		{
 		int ret=pkey->save_parameters;
@@ -122,7 +122,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, EVP_PKEY *from)
 		EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS,EVP_R_MISSING_PARAMETERS);
 		goto err;
 		}
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	if (to->type == EVP_PKEY_DSA)
 		{
 		BIGNUM *a;
@@ -147,7 +147,7 @@ err:
 
 int EVP_PKEY_missing_parameters(EVP_PKEY *pkey)
 	{
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	if (pkey->type == EVP_PKEY_DSA)
 		{
 		DSA *dsa;
@@ -162,7 +162,7 @@ int EVP_PKEY_missing_parameters(EVP_PKEY *pkey)
 
 int EVP_PKEY_cmp_parameters(EVP_PKEY *a, EVP_PKEY *b)
 	{
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	if ((a->type == EVP_PKEY_DSA) && (b->type == EVP_PKEY_DSA))
 		{
 		if (	BN_cmp(a->pkey.dsa->p,b->pkey.dsa->p) ||
@@ -205,7 +205,7 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, char *key)
 	return(key != NULL);
 	}
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 {
 	int ret = EVP_PKEY_assign_RSA(pkey, key);
@@ -224,7 +224,7 @@ RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 }
 #endif
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
 {
 	int ret = EVP_PKEY_assign_DSA(pkey, key);
@@ -243,7 +243,7 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 }
 #endif
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 
 int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
 {
@@ -309,13 +309,13 @@ static void EVP_PKEY_free_it(EVP_PKEY *x)
 	{
 	switch (x->type)
 		{
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	case EVP_PKEY_RSA:
 	case EVP_PKEY_RSA2:
 		RSA_free(x->pkey.rsa);
 		break;
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	case EVP_PKEY_DSA:
 	case EVP_PKEY_DSA2:
 	case EVP_PKEY_DSA3:
@@ -323,7 +323,7 @@ static void EVP_PKEY_free_it(EVP_PKEY *x)
 		DSA_free(x->pkey.dsa);
 		break;
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	case EVP_PKEY_DH:
 		DH_free(x->pkey.dh);
 		break;

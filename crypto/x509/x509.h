@@ -60,39 +60,39 @@
 #define HEADER_X509_H
 
 #include <openssl/symhacks.h>
-#ifndef NO_BUFFER
+#ifndef OPENSSL_NO_BUFFER
 #include <openssl/buffer.h>
 #endif
-#ifndef NO_EVP
+#ifndef OPENSSL_NO_EVP
 #include <openssl/evp.h>
 #endif
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
 #include <openssl/stack.h>
 #include <openssl/asn1.h>
 #include <openssl/safestack.h>
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
 
 #include <openssl/evp.h>
-
+#include <openssl/e_os2.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 /* Under Win32 this is defined in wincrypt.h */
 #undef X509_NAME
 #endif
@@ -167,7 +167,7 @@ typedef struct X509_name_st
 	{
 	STACK_OF(X509_NAME_ENTRY) *entries;
 	int modified;	/* true if 'bytes' needs to be built */
-#ifndef NO_BUFFER
+#ifndef OPENSSL_NO_BUFFER
 	BUF_MEM *bytes;
 #else
 	char *bytes;
@@ -269,7 +269,7 @@ typedef struct x509_st
 	unsigned long ex_nscert;
 	ASN1_OCTET_STRING *skid;
 	struct AUTHORITY_KEYID_st *akid;
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif
 	X509_CERT_AUX *aux;
@@ -442,7 +442,7 @@ typedef struct private_key_st
 	int references;
 	} X509_PKEY;
 
-#ifndef NO_EVP
+#ifndef OPENSSL_NO_EVP
 typedef struct X509_info_st
 	{
 	X509 *x509;
@@ -698,7 +698,7 @@ extern "C" {
 const char *X509_verify_cert_error_string(long n);
 
 #ifndef SSLEAY_MACROS
-#ifndef NO_EVP
+#ifndef OPENSSL_NO_EVP
 int X509_verify(X509 *a, EVP_PKEY *r);
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
@@ -731,14 +731,14 @@ int X509_NAME_digest(const X509_NAME *data,const EVP_MD *type,
 		unsigned char *md, unsigned int *len);
 #endif
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 X509 *d2i_X509_fp(FILE *fp, X509 **x509);
 int i2d_X509_fp(FILE *fp,X509 *x509);
 X509_CRL *d2i_X509_CRL_fp(FILE *fp,X509_CRL **crl);
 int i2d_X509_CRL_fp(FILE *fp,X509_CRL *crl);
 X509_REQ *d2i_X509_REQ_fp(FILE *fp,X509_REQ **req);
 int i2d_X509_REQ_fp(FILE *fp,X509_REQ *req);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 RSA *d2i_RSAPrivateKey_fp(FILE *fp,RSA **rsa);
 int i2d_RSAPrivateKey_fp(FILE *fp,RSA *rsa);
 RSA *d2i_RSAPublicKey_fp(FILE *fp,RSA **rsa);
@@ -746,7 +746,7 @@ int i2d_RSAPublicKey_fp(FILE *fp,RSA *rsa);
 RSA *d2i_RSA_PUBKEY_fp(FILE *fp,RSA **rsa);
 int i2d_RSA_PUBKEY_fp(FILE *fp,RSA *rsa);
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa);
 int i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa);
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa);
@@ -764,14 +764,14 @@ int i2d_PUBKEY_fp(FILE *fp, EVP_PKEY *pkey);
 EVP_PKEY *d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a);
 #endif
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 X509 *d2i_X509_bio(BIO *bp,X509 **x509);
 int i2d_X509_bio(BIO *bp,X509 *x509);
 X509_CRL *d2i_X509_CRL_bio(BIO *bp,X509_CRL **crl);
 int i2d_X509_CRL_bio(BIO *bp,X509_CRL *crl);
 X509_REQ *d2i_X509_REQ_bio(BIO *bp,X509_REQ **req);
 int i2d_X509_REQ_bio(BIO *bp,X509_REQ *req);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 RSA *d2i_RSAPrivateKey_bio(BIO *bp,RSA **rsa);
 int i2d_RSAPrivateKey_bio(BIO *bp,RSA *rsa);
 RSA *d2i_RSAPublicKey_bio(BIO *bp,RSA **rsa);
@@ -779,7 +779,7 @@ int i2d_RSAPublicKey_bio(BIO *bp,RSA *rsa);
 RSA *d2i_RSA_PUBKEY_bio(BIO *bp,RSA **rsa);
 int i2d_RSA_PUBKEY_bio(BIO *bp,RSA *rsa);
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 DSA *d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa);
 int i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa);
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa);
@@ -805,7 +805,7 @@ X509_REQ *X509_REQ_dup(X509_REQ *req);
 X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn);
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
 X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 RSA *RSAPublicKey_dup(RSA *rsa);
 RSA *RSAPrivateKey_dup(RSA *rsa);
 #endif
@@ -840,12 +840,12 @@ int		X509_get_pubkey_parameters(EVP_PKEY *pkey,
 int		i2d_PUBKEY(EVP_PKEY *a,unsigned char **pp);
 EVP_PKEY *	d2i_PUBKEY(EVP_PKEY **a,unsigned char **pp,
 			long length);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 int		i2d_RSA_PUBKEY(RSA *a,unsigned char **pp);
 RSA *		d2i_RSA_PUBKEY(RSA **a,unsigned char **pp,
 			long length);
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 int		i2d_DSA_PUBKEY(DSA *a,unsigned char **pp);
 DSA *		d2i_DSA_PUBKEY(DSA **a,unsigned char **pp,
 			long length);
@@ -902,7 +902,7 @@ DECLARE_ASN1_FUNCTIONS(NETSCAPE_SPKI)
 DECLARE_ASN1_FUNCTIONS(NETSCAPE_SPKAC)
 DECLARE_ASN1_FUNCTIONS(NETSCAPE_CERT_SEQUENCE)
 
-#ifndef NO_EVP
+#ifndef OPENSSL_NO_EVP
 X509_INFO *	X509_INFO_new(void);
 void		X509_INFO_free(X509_INFO *a);
 char *		X509_NAME_oneline(X509_NAME *a,char *buf,int size);
@@ -987,7 +987,7 @@ int		X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b);
 unsigned long	X509_NAME_hash(X509_NAME *x);
 
 int		X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b);
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int		X509_print_ex_fp(FILE *bp,X509 *x, unsigned long nmflag, unsigned long cflag);
 int		X509_print_fp(FILE *bp,X509 *x);
 int		X509_CRL_print_fp(FILE *bp,X509_CRL *x);
@@ -995,7 +995,7 @@ int		X509_REQ_print_fp(FILE *bp,X509_REQ *req);
 int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent, unsigned long flags);
 #endif
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 int		X509_NAME_print(BIO *bp, X509_NAME *name, int obase);
 int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent, unsigned long flags);
 int		X509_print_ex(BIO *bp,X509 *x, unsigned long nmflag, unsigned long cflag);

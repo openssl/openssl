@@ -65,11 +65,12 @@
 #ifndef HEADER_X509_VFY_H
 #define HEADER_X509_VFY_H
 
-#ifndef NO_LHASH
+#ifndef OPENSSL_NO_LHASH
 #include <openssl/lhash.h>
 #endif
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -290,21 +291,6 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 #define	X509_V_FLAG_CB_ISSUER_CHECK		0x1	/* Send issuer+subject checks to verify_cb */
 #define	X509_V_FLAG_USE_CHECK_TIME		0x2	/* Use check time instead of current time */
 
-		  /* These functions are being redefined in another directory,
-		     and clash when the linker is case-insensitive, so let's
-		     hide them a little, by giving them an extra 'o' at the
-		     beginning of the name... */
-#ifdef VMS
-#undef X509v3_cleanup_extensions
-#define X509v3_cleanup_extensions oX509v3_cleanup_extensions
-#undef X509v3_add_extension
-#define X509v3_add_extension oX509v3_add_extension
-#undef X509v3_add_netscape_extensions
-#define X509v3_add_netscape_extensions oX509v3_add_netscape_extensions
-#undef X509v3_add_standard_extensions
-#define X509v3_add_standard_extensions oX509v3_add_standard_extensions
-#endif
-
 int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, int type,
 	     X509_NAME *name);
 X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,int type,X509_NAME *name);
@@ -338,7 +324,7 @@ int X509_STORE_get_by_subject(X509_STORE_CTX *vs,int type,X509_NAME *name,
 int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
 	long argl, char **ret);
 
-#ifndef NO_STDIO
+#ifndef OPENSSL_NO_STDIO
 int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type);
 int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type);
 int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type);
@@ -358,7 +344,7 @@ int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, int type, char *str,
 	int len, X509_OBJECT *ret);
 int X509_LOOKUP_shutdown(X509_LOOKUP *ctx);
 
-#ifndef NO_STDIO
+#ifndef OPENSSL_NO_STDIO
 int	X509_STORE_load_locations (X509_STORE *ctx,
 		const char *file, const char *dir);
 int	X509_STORE_set_default_paths(X509_STORE *ctx);

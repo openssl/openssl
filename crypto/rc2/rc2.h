@@ -59,7 +59,7 @@
 #ifndef HEADER_RC2_H
 #define HEADER_RC2_H
 
-#ifdef NO_RC2
+#ifdef OPENSSL_NO_RC2
 #error RC2 is disabled.
 #endif
 

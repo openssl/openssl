@@ -1,10 +1,10 @@
 /* apps/passwd.c */
 
-#if defined NO_MD5 || defined CHARSET_EBCDIC
+#if defined OPENSSL_NO_MD5 || defined CHARSET_EBCDIC
 # define NO_MD5CRYPT_1
 #endif
 
-#if !defined(NO_DES) || !defined(NO_MD5CRYPT_1)
+#if !defined(OPENSSL_NO_DES) || !defined(NO_MD5CRYPT_1)
 
 #include <assert.h>
 #include <string.h>
@@ -16,7 +16,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 # include <openssl/des.h>
 #endif
 #ifndef NO_MD5CRYPT_1
@@ -157,7 +157,7 @@ int MAIN(int argc, char **argv)
 		badopt = 1;
 
 	/* reject unsupported algorithms */
-#ifdef NO_DES
+#ifdef OPENSSL_NO_DES
 	if (usecrypt) badopt = 1;
 #endif
 #ifdef NO_MD5CRYPT_1
@@ -168,7 +168,7 @@ int MAIN(int argc, char **argv)
 		{
 		BIO_printf(bio_err, "Usage: passwd [options] [passwords]\n");
 		BIO_printf(bio_err, "where options are\n");
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 		BIO_printf(bio_err, "-crypt             standard Unix password algorithm (default)\n");
 #endif
 #ifndef NO_MD5CRYPT_1
@@ -422,7 +422,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 	/* first make sure we have a salt */
 	if (!passed_salt)
 		{
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 		if (usecrypt)
 			{
 			if (*salt_malloc_p == NULL)
@@ -441,7 +441,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 			                                    * back to ASCII */
 #endif
 			}
-#endif /* !NO_DES */
+#endif /* !OPENSSL_NO_DES */
 
 #ifndef NO_MD5CRYPT_1
 		if (use1 || useapr1)
@@ -476,7 +476,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 	assert(strlen(passwd) <= pw_maxlen);
 	
 	/* now compute password hash */
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 	if (usecrypt)
 		hash = des_crypt(passwd, *salt_p);
 #endif

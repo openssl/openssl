@@ -63,7 +63,7 @@
 #include <openssl/evp.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA EVP_str_functs[]=
 	{
 {ERR_PACK(0,EVP_F_D2I_PKEY,0),	"D2I_PKEY"},
@@ -149,7 +149,7 @@ void ERR_load_EVP_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_EVP,EVP_str_functs);
 		ERR_load_strings(ERR_LIB_EVP,EVP_str_reasons);
 #endif

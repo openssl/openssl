@@ -125,7 +125,7 @@ long MS_CALLBACK BIO_debug_callback(BIO *bio, int cmd, const char *argp,
 	b=(BIO *)bio->cb_arg;
 	if (b != NULL)
 		BIO_write(b,buf,strlen(buf));
-#if !defined(NO_STDIO) && !defined(WIN16)
+#if !defined(OPENSSL_NO_STDIO) && !defined(WIN16)
 	else
 		fputs(buf,stderr);
 #endif

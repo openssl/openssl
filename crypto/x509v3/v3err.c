@@ -63,7 +63,7 @@
 #include <openssl/x509v3.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA X509V3_str_functs[]=
 	{
 {ERR_PACK(0,X509V3_F_COPY_EMAIL,0),	"COPY_EMAIL"},
@@ -170,7 +170,7 @@ void ERR_load_X509V3_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_X509V3,X509V3_str_functs);
 		ERR_load_strings(ERR_LIB_X509V3,X509V3_str_reasons);
 #endif

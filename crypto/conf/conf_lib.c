@@ -98,7 +98,7 @@ LHASH *CONF_load(LHASH *conf, const char *file, long *eline)
 	return ltmp;
 	}
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 LHASH *CONF_load_fp(LHASH *conf, FILE *fp,long *eline)
 	{
 	BIO *btmp;
@@ -208,7 +208,7 @@ void CONF_free(LHASH *conf)
 	NCONF_free_data(&ctmp);
 	}
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int CONF_dump_fp(LHASH *conf, FILE *out)
 	{
 	BIO *btmp;
@@ -284,7 +284,7 @@ int NCONF_load(CONF *conf, const char *file, long *eline)
 	return conf->meth->load(conf, file, eline);
 	}
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int NCONF_load_fp(CONF *conf, FILE *fp,long *eline)
 	{
 	BIO *btmp;
@@ -371,7 +371,7 @@ int NCONF_get_number_e(CONF *conf,char *group,char *name,long *result)
 	return 1;
 	}
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int NCONF_dump_fp(CONF *conf, FILE *out)
 	{
 	BIO *btmp;

@@ -135,7 +135,7 @@ static unsigned long get_error_values(int inc,const char **file,int *line,
 				      const char **data,int *flags);
 
 static void ERR_STATE_free(ERR_STATE *s);
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA ERR_str_libraries[]=
 	{
 {ERR_PACK(ERR_LIB_NONE,0,0)		,"unknown library"},
@@ -306,7 +306,7 @@ void ERR_load_ERR_strings(void)
 			}
 		CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
 
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(0,ERR_str_libraries);
 		ERR_load_strings(0,ERR_str_reasons);
 		ERR_load_strings(ERR_LIB_SYS,ERR_str_functs);

@@ -60,11 +60,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(NO_DES) && !defined(NO_MDC2)
-#define NO_MDC2
+#if defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_MDC2)
+#define OPENSSL_NO_MDC2
 #endif
 
-#ifdef NO_MDC2
+#ifdef OPENSSL_NO_MDC2
 int main(int argc, char *argv[])
 {
     printf("No MDC2 support\n");

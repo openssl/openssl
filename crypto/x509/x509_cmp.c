@@ -75,7 +75,7 @@ int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
 	return(X509_NAME_cmp(ai->issuer,bi->issuer));
 	}
 
-#ifndef NO_MD5
+#ifndef OPENSSL_NO_MD5
 unsigned long X509_issuer_and_serial_hash(X509 *a)
 	{
 	unsigned long ret=0;
@@ -137,7 +137,7 @@ unsigned long X509_subject_name_hash(X509 *x)
 	return(X509_NAME_hash(x->cert_info->subject));
 	}
 
-#ifndef NO_SHA
+#ifndef OPENSSL_NO_SHA
 /* Compare two certificates: they must be identical for
  * this to work. NB: Although "cmp" operations are generally
  * prototyped to take "const" arguments (eg. for use in
@@ -192,7 +192,7 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 	return(0);
 	}
 
-#ifndef NO_MD5
+#ifndef OPENSSL_NO_MD5
 /* I now DER encode the name and hash it.  Since I cache the DER encoding,
  * this is reasonably efficient. */
 unsigned long X509_NAME_hash(X509_NAME *x)
@@ -274,7 +274,7 @@ int X509_check_private_key(X509 *x, EVP_PKEY *k)
 	    }
 	switch (k->type)
 		{
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	case EVP_PKEY_RSA:
 		if (BN_cmp(xk->pkey.rsa->n,k->pkey.rsa->n) != 0
 		    || BN_cmp(xk->pkey.rsa->e,k->pkey.rsa->e) != 0)
@@ -284,7 +284,7 @@ int X509_check_private_key(X509 *x, EVP_PKEY *k)
 		    }
 		break;
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	case EVP_PKEY_DSA:
 		if (BN_cmp(xk->pkey.dsa->pub_key,k->pkey.dsa->pub_key) != 0)
 		    {
@@ -293,7 +293,7 @@ int X509_check_private_key(X509 *x, EVP_PKEY *k)
 		    }
 		break;
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	case EVP_PKEY_DH:
 		/* No idea */
 	        X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_CANT_CHECK_DH_KEY);

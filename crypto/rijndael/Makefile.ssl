@@ -12,7 +12,8 @@ INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	$(TOP)/util/domd $(TOP)
+MAKEDEPPROG=	makedepend
+MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -83,6 +84,6 @@ dclean:
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
-# DO NOT DELETE THIS LINE
+# DO NOT DELETE THIS LINE -- make depend depends on it.
 
-rd_fst.o: rd_fst.h
+rd_fst.o: rd_fst.c rd_fst.h

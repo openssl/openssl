@@ -65,7 +65,7 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 #include <openssl/des.h>
 #endif
 
@@ -87,7 +87,7 @@ static int do_pk8pkey_fp(FILE *bp, EVP_PKEY *x, int isder,
 
 static int def_callback(char *buf, int num, int w, void *key)
 	{
-#ifdef NO_FP_API
+#ifdef OPENSSL_NO_FP_API
 	/* We should not ever call the default callback routine from
 	 * windows. */
 	PEMerr(PEM_F_DEF_CALLBACK,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -164,7 +164,7 @@ void PEM_dek_info(char *buf, const char *type, int len, char *str)
 	buf[j+i*2+1]='\0';
 	}
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 char *PEM_ASN1_read(char *(*d2i)(), const char *name, FILE *fp, char **x,
 	     pem_password_cb *cb, void *u)
 	{
@@ -295,7 +295,7 @@ err:
 	return(ret);
 	}
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int PEM_ASN1_write(int (*i2d)(), const char *name, FILE *fp, char *x,
 	     const EVP_CIPHER *enc, unsigned char *kstr, int klen,
 	     pem_password_cb *callback, void *u)
@@ -540,7 +540,7 @@ static int load_iv(unsigned char **fromp, unsigned char *to, int num)
 	return(1);
 	}
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int PEM_write(FILE *fp, char *name, char *header, unsigned char *data,
 	     long len)
         {
@@ -614,7 +614,7 @@ err:
 	return(0);
 	}
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int PEM_read(FILE *fp, char **name, char **header, unsigned char **data,
 	     long *len)
         {
@@ -903,7 +903,7 @@ EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, vo
 	return ret;
 }
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 
 int i2d_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
 				  char *kstr, int klen,

@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

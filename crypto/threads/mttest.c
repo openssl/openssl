@@ -86,7 +86,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-#ifdef NO_FP_API
+#ifdef OPENSSL_NO_FP_API
 #define APPS_WIN16
 #include "../buffer/bss_file.c"
 #endif

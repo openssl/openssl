@@ -209,7 +209,7 @@ static int init_client_ip(int *sock, unsigned char ip[4], int port)
 	s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
 	if (s == INVALID_SOCKET) { perror("socket"); return(0); }
 
-#ifndef MPE
+#ifndef OPENSSL_SYS_MPE
 	i=0;
 	i=setsockopt(s,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
 	if (i < 0) { perror("keepalive"); return(0); }

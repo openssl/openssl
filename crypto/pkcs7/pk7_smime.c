@@ -115,17 +115,17 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 			PKCS7err(PKCS7_F_PKCS7_SIGN,ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 		PKCS7_simple_smimecap (smcap, NID_des_ede3_cbc, -1);
 #endif
-#ifndef NO_RC2
+#ifndef OPENSSL_NO_RC2
 		PKCS7_simple_smimecap (smcap, NID_rc2_cbc, 128);
 		PKCS7_simple_smimecap (smcap, NID_rc2_cbc, 64);
 #endif
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 		PKCS7_simple_smimecap (smcap, NID_des_cbc, -1);
 #endif
-#ifndef NO_RC2
+#ifndef OPENSSL_NO_RC2
 		PKCS7_simple_smimecap (smcap, NID_rc2_cbc, 40);
 #endif
 		PKCS7_add_attrib_smimecap (si, smcap);

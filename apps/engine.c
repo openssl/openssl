@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef NO_STDIO
+#ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif
 #include "apps.h"

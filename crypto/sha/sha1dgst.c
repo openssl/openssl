@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#if !defined(NO_SHA1) && !defined(NO_SHA)
+#if !defined(OPENSSL_NO_SHA1) && !defined(OPENSSL_NO_SHA)
 
 #undef  SHA_0
 #define SHA_1

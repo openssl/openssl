@@ -76,7 +76,7 @@ int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki)
 	pkey = X509_PUBKEY_get(spki->spkac->pubkey);
 	if(!pkey) BIO_printf(out, "  Unable to load public key\n");
 	else {
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 		if (pkey->type == EVP_PKEY_RSA)
 			{
 			BIO_printf(out,"  RSA Public Key: (%d bit)\n",
@@ -85,7 +85,7 @@ int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki)
 			}
 		else 
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (pkey->type == EVP_PKEY_DSA)
 		{
 		BIO_printf(out,"  DSA Public Key:\n");

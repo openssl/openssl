@@ -60,7 +60,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef NO_SHA
+#ifdef OPENSSL_NO_SHA
 int main(int argc, char *argv[])
 {
     printf("No SHA support\n");

@@ -59,7 +59,7 @@
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 #include <stdio.h> /* FILE */
 #endif
 #include <openssl/opensslconf.h>
@@ -87,7 +87,8 @@ extern "C" {
  * For machines with only one compiler (or shared libraries), this should
  * be on.  Again this in only really a problem on machines
  * using "long long's", are 32bit, and are not using my assembler code. */
-#if defined(MSDOS) || defined(WINDOWS) || defined(WIN32) || defined(linux)
+#if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || \
+    defined(OPENSSL_SYS_WIN32) || defined(linux)
 #undef BN_DIV2W
 #define BN_DIV2W
 #endif
@@ -141,7 +142,7 @@ extern "C" {
 #endif
 
 #ifdef THIRTY_TWO_BIT
-#if defined(WIN32) && !defined(__GNUC__)
+#if defined(OPENSSL_SYS_WIN32) && !defined(__GNUC__)
 #define BN_ULLONG	unsigned _int64
 #else
 #define BN_ULLONG	unsigned long long
@@ -152,7 +153,7 @@ extern "C" {
 #define BN_BYTES	4
 #define BN_BITS2	32
 #define BN_BITS4	16
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 /* VC++ doesn't like the LL suffix */
 #define BN_MASK		(0xffffffffffffffffL)
 #else
@@ -392,7 +393,7 @@ int	BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	const BIGNUM *m,BN_CTX *ctx);
 
 int	BN_mask_bits(BIGNUM *a,int n);
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int	BN_print_fp(FILE *fp, const BIGNUM *a);
 #endif
 #ifdef HEADER_BIO_H

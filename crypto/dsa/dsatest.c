@@ -69,7 +69,7 @@
 #include "../bio/bss_file.c"
 #endif
 
-#ifdef NO_DSA
+#ifdef OPENSSL_NO_DSA
 int main(int argc, char *argv[])
 {
     printf("No DSA support\n");

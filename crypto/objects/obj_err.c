@@ -63,7 +63,7 @@
 #include <openssl/objects.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA OBJ_str_functs[]=
 	{
 {ERR_PACK(0,OBJ_F_OBJ_CREATE,0),	"OBJ_create"},
@@ -90,7 +90,7 @@ void ERR_load_OBJ_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_OBJ,OBJ_str_functs);
 		ERR_load_strings(ERR_LIB_OBJ,OBJ_str_reasons);
 #endif

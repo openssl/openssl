@@ -59,7 +59,7 @@
 #ifndef HEADER_MD2_H
 #define HEADER_MD2_H
 
-#ifdef NO_MD2
+#ifdef OPENSSL_NO_MD2
 #error MD2 is disabled.
 #endif
 

@@ -63,7 +63,7 @@
 #include <openssl/dso.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA DSO_str_functs[]=
 	{
 {ERR_PACK(0,DSO_F_DLFCN_BIND_FUNC,0),	"DLFCN_BIND_FUNC"},
@@ -126,7 +126,7 @@ void ERR_load_DSO_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_DSO,DSO_str_functs);
 		ERR_load_strings(ERR_LIB_DSO,DSO_str_reasons);
 #endif

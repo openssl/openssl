@@ -67,7 +67,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef NO_STDIO
+#ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif
 #define USE_SOCKETS
@@ -314,11 +314,11 @@ static int parseArgs(int argc, char **argv)
 		}
 	else if(strcmp(*argv,"-bugs") == 0)
 	    st_bugs=1;
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 	else if(strcmp(*argv,"-ssl2") == 0)
 	    s_time_meth=SSLv2_client_method();
 #endif
-#ifndef NO_SSL3
+#ifndef OPENSSL_NO_SSL3
 	else if(strcmp(*argv,"-ssl3") == 0)
 	    s_time_meth=SSLv3_client_method();
 #endif
@@ -406,11 +406,11 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
-#if !defined(NO_SSL2) && !defined(NO_SSL3)
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	s_time_meth=SSLv23_client_method();
-#elif !defined(NO_SSL3)
+#elif !defined(OPENSSL_NO_SSL3)
 	s_time_meth=SSLv3_client_method();
-#elif !defined(NO_SSL2)
+#elif !defined(OPENSSL_NO_SSL2)
 	s_time_meth=SSLv2_client_method();
 #endif
 

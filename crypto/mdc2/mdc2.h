@@ -65,7 +65,7 @@
 extern "C" {
 #endif
 
-#ifdef NO_MDC2
+#ifdef OPENSSL_NO_MDC2
 #error MDC2 is disabled.
 #endif
 

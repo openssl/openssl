@@ -59,7 +59,7 @@
 #ifndef HEADER_SSL3_H 
 #define HEADER_SSL3_H 
 
-#ifndef NO_COMP
+#ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
 #endif
 #include <openssl/buffer.h>
@@ -165,7 +165,8 @@ extern "C" {
 #define SSL3_RT_HEADER_LENGTH			5
 
 /* Due to MS stuffing up, this can change.... */
-#if defined(WIN16) || (defined(MSDOS) && !defined(WIN32))
+#if defined(OPENSSL_SYS_WIN16) || \
+	(defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32))
 #define SSL3_RT_MAX_EXTRA			(14000)
 #else
 #define SSL3_RT_MAX_EXTRA			(16384)
@@ -308,7 +309,7 @@ typedef struct ssl3_state_st
 
 		/* used to hold the new cipher we are going to use */
 		SSL_CIPHER *new_cipher;
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 		DH *dh;
 #endif
 		/* used when SSL_ST_FLUSH_DATA is entered */
@@ -329,7 +330,7 @@ typedef struct ssl3_state_st
 
 		const EVP_CIPHER *new_sym_enc;
 		const EVP_MD *new_hash;
-#ifndef NO_COMP
+#ifndef OPENSSL_NO_COMP
 		const SSL_COMP *new_compression;
 #else
 		char *new_compression;

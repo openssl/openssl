@@ -18,7 +18,7 @@ $out_def="out32";
 $tmp_def="tmp32";
 $inc_def="inc32";
 #enable max error messages, disable most common warnings
-$cflags="-DWIN32_LEAN_AND_MEAN -q -w-aus -w-par -w-inl  -c -tWC -tWM -DWINDOWS -DWIN32 -DL_ENDIAN -DDSO_WIN32 ";
+$cflags="-DWIN32_LEAN_AND_MEAN -q -w-aus -w-par -w-inl  -c -tWC -tWM -DOPENSSL_SYSNAME_WIN32 -DL_ENDIAN -DDSO_WIN32 ";
 if ($debug)
 {
     $cflags.="-Od -y -v -vi- -D_DEBUG";

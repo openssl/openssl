@@ -731,7 +731,7 @@ void CRYPTO_mem_leaks(BIO *b)
 	MemCheck_on(); /* release MALLOC2 lock */
 	}
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 void CRYPTO_mem_leaks_fp(FILE *fp)
 	{
 	BIO *b;

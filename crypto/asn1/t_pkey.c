@@ -60,20 +60,20 @@
 #include "cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/bn.h>
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
 
 static int print(BIO *fp,const char *str,BIGNUM *num,
 		unsigned char *buf,int off);
-#ifndef NO_RSA
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_RSA
+#ifndef OPENSSL_NO_FP_API
 int RSA_print_fp(FILE *fp, const RSA *x, int off)
         {
         BIO *b;
@@ -136,10 +136,10 @@ err:
 	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
-#endif /* NO_RSA */
+#endif /* OPENSSL_NO_RSA */
 
-#ifndef NO_DSA
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_DSA
+#ifndef OPENSSL_NO_FP_API
 int DSA_print_fp(FILE *fp, const DSA *x, int off)
 	{
 	BIO *b;
@@ -207,7 +207,7 @@ err:
 	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
-#endif /* !NO_DSA */
+#endif /* !OPENSSL_NO_DSA */
 
 static int print(BIO *bp, const char *number, BIGNUM *num, unsigned char *buf,
 	     int off)
@@ -259,8 +259,8 @@ static int print(BIO *bp, const char *number, BIGNUM *num, unsigned char *buf,
 	return(1);
 	}
 
-#ifndef NO_DH
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_DH
+#ifndef OPENSSL_NO_FP_API
 int DHparams_print_fp(FILE *fp, const DH *x)
         {
         BIO *b;
@@ -312,8 +312,8 @@ err:
 	}
 #endif
 
-#ifndef NO_DSA
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_DSA
+#ifndef OPENSSL_NO_FP_API
 int DSAparams_print_fp(FILE *fp, const DSA *x)
         {
         BIO *b;
@@ -357,5 +357,5 @@ err:
 	return(ret);
 	}
 
-#endif /* !NO_DSA */
+#endif /* !OPENSSL_NO_DSA */
 

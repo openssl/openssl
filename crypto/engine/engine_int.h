@@ -113,33 +113,33 @@ struct engine_st
 /* Returns a structure of software only methods (the default). */
 ENGINE *ENGINE_openssl();
 
-#ifndef NO_HW
+#ifndef OPENSSL_NO_HW
 
-#ifndef NO_HW_CSWIFT
+#ifndef OPENSSL_NO_HW_CSWIFT
 /* Returns a structure of cswift methods ... NB: This can exist and be
  * "used" even on non-cswift systems because the "init" will fail if the
  * card/library are not found. */
 ENGINE *ENGINE_cswift();
-#endif /* !NO_HW_CSWIFT */
+#endif /* !OPENSSL_NO_HW_CSWIFT */
 
-#ifndef NO_HW_NCIPHER
+#ifndef OPENSSL_NO_HW_NCIPHER
 ENGINE *ENGINE_ncipher();
-#endif /* !NO_HW_NCIPHER */
+#endif /* !OPENSSL_NO_HW_NCIPHER */
 
-#ifndef NO_HW_ATALLA
+#ifndef OPENSSL_NO_HW_ATALLA
 /* Returns a structure of atalla methods. */
 ENGINE *ENGINE_atalla();
-#endif /* !NO_HW_ATALLA */
+#endif /* !OPENSSL_NO_HW_ATALLA */
 
-#ifndef NO_HW_NURON
+#ifndef OPENSSL_NO_HW_NURON
 ENGINE *ENGINE_nuron();
-#endif /* !NO_HW_NURON */
+#endif /* !OPENSSL_NO_HW_NURON */
 
-#ifndef NO_HW_UBSEC
+#ifndef OPENSSL_NO_HW_UBSEC
 ENGINE *ENGINE_ubsec();
-#endif /* !NO_HW_UBSEC */
+#endif /* !OPENSSL_NO_HW_UBSEC */
 
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW */
 
 #ifdef  __cplusplus
 }

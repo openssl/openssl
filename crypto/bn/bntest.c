@@ -96,7 +96,7 @@ int test_sqrt(BIO *bp,BN_CTX *ctx);
 int rand_neg(void);
 static int results=0;
 
-#ifdef NO_STDIO
+#ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #include "bss_file.c"
 #endif

@@ -11,7 +11,8 @@ INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	$(TOP)/util/domd $(TOP)
+MAKEDEPPROG=	makedepend
+MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -95,4 +96,4 @@ hmac.o: ../../include/openssl/rc5.h ../../include/openssl/rd_fst.h
 hmac.o: ../../include/openssl/rijndael.h ../../include/openssl/ripemd.h
 hmac.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 hmac.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-hmac.o: ../../include/openssl/symhacks.h
+hmac.o: ../../include/openssl/symhacks.h hmac.c

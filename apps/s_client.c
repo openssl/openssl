@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef NO_STDIO
+#ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif
 
@@ -190,11 +190,11 @@ int MAIN(int argc, char **argv)
 	struct timeval tv;
 #endif
 
-#if !defined(NO_SSL2) && !defined(NO_SSL3)
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_client_method();
-#elif !defined(NO_SSL3)
+#elif !defined(OPENSSL_NO_SSL3)
 	meth=SSLv3_client_method();
-#elif !defined(NO_SSL2)
+#elif !defined(OPENSSL_NO_SSL2)
 	meth=SSLv2_client_method();
 #endif
 
@@ -275,15 +275,15 @@ int MAIN(int argc, char **argv)
 			nbio_test=1;
 		else if	(strcmp(*argv,"-state") == 0)
 			state=1;
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			meth=SSLv2_client_method();
 #endif
-#ifndef NO_SSL3
+#ifndef OPENSSL_NO_SSL3
 		else if	(strcmp(*argv,"-ssl3") == 0)
 			meth=SSLv3_client_method();
 #endif
-#ifndef NO_TLS1
+#ifndef OPENSSL_NO_TLS1
 		else if	(strcmp(*argv,"-tls1") == 0)
 			meth=TLSv1_client_method();
 #endif
@@ -437,12 +437,12 @@ bad:
 
 
 	con=SSL_new(ctx);
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
 	if (con  &&  (con->kssl_ctx = kssl_ctx_new()) != NULL)
                 {
                 kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVER, host);
 		}
-#endif	/* NO_KRB5  */
+#endif	/* OPENSSL_NO_KRB5  */
 /*	SSL_set_cipher_list(con,"RC4-MD5"); */
 
 re_start:

@@ -63,7 +63,7 @@
 #include <openssl/rand.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA RAND_str_functs[]=
 	{
 {ERR_PACK(0,RAND_F_SSLEAY_RAND_BYTES,0),	"SSLEAY_RAND_BYTES"},
@@ -85,7 +85,7 @@ void ERR_load_RAND_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_RAND,RAND_str_functs);
 		ERR_load_strings(ERR_LIB_RAND,RAND_str_reasons);
 #endif

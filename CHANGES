@@ -3,6 +3,13 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Make all configuration macros available for application by making
+     sure they are available in opensslconf.h, by giving them names starting
+     with "OPENSSL_" to avoid conflicts with other packages and by making
+     sure e_os2.h will cover all platform-specific cases together with
+     opensslconf.h.
+     [Richard Levitte]
+
   *) New option -set_serial to 'req' and 'x509' this allows the serial
      number to use to be specified on the command line. Previously self
      signed certificates were hard coded with serial number 0 and the 

@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -194,7 +194,7 @@ bad:
 		BIO_printf(bio_err," -passout arg    output file pass phrase source\n");
 		BIO_printf(bio_err," -des            encrypt PEM output with cbc des\n");
 		BIO_printf(bio_err," -des3           encrypt PEM output with ede cbc des using 168 bit key\n");
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err," -idea           encrypt PEM output with cbc idea\n");
 #endif
 		BIO_printf(bio_err," -text           print the key in text\n");
@@ -261,7 +261,7 @@ bad:
 		if (pubin) rsa=d2i_RSA_PUBKEY_bio(in,NULL);
 		else rsa=d2i_RSAPrivateKey_bio(in,NULL);
 	}
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 	else if (informat == FORMAT_NETSCAPE)
 		{
 		BUF_MEM *buf=NULL;
@@ -375,7 +375,7 @@ bad:
 		if(pubout || pubin) i=i2d_RSA_PUBKEY_bio(out,rsa);
 		else i=i2d_RSAPrivateKey_bio(out,rsa);
 	}
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 	else if (outformat == FORMAT_NETSCAPE)
 		{
 		unsigned char *p,*pp;
@@ -418,7 +418,7 @@ end:
 	if(passout) OPENSSL_free(passout);
 	EXIT(ret);
 	}
-#else /* !NO_RSA */
+#else /* !OPENSSL_NO_RSA */
 
 # if PEDANTIC
 static void *dummy=&dummy;

@@ -59,7 +59,7 @@
 #ifndef HEADER_DES_H
 #define HEADER_DES_H
 
-#ifdef NO_DES
+#ifdef OPENSSL_NO_DES
 #error DES is disabled.
 #endif
 

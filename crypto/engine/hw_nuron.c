@@ -64,8 +64,8 @@
 #include <openssl/engine.h>
 
 
-#ifndef NO_HW
-#ifndef NO_HW_NURON
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_NURON
 
 typedef int tfnModExp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,const BIGNUM *m);
 static tfnModExp *pfnModExp = NULL;
@@ -282,5 +282,5 @@ ENGINE *ENGINE_nuron()
 	return &engine_nuron;
 	}
 
-#endif /* !NO_HW_NURON */
-#endif /* !NO_HW */
+#endif /* !OPENSSL_NO_HW_NURON */
+#endif /* !OPENSSL_NO_HW */

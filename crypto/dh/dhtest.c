@@ -67,7 +67,7 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 
-#ifdef NO_DH
+#ifdef OPENSSL_NO_DH
 int main(int argc, char *argv[])
 {
     printf("No DH support\n");
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 #endif
 
 static void MS_CALLBACK cb(int p, int n, void *arg);
-#ifdef NO_STDIO
+#ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #include "bss_file.c"
 #endif

@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_SOCK
+#ifndef OPENSSL_NO_SOCK
 
 #include <stdio.h>
 #include <stdlib.h>

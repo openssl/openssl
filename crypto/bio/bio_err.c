@@ -63,7 +63,7 @@
 #include <openssl/bio.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA BIO_str_functs[]=
 	{
 {ERR_PACK(0,BIO_F_ACPT_STATE,0),	"ACPT_STATE"},
@@ -141,7 +141,7 @@ void ERR_load_BIO_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_BIO,BIO_str_functs);
 		ERR_load_strings(ERR_LIB_BIO,BIO_str_reasons);
 #endif

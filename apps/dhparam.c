@@ -109,7 +109,7 @@
  *
  */
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -123,7 +123,7 @@
 #include <openssl/pem.h>
 #include <openssl/engine.h>
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
 
@@ -152,7 +152,7 @@ int MAIN(int argc, char **argv)
 	ENGINE *e = NULL;
 	DH *dh=NULL;
 	int i,badops=0,text=0;
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	int dsaparam=0;
 #endif
 	BIO *in=NULL,*out=NULL;
@@ -206,7 +206,7 @@ int MAIN(int argc, char **argv)
 			check=1;
 		else if (strcmp(*argv,"-text") == 0)
 			text=1;
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		else if (strcmp(*argv,"-dsaparam") == 0)
 			dsaparam=1;
 #endif
@@ -238,7 +238,7 @@ bad:
 		BIO_printf(bio_err," -outform arg  output format - one of DER PEM\n");
 		BIO_printf(bio_err," -in arg       input file\n");
 		BIO_printf(bio_err," -out arg      output file\n");
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		BIO_printf(bio_err," -dsaparam     read or generate DSA parameters, convert to DH\n");
 #endif
 		BIO_printf(bio_err," -check        check the DH parameters\n");
@@ -278,7 +278,7 @@ bad:
 	if (g && !num)
 		num = DEFBITS;
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	if (dsaparam)
 		{
 		if (g)
@@ -305,7 +305,7 @@ bad:
 			BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
 				app_RAND_load_files(inrand));
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (dsaparam)
 			{
 			DSA *dsa;
@@ -366,7 +366,7 @@ bad:
 			goto end;
 			}
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (dsaparam)
 			{
 			DSA *dsa;

@@ -19,7 +19,7 @@
  */
 
 
-#if !defined(NO_SHA) && !defined(NO_SHA1)
+#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>

@@ -63,7 +63,7 @@
 #include <openssl/x509.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA X509_str_functs[]=
 	{
 {ERR_PACK(0,X509_F_ADD_CERT_DIR,0),	"ADD_CERT_DIR"},
@@ -143,7 +143,7 @@ void ERR_load_X509_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_X509,X509_str_functs);
 		ERR_load_strings(ERR_LIB_X509,X509_str_reasons);
 #endif

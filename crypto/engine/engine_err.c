@@ -63,7 +63,7 @@
 #include <openssl/engine.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA ENGINE_str_functs[]=
 	{
 {ERR_PACK(0,ENGINE_F_ATALLA_FINISH,0),	"ATALLA_FINISH"},
@@ -186,7 +186,7 @@ void ERR_load_ENGINE_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_ENGINE,ENGINE_str_functs);
 		ERR_load_strings(ERR_LIB_ENGINE,ENGINE_str_reasons);
 #endif

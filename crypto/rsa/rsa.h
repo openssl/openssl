@@ -61,13 +61,13 @@
 
 #include <openssl/asn1.h>
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 
-#ifdef NO_RSA
+#ifdef OPENSSL_NO_RSA
 #error RSA is disabled.
 #endif
 
@@ -224,11 +224,11 @@ void	ERR_load_RSA_strings(void );
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPublicKey)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPrivateKey)
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int	RSA_print_fp(FILE *fp, const RSA *r,int offset);
 #endif
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 int	RSA_print(BIO *bp, const RSA *r,int offset);
 #endif
 

@@ -59,11 +59,13 @@
 #ifndef HEADER_MD4_H
 #define HEADER_MD4_H
 
+#include <openssl/e_os2.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-#ifdef NO_MD4
+#ifdef OPENSSL_NO_MD4
 #error MD4 is disabled.
 #endif
 
@@ -74,9 +76,9 @@ extern "C" {
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
-#if defined(WIN16) || defined(__LP32__)
+#if defined(OPENSSL_SYS_WIN16) || defined(__LP32__)
 #define MD4_LONG unsigned long
-#elif defined(_CRAY) || defined(__ILP64__)
+#elif defined(OPENSSL_SYS_CRAY) || defined(__ILP64__)
 #define MD4_LONG unsigned long
 #define MD4_LONG_LOG2 3
 /*

@@ -60,7 +60,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef NO_MD4
+#ifdef OPENSSL_NO_MD4
 int main(int argc, char *argv[])
 {
     printf("No MD4 support\n");

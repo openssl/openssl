@@ -63,7 +63,7 @@
 #ifndef	KSSL_H
 #define	KSSL_H
 
-#ifndef NO_KRB5
+#ifndef OPENSSL_NO_KRB5
 
 #include <stdio.h>
 #include <ctype.h>
@@ -158,5 +158,5 @@ void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data);
 #ifdef  __cplusplus
 }
 #endif
-#endif	/* NO_KRB5	*/
+#endif	/* OPENSSL_NO_KRB5	*/
 #endif	/* KSSL_H 	*/

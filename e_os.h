@@ -88,7 +88,7 @@ extern "C" {
 #define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
 #endif
 
-#if defined(__MWERKS__) && defined(macintosh)
+#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC)
 # if macintosh==1
 #  ifndef MAC_OS_GUSI_SOURCE
 #    define MAC_OS_pre_X
@@ -108,23 +108,23 @@ extern "C" {
  ********************************************************************/
 /* The following is used becaue of the small stack in some
  * Microsoft operating systems */
-#if defined(WIN16) || defined(MSDOS)
+#if defined(OPENSSL_SYS_MSDOS)
 #  define MS_STATIC	static
 #else
 #  define MS_STATIC
 #endif
 
-#if defined(_WIN32) && !defined(WIN32) && !defined(__CYGWIN32__)
+#if defined(OPENSSL_SYS_WIN32) && !defined(WIN32)
 #  define WIN32
 #endif
-
-#if (defined(WIN32) || defined(WIN16)) && !defined(__CYGWIN32__)
-#  ifndef WINDOWS
-#    define WINDOWS
-#  endif
-#  ifndef MSDOS
-#    define MSDOS
-#  endif
+#if defined(OPENSSL_SYS_WIN16) && !defined(WIN16)
+#  define WIN16
+#endif
+#if defined(OPENSSL_SYS_WINDOWS) && !defined(WINDOWS)
+#  define WINDOWS
+#endif
+#if defined(OPENSSL_SYS_MSDOS) && !defined(MSDOS)
+#  define MSDOS
 #endif
 
 #if defined(MSDOS) && !defined(GETPID_IS_MEANINGLESS)
@@ -142,7 +142,7 @@ extern "C" {
 #define clear_sys_error()	errno=0
 #endif
 
-#if defined(WINDOWS) && !defined(__CYGWIN32__)
+#if defined(WINDOWS)
 #define get_last_socket_error()	WSAGetLastError()
 #define clear_socket_error()	WSASetLastError(0)
 #define readsocket(s,b,n)	recv((s),(b),(n),0)
@@ -164,7 +164,7 @@ extern "C" {
 #endif
 
 #ifdef WIN16
-#  define NO_FP_API
+#  define OPENSSL_NO_FP_API
 #  define MS_CALLBACK	_far _loadds
 #  define MS_FAR	_far
 #else
@@ -172,11 +172,11 @@ extern "C" {
 #  define MS_FAR
 #endif
 
-#ifdef NO_STDIO
-#  define NO_FP_API
+#ifdef OPENSSL_NO_STDIO
+#  define OPENSSL_NO_FP_API
 #endif
 
-#if (defined(WINDOWS) || defined(MSDOS)) && !defined(__CYGWIN32__)
+#if (defined(WINDOWS) || defined(MSDOS))
 
 #  ifndef S_IFDIR
 #    define S_IFDIR	_S_IFDIR
@@ -233,11 +233,8 @@ extern "C" {
 
 #else /* The non-microsoft world world */
 
-#  if defined(__VMS) && !defined(VMS)
-#  define VMS 1
-#  endif
-
-#  ifdef VMS
+#  ifdef OPENSSL_SYS_VMS
+#    define VMS 1
   /* some programs don't include stdlib, so exit() and others give implicit 
      function warnings */
 #    include <stdlib.h>
@@ -283,7 +280,7 @@ extern "C" {
 #    define NO_SYS_PARAM_H
 #  else
      /* !defined VMS */
-#    ifdef MPE
+#    ifdef OPENSSL_SYS_MPE
 #      define NO_SYS_PARAM_H
 #    endif
 #    ifdef OPENSSL_UNISTD
@@ -294,13 +291,13 @@ extern "C" {
 #    ifndef NO_SYS_TYPES_H
 #      include <sys/types.h>
 #    endif
-#    if defined(NeXT) || defined(NEWS4)
+#    if defined(NeXT) || defined(OPENSSL_SYS_NEWS4)
 #      define pid_t int /* pid_t is missing on NEXTSTEP/OPENSTEP
                          * (unless when compiling with -D_POSIX_SOURCE,
                          * which doesn't work for us) */
 #      define ssize_t int /* ditto */
 #    endif
-#    ifdef NEWS4 /* setvbuf is missing on mips-sony-bsd */
+#    ifdef OPENSSL_SYS_NEWS4 /* setvbuf is missing on mips-sony-bsd */
 #      define setvbuf(a, b, c, d) setbuffer((a), (b), (d))
        typedef unsigned long clock_t;
 #    endif
@@ -328,7 +325,7 @@ extern "C" {
 #  if defined(WINDOWS) || defined(MSDOS)
       /* windows world */
 
-#    ifdef NO_SOCK
+#    ifdef OPENSSL_NO_SOCK
 #      define SSLeay_Write(a,b,c)	(-1)
 #      define SSLeay_Read(a,b,c)	(-1)
 #      define SHUTDOWN(fd)		close(fd)
@@ -355,12 +352,12 @@ extern HINSTANCE _hInstance;
 #    ifndef NO_SYS_PARAM_H
 #      include <sys/param.h>
 #    endif
-#    ifndef MPE
+#    ifndef OPENSSL_SYS_MPE
 #      include <sys/time.h> /* Needed under linux for FD_XXX */
 #    endif
 
 #    include <netdb.h>
-#    if defined(VMS) && !defined(__DECC)
+#    if defined(OPENSSL_SYS_VMS_NODECC)
 #      include <socket.h>
 #      include <in.h>
 #      include <inet.h>
@@ -378,7 +375,7 @@ extern HINSTANCE _hInstance;
 #      include <sys/types.h>
 #    endif
 
-#    ifdef AIX
+#    ifdef OPENSSL_SYS_AIX
 #      include <sys/select.h>
 #    endif
 
@@ -420,7 +417,7 @@ extern HINSTANCE _hInstance;
 #  endif
 #endif
 
-#if defined(THREADS) || defined(sun)
+#if defined(OPENSSL_THREADS) || defined(sun)
 #ifndef _REENTRANT
 #define _REENTRANT
 #endif
@@ -454,7 +451,7 @@ extern char *sys_errlist[]; extern int sys_nerr;
 #ifdef sgi
 #define IRIX_CC_BUG	/* all version of IRIX I've tested (4.* 5.*) */
 #endif
-#ifdef SNI
+#ifdef OPENSSL_SYS_SNI
 #define IRIX_CC_BUG	/* CDS++ up to V2.0Bsomething suffered from the same bug.*/
 #endif
 

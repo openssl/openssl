@@ -225,7 +225,7 @@ $ LIB_ERR = "err,err_all,err_prn"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err"
 $ LIB_EVP = "encode,digest,evp_enc,evp_key,"+ -
 	"e_des,e_bf,e_idea,e_des3,"+ -
-	"e_rc4,e_rd,names,"+ -
+	"e_rc4,e_aes,names,"+ -
 	"e_xcbc_d,e_rc2,e_cast,e_rc5"
 $ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1," + -
 	"m_dss,m_dss1,m_mdc2,m_ripemd,"+ -
@@ -267,8 +267,8 @@ $ LIB_PKCS12 = "p12_add,p12_asn,p12_attr,p12_crpt,p12_crt,p12_decr,"+ -
 	"p12_utl,p12_npas,pk12err"
 $ LIB_COMP = "comp_lib,"+ -
 	"c_rle,c_zlib"
-$ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,"+ -
-	"ocsp_lib,ocsp_cl,ocsp_prn,ocsp_err"
+$ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
+	"ocsp_prn,ocsp_vfy,ocsp_err"
 $!
 $! Setup exceptional compilations
 $!
