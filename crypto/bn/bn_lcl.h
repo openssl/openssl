@@ -240,7 +240,7 @@ extern "C" {
 #define Lw(t)    (((BN_ULONG)(t))&BN_MASK2)
 #define Hw(t)    (((BN_ULONG)((t)>>BN_BITS2))&BN_MASK2)
 
-
+#ifdef BN_DEBUG_RAND
 #define bn_clear_top2max(a) \
 	{ \
 	int      ind = (a)->dmax - (a)->top; \
@@ -248,6 +248,9 @@ extern "C" {
 	for (; ind != 0; ind--) \
 		*(++ftl) = 0x0; \
 	}
+#else
+#define bn_clear_top2max(a)
+#endif
 
 #ifdef BN_LLONG
 #define mul_add(r,a,w,c) { \

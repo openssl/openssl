@@ -232,10 +232,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	wnum.neg   = 0;
 	wnum.d     = &(snum->d[loop]);
 	wnum.top   = div_n;
-#ifdef BN_DEBUG_RAND
 	/* only needed when BN_ucmp messes up the values between top and max */
 	wnum.dmax  = snum->dmax - loop; /* so we don't step out of bounds */
-#endif
 
 	/* Get the top 2 words of sdiv */
 	/* div_n=sdiv->top; */
@@ -256,12 +254,10 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 
 	if (BN_ucmp(&wnum,sdiv) >= 0)
 		{
-#ifdef BN_DEBUG_RAND
 		/* If BN_DEBUG_RAND is defined BN_ucmp changes (via
 		 * bn_pollute) the const bignum arguments =>
 		 * clean the values between top and max again */
 		bn_clear_top2max(&wnum);
-#endif
 		bn_sub_words(wnum.d, wnum.d, sdiv->d, div_n);
 		*resp=1;
 		}
@@ -384,13 +380,13 @@ X) -> 0x%08X\n",
 		/* store part of the result */
 		*resp = q;
 		}
+	bn_correct_top(snum);
 	if (rm != NULL)
 		{
 		/* Keep a copy of the neg flag in num because if rm==num
 		 * BN_rshift() will overwrite it.
 		 */
 		int neg = num->neg;
-		bn_correct_top(snum);
 		BN_rshift(rm,snum,norm_shift);
 		if (!BN_is_zero(rm))
 			rm->neg = neg;
