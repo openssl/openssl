@@ -293,7 +293,7 @@ void DES_decrypt3(DES_LONG *data, DES_key_schedule *ks1,
 
 #ifndef DES_DEFAULT_OPTIONS
 
-#if !defined(OPENSSL_FIPS) || !defined(I386_ONLY)
+#if !defined(OPENSSL_FIPS)
 
 #undef CBC_ENC_C__DONT_UPDATE_IV
 #include "ncbc_enc.c" /* DES_ncbc_encrypt */
@@ -410,6 +410,6 @@ void DES_ede3_cbc_encrypt(const unsigned char *input, unsigned char *output,
 	tin[0]=tin[1]=0;
 	}
 
-#endif /* !defined(OPENSSL_FIPS) || !defined(I386_ONLY) */
+#endif /* !defined(OPENSSL_FIPS) */
 
 #endif /* DES_DEFAULT_OPTIONS */
