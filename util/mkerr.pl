@@ -108,12 +108,11 @@ while (($lib, $hdr) = each %hinc)
 	}
 
 	foreach (split /;/, $def) {
-		s/^[\n\s]*//g;
+	    s/^[\n\s]*//g;
 	    s/[\n\s]*$//g;
+	    next if (/\w+\W+(\w+)\W*\(\s*\)$/s); # K&R C
 	    next if (/\(\*(\w*)\([^\)]+/);
-	    next if (/\w+\W+(\w+)\W*\(\s*\)$/s);
 	    if (/\w+\W+\w+\W*\(.*\)$/s) {
-		s/\)[\s\n]*$/\)/s;
 		while (not /\(\)$/s) {
 		    s/[^\(\)]*\)$/\)/s;
 		    s/\([^\(\)]*\)\)$/\)/s;
@@ -173,7 +172,7 @@ while (($lib, $hdr) = each %hinc)
 foreach $file (@source) {
 	# Don't parse the error source file.
 	next if exists $cskip{$file};
-	open(IN, "<$file") || die "Can't open source file $_\n";
+	open(IN, "<$file") || die "Can't open source file $file\n";
 	while(<IN>) {
 		if(/(([A-Z0-9]+)_F_[A-Z0-9_]+)/) {
 			next unless exists $csrc{$2};
@@ -417,7 +416,7 @@ static ERR_STRING_DATA ${lib}_lib_name[]=
 
 int ${lib}_lib_error_code=0;
 
-void ERR_load_${lib}_strings()
+void ERR_load_${lib}_strings(void)
 	{
 	static int init=1;
 
@@ -439,11 +438,7 @@ void ERR_load_${lib}_strings()
 		}
 	}
 
-void ERR_${lib}_error(function,reason,file,line)
-int function;
-int reason;
-char *file;
-int line;
+void ERR_${lib}_error(int function, int reason, char *file, int line)
 	{
 	if (${lib}_lib_error_code == 0)
 		${lib}_lib_error_code=ERR_get_next_error_library();
