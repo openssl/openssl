@@ -67,7 +67,7 @@ static int bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		       const unsigned char *iv, int enc);
 
 IMPLEMENT_BLOCK_CIPHER(bf, bf_ks, BF, bf_ks, NID_bf, 8, 16, 8,
-			0, bf_init_key, NULL, 
+			EVP_CIPH_VARIABLE_LENGTH, bf_init_key, NULL, 
 			EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
 	
 static int bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,

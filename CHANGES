@@ -4,6 +4,13 @@
 
  Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
 
+  *) Fix for compatibility mode trust settings: ignore trust settings
+     unless some valid trust or reject settings are present.
+     [Steve Henson]
+
+  *) Fix for blowfish EVP: its a variable length cipher.
+     [Steve Henson]
+
   *) Fix various bugs related to DSA S/MIME verification. Handle missing
      parameters in DSA public key structures and return an error in the
      DSA routines if parameters are absent.
