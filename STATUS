@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/03/11 09:35:33 $
+  ______________                           $Date: 2002/04/13 22:50:47 $
 
   DEVELOPMENT STATE
 
@@ -61,10 +61,6 @@
 	OCSP
 
   NEEDS PATCH
-
-    o  An (optional) countermeasure against the predictable-IV CBC
-       weakness in SSL/TLS should be added; see
-       http://www.openssl.org/~bodo/tls-cbc.txt
 
     o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
 

@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -592,6 +592,7 @@ int ssl3_setup_buffers(SSL *s)
 	{
 	unsigned char *p;
 	unsigned int extra;
+	size_t len;
 
 	if (s->s3->rbuf.buf == NULL)
 		{
@@ -599,18 +600,21 @@ int ssl3_setup_buffers(SSL *s)
 			extra=SSL3_RT_MAX_EXTRA;
 		else
 			extra=0;
-		if ((p=OPENSSL_malloc(SSL3_RT_MAX_PACKET_SIZE+extra))
-			== NULL)
+		len = SSL3_RT_MAX_PACKET_SIZE + extra;
+		if ((p=OPENSSL_malloc(len)) == NULL)
 			goto err;
-		s->s3->rbuf.buf=p;
+		s->s3->rbuf.buf = p;
+		s->s3->rbuf.len = len;
 		}
 
 	if (s->s3->wbuf.buf == NULL)
 		{
-		if ((p=OPENSSL_malloc(SSL3_RT_MAX_PACKET_SIZE))
-			== NULL)
+		len = SSL3_RT_MAX_PACKET_SIZE;
+		len += SSL3_RT_HEADER_LENGTH + 256; /* extra space for empty fragment */
+		if ((p=OPENSSL_malloc(len)) == NULL)
 			goto err;
-		s->s3->wbuf.buf=p;
+		s->s3->wbuf.buf = p;
+		s->s3->wbuf.len = len;
 		}
 	s->packet= &(s->s3->rbuf.buf[0]);
 	return(1);
