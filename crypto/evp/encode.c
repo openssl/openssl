@@ -292,7 +292,17 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 		/* If we are at the end of input and it looks like a
 		 * line, process it. */
 		if (((i+1) == inl) && (((n&3) == 0) || eof))
+			{
 			v=B64_EOF;
+			/* In case things were given us in really small
+			   records (so two '=' were given in separate
+			   updates), eof may contain the incorrect number
+			   of ending bytes to skip, so let's redo the count */
+			eof = 0;
+			if (d[n-1] == '=') eof++;
+			if (d[n-2] == '=') eof++;
+			/* There will never be more than two '=' */
+			}
 
 		if ((v == B64_EOF) || (n >= 64))
 			{
