@@ -28,6 +28,9 @@
       o TLS/SSL code now "tolerates" MS SGC
       o RSA_NULL option that removes RSA patent code but keeps other
         RSA functionality
+      o Memory leak detection now allows applications to add extra information
+        via a per-thread stack
+      o PRNG robustness improved
 
   Major changes between OpenSSL 0.9.3 and OpenSSL 0.9.4:
 

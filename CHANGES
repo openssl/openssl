@@ -520,8 +520,8 @@
      code.
      [Steve Henson]
 
-  *) Correctly increment the reference count in the SSL_SESSION pointer 
-     returned from SSL_get_session().
+  *) SSL_get1_session() is like SSL_get_session(), but increments
+     the reference count in the SSL_SESSION returned.
      [Geoff Thorpe <geoff@eu.c2.net>]
 
   *) Fix for 'req': it was adding a null to request attributes.
