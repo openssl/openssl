@@ -179,11 +179,11 @@ long length;
 	M_ASN1_D2I_get(ret->issuer,d2i_X509_NAME);
 	M_ASN1_D2I_get(ret->lastUpdate,d2i_ASN1_TIME);
 	/* Manually handle the OPTIONAL ASN1_TIME stuff */
-	if((c.slen != 0) && 
-		( ( (M_ASN1_next & ~V_ASN1_CONSTRUCTED) ==
-			 V_ASN1_UNIVERSAL|V_ASN1_UTCTIME)
-		|| ( ( (M_ASN1_next & ~V_ASN1_CONSTRUCTED) ==
-			 V_ASN1_UNIVERSAL|V_ASN1_GENERALIZEDTIME) ) ) ) {
+	if(c.slen != 0
+	   && ( (M_ASN1_next & ~V_ASN1_CONSTRUCTED) ==
+		    (V_ASN1_UNIVERSAL|V_ASN1_UTCTIME)
+		|| (M_ASN1_next & ~V_ASN1_CONSTRUCTED) ==
+		    (V_ASN1_UNIVERSAL|V_ASN1_GENERALIZEDTIME) ) ) {
 		M_ASN1_D2I_get(ret->nextUpdate,d2i_ASN1_TIME);
 	}
 	if(!ret->nextUpdate) 
