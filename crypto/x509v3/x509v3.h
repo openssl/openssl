@@ -130,6 +130,8 @@ char *lname;
 char *sname;
 } BIT_STRING_BITNAME;
 
+typedef BIT_STRING_BITNAME ENUMERATED_NAMES;
+
 typedef struct {
 int ca;
 ASN1_INTEGER *pathlen;
@@ -241,6 +243,7 @@ GENERAL_NAME *v2i_GENERAL_NAME(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, CONF_
 void X509V3_conf_free(CONF_VALUE *val);
 X509_EXTENSION *X509V3_EXT_conf_nid(LHASH *conf, X509V3_CTX *ctx, int ext_nid, char *value);
 X509_EXTENSION *X509V3_EXT_conf(LHASH *conf, X509V3_CTX *ctx, char *name, char *value);
+char *str_dup(char *val);
 int X509V3_EXT_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section, X509 *cert);
 int X509V3_EXT_check_conf(LHASH *conf, char *section);
 int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool);
@@ -251,6 +254,8 @@ int X509V3_add_value(char *name, char *value, STACK **extlist);
 int X509V3_add_value_bool(char *name, int asn1_bool, STACK **extlist);
 int X509V3_add_value_int( char *name, ASN1_INTEGER *aint, STACK **extlist);
 char * i2s_ASN1_INTEGER(X509V3_EXT_METHOD *meth, ASN1_INTEGER *aint);
+char * i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *meth, ASN1_ENUMERATED *aint);
+char * i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *meth, ASN1_ENUMERATED *aint);
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext);
 int X509V3_EXT_add_alias(int nid_to, int nid_from);
 void X509V3_EXT_cleanup(void);
@@ -305,6 +310,7 @@ STACK *ext_ku_new();
 
 #ifdef HEADER_CONF_H
 void X509V3_conf_free();
+char *str_dup();
 X509_EXTENSION *X509V3_EXT_conf_nid();
 X509_EXTENSION *X509V3_EXT_conf();
 int X509V3_EXT_add_conf();
@@ -317,6 +323,8 @@ int X509V3_add_value();
 int X509V3_add_value_bool();
 int X509V3_add_value_int();
 char *i2s_ASN1_INTEGER();
+char * i2s_ASN1_ENUMERATED();
+char * i2s_ASN1_ENUMERATED_TABLE();
 int X509V3_EXT_add();
 int X509V3_EXT_add_alias();
 void X509V3_EXT_cleanup();
@@ -340,6 +348,7 @@ int X509V3_EXT_print_fp();
 
 /* Function codes. */
 #define X509V3_F_HEX_TO_STRING				 111
+#define X509V3_F_I2S_ASN1_ENUMERATED			 121
 #define X509V3_F_I2S_ASN1_INTEGER			 120
 #define X509V3_F_S2I_ASN1_IA5STRING			 100
 #define X509V3_F_S2I_ASN1_OCTET_STRING			 112
