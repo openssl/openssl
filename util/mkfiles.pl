@@ -53,6 +53,7 @@ my @dirs = (
 "crypto/krb5",
 "fips",
 "fips/aes",
+"fips/dh",
 "fips/des",
 "fips/dsa",
 "fips/rand",
