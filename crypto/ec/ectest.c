@@ -148,6 +148,7 @@ int main(int argc, char *argv[])
 	BIGNUM *x, *y, *z;
 	unsigned char buf[100];
 	size_t i, len;
+	int k;
 	
 	/* enable memory leak checking unless explicitly disabled */
 	if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL) && (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off"))))
@@ -230,8 +231,11 @@ int main(int argc, char *argv[])
 		}
 
 	fprintf(stdout, "A cyclic subgroup:\n");
+	k = 100;
 	do
 		{
+		if (k-- == 0) ABORT;
+
 		if (EC_POINT_is_at_infinity(group, P))
 			fprintf(stdout, "     point at infinity\n");
 		else
