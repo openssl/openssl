@@ -18,7 +18,9 @@ in fact prime, and that B<n = p*q>.
 It also checks that B<d*e = 1 mod (p-1*q-1)>,
 and that B<dmp1>, B<dmq1> and B<iqmp> are set correctly or are B<NULL>.
 
-The key's public components may not be B<NULL>.
+As such, this function can not be used with any arbitrary RSA key object,
+even if it is otherwise fit for regular RSA operation. See B<NOTES> for more
+information.
 
 =head1 RETURN VALUE
 
@@ -27,6 +29,13 @@ RSA_check_key() returns 1 if B<rsa> is a valid RSA key, and 0 otherwise.
 
 If the key is invalid or an error occurred, the reason code can be
 obtained using L<ERR_get_error(3)|ERR_get_error(3)>.
+
+=head1 NOTES
+
+This function does not work on RSA public keys that have only the modulus
+and public exponent elements populated. It performs integrity checks on all
+the RSA key material, so the RSA key structure must contain all the private
+key data too.
 
 =head1 SEE ALSO
 
