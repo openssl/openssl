@@ -3019,4 +3019,4 @@ ASN1_put_eoc                            3451	EXIST::FUNCTION:
 PKCS12_add_key                          3452	EXIST::FUNCTION:
 PKCS12_add_cert                         3453	EXIST::FUNCTION:
 ASN1_item_ndef_i2d                      3454	EXIST::FUNCTION:
-d2i_PKCS7_NDEF                          3455	EXIST::FUNCTION:
+i2d_PKCS7_NDEF                          3455	EXIST::FUNCTION:

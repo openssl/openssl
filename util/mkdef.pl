@@ -711,7 +711,7 @@ sub do_defs
 						      "FUNCTION");
 					next;
 				} elsif (/^\s*DECLARE_ASN1_NDEF_FUNCTION\s*\(\s*(\w*)\s*\)/) {
-					$def .= "int d2i_$1_NDEF(void);";
+					$def .= "int i2d_$1_NDEF(void);";
 				} elsif (/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
 					next;
 				} elsif (/^\s*DECLARE_PKCS12_STACK_OF\s*\(\s*(\w*)\s*\)/) {
