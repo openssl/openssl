@@ -3231,3 +3231,5 @@ EVP_sha384                              3633	EXIST::FUNCTION:SHA,SHA512
 EVP_sha512                              3634	EXIST::FUNCTION:SHA,SHA512
 EVP_sha224                              3635	EXIST::FUNCTION:SHA,SHA256
 EVP_sha256                              3636	EXIST::FUNCTION:SHA,SHA256
+OPENSSL_DIR_end                         3637	EXIST::FUNCTION:
+OPENSSL_DIR_read                        3638	EXIST::FUNCTION:
