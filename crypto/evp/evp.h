@@ -641,10 +641,25 @@ const EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 #ifndef OPENSSL_NO_AES
 const EVP_CIPHER *EVP_aes_128_ecb(void);
 const EVP_CIPHER *EVP_aes_128_cbc(void);
+const EVP_CIPHER *EVP_aes_128_cfb(void);
+const EVP_CIPHER *EVP_aes_128_ofb(void);
+#if 0
+const EVP_CIPHER *EVP_aes_128_ctr(void);
+#endif
 const EVP_CIPHER *EVP_aes_192_ecb(void);
 const EVP_CIPHER *EVP_aes_192_cbc(void);
+const EVP_CIPHER *EVP_aes_192_cfb(void);
+const EVP_CIPHER *EVP_aes_192_ofb(void);
+#if 0
+const EVP_CIPHER *EVP_aes_192_ctr(void);
+#endif
 const EVP_CIPHER *EVP_aes_256_ecb(void);
 const EVP_CIPHER *EVP_aes_256_cbc(void);
+const EVP_CIPHER *EVP_aes_256_cfb(void);
+const EVP_CIPHER *EVP_aes_256_ofb(void);
+#if 0
+const EVP_CIPHER *EVP_aes_256_ctr(void);
+#endif
 #endif
 
 void OPENSSL_add_all_algorithms_noconf(void);
