@@ -618,8 +618,10 @@ BN_ULONG BN_get_word(const BIGNUM *a)
 	{
 	if (a->top > 1)
 		return BN_MASK2;
-	else
+	else if (a->top == 1)
 		return a->d[0];
+	/* a->top == 0 */
+	return 0;
 	}
 
 int BN_set_word(BIGNUM *a, BN_ULONG w)
