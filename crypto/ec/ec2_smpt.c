@@ -61,7 +61,8 @@
  * compressed coordinates.  Uses algorithm 2.3.4 of SEC 1. 
  * Note that the simple implementation only uses affine coordinates.
  *
- * This algorithm is patented by Certicom Corp. under US Patent 6,141,420.
+ * This algorithm is patented by Certicom Corp. under US Patent 6,141,420
+ * (for licensing information, contact licensing@certicom.com).
  * This function is disabled by default and can be enabled by defining the 
  * preprocessor macro OPENSSL_EC_BIN_PT_COMP at Configure-time.
  */
