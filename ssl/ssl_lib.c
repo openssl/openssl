@@ -910,7 +910,7 @@ const char *SSL_get_cipher_list(SSL *s,int n)
 	return(c->name);
 	}
 
-/** specify the ciphers to be used by defaut by the SSL_CTX */
+/** specify the ciphers to be used by default by the SSL_CTX */
 int SSL_CTX_set_cipher_list(SSL_CTX *ctx,char *str)
 	{
 	STACK_OF(SSL_CIPHER) *sk;

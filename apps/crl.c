@@ -75,7 +75,7 @@
 static char *crl_usage[]={
 "usage: crl args\n",
 "\n",
-" -inform arg     - input format - default PEM (one of DER, TXT or PEM)\n",
+" -inform arg     - input format - default PEM (DER or PEM)\n",
 " -outform arg    - output format - default PEM\n",
 " -text           - print out a text format version\n",
 " -in arg         - input file - default stdin\n",

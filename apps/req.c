@@ -91,7 +91,7 @@
 #undef PROG
 #define PROG	req_main
 
-/* -inform arg	- input format - default PEM (one of DER, TXT or PEM)
+/* -inform arg	- input format - default PEM (DER or PEM)
  * -outform arg - output format - default PEM
  * -in arg	- input file - default stdin
  * -out arg	- output file - default stdout
@@ -377,8 +377,8 @@ int MAIN(int argc, char **argv)
 bad:
 		BIO_printf(bio_err,"%s [options] <infile >outfile\n",prog);
 		BIO_printf(bio_err,"where options  are\n");
-		BIO_printf(bio_err," -inform arg    input format - one of DER TXT PEM\n");
-		BIO_printf(bio_err," -outform arg   output format - one of DER TXT PEM\n");
+		BIO_printf(bio_err," -inform arg    input format - DER or PEM\n");
+		BIO_printf(bio_err," -outform arg   output format - DER or PEM\n");
 		BIO_printf(bio_err," -in arg        input file\n");
 		BIO_printf(bio_err," -out arg       output file\n");
 		BIO_printf(bio_err," -text          text form of request\n");

@@ -347,6 +347,7 @@ void	X509_STORE_CTX_set_error(X509_STORE_CTX *ctx,int s);
 int	X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
 X509 *	X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
 STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx);
+STACK_OF(X509) *X509_STORE_CTX_rget_chain(X509_STORE_CTX *ctx);
 void	X509_STORE_CTX_set_cert(X509_STORE_CTX *c,X509 *x);
 void	X509_STORE_CTX_set_chain(X509_STORE_CTX *c,STACK_OF(X509) *sk);
 int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose);

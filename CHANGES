@@ -4,6 +4,16 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) New function X509_CTX_rget_chain(), this returns the chain
+     from an X509_CTX structure with a dup of the stack and all
+     the X509 reference counts upped: so the stack will exist
+     after X509_CTX_cleanup() has been called. Modify pkcs12.c
+     to use this.
+
+     Also make SSL_SESSION_print() print out the verify return
+     code.
+     [Steve Henson]
+
   *) Add manpage for the pkcs12 command. Also change the default
      behaviour so MAC iteration counts are used unless the new
      -nomaciter option is used. This improves file security and

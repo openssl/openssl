@@ -607,11 +607,7 @@ int get_cert_chain (X509 *cert, STACK_OF(X509) **chain)
 		i = X509_STORE_CTX_get_error (&store_ctx);
 		goto err;
 	}
-	chn =  sk_X509_dup(X509_STORE_CTX_get_chain (&store_ctx));
-	for (i = 0; i < sk_X509_num(chn); i++) {
-		x = sk_X509_value(chn, i);
-		CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
-	}
+	chn =  X509_STORE_CTX_rget_chain(&store_ctx);
 	i = 0;
 	*chain = chn;
 err:
