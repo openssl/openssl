@@ -77,12 +77,9 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 
 	BN_CTX_start(ctx);
 	tmp = BN_CTX_get(ctx);
-	tmp2 = BN_CTX_get(ctx);
-	if (tmp == NULL || tmp2 == NULL) goto err;
+	if (tmp == NULL) goto err;
 
 	bn_check_top(tmp);
-	bn_check_top(tmp2);
-
 	if (a == b)
 		{
 		if (!BN_sqr(tmp,a,ctx)) goto err;
