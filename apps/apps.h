@@ -65,7 +65,6 @@
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
-#include "progs.h"
 
 int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn);
 int app_RAND_write_file(const char *file, BIO *bio_e);
@@ -114,7 +113,7 @@ extern BIO *bio_err;
 #define do_pipe_sig()
 #endif
 
-#if defined(MONOLITH) && !defined(SSLEAY)
+#if defined(MONOLITH)
 #  define apps_startup()	do_pipe_sig()
 #else
 #  if defined(MSDOS) || defined(WIN16) || defined(WIN32)

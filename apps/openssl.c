@@ -70,10 +70,9 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
-#define SSLEAY	/* turn off a few special case MONOLITH macros */
 #define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
-#define SSLEAY_SRC
 #include "apps.h"
+#include "progs.h"
 #include "s_apps.h"
 #include <openssl/err.h>
 
@@ -374,5 +373,3 @@ static unsigned long MS_CALLBACK hash(FUNCTION *a)
 	{
 	return(lh_strhash(a->name));
 	}
-
-#undef SSLEAY

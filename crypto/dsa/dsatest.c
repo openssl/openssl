@@ -136,6 +136,7 @@ int main(int argc, char **argv)
 	unsigned char sig[256];
 	unsigned int siglen;
 
+	ERR_load_crypto_strings();
 	RAND_seed(rnd_seed, sizeof rnd_seed);
 
 	if (bio_err == NULL)
@@ -199,6 +200,7 @@ end:
 	if (!ret)
 		ERR_print_errors(bio_err);
 	if (dsa != NULL) DSA_free(dsa);
+	ERR_remove_state(0);
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL)
 		{
