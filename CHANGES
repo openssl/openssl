@@ -4,6 +4,10 @@
 
  Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
 
+  *) Verify that incoming data obeys the block size in
+     ssl3_enc (ssl/s3_enc.c) and tls1_enc (ssl/t1_enc.c).
+     [Bodo Moeller]
+
   *) Fix OAEP check.
      [Ulf Möller, Bodo Möller]
 
