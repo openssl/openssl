@@ -104,6 +104,7 @@ int ssl2_read(SSL *s, char *buf, int len)
 	int i;
 	unsigned int mac_size=0;
 
+ssl2_read_again:
 	if (SSL_in_init(s) && !s->in_handshake)
 		{
 		n=s->handshake_func(s);
@@ -231,6 +232,25 @@ int ssl2_read(SSL *s, char *buf, int len)
 		INC32(s->s2->read_sequence); /* expect next number */
 		/* s->s2->ract_data is now available for processing */
 
+#if 1
+		/* How should we react when a packet containing 0
+		 * bytes is received?  (Note that SSLeay/OpenSSL itself
+		 * never sends such packets; see ssl2_write.)
+		 * Returning 0 would be interpreted by the caller as
+		 * indicating EOF, so it's not a good idea.
+		 * Instead, we just continue reading.  Note that using
+		 * select() for blocking sockets *never* guarantees
+		 * that the next SSL_read will not block -- the available
+		 * data may contain incomplete packets, and except for SSL 2
+		 * renegotiation can confuse things even more. */
+
+		goto ssl2_read_again; /* This should really be
+				       * "return ssl2_read(s,buf,len)",
+				       * but that would allow for
+				       * denial-of-service attacks if a
+				       * C compiler is used that does not
+				       * recognize end-recursion. */
+#else
 		/* If a 0 byte packet was sent, return 0, otherwise
 		 * we play havoc with people using select with
 		 * blocking sockets.  Let them handle a packet at a time,
@@ -238,6 +258,7 @@ int ssl2_read(SSL *s, char *buf, int len)
 		if (s->s2->ract_data_length == 0)
 			return(0);
 		return(ssl2_read(s,buf,len));
+#endif
 		}
 	else
 		{

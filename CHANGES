@@ -5,6 +5,10 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Change behaviour of ssl2_read when facing length-0 packets: Don't return
+     0 (which usually indicates a closed connection), but continue reading.
+     [Bodo Moeller]
+
   *) Fix some race conditions.
      [Bodo Moeller]
 
