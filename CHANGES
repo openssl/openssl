@@ -3,12 +3,7 @@
  _______________
 
 
- Changes between 0.9.2b and 0.9.3  [XX May 1999]
-                                   [I suggest using the same format for the
-                                   date as in opensslv.h.  0.9.1c used
-                                   hyphens in the date, so I wrote
-                                   [23-Dec-1998] down below; but in later
-                                   versions, these hyphens are gone.]
+ Changes between 0.9.2b and 0.9.3  [24 May 1999]
 
   *) Bignum library bug fix. IRIX 6 passes "make test" now!
      This also avoids the problems with SC4.2 and unpatched SC5.  
