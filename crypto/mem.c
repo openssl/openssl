@@ -136,9 +136,9 @@ int CRYPTO_set_mem_ex_functions(
 	{
 	if (!allow_customize)
 		return 0;
-        if (m == NULL) m = crypto_i_malloc_ex;
-        if (r == NULL) r = crypto_i_realloc_ex;
-        if (f == NULL) f = crypto_i_free_ex;
+	if (m == NULL) m = crypto_i_malloc_ex;
+	if (r == NULL) r = crypto_i_realloc_ex;
+	if (f == NULL) f = crypto_i_free_ex;
 	malloc_ex_func=m;
 	realloc_ex_func=r;
 	free_ex_func=f;
@@ -164,8 +164,8 @@ int CRYPTO_set_locked_mem_ex_functions(
 	{
 	if (!allow_customize)
 		return 0;
-        if (m == NULL) m = crypto_i_malloc_ex;
-        if (f == NULL) f = crypto_i_free_ex;
+	if (m == NULL) m = crypto_i_malloc_ex;
+	if (f == NULL) f = crypto_i_free_ex;
 	malloc_locked_ex_func=m;
 	free_locked_ex_func=f;
 	return 1;
@@ -335,17 +335,17 @@ long CRYPTO_get_mem_debug_options(void)
 	}
 
 static void *crypto_i_malloc_ex(size_t num, const char *file, int line)
-        {
-        return malloc_func(num);
-        }
+	{
+	return malloc_func(num);
+	}
 
 static void *crypto_i_realloc_ex(void *str, size_t num,
         const char *file, int line)
-        {
-        return realloc_func(str,num);
-        }
+	{
+	return realloc_func(str,num);
+	}
 
 static void crypto_i_free_ex(void *str)
-        {
-        free_func(str);
-        }
+	{
+	free_func(str);
+	}
