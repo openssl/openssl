@@ -54,8 +54,8 @@ asm/mx86-elf.s: asm/md5-586.pl ../perlasm/x86asm.pl
 asm/mx86-cof.s: asm/md5-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) md5-586.pl coff $(CFLAGS) > ../$@)
 # a.out
-asm/mx86-out.s: asm/md5-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) md5-586.pl a.out $(CFLAGS) > ../$@)
+asm/mx86-out.o: asm/md5-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) md5-586.pl a.out $(CFLAGS) | as -o ../$@)
 
 asm/md5-sparcv8plus.o: asm/md5-sparcv9.S
 	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -c \
@@ -107,7 +107,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/mx86unix.cpp asm/*-[elf|cof|out].* *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f asm/mx86unix.cpp asm/*.s *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

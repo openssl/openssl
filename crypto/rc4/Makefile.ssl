@@ -59,8 +59,8 @@ asm/rx86-elf.s: asm/rc4-586.pl ../perlasm/x86asm.pl
 asm/rx86-cof.s: asm/rc4-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) rc4-586.pl coff $(CFLAGS) > ../$@)
 # a.out
-asm/rx86-out.s: asm/rc4-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) rc4-586.pl a.out $(CFLAGS) > ../$@)
+asm/rx86-out.o: asm/rc4-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) rc4-586.pl a.out $(CFLAGS) | as -o ../$@)
 
 asm/rc4-amd64.s: asm/rc4-amd64.pl;	$(PERL) $< $@
 
@@ -96,7 +96,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/rx86unix.cpp asm/*-[elf|cof|out].* *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
+	rm -f asm/rx86unix.cpp asm/*.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff asm/*.o
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

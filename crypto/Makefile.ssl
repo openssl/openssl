@@ -67,8 +67,8 @@ x86cpuid-elf.s:	x86cpuid.pl perlasm/x86asm.pl
 	$(PERL) x86cpuid.pl elf $(CFLAGS) $(PROCESSOR) > $@
 x86cpuid-cof.s: x86cpuid.pl perlasm/x86asm.pl
 	$(PERL) x86cpuid.pl coff $(CFLAGS) $(PROCESSOR) > $@
-x86cpuid-out.s: x86cpuid.pl perlasm/x86asm.pl
-	$(PERL) x86cpuid.pl a.out $(CFLAGS) $(PROCESSOR) > $@
+x86cpuid-out.o: x86cpuid.pl perlasm/x86asm.pl
+	$(PERL) x86cpuid.pl a.out $(CFLAGS) $(PROCESSOR) | as -o $@
 
 amd64cpuid.s: amd64cpuid.pl
 	$(PERL) amd64cpuid.pl $@

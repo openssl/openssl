@@ -54,8 +54,8 @@ asm/rm86-elf.s: asm/rmd-586.pl ../perlasm/x86asm.pl
 asm/rm86-cof.s: asm/rmd-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) rmd-586.pl coff $(CFLAGS) > ../$@)
 # a.out
-asm/rm86-out.s: asm/rmd-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) rmd-586.pl a.out $(CFLAGS) > ../$@)
+asm/rm86-out.o: asm/rmd-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) rmd-586.pl a.out $(CFLAGS) | as -o ../$@)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
@@ -89,7 +89,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/rm86unix.cpp asm/*-[elf|cof|out].* *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f asm/rm86unix.cpp asm/*.s *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

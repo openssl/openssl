@@ -80,31 +80,10 @@ asm/dx86-cof.s: asm/des-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 asm/yx86-cof.s: asm/crypt586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 	(cd asm; $(PERL) crypt586.pl coff $(CFLAGS) > ../$@)
 # a.out
-asm/dx86-out.s: asm/des-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	(cd asm; $(PERL) des-586.pl a.out $(CFLAGS) > ../$@)
-asm/yx86-out.s: asm/crypt586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	(cd asm; $(PERL) crypt586.pl a.out $(CFLAGS) > ../$@)
-
-
-# a.out
-asm/dx86-out.o: asm/dx86unix.cpp
-	$(CPP) -DOUT asm/dx86unix.cpp | as -o asm/dx86-out.o
-
-asm/yx86-out.o: asm/yx86unix.cpp
-	$(CPP) -DOUT asm/yx86unix.cpp | as -o asm/yx86-out.o
-
-# bsdi
-asm/dx86bsdi.o: asm/dx86unix.cpp
-	$(CPP) -DBSDI asm/dx86unix.cpp | sed 's/ :/:/' | as -o asm/dx86bsdi.o
-
-asm/yx86bsdi.o: asm/yx86unix.cpp
-	$(CPP) -DBSDI asm/yx86unix.cpp | sed 's/ :/:/' | as -o asm/yx86bsdi.o
-
-asm/dx86unix.cpp: asm/des-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	(cd asm; $(PERL) des-586.pl cpp >dx86unix.cpp)
-
-asm/yx86unix.cpp: asm/crypt586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) crypt586.pl cpp >yx86unix.cpp)
+asm/dx86-out.o: asm/des-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	(cd asm; $(PERL) des-586.pl a.out $(CFLAGS) | as -o ../$@)
+asm/yx86-out.o: asm/crypt586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	(cd asm; $(PERL) crypt586.pl a.out $(CFLAGS) | as -o ../$@)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
@@ -140,7 +119,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/dx86unix.cpp asm/yx86unix.cpp asm/*-[elf|cof|out].* *.o asm/*.o *.obj des lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f asm/dx86unix.cpp asm/yx86unix.cpp asm/*.s *.o asm/*.o *.obj des lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

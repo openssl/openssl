@@ -78,10 +78,10 @@ asm/bn86-cof.s: asm/bn-586.pl ../perlasm/x86asm.pl
 asm/co86-cof.s: asm/co-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) co-586.pl coff $(CFLAGS) > ../$@)
 # a.out
-asm/bn86-out.s: asm/bn-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) bn-586.pl a.out $(CFLAGS) > ../$@)
-asm/co86-out.s: asm/co-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) co-586.pl a.out $(CFLAGS) > ../$@)
+asm/bn86-out.o: asm/bn-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) bn-586.pl a.out $(CFLAGS) | as -o ../$@)
+asm/co86-out.o: asm/co-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) co-586.pl a.out $(CFLAGS) | as -o ../$@)
 
 asm/sparcv8.o: asm/sparcv8.S
 
@@ -146,7 +146,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f asm/co86unix.cpp asm/bn86unix.cpp asm/*-[elf|cof|out].* asm/ia64.[so] *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff bn_asm.s
+	rm -f asm/co86unix.cpp asm/bn86unix.cpp asm/*-elf.* asm/*-cof.* asm/*-out.* asm/ia64.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff bn_asm.s
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

@@ -8,6 +8,7 @@ $constl=0;
 
 $align=($main'aout)?"4":"16";
 $under=($main'aout or $main'coff)?"_":"";
+$dot=($main'aout)?"":".";
 $com_start="#" if ($main'aout or $main'coff);
 
 sub main'asm_init_output { @out=(); }
@@ -193,7 +194,7 @@ sub main'pop	{ &out1("popl",@_); $stack-=4; }
 sub main'pushf	{ &out0("pushf"); $stack+=4; }
 sub main'popf	{ &out0("popf"); $stack-=4; }
 sub main'not	{ &out1("notl",@_); }
-sub main'call	{ &out1("call",($_[0]=~/^\.L/?'':$under).$_[0]); }
+sub main'call	{ &out1("call",($_[0]=~/^\Q${dot}\EL/?'':$under).$_[0]); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
 sub main'test	{ &out2("testl",@_); }
@@ -394,15 +395,15 @@ sub main'function_end
 	popl	%ebx
 	popl	%ebp
 	ret
-.L_${func}_end:
+${dot}L_${func}_end:
 EOF
 	push(@out,$tmp);
 
 	if ($main'cpp)
-		{ push(@out,"SIZE($func,.L_${func}_end-$func)\n"); }
+		{ push(@out,"SIZE($func,${dot}L_${func}_end-$func)\n"); }
 	elsif ($main'coff or $main'aout)
                 { $tmp=push(@out,".align $align\n"); }
-	else	{ push(@out,".size\t$func,.L_${func}_end-$func\n"); }
+	else	{ push(@out,".size\t$func,${dot}L_${func}_end-$func\n"); }
 	push(@out,".ident	\"$func\"\n");
 	$stack=0;
 	%label=();
@@ -428,12 +429,12 @@ sub main'function_end_B
 
 	$func=$under.$func;
 
-	push(@out,".L_${func}_end:\n");
+	push(@out,"${dot}L_${func}_end:\n");
 	if ($main'cpp)
-		{ push(@out,"SIZE($func,.L_${func}_end-$func)\n"); }
+		{ push(@out,"SIZE($func,${dot}L_${func}_end-$func)\n"); }
         elsif ($main'coff or $main'aout)
                 { push(@out,".align $align\n"); }
-	else	{ push(@out,".size\t$func,.L_${func}_end-$func\n"); }
+	else	{ push(@out,".size\t$func,${dot}L_${func}_end-$func\n"); }
 	push(@out,".ident	\"$func\"\n");
 	$stack=0;
 	%label=();
@@ -475,10 +476,10 @@ sub main'swtmp
 
 sub main'comment
 	{
-	return if (!defined($com_start);
-	if ($main'elf)	# GNU and SVR4 as'es use different comment delimiters,
-		{	# so we just skip comments...
-		push(@out,"\n");
+	if (!defined($com_start) or $main'elf)
+		{	# Regarding $main'elf above...
+			# GNU and SVR4 as'es use different comment delimiters,
+		push(@out,"\n");	# so we just skip ELF comments...
 		return;
 		}
 	foreach (@_)
@@ -494,7 +495,7 @@ sub main'label
 	{
 	if (!defined($label{$_[0]}))
 		{
-		$label{$_[0]}=".${label}${_[0]}";
+		$label{$_[0]}="${dot}${label}${_[0]}";
 		$label++;
 		}
 	return($label{$_[0]});
@@ -504,7 +505,7 @@ sub main'set_label
 	{
 	if (!defined($label{$_[0]}))
 		{
-		$label{$_[0]}=".${label}${_[0]}";
+		$label{$_[0]}="${dot}${label}${_[0]}";
 		$label++;
 		}
 	push(@out,".align $align\n") if ($_[1] != 0);
@@ -662,7 +663,6 @@ sub main'picmeup
 		{
 		local($tmp)=<<___;
 #if (defined(ELF) || defined(SOL)) && defined(PIC)
-	.align	4
 	call	1f
 1:	popl	$regs{$dst}
 	addl	\$_GLOBAL_OFFSET_TABLE_+[.-1b],$regs{$dst}
@@ -680,7 +680,7 @@ ___
 		&main'blindpop($dst);
 		&main'add($dst,"\$$under"."_GLOBAL_OFFSET_TABLE_+[.-".
 				&main'label("PIC_me_up") . "]");
-		&main'mov($dst,&main'DWP($sym."\@GOT",$dst));
+		&main'mov($dst,&main'DWP("$under".$sym."\@GOT",$dst));
 		}
 	else
 		{
