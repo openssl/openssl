@@ -82,7 +82,7 @@ void des_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 				{
 				c2l(iv,v0); ti[0]=v0;
 				c2l(iv,v1); ti[1]=v1;
-				des_encrypt(ti,schedule,DES_ENCRYPT);
+				des_encrypt1(ti,schedule,DES_ENCRYPT);
 				iv = &(*ivec)[0];
 				v0=ti[0]; l2c(v0,iv);
 				v0=ti[1]; l2c(v0,iv);
@@ -102,7 +102,7 @@ void des_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 				{
 				c2l(iv,v0); ti[0]=v0;
 				c2l(iv,v1); ti[1]=v1;
-				des_encrypt(ti,schedule,DES_ENCRYPT);
+				des_encrypt1(ti,schedule,DES_ENCRYPT);
 				iv = &(*ivec)[0];
 				v0=ti[0]; l2c(v0,iv);
 				v0=ti[1]; l2c(v0,iv);
