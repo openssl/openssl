@@ -509,13 +509,13 @@ while (<IN>)
 	{
 	chop;
 	$sdirs = 1 if /^SDIRS=/;
-	$sdirs = 0 unless /\\$/;
 	if ($sdirs) {
 		my $dir;
 		foreach $dir (@skip) {
 			s/$dir//;
 			}
 		}
+	$sdirs = 0 unless /\\$/;
 	s/^VERSION=.*/VERSION=$version/;
 	s/^MAJOR=.*/MAJOR=$major/;
 	s/^MINOR=.*/MINOR=$minor/;
