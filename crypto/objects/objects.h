@@ -59,6 +59,11 @@
 #ifndef HEADER_OBJECTS_H
 #define HEADER_OBJECTS_H
 
+#define USE_OBJ_MAC
+
+#ifdef USE_OBJ_MAC
+#include <openssl/obj_mac.h>
+#else
 #define SN_undef			"UNDEF"
 #define LN_undef			"undefined"
 #define NID_undef			0
@@ -949,6 +954,7 @@
 #define LN_OCSP_sign			"OCSP Signing"
 #define NID_OCSP_sign			180
 #define OBJ_OCSP_sign			OBJ_id_kp,9L
+#endif /* USE_OBJ_MAC */
 
 #include <openssl/bio.h>
 #include <openssl/asn1.h>

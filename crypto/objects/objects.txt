@@ -1,40 +1,567 @@
-1 2			: ISO member bodies
-1 2 840			: US (ANSI)
-1 2 840 113549		: rsadsi	: RSA Data Security, Inc.
-1 2 840 113549 1	: pkcs		: RSA Data Security, Inc. PKCS
-1 2 840 113549 1 1 1	: rsaEncryption
-1 2 840 113549 1 1 2	: md2withRSAEncryption
-1 2 840 113549 1 1 4	: md5withRSAEncryption
-1 2 840 113549 1 7	: pkcs-7
-1 2 840 113549 1 7 1	: pkcs-7-data
-1 2 840 113549 1 7 2	: pkcs-7-signedData
-1 2 840 113549 1 7 3	: pkcs-7-envelopedData
-1 2 840 113549 1 7 4	: pkcs-7-signedAndEnvelopedData
-1 2 840 113549 1 7 5	: pkcs-7-digestData
-1 2 840 113549 1 7 6	: pkcs-7-encryptedData
-1 2 840 113549 2 2	: md2
-1 2 840 113549 2 4	: md4
-1 2 840 113549 2 5	: md5
-1 2 840 113549 3 4	: rc4
-1 2 840 113549 5 1	: pbeWithMD2AndDES_CBC
-1 2 840 113549 5 3	: pbeWithMD5AndDES_CBC
-2 5			: X500		: directory services (X.500)
-2 5 4			: X509
-2 5 4 3			: commonName
-2 5 4 6			: countryName
-2 5 4 7			: localityName
-2 5 4 8			: stateOrProvinceName
-2 5 4 10		: organizationName
-2 5 4 11		: organizationalUnitName
-2 5 8			: directory services - algorithms
-2 5 8 1 1		: rsa
+1			: ISO			: iso
+iso 2			: member-body		: ISO Member Body
+member-body 840		: ISO-US		: ISO US Member Body
+ISO-US 10040		: X9-57			: X9.57
+X9-57 4			: X9cm			: X9.57 CM ?
 
-algorithm 18		: sha
-encryptionAlgorithm 1	: rsa
+!Cname dsa
+X9cm 1			: DSA			: dsaEncryption
+X9cm 3			: DSA-SHA1		: dsaWithSHA1
+
+ISO-US 113533 7 66 10	: CAST5-CBC		: cast5-cbc
+			: CAST5-ECB		: cast5-ecb
+!Cname cast5-cfb64
+			: CAST5-CFB		: cast5-cfb
+!Cname cast5-ofb64
+			: CAST5-OFB		: cast5-ofb
+!Cname pbeWithMD5AndCast5-CBC
+ISO-US 113533 7 66 12	:			: pbeWithMD5AndCast5CBC
+
+ISO-US 113549		: rsadsi		: RSA Data Security, Inc.
+
+rsadsi 1		: pkcs			: RSA Data Security, Inc. PKCS
+
+pkcs 1			: pkcs1
+pkcs1 1			:			: rsaEncryption
+pkcs1 2			: RSA-MD2		: md2WithRSAEncryption
+pkcs1 4			: RSA-MD5		: md5WithRSAEncryption
+pkcs1 5			: RSA-SHA1		: sha1WithRSAEncryption
+
+pkcs 3			: pkcs3
+pkcs3 1			:			: dhKeyAgreement
+
+pkcs 5			: pkcs5
+pkcs5 1			: PBE-MD2-DES		: pbeWithMD2AndDES-CBC
+pkcs5 3			: PBE-MD5-DES		: pbeWithMD5AndDES-CBC
+pkcs5 4			: PBE-MD2-RC2-64	: pbeWithMD2AndRC2-CBC
+pkcs5 6			: PBE-MD5-RC2-64	: pbeWithMD5AndRC2-CBC
+pkcs5 10		: PBE-SHA1-DES		: pbeWithSHA1AndDES-CBC
+pkcs5 11		: PBE-SHA1-RC2-64	: pbeWithSHA1AndRC2-CBC
+!Cname id_pbkdf2
+pkcs5 12		:			: PBKDF2
+!Cname pbes2
+pkcs5 13		:			: PBES2
+!Cname pbmac1
+pkcs5 14		:			: PBMAC1
+
+pkcs 7			: pkcs7
+pkcs7 1			:			: pkcs7-data
+!Cname pkcs7-signed
+pkcs7 2			:			: pkcs7-signedData
+!Cname pkcs7-enveloped
+pkcs7 3			:			: pkcs7-envelopedData
+!Cname pkcs7-signedAndEnveloped
+pkcs7 4			:			: pkcs7-signedAndEnvelopedData
+!Cname pkcs7-digest
+pkcs7 5			:			: pkcs7-digestData
+!Cname pkcs7-encrypted
+pkcs7 6			:			: pkcs7-encryptedData
+
+pkcs 9			: pkcs9
+!module pkcs9
+pkcs9 1			: Email			: emailAddress
+pkcs9 2			:			: unstructuredName
+pkcs9 3			:			: contentType
+pkcs9 4			:			: messageDigest
+pkcs9 5			:			: signingTime
+pkcs9 6			:			: countersignature
+pkcs9 7			:			: challengePassword
+pkcs9 8			:			: unstructuredAddress
+!Cname extCertAttributes
+pkcs9 9			:			: extendedCertificateAttributes
+!global
+
+!Cname ext-req
+pkcs9 14		: extReq		: Extension Request
+
+!Cname SMIMECapabilities
+pkcs9 15		: SMIME-CAPS		: S/MIME Capabilities
+
+# S/MIME
+!Cname SMIME
+pkcs9 16		: SMIME			: S/MIME
+SMIME 0			: id-smime-mod
+SMIME 1			: id-smime-ct
+SMIME 2			: id-smime-aa
+SMIME 3			: id-smime-alg
+SMIME 4			: id-smime-cd
+SMIME 5			: id-smime-spq
+SMIME 6			: id-smime-cti
+
+# S/MIME Modules
+id-smime-mod 1		: id-smime-mod-cms
+id-smime-mod 2		: id-smime-mod-ess
+id-smime-mod 3		: id-smime-mod-oid
+id-smime-mod 4		: id-smime-mod-msg-v3
+id-smime-mod 5		: id-smime-mod-ets-eSignature-88
+id-smime-mod 6		: id-smime-mod-ets-eSignature-97
+id-smime-mod 7		: id-smime-mod-ets-eSigPolicy-88
+id-smime-mod 8		: id-smime-mod-ets-eSigPolicy-97
+
+# S/MIME Content Types
+id-smime-ct 1		: id-smime-ct-receipt
+id-smime-ct 2		: id-smime-ct-authData
+id-smime-ct 3		: id-smime-ct-publishCert
+id-smime-ct 4		: id-smime-ct-TSTInfo
+id-smime-ct 5		: id-smime-ct-TDTInfo
+id-smime-ct 6		: id-smime-ct-contentInfo
+id-smime-ct 7		: id-smime-ct-DVCSRequestData
+id-smime-ct 8		: id-smime-ct-DVCSResponseData
+
+# S/MIME Attributes
+id-smime-aa 1		: id-smime-aa-receiptRequest
+id-smime-aa 2		: id-smime-aa-securityLabel
+id-smime-aa 3		: id-smime-aa-mlExpandHistory
+id-smime-aa 4		: id-smime-aa-contentHint
+id-smime-aa 5		: id-smime-aa-msgSigDigest
+# obsolete
+id-smime-aa 6		: id-smime-aa-encapContentType
+id-smime-aa 7		: id-smime-aa-contentIdentifier
+# obsolete
+id-smime-aa 8		: id-smime-aa-macValue
+id-smime-aa 9		: id-smime-aa-equivalentLabels
+id-smime-aa 10		: id-smime-aa-contentReference
+id-smime-aa 11		: id-smime-aa-encrypKeyPref
+id-smime-aa 12		: id-smime-aa-signingCertificate
+id-smime-aa 13		: id-smime-aa-smimeEncryptCerts
+id-smime-aa 14		: id-smime-aa-timeStampToken
+id-smime-aa 15		: id-smime-aa-ets-sigPolicyId
+id-smime-aa 16		: id-smime-aa-ets-commitmentType
+id-smime-aa 17		: id-smime-aa-ets-signerLocation
+id-smime-aa 18		: id-smime-aa-ets-signerAttr
+id-smime-aa 19		: id-smime-aa-ets-otherSigCert
+id-smime-aa 20		: id-smime-aa-ets-contentTimestamp
+id-smime-aa 21		: id-smime-aa-ets-CertificateRefs
+id-smime-aa 22		: id-smime-aa-ets-RevocationRefs
+id-smime-aa 23		: id-smime-aa-ets-certValues
+id-smime-aa 24		: id-smime-aa-ets-revocationValues
+id-smime-aa 25		: id-smime-aa-ets-escTimeStamp
+id-smime-aa 26		: id-smime-aa-ets-certCRLTimestamp
+id-smime-aa 27		: id-smime-aa-ets-archiveTimeStamp
+id-smime-aa 28		: id-smime-aa-signatureType
+id-smime-aa 29		: id-smime-aa-dvcs-dvc
+
+# S/MIME Algorithm Identifiers
+# obsolete
+id-smime-alg 1		: id-smime-alg-ESDHwith3DES
+# obsolete
+id-smime-alg 2		: id-smime-alg-ESDHwithRC2
+# obsolete
+id-smime-alg 3		: id-smime-alg-3DESwrap
+# obsolete
+id-smime-alg 4		: id-smime-alg-RC2wrap
+id-smime-alg 5		: id-smime-alg-ESDH
+id-smime-alg 6		: id-smime-alg-CMS3DESwrap
+id-smime-alg 7		: id-smime-alg-CMSRC2wrap
+
+# S/MIME Certificate Distribution
+id-smime-cd 1		: id-smime-cd-ldap
+
+# S/MIME Signature Policy Qualifier
+id-smime-spq 1		: id-smime-spq-ets-sqt-uri
+id-smime-spq 2		: id-smime-spq-ets-sqt-unotice
+
+# S/MIME Commitment Type Identifier
+id-smime-cti 1		: id-smime-cti-ets-proofOfOrigin
+id-smime-cti 2		: id-smime-cti-ets-proofOfReceipt
+id-smime-cti 3		: id-smime-cti-ets-proofOfDelivery
+id-smime-cti 4		: id-smime-cti-ets-proofOfSender
+id-smime-cti 5		: id-smime-cti-ets-proofOfApproval
+id-smime-cti 6		: id-smime-cti-ets-proofOfCreation
+
+pkcs9 20		:			: friendlyName
+pkcs9 21		:			: localKeyID
+!Alias certTypes pkcs9 22
+certTypes 1		:			: x509Certificate
+certTypes 2		:			: sdsiCertificate
+!Alias crlTypes pkcs9 23
+crlTypes 1		:			: x509Crl
+
+!Alias pkcs12 pkcs 12
+!Alias pkcs12-pbeids pkcs12 1
+
+!Cname pbe-WithSHA1And128BitRC4
+pkcs12-pbeids 1		: PBE-SHA1-RC4-128	: pbeWithSHA1And128BitRC4
+!Cname pbe-WithSHA1And40BitRC4
+pkcs12-pbeids 2		: PBE-SHA1-RC4-40	: pbeWithSHA1And40BitRC4
+!Cname pbe-WithSHA1And3_Key_TripleDES-CBC
+pkcs12-pbeids 3		: PBE-SHA1-3DES		: pbeWithSHA1And3-KeyTripleDES-CBC
+!Cname pbe-WithSHA1And2_Key_TripleDES-CBC
+pkcs12-pbeids 4		: PBE-SHA1-2DES		: pbeWithSHA1And2-KeyTripleDES-CBC
+!Cname pbe-WithSHA1And128BitRC2-CBC
+pkcs12-pbeids 5		: PBE-SHA1-RC2-128	: pbeWithSHA1And128BitRC2-CBC
+!Cname pbe-WithSHA1And40BitRC2-CBC
+pkcs12-pbeids 6		: PBE-SHA1-RC2-40	: pbeWithSHA1And40BitRC2-CBC
+
+!Alias pkcs12-Version1 pkcs12 10
+!Alias pkcs12-BagIds pkcs12-Version1 1
+pkcs12-BagIds 1		:			: keyBag
+pkcs12-BagIds 2		:			: pkcs8ShroudedKeyBag
+pkcs12-BagIds 3		:			: certBag
+pkcs12-BagIds 4		:			: crlBag
+pkcs12-BagIds 5		:			: secretBag
+pkcs12-BagIds 6		:			: safeContentsBag
+
+rsadsi 2 2		: MD2			: md2
+rsadsi 2 4		: MD4			: md4
+rsadsi 2 5		: MD5			: md5
+			: MD5-SHA1		: md5-sha1
+rsadsi 2 7		:			: hmacWithSHA1
+rsadsi 3 2		: RC2-CBC		: rc2-cbc
+			: RC2-ECB		: rc2-ecb
+!Cname rc2-cfb64
+			: RC2-CFB		: rc2-cfb
+!Cname rc2-ofb64
+			: RC2-OFB		: rc2-ofb
+			: RC2-40-CBC		: rc2-40-cbc
+			: RC2-64-CBC		: rc2-64-cbc
+rsadsi 3 4		: RC4			: rc4
+			: RC4-40		: rc4-40
+rsadsi 3 7		: DES-EDE3-CBC		: des-ede3-cbc
+rsadsi 3 8		: RC5-CBC		: rc5-cbc
+			: RC5-ECB		: rc5-ecb
+!Cname rc5-cfb64
+			: RC5-CFB		: rc5-cfb
+!Cname rc5-ofb64
+			: RC5-OFB		: rc5-ofb
+
+!Cname ms-ext-req
+1 3 6 1 4 1 311 2 1 14	: msExtReq		: Microsoft Extension Request
+!Cname ms-code-ind
+1 3 6 1 4 1 311 2 1 21	: msCodeInd		: Microsoft Individual Code Signing
+!Cname ms-code-com
+1 3 6 1 4 1 311 2 1 22	: msCodeCom		: Microsoft Commercial Code Signing
+!Cname ms-ctl-sign
+1 3 6 1 4 1 311 10 3 1	: msCTLSign		: Microsoft Trust List Signing
+!Cname ms-sgc
+1 3 6 1 4 1 311 10 3 3	: msSGC			: Microsoft Server Gated Crypto
+!Cname ms-efs
+1 3 6 1 4 1 311 10 3 4	: msEFS			: Microsoft Encrypted File System
+
+1 3 6 1 4 1 188 7 1 1 2	: IDEA-CBC		: idea-cbc
+			: IDEA-ECB		: idea-ecb
+!Cname idea-cfb64
+			: IDEA-CFB		: idea-cfb
+!Cname idea-ofb64
+			: IDEA-OFB		: idea-ofb
+
+1 3 6 1 4 1 3029 1 2	: BF-CBC		: bf-cbc
+			: BF-ECB		: bf-ecb
+!Cname bf-cfb64
+			: BF-CFB		: bf-cfb
+!Cname bf-ofb64
+			: BF-OFB		: bf-ofb
+
+!Cname id-pkix
+1 3 6 1 5 5 7		: PKIX
+
+# PKIX Arcs
+id-pkix 0		: id-pkix-mod
+id-pkix 1		: id-pe
+id-pkix 2		: id-qt
+id-pkix 3		: id-kp
+id-pkix 4		: id-it
+id-pkix 5		: id-pkip
+id-pkix 6		: id-alg
+id-pkix 7		: id-cmc
+id-pkix 8		: id-on
+id-pkix 9		: id-pda
+id-pkix 10		: id-aca
+id-pkix 11		: id-qcs
+id-pkix 12		: id-cct
+id-pkix 48		: id-ad
+
+# PKIX Modules
+id-pkix-mod 1		: id-pkix1-explicit-88
+id-pkix-mod 2		: id-pkix1-implicit-88
+id-pkix-mod 3		: id-pkix1-explicit-93
+id-pkix-mod 4		: id-pkix1-implicit-93
+id-pkix-mod 5		: id-mod-crmf
+id-pkix-mod 6		: id-mod-cmc
+id-pkix-mod 7		: id-mod-kea-profile-88
+id-pkix-mod 8		: id-mod-kea-profile-93
+id-pkix-mod 9		: id-mod-cmp
+id-pkix-mod 10		: id-mod-qualified-cert-88
+id-pkix-mod 11		: id-mod-qualified-cert-93
+id-pkix-mod 12		: id-mod-attribute-cert
+id-pkix-mod 13		: id-mod-timestamp-protocol
+id-pkix-mod 14		: id-mod-ocsp
+id-pkix-mod 15		: id-mod-dvcs
+id-pkix-mod 16		: id-mod-cmp2000
+
+# PKIX Private Extensions
+!Cname info-access
+id-pe 1			: authorityInfoAccess	: Authority Information Access
+id-pe 2			: biometricInfo		: Biometric Info
+id-pe 3			: qcStatements
+id-pe 4			: ac-auditEntity
+id-pe 5			: ac-targeting
+id-pe 6			: aaControls
+id-pe 7			: sbqp-ipAddrBlock
+id-pe 8			: sbqp-autonomousSysNum
+id-pe 9			: sbqp-routerIdentifier
+
+# PKIX policyQualifiers for Internet policy qualifiers
+id-qt 1			: id-qt-cps		: Policy Qualifier CPS
+id-qt 2			: id-qt-unotice		: Policy Qualifier User Notice
+id-qt 3			: textNotice
+
+# PKIX key purpose identifiers
+!Cname server-auth
+id-kp 1			: serverAuth		: TLS Web Server Authentication
+!Cname client-auth
+id-kp 2			: clientAuth		: TLS Web Client Authentication
+!Cname code-sign
+id-kp 3			: codeSigning		: Code Signing
+!Cname email-protect
+id-kp 4			: emailProtection	: E-mail Protection
+id-kp 5			: ipsecEndSystem	: IPSec End System
+id-kp 6			: ipsecTunnel		: IPSec Tunnel
+id-kp 7			: ipsecUser		: IPSec User
+!Cname time-stamp
+id-kp 8			: timeStamping		: Time Stamping
+#??? According to PKIX, id-kp 9 is temporalDataAuthority
+#??? I've no idea where OCSP-sign comes from -- Richard Levitte
+!Cname OCSP-sign
+id-kp 9			: OCSPSigning		: OCSP Signing
+id-kp 10		: DVCS			: dvcs
+
+# CMP information types
+id-it 1			: id-it-caProtEncCert
+id-it 2			: id-it-signKeyPairTypes
+id-it 3			: id-it-encKeyPairTypes
+id-it 4			: id-it-preferredSymmAlg
+id-it 5			: id-it-caKeyUpdateInfo
+id-it 6			: id-it-currentCRL
+id-it 7			: id-it-unsupportedOIDs
+# obsolete
+id-it 8			: id-it-subscriptionRequest
+# obsolete
+id-it 9			: id-it-subscriptionResponse
+id-it 10		: id-it-keyPairParamReq
+id-it 11		: id-it-keyPairParamRep
+id-it 12		: id-it-revPassphrase
+id-it 13		: id-it-implicitConfirm
+id-it 14		: id-it-confirmWaitTime
+id-it 15		: id-it-origPKIMessage
+
+# CRMF registration
+id-pkip 1		: id-regCtrl
+id-pkip 2		: id-regInfo
+
+# CRMF registration controls
+id-regCtrl 1		: id-regCtrl-regToken
+id-regCtrl 2		: id-regCtrl-authenticator
+id-regCtrl 3		: id-regCtrl-pkiPublicationInfo
+id-regCtrl 4		: id-regCtrl-pkiArchiveOptions
+id-regCtrl 5		: id-regCtrl-oldCertID
+id-regCtrl 6		: id-regCtrl-protocolEncrKey
+
+# CRMF registration information
+id-regInfo 1		: id-regInfo-utf8Pairs
+id-regInfo 2		: id-regInfo-certReq
+
+# algorithms
+id-alg 1		: id-alg-des40
+id-alg 2		: id-alg-noSignature
+id-alg 3		: id-alg-dh-sig-hmac-sha1
+id-alg 4		: id-alg-dh-pop
+
+# CMC controls
+id-cmc 1		: id-cmc-statusInfo
+id-cmc 2		: id-cmc-identification
+id-cmc 3		: id-cmc-identityProof
+id-cmc 4		: id-cmc-dataReturn
+id-cmc 5		: id-cmc-transactionId
+id-cmc 6		: id-cmc-senderNonce
+id-cmc 7		: id-cmc-recipientNonce
+id-cmc 8		: id-cmc-addExtensions
+id-cmc 9		: id-cmc-encryptedPOP
+id-cmc 10		: id-cmc-decryptedPOP
+id-cmc 11		: id-cmc-lraPOPWitness
+id-cmc 15		: id-cmc-getCert
+id-cmc 16		: id-cmc-getCRL
+id-cmc 17		: id-cmc-revokeRequest
+id-cmc 18		: id-cmc-regInfo
+id-cmc 19		: id-cmc-responseInfo
+id-cmc 21		: id-cmc-queryPending
+id-cmc 22		: id-cmc-popLinkRandom
+id-cmc 23		: id-cmc-popLinkWitness
+id-cmc 24		: id-cmc-confirmCertAcceptance 
+
+# other names
+id-on 1			: id-on-personalData
+
+# personal data attributes
+id-pda 1		: id-pda-dateOfBirth
+id-pda 2		: id-pda-placeOfBirth
+id-pda 3		: id-pda-pseudonym
+id-pda 4		: id-pda-gender
+id-pda 5		: id-pda-countryOfCitizenship
+id-pda 6		: id-pda-countryOfResidence
+
+# attribute certificate attributes
+id-aca 1		: id-aca-authenticationInfo
+id-aca 2		: id-aca-accessIdentity
+id-aca 3		: id-aca-chargingIdentity
+id-aca 4		: id-aca-group
+id-aca 5		: id-aca-role
+
+# qualified certificate statements
+id-qcs 1		: id-qcs-pkixQCSyntax-v1
+
+# CMC content types
+id-cct 1		: id-cct-crs
+id-cct 2		: id-cct-PKIData
+id-cct 3		: id-cct-PKIResponse
+
+# access descriptors for authority info access extension
+!Cname ad-OCSP
+id-ad 1			: OCSP			: OCSP
+!Cname ad-ca-issuers
+id-ad 2			: caIssuers		: CA Issuers
+!Cname ad-timeStamping
+id-ad 3			: timestamping		: Time Stamping
+!Cname ad-dvcs
+id-ad 4			: DVCS			: dvcs
+
+
+!Alias id-pkix-OCSP ad-OCSP
+!module id-pkix-OCSP
+!Cname basic
+id-pkix-OCSP 1		: basicOCSPResponse	: Basic OCSP Response
+id-pkix-OCSP 2		: Nonce			: OCSP Nonce
+id-pkix-OCSP 3		: CrlID			: OCSP CRL ID
+id-pkix-OCSP 4		: acceptableResponses	: Acceptable OCSP Responses
+id-pkix-OCSP 5		: noCheck
+id-pkix-OCSP 6		: archiveCutoff		: OCSP Archive Cutoff
+id-pkix-OCSP 7		: serviceLocator	: OCSP Service Locator
+id-pkix-OCSP 8		: extendedStatus	: Extended OCSP Status
+id-pkix-OCSP 9		: valid
+id-pkix-OCSP 10		: path
+id-pkix-OCSP 11		: trustRoot		: Trust Root
+!global
+
+1 3 14 3 2		: algorithm		: algorithm
+algorithm 3		: RSA-NP-MD5		: md5WithRSA
+algorithm 6		: DES-ECB		: des-ecb
+algorithm 7		: DES-CBC		: des-cbc
+!Cname des-ofb64
+algorithm 8		: DES-OFB		: des-ofb
+!Cname des-cfb64
+algorithm 9		: DES-CFB		: des-cfb
 algorithm 11		: rsaSignature
+!Cname dsa-2
+algorithm 12		: DSA-old		: dsaEncryption-old
+algorithm 13		: DSA-SHA		: dsaWithSHA
+algorithm 15		: RSA-SHA		: shaWithRSAEncryption
+algorithm 17		: DES-EDE		: des-ede
+			: DES-EDE3		: des-ede3
+			: DES-EDE-CBC		: des-ede-cbc
+!Cname des-ede-cfb64
+			: DES-EDE-CFB		: des-ede-cfb
+!Cname des-ede3-cfb64
+			: DES-EDE3-CFB		: des-ede3-cfb
+!Cname des-ede-ofb64
+			: DES-EDE-OFB		: des-ede-ofb
+!Cname des-ede3-ofb64
+			: DES-EDE3-OFB		: des-ede3-ofb
+			: DESX-CBC		: desx-cbc
+algorithm 18		: SHA			: sha
+algorithm 26		: SHA1			: sha1
+!Cname dsaWithSHA1-2
+algorithm 27		: DSA-SHA1-old		: dsaWithSHA1-old
+algorithm 29		: RSA-SHA1-2		: sha1WithRSA
 
-algorithm 6		: desECB
-algorithm 7		: desCBC
-algorithm 8		: desOFB
-algorithm 9		: desCFB
-algorithm 17		: desEDE2
+1 3 36 3 2 1		: RIPEMD160		: ripemd160
+1 3 36 3 3 1 2		: RSA-RIPEMD160		: ripemd160WithRSA
+
+!Cname sxnet
+1 3 101 1 4 1		: SXNetID		: Strong Extranet ID
+
+2 5			: X500			: directory services (X.500)
+
+X500 4			: X509
+X509 3			: CN			: commonName
+X509 4			: S			: surname
+X509 5			: SN			: serialNumber
+X509 6			: C			: countryName
+X509 7			: L			: localityName
+X509 8			: ST			: stateOrProvinceName
+X509 10			: O			: organizationName
+X509 11			: OU			: organizationalUnitName
+X509 12			: T			: title
+X509 13			: D			: description
+X509 41			: name			: name
+X509 42			: G			: givenName
+X509 43			: I			: initials
+X509 45			: UID			: uniqueIdentifier
+X509 46			: dnQualifier		: dnQualifier
+
+X500 8			: X500algorithms	: directory services - algorithms
+X500algorithms 1 1	: RSA			: rsa
+X500algorithms 3 100	: RSA-MDC2		: mdc2WithRSA
+X500algorithms 3 101	: MDC2			: mdc2
+
+X500 29			: id-ce
+!Cname subject-key-identifier
+id-ce 14		: subjectKeyIdentifier	: X509v3 Subject Key Identifier
+!Cname key-usage
+id-ce 15		: keyUsage		: X509v3 Key Usage
+!Cname private-key-usage-period
+id-ce 16		: privateKeyUsagePeriod	: X509v3 Private Key Usage Period
+!Cname subject-alt-name
+id-ce 17		: subjectAltName	: X509v3 Subject Alternative Name
+!Cname issuer-alt-name
+id-ce 18		: issuerAltName		: X509v3 Issuer Alternative Name
+!Cname basic-constraints
+id-ce 19		: basicConstraints	: X509v3 Basic Constraints
+!Cname crl-number
+id-ce 20		: crlNumber		: X509v3 CRL Number
+!Cname crl-reason
+id-ce 21		: CRLReason		: X509v3 CRL Reason Code
+!Cname invalidity-date
+id-ce 24		: invalidityDate	: Invalidity Date
+!Cname delta-crl
+id-ce 27		: deltaCRL		: X509v3 Delta CRL Indicator
+!Cname crl-distribution-points
+id-ce 31		: crlDistributionPoints	: X509v3 CRL Distribution Points
+!Cname certificate-policies
+id-ce 32		: certificatePolicies	: X509v3 Certificate Policies
+!Cname authority-key-identifier
+id-ce 35		: authorityKeyIdentifier : X509v3 Authority Key Identifier
+!Cname ext-key-usage
+id-ce 37		: extendedKeyUsage	: X509v3 Extended Key Usage
+
+!Cname netscape
+2 16 840 1 113730	: Netscape		: Netscape Communications Corp.
+!Cname netscape-cert-extension
+netscape 1		: nsCertExt		: Netscape Certificate Extension
+!Cname netscape-data-type
+netscape 2		: nsDataType		: Netscape Data Type
+!Cname netscape-cert-type
+netscape-cert-extension 1 : nsCertType		: Netscape Cert Type
+!Cname netscape-base-url
+netscape-cert-extension 2 : nsBaseUrl		: Netscape Base Url
+!Cname netscape-revocation-url
+netscape-cert-extension 3 : nsRevocationUrl	: Netscape Revocation Url
+!Cname netscape-ca-revocation-url
+netscape-cert-extension 4 : nsCaRevocationUrl	: Netscape CA Revocation Url
+!Cname netscape-renewal-url
+netscape-cert-extension 7 : nsRenewalUrl	: Netscape Renewal Url
+!Cname netscape-ca-policy-url
+netscape-cert-extension 8 : nsCaPolicyUrl	: Netscape CA Policy Url
+!Cname netscape-ssl-server-name
+netscape-cert-extension 12 : nsSslServerName	: Netscape SSL Server Name
+!Cname netscape-comment
+netscape-cert-extension 13 : nsComment		: Netscape Comment
+!Cname netscape-cert-sequence
+netscape-data-type 5	: nsCertSequence	: Netscape Certificate Sequence
+!Cname ns-sgc
+netscape 4 1		: nsSGC			: Netscape Server Gated Crypto
+
+# What the hell are these OIDs, really?
+!Cname rle-compression
+1 1 1 1 666 1		: RLE			: run length compression
+!Cname zlib-compression
+1 1 1 1 666 2		: ZLIB			: zlib compression
