@@ -377,6 +377,8 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define EVP_get_cipherbyobj(a) EVP_get_cipherbynid(OBJ_obj2nid(a))
 
 #define EVP_MD_type(e)			((e)->type)
+#define EVP_MD_nid(e)			EVP_MD_type(e)
+#define EVP_MD_name(e)			OBJ_nid2sn(EVP_MD_nid(e))
 #define EVP_MD_pkey_type(e)		((e)->pkey_type)
 #define EVP_MD_size(e)			((e)->md_size)
 #define EVP_MD_block_size(e)		((e)->block_size)
@@ -559,6 +561,7 @@ const EVP_CIPHER *EVP_desx_cbc(void);
 # ifdef OPENSSL_OPENBSD_DEV_CRYPTO
 const EVP_CIPHER *EVP_dev_crypto_des_ede3_cbc(void);
 const EVP_CIPHER *EVP_dev_crypto_rc4(void);
+const EVP_MD *EVP_dev_crypto_md5(void);
 # endif
 #endif
 #ifndef OPENSSL_NO_RC4

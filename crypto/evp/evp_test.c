@@ -104,7 +104,6 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
     hexdump(stdout,"Plaintext",plaintext,pn);
     hexdump(stdout,"Ciphertext",ciphertext,cn);
     
-    
     if(kn != c->key_len)
 	{
 	fprintf(stderr,"Key length doesn't match, got %d expected %d\n",kn,
@@ -148,7 +147,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
     if(!EVP_DecryptInit(&ctx,c,key,iv))
 	{
 	fprintf(stderr,"DecryptInit failed\n");
-	exit(10);
+	exit(11);
 	}
     EVP_CIPHER_CTX_set_padding(&ctx,0);
 
@@ -181,6 +180,86 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
     printf("\n");
     }
 
+static int test_cipher(const char *cipher,const unsigned char *key,int kn,
+		       const unsigned char *iv,int in,
+		       const unsigned char *plaintext,int pn,
+		       const unsigned char *ciphertext,int cn)
+    {
+    const EVP_CIPHER *c;
+    ENGINE *e;
+
+    c=EVP_get_cipherbyname(cipher);
+    if(!c)
+	return 0;
+
+    test1(c,key,kn,iv,in,plaintext,pn,ciphertext,cn);
+
+    for(e=ENGINE_get_first() ; e ; e=ENGINE_get_next(e))
+	{
+	c=ENGINE_get_cipher_by_name(e,cipher);
+	if(!c)
+	    continue;
+	printf("Testing engine %s\n",ENGINE_get_name(e));
+
+	test1(c,key,kn,iv,in,plaintext,pn,ciphertext,cn);
+	}
+
+    return 1;
+    }
+
+static int test_digest(const char *digest,
+		       const unsigned char *plaintext,int pn,
+		       const unsigned char *ciphertext, int cn)
+    {
+    const EVP_MD *d;
+    EVP_MD_CTX ctx;
+    unsigned char md[EVP_MAX_MD_SIZE];
+    unsigned int mdn;
+
+    d=EVP_get_digestbyname(digest);
+    if(!d)
+	return 0;
+
+    printf("Testing digest %s\n",EVP_MD_name(d));
+    hexdump(stdout,"Plaintext",plaintext,pn);
+    hexdump(stdout,"Digest",ciphertext,cn);
+
+    EVP_MD_CTX_init(&ctx);
+    if(!EVP_DigestInit(&ctx,d))
+	{
+	fprintf(stderr,"DigestInit failed\n");
+	exit(100);
+	}
+    if(!EVP_DigestUpdate(&ctx,plaintext,pn))
+	{
+	fprintf(stderr,"DigestUpdate failed\n");
+	exit(101);
+	}
+    if(!EVP_DigestFinal(&ctx,md,&mdn))
+	{
+	fprintf(stderr,"DigestUpdate failed\n");
+	exit(101);
+	}
+
+    if(mdn != cn)
+	{
+	fprintf(stderr,"Digest length mismatch, got %d expected %d\n",mdn,cn);
+	exit(102);
+	}
+
+    if(memcmp(md,ciphertext,cn))
+	{
+	fprintf(stderr,"Digest mismatch\n");
+	hexdump(stderr,"Got",md,cn);
+	hexdump(stderr,"Expected",ciphertext,cn);
+	exit(103);
+	}
+
+    printf("\n");
+
+    return 1;
+    }
+
 int main(int argc,char **argv)
     {
     const char *szTestFile;
@@ -202,6 +281,7 @@ int main(int argc,char **argv)
 	}
 
     OpenSSL_add_all_ciphers();
+    OpenSSL_add_all_digests();
     ENGINE_load_builtin_engines();
 
     for( ; ; )
@@ -210,9 +290,7 @@ int main(int argc,char **argv)
 	char *p;
 	char *cipher;
 	unsigned char *iv,*key,*plaintext,*ciphertext;
-	const EVP_CIPHER *c;
 	int kn,in,pn,cn;
-	ENGINE *e;
 
 	if(!fgets((char *)line,sizeof line,f))
 	    break;
@@ -225,28 +303,16 @@ int main(int argc,char **argv)
 	plaintext=ustrsep(&p,":");
 	ciphertext=ustrsep(&p,"\n");
 
-	c=EVP_get_cipherbyname(cipher);
-	if(!c)
-	    {
-	    fprintf(stderr,"Can't find cipher %s!\n",cipher);
-	    exit(3);
-	    }
-
 	kn=convert(key);
 	in=convert(iv);
 	pn=convert(plaintext);
 	cn=convert(ciphertext);
 
-	test1(c,key,kn,iv,in,plaintext,pn,ciphertext,cn);
-
-	for(e=ENGINE_get_first() ; e ; e=ENGINE_get_next(e))
+	if(!test_cipher(cipher,key,kn,iv,in,plaintext,pn,ciphertext,cn)
+	   && !test_digest(cipher,plaintext,pn,ciphertext,cn))
 	    {
-	    c=ENGINE_get_cipher_by_name(e,cipher);
-	    if(!c)
-		continue;
-	    printf("Testing engine %s\n",ENGINE_get_name(e));
-
-	    test1(c,key,kn,iv,in,plaintext,pn,ciphertext,cn);
+	    fprintf(stderr,"Can't find %s\n",cipher);
+	    exit(3);
 	    }
 	}
 
