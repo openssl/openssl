@@ -78,10 +78,7 @@ extern "C" {
 typedef unsigned char des_cblock[8];
 typedef /* const */ unsigned char const_des_cblock[8];
 /* With "const", gcc 2.8.1 on Solaris thinks that des_cblock *
- * and const_des_cblock * are incompatible pointer types.
- * I haven't seen that warning on other systems ... I'll look
- * what the standard says. */
-
+ * and const_des_cblock * are incompatible pointer types. */
 
 typedef struct des_ks_struct
 	{
@@ -141,8 +138,26 @@ void des_cfb_encrypt(const unsigned char *in,unsigned char *out,int numbits,
 		     int enc);
 void des_ecb_encrypt(const_des_cblock *input,des_cblock *output,
 		     des_key_schedule ks,int enc);
+
+/* 	This is the DES encryption function that gets called by just about
+	every other DES routine in the library.  You should not use this
+	function except to implement 'modes' of DES.  I say this because the
+	functions that call this routine do the conversion from 'char *' to
+	long, and this needs to be done to make sure 'non-aligned' memory
+	access do not occur.  The characters are loaded 'little endian'.
+	Data is a pointer to 2 unsigned long's and ks is the
+	des_key_schedule to use.  enc, is non zero specifies encryption,
+	zero if decryption. */
 void des_encrypt(DES_LONG *data,des_key_schedule ks, int enc);
+
+/* 	This functions is the same as des_encrypt() except that the DES
+	initial permutation (IP) and final permutation (FP) have been left
+	out.  As for des_encrypt(), you should not use this function.
+	It is used by the routines in the library that implement triple DES.
+	IP() des_encrypt2() des_encrypt2() des_encrypt2() FP() is the same
+	as des_encrypt() des_encrypt() des_encrypt() except faster :-). */
 void des_encrypt2(DES_LONG *data,des_key_schedule ks, int enc);
+
 void des_encrypt3(DES_LONG *data, des_key_schedule ks1,
 	des_key_schedule ks2, des_key_schedule ks3);
 void des_decrypt3(DES_LONG *data, des_key_schedule ks1,
@@ -192,6 +207,7 @@ int des_read_2passwords(des_cblock *key1,des_cblock *key2,
 			const char *prompt,int verify);
 int des_read_pw_string(char *buf,int length,const char *prompt,int verify);
 void des_set_odd_parity(des_cblock *key);
+int des_check_key_parity(const_des_cblock *key);
 int des_is_weak_key(const_des_cblock *key);
 /* des_set_key (= set_key = des_key_sched = key_sched) calls
  * des_set_key_checked if global variable des_check_key is set,
@@ -208,9 +224,6 @@ void des_cfb64_encrypt(const unsigned char *in,unsigned char *out,long length,
 void des_ofb64_encrypt(const unsigned char *in,unsigned char *out,long length,
 		       des_key_schedule schedule,des_cblock *ivec,int *num);
 int des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify);
-
-/* Extra functions from Mark Murray <mark@grondar.za> */
-void des_cblock_print_file(const_des_cblock *cb, FILE *fp);
 
 /* The following definitions provide compatibility with the MIT Kerberos
  * library. The des_key_schedule structure is not binary compatible. */
@@ -241,11 +254,11 @@ void des_cblock_print_file(const_des_cblock *cb, FILE *fp);
 #  define xcbc_encrypt des_xcbc_encrypt
 #  define cbc_cksum des_cbc_cksum
 #  define quad_cksum des_quad_cksum
+#  define check_parity des_check_key_parity
 #endif
 
 typedef des_key_schedule bit_64;
 #define des_fixup_key_parity des_set_odd_parity
-#define des_check_key_parity check_parity
 
 #ifdef  __cplusplus
 }

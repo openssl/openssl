@@ -67,7 +67,6 @@
 #include "podd.h"
 #include "sk.h"
 
-static int check_parity(const_des_cblock *key);
 OPENSSL_GLOBAL int des_check_key=0;
 
 void des_set_odd_parity(des_cblock *key)
@@ -78,7 +77,7 @@ void des_set_odd_parity(des_cblock *key)
 		(*key)[i]=odd_parity[(*key)[i]];
 	}
 
-static int check_parity(const_des_cblock *key)
+int des_check_key_parity(const_des_cblock *key)
 	{
 	int i;
 
@@ -164,7 +163,7 @@ int des_set_key(const_des_cblock *key, des_key_schedule schedule)
  */
 int des_set_key_checked(const_des_cblock *key, des_key_schedule schedule)
 	{
-	if (!check_parity(key))
+	if (!des_check_key_parity(key))
 		return(-1);
 	if (des_is_weak_key(key))
 		return(-2);
@@ -244,4 +243,10 @@ void des_set_key_unchecked(const_des_cblock *key, des_key_schedule schedule)
 int des_key_sched(const_des_cblock *key, des_key_schedule schedule)
 	{
 	return(des_set_key(key,schedule));
+	}
+
+#undef des_fixup_key_parity
+void des_fixup_key_parity(des_cblock *key)
+	{
+	des_set_odd_parity(key);
 	}

@@ -32,15 +32,15 @@ LIBSRC=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
 	fcrypt.c ofb64enc.c ofb_enc.c  pcbc_enc.c \
 	qud_cksm.c rand_key.c read_pwd.c rpc_enc.c  set_key.c  \
 	des_enc.c fcrypt_b.c read2pwd.c \
-	fcrypt.c xcbc_enc.c \
-	str2key.c  cfb64ede.c ofb64ede.c supp.c ede_cbcm_enc.c
+	xcbc_enc.c \
+	str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c
 
 LIBOBJ= set_key.o  ecb_enc.o  cbc_enc.o \
 	ecb3_enc.o cfb64enc.o cfb64ede.o cfb_enc.o  ofb64ede.o \
 	enc_read.o enc_writ.o ofb64enc.o \
 	ofb_enc.o  str2key.o  pcbc_enc.o qud_cksm.o rand_key.o \
 	${DES_ENC} read2pwd.o \
-	fcrypt.o xcbc_enc.o read_pwd.o rpc_enc.o  cbc_cksm.o supp.o \
+	fcrypt.o xcbc_enc.o read_pwd.o rpc_enc.o  cbc_cksm.o \
 	ede_cbcm_enc.o
 
 SRC= $(LIBSRC)
