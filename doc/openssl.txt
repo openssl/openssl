@@ -1,3 +1,62 @@
+
+This is some preliminary documentation for OpenSSL.
+
+==============================================================================
+                            BUFFER Library
+==============================================================================
+
+[Note: I wrote this when I saw a Malloc version of strdup() in there which
+ I'd written myself anyway. I was so annoyed at not noticing this I decided to
+ document it :-) Steve.]
+
+The buffer library handles simple character arrays. Buffers are used for various
+purposes in the library, most notably memory BIOs.
+
+The library uses the BUF_MEM structure defined in buffer.h:
+
+typedef struct buf_mem_st
+        {
+        int length;     /* current number of bytes */
+        char *data;
+        int max;        /* size of buffer */
+        } BUF_MEM;
+
+'length' is the current size of the buffer in bytes, 'max' is the amount of
+memory allocated to the buffer. There are three functions which handle these
+and one "miscelanous" function.
+
+BUF_MEM *BUF_MEM_new()
+
+This allocates a new buffer of zero size. Returns the buffer or NULL on error.
+
+void BUF_MEM_free(BUF_MEM *a)
+
+This frees up an already existing buffer. The data is zeroed before freeing
+up in case the buffer contains sensitive data.
+
+int BUF_MEM_grow(BUF_MEM *str, int len)
+
+This changes the size of an already existing buffer. It returns zero on error
+or the new size (i.e. 'len'). Any data already in the buffer is preserved if
+it increases in size.
+
+char * BUF_strdup(char *str)
+
+This is the previously mentioned strdup function: like the standard library
+strdup() it copies a null terminated string into a block of allocated memory
+and returns a pointer to the allocated block.
+
+Unlike the standard C library strdup() this function uses Malloc() and so
+should be used in preference to the standard library strdup() because it can
+be used for memory leak checking or replacing the malloc() function.
+
+The memory allocated from BUF_strdup() should be freed up using the Free()
+function.
+
+==============================================================================
+               OpenSSL X509V3 extension configuration
+==============================================================================
+
 OpenSSL X509V3 extension configuration: preliminary documentation.
 
 INTRODUCTION.
@@ -222,3 +281,4 @@ Display only extensions.
 Some extensions are only partially supported and currently are only displayed
 but cannot be set. These include private key usage period, CRL number, and
 CRL reason.
+
