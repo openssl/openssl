@@ -124,5 +124,6 @@ void ERR_load_crypto_strings(void)
 	ERR_load_DSO_strings();
 	ERR_load_ENGINE_strings();
 	ERR_load_OCSP_strings();
+	ERR_load_UI_strings();
 #endif
 	}
