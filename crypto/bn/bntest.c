@@ -139,10 +139,10 @@ int main(int argc, char *argv[])
 
 
 	ctx=BN_CTX_new();
-	if (ctx == NULL) exit(1);
+	if (ctx == NULL) EXIT(1);
 
 	out=BIO_new(BIO_s_file());
-	if (out == NULL) exit(1);
+	if (out == NULL) EXIT(1);
 	if (outfile == NULL)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
 		if (!BIO_write_filename(out,outfile))
 			{
 			perror(outfile);
-			exit(1);
+			EXIT(1);
 			}
 		}
 
@@ -228,14 +228,14 @@ int main(int argc, char *argv[])
 	BIO_free(out);
 
 /**/
-	exit(0);
+	EXIT(0);
 err:
 	BIO_puts(out,"1\n"); /* make sure the Perl script fed by bc notices
 	                      * the failure, see test_bn in test/Makefile.ssl*/
 	BIO_flush(out);
 	ERR_load_crypto_strings();
 	ERR_print_errors_fp(stderr);
-	exit(1);
+	EXIT(1);
 	return(1);
 	}
 
@@ -746,7 +746,7 @@ int test_mod_mul(BIO *bp, BN_CTX *ctx)
 			while ((l=ERR_get_error()))
 				fprintf(stderr,"ERROR:%s\n",
 					ERR_error_string(l,NULL));
-			exit(1);
+			EXIT(1);
 			}
 		if (bp != NULL)
 			{

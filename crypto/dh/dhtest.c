@@ -59,6 +59,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "../e_os.h"
+
 #ifdef WINDOWS
 #include "../bio/bss_file.c" 
 #endif
@@ -107,7 +110,7 @@ int main(int argc, char *argv[])
 	RAND_seed(rnd_seed, sizeof rnd_seed);
 
 	out=BIO_new(BIO_s_file());
-	if (out == NULL) exit(1);
+	if (out == NULL) EXIT(1);
 	BIO_set_fp(out,stdout,BIO_NOCLOSE);
 
 	a=DH_generate_parameters(64,DH_GENERATOR_5,cb,out);
@@ -188,7 +191,7 @@ err:
 	if(b != NULL) DH_free(b);
 	if(a != NULL) DH_free(a);
 	BIO_free(out);
-	exit(ret);
+	EXIT(ret);
 	return(ret);
 	}
 

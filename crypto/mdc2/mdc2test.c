@@ -60,6 +60,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../e_os.h"
+
 #if defined(NO_DES) && !defined(NO_MDC2)
 #define NO_MDC2
 #endif
@@ -134,7 +136,7 @@ int main(int argc, char *argv[])
 	else
 		printf("pad2 - ok\n");
 
-	exit(ret);
+	EXIT(ret);
 	return(ret);
 	}
 #endif

@@ -63,6 +63,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "../e_os.h"
+
 #ifdef NO_RC5
 int main(int argc, char *argv[])
 {
@@ -318,7 +320,7 @@ int main(int argc, char *argv[])
 		}
 	if (err == 0) printf("cbc RC5 ok\n");
 
-	exit(err);
+	EXIT(err);
 	return(err);
 	}
 

@@ -61,6 +61,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include "../e_os.h"
+
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/bio.h>
@@ -207,7 +210,7 @@ end:
 		BIO_free(bio_err);
 		bio_err = NULL;
 		}
-	exit(!ret);
+	EXIT(!ret);
 	return(0);
 	}
 
@@ -226,7 +229,7 @@ static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
 	if (!ok && (p == 0) && (num > 1))
 		{
 		BIO_printf((BIO *)arg,"error in dsatest\n");
-		exit(1);
+		EXIT(1);
 		}
 	}
 #endif

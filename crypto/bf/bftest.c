@@ -63,6 +63,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "../e_os.h"
+
 #ifdef NO_BF
 int main(int argc, char *argv[])
 {
@@ -275,7 +277,7 @@ int main(int argc, char *argv[])
 	else
 		ret=test();
 
-	exit(ret);
+	EXIT(ret);
 	return(0);
 	}
 
