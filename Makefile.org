@@ -356,10 +356,10 @@ install: all install_docs
 
 install_docs:
 	@$(PERL) $(TOP)/util/mkdir-p.pl \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man1 \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man3 \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man5 \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man7
+		$(INSTALL_PREFIX)$(INSTALLTOP)/man/man1 \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/man/man3 \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/man/man5 \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/man/man7
 	@echo installing man 1 and man 5
 	@for i in doc/apps/*.pod; do \
 		(cd `dirname $$i`; \
