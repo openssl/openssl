@@ -12,6 +12,14 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Modified SSL library such that the verify_callback that has been set
+     specificly for an SSL object with SSL_set_verify() is actually being
+     used. Before the change, a verify_callback set with this function was
+     ignored and the verify_callback() set in the SSL_CTX at the time of
+     the call was used. New function X509_STORE_CTX_set_verify_cb() introduced
+     to allow the necessary settings.
+     [Lutz Jaenicke]
+
   +) Initial reduction of linker bloat: the use of some functions, such as
      PEM causes large amounts of unused functions to be linked in due to
      poor organisation. For example pem_all.c contains every PEM function

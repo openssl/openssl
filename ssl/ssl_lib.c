@@ -1361,8 +1361,6 @@ void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,int (*cb)(int, X509_STORE_CTX *))
 	{
 	ctx->verify_mode=mode;
 	ctx->default_verify_callback=cb;
-	/* This needs cleaning up EAY EAY EAY */
-	X509_STORE_set_verify_cb_func(ctx->cert_store,cb);
 	}
 
 void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth)
