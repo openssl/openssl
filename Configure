@@ -47,7 +47,7 @@ use strict;
 # RC4_INDEX	define RC4_INDEX in crypto/rc4/rc4_locl.h.  This turns on
 #		array lookups instead of pointer use.
 # BF_PTR	use 'pointer arithmatic' for Blowfish (unsafe on Alpha).
-# BF_PTR2	use a pentium/intel specific version.
+# BF_PTR2	intel specific version (generic version is more efficient).
 # MD5_ASM	use some extra md5 assember,
 # SHA1_ASM	use some extra sha1 assember, must define L_ENDIAN for x86
 # RMD160_ASM	use some extra ripemd160 assember,
@@ -55,7 +55,7 @@ use strict;
 my $x86_gcc_des="DES_PTR DES_RISC1 DES_UNROLL";
 
 # MD2_CHAR slags pentium pros
-my $x86_gcc_opts="RC4_INDEX MD2_INT BF_PTR2";
+my $x86_gcc_opts="RC4_INDEX MD2_INT";
 
 # MODIFY THESE PARAMETERS IF YOU ARE GOING TO USE THE 'util/speed.sh SCRIPT
 # Don't worry about these normally
