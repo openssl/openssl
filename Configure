@@ -468,6 +468,7 @@ my %table=(
 "VC-WIN64A","cl::::WIN64A::SIXTY_FOUR_BIT EXPORT_VAR_AS_FN:${no_asm}:win32",
 
 # Visual C targets
+"VC-NT","cl::::WINNT::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${no_asm}:win32",
 "VC-CE","cl::::WINCE::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${no_asm}:win32",
 "VC-WIN32","cl::::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${no_asm}:win32",
 "VC-WIN16","cl:::(unknown):WIN16::MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
