@@ -45,7 +45,10 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all: subdirs lib check shared
+all:
+	@if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
+		$(MAKE) -e subdirs check lib shared; \
+	fi
 
 check:
 	TOP=`pwd`/$(TOP) ./fips_check_sha1 fingerprint.sha1 $(SRC) $(HEADER)

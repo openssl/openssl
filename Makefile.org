@@ -227,7 +227,7 @@ all: Makefile sub_all openssl.pc
 
 sigs:	$(SIGS)
 libcrypto.a.sha1: libcrypto.a
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
+	@if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 		$(RANLIB) libcrypto.a; \
 		fips/sha1/fips_standalone_sha1 libcrypto.a > libcrypto.a.sha1; \
 	fi
