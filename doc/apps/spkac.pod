@@ -17,7 +17,7 @@ B<openssl> B<spkac>
 [B<-spksect section>]
 [B<-noout>]
 [B<-verify>]
-
+[B<-engine id>]
 
 =head1 DESCRIPTION
 
@@ -79,6 +79,12 @@ being created).
 
 verifies the digital signature on the supplied SPKAC.
 
+=item B<-engine id>
+
+specifying an engine (by it's unique B<id> string) will cause B<req>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
 
 =back
 

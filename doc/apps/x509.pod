@@ -50,6 +50,7 @@ B<openssl> B<x509>
 [B<-clrext>]
 [B<-extfile filename>]
 [B<-extensions section>]
+[B<-engine id>]
 
 =head1 DESCRIPTION
 
@@ -98,6 +99,12 @@ digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options. If not
 specified then MD5 is used. If the key being used to sign with is a DSA key then
 this option has no effect: SHA1 is always used with DSA keys.
 
+=item B<-engine id>
+
+specifying an engine (by it's unique B<id> string) will cause B<req>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
 
 =back
 
