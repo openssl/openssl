@@ -74,7 +74,7 @@ top_fips_aesavs:
 
 fips_aesavs: fips_aesavs.o $(TOP)/libcrypto.a
 	$(CC) $(CFLAGS) -o fips_aesavs fips_aesavs.o $(TOP)/libcrypto.a
-	$(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_aesavs
+	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_aesavs
 
 fips_test: top top_fips_aesavs
 	find ../testvectors/aes/req -name '*.req' > testlist

@@ -6,6 +6,13 @@
 lib=$1
 exe=$2
 
+# deal with the case where we're run from within the build and OpenSSL is
+# not yet installed
+if [ "X$TOP" != "X" ]
+then
+    PATH=$PATH:$TOP/apps
+fi
+
 elib=`echo $lib| sed 's/\//\\\\\//g'`
 echo "Checking library fingerprint for $lib"
 openssl sha1 $lib | sed "s/$elib/libcrypto.a/" | diff -u ${lib%.a}.sha1 - || { echo "$libs fingerprint mismatch"; exit 1; }

@@ -322,7 +322,7 @@ $(FIPS_AESTEST): $(FIPS_AESTEST).o $(DLIBCRYPTO)
 	  $(CC) -o $(FIPS_AESTEST) $(CFLAGS) $(FIPS_AESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_AESTEST); \
+	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_AESTEST); \
 	fi
 
 $(RSATEST): $(RSATEST).o $(DLIBCRYPTO)
@@ -396,7 +396,7 @@ $(FIPS_SHA1TEST): $(FIPS_SHA1TEST).o $(DLIBCRYPTO)
 	  $(CC) -o $(FIPS_SHA1TEST) $(CFLAGS) $(FIPS_SHA1TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_SHA1TEST); \
+	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_SHA1TEST); \
 	fi
 
 $(RMDTEST): $(RMDTEST).o $(DLIBCRYPTO)
@@ -495,7 +495,7 @@ $(FIPS_DESTEST): $(FIPS_DESTEST).o $(DLIBCRYPTO)
 	  $(CC) -o $(FIPS_DESTEST) $(CFLAGS) $(FIPS_DESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DESTEST); \
+	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DESTEST); \
 	fi
 
 $(RANDTEST): $(RANDTEST).o $(DLIBCRYPTO)
@@ -513,7 +513,7 @@ $(FIPS_RANDTEST): $(FIPS_RANDTEST).o $(DLIBCRYPTO)
 	  $(CC) -o $(FIPS_RANDTEST) $(CFLAGS) $(FIPS_RANDTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_RANDTEST); \
+	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_RANDTEST); \
 	fi
 
 $(DHTEST): $(DHTEST).o $(DLIBCRYPTO)
@@ -539,7 +539,7 @@ $(FIPS_DSATEST): $(FIPS_DSATEST).o $(DLIBCRYPTO)
 	  $(CC) -o $(FIPS_DSATEST) $(CFLAGS) $(FIPS_DSATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DSATEST); \
+	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DSATEST); \
 	fi
 
 $(METHTEST): $(METHTEST).o $(DLIBCRYPTO)
@@ -558,7 +558,7 @@ $(SSLTEST): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
 	  $(CC) -o $(SSLTEST) $(CFLAGS) $(SSLTEST).o $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(SSLTEST); \
+	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(SSLTEST); \
 	fi
 
 $(ENGINETEST): $(ENGINETEST).o $(DLIBCRYPTO)
