@@ -338,7 +338,7 @@ link_o.solaris:
 		LIBDEPS="$(LIBDEPS) -lc" \
 		ALLSYMSFLAGS='-z allextract' \
 		NOALLSYMSFLAGS='' \
-		SHAREDFLAGS='-G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX' \
+		SHAREDFLAGS='-G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX' \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_O)
@@ -352,7 +352,7 @@ link_a.solaris:
 		LIBDEPS="$(LIBDEPS) -lc" \
 		ALLSYMSFLAGS='-z allextract' \
 		NOALLSYMSFLAGS='' \
-		SHAREDFLAGS='-G -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX' \
+		SHAREDFLAGS='-G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX' \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_A)
