@@ -20,17 +20,11 @@ COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
 		OPENSSL_free(ret);
 		ret=NULL;
 		}
-#if 0
-	else
-		CRYPTO_new_ex_data(rsa_meth,(char *)ret,&ret->ex_data);
-#endif
 	return(ret);
 	}
 
 void COMP_CTX_free(COMP_CTX *ctx)
 	{
-	/* CRYPTO_free_ex_data(rsa_meth,(char *)ctx,&ctx->ex_data); */
-
 	if(ctx == NULL)
 	    return;
 

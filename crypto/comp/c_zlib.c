@@ -23,6 +23,13 @@ static COMP_METHOD zlib_method_nozlib={
 
 #include <zlib.h>
 
+static int zlib_stateful_init(COMP_CTX *ctx);
+static void zlib_stateful_finish(COMP_CTX *ctx);
+static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
+	unsigned int olen, unsigned char *in, unsigned int ilen);
+static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
+	unsigned int olen, unsigned char *in, unsigned int ilen);
+
 static int zlib_compress_block(COMP_CTX *ctx, unsigned char *out,
 	unsigned int olen, unsigned char *in, unsigned int ilen);
 static int zlib_expand_block(COMP_CTX *ctx, unsigned char *out,
@@ -31,13 +38,24 @@ static int zlib_expand_block(COMP_CTX *ctx, unsigned char *out,
 static int zz_uncompress(Bytef *dest, uLongf *destLen, const Bytef *source,
 	uLong sourceLen);
 
-static COMP_METHOD zlib_method={
+static COMP_METHOD zlib_stateless_method={
 	NID_zlib_compression,
 	LN_zlib_compression,
 	NULL,
 	NULL,
 	zlib_compress_block,
 	zlib_expand_block,
+	NULL,
+	NULL,
+	};
+
+static COMP_METHOD zlib_stateful_method={
+	NID_zlib_compression,
+	LN_zlib_compression,
+	zlib_stateful_init,
+	zlib_stateful_finish,
+	zlib_stateful_compress_block,
+	zlib_stateful_expand_block,
 	NULL,
 	NULL,
 	};
@@ -75,10 +93,17 @@ typedef int (Z_CALLCONV *inflateEnd_ft)(z_streamp strm);
 typedef int (Z_CALLCONV *inflate_ft)(z_streamp strm, int flush);
 typedef int (Z_CALLCONV *inflateInit__ft)(z_streamp strm,
 	const char * version, int stream_size);
+typedef int (Z_CALLCONV *deflateEnd_ft)(z_streamp strm);
+typedef int (Z_CALLCONV *deflate_ft)(z_streamp strm, int flush);
+typedef int (Z_CALLCONV *deflateInit__ft)(z_streamp strm, int level,
+	const char * version, int stream_size);
 static compress_ft	p_compress=NULL;
 static inflateEnd_ft	p_inflateEnd=NULL;
 static inflate_ft	p_inflate=NULL;
 static inflateInit__ft	p_inflateInit_=NULL;
+static deflateEnd_ft	p_deflateEnd=NULL;
+static deflate_ft	p_deflate=NULL;
+static deflateInit__ft	p_deflateInit_=NULL;
 
 static int zlib_loaded = 0;     /* only attempt to init func pts once */
 static DSO *zlib_dso = NULL;
@@ -86,11 +111,130 @@ static DSO *zlib_dso = NULL;
 #define compress                stub_compress
 #define inflateEnd              stub_inflateEnd
 #define inflate                 stub_inflate
+#define inflateInit             stub_inflateInit
 #define inflateInit_            stub_inflateInit_
+#define deflateEnd              stub_deflateEnd
+#define deflate                 stub_deflate
+#define deflateInit             stub_deflateInit
+#define deflateInit_            stub_deflateInit_
 #endif /* ZLIB_SHARED */
 
+struct zlib_state
+	{
+	z_stream istream;
+	z_stream ostream;
+	};
+
+static int zlib_stateful_ex_idx = -1;
+
+static void zlib_stateful_free_ex_data(void *obj, void *item,
+	CRYPTO_EX_DATA *ad, int ind,long argl, void *argp)
+	{
+	struct zlib_state *state = (struct zlib_state *)item;
+	inflateEnd(&state->istream);
+	deflateEnd(&state->ostream);
+	OPENSSL_free(state);
+	}
+
+static int zlib_stateful_init(COMP_CTX *ctx)
+	{
+	int err;
+	struct zlib_state *state =
+		(struct zlib_state *)OPENSSL_malloc(sizeof(struct zlib_state));
+
+	if (state == NULL)
+		goto err;
+
+	state->istream.zalloc = Z_NULL;
+	state->istream.zfree = Z_NULL;
+	state->istream.opaque = Z_NULL;
+	state->istream.next_in = Z_NULL;
+	state->istream.next_out = Z_NULL;
+	state->istream.avail_in = 0;
+	state->istream.avail_out = 0;
+	err = inflateInit(&state->istream);
+	if (err != Z_OK)
+		goto err;
+
+	state->ostream.zalloc = Z_NULL;
+	state->ostream.zfree = Z_NULL;
+	state->ostream.opaque = Z_NULL;
+	state->ostream.next_in = Z_NULL;
+	state->ostream.next_out = Z_NULL;
+	state->ostream.avail_in = 0;
+	state->ostream.avail_out = 0;
+	err = deflateInit(&state->ostream,Z_DEFAULT_COMPRESSION);
+	if (err != Z_OK)
+		goto err;
+
+	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_COMP,ctx,&ctx->ex_data);
+	if (zlib_stateful_ex_idx == -1)
+		{
+		zlib_stateful_ex_idx =
+			CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_COMP,
+				0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
+		if (zlib_stateful_ex_idx == -1)
+			goto err;
+		}
+	CRYPTO_set_ex_data(&ctx->ex_data,zlib_stateful_ex_idx,state);
+	return 1;
+ err:
+	if (state) OPENSSL_free(state);
+	return 0;
+	}
+
+static void zlib_stateful_finish(COMP_CTX *ctx)
+	{
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_COMP,ctx,&ctx->ex_data);
+	}
+
+static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
+	unsigned int olen, unsigned char *in, unsigned int ilen)
+	{
+	int err = Z_OK;
+	struct zlib_state *state =
+		(struct zlib_state *)CRYPTO_get_ex_data(&ctx->ex_data,
+			zlib_stateful_ex_idx);
+
+	if (state == NULL)
+		return -1;
+
+	state->ostream.next_in = in;
+	state->ostream.avail_in = ilen;
+	state->ostream.next_out = out;
+	state->ostream.avail_out = olen;
+	if (ilen > 0)
+		err = deflate(&state->ostream, Z_SYNC_FLUSH);
+	if (err != Z_OK)
+		return -1;
+	return olen - state->ostream.avail_out;
+	}
+
+static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
+	unsigned int olen, unsigned char *in, unsigned int ilen)
+	{
+	int err = Z_OK;
+
+	struct zlib_state *state =
+		(struct zlib_state *)CRYPTO_get_ex_data(&ctx->ex_data,
+			zlib_stateful_ex_idx);
+
+	if (state == NULL)
+		return 0;
+
+	state->istream.next_in = in;
+	state->istream.avail_in = ilen;
+	state->istream.next_out = out;
+	state->istream.avail_out = olen;
+	if (ilen > 0)
+		err = inflate(&state->istream, Z_SYNC_FLUSH);
+	if (err != Z_OK)
+		return -1;
+	return olen - state->istream.avail_out;
+	}
+
 static int zlib_compress_block(COMP_CTX *ctx, unsigned char *out,
-	     unsigned int olen, unsigned char *in, unsigned int ilen)
+	unsigned int olen, unsigned char *in, unsigned int ilen)
 	{
 	unsigned long l;
 	int i;
@@ -123,7 +267,7 @@ static int zlib_compress_block(COMP_CTX *ctx, unsigned char *out,
 	}
 
 static int zlib_expand_block(COMP_CTX *ctx, unsigned char *out,
-	     unsigned int olen, unsigned char *in, unsigned int ilen)
+	unsigned int olen, unsigned char *in, unsigned int ilen)
 	{
 	unsigned long l;
 	int i;
@@ -207,13 +351,22 @@ COMP_METHOD *COMP_zlib(void)
 			p_inflateInit_
 				= (inflateInit__ft) DSO_bind_func(zlib_dso,
 					"inflateInit_");
+			p_deflateEnd
+				= (deflateEnd_ft) DSO_bind_func(zlib_dso,
+					"deflateEnd");
+			p_deflate
+				= (deflate_ft) DSO_bind_func(zlib_dso,
+					"deflate");
+			p_deflateInit_
+				= (deflateInit__ft) DSO_bind_func(zlib_dso,
+					"deflateInit_");
 			zlib_loaded++;
 			}
 		}
 
 #endif
 #if defined(ZLIB) || defined(ZLIB_SHARED)
-	meth = &zlib_method;
+	meth = &zlib_stateful_method;
 #endif
 
 	return(meth);
@@ -253,6 +406,34 @@ stub_inflateInit_(z_streamp strm, const char * version, int stream_size)
 	{
 	if ( p_inflateInit_ )
 		return(p_inflateInit_(strm,version,stream_size));
+	else
+		return(Z_MEM_ERROR);
+	}
+
+static int
+stub_deflateEnd(z_streamp strm)
+	{
+	if ( p_deflateEnd )
+		return(p_deflateEnd(strm));
+	else
+		return(Z_MEM_ERROR);
+	}
+
+static int
+stub_deflate(z_streamp strm, int flush)
+	{
+	if ( p_deflate )
+		return(p_deflate(strm,flush));
+	else
+		return(Z_MEM_ERROR);
+	}
+
+static int
+stub_deflateInit_(z_streamp strm, int level,
+	const char * version, int stream_size)
+	{
+	if ( p_deflateInit_ )
+		return(p_deflateInit_(strm,version,stream_size));
 	else
 		return(Z_MEM_ERROR);
 	}
