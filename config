@@ -525,6 +525,7 @@ EOF
 	OUT="linux-parisc" ;;
   arm*-*-linux2) OUT="linux-elf-arm" ;;
   s390-*-linux2) OUT="linux-s390" ;;
+  s390x-*-linux?) OUT="linux-s390x" ;;
   *-*-linux2) OUT="linux-elf" ;;
   *-*-linux1) OUT="linux-aout" ;;
   sun4u*-*-solaris2)
