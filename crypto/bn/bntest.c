@@ -907,6 +907,7 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 	 * works.) */
 
 	if (!BN_generate_prime(b, 512, 0, NULL, NULL, genprime_cb, NULL)) goto err;
+	b->neg = rand_neg();
 	putc('\n', stderr);
 
 	for (i = 0; i < num0; i++)
@@ -914,12 +915,17 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 		if (!BN_bntest_rand(a, 512, 0, 0)) goto err;
 		a->neg = rand_neg();
 
-		/* t := (b-1)/2  (note that b is odd) */
+		/* t := (|b|-1)/2  (note that b is odd) */
 		if (!BN_copy(t, b)) goto err;
+		t->neg = 0;
 		if (!BN_sub_word(t, 1)) goto err;
 		if (!BN_rshift1(t, t)) goto err;
 		/* r := a^t mod b */
-		if (!BN_mod_exp(r, a, t, b, ctx)) goto err;
+		/* FIXME: Using BN_mod_exp (Montgomery variant) leads to
+		 * incorrect results if  b  is negative ("Legendre symbol
+		 * computation failed").
+		 * We want computations to be carried out modulo |b|. */
+		if (!BN_mod_exp_simple(r, a, t, b, ctx)) goto err;
 
 		if (BN_is_word(r, 1))
 			legendre = 1;
@@ -938,6 +944,9 @@ int test_kron(BIO *bp, BN_CTX *ctx)
 		
 		kronecker = BN_kronecker(a, b, ctx);
 		if (kronecker < -1) goto err;
+		/* we actually need BN_kronecker(a, |b|) */
+		if (a->neg && b->neg)
+			kronecker = -kronecker;
 		
 		if (legendre != kronecker)
 			{
@@ -991,6 +1000,7 @@ int test_sqrt(BIO *bp, BN_CTX *ctx)
 			if (!BN_generate_prime(p, 256, 0, a, r, genprime_cb, NULL)) goto err;
 			putc('\n', stderr);
 			}
+		p->neg = rand_neg();
 
 		for (j = 0; j < num2; j++)
 			{
@@ -1003,6 +1013,8 @@ int test_sqrt(BIO *bp, BN_CTX *ctx)
 			if (!BN_nnmod(a, a, p, ctx)) goto err;
 			if (!BN_mod_sqr(a, a, p, ctx)) goto err;
 			if (!BN_mul(a, a, r, ctx)) goto err;
+			if (rand_neg())
+				if (!BN_sub(a, a, p)) goto err;
 
 			if (!BN_mod_sqrt(r, a, p, ctx)) goto err;
 			if (!BN_mod_sqr(r, r, p, ctx)) goto err;

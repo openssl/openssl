@@ -133,21 +133,16 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	e = 1;
 	while (!BN_is_bit_set(p, e))
 		e++;
-	if (e > 2)
-		{
-		/* we don't need this  q  if  e = 1 or 2 */
-		if (!BN_rshift(q, p, e)) goto end;
-		q->neg = 0;
-		}
+	/* we'll set  q  later (if needed) */
 
 	if (e == 1)
 		{
-		/* The easy case:  (p-1)/2  is odd, so 2 has an inverse
-		 * modulo  (p-1)/2,  and square roots can be computed
+		/* The easy case:  (|p|-1)/2  is odd, so 2 has an inverse
+		 * modulo  (|p|-1)/2,  and square roots can be computed
 		 * directly by modular exponentiation.
 		 * We have
-		 *     2 * (p+1)/4 == 1   (mod (p-1)/2),
-		 * so we can use exponent  (p+1)/4,  i.e.  (p-3)/4 + 1.
+		 *     2 * (|p|+1)/4 == 1   (mod (|p|-1)/2),
+		 * so we can use exponent  (|p|+1)/4,  i.e.  (|p|-3)/4 + 1.
 		 */
 		if (!BN_rshift(q, p, 2)) goto end;
 		q->neg = 0;
@@ -159,16 +154,16 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	
 	if (e == 2)
 		{
-		/* p == 5  (mod 8)
+		/* |p| == 5  (mod 8)
 		 *
 		 * In this case  2  is always a non-square since
 		 * Legendre(2,p) = (-1)^((p^2-1)/8)  for any odd prime.
 		 * So if  a  really is a square, then  2*a  is a non-square.
 		 * Thus for
-		 *      b := (2*a)^((p-5)/8),
+		 *      b := (2*a)^((|p|-5)/8),
 		 *      i := (2*a)*b^2
 		 * we have
-		 *     i^2 = (2*a)^((1 + (p-5)/4)*2)
+		 *     i^2 = (2*a)^((1 + (|p|-5)/4)*2)
 		 *         = (2*a)^((p-1)/2)
 		 *         = -1;
 		 * so if we set
@@ -195,7 +190,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		/* t := 2*a */
 		if (!BN_mod_lshift1_quick(t, a, p)) goto end;
 
-		/* b := (2*a)^((p-5)/8) */
+		/* b := (2*a)^((|p|-5)/8) */
 		if (!BN_rshift(q, p, 3)) goto end;
 		q->neg = 0;
 		if (!BN_mod_exp(b, t, q, p, ctx)) goto end;
@@ -218,6 +213,8 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	
 	/* e > 2, so we really have to use the Tonelli/Shanks algorithm.
 	 * First, find some  y  that is not a square. */
+	if (!BN_copy(q, p)) goto end; /* use 'q' as temp */
+	q->neg = 0;
 	i = 2;
 	do
 		{
@@ -240,7 +237,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 				if (!BN_set_word(y, i)) goto end;
 			}
 		
-		r = BN_kronecker(y, p, ctx);
+		r = BN_kronecker(y, q, ctx); /* here 'q' is |p| */
 		if (r < -1) goto end;
 		if (r == 0)
 			{
@@ -262,6 +259,8 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		goto end;
 		}
 
+	/* Here's our actual 'q': */
+	if (!BN_rshift(q, q, e)) goto end;
 
 	/* Now that we have some non-square, we can find an element
 	 * of order  2^e  by computing its q'th power. */

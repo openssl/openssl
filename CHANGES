@@ -3,6 +3,10 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) BN_div bugfix: If the result is 0, the sign (res->neg) must not be
+     set.
+     [Bodo Moeller]
+
   *) Changed the LHASH code to use prototypes for callbacks, and created
      macros to declare and implement thin (optionally static) functions
      that provide type-safety and avoid function pointer casting for the

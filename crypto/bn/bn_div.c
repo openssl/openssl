@@ -241,6 +241,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		}
 	else
 		res->top--;
+	if (res->top == 0)
+		res->neg = 0;
 	resp--;
 
 	for (i=0; i<loop-1; i++)
