@@ -5,7 +5,9 @@
 
   *) Finish off removing the remaining LHASH function pointer casts.
      There should no longer be any prototype-casting required when using
-     the LHASH abstraction, and any casts that remain are "bugs".
+     the LHASH abstraction, and any casts that remain are "bugs". See
+     the callback types and macros at the head of lhash.h for details
+     (and "OBJ_cleanup" in crypto/objects/obj_dat.c as an example).
      [Geoff Thorpe]
 
   *) Change the Unix RAND_poll() variant to be able to poll several
