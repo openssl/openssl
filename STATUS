@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/12/24 10:38:05 $
+  ______________                           $Date: 2002/12/24 23:52:07 $
 
   DEVELOPMENT STATE
 
@@ -8,6 +8,8 @@
     o  OpenSSL 0.9.7-beta6: Released on December 17th, 2002
        Solaris on Sun Ultra (Workshop 6 update 1)	- PASSED with warnings
 							  (warnings fixed)
+       Solaris 8 on Sun Ultra 5 (gcc 3.2 64-bit)	- ERROR
+							  (PR: 417)
        Redhat 8 on i386 (gcc 3.2)			- PASSED
        Debian GNU/Linux on i386 (kernel 2.4.19, gxx 2.95.4) - PASSED
        Windows CE on HPC Pro 2.11			- PASSED
@@ -18,7 +20,9 @@
 							  (errors fixed
 							  PR: 407, 413)
        Windows XP, with Kerberos 5			- ERROR
-       Windows 2000 (Cygwin)				- ERROR (PR: 404)
+       Windows 2000 (Cygwin)				- ERROR
+							  (PR: 404)
+       SCO OpenServer, Unixware?			- ERROR
     o  OpenSSL 0.9.7-beta5: Released on December  5th, 2002
     o  OpenSSL 0.9.7-beta4: Released on November 19th, 2002
     o  OpenSSL 0.9.7-beta3: Released on July     30th, 2002
