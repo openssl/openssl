@@ -122,6 +122,8 @@ const char *X509_verify_cert_error_string(long n)
 		return("certificate revoked");
 	case X509_V_ERR_INVALID_CA:
 		return ("invalid CA certificate");
+	case X509_V_ERR_INVALID_NON_CA:
+		return ("invalid non-CA certificate (has CA markings)");
 	case X509_V_ERR_PATH_LENGTH_EXCEEDED:
 		return ("path length constraint exceeded");
 	case X509_V_ERR_INVALID_PURPOSE:
