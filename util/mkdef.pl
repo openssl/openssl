@@ -63,6 +63,7 @@ my $do_crypto = 0;
 my $do_ssl = 0;
 my $do_ctest = 0;
 my $do_ctestall = 0;
+my $do_checkexist = 0;
 
 my $VMS=0;
 my $W32=0;
@@ -76,7 +77,7 @@ my @known_platforms = ( "__FreeBSD__", "VMS", "WIN16", "WIN32",
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
 			 "RIPEMD",
-			 "MDC2", "RSA", "DSA", "DH", "HMAC", "RIJNDAEL",
+			 "MDC2", "RSA", "DSA", "DH", "HMAC", "AES",
 			 # Envelope "algorithms"
 			 "EVP", "X509", "ASN1_TYPEDEFS",
 			 # Helper "algorithms"
@@ -98,7 +99,7 @@ close(IN);
 my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
 my $no_cast;
 my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
-my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_rijndael;
+my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes;
 my $no_fp_api;
 
 foreach (@ARGV, split(/ /, $options))
@@ -119,6 +120,7 @@ foreach (@ARGV, split(/ /, $options))
 	$do_rewrite=1 if $_ eq "rewrite";
 	$do_ctest=1 if $_ eq "ctest";
 	$do_ctestall=1 if $_ eq "ctestall";
+	$do_checkexist=1 if $_ eq "exist";
 	#$safe_stack_def=1 if $_ eq "-DDEBUG_SAFESTACK";
 
 	if    (/^no-rc2$/)      { $no_rc2=1; }
@@ -138,7 +140,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-dsa$/)      { $no_dsa=1; }
 	elsif (/^no-dh$/)       { $no_dh=1; }
 	elsif (/^no-hmac$/)	{ $no_hmac=1; }
-	elsif (/^no-rijndael$/)	{ $no_rijndael=1; }
+	elsif (/^no-aes$/)	{ $no_aes=1; }
 	elsif (/^no-evp$/)	{ $no_evp=1; }
 	elsif (/^no-lhash$/)	{ $no_lhash=1; }
 	elsif (/^no-stack$/)	{ $no_stack=1; }
@@ -189,8 +191,8 @@ $crypto.=" crypto/md5/md5.h" unless $no_md5;
 $crypto.=" crypto/mdc2/mdc2.h" unless $no_mdc2;
 $crypto.=" crypto/sha/sha.h" unless $no_sha;
 $crypto.=" crypto/ripemd/ripemd.h" unless $no_ripemd;
-$crypto.=" crypto/rijndael/rijndael.h" unless $no_rijndael;
-$crypto.=" crypto/rijndael/rd_fst.h" unless $no_rijndael;
+$crypto.=" crypto/rijndael/rijndael.h" unless $no_aes;
+$crypto.=" crypto/rijndael/rd_fst.h" unless $no_aes;
 
 $crypto.=" crypto/bn/bn.h";
 $crypto.=" crypto/rsa/rsa.h" unless $no_rsa;
@@ -259,6 +261,11 @@ if($do_crypto == 1) {
 	close OUT;
 } 
 
+} elsif ($do_checkexist) {
+	&check_existing(*ssl_list, @ssl_symbols)
+		if $do_ssl == 1;
+	&check_existing(*crypto_list, @crypto_symbols)
+		if $do_crypto == 1;
 } elsif ($do_ctest || $do_ctestall) {
 
 	print <<"EOF";
@@ -406,6 +413,12 @@ sub do_defs
 			}
 			if (/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
 				next;
+			} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+				$syms{"d2i_$3"} = 1;
+				$syms{"i2d_$3"} = 1;
+				$syms{"$2_it"} = 1;
+				$kind{"$2_it"} = "VARIABLE";
+				next;
 			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS_fname\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
 				$syms{"d2i_$3"} = 1;
 				$syms{"i2d_$3"} = 1;
@@ -413,11 +426,30 @@ sub do_defs
 				$syms{"$3_free"} = 1;
 				$syms{"$2_it"} = 1;
 				$kind{"$2_it"} = "VARIABLE";
-			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS\s*\(\s*(\w*)\s*\)/) {
+			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS\s*\(\s*(\w*)\s*\)/ ||
+				/^\s*DECLARE_ASN1_FUNCTIONS_const\s*\(\s*(\w*)\s*\)/) {
 				$syms{"d2i_$1"} = 1;
 				$syms{"i2d_$1"} = 1;
 				$syms{"$1_new"} = 1;
 				$syms{"$1_free"} = 1;
+				$syms{"$1_it"} = 1;
+				$kind{"$1_it"} = "VARIABLE";
+				next;
+			} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS_const\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+				$syms{"d2i_$2"} = 1;
+				$syms{"i2d_$2"} = 1;
+				$syms{"$2_it"} = 1;
+				$kind{"$2_it"} = "VARIABLE";
+				next;
+			} elsif (/^\s*DECLARE_ASN1_FUNCTIONS_name\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+				$syms{"d2i_$2"} = 1;
+				$syms{"i2d_$2"} = 1;
+				$syms{"$2_new"} = 1;
+				$syms{"$2_free"} = 1;
+				$syms{"$2_it"} = 1;
+				$kind{"$2_it"} = "VARIABLE";
+				next;
+			} elsif (/^\s*DECLARE_ASN1_ITEM\s*\(\s*(\w*)\s*,(\w*)\s*\)/) {
 				$syms{"$1_it"} = 1;
 				$kind{"$1_it"} = "VARIABLE";
 				next;
@@ -805,7 +837,7 @@ EOF
 			    && (!@a || (!$no_dsa || !grep(/^DSA$/,@a)))
 			    && (!@a || (!$no_dh || !grep(/^DH$/,@a)))
 			    && (!@a || (!$no_hmac || !grep(/^HMAC$/,@a)))
-			    && (!@a || (!$no_rijndael || !grep(/^RIJNDAEL$/,@a)))
+			    && (!@a || (!$no_aes || !grep(/^AES$/,@a)))
 			    && (!@a || (!$no_fp_api || !grep(/^FP_API$/,@a)))
 			    ) {
 				if($v) {

@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Make mkdef.pl recognise all DECLARE_ASN1 macros, change rijndael
+     to aes and add a new 'exist' option to print out symbols that don't
+     appear to exist.
+     [Steve Henson]
+
   *) Additional options to ocsp utility to allow flags to be set and
      additional certificates supplied.
      [Steve Henson]
