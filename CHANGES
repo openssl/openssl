@@ -26,6 +26,7 @@
   +) Increase ENTROPY_NEEDED to 32 bytes, as Rijndael can operate with
      256 bit (=32 byte) keys. Of course seeding with more entropy bytes
      than this minimum value is recommended.
+     [Lutz Jaenicke]
 
   +) New random seeder for OpenVMS, using the system process statistics
      that are easily reachable.
