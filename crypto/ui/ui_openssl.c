@@ -378,7 +378,7 @@ static void read_till_nl(FILE *in)
 		} while (strchr(buf,'\n') == NULL);
 	}
 
-static sig_atomic_t intr_signal;
+static volatile sig_atomic_t intr_signal;
 
 static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
 	{
