@@ -56,8 +56,9 @@
 #error AES is disabled.
 #endif
 
-static const int AES_DECRYPT = 0;
-static const int AES_ENCRYPT = 1;
+#define AES_ENCRYPT	1
+#define AES_DECRYPT	0
+
 /* Because array size can't be a const in C, the following two are macros.
    Both sizes are in bytes. */
 #define AES_MAXNR 14
