@@ -159,6 +159,8 @@ extern "C" {
 /* Adds thread number to the memory checking information */
 #define V_CRYPTO_MDEBUG_THREAD	0x2 /* a bit */
 
+#define V_CRYPTO_MDEBUG_ALL (V_CRYPTO_MDEBUG_TIME | V_CRYPTO_MDEBUG_THREAD)
+
 
 /* predec of the BIO type */
 typedef struct bio_st BIO_dummy;
