@@ -1,0 +1,47 @@
+=pod
+
+=head1 NAME
+
+SSL_set_connect_state, SSL_get_accept_state - prepare SSL object to work in client or server mode
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ void SSL_set_connect_state(SSL *ssl);
+
+ void SSL_set_accept_state(SSL *ssl);
+
+=head1 DESCRIPTION
+
+SSL_set_connect_state() B<ssl> to work in client mode.
+
+SSL_set_accept_state() B<ssl> to work in server mode.
+
+=head1 NOTES
+
+When the SSL_CTX object was created with L<SSL_CTX_new(3)|SSL_CTX_new(3)>,
+it was either assigned a dedicated client method, a dedicated server
+method, or a generic method, that can be used for both client and
+server connections. (The method might have been changed with
+L<SSL_CTX_set_ssl_version(3)|SSL_CTX_set_ssl_version(3)> or
+SSL_set_ssl_method().)
+
+In order to successfully accomplish the handshake, the SSL routines need
+to know whether they should act in server or client mode. If the generic
+method was used, this is not clear from the method itself and must be set
+with either SSL_set_connect_state() or SSL_set_accept_state(). If these
+routines are not called, the default value set when L<SSL_new(3)|SSL_new(3)>
+is called is server mode.
+
+=head1 RETURN VALUES
+
+SSL_set_connect_state() and SSL_set_accept_state() do not return diagnostic
+information.
+
+=head1 SEE ALSO
+
+L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>, L<SSL_CTX_new(3)|SSL_CTX_new(3)>,
+L<SSL_CTX_set_ssl_version(3)|SSL_CTX_set_ssl_version(3)>
+
+=cut
