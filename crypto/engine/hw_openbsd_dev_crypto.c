@@ -408,7 +408,7 @@ static int do_digest(int ses,unsigned char *md,const void *data,int len)
     cryp.op=COP_ENCRYPT;/* required to do the MAC rather than check it */
     cryp.len=len;
     cryp.src=(caddr_t)data;
-    cryp.dst=(caddr_t)data; // FIXME!!!
+    cryp.dst=(caddr_t)data; /* FIXME!!! */
     cryp.mac=(caddr_t)md;
 
     if(ioctl(fd, CIOCCRYPT, &cryp) == -1)
@@ -420,7 +420,7 @@ static int do_digest(int ses,unsigned char *md,const void *data,int len)
 	    dcopy=OPENSSL_malloc(len);
 	    memcpy(dcopy,data,len);
 	    cryp.src=dcopy;
-	    cryp.dst=cryp.src; // FIXME!!!
+	    cryp.dst=cryp.src; /* FIXME!!! */
 
 	    if(ioctl(fd, CIOCCRYPT, &cryp) == -1)
 		{
@@ -437,7 +437,7 @@ static int do_digest(int ses,unsigned char *md,const void *data,int len)
 	    return 0;
 	    }
 	}
-    //    printf("done\n");
+    /*    printf("done\n"); */
 
     return 1;
     }
@@ -483,7 +483,7 @@ static int dev_crypto_md5_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from)
     const MD_DATA *from_md=from->md_data;
     MD_DATA *to_md=to->md_data;
 
-    // How do we copy sessions?
+    /* How do we copy sessions? */
     assert(from->digest->flags&EVP_MD_FLAG_ONESHOT);
 
     to_md->data=OPENSSL_malloc(from_md->len);
@@ -530,7 +530,7 @@ static const EVP_MD md5_md=
     NID_md5,
     NID_md5WithRSAEncryption,
     MD5_DIGEST_LENGTH,
-    EVP_MD_FLAG_ONESHOT,	// XXX: set according to device info...
+    EVP_MD_FLAG_ONESHOT,	/* XXX: set according to device info... */
     dev_crypto_md5_init,
     dev_crypto_md5_update,
     dev_crypto_md5_final,
