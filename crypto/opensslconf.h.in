@@ -58,27 +58,7 @@
 
 #if defined(HEADER_BF_LOCL_H) && !defined(CONFIG_HEADER_BF_LOCL_H)
 #define CONFIG_HEADER_BF_LOCL_H
-/* Special defines which change the way the code is built depending on the
-   CPU and OS.  For SGI machines you can use _MIPS_SZLONG (32 or 64) to find
-   even newer MIPS CPU's, but at the moment one size fits all for
-   optimization options.  Older Sparc's work better with only UNROLL, but
-   there's no way to tell at compile time what it is you're running on */
-
-#if defined( sun )                    /* Newer Sparc's */
-#  define BF_PTR
-#elif defined( __ultrix )     /* Older MIPS */
-#  define BF_PTR
-#elif defined( __sgi )                /* Newer MIPS */
-#  define BF_PTR
-#endif /* Systems-specific speed defines */
-
-/* use BF_PTR2 for intel boxes,
- * BF_PTR for sparc and MIPS/SGI
- * use nothing for Alpha and HP.
- */
-#if !defined(BF_PTR) && !defined(BF_PTR2)
-#define BF_PTR2
-#endif
+#undef BF_PTR
 #endif /* HEADER_BF_LOCL_H */
 
 #if defined(HEADER_DES_LOCL_H) && !defined(CONFIG_HEADER_DES_LOCL_H)

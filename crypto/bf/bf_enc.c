@@ -71,6 +71,7 @@ to modify the code.
 
 void BF_encrypt(BF_LONG *data, BF_KEY *key)
 	{
+#ifndef BF_PTR2
 	register BF_LONG l,r,*p,*s;
 
 	p=key->P;
@@ -105,12 +106,48 @@ void BF_encrypt(BF_LONG *data, BF_KEY *key)
 
 	data[1]=l&0xffffffffL;
 	data[0]=r&0xffffffffL;
+#else
+	register BF_LONG l,r,t,*k;
+
+	l=data[0];
+	r=data[1];
+	k=(BF_LONG*)key;
+
+	l^=k[0];
+	BF_ENC(r,l,k, 1);
+	BF_ENC(l,r,k, 2);
+	BF_ENC(r,l,k, 3);
+	BF_ENC(l,r,k, 4);
+	BF_ENC(r,l,k, 5);
+	BF_ENC(l,r,k, 6);
+	BF_ENC(r,l,k, 7);
+	BF_ENC(l,r,k, 8);
+	BF_ENC(r,l,k, 9);
+	BF_ENC(l,r,k,10);
+	BF_ENC(r,l,k,11);
+	BF_ENC(l,r,k,12);
+	BF_ENC(r,l,k,13);
+	BF_ENC(l,r,k,14);
+	BF_ENC(r,l,k,15);
+	BF_ENC(l,r,k,16);
+#if BF_ROUNDS == 20
+	BF_ENC(r,l,k,17);
+	BF_ENC(l,r,k,18);
+	BF_ENC(r,l,k,19);
+	BF_ENC(l,r,k,20);
+#endif
+	r^=k[BF_ROUNDS+1];
+
+	data[1]=l&0xffffffffL;
+	data[0]=r&0xffffffffL;
+#endif
 	}
 
 #ifndef BF_DEFAULT_OPTIONS
 
 void BF_decrypt(BF_LONG *data, BF_KEY *key)
 	{
+#ifndef BF_PTR2
 	register BF_LONG l,r,*p,*s;
 
 	p=key->P;
@@ -145,6 +182,41 @@ void BF_decrypt(BF_LONG *data, BF_KEY *key)
 
 	data[1]=l&0xffffffffL;
 	data[0]=r&0xffffffffL;
+#else
+	register BF_LONG l,r,t,*k;
+
+	l=data[0];
+	r=data[1];
+	k=(BF_LONG *)key;
+
+	l^=k[BF_ROUNDS+1];
+#if BF_ROUNDS == 20
+	BF_ENC(r,l,k,20);
+	BF_ENC(l,r,k,19);
+	BF_ENC(r,l,k,18);
+	BF_ENC(l,r,k,17);
+#endif
+	BF_ENC(r,l,k,16);
+	BF_ENC(l,r,k,15);
+	BF_ENC(r,l,k,14);
+	BF_ENC(l,r,k,13);
+	BF_ENC(r,l,k,12);
+	BF_ENC(l,r,k,11);
+	BF_ENC(r,l,k,10);
+	BF_ENC(l,r,k, 9);
+	BF_ENC(r,l,k, 8);
+	BF_ENC(l,r,k, 7);
+	BF_ENC(r,l,k, 6);
+	BF_ENC(l,r,k, 5);
+	BF_ENC(r,l,k, 4);
+	BF_ENC(l,r,k, 3);
+	BF_ENC(r,l,k, 2);
+	BF_ENC(l,r,k, 1);
+	r^=k[0];
+
+	data[1]=l&0xffffffffL;
+	data[0]=r&0xffffffffL;
+#endif
 	}
 
 void BF_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
