@@ -160,6 +160,7 @@ can't find the installed OpenSSL libraries.  The problem is actually
 a small glitch that is easily solved with the following patch to be
 applied to the OpenSSH distribution:
 
+----- snip:start -----
 --- openssh-1.2.2p1/configure.in.orig	Thu Mar 23 18:56:58 2000
 +++ openssh-1.2.2p1/configure.in	Thu Mar 23 18:55:05 2000
 @@ -152,10 +152,10 @@
@@ -190,4 +191,5 @@ applied to the OpenSSH distribution:
  		fi
  	fi
  	LIBS="$LIBS -lcrypto"
+----- snip:end -----
 
