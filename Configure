@@ -755,9 +755,11 @@ EOF
 	&dofile("tools/c_rehash",$openssldir,'^DIR=',	'DIR=%s',);
 	if ( $perl =~ m@^/@) {
 	    &dofile("apps/der_chop",$perl,'^#!/', '#!%s');
+	    &dofile("apps/CA.pl",$perl,'^#!/', '#!%s');
 	} else {
 	    # No path for Perl known ...
 	    &dofile("apps/der_chop",'/usr/local/bin/perl','^#!/', '#!%s');
+	    &dofile("apps/CA.pl",'/usr/local/bin/perl','^#!/', '#!%s');
 	}	    
 }
 
