@@ -329,6 +329,8 @@ struct env_md_ctx_st
 						* once only */
 #define EVP_MD_CTX_FLAG_CLEANED		0x0002 /* context has already been
 						* cleaned */
+#define EVP_MD_CTX_FLAG_REUSE		0x0004 /* Don't free up ctx->md_data
+						* in EVP_MD_CTX_cleanup */
 
 struct evp_cipher_st
 	{
