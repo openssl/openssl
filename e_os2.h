@@ -200,8 +200,10 @@ extern "C" {
 
 
 /* Specials for I/O an exit */
-#ifdef OPENSSL_SYS_MSDOS
+#ifdef OPENSSL_SYS_WIN16
 # define OPENSSL_NO_FP_API
+#endif
+#ifdef OPENSSL_SYS_MSDOS
 # define OPENSSL_UNISTD_IO <io.h>
 # define OPENSSL_DECLARE_EXIT extern void exit(int);
 #else
