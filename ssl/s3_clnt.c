@@ -785,13 +785,13 @@ static int ssl3_get_server_certificate(SSL *s)
 	 * certificate, which we don't include in s3_srvr.c */
 	x=sk_X509_value(sk,0);
 	sk=NULL;
- 	/* VRS 19990621: possible memory leak; sk=null ==> !sk_pop_free() @end */
+ 	/* VRS 19990621: possible memory leak; sk=null ==> !sk_pop_free() @end*/
 
 	pkey=X509_get_pubkey(x);
 
         /* VRS: allow null cert if auth == KRB5 */
-        need_cert =
-                ((s->s3->tmp.new_cipher->algorithms & (SSL_MKEY_MASK|SSL_AUTH_MASK))
+        need_cert =	((s->s3->tmp.new_cipher->algorithms
+			& (SSL_MKEY_MASK|SSL_AUTH_MASK))
                         == (SSL_aKRB5|SSL_kKRB5))? 0: 1;
 
 #ifdef KSSL_DEBUG
@@ -801,11 +801,12 @@ static int ssl3_get_server_certificate(SSL *s)
                 s->s3->tmp.new_cipher->algorithms, need_cert);
 #endif    /* KSSL_DEBUG */
 
-	if (need_cert  &&  ((pkey == NULL) || EVP_PKEY_missing_parameters(pkey)))
+	if (need_cert && ((pkey == NULL) || EVP_PKEY_missing_parameters(pkey)))
 		{
 		x=NULL;
 		al=SSL3_AL_FATAL;
-		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
+		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
+			SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
 		goto f_err;
 		}
 
@@ -814,7 +815,8 @@ static int ssl3_get_server_certificate(SSL *s)
 		{
 		x=NULL;
 		al=SSL3_AL_FATAL;
-		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
+			SSL_R_UNKNOWN_CERTIFICATE_TYPE);
 		goto f_err;
 		}
 
@@ -1427,65 +1429,121 @@ static int ssl3_send_client_key_exchange(SSL *s)
                         {
                         krb5_error_code	krb5rc;
                         KSSL_CTX	*kssl_ctx = s->kssl_ctx;
-                        krb5_data	krb5_ap_req;
+                        /*  krb5_data	krb5_ap_req;  */
+                        krb5_data	*enc_ticket;
+                        krb5_data	authenticator, *authp = NULL;
+			EVP_CIPHER_CTX	ciph_ctx;
+			EVP_CIPHER	*enc = NULL;
+			unsigned char	iv[EVP_MAX_IV_LENGTH];
+			unsigned char	tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
+			unsigned char	epms[SSL_MAX_MASTER_KEY_LENGTH 
+						+ EVP_MAX_IV_LENGTH];
+			int 		padl, outl = sizeof(epms);
 
 #ifdef KSSL_DEBUG
                         printf("ssl3_send_client_key_exchange(%lx & %lx)\n",
                                 l, SSL_kKRB5);
 #endif	/* KSSL_DEBUG */
 
-                        /*
-                        **	Tried to send random tmp_buf[] as PMS in Kerberos ticket
-                        **	by passing  krb5_mk_req_extended(ctx,authctx,opts, tmp_buf, ...)
-                        **	but: I can't retrieve the PMS on the other side!  There is
-                        **	some indication in the krb5 source that this is only used
-                        **	to generate a checksum.  OTOH, the Tung book shows data
-                        **	("GET widget01.txt") being passed in krb5_mk_req_extended()
-                        **	by way of krb5_sendauth().  I don't get it.
-                        **	Until Kerberos goes 3DES, the big PMS secret would only be
-                        **	encrypted in 1-DES anyway.  So losing the PMS shouldn't be
-                        **	a big deal.
-                        */
-                        krb5rc = kssl_cget_tkt(kssl_ctx, &krb5_ap_req,
-                                &kssl_err);
+			authp = NULL;
+#ifdef KRB5SENDAUTH
+			if (KRB5SENDAUTH)  authp = &authenticator;
+#endif	/* KRB5SENDAUTH */
+
+                        krb5rc = kssl_cget_tkt(kssl_ctx, &enc_ticket, authp,
+				&kssl_err);
+			enc = kssl_map_enc(kssl_ctx->enctype);
 #ifdef KSSL_DEBUG
                         {
                         printf("kssl_cget_tkt rtn %d\n", krb5rc);
-                        kssl_ctx_show(kssl_ctx);
                         if (krb5rc && kssl_err.text)
-                                printf("kssl_cget_tkt kssl_err=%s\n", kssl_err.text);
+			  printf("kssl_cget_tkt kssl_err=%s\n", kssl_err.text);
                         }
 #endif	/* KSSL_DEBUG */
 
                         if (krb5rc)
                                 {
-                                ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_HANDSHAKE_FAILURE);
-                                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, kssl_err.reason);
+                                ssl3_send_alert(s,SSL3_AL_FATAL,
+						SSL_AD_HANDSHAKE_FAILURE);
+                                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+						kssl_err.reason);
                                 goto err;
                                 }
 
-                        /*	Send ticket (copy to *p, set n = length)
-                         */
-                        n = krb5_ap_req.length;
-                        memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
-                        if (krb5_ap_req.data)  
-                                kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
+			/*  20010406 VRS - Earlier versions used KRB5 AP_REQ
+			**  in place of RFC 2712 KerberosWrapper, as in:
+			**
+                        **  Send ticket (copy to *p, set n = length)
+                        **  n = krb5_ap_req.length;
+                        **  memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
+                        **  if (krb5_ap_req.data)  
+                        **    kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
+                        **
+			**  Now using real RFC 2712 KerberosWrapper
+			**  (Thanks to Simon Wilkinson <sxw@sxw.org.uk>)
+			**  Note: 2712 "opaque" types are here replaced
+			**  with a 2-byte length followed by the value.
+			**  Example:
+			**  KerberosWrapper= xx xx asn1ticket 0 0 xx xx encpms
+			**  Where "xx xx" = length bytes.  Shown here with
+			**  optional authenticator omitted.
+			*/
 
-                        /*	19991013 VRS -	3DES is kind of bogus here,
-                        **	at least until Kerberos supports 3DES.  The only
-                        **	real secret is the 8-byte Kerberos session key;
-                        **	the other key material ((s->) client_random, server_random)
-                        **	could be sniffed.  Mixing in these nonces should help
-                        **	protect against replay attacks, however.
-                        **
-                        **	Alternate code for Kerberos Purists:
-                        **
-                        **	memcpy(s->session->master_key, kssl_ctx->key, kssl_ctx->length);
-                        **	s->session->master_key_length = kssl_ctx->length;
-                        */
+			/*  KerberosWrapper.Ticket		*/
+			s2n(enc_ticket->length,p);
+			memcpy(p, enc_ticket->data, enc_ticket->length);
+			p+= enc_ticket->length;
+			n = enc_ticket->length + 2;
+
+			/*  KerberosWrapper.Authenticator	*/
+			if (authp  &&  authp->length)  
+				{
+				s2n(authp->length,p);
+				memcpy(p, authp->data, authp->length);
+				p+= authp->length;
+				n+= authp->length + 2;
+				
+				free(authp->data);
+				authp->data = NULL;
+				authp->length = 0;
+				}
+			else
+				{
+				s2n(0,p);/*  null authenticator length	*/
+				n+=2;
+				}
+ 
+			if (RAND_bytes(tmp_buf,SSL_MAX_MASTER_KEY_LENGTH) <= 0)
+			    goto err;
+
+			/*  20010420 VRS.  Tried it this way; failed.
+			**	EVP_EncryptInit(&ciph_ctx,enc, NULL,NULL);
+			**	EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
+			**				kssl_ctx->length);
+			**	EVP_EncryptInit(&ciph_ctx,NULL, key,iv);
+			*/
+
+			memset(iv, 0, EVP_MAX_IV_LENGTH);  /* per RFC 1510 */
+			EVP_EncryptInit(&ciph_ctx,enc, kssl_ctx->key,iv);
+			EVP_EncryptUpdate(&ciph_ctx,epms,&outl,tmp_buf,
+						SSL_MAX_MASTER_KEY_LENGTH);
+			EVP_EncryptFinal(&ciph_ctx,&(epms[outl]),&padl);
+			outl += padl;
+			EVP_CIPHER_CTX_cleanup(&ciph_ctx);
+
+			/*  KerberosWrapper.EncryptedPreMasterSecret	*/
+			s2n(outl,p);
+			memcpy(p, epms, outl);
+			p+=outl;
+			n+=outl + 2;
+
                         s->session->master_key_length=
                                 s->method->ssl3_enc->generate_master_secret(s,
-                                        s->session->master_key,	kssl_ctx->key,kssl_ctx->length);
+					s->session->master_key,
+					tmp_buf, SSL_MAX_MASTER_KEY_LENGTH);
+
+			memset(tmp_buf, 0, SSL_MAX_MASTER_KEY_LENGTH);
+			memset(epms, 0, outl);
                         }
 #endif
 #ifndef OPENSSL_NO_DH

@@ -863,8 +863,10 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 #ifndef OPENSSL_NO_KRB5
 		if ((con->kssl_ctx = kssl_ctx_new()) != NULL)
                         {
-                        kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVICE, KRB5SVC);
-                        kssl_ctx_setstring(con->kssl_ctx, KSSL_KEYTAB, KRB5KEYTAB);
+                        kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVICE,
+								KRB5SVC);
+                        kssl_ctx_setstring(con->kssl_ctx, KSSL_KEYTAB,
+								KRB5KEYTAB);
                         }
 #endif	/* OPENSSL_NO_KRB5 */
 		if(context)
@@ -1249,6 +1251,13 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	if (!BIO_set_write_buffer_size(io,bufsize)) goto err;
 
 	if ((con=SSL_new(ctx)) == NULL) goto err;
+#ifndef OPENSSL_NO_KRB5
+	if ((con->kssl_ctx = kssl_ctx_new()) != NULL)
+		{
+		kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVICE, KRB5SVC);
+		kssl_ctx_setstring(con->kssl_ctx, KSSL_KEYTAB, KRB5KEYTAB);
+		}
+#endif	/* OPENSSL_NO_KRB5 */
 	if(context) SSL_set_session_id_context(con, context,
 					       strlen((char *)context));
 

@@ -66,6 +66,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include <openssl/krb5_asn.h>
 #include "ssl_locl.h"
 
 #ifndef OPENSSL_NO_KRB5
@@ -1452,13 +1453,46 @@ static int ssl3_get_client_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_KRB5
         if (l & SSL_kKRB5)
                 {
-                krb5_error_code	krb5rc;
-                KSSL_CTX	*kssl_ctx = s->kssl_ctx;
+                krb5_error_code		krb5rc;
+		krb5_data		enc_ticket;
+		krb5_data		authenticator;
+		krb5_data		enc_pms;
+                KSSL_CTX		*kssl_ctx = s->kssl_ctx;
+		EVP_CIPHER_CTX		ciph_ctx;
+		EVP_CIPHER		*enc = NULL;
+		unsigned char		iv[EVP_MAX_IV_LENGTH];
+		unsigned char		pms[SSL_MAX_MASTER_KEY_LENGTH];
+		int 			padl, outl = sizeof(pms);
+		krb5_timestamp		authtime = 0;
+		krb5_ticket_times	ttimes;
 
                 if (!kssl_ctx)  kssl_ctx = kssl_ctx_new();
-                if ((krb5rc = kssl_sget_tkt(kssl_ctx,
-                        s->init_buf->data, s->init_buf->length,
-                        &kssl_err)) != 0)
+
+		n2s(p,i);
+		enc_ticket.length = i;
+		enc_ticket.data = p;
+		p+=enc_ticket.length;
+
+		n2s(p,i);
+		authenticator.length = i;
+		authenticator.data = p;
+		p+=authenticator.length;
+
+		n2s(p,i);
+		enc_pms.length = i;
+		enc_pms.data = p;
+		p+=enc_pms.length;
+
+		if (n != enc_ticket.length + authenticator.length +
+						enc_pms.length + 6)
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+				SSL_R_DATA_LENGTH_TOO_LONG);
+			goto err;
+			}
+
+                if ((krb5rc = kssl_sget_tkt(kssl_ctx, &enc_ticket, &ttimes,
+					&kssl_err)) != 0)
                         {
 #ifdef KSSL_DEBUG
                         printf("kssl_sget_tkt rtn %d [%d]\n",
@@ -1471,34 +1505,71 @@ static int ssl3_get_client_key_exchange(SSL *s)
                         goto err;
                         }
 
+		/*  Note: no authenticator is not considered an error,
+		**  but will return authtime == 0.
+		*/
+		if ((krb5rc = kssl_check_authent(kssl_ctx, &authenticator,
+					&authtime, &kssl_err)) != 0)
+			{
+#ifdef KSSL_DEBUG
+                        printf("kssl_check_authent rtn %d [%d]\n",
+                                krb5rc, kssl_err.reason);
+                        if (kssl_err.text)
+                                printf("kssl_err text= %s\n", kssl_err.text);
+#endif	/* KSSL_DEBUG */
+                        SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+                                kssl_err.reason);
+                        goto err;
+			}
+
+		if ((krb5rc = kssl_validate_times(authtime, &ttimes)) != 0)
+			{
+			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, krb5rc);
+                        goto err;
+			}
+
 #ifdef KSSL_DEBUG
                 kssl_ctx_show(kssl_ctx);
 #endif	/* KSSL_DEBUG */
 
-                /*	19991013 VRS -	3DES is kind of bogus here,
-                **	at least until Kerberos supports 3DES.  The only
-                **	real secret is the 8-byte Kerberos session key;
-                **	the other key material (client_random, server_random)
-                **	could be sniffed.  Nonces may help against replays though.
-                **
-                **	Alternate code for Kerberos Purists:
-                **
-                **	memcpy(s->session->master_key,	kssl_ctx->key, kssl_ctx->length);
-                **	s->session->master_key_length = kssl_ctx->length;
-                */
+		enc = kssl_map_enc(kssl_ctx->enctype);
+		memset(iv, 0, EVP_MAX_IV_LENGTH);	/* per RFC 1510 */
+
+		EVP_DecryptInit(&ciph_ctx,enc,kssl_ctx->key,iv);
+		EVP_DecryptUpdate(&ciph_ctx, pms,&outl,
+					enc_pms.data, enc_pms.length);
+		if (outl > SSL_MAX_MASTER_KEY_LENGTH)
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+				SSL_R_DATA_LENGTH_TOO_LONG);
+			goto err;
+			}
+		EVP_DecryptFinal(&ciph_ctx,&(pms[outl]),&padl);
+		outl += padl;
+		if (outl > SSL_MAX_MASTER_KEY_LENGTH)
+			{
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+				SSL_R_DATA_LENGTH_TOO_LONG);
+			goto err;
+			}
+		EVP_CIPHER_CTX_cleanup(&ciph_ctx);
+
                 s->session->master_key_length=
                         s->method->ssl3_enc->generate_master_secret(s,
-                                s->session->master_key, kssl_ctx->key, kssl_ctx->length);
-                /*	Was doing kssl_ctx_free() here, but it caused problems for apache.
-                **	kssl_ctx = kssl_ctx_free(kssl_ctx);
-                **	if (s->kssl_ctx)  s->kssl_ctx = NULL;
+                                s->session->master_key, pms, outl);
+
+                /*  Was doing kssl_ctx_free() here,
+		**  but it caused problems for apache.
+                **  kssl_ctx = kssl_ctx_free(kssl_ctx);
+                **  if (s->kssl_ctx)  s->kssl_ctx = NULL;
                 */
                 }
 	else
 #endif	/* OPENSSL_NO_KRB5 */
 		{
 		al=SSL_AD_HANDSHAKE_FAILURE;
-		SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_UNKNOWN_CIPHER_TYPE);
+		SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+				SSL_R_UNKNOWN_CIPHER_TYPE);
 		goto f_err;
 		}
 

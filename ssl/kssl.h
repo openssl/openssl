@@ -96,6 +96,17 @@ typedef unsigned char krb5_octet;
 #define KRB5KEYTAB	"/etc/krb5.keytab"
 #endif
 
+#ifndef KRB5SENDAUTH
+#define KRB5SENDAUTH	1
+#endif
+
+#ifndef KRB5CHECKAUTH
+#define KRB5CHECKAUTH	1
+#endif
+
+#ifndef KSSL_CLOCKSKEW
+#define	KSSL_CLOCKSKEW	300;
+#endif
 
 #define	KSSL_ERR_MAX	255
 typedef struct kssl_err_st  {
@@ -139,6 +150,8 @@ void print_krb5_keyblock(char *label, krb5_keyblock *keyblk);
 char *kstring(char *string);
 char *knumber(int len, krb5_octet *contents);
 
+EVP_CIPHER *kssl_map_enc(krb5_enctype enctype);
+
 
 /* Public (for use by applications that use OpenSSL with Kerberos 5 support */
 krb5_error_code kssl_ctx_setstring(KSSL_CTX *kssl_ctx, int which, char *text);
@@ -147,13 +160,21 @@ KSSL_CTX *kssl_ctx_free(KSSL_CTX *kssl_ctx);
 void kssl_ctx_show(KSSL_CTX *kssl_ctx);
 krb5_error_code kssl_ctx_setprinc(KSSL_CTX *kssl_ctx, int which,
         krb5_data *realm, krb5_data *entity);
-krb5_error_code	kssl_cget_tkt(KSSL_CTX *kssl_ctx,  krb5_data *ap_req,
-        KSSL_ERR *kssl_err);
-krb5_error_code	kssl_sget_tkt(KSSL_CTX *kssl_ctx,  char *msg, int msglen,
-        KSSL_ERR *kssl_err);
+krb5_error_code	kssl_cget_tkt(KSSL_CTX *kssl_ctx,  krb5_data **enc_tktp,
+        krb5_data *authenp, KSSL_ERR *kssl_err);
+krb5_error_code	kssl_sget_tkt(KSSL_CTX *kssl_ctx,  krb5_data *indata,
+        krb5_ticket_times *ttimes, KSSL_ERR *kssl_err);
 krb5_error_code kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session);
 void	kssl_err_set(KSSL_ERR *kssl_err, int reason, char *text);
 void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data);
+krb5_error_code  kssl_build_principal_2(krb5_context context,
+			krb5_principal *princ, int rlen, const char *realm,
+			int slen, const char *svc, int hlen, const char *host);
+krb5_error_code  kssl_validate_times(krb5_timestamp atime,
+					krb5_ticket_times *ttimes);
+krb5_error_code  kssl_check_authent(KSSL_CTX *kssl_ctx, krb5_data *authentp,
+			            krb5_timestamp *atimep, KSSL_ERR *kssl_err);
+unsigned char	*kssl_skip_confound(krb5_enctype enctype, unsigned char *authn);
 
 #ifdef  __cplusplus
 }

@@ -56,15 +56,26 @@
  */
 
 
-/*	ssl/kssl.c  --  Routines to support (& debug) Kerberos5 auth for openssl
+/*  ssl/kssl.c  --  Routines to support (& debug) Kerberos5 auth for openssl
 **
-**	19990701	VRS 	Started.
+**  19990701	VRS 	Started.
+**  200011??	Jeffrey Altman, Richard Levitte
+**          		Generalized for Heimdal, Newer MIT, & Win32.
+**          		Integrated into main OpenSSL 0.9.7 snapshots.
+**  20010413	Simon Wilkinson, VRS
+**          		Real RFC2712 KerberosWrapper replaces AP_REQ.
 */
 
 #include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_KRB5
 #include <string.h>
+#define _XOPEN_SOURCE /* glibc2 needs this to declare strptime() */
+#include <time.h>
+
 #include <openssl/ssl.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/krb5_asn.h>
 
 /* 
  * When OpenSSL is built on Windows, we do not want to require that
@@ -104,6 +115,15 @@
 #define krb5_kt_resolve          kssl_krb5_kt_resolve           
 #define krb5_auth_con_init       kssl_krb5_auth_con_init        
 
+#define krb5_principal_compare   kssl_krb5_principal_compare
+/* macro  #define krb5_kt_get_entry        kssl_krb5_kt_get_entry  */
+#define krb5_decrypt_tkt_part    kssl_krb5_decrypt_tkt_part
+#define krb5_timeofday           kssl_krb5_timeofday
+#define krb5_rc_default           kssl_krb5_rc_default
+#define krb5_krb5_rc_initialize   kssl_krb5_rc_initialize
+#define krb5_krb5_rc_get_lifespan kssl_krb5_rc_get_lifespan
+#define krb5_krb5_rc_destroy      kssl_krb5_rc_destroy
+
 /* Prototypes for built in stubs */
 void kssl_krb5_free_data_contents(krb5_context, krb5_data *);
 void kssl_krb5_free_principal(krb5_context, krb5_principal );
@@ -117,6 +137,19 @@ krb5_error_code kssl_krb5_rd_req(krb5_context, krb5_auth_context *,
                                  krb5_const krb5_data *,
                                  krb5_const_principal, krb5_keytab, 
                                  krb5_flags *,krb5_ticket **);
+
+krb5_boolean kssl_krb5_principal_compare(krb5_context, krb5_const_principal,
+                                         krb5_const_principal);
+krb5_error_code krb5_decrypt_tkt_part(krb5_context, krb5_const krb5_keyblock *,
+				      krb5_ticket *);
+krb5_error_code krb5_timeofday(krb5_context context, krb5_int32 *timeret);
+krb5_error_code krb5_rc_default(krb5_context context, krb5_rcache *rc);
+krb5_error_code krb5_rc_initialize(krb5_context context, krb5_rcache rc,
+				     krb5_deltat lifespan);
+krb5_error_code krb5_rc_get_lifespan(krb5_context context, krb5_rcache rc,
+				     krb5_deltat *lifespan);
+krb5_error_code krb5_rc_destroy(krb5_context context, krb5_rcache rc);
+
 krb5_error_code kssl_krb5_mk_req_extended(krb5_context,
                                           krb5_auth_context  *,
                                           krb5_const krb5_flags,
@@ -144,10 +177,12 @@ krb5_error_code kssl_krb5_cc_get_principal(krb5_context context,
 krb5_error_code kssl_krb5_auth_con_free(krb5_context,krb5_auth_context);
 
 /* Function pointers (almost all Kerberos functions are _stdcall) */
-static void (_stdcall *p_krb5_free_data_contents)(krb5_context, krb5_data *)=NULL;
-static void (_stdcall *p_krb5_free_principal)(krb5_context, krb5_principal )=NULL;
-static krb5_error_code(_stdcall *p_krb5_kt_resolve)(krb5_context, krb5_const char *,
-                                                    krb5_keytab *)=NULL;
+static void (_stdcall *p_krb5_free_data_contents)(krb5_context, krb5_data *)
+	=NULL;
+static void (_stdcall *p_krb5_free_principal)(krb5_context, krb5_principal )
+	=NULL;
+static krb5_error_code(_stdcall *p_krb5_kt_resolve)
+			(krb5_context, krb5_const char *, krb5_keytab *)=NULL;
 static krb5_error_code (_stdcall *p_krb5_kt_default)(krb5_context,
                                                      krb5_keytab *)=NULL;
 static krb5_error_code (_stdcall *p_krb5_free_ticket)(krb5_context, 
@@ -158,33 +193,27 @@ static krb5_error_code (_stdcall *p_krb5_rd_req)(krb5_context,
                                                  krb5_const_principal, 
                                                  krb5_keytab, krb5_flags *,
                                                  krb5_ticket **)=NULL;
-static krb5_error_code (_stdcall *p_krb5_mk_req_extended) (krb5_context,
-                                                           krb5_auth_context  *,
-                                                           krb5_const krb5_flags,
-                                                           krb5_data  *,
-                                                           krb5_creds  *,
-                                                           krb5_data  * )=NULL;
+static krb5_error_code (_stdcall *p_krb5_mk_req_extended)
+			(krb5_context, krb5_auth_context *,
+			 krb5_const krb5_flags, krb5_data *, krb5_creds *,
+			 krb5_data * )=NULL;
 static krb5_error_code (_stdcall *p_krb5_init_context)(krb5_context *)=NULL;
 static void (_stdcall *p_krb5_free_context)(krb5_context)=NULL;
 static krb5_error_code (_stdcall *p_krb5_cc_default)(krb5_context,
                                                      krb5_ccache  *)=NULL;
-static krb5_error_code (_stdcall *p_krb5_sname_to_principal)(krb5_context,
-                                                             krb5_const char  *,
-                                                             krb5_const char  *,
-                                                             krb5_int32,
-                                                             krb5_principal  *)=NULL;
-static krb5_error_code (_stdcall *p_krb5_get_credentials)(krb5_context,
-                                                          krb5_const krb5_flags,
-                                                          krb5_ccache,
-                                                          krb5_creds  *,
-                                                          krb5_creds  *  *)=NULL;
-static krb5_error_code (_stdcall *p_krb5_auth_con_init)(krb5_context,
-                                                        krb5_auth_context  *)=NULL;
-static krb5_error_code (_stdcall *p_krb5_cc_get_principal)(krb5_context context, 
-                                                           krb5_ccache cache,
-                                                           krb5_principal *principal)=NULL;
-static krb5_error_code (_stdcall *p_krb5_auth_con_free)(krb5_context,
-                                                        krb5_auth_context)=NULL;
+static krb5_error_code (_stdcall *p_krb5_sname_to_principal)
+			(krb5_context, krb5_const char *, krb5_const char *,
+			 krb5_int32, krb5_principal *)=NULL;
+static krb5_error_code (_stdcall *p_krb5_get_credentials)
+			(krb5_context, krb5_const krb5_flags, krb5_ccache,
+			 krb5_creds *, krb5_creds **)=NULL;
+static krb5_error_code (_stdcall *p_krb5_auth_con_init)
+			(krb5_context, krb5_auth_context *)=NULL;
+static krb5_error_code (_stdcall *p_krb5_cc_get_principal)
+			(krb5_context context, krb5_ccache cache,
+			 krb5_principal *principal)=NULL;
+static krb5_error_code (_stdcall *p_krb5_auth_con_free)
+			(krb5_context, krb5_auth_context)=NULL;
 static int krb5_loaded = 0;     /* only attempt to initialize func ptrs once */
 
 /* Function to Load the Kerberos 5 DLL and initialize function pointers */
@@ -222,6 +251,20 @@ load_krb5_dll(void)
 		GetProcAddress( hKRB5_32, "krb5_free_ticket" );
 	(FARPROC) p_krb5_rd_req =
 		GetProcAddress( hKRB5_32, "krb5_rd_req" );
+	(FARPROC) p_krb5_principal_compare =
+		GetProcAddress( hKRB5_32, "krb5_principal_compare" );
+	(FARPROC) p_krb5_decrypt_tkt_part =
+		GetProcAddress( hKRB5_32, "krb5_decrypt_tkt_part" );
+	(FARPROC) p_krb5_timeofday =
+		GetProcAddress( hKRB5_32, "krb5_timeofday" );
+	(FARPROC) p_krb5_rc_default =
+		GetProcAddress( hKRB5_32, "krb5_rc_default" );
+	(FARPROC) p_krb5_rc_initialize =
+		GetProcAddress( hKRB5_32, "krb5_rc_initialize" );
+	(FARPROC) p_krb5_rc_get_lifespan =
+		GetProcAddress( hKRB5_32, "krb5_rc_get_lifespan" );
+	(FARPROC) p_krb5_rc_destroy =
+		GetProcAddress( hKRB5_32, "krb5_rc_destroy" );
 	(FARPROC) p_krb5_kt_default =
 		GetProcAddress( hKRB5_32, "krb5_kt_default" );
 	(FARPROC) p_krb5_kt_resolve =
@@ -412,6 +455,92 @@ kssl_krb5_rd_req(krb5_context con, krb5_auth_context * pacon,
 		return KRB5KRB_ERR_GENERIC;
 	}
 
+krb5_boolean
+krb5_principal_compare(krb5_context con, krb5_const_principal princ1,
+                krb5_const_principal princ2)
+	{
+	if (!krb5_loaded)
+		load_krb5_dll();
+
+	if ( p_krb5_principal_compare )
+		return(p_krb5_principal_compare(con,princ1,princ2);
+	else
+		return KRB5KRB_ERR_GENERIC;
+	}
+
+krb5_error_code
+krb5_decrypt_tkt_part(krb5_context con, krb5_const krb5_keyblock *keys,
+                krb5_ticket *ticket)
+	{
+	if (!krb5_loaded)
+		load_krb5_dll();
+
+	if ( p_krb5_decrypt_tkt_part )
+		return(p_krb5_decrypt_tkt_part(con,keys,ticket);
+	else
+		return KRB5KRB_ERR_GENERIC;
+	}
+
+krb5_error_code
+krb5_timeofday(krb5_context con, krb5_int32 *timeret)
+	{
+	if (!krb5_loaded)
+		load_krb5_dll();
+
+	if ( p_krb5_timeofday )
+		return(p_krb5_timeofday(con,timeret);
+	else
+		return KRB5KRB_ERR_GENERIC;
+	}
+
+krb5_error_code
+krb5_rc_default(krb5_context con, krb5_rcache *rc)
+	{
+	if (!krb5_loaded)
+		load_krb5_dll();
+
+	if ( p_krb5_rc_default )
+		return(p_krb5_rc_default(con,rc);
+	else
+		return KRB5KRB_ERR_GENERIC;
+	}
+
+krb5_error_code
+krb5_rc_initialize(krb5_context con, krb5_rcache rc, krb5_deltat lifespan)
+	{
+	if (!krb5_loaded)
+		load_krb5_dll();
+
+	if ( p_krb5_rc_initialize )
+		return(p_krb5_rc_initialize(con, rc, lifespan);
+	else
+		return KRB5KRB_ERR_GENERIC;
+	}
+
+krb5_error_code
+krb5_rc_get_lifespan(krb5_context con, krb5_rcache rc, krb5_deltat *lifespanp)
+	{
+	if (!krb5_loaded)
+		load_krb5_dll();
+
+	if ( p_krb5_rc_get_lifespan )
+		return(p_krb5_rc_get_lifespan(con, rc, lifespanp);
+	else
+		return KRB5KRB_ERR_GENERIC;
+	}
+
+krb5_error_code
+krb5_rc_destroy(krb5_context con, krb5_rcache rc)
+	{
+	if (!krb5_loaded)
+		load_krb5_dll();
+
+	if ( p_krb5_rc_destroy )
+		return(p_krb5_rc_destroy(con, rc);
+	else
+		return KRB5KRB_ERR_GENERIC;
+	}
+
 /* Structure definitions  */
 #ifndef NO_DEF_KRB5_CCACHE
 #ifndef krb5_x
@@ -432,31 +561,37 @@ typedef struct _krb5_cc_ops
 	{
 	krb5_magic magic;
 	char  *prefix;
-	char  * (KRB5_CALLCONV *get_name) KRB5_NPROTOTYPE((krb5_context, krb5_ccache));
-	krb5_error_code (KRB5_CALLCONV *resolve) KRB5_NPROTOTYPE((krb5_context, krb5_ccache  *,
-		const char  *));
-	krb5_error_code (KRB5_CALLCONV *gen_new) KRB5_NPROTOTYPE((krb5_context, krb5_ccache  *));
-	krb5_error_code (KRB5_CALLCONV *init) KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
-		krb5_principal));
-	krb5_error_code (KRB5_CALLCONV *destroy) KRB5_NPROTOTYPE((krb5_context, krb5_ccache));
-	krb5_error_code (KRB5_CALLCONV *close) KRB5_NPROTOTYPE((krb5_context, krb5_ccache));
-	krb5_error_code (KRB5_CALLCONV *store) KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
-		krb5_creds  *));
-	krb5_error_code (KRB5_CALLCONV *retrieve) KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
-		krb5_flags, krb5_creds  *,
-		krb5_creds  *));
-	krb5_error_code (KRB5_CALLCONV *get_princ) KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
-		krb5_principal  *));
-	krb5_error_code (KRB5_CALLCONV *get_first) KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
-		krb5_cc_cursor  *));
-	krb5_error_code (KRB5_CALLCONV *get_next) KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
+	char  * (KRB5_CALLCONV *get_name)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache));
+	krb5_error_code (KRB5_CALLCONV *resolve)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache  *, const char  *));
+	krb5_error_code (KRB5_CALLCONV *gen_new)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache  *));
+	krb5_error_code (KRB5_CALLCONV *init)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache, krb5_principal));
+	krb5_error_code (KRB5_CALLCONV *destroy)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache));
+	krb5_error_code (KRB5_CALLCONV *close)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache));
+	krb5_error_code (KRB5_CALLCONV *store)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache, krb5_creds  *));
+	krb5_error_code (KRB5_CALLCONV *retrieve)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
+		krb5_flags, krb5_creds  *, krb5_creds  *));
+	krb5_error_code (KRB5_CALLCONV *get_princ)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache, krb5_principal  *));
+	krb5_error_code (KRB5_CALLCONV *get_first)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache, krb5_cc_cursor  *));
+	krb5_error_code (KRB5_CALLCONV *get_next)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
 		krb5_cc_cursor  *, krb5_creds  *));
-	krb5_error_code (KRB5_CALLCONV *end_get) KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
-		krb5_cc_cursor  *));
-	krb5_error_code (KRB5_CALLCONV *remove_cred) KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
+	krb5_error_code (KRB5_CALLCONV *end_get)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache, krb5_cc_cursor  *));
+	krb5_error_code (KRB5_CALLCONV *remove_cred)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
 		krb5_flags, krb5_creds  *));
-	krb5_error_code (KRB5_CALLCONV *set_flags) KRB5_NPROTOTYPE((krb5_context, krb5_ccache,
-		krb5_flags));
+	krb5_error_code (KRB5_CALLCONV *set_flags)
+		KRB5_NPROTOTYPE((krb5_context, krb5_ccache, krb5_flags));
 	} krb5_cc_ops;
 #endif /* NO_DEF_KRB5_CCACHE */
 
@@ -468,8 +603,10 @@ kssl_krb5_cc_get_principal
 	if ( p_krb5_cc_get_principal )
 		return(p_krb5_cc_get_principal(context,cache,principal));
 	else
-		return(krb5_x ((cache)->ops->get_princ,(context, cache, principal)));
+		return(krb5_x
+			((cache)->ops->get_princ,(context, cache, principal)));
 	}
+#else
 #endif  /* OPENSSL_SYS_WINDOWS || OPENSSL_SYS_WIN32 */
 
 char
@@ -498,6 +635,120 @@ char
 	}
 
 
+/*	Given KRB5 enctype (basically DES or 3DES), return
+*/
+EVP_CIPHER *
+kssl_map_enc(krb5_enctype enctype)
+        {
+	switch (enctype)
+		{
+	case ENCTYPE_DES_CBC_CRC:
+	case ENCTYPE_DES_CBC_MD4:
+	case ENCTYPE_DES_CBC_MD5:
+	case ENCTYPE_DES_CBC_RAW:
+#if ! defined(KRB5_MIT_OLD11)
+	case ENCTYPE_DES_HMAC_SHA1:
+#endif
+				return (EVP_CIPHER *) EVP_des_cbc();
+				break;
+	case ENCTYPE_DES3_CBC_SHA:
+	case ENCTYPE_DES3_CBC_RAW:
+#if ! defined(KRB5_MIT_OLD11)
+	case ENCTYPE_DES3_CBC_SHA1:
+#endif
+				return (EVP_CIPHER *) EVP_des_ede3_cbc();
+				break;
+	default:                return (EVP_CIPHER *) NULL;
+				break;
+		}
+	}
+
+
+/*	Return true:1 if p "looks like" the start of the real authenticator
+**	described in kssl_skip_confound() below.  The ASN.1 pattern is
+**	"62 xx 30 yy" (APPLICATION-2, SEQUENCE), where xx-yy =~ 2, and
+**	xx and yy are possibly multi-byte length fields.
+*/
+int 	kssl_test_confound(unsigned char *p)
+	{
+	int 	len = 2;
+	int 	xx = 0, yy = 0;
+
+	if (*p++ != 0x62)  return 0;
+	if (*p > 0x82)  return 0;
+	switch(*p)  {
+		case 0x82:  p++;          xx = (*p++ << 8);  xx += *p++;  break;
+		case 0x81:  p++;          xx =  *p++;  break;
+		case 0x80:  return 0;
+		default:    xx = *p++;  break;
+		}
+	if (*p++ != 0x30)  return 0;
+	if (*p > 0x82)  return 0;
+	switch(*p)  {
+		case 0x82:  p++; len+=2;  yy = (*p++ << 8);  yy += *p++;  break;
+		case 0x81:  p++; len++;   yy =  *p++;  break;
+		case 0x80:  return 0;
+		default:    yy = *p++;  break;
+		}
+
+	return (xx - len == yy)? 1: 0;
+	}
+
+/*	Allocate, fill, and return cksumlens array of checksum lengths.
+**	This array holds just the unique elements from the krb5_cksumarray[].
+**	array[n] == 0 signals end of data.
+*/
+int 	*populate_cksumlens(void)
+	{
+	int 		i, j, n = krb5_max_cksum+1;
+	static int 	*cklens = NULL;
+
+#ifdef KRB5CHECKAUTH
+	if (!cklens && !(cklens = (int *) calloc(sizeof(int), n)))  return NULL;
+
+	for (i=0; i < krb5_max_cksum; i++)  {
+		if (!krb5_cksumarray[i])  continue;	/*  array has holes  */
+		for (j=0; j < krb5_max_cksum; j++)  {
+			if (cklens[j] == 0)  {
+				cklens[j] = krb5_cksumarray[i]->checksum_length;
+				break;		/*  krb5 elem was new: add   */
+				}
+			if (cklens[j] == krb5_cksumarray[i]->checksum_length)  {
+				break;		/*  ignore duplicate elements */
+				}
+			}
+		}
+#endif	/* KRB5CHECKAUTH */
+
+	return cklens;
+	}
+
+/*	Return pointer to start of real authenticator within authenticator, or
+**	return NULL on error.
+**	Decrypted authenticator looks like this:
+**		[0 or 8 byte confounder] [4-24 byte checksum] [real authent'r]
+**	This hackery wouldn't be necessary if MIT KRB5 1.0.6 had the
+**	krb5_auth_con_getcksumtype() function advertised in its krb5.h.
+*/
+unsigned char	*kssl_skip_confound(krb5_enctype etype, unsigned char *a)
+	{
+	int 		i, cklen, conlen;
+	static int 	*cksumlens = NULL;
+	unsigned char	*test_auth;
+
+	conlen = (etype)? 8: 0;
+
+	if (!cksumlens  &&  !(cksumlens = populate_cksumlens()))  return NULL;
+	for (i=0; (cklen = cksumlens[i]) != 0; i++)
+		{
+		test_auth = a + conlen + cklen;
+		if (kssl_test_confound(test_auth))  return test_auth;
+		}
+
+	return NULL;
+	}
+
+
 /*	Set kssl_err error info when reason text is a simple string
 **		kssl_err = struct { int reason; char text[KSSL_ERR_MAX+1]; }
 */
@@ -522,10 +773,10 @@ print_krb5_data(char *label, krb5_data *kdata)
 	printf("%s[%d] ", label, kdata->length);
 	for (i=0; i < kdata->length; i++)
                 {
-		if (isprint((int) kdata->data[i]))
+		if (0 &&  isprint((int) kdata->data[i]))
                         printf(	"%c ",  kdata->data[i]);
 		else
-                        printf(	"%02x", kdata->data[i]);
+                        printf(	"%02x ", (unsigned char) kdata->data[i]);
 		}
 	printf("\n");
         }
@@ -570,7 +821,8 @@ print_krb5_keyblock(char *label, krb5_keyblock *keyblk)
 		return;
 		}
 #ifdef KRB5_HEIMDAL
-	printf("%s\n\t[et%d:%d]: ", label, keyblk->keytype, keyblk->keyvalue->length);
+	printf("%s\n\t[et%d:%d]: ", label, keyblk->keytype,
+					   keyblk->keyvalue->length);
 	for (i=0; i < keyblk->keyvalue->length; i++)
                 {
 		printf("%02x",(unsigned char *)(keyblk->keyvalue->contents)[i]);
@@ -587,21 +839,52 @@ print_krb5_keyblock(char *label, krb5_keyblock *keyblk)
         }
 
 
+/*	Display contents of krb5_principal_data struct, for debugging
+**	(krb5_principal is typedef'd == krb5_principal_data *)
+*/
+void
+print_krb5_princ(char *label, krb5_principal_data *princ)
+        {
+	int 	i, j;
+
+	printf("%s principal Realm: ", label);
+	if (princ == NULL)  return;
+	for (i=0; i < princ->realm.length; i++)  putchar(princ->realm.data[i]);
+	printf(" (nametype %d) has %d strings:\n", princ->type,princ->length);
+	for (i=0; i < princ->length; i++)
+                {
+		printf("\t%d [%d]: ", i, princ->data[i].length);
+		for (j=0; j < princ->data[i].length; j++)  {
+			putchar(princ->data[i].data[j]);
+			}
+		printf("\n");
+		}
+	return;
+        }
+
+
 /*	Given krb5 service (typically "kssl") and hostname in kssl_ctx,
-**	Create Kerberos AP_REQ message for SSL Client.
+**	Return encrypted Kerberos ticket for service @ hostname.
+**	If authenp is non-NULL, also return encrypted authenticator,
+**	whose data should be freed by caller.
+**	(Originally was: Create Kerberos AP_REQ message for SSL Client.)
 **
-**	19990628	VRS 	Started.
+**	19990628	VRS 	Started; Returns Kerberos AP_REQ message.
+**	20010409	VRS 	Modified for RFC2712; Returns enc tkt.
+**	20010606	VRS 	May also return optional authenticator.
 */
 krb5_error_code
 kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
-                /* OUT    */	krb5_data *krb5_app_req, KSSL_ERR *kssl_err)
+                /* OUT    */	krb5_data **enc_ticketp,
+                /* UPDATE */	krb5_data *authenp,
+                /* OUT    */	KSSL_ERR *kssl_err)
 	{
 	krb5_error_code		krb5rc = KRB5KRB_ERR_GENERIC;
 	krb5_context		krb5context = NULL;
 	krb5_auth_context	krb5auth_context = NULL;
 	krb5_ccache 		krb5ccdef = NULL;
 	krb5_creds		krb5creds, *krb5credsp = NULL;
-	krb5_data 		krb5in_data;
+	krb5_data		krb5_app_req;
 
 	kssl_err_set(kssl_err, 0, "");
 	memset((char *)&krb5creds, 0, sizeof(krb5creds));
@@ -635,7 +918,8 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 		BIO_snprintf(kssl_err->text,KSSL_ERR_MAX,
                         "krb5_sname_to_principal() fails for %s/%s\n",
                         kssl_ctx->service_host,
-                        (kssl_ctx->service_name)? kssl_ctx->service_name: KRB5SVC);
+                        (kssl_ctx->service_name)? kssl_ctx->service_name:
+						  KRB5SVC);
 		kssl_err->reason = SSL_R_KRB5_C_INIT;
 		goto err;
 		}
@@ -663,26 +947,65 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 		goto err;
 		}
 
-	krb5in_data.data = NULL;
-	krb5in_data.length = 0;
+	*enc_ticketp = &krb5credsp->ticket;
+#ifdef KRB5_HEIMDAL
+	kssl_ctx->enctype = krb5credsp->session.keytype;
+#else
+	kssl_ctx->enctype = krb5credsp->keyblock.enctype;
+#endif
 
 	krb5rc = KRB5KRB_ERR_GENERIC;
 	/*	caller should free data of krb5_app_req  */
-        if ((krb5rc = krb5_mk_req_extended(krb5context, &krb5auth_context,
-                0, &krb5in_data, krb5credsp, krb5_app_req)) != 0)
+	/*  20010406 VRS deleted for real KerberosWrapper
+	**  20010605 VRS reinstated to offer Authenticator to KerberosWrapper
+	*/
+	krb5_app_req.length = 0;
+	if (authenp)
                 {
-		kssl_err_set(kssl_err, SSL_R_KRB5_C_MK_REQ,
-                        "krb5_mk_req_extended() fails.\n");
-		goto err;
+		krb5_data	krb5in_data;
+		unsigned char	*p;
+		long		arlen;
+		KRB5_APREQBODY	*ap_req;
+
+		authenp->length = 0;
+		krb5in_data.data = NULL;
+		krb5in_data.length = 0;
+		if ((krb5rc = krb5_mk_req_extended(krb5context,
+			&krb5auth_context, 0, &krb5in_data, krb5credsp,
+			&krb5_app_req)) != 0)
+			{
+			kssl_err_set(kssl_err, SSL_R_KRB5_C_MK_REQ,
+				"krb5_mk_req_extended() fails.\n");
+			goto err;
+			}
+
+		arlen = krb5_app_req.length;
+		p = krb5_app_req.data;
+		ap_req = (KRB5_APREQBODY *) d2i_KRB5_APREQ(NULL, &p, arlen);
+		if (ap_req)
+			{
+			authenp->length = i2d_KRB5_ENCDATA(
+					ap_req->authenticator, NULL);
+			if (authenp->length  && 
+				(authenp->data = malloc(authenp->length)))
+				{
+				unsigned char	*p = authenp->data;
+				authenp->length = i2d_KRB5_ENCDATA(
+						ap_req->authenticator, &p);
+				}
+			}
+
+		if (ap_req)  KRB5_APREQ_free((KRB5_APREQ *) ap_req);
+		if (krb5_app_req.length)  krb5_xfree(krb5_app_req.data);
 		}
 #ifdef KRB5_HEIMDAL
-	else if (kssl_ctx_setkey(kssl_ctx, &krb5credsp->session))
+	if (kssl_ctx_setkey(kssl_ctx, &krb5credsp->session))
                 {
 		kssl_err_set(kssl_err, SSL_R_KRB5_C_INIT,
                         "kssl_ctx_setkey() fails.\n");
 		}
 #else
-	else if (kssl_ctx_setkey(kssl_ctx, &krb5credsp->keyblock))
+	if (kssl_ctx_setkey(kssl_ctx, &krb5credsp->keyblock))
                 {
 		kssl_err_set(kssl_err, SSL_R_KRB5_C_INIT,
                         "kssl_ctx_setkey() fails.\n");
@@ -695,11 +1018,99 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 	kssl_ctx_show(kssl_ctx);
 #endif	/* KSSL_DEBUG */
 
-	if (krb5creds.client)	krb5_free_principal(krb5context, krb5creds.client);
-	if (krb5creds.server)	krb5_free_principal(krb5context, krb5creds.server);
-	if (krb5auth_context)	krb5_auth_con_free(krb5context, krb5auth_context);
+	if (krb5creds.client)	krb5_free_principal(krb5context,
+							krb5creds.client);
+	if (krb5creds.server)	krb5_free_principal(krb5context,
+							krb5creds.server);
+	if (krb5auth_context)	krb5_auth_con_free(krb5context,
+							krb5auth_context);
 	if (krb5context)	krb5_free_context(krb5context);
 	return (krb5rc);
+	}
+
+
+/*  Given d2i_-decoded asn1ticket, allocate and return a new krb5_ticket.
+**  Return Kerberos error code and kssl_err struct on error.
+**  Allocates krb5_ticket and krb5_principal; caller should free these.
+**
+**	20010410	VRS	Implemented krb5_decode_ticket() as
+**				old_krb5_decode_ticket(). Missing from MIT1.0.6.
+**	20010615	VRS 	Re-cast as openssl/asn1 d2i_*() functions.
+**				Re-used some of the old krb5_decode_ticket()
+**				code here.  This tkt should alloc/free just
+**				like the real thing.
+*/
+krb5_error_code
+kssl_TKT2tkt(	/* IN     */	krb5_context	krb5context,
+		/* IN     */	KRB5_TKTBODY	*asn1ticket,
+		/* OUT    */	krb5_ticket	**krb5ticket,
+		/* OUT    */	KSSL_ERR *kssl_err  )
+        {
+        krb5_error_code			krb5rc = KRB5KRB_ERR_GENERIC;
+	krb5_ticket 			*new5ticket = NULL;
+	ASN1_GENERALSTRING		*gstr_svc, *gstr_host;
+
+	*krb5ticket = NULL;
+
+	if (asn1ticket == NULL  ||  asn1ticket->realm == NULL  ||
+		asn1ticket->sname == NULL  || 
+		asn1ticket->sname->namestring == NULL  ||
+		asn1ticket->sname->namestring->num < 2)
+		{
+		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+			"Null field in asn1ticket.\n");
+		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
+		return KRB5KRB_ERR_GENERIC;
+		}
+
+	if ((new5ticket = (krb5_ticket *) calloc(1, sizeof(krb5_ticket)))==NULL)
+		{
+		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+			"Unable to allocate new krb5_ticket.\n");
+		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
+		return ENOMEM;		/*  or  KRB5KRB_ERR_GENERIC;	*/
+		}
+
+	gstr_svc  = (ASN1_GENERALSTRING*)asn1ticket->sname->namestring->data[0];
+	gstr_host = (ASN1_GENERALSTRING*)asn1ticket->sname->namestring->data[1];
+
+	if ((krb5rc = kssl_build_principal_2(krb5context,
+			&new5ticket->server,
+			asn1ticket->realm->length, asn1ticket->realm->data,
+			gstr_svc->length,  gstr_svc->data,
+			gstr_host->length, gstr_host->data)) != 0)
+		{
+		free(new5ticket);
+		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+			"Error building ticket server principal.\n");
+		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
+		return krb5rc;		/*  or  KRB5KRB_ERR_GENERIC;	*/
+		}
+
+	krb5_princ_type(krb5context, new5ticket->server) =
+			asn1ticket->sname->nametype->data[0];
+	new5ticket->enc_part.enctype = asn1ticket->encdata->etype->data[0];
+	new5ticket->enc_part.kvno = asn1ticket->encdata->kvno->data[0];
+	new5ticket->enc_part.ciphertext.length =
+			asn1ticket->encdata->cipher->length;
+	if ((new5ticket->enc_part.ciphertext.data =
+		calloc(1, asn1ticket->encdata->cipher->length)) == NULL)
+		{
+		free(new5ticket);
+		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+			"Error allocating cipher in krb5ticket.\n");
+		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
+		return KRB5KRB_ERR_GENERIC;
+		}
+	else
+		{
+		memcpy(new5ticket->enc_part.ciphertext.data,
+			asn1ticket->encdata->cipher->data,
+			asn1ticket->encdata->cipher->length);
+		}
+
+	*krb5ticket = new5ticket;
+	return 0;
 	}
 
 
@@ -711,24 +1122,27 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 **	19990702	VRS 	Started.
 */
 krb5_error_code
-kssl_sget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
-		/* IN     */	char *msg, int msglen,
-		/* OUT    */	KSSL_ERR *kssl_err  )
+kssl_sget_tkt(	/* UPDATE */	KSSL_CTX		*kssl_ctx,
+		/* IN     */	krb5_data		*indata,
+		/* OUT    */	krb5_ticket_times	*ttimes,
+		/* OUT    */	KSSL_ERR		*kssl_err  )
         {
         krb5_error_code			krb5rc = KRB5KRB_ERR_GENERIC;
         static krb5_context		krb5context = NULL;
 	static krb5_auth_context	krb5auth_context = NULL;
 	krb5_ticket 			*krb5ticket = NULL;
+	KRB5_TKTBODY 			*asn1ticket = NULL;
+	unsigned char			*p;
 	krb5_keytab 			krb5keytab = NULL;
+	krb5_keytab_entry		kt_entry;
 	krb5_principal			krb5server;
-	krb5_data			krb5in_data;
-	krb5_flags			ap_option;
 
 	kssl_err_set(kssl_err, 0, "");
 
 	if (!kssl_ctx)
                 {
-		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT, "No kssl_ctx defined.\n");
+		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+					"No kssl_ctx defined.\n");
 		goto err;
 		}
 
@@ -792,20 +1206,88 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 		}
 
 	/*	Actual Kerberos5 krb5_recvauth() has initial conversation here
-	**	o	check KRB5_SENDAUTH_BADAUTHVERS unless KRB5_RECVAUTH_SKIP_VERSION
+	**	o	check KRB5_SENDAUTH_BADAUTHVERS
+	**		unless KRB5_RECVAUTH_SKIP_VERSION
 	**	o	check KRB5_SENDAUTH_BADAPPLVERS
 	**	o	send "0" msg if all OK
 	*/
 
-	krb5in_data.data = msg;
-	krb5in_data.length = msglen;
-	if ((krb5rc = krb5_rd_req(krb5context, &krb5auth_context, &krb5in_data,
-                krb5server, krb5keytab, &ap_option, &krb5ticket)) != 0)
-                {
+	/*  20010411 was using AP_REQ instead of true KerberosWrapper
+	**
+	**  if ((krb5rc = krb5_rd_req(krb5context, &krb5auth_context,
+	**			&krb5in_data, krb5server, krb5keytab,
+	**			&ap_option, &krb5ticket)) != 0)  { Error }
+	*/
+
+	p = indata->data;
+	if ((asn1ticket = (KRB5_TKTBODY *) d2i_KRB5_TICKET(NULL, &p,
+						(long) indata->length)) == NULL)
+		{
 		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
-                        "krb5_rd_req() fails with %x.\n", krb5rc);
+			"d2i_KRB5_TICKET() ASN.1 decode failure.\n");
 		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
 		goto err;
+		}
+	
+	/* Was:  krb5rc = krb5_decode_ticket(krb5in_data,&krb5ticket)) != 0) */
+	if ((krb5rc = kssl_TKT2tkt(krb5context, asn1ticket, &krb5ticket,
+					kssl_err)) != 0)
+		{
+		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+			"Error converting ASN.1 ticket to krb5_ticket.\n");
+		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
+		goto err;
+		}
+
+	if (! krb5_principal_compare(krb5context, krb5server,
+						  krb5ticket->server))  {
+		krb5rc = KRB5_PRINC_NOMATCH;
+		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+			"server principal != ticket principal\n");
+		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
+		goto err;
+		}
+	if ((krb5rc = krb5_kt_get_entry(krb5context, krb5keytab,
+			krb5ticket->server, krb5ticket->enc_part.kvno,
+			krb5ticket->enc_part.enctype, &kt_entry)) != 0)  {
+		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+			"krb5_kt_get_entry() fails with %x.\n", krb5rc);
+		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
+		goto err;
+		}
+	if ((krb5rc = krb5_decrypt_tkt_part(krb5context, &kt_entry.key,
+			krb5ticket)) != 0)  {
+		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+			"krb5_decrypt_tkt_part() failed.\n");
+		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
+		goto err;
+		}
+	else  {
+		krb5_kt_free_entry(krb5context, &kt_entry);
+#ifdef KSSL_DEBUG
+		{
+		int i; krb5_address **paddr = krb5ticket->enc_part2->caddrs;
+		printf("Decrypted ticket fields:\n");
+		printf("\tflags: %X, transit-type: %X",
+			krb5ticket->enc_part2->flags,
+			krb5ticket->enc_part2->transited.tr_type);
+		print_krb5_data("\ttransit-data: ",
+			&(krb5ticket->enc_part2->transited.tr_contents));
+		printf("\tcaddrs: %p, authdata: %p\n",
+			krb5ticket->enc_part2->caddrs,
+			krb5ticket->enc_part2->authorization_data);
+		printf("\tcaddrs:\n");
+		for (i=0; paddr[i] != NULL; i++)
+			{  krb5_data d;
+			d.length=paddr[i]->length; d.data=paddr[i]->contents;
+			print_krb5_data("\t\tIP: ", &d);
+			}
+		printf("\tstart/auth/end times: %d / %d / %d\n",
+			krb5ticket->enc_part2->times.starttime,
+			krb5ticket->enc_part2->times.authtime,
+			krb5ticket->enc_part2->times.endtime);
+		}
+#endif	/* KSSL_DEBUG */
 		}
 
 	krb5rc = KRB5_NO_TKT_SUPPLIED;
@@ -829,13 +1311,26 @@ kssl_sget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 		kssl_err_set(kssl_err, SSL_R_KRB5_S_BAD_TICKET,
                         "kssl_ctx_setkey() fails.\n");
 		}
+	else if (krb5ticket->enc_part2->flags & TKT_FLG_INVALID)
+                {
+		krb5rc = KRB5KRB_AP_ERR_TKT_INVALID;
+                kssl_err_set(kssl_err, SSL_R_KRB5_S_BAD_TICKET,
+                        "invalid ticket from krb5_rd_req.\n");
+		}
 	else	krb5rc = 0;
+
+	kssl_ctx->enctype	= krb5ticket->enc_part.enctype;
+	ttimes->authtime	= krb5ticket->enc_part2->times.authtime;
+	ttimes->starttime	= krb5ticket->enc_part2->times.starttime;
+	ttimes->endtime 	= krb5ticket->enc_part2->times.endtime;
+	ttimes->renew_till	= krb5ticket->enc_part2->times.renew_till;
 
  err:
 #ifdef KSSL_DEBUG
 	kssl_ctx_show(kssl_ctx);
 #endif	/* KSSL_DEBUG */
 
+	if (asn1ticket) 	KRB5_TICKET_free((KRB5_TICKET *) asn1ticket);
         if (krb5keytab)         krb5_kt_close(krb5context, krb5keytab);
 	if (krb5ticket) 	krb5_free_ticket(krb5context, krb5ticket);
 	if (krb5server) 	krb5_free_principal(krb5context, krb5server);
@@ -860,7 +1355,8 @@ kssl_ctx_free(KSSL_CTX *kssl_ctx)
         {
 	if (kssl_ctx == NULL)  return kssl_ctx;
 
-	if (kssl_ctx->key)  		memset(kssl_ctx->key, 0, kssl_ctx->length);
+	if (kssl_ctx->key)  		memset(kssl_ctx->key, 0,
+							      kssl_ctx->length);
 	if (kssl_ctx->key)  		free(kssl_ctx->key);
 	if (kssl_ctx->client_princ) 	free(kssl_ctx->client_princ);
 	if (kssl_ctx->service_host) 	free(kssl_ctx->service_host);
@@ -953,6 +1449,10 @@ kssl_ctx_setstring(KSSL_CTX *kssl_ctx, int which, char *text)
 krb5_error_code
 kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session)
         {
+	int 		length;
+	krb5_enctype	enctype;
+	krb5_octet FAR	*contents = NULL;
+
 	if (!kssl_ctx)  return KSSL_CTX_ERR;
 
 	if (kssl_ctx->key)
@@ -963,8 +1463,18 @@ kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session)
 
 	if (session)
                 {
-		kssl_ctx->enctype = session->enctype;
-		kssl_ctx->length  = session->length;
+
+#ifdef KRB5_HEIMDAL
+		length = session->keyvalue->length;
+		enctype = session->keytype;
+		contents = session->keyvalue->contents;
+#else
+		length = session->length;
+		enctype = session->enctype;
+		contents = session->contents;
+#endif
+		kssl_ctx->enctype = enctype;
+		kssl_ctx->length  = length;
 		}
 	else
                 {
@@ -980,7 +1490,7 @@ kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session)
 		return KSSL_CTX_ERR;
 		}
 	else
-		memcpy(kssl_ctx->key, session->contents, session->length);
+		memcpy(kssl_ctx->key, contents, length);
 
 	return KSSL_CTX_OK;
         }
@@ -1026,10 +1536,268 @@ void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 #ifdef KRB5_HEIMDAL
 	data->length = 0;
 	free(data->if (data->data) data);
+#elif defined(KRB5_MIT_OLD11)
+	if (data->data)  {
+		krb5_xfree(data->data);
+		data->data = 0;
+		}
 #else
 	krb5_free_data_contents(NULL, data);
 #endif
 	}
+
+
+/*  Helper function for kssl_validate_times().
+**  We need context->clockskew, but krb5_context is an opaque struct.
+**  So we try to sneek the clockskew out through the replay cache.
+**	If that fails just return a likely default (300 seconds).
+*/
+krb5_deltat	get_rc_clockskew(krb5_context context)
+	{
+	krb5_rcache 	rc;
+	krb5_deltat 	clockskew;
+
+	if (krb5_rc_default(context, &rc))  return KSSL_CLOCKSKEW;
+	if (krb5_rc_initialize(context, rc, 0))  return KSSL_CLOCKSKEW;
+	if (krb5_rc_get_lifespan(context, rc, &clockskew))  {
+		clockskew = KSSL_CLOCKSKEW;
+		}
+	(void) krb5_rc_destroy(context, rc);
+	return clockskew;
+	}
+
+
+/*  kssl_validate_times() combines (and more importantly exposes)
+**  the MIT KRB5 internal function krb5_validate_times() and the
+**  in_clock_skew() macro.  The authenticator client time is checked
+**  to be within clockskew secs of the current time and the current
+**  time is checked to be within the ticket start and expire times.
+**  Either check may be omitted by supplying a NULL value.
+**  Returns 0 for valid times, SSL_R_KRB5* error codes otherwise.
+**  See Also: (Kerberos source)/krb5/lib/krb5/krb/valid_times.c
+**  20010420 VRS
+*/
+krb5_error_code  kssl_validate_times(	krb5_timestamp atime,
+					krb5_ticket_times *ttimes)
+	{
+	krb5_deltat 	skew;
+	krb5_timestamp	start, now;
+	krb5_error_code	rc;
+	krb5_context	context;
+
+	if ((rc = krb5_init_context(&context)))	 return SSL_R_KRB5_S_BAD_TICKET;
+	skew = get_rc_clockskew(context); 
+	if ((rc = krb5_timeofday(context,&now))) return SSL_R_KRB5_S_BAD_TICKET;
+	krb5_free_context(context);
+
+	if (atime  &&  labs(atime - now) >= skew)  return SSL_R_KRB5_S_TKT_SKEW;
+
+	if (! ttimes)  return 0;
+
+	start = (ttimes->starttime != 0)? ttimes->starttime: ttimes->authtime;
+	if (start - now > skew)  return SSL_R_KRB5_S_TKT_NYV;
+	if ((now - ttimes->endtime) > skew)  return SSL_R_KRB5_S_TKT_EXPIRED;
+
+#ifdef KSSL_DEBUG
+	printf("kssl_validate_times: %d |<-  | %d - %d | < %d  ->| %d\n",
+		start, atime, now, skew, ttimes->endtime);
+#endif	/* KSSL_DEBUG */
+
+	return 0;
+	}
+
+
+/*  Decode and decrypt given DER-encoded authenticator, then pass
+**  authenticator ctime back in *atimep (or 0 if time unavailable).
+**  Returns krb5_error_code and kssl_err on error.  A NULL 
+**  authenticator (authentp->length == 0) is not considered an error.
+**  Note that kssl_check_authent() makes use of the KRB5 session key;
+**  you must call kssl_sget_tkt() to get the key before calling this routine.
+*/
+krb5_error_code  kssl_check_authent(
+			/* IN     */	KSSL_CTX	*kssl_ctx,
+                        /* IN     */   	krb5_data	*authentp,
+			/* OUT    */	krb5_timestamp	*atimep,
+			/* OUT    */    KSSL_ERR	*kssl_err  )
+	{
+        krb5_error_code		krb5rc = 0;
+	KRB5_ENCDATA		*dec_authent = NULL;
+	KRB5_AUTHENTBODY	*auth = NULL;
+	krb5_enctype		enctype;
+	EVP_CIPHER_CTX		ciph_ctx;
+	EVP_CIPHER		*enc = NULL;
+	unsigned char		iv[EVP_MAX_IV_LENGTH];
+	unsigned char		*p, *unenc_authent, *tbuf = NULL;
+	int 			padl, outl, unencbufsize;
+	struct tm		tm_time, *tm_l, *tm_g;
+	time_t			now, tl, tg, tz_offset;
+
+	*atimep = 0;
+	kssl_err_set(kssl_err, 0, "");
+
+#ifndef KRB5CHECKAUTH
+	authentp = NULL;
+#else
+#if	KRB5CHECKAUTH == 0
+	authentp = NULL;
+#endif
+#endif	/* KRB5CHECKAUTH */
+
+	if (authentp == NULL  ||  authentp->length == 0)  return 0;
+
+#ifdef KSSL_DEBUG
+	printf("kssl_check_authent: authenticator[%d]:\n",authentp->length);
+	p = authentp->data; 
+	for (padl=0; padl < authentp->length; padl++)  printf("%02x ",p[padl]);
+	printf("\n");
+#endif	/* KSSL_DEBUG */
+
+	unencbufsize = 2 * authentp->length;
+	if ((unenc_authent = calloc(1, unencbufsize)) == NULL)
+		{
+		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+			"Unable to allocate authenticator buffer.\n");
+		krb5rc = KRB5KRB_ERR_GENERIC;
+		goto err;
+		}
+
+	p = authentp->data;
+	if ((dec_authent = d2i_KRB5_ENCDATA(NULL, &p,
+					(long) authentp->length)) == NULL) 
+		{
+		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+                        "Error decoding authenticator.\n");
+		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+		goto err;
+		}
+
+	enctype = dec_authent->etype->data[0];	/* should = kssl_ctx->enctype */
+	enc = kssl_map_enc(enctype);
+	memset(iv, 0, EVP_MAX_IV_LENGTH);       /* per RFC 1510 */
+
+	EVP_DecryptInit(&ciph_ctx, enc, kssl_ctx->key, iv);
+	EVP_DecryptUpdate(&ciph_ctx, unenc_authent, &outl,
+			dec_authent->cipher->data, dec_authent->cipher->length);
+	if (outl > unencbufsize)
+		{
+		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+                        "Buffer overflow decrypting authenticator.\n");
+		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+		goto err;
+		}
+	EVP_DecryptFinal(&ciph_ctx, &(unenc_authent[outl]), &padl);
+	outl += padl;
+	if (outl > unencbufsize)
+		{
+		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+                        "Buffer overflow decrypting authenticator.\n");
+		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+		goto err;
+		}
+	EVP_CIPHER_CTX_cleanup(&ciph_ctx);
+
+#ifdef KSSL_DEBUG
+	printf("kssl_check_authent: decrypted authenticator[%d] =\n", outl);
+	for (padl=0; padl < outl; padl++) printf("%02x ",unenc_authent[padl]);
+	printf("\n");
+#endif	/* KSSL_DEBUG */
+
+	if ((p = kssl_skip_confound(enctype, unenc_authent)) == NULL)
+		{
+		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+                        "confounded by authenticator.\n");
+		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+		goto err;
+		}
+	outl -= p - unenc_authent;
+
+	if ((auth = (KRB5_AUTHENTBODY *) d2i_KRB5_AUTHENT(NULL, &p,
+							  (long) outl))==NULL)
+		{
+		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+                        "Error decoding authenticator body.\n");
+		krb5rc = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+		goto err;
+		}
+	if ((tbuf = calloc(1, auth->ctime->length + 1)) == NULL)
+		{
+		kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
+			"Unable to allocate atime buffer.\n");
+		krb5rc = KRB5KRB_ERR_GENERIC;
+		goto err;
+		}
+	else	strncpy(tbuf, auth->ctime->data, auth->ctime->length);
+	
+	if (strptime(tbuf, "%Y%m%d%H%M%S", &tm_time) != NULL)
+		{
+		now  = time(&now);
+		tm_l = localtime(&now); 	tl = mktime(tm_l);
+		tm_g = gmtime(&now);		tg = mktime(tm_g);
+		tz_offset = tg - tl;
+
+		*atimep = mktime(&tm_time) - tz_offset;
+		}
+
+#ifdef KSSL_DEBUG
+	printf("kssl_check_authent: client time %s = %d\n", tbuf, *atimep);
+#endif	/* KSSL_DEBUG */
+
+ err:
+	if (tbuf)		free(tbuf);
+	if (auth)		KRB5_AUTHENT_free((KRB5_AUTHENT *) auth);
+	if (dec_authent)	KRB5_ENCDATA_free(dec_authent);
+	if (unenc_authent)	free(unenc_authent);
+	return krb5rc;
+	}
+
+
+/*  Replaces krb5_build_principal_ext(), with varargs length == 2 (svc, host),
+**  because I dont't know how to stub varargs.
+**  Returns krb5_error_code == ENOMEM on alloc error, otherwise
+**  passes back newly constructed principal, which should be freed by caller.
+*/
+krb5_error_code  kssl_build_principal_2(
+			/* UPDATE */	krb5_context	context,
+			/* OUT    */	krb5_principal	*princ,
+			/* IN     */	int rlen,  const char *realm,
+			/* IN	  */	int slen,  const char *svc,
+			/* IN	  */	int hlen,  const char *host)
+	{
+	krb5_data		*p_data = NULL;
+	krb5_principal		new_p = NULL;
+        char			*new_r = NULL;
+
+	if ((p_data = (krb5_data *) calloc(2, sizeof(krb5_data))) == NULL  ||
+	    (new_p = (krb5_principal) calloc(1, sizeof(krb5_principal_data)))
+			== NULL)  goto err;
+	new_p->length = 2;
+	new_p->data = p_data;
+
+	if ((new_r = calloc(1, rlen + 1)) == NULL)  goto err;
+	memcpy(new_r, realm, rlen);
+	krb5_princ_set_realm_length(context, new_p, rlen);
+	krb5_princ_set_realm_data(context, new_p, new_r);
+
+	if ((new_p->data[0].data = calloc(1, slen + 1)) == NULL)  goto err;
+	memcpy(new_p->data[0].data, svc, slen);
+	new_p->data[0].length = slen;
+
+	if ((new_p->data[1].data = calloc(1, hlen + 1)) == NULL)  goto err;
+	memcpy(new_p->data[1].data, host, hlen);
+	new_p->data[1].length = hlen;
+	
+	krb5_princ_type(context, new_p) = KRB5_NT_UNKNOWN;
+	*princ = new_p;
+	return 0;
+
+ err:
+	if (new_p  &&  new_p[0].data)	free(new_p[0].data);
+	if (new_p  &&  new_p[1].data)	free(new_p[1].data);
+	if (new_p)	free(new_p);
+	if (new_r)	free(new_r);
+	return ENOMEM;
+	}
+
 
 #else /* !OPENSSL_NO_KRB5 */
 
