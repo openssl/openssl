@@ -18,26 +18,27 @@ int main()
 
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-	X509V3_add_standard_extensions();
-
-	if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-		BIO_set_fp(bio_err,stderr,BIO_NOCLOSE);
+	bio_err=BIO_new_fp(stderr, BIO_NOCLOSE);
 
 	mkit(&x509,&pkey,512,0,365);
 
 	RSA_print_fp(stdout,pkey->pkey.rsa,0);
 	X509_print_fp(stdout,x509);
 
-	PEM_write_RSAPrivateKey(stdout,pkey->pkey.rsa,NULL,NULL,0,NULL);
+	PEM_write_PrivateKey(stdout,pkey,NULL,NULL,0,NULL, NULL);
 	PEM_write_X509(stdout,x509);
 
 	X509_free(x509);
 	EVP_PKEY_free(pkey);
-	BIO_free(bio_err);
 
+#ifdef CUSTOM_EXT
+	/* Only needed if we add objects or custom extensions */
 	X509V3_EXT_cleanup();
+	OBJ_cleanup();
+#endif
 
 	CRYPTO_mem_leaks(bio_err);
+	BIO_free(bio_err);
 	return(0);
 	}
 
@@ -111,24 +112,18 @@ int days;
 	X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days);
 	X509_set_pubkey(x,pk);
 
-	name=X509_NAME_new();
+	name=X509_get_subject_name(x);
 
-	ne=X509_NAME_ENTRY_create_by_NID(NULL,NID_countryName,
-		V_ASN1_APP_CHOOSE,"AU",-1);
-	X509_NAME_add_entry(name,ne,0,0);
+	/* This function creates and adds the entry, working out the
+	 * correct string type and performing checks on its length.
+	 * Normally we'd check the return value for errors...
+	 */
+	X509_NAME_add_entry_by_txt(name,"C",
+				MBSTRING_ASC, "UK", -1, -1, 0);
+	X509_NAME_add_entry_by_txt(name,"CN",
+				MBSTRING_ASC, "OpenSSL Group", -1, -1, 0);
 
-	X509_NAME_ENTRY_create_by_NID(&ne,NID_commonName,
-		V_ASN1_APP_CHOOSE,"Eric Young",-1);
-	X509_NAME_add_entry(name,ne,1,0);
-
-	/* finished with structure */
-	X509_NAME_ENTRY_free(ne);
-
-	X509_set_subject_name(x,name);
 	X509_set_issuer_name(x,name);
-
-	/* finished with structure */
-	X509_NAME_free(name);
 
 	/* Add extension using V3 code: we can set the config file as NULL
 	 * because we wont reference any other sections. We can also set
@@ -138,15 +133,18 @@ int days;
 
 	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_cert_type, "server");
 	X509_add_ext(x,ex,-1);
+	X509_EXTENSION_free(ex);
 
 	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_comment,
 						"example comment extension");
 	X509_add_ext(x,ex,-1);
+	X509_EXTENSION_free(ex);
 
 	ex = X509V3_EXT_conf_nid(NULL, NULL, NID_netscape_ssl_server_name,
 							"www.openssl.org");
 
 	X509_add_ext(x,ex,-1);
+	X509_EXTENSION_free(ex);
 
 #if 0
 	/* might want something like this too.... */
@@ -155,6 +153,20 @@ int days;
 
 
 	X509_add_ext(x,ex,-1);
+	X509_EXTENSION_free(ex);
+#endif
+
+#ifdef CUSTOM_EXT
+	/* Maybe even add our own extension based on existing */
+	{
+		int nid;
+		nid = OBJ_create("1.2.3.4", "MyAlias", "My Test Alias Extension");
+		X509V3_EXT_add_alias(nid, NID_netscape_comment);
+		ex = X509V3_EXT_conf_nid(NULL, NULL, nid,
+						"example comment alias");
+		X509_add_ext(x,ex,-1);
+		X509_EXTENSION_free(ex);
+	}
 #endif
 	
 	if (!X509_sign(x,pk,EVP_md5()))

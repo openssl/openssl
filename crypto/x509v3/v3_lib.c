@@ -132,7 +132,7 @@ int X509V3_EXT_add_alias(int nid_to, int nid_from)
 	*tmpext = *ext;
 	tmpext->ext_nid = nid_to;
 	tmpext->ext_flags |= X509V3_EXT_DYNAMIC;
-	return 1;
+	return X509V3_EXT_add(tmpext);
 }
 
 void X509V3_EXT_cleanup(void)
