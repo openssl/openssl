@@ -100,6 +100,8 @@ static struct hostent *ghbn_dup(struct hostent *a);
 int BIO_get_host_ip(const char *str, unsigned char *ip)
 	{
 	int i;
+	int err = 1;
+	int locked = 0;
 	struct hostent *he;
 
 	i=get_ip(str,ip);
@@ -107,32 +109,42 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
 	if (i < 0)
 		{
 		BIOerr(BIO_F_BIO_GET_HOST_IP,BIO_R_INVALID_IP_ADDRESS);
+		goto err;
+		}
+
+	/* do a gethostbyname */
+	if (!BIO_sock_init())
+		return(0); /* don't generate another error code here */
+
+	CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
+	locked = 1;
+	he=BIO_gethostbyname(str);
+	if (he == NULL)
+		{
+		BIOerr(BIO_F_BIO_GET_HOST_IP,BIO_R_BAD_HOSTNAME_LOOKUP);
+		goto err;
+		}
+
+	/* cast to short because of win16 winsock definition */
+	if ((short)he->h_addrtype != AF_INET)
+		{
+		BIOerr(BIO_F_BIO_GET_HOST_IP,BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
+		goto err;
+		}
+	for (i=0; i<4; i++)
+		ip[i]=he->h_addr_list[0][i];
+	err = 0;
+
+ err:
+	if (locked)
+		CRYPTO_w_unlock(CRYPTO_LOCK_GETHOSTBYNAME);
+	if (err)
+		{
 		ERR_add_error_data(2,"host=",str);
-		return(0);
+		return 0;
 		}
 	else
-		{ /* do a gethostbyname */
-		if (!BIO_sock_init()) return(0);
-
-		he=BIO_gethostbyname(str);
-		if (he == NULL)
-			{
-			BIOerr(BIO_F_BIO_GET_HOST_IP,BIO_R_BAD_HOSTNAME_LOOKUP);
-			ERR_add_error_data(2,"host=",str);
-			return(0);
-			}
-
-		/* cast to short because of win16 winsock definition */
-		if ((short)he->h_addrtype != AF_INET)
-			{
-			BIOerr(BIO_F_BIO_GET_HOST_IP,BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
-			ERR_add_error_data(2,"host=",str);
-			return(0);
-			}
-		for (i=0; i<4; i++)
-			ip[i]=he->h_addr_list[0][i];
-		}
-	return(1);
+		return 1;
 	}
 
 int BIO_get_port(const char *str, unsigned short *port_ptr)
@@ -327,7 +339,12 @@ struct hostent *BIO_gethostbyname(const char *name)
 
 /*	return(gethostbyname(name)); */
 
+#if 0 /* It doesn't make sense to use locking here: The function interface
+	   * is not thread-safe, because threads can never be sure when
+	   * some other thread destroys the data they were given a pointer to.
+	   */
 	CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
+#endif
 	j=strlen(name);
 	if (j < 128)
 		{
@@ -357,7 +374,11 @@ struct hostent *BIO_gethostbyname(const char *name)
 			goto end;
 		if (j > 128) /* too big to cache */
 			{
+#if 0 /* If we were trying to make this function thread-safe (which
+	   * is bound to fail), we'd have to give up in this case
+	   * (or allocate more memory). */
 			ret = NULL;
+#endif
 			goto end;
 			}
 
@@ -381,7 +402,9 @@ struct hostent *BIO_gethostbyname(const char *name)
 		ghbn_cache[i].order=BIO_ghbn_miss+BIO_ghbn_hits;
 		}
 end:
+#if 0
 	CRYPTO_w_unlock(CRYPTO_LOCK_GETHOSTBYNAME);
+#endif
 	return(ret);
 	}
 
