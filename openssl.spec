@@ -96,8 +96,8 @@ perl util/perlpath.pl /usr/bin/perl
 #!#./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-ppc shared
 %endif
 %ifarch alpha
-./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha
-#!#./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha shared
+./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha-gcc
+#!#./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha-gcc shared
 %endif
 LD_LIBRARY_PATH=`pwd` make
 LD_LIBRARY_PATH=`pwd` make rehash

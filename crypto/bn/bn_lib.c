@@ -62,6 +62,7 @@
 #endif
 
 #include <assert.h>
+#include <limits.h>
 #include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
@@ -319,6 +320,12 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 
 	if (words > b->dmax)
 		{
+		if (words > (INT_MAX/(4*BN_BITS2)))
+			{
+			BNerr(BN_F_BN_EXPAND2,BN_R_BIGNUM_TOO_LONG);
+			return NULL;
+			}
+			
 		bn_check_top(b);	
 		if (BN_get_flags(b,BN_FLG_STATIC_DATA))
 			{

@@ -180,13 +180,9 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	kinv=NULL;
 
 	/* Get random k */
-	for (;;)
-		{
-		if (!BN_rand(&k, BN_num_bits(dsa->q), 0, 0)) goto err;
-		if (BN_cmp(&k,dsa->q) >= 0)
-			BN_sub(&k,&k,dsa->q);
-		if (!BN_is_zero(&k)) break;
-		}
+	do
+		if (!BN_rand_range(&k, dsa->q)) goto err;
+	while (BN_is_zero(&k));
 
 	if ((dsa->method_mont_p == NULL) && (dsa->flags & DSA_FLAG_CACHE_MONT_P))
 		{

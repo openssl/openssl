@@ -158,7 +158,7 @@ my %table=(
 "solaris-sparcv7-cc","cc:-xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::::::::dlfcn:solaris-shared:-KPIC",
 "solaris-sparcv8-cc","cc:-xarch=v8 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o:::::::::dlfcn:solaris-shared:-KPIC",
 "solaris-sparcv9-cc","cc:-xtarget=ultra -xarch=v8plus -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o::::::dlfcn:solaris-shared:-KPIC",
-"solaris64-sparcv9-cc","cc:-xtarget=ultra -xarch=v9 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o::::::dlfcn:solaris-shared:-KPIC",
+"solaris64-sparcv9-cc","cc:-xtarget=ultra -xarch=v9 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o::::::dlfcn:solaris-shared:-KPIC:/usr/ccs/bin/ar rs",
 ####
 "debug-solaris-sparcv8-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xarch=v8 -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o:::::::::dlfcn:solaris-shared:-KPIC",
 "debug-solaris-sparcv9-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o::::::dlfcn:solaris-shared:-KPIC",
@@ -289,8 +289,8 @@ my %table=(
 #
 #					<appro@fy.chalmers.se>
 #
-"linux-alpha-gcc","gcc:-O3 -DL_ENDIAN -DTERMIO::-D_REENTRANT::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_UNROLL:asm/alpha.o::",
-"linux-alpha+bwx-gcc","gcc:-O3 -DL_ENDIAN -DTERMIO::-D_REENTRANT::SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:asm/alpha.o::",
+"linux-alpha-gcc","gcc:-O3 -DL_ENDIAN -DTERMIO::-D_REENTRANT:-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_UNROLL:asm/alpha.o:::::::::dlfcn:linux-shared:-fPIC",
+"linux-alpha+bwx-gcc","gcc:-O3 -DL_ENDIAN -DTERMIO::-D_REENTRANT:-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:asm/alpha.o:::::::::dlfcn:linux-shared:-fPIC",
 "linux-alpha-ccc","ccc:-fast -readonly_strings -DL_ENDIAN -DTERMIO::-D_REENTRANT::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL:asm/alpha.o::",
 "linux-alpha+bwx-ccc","ccc:-fast -readonly_strings -DL_ENDIAN -DTERMIO::-D_REENTRANT::SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL:asm/alpha.o::",
 
@@ -306,6 +306,7 @@ my %table=(
 "linux-mips",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::BN_LLONG:::",
 "linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::",
 "linux-m68k",   "gcc:-DB_ENDIAN -DTERMIO -O2 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::",
+"linux-s390",	"gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::",
 "linux-ia64",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::SIXTY_FOUR_BIT_LONG::",
 "NetBSD-sparc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN::(unknown)::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
 "NetBSD-m68",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall -DB_ENDIAN::(unknown)::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
@@ -451,10 +452,10 @@ my $md5_obj="";
 my $sha1_obj="";
 my $rmd160_obj="";
 my $processor="";
-my $ranlib;
+my $default_ranlib;
 my $perl;
 
-$ranlib=&which("ranlib") or $ranlib="true";
+$default_ranlib= &which("ranlib") or $default_ranlib="true";
 $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
   or $perl="perl";
 
@@ -653,7 +654,7 @@ $openssldir=$prefix . "/" . $openssldir if $openssldir !~ /^\//;
 print "IsWindows=$IsWindows\n";
 
 (my $cc,my $cflags,my $unistd,my $thread_cflag,my $lflags,my $bn_ops,my $bn_obj,my $des_obj,my $bf_obj,
- $md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj,my $dso_scheme,my $shared_target,my $shared_cflag)=
+ $md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj,my $dso_scheme,my $shared_target,my $shared_cflag, my $ranlib)=
 	split(/\s*:\s*/,$table{$target} . ":" x 22 , -1);
 $cflags="$flags$cflags" if ($flags ne "");
 
@@ -739,6 +740,15 @@ if ($shared_cflag ne "")
 		$shared_mark1 = ".shlib-clean.";
 		$shared_mark2 = ".shlib.";
 		}
+	}
+else
+	{
+	$no_shared = 1;
+	}
+
+if ($ranlib eq "")
+	{
+	$ranlib = $default_ranlib;
 	}
 
 #my ($bn1)=split(/\s+/,$bn_obj);
@@ -1133,7 +1143,7 @@ sub print_table_entry
 	(my $cc,my $cflags,my $unistd,my $thread_cflag,my $lflags,my $bn_ops,
 	my $bn_obj,my $des_obj,my $bf_obj,
 	my $md5_obj,my $sha1_obj,my $cast_obj,my $rc4_obj,my $rmd160_obj,
-	my $rc5_obj,my $dso_scheme,my $shared_target,my $shared_cflag)=
+	my $rc5_obj,my $dso_scheme,my $shared_target,my $shared_cflag,my $ranlib)=
 	split(/\s*:\s*/,$table{$target} . ":" x 22 , -1);
 			
 	print <<EOF
@@ -1157,5 +1167,6 @@ sub print_table_entry
 \$dso_scheme   = $dso_scheme
 \$shared_target= $shared_target
 \$shared_cflag = $shared_cflag
+\$ranlib       = $ranlib
 EOF
 	}

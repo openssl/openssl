@@ -173,13 +173,13 @@ DSA *DSA_new_method(ENGINE *engine)
 
 	ret->references=1;
 	ret->flags=meth->flags;
+	CRYPTO_new_ex_data(dsa_meth,ret,&ret->ex_data);
 	if ((meth->init != NULL) && !meth->init(ret))
 		{
+		CRYPTO_free_ex_data(dsa_meth,ret,&ret->ex_data);
 		OPENSSL_free(ret);
 		ret=NULL;
 		}
-	else
-		CRYPTO_new_ex_data(dsa_meth,ret,&ret->ex_data);
 	
 	return(ret);
 	}
@@ -204,11 +204,11 @@ void DSA_free(DSA *r)
 		}
 #endif
 
-	CRYPTO_free_ex_data(dsa_meth, r, &r->ex_data);
-
 	meth = ENGINE_get_DSA(r->engine);
 	if(meth->finish) meth->finish(r);
 	ENGINE_finish(r->engine);
+
+	CRYPTO_free_ex_data(dsa_meth, r, &r->ex_data);
 
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->q != NULL) BN_clear_free(r->q);

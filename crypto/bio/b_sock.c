@@ -113,8 +113,8 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
 
 	/* At this point, we have something that is most probably correct
 	   in some way, so let's init the socket. */
-	if (!BIO_sock_init())
-		return(0); /* don't generate another error code here */
+	if (BIO_sock_init() != 1)
+		return 0; /* don't generate another error code here */
 
 	/* If the string actually contained an IP address, we need not do
 	   anything more */
@@ -519,15 +519,15 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 	{
 	int ret=0;
 	struct sockaddr_in server,client;
-	int s= -1,cs;
+	int s=INVALID_SOCKET,cs;
 	unsigned char ip[4];
 	unsigned short port;
-	char *str,*e;
+	char *str=NULL,*e;
 	const char *h,*p;
 	unsigned long l;
 	int err_num;
 
-	if (!BIO_sock_init()) return(INVALID_SOCKET);
+	if (BIO_sock_init() != 1) return(INVALID_SOCKET);
 
 	if ((str=BUF_strdup(host)) == NULL) return(INVALID_SOCKET);
 
@@ -553,7 +553,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 		h="*";
 		}
 
-	if (!BIO_get_port(p,&port)) return(INVALID_SOCKET);
+	if (!BIO_get_port(p,&port)) goto err;
 
 	memset((char *)&server,0,sizeof(server));
 	server.sin_family=AF_INET;
@@ -563,7 +563,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 		server.sin_addr.s_addr=INADDR_ANY;
 	else
 		{
-		if (!BIO_get_host_ip(h,&(ip[0]))) return(INVALID_SOCKET);
+                if (!BIO_get_host_ip(h,&(ip[0]))) goto err;
 		l=(unsigned long)
 			((unsigned long)ip[0]<<24L)|
 			((unsigned long)ip[1]<<16L)|

@@ -245,6 +245,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatibility\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
+	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 	}
 
@@ -598,7 +599,14 @@ bad:
 		goto end;
 		}
 
-	app_RAND_load_file(NULL, bio_err, 0);
+	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
+		&& !RAND_status())
+		{
+		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
+		}
+	if (inrand != NULL)
+		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
+			app_RAND_load_files(inrand));
 
 	if (bio_s_out == NULL)
 		{
@@ -716,7 +724,8 @@ bad:
 
 #ifndef NO_RSA
 #if 1
-	SSL_CTX_set_tmp_rsa_callback(ctx,tmp_rsa_cb);
+	if (!no_tmp_rsa)
+		SSL_CTX_set_tmp_rsa_callback(ctx,tmp_rsa_cb);
 #else
 	if (!no_tmp_rsa && SSL_CTX_need_tmp_RSA(ctx))
 		{

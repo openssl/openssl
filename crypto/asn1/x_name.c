@@ -141,8 +141,9 @@ static int i2d_X509_NAME_entries(X509_NAME *a)
 			}
 		size+=i2d_X509_NAME_ENTRY(ne,NULL);
 		}
-
-	ret+=ASN1_object_size(1,size,V_ASN1_SET);
+	/* If empty no extra SET OF needed */
+	if (ret)
+		ret+=ASN1_object_size(1,size,V_ASN1_SET);
 	if (fe != NULL)
 		fe->size=size;
 

@@ -180,13 +180,13 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 
 	BN_CTX_start(ctx);
 	tmp=BN_CTX_get(ctx);
-	tmp->neg=0;
 	snum=BN_CTX_get(ctx);
 	sdiv=BN_CTX_get(ctx);
 	if (dv == NULL)
 		res=BN_CTX_get(ctx);
 	else	res=dv;
-	if (res == NULL) goto err;
+	if (sdiv==NULL || res == NULL) goto err;
+	tmp->neg=0;
 
 	/* First we normalise the numbers */
 	norm_shift=BN_BITS2-((BN_num_bits(divisor))%BN_BITS2);
@@ -237,7 +237,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	for (i=0; i<loop-1; i++)
 		{
 		BN_ULONG q,l0;
-#ifdef BN_DIV3W
+#if defined(BN_DIV3W) && !defined(NO_ASM)
 		q=bn_div_3_words(wnump,d1,d0);
 #else
 		BN_ULONG n0,n1,rem=0;

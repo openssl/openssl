@@ -2,6 +2,209 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.6 and 0.9.6a  [xx XXX 2001]
+
+  *) Fix a memory leak in err.c: free err_data string if necessary.
+     [Bodo Moeller]
+
+  *) Implement ssl23_peek (analogous to ssl23_read), which previously
+     did not exist.
+     [Bodo Moeller]
+
+  *) Replace rdtsc with _emit statements for VC++ version 5.
+     [Jeremy Cooper <jeremy@baymoo.org>]
+
+  *) Make it possible to reuse SSLv2 sessions.
+     [Richard Levitte]
+
+  *) In copy_email() check for >= 0 as a return value for
+     X509_NAME_get_index_by_NID() since 0 is a valid index.
+     [Steve Henson reported by Massimiliano Pala <madwolf@opensca.org>]
+
+  *) Use better test patterns in bntest.
+     [Ulf Möller]
+
+  *) Initialise "ex_data" member of RSA/DSA/DH structures prior to calling
+     the method-specific "init()" handler. Also clean up ex_data after
+     calling the method-specific "finish()" handler. Previously, this was
+     happening the other way round.
+     [Geoff Thorpe]
+
+  *) Avoid coredump with unsupported or invalid public keys by checking if
+     X509_get_pubkey() fails in PKCS7_verify(). Fix memory leak when
+     PKCS7_verify() fails with non detached data.
+     [Steve Henson]
+
+  *) Don't use getenv in library functions when run as setuid/setgid.
+     New function OPENSSL_issetugid().
+     [Ulf Moeller]
+
+  *) Avoid false positives in memory leak detection code (crypto/mem_dbg.c)
+     due to incorrect handling of multi-threading:
+
+     1. Fix timing glitch in the MemCheck_off() portion of CRYPTO_mem_ctrl().
+
+     2. Fix logical glitch in is_MemCheck_on() aka CRYPTO_is_mem_check_on().
+
+     3. Count how many times MemCheck_off() has been called so that
+        nested use can be treated correctly.  This also avoids 
+        inband-signalling in the previous code (which relied on the
+        assumption that thread ID 0 is impossible).
+     [Bodo Moeller]
+
+  *) Add "-rand" option also to s_client and s_server.
+     [Lutz Jaenicke]
+
+  *) Fix CPU detection on Irix 6.x.
+     [Kurt Hockenbury <khockenb@stevens-tech.edu> and
+      "Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
+
+  *) Fix X509_NAME bug which produced incorrect encoding if X509_NAME
+     was empty.
+     [Steve Henson]
+
+  *) Use the cached encoding of an X509_NAME structure rather than
+     copying it. This is apparently the reason for the libsafe "errors"
+     but the code is actually correct.
+     [Steve Henson]
+
+  *) Add new function BN_rand_range(), and fix DSA_sign_setup() to prevent
+     Bleichenbacher's DSA attack.
+     Extend BN_[pseudo_]rand: As before, top=1 forces the highest two bits
+     to be set and top=0 forces the highest bit to be set; top=-1 is new
+     and leaves the highest bit random.
+     [Ulf Moeller]
+
+  *) In the NCONF_...-based implementations for CONF_... queries
+     (crypto/conf/conf_lib.c), if the input LHASH is NULL, avoid using
+     a temporary CONF structure with the data component set to NULL
+     (which gives segmentation faults in lh_retrieve).
+     Instead, use NULL for the CONF pointer in CONF_get_string and
+     CONF_get_number (which may use environment variables) and directly
+     return NULL from CONF_get_section.
+     [Bodo Moeller]
+
+  *) Fix potential buffer overrun for EBCDIC.
+     [Ulf Moeller]
+
+  *) Tolerate nonRepudiation as being valid for S/MIME signing and certSign
+     keyUsage if basicConstraints absent for a CA.
+     [Steve Henson]
+
+  *) Make SMIME_write_PKCS7() write mail header values with a format that
+     is more generally accepted (no spaces before the semicolon), since
+     some programs can't parse those values properly otherwise.  Also make
+     sure BIO's that break lines after each write do not create invalid
+     headers.
+     [Richard Levitte]
+
+  *) Make the CRL encoding routines work with empty SEQUENCE OF. The
+     macros previously used would not encode an empty SEQUENCE OF
+     and break the signature.
+     [Steve Henson]
+
+  *) Zero the premaster secret after deriving the master secret in
+     DH ciphersuites.
+     [Steve Henson]
+
+  *) Add some EVP_add_digest_alias registrations (as found in
+     OpenSSL_add_all_digests()) to SSL_library_init()
+     aka OpenSSL_add_ssl_algorithms().  This provides improved
+     compatibility with peers using X.509 certificates
+     with unconventional AlgorithmIdentifier OIDs.
+     [Bodo Moeller]
+
+  *) Fix for Irix with NO_ASM.
+     ["Bruce W. Forsberg" <bruce.forsberg@baesystems.com>]
+
+  *) ./config script fixes.
+     [Ulf Moeller, Richard Levitte]
+
+  *) Fix 'openssl passwd -1'.
+     [Bodo Moeller]
+
+  *) Change PKCS12_key_gen_asc() so it can cope with non null
+     terminated strings whose length is passed in the passlen
+     parameter, for example from PEM callbacks. This was done
+     by adding an extra length parameter to asc2uni().
+     [Steve Henson, reported by <oddissey@samsung.co.kr>]
+
+  *) Fix C code generated by 'openssl dsaparam -C': If a BN_bin2bn
+     call failed, free the DSA structure.
+     [Bodo Moeller]
+
+  *) Fix to uni2asc() to cope with zero length Unicode strings.
+     These are present in some PKCS#12 files.
+     [Steve Henson]
+
+  *) Increase s2->wbuf allocation by one byte in ssl2_new (ssl/s2_lib.c).
+     Otherwise do_ssl_write (ssl/s2_pkt.c) will write beyond buffer limits
+     when writing a 32767 byte record.
+     [Bodo Moeller; problem reported by Eric Day <eday@concentric.net>]
+
+  *) In RSA_eay_public_{en,ed}crypt and RSA_eay_mod_exp (rsa_eay.c),
+     obtain lock CRYPTO_LOCK_RSA before setting rsa->_method_mod_{n,p,q}.
+
+     (RSA objects have a reference count access to which is protected
+     by CRYPTO_LOCK_RSA [see rsa_lib.c, s3_srvr.c, ssl_cert.c, ssl_rsa.c],
+     so they are meant to be shared between threads.)
+     [Bodo Moeller, Geoff Thorpe; original patch submitted by
+     "Reddie, Steven" <Steven.Reddie@ca.com>]
+
+  *) Fix a deadlock in CRYPTO_mem_leaks().
+     [Bodo Moeller]
+
+  *) rand_win.c fix for Borland C.
+     [Ulf Möller]
+ 
+  *) BN_rshift bugfix for n == 0.
+     [Bodo Moeller]
+
+  *) Store verify_result within SSL_SESSION also for client side to
+     avoid potential security hole. (Re-used sessions on the client side
+     always resulted in verify_result==X509_V_OK, not using the original
+     result of the server certificate verification.)
+     [Lutz Jaenicke]
+
+  *) Fix ssl3_pending: If the record in s->s3->rrec is not of type
+     SSL3_RT_APPLICATION_DATA, return 0.
+     Similarly, change ssl2_pending to return 0 if SSL_in_init(s) is true.
+     [Bodo Moeller]
+
+  *) Fix SSL_peek:
+     Both ssl2_peek and ssl3_peek, which were totally broken in earlier
+     releases, have been re-implemented by renaming the previous
+     implementations of ssl2_read and ssl3_read to ssl2_read_internal
+     and ssl3_read_internal, respectively, and adding 'peek' parameters
+     to them.  The new ssl[23]_{read,peek} functions are calls to
+     ssl[23]_read_internal with the 'peek' flag set appropriately.
+     A 'peek' parameter has also been added to ssl3_read_bytes, which
+     does the actual work for ssl3_read_internal.
+     [Bodo Moeller]
+
+  *) Increase BN_CTX_NUM (the number of BIGNUMs in a BN_CTX) to 16.
+     The previous value, 12, was not always sufficient for BN_mod_exp().
+     [Bodo Moeller]
+
+  *) Fix typo in get_cert_by_subject() in by_dir.c
+     [Jean-Marc Desperrier <jean-marc.desperrier@certplus.com>]
+
+  *) Fix SSL_CTX_set_read_ahead macro to actually use its argument.
+
+     Copy SSL_CTX's read_ahead flag to SSL object directly in SSL_new
+     and not in SSL_clear because the latter is also used by the
+     accept/connect functions; previously, the settings made by
+     SSL_set_read_ahead would be lost during the handshake.
+     [Bodo Moeller; problems reported by Anders Gertz <gertz@epact.se>]     
+
+  *) Correct util/mkdef.pl to be selective about disabled algorithms.
+     Previously, it would create entries for disableed algorithms no
+     matter what.
+     [Richard Levitte]
+
+  *) Added several new manual pages for SSL_* function.
+     [Lutz Jaenicke]
+
  Changes between 0.9.5a and 0.9.6  [24 Sep 2000]
 
   *) In ssl23_get_client_hello, generate an error message when faced

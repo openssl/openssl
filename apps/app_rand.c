@@ -177,8 +177,10 @@ long app_RAND_load_files(char *name)
 		if (*n == '\0') break;
 
 		egd=RAND_egd(n);
-		if (egd > 0) tot+=egd;
-		tot+=RAND_load_file(n,-1);
+		if (egd > 0)
+			tot+=egd;
+		else
+			tot+=RAND_load_file(n,-1);
 		if (last) break;
 		}
 	if (tot > 512)

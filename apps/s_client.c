@@ -153,8 +153,8 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
 	BIO_printf(bio_err," -cipher       - preferred cipher to use, use the 'openssl ciphers'\n");
 	BIO_printf(bio_err,"                 command to see what is available\n");
+	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
-
 	}
 
 int MAIN(int, char **);
@@ -347,7 +347,14 @@ bad:
 		goto end;
 		}
 
-	app_RAND_load_file(NULL, bio_err, 0);
+	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
+		&& !RAND_status())
+		{
+		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
+		}
+	if (inrand != NULL)
+		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
+			app_RAND_load_files(inrand));
 
 	if (bio_c_out == NULL)
 		{

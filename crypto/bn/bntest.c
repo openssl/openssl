@@ -107,11 +107,9 @@ static const char rnd_seed[] = "string to make the random number generator think
 static void message(BIO *out, char *m)
 	{
 	fprintf(stderr, "test %s\n", m);
-#if defined(linux) || defined(__FreeBSD__) /* can we use GNU bc features? */
 	BIO_puts(out, "print \"test ");
 	BIO_puts(out, m);
 	BIO_puts(out, "\\n\"\n");
-#endif
 	}
 
 int main(int argc, char *argv[])
@@ -122,9 +120,7 @@ int main(int argc, char *argv[])
 
 	results = 0;
 
-	RAND_seed(rnd_seed, sizeof rnd_seed); /* or BN_rand may fail, and we don't
-	                                       * even check its return value
-	                                       * (which we should) */
+	RAND_seed(rnd_seed, sizeof rnd_seed); /* or BN_generate_prime may fail */
 
 	argc--;
 	argv++;
@@ -253,10 +249,10 @@ int test_add(BIO *bp)
 	BN_init(&b);
 	BN_init(&c);
 
-	BN_rand(&a,512,0,0);
+	BN_bntest_rand(&a,512,0,0);
 	for (i=0; i<num0; i++)
 		{
-		BN_rand(&b,450+i,0,0);
+		BN_bntest_rand(&b,450+i,0,0);
 		a.neg=rand_neg();
 		b.neg=rand_neg();
 		if (bp == NULL)
@@ -305,14 +301,14 @@ int test_sub(BIO *bp)
 		{
 		if (i < num1)
 			{
-			BN_rand(&a,512,0,0);
+			BN_bntest_rand(&a,512,0,0);
 			BN_copy(&b,&a);
 			if (BN_set_bit(&a,i)==0) return(0);
 			BN_add_word(&b,i);
 			}
 		else
 			{
-			BN_rand(&b,400+i-num1,0,0);
+			BN_bntest_rand(&b,400+i-num1,0,0);
 			a.neg=rand_neg();
 			b.neg=rand_neg();
 			}
@@ -362,13 +358,13 @@ int test_div(BIO *bp, BN_CTX *ctx)
 		{
 		if (i < num1)
 			{
-			BN_rand(&a,400,0,0);
+			BN_bntest_rand(&a,400,0,0);
 			BN_copy(&b,&a);
 			BN_lshift(&a,&a,i);
 			BN_add_word(&a,i);
 			}
 		else
-			BN_rand(&b,50+3*(i-num1),0,0);
+			BN_bntest_rand(&b,50+3*(i-num1),0,0);
 		a.neg=rand_neg();
 		b.neg=rand_neg();
 		if (bp == NULL)
@@ -432,13 +428,13 @@ int test_div_recp(BIO *bp, BN_CTX *ctx)
 		{
 		if (i < num1)
 			{
-			BN_rand(&a,400,0,0);
+			BN_bntest_rand(&a,400,0,0);
 			BN_copy(&b,&a);
 			BN_lshift(&a,&a,i);
 			BN_add_word(&a,i);
 			}
 		else
-			BN_rand(&b,50+3*(i-num1),0,0);
+			BN_bntest_rand(&b,50+3*(i-num1),0,0);
 		a.neg=rand_neg();
 		b.neg=rand_neg();
 		BN_RECP_CTX_set(&recp,&b,ctx);
@@ -509,11 +505,11 @@ int test_mul(BIO *bp)
 		{
 		if (i <= num1)
 			{
-			BN_rand(&a,100,0,0);
-			BN_rand(&b,100,0,0);
+			BN_bntest_rand(&a,100,0,0);
+			BN_bntest_rand(&b,100,0,0);
 			}
 		else
-			BN_rand(&b,i-num1,0,0);
+			BN_bntest_rand(&b,i-num1,0,0);
 		a.neg=rand_neg();
 		b.neg=rand_neg();
 		if (bp == NULL)
@@ -562,7 +558,7 @@ int test_sqr(BIO *bp, BN_CTX *ctx)
 
 	for (i=0; i<num0; i++)
 		{
-		BN_rand(&a,40+i*10,0,0);
+		BN_bntest_rand(&a,40+i*10,0,0);
 		a.neg=rand_neg();
 		if (bp == NULL)
 			for (j=0; j<100; j++)
@@ -613,15 +609,15 @@ int test_mont(BIO *bp, BN_CTX *ctx)
 
 	mont=BN_MONT_CTX_new();
 
-	BN_rand(&a,100,0,0); /**/
-	BN_rand(&b,100,0,0); /**/
+	BN_bntest_rand(&a,100,0,0); /**/
+	BN_bntest_rand(&b,100,0,0); /**/
 	for (i=0; i<num2; i++)
 		{
 		int bits = (200*(i+1))/num2;
 
 		if (bits == 0)
 			continue;
-		BN_rand(&n,bits,0,1);
+		BN_bntest_rand(&n,bits,0,1);
 		BN_MONT_CTX_set(mont,&n,ctx);
 
 		BN_to_montgomery(&A,&a,mont,ctx);
@@ -683,10 +679,10 @@ int test_mod(BIO *bp, BN_CTX *ctx)
 	d=BN_new();
 	e=BN_new();
 
-	BN_rand(a,1024,0,0); /**/
+	BN_bntest_rand(a,1024,0,0); /**/
 	for (i=0; i<num0; i++)
 		{
-		BN_rand(b,450+i*10,0,0); /**/
+		BN_bntest_rand(b,450+i*10,0,0); /**/
 		a->neg=rand_neg();
 		b->neg=rand_neg();
 		if (bp == NULL)
@@ -732,11 +728,11 @@ int test_mod_mul(BIO *bp, BN_CTX *ctx)
 	d=BN_new();
 	e=BN_new();
 
-	BN_rand(c,1024,0,0); /**/
+	BN_bntest_rand(c,1024,0,0); /**/
 	for (i=0; i<num0; i++)
 		{
-		BN_rand(a,475+i*10,0,0); /**/
-		BN_rand(b,425+i*11,0,0); /**/
+		BN_bntest_rand(a,475+i*10,0,0); /**/
+		BN_bntest_rand(b,425+i*11,0,0); /**/
 		a->neg=rand_neg();
 		b->neg=rand_neg();
 	/*	if (bp == NULL)
@@ -794,11 +790,11 @@ int test_mod_exp(BIO *bp, BN_CTX *ctx)
 	d=BN_new();
 	e=BN_new();
 
-	BN_rand(c,30,0,1); /* must be odd for montgomery */
+	BN_bntest_rand(c,30,0,1); /* must be odd for montgomery */
 	for (i=0; i<num2; i++)
 		{
-		BN_rand(a,20+i*5,0,0); /**/
-		BN_rand(b,2+i,0,0); /**/
+		BN_bntest_rand(a,20+i*5,0,0); /**/
+		BN_bntest_rand(b,2+i,0,0); /**/
 
 		if (!BN_mod_exp(d,a,b,c,ctx))
 			return(00);
@@ -848,8 +844,8 @@ int test_exp(BIO *bp, BN_CTX *ctx)
 
 	for (i=0; i<num2; i++)
 		{
-		BN_rand(a,20+i*5,0,0); /**/
-		BN_rand(b,2+i,0,0); /**/
+		BN_bntest_rand(a,20+i*5,0,0); /**/
+		BN_bntest_rand(b,2+i,0,0); /**/
 
 		if (!BN_exp(d,a,b,ctx))
 			return(00);
@@ -899,7 +895,7 @@ int test_lshift(BIO *bp,BN_CTX *ctx,BIGNUM *a_)
 	else
 	    {
 	    a=BN_new();
-	    BN_rand(a,200,0,0); /**/
+	    BN_bntest_rand(a,200,0,0); /**/
 	    a->neg=rand_neg();
 	    }
 	for (i=0; i<num0; i++)
@@ -951,7 +947,7 @@ int test_lshift1(BIO *bp)
 	b=BN_new();
 	c=BN_new();
 
-	BN_rand(a,200,0,0); /**/
+	BN_bntest_rand(a,200,0,0); /**/
 	a->neg=rand_neg();
 	for (i=0; i<num0; i++)
 		{
@@ -995,7 +991,7 @@ int test_rshift(BIO *bp,BN_CTX *ctx)
 	e=BN_new();
 	BN_one(c);
 
-	BN_rand(a,200,0,0); /**/
+	BN_bntest_rand(a,200,0,0); /**/
 	a->neg=rand_neg();
 	for (i=0; i<num0; i++)
 		{
@@ -1038,7 +1034,7 @@ int test_rshift1(BIO *bp)
 	b=BN_new();
 	c=BN_new();
 
-	BN_rand(a,200,0,0); /**/
+	BN_bntest_rand(a,200,0,0); /**/
 	a->neg=rand_neg();
 	for (i=0; i<num0; i++)
 		{

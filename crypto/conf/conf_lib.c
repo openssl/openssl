@@ -131,38 +131,59 @@ LHASH *CONF_load_bio(LHASH *conf, BIO *bp,long *eline)
 
 STACK_OF(CONF_VALUE) *CONF_get_section(LHASH *conf,char *section)
 	{
-	CONF ctmp;
+	if (conf == NULL)
+		{
+		return NULL;
+		}
+	else
+		{
+		CONF ctmp;
 
-	if (default_CONF_method == NULL)
-		default_CONF_method = NCONF_default();
+		if (default_CONF_method == NULL)
+			default_CONF_method = NCONF_default();
 
-	default_CONF_method->init(&ctmp);
-	ctmp.data = conf;
-	return NCONF_get_section(&ctmp, section);
+		default_CONF_method->init(&ctmp);
+		ctmp.data = conf;
+		return NCONF_get_section(&ctmp, section);
+		}
 	}
 
 char *CONF_get_string(LHASH *conf,char *group,char *name)
 	{
-	CONF ctmp;
+	if (conf == NULL)
+		{
+		return NCONF_get_string(NULL, group, name);
+		}
+	else
+		{
+		CONF ctmp;
 
-	if (default_CONF_method == NULL)
-		default_CONF_method = NCONF_default();
+		if (default_CONF_method == NULL)
+			default_CONF_method = NCONF_default();
 
-	default_CONF_method->init(&ctmp);
-	ctmp.data = conf;
-	return NCONF_get_string(&ctmp, group, name);
+		default_CONF_method->init(&ctmp);
+		ctmp.data = conf;
+		return NCONF_get_string(&ctmp, group, name);
+		}
 	}
 
 long CONF_get_number(LHASH *conf,char *group,char *name)
 	{
-	CONF ctmp;
+	if (conf == NULL)
+		{
+		return NCONF_get_number(NULL, group, name);
+		}
+	else
+		{
+		CONF ctmp;
 
-	if (default_CONF_method == NULL)
-		default_CONF_method = NCONF_default();
+		if (default_CONF_method == NULL)
+			default_CONF_method = NCONF_default();
 
-	default_CONF_method->init(&ctmp);
-	ctmp.data = conf;
-	return NCONF_get_number(&ctmp, group, name);
+		default_CONF_method->init(&ctmp);
+		ctmp.data = conf;
+		return NCONF_get_number(&ctmp, group, name);
+		}
 	}
 
 void CONF_free(LHASH *conf)
@@ -299,27 +320,46 @@ STACK_OF(CONF_VALUE) *NCONF_get_section(CONF *conf,char *section)
 		return NULL;
 		}
 
+	if (section == NULL)
+		{
+		CONFerr(CONF_F_NCONF_GET_SECTION,CONF_R_NO_SECTION);
+		return NULL;
+		}
+
 	return _CONF_get_section_values(conf, section);
 	}
 
 char *NCONF_get_string(CONF *conf,char *group,char *name)
 	{
+	char *s = _CONF_get_string(conf, group, name);
+
+        /* Since we may get a value from an environment variable even
+           if conf is NULL, let's check the value first */
+        if (s) return s;
+
 	if (conf == NULL)
 		{
-		CONFerr(CONF_F_NCONF_GET_STRING,CONF_R_NO_CONF);
+		CONFerr(CONF_F_NCONF_GET_STRING,
+                        CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
 		return NULL;
 		}
-
-	return _CONF_get_string(conf, group, name);
+	return NULL;
 	}
 
 long NCONF_get_number(CONF *conf,char *group,char *name)
 	{
+#if 0 /* As with _CONF_get_string(), we rely on the possibility of finding
+         an environment variable with a suitable name.  Unfortunately, there's
+         no way with the current API to see if we found one or not...
+         The meaning of this is that if a number is not found anywhere, it
+         will always default to 0. */
 	if (conf == NULL)
 		{
-		CONFerr(CONF_F_NCONF_GET_NUMBER,CONF_R_NO_CONF);
+		CONFerr(CONF_F_NCONF_GET_NUMBER,
+                        CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
 		return 0;
 		}
+#endif
 	
 	return _CONF_get_number(conf, group, name);
 	}
