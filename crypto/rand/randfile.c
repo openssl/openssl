@@ -194,7 +194,7 @@ err:
 	return (rand_err ? -1 : ret);
 	}
 
-const char *RAND_file_name(char *buf, int size)
+const char *RAND_file_name(char *buf, size_t size)
 	{
 	char *s=NULL;
 	char *ret=NULL;
