@@ -27,7 +27,6 @@
   *) Fix problems with sizeof(long) == 8.
      [Andy Polyakov <appro@fy.chalmers.se>]
 
->>>>>>> 1.185
   *) Change functions to ANSI C.
      [Ulf Möller]
 
