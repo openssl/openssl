@@ -25,25 +25,6 @@
   What already exists is fairly stable as far as it has been tested, but
   the test base has been a bit small most of the time.
 
-  Because of this experimental status and what's lacking, the ENGINE
-  component is not yet part of the default OpenSSL distribution.  However,
-  we have made a separate kit for those who want to try this out, to be
-  found in the same places as the default OpenSSL distribution, but with
-  "-engine-" being part of the kit file name.  For example, version 0.9.6
-  is distributed in the following two files:
-
-      openssl-0.9.6.tar.gz
-      openssl-engine-0.9.6.tar.gz
-
-  NOTES
-  =====
-
-  openssl-engine-0.9.6.tar.gz does not depend on openssl-0.9.6.tar, you do
-  not need to download both.
-
-  openssl-engine-0.9.6.tar.gz is usable even if you don't have an external
-  crypto device.  The internal OpenSSL functions are contained in the
-  engine "openssl", and will be used by default.
 
   No external crypto device is chosen unless you say so.  You have actively
   tell the openssl utility commands to use it through a new command line
