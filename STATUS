@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/09/25 10:30:15 $
+  ______________                           $Date: 2001/09/25 11:01:14 $
 
   DEVELOPMENT STATE
 
@@ -50,6 +50,9 @@
 	OCSP
 
   NEEDS PATCH
+
+    o  All 'openssl' subprograms taking '-des' and '-des3' options should
+       include AES support (0.9.7-dev)
 
     o  'openssl speed' should include AES support (0.9.7-dev)
 
