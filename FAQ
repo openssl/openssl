@@ -39,6 +39,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the OpenSSL compilation fail with "ar: command not found"?
 * Why does the OpenSSL compilation fail on Win32 with VC++?
 * What is special about OpenSSL on Redhat?
+* Why does the OpenSSL test suite fail on MacOS X?
 
 [PROG] Questions about programming with OpenSSL
 
@@ -457,18 +458,10 @@ and the changes are only valid for the current DOS session.
 
 * What is special about OpenSSL on Redhat?
 
-Red Hat Linux 7.0 and following versions already have a limited version of
-openssl already installed. This may well apply to other Linux distributions
-also. This version does not have support for the IDEA, RC5 and MDC-2
-algorithms as these are patented within the United States. For information
-these patent numbers and expiry dates are:
-
-MDC-2: 4,908,861 13/03/2007
-IDEA:  5,214,703 25/05/2010
-RC5:   5,724,428 03/03/2015
-
-However, Europeans and other non-Americans may wish to install all the
-features.
+Red Hat Linux (release 7.0 and later) include a preinstalled limited
+version of OpenSSL. For patent reasons, support for IDEA, RC5 and MDC2
+is disabled in this version. The same may apply to other Linux distributions.
+Users may therefore wish to install more or all of the features left out.
 
 To do this you MUST ensure that you do not overwrite the openssl that is in
 /usr/bin on your Red Hat machine. Several packages depend on this file,
@@ -489,6 +482,25 @@ relevant updates in packages up to and including 0.9.6b.
 
 A possible way around this is to persuade Red Hat to produce a non-US
 version of Red Hat Linux.
+
+FYI: Patent numbers and expiry dates of US patents:
+MDC-2: 4,908,861 13/03/2007
+IDEA:  5,214,703 25/05/2010
+RC5:   5,724,428 03/03/2015
+
+
+* Why does the OpenSSL test suite fail on MacOS X?
+
+If the failure happens when running 'make test' and the RC4 test fails,
+it's very probable that you have OpenSSL 0.9.6b delivered with the
+operating system (you can find out by running '/usr/bin/openssl version')
+and that you were trying to build OpenSSL 0.9.6d.  The problem is that
+the loader ('ld') in MacOS X has a misfeature that's quite difficult to
+go around and has linked the programs "openssl" and the test programs
+with /usr/lib/libcrypto.dylib and /usr/lib/libssl.dylib instead of the
+libraries you just built.
+Look in the file PROBLEMS for a more detailed explanation and for possible
+solutions.
 
 [PROG] ========================================================================
 
