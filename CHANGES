@@ -3381,7 +3381,7 @@
                                      copied!)
      [Bodo Moeller]
 
-  *) Bugfix: SSL_set_mode ignored its parameter, only SSL_CTX_set_mode
+  *) Bugfix: SSL_set_options ignored its parameter, only SSL_CTX_set_options
      worked.
 
   *) Fix problems with no-hmac etc.
