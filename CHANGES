@@ -4,6 +4,13 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Improve RSA_padding_check_PKCS1_OAEP() check again to avoid
+     'wristwatch attack' using huge encoding parameters (cf.
+     James H. Manger's CRYPTO 2001 paper).  Note that the
+     RSA_PKCS1_OAEP_PADDING case of RSA_private_decrypt() does not use
+     encoding paramters and hence was not vulnerable.
+     [Bodo Moeller]
+
   *) BN_sqr() bug fix.
      [Ulf Möller, reported by Jim Ellis <jim.ellis@cavium.com>]
 
