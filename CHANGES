@@ -3,6 +3,12 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Change OCSP_cert_to_id() to tolerate a NULL subject certificate and
+     OCSP_cert_id_new() a NULL serialNumber. This allows a partial certificate
+     ID to be generated from the issuer certificate alone which can then be
+     passed to OCSP_id_issuer_cmp().
+     [Steve Henson]
+
   *) New compilation option ASN1_ITEM_FUNCTIONS. This causes the new
      ASN1 modules to export functions returning ASN1_ITEM pointers
      instead of the ASN1_ITEM structures themselves. This adds several

@@ -80,8 +80,16 @@ OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer)
 #ifndef OPENSSL_NO_SHA1
 	if(!dgst) dgst = EVP_sha1();
 #endif
-	iname = X509_get_issuer_name(subject);
-	serial = X509_get_serialNumber(subject);
+	if (subject)
+		{
+		iname = X509_get_issuer_name(subject);
+		serial = X509_get_serialNumber(subject);
+		}
+	else
+		{
+		iname = X509_get_subject_name(issuer);
+		serial = NULL;
+		}
 	ikey = X509_get0_pubkey_bitstr(issuer);
 	return OCSP_cert_id_new(dgst, iname, ikey, serial);
 }
@@ -118,9 +126,12 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
 	EVP_Digest(issuerKey->data, issuerKey->length, md, &i, dgst);
 
 	if (!(ASN1_OCTET_STRING_set(cid->issuerKeyHash, md, i))) goto err;
-	
-	if (cid->serialNumber != NULL) ASN1_INTEGER_free(cid->serialNumber);
-	if (!(cid->serialNumber = ASN1_INTEGER_dup(serialNumber))) goto err;
+
+	if (serialNumber)
+		{
+		ASN1_INTEGER_free(cid->serialNumber);
+		if (!(cid->serialNumber = ASN1_INTEGER_dup(serialNumber))) goto err;
+		}
 	return cid;
 digerr:
 	OCSPerr(OCSP_F_CERT_ID_NEW,OCSP_R_DIGEST_ERR);
