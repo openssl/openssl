@@ -314,8 +314,8 @@ PKCS7 *d2i_PKCS7(PKCS7 **a, unsigned char **pp, long length)
 				c.line=__LINE__;
 				goto err;
 				}
-			}
 			c.slen-=(c.p-c.q);
+			}
 		}
 	else
 		ret->detached=1;
