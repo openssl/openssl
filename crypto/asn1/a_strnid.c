@@ -105,7 +105,7 @@ int ASN1_STRING_set_default_mask_asc(char *p)
 		mask = strtoul(p + 5, &end, 0);
 		if(*end) return 0;
 	} else if(!strcmp(p, "nombstr"))
-		mask = ~((unsiged long)(B_ASN1_BMPSTRING|B_ASN1_UTF8STRING));
+		mask = ~((unsigned long)(B_ASN1_BMPSTRING|B_ASN1_UTF8STRING));
 	else if(!strcmp(p, "pkix"))
 			mask = ~((unsigned long)B_ASN1_T61STRING);
 	else if(!strcmp(p, "utf8only")) mask = B_ASN1_UTF8STRING;
