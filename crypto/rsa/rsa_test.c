@@ -16,9 +16,6 @@ int main(int argc, char *argv[])
 }
 #else
 #include <openssl/rsa.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 
 #define SetKey \
   key->n = BN_bin2bn(n, sizeof(n)-1, key->n); \

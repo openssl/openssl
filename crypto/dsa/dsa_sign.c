@@ -64,9 +64,6 @@
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 #include <openssl/asn1.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 
 DSA_SIG * DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	{

@@ -65,9 +65,6 @@
 #include <openssl/rand.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1_mac.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 
 int DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 		  DSA *dsa)

@@ -61,9 +61,6 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 
 #ifndef RSA_NULL
 
