@@ -312,7 +312,8 @@ my %table=(
 "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
 "linux-mipsel",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::BN_LLONG:::",
 "linux-mips",   "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::BN_LLONG:::",
-"linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::",
+"linux-ppc",	"gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_RE\
+ENTRANT:-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL::::::::::dlfcn:linux-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-m68k",   "gcc:-DB_ENDIAN -DTERMIO -O2 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::",
 "linux-s390",	"gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG::",
 "linux-ia64",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::SIXTY_FOUR_BIT_LONG::",
