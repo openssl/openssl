@@ -14,7 +14,7 @@
  * (Prior to 0.9.3-dev a different scheme was used: 0.9.2b is 0x0922.)
  */
 #define OPENSSL_VERSION_NUMBER	0x00903002L
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.3beta2-dev 20 May 1999"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.3beta2 23 May 1999"
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
 #endif /* HEADER_OPENSSLV_H */
