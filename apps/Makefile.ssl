@@ -60,7 +60,7 @@ E_SRC=	verify.c asn1pars.c req.c dgst.c dh.c enc.c gendh.c errstr.c ca.c \
 	rsa.c dsa.c dsaparam.c \
 	x509.c genrsa.c gendsa.c s_server.c s_client.c speed.c \
 	s_time.c $(A_SRC) $(S_SRC) version.c sess_id.c \
-	ciphers.c nseq.c pkcs12.c pkcs8.c spkac.o
+	ciphers.c nseq.c pkcs12.c pkcs8.c spkac.c
 
 #	pem_mail.c
 
