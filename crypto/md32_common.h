@@ -183,11 +183,10 @@
 #  define ROTATE(a,n)	_lrotl(a,n)
 # elif defined(__MWERKS__)
 #  ifdef __POWERPC__
-#   defined ROTATE(a,n)	__rlwinm(a,n,0,31)
+#   define ROTATE(a,n)	__rlwinm(a,n,0,31)
 #  else
 #   define ROTATE(a,n)	__rol(a,n)
 #  endif
- B
 # elif defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM)
   /*
    * Some GNU C inline assembler templates. Note that these are

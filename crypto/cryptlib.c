@@ -183,7 +183,7 @@ unsigned long CRYPTO_thread_id(void)
 		ret=(unsigned long)GetCurrentTask();
 #elif defined(WIN32)
 		ret=(unsigned long)GetCurrentThreadId();
-#elif defined(MSDOS)
+#elif defined(GETPID_IS_MEANINGLESS)
 		ret=1L;
 #else
 		ret=(unsigned long)getpid();

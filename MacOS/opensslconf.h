@@ -6,8 +6,6 @@
 #endif
 #endif
 
-#define OPENSSL_UNISTD <unistd.h>
-
 #if defined(HEADER_IDEA_H) && !defined(IDEA_INT)
 #define IDEA_INT unsigned int
 #endif
@@ -116,3 +114,4 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 #ifndef __POWERPC__
 #define SHA_XARRAY
 #endif
+

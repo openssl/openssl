@@ -251,7 +251,11 @@ extern "C" {
 #    endif
 #  else
      /* !defined VMS */
-#    include OPENSLL_UNISTD
+#    ifdef OPENSSL_UNISTD
+#      include OPENSLL_UNISTD
+#    else
+#      include <unistd.h>
+#    endif
 #    ifndef NO_SYS_TYPES_H
 #      include <sys/types.h>
 #    endif

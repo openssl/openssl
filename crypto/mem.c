@@ -93,7 +93,7 @@ static void (*free_func)(void *)            = free;
   static void (*realloc_debug_func)()= NULL;
   static void (*free_debug_func)()= NULL;
   static void (*set_debug_options_func)()= NULL;
-  static int (*get_debug_options_func)()= NULL;
+  static long (*get_debug_options_func)()= NULL;
 #endif
 
 
