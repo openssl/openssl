@@ -122,7 +122,7 @@ static int (MS_FAR *add_lock_callback)(int *pointer,int amount,
 static unsigned long (MS_FAR *id_callback)(void)=NULL;
 static struct CRYPTO_dynlock_value *(MS_FAR *dynlock_create_callback)
 	(const char *file,int line)=NULL;
-static void (MS_FAR *dynlock_locking_callback)(int mode,
+static void (MS_FAR *dynlock_lock_callback)(int mode,
 	struct CRYPTO_dynlock_value *l, const char *file,int line)=NULL;
 static void (MS_FAR *dynlock_destroy_callback)(struct CRYPTO_dynlock_value *l,
 	const char *file,int line)=NULL;
@@ -199,7 +199,11 @@ int CRYPTO_get_new_dynlockid(void)
 		}
 
 	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
-	i=sk_CRYPTO_dynlock_push(dyn_locks,pointer);
+	/* First, try to find an existing empty slot */
+	i=sk_CRYPTO_dynlock_find(dyn_locks,NULL);
+	/* If there was none, push, thereby creating a new one */
+	if (i == -1)
+		i=sk_CRYPTO_dynlock_push(dyn_locks,pointer);
 	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
 	if (!i)
@@ -272,16 +276,47 @@ struct CRYPTO_dynlock_value *CRYPTO_get_dynlock_value(int i)
 	return NULL;
 	}
 
-void (*CRYPTO_get_locking_callback(void))(int mode,int type,const char *file,
-		int line)
+struct CRYPTO_dynlock_value *(*CRYPTO_get_dynlock_create_callback(void))
+	(const char *file,int line)
 	{
-	return(locking_callback);
+	return(dynlock_create_callback);
 	}
 
 void (*CRYPTO_get_dynlock_lock_callback(void))(int mode,
 	struct CRYPTO_dynlock_value *l, const char *file,int line)
 	{
-	return(dynlock_locking_callback);
+	return(dynlock_lock_callback);
+	}
+
+void (*CRYPTO_get_dynlock_destroy_callback(void))
+	(struct CRYPTO_dynlock_value *l, const char *file,int line)
+	{
+	return(dynlock_destroy_callback);
+	}
+
+void CRYPTO_set_dynlock_create_callback(struct CRYPTO_dynlock_value *(*func)
+	(const char *file, int line))
+	{
+	dynlock_create_callback=func;
+	}
+
+void CRYPTO_set_dynlock_lock_callback(void (*func)(int mode,
+	struct CRYPTO_dynlock_value *l, const char *file, int line))
+	{
+	dynlock_lock_callback=func;
+	}
+
+void CRYPTO_set_dynlock_destroy_callback(void (*func)
+	(struct CRYPTO_dynlock_value *l, const char *file, int line))
+	{
+	dynlock_destroy_callback=func;
+	}
+
+
+void (*CRYPTO_get_locking_callback(void))(int mode,int type,const char *file,
+		int line)
+	{
+	return(locking_callback);
 	}
 
 int (*CRYPTO_get_add_lock_callback(void))(int *num,int mount,int type,
@@ -294,12 +329,6 @@ void CRYPTO_set_locking_callback(void (*func)(int mode,int type,
 					      const char *file,int line))
 	{
 	locking_callback=func;
-	}
-
-void CRYPTO_set_dynlock_locking_callback(void (*func)(int mode,
-	struct CRYPTO_dynlock_value *l, const char *file, int line))
-	{
-	dynlock_locking_callback=func;
 	}
 
 void CRYPTO_set_add_lock_callback(int (*func)(int *num,int mount,int type,
@@ -372,7 +401,7 @@ void CRYPTO_lock(int mode, int type, const char *file, int line)
 
 		if (pointer)
 			{
-			dynlock_locking_callback(mode, pointer, file, line);
+			dynlock_lock_callback(mode, pointer, file, line);
 			}
 
 		CRYPTO_destroy_dynlockid(i);
