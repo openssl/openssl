@@ -712,7 +712,7 @@ PROCESS_ARGS:
 			{ $threads=1; }
 		elsif (/^no-shared$/)
 			{ $no_shared=1; }
-		elsif (/^shared$/)
+		elsif (/^shared$/ || /^-shared$/ || /^--shared$/)
 			{ $no_shared=0; }
 		elsif (/^no-zlib$/)
 			{ $zlib=0; }
