@@ -191,7 +191,7 @@ int des_enc_read(int fd,char *buf,int len,des_key_schedule sched,
 int des_enc_write(int fd,char *buf,int len,des_key_schedule sched,
 	des_cblock *iv);
 char *des_fcrypt(const char *buf,const char *salt, char *ret);
-#ifdef PERL5
+#if defined(PERL5) || defined(__FreeBSD__)
 char *des_crypt(const char *buf,const char *salt);
 #else
 /* some stupid compilers complain because I have declared char instead
