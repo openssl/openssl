@@ -226,7 +226,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 		: "cc");			\
 	    q;					\
 	})
-#  define REMINDER_IS_ALREADY_CALCULATED
+#  define REMAINDER_IS_ALREADY_CALCULATED
 #  endif /* __<cpu> */
 # endif /* __GNUC__ */
 #endif /* NO_ASM */
@@ -246,7 +246,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 #ifdef BN_LLONG
 		BN_ULLONG t2;
 
-#ifndef REMINDER_IS_ALREADY_CALCULATED
+#ifndef REMAINDER_IS_ALREADY_CALCULATED
 		/*
 		 * rem doesn't have to be BN_ULLONG. The least we
 		 * know it's less that d0, isn't it?
@@ -267,7 +267,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 #else
 		BN_ULONG t2l,t2h,ql,qh;
 
-#ifndef REMINDER_IS_ALREADY_CALCULATED
+#ifndef REMAINDER_IS_ALREADY_CALCULATED
 		/*
 		 * It's more than enough with the only multiplication.
 		 * See the comment above in BN_LLONG section...
