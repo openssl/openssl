@@ -5,7 +5,7 @@
 ERR_get_error, ERR_peek_error, ERR_peek_last_error,
 ERR_get_error_line, ERR_peek_error_line, ERR_peek_last_error_line,
 ERR_get_error_line_data, ERR_peek_error_line_data,
-ERR_peek_error_line_data - obtain error code and data
+ERR_peek_last_error_line_data - obtain error code and data
 
 =head1 SYNOPSIS
 
