@@ -709,7 +709,7 @@ int full;
 			BIO_printf(bio,"no peer certificate available\n");
 
 		sk2=SSL_get_client_CA_list(s);
-		if ((sk != NULL) && (sk_X509_NAME_num(sk2) > 0))
+		if ((sk2 != NULL) && (sk_X509_NAME_num(sk2) > 0))
 			{
 			BIO_printf(bio,"---\nAcceptable client certificate CA names\n");
 			for (i=0; i<sk_X509_NAME_num(sk2); i++)
