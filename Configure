@@ -91,38 +91,38 @@ my %table=(
 #"b2-is-ri-dp",	"$tcc:$tflags::$tlib:${bits2}IDEA_SHORT RC4_INDEX DES_PTR:$tbn_mul::",
 
 # Our development configs
-"purify",	"purify gcc:-g -DPURIFY -Wall:(unknown):-lsocket -lnsl::::",
-"debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror:(unknown):-lefence::::",
-"debug-ben",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DPEDANTIC -O2 -pedantic -Wall -Wshadow -Werror -pipe:(unknown):::::",
-"debug-ben-debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe:(unknown):::::",
-"debug-ben-strict",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe:(unknown):::::",
-"debug-rse","cc:-DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall:(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
-"debug-bodo",	"gcc:-DL_ENDIAN -O3 -g -m486 -Wall:-D_REENTRANT::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
-"dist",		"cc:-O:(unknown):::::",
+"purify",	"purify gcc:-g -DPURIFY -Wall::(unknown):-lsocket -lnsl::::",
+"debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror::(unknown):-lefence::::",
+"debug-ben",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DPEDANTIC -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown):::::",
+"debug-ben-debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown):::::",
+"debug-ben-strict",	"gcc:-DBN_DEBUG -DREF_CHECK -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe::(unknown):::::",
+"debug-rse","cc:-DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
+"debug-bodo",	"gcc:-DL_ENDIAN -O3 -g -m486 -Wall::-D_REENTRANT::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
+"dist",		"cc:-O::(unknown):::::",
 
 # Basic configs that should work on any box
-"gcc",		"gcc:-O3:(unknown)::BN_LLONG:::",
-"cc",		"cc:-O:(unknown):::::",
+"gcc",		"gcc:-O3::(unknown)::BN_LLONG:::",
+"cc",		"cc:-O::(unknown):::::",
 
 # Solaris setups
-"solaris-x86-gcc","gcc:-O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_sol_asm",
-"solaris-sparc-gcc","gcc:-O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8.o::",
-"solaris-usparc-gcc","gcc:-O3 -fomit-frame-pointer -mcpu=ultrasparc -Wall -DB_ENDIAN -DULTRASPARC:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o:::asm/md5-sparcv8plus.o:",
-"solaris-usparc-oldgcc","gcc:-O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN -DULTRASPARC:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o:::asm/md5-sparcv8plus.o:",
-"debug-solaris-sparc-gcc","gcc:-O3 -g -mv8 -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:::",
-"debug-solaris-usparc-gcc","gcc:-O3 -g -mcpu=ultrasparc -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o::",
+"solaris-x86-gcc","gcc:-O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN::-D_REENTRANT:-lsocket -lnsl:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_sol_asm",
+"solaris-sparc-gcc","gcc:-O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8.o::",
+"solaris-usparc-gcc","gcc:-O3 -fomit-frame-pointer -mcpu=ultrasparc -Wall -DB_ENDIAN -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o:::asm/md5-sparcv8plus.o:",
+"solaris-usparc-oldgcc","gcc:-O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o:::asm/md5-sparcv8plus.o:",
+"debug-solaris-sparc-gcc","gcc:-O3 -g -mv8 -Wall -DB_ENDIAN::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:::",
+"debug-solaris-usparc-gcc","gcc:-O3 -g -mcpu=ultrasparc -Wall -DB_ENDIAN::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o::",
 
 # DO NOT use /xO[34] on sparc with SC3.0.  It is broken, and will not pass the tests
-"solaris-sparc-sc3","cc:-fast -O -Xa -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_UNROLL BF_PTR:::",
+"solaris-sparc-sc3","cc:-fast -O -Xa -DB_ENDIAN::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_UNROLL BF_PTR:::",
 # SC4 is ok, better than gcc even on bn as long as you tell it -xarch=v8
 # -fast slows things like DES down quite a lot
-"solaris-sparc-cc","cc:-xarch=v8 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
-"solaris-usparc-cc","cc:-xtarget=ultra -xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o:",
-"solaris64-usparc-cc","cc:-xtarget=ultra -xarch=v9 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC:-D_REENTRANT:-lsocket -lnsl:SIXTY_FOUR_BIT_LONG RC4_CHAR DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o:",
+"solaris-sparc-cc","cc:-xarch=v8 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
+"solaris-usparc-cc","cc:-xtarget=ultra -xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC -DBN_DIV2W::-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o:",
+"solaris64-usparc-cc","cc:-xtarget=ultra -xarch=v9 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC::-D_REENTRANT:-lsocket -lnsl:SIXTY_FOUR_BIT_LONG RC4_CHAR DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o:",
 
 # Sunos configs, assuming sparc for the gcc one.
-##"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST:(unknown)::DES_UNROLL:::",
-"sunos-gcc","gcc:-O3 -mv8:(unknown)::BN_LLONG RC4_CHAR DES_UNROLL DES_PTR DES_RISC1:::",
+##"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST::(unknown)::DES_UNROLL:::",
+"sunos-gcc","gcc:-O3 -mv8::(unknown)::BN_LLONG RC4_CHAR DES_UNROLL DES_PTR DES_RISC1:::",
 
 # SGI configurations.  If the box is rather old (r3000 cpu), you will
 # probably have to remove the '-mips2' flag.  I've only been using
@@ -130,71 +130,71 @@ my %table=(
 # I've recently done 32 and 64 bit mips assember, it make this RSA
 # 3 times faster, use if at all possible.
 #"irix-gcc","gcc:-O2 -mips2::SIXTY_FOUR_BIT BN_LLONG RC4_INDEX RC4_CHAR:::",
-"irix-gcc","gcc:-O2 -DTERMIOS -DB_ENDIAN:(unknown)::BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR:::",
-"irix-cc", "cc:-O2 -use_readonly_const -DTERMIOS -DB_ENDIAN:(unknown)::BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR:::",
-"irix-mips3-gcc","gcc:-mips3 -O2 -DTERMIOS -DB_ENDIAN:(unknown)::MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT:::",
-"irix-mips3-cc", "cc:-n32 -mips3 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN:(unknown)::DES_PTR DES_RISC2 DES_UNROLL BF_PTR SIXTY_FOUR_BIT:::",
-"debug-irix-cc", "cc:-w2 -g -DCRYPTO_MDEBUG -DTERMIOS -DB_ENDIAN:(unknown):::::",
+"irix-gcc","gcc:-O2 -DTERMIOS -DB_ENDIAN::(unknown)::BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR:::",
+"irix-cc", "cc:-O2 -use_readonly_const -DTERMIOS -DB_ENDIAN::(unknown)::BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR:::",
+"irix-mips3-gcc","gcc:-mips3 -O2 -DTERMIOS -DB_ENDIAN::(unknown)::MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT:::",
+"irix-mips3-cc", "cc:-n32 -mips3 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN::(unknown)::DES_PTR DES_RISC2 DES_UNROLL BF_PTR SIXTY_FOUR_BIT:::",
+"debug-irix-cc", "cc:-w2 -g -DCRYPTO_MDEBUG -DTERMIOS -DB_ENDIAN::(unknown):::::",
 # This is the n64 mode build.
-"irix64-mips4-cc", "cc:-64 -mips4 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN:(unknown)::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG:::",
+"irix64-mips4-cc", "cc:-64 -mips4 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN::(unknown)::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG:::",
 
 # HPUX 9.X config.
 # Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or
 # egcs.  gcc 2.8.1 is also broken.
-"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z:(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
-"hpux-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3:(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 # HPUX 10.X config.  Supports threads.
-"hpux10-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z:-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
-"hpux10-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3:-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux10-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux10-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::-D_REENTRANT::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 # HPUX 11.X from www.globus.org.
 # Only works on PA-RISC 2.0 cpus, and not optimized.  Why?
-"hpux11-32bit-cc","cc:+DA2.0 -DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit:-D_REENTRANT::DES_PTR DES_UNROLL DES_RISC1:::",
-"hpux11-64bit-cc","cc:+DA2.0W -g -D_HPUX_SOURCE -Aa -Ae +ESlit:-D_REENTRANT::SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT :::",
+"hpux11-32bit-cc","cc:+DA2.0 -DB_ENDIAN -D_HPUX_SOURCE -Aa -Ae +ESlit::-D_REENTRANT::DES_PTR DES_UNROLL DES_RISC1:::",
+"hpux11-64bit-cc","cc:+DA2.0W -g -D_HPUX_SOURCE -Aa -Ae +ESlit::-D_REENTRANT::SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT :::",
 
 # Dec Alpha, OSF/1 - the alpha164-cc is the flags for a 21164A with
 # the new compiler
 # For gcc, the following gave a %50 speedup on a 164 over the 'DES_INT' version
-"alpha-gcc","gcc:-O3:(unknown)::SIXTY_FOUR_BIT_LONG DES_UNROLL DES_RISC1:::",
-"alpha-cc", "cc:-std1 -tune host -O4 -readonly_strings:(unknown)::SIXTY_FOUR_BIT_LONG:::",
-"alpha164-cc", "cc:-std1 -tune host -fast -readonly_strings:(unknown)::SIXTY_FOUR_BIT_LONG:::",
-"FreeBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer:(unknown)::SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2:::",
+"alpha-gcc","gcc:-O3::(unknown)::SIXTY_FOUR_BIT_LONG DES_UNROLL DES_RISC1:::",
+"alpha-cc", "cc:-std1 -tune host -O4 -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG:::",
+"alpha164-cc", "cc:-std1 -tune host -fast -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG:::",
+"FreeBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2:::",
 
 # assembler versions -- currently defunct:
-##"alpha-gcc","gcc:-O3:(unknown)::SIXTY_FOUR_BIT_LONG DES_UNROLL DES_RISC1:asm/alpha.o::",
-##"alpha-cc", "cc:-tune host -O4 -readonly_strings:(unknown)::SIXTY_FOUR_BIT_LONG:asm/alpha.o::",
-##"alpha164-cc", "cc:-tune host -fast -readonly_strings:(unknown)::SIXTY_FOUR_BIT_LONG:asm/alpha.o::",
-##"OpenBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer:(unknown):SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2:asm/alpha.o::",
+##"alpha-gcc","gcc:-O3::(unknown)::SIXTY_FOUR_BIT_LONG DES_UNROLL DES_RISC1:asm/alpha.o::",
+##"alpha-cc", "cc:-tune host -O4 -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG:asm/alpha.o::",
+##"alpha164-cc", "cc:-tune host -fast -readonly_strings::(unknown)::SIXTY_FOUR_BIT_LONG:asm/alpha.o::",
+##"OpenBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown):SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2:asm/alpha.o::",
 
 # The intel boxes :-), It would be worth seeing if bsdi-gcc can use the
 # bn86-elf.o file file since it is hand tweaked assembler.
-"linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall:-D_REENTRANT::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
-"debug-linux-elf","gcc:-DREF_CHECK -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall:-D_REENTRANT:-lefence:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
-"linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall:(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
-"linux-mips",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall:(unknown)::BN_LLONG:::",
-"linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall:(unknown)::::",
-"linux-sparc","gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall:-D_REENTRANT::BN_LLONG RC4_CHAR DES_UNROLL BF_PTR::",
-"linux-sparc64","gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mv8 -Wall:-D_REENTRANT:::::",
-"NetBSD-sparc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN:(unknown)::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
-"NetBSD-m68",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall -DB_ENDIAN:(unknown)::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
-"NetBSD-x86",	"gcc:-DTERMIOS -D_ANSI_SOURCE -O3 -fomit-frame-pointer -m486 -Wall:(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
+"linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::-D_REENTRANT::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
+"debug-linux-elf","gcc:-DREF_CHECK -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT:-lefence:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
+"linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
+"linux-mips",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::BN_LLONG:::",
+"linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::(unknown)::::",
+"linux-sparc","gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::BN_LLONG RC4_CHAR DES_UNROLL BF_PTR::",
+"linux-sparc64","gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mv8 -Wall::-D_REENTRANT:::::",
+"NetBSD-sparc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN::(unknown)::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
+"NetBSD-m68",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall -DB_ENDIAN::(unknown)::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
+"NetBSD-x86",	"gcc:-DTERMIOS -D_ANSI_SOURCE -O3 -fomit-frame-pointer -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
 #"FreeBSD",   "gcc:-DTERMIOS -DL_ENDIAN -D_ANSI_SOURCE -fomit-frame-pointer -O3 -m486 -Wall:(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
-"FreeBSD",      "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall:(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
-"FreeBSD-elf",  "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall:(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
-"bsdi-gcc",     "gcc:-O3 -ffast-math -DL_ENDIAN -DPERL5 -m486:(unknown)::RSA_LLONG $x86_gcc_des $x86_gcc_opts:$x86_bsdi_asm",
-"bsdi-elf-gcc",     "gcc:-DPERL5 -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall:(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
+"FreeBSD",      "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
+"FreeBSD-elf",  "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
+"bsdi-gcc",     "gcc:-O3 -ffast-math -DL_ENDIAN -DPERL5 -m486::(unknown)::RSA_LLONG $x86_gcc_des $x86_gcc_opts:$x86_bsdi_asm",
+"bsdi-elf-gcc",     "gcc:-DPERL5 -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 # Mark Crispin advises against using -O3 on NeXTstep ...
-# "nextstep",	"cc:-O3 -Wall:(unknown)::BN_LLONG $x86_gcc_des ${x86_gcc_opts}:::",
-"nextstep",	"cc:-O -Wall:(unknown)::BN_LLONG $x86_gcc_des ${x86_gcc_opts}:::",
+# "nextstep",	"cc:-O3 -Wall::(unknown)::BN_LLONG $x86_gcc_des ${x86_gcc_opts}:::",
+"nextstep",	"cc:-O -Wall:<libc.h>:(unknown)::BN_LLONG $x86_gcc_des ${x86_gcc_opts}:::",
 # NCR MP-RAS UNIX ver 02.03.01
-"ncr-scde","cc:-O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw:(unknown):-lsocket -lnsl:$x86_gcc_des ${x86_gcc_opts}:::",
+"ncr-scde","cc:-O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw::(unknown):-lsocket -lnsl:$x86_gcc_des ${x86_gcc_opts}:::",
 
 # UnixWare 2.0
-"unixware-2.0","cc:-O -DFILIO_H:(unknown):-lsocket -lnsl:$x86_gcc_des ${x86_gcc_opts}:::",
-"unixware-2.0-pentium","cc:-O -DFILIO_H -Kpentium -Kthread:(unknown):-lsocket -lnsl:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
+"unixware-2.0","cc:-O -DFILIO_H::(unknown):-lsocket -lnsl:$x86_gcc_des ${x86_gcc_opts}:::",
+"unixware-2.0-pentium","cc:-O -DFILIO_H -Kpentium -Kthread::(unknown):-lsocket -lnsl:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
 
 # IBM's AIX.
-"aix-cc",   "cc:-O -DAIX -DB_ENDIAN:(unknown)::BN_LLONG RC4_CHAR:::",
-"aix-gcc",  "gcc:-O3 -DAIX -DB_ENDIAN:(unknown)::BN_LLONG RC4_CHAR:::",
+"aix-cc",   "cc:-O -DAIX -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR:::",
+"aix-gcc",  "gcc:-O3 -DAIX -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR:::",
 
 #
 # Cray T90 (SDSC)
@@ -207,7 +207,7 @@ my %table=(
 #'Taking the address of a bit field is not allowed. '
 #'An expression with bit field exists as the operand of "sizeof" '
 # (written by Wayne Schroeder <schroede@SDSC.EDU>)
-"cray-t90-cc", "cc: -DBIT_FIELD_LIMITS -DTERMIOS:(unknown)::SIXTY_FOUR_BIT_LONG DES_INT:::",
+"cray-t90-cc", "cc: -DBIT_FIELD_LIMITS -DTERMIOS::(unknown)::SIXTY_FOUR_BIT_LONG DES_INT:::",
 
 #
 # Cray T3E (Research Center Juelich, beckman@acl.lanl.gov)
@@ -217,55 +217,55 @@ my %table=(
 # for some st_addr stuff, and then sizeof and address-of fails
 # I could not use the ams/alpha.o option because the Cray assembler, 'cam'
 # did not like it.
-"cray-t3e", "cc: -DBIT_FIELD_LIMITS -DTERMIOS:(unknown)::SIXTY_FOUR_BIT_LONG DES_INT:::",
+"cray-t3e", "cc: -DBIT_FIELD_LIMITS -DTERMIOS::(unknown)::SIXTY_FOUR_BIT_LONG DES_INT:::",
 
 # DGUX, 88100.
-"dgux-R3-gcc",	"gcc:-O3 -fomit-frame-pointer:(unknown)::RC4_INDEX DES_UNROLL:::",
-"dgux-R4-gcc",	"gcc:-O3 -fomit-frame-pointer:(unknown):-lnsl -lsocket:RC4_INDEX:RC4_INDEX DES_UNROLL:::",
-"dgux-R4-x86-gcc",	"gcc:-O3 -fomit-frame-pointer -DL_ENDIAN:(unknown):-lnsl -lsocket:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
+"dgux-R3-gcc",	"gcc:-O3 -fomit-frame-pointer::(unknown)::RC4_INDEX DES_UNROLL:::",
+"dgux-R4-gcc",	"gcc:-O3 -fomit-frame-pointer::(unknown):-lnsl -lsocket:RC4_INDEX:RC4_INDEX DES_UNROLL:::",
+"dgux-R4-x86-gcc",	"gcc:-O3 -fomit-frame-pointer -DL_ENDIAN::(unknown):-lnsl -lsocket:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_elf_asm",
 
 # SCO 5 - Ben Laurie <ben@algroup.co.uk> says the -O breaks the
 # SCO cc.
-"sco5-cc",  "cc::(unknown):-lsocket:$x86_gcc_des ${x86_gcc_opts}:::", # des options?
-"sco5-gcc",  "gcc:-O3 -fomit-frame-pointer:(unknown):-lsocket:BN_LLONG $x86_gcc_des ${x86_gcc_opts}:::", # the SCO assembler doesn't seem to like our assembler files ...
+"sco5-cc",  "cc:::(unknown):-lsocket:$x86_gcc_des ${x86_gcc_opts}:::", # des options?
+"sco5-gcc",  "gcc:-O3 -fomit-frame-pointer::(unknown):-lsocket:BN_LLONG $x86_gcc_des ${x86_gcc_opts}:::", # the SCO assembler doesn't seem to like our assembler files ...
 
 # Sinix/ReliantUNIX RM400
 # NOTE: The CDS++ Compiler up to V2.0Bsomething has the IRIX_CC_BUG optimizer problem. Better use -g  */
-"ReliantUNIX","cc:-KPIC -g -DSNI -DTERMIOS -DB_ENDIAN:-Kthread:-lsocket -lnsl -lc -L/usr/ucblib -lucb:BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR:::",
-"SINIX","cc:-O -DSNI:(unknown):-lsocket -lnsl -lc -L/usr/ucblib -lucb:RC4_INDEX RC4_CHAR:::",
-"SINIX-N","/usr/ucb/cc:-O2 -misaligned:(unknown):-lucb:RC4_INDEX RC4_CHAR:::",
+"ReliantUNIX","cc:-KPIC -g -DSNI -DTERMIOS -DB_ENDIAN::-Kthread:-lsocket -lnsl -lc -L/usr/ucblib -lucb:BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR:::",
+"SINIX","cc:-O -DSNI::(unknown):-lsocket -lnsl -lc -L/usr/ucblib -lucb:RC4_INDEX RC4_CHAR:::",
+"SINIX-N","/usr/ucb/cc:-O2 -misaligned::(unknown):-lucb:RC4_INDEX RC4_CHAR:::",
 
 # SIEMENS BS2000/OSD: an EBCDIC-based mainframe
-"BS2000-OSD","c89:-XLLML -XLLMK -XL -DB_ENDIAN -DTERMIOS -DCHARSET_EBCDIC:-lsocket -lnsl:THIRTY_TWO_BIT DES_PTR DES_UNROLL MD2_CHAR RC4_INDEX RC4_CHAR BF_PTR:::",
+"BS2000-OSD","c89:-XLLML -XLLMK -XL -DB_ENDIAN -DTERMIOS -DCHARSET_EBCDIC::(unknown):-lsocket -lnsl:THIRTY_TWO_BIT DES_PTR DES_UNROLL MD2_CHAR RC4_INDEX RC4_CHAR BF_PTR:::",
 
 # Windows NT, Microsoft Visual C++ 4.0
 
-"VC-NT","cl::(unknown)::BN_LLONG RC4_INDEX ${x86_gcc_opts}:::",
-"VC-WIN32","cl::(unknown)::BN_LLONG RC4_INDEX ${x86_gcc_opts}:::",
-"VC-WIN16","cl::(unknown)::MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
-"VC-W31-16","cl::(unknown)::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT:::",
-"VC-W31-32","cl::(unknown)::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
-"VC-MSDOS","cl::(unknown)::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT:::",
+"VC-NT","cl:::(unknown)::BN_LLONG RC4_INDEX ${x86_gcc_opts}:::",
+"VC-WIN32","cl:::(unknown)::BN_LLONG RC4_INDEX ${x86_gcc_opts}:::",
+"VC-WIN16","cl:::(unknown)::MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
+"VC-W31-16","cl:::(unknown)::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT:::",
+"VC-W31-32","cl:::(unknown)::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT:::",
+"VC-MSDOS","cl:::(unknown)::BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 
 # Borland C++ 4.5
-"BC-32","bcc32::(unknown)::BN_LLONG DES_PTR RC4_INDEX:::",
-"BC-16","bcc::(unknown)::BN_LLONG DES_PTR RC4_INDEX SIXTEEN_BIT:::",
+"BC-32","bcc32:::(unknown)::BN_LLONG DES_PTR RC4_INDEX:::",
+"BC-16","bcc:::(unknown)::BN_LLONG DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 
 # CygWin32
-"CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall:(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
-"Mingw32", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall:(unknown):BN_LLONG $x86_gcc_des $x86_gcc_opts:",
+"CygWin32", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:",
+"Mingw32", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown):BN_LLONG $x86_gcc_des $x86_gcc_opts:",
 
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
-"ultrix-cc","cc:-std1 -O -Olimit 1000 -DL_ENDIAN:(unknown)::::::",
-"ultrix-gcc","gcc:-O3 -DL_ENDIAN:(unknown)::::::",
+"ultrix-cc","cc:-std1 -O -Olimit 1000 -DL_ENDIAN::(unknown)::::::",
+"ultrix-gcc","gcc:-O3 -DL_ENDIAN::(unknown)::::::",
 # K&R C is no longer supported; you need gcc on old Ultrix installations
-##"ultrix","cc:-O2 -DNOPROTO -DNOCONST -DL_ENDIAN:(unknown)::::::",
+##"ultrix","cc:-O2 -DNOPROTO -DNOCONST -DL_ENDIAN::(unknown)::::::",
 
 # Some OpenBSD from Bob Beck <beck@obtuse.com>
-"OpenBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer:(unknown)::SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2:::",
-"OpenBSD-x86",  "gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -m486:(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
-"OpenBSD",      "gcc:-DTERMIOS -O3 -fomit-frame-pointer:(unknown)::BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL:::",
-"OpenBSD-mips","gcc:-O2 -DL_ENDIAN:(unknown):BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR::::",
+"OpenBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2:::",
+"OpenBSD-x86",  "gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -m486::(unknown)::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
+"OpenBSD",      "gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL:::",
+"OpenBSD-mips","gcc:-O2 -DL_ENDIAN::(unknown):BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR::::",
 
 );
 
@@ -400,7 +400,7 @@ $openssldir=$prefix . "/" . $openssldir if $openssldir !~ /^\//;
 
 print "IsWindows=$IsWindows\n";
 
-(my $cc,my $cflags,my $thread_cflag,my $lflags,my $bn_ops,my $bn_obj,my $des_obj,my $bf_obj,
+(my $cc,my $cflags,my $unistd,my $thread_cflag,my $lflags,my $bn_ops,my $bn_obj,my $des_obj,my $bf_obj,
  $md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj)=
 	split(/\s*:\s*/,$table{$target} . ":" x 20 , -1);
 $cflags="$flags$cflags" if ($flags ne "");
@@ -588,6 +588,11 @@ while (<IN>)
 	{
 	if	(/^#define\s+OPENSSLDIR/)
 		{ print OUT "#define OPENSSLDIR \"$openssldir\"\n"; }
+	elsif	(/^#define\s+OPENSSL_UNISTD/)
+		{
+		$unistd = "<unistd.h>" if $unistd eq "";
+		print OUT "#define OPENSSL_UNISTD $unistd\n";
+		}
 	elsif	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT_LONG/)
 		{ printf OUT "#%s SIXTY_FOUR_BIT_LONG\n",($b64l)?"define":"undef"; }
 	elsif	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT/)
@@ -635,6 +640,7 @@ while (<IN>)
 	}
 close(IN);
 close(OUT);
+
 
 # Fix the date
 
@@ -779,7 +785,7 @@ sub print_table_entry
 	{
 	my $target = shift;
 
-	(my $cc,my $cflags,my $thread_cflag,my $lflags,my $bn_ops,
+	(my $cc,my $cflags,my $unistd,my $thread_cflag,my $lflags,my $bn_ops,
 	my $bn_obj,my $des_obj,my $bf_obj,
 	$md5_obj,$sha1_obj,my $cast_obj,my $rc4_obj,$rmd160_obj,my $rc5_obj)=
 	split(/\s*:\s*/,$table{$target} . ":" x 20 , -1);
@@ -789,6 +795,7 @@ sub print_table_entry
 *** $target
 \$cc           = $cc
 \$cflags       = $cflags
+\$unistd       = $unistd
 \$thread_cflag = $thread_cflag
 \$lflags       = $lflags
 \$bn_ops       = $bn_ops

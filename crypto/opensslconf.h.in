@@ -10,6 +10,8 @@
 #endif
 #endif
 
+#define OPENSSL_UNISTD <unistd.h>
+
 #if defined(HEADER_IDEA_H) && !defined(IDEA_INT)
 #define IDEA_INT unsigned int
 #endif

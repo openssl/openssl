@@ -64,12 +64,11 @@
 #endif
 
 #include <stdio.h>
-#ifndef MSDOS
-#include <unistd.h>
-#else
-#include <io.h>
-extern int exit();
-#endif
+
+#include <openssl/e_os2.h>
+#include OPENSSL_UNISTD_IO
+OPENSSL_DECLARE_EXIT
+
 #include <signal.h>
 #ifndef _IRIX
 #include <time.h>

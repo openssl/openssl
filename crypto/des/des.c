@@ -60,7 +60,8 @@
 #include <stdlib.h>
 #ifndef MSDOS
 #ifndef VMS
-#include <unistd.h>
+#include <openssl/opensslconf.h>
+#include OPENSSL_UNISTD
 #else /* VMS */
 #ifdef __DECC
 #include <unistd.h>

@@ -67,14 +67,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <openssl/opensslconf.h>
+
 #ifndef MSDOS
 #if !defined(VMS) || defined(__DECC)
-#include <unistd.h>
+#include OPENSSL_UNISTD
 #endif
 #endif
 #include <openssl/des.h>
-
-#include <openssl/opensslconf.h>
 
 #ifdef MSDOS		/* Visual C++ 2.1 (Windows NT/95) */
 #include <stdlib.h>
