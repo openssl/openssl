@@ -227,9 +227,10 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	 * This is the part that corresponds to the current
 	 * 'area' being divided */
 	BN_init(&wnum);
+	wnum.flags = BN_FLG_STATIC_DATA; /* prevent accidental "expands" */
 	wnum.d=	 &(snum->d[loop]);
 	wnum.top= div_n;
-	wnum.dmax= snum->dmax+1; /* a bit of a lie */
+	wnum.dmax= snum->dmax - loop; /* so we don't step out of bounds */
 
 	/* Get the top 2 words of sdiv */
 	/* i=sdiv->top; */
@@ -248,6 +249,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	/* space for temp */
 	if (!bn_wexpand(tmp,(div_n+1))) goto err;
 
+	bn_fix_top(&wnum);
 	if (BN_ucmp(&wnum,sdiv) >= 0)
 		{
 		if (!BN_usub(&wnum,&wnum,sdiv)) goto err;
@@ -346,7 +348,7 @@ X) -> 0x%08X\n",
 #endif /* !BN_DIV3W */
 
 		l0=bn_mul_words(tmp->d,sdiv->d,div_n,q);
-		wnum.d--; wnum.top++;
+		wnum.d--; wnum.top++; wnum.dmax++;
 		tmp->d[div_n]=l0;
 		/* XXX: Couldn't we replace this with;
 		 *    tmp->top = div_n;
