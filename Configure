@@ -107,7 +107,7 @@ my %table=(
 "solaris-x86-gcc","gcc:-O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_sol_asm",
 "solaris-sparc-gcc","gcc:-O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8.o::",
 "solaris-usparc-gcc","gcc:-O3 -fomit-frame-pointer -mcpu=ultrasparc -Wall -DB_ENDIAN -DULTRASPARC:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o:::asm/md5-sparcv8plus.o:",
-"solaris-usparc-oldgcc","gcc:-O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DULTRASPARC:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o:::asm/md5-sparcv8plus.o:",
+"solaris-usparc-oldgcc","gcc:-O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN -DULTRASPARC:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o:::asm/md5-sparcv8plus.o:",
 "debug-solaris-sparc-gcc","gcc:-O3 -g -mv8 -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:::",
 "debug-solaris-usparc-gcc","gcc:-O3 -g -mcpu=ultrasparc -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o::",
 
