@@ -81,6 +81,7 @@ static char *crl_usage[]={
 " -in arg         - input file - default stdin\n",
 " -out arg        - output file - default stdout\n",
 " -hash           - print hash value\n",
+" -fingerprint    - print the crl fingerprint\n",
 " -issuer         - print issuer DN\n",
 " -lastupdate     - lastUpdate field\n",
 " -nextupdate     - nextUpdate field\n",
