@@ -259,8 +259,12 @@ void vms_bind_sym(DSO *dso, const char *symname, void **sym)
 	{
 	DSO_VMS_INTERNAL *ptr;
 	int status;
+#if 0
 	int flags = (1<<4); /* LIB$M_FIS_MIXEDCASE, but this symbol isn't
                                defined in VMS older than 7.0 or so */
+#else
+	int flags = 0;
+#endif
 	struct dsc$descriptor_s symname_dsc;
 	*sym = NULL;
 
