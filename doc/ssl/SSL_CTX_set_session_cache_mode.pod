@@ -105,6 +105,7 @@ prevents these additions to the internal cache as well.
 Enable both SSL_SESS_CACHE_NO_INTERNAL_LOOKUP and
 SSL_SESS_CACHE_NO_INTERNAL_STORE at the same time.
 
+
 =back
 
 The default mode is SSL_SESS_CACHE_SERVER.
