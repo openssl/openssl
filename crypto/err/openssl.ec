@@ -24,7 +24,7 @@ L X509V3	crypto/x509v3/x509v3.h		crypto/x509v3/v3err.c
 L PKCS12	crypto/pkcs12/pkcs12.h		crypto/pkcs12/pk12err.c
 L RAND		crypto/rand/rand.h		crypto/rand/rand_err.c
 L DSO		crypto/dso/dso.h		crypto/dso/dso_err.c
-L ENGINE	crypto/engine/engine.h		crypto/engine/engine_err.c
+L ENGINE	crypto/engine/engine.h		crypto/engine/eng_err.c
 L OCSP		crypto/ocsp/ocsp.h		crypto/ocsp/ocsp_err.c
 L UI		crypto/ui/ui.h			crypto/ui/ui_err.c
 
