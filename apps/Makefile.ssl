@@ -179,7 +179,7 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	    if [ "$(PLATFORM)" = "Cygwin" ]; then \
 	      PATH="`pwd`:$$PATH"; \
 	    fi; \
-	    LD_PRELOAD="$$OSSL_LIBPATH/libssl.so $$OSSL_LIBPATH/libcrypto.so"; \
+	    LD_PRELOAD="`pwd`/libssl.so `pwd`/libcrypto.so"; \
 	    export LD_LIBRARY_PATH DYLD_LIBRARY_PATH SHLIB_PATH LIBPATH PATH; \
 	    export LD_PRELOAD; \
 	  fi; \
