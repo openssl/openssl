@@ -347,7 +347,7 @@ int main(int argc,char **argv)
 	    }
 
 	/* FIXME: we should only extract if stdout is ready */
-	n=SSLStateMachine_read_extract(pMachine,buf,n);
+	n=SSLStateMachine_read_extract(pMachine,buf,sizeof buf);
 	if(n < 0)
 	    {
 	    SSLStateMachine_print_error(pMachine,"read extract failed");
