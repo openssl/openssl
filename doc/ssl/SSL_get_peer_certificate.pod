@@ -19,7 +19,7 @@ peer presented. If the peer did not present a certificate, NULL is returned.
 
 Due to the protocol definition, a TLS/SSL server will always send a
 certificate, if present. A client will only send a certificate when
-explicitely requested to do so by the server (see
+explicitly requested to do so by the server (see
 L<SSL_CTX_set_verify(3)|SSL_CTX_set_verify(3)>). If an anonymous cipher
 is used, no certificates are sent.
 

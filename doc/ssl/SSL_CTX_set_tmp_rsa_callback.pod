@@ -31,7 +31,7 @@ SSL_CTX_set_tmp_rsa() sets the temporary/ephemeral RSA key to be used to be
 B<rsa>. The key is inherited by all SSL objects newly created from B<ctx>
 with <SSL_new(3)|SSL_new(3)>. Already created SSL objects are not affected.
 
-SSL_CTX_need_tmp_rsa() returns 1, if a temporay/ephemeral RSA key is needed
+SSL_CTX_need_tmp_rsa() returns 1, if a temporary/ephemeral RSA key is needed
 for RSA-based strength-limited 'exportable' ciphersuites because a RSA key
 with a keysize larger than 512 bits is installed.
 
@@ -39,7 +39,7 @@ SSL_set_tmp_rsa_callback() sets the callback only for B<ssl>.
 
 SSL_set_tmp_rsa() sets the key only for B<ssl>.
 
-SSL_need_tmp_rsa() returns 1, if a temporay/ephemeral RSA key is needed,
+SSL_need_tmp_rsa() returns 1, if a temporary/ephemeral RSA key is needed,
 for RSA-based strength-limited 'exportable' ciphersuites because a RSA key
 with a keysize larger than 512 bits is installed.
 

@@ -83,11 +83,13 @@ bytes actually read from the TLS/SSL connection.
 
 =item 0
 
-The read operation was not successful, the SSL connection was closed by the
-peer by sending a "close notify" alert. The SSL_RECEIVED_SHUTDOWN flag in
-the ssl shutdown state is set (see L<SSL_shutdown(3)|SSL_shutdown(3)>,
-L<SSL_set_shutdown(3)|SSL_set_shutdown(3)>).
-Call SSL_get_error() with the return value B<ret> to find out,
+The read operation was not successful. The reason may either be a clean
+shutdown due to a "close notify" alert sent by the peer (in which case
+the SSL_RECEIVED_SHUTDOWN flag in the ssl shutdown state is set
+(see L<SSL_shutdown(3)|SSL_shutdown(3)>,
+L<SSL_set_shutdown(3)|SSL_set_shutdown(3)>). It is also possible, that
+the peer simply shut down the underlying transport and the shutdown is
+incomplete. Call SSL_get_error() with the return value B<ret> to find out,
 whether an error occurred or the connection was shut down cleanly
 (SSL_ERROR_ZERO_RETURN).
 

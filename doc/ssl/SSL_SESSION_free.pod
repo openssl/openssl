@@ -20,6 +20,8 @@ memory, if the the reference count has reached 0.
 
 SSL_SESSION_free() does not provide diagnostic information.
 
+=head1 SEE ALSO
+
 L<ssl(3)|ssl(3)>, L<SSL_get_session(3)|SSL_get_session(3)>
 
 =cut

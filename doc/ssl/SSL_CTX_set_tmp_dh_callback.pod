@@ -29,7 +29,7 @@ The key is inherited by all B<ssl> objects created from B<ctx>.
 
 SSL_set_tmp_dh_callback() sets the callback only for B<ssl>.
 
-SSL_set_tmp_dh() sets the paramters only for B<ssl>.
+SSL_set_tmp_dh() sets the parameters only for B<ssl>.
 
 These functions apply to SSL/TLS servers only.
 
@@ -54,7 +54,7 @@ In order to perform a DH key exchange the server must use a DH group
 DH key during the negotiation, when the DH parameters are supplied via
 callback and/or when the SSL_OP_SINGLE_DH_USE option of
 L<SSL_CTX_set_options(3)|SSL_CTX_set_options(3)> is set. It will
-immediatly create a DH key, when DH parameters are supplied via
+immediately create a DH key, when DH parameters are supplied via
 SSL_CTX_set_tmp_dh() and SSL_OP_SINGLE_DH_USE is not set. In this case,
 it may happen that a key is generated on initialization without later
 being needed, while on the other hand the computer time during the
@@ -74,7 +74,7 @@ should not generate the parameters on the fly but supply the parameters.
 DH parameters can be reused, as the actual key is newly generated during
 the negotiation. The risk in reusing DH parameters is that an attacker
 may specialize on a very often used DH group. Applications should therefore
-generate their own DH paramaters during the installation process using the
+generate their own DH parameters during the installation process using the
 openssl L<dhparam(1)|dhparam(1)> application. In order to reduce the computer
 time needed for this generation, it is possible to use DSA parameters
 instead (see L<dhparam(1)|dhparam(1)>), but in this case SSL_OP_SINGLE_DH_USE

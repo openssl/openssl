@@ -133,7 +133,7 @@ This option must be used to prevent small subgroup attacks, when
 the DH parameters were not generated using "strong" primes
 (e.g. when using DSA-parameters, see L<dhparam(1)|dhparam(1)>).
 If "strong" primes were used, it is not strictly necessary to generate
-a new DH key during each handshake but it is also recommendet.
+a new DH key during each handshake but it is also recommended.
 SSL_OP_SINGLE_DH_USE should therefore be enabled whenever
 temporary/ephemeral DH parameters are used.
 

@@ -36,7 +36,7 @@ When using the L<SSL_connect(3)|SSL_connect(3)> or
 L<SSL_accept(3)|SSL_accept(3)> routines, the correct handshake
 routines are automatically set. When performing a transparent negotiation
 using L<SSL_write(3)|SSL_write(3)> or L<SSL_read(3)|SSL_read(3)>, the
-handshake routines must be explicitely set in advance using either
+handshake routines must be explicitly set in advance using either
 SSL_set_connect_state() or SSL_set_accept_state().
 
 =head1 RETURN VALUES
