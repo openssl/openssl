@@ -431,7 +431,7 @@ here, except the B<no_signame> and B<no_sigdump> are permanently set
 and cannot be disabled (this is because the certificate signature cannot
 be displayed because the certificate has not been signed at this point).
 
-For convenience the values B<default_ca> are accepted by both to produce
+For convenience the values B<ca_default> are accepted by both to produce
 a reasonable output.
 
 If neither option is present the format used in earlier versions of
@@ -544,8 +544,8 @@ A sample configuration file with the relevant sections for B<ca>:
  policy         = policy_any            # default policy
  email_in_dn    = no                    # Don't add the email into cert DN
 
- nameopt	= default_ca		# Subject name display option
- certopt	= default_ca		# Certificate display option
+ nameopt	= ca_default		# Subject name display option
+ certopt	= ca_default		# Certificate display option
  copy_extensions = none			# Don't copy extensions from request
 
  [ policy_any ]
