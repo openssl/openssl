@@ -852,7 +852,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)())
 		{
 		if (!ssl_cert_inst(&s->cert))
 			{
-			SSLerr(SSL_F_SSL3_CTRL, ERR_R_MALLOC_FAILURE);
+			SSLerr(SSL_F_SSL3_CALLBACK_CTRL, ERR_R_MALLOC_FAILURE);
 			return(0);
 			}
 		}

@@ -195,7 +195,7 @@ CERT *ssl_cert_dup(CERT *cert)
 		ret->dh_tmp = DHparams_dup(cert->dh_tmp);
 		if (ret->dh_tmp == NULL)
 			{
-			SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_DH_LIB);
+			SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_DH_LIB);
 			goto err;
 			}
 		if (cert->dh_tmp->priv_key)
@@ -203,7 +203,7 @@ CERT *ssl_cert_dup(CERT *cert)
 			BIGNUM *b = BN_dup(cert->dh_tmp->priv_key);
 			if (!b)
 				{
-				SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_BN_LIB);
+				SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_BN_LIB);
 				goto err;
 				}
 			ret->dh_tmp->priv_key = b;
@@ -213,7 +213,7 @@ CERT *ssl_cert_dup(CERT *cert)
 			BIGNUM *b = BN_dup(cert->dh_tmp->pub_key);
 			if (!b)
 				{
-				SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_BN_LIB);
+				SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_BN_LIB);
 				goto err;
 				}
 			ret->dh_tmp->pub_key = b;
