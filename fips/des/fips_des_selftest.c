@@ -52,6 +52,7 @@
 #include <openssl/fips.h>
 #include <openssl/des.h>
 
+#ifdef FIPS
 static struct
     {
     DES_cblock key;
@@ -90,3 +91,4 @@ int FIPS_selftest_des()
 	}
     return 1;
     }
+#endif

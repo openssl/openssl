@@ -52,6 +52,7 @@
 #include <openssl/fips.h>
 #include <openssl/sha.h>
 
+#ifdef FIPS
 static char *test[]=
     {
     "",
@@ -87,3 +88,5 @@ int FIPS_selftest_sha1()
 	}
     return 1;
     }
+
+#endif

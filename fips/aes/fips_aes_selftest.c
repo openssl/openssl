@@ -52,6 +52,7 @@
 #include <openssl/fips.h>
 #include <openssl/aes.h>
 
+#ifdef FIPS
 static struct
     {
     unsigned char key[16];
@@ -88,3 +89,4 @@ int FIPS_selftest_aes()
 	}
     return 1;
     }
+#endif
