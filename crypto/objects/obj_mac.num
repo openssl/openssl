@@ -565,3 +565,9 @@ wap_wsg_idm_ecid_wtls1		564
 wap_wsg_idm_ecid_wtls6		565
 wap_wsg_idm_ecid_wtls8		566
 wap_wsg_idm_ecid_wtls9		567
+x500UniqueIdentifier		568
+mime_mhs		569
+mime_mhs_headings		570
+mime_mhs_bodies		571
+id_hex_partial_message		572
+id_hex_multipart_message		573

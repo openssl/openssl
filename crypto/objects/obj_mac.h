@@ -583,7 +583,6 @@
 #define NID_pkcs9		47
 #define OBJ_pkcs9		OBJ_pkcs,9L
 
-#define SN_pkcs9_emailAddress		"Email"
 #define LN_pkcs9_emailAddress		"emailAddress"
 #define NID_pkcs9_emailAddress		48
 #define OBJ_pkcs9_emailAddress		OBJ_pkcs9,1L
@@ -1876,12 +1875,10 @@
 #define NID_organizationalUnitName		18
 #define OBJ_organizationalUnitName		OBJ_X509,11L
 
-#define SN_title		"T"
 #define LN_title		"title"
 #define NID_title		106
 #define OBJ_title		OBJ_X509,12L
 
-#define SN_description		"D"
 #define LN_description		"description"
 #define NID_description		107
 #define OBJ_description		OBJ_X509,13L
@@ -1891,19 +1888,18 @@
 #define NID_name		173
 #define OBJ_name		OBJ_X509,41L
 
-#define SN_givenName		"G"
+#define SN_givenName		"gn"
 #define LN_givenName		"givenName"
 #define NID_givenName		99
 #define OBJ_givenName		OBJ_X509,42L
 
-#define SN_initials		"I"
 #define LN_initials		"initials"
 #define NID_initials		101
 #define OBJ_initials		OBJ_X509,43L
 
-#define LN_uniqueIdentifier		"uniqueIdentifier"
-#define NID_uniqueIdentifier		102
-#define OBJ_uniqueIdentifier		OBJ_X509,45L
+#define LN_x500UniqueIdentifier		"x500UniqueIdentifier"
+#define NID_x500UniqueIdentifier		568
+#define OBJ_x500UniqueIdentifier		OBJ_X509,45L
 
 #define SN_dnQualifier		"dnQualifier"
 #define LN_dnQualifier		"dnQualifier"
@@ -2150,6 +2146,31 @@
 #define LN_dcObject		"dcObject"
 #define NID_dcObject		390
 #define OBJ_dcObject		OBJ_Enterprises,1466L,344L
+
+#define SN_mime_mhs		"mime-mhs"
+#define LN_mime_mhs		"MIME MHS"
+#define NID_mime_mhs		569
+#define OBJ_mime_mhs		OBJ_Mail,1L
+
+#define SN_mime_mhs_headings		"mime-mhs-headings"
+#define LN_mime_mhs_headings		"mime-mhs-headings"
+#define NID_mime_mhs_headings		570
+#define OBJ_mime_mhs_headings		OBJ_mime_mhs,1L
+
+#define SN_mime_mhs_bodies		"mime-mhs-bodies"
+#define LN_mime_mhs_bodies		"mime-mhs-bodies"
+#define NID_mime_mhs_bodies		571
+#define OBJ_mime_mhs_bodies		OBJ_mime_mhs,2L
+
+#define SN_id_hex_partial_message		"id-hex-partial-message"
+#define LN_id_hex_partial_message		"id-hex-partial-message"
+#define NID_id_hex_partial_message		572
+#define OBJ_id_hex_partial_message		OBJ_mime_mhs_headings,1L
+
+#define SN_id_hex_multipart_message		"id-hex-multipart-message"
+#define LN_id_hex_multipart_message		"id-hex-multipart-message"
+#define NID_id_hex_multipart_message		573
+#define OBJ_id_hex_multipart_message		OBJ_mime_mhs_headings,2L
 
 #define SN_rle_compression		"RLE"
 #define LN_rle_compression		"run length compression"

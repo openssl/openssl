@@ -168,7 +168,7 @@ pkcs7 6			:			: pkcs7-encryptedData
 
 pkcs 9			: pkcs9
 !module pkcs9
-pkcs9 1			: Email			: emailAddress
+pkcs9 1			: 			: emailAddress
 pkcs9 2			:			: unstructuredName
 pkcs9 3			:			: contentType
 pkcs9 4			:			: messageDigest
@@ -606,12 +606,12 @@ X509 7			: L			: localityName
 X509 8			: ST			: stateOrProvinceName
 X509 10			: O			: organizationName
 X509 11			: OU			: organizationalUnitName
-X509 12			: T			: title
-X509 13			: D			: description
+X509 12			: 			: title
+X509 13			: 			: description
 X509 41			: name			: name
-X509 42			: G			: givenName
-X509 43			: I			: initials
-X509 45			: 			: uniqueIdentifier
+X509 42			: gn			: givenName
+X509 43			: 			: initials
+X509 45			: 			: x500UniqueIdentifier
 X509 46			: dnQualifier		: dnQualifier
 X509 72			: role			: role
 
@@ -701,6 +701,13 @@ Private 1		: enterprises		: Enterprises
 
 # RFC 2247
 Enterprises 1466 344	: dcobject		: dcObject
+
+# RFC 1495
+Mail 1			: mime-mhs		: MIME MHS
+mime-mhs 1		: mime-mhs-headings	: mime-mhs-headings
+mime-mhs 2		: mime-mhs-bodies	: mime-mhs-bodies
+mime-mhs-headings 1	: id-hex-partial-message : id-hex-partial-message
+mime-mhs-headings 2	: id-hex-multipart-message : id-hex-multipart-message
 
 # What the hell are these OIDs, really?
 !Cname rle-compression
