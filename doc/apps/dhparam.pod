@@ -73,7 +73,7 @@ input file is ignored and parameters are generated instead.
 a file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVSM, and B<:> for
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
 =item I<numbits>
