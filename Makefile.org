@@ -299,7 +299,7 @@ util/ssleay.num::
 	perl util/mkdef.pl ssl update
 
 TABLE: Configure
-	(echo 'Output of `Configure TABLE:'"'"; \
+	(echo 'Output of `Configure TABLE'"':"; \
 	perl Configure TABLE) > TABLE
 
 update: depend errors util/libeay.num util/ssleay.num TABLE
