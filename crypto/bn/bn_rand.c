@@ -76,7 +76,7 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 
 	bytes=(bits+7)/8;
 	bit=(bits-1)%8;
-	mask=0xff<<bit;
+	mask=0xff<<(bit+1);
 
 	buf=(unsigned char *)OPENSSL_malloc(bytes);
 	if (buf == NULL)
@@ -104,7 +104,7 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 		{
 		if (top)
 			{
-			if (bit	== 0)
+			if (bit == 0)
 				{
 				buf[0]=1;
 				buf[1]|=0x80;
@@ -112,16 +112,15 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 			else
 				{
 				buf[0]|=(3<<(bit-1));
-				buf[0]&= ~(mask<<1);
 				}
 			}
 		else
 			{
 			buf[0]|=(1<<bit);
-			buf[0]&= ~(mask<<1);
 			}
 		}
-	if (bottom) /* set bottom bits to whatever odd is */
+	buf[0] &= ~mask;
+	if (bottom) /* set bottom bit if requested */
 		buf[bytes-1]|=1;
 	if (!BN_bin2bn(buf,bytes,rnd)) goto err;
 	ret=1;
@@ -156,7 +155,7 @@ int	BN_rand_range(BIGNUM *r, BIGNUM *range)
 		}
 
 	n = BN_num_bits(range); /* n > 0 */
-	
+
 	if (n == 1)
 		{
 		if (!BN_zero(r)) return 0;
@@ -194,4 +193,3 @@ int	BN_rand_range(BIGNUM *r, BIGNUM *range)
 
 	return 1;
 	}
-
