@@ -59,6 +59,8 @@
 #ifndef HEADER_RAND_H
 #define HEADER_RAND_H
 
+#include <stdlib.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
