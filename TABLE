@@ -71,7 +71,7 @@ $ranlib       =
 
 *** Cygwin
 $cc           = gcc
-$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -march=486 -Wall
+$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -march=i486 -Wall
 $unistd       = 
 $thread_cflag = 
 $lflags       = 
