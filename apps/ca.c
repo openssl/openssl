@@ -1515,7 +1515,7 @@ bad:
 			else
 #endif
 #ifndef OPENSSL_NO_ECDSA
-			if (pkey->type == EVP_PKEY_ECDSA)
+			if (pkey->type == EVP_PKEY_EC)
 				dgst=EVP_ecdsa();
 			else
 #endif
@@ -2293,7 +2293,7 @@ again2:
 	EVP_PKEY_free(pktmp);
 #endif
 #ifndef OPENSSL_NO_ECDSA
-	if (pkey->type == EVP_PKEY_ECDSA)
+	if (pkey->type == EVP_PKEY_EC)
 		dgst = EVP_ecdsa();
 	pktmp = X509_get_pubkey(ret);
 	if (EVP_PKEY_missing_parameters(pktmp) &&

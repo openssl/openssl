@@ -1446,7 +1446,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 			else
 #endif
 #if !defined(OPENSSL_NO_ECDSA)
-				if (pkey->type == EVP_PKEY_ECDSA)
+				if (pkey->type == EVP_PKEY_EC)
 				{
 				/* let's do ECDSA */
 				EVP_SignInit_ex(&md_ctx,EVP_ecdsa(), NULL);
@@ -2001,7 +2001,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 				 }
                         if (((clnt_pub_pkey=X509_get_pubkey(s->session->peer))
 			    == NULL) || 
-			    (clnt_pub_pkey->type != EVP_PKEY_ECDSA))
+			    (clnt_pub_pkey->type != EVP_PKEY_EC))
                         	{
 				/* XXX: For now, we do not support client
 				 * authentication using ECDH certificates
@@ -2228,7 +2228,7 @@ static int ssl3_get_cert_verify(SSL *s)
 	else
 #endif
 #ifndef OPENSSL_NO_ECDSA
-		if (pkey->type == EVP_PKEY_ECDSA)
+		if (pkey->type == EVP_PKEY_EC)
 		{
 		j=ECDSA_verify(pkey->save_type,
 			&(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]),

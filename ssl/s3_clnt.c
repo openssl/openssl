@@ -1349,7 +1349,7 @@ static int ssl3_get_key_exchange(SSL *s)
 		else
 #endif
 #ifndef OPENSSL_NO_ECDSA
-			if (pkey->type == EVP_PKEY_ECDSA)
+			if (pkey->type == EVP_PKEY_EC)
 			{
 			/* let's do ECDSA */
 			EVP_VerifyInit_ex(&md_ctx,EVP_ecdsa(), NULL);
@@ -1907,7 +1907,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 				srvr_pub_pkey = X509_get_pubkey(s->session-> \
 				    sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
 				if ((srvr_pub_pkey == NULL) ||
-				    (srvr_pub_pkey->type != EVP_PKEY_ECDSA) ||
+				    (srvr_pub_pkey->type != EVP_PKEY_EC) ||
 				    (srvr_pub_pkey->pkey.eckey == NULL))
 					{
 					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
@@ -2118,7 +2118,7 @@ static int ssl3_send_client_verify(SSL *s)
 		else
 #endif
 #ifndef OPENSSL_NO_ECDSA
-			if (pkey->type == EVP_PKEY_ECDSA)
+			if (pkey->type == EVP_PKEY_EC)
 			{
 			if (!ECDSA_sign(pkey->save_type,
 				&(data[MD5_DIGEST_LENGTH]),

@@ -526,10 +526,7 @@ int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 			}
 		}
 #ifndef OPENSSL_NO_EC
-	/* XXX: Structurally, there is no distinction between 
-	 * ECDSA and ECDH public keys (both are ECPoints).
-	 * So EVP_PKEY_ECDSA should really be renamed EVP_PKEY_ECC
-	 * (or similar). As for ECC certificates, additional
+	/* As for ECC certificates, additional
 	 * information (e.g. in the optional key usage X509v3 
 	 * extension) could be used when available to distinguish
 	 * between ECDH and ECDSA certificates. For now, we do not
@@ -537,7 +534,7 @@ int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 	 * of checking for appropriate key usage to the SSL code
 	 * responsible for sending/processing ECC certificates.
 	 */
-	else if (i == EVP_PKEY_ECDSA)
+	else if (i == EVP_PKEY_EC)
 		{
 		ret = SSL_PKEY_ECC;
 		}

@@ -682,7 +682,8 @@ bad:
 			   message */
 			goto end;
 			}
-		if (EVP_PKEY_type(pkey->type) == EVP_PKEY_DSA || EVP_PKEY_type(pkey->type) == EVP_PKEY_ECDSA)
+		if (EVP_PKEY_type(pkey->type) == EVP_PKEY_DSA || 
+			EVP_PKEY_type(pkey->type) == EVP_PKEY_EC)
 			{
 			char *randfile = NCONF_get_string(req_conf,SECTION,"RANDFILE");
 			if (randfile == NULL)
@@ -852,7 +853,7 @@ loop:
 			digest=EVP_dss1();
 #endif
 #ifndef OPENSSL_NO_ECDSA
-		if (pkey->type == EVP_PKEY_ECDSA)
+		if (pkey->type == EVP_PKEY_EC)
 			digest=EVP_ecdsa();
 #endif
 		if (req == NULL)

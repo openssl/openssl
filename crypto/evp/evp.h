@@ -150,13 +150,13 @@
 #define EVP_PK_RSA	0x0001
 #define EVP_PK_DSA	0x0002
 #define EVP_PK_DH	0x0004
-#define EVP_PK_ECDSA	0x0008
+#define EVP_PK_EC	0x0008
 #define EVP_PKT_SIGN	0x0010
 #define EVP_PKT_ENC	0x0020
 #define EVP_PKT_EXCH	0x0040
 #define EVP_PKS_RSA	0x0100
 #define EVP_PKS_DSA	0x0200
-#define EVP_PKS_ECDSA	0x0400
+#define EVP_PKS_EC	0x0400
 #define EVP_PKT_EXP	0x1000 /* <= 512 bit key */
 
 #define EVP_PKEY_NONE	NID_undef
@@ -169,7 +169,6 @@
 #define EVP_PKEY_DSA4	NID_dsaWithSHA1_2
 #define EVP_PKEY_DH	NID_dhKeyAgreement
 #define EVP_PKEY_EC	NID_X9_62_id_ecPublicKey
-#define EVP_PKEY_ECDSA	EVP_PKEY_EC
 
 #ifdef	__cplusplus
 extern "C" {
@@ -310,7 +309,7 @@ struct env_md_st
 
 #ifndef OPENSSL_NO_ECDSA
 #define EVP_PKEY_ECDSA_method   ECDSA_sign,ECDSA_verify, \
-                                 {EVP_PKEY_ECDSA,0,0,0}
+                                 {EVP_PKEY_EC,0,0,0}
 #else   
 #define EVP_PKEY_ECDSA_method   EVP_PKEY_NULL_method
 #endif

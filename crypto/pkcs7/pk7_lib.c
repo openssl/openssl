@@ -310,7 +310,7 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	int nid;
 	char is_dsa;
 
-	if (pkey->type == EVP_PKEY_DSA || pkey->type == EVP_PKEY_ECDSA)
+	if (pkey->type == EVP_PKEY_DSA || pkey->type == EVP_PKEY_EC)
 		is_dsa = 1;
 	else
 		is_dsa = 0;
@@ -363,7 +363,7 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 #endif
 		p7i->digest_enc_alg->parameter = NULL; /* special case for DSA: omit 'parameter'! */
 		}
-	else if (nid == EVP_PKEY_ECDSA)
+	else if (nid == EVP_PKEY_EC)
 		{
 		p7i->digest_enc_alg->algorithm=OBJ_nid2obj(NID_ecdsa_with_SHA1);
 		if (!(p7i->digest_enc_alg->parameter=ASN1_TYPE_new()))

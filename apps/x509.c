@@ -870,7 +870,7 @@ bad:
 		                        digest=EVP_dss1();
 #endif
 #ifndef OPENSSL_NO_ECDSA
-				if (Upkey->type == EVP_PKEY_ECDSA)
+				if (Upkey->type == EVP_PKEY_EC)
 					digest=EVP_ecdsa();
 #endif
 
@@ -894,7 +894,7 @@ bad:
 		                        digest=EVP_dss1();
 #endif
 #ifndef OPENSSL_NO_ECDSA
-				if (CApkey->type == EVP_PKEY_ECDSA)
+				if (CApkey->type == EVP_PKEY_EC)
 					digest = EVP_ecdsa();
 #endif
 				
@@ -929,7 +929,7 @@ bad:
 		                        digest=EVP_dss1();
 #endif
 #ifndef OPENSSL_NO_ECDSA
-				if (pk->type == EVP_PKEY_ECDSA)
+				if (pk->type == EVP_PKEY_EC)
 					digest=EVP_ecdsa();
 #endif
 

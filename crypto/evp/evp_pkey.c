@@ -83,7 +83,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 #ifndef OPENSSL_NO_EC
 	EC_KEY *eckey = NULL;
 #endif
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 	ASN1_INTEGER *privkey;
 	ASN1_TYPE    *t1, *t2, *param = NULL;
 	STACK_OF(ASN1_TYPE) *n_stack = NULL;
@@ -124,7 +124,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 		EVP_PKEY_assign_RSA (pkey, rsa);
 		break;
 #endif
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 		case NID_ecdsa_with_SHA1:
 		case NID_dsa:
 		/* PKCS#8 DSA/ECDSA is weird: you just get a private key integer
@@ -235,7 +235,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 		} 
 		else /* nid == NID_ecdsa_with_SHA1 */
 		{
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
 			if ((eckey = d2i_ECParameters(NULL, &cp, 
 				plen)) == NULL)
 			{
@@ -350,8 +350,8 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 
 		break;
 #endif
-#ifndef OPENSSL_NO_ECDSA
-		case EVP_PKEY_ECDSA:
+#ifndef OPENSSL_NO_EC
+		case EVP_PKEY_EC:
 		if (!eckey_pkey2pkcs8(p8, pkey))
 		{
 			PKCS8_PRIV_KEY_INFO_free(p8);
@@ -529,7 +529,7 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	q = p;
 	if (!i2d_ECParameters(pkey->pkey.eckey, &q))
 	{
-		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_ECDSA_LIB);
+		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
 		OPENSSL_free(p);
 		return 0;
 	}
@@ -703,7 +703,7 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 					 &p8->pkey->value.octet_string->data,
 					 &p8->pkey->value.octet_string->length)) 
 		{
-			EVPerr(EVP_F_ECDSA_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
 			sk_ASN1_TYPE_pop_free(neckey, ASN1_TYPE_free);
 			return 0;
 		}

@@ -1937,7 +1937,7 @@ int MAIN(int argc, char **argv)
 				{
 				/* Perform ECDSA signature test */
 				EC_KEY_generate_key(ecdsa[j]);
-				ret = ECDSA_sign(EVP_PKEY_ECDSA, buf, 20, ecdsasig, 
+				ret = ECDSA_sign(0, buf, 20, ecdsasig, 
 					&ecdsasiglen, ecdsa[j]);
 				if (ret == 0) 
 					{
@@ -1953,9 +1953,12 @@ int MAIN(int argc, char **argv)
 						ECDSA_SECONDS);
 
 					Time_F(START);
-					for (count=0,run=1; COND(ecdsa_c[j][0]); count++) 
+					for (count=0,run=1; COND(ecdsa_c[j][0]);
+						count++) 
 						{
-						ret=ECDSA_sign(EVP_PKEY_ECDSA, buf, 20, ecdsasig, &ecdsasiglen, ecdsa[j]);
+						ret=ECDSA_sign(0, buf, 20, 
+							ecdsasig, &ecdsasiglen,
+							ecdsa[j]);
 						if (ret == 0) 
 							{
 							BIO_printf(bio_err, "ECDSA sign failure\n");
@@ -1974,7 +1977,8 @@ int MAIN(int argc, char **argv)
 					}
 
 				/* Perform ECDSA verification test */
-				ret=ECDSA_verify(EVP_PKEY_ECDSA, buf, 20, ecdsasig, ecdsasiglen, ecdsa[j]);
+				ret=ECDSA_verify(0, buf, 20, ecdsasig, 
+					ecdsasiglen, ecdsa[j]);
 				if (ret != 1) 
 					{
 					BIO_printf(bio_err,"ECDSA verify failure.  No ECDSA verify will be done.\n");

@@ -137,8 +137,8 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 		return(ret);
 		}
 #endif
-#ifndef OPENSSL_NO_ECDSA
-	if (pkey->type == EVP_PKEY_ECDSA)
+#ifndef OPENSSL_NO_EC
+	if (pkey->type == EVP_PKEY_EC)
 		{
 		int ret = pkey->save_parameters;
 
@@ -182,7 +182,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, EVP_PKEY *from)
 		}
 #endif
 #ifndef OPENSSL_NO_EC
-	if (to->type == EVP_PKEY_ECDSA)
+	if (to->type == EVP_PKEY_EC)
 		{
 		if (to->pkey.eckey->group != NULL)
 			EC_GROUP_free(to->pkey.eckey->group);
