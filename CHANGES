@@ -43,7 +43,7 @@
   *) Make object definitions compliant to LDAP (RFC2256): SN is the short
      form for "surname", serialNumber has no short form (Michael Bell
      <michael.bell@rz.hu-berlin.de>).
-     [Lutu Jaenicke]
+     [Lutz Jaenicke]
 
   *) Add an "init" command to the ENGINE config module and auto initialize
      ENGINEs. Without any "init" command the ENGINE will be initialized 
