@@ -279,6 +279,7 @@ test_engine:
 
 test_ssl: keyU.ss certU.ss certCA.ss
 	@echo "test SSL protocol"
+	@$(SET_SO_PATHS); sh ./testfipsssl keyU.ss certU.ss certCA.ss
 	@$(SET_SO_PATHS); sh ./testssl keyU.ss certU.ss certCA.ss
 
 test_ca:
@@ -553,6 +554,9 @@ $(SSLTEST): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	  $(CC) -o $(SSLTEST) $(CFLAGS) $(SSLTEST).o $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
+	fi
+	if echo "$(CFLAG)" | grep " -DFIPS" > /dev/null 2> /dev/null; then \
+	  $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(SSLTEST); \
 	fi
 
 $(ENGINETEST): $(ENGINETEST).o $(DLIBCRYPTO)

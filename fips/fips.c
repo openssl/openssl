@@ -55,8 +55,11 @@
 #include <openssl/evp.h>
 #include <string.h>
 #include <limits.h>
+#include "fips_locl.h"
 
 #ifdef FIPS
+
+int FIPS_md5_allowed;
 
 int FIPS_selftest()
     {
@@ -143,6 +146,10 @@ int FIPS_mode_set(int onoff,const char *path)
     return 1;
     }
 
+void FIPS_allow_md5(int onoff)
+    {
+    FIPS_md5_allowed=onoff;
+    }
 
 #if 0
 /* here just to cause error codes to exist */
