@@ -55,6 +55,14 @@
  
  Changes between 0.9.6d and 0.9.7  [XX xxx 2002]
 
+  *) Remove most calls to EVP_CIPHER_CTX_cleanup() in evp_enc.c, this 
+     allows existing EVP_CIPHER_CTX structures to be reused after
+     calling EVP_*Final(). This behaviour is used by encryption
+     BIOs and some applications. This has the side effect that
+     applications must explicitly clean up cipher contexts with
+     EVP_CIPHER_CTX_cleanup() or they will leak memory.
+     [Steve Henson]
+
   *) Check the values of dna and dnb in bn_mul_recursive before calling
      bn_mul_comba (a non zero value means the a or b arrays do not contain
      n2 elements) and fallback to bn_mul_normal if either is not zero.

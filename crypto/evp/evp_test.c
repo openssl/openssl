@@ -209,6 +209,8 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	exit(9);
 	}
 
+    EVP_CIPHER_CTX_cleanup(&ctx);
+
     printf("\n");
     }
 
@@ -278,6 +280,8 @@ static int test_digest(const char *digest,
 	}
 
     printf("\n");
+
+    EVP_MD_CTX_cleanup(&ctx);
 
     return 1;
     }
