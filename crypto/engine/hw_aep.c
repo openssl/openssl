@@ -58,7 +58,14 @@
 #include <stdio.h>
 #include <openssl/bn.h>
 #include <string.h>
+
+#include <openssl/e_os2.h>
+#ifndef OPENSSL_SYS_MSDOS
 #include <unistd.h>
+#else
+#include <process.h>
+typedef int pid_t;
+#endif
 
 #include <openssl/crypto.h>
 #include "cryptlib.h"
