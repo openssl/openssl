@@ -286,8 +286,6 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
 	return pkey;
 	}
 
-/* Initialise a engine type for use (or up its functional reference count
- * if it's already in use). */
 int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	{
 	if(e == NULL)
