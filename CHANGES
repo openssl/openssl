@@ -4,6 +4,15 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Fix various signed/unsigned issues to make a_strex,c
+     compile under VC++.
+     [Oscar Jacobsson <oscar.jacobsson@celocom.com>]
+
+  *) ASN1 fixes. i2d_ASN1_OBJECT was not returning the correct
+     length if passed a buffer. ASN1_INTEGER_to_BN failed
+     if passed a NULL BN and its argument was negative.
+     [Steve Henson, pointed out by Sven Heiberg <sven@tartu.cyber.ee>]
+
   *) Modification to PKCS#7 encoding routines to output definite
      length encoding. Since currently the whole structures are in
      memory there's not real point in using indefinite length 
