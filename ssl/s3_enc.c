@@ -474,6 +474,7 @@ int ssl3_enc(SSL *s, int send)
 				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECRYPTION_FAILED);
 				return 0;
 				}
+			/* otherwise, rec->length >= bs */
 			}
 		
 		EVP_Cipher(ds,rec->data,rec->input,l);
@@ -482,7 +483,7 @@ int ssl3_enc(SSL *s, int send)
 			{
 			i=rec->data[l-1]+1;
 			/* SSL 3.0 bounds the number of padding bytes by the block size;
-			 * padding bytes (except that last) are arbitrary */
+			 * padding bytes (except the last one) are arbitrary */
 			if (i > bs)
 				{
 				/* Incorrect padding. SSLerr() and ssl3_alert are done
@@ -491,6 +492,7 @@ int ssl3_enc(SSL *s, int send)
 				 * (see http://www.openssl.org/~bodo/tls-cbc.txt) */
 				return -1;
 				}
+			/* now i <= bs <= rec->length */
 			rec->length-=i;
 			}
 		}
