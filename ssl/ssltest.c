@@ -116,6 +116,8 @@
 
 #define _BSD_SOURCE 1		/* Or gethostname won't be declared properly
 				   on Linux and GNU platforms. */
+#define _XOPEN_SOURCE 1		/* Ot isascii won't be declared properly on
+				   VMS (at least with DECompHP C).  */
 
 #include <assert.h>
 #include <errno.h>
