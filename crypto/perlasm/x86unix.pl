@@ -566,13 +566,13 @@ sub main'picmeup
 ___
 		push(@out,$tmp);
 		}
-	elsif ($main'pic && $main'elf)
+	elsif ($main'pic && ($main'elf || $main'aout))
 		{
 		push(@out,"\t.align\t8\n");
 		&main'call(&main'label("PIC_me_up"));
 		&main'set_label("PIC_me_up");
 		&main'blindpop($dst);
-		&main'add($dst,"\$_GLOBAL_OFFSET_TABLE_+[.-" .
+		&main'add($dst,"\$$under"."_GLOBAL_OFFSET_TABLE_+[.-".
 				&main'label("PIC_me_up") . "]");
 		&main'mov($dst,&main'DWP($sym."\@GOT",$dst));
 		}
