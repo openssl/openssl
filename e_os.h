@@ -404,10 +404,11 @@ extern HINSTANCE _hInstance;
 #endif
 
 #if defined(sun) && !defined(__svr4__) && !defined(__SVR4)
+  /* bcopy can handle overlapping moves according to SunOS 4.1.4 manpage */
 # define memmove(s1,s2,n) bcopy((s2),(s1),(n))
 # define strtoul(s,e,b) ((unsigned long int)strtol((s),(e),(b)))
 extern char *sys_errlist[]; extern int sys_nerr;
-#  define strerror(errnum) \
+# define strerror(errnum) \
 	(((errnum)<0 || (errnum)>=sys_nerr) ? NULL : sys_errlist[errnum])
 #endif
 
