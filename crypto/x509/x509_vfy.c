@@ -756,7 +756,7 @@ int X509_cmp_time(ASN1_TIME *ctm, time_t *cmp_time)
 	{
 	char *str;
 	ASN1_TIME atm;
-	time_t offset;
+	long offset;
 	char buff1[24],buff2[24],*p;
 	int i,j;
 
