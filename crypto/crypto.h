@@ -203,7 +203,8 @@ typedef struct openssl_item_st
 #define CRYPTO_LOCK_BN  		35
 #define CRYPTO_LOCK_EC_PRE_COMP		36
 #define CRYPTO_LOCK_STORE		37
-#define CRYPTO_NUM_LOCKS		38
+#define CRYPTO_LOCK_COMP		38
+#define CRYPTO_NUM_LOCKS		39
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2

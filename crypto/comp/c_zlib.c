@@ -178,9 +178,12 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_COMP,ctx,&ctx->ex_data);
 	if (zlib_stateful_ex_idx == -1)
 		{
-		zlib_stateful_ex_idx =
-			CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_COMP,
-				0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
+		CRYPTO_w_lock(CRYPTO_LOCK_COMP);
+		if (zlib_stateful_ex_idx == -1)
+			zlib_stateful_ex_idx =
+				CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_COMP,
+					0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
+		CRYPTO_w_unlock(CRYPTO_LOCK_COMP);
 		if (zlib_stateful_ex_idx == -1)
 			goto err;
 		}
