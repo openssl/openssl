@@ -4,6 +4,14 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) In ssl3_get_client_hello (ssl/s3_srvr.c), generate a fatal alert
+     (sent using the client's version number) if client_version is
+     smaller than the protocol version in use.  Also change
+     ssl23_get_client_hello (ssl/s23_srvr.c) to select TLS 1.0 if
+     the client demanded SSL 3.0 but only TLS 1.0 is enabled; then
+     the client will at least see that alert.
+     [Bodo Moeller]
+
   *) Fix ssl3_get_message (ssl/s3_both.c) to handle message fragmentation
      correctly.
      [Bodo Moeller]
