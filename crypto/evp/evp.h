@@ -113,7 +113,7 @@
 #ifndef OPENSSL_NO_AES
 #include <openssl/rijndael.h>
 #endif
-#endif // 0
+#endif /* 0 */
 
 /*
 #define EVP_RC2_KEY_SIZE		16
@@ -466,7 +466,7 @@ struct evp_cipher_ctx_st
 		struct session_op *dev_crypto;
 #endif
 		} c;
-#endif // 0
+#endif /* 0 */
 	void *cipher_data; /* per EVP data */
 	int final_used;
 	int block_mask;
