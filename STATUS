@@ -1,11 +1,12 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/03/25 10:23:46 $
+  ______________                           $Date: 2000/03/25 10:28:35 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.5a: Under development...
-                       0.9.5a-beta1 is available.
+                       Proposed release date March 31st, 2000
+					   0.9.5a-beta1 is available.
                         sunos-gcc                       - failed (ssize_t)
                         ultrix-gcc, ultrix-cc           - failed (ssize_t)
                         sco5-cc                         - bc fails in test
