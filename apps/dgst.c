@@ -332,7 +332,13 @@ int MAIN(int argc, char **argv)
 
 
 	/* we use md as a filter, reading from 'in' */
-	BIO_set_md(bmd,md);
+	if (!BIO_set_md(bmd,md))
+		{
+		BIO_printf(bio_err, "Error setting digest %s\n", pname);
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+		
 	inp=BIO_push(bmd,in);
 
 	if (argc == 0)
