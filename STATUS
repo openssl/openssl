@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/03/24 15:08:04 $
+  ______________                           $Date: 2000/03/24 15:19:07 $
 
   DEVELOPMENT STATE
 
@@ -23,6 +23,18 @@
                         Mingw32                         - passed
                         VMS/Alpha 7.1 w/ DEC C 5.6-003  - passed
                         VMS/Alpha 7.2-1 w/ CPQ C 6.2-003- passed
+                        AIX 4.3.3.0 w/ cc               - passed
+                        AIX 4.3.3.0 w/ gcc (2.7.2.3?)   - passed
+                        Irix 6.4 w/ cc                  - passed
+                        Irix 6.4 w/ gcc                 - passed
+                        Irix 6.5 w/ cc                  - passed
+                        Irix 6.5 w/ gcc                 - passed
+                        NetBSD-x86                      - passed
+                        Unixware 7.0.1 w/ native cc     - passed
+                        Solaris-x86 2.6 w/ gcc 2.7.2.3  - passed
+                        Solaris-x86 2.7 w/ gcc 2.7.2.3  - passed
+                        True64 Unix w/ gcc 2.7.2.3      - passed
+                        Win32-NASM                      - passed
 
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
