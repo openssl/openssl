@@ -312,7 +312,7 @@ bad:
 
 	num -= offset;
 
-	if ((length == 0) || (length > num)) length=(unsigned int)num;
+	if ((length == 0) || ((long)length > num)) length=(unsigned int)num;
 	if(derout) {
 		if(BIO_write(derout, str + offset, length) != (int)length) {
 			BIO_printf(bio_err, "Error writing output\n");
