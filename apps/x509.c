@@ -606,9 +606,12 @@ bad:
 			sno = ASN1_INTEGER_new();
 			if (!sno || !rand_serial(NULL, sno))
 				goto end;
+			if (!X509_set_serialNumber(x, sno)) 
+				goto end;
+			ASN1_INTEGER_free(sno);
+			sno = NULL;
 			}
-
-		if (!X509_set_serialNumber(x, sno)) 
+		else if (!X509_set_serialNumber(x, sno)) 
 			goto end;
 
 		if (!X509_set_issuer_name(x,req->req_info->subject)) goto end;
