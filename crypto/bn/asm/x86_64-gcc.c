@@ -186,7 +186,7 @@ BN_ULONG bn_add_words (BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int n)
 	"	leaq	1(%2),%2	\n"
 	"	loop	1b		\n"
 	"	sbbq	%0,%0		\n"
-		: "+a"(ret),"+c"(n),"+r"(i)
+		: "=&a"(ret),"+c"(n),"=&r"(i)
 		: "r"(rp),"r"(ap),"r"(bp)
 		: "cc"
 	);
@@ -209,7 +209,7 @@ BN_ULONG bn_sub_words (BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int n)
 	"	leaq	1(%2),%2	\n"
 	"	loop	1b		\n"
 	"	sbbq	%0,%0		\n"
-		: "+a"(ret),"+c"(n),"+r"(i)
+		: "=&a"(ret),"+c"(n),"=&r"(i)
 		: "r"(rp),"r"(ap),"r"(bp)
 		: "cc"
 	);
