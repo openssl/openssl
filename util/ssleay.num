@@ -211,3 +211,4 @@ SSL_CTX_get_verify_depth                228
 SSL_get_verify_depth                    229
 sk_SSL_COMP_unshift                     230
 SSL_CTX_set_session_id_context          231
+SSL_CTX_set_cert_verify_callback        232
