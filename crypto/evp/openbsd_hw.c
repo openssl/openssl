@@ -59,7 +59,7 @@
 #include "evp_locl.h"
 #include <assert.h>
 
-// longest key supported in hardware
+/* longest key supported in hardware */
 #define MAX_HW_KEY	24
 
 static int fd;
@@ -115,14 +115,14 @@ static int dev_crypto_cleanup(EVP_CIPHER_CTX *ctx)
     return 1;
     }
 
-// FIXME: there should be some non-fatal way to report we fell back to s/w?
+/* FIXME: there should be some non-fatal way to report we fell back to s/w? */
 static int dev_crypto_des_ede3_init_key(EVP_CIPHER_CTX *ctx,
 					const unsigned char *key,
 					const unsigned char *iv, int enc)
     {
     if(!dev_crypto_init(ctx))
 	{
-	// fall back to using software...
+	/* fall back to using software... */
 	ctx->cipher=EVP_des_ede3_cbc();
 	return ctx->cipher->init(ctx,key,iv,enc);
 	}
@@ -135,7 +135,7 @@ static int dev_crypto_des_ede3_init_key(EVP_CIPHER_CTX *ctx,
     if (ioctl(fd,CIOCGSESSION,ctx->c.dev_crypto) == -1)
 	{
 	err("CIOCGSESSION failed");
-	// fall back to using software...
+	/* fall back to using software... */
 	dev_crypto_cleanup(ctx);
 	ctx->cipher=EVP_des_ede3_cbc();
 	return ctx->cipher->init(ctx,key,iv,enc);
@@ -158,7 +158,9 @@ static int dev_crypto_des_ede3_cbc_cipher(EVP_CIPHER_CTX *ctx,
     cryp.ses=ctx->c.dev_crypto->ses;
     cryp.op=ctx->encrypt ? COP_ENCRYPT : COP_DECRYPT;
     cryp.flags=0;
-    //    cryp.len=((inl+7)/8)*8;
+#if 0
+    cryp.len=((inl+7)/8)*8;
+#endif
     cryp.len=inl;
     assert((inl&7) == 0);
     cryp.src=(caddr_t)in;

@@ -134,7 +134,9 @@ static int asn1_item_print_nm(BIO *out, void *fld, int indent, const ASN1_ITEM *
 int ASN1_template_print(BIO *out, void *fld, int indent, const ASN1_TEMPLATE *tt)
 {
 	int i, flags;
-	//if(!fld) return 0;
+#if 0
+	if(!fld) return 0; 
+#endif
 	flags = tt->flags;
 	if(flags & ASN1_TFLG_SK_MASK) {
 		char *tname;
