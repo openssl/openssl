@@ -161,10 +161,11 @@ static void fmtint     (void (*)(char **, size_t *, size_t *, int),
 			char **, size_t *, size_t *, LLONG, int, int, int, int);
 static void fmtfp      (void (*)(char **, size_t *, size_t *, int),
 			char **, size_t *, size_t *, LDOUBLE, int, int, int);
+#ifndef USE_ALLOCATING_PRINT
 static int dopr_isbig (size_t, size_t);
 static int dopr_copy (size_t);
 static void dopr_outch (char **, size_t *, size_t *, int);
-#ifdef USE_ALLOCATING_PRINT
+#else
 static int doapr_isbig (size_t, size_t);
 static int doapr_copy (size_t);
 static void doapr_outch (char **, size_t *, size_t *, int);
@@ -203,6 +204,7 @@ static void _dopr(void (*)(char **, size_t *, size_t *, int),
 #define char_to_int(p) (p - '0')
 #define MAX(p,q) ((p >= q) ? p : q)
 
+#ifndef USE_ALLOCATING_PRINT
 static void
 dopr(
     char *buffer,
@@ -215,7 +217,7 @@ dopr(
 	  &buffer, &maxlen, retlen, format, args);
 }
 
-#ifdef USE_ALLOCATING_PRINT
+#else
 static void
 doapr(
     char **buffer,
