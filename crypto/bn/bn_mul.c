@@ -631,7 +631,6 @@ int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 
 	al=a->top;
 	bl=b->top;
-	r->neg=a->neg^b->neg;
 
 	if ((al == 0) || (bl == 0))
 		{
@@ -647,6 +646,7 @@ int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 		}
 	else
 		rr = r;
+	rr->neg=a->neg^b->neg;
 
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
 	i = al-bl;
