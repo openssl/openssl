@@ -27,6 +27,7 @@ It can be used for
  o  Calculation of Message Digests
  o  Encryption and Decryption with Ciphers
  o  SSL/TLS Client and Server Tests
+ o  Handling of S/MIME signed or encrypted mail
 
 =head1 COMMAND SUMMARY
 
@@ -129,6 +130,10 @@ SSL Connection Timer.
 =item B<sess_id>
 
 SSL Session Data Management.
+
+=item B<smime>
+
+S/MIME mail processing.
 
 =item B<speed>
 

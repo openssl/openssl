@@ -71,7 +71,7 @@ See L<ERR_put_error(3)> if you want to record error codes in the
 OpenSSL error system from within your application.
 
 The remainder of this section is of interest only if you want to add
-new functionality to OpenSSL.
+new error codes to OpenSSL or add error codes from external libraries.
 
 =head2 Reporting errors
 
@@ -88,6 +88,11 @@ When you are using new function or reason codes, run B<make errors>.
 The necessary B<#define>s will then automatically be added to the
 sub-library's header file.
 
+Although a library will normally report errors using its own specific
+macro, a different macro is used. This is normally only done when a
+library wants to include ASN1 code which must user the ASN1 libraries
+error macro.
+
 =head2 Adding new libraries
 
 When adding a new sub-library to OpenSSL, assign it a library number
@@ -101,6 +106,47 @@ C<ERR_load_XXX_strings()> to the ERR_load_crypto_strings() function
 to B<crypto/err/openssl.ec>, and add B<xxx_err.c> to the Makefile.
 Running B<make errors> will then generate a file B<xxx_err.c>, and
 add all error codes used in the library to B<xxx.h>.
+
+Additionally the library include file must have a certain form.
+Typically it will initially look like this:
+
+ #ifndef HEADER_XXX_H
+ #define HEADER_XXX_H
+
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+
+ /* Include files */
+
+ #include <openssl/bio.h>
+ #include <openssl/x509.h>
+
+ /* Macros, structures and function prototypes */
+
+
+ /* BEGIN ERROR CODES */
+
+The B<BEGIN ERROR CODES> sequence is used by the error code
+generation script as the point to place new error codes, any text
+after this point will be overwritten when B<make errors> is run.
+The closing #endif etc will be automatically added by the script.
+
+The generated C error code file B<xxx_err.c> will load the header
+files B<stdio.h>, B<openssl/err.h> and B<openssl/xxx.h> so the
+header file must load any additional header files containg any
+definitions it uses.
+
+=head1 USING ERROR CODES IN EXTERNAL LIBRARIES
+
+It is also possible to use OpenSSL's error code scheme in external
+libraries. The library needs to load its own codes and call the OpenSSL
+error code insertion script B<mkerr.pl> explicitly to add codes to
+the header file and generate the C error code file. This will normally
+be done if the external library needs to generate new ASN1 structures
+but it can also be used to add more general purpose error code handling.
+
+TBA more details
 
 =head1 INTERNALS
 
