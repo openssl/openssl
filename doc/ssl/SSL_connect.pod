@@ -25,7 +25,8 @@ handshake has been finished or an error occurred.
 
 If the underlying BIO is B<non-blocking>, SSL_connect() will also return
 when the underlying BIO could not satisfy the needs of SSL_connect()
-to continue the handshake. In this case a call to SSL_get_error() with the
+to continue the handshake, indicating the problem by the return value -1.
+In this case a call to SSL_get_error() with the
 return value of SSL_connect() will yield B<SSL_ERROR_WANT_READ> or
 B<SSL_ERROR_WANT_WRITE>. The calling process then must repeat the call after
 taking appropriate action to satisfy the needs of SSL_connect().
