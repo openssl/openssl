@@ -726,6 +726,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 		{
 		unsigned char *src = s->s3->handshake_fragment;
 		unsigned char *dst = buf;
+		unsigned int j;
 
 		n = 0;
 		while ((len > 0) && (s->s3->handshake_fragment_len > 0))
@@ -735,8 +736,8 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 			n++;
 			}
 		/* move any remaining fragment bytes: */
-		for (i = 0; i < s->s3->handshake_fragment_len; i++)
-			s->s3->handshake_fragment[i] = *src++;
+		for (j = 0; j < s->s3->handshake_fragment_len; j++)
+			s->s3->handshake_fragment[j] = *src++;
 		return n;
 	}
 
