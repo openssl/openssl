@@ -129,8 +129,7 @@ const EC_METHOD *EC_GFp_recp_method(void); /* TODO */
 const EC_METHOD *EC_GFp_nist_method(void); /* TODO */
 #endif
 
-/* EC_METHODs for curves over GF(2^m).
- * EC_GF2m_simple_method provides the basis for the optimized methods.
+/* EC_METHOD for curves over GF(2^m).
  */
 const EC_METHOD *EC_GF2m_simple_method(void);
 
