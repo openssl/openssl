@@ -254,11 +254,12 @@
      "Douglas E. Engert" <deengert@anl.gov>.
      [Lutz Jaenicke]
 
-  ?) Add support for shared libraries for Unixware-7 and support including
-     shared libraries for OpenUNIX-8 (Boyd Lynn Gerber <gerberb@zenez.com>).
+  +) Add support for shared libraries for Unixware-7
+     (Boyd Lynn Gerber <gerberb@zenez.com>).
      [Lutz Jaenicke]
 
-  -) OpenUNIX-8 support (Boyd Lynn Gerber <gerberb@zenez.com>)
+  *) Add OpenUNIX-8 support including shared libraries
+     (Boyd Lynn Gerber <gerberb@zenez.com>).
      [Lutz Jaenicke]
 
   *) Improve RSA_padding_check_PKCS1_OAEP() check again to avoid
