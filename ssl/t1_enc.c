@@ -490,12 +490,18 @@ printf("\nkey block\n");
 		 */
 		s->s3->need_empty_fragments = 1;
 
-#ifndef NO_RC4
-		if ((s->session->cipher != NULL) && ((s->session->cipher->algorithms & SSL_ENC_MASK) == SSL_RC4))
-			s->s3->need_empty_fragments = 0;
+		if (s->session->cipher != NULL)
+			{
+			if ((s->session->cipher->algorithms & SSL_ENC_MASK) == SSL_eNULL)
+				s->s3->need_empty_fragments = 0;
+			
+#ifndef OPENSSL_NO_RC4
+			if ((s->session->cipher->algorithms & SSL_ENC_MASK) == SSL_RC4)
+				s->s3->need_empty_fragments = 0;
 #endif
+			}
 		}
-		
+
 	return(1);
 err:
 	SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,ERR_R_MALLOC_FAILURE);
