@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/10/23 08:01:41 $
+  ______________                           $Date: 2000/10/23 14:36:18 $
 
   DEVELOPMENT STATE
 
@@ -25,7 +25,7 @@
     o Steve is currently working on (in no particular order):
         ASN1 code redesign, butchery, replacement.
         EVP cipher enhancement.
-        Proper (or at least usable) certificate chain verification.
+     /* Proper (or at least usable) certificate chain verification. */
 	Private key, certificate and CRL API and implementation.
 	Developing and bugfixing PKCS#7 (S/MIME code).
         Various X509 issues: character sets, certificate request extensions.
