@@ -61,3 +61,8 @@
  > cd out32
  > ..\ms\testce
 
+ This will copy each of the test programs to the Windows CE device and execute
+ them, displaying the output of the tests on this computer.  The output should
+ look similar to the output produced by running the tests for a regular Windows
+ build.
+
