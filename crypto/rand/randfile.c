@@ -71,6 +71,7 @@
 #else
 # include <sys/stat.h>
 #endif
+#include OPENSSL_UNISTD
 
 #include <openssl/rand.h>
 

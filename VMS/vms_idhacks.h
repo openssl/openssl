@@ -143,6 +143,27 @@
 #define sk_ACCESS_DESCRIPTION_pop		sk_ACC_DESC_pop
 #define sk_ACCESS_DESCRIPTION_sort		sk_ACC_DESC_sort
 
+/* Hack the names created with DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS) */
+#define sk_CRYPTO_EX_DATA_FUNCS_new		sk_CRYPT_EX_DATFNS_new
+#define sk_CRYPTO_EX_DATA_FUNCS_new_null	sk_CRYPT_EX_DATFNS_new_null
+#define sk_CRYPTO_EX_DATA_FUNCS_free		sk_CRYPT_EX_DATFNS_free
+#define sk_CRYPTO_EX_DATA_FUNCS_num		sk_CRYPT_EX_DATFNS_num
+#define sk_CRYPTO_EX_DATA_FUNCS_value		sk_CRYPT_EX_DATFNS_value
+#define sk_CRYPTO_EX_DATA_FUNCS_set		sk_CRYPT_EX_DATFNS_set
+#define sk_CRYPTO_EX_DATA_FUNCS_zero		sk_CRYPT_EX_DATFNS_zero
+#define sk_CRYPTO_EX_DATA_FUNCS_push		sk_CRYPT_EX_DATFNS_push
+#define sk_CRYPTO_EX_DATA_FUNCS_unshift		sk_CRYPT_EX_DATFNS_unshift
+#define sk_CRYPTO_EX_DATA_FUNCS_find		sk_CRYPT_EX_DATFNS_find
+#define sk_CRYPTO_EX_DATA_FUNCS_delete		sk_CRYPT_EX_DATFNS_delete
+#define sk_CRYPTO_EX_DATA_FUNCS_delete_ptr	sk_CRYPT_EX_DATFNS_delete_ptr
+#define sk_CRYPTO_EX_DATA_FUNCS_insert		sk_CRYPT_EX_DATFNS_insert
+#define sk_CRYPTO_EX_DATA_FUNCS_set_cmp_func	sk_CRYPT_EX_DATFNS_set_cmp_func
+#define sk_CRYPTO_EX_DATA_FUNCS_dup		sk_CRYPT_EX_DATFNS_dup
+#define sk_CRYPTO_EX_DATA_FUNCS_pop_free	sk_CRYPT_EX_DATFNS_pop_free
+#define sk_CRYPTO_EX_DATA_FUNCS_shift		sk_CRYPT_EX_DATFNS_shift
+#define sk_CRYPTO_EX_DATA_FUNCS_pop		sk_CRYPT_EX_DATFNS_pop
+#define sk_CRYPTO_EX_DATA_FUNCS_sort		sk_CRYPT_EX_DATFNS_sort
+
 /* Hack the names created with DECLARE_ASN1_SET_OF(PKCS7_SIGNER_INFO) */
 #define i2d_ASN1_SET_OF_PKCS7_SIGNER_INFO	i2d_ASN1_SET_OF_PKCS7_SIGINF
 #define d2i_ASN1_SET_OF_PKCS7_SIGNER_INFO	d2i_ASN1_SET_OF_PKCS7_SIGINF
