@@ -11,8 +11,8 @@
           EC_GROUP_set_point_conversion_form()
           EC_GROUP_get_point_conversion_form()
      These control ASN1 encoding details:
-     - Curve are encoded explicitly unless asn1_flag has been set to
-       OPENSSL_EC_NAMED_CURVE.
+     - Curves (i.e., groups) are encoded explicitly unless asn1_flag
+       has been set to OPENSSL_EC_NAMED_CURVE.
      - Points are encoded in compressed form by default; options for
        asn1_for are as for point2oct, namely
           POINT_CONVERSION_COMPRESSED
