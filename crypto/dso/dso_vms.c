@@ -59,6 +59,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include "cryptlib.h"
+#include <openssl/dso.h>
 #ifdef OPENSSL_SYS_VMS
 #pragma message disable DOLLARID
 #include <lib$routines.h>
@@ -67,8 +69,6 @@
 #include <descrip.h>
 #include <starlet.h>
 #endif
-#include "cryptlib.h"
-#include <openssl/dso.h>
 
 #ifndef OPENSSL_SYS_VMS
 DSO_METHOD *DSO_METHOD_vms(void)
@@ -89,7 +89,7 @@ static int vms_init(DSO *dso);
 static int vms_finish(DSO *dso);
 static long vms_ctrl(DSO *dso, int cmd, long larg, void *parg);
 #endif
-static char *vms_name_converter(DSO *dso);
+static char *vms_name_converter(DSO *dso, const char *filename);
 
 static DSO_METHOD dso_meth_vms = {
 	"OpenSSL 'VMS' shared library method",
@@ -366,7 +366,10 @@ static DSO_FUNC_TYPE vms_bind_func(DSO *dso, const char *symname)
 
 static char *vms_name_converter(DSO *dso, const char *filename)
 	{
-	return(filename);
+        int len = strlen(filename);
+        char *not_translated = OPENSSL_malloc(len+1);
+        strcpy(not_translated,filename);
+	return(not_translated);
 	}
 
 #endif /* OPENSSL_SYS_VMS */
