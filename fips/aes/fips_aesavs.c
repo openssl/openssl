@@ -723,7 +723,7 @@ int proc_file(char *rqfile)
 		break;
 	    if(!strncasecmp(ibuf,"COUNT = ",8))
 		break;
-	  
+
 	    if (strncasecmp(ibuf, "KEY = ", 6) != 0)
 		{
 		printf("Missing KEY\n");
@@ -833,7 +833,7 @@ int proc_file(char *rqfile)
 		    err =1;
 		    break;
 		    }
-		
+
 		PrintValue("CIPHERTEXT", ciphertext, len);
 		if (strcmp(atest, "MCT") == 0)  /* Monte Carlo Test */
 		    {
@@ -889,7 +889,7 @@ int main(int argc, char **argv)
     char fn[250] = "", rfn[256] = "";
     int f_opt = 0, d_opt = 1;
 
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
     if(!FIPS_mode_set(1,argv[0]))
 	{
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));

@@ -53,7 +53,7 @@
 
 int main(int argc,char **argv)
     {
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
     int n;
 
     if(argc < 2)

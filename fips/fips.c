@@ -57,7 +57,7 @@
 #include <limits.h>
 #include "fips_locl.h"
 
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
 
 int FIPS_md5_allowed;
 

@@ -47,7 +47,9 @@
  *
  */
 
-#if defined(FIPS) || defined(OPENSSL_FIPS)
+#include <openssl/opensslconf.h>
+
+#ifdef OPENSSL_FIPS
 /* Note that these are defined in crypto/cryptlib.c so they're
  * available even without -lfips.
  */

@@ -84,7 +84,7 @@
 #ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
 
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
 
 DSA *DSA_generate_parameters(int bits,
 		unsigned char *seed_in, int seed_len,

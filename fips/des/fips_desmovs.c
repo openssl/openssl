@@ -667,7 +667,7 @@ int main(int argc, char **argv)
     char fn[250] = "", rfn[256] = "";
     int f_opt = 0, d_opt = 1;
 
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
     if(!FIPS_mode_set(1,argv[0]))
 	{
 	ERR_load_crypto_strings();

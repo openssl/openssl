@@ -1151,7 +1151,6 @@ $bn_obj = $bn_asm unless $bn_obj ne "";
 if ($fips)
 	{
 	$des_obj=$sha1_obj="";
-	$cflags.=" -DFIPS";
 	}
 $des_obj=$des_enc	unless (!$fips && $des_obj =~ /\.o$/);
 $bf_obj=$bf_enc		unless ($bf_obj =~ /\.o$/);

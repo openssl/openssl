@@ -68,7 +68,7 @@
 #endif
 #include <openssl/fips.h>
 
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp);
@@ -367,8 +367,8 @@ static int dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 	return BN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
 }
 
-#else /* ndef FIPS */
+#else /* ndef OPENSSL_FIPS */
 
 static void *dummy=&dummy;
 
-#endif /* ndef FIPS */
+#endif /* ndef OPENSSL_FIPS */

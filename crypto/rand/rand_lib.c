@@ -87,7 +87,7 @@ int RAND_set_rand_method(const RAND_METHOD *meth)
 
 const RAND_METHOD *RAND_get_rand_method(void)
 	{
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
 	if(FIPS_mode && default_RAND_meth != FIPS_rand_check)
 	    {
 	    RANDerr(RAND_F_RAND_GET_RAND_METHOD,RAND_R_NON_FIPS_METHOD);

@@ -52,7 +52,7 @@
 #include <openssl/fips.h>
 #include <openssl/sha.h>
 
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
 static char *test[]=
     {
     "",

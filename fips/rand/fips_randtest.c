@@ -110,7 +110,7 @@
 
 #include "e_os.h"
 
-#ifndef FIPS
+#ifndef OPENSSL_FIPS
 int main(int argc, char *argv[])
 {
     printf("No FIPS RAND support\n");

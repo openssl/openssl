@@ -74,7 +74,7 @@
 #include <openssl/fips.h>
 #include <openssl/fips_rand.h>
 
-#if defined(OPENSSL_NO_DSA) || !defined(FIPS)
+#if defined(OPENSSL_NO_DSA) || !defined(OPENSSL_FIPS)
 int main(int argc, char *argv[])
 {
     printf("No FIPS DSA support\n");
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
 	if(!FIPS_mode_set(1,argv[0]))
 	    {
 	    ERR_print_errors(bio_err);

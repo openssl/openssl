@@ -52,7 +52,7 @@
 #include <openssl/fips.h>
 #include <openssl/aes.h>
 
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
 static struct
     {
     unsigned char key[16];

@@ -71,7 +71,7 @@
 
 DSA_SIG * DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	{
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
 	if(FIPS_mode && !FIPS_dsa_check(dsa))
 		return NULL;
 #endif
@@ -95,7 +95,7 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
 
 int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	{
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
 	if(FIPS_mode && !FIPS_dsa_check(dsa))
 		return 0;
 #endif

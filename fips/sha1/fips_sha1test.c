@@ -7,7 +7,7 @@
 #include <openssl/err.h>
 #include <openssl/fips.h>
 
-#ifndef FIPS
+#ifndef OPENSSL_FIPS
 int main(int argc, char *argv[])
 {
     printf("No FIPS SHA1 support\n");

@@ -58,7 +58,7 @@
 
 #include "des_locl.h"
 
-#ifndef FIPS
+#ifndef OPENSSL_FIPS
 
 void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 	{
@@ -289,7 +289,7 @@ void DES_decrypt3(DES_LONG *data, DES_key_schedule *ks1,
 	data[1]=r;
 	}
 
-#endif /* ndef FIPS */
+#endif /* ndef OPENSSL_FIPS */
 
 #ifndef DES_DEFAULT_OPTIONS
 

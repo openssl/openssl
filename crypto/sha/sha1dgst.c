@@ -63,18 +63,18 @@
 
 #include <openssl/opensslv.h>
 
-#ifndef FIPS
+#ifndef OPENSSL_FIPS
 const char *SHA1_version="SHA1" OPENSSL_VERSION_PTEXT;
 
 /* The implementation is in ../md32_common.h */
 
 #include "sha_locl.h"
 
-#else /* ndef FIPS */
+#else /* ndef OPENSSL_FIPS */
 
 static void *dummy=&dummy;
 
-#endif /* ndef FIPS */
+#endif /* ndef OPENSSL_FIPS */
 
 #endif
 

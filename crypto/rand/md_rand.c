@@ -333,7 +333,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 #endif
 	int do_stir_pool = 0;
 
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
 	if(FIPS_mode)
 	    {
 	    FIPSerr(FIPS_F_SSLEAY_RAND_BYTES,FIPS_R_NON_FIPS_METHOD);

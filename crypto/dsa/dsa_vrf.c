@@ -73,7 +73,7 @@
 int DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 		  DSA *dsa)
 	{
-#ifdef FIPS
+#ifdef OPENSSL_FIPS
 	if(FIPS_mode && !FIPS_dsa_check(dsa))
 		return -1;
 #endif
