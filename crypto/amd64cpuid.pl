@@ -135,5 +135,4 @@ OPENSSL_ia32_cpuid:
 
 .section	.init
 	call	OPENSSL_cpuid_setup
-	.align	16
 ___

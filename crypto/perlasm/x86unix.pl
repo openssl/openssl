@@ -571,7 +571,6 @@ sub main'file_end
 		movl	%edx,0(%edi)
 		popl	%ebx
 		popl	%edi
-	.align	$align
 	1:
 ___
 		push (@out,$tmp);
@@ -716,7 +715,6 @@ sub main'initseg
 		$tmp=<<___;
 .section	.init
 	call	$under$f
-	.align	$align
 ___
 		}
 	elsif ($main'coff)
