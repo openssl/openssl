@@ -116,26 +116,30 @@ extern BIO *bio_err;
 #endif
 
 #if defined(MONOLITH) && !defined(OPENSSL_C)
-#  define apps_startup()	do_pipe_sig()
+#  define apps_startup() \
+		do_pipe_sig()
+#  define apps_shutdown()
 #else
 #  if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WIN16) || \
    defined(OPENSSL_SYS_WIN32)
 #    ifdef _O_BINARY
 #      define apps_startup() \
-		_fmode=_O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
+		do { _fmode=_O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
 		OpenSSL_add_all_algorithms(); ENGINE_load_builtin_engines(); \
-                setup_ui_method();
+                setup_ui_method(); } while(0)
 #    else
 #      define apps_startup() \
-		_fmode=O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
+		do { _fmode=O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
 		OpenSSL_add_all_algorithms(); ENGINE_load_builtin_engines(); \
-                setup_ui_method();
+                setup_ui_method(); } while(0)
 #    endif
 #  else
 #    define apps_startup() \
-		do_pipe_sig(); OpenSSL_add_all_algorithms(); \
-		ENGINE_load_builtin_engines(); setup_ui_method();
+		do { do_pipe_sig(); OpenSSL_add_all_algorithms(); \
+		ENGINE_load_builtin_engines(); setup_ui_method(); } while(0)
 #  endif
+#  define apps_shutdown() \
+		destroy_ui_method()
 #endif
 
 typedef struct args_st
