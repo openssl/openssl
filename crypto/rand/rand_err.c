@@ -71,7 +71,7 @@ static ERR_STRING_DATA RAND_str_functs[]=
 
 static ERR_STRING_DATA RAND_str_reasons[]=
 	{
-{RAND_R_PRNG_NOT_SEEDED                  ,"prng not seeded"},
+{RAND_R_PRNG_NOT_SEEDED                  ,"PRNG not seeded"},
 {0,NULL}
 	};
 
