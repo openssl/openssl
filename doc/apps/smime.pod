@@ -17,6 +17,9 @@ B<openssl> B<smime>
 [B<-rc2-40>]
 [B<-rc2-64>]
 [B<-rc2-128>]
+[B<-aes128>]
+[B<-aes192>]
+[B<-aes256>]
 [B<-in file>]
 [B<-certfile file>]
 [B<-signer file>]
@@ -126,11 +129,11 @@ B<-verify>. This directory must be a standard certificate directory: that
 is a hash of each subject name (using B<x509 -hash>) should be linked
 to each certificate.
 
-=item B<-des -des3 -rc2-40 -rc2-64 -rc2-128>
+=item B<-des -des3 -rc2-40 -rc2-64 -rc2-128 -aes128 -aes192 -aes256>
 
-the encryption algorithm to use. DES (56 bits), triple DES (168 bits)
-or 40, 64 or 128 bit RC2 respectively if not specified 40 bit RC2 is
-used. Only used with B<-encrypt>.
+the encryption algorithm to use. DES (56 bits), triple DES (168 bits),
+40, 64 or 128 bit RC2 or 128, 192 or 256 bit AES respectively.  If not
+specified 40 bit RC2 is used. Only used with B<-encrypt>.
 
 =item B<-nointern>
 
