@@ -163,7 +163,8 @@ prints out the start and expiry dates of a certificate.
 
 =item B<-fingerprint>
 
-prints out the digest of the DER encoded version of the whole certificate.
+prints out the digest of the DER encoded version of the whole certificate
+(see digest options).
 
 =item B<-C>
 
