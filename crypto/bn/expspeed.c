@@ -64,15 +64,18 @@
 #define NUM_START 0
 
 
-/* determine timings for modexp, gcd, or modular inverse */
+/* determine timings for modexp, modmul, modsqr, gcd, Kronecker symbol,
+ * modular inverse, or modular square roots */
 #define TEST_EXP
+#undef TEST_MUL
+#undef TEST_SQR
 #undef TEST_GCD
 #undef TEST_KRON
 #undef TEST_INV
 #undef TEST_SQRT
 #define P_MOD_64 9 /* least significant 6 bits for prime to be used for BN_sqrt timings */
 
-#if defined(TEST_EXP) + defined(TEST_GCD) + defined(TEST_KRON) + defined(TEST_INV) +defined(TEST_SQRT) != 1
+#if defined(TEST_EXP) + defined(TEST_MUL) + defined(TEST_SQR) + defined(TEST_GCD) + defined(TEST_KRON) + defined(TEST_INV) +defined(TEST_SQRT) != 1
 #  error "choose one test"
 #endif
 
@@ -270,6 +273,21 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 
 #if defined(TEST_EXP)
 			if (!BN_mod_exp(r,a,b,c,ctx)) goto err;
+#elif defined(TEST_MUL)
+			{
+			int i = 0;
+			for (i = 0; i < 50; i++)
+				if (!BN_mod_mul(r,a,b,c,ctx)) goto err;
+			}
+#elif defined(TEST_SQR)
+			{
+			int i = 0;
+			for (i = 0; i < 50; i++)
+				{
+				if (!BN_mod_sqr(r,a,c,ctx)) goto err;
+				if (!BN_mod_sqr(r,b,c,ctx)) goto err;
+				}
+			}
 #elif defined(TEST_GCD)
 			if (!BN_gcd(r,a,b,ctx)) goto err;
 			if (!BN_gcd(r,b,c,ctx)) goto err;
@@ -290,6 +308,10 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 		printf(
 #if defined(TEST_EXP)
 			"modexp %4d ^ %4d %% %4d"
+#elif defined(TEST_MUL)
+			"50*modmul %4d %4d %4d"
+#elif defined(TEST_SQR)
+			"100*modsqr %4d %4d %4d"
 #elif defined(TEST_GCD)
 			"3*gcd %4d %4d %4d"
 #elif defined(TEST_KRON)
