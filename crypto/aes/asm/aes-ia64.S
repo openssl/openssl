@@ -374,7 +374,7 @@ AES_decrypt:
 	mov	r44=r33			// save 2nd arg
 	mov	twenty4=24	}
 { .mmi;	ld4	r23=[r41],8
-	addl	te0=@ltoff(Td0#),gp
+	addl	te0=@ltoff(AES_Td#),gp
 	ADDP	r35=KSZ*60,r34	};;	// &AES_KEY->rounds, borrow s1
 { .mmi;	ld8	te0=[te0]
 	ld4	r35=[r35]		// AES_KEY->rounds
@@ -421,7 +421,7 @@ AES_decrypt:
 	mov	maskff=0xff	}//;;
 { .mmi;	ld1	r30=[r42]
 	ld1	r31=[r43]
-	addl	te0=@ltoff(Td0#),gp	};;	// that was close...
+	addl	te0=@ltoff(AES_Td#),gp	};;	// that was close...
 
 { .mii;	ld8	te0=[te0]
 	dep	r19=r16,r19,24,8	//;;
@@ -927,7 +927,7 @@ AES_Te:	data4	0xc66363a5, 0xf87c7c84, 0xee777799, 0xf67b7b8d
 .size	AES_Te#,5*256*4	// HP-UX assembler fails to ".-AES_Te#"
 
 .align	64
-.global	AES_Te#
+.global	AES_Td#
 .type	AES_Td#,@object
 AES_Td:	data4	0x51f4a750, 0x7e416553, 0x1a17a4c3, 0x3a275e96
 	data4	0x3bab6bcb, 0x1f9d45f1, 0xacfa58ab, 0x4be30393
