@@ -40,6 +40,11 @@
          *) applies to 0.9.6a ... 0.9.6d and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Fix ssl3_pending() (ssl/s3_lib.c) to prevent SSL_pending() from
+     returning non-zero before the data has been completely received
+     when using non-blocking I/O.
+     [Bodo Moeller; problem pointed out by John Hughes]
+
   *) Some of the ciphers missed the strength entry (SSL_LOW etc).
      [Ben Laurie, Lutz Jaenicke]
 
