@@ -4,6 +4,9 @@
 
  Changes between 0.9.7 and 0.9.7a  [XX xxx 2003]
 
+  *) Add support for FreeBSD on IA64.
+     [dirk.meyer@dinoex.sub.org via Richard Levitte, resolves #454]
+
   *) Adjust DES_cbc_cksum() so it returns the same value as the MIT
      Kerberos function mit_des_cbc_cksum().  Before this change,
      the value returned by DES_cbc_cksum() was like the one from

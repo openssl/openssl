@@ -641,6 +641,7 @@ EOF
   *-*-sunos4) OUT="sunos-$CC" ;;
   alpha*-*-freebsd*) OUT="FreeBSD-alpha" ;;
   sparc64-*-freebsd*) OUT="FreeBSD-sparc64" ;;
+  ia64-*-freebsd*) OUT="FreeBSD-ia64" ;;
   *-freebsd[3-9]*) OUT="FreeBSD-elf" ;;
   *-freebsd[1-2]*) OUT="FreeBSD" ;;
   *86*-*-netbsd) OUT="NetBSD-x86" ;;
