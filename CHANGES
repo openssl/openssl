@@ -5,6 +5,10 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Add PEDANTIC compiler flag to allow compilation with gcc -pedantic,
+     without disallowing inline assembler and the like for non-pedantic builds.
+     [Ben Laurie]
+
   *) Support Borland C++ builder.
      [Janez Jere <jj@void.si>, modified by Ulf Möller]
 
