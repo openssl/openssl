@@ -451,10 +451,10 @@ static int ENGINE_free_nolock(ENGINE *e)
 int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 		CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 	{
-	engine_ex_data_num++;
-	return(CRYPTO_get_ex_new_index(engine_ex_data_num - 1,
-			&engine_ex_data_stack, argl, argp,
-			new_func, dup_func, free_func));
+	if(CRYPTO_get_ex_new_index(engine_ex_data_num, &engine_ex_data_stack,
+			argl, argp, new_func, dup_func, free_func) < 0)
+		return -1;
+	return (engine_ex_data_num++);
 	}
 
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg)
