@@ -409,7 +409,7 @@ Skeleton pass phrase callback:
 	memcpy(buf, tmp, len);
 	return len;
 	}
-	
+
 =head1 NOTES
 
 The old B<PrivateKey> write routines are retained for compatibility.
@@ -430,6 +430,29 @@ this:
 
 this is a bug because an attempt will be made to reuse the data at B<x>
 which is an uninitialised pointer.
+
+=head1 PEM ENCRYPTION FORMAT
+
+This old B<PrivateKey> routines use a non standard technique for encryption.
+
+The private key (or other data) takes the following form: 
+
+ -----BEGIN RSA PRIVATE KEY-----
+ Proc-Type: 4,ENCRYPTED
+ DEK-Info: DES-EDE3-CBC,3F17F5316E2BAC89
+
+ ...base64 encoded data...
+ -----END RSA PRIVATE KEY-----
+
+The line beginning DEK-Info contains two comma separated pieces of information:
+the encryption algorithm name as used by EVP_get_cipherbyname() and an 8
+byte B<salt> encoded as a set of hexadecimal digits.
+
+After this is the base64 encoded encrypted data.
+
+The encryption key is determined using EVP_bytestokey(), using B<salt> and an
+iteration count of 1. The IV used is the value of B<salt> and *not* the IV
+returned by EVP_bytestokey().
 
 =head1 BUGS
 
