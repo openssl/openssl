@@ -225,7 +225,7 @@
 	$ md c:\openssl\lib
 	$ md c:\openssl\include
 	$ md c:\openssl\include\openssl
-	$ copy /b inc32\*               c:\openssl\include\openssl
+	$ copy /b inc32\openssl\*       c:\openssl\include\openssl
 	$ copy /b out32dll\ssleay32.lib c:\openssl\lib
 	$ copy /b out32dll\libeay32.lib c:\openssl\lib
 	$ copy /b out32dll\ssleay32.dll c:\openssl\bin
