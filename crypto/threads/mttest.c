@@ -84,6 +84,7 @@
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 
 #ifdef NO_FP_API
 #define APPS_WIN16
@@ -122,6 +123,8 @@ int thread_number=10;
 int number_of_loops=10;
 int reconnect=0;
 int cache_stats=0;
+
+static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 
 int doit(char *ctx[4]);
 static void print_stats(FILE *fp, SSL_CTX *ctx)
@@ -171,6 +174,8 @@ int main(int argc, char *argv[])
 	char *scert=TEST_SERVER_CERT;
 	char *ccert=TEST_CLIENT_CERT;
 	SSL_METHOD *ssl_method=SSLv23_method();
+
+	RAND_seed(rnd_seed, sizeof rnd_seed);
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
@@ -261,8 +266,15 @@ bad:
 	SSL_CTX_set_session_cache_mode(c_ctx,
 		SSL_SESS_CACHE_NO_AUTO_CLEAR|SSL_SESS_CACHE_SERVER);
 
-	SSL_CTX_use_certificate_file(s_ctx,scert,SSL_FILETYPE_PEM);
-	SSL_CTX_use_RSAPrivateKey_file(s_ctx,scert,SSL_FILETYPE_PEM);
+	if (!SSL_CTX_use_certificate_file(s_ctx,scert,SSL_FILETYPE_PEM))
+		{
+		ERR_print_errors(bio_err);
+		}
+	else if (!SSL_CTX_use_RSAPrivateKey_file(s_ctx,scert,SSL_FILETYPE_PEM))
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
 
 	if (client_auth)
 		{
@@ -491,6 +503,7 @@ int doit(char *ctx[4])
 					else
 						{
 						fprintf(stderr,"ERROR in CLIENT\n");
+						ERR_print_errors_fp(stderr);
 						return(1);
 						}
 					}
@@ -522,6 +535,7 @@ int doit(char *ctx[4])
 					else
 						{
 						fprintf(stderr,"ERROR in CLIENT\n");
+						ERR_print_errors_fp(stderr);
 						return(1);
 						}
 					}
