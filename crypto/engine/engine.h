@@ -64,6 +64,7 @@
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
 #include <openssl/rand.h>
+#include <openssl/evp.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -85,7 +86,8 @@ extern "C" {
  * All command numbers are shared between all engines, even if some don't
  * make sense to some engines.  In such a case, they do nothing but return
  * the error ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED. */
-#define ENGINE_CTRL_SET_LOGSTREAM	1
+#define ENGINE_CTRL_SET_LOGSTREAM		1
+#define ENGINE_CTRL_SET_PASSWORD_CALLBACK	2
 
 
 /* As we're missing a BIGNUM_METHOD, we need a couple of locally
@@ -229,6 +231,14 @@ int ENGINE_finish(ENGINE *e);
 /* WARNING: This is currently experimental and may change radically! */
 int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
 
+/* The following functions handle keys that are stored in some secondary
+ * location, handled by the engine.  The storage may be on a card or
+ * whatever. */
+EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
+	const char *passphrase);
+EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
+	const char *passphrase);
+
 /* This returns a pointer for the current ENGINE structure that
  * is (by default) performing any RSA operations. The value returned
  * is an incremented reference, so it should be free'd (ENGINE_finish)
@@ -310,6 +320,8 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_INIT				 119
 #define ENGINE_F_ENGINE_LIST_ADD			 120
 #define ENGINE_F_ENGINE_LIST_REMOVE			 121
+#define ENGINE_F_ENGINE_LOAD_PRIVATE_KEY		 150
+#define ENGINE_F_ENGINE_LOAD_PUBLIC_KEY			 151
 #define ENGINE_F_ENGINE_NEW				 122
 #define ENGINE_F_ENGINE_REMOVE				 123
 #define ENGINE_F_ENGINE_SET_BN_MOD_EXP			 124
@@ -324,9 +336,13 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_SET_NAME			 130
 #define ENGINE_F_ENGINE_SET_RAND			 131
 #define ENGINE_F_ENGINE_SET_RSA				 132
+#define ENGINE_F_ENGINE_UNLOAD_KEY			 152
 #define ENGINE_F_HWCRHK_CTRL				 143
 #define ENGINE_F_HWCRHK_FINISH				 135
+#define ENGINE_F_HWCRHK_GET_PASS			 155
 #define ENGINE_F_HWCRHK_INIT				 136
+#define ENGINE_F_HWCRHK_LOAD_PRIVKEY			 153
+#define ENGINE_F_HWCRHK_LOAD_PUBKEY			 154
 #define ENGINE_F_HWCRHK_MOD_EXP				 137
 #define ENGINE_F_HWCRHK_MOD_EXP_CRT			 138
 #define ENGINE_F_HWCRHK_RAND_BYTES			 139
@@ -338,6 +354,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_BIO_WAS_FREED				 121
 #define ENGINE_R_BN_CTX_FULL				 101
 #define ENGINE_R_BN_EXPAND_FAIL				 102
+#define ENGINE_R_CHIL_ERROR				 123
 #define ENGINE_R_CONFLICTING_ENGINE_ID			 103
 #define ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED		 119
 #define ENGINE_R_DSO_FAILURE				 104
@@ -350,8 +367,12 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_MISSING_KEY_COMPONENTS			 111
 #define ENGINE_R_NOT_INITIALISED			 117
 #define ENGINE_R_NOT_LOADED				 112
+#define ENGINE_R_NO_CALLBACK				 127
 #define ENGINE_R_NO_CONTROL_FUNCTION			 120
+#define ENGINE_R_NO_KEY					 124
+#define ENGINE_R_NO_LOAD_FUNCTION			 125
 #define ENGINE_R_NO_SUCH_ENGINE				 116
+#define ENGINE_R_NO_UNLOAD_FUNCTION			 126
 #define ENGINE_R_PROVIDE_PARAMETERS			 113
 #define ENGINE_R_REQUEST_FAILED				 114
 #define ENGINE_R_REQUEST_FALLBACK			 118

@@ -1896,3 +1896,5 @@ ENGINE_set_init_function                2471
 ENGINE_set_finish_function              2472
 ENGINE_get_ctrl_function                2473
 ENGINE_set_ctrl_function                2474
+ENGINE_load_public_key                  2475
+ENGINE_load_private_key                 2476

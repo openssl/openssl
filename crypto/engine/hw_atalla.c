@@ -155,6 +155,8 @@ static ENGINE engine_atalla =
 	atalla_init,
 	atalla_finish,
 	NULL, /* no ctrl() */
+	NULL, /* no load_privkey() */
+	NULL, /* no load_pubkey() */
 	0, /* no flags */
 	0, 0, /* no references */
 	NULL, NULL /* unlinked */

@@ -87,9 +87,11 @@ static ENGINE engine_openssl =
 	NULL,
 	NULL,
 	openssl_mod_exp_crt,
-	NULL, /* no "init()" */
-	NULL, /* no "finish()" */
-	NULL, /* no "ctrl()" */
+	NULL, /* no init() */
+	NULL, /* no finish() */
+	NULL, /* no ctrl() */
+	NULL, /* no load_privkey() */
+	NULL, /* no load_pubkey() */
 	0, /* no flags */
 	0, 0, /* no references. */
 	NULL, NULL /* unlinked */

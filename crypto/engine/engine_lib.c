@@ -216,6 +216,58 @@ int ENGINE_finish(ENGINE *e)
 	return to_return;
 	}
 
+EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
+	const char *passphrase)
+	{
+	if(e == NULL)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
+			ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+	if(e->funct_ref == 0)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
+			ENGINE_R_NOT_INITIALISED);
+		return 0;
+		}
+	if (!e->load_privkey)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
+			ENGINE_R_NO_LOAD_FUNCTION);
+		return 0;
+		}
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+	return e->load_privkey(key_id, passphrase);
+	}
+
+EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
+	const char *passphrase)
+	{
+	if(e == NULL)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
+			ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+	if(e->funct_ref == 0)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
+			ENGINE_R_NOT_INITIALISED);
+		return 0;
+		}
+	if (!e->load_pubkey)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
+			ENGINE_R_NO_LOAD_FUNCTION);
+		return 0;
+		}
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+	return e->load_pubkey(key_id, passphrase);
+	}
+
 /* Initialise a engine type for use (or up its functional reference count
  * if it's already in use). */
 int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())

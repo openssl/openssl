@@ -64,6 +64,7 @@
 #include <openssl/dh.h>
 #include <openssl/rand.h>
 #include <openssl/bn.h>
+#include <openssl/evp.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -110,6 +111,8 @@ typedef struct engine_st
 	int (*init)(void);
 	int (*finish)(void);
 	int (*ctrl)(int cmd, long i, void *p, void (*f)());
+	EVP_PKEY *(*load_privkey)(const char *key_id, const char *passphrase);
+	EVP_PKEY *(*load_pubkey)(const char *key_id, const char *passphrase);
 	int flags;
 	/* reference count on the structure itself */
 	int struct_ref;
