@@ -392,7 +392,7 @@ sub sha1_block_data
 	&X_expand("esi");
 	 &mov(&wparam(1),"esi");
 
-	&set_label("shortcut", 1);
+	&set_label("shortcut", 0, 1);
 	&comment("");
 	&comment("Start processing");
 

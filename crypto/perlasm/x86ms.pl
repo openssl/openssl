@@ -341,7 +341,7 @@ sub main'set_label
 		$label{$_[0]}="${label}${_[0]}";
 		$label++;
 		}
-	if((defined $_[1]) && ($_[1] == 1))
+	if((defined $_[2]) && ($_[2] == 1))
 		{
 		push(@out,"$label{$_[0]}::\n");
 		}

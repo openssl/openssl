@@ -4,6 +4,11 @@
 
  Changes between 0.9.5 and 0.9.6  [XX XXX 2000]
 
+  *) The second argument to set_label in perlasm was already being used
+     so couldn't be used as a "file scope" flag. Moved to third argument
+     which was free.
+     [Steve Henson]
+
   *) In PEM_ASN1_write_bio and some other functions, use RAND_pseudo_bytes
      instead of RAND_bytes for encryption IVs and salts.
      [Bodo Moeller]
