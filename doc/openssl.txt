@@ -104,7 +104,7 @@ extensions. In this case a line with:
 
 extensions = extension_section
 
-in the nameless (default) section is used. If no such line is include then
+in the nameless (default) section is used. If no such line is included then
 it uses the default section.
 
 You can also add extensions to CRLs: a line
@@ -141,11 +141,11 @@ reject it as invalid. Some broken software will reject certificates which
 have *any* critical extensions (these violates PKIX but we have to live
 with it).
 
-There are three main types of extension, string extensions, multi valued
+There are three main types of extension: string extensions, multi valued
 extensions, and raw extensions.
 
-String extensions simply have a string which defines the value of the or how
-it is obtained.
+String extensions simply have a string which contains either the value itself
+or how it is obtained.
 
 For example:
 
@@ -182,19 +182,25 @@ email.2=steve@there
 This is because the configuration file code cannot handle the same name
 occurring twice in the same extension.
 
-Raw extensions allow arbitrary data to be placed in an extension. For
-example
+The syntax of raw extensions is governed by the extension code: it can
+for example contain data in multiple sections. The correct syntax to
+use is defined by the extension code itself: check out the certificate
+policies extension for an example.
 
-1.2.3.4=critical,RAW:01:02:03:04
-1.2.3.4=RAW:01020304
+In addition it is also possible to use the word DER to include arbitrary
+data in any extension.
 
-The value following RAW is a hex dump of the extension contents. Any extension
-can be placed in this form to override the default behaviour. For example:
+1.2.3.4=critical,DER:01:02:03:04
+1.2.3.4=DER:01020304
 
-basicConstraints=critical,RAW:00:01:02:03
+The value following DER is a hex dump of the DER encoding of the extension
+Any extension can be placed in this form to override the default behaviour.
+For example:
 
-WARNING: raw extensions should be used with caution. It is possible to create
-totally invalid extensions unless care is taken.
+basicConstraints=critical,DER:00:01:02:03
+
+WARNING: DER should be used with caution. It is possible to create totally
+invalid extensions unless care is taken.
 
 CURRENTLY SUPPORTED EXTENSIONS.
 
