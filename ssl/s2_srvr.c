@@ -472,7 +472,7 @@ static int get_client_master_key(SSL *s)
 	 * random master secret (Bleichenbacher attack) */
 	if ((i < 0) ||
 		((!is_export && (i != EVP_CIPHER_key_length(c)))
-		|| (is_export && ((i != ek) || (s->s2->tmp.clear+i !=
+		|| (is_export && ((i != ek) || ((int)s->s2->tmp.clear+i !=
 			EVP_CIPHER_key_length(c))))))
 		{
 		ERR_clear_error();
