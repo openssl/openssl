@@ -4,6 +4,15 @@
 
  Changes between 0.9.5 and 0.9.5a  [XX XXX 2000]
 
+  *) For SSL_[CTX_]set_tmp_dh, don't create a DH key if SSL_OP_SINGLE_DH_USE
+     is set; it will be thrown away anyway because each handshake creates
+     its own key.
+     ssl_cert_dup, which is used by SSL_new, now copies DH keys in addition
+     to parameters -- in previous versions (since OpenSSL 0.9.3) the
+     'default key' from SSL_CTX_set_tmp_dh would always be lost, meanining
+     you effectivly got SSL_OP_SINGLE_DH_USE when using this macro.
+     [Bodo Moeller]
+
   *) New s_client option -ign_eof: EOF at stdin is ignored, and
      'Q' and 'R' lose their special meanings (quit/renegotiate).
      This is part of what -quiet does; unlike -quiet, -ign_eof

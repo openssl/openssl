@@ -191,15 +191,32 @@ CERT *ssl_cert_dup(CERT *cert)
 #ifndef NO_DH
 	if (cert->dh_tmp != NULL)
 		{
-		/* DH parameters don't have a reference count (and cannot
-		 * reasonably be shared anyway, as the secret exponent may
-		 * be created just when it is needed -- earlier library
-		 * versions did not pay attention to this) */
+		/* DH parameters don't have a reference count */
 		ret->dh_tmp = DHparams_dup(cert->dh_tmp);
 		if (ret->dh_tmp == NULL)
 			{
 			SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_DH_LIB);
 			goto err;
+			}
+		if (cert->dh_tmp->priv_key)
+			{
+			BIGNUM *b = BN_dup(cert->dh_tmp->priv_key);
+			if (!b)
+				{
+				SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_BN_LIB);
+				goto err;
+				}
+			ret->dh_tmp->priv_key = b;
+			}
+		if (cert->dh_tmp->pub_key)
+			{
+			BIGNUM *b = BN_dup(cert->dh_tmp->pub_key);
+			if (!b)
+				{
+				SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_BN_LIB);
+				goto err;
+				}
+			ret->dh_tmp->pub_key = b;
 			}
 		}
 	ret->dh_tmp_cb = cert->dh_tmp_cb;
