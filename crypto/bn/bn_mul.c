@@ -1110,7 +1110,13 @@ void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
 
 		}
 	rr= &(r[na]);
-	rr[0]=bn_mul_words(r,a,na,b[0]);
+	if (nb <= 0)
+		{
+		(void)bn_mul_words(r,a,na,0);
+		return;
+		}
+	else
+		rr[0]=bn_mul_words(r,a,na,b[0]);
 
 	for (;;)
 		{
