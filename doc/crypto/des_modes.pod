@@ -2,20 +2,13 @@
 
 =head1 NAME
 
-Modes of DES and other crypto algorithms of OpenSSL
+Modes of DES - The variants of DES and other crypto algorithms of OpenSSL
 
 =head1 DESCRIPTION
 
-Several crypto algorithms fo OpenSSL can be used in a number of modes.  The
-following text has been written in large parts by Eric Young in his original
-documentation for SSLeay, the predecessor of OpenSSL.  In turn, he attributed
-it to:
-
-	AS 2805.5.2
-	Australian Standard
-	Electronic funds transfer - Requirements for interfaces,
-	Part 5.2: Modes of operation for an n-bit block cipher algorithm
-	Appendix A
+Several crypto algorithms fo OpenSSL can be used in a number of modes.  Those
+are used for using block ciphers in a way similar to stream ciphers, among
+other things.
 
 =head1 OVERVIEW
 
@@ -238,6 +231,18 @@ As for CBC encryption but increases the key length to 168 bits with
 the same restrictions as for triple ecb mode.
 
 =back
+
+=head1 NOTES
+
+This text was been written in large parts by Eric Young in his original
+documentation for SSLeay, the predecessor of OpenSSL.  In turn, he attributed
+it to:
+
+	AS 2805.5.2
+	Australian Standard
+	Electronic funds transfer - Requirements for interfaces,
+	Part 5.2: Modes of operation for an n-bit block cipher algorithm
+	Appendix A
 
 =head1 SEE ALSO
 
