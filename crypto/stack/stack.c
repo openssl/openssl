@@ -82,13 +82,17 @@ char *STACK_version="Stack part of OpenSSL 0.9.2 31-Dec-1998";
 
 #include <errno.h>
 
-void sk_set_cmp_func(sk,c)
+int (*sk_set_cmp_func(sk,c))()
 STACK *sk;
 int (*c)();
 	{
+	int (*old)()=sk->comp;
+
 	if (sk->comp != c)
 		sk->sorted=0;
 	sk->comp=c;
+
+	return old;
 	}
 
 STACK *sk_dup(sk)

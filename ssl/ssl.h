@@ -859,6 +859,8 @@ int	SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, char *file, int type);
 int	SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, char *file, int type);
 int	SSL_CTX_use_certificate_file(SSL_CTX *ctx, char *file, int type);
 STACK * SSL_load_client_CA_file(char *file);
+int	SSL_add_cert_file_to_stack(STACK *stackCAs,const char *file);
+int	SSL_add_cert_dir_to_stack(STACK *stackCAs,const char *dir);
 #endif
 
 void	ERR_load_SSL_strings(void );
@@ -1111,6 +1113,8 @@ int	SSL_CTX_use_RSAPrivateKey_file();
 int	SSL_CTX_use_PrivateKey_file();
 int	SSL_CTX_use_certificate_file();
 STACK * SSL_load_client_CA_file();
+int	SSL_add_cert_file_to_stack();
+int	SSL_add_cert_dir_to_stack();
 #endif
 
 void	ERR_load_SSL_strings();
@@ -1317,6 +1321,7 @@ void SSL_set_tmp_dh_callback();
 #define SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM		 130
 #define SSL_F_SSL3_CLIENT_HELLO				 131
 #define SSL_F_SSL3_CONNECT				 132
+#define SSL_F_SSL3_CTRL					 213
 #define SSL_F_SSL3_CTX_CTRL				 133
 #define SSL_F_SSL3_ENC					 134
 #define SSL_F_SSL3_GET_CERTIFICATE_REQUEST		 135
@@ -1344,8 +1349,11 @@ void SSL_set_tmp_dh_callback();
 #define SSL_F_SSL3_SETUP_KEY_BLOCK			 157
 #define SSL_F_SSL3_WRITE_BYTES				 158
 #define SSL_F_SSL3_WRITE_PENDING			 159
+#define SSL_F_SSL_ADD_CERT_DIR_TO_STACK			 215
+#define SSL_F_SSL_ADD_CERT_FILE_TO_STACK		 216
 #define SSL_F_SSL_BAD_METHOD				 160
 #define SSL_F_SSL_BYTES_TO_CIPHER_LIST			 161
+#define SSL_F_SSL_CERT_INSTANTIATE			 214
 #define SSL_F_SSL_CERT_NEW				 162
 #define SSL_F_SSL_CHECK_PRIVATE_KEY			 163
 #define SSL_F_SSL_CLEAR					 164
@@ -1396,8 +1404,6 @@ void SSL_set_tmp_dh_callback();
 #define SSL_F_TLS1_ENC					 210
 #define SSL_F_TLS1_SETUP_KEY_BLOCK			 211
 #define SSL_F_WRITE_PENDING				 212
-#define SSL_F_SSL3_CTRL					 213
-#define SSL_F_SSL_CERT_INSTANTIATE			 214
 
 /* Reason codes. */
 #define SSL_R_APP_DATA_IN_HANDSHAKE			 100
@@ -1499,6 +1505,7 @@ void SSL_set_tmp_dh_callback();
 #define SSL_R_NULL_SSL_METHOD_PASSED			 196
 #define SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED		 197
 #define SSL_R_PACKET_LENGTH_TOO_LONG			 198
+#define SSL_R_PATH_TOO_LONG				 270
 #define SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE		 199
 #define SSL_R_PEER_ERROR				 200
 #define SSL_R_PEER_ERROR_CERTIFICATE			 201

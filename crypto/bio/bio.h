@@ -383,8 +383,10 @@ int BIO_get_ex_new_index(long argl, char *argp, int (*new_func)(),
 #define BIO_seek(b,ofs)	(int)BIO_ctrl(b,BIO_C_FILE_SEEK,ofs,NULL)
 #define BIO_tell(b)	(int)BIO_ctrl(b,BIO_C_FILE_TELL,0,NULL)
 
+/* name is cast to lose const, but might be better to route through a function
+   so we can do it safely */
 #define BIO_read_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \
-		BIO_CLOSE|BIO_FP_READ,name)
+		BIO_CLOSE|BIO_FP_READ,(char *)name)
 #define BIO_write_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \
 		BIO_CLOSE|BIO_FP_WRITE,name)
 #define BIO_append_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \

@@ -1,4 +1,4 @@
-/* ssl/ssl_cert.c */
+/*! \file ssl/ssl_cert.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include "objects.h"
 #include "bio.h"
 #include "pem.h"
@@ -100,8 +102,7 @@ CERT *ssl_cert_new()
 	return(ret);
 	}
 
-void ssl_cert_free(c)
-CERT *c;
+void ssl_cert_free(CERT *c)
 	{
 	int i;
 
@@ -165,17 +166,13 @@ int ssl_cert_instantiate(CERT **o, CERT *d)
 	return(1);
 	}
 
-int ssl_set_cert_type(c, type)
-CERT *c;
-int type;
+int ssl_set_cert_type(CERT *c,int type)
 	{
 	c->cert_type=type;
 	return(1);
 	}
 
-int ssl_verify_cert_chain(s,sk)
-SSL *s;
-STACK *sk;
+int ssl_verify_cert_chain(SSL *s,STACK *sk)
 	{
 	X509 *x;
 	int i;
@@ -208,9 +205,7 @@ STACK *sk;
 	return(i);
 	}
 
-static void set_client_CA_list(ca_list,list)
-STACK **ca_list;
-STACK *list;
+static void set_client_CA_list(STACK **ca_list,STACK *list)
 	{
 	if (*ca_list != NULL)
 		sk_pop_free(*ca_list,X509_NAME_free);
@@ -218,8 +213,7 @@ STACK *list;
 	*ca_list=list;
 	}
 
-STACK *SSL_dup_CA_list(sk)
-STACK *sk;
+STACK *SSL_dup_CA_list(STACK *sk)
 	{
 	int i;
 	STACK *ret;
@@ -238,28 +232,22 @@ STACK *sk;
 	return(ret);
 	}
 
-void SSL_set_client_CA_list(s,list)
-SSL *s;
-STACK *list;
+void SSL_set_client_CA_list(SSL *s,STACK *list)
 	{
 	set_client_CA_list(&(s->client_CA),list);
 	}
 
-void SSL_CTX_set_client_CA_list(ctx,list)
-SSL_CTX *ctx;
-STACK *list;
+void SSL_CTX_set_client_CA_list(SSL_CTX *ctx,STACK *list)
 	{
 	set_client_CA_list(&(ctx->client_CA),list);
 	}
 
-STACK *SSL_CTX_get_client_CA_list(ctx)
-SSL_CTX *ctx;
+STACK *SSL_CTX_get_client_CA_list(SSL_CTX *ctx)
 	{
 	return(ctx->client_CA);
 	}
 
-STACK *SSL_get_client_CA_list(s)
-SSL *s;
+STACK *SSL_get_client_CA_list(SSL *s)
 	{
 	if (s->type == SSL_ST_CONNECT)
 		{ /* we are in the client */
@@ -278,9 +266,7 @@ SSL *s;
 		}
 	}
 
-static int add_client_CA(sk,x)
-STACK **sk;
-X509 *x;
+static int add_client_CA(STACK **sk,X509 *x)
 	{
 	X509_NAME *name;
 
@@ -299,29 +285,31 @@ X509 *x;
 	return(1);
 	}
 
-int SSL_add_client_CA(ssl,x)
-SSL *ssl;
-X509 *x;
+int SSL_add_client_CA(SSL *ssl,X509 *x)
 	{
 	return(add_client_CA(&(ssl->client_CA),x));
 	}
 
-int SSL_CTX_add_client_CA(ctx,x)
-SSL_CTX *ctx;
-X509 *x;
+int SSL_CTX_add_client_CA(SSL_CTX *ctx,X509 *x)
 	{
 	return(add_client_CA(&(ctx->client_CA),x));
 	}
 
-static int name_cmp(a,b)
-X509_NAME **a,**b;
+static int name_cmp(X509_NAME **a,X509_NAME **b)
 	{
 	return(X509_NAME_cmp(*a,*b));
 	}
 
 #ifndef NO_STDIO
-STACK *SSL_load_client_CA_file(file)
-char *file;
+/*!
+ * Load CA certs from a file into a ::STACK. Note that it is somewhat misnamed;
+ * it doesn't really have anything to do with clients (except that a common use
+ * for a stack of CAs is to send it to the client). Actually, it doesn't have
+ * much to do with CAs, either, since it will load any old cert.
+ * \param file the file containing one or more certs.
+ * \return a ::STACK containing the certs.
+ */
+STACK *SSL_load_client_CA_file(char *file)
 	{
 	BIO *in;
 	X509 *x=NULL;
@@ -372,3 +360,101 @@ err:
 	}
 #endif
 
+/*!
+ * Add a file of certs to a stack.
+ * \param stack the stack to add to.
+ * \param file the file to add from. All certs in this file that are not
+ * already in the stack will be added.
+ * \return 1 for success, 0 for failure. Note that in the case of failure some
+ * certs may have been added to \c stack.
+ */
+
+int SSL_add_cert_file_to_stack(STACK *stack,const char *file)
+    {
+    BIO *in;
+    X509 *x=NULL;
+    X509_NAME *xn=NULL;
+    int ret=1;
+    int (*oldcmp)();
+
+    oldcmp=sk_set_cmp_func(stack,name_cmp);
+
+    in=BIO_new(BIO_s_file_internal());
+
+    if (ret == NULL || in == NULL)
+	{
+	SSLerr(SSL_F_SSL_ADD_CERT_FILE_TO_STACK,ERR_R_MALLOC_FAILURE);
+	goto err;
+	}
+	
+    if (!BIO_read_filename(in,file))
+	goto err;
+
+    for (;;)
+	{
+	if (PEM_read_bio_X509(in,&x,NULL) == NULL)
+	    break;
+	if ((xn=X509_get_subject_name(x)) == NULL) goto err;
+	xn=X509_NAME_dup(xn);
+	if (xn == NULL) goto err;
+	if (sk_find(stack,(char *)xn) >= 0)
+	    X509_NAME_free(xn);
+	else
+	    sk_push(stack,(char *)xn);
+	}
+
+    if (0)
+	{
+err:
+	ret=0;
+	}
+    if(in != NULL)
+	BIO_free(in);
+    if(x != NULL)
+	X509_free(x);
+
+    sk_set_cmp_func(stack,oldcmp);
+
+    return ret;
+    }
+
+/*!
+ * Add a directory of certs to a stack.
+ * \param stack the stack to append to.
+ * \param dir the directory to append from. All files in this directory will be
+ * examined as potential certs. Any that are acceptable to
+ * SSL_add_cert_file_to_stack() that are not already in the stack will be
+ * included.
+ * \return 1 for success, 0 for failure. Note that in the case of failure some
+ * certs may have been added to \c stack.
+ */
+
+int SSL_add_cert_dir_to_stack(STACK *stack,const char *dir)
+    {
+    DIR *d=opendir(dir);
+    struct dirent *dstruct;
+
+    /* Note that a side effect is that the CAs will be sorted by name */
+    if(!d)
+	{
+	SSLerr(SSL_F_SSL_ADD_CERT_DIR_TO_STACK,ERR_R_MALLOC_FAILURE);
+	return 0;
+	}
+
+    while((dstruct=readdir(d)))
+	{
+	char buf[1024];
+
+	if(strlen(dir)+strlen(dstruct->d_name)+2 > sizeof buf)
+	    {
+	    SSLerr(SSL_F_SSL_ADD_CERT_DIR_TO_STACK,SSL_R_PATH_TOO_LONG);
+	    return 0;
+	    }
+	
+	sprintf(buf,"%s/%s",dir,dstruct->d_name);
+	if(!SSL_add_cert_file_to_stack(stack,buf))
+	    return 0;
+	}
+
+    return 1;
+    }

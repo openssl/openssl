@@ -91,7 +91,7 @@ int sk_unshift(STACK *st,char *data);
 char *sk_shift(STACK *st);
 char *sk_pop(STACK *st);
 void sk_zero(STACK *st);
-void sk_set_cmp_func(STACK *sk, int (*c)());
+int (*sk_set_cmp_func(STACK *sk, int (*c)()))();
 STACK *sk_dup(STACK *st);
 
 #else
@@ -108,7 +108,7 @@ int sk_unshift();
 char *sk_shift();
 char *sk_pop();
 void sk_zero();
-void sk_set_cmp_func();
+int (*sk_set_cmp_func())();
 STACK *sk_dup();
 
 #endif
