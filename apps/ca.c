@@ -2063,7 +2063,7 @@ again2:
 			goto err;
 			}
 		while((i = X509_NAME_get_index_by_NID(dn_subject,
-					NID_pkcs9_emailAddress, -1) >= 0))
+					NID_pkcs9_emailAddress, -1)) >= 0)
 			{
 			tmpne = X509_NAME_get_entry(dn_subject, i);
 			X509_NAME_delete_entry(dn_subject, i);
