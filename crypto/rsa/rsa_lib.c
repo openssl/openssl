@@ -62,6 +62,7 @@
 #include <openssl/lhash.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
+#include <openssl/rand.h>
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
