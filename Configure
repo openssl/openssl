@@ -435,6 +435,7 @@ my $openssl_other_defines="";
 my $libs="";
 my $target="";
 my $options="";
+my $symlink=1;
 foreach (@ARGV)
 	{
 	s /^-no-/no-/; # some people just can't read the instructions
@@ -450,6 +451,8 @@ foreach (@ARGV)
 		{ $no_threads=1; }
 	elsif (/^threads$/)
 		{ $threads=1; }
+	elsif (/^no-symlinks$/)
+		{ $symlink=0; }
 	elsif (/^no-(.+)$/)
 		{
 		my $algo=$1;
@@ -895,7 +898,8 @@ if($IsWindows) {
 EOF
 	close(OUT);
 } else {
-	(system "make -f Makefile.ssl PERL=\'$perl\' links") == 0 or exit $?;
+	(system "make -f Makefile.ssl PERL=\'$perl\' links") == 0 or exit $?
+		if $symlink;
 	### (system 'make depend') == 0 or exit $? if $depflags ne "";
 	# Run "make depend" manually if you want to be able to delete
 	# the source code files of ciphers you left out.
