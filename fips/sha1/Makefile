@@ -24,7 +24,7 @@ APPS=
 EXE= fips_standalone_sha1
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_sha1dgst.c fips_sha1_selftest.c
+LIBSRC=fips_sha1dgst.c fips_sha1_selftest.c asm/sx86-elf.s
 LIBOBJ=fips_sha1dgst.o fips_sha1_selftest.o $(FIPS_SHA1_ASM_OBJ)
 
 SRC= $(LIBSRC) fips_standalone_sha1.c
