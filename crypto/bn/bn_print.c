@@ -79,7 +79,7 @@ char *BN_bn2hex(const BIGNUM *a)
 		}
 	p=buf;
 	if (a->neg) *(p++)='-';
-	if (a->top == 0) *(p++)='0';
+	if (BN_is_zero(a)) *(p++)='0';
 	for (i=a->top-1; i >=0; i--)
 		{
 		for (j=BN_BITS2-8; j >= 0; j-=8)
@@ -122,7 +122,7 @@ char *BN_bn2dec(const BIGNUM *a)
 	p=buf;
 	lp=bn_data;
 	if (t->neg) *(p++)='-';
-	if (t->top == 0)
+	if (BN_is_zero(t))
 		{
 		*(p++)='0';
 		*(p++)='\0';
@@ -301,7 +301,7 @@ int BN_print(BIO *bp, const BIGNUM *a)
 	int ret=0;
 
 	if ((a->neg) && (BIO_write(bp,"-",1) != 1)) goto end;
-	if ((a->top == 0) && (BIO_write(bp,"0",1) != 1)) goto end;
+	if (BN_is_zero(a) && (BIO_write(bp,"0",1) != 1)) goto end;
 	for (i=a->top-1; i >=0; i--)
 		{
 		for (j=BN_BITS2-4; j >= 0; j-=4)
