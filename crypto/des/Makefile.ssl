@@ -172,10 +172,8 @@ enc_writ.o: ../../include/openssl/err.h ../../include/openssl/opensslconf.h
 enc_writ.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 enc_writ.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 enc_writ.o: ../cryptlib.h des_locl.h
-fcrypt.o: ../../include/openssl/des.h ../../include/openssl/des.h
-fcrypt.o: ../../include/openssl/e_os2.h ../../include/openssl/e_os2.h
-fcrypt.o: ../../include/openssl/opensslconf.h
-fcrypt.o: ../../include/openssl/opensslconf.h des_locl.h des_locl.h
+fcrypt.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
+fcrypt.o: ../../include/openssl/opensslconf.h des_locl.h
 fcrypt_b.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 fcrypt_b.o: ../../include/openssl/opensslconf.h des_locl.h
 ofb64ede.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
@@ -204,7 +202,5 @@ set_key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 set_key.o: ../../include/openssl/opensslconf.h des_locl.h podd.h sk.h
 str2key.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 str2key.o: ../../include/openssl/opensslconf.h des_locl.h
-supp.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-supp.o: ../../include/openssl/opensslconf.h des_locl.h
 xcbc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 xcbc_enc.o: ../../include/openssl/opensslconf.h des_locl.h
