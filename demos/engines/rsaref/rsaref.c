@@ -6,17 +6,28 @@
 #include "./source/global.h"
 #include "./source/rsaref.h"
 #include "./source/rsa.h"
+#include "./source/des.h"
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/engine.h>
 
 #define RSAREF_LIB_NAME "rsaref engine"
 #include "rsaref_err.c"
 
-/* Constants used when creating the ENGINE */
+/*****************************************************************************
+ *** Function declarations and global variable definitions                 ***
+ *****************************************************************************/
+
+/*****************************************************************************
+ * Constants used when creating the ENGINE
+ **/
 static const char *engine_rsaref_id = "rsaref";
 static const char *engine_rsaref_name = "RSAref engine support";
 
+/*****************************************************************************
+ * Functions to handle the engine
+ **/
 static int rsaref_destroy(ENGINE *e);
 static int rsaref_init(ENGINE *e);
 static int rsaref_finish(ENGINE *e);
@@ -24,6 +35,16 @@ static int rsaref_finish(ENGINE *e);
 static int rsaref_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()); 
 #endif
 
+/*****************************************************************************
+ * Engine commands
+ **/
+static const ENGINE_CMD_DEFN rsaref_cmd_defns[] = {
+	{0, NULL, NULL, 0}
+	};
+
+/*****************************************************************************
+ * RSA functions
+ **/
 static int rsaref_private_decrypt(int len, const unsigned char *from,
 	unsigned char *to, RSA *rsa, int padding);
 static int rsaref_private_encrypt(int len, const unsigned char *from,
@@ -36,10 +57,9 @@ static int bnref_mod_exp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,const BIGNUM 
 			  BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 static int rsaref_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
 
-static const ENGINE_CMD_DEFN rsaref_cmd_defns[] = {
-	{0, NULL, NULL, 0}
-	};
-
+/*****************************************************************************
+ * Our RSA method
+ **/
 static RSA_METHOD rsaref_rsa =
 {
   "RSAref PKCS#1 RSA",
@@ -57,7 +77,93 @@ static RSA_METHOD rsaref_rsa =
   NULL
 };
 
-/* Now, to our own code */
+/*****************************************************************************
+ * Symetric cipher and digest function registrars
+ **/
+static int rsaref_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
+	const int **nids, int nid);
+static int rsaref_digests(ENGINE *e, const EVP_MD **digest,
+	const int **nids, int nid);
+
+static int rsaref_cipher_nids[] =
+	{ NID_des_cbc, NID_des_ede3_cbc, NID_desx_cbc, 0 };
+static int rsaref_digest_nids[] =
+	{ 0 };
+
+/*****************************************************************************
+ * DES functions
+ **/
+int cipher_des_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+	const unsigned char *iv, int enc);
+int cipher_des_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	const unsigned char *in, unsigned int inl);
+int cipher_des_cbc_clean(EVP_CIPHER_CTX *);
+int cipher_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+	const unsigned char *iv, int enc);
+int cipher_des_ede3_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	const unsigned char *in, unsigned int inl);
+int cipher_des_ede3_cbc_clean(EVP_CIPHER_CTX *);
+int cipher_desx_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+	const unsigned char *iv, int enc);
+int cipher_desx_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	const unsigned char *in, unsigned int inl);
+int cipher_desx_cbc_clean(EVP_CIPHER_CTX *);
+
+/*****************************************************************************
+ * Our DES ciphers
+ **/
+static EVP_CIPHER cipher_des_cbc =
+	{
+	NID_des_cbc,
+	8, 8, 8,
+	0,
+	cipher_des_cbc_init,
+	cipher_des_cbc_code,
+	cipher_des_cbc_clean,
+	sizeof(DES_CBC_CTX),
+	NULL,
+	NULL,
+	NULL,
+	NULL
+	};
+
+static EVP_CIPHER cipher_des_ede3_cbc =
+	{
+	NID_des_ede3_cbc,
+	8, 24, 8,
+	0,
+	cipher_des_ede3_cbc_init,
+	cipher_des_ede3_cbc_code,
+	cipher_des_ede3_cbc_clean,
+	sizeof(DES3_CBC_CTX),
+	NULL,
+	NULL,
+	NULL,
+	NULL
+	};
+
+static EVP_CIPHER cipher_desx_cbc =
+	{
+	NID_desx_cbc,
+	8, 24, 8,
+	0,
+	cipher_desx_cbc_init,
+	cipher_desx_cbc_code,
+	cipher_desx_cbc_clean,
+	sizeof(DESX_CBC_CTX),
+	NULL,
+	NULL,
+	NULL,
+	NULL
+	};
+
+/*****************************************************************************
+ *** Function definitions                                                  ***
+ *****************************************************************************/
+
+/*****************************************************************************
+ * Functions to handle the engine
+ **/
 
 static int bind_rsaref(ENGINE *e)
 	{
@@ -65,6 +171,8 @@ static int bind_rsaref(ENGINE *e)
 	if(!ENGINE_set_id(e, engine_rsaref_id)
 		|| !ENGINE_set_name(e, engine_rsaref_name)
 		|| !ENGINE_set_RSA(e, &rsaref_rsa)
+		|| !ENGINE_set_ciphers(e, rsaref_ciphers)
+		|| !ENGINE_set_digests(e, rsaref_digests)
 		|| !ENGINE_set_destroy_function(e, rsaref_destroy)
 		|| !ENGINE_set_init_function(e, rsaref_init)
 		|| !ENGINE_set_finish_function(e, rsaref_finish)
@@ -131,6 +239,10 @@ static int rsaref_destroy(ENGINE *e)
 	ERR_unload_RSAREF_strings();
 	return 1;
 	}
+
+/*****************************************************************************
+ * RSA functions
+ **/
 
 static int rsaref_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	{
@@ -330,4 +442,110 @@ err:
 	R_RandomFinal(&rnd);
 	memset(&rnd,0,sizeof(rnd));
 	return(outlen);
+	}
+
+/*****************************************************************************
+ * Symetric cipher and digest function registrars
+ **/
+static int rsaref_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
+	const int **nids, int nid)
+	{
+	int ok = 1;
+	if(!cipher)
+		{
+		/* We are returning a list of supported nids */
+		*nids = rsaref_cipher_nids;
+		return (sizeof(rsaref_cipher_nids)-1)/sizeof(rsaref_cipher_nids[0]);
+		}
+	/* We are being asked for a specific cipher */
+	switch (nid)
+		{
+	case NID_des_cbc:
+		*cipher = &cipher_des_cbc; break;
+	case NID_des_ede3_cbc:
+		*cipher = &cipher_des_ede3_cbc; break;
+	case NID_desx_cbc:
+		*cipher = &cipher_desx_cbc; break;
+	default:
+		ok = 0;
+		*cipher = NULL;
+		break;
+		}
+	return ok;
+	}
+static int rsaref_digests(ENGINE *e, const EVP_MD **digest,
+	const int **nids, int nid)
+	{
+	int ok = 1;
+	if(!digest)
+		{
+		/* We are returning a list of supported nids */
+		*nids = rsaref_digest_nids;
+		return (sizeof(rsaref_digest_nids)-1)/sizeof(rsaref_digest_nids[0]);
+		}
+	/* We are being asked for a specific digest */
+	switch (nid)
+		{
+	default:
+		ok = 0;
+		*digest = NULL;
+		break;
+		}
+	return ok;
+	}
+
+/*****************************************************************************
+ * DES functions
+ **/
+#undef data
+#define data(ctx) ((DES_CBC_CTX *)(ctx)->cipher_data)
+int cipher_des_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+	const unsigned char *iv, int enc)
+	{
+	DES_CBCInit(data(ctx), (unsigned char *)key, (unsigned char *)iv, enc);
+	}
+int cipher_des_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	const unsigned char *in, unsigned int inl)
+	{
+	DES_CBCUpdate(data(ctx), out, (unsigned char *)in, inl);
+	}
+int cipher_des_cbc_clean(EVP_CIPHER_CTX *ctx)
+	{
+	memset(data(ctx), 0, ctx->cipher->ctx_size);
+	}
+
+#undef data
+#define data(ctx) ((DES3_CBC_CTX *)(ctx)->cipher_data)
+int cipher_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+	const unsigned char *iv, int enc)
+	{
+	DES3_CBCInit(data(ctx), (unsigned char *)key, (unsigned char *)iv,
+		enc);
+	}
+int cipher_des_ede3_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	const unsigned char *in, unsigned int inl)
+	{
+	DES3_CBCUpdate(data(ctx), out, (unsigned char *)in, inl);
+	}
+int cipher_des_ede3_cbc_clean(EVP_CIPHER_CTX *ctx)
+	{
+	memset(data(ctx), 0, ctx->cipher->ctx_size);
+	}
+
+#undef data
+#define data(ctx) ((DESX_CBC_CTX *)(ctx)->cipher_data)
+int cipher_desx_cbc_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+	const unsigned char *iv, int enc)
+	{
+	DESX_CBCInit(data(ctx), (unsigned char *)key, (unsigned char *)iv,
+		enc);
+	}
+int cipher_desx_cbc_code(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	const unsigned char *in, unsigned int inl)
+	{
+	DESX_CBCUpdate(data(ctx), out, (unsigned char *)in, inl);
+	}
+int cipher_desx_cbc_clean(EVP_CIPHER_CTX *ctx)
+	{
+	memset(data(ctx), 0, ctx->cipher->ctx_size);
 	}
