@@ -416,12 +416,15 @@ int ssl2_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 	return(3);
 	}
 
-void ssl2_generate_key_material(SSL *s)
+int ssl2_generate_key_material(SSL *s)
 	{
 	unsigned int i;
 	EVP_MD_CTX ctx;
 	unsigned char *km;
 	unsigned char c='0';
+	const EVP_MD *md5;
+
+	md5 = EVP_md5();
 
 #ifdef CHARSET_EBCDIC
 	c = os_toascii['0']; /* Must be an ASCII '0', not EBCDIC '0',
@@ -429,23 +432,35 @@ void ssl2_generate_key_material(SSL *s)
 #endif
 	EVP_MD_CTX_init(&ctx);
 	km=s->s2->key_material;
-	die(s->s2->key_material_length <= sizeof s->s2->key_material);
-	for (i=0; i<s->s2->key_material_length; i+=MD5_DIGEST_LENGTH)
-		{
-		EVP_DigestInit_ex(&ctx,EVP_md5(), NULL);
 
-		die(s->session->master_key_length >= 0
-		    && s->session->master_key_length
-		    < sizeof s->session->master_key);
+ 	if (s->session->master_key_length < 0 || s->session->master_key_length > sizeof s->session->master_key)
+ 		{
+ 		SSLerr(SSL_F_SSL2_GENERATE_KEY_MATERIAL, ERR_R_INTERNAL_ERROR);
+ 		return 0;
+ 		}
+
+	for (i=0; i<s->s2->key_material_length; i += EVP_MD_block_size(md5))
+		{
+		if (((km - s->s2->key_material) + EVP_MD_block_size(md5)) > sizeof s->s2->key_material)
+			{
+			/* EVP_DigestFinal_ex() below would write beyond buffer */
+			SSLerr(SSL_F_SSL2_GENERATE_KEY_MATERIAL, ERR_R_INTERNAL_ERROR);
+			return 0;
+			}
+
+		EVP_DigestInit_ex(&ctx, md5, NULL);
+
 		EVP_DigestUpdate(&ctx,s->session->master_key,s->session->master_key_length);
 		EVP_DigestUpdate(&ctx,&c,1);
 		c++;
 		EVP_DigestUpdate(&ctx,s->s2->challenge,s->s2->challenge_length);
 		EVP_DigestUpdate(&ctx,s->s2->conn_id,s->s2->conn_id_length);
 		EVP_DigestFinal_ex(&ctx,km,NULL);
-		km+=MD5_DIGEST_LENGTH;
+		km += EVP_MD_block_size(md5);
 		}
+
 	EVP_MD_CTX_cleanup(&ctx);
+	return 1;
 	}
 
 void ssl2_return_error(SSL *s, int err)
@@ -470,10 +485,14 @@ void ssl2_write_error(SSL *s)
 	buf[2]=(s->error_code)&0xff;
 
 /*	state=s->rwstate;*/
-	error=s->error;
+
+	error=s->error; /* number of bytes left to write */
 	s->error=0;
-	die(error >= 0 && error <= 3);
+	if (error < 0 || error > sizeof buf) /* can't happen */
+ 		return;
+  
 	i=ssl2_write(s,&(buf[3-error]),error);
+
 /*	if (i == error) s->rwstate=state; */
 
 	if (i < 0)

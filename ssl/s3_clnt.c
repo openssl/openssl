@@ -546,7 +546,11 @@ static int ssl3_client_hello(SSL *s)
 		*(p++)=i;
 		if (i != 0)
 			{
-			die(i <= sizeof s->session->session_id);
+			if (i > sizeof s->session->session_id)
+				{
+				SSLerr(SSL_F_SSL3_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
 			memcpy(p,s->session->session_id,i);
 			p+=i;
 			}
@@ -1598,7 +1602,11 @@ static int ssl3_send_client_key_exchange(SSL *s)
 				SSL_MAX_MASTER_KEY_LENGTH);
 			EVP_EncryptFinal_ex(&ciph_ctx,&(epms[outl]),&padl);
 			outl += padl;
-			die(outl <= sizeof epms);
+			if (outl > sizeof epms)
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
 			EVP_CIPHER_CTX_cleanup(&ciph_ctx);
 
 			/*  KerberosWrapper.EncryptedPreMasterSecret	*/
