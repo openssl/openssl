@@ -65,7 +65,7 @@
 #undef TIMES
 #endif
 
-#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32) && !(defined(OPENSSL_SYS_VMS) || defined(__DECC)) && !defined(OPENSSL_SYS_MACOSX) && !defined(OPENSSL_SYS_VXWORKS)
+#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32) && !(defined(OPENSSL_SYS_VMS) || defined(__DECC)) && !defined(OPENSSL_SYS_MACOSX_RHAPSODY) && !defined(OPENSSL_SYS_VXWORKS)
 # define TIMES
 #endif
 
