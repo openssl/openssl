@@ -65,6 +65,25 @@
 /*extern int errno;*/
 int des_rw_mode=DES_PCBC_MODE;
 
+
+/*
+ * WARNINGS:
+ *
+ *  -  The data format used by des_enc_write() and des_enc_read()
+ *     has a cryptographic weakness: When asked to write more
+ *     than MAXWRITE bytes, des_enc_write will split the data
+ *     into several chunks that are all encrypted
+ *     using the same IV.  So don't use these functions unless you
+ *     are sure you know what you do (in which case you might
+ *     not want to use them anyway).
+ *
+ *  -  This code cannot handle non-blocking sockets.
+ *
+ *  -  This function uses an internal state and thus cannot be
+ *     used on multiple files.
+ */
+
+
 int des_enc_read(fd, buf, len, sched, iv)
 int fd;
 char *buf;
