@@ -266,7 +266,7 @@ $ LIB_PKCS12 = "p12_add,p12_asn,p12_attr,p12_crpt,p12_crt,p12_decr,"+ -
 	"p12_utl,p12_npas,pk12err"
 $ LIB_COMP = "comp_lib,"+ -
 	"c_rle,c_zlib"
-$ LIB_OCSP = ocsp_asn,ocsp_ext,"+ -
+$ LIB_OCSP = "ocsp_asn,ocsp_ext,"+ -
 	"ocsp_lib,ocsp_prn,ocsp_err"
 $!
 $! Setup exceptional compilations
