@@ -116,6 +116,8 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 	if (RAND_pseudo_bytes(iv, EVP_CIPHER_iv_length(cipher)) < 0)
 		goto err;
 
+	EVP_CIPHER_CTX_init(&ctx);
+
 	/* Dummy cipherinit to just setup the IV */
 	EVP_CipherInit_ex(&ctx, cipher, NULL, NULL, iv, 0);
 	if(EVP_CIPHER_param_to_asn1(&ctx, scheme->parameter) < 0) {
