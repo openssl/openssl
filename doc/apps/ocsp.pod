@@ -1,0 +1,136 @@
+=pod
+
+=head1 NAME
+
+ocsp - OCSP utility
+
+=head1 SYNOPSIS
+
+B<openssl> B<ocsp>
+[B<-out file>]
+[B<-issuer file>]
+[B<-cert file>]
+[B<-serial n>]
+[B<-req_text>]
+[B<-resp_text>]
+[B<-text>]
+[B<-reqout file>]
+[B<-respout file>]
+[B<-reqin file>]
+[B<-respin file>]
+[B<-nonce>]
+[B<-no_nonce>]
+[B<-host host:n>]
+[B<-path>]
+
+=head1 DESCRIPTION
+
+B<WARNING: this documentation is preliminary and subject to change.>
+
+The B<ocsp> command performs many common OCSP tasks. It can be used
+to print out requests and responses, create requests and send queries
+to an OCSP responder.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-out filename>
+
+specify output filename, default is standard output.
+
+=item B<-issuer filename>
+
+This specifies the current issuer certificate. This option can be used
+multiple times. The certificate specified in B<filename> must be in
+PEM format.
+
+=item B<-cert filename>
+
+Add the certificate B<filename> to the request. The issuer certificate
+is taken from the previous B<issuer> option, or an error occurs if no
+issuer certificate is specified.
+
+=item B<-serial num>
+
+Same as the B<cert> option except the certificate with serial number
+B<num> (in decimal) is added to the request.
+
+=item B<-signer filename>, B<-signkey filename>
+
+Sign the OCSP request using the certificate specified in the B<signer>
+option and the private key specified by the B<signkey> option. If
+the B<signkey> option is not present then the private key is read
+from the same file as the certificate. If neither option is specified then
+the OCSP request is not signed.
+
+=item B<-nonce>, B<-no_nonce>
+
+Add an OCSP nonce extension to a request or disable OCSP nonce addition.
+Normally if an OCSP request is input using the B<respin> option no
+nonce is added: using the B<nonce> option will force addition of a nonce.
+If an OCSP request is being created (using B<cert> and B<serial> options)
+a nonce is automatically added specifying B<no_nonce> overrides this.
+
+=item B<-req_text>, B<-resp_text>, B<-text>
+
+print out the text form of the OCSP request, reponse or both respectively.
+
+=item B<-reqout file>, B<-respout file>
+
+write out the DER encoded certificate request or response to B<file>.
+
+=item B<-reqin file>, B<-respin file>
+
+read OCSP request or response file from B<file>. These option are ignored
+if OCSP request or response creation is implied by other options (for example
+with B<serial>, B<cert> and B<host> options).
+
+=item B<-host hostname:port>, B<-path pathname>
+
+if the B<host> option is present then the OCSP request is sent to the host
+B<hostname> on port B<port>. B<path> specifies the HTTP path name to use
+or "/" by default.
+
+=back
+
+=head1 NOTES
+
+The B<-host> and B<-path> options specify the relevant parts of the OCSP
+URI. For example the OCSP responder URL:
+
+http://ocsp.myhost.com/ocsp/request
+
+corresponds to the the options:
+
+ -host ocsp.myhost.com:80 -path /ocsp/request
+
+=head1 EXAMPLES
+
+Create an OCSP request and write it to a file:
+
+ openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem -reqout req.der
+
+Send a query an OCSP responder with URL http://ocsp.myhost.com/ save the 
+response to a file and print it out in text form
+
+ openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem \
+     -host ocsp.myhost.com:80 -resp_text -respout resp.der
+
+Read in an OCSP response and print out text form:
+
+ openssl ocsp -respin resp.der -text
+
+=head1 BUGS
+
+This utility is incomplete. It currently does not check the OCSP response's
+validity in any way.
+
+The B<host> and B<path> options may well go away and be replaced by a B<url>
+option and an option to determine the URI based on certificate extensions.
+
+The B<serial> option only supports postive serial numbers and must be supplied
+in decimal form. Some CAs issue certificates with negative serial numbers
+(probably unintentionally) and cannot currently be specified.
+
+SSL OCSP responders using https URLs cannot currently be queried.

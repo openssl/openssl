@@ -235,9 +235,12 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "OCSP utility\n");
 		BIO_printf (bio_err, "Usage ocsp [options]\n");
 		BIO_printf (bio_err, "where options are\n");
+		BIO_printf (bio_err, "-out file     output filename\n");
 		BIO_printf (bio_err, "-issuer file  issuer certificate\n");
 		BIO_printf (bio_err, "-cert file    certificate to check\n");
 		BIO_printf (bio_err, "-serial n     serial number to check\n");
+		BIO_printf (bio_err, "-signer file  certificate to sign OCSP request with\n");
+		BIO_printf (bio_err, "-signkey file private key to sign OCSP request with\n");
 		BIO_printf (bio_err, "-req_text     print text form of request\n");
 		BIO_printf (bio_err, "-resp_text    print text form of response\n");
 		BIO_printf (bio_err, "-text         print text form of request and response\n");
