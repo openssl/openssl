@@ -535,6 +535,12 @@ install: all install_docs
 		(	here="`pwd`"; \
 			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
 			$(NEWMAKE) -f $$here/Makefile HERE="$$here" link-shared ); \
+		if [ "$(INSTALLTOP)" != "/usr" ]; then \
+			echo 'OpenSSL shared libraries have been installed in:'; \
+			echo '  $(INSTALLTOP)'; \
+			echo ''; \
+			sed -e '1,/^$/d' doc/openssl-shared.txt; \
+		fi; \
 	fi
 	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
 
