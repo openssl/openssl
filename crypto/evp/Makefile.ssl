@@ -496,21 +496,19 @@ evp_acnf.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
 evp_acnf.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 evp_acnf.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 evp_acnf.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-evp_acnf.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-evp_acnf.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-evp_acnf.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
-evp_acnf.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
-evp_acnf.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
-evp_acnf.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-evp_acnf.o: ../../include/openssl/opensslconf.h
+evp_acnf.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+evp_acnf.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+evp_acnf.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
+evp_acnf.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
+evp_acnf.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
+evp_acnf.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 evp_acnf.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-evp_acnf.o: ../../include/openssl/rand.h ../../include/openssl/rc2.h
-evp_acnf.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
-evp_acnf.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
-evp_acnf.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-evp_acnf.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-evp_acnf.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
-evp_acnf.o: ../cryptlib.h evp_acnf.c
+evp_acnf.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+evp_acnf.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+evp_acnf.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+evp_acnf.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+evp_acnf.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+evp_acnf.o: ../../include/openssl/ui_compat.h ../cryptlib.h evp_acnf.c
 evp_enc.o: ../../e_os.h ../../include/openssl/aes.h
 evp_enc.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 evp_enc.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
