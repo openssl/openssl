@@ -68,6 +68,11 @@ if [ "x$XREL" != "x" ]; then
 	    4.2)
 		echo "whatever-whatever-unixware1"; exit 0
 		;;
+     OpenUNIX)
+		if [ "`echo x$VERSION | sed -e 's/\..*//'`" = "x8" ]; then
+		    echo "${MACHINE}-unknown-OpenUNIX${VERSION}"; exit 0
+		fi
+		;;
 	    5)
 		if [ "`echo x$VERSION | sed -e 's/\..*//'`" = "x7" ]; then
 		    echo "${MACHINE}-sco-unixware7"; exit 0
@@ -193,6 +198,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 
     OpenBSD:*)
 	echo "${MACHINE}-whatever-openbsd"; exit 0
+	;;
+
+    OpenUNIX:*)
+	echo "${MACHINE}-unknown-OpenUNIX${VERSION}"; exit 0
 	;;
 
     OSF1:*:*:*alpha*)
@@ -498,6 +507,13 @@ case "$GUESSOS" in
   *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
   *-*-osf) OUT="alphaold-cc" ;;
   *-*-tru64) OUT="alpha-cc" ;;
+  *-*-OpenUNIX*)
+	if [ "$CC" = "gcc" ]; then
+	  OUT="OpenUNIX-8-gcc" 
+	else    
+	  OUT="OpenUNIX-8" 
+	fi
+	;;
   *-*-unixware7) OUT="unixware-7" ;;
   *-*-UnixWare7) OUT="unixware-7" ;;
   *-*-Unixware7) OUT="unixware-7" ;;
