@@ -1574,7 +1574,6 @@
 #define NID_initials		101
 #define OBJ_initials		OBJ_X509,43L
 
-#define SN_uniqueIdentifier		"UID"
 #define LN_uniqueIdentifier		"uniqueIdentifier"
 #define NID_uniqueIdentifier		102
 #define OBJ_uniqueIdentifier		OBJ_X509,45L

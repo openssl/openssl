@@ -508,7 +508,7 @@ X509 13			: D			: description
 X509 41			: name			: name
 X509 42			: G			: givenName
 X509 43			: I			: initials
-X509 45			: UID			: uniqueIdentifier
+X509 45			: 			: uniqueIdentifier
 X509 46			: dnQualifier		: dnQualifier
 X509 72			: role			: role
 

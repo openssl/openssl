@@ -587,7 +587,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"G","givenName",NID_givenName,3,&(lvalues[535]),0},
 {"S","surname",NID_surname,3,&(lvalues[538]),0},
 {"I","initials",NID_initials,3,&(lvalues[541]),0},
-{"UID","uniqueIdentifier",NID_uniqueIdentifier,3,&(lvalues[544]),0},
+{"uniqueIdentifier","uniqueIdentifier",NID_uniqueIdentifier,3,
+	&(lvalues[544]),0},
 {"crlDistributionPoints","X509v3 CRL Distribution Points",
 	NID_crl_distribution_points,3,&(lvalues[547]),0},
 {"RSA-NP-MD5","md5WithRSA",NID_md5WithRSA,5,&(lvalues[550]),0},
@@ -1185,7 +1186,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[16]),/* "ST" */
 &(nid_objs[143]),/* "SXNetID" */
 &(nid_objs[106]),/* "T" */
-&(nid_objs[102]),/* "UID" */
 &(nid_objs[ 0]),/* "UNDEF" */
 &(nid_objs[11]),/* "X500" */
 &(nid_objs[378]),/* "X500algorithms" */
@@ -1474,6 +1474,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[293]),/* "textNotice" */
 &(nid_objs[133]),/* "timeStamping" */
 &(nid_objs[375]),/* "trustRoot" */
+&(nid_objs[102]),/* "uniqueIdentifier" */
 &(nid_objs[55]),/* "unstructuredAddress" */
 &(nid_objs[49]),/* "unstructuredName" */
 &(nid_objs[373]),/* "valid" */
