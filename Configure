@@ -1104,6 +1104,11 @@ if ($no_asm)
 	$sha1_obj=$md5_obj=$rmd160_obj="";
 	}
 
+if (!$no_shared)
+	{
+	$cast_obj="";	# CAST assembler is not PIC
+	}
+
 if ($threads)
 	{
 	$cflags=$thread_cflags;
@@ -1119,20 +1124,16 @@ if ($zlib)
 
 # You will find shlib_mark1 and shlib_mark2 explained in Makefile.org
 my $shared_mark = "";
-if ($shared_target ne "")
+if ($shared_target eq "")
+	{
+	$no_shared = 1;
+	}
+if (!$no_shared)
 	{
 	if ($shared_cflag ne "")
 		{
 		$cflags = "$shared_cflag $cflags";
 		}
-	if (!$no_shared)
-		{
-		#$shared_mark = "\$(SHARED_LIBS)";
-		}
-	}
-else
-	{
-	$no_shared = 1;
 	}
 
 if ($no_shared)
