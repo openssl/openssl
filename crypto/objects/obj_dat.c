@@ -176,7 +176,6 @@ static int add_cmp(const void *ca_void, const void *cb_void)
 		/* abort(); */
 		return 0;
 		}
-	return(1); /* should not get here */
 	}
 
 static int init_added(void)
