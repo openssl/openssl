@@ -110,7 +110,7 @@ typedef struct pkcs7_recip_info_st
 typedef struct pkcs7_signed_st
 	{
 	ASN1_INTEGER			*version;	/* version 1 */
-	STACK /* X509_ALGOR's */	*md_algs;	/* md used */
+	STACK_OF(X509_ALGOR)		*md_algs;	/* md used */
 	STACK_OF(X509)			*cert;		/* [ 0 ] */
 	STACK /* X509_CRL */		*crl;		/* [ 1 ] */
 	STACK /* PKCS7_SIGNER_INFO */	*signer_info;
@@ -138,7 +138,7 @@ typedef struct pkcs7_enveloped_st
 typedef struct pkcs7_signedandenveloped_st
 	{
 	ASN1_INTEGER			*version;	/* version 1 */
-	STACK /* X509_ALGOR's */	*md_algs;	/* md used */
+	STACK_OF(X509_ALGOR)		*md_algs;	/* md used */
 	STACK_OF(X509)			*cert;		/* [ 0 ] */
 	STACK /* X509_CRL */		*crl;		/* [ 1 ] */
 	STACK /* PKCS7_SIGNER_INFO */	*signer_info;

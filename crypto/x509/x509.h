@@ -120,6 +120,9 @@ typedef struct X509_algor_st
 	ASN1_TYPE *parameter;
 	} X509_ALGOR;
 
+DECLARE_STACK_OF(X509_ALGOR)
+DECLARE_ASN1_SET_OF(X509_ALGOR)
+
 typedef struct X509_val_st
 	{
 	ASN1_UTCTIME *notBefore;

@@ -191,7 +191,7 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
 	int i,j,nid;
 	X509_ALGOR *alg;
 	STACK *signer_sk;
-	STACK *md_sk;
+	STACK_OF(X509_ALGOR) *md_sk;
 
 	i=OBJ_obj2nid(p7->type);
 	switch (i)
@@ -213,9 +213,9 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
 
 	/* If the digest is not currently listed, add it */
 	j=0;
-	for (i=0; i<sk_num(md_sk); i++)
+	for (i=0; i<sk_X509_ALGOR_num(md_sk); i++)
 		{
-		alg=(X509_ALGOR *)sk_value(md_sk,i);
+		alg=sk_X509_ALGOR_value(md_sk,i);
 		if (OBJ_obj2nid(alg->algorithm) == nid)
 			{
 			j=1;
@@ -226,7 +226,7 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
 		{
 		alg=X509_ALGOR_new();
 		alg->algorithm=OBJ_nid2obj(nid);
-		sk_push(md_sk,(char *)alg);
+		sk_X509_ALGOR_push(md_sk,alg);
 		}
 
 	sk_push(signer_sk,(char *)psi);

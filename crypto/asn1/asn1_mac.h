@@ -352,6 +352,10 @@ err:\
 #define M_ASN1_I2D_len_SET(a,f) \
 		ret+=i2d_ASN1_SET(a,NULL,f,V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
 
+#define M_ASN1_I2D_len_SET_type(type,a,f) \
+		ret+=i2d_ASN1_SET_OF_##type(a,NULL,f,V_ASN1_SET, \
+					    V_ASN1_UNIVERSAL,IS_SET);
+
 #define M_ASN1_I2D_len_SEQUENCE(a,f) \
 		ret+=i2d_ASN1_SET(a,NULL,f,V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL, \
 				  IS_SEQUENCE);
@@ -444,6 +448,8 @@ err:\
 
 #define M_ASN1_I2D_put_SET(a,f) i2d_ASN1_SET(a,&p,f,V_ASN1_SET,\
 			V_ASN1_UNIVERSAL,IS_SET)
+#define M_ASN1_I2D_put_SET_type(type,a,f) \
+     i2d_ASN1_SET_OF_##type(a,&p,f,V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET)
 #define M_ASN1_I2D_put_IMP_SET(a,f,x) i2d_ASN1_SET(a,&p,f,x,\
 			V_ASN1_CONTEXT_SPECIFIC,IS_SET)
 #define M_ASN1_I2D_put_IMP_SET_type(type,a,f,x) \

@@ -73,7 +73,8 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 	X509_ALGOR *xa;
 	const EVP_MD *evp_md;
 	const EVP_CIPHER *evp_cipher=NULL;
-	STACK *md_sk=NULL,*rsk=NULL;
+	STACK_OF(X509_ALGOR) *md_sk=NULL;
+	STACK *rsk=NULL;
 	X509_ALGOR *xalg=NULL;
 	PKCS7_RECIP_INFO *ri=NULL;
 	EVP_PKEY *pkey;
@@ -116,9 +117,9 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 
 	if (md_sk != NULL)
 		{
-		for (i=0; i<sk_num(md_sk); i++)
+		for (i=0; i<sk_X509_ALGOR_num(md_sk); i++)
 			{
-			xa=(X509_ALGOR *)sk_value(md_sk,i);
+			xa=sk_X509_ALGOR_value(md_sk,i);
 			if ((btmp=BIO_new(BIO_f_md())) == NULL)
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATAINIT,ERR_R_BIO_LIB);
@@ -265,7 +266,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	const EVP_CIPHER *evp_cipher=NULL;
 	EVP_CIPHER_CTX *evp_ctx=NULL;
 	X509_ALGOR *enc_alg=NULL;
-	STACK *md_sk=NULL,*rsk=NULL;
+	STACK_OF(X509_ALGOR) *md_sk=NULL;
+	STACK *rsk=NULL;
 	X509_ALGOR *xalg=NULL;
 	PKCS7_RECIP_INFO *ri=NULL;
 /*	EVP_PKEY *pkey; */
@@ -315,9 +317,9 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	/* We will be checking the signature */
 	if (md_sk != NULL)
 		{
-		for (i=0; i<sk_num(md_sk); i++)
+		for (i=0; i<sk_X509_ALGOR_num(md_sk); i++)
 			{
-			xa=(X509_ALGOR *)sk_value(md_sk,i);
+			xa=sk_X509_ALGOR_value(md_sk,i);
 			if ((btmp=BIO_new(BIO_f_md())) == NULL)
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATADECODE,ERR_R_BIO_LIB);
