@@ -1332,7 +1332,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 			 * ClientHello to detect version rollback attacks (strangely, the
 			 * protocol does not offer such protection for DH ciphersuites).
 			 * However, buggy clients exist that send the negotiated protocol
-			 * version instead if the servers does not support the requested
+			 * version instead if the server does not support the requested
 			 * protocol version.
 			 * If SSL_OP_TLS_ROLLBACK_BUG is set, tolerate such clients. */
 			if (!((s->options & SSL_OP_TLS_ROLLBACK_BUG) &&
