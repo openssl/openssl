@@ -63,7 +63,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-int EVP_OpenInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char *ek,
+int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char *ek,
 	     int ekl, unsigned char *iv, EVP_PKEY *priv)
 	{
 	unsigned char *key=NULL;

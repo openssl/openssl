@@ -66,7 +66,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-int EVP_SealInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char **ek,
+int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
 	     int *ekl, unsigned char *iv, EVP_PKEY **pubk, int npubk)
 	{
 	unsigned char key[EVP_MAX_KEY_LENGTH];

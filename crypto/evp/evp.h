@@ -509,11 +509,11 @@ int	EVP_SignFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s,
 int	EVP_VerifyFinal(EVP_MD_CTX *ctx,unsigned char *sigbuf,
 		unsigned int siglen,EVP_PKEY *pkey);
 
-int	EVP_OpenInit(EVP_CIPHER_CTX *ctx,EVP_CIPHER *type,unsigned char *ek,
+int	EVP_OpenInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,unsigned char *ek,
 		int ekl,unsigned char *iv,EVP_PKEY *priv);
 int	EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
-int	EVP_SealInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char **ek,
+int	EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
 		int *ekl, unsigned char *iv,EVP_PKEY **pubk, int npubk);
 void	EVP_SealFinal(EVP_CIPHER_CTX *ctx,unsigned char *out,int *outl);
 
