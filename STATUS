@@ -1,22 +1,40 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/12 08:37:49 $
+  ______________                           $Date: 2000/09/13 21:20:43 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.6:  Under development (in release cycle)...
                        Proposed release date September 24, 2000
                        0.9.6-beta1 is available:
-			OpenBSD-x86 2.7			- failed (ftime/TIMEB)
+			OpenBSD-x86 2.7			- failed
+				ftime not supported [FIXED]
 			hpux-parisc-cc 10.20		- passed
 			hpux-parisc-gcc 10.20		- passed
+			hpux-parisc-gcc 11.00		- passed
 			hpux-gcc			- passed
-			hpux-brokengcc			- failed (BN_sqr)
+			hpux-brokengcc			- failed
+				BN_sqr fails in test
 			linux-elf			- passed
 			linux-sparcv7			- passed
-			Solaris [engine]		- failed (speed cswift)
+			linux-ppc			- passed
+			Solaris [engine]		- failed
+				speed cswift gives odd errors [FIXED]
+			solaris-sparcv8-gcc		- passed
+			solaris-sparcv9-gcc		- passed
+			solaris-sparcv9-cc		- passed
+			solaris64-sparcv9-cc		- passed
 			sco5-gcc			- passed
 			sco5-cc				- passed
+			FreeBSD				- passed
+			Win32 VC++			- failed
+				PCURSORINFO not defined unless Win2000 [FIXED]
+				RAND_poll() problem on Win2000 [FIXED]
+				DSO method always DSO_METHOD_null [FIXED]
+			CygWin32			- test failed
+			MingW32				- failed
+				thelp32.h
+			aix-gcc (AIX 4.3.2)		- passed
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
