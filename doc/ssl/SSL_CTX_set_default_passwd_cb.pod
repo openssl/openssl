@@ -40,6 +40,12 @@ then keep it in memory and use it several times. In the last case, the
 password could be stored into the B<userdata> storage and the
 pem_passwd_cb() only returns the password already stored.
 
+When asking for the password interactively, pem_passwd_cb() can use
+B<rwflag> to check, whether an item shall be encrypted (rwflag=1).
+In this case the password dialog may ask for the same password twice
+for comparison in order to catch typos, that would make decryption
+impossible.
+
 Other items in PEM formatting (certificates) can also be encrypted, it is
 however not usual, as certificate information is considered public.
 
