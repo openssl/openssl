@@ -38,7 +38,7 @@ use of B<ENGINE> API calls.
 Initially, the default RSA_METHOD is the OpenSSL internal implementation,
 as returned by RSA_PKCS1_SSLeay().
 
-RSA_set_default_method() makes B<meth> the default method for all <RSA>
+RSA_set_default_method() makes B<meth> the default method for all RSA
 structures created later. B<NB>: This is true only whilst no ENGINE has
 been set as a default for RSA, so this function is no longer recommended.
 
