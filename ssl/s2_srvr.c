@@ -910,6 +910,7 @@ static int request_certificate(SSL *s)
 		EVP_MD_CTX ctx;
 		EVP_PKEY *pkey=NULL;
 
+		EVP_MD_CTX_init(&ctx);
 		EVP_VerifyInit(&ctx,s->ctx->rsa_md5);
 		EVP_VerifyUpdate(&ctx,s->s2->key_material,
 			(unsigned int)s->s2->key_material_length);
@@ -931,7 +932,7 @@ static int request_certificate(SSL *s)
 		if (pkey == NULL) goto end;
 		i=EVP_VerifyFinal(&ctx,p,s->s2->tmp.rlen,pkey);
 		EVP_PKEY_free(pkey);
-		memset(&ctx,0,sizeof(ctx));
+		EVP_MD_CTX_cleanup(&ctx);
 
 		if (i) 
 			{

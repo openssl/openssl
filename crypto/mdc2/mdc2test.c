@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
 }
 #else
 #include <openssl/evp.h>
+#include <openssl/mdc2.h>
 
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>
@@ -99,6 +100,7 @@ int main(int argc, char *argv[])
 	ebcdic2ascii(text,text,strlen(text));
 #endif
 
+	EVP_MD_CTX_init(&c);
 	EVP_DigestInit(&c,EVP_mdc2());
 	EVP_DigestUpdate(&c,(unsigned char *)text,strlen(text));
 	EVP_DigestFinal(&c,&(md[0]),NULL);
@@ -117,7 +119,8 @@ int main(int argc, char *argv[])
 		printf("pad1 - ok\n");
 
 	EVP_DigestInit(&c,EVP_mdc2());
-	c.md.mdc2.pad_type=2;
+	/* FIXME: use a ctl function? */
+	((MDC2_CTX *)c.md_data)->pad_type=2;
 	EVP_DigestUpdate(&c,(unsigned char *)text,strlen(text));
 	EVP_DigestFinal(&c,&(md[0]),NULL);
 
@@ -134,6 +137,7 @@ int main(int argc, char *argv[])
 	else
 		printf("pad2 - ok\n");
 
+	EVP_MD_CTX_cleanup(&c);
 	exit(ret);
 	return(ret);
 	}

@@ -62,6 +62,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include <openssl/md2.h>
 
 static const EVP_MD md2_md=
 	{

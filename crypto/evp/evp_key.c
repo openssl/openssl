@@ -118,6 +118,7 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
 
 	if (data == NULL) return(nkey);
 
+	EVP_MD_CTX_init(&c);
 	for (;;)
 		{
 		EVP_DigestInit(&c,md);
@@ -161,7 +162,7 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
 			}
 		if ((nkey == 0) && (niv == 0)) break;
 		}
-	memset(&c,0,sizeof(c));
+	EVP_MD_CTX_cleanup(&c);
 	memset(&(md_buf[0]),0,EVP_MAX_MD_SIZE);
 	return(type->key_len);
 	}

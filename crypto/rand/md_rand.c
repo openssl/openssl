@@ -192,7 +192,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 	int i,j,k,st_idx;
 	long md_c[2];
 	unsigned char local_md[MD_DIGEST_LENGTH];
-	MD_CTX m;
+	EVP_MD_CTX m;
 	int do_not_lock;
 
 	/*
@@ -254,6 +254,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 
 	if (!do_not_lock) CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
+	EVP_MD_CTX_init(&m);
 	for (i=0; i<num; i+=MD_DIGEST_LENGTH)
 		{
 		j=(num-i);
@@ -292,7 +293,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 				st_idx=0;
 			}
 		}
-	memset((char *)&m,0,sizeof(m));
+	EVP_MD_CTX_cleanup(&m);
 
 	if (!do_not_lock) CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	/* Don't just copy back local_md into md -- this could mean that
@@ -325,7 +326,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	int ok;
 	long md_c[2];
 	unsigned char local_md[MD_DIGEST_LENGTH];
-	MD_CTX m;
+	EVP_MD_CTX m;
 #ifndef GETPID_IS_MEANINGLESS
 	pid_t curr_pid = getpid();
 #endif
@@ -344,7 +345,8 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 
 	if (num <= 0)
 		return 1;
-	
+
+	EVP_MD_CTX_init(&m);
 	/* round upwards to multiple of MD_DIGEST_LENGTH/2 */
 	num_ceil = (1 + (num-1)/(MD_DIGEST_LENGTH/2)) * (MD_DIGEST_LENGTH/2);
 
@@ -493,7 +495,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	MD_Final(&m,md);
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
-	memset(&m,0,sizeof(m));
+	EVP_MD_CTX_cleanup(&m);
 	if (ok)
 		return(1);
 	else

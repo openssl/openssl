@@ -82,6 +82,7 @@ int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
 	int i,inl=0,outl=0,outll=0;
 	X509_ALGOR *a;
 
+	EVP_MD_CTX_init(&ctx);
 	for (i=0; i<2; i++)
 		{
 		if (i == 0)
@@ -141,7 +142,7 @@ int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
 	signature->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
 	signature->flags|=ASN1_STRING_FLAG_BITS_LEFT;
 err:
-	memset(&ctx,0,sizeof(ctx));
+	EVP_MD_CTX_cleanup(&ctx);
 	if (buf_in != NULL)
 		{ memset((char *)buf_in,0,(unsigned int)inl); OPENSSL_free(buf_in); }
 	if (buf_out != NULL)
@@ -160,6 +161,7 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	int i,inl=0,outl=0,outll=0;
 	X509_ALGOR *a;
 
+	EVP_MD_CTX_init(&ctx);
 	for (i=0; i<2; i++)
 		{
 		if (i == 0)
@@ -216,7 +218,7 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	signature->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
 	signature->flags|=ASN1_STRING_FLAG_BITS_LEFT;
 err:
-	memset(&ctx,0,sizeof(ctx));
+	EVP_MD_CTX_cleanup(&ctx);
 	if (buf_in != NULL)
 		{ memset((char *)buf_in,0,(unsigned int)inl); OPENSSL_free(buf_in); }
 	if (buf_out != NULL)

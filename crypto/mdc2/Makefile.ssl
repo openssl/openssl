@@ -86,7 +86,6 @@ mdc2_one.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 mdc2_one.o: ../../include/openssl/mdc2.h ../../include/openssl/opensslconf.h
 mdc2_one.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 mdc2_one.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-mdc2_one.o: ../cryptlib.h mdc2_one.c
+mdc2_one.o: ../cryptlib.h
 mdc2dgst.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 mdc2dgst.o: ../../include/openssl/mdc2.h ../../include/openssl/opensslconf.h
-mdc2dgst.o: mdc2dgst.c

@@ -63,6 +63,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include "evp_locl.h"
+#include <openssl/rc2.h>
 
 static int rc2_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			const unsigned char *iv,int enc);
@@ -72,9 +73,17 @@ static int rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
 static int rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
 static int rc2_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr);
 
-IMPLEMENT_BLOCK_CIPHER(rc2, rc2.ks, RC2, rc2, NID_rc2,
+typedef struct
+	{
+	int key_bits;	/* effective key bits */
+	RC2_KEY ks;	/* key schedule */
+	} EVP_RC2_KEY;
+
+#define data(ctx)	((EVP_RC2_KEY *)(ctx)->cipher_data)
+
+IMPLEMENT_BLOCK_CIPHER(rc2, ks, RC2, EVP_RC2_KEY, NID_rc2,
 			8,
-			EVP_RC2_KEY_SIZE, 8,
+			RC2_KEY_LENGTH, 8,
 			EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
 			rc2_init_key, NULL,
 			rc2_set_asn1_type_and_iv, rc2_get_asn1_type_and_iv, 
@@ -92,8 +101,7 @@ static const EVP_CIPHER r2_64_cbc_cipher=
 	rc2_init_key,
 	rc2_cbc_cipher,
 	NULL,
-	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc2)),
+	sizeof(EVP_RC2_KEY),
 	rc2_set_asn1_type_and_iv,
 	rc2_get_asn1_type_and_iv,
 	rc2_ctrl,
@@ -108,8 +116,7 @@ static const EVP_CIPHER r2_40_cbc_cipher=
 	rc2_init_key,
 	rc2_cbc_cipher,
 	NULL,
-	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rc2)),
+	sizeof(EVP_RC2_KEY),
 	rc2_set_asn1_type_and_iv,
 	rc2_get_asn1_type_and_iv,
 	rc2_ctrl,
@@ -129,8 +136,8 @@ const EVP_CIPHER *EVP_rc2_40_cbc(void)
 static int rc2_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			const unsigned char *iv, int enc)
 	{
-	RC2_set_key(&(ctx->c.rc2.ks),EVP_CIPHER_CTX_key_length(ctx),
-			key,ctx->c.rc2.key_bits);
+	RC2_set_key(&data(ctx)->ks,EVP_CIPHER_CTX_key_length(ctx),
+		    key,data(ctx)->key_bits);
 	return 1;
 	}
 
@@ -196,26 +203,26 @@ static int rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 static int rc2_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	{
-		switch(type) {
+	switch(type)
+		{
+	case EVP_CTRL_INIT:
+		data(c)->key_bits = EVP_CIPHER_CTX_key_length(c) * 8;
+		return 1;
 
-			case EVP_CTRL_INIT:
-			c->c.rc2.key_bits = EVP_CIPHER_CTX_key_length(c) * 8;
-			return 1;
-
-			case EVP_CTRL_GET_RC2_KEY_BITS:
-			*(int *)ptr = c->c.rc2.key_bits;
-			return 1;
+	case EVP_CTRL_GET_RC2_KEY_BITS:
+		*(int *)ptr = data(c)->key_bits;
+		return 1;
 			
-			
-			case EVP_CTRL_SET_RC2_KEY_BITS:
-			if(arg > 0) {
-				c->c.rc2.key_bits = arg;
-				return 1;
+	case EVP_CTRL_SET_RC2_KEY_BITS:
+		if(arg > 0)
+			{
+			data(c)->key_bits = arg;
+			return 1;
 			}
-			return 0;
+		return 0;
 
-			default:
-			return -1;
+	default:
+		return -1;
 		}
 	}
 

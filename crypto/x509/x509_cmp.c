@@ -83,6 +83,7 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
 	unsigned char md[16];
 	char str[256];
 
+	EVP_MD_CTX_init(&ctx);
 	X509_NAME_oneline(a->cert_info->issuer,str,256);
 	ret=strlen(str);
 	EVP_DigestInit(&ctx,EVP_md5());
@@ -93,6 +94,7 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
 	ret=(	((unsigned long)md[0]     )|((unsigned long)md[1]<<8L)|
 		((unsigned long)md[2]<<16L)|((unsigned long)md[3]<<24L)
 		)&0xffffffffL;
+	EVP_MD_CTX_cleanup(&ctx);
 	return(ret);
 	}
 #endif

@@ -107,13 +107,12 @@ void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
 		EVP_DigestInit(&ctx->o_ctx,md);
 		EVP_DigestUpdate(&ctx->o_ctx,pad,EVP_MD_block_size(md));
 		}
-
-	memcpy(&ctx->md_ctx,&ctx->i_ctx,sizeof(ctx->i_ctx));
+	EVP_MD_CTX_copy(&ctx->md_ctx,&ctx->i_ctx);
 	}
 
 void HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len)
 	{
-	EVP_DigestUpdate(&(ctx->md_ctx),data,len);
+	EVP_DigestUpdate(&ctx->md_ctx,data,len);
 	}
 
 void HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len)
@@ -124,15 +123,25 @@ void HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len)
 
 	j=EVP_MD_block_size(ctx->md);
 
-	EVP_DigestFinal(&(ctx->md_ctx),buf,&i);
-	memcpy(&(ctx->md_ctx),&(ctx->o_ctx),sizeof(ctx->o_ctx));
-	EVP_DigestUpdate(&(ctx->md_ctx),buf,i);
-	EVP_DigestFinal(&(ctx->md_ctx),md,len);
+	EVP_DigestFinal(&ctx->md_ctx,buf,&i);
+	EVP_MD_CTX_copy(&ctx->md_ctx,&ctx->o_ctx);
+	EVP_DigestUpdate(&ctx->md_ctx,buf,i);
+	EVP_DigestFinal(&ctx->md_ctx,md,len);
 	}
 
-void HMAC_cleanup(HMAC_CTX *ctx)
+void HMAC_CTX_init(HMAC_CTX *ctx)
 	{
-	memset(ctx,0,sizeof(HMAC_CTX));
+	EVP_MD_CTX_init(&ctx->i_ctx);
+	EVP_MD_CTX_init(&ctx->o_ctx);
+	EVP_MD_CTX_init(&ctx->md_ctx);
+	}
+
+void HMAC_CTX_cleanup(HMAC_CTX *ctx)
+	{
+	EVP_MD_CTX_cleanup(&ctx->i_ctx);
+	EVP_MD_CTX_cleanup(&ctx->o_ctx);
+	EVP_MD_CTX_cleanup(&ctx->md_ctx);
+	memset(ctx,0,sizeof *ctx);
 	}
 
 unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
@@ -143,10 +152,11 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
 	static unsigned char m[EVP_MAX_MD_SIZE];
 
 	if (md == NULL) md=m;
+	HMAC_CTX_init(&c);
 	HMAC_Init(&c,key,key_len,evp_md);
 	HMAC_Update(&c,d,n);
 	HMAC_Final(&c,md,md_len);
-	HMAC_cleanup(&c);
+	HMAC_CTX_cleanup(&c);
 	return(md);
 	}
 

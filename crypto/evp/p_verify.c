@@ -85,8 +85,10 @@ int EVP_VerifyFinal(EVP_MD_CTX *ctx, unsigned char *sigbuf,
 		EVPerr(EVP_F_EVP_VERIFYFINAL,EVP_R_WRONG_PUBLIC_KEY_TYPE);
 		return(-1);
 		}
+	EVP_MD_CTX_init(&tmp_ctx);
 	EVP_MD_CTX_copy(&tmp_ctx,ctx);     
 	EVP_DigestFinal(&tmp_ctx,&(m[0]),&m_len);
+	EVP_MD_CTX_cleanup(&tmp_ctx);
         if (ctx->digest->verify == NULL)
                 {
 		EVPerr(EVP_F_EVP_VERIFYFINAL,EVP_R_NO_VERIFY_FUNCTION_CONFIGURED);

@@ -53,6 +53,7 @@
 #include <openssl/err.h>
 #include <string.h>
 #include <assert.h>
+#include <openssl/rijndael.h>
 
 static int aes_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 					const unsigned char *iv, int enc);
@@ -70,8 +71,7 @@ static const EVP_CIPHER name##_cipher_st = \
 	aes_init, \
 	ciph_func, \
 	NULL, \
-	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+ \
-		sizeof((((EVP_CIPHER_CTX *)NULL)->c.rijndael)), \
+	sizeof(RIJNDAEL_KEY), \
 	EVP_CIPHER_set_asn1_iv, \
 	EVP_CIPHER_get_asn1_iv, \
 	NULL, \
@@ -93,7 +93,7 @@ IMPLEMENT_AES_CIPHER(aes_256_cbc, aes_cbc, 32, 32, EVP_CIPH_CBC_MODE)
 static int aes_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		   const unsigned char *iv, int enc)
 	{
-	RIJNDAEL_KEY *k=&ctx->c.rijndael;
+	RIJNDAEL_KEY *k=ctx->cipher_data;
 	if (enc) 
 		k->rounds = rijndaelKeySetupEnc(k->rd_key, key, ctx->key_len * 8);
 	else
@@ -105,7 +105,7 @@ static int aes_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int aes_ecb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			 const unsigned char *in, unsigned int inl)
 	{
-	RIJNDAEL_KEY *k=&ctx->c.rijndael;
+	RIJNDAEL_KEY *k=ctx->cipher_data;
 	while(inl > 0)
 		{
 		if(ctx->encrypt)
@@ -126,7 +126,7 @@ static int aes_cbc(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	{
 	int n;
 	unsigned char tmp[16];
-	RIJNDAEL_KEY *k=&ctx->c.rijndael;
+	RIJNDAEL_KEY *k=ctx->cipher_data;
 	while(inl > 0)
 		{
 		if(ctx->encrypt)

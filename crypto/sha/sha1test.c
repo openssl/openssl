@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
 }
 #else
 #include <openssl/evp.h>
+#include <openssl/sha.h>
 
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>
@@ -114,6 +115,7 @@ int main(int argc, char *argv[])
 	ebcdic2ascii(test[1], test[1], strlen(test[1]));
 #endif
 
+	EVP_MD_CTX_init(&c);
 	P=(unsigned char **)test;
 	R=(unsigned char **)ret;
 	i=1;
@@ -154,6 +156,7 @@ int main(int argc, char *argv[])
 	else
 		printf("test 3 ok\n");
 	exit(err);
+	EVP_MD_CTX_cleanup(&c);
 	return(0);
 	}
 

@@ -118,6 +118,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 	}
 #endif
 
+	EVP_MD_CTX_init(&ctx);
 #ifdef  DEBUG_KEYGEN
 	fprintf(stderr, "KEYGEN DEBUG\n");
 	fprintf(stderr, "ID %d, ITER %d\n", id, iter);
@@ -194,6 +195,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 			} else BN_bn2bin (Ij, I + j);
 		}
 	}
+	EVP_MD_CTX_cleanup(&ctx);
 }
 #ifdef DEBUG_KEYGEN
 void h__dump (unsigned char *p, int len)

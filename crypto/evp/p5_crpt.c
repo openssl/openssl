@@ -128,6 +128,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	if(!pass) passlen = 0;
 	else if(passlen == -1) passlen = strlen(pass);
 
+	EVP_MD_CTX_init(&ctx);
 	EVP_DigestInit (&ctx, md);
 	EVP_DigestUpdate (&ctx, pass, passlen);
 	EVP_DigestUpdate (&ctx, salt, saltlen);
@@ -138,6 +139,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 		EVP_DigestUpdate(&ctx, md_tmp, EVP_MD_size(md));
 		EVP_DigestFinal (&ctx, md_tmp, NULL);
 	}
+	EVP_MD_CTX_cleanup(&ctx);
 	memcpy (key, md_tmp, EVP_CIPHER_key_length(cipher));
 	memcpy (iv, md_tmp + (16 - EVP_CIPHER_iv_length(cipher)),
 						 EVP_CIPHER_iv_length(cipher));

@@ -84,8 +84,10 @@ int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 	MS_STATIC EVP_MD_CTX tmp_ctx;
 
 	*siglen=0;
+	EVP_MD_CTX_init(&tmp_ctx);
 	EVP_MD_CTX_copy(&tmp_ctx,ctx);   
 	EVP_DigestFinal(&tmp_ctx,&(m[0]),&m_len);
+	EVP_MD_CTX_cleanup(&tmp_ctx);
 	for (i=0; i<4; i++)
 		{
 		v=ctx->digest->required_pkey_type[i];

@@ -62,6 +62,11 @@
 #include "apps.h"
 #include <openssl/evp.h>
 #include <openssl/crypto.h>
+#include <openssl/md2.h>
+#include <openssl/rc4.h>
+#include <openssl/des.h>
+#include <openssl/idea.h>
+#include <openssl/blowfish.h>
 
 #undef PROG
 #define PROG	version_main

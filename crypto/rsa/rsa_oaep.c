@@ -26,6 +26,7 @@
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <openssl/sha.h>
 
 int MGF1(unsigned char *mask, long len,
 	const unsigned char *seed, long seedlen);
@@ -162,6 +163,7 @@ int MGF1(unsigned char *mask, long len,
     EVP_MD_CTX c;
     unsigned char md[SHA_DIGEST_LENGTH];
 
+    EVP_MD_CTX_init(&c);
     for (i = 0; outlen < len; i++)
 	{
 	cnt[0] = (unsigned char)((i >> 24) & 255);
@@ -183,6 +185,7 @@ int MGF1(unsigned char *mask, long len,
 	    outlen = len;
 	    }
 	}
+    EVP_MD_CTX_cleanup(&c);
     return (0);
     }
 #endif

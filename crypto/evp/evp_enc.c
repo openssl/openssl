@@ -76,8 +76,12 @@ int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     unsigned char *key, unsigned char *iv, int enc)
 	{
 	if(enc && (enc != -1)) enc = 1;
-	if (cipher) {
+	if (cipher)
+		{
+		if(ctx->cipher_data)
+			OPENSSL_free(ctx->cipher_data);
 		ctx->cipher=cipher;
+		ctx->cipher_data=OPENSSL_malloc(ctx->cipher->ctx_size);
 		ctx->key_len = cipher->key_len;
 		ctx->flags = 0;
 		if(ctx->cipher->flags & EVP_CIPH_CTRL_INIT) {
@@ -339,6 +343,7 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 		{
 		if(!c->cipher->cleanup(c)) return 0;
 		}
+	OPENSSL_free(c->cipher_data);
 	memset(c,0,sizeof(EVP_CIPHER_CTX));
 	return 1;
 	}

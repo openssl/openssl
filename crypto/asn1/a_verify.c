@@ -81,6 +81,7 @@ int ASN1_verify(int (*i2d)(), X509_ALGOR *a, ASN1_BIT_STRING *signature,
 	unsigned char *p,*buf_in=NULL;
 	int ret= -1,i,inl;
 
+	EVP_MD_CTX_init(&ctx);
 	i=OBJ_obj2nid(a->algorithm);
 	type=EVP_get_digestbyname(OBJ_nid2sn(i));
 	if (type == NULL)
@@ -117,6 +118,7 @@ int ASN1_verify(int (*i2d)(), X509_ALGOR *a, ASN1_BIT_STRING *signature,
 	/* memset(&ctx,0,sizeof(ctx)); */
 	ret=1;
 err:
+	EVP_MD_CTX_cleanup(&ctx);
 	return(ret);
 	}
 
@@ -131,6 +133,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signat
 	unsigned char *buf_in=NULL;
 	int ret= -1,i,inl;
 
+	EVP_MD_CTX_init(&ctx);
 	i=OBJ_obj2nid(a->algorithm);
 	type=EVP_get_digestbyname(OBJ_nid2sn(i));
 	if (type == NULL)
@@ -165,6 +168,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signat
 	/* memset(&ctx,0,sizeof(ctx)); */
 	ret=1;
 err:
+	EVP_MD_CTX_cleanup(&ctx);
 	return(ret);
 	}
 

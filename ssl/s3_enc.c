@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include <openssl/evp.h>
 #include "ssl_locl.h"
+#include <openssl/md5.h>
 
 static unsigned char ssl3_pad_1[48]={
 	0x36,0x36,0x36,0x36,0x36,0x36,0x36,0x36,
@@ -91,6 +92,8 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 	c = os_toascii[c]; /*'A' in ASCII */
 #endif
 	k=0;
+	EVP_MD_CTX_init(&m5);
+	EVP_MD_CTX_init(&s1);
 	for (i=0; i<num; i+=MD5_DIGEST_LENGTH)
 		{
 		k++;
@@ -127,6 +130,8 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 		km+=MD5_DIGEST_LENGTH;
 		}
 	memset(smd,0,SHA_DIGEST_LENGTH);
+	EVP_MD_CTX_cleanup(&m5);
+	EVP_MD_CTX_cleanup(&s1);
 	return 1;
 	}
 
@@ -244,6 +249,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 		goto err2;
 		}
 
+	EVP_MD_CTX_init(&md);
 	memcpy(mac_secret,ms,i);
 	if (exp)
 		{
@@ -273,6 +279,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
 	memset(&(exp_key[0]),0,sizeof(exp_key));
 	memset(&(exp_iv[0]),0,sizeof(exp_iv));
+	EVP_MD_CTX_cleanup(&md);
 	return(1);
 err:
 	SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE,ERR_R_MALLOC_FAILURE);
@@ -447,6 +454,7 @@ static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
 	unsigned char md_buf[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX ctx;
 
+	EVP_MD_CTX_init(&ctx);
 	EVP_MD_CTX_copy(&ctx,in_ctx);
 
 	n=EVP_MD_CTX_size(&ctx);
@@ -466,7 +474,7 @@ static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
 	EVP_DigestUpdate(&ctx,md_buf,i);
 	EVP_DigestFinal(&ctx,p,&ret);
 
-	memset(&ctx,0,sizeof(EVP_MD_CTX));
+	EVP_MD_CTX_cleanup(&ctx);
 
 	return((int)ret);
 	}
@@ -500,6 +508,7 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 	npad=(48/md_size)*md_size;
 
 	/* Chop the digest off the end :-) */
+	EVP_MD_CTX_init(&md_ctx);
 
 	EVP_DigestInit(  &md_ctx,hash);
 	EVP_DigestUpdate(&md_ctx,mac_sec,md_size);
@@ -518,6 +527,8 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 	EVP_DigestUpdate(&md_ctx,ssl3_pad_2,npad);
 	EVP_DigestUpdate(&md_ctx,md,md_size);
 	EVP_DigestFinal( &md_ctx,md,&md_size);
+
+	EVP_MD_CTX_cleanup(&md_ctx);
 
 	for (i=7; i>=0; i--)
 		{
@@ -547,6 +558,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	int i,ret=0;
 	unsigned int n;
 
+	EVP_MD_CTX_init(&ctx);
 	for (i=0; i<3; i++)
 		{
 		EVP_DigestInit(&ctx,s->ctx->sha1);
@@ -565,6 +577,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 		out+=n;
 		ret+=n;
 		}
+	EVP_MD_CTX_cleanup(&ctx);
 	return(ret);
 	}
 

@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
 }
 #else
 #include <openssl/evp.h>
+#include <openssl/md5.h>
 
 static char *test[]={
 	"",

@@ -12,6 +12,15 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Rationalise EVP so it can be extended: don't include a union of
+     cipher/digest structures, add init/cleanup functions. This also reduces
+     the number of header dependencies.
+     [Ben Laurie]
+
+  +) Make DES key schedule conform to the usual scheme, as well as correcting
+     its structure.
+     [Ben Laurie]
+
   +) Enhanced support for IA-64 Unix platforms (well, Linux and HP-UX).
      [Andy Polyakov]
 

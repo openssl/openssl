@@ -15,12 +15,12 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
-
 #ifndef OPENSSL_NO_DES
 # include <openssl/des.h>
 #endif
 #ifndef NO_MD5CRYPT_1
 # include <openssl/evp.h>
+# include <openssl/md5.h>
 #endif
 
 
@@ -311,7 +311,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 	unsigned char buf[MD5_DIGEST_LENGTH];
 	char *salt_out;
 	int n, i;
-	EVP_MD_CTX md;
+	EVP_MD_CTX md,md2;
 	size_t passwd_len, salt_len;
 
 	passwd_len = strlen(passwd);
@@ -326,6 +326,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 	salt_len = strlen(salt_out);
 	assert(salt_len <= 8);
 	
+	EVP_MD_CTX_init(&md);
 	EVP_DigestInit(&md,EVP_md5());
 	EVP_DigestUpdate(&md, passwd, passwd_len);
 	EVP_DigestUpdate(&md, "$", 1);
@@ -333,15 +334,13 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 	EVP_DigestUpdate(&md, "$", 1);
 	EVP_DigestUpdate(&md, salt_out, salt_len);
 	
-	 {
-		EVP_MD_CTX md2;
+	EVP_MD_CTX_init(&md2);
+	EVP_DigestInit(&md2,EVP_md5());
+	EVP_DigestUpdate(&md2, passwd, passwd_len);
+	EVP_DigestUpdate(&md2, salt_out, salt_len);
+	EVP_DigestUpdate(&md2, passwd, passwd_len);
+	EVP_DigestFinal(&md2, buf, NULL);
 
-		EVP_DigestInit(&md2,EVP_md5());
-		EVP_DigestUpdate(&md2, passwd, passwd_len);
-		EVP_DigestUpdate(&md2, salt_out, salt_len);
-		EVP_DigestUpdate(&md2, passwd, passwd_len);
-		EVP_DigestFinal(&md2, buf, NULL);
-	 }
 	for (i = passwd_len; i > sizeof buf; i -= sizeof buf)
 		EVP_DigestUpdate(&md, buf, sizeof buf);
 	EVP_DigestUpdate(&md, buf, i);
@@ -356,8 +355,6 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 
 	for (i = 0; i < 1000; i++)
 		{
-		EVP_MD_CTX md2;
-
 		EVP_DigestInit(&md2,EVP_md5());
 		EVP_DigestUpdate(&md2, (i & 1) ? (unsigned char *) passwd : buf,
 		                       (i & 1) ? passwd_len : sizeof buf);
@@ -369,6 +366,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 		                       (i & 1) ? sizeof buf : passwd_len);
 		EVP_DigestFinal(&md2, buf, NULL);
 		}
+	EVP_MD_CTX_cleanup(&md2);
 	
 	 {
 		/* transform buf into output string */
@@ -406,6 +404,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 		*output = 0;
 		assert(strlen(out_buf) < sizeof(out_buf));
 	 }
+	EVP_MD_CTX_cleanup(&md);
 
 	return out_buf;
 	}

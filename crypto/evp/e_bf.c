@@ -62,18 +62,26 @@
 #include <openssl/evp.h>
 #include "evp_locl.h"
 #include <openssl/objects.h>
+#include <openssl/blowfish.h>
 
 static int bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		       const unsigned char *iv, int enc);
 
-IMPLEMENT_BLOCK_CIPHER(bf, bf_ks, BF, bf_ks, NID_bf, 8, 16, 8,
+typedef struct
+	{
+	BF_KEY ks;
+	} EVP_BF_KEY;
+
+#define data(ctx)	EVP_C_DATA(EVP_BF_KEY,ctx)
+
+IMPLEMENT_BLOCK_CIPHER(bf, ks, BF, EVP_BF_KEY, NID_bf, 8, 16, 8,
 			EVP_CIPH_VARIABLE_LENGTH, bf_init_key, NULL, 
 			EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
 	
 static int bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		       const unsigned char *iv, int enc)
 	{
-	BF_set_key(&(ctx->c.bf_ks),EVP_CIPHER_CTX_key_length(ctx),key);
+	BF_set_key(&data(ctx)->ks,EVP_CIPHER_CTX_key_length(ctx),key);
 	return 1;
 	}
 

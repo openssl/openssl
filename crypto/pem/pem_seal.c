@@ -91,10 +91,13 @@ int PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 		goto err;
 		}
 
-	EVP_EncodeInit(&(ctx->encode));
-	EVP_SignInit(&(ctx->md),md_type);
+	EVP_EncodeInit(&ctx->encode);
 
-	ret=EVP_SealInit(&(ctx->cipher),type,ek,ekl,iv,pubk,npubk);
+	EVP_MD_CTX_init(&ctx->md);
+	EVP_SignInit(&ctx->md,md_type);
+
+	EVP_CIPHER_CTX_init(&ctx->cipher);
+	ret=EVP_SealInit(&ctx->cipher,type,ek,ekl,iv,pubk,npubk);
 	if (!ret) goto err;
 
 	/* base64 encode the keys */
@@ -120,7 +123,7 @@ void PEM_SealUpdate(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *out, int *outl,
 	int i,j;
 
 	*outl=0;
-	EVP_SignUpdate(&(ctx->md),in,inl);
+	EVP_SignUpdate(&ctx->md,in,inl);
 	for (;;)
 		{
 		if (inl <= 0) break;
@@ -128,8 +131,8 @@ void PEM_SealUpdate(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *out, int *outl,
 			i=1200;
 		else
 			i=inl;
-		EVP_EncryptUpdate(&(ctx->cipher),buffer,&j,in,i);
-		EVP_EncodeUpdate(&(ctx->encode),out,&j,buffer,j);
+		EVP_EncryptUpdate(&ctx->cipher,buffer,&j,in,i);
+		EVP_EncodeUpdate(&ctx->encode,out,&j,buffer,j);
 		*outl+=j;
 		out+=j;
 		in+=i;
@@ -158,20 +161,20 @@ int PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
 		goto err;
 		}
 
-	EVP_EncryptFinal(&(ctx->cipher),s,(int *)&i);
-	EVP_EncodeUpdate(&(ctx->encode),out,&j,s,i);
+	EVP_EncryptFinal(&ctx->cipher,s,(int *)&i);
+	EVP_EncodeUpdate(&ctx->encode,out,&j,s,i);
 	*outl=j;
 	out+=j;
-	EVP_EncodeFinal(&(ctx->encode),out,&j);
+	EVP_EncodeFinal(&ctx->encode,out,&j);
 	*outl+=j;
 
-	if (!EVP_SignFinal(&(ctx->md),s,&i,priv)) goto err;
+	if (!EVP_SignFinal(&ctx->md,s,&i,priv)) goto err;
 	*sigl=EVP_EncodeBlock(sig,s,i);
 
 	ret=1;
 err:
-	memset((char *)&(ctx->md),0,sizeof(ctx->md));
-	memset((char *)&(ctx->cipher),0,sizeof(ctx->cipher));
+	EVP_MD_CTX_cleanup(&ctx->md);
+	EVP_CIPHER_CTX_cleanup(&ctx->cipher);
 	if (s != NULL) OPENSSL_free(s);
 	return(ret);
 	}

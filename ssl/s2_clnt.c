@@ -766,6 +766,7 @@ static int client_certificate(SSL *s)
 		/* ok, now we calculate the checksum
 		 * do it first so we can reuse buf :-) */
 		p=buf;
+		EVP_MD_CTX_init(&ctx);
 		EVP_SignInit(&ctx,s->ctx->rsa_md5);
 		EVP_SignUpdate(&ctx,s->s2->key_material,
 			(unsigned int)s->s2->key_material_length);
@@ -787,7 +788,7 @@ static int client_certificate(SSL *s)
 			 * We will continue with a 0 length signature
 			 */
 			}
-		memset(&ctx,0,sizeof(ctx));
+		EVP_MD_CTX_cleanup(&ctx);
 		s2n(n,p);
 		d+=n;
 

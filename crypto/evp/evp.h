@@ -70,6 +70,7 @@
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
+#if 0
 #ifndef OPENSSL_NO_MD2
 #include <openssl/md2.h>
 #endif
@@ -112,12 +113,15 @@
 #ifndef OPENSSL_NO_AES
 #include <openssl/rijndael.h>
 #endif
+#endif // 0
 
+/*
 #define EVP_RC2_KEY_SIZE		16
 #define EVP_RC4_KEY_SIZE		16
 #define EVP_BLOWFISH_KEY_SIZE		16
 #define EVP_CAST5_KEY_SIZE		16
 #define EVP_RC5_32_12_16_KEY_SIZE	16
+*/
 #define EVP_MAX_MD_SIZE			(16+20) /* The SSLv3 md5+sha1 type */
 #define EVP_MAX_KEY_LENGTH		32
 #define EVP_MAX_IV_LENGTH		16
@@ -275,7 +279,7 @@ typedef struct env_md_st
 	int (*verify)();
 	int required_pkey_type[5]; /*EVP_PKEY_xxx */
 	int block_size;
-	int ctx_size; /* how big does the ctx need to be */
+	int ctx_size; /* how big does the ctx->md_data need to be */
 	} EVP_MD;
 
 
@@ -307,6 +311,7 @@ typedef struct env_md_st
 typedef struct env_md_ctx_st
 	{
 	const EVP_MD *digest;
+#if 0
 	union	{
 		unsigned char base[4];
 #ifndef OPENSSL_NO_MD2
@@ -328,6 +333,8 @@ typedef struct env_md_ctx_st
 		MDC2_CTX mdc2;
 #endif
 		} md;
+#endif
+	void *md_data;
 	} EVP_MD_CTX;
 
 typedef struct evp_cipher_st EVP_CIPHER;
@@ -345,7 +352,7 @@ struct evp_cipher_st
 	int (*do_cipher)(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			 const unsigned char *in, unsigned int inl);/* encrypt/decrypt data */
 	int (*cleanup)(EVP_CIPHER_CTX *); /* cleanup ctx */
-	int ctx_size;		/* how big the ctx needs to be */
+	int ctx_size;		/* how big ctx->cipher_data needs to be */
 	int (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Populate a ASN1_TYPE with parameters */
 	int (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Get parameters from a ASN1_TYPE */
 	int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr); /* Miscellaneous operations */
@@ -404,6 +411,7 @@ struct evp_cipher_ctx_st
 	void *app_data;		/* application stuff */
 	int key_len;		/* May change for variable length cipher */
 	unsigned long flags;	/* Various flags */
+#if 0
 	union
 		{
 #ifndef OPENSSL_NO_RC4
@@ -458,6 +466,8 @@ struct evp_cipher_ctx_st
 		struct session_op *dev_crypto;
 #endif
 		} c;
+#endif // 0
+	void *cipher_data; /* per EVP data */
 	int final_used;
 	int block_mask;
 	unsigned char final[EVP_MAX_BLOCK_LENGTH];/* possible final block */
@@ -562,7 +572,11 @@ void BIO_set_md(BIO *,const EVP_MD *md);
 	OBJ_NAME_remove(alias,OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS);
 
 
-int     EVP_MD_CTX_copy(EVP_MD_CTX *out,EVP_MD_CTX *in);  
+void	EVP_MD_CTX_init(EVP_MD_CTX *ctx);
+int	EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
+EVP_MD_CTX *EVP_MD_CTX_create(void);
+void	EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
+int     EVP_MD_CTX_copy(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
 int	EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 int	EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d,
 			 unsigned int cnt);

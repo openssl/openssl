@@ -113,6 +113,7 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 #include "kssl_lcl.h"
+#include <openssl/md5.h>
 
 const char *ssl3_version_str="SSLv3" OPENSSL_VERSION_PTEXT;
 
@@ -951,6 +952,8 @@ int ssl3_new(SSL *s)
 
 	if ((s3=OPENSSL_malloc(sizeof *s3)) == NULL) goto err;
 	memset(s3,0,sizeof *s3);
+	EVP_MD_CTX_init(&s3->finish_dgst1);
+	EVP_MD_CTX_init(&s3->finish_dgst2);
 
 	s->s3=s3;
 
@@ -978,6 +981,8 @@ void ssl3_free(SSL *s)
 #endif
 	if (s->s3->tmp.ca_names != NULL)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
+	EVP_MD_CTX_cleanup(&s->s3->finish_dgst1);
+	EVP_MD_CTX_cleanup(&s->s3->finish_dgst2);
 	memset(s->s3,0,sizeof *s->s3);
 	OPENSSL_free(s->s3);
 	s->s3=NULL;

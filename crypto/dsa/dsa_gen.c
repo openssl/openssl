@@ -78,6 +78,7 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
+#include <openssl/sha.h>
 
 DSA *DSA_generate_parameters(int bits,
 		unsigned char *seed_in, int seed_len,

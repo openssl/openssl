@@ -84,6 +84,8 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
 	int cplen, j, k, tkeylen;
 	unsigned long i = 1;
 	HMAC_CTX hctx;
+
+	HMAC_CTX_init(&hctx);
 	p = out;
 	tkeylen = keylen;
 	if(!pass) passlen = 0;
@@ -112,7 +114,7 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
 		i++;
 		p+= cplen;
 	}
-	HMAC_cleanup(&hctx);
+	HMAC_CTX_cleanup(&hctx);
 #ifdef DEBUG_PKCS5V2
 	fprintf(stderr, "Password:\n");
 	h__dump (pass, passlen);

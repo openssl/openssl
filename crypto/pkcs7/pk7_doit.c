@@ -537,7 +537,8 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			
 			/* We now have the EVP_MD_CTX, lets do the
 			 * signing. */
-			memcpy(&ctx_tmp,mdc,sizeof(ctx_tmp));
+			EVP_MD_CTX_init(&ctx_tmp);
+			EVP_MD_CTX_copy(&ctx_tmp,mdc);
 			if (!BUF_MEM_grow(buf,EVP_PKEY_size(si->pkey)))
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATASIGN,ERR_R_BIO_LIB);
@@ -623,6 +624,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 		}
 	ret=1;
 err:
+	EVP_MD_CTX_cleanup(&ctx_tmp);
 	if (buf != NULL) BUF_MEM_free(buf);
 	return(ret);
 	}
@@ -688,6 +690,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 	BIO *btmp;
 	EVP_PKEY *pkey;
 
+	EVP_MD_CTX_init(&mdc_tmp);
+
 	if (!PKCS7_type_is_signed(p7) && 
 				!PKCS7_type_is_signedAndEnveloped(p7)) {
 		PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY,
@@ -721,7 +725,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 
 	/* mdc is the digest ctx that we want, unless there are attributes,
 	 * in which case the digest is the signed attributes */
-	memcpy(&mdc_tmp,mdc,sizeof(mdc_tmp));
+	EVP_MD_CTX_copy(&mdc_tmp,mdc);
 
 	sk=si->auth_attr;
 	if ((sk != NULL) && (sk_X509_ATTRIBUTE_num(sk) != 0))
@@ -787,6 +791,7 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 	else
 		ret=1;
 err:
+	EVP_MD_CTX_cleanup(&mdc_tmp);
 	return(ret);
 	}
 

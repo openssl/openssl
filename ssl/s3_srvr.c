@@ -68,10 +68,10 @@
 #include <openssl/x509.h>
 #include <openssl/krb5_asn.h>
 #include "ssl_locl.h"
-
 #ifndef OPENSSL_NO_KRB5
 #include "kssl_lcl.h"
 #endif /* OPENSSL_NO_KRB5 */
+#include <openssl/md5.h>
 
 static SSL_METHOD *ssl3_get_server_method(int ver);
 static int ssl3_get_client_hello(SSL *s);
@@ -953,6 +953,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 	BUF_MEM *buf;
 	EVP_MD_CTX md_ctx;
 
+	EVP_MD_CTX_init(&md_ctx);
 	if (s->state == SSL3_ST_SW_KEY_EXCH_A)
 		{
 		type=s->s3->tmp.new_cipher->algorithms & SSL_MKEY_MASK;
@@ -1161,10 +1162,12 @@ static int ssl3_send_server_key_exchange(SSL *s)
 		}
 
 	s->state = SSL3_ST_SW_KEY_EXCH_B;
+	EVP_MD_CTX_cleanup(&md_ctx);
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
 err:
+	EVP_MD_CTX_cleanup(&md_ctx);
 	return(-1);
 	}
 

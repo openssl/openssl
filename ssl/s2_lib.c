@@ -62,6 +62,7 @@
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
+#include <openssl/md5.h>
 
 static long ssl2_default_timeout(void );
 const char *ssl2_version_str="SSLv2" OPENSSL_VERSION_PTEXT;
@@ -423,7 +424,7 @@ void ssl2_generate_key_material(SSL *s)
 	c = os_toascii['0']; /* Must be an ASCII '0', not EBCDIC '0',
 				see SSLv2 docu */
 #endif
-
+	EVP_MD_CTX_init(&ctx);
 	km=s->s2->key_material;
 	for (i=0; i<s->s2->key_material_length; i+=MD5_DIGEST_LENGTH)
 		{
@@ -437,6 +438,7 @@ void ssl2_generate_key_material(SSL *s)
 		EVP_DigestFinal(&ctx,km,NULL);
 		km+=MD5_DIGEST_LENGTH;
 		}
+	EVP_MD_CTX_cleanup(&ctx);
 	}
 
 void ssl2_return_error(SSL *s, int err)

@@ -127,7 +127,8 @@ extern "C" {
 #define PEM_STRING_SSL_SESSION	"SSL SESSION PARAMETERS"
 #define PEM_STRING_DSAPARAMS	"DSA PARAMETERS"
 
-
+  /* Note that this structure is initialised by PEM_SealInit and cleaned up
+     by PEM_SealFinal (at least for now) */
 typedef struct PEM_Encode_Seal_st
 	{
 	EVP_ENCODE_CTX encode;

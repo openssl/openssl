@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
 }
 #else
 #include <openssl/hmac.h>
+#include <openssl/md5.h>
 
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>

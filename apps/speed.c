@@ -787,9 +787,9 @@ int MAIN(int argc, char **argv)
 #endif
 
 #ifndef OPENSSL_NO_DES
-	des_set_key_unchecked(&key,sch);
-	des_set_key_unchecked(&key2,sch2);
-	des_set_key_unchecked(&key3,sch3);
+	des_set_key_unchecked(&key,&sch);
+	des_set_key_unchecked(&key2,&sch2);
+	des_set_key_unchecked(&key3,&sch3);
 #endif
 #ifndef OPENSSL_NO_IDEA
 	idea_set_encrypt_key(key16,&idea_ks);
@@ -990,6 +990,8 @@ int MAIN(int argc, char **argv)
 	if (doit[D_HMAC])
 		{
 		HMAC_CTX hctx;
+
+		HMAC_CTX_init(&hctx);
 		HMAC_Init(&hctx,(unsigned char *)"This is a key...",
 			16,EVP_md5());
 
@@ -1008,7 +1010,7 @@ int MAIN(int argc, char **argv)
 				count,names[D_HMAC],d);
 			results[D_HMAC][j]=((double)count)/d*lengths[j];
 			}
-		HMAC_cleanup(&hctx);
+		HMAC_CTX_cleanup(&hctx);
 		}
 #endif
 #ifndef OPENSSL_NO_SHA
@@ -1068,11 +1070,11 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_CBC_DES],c[D_CBC_DES][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_CBC_DES][j]); count++)
-				des_ncbc_encrypt(buf,buf,lengths[j],sch,
+				des_ncbc_encrypt(buf,buf,lengths[j],&sch,
 						 &iv,DES_ENCRYPT);
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
-				count,names[D_CBC_DES],d);
+				   count,names[D_CBC_DES],d);
 			results[D_CBC_DES][j]=((double)count)/d*lengths[j];
 			}
 		}
@@ -1085,7 +1087,7 @@ int MAIN(int argc, char **argv)
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_EDE3_DES][j]); count++)
 				des_ede3_cbc_encrypt(buf,buf,lengths[j],
-						     sch,sch2,sch3,
+						     &sch,&sch2,&sch3,
 						     &iv,DES_ENCRYPT);
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",

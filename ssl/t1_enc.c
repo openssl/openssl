@@ -61,6 +61,7 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include "ssl_locl.h"
+#include <openssl/md5.h>
 
 static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 			int sec_len, unsigned char *seed, int seed_len,
@@ -75,6 +76,8 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 	
 	chunk=EVP_MD_size(md);
 
+	HMAC_CTX_init(&ctx);
+	HMAC_CTX_init(&ctx_tmp);
 	HMAC_Init(&ctx,sec,sec_len,md);
 	HMAC_Init(&ctx_tmp,sec,sec_len,md);
 	HMAC_Update(&ctx,seed,seed_len);
@@ -103,8 +106,8 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 			break;
 			}
 		}
-	HMAC_cleanup(&ctx);
-	HMAC_cleanup(&ctx_tmp);
+	HMAC_CTX_cleanup(&ctx);
+	HMAC_CTX_cleanup(&ctx_tmp);
 	memset(A1,0,sizeof(A1));
 	}
 
@@ -571,8 +574,10 @@ int tls1_cert_verify_mac(SSL *s, EVP_MD_CTX *in_ctx, unsigned char *out)
 	unsigned int ret;
 	EVP_MD_CTX ctx;
 
+	EVP_MD_CTX_init(&ctx);
 	EVP_MD_CTX_copy(&ctx,in_ctx);
 	EVP_DigestFinal(&ctx,out,&ret);
+	EVP_MD_CTX_cleanup(&ctx);
 	return((int)ret);
 	}
 
@@ -588,6 +593,7 @@ int tls1_final_finish_mac(SSL *s, EVP_MD_CTX *in1_ctx, EVP_MD_CTX *in2_ctx,
 	memcpy(q,str,slen);
 	q+=slen;
 
+	EVP_MD_CTX_init(&ctx);
 	EVP_MD_CTX_copy(&ctx,in1_ctx);
 	EVP_DigestFinal(&ctx,q,&i);
 	q+=i;
@@ -598,7 +604,7 @@ int tls1_final_finish_mac(SSL *s, EVP_MD_CTX *in1_ctx, EVP_MD_CTX *in2_ctx,
 	tls1_PRF(s->ctx->md5,s->ctx->sha1,buf,(int)(q-buf),
 		s->session->master_key,s->session->master_key_length,
 		out,buf2,12);
-	memset(&ctx,0,sizeof(EVP_MD_CTX));
+	EVP_MD_CTX_cleanup(&ctx);
 
 	return((int)12);
 	}
@@ -637,12 +643,13 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	buf[4]=rec->length&0xff;
 
 	/* I should fix this up TLS TLS TLS TLS TLS XXXXXXXX */
+	HMAC_CTX_init(&hmac);
 	HMAC_Init(&hmac,mac_sec,EVP_MD_size(hash),hash);
 	HMAC_Update(&hmac,seq,8);
 	HMAC_Update(&hmac,buf,5);
 	HMAC_Update(&hmac,rec->input,rec->length);
 	HMAC_Final(&hmac,md,&md_size);
-	HMAC_cleanup(&hmac);
+	HMAC_CTX_cleanup(&hmac);
 
 #ifdef TLS_DEBUG
 printf("sec=");

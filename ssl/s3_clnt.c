@@ -62,10 +62,10 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "ssl_locl.h"
-
 #ifndef OPENSSL_NO_KRB5
 #include "kssl_lcl.h"
 #endif
+#include <openssl/md5.h>
 
 static SSL_METHOD *ssl3_get_client_method(int ver);
 static int ssl3_client_hello(SSL *s);
@@ -925,6 +925,7 @@ static int ssl3_get_key_exchange(SSL *s)
 
 	param_len=0;
 	alg=s->s3->tmp.new_cipher->algorithms;
+	EVP_MD_CTX_init(&md_ctx);
 
 #ifndef OPENSSL_NO_RSA
 	if (alg & SSL_kRSA)
@@ -1158,6 +1159,7 @@ static int ssl3_get_key_exchange(SSL *s)
 			}
 		}
 	EVP_PKEY_free(pkey);
+	EVP_MD_CTX_cleanup(&md_ctx);
 	return(1);
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
@@ -1171,6 +1173,7 @@ err:
 	if (dh != NULL)
 		DH_free(dh);
 #endif
+	EVP_MD_CTX_cleanup(&md_ctx);
 	return(-1);
 	}
 

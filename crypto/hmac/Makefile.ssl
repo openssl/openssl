@@ -80,18 +80,11 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 hmac.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-hmac.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
-hmac.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
-hmac.o: ../../include/openssl/des.h ../../include/openssl/dh.h
-hmac.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-hmac.o: ../../include/openssl/evp.h ../../include/openssl/hmac.h
-hmac.o: ../../include/openssl/idea.h ../../include/openssl/md2.h
-hmac.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
-hmac.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
+hmac.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+hmac.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+hmac.o: ../../include/openssl/e_os2.h ../../include/openssl/evp.h
+hmac.o: ../../include/openssl/hmac.h ../../include/openssl/obj_mac.h
 hmac.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-hmac.o: ../../include/openssl/opensslv.h ../../include/openssl/rc2.h
-hmac.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
-hmac.o: ../../include/openssl/rd_fst.h ../../include/openssl/rijndael.h
-hmac.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
-hmac.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-hmac.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h hmac.c
+hmac.o: ../../include/openssl/opensslv.h ../../include/openssl/rsa.h
+hmac.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+hmac.o: ../../include/openssl/symhacks.h
