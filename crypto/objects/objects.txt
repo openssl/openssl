@@ -434,7 +434,7 @@ id-pkix-OCSP 1		: basicOCSPResponse	: Basic OCSP Response
 id-pkix-OCSP 2		: Nonce			: OCSP Nonce
 id-pkix-OCSP 3		: CrlID			: OCSP CRL ID
 id-pkix-OCSP 4		: acceptableResponses	: Acceptable OCSP Responses
-id-pkix-OCSP 5		: noCheck
+id-pkix-OCSP 5		: noCheck		: OCSP No Check
 id-pkix-OCSP 6		: archiveCutoff		: OCSP Archive Cutoff
 id-pkix-OCSP 7		: serviceLocator	: OCSP Service Locator
 id-pkix-OCSP 8		: extendedStatus	: Extended OCSP Status

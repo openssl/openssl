@@ -1323,6 +1323,7 @@
 #define OBJ_id_pkix_OCSP_acceptableResponses		OBJ_id_pkix_OCSP,4L
 
 #define SN_id_pkix_OCSP_noCheck		"noCheck"
+#define LN_id_pkix_OCSP_noCheck		"OCSP No Check"
 #define NID_id_pkix_OCSP_noCheck		369
 #define OBJ_id_pkix_OCSP_noCheck		OBJ_id_pkix_OCSP,5L
 

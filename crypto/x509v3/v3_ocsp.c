@@ -75,6 +75,9 @@ static void *d2i_ocsp_nonce(void *a, unsigned char **pp, long length);
 static void ocsp_nonce_free(void *a);
 static int i2r_ocsp_nonce(X509V3_EXT_METHOD *method, void *nonce, BIO *out, int indent);
 
+static int i2r_ocsp_nocheck(X509V3_EXT_METHOD *method, void *nocheck, BIO *out, int indent);
+static void *s2i_ocsp_nocheck(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
+
 X509V3_EXT_METHOD v3_ocsp_crlid = {
 	NID_id_pkix_OCSP_CrlID, 0, &OCSP_CRLID_it,
 	0,0,0,0,
@@ -102,6 +105,15 @@ X509V3_EXT_METHOD v3_ocsp_nonce = {
 	0,0,
 	0,0,
 	i2r_ocsp_nonce,0,
+	NULL
+};
+
+X509V3_EXT_METHOD v3_ocsp_nocheck = {
+	NID_id_pkix_OCSP_noCheck, 0, &ASN1_NULL_it,
+	0,0,0,0,
+	0,s2i_ocsp_nocheck,
+	0,0,
+	i2r_ocsp_nocheck,0,
 	NULL
 };
 
@@ -189,4 +201,14 @@ static int i2r_ocsp_nonce(X509V3_EXT_METHOD *method, void *nonce, BIO *out, int 
 	return 1;
 }
 
+/* Nocheck is just a single NULL. Don't print anything and always set it */
 
+static int i2r_ocsp_nocheck(X509V3_EXT_METHOD *method, void *nocheck, BIO *out, int indent)
+{
+	return 1;
+}
+
+static void *s2i_ocsp_nocheck(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str)
+{
+	return ASN1_NULL_new();
+}

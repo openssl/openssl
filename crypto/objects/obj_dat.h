@@ -1016,7 +1016,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"CrlID","OCSP CRL ID",NID_id_pkix_OCSP_CrlID,9,&(lvalues[2745]),0},
 {"acceptableResponses","Acceptable OCSP Responses",
 	NID_id_pkix_OCSP_acceptableResponses,9,&(lvalues[2754]),0},
-{"noCheck","noCheck",NID_id_pkix_OCSP_noCheck,9,&(lvalues[2763]),0},
+{"noCheck","OCSP No Check",NID_id_pkix_OCSP_noCheck,9,&(lvalues[2763]),0},
 {"archiveCutoff","OCSP Archive Cutoff",NID_id_pkix_OCSP_archiveCutoff,
 	9,&(lvalues[2772]),0},
 {"serviceLocator","OCSP Service Locator",
@@ -1517,6 +1517,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[178]),/* "OCSP" */
 &(nid_objs[370]),/* "OCSP Archive Cutoff" */
 &(nid_objs[367]),/* "OCSP CRL ID" */
+&(nid_objs[369]),/* "OCSP No Check" */
 &(nid_objs[366]),/* "OCSP Nonce" */
 &(nid_objs[371]),/* "OCSP Service Locator" */
 &(nid_objs[180]),/* "OCSP Signing" */
@@ -1791,7 +1792,6 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[96]),/* "mdc2WithRSA" */
 &(nid_objs[51]),/* "messageDigest" */
 &(nid_objs[173]),/* "name" */
-&(nid_objs[369]),/* "noCheck" */
 &(nid_objs[379]),/* "org" */
 &(nid_objs[17]),/* "organizationName" */
 &(nid_objs[18]),/* "organizationalUnitName" */
