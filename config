@@ -301,9 +301,13 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
     CYGWIN*)
 	case "$RELEASE" in
 	    [bB]*|1.0|1.[12].*)
-		echo "${MACHINE}-whatever-cygwin32_pre1.3"; exit 0
+		echo "${MACHINE}-whatever-cygwin32_pre1.3"
+		;;
 	    *)
-		echo "${MACHINE}-whatever-cygwin32"; exit 0
+		echo "${MACHINE}-whatever-cygwin32"
+		;;
+	esac
+	exit 0
 	;;
 
 esac
