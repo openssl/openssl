@@ -191,9 +191,9 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 	num=BASENUM;
 	for (i=0; i<NUM_SIZES; i++)
 		{
-		BN_rand(a,sizes[i],1,0);
-		BN_rand(b,sizes[i],1,0);
-		BN_rand(c,sizes[i],1,1);
+		BN_pseudo_rand(a,sizes[i],1,0);
+		BN_pseudo_rand(b,sizes[i],1,0);
+		BN_pseudo_rand(c,sizes[i],1,1);
 		BN_mod(a,a,c,ctx);
 		BN_mod(b,b,c,ctx);
 
