@@ -92,8 +92,8 @@ if [ "x$XREL" != "x" ]; then
 		    # with i386 is that it makes ./config pass 386 to
 		    # ./Configure, which in turn makes make generate
 		    # inefficient SHA-1 (for this moment) code.
-		    x7*)  echo "i586-sco-unixware7";          exit 0 ;;
-		    x8*)  echo "i586-unkn-OpenUNIX${VERSION}; exit 0 ;;
+		    x7*)  echo "i586-sco-unixware7";           exit 0 ;;
+		    x8*)  echo "i586-unkn-OpenUNIX${VERSION}"; exit 0 ;;
 		esac
 		;;
 	esac
