@@ -202,7 +202,7 @@ X9_62_CURVE   *ECDSA_get_X9_62_CURVE(const ECDSA *ecdsa, X9_62_CURVE *curve)
 
 	if (len1 == 0) /* => a == 0 */
 	{
-		if (!M_ASN1_OCTET_STRING_set(ret->a, char_buf, 1))
+		if (!M_ASN1_OCTET_STRING_set(ret->a, &char_buf, 1))
 			OPENSSL_ECDSA_ABORT(ERR_R_ASN1_LIB)
 	}
 	else
@@ -213,7 +213,7 @@ X9_62_CURVE   *ECDSA_get_X9_62_CURVE(const ECDSA *ecdsa, X9_62_CURVE *curve)
 	}
 	if (len2 == 0) /* => b == 0 */
 	{
-		if (!M_ASN1_OCTET_STRING_set(ret->a, char_buf, 1))
+		if (!M_ASN1_OCTET_STRING_set(ret->a, &char_buf, 1))
 			OPENSSL_ECDSA_ABORT(ERR_R_ASN1_LIB)
 	}
 	else
