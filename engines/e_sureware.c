@@ -51,6 +51,7 @@
 ====================================================================*/
 
 #include <stdio.h>
+#include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include <openssl/dso.h>
