@@ -473,6 +473,15 @@ RSA *rsa;
 
 	if (!BN_mul(&r1,r0,rsa->iqmp,ctx)) goto err;
 	if (!BN_mod(r0,&r1,rsa->p,ctx)) goto err;
+	/* If p < q it is occasionally possible for the correction of
+         * adding 'p' if r0 is negative above to leave the result still
+	 * negative. This can break the private key operations: the following
+	 * second correction should *always* correct this rare occurrence.
+	 * This will *never* happen with OpenSSL generated keys because
+         * they ensure p > q [steve]
+         */
+	if (r0->neg)
+		if (!BN_add(r0,r0,rsa->p)) goto err;
 	if (!BN_mul(&r1,r0,rsa->q,ctx)) goto err;
 	if (!BN_add(r0,&r1,&m1)) goto err;
 
