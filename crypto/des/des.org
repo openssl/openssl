@@ -153,7 +153,7 @@ extern int des_set_weak_key_flag; /* set the weak key flag */
 #endif
 #ifndef NOPROTO
 const char *des_options(void);
-void des_ecb3_encrypt(const unsigned char *input,unsigned char *output,
+void des_ecb3_encrypt(const des_cblock input, des_cblock output,
 		      des_key_schedule ks1,des_key_schedule ks2,
 		      des_key_schedule ks3, int enc);
 DES_LONG des_cbc_cksum(const unsigned char *input,des_cblock output,
