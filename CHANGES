@@ -114,7 +114,6 @@
      that they do not hold after the first thread unsets add_do_not_lock).
      [Bodo Moeller]
 
->>>>>>> 1.823
   +) Implement binary inversion algorithm for BN_mod_inverse in addition
      to the algorithm using long divison.  The binary algorithm can be
      used only if the modulus is odd.  On 32-bit systems, it is faster
