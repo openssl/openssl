@@ -232,7 +232,7 @@ int ENGINE_finish(ENGINE *e)
 	}
 
 EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
-	const char *passphrase)
+	pem_password_cb *callback, void *callback_data)
 	{
 	EVP_PKEY *pkey;
 
@@ -257,7 +257,7 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
 			ENGINE_R_NO_LOAD_FUNCTION);
 		return 0;
 		}
-	pkey = e->load_privkey(e, key_id, passphrase);
+	pkey = e->load_privkey(e, key_id, callback, callback_data);
 	if (!pkey)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
@@ -268,7 +268,7 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
 	}
 
 EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
-	const char *passphrase)
+	pem_password_cb *callback, void *callback_data)
 	{
 	EVP_PKEY *pkey;
 
@@ -293,7 +293,7 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
 			ENGINE_R_NO_LOAD_FUNCTION);
 		return 0;
 		}
-	pkey = e->load_pubkey(e, key_id, passphrase);
+	pkey = e->load_pubkey(e, key_id, callback, callback_data);
 	if (!pkey)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,

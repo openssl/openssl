@@ -71,6 +71,7 @@
 #endif
 #include <openssl/rand.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
@@ -262,7 +263,8 @@ typedef int (*ENGINE_GEN_INT_FUNC_PTR)(ENGINE *);
 /* Specific control function pointer */
 typedef int (*ENGINE_CTRL_FUNC_PTR)(ENGINE *, int, long, void *, void (*f)());
 /* Generic load_key function pointer */
-typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *, const char *);
+typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *,
+	pem_password_cb *callback, void *callback_data);
 
 /* STRUCTURE functions ... all of these functions deal with pointers to ENGINE
  * structures where the pointers have a "structural reference". This means that
@@ -417,9 +419,9 @@ int ENGINE_finish(ENGINE *e);
  * location, handled by the engine.  The storage may be on a card or
  * whatever. */
 EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
-	const char *passphrase);
+	pem_password_cb *callback, void *callback_data);
 EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
-	const char *passphrase);
+	pem_password_cb *callback, void *callback_data);
 
 /* This returns a pointer for the current ENGINE structure that
  * is (by default) performing any RSA operations. The value returned

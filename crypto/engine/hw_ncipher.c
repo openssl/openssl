@@ -58,6 +58,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include "cryptlib.h"
@@ -115,9 +116,9 @@ static int hwcrhk_rand_status(void);
 
 /* KM stuff */
 static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
-	const char *passphrase);
+	pem_password_cb *callback, void *callback_data);
 static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
-	const char *passphrase);
+	pem_password_cb *callback, void *callback_data);
 static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 	int ind,long argl, void *argp);
 
@@ -213,7 +214,8 @@ struct HWCryptoHook_MutexValue
    into HWCryptoHook_PassphraseContext */
 struct HWCryptoHook_PassphraseContextValue
 	{
-	void *any;
+	pem_password_cb *password_callback; /* If != NULL, will be called */
+	void *callback_data;
 	};
 
 /* hwcryptohook.h has some typedefs that turn
@@ -651,7 +653,7 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	}
 
 static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
-	const char *passphrase)
+	pem_password_cb *callback, void *callback_data)
 	{
 #ifndef OPENSSL_NO_RSA
 	RSA *rtmp = NULL;
@@ -664,6 +666,7 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 #if !defined(OPENSSL_NO_RSA)
 	HWCryptoHook_ErrMsgBuf rmsg;
 #endif
+	HWCryptoHook_PassphraseContext ppctx;
 
 	if(!hwcrhk_context)
 		{
@@ -679,8 +682,10 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 			ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
+	ppctx.password_callback = callback;
+	ppctx.callback_data = callback_data;
 	if (p_hwcrhk_RSALoadKey(hwcrhk_context, key_id, hptr,
-		&rmsg, NULL))
+		&rmsg, &ppctx))
 		{
 		ENGINEerr(ENGINE_F_HWCRHK_LOAD_PRIVKEY,
 			ENGINE_R_CHIL_ERROR);
@@ -747,12 +752,12 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 	}
 
 static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
-	const char *passphrase)
+	pem_password_cb *callback, void *callback_data)
 	{
 	EVP_PKEY *res = NULL;
 
 #ifndef OPENSSL_NO_RSA
-        res = hwcrhk_load_privkey(eng, key_id, passphrase);
+        res = hwcrhk_load_privkey(eng, key_id, callback, callback_data);
 #endif
 
 	if (res)
@@ -1079,38 +1084,23 @@ static int hwcrhk_get_pass(const char *prompt_info,
 	HWCryptoHook_PassphraseContext *ppctx,
 	HWCryptoHook_CallerContext *cactx)
 	{
-	int l = 0;
-	char prompt[1024];
+	pem_password_cb *callback = password_callback;
+	void *callback_data = NULL;
 
-	if (password_callback == NULL)
+	if (ppctx)
+		{
+		if (ppctx->password_callback)
+			callback = ppctx->password_callback;
+		if (ppctx->callback_data)
+			callback_data = ppctx->callback_data;
+		}
+	if (callback == NULL)
 		{
 		ENGINEerr(ENGINE_F_HWCRHK_GET_PASS,ENGINE_R_NO_CALLBACK);
 		return -1;
 		}
-	if (prompt_info)
-		{
-		strncpy(prompt, "Card: \"", sizeof(prompt));
-		l += 5;
-		strncpy(prompt + l, prompt_info, sizeof(prompt) - l);
-		l += strlen(prompt_info);
-		if (l + 2 < sizeof(prompt))
-			{
-			strncpy(prompt + l, "\"\n", sizeof(prompt) - l);
-			l += 2;
-			}
-		}
-	if (l < sizeof(prompt) - 1)
-		{
-		strncpy(prompt, "Enter Passphrase <enter to cancel>:",
-			sizeof(prompt) - l);
-		l += 35;
-		}
-	prompt[l] = '\0';
 
-	/* I know, passing on the prompt instead of the user data *is*
-	   a bad thing.  However, that's all we have right now.
-	   --  Richard Levitte */
-	*len_io = password_callback(buf, *len_io, 0, prompt);
+	*len_io = callback(buf, *len_io, 0, callback_data);
 	if(!*len_io)
 		return -1;
 	return 0;
