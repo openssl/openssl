@@ -200,12 +200,12 @@ B<n> word number.  If the number has to be expanded, both macros
 call bn_expand2(), which allocates a new B<d> array and copies the
 data.  They return B<NULL> on error, B<b> otherwise.
 
-The bn_fix_top() macro reduces B<a-E<gt>top> to most significant
-non-zero word when B<a> has shrunk.
+The bn_fix_top() macro reduces B<a-E<gt>top> to point to the most
+significant non-zero word when B<a> has shrunk.
 
 =head2 Debugging
 
-bn_check_top() verifies that C<((a)->top E<gt>= 0 && (a)-E<gt>top
+bn_check_top() verifies that C<((a)-E<gt>top E<gt>= 0 && (a)-E<gt>top
 E<lt>= (a)-E<gt>max)>.  A violation will cause the program to abort.
 
 bn_print() prints B<a> to stderr. bn_dump() prints B<n> words at B<d>
@@ -213,7 +213,7 @@ bn_print() prints B<a> to stderr. bn_dump() prints B<n> words at B<d>
 
 bn_set_max() makes B<a> a static number with a B<max> of its current size.
 This is used by bn_set_low() and bn_set_high() to make B<r> a read-only
-B<BIGNUM> that contains the B<n> lower or higher words of B<a>.
+B<BIGNUM> that contains the B<n> low or high words of B<a>.
 
 If B<BN_DEBUG> is not defined, bn_check_top(), bn_print(), bn_dump()
 and bn_set_max() are defined as empty macros.
