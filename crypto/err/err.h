@@ -274,6 +274,15 @@ LHASH *ERR_get_err_state_table(void); /* even less thread-safe than
 
 int ERR_get_next_error_library(void);
 
+/* This opaque type encapsulates the low-level error-state functions */
+typedef struct st_ERR_FNS ERR_FNS;
+/* An application can use this function and provide the return value to loaded
+ * modules that should use the application's ERR state/functionality */
+const ERR_FNS *ERR_get_implementation(void);
+/* A loaded module should call this function prior to any ERR operations using
+ * the application's "ERR_FNS". */
+int ERR_set_implementation(const ERR_FNS *fns);
+
 #ifdef	__cplusplus
 }
 #endif
