@@ -63,8 +63,8 @@
  * used.  The extra state information to record how much of the
  * 64bit block we have used is contained in *num;
  */
-void BF_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
-	     BF_KEY *schedule, unsigned char *ivec, int *num)
+void BF_ofb64_encrypt(const unsigned char *in, unsigned char *out, long length,
+	     const BF_KEY *schedule, unsigned char *ivec, int *num)
 	{
 	register BF_LONG v0,v1,t;
 	register int n= *num;

@@ -64,8 +64,8 @@
  * 64bit block we have used is contained in *num;
  */
 
-void BF_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
-	     BF_KEY *schedule, unsigned char *ivec, int *num, int encrypt)
+void BF_cfb64_encrypt(const unsigned char *in, unsigned char *out, long length,
+	     const BF_KEY *schedule, unsigned char *ivec, int *num, int encrypt)
 	{
 	register BF_LONG v0,v1,t;
 	register int n= *num;
