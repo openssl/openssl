@@ -136,12 +136,12 @@ lint:
 
 depend:
 	if [ ! -f buildinf.h ]; then touch buildinf.h; fi # fake buildinf.h if it does not exist
-	$(MAKEDEPEND) $(INCLUDE) $(DEPFLAG) $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) $(CFLAG) $(INCLUDE) $(DEPFLAG) $(PROGS) $(LIBSRC)
 	if [ ! -s buildinf.h ]; then rm buildinf.h; fi
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making depend in crypto/$$i..." && \
-	$(MAKE) MAKEFILE='${MAKEFILE}' INCLUDES='${INCLUDES}' DEPFLAG='${DEPFLAG}' PERL='${PERL}' depend ); \
+	$(MAKE) MAKEFILE='${MAKEFILE}' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' DEPFLAG='${DEPFLAG}' PERL='${PERL}' depend ); \
 	done;
 
 clean:
