@@ -78,7 +78,7 @@
  */
 
 int des_enc_write(int fd, const void *_buf, int len,
-		  des_key_schedule sched, des_cblock *iv)
+		  des_key_schedule *sched, des_cblock *iv)
 	{
 #ifdef _LIBC
 	extern unsigned long time();

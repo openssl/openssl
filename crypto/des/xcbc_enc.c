@@ -108,8 +108,9 @@ void des_xwhite_in2out(const_des_cblock *des_key, const_des_cblock *in_white,
 	}
 
 void des_xcbc_encrypt(const unsigned char *in, unsigned char *out,
-	    long length, des_key_schedule schedule, des_cblock *ivec,
-	    const_des_cblock *inw, const_des_cblock *outw, int enc)
+		      long length, des_key_schedule *schedule,
+		      des_cblock *ivec, const_des_cblock *inw,
+		      const_des_cblock *outw, int enc)
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;

@@ -59,7 +59,8 @@
 #include "des_locl.h"
 
 void des_pcbc_encrypt(const unsigned char *input, unsigned char *output,
-	     long length, des_key_schedule schedule, des_cblock *ivec, int enc)
+		      long length, des_key_schedule *schedule,
+		      des_cblock *ivec, int enc)
 	{
 	register DES_LONG sin0,sin1,xor0,xor1,tout0,tout1;
 	DES_LONG tin[2];

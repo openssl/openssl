@@ -307,7 +307,7 @@ static const DES_LONG des_skb[8][64]={
 	0x00002822L,0x04002822L,0x00042822L,0x04042822L,
 	}};
 
-int des_set_key(const_des_cblock *key, des_key_schedule schedule)
+int des_set_key(const_des_cblock *key, des_key_schedule *schedule)
 	{
 	if (des_check_key)
 		{
@@ -324,7 +324,7 @@ int des_set_key(const_des_cblock *key, des_key_schedule schedule)
  * return -1 if key parity error,
  * return -2 if illegal weak key.
  */
-int des_set_key_checked(const_des_cblock *key, des_key_schedule schedule)
+int des_set_key_checked(const_des_cblock *key, des_key_schedule *schedule)
 	{
 	if (!des_check_key_parity(key))
 		return(-1);
@@ -334,7 +334,7 @@ int des_set_key_checked(const_des_cblock *key, des_key_schedule schedule)
 	return 0;
 	}
 
-void des_set_key_unchecked(const_des_cblock *key, des_key_schedule schedule)
+void des_set_key_unchecked(const_des_cblock *key, des_key_schedule *schedule)
 	{
 	static int shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
 	register DES_LONG c,d,t,s,t2;
@@ -342,7 +342,11 @@ void des_set_key_unchecked(const_des_cblock *key, des_key_schedule schedule)
 	register DES_LONG *k;
 	register int i;
 
-	k = &schedule->ks.deslong[0];
+#if OPENBSD_DEV_CRYPTO
+	memcpy(schedule->key,key,sizeof schedule->key);
+	schedule->session=NULL;
+#endif
+	k = &schedule->ks->deslong[0];
 	in = &(*key)[0];
 
 	c2l(in,c);
@@ -390,7 +394,7 @@ void des_set_key_unchecked(const_des_cblock *key, des_key_schedule schedule)
 		}
 	}
 
-int des_key_sched(const_des_cblock *key, des_key_schedule schedule)
+int des_key_sched(const_des_cblock *key, des_key_schedule *schedule)
 	{
 	return(des_set_key(key,schedule));
 	}

@@ -58,8 +58,8 @@ static unsigned const char cov_2char[64]={
 0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A
 };
 
-void fcrypt_body(DES_LONG *out,des_key_schedule ks,
-	DES_LONG Eswap0, DES_LONG Eswap1);
+void fcrypt_body(DES_LONG *out,des_key_schedule *ks,
+		 DES_LONG Eswap0, DES_LONG Eswap1);
 
 #if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT)
 char *crypt(const char *buf, const char *salt)
@@ -150,8 +150,8 @@ r=(r+7)/8;
 	for (; i<8; i++)
 		key[i]=0;
 
-	des_set_key_unchecked(&key,ks);
-	fcrypt_body(&(out[0]),ks,Eswap0,Eswap1);
+	des_set_key_unchecked(&key,&ks);
+	fcrypt_body(&(out[0]),&ks,Eswap0,Eswap1);
 
 	ll=out[0]; l2c(ll,b);
 	ll=out[1]; l2c(ll,b);

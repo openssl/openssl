@@ -72,8 +72,8 @@ http://www.cs.technion.ac.il/users/wwwb/cgi-bin/tr-get.cgi/1998/CS/CS0928.ps.gz
 #include "des_locl.h"
 
 void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
-	     long length, des_key_schedule ks1, des_key_schedule ks2,
-	     des_key_schedule ks3, des_cblock *ivec1, des_cblock *ivec2,
+	     long length, des_key_schedule *ks1, des_key_schedule *ks2,
+	     des_key_schedule *ks3, des_cblock *ivec1, des_cblock *ivec2,
 	     int enc)
     {
     register DES_LONG tin0,tin1;

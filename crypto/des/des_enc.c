@@ -58,7 +58,7 @@
 
 #include "des_locl.h"
 
-void des_encrypt1(DES_LONG *data, des_key_schedule ks, int enc)
+void des_encrypt1(DES_LONG *data, des_key_schedule *ks, int enc)
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
@@ -84,7 +84,7 @@ void des_encrypt1(DES_LONG *data, des_key_schedule ks, int enc)
 	r=ROTATE(r,29)&0xffffffffL;
 	l=ROTATE(l,29)&0xffffffffL;
 
-	s=ks->ks.deslong;
+	s=ks->ks->deslong;
 	/* I don't know if it is worth the effort of loop unrolling the
 	 * inner loop */
 	if (enc)
@@ -156,7 +156,7 @@ void des_encrypt1(DES_LONG *data, des_key_schedule ks, int enc)
 	l=r=t=u=0;
 	}
 
-void des_encrypt2(DES_LONG *data, des_key_schedule ks, int enc)
+void des_encrypt2(DES_LONG *data, des_key_schedule *ks, int enc)
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
@@ -180,7 +180,7 @@ void des_encrypt2(DES_LONG *data, des_key_schedule ks, int enc)
 	r=ROTATE(r,29)&0xffffffffL;
 	l=ROTATE(l,29)&0xffffffffL;
 
-	s=ks->ks.deslong;
+	s=ks->ks->deslong;
 	/* I don't know if it is worth the effort of loop unrolling the
 	 * inner loop */
 	if (enc)
@@ -247,8 +247,8 @@ void des_encrypt2(DES_LONG *data, des_key_schedule ks, int enc)
 	l=r=t=u=0;
 	}
 
-void des_encrypt3(DES_LONG *data, des_key_schedule ks1, des_key_schedule ks2,
-	     des_key_schedule ks3)
+void des_encrypt3(DES_LONG *data, des_key_schedule *ks1,
+		  des_key_schedule *ks2, des_key_schedule *ks3)
 	{
 	register DES_LONG l,r;
 
@@ -267,8 +267,8 @@ void des_encrypt3(DES_LONG *data, des_key_schedule ks1, des_key_schedule ks2,
 	data[1]=r;
 	}
 
-void des_decrypt3(DES_LONG *data, des_key_schedule ks1, des_key_schedule ks2,
-	     des_key_schedule ks3)
+void des_decrypt3(DES_LONG *data, des_key_schedule *ks1,
+		  des_key_schedule *ks2, des_key_schedule *ks3)
 	{
 	register DES_LONG l,r;
 
@@ -293,8 +293,9 @@ void des_decrypt3(DES_LONG *data, des_key_schedule ks1, des_key_schedule ks2,
 #include "ncbc_enc.c" /* des_ncbc_encrypt */
 
 void des_ede3_cbc_encrypt(const unsigned char *input, unsigned char *output,
-	     long length, des_key_schedule ks1, des_key_schedule ks2,
-	     des_key_schedule ks3, des_cblock *ivec, int enc)
+			  long length, des_key_schedule *ks1,
+			  des_key_schedule *ks2, des_key_schedule *ks3,
+			  des_cblock *ivec, int enc)
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;

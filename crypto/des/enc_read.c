@@ -84,7 +84,7 @@ OPENSSL_IMPLEMENT_GLOBAL(int,des_rw_mode)=DES_PCBC_MODE;
  */
 
 
-int des_enc_read(int fd, void *buf, int len, des_key_schedule sched,
+int des_enc_read(int fd, void *buf, int len, des_key_schedule *sched,
 		 des_cblock *iv)
 	{
 	/* data to be unencrypted */
