@@ -335,7 +335,7 @@ void sk_sort(STACK *st)
 
 int sk_is_sorted(const STACK *st)
 	{
-	if (st)
+	if (!st)
 		return 1;
 	return st->sorted;
 	}
