@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/09/20 23:34:01 $
+  ______________                           $Date: 1999/09/21 17:19:05 $
 
   DEVELOPMENT STATE
 
@@ -19,6 +19,8 @@
     o HP compiler flags <peter_huang@hp.com>
     o Lennart Bang: test program patches
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
+    o SMIME tool (demo), Sampo Kellomaki <sampo@iki.fi>
+    o OCSP patch, Massimiliano Pala (madwolf@openca.org)
 
   IN PROGRESS
 
@@ -89,6 +91,11 @@
        Status: Ralf will look how we can easily incorporate the
                compiler PIC and linker DSO flags from Apache
                into the OpenSSL Configure script.
+
+               Ulf: +1 for using GNU autoconf and libtool (but not automake,
+                    which apparently is not flexible enough to generate
+                    libcrypto)
+
 
     o  The perl/ stuff needs a major overhaul. Currently it's
        totally obsolete. Either we clean it up and enhance it to be up-to-date
