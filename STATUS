@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/10/26 21:07:27 $
+  ______________                           $Date: 2000/11/19 14:11:03 $
 
   DEVELOPMENT STATE
 
@@ -34,8 +34,10 @@
     o Richard is currently working on:
 	UTIL (a new set of library functions to support some higher level
 	      functionality that is currently missing).
-	Dynamic thread-lock support.
 	Shared library support for VMS.
+	OCSP
+	Kerberos 5 authentication
+	Constification
 
   NEEDS PATCH
 
