@@ -1,4 +1,4 @@
-/* apps/speed.c */
+/* apps/speed.c -*- mode:C; c-file-style: "eay" -*- */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -188,13 +188,20 @@
 #   define HZ ((double)_BSD_CLK_TCK_)
 #  endif
 # else /* CLK_TCK */
-#  define HZ ((double)CLK_TCK)
+#  ifdef OPENSSL_SYS_LINUX	/* Because it seems like some Linuxen
+				   have weird values here... */
+#   define HZ   100.0
+#  else
+#   define HZ ((double)CLK_TCK)
+#  endif
 # endif
 #endif
 
 #undef BUFSIZE
 #define BUFSIZE	((long)1024*8+1)
 int run=0;
+
+static char ftime_used = 0, times_used = 0, gettimeofday_used = 0, getrusage_used = 0;
 
 static double Time_F(int s, int usertime);
 static void print_message(const char *s,long num,int length);
@@ -229,6 +236,7 @@ static double Time_F(int s, int usertime)
 	    {
 		static struct rusage tstart,tend;
 
+		getrusage_used = 1;
 		if (s == START)
 			{
 			getrusage(RUSAGE_SELF,&tstart);
@@ -250,6 +258,7 @@ static double Time_F(int s, int usertime)
 		static struct timeval tstart,tend;
 		long i;
 
+		gettimeofday_used = 1;
 		if (s == START)
 			{
 			gettimeofday(&tstart,NULL);
@@ -270,6 +279,7 @@ static double Time_F(int s, int usertime)
 		{
 		static struct tms tstart,tend;
 
+		times_used = 1;
 		if (s == START)
 			{
 			times(&tstart);
@@ -291,6 +301,7 @@ static double Time_F(int s, int usertime)
 		static struct timeb tstart,tend;
 		long i;
 
+		ftime_used = 1;
 		if (s == START)
 			{
 			ftime(&tstart);
@@ -477,7 +488,11 @@ int MAIN(int argc, char **argv)
 	while (argc)
 		{
 		if	((argc > 0) && (strcmp(*argv,"-elapsed") == 0))
+			{
 			usertime = 0;
+			j--;	/* Otherwise, -elapsed gets confused with
+				   an algorithm. */
+			}
 		else if	((argc > 0) && (strcmp(*argv,"-evp") == 0))
 			{
 			argc--;
@@ -495,10 +510,13 @@ int MAIN(int argc, char **argv)
 				}
 			doit[D_EVP]=1;
 			}
-		else if(argc > 0 && !strcmp(*argv,"-decrypt"))
+		else if (argc > 0 && !strcmp(*argv,"-decrypt"))
+			{
 			decrypt=1;
-		else
-		if	((argc > 0) && (strcmp(*argv,"-engine") == 0))
+			j--;	/* Otherwise, -elapsed gets confused with
+				   an algorithm. */
+			}
+		else if	((argc > 0) && (strcmp(*argv,"-engine") == 0))
 			{
 			argc--;
 			argv++;
@@ -1416,6 +1434,30 @@ int MAIN(int argc, char **argv)
 	printf("%s ",BF_options());
 #endif
 	fprintf(stdout,"\n%s\n",SSLeay_version(SSLEAY_CFLAGS));
+	printf("available timing options: ");
+#ifdef TIMES
+	printf("TIMES ");
+#endif
+#ifdef TIMEB
+	printf("TIMEB ");
+#endif
+#ifdef USE_TOD
+	printf("USE_TOD ");
+#endif
+#ifdef HZ
+#define as_string(s) (#s)
+	printf("HZ=%g", (double)HZ);
+#endif
+	printf("\n");
+	printf("timing function used: %s%s%s%s%s%s%s\n",
+		(ftime_used ? "ftime" : ""),
+		(ftime_used + times_used > 1 ? "," : ""),
+		(times_used ? "times" : ""),
+		(ftime_used + times_used + gettimeofday_used > 1 ? "," : ""),
+		(gettimeofday_used ? "gettimeofday" : ""),
+		(ftime_used + times_used + gettimeofday_used + getrusage_used > 1 ? "," : ""),
+		(getrusage_used ? "getrusage" : ""));
+
 
 	if (pr_header)
 		{
