@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
+ Changes between 0.9.7 and 0.9.8  [xx XXX xxxx]
 
   *) Change the "progress" mechanism used in key-generation and
      primality testing to functions that take a new BN_GENCB pointer in
@@ -350,7 +350,7 @@ TODO: bug: pad  x  with leading zeros if necessary
          EC_GROUP_get_nid()
      [Nils Larsch <nla@trustcenter.de, Bodo Moeller]
  
- Changes between 0.9.7 and 0.9.7a  [XX xxx 2002]
+ Changes between 0.9.7 and 0.9.7a  [XX xxx 2003]
 
   *) 
 
