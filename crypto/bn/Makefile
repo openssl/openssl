@@ -122,6 +122,12 @@ asm/x86_64-gcc.o: asm/x86_64-gcc.c
 asm/pa-risc2W.o: asm/pa-risc2W.s
 	/usr/ccs/bin/as -o asm/pa-risc2W.o asm/pa-risc2W.s
 
+asm/linux_ppc32.s: asm/ppc.pl;	$(PERL) $< $@
+asm/linux_ppc64.s: asm/ppc.pl;	$(PERL) $< $@
+asm/aix_ppc32.s: asm/ppc.pl;	$(PERL) asm/ppc.pl $@
+asm/aix_ppc64.s: asm/ppc.pl;	$(PERL) asm/ppc.pl $@
+asm/osx_ppc32.s: asm/ppc.pl;	$(PERL) $< $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
