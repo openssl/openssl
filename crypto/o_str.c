@@ -88,7 +88,7 @@ int OPENSSL_strncasecmp(const char *str1, const char *str2, size_t n)
 int OPENSSL_strcasecmp(const char *str1, const char *str2)
 	{
 #if defined(OPENSSL_SYS_VMS)
-	return OSSL_strncasecmp(str1, str2, (size_t)-1);
+	return OPENSSL_strncasecmp(str1, str2, (size_t)-1);
 #elif defined(OPENSSL_SYS_WINDOWS)
 	return _stricmp(str1, str2);
 #else
