@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -693,6 +693,9 @@ SSL_CIPHER *ssl3_get_cipher(unsigned int u)
 
 int ssl3_pending(SSL *s)
 	{
+	if (s->rstate == SSL_ST_READ_BODY)
+		return 0;
+	
 	return (s->s3->rrec.type == SSL3_RT_APPLICATION_DATA) ? s->s3->rrec.length : 0;
 	}
 
