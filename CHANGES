@@ -4,6 +4,11 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Implement compute_wNAF (crypto/ec/ec_mult.c) without BIGNUM
+     arithmetic, and such that modified wNAFs are generated
+     (which avoid length expansion in many cases).
+     [Bodo Moeller]
+
   *) Add a function EC_GROUP_check_discriminant() (defined via
      EC_METHOD) that verifies that the curve discriminant is non-zero.
 
@@ -1057,9 +1062,16 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Update Rijndael code to version 3.0 and change EVP AES ciphers to
      handle the new API. Currently only ECB, CBC modes supported. Add new
-     AES OIDs. Add TLS AES ciphersuites as described in the "AES Ciphersuites
-     for TLS" draft-ietf-tls-ciphersuite-03.txt.
-     [Ben Laurie, Steve Henson]
+     AES OIDs.
+
+     Add TLS AES ciphersuites as described in the "AES Ciphersuites
+     for TLS" draft-ietf-tls-ciphersuite-03.txt. As these are not yet
+     official, they are not enabled by default and are not even part
+     of the "ALL" ciphersuite alias; for now, they must be explicitly
+     requested by specifying the new "AESdraft" ciphersuite alias. If
+     you want the default ciphersuite list plus the new ciphersuites,
+     use "DEFAULT:AESdraft:@STRENGTH".
+     [Ben Laurie, Steve Henson, Bodo Moeller]
 
   *) New function OCSP_copy_nonce() to copy nonce value (if present) from
      request to response.

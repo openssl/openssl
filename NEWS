@@ -38,6 +38,7 @@
       o SSL/TLS: support Kerberos cipher suites (RFC2712).
       o SSL/TLS: allow more precise control of renegotiations and sessions.
       o SSL/TLS: add callback to retrieve SSL/TLS messages.
+      o SSL/TLS: add draft AES ciphersuites (disabled unless explicitly requested).
 
   Major changes between OpenSSL 0.9.6c and OpenSSL 0.9.6d:
 
