@@ -241,13 +241,14 @@ static double Time_F(int s)
 int MAIN(int argc, char **argv)
 	{
 	unsigned char *buf=NULL,*buf2=NULL;
-	int ret=1;
+	int mret=1;
 #define ALGOR_NUM	14
 #define SIZE_NUM	5
 #define RSA_NUM		4
 #define DSA_NUM		3
 	long count,rsa_count;
-	int i,j,k,rsa_num,rsa_num2;
+	int i,j,k;
+	unsigned rsa_num,rsa_num2;
 #ifndef NO_MD2
 	unsigned char md2[MD2_DIGEST_LENGTH];
 #endif
@@ -1157,7 +1158,7 @@ int MAIN(int argc, char **argv)
 		fprintf(stdout,"\n");
 		}
 #endif
-	ret=0;
+	mret=0;
 end:
 	if (buf != NULL) Free(buf);
 	if (buf2 != NULL) Free(buf2);
@@ -1171,7 +1172,7 @@ end:
 		if (dsa_key[i] != NULL)
 			DSA_free(dsa_key[i]);
 #endif
-	EXIT(ret);
+	EXIT(mret);
 	}
 
 static void print_message(char *s, long num, int length)
