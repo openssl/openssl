@@ -163,7 +163,11 @@ int RAND_write_file(const char *file)
 		out = fopen(file,"wb");
 #endif
 		}
-	if (out == NULL) goto err;
+	if (out == NULL)
+		{
+		err=1;
+		goto err;
+		}
 #ifndef NO_CHMOD
 	chmod(file,0600);
 #endif
