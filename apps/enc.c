@@ -449,7 +449,7 @@ bad:
 					} else RAND_bytes(salt, PKCS5_SALT_LEN);
 					/* If -P option then don't bother writing */
 					if((printkey != 2) && (BIO_write(wbio,
-							(unsigned char *) salt,
+							(char *)salt,
 				    			PKCS5_SALT_LEN) != PKCS5_SALT_LEN)) {
 						BIO_printf(bio_err,"error writing output file\n");
 						goto end;
