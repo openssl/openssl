@@ -3,6 +3,7 @@
 package x86unix;
 
 $label="L000";
+$const="";
 
 $align=($main'aout)?"4":"16";
 $under=($main'aout)?"_":"";
@@ -341,9 +342,13 @@ sub main'function_end
 	popl	%ebx
 	popl	%ebp
 	ret
-.${func}_end:
 EOF
 	push(@out,$tmp);
+
+	push(@out,$const);
+	$const="";
+	push(@out,".${func}_end:\n");
+
 	if ($main'cpp)
 		{ push(@out,"\tSIZE($func,.${func}_end-$func)\n"); }
 	elsif ($main'gaswin)
@@ -458,4 +463,25 @@ sub main'file_end
 sub main'data_word
 	{
 	push(@out,"\t.long $_[0]\n");
+	}
+
+sub main'puts
+	{
+	    $constl++;
+	    &main'push('$Lstring' . $constl);
+	    &main'call('puts');
+	    &main'add("esp",4);
+
+	    $const .= "Lstring$constl:\n\t.string \"@_[0]\"\n";
+	}
+
+sub main'putx
+	{
+	    $constl++;
+	    &main'push($_[0]);
+	    &main'push('$Lstring' . $constl);
+	    &main'call('printf');
+	    &main'add("esp",8);
+
+	    $const .= "Lstring$constl:\n\t.string \"\%X\"\n";
 	}
