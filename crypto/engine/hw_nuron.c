@@ -108,7 +108,6 @@ static ERR_STRING_DATA nuron_str_functs[] =
 {NURON_R_NOT_LOADED			,"not loaded"},
 {NURON_R_DSO_FAILURE			,"DSO failure"},
 {NURON_R_CTRL_COMMAND_NOT_IMPLEMENTED	,"ctrl command not implemented"},
-{NURON_R_NOT_LOADED			,"not loaded"},
 {0,NULL}
 	};
 /* The library number we obtain dynamically from the ERR code */
