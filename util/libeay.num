@@ -2905,7 +2905,7 @@ BN_nist_mod_224                         3342	EXIST::FUNCTION:
 i2d_EC_PUBKEY_bio                       3343	EXIST::FUNCTION:BIO,EC
 EC_GROUP_get_asn1_flag                  3344	EXIST::FUNCTION:EC
 ECDH_get_ex_new_index                   3345	EXIST::FUNCTION:ECDH
-ECDH_size                               3346	EXIST::FUNCTION:ECDH
+ECDH_size                               3346	NOEXIST::FUNCTION:
 BN_GF2m_mod_inv                         3347	EXIST::FUNCTION:
 BN_GF2m_mod_exp                         3348	EXIST::FUNCTION:
 EC_GROUP_get0_seed                      3349	EXIST::FUNCTION:EC
@@ -2999,3 +2999,4 @@ ENGINE_load_gmp                         3433	EXIST::FUNCTION:ENGINE,STATIC_ENGIN
 a2i_IPADDRESS                           3434	EXIST::FUNCTION:
 ENGINE_setup_bsd_cryptodev              3435	EXIST:__FreeBSD__:FUNCTION:ENGINE
 EC_GROUP_have_precompute_mult           3436	EXIST::FUNCTION:EC
+X509V3_NAME_from_section                3437	EXIST::FUNCTION:
