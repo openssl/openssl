@@ -141,8 +141,8 @@ union {
 #define PKCS12_ERROR	0
 #define PKCS12_OK	1
 
-#define M_PKCS12_bag_type(bag) OBJ_obj2nid(bag->type)
-#define M_PKCS12_cert_bag_type(bag) OBJ_obj2nid(bag->value.bag->type)
+#define M_PKCS12_bag_type(bg) OBJ_obj2nid((bg)->type)
+#define M_PKCS12_cert_bag_type(bg) OBJ_obj2nid((bg)->value.bag->type)
 #define M_PKCS12_crl_bag_type M_PKCS12_cert_bag_type
 
 #define M_PKCS12_x5092certbag(x509) \
