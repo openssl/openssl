@@ -504,7 +504,10 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 	EVP_DigestFinal( &md_ctx,md,&md_size);
 
 	for (i=7; i>=0; i--)
-		if (++seq[i]) break; 
+		{
+		++seq[i];
+		if (seq[i] != 0) break; 
+		}
 
 	return(md_size);
 	}
