@@ -272,8 +272,7 @@ int main()
 	    printf("OAEP decryption (encrypted data) failed!\n");
 	    err=1;
 	    }
-  
-	if (memcmp(ctext, ctext_ex, num) == 0)
+	else if (memcmp(ctext, ctext_ex, num) == 0)
 	    {
 	    printf("OAEP test vector %d passed!\n", v);
 	    goto next;
