@@ -1,0 +1,3 @@
+HMAC-SHA1(fips_dh_check.c)= 5657cf7c136f6d9608df40d0699fe1d61d0ad5b5
+HMAC-SHA1(fips_dh_gen.c)= e3626ccd5124942cb19ca962470d2c3704d265bb
+HMAC-SHA1(fips_dh_key.c)= 88c882a9063c0b7e5f46de1a7bfa82f71e0a918e
