@@ -104,7 +104,7 @@ unsigned char *ASN1_seq_pack(STACK *safes, int (*i2d)(), unsigned char **buf,
 
 /* Extract an ASN1 object from an ASN1_STRING */
 
-char *ASN1_unpack_string (ASN1_STRING *oct, char *(*d2i)())
+void *ASN1_unpack_string (ASN1_STRING *oct, char *(*d2i)())
 {
 	unsigned char *p;
 	char *ret;
@@ -117,7 +117,7 @@ char *ASN1_unpack_string (ASN1_STRING *oct, char *(*d2i)())
 
 /* Pack an ASN1 object into an ASN1_STRING */
 
-ASN1_STRING *ASN1_pack_string (char *obj, int (*i2d)(), ASN1_STRING **oct)
+ASN1_STRING *ASN1_pack_string (void *obj, int (*i2d)(), ASN1_STRING **oct)
 {
 	unsigned char *p;
 	ASN1_STRING *octmp;

@@ -109,6 +109,8 @@ extern "C" {
 #define EVP_MAX_KEY_LENGTH		24
 #define EVP_MAX_IV_LENGTH		8
 
+#define PKCS5_SALT_LEN			8
+
 #ifndef NO_RSA
 #include <openssl/rsa.h>
 #endif

@@ -364,7 +364,7 @@ X509_ALGOR *encryption;
 } PBE2PARAM;
 
 typedef struct PBKDF2PARAM_st {
-ASN1_OCTET_STRING *salt;
+ASN1_TYPE *salt;	/* Usually OCTET STRING but could be anything */
 ASN1_INTEGER *iter;
 ASN1_INTEGER *keylength;
 X509_ALGOR *prf;
@@ -906,6 +906,8 @@ PBEPARAM *PBEPARAM_new(void);
 PBEPARAM *d2i_PBEPARAM(PBEPARAM **a, unsigned char **pp, long length);
 void PBEPARAM_free(PBEPARAM *a);
 X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt, int saltlen);
+X509_ALGOR *PKCS5_pbe2_set(EVP_CIPHER *cipher, int iter, unsigned char *salt,
+								 int saltlen);
 
 int i2d_PBKDF2PARAM(PBKDF2PARAM *a, unsigned char **pp);
 PBKDF2PARAM *PBKDF2PARAM_new(void);

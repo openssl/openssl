@@ -109,14 +109,14 @@ void PBE2PARAM_free (PBE2PARAM *a)
 int i2d_PBKDF2PARAM(PBKDF2PARAM *a, unsigned char **pp)
 {
 	M_ASN1_I2D_vars(a);
-	M_ASN1_I2D_len (a->salt, i2d_ASN1_OCTET_STRING);
+	M_ASN1_I2D_len (a->salt, i2d_ASN1_TYPE);
 	M_ASN1_I2D_len (a->iter, i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len (a->keylength, i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len (a->prf, i2d_X509_ALGOR);
 
 	M_ASN1_I2D_seq_total ();
 
-	M_ASN1_I2D_put (a->salt, i2d_ASN1_OCTET_STRING);
+	M_ASN1_I2D_put (a->salt, i2d_ASN1_TYPE);
 	M_ASN1_I2D_put (a->iter, i2d_ASN1_INTEGER);
 	M_ASN1_I2D_put (a->keylength, i2d_ASN1_INTEGER);
 	M_ASN1_I2D_put (a->prf, i2d_X509_ALGOR);
@@ -129,7 +129,7 @@ PBKDF2PARAM *PBKDF2PARAM_new(void)
 	PBKDF2PARAM *ret=NULL;
 	ASN1_CTX c;
 	M_ASN1_New_Malloc(ret, PBKDF2PARAM);
-	M_ASN1_New(ret->salt, ASN1_OCTET_STRING_new);
+	M_ASN1_New(ret->salt, ASN1_TYPE_new);
 	M_ASN1_New(ret->iter, ASN1_INTEGER_new);
 	ret->keylength = NULL;
 	ret->prf = NULL;
@@ -143,7 +143,7 @@ PBKDF2PARAM *d2i_PBKDF2PARAM(PBKDF2PARAM **a, unsigned char **pp,
 	M_ASN1_D2I_vars(a,PBKDF2PARAM *,PBKDF2PARAM_new);
 	M_ASN1_D2I_Init();
 	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get (ret->salt, d2i_ASN1_OCTET_STRING);
+	M_ASN1_D2I_get (ret->salt, d2i_ASN1_TYPE);
 	M_ASN1_D2I_get (ret->iter, d2i_ASN1_INTEGER);
 	M_ASN1_D2I_get_opt (ret->keylength, d2i_ASN1_INTEGER, V_ASN1_INTEGER);
 	M_ASN1_D2I_get_opt (ret->prf, d2i_X509_ALGOR, V_ASN1_SEQUENCE);
@@ -158,5 +158,116 @@ void PBKDF2PARAM_free (PBKDF2PARAM *a)
 	ASN1_INTEGER_free(a->keylength);
 	X509_ALGOR_free(a->prf);
 	Free ((char *)a);
+}
+
+/* Return an algorithm identifier for a PKCS#5 v2.0 PBE algorithm:
+ * yes I know this is horrible!
+ */
+
+X509_ALGOR *PKCS5_pbe2_set(EVP_CIPHER *cipher, int iter, unsigned char *salt,
+	     int saltlen)
+{
+	X509_ALGOR *scheme = NULL, *kalg = NULL, *ret = NULL;
+	int alg_nid;
+	EVP_CIPHER_CTX ctx;
+	unsigned char iv[EVP_MAX_IV_LENGTH];
+	PBKDF2PARAM *kdf = NULL;
+	PBE2PARAM *pbe2 = NULL;
+	ASN1_OCTET_STRING *osalt = NULL;
+
+	if(!(pbe2 = PBE2PARAM_new())) goto merr;
+
+	/* Setup the AlgorithmIdentifier for the encryption scheme */
+	scheme = pbe2->encryption;
+
+	alg_nid = EVP_CIPHER_type(cipher);
+
+	scheme->algorithm = OBJ_nid2obj(alg_nid);
+	if(!(scheme->parameter = ASN1_TYPE_new())) goto merr;
+
+	/* Create random IV */
+	RAND_bytes(iv, EVP_CIPHER_iv_length(cipher));
+
+	/* Dummy cipherinit to just setup the IV */
+	EVP_CipherInit(&ctx, cipher, NULL, iv, 0);
+	if(EVP_CIPHER_param_to_asn1(&ctx, scheme->parameter) < 0) {
+		ASN1err(ASN1_F_PKCS5_PBE2_SET,
+					ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
+		goto err;
+	}
+	EVP_CIPHER_CTX_cleanup(&ctx);
+
+	if(!(kdf = PBKDF2PARAM_new())) goto merr;
+	if(!(osalt = ASN1_OCTET_STRING_new())) goto merr;
+
+	if (!saltlen) saltlen = PKCS5_SALT_LEN;
+	if (!(osalt->data = Malloc (saltlen))) goto merr;
+	osalt->length = saltlen;
+	if (salt) memcpy (osalt->data, salt, saltlen);
+	else RAND_bytes (osalt->data, saltlen);
+
+	if(!ASN1_INTEGER_set(kdf->iter, iter)) goto merr;
+
+	/* Now include salt in kdf structure */
+	kdf->salt->value.octet_string = osalt;
+	kdf->salt->type = V_ASN1_OCTET_STRING;
+	osalt = NULL;
+
+	/* If its RC2 then we'd better setup the key length */
+
+	if(alg_nid == NID_rc2_cbc) {
+		if(!(kdf->keylength = ASN1_INTEGER_new())) goto merr;
+		if(!ASN1_INTEGER_set (kdf->keylength,
+				 EVP_CIPHER_key_length(cipher))) goto merr;
+	}
+
+	/* prf can stay NULL because we are using hmacWithSHA1 */
+
+	/* Now setup the PBE2PARAM keyfunc structure */
+
+	pbe2->keyfunc->algorithm = OBJ_nid2obj(NID_id_pbkdf2);
+
+	/* Encode PBKDF2PARAM into parameter of pbe2 */
+
+	if(!(pbe2->keyfunc->parameter = ASN1_TYPE_new())) goto merr;
+
+	if(!ASN1_pack_string(kdf, i2d_PBKDF2PARAM,
+			 &pbe2->keyfunc->parameter->value.sequence)) goto merr;
+	pbe2->keyfunc->parameter->type = V_ASN1_SEQUENCE;
+
+	PBKDF2PARAM_free(kdf);
+	kdf = NULL;
+
+	/* Now set up top level AlgorithmIdentifier */
+
+	if(!(ret = X509_ALGOR_new())) goto merr;
+	if(!(ret->parameter = ASN1_TYPE_new())) goto merr;
+
+	ret->algorithm = OBJ_nid2obj(NID_pbes2);
+
+	/* Encode PBE2PARAM into parameter */
+
+	if(!ASN1_pack_string(pbe2, i2d_PBE2PARAM,
+				 &ret->parameter->value.sequence)) goto merr;
+	ret->parameter->type = V_ASN1_SEQUENCE;
+
+	PBE2PARAM_free(pbe2);
+	pbe2 = NULL;
+
+	return ret;
+
+	merr:
+	ASN1err(ASN1_F_PKCS5_PBE2_SET,ERR_R_MALLOC_FAILURE);
+
+	err:
+	PBE2PARAM_free(pbe2);
+	/* Note 'scheme' is freed as part of pbe2 */
+	ASN1_OCTET_STRING_free(osalt);
+	PBKDF2PARAM_free(kdf);
+	X509_ALGOR_free(kalg);
+	X509_ALGOR_free(ret);
+
+	return NULL;
+
 }
 

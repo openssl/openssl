@@ -384,10 +384,13 @@ extern "C" {
 #define NID_pbeWithSHA1AndRC2_CBC	68
 #define OBJ_pbeWithSHA1AndRC2_CBC	OBJ_pkcs,5L,11L 
 
-/* proposed by microsoft to RSA */
-#define LN_pbeWithSHA1AndRC4		"pbeWithSHA1AndRC4"
-#define NID_pbeWithSHA1AndRC4		69
-#define OBJ_pbeWithSHA1AndRC4		OBJ_pkcs,5L,12L 
+/* proposed by microsoft to RSA as pbeWithSHA1AndRC4: it is now
+ * defined explicitly in PKCS#5 v2.0 as id-PBKDF2 which is something
+ * completely different.
+ */
+#define LN_id_pbkdf2			"PBKDF2"
+#define NID_id_pbkdf2			69
+#define OBJ_id_pbkdf2			OBJ_pkcs,5L,12L 
 
 #define SN_dsaWithSHA1_2		"DSA-SHA1-old"
 #define LN_dsaWithSHA1_2		"dsaWithSHA1-old"

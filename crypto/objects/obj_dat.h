@@ -123,7 +123,7 @@ static unsigned char lvalues[984]={
 0x2B,0x0E,0x03,0x02,0x0D,                    /* [364] OBJ_dsaWithSHA */
 0x2B,0x0E,0x03,0x02,0x0C,                    /* [369] OBJ_dsa_2 */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0B,/* [374] OBJ_pbeWithSHA1AndRC2_CBC */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0C,/* [383] OBJ_pbeWithSHA1AndRC4 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x05,0x0C,/* [383] OBJ_id_pbkdf2 */
 0x2B,0x0E,0x03,0x02,0x1B,                    /* [392] OBJ_dsaWithSHA1_2 */
 0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x01,/* [397] OBJ_netscape_cert_type */
 0x60,0x86,0x48,0x01,0x86,0xF8,0x42,0x01,0x02,/* [406] OBJ_netscape_base_url */
@@ -304,8 +304,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"DSA-old","dsaEncryption-old",NID_dsa_2,5,&(lvalues[369]),0},
 {"pbeWithSHA1AndRC2-CBC","pbeWithSHA1AndRC2-CBC",
 	NID_pbeWithSHA1AndRC2_CBC,9,&(lvalues[374]),0},
-{"pbeWithSHA1AndRC4","pbeWithSHA1AndRC4",NID_pbeWithSHA1AndRC4,9,
-	&(lvalues[383]),0},
+{"PBKDF2","PBKDF2",NID_id_pbkdf2,9,&(lvalues[383]),0},
 {"DSA-SHA1-old","dsaWithSHA1-old",NID_dsaWithSHA1_2,5,&(lvalues[392]),0},
 {"nsCertType","Netscape Cert Type",NID_netscape_cert_type,9,
 	&(lvalues[397]),0},
@@ -600,6 +599,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[77]),/* "Netscape SSL Server Name" */
 &(nid_objs[139]),/* "Netscape Server Gated Crypto" */
 &(nid_objs[161]),/* "PBES2" */
+&(nid_objs[69]),/* "PBKDF2" */
 &(nid_objs[162]),/* "PBMAC1" */
 &(nid_objs[164]),/* "Policy Qualifier CPS" */
 &(nid_objs[165]),/* "Policy Qualifier User Notice" */
@@ -694,7 +694,6 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[145]),/* "pbeWithSHA1And40BitRC4" */
 &(nid_objs[170]),/* "pbeWithSHA1AndDES-CBC" */
 &(nid_objs[68]),/* "pbeWithSHA1AndRC2-CBC" */
-&(nid_objs[69]),/* "pbeWithSHA1AndRC4" */
 &(nid_objs[ 2]),/* "pkcs" */
 &(nid_objs[27]),/* "pkcs3" */
 &(nid_objs[20]),/* "pkcs7" */
@@ -839,7 +838,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[169]),/* OBJ_pbeWithMD5AndRC2_CBC         1 2 840 113549 1 5 6 */
 &(nid_objs[170]),/* OBJ_pbeWithSHA1AndDES_CBC        1 2 840 113549 1 5 10 */
 &(nid_objs[68]),/* OBJ_pbeWithSHA1AndRC2_CBC        1 2 840 113549 1 5 11  */
-&(nid_objs[69]),/* OBJ_pbeWithSHA1AndRC4            1 2 840 113549 1 5 12  */
+&(nid_objs[69]),/* OBJ_id_pbkdf2                    1 2 840 113549 1 5 12  */
 &(nid_objs[161]),/* OBJ_pbes2                        1 2 840 113549 1 5 13 */
 &(nid_objs[162]),/* OBJ_pbmac1                       1 2 840 113549 1 5 14 */
 &(nid_objs[21]),/* OBJ_pkcs7_data                   1 2 840 113549 1 7 1 */
