@@ -13,6 +13,24 @@
   * Borland C
   * GNU C (Mingw32 or Cygwin32)
 
+ If you want to compile in the assembly language routines with Visual C++ then
+ you will need an assembler. This is worth doing because it will result in
+ faster code: for example it will typically result in a 2 times speedup in the
+ RSA routines. Currently the following assemblers are supported:
+
+  * Microsoft MASM (aka "ml")
+  * Free Netwide Assembler NASM.
+
+ MASM was I believe distributed in the past with VC++ and it is also part of
+ the MSDN SDKs. It is no longer distributed as part of VC++ and can be hard
+ to get hold of. It can be purchased: see Microsoft's site for details at:
+ http://www.microsoft.com/
+
+ NASM is freely available. Version 0.98 was used during testing: other versions
+ may also work. It is available from many places, see for example:
+ http://www.kernel.org/pub/software/devel/nasm/binaries/win32/
+ The NASM binary nasmw.exe needs to be installed anywhere on your PATH.
+
  If you are compiling from a tarball or a CVS snapshot then the Win32 files
  may well be not up to date. This may mean that some "tweaking" is required to
  get it all to work. See the trouble shooting section later on for if (when?)
@@ -21,9 +39,23 @@
  Visual C++
  ----------
 
- Firstly you should run Configure and build the Win32 Makefiles:
+ Firstly you should run Configure:
 
  > perl Configure VC-WIN32
+
+ Next you need to build the Makefiles and optionally the assembly language
+ files.
+
+ If you are using MASM then run:
+
+ > ms\do_masm
+
+ If you are using NASM then run:
+
+ > ms\do_nasm
+
+ If you don't want to use the assembly language files at all then run:
+
  > ms\do_ms
 
  If you get errors about things not having numbers assigned then check the
@@ -42,10 +74,10 @@
 
  Tweaks:
 
- There are various changes you can make to the Win32 compile environment. If
- you have the MASM assembler 'ml' then you can try the assembly language code.
- To do this remove the 'no-asm' part from do_ms.bat. You can also add 'debug'
- here to make a debugging version of the library.
+ There are various changes you can make to the Win32 compile environment. By
+ default the library is not compiled with debugging symbols. If you add 'debug'
+ to the mk1mk.pl lines in the do_* batch file then debugging symbols will be
+ compiled in.
 
  The default Win32 environment is to leave out any Windows NT specific
  features.
@@ -108,7 +140,7 @@
 
  > perl util\mkdef.pl crypto ssl update
 
- then ms\do_ms should not give a warning any more. However the numbers that
+ then ms\do_XXX should not give a warning any more. However the numbers that
  get assigned by this technique may not match those that eventually get
  assigned in the CVS tree: so anything linked against this version of the
  library may need to be recompiled.
