@@ -719,6 +719,10 @@ if ($shared_cflag ne "")
 		$shared_mark2 = ".shlib.";
 		}
 	}
+else
+	{
+	$no_shared = 1;
+	}
 
 #my ($bn1)=split(/\s+/,$bn_obj);
 #$bn1 = "" unless defined $bn1;
