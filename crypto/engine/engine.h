@@ -104,6 +104,13 @@ typedef int (*BN_MOD_EXP_CRT)(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *q, const BIGNUM *dmp1, const BIGNUM *dmq1,
 		const BIGNUM *iqmp, BN_CTX *ctx);
 
+/* Generic function pointer */
+typedef void (*ENGINE_GEN_FUNC_PTR)();
+/* Generic function pointer taking no arguments */
+typedef void (*ENGINE_GEN_INT_FUNC_PTR)(void);
+/* Specific control function pointer */
+typedef int (*ENGINE_CTRL_FUNC_PTR)(int cmd, long i, void *p, void (*f)());
+
 /* The list of "engine" types is a static array of (const ENGINE*)
  * pointers (not dynamic because static is fine for now and we otherwise
  * have to hook an appropriate load/unload function in to initialise and
@@ -160,6 +167,9 @@ int ENGINE_set_DH(ENGINE *e, DH_METHOD *dh_meth);
 int ENGINE_set_RAND(ENGINE *e, RAND_METHOD *rand_meth);
 int ENGINE_set_BN_mod_exp(ENGINE *e, BN_MOD_EXP bn_mod_exp);
 int ENGINE_set_BN_mod_exp_crt(ENGINE *e, BN_MOD_EXP_CRT bn_mod_exp_crt);
+int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f);
+int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
+int ENGINE_set_ctrl_function(ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f);
 
 /* These return values from within the ENGINE structure. These can
  * be useful with functional references as well as structural
@@ -174,6 +184,9 @@ DH_METHOD *ENGINE_get_DH(ENGINE *e);
 RAND_METHOD *ENGINE_get_RAND(ENGINE *e);
 BN_MOD_EXP ENGINE_get_BN_mod_exp(ENGINE *e);
 BN_MOD_EXP_CRT ENGINE_get_BN_mod_exp_crt(ENGINE *e);
+ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(ENGINE *e);
+ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(ENGINE *e);
+ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(ENGINE *e);
 
 /* ENGINE_new is normally passed a NULL in the first parameter because
  * the calling code doesn't have access to the definition of the ENGINE
@@ -283,9 +296,12 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_FREE				 108
 #define ENGINE_F_ENGINE_GET_BN_MOD_EXP			 109
 #define ENGINE_F_ENGINE_GET_BN_MOD_EXP_CRT		 110
+#define ENGINE_F_ENGINE_GET_CTRL_FUNCTION		 144
 #define ENGINE_F_ENGINE_GET_DH				 111
 #define ENGINE_F_ENGINE_GET_DSA				 112
+#define ENGINE_F_ENGINE_GET_FINISH_FUNCTION		 145
 #define ENGINE_F_ENGINE_GET_ID				 113
+#define ENGINE_F_ENGINE_GET_INIT_FUNCTION		 146
 #define ENGINE_F_ENGINE_GET_NAME			 114
 #define ENGINE_F_ENGINE_GET_NEXT			 115
 #define ENGINE_F_ENGINE_GET_PREV			 116
@@ -298,10 +314,13 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_REMOVE				 123
 #define ENGINE_F_ENGINE_SET_BN_MOD_EXP			 124
 #define ENGINE_F_ENGINE_SET_BN_MOD_EXP_CRT		 125
+#define ENGINE_F_ENGINE_SET_CTRL_FUNCTION		 147
 #define ENGINE_F_ENGINE_SET_DEFAULT_TYPE		 126
 #define ENGINE_F_ENGINE_SET_DH				 127
 #define ENGINE_F_ENGINE_SET_DSA				 128
+#define ENGINE_F_ENGINE_SET_FINISH_FUNCTION		 148
 #define ENGINE_F_ENGINE_SET_ID				 129
+#define ENGINE_F_ENGINE_SET_INIT_FUNCTION		 149
 #define ENGINE_F_ENGINE_SET_NAME			 130
 #define ENGINE_F_ENGINE_SET_RAND			 131
 #define ENGINE_F_ENGINE_SET_RSA				 132

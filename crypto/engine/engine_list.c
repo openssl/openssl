@@ -514,6 +514,42 @@ int ENGINE_set_BN_mod_exp_crt(ENGINE *e, BN_MOD_EXP_CRT bn_mod_exp_crt)
 	return 1;
 	}
 
+int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f)
+	{
+	if((e == NULL) || (init_f == NULL))
+		{
+		ENGINEerr(ENGINE_F_ENGINE_SET_INIT_FUNCTION,
+			ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	e->init = init_f;
+	return 1;
+	}
+
+int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f)
+	{
+	if((e == NULL) || (finish_f == NULL))
+		{
+		ENGINEerr(ENGINE_F_ENGINE_SET_FINISH_FUNCTION,
+			ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	e->finish = finish_f;
+	return 1;
+	}
+
+int ENGINE_set_ctrl_function(ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f)
+	{
+	if((e == NULL) || (ctrl_f == NULL))
+		{
+		ENGINEerr(ENGINE_F_ENGINE_SET_CTRL_FUNCTION,
+			ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	e->ctrl = ctrl_f;
+	return 1;
+	}
+
 const char *ENGINE_get_id(ENGINE *e)
 	{
 	if(e == NULL)
@@ -601,3 +637,37 @@ BN_MOD_EXP_CRT ENGINE_get_BN_mod_exp_crt(ENGINE *e)
 		}
 	return e->bn_mod_exp_crt;
 	}
+
+ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(ENGINE *e)
+	{
+	if(e == NULL)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_GET_INIT_FUNCTION,
+			ERR_R_PASSED_NULL_PARAMETER);
+		return NULL;
+		}
+	return e->init;
+	}
+
+ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(ENGINE *e)
+	{
+	if(e == NULL)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_GET_FINISH_FUNCTION,
+			ERR_R_PASSED_NULL_PARAMETER);
+		return NULL;
+		}
+	return e->finish;
+	}
+
+ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(ENGINE *e)
+	{
+	if(e == NULL)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_GET_CTRL_FUNCTION,
+			ERR_R_PASSED_NULL_PARAMETER);
+		return NULL;
+		}
+	return e->ctrl;
+	}
+

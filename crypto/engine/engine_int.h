@@ -86,6 +86,13 @@ typedef int (*BN_MOD_EXP_CRT)(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *q, const BIGNUM *dmp1, const BIGNUM *dmq1,
 		const BIGNUM *iqmp, BN_CTX *ctx);
 
+/* Generic function pointer */
+typedef int (*ENGINE_GEN_FUNC_PTR)();
+/* Generic function pointer taking no arguments */
+typedef int (*ENGINE_GEN_INT_FUNC_PTR)(void);
+/* Specific control function pointer */
+typedef int (*ENGINE_CTRL_FUNC_PTR)(int cmd, long i, void *p, void (*f)());
+
 #endif
 
 /* This is a structure for storing implementations of various crypto

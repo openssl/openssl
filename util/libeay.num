@@ -1890,3 +1890,9 @@ ENGINE_add                              2465
 DH_set_default_openssl_method           2466
 ENGINE_get_DSA                          2467
 ENGINE_ctrl                             2468
+ENGINE_get_finish_function              2469
+ENGINE_get_init_function                2470
+ENGINE_set_init_function                2471
+ENGINE_set_finish_function              2472
+ENGINE_get_ctrl_function                2473
+ENGINE_set_ctrl_function                2474
