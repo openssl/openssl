@@ -738,6 +738,24 @@ $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 
+*** debug-linux-elf-noefence
+$cc           = gcc
+$cflags       = -DREF_CHECK -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+$dso_scheme   = dlfcn
+
 *** debug-rse
 $cc           = cc
 $cflags       = -DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall
