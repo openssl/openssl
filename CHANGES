@@ -31,10 +31,6 @@
      overflows.
      [Ben Laurie (CHATS)]
 
-  *) New OPENSSL_assert() macro (similar to assert(), but enabled
-     unconditionally).
-     [Ben Laurie (CHATS)]
-
   *) Don't cache truncated DNS entries in the local cache (this could
      potentially lead to a spoofing attack).
      [Ben Laurie (CHATS)]
@@ -60,6 +56,10 @@
 
   *) Add assertions to prevent crypto functions from overflowing
      internal buffers by having large block sizes, etc.
+     [Ben Laurie (CHATS)]
+
+  *) New OPENSSL_assert() macro (similar to assert(), but enabled
+     unconditionally).
      [Ben Laurie (CHATS)]
 
   *) Eliminate unused copy of key in RC4.
