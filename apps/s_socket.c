@@ -209,9 +209,11 @@ static int init_client_ip(int *sock, unsigned char ip[4], int port)
 	s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
 	if (s == INVALID_SOCKET) { perror("socket"); return(0); }
 
+#ifndef MPE
 	i=0;
 	i=setsockopt(s,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
 	if (i < 0) { perror("keepalive"); return(0); }
+#endif
 
 	if (connect(s,(struct sockaddr *)&them,sizeof(them)) == -1)
 		{ close(s); perror("connect"); return(0); }

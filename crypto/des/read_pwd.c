@@ -271,7 +271,9 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 #elif defined(MAC_OS_pre_X)
 	tty=stdin;
 #else
+#ifndef MPE
 	if ((tty=fopen("/dev/tty","r")) == NULL)
+#endif
 		tty=stdin;
 #endif
 
@@ -312,7 +314,11 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 
 #if defined(TTY_set) && !defined(VMS)
 	if (is_a_tty && (TTY_set(fileno(tty),&tty_new) == -1))
+#ifdef MPE 
+		; /* MPE lies -- echo really has been disabled */
+#else
 		return(-1);
+#endif
 #endif
 #ifdef VMS
 	tty_new[0] = tty_orig[0];
