@@ -4,6 +4,13 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Minor change to 'x509' utility. The -CAcreateserial option now uses 1
+     for the first serial number and places 2 in the serial number file. This
+     avoids problems when the root CA is created with serial number zero and
+     the first user certificate has the same issuer name and serial number
+     as the root CA.
+     [Steve Henson]
+
   *) Fixes to X509_ATTRIBUTE utilities, change the 'req' program so it uses
      the new code. Add documentation for this stuff.
      [Steve Henson]

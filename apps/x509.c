@@ -943,8 +943,8 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 			}
 		else
 			{
-			ASN1_INTEGER_set(bs,0);
-			BN_zero(serial);
+			ASN1_INTEGER_set(bs,1);
+			BN_one(serial);
 			}
 		}
 	else 

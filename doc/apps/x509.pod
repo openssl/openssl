@@ -311,8 +311,9 @@ The default filename consists of the CA certificate file base name with
 =item B<-CAcreateserial filename>
 
 with this option the CA serial number file is created if it does not exist:
-it will contain the serial number "01". Normally if the B<-CA> option is
-specified and the serial number file does not exist it is an error.
+it will contain the serial number "02" and the certificate being signed will
+have the 1 as its serial number. Normally if the B<-CA> option is specified
+and the serial number file does not exist it is an error.
 
 =item B<-extfile filename>
 
