@@ -357,7 +357,7 @@ void usage()
 "-3         : encrypt using tripple DES encryption.  This uses 2 keys",
 "             generated from the input key.  If the input key is less",
 "             than 8 characters long, this is equivelent to normal",
-"             encryption.  Default is tripple cbc, -b makes it tripple ecb.",
+"             encryption.  Default is triple cbc, -b makes it triple ecb.",
 NULL
 };
 	for (u=(char **)Usage; *u; u++)

@@ -88,10 +88,10 @@ asm/dx86bsdi.o: asm/dx86unix.cpp
 asm/yx86bsdi.o: asm/yx86unix.cpp
 	$(CPP) -DBSDI asm/yx86unix.cpp | sed 's/ :/:/' | as -o asm/yx86bsdi.o
 
-asm/dx86unix.cpp:
+asm/dx86unix.cpp: asm/des-586.pl
 	(cd asm; perl des-586.pl cpp >dx86unix.cpp)
 
-asm/yx86unix.cpp:
+asm/yx86unix.cpp: asm/crypt586.pl
 	(cd asm; perl crypt586.pl cpp >yx86unix.cpp)
 
 files:
