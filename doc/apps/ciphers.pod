@@ -25,9 +25,13 @@ the appropriate cipherlist.
 
 =item B<-v>
 
-verbose option. List ciphers with a complete description of the authentication,
-key exchange, encryption and mac algorithms used along with any key size
+verbose option. List ciphers with a complete description of
+protocol version (SSLv2 or SSLv3; the latter includes TLS), key exchange,
+authentication, encryption and mac algorithms used along with any key size
 restrictions and whether the algorithm is classed as an "export" cipher.
+Note that without the B<-v> option, ciphers may seem to appear twice
+in a cipher list; this is when similar ciphers are available for
+SSL v2 and for SSL v3/TLS v1.
 
 =item B<-ssl3>
 

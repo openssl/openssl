@@ -49,7 +49,7 @@ the result in B<r>.
 
 BN_from_montgomery() performs the Montgomery reduction B<r> = B<a>*R^-1.
 
-BN_to_montgomery() computes Mont(B<a>,R^2).
+BN_to_montgomery() computes Mont(B<a>,R^2), i.e. B<a>*R.
 
 For all functions, B<ctx> is a previously allocated B<BN_CTX> used for
 temporary variables.
