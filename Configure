@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-engine] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -38,7 +38,6 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 # --test-sanity Make a number of sanity checks on the data in this file.
 #               This is a debugging tool for OpenSSL developers.
 #
-# no-engine     do not compile in any engine code.
 # no-hw-xxx     do not compile support for specific crypto hardware.
 #               Generic OpenSSL-style methods relating to this support
 #               are always compiled but return NULL if the hardware
@@ -704,7 +703,6 @@ PROCESS_ARGS:
 		elsif (/^no-asm$/)
 		 	{
 			$no_asm=1;
-			#$flags .= "-DOPENSSL_NO_ASM ";
 			$openssl_other_defines .= "#define OPENSSL_NO_ASM\n";
 			}
 		elsif (/^no-err$/)
@@ -716,12 +714,10 @@ PROCESS_ARGS:
 			{
 			my $hw=$1;
 			$hw =~ tr/[a-z]/[A-Z]/;
-			#$flags .= "-DOPENSSL_NO_HW_$hw ";
 			$openssl_other_defines .= "#define OPENSSL_NO_HW_$hw\n";
 			}
 		elsif (/^no-hw$/)
 			{
-			#$flags .= "-DOPENSSL_NO_HW ";
 			$openssl_other_defines .= "#define OPENSSL_NO_HW\n";
 			}
 		elsif (/^no-dso$/)
@@ -1157,12 +1153,10 @@ if (!$no_shared)
 
 if ($no_shared)
 	{
-	#$cflags="-DOPENSSL_NO_DYNAMIC_ENGINE $cflags";
 	$openssl_other_defines.="#define OPENSSL_NO_DYNAMIC_ENGINE\n";
 	}
 else
 	{
-	#$cflags="-DOPENSSL_NO_STATIC_ENGINE $cflags";
 	$openssl_other_defines.="#define OPENSSL_NO_STATIC_ENGINE\n";
 	}
 
