@@ -2842,3 +2842,16 @@ FIPS_mode                               3283	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_selftest_failed                    3284	EXIST:OPENSSL_FIPS:FUNCTION:
 sk_is_sorted                            3285	EXIST::FUNCTION:
 X509_check_ca                           3286	EXIST::FUNCTION:
+private_idea_set_encrypt_key            3287	EXIST:OPENSSL_FIPS:FUNCTION:IDEA
+HMAC_CTX_set_flags                      3288	EXIST::FUNCTION:HMAC
+private_SHA_Init                        3289	EXIST:OPENSSL_FIPS:FUNCTION:SHA,SHA0
+private_CAST_set_key                    3290	EXIST::FUNCTION:CAST
+private_RIPEMD160_Init                  3291	EXIST:OPENSSL_FIPS:FUNCTION:RIPEMD
+private_RC5_32_set_key                  3292	EXIST::FUNCTION:RC5
+private_MD5_Init                        3293	EXIST:OPENSSL_FIPS:FUNCTION:MD5
+private_RC4_set_key                     3294	EXIST:OPENSSL_FIPS:FUNCTION:RC4
+private_MDC2_Init                       3295	EXIST:OPENSSL_FIPS:FUNCTION:MDC2
+private_RC2_set_key                     3296	EXIST::FUNCTION:RC2
+private_MD4_Init                        3297	EXIST:OPENSSL_FIPS:FUNCTION:MD4
+private_BF_set_key                      3298	EXIST::FUNCTION:BF
+private_MD2_Init                        3299	EXIST:OPENSSL_FIPS:FUNCTION:MD2

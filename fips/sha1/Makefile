@@ -112,10 +112,8 @@ fips_sha1_selftest.o: ../../include/openssl/opensslv.h
 fips_sha1_selftest.o: ../../include/openssl/safestack.h
 fips_sha1_selftest.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 fips_sha1_selftest.o: ../../include/openssl/symhacks.h fips_sha1_selftest.c
-fips_sha1dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/fips.h
 fips_sha1dgst.o: ../../include/openssl/opensslconf.h
-fips_sha1dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/sha.h
-fips_sha1dgst.o: fips_md32_common.h fips_sha1dgst.c fips_sha_locl.h
+fips_sha1dgst.o: ../../include/openssl/opensslv.h fips_sha1dgst.c
 fips_sha1test.o: ../../e_os.h ../../include/openssl/bio.h
 fips_sha1test.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 fips_sha1test.o: ../../include/openssl/err.h ../../include/openssl/fips.h

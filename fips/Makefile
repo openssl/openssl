@@ -193,10 +193,4 @@ fips.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 fips.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 fips.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h fips.c
 fips.o: fips_locl.h
-fips_err_wrapper.o: ../include/openssl/bio.h ../include/openssl/crypto.h
-fips_err_wrapper.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-fips_err_wrapper.o: ../include/openssl/fips.h ../include/openssl/lhash.h
-fips_err_wrapper.o: ../include/openssl/opensslconf.h
-fips_err_wrapper.o: ../include/openssl/opensslv.h
-fips_err_wrapper.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-fips_err_wrapper.o: ../include/openssl/symhacks.h fips_err.h fips_err_wrapper.c
+fips_err_wrapper.o: ../include/openssl/opensslconf.h fips_err_wrapper.c

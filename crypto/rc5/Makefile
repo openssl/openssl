@@ -101,6 +101,10 @@ clean:
 rc5_ecb.o: ../../include/openssl/opensslv.h ../../include/openssl/rc5.h
 rc5_ecb.o: rc5_ecb.c rc5_locl.h
 rc5_enc.o: ../../include/openssl/rc5.h rc5_enc.c rc5_locl.h
-rc5_skey.o: ../../include/openssl/rc5.h rc5_locl.h rc5_skey.c
+rc5_skey.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+rc5_skey.o: ../../include/openssl/opensslconf.h
+rc5_skey.o: ../../include/openssl/opensslv.h ../../include/openssl/rc5.h
+rc5_skey.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+rc5_skey.o: ../../include/openssl/symhacks.h rc5_locl.h rc5_skey.c
 rc5cfb64.o: ../../include/openssl/rc5.h rc5_locl.h rc5cfb64.c
 rc5ofb64.o: ../../include/openssl/rc5.h rc5_locl.h rc5ofb64.c
