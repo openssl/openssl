@@ -129,6 +129,7 @@
 #include "progs.h"
 #include "s_apps.h"
 #include <openssl/err.h>
+#include <openssl/fips.h>
 
 /* The LHASH callbacks ("hash" & "cmp") have been replaced by functions with the
  * base prototypes (we cast each variable inside the function to the required
@@ -231,6 +232,14 @@ int main(int Argc, char *Argv[])
 	arg.data=NULL;
 	arg.count=0;
 
+#ifdef OPENSSL_FIPS
+	if(getenv("OPENSSL_FIPS") && !FIPS_mode_set(1,Argv[0]))
+		{
+		ERR_load_crypto_strings();
+		ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+		exit(1);
+		}
+#endif
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);

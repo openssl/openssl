@@ -149,6 +149,7 @@ $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
+	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(PROGRAM)
 	-(cd ..; OPENSSL="`pwd`/apps/openssl"; export OPENSSL; \
 		LD_LIBRARY_PATH="`pwd`:$$LD_LIBRARY_PATH"; \
 		DYLD_LIBRARY_PATH="`pwd`:$$DYLD_LIBRARY_PATH"; \
