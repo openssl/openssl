@@ -47,6 +47,7 @@ the server did not send a list of CAs (client mode).
 =head1 SEE ALSO
 
 L<ssl(3)|ssl(3)>,
-L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>
+L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>,
+L<SSL_CTX_set_client_cert_cb(3)|SSL_CTX_set_client_cert_cb(3)>
 
 =cut

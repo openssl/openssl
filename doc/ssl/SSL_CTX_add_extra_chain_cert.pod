@@ -33,6 +33,7 @@ error stack to find out the reason for failure otherwise.
 
 L<ssl(3)|ssl(3)>,
 L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>,
+L<SSL_CTX_set_client_cert_cb(3)|SSL_CTX_set_client_cert_cb(3)>,
 L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
 
 =cut
