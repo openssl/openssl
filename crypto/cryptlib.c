@@ -544,7 +544,7 @@ const char *CRYPTO_get_lock_name(int type)
 unsigned long  OPENSSL_ia32cap=0;
 unsigned long *OPENSSL_ia32cap_loc() { return &OPENSSL_ia32cap; }
 
-#if !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
+#if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
 #define OPENSSL_CPUID_SETUP
 void OPENSSL_cpuid_setup()
 { static int trigger=0;

@@ -1408,6 +1408,8 @@ print OUT "#ifdef OPENSSL_ALGORITHM_DEFINES\n";
 print OUT $openssl_algorithm_defines_trans;
 print OUT "#endif\n\n";
 
+print OUT "#define OPENSSL_CPUID_OBJ\n\n" if ($cpuid_obj);
+
 while (<IN>)
 	{
 	if	(/^#define\s+OPENSSLDIR/)
