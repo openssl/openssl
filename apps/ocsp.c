@@ -585,7 +585,7 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 		if (status != V_OCSP_CERTSTATUS_REVOKED)
 			continue;
 
-		if (reason > 0)
+		if (reason != -1)
 			BIO_printf(out, "\tReason: %s\n",
 				OCSP_crl_reason_str(reason));
 

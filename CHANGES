@@ -3,6 +3,14 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Fixes to BN_to_ASN1_INTEGER when bn is zero. This would previously
+     result in a zero length in the ASN1_INTEGER structure which was
+     not consistent with the structure when d2i_ASN1_INTEGER() was used
+     and would cause ASN1_INTEGER_cmp() to fail. Enhance s2i_ASN1_INTEGER()
+     to cope with hex and negative integers. Fix bug in i2a_ASN1_INTEGER()
+     where it did not print out a minus for negative ASN1_INTEGER.
+     [Steve Henson]
+
   *) Fix 'openssl passwd -1'.
      [Bodo Moeller]
 

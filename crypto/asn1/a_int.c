@@ -399,6 +399,12 @@ ASN1_INTEGER *BN_to_ASN1_INTEGER(BIGNUM *bn, ASN1_INTEGER *ai)
 	len=((j == 0)?0:((j/8)+1));
 	ret->data=(unsigned char *)OPENSSL_malloc(len+4);
 	ret->length=BN_bn2bin(bn,ret->data);
+	/* Correct zero case */
+	if(!ret->length)
+		{
+		ret->data[0] = 0;
+		ret->length = 1;
+		}
 	return(ret);
 err:
 	if (ret != ai) M_ASN1_INTEGER_free(ret);
