@@ -1,0 +1,111 @@
+=pod
+
+=head1 NAME
+
+DSA_set_default_method, DSA_get_default_method, DSA_set_method,
+DSA_new_method, DSA_OpenSSL - Select RSA method
+
+=head1 SYNOPSIS
+
+ #include <openssl/DSA.h>
+
+ void DSA_set_default_method(DSA_METHOD *meth);
+
+ DSA_METHOD *DSA_get_default_method(void);
+
+ DSA_METHOD *DSA_set_method(DSA *dsa, DSA_METHOD *meth);
+
+ DSA *DSA_new_method(DSA_METHOD *meth);
+
+ DSA_METHOD *DSA_OpenSSL(void);
+
+=head1 DESCRIPTION
+
+A B<DSA_METHOD> specifies the functions that OpenSSL uses for DSA
+operations. By modifying the method, alternative implementations
+such as hardware accelerators may be used.
+
+Initially, the default is to use the OpenSSL internal implementation.
+DSA_OpenSSL() returns a pointer to that method.
+
+DSA_set_default_method() makes B<meth> the default method for all B<DSA>
+structures created later.
+
+DSA_get_default_method() returns a pointer to the current default
+method.
+
+DSA_set_method() selects B<meth> for all operations using the structure B<DSA>.
+
+DSA_get_method() returns a pointer to the method currently selected
+for B<DSA>.
+
+DSA_new_method() allocates and initializes a B<DSA> structure so that
+B<method> will be used for the DSA operations. If B<method> is B<NULL>,
+the default method is used.
+
+=head1 THE DSA_METHOD STRUCTURE
+
+struct
+ {
+     /* name of the implementation */
+	const char *name;
+
+     /* sign */
+	DSA_SIG *(*dsa_do_sign)(const unsigned char *dgst, int dlen,
+                                 DSA *dsa);
+
+     /* pre-compute k^-1 and r */
+	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
+                                 BIGNUM **rp);
+
+     /* verify */
+	int (*dsa_do_verify)(const unsigned char *dgst, int dgst_len,
+                                 DSA_SIG *sig, DSA *dsa);
+
+     /* compute rr = a1^p1 * a2^p2 mod m. May be NULL */
+	int (*dsa_mod_exp)(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
+                                 BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
+                                 BN_CTX *ctx, BN_MONT_CTX *in_mont);
+
+     /* compute r = a ^ p mod m. May be NULL */
+	int (*bn_mod_exp)(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+                                 const BIGNUM *m, BN_CTX *ctx,
+                                 BN_MONT_CTX *m_ctx);
+
+     /* called at DSA_new */
+        int (*init)(DSA *DSA);
+
+     /* called at DSA_free */
+        int (*finish)(DSA *DSA);
+
+        int flags;
+
+        char *app_data; /* ?? */
+
+ } DSA_METHOD;
+
+=head1 RETURN VALUES
+
+DSA_OpenSSL(), DSA_get_default_method() and DSA_get_method() return
+pointers to the respective B<DSA_METHOD>s.
+
+DSA_set_default_method() returns no value.
+
+DSA_set_method() returns a pointer to the B<DSA_METHOD> previously
+associated with B<dsa>.
+
+DSA_new_method() returns B<NULL> and sets an error code that can be
+obtained by L<ERR_get_error(3)|ERR_get_error(3)> if the allocation
+fails. Otherwise it returns a pointer to the newly allocated
+structure.
+
+=head1 SEE ALSO
+
+L<dsa(3)|dsa(3)>, L<DSA_new(3)|DSA_new(3)>
+
+=head1 HISTORY
+
+DSA_set_default_method(), DSA_get_default_method(), DSA_set_method(),
+DSA_new_method() and DSA_OpenSSL() were added in OpenSSL 0.9.4.
+
+=cut

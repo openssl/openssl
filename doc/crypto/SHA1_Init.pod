@@ -1,0 +1,42 @@
+=pod
+
+=head1 NAME
+
+SHA1_Init, SHA1_Update_SHA1_Final - Compute SHA1 hash
+
+=head1 SYNOPSIS
+
+ #include <openssl/sha.h>
+
+ void SHA1_Init(SHA_CTX *c);
+ void SHA1_Update(SHA_CTX *c, const unsigned char *data,
+                  unsigned long len);
+ void SHA1_Final(unsigned char *md, SHA_CTX *c);
+
+=head1 DESCRIPTION
+
+SHA1_Init() initializes a B<SHA_CTX> structure.
+
+SHA1_Update() can be called repeatedly with chunks of the message to
+be hashed (B<len> bytes at B<data>).
+
+SHA1_Final() places the message digest in B<md>, which must have space
+for SHA_DIGEST_LENGTH == 20 bytes of output, and erases the B<SHA_CTX>.
+
+When the entire message is available at one time, L<SHA1(3)|SHA(1)>
+can be used.
+
+=head1 RETURN VALUES
+
+SHA1_Init(), SHA1_Update() and SHA1_Final() do not return values.
+
+=head1 HISTORY
+
+SHA1_Init(), SHA1_Update() and SHA1_Final()are available in all
+versions of SSLeay and OpenSSL.
+
+=head1 SEE ALSO
+
+sha(3), ripemd(3), SHA1(3)
+
+=cut

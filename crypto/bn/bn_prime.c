@@ -68,24 +68,6 @@
  */
 #include "bn_prime.h"
 
-/* number of Miller-Rabin iterations for an error rate  of less than 2^-80
- * for random 'b'-bit input, b >= 100 (taken from table 4.4 in the Handbook
- * of Applied Cryptography [Menezes, van Oorschot, Vanstone; CRC Press 1996];
- * original paper: Damgaard, Landrock, Pomerance: Average case error estimates
- * for the strong probable prime test. -- Math. Comp. 61 (1993) 177-194) */
-#define BN_prime_checks_size(b) ((b) >= 1300 ?  2 : \
-                                (b) >=  850 ?  3 : \
-                                (b) >=  650 ?  4 : \
-                                (b) >=  550 ?  5 : \
-                                (b) >=  450 ?  6 : \
-                                (b) >=  400 ?  7 : \
-                                (b) >=  350 ?  8 : \
-                                (b) >=  300 ?  9 : \
-                                (b) >=  250 ? 12 : \
-                                (b) >=  200 ? 15 : \
-                                (b) >=  150 ? 18 : \
-                                /* b >= 100 */ 27)
-
 static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx,BN_CTX *ctx2,
 	BN_MONT_CTX *mont);
 static int probable_prime(BIGNUM *rnd, int bits);
@@ -203,7 +185,7 @@ int BN_is_prime(BIGNUM *a, int checks, void (*callback)(int,int,void *),
 
 	for (i=0; i<checks; i++)
 		{
-		if (!BN_rand(check,BN_num_bits(a)-1,0,0)) goto err;
+		if (!BN_pseudo_rand(check,BN_num_bits(a)-1,0,0)) goto err;
 		j=witness(check,a,ctx,ctx2,mont);
 		if (j == -1) goto err;
 		if (j)

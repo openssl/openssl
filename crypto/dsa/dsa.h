@@ -182,7 +182,7 @@ DSA *	d2i_DSAPrivateKey(DSA **a, unsigned char **pp, long length);
 DSA * 	d2i_DSAparams(DSA **a, unsigned char **pp, long length);
 DSA *	DSA_generate_parameters(int bits, unsigned char *seed,int seed_len,
 		int *counter_ret, unsigned long *h_ret,void
-		(*callback)(),char *cb_arg);
+		(*callback)(),void *cb_arg);
 int	DSA_generate_key(DSA *a);
 int	i2d_DSAPublicKey(DSA *a, unsigned char **pp);
 int 	i2d_DSAPrivateKey(DSA *a, unsigned char **pp);
@@ -197,7 +197,7 @@ int	DSAparams_print_fp(FILE *fp, DSA *x);
 int	DSA_print_fp(FILE *bp, DSA *x, int off);
 #endif
 
-int DSA_is_prime(BIGNUM *q,void (*callback)(),char *cb_arg);
+int DSA_is_prime(BIGNUM *q,void (*callback)(),void *cb_arg);
 
 #ifndef NO_DH
 /* Convert DSA structure (key or just parameters) into DH structure

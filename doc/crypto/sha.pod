@@ -1,0 +1,36 @@
+=pod
+
+=head1 NAME
+
+sha - Secure Hash Algorithm
+
+=head1 SYNOPSIS
+
+ #include <openssl/sha.h>
+
+ unsigned char *SHA1(const unsigned char *d, unsigned long n,
+                     unsigned char *md);
+
+ void SHA1_Init(SHA_CTX *c);
+ void SHA1_Update(SHA_CTX *c, const unsigned char *data,
+                  unsigned long len);
+ void SHA1_Final(unsigned char *md, SHA_CTX *c);
+
+=head1 DESCRIPTION
+
+SHA-1 (Secure Hash Algorithm) is a cryptographic hash function with a
+160 bit output.
+
+The predecessor of SHA-1, SHA, is also implemented, but it should be
+used only when backward compatibility is required.
+
+=head1 CONFORMING TO
+
+US Federal Information Processing Standard FIPS 180 (Secure Hash
+Standard), ANSI X9.30
+
+=head1 SEE ALSO
+
+ripemd(3), SHA1(3), SHA1_Init(3)
+
+=cut

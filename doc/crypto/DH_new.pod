@@ -10,7 +10,7 @@ DH_new, DH_free - allocate and free DH objects
 
  DH* DH_new(void);
 
- void DH_free(DH *rsa);
+ void DH_free(DH *dh);
 
 =head1 DESCRIPTION
 

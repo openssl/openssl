@@ -1,0 +1,36 @@
+=pod
+
+=head1 NAME
+
+SHA1 - Compute SHA1 hash
+
+=head1 SYNOPSIS
+
+ #include <openssl/sha.h>
+
+ unsigned char *SHA1(const unsigned char *d, unsigned long n,
+                     unsigned char *md);
+
+=head1 DESCRIPTION
+
+SHA1() computes the SHA-1 message digest of the B<n> bytes at B<d> and
+places it in B<md> (which must have space for SHA_DIGEST_LENGTH == 20
+bytes of output). If B<md> is NULL, the digest is placed in a static
+array.
+
+L<SHA1_Init(3)|SHA1_Init(3)> may be used if the message is not completely
+stored in memory.
+
+=head1 RETURN VALUE
+
+SHA1() returns a pointer to the hash value. 
+
+=head1 HISTORY
+
+SHA1() is available in all versions of SSLeay and OpenSSL.
+
+=head1 SEE ALSO
+
+sha(3), ripemd(3), SHA1_Init(3)
+
+=cut

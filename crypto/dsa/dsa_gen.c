@@ -75,7 +75,7 @@
 
 DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 	     int *counter_ret, unsigned long *h_ret, void (*callback)(),
-	     char *cb_arg)
+	     void *cb_arg)
 	{
 	int ok=0;
 	unsigned char seed[SHA_DIGEST_LENGTH];
@@ -93,6 +93,7 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 	if (bits < 512) bits=512;
 	bits=(bits+63)/64*64;
 
+	if (seed_len < 20) seed_in = NULL;
 	if ((seed_in != NULL) && (seed_len == 20))
 		memcpy(seed,seed_in,seed_len);
 
@@ -142,10 +143,10 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 			/* step 3 */
 			md[0]|=0x80;
 			md[SHA_DIGEST_LENGTH-1]|=0x01;
-			if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,q)) abort();
+			if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,q)) goto err;
 
 			/* step 4 */
-			if (DSA_is_prime(q,callback,cb_arg) > 0) break;
+			if (BN_is_prime(q,BN_prime_checks,callback,NULL,cb_arg) > 0) break;
 			/* do a callback call */
 			/* step 5 */
 			}
@@ -174,7 +175,8 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 				HASH(buf,SHA_DIGEST_LENGTH,md);
 
 				/* step 8 */
-				if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,r0)) abort();
+				if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,r0))
+					goto err;
 				BN_lshift(r0,r0,160*k);
 				BN_add(W,W,r0);
 				}
@@ -194,7 +196,7 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 			if (BN_cmp(p,test) >= 0)
 				{
 				/* step 11 */
-				if (DSA_is_prime(p,callback,cb_arg) > 0)
+				if (BN_is_prime(p,BN_prime_checks,callback,NULL,cb_arg) > 0)
 					goto end;
 				}
 
@@ -210,7 +212,7 @@ DSA *DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 end:
 	if (callback != NULL) callback(2,1,cb_arg);
 
-	/* We now need to gernerate g */
+	/* We now need to generate g */
 	/* Set r0=(p-1)/q */
 	BN_sub(test,p,BN_value_one());
 	BN_div(r0,NULL,test,q,ctx);
@@ -250,7 +252,7 @@ err:
 	return(ok?ret:NULL);
 	}
 
-int DSA_is_prime(BIGNUM *w, void (*callback)(), char *cb_arg)
+int DSA_is_prime(BIGNUM *w, void (*callback)(), void *cb_arg)
 	{
 	int ok= -1,j,i,n;
 	BN_CTX *ctx=NULL,*ctx2=NULL;
@@ -258,7 +260,7 @@ int DSA_is_prime(BIGNUM *w, void (*callback)(), char *cb_arg)
 	int a;
 	BN_MONT_CTX *mont=NULL;
 
-	if (!BN_is_bit_set(w,0)) return(0);
+	if (!BN_is_odd(w)) return(0);
 
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	if ((ctx2=BN_CTX_new()) == NULL) goto err;
@@ -272,7 +274,7 @@ int DSA_is_prime(BIGNUM *w, void (*callback)(), char *cb_arg)
 	mont_1= &(ctx2->bn[7]);
 
 	/* step 1 */
-	n=50;
+	n=BN_prime_checks_size(BN_num_bits(w));
 
 	/* step 2 */
 	if (!BN_sub(w_1,w,BN_value_one())) goto err;
@@ -286,7 +288,8 @@ int DSA_is_prime(BIGNUM *w, void (*callback)(), char *cb_arg)
 	for (i=1; i < n; i++)
 		{
 		/* step 3 */
-		BN_rand(b,BN_num_bits(w)-2/*-1*/,0,0);
+		if (!BN_pseudo_rand(b,BN_num_bits(w)-2/*-1*/,0,0))
+			goto err;
 		/* BN_set_word(b,0x10001L); */
 
 		/* step 4 */

@@ -59,6 +59,7 @@ bn - Multiprecision integer arithmetics
  unsigned long BN_get_word(BIGNUM *a);
 
  int BN_rand(BIGNUM *rnd, int bits, int top,int bottom);
+ int BN_pseudo_rand(BIGNUM *rnd, int bits, int top,int bottom);
 
  BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,BIGNUM *add,
          BIGNUM *rem,void (*callback)(int,int,void *),void *cb_arg);

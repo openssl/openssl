@@ -30,7 +30,7 @@ BN_from_montgomery, BN_to_montgomery - Montgomery multiplication
 
 These functions implement Montgomery multiplication. They are used
 automatically when BN_mod_exp(3) is called with suitable input,
-but they may be useful when several operations are to be perfomed
+but they may be useful when several operations are to be performed
 using the same modulus.
 
 BN_MONT_CTX_new() allocates and initializes a B<BN_MONT_CTX> structure.

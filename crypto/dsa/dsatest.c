@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 	BIO_printf(bio_err,"test generation of DSA parameters\n");
-	BIO_printf(bio_err,"expect '.*' followed by 5 lines of '.'s and '+'s\n");
+	BIO_printf(bio_err,"expect '.*' followed by 3 lines of '.'s and '+'s\n");
 	dsa=DSA_generate_parameters(512,seed,20,&counter,&h,dsa_cb,
 		(char *)bio_err);
 

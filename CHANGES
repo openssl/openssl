@@ -2,7 +2,14 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
+ Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
+
+  *) Use BN_prime_checks_size(BN_num_bits(w)) rounds of Miller-Rabin when
+     generating DSA primes.
+     [Ulf Möller]
+
+  *) New function BN_pseudo_rand().
+     [Ulf Möller]
 
   *) Clean up BN_mod_mul_montgomery(): replace the broken (and unreadable)
      bignum version of BN_from_montgomery() with the working code from

@@ -110,6 +110,10 @@ B<NULL>.
 B<dmp1>, B<dmq1> and B<iqmp> may be B<NULL> in private keys, but the
 RSA operations are much faster when these values are available.
 
+=head1 CONFORMING TO
+
+SSL, PKCS #1 v2.0
+
 =head1 PATENTS
 
 RSA is covered by a US patent which expires in September 2000.
