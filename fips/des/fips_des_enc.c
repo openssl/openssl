@@ -58,6 +58,8 @@
 
 #include "fips_des_locl.h"
 
+#ifdef FIPS
+
 void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 	{
 	register DES_LONG l,r,t,u;
@@ -286,3 +288,10 @@ void DES_decrypt3(DES_LONG *data, DES_key_schedule *ks1,
 	data[0]=l;
 	data[1]=r;
 	}
+
+#else /* ndef FIPS */
+
+static void *dummy=&dummy;
+
+#endif /* ndef FIPS */
+
