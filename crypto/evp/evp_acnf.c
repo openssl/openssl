@@ -1,4 +1,4 @@
-/* conf_mall.c */
+/* evp_acnf.c */
 /* Written by Stephen Henson (shenson@bigfoot.com) for the OpenSSL
  * project 2001.
  */
@@ -56,21 +56,19 @@
  *
  */
 
-#include <stdio.h>
-#include <openssl/crypto.h>
 #include "cryptlib.h"
+#include <openssl/evp.h>
 #include <openssl/conf.h>
-#include <openssl/dso.h>
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
 #include <openssl/engine.h>
 
-/* Load all OpenSSL builtin modules */
 
-void OPENSSL_load_builtin_modules(void)
+/* Load all algorithms and configure OpenSSL.
+ * This function is called automatically when
+ * OPENSSL_LOAD_CONF is set.
+ */
+
+void OPENSSL_add_all_algorithms_conf(void)
 	{
-	/* Add builtin modules here */
-	ASN1_add_oid_module();
-	ENGINE_add_conf_module();
+	OPENSSL_add_all_algorithms_noconf();
+	OPENSSL_config(NULL);
 	}
-

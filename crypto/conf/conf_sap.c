@@ -1,4 +1,4 @@
-/* conf_mall.c */
+/* conf_sap.c */
 /* Written by Stephen Henson (shenson@bigfoot.com) for the OpenSSL
  * project 2001.
  */
@@ -65,12 +65,43 @@
 #include <openssl/asn1.h>
 #include <openssl/engine.h>
 
-/* Load all OpenSSL builtin modules */
+/* This is the automatic configuration loader: it is called automatically by
+ * OpenSSL when any of a number of standard initialisation functions are called,
+ * unless this is overridden by calling OPENSSL_no_config()
+ */
 
-void OPENSSL_load_builtin_modules(void)
+static int openssl_configured = 0;
+
+void OPENSSL_config(const char *config_name)
 	{
-	/* Add builtin modules here */
-	ASN1_add_oid_module();
-	ENGINE_add_conf_module();
+	if (openssl_configured)
+		return;
+
+	OPENSSL_load_builtin_modules();
+	/* Need to load ENGINEs */
+	ENGINE_load_builtin_engines();
+	/* Add others here? */
+
+
+	ERR_clear_error();
+	if (CONF_modules_load_file(NULL, NULL,
+					CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0)
+		{
+		BIO *bio_err;
+		ERR_load_crypto_strings();
+		if ((bio_err=BIO_new_fp(stderr, BIO_NOCLOSE)) != NULL)
+			{
+			BIO_printf(bio_err,"Auto configuration failed\n");
+			ERR_print_errors(bio_err);
+			BIO_free(bio_err);
+			}
+		exit(1);
+		}
+
+	return;
 	}
 
+void OPENSSL_no_config()
+	{
+	openssl_configured = 1;
+	}

@@ -23,9 +23,11 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= conf_err.c conf_lib.c conf_api.c conf_def.c conf_mod.c conf_mall.c
+LIBSRC= conf_err.c conf_lib.c conf_api.c conf_def.c conf_mod.c \
+	 conf_mall.c conf_sap.c
 
-LIBOBJ=	conf_err.o conf_lib.o conf_api.o conf_def.o conf_mod.o conf_mall.o
+LIBOBJ=	conf_err.o conf_lib.o conf_api.o conf_def.o conf_mod.o \
+	conf_mall.o conf_sap.o
 
 SRC= $(LIBSRC)
 

@@ -664,7 +664,17 @@ const EVP_CIPHER *EVP_aes_256_ecb(void);
 const EVP_CIPHER *EVP_aes_256_cbc(void);
 #endif
 
-void OpenSSL_add_all_algorithms(void);
+void OPENSSL_add_all_algorithms_noconf(void);
+void OPENSSL_add_all_algorithms_conf(void);
+
+#ifdef OPENSSL_LOAD_CONF
+#define OpenSSL_add_all_algorithms() \
+		OPENSSL_add_all_algorithms_conf()
+#else
+#define OpenSSL_add_all_algorithms() \
+		OPENSSL_add_all_algorithms_noconf()
+#endif
+
 void OpenSSL_add_all_ciphers(void);
 void OpenSSL_add_all_digests(void);
 #define SSLeay_add_all_algorithms() OpenSSL_add_all_algorithms()
