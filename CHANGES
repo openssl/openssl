@@ -8,8 +8,12 @@
      (the SSL 3.0 and TLS 1.0 specifications allow any length up to 32 bytes).
      [Bodo Moeller]
 
-  *) Fix race condition in SSLv3_client_method().
-     [Bodo Moeller]
+  *) Fix initialization code race conditions in
+        SSLv23_client_method(),   SSLv23_server_method(),
+        SSLv2_client_method(),    SSLv2_server_method(),
+        SSLv3_client_method(),    SSLv3_server_method(),
+        TLSv1_client_method(),    TLSv1_server_method().
+     [Patrick McCormick <patrick@tellme.com>, Bodo Moeller]
 
   *) Reorder cleanup sequence in SSL_CTX_free(): only remove the ex_data after
      the cached sessions are flushed, as the remove_cb() might use ex_data

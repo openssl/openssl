@@ -89,6 +89,7 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"ssl_session",
 	"ssl_sess_cert",
 	"ssl",
+	/* "ssl_method", */
 	"rand",
 	"rand2",
 	"debug_malloc",
