@@ -35,7 +35,6 @@ int DESTest(EVP_CIPHER_CTX *ctx,
 	    unsigned char *out, unsigned char *in, int len)
     {
     const EVP_CIPHER *cipher = NULL;
-    int ret = 1;
     int kt = 0;
 
     if (ctx)
@@ -58,67 +57,64 @@ int DESTest(EVP_CIPHER_CTX *ctx,
 	printf("Unknown mode: %s\n", amode);
 	exit(1);
 	}
-    if (ret)
+    if (akeysz != 64 && akeysz != 192)
 	{
-	if (akeysz != 64 && akeysz != 192)
+	printf("Invalid key size: %d\n", akeysz);
+	exit(1);
+	}
+    else
+	{
+	kt += akeysz;
+	switch (kt)
 	    {
-	    printf("Invalid key size: %d\n", akeysz);
+	case 1064:
+	    cipher=EVP_des_cbc();
+	    break;
+	case 1192:
+	    cipher=EVP_des_ede3_cbc();
+	    break;
+	case 2064:
+	    cipher=EVP_des_ecb();
+	    break;
+	case 2192:
+	    cipher=EVP_des_ede3_ecb();
+	    break;
+	case 3064:
+	    cipher=EVP_des_cfb64();
+	    break;
+	case 3192:
+	    cipher=EVP_des_ede3_cfb64();
+	    break;
+	case 4064:
+	    cipher=EVP_des_ofb();
+	    break;
+	case 4192:
+	    cipher=EVP_des_ede3_ofb();
+	    break;
+	case 5064:
+	    cipher=EVP_des_cfb1();
+	    break;
+	case 5192:
+	    cipher=EVP_des_ede3_cfb1();
+	    break;
+	case 6064:
+	    cipher=EVP_des_cfb8();
+	    break;
+	case 6192:
+	    cipher=EVP_des_ede3_cfb8();
+	    break;
+	default:
+	    printf("Didn't handle mode %d\n",kt);
 	    exit(1);
 	    }
-	else
+	if(!EVP_CipherInit(ctx, cipher, aKey, iVec, dir))
 	    {
-	    kt += akeysz;
-	    switch (kt)
-		{
-	    case 1064:
-		cipher=EVP_des_cbc();
-		break;
-	    case 1192:
-		cipher=EVP_des_ede3_cbc();
-		break;
-	    case 2064:
-		cipher=EVP_des_ecb();
-		break;
-	    case 2192:
-		cipher=EVP_des_ede3_ecb();
-		break;
-	    case 3064:
-		cipher=EVP_des_cfb64();
-		break;
-	    case 3192:
-		cipher=EVP_des_ede3_cfb64();
-		break;
-	    case 4064:
-		cipher=EVP_des_ofb();
-		break;
-	    case 4192:
-		cipher=EVP_des_ede3_ofb();
-		break;
-	    case 5064:
-		cipher=EVP_des_cfb1();
-		break;
-	    case 5192:
-		cipher=EVP_des_ede3_cfb1();
-		break;
-	    case 6064:
-		cipher=EVP_des_cfb8();
-		break;
-	    case 6192:
-		cipher=EVP_des_ede3_cfb8();
-		break;
-	    default:
-		printf("Didn't handle mode %d\n",kt);
-		exit(1);
-		}
-	    if(!EVP_CipherInit(ctx, cipher, aKey, iVec, dir))
-		{
-		ERR_print_errors_fp(stderr);
-		exit(1);
-		}
-	    EVP_Cipher(ctx, out, in, len);
+	    ERR_print_errors_fp(stderr);
+	    exit(1);
 	    }
+	EVP_Cipher(ctx, out, in, len);
 	}
-    return ret;
+    return 1;
     }
 
 /*-----------------------------------------------*/
