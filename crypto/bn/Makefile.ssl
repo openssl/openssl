@@ -104,7 +104,9 @@ asm/sparcv8plus.o: asm/sparcv8plus.S
 	$(CC) -xarch=v8plus -c asm/sparcv8plus.S -o asm/sparcv8plus.o
 
 asm/sparcv8plus-gcc.o: asm/sparcv8plus.S
-	gcc -E asm/sparcv8plus.S | as -xarch=v8plus /dev/fd/0 -o asm/sparcv8plus-gcc.o
+	gcc -E asm/sparcv8plus.S | /usr/ccs/bin/as -xarch=v8plus /dev/fd/0 -o asm/sparcv8plus-gcc.o
+	# GNU as cannot handle that file, so we circumvent PATH and
+	# always use /usr/ccs/bin/as.
 
 # MIPS 64 bit assember 
 asm/mips3.o: asm/mips3.s
