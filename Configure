@@ -728,9 +728,10 @@ print OUT "/* WARNING: Generated automatically from opensslconf.h.in by Configur
 
 print OUT "/* OpenSSL was configured with the following options: */\n";
 $openssl_exclude_defines =~ s/^\s*#\s*define\s+(.*)/# ifndef $1\n#  define $1\n# endif/mg;
+$openssl_exclude_defines = "   /* no ciphers excluded */\n" if $openssl_exclude_defines eq "";
 $openssl_thread_defines =~ s/^\s*#\s*define\s+(.*)/# ifndef $1\n#  define $1\n# endif/mg;
 $openssl_other_defines =~ s/^\s*#\s*define\s+(.*)/# ifndef $1\n#  define $1\n# endif/mg;
-print OUT "#ifdef OPENSSL_EXCLUDE_DEFINES\n$openssl_exclude_defines#endif\n";
+print OUT "#ifdef OPENSSL_ALGORITHM_DEFINES\n$openssl_exclude_defines#endif\n";
 print OUT "#ifdef OPENSSL_THREAD_DEFINES\n$openssl_thread_defines#endif\n";
 print OUT "#ifdef OPENSSL_OTHER_DEFINES\n$openssl_other_defines#endif\n\n";
 
