@@ -15,8 +15,6 @@
 
 #include <openssl/bn.h>
 
-
-int BN_legendre(BIGNUM *a, BIGNUM *p, BN_CTX *ctx);
 int BN_mod_sqrt(BIGNUM *x, BIGNUM *a, BIGNUM *p, BN_CTX *ctx);
 
 #endif

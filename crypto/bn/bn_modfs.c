@@ -19,67 +19,6 @@
 #define MAX_ROUNDS	10
 
 
-int BN_legendre(BIGNUM *a, BIGNUM *p, BN_CTX *ctx) 
-	{
-	BIGNUM *x, *y, *y2;
-	BN_ULONG m;
-	int L;
-
-	assert(a != NULL && p != NULL && ctx != NULL);
-
-	BN_CTX_start(ctx);
-	x = BN_CTX_get(ctx);
-	y = BN_CTX_get(ctx);
-	y2 = BN_CTX_get(ctx);
-	if (y2 == NULL) goto err;
-
-	if (!BN_nnmod(x, a, p, ctx)) goto err;
-	if (BN_is_zero(x)) 
-		{
-		BN_CTX_end(ctx);
-		return 0;
-		}
-
-	if (BN_copy(y, p) == NULL) goto err;
-	L = 1;
-
-	while (1)
-		{
-		if (!BN_rshift1(y2, y)) goto err;
-		if (BN_cmp(x, y2) > 0)
-			{
-			if (!BN_sub(x, y, x)) goto err;
-			if (BN_mod_word(y, 4) == 3)
-				L = -L;			
-			}
-		while (BN_mod_word(x, 4) == 0)
-			BN_div_word(x, 4);
-		if (BN_mod_word(x, 2) == 0)
-			{
-			BN_div_word(x, 2);
-			m = BN_mod_word(y, 8);
-			if (m == 3 || m == 5) L = -L;			
-			}
-		if (BN_is_one(x)) 
-			{
-			BN_CTX_end(ctx);
-			return L;
-			}
-		
-		if (BN_mod_word(x, 4) == 3 && BN_mod_word(y, 4) == 3) L = -L;
-		BN_swap(x, y);
-
-		if (!BN_nnmod(x, x, y, ctx)) goto err;
-
-		}
-
-
-err:
-	BN_CTX_end(ctx);
-	return -2;
-
-	}
-
 int BN_mod_sqrt(BIGNUM *x, BIGNUM *a, BIGNUM *p, BN_CTX *ctx) 
 /* x^2 = a (mod p) */
 	{
@@ -90,7 +29,7 @@ int BN_mod_sqrt(BIGNUM *x, BIGNUM *a, BIGNUM *p, BN_CTX *ctx)
 	assert(x != NULL && a != NULL && p != NULL && ctx != NULL);
 	assert(BN_cmp(a, p) < 0);
 
-	ret = BN_legendre(a, p, ctx);
+	ret = BN_kronecker(a, p, ctx);
 	if (ret < 0 || ret > 1) return 0;
 	if (ret == 0)
 		{
@@ -120,7 +59,7 @@ int BN_mod_sqrt(BIGNUM *x, BIGNUM *a, BIGNUM *p, BN_CTX *ctx)
 		{
 		if (max++ > MAX_ROUNDS) goto err; /* if p is not prime could never stop*/
 		if (!BN_add_word(m, 1)) goto err;
-		ret = BN_legendre(m, p, ctx);
+		ret = BN_kronecker(m, p, ctx);
 		if (ret < -1 || ret > 1) goto err;
 		}
 	while (ret != -1);
