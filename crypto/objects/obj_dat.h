@@ -150,7 +150,7 @@ static unsigned char lvalues[4455]={
 0x55,0x08,0x03,0x65,                         /* [527] OBJ_mdc2 */
 0x55,0x08,0x03,0x64,                         /* [531] OBJ_mdc2WithRSA */
 0x55,0x04,0x2A,                              /* [535] OBJ_givenName */
-0x55,0x04,0x04,                              /* [538] OBJ_surname */
+0x55,0x04,0x04,                              /* [538] OBJ_surName */
 0x55,0x04,0x2B,                              /* [541] OBJ_initials */
 0x55,0x1D,0x1F,                              /* [544] OBJ_crl_distribution_points */
 0x2B,0x0E,0x03,0x02,0x03,                    /* [547] OBJ_md5WithRSA */
@@ -826,8 +826,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"RSA-MDC2","mdc2WithRSA",NID_mdc2WithRSA,4,&(lvalues[531]),0},
 {"RC4-40","rc4-40",NID_rc4_40,0,NULL},
 {"RC2-40-CBC","rc2-40-cbc",NID_rc2_40_cbc,0,NULL},
-{"gn","givenName",NID_givenName,3,&(lvalues[535]),0},
-{"SN","surname",NID_surname,3,&(lvalues[538]),0},
+{"GN","givenName",NID_givenName,3,&(lvalues[535]),0},
+{"SN","surName",NID_surName,3,&(lvalues[538]),0},
 {"initials","initials",NID_initials,3,&(lvalues[541]),0},
 {NULL,NULL,NID_undef,0,NULL},
 {"crlDistributionPoints","X509v3 CRL Distribution Points",
@@ -1780,6 +1780,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[70]),/* "DSA-SHA1-old" */
 &(nid_objs[67]),/* "DSA-old" */
 &(nid_objs[297]),/* "DVCS" */
+&(nid_objs[99]),/* "GN" */
 &(nid_objs[381]),/* "IANA" */
 &(nid_objs[34]),/* "IDEA-CBC" */
 &(nid_objs[35]),/* "IDEA-CFB" */
@@ -1926,7 +1927,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[490]),/* "friendlyCountryName" */
 &(nid_objs[156]),/* "friendlyName" */
 &(nid_objs[509]),/* "generationQualifier" */
-&(nid_objs[99]),/* "gn" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
 &(nid_objs[432]),/* "holdInstructionCallIssuer" */
 &(nid_objs[430]),/* "holdInstructionCode" */
@@ -3005,7 +3005,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[16]),/* "stateOrProvinceName" */
 &(nid_objs[498]),/* "subtreeMaximumQuality" */
 &(nid_objs[497]),/* "subtreeMinimumQuality" */
-&(nid_objs[100]),/* "surname" */
+&(nid_objs[100]),/* "surName" */
 &(nid_objs[459]),/* "textEncodedORAddress" */
 &(nid_objs[293]),/* "textNotice" */
 &(nid_objs[106]),/* "title" */
@@ -3041,7 +3041,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[381]),/* OBJ_iana                         1 3 6 1 */
 &(nid_objs[394]),/* OBJ_selected_attribute_types     2 5 1 5 */
 &(nid_objs[13]),/* OBJ_commonName                   2 5 4 3 */
-&(nid_objs[100]),/* OBJ_surname                      2 5 4 4 */
+&(nid_objs[100]),/* OBJ_surName                      2 5 4 4 */
 &(nid_objs[105]),/* OBJ_serialNumber                 2 5 4 5 */
 &(nid_objs[14]),/* OBJ_countryName                  2 5 4 6 */
 &(nid_objs[15]),/* OBJ_localityName                 2 5 4 7 */

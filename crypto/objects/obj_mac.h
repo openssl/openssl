@@ -1595,10 +1595,10 @@
 #define NID_commonName		13
 #define OBJ_commonName		OBJ_X509,3L
 
-#define SN_surname		"SN"
-#define LN_surname		"surname"
-#define NID_surname		100
-#define OBJ_surname		OBJ_X509,4L
+#define SN_surName		"SN"
+#define LN_surName		"surName"
+#define NID_surName		100
+#define OBJ_surName		OBJ_X509,4L
 
 #define LN_serialNumber		"serialNumber"
 #define NID_serialNumber		105
@@ -1642,7 +1642,7 @@
 #define NID_name		173
 #define OBJ_name		OBJ_X509,41L
 
-#define SN_givenName		"gn"
+#define SN_givenName		"GN"
 #define LN_givenName		"givenName"
 #define NID_givenName		99
 #define OBJ_givenName		OBJ_X509,42L
