@@ -72,7 +72,13 @@ static const RSA_METHOD *default_RSA_meth=NULL;
 
 RSA *RSA_new(void)
 	{
-	return(RSA_new_method(NULL));
+	RSA *r=RSA_new_method(NULL);
+
+#ifndef OPENSSL_NO_FORCE_RSA_BLINDING
+	r->flags|=RSA_FLAG_BLINDING;
+#endif
+
+	return r;
 	}
 
 void RSA_set_default_method(const RSA_METHOD *meth)

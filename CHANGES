@@ -4,6 +4,12 @@
 
  Changes between 0.9.7a and 0.9.7b  [xx XXX 2003]
 
+  *) Turn on RSA blinding by default, to avoid a timing attack. Applications
+     that don't want it can call RSA_blinding_off(). They would be ill-advised
+     to do so in most cases. The automatic enabling can also be turned off
+     by defining OPENSSL_FORCE_NO_RSA_BLINDING at compile-time.
+     [Ben Laurie, Steve Henson, Geoff Thorpe]
+
   *) Fixed a typo bug that would cause ENGINE_set_default() to set an
      ENGINE as defaults for all supported algorithms irrespective of
      the 'flags' parameter. 'flags' is now honoured, so applications
