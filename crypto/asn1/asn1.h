@@ -801,6 +801,8 @@ int ASN1_object_size(int constructed, int length, int tag);
 /* Used to implement other functions */
 char *ASN1_dup(int (*i2d)(),char *(*d2i)(),char *x);
 
+void *ASN1_item_dup(const ASN1_ITEM *it, void *x);
+
 #ifndef NO_FP_API
 char *ASN1_d2i_fp(char *(*xnew)(),char *(*d2i)(),FILE *fp,unsigned char **x);
 int ASN1_i2d_fp(int (*i2d)(),FILE *out,unsigned char *x);

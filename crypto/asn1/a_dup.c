@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
-#define READ_CHUNK   2048
+#ifndef NO_OLD_ASN1
 
 char *ASN1_dup(int (*i2d)(), char *(*d2i)(), char *x)
 	{
@@ -78,6 +78,30 @@ char *ASN1_dup(int (*i2d)(), char *(*d2i)(), char *x)
 	i=i2d(x,&p);
 	p= b;
 	ret=d2i(NULL,&p,i);
+	OPENSSL_free(b);
+	return(ret);
+	}
+
+#endif
+
+/* ASN1_ITEM version of dup: this follows the model above except we don't need
+ * to allocate the buffer. At some point this could be rewritten to directly dup
+ * the underlying structure instead of doing and encode and decode.
+ */
+
+void *ASN1_item_dup(const ASN1_ITEM *it, void *x)
+	{
+	unsigned char *b = NULL, *p;
+	long i;
+	void *ret;
+
+	if (x == NULL) return(NULL);
+
+	i=ASN1_item_i2d(x,&b,it);
+	if (b == NULL)
+		{ ASN1err(ASN1_F_ASN1_DUP,ERR_R_MALLOC_FAILURE); return(NULL); }
+	p= b;
+	ret=ASN1_item_d2i(NULL,&p,i, it);
 	OPENSSL_free(b);
 	return(ret);
 	}
