@@ -138,7 +138,7 @@
 #define INIT_DATA_h3 0x10325476UL
 #define INIT_DATA_h4 0xc3d2e1f0UL
 
-void HASH_INIT (SHA_CTX *c)
+int HASH_INIT (SHA_CTX *c)
 	{
 	c->h0=INIT_DATA_h0;
 	c->h1=INIT_DATA_h1;
@@ -148,6 +148,7 @@ void HASH_INIT (SHA_CTX *c)
 	c->Nl=0;
 	c->Nh=0;
 	c->num=0;
+	return 1;
 	}
 
 #define K_00_19	0x5a827999UL

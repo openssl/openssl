@@ -410,14 +410,14 @@
  * Time for some action:-)
  */
 
-void HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
+int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 	{
 	const unsigned char *data=data_;
 	register HASH_LONG * p;
 	register unsigned long l;
 	int sw,sc,ew,ec;
 
-	if (len==0) return;
+	if (len==0) return 1;
 
 	l=(c->Nl+(len<<3))&0xffffffffL;
 	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
@@ -466,7 +466,7 @@ void HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 					HOST_c2l_p(data,l,ec); p[sw]=l;
 					}
 				}
-			return;
+			return 1;
 			}
 		}
 
@@ -520,6 +520,7 @@ void HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 		HOST_c2l_p(data,l,ec);
 		*p=l;
 		}
+	return 1;
 	}
 
 
@@ -543,7 +544,7 @@ void HASH_TRANSFORM (HASH_CTX *c, const unsigned char *data)
 	}
 
 
-void HASH_FINAL (unsigned char *md, HASH_CTX *c)
+int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	{
 	register HASH_LONG *p;
 	register unsigned long l;
@@ -604,4 +605,5 @@ void HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	 * but I'm not worried :-)
 	memset((void *)c,0,sizeof(HASH_CTX));
 	 */
+	return 1;
 	}

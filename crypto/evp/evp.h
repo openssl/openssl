@@ -268,9 +268,9 @@ typedef struct env_md_st
 	int type;
 	int pkey_type;
 	int md_size;
-	void (*init)();
-	void (*update)();
-	void (*final)();
+	int (*init)();
+	int (*update)();
+	int (*final)();
 
 	int (*sign)();
 	int (*verify)();
@@ -558,10 +558,10 @@ void BIO_set_md(BIO *,const EVP_MD *md);
 
 
 int     EVP_MD_CTX_copy(EVP_MD_CTX *out,EVP_MD_CTX *in);  
-void	EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
-void	EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d,
+int	EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
+int	EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d,
 			 unsigned int cnt);
-void	EVP_DigestFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
+int	EVP_DigestFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
 int	EVP_Digest(void *data, unsigned int count,
 		unsigned char *md, unsigned int *size, const EVP_MD *type);
 

@@ -75,15 +75,16 @@
 			*((c)++)=(unsigned char)(((l)>>24L)&0xff))
 
 static void mdc2_body(MDC2_CTX *c, const unsigned char *in, unsigned int len);
-void MDC2_Init(MDC2_CTX *c)
+int MDC2_Init(MDC2_CTX *c)
 	{
 	c->num=0;
 	c->pad_type=1;
 	memset(&(c->h[0]),0x52,MDC2_BLOCK);
 	memset(&(c->hh[0]),0x25,MDC2_BLOCK);
+	return 1;
 	}
 
-void MDC2_Update(MDC2_CTX *c, const unsigned char *in, unsigned long len)
+int MDC2_Update(MDC2_CTX *c, const unsigned char *in, unsigned long len)
 	{
 	int i,j;
 
@@ -95,7 +96,7 @@ void MDC2_Update(MDC2_CTX *c, const unsigned char *in, unsigned long len)
 			/* partial block */
 			memcpy(&(c->data[i]),in,(int)len);
 			c->num+=(int)len;
-			return;
+			return 1;
 			}
 		else
 			{
@@ -116,6 +117,7 @@ void MDC2_Update(MDC2_CTX *c, const unsigned char *in, unsigned long len)
 		memcpy(&(c->data[0]),&(in[i]),j);
 		c->num=j;
 		}
+	return 1;
 	}
 
 static void mdc2_body(MDC2_CTX *c, const unsigned char *in, unsigned int len)
@@ -156,7 +158,7 @@ static void mdc2_body(MDC2_CTX *c, const unsigned char *in, unsigned int len)
 		}
 	}
 
-void MDC2_Final(unsigned char *md, MDC2_CTX *c)
+int MDC2_Final(unsigned char *md, MDC2_CTX *c)
 	{
 	int i,j;
 
@@ -171,6 +173,7 @@ void MDC2_Final(unsigned char *md, MDC2_CTX *c)
 		}
 	memcpy(md,(char *)c->h,MDC2_BLOCK);
 	memcpy(&(md[MDC2_BLOCK]),(char *)c->hh,MDC2_BLOCK);
+	return 1;
 	}
 
 #undef TEST

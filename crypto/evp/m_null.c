@@ -62,8 +62,9 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-static void function(void)
+static int function(void)
 	{
+	return 1;
 	}
 
 static EVP_MD null_md=

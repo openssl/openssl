@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Modify EVP_Digest*() routines so they now return values. Although the
+     internal software routines can never fail additional hardware versions
+     might.
+     [Steve Henson]
+
   *) Clean up crypto/err/err.h and change some error codes to avoid conflicts:
 
      Previously ERR_R_FATAL was too small and coincided with ERR_LIB_PKCS7

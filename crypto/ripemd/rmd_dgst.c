@@ -69,7 +69,7 @@ const char *RMD160_version="RIPE-MD160" OPENSSL_VERSION_PTEXT;
      void ripemd160_block(RIPEMD160_CTX *c, unsigned long *p,int num);
 #  endif
 
-void RIPEMD160_Init(RIPEMD160_CTX *c)
+int RIPEMD160_Init(RIPEMD160_CTX *c)
 	{
 	c->A=RIPEMD160_A;
 	c->B=RIPEMD160_B;
@@ -79,6 +79,7 @@ void RIPEMD160_Init(RIPEMD160_CTX *c)
 	c->Nl=0;
 	c->Nh=0;
 	c->num=0;
+	return 1;
 	}
 
 #ifndef ripemd160_block_host_order

@@ -61,24 +61,26 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 
-void EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
+int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 	{
 	ctx->digest=type;
-	type->init(&(ctx->md));
+	return type->init(&(ctx->md));
 	}
 
-void EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data,
+int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data,
 	     unsigned int count)
 	{
-	ctx->digest->update(&(ctx->md.base[0]),data,(unsigned long)count);
+	return ctx->digest->update(&(ctx->md.base[0]),data,(unsigned long)count);
 	}
 
-void EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
+int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	{
-	ctx->digest->final(md,&(ctx->md.base[0]));
+	int ret;
+	ret = ctx->digest->final(md,&(ctx->md.base[0]));
 	if (size != NULL)
 		*size=ctx->digest->md_size;
 	memset(&(ctx->md),0,sizeof(ctx->md));
+	return ret;
 	}
 
 int EVP_MD_CTX_copy(EVP_MD_CTX *out, EVP_MD_CTX *in)
@@ -95,8 +97,9 @@ int EVP_Digest(void *data, unsigned int count,
 		unsigned char *md, unsigned int *size, const EVP_MD *type)
 {
 	EVP_MD_CTX ctx;
-	EVP_DigestInit(&ctx, type);
-	EVP_DigestUpdate(&ctx, data, count);
-	EVP_DigestFinal(&ctx, md, size);
-	return 1;
+	if (!EVP_DigestInit(&ctx, type))
+		return 0;
+	if (!EVP_DigestUpdate(&ctx, data, count))
+		return 0;
+	return EVP_DigestFinal(&ctx, md, size);
 }
