@@ -4,6 +4,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Never call load_dh_param(NULL) in s_server.
+     [Bodo Moeller]
+
   *) Add engine application.  It can currently list engines by name and
      identity, and test if they are actually available.
      [Richard Levitte]
