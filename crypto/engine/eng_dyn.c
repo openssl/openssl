@@ -108,6 +108,9 @@ static const ENGINE_CMD_DEFN dynamic_cmd_defns[] = {
 		ENGINE_CMD_FLAG_NO_INPUT},
 	{0, NULL, NULL, 0}
 	};
+static const ENGINE_CMD_DEFN dynamic_cmd_defns_empty[] = {
+	{0, NULL, NULL, 0}
+	};
 
 /* Loading code stores state inside the ENGINE structure via the "ex_data"
  * element. We load all our state into a single structure and use that as a
@@ -402,6 +405,10 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
 	fns.lock_fns.dynlock_create_cb = CRYPTO_get_dynlock_create_callback();
 	fns.lock_fns.dynlock_lock_cb = CRYPTO_get_dynlock_lock_callback();
 	fns.lock_fns.dynlock_destroy_cb = CRYPTO_get_dynlock_destroy_callback();
+	/* Now that we've loaded the dynamic engine, initialise the command
+	   array to contain none */
+	ENGINE_set_cmd_defns(e, dynamic_cmd_defns_empty);
+
 	/* Try to bind the ENGINE onto our own ENGINE structure */
 	if(!ctx->bind_engine(e, ctx->engine_id, &fns))
 		{
