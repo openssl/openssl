@@ -70,3 +70,22 @@ if compiled with WorkShop 6 compiler and -xarch=v9. The cause for
 this seems to be the fact that compiler emits multiplication to
 perform shift operations:-( To work the problem around configure
 with './Configure solaris64-sparcv9-cc -DMD32_REG_T=int'.
+
+* Problems with hp-parisc2-cc target when used with "no-asm" flag
+
+When using the hp-parisc2-cc target, wrong bignum code is generated.
+This is due to the SIXTY_FOUR_BIT build being compiled with the +O3
+aggressive optimization.
+The problem manifests itself by the BN_kronecker test hanging in an
+endless loop. Reason: the BN_kronecker test calls BN_generate_prime()
+which itself hangs. The reason could be tracked down to the bn_mul_comba8()
+function in bn_asm.c. At some occasions the higher 32bit value of r[7]
+is off by 1 (meaning: calculated=shouldbe+1). Further analysis failed,
+as no debugger support possible at +O3 and additional fprintf()'s
+introduced fixed the bug, therefore it is most likely a bug in the
+optimizer.
+The bug was found in the BN_kronecker test but may also lead to
+failures in other parts of the code.
+(See Ticket #426.)
+
+Workaround: modify the target to +O2 when building with no-asm.
