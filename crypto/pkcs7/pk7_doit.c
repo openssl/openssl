@@ -257,10 +257,15 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			bio=BIO_new(BIO_s_null());
 		else
 			{
-			ASN1_OCTET_STRING *os;
-			os = PKCS7_get_octet_string(p7->d.sign->contents);
-			if (os && os->length > 0)
-				bio = BIO_new_mem_buf(os->data, os->length);
+			if (PKCS7_type_is_signed(p7))
+				{
+				ASN1_OCTET_STRING *os;
+				os = PKCS7_get_octet_string(
+							p7->d.sign->contents);
+				if (os && os->length > 0)
+					bio = BIO_new_mem_buf(os->data,
+								os->length);
+				}
 			if(bio == NULL)
 				{
 				bio=BIO_new(BIO_s_mem());
