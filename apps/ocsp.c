@@ -324,8 +324,8 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-serial n          serial number to check\n");
 		BIO_printf (bio_err, "-signer file       certificate to sign OCSP request with\n");
 		BIO_printf (bio_err, "-signkey file      private key to sign OCSP request with\n");
-		BIO_printf (bio_err, "-sign_certs file   additional certificates to include in signed request");
-		BIO_printf (bio_err, "-no_certs          don't include any certificates in signed request");
+		BIO_printf (bio_err, "-sign_certs file   additional certificates to include in signed request\n");
+		BIO_printf (bio_err, "-no_certs          don't include any certificates in signed request\n");
 		BIO_printf (bio_err, "-req_text          print text form of request\n");
 		BIO_printf (bio_err, "-resp_text         print text form of response\n");
 		BIO_printf (bio_err, "-text              print text form of request and response\n");
@@ -341,13 +341,13 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-CAfile file       trusted certificates file\n");
 		BIO_printf (bio_err, "-VAfile file       validator certificates file\n");
 		BIO_printf (bio_err, "-noverify          don't verify response at all\n");
-		BIO_printf (bio_err, "-verify_certs file additional certificates to search for signer");
-		BIO_printf (bio_err, "-trust_other       don't verify additional certificates");
-		BIO_printf (bio_err, "-no_intern         don't search certificates contained in response for signer");
-		BIO_printf (bio_err, "-no_sig_verify     don't check signature on response");
-		BIO_printf (bio_err, "-no_cert_verify    don't check signing certificate");
-		BIO_printf (bio_err, "-no_chain          don't chain verify response");
-		BIO_printf (bio_err, "-no_cert_checks    don't do additional checks on signing certificate");
+		BIO_printf (bio_err, "-verify_certs file additional certificates to search for signer\n");
+		BIO_printf (bio_err, "-trust_other       don't verify additional certificates\n");
+		BIO_printf (bio_err, "-no_intern         don't search certificates contained in response for signer\n");
+		BIO_printf (bio_err, "-no_sig_verify     don't check signature on response\n");
+		BIO_printf (bio_err, "-no_cert_verify    don't check signing certificate\n");
+		BIO_printf (bio_err, "-no_chain          don't chain verify response\n");
+		BIO_printf (bio_err, "-no_cert_checks    don't do additional checks on signing certificate\n");
 		goto end;
 		}
 
