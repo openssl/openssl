@@ -138,7 +138,7 @@ if (/no-/)
     goto err;
 }
 
-if (`echo 4+1 | bc` != 5)
+if (`echo 4+1 | bc` != 5 || (system("sh test/bctest") >> 8) != 0)
 {
     print OUT "Can't run bc! Test skipped.\n";
     print OUT $not_our_fault;
