@@ -219,6 +219,9 @@ static int free_type;
 static void names_lh_free(onp,type)
 OBJ_NAME *onp;
 	{
+	if(onp == NULL)
+	    return;
+
 	if ((free_type < 0) || (free_type == onp->type))
 		{
 		OBJ_NAME_remove(onp->name,onp->type);
