@@ -6,7 +6,7 @@
 
   *) For easily testing in shell scripts whether some command
      'openssl XXX' exists, the new pseudo-command 'openssl no-XXX'
-     returns with exit code 0 iff a command of the given name is available.
+     returns with exit code 0 iff no command of the given name is available.
      'no-XXX' is printed in this case, 'XXX' otherwise.  In both cases,
      the output goes to stdout and nothing is printed to stderr.
      Additional arguments are always ignored.
