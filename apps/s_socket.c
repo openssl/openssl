@@ -342,6 +342,12 @@ char *ip;
 	s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
 
 	if (s == INVALID_SOCKET) goto err;
+#if defined SOL_SOCKET && defined SO_REUSEADDR
+		{
+		int i = 1;
+		setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &i, sizeof i);
+		}
+#endif
 	if (bind(s,(struct sockaddr *)&server,sizeof(server)) == -1)
 		{
 #ifndef WINDOWS
