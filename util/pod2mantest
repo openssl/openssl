@@ -12,7 +12,8 @@
 
 IFS=:
 if test "$OSTYPE" = "msdosdjgpp"; then IFS=";"; fi
-try_without_dir=false
+
+try_without_dir=true
 # First we try "pod2man", then "$dir/pod2man" for each item in $PATH.
 for dir in dummy${IFS}$PATH; do
     if [ "$try_without_dir" = true ]; then
@@ -30,9 +31,16 @@ for dir in dummy${IFS}$PATH; do
     if [ ! "$pod2man" = '' ]; then
         failure=none
 
+	if "$pod2man" --section=1 --center=OpenSSL --release=dev pod2mantest.pod | fgrep OpenSSL >/dev/null; then
+	    :
+	else
+	    failure=BasicTest
+	fi
 
-	if "$pod2man" --section=1 --center=OpenSSL --release=dev pod2mantest.pod | grep '^MARKER - ' >/dev/null 2>&1; then
-	    failure=MultilineTest
+	if [ "$failure" = none ]; then
+	    if "$pod2man" --section=1 --center=OpenSSL --release=dev pod2mantest.pod | grep '^MARKER - ' >/dev/null; then
+	        failure=MultilineTest
+	    fi
 	fi
 
 
@@ -46,9 +54,5 @@ for dir in dummy${IFS}$PATH; do
 done
 
 echo "No working pod2man found.  Consider installing a new version." >&2
-if [ "$1" = ignore ]; then
-  echo "As a workaround, we'll use a bundled old copy of pod2man.pl." >&2
-  echo "../../util/pod2man.pl"
-  exit 0
-fi
-exit 1
+echo "As a workaround, we'll use a bundled old copy of pod2man.pl." >&2
+echo "$1 ../../util/pod2man.pl"
