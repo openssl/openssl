@@ -119,20 +119,29 @@ typedef struct x509_object_st
 		} data;
 	} X509_OBJECT;
 
+typedef struct x509_lookup_st X509_LOOKUP;
+
 /* This is a static that defines the function interface */
 typedef struct x509_lookup_method_st
 	{
 	char *name;
-	int (*new_item)();
-	void (*free)();
-	int (*init)(/* meth, char ** */);
-	int (*shutdown)( /* meth, char ** */);
-	int (*ctrl)( /* meth, char **, int cmd, char *argp, int argi */);
-	int (*get_by_subject)(/* meth, char **, XNAME *, X509 **ret */);
-	int (*get_by_issuer_serial)();
-	int (*get_by_fingerprint)();
-	int (*get_by_alias)();
+	int (*new_item)(X509_LOOKUP *ctx);
+	void (*free)(X509_LOOKUP *ctx);
+	int (*init)(X509_LOOKUP *ctx);
+	int (*shutdown)(X509_LOOKUP *ctx);
+	int (*ctrl)(X509_LOOKUP *ctx,int cmd,char *argc,long argl,char **ret);
+	int (*get_by_subject)(X509_LOOKUP *ctx,int type,X509_NAME *name,
+			      X509_OBJECT *ret);
+	int (*get_by_issuer_serial)(X509_LOOKUP *ctx,int type,X509_NAME *name,
+				    ASN1_INTEGER *serial,X509_OBJECT *ret);
+	int (*get_by_fingerprint)(X509_LOOKUP *ctx,int type,
+				  unsigned char *bytes,int len,
+				  X509_OBJECT *ret);
+	int (*get_by_alias)(X509_LOOKUP *ctx,int type,char *str,int len,
+			    X509_OBJECT *ret);
 	} X509_LOOKUP_METHOD;
+
+typedef struct x509_store_state_st X509_STORE_CTX;
 
 /* This is used to hold everything.  It is used for all certificate
  * validation.  Once we have a certificate chain, the 'verify'
@@ -149,8 +158,8 @@ typedef struct x509_store_st
 
 	/* These are external lookup methods */
 	STACK *get_cert_methods;/* X509_LOOKUP */
-	int (*verify)();	/* called to verify a certificate */
-	int (*verify_cb)();	/* error callback */
+	int (*verify)(X509_STORE_CTX *ctx);	/* called to verify a certificate */
+	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);	/* error callback */
 
 	CRYPTO_EX_DATA ex_data;
 	int references;
@@ -163,7 +172,7 @@ typedef struct x509_store_st
 #define X509_STORE_set_verify_func(ctx,func)	((ctx)->verify=(func))
 
 /* This is the functions plus an instance of the local variables. */
-typedef struct x509_lookup_st
+struct x509_lookup_st
 	{
 	int init;			/* have we been started */
 	int skip;			/* don't use us. */
@@ -171,12 +180,12 @@ typedef struct x509_lookup_st
 	char *method_data;		/* method data */
 
 	X509_STORE *store_ctx;	/* who owns us */
-	} X509_LOOKUP;
+	};
 
 /* This is a temporary used when processing cert chains.  Since the
  * gathering of the cert chain can take some time (and have to be
  * 'retried', this needs to be kept and passed around. */
-typedef struct x509_store_state_st
+struct x509_store_state_st
 	{
 	X509_STORE *ctx;
 	int current_method;	/* used when looking up certs */
@@ -197,7 +206,7 @@ typedef struct x509_store_state_st
 	X509 *current_cert;
 
 	CRYPTO_EX_DATA ex_data;
-	} X509_STORE_CTX;
+	};
 
 #define X509_STORE_CTX_set_app_data(ctx,data) \
 	X509_STORE_CTX_set_ex_data(ctx,0,data)

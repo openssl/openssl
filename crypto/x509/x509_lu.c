@@ -175,7 +175,7 @@ X509_OBJECT *ret;
 	{
 	if ((ctx->method == NULL) || (ctx->method->get_by_alias == NULL))
 		return(X509_LU_FAIL);
-	return(ctx->method->get_by_alias(ctx,str,len,ret));
+	return(ctx->method->get_by_alias(ctx,type,str,len,ret));
 	}
 
 static unsigned long x509_object_hash(a)
