@@ -107,7 +107,7 @@ int X509_check_purpose(X509 *x, int id, int ca)
 	if(id == -1) return 1;
 	idx = X509_PURPOSE_get_by_id(id);
 	if(idx == -1) return -1;
-	pt = X509_PURPOSE_iget(idx);
+	pt = X509_PURPOSE_get0(idx);
 	return pt->check_purpose(pt, x, ca);
 }
 
@@ -117,7 +117,7 @@ int X509_PURPOSE_get_count(void)
 	return sk_X509_PURPOSE_num(xptable) + X509_PURPOSE_COUNT;
 }
 
-X509_PURPOSE * X509_PURPOSE_iget(int idx)
+X509_PURPOSE * X509_PURPOSE_get0(int idx)
 {
 	if(idx < 0) return NULL;
 	if(idx < X509_PURPOSE_COUNT) return xstandard + idx;
@@ -129,7 +129,7 @@ int X509_PURPOSE_get_by_sname(char *sname)
 	int i;
 	X509_PURPOSE *xptmp;
 	for(i = 0; i < X509_PURPOSE_get_count(); i++) {
-		xptmp = X509_PURPOSE_iget(i);
+		xptmp = X509_PURPOSE_get0(i);
 		if(!strcmp(xptmp->sname, sname)) return i;
 	}
 	return -1;
@@ -168,7 +168,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
 			return 0;
 		}
 		ptmp->flags = X509_PURPOSE_DYNAMIC;
-	} else ptmp = X509_PURPOSE_iget(idx);
+	} else ptmp = X509_PURPOSE_get0(idx);
 
 	/* Free existing name if dynamic */
 	if(ptmp->flags & X509_PURPOSE_DYNAMIC_NAME) {

@@ -822,8 +822,8 @@ void		X509_CERT_AUX_free(X509_CERT_AUX *a);
 int		i2d_X509_CERT_AUX(X509_CERT_AUX *a,unsigned char **pp);
 X509_CERT_AUX *	d2i_X509_CERT_AUX(X509_CERT_AUX **a,unsigned char **pp,
 								long length);
-int X509_alias_rset(X509 *x, unsigned char *name, int len);
-unsigned char * X509_alias_iget(X509 *x, int *len);
+int X509_alias_set1(X509 *x, unsigned char *name, int len);
+unsigned char * X509_alias_get0(X509 *x, int *len);
 int (*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int);
 int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj);
 int X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj);
@@ -1115,7 +1115,7 @@ PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken);
 
 int X509_check_trust(X509 *x, int id, int flags);
 int X509_TRUST_get_count(void);
-X509_TRUST * X509_TRUST_iget(int idx);
+X509_TRUST * X509_TRUST_get0(int idx);
 int X509_TRUST_get_by_id(int id);
 int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 					char *name, int arg1, void *arg2);

@@ -4,7 +4,14 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
-  *) Change function names to the new get0/get1 naming convention.
+  *) Change names of new functions to the new get1/get0 naming
+     convention: After 'get1', the caller owns a reference count
+     and has to call ..._free; 'get0' returns a pointer to some
+     data structure without incrementing reference counters.
+     (Some of the existing 'get' functions increment a reference
+     counter, some don't.)
+     Similarly, 'set1' and 'add1' functions increase reference
+     counters or duplicate objects.
      [Steve Henson]
 
   *) Allow for the possibility of temp RSA key generation failure:
@@ -305,7 +312,8 @@
   *) Rewrite ssl3_read_n (ssl/s3_pkt.c) avoiding a couple of bugs.
      [Bodo Moeller]
 
-  *) New function X509_CTX_rget_chain(), this returns the chain
+  *) New function X509_CTX_rget_chain() (renamed to X509_CTX_get1_chain
+     in the 0.9.5 release), this returns the chain
      from an X509_CTX structure with a dup of the stack and all
      the X509 reference counts upped: so the stack will exist
      after X509_CTX_cleanup() has been called. Modify pkcs12.c
@@ -641,10 +649,12 @@
      it clearly returns an error if you try to read the wrong kind of key.
 
      Added a -pubkey option to the 'x509' utility to output the public key.
-     Also rename the EVP_PKEY_get_*() to EVP_PKEY_rget_*() and add
-     EVP_PKEY_rset_*() functions that do the same as the EVP_PKEY_assign_*()
-     except they up the reference count of the added key (they don't "swallow"
-     the supplied key).
+     Also rename the EVP_PKEY_get_*() to EVP_PKEY_rget_*()
+     (renamed to EVP_PKEY_get1_*() in the OpenSSL 0.9.5 release) and add
+     EVP_PKEY_rset_*() functions (renamed to EVP_PKEY_set1_*())
+     that do the same as the EVP_PKEY_assign_*() except they up the
+     reference count of the added key (they don't "swallow" the
+     supplied key).
      [Steve Henson]
 
   *) Fixes to crypto/x509/by_file.c the code to read in certificates and

@@ -777,7 +777,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 		/* If trust not set then get from purpose default */
 		if(!trust) {
 			X509_PURPOSE *ptmp;
-			ptmp = X509_PURPOSE_iget(idx);
+			ptmp = X509_PURPOSE_get0(idx);
 			trust = ptmp->trust;
 		}
 	}

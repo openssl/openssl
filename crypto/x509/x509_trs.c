@@ -109,7 +109,7 @@ int X509_check_trust(X509 *x, int id, int flags)
 	if(id == -1) return 1;
 	if(!(idx = X509_TRUST_get_by_id(id)))
 			return default_trust(id, x, flags);
-	pt = X509_TRUST_iget(idx);
+	pt = X509_TRUST_get0(idx);
 	return pt->check_trust(pt, x, flags);
 }
 
@@ -119,7 +119,7 @@ int X509_TRUST_get_count(void)
 	return sk_X509_TRUST_num(trtable) + X509_TRUST_COUNT;
 }
 
-X509_TRUST * X509_TRUST_iget(int idx)
+X509_TRUST * X509_TRUST_get0(int idx)
 {
 	if(idx < 0) return NULL;
 	if(idx < X509_TRUST_COUNT) return trstandard + idx;
@@ -157,7 +157,7 @@ int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 			return 0;
 		}
 		trtmp->flags = X509_TRUST_DYNAMIC;
-	} else trtmp = X509_TRUST_iget(idx);
+	} else trtmp = X509_TRUST_get0(idx);
 
 	/* Free existing name if dynamic */
 	if(trtmp->flags & X509_TRUST_DYNAMIC_NAME) Free(trtmp->name);

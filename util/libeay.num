@@ -1886,7 +1886,7 @@ X509_reject_set_bit_asc                 1911
 X509_NAME_add_entry_by_txt              1912
 sk_X509_TRUST_pop                       1913
 X509_NAME_add_entry_by_NID              1914
-X509_PURPOSE_iget                       1915
+X509_PURPOSE_get0                       1915
 sk_ACCESS_DESCRIPTION_shift             1916
 PEM_read_X509_AUX                       1917
 d2i_AUTHORITY_INFO_ACCESS               1918
@@ -1904,7 +1904,7 @@ sk_X509_PURPOSE_value                   1929
 sk_X509_PURPOSE_zero                    1930
 X509_TRUST_add                          1931
 ASN1_VISIBLESTRING_new                  1932
-X509_alias_rset                         1933
+X509_alias_set1                         1933
 ASN1_PRINTABLESTRING_free               1934
 EVP_PKEY_get1_DSA                       1935
 ASN1_BMPSTRING_new                      1936
@@ -2018,7 +2018,7 @@ sk_X509_TRUST_value                     2043
 d2i_RSA_PUBKEY                          2044
 sk_ASN1_STRING_TABLE_set                2045
 X509_TRUST_get0_name                    2046
-X509_TRUST_iget                         2047
+X509_TRUST_get0                         2047
 AUTHORITY_INFO_ACCESS_free              2048
 ASN1_IA5STRING_new                      2049
 d2i_DSA_PUBKEY                          2050
@@ -2045,7 +2045,7 @@ sk_ASN1_STRING_TABLE_set_cmp_func       2070
 X509_NAME_ENTRY_create_by_txt           2071
 ASN1_STRING_get_default_mask            2072
 sk_X509_TRUST_dup                       2073
-X509_alias_iget                         2074
+X509_alias_get0                         2074
 ASN1_STRING_data                        2075
 sk_X509_TRUST_insert                    2076
 i2d_ACCESS_DESCRIPTION                  2077

@@ -124,7 +124,7 @@ int MAIN(int argc, char **argv)
 					BIO_printf(bio_err, "unrecognized purpose\n");
 					goto end;
 					}
-				xptmp = X509_PURPOSE_iget(i);
+				xptmp = X509_PURPOSE_get0(i);
 				purpose = X509_PURPOSE_get_id(xptmp);
 				}
 			else if (strcmp(*argv,"-untrusted") == 0)
@@ -190,7 +190,7 @@ end:
 		BIO_printf(bio_err,"recognized usages:\n");
 		for(i = 0; i < X509_PURPOSE_get_count(); i++) {
 			X509_PURPOSE *ptmp;
-			ptmp = X509_PURPOSE_iget(i);
+			ptmp = X509_PURPOSE_get0(i);
 			BIO_printf(bio_err, "\t%-10s\t%s\n", X509_PURPOSE_get0_sname(ptmp),
 								X509_PURPOSE_get0_name(ptmp));
 		}
