@@ -21,10 +21,10 @@ $	else
 $	    tests := -
 	test_des,test_idea,test_sha,test_md4,test_md5,test_hmac,-
 	test_md2,test_mdc2,-
-	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,-
+	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,test_rd,-
 	test_rand,test_bn,test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
-	test_ss,test_ca,test_engine,test_ssl,test_rd
+	test_ss,test_ca,test_engine,test_engine,test_ssl
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
 $
@@ -158,7 +158,7 @@ RECORD
 $	create/fdl=bntest-vms.fdl bntest-vms.sh
 $	open/append foo bntest-vms.sh
 $	type/output=foo: sys$input:
-<< __FOO__ bc | perl -e 'while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $1";} elsif (!/^0$/) {die "\nFailed! bc: $_";} print STDERR "."; $i++;} print STDERR "\n$i tests passed\n"'
+<< __FOO__ sh -c "`sh ./bctest`" | $(PERL) -e '$$i=0; while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $$1";} elsif (!/^0$$/) {die "\nFailed! bc: $$_";} else {print STDERR "."; $$i++;}} print STDERR "\n$$i tests passed\n"'
 $	define/user sys$output bntest-vms.tmp
 $	mcr 'texe_dir''bntest'
 $	copy bntest-vms.tmp foo:
@@ -225,7 +225,7 @@ $	    write sys$output "Generate and certify a test certificate via the 'ca' pro
 $	    @testca.com
 $	endif
 $	return
-$ test_engine: 
+$ test_rd: 
 $	write sys$output "test Rijndael"
 $	!mcr 'texe_dir''rdtest'
 $	return

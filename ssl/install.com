@@ -38,7 +38,7 @@ $	IF F$PARSE("WRK_SSLVEXE:") .EQS. "" THEN -
 $	IF F$PARSE("WRK_SSLAEXE:") .EQS. "" THEN -
 	   CREATE/DIR/LOG WRK_SSLAEXE:
 $
-$	EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h
+$	EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,kssl.h
 $	E_EXE := ssl_task
 $	LIBS := LIBSSL
 $

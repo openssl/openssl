@@ -398,7 +398,7 @@ $ EXHEADER_RAND := rand.h
 $ EXHEADER_ERR := err.h
 $ EXHEADER_OBJECTS := objects.h,obj_mac.h
 $ EXHEADER_EVP := evp.h
-$ EXHEADER_ASN1 := asn1.h,asn1_mac.h
+$ EXHEADER_ASN1 := asn1.h,asn1_mac.h,asn1t.h
 $ EXHEADER_PEM := pem.h,pem2.h
 $ EXHEADER_X509 := x509.h,x509_vfy.h
 $ EXHEADER_X509V3 := x509v3.h
@@ -430,7 +430,7 @@ $! COPY SYS$DISK:[.RSAREF]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
-$ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h
+$ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,kssl.h
 $ COPY SYS$DISK:[.SSL]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Purge all doubles
