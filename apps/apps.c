@@ -1242,6 +1242,7 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 			{
 			BIO_printf(err,"can't use that engine\n");
 			ERR_print_errors(err);
+			ENGINE_free(e);
 			return NULL;
 			}
 
