@@ -283,6 +283,9 @@ my %table=(
 # If hpux-gcc fails, try this one:
 "hpux-brokengcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown)::-Wl,+s -ldld:DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
+# HPUX 9.X on Motorola 68k platforms with gcc
+"hpux-m68k-gcc",  "gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown):::BN_LLONG DES_PTR DES_UNROLL:::::::::::::",
+
 # HPUX 10.X config.  Supports threads.
 "hpux10-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z::-D_REENTRANT::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # If hpux10-cc fails, try this one (if still fails, try deleting BN_LLONG):

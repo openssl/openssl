@@ -1701,6 +1701,29 @@ $shared_cflag = +Z
 $shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 
+*** hpux-m68k-gcc
+$cc           = gcc
+$cflags       = -DB_ENDIAN -DBN_DIV2W -O3
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
 *** hpux-parisc-cc
 $cc           = cc
 $cflags       = +O3 +Optrs_strongly_typed +Olibcalls -Ae +ESlit -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY
