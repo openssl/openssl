@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OPENSSL_VERSION_NUMBER, SSLeay SSLeay_version - get OpenSSL version number
+OPENSSL_VERSION_NUMBER, SSLeay, SSLeay_version - get OpenSSL version number
 
 =head1 SYNOPSIS
 
@@ -11,7 +11,7 @@ OPENSSL_VERSION_NUMBER, SSLeay SSLeay_version - get OpenSSL version number
 
  #include <openssl/crypto.h>
  long SSLeay(void);
- char *SSLeay_version(int t);
+ const char *SSLeay_version(int t);
 
 =head1 DESCRIPTION
 
