@@ -205,7 +205,7 @@ HEADER=         e_os.h
 # When we're prepared to use shared libraries in the programs we link here
 # we might remove 'clean-shared' from the targets to perform at this stage
 
-all: Makefile.ssl sub_all
+all: Makefile.ssl sub_all openssl.pc
 
 sub_all:
 	@for i in $(DIRS); \
@@ -514,6 +514,19 @@ do_reliantunix-shared:
 	libs="$$libs -l$$i"; \
 	done
 
+openssl.pc:
+	@ ( echo 'prefix=$(INSTALLTOP)'; \
+	    echo 'exec_prefix=$${prefix}'; \
+	    echo 'libdir=$${exec_prefix}/lib'; \
+	    echo 'includedir=$${prefix}/include'; \
+	    echo ''; \
+	    echo 'Name: OpenSSL'; \
+	    echo 'Description: Secure Sockets Layer and cryptography libraries and tools'; \
+	    echo 'Version: '$(VERSION); \
+	    echo 'Requires: '; \
+	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(EX_LIBS)'; \
+	    echo 'Cflags: -I$${includedir}' ) > openssl.pc
+
 Makefile.ssl: Makefile.org
 	@echo "Makefile.ssl is older than Makefile.org."
 	@echo "Reconfigure the source tree (via './config' or 'perl Configure'), please."
@@ -532,6 +545,7 @@ clean:
 		rm -f $(LIBS); \
 	fi; \
 	done;
+	rm -f openssl.pc
 	rm -f *.a *.o speed.* *.map *.so .pure core
 	rm -f $(TARFILE)
 	@for i in $(ONEDIRS) ;\
@@ -685,6 +699,7 @@ dist_pem_h:
 install: all install_docs
 	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/lib \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkginfo \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
@@ -738,6 +753,7 @@ install: all install_docs
 			set $(MAKE); \
 			$$1 -f $$here/Makefile link-shared ); \
 	fi
+	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkginfo
 
 install_docs:
 	@$(PERL) $(TOP)/util/mkdir-p.pl \
