@@ -22,11 +22,11 @@
   * Free Netwide Assembler NASM.
 
  MASM was at one point distributed with VC++. It is now distributed with some
- Microsoft DDKs, for example the Windows NT 4.0 DDK and the Windows 98 DDK. If you
- do not have either of these DDKs then you can just download the binaries for the
- Windows 98 DDK and extract and rename the two files XXXXXml.exe and XXXXXml.err,
- to ml.exe and ml.err and install somewhere on your PATH. Both DDKs can be downloaded
- from the Microsoft developers site www.msdn.com.
+ Microsoft DDKs, for example the Windows NT 4.0 DDK and the Windows 98 DDK. If
+ you do not have either of these DDKs then you can just download the binaries
+ for the Windows 98 DDK and extract and rename the two files XXXXXml.exe and
+ XXXXXml.err, to ml.exe and ml.err and install somewhere on your PATH. Both
+ DDKs can be downloaded from the Microsoft developers site www.msdn.com.
 
  NASM is freely available. Version 0.98 was used during testing: other versions
  may also work. It is available from many places, see for example:
@@ -61,7 +61,7 @@
    > ms\do_ms
 
  If you get errors about things not having numbers assigned then check the
- troubleshooting section: you probably wont be able to compile it as it
+ troubleshooting section: you probably won't be able to compile it as it
  stands.
 
  Then from the VC++ environment at a prompt do:
