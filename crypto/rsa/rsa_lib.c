@@ -105,10 +105,14 @@ RSA *RSA_new_method(RSA_METHOD *meth)
 
 	if (default_RSA_meth == NULL)
 		{
+#ifdef RSA_NULL
+		default_RSA_meth=RSA_null_method();
+#else
 #ifdef RSAref
 		default_RSA_meth=RSA_PKCS1_RSAref();
 #else
 		default_RSA_meth=RSA_PKCS1_SSLeay();
+#endif
 #endif
 		}
 	ret=(RSA *)Malloc(sizeof(RSA));

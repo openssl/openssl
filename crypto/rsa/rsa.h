@@ -181,6 +181,8 @@ RSA_METHOD *RSA_PKCS1_RSAref(void);
 /* these are the actual SSLeay RSA functions */
 RSA_METHOD *RSA_PKCS1_SSLeay(void);
 
+RSA_METHOD *RSA_null_method(void);
+
 void	ERR_load_RSA_strings(void );
 
 RSA *	d2i_RSAPublicKey(RSA **a, unsigned char **pp, long length);
@@ -262,6 +264,7 @@ char *RSA_get_ex_data(RSA *r, int idx);
 #define RSA_F_RSA_EAY_PUBLIC_ENCRYPT			 104
 #define RSA_F_RSA_GENERATE_KEY				 105
 #define RSA_F_RSA_NEW_METHOD				 106
+#define RSA_F_RSA_NULL					 124
 #define RSA_F_RSA_PADDING_ADD_NONE			 107
 #define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP		 121
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1		 108
@@ -292,10 +295,10 @@ char *RSA_get_ex_data(RSA *r, int idx);
 #define RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE		 110
 #define RSA_R_DATA_TOO_SMALL				 111
 #define RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE		 122
-#define RSA_R_D_E_NOT_CONGRUENT_TO_1			 123
 #define RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY		 112
 #define RSA_R_DMP1_NOT_CONGRUENT_TO_D			 124
 #define RSA_R_DMQ1_NOT_CONGRUENT_TO_D			 125
+#define RSA_R_D_E_NOT_CONGRUENT_TO_1			 123
 #define RSA_R_IQMP_NOT_INVERSE_OF_Q			 126
 #define RSA_R_KEY_SIZE_TOO_SMALL			 120
 #define RSA_R_NULL_BEFORE_BLOCK_MISSING			 113
@@ -304,6 +307,7 @@ char *RSA_get_ex_data(RSA *r, int idx);
 #define RSA_R_PADDING_CHECK_FAILED			 114
 #define RSA_R_P_NOT_PRIME				 128
 #define RSA_R_Q_NOT_PRIME				 129
+#define RSA_R_RSA_OPERATIONS_NOT_SUPPORTED		 130
 #define RSA_R_SSLV3_ROLLBACK_ATTACK			 115
 #define RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 116
 #define RSA_R_UNKNOWN_ALGORITHM_TYPE			 117

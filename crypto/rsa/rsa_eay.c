@@ -62,6 +62,8 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 
+#ifndef RSA_NULL
+
 static int RSA_eay_public_encrypt(int flen, unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
 static int RSA_eay_private_encrypt(int flen, unsigned char *from,
@@ -486,4 +488,4 @@ static int RSA_eay_finish(RSA *rsa)
 	return(1);
 	}
 
-
+#endif

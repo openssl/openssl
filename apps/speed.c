@@ -435,12 +435,14 @@ int MAIN(int argc, char **argv)
 			}
 		else
 #endif
+#ifndef RSA_NULL
 			if (strcmp(*argv,"openssl") == 0) 
 			{
 			RSA_set_default_method(RSA_PKCS1_SSLeay());
 			j--;
 			}
 		else
+#endif
 #endif /* !NO_RSA */
 		     if (strcmp(*argv,"dsa512") == 0) dsa_doit[R_DSA_512]=2;
 		else if (strcmp(*argv,"dsa1024") == 0) dsa_doit[R_DSA_1024]=2;
