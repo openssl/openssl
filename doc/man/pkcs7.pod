@@ -64,7 +64,7 @@ Output all certificates in a file:
 There is no option to print out all the fields of a PKCS#7 file.
 
 This PKCS#7 routines only understand PKCS#7 v 1.5 as specified in RFC2315 they 
-cannot currently parse, for example, the new CMS as described in RFCXXXX.
+cannot currently parse, for example, the new CMS as described in RFC2630.
 
 =head1 SEE ALSO
 
