@@ -409,8 +409,9 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[])
  */
 int	BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p)
 	{
+	int ret = 0;
 	const int max = BN_num_bits(p);
-	unsigned int *arr=NULL, ret = 0;
+	unsigned int *arr=NULL;
 	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
@@ -483,8 +484,9 @@ int	BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsig
  */
 int	BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p, BN_CTX *ctx)
 	{
+	int ret = 0;
 	const int max = BN_num_bits(p);
-	unsigned int *arr=NULL, ret = 0;
+	unsigned int *arr=NULL;
 	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
@@ -534,8 +536,9 @@ int	BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_C
  */
 int	BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	{
+	int ret = 0;
 	const int max = BN_num_bits(p);
-	unsigned int *arr=NULL, ret = 0;
+	unsigned int *arr=NULL;
 	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
@@ -801,8 +804,9 @@ int	BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsig
  */
 int BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p, BN_CTX *ctx)
 	{
+	int ret = 0;
 	const int max = BN_num_bits(p);
-	unsigned int *arr=NULL, ret = 0;
+	unsigned int *arr=NULL;
 	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
@@ -852,8 +856,9 @@ int	BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_
  */
 int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	{
+	int ret = 0;
 	const int max = BN_num_bits(p);
-	unsigned int *arr=NULL, ret = 0;
+	unsigned int *arr=NULL;
 	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
@@ -958,9 +963,11 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p
  */
 int BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	{
+	int ret = 0;
 	const int max = BN_num_bits(p);
-	unsigned int *arr=NULL, ret = 0;
-	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
+	unsigned int *arr=NULL;
+	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) *
+						max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
 		{
