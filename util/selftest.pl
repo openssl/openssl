@@ -50,6 +50,7 @@ if (open(IN,"<Makefile.ssl")) {
 
 $cversion=`$cc -v 2>&1`;
 $cversion=`$cc -V 2>&1` if $cversion =~ "usage";
+$cversion=`cc -V |head -1` if $cversion =~ "Error";
 $cversion=`$cc --version` if $cversion eq "";
 $cversion =~ s/Reading specs.*\n//;
 $cversion =~ s/usage.*\n//;
