@@ -872,6 +872,7 @@ static int ssl3_send_server_key_exchange(SSL *s)
 	EVP_PKEY *pkey;
 	unsigned char *p,*d;
 	int al,i;
+	unsigned int u;
 	unsigned long type;
 	int n;
 	CERT *cert;
@@ -1027,13 +1028,13 @@ static int ssl3_send_server_key_exchange(SSL *s)
 					j+=i;
 					}
 				if (RSA_sign(NID_md5_sha1, md_buf, j,
-					&(p[2]), &i, pkey->pkey.rsa) <= 0)
+					&(p[2]), &u, pkey->pkey.rsa) <= 0)
 					{
 					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_RSA);
 					goto err;
 					}
-				s2n(i,p);
-				n+=i+2;
+				s2n(u,p);
+				n+=u+2;
 				}
 			else
 #endif

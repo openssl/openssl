@@ -1460,7 +1460,7 @@ static int ssl3_send_client_verify(SSL *s)
 	unsigned char data[MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH];
 	EVP_PKEY *pkey;
 #ifndef NO_RSA
-	int i=0;
+	unsigned u=0;
 #endif
 	unsigned long n;
 #ifndef NO_DSA
@@ -1483,13 +1483,13 @@ static int ssl3_send_client_verify(SSL *s)
 				&(s->s3->finish_dgst1),&(data[0]));
 			if (RSA_sign(NID_md5_sha1, data,
 					 MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH,
-					&(p[2]), &i, pkey->pkey.rsa) <= 0 )
+					&(p[2]), &u, pkey->pkey.rsa) <= 0 )
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,ERR_R_RSA_LIB);
 				goto err;
 				}
-			s2n(i,p);
-			n=i+2;
+			s2n(u,p);
+			n=u+2;
 			}
 		else
 #endif
