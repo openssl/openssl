@@ -168,7 +168,7 @@
     - Version, most of these details can be got from the
       'openssl version -a' command.
     Operating System Details
-    - Output of './config -t'
+    - On Unix systems: Output of './config -t'
     - OS Name, Version
     - Hardware platform
     Compiler Details
