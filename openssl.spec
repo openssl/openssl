@@ -1,15 +1,15 @@
 %define libmaj 0
 %define libmin 9
 %define librel 6
-#%define librev 
+%define librev a
 Release: 1
 
 %define openssldir /var/ssl
 
 Summary: Secure Sockets Layer and cryptography libraries and tools
 Name: openssl
-Version: %{libmaj}.%{libmin}.%{librel}
-#Version: %{libmaj}.%{libmin}.%{librel}%{librev}
+#Version: %{libmaj}.%{libmin}.%{librel}
+Version: %{libmaj}.%{libmin}.%{librel}%{librev}
 Source0: ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
 Copyright: Freely distributable
 Group: System Environment/Libraries
@@ -94,7 +94,7 @@ perl util/perlpath.pl /usr/bin/perl
 ./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-ppc shared
 %endif
 %ifarch alpha
-./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha-gcc shared
+./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha shared
 %endif
 LD_LIBRARY_PATH=`pwd` make
 LD_LIBRARY_PATH=`pwd` make rehash
@@ -102,7 +102,7 @@ LD_LIBRARY_PATH=`pwd` make test
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make install MANDIR=/usr/man INSTALL_PREFIX="$RPM_BUILD_ROOT"
+make MANDIR=/usr/man INSTALL_PREFIX="$RPM_BUILD_ROOT" install
 
 # Rename manpages
 for x in $RPM_BUILD_ROOT/usr/man/man*/* 
@@ -115,19 +115,6 @@ install -m644 libRSAglue.a $RPM_BUILD_ROOT/usr/lib
 
 # Make backwards-compatibility symlink to ssleay
 ln -s /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay
-
-# Install shared libs
-install -m644 libcrypto.a $RPM_BUILD_ROOT/usr/lib
-install -m755 libcrypto.so.%{libmaj}.%{libmin}.%{librel} $RPM_BUILD_ROOT/usr/lib
-install -m644 libssl.a $RPM_BUILD_ROOT/usr/lib
-install -m755 libssl.so.%{libmaj}.%{libmin}.%{librel} $RPM_BUILD_ROOT/usr/lib
-(
-	cd $RPM_BUILD_ROOT/usr/lib
-	ln -s libcrypto.so.%{libmaj}.%{libmin}.%{librel} libcrypto.so.%{libmaj}
-	ln -s libcrypto.so.%{libmaj}.%{libmin}.%{librel} libcrypto.so
-	ln -s libssl.so.%{libmaj}.%{libmin}.%{librel} libssl.so.%{libmaj}
-	ln -s libssl.so.%{libmaj}.%{libmin}.%{librel} libssl.so
-)
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -166,6 +153,21 @@ ldconfig
 ldconfig
 
 %changelog
+* Thu Mar 22 2001 Richard Levitte <richard@levitte.org>
+- Removed redundant subsection that re-installed libcrypto.a and libssl.a
+  as well.
+* Thu Mar 15 2001 Jeremiah Johnson <jjohnson@penguincomputing.com>
+- Removed redundant subsection that re-installed libcrypto.so.0.9.6 and
+  libssl.so.0.9.6.  As well as the subsection that created symlinks for
+  these.  make install handles all this.
+* Sat Oct 21 2000 Horms <horms@vergenet.net>
+- Make sure symlinks are created by using -f flag to ln.
+  Otherwise some .so libraries are copied rather than
+  linked in the resulting binary RPM. This causes the package
+  to be larger than neccessary and makes ldconfig complain.
+* Fri Oct 13 2000 Horms <horms@vergenet.net>
+- Make defattr is set for files in all packages so packages built as
+  non-root will still be installed with files owned by root.
 * Thu Sep 14 2000 Richard Levitte <richard@levitte.org>
 - Changed to adapt to the new (supported) way of making shared libraries
 - Installs all static libraries, not just libRSAglue.a
