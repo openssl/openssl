@@ -159,10 +159,7 @@ static int win32_unload(DSO *dso)
 		return(0);
 		}
 	if(sk_num(dso->meth_data) < 1)
-		{
-		DSOerr(DSO_F_WIN32_UNLOAD,DSO_R_STACK_ERROR);
-		return(0);
-		}
+		return(1);
 	p = (HINSTANCE *)sk_pop(dso->meth_data);
 	if(p == NULL)
 		{

@@ -147,10 +147,7 @@ static int dl_unload(DSO *dso)
 		return(0);
 		}
 	if(sk_num(dso->meth_data) < 1)
-		{
-		DSOerr(DSO_F_DL_UNLOAD,DSO_R_STACK_ERROR);
-		return(0);
-		}
+		return(1);
 	/* Is this statement legal? */
 	ptr = (shl_t)sk_pop(dso->meth_data);
 	if(ptr == NULL)
