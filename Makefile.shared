@@ -21,7 +21,7 @@ SHARED_LDFLAGS=
 LIBNAME=
 
 # LIBEXTRAS contains extra modules to link together with the library.
-# For example, if a seond library, say libbar.a needs to be linked into
+# For example, if a second library, say libbar.a needs to be linked into
 # libfoo.so, you need to do the following:
 #LIBEXTRAS=libbar.a
 # Note that this MUST be used when using the link_o targets, to hold the
@@ -107,7 +107,7 @@ LINK_SO_A_UNPACKED=	\
   $(LINK_SO) && rm -rf $$UNPACKDIR
 
 DETECT_GNU_LD=${CC} -v 2>&1 | grep '^gcc' >/dev/null 2>&1 && \
-	my_ld=`gcc -print-prog-name=ld 2>&1` && \
+	my_ld=`${CC} -print-prog-name=ld 2>&1` && \
 	[ -n "$$my_ld" ] && \
 	$$my_ld -v 2>&1 | grep 'GNU ld' >/dev/null 2>&1
 DO_GNU=$(CALC_VERSIONS); \
