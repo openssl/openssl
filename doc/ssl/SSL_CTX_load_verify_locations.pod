@@ -118,7 +118,7 @@ L<ssl(3)|ssl(3)>,
 L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>,
 L<SSL_get_client_CA_list(3)|SSL_get_client_CA_list(3)>,
 L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>,
-L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>
-
+L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>,
+L<SSL_CTX_set_cert_store(3)|SSL_CTX_set_cert_store(3)>
 
 =cut
