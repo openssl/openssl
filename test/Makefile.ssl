@@ -811,17 +811,14 @@ dhtest.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 dhtest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 dhtest.o: ../include/openssl/rand.h ../include/openssl/safestack.h
 dhtest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h dhtest.c
-dsatest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-dsatest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
-dsatest.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-dsatest.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-dsatest.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-dsatest.o: ../include/openssl/engine.h ../include/openssl/err.h
-dsatest.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
-dsatest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-dsatest.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+dsatest.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/bn.h
+dsatest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+dsatest.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+dsatest.o: ../include/openssl/err.h ../include/openssl/lhash.h
+dsatest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+dsatest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
 dsatest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-dsatest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h dsatest.c
+dsatest.o: ../include/openssl/symhacks.h dsatest.c
 ecdhtest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 ecdhtest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
 ecdhtest.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
@@ -952,15 +949,12 @@ rmdtest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 rmdtest.o: ../include/openssl/symhacks.h rmdtest.c
 rsa_test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 rsa_test.o: ../include/openssl/bn.h ../include/openssl/crypto.h
-rsa_test.o: ../include/openssl/dh.h ../include/openssl/dsa.h
-rsa_test.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-rsa_test.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-rsa_test.o: ../include/openssl/engine.h ../include/openssl/err.h
+rsa_test.o: ../include/openssl/e_os2.h ../include/openssl/err.h
 rsa_test.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 rsa_test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 rsa_test.o: ../include/openssl/rand.h ../include/openssl/rsa.h
 rsa_test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-rsa_test.o: ../include/openssl/symhacks.h ../include/openssl/ui.h rsa_test.c
+rsa_test.o: ../include/openssl/symhacks.h rsa_test.c
 sha1test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 sha1test.o: ../include/openssl/bn.h ../include/openssl/crypto.h
 sha1test.o: ../include/openssl/e_os2.h ../include/openssl/evp.h
