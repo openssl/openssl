@@ -1,0 +1,131 @@
+=pod
+
+=head1 NAME
+
+EVP_EncryptInit, EVP_EncryptUpdate, EVP_EncryptFinal - EVP cipher routines
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ void EVP_EncryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type, unsigned char *key, unsigned char *iv);
+ void EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl, unsigned char *in, int inl);
+ void EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
+
+ void EVP_DecryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type, unsigned char *key, unsigned char *iv);
+ void EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl, unsigned char *in, int inl);
+ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
+
+ void EVP_CipherInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type, unsigned char *key,unsigned char *iv,int enc);
+ void EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl, unsigned char *in, int inl);
+ int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
+
+ void EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
+
+ const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
+ #define EVP_get_cipherbynid(a) EVP_get_cipherbyname(OBJ_nid2sn(a))
+ #define EVP_get_cipherbyobj(a) EVP_get_cipherbynid(OBJ_obj2nid(a))
+
+ #define EVP_CIPHER_nid(e)		((e)->nid)
+ #define EVP_CIPHER_block_size(e)	((e)->block_size)
+ #define EVP_CIPHER_key_length(e)	((e)->key_len)
+ #define EVP_CIPHER_iv_length(e)		((e)->iv_len)
+
+ int EVP_CIPHER_type(const EVP_CIPHER *ctx);
+ #define EVP_CIPHER_CTX_cipher(e)	((e)->cipher)
+ #define EVP_CIPHER_CTX_nid(e)		((e)->cipher->nid)
+ #define EVP_CIPHER_CTX_block_size(e)	((e)->cipher->block_size)
+ #define EVP_CIPHER_CTX_key_length(e)	((e)->cipher->key_len)
+ #define EVP_CIPHER_CTX_iv_length(e)	((e)->cipher->iv_len)
+ #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
+
+=head1 DESCRIPTION
+
+The EVP cipher routines are a high level interface to certain
+symmetric ciphers.
+
+EVP_EncryptInit() initialises a cipher context B<ctx> for encryption
+with cipher B<type>. B<type> is normally supplied by a function such
+as EVP_des_cbc() . B<key> is the symmetric key to use and B<iv> is the
+IV to use (if necessary), the actual number of bytes used for the
+key and IV depends on the cipher.
+
+EVP_EncryptUpdate() encrypts B<inl> bytes from the buffer B<in> and
+writes the encrypted version to B<out>. This function can be called
+multiple times to encrypt successive blocks of data. The amount
+of data written depends on the block alignment of the encrypted data:
+as a result the amount of data written may be anything from zero bytes
+to (inl + cipher_block_size - 1) so B<outl> should contain sufficient
+room.  The actual number of bytes written is placed in B<outl>.
+
+EVP_EncryptFinal() encrypts the "final" data, that is any data that
+remains in a partial block. It uses standard block padding (aka PKCS
+padding). The encrypted final data is written to B<out> which should
+have sufficient space for one cipher block. The number of bytes written
+is placed in B<outl>. After this function is called the encryption operation
+is finished and no further calls to EVP_EncryptUpdate() should be made.
+
+EVP_DecryptInit(), EVP_DecryptUpdate() and EVP_DecryptFinal() are the
+corresponding decryption operations. EVP_DecryptFinal() will return an
+error code if the final block is not correctly formatted. The parameters
+and restrictions are identical to the encryption operations except that
+the decrypted data buffer B<out> passed to EVP_DecryptUpdate() should
+have sufficient room for (B<inl> + cipher_block_size) bytes unless the
+cipher block size is 1 in which case B<inl> bytes is sufficient.
+
+EVP_CipherInit(), EVP_CipherUpdate() and EVP_CipherFinal() are functions
+that can be used for decryption or encryption. The operation performed
+depends on the value of the B<enc> parameter. It should be set to 1 for
+encryption and 0 for decryption.
+
+EVP_CIPHER_CTX_cleanup() clears all information from a cipher context.
+It should be called after all operations using a cipher are complete
+so sensitive information does not remain in memory.
+
+=head1 RETURN VALUES
+
+EVP_EncryptInit(), EVP_EncryptUpdate() and EVP_EncryptFinal() do not return
+values.
+
+EVP_DecryptInit() and EVP_DecryptUpdate() do not return values.
+EVP_DecryptFinal() returns 0 if the decrypt failed or 1 for success.
+
+EVP_CipherInit() and EVP_CipherUpdate() do not return values.
+EVP_CipherFinal() returns 1 for a decryption failure or 1 for success, if
+the operation is encryption then it always returns 1.
+
+=head1 NOTES
+
+Where possible the B<EVP> interface to symmetric ciphers should be used in
+preference to the low level interfaces. This is because the code then becomes
+transparent to the cipher used and much more flexible.
+
+PKCS padding works by adding B<n> padding bytes of value B<n> to make the total 
+length of the encrypted data a multiple of the block size. Padding is always
+added so if the data is already a multiple of the block size B<n> will equal
+the block size. For example if the block size is 8 and 11 bytes are to be
+encrypted then 5 padding bytes of value 5 will be added.
+
+When decrypting the final block is checked to see if it has the correct form.
+
+Although the decryption operation can produce an error, it is not a strong
+test that the input data or key is correct. A random block has better than
+1 in 256 chance of being of the correct format and problems with the
+input data earlier on will not produce a final decrypt error.
+
+=head1 BUGS
+
+The current B<EVP> cipher interface is not as flexible as it should be. Only
+certain "spot" encryption algorithms can be used for ciphers which have various
+parameters associated with them (RC2, RC5 for example) this is inadequate.
+
+Several of the functions do not return error codes because the software versions
+can never fail. This is not true of hardware versions.
+
+=head1 SEE ALSO
+
+L<evp(3)|evp(3)>
+
+=head1 HISTORY
+
+=cut

@@ -76,7 +76,7 @@ int ssl3_do_write(SSL *s, int type)
 	if (type == SSL3_RT_HANDSHAKE)
 		/* should not be done for 'Hello Request's, but in that case
 		 * we'll ignore the result anyway */
-		ssl3_finish_mac(s,&s->init_buf->data[s->init_off],ret);
+		ssl3_finish_mac(s,(unsigned char *)&s->init_buf->data[s->init_off],ret);
 	
 	if (ret == s->init_num)
 		return(1);

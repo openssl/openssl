@@ -827,8 +827,8 @@ start:
 	 */
 		{
 		int dest_maxlen = 0;
-		unsigned char *dest;
-		int *dest_len;
+		unsigned char *dest = NULL;
+		int *dest_len = NULL;
 
 		if (rr->type == SSL3_RT_HANDSHAKE)
 			{

@@ -443,7 +443,7 @@ static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
 	EVP_DigestUpdate(&ctx,ssl3_pad_1,npad);
 	EVP_DigestFinal(&ctx,md_buf,&i);
 
-	EVP_DigestInit(&ctx,EVP_MD_CTX_type(&ctx));
+	EVP_DigestInit(&ctx,EVP_MD_CTX_md(&ctx));
 	EVP_DigestUpdate(&ctx,s->session->master_key,
 		s->session->master_key_length);
 	EVP_DigestUpdate(&ctx,ssl3_pad_2,npad);

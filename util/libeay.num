@@ -2223,3 +2223,4 @@ CRYPTO_get_mem_debug_options            2248
 des_crypt                               2249
 PEM_write_bio_X509_REQ_NEW              2250
 PEM_write_X509_REQ_NEW                  2251
+BIO_callback_ctrl                       2252

@@ -4,6 +4,11 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Change the EVP_MD_CTX_type macro so its meaning consistent with
+     EVP_MD_type. The old functionality is available in a new macro called
+     EVP_MD_md(). Change code that uses it and update docs.
+     [Steve Henson]
+
   *) ..._ctrl functions now have corresponding ..._callback_ctrl functions
      where the 'void *' argument is replaced by a function pointer argument.
      Previously 'void *' was abused to point to functions, which works on

@@ -554,7 +554,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 					PKCS7err(PKCS7_F_PKCS7_DATASIGN,PKCS7_R_INTERNAL_ERROR);
 					goto err;
 					}
-				if (EVP_MD_type(EVP_MD_CTX_type(mdc)) == j)
+				if (EVP_MD_CTX_type(mdc) == j)
 					break;
 				else
 					btmp=btmp->next_bio;
@@ -588,7 +588,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 					V_ASN1_UTCTIME,sign_time);
 
 				/* Add digest */
-				md_tmp=EVP_MD_CTX_type(&ctx_tmp);
+				md_tmp=EVP_MD_CTX_md(&ctx_tmp);
 				EVP_DigestFinal(&ctx_tmp,md_data,&md_len);
 				digest=M_ASN1_OCTET_STRING_new();
 				M_ASN1_OCTET_STRING_set(digest,md_data,md_len);
@@ -746,7 +746,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 							PKCS7_R_INTERNAL_ERROR);
 			goto err;
 			}
-		if (EVP_MD_type(EVP_MD_CTX_type(mdc)) == md_type)
+		if (EVP_MD_CTX_type(mdc) == md_type)
 			break;
 		btmp=btmp->next_bio;	
 		}

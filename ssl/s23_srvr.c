@@ -389,7 +389,6 @@ int ssl23_get_client_hello(SSL *s)
 			}
 		}
 
-next_bit:
 	if (s->state == SSL23_ST_SR_CLNT_HELLO_B)
 		{
 		/* we have SSLv3/TLSv1 in an SSLv2 header

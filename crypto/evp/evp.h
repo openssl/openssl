@@ -421,9 +421,10 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define EVP_MD_size(e)			((e)->md_size)
 #define EVP_MD_block_size(e)		((e)->block_size)
 
+#define EVP_MD_CTX_md(e)		((e)->digest)
 #define EVP_MD_CTX_size(e)		EVP_MD_size((e)->digest)
 #define EVP_MD_CTX_block_size(e)	EVP_MD_block_size((e)->digest)
-#define EVP_MD_CTX_type(e)		((e)->digest)
+#define EVP_MD_CTX_type(e)		EVP_MD_type((e)->digest)
 
 #define EVP_CIPHER_nid(e)		((e)->nid)
 #define EVP_CIPHER_block_size(e)	((e)->block_size)

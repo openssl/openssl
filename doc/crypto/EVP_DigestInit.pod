@@ -21,9 +21,10 @@ EVP_DigestInit, EVP_DigestUpdate, EVP_DigestFinal - EVP digest routines
  #define EVP_MD_size(e)			((e)->md_size)
  #define EVP_MD_block_size(e)		((e)->block_size)
 
+ #define EVP_MD_CTX_md(e)		(e)->digest)
  #define EVP_MD_CTX_size(e)		EVP_MD_size((e)->digest)
  #define EVP_MD_CTX_block_size(e)	EVP_MD_block_size((e)->digest)
- #define EVP_MD_CTX_type(e)		((e)->digest)
+ #define EVP_MD_CTX_type(e)		EVP_MD_type((e)->digest)
 
  EVP_MD *EVP_md_null(void);
  EVP_MD *EVP_md2(void);
@@ -75,7 +76,7 @@ representing the given message digest when passed an B<EVP_MD> structure.
 For example EVP_MD_type(EVP_sha1()) returns B<NID_sha1>. This function is
 normally used when setting ASN1 OIDs.
 
-EVP_MD_CTX_type() returns the B<EVP_MD> structure corresponding to the passed
+EVP_MD_CTX_md() returns the B<EVP_MD> structure corresponding to the passed
 B<EVP_MD_CTX>.
 
 EVP_MD_pkey_type() returns the NID of the public key signing algorithm associated
@@ -169,9 +170,6 @@ digest name passed on the command line.
  }
 
 =head1 BUGS
-
-B<EVP_MD_CTX_type> is not a good name because its name wrongly implies it does
-the same as B<EVP_MD_type> but takes an B<EVP_MD_CTX> parameter instead.
 
 Several of the functions do not return values: maybe they should. Although the
 internal digest operations will never fail some future hardware based operations
