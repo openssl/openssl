@@ -503,19 +503,28 @@ int proc_file(char *rqfile)
 		step = 2;
 
 	case 2: /* KEY = xxxx */
-	    fputs(ibuf, rfp);
 	    if(*ibuf == '\n')
+		{
+	        fputs(ibuf, rfp);
 		break;
+                }
 	    if(!strncasecmp(ibuf,"COUNT = ",8))
+		{
+	        fputs(ibuf, rfp);
 		break;
+                }
 	    if(!strncasecmp(ibuf,"COUNT=",6))
+		{
+	        fputs(ibuf, rfp);
 		break;
+                }
 	    if(!strncasecmp(ibuf,"NumKeys = ",10))
 		{
 		numkeys=atoi(ibuf+10);
 		break;
 		}
 	  
+	    fputs(ibuf, rfp);
 	    if(!strncasecmp(ibuf,"KEY = ",6))
 		{
 		akeysz=64;
