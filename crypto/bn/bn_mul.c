@@ -376,7 +376,7 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 
 		/* The overflow will stop before we over write
 		 * words we should not overwrite */
-		if (ln < c1)
+		if (ln < (BN_ULONG)c1)
 			{
 			do	{
 				p++;
