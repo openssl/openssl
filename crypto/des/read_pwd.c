@@ -63,12 +63,23 @@
 #include <graph.h>
 #endif
 
+#if defined(WIN32) && !defined(WINNT)
+#define WIN_CONSOLE_BUG
+#endif
+
+
 /* 06-Apr-92 Luke Brennan    Support for VMS */
 #include "des_locl.h"
 #include <signal.h>
 #include <string.h>
 #include <setjmp.h>
 #include <errno.h>
+
+#ifdef WIN_CONSOLE_BUG
+#include <windows.h>
+#include <wincon.h>
+#endif
+
 
 /* There are 5 types of terminal interface supported,
  * TERMIO, TERMIOS, VMS, MSDOS and SGTTY
@@ -462,6 +473,18 @@ FILE *tty;
 			break;
 			}
 		}
+#ifdef WIN_CONSOLE_BUG
+/* Win95 has several evil console bugs: one of these is that the
+ * last character read using getch() is passed to the next read: this is
+ * usually a CR so this can be trouble. No STDIO fix seems to work but
+ * flushing the console appears to do the trick.
+ */
+                {
+                        HANDLE inh;
+                        inh = GetStdHandle(STD_INPUT_HANDLE);
+                        FlushConsoleInputBuffer(inh);
+                }
+#endif
 	return(strlen(buf));
 	}
 #endif
