@@ -270,72 +270,103 @@ do_gnu-shared:
 	libs="$$libs -l$$i"; \
 	done
 
+DETECT_GNU_LD=${CC} -v 2>&1 | grep '^gcc' >/dev/null 2>&1 && \
+	collect2=`gcc -print-prog-name=collect2 2>&1` && \
+	[ -n "$$collect2" ] && \
+	my_ld=`$$collect2 --help 2>&1 | grep Usage: | sed 's/^Usage: *\([^ ][^ ]*\).*/\1/'` && \
+	[ -n "$$my_ld" ] && \
+	$$my_ld -v 2>&1 | grep 'GNU ld' >/dev/null 2>&1
+
 # This assumes that GNU utilities are *not* used
 do_alpha-osf1-shared:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; ${CC}  -shared -o lib$$i.so \
-		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-		-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -l$$i"; \
-	done
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( set -x; ${CC}  -shared -o lib$$i.so \
+			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
+			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
 
 # This assumes that GNU utilities are *not* used
 # The difference between alpha-osf1-shared and tru64-shared is the `-msym'
 # option passed to the linker.
 do_tru64-shared:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; ${CC}  -shared -msym -o lib$$i.so \
-		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-		-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -l$$i"; \
-	done
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( set -x; ${CC}  -shared -msym -o lib$$i.so \
+			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
+			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
 
 # This assumes that GNU utilities are *not* used
 # The difference between tru64-shared and tru64-shared-rpath is the
 # -rpath ${INSTALLTOP}/lib passed to the linker.
 do_tru64-shared-rpath:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; ${CC}  -shared -msym -o lib$$i.so \
-		-rpath  ${INSTALLTOP}/lib \
-		-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-		-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -l$$i"; \
-	done
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( set -x; ${CC}  -shared -msym -o lib$$i.so \
+			-rpath  ${INSTALLTOP}/lib \
+			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
+			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
 
 
 # This assumes that GNU utilities are *not* used
 do_solaris-shared:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
-	  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
-	libs="$$libs -l$$i"; \
-	done
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
+		  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-z allextract lib$$i.a $$libs ${EX_LIBS} -lc ) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
 
 # UnixWare 7 and OpenUNIX 8 native compilers used
 do_svr5-shared:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
-	  find . -name "*.o" -print > allobjs ; \
-	  OBJS= ; export OBJS ; \
-	  for obj in `ar t lib$$i.a` ; do \
-	    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
-	  done ; \
-	  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
-	libs="$$libs -l$$i"; \
-	done
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
+		  find . -name "*.o" -print > allobjs ; \
+		  OBJS= ; export OBJS ; \
+		  for obj in `ar t lib$$i.a` ; do \
+		    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
+		  done ; \
+		  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
 
 # This assumes that GNU utilities are *not* used
 do_irix-shared:
-	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	( set -x; ${CC} -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		-all lib$$i.a $$libs ${EX_LIBS} -lc) || exit 1; \
-	libs="$$libs -l$$i"; \
-	done
+	if ${DETECT_GNU_LD}; then \
+		$(MAKE) do_gnu-shared; \
+	else \
+		libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		( set -x; ${CC} -shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			-all lib$$i.a $$libs ${EX_LIBS} -lc) || exit 1; \
+		libs="$$libs -l$$i"; \
+		done; \
+	fi
 
 # This assumes that GNU utilities are *not* used
 # HP-UX includes the full pathname of libs we depend on, so we would get
