@@ -1,11 +1,11 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/02/14 16:58:40 $
+  ______________                           $Date: 2000/02/24 17:17:29 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.5:  Under development...
-                       Proposed freeze  time: Monday, February 21st 2000
+                       0.9.5-beta1 is available.
                        Proposed release time: Monday, February 28th 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
     o  OpenSSL 0.9.3a: Released on May      29th, 1999
@@ -18,8 +18,6 @@
   AVAILABLE PATCHES
 
     o shared libraries <behnke@trustcenter.de>
-    o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
-    o SMIME tool (demo), Sampo Kellomaki <sampo@iki.fi>
     o CA.pl patch (Damien Miller)
     o FreeBSD 3.0 changes (Richard Levitte)
 
@@ -32,38 +30,9 @@
         Various X509 issues: character sets, certificate request extensions.
 	Documentation for the openssl utility.
 
-    o Mark is currently working on:
-        Folding in any changes that are in the C2Net code base that were
-        not in the original SSLeay-0.9.1.b release.  Plus other minor
-        tidying.
-
-    o Ralf is currently working on:
-        1. Support for SSL_set_default_verify_paths(),
-           SSL_load_verify_locations(), SSL_get_cert_store() and
-           SSL_set_cert_store() functions which work like their existing
-           SSL_CTX_xxx() variants but on a per connection basis. That's needed
-           to let us provide full-featured per-URL client verification in
-           mod_ssl or Apache-SSL.
-           => It still dumps core, so I suspend this and investigate
-              again for OpenSSL 0.9.3.
-        2. The perl/ stuff to make it really work the first time ;-)
-           => I'll investigate a few more hours for OpenSSL 0.9.2
-        3. The new documentation set in POD format under doc/
-           => I'll investigate a few more hours for OpenSSL 0.9.2
-        4. More cleanups to get rid of obsolete/old/ugly files in the
-           source tree which are not really needed.
-           => Done all which were possible with my personal knowledge
-
-    o Ben is currently working on:
-	1. Function Prototype Thought Police issues.
-	2. Integrated documentation.
-	3. New TLS Ciphersuites.
-	4. Anything else that takes his fancy.
-
   NEEDS PATCH
 
-    o  salzr@certco.com (Rich Salz): Bug in X509_name_print
-       <29E0A6D39ABED111A36000A0C99609CA2C2BA4@macertco-srv1.ma.certco.com>
+    o  non-blocking socket on AIX
     o  $(PERL) in */Makefile.ssl
     o  "Sign the certificate?" - "n" creates empty certificate file
 
@@ -121,8 +90,6 @@
       don't work unless the key length matches the fixed value (some vendors
       use a key length decided by the size of the RSA encrypted key and expect
       RC2 to adapt).
-
-    o Properly initialize the PRNG in the absence of /dev/random.
 
     o ERR_error_string(..., buf) does not know how large buf is,
       there should be ERR_error_string_n(..., buf, bufsize)
