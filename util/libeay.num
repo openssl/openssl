@@ -2049,7 +2049,7 @@ SXNET_it                                2613	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTI
 UI_dup_input_boolean                    2614	EXIST::FUNCTION:
 PKCS12_add_CSPName_asc                  2615	EXIST::FUNCTION:
 EC_POINT_is_at_infinity                 2616	EXIST::FUNCTION:EC
-ENGINE_load_openbsd_dev_crypto          2617	EXIST::FUNCTION:
+ENGINE_load_cryptodev                   2617	EXIST::FUNCTION:
 DSO_convert_filename                    2618	EXIST::FUNCTION:
 POLICYQUALINFO_it                       2619	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 POLICYQUALINFO_it                       2619	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:

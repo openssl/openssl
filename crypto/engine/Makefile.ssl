@@ -28,13 +28,13 @@ LIBSRC= eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 	tb_rsa.c tb_dsa.c tb_ecdsa.c tb_dh.c tb_rand.c tb_cipher.c tb_digest.c tb_ecdh.c \
 	eng_openssl.c eng_dyn.c eng_cnf.c \
 	hw_atalla.c hw_cswift.c hw_ncipher.c hw_nuron.c hw_ubsec.c \
-	hw_openbsd_dev_crypto.c hw_aep.c hw_sureware.c hw_4758_cca.c
+	hw_cryptodev.c hw_aep.c hw_sureware.c hw_4758_cca.c
 LIBOBJ= eng_err.o eng_lib.o eng_list.o eng_init.o eng_ctrl.o \
 	eng_table.o eng_pkey.o eng_fat.o eng_all.o \
 	tb_rsa.o tb_dsa.o tb_ecdsa.o tb_dh.o tb_rand.o tb_cipher.o tb_digest.o tb_ecdh.o \
 	eng_openssl.o eng_dyn.o eng_cnf.o \
 	hw_atalla.o hw_cswift.o hw_ncipher.o hw_nuron.o hw_ubsec.o \
-	hw_openbsd_dev_crypto.o hw_aep.o hw_sureware.o hw_4758_cca.o
+	hw_cryptodev.o hw_aep.o hw_sureware.o hw_4758_cca.o
 
 SRC= $(LIBSRC)
 
