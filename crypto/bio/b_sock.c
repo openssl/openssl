@@ -113,8 +113,8 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
 
 	/* At this point, we have something that is most probably correct
 	   in some way, so let's init the socket. */
-	if (!BIO_sock_init())
-		return(0); /* don't generate another error code here */
+	if (BIO_sock_init() != 1)
+		return 0; /* don't generate another error code here */
 
 	/* If the string actually contained an IP address, we need not do
 	   anything more */
@@ -527,7 +527,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 	unsigned long l;
 	int err_num;
 
-	if (!BIO_sock_init()) return(INVALID_SOCKET);
+	if (BIO_sock_init() != 1) return(INVALID_SOCKET);
 
 	if ((str=BUF_strdup(host)) == NULL) return(INVALID_SOCKET);
 
