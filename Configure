@@ -1,5 +1,5 @@
 :
-eval 'exec perl $0 -S ${1+"$@"}'
+eval 'exec perl -S $0 ${1+"$@"}'
     if $running_under_some_shell;
 ##
 ##  Configure -- OpenSSL source tree configuration script

@@ -258,7 +258,7 @@ BN_MONT_CTX *mont;
 			good=0;
 
 		BN_mod_mul_montgomery(dd,d,d,mont,ctx2);
-		
+
 		if (good && (BN_cmp(dd,mont_one) == 0))
 			{
 			ret=1;
