@@ -168,7 +168,7 @@ err:
 X509_EXTENSION *OCSP_accept_responses_new(char **oids)
         {
 	int nid;
-	STACK *sk = NULL;
+	STACK_OF(ASN1_OBJECT) *sk = NULL;
 	ASN1_OBJECT *o = NULL;
         X509_EXTENSION *x = NULL;
 	if (!(sk = sk_new(NULL))) goto err;
@@ -183,11 +183,11 @@ X509_EXTENSION *OCSP_accept_responses_new(char **oids)
 		goto err;
 	if (!(ASN1_STRING_encode(x->value,i2d_ASN1_OBJECT,NULL,sk)))
 	        goto err;
-	sk_pop_free(sk, ASN1_OBJECT_free);
+	sk_ASN1_OBJECT_pop_free(sk, ASN1_OBJECT_free);
 	return x;
 err:
 	if (x) X509_EXTENSION_free(x);
-	if (sk) sk_pop_free(sk, ASN1_OBJECT_free);
+	if (sk) sk_ASN1_OBJECT_pop_free(sk, ASN1_OBJECT_free);
 	return NULL;
         }
 
@@ -267,7 +267,7 @@ int OCSP_extension_print(BIO *bp,
 			 int ind)
         {
 	int i, j;
-	STACK *sk = NULL;
+	STACK_OF(ASN1_OBJECT) *sk = NULL;
 	unsigned char *p;
 	OCSP_CRLID *crlid = NULL;
 	OCSP_SERVICELOC *sloc = NULL;
@@ -300,7 +300,8 @@ int OCSP_extension_print(BIO *bp,
 		        p = x->value->data;
 		        if (!(d2i_ASN1_SET(&sk, &p, x->value->length, 
 					   (char *(*)())d2i_ASN1_OBJECT, 
-					   ASN1_OBJECT_free, V_ASN1_SEQUENCE, 
+					   (void (*)(void *))ASN1_OBJECT_free,
+					   V_ASN1_SEQUENCE, 
 					   V_ASN1_UNIVERSAL)))
 			        goto err;
 			for (i = 0; i < sk_num(sk); i++)
@@ -312,7 +313,7 @@ int OCSP_extension_print(BIO *bp,
 				          goto err;
 				}
 			if (BIO_write(bp, "\n", 1) <= 0) goto err;
-			sk_pop_free(sk, ASN1_OBJECT_free);
+			sk_ASN1_OBJECT_pop_free(sk, ASN1_OBJECT_free);
 		        break;
 		case NID_id_pkix_OCSP_archiveCutoff:
 		        if (BIO_printf(bp, "%*sarchive cutoff: ", ind, "")<=0)
