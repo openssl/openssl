@@ -80,8 +80,10 @@
 
 static void dopr (char *buffer, size_t maxlen, size_t *retlen,
 	const char *format, va_list args);
+#ifdef USE_ALLOCATING_PRINT
 static void doapr (char **buffer, size_t *retlen,
 	const char *format, va_list args);
+#endif
 
 int BIO_printf (BIO *bio, ...)
 	{
@@ -153,17 +155,20 @@ int BIO_printf (BIO *bio, ...)
 #endif
 
 static void fmtstr     (void (*)(char **, size_t *, size_t *, int),
-			char **, size_t *, size_t *, char *, int, int, int);
+			char **, size_t *, size_t *, const char *, int, int,
+			int);
 static void fmtint     (void (*)(char **, size_t *, size_t *, int),
 			char **, size_t *, size_t *, LLONG, int, int, int, int);
 static void fmtfp      (void (*)(char **, size_t *, size_t *, int),
 			char **, size_t *, size_t *, LDOUBLE, int, int, int);
 static int dopr_isbig (size_t, size_t);
-static int doapr_isbig (size_t, size_t);
 static int dopr_copy (size_t);
-static int doapr_copy (size_t);
 static void dopr_outch (char **, size_t *, size_t *, int);
+#ifdef USE_ALLOCATING_PRINT
+static int doapr_isbig (size_t, size_t);
+static int doapr_copy (size_t);
 static void doapr_outch (char **, size_t *, size_t *, int);
+#endif
 static void _dopr(void (*)(char **, size_t *, size_t *, int),
 		  int (*)(size_t, size_t), int (*)(size_t),
 		  char **buffer, size_t *maxlen, size_t *retlen,
@@ -210,6 +215,7 @@ dopr(
 	  &buffer, &maxlen, retlen, format, args);
 }
 
+#ifdef USE_ALLOCATING_PRINT
 static void
 doapr(
     char **buffer,
@@ -221,6 +227,7 @@ doapr(
     _dopr(doapr_outch, doapr_isbig, doapr_copy,
 	  buffer, &dummy_maxlen, retlen, format, args);
 }
+#endif
 
 static void
 _dopr(
@@ -488,7 +495,7 @@ fmtstr(
     char **buffer,
     size_t *currlen,
     size_t *maxlen,
-    char *value,
+    const char *value,
     int flags,
     int min,
     int max)
@@ -769,6 +776,7 @@ dopr_copy(
     return len;
 }
 
+#ifdef USE_ALLOCATING_PRINT
 static int
 doapr_copy(
     size_t len)
@@ -776,6 +784,7 @@ doapr_copy(
     /* Return as high an integer as possible */
     return INT_MAX;
 }
+#endif
 
 static int
 dopr_isbig(
@@ -785,6 +794,7 @@ dopr_isbig(
     return currlen > maxlen;
 }
 
+#ifdef USE_ALLOCATING_PRINT
 static int
 doapr_isbig(
     size_t currlen,
@@ -792,6 +802,7 @@ doapr_isbig(
 {
     return 0;
 }
+#endif
 
 static void
 dopr_outch(
@@ -805,6 +816,7 @@ dopr_outch(
     return;
 }
 
+#ifdef USE_ALLOCATING_PRINT
 static void
 doapr_outch(
     char **buffer,
@@ -827,3 +839,4 @@ doapr_outch(
     (*buffer)[(*currlen)++] = (char)c;
     return;
 }
+#endif
