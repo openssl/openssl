@@ -640,7 +640,9 @@ bad:
 	p = NCONF_get_string(conf, section, "unique_subject");
 	if (p)
 		{
+#ifdef RL_DEBUG
 		BIO_printf(bio_err, "DEBUG: unique_subject = \"%s\"\n", p);
+#endif
 		switch(*p)
 			{
 		case 'f': /* false */
@@ -658,10 +660,14 @@ bad:
 			break;
 			}
 		}
+#ifdef RL_DEBUG
 	else
 		BIO_printf(bio_err, "DEBUG: unique_subject undefined\n", p);
+#endif
+#ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: configured unique_subject is %d\n",
 		db_attr.unique_subject);
+#endif
 	
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());

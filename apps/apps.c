@@ -1709,7 +1709,9 @@ int save_index(char *dbfile, char *suffix, CA_DB *db)
 #else
 	j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", dbfile, suffix);
 #endif
+#ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: writing \"%s\"\n", buf[0]);
+#endif
 	if (BIO_write_filename(out,buf[0]) <= 0)
 		{
 		perror(dbfile);
@@ -1722,7 +1724,9 @@ int save_index(char *dbfile, char *suffix, CA_DB *db)
 	BIO_free(out);
 
 	out = BIO_new(BIO_s_file());
+#ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: writing \"%s\"\n", buf[1]);
+#endif
 	if (BIO_write_filename(out,buf[1]) <= 0)
 		{
 		perror(buf[2]);
@@ -1796,8 +1800,10 @@ int rotate_index(char *dbfile, char *new_suffix, char *old_suffix)
 		}
 	else
 		{
+#ifdef RL_DEBUG
 		BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 			dbfile, buf[1]);
+#endif
 		if (rename(dbfile,buf[1]) < 0)
 			{
 			BIO_printf(bio_err,
@@ -1807,8 +1813,10 @@ int rotate_index(char *dbfile, char *new_suffix, char *old_suffix)
 			goto err;
 			}
 		}
+#ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 		buf[0],dbfile);
+#endif
 	if (rename(buf[0],dbfile) < 0)
 		{
 		BIO_printf(bio_err,
@@ -1828,8 +1836,10 @@ int rotate_index(char *dbfile, char *new_suffix, char *old_suffix)
 		}
 	else
 		{
+#ifdef RL_DEBUG
 		BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 			buf[4],buf[3]);
+#endif
 		if (rename(buf[4],buf[3]) < 0)
 			{
 			BIO_printf(bio_err,
@@ -1841,8 +1851,10 @@ int rotate_index(char *dbfile, char *new_suffix, char *old_suffix)
 			goto err;
 			}
 		}
+#ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 		buf[2],buf[4]);
+#endif
 	if (rename(buf[2],buf[4]) < 0)
 		{
 		BIO_printf(bio_err,
