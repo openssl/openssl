@@ -92,6 +92,9 @@ typedef struct mem_st
 	int num;
 	const char *file;
 	int line;
+#ifdef CRYPTO_MDEBUG_THREAD
+	unsigned long thread;
+#endif
 	unsigned long order;
 #ifdef CRYPTO_MDEBUG_TIME
 	time_t time;
@@ -239,6 +242,9 @@ void *CRYPTO_dbg_malloc(int num, const char *file, int line)
 		m->file=file;
 		m->line=line;
 		m->num=num;
+#ifdef CRYPTO_MDEBUG_THREAD
+		m->thread=CRYPTO_thread_id();
+#endif
 		if (order == break_order_num)
 			{
 			/* BREAK HERE */
@@ -329,20 +335,35 @@ typedef struct mem_leak_st
 static void print_leak(MEM *m, MEM_LEAK *l)
 	{
 	char buf[128];
+#ifdef CRYPTO_MDEBUG_TIME
+	struct tm *lcl;
+#endif
 
 	if(m->addr == (char *)l->bio)
 	    return;
+
 #ifdef CRYPTO_MDEBUG_TIME
-	{
-	struct tm *lcl = localtime(&m->time);
-	sprintf(buf,"[%02d:%02d:%02d] %5lu file=%s, line=%d, number=%d, address=%08lX\n",
-		lcl->tm_hour,lcl->tm_min,lcl->tm_sec,
-		m->order,m->file,m->line,m->num,(unsigned long)m->addr);
-	}
-#else
-	sprintf(buf,"%5lu file=%s, line=%d, number=%d, address=%08lX\n",
-		m->order,m->file,m->line,m->num,(unsigned long)m->addr);
+	lcl = localtime(&m->time);
 #endif
+
+	sprintf(buf,
+#ifdef CRYPTO_MDEBUG_TIME
+		"[%02d:%02d:%02d] "
+#endif
+		"%5lu file=%s, line=%d, "
+#ifdef CRYPTO_MDEBUG_THREAD
+		"thread=%lu, "
+#endif
+		"number=%d, address=%08lX\n",
+#ifdef CRYPTO_MDEBUG_TIME
+		lcl->tm_hour,lcl->tm_min,lcl->tm_sec,
+#endif
+		m->order,m->file,m->line,
+#ifdef CRYPTO_MDEBUG_THREAD
+		m->thread,
+#endif
+		m->num,(unsigned long)m->addr);
+
 	BIO_puts(l->bio,buf);
 	l->chunks++;
 	l->bytes+=m->num;

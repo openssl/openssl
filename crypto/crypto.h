@@ -200,7 +200,16 @@ typedef struct crypto_ex_data_func_st
 	(char *(*)())realloc,\
 	(void (*)())free)
 
-#ifdef CRYPTO_MDEBUG_TIME
+#ifdef CRYPTO_MDEBUG_ALL
+# ifndef CRYPTO_MDEBUG_TIME
+#  define CRYPTO_MDEBUG_TIME
+# endif
+# ifndef CRYPTO_MDEBUG_THREAD
+#  define CRYPTO_MDEBUG_THREAD
+# endif
+#endif
+
+#if defined CRYPTO_MDEBUG_TIME || defined CRYPTO_MDEBUG_THREAD
 # ifndef CRYPTO_MDEBUG /* avoid duplicate #define */
 #  define CRYPTO_MDEBUG
 # endif

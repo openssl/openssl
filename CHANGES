@@ -71,6 +71,11 @@
      -DCRYPTO_MDEBUG_TIME is new and additionally stores the current time
      with each memory chunk allocated; this is occasionally more helpful
      than just having a counter.
+
+     -DCRYPTO_MDEBUG_THREAD is also new and adds the thread ID.
+
+     -DCRYPTO_MDEBUG_ALL enables all of the above, plus any future
+     extensions.
      [Bodo Moeller]
 
   *) Introduce "mode" for SSL structures (with defaults in SSL_CTX),
