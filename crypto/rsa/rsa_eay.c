@@ -230,6 +230,40 @@ static int rsa_eay_blinding(RSA *rsa, BN_CTX *ctx)
 			err_instr \
 	} while(0)
 
+static BN_BLINDING *setup_blinding(RSA *rsa, BN_CTX *ctx)
+	{
+	BIGNUM *A, *Ai;
+	BN_BLINDING *ret = NULL;
+
+	/* added in OpenSSL 0.9.6j and 0.9.7b */
+
+	/* NB: similar code appears in RSA_blinding_on (rsa_lib.c);
+	 * this should be placed in a new function of its own, but for reasons
+	 * of binary compatibility can't */
+
+	BN_CTX_start(ctx);
+	A = BN_CTX_get(ctx);
+	if ((RAND_status() == 0) && rsa->d != NULL && rsa->d->d != NULL)
+		{
+		/* if PRNG is not properly seeded, resort to secret exponent as unpredictable seed */
+		RAND_add(rsa->d->d, rsa->d->dmax * sizeof rsa->d->d[0], 0);
+		if (!BN_pseudo_rand_range(A,rsa->n)) goto err;
+		}
+	else
+		{
+		if (!BN_rand_range(A,rsa->n)) goto err;
+		}
+	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
+
+	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,rsa->_method_mod_n))
+		goto err;
+	ret = BN_BLINDING_new(A,Ai,rsa->n);
+	BN_free(Ai);
+err:
+	BN_CTX_end(ctx);
+	return ret;
+	}
+
 /* signing */
 static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
@@ -238,6 +272,8 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 	int i,j,k,num=0,r= -1;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
+	int local_blinding = 0;
+	BN_BLINDING *blinding = NULL;
 
 	BN_init(&f);
 	BN_init(&ret);
@@ -275,9 +311,38 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 		}
 
 	BLINDING_HELPER(rsa, ctx, goto err;);
-
+	blinding = rsa->blinding;
+	
+	/* Now unless blinding is disabled, 'blinding' is non-NULL.
+	 * But the BN_BLINDING object may be owned by some other thread
+	 * (we don't want to keep it constant and we don't want to use
+	 * lots of locking to avoid race conditions, so only a single
+	 * thread can use it; other threads have to use local blinding
+	 * factors) */
 	if (!(rsa->flags & RSA_FLAG_NO_BLINDING))
-		if (!BN_BLINDING_convert(&f,rsa->blinding,ctx)) goto err;
+		{
+		if (blinding == NULL)
+			{
+			RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_INTERNAL_ERROR);
+			goto err;
+			}
+		}
+	
+	if (blinding != NULL)
+		{
+		if (blinding->thread_id != CRYPTO_thread_id())
+			{
+			/* we need a local one-time blinding factor */
+
+			blinding = setup_blinding(rsa, ctx);
+			if (blinding == NULL)
+				goto err;
+			local_blinding = 1;
+			}
+		}
+
+	if (blinding)
+		if (!BN_BLINDING_convert(&f, blinding, ctx)) goto err;
 
 	if ( (rsa->flags & RSA_FLAG_EXT_PKEY) ||
 		((rsa->p != NULL) &&
@@ -293,8 +358,8 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 				rsa->_method_mod_n)) goto err;
 		}
 
-	if (!(rsa->flags & RSA_FLAG_NO_BLINDING))
-		if (!BN_BLINDING_invert(&ret,rsa->blinding,ctx)) goto err;
+	if (blinding)
+		if (!BN_BLINDING_invert(&ret, blinding, ctx)) goto err;
 
 	/* put in leading 0 bytes if the number is less than the
 	 * length of the modulus */
@@ -308,6 +373,8 @@ err:
 	if (ctx != NULL) BN_CTX_free(ctx);
 	BN_clear_free(&ret);
 	BN_clear_free(&f);
+	if (local_blinding)
+		BN_BLINDING_free(blinding);
 	if (buf != NULL)
 		{
 		OPENSSL_cleanse(buf,num);
@@ -324,6 +391,8 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 	unsigned char *p;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
+	int local_blinding = 0;
+	BN_BLINDING *blinding = NULL;
 
 	BN_init(&f);
 	BN_init(&ret);
@@ -356,9 +425,38 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 		}
 
 	BLINDING_HELPER(rsa, ctx, goto err;);
-
+	blinding = rsa->blinding;
+	
+	/* Now unless blinding is disabled, 'blinding' is non-NULL.
+	 * But the BN_BLINDING object may be owned by some other thread
+	 * (we don't want to keep it constant and we don't want to use
+	 * lots of locking to avoid race conditions, so only a single
+	 * thread can use it; other threads have to use local blinding
+	 * factors) */
 	if (!(rsa->flags & RSA_FLAG_NO_BLINDING))
-		if (!BN_BLINDING_convert(&f,rsa->blinding,ctx)) goto err;
+		{
+		if (blinding == NULL)
+			{
+			RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, ERR_R_INTERNAL_ERROR);
+			goto err;
+			}
+		}
+	
+	if (blinding != NULL)
+		{
+		if (blinding->thread_id != CRYPTO_thread_id())
+			{
+			/* we need a local one-time blinding factor */
+
+			blinding = setup_blinding(rsa, ctx);
+			if (blinding == NULL)
+				goto err;
+			local_blinding = 1;
+			}
+		}
+
+	if (blinding)
+		if (!BN_BLINDING_convert(&f, blinding, ctx)) goto err;
 
 	/* do the decrypt */
 	if ( (rsa->flags & RSA_FLAG_EXT_PKEY) ||
@@ -376,8 +474,8 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 			goto err;
 		}
 
-	if (!(rsa->flags & RSA_FLAG_NO_BLINDING))
-		if (!BN_BLINDING_invert(&ret,rsa->blinding,ctx)) goto err;
+	if (blinding)
+		if (!BN_BLINDING_invert(&ret, blinding, ctx)) goto err;
 
 	p=buf;
 	j=BN_bn2bin(&ret,p); /* j is only used with no-padding mode */
