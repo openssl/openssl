@@ -70,7 +70,7 @@
 /* Our ENGINE handlers */
 static int dynamic_init(ENGINE *e);
 static int dynamic_finish(ENGINE *e);
-static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
+static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
 /* Predeclare our context type */
 typedef struct st_dynamic_data_ctx dynamic_data_ctx;
 /* The implementation for the important control command */
