@@ -1,14 +1,14 @@
 #!/usr/local/bin/perl
 
-package x86unix;
+package x86unix;	# GAS actually...
 
 $label="L000";
 $const="";
 $constl=0;
 
 $align=($main'aout)?"4":"16";
-$under=($main'aout)?"_":"";
-$com_start=($main'sol)?"/":"#";
+$under=($main'aout or $main'coff)?"_":"";
+$com_start="#" if ($main'aout or $main'coff);
 
 sub main'asm_init_output { @out=(); }
 sub main'asm_get_output { return(@out); }
@@ -322,8 +322,6 @@ sub main'file
 
 	local($tmp)=<<"EOF";
 	.file	"$file.s"
-	.version	"01.01"
-gcc2_compiled.:
 EOF
 	push(@out,$tmp);
 	}
@@ -337,15 +335,17 @@ sub main'function_begin
 
 	local($tmp)=<<"EOF";
 .text
-	.align $align
+.align $align
 .globl $func
 EOF
 	push(@out,$tmp);
 	if ($main'cpp)
-		{ $tmp=push(@out,"\tTYPE($func,\@function)\n"); }
-	elsif ($main'gaswin)
-		{ $tmp=push(@out,"\t.def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
-	else	{ $tmp=push(@out,"\t.type\t$func,\@function\n"); }
+		{ $tmp=push(@out,"TYPE($func,\@function)\n"); }
+	elsif ($main'coff)
+		{ $tmp=push(@out,".def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
+	elsif ($main'aout)
+		{ }
+	else	{ $tmp=push(@out,".type\t$func,\@function\n"); }
 	push(@out,"$func:\n");
 	$tmp=<<"EOF";
 	pushl	%ebp
@@ -367,15 +367,17 @@ sub main'function_begin_B
 
 	local($tmp)=<<"EOF";
 .text
-	.align $align
+.align $align
 .globl $func
 EOF
 	push(@out,$tmp);
 	if ($main'cpp)
-		{ push(@out,"\tTYPE($func,\@function)\n"); }
-	elsif ($main'gaswin)
-		{ $tmp=push(@out,"\t.def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
-	else	{ push(@out,"\t.type	$func,\@function\n"); }
+		{ push(@out,"TYPE($func,\@function)\n"); }
+	elsif ($main'coff)
+		{ $tmp=push(@out,".def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
+	elsif ($main'aout)
+		{ }
+	else	{ push(@out,".type	$func,\@function\n"); }
 	push(@out,"$func:\n");
 	$stack=4;
 	}
@@ -397,10 +399,10 @@ EOF
 	push(@out,$tmp);
 
 	if ($main'cpp)
-		{ push(@out,"\tSIZE($func,.L_${func}_end-$func)\n"); }
-	elsif ($main'gaswin)
-                { $tmp=push(@out,"\t.align 4\n"); }
-	else	{ push(@out,"\t.size\t$func,.L_${func}_end-$func\n"); }
+		{ push(@out,"SIZE($func,.L_${func}_end-$func)\n"); }
+	elsif ($main'coff or $main'aout)
+                { $tmp=push(@out,".align $align\n"); }
+	else	{ push(@out,".size\t$func,.L_${func}_end-$func\n"); }
 	push(@out,".ident	\"$func\"\n");
 	$stack=0;
 	%label=();
@@ -428,10 +430,10 @@ sub main'function_end_B
 
 	push(@out,".L_${func}_end:\n");
 	if ($main'cpp)
-		{ push(@out,"\tSIZE($func,.L_${func}_end-$func)\n"); }
-        elsif ($main'gaswin)
-                { push(@out,"\t.align 4\n"); }
-	else	{ push(@out,"\t.size\t$func,.L_${func}_end-$func\n"); }
+		{ push(@out,"SIZE($func,.L_${func}_end-$func)\n"); }
+        elsif ($main'coff or $main'aout)
+                { push(@out,".align $align\n"); }
+	else	{ push(@out,".size\t$func,.L_${func}_end-$func\n"); }
 	push(@out,".ident	\"$func\"\n");
 	$stack=0;
 	%label=();
@@ -473,6 +475,7 @@ sub main'swtmp
 
 sub main'comment
 	{
+	return if (!defined($com_start);
 	if ($main'elf)	# GNU and SVR4 as'es use different comment delimiters,
 		{	# so we just skip comments...
 		push(@out,"\n");
@@ -571,7 +574,13 @@ sub main'data_word
 
 sub main'align
 	{
-	push(@out,".align $_[0]\n");
+	my $val=$_[0],$p2,$i;
+	if ($main'aout) {
+		for ($p2=0;$val!=0;$val>>=1) { $p2++; }
+		$val=$p2-1;
+		$val.=",0x90";
+	}
+	push(@out,".align $val\n");
 	}
 
 # debug output functions: puts, putx, printf
@@ -666,7 +675,6 @@ ___
 		}
 	elsif ($main'pic && ($main'elf || $main'aout))
 		{
-		push(@out,"\t.align\t4\n");
 		&main'call(&main'label("PIC_me_up"));
 		&main'set_label("PIC_me_up");
 		&main'blindpop($dst);
