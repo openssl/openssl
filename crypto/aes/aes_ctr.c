@@ -94,11 +94,12 @@ static void AES_ctr128_inc(unsigned char *counter) {
  */
 void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned long length, const AES_KEY *key,
-	unsigned char *counter, unsigned int *num) {
+	unsigned char counter[AES_BLOCK_SIZE],
+	unsigned char ecount_buf[AES_BLOCK_SIZE],
+	unsigned int *num) {
 
 	unsigned int n;
 	unsigned long l=length;
-	unsigned char tmp[AES_BLOCK_SIZE];
 
 	assert(in && out && key && counter && num);
 
@@ -106,10 +107,10 @@ void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 
 	while (l--) {
 		if (n == 0) {
-			AES_encrypt(counter, tmp, key);
+			AES_encrypt(counter, ecount_buf, key);
 			AES_ctr128_inc(counter);
 		}
-		*(out++) = *(in++) ^ tmp[n];
+		*(out++) = *(in++) ^ ecount_buf[n];
 		n = (n+1) % AES_BLOCK_SIZE;
 	}
 
