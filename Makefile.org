@@ -290,8 +290,8 @@ errors:
 
 tar:
 	@gtar --no-recursion -cvf - \
-		`find * -depth -print | grep -v CVS | grep -v .cvsignore | sort` |\
-	tardy --user_number=0  --user_name=rse      \
+		`find * -depth -print | grep -v CVS | grep -v .cvsignore | grep -v STATUS sort` |\
+	tardy --user_number=0  --user_name=openssl \
 	      --group_number=0 --group_name=openssl \
 	      --prefix=openssl-$(VERSION) - |\
 	gzip --best >../$(TARFILE).gz; \
@@ -303,7 +303,6 @@ dist:
 	@$(MAKE) dist_pem_h
 	@$(MAKE) SDIRS='${SDIRS}' clean
 	@$(MAKE) SDIRS='${SDIRS}' dclean
-	@(cd apps; sh ./rmlinks)
 	@$(MAKE) makefile.one
 	@$(MAKE) tar
 
