@@ -1197,6 +1197,22 @@ X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath)
 	return NULL;
 }
 
+/* Try to load an engine in a shareable library */
+ENGINE *try_load_engine(BIO *err, const char *engine, int debug)
+	{
+	ENGINE *e = ENGINE_by_id("dynamic");
+	if (e)
+		{
+		if (!ENGINE_ctrl_cmd_string(e, "SO_PATH", engine, 0)
+			|| !ENGINE_ctrl_cmd_string(e, "LOAD", NULL, 0))
+			{
+			ENGINE_free(e);
+			e = NULL;
+			}
+		}
+	return e;
+	}
+
 ENGINE *setup_engine(BIO *err, const char *engine, int debug)
         {
         ENGINE *e = NULL;
@@ -1209,9 +1225,11 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 			ENGINE_register_all_complete();
 			return NULL;
 			}
-		if((e = ENGINE_by_id(engine)) == NULL)
+		if((e = ENGINE_by_id(engine)) == NULL
+			&& (e = try_load_engine(err, engine, debug)) == NULL)
 			{
 			BIO_printf(err,"invalid engine \"%s\"\n", engine);
+			ERR_print_errors(err);
 			return NULL;
 			}
 		if (debug)
@@ -1223,10 +1241,11 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
 			{
 			BIO_printf(err,"can't use that engine\n");
+			ERR_print_errors(err);
 			return NULL;
 			}
 
-		BIO_printf(err,"engine \"%s\" set.\n", engine);
+		BIO_printf(err,"engine \"%s\" set.\n", ENGINE_get_id(e));
 
 		/* Free our "structural" reference. */
 		ENGINE_free(e);
