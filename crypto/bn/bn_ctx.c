@@ -161,33 +161,33 @@ static void ctxdbg(BN_CTX *ctx)
 	unsigned int bnidx = 0, fpidx = 0;
 	BN_POOL_ITEM *item = ctx->pool.head;
 	BN_STACK *stack = &ctx->stack;
-	printf("(%08x): ", (unsigned int)ctx);
+	fprintf(stderr,"(%08x): ", (unsigned int)ctx);
 	while(bnidx < ctx->used)
 		{
-		printf("%02x ", item->vals[bnidx++ % BN_CTX_POOL_SIZE].dmax);
+		fprintf(stderr,"%02x ", item->vals[bnidx++ % BN_CTX_POOL_SIZE].dmax);
 		if(!(bnidx % BN_CTX_POOL_SIZE))
 			item = item->next;
 		}
-	printf("\n");
+	fprintf(stderr,"\n");
 	bnidx = 0;
-	printf("          : ");
+	fprintf(stderr,"          : ");
 	while(fpidx < stack->depth)
 		{
 		while(bnidx++ < stack->indexes[fpidx])
-			printf("   ");
-		printf("^^ ");
+			fprintf(stderr,"   ");
+		fprintf(stderr,"^^ ");
 		bnidx++;
 		fpidx++;
 		}
-	printf("\n");
+	fprintf(stderr,"\n");
 	}
 #define CTXDBG_ENTRY(str, ctx)	do { \
 				ctxdbg_cur = (str); \
-				printf("Starting %s\n", ctxdbg_cur); \
+				fprintf(stderr,"Starting %s\n", ctxdbg_cur); \
 				ctxdbg(ctx); \
 				} while(0)
 #define CTXDBG_EXIT(ctx)	do { \
-				printf("Ending %s\n", ctxdbg_cur); \
+				fprintf(stderr,"Ending %s\n", ctxdbg_cur); \
 				ctxdbg(ctx); \
 				} while(0)
 #define CTXDBG_RET(ctx,ret)
@@ -235,16 +235,16 @@ void BN_CTX_free(BN_CTX *ctx)
 	{
 #ifdef BN_CTX_DEBUG
 	BN_POOL_ITEM *pool = ctx->pool.head;
-	printf("BN_CTX_free, stack-size=%d, pool-bignums=%d\n",
+	fprintf(stderr,"BN_CTX_free, stack-size=%d, pool-bignums=%d\n",
 		ctx->stack.size, ctx->pool.size);
-	printf("dmaxs: ");
+	fprintf(stderr,"dmaxs: ");
 	while(pool) {
 		unsigned loop = 0;
 		while(loop < BN_CTX_POOL_SIZE)
-			printf("%02x ", pool->vals[loop++].dmax);
+			fprintf(stderr,"%02x ", pool->vals[loop++].dmax);
 		pool = pool->next;
 	}
-	printf("\n");
+	fprintf(stderr,"\n");
 #endif
 	BN_STACK_finish(&ctx->stack);
 	BN_POOL_finish(&ctx->pool);
