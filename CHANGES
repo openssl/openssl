@@ -18,6 +18,9 @@
      [Bodo Moeller, Geoff Thorpe; original patch submitted by
      "Reddie, Steven" <Steven.Reddie@ca.com>]
 
+  *) Fix a deadlock in CRYPTO_mem_leaks().
+     [Bodo Moeller]
+
   *) rand_win.c fix for Borland C.
      [Ulf Möller]
  

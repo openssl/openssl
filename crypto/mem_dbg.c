@@ -671,7 +671,15 @@ void CRYPTO_mem_leaks(BIO *b)
 		 * void_fn_to_char kludge in CRYPTO_mem_leaks_cb.
 		 * Otherwise the code police will come and get us.)
 		 */
+		int old_mh_mode;
+
 		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
+
+		/* avoid deadlock when lh_free() uses CRYPTO_dbg_free(),
+		 * which uses CRYPTO_is_mem_check_on */
+		old_mh_mode = mh_mode;
+		mh_mode = CRYPTO_MEM_CHECK_OFF;
+
 		if (mh != NULL)
 			{
 			lh_free(mh);
@@ -685,6 +693,8 @@ void CRYPTO_mem_leaks(BIO *b)
 				amih = NULL;
 				}
 			}
+
+		mh_mode = old_mh_mode;
 		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
 		}
 	MemCheck_on(); /* releases CRYPTO_LOCK_MALLOC2 */
