@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #ifndef HEADER_SSL_H 
 #define HEADER_SSL_H 
@@ -432,9 +485,6 @@ DECLARE_STACK_OF(SSL_COMP)
 struct ssl_ctx_st
 	{
 	SSL_METHOD *method;
-	unsigned long options;
-	unsigned long mode;
-	long max_cert_list;
 
 	STACK_OF(SSL_CIPHER) *cipher_list;
 	/* same as above but sorted for lookup */
@@ -472,6 +522,7 @@ struct ssl_ctx_st
 	void (*remove_session_cb)(struct ssl_ctx_st *ctx,SSL_SESSION *sess);
 	SSL_SESSION *(*get_session_cb)(struct ssl_st *ssl,
 		unsigned char *data,int len,int *copy);
+
 	struct
 		{
 		int sess_connect;	/* SSL new conn - started */
@@ -494,40 +545,18 @@ struct ssl_ctx_st
 
 	int references;
 
-/**/	void (*info_callback)();
-
 	/* if defined, these override the X509_verify_cert() calls */
-/**/	int (*app_verify_callback)();
-/**/	char *app_verify_arg; /* never used; should be void * */
-
-	/* default values to use in SSL structures */
-/**/	struct cert_st /* CERT */ *cert;
-/**/	int read_ahead;
-/**/	int verify_mode;
-/**/	int verify_depth;
-/**/	unsigned int sid_ctx_length;
-/**/	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
-/**/	int (*default_verify_callback)(int ok,X509_STORE_CTX *ctx);
-
-	int purpose;		/* Purpose setting */
-	int trust;		/* Trust setting */
-
-	/* Default generate session ID callback. */
-	GEN_SESSION_CB generate_session_id;
+	int (*app_verify_callback)();
+	char *app_verify_arg; /* never used; should be void * */
 
 	/* Default password callback. */
-/**/	pem_password_cb *default_passwd_callback;
+	pem_password_cb *default_passwd_callback;
 
 	/* Default password callback user data. */
-/**/	void *default_passwd_callback_userdata;
+	void *default_passwd_callback_userdata;
 
 	/* get client cert callback */
-/**/	int (*client_cert_cb)(/* SSL *ssl, X509 **x509, EVP_PKEY **pkey */);
-
-	/* what we put in client cert requests */
-	STACK_OF(X509_NAME) *client_CA;
-
-/**/	int quiet_shutdown;
+	int (*client_cert_cb)(/* SSL *ssl, X509 **x509, EVP_PKEY **pkey */);
 
 	CRYPTO_EX_DATA ex_data;
 
@@ -536,7 +565,43 @@ struct ssl_ctx_st
 	const EVP_MD *sha1;   /* For SSLv3/TLSv1 'ssl3->sha1' */
 
 	STACK_OF(X509) *extra_certs;
-        STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, SSLv3/TLSv1 */
+	STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, SSLv3/TLSv1 */
+
+
+	/* Default values used when no per-SSL value is defined follow */
+
+	void (*info_callback)(); /* used if SSL's info_callback is NULL */
+
+	/* what we put in client cert requests */
+	STACK_OF(X509_NAME) *client_CA;
+
+
+	/* Default values to use in SSL structures follow (these are copied by SSL_new) */
+
+	unsigned long options;
+	unsigned long mode;
+	long max_cert_list;
+
+	struct cert_st /* CERT */ *cert;
+	int read_ahead;
+
+	/* callback that allows applications to peek at protocol messages */
+	void (*msg_callback)(int write, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg);
+	void *msg_callback_arg;
+
+	int verify_mode;
+	int verify_depth;
+	unsigned int sid_ctx_length;
+	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
+	int (*default_verify_callback)(int ok,X509_STORE_CTX *ctx); /* called 'verify_callback' in the SSL */
+
+	/* Default generate session ID callback. */
+	GEN_SESSION_CB generate_session_id;
+
+	int purpose;		/* Purpose setting */
+	int trust;		/* Trust setting */
+
+	int quiet_shutdown;
 	};
 
 #define SSL_SESS_CACHE_OFF			0x0000
@@ -665,6 +730,11 @@ struct ssl_st
 
 	int read_ahead;		/* Read as many input bytes as possible
 	               	 	 * (for non-blocking reads) */
+
+	/* callback that allows applications to peek at protocol messages */
+	void (*msg_callback)(int write, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg);
+	void *msg_callback_arg;
+
 	int hit;		/* reusing a previous session */
 
 	int purpose;		/* Purpose setting */
@@ -715,6 +785,7 @@ struct ssl_st
 				 * 1 fail if verify fails */
 	int verify_depth;
 	int (*verify_callback)(int ok,X509_STORE_CTX *ctx); /* fail if callback returns 0 */
+
 	void (*info_callback)(); /* optional informational callback */
 
 	int error;		/* error bytes to be written */
@@ -908,7 +979,7 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 #define SSL_CTRL_SET_TMP_DH			3
 #define SSL_CTRL_SET_TMP_RSA_CB			4
 #define SSL_CTRL_SET_TMP_DH_CB			5
-/* Add these ones */
+
 #define SSL_CTRL_GET_SESSION_REUSED		6
 #define SSL_CTRL_GET_CLIENT_CERT_REQUEST	7
 #define SSL_CTRL_GET_NUM_RENEGOTIATIONS		8
@@ -916,6 +987,9 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 #define SSL_CTRL_GET_TOTAL_RENEGOTIATIONS	10
 #define SSL_CTRL_GET_FLAGS			11
 #define SSL_CTRL_EXTRA_CHAIN_CERT		12
+
+#define SSL_CTRL_SET_MSG_CALLBACK               13
+#define SSL_CTRL_SET_MSG_CALLBACK_ARG           14
 
 /* Stats */
 #define SSL_CTRL_SESS_NUMBER			20

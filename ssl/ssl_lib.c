@@ -57,6 +57,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 
 #ifdef REF_CHECK
@@ -193,6 +246,10 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->kssl_ctx = kssl_ctx_new();
 #endif	/* OPENSSL_NO_KRB5 */
 
+	s->options=ctx->options;
+	s->mode=ctx->mode;
+	s->max_cert_list=ctx->max_cert_list;
+
 	if (ctx->cert != NULL)
 		{
 		/* Earlier library versions used to copy the pointer to
@@ -211,14 +268,20 @@ SSL *SSL_new(SSL_CTX *ctx)
 		}
 	else
 		s->cert=NULL; /* Cannot really happen (see SSL_CTX_new) */
-	s->sid_ctx_length=ctx->sid_ctx_length;
-	memcpy(&s->sid_ctx,&ctx->sid_ctx,sizeof(s->sid_ctx));
+
+	s->read_ahead=ctx->read_ahead;
+	s->msg_callback=ctx->msg_callback;
+	s->msg_callback_arg=ctx->msg_callback_arg;
 	s->verify_mode=ctx->verify_mode;
 	s->verify_depth=ctx->verify_depth;
+	s->sid_ctx_length=ctx->sid_ctx_length;
+	memcpy(&s->sid_ctx,&ctx->sid_ctx,sizeof(s->sid_ctx));
 	s->verify_callback=ctx->default_verify_callback;
 	s->generate_session_id=ctx->generate_session_id;
 	s->purpose = ctx->purpose;
 	s->trust = ctx->trust;
+	s->quiet_shutdown=ctx->quiet_shutdown;
+
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->ctx=ctx;
 
@@ -229,13 +292,9 @@ SSL *SSL_new(SSL_CTX *ctx)
 	if (!s->method->ssl_new(s))
 		goto err;
 
-	s->quiet_shutdown=ctx->quiet_shutdown;
 	s->references=1;
 	s->server=(ctx->method->ssl_accept == ssl_undefined_function)?0:1;
-	s->options=ctx->options;
-	s->mode=ctx->mode;
-	s->max_cert_list=ctx->max_cert_list;
-	s->read_ahead=ctx->read_ahead; /* used to happen in SSL_clear */
+
 	SSL_clear(s);
 
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
@@ -329,24 +388,24 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 	}
 
 int SSL_CTX_set_purpose(SSL_CTX *s, int purpose)
-{
+	{
 	return X509_PURPOSE_set(&s->purpose, purpose);
-}
+	}
 
 int SSL_set_purpose(SSL *s, int purpose)
-{
+	{
 	return X509_PURPOSE_set(&s->purpose, purpose);
-}
+	}
 
 int SSL_CTX_set_trust(SSL_CTX *s, int trust)
-{
+	{
 	return X509_TRUST_set(&s->trust, trust);
-}
+	}
 
 int SSL_set_trust(SSL *s, int trust)
-{
+	{
 	return X509_TRUST_set(&s->trust, trust);
-}
+	}
 
 void SSL_free(SSL *s)
 	{
@@ -855,6 +914,11 @@ long SSL_ctrl(SSL *s,int cmd,long larg,char *parg)
 		l=s->read_ahead;
 		s->read_ahead=larg;
 		return(l);
+
+	case SSL_CTRL_SET_MSG_CALLBACK_ARG:
+		s->msg_callback_arg = parg;
+		return 1;
+
 	case SSL_CTRL_OPTIONS:
 		return(s->options|=larg);
 	case SSL_CTRL_MODE:
@@ -874,6 +938,10 @@ long SSL_callback_ctrl(SSL *s, int cmd, void (*fp)())
 	{
 	switch(cmd)
 		{
+	case SSL_CTRL_SET_MSG_CALLBACK:
+		s->msg_callback = (void (*)(int write, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg))(fp);
+		return 1;
+		
 	default:
 		return(s->method->ssl_callback_ctrl(s,cmd,fp));
 		}
@@ -896,6 +964,11 @@ long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,char *parg)
 		l=ctx->read_ahead;
 		ctx->read_ahead=larg;
 		return(l);
+		
+	case SSL_CTRL_SET_MSG_CALLBACK_ARG:
+		ctx->msg_callback_arg = parg;
+		return 1;
+
 	case SSL_CTRL_GET_MAX_CERT_LIST:
 		return(ctx->max_cert_list);
 	case SSL_CTRL_SET_MAX_CERT_LIST:
@@ -953,6 +1026,10 @@ long SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)())
 	{
 	switch(cmd)
 		{
+	case SSL_CTRL_SET_MSG_CALLBACK:
+		ctx->msg_callback = (void (*)(int write, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg))(fp);
+		return 1;
+
 	default:
 		return(ctx->method->ssl_ctx_callback_ctrl(ctx,cmd,fp));
 		}
@@ -1220,10 +1297,10 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	/* We take the system default */
 	ret->session_timeout=meth->get_timeout();
 
-	ret->new_session_cb=NULL;
-	ret->remove_session_cb=NULL;
-	ret->get_session_cb=NULL;
-	ret->generate_session_id=NULL;
+	ret->new_session_cb=0;
+	ret->remove_session_cb=0;
+	ret->get_session_cb=0;
+	ret->generate_session_id=0;
 
 	memset((char *)&ret->stats,0,sizeof(ret->stats));
 
@@ -1236,22 +1313,25 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ret->key_arg=NULL;
 	ret->s2->conn_id=NULL; */
 
-	ret->info_callback=NULL;
+	ret->info_callback=0;
 
-	ret->app_verify_callback=NULL;
+	ret->app_verify_callback=0;
 	ret->app_verify_arg=NULL;
 
 	ret->max_cert_list=SSL_MAX_CERT_LIST_DEFAULT;
 	ret->read_ahead=0;
+	ret->msg_callback=0;
+	ret->msg_callback_arg=NULL;
 	ret->verify_mode=SSL_VERIFY_NONE;
 	ret->verify_depth=-1; /* Don't impose a limit (but x509_lu.c does) */
+	ret->sid_ctx_length=0;
 	ret->default_verify_callback=NULL;
 	if ((ret->cert=ssl_cert_new()) == NULL)
 		goto err;
 
-	ret->default_passwd_callback=NULL;
+	ret->default_passwd_callback=0;
 	ret->default_passwd_callback_userdata=NULL;
-	ret->client_cert_cb=NULL;
+	ret->client_cert_cb=0;
 
 	ret->sessions=lh_new(LHASH_HASH_FN(SSL_SESSION_hash),
 			LHASH_COMP_FN(SSL_SESSION_cmp));
@@ -1780,7 +1860,11 @@ SSL *SSL_dup(SSL *s)
 		 
 	if ((ret=SSL_new(SSL_get_SSL_CTX(s))) == NULL)
 	    return(NULL);
-			  
+
+	ret->version = s->version;
+	ret->type = s->type;
+	ret->method = s->method;
+
 	if (s->session != NULL)
 		{
 		/* This copies session-id, SSL_METHOD, sid_ctx, and 'cert' */
@@ -1811,16 +1895,20 @@ SSL *SSL_dup(SSL *s)
 			s->sid_ctx, s->sid_ctx_length);
 		}
 
+	ret->options=s->options;
+	ret->mode=s->mode;
 	SSL_set_max_cert_list(ret,SSL_get_max_cert_list(s));
 	SSL_set_read_ahead(ret,SSL_get_read_ahead(s));
+	ret->msg_callback = s->msg_callback;
+	ret->msg_callback_arg = s->msg_callback_arg;
 	SSL_set_verify(ret,SSL_get_verify_mode(s),
 		SSL_get_verify_callback(s));
 	SSL_set_verify_depth(ret,SSL_get_verify_depth(s));
+	ret->generate_session_id = s->generate_session_id;
 
 	SSL_set_info_callback(ret,SSL_get_info_callback(s));
 	
 	ret->debug=s->debug;
-	ret->options=s->options;
 
 	/* copy app data, a little dangerous perhaps */
 	if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL, &ret->ex_data, &s->ex_data))
@@ -1842,6 +1930,19 @@ SSL *SSL_dup(SSL *s)
 		else
 			ret->wbio=ret->rbio;
 		}
+	ret->rwstate = s->rwstate;
+	ret->in_handshake = s->in_handshake;
+	ret->handshake_func = s->handshake_func;
+	ret->server = s->server;
+	ret->new_session = s->new_session;
+	ret->quiet_shutdown = s->quiet_shutdown;
+	ret->shutdown=s->shutdown;
+	ret->state=s->state; /* SSL_dup does not really work at any state, though */
+	ret->rstate=s->rstate;
+	ret->init_num = 0; /* would have to copy ret->init_buf, ret->init_msg, ret->init_num, ret->init_off */
+	ret->hit=s->hit;
+	ret->purpose=s->purpose;
+	ret->trust=s->trust;
 
 	/* dup the cipher_list and cipher_list_by_id stacks */
 	if (s->cipher_list != NULL)
@@ -1869,11 +1970,6 @@ SSL *SSL_dup(SSL *s)
 				}
 			}
 		}
-
-	ret->shutdown=s->shutdown;
-	ret->state=s->state;
-	ret->handshake_func=s->handshake_func;
-	ret->server=s->server;
 
 	if (0)
 		{
