@@ -27,8 +27,6 @@ B<NID_md5>; see L<objects> for details. If B<type> is B<NID_md5_sha1>,
 an SSL signature (MD5 and SHA1 message digests with PKCS #1 padding
 and no algorithm identifier) is created.
 
-The random number generator must be seeded prior to calling RSA_sign().
-
 RSA_verify() verifies that the signature B<sigbuf> of size B<siglen>
 matches a given message digest B<m> of size B<m_len>. B<type> denotes
 the message digest algorithm that was used to generate the signature.
@@ -52,7 +50,7 @@ SSL, PKCS #1 v2.0
 
 =head1 SEE ALSO
 
-err(3), objects(3), rand(3), rsa(3), RSA_private_encrypt(3),
+err(3), objects(3), rsa(3), RSA_private_encrypt(3),
 RSA_public_decrypt(3)
 
 =head1 HISTORY

@@ -42,9 +42,6 @@ Signing user data directly with RSA is insecure.
 
 =back
 
-The random number generator must be seeded prior to calling
-RSA_private_encrypt().
-
 RSA_public_decrypt() recovers the message digest from the B<flen>
 bytes long signature at B<from> using the signer's public key
 B<rsa>. B<to> must point to a memory section large enough to hold the
@@ -62,7 +59,7 @@ obtained by ERR_get_error(3).
 
 =head1 SEE ALSO
 
-err(3), rand(3), rsa(3), RSA_sign(3), RSA_verify(3)
+err(3), rsa(3), RSA_sign(3), RSA_verify(3)
 
 =head1 HISTORY
 
