@@ -141,7 +141,7 @@ $(DLIBCRYPTO):
 
 $(PROGRAM): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(PROGRAM)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
 	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  $(CC) -o $(PROGRAM) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
