@@ -346,14 +346,14 @@ bad:
 			BIO_printf(out,"RSA key ok\n");
 		else if (r == 0)
 			{
-			long e;
+			long err;
 
-			while ((e = ERR_peek_error()) != 0 &&
-				ERR_GET_LIB(e) == ERR_LIB_RSA &&
-				ERR_GET_FUNC(e) == RSA_F_RSA_CHECK_KEY &&
-				ERR_GET_REASON(e) != ERR_R_MALLOC_FAILURE)
+			while ((err = ERR_peek_error()) != 0 &&
+				ERR_GET_LIB(err) == ERR_LIB_RSA &&
+				ERR_GET_FUNC(err) == RSA_F_RSA_CHECK_KEY &&
+				ERR_GET_REASON(err) != ERR_R_MALLOC_FAILURE)
 				{
-				BIO_printf(out, "RSA key error: %s\n", ERR_reason_error_string(e));
+				BIO_printf(out, "RSA key error: %s\n", ERR_reason_error_string(err));
 				ERR_get_error(); /* remove e from error stack */
 				}
 			}
