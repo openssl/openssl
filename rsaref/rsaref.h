@@ -118,17 +118,22 @@ typedef struct RSARandomState_st
 #define RE_SIGNATURE_ENCODING 0x040c
 #define RE_ENCRYPTION_ALGORITHM 0x040d
 
-int RSAPrivateDecrypt(unsigned char *to, int *outlen, unsigned char *from,
+int RSAPrivateDecrypt(unsigned char *to, int *outlen,
+	const unsigned char *from,
 	int len, RSArefPrivateKey *RSAkey);
-int RSAPrivateEncrypt(unsigned char *to, int *outlen, unsigned char *from,
+int RSAPrivateEncrypt(unsigned char *to, int *outlen,
+	const unsigned char *from,
 	int len, RSArefPrivateKey *RSAkey);
-int RSAPublicDecrypt(unsigned char *to, int *outlen, unsigned char *from,
+int RSAPublicDecrypt(unsigned char *to, int *outlen,
+	const unsigned char *from,
 	int len, RSArefPublicKey *RSAkey);
-int RSAPublicEncrypt(unsigned char *to, int *outlen, unsigned char *from,
+int RSAPublicEncrypt(unsigned char *to, int *outlen,
+	const unsigned char *from,
 	int len, RSArefPublicKey *RSAkey,RSARandomState *rnd);
 int R_RandomInit(RSARandomState *rnd);
 int R_GetRandomBytesNeeded(unsigned int *,RSARandomState *rnd);
-int R_RandomUpdate(RSARandomState *rnd, unsigned char *data, unsigned int n);
+int R_RandomUpdate(RSARandomState *rnd,
+	const unsigned char *data, unsigned int n);
 int R_RandomFinal(RSARandomState *rnd);
 
 void ERR_load_RSAREF_strings(void );
