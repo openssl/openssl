@@ -613,9 +613,9 @@ int MAIN(int argc, char **argv)
 			NULL, e, "CA certificate");
 		if (rcertfile)
 			{
-			rother = load_certs(bio_err, sign_certfile, FORMAT_PEM,
+			rother = load_certs(bio_err, rcertfile, FORMAT_PEM,
 				NULL, e, "responder other certificates");
-			if (!sign_other) goto end;
+			if (!rother) goto end;
 			}
 		rkey = load_key(bio_err, rkeyfile, FORMAT_PEM, NULL, NULL,
 			"responder private key");
