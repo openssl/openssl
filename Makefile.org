@@ -111,7 +111,7 @@ DES_ENC= asm/dx86-out.o asm/yx86-out.o
 #DES_ENC= asm/dx86-out.o asm/yx86-out.o # a.out, FreeBSD
 #DES_ENC= asm/dx86bsdi.o asm/yx86bsdi.o # bsdi
 
-AES_ASM_OBJ=aes_core.o
+AES_ASM_OBJ=aes_core.o aes_cbc.o
 
 # Set BF_ENC to bf_enc.o if you want to use the C version
 #There are 4 x86 assember options.
