@@ -87,7 +87,7 @@ void show_ciphers(const OBJ_NAME *name,void *bio_)
 	BIO *bio=bio_;
 	static int n;
 
-	if(!islower(*name->name))
+	if(!islower((unsigned char)*name->name))
 		return;
 
 	BIO_printf(bio,"-%-25s",name->name);
