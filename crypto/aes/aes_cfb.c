@@ -162,7 +162,7 @@ void AES_cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
 			    const int nbits,const AES_KEY *key,
 			    unsigned char *ivec,const int enc)
     {
-    unsigned int n;
+    int n;
     unsigned char ovec[AES_BLOCK_SIZE*2];
 
     assert(in && out && key && ivec);
