@@ -1,2 +1,4 @@
 bn86unix.cpp
 co86unix.cpp
+bn86-elf.s
+co86-elf.s
