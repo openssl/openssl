@@ -143,6 +143,12 @@ int SSL_clear(SSL *s)
 		return(0);
 		}
 
+	if (ssl_clear_bad_session(s))
+		{
+		SSL_SESSION_free(s->session);
+		s->session=NULL;
+		}
+
 	s->error=0;
 	s->hit=0;
 	s->shutdown=0;
@@ -161,12 +167,6 @@ int SSL_clear(SSL *s)
 #endif
 
 	s->type=0;
-
-	if (ssl_clear_bad_session(s))
-		{
-		SSL_SESSION_free(s->session);
-		s->session=NULL;
-		}
 
 	s->state=SSL_ST_BEFORE|((s->server)?SSL_ST_ACCEPT:SSL_ST_CONNECT);
 
