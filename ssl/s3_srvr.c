@@ -1561,17 +1561,17 @@ static int ssl3_get_client_key_exchange(SSL *s)
 
 		n2s(p,i);
 		enc_ticket.length = i;
-		enc_ticket.data = p;
+		enc_ticket.data = (char *)p;
 		p+=enc_ticket.length;
 
 		n2s(p,i);
 		authenticator.length = i;
-		authenticator.data = p;
+		authenticator.data = (char *)p;
 		p+=authenticator.length;
 
 		n2s(p,i);
 		enc_pms.length = i;
-		enc_pms.data = p;
+		enc_pms.data = (char *)p;
 		p+=enc_pms.length;
 
 		if ((unsigned long)n != enc_ticket.length + authenticator.length +
@@ -1636,7 +1636,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 			goto err;
 			}
 		if (!EVP_DecryptUpdate(&ciph_ctx, pms,&outl,
-					enc_pms.data, enc_pms.length))
+					(unsigned char *)enc_pms.data, enc_pms.length))
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
 				SSL_R_DECRYPTION_FAILED);
