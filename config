@@ -57,6 +57,9 @@ if [ "x$XREL" != "x" ]; then
 	    4.2)
 		echo "whatever-whatever-unixware1"; exit 0
 		;;
+	    5*)
+		echo "${MACHINE}-sco-unixware7"; exit 0
+		;;
 	esac
     fi
 fi
@@ -444,9 +447,12 @@ case "$GUESSOS" in
   *-*-openbsd) OUT="OpenBSD" ;;
   *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
   *-*-osf) OUT="alpha-cc" ;;
-  *-*-unixware*) OUT="unixware-2.0" ;;
-  *-*-UnixWare*) OUT="unixware-2.0" ;;
-  *-*-Unixware*) OUT="unixware-2.0" ;;
+  *-*-unixware7) OUT="unixware-7" ;;
+  *-*-UnixWare7) OUT="unixware-7" ;;
+  *-*-Unixware7) OUT="unixware-7" ;;
+  *-*-unixware[1-2]*) OUT="unixware-2.0" ;;
+  *-*-UnixWare[1-2]*) OUT="unixware-2.0" ;;
+  *-*-Unixware[1-2]*) OUT="unixware-2.0" ;;
   BS2000-siemens-sysv4) OUT="BS2000-OSD" ;;
   RM*-siemens-sysv4) OUT="ReliantUNIX" ;;
   *-siemens-sysv4) OUT="SINIX" ;;

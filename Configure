@@ -287,6 +287,9 @@ my %table=(
 "unixware-2.0","cc:-O -DFILIO_H::(unknown):-lsocket -lnsl:$x86_gcc_des ${x86_gcc_opts}:::",
 "unixware-2.0-pentium","cc:-O -DFILIO_H -Kpentium -Kthread::(unknown):-lsocket -lnsl:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
 
+# UnixWare 7
+"unixware-7","cc:-O -DFILIO_H -Kalloca::-Kthread:-lsocket -lnsl:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
+
 # IBM's AIX.
 "aix-cc",   "cc:-O -DAIX -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR:::",
 "aix-gcc",  "gcc:-O3 -DAIX -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR:::",
