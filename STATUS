@@ -1,10 +1,11 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/05/16 10:01:53 $
+  ______________                           $Date: 2002/06/01 15:33:36 $
 
   DEVELOPMENT STATE
 
-    o  OpenSSL 0.9.7:  Under development...
+    o  OpenSSL 0.9.8:  Under development...
+    o  OpenSSL 0.9.7-beta1:  Released on June 1st, 2002
     o  OpenSSL 0.9.6d: Released on May        9th, 2002
     o  OpenSSL 0.9.6c: Released on December  21st, 2001
     o  OpenSSL 0.9.6b: Released on July       9th, 2001
@@ -57,9 +58,6 @@
     o  "OpenSSL STATUS" is never up-to-date.
 
   OPEN ISSUES
-
-    o  Do we want the EVP API changes in 0.9.7?
-       Can compatibility be improved?
 
     o  The Makefile hierarchy and build mechanism is still not a round thing:
 
