@@ -320,6 +320,21 @@ DECLARE_STACK_OF(X509_TRUST)
 #define X509_TRUST_REJECTED	2
 #define X509_TRUST_UNTRUSTED	3
 
+/* Flags for X509_print_ex() */
+
+#define	X509_FLAG_COMPAT		0
+#define	X509_FLAG_NO_HEADER		1L
+#define	X509_FLAG_NO_VERSION		(1L << 1)
+#define	X509_FLAG_NO_SERIAL		(1L << 2)
+#define	X509_FLAG_NO_SIGNAME		(1L << 3)
+#define	X509_FLAG_NO_ISSUER		(1L << 4)
+#define	X509_FLAG_NO_VALIDITY		(1L << 5)
+#define	X509_FLAG_NO_SUBJECT		(1L << 6)
+#define	X509_FLAG_NO_PUBKEY		(1L << 7)
+#define	X509_FLAG_NO_EXTENSIONS		(1L << 8)
+#define	X509_FLAG_NO_SIGDUMP		(1L << 9)
+#define	X509_FLAG_NO_AUX		(1L << 10)
+
 /* Flags specific to X509_NAME_print_ex() */	
 
 /* The field separator information */
@@ -1034,6 +1049,7 @@ unsigned long	X509_NAME_hash(X509_NAME *x);
 
 int		X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b);
 #ifndef NO_FP_API
+int		X509_print_ex_fp(FILE *bp,X509 *x, unsigned long nmflag, unsigned long cflag);
 int		X509_print_fp(FILE *bp,X509 *x);
 int		X509_CRL_print_fp(FILE *bp,X509_CRL *x);
 int		X509_REQ_print_fp(FILE *bp,X509_REQ *req);
@@ -1043,6 +1059,7 @@ int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent, unsigned long fla
 #ifndef NO_BIO
 int		X509_NAME_print(BIO *bp, X509_NAME *name, int obase);
 int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent, unsigned long flags);
+int		X509_print_ex(BIO *bp,X509 *x, unsigned long nmflag, unsigned long cflag);
 int		X509_print(BIO *bp,X509 *x);
 int		X509_CERT_AUX_print(BIO *bp,X509_CERT_AUX *x, int indent);
 int		X509_CRL_print(BIO *bp,X509_CRL *x);

@@ -297,6 +297,22 @@ long DSO_ctrl(DSO *dso, int cmd, long larg, void *parg)
 		DSOerr(DSO_F_DSO_CTRL,ERR_R_PASSED_NULL_PARAMETER);
 		return(-1);
 		}
+	/* We should intercept certain generic commands and only pass control
+	 * to the method-specific ctrl() function if it's something we don't
+	 * handle. */
+	switch(cmd)
+		{
+	case DSO_CTRL_GET_FLAGS:
+		return dso->flags;
+	case DSO_CTRL_SET_FLAGS:
+		dso->flags = (int)larg;
+		return(0);
+	case DSO_CTRL_OR_FLAGS:
+		dso->flags |= (int)larg;
+		return(0);
+	default:
+		break;
+		}
 	if((dso->meth == NULL) || (dso->meth->dso_ctrl == NULL))
 		{
 		DSOerr(DSO_F_DSO_CTRL,DSO_R_UNSUPPORTED);

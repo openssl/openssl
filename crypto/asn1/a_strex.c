@@ -491,12 +491,24 @@ static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
 
 int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent, unsigned long flags)
 {
+	if(flags == XN_FLAG_COMPAT)
+		return X509_NAME_print(out, nm, indent);
 	return do_name_ex(send_bio_chars, out, nm, indent, flags);
 }
 
 
 int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent, unsigned long flags)
 {
+	if(flags == XN_FLAG_COMPAT)
+		{
+		BIO *btmp;
+		int ret;
+		btmp = BIO_new_fp(fp, BIO_NOCLOSE);
+		if(!btmp) return -1;
+		ret = X509_NAME_print(btmp, nm, indent);
+		BIO_free(btmp);
+		return ret;
+		}
 	return do_name_ex(send_fp_chars, fp, nm, indent, flags);
 }
 

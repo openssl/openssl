@@ -80,8 +80,8 @@ static int win32_unbind_var(DSO *dso, char *symname, void *symptr);
 static int win32_unbind_func(DSO *dso, char *symname, DSO_FUNC_TYPE symptr);
 static int win32_init(DSO *dso);
 static int win32_finish(DSO *dso);
-#endif
 static long win32_ctrl(DSO *dso, int cmd, long larg, void *parg);
+#endif
 
 static DSO_METHOD dso_meth_win32 = {
 	"OpenSSL 'win32' shared library method",
@@ -94,7 +94,7 @@ static DSO_METHOD dso_meth_win32 = {
 	NULL, /* unbind_var */
 	NULL, /* unbind_func */
 #endif
-	win32_ctrl,
+	NULL, /* ctrl */
 	NULL, /* init */
 	NULL  /* finish */
 	};
@@ -245,29 +245,5 @@ static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname)
 		}
 	return((DSO_FUNC_TYPE)sym);
 	}
-
-static long win32_ctrl(DSO *dso, int cmd, long larg, void *parg)
-        {
-        if(dso == NULL)
-                {
-                DSOerr(DSO_F_WIN32_CTRL,ERR_R_PASSED_NULL_PARAMETER);
-                return(-1);
-                }
-        switch(cmd)
-                {
-        case DSO_CTRL_GET_FLAGS:
-                return dso->flags;
-        case DSO_CTRL_SET_FLAGS:
-                dso->flags = (int)larg;
-                return(0);
-        case DSO_CTRL_OR_FLAGS:
-                dso->flags |= (int)larg;
-                return(0);
-        default:
-                break;
-                }
-        DSOerr(DSO_F_WIN32_CTRL,DSO_R_UNKNOWN_COMMAND);
-        return(-1);
-        }
 
 #endif /* WIN32 */

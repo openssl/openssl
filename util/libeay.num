@@ -301,8 +301,8 @@ EVP_des_ede_cfb                         308	EXIST::FUNCTION:DES
 EVP_des_ede_ofb                         309	EXIST::FUNCTION:DES
 EVP_des_ofb                             310	EXIST::FUNCTION:DES
 EVP_desx_cbc                            311	EXIST::FUNCTION:DES
-EVP_dss                                 312	EXIST::FUNCTION:DSA
-EVP_dss1                                313	EXIST::FUNCTION:DSA
+EVP_dss                                 312	EXIST::FUNCTION:DSA,SHA
+EVP_dss1                                313	EXIST::FUNCTION:DSA,SHA
 EVP_enc_null                            314	EXIST::FUNCTION:
 EVP_get_cipherbyname                    315	EXIST::FUNCTION:
 EVP_get_digestbyname                    316	EXIST::FUNCTION:
@@ -926,7 +926,7 @@ PKCS7_add_signature                     938	EXIST::FUNCTION:
 PKCS7_cert_from_signer_info             939	EXIST::FUNCTION:
 PKCS7_get_signer_info                   940	EXIST::FUNCTION:
 EVP_delete_alias                        941	NOEXIST::FUNCTION:
-EVP_mdc2                                942	EXIST::FUNCTION:
+EVP_mdc2                                942	EXIST::FUNCTION:MDC2
 PEM_read_bio_RSAPublicKey               943	EXIST::FUNCTION:RSA
 PEM_write_bio_RSAPublicKey              944	EXIST::FUNCTION:RSA
 d2i_RSAPublicKey_bio                    945	EXIST::FUNCTION:RSA

@@ -147,6 +147,7 @@ int chopup_args(ARGS *arg,char *buf, int *argc, char **argv[]);
 int dump_cert_text(BIO *out, X509 *x);
 void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags);
 #endif
+int set_cert_ex(unsigned long *flags, const char *arg);
 int set_name_ex(unsigned long *flags, const char *arg);
 int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(BIO *err, LHASH *conf);

@@ -82,8 +82,8 @@ static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname);
 static int dlfcn_unbind(DSO *dso, char *symname, void *symptr);
 static int dlfcn_init(DSO *dso);
 static int dlfcn_finish(DSO *dso);
-#endif
 static long dlfcn_ctrl(DSO *dso, int cmd, long larg, void *parg);
+#endif
 
 static DSO_METHOD dso_meth_dlfcn = {
 	"OpenSSL 'dlfcn' shared library method",
@@ -96,7 +96,7 @@ static DSO_METHOD dso_meth_dlfcn = {
 	NULL, /* unbind_var */
 	NULL, /* unbind_func */
 #endif
-	dlfcn_ctrl,
+	NULL, /* ctrl */
 	NULL, /* init */
 	NULL  /* finish */
 	};
@@ -247,30 +247,6 @@ static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
 		return(NULL);
 		}
 	return(sym);
-	}
-
-static long dlfcn_ctrl(DSO *dso, int cmd, long larg, void *parg)
-	{
-	if(dso == NULL)
-		{
-		DSOerr(DSO_F_DLFCN_CTRL,ERR_R_PASSED_NULL_PARAMETER);
-		return(-1);
-		}
-	switch(cmd)
-		{
-	case DSO_CTRL_GET_FLAGS:
-		return dso->flags;
-	case DSO_CTRL_SET_FLAGS:
-		dso->flags = (int)larg;
-		return(0);
-	case DSO_CTRL_OR_FLAGS:
-		dso->flags |= (int)larg;
-		return(0);
-	default:
-		break;
-		}
-	DSOerr(DSO_F_DLFCN_CTRL,DSO_R_UNKNOWN_COMMAND);
-	return(-1);
 	}
 
 #endif /* DSO_DLFCN */

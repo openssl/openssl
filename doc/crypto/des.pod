@@ -345,7 +345,7 @@ the MIT Kerberos library.
 
 =head1 SEE ALSO
 
-crypt(3), L<des_modes(3)|des_modes(3)>, L<evp(3)|evp(3)>, L<rand(3)|rand(3)>
+crypt(3), L<des_modes(7)|des_modes(7)>, L<evp(3)|evp(3)>, L<rand(3)|rand(3)>
 
 =head1 HISTORY
 

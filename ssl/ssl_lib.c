@@ -119,7 +119,9 @@ int SSL_clear(SSL *s)
 	s->client_version=s->version;
 	s->rwstate=SSL_NOTHING;
 	s->rstate=SSL_ST_READ_HEADER;
+#if 0
 	s->read_ahead=s->ctx->read_ahead;
+#endif
 
 	if (s->init_buf != NULL)
 		{
@@ -229,6 +231,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->server=(ctx->method->ssl_accept == ssl_undefined_function)?0:1;
 	s->options=ctx->options;
 	s->mode=ctx->mode;
+	s->read_ahead=ctx->read_ahead; /* used to happen in SSL_clear */
 	SSL_clear(s);
 
 	CRYPTO_new_ex_data(ssl_meth,s,&s->ex_data);
