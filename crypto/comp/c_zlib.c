@@ -3,6 +3,7 @@
 #include <string.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
+#include <openssl/err.h>
 
 COMP_METHOD *COMP_zlib(void );
 
