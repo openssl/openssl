@@ -468,7 +468,6 @@ bad:
 				BIO_printf(STDout,"%08lx\n",X509_subject_name_hash(x));
 				}
 			else
-#ifndef NO_RSA
 				if (modulus == i)
 				{
 				EVP_PKEY *pkey;
@@ -481,15 +480,21 @@ bad:
 					goto end;
 					}
 				BIO_printf(STDout,"Modulus=");
+#ifndef NO_RSA
 				if (pkey->type == EVP_PKEY_RSA)
 					BN_print(STDout,pkey->pkey.rsa->n);
 				else
+#endif
+#ifndef NO_DSA
+				if (pkey->type == EVP_PKEY_DSA)
+					BN_print(STDout,pkey->pkey.dsa->pub_key);
+				else
+#endif
 					BIO_printf(STDout,"Wrong Algorithm type");
 				BIO_printf(STDout,"\n");
 				EVP_PKEY_free(pkey);
 				}
 			else
-#endif
 				if (C == i)
 				{
 				unsigned char *d;
