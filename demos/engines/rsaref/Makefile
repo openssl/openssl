@@ -29,6 +29,11 @@ install:	FORCE.install
 		cd install; \
 			make -f unix/makefile CFLAGS='-I. -DPROTOTYPES=1 -O -c' RSAREFLIB=librsaref.a librsaref.a
 
+FORCE.update:
+update:		FORCE.update
+		perl ../../../util/mkerr.pl -conf rsaref.ec \
+			-nostatic -staticloader -write rsaref.c
+
 gnu:		install $(SHLIB).gnu
 tru64:		install $(SHLIB).tru64
 solaris:	install $(SHLIB).solaris
@@ -44,7 +49,7 @@ $(LIB):		$(OBJ)
 LINK_SO=	\
   ld -r -o $(LIBNAME).o $$ALLSYMSFLAGS $(LIB) install/librsaref.a && \
   (nm -Pg $(LIBNAME).o | grep ' [BD] ' | cut -f1 -d' ' > $(LIBNAME).exp; \
-   $$SHAREDCMD $$SHAREDFLAGS -o $(SHLIB) $(LIBNAME).o -L ../../.. -lcrypto)
+   $$SHAREDCMD $$SHAREDFLAGS -o $(SHLIB) $(LIBNAME).o -L ../../.. -lcrypto -lc)
 
 $(SHLIB).gnu:	$(LIB) install/librsaref.a
 		ALLSYMSFLAGS='--whole-archive' \
@@ -88,3 +93,27 @@ $(SHLIB).aix:	$(LIB) install/librsaref.a
 		SHAREDCMD='$(CC)'; \
 		$(LINK_SO)
 		touch $(SHLIB).aix
+
+depend:
+		sed -e '/^# DO NOT DELETE.*/,$$d' < Makefile > Makefile.tmp
+		echo '# DO NOT DELETE THIS LINE -- make depend depends on it.' >> Makefile.tmp
+		gcc -M $(CFLAGS) $(SRC) >> Makefile.tmp
+		perl ../../../util/clean-depend.pl < Makefile.tmp > Makefile.new
+		rm -f Makefile.tmp Makefile
+		mv Makefile.new Makefile
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.
+
+rsaref.o: ../../../include/openssl/asn1.h ../../../include/openssl/bio.h
+rsaref.o: ../../../include/openssl/bn.h ../../../include/openssl/crypto.h
+rsaref.o: ../../../include/openssl/dh.h ../../../include/openssl/dsa.h
+rsaref.o: ../../../include/openssl/e_os2.h ../../../include/openssl/engine.h
+rsaref.o: ../../../include/openssl/err.h ../../../include/openssl/lhash.h
+rsaref.o: ../../../include/openssl/opensslconf.h
+rsaref.o: ../../../include/openssl/opensslv.h
+rsaref.o: ../../../include/openssl/ossl_typ.h ../../../include/openssl/rand.h
+rsaref.o: ../../../include/openssl/rsa.h ../../../include/openssl/safestack.h
+rsaref.o: ../../../include/openssl/stack.h ../../../include/openssl/symhacks.h
+rsaref.o: ../../../include/openssl/ui.h rsaref.c rsaref_err.c rsaref_err.h
+rsaref.o: source/des.h source/global.h source/md2.h source/md5.h source/rsa.h
+rsaref.o: source/rsaref.h
