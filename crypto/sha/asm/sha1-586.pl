@@ -9,7 +9,7 @@
 #
 #		compared with original	compared with Intel cc
 #		assembler impl.		generated code
-# Pentium	-25%			+37%
+# Pentium	-16%			+48%
 # PIII/AMD	+8%			+16%
 # P4		+85%(!)			+45%
 #
@@ -104,19 +104,21 @@ sub BODY_00_15
 
 	&comment("00_15 $n");
 
-	&mov($tmp1,$a);
-	 &mov($f,$c);			# f to hold F_00_19(b,c,d)
+	&mov($f,$c);			# f to hold F_00_19(b,c,d)
+	 if ($n==0)  { &mov($tmp1,$a); }
+	 else        { &mov($a,$tmp1); }
 	&rotl($tmp1,5);			# tmp1=ROTATE(a,5)
 	 &xor($f,$d);
 	&and($f,$b);
-	 &rotr($b,2);			# b=ROTATE(b,30)
-	&add($tmp1,$e);			# tmp1+=e;
-	 &mov($e,&swtmp($n));		# e becomes volatile and
+	 &add($tmp1,$e);		# tmp1+=e;
+	&mov($e,&swtmp($n));		# e becomes volatile and
 	 				# is loaded with xi
-	&xor($f,$d);			# f holds F_00_19(b,c,d)
+	 &xor($f,$d);			# f holds F_00_19(b,c,d)
+	&rotr($b,2);			# b=ROTATE(b,30)
 	 &lea($tmp1,&DWP($K,$tmp1,$e,1));# tmp1+=K_00_19+xi
-	
-	&add($f,$tmp1);			# f+=tmp1
+
+	if ($n==15) { &add($f,$tmp1); }	# f+=tmp1
+	else        { &add($tmp1,$f); }
 	}
 
 sub BODY_16_19
@@ -132,15 +134,15 @@ sub BODY_16_19
 	 &xor($tmp1,$d);
 	&xor($f,&swtmp($n2));
 	 &and($tmp1,$b);		# tmp1 holds F_00_19(b,c,d)
-	&xor($f,&swtmp($n3));		# f holds xa^xb^xc^xd
-	 &rotr($b,2);			# b=ROTATE(b,30)
-	&xor($tmp1,$d);			# tmp1=F_00_19(b,c,d)
-	 &rotl($f,1);			# f=ROATE(f,1)
+	&rotr($b,2);			# b=ROTATE(b,30)
+	 &xor($f,&swtmp($n3));		# f holds xa^xb^xc^xd
+	&rotl($f,1);			# f=ROATE(f,1)
+	 &xor($tmp1,$d);		# tmp1=F_00_19(b,c,d)
 	&mov(&swtmp($n0),$f);		# xi=f
 	&lea($f,&DWP($K,$f,$e,1));	# f+=K_00_19+e
 	 &mov($e,$a);			# e becomes volatile
-	&add($f,$tmp1);			# f+=F_00_19(b,c,d)
-	 &rotl($e,5);			# e=ROTATE(a,5)
+	&rotl($e,5);			# e=ROTATE(a,5)
+	 &add($f,$tmp1);		# f+=F_00_19(b,c,d)
 	&add($f,$e);			# f+=ROTATE(a,5)
 	}
 
@@ -151,20 +153,20 @@ sub BODY_20_39
 	&comment("20_39 $n");
 	local($n0,$n1,$n2,$n3,$np)=&Na($n);
 
-	&mov($f,&swtmp($n0));		# f to hold Xupdate(xi,xa,xb,xc,xd)
-	 &mov($tmp1,$b);		# tmp1 to hold F_20_39(b,c,d)
-	&xor($f,&swtmp($n1));
-	 &rotr($b,2);			# b=ROTATE(b,30)
-	&xor($f,&swtmp($n2));
-	 &xor($tmp1,$c);
-	&xor($f,&swtmp($n3));		# f holds xa^xb^xc^xd
-	 &xor($tmp1,$d);		# tmp1 holds F_20_39(b,c,d)
+	&mov($tmp1,$b);			# tmp1 to hold F_20_39(b,c,d)
+	 &mov($f,&swtmp($n0));		# f to hold Xupdate(xi,xa,xb,xc,xd)
+	&rotr($b,2);			# b=ROTATE(b,30)
+	 &xor($f,&swtmp($n1));
+	&xor($tmp1,$c);
+	 &xor($f,&swtmp($n2));
+	&xor($tmp1,$d);			# tmp1 holds F_20_39(b,c,d)
+	 &xor($f,&swtmp($n3));		# f holds xa^xb^xc^xd
 	&rotl($f,1);			# f=ROTATE(f,1)
+	 &add($tmp1,$e);
 	&mov(&swtmp($n0),$f);		# xi=f
-	&lea($f,&DWP($K,$f,$e,1));	# f+=K_20_39+e
 	 &mov($e,$a);			# e becomes volatile
 	&rotl($e,5);			# e=ROTATE(a,5)
-	 &add($f,$tmp1);		# f+=F_20_39(b,c,d)
+	 &lea($f,&DWP($K,$f,$tmp1,1));	# f+=K_20_39+e
 	&add($f,$e);			# f+=ROTATE(a,5)
 	}
 
@@ -176,14 +178,17 @@ sub BODY_40_59
 	local($n0,$n1,$n2,$n3,$np)=&Na($n);
 
 	&mov($f,&swtmp($n0));		# f to hold Xupdate(xi,xa,xb,xc,xd)
+	 &mov($tmp1,&swtmp($n1));
+	&xor($f,$tmp1);
+	 &mov($tmp1,&swtmp($n2));
+	&xor($f,$tmp1);
+	 &mov($tmp1,&swtmp($n3));
+	&xor($f,$tmp1);			# f holds xa^xb^xc^xd
 	 &mov($tmp1,$b);		# tmp1 to hold F_40_59(b,c,d)
-	&xor($f,&swtmp($n1));
-	 &or($tmp1,$c);
-	&xor($f,&swtmp($n2));
-	 &and($tmp1,$d);
-	&xor($f,&swtmp($n3));		# f holds xa^xb^xc^xd
 	&rotl($f,1);			# f=ROTATE(f,1)
+	 &or($tmp1,$c);
 	&mov(&swtmp($n0),$f);		# xi=f
+	 &and($tmp1,$d);
 	&lea($f,&DWP($K,$f,$e,1));	# f+=K_40_59+e
 	 &mov($e,$b);			# e becomes volatile and is used
 					# to calculate F_40_59(b,c,d)
@@ -192,8 +197,8 @@ sub BODY_40_59
 	&or($tmp1,$e);			# tmp1 holds F_40_59(b,c,d)		
 	 &mov($e,$a);
 	&rotl($e,5);			# e=ROTATE(a,5)
-	&add($tmp1,$e);			# tmp1+=ROTATE(a,5)
-	&add($f,$tmp1);			# f+=tmp1;
+	 &add($f,$tmp1);		# f+=tmp1;
+	&add($f,$e);			# f+=ROTATE(a,5)
 	}
 
 sub BODY_60_79
