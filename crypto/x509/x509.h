@@ -171,24 +171,6 @@ typedef struct X509_extension_st
 	void (*ex_free)();		/* clear argp stuff */
 	} X509_EXTENSION;
 
-/* #if 1 */
-typedef struct x509_extension_method_st
-	{
-	int nid;
-	int data_type;
-	int pack_type;
-	void (*ex_clear)();
-	int (*ex_get_bool)();
-	int (*ex_set_bool)();
-	int (*ex_get_str)();
-	int (*ex_set_str)();
-	char *(*ex_get_struct)();
-	int (*ex_set_struct)();
-	int (*a2i)();
-	int (*i2a)();
-	} X509_EXTENSION_METHOD;
-/* #endif */
-
 typedef struct X509_req_info_st
 	{
 	ASN1_INTEGER *version;
@@ -828,11 +810,6 @@ X509_EXTENSION *X509v3_get_ext(STACK *x, int loc);
 X509_EXTENSION *X509v3_delete_ext(STACK *x, int loc);
 STACK *		X509v3_add_ext(STACK **x, X509_EXTENSION *ex, int loc);
 
-int		X509v3_data_type_by_OBJ(ASN1_OBJECT *obj);
-int		X509v3_data_type_by_NID(int nid);
-int		X509v3_pack_type_by_OBJ(ASN1_OBJECT *obj);
-int		X509v3_pack_type_by_NID(int nid);
-
 int		X509_get_ext_count(X509 *x);
 int		X509_get_ext_by_NID(X509 *x, int nid, int lastpos);
 int		X509_get_ext_by_OBJ(X509 *x,ASN1_OBJECT *obj,int lastpos);
@@ -1168,11 +1145,6 @@ X509_EXTENSION *X509v3_get_ext();
 X509_EXTENSION *X509v3_delete_ext();
 STACK *		X509v3_add_ext();
 
-int		X509v3_data_type_by_OBJ();
-int		X509v3_data_type_by_NID();
-int		X509v3_pack_type_by_OBJ();
-int		X509v3_pack_type_by_NID();
-
 int		X509_get_ext_count();
 int		X509_get_ext_by_NID();
 int		X509_get_ext_by_OBJ();
@@ -1255,9 +1227,6 @@ void EVP_PBE_cleanup();
 #define X509_F_DIR_CTRL					 102
 #define X509_F_GET_CERT_BY_SUBJECT			 103
 #define X509_F_X509V3_ADD_EXT				 104
-#define X509_F_X509V3_ADD_EXTENSION			 105
-#define X509_F_X509V3_PACK_STRING			 106
-#define X509_F_X509V3_UNPACK_STRING			 107
 #define X509_F_X509_CHECK_PRIVATE_KEY			 128
 #define X509_F_X509_EXTENSION_CREATE_BY_NID		 108
 #define X509_F_X509_EXTENSION_CREATE_BY_OBJ		 109
@@ -1296,7 +1265,6 @@ void EVP_PBE_cleanup();
 #define X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY		 108
 #define X509_R_UNKNOWN_KEY_TYPE				 117
 #define X509_R_UNKNOWN_NID				 109
-#define X509_R_UNKNOWN_STRING_TYPE			 110
 #define X509_R_UNSUPPORTED_ALGORITHM			 111
 #define X509_R_WRONG_LOOKUP_TYPE			 112
  

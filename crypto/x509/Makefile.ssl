@@ -25,17 +25,15 @@ LIB=$(TOP)/libcrypto.a
 LIBSRC=	x509_def.c x509_d2.c x509_r2x.c x509_cmp.c \
 	x509_obj.c x509_req.c x509_vfy.c \
 	x509_set.c x509rset.c $(ERRC).c \
-	x509name.c x509_v3.c x509_ext.c x509pack.c \
+	x509name.c x509_v3.c x509_ext.c \
 	x509type.c x509_lu.c x_all.c x509_txt.c \
-	by_file.c by_dir.c \
-	v3_net.c v3_x509.c
+	by_file.c by_dir.c 
 LIBOBJ= x509_def.o x509_d2.o x509_r2x.o x509_cmp.o \
 	x509_obj.o x509_req.o x509_vfy.o \
 	x509_set.o x509rset.o $(ERRC).o \
-	x509name.o x509_v3.o x509_ext.o x509pack.o \
+	x509name.o x509_v3.o x509_ext.o \
 	x509type.o x509_lu.o x_all.o x509_txt.o \
-	by_file.o by_dir.o \
-	v3_net.o v3_x509.o
+	by_file.o by_dir.o
 
 SRC= $(LIBSRC)
 
@@ -117,26 +115,6 @@ by_file.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 by_file.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
 by_file.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
 by_file.o: ../opensslv.h x509.h x509_vfy.h
-v3_net.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
-v3_net.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
-v3_net.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
-v3_net.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
-v3_net.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
-v3_net.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
-v3_net.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
-v3_net.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
-v3_net.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
-v3_net.o: ../opensslv.h x509.h x509_vfy.h
-v3_x509.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
-v3_x509.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
-v3_x509.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
-v3_x509.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
-v3_x509.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
-v3_x509.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
-v3_x509.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
-v3_x509.o: ../../include/ripemd.h ../../include/rsa.h ../../include/safestack.h
-v3_x509.o: ../../include/sha.h ../../include/stack.h ../cryptlib.h ../crypto.h
-v3_x509.o: ../opensslv.h x509.h x509_vfy.h
 x509_cmp.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 x509_cmp.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 x509_cmp.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
@@ -277,16 +255,6 @@ x509name.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
 x509name.o: ../../include/ripemd.h ../../include/rsa.h
 x509name.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
 x509name.o: ../cryptlib.h ../crypto.h ../opensslv.h x509.h x509_vfy.h
-x509pack.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
-x509pack.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
-x509pack.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h
-x509pack.o: ../../include/e_os.h ../../include/err.h ../../include/evp.h
-x509pack.o: ../../include/idea.h ../../include/md2.h ../../include/md5.h
-x509pack.o: ../../include/mdc2.h ../../include/objects.h ../../include/pkcs7.h
-x509pack.o: ../../include/rc2.h ../../include/rc4.h ../../include/rc5.h
-x509pack.o: ../../include/ripemd.h ../../include/rsa.h
-x509pack.o: ../../include/safestack.h ../../include/sha.h ../../include/stack.h
-x509pack.o: ../cryptlib.h ../crypto.h ../opensslv.h x509.h x509_vfy.h
 x509rset.o: ../../include/asn1.h ../../include/bio.h ../../include/blowfish.h
 x509rset.o: ../../include/bn.h ../../include/buffer.h ../../include/cast.h
 x509rset.o: ../../include/des.h ../../include/dh.h ../../include/dsa.h

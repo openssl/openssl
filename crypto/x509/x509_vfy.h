@@ -283,10 +283,6 @@ int X509_load_cert_file(X509_LOOKUP *ctx, char *file, int type);
 int X509_load_crl_file(X509_LOOKUP *ctx, char *file, int type);
 #endif
 
-void X509v3_cleanup_extensions(void );
-int X509v3_add_extension(X509_EXTENSION_METHOD *x);
-int X509v3_add_netscape_extensions(void );
-int X509v3_add_standard_extensions(void );
 
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method);
 void X509_LOOKUP_free(X509_LOOKUP *ctx);
@@ -348,11 +344,6 @@ int X509_LOOKUP_ctrl();
 int X509_load_cert_file();
 int X509_load_crl_file();
 #endif
-
-void X509v3_cleanup_extensions();
-int X509v3_add_extension();
-int X509v3_add_netscape_extensions();
-int X509v3_add_standard_extensions();
 
 X509_LOOKUP *X509_LOOKUP_new();
 void X509_LOOKUP_free();

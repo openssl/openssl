@@ -127,7 +127,7 @@ typedef struct v3_ext_ctx X509V3_CTX;
 #define X509V3_EXT_CTX_DEP	0x2
 #define X509V3_EXT_MULTILINE	0x4
 
-typedef struct {
+typedef struct BIT_STRING_BITNAME_st {
 int bitnum;
 char *lname;
 char *sname;
@@ -135,23 +135,23 @@ char *sname;
 
 typedef BIT_STRING_BITNAME ENUMERATED_NAMES;
 
-typedef struct {
+typedef struct BASIC_CONSTRAINTS_st {
 int ca;
 ASN1_INTEGER *pathlen;
 } BASIC_CONSTRAINTS;
 
-typedef struct {
+typedef struct AUTHORITY_KEYID_st {
 ASN1_OCTET_STRING *keyid;
 STACK *issuer;
 ASN1_INTEGER *serial;
 } AUTHORITY_KEYID;
 
-typedef struct {
+typedef struct PKEY_USAGE_PERIOD_st {
 ASN1_GENERALIZEDTIME *notBefore;
 ASN1_GENERALIZEDTIME *notAfter;
 } PKEY_USAGE_PERIOD;
 
-typedef struct {
+typedef struct GENERAL_NAME_st {
 
 #define GEN_OTHERNAME	(0|V_ASN1_CONTEXT_SPECIFIC)
 #define GEN_EMAIL	(1|V_ASN1_CONTEXT_SPECIFIC)
@@ -176,12 +176,12 @@ union {
 
 /* Strong extranet structures */
 
-typedef struct {
+typedef struct SXNET_st {
 	ASN1_INTEGER *version;
 	STACK /* SXNETID */ *ids;
 } SXNET;
 
-typedef struct {
+typedef struct SXNET_ID_st {
 	ASN1_INTEGER *zone;
 	ASN1_OCTET_STRING *user;
 } SXNETID;
