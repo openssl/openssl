@@ -183,9 +183,12 @@ int RAND_poll(void)
 				&& t.tv_usec != 0 && n < ENTROPY_NEEDED);
 
 			close(fd);
-			RAND_add(tmpbuf,sizeof tmpbuf,n);
-			memset(tmpbuf,0,n);
 			}
+		}
+	if (n > 0)
+		{
+		RAND_add(tmpbuf,sizeof tmpbuf,n);
+		memset(tmpbuf,0,n);
 		}
 #endif
 
