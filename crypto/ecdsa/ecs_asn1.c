@@ -355,7 +355,7 @@ ECDSA         *ECDSA_x9_62parameters2ecdsa(const X9_62_EC_PARAMETERS *params, EC
 {
 	int	  ok=0, reason=ERR_R_EC_LIB, tmp;
 	ECDSA	  *ret=NULL;
-	EC_METHOD *meth=NULL;
+	const EC_METHOD *meth=NULL;
 	BIGNUM	  *tmp_1=NULL, *tmp_2=NULL, *tmp_3=NULL;
 	EC_POINT  *point=NULL;
 
@@ -398,7 +398,7 @@ ECDSA         *ECDSA_x9_62parameters2ecdsa(const X9_62_EC_PARAMETERS *params, EC
 	else if (tmp == NID_X9_62_prime_field)
 	{
 		/* TODO : optimal method for the curve */
-		(const EC_METHOD *)meth = EC_GFp_mont_method();
+		meth = EC_GFp_mont_method();
 		if ((ret->group = EC_GROUP_new(meth)) == NULL) goto err;
 		if (params->fieldID->parameters->type != V_ASN1_INTEGER)
 			OPENSSL_ECDSA_ABORT(ECDSA_R_UNEXPECTED_ASN1_TYPE)
