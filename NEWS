@@ -16,7 +16,6 @@
 
       o Various SSL/TLS library bugfixes.
       o BIGNUM library fixes.
-      o Fix potential multi-threading race conditions in the PRNG.
 
   Changes between OpenSSL 0.9.6a and OpenSSL 0.9.6b:
 
