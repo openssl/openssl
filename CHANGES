@@ -4,9 +4,13 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Add d2i,i2d bio/fp functions for PrivateKey: these convert the
+     traditional format into an EVP_PKEY structure.
+     [Steve Henson]
+
   *) Add a password callback function PEM_cb() which either prompts for
      a password if usr_data is NULL or otherwise assumes it is a null
-     terminate password. Allow passwords to be passed on command line
+     terminated password. Allow passwords to be passed on command line
      environment or config files in a few more utilities.
      [Steve Henson]
 

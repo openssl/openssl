@@ -658,13 +658,15 @@ DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa);
 int i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa);
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa);
 int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
+#endif
 X509_SIG *d2i_PKCS8_fp(FILE *fp,X509_SIG **p8);
 int i2d_PKCS8_fp(FILE *fp,X509_SIG *p8);
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
 						PKCS8_PRIV_KEY_INFO **p8inf);
 int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,PKCS8_PRIV_KEY_INFO *p8inf);
 int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, EVP_PKEY *key);
-#endif
+int i2d_PrivateKey_fp(FILE *fp, EVP_PKEY *pkey);
+EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, int type, EVP_PKEY **a);
 #endif
 
 #ifdef HEADER_BIO_H
@@ -694,6 +696,8 @@ PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
 						PKCS8_PRIV_KEY_INFO **p8inf);
 int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,PKCS8_PRIV_KEY_INFO *p8inf);
 int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, EVP_PKEY *key);
+int i2d_PrivateKey_bio(BIO *bp, EVP_PKEY *pkey);
+EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, int type, EVP_PKEY **a);
 #endif
 
 X509 *X509_dup(X509 *x509);

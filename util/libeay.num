@@ -2152,3 +2152,7 @@ i2d_PKCS8PrivateKey_nid_bio             2176
 i2d_PKCS8PrivateKeyInfo_fp              2177
 i2d_PKCS8PrivateKeyInfo_bio             2178
 PEM_cb                                  2179
+i2d_PrivateKey_fp                       2180
+d2i_PrivateKey_bio                      2181
+d2i_PrivateKey_fp                       2182
+i2d_PrivateKey_bio                      2183
