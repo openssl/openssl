@@ -221,13 +221,16 @@ char **argv;
 			}
 		else if (strcmp(*argv,"-newkey") == 0)
 			{
+			int is_numeric;
+
 			if (--argc < 1) goto bad;
 			p= *(++argv);
-			if ((strncmp("rsa:",p,4) == 0) ||
-				((p[0] >= '0') && (p[0] <= '9')))
+			is_numeric = p[0] >= '0' && p[0] <= '9';
+			if (strncmp("rsa:",p,4) == 0 || is_numeric)
 				{
 				pkey_type=TYPE_RSA;
-				p+=4;
+				if(!is_numeric)
+				    p+=4;
 				newkey= atoi(p);
 				}
 			else
