@@ -135,7 +135,7 @@ install:
 		echo "installing $$i"; \
 		cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
 		chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
-		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
+		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
 	done
 
 lint:
