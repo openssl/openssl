@@ -186,8 +186,8 @@ $ LIB_DES = "set_key,ecb_enc,cbc_enc,"+ -
 	"ecb3_enc,cfb64enc,cfb64ede,cfb_enc,ofb64ede,"+ -
 	"enc_read,enc_writ,ofb64enc,"+ -
 	"ofb_enc,str2key,pcbc_enc,qud_cksm,rand_key,"+ -
-	"des_enc,fcrypt_b,read2pwd,"+ -
-	"fcrypt,xcbc_enc,read_pwd,rpc_enc,cbc_cksm,ede_cbcm_enc"
+	"des_enc,fcrypt_b,"+ -
+	"fcrypt,xcbc_enc,rpc_enc,cbc_cksm,ede_cbcm_enc"
 $ LIB_RC2 = "rc2_ecb,rc2_skey,rc2_cbc,rc2cfb64,rc2ofb64"
 $ LIB_RC4 = "rc4_skey,rc4_enc"
 $ LIB_RC5 = "rc5_skey,rc5_ecb,rc5_enc,rc5cfb64,rc5ofb64"
@@ -270,7 +270,7 @@ $ LIB_COMP = "comp_lib,"+ -
 $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
 	"ocsp_srv,ocsp_prn,ocsp_vfy,ocsp_err"
 $ LIB_UI_COMPAT = "ui_compat"
-$ LIB_UI = "ui_er,ui_lib,ui_openssl,"+LIB_UI_COMPAT
+$ LIB_UI = "ui_err,ui_lib,ui_openssl,"+LIB_UI_COMPAT
 $!
 $! Setup exceptional compilations
 $!
