@@ -592,6 +592,47 @@ EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass)
 	return(pkey);
 	}
 
+EVP_PKEY *load_pubkey(BIO *err, char *file, int format)
+	{
+	BIO *key=NULL;
+	EVP_PKEY *pkey=NULL;
+
+	if (file == NULL)
+		{
+		BIO_printf(err,"no keyfile specified\n");
+		goto end;
+		}
+	key=BIO_new(BIO_s_file());
+	if (key == NULL)
+		{
+		ERR_print_errors(err);
+		goto end;
+		}
+	if (BIO_read_filename(key,file) <= 0)
+		{
+		perror(file);
+		goto end;
+		}
+	if (format == FORMAT_ASN1)
+		{
+		pkey=d2i_PUBKEY_bio(key, NULL);
+		}
+	else if (format == FORMAT_PEM)
+		{
+		pkey=PEM_read_bio_PUBKEY(key,NULL,NULL,NULL);
+		}
+	else
+		{
+		BIO_printf(err,"bad input format specified for key\n");
+		goto end;
+		}
+ end:
+	if (key != NULL) BIO_free(key);
+	if (pkey == NULL)
+		BIO_printf(err,"unable to load Public Key\n");
+	return(pkey);
+	}
+
 STACK_OF(X509) *load_certs(BIO *err, char *file, int format)
 	{
 	BIO *certs;

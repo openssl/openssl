@@ -4,6 +4,11 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) New openssl application 'rsautl'. This utility can be
+     used for low level RSA operations. DER public key
+     BIO/fp routines also added.
+     [Steve Henson]
+
   *) New Configure entry and patches for compiling on QNX 4.
      [Andreas Schneider <andreas@ds3.etech.fh-hamburg.de>]
 

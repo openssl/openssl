@@ -14,6 +14,7 @@ extern int errstr_main(int argc,char *argv[]);
 extern int ca_main(int argc,char *argv[]);
 extern int crl_main(int argc,char *argv[]);
 extern int rsa_main(int argc,char *argv[]);
+extern int rsautl_main(int argc,char *argv[]);
 extern int dsa_main(int argc,char *argv[]);
 extern int dsaparam_main(int argc,char *argv[]);
 extern int x509_main(int argc,char *argv[]);
@@ -66,6 +67,9 @@ FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"crl",crl_main},
 #ifndef NO_RSA
 	{FUNC_TYPE_GENERAL,"rsa",rsa_main},
+#endif
+#ifndef NO_RSA
+	{FUNC_TYPE_GENERAL,"rsautl",rsautl_main},
 #endif
 #ifndef NO_DSA
 	{FUNC_TYPE_GENERAL,"dsa",dsa_main},

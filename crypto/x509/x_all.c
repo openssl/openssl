@@ -504,6 +504,17 @@ EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
 		(char *(*)())d2i_AutoPrivateKey, (fp),(unsigned char **)(a)));
 }
 
+int i2d_PUBKEY_fp(FILE *fp, EVP_PKEY *pkey)
+	{
+	return(ASN1_i2d_fp(i2d_PUBKEY,fp,(unsigned char *)pkey));
+	}
+
+EVP_PKEY *d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a)
+{
+	return((EVP_PKEY *)ASN1_d2i_fp((char *(*)())EVP_PKEY_new,
+		(char *(*)())d2i_PUBKEY, (fp),(unsigned char **)(a)));
+}
+
 #endif
 
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
@@ -540,4 +551,15 @@ EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
 	{
 	return((EVP_PKEY *)ASN1_d2i_bio((char *(*)())EVP_PKEY_new,
 		(char *(*)())d2i_AutoPrivateKey, (bp),(unsigned char **)(a)));
+	}
+
+int i2d_PUBKEY_bio(BIO *bp, EVP_PKEY *pkey)
+	{
+	return(ASN1_i2d_bio(i2d_PUBKEY,bp,(unsigned char *)pkey));
+	}
+
+EVP_PKEY *d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **a)
+	{
+	return((EVP_PKEY *)ASN1_d2i_bio((char *(*)())EVP_PKEY_new,
+		(char *(*)())d2i_PUBKEY, (bp),(unsigned char **)(a)));
 	}
