@@ -206,7 +206,7 @@ $cflags.=" -DNO_MD4"  if $no_md4;
 $cflags.=" -DNO_MD5"  if $no_md5;
 $cflags.=" -DNO_SHA"  if $no_sha;
 $cflags.=" -DNO_SHA1" if $no_sha1;
-$cflags.=" -DNO_RIPEMD" if $no_rmd160;
+$cflags.=" -DNO_RIPEMD" if $no_ripemd;
 $cflags.=" -DNO_MDC2" if $no_mdc2;
 $cflags.=" -DNO_BF"  if $no_bf;
 $cflags.=" -DNO_CAST" if $no_cast;
@@ -674,7 +674,7 @@ sub var_add
 	@a=grep(!/(^md2)|(_md2$)/,@a) if $no_md2;
 	@a=grep(!/(^md4)|(_md4$)/,@a) if $no_md4;
 	@a=grep(!/(^md5)|(_md5$)/,@a) if $no_md5;
-	@a=grep(!/(rmd)|(ripemd)/,@a) if $no_rmd160;
+	@a=grep(!/(rmd)|(ripemd)/,@a) if $no_ripemd;
 
 	@a=grep(!/(^d2i_r_)|(^i2d_r_)/,@a) if $no_rsa;
 	@a=grep(!/(^p_open$)|(^p_seal$)/,@a) if $no_rsa;
@@ -883,7 +883,7 @@ sub read_options
 
 	elsif (/^just-ssl$/)	{ $no_rc2=$no_idea=$no_des=$no_bf=$no_cast=1;
 				  $no_md2=$no_sha=$no_mdc2=$no_dsa=$no_dh=1;
-				  $no_ssl2=$no_err=$no_rmd160=$no_rc5=1; }
+				  $no_ssl2=$no_err=$no_ripemd=$no_rc5=1; }
 
 	elsif (/^rsaref$/)	{ $rsaref=1; }
 	elsif (/^gcc$/)		{ $gcc=1; }
