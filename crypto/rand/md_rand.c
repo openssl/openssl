@@ -255,7 +255,7 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 		l=time(NULL);
 		RAND_seed(&l,sizeof(l));
 
-/* #ifdef DEVRANDOM */
+#ifdef DEVRANDOM
 		/* 
 		 * Use a random entropy pool device.
 		 * Linux 1.3.x and FreeBSD-Current has 
@@ -275,7 +275,7 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 			RAND_seed(tmpbuf,32);
 			memset(tmpbuf,0,32);
 			}
-/* #endif */
+#endif
 #ifdef PURIFY
 		memset(state,0,STATE_SIZE);
 		memset(md,0,MD_DIGEST_LENGTH);
