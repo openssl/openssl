@@ -750,7 +750,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 	rk[2] = GETU32(userKey +  8);
 	rk[3] = GETU32(userKey + 12);
 	if (bits == 128) {
-		for (;;) {
+		while (1) {
 			temp  = rk[3];
 			rk[4] = rk[0] ^
 				(Te4[(temp >> 16) & 0xff] & 0xff000000) ^
@@ -770,7 +770,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 	rk[4] = GETU32(userKey + 16);
 	rk[5] = GETU32(userKey + 20);
 	if (bits == 192) {
-		for (;;) {
+		while (1) {
 			temp = rk[ 5];
 			rk[ 6] = rk[ 0] ^
 				(Te4[(temp >> 16) & 0xff] & 0xff000000) ^
@@ -792,7 +792,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 	rk[6] = GETU32(userKey + 24);
 	rk[7] = GETU32(userKey + 28);
 	if (bits == 256) {
-		for (;;) {
+		while (1) {
 			temp = rk[ 7];
 			rk[ 8] = rk[ 0] ^
 				(Te4[(temp >> 16) & 0xff] & 0xff000000) ^
