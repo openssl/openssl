@@ -939,7 +939,7 @@ long SSL_callback_ctrl(SSL *s, int cmd, void (*fp)())
 	switch(cmd)
 		{
 	case SSL_CTRL_SET_MSG_CALLBACK:
-		s->msg_callback = (void (*)(int write, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg))(fp);
+		s->msg_callback = (void (*)(int write_p, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg))(fp);
 		return 1;
 		
 	default:
@@ -1027,7 +1027,7 @@ long SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)())
 	switch(cmd)
 		{
 	case SSL_CTRL_SET_MSG_CALLBACK:
-		ctx->msg_callback = (void (*)(int write, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg))(fp);
+		ctx->msg_callback = (void (*)(int write_p, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg))(fp);
 		return 1;
 
 	default:

@@ -586,7 +586,7 @@ struct ssl_ctx_st
 	int read_ahead;
 
 	/* callback that allows applications to peek at protocol messages */
-	void (*msg_callback)(int write, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg);
+	void (*msg_callback)(int write_p, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg);
 	void *msg_callback_arg;
 
 	int verify_mode;
@@ -732,7 +732,7 @@ struct ssl_st
 	               	 	 * (for non-blocking reads) */
 
 	/* callback that allows applications to peek at protocol messages */
-	void (*msg_callback)(int write, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg);
+	void (*msg_callback)(int write_p, int version, int content_type, size_t len, const char *buf, SSL *ssl, void *arg);
 	void *msg_callback_arg;
 
 	int hit;		/* reusing a previous session */
