@@ -275,8 +275,8 @@ typedef struct cert_st
 
 	RSA *rsa_tmp;
 	DH *dh_tmp;
-	RSA *(*rsa_tmp_cb)();
-	DH *(*dh_tmp_cb)();
+	RSA *(*rsa_tmp_cb)(SSL *ssl,int export,int keysize);
+	DH *(*dh_tmp_cb)(SSL *ssl,int export,int keysize);
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 
 	STACK *cert_chain;
@@ -366,7 +366,7 @@ int ssl_undefined_function(SSL *s);
 X509 *ssl_get_server_send_cert(SSL *);
 EVP_PKEY *ssl_get_sign_pkey(SSL *,SSL_CIPHER *);
 int ssl_cert_type(X509 *x,EVP_PKEY *pkey);
-void ssl_set_cert_masks(CERT *c);
+void ssl_set_cert_masks(CERT *c,SSL_CIPHER *cipher);
 STACK *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
 

@@ -1131,46 +1131,49 @@ int (*cb)();
 	X509_STORE_set_verify_cb_func(ctx->cert_store,cb);
 	}
 
-void ssl_set_cert_masks(c)
+void ssl_set_cert_masks(c,cipher)
 CERT *c;
+SSL_CIPHER *cipher;
 	{
 	CERT_PKEY *cpk;
 	int rsa_enc,rsa_tmp,rsa_sign,dh_tmp,dh_rsa,dh_dsa,dsa_sign;
 	int rsa_enc_export,dh_rsa_export,dh_dsa_export;
-	int rsa_tmp_export,dh_tmp_export;
+	int rsa_tmp_export,dh_tmp_export,kl;
 	unsigned long mask,emask;
 
 	if ((c == NULL) || (c->valid)) return;
 
+	kl=SSL_C_EXPORT_PKEYLENGTH(cipher);
+
 #ifndef NO_RSA
-	rsa_tmp=((c->rsa_tmp != NULL) || (c->rsa_tmp_cb != NULL))?1:0;
-	rsa_tmp_export=((c->rsa_tmp_cb != NULL) ||
-		(rsa_tmp && (RSA_size(c->rsa_tmp)*8 <= 512)))?1:0;
+	rsa_tmp=(c->rsa_tmp != NULL || c->rsa_tmp_cb != NULL);
+	rsa_tmp_export=(c->rsa_tmp_cb != NULL ||
+		(rsa_tmp && RSA_size(c->rsa_tmp)*8 <= kl));
 #else
 	rsa_tmp=rsa_tmp_export=0;
 #endif
 #ifndef NO_DH
-	dh_tmp=((c->dh_tmp != NULL) || (c->dh_tmp_cb != NULL))?1:0;
-	dh_tmp_export=((c->dh_tmp_cb != NULL) ||
-		(dh_tmp && (DH_size(c->dh_tmp)*8 <= 512)))?1:0;
+	dh_tmp=(c->dh_tmp != NULL || c->dh_tmp_cb != NULL);
+	dh_tmp_export=(c->dh_tmp_cb != NULL ||
+		(dh_tmp && DH_size(c->dh_tmp)*8 <= kl));
 #else
 	dh_tmp=dh_tmp_export=0;
 #endif
 
 	cpk= &(c->pkeys[SSL_PKEY_RSA_ENC]);
-	rsa_enc= ((cpk->x509 != NULL) && (cpk->privatekey != NULL))?1:0;
-	rsa_enc_export=(rsa_enc && (EVP_PKEY_size(cpk->privatekey)*8 <= 512))?1:0;
+	rsa_enc= (cpk->x509 != NULL && cpk->privatekey != NULL);
+	rsa_enc_export=(rsa_enc && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
 	cpk= &(c->pkeys[SSL_PKEY_RSA_SIGN]);
-	rsa_sign=((cpk->x509 != NULL) && (cpk->privatekey != NULL))?1:0;
+	rsa_sign=(cpk->x509 != NULL && cpk->privatekey != NULL);
 	cpk= &(c->pkeys[SSL_PKEY_DSA_SIGN]);
-	dsa_sign=((cpk->x509 != NULL) && (cpk->privatekey != NULL))?1:0;
+	dsa_sign=(cpk->x509 != NULL && cpk->privatekey != NULL);
 	cpk= &(c->pkeys[SSL_PKEY_DH_RSA]);
-	dh_rsa=  ((cpk->x509 != NULL) && (cpk->privatekey != NULL))?1:0;
-	dh_rsa_export=(dh_rsa && (EVP_PKEY_size(cpk->privatekey)*8 <= 512))?1:0;
+	dh_rsa=  (cpk->x509 != NULL && cpk->privatekey != NULL);
+	dh_rsa_export=(dh_rsa && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
 	cpk= &(c->pkeys[SSL_PKEY_DH_DSA]);
 /* FIX THIS EAY EAY EAY */
-	dh_dsa=  ((cpk->x509 != NULL) && (cpk->privatekey != NULL))?1:0;
-	dh_dsa_export=(dh_dsa && (EVP_PKEY_size(cpk->privatekey)*8 <= 512))?1:0;
+	dh_dsa=  (cpk->x509 != NULL && cpk->privatekey != NULL);
+	dh_dsa_export=(dh_dsa && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
 
 	mask=0;
 	emask=0;
@@ -1236,13 +1239,13 @@ SSL *s;
 	{
 	unsigned long alg,mask,kalg;
 	CERT *c;
-	int i,_export;
+	int i,export;
 
 	c=s->cert;
-	ssl_set_cert_masks(c);
+	ssl_set_cert_masks(c,s->s3->tmp.new_cipher);
 	alg=s->s3->tmp.new_cipher->algorithms;
-	_export=SSL_IS_EXPORT(alg);
-	mask=_export?c->export_mask:c->mask;
+	export=SSL_IS_EXPORT(alg);
+	mask=export?c->export_mask:c->mask;
 	kalg=alg&(SSL_MKEY_MASK|SSL_AUTH_MASK);
 
 	if 	(kalg & SSL_kDHr)
@@ -1888,10 +1891,12 @@ SSL *s;
 	return(s->rwstate);
 	}
 
-void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,RSA *(*cb)(SSL *ssl,int export))
+void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,RSA *(*cb)(SSL *ssl,int export,
+							  int keylength))
     { SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_RSA_CB,0,(char *)cb); }
 
-void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int export))
+void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int export,
+							int keylength))
     { SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,0,(char *)dh); }
 
 #if defined(_WINDLL) && defined(WIN16)

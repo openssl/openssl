@@ -1022,13 +1022,12 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void );
 #define SSL_CTX_set_read_ahead(ctx,m) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_READ_AHEAD,0,NULL)
 
-/* For the next 2, the callbacks are 
- * RSA *tmp_rsa_cb(SSL *ssl,int export)
- * DH *tmp_dh_cb(SSL *ssl,int export)
- */
+     /* NB: the keylength is only applicable when export is true */
 void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,
-				  RSA *(*cb)(SSL *ssl,int export));
-void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int export));
+				  RSA *(*cb)(SSL *ssl,int export,
+					     int keylength));
+void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
+				 DH *(*dh)(SSL *ssl,int export,int keylength));
 
 #ifdef HEADER_COMP_H
 int SSL_COMP_add_compression_method(int id,COMP_METHOD *cm);

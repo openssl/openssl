@@ -75,7 +75,7 @@
 
 #ifndef NOPROTO
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
-static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export);
+static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export,int keylength);
 #ifndef NO_DSA
 static DH *get_dh512(void);
 #endif
@@ -730,18 +730,19 @@ static DH *get_dh512()
 	}
 #endif
 
-static RSA MS_CALLBACK *tmp_rsa_cb(s,export)
+static RSA MS_CALLBACK *tmp_rsa_cb(s,export,keylength)
 SSL *s;
 int export;
+int keylength;
 	{
 	static RSA *rsa_tmp=NULL;
 
 	if (rsa_tmp == NULL)
 		{
-		BIO_printf(bio_err,"Generating temp (512 bit) RSA key...");
+		BIO_printf(bio_err,"Generating temp (%d bit) RSA key...",keylength);
 		BIO_flush(bio_err);
 #ifndef NO_RSA
-		rsa_tmp=RSA_generate_key(512,RSA_F4,NULL,NULL);
+		rsa_tmp=RSA_generate_key(keylength,RSA_F4,NULL,NULL);
 #endif
 		BIO_printf(bio_err,"\n");
 		BIO_flush(bio_err);

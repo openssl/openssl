@@ -752,15 +752,16 @@ STACK *have,*pref;
 	else
 		cert=s->ctx->default_cert;
 
-	ssl_set_cert_masks(cert);
-	mask=cert->mask;
-	emask=cert->export_mask;
-			
 	sk_set_cmp_func(pref,ssl_cipher_ptr_id_cmp);
 
 	for (i=0; i<sk_num(have); i++)
 		{
 		c=(SSL_CIPHER *)sk_value(have,i);
+
+		ssl_set_cert_masks(cert,c);
+		mask=cert->mask;
+		emask=cert->export_mask;
+			
 		alg=c->algorithms&(SSL_MKEY_MASK|SSL_AUTH_MASK);
 		if (SSL_IS_EXPORT(alg))
 			{

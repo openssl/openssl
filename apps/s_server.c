@@ -75,7 +75,7 @@
 #include "s_apps.h"
 
 #ifndef NOPROTO
-static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export);
+static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export,int keylength);
 static int sv_body(char *hostname, int s);
 static int www_body(char *hostname, int s);
 static void close_accept_socket(void );
@@ -1211,9 +1211,10 @@ err:
 	return(ret);
 	}
 
-static RSA MS_CALLBACK *tmp_rsa_cb(s,export)
+static RSA MS_CALLBACK *tmp_rsa_cb(s,export,keylength)
 SSL *s;
 int export;
+int keylength;
 	{
 	static RSA *rsa_tmp=NULL;
 
@@ -1221,11 +1222,11 @@ int export;
 		{
 		if (!s_quiet)
 			{
-			BIO_printf(bio_err,"Generating temp (512 bit) RSA key...");
+			BIO_printf(bio_err,"Generating temp (%d bit) RSA key...",keylength);
 			BIO_flush(bio_err);
 			}
 #ifndef NO_RSA
-		rsa_tmp=RSA_generate_key(512,RSA_F4,NULL,NULL);
+		rsa_tmp=RSA_generate_key(keylength,RSA_F4,NULL,NULL);
 #endif
 		if (!s_quiet)
 			{

@@ -945,7 +945,8 @@ SSL *s;
 			if ((rsa == NULL) && (s->ctx->default_cert->rsa_tmp_cb != NULL))
 				{
 				rsa=s->ctx->default_cert->rsa_tmp_cb(s,
-					!SSL_C_IS_EXPORT(s->s3->tmp.new_cipher));
+				      !SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
+				      SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher));
 				CRYPTO_add(&rsa->references,1,CRYPTO_LOCK_RSA);
 				cert->rsa_tmp=rsa;
 				}
@@ -967,7 +968,8 @@ SSL *s;
 			dhp=cert->dh_tmp;
 			if ((dhp == NULL) && (cert->dh_tmp_cb != NULL))
 				dhp=cert->dh_tmp_cb(s,
-					!SSL_C_IS_EXPORT(s->s3->tmp.new_cipher));
+				      !SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
+				      SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher));
 			if (dhp == NULL)
 				{
 				al=SSL_AD_HANDSHAKE_FAILURE;
