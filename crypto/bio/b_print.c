@@ -109,7 +109,7 @@
  * o ...                                       (for OpenSSL)
  */
 
-#if HAVE_LONG_DOUBLE
+#ifdef HAVE_LONG_DOUBLE
 #define LDOUBLE long double
 #else
 #define LDOUBLE double
