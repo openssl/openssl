@@ -92,7 +92,6 @@ int ECDSA_generate_key(ECDSA *ecdsa)
 	else
 		pub_key = ecdsa->pub_key;
 
-	if (!EC_POINT_copy(pub_key, EC_GROUP_get0_generator(ecdsa->group))) goto err;
 	if (!EC_POINT_mul(ecdsa->group, pub_key, priv_key, NULL, NULL, ctx)) goto err;
 
 	ecdsa->priv_key = priv_key;
@@ -130,7 +129,6 @@ int ECDSA_check_key(ECDSA *ecdsa)
 	if (ecdsa->priv_key)
 	{
 		if (BN_cmp(ecdsa->priv_key,order) >= 0) goto err;
-		if (!EC_POINT_copy(point,EC_GROUP_get0_generator(ecdsa->group))) goto err;
 		if (!EC_POINT_mul(ecdsa->group,point,ecdsa->priv_key,NULL,NULL,ctx)) goto err;
 		if (EC_POINT_cmp(ecdsa->group,point,ecdsa->pub_key,ctx) != 0) goto err;
 	}

@@ -159,11 +159,6 @@ static int ecdsa_sign_setup(ECDSA *ecdsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM
 		reason = ERR_R_EC_LIB;
 		goto err;
 	}
-	if (!EC_POINT_copy(tmp_point,EC_GROUP_get0_generator(ecdsa->group)))
-	{
-		reason = ERR_R_EC_LIB;
-		goto err;
-	}
 	if (!EC_GROUP_get_order(ecdsa->group,order,ctx))
 	{
 		reason = ERR_R_EC_LIB;
@@ -351,11 +346,6 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len, ECDSA_SIG *s
 	if (!BN_mod_mul(u2,sig->r,u2,order,ctx)) goto err;
 
 	if ((point = EC_POINT_new(ecdsa->group)) == NULL)
-	{
-		reason = ERR_R_EC_LIB;
-		goto err;
-	}
-	if (!EC_POINT_copy(point,EC_GROUP_get0_generator(ecdsa->group)))
 	{
 		reason = ERR_R_EC_LIB;
 		goto err;
