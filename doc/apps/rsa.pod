@@ -70,9 +70,9 @@ read the input file password from the environment variable B<var>.
 
 =item B<-out filename>
 
-This specifies the output filename to write a key to or standard output by
-is not specified. If any encryption options are set then a pass phrase will be
-prompted for. The output filename should B<not> be the same as the input
+This specifies the output filename to write a key to or standard output if this
+option is not specified. If any encryption options are set then a pass phrase
+will be prompted for. The output filename should B<not> be the same as the input
 filename.
 
 =item B<-passout password>

@@ -55,8 +55,8 @@ the TCP port to listen on for connections. If not specified 4433 is used.
 
 =item B<-context id>
 
-sets the SSL context id. If a client certificate is being requested then
-this option must be set. It can be given any string value.
+sets the SSL context id. It can be given any string value. If this option
+is not present a default value will be used.
 
 =item B<-cert certname>
 
