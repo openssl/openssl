@@ -320,7 +320,8 @@ static CONF_MODULE *module_find(char *name)
 /* initialize a module */
 static int module_init(CONF_MODULE *pmod, char *name, char *value, CONF *cnf)
 	{
-	int ret, init_called = 0;
+	int ret = 1;
+	int init_called = 0;
 	CONF_IMODULE *imod = NULL;
 
 	/* Otherwise add initialized module to list */
