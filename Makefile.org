@@ -171,7 +171,7 @@ BASENAME=       openssl
 NAME=           $(BASENAME)-$(VERSION)
 TARFILE=        $(NAME).tar
 WTARFILE=       $(NAME)-win.tar
-EXHEADER=       e_os.h
+EXHEADER=       e_os.h e_os2.h
 HEADER=         e_os.h
 
 all: Makefile.ssl
@@ -318,6 +318,11 @@ install: all
 	@-mkdir -p $(INSTALL_PREFIX)$(OPENSSLDIR)/certs 2>/dev/null
 	@-mkdir -p $(INSTALL_PREFIX)$(OPENSSLDIR)/private 2>/dev/null
 	@-mkdir -p $(INSTALL_PREFIX)$(OPENSSLDIR)/lib 2>/dev/null
+	@for i in $(EXHEADER) ;\
+	do \
+	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
+	done;
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i; echo "installing $$i..."; \
