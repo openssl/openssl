@@ -398,7 +398,7 @@ if (export_cert) {
 			cpass, -1, NULL, 0, iter, p8);
 	PKCS8_PRIV_KEY_INFO_free(p8);
         if (name) PKCS12_add_friendlyname (bag, name, -1);
-	if(!pmatch) PKCS12_add_localkeyid (bag, keyid, keyidlen);
+	if(pmatch) PKCS12_add_localkeyid (bag, keyid, keyidlen);
 	bags = sk_new(NULL);
 	sk_push (bags, (char *)bag);
 	/* Turn it into unencrypted safe bag */
