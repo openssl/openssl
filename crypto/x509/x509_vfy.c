@@ -674,7 +674,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 				ok=(*cb)(0,ctx);
 				if (!ok) goto end;
 				}
-			if (X509_verify(xs,pkey) <= 0)
+			else if (X509_verify(xs,pkey) <= 0)
 				/* XXX  For the final trusted self-signed cert,
 				 * this is a waste of time.  That check should
 				 * optional so that e.g. 'openssl x509' can be
