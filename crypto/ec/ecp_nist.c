@@ -72,7 +72,7 @@ const EC_METHOD *EC_GFp_nist_method(void)
 		ec_GFp_simple_group_init,
 		ec_GFp_simple_group_finish,
 		ec_GFp_simple_group_clear_finish,
-		ec_GFp_simple_group_copy,
+		ec_GFp_nist_group_copy,
 		ec_GFp_nist_group_set_curve,
 		ec_GFp_simple_group_get_curve,
 		ec_GFp_simple_group_get_degree,
@@ -114,6 +114,12 @@ const EC_METHOD *EC_GFp_nist_method(void)
 #define	NO_32_BIT_TYPE
 #endif
 
+int ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src)
+	{
+	dest->field_mod_func = src->field_mod_func;
+
+	return ec_GFp_simple_group_copy(dest, src);
+	}
 
 int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 	const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
