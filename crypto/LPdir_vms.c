@@ -1,4 +1,4 @@
-/* $LP: LPlib/source/LPdir_vms.c,v 1.17 2004/06/30 11:36:43 _cvs_levitte Exp $ */
+/* $LP: LPlib/source/LPdir_vms.c,v 1.19 2004/07/11 20:17:45 _cvs_levitte Exp $ */
 /*
  * Copyright (c) 2004, Richard Levitte <richard@levitte.org>
  * All rights reserved.
@@ -41,6 +41,11 @@
 #include "LPdir.h"
 #endif
 
+/* Because some compiler options hide this macor */
+#ifndef EVMSERR
+#define EVMSERR		65535  /* error for non-translatable VMS errors */
+#endif
+
 struct LP_dir_context_st
 {
   unsigned long VMS_context;
@@ -60,7 +65,7 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
   int status;
   char *p, *r;
   size_t l;
-  const unsigned long flags = 0;
+  unsigned long flags = 0;
 #ifdef NAML$C_MAXRSS
   flags |= LIB$M_FIL_LONG_NAMES;
 #endif
