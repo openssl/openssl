@@ -322,7 +322,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 		{
 		if (words > (INT_MAX/(4*BN_BITS2)))
 			{
-			BNerr(BN_F_BN_EXPAND2,BN_R_TOO_LARGE);
+			BNerr(BN_F_BN_EXPAND2,BN_R_BIGNUM_TOO_LONG);
 			return NULL;
 			}
 			

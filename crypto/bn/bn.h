@@ -498,6 +498,7 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int num);
 /* Reason codes. */
 #define BN_R_ARG2_LT_ARG3				 100
 #define BN_R_BAD_RECIPROCAL				 101
+#define BN_R_BIGNUM_TOO_LONG				 114
 #define BN_R_CALLED_WITH_EVEN_MODULUS			 102
 #define BN_R_DIV_BY_ZERO				 103
 #define BN_R_ENCODING_ERROR				 104
@@ -505,7 +506,6 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int num);
 #define BN_R_INVALID_LENGTH				 106
 #define BN_R_NOT_INITIALIZED				 107
 #define BN_R_NO_INVERSE					 108
-#define BN_R_TOO_LARGE					 114
 #define BN_R_TOO_MANY_TEMPORARY_VARIABLES		 109
 
 #ifdef  __cplusplus
