@@ -288,7 +288,6 @@ EOF
 }
 #endif
 #endif
-
 EOF
 	close OUT;
 

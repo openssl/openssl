@@ -74,7 +74,10 @@ const EC_METHOD *EC_GFp_simple_method(void)
 		ec_GFp_simple_point_finish,
 		ec_GFp_simple_point_clear_finish,
 		ec_GFp_simple_point_copy,
-		/* TODO: 'set' and 'get' functions for EC_POINTs */
+		ec_GFp_simple_point_set_to_infinity,
+		ec_GFp_simple_point_set_affine_coordinates_GFp,
+		ec_GFp_simple_point_get_affine_coordinates_GFp,
+		/* TODO: other 'set' and 'get' functions for EC_POINTs */
 		ec_GFp_simple_point2oct,
 		ec_GFp_simple_oct2point,
 		ec_GFp_simple_add,
@@ -117,8 +120,8 @@ int ec_GFp_simple_group_set_curve_GFp(EC_GROUP *group,
 		if (ctx == NULL)
 			return 0;
 		}
-	BN_CTX_start(ctx);
 
+	BN_CTX_start(ctx);
 	tmp_a = BN_CTX_get(ctx);
 	if (tmp_a == NULL) goto err;
 
@@ -285,17 +288,404 @@ int ec_GFp_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
 	}
 
 
-/* TODO: 'set' and 'get' functions for EC_POINTs */
+int ec_GFp_simple_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
+	{
+	point->Z_is_one = 0;
+	return (BN_zero(&point->Z));
+	}
+
+
+int ec_GFp_simple_point_set_affine_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
+	const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx)
+	{
+	BN_CTX *new_ctx = NULL;
+	int ret = 0;
+
+	if (!BN_copy(&point->X, x)) goto err;
+	if (!BN_copy(&point->Y, y)) goto err;
+	if (!BN_one(&point->Z)) goto err;
+
+	if (group->meth->field_encode)
+		{
+		if (ctx == NULL)
+			{
+			ctx = new_ctx = BN_CTX_new();
+			if (ctx == NULL)
+				return 0;
+			}
+		
+		if (!group->meth->field_encode(group, &point->X, &point->X, ctx)) goto err;
+		if (!group->meth->field_encode(group, &point->Y, &point->Y, ctx)) goto err;
+		if (!group->meth->field_encode(group, &point->Z, &point->Z, ctx)) goto err;
+		}
+
+	point->Z_is_one = 1;
+	
+ err:
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	return ret;
+	}
+
+
+int ec_GFp_simple_point_get_affine_coordinates_GFp(const EC_GROUP *group, const EC_POINT *point,
+	BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
+	{
+	BN_CTX *new_ctx = NULL;
+	BIGNUM *X, *Y, *Z, *Z_1, *Z_2, *Z_3;
+	const BIGNUM *X_, *Y_, *Z_;
+	int ret = 0;
+
+	if (EC_POINT_is_at_infinity(group, point))
+		{
+		ECerr(EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES_GFP, EC_R_POINT_AT_INFINITY);
+		return 0;
+		}
+
+	if (ctx == NULL)
+		{
+		ctx = new_ctx = BN_CTX_new();
+		if (ctx == NULL)
+			return 0;
+		}
+
+	BN_CTX_start(ctx);
+	X = BN_CTX_get(ctx);
+	Y = BN_CTX_get(ctx);
+	Z = BN_CTX_get(ctx);
+	Z_1 = BN_CTX_get(ctx);
+	Z_2 = BN_CTX_get(ctx);
+	Z_3 = BN_CTX_get(ctx);
+	if (Z_3 == NULL) goto err;
+
+	/* transform  (X, Y, Z)  into  (x, y) := (X/Z^2, Y/Z^3) */
+	
+	if (group->meth->field_decode)
+		{
+		if (!group->meth->field_decode(group, X, &point->X, ctx)) goto err;
+		if (!group->meth->field_decode(group, Y, &point->Y, ctx)) goto err;
+		if (!group->meth->field_decode(group, Z, &point->Z, ctx)) goto err;
+		X_ = X; Y_ = Y;	Z_ = Z;
+		}
+	else
+		{
+		X_ = &point->X;
+		Y_ = &point->Y;
+		Z_ = &point->Z;
+		}
+	
+	if (BN_is_one(Z_))
+		{
+		if (!BN_copy(x, X_)) goto err;
+		if (!BN_copy(y, Y_)) goto err;
+		}
+	else
+		{
+		if (!BN_mod_inverse(Z_1, Z_, &group->field, ctx))
+			{
+			ECerr(EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES_GFP, ERR_R_BN_LIB);
+			goto err;
+			}
+		if (!BN_mod_sqr(Z_2, Z_1, &group->field, ctx)) goto err;
+		if (!BN_mod_mul(Z_3, Z_2, Z_1, &group->field, ctx)) goto err;
+	
+		if (!BN_mod_mul(x, X_, Z_2, &group->field, ctx)) goto err;
+		if (!BN_mod_mul(y, Y_, Z_3, &group->field, ctx)) goto err;
+		}
+
+	ret = 1;
+
+ err:
+	BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	return ret;
+	}
+
+
+/* TODO: other 'set' and 'get' functions for EC_POINTs */
 
 
 size_t ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point, point_conversion_form_t form,
-	unsigned char *buf, size_t len, BN_CTX *ctx);
-/* TODO */
+	unsigned char *buf, size_t len, BN_CTX *ctx)
+	{
+	size_t ret;
+	BN_CTX *new_ctx = NULL;
+	int used_ctx = 0;
+	BIGNUM *x, *y;
+	size_t field_len, i, skip;
+
+	if ((form != POINT_CONVERSION_COMPRESSED)
+		&& (form != POINT_CONVERSION_UNCOMPRESSED)
+		&& (form != POINT_CONVERSION_HYBRID))
+		{
+		ECerr(EC_F_EC_GFP_SIMPLE_POINT2OCT, EC_R_INVALID_FORM);
+		goto err;
+		}
+
+	if (EC_POINT_is_at_infinity(group, point))
+		{
+		/* encodes to a single 0 octet */
+		if (buf != NULL)
+			{
+			if (len < 1)
+				{
+				ECerr(EC_F_EC_GFP_SIMPLE_POINT2OCT, EC_R_BUFFER_TOO_SMALL);
+				return 0;
+				}
+			buf[0] = 0;
+			}
+		return 1;
+		}
+
+
+	/* ret := required output buffer length */
+	field_len = BN_num_bytes(&group->field);
+	ret = (form == POINT_CONVERSION_COMPRESSED) ? 1 + field_len : 1 + 2*field_len;
+
+	/* if 'buf' is NULL, just return required length */
+	if (buf != NULL)
+		{
+		if (len < ret)
+			{
+			ECerr(EC_F_EC_GFP_SIMPLE_POINT2OCT, EC_R_BUFFER_TOO_SMALL);
+			goto err;
+			}
+
+		if (ctx == NULL)
+			{
+			ctx = new_ctx = BN_CTX_new();
+			if (ctx == NULL)
+				return 0;
+			}
+
+		BN_CTX_start(ctx);
+		used_ctx = 1;
+		x = BN_CTX_get(ctx);
+		y = BN_CTX_get(ctx);
+		if (y == NULL) goto err;
+
+		if (!EC_POINT_get_affine_coordinates_GFp(group, point, x, y, ctx)) goto err;
+
+		if ((form == POINT_CONVERSION_COMPRESSED || form == POINT_CONVERSION_HYBRID) && BN_is_bit_set(y, 0))
+			buf[0] = form + 1;
+		else
+			buf[0] = form;
+	
+		i = 1;
+		
+		skip = field_len - BN_num_bytes(x);
+		if (skip > field_len)
+			{
+			ECerr(EC_F_EC_GFP_SIMPLE_POINT2OCT, ERR_R_INTERNAL_ERROR);
+			goto err;
+			}
+		while (skip > 0)
+			{
+			buf[i++] = 0;
+			skip--;
+			}
+		skip = BN_bn2bin(x, buf + i);
+		i += skip;
+		if (i != 1 + field_len)
+			{
+			ECerr(EC_F_EC_GFP_SIMPLE_POINT2OCT, ERR_R_INTERNAL_ERROR);
+			goto err;
+			}
+
+		if (form == POINT_CONVERSION_UNCOMPRESSED || form == POINT_CONVERSION_HYBRID)
+			{
+			skip = field_len - BN_num_bytes(y);
+			if (skip > field_len)
+				{
+				ECerr(EC_F_EC_GFP_SIMPLE_POINT2OCT, ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
+			while (skip > 0)
+				{
+				buf[i++] = 0;
+				skip--;
+				}
+			skip = BN_bn2bin(y, buf + i);
+			i += skip;
+			}
+
+		if (i != ret)
+			{
+			ECerr(EC_F_EC_GFP_SIMPLE_POINT2OCT, ERR_R_INTERNAL_ERROR);
+			goto err;
+			}
+		}
+	
+	if (used_ctx)
+		BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	return ret;
+
+ err:
+	if (used_ctx)
+		BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	return 0;
+	}
 
 
 int ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
-	const unsigned char *buf, size_t len, BN_CTX *);
-/* TODO */
+	const unsigned char *buf, size_t len, BN_CTX *ctx)
+	{
+	point_conversion_form_t form;
+	int y_bit;
+	BN_CTX *new_ctx = NULL;
+	BIGNUM *x, *y;
+	size_t field_len, enc_len;
+	int ret = 0;
+
+	if (len <= 0)
+		{
+		ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_BUFFER_TOO_SMALL);
+		return 0;
+		}
+	form = buf[0];
+	y_bit = form & 1;
+	form = form & ~1;
+	if ((form != 0)	&& (form != POINT_CONVERSION_COMPRESSED)
+		&& (form != POINT_CONVERSION_UNCOMPRESSED)
+		&& (form != POINT_CONVERSION_HYBRID))
+		{
+		ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+		return 0;
+		}
+	if ((form == 0 || form == POINT_CONVERSION_UNCOMPRESSED) && y_bit)
+		{
+		ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+		return 0;
+		}
+
+	if (form == 0)
+		{
+		if (len != 1)
+			{
+			ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+			return 0;
+			}
+
+		return EC_POINT_set_to_infinity(group, point);
+		}
+	
+	field_len = BN_num_bytes(&group->field);
+	enc_len = (form == POINT_CONVERSION_COMPRESSED) ? 1 + field_len : 1 + 2*field_len;
+
+	if (len != enc_len)
+		{
+		ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+		return 0;
+		}
+
+	if (ctx == NULL)
+		{
+		ctx = new_ctx = BN_CTX_new();
+		if (ctx == NULL)
+			return 0;
+		}
+
+	BN_CTX_start(ctx);
+	x = BN_CTX_get(ctx);
+	y = BN_CTX_get(ctx);
+	if (y == NULL) goto err;
+
+	if (!BN_bin2bn(buf + 1, field_len, x)) goto err;
+	if (BN_ucmp(x, &group->field) >= 0)
+		{
+		ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+		goto err;
+		}
+
+	if (form != POINT_CONVERSION_COMPRESSED)
+		{
+		if (!BN_bin2bn(buf + 1 + field_len, field_len, y)) goto err;
+		if (BN_ucmp(y, &group->field) >= 0)
+			{
+			ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+			goto err;
+			}
+		if (form == POINT_CONVERSION_HYBRID)
+			{
+			if (y_bit != BN_is_bit_set(y, 0))
+				{
+				ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+				goto err;
+				}
+			}
+		}
+
+	if (form == POINT_CONVERSION_COMPRESSED)
+		{
+		/* Recover y.  We have a Weierstrass equation
+		 *     y^2 = x^3 + a*x + b,
+		 * so  y  is one of the square roots of  x^3 + a*x + b.
+		 */
+
+		BIGNUM *tmp1, *tmp2;
+		
+		tmp1 = BN_CTX_get(ctx);
+		tmp2 = BN_CTX_get(ctx);
+		if (tmp2 == NULL) goto err;
+		
+		/* tmp1 := x^3 */
+		if (!BN_mod_sqr(tmp2, x, &group->field, ctx)) goto err;
+		if (!BN_mod_mul(tmp1, tmp2, x, &group->field, ctx)) goto err;
+
+		/* tmp1 := tmp1 + a*x */
+		if (group->a_is_minus3)
+			{
+			if (!BN_mod_lshift1_quick(tmp2, x, &group->field)) goto err;
+			if (!BN_mod_add_quick(tmp2, tmp2, x, &group->field)) goto err;
+			if (!BN_mod_sub_quick(tmp1, tmp1, tmp2, &group->field)) goto err;
+			}
+		else
+			{
+			if (!BN_mod_mul(tmp2, &group->a, x, &group->field, ctx)) goto err;
+			if (!BN_mod_add_quick(tmp1, tmp1, tmp2, &group->field)) goto err;
+			}
+		
+		/* tmp1 := tmp1 + b */
+		if (!BN_mod_add_quick(tmp1, tmp1, &group->b, &group->field)) goto err;
+
+		if (!BN_mod_sqrt(y, tmp1, &group->field, ctx))
+			{
+			ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, ERR_R_BN_LIB);
+			goto err;
+			}
+
+		if (y_bit != BN_is_bit_set(y, 0))
+			{
+			if (!BN_usub(y, &group->field, y)) goto err;
+			}
+		if (y_bit != BN_is_bit_set(y, 0))
+			{
+			ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, ERR_R_INTERNAL_ERROR);
+			goto err;
+			}
+		}
+	
+	if (!EC_POINT_set_affine_coordinates_GFp(group, point, x, y, ctx)) goto err;
+
+	if (!EC_POINT_is_on_curve(group, point, ctx)) /* test required by X9.62 */
+		{
+		ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_POINT_IS_NOT_ON_CURVE);
+		goto err;
+		}
+
+	ret = 1;
+	
+ err:
+	BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	return ret;
+	}
 
 
 int ec_GFp_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
@@ -324,8 +714,8 @@ int ec_GFp_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, con
 		if (ctx == NULL)
 			return 0;
 		}
-	BN_CTX_start(ctx);
 
+	BN_CTX_start(ctx);
 	n0 = BN_CTX_get(ctx);
 	n1 = BN_CTX_get(ctx);
 	n2 = BN_CTX_get(ctx);
@@ -483,8 +873,8 @@ int ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_
 		if (ctx == NULL)
 			return 0;
 		}
-	BN_CTX_start(ctx);
 
+	BN_CTX_start(ctx);
 	n0 = BN_CTX_get(ctx);
 	n1 = BN_CTX_get(ctx);
 	n2 = BN_CTX_get(ctx);
@@ -595,10 +985,10 @@ int ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_C
 		{
 		ctx = new_ctx = BN_CTX_new();
 		if (ctx == NULL)
-			return 0;
+			return -1;
 		}
-	BN_CTX_start(ctx);
 
+	BN_CTX_start(ctx);
 	rh = BN_CTX_get(ctx);
 	tmp1 = BN_CTX_get(ctx);
 	tmp2 = BN_CTX_get(ctx);
@@ -680,7 +1070,7 @@ int ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_C
 int ec_GFp_simple_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 	{
 	BN_CTX *new_ctx = NULL;
-	BIGNUM *Z, *Z_1, *Z_2, *Z_3;
+	BIGNUM *x, *y;
 	int ret = 0;
 
 	if (point->Z_is_one || EC_POINT_is_at_infinity(group, point))
@@ -692,46 +1082,23 @@ int ec_GFp_simple_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ct
 		if (ctx == NULL)
 			return 0;
 		}
+
 	BN_CTX_start(ctx);
+	x = BN_CTX_get(ctx);
+	y = BN_CTX_get(ctx);
+	if (y == NULL) goto err;
 
-	Z = BN_CTX_get(ctx);
-	Z_1 = BN_CTX_get(ctx);
-	Z_2 = BN_CTX_get(ctx);
-	Z_3 = BN_CTX_get(ctx);
-	if (Z_3 == NULL) goto end;
-
-	/* transform  (X, Y, Z)  into  (X/Z^2, Y/Z^3, 1) */
-	
-	if (group->meth->field_decode)
+	if (!EC_POINT_get_affine_coordinates_GFp(group, point, x, y, ctx)) goto err;
+	if (!EC_POINT_set_affine_coordinates_GFp(group, point, x, y, ctx)) goto err;
+	if (!point->Z_is_one)
 		{
-		if (!group->meth->field_decode(group, Z, &point->Z, ctx)) goto end;
+		ECerr(EC_F_EC_GFP_SIMPLE_MAKE_AFFINE, ERR_R_INTERNAL_ERROR);
+		goto err;
 		}
-	else
-		Z = &point->Z;
 	
-	if (BN_is_one(Z))
-		{
-		point->Z_is_one = 1;
-		ret = 1;
-		goto end;
-		}
-
-	if (!BN_mod_inverse(Z_1, Z, &group->field, ctx))
-		{
-		ECerr(EC_F_EC_GFP_SIMPLE_MAKE_AFFINE, ERR_R_BN_LIB);
-		goto end;
-		}
-	if (!BN_mod_sqr(Z_2, Z_1, &group->field, ctx)) goto end;
-	if (!BN_mod_mul(Z_3, Z_2, Z_1, &group->field, ctx)) goto end;
-	
-	if (!BN_mod_mul(&point->X, &point->X, Z_2, &group->field, ctx)) goto end;
-	if (!BN_mod_mul(&point->Y, &point->Y, Z_2, &group->field, ctx)) goto end;
-	if (!BN_set_word(&point->Z, 1)) goto end;
-	point->Z_is_one = 1;
-
 	ret = 1;
 
- end:
+ err:
 	BN_CTX_end(ctx);
 	if (new_ctx != NULL)
 		BN_CTX_free(new_ctx);

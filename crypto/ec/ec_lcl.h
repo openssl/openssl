@@ -84,7 +84,12 @@ struct ec_method_st {
 	void (*point_clear_finish)(EC_POINT *);
 	int (*point_copy)(EC_POINT *, const EC_POINT *);
 
-	/* TODO: 'set' and 'get' functions for EC_POINTs */
+	int (*point_set_to_infinity)(const EC_GROUP *, EC_POINT *);
+	int (*point_set_affine_coordinates_GFp)(const EC_GROUP *, EC_POINT *,
+		const BIGNUM *x, const BIGNUM *y, BN_CTX *);
+	int (*point_get_affine_coordinates_GFp)(const EC_GROUP *, const EC_POINT *,
+		BIGNUM *x, BIGNUM *y, BN_CTX *);
+	/* TODO: other 'set' and 'get' functions for EC_POINTs */
 
 	/* used by EC_POINT_point2oct, EC_POINT_oct2point: */
 	size_t (*point2oct)(const EC_GROUP *, const EC_POINT *, point_conversion_form_t form,
@@ -188,7 +193,12 @@ int ec_GFp_simple_point_init(EC_POINT *);
 void ec_GFp_simple_point_finish(EC_POINT *);
 void ec_GFp_simple_point_clear_finish(EC_POINT *);
 int ec_GFp_simple_point_copy(EC_POINT *, const EC_POINT *);
-/* TODO: 'set' and 'get' functions for EC_POINTs */
+int ec_GFp_simple_point_set_to_infinity(const EC_GROUP *, EC_POINT *);
+int ec_GFp_simple_point_set_affine_coordinates_GFp(const EC_GROUP *, EC_POINT *,
+	const BIGNUM *x, const BIGNUM *y, BN_CTX *);
+int ec_GFp_simple_point_get_affine_coordinates_GFp(const EC_GROUP *, const EC_POINT *,
+	BIGNUM *x, BIGNUM *y, BN_CTX *);
+/* TODO: other 'set' and 'get' functions for EC_POINTs */
 size_t ec_GFp_simple_point2oct(const EC_GROUP *, const EC_POINT *, point_conversion_form_t form,
 	unsigned char *buf, size_t len, BN_CTX *);
 int ec_GFp_simple_oct2point(const EC_GROUP *, EC_POINT *,

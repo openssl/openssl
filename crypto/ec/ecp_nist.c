@@ -70,7 +70,10 @@ const EC_METHOD *EC_GFp_nist_method(void)
 		ec_GFp_simple_point_finish,
 		ec_GFp_simple_point_clear_finish,
 		ec_GFp_simple_point_copy,
-		/* TODO: 'set' and 'get' functions for EC_POINTs */
+		ec_GFp_simple_point_set_to_infinity,
+		ec_GFp_simple_point_set_affine_coordinates_GFp,
+		ec_GFp_simple_point_get_affine_coordinates_GFp,
+		/* TODO: other 'set' and 'get' functions for EC_POINTs */
 		ec_GFp_simple_point2oct,
 		ec_GFp_simple_oct2point,
 		ec_GFp_simple_add,

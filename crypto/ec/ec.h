@@ -65,6 +65,7 @@ extern "C" {
 
 
 typedef enum {
+	/* values as defined in X9.62 (ECDSA) and elsewhere */
 	POINT_CONVERSION_COMPRESSED = 2,
 	POINT_CONVERSION_UNCOMPRESSED = 4,
 	POINT_CONVERSION_HYBRID = 6
@@ -120,7 +121,12 @@ void EC_POINT_free(EC_POINT *);
 void EC_POINT_clear_free(EC_POINT *);
 int EC_POINT_copy(EC_POINT *, const EC_POINT *);
  
-/* TODO: 'set' and 'get' functions for EC_POINTs */
+int EC_POINT_set_to_infinity(const EC_GROUP *, EC_POINT *);
+int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *, EC_POINT *,
+	const BIGNUM *x, const BIGNUM *y, BN_CTX *);
+int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *, const EC_POINT *,
+	BIGNUM *x, BIGNUM *y, BN_CTX *);
+/* TODO: other 'set' and 'get' functions for EC_POINTs */
 
 size_t EC_POINT_point2oct(const EC_GROUP *, const EC_POINT *, point_conversion_form_t form,
         unsigned char *buf, size_t len, BN_CTX *);
@@ -149,33 +155,41 @@ int EC_POINT_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
 /* Error codes for the EC functions. */
 
 /* Function codes. */
-#define EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR		 117
-#define EC_F_EC_GFP_SIMPLE_MAKE_AFFINE			 118
-#define EC_F_EC_GROUP_CLEAR_FREE			 103
-#define EC_F_EC_GROUP_COPY				 102
-#define EC_F_EC_GROUP_FREE				 104
-#define EC_F_EC_GROUP_GET_EXTRA_DATA			 115
-#define EC_F_EC_GROUP_NEW				 100
-#define EC_F_EC_GROUP_SET_CURVE_GFP			 101
-#define EC_F_EC_GROUP_SET_EXTRA_DATA			 116
-#define EC_F_EC_GROUP_SET_GENERATOR			 106
-#define EC_F_EC_POINT_ADD				 107
-#define EC_F_EC_POINT_COPY				 108
-#define EC_F_EC_POINT_DBL				 109
-#define EC_F_EC_POINT_IS_AT_INFINITY			 110
-#define EC_F_EC_POINT_IS_ON_CURVE			 111
-#define EC_F_EC_POINT_MAKE_AFFINE			 112
-#define EC_F_EC_POINT_NEW				 105
-#define EC_F_EC_POINT_OCT2POINT				 113
-#define EC_F_EC_POINT_POINT2OCT				 114
+#define EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR		 100
+#define EC_F_EC_GFP_SIMPLE_MAKE_AFFINE			 101
+#define EC_F_EC_GFP_SIMPLE_OCT2POINT			 102
+#define EC_F_EC_GFP_SIMPLE_POINT2OCT			 103
+#define EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES_GFP 104
+#define EC_F_EC_GROUP_COPY				 105
+#define EC_F_EC_GROUP_GET_EXTRA_DATA			 106
+#define EC_F_EC_GROUP_NEW				 107
+#define EC_F_EC_GROUP_SET_CURVE_GFP			 108
+#define EC_F_EC_GROUP_SET_EXTRA_DATA			 109
+#define EC_F_EC_GROUP_SET_GENERATOR			 110
+#define EC_F_EC_POINT_ADD				 111
+#define EC_F_EC_POINT_COPY				 112
+#define EC_F_EC_POINT_DBL				 113
+#define EC_F_EC_POINT_GET_AFFINE_COORDINATES_GFP	 114
+#define EC_F_EC_POINT_IS_AT_INFINITY			 115
+#define EC_F_EC_POINT_IS_ON_CURVE			 116
+#define EC_F_EC_POINT_MAKE_AFFINE			 117
+#define EC_F_EC_POINT_NEW				 118
+#define EC_F_EC_POINT_OCT2POINT				 119
+#define EC_F_EC_POINT_POINT2OCT				 120
+#define EC_F_EC_POINT_SET_AFFINE_COORDINATES_GFP	 121
+#define EC_F_EC_POINT_SET_TO_INFINITY			 122
 
 /* Reason codes. */
-#define EC_R_INCOMPATIBLE_OBJECTS			 100
-#define EC_R_NO_SUCH_EXTRA_DATA				 101
-#define EC_R_SLOT_FULL					 102
+#define EC_R_BUFFER_TOO_SMALL				 100
+#define EC_R_INCOMPATIBLE_OBJECTS			 101
+#define EC_R_INVALID_ENCODING				 102
+#define EC_R_INVALID_FORM				 103
+#define EC_R_NO_SUCH_EXTRA_DATA				 104
+#define EC_R_POINT_AT_INFINITY				 105
+#define EC_R_POINT_IS_NOT_ON_CURVE			 106
+#define EC_R_SLOT_FULL					 107
 
 #ifdef  __cplusplus
 }
 #endif
 #endif
-

@@ -108,7 +108,6 @@ int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, co
 		ECerr(EC_F_EC_GROUP_SET_CURVE_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 		}
-	
 	return group->meth->group_set_curve_GFp(group, p, a, b, ctx);
 	}
 
@@ -315,12 +314,61 @@ int EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
 		ECerr(EC_F_EC_POINT_COPY, EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 		}
-	
 	return dest->meth->point_copy(dest, src);
 	}
 
 
-/* TODO: 'set' and 'get' functions for EC_POINTs */
+int EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
+	{
+	if (group->meth->point_set_to_infinity == 0)
+		{
+		ECerr(EC_F_EC_POINT_SET_TO_INFINITY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	if (group->meth != point->meth)
+		{
+		ECerr(EC_F_EC_POINT_SET_TO_INFINITY, EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+		}
+	return group->meth->point_set_to_infinity(group, point);
+	}
+
+
+int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
+	const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx)
+	{
+	if (group->meth->point_set_affine_coordinates_GFp == 0)
+		{
+		ECerr(EC_F_EC_POINT_SET_AFFINE_COORDINATES_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	if (group->meth != point->meth)
+		{
+		ECerr(EC_F_EC_POINT_SET_AFFINE_COORDINATES_GFP, EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+		}
+	return group->meth->point_set_affine_coordinates_GFp(group, point, x, y, ctx);
+	}
+
+
+int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group, const EC_POINT *point,
+	BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
+	{
+	if (group->meth->point_get_affine_coordinates_GFp == 0)
+		{
+		ECerr(EC_F_EC_POINT_GET_AFFINE_COORDINATES_GFP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+		}
+	if (group->meth != point->meth)
+		{
+		ECerr(EC_F_EC_POINT_GET_AFFINE_COORDINATES_GFP, EC_R_INCOMPATIBLE_OBJECTS);
+		return 0;
+		}
+	return group->meth->point_get_affine_coordinates_GFp(group, point, x, y, ctx);
+	}
+
+
+/* TODO: other 'set' and 'get' functions for EC_POINTs */
 
 
 size_t EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point, point_conversion_form_t form,
