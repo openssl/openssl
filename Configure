@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-asm] [rsaref] [--openssldir=OPENSSLDIR] [--prefix=DIR] os/compiler\n";
+my $usage="Usage: Configure [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [rsaref] [no-asm] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] os/compiler[:flags]\n";
 
 # Options:
 # --openssldir  install OpenSSL in OPENSSLDIR (Default: DIR/ssl if the
@@ -318,6 +318,7 @@ foreach (@ARGV)
 		else
 			{
 			print STDERR $usage;
+			exit(1);
 			}
 		}
 	elsif ($_ =~ /^([^:]+):(.+)$/) {
