@@ -405,9 +405,9 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
 	fns.lock_fns.dynlock_create_cb = CRYPTO_get_dynlock_create_callback();
 	fns.lock_fns.dynlock_lock_cb = CRYPTO_get_dynlock_lock_callback();
 	fns.lock_fns.dynlock_destroy_cb = CRYPTO_get_dynlock_destroy_callback();
-	/* Now that we've loaded the dynamic engine, initialise the command
-	   array to contain none */
-	ENGINE_set_cmd_defns(e, dynamic_cmd_defns_empty);
+	/* Now that we've loaded the dynamic engine, make sure no "dynamic"
+	 * ENGINE elements will show through. */
+	engine_set_all_null(e);
 
 	/* Try to bind the ENGINE onto our own ENGINE structure */
 	if(!ctx->bind_engine(e, ctx->engine_id, &fns))

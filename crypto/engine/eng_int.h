@@ -129,6 +129,11 @@ int engine_unlocked_init(ENGINE *e);
 int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers);
 int engine_free_util(ENGINE *e, int locked);
 
+/* This function will reset all "set"able values in an ENGINE to NULL. This
+ * won't touch reference counts or ex_data, but is equivalent to calling all the
+ * ENGINE_set_***() functions with a NULL value. */
+void engine_set_all_null(ENGINE *e);
+
 /* NB: Bitwise OR-able values for the "flags" variable in ENGINE are now exposed
  * in engine.h. */
 

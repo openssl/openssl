@@ -81,6 +81,29 @@ ENGINE *ENGINE_new(void)
 	return ret;
 	}
 
+/* Placed here (close proximity to ENGINE_new) so that modifications to the
+ * elements of the ENGINE structure are more likely to be caught and changed
+ * here. */
+void engine_set_all_null(ENGINE *e)
+	{
+	e->id = NULL;
+	e->name = NULL;
+	e->rsa_meth = NULL;
+	e->dsa_meth = NULL;
+	e->dh_meth = NULL;
+	e->rand_meth = NULL;
+	e->ciphers = NULL;
+	e->digests = NULL;
+	e->destroy = NULL;
+	e->init = NULL;
+	e->finish = NULL;
+	e->ctrl = NULL;
+	e->load_privkey = NULL;
+	e->load_pubkey = NULL;
+	e->cmd_defns = NULL;
+	e->flags = 0;
+	}
+
 int engine_free_util(ENGINE *e, int locked)
 	{
 	int i;
