@@ -104,6 +104,8 @@
      the operation, and provides a more encapsulated way for external code
      (crypto/evp/ and ssl/) to do this. Also changed the evp and ssl code
      to use these functions rather than manually incrementing the counts.
+
+     Also rename "DSO_up()" function to more descriptive "DSO_up_ref()".
      [Geoff Thorpe]
 
   *) s3_srvr.c: allow sending of large client certificate lists (> 16 kB).
