@@ -264,7 +264,6 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST     ,"error in received cipher list"},
 {SSL_R_EXCESSIVE_MESSAGE_SIZE            ,"excessive message size"},
 {SSL_R_EXTRA_DATA_IN_MESSAGE             ,"extra data in message"},
-{SSL_R_FIXME                             ,"FIXME"},
 {SSL_R_GOT_A_FIN_BEFORE_A_CCS            ,"got a fin before a ccs"},
 {SSL_R_HTTPS_PROXY_REQUEST               ,"https proxy request"},
 {SSL_R_HTTP_REQUEST                      ,"http request"},

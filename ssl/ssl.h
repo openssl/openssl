@@ -1429,7 +1429,6 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST		 151
 #define SSL_R_EXCESSIVE_MESSAGE_SIZE			 152
 #define SSL_R_EXTRA_DATA_IN_MESSAGE			 153
-#define SSL_R_FIXME					 1101
 #define SSL_R_GOT_A_FIN_BEFORE_A_CCS			 154
 #define SSL_R_HTTPS_PROXY_REQUEST			 155
 #define SSL_R_HTTP_REQUEST				 156
