@@ -393,7 +393,9 @@ my %table=(
 "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
 "linux-mipsel",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL DES_RISC2::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-mips",   "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL DES_RISC2::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:asm/linux_ppc32.o:::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+# -bpowerpc64-linux is transient option, -m64 should be the one to use...
+"linux-ppc64",  "gcc:-bpowerpc64-linux -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:asm/linux_ppc64.o:::::::::dlfcn:linux-shared:-fPIC:-bpowerpc64-linux:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-m68k",   "gcc:-DB_ENDIAN -DTERMIO -O2 -fomit-frame-pointer -Wall::-D_REENTRANT:::BN_LLONG::",
 "linux-s390",	"gcc:-DB_ENDIAN -DTERMIO -DNO_ASM -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-s390x",	"gcc:-DB_ENDIAN -DTERMIO -DNO_ASM -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -450,11 +452,10 @@ my %table=(
 
 
 # IBM's AIX.
-"aix-cc",   "cc:-O -DB_ENDIAN -qmaxmem=16384::(unknown):AIX::BN_LLONG RC4_CHAR:::",
-"aix-gcc",  "gcc:-O3 -DB_ENDIAN::(unknown):AIX::BN_LLONG RC4_CHAR:::",
-"aix43-cc",   "cc:-O -DAIX -DB_ENDIAN -qmaxmem=16384::(unknown):::BN_LLONG RC4_CHAR::::::::::dlfcn:aix-shared:::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::",
-"aix43-gcc",  "gcc:-O1 -DAIX -DB_ENDIAN::(unknown):::BN_LLONG RC4_CHAR::::::::::dlfcn:",
-"aix64-cc",   "cc:-O -DAIX -DB_ENDIAN -qmaxmem=16384 -q64::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHAR::::::::::dlfcn:aix-shared::-q64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
+"aix3-cc",    "cc:-O -DB_ENDIAN -qmaxmem=16384::(unknown):AIX::BN_LLONG RC4_CHAR:::",
+"aix-gcc",    "gcc:-O3 -DB_ENDIAN::-D_THREAD_SAFE:AIX::BN_LLONG RC4_CHAR:asm/aix_ppc32.o:::::::::dlfcn:",
+"aix-cc",     "cc:-q32 -O -DB_ENDIAN -qmaxmem=16384::-qthreaded:AIX::BN_LLONG RC4_CHAR:asm/aix_ppc32.o:::::::::dlfcn:aix-shared::-q32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
+"aix64-cc",   "cc:-q64 -O -DB_ENDIAN -qmaxmem=16384::-qthreaded:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:asm/aix_ppc64.o:::::::::dlfcn:aix-shared::-q64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
 
 #
 # Cray T90 and similar (SDSC)
@@ -550,7 +551,7 @@ my %table=(
 
 ##### MacOS X (a.k.a. Rhapsody or Darwin) setup
 "rhapsody-ppc-cc","cc:-O3 -DB_ENDIAN::(unknown):MACOSX_RHAPSODY::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",
-"darwin-ppc-cc","cc:-O3 -fomit-frame-pointer -fno-common -DB_ENDIAN::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+"darwin-ppc-cc","cc:-O3 -fomit-frame-pointer -fno-common -DB_ENDIAN::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/osx_ppc32.o::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 "darwin-i386-cc","cc:-O3 -fomit-frame-pointer -fno-common -DB_ENDIAN::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 
 ##### A/UX

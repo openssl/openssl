@@ -574,6 +574,8 @@ do_aix-shared:
 		libs="$(LIBKRB5) $$libs"; \
 	fi; \
 	( set -x; \
+	  OBJECT_MODE=`expr x${SHARED_LDFLAGS} : 'x\-[a-z]\([0-9]*\)'`; \
+	  OBJECT_MODE=$${OBJECT_MODE:-32}; export OBJECT_MODE; \
 	  ld -r -o lib$$i.o $(ALLSYMSFLAG) lib$$i.a && \
 	  ( nm -Pg lib$$i.o | grep ' [BD] ' | cut -f1 -d' ' > lib$$i.exp; \
 	    $(SHAREDCMD) $(SHAREDFLAGS) \

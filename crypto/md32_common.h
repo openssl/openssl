@@ -211,7 +211,7 @@
 				: "cc");		\
 			   ret;				\
 			})
-#  elif defined(__powerpc) || defined(__ppc)
+#  elif defined(__powerpc) || defined(__ppc__) || defined(__powerpc64__)
 #   define ROTATE(a,n)	({ register unsigned int ret;	\
 				asm (			\
 				"rlwinm %0,%1,%2,0,31"	\

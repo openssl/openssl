@@ -111,16 +111,16 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "m68k-apple-aux3"; exit 0
 	;;
 
-    AIX:[3456789]:4:*)
-	echo "${MACHINE}-ibm-aix43"; exit 0
+    AIX:[3-9]:4:*)
+	echo "${MACHINE}-ibm-aix"; exit 0
 	;;
 
-    AIX:*:[56789]:*)
-	echo "${MACHINE}-ibm-aix43"; exit 0
+    AIX:*:[5-9]:*)
+	echo "${MACHINE}-ibm-aix"; exit 0
 	;;
 
     AIX:*)
-	echo "${MACHINE}-ibm-aix"; exit 0
+	echo "${MACHINE}-ibm-aix3"; exit 0
 	;;
 
     dgux:*)
@@ -547,9 +547,14 @@ EOF
 	rm dummy dummy.c
 	;;
   ppc64-*-linux2)
-	#Use the standard target for PPC architecture until we create a
-	#special one for the 64bit architecture.
-	OUT="linux-ppc" ;;
+	echo "WARNING! If you wish to build 64-bit library, then you have to"
+	echo "         invoke './Configure linux-ppc64' *manually*."
+	if [ "$TEST" = "false" ]; then
+	    echo "         You have about 5 seconds to press Ctrl-C to abort."
+	    (stty -icanon min 0 time 50; read waste) < /dev/tty
+	fi
+	OUT="linux-ppc"
+	;;
   ppc-*-linux2) OUT="linux-ppc" ;;
   m68k-*-linux*) OUT="linux-m68k" ;;
   ia64-*-linux?) OUT="linux-ia64" ;;
@@ -741,8 +746,28 @@ EOF
 	fi
 	options="$options -D_REENTRANT" ;;
   *-hpux)	OUT="hpux-parisc-$CC" ;;
+  *-aix)
+	KERNEL_BITS=`(getconf KERNEL_BITMODE) 2>/dev/null`
+	KERNEL_BITS=${KERNEL_BITS:-32}
+	OBJECT_MODE=${OBJECT_MODE:-32}
+	if [ "$CC" = "gcc" ]; then
+	    OUT="aix-gcc"
+	elif [ $OBJECT_MODE -eq 64 ]; then
+	    echo 'Your $OBJECT_MODE was found to be set to 64' 
+	    OUT="aix64-cc"
+	else
+	    OUT="aix-cc"
+	    if [ $KERNEL_BITS -eq 64 ]; then
+		echo "WARNING! If you wish to build 64-bit kit, then you have to"
+		echo "         invoke './Configure aix64-cc' *manually*."
+		if [ "$TEST" = "false" ]; then
+		    echo "         You have ~5 seconds to press Ctrl-C to abort."
+		    (/bin/stty -icanon min 0 time 50; read waste) < /dev/tty
+		fi
+	    fi
+	fi
+	;;
   # these are all covered by the catchall below
-  # *-aix) OUT="aix-$CC" ;;
   # *-dgux) OUT="dgux" ;;
   mips-sony-newsos4) OUT="newsos4-gcc" ;;
   *-*-cygwin_pre1.3) OUT="Cygwin-pre1.3" ;;
