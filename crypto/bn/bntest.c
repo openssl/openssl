@@ -468,6 +468,22 @@ int test_div(BIO *bp, BN_CTX *ctx)
 	return(1);
 	}
 
+static void print_word(BIO *bp,BN_ULONG w)
+	{
+#ifdef SIXTY_FOUR_BIT
+	if (sizeof(w) > sizeof(unsigned long))
+		{
+		unsigned long	h=(unsigned long)(w>>32),
+				l=(unsigned long)(w);
+
+		if (h)	BIO_printf(bp,"%lX%08lX",h,l);
+		else	BIO_printf(bp,"%lX",l);
+		return;
+		}
+#endif
+	BIO_printf(bp,"%lX",w);
+	}
+
 int test_div_word(BIO *bp)
 	{
 	BIGNUM   a,b;
@@ -494,7 +510,7 @@ int test_div_word(BIO *bp)
 				{
 				BN_print(bp,&a);
 				BIO_puts(bp," / ");
-				BIO_printf(bp,"%lX",s);
+				print_word(bp,s);
 				BIO_puts(bp," - ");
 				}
 			BN_print(bp,&b);
@@ -504,10 +520,10 @@ int test_div_word(BIO *bp)
 				{
 				BN_print(bp,&a);
 				BIO_puts(bp," % ");
-				BIO_printf(bp,"%lX",s);
+				print_word(bp,s);
 				BIO_puts(bp," - ");
 				}
-			BIO_printf(bp,"%lX",r);
+			print_word(bp,r);
 			BIO_puts(bp,"\n");
 			}
 		BN_mul_word(&b,s);
