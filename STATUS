@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/02/27 19:06:27 $
+  ______________                           $Date: 2000/02/27 19:24:57 $
 
   DEVELOPMENT STATE
 
@@ -25,6 +25,7 @@
                          OpenVMS V7.2-1/Alpha - test passed
                          OpenVMS V7.2/VAX     - test failed (is corrected)
                          OpenVMS V7.1/VAX     - test failed (is corrected)
+                         solaris-sparcv9-cc   - test passed 
 			 irix-mips3-cc        - test passed
 			 irix64-mips4-cc      - test passed
                        Proposed release time: Monday, February 28th 2000
