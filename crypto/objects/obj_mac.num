@@ -717,3 +717,4 @@ ms_smartcard_login		716
 ms_upn		717
 any_policy		718
 policy_mappings		719
+name_constraints		720
