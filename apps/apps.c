@@ -369,6 +369,57 @@ int dump_cert_text (BIO *out, X509 *x)
         return 0;
 }
 
+int password_callback(char *buf, int bufsiz, int verify,
+	PW_CB_DATA *cb_data)
+	{
+	int i,j;
+	char prompt[80];
+	const char *prompt_info = NULL;
+	const char *password = NULL;
+
+	if (cb_data)
+		{
+		if (cb_data->password)
+			password = cb_data->password;
+		if (cb_data->prompt_info)
+			prompt_info = cb_data->prompt_info;
+		}
+
+	if(password) {
+		i=strlen(password);
+		i=(i > bufsiz)?bufsiz:i;
+		memcpy(buf,password,i);
+		return(i);
+	}
+
+	if (EVP_get_pw_prompt())
+		BIO_snprintf(prompt, sizeof(prompt)-1, EVP_get_pw_prompt(),
+			prompt_info ? prompt_info : "");
+	else
+		BIO_snprintf(prompt, sizeof(prompt)-1,
+			"Enter pass phrase for %s:",
+			prompt_info ? prompt_info : "");
+
+	for (;;)
+		{
+		i=EVP_read_pw_string(buf,bufsiz,prompt,verify);
+		if (i != 0)
+			{
+			BIO_printf(bio_err,"aborted!\n");
+			memset(buf,0,(unsigned int)bufsiz);
+			return(-1);
+			}
+		j=strlen(buf);
+		if (j < PW_MIN_LENGTH)
+			{
+			BIO_printf(bio_err,"phrase is too short, needs to be at least %d chars\n",PW_MIN_LENGTH);
+			}
+		else
+			break;
+		}
+	return(j);
+	}
+
 static char *app_get_pass(BIO *err, char *arg, int keepbio);
 
 int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2)
@@ -470,7 +521,8 @@ int add_oid_section(BIO *err, LHASH *conf)
 	return 1;
 }
 
-X509 *load_cert(BIO *err, char *file, int format)
+X509 *load_cert(BIO *err, const char *file, int format,
+	const char *pass, ENGINE *e, const char *cert_descrip)
 	{
 	ASN1_HEADER *ah=NULL;
 	BUF_MEM *buf=NULL;
@@ -492,7 +544,9 @@ X509 *load_cert(BIO *err, char *file, int format)
 		{
 		if (BIO_read_filename(cert,file) <= 0)
 			{
-			perror(file);
+			BIO_printf(err, "Error opening %s %s\n",
+				cert_descrip, file);
+			ERR_print_errors(err);
 			goto end;
 			}
 		}
@@ -543,7 +597,8 @@ X509 *load_cert(BIO *err, char *file, int format)
 		ah->data=NULL;
 		}
 	else if (format == FORMAT_PEM)
-		x=PEM_read_bio_X509_AUX(cert,NULL,NULL,NULL);
+		x=PEM_read_bio_X509_AUX(cert,NULL,
+			(pem_password_cb *)password_callback, NULL);
 	else if (format == FORMAT_PKCS12)
 		{
 		PKCS12 *p12 = d2i_PKCS12_bio(cert, NULL);
@@ -553,7 +608,8 @@ X509 *load_cert(BIO *err, char *file, int format)
 		p12 = NULL;
 		}
 	else	{
-		BIO_printf(err,"bad input format specified for input cert\n");
+		BIO_printf(err,"bad input format specified for %s\n",
+			cert_descrip);
 		goto end;
 		}
 end:
@@ -568,10 +624,15 @@ end:
 	return(x);
 	}
 
-EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass, ENGINE *e)
+EVP_PKEY *load_key(BIO *err, const char *file, int format,
+	const char *pass, ENGINE *e, const char *key_descrip)
 	{
 	BIO *key=NULL;
 	EVP_PKEY *pkey=NULL;
+	PW_CB_DATA cb_data;
+
+	cb_data.password = pass;
+	cb_data.prompt_info = file;
 
 	if (file == NULL)
 		{
@@ -583,7 +644,8 @@ EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass, ENGINE *e)
 		if (!e)
 			BIO_printf(bio_err,"no engine specified\n");
 		else
-			pkey = ENGINE_load_private_key(e, file, pass);
+			pkey = ENGINE_load_private_key(e, file,
+				(pem_password_cb *)password_callback, &cb_data);
 		goto end;
 		}
 	key=BIO_new(BIO_s_file());
@@ -594,7 +656,8 @@ EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass, ENGINE *e)
 		}
 	if (BIO_read_filename(key,file) <= 0)
 		{
-		perror(file);
+		BIO_printf(err, "Error opening %s %s\n", key_descrip, file);
+		ERR_print_errors(err);
 		goto end;
 		}
 	if (format == FORMAT_ASN1)
@@ -603,7 +666,8 @@ EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass, ENGINE *e)
 		}
 	else if (format == FORMAT_PEM)
 		{
-		pkey=PEM_read_bio_PrivateKey(key,NULL,NULL,pass);
+		pkey=PEM_read_bio_PrivateKey(key,NULL,
+			(pem_password_cb *)password_callback, &cb_data);
 		}
 	else if (format == FORMAT_PKCS12)
 		{
@@ -615,20 +679,25 @@ EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass, ENGINE *e)
 		}
 	else
 		{
-		BIO_printf(err,"bad input format specified for key\n");
+		BIO_printf(err,"bad input format specified for key file\n");
 		goto end;
 		}
  end:
 	if (key != NULL) BIO_free(key);
 	if (pkey == NULL)
-		BIO_printf(err,"unable to load Private Key\n");
+		BIO_printf(err,"unable to load %s\n", key_descrip);
 	return(pkey);
 	}
 
-EVP_PKEY *load_pubkey(BIO *err, char *file, int format, ENGINE *e)
+EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
+	const char *pass, ENGINE *e, const char *key_descrip)
 	{
 	BIO *key=NULL;
 	EVP_PKEY *pkey=NULL;
+	PW_CB_DATA cb_data;
+
+	cb_data.password = pass;
+	cb_data.prompt_info = file;
 
 	if (file == NULL)
 		{
@@ -640,7 +709,8 @@ EVP_PKEY *load_pubkey(BIO *err, char *file, int format, ENGINE *e)
 		if (!e)
 			BIO_printf(bio_err,"no engine specified\n");
 		else
-			pkey = ENGINE_load_public_key(e, file, NULL);
+			pkey = ENGINE_load_public_key(e, file,
+				(pem_password_cb *)password_callback, &cb_data);
 		goto end;
 		}
 	key=BIO_new(BIO_s_file());
@@ -651,7 +721,8 @@ EVP_PKEY *load_pubkey(BIO *err, char *file, int format, ENGINE *e)
 		}
 	if (BIO_read_filename(key,file) <= 0)
 		{
-		perror(file);
+		BIO_printf(err, "Error opening %s %s\n", key_descrip, file);
+		ERR_print_errors(err);
 		goto end;
 		}
 	if (format == FORMAT_ASN1)
@@ -660,27 +731,33 @@ EVP_PKEY *load_pubkey(BIO *err, char *file, int format, ENGINE *e)
 		}
 	else if (format == FORMAT_PEM)
 		{
-		pkey=PEM_read_bio_PUBKEY(key,NULL,NULL,NULL);
+		pkey=PEM_read_bio_PUBKEY(key,NULL,
+			(pem_password_cb *)password_callback, &cb_data);
 		}
 	else
 		{
-		BIO_printf(err,"bad input format specified for key\n");
+		BIO_printf(err,"bad input format specified for key file\n");
 		goto end;
 		}
  end:
 	if (key != NULL) BIO_free(key);
 	if (pkey == NULL)
-		BIO_printf(err,"unable to load Public Key\n");
+		BIO_printf(err,"unable to load %s\n", key_descrip);
 	return(pkey);
 	}
 
-STACK_OF(X509) *load_certs(BIO *err, char *file, int format)
+STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
+	const char *pass, ENGINE *e, const char *cert_descrip)
 	{
 	BIO *certs;
 	int i;
 	STACK_OF(X509) *othercerts = NULL;
 	STACK_OF(X509_INFO) *allcerts = NULL;
 	X509_INFO *xi;
+	PW_CB_DATA cb_data;
+
+	cb_data.password = pass;
+	cb_data.prompt_info = file;
 
 	if((certs = BIO_new(BIO_s_file())) == NULL)
 		{
@@ -694,7 +771,9 @@ STACK_OF(X509) *load_certs(BIO *err, char *file, int format)
 		{
 		if (BIO_read_filename(certs,file) <= 0)
 			{
-			perror(file);
+			BIO_printf(err, "Error opening %s %s\n",
+				cert_descrip, file);
+			ERR_print_errors(err);
 			goto end;
 			}
 		}
@@ -708,7 +787,8 @@ STACK_OF(X509) *load_certs(BIO *err, char *file, int format)
 			othercerts = NULL;
 			goto end;
 			}
-		allcerts = PEM_X509_INFO_read_bio(certs, NULL, NULL, NULL);
+		allcerts = PEM_X509_INFO_read_bio(certs, NULL,
+				(pem_password_cb *)password_callback, &cb_data);
 		for(i = 0; i < sk_X509_INFO_num(allcerts); i++)
 			{
 			xi = sk_X509_INFO_value (allcerts, i);
@@ -721,7 +801,8 @@ STACK_OF(X509) *load_certs(BIO *err, char *file, int format)
 		goto end;
 		}
 	else	{
-		BIO_printf(err,"bad input format specified for input cert\n");
+		BIO_printf(err,"bad input format specified for %s\n",
+			cert_descrip);
 		goto end;
 		}
 end:

@@ -142,6 +142,16 @@ typedef struct args_st
 	int count;
 	} ARGS;
 
+#define PW_MIN_LENGTH 4
+typedef struct pw_cb_data
+	{
+	const void *password;
+	const char *prompt_info;
+	} PW_CB_DATA;
+
+int password_callback(char *buf, int bufsiz, int verify,
+	PW_CB_DATA *cb_data);
+
 int should_retry(int i);
 int args_from_file(char *file, int *argc, char **argv[]);
 int str2fmt(char *s);
@@ -157,10 +167,14 @@ int set_ext_copy(int *copy_type, const char *arg);
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
 int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(BIO *err, LHASH *conf);
-X509 *load_cert(BIO *err, char *file, int format);
-EVP_PKEY *load_key(BIO *err, char *file, int format, char *pass, ENGINE *e);
-EVP_PKEY *load_pubkey(BIO *err, char *file, int format, ENGINE *e);
-STACK_OF(X509) *load_certs(BIO *err, char *file, int format);
+X509 *load_cert(BIO *err, const char *file, int format,
+	const char *pass, ENGINE *e, const char *cert_descrip);
+EVP_PKEY *load_key(BIO *err, const char *file, int format,
+	const char *pass, ENGINE *e, const char *key_descrip);
+EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
+	const char *pass, ENGINE *e, const char *key_descrip);
+STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
+	const char *pass, ENGINE *e, const char *cert_descrip);
 X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath);
 
 #define FORMAT_UNDEF    0

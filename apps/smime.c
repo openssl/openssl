@@ -372,8 +372,11 @@ int MAIN(int argc, char **argv)
 		}
 		encerts = sk_X509_new_null();
 		while (*args) {
-			if(!(cert = load_cert(bio_err,*args,FORMAT_PEM))) {
+			if(!(cert = load_cert(bio_err,*args,FORMAT_PEM,
+				NULL, e, "recipient certificate file"))) {
+#if 0				/* An appropriate message is already printed */
 				BIO_printf(bio_err, "Can't read recipient certificate file %s\n", *args);
+#endif
 				goto end;
 			}
 			sk_X509_push(encerts, cert);
@@ -383,23 +386,32 @@ int MAIN(int argc, char **argv)
 	}
 
 	if(signerfile && (operation == SMIME_SIGN)) {
-		if(!(signer = load_cert(bio_err,signerfile,FORMAT_PEM))) {
+		if(!(signer = load_cert(bio_err,signerfile,FORMAT_PEM, NULL,
+			e, "signer certificate"))) {
+#if 0			/* An appropri message has already been printed */
 			BIO_printf(bio_err, "Can't read signer certificate file %s\n", signerfile);
+#endif
 			goto end;
 		}
 	}
 
 	if(certfile) {
-		if(!(other = load_certs(bio_err,certfile,FORMAT_PEM))) {
+		if(!(other = load_certs(bio_err,certfile,FORMAT_PEM, NULL,
+			e, "certificate file"))) {
+#if 0			/* An appropriate message has already been printed */
 			BIO_printf(bio_err, "Can't read certificate file %s\n", certfile);
+#endif
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
 
 	if(recipfile && (operation == SMIME_DECRYPT)) {
-		if(!(recip = load_cert(bio_err,recipfile,FORMAT_PEM))) {
+		if(!(recip = load_cert(bio_err,recipfile,FORMAT_PEM,NULL,
+			e, "recipient certificate file"))) {
+#if 0			/* An appropriate message has alrady been printed */
 			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", recipfile);
+#endif
 			ERR_print_errors(bio_err);
 			goto end;
 		}
@@ -412,18 +424,10 @@ int MAIN(int argc, char **argv)
 	} else keyfile = NULL;
 
 	if(keyfile) {
-                if (keyform == FORMAT_ENGINE) {
-        		if (!e) {
-        			BIO_printf(bio_err,"no engine specified\n");
-                		goto end;
-			}
-                        key = ENGINE_load_private_key(e, keyfile, passin);
-                } else {
-                        if(!(key = load_key(bio_err,keyfile, FORMAT_PEM, passin, NULL))) {
-                                BIO_printf(bio_err, "Can't read recipient certificate file %s\n", keyfile);
-        			ERR_print_errors(bio_err);
-                		goto end;
-                        }
+		key = load_key(bio_err, keyfile, keyform, passin, e,
+			       "signing key file");
+		if (!key) {
+			goto end;
                 }
 	}
 

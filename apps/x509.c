@@ -619,12 +619,12 @@ bad:
 		EVP_PKEY_free(pkey);
 		}
 	else
-		x=load_cert(bio_err,infile,informat);
+		x=load_cert(bio_err,infile,informat,NULL,e,"Certificate");
 
 	if (x == NULL) goto end;
 	if (CA_flag)
 		{
-		xca=load_cert(bio_err,CAfile,CAformat);
+		xca=load_cert(bio_err,CAfile,CAformat,NULL,e,"CA Certificate");
 		if (xca == NULL) goto end;
 		}
 
@@ -874,7 +874,8 @@ bad:
 				if (Upkey == NULL)
 					{
 					Upkey=load_key(bio_err,
-						keyfile,keyformat, passin, e);
+						keyfile,keyformat, passin, e,
+						"Private key");
 					if (Upkey == NULL) goto end;
 					}
 #ifndef OPENSSL_NO_DSA
@@ -893,7 +894,7 @@ bad:
 					{
 					CApkey=load_key(bio_err,
 						CAkeyfile,CAkeyformat, passin,
-						e);
+						e, "CA Private Key");
 					if (CApkey == NULL) goto end;
 					}
 #ifndef OPENSSL_NO_DSA
@@ -920,7 +921,8 @@ bad:
 				else
 					{
 					pk=load_key(bio_err,
-						keyfile,FORMAT_PEM, passin, e);
+						keyfile,FORMAT_PEM, passin, e,
+						"request key");
 					if (pk == NULL) goto end;
 					}
 

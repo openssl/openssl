@@ -606,40 +606,12 @@ bad:
 
 	if (keyfile != NULL)
 		{
-		if (keyform == FORMAT_ENGINE)
+		pkey = load_key(bio_err, keyfile, keyform, NULL, e,
+			"Private Key");
+		if (!pkey)
 			{
-			if (!e)
-				{
-				BIO_printf(bio_err,"no engine specified\n");
-				goto end;
-				}
-			pkey = ENGINE_load_private_key(e, keyfile, NULL);
-			}
-		else
-			{
-			if (BIO_read_filename(in,keyfile) <= 0)
-				{
-				perror(keyfile);
-				goto end;
-				}
-
-			if (keyform == FORMAT_ASN1)
-				pkey=d2i_PrivateKey_bio(in,NULL);
-			else if (keyform == FORMAT_PEM)
-				{
-				pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,
-					passin);
-				}
-			else
-				{
-				BIO_printf(bio_err,"bad input format specified for X509 request\n");
-				goto end;
-				}
-			}
-
-		if (pkey == NULL)
-			{
-			BIO_printf(bio_err,"unable to load Private key\n");
+			/* load_key() has already printed an appropriate
+			   message */
 			goto end;
 			}
 		if (EVP_PKEY_type(pkey->type) == EVP_PKEY_DSA)

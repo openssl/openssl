@@ -180,15 +180,18 @@ int MAIN(int argc, char **argv)
 	
 	switch(key_type) {
 		case KEY_PRIVKEY:
-		pkey = load_key(bio_err, keyfile, keyform, NULL, e);
+		pkey = load_key(bio_err, keyfile, keyform,
+			NULL, e, "Private Key");
 		break;
 
 		case KEY_PUBKEY:
-		pkey = load_pubkey(bio_err, keyfile, keyform, e);
+		pkey = load_pubkey(bio_err, keyfile, keyform,
+			NULL, e, "Public Key");
 		break;
 
 		case KEY_CERT:
-		x = load_cert(bio_err, keyfile, keyform);
+		x = load_cert(bio_err, keyfile, keyform,
+			NULL, e, "Certificate");
 		if(x) {
 			pkey = X509_get_pubkey(x);
 			X509_free(x);
@@ -197,7 +200,6 @@ int MAIN(int argc, char **argv)
 	}
 
 	if(!pkey) {
-		BIO_printf(bio_err, "Error loading key\n");
 		return 1;
 	}
 

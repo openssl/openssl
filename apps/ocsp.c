@@ -82,6 +82,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
+	ENGINE *e = NULL;
 	char **args;
 	char *host = NULL, *port = NULL, *path = "/";
 	char *reqin = NULL, *respin = NULL;
@@ -326,7 +327,8 @@ int MAIN(int argc, char **argv)
 				{
 				args++;
 				X509_free(issuer);
-				issuer = load_cert(bio_err, *args, FORMAT_PEM);
+				issuer = load_cert(bio_err, *args, FORMAT_PEM,
+					NULL, e, "issuer certificate");
 				if(!issuer) goto end;
 				}
 			else badarg = 1;
@@ -337,7 +339,8 @@ int MAIN(int argc, char **argv)
 				{
 				args++;
 				X509_free(cert);
-				cert = load_cert(bio_err, *args, FORMAT_PEM);
+				cert = load_cert(bio_err, *args, FORMAT_PEM,
+					NULL, e, "certificate");
 				if(!cert) goto end;
 				if(!add_ocsp_cert(&req, cert, issuer, ids))
 					goto end;
@@ -445,7 +448,8 @@ int MAIN(int argc, char **argv)
 	if (signfile)
 		{
 		if (!keyfile) keyfile = signfile;
-		signer = load_cert(bio_err, signfile, FORMAT_PEM);
+		signer = load_cert(bio_err, signfile, FORMAT_PEM,
+			NULL, e, "signer certificate");
 		if (!signer)
 			{
 			BIO_printf(bio_err, "Error loading signer certificate\n");
@@ -453,13 +457,17 @@ int MAIN(int argc, char **argv)
 			}
 		if (sign_certfile)
 			{
-			sign_other = load_certs(bio_err, sign_certfile, FORMAT_PEM);
+			sign_other = load_certs(bio_err, sign_certfile, FORMAT_PEM,
+				NULL, e, "signer certificates");
 			if (!sign_other) goto end;
 			}
-		key = load_key(bio_err, keyfile, FORMAT_PEM, NULL, NULL);
+		key = load_key(bio_err, keyfile, FORMAT_PEM, NULL, NULL,
+			"signer private key");
 		if (!key)
 			{
+#if 0			/* An appropriate message has already been printed */
 			BIO_printf(bio_err, "Error loading signer private key\n");
+#endif
 			goto end;
 			}
 		if (!OCSP_request_sign(req, signer, key, EVP_sha1(), sign_other, sign_flags))
@@ -565,7 +573,8 @@ int MAIN(int argc, char **argv)
 	if(!store) goto end;
 	if (verify_certfile)
 		{
-		verify_other = load_certs(bio_err, verify_certfile, FORMAT_PEM);
+		verify_other = load_certs(bio_err, verify_certfile, FORMAT_PEM,
+			NULL, e, "validator certificate");
 		if (!verify_other) goto end;
 		}
 

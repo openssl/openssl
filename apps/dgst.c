@@ -289,52 +289,19 @@ int MAIN(int argc, char **argv)
 
 	if(keyfile)
 		{
-		if (keyform == FORMAT_PEM)
-			{
-			BIO *keybio;
-			keybio = BIO_new_file(keyfile, "r");
-			if(!keybio)
-				{
-				BIO_printf(bio_err,
-					"Error opening key file %s\n",
-					keyfile);
-				ERR_print_errors(bio_err);
-				goto end;
-				}
-			if(want_pub) 
-				sigkey = PEM_read_bio_PUBKEY(keybio,
-					NULL, NULL, NULL);
-			else
-				sigkey = PEM_read_bio_PrivateKey(keybio,
-					NULL, NULL, NULL);
-			BIO_free(keybio);
-			}
-		else if (keyform == FORMAT_ENGINE)
-			{
-			if (!e)
-				{
-				BIO_printf(bio_err,"no engine specified\n");
-				goto end;
-				}
-			if (want_pub)
-				sigkey = ENGINE_load_public_key(e, keyfile, NULL);
-			else
-				sigkey = ENGINE_load_private_key(e, keyfile, NULL);
-			}
+		if (want_pub)
+			sigkey = load_pubkey(bio_err, keyfile, keyform, NULL,
+				e, "key file");
 		else
+			sigkey = load_key(bio_err, keyfile, keyform, NULL,
+				e, "key file");
+		if (!sigkey)
 			{
-			BIO_printf(bio_err,
-				"bad input format specified for key file\n");
+			/* load_[pub]key() has already printed an appropriate
+			   message */
 			goto end;
 			}
-		
-		if(!sigkey) {
-			BIO_printf(bio_err, "Error reading key file %s\n",
-								keyfile);
-			ERR_print_errors(bio_err);
-			goto end;
 		}
-	}
 
 	if(sigfile && sigkey) {
 		BIO *sigbio;

@@ -702,34 +702,12 @@ bad:
 		BIO_printf(bio_err,"Error getting password\n");
 		goto err;
 		}
-	if (keyform == FORMAT_ENGINE)
-		{
-		if (!e)
-			{
-			BIO_printf(bio_err,"no engine specified\n");
-			goto err;
-			}
-		pkey = ENGINE_load_private_key(e, keyfile, key);
-		}
-	else if (keyform == FORMAT_PEM)
-		{
-		if (BIO_read_filename(in,keyfile) <= 0)
-			{
-			perror(keyfile);
-			BIO_printf(bio_err,"trying to load CA private key\n");
-			goto err;
-			}
-		pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,key);
-		}
-	else
-		{
-		BIO_printf(bio_err,"bad input format specified for key file\n");
-		goto err;
-		}
+	pkey = load_key(bio_err, keyfile, keyform, key, e, 
+		"CA private key");
 	if (key) memset(key,0,strlen(key));
 	if (pkey == NULL)
 		{
-		BIO_printf(bio_err,"unable to load CA private key\n");
+		/* load_key() has already printed an appropriate message */
 		goto err;
 		}
 
