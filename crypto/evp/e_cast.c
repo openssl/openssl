@@ -56,10 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef OPENSSL_NO_CAST
-
 #include <stdio.h>
 #include "cryptlib.h"
+
+#ifndef OPENSSL_NO_CAST
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include "evp_locl.h"
