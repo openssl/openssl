@@ -124,7 +124,7 @@ char *str;
 	ASN1_BIT_STRING *pk;
 	unsigned char pkey_dig[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX md;
-	int diglen;
+	unsigned int diglen;
 
 	if(strcmp(str, "hash")) return s2i_ASN1_OCTET_STRING(method, ctx, str);
 

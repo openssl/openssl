@@ -721,7 +721,7 @@ PKCS7_SIGNER_INFO *si;
 	if ((sk != NULL) && (sk_num(sk) != 0))
 		{
 		unsigned char md_dat[EVP_MAX_MD_SIZE];
-                int md_len;
+                unsigned int md_len;
 		ASN1_OCTET_STRING *message_digest;
 
 		EVP_DigestFinal(&mdc_tmp,md_dat,&md_len);
@@ -731,7 +731,7 @@ PKCS7_SIGNER_INFO *si;
 			PKCS7err(PKCS7_F_PKCS7_DATAVERIFY,PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
 			goto err;
 			}
-		if ((message_digest->length != md_len) ||
+		if ((message_digest->length != (int)md_len) ||
 			(memcmp(message_digest->data,md_dat,md_len)))
 			{
 #if 0
