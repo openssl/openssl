@@ -722,7 +722,7 @@ static int ssl3_get_server_hello(SSL *s)
 		goto f_err;
 		}
 
-	if (s->hit && (s->session->cipher != c))
+	if (s->hit && (s->session->cipher_id != c->id))
 		{
 		if (!(s->options &
 			SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG))
