@@ -99,6 +99,7 @@ static ERR_STRING_DATA X509_str_reasons[]=
 {X509_R_BAD_X509_FILETYPE                ,"bad x509 filetype"},
 {X509_R_CERT_ALREADY_IN_HASH_TABLE       ,"cert already in hash table"},
 {X509_R_ERR_ASN1_LIB                     ,"err asn1 lib"},
+{X509_R_INVALID_DIRECTORY                ,"invalid directory"},
 {X509_R_LOADING_CERT_DIR                 ,"loading cert dir"},
 {X509_R_LOADING_DEFAULTS                 ,"loading defaults"},
 {X509_R_NO_CERT_SET_FOR_US_TO_VERIFY     ,"no cert set for us to verify"},
