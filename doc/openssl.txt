@@ -344,7 +344,7 @@ the extension.
 
 Examples:
 
-subjectAltName=email:copy,email:my@other.address,URL:http://my.url.here/
+subjectAltName=email:copy,email:my@other.address,URI:http://my.url.here/
 subjectAltName=email:my@other.address,RID:1.2.3.4
 
 Issuer Alternative Name.
