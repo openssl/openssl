@@ -884,11 +884,17 @@ static int ssl3_get_key_exchange(SSL *s)
 	DH *dh=NULL;
 #endif
 
+	/* use same message size as in ssl3_get_certificate_request()
+	 * as ServerKeyExchange message may be skipped */
 	n=ssl3_get_message(s,
 		SSL3_ST_CR_KEY_EXCH_A,
 		SSL3_ST_CR_KEY_EXCH_B,
 		-1,
-		1024*8, /* ?? */
+#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32)
+		1024*30,  /* 30k max cert list :-) */
+#else
+		1024*100, /* 100k max cert list :-) */
+#endif
 		&ok);
 
 	if (!ok) return((int)n);

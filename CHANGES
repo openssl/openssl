@@ -12,6 +12,12 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) In ssl3_get_key_exchange (ssl/s3_clnt.c), call ssl3_get_message()
+     with the same message size as in ssl3_get_certificate_request().
+     Otherwise, if no ServerKeyExchange message occurs, CertificateRequest
+     messages might inadvertently be reject as too long.
+     [Petr Lampa <lampa@fee.vutbr.cz>]
+
   +) Move SSL_OP_TLS_ROLLBACK_BUG out of the SSL_OP_ALL list of recommended
      bug workarounds. Rollback attack detection is a security feature.
      The problem will only arise on OpenSSL servers when TLSv1 is not
