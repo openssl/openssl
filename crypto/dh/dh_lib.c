@@ -148,7 +148,7 @@ DH *DH_new_method(ENGINE *engine)
 		{
 		if((ret->engine=ENGINE_get_default_DH()) == NULL)
 			{
-			Free(ret);
+			OPENSSL_free(ret);
 			return NULL;
 			}
 		}

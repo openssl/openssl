@@ -349,7 +349,7 @@ ENGINE *ENGINE_new(ENGINE *e)
 
 	if(e == NULL)
 		{
-		ret = (ENGINE *)Malloc(sizeof(ENGINE));
+		ret = (ENGINE *)(OPENSSL_malloc(sizeof(ENGINE));
 		if(ret == NULL)
 			{
 			ENGINEerr(ENGINE_F_ENGINE_NEW,
@@ -370,7 +370,7 @@ ENGINE *ENGINE_new(void)
 	{
 	ENGINE *ret;
 
-	ret = (ENGINE *)Malloc(sizeof(ENGINE));
+	ret = (ENGINE *)OPENSSL_malloc(sizeof(ENGINE));
 	if(ret == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
@@ -406,7 +406,7 @@ int ENGINE_free(ENGINE *e)
 		}
 #endif
 	if(e->flags & ENGINE_FLAGS_MALLOCED)
-		Free(e);
+		OPENSSL_free(e);
 	return 1;
 	}
 
