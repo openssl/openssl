@@ -46,11 +46,19 @@ compilation flags.
 
 platform setting.
 
+=item B<-d>
+
+OPENSSLDIR setting.
+
 =back
 
 =head1 NOTES
 
 The output of B<openssl version -a> would typically be used when sending
 in a bug report.
+
+=head1 HISTORY
+
+The B<-d> option was added in OpenSSL 0.9.7.
 
 =cut

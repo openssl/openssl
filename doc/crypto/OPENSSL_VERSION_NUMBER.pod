@@ -55,22 +55,32 @@ SSLeay_version() returns different strings depending on B<t>:
 =over 4
 
 =item SSLEAY_VERSION
+
 The text variant of the version number and the release date.  For example,
 "OpenSSL 0.9.5a 1 Apr 2000".
 
 =item SSLEAY_CFLAGS
-The flags given to the C compiler when compiling OpenSSL are returned in a
-string.
+
+The compiler flags set for the compilation process in the form
+"compiler: ..."  if available or "compiler: information not available"
+otherwise.
+
+=item SSLEAY_BUILT_ON
+
+The date of the build process in the form "built on: ..." if available
+or "built on: date not available" otherwise.
 
 =item SSLEAY_PLATFORM
-The platform name used when OpenSSL was configured is returned.
+
+The "Configure" target of the library build in the form "platform: ..."
+if available or "platform: information not available" otherwise.
+
+=item SSLEAY_DIR
+
+The "OPENSSLDIR" setting of the library build in the form "OPENSSLDIR: "...""
+if available or "OPENSSLDIR: N/A" otherwise.
 
 =back
-
-If the data request isn't available, a text saying that the information is
-not available is returned.
-
-For an unknown B<t>, the text "not available" is returned.
 
 =head1 RETURN VALUE
 
@@ -84,5 +94,6 @@ L<crypto(3)|crypto(3)>
 
 SSLeay() and SSLEAY_VERSION_NUMBER are available in all versions of SSLeay and OpenSSL.
 OPENSSL_VERSION_NUMBER is available in all versions of OpenSSL.
+B<SSLEAY_DIR> was added in OpenSSL 0.9.7.
 
 =cut
