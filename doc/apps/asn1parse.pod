@@ -16,6 +16,8 @@ B<openssl> B<asn1parse>
 [B<-i>]
 [B<-oid filename>]
 [B<-strparse offset>]
+[B<-genstr string>]
+[B<-genconf file>]
 
 =head1 DESCRIPTION
 
@@ -67,6 +69,14 @@ file is described in the NOTES section below.
 parse the contents octets of the ASN.1 object starting at B<offset>. This
 option can be used multiple times to "drill down" into a nested structure.
 
+=item B<-genstr string>, B<-genconf file>
+
+generate encoded data based on B<string>, B<file> or both using
+ASN1_generate_nconf() format. If B<file> only is present then the string
+is obtained from the default section using the name B<asn1>. The encoded
+data is passed through the ASN1 parser and printed out as though it came
+from a file, the contents can thus be examined and written to a file
+using the B<out> option. 
 
 =back
 
@@ -120,6 +130,38 @@ by white space. The final column is the rest of the line and is the
 "long name". B<asn1parse> displays the long name. Example:
 
 C<1.2.3.4	shortName	A long name>
+
+=head1 EXAMPLES
+
+Parse a file:
+
+ openssl asn1parse -in file.pem
+
+Parse a DER file:
+
+ openssl asn1parse -inform DER -in file.der
+
+Generate a simple UTF8String:
+
+ openssl asn1parse -genstr 'UTF8:Hello World'
+
+Generate and write out a UTF8String, don't print parsed output:
+
+ openssl asn1parse -genstr 'UTF8:Hello World' -noout -out utf8.der
+
+Generate using a config file:
+
+ openssl asn1parse -genconf asn1.cnf -noout -out asn1.der
+
+Example config file:
+
+ asn1=SEQUENCE:seq_sect
+
+ [seq_sect]
+
+ field1=BOOL:TRUE
+ field2=EXP:0, UTF8:some random string
+
 
 =head1 BUGS
 

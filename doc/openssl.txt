@@ -154,8 +154,22 @@ for example contain data in multiple sections. The correct syntax to
 use is defined by the extension code itself: check out the certificate
 policies extension for an example.
 
-In addition it is also possible to use the word DER to include arbitrary
-data in any extension.
+There are two ways to encode arbitrary extensions.
+
+The first way is to use the word ASN1 followed by the extension content
+using the same syntax as ASN1_generate_nconf(). For example:
+
+1.2.3.4=critical,ASN1:UTF8String:Some random data
+
+1.2.3.4=ASN1:SEQUENCE:seq_sect
+
+[seq_sect]
+
+field1 = UTF8:field1
+field2 = UTF8:field2
+
+It is also possible to use the word DER to include arbitrary data in any
+extension.
 
 1.2.3.4=critical,DER:01:02:03:04
 1.2.3.4=DER:01020304
@@ -336,16 +350,21 @@ Subject Alternative Name.
 The subject alternative name extension allows various literal values to be
 included in the configuration file. These include "email" (an email address)
 "URI" a uniform resource indicator, "DNS" (a DNS domain name), RID (a
-registered ID: OBJECT IDENTIFIER) and IP (and IP address).
+registered ID: OBJECT IDENTIFIER), IP (and IP address) and otherName.
 
 Also the email option include a special 'copy' value. This will automatically
 include and email addresses contained in the certificate subject name in
 the extension.
 
+otherName can include arbitrary data associated with an OID: the value
+should be the OID followed by a semicolon and the content in standard
+ASN1_generate_nconf() format.
+
 Examples:
 
 subjectAltName=email:copy,email:my@other.address,URI:http://my.url.here/
 subjectAltName=email:my@other.address,RID:1.2.3.4
+subjectAltName=otherName:1.2.3.4;UTF8:some other identifier
 
 Issuer Alternative Name.
 
