@@ -629,6 +629,9 @@ int test_mont(BIO *bp, BN_CTX *ctx)
 		BN_rand(&n,bits,0,1);
 		BN_MONT_CTX_set(mont,&n,ctx);
 
+		BN_nnmod(&a,&a,&n,ctx);
+		BN_nnmod(&b,&b,&n,ctx);
+
 		BN_to_montgomery(&A,&a,mont,ctx);
 		BN_to_montgomery(&B,&b,mont,ctx);
 
