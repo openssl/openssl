@@ -153,6 +153,15 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 {
 	char bound[33], c;
 	int i;
+	char *mime_prefix, *mime_eol;
+	if (flags & PKCS7_NOOLDMIMETYPE)
+		mime_prefix = "application/pkcs7-";
+	else
+		mime_prefix = "application/x-pkcs7-";
+	if (flags & PKCS7_CRLFEOL)
+		mime_eol = "\r\n";
+	else
+		mime_eol = "\n";
 	if((flags & PKCS7_DETACHED) && data) {
 	/* We want multipart/signed */
 		/* Generate a random boundary */
@@ -164,34 +173,42 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 			bound[i] = c;
 		}
 		bound[32] = 0;
-		BIO_printf(bio, "MIME-Version: 1.0\n");
+		BIO_printf(bio, "MIME-Version: 1.0%s", mime_eol);
 		BIO_printf(bio, "Content-Type: multipart/signed;");
-		BIO_printf(bio, " protocol=\"application/x-pkcs7-signature\";");
-		BIO_printf(bio, " micalg=sha1; boundary=\"----%s\"\n\n", bound);
-		BIO_printf(bio, "This is an S/MIME signed message\n\n");
+		BIO_printf(bio, " protocol=\"%ssignature\";", mime_prefix);
+		BIO_printf(bio, " micalg=sha1; boundary=\"----%s\"%s%s",
+						bound, mime_eol, mime_eol);
+		BIO_printf(bio, "This is an S/MIME signed message%s%s",
+						mime_eol, mime_eol);
 		/* Now write out the first part */
-		BIO_printf(bio, "------%s\r\n", bound);
-
+		BIO_printf(bio, "------%s%s", bound, mime_eol);
 		pkcs7_output_data(bio, data, p7, flags);
-
-		BIO_printf(bio, "\n------%s\n", bound);
+		BIO_printf(bio, "%s------%s%s", mime_eol, bound, mime_eol);
 
 		/* Headers for signature */
 
-		BIO_printf(bio, "Content-Type: application/x-pkcs7-signature; name=\"smime.p7s\"\n");
-		BIO_printf(bio, "Content-Transfer-Encoding: base64\n");
-		BIO_printf(bio, "Content-Disposition: attachment; filename=\"smime.p7s\"\n\n");
+		BIO_printf(bio, "Content-Type: %ssignature;", mime_prefix); 
+		BIO_printf(bio, " name=\"smime.p7s\"%s", mime_eol);
+		BIO_printf(bio, "Content-Transfer-Encoding: base64%s",
+								mime_eol);
+		BIO_printf(bio, "Content-Disposition: attachment;");
+		BIO_printf(bio, " filename=\"smime.p7s\"%s%s",
+							mime_eol, mime_eol);
 		B64_write_PKCS7(bio, p7);
-		BIO_printf(bio,"\n------%s--\n\n", bound);
+		BIO_printf(bio,"%s------%s--%s%s", mime_eol, bound,
+							mime_eol, mime_eol);
 		return 1;
 	}
 	/* MIME headers */
-	BIO_printf(bio, "MIME-Version: 1.0\n");
-	BIO_printf(bio, "Content-Disposition: attachment; filename=\"smime.p7m\"\n");
-	BIO_printf(bio, "Content-Type: application/x-pkcs7-mime; name=\"smime.p7m\"\n");
-	BIO_printf(bio, "Content-Transfer-Encoding: base64\n\n");
+	BIO_printf(bio, "MIME-Version: 1.0%s", mime_eol);
+	BIO_printf(bio, "Content-Disposition: attachment;");
+	BIO_printf(bio, " filename=\"smime.p7m\"%s", mime_eol);
+	BIO_printf(bio, "Content-Type: %smime;", mime_prefix);
+	BIO_printf(bio, " name=\"smime.p7m\"%s", mime_eol);
+	BIO_printf(bio, "Content-Transfer-Encoding: base64%s%s",
+						mime_eol, mime_eol);
 	B64_write_PKCS7(bio, p7);
-	BIO_printf(bio, "\n");
+	BIO_printf(bio, "%s", mime_eol);
 	return 1;
 }
 
