@@ -1013,7 +1013,7 @@ int test_sqrt(BIO *bp, BN_CTX *ctx)
 		{
 		if (i < 8)
 			{
-			unsigned primes[8] = { 2, 3, 7, 11, 13, 17, 19 };
+			unsigned primes[8] = { 2, 3, 5, 7, 11, 13, 17, 19 };
 			
 			if (!BN_set_word(p, primes[i])) goto err;
 			}
