@@ -282,6 +282,56 @@ err:
 	return(ret);
 	}
 
+int X509_ocspid_print (BIO *bp, X509 *x)
+	{
+	unsigned char *der=NULL ;
+	unsigned char *dertmp;
+	int derlen;
+	int i;
+	SHA_CTX SHA1buf ;
+	unsigned char SHA1md[SHA_DIGEST_LENGTH];
+
+	/* display the hash of the subject as it would appear
+	   in OCSP requests */
+	if (BIO_printf(bp,"        Subject OCSP hash: ") <= 0)
+		goto err;
+	derlen = i2d_X509_NAME(x->cert_info->subject, NULL);
+	if ((der = dertmp = (unsigned char *)OPENSSL_malloc (derlen)) == NULL)
+		goto err;
+	i2d_X509_NAME(x->cert_info->subject, &dertmp);
+
+	SHA1_Init(&SHA1buf);
+	SHA1_Update(&SHA1buf, der, derlen);
+	SHA1_Final(SHA1md,&SHA1buf);
+	for (i=0; i < SHA_DIGEST_LENGTH; i++)
+		{
+		if (BIO_printf(bp,"%02X",SHA1md[i]) <= 0) goto err;
+		}
+	OPENSSL_free (der);
+	der=NULL;
+
+	/* display the hash of the public key as it would appear
+	   in OCSP requests */
+	if (BIO_printf(bp,"\n        Public key OCSP hash: ") <= 0)
+		goto err;
+
+	SHA1_Init(&SHA1buf);
+	SHA1_Update(&SHA1buf, x->cert_info->key->public_key->data,
+		x->cert_info->key->public_key->length);
+	SHA1_Final(SHA1md,&SHA1buf);
+	for (i=0; i < SHA_DIGEST_LENGTH; i++)
+		{
+		if (BIO_printf(bp,"%02X",SHA1md[i]) <= 0)
+			goto err;
+		}
+	BIO_printf(bp,"\n");
+
+	return (1);
+err:
+	if (der != NULL) OPENSSL_free(der);
+	return(0);
+	}
+
 int ASN1_STRING_print(BIO *bp, ASN1_STRING *v)
 	{
 	int i,n;

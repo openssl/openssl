@@ -484,6 +484,46 @@ STACK_OF(type) \
 #define sk_NAME_FUNCS_pop(st) SKM_sk_pop(NAME_FUNCS, (st))
 #define sk_NAME_FUNCS_sort(st) SKM_sk_sort(NAME_FUNCS, (st))
 
+#define sk_OCSP_ONEREQ_new(st) SKM_sk_new(OCSP_ONEREQ, (st))
+#define sk_OCSP_ONEREQ_new_null() SKM_sk_new_null(OCSP_ONEREQ)
+#define sk_OCSP_ONEREQ_free(st) SKM_sk_free(OCSP_ONEREQ, (st))
+#define sk_OCSP_ONEREQ_num(st) SKM_sk_num(OCSP_ONEREQ, (st))
+#define sk_OCSP_ONEREQ_value(st, i) SKM_sk_value(OCSP_ONEREQ, (st), (i))
+#define sk_OCSP_ONEREQ_set(st, i, val) SKM_sk_set(OCSP_ONEREQ, (st), (i), (val))
+#define sk_OCSP_ONEREQ_zero(st) SKM_sk_zero(OCSP_ONEREQ, (st))
+#define sk_OCSP_ONEREQ_push(st, val) SKM_sk_push(OCSP_ONEREQ, (st), (val))
+#define sk_OCSP_ONEREQ_unshift(st, val) SKM_sk_unshift(OCSP_ONEREQ, (st), (val))
+#define sk_OCSP_ONEREQ_find(st, val) SKM_sk_find(OCSP_ONEREQ, (st), (val))
+#define sk_OCSP_ONEREQ_delete(st, i) SKM_sk_delete(OCSP_ONEREQ, (st), (i))
+#define sk_OCSP_ONEREQ_delete_ptr(st, ptr) SKM_sk_delete_ptr(OCSP_ONEREQ, (st), (ptr))
+#define sk_OCSP_ONEREQ_insert(st, val, i) SKM_sk_insert(OCSP_ONEREQ, (st), (val), (i))
+#define sk_OCSP_ONEREQ_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(OCSP_ONEREQ, (st), (cmp))
+#define sk_OCSP_ONEREQ_dup(st) SKM_sk_dup(OCSP_ONEREQ, st)
+#define sk_OCSP_ONEREQ_pop_free(st, free_func) SKM_sk_pop_free(OCSP_ONEREQ, (st), (free_func))
+#define sk_OCSP_ONEREQ_shift(st) SKM_sk_shift(OCSP_ONEREQ, (st))
+#define sk_OCSP_ONEREQ_pop(st) SKM_sk_pop(OCSP_ONEREQ, (st))
+#define sk_OCSP_ONEREQ_sort(st) SKM_sk_sort(OCSP_ONEREQ, (st))
+
+#define sk_OCSP_SINGLERESP_new(st) SKM_sk_new(OCSP_SINGLERESP, (st))
+#define sk_OCSP_SINGLERESP_new_null() SKM_sk_new_null(OCSP_SINGLERESP)
+#define sk_OCSP_SINGLERESP_free(st) SKM_sk_free(OCSP_SINGLERESP, (st))
+#define sk_OCSP_SINGLERESP_num(st) SKM_sk_num(OCSP_SINGLERESP, (st))
+#define sk_OCSP_SINGLERESP_value(st, i) SKM_sk_value(OCSP_SINGLERESP, (st), (i))
+#define sk_OCSP_SINGLERESP_set(st, i, val) SKM_sk_set(OCSP_SINGLERESP, (st), (i), (val))
+#define sk_OCSP_SINGLERESP_zero(st) SKM_sk_zero(OCSP_SINGLERESP, (st))
+#define sk_OCSP_SINGLERESP_push(st, val) SKM_sk_push(OCSP_SINGLERESP, (st), (val))
+#define sk_OCSP_SINGLERESP_unshift(st, val) SKM_sk_unshift(OCSP_SINGLERESP, (st), (val))
+#define sk_OCSP_SINGLERESP_find(st, val) SKM_sk_find(OCSP_SINGLERESP, (st), (val))
+#define sk_OCSP_SINGLERESP_delete(st, i) SKM_sk_delete(OCSP_SINGLERESP, (st), (i))
+#define sk_OCSP_SINGLERESP_delete_ptr(st, ptr) SKM_sk_delete_ptr(OCSP_SINGLERESP, (st), (ptr))
+#define sk_OCSP_SINGLERESP_insert(st, val, i) SKM_sk_insert(OCSP_SINGLERESP, (st), (val), (i))
+#define sk_OCSP_SINGLERESP_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(OCSP_SINGLERESP, (st), (cmp))
+#define sk_OCSP_SINGLERESP_dup(st) SKM_sk_dup(OCSP_SINGLERESP, st)
+#define sk_OCSP_SINGLERESP_pop_free(st, free_func) SKM_sk_pop_free(OCSP_SINGLERESP, (st), (free_func))
+#define sk_OCSP_SINGLERESP_shift(st) SKM_sk_shift(OCSP_SINGLERESP, (st))
+#define sk_OCSP_SINGLERESP_pop(st) SKM_sk_pop(OCSP_SINGLERESP, (st))
+#define sk_OCSP_SINGLERESP_sort(st) SKM_sk_sort(OCSP_SINGLERESP, (st))
+
 #define sk_PKCS12_SAFEBAG_new(st) SKM_sk_new(PKCS12_SAFEBAG, (st))
 #define sk_PKCS12_SAFEBAG_new_null() SKM_sk_new_null(PKCS12_SAFEBAG)
 #define sk_PKCS12_SAFEBAG_free(st) SKM_sk_free(PKCS12_SAFEBAG, (st))
@@ -997,6 +1037,24 @@ STACK_OF(type) \
 	SKM_ASN1_seq_pack(GENERAL_NAME, (st), (i2d_func), (buf), (len))
 #define ASN1_seq_unpack_GENERAL_NAME(buf, len, d2i_func, free_func) \
 	SKM_ASN1_seq_unpack(GENERAL_NAME, (buf), (len), (d2i_func), (free_func))
+
+#define d2i_ASN1_SET_OF_OCSP_ONEREQ(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
+	SKM_ASN1_SET_OF_d2i(OCSP_ONEREQ, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class)) 
+#define i2d_ASN1_SET_OF_OCSP_ONEREQ(st, pp, i2d_func, ex_tag, ex_class, is_set) \
+	SKM_ASN1_SET_OF_i2d(OCSP_ONEREQ, (st), (pp), (i2d_func), (ex_tag), (ex_class), (is_set))
+#define ASN1_seq_pack_OCSP_ONEREQ(st, i2d_func, buf, len) \
+	SKM_ASN1_seq_pack(OCSP_ONEREQ, (st), (i2d_func), (buf), (len))
+#define ASN1_seq_unpack_OCSP_ONEREQ(buf, len, d2i_func, free_func) \
+	SKM_ASN1_seq_unpack(OCSP_ONEREQ, (buf), (len), (d2i_func), (free_func))
+
+#define d2i_ASN1_SET_OF_OCSP_SINGLERESP(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
+	SKM_ASN1_SET_OF_d2i(OCSP_SINGLERESP, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class)) 
+#define i2d_ASN1_SET_OF_OCSP_SINGLERESP(st, pp, i2d_func, ex_tag, ex_class, is_set) \
+	SKM_ASN1_SET_OF_i2d(OCSP_SINGLERESP, (st), (pp), (i2d_func), (ex_tag), (ex_class), (is_set))
+#define ASN1_seq_pack_OCSP_SINGLERESP(st, i2d_func, buf, len) \
+	SKM_ASN1_seq_pack(OCSP_SINGLERESP, (st), (i2d_func), (buf), (len))
+#define ASN1_seq_unpack_OCSP_SINGLERESP(buf, len, d2i_func, free_func) \
+	SKM_ASN1_seq_unpack(OCSP_SINGLERESP, (buf), (len), (d2i_func), (free_func))
 
 #define d2i_ASN1_SET_OF_PKCS12_SAFEBAG(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
 	SKM_ASN1_SET_OF_d2i(PKCS12_SAFEBAG, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class)) 

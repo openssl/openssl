@@ -46,6 +46,7 @@ my @dirs = (
 "crypto/pkcs12",
 "crypto/comp",
 "crypto/engine",
+"crypto/ocsp",
 "ssl",
 "rsaref",
 "apps",

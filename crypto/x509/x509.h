@@ -1061,6 +1061,7 @@ int		X509_NAME_print(BIO *bp, X509_NAME *name, int obase);
 int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent, unsigned long flags);
 int		X509_print_ex(BIO *bp,X509 *x, unsigned long nmflag, unsigned long cflag);
 int		X509_print(BIO *bp,X509 *x);
+int		X509_ocspid_print(BIO *bp,X509 *x);
 int		X509_CERT_AUX_print(BIO *bp,X509_CERT_AUX *x, int indent);
 int		X509_CRL_print(BIO *bp,X509_CRL *x);
 int		X509_REQ_print(BIO *bp,X509_REQ *req);

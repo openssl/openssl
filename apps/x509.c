@@ -106,6 +106,7 @@ static char *x509_usage[]={
 " -fingerprint    - print the certificate fingerprint\n",
 " -alias          - output certificate alias\n",
 " -noout          - no certificate output\n",
+" -ocspid         - print OCSP hash values for the subject name and public key\n",
 " -trustout       - output a \"trusted\" certificate\n",
 " -clrtrust       - clear all trusted purposes\n",
 " -clrreject      - clear all rejected purposes\n",
@@ -163,6 +164,7 @@ int MAIN(int argc, char **argv)
 	char *CAkeyfile=NULL,*CAserial=NULL;
 	char *alias=NULL;
 	int text=0,serial=0,hash=0,subject=0,issuer=0,startdate=0,enddate=0;
+	int ocspid=0;
 	int noout=0,sign_flag=0,CA_flag=0,CA_createserial=0,email=0;
 	int trustout=0,clrtrust=0,clrreject=0,aliasout=0,clrext=0;
 	int C=0;
@@ -412,6 +414,8 @@ int MAIN(int argc, char **argv)
 			clrext = 1;
 			}
 #endif
+		else if (strcmp(*argv,"-ocspid") == 0)
+			ocspid= ++num;
 		else if ((md_alg=EVP_get_digestbyname(*argv + 1)))
 			{
 			/* ok */
@@ -916,6 +920,10 @@ bad:
 					PEM_write_bio_X509_REQ(out,rq);
 					}
 				noout=1;
+				}
+			else if (ocspid == i)
+				{
+				X509_ocspid_print(out, x);
 				}
 			}
 		}
