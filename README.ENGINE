@@ -154,7 +154,7 @@
     shared-library that contains the ENGINE implementation, and "NO_VCHECK"
     might possibly be useful if there is a minor version conflict and you
     (or a vendor helpdesk) is convinced you can safely ignore it.
-    "ENGINE_ID" is probably only needed if a shared-library implements
+    "ID" is probably only needed if a shared-library implements
     multiple ENGINEs, but if you know the engine id you expect to be using,
     it doesn't hurt to specify it (and this provides a sanity check if
     nothing else). "LIST_ADD" is only required if you actually wish the
@@ -174,7 +174,7 @@
 
        ENGINE *e = ENGINE_by_id("dynamic");
        ENGINE_ctrl_cmd_string(e, "SO_PATH", "/lib/libfoo.so", 0);
-       ENGINE_ctrl_cmd_string(e, "ENGINE_ID", "foo", 0);
+       ENGINE_ctrl_cmd_string(e, "ID", "foo", 0);
        ENGINE_ctrl_cmd_string(e, "LOAD", NULL, 0);
        ENGINE_ctrl_cmd_string(e, "CMD_FOO", "some input data", 0);
 
