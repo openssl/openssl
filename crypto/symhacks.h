@@ -182,6 +182,18 @@
 #undef OCSP_SINGLERESP_get_ext_by_critical
 #define OCSP_SINGLERESP_get_ext_by_critical     OCSP_SINGLERESP_get_ext_by_crit
 
+/* Hack some long DES names */
+#undef _ossl_old_des_ede3_cfb64_encrypt
+#define _ossl_old_des_ede3_cfb64_encrypt	_ossl_odes_ede3_cfb64_encrypt
+#undef _ossl_old_des_ede3_ofb64_encrypt
+#define _ossl_old_des_ede3_ofb64_encrypt	_ossl_odes_ede3_ofb64_encrypt
+
+/* Hack some long EVP names */
+#undef OPENSSL_add_all_algorithms_noconf
+#define OPENSSL_add_all_algorithms_noconf	OPENSSL_add_all_algo_noconf
+#undef OPENSSL_add_all_algorithms_conf
+#define OPENSSL_add_all_algorithms_conf		OPENSSL_add_all_algo_conf
+
 /* Hack some long EC names */
 #undef EC_POINT_set_Jprojective_coordinates_GFp
 #define EC_POINT_set_Jprojective_coordinates_GFp \
