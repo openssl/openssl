@@ -59,6 +59,16 @@
 /* Header for dynamic hash table routines
  * Author - Eric Young
  */
+/* ... erm yeah, "dynamic hash tables" you say?
+ * 
+ * And what would dynamic hash tables have to do with any of this code *now*?
+ * AFAICS, this code is only referenced by crypto/bn/exp.c which is an unused
+ * file that I doubt compiles any more. speed.c is the only thing that could
+ * use this (and it has nothing to do with hash tables), yet it instead has its
+ * own duplication of all this stuff and looks, if anything, more complete. See
+ * the corresponding note in apps/speed.c.
+ * The Bemused - Geoff
+ */
 
 #ifndef HEADER_TMDIFF_H
 #define HEADER_TMDIFF_H
@@ -67,11 +77,13 @@
 extern "C" {
 #endif
 
-char *ms_time_new(void );
-void ms_time_free(char *a);
-void ms_time_get(char *a);
-double ms_time_diff(char *start,char *end);
-int ms_time_cmp(char *ap,char *bp);
+typedef struct ms_tm MS_TM;
+
+MS_TM *ms_time_new(void );
+void ms_time_free(MS_TM *a);
+void ms_time_get(MS_TM *a);
+double ms_time_diff(MS_TM *start, MS_TM *end);
+int ms_time_cmp(const MS_TM *ap, const MS_TM *bp);
 
 #ifdef  __cplusplus
 }

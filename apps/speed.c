@@ -208,11 +208,21 @@
 #include <openssl/ecdh.h>
 #endif
 
+/*
+ * The following "HZ" timing stuff should be sync'd up with the code in
+ * crypto/tmdiff.[ch]. That appears to try to do the same job, though I think
+ * this code is more up to date than libcrypto's so there may be features to
+ * migrate over first. This is used in two places further down AFAICS. 
+ * The point is that nothing in openssl actually *uses* that tmdiff stuff, so
+ * either speed.c should be using it or it should go because it's obviously not
+ * useful enough. Anyone want to do a janitorial job on this?
+ */
+
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ
 # if defined(_SC_CLK_TCK) \
      && (!defined(OPENSSL_SYS_VMS) || __CTRL_VER >= 70000000)
-#  define HZ ((double)sysconf(_SC_CLK_TCK))
+#  define HZ sysconf(_SC_CLK_TCK)
 # else
 #  ifndef CLK_TCK
 #   ifndef _BSD_CLK_TCK_ /* FreeBSD hack */
@@ -294,7 +304,7 @@ static double Time_F(int s)
 
 #ifdef USE_TOD
 	if(usertime)
-	    {
+		{
 		static struct rusage tstart,tend;
 
 		getrusage_used = 1;
@@ -349,7 +359,8 @@ static double Time_F(int s)
 		else
 			{
 			times(&tend);
-			ret=((double)(tend.tms_utime-tstart.tms_utime))/HZ;
+			ret = HZ;
+			ret=(double)(tend.tms_utime-tstart.tms_utime) / ret;
 			return((ret < 1e-3)?1e-3:ret);
 			}
 		}
@@ -2191,7 +2202,10 @@ show_res:
 #endif
 #ifdef HZ
 #define as_string(s) (#s)
-		printf("HZ=%g", (double)HZ);
+		{
+		double dbl = HZ;
+		printf("HZ=%g", dbl);
+		}
 # ifdef _SC_CLK_TCK
 		printf(" [sysconf value]");
 # endif

@@ -4,6 +4,15 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) The tmdiff.h API was so ugly and minimal that our own timing utility
+     (speed) prefers to use its own implementation. The two implementations
+     haven't been consolidated as yet (volunteers?) but the tmdiff API has had
+     its object type properly exposed (MS_TM) instead of casting to/from "char
+     *". This may still change yet if someone realises MS_TM and "ms_time_***"
+     aren't necessarily the greatest nomenclatures - but this is what was used
+     internally to the implementation so I've used that for now.
+     [Geoff Thorpe]
+
   *) Ensure that deprecated functions do not get compiled when
      OPENSSL_NO_DEPRECATED is defined. Some "openssl" subcommands and a few of
      the self-tests were still using deprecated key-generation functions so
