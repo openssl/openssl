@@ -1,3 +1,4 @@
+Output of `Configure TABLE':
 
 *** BC-16
 $cc           = bcc
@@ -134,8 +135,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= bsd-gcc-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** FreeBSD-elf
 $cc           = gcc
@@ -157,8 +158,8 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 $shared_target= bsd-gcc-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** MPE/iX-gcc
 $cc           = gcc
@@ -226,8 +227,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= bsd-gcc-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** NetBSD-sparc
 $cc           = gcc
@@ -249,8 +250,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= bsd-gcc-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** NetBSD-x86
 $cc           = gcc
@@ -272,8 +273,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= bsd-gcc-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** OS2-EMX
 $cc           = gcc
@@ -341,8 +342,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= bsd-gcc-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** OpenBSD-alpha
 $cc           = gcc
@@ -364,8 +365,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= bsd-gcc-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** OpenBSD-mips
 $cc           = gcc
@@ -387,8 +388,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= bsd-gcc-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** OpenBSD-x86
 $cc           = gcc
@@ -410,8 +411,8 @@ $rc5_obj      = asm/r586-out.o
 $dso_scheme   = dlfcn
 $shared_target= bsd-gcc-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** OpenUNIX-8
 $cc           = cc
@@ -433,8 +434,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= svr5-shared
 $shared_cflag = -Kpic
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** OpenUNIX-8-gcc
 $cc           = gcc
@@ -456,8 +457,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= svr5-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** OpenUNIX-8-pentium
 $cc           = cc
@@ -479,8 +480,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= svr5-shared
 $shared_cflag = -Kpic
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** OpenUNIX-8-pentium_pro
 $cc           = cc
@@ -502,8 +503,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= svr5-shared
 $shared_cflag = -Kpic
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** ReliantUNIX
 $cc           = cc
@@ -823,8 +824,8 @@ $rmd160_obj   =
 $rc5_obj      = dlfcn
 $dso_scheme   = tru64-shared
 $shared_target= 
-$shared_cflag = .so
-$shared_extension = 
+$shared_cflag = 
+$shared_extension = .so
 $ranlib       = 
 
 *** alpha-cc-rpath
@@ -846,8 +847,8 @@ $rmd160_obj   =
 $rc5_obj      = dlfcn
 $dso_scheme   = tru64-shared-rpath
 $shared_target= 
-$shared_cflag = .so
-$shared_extension = 
+$shared_cflag = 
+$shared_extension = .so
 $ranlib       = 
 
 *** alpha-gcc
@@ -869,8 +870,8 @@ $rmd160_obj   =
 $rc5_obj      = dlfcn
 $dso_scheme   = alpha-osf1-shared
 $shared_target= 
-$shared_cflag = .so
-$shared_extension = 
+$shared_cflag = 
+$shared_extension = .so
 $ranlib       = 
 
 *** alpha164-cc
@@ -892,8 +893,8 @@ $rmd160_obj   =
 $rc5_obj      = dlfcn
 $dso_scheme   = tru64-shared
 $shared_target= 
-$shared_cflag = .so
-$shared_extension = 
+$shared_cflag = 
+$shared_extension = .so
 $ranlib       = 
 
 *** alphaold-cc
@@ -915,8 +916,8 @@ $rmd160_obj   =
 $rc5_obj      = dlfcn
 $dso_scheme   = alpha-osf1-shared
 $shared_target= 
-$shared_cflag = .so
-$shared_extension = 
+$shared_cflag = 
+$shared_extension = .so
 $ranlib       = 
 
 *** bsdi-elf-gcc
@@ -939,8 +940,8 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 $shared_target= bsd-gcc-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** bsdi-gcc
 $cc           = gcc
@@ -1238,8 +1239,8 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** debug-levitte-linux-noasm
 $cc           = gcc
@@ -1261,8 +1262,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** debug-linux-elf
 $cc           = gcc
@@ -1353,8 +1354,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** debug-solaris-sparcv8-gcc
 $cc           = gcc
@@ -1376,8 +1377,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** debug-solaris-sparcv9-cc
 $cc           = cc
@@ -1399,8 +1400,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** debug-solaris-sparcv9-gcc
 $cc           = gcc
@@ -1422,8 +1423,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** debug-steve
 $cc           = gcc
@@ -1606,8 +1607,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = +Z
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-brokengcc
 $cc           = gcc
@@ -1629,8 +1630,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = -fPIC
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-cc
 $cc           = cc
@@ -1652,8 +1653,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = +Z
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-gcc
 $cc           = gcc
@@ -1675,8 +1676,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = -fPIC
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-ia64-cc
 $cc           = cc
@@ -1698,8 +1699,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= hpux-shared
 $shared_cflag = +Z
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-m68k-gcc
 $cc           = gcc
@@ -1744,8 +1745,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = +Z
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-parisc-cc-o4
 $cc           = cc
@@ -1767,8 +1768,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = +Z
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-parisc-gcc
 $cc           = gcc
@@ -1790,8 +1791,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = -fPIC
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-parisc1_1-cc
 $cc           = cc
@@ -1813,8 +1814,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = +Z
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux-parisc2-cc
 $cc           = cc
@@ -1836,8 +1837,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = +Z
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux10-brokencc
 $cc           = cc
@@ -1859,8 +1860,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = +Z
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux10-brokengcc
 $cc           = gcc
@@ -1882,8 +1883,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = -fPIC
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux10-cc
 $cc           = cc
@@ -1905,8 +1906,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = +Z
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux10-gcc
 $cc           = gcc
@@ -1928,8 +1929,8 @@ $rc5_obj      =
 $dso_scheme   = dl
 $shared_target= hpux-shared
 $shared_cflag = -fPIC
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux64-ia64-cc
 $cc           = cc
@@ -1951,8 +1952,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= hpux64-shared
 $shared_cflag = +Z
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux64-parisc-cc
 $cc           = cc
@@ -1974,8 +1975,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= hpux64-shared
 $shared_cflag = +Z
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hpux64-parisc2-cc
 $cc           = cc
@@ -1997,8 +1998,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= hpux64-shared
 $shared_cflag = +Z
-$shared_extension = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .sl.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** hurd-x86
 $cc           = gcc
@@ -2043,8 +2044,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= irix-shared
 $shared_cflag = 
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** irix-gcc
 $cc           = gcc
@@ -2066,8 +2067,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= irix-shared
 $shared_cflag = 
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** irix-mips3-cc
 $cc           = cc
@@ -2089,8 +2090,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= irix-shared
 $shared_cflag = 
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** irix-mips3-gcc
 $cc           = gcc
@@ -2112,8 +2113,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= irix-shared
 $shared_cflag = 
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** irix64-mips4-cc
 $cc           = cc
@@ -2135,8 +2136,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= irix-shared
 $shared_cflag = 
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** irix64-mips4-gcc
 $cc           = gcc
@@ -2158,8 +2159,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= irix-shared
 $shared_cflag = 
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-alpha+bwx-ccc
 $cc           = ccc
@@ -2204,8 +2205,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-alpha-ccc
 $cc           = ccc
@@ -2250,8 +2251,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-aout
 $cc           = gcc
@@ -2296,8 +2297,8 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-elf-arm
 $cc           = gcc
@@ -2319,8 +2320,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-ia64
 $cc           = gcc
@@ -2342,8 +2343,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-k6
 $cc           = gcc
@@ -2365,8 +2366,8 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-m68k
 $cc           = gcc
@@ -2437,6 +2438,29 @@ $shared_cflag =
 $shared_extension = 
 $ranlib       = 
 
+*** linux-parisc
+$cc           = gcc
+$cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = 
+$bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_extension = 
+$ranlib       = 
+
 *** linux-pentium
 $cc           = gcc
 $cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mcpu=pentium -Wall
@@ -2457,8 +2481,8 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-ppc
 $cc           = gcc
@@ -2480,8 +2504,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-ppro
 $cc           = gcc
@@ -2503,8 +2527,8 @@ $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** linux-s390
 $cc           = gcc
@@ -2894,8 +2918,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv7-cc
 $cc           = cc
@@ -2917,8 +2941,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv7-gcc
 $cc           = gcc
@@ -2940,8 +2964,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv8-cc
 $cc           = cc
@@ -2963,8 +2987,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv8-gcc
 $cc           = gcc
@@ -2986,8 +3010,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv9-cc
 $cc           = cc
@@ -3009,8 +3033,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv9-gcc
 $cc           = gcc
@@ -3032,8 +3056,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-sparcv9-gcc27
 $cc           = gcc
@@ -3055,8 +3079,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-x86-cc
 $cc           = cc
@@ -3078,8 +3102,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris-x86-gcc
 $cc           = gcc
@@ -3101,8 +3125,8 @@ $rc5_obj      = asm/r586-sol.o
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris64-sparcv9-cc
 $cc           = cc
@@ -3124,8 +3148,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -KPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = /usr/ccs/bin/ar rs
+$shared_extension = -xarch=v9
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** solaris64-sparcv9-gcc
 $cc           = gcc
@@ -3147,8 +3171,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= solaris-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** sunos-gcc
 $cc           = gcc
@@ -3354,8 +3378,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= svr5-shared
 $shared_cflag = -Kpic
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** unixware-7-gcc
 $cc           = gcc
@@ -3377,8 +3401,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= gnu-shared
 $shared_cflag = -fPIC
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** unixware-7-pentium
 $cc           = cc
@@ -3400,8 +3424,8 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= svr5-shared
 $shared_cflag = -Kpic
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 
 *** unixware-7-pentium_pro
 $cc           = cc
@@ -3423,5 +3447,5 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= svr5-shared
 $shared_cflag = -Kpic
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$shared_extension = 
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)

@@ -97,6 +97,13 @@ c_zlib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 c_zlib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 c_zlib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 c_zlib.o: c_zlib.c
+comp_err.o: ../../include/openssl/bio.h ../../include/openssl/comp.h
+comp_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+comp_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+comp_err.o: ../../include/openssl/opensslconf.h
+comp_err.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+comp_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+comp_err.o: comp_err.c
 comp_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 comp_lib.o: ../../include/openssl/bn.h ../../include/openssl/comp.h
 comp_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
