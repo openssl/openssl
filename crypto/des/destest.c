@@ -449,7 +449,10 @@ int main(int argc, char *argv[])
 	des_ncbc_encrypt(cbc_data,cbc_out,strlen((char *)cbc_data)+1,ks,
 			 &iv3,DES_ENCRYPT);
 	if (memcmp(cbc_out,cbc_ok,32) != 0)
+		{
 		printf("cbc_encrypt encrypt error\n");
+		err=1;
+		}
 
 	memcpy(iv3,cbc_iv,sizeof(cbc_iv));
 	des_ncbc_encrypt(cbc_out,cbc_in,strlen((char *)cbc_data)+1,ks,
@@ -475,6 +478,7 @@ int main(int argc, char *argv[])
 	if (memcmp(cbc_out,xcbc_ok,32) != 0)
 		{
 		printf("des_xcbc_encrypt encrypt error\n");
+		err=1;
 		}
 	memcpy(iv3,cbc_iv,sizeof(cbc_iv));
 	des_xcbc_encrypt(cbc_out,cbc_in,strlen((char *)cbc_data)+1,ks,
@@ -781,7 +785,6 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 		}
 	printf("\n");
 	exit(err);
-	return(0);
 	}
 
 static char *pt(unsigned char *p)
