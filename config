@@ -164,7 +164,7 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
         ;;
 
     NetBSD:*:*:*386*)
-        echo "`sysctl -n hw.model | sed 's,.*\(.\)86-class.*,i\186,'`-whateve\r-netbsd"; exit 0
+        echo "`/usr/sbin/sysctl -n hw.model | sed 's,.*\(.\)86-class.*,i\186,'`-whatever-netbsd"; exit 0
 	;;
 
     NetBSD:*)

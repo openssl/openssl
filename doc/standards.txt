@@ -55,7 +55,7 @@ These are documents that describe things that are implemented in OpenSSL.
      Profile. R. Housley, W. Ford, W. Polk, D. Solo. January 1999.
      (Format: TXT=278438 bytes) (Status: PROPOSED STANDARD)
 
-PKCS#12: Personal Informatoin Exchange Syntax Standard, version 1.0.
+PKCS#12: Personal Information Exchange Syntax Standard, version 1.0.
 
 
 Related:
@@ -63,6 +63,24 @@ Related:
 
 These are documents that are close to OpenSSL, for example the
 STARTTLS documents.
+
+1421 Privacy Enhancement for Internet Electronic Mail: Part I: Message
+     Encryption and Authentication Procedures. J. Linn. February 1993.
+     (Format: TXT=103894 bytes) (Obsoletes RFC1113) (Status: PROPOSED
+     STANDARD)
+
+1422 Privacy Enhancement for Internet Electronic Mail: Part II:
+     Certificate-Based Key Management. S. Kent. February 1993. (Format:
+     TXT=86085 bytes) (Obsoletes RFC1114) (Status: PROPOSED STANDARD)
+
+1423 Privacy Enhancement for Internet Electronic Mail: Part III:
+     Algorithms, Modes, and Identifiers. D. Balenson. February 1993.
+     (Format: TXT=33277 bytes) (Obsoletes RFC1115) (Status: PROPOSED
+     STANDARD)
+
+1424 Privacy Enhancement for Internet Electronic Mail: Part IV: Key
+     Certification and Related Services. B. Kaliski. February 1993.
+     (Format: TXT=17537 bytes) (Status: PROPOSED STANDARD)
 
 2487 SMTP Service Extension for Secure SMTP over TLS. P. Hoffman.
      January 1999. (Format: TXT=15120 bytes) (Status: PROPOSED STANDARD)

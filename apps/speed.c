@@ -103,9 +103,7 @@
 #undef TIMES
 #endif
 
-#ifndef TIMES
 #include <sys/timeb.h>
-#endif
 
 #if defined(sun) || defined(__ultrix)
 #define _POSIX_SOURCE
@@ -179,7 +177,7 @@
 #define BUFSIZE	((long)1024*8+1)
 int run=0;
 
-static double Time_F(int s);
+static double Time_F(int s, int usertime);
 static void print_message(char *s,long num,int length);
 static void pkey_print_message(char *str,char *str2,long num,int bits,int sec);
 #ifdef SIGALRM
@@ -203,40 +201,45 @@ static SIGRETTYPE sig_done(int sig)
 #define START	0
 #define STOP	1
 
-static double Time_F(int s)
+static double Time_F(int s, int usertime)
 	{
 	double ret;
 #ifdef TIMES
-	static struct tms tstart,tend;
-
-	if (s == START)
+	if (usertime)
 		{
-		times(&tstart);
-		return(0);
+		static struct tms tstart,tend;
+
+		if (s == START)
+			{
+			times(&tstart);
+			return(0);
+			}
+		else
+			{
+			times(&tend);
+			ret=((double)(tend.tms_utime-tstart.tms_utime))/HZ;
+			return((ret < 1e-3)?1e-3:ret);
+			}
 		}
 	else
+#endif /* times() */
 		{
-		times(&tend);
-		ret=((double)(tend.tms_utime-tstart.tms_utime))/HZ;
-		return((ret < 1e-3)?1e-3:ret);
-		}
-#else /* !times() */
-	static struct timeb tstart,tend;
-	long i;
+		static struct timeb tstart,tend;
+		long i;
 
-	if (s == START)
-		{
-		ftime(&tstart);
-		return(0);
+		if (s == START)
+			{
+			ftime(&tstart);
+			return(0);
+			}
+		else
+			{
+			ftime(&tend);
+			i=(long)tend.millitm-(long)tstart.millitm;
+			ret=((double)(tend.time-tstart.time))+((double)i)/1000.0;
+			return((ret < 0.001)?0.001:ret);
+			}
 		}
-	else
-		{
-		ftime(&tend);
-		i=(long)tend.millitm-(long)tstart.millitm;
-		ret=((double)(tend.time-tstart.time))+((double)i)/1000.0;
-		return((ret < 0.001)?0.001:ret);
-		}
-#endif
 	}
 
 int MAIN(int, char **);
@@ -347,6 +350,11 @@ int MAIN(int argc, char **argv)
 	int dsa_doit[DSA_NUM];
 	int doit[ALGOR_NUM];
 	int pr_header=0;
+	int usertime=1;
+
+#ifndef TIMES
+	usertime=-1;
+#endif
 
 	apps_startup();
 	memset(results, 0, sizeof(results));
@@ -393,7 +401,10 @@ int MAIN(int argc, char **argv)
 	argv++;
 	while (argc)
 		{
-		if	((strcmp(*argv,"-engine") == 0) && (argc > 0))
+		if	((argc > 0) && (strcmp(*argv,"-elapsed") == 0))
+			usertime = 0;
+		else
+		if	((argc > 0) && (strcmp(*argv,"-engine") == 0))
 			{
 			argc--;
 			argv++;
@@ -542,7 +553,7 @@ int MAIN(int argc, char **argv)
 		else
 #endif
 			{
-			BIO_printf(bio_err,"bad value, pick one of\n");
+			BIO_printf(bio_err,"bad option or value, pick one of\n");
 			BIO_printf(bio_err,"md2      mdc2	md5      hmac      sha1    rmd160\n");
 #ifndef NO_IDEA
 			BIO_printf(bio_err,"idea-cbc ");
@@ -570,6 +581,11 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"\ndsa512   dsa1024  dsa2048\n");
 #endif
 			BIO_printf(bio_err,"idea     rc2      des      rsa    blowfish\n");
+			BIO_printf(bio_err,"\n");
+			BIO_printf(bio_err,"Available options:\n");
+			BIO_printf(bio_err,"\n");
+			BIO_printf(bio_err,"-elapsed        measure time in real time instead of CPU user time.\n");
+			BIO_printf(bio_err,"-engine e       use engine e, possibly a hardware device.\n");
 			goto end;
 			}
 		argc--;
@@ -589,10 +605,13 @@ int MAIN(int argc, char **argv)
 	for (i=0; i<ALGOR_NUM; i++)
 		if (doit[i]) pr_header++;
 
-#ifndef TIMES
-	BIO_printf(bio_err,"To get the most accurate results, try to run this\n");
-	BIO_printf(bio_err,"program when this computer is idle.\n");
-#endif
+	if (usertime == 0)
+		BIO_printf(bio_err,"You have chosen to measure elapsed time instead of user CPU time.\n");
+	if (usertime <= 0)
+		{
+		BIO_printf(bio_err,"To get the most accurate results, try to run this\n");
+		BIO_printf(bio_err,"program when this computer is idle.\n");
+		}
 
 #ifndef NO_RSA
 	for (i=0; i<RSA_NUM; i++)
@@ -656,11 +675,11 @@ int MAIN(int argc, char **argv)
 	do	{
 		long i;
 		count*=2;
-		Time_F(START);
+		Time_F(START,usertime);
 		for (i=count; i; i--)
 			des_ecb_encrypt(buf_as_des_cblock,buf_as_des_cblock,
 				&(sch[0]),DES_ENCRYPT);
-		d=Time_F(STOP);
+		d=Time_F(STOP,usertime);
 		} while (d <3);
 	c[D_MD2][0]=count/10;
 	c[D_MDC2][0]=count/10;
@@ -757,10 +776,10 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_MD2],c[D_MD2][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_MD2][j]); count++)
 				MD2(buf,(unsigned long)lengths[j],&(md2[0]));
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MD2],d);
 			results[D_MD2][j]=((double)count)/d*lengths[j];
@@ -773,10 +792,10 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_MDC2],c[D_MDC2][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_MDC2][j]); count++)
 				MDC2(buf,(unsigned long)lengths[j],&(mdc2[0]));
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MDC2],d);
 			results[D_MDC2][j]=((double)count)/d*lengths[j];
@@ -790,10 +809,10 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_MD5],c[D_MD5][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_MD5][j]); count++)
 				MD5(&(buf[0]),(unsigned long)lengths[j],&(md5[0]));
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MD5],d);
 			results[D_MD5][j]=((double)count)/d*lengths[j];
@@ -811,14 +830,14 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_HMAC],c[D_HMAC][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_HMAC][j]); count++)
 				{
 				HMAC_Init(&hctx,NULL,0,NULL);
                                 HMAC_Update(&hctx,buf,lengths[j]);
                                 HMAC_Final(&hctx,&(hmac[0]),NULL);
 				}
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_HMAC],d);
 			results[D_HMAC][j]=((double)count)/d*lengths[j];
@@ -831,10 +850,10 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_SHA1],c[D_SHA1][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_SHA1][j]); count++)
 				SHA1(buf,(unsigned long)lengths[j],&(sha[0]));
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_SHA1],d);
 			results[D_SHA1][j]=((double)count)/d*lengths[j];
@@ -847,10 +866,10 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_RMD160],c[D_RMD160][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_RMD160][j]); count++)
 				RIPEMD160(buf,(unsigned long)lengths[j],&(rmd160[0]));
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_RMD160],d);
 			results[D_RMD160][j]=((double)count)/d*lengths[j];
@@ -863,11 +882,11 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_RC4],c[D_RC4][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_RC4][j]); count++)
 				RC4(&rc4_ks,(unsigned int)lengths[j],
 					buf,buf);
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_RC4],d);
 			results[D_RC4][j]=((double)count)/d*lengths[j];
@@ -880,11 +899,11 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_CBC_DES],c[D_CBC_DES][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_CBC_DES][j]); count++)
 				des_ncbc_encrypt(buf,buf,lengths[j],sch,
 						 &iv,DES_ENCRYPT);
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_CBC_DES],d);
 			results[D_CBC_DES][j]=((double)count)/d*lengths[j];
@@ -896,12 +915,12 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_EDE3_DES],c[D_EDE3_DES][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_EDE3_DES][j]); count++)
 				des_ede3_cbc_encrypt(buf,buf,lengths[j],
 						     sch,sch2,sch3,
 						     &iv,DES_ENCRYPT);
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_EDE3_DES],d);
 			results[D_EDE3_DES][j]=((double)count)/d*lengths[j];
@@ -914,12 +933,12 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_CBC_IDEA],c[D_CBC_IDEA][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_CBC_IDEA][j]); count++)
 				idea_cbc_encrypt(buf,buf,
 					(unsigned long)lengths[j],&idea_ks,
 					iv,IDEA_ENCRYPT);
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_CBC_IDEA],d);
 			results[D_CBC_IDEA][j]=((double)count)/d*lengths[j];
@@ -932,12 +951,12 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_CBC_RC2],c[D_CBC_RC2][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_CBC_RC2][j]); count++)
 				RC2_cbc_encrypt(buf,buf,
 					(unsigned long)lengths[j],&rc2_ks,
 					iv,RC2_ENCRYPT);
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_CBC_RC2],d);
 			results[D_CBC_RC2][j]=((double)count)/d*lengths[j];
@@ -950,12 +969,12 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_CBC_RC5],c[D_CBC_RC5][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_CBC_RC5][j]); count++)
 				RC5_32_cbc_encrypt(buf,buf,
 					(unsigned long)lengths[j],&rc5_ks,
 					iv,RC5_ENCRYPT);
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_CBC_RC5],d);
 			results[D_CBC_RC5][j]=((double)count)/d*lengths[j];
@@ -968,12 +987,12 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_CBC_BF],c[D_CBC_BF][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_CBC_BF][j]); count++)
 				BF_cbc_encrypt(buf,buf,
 					(unsigned long)lengths[j],&bf_ks,
 					iv,BF_ENCRYPT);
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_CBC_BF],d);
 			results[D_CBC_BF][j]=((double)count)/d*lengths[j];
@@ -986,12 +1005,12 @@ int MAIN(int argc, char **argv)
 		for (j=0; j<SIZE_NUM; j++)
 			{
 			print_message(names[D_CBC_CAST],c[D_CBC_CAST][j],lengths[j]);
-			Time_F(START);
+			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_CBC_CAST][j]); count++)
 				CAST_cbc_encrypt(buf,buf,
 					(unsigned long)lengths[j],&cast_ks,
 					iv,CAST_ENCRYPT);
-			d=Time_F(STOP);
+			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_CBC_CAST],d);
 			results[D_CBC_CAST][j]=((double)count)/d*lengths[j];
@@ -1009,7 +1028,7 @@ int MAIN(int argc, char **argv)
 		pkey_print_message("private","rsa",rsa_c[j][0],rsa_bits[j],
 			RSA_SECONDS);
 /*		RSA_blinding_on(rsa_key[j],NULL); */
-		Time_F(START);
+		Time_F(START,usertime);
 		for (count=0,run=1; COND(rsa_c[j][0]); count++)
 			{
 			ret=RSA_sign(NID_md5_sha1, buf,36, buf2, &rsa_num,
@@ -1022,7 +1041,7 @@ int MAIN(int argc, char **argv)
 				break;
 				}
 			}
-		d=Time_F(STOP);
+		d=Time_F(STOP,usertime);
 		BIO_printf(bio_err,"%ld %d bit private RSA's in %.2fs\n",
 			count,rsa_bits[j],d);
 		rsa_results[j][0]=d/(double)count;
@@ -1032,7 +1051,7 @@ int MAIN(int argc, char **argv)
 		ret=RSA_verify(NID_md5_sha1, buf,36, buf2, rsa_num, rsa_key[j]);
 		pkey_print_message("public","rsa",rsa_c[j][1],rsa_bits[j],
 			RSA_SECONDS);
-		Time_F(START);
+		Time_F(START,usertime);
 		for (count=0,run=1; COND(rsa_c[j][1]); count++)
 			{
 			ret=RSA_verify(NID_md5_sha1, buf,36, buf2, rsa_num,
@@ -1045,7 +1064,7 @@ int MAIN(int argc, char **argv)
 				break;
 				}
 			}
-		d=Time_F(STOP);
+		d=Time_F(STOP,usertime);
 		BIO_printf(bio_err,"%ld %d bit public RSA's in %.2fs\n",
 			count,rsa_bits[j],d);
 		rsa_results[j][1]=d/(double)count;
@@ -1078,7 +1097,7 @@ int MAIN(int argc, char **argv)
 			&kk,dsa_key[j]);
 		pkey_print_message("sign","dsa",dsa_c[j][0],dsa_bits[j],
 			DSA_SECONDS);
-		Time_F(START);
+		Time_F(START,usertime);
 		for (count=0,run=1; COND(dsa_c[j][0]); count++)
 			{
 			rsa_num=DSA_sign(EVP_PKEY_DSA,buf,20,buf2,
@@ -1091,7 +1110,7 @@ int MAIN(int argc, char **argv)
 				break;
 				}
 			}
-		d=Time_F(STOP);
+		d=Time_F(STOP,usertime);
 		BIO_printf(bio_err,"%ld %d bit DSA signs in %.2fs\n",
 			count,dsa_bits[j],d);
 		dsa_results[j][0]=d/(double)count;
@@ -1101,7 +1120,7 @@ int MAIN(int argc, char **argv)
 			kk,dsa_key[j]);
 		pkey_print_message("verify","dsa",dsa_c[j][1],dsa_bits[j],
 			DSA_SECONDS);
-		Time_F(START);
+		Time_F(START,usertime);
 		for (count=0,run=1; COND(dsa_c[j][1]); count++)
 			{
 			rsa_num2=DSA_verify(EVP_PKEY_DSA,buf,20,buf2,
@@ -1114,7 +1133,7 @@ int MAIN(int argc, char **argv)
 				break;
 				}
 			}
-		d=Time_F(STOP);
+		d=Time_F(STOP,usertime);
 		BIO_printf(bio_err,"%ld %d bit DSA verify in %.2fs\n",
 			count,dsa_bits[j],d);
 		dsa_results[j][1]=d/(double)count;
