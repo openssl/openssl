@@ -31,6 +31,7 @@
       o Reworked parts of the BIGNUM code.
       o Support for new engines: Broadcom ubsec, Accelerated Encryption
         Processing, IBM 4758.
+      o Extended and corrected OID (object identifier) table.
       o PRNG: query at more locations for a random device, automatic query for
         EGD style random sources at several locations.
       o SSL/TLS: allow optional cipher choice according to server's preference.
