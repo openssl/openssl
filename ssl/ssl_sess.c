@@ -123,6 +123,7 @@ SSL_SESSION *SSL_SESSION_new()
 	ss->time=time(NULL);
 	ss->prev=NULL;
 	ss->next=NULL;
+	ss->compress_meth=0;
 	CRYPTO_new_ex_data(ssl_session_meth,(char *)ss,&ss->ex_data);
 	return(ss);
 	}
@@ -136,8 +137,10 @@ int session;
 	if ((ss=SSL_SESSION_new()) == NULL) return(0);
 
 	/* If the context has a default timeout, use it */
-	if (s->ctx->session_timeout != 0)
+	if (s->ctx->session_timeout == 0)
 		ss->timeout=SSL_get_default_timeout(s);
+	else
+		ss->timeout=s->ctx->session_timeout;
 
 	if (s->session != NULL)
 		{
@@ -218,13 +221,13 @@ int len;
 		{
 		int copy=1;
 
-		s->ctx->sess_miss++;
+		s->ctx->stats.sess_miss++;
 		ret=NULL;
 		if ((s->ctx->get_session_cb != NULL) &&
 			((ret=s->ctx->get_session_cb(s,session_id,len,&copy))
 				!= NULL))
 			{
-			s->ctx->sess_cb_hit++;
+			s->ctx->stats.sess_cb_hit++;
 
 			/* The following should not return 1, otherwise,
 			 * things are very strange */
@@ -260,14 +263,14 @@ int len;
 
 	if ((long)(ret->time+ret->timeout) < (long)time(NULL)) /* timeout */
 		{
-		s->ctx->sess_timeout++;
+		s->ctx->stats.sess_timeout++;
 		/* remove it from the cache */
 		SSL_CTX_remove_session(s->ctx,ret);
 		SSL_SESSION_free(ret);		/* again to actually Free it */
 		return(0);
 		}
 
-	s->ctx->sess_hit++;
+	s->ctx->stats.sess_hit++;
 
 	/* ret->time=time(NULL); */ /* rezero timeout? */
 	/* again, just leave the session 
@@ -318,7 +321,7 @@ SSL_SESSION *c;
 					ctx->session_cache_tail))
 					break;
 				else
-					ctx->sess_cache_full++;
+					ctx->stats.sess_cache_full++;
 				}
 			}
 		}
@@ -413,7 +416,10 @@ SSL_SESSION *session;
 			{
 			if (!SSL_set_ssl_method(s,meth))
 				return(0);
-			session->timeout=SSL_get_default_timeout(s);
+			if (s->ctx->session_timeout == 0)
+				session->timeout=SSL_get_default_timeout(s);
+			else
+				session->timeout=s->ctx->session_timeout;
 			}
 
 		/* CRYPTO_w_lock(CRYPTO_LOCK_SSL);*/
@@ -431,6 +437,14 @@ SSL_SESSION *session;
 			SSL_SESSION_free(s->session);
 			s->session=NULL;
 			}
+
+		meth=s->ctx->method;
+		if (meth != s->method)
+			{
+			if (!SSL_set_ssl_method(s,meth))
+				return(0);
+			}
+		ret=1;
 		}
 	return(ret);
 	}
@@ -467,6 +481,24 @@ long t;
 	return(t);
 	}
 
+long SSL_CTX_set_timeout(s,t)
+SSL_CTX *s;
+long t;
+	{
+	long l;
+	if (s == NULL) return(0);
+	l=s->session_timeout;
+	s->session_timeout=t;
+	return(l);
+	}
+
+long SSL_CTX_get_timeout(s)
+SSL_CTX *s;
+	{
+	if (s == NULL) return(0);
+	return(s->session_timeout);
+	}
+
 typedef struct timeout_param_st
 	{
 	SSL_CTX *ctx;
@@ -499,7 +531,7 @@ long t;
 	TIMEOUT_PARAM tp;
 
 	tp.ctx=s;
-	tp.cache=SSL_CTX_sessions(s);
+	tp.cache=s->sessions;
 	if (tp.cache == NULL) return;
 	tp.time=t;
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);

@@ -146,6 +146,7 @@ SSL *s;
 		case SSL_ST_BEFORE|SSL_ST_CONNECT:
 		case SSL_ST_OK|SSL_ST_CONNECT:
 
+			s->server=0;
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
 			s->version=SSL2_VERSION;
@@ -166,7 +167,7 @@ SSL *s;
 			s->init_buf=buf;
 			s->init_num=0;
 			s->state=SSL2_ST_SEND_CLIENT_HELLO_A;
-			s->ctx->sess_connect++;
+			s->ctx->stats.sess_connect++;
 			s->handshake_func=ssl2_connect;
 			BREAK;
 
@@ -249,8 +250,11 @@ SSL *s;
 			break;
 
 		case SSL_ST_OK:
-			BUF_MEM_free(s->init_buf);
-			s->init_buf=NULL;
+			if (s->init_buf != NULL)
+				{
+				BUF_MEM_free(s->init_buf);
+				s->init_buf=NULL;
+				}
 			s->init_num=0;
 		/*	ERR_clear_error();*/
 
@@ -261,11 +265,11 @@ SSL *s;
 			 */
 
 			ssl_update_cache(s,SSL_SESS_CACHE_CLIENT);
-			if (s->hit) s->ctx->sess_hit++;
+			if (s->hit) s->ctx->stats.sess_hit++;
 
 			ret=1;
 			/* s->server=0; */
-			s->ctx->sess_connect_good++;
+			s->ctx->stats.sess_connect_good++;
 
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_DONE,1);
 
@@ -538,7 +542,7 @@ SSL *s;
 	if (s->state == SSL2_ST_SEND_CLIENT_MASTER_KEY_A)
 		{
 
-		if (!ssl_cipher_get_evp(s->session->cipher,&c,&md))
+		if (!ssl_cipher_get_evp(s->session,&c,&md,NULL))
 			{
 			ssl2_return_error(s,SSL2_PE_NO_CIPHER);
 			SSLerr(SSL_F_CLIENT_MASTER_KEY,SSL_R_PROBLEMS_MAPPING_CIPHER_FUNCTIONS);

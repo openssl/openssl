@@ -486,6 +486,12 @@ SSL *s;
 	if (s->s3->tmp.ca_names != NULL)
 		sk_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
 
+	if (s->s3->rrec.comp != NULL)
+		{
+		Free(s->s3->rrec.comp);
+		s->s3->rrec.comp=NULL;
+		}
+
 	rp=s->s3->rbuf.buf;
 	wp=s->s3->wbuf.buf;
 
@@ -493,11 +499,7 @@ SSL *s;
 	if (rp != NULL) s->s3->rbuf.buf=rp;
 	if (wp != NULL) s->s3->wbuf.buf=wp;
 
-	if (s->s3->rrec.comp != NULL)
-		{
-		Free(s->s3->rrec.comp);
-		s->s3->rrec.comp=NULL;
-		}
+	ssl_free_wbio_buffer(s);
 
 	s->packet_length=0;
 	s->s3->renegotiate=0;
@@ -844,7 +846,6 @@ const char *buf;
 int len;
 	{
 	int ret,n;
-	BIO *under;
 
 #if 0
 	if (s->shutdown & SSL_SEND_SHUTDOWN)
@@ -878,15 +879,12 @@ int len;
 		if (n <= 0) return(n);
 		s->rwstate=SSL_NOTHING;
 
-		/* We have flushed the buffer */
-		under=BIO_pop(s->wbio);
-		s->wbio=under;
-		BIO_free(s->bbio);
-		s->bbio=NULL;
+		/* We have flushed the buffer, so remove it */
+		ssl_free_wbio_buffer(s);
+		s->s3->flags&= ~SSL3_FLAGS_POP_BUFFER;
+
 		ret=s->s3->delay_buf_pop_ret;
 		s->s3->delay_buf_pop_ret=0;
-
-		s->s3->flags&= ~SSL3_FLAGS_POP_BUFFER;
 		}
 	else
 		{
@@ -986,5 +984,4 @@ need to go to SSL_ST_ACCEPT.
 		}
 	return(ret);
 	}
-
 

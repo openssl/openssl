@@ -136,6 +136,13 @@ SSL *s;
 		case SSL_ST_BEFORE|SSL_ST_CONNECT:
 		case SSL_ST_OK|SSL_ST_CONNECT:
 
+			if (s->session != NULL)
+				{
+				SSLerr(SSL_F_SSL23_CONNECT,SSL_R_SSL23_DOING_SESSION_ID_REUSE);
+				ret= -1;
+				goto end;
+				}
+			s->server=0;
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
 			/* s->version=TLS1_VERSION; */
@@ -161,7 +168,7 @@ SSL *s;
 			ssl3_init_finished_mac(s);
 
 			s->state=SSL23_ST_CW_CLNT_HELLO_A;
-			s->ctx->sess_connect++;
+			s->ctx->stats.sess_connect++;
 			s->init_num=0;
 			break;
 
@@ -238,16 +245,19 @@ SSL *s;
 			{
 			*(d++)=TLS1_VERSION_MAJOR;
 			*(d++)=TLS1_VERSION_MINOR;
+			s->client_version=TLS1_VERSION;
 			}
 		else if (!(s->options & SSL_OP_NO_SSLv3))
 			{
 			*(d++)=SSL3_VERSION_MAJOR;
 			*(d++)=SSL3_VERSION_MINOR;
+			s->client_version=SSL3_VERSION;
 			}
 		else if (!(s->options & SSL_OP_NO_SSLv2))
 			{
 			*(d++)=SSL2_VERSION_MAJOR;
 			*(d++)=SSL2_VERSION_MINOR;
+			s->client_version=SSL2_VERSION;
 			}
 		else
 			{

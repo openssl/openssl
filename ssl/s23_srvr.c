@@ -134,6 +134,7 @@ SSL *s;
 		case SSL_ST_BEFORE|SSL_ST_ACCEPT:
 		case SSL_ST_OK|SSL_ST_ACCEPT:
 
+			s->server=1;
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
 			/* s->version=SSL3_VERSION; */
@@ -157,7 +158,7 @@ SSL *s;
 			ssl3_init_finished_mac(s);
 
 			s->state=SSL23_ST_SR_CLNT_HELLO_A;
-			s->ctx->sess_accept++;
+			s->ctx->stats.sess_accept++;
 			s->init_num=0;
 			break;
 
@@ -203,8 +204,10 @@ SSL *s;
 	unsigned int csl,sil,cl;
 	int n=0,j,tls1=0;
 	int type=0,use_sslv2_strong=0;
+	int v[2];
 
 	/* read the initial header */
+	v[0]=v[1]=0;
 	if (s->state ==	SSL23_ST_SR_CLNT_HELLO_A)
 		{
 		if (!ssl3_setup_buffers(s)) goto err;
@@ -221,12 +224,14 @@ SSL *s;
 			/* SSLv2 header */
 			if ((p[3] == 0x00) && (p[4] == 0x02))
 				{
+				v[0]=p[3]; v[1]=p[4];
 				/* SSLv2 */
 				if (!(s->options & SSL_OP_NO_SSLv2))
 					type=1;
 				}
 			else if (p[3] == SSL3_VERSION_MAJOR)
 				{
+				v[0]=p[3]; v[1]=p[4];
 				/* SSLv3/TLSv1 */
 				if (p[4] >= TLS1_VERSION_MINOR)
 					{
@@ -307,6 +312,7 @@ SSL *s;
 			 (p[1] == SSL3_VERSION_MAJOR) &&
 			 (p[5] == SSL3_MT_CLIENT_HELLO))
 			{
+			v[0]=p[1]; v[1]=p[2];
 			/* true SSLv3 or tls1 */
 			if (p[2] >= TLS1_VERSION_MINOR)
 				{
@@ -486,6 +492,7 @@ next_bit:
 			s->version=SSL3_VERSION;
 			s->method=SSLv3_server_method();
 			}
+		s->client_version=(v[0]<<8)|v[1];
 		s->handshake_func=s->method->ssl_accept;
 		}
 	

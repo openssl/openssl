@@ -133,6 +133,23 @@ SSL_SESSION *x;
 			sprintf(str,"%02X",x->key_arg[i]);
 			if (BIO_puts(bp,str) <= 0) goto err;
 			}
+	if (x->compress_meth != 0)
+		{
+		SSL_COMP *comp;
+
+		ssl_cipher_get_evp(x,NULL,NULL,&comp);
+		if (comp == NULL)
+			{
+			sprintf(str,"\n   Compression: %d",x->compress_meth);
+			if (BIO_puts(bp,str) <= 0) goto err;
+			}
+		else
+			{
+			sprintf(str,"\n   Compression: %d (%s)",
+				comp->id,comp->method->name);
+			if (BIO_puts(bp,str) <= 0) goto err;
+			}
+		}	
 	if (x->time != 0L)
 		{
 		sprintf(str,"\n    Start Time: %ld",x->time);

@@ -61,7 +61,7 @@
 #include "lhash.h"
 #include "ssl_locl.h"
 
-void SSLeay_add_ssl_algorithms()
+int SSL_library_init()
 	{
 #ifndef NO_DES
 	EVP_add_cipher(EVP_des_cbc());
@@ -98,5 +98,6 @@ void SSLeay_add_ssl_algorithms()
 	EVP_add_digest(EVP_sha());
 	EVP_add_digest(EVP_dss());
 #endif
+	return(1);
 	}
 

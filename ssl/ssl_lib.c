@@ -77,30 +77,37 @@ SSL3_ENC_METHOD ssl3_undef_enc_method={
 	ssl_undefined_function,
 	};
 
-void SSL_clear(s)
+int SSL_clear(s)
 SSL *s;
 	{
 	int state;
 
-	if (s->method == NULL) return;
+	if (s->method == NULL)
+		{
+		SSLerr(SSL_F_SSL_CLEAR,SSL_R_NO_METHOD_SPECIFIED);
+		return(0);
+		}
 
 	s->error=0;
 	s->hit=0;
+	s->shutdown=0;
 
+#if 0
 	/* This is set if we are doing dynamic renegotiation so keep
 	 * the old cipher.  It is sort of a SSL_clear_lite :-) */
-	if (s->new_session) return;
+	if (s->new_session) return(1);
+#endif
 
 	state=s->state; /* Keep to check if we throw away the session-id */
 	s->type=0;
 
-	s->version=s->method->version;
-	s->rwstate=SSL_NOTHING;
-	s->state=SSL_ST_BEFORE;
-	s->rstate=SSL_ST_READ_HEADER;
-	s->read_ahead=s->ctx->default_read_ahead;
+	s->state=SSL_ST_BEFORE|((s->server)?SSL_ST_ACCEPT:SSL_ST_CONNECT);
 
-/*	s->shutdown=(SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN); */
+	s->version=s->method->version;
+	s->client_version=s->version;
+	s->rwstate=SSL_NOTHING;
+	s->rstate=SSL_ST_READ_HEADER;
+	s->read_ahead=s->ctx->read_ahead;
 
 	if (s->init_buf != NULL)
 		{
@@ -116,10 +123,22 @@ SSL *s;
 		s->session=NULL;
 		}
 
-	s->shutdown=(SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
 	s->first_packet=0;
 
-	s->method->ssl_clear(s);
+#if 1
+	/* Check to see if we were changed into a different method, if
+	 * so, revert back if we are not doing session-id reuse. */
+	if ((s->session == NULL) && (s->method != s->ctx->method))
+		{
+		s->method->ssl_free(s);
+		s->method=s->ctx->method;
+		if (!s->method->ssl_new(s))
+			return(0);
+		}
+	else
+#endif
+		s->method->ssl_clear(s);
+	return(1);
 	}
 
 /* Used to change an SSL_CTXs default SSL method type */
@@ -169,7 +188,7 @@ SSL_CTX *ctx;
 		}
 	else
 		s->cert=NULL;
-	s->verify_mode=ctx->default_verify_mode;
+	s->verify_mode=ctx->verify_mode;
 	s->verify_callback=ctx->default_verify_callback;
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->ctx=ctx;
@@ -187,6 +206,7 @@ SSL_CTX *ctx;
 
 	s->quiet_shutdown=ctx->quiet_shutdown;
 	s->references=1;
+	s->server=(ctx->method->ssl_accept == ssl_undefined_function)?0:1;
 	s->options=ctx->options;
 	SSL_clear(s);
 
@@ -250,11 +270,6 @@ SSL *s;
 		}
 
 	ssl_clear_cipher_ctx(s);
-
-	if (s->expand != NULL)
-		COMP_CTX_free(s->expand);
-	if (s->compress != NULL)
-		COMP_CTX_free(s->compress);
 
 	if (s->cert != NULL) ssl_cert_free(s->cert);
 	/* Free up if allocated */
@@ -402,7 +417,7 @@ SSL *s;
 int SSL_CTX_get_verify_mode(ctx)
 SSL_CTX *ctx;
 	{
-	return(ctx->default_verify_mode);
+	return(ctx->verify_mode);
 	}
 
 int (*SSL_CTX_get_verify_callback(ctx))()
@@ -623,7 +638,22 @@ int cmd;
 long larg;
 char *parg;
 	{
-	return(s->method->ssl_ctrl(s,cmd,larg,parg));
+	long l;
+
+	switch (cmd)
+		{
+	case SSL_CTRL_GET_READ_AHEAD:
+		return(s->read_ahead);
+	case SSL_CTRL_SET_READ_AHEAD:
+		l=s->read_ahead;
+		s->read_ahead=larg;
+		return(l);
+	case SSL_CTRL_OPTIONS:
+		return(s->options|=larg);
+	default:
+		return(s->method->ssl_ctrl(s,cmd,larg,parg));
+		}
+	return(0);
 	}
 
 long SSL_CTX_ctrl(ctx,cmd,larg,parg)
@@ -632,7 +662,60 @@ int cmd;
 long larg;
 char *parg;
 	{
-	return(ctx->method->ssl_ctx_ctrl(ctx,cmd,larg,parg));
+	long l;
+
+	switch (cmd)
+		{
+	case SSL_CTRL_GET_READ_AHEAD:
+		return(ctx->read_ahead);
+	case SSL_CTRL_SET_READ_AHEAD:
+		l=ctx->read_ahead;
+		ctx->read_ahead=larg;
+		return(l);
+
+	case SSL_CTRL_SET_SESS_CACHE_SIZE:
+		l=ctx->session_cache_size;
+		ctx->session_cache_size=larg;
+		return(l);
+	case SSL_CTRL_GET_SESS_CACHE_SIZE:
+		return(ctx->session_cache_size);
+	case SSL_CTRL_SET_SESS_CACHE_MODE:
+		l=ctx->session_cache_mode;
+		ctx->session_cache_mode=larg;
+		return(l);
+	case SSL_CTRL_GET_SESS_CACHE_MODE:
+		return(ctx->session_cache_mode);
+
+	case SSL_CTRL_SESS_NUMBER:
+		return(ctx->sessions->num_items);
+	case SSL_CTRL_SESS_CONNECT:
+		return(ctx->stats.sess_connect);
+	case SSL_CTRL_SESS_CONNECT_GOOD:
+		return(ctx->stats.sess_connect_good);
+	case SSL_CTRL_SESS_CONNECT_RENEGOTIATE:
+		return(ctx->stats.sess_connect_renegotiate);
+	case SSL_CTRL_SESS_ACCEPT:
+		return(ctx->stats.sess_accept);
+	case SSL_CTRL_SESS_ACCEPT_GOOD:
+		return(ctx->stats.sess_accept_good);
+	case SSL_CTRL_SESS_ACCEPT_RENEGOTIATE:
+		return(ctx->stats.sess_accept_renegotiate);
+	case SSL_CTRL_SESS_HIT:
+		return(ctx->stats.sess_hit);
+	case SSL_CTRL_SESS_CB_HIT:
+		return(ctx->stats.sess_cb_hit);
+	case SSL_CTRL_SESS_MISSES:
+		return(ctx->stats.sess_miss);
+	case SSL_CTRL_SESS_TIMEOUTS:
+		return(ctx->stats.sess_timeout);
+	case SSL_CTRL_SESS_CACHE_FULL:
+		return(ctx->stats.sess_cache_full);
+	case SSL_CTRL_OPTIONS:
+		return(ctx->options|=larg);
+	default:
+		return(ctx->method->ssl_ctx_ctrl(ctx,cmd,larg,parg));
+		}
+	return(0);
 	}
 
 int ssl_cipher_id_cmp(a,b)
@@ -903,17 +986,7 @@ SSL_METHOD *meth;
 	ret->remove_session_cb=NULL;
 	ret->get_session_cb=NULL;
 
-	ret->sess_connect=0;
-	ret->sess_connect_good=0;
-	ret->sess_accept=0;
-	ret->sess_accept_renegotiate=0;
-	ret->sess_connect_renegotiate=0;
-	ret->sess_accept_good=0;
-	ret->sess_miss=0;
-	ret->sess_timeout=0;
-	ret->sess_cache_full=0;
-	ret->sess_hit=0;
-	ret->sess_cb_hit=0;
+	memset((char *)&ret->stats,0,sizeof(ret->stats));
 
 	ret->references=1;
 	ret->quiet_shutdown=0;
@@ -929,8 +1002,8 @@ SSL_METHOD *meth;
 	ret->app_verify_callback=NULL;
 	ret->app_verify_arg=NULL;
 
-	ret->default_read_ahead=0;
-	ret->default_verify_mode=SSL_VERIFY_NONE;
+	ret->read_ahead=0;
+	ret->verify_mode=SSL_VERIFY_NONE;
 	ret->default_verify_callback=NULL;
 	if ((ret->default_cert=ssl_cert_new()) == NULL)
 		goto err;
@@ -974,6 +1047,7 @@ SSL_METHOD *meth;
 	CRYPTO_new_ex_data(ssl_ctx_meth,(char *)ret,&ret->ex_data);
 
 	ret->extra_certs=NULL;
+	ret->comp_methods=SSL_COMP_get_compression_methods();
 
 	return(ret);
 err:
@@ -1021,6 +1095,8 @@ SSL_CTX *a;
 		sk_pop_free(a->client_CA,X509_NAME_free);
 	if (a->extra_certs != NULL)
 		sk_pop_free(a->extra_certs,X509_free);
+	if (a->comp_methods != NULL)
+		sk_pop_free(a->comp_methods,free);
 	Free((char *)a);
 	}
 
@@ -1049,7 +1125,7 @@ int (*cb)(int, X509_STORE_CTX *);
 int (*cb)();
 #endif
 	{
-	ctx->default_verify_mode=mode;
+	ctx->verify_mode=mode;
 	ctx->default_verify_callback=cb;
 	/* This needs cleaning up EAY EAY EAY */
 	X509_STORE_set_verify_cb_func(ctx->cert_store,cb);
@@ -1246,8 +1322,8 @@ int mode;
 		((i & mode) == mode))
 		{
 		if (  (((mode & SSL_SESS_CACHE_CLIENT)
-			?s->ctx->sess_connect_good
-			:s->ctx->sess_accept_good) & 0xff) == 0xff)
+			?s->ctx->stats.sess_connect_good
+			:s->ctx->stats.sess_accept_good) & 0xff) == 0xff)
 			{
 			SSL_CTX_flush_sessions(s->ctx,time(NULL));
 			}
@@ -1294,12 +1370,20 @@ SSL *s;
 int i;
 	{
 	int reason;
+	unsigned long l;
 	BIO *bio;
 
 	if (i > 0) return(SSL_ERROR_NONE);
 
-	if (ERR_peek_error() != 0)
-		return(SSL_ERROR_SSL);
+	/* Make things return SSL_ERROR_SYSCALL when doing SSL_do_handshake
+	 * etc, where we do encode the error */
+	if ((l=ERR_peek_error()) != 0)
+		{
+		if (ERR_GET_LIB(l) == ERR_LIB_SYS)
+			return(SSL_ERROR_SYSCALL);
+		else
+			return(SSL_ERROR_SSL);
+		}
 
 	if ((i < 0) && SSL_want_read(s))
 		{
@@ -1381,6 +1465,7 @@ SSL *s;
 void SSL_set_accept_state(s)
 SSL *s;
 	{
+	s->server=1;
 	s->shutdown=0;
 	s->state=SSL_ST_ACCEPT|SSL_ST_BEFORE;
 	s->handshake_func=s->method->ssl_accept;
@@ -1391,6 +1476,7 @@ SSL *s;
 void SSL_set_connect_state(s)
 SSL *s;
 	{
+	s->server=0;
 	s->shutdown=0;
 	s->state=SSL_ST_CONNECT|SSL_ST_BEFORE;
 	s->handshake_func=s->method->ssl_connect;
@@ -1498,6 +1584,7 @@ SSL *s;
 	ret->shutdown=s->shutdown;
 	ret->state=s->state;
 	ret->handshake_func=s->handshake_func;
+	ret->server=s->server;
 
 	if (0)
 		{
@@ -1523,6 +1610,16 @@ SSL *s;
                 Free(s->enc_write_ctx);
                 s->enc_write_ctx=NULL;
                 }
+	if (s->expand != NULL)
+		{
+		COMP_CTX_free(s->expand);
+		s->expand=NULL;
+		}
+	if (s->compress != NULL)
+		{
+		COMP_CTX_free(s->compress);
+		s->compress=NULL;
+		}
 	}
 
 /* Fix this function so that it takes an optional type parameter */
@@ -1589,6 +1686,26 @@ int push;
 			s->wbio=BIO_pop(bbio);
 		}
 	return(1);
+	}
+
+void ssl_free_wbio_buffer(s)
+SSL *s;
+	{
+	BIO *under;
+
+	if (s->bbio == NULL) return;
+
+	if (s->bbio == s->wbio)
+		{
+		/* remove buffering */
+		under=BIO_pop(s->wbio);
+		if (under != NULL)
+			s->wbio=under;
+		else
+			abort(); /* ok */
+		}
+	BIO_free(s->bbio);
+	s->bbio=NULL;
 	}
 	
 void SSL_CTX_set_quiet_shutdown(ctx,mode)
@@ -1748,6 +1865,27 @@ int ssl_ok(s)
 SSL *s;
 	{
 	return(1);
+	}
+
+X509_STORE *SSL_CTX_get_cert_store(ctx)
+SSL_CTX *ctx;
+	{
+	return(ctx->cert_store);
+	}
+
+void SSL_CTX_set_cert_store(ctx,store)
+SSL_CTX *ctx;
+X509_STORE *store;
+	{
+	if (ctx->cert_store != NULL)
+		X509_STORE_free(ctx->cert_store);
+	ctx->cert_store=store;
+	}
+
+int SSL_want(s)
+SSL *s;
+	{
+	return(s->rwstate);
 	}
 
 void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,RSA *(*cb)(SSL *ssl,int export))

@@ -144,7 +144,10 @@ int which;
 	exp=(s->s3->tmp.new_cipher->algorithms & SSL_EXPORT)?1:0;
 	c=s->s3->tmp.new_sym_enc;
 	m=s->s3->tmp.new_hash;
-	comp=s->s3->tmp.new_compression;
+	if (s->s3->tmp.new_compression == NULL)
+		comp=NULL;
+	else
+		comp=s->s3->tmp.new_compression->method;
 	key_block=s->s3->tmp.key_block;
 
 	if (which & SSL3_CC_READ)
@@ -169,8 +172,9 @@ int which;
 				SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE,SSL_R_COMPRESSION_LIBRARY_ERROR);
 				goto err2;
 				}
-			s->s3->rrec.comp=(unsigned char *)
-				Malloc(SSL3_RT_MAX_PLAIN_LENGTH);
+			if (s->s3->rrec.comp == NULL)
+				s->s3->rrec.comp=(unsigned char *)
+					Malloc(SSL3_RT_MAX_PLAIN_LENGTH);
 			if (s->s3->rrec.comp == NULL)
 				goto err;
 			}
@@ -280,11 +284,12 @@ SSL *s;
 	EVP_CIPHER *c;
 	EVP_MD *hash;
 	int num,exp;
+	SSL_COMP *comp;
 
 	if (s->s3->tmp.key_block_length != 0)
 		return(1);
 
-	if (!ssl_cipher_get_evp(s->session->cipher,&c,&hash))
+	if (!ssl_cipher_get_evp(s->session,&c,&hash,&comp))
 		{
 		SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK,SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 		return(0);
@@ -292,11 +297,7 @@ SSL *s;
 
 	s->s3->tmp.new_sym_enc=c;
 	s->s3->tmp.new_hash=hash;
-#ifdef ZLIB
-	s->s3->tmp.new_compression=COMP_zlib();
-#endif
-/*	s->s3->tmp.new_compression=COMP_rle(); */
-/*	s->session->compress_meth= xxxxx */
+	s->s3->tmp.new_compression=comp;
 
 	exp=(s->session->cipher->algorithms & SSL_EXPORT)?1:0;
 
@@ -454,7 +455,7 @@ unsigned char *p;
 	unsigned char md_buf[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX ctx;
 
-	memcpy(&ctx,in_ctx,sizeof(EVP_MD_CTX));
+	EVP_MD_CTX_copy(&ctx,in_ctx);
 
 	n=EVP_MD_CTX_size(&ctx);
 	npad=(48/n)*n;

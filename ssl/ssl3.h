@@ -341,12 +341,13 @@ typedef struct ssl3_ctx_st
 		EVP_CIPHER *new_sym_enc;
 		EVP_MD *new_hash;
 #ifdef HEADER_COMP_H
-		COMP_METHOD *new_compression;
+		SSL_COMP *new_compression;
 #else
 		char *new_compression;
 #endif
 		int cert_request;
 		} tmp;
+
 	} SSL3_CTX;
 
 /* SSLv3 */

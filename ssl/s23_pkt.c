@@ -76,7 +76,7 @@ SSL *s;
 		{
 		s->rwstate=SSL_WRITING;
 		i=BIO_write(s->wbio,&(buf[tot]),num);
-		if (i < 0)
+		if (i <= 0)
 			{
 			s->init_off=tot;
 			s->init_num=num;

@@ -348,7 +348,8 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK *sk,unsigned char *p);
 STACK *ssl_create_cipher_list(SSL_METHOD *meth,STACK **pref,
 	STACK **sorted,char *str);
 void ssl_update_cache(SSL *s, int mode);
-int ssl_cipher_get_evp(SSL_CIPHER *c, EVP_CIPHER **enc, EVP_MD **md);
+int ssl_cipher_get_evp(SSL_SESSION *s, EVP_CIPHER **enc, EVP_MD **md,
+	SSL_COMP **comp);
 int ssl_verify_cert_chain(SSL *s,STACK *sk);
 int ssl_undefined_function(SSL *s);
 X509 *ssl_get_server_send_cert(SSL *);
@@ -442,6 +443,7 @@ long tls1_ctrl(SSL *s,int cmd, long larg, char *parg);
 SSL_METHOD *tlsv1_base_method(void );
 
 int ssl_init_wbio_buffer(SSL *s, int push);
+void ssl_free_wbio_buffer(SSL *s);
 
 int tls1_change_cipher_state(SSL *s, int which);
 int tls1_setup_key_block(SSL *s);
@@ -455,6 +457,9 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out,
 int tls1_alert_code(int code);
 int ssl3_alert_code(int code);
 int ssl_ok(SSL *s);
+
+SSL_COMP *ssl3_comp_find(STACK *sk, int n);
+STACK *SSL_COMP_get_compression_methods(void);
 
 
 #else
@@ -562,10 +567,8 @@ int ssl23_read_bytes();
 int ssl23_write_bytes();
 
 int ssl_init_wbio_buffer();
+void ssl_free_wbio_buffer();
 
-#endif
-
-#endif
 int ssl3_cert_verify_mac();
 int ssl3_alert_code();
 int tls1_new();
@@ -582,3 +585,9 @@ int tls1_mac();
 int tls1_generate_master_secret();
 int tls1_alert_code();
 int ssl_ok();
+SSL_COMP *ssl3_comp_find();
+STACK *SSL_COMP_get_compression_methods();
+
+#endif
+
+#endif

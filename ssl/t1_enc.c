@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include "comp.h"
 #include "evp.h"
 #include "hmac.h"
 #include "ssl_locl.h"
@@ -175,7 +176,7 @@ int which;
 	int client_write;
 	EVP_CIPHER_CTX *dd;
 	EVP_CIPHER *c;
-	COMP_METHOD *comp;
+	SSL_COMP *comp;
 	EVP_MD *m;
 	int exp,n,i,j,k,exp_label_len,cl;
 
@@ -200,14 +201,15 @@ int which;
 			}
 		if (comp != NULL)
 			{
-			s->expand=COMP_CTX_new(comp);
+			s->expand=COMP_CTX_new(comp->method);
 			if (s->expand == NULL)
 				{
 				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,SSL_R_COMPRESSION_LIBRARY_ERROR);
 				goto err2;
 				}
-			s->s3->rrec.comp=(unsigned char *)
-				Malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
+			if (s->s3->rrec.comp == NULL)
+				s->s3->rrec.comp=(unsigned char *)
+					Malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
 			if (s->s3->rrec.comp == NULL)
 				goto err;
 			}
@@ -229,7 +231,7 @@ int which;
 			}
 		if (comp != NULL)
 			{
-			s->compress=COMP_CTX_new(comp);
+			s->compress=COMP_CTX_new(comp->method);
 			if (s->compress == NULL)
 				{
 				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,SSL_R_COMPRESSION_LIBRARY_ERROR);
@@ -346,11 +348,12 @@ SSL *s;
 	EVP_CIPHER *c;
 	EVP_MD *hash;
 	int num,exp;
+	SSL_COMP *comp;
 
 	if (s->s3->tmp.key_block_length != 0)
 		return(1);
 
-	if (!ssl_cipher_get_evp(s->session->cipher,&c,&hash))
+	if (!ssl_cipher_get_evp(s->session,&c,&hash,&comp))
 		{
 		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 		return(0);
@@ -504,7 +507,7 @@ unsigned char *out;
 	unsigned int ret;
 	EVP_MD_CTX ctx;
 
-	memcpy(&ctx,in_ctx,sizeof(EVP_MD_CTX));
+	EVP_MD_CTX_copy(&ctx,in_ctx);
 	EVP_DigestFinal(&ctx,out,&ret);
 	return((int)ret);
 	}
@@ -525,10 +528,10 @@ unsigned char *out;
 	memcpy(q,str,slen);
 	q+=slen;
 
-	memcpy(&ctx,in1_ctx,sizeof(EVP_MD_CTX));
+	EVP_MD_CTX_copy(&ctx,in1_ctx);
 	EVP_DigestFinal(&ctx,q,&i);
 	q+=i;
-	memcpy(&ctx,in2_ctx,sizeof(EVP_MD_CTX));
+	EVP_MD_CTX_copy(&ctx,in2_ctx);
 	EVP_DigestFinal(&ctx,q,&i);
 	q+=i;
 

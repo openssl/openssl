@@ -243,7 +243,7 @@ bad:
 
 /*	if (cipher == NULL) cipher=getenv("SSL_CIPHER"); */
 
-	SSLeay_add_ssl_algorithms();
+	SSL_library_init();
 	SSL_load_error_strings();
 
 #if !defined(NO_SSL2) && !defined(NO_SSL3)

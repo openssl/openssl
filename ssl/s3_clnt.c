@@ -134,7 +134,6 @@ SSL *s;
 	long num1;
 	void (*cb)()=NULL;
 	int ret= -1;
-	BIO *under;
 	int new_state,state,skip=0;;
 
 	RAND_seed(&Time,sizeof(Time));
@@ -158,13 +157,14 @@ SSL *s;
 		case SSL_ST_RENEGOTIATE:
 			s->new_session=1;
 			s->state=SSL_ST_CONNECT;
-			s->ctx->sess_connect_renegotiate++;
+			s->ctx->stats.sess_connect_renegotiate++;
 			/* break */
 		case SSL_ST_BEFORE:
 		case SSL_ST_CONNECT:
 		case SSL_ST_BEFORE|SSL_ST_CONNECT:
 		case SSL_ST_OK|SSL_ST_CONNECT:
 
+			s->server=0;
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
 			if ((s->version & 0xff00 ) != 0x0300)
@@ -197,7 +197,7 @@ SSL *s;
 			ssl3_init_finished_mac(s);
 
 			s->state=SSL3_ST_CW_CLNT_HELLO_A;
-			s->ctx->sess_connect++;
+			s->ctx->stats.sess_connect++;
 			s->init_num=0;
 			break;
 
@@ -326,6 +326,11 @@ SSL *s;
 			s->init_num=0;
 
 			s->session->cipher=s->s3->tmp.new_cipher;
+			if (s->s3->tmp.new_compression == NULL)
+				s->session->compress_meth=0;
+			else
+				s->session->compress_meth=
+					s->s3->tmp.new_compression->id;
 			if (!s->method->ssl3_enc->setup_key_block(s))
 				{
 				ret= -1;
@@ -401,33 +406,28 @@ SSL *s;
 			/* clean a few things up */
 			ssl3_cleanup_key_block(s);
 
-			BUF_MEM_free(s->init_buf);
-			s->init_buf=NULL;
-
-			if (!(s->s3->flags & SSL3_FLAGS_POP_BUFFER))
+			if (s->init_buf != NULL)
 				{
-				/* remove buffering */
-				under=BIO_pop(s->wbio);
-				if (under != NULL)
-					s->wbio=under;
-				else
-					abort(); /* ok */
-
-				BIO_free(s->bbio);
-				s->bbio=NULL;
+				BUF_MEM_free(s->init_buf);
+				s->init_buf=NULL;
 				}
-			/* else do it later */
+
+			/* If we are not 'joining' the last two packets,
+			 * remove the buffering now */
+			if (!(s->s3->flags & SSL3_FLAGS_POP_BUFFER))
+				ssl_free_wbio_buffer(s);
+			/* else do it later in ssl3_write */
 
 			s->init_num=0;
 			s->new_session=0;
 
 			ssl_update_cache(s,SSL_SESS_CACHE_CLIENT);
-			if (s->hit) s->ctx->sess_hit++;
+			if (s->hit) s->ctx->stats.sess_hit++;
 
 			ret=1;
 			/* s->server=0; */
 			s->handshake_func=ssl3_connect;
-			s->ctx->sess_connect_good++;
+			s->ctx->stats.sess_connect_good++;
 
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_DONE,1);
 
@@ -473,8 +473,9 @@ SSL *s;
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
-	int i;
+	int i,j;
 	unsigned long Time,l;
+	SSL_COMP *comp;
 
 	buf=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL3_ST_CW_CLNT_HELLO_A)
@@ -498,6 +499,7 @@ SSL *s;
 
 		*(p++)=s->version>>8;
 		*(p++)=s->version&0xff;
+		s->client_version=s->version;
 
 		/* Random stuff */
 		memcpy(p,s->s3->client_random,SSL3_RANDOM_SIZE);
@@ -525,10 +527,18 @@ SSL *s;
 		s2n(i,p);
 		p+=i;
 
-		/* hardwire in the NULL compression algorithm. */
 		/* COMPRESSION */
-		*(p++)=1;
-		*(p++)=0;
+		if (s->ctx->comp_methods == NULL)
+			j=0;
+		else
+			j=sk_num(s->ctx->comp_methods);
+		*(p++)=1+j;
+		for (i=0; i<j; i++)
+			{
+			comp=(SSL_COMP *)sk_value(s->ctx->comp_methods,i);
+			*(p++)=comp->id;
+			}
+		*(p++)=0; /* Add the NULL method */
 		
 		l=(p-d);
 		d=buf;
@@ -556,6 +566,7 @@ SSL *s;
 	int i,al,ok;
 	unsigned int j;
 	long n;
+	SSL_COMP *comp;
 
 	n=ssl3_get_message(s,
 		SSL3_ST_CR_SRVR_HELLO_A,
@@ -649,11 +660,20 @@ SSL *s;
 	/* lets get the compression algorithm */
 	/* COMPRESSION */
 	j= *(p++);
-	if (j != 0)
+	if (j == 0)
+		comp=NULL;
+	else
+		comp=ssl3_comp_find(s->ctx->comp_methods,j);
+	
+	if ((j != 0) && (comp == NULL))
 		{
 		al=SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
 		goto f_err;
+		}
+	else
+		{
+		s->s3->tmp.new_compression=comp;
 		}
 
 	if (p != (d+n))
@@ -996,6 +1016,7 @@ SSL *s;
 		/* else anonymous DH, so no certificate or pkey. */
 
 		s->session->cert->dh_tmp=dh;
+		dh=NULL;
 		}
 	else if ((alg & SSL_kDHr) || (alg & SSL_kDHd))
 		{
@@ -1326,8 +1347,8 @@ SSL *s;
 				rsa=pkey->pkey.rsa;
 				}
 				
-			tmp_buf[0]=s->version>>8;
-			tmp_buf[1]=s->version&0xff;
+			tmp_buf[0]=s->client_version>>8;
+			tmp_buf[1]=s->client_version&0xff;
 			RAND_bytes(&(tmp_buf[2]),SSL_MAX_MASTER_KEY_LENGTH-2);
 
 			s->session->master_key_length=SSL_MAX_MASTER_KEY_LENGTH;

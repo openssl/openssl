@@ -155,6 +155,7 @@ SSL *s;
 		case SSL_ST_BEFORE|SSL_ST_ACCEPT:
 		case SSL_ST_OK|SSL_ST_ACCEPT:
 
+			s->server=1;
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
 			s->version=SSL2_VERSION;
@@ -168,7 +169,7 @@ SSL *s;
 				{ ret= -1; goto end; }
 			s->init_buf=buf;
 			s->init_num=0;
-			s->ctx->sess_accept++;
+			s->ctx->stats.sess_accept++;
 			s->handshake_func=ssl2_accept;
 			s->state=SSL2_ST_GET_CLIENT_HELLO_A;
 			BREAK;
@@ -295,13 +296,14 @@ SSL *s;
 
 		case SSL_ST_OK:
 			BUF_MEM_free(s->init_buf);
+			ssl_free_wbio_buffer(s);
 			s->init_buf=NULL;
 			s->init_num=0;
 		/*	ERR_clear_error();*/
 
 			ssl_update_cache(s,SSL_SESS_CACHE_SERVER);
 
-			s->ctx->sess_accept_good++;
+			s->ctx->stats.sess_accept_good++;
 			/* s->server=1; */
 			ret=1;
 
@@ -336,9 +338,6 @@ static int get_client_master_key(s)
 SSL *s;
 	{
 	int export,i,n,keya,ek;
-#if 0
-	int error=0;
-#endif
 	unsigned char *p;
 	SSL_CIPHER *cp;
 	EVP_CIPHER *c;
@@ -404,7 +403,7 @@ SSL *s;
 
 	export=(s->session->cipher->algorithms & SSL_EXP)?1:0;
 	
-	if (!ssl_cipher_get_evp(s->session->cipher,&c,&md))
+	if (!ssl_cipher_get_evp(s->session,&c,&md,NULL))
 		{
 		ssl2_return_error(s,SSL2_PE_NO_CIPHER);
 		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_PROBLEMS_MAPPING_CIPHER_FUNCTIONS);

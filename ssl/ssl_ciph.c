@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include "objects.h"
+#include "comp.h"
 #include "ssl_locl.h"
 
 #define SSL_ENC_DES_IDX		0
@@ -72,6 +73,8 @@
 static EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX]={
 	NULL,NULL,NULL,NULL,NULL,NULL,
 	};
+
+static STACK /* SSL_COMP */ *ssl_comp_methods=NULL;
 
 #define SSL_MD_MD5_IDX	0
 #define SSL_MD_SHA1_IDX	1
@@ -180,14 +183,41 @@ static void load_ciphers()
 		EVP_get_digestbyname(SN_sha1);
 	}
 
-int ssl_cipher_get_evp(c,enc,md)
-SSL_CIPHER *c;
+int ssl_cipher_get_evp(s,enc,md,comp)
+SSL_SESSION *s;
 EVP_CIPHER **enc;
 EVP_MD **md;
+SSL_COMP **comp;
 	{
 	int i;
+	SSL_CIPHER *c;
 
+	c=s->cipher;
 	if (c == NULL) return(0);
+	if (comp != NULL)
+		{
+		SSL_COMP ctmp;
+
+		if (s->compress_meth == 0)
+			*comp=NULL;
+		else if (ssl_comp_methods == NULL)
+			{
+			/* bad */
+			*comp=NULL;
+			}
+		else
+			{
+
+			ctmp.id=s->compress_meth;
+			i=sk_find(ssl_comp_methods,(char *)&ctmp);
+			if (i >= 0)
+				*comp=(SSL_COMP *)sk_value(ssl_comp_methods,i);
+			else
+				*comp=NULL;
+			}
+		}
+
+	if ((enc == NULL) || (md == NULL)) return(0);
 
 	switch (c->algorithms & SSL_ENC_MASK)
 		{
@@ -730,10 +760,12 @@ int *alg_bits;
 	int ret=0,a=0;
 	EVP_CIPHER *enc;
 	EVP_MD *md;
+	SSL_SESSION ss;
 
 	if (c != NULL)
 		{
-		if (!ssl_cipher_get_evp(c,&enc,&md))
+		ss.cipher=c;
+		if (!ssl_cipher_get_evp(&ss,&enc,&md,NULL))
 			return(0);
 
 		a=EVP_CIPHER_key_length(enc)*8;
@@ -754,5 +786,57 @@ int *alg_bits;
 	if (alg_bits != NULL) *alg_bits=a;
 	
 	return(ret);
+	}
+
+SSL_COMP *ssl3_comp_find(sk,n)
+STACK *sk;
+int n;
+	{
+	SSL_COMP *ctmp;
+	int i,nn;
+
+	if ((n == 0) || (sk == NULL)) return(NULL);
+	nn=sk_num(sk);
+	for (i=0; i<nn; i++)
+		{
+		ctmp=(SSL_COMP *)sk_value(sk,i);
+		if (ctmp->id == n)
+			return(ctmp);
+		}
+	return(NULL);
+	}
+
+static int sk_comp_cmp(a,b)
+SSL_COMP **a,**b;
+	{
+	return((*a)->id-(*b)->id);
+	}
+
+STACK *SSL_COMP_get_compression_methods()
+	{
+	return(ssl_comp_methods);
+	}
+
+int SSL_COMP_add_compression_method(id,cm)
+int id;
+COMP_METHOD *cm;
+	{
+	SSL_COMP *comp;
+	STACK *sk;
+
+	comp=(SSL_COMP *)Malloc(sizeof(SSL_COMP));
+	comp->id=id;
+	comp->method=cm;
+	if (ssl_comp_methods == NULL)
+		sk=ssl_comp_methods=sk_new(sk_comp_cmp);
+	else
+		sk=ssl_comp_methods;
+	if ((sk == NULL) || !sk_push(sk,(char *)comp))
+		{
+		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,ERR_R_MALLOC_FAILURE);
+		return(0);
+		}
+	else
+		return(1);
 	}
 

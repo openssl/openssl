@@ -152,10 +152,10 @@ end:
 	}
 #endif
 
-int SSL_use_certificate_ASN1(ssl, len, d)
+int SSL_use_certificate_ASN1(ssl, d,len)
 SSL *ssl;
-int len;
 unsigned char *d;
+int len;
 	{
 	X509 *x;
 	int ret;

@@ -872,7 +872,9 @@ start:
 			if (((s->state&SSL_ST_MASK) == SSL_ST_OK) &&
 				!(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS))
 				{
-				s->state=SSL_ST_BEFORE;
+				s->state=SSL_ST_BEFORE|(s->server)
+						?SSL_ST_ACCEPT
+						:SSL_ST_CONNECT;
 				s->new_session=1;
 				}
 			n=s->handshake_func(s);
