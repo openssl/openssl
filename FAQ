@@ -176,6 +176,12 @@ Most components of the openssl command line tool try to use the
 file $HOME/.rnd (or $RANDFILE, if this environment variable is set)
 for seeding the PRNG.  If this file does not exist or is too short,
 the "PRNG not seeded" error message may occur.
+Pointing $RANDFILE to an Entropy Gathering Daemon socket does not work.
+Use the "-rand" option of the OpenSSL command line tools instead.
+The $RANDFILE environment variable and $HOME/.rnd are only used by the
+OpenSSL command line tools. Applications using the OpenSSL library
+provide their own configuration options to specify the entropy source,
+please check out the documentation coming the with application.
 
 [Note to OpenSSL 0.9.5 users: The command "openssl rsa" in version
 0.9.5 does not do this and will fail on systems without /dev/urandom
