@@ -304,6 +304,27 @@ hw_atalla.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 hw_atalla.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 hw_atalla.o: ../cryptlib.h hw_atalla.c hw_atalla_err.c hw_atalla_err.h
 hw_atalla.o: vendor_defns/atalla.h
+hw_cryptodev.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+hw_cryptodev.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
+hw_cryptodev.o: ../../include/openssl/bn.h ../../include/openssl/cast.h
+hw_cryptodev.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+hw_cryptodev.o: ../../include/openssl/des_old.h ../../include/openssl/dh.h
+hw_cryptodev.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+hw_cryptodev.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+hw_cryptodev.o: ../../include/openssl/evp.h ../../include/openssl/idea.h
+hw_cryptodev.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
+hw_cryptodev.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
+hw_cryptodev.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
+hw_cryptodev.o: ../../include/openssl/objects.h
+hw_cryptodev.o: ../../include/openssl/opensslconf.h
+hw_cryptodev.o: ../../include/openssl/opensslv.h
+hw_cryptodev.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
+hw_cryptodev.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+hw_cryptodev.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+hw_cryptodev.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+hw_cryptodev.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+hw_cryptodev.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+hw_cryptodev.o: ../../include/openssl/ui_compat.h hw_cryptodev.c
 hw_cswift.o: ../../e_os.h ../../include/openssl/asn1.h
 hw_cswift.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 hw_cswift.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -354,45 +375,6 @@ hw_nuron.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 hw_nuron.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 hw_nuron.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 hw_nuron.o: ../cryptlib.h hw_nuron.c hw_nuron_err.c hw_nuron_err.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/aes.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/asn1.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/bio.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/blowfish.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/bn.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/cast.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/conf.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/crypto.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/des.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/des_old.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/e_os2.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/engine.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/err.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/evp.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/idea.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/lhash.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/md2.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/md4.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/md5.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/mdc2.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/obj_mac.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/objects.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/opensslconf.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/opensslv.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/ossl_typ.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/rand.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/rc2.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/rc4.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/rc5.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/ripemd.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/rsa.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/safestack.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/sha.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/stack.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/symhacks.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/ui.h
-hw_openbsd_dev_crypto.o: ../../include/openssl/ui_compat.h ../evp/evp_locl.h
-hw_openbsd_dev_crypto.o: eng_int.h hw_openbsd_dev_crypto.c
 hw_sureware.o: ../../e_os.h ../../include/openssl/aes.h
 hw_sureware.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 hw_sureware.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
