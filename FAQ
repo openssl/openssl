@@ -52,6 +52,7 @@ OpenSSL  -  Frequently Asked Questions
 * Is OpenSSL thread-safe?
 * I've compiled a program under Windows and it crashes: why?
 * How do I read or write a DER encoded buffer using the ASN1 functions?
+* OpenSSL uses DER but I need BER format: does OpenSSL support BER?
 * I've tried using <M_some_evil_pkcs12_macro> and I get errors why?
 * I've called <some function> and it fails, why?
 * I just get a load of numbers for the error output, what do they mean?
@@ -60,6 +61,7 @@ OpenSSL  -  Frequently Asked Questions
 * Can I use OpenSSL's SSL library with non-blocking I/O?
 * Why doesn't my server application receive a client certificate?
 * Why does compilation fail due to an undefined symbol NID_uniqueIdentifier?
+* I think I've detected a memory leak, is this a bug?
 
 ===============================================================================
 
@@ -683,6 +685,20 @@ and attempts to free the buffer will have unpredictable results
 because it no longer points to the same address.
 
 
+* OpenSSL uses DER but I need BER format: does OpenSSL support BER?
+
+The short answer is yes, because DER is a special case of BER and OpenSSL
+ASN1 decoders can process BER.
+
+The longer answer is that ASN1 structures can be encoded in a number of
+different ways. One set of ways is the Basic Encoding Rules (BER) with various
+permissible encodings. A restriction of BER is the Distinguished Encoding
+Rules (DER): these uniquely specify how a given structure is encoded.
+
+Therefore, because DER is a special case of BER, DER is an acceptable encoding
+for BER.
+
+
 * I've tried using <M_some_evil_pkcs12_macro> and I get errors why?
 
 This usually happens when you try compiling something using the PKCS#12
@@ -763,6 +779,18 @@ For OpenSSL 0.9.7 the OID table was extended and corrected. In earlier
 versions, uniqueIdentifier was incorrectly used for X.509 certificates.
 The correct name according to RFC2256 (LDAP) is x500UniqueIdentifier.
 Change your code to use the new name when compiling against OpenSSL 0.9.7.
+
+
+* I think I've detected a memory leak, is this a bug?
+
+In most cases the cause of an apparent memory leak is an OpenSSL internal table
+that is allocated when an application starts up. Since such tables do not grow
+in size over time they are harmless.
+
+These internal tables can be freed up when an application closes using various
+functions.  Currently these include: EVP_cleanup(), ERR_remove_state(),
+ERR_free_strings(), ENGINE_cleanup(), CONF_modules_unload() and
+CRYPTO_cleanup_all_ex_data().
 
 
 ===============================================================================
