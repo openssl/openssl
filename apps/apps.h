@@ -146,11 +146,18 @@ int chopup_args(ARGS *arg,char *buf, int *argc, char **argv[]);
 int dump_cert_text(BIO *out, X509 *x);
 #endif
 int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
+X509 *load_cert(char *file, int format);
+EVP_PKEY *load_key(char *file, int format, char *pass);
+STACK_OF(X509) *load_certs(char *file, int format);
+
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1
 #define FORMAT_TEXT     2
 #define FORMAT_PEM      3
 #define FORMAT_NETSCAPE 4
+#define FORMAT_PKCS12   5
+
+#define NETSCAPE_CERT_HDR	"certificate"
 
 #define APP_PASS_LEN	1024
 

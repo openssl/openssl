@@ -67,9 +67,6 @@
 
 #undef PROG
 #define PROG smime_main
-static X509 *load_cert(char *file);
-static EVP_PKEY *load_key(char *file, char *pass);
-static STACK_OF(X509) *load_certs(char *file);
 static X509_STORE *setup_verify(char *CAfile, char *CApath);
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 
@@ -311,7 +308,7 @@ int MAIN(int argc, char **argv)
 		}
 		encerts = sk_X509_new_null();
 		while (*args) {
-			if(!(cert = load_cert(*args))) {
+			if(!(cert = load_cert(*args,FORMAT_PEM))) {
 				BIO_printf(bio_err, "Can't read recipient certificate file %s\n", *args);
 				goto end;
 			}
@@ -322,14 +319,14 @@ int MAIN(int argc, char **argv)
 	}
 
 	if(signerfile && (operation == SMIME_SIGN)) {
-		if(!(signer = load_cert(signerfile))) {
+		if(!(signer = load_cert(signerfile,FORMAT_PEM))) {
 			BIO_printf(bio_err, "Can't read signer certificate file %s\n", signerfile);
 			goto end;
 		}
 	}
 
 	if(certfile) {
-		if(!(other = load_certs(certfile))) {
+		if(!(other = load_certs(certfile,FORMAT_PEM))) {
 			BIO_printf(bio_err, "Can't read certificate file %s\n", certfile);
 			ERR_print_errors(bio_err);
 			goto end;
@@ -337,7 +334,7 @@ int MAIN(int argc, char **argv)
 	}
 
 	if(recipfile && (operation == SMIME_DECRYPT)) {
-		if(!(recip = load_cert(recipfile))) {
+		if(!(recip = load_cert(recipfile,FORMAT_PEM))) {
 			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", recipfile);
 			ERR_print_errors(bio_err);
 			goto end;
@@ -351,7 +348,7 @@ int MAIN(int argc, char **argv)
 	} else keyfile = NULL;
 
 	if(keyfile) {
-		if(!(key = load_key(keyfile, passin))) {
+		if(!(key = load_key(keyfile, FORMAT_PEM, passin))) {
 			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", keyfile);
 			ERR_print_errors(bio_err);
 			goto end;
@@ -445,49 +442,6 @@ end:
 	BIO_free(out);
 	if(passin) OPENSSL_free(passin);
 	return (ret);
-}
-
-static X509 *load_cert(char *file)
-{
-	BIO *in;
-	X509 *cert;
-	if(!(in = BIO_new_file(file, "r"))) return NULL;
-	cert = PEM_read_bio_X509(in, NULL, NULL,NULL);
-	BIO_free(in);
-	return cert;
-}
-
-static EVP_PKEY *load_key(char *file, char *pass)
-{
-	BIO *in;
-	EVP_PKEY *key;
-	if(!(in = BIO_new_file(file, "r"))) return NULL;
-	key = PEM_read_bio_PrivateKey(in, NULL,NULL,pass);
-	BIO_free(in);
-	return key;
-}
-
-static STACK_OF(X509) *load_certs(char *file)
-{
-	BIO *in;
-	int i;
-	STACK_OF(X509) *othercerts;
-	STACK_OF(X509_INFO) *allcerts;
-	X509_INFO *xi;
-	if(!(in = BIO_new_file(file, "r"))) return NULL;
-	othercerts = sk_X509_new(NULL);
-	if(!othercerts) return NULL;
-	allcerts = PEM_X509_INFO_read_bio(in, NULL, NULL, NULL);
-	for(i = 0; i < sk_X509_INFO_num(allcerts); i++) {
-		xi = sk_X509_INFO_value (allcerts, i);
-		if (xi->x509) {
-			sk_X509_push(othercerts, xi->x509);
-			xi->x509 = NULL;
-		}
-	}
-	sk_X509_INFO_pop_free(allcerts, X509_INFO_free);
-	BIO_free(in);
-	return othercerts;
 }
 
 static X509_STORE *setup_verify(char *CAfile, char *CApath)

@@ -64,6 +64,11 @@
 #define NON_MAIN
 #include "apps.h"
 #undef NON_MAIN
+#include <openssl/err.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/pkcs12.h>
+#include <openssl/safestack.h>
 
 #ifdef WINDOWS
 #  include "bss_file.c"
@@ -159,6 +164,10 @@ int str2fmt(char *s)
 		return(FORMAT_PEM);
 	else if ((*s == 'N') || (*s == 'n'))
 		return(FORMAT_NETSCAPE);
+	else if ((*s == '1')
+		|| (strcmp(s,"PKCS12") == 0) || (strcmp(s,"pkcs12") == 0)
+		|| (strcmp(s,"P12") == 0) || (strcmp(s,"p12") == 0))
+		return(FORMAT_PKCS12);
 	else
 		return(FORMAT_UNDEF);
 	}
@@ -414,3 +423,209 @@ static char *app_get_pass(BIO *err, char *arg, int keepbio)
 	if(tmp) *tmp = 0;
 	return BUF_strdup(tpass);
 }
+
+X509 *load_cert(char *file, int format)
+	{
+	ASN1_HEADER *ah=NULL;
+	BUF_MEM *buf=NULL;
+	X509 *x=NULL;
+	BIO *cert;
+
+	if ((cert=BIO_new(BIO_s_file())) == NULL)
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+
+	if (file == NULL)
+		BIO_set_fp(cert,stdin,BIO_NOCLOSE);
+	else
+		{
+		if (BIO_read_filename(cert,file) <= 0)
+			{
+			perror(file);
+			goto end;
+			}
+		}
+
+	if 	(format == FORMAT_ASN1)
+		x=d2i_X509_bio(cert,NULL);
+	else if (format == FORMAT_NETSCAPE)
+		{
+		unsigned char *p,*op;
+		int size=0,i;
+
+		/* We sort of have to do it this way because it is sort of nice
+		 * to read the header first and check it, then
+		 * try to read the certificate */
+		buf=BUF_MEM_new();
+		for (;;)
+			{
+			if ((buf == NULL) || (!BUF_MEM_grow(buf,size+1024*10)))
+				goto end;
+			i=BIO_read(cert,&(buf->data[size]),1024*10);
+			size+=i;
+			if (i == 0) break;
+			if (i < 0)
+				{
+				perror("reading certificate");
+				goto end;
+				}
+			}
+		p=(unsigned char *)buf->data;
+		op=p;
+
+		/* First load the header */
+		if ((ah=d2i_ASN1_HEADER(NULL,&p,(long)size)) == NULL)
+			goto end;
+		if ((ah->header == NULL) || (ah->header->data == NULL) ||
+			(strncmp(NETSCAPE_CERT_HDR,(char *)ah->header->data,
+			ah->header->length) != 0))
+			{
+			BIO_printf(bio_err,"Error reading header on certificate\n");
+			goto end;
+			}
+		/* header is ok, so now read the object */
+		p=op;
+		ah->meth=X509_asn1_meth();
+		if ((ah=d2i_ASN1_HEADER(&ah,&p,(long)size)) == NULL)
+			goto end;
+		x=(X509 *)ah->data;
+		ah->data=NULL;
+		}
+	else if (format == FORMAT_PEM)
+		x=PEM_read_bio_X509_AUX(cert,NULL,NULL,NULL);
+	else if (format == FORMAT_PKCS12)
+		{
+		PKCS12 *p12 = d2i_PKCS12_bio(cert, NULL);
+
+		PKCS12_parse(p12, NULL, NULL, &x, NULL);
+		PKCS12_free(p12);
+		p12 = NULL;
+		}
+	else	{
+		BIO_printf(bio_err,"bad input format specified for input cert\n");
+		goto end;
+		}
+end:
+	if (x == NULL)
+		{
+		BIO_printf(bio_err,"unable to load certificate\n");
+		ERR_print_errors(bio_err);
+		}
+	if (ah != NULL) ASN1_HEADER_free(ah);
+	if (cert != NULL) BIO_free(cert);
+	if (buf != NULL) BUF_MEM_free(buf);
+	return(x);
+	}
+
+EVP_PKEY *load_key(char *file, int format, char *pass)
+	{
+	BIO *key=NULL;
+	EVP_PKEY *pkey=NULL;
+
+	if (file == NULL)
+		{
+		BIO_printf(bio_err,"no keyfile specified\n");
+		goto end;
+		}
+	key=BIO_new(BIO_s_file());
+	if (key == NULL)
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+	if (BIO_read_filename(key,file) <= 0)
+		{
+		perror(file);
+		goto end;
+		}
+	if (format == FORMAT_ASN1)
+		{
+		pkey=d2i_PrivateKey_bio(key, NULL);
+		}
+	else if (format == FORMAT_PEM)
+		{
+		pkey=PEM_read_bio_PrivateKey(key,NULL,NULL,pass);
+		}
+	else if (format == FORMAT_PKCS12)
+		{
+		PKCS12 *p12 = d2i_PKCS12_bio(key, NULL);
+
+		PKCS12_parse(p12, pass, &pkey, NULL, NULL);
+		PKCS12_free(p12);
+		p12 = NULL;
+		}
+	else
+		{
+		BIO_printf(bio_err,"bad input format specified for key\n");
+		goto end;
+		}
+ end:
+	if (key != NULL) BIO_free(key);
+	if (pkey == NULL)
+		BIO_printf(bio_err,"unable to load Private Key\n");
+	return(pkey);
+	}
+
+STACK_OF(X509) *load_certs(char *file, int format)
+	{
+	BIO *certs;
+	int i;
+	STACK_OF(X509) *othercerts = NULL;
+	STACK_OF(X509_INFO) *allcerts = NULL;
+	X509_INFO *xi;
+
+	if((certs = BIO_new(BIO_s_file())) == NULL)
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+
+	if (file == NULL)
+		BIO_set_fp(certs,stdin,BIO_NOCLOSE);
+	else
+		{
+		if (BIO_read_filename(certs,file) <= 0)
+			{
+			perror(file);
+			goto end;
+			}
+		}
+
+	if      (format == FORMAT_PEM)
+		{
+		othercerts = sk_X509_new(NULL);
+		if(!othercerts)
+			{
+			sk_X509_free(othercerts);
+			othercerts = NULL;
+			goto end;
+			}
+		allcerts = PEM_X509_INFO_read_bio(certs, NULL, NULL, NULL);
+		for(i = 0; i < sk_X509_INFO_num(allcerts); i++)
+			{
+			xi = sk_X509_INFO_value (allcerts, i);
+			if (xi->x509)
+				{
+				sk_X509_push(othercerts, xi->x509);
+				xi->x509 = NULL;
+				}
+			}
+		goto end;
+		}
+	else	{
+		BIO_printf(bio_err,"bad input format specified for input cert\n");
+		goto end;
+		}
+end:
+	if (othercerts == NULL)
+		{
+		BIO_printf(bio_err,"unable to load certificates\n");
+		ERR_print_errors(bio_err);
+		}
+	if (allcerts) sk_X509_INFO_pop_free(allcerts, X509_INFO_free);
+	if (certs != NULL) BIO_free(certs);
+	return(othercerts);
+	}
+

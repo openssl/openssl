@@ -81,8 +81,6 @@
 #define	POSTFIX	".srl"
 #define DEF_DAYS	30
 
-#define CERT_HDR	"certificate"
-
 static char *x509_usage[]={
 "usage: x509 args\n",
 " -inform arg     - input format - default PEM (one of DER, NET or PEM)\n",
@@ -134,8 +132,6 @@ NULL
 };
 
 static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx);
-static EVP_PKEY *load_key(char *file, int format, char *passin);
-static X509 *load_cert(char *file, int format);
 static int sign (X509 *x, EVP_PKEY *pkey,int days,int clrext, const EVP_MD *digest,
 						LHASH *conf, char *section);
 static int x509_certify (X509_STORE *ctx,char *CAfile,const EVP_MD *digest,
@@ -894,8 +890,8 @@ bad:
 		ASN1_HEADER ah;
 		ASN1_OCTET_STRING os;
 
-		os.data=(unsigned char *)CERT_HDR;
-		os.length=strlen(CERT_HDR);
+		os.data=(unsigned char *)NETSCAPE_CERT_HDR;
+		os.length=strlen(NETSCAPE_CERT_HDR);
 		ah.header= &os;
 		ah.data=(char *)x;
 		ah.meth=X509_asn1_meth();
@@ -1112,133 +1108,6 @@ static int MS_CALLBACK callb(int ok, X509_STORE_CTX *ctx)
 			X509_verify_cert_error_string(err));
 		return(1);
 		}
-	}
-
-static EVP_PKEY *load_key(char *file, int format, char *passin)
-	{
-	BIO *key=NULL;
-	EVP_PKEY *pkey=NULL;
-
-	if (file == NULL)
-		{
-		BIO_printf(bio_err,"no keyfile specified\n");
-		goto end;
-		}
-	key=BIO_new(BIO_s_file());
-	if (key == NULL)
-		{
-		ERR_print_errors(bio_err);
-		goto end;
-		}
-	if (BIO_read_filename(key,file) <= 0)
-		{
-		perror(file);
-		goto end;
-		}
-	if (format == FORMAT_ASN1)
-		{
-		pkey=d2i_PrivateKey_bio(key, NULL);
-		}
-	else if (format == FORMAT_PEM)
-		{
-		pkey=PEM_read_bio_PrivateKey(key,NULL,NULL,passin);
-		}
-	else
-		{
-		BIO_printf(bio_err,"bad input format specified for key\n");
-		goto end;
-		}
-end:
-	if (key != NULL) BIO_free(key);
-	if (pkey == NULL)
-		BIO_printf(bio_err,"unable to load Private Key\n");
-	return(pkey);
-	}
-
-static X509 *load_cert(char *file, int format)
-	{
-	ASN1_HEADER *ah=NULL;
-	BUF_MEM *buf=NULL;
-	X509 *x=NULL;
-	BIO *cert;
-
-	if ((cert=BIO_new(BIO_s_file())) == NULL)
-		{
-		ERR_print_errors(bio_err);
-		goto end;
-		}
-
-	if (file == NULL)
-		BIO_set_fp(cert,stdin,BIO_NOCLOSE);
-	else
-		{
-		if (BIO_read_filename(cert,file) <= 0)
-			{
-			perror(file);
-			goto end;
-			}
-		}
-	if 	(format == FORMAT_ASN1)
-		x=d2i_X509_bio(cert,NULL);
-	else if (format == FORMAT_NETSCAPE)
-		{
-		unsigned char *p,*op;
-		int size=0,i;
-
-		/* We sort of have to do it this way because it is sort of nice
-		 * to read the header first and check it, then
-		 * try to read the certificate */
-		buf=BUF_MEM_new();
-		for (;;)
-			{
-			if ((buf == NULL) || (!BUF_MEM_grow(buf,size+1024*10)))
-				goto end;
-			i=BIO_read(cert,&(buf->data[size]),1024*10);
-			size+=i;
-			if (i == 0) break;
-			if (i < 0)
-				{
-				perror("reading certificate");
-				goto end;
-				}
-			}
-		p=(unsigned char *)buf->data;
-		op=p;
-
-		/* First load the header */
-		if ((ah=d2i_ASN1_HEADER(NULL,&p,(long)size)) == NULL)
-			goto end;
-		if ((ah->header == NULL) || (ah->header->data == NULL) ||
-			(strncmp(CERT_HDR,(char *)ah->header->data,
-			ah->header->length) != 0))
-			{
-			BIO_printf(bio_err,"Error reading header on certificate\n");
-			goto end;
-			}
-		/* header is ok, so now read the object */
-		p=op;
-		ah->meth=X509_asn1_meth();
-		if ((ah=d2i_ASN1_HEADER(&ah,&p,(long)size)) == NULL)
-			goto end;
-		x=(X509 *)ah->data;
-		ah->data=NULL;
-		}
-	else if (format == FORMAT_PEM)
-		x=PEM_read_bio_X509_AUX(cert,NULL,NULL,NULL);
-	else	{
-		BIO_printf(bio_err,"bad input format specified for input cert\n");
-		goto end;
-		}
-end:
-	if (x == NULL)
-		{
-		BIO_printf(bio_err,"unable to load certificate\n");
-		ERR_print_errors(bio_err);
-		}
-	if (ah != NULL) ASN1_HEADER_free(ah);
-	if (cert != NULL) BIO_free(cert);
-	if (buf != NULL) BUF_MEM_free(buf);
-	return(x);
 	}
 
 /* self sign */
