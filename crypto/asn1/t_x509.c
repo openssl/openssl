@@ -441,7 +441,7 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 	b=s=X509_NAME_oneline(name,NULL,0);
 	if (!*s)
 		{
-		free(b);
+		OPENSSL_free(b);
 		return 1;
 		}
 	s++; /* skip the first slash */
@@ -499,7 +499,7 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 err:
 		X509err(X509_F_X509_NAME_PRINT,ERR_R_BUF_LIB);
 		}
-	free(b);
+	OPENSSL_free(b);
 	return(ret);
 	}
 
