@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2002/02/28 12:43:00 $
+  ______________                           $Date: 2002/02/28 22:06:26 $
 
   DEVELOPMENT STATE
 
@@ -90,22 +90,6 @@
                Ulf: +1 for using GNU autoconf and libtool (but not automake,
                     which apparently is not flexible enough to generate
                     libcrypto)
-
-
-    o  The perl/ stuff needs a major overhaul. Currently it's
-       totally obsolete. Either we clean it up and enhance it to be up-to-date
-       with the C code or we also could replace it with the really nice
-       Net::SSLeay package we can find under
-       http://www.neuronio.pt/SSLeay.pm.html.  Ralf uses this package for a
-       longer time and it works fine and is a nice Perl module. Best would be
-       to convince the author to work for the OpenSSL project and create a
-       Net::OpenSSL or Crypt::OpenSSL package out of it and maintains it for
-       us.
-
-       Status: Ralf thinks we should both contact the author of Net::SSLeay
-               and look how much effort it is to bring Eric's perl/ stuff up
-               to date.
-               Paul +1
 
   WISHES
 
