@@ -1,5 +1,5 @@
 openssl.pc
-Makefile.ssl
+Makefile
 MINFO
 makefile.one
 tmp
