@@ -532,6 +532,14 @@ $! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!  
 $ @CRYPTO-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
 $!
+$! Go To The [.FIPS] Directory.
+$!
+$ SET DEFAULT SYS$DISK:[.FIPS]
+$!
+$! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
+$!  
+$ @FIPS-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
+$!
 $! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
 $!  
 $ @CRYPTO-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
