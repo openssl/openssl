@@ -315,14 +315,18 @@ do_solaris-shared:
 
 # UnixWare 7 and OpenUNIX 8 native compilers used
 do_svr5-shared:
- 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-	touch lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
- 	( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
- 	  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
- 		-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
- 		-z allextract lib$$i.a $$libs ${EX_LIBS} ) || exit 1; \
- 	libs="$$libs -l$$i"; \
- 	done
+	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+	( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
+	  find . -name "*.o" -print > allobjs ; \
+	  OBJS= ; export OBJS ; \
+	  for obj in `ar t lib$$i.a` ; do \
+	    OBJS="$${OBJS} `grep $$obj allobjs`" ; \
+	  done ; \
+	  set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		$${OBJS} $$libs ${EX_LIBS} ) || exit 1; \
+	libs="$$libs -l$$i"; \
+	done
 
 # This assumes that GNU utilities are *not* used
 do_irix-shared:
