@@ -23,6 +23,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why can't the OpenSSH configure script detect OpenSSL?
 * Why does the OpenSSL test fail with "bc: command not found"?
 * Why does the OpenSSL test fail with "bc: 1 no implemented"?
+* Why does the OpenSSL compilation fail on Alpha True64 Unix?
 
 
 * Which is the current version of OpenSSL?
@@ -323,3 +324,26 @@ you run the test suite (using "make test").  The message returned is "bc:
 implementation of bc and compile/install it.  For example, GNU bc (see
 http://www.gnu.org/software/software.html for download instructions) can
 be safely used.
+
+
+* Why does the OpenSSL compilation fail on Alpha True64 Unix?
+
+On some Alpha installations running True64 Unix and Compaq C, the compilation
+of crypto/sha/sha_dgst.c fails with the message 'Fatal:  Insufficient virtual
+memory to continue compilation.'  It's currently unknown why this happens,
+except that it has to do with optimization.  The very quick solution would
+be to compile everything with -O0 as optimization level, but that's not a very
+nice thing to do for those who expect to get the best result from OpenSSL.
+A bit more complicated solution is the following:
+
+----- snip:start -----
+  make DIRS=crypto SDIRS=sha "`grep '^CFLAG=' Makefile.ssl | \
+       sed -e 's/ -O[0-9] / -O0 /'`"
+  rm `ls crypto/*.o crypto/sha/*.o | grep -v 'sha_dgst\.o'`
+  make
+----- snip:end -----
+
+This will only compile sha_dgst.c with -O0, the rest with the optimization
+level chosen by the configuration process.  When the above is done, do the
+test and installation and you're set.
+
