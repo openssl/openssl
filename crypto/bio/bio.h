@@ -241,7 +241,7 @@ typedef struct bio_method_st
 	long (_far *ctrl)();
 	int (_far *create)();
 	int (_far *destroy)();
-	long (_fat *callback_ctrl)();
+	long (_far *callback_ctrl)();
 	} BIO_METHOD;
 #endif
 
