@@ -390,7 +390,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
 	  const char *file,BIO *bmd,const char *hmac_key)
 	{
-	int len;
+	unsigned int len;
 	int i;
 	EVP_MD_CTX *md_ctx;
 
