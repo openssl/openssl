@@ -311,7 +311,7 @@ bad:
 		printf("\tdsa->g=BN_bin2bn(dsa%d_g,sizeof(dsa%d_g),NULL);\n",
 			bits_p,bits_p);
 		printf("\tif ((dsa->p == NULL) || (dsa->q == NULL) || (dsa->g == NULL))\n");
-		printf("\t\treturn(NULL);\n");
+		printf("\t\t{ DSA_free(dsa); return(NULL); }\n");
 		printf("\treturn(dsa);\n\t}\n");
 		}
 
