@@ -61,6 +61,7 @@
 **	19990701	VRS 	Started.
 */
 
+#include <openssl/opensslconf.h>
 #ifndef NO_KRB5
 #include <string.h>
 #include <openssl/ssl.h>

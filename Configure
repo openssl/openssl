@@ -693,6 +693,7 @@ if ($no_krb5
 	$cflags="-DOPENSSL_NO_KRB5 $cflags";
 	$options.=" no-krb5" unless $no_krb5;
 	$openssl_algorithm_defines .= "#define OPENSSL_NO_KRB5\n";
+	$openssl_algorithm_defines .= "#define NO_KRB5\n";
 	}
 else
 	{
