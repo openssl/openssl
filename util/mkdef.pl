@@ -390,6 +390,7 @@ sub do_defs
 
         delete $funcs{"SSL_add_dir_cert_subjects_to_stack"};
         delete $funcs{"RSA_PKCS1_RSAref"} unless $rsaref;
+        delete $funcs{"bn_dump1"};
 
 	if($W32) {
 		delete $funcs{"BIO_s_file_internal"};
