@@ -2113,3 +2113,4 @@ DIRECTORYSTRING_new                     2137
 sk_ASN1_STRING_TABLE_new                2138
 sk_X509_TRUST_delete                    2139
 X509_add_trust_object                   2140
+PKCS12_newpass                          2141

@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) New function PKCS12_newpass() which changes the password of a
+     PKCS12 structure.
+     [Steve Henson]
+
   *) Modify X509_TRUST and X509_PURPOSE so it also uses a static and
      dynamic mix. In both cases the ids can be used as an index into the
      table. Also modified the X509_TRUST_add() and X509_PURPOSE_add()

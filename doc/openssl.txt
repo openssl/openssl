@@ -494,16 +494,16 @@ extension in a human or machine readable form.
 
 1. Initialisation and cleanup.
 
-X509V3_add_standard_extensions();
-
-This function should be called before any other extension code. It adds support
-for some common PKIX and Netscape extensions. Additional custom extensions can
-be added as well (see later).
+No special initialisation is needed before calling the extension functions.
+You used to have to call X509V3_add_standard_extensions(); but this is no longer
+required and this function no longer does anything.
 
 void X509V3_EXT_cleanup(void);
 
-This function should be called last to cleanup the extension code. After this
-call no other extension calls should be made.
+This function should be called to cleanup the extension code if any custom
+extensions have been added. If no custom extensions have been added then this
+call does nothing. After this call all custom extension code is freed up but
+you can still use the standard extensions.
 
 2. Printing and parsing extensions.
 
@@ -917,7 +917,7 @@ d2i_PKCS12_fp(fp, p12)
 
 This is the same but for a FILE pointer.
 
-3. Parsing and creation functions.
+3. High level functions.
 
 3.1 Parsing with PKCS12_parse().
 
@@ -954,6 +954,14 @@ Typically to create a PKCS#12 file the following could be used:
 p12 = PKCS12_create(pass, "My Certificate", pkey, cert, NULL, 0,0,0,0,0);
 i2d_PKCS12_fp(fp, p12);
 PKCS12_free(p12);
+
+3.3 Changing a PKCS#12 structure password.
+
+int PKCS12_newpass(PKCS12 *p12, char *oldpass, char *newpass);
+
+This changes the password of an already existing PKCS#12 structure. oldpass
+is the old password and newpass is the new one. An error occurs if the old
+password is incorrect.
 
 LOW LEVEL FUNCTIONS.
 

@@ -24,10 +24,10 @@ APPS=
 LIB=$(TOP)/libcrypto.a
 LIBSRC= p12_add.c p12_attr.c p12_bags.c p12_crpt.c p12_crt.c p12_decr.c \
 	p12_init.c p12_key.c p12_kiss.c p12_lib.c p12_mac.c p12_mutl.c\
-	p12_sbag.c p12_utl.c pk12err.c
+	p12_sbag.c p12_utl.c p12_npas.c pk12err.c
 LIBOBJ= p12_add.o p12_attr.o p12_bags.o p12_crpt.o p12_crt.o p12_decr.o \
 	p12_init.o p12_key.o p12_kiss.o p12_lib.o p12_mac.o p12_mutl.o\
-	p12_sbag.o p12_utl.o pk12err.o
+	p12_sbag.o p12_utl.o p12_npas.o pk12err.o
 
 SRC= $(LIBSRC)
 
@@ -293,6 +293,23 @@ p12_mutl.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 p12_mutl.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 p12_mutl.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 p12_mutl.o: ../cryptlib.h
+p12_npas.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+p12_npas.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+p12_npas.o: ../../include/openssl/cast.h ../../include/openssl/crypto.h
+p12_npas.o: ../../include/openssl/des.h ../../include/openssl/dh.h
+p12_npas.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+p12_npas.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+p12_npas.o: ../../include/openssl/idea.h ../../include/openssl/md2.h
+p12_npas.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+p12_npas.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+p12_npas.o: ../../include/openssl/opensslv.h ../../include/openssl/pem.h
+p12_npas.o: ../../include/openssl/pem2.h ../../include/openssl/pkcs12.h
+p12_npas.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
+p12_npas.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+p12_npas.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+p12_npas.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+p12_npas.o: ../../include/openssl/stack.h ../../include/openssl/x509.h
+p12_npas.o: ../../include/openssl/x509_vfy.h
 p12_sbag.o: ../../include/openssl/asn1.h ../../include/openssl/asn1_mac.h
 p12_sbag.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 p12_sbag.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
