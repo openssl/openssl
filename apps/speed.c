@@ -1316,7 +1316,7 @@ int MAIN(int argc, char **argv)
 		int ret;
 
 		if (!dsa_doit[j]) continue;
-		DSA_generate_key(dsa_key[j]);
+/*		DSA_generate_key(dsa_key[j]); */
 /*		DSA_sign_setup(dsa_key[j],NULL); */
 		ret=DSA_sign(EVP_PKEY_DSA,buf,20,buf2,
 			&kk,dsa_key[j]);
