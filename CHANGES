@@ -3,6 +3,11 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Have mk1mf.pl generate the macros OPENSSL_BUILD_SHLIBCRYPTO and
+     OPENSSL_BUILD_SHLIBSSL and use them appropriately in the header
+     files to get correct declarations of the ASN.1 item variables.
+     [Richard Levitte]
+
   *) New functions or ASN1_item_d2i_fp() and ASN1_item_d2i_bio(). These
      replace the old function pointer based I/O routines. Change most of
      the *_d2i_bio() and *_d2i_fp() functions to use these.
