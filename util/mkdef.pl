@@ -79,7 +79,7 @@ my $OS2=0;
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "PERL5", "NeXT",
-			"EXPORT_VAR_AS_FUNCTION" );
+			"EXPORT_VAR_AS_FUNCTION", "OPENSSL_FIPS" );
 my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
@@ -892,6 +892,9 @@ sub do_defs
 	$platform{"PEM_write_NS_CERT_SEQ"} = "VMS";
 	$platform{"PEM_read_P8_PRIV_KEY_INFO"} = "VMS";
 	$platform{"PEM_write_P8_PRIV_KEY_INFO"} = "VMS";
+
+	$platform{"RSA_PKCS1_SSLeay"} = "OPENSSL_FIPS";
+	$platform{"RSA_generate_key"} = "OPENSSL_FIPS";
 
 	# Info we know about
 
