@@ -186,14 +186,13 @@ static int usage(const char *errstr, int isunknownarg)
 
 static int err_str0(const char *str0)
 {
-	fprintf(stderr, str0);
-	fprintf(stderr, "\n");
+	fprintf(stderr, "%s\n", str0);
 	return 1;
 }
 
-static int err_str1(const char *str0, const char *str1)
+static int err_str1(const char *fmt, const char *str1)
 {
-	fprintf(stderr, str0, str1);
+	fprintf(stderr, fmt, str1);
 	fprintf(stderr, "\n");
 	return 1;
 }

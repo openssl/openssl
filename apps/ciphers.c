@@ -150,7 +150,7 @@ int MAIN(int argc, char **argv)
 	if (badops)
 		{
 		for (pp=ciphers_usage; (*pp != NULL); pp++)
-			BIO_printf(bio_err,*pp);
+			BIO_printf(bio_err,"%s",*pp);
 		goto end;
 		}
 

@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 		{
 bad:
 		for (pp=usage; (*pp != NULL); pp++)
-			fprintf(stderr,*pp);
+			fprintf(stderr,"%s",*pp);
 		exit(1);
 		}
 

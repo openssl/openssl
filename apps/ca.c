@@ -479,7 +479,7 @@ bad:
 	if (badops)
 		{
 		for (pp=ca_usage; (*pp != NULL); pp++)
-			BIO_printf(bio_err,*pp);
+			BIO_printf(bio_err,"%s",*pp);
 		goto err;
 		}
 

@@ -156,7 +156,7 @@ int MAIN(int argc, char **argv)
 		{
 bad:
 		for (pp=sess_id_usage; (*pp != NULL); pp++)
-			BIO_printf(bio_err,*pp);
+			BIO_printf(bio_err,"%s",*pp);
 		goto end;
 		}
 

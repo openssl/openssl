@@ -167,7 +167,7 @@ void main(void)
 		
 		tempString[bytesRead] = '\0';
 		
-		printf(tempString);
+		printf("%s", tempString);
 	}
 	
 	printf("\n\n\n");
@@ -201,7 +201,7 @@ EXITPOINT:
 	{
 		printf("An error occurred:\n");
 		
-		printf(GetErrorMessage());
+		printf("%s",GetErrorMessage());
 	}
 	
 	
