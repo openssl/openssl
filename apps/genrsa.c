@@ -154,7 +154,7 @@ bad:
 		BIO_printf(bio_err," -passout arg    output file pass phrase source\n");
 		BIO_printf(bio_err," -f4             use F4 (0x10001) for the E value\n");
 		BIO_printf(bio_err," -3              use 3 for the E value\n");
-		BIO_printf(bio_err," -rand file:file:...\n");
+		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"                 load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"                 the random number generator\n");
 		goto err;

@@ -172,7 +172,7 @@ bad:
 		BIO_printf(bio_err," -2            generate parameters using  2 as the generator value\n");
 		BIO_printf(bio_err," -5            generate parameters using  5 as the generator value\n");
 		BIO_printf(bio_err," numbits       number of bits in to generate (default 512)\n");
-		BIO_printf(bio_err," -rand file:file:...\n");
+		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"               - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"               the random number generator\n");
 		BIO_printf(bio_err," -noout        no output\n");

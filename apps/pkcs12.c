@@ -265,7 +265,7 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-password p   set import/export password source\n");
 	BIO_printf (bio_err, "-passin p     input file pass phrase source\n");
 	BIO_printf (bio_err, "-passout p    output file pass phrase source\n");
-	BIO_printf(bio_err,  "-rand file:file:...\n");
+	BIO_printf(bio_err,  "-rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	BIO_printf(bio_err,  "              load the file (or the files in the directory) into\n");
 	BIO_printf(bio_err,  "              the random number generator\n");
     	goto end;

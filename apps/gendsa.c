@@ -145,7 +145,7 @@ bad:
 #ifndef NO_IDEA
 		BIO_printf(bio_err," -idea     - encrypt the generated key with IDEA in cbc mode\n");
 #endif
-		BIO_printf(bio_err," -rand file:file:...\n");
+		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"           - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"             the random number generator\n");
 		BIO_printf(bio_err," dsaparam-file\n");

@@ -127,7 +127,7 @@ bad:
 		BIO_printf(bio_err," -2    use 2 as the generator value\n");
 	/*	BIO_printf(bio_err," -3    use 3 as the generator value\n"); */
 		BIO_printf(bio_err," -5    use 5 as the generator value\n");
-		BIO_printf(bio_err," -rand file:file:...\n");
+		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err,"           - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"             the random number generator\n");
 		goto end;
