@@ -279,7 +279,7 @@ d=12 ;(AP)	d	by value (input)
 	xorl2	#^X80000000,r7	; fixup a21 so highest bit is 1
 2$:
 	tstl	r9
-	beq	666$		; Uh-oh, the divisor is 0...
+	beql	666$		; Uh-oh, the divisor is 0...
 	bgtr	3$
 	xorl2	#^X80000000,r9	; fixup b2 so highest bit is 0
 	incl	r8		; b' = 1
