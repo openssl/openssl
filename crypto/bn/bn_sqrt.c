@@ -65,8 +65,6 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
  * using the Tonelli/Shanks algorithm (cf. Henri Cohen, "A Course
  * in Algebraic Computational Number Theory", algorithm 1.5.1).
  * 'p' must be prime!
- * If 'a' is not a square, this is not necessarily detected by
- * the algorithms; a bogus result must be expected in this case.
  */
 	{
 	BIGNUM *ret = in;
