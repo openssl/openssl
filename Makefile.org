@@ -335,7 +335,8 @@ install: all
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/private \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/lib \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man1 \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man3
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man3 \
+		$(INSTALL_PREFIX)$(OPENSSLDIR)/man/man5
 	@for i in $(EXHEADER) ;\
 	do \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
@@ -354,8 +355,8 @@ install: all
 		chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
 	done
 	@echo installing man 1
-	@for i in doc/apps/*.pod; do (cd `dirname $$i`; pod2man --section=1 --date=`date +%Y-%m-%d` --center=OpenSSL --release=$(VERSION) `basename $$i` >  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man1/`basename $$i .pod`.1); done
+	@for i in doc/apps/*.pod; do (cd `dirname $$i`; fn=`basename $$i .pod`; sec=`[ "$$fn" = "config" ] && echo 5 || echo 1`; ../../util/pod2man.pl --section=$$sec --date=`date +%Y-%m-%d` --center=OpenSSL --release=$(VERSION) `basename $$i` >  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man$$sec/`basename $$i .pod`.$$sec); done
 	@echo installing man 3
-	@for i in doc/crypto/*.pod doc/ssl/*.pod; do (cd `dirname $$i`; pod2man --section=3 --date=`date +%Y-%m-%d` --center=OpenSSL --release=$(VERSION) `basename $$i` >  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man3/`basename $$i .pod`.3); done
+	@for i in doc/crypto/*.pod doc/ssl/*.pod; do (cd `dirname $$i`; ../../util/pod2man.pl --section=3 --date=`date +%Y-%m-%d` --center=OpenSSL --release=$(VERSION) `basename $$i` >  $(INSTALL_PREFIX)$(INSTALLTOP)/man/man3/`basename $$i .pod`.3); done
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
