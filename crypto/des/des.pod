@@ -1,186 +1,217 @@
-.TH DES 1 
-.SH NAME
+=pod
+
+=head1 NAME
+
 des - encrypt or decrypt data using Data Encryption Standard
-.SH SYNOPSIS
-.B des
+
+=head1 SYNOPSIS
+
+B<des>
 (
-.B \-e
+B<-e>
 |
-.B \-E
+B<-E>
 ) | (
-.B \-d
+B<-d>
 |
-.B \-D
+B<-D>
 ) | (
-.B \-\fR[\fPcC\fR][\fPckname\fR]\fP
+B<->[B<cC>][B<ckname>]
 ) |
 [
-.B \-b3hfs
+B<-b3hfs>
 ] [
-.B \-k
-.I key
+B<-k>
+I<key>
 ]
 ] [
-.B \-u\fR[\fIuuname\fR]
+B<-u>[I<uuname>]
 [
-.I input-file
+I<input-file>
 [
-.I output-file
+I<output-file>
 ] ]
-.SH DESCRIPTION
-.B des
+
+=head1 NOTE
+
+This page describes the B<des> stand-alone program, not the B<openssl des>
+command.
+
+=head1 DESCRIPTION
+
+B<des>
 encrypts and decrypts data using the
 Data Encryption Standard algorithm.
 One of
-.B \-e, \-E
+B<-e>, B<-E>
 (for encrypt) or
-.B \-d, \-D
+B<-d>, B<-D>
 (for decrypt) must be specified.
 It is also possible to use
-.B \-c
+B<-c>
 or
-.B \-C
+B<-C>
 in conjunction or instead of the a encrypt/decrypt option to generate
 a 16 character hexadecimal checksum, generated via the
-.I des_cbc_cksum.
-.LP
+I<des_cbc_cksum>.
+
 Two standard encryption modes are supported by the
-.B des
+B<des>
 program, Cipher Block Chaining (the default) and Electronic Code Book
 (specified with
-.B \-b
-).
-.LP
+B<-b>).
+
 The key used for the DES
 algorithm is obtained by prompting the user unless the
-.B `\-k
-.I key'
+B<-k>
+I<key>
 option is given.
 If the key is an argument to the
-.B des
+B<des>
 command, it is potentially visible to users executing
-.BR ps (1)
+ps(1)
 or a derivative.  To minimise this possibility,
-.B des
+B<des>
 takes care to destroy the key argument immediately upon entry.
 If your shell keeps a history file be careful to make sure it is not
 world readable.
-.LP
-Since this program attempts to maintain compatability with sunOS's
+
+Since this program attempts to maintain compatibility with sunOS's
 des(1) command, there are 2 different methods used to convert the user
 supplied key to a des key.
 Whenever and one or more of
-.B \-E, \-D, \-C
+B<-E>, B<-D>, B<-C>
 or
-.B \-3
+B<-3>
 options are used, the key conversion procedure will not be compatible
 with the sunOS des(1) version but will use all the user supplied
 character to generate the des key.
-.B des
+B<des>
 command reads from standard input unless
-.I input-file
+I<input-file>
 is specified and writes to standard output unless
-.I output-file
+I<output-file>
 is given.
-.SH OPTIONS
-.TP
-.B \-b
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-b>
+
 Select ECB
 (eight bytes at a time) encryption mode.
-.TP
-.B \-3
+
+=item B<-3>
+
 Encrypt using triple encryption.
 By default triple cbc encryption is used but if the
-.B \-b
-option is used then triple ecb encryption is performed.
+B<-b>
+option is used then triple ECB encryption is performed.
 If the key is less than 8 characters long, the flag has no effect.
-.TP
-.B \-e
+
+=item B<-e>
+
 Encrypt data using an 8 byte key in a manner compatible with sunOS
 des(1).
-.TP
-.B \-E
+
+=item B<-E>
+
 Encrypt data using a key of nearly unlimited length (1024 bytes).
 This will product a more secure encryption.
-.TP
-.B \-d
-Decrypt data that was encrypted with the \-e option.
-.TP
-.B \-D
-Decrypt data that was encrypted with the \-E option.
-.TP
-.B \-c
+
+=item B<-d>
+
+Decrypt data that was encrypted with the B<-e> option.
+
+=item B<-D>
+
+Decrypt data that was encrypted with the B<-E> option.
+
+=item B<-c>
+
 Generate a 16 character hexadecimal cbc checksum and output this to
 stderr.
 If a filename was specified after the
-.B \-c
+B<-c>
 option, the checksum is output to that file.
 The checksum is generated using a key generated in a sunOS compatible
 manner.
-.TP
-.B \-C
+
+=item B<-C>
+
 A cbc checksum is generated in the same manner as described for the
-.B \-c
+B<-c>
 option but the DES key is generated in the same manner as used for the
-.B \-E
+B<-E>
 and
-.B \-D
+B<-D>
 options
-.TP
-.B \-f
+
+=item B<-f>
+
 Does nothing - allowed for compatibility with sunOS des(1) command.
-.TP
-.B \-s
+
+=item B<-s>
+
 Does nothing - allowed for compatibility with sunOS des(1) command.
-.TP
-.B "\-k \fIkey\fP"
+
+=item B<-k> I<key>
+
 Use the encryption 
-.I key
+I<key>
 specified.
-.TP
-.B "\-h"
+
+=item B<-h>
+
 The
-.I key
+I<key>
 is assumed to be a 16 character hexadecimal number.
 If the
-.B "\-3"
+B<-3>
 option is used the key is assumed to be a 32 character hexadecimal
 number.
-.TP
-.B \-u
+
+=item B<-u>
+
 This flag is used to read and write uuencoded files.  If decrypting,
 the input file is assumed to contain uuencoded, DES encrypted data.
-If encrypting, the characters following the -u are used as the name of
+If encrypting, the characters following the B<-u> are used as the name of
 the uuencoded file to embed in the begin line of the uuencoded
-output.  If there is no name specified after the -u, the name text.des
+output.  If there is no name specified after the B<-u>, the name text.des
 will be embedded in the header.
-.SH SEE ALSO
-.B ps (1)
-.B des_crypt(3)
-.SH BUGS
-.LP
+
+=head1 SEE ALSO
+
+ps(1),
+L<des_crypt(3)|des_crypt(3)>
+
+=head1 BUGS
+
 The problem with using the
-.B -e
+B<-e>
 option is the short key length.
 It would be better to use a real 56-bit key rather than an
 ASCII-based 56-bit pattern.  Knowing that the key was derived from ASCII
 radically reduces the time necessary for a brute-force cryptographic attack.
 My attempt to remove this problem is to add an alternative text-key to
 DES-key function.  This alternative function (accessed via
-.B -E, -D, -S
+B<-E>, B<-D>, B<-S>
 and
-.B -3
-)
+B<-3>)
 uses DES to help generate the key.
-.LP
-Be carefully when using the -u option.  Doing des -ud <filename> will
-not decrypt filename (the -u option will gobble the d option).
-.LP
+
+Be carefully when using the B<-u> option.  Doing B<des -ud> I<filename> will
+not decrypt filename (the B<-u> option will gobble the B<-d> option).
+
 The VMS operating system operates in a world where files are always a
 multiple of 512 bytes.  This causes problems when encrypted data is
-send from unix to VMS since a 88 byte file will suddenly be padded
-with 424 null bytes.  To get around this problem, use the -u option
+send from Unix to VMS since a 88 byte file will suddenly be padded
+with 424 null bytes.  To get around this problem, use the B<-u> option
 to uuencode the data before it is send to the VMS system.
-.SH AUTHOR
-.LP
+
+=head1 AUTHOR
+
 Eric Young (eay@cryptsoft.com)
+
+=cut
