@@ -57,9 +57,13 @@
  */
 
 #include <ctype.h>
-#include <strings.h>
-#include "o_str.h"
 #include <openssl/e_os2.h>
+#ifdef OPENSSL_SYS_WINDOWS
+# include <string.h>
+#else
+# include <strings.h>
+#endif
+#include "o_str.h"
 
 #undef strncasecmp
 #undef strcasecmp
