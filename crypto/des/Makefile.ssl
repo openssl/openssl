@@ -196,13 +196,13 @@ ecb3_enc.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 ecb3_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ecb3_enc.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
 ecb3_enc.o: des_locl.h ecb3_enc.c
-ecb_enc.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-ecb_enc.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
-ecb_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-ecb_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ecb_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-ecb_enc.o: ../../include/openssl/ui_compat.h des_locl.h des_ver.h ecb_enc.c
-ecb_enc.o: spr.h
+ecb_enc.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+ecb_enc.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+ecb_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+ecb_enc.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+ecb_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+ecb_enc.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+ecb_enc.o: des_locl.h des_ver.h ecb_enc.c spr.h
 ede_cbcm_enc.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
 ede_cbcm_enc.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
 ede_cbcm_enc.o: ../../include/openssl/opensslconf.h
