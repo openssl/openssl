@@ -147,6 +147,8 @@ option enables various workarounds.
 this allows the cipher list sent by the client to be modified. See the
 B<ciphers> command for more information.
 
+=back
+
 =head1 CONNECTED COMMANDS
 
 If a connection is established with an SSL server then any data received
