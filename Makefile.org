@@ -187,15 +187,15 @@ HEADER=         e_os.h
 all:
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i; echo "making $$i..."; \
-	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' SDIRS='${SDIRS}' AR='${AR}' all ); \
+	(cd $$i && echo "making $$i..." && \
+	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' SDIRS='${SDIRS}' AR='${AR}' all ) || exit 1; \
 	done;
 
 sub_all:
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i; echo "making $$i..."; \
-	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' all ); \
+	(cd $$i && echo "making $$i..." && \
+	$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' all ) || exit 1; \
 	done;
 
 libclean:
@@ -205,8 +205,8 @@ clean:
 	/bin/rm -f shlib/*.o *.o core a.out fluff *.map
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i; echo "cleaning $$i..."; \
-	$(MAKE) SDIRS='${SDIRS}' clean ); \
+	(cd $$i && echo "cleaning $$i..." && \
+	$(MAKE) SDIRS='${SDIRS}' clean ) || exit 1; \
 	/bin/rm -f $(LIBS); \
 	done;
 	/bin/rm -f *.a *.o speed.* *.map *.so .pure core
@@ -224,8 +224,8 @@ files:  MINFO
 	perl $(TOP)/util/files.pl Makefile.ssl > $(TOP)/MINFO
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i; echo "making 'files' in $$i..."; \
-	$(MAKE) SDIRS='${SDIRS}' files ); \
+	(cd $$i && echo "making 'files' in $$i..." && \
+	$(MAKE) SDIRS='${SDIRS}' files ) || exit 1; \
 	done;
 
 links:
@@ -234,8 +234,8 @@ links:
 	$(TOP)/util/mklink.sh include $(EXHEADER)
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i; echo "making links in $$i..."; \
-	$(MAKE) SDIRS='${SDIRS}' links ); \
+	(cd $$i && echo "making links in $$i..." && \
+	$(MAKE) SDIRS='${SDIRS}' links ) || exit 1; \
 	done;
 	@(SSLEAY="`pwd`/apps/ssleay"; export SSLEAY; sh tools/c_rehash certs)
 
@@ -243,8 +243,8 @@ dclean:
 	/bin/rm -f *.bak
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i; echo "undoing makedepend in $$i..."; \
-	$(MAKE) SDIRS='${SDIRS}' dclean ); \
+	(cd $$i && echo "undoing makedepend in $$i..." && \
+	$(MAKE) SDIRS='${SDIRS}' dclean ) || exit 1; \
 	done;
 
 rehash:
@@ -253,36 +253,36 @@ rehash:
 test:   tests
 
 tests:
-	(cd test; echo "testing $$i..."; \
+	(cd test && echo "testing $$i..." && \
 	$(MAKE) CC='${CC}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SDIRS='${SDIRS}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' tests );
 	@apps/ssleay version -a
 
 depend:
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i; echo "making dependancies $$i..."; \
-	$(MAKE) SDIRS='${SDIRS}' depend ); \
+	(cd $$i && echo "making dependancies $$i..." && \
+	$(MAKE) SDIRS='${SDIRS}' depend ) || exit 1; \
 	done;
 
 lint:
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i; echo "making lint $$i..."; \
-	$(MAKE) SDIRS='${SDIRS}' lint ); \
+	(cd $$i && echo "making lint $$i..." && \
+	$(MAKE) SDIRS='${SDIRS}' lint ) || exit 1; \
 	done;
 
 tags:
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i; echo "making tags $$i..."; \
-	$(MAKE) SDIRS='${SDIRS}' tags ); \
+	(cd $$i && echo "making tags $$i..." && \
+	$(MAKE) SDIRS='${SDIRS}' tags ) || exit 1; \
 	done;
 
 errors:
 	@for i in $(DIRS) ;\
 	do \
-	(cd $$i; echo "making errors in $$i..."; \
-	$(MAKE) SDIRS='${SDIRS}' errors ); \
+	(cd $$i && echo "making errors in $$i..." && \
+	$(MAKE) SDIRS='${SDIRS}' errors ) || exit 1; \
 	done;
 
 tar:
