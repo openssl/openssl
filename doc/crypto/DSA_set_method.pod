@@ -8,7 +8,6 @@ DSA_set_method, DSA_new_method, DSA_OpenSSL - select DSA method
 =head1 SYNOPSIS
 
  #include <openssl/dsa.h>
- #include <openssl/engine.h>
 
  void DSA_set_default_method(const DSA_METHOD *meth);
 
@@ -16,7 +15,7 @@ DSA_set_method, DSA_new_method, DSA_OpenSSL - select DSA method
 
  int DSA_set_method(DSA *dsa, const DSA_METHOD *meth);
 
- DSA *DSA_new_method(ENGINE *engine);
+ DSA *DSA_new_method(DSA_METHOD *meth);
 
  DSA_METHOD *DSA_OpenSSL(void);
 
