@@ -56,6 +56,7 @@ my @dirs = (
 "crypto/store",
 "ssl",
 "apps",
+"engines",
 "test",
 "tools"
 );
