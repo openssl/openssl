@@ -400,7 +400,7 @@ static int hwcrhk_init()
 		goto err;
 		}
 	/* Everything's fine. */
-	if (hdnidx == -1)
+	if (hndidx == -1)
 		hndidx = RSA_get_ex_new_index(0,
 			"nFast HWCryptoHook RSA key handle",
 			NULL, NULL, hwcrhk_ex_free);
