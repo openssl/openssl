@@ -115,7 +115,7 @@
 #include <sys/timeb.h>
 #endif
 
-#if !defined(TIMES) && !defined(TIMEB)
+#if !defined(TIMES) && !defined(TIMEB) && !defined(USE_TOD)
 #error "It seems neither struct tms nor struct timeb is supported in this platform!"
 #endif
 
