@@ -230,6 +230,7 @@ static int bn_rand_range(int pseudo, BIGNUM *r, BIGNUM *range)
 	{
 	int (*bn_rand)(BIGNUM *, int, int, int) = pseudo ? BN_pseudo_rand : BN_rand;
 	int n;
+	int count = 100;
 
 	if (range->neg || BN_is_zero(range))
 		{
@@ -263,6 +264,13 @@ static int bn_rand_range(int pseudo, BIGNUM *r, BIGNUM *range)
 				if (BN_cmp(r, range) >= 0)
 					if (!BN_sub(r, r, range)) return 0;
 				}
+
+			if (!--count)
+				{
+				BNerr(BN_F_BN_RAND_RANGE, BN_R_TOO_MANY_ITERATIONS);
+				return 0;
+				}
+			
 			}
 		while (BN_cmp(r, range) >= 0);
 		}
@@ -272,6 +280,12 @@ static int bn_rand_range(int pseudo, BIGNUM *r, BIGNUM *range)
 			{
 			/* range = 11..._2  or  range = 101..._2 */
 			if (!bn_rand(r, n, -1, 0)) return 0;
+
+			if (!--count)
+				{
+				BNerr(BN_F_BN_RAND_RANGE, BN_R_TOO_MANY_ITERATIONS);
+				return 0;
+				}
 			}
 		while (BN_cmp(r, range) >= 0);
 		}

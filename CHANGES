@@ -4,6 +4,10 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Let BN_rand_range() abort with an error after 100 iterations
+     without success (which indicates a broken PRNG).
+     [Bodo Moeller]
+
   *) Change BN_mod_sqrt() so that it verifies that the input value
      is really the square of the return value.  (Previously,
      BN_mod_sqrt would show GIGO behaviour.)
