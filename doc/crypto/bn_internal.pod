@@ -72,19 +72,19 @@ applications.
 
  typedef struct bignum_st
         {
-        int top;      /* index of last used d (most significant word) + 1 */
-        BN_ULONG *d;  /* pointer to an array of 'BITS2' bit chunks */
+        int top;      /* number of words used in d */
+        BN_ULONG *d;  /* pointer to an array containing the integer value */
         int max;      /* size of the d array */
         int neg;      /* sign */
         } BIGNUM;
 
-The big number is stored in B<d>, a malloc()ed array of B<BN_ULONG>s,
-least significant first. A B<BN_ULONG> can be either 16, 32 or 64 bits
-in size (B<BITS2>), depending on the 'number of bits' specified in
+The integer value is stored in B<d>, a malloc()ed array of words (B<BN_ULONG>),
+least significant word first. A B<BN_ULONG> can be either 16, 32 or 64 bits
+in size, depending on the 'number of bits' (B<BITS2>) specified in
 C<openssl/bn.h>.
 
 B<max> is the size of the B<d> array that has been allocated.  B<top>
-is the 'last' entry being used plus one, so for a value of 4, bn.d[0]=4 and
+is the number of words being used, so for a value of 4, bn.d[0]=4 and
 bn.top=1.  B<neg> is 1 if the number is negative.  When a B<BIGNUM> is
 B<0>, the B<d> field can be B<NULL> and B<top> == B<0>.
 
