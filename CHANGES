@@ -3,6 +3,21 @@
  _______________
 
 
+ Changes between 0.9.3 and 0.9.3a [?]  [xx May? 1999]
+
+  *) Updates for Win32 to assembler version of MD5.
+     [Steve Henson]
+
+  *) Set #! path to perl in apps/der_chop to where we found it
+     instead of using a fixed path.
+     [Bodo Moeller]
+
+  *) SHA library changes for irix64-mips4-cc.
+     [Andy Polyakov]
+
+  *) Improvements for VMS support.
+     [Richard Levitte]
+
  Changes between 0.9.2b and 0.9.3  [24 May 1999]
 
   *) Bignum library bug fix. IRIX 6 passes "make test" now!
