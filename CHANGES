@@ -4,6 +4,10 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) Fix potential buffer overrun problem in BIO_printf().
+     [Ulf Möller, using public domain code by Patrick Powell; problem
+      pointed out by David Sacerdote <das33@cornell.edu>]
+
   *) Support EGD <http://www.lothar.com/tech/crypto/>.  New functions
      RAND_egd() and RAND_status().  In the command line application,
      the EGD socket can be specified like a seed file using RANDFILE
