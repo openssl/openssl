@@ -4,6 +4,22 @@ $	__arch := VAX
 $	if f$getsyi("cpu") .ge. 128 then __arch := AXP
 $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
+$	found_it := NO
+$	define/user sys$output trsa-standard-commands.
+$	mcr 'exe_dir'openssl list-standard-commands
+$	open/read f trsa-standard-commands.
+$ loop_standard_commands:
+$	read/end=loop_standard_commands_end f i
+$	if f$edit(i,"lowercase") .eqs. "rsa"
+$	then
+$	    found_it := YES
+$	    goto loop_standard_commands_end
+$	endif
+$	goto loop_standard_commands
+$ loop_standard_commands_end:
+$	close f
+$	delete trsa-standard-commands.;*
+$
 $	cmd := mcr 'exe_dir'openssl rsa
 $
 $	t := testrsa.pem
