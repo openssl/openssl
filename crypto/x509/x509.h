@@ -645,7 +645,8 @@ X509_PUBKEY *	d2i_X509_PUBKEY(X509_PUBKEY **a,unsigned char **pp,
 			long length);
 int		X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_PUBKEY_get(X509_PUBKEY *key);
-int		X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK *chain);
+int		X509_get_pubkey_parameters(EVP_PKEY *pkey,
+					   STACK_OF(X509) *chain);
 
 
 X509_SIG *	X509_SIG_new(void );

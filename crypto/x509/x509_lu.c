@@ -401,7 +401,7 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 	{
 	if (ctx->chain != NULL)
 		{
-		sk_pop_free(ctx->chain,X509_free);
+		sk_X509_pop_free(ctx->chain,X509_free);
 		ctx->chain=NULL;
 		}
 	CRYPTO_free_ex_data(x509_store_ctx_meth,(char *)ctx,&(ctx->ex_data));

@@ -117,8 +117,8 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	 * present and that the first entry is in place */
 	if (ctx->chain == NULL)
 		{
-		if (	((ctx->chain=sk_new_null()) == NULL) ||
-			(!sk_push(ctx->chain,(char *)ctx->cert)))
+		if (	((ctx->chain=sk_X509_new_null()) == NULL) ||
+			(!sk_X509_push(ctx->chain,ctx->cert)))
 			{
 			X509err(X509_F_X509_VERIFY_CERT,ERR_R_MALLOC_FAILURE);
 			goto end;
@@ -135,8 +135,8 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		goto end;
 		}
 
-	num=sk_num(ctx->chain);
-	x=(X509 *)sk_value(ctx->chain,num-1);
+	num=sk_X509_num(ctx->chain);
+	x=sk_X509_value(ctx->chain,num-1);
 	depth=ctx->depth;
 
 
@@ -160,7 +160,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 			xtmp=X509_find_by_subject(sktmp,xn);
 			if (xtmp != NULL)
 				{
-				if (!sk_push(ctx->chain,(char *)xtmp))
+				if (!sk_X509_push(ctx->chain,xtmp))
 					{
 					X509err(X509_F_X509_VERIFY_CERT,ERR_R_MALLOC_FAILURE);
 					goto end;
@@ -182,13 +182,13 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	 * certificates.  We now need to add at least one trusted one,
 	 * if possible, otherwise we complain. */
 
-	i=sk_num(ctx->chain);
-	x=(X509 *)sk_value(ctx->chain,i-1);
+	i=sk_X509_num(ctx->chain);
+	x=sk_X509_value(ctx->chain,i-1);
 	if (X509_NAME_cmp(X509_get_subject_name(x),X509_get_issuer_name(x))
 		== 0)
 		{
 		/* we have a self signed certificate */
-		if (sk_num(ctx->chain) == 1)
+		if (sk_X509_num(ctx->chain) == 1)
 			{
 			ctx->error=X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT;
 			ctx->current_cert=x;
@@ -199,10 +199,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		else
 			{
 			/* worry more about this one elsewhere */
-			chain_ss=(X509 *)sk_pop(ctx->chain);
+			chain_ss=sk_X509_pop(ctx->chain);
 			ctx->last_untrusted--;
 			num--;
-			x=(X509 *)sk_value(ctx->chain,num-1);
+			x=sk_X509_value(ctx->chain,num-1);
 			}
 		}
 
@@ -235,7 +235,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 			break;
 			}
 		x=obj.data.x509;
-		if (!sk_push(ctx->chain,(char *)obj.data.x509))
+		if (!sk_X509_push(ctx->chain,obj.data.x509))
 			{
 			X509_OBJECT_free_contents(&obj);
 			X509err(X509_F_X509_VERIFY_CERT,ERR_R_MALLOC_FAILURE);
@@ -259,7 +259,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		else
 			{
 
-			sk_push(ctx->chain,(char *)chain_ss);
+			sk_X509_push(ctx->chain,chain_ss);
 			num++;
 			ctx->last_untrusted=num;
 			ctx->current_cert=chain_ss;
@@ -300,10 +300,10 @@ static int internal_verify(X509_STORE_CTX *ctx)
 	cb=ctx->ctx->verify_cb;
 	if (cb == NULL) cb=null_callback;
 
-	n=sk_num(ctx->chain);
+	n=sk_X509_num(ctx->chain);
 	ctx->error_depth=n-1;
 	n--;
-	xi=(X509 *)sk_value(ctx->chain,n);
+	xi=sk_X509_value(ctx->chain,n);
 	if (X509_NAME_cmp(X509_get_subject_name(xi),
 		X509_get_issuer_name(xi)) == 0)
 		xs=xi;
@@ -320,7 +320,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 			{
 			n--;
 			ctx->error_depth=n;
-			xs=(X509 *)sk_value(ctx->chain,n);
+			xs=sk_X509_value(ctx->chain,n);
 			}
 		}
 
@@ -394,7 +394,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 		if (n >= 0)
 			{
 			xi=xs;
-			xs=(X509 *)sk_value(ctx->chain,n);
+			xs=sk_X509_value(ctx->chain,n);
 			}
 		}
 	ok=1;
@@ -464,16 +464,16 @@ ASN1_UTCTIME *X509_gmtime_adj(ASN1_UTCTIME *s, long adj)
 	return(ASN1_UTCTIME_set(s,t));
 	}
 
-int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK *chain)
+int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 	{
 	EVP_PKEY *ktmp=NULL,*ktmp2;
 	int i,j;
 
 	if ((pkey != NULL) && !EVP_PKEY_missing_parameters(pkey)) return(1);
 
-	for (i=0; i<sk_num(chain); i++)
+	for (i=0; i<sk_X509_num(chain); i++)
 		{
-		ktmp=X509_get_pubkey((X509 *)sk_value(chain,i));
+		ktmp=X509_get_pubkey(sk_X509_value(chain,i));
 		if (ktmp == NULL)
 			{
 			X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
@@ -496,7 +496,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK *chain)
 	/* first, populate the other certs */
 	for (j=i-1; j >= 0; j--)
 		{
-		ktmp2=X509_get_pubkey((X509 *)sk_value(chain,j));
+		ktmp2=X509_get_pubkey(sk_X509_value(chain,j));
 		EVP_PKEY_copy_parameters(ktmp2,ktmp);
 		EVP_PKEY_free(ktmp2);
 		}
@@ -615,7 +615,7 @@ X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx)
 	return(ctx->current_cert);
 	}
 
-STACK *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx)
+STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx)
 	{
 	return(ctx->chain);
 	}
