@@ -63,11 +63,21 @@
 #include <openssl/lhash.h>
 #include "cryptlib.h"
 
-#ifdef CRYPTO_MDEBUG
-static int mh_mode=CRYPTO_MEM_CHECK_ON;
-#else
+/* #ifdef CRYPTO_MDEBUG */
+/* static int mh_mode=CRYPTO_MEM_CHECK_ON; */
+/* #else */
 static int mh_mode=CRYPTO_MEM_CHECK_OFF;
-#endif
+/* #endif */
+/* State CRYPTO_MEM_CHECK_ON exists only temporarily when the library
+ * thinks that certain allocations should not be checked (e.g. the data
+ * structures used for memory checking).  It is not suitable as an initial
+ * state: the library will unexpectedly enable memory checking when it
+ * executes one of those sections that want to disable checking
+ * temporarily.
+ *
+ * State CRYPTO_MEM_CHECK_ENABLE without ..._ON makes no sense whatsoever.
+ */
+
 static unsigned long order=0;
 
 static LHASH *mh=NULL;
@@ -88,19 +98,23 @@ int CRYPTO_mem_ctrl(int mode)
 	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 	switch (mode)
 		{
-	case CRYPTO_MEM_CHECK_ON:
-		mh_mode|=CRYPTO_MEM_CHECK_ON;
+	/* for applications: */
+	case CRYPTO_MEM_CHECK_ON: /* aka MemCheck_start() */
+		mh_mode = CRYPTO_MEM_CHECK_ON|CRYPTO_MEM_CHECK_ENABLE;
 		break;
-	case CRYPTO_MEM_CHECK_OFF:
-		mh_mode&= ~CRYPTO_MEM_CHECK_ON;
+	case CRYPTO_MEM_CHECK_OFF: /* aka MemCheck_stop() */
+		mh_mode = 0;
 		break;
-	case CRYPTO_MEM_CHECK_DISABLE:
+
+	/* switch off temporarily (for library-internal use): */
+	case CRYPTO_MEM_CHECK_DISABLE: /* aka MemCheck_off() */
 		mh_mode&= ~CRYPTO_MEM_CHECK_ENABLE;
 		break;
-	case CRYPTO_MEM_CHECK_ENABLE:
+	case CRYPTO_MEM_CHECK_ENABLE: /* aka MemCheck_on() */
 		if (mh_mode&CRYPTO_MEM_CHECK_ON)
 			mh_mode|=CRYPTO_MEM_CHECK_ENABLE;
 		break;
+
 	default:
 		break;
 		}

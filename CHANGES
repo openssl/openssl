@@ -4,6 +4,20 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Memory leak checking had some problems.  The interface is as follows:
+     Applications can use
+         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON) aka MemCheck_start(),
+         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_OFF) aka MemCheck_stop();
+     "off" is now the default.
+     The library internally uses
+         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE) aka MemCheck_off(),
+         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE) aka MemCheck_on()
+     to disable memory-checking temporarily.
+
+     Some inconsistent states that previously were possible (and were
+     even the default) are now avoided.
+     [Bodo Moeller]
+
   *) Introduce "mode" for SSL structures (with defaults in SSL_CTX),
      which largely parallels "options", but is for changing API behaviour,
      whereas "options" are about protocol behaviour.

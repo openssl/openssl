@@ -216,7 +216,7 @@ int main()
     int clen = 0;
     int num;
 
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 	
     plen = sizeof(ptext_ex) - 1;
 
