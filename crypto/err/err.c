@@ -129,6 +129,12 @@ static unsigned long pid_hash(ERR_STATE *pid);
 static int pid_cmp(ERR_STATE *a,ERR_STATE *pid);
 static unsigned long get_error_values(int inc,const char **file,int *line,
 				      const char **data,int *flags);
+
+static IMPLEMENT_LHASH_HASH_FN(err_hash, ERR_STRING_DATA *)
+static IMPLEMENT_LHASH_COMP_FN(err_cmp, ERR_STRING_DATA *)
+static IMPLEMENT_LHASH_HASH_FN(pid_hash, ERR_STATE *)
+static IMPLEMENT_LHASH_COMP_FN(pid_cmp, ERR_STATE *)
+
 static void ERR_STATE_free(ERR_STATE *s);
 #ifndef NO_ERR
 static ERR_STRING_DATA ERR_str_libraries[]=
@@ -316,8 +322,8 @@ void ERR_load_strings(int lib, ERR_STRING_DATA *str)
 	if (error_hash == NULL)
 		{
 		CRYPTO_w_lock(CRYPTO_LOCK_ERR_HASH);
-		error_hash=lh_new((LHASH_HASH_FN_TYPE)err_hash,
-				(LHASH_COMP_FN_TYPE)err_cmp);
+		error_hash=lh_new(LHASH_HASH_FN(err_hash),
+				LHASH_COMP_FN(err_cmp));
 		if (error_hash == NULL)
 			{
 			CRYPTO_w_unlock(CRYPTO_LOCK_ERR_HASH);
@@ -707,8 +713,8 @@ ERR_STATE *ERR_get_state(void)
 		/* no entry yet in thread_hash for current thread -
 		 * thus, it may have changed since we last looked at it */
 		if (thread_hash == NULL)
-			thread_hash = lh_new((LHASH_HASH_FN_TYPE)pid_hash,
-					(LHASH_COMP_FN_TYPE)pid_cmp);
+			thread_hash = lh_new(LHASH_HASH_FN(pid_hash),
+					LHASH_COMP_FN(pid_cmp));
 		if (thread_hash == NULL)
 			thread_state_exists = 0; /* allocation error */
 		else

@@ -27,12 +27,15 @@ static STACK_OF(NAME_FUNCS) *name_funcs_stack;
 static unsigned long obj_name_hash(OBJ_NAME *a);
 static int obj_name_cmp(OBJ_NAME *a,OBJ_NAME *b);
 
+static IMPLEMENT_LHASH_HASH_FN(obj_name_hash, OBJ_NAME *)
+static IMPLEMENT_LHASH_COMP_FN(obj_name_cmp, OBJ_NAME *)
+
 int OBJ_NAME_init(void)
 	{
 	if (names_lh != NULL) return(1);
 	MemCheck_off();
-	names_lh=lh_new((LHASH_HASH_FN_TYPE)obj_name_hash,
-			(LHASH_COMP_FN_TYPE)obj_name_cmp);
+	names_lh=lh_new(LHASH_HASH_FN(obj_name_hash),
+			LHASH_COMP_FN(obj_name_cmp));
 	MemCheck_on();
 	return(names_lh != NULL);
 	}

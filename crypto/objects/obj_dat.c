@@ -174,10 +174,13 @@ static int add_cmp(ADDED_OBJ *ca, ADDED_OBJ *cb)
 	return(1); /* should not get here */
 	}
 
+static IMPLEMENT_LHASH_HASH_FN(add_hash, ADDED_OBJ *)
+static IMPLEMENT_LHASH_COMP_FN(add_cmp, ADDED_OBJ *)
+
 static int init_added(void)
 	{
 	if (added != NULL) return(1);
-	added=lh_new((LHASH_HASH_FN_TYPE)add_hash,(LHASH_COMP_FN_TYPE)add_cmp);
+	added=lh_new(LHASH_HASH_FN(add_hash),LHASH_COMP_FN(add_cmp));
 	return(added != NULL);
 	}
 

@@ -234,6 +234,9 @@ static unsigned long mem_hash(MEM *a)
 	return(ret);
 	}
 
+static IMPLEMENT_LHASH_HASH_FN(mem_hash, MEM *)
+static IMPLEMENT_LHASH_COMP_FN(mem_cmp, MEM *)
+
 static int app_info_cmp(APP_INFO *a, APP_INFO *b)
 	{
 	return(a->thread != b->thread);
@@ -248,6 +251,9 @@ static unsigned long app_info_hash(APP_INFO *a)
 	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
 	return(ret);
 	}
+
+static IMPLEMENT_LHASH_HASH_FN(app_info_hash, APP_INFO *)
+static IMPLEMENT_LHASH_COMP_FN(app_info_cmp, APP_INFO *)
 
 static APP_INFO *pop_info(void)
 	{
@@ -302,8 +308,8 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
 			}
 		if (amih == NULL)
 			{
-			if ((amih=lh_new((LHASH_HASH_FN_TYPE)app_info_hash,
-					(LHASH_COMP_FN_TYPE)app_info_cmp)) == NULL)
+			if ((amih=lh_new(LHASH_HASH_FN(app_info_hash),
+					LHASH_COMP_FN(app_info_cmp))) == NULL)
 				{
 				OPENSSL_free(ami);
 				ret=0;
@@ -395,8 +401,8 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 				}
 			if (mh == NULL)
 				{
-				if ((mh=lh_new((LHASH_HASH_FN_TYPE)mem_hash,
-					(LHASH_COMP_FN_TYPE)mem_cmp)) == NULL)
+				if ((mh=lh_new(LHASH_HASH_FN(mem_hash),
+					LHASH_COMP_FN(mem_cmp))) == NULL)
 					{
 					OPENSSL_free(addr);
 					OPENSSL_free(m);

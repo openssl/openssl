@@ -73,6 +73,9 @@ static void value_free_stack(CONF_VALUE *a,LHASH *conf);
 static unsigned long hash(CONF_VALUE *v);
 static int cmp_conf(CONF_VALUE *a,CONF_VALUE *b);
 
+static IMPLEMENT_LHASH_HASH_FN(hash, CONF_VALUE *)
+static IMPLEMENT_LHASH_COMP_FN(cmp_conf, CONF_VALUE *)
+
 /* Up until OpenSSL 0.9.5a, this was get_section */
 CONF_VALUE *_CONF_get_section(CONF *conf, char *section)
 	{
@@ -181,8 +184,8 @@ int _CONF_new_data(CONF *conf)
 		return 0;
 		}
 	if (conf->data == NULL)
-		if ((conf->data = lh_new((LHASH_HASH_FN_TYPE)hash,
-					(LHASH_COMP_FN_TYPE)cmp_conf)) == NULL)
+		if ((conf->data = lh_new(LHASH_HASH_FN(hash),
+					LHASH_COMP_FN(cmp_conf))) == NULL)
 			{
 			return 0;
 			}
