@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2001/04/02 14:39:20 $
+  ______________                           $Date: 2001/04/03 09:02:07 $
 
   DEVELOPMENT STATE
 
@@ -74,6 +74,14 @@
 		[CORRECTED]
 	OpenVMS/VAX 7.2-1 w/ UCX 5.1, CC 6.4	- PASSED [normal]
 		There's a small warning about ebcdic.c being empty
+		[CORRECTED]
+	Win32 (VC-NT and VC-WIN32, static)	- PASSED [normal]
+	OpenVMS/VAX 6.2 w/ CC 6.2-003		- FAILED [normal]
+		libfisdef.h and LIB$M_FIS_MIXEDCASE do not exist in
+		that version of OpenVMS.
+		[CORRECTED]
+	DGUX R4.11MU06 88k (dgux-R4-gcc)	- FAILED [normal]
+		The entry in Configure had a typo.
 		[CORRECTED]
 
     o  OpenSSL 0.9.6:  Released on September 24th, 2000
