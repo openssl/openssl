@@ -1,6 +1,10 @@
 /* apps/passwd.c */
 
-#if !defined(NO_DES) || !defined(NO_MD5)
+#if defined NO_MD5 || defined CHARSET_EBCDIC
+# define NO_APR1
+#endif
+
+#if !defined(NO_DES) || !defined(NO_APR1)
 
 #include <assert.h>
 #include <string.h>
@@ -11,10 +15,6 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
-
-#if defined NO_MD5 || defined CHARSET_EBCDIC
-# define NO_APR1
-#endif
 
 #ifndef NO_DES
 # include <openssl/des.h>
@@ -461,6 +461,11 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 err:
 	return 0;
 	}
+#else
+
+int MAIN(int argc, char **argv)
+	{
+	fputs("Program not available.\n", stderr)
+	EXIT(1);
+	}
 #endif
-
-

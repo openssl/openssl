@@ -262,7 +262,7 @@ dclean:
 rehash: rehash.time
 rehash.time: certs
 	@(OPENSSL="`pwd`/apps/openssl"; export OPENSSL; sh tools/c_rehash certs)
-	touch .rehash.time
+	touch rehash.time
 
 test:   tests
 
