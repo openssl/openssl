@@ -65,6 +65,14 @@
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
+
+#ifdef NO_DH
+int main(int argc, char *argv[])
+{
+    printf("No DH support\n");
+    return(0);
+}
+#else
 #include <openssl/dh.h>
 
 #ifdef WIN16
@@ -177,3 +185,4 @@ static void MS_CALLBACK cb(int p, int n, char *arg)
 	p=n;
 #endif
 	}
+#endif

@@ -67,14 +67,19 @@
 EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 {
 	EVP_PKEY *pkey;
+#ifndef NO_RSA
 	RSA *rsa;
+#endif
+#ifndef NO_DSA
 	DSA *dsa;
 	ASN1_INTEGER *dsapriv;
-	X509_ALGOR *a;
 	STACK *ndsa;
 	BN_CTX *ctx;
+	int plen;
+#endif
+	X509_ALGOR *a;
 	unsigned char *p;
-	int plen, pkeylen;
+	int pkeylen;
 	char obj_tmp[80];
 
 	switch (p8->broken) {
@@ -100,6 +105,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 	a = p8->pkeyalg;
 	switch (OBJ_obj2nid(a->algorithm))
 	{
+#ifndef NO_RSA
 		case NID_rsaEncryption:
 		if (!(rsa = d2i_RSAPrivateKey (NULL, &p, pkeylen))) {
 			EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_DECODE_ERROR);
@@ -107,7 +113,8 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 		}
 		EVP_PKEY_assign_RSA (pkey, rsa);
 		break;
-		
+#endif
+#ifndef NO_DSA
 		case NID_dsa:
 		/* PKCS#8 DSA is weird: you just get a private key integer
 	         * and parameters in the AlgorithmIdentifier the pubkey must
@@ -174,7 +181,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 		EVP_PKEY_assign_DSA (pkey, dsa);
 		BN_CTX_free (ctx);
 		break;
-
+#endif
 		default:
 		EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
 		if (!a->algorithm) strcpy (obj_tmp, "NULL");
@@ -191,9 +198,11 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey)
 {
 	PKCS8_PRIV_KEY_INFO *p8;
+#ifndef NO_DSA
 	ASN1_INTEGER *dpkey;
 	unsigned char *p, *q;
 	int len;
+#endif
 	if (!(p8 = PKCS8_PRIV_KEY_INFO_new())) {	
 		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 		return NULL;
@@ -205,6 +214,7 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey)
 		return NULL;
 	}
 	switch (EVP_PKEY_type(pkey->type)) {
+#ifndef NO_RSA
 		case EVP_PKEY_RSA:
 
 		p8->pkeyalg->algorithm = OBJ_nid2obj(NID_rsaEncryption);
@@ -216,7 +226,8 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey)
 			return NULL;
 		}
 		break;
-
+#endif
+#ifndef NO_DSA
 		case EVP_PKEY_DSA:
 		p8->pkeyalg->algorithm = OBJ_nid2obj(NID_dsa);
 
@@ -249,7 +260,7 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey)
 		}
 		ASN1_INTEGER_free (dpkey);
 		break;
-
+#endif
 		default:
 		EVPerr(EVP_F_EVP_PKEY2PKCS8, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
 		PKCS8_PRIV_KEY_INFO_free (p8);

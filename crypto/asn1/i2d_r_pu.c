@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
@@ -108,4 +109,4 @@ int i2d_RSAPublicKey(RSA *a, unsigned char **pp)
 	*pp=p;
 	return(t);
 	}
-
+#endif

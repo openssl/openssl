@@ -68,6 +68,7 @@ http://www.cs.technion.ac.il/users/wwwb/cgi-bin/tr-get.cgi/1998/CS/CS0928.ps.gz
 
 */
 
+#ifndef NO_DESCBCM
 #include "des_locl.h"
 
 void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
@@ -192,3 +193,4 @@ void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
     tin0=tin1=tout0=tout1=xor0=xor1=0;
     tin[0]=tin[1]=0;
     }
+#endif

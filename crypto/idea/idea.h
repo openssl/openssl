@@ -63,6 +63,10 @@
 extern "C" {
 #endif
 
+#ifdef NO_IDEA
+#error IDEA is disabled.
+#endif
+
 #define IDEA_ENCRYPT	1
 #define IDEA_DECRYPT	0
 

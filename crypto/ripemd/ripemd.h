@@ -63,6 +63,10 @@
 extern "C" {
 #endif
 
+#ifdef NO_RIPEMD
+#error RIPEMD is disabled.
+#endif
+
 #define RIPEMD160_CBLOCK	64
 #define RIPEMD160_LBLOCK	16
 #define RIPEMD160_BLOCK		16

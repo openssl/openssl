@@ -63,6 +63,10 @@
 extern "C" {
 #endif
 
+#ifdef NO_DES
+#error DES is disabled.
+#endif
+
 #include <stdio.h>
 #include <openssl/opensslconf.h> /* DES_LONG */
 

@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
@@ -174,3 +175,4 @@ err:
 	if (s != NULL) Free(s);
 	return(ret);
 	}
+#endif

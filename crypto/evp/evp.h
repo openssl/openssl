@@ -69,10 +69,10 @@ extern "C" {
 #ifndef NO_MD5
 #include <openssl/md5.h>
 #endif
-#if !defined(NO_SHA) || !defined(NO_SHA1)
+#ifndef NO_SHA
 #include <openssl/sha.h>
 #endif
-#ifndef NO_RMD160
+#ifndef NO_RIPEMD
 #include <openssl/ripemd.h>
 #endif
 #ifndef NO_DES
@@ -87,7 +87,7 @@ extern "C" {
 #ifndef NO_RC5
 #include <openssl/rc5.h>
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 #include <openssl/blowfish.h>
 #endif
 #ifndef NO_CAST
@@ -111,20 +111,14 @@ extern "C" {
 
 #ifndef NO_RSA
 #include <openssl/rsa.h>
-#else
-#define RSA	long
 #endif
 
 #ifndef NO_DSA
 #include <openssl/dsa.h>
-#else
-#define DSA	long
 #endif
 
 #ifndef NO_DH
 #include <openssl/dh.h>
-#else
-#define DH	long
 #endif
 
 #include <openssl/objects.h>
@@ -159,9 +153,15 @@ typedef struct evp_pkey_st
 	int references;
 	union	{
 		char *ptr;
+#ifndef NO_RSA
 		struct rsa_st *rsa;	/* RSA */
+#endif
+#ifndef NO_DSA
 		struct dsa_st *dsa;	/* DSA */
+#endif
+#ifndef NO_DH
 		struct dh_st *dh;	/* DH */
+#endif
 		} pkey;
 	int save_parameters;
 	STACK /*X509_ATTRIBUTE*/ *attributes; /* [ 0 ] */
@@ -294,10 +294,10 @@ typedef struct env_md_ctx_st
 #ifndef NO_MD5
 		MD5_CTX md5;
 #endif
-#ifndef NO_RMD160
+#ifndef NO_RIPEMD
 		RIPEMD160_CTX ripemd160;
 #endif
-#if !defined(NO_SHA) || !defined(NO_SHA1)
+#ifndef NO_SHA
 		SHA_CTX sha;
 #endif
 #ifndef NO_MDC2
@@ -372,7 +372,7 @@ typedef struct evp_cipher_ctx_st
 #ifndef NO_RC5
 		RC5_32_KEY rc5_ks;/* key schedule */
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 		BF_KEY bf_ks;/* key schedule */
 #endif
 #ifndef NO_CAST

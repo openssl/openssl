@@ -70,6 +70,14 @@
 #include <io.h>
 #endif
 #include <string.h>
+
+#ifdef NO_DES
+int main(int argc, char *argv[])
+{
+    printf("No DES support\n");
+    return(0);
+}
+#else
 #include <openssl/des.h>
 
 #if defined(PERL5) || defined(__FreeBSD__)
@@ -318,6 +326,7 @@ int main(int argc, char *argv[])
 	int num;
 	char *str;
 
+#ifndef NO_DESCBCM
 	printf("Doing cbcm\n");
 	if ((j=des_key_sched(cbc_key,ks)) != 0)
 		{
@@ -368,7 +377,7 @@ int main(int argc, char *argv[])
 		printf("\n");
 		err=1;
 		}
-
+#endif
 
 	printf("Doing ecb\n");
 	for (i=0; i<NUM_TESTS; i++)
@@ -908,4 +917,4 @@ static int ede_cfb64_test(unsigned char *cfb_cipher)
 	}
 
 #endif
-
+#endif

@@ -59,6 +59,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#ifdef NO_CAST
+int main(int argc, char *argv[])
+{
+    printf("No CAST support\n");
+    return(0);
+}
+#else
 #include <openssl/cast.h>
 
 #define FULL_TEST
@@ -219,4 +227,4 @@ int main(int argc, char *argv[])
     exit(err);
     return(err);
     }
-
+#endif

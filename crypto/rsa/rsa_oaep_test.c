@@ -3,8 +3,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <openssl/e_os.h>
-#include <openssl/rsa.h>
 #include <openssl/err.h>
+#ifdef NO_RSA
+int main(int argc, char *argv[])
+{
+    printf("No RSA support\n");
+    return(0);
+}
+#else
+#include <openssl/rsa.h>
 
 #define SetKey \
   key->n = BN_bin2bn(n, sizeof(n)-1, key->n); \
@@ -291,3 +298,4 @@ int main()
 	}
     return err;
     }
+#endif

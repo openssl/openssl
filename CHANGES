@@ -5,6 +5,9 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) New Configure option no-<cipher> (rsa, idea, rc5, ...).
+     [Ulf Möller]
+
   *) Add the PKCS#12 API documentation to openssl.txt. Preliminary support for
      extension adding in x509 utility.
      [Steve Henson]

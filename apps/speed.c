@@ -127,10 +127,10 @@ struct tms {
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 #endif
-#ifndef NO_SHA1
+#ifndef NO_SHA
 #include <openssl/sha.h>
 #endif
-#ifndef NO_RMD160
+#ifndef NO_RIPEMD
 #include <openssl/ripemd.h>
 #endif
 #ifndef NO_RC4
@@ -145,7 +145,7 @@ struct tms {
 #ifndef NO_IDEA
 #include <openssl/idea.h>
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 #include <openssl/blowfish.h>
 #endif
 #ifndef NO_CAST
@@ -153,9 +153,9 @@ struct tms {
 #endif
 #ifndef NO_RSA
 #include <openssl/rsa.h>
+#include "./testrsa.h"
 #endif
 #include <openssl/x509.h>
-#include "./testrsa.h"
 #ifndef NO_DSA
 #include "./testdsa.h"
 #endif
@@ -261,10 +261,10 @@ int MAIN(int argc, char **argv)
 	unsigned char md5[MD5_DIGEST_LENGTH];
 	unsigned char hmac[MD5_DIGEST_LENGTH];
 #endif
-#ifndef NO_SHA1
+#ifndef NO_SHA
 	unsigned char sha[SHA_DIGEST_LENGTH];
 #endif
-#ifndef NO_RMD160
+#ifndef NO_RIPEMD
 	unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
 #endif
 #ifndef NO_RC4
@@ -279,7 +279,7 @@ int MAIN(int argc, char **argv)
 #ifndef NO_IDEA
 	IDEA_KEY_SCHEDULE idea_ks;
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 	BF_KEY bf_ks;
 #endif
 #ifndef NO_CAST
@@ -323,9 +323,9 @@ int MAIN(int argc, char **argv)
 #define	R_RSA_1024	1
 #define	R_RSA_2048	2
 #define	R_RSA_4096	3
+#ifndef NO_RSA
 	RSA *rsa_key[RSA_NUM];
 	long rsa_c[RSA_NUM][2];
-#ifndef NO_RSA
 	double rsa_results[RSA_NUM][2];
 	static unsigned int rsa_bits[RSA_NUM]={512,1024,2048,4096};
 	static unsigned char *rsa_data[RSA_NUM]=
@@ -346,7 +346,7 @@ int MAIN(int argc, char **argv)
 	int pr_header=0;
 
 	apps_startup();
-#ifdef NO_DSA
+#ifndef NO_DSA
 	memset(dsa_key,0,sizeof(dsa_key));
 #endif
 
@@ -402,13 +402,13 @@ int MAIN(int argc, char **argv)
 			if (strcmp(*argv,"hmac") == 0) doit[D_HMAC]=1;
 		else
 #endif
-#ifndef NO_SHA1
+#ifndef NO_SHA
 			if (strcmp(*argv,"sha1") == 0) doit[D_SHA1]=1;
 		else
 			if (strcmp(*argv,"sha") == 0) doit[D_SHA1]=1;
 		else
 #endif
-#ifndef NO_RMD160
+#ifndef NO_RIPEMD
 			if (strcmp(*argv,"ripemd") == 0) doit[D_RMD160]=1;
 		else
 			if (strcmp(*argv,"rmd160") == 0) doit[D_RMD160]=1;
@@ -464,7 +464,7 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"idea") == 0) doit[D_CBC_IDEA]=1;
 		else
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 		     if (strcmp(*argv,"bf-cbc") == 0) doit[D_CBC_BF]=1;
 		else if (strcmp(*argv,"blowfish") == 0) doit[D_CBC_BF]=1;
 		else if (strcmp(*argv,"bf") == 0) doit[D_CBC_BF]=1;
@@ -514,10 +514,10 @@ int MAIN(int argc, char **argv)
 #ifndef NO_RC5
 			BIO_printf(bio_err,"rc5-cbc  ");
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 			BIO_printf(bio_err,"bf-cbc");
 #endif
-#if !defined(NO_IDEA) && !defined(NO_RC2) && !defined(NO_BLOWFISH) && !defined(NO_RC5)
+#if !defined(NO_IDEA) && !defined(NO_RC2) && !defined(NO_BF) && !defined(NO_RC5)
 			BIO_printf(bio_err,"\n");
 #endif
 			BIO_printf(bio_err,"des-cbc  des-ede3 ");
@@ -601,14 +601,15 @@ int MAIN(int argc, char **argv)
 #ifndef NO_RC5
 	RC5_32_set_key(&rc5_ks,16,key16,12);
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 	BF_set_key(&bf_ks,16,key16);
 #endif
 #ifndef NO_CAST
 	CAST_set_key(&cast_ks,16,key16);
 #endif
-
+#ifndef NO_RSA
 	memset(rsa_c,0,sizeof(rsa_c));
+#endif
 #ifndef SIGALRM
 	BIO_printf(bio_err,"First we calculate the approximate speed ...\n");
 	count=10;
@@ -659,6 +660,7 @@ int MAIN(int argc, char **argv)
 		c[D_CBC_BF][i]=c[D_CBC_BF][i-1]*l0/l1;
 		c[D_CBC_CAST][i]=c[D_CBC_CAST][i-1]*l0/l1;
 		}
+#ifndef NO_RSA
 	rsa_c[R_RSA_512][0]=count/2000;
 	rsa_c[R_RSA_512][1]=count/400;
 	for (i=1; i<RSA_NUM; i++)
@@ -676,6 +678,7 @@ int MAIN(int argc, char **argv)
 				}
 			}				
 		}
+#endif
 
 	dsa_c[R_DSA_512][0]=count/1000;
 	dsa_c[R_DSA_512][1]=count/1000/2;
@@ -777,7 +780,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_SHA1
+#ifndef NO_SHA
 	if (doit[D_SHA1])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -793,7 +796,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_RMD160
+#ifndef NO_RIPEMD
 	if (doit[D_RMD160])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -914,7 +917,7 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 	if (doit[D_CBC_BF])
 		{
 		for (j=0; j<SIZE_NUM; j++)
@@ -1092,7 +1095,7 @@ int MAIN(int argc, char **argv)
 #ifndef NO_IDEA
 	printf("%s ",idea_options());
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 	printf("%s ",BF_options());
 #endif
 	fprintf(stdout,"\n%s\n",SSLeay_version(SSLEAY_CFLAGS));

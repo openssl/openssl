@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DSA
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
@@ -124,4 +125,4 @@ int i2d_DSAPublicKey(DSA *a, unsigned char **pp)
 	*pp=p;
 	return(t);
 	}
-
+#endif

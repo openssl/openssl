@@ -59,6 +59,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef NO_RC4
+int main(int argc, char *argv[])
+{
+    printf("No RC4 support\n");
+    return(0);
+}
+#else
 #include <openssl/rc4.h>
 
 unsigned char keys[7][30]={
@@ -190,4 +198,4 @@ int main(int argc, char *argv[])
 	exit(err);
 	return(0);
 	}
-
+#endif

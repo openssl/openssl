@@ -65,7 +65,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#ifdef NO_MD5
+#ifndef NO_MD5
 #include <openssl/md5.h>
 #endif
 #include <openssl/pem.h>

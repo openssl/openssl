@@ -62,6 +62,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#ifdef NO_BF
+int main(int argc, char *argv[])
+{
+    printf("No BF support\n");
+    return(0);
+}
+#else
 #include <openssl/blowfish.h>
 
 char *bf_key[2]={
@@ -511,3 +519,4 @@ static int test(void)
 
 	return(err);
 	}
+#endif

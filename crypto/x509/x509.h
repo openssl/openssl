@@ -69,20 +69,14 @@ extern "C" {
 
 #ifndef NO_RSA
 #include <openssl/rsa.h>
-#else
-#define RSA	long
 #endif
 
 #ifndef NO_DSA
 #include <openssl/dsa.h>
-#else
-#define DSA	long
 #endif
 
 #ifndef NO_DH
 #include <openssl/dh.h>
-#else
-#define DH	long
 #endif
 
 #include <openssl/evp.h>
@@ -549,12 +543,16 @@ X509_CRL *d2i_X509_CRL_fp(FILE *fp,X509_CRL *crl);
 int i2d_X509_CRL_fp(FILE *fp,X509_CRL *crl);
 X509_REQ *d2i_X509_REQ_fp(FILE *fp,X509_REQ *req);
 int i2d_X509_REQ_fp(FILE *fp,X509_REQ *req);
+#ifndef NO_RSA
 RSA *d2i_RSAPrivateKey_fp(FILE *fp,RSA *rsa);
 int i2d_RSAPrivateKey_fp(FILE *fp,RSA *rsa);
-DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
-int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
 RSA *d2i_RSAPublicKey_fp(FILE *fp,RSA *rsa);
 int i2d_RSAPublicKey_fp(FILE *fp,RSA *rsa);
+#endif
+#ifndef NO_DSA
+DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
+int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
+#endif
 #endif
 
 #ifdef HEADER_BIO_H
@@ -564,12 +562,16 @@ X509_CRL *d2i_X509_CRL_bio(BIO *bp,X509_CRL *crl);
 int i2d_X509_CRL_bio(BIO *bp,X509_CRL *crl);
 X509_REQ *d2i_X509_REQ_bio(BIO *bp,X509_REQ *req);
 int i2d_X509_REQ_bio(BIO *bp,X509_REQ *req);
+#ifndef NO_RSA
 RSA *d2i_RSAPrivateKey_bio(BIO *bp,RSA *rsa);
 int i2d_RSAPrivateKey_bio(BIO *bp,RSA *rsa);
-DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
-int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
 RSA *d2i_RSAPublicKey_bio(BIO *bp,RSA *rsa);
 int i2d_RSAPublicKey_bio(BIO *bp,RSA *rsa);
+#endif
+#ifndef NO_DSA
+DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
+int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
+#endif
 #endif
 
 X509 *X509_dup(X509 *x509);
@@ -580,8 +582,10 @@ X509_REQ *X509_REQ_dup(X509_REQ *req);
 X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn);
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
 X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);
+#ifndef NO_RSA
 RSA *RSAPublicKey_dup(RSA *rsa);
 RSA *RSAPrivateKey_dup(RSA *rsa);
+#endif
 
 #endif /* !SSLEAY_MACROS */
 

@@ -62,6 +62,10 @@
 extern "C" {
 #endif
 
+#ifdef NO_HMAC
+#error No HMAC support.
+#endif
+
 #include <openssl/evp.h>
 
 #define HMAC_MAX_MD_CBLOCK	64

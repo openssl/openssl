@@ -64,6 +64,7 @@
 #include "sha_locl.h"
 #include <openssl/opensslv.h>
 
+#ifndef NO_SHA0
 char *SHA_version="SHA" OPENSSL_VERSION_PTEXT;
 
 /* Implemented from SHA-0 document - The Secure Hash Algorithm
@@ -424,4 +425,4 @@ void SHA_Final(unsigned char *md, SHA_CTX *c)
 	c->num=0;
 /*	memset((char *)&c,0,sizeof(c));*/
 	}
-
+#endif

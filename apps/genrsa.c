@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -262,5 +263,4 @@ static long gr_load_rand(char *name)
 		}
 	return(tot);
 	}
-
-
+#endif

@@ -58,6 +58,7 @@
 
 /* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
 
+#ifndef NO_DSA
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
@@ -101,4 +102,4 @@ err:
 	if (bs != NULL) ASN1_INTEGER_free(bs);
 	return(NULL);
 	}
-
+#endif

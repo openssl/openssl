@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DSA
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -252,4 +253,4 @@ end:
 	if (dsa != NULL) DSA_free(dsa);
 	EXIT(ret);
 	}
-
+#endif

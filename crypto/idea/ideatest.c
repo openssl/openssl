@@ -59,6 +59,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#ifdef NO_IDEA
+int main(int argc, char *argv[])
+{
+    printf("No IDEA support\n");
+    return(0);
+}
+#else
 #include <openssl/idea.h>
 
 unsigned char k[16]={
@@ -219,4 +227,4 @@ static char *pt(unsigned char *p)
 	ret[16]='\0';
 	return(ret);
 	}
-	
+#endif

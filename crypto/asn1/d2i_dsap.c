@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DSA
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
@@ -90,4 +91,4 @@ err:
 	if (bs != NULL) ASN1_BIT_STRING_free(bs);
 	return(NULL);
 	}
-
+#endif

@@ -115,11 +115,11 @@ lint:
 	done;
 
 depend:
-	$(MAKEDEPEND) $(INCLUDE) $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) $(INCLUDE) $(DEPFLAG) $(PROGS) $(LIBSRC)
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i; echo "making depend in crypto/$$i..."; \
-	$(MAKE) MAKEFILE='${MAKEFILE}' INCLUDES='${INCLUDES}' depend ); \
+	$(MAKE) MAKEFILE='${MAKEFILE}' INCLUDES='${INCLUDES}' DEPFLAG='${DEPFLAG}' depend ); \
 	done;
 
 clean:

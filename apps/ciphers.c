@@ -66,6 +66,10 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
+#if defined(NO_RSA) && !defined(NO_SSL2)
+#define NO_SSL2
+#endif
+
 #undef PROG
 #define PROG	ciphers_main
 

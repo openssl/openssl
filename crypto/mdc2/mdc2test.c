@@ -59,6 +59,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef NO_DES
+#define NO_MDC2
+#endif
+
+#ifdef NO_MDC2
+int main(int argc, char *argv[])
+{
+    printf("No MDC2 support\n");
+    return(0);
+}
+#else
 #include <openssl/mdc2.h>
 
 static unsigned char pad1[16]={
@@ -117,4 +129,4 @@ int main(int argc, char *argv[])
 	exit(ret);
 	return(ret);
 	}
-
+#endif

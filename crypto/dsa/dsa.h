@@ -69,6 +69,10 @@
 extern "C" {
 #endif
 
+#ifdef NO_DSA
+#error DSA is disabled.
+#endif
+
 #include <openssl/bn.h>
 
 #define DSA_FLAG_CACHE_MONT_P	0x01

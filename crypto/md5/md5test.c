@@ -59,6 +59,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#ifdef NO_MD5
+int main(int argc, char *argv[])
+{
+    printf("No MD5 support\n");
+    return(0);
+}
+#else
 #include <openssl/md5.h>
 
 char *test[]={
@@ -120,3 +128,4 @@ static char *pt(unsigned char *md)
 		sprintf(&(buf[i*2]),"%02x",md[i]);
 	return(buf);
 	}
+#endif

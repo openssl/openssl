@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DSA
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -228,5 +229,4 @@ static long dsa_load_rand(char *name)
 		}
 	return(tot);
 	}
-
-
+#endif

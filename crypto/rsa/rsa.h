@@ -66,6 +66,10 @@ extern "C" {
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 
+#ifdef NO_RSA
+#error RSA is disabled.
+#endif
+
 typedef struct rsa_st RSA;
 
 typedef struct rsa_meth_st

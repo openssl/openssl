@@ -59,7 +59,9 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/rand.h>
+#ifndef NO_RSA
 #include <openssl/rsa.h>
+#endif
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>

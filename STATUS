@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/04/27 00:36:14 $
+  ______________                           $Date: 1999/04/27 01:13:19 $
 
   DEVELOPMENT STATE
 
@@ -148,13 +148,6 @@
       RC2 to adapt).
 
     o Properly initialize the PRNG in the absence of /dev/random.
-
-    o > NO_RSA (ejs@bfd.com)
-      > ./Configure -DNO_IDEA -DNO_RC5 -DNO_RC4 -DNO_RC2 -DNO_RSA -DNO_ERR linux-elf
-      > I tried for a whole day to do this and could not get it to work.  Linux
-      > machine, kernel 2.0.36 and 2.2.1, redhat 5.2 latest, gcc and egcs , no
-      > go.  I also noticed the even with -DNO_IDEA, _DNO_RC2, etc. the make
-      > still goes into those subdirectories and 'makes'.
 
     o ERR_error_string(..., buf) does not know how large buf is,
       there should be ERR_error_string_n(..., buf, bufsize)

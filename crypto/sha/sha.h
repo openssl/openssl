@@ -63,6 +63,10 @@
 extern "C" {
 #endif
 
+#ifdef NO_SHA
+#error SHA is disabled.
+#endif
+
 #define SHA_CBLOCK	64
 #define SHA_LBLOCK	16
 #define SHA_BLOCK	16
@@ -84,16 +88,20 @@ typedef struct SHAstate_st
 	int num;
 	} SHA_CTX;
 
+#ifndef NO_SHA0
 void SHA_Init(SHA_CTX *c);
 void SHA_Update(SHA_CTX *c, unsigned char *data, unsigned long len);
 void SHA_Final(unsigned char *md, SHA_CTX *c);
 unsigned char *SHA(unsigned char *d, unsigned long n,unsigned char *md);
 void SHA_Transform(SHA_CTX *c, unsigned char *data);
+#endif
+#ifndef NO_SHA1
 void SHA1_Init(SHA_CTX *c);
 void SHA1_Update(SHA_CTX *c, unsigned char *data, unsigned long len);
 void SHA1_Final(unsigned char *md, SHA_CTX *c);
 unsigned char *SHA1(unsigned char *d, unsigned long n,unsigned char *md);
 void SHA1_Transform(SHA_CTX *c, unsigned char *data);
+#endif
 #ifdef  __cplusplus
 }
 #endif

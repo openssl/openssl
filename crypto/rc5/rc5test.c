@@ -62,6 +62,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#ifdef NO_RC5
+int main(int argc, char *argv[])
+{
+    printf("No RC5 support\n");
+    return(0);
+}
+#else
 #include <openssl/rc5.h>
 
 unsigned char RC5key[5][16]={
@@ -372,4 +380,5 @@ static char *pt(unsigned char *p)
 	return(ret);
 	}
 	
+#endif
 #endif

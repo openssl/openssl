@@ -70,6 +70,10 @@
 #include <openssl/pem.h>
 #include "s_apps.h"
 
+#if defined(NO_RSA) && !defined(NO_SSL2)
+#define NO_SSL2
+#endif
+
 #undef PROG
 #define PROG	s_client_main
 

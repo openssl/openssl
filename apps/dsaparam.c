@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DSA
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -349,3 +350,4 @@ static void MS_CALLBACK dsa_cb(int p, int n, char *arg)
 	p=n;
 #endif
 	}
+#endif

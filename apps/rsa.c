@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -298,4 +299,4 @@ end:
 	if (rsa != NULL) RSA_free(rsa);
 	EXIT(ret);
 	}
-
+#endif

@@ -372,28 +372,42 @@ void	PEM_dek_info(char *buf, const char *type, int len, char *str);
 X509 *PEM_read_X509(FILE *fp,X509 **x,int (*cb)());
 X509_REQ *PEM_read_X509_REQ(FILE *fp,X509_REQ **x,int (*cb)());
 X509_CRL *PEM_read_X509_CRL(FILE *fp,X509_CRL **x,int (*cb)());
+#ifndef NO_RSA
 RSA *PEM_read_RSAPrivateKey(FILE *fp,RSA **x,int (*cb)());
 RSA *PEM_read_RSAPublicKey(FILE *fp,RSA **x,int (*cb)());
+#endif
+#ifndef NO_DSA
 DSA *PEM_read_DSAPrivateKey(FILE *fp,DSA **x,int (*cb)());
+DSA *PEM_read_DSAparams(FILE *fp,DSA **x,int (*cb)());
+#endif
+#ifndef NO_DH
+DH *PEM_read_DHparams(FILE *fp,DH **x,int (*cb)());
+#endif
 EVP_PKEY *PEM_read_PrivateKey(FILE *fp,EVP_PKEY **x,int (*cb)());
 PKCS7 *PEM_read_PKCS7(FILE *fp,PKCS7 **x,int (*cb)());
-DH *PEM_read_DHparams(FILE *fp,DH **x,int (*cb)());
-DSA *PEM_read_DSAparams(FILE *fp,DSA **x,int (*cb)());
 NETSCAPE_CERT_SEQUENCE *PEM_read_NETSCAPE_CERT_SEQUENCE(FILE *fp,NETSCAPE_CERT_SEQUENCE **x,int (*cb)());
 int PEM_write_X509(FILE *fp,X509 *x);
 int PEM_write_X509_REQ(FILE *fp,X509_REQ *x);
 int PEM_write_X509_CRL(FILE *fp,X509_CRL *x);
+#ifndef NO_RSA
 int PEM_write_RSAPrivateKey(FILE *fp,RSA *x,EVP_CIPHER *enc,unsigned char *kstr,
         int klen,int (*cb)());
 int PEM_write_RSAPublicKey(FILE *fp,RSA *x);
+#endif
+#ifndef NO_DSA
 int PEM_write_DSAPrivateKey(FILE *fp,DSA *x,const EVP_CIPHER *enc,
 			    unsigned char *kstr,
         int klen,int (*cb)());
+#endif
 int PEM_write_PrivateKey(FILE *fp,EVP_PKEY *x,EVP_CIPHER *enc,
 	unsigned char *kstr,int klen,int (*cb)());
 int PEM_write_PKCS7(FILE *fp,PKCS7 *x);
+#ifndef NO_DH
 int PEM_write_DHparams(FILE *fp,DH *x);
+#endif
+#ifndef NO_DSA
 int PEM_write_DSAparams(FILE *fp,DSA *x);
+#endif
 int PEM_write_NETSCAPE_CERT_SEQUENCE(FILE *fp,NETSCAPE_CERT_SEQUENCE *x);
 #endif
 
@@ -401,27 +415,43 @@ int PEM_write_NETSCAPE_CERT_SEQUENCE(FILE *fp,NETSCAPE_CERT_SEQUENCE *x);
 X509 *PEM_read_bio_X509(BIO *bp,X509 **x,int (*cb)());
 X509_REQ *PEM_read_bio_X509_REQ(BIO *bp,X509_REQ **x,int (*cb)());
 X509_CRL *PEM_read_bio_X509_CRL(BIO *bp,X509_CRL **x,int (*cb)());
+#ifndef NO_RSA
 RSA *PEM_read_bio_RSAPrivateKey(BIO *bp,RSA **x,int (*cb)());
 RSA *PEM_read_bio_RSAPublicKey(BIO *bp,RSA **x,int (*cb)());
+#endif
+#ifndef NO_DSA
 DSA *PEM_read_bio_DSAPrivateKey(BIO *bp,DSA **x,int (*cb)());
+#endif
 EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp,EVP_PKEY **x,int (*cb)());
 PKCS7 *PEM_read_bio_PKCS7(BIO *bp,PKCS7 **x,int (*cb)());
+#ifndef NO_DH
 DH *PEM_read_bio_DHparams(BIO *bp,DH **x,int (*cb)());
+#endif
 NETSCAPE_CERT_SEQUENCE *PEM_read_bio_NETSCAPE_CERT_SEQUENCE(BIO *bp,NETSCAPE_CERT_SEQUENCE **x,int (*cb)());
+#ifndef NO_DSA
 DSA *PEM_read_bio_DSAparams(BIO *bp,DSA **x,int (*cb)());
+#endif
 int PEM_write_bio_X509(BIO *bp,X509 *x);
 int PEM_write_bio_X509_REQ(BIO *bp,X509_REQ *x);
 int PEM_write_bio_X509_CRL(BIO *bp,X509_CRL *x);
+#ifndef NO_RSA
 int PEM_write_bio_RSAPrivateKey(BIO *fp,RSA *x,const EVP_CIPHER *enc,
         unsigned char *kstr,int klen,int (*cb)());
 int PEM_write_bio_RSAPublicKey(BIO *fp,RSA *x);
+#endif
+#ifndef NO_DSA
 int PEM_write_bio_DSAPrivateKey(BIO *fp,DSA *x,const EVP_CIPHER *enc,
         unsigned char *kstr,int klen,int (*cb)());
+#endif
 int PEM_write_bio_PrivateKey(BIO *fp,EVP_PKEY *x,EVP_CIPHER *enc,
         unsigned char *kstr,int klen,int (*cb)());
 int PEM_write_bio_PKCS7(BIO *bp,PKCS7 *x);
+#ifndef NO_DH
 int PEM_write_bio_DHparams(BIO *bp,DH *x);
+#endif
+#ifndef NO_DSA
 int PEM_write_bio_DSAparams(BIO *bp,DSA *x);
+#endif
 int PEM_write_bio_NETSCAPE_CERT_SEQUENCE(BIO *bp,NETSCAPE_CERT_SEQUENCE *x);
 #endif
 

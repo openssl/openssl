@@ -65,10 +65,18 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include <openssl/dsa.h>
 #ifdef WINDOWS
 #include "../bio/bss_file.c"
 #endif
+
+#ifdef NO_DSA
+int main(int argc, char *argv[])
+{
+    printf("No DSA support\n");
+    return(0);
+}
+#else
+#include <openssl/dsa.h>
 
 #ifdef WIN16
 #define MS_CALLBACK     _far _loadds
@@ -206,5 +214,4 @@ static void MS_CALLBACK dsa_cb(int p, int n, char *arg)
 		exit(1);
 		}
 	}
-
-
+#endif

@@ -119,7 +119,7 @@ int MAIN(int argc, char **argv)
 #ifndef NO_IDEA
 		printf("%s ",idea_options());
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 		printf("%s ",BF_options());
 #endif
 		printf("\n");

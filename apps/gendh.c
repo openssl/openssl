@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DH
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -219,5 +220,4 @@ static long dh_load_rand(char *name)
 		}
 	return(tot);
 	}
-
-
+#endif

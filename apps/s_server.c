@@ -74,7 +74,13 @@
 #include <openssl/ssl.h>
 #include "s_apps.h"
 
+#if defined(NO_RSA) && !defined(NO_SSL2)
+#define NO_SSL2
+#endif
+
+#ifndef NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export,int keylength);
+#endif
 static int sv_body(char *hostname, int s, unsigned char *context);
 static int www_body(char *hostname, int s, unsigned char *context);
 static void close_accept_socket(void );
@@ -470,6 +476,7 @@ bad:
 			goto end;
 		}
 
+#ifndef NO_RSA
 #if 1
 	SSL_CTX_set_tmp_rsa_callback(ctx,tmp_rsa_cb);
 #else
@@ -490,6 +497,7 @@ bad:
 		RSA_free(rsa);
 		BIO_printf(bio_s_out,"\n");
 		}
+#endif
 #endif
 
 	if (cipher != NULL)
@@ -1199,6 +1207,7 @@ err:
 	return(ret);
 	}
 
+#ifndef NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export, int keylength)
 	{
 	static RSA *rsa_tmp=NULL;
@@ -1210,9 +1219,7 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export, int keylength)
 			BIO_printf(bio_err,"Generating temp (%d bit) RSA key...",keylength);
 			BIO_flush(bio_err);
 			}
-#ifndef NO_RSA
 		rsa_tmp=RSA_generate_key(keylength,RSA_F4,NULL,NULL);
-#endif
 		if (!s_quiet)
 			{
 			BIO_printf(bio_err,"\n");
@@ -1221,3 +1228,4 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int export, int keylength)
 		}
 	return(rsa_tmp);
 	}
+#endif

@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DSA
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
@@ -112,4 +113,5 @@ err:
 	*pp=p;
 	return(ret);
 	}
+#endif
 

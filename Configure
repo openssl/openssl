@@ -20,16 +20,9 @@ my $usage="Usage: Configure [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [rsaref] [no
 # rsaref        use RSAref
 # no-asm        do not use assembler
 # 386           generate 80386 code
+# no-CIPHER     build without specified algorithm
 # -D, -L, -l, -f, -K: compiler options are passed through 
 # 
-# -DRSAref	build to use RSAref
-# -DNO_IDEA	build with no IDEA algorithm
-# -DNO_RC4	build with no RC4 algorithm
-# -DNO_RC2	build with no RC2 algorithm
-# -DNO_BF	build with no Blowfish algorithm
-# -DNO_DES	build with no DES/3DES algorithm
-# -DNO_MD2	build with no MD2 algorithm
-#
 # DES_PTR	use pointer lookup vs arrays in the DES in crypto/des/des_locl.h
 # DES_RISC1	use different DES_ENCRYPT macro that helps reduce register
 #		dependancies but needs to more registers, good for RISC CPU's
@@ -255,6 +248,7 @@ my @WinTargets=qw(VC-NT VC-WIN32 VC-WIN16 VC-W31-16 VC-W31-32 VC-MSDOS BC-32
 my $installprefix="";
 my $openssldir="";
 my $no_asm=0;
+my @skip=();
 my $Makefile="Makefile.ssl";
 my $des_locl="crypto/des/des_locl.h";
 my $des	="crypto/des/des.h";
@@ -284,12 +278,21 @@ $perl=&which("perl5") or $perl=&which("perl");
 &usage if ($#ARGV < 0);
 
 my $flags="";
+my $depflags="";
 my $libs="";
 my $target="";
 foreach (@ARGV)
 	{
 	if (/^no-asm$/)
 		{ $no_asm=1; }
+	elsif (/^no-(.+)$/)
+		{
+		my $algo=$1;
+		push @skip,$algo;
+		$algo =~ tr/[a-z]/[A-Z]/;
+		$flags .= "-DNO_$algo ";
+		$depflags .= "-DNO_$algo ";
+		}
 	elsif (/^386$/)
 		{ $processor=386; }
 	elsif (/^rsaref$/)
@@ -390,14 +393,24 @@ if ($rmd160_obj =~ /\.o$/)
 
 open(IN,'<Makefile.org') || die "unable to read Makefile.org:$!\n";
 open(OUT,">$Makefile") || die "unable to create $Makefile:$!\n";
+my $sdirs=0;
 while (<IN>)
 	{
 	chop;
+	$sdirs = 1 if /^SDIRS=/;
+	$sdirs = 0 unless /\\$/;
+	if ($sdirs) {
+		my $dir;
+		foreach $dir (@skip) {
+			s/$dir//;
+			}
+		}
 	s/^INSTALLTOP=.*$/INSTALLTOP=$installprefix/;
 	s/^OPENSSLDIR=.*$/OPENSSLDIR=$openssldir/;
 	s/^PLATFORM=.*$/PLATFORM=$target/;
 	s/^CC=.*$/CC= $cc/;
 	s/^CFLAG=.*$/CFLAG= $cflags/;
+	s/^DEPFLAG=.*$/DEPFLAG= $depflags/;
 	s/^EX_LIBS=.*$/EX_LIBS= $lflags/;
 	s/^BN_ASM=.*$/BN_ASM= $bn_obj/;
 	s/^DES_ENC=.*$/DES_ENC= $des_obj/;
@@ -551,6 +564,7 @@ if($IsWindows) {
 	close(OUT);
 } else {
 	(system 'make -f Makefile.ssl links') == 0 or exit $?;
+	(system 'make depend') == 0 or exit $? if $depflags ne "";
 	&dofile("tools/c_rehash",$openssldir,'^DIR=',	'DIR=%s',);
 	&dofile("util/mk1mf.pl",$openssldir,
 				('^\$INSTALLTOP=','$INSTALLTOP="%s";',));

@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/rsa.h>
@@ -78,6 +79,7 @@ static int i2d_NETSCAPE_PKEY(NETSCAPE_PKEY *a, unsigned char **pp);
 static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY(NETSCAPE_PKEY **a,unsigned char **pp, long length);
 static NETSCAPE_PKEY *NETSCAPE_PKEY_new(void);
 static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *);
+
 int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)())
 	{
 	int i,j,l[6];
@@ -336,4 +338,4 @@ static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *a)
 	}
 
 #endif /* NO_RC4 */
-
+#endif

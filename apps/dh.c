@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DH
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -308,3 +309,4 @@ end:
 	if (dh != NULL) DH_free(dh);
 	EXIT(ret);
 	}
+#endif

@@ -63,6 +63,10 @@
 extern "C" {
 #endif
 
+#ifdef NO_MD5
+#error MD5 is disabled.
+#endif
+
 #define MD5_CBLOCK	64
 #define MD5_LBLOCK	16
 #define MD5_BLOCK	16

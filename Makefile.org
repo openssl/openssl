@@ -43,6 +43,7 @@ OPENSSLDIR=/usr/local/ssl
 CC= gcc
 #CFLAG= -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall -Wuninitialized -DSHA1_ASM -DMD5_ASM -DRMD160_ASM
 CFLAG= -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall -DSHA1_ASM -DMD5_ASM -DRMD160_ASM
+DEPFLAG= 
 PEX_LIBS= -L. -L.. -L../.. -L../../..
 EX_LIBS= 
 AR=ar r
@@ -246,7 +247,7 @@ depend:
 	@for i in $(DIRS) ;\
 	do \
 	(cd $$i && echo "making dependancies $$i..." && \
-	$(MAKE) SDIRS='${SDIRS}' depend ) || exit 1; \
+	$(MAKE) SDIRS='${SDIRS}' DEPFLAG='${DEPFLAG}' depend ) || exit 1; \
 	done;
 
 lint:

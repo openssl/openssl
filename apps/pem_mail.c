@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
@@ -166,3 +167,4 @@ err:
 	ERR_print_errors(bio_err);
 	EXIT(1);
 	}
+#endif
