@@ -157,8 +157,10 @@ int RAND_write_file(const char *file)
 		int fd = open(file, O_CREAT | O_EXCL, 0600);
 		if (fd != -1)
 			out = fdopen(fd, "wb");
-#else		
-		out=fopen(file,"wb");
+		else /* the open(...) reportedly fails on Win98 w/ VisualC */
+			out = fopen(file,"wb");
+#else
+		out = fopen(file,"wb");
 #endif
 		}
 	if (out == NULL) goto err;
