@@ -16,8 +16,14 @@
 
       o Various SSL/TLS library bugfixes.
       o BIGNUM library fixes.
+      o RSA OAEP and random number generation fixes.
+      o Object identifiers corrected and added.
+      o Add assembler BN routines for IA64.
+      o Add support for OS/390 Unix, UnixWare with gcc, OpenUNIX 8,
+        MIPS Linux; shared library support for Irix, HP-UX.
       o Add crypto accelerator support for AEP, Baltimore SureWare,
-        Broadcom [in 0.9.6c-engine release].
+        Broadcom and Cryptographic Appliance's keyserver
+        [in 0.9.6c-engine release].
 
   Changes between OpenSSL 0.9.6a and OpenSSL 0.9.6b:
 
