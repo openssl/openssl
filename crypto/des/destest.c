@@ -431,7 +431,7 @@ int main(int argc, char *argv[])
 
 #ifndef LIBDES_LIT
 	printf("Doing ede ecb\n");
-	for (i=0; i<(NUM_TESTS-1); i++)
+	for (i=0; i<(NUM_TESTS-2); i++)
 		{
 		DES_set_key_unchecked(&key_data[i],&ks);
 		DES_set_key_unchecked(&key_data[i+1],&ks2);
