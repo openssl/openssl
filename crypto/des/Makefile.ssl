@@ -142,7 +142,7 @@ clean:
 cbc_cksm.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 cbc_cksm.o: ../../include/openssl/opensslconf.h des_locl.h
 cbc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-cbc_enc.o: ../../include/openssl/opensslconf.h des_locl.h
+cbc_enc.o: ../../include/openssl/opensslconf.h des_locl.h ncbc_enc.c
 cfb64ede.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 cfb64ede.o: ../../include/openssl/opensslconf.h des_locl.h
 cfb64enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
@@ -150,7 +150,7 @@ cfb64enc.o: ../../include/openssl/opensslconf.h des_locl.h
 cfb_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 cfb_enc.o: ../../include/openssl/opensslconf.h des_locl.h
 des_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-des_enc.o: ../../include/openssl/opensslconf.h des_locl.h
+des_enc.o: ../../include/openssl/opensslconf.h des_locl.h des_locl.h ncbc_enc.c
 ecb3_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 ecb3_enc.o: ../../include/openssl/opensslconf.h des_locl.h
 ecb_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
