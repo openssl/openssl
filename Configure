@@ -118,12 +118,19 @@ my $x86_elf_asm="x86cpuid-elf.o:asm/bn86-elf.o asm/co86-elf.o:asm/dx86-elf.o asm
 my $x86_coff_asm="x86cpuid-cof.o:asm/bn86-cof.o asm/co86-cof.o:asm/dx86-cof.o asm/yx86-cof.o:asm/ax86-cof.o:asm/bx86-cof.o:asm/mx86-cof.o:asm/sx86-cof.o asm/s512sse2-cof.o:asm/cx86-cof.o:asm/rx86-cof.o:asm/rm86-cof.o:asm/r586-cof.o";
 my $x86_out_asm="x86cpuid-out.o:bn86-out.o co86-out.o:dx86-out.o yx86-out.o:ax86-out.o:bx86-out.o:mx86-out.o:sx86-out.o s512sse2-out.o:cx86-out.o:rx86-out.o:rm86-out.o:r586-out.o";
 
+my $x86_64_asm="amd64cpuid.o:asm/x86_64-gcc.o:::::::asm/rc4-amd64.o::";
 my $ia64_asm=":asm/ia64.o::aes_core.o aes_cbc.o asm/aes-ia64.o:::asm/sha1-ia64.o asm/sha256-ia64.o asm/sha512-ia64.o::asm/rc4-ia64.o::";
 
 my $no_asm="::::::::::";
 
-# -DB_ENDIAN slows things down on a sparc for md5, but helps sha1.
-# So the md5_locl.h file has an undef B_ENDIAN if sun is defined
+# As for $BSDthreads. Idea is to maintain "collective" set of flags,
+# which would cover all BSD flavors. -pthread applies to them all, 
+# but is treated differently. OpenBSD expands is as -D_POSIX_THREAD
+# -lc_r, which is sufficient. FreeBSD 4.x expands it as -lc_r,
+# which has to be accompanied by explicit -D_THREAD_SAFE and
+# sometimes -D_REENTRANT. FreeBSD 5.x expands it as -lc_r, which
+# seems to be sufficient?
+my $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 
 #config-string	$cc : $cflags : $unistd : $thread_cflag : $sys_id : $lflags : $bn_ops : $cpuid_obj : $bn_obj : $des_obj : $aes_obj : $bf_obj : $md5_obj : $sha1_obj : $cast_obj : $rc4_obj : $rmd160_obj : $rc5_obj : $dso_scheme : $shared_target : $shared_cflag : $shared_ldflag : $shared_extension : $ranlib : $arflags
 
@@ -155,6 +162,10 @@ my %table=(
 "debug-levitte-linux-elf-extreme","gcc:-DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "debug-levitte-linux-noasm-extreme","gcc:-DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "debug-geoff","gcc:-DBN_DEBUG -DBN_DEBUG_RAND -DBN_STRICT -DPURIFY -DOPENSSL_NO_DEPRECATED -DOPENSSL_NO_ASM -DOPENSSL_NO_INLINE_ASM -DL_ENDIAN -DTERMIO -DPEDANTIC -O1 -ggdb2 -Wall -Werror -Wundef -pedantic -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align -Wsign-compare -Wmissing-prototypes -Wmissing-declarations -Wno-long-long::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"debug-linux-pentium","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentium -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
+"debug-linux-ppro","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentiumpro -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
+"debug-linux-elf","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT::-lefence -ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"debug-linux-elf-noefence","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "dist",		"cc:-O::(unknown)::::::",
 
 # Basic configs that should work on any (32 and less bit) box
@@ -210,7 +221,6 @@ my %table=(
 #### IRIX 6.x configs
 # Only N32 and N64 ABIs are supported. If you need O32 ABI build, invoke
 # './Configure irix-cc -o32' manually.
-# -mips4 flag is added by ./config when appropriate.
 "irix-mips3-gcc","gcc:-mabi=n32 -mmips-as -O3 -DTERMIOS -DB_ENDIAN -DBN_DIV3W::-D_SGI_MP_SOURCE:::MD2_CHAR RC4_INDEX RC4_CHAR RC4_CHUNK_LL DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT::asm/mips3.o::::::::::dlfcn:irix-shared::-mabi=n32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "irix-mips3-cc", "cc:-n32 -mips3 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN -DBN_DIV3W::-D_SGI_MP_SOURCE:::DES_PTR RC4_CHAR RC4_CHUNK_LL DES_RISC2 DES_UNROLL BF_PTR SIXTY_FOUR_BIT::asm/mips3.o::::::::::dlfcn:irix-shared::-n32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # N64 ABI builds.
@@ -300,35 +310,22 @@ my %table=(
 ####
 #### Variety of LINUX:-)
 ####
+# *-generic* is endian-neutral target, but ./config is free to
+# throw in -D[BL]_ENDIAN, whichever appropriate...
+"linux-generic32","gcc:-DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-ppc",	"gcc:-DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL::asm/linux_ppc32.o::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 #### IA-32 targets...
 "linux-ia32-icc",	"icc:-DL_ENDIAN -DTERMIO -O2 -no_cpprt::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-pentium",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mcpu=pentium -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-ppro",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mcpu=pentiumpro -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-k6",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mcpu=k6 -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"debug-linux-pentium","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentium -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
-"debug-linux-ppro","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentiumpro -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
-"debug-linux-elf","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT::-lefence -ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"debug-linux-elf-noefence","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
-#
-"linux-mipsel",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL DES_RISC2:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-mips",	"gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL DES_RISC2:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-ppc",	"gcc:-DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL::asm/linux_ppc32.o::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+####
+"linux-generic64","gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # -bpowerpc64-linux is transient option, -m64 should be the one to use...
 "linux-ppc64",	"gcc:-bpowerpc64-linux -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL::asm/linux_ppc64.o::::::::::dlfcn:linux-shared:-fPIC:-bpowerpc64-linux:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-m68k",	"gcc:-DB_ENDIAN -DTERMIO -O2 -fomit-frame-pointer -Wall::-D_REENTRANT:::BN_LLONG::",
-"linux-s390",	"gcc:-DB_ENDIAN -DTERMIO -DNO_ASM -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-s390x",	"gcc:-DB_ENDIAN -DTERMIO -DNO_ASM -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-ia64",	"gcc:-DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-ia64-ecc","ecc:-DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-x86_64",	"gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall -DMD32_REG_T=int::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL:amd64cpuid.o:asm/x86_64-gcc.o:::::::asm/rc4-amd64.o:::dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-# ARM comes in both little- and big-endian flavors. The following line is
-# endian neutral, but ./config is free to throw in -D[BL]_ENDIAN...
-"linux-elf-arm","gcc:-DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-parisc",	"gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-x86_64",	"gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall -DMD32_REG_T=int::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL:${x86_64_asm}:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 #### SPARC Linux setups
-"linux-sparcv7","gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT:::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::",
 # Ray Miller <ray.miller@computing-services.oxford.ac.uk> has patiently
 # assisted with debugging of following two configs.
 "linux-sparcv8","gcc:-mv8 -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::asm/sparcv8.o:asm/des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -355,29 +352,19 @@ my %table=(
 "linux-alpha-ccc","ccc:-fast -readonly_strings -DL_ENDIAN -DTERMIO::-D_REENTRANT:::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL:${no_asm}",
 "linux-alpha+bwx-ccc","ccc:-fast -readonly_strings -DL_ENDIAN -DTERMIO::-D_REENTRANT:::SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL:${no_asm}",
 
-#### *BSD
-"NetBSD-sparc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN::(unknown):::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"NetBSD-m68",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall -DB_ENDIAN::(unknown):::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"NetBSD-x86",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -m486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+#### *BSD [do see comment about ${BSDthreads} above!]
+"BSD-generic32","gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall::${BSDthreads}:::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"BSD-x86",	"gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -Wall::${BSDthreads}:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:dlfcn:bsd-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"BSD-x86-elf",	"gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -Wall::${BSDthreads}:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:bsd-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"BSD-sparcv8",	"gcc:-DB_ENDIAN -DTERMIOS -O3 -mv8 -Wall::${BSDthreads}:::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL::asm/sparcv8.o:asm/des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
-"FreeBSD-elf",	"gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::-pthread -D_REENTRANT -D_THREAD_SAFE -D_THREADSAFE:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"FreeBSD-sparc64","gcc:-DB_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer::-pthread -D_REENTRANT -D_THREAD_SAFE -D_THREADSAFE:::SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2 BF_PTR:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"FreeBSD-ia64",	"gcc:-DL_ENDIAN -DTERMIOS -O -fomit-frame-pointer::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${ia64_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"FreeBSD-alpha","gcc:-DTERMIOS -O::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_PTR DES_RISC2:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"FreeBSD",	"gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
-
-# Some OpenBSD from Bob Beck <beck@obtuse.com>
-"OpenBSD",		"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-alpha",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown):::SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-i386",		"gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:dlfcn:bsd-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-m68k",		"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-m88k",		"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-mips",		"gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL DES_RISC2:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-powerpc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-sparc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL::asm/sparcv8.o:asm/des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-sparc64",	"gcc:-DB_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer::(unknown):::SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2 BF_PTR:::asm/des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-vax",		"gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-hppa",		"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown):::BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"BSD-generic64","gcc:-DTERMIOS -O3 -Wall::${BSDthreads}:::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+# -DMD32_REG_T=int doesn't actually belong in sparc64 target, it
+# simply *happens* to work around a compiler bug in gcc 3.3.3,
+# triggered by RIPEMD160 code.
+"BSD-sparc64",	"gcc:-DB_ENDIAN -DTERMIOS -O3 -DMD32_REG_T=int -Wall::${BSDthreads}:::SIXTY_FOUR_BIT_LONG RC2_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC2 BF_PTR:::asm/des_enc-sparc.o fcrypt_b.o:::asm/md5-sparcv9.o::::::dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"BSD-ia64",	"gcc:-DL_ENDIAN -DTERMIOS -O3 -Wall::${BSDthreads}:::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${ia64_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"BSD-x86_64",	"gcc:-DL_ENDIAN -DTERMIOS -O3 -DMD32_REG_T=int -Wall::${BSDthreads}:::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 "bsdi-elf-gcc",     "gcc:-DPERL5 -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown)::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
@@ -1327,8 +1314,10 @@ rename("$Makefile.new",$Makefile) || die "unable to rename $Makefile.new\n";
 print "CC            =$cc\n";
 print "CFLAG         =$cflags\n";
 print "EX_LIBS       =$lflags\n";
+print "CPUID_OBJ     =$cpuid_obj\n";
 print "BN_ASM        =$bn_obj\n";
 print "DES_ENC       =$des_obj\n";
+print "AES_ASM_OBJ   =$aes_obj\n";
 print "BF_ENC        =$bf_obj\n";
 print "CAST_ENC      =$cast_obj\n";
 print "RC4_ENC       =$rc4_obj\n";
