@@ -125,7 +125,7 @@ static int des_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     {
     unsigned char *tmp; /* DES_cfb_encrypt rudely overwrites the whole buffer*/
 
-    tmp=alloca(inl);
+    tmp=alloca(inl+7);
     memcpy(tmp,in,inl);
     DES_cfb_encrypt(tmp,tmp,8,inl,ctx->cipher_data,(DES_cblock *)ctx->iv,
 		    ctx->encrypt);
