@@ -110,3 +110,29 @@ int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 		}
 	return(i);
 	}
+
+/* Convert the various cipher NIDs and dummies to a proper OID NID */
+int EVP_CIPHER_type(EVP_CIPHER *ctx)
+{
+	int nid;
+	nid = EVP_CIPHER_nid(ctx);
+
+	switch(nid) {
+
+		case NID_rc2_cbc:
+		case NID_rc2_64_cbc:
+		case NID_rc2_40_cbc:
+
+		return NID_rc2_cbc;
+
+		case NID_rc4:
+		case NID_rc4_40:
+
+		return NID_rc4;
+
+		default:
+
+		return nid;
+	}
+}
+

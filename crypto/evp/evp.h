@@ -433,6 +433,7 @@ typedef int (EVP_PBE_KEYGEN)(const char *pass, int passlen,
 #define EVP_CIPHER_CTX_iv_length(e)	((e)->cipher->iv_len)
 #define EVP_CIPHER_CTX_get_app_data(e)	((e)->app_data)
 #define EVP_CIPHER_CTX_set_app_data(e,d) ((e)->app_data=(char *)(d))
+#define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
 
 #define EVP_ENCODE_LENGTH(l)	(((l+2)/3*4)+(l/48+1)*2+80)
 #define EVP_DECODE_LENGTH(l)	((l+3)/4*3+80)
@@ -622,6 +623,8 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to,EVP_PKEY *from);
 int EVP_PKEY_missing_parameters(EVP_PKEY *pkey);
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey,int mode);
 int EVP_PKEY_cmp_parameters(EVP_PKEY *a,EVP_PKEY *b);
+
+int EVP_CIPHER_type(EVP_CIPHER *ctx);
 
 /* calls methods */
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);

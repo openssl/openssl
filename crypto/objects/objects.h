@@ -866,6 +866,10 @@ extern "C" {
 #define NID_id_qt_unotice	165
 #define OBJ_id_qt_unotice	OBJ_id_pkix,2L,2L
 
+#define SN_rc2_64_cbc			"RC2-64-CBC"
+#define LN_rc2_64_cbc			"rc2-64-cbc"
+#define NID_rc2_64_cbc			166
+
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 

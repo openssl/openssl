@@ -156,19 +156,14 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		keylen=EVP_CIPHER_key_length(evp_cipher);
 		ivlen=EVP_CIPHER_iv_length(evp_cipher);
 
-		if (ivlen > 0)
-			{
-			ASN1_OCTET_STRING *os;
-
-			RAND_bytes(iv,ivlen);
-			os=ASN1_OCTET_STRING_new();
-			ASN1_OCTET_STRING_set(os,iv,ivlen);
-/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX this needs to change */
-			if (xalg->parameter == NULL)
-				xalg->parameter=ASN1_TYPE_new();
-			ASN1_TYPE_set(xalg->parameter,V_ASN1_OCTET_STRING,
-				(char *)os);
-			}
+		if (ivlen > 0) {
+			EVP_CIPHER_CTX *ctx;
+			BIO_get_cipher_ctx(btmp, &ctx);
+			if (xalg->parameter == NULL) 
+						xalg->parameter=ASN1_TYPE_new();
+			if(EVP_CIPHER_param_to_asn1(ctx, xalg->parameter) < 0)
+								       goto err;
+		}
 		RAND_bytes(key,keylen);
 
 		/* Lets do the pub key stuff :-) */

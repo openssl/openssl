@@ -155,9 +155,9 @@ static int rc2_meth_to_magic(const EVP_CIPHER *e)
 	int i;
 
 	i=EVP_CIPHER_key_length(e);
-	if 	(i == 128) return(RC2_128_MAGIC);
-	else if (i == 64)  return(RC2_64_MAGIC);
-	else if (i == 40)  return(RC2_40_MAGIC);
+	if 	(i == 16) return(RC2_128_MAGIC);
+	else if (i == 8)  return(RC2_64_MAGIC);
+	else if (i == 5)  return(RC2_40_MAGIC);
 	else return(0);
 	}
 

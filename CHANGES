@@ -5,6 +5,10 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Various fixes to the EVP and PKCS#7 code. It may now be able to
+     handle PKCS#7 enveloped data properly.
+     [Sebastian Akerman <sak@parallelconsulting.com>, modified by Steve]
+
   *) Create a duplicate of the SSL_CTX's CERT in SSL_new instead of
      copying pointers.  The cert_st handling is changed by this in
      various ways (and thus what used to be known as ctx->default_cert

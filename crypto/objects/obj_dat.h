@@ -61,9 +61,9 @@
  * perl obj_dat.pl < objects.h > obj_dat.h
  */
 
-#define NUM_NID 166
-#define NUM_SN 117
-#define NUM_LN 162
+#define NUM_NID 167
+#define NUM_SN 118
+#define NUM_LN 163
 #define NUM_OBJ 138
 
 static unsigned char lvalues[956]={
@@ -439,6 +439,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"id-qt-cps","Policy Qualifier CPS",NID_id_qt_cps,8,&(lvalues[939]),0},
 {"id-qt-unotice","Policy Qualifier User Notice",NID_id_qt_unotice,8,
 	&(lvalues[947]),0},
+{"RC2-64-CBC","rc2-64-cbc",NID_rc2_64_cbc,0,NULL},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -489,6 +490,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[18]),/* "OU" */
 &(nid_objs[127]),/* "PKIX" */
 &(nid_objs[98]),/* "RC2-40-CBC" */
+&(nid_objs[166]),/* "RC2-64-CBC" */
 &(nid_objs[37]),/* "RC2-CBC" */
 &(nid_objs[39]),/* "RC2-CFB" */
 &(nid_objs[38]),/* "RC2-ECB" */
@@ -688,6 +690,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[151]),/* "pkcs8ShroudedKeyBag" */
 &(nid_objs[47]),/* "pkcs9" */
 &(nid_objs[98]),/* "rc2-40-cbc" */
+&(nid_objs[166]),/* "rc2-64-cbc" */
 &(nid_objs[37]),/* "rc2-cbc" */
 &(nid_objs[39]),/* "rc2-cfb" */
 &(nid_objs[38]),/* "rc2-ecb" */

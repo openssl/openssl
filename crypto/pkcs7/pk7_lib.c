@@ -435,7 +435,7 @@ int PKCS7_set_cipher(PKCS7 *p7, EVP_CIPHER *cipher)
 		return(0);
 		}
 
-	ec->algorithm->algorithm=OBJ_nid2obj(EVP_CIPHER_nid(cipher));
+	ec->algorithm->algorithm=OBJ_nid2obj(EVP_CIPHER_type(cipher));
 	return(ec->algorithm->algorithm != NULL);
 	}
 
