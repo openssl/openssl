@@ -1662,7 +1662,7 @@ again2:
 					}
 				if (j < 0)
 					{
-					BIO_printf(bio_err,"The %s field needed to be the same in the\nCA certificate (%s) and the request (%s)\n",cv->name,((str == NULL)?"NULL":(char *)str->data),((str2 == NULL)?"NULL":(char *)str2->data));
+					BIO_printf(bio_err,"The %s field needed to be the same in the\nCA certificate (%s) and the request (%s)\n",cv->name,((str2 == NULL)?"NULL":(char *)str2->data),((str == NULL)?"NULL":(char *)str->data));
 					goto err;
 					}
 				}

@@ -949,7 +949,7 @@ extern "C" {
 #define NID_ad_ca_issuers		179
 #define OBJ_ad_ca_issuers		OBJ_id_ad,2L
 
-#define SN_OSCP_sign			"OCSPSigning"
+#define SN_OCSP_sign			"OCSPSigning"
 #define LN_OCSP_sign			"OCSP Signing"
 #define NID_OCSP_sign			180
 #define OBJ_OCSP_sign			OBJ_id_kp,9L
