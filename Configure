@@ -611,6 +611,10 @@ my %disabled = ( # "what"         => "comment"
 # To remove something from %disabled, use e.g. "enable-rc5".
 # For symmetry, "disable-..." is a synonym for "no-...".
 
+# This is what $depflags will look like with the above default:
+my $default_depflags = "-DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 ";
+
+
 my $no_sse2=0;
 
 &usage if ($#ARGV < 0);
@@ -891,6 +895,8 @@ foreach (sort (keys %disabled))
 				{
 				push @skip, $algo;
 				print " (skip dir)";
+
+				$depflags .="-DOPENSSL_NO_$ALGO ";
 				}
 			}
 		}
@@ -1531,7 +1537,7 @@ EOF
 	my $make_command = "make -f Makefile.ssl PERL=\'$perl\'";
 	my $make_targets = "";
 	$make_targets .= " links" if $symlink;
-	$make_targets .= " depend" if $depflags ne "" && $make_depend;
+	$make_targets .= " depend" if $depflags ne $default_depflags && $make_depend;
 	$make_targets .= " gentests" if $symlink;
 	(system $make_command.$make_targets) == 0 or exit $?
 		if $make_targets ne "";
@@ -1543,11 +1549,11 @@ EOF
 	    &dofile("tools/c_rehash",'/usr/local/bin/perl','^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";');
 	    &dofile("apps/CA.pl",'/usr/local/bin/perl','^#!/', '#!%s');
 	}
-	if ($depflags ne "" && !$make_depend) {
+	if ($depflags ne $default_depflags && !$make_depend) {
 		print <<EOF;
 
-Since you've disabled at least one algorithm, you need to do the following
-before building:
+Since you've disabled or enabled at least one algorithm, you need to do
+the following before building:
 
 	make depend
 EOF
