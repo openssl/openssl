@@ -82,6 +82,9 @@
 
 int RAND_load_file(const char *file, long bytes)
 	{
+	/* If bytes >= 0, read up to 'bytes' bytes.
+	 * if bytes == -1, read complete file. */
+
 	MS_STATIC unsigned char buf[BUFSIZE];
 	struct stat sb;
 	int i,ret=0,n;
@@ -93,20 +96,26 @@ int RAND_load_file(const char *file, long bytes)
 	/* If the state fails, put some crap in anyway */
 	RAND_add(&sb,sizeof(sb),0);
 	if (i < 0) return(0);
-	if (bytes <= 0) return(ret);
+	if (bytes == 0) return(ret);
 
 	in=fopen(file,"rb");
 	if (in == NULL) goto err;
 	for (;;)
 		{
-		n=(bytes < BUFSIZE)?(int)bytes:BUFSIZE;
+		if (bytes > 0)
+			n = (bytes < BUFSIZE)?(int)bytes:BUFSIZE;
+		else
+			n = BUFSIZE;
 		i=fread(buf,1,n,in);
 		if (i <= 0) break;
 		/* even if n != i, use the full array */
 		RAND_add(buf,n,i);
 		ret+=i;
-		bytes-=n;
-		if (bytes <= 0) break;
+		if (bytes > 0)
+			{
+			bytes-=n;
+			if (bytes == 0) break;
+			}
 		}
 	fclose(in);
 	memset(buf,0,BUFSIZE);

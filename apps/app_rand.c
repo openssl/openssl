@@ -130,7 +130,7 @@ int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn)
 
 	if (file == NULL)
 		file = RAND_file_name(buffer, sizeof buffer);
-	if (file == NULL || !RAND_load_file(file, 1024L*1024L))
+	if (file == NULL || !RAND_load_file(file, -1))
 		{
 		if (!dont_warn)
 			{
