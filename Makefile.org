@@ -475,7 +475,7 @@ dist_pem_h:
 install: all install_docs
 	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/lib \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkginfo \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/engines \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
