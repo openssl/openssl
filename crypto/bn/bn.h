@@ -726,16 +726,6 @@ BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d);
 BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int num);
 BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int num);
 
-#ifdef BN_DEBUG
-void bn_dump1(FILE *o, const char *a, const BN_ULONG *b,int n);
-# define bn_print(a) {fprintf(stderr, #a "="); BN_print_fp(stderr,a); \
-   fprintf(stderr,"\n");}
-# define bn_dump(a,n) bn_dump1(stderr,#a,a,n);
-#else
-# define bn_print(a)
-# define bn_dump(a,b)
-#endif
-
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top,int bottom);
 
 /* BEGIN ERROR CODES */

@@ -322,14 +322,3 @@ end:
 	return(ret);
 	}
 #endif
-
-#ifdef BN_DEBUG
-void bn_dump1(FILE *o, const char *a, const BN_ULONG *b,int n)
-	{
-	int i;
-	fprintf(o, "%s=", a);
-	for (i=n-1;i>=0;i--)
-		fprintf(o, "%08lX", b[i]); /* assumes 32-bit BN_ULONG */
-	fprintf(o, "\n");
-	}
-#endif
