@@ -466,7 +466,7 @@ $ EXHEADER_PKCS7 := pkcs7.h
 $ EXHEADER_PKCS12 := pkcs12.h
 $ EXHEADER_COMP := comp.h
 $ EXHEADER_OCSP := ocsp.h
-$ EXHEADER_UI := ui.h
+$ EXHEADER_UI := ui.h,ui_compat.h
 $
 $ I = 0
 $ LOOP_SDIRS: 
