@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/09/21 17:19:05 $
+  ______________                           $Date: 1999/09/30 08:32:54 $
 
   DEVELOPMENT STATE
 
@@ -16,7 +16,6 @@
   AVAILABLE PATCHES
 
     o shared libraries <behnke@trustcenter.de>
-    o HP compiler flags <peter_huang@hp.com>
     o Lennart Bang: test program patches
     o getenv in ca.c and x509_def.c (jaltman@watsun.cc.columbia.edu)
     o SMIME tool (demo), Sampo Kellomaki <sampo@iki.fi>
