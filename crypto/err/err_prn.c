@@ -62,7 +62,6 @@
 #include "cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/err.h>
-#include <openssl/crypto.h>
 
 void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u),
 			 void *u)

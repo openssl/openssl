@@ -315,9 +315,7 @@ extern "C" {
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 #include <openssl/buffer.h>
-#include <openssl/bio.h>
 #include <openssl/pem.h>
-#include <openssl/x509.h>
 
 #ifdef  __cplusplus
 extern "C" {

@@ -63,7 +63,6 @@
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 
-#include "apps.h"
 #define PROG pkcs8_main
 
 int MAIN(int, char **);
