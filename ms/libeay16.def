@@ -90,6 +90,9 @@ EXPORTS
     _BIO_free                           @66
     _BIO_free_all                       @67
     _BIO_get_accept_socket              @69
+    _BIO_get_ex_data                    @1157
+    _BIO_get_ex_new_index               @1158
+    _BIO_get_ex_num                     @1159
     _BIO_get_host_ip                    @71
     _BIO_get_port                       @72
     _BIO_get_retry_BIO                  @73
@@ -116,6 +119,7 @@ EXPORTS
     _BIO_s_null                         @96
     _BIO_s_socket                       @98
     _BIO_set                            @100
+    _BIO_set_ex_data                    @1160
     _BIO_set_cipher                     @101
     _BIO_set_tcp_ndelay                 @102
     _BIO_sock_cleanup                   @103
