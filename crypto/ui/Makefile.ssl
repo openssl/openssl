@@ -87,7 +87,8 @@ ui_compat.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
 ui_compat.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 ui_compat.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 ui_compat.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ui_compat.o: ../../include/openssl/ui.h ui_compat.c
+ui_compat.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+ui_compat.o: ui_compat.c
 ui_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 ui_err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 ui_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h

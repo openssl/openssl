@@ -795,8 +795,8 @@ des_random_key                          802	EXIST::FUNCTION:DES
 des_random_seed                         803	EXIST::FUNCTION:DES
 des_read_2passwords                     804	EXIST::FUNCTION:DES
 des_read_password                       805	EXIST::FUNCTION:DES
-des_read_pw                             806	EXIST::FUNCTION:DES
-des_read_pw_string                      807	EXIST::FUNCTION:DES
+des_read_pw                             806	EXIST::FUNCTION:
+des_read_pw_string                      807	EXIST::FUNCTION:
 des_set_key                             808	EXIST::FUNCTION:DES
 des_set_odd_parity                      809	EXIST::FUNCTION:DES
 des_string_to_2keys                     810	EXIST::FUNCTION:DES
