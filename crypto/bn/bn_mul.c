@@ -106,22 +106,22 @@ BN_ULONG bn_sub_part_words(BN_ULONG *r,
 		for (;;)
 			{
 			t = b[0];
-			r[0] = (-t-c)&BN_MASK2;
+			r[0] = (0-t-c)&BN_MASK2;
 			if (t != 0) c=1;
 			if (++dl >= 0) break;
 
 			t = b[1];
-			r[1] = (-t-c)&BN_MASK2;
+			r[1] = (0-t-c)&BN_MASK2;
 			if (t != 0) c=1;
 			if (++dl >= 0) break;
 
 			t = b[2];
-			r[2] = (-t-c)&BN_MASK2;
+			r[2] = (0-t-c)&BN_MASK2;
 			if (t != 0) c=1;
 			if (++dl >= 0) break;
 
 			t = b[3];
-			r[3] = (-t-c)&BN_MASK2;
+			r[3] = (0-t-c)&BN_MASK2;
 			if (t != 0) c=1;
 			if (++dl >= 0) break;
 
