@@ -167,6 +167,7 @@ RMD160_ASM_OBJ= asm/rm86-out.o
 
 # KRB5 stuff
 KRB5_INCLUDES=
+LIBKRB5=
 
 DIRS=   crypto ssl engines apps test tools
 SHLIBDIRS= crypto ssl
@@ -280,6 +281,9 @@ build-shared: do_$(SHLIB_TARGET) link-shared
 
 do_$(SHLIB_TARGET):
 	@ libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
+		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+			libs="$(LIBKRB5) $$libs"; \
+		fi; \
 		$(NEWMAKE) -f Makefile.shared \
 			CC="$(CC)" LDFLAGS="$(LDFLAGS)" \
 			SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
@@ -288,7 +292,7 @@ do_$(SHLIB_TARGET):
 			LIBDEPS="$$libs $(EX_LIBS)" \
 			LIBRPATH="$(INSTALLTOP)/lib" \
 			link_a.$(SHLIB_TARGET); \
-		libs="$$libs -l$$i"; \
+		libs="-l$$i $$libs"; \
 	done
 
 openssl.pc: Makefile.ssl
