@@ -258,7 +258,7 @@ link-shared:
 
 build-shared: clean-shared do_$(SHLIB_TARGET) link-shared
 
-do_bsd-gcc-shared: linux-shared
+do_bsd-gcc-shared: do_gnu-shared
 do_linux-shared: do_gnu-shared
 do_gnu-shared:
 	libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
