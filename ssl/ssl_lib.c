@@ -189,6 +189,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->sid_ctx_length=ctx->sid_ctx_length;
 	memcpy(&s->sid_ctx,&ctx->sid_ctx,sizeof(s->sid_ctx));
 	s->verify_mode=ctx->verify_mode;
+	s->verify_depth=ctx->verify_depth;
 	s->verify_callback=ctx->default_verify_callback;
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->ctx=ctx;
@@ -422,6 +423,11 @@ int SSL_get_verify_mode(SSL *s)
 	return(s->verify_mode);
 	}
 
+int SSL_get_verify_depth(SSL *s)
+	{
+	return(s->verify_depth);
+	}
+
 int (*SSL_get_verify_callback(SSL *s))(int,X509_STORE_CTX *)
 	{
 	return(s->verify_callback);
@@ -430,6 +436,11 @@ int (*SSL_get_verify_callback(SSL *s))(int,X509_STORE_CTX *)
 int SSL_CTX_get_verify_mode(SSL_CTX *ctx)
 	{
 	return(ctx->verify_mode);
+	}
+
+int SSL_CTX_get_verify_depth(SSL_CTX *ctx)
+	{
+	return(ctx->verify_depth);
 	}
 
 int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int,X509_STORE_CTX *)
@@ -443,6 +454,11 @@ void SSL_set_verify(SSL *s,int mode,
 	s->verify_mode=mode;
 	if (callback != NULL)
 		s->verify_callback=callback;
+	}
+
+void SSL_set_verify_depth(SSL *s,int depth)
+	{
+	s->verify_depth=depth;
 	}
 
 void SSL_set_read_ahead(SSL *s,int yes)
@@ -961,6 +977,7 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 
 	ret->read_ahead=0;
 	ret->verify_mode=SSL_VERIFY_NONE;
+	ret->verify_depth=-1; /* Don't impose a limit (but x509_lu.c does) */
 	ret->default_verify_callback=NULL;
 	if ((ret->default_cert=ssl_cert_new()) == NULL)
 		goto err;
@@ -1077,6 +1094,11 @@ void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,int (*cb)(int, X509_STORE_CTX *))
 	ctx->default_verify_callback=cb;
 	/* This needs cleaning up EAY EAY EAY */
 	X509_STORE_set_verify_cb_func(ctx->cert_store,cb);
+	}
+
+void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth)
+	{
+	ctx->verify_depth=depth;
 	}
 
 /* Need default_cert to check for callbacks, for now (see comment in CERT
@@ -1463,6 +1485,7 @@ SSL *SSL_dup(SSL *s)
 	SSL_set_read_ahead(ret,SSL_get_read_ahead(s));
 	SSL_set_verify(ret,SSL_get_verify_mode(s),
 		SSL_get_verify_callback(s));
+	SSL_set_verify_depth(ret,SSL_get_verify_depth(s));
 
 	SSL_set_info_callback(ret,SSL_get_info_callback(s));
 	

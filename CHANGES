@@ -5,6 +5,13 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Support verify_depth from the SSL API.
+     x509_vfy.c had what can be considered an off-by-one-error:
+     Its depth (which was not part of the external interface)
+     was actually counting the number of certificates in a chain;
+     now it really counts the depth.
+     [Bodo Moeller]
+
   *) New function SSL_CTX_set_session_id_context that allows to set a default
      value (so that you don't need SSL_set_session_id_context for each
      connection using the SSL_CTX).

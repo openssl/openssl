@@ -143,7 +143,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	for (;;)
 		{
 		/* If we have enough, we break */
-		if (depth <= num) break;
+		if (depth < num) break;
 
 		/* If we are self signed, we break */
 		xn=X509_get_issuer_name(x);
@@ -206,7 +206,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	for (;;)
 		{
 		/* If we have enough, we break */
-		if (depth <= num) break;
+		if (depth < num) break;
 
 		/* If we are self signed, we break */
 		xn=X509_get_issuer_name(x);

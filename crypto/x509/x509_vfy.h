@@ -169,7 +169,7 @@ typedef struct x509_store_st
 
 	CRYPTO_EX_DATA ex_data;
 	int references;
-	int depth;		/* how deep to look (still unused) */
+	int depth;		/* how deep to look (still unused -- X509_STORE_CTX's depth is used) */
 	}  X509_STORE;
 
 #define X509_STORE_set_depth(ctx,d)       ((ctx)->depth=(d))
@@ -191,7 +191,7 @@ struct x509_lookup_st
 /* This is a temporary used when processing cert chains.  Since the
  * gathering of the cert chain can take some time (and have to be
  * 'retried', this needs to be kept and passed around. */
-struct x509_store_state_st
+struct x509_store_state_st      /* X509_STORE_CTX */
 	{
 	X509_STORE *ctx;
 	int current_method;	/* used when looking up certs */
@@ -213,6 +213,8 @@ struct x509_store_state_st
 
 	CRYPTO_EX_DATA ex_data;
 	};
+
+#define X509_STORE_CTX_set_depth(ctx,d)       ((ctx)->depth=(d))
 
 #define X509_STORE_CTX_set_app_data(ctx,data) \
 	X509_STORE_CTX_set_ex_data(ctx,0,data)

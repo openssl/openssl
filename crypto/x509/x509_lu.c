@@ -391,7 +391,7 @@ void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	ctx->last_untrusted=0;
 	ctx->valid=0;
 	ctx->chain=NULL;
-	ctx->depth=10;
+	ctx->depth=9;
 	ctx->error=0;
 	ctx->current_cert=NULL;
 	memset(&(ctx->ex_data),0,sizeof(CRYPTO_EX_DATA));

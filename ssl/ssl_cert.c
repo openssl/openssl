@@ -185,6 +185,8 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 
 	x=sk_X509_value(sk,0);
 	X509_STORE_CTX_init(&ctx,s->ctx->cert_store,x,sk);
+	if (SSL_get_verify_depth(s) >= 0)
+		X509_STORE_CTX_set_depth(&ctx, SSL_get_verify_depth(s));
 	X509_STORE_CTX_set_ex_data(&ctx,SSL_get_ex_data_X509_STORE_CTX_idx(),
 		(char *)s);
 

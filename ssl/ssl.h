@@ -394,6 +394,7 @@ struct ssl_ctx_st
 /**/	struct cert_st /* CERT */ *default_cert;
 /**/	int read_ahead;
 /**/	int verify_mode;
+/**/	int verify_depth;
 /**/	unsigned int sid_ctx_length;
 /**/	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 /**/	int (*default_verify_callback)(int ok,X509_STORE_CTX *ctx);
@@ -573,6 +574,7 @@ struct ssl_st
 	/* Used in SSL2 and SSL3 */
 	int verify_mode;	/* 0 don't care about verify failure.
 				 * 1 fail if verify fails */
+	int verify_depth;
 	int (*verify_callback)(int ok,X509_STORE_CTX *ctx); /* fail if callback returns 0 */
 	void (*info_callback)(); /* optional informational callback */
 
@@ -851,9 +853,11 @@ BIO *	SSL_get_wbio(SSL *s);
 int	SSL_set_cipher_list(SSL *s, char *str);
 void	SSL_set_read_ahead(SSL *s, int yes);
 int	SSL_get_verify_mode(SSL *s);
+int	SSL_get_verify_depth(SSL *s);
 int	(*SSL_get_verify_callback(SSL *s))(int,X509_STORE_CTX *);
 void	SSL_set_verify(SSL *s, int mode,
 		       int (*callback)(int ok,X509_STORE_CTX *ctx));
+void	SSL_set_verify_depth(SSL *s, int depth);
 #ifndef NO_RSA
 int	SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa);
 #endif
@@ -912,9 +916,11 @@ X509 *	SSL_get_peer_certificate(SSL *s);
 STACK_OF(X509) *SSL_get_peer_cert_chain(SSL *s);
 
 int SSL_CTX_get_verify_mode(SSL_CTX *ctx);
+int SSL_CTX_get_verify_depth(SSL_CTX *ctx);
 int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int,X509_STORE_CTX *);
 void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,
 			int (*callback)(int, X509_STORE_CTX *));
+void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth);
 void SSL_CTX_set_cert_verify_cb(SSL_CTX *ctx, int (*cb)(),char *arg);
 #ifndef NO_RSA
 int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
