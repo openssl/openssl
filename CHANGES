@@ -4,6 +4,13 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 1999]
 
+  *) Preliminary compilation option RSA_NULL which disables RSA crypto without
+     removing all other RSA functionality (this is what NO_RSA does). This
+     is so (for example) those in the US can disable those operations covered
+     by the RSA patent while allowing storage and parsing of RSA keys and RSA
+     key generation.
+     [Steve Henson]
+
   *) Non-copying interface to BIO pairs.
      (still totally untested)
      [Bodo Moeller]
