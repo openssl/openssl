@@ -229,7 +229,10 @@ void CRYPTO_destroy_dynlockid(int i)
 	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
 
 	if (dyn_locks == NULL || i >= sk_CRYPTO_dynlock_num(dyn_locks))
-		return;
+		{
+		CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
+ 		return;
+		}
 	pointer = sk_CRYPTO_dynlock_value(dyn_locks, i);
 	if (pointer != NULL)
 		{

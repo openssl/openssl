@@ -4,6 +4,14 @@
 
  Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
 
+  *) Release CRYPTO_LOCK_DYNLOCK when CRYPTO_destroy_dynlockid()
+     returns early because it has nothing to do.
+     [Andy Schneider <andy.schneider@bjss.co.uk>]
+
+  *) [In 0.9.6c-engine release:]
+     Fix mutex callback return values in crypto/engine/hw_ncipher.c.
+     [Andy Schneider <andy.schneider@bjss.co.uk>]
+
   *) [In 0.9.6c-engine release:]
      Add support for Cryptographic Appliance's keyserver technology.
      (Use engine 'keyclient')
