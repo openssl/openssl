@@ -96,7 +96,7 @@ SSL, PKCS #1 v2.0
 
 =head1 PATENTS
 
-RSA is covered by a US patent which expires in September 2000.
+RSA was covered by a US patent which expired in September 2000.
 
 =head1 SEE ALSO
 
