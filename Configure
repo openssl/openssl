@@ -206,8 +206,8 @@ my %table=(
 #"linux64-sparcv9","sparc64-linux-gcc:-m64 -mcpu=v9 -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W::-D_REENTRANT:ULTRASPARC::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::::asm/md5-sparcv9.o:",
 
 # Sunos configs, assuming sparc for the gcc one.
-##"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST::(unknown):::DES_UNROLL:::",
-"sunos-gcc","gcc:-O3 -mv8 -Dssize_t=int::(unknown):::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL DES_PTR DES_RISC1:::",
+##"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST::(unknown):SUNOS::DES_UNROLL:::",
+"sunos-gcc","gcc:-O3 -mv8 -Dssize_t=int::(unknown):SUNOS::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL DES_PTR DES_RISC1:::",
 
 #### IRIX 5.x configs
 # -mips2 flag is added by ./config when appropriate.

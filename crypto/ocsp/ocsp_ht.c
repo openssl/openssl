@@ -64,6 +64,9 @@
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
 #include <openssl/buffer.h>
+#ifdef OPENSSL_SYS_SUNOS
+#define strtoul (unsigned long)strtol
+#endif /* OPENSSL_SYS_SUNOS */
 
 /* Quick and dirty HTTP OCSP request handler.
  * Could make this a bit cleverer by adding
