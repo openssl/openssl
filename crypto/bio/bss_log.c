@@ -57,8 +57,8 @@
 	Why BIO_s_log?
 
 	BIO_s_log is useful for system daemons (or services under NT).
-	It is one-way BIO, it sends all stuff to syslogd (or event log
-	under NT).
+	It is one-way BIO, it sends all stuff to syslogd (on system that
+	commonly use that), or event log (on NT), or OPCOM (on OpenVMS).
 
 */
 
@@ -66,14 +66,15 @@
 #include <stdio.h>
 #include <errno.h>
 
-#ifndef WIN32
-#ifdef __ultrix
+#if defined(WIN32)
+#include <process.h>
+#elif defined(VMS) || defined(__VMS)
+#include <opcdef.h>
+#include <descrip.h>
+#elif defined(__ultrix)
 #include <sys/syslog.h>
 #else
 #include <syslog.h>
-#endif
-#else
-#include <process.h>
 #endif
 
 #include "cryptlib.h"
@@ -81,14 +82,39 @@
 #include <openssl/err.h>
 #ifndef NO_SYSLOG
 
+#if defined(WIN32)
+#define LOG_EMERG	0
+#define LOG_ALERT	1
+#define LOG_CRIT	2
+#define LOG_ERR		3
+#define LOG_WARNING	4
+#define LOG_NOTICE	5
+#define LOG_INFO	6
+#define LOG_DEBUG	7
+
+#define LOG_DAEMON	(3<<3)
+#elif defined(VMS)
+/* On VMS, we don't really care about these, but we need them to compile */
+#define LOG_EMERG	0
+#define LOG_ALERT	1
+#define LOG_CRIT	2
+#define LOG_ERR		3
+#define LOG_WARNING	4
+#define LOG_NOTICE	5
+#define LOG_INFO	6
+#define LOG_DEBUG	7
+
+#define LOG_DAEMON	OPC$M_NM_NTWORK
+#endif
 
 static int MS_CALLBACK slg_write(BIO *h,char *buf,int num);
 static int MS_CALLBACK slg_puts(BIO *h,char *str);
 static long MS_CALLBACK slg_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int MS_CALLBACK slg_new(BIO *h);
 static int MS_CALLBACK slg_free(BIO *data);
-static int xopenlog(BIO* bp, const char* name, int level);
-static int xcloselog(BIO* bp);
+static void xopenlog(BIO* bp, const char* name, int level);
+static void xsyslog(BIO* bp, int priority, const char* string);
+static void xcloselog(BIO* bp);
 
 static BIO_METHOD methods_slg=
 	{
@@ -113,11 +139,7 @@ static int MS_CALLBACK slg_new(BIO *bi)
 	bi->init=1;
 	bi->num=0;
 	bi->ptr=NULL;
-#ifndef WIN32
 	xopenlog(bi, "application", LOG_DAEMON);
-#else
-	xopenlog(bi, "application", 0);
-#endif
 	return(1);
 	}
 
@@ -133,43 +155,14 @@ static int MS_CALLBACK slg_write(BIO *b, char *in, int inl)
 	int ret= inl;
 	char* buf= in;
 	char* pp;
-#if defined(WIN32)
-	LPCSTR lpszStrings[2];
-	WORD evtype= EVENTLOG_ERROR_TYPE;
-	int pid = _getpid();
-	char pidbuf[20];
-#else
 	int priority;
-#endif
 
 	if((buf= (char *)Malloc(inl+ 1)) == NULL){
 		return(0);
 	}
 	strncpy(buf, in, inl);
 	buf[inl]= '\0';
-#if defined(WIN32)
-	if(strncmp(buf, "ERR ", 4) == 0){
-		evtype= EVENTLOG_ERROR_TYPE;
-		pp= buf+ 4;
-	}else if(strncmp(buf, "WAR ", 4) == 0){
-		evtype= EVENTLOG_WARNING_TYPE;
-		pp= buf+ 4;
-	}else if(strncmp(buf, "INF ", 4) == 0){
-		evtype= EVENTLOG_INFORMATION_TYPE;
-		pp= buf+ 4;
-	}else{
-		evtype= EVENTLOG_ERROR_TYPE;
-		pp= buf;
-	}
 
-	sprintf(pidbuf, "[%d] ", pid);
-	lpszStrings[0] = pidbuf;
-	lpszStrings[1] = pp;
-
-	if(b->ptr)
-		ReportEvent(b->ptr, evtype, 0, 1024, NULL, 2, 0,
-				lpszStrings, NULL);
-#else
 	if(strncmp(buf, "ERR ", 4) == 0){
 		priority= LOG_ERR;
 		pp= buf+ 4;
@@ -184,8 +177,8 @@ static int MS_CALLBACK slg_write(BIO *b, char *in, int inl)
 		pp= buf;
 	}
 
-	syslog(priority, "%s", pp);
-#endif
+	xsyslog(b, priority, pp);
+
 	Free(buf);
 	return(ret);
 	}
@@ -213,28 +206,115 @@ static int MS_CALLBACK slg_puts(BIO *bp, char *str)
 	return(ret);
 	}
 
-static int xopenlog(BIO* bp, const char* name, int level)
-{
 #if defined(WIN32)
+
+static void xopenlog(BIO* bp, const char* name, int level)
+{
 	if((bp->ptr= (char *)RegisterEventSource(NULL, name)) == NULL){
 		return(0);
 	}
-#else
-	openlog(name, LOG_PID|LOG_CONS, level);
-#endif
 	return(1);
 }
 
-static int xcloselog(BIO* bp)
+static void xsyslog(BIO *bp, int priority, const char *string)
 {
-#if defined(WIN32)
+	LPCSTR lpszStrings[2];
+	WORD evtype= EVENTLOG_ERROR_TYPE;
+	int pid = _getpid();
+	char pidbuf[20];
+
+	switch (priority)
+		{
+	case LOG_ERR:
+		evtype = EVENTLOG_ERROR_TYPE;
+		break;
+	case LOG_WARNING:
+		evtype = EVENTLOG_WARNING_TYPE;
+		break;
+	case LOG_INFO:
+		evtype = EVENTLOG_INFORMATION_TYPE;
+		break;
+	default:
+		evtype = EVENTLOG_ERROR_TYPE;
+		break;
+		}
+
+	sprintf(pidbuf, "[%d] ", pid);
+	lpszStrings[0] = pidbuf;
+	lpszStrings[1] = pp;
+
+	if(bp->ptr)
+		ReportEvent(bp->ptr, evtype, 0, 1024, NULL, 2, 0,
+				lpszStrings, NULL);
+	return 1;
+}
+	
+static void xcloselog(BIO* bp)
+{
 	if(bp->ptr)
 		DeregisterEventSource((HANDLE)(bp->ptr));
 	bp->ptr= NULL;
-#else
-	closelog();
-#endif
 	return(1);
 }
+
+#elif defined(VMS)
+
+static int VMS_OPC_target = OPC$M_NM_NTWORK;
+
+static void xopenlog(BIO* bp, const char* name, int level)
+{
+	VMS_OPC_target = level; 
+}
+
+statis void xsyslog(BIO *bp, int priority, const char *string)
+{
+	struct descriptor_s opc_dsc;
+	struct opcdef *opcdef_p;
+	char buf[10240];
+	unsigned int len;
+	$DESCRIPTOR(buf_dsc, buf);
+	$DESCRIPTOR(fao_cmd, "!AZ");
+
+	lib$sys_fao(&fao_cmd, &len, &buf_dsc, s);
+
+	/* we knoe there's an 8 byte header.  That's documented */
+	opcdef_p = (struct opcdef *) Malloc(8 + strlen(s));
+	opcdef_p->opc$b_ms_type = OPC$_RQ_RQST;
+	memcpy(opcdef_p->opc$b_ms_target, &priority, 3);
+	opcdef_p->opc$l_ms_rqstid = 0;
+	memcpy(&opcdef_p->opc$l_ms_text, buf, len);
+
+	opc_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
+	opc_dsc.dsc$b_class = DSC$K_CLASS_S;
+	opc_dsc.dsc$a_pointer = opcdef_p;
+	opc_dsc.dsc$w_length = len + 8;
+
+	sys$sndopc(opc_dsc, 0);
+
+	Free(opcdef_p);
+}
+
+static void xcloselog(BIO* bp)
+{
+}
+
+#else
+
+static void xopenlog(BIO* bp, const char* name, int level)
+{
+	openlog(name, LOG_PID|LOG_CONS, level);
+}
+
+static void xsyslog(BIO *bp, int priority, const char *string)
+{
+	syslog(priority, "%s", string);
+}
+
+static void xcloselog(BIO* bp)
+{
+	closelog();
+}
+
+#endif
 
 #endif

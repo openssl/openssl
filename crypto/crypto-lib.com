@@ -208,7 +208,7 @@ $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
 	"bss_file,bss_sock,bss_conn,"+ -
 	"bf_null,bf_buff,b_print,b_dump,"+ -
-	"b_sock,bss_acpt,bf_nbio,bss_rtcp,bss_bio" ! + ",bss_log" for syslog
+	"b_sock,bss_acpt,bf_nbio,bss_rtcp,bss_bio,bss_log"
 $ LIB_STACK = "stack"
 $ LIB_LHASH = "lhash,lh_stats"
 $ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd"
