@@ -222,7 +222,7 @@ $cflags.=" -DOPENSSL_NO_SHA"  if $no_sha;
 $cflags.=" -DOPENSSL_NO_SHA1" if $no_sha1;
 $cflags.=" -DOPENSSL_NO_RIPEMD" if $no_ripemd;
 $cflags.=" -DOPENSSL_NO_MDC2" if $no_mdc2;
-$cflags.=" -DOPENSSL_NO_BF"  if $no_bf;
+$cflags.=" -DOPENSSL_NO_BF"   if $no_bf;
 $cflags.=" -DOPENSSL_NO_CAST" if $no_cast;
 $cflags.=" -DOPENSSL_NO_DES"  if $no_des;
 $cflags.=" -DOPENSSL_NO_RSA"  if $no_rsa;
@@ -236,6 +236,7 @@ $cflags.=" -DOPENSSL_NO_KRB5" if $no_krb5;
 $cflags.=" -DOPENSSL_NO_EC"   if $no_ec;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
+$cflags.=" -DFIPS"	      if $fips;
 #$cflags.=" -DRSAref"  if $rsaref ne "";
 
 ## if ($unix)
@@ -919,6 +920,7 @@ sub read_options
 				  $no_aes=1; }
 
 	elsif (/^rsaref$/)	{ }
+	elsif (/^fips$/)	{ $fips=1; }
 	elsif (/^gcc$/)		{ $gcc=1; }
 	elsif (/^debug$/)	{ $debug=1; }
 	elsif (/^profile$/)	{ $profile=1; }
