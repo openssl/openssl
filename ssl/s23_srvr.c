@@ -232,9 +232,9 @@ int ssl23_accept(SSL *s)
 			}
 		}
 end:
+	s->in_handshake--;
 	if (cb != NULL)
 		cb(s,SSL_CB_ACCEPT_EXIT,ret);
-	s->in_handshake--;
 	return(ret);
 	}
 
@@ -339,17 +339,22 @@ int ssl23_get_client_hello(SSL *s)
 			/* We must look at client_version inside the Client Hello message
 			 * to get the correct minor version.
 			 * However if we have only a pathologically small fragment of the
-			 * Client Hello message, this would be difficult, we'd have
-			 * to read at least one additional record to find out.
-			 * This doesn't usually happen in real life, so we just complain
-			 * for now.
-			 */
+			 * Client Hello message, this would be difficult, and we'd have
+			 * to read more records to find out.
+			 * No known SSL 3.0 client fragments ClientHello like this,
+			 * so we simply assume TLS 1.0 to avoid protocol version downgrade
+			 * attacks. */
 			if (p[3] == 0 && p[4] < 6)
 				{
+#if 0
 				SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_RECORD_TOO_SMALL);
 				goto err;
+#else
+				v[1] = TLS1_VERSION_MINOR;
+#endif
 				}
-			v[1]=p[10]; /* minor version according to client_version */
+			else
+				v[1]=p[10]; /* minor version according to client_version */
 			if (v[1] >= TLS1_VERSION_MINOR)
 				{
 				if (!(s->options & SSL_OP_NO_TLSv1))

@@ -12,6 +12,15 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Change ssl23_get_client_hello (ssl/s23_srvr.c) behaviour when
+     faced with a pathologically small ClientHello fragment that does
+     not contain client_version: Instead of aborting with an error,
+     simply choose the highest available protocol version (i.e.,
+     TLS 1.0 unless it is disabled).  In practice, ClientHello
+     messages are never sent like this, but this change gives us
+     strictly correct behaviour at least for TLS.
+     [Bodo Moeller]
+
   +) Change all functions with names starting with des_ to be starting
      with DES_ instead.  This because there are increasing clashes with
      libdes and other des libraries that are currently used by other
