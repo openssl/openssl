@@ -115,7 +115,7 @@ int BN_add_word(BIGNUM *a, BN_ULONG w)
 		a->neg=0;
 		i=BN_sub_word(a,w);
 		if (!BN_is_zero(a))
-			a->neg=1;
+			a->neg=!(a->neg);
 		return(i);
 		}
 	w&=BN_MASK2;
