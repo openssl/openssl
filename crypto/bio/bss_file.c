@@ -91,6 +91,7 @@ static BIO_METHOD methods_filep=
 	file_ctrl,
 	file_new,
 	file_free,
+	NULL,
 	};
 
 BIO *BIO_new_file(const char *filename, const char *mode)

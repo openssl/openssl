@@ -794,6 +794,15 @@ long SSL_ctrl(SSL *s,int cmd,long larg,char *parg)
 		}
 	}
 
+long SSL_callback_ctrl(SSL *s, int cmd, void (*fp)())
+	{
+	switch(cmd)
+		{
+	default:
+		return(s->method->ssl_callback_ctrl(s,cmd,fp));
+		}
+	}
+
 long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,char *parg)
 	{
 	long l;
@@ -850,6 +859,15 @@ long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,char *parg)
 		return(ctx->mode|=larg);
 	default:
 		return(ctx->method->ssl_ctx_ctrl(ctx,cmd,larg,parg));
+		}
+	}
+
+long SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)())
+	{
+	switch(cmd)
+		{
+	default:
+		return(ctx->method->ssl_ctx_callback_ctrl(ctx,cmd,fp));
 		}
 	}
 
@@ -1988,21 +2006,14 @@ void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,RSA *(*cb)(SSL *ssl,
 							  int is_export,
 							  int keylength))
     {
-    union rsa_fn_to_char_u rsa_tmp_cb;
-
-    rsa_tmp_cb.fn_p = cb;
-    SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_RSA_CB,0,rsa_tmp_cb.char_p);
+    SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TMP_RSA_CB,(void (*)())cb);
     }
-#endif
 
-#ifndef NO_RSA
-void SSL_set_tmp_rsa_callback(SSL *ssl,RSA *(*cb)(SSL *ssl,int is_export,
-							  int keylength))
+void SSL_set_tmp_rsa_callback(SSL *ssl,RSA *(*cb)(SSL *ssl,
+						  int is_export,
+						  int keylength))
     {
-    union rsa_fn_to_char_u rsa_tmp_cb;
-
-    rsa_tmp_cb.fn_p = cb;
-    SSL_ctrl(ssl,SSL_CTRL_SET_TMP_RSA_CB,0,rsa_tmp_cb.char_p);
+    SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_RSA_CB,(void (*)())cb);
     }
 #endif
 
@@ -2031,19 +2042,13 @@ RSA *cb(SSL *ssl,int is_export,int keylength)
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int is_export,
 							int keylength))
     {
-    union dh_fn_to_char_u dh_tmp_cb;
-
-    dh_tmp_cb.fn_p = dh;
-    SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,0,dh_tmp_cb.char_p);
+    SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,(void (*)())dh);
     }
 
 void SSL_set_tmp_dh_callback(SSL *ssl,DH *(*dh)(SSL *ssl,int is_export,
-							int keylength))
+						int keylength))
     {
-    union dh_fn_to_char_u dh_tmp_cb;
-
-    dh_tmp_cb.fn_p = dh;
-    SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH_CB,0,dh_tmp_cb.char_p);
+    SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_DH_CB,(void (*)())dh);
     }
 #endif
 

@@ -317,16 +317,43 @@ long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
 	return(ret);
 	}
 
+long BIO_callback_ctrl(BIO *b, int cmd, void (*fp)())
+	{
+	long ret;
+	long (*cb)();
+
+	if (b == NULL) return(0);
+
+	if ((b->method == NULL) || (b->method->callback_ctrl == NULL))
+		{
+		BIOerr(BIO_F_BIO_CTRL,BIO_R_UNSUPPORTED_METHOD);
+		return(-2);
+		}
+
+	cb=b->callback;
+
+	if ((cb != NULL) &&
+		((ret=cb(b,BIO_CB_CTRL,(void *)&fp,cmd,0,1L)) <= 0))
+		return(ret);
+
+	ret=b->method->callback_ctrl(b,cmd,fp);
+
+	if (cb != NULL)
+		ret=cb(b,BIO_CB_CTRL|BIO_CB_RETURN,(void *)&fp,cmd,
+			0,ret);
+	return(ret);
+	}
+
 /* It is unfortunate to duplicate in functions what the BIO_(w)pending macros
  * do; but those macros have inappropriate return type, and for interfacing
  * from other programming languages, C macros aren't much of a help anyway. */
 size_t BIO_ctrl_pending(BIO *bio)
-    {
+	{
 	return BIO_ctrl(bio, BIO_CTRL_PENDING, 0, NULL);
 	}
 
 size_t BIO_ctrl_wpending(BIO *bio)
-    {
+	{
 	return BIO_ctrl(bio, BIO_CTRL_WPENDING, 0, NULL);
 	}
 

@@ -101,6 +101,9 @@ static SSL_METHOD TLSv1_data= {
 	ssl_bad_method,
 	tls1_default_timeout,
 	&TLSv1_enc_data,
+	ssl_undefined_function,
+	ssl3_callback_ctrl,
+	ssl3_ctx_callback_ctrl,
 	};
 
 static long tls1_default_timeout(void)
@@ -135,6 +138,11 @@ void tls1_clear(SSL *s)
 
 #if 0
 long tls1_ctrl(SSL *s, int cmd, long larg, char *parg)
+	{
+	return(0);
+	}
+
+long tls1_callback_ctrl(SSL *s, int cmd, void *(*fp)())
 	{
 	return(0);
 	}

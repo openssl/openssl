@@ -107,6 +107,7 @@ static BIO_METHOD rtcp_method=
 	rtcp_ctrl,
 	rtcp_new,
 	rtcp_free,
+	NULL,
 	};
 
 BIO_METHOD *BIO_s_rtcp(void)

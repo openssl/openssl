@@ -118,6 +118,7 @@ static BIO_METHOD methods_acceptp=
 	acpt_ctrl,
 	acpt_new,
 	acpt_free,
+	NULL,
 	};
 
 BIO_METHOD *BIO_s_accept(void)

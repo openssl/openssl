@@ -230,6 +230,9 @@ static SSL_METHOD SSLv2_data= {
 	ssl_bad_method,
 	ssl2_default_timeout,
 	&ssl3_undef_enc_method,
+	ssl_undefined_function,
+	ssl2_callback_ctrl,	/* local */
+	ssl2_ctx_callback_ctrl,	/* local */
 	};
 
 static long ssl2_default_timeout(void)
@@ -335,7 +338,17 @@ long ssl2_ctrl(SSL *s, int cmd, long larg, char *parg)
 	return(ret);
 	}
 
+long ssl2_callback_ctrl(SSL *s, int cmd, void (*fp)())
+	{
+	return(0);
+	}
+
 long ssl2_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
+	{
+	return(0);
+	}
+
+long ssl2_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)())
 	{
 	return(0);
 	}

@@ -69,6 +69,7 @@ static int buffer_gets(BIO *h,char *str,int size);
 static long buffer_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int buffer_new(BIO *h);
 static int buffer_free(BIO *data);
+static long buffer_callback_ctrl(BIO *h,int cmd, void (*fp)());
 #define DEFAULT_BUFFER_SIZE	1024
 
 static BIO_METHOD methods_buffer=
@@ -82,6 +83,7 @@ static BIO_METHOD methods_buffer=
 	buffer_ctrl,
 	buffer_new,
 	buffer_free,
+	buffer_callback_ctrl,
 	};
 
 BIO_METHOD *BIO_f_buffer(void)
@@ -284,6 +286,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, char *ptr)
 		ctx->ibuf_len=0;
 		ctx->obuf_off=0;
 		ctx->obuf_len=0;
+		if (b->next_bio == NULL) return(0);
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		break;
 	case BIO_CTRL_INFO:
@@ -300,12 +303,18 @@ static long buffer_ctrl(BIO *b, int cmd, long num, char *ptr)
 	case BIO_CTRL_WPENDING:
 		ret=(long)ctx->obuf_len;
 		if (ret == 0)
+			{
+			if (b->next_bio == NULL) return(0);
 			ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+			}
 		break;
 	case BIO_CTRL_PENDING:
 		ret=(long)ctx->ibuf_len;
 		if (ret == 0)
+			{
+			if (b->next_bio == NULL) return(0);
 			ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+			}
 		break;
 	case BIO_C_SET_BUFF_READ_DATA:
 		if (num > ctx->ibuf_size)
@@ -374,12 +383,14 @@ static long buffer_ctrl(BIO *b, int cmd, long num, char *ptr)
 			}
 		break;
 	case BIO_C_DO_STATE_MACHINE:
+		if (b->next_bio == NULL) return(0);
 		BIO_clear_retry_flags(b);
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		BIO_copy_next_retry(b);
 		break;
 
 	case BIO_CTRL_FLUSH:
+		if (b->next_bio == NULL) return(0);
 		if (ctx->obuf_len <= 0)
 			{
 			ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
@@ -418,6 +429,7 @@ fprintf(stderr,"FLUSH [%3d] %3d -> %3d\n",ctx->obuf_off,ctx->obuf_len-ctx->obuf_
 			ret=0;
 		break;
 	default:
+		if (b->next_bio == NULL) return(0);
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		break;
 		}
@@ -425,6 +437,20 @@ fprintf(stderr,"FLUSH [%3d] %3d -> %3d\n",ctx->obuf_off,ctx->obuf_len-ctx->obuf_
 malloc_error:
 	BIOerr(BIO_F_BUFFER_CTRL,ERR_R_MALLOC_FAILURE);
 	return(0);
+	}
+
+static long buffer_callback_ctrl(BIO *b, int cmd, void (*fp)())
+	{
+	long ret=1;
+
+	if (b->next_bio == NULL) return(0);
+	switch (cmd)
+		{
+	default:
+		ret=BIO_callback_ctrl(b->next_bio,cmd,fp);
+		break;
+		}
+	return(ret);
 	}
 
 static int buffer_gets(BIO *b, char *buf, int size)

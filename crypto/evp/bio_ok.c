@@ -130,6 +130,8 @@ static int ok_read(BIO *h,char *buf,int size);
 static long ok_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int ok_new(BIO *h);
 static int ok_free(BIO *data);
+static long ok_callback_ctrl(BIO *h,int cmd,void (*fp)());
+
 static void sig_out(BIO* b);
 static void sig_in(BIO* b);
 static void block_out(BIO* b);
@@ -173,6 +175,7 @@ static BIO_METHOD methods_ok=
 	ok_ctrl,
 	ok_new,
 	ok_free,
+	ok_callback_ctrl,
 	};
 
 BIO_METHOD *BIO_f_reliable(void)
@@ -423,6 +426,20 @@ static long ok_ctrl(BIO *b, int cmd, long num, char *ptr)
 		break;
 	default:
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+		break;
+		}
+	return(ret);
+	}
+
+static long ok_callback_ctrl(BIO *b, int cmd, void (*fp)())
+	{
+	long ret=1;
+
+	if (b->next_bio == NULL) return(0);
+	switch (cmd)
+		{
+	default:
+		ret=BIO_callback_ctrl(b->next_bio,cmd,fp);
 		break;
 		}
 	return(ret);

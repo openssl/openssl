@@ -69,6 +69,7 @@ static int b64_read(BIO *h,char *buf,int size);
 static long b64_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int b64_new(BIO *h);
 static int b64_free(BIO *data);
+static long b64_callback_ctrl(BIO *h,int cmd,void (*fp)());
 #define B64_BLOCK_SIZE	1024
 #define B64_BLOCK_SIZE2	768
 #define B64_NONE	0
@@ -100,6 +101,7 @@ static BIO_METHOD methods_b64=
 	b64_ctrl,
 	b64_new,
 	b64_free,
+	b64_callback_ctrl,
 	};
 
 BIO_METHOD *BIO_f_base64(void)
@@ -517,6 +519,20 @@ again:
 	case BIO_CTRL_SET:
 	default:
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+		break;
+		}
+	return(ret);
+	}
+
+static long b64_callback_ctrl(BIO *b, int cmd, void (*fp)())
+	{
+	long ret=1;
+
+	if (b->next_bio == NULL) return(0);
+	switch (cmd)
+		{
+	default:
+		ret=BIO_callback_ctrl(b->next_bio,cmd,fp);
 		break;
 		}
 	return(ret);

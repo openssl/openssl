@@ -219,6 +219,7 @@ typedef struct bio_method_st
 	long (*ctrl)();
 	int (*create)();
 	int (*destroy)();
+	long (*callback_ctrl)();
 	} BIO_METHOD;
 #else
 typedef struct bio_method_st
@@ -232,6 +233,7 @@ typedef struct bio_method_st
 	long (_far *ctrl)();
 	int (_far *create)();
 	int (_far *destroy)();
+	long (_fat *callback_ctrl)();
 	} BIO_METHOD;
 #endif
 
@@ -373,7 +375,7 @@ typedef struct bio_f_buffer_ctx_struct
 /* BIO_set_nbio(b,n) */
 #define BIO_set_filter_bio(b,s) BIO_ctrl(b,BIO_C_SET_PROXY_PARAM,2,(char *)(s))
 /* BIO *BIO_get_filter_bio(BIO *bio); */
-#define BIO_set_proxy_cb(b,cb) BIO_ctrl(b,BIO_C_SET_PROXY_PARAM,3,(char *)(cb))
+#define BIO_set_proxy_cb(b,cb) BIO_callback_ctrl(b,BIO_C_SET_PROXY_PARAM,3,(void *(*cb)()))
 #define BIO_set_proxy_header(b,sk) BIO_ctrl(b,BIO_C_SET_PROXY_PARAM,4,(char *)sk)
 #define BIO_set_no_connect_return(b,bool) BIO_int_ctrl(b,BIO_C_SET_PROXY_PARAM,5,bool)
 
@@ -452,8 +454,8 @@ int BIO_read_filename(BIO *b,const char *name);
 size_t BIO_ctrl_pending(BIO *b);
 size_t BIO_ctrl_wpending(BIO *b);
 #define BIO_flush(b)		(int)BIO_ctrl(b,BIO_CTRL_FLUSH,0,NULL)
-#define BIO_get_info_callback(b,cbp) (int)BIO_ctrl(b,BIO_CTRL_GET_CALLBACK,0,(char *)cbp)
-#define BIO_set_info_callback(b,cb) (int)BIO_ctrl(b,BIO_CTRL_SET_CALLBACK,0,(char *)cb)
+#define BIO_get_info_callback(b,cbp) (int)BIO_ctrl(b,BIO_CTRL_GET_CALLBACK,0,(void (**)())(cbp))
+#define BIO_set_info_callback(b,cb) (int)BIO_callback_ctrl(b,BIO_CTRL_SET_CALLBACK,(void (*)())(cb))
 
 /* For the BIO_f_buffer() type */
 #define BIO_buffer_get_num_lines(b) BIO_ctrl(b,BIO_CTRL_GET,0,NULL)
@@ -508,6 +510,7 @@ int	BIO_gets(BIO *bp,char *buf, int size);
 int	BIO_write(BIO *b, const char *data, int len);
 int	BIO_puts(BIO *bp,const char *buf);
 long	BIO_ctrl(BIO *bp,int cmd,long larg,void *parg);
+long	BIO_callback_ctrl(BIO *bp,int cmd,void (*fp)());
 char *	BIO_ptr_ctrl(BIO *bp,int cmd,long larg);
 long	BIO_int_ctrl(BIO *bp,int cmd,long larg,int iarg);
 BIO *	BIO_push(BIO *b,BIO *append);

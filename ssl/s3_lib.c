@@ -608,18 +608,9 @@ static SSL_METHOD SSLv3_data= {
 	ssl_bad_method,
 	ssl3_default_timeout,
 	&SSLv3_enc_data,
-	};
-
-union rsa_fn_to_char_u
-	{
-	char *char_p;
-	RSA *(*fn_p)(SSL *, int, int);
-	};
-
-union dh_fn_to_char_u
-	{
-	char *char_p;
-	DH *(*fn_p)(SSL *, int, int);
+	ssl_undefined_function,
+	ssl3_callback_ctrl,
+	ssl3_ctx_callback_ctrl,
 	};
 
 static long ssl3_default_timeout(void)
@@ -792,10 +783,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, char *parg)
 		break;
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		{
-		union rsa_fn_to_char_u rsa_tmp_cb;
-
-		rsa_tmp_cb.char_p = parg;
-		s->cert->rsa_tmp_cb = rsa_tmp_cb.fn_p;
+		SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return(ret);
 		}
 		break;
 #endif
@@ -824,10 +813,52 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, char *parg)
 		break;
 	case SSL_CTRL_SET_TMP_DH_CB:
 		{
-		union dh_fn_to_char_u dh_tmp_cb;
+		SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return(ret);
+		}
+		break;
+#endif
+	default:
+		break;
+		}
+	return(ret);
+	}
 
-		dh_tmp_cb.char_p = parg;
-		s->cert->dh_tmp_cb = dh_tmp_cb.fn_p;
+long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)())
+	{
+	int ret=0;
+
+#if !defined(NO_DSA) || !defined(NO_RSA)
+	if (
+#ifndef NO_RSA
+	    cmd == SSL_CTRL_SET_TMP_RSA_CB ||
+#endif
+#ifndef NO_DSA
+	    cmd == SSL_CTRL_SET_TMP_DH_CB ||
+#endif
+		0)
+		{
+		if (!ssl_cert_inst(&s->cert))
+		    	{
+			SSLerr(SSL_F_SSL3_CTRL, ERR_R_MALLOC_FAILURE);
+			return(0);
+			}
+		}
+#endif
+
+	switch (cmd)
+		{
+#ifndef NO_RSA
+	case SSL_CTRL_SET_TMP_RSA_CB:
+		{
+		s->cert->rsa_tmp_cb = (RSA *(*)(SSL *, int, int))fp;
+		}
+		break;
+#endif
+#ifndef NO_DH
+	case SSL_CTRL_SET_TMP_DH_CB:
+		{
+		s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
 		}
 		break;
 #endif
@@ -885,10 +916,8 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 		/* break; */
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		{
-		union rsa_fn_to_char_u rsa_tmp_cb;
-
-		rsa_tmp_cb.char_p = parg;
-		cert->rsa_tmp_cb = rsa_tmp_cb.fn_p;
+		SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return(0);
 		}
 		break;
 #endif
@@ -917,10 +946,8 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 		/*break; */
 	case SSL_CTRL_SET_TMP_DH_CB:
 		{
-		union dh_fn_to_char_u dh_tmp_cb;
-
-		dh_tmp_cb.char_p = parg;
-		cert->dh_tmp_cb = dh_tmp_cb.fn_p;
+		SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return(0);
 		}
 		break;
 #endif
@@ -934,6 +961,34 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 		sk_X509_push(ctx->extra_certs,(X509 *)parg);
 		break;
 
+	default:
+		return(0);
+		}
+	return(1);
+	}
+
+long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)())
+	{
+	CERT *cert;
+
+	cert=ctx->cert;
+
+	switch (cmd)
+		{
+#ifndef NO_RSA
+	case SSL_CTRL_SET_TMP_RSA_CB:
+		{
+		cert->rsa_tmp_cb = (RSA *(*)(SSL *, int, int))fp;
+		}
+		break;
+#endif
+#ifndef NO_DH
+	case SSL_CTRL_SET_TMP_DH_CB:
+		{
+		cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
+		}
+		break;
+#endif
 	default:
 		return(0);
 		}

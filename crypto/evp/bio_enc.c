@@ -69,6 +69,7 @@ static int enc_read(BIO *h,char *buf,int size);
 static long enc_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int enc_new(BIO *h);
 static int enc_free(BIO *data);
+static long enc_callback_ctrl(BIO *h,int cmd,void (*fp)());
 #define ENC_BLOCK_SIZE	(1024*4)
 
 typedef struct enc_struct
@@ -92,6 +93,7 @@ static BIO_METHOD methods_enc=
 	enc_ctrl,
 	enc_new,
 	enc_free,
+	enc_callback_ctrl,
 	};
 
 BIO_METHOD *BIO_f_cipher(void)
@@ -363,6 +365,20 @@ again:
 		break;
 	default:
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+		break;
+		}
+	return(ret);
+	}
+
+static long enc_callback_ctrl(BIO *b, int cmd, void (*fp)())
+	{
+	long ret=1;
+
+	if (b->next_bio == NULL) return(0);
+	switch (cmd)
+		{
+	default:
+		ret=BIO_callback_ctrl(b->next_bio,cmd,fp);
 		break;
 		}
 	return(ret);

@@ -72,6 +72,7 @@ static int nullf_gets(BIO *h,char *str,int size);
 static long nullf_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int nullf_new(BIO *h);
 static int nullf_free(BIO *data);
+static long nullf_callback_ctrl(BIO *h,int cmd,void (*fp)());
 static BIO_METHOD methods_nullf=
 	{
 	BIO_TYPE_NULL_FILTER,
@@ -83,6 +84,7 @@ static BIO_METHOD methods_nullf=
 	nullf_ctrl,
 	nullf_new,
 	nullf_free,
+	nullf_callback_ctrl,
 	};
 
 BIO_METHOD *BIO_f_null(void)
@@ -148,6 +150,20 @@ static long nullf_ctrl(BIO *b, int cmd, long num, char *ptr)
 		break;
 	default:
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+		}
+	return(ret);
+	}
+
+static long nullf_callback_ctrl(BIO *b, int cmd, void (*fp)())
+	{
+	long ret=1;
+
+	if (b->next_bio == NULL) return(0);
+	switch (cmd)
+		{
+	default:
+		ret=BIO_callback_ctrl(b->next_bio,cmd,fp);
+		break;
 		}
 	return(ret);
 	}

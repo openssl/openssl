@@ -79,6 +79,7 @@ static BIO_METHOD null_method=
 	null_ctrl,
 	null_new,
 	null_free,
+	NULL,
 	};
 
 BIO_METHOD *BIO_s_null(void)

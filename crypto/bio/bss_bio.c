@@ -41,7 +41,8 @@ static BIO_METHOD methods_biop =
 	NULL /* no bio_gets */,
 	bio_ctrl,
 	bio_new,
-	bio_free
+	bio_free,
+	NULL /* no bio_callback_ctrl */
 };
 
 BIO_METHOD *BIO_s_bio(void)

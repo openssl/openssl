@@ -72,6 +72,8 @@ static int md_gets(BIO *h,char *str,int size);
 static long md_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int md_new(BIO *h);
 static int md_free(BIO *data);
+static long md_callback_ctrl(BIO *h,int cmd,void (*fp)());
+
 static BIO_METHOD methods_md=
 	{
 	BIO_TYPE_MD,"message digest",
@@ -82,6 +84,7 @@ static BIO_METHOD methods_md=
 	md_ctrl,
 	md_new,
 	md_free,
+	md_callback_ctrl,
 	};
 
 BIO_METHOD *BIO_f_md(void)
@@ -215,6 +218,20 @@ static long md_ctrl(BIO *b, int cmd, long num, char *ptr)
 		break;
 	default:
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+		break;
+		}
+	return(ret);
+	}
+
+static long md_callback_ctrl(BIO *b, int cmd, void (*fp)())
+	{
+	long ret=1;
+
+	if (b->next_bio == NULL) return(0);
+	switch (cmd)
+		{
+	default:
+		ret=BIO_callback_ctrl(b->next_bio,cmd,fp);
 		break;
 		}
 	return(ret);

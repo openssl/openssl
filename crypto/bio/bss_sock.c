@@ -95,6 +95,7 @@ static BIO_METHOD methods_sockp=
 	sock_ctrl,
 	sock_new,
 	sock_free,
+	NULL,
 	};
 
 BIO_METHOD *BIO_s_socket(void)
@@ -112,6 +113,7 @@ static BIO_METHOD methods_fdp=
 	fd_ctrl,
 	fd_new,
 	fd_free,
+	NULL,
 	};
 
 BIO_METHOD *BIO_s_fd(void)

@@ -79,6 +79,7 @@ static BIO_METHOD mem_method=
 	mem_ctrl,
 	mem_new,
 	mem_free,
+	NULL,
 	};
 
 /* bio->num is used to hold the value to return on 'empty', if it is

@@ -69,6 +69,7 @@ static int ber_read(BIO *h,char *buf,int size);
 static long ber_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int ber_new(BIO *h);
 static int ber_free(BIO *data);
+static long ber_callback_ctrl(BIO *h,int cmd,void *(*fp)());
 #define BER_BUF_SIZE	(32)
 
 /* This is used to hold the state of the BER objects being read. */
@@ -115,6 +116,7 @@ static BIO_METHOD methods_ber=
 	ber_ctrl,
 	ber_new,
 	ber_free,
+	ber_callback_ctrl,
 	};
 
 BIO_METHOD *BIO_f_ber(void)
@@ -404,6 +406,20 @@ again:
 		break;
 	default:
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+		break;
+		}
+	return(ret);
+	}
+
+static long ber_callback_ctrl(BIO *b, int cmd, void *(*fp)())
+	{
+	long ret=1;
+
+	if (b->next_bio == NULL) return(0);
+	switch (cmd)
+		{
+	default:
+		ret=BIO_callback_ctrl(b->next_bio,cmd,fp);
 		break;
 		}
 	return(ret);

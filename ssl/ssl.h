@@ -210,6 +210,8 @@ typedef struct ssl_method_st
 	long (*get_timeout)(void);
 	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
 	int (*ssl_version)();
+	long (*ssl_callback_ctrl)(SSL *s, int cb_id, void (*fp)());
+	long (*ssl_ctx_callback_ctrl)(SSL_CTX *s, int cb_id, void (*fp)());
 	} SSL_METHOD;
 
 /* Lets make this into an ASN.1 type structure as follows

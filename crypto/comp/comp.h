@@ -17,6 +17,7 @@ typedef struct comp_method_st
 	int (*compress)();
 	int (*expand)();
 	long (*ctrl)();
+	long (*callback_ctrl)();
 	} COMP_METHOD;
 
 typedef struct comp_ctx_st
