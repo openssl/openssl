@@ -175,10 +175,6 @@ void ERR_load_EC_strings(void);
 /* Error codes for the EC functions. */
 
 /* Function codes. */
-#define EC_F_EC_GFP_MONT2_FIELD_DECODE			 143
-#define EC_F_EC_GFP_MONT2_FIELD_ENCODE			 144
-#define EC_F_EC_GFP_MONT2_FIELD_MUL			 145
-#define EC_F_EC_GFP_MONT2_FIELD_SQR			 146
 #define EC_F_EC_GFP_MONT_FIELD_DECODE			 133
 #define EC_F_EC_GFP_MONT_FIELD_ENCODE			 134
 #define EC_F_EC_GFP_MONT_FIELD_MUL			 131
@@ -221,7 +217,6 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP	 125
 #define EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP	 126
 #define EC_F_EC_POINT_SET_TO_INFINITY			 127
-#define EC_F_GFP_MONT2_GROUP_SET_CURVE_GFP		 147
 #define EC_F_GFP_MONT_GROUP_SET_CURVE_GFP		 135
 
 /* Reason codes. */
