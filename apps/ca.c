@@ -264,6 +264,7 @@ int MAIN(int argc, char **argv)
 	{
 	ENGINE *e = NULL;
 	char *key=NULL,*passargin=NULL;
+	int free_key = 0;
 	int total=0;
 	int total_done=0;
 	int badops=0;
@@ -677,10 +678,14 @@ bad:
 		lookup_fail(section,ENV_PRIVATE_KEY);
 		goto err;
 		}
-	if (!key && !app_passwd(bio_err, passargin, NULL, &key, NULL))
+	if (!key)
 		{
-		BIO_printf(bio_err,"Error getting password\n");
-		goto err;
+		free_key = 1;
+		if (!app_passwd(bio_err, passargin, NULL, &key, NULL))
+			{
+			BIO_printf(bio_err,"Error getting password\n");
+			goto err;
+			}
 		}
 	pkey = load_key(bio_err, keyfile, keyform, key, e, 
 		"CA private key");
@@ -1577,6 +1582,8 @@ err:
 
 	if (ret) ERR_print_errors(bio_err);
 	app_RAND_write_file(randfile, bio_err);
+	if (free_key)
+		OPENSSL_free(key);
 	BN_free(serial);
 	TXT_DB_free(db);
 	EVP_PKEY_free(pkey);

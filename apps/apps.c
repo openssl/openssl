@@ -459,6 +459,15 @@ int password_callback(char *buf, int bufsiz, int verify,
 			prompt_info = cb_data->prompt_info;
 		}
 
+	if (password)
+		{
+		res = strlen(password);
+		if (res > bufsiz)
+			res = bufsiz;
+		memcpy(buf, password, res);
+		return res;
+		}
+
 	ui = UI_new_method(ui_method);
 	if (ui)
 		{
