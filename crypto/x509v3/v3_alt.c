@@ -65,11 +65,6 @@
 #include <conf.h>
 #include "x509v3.h"
 
-#ifndef NOPROTO
-static STACK *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method, STACK *gen);
-/*static STACK *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *values);*/
-#endif
-
 X509V3_EXT_METHOD v3_alt[] = {
 { NID_subject_alt_name, 0,
 (X509V3_EXT_NEW)GENERAL_NAMES_new,
@@ -92,13 +87,14 @@ NULL, NULL},
 EXT_END
 };
 
-static STACK *i2v_GENERAL_NAMES(method, gens)
+STACK *i2v_GENERAL_NAMES(method, gens, ret)
 X509V3_EXT_METHOD *method;
 STACK *gens;
+STACK *ret;
 {
 	int i;
-	STACK *ret = NULL;
 	GENERAL_NAME *gen;
+	char oline[256];
 	for(i = 0; i < sk_num(gens); i++) {
 		gen = (GENERAL_NAME *)sk_value(gens, i);
 		switch (gen->type)
@@ -125,6 +121,11 @@ STACK *gens;
 
                 case GEN_URI:
 		X509V3_add_value("URI",gen->d.ia5->data, &ret);
+                break;
+
+                case GEN_DIRNAME:
+		X509_NAME_oneline(gen->d.dirn, oline, 256);
+		X509V3_add_value("DirName",oline, &ret);
                 break;
 
                 case GEN_IPADD:

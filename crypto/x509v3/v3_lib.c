@@ -108,7 +108,6 @@ X509_EXTENSION *ext;
 	return X509V3_EXT_get_nid(nid);
 }
 
-extern X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku, v3_ns_ia5_list[],v3_alt[];
 
 int X509V3_EXT_add_list(extlist)
 X509V3_EXT_METHOD *extlist;
@@ -132,7 +131,7 @@ int nid_to, nid_from;
 	}
 	*tmpext = *ext;
 	tmpext->ext_nid = nid_to;
-	tmpext->ext_flags = X509V3_EXT_DYNAMIC;
+	tmpext->ext_flags |= X509V3_EXT_DYNAMIC;
 	return 1;
 }
 
@@ -147,6 +146,9 @@ X509V3_EXT_METHOD *ext;
 	if(ext->ext_flags & X509V3_EXT_DYNAMIC) Free(ext);
 }
 
+extern X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
+extern X509V3_EXT_METHOD v3_ns_ia5_list[], v3_alt[], v3_skey_id, v3_akey_id;
+
 int X509V3_add_standard_extensions()
 {
 	X509V3_EXT_add_list(v3_ns_ia5_list);
@@ -155,5 +157,7 @@ int X509V3_add_standard_extensions()
 	X509V3_EXT_add(&v3_nscert);
 	X509V3_EXT_add(&v3_key_usage);
 	X509V3_EXT_add(&v3_ext_ku);
+	X509V3_EXT_add(&v3_skey_id);
+	X509V3_EXT_add(&v3_akey_id);
 	return 1;
 }

@@ -68,7 +68,7 @@
 #ifndef NOPROTO
 static ASN1_BIT_STRING *asn1_bit_string_new(void);
 static ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
-static STACK *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, ASN1_BIT_STRING *bits);
+static STACK *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, ASN1_BIT_STRING *bits, STACK *extlist);
 #else
 static ASN1_BIT_STRING *asn1_bit_string_new();
 static ASN1_BIT_STRING *v2i_ASN1_BIT_STRING();
@@ -110,12 +110,12 @@ static ASN1_BIT_STRING *asn1_bit_string_new()
 	return ASN1_BIT_STRING_new();
 }
 
-static STACK *i2v_ASN1_BIT_STRING(method, bits)
+static STACK *i2v_ASN1_BIT_STRING(method, bits, ret)
 X509V3_EXT_METHOD *method;
 ASN1_BIT_STRING *bits;
+STACK *ret;
 {
 	BIT_STRING_BITNAME *bnam;
-	STACK *ret = NULL;
 	for(bnam =(BIT_STRING_BITNAME *)method->usr_data; bnam->lname; bnam++) {
 		if(ASN1_BIT_STRING_get_bit(bits, bnam->bitnum)) 
 			X509V3_add_value(bnam->lname, NULL, &ret);

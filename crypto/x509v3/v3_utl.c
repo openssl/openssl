@@ -310,3 +310,86 @@ char *name;
 	if(!*p) return NULL;
 	return p;
 }
+
+/* hex string utilities */
+
+/* Given a buffer of length 'len' return a Malloc'ed string with its
+ * hex representation
+ */
+
+char *hex_to_string(buffer, len)
+unsigned char *buffer;
+long len;
+{
+	char *tmp, *q;
+	unsigned char *p;
+	int i;
+	static char hexdig[] = "0123456789ABCDEF";
+	if(!buffer || !len) return NULL;
+	if(!(tmp = Malloc(len * 3 + 1))) {
+		X509V3err(X509V3_F_HEX_TO_STRING,ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+	q = tmp;
+	for(i = 0, p = buffer; i < len; i++,p++) {
+		*q++ = hexdig[(*p >> 4) & 0xf];
+		*q++ = hexdig[*p & 0xf];
+		*q++ = ':';
+	}
+	q[-1] = 0;
+	return tmp;
+}
+
+/* Give a string of hex digits convert to
+ * a buffer
+ */
+
+unsigned char *string_to_hex(str, len)
+char *str;
+long *len;
+{
+	unsigned char *hexbuf, *q;
+	unsigned char ch, cl, *p;
+	if(!str) {
+		X509V3err(X509V3_F_STRING_TO_HEX,X509V3_R_INVALID_NULL_ARGUMENT);
+		return NULL;
+	}
+	if(!(hexbuf = Malloc(strlen(str) >> 1))) goto err;
+	for(p = (unsigned char *)str, q = hexbuf; *p;) {
+		ch = *p++;
+		if(ch == ':') continue;
+		cl = *p++;
+		if(!cl) {
+			X509V3err(X509V3_F_STRING_TO_HEX,X509V3_R_ODD_NUMBER_OF_DIGITS);
+			Free(hexbuf);
+			return NULL;
+		}
+		if(isupper(ch)) ch = tolower(ch);
+		if(isupper(cl)) cl = tolower(cl);
+
+		if((ch >= '0') && (ch <= '9')) ch -= '0';
+		else if ((ch >= 'a') && (ch <= 'f')) ch -= 'a' - 10;
+		else goto badhex;
+
+		if((cl >= '0') && (cl <= '9')) cl -= '0';
+		else if ((cl >= 'a') && (cl <= 'f')) cl -= 'a' - 10;
+		else goto badhex;
+
+		*q++ = (ch << 4) | cl;
+	}
+
+	if(len) *len = q - hexbuf;
+
+	return hexbuf;
+
+	err:
+	if(hexbuf) Free(hexbuf);
+	X509V3err(X509V3_F_STRING_TO_HEX,ERR_R_MALLOC_FAILURE);
+	return NULL;
+
+	badhex:
+	Free(hexbuf);
+	X509V3err(X509V3_F_STRING_TO_HEX,X509V3_R_ILLEGAL_HEX_DIGIT);
+	return NULL;
+
+}

@@ -690,9 +690,8 @@ bad:
 
 		extensions=CONF_get_string(conf,section,ENV_EXTENSIONS);
 		if(extensions) {
-
 			/* Check syntax of file */
-			if(!X509V3_EXT_add_conf(conf, NULL, extensions, NULL)) {
+			if(!X509V3_EXT_check_conf(conf, extensions)) {
 				BIO_printf(bio_err,
 				 "Error Loading extension section %s\n",
 								 extensions);
@@ -1669,6 +1668,7 @@ again2:
 	/* Lets add the extensions, if there are any */
 	if (ext_sect)
 		{
+		X509V3_CTX ctx;
 		if (ci->version == NULL)
 			if ((ci->version=ASN1_INTEGER_new()) == NULL)
 				goto err;
@@ -1681,7 +1681,13 @@ again2:
 
 		ci->extensions = NULL;
 
-		if(!X509V3_EXT_add_conf(conf, NULL, ext_sect, ret)) goto err;
+		ctx.subject_cert = ret;
+		ctx.issuer_cert = x509;
+		ctx.subject_req = req;
+		ctx.crl = NULL;
+		ctx.flags = 0;
+
+		if(!X509V3_EXT_add_conf(conf, &ctx, ext_sect, ret)) goto err;
 
 		}
 

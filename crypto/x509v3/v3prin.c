@@ -70,6 +70,7 @@ char **argv;
 	int i, count;
 	X509_EXTENSION *ext;
 	X509V3_add_standard_extensions();
+	ERR_load_crypto_strings();
 	if(!argv[1]) {
 		fprintf(stderr, "Usage v3prin cert.pem\n");
 		exit(1);
@@ -89,7 +90,7 @@ char **argv;
 	for(i = 0; i < count; i++) {
 		ext = X509_get_ext(cert, i);
 		printf("%s\n", OBJ_nid2ln(OBJ_obj2nid(ext->object)));
-		X509V3_EXT_print_fp(stdout, ext, 0);
+		if(!X509V3_EXT_print_fp(stdout, ext, 0)) ERR_print_errors_fp(stderr);
 		printf("\n");
 		
 	}

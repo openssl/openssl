@@ -163,3 +163,11 @@ X509 *cert;
 	return 1;
 }
 
+/* Just check syntax of config file as far as possible */
+int X509V3_EXT_check_conf(conf, section)
+LHASH *conf;
+char *section;
+{
+	static X509V3_CTX ctx_tst = { CTX_TEST, NULL, NULL, NULL, NULL };
+	return X509V3_EXT_add_conf(conf, &ctx_tst, section, NULL);
+}

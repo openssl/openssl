@@ -1,4 +1,4 @@
-/* v3_extku.c */
+/* v3_akey.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project 1999.
  */
@@ -66,100 +66,120 @@
 #include "x509v3.h"
 
 #ifndef NOPROTO
-static STACK *v2i_ext_ku(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
-static STACK *i2v_ext_ku(X509V3_EXT_METHOD *method, STACK *eku, STACK *extlist);
+static STACK *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, AUTHORITY_KEYID *akeyid, STACK *extlist);
+static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *values);
+
 #else
-static STACK *v2i_ext_ku();
-static STACK *i2v_ext_ku();
+
+static STACK *i2v_AUTHORITY_KEYID();
+static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID();
+
 #endif
 
-X509V3_EXT_METHOD v3_ext_ku = {
-NID_ext_key_usage, 0,
-(X509V3_EXT_NEW)ext_ku_new,
-ext_ku_free,
-(X509V3_EXT_D2I)d2i_ext_ku,
-i2d_ext_ku,
+X509V3_EXT_METHOD v3_akey_id = {
+NID_authority_key_identifier, 0,
+(X509V3_EXT_NEW)AUTHORITY_KEYID_new,
+AUTHORITY_KEYID_free,
+(X509V3_EXT_D2I)d2i_AUTHORITY_KEYID,
+i2d_AUTHORITY_KEYID,
 NULL, NULL,
-(X509V3_EXT_I2V)i2v_ext_ku,
-(X509V3_EXT_V2I)v2i_ext_ku,
+(X509V3_EXT_I2V)i2v_AUTHORITY_KEYID,
+(X509V3_EXT_V2I)v2i_AUTHORITY_KEYID,
 NULL,
 NULL
 };
 
-STACK *ext_ku_new()
-{
-	return sk_new_null();
-}
 
-void ext_ku_free(eku)
-STACK *eku;
-{
-	sk_pop_free(eku, ASN1_OBJECT_free);
-	return;
-}
+/*
+ * ASN1err(ASN1_F_AUTHORITY_KEYID_NEW,ERR_R_MALLOC_FAILURE);
+ * ASN1err(ASN1_F_D2I_AUTHORITY_KEYID,ERR_R_MALLOC_FAILURE);
+ */
 
-int i2d_ext_ku(a,pp)
-STACK *a;
+int i2d_AUTHORITY_KEYID(a,pp)
+AUTHORITY_KEYID *a;
 unsigned char **pp;
 {
-	return i2d_ASN1_SET(a, pp, i2d_ASN1_OBJECT, V_ASN1_SEQUENCE,
-						 V_ASN1_UNIVERSAL, IS_SEQUENCE);
+	M_ASN1_I2D_vars(a);
+
+	M_ASN1_I2D_len_IMP_opt (a->keyid, i2d_ASN1_OCTET_STRING);
+	M_ASN1_I2D_len_IMP_opt (a->issuer, i2d_GENERAL_NAMES);
+	M_ASN1_I2D_len_IMP_opt (a->serial, i2d_ASN1_INTEGER);
+
+	M_ASN1_I2D_seq_total();
+
+	M_ASN1_I2D_put_IMP_opt (a->keyid, i2d_ASN1_OCTET_STRING, 0);
+	M_ASN1_I2D_put_IMP_opt (a->issuer, i2d_GENERAL_NAMES, 1);
+	M_ASN1_I2D_put_IMP_opt (a->serial, i2d_ASN1_INTEGER, 2);
+
+	M_ASN1_I2D_finish();
 }
 
-STACK *d2i_ext_ku(a,pp,length)
-STACK **a;
+AUTHORITY_KEYID *AUTHORITY_KEYID_new()
+{
+	AUTHORITY_KEYID *ret=NULL;
+	ASN1_CTX c;
+	M_ASN1_New_Malloc(ret, AUTHORITY_KEYID);
+	ret->keyid = NULL;
+	ret->issuer = NULL;
+	ret->serial = NULL;
+	return (ret);
+	M_ASN1_New_Error(ASN1_F_AUTHORITY_KEYID_NEW);
+}
+
+AUTHORITY_KEYID *d2i_AUTHORITY_KEYID(a,pp,length)
+AUTHORITY_KEYID **a;
 unsigned char **pp;
 long length;
 {
-	return d2i_ASN1_SET(a, pp, length, (char *(*)())(d2i_ASN1_OBJECT),
-			 ASN1_OBJECT_free, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
+	M_ASN1_D2I_vars(a,AUTHORITY_KEYID *,AUTHORITY_KEYID_new);
+	M_ASN1_D2I_Init();
+	M_ASN1_D2I_start_sequence();
+	M_ASN1_D2I_get_IMP_opt (ret->keyid, d2i_ASN1_OCTET_STRING, 0,
+							V_ASN1_OCTET_STRING);
+	M_ASN1_D2I_get_IMP_opt (ret->issuer, d2i_GENERAL_NAMES, 1,
+							V_ASN1_SEQUENCE);
+	M_ASN1_D2I_get_IMP_opt (ret->serial, d2i_ASN1_INTEGER, 2,
+							V_ASN1_INTEGER);
+	M_ASN1_D2I_Finish(a, AUTHORITY_KEYID_free, ASN1_F_D2I_AUTHORITY_KEYID);
 }
 
-
-
-static STACK *i2v_ext_ku(method, eku, ext_list)
-X509V3_EXT_METHOD *method;
-STACK  *eku;
-STACK *ext_list;
+void AUTHORITY_KEYID_free(a)
+AUTHORITY_KEYID *a;
 {
-int i;
-ASN1_OBJECT *obj;
-char obj_tmp[80];
-for(i = 0; i < sk_num(eku); i++) {
-	obj = (ASN1_OBJECT *)sk_value(eku, i);
-	i2t_ASN1_OBJECT(obj_tmp, 80, obj);
-	X509V3_add_value(NULL, obj_tmp, &ext_list);
-}
-return ext_list;
+	if (a == NULL) return;
+	ASN1_OCTET_STRING_free(a->keyid);
+	sk_pop_free(a->issuer, GENERAL_NAME_free);
+	ASN1_INTEGER_free (a->serial);
+	Free ((char *)a);
 }
 
-static STACK *v2i_ext_ku(method, ctx, nval)
+static STACK *i2v_AUTHORITY_KEYID(method, akeyid, extlist)
+X509V3_EXT_METHOD *method;
+AUTHORITY_KEYID *akeyid;
+STACK *extlist;
+{
+	char *tmp;
+	if(akeyid->keyid) {
+		tmp = hex_to_string(akeyid->keyid->data, akeyid->keyid->length);
+		X509V3_add_value("keyid", tmp, &extlist);
+		Free(tmp);
+	}
+	if(akeyid->issuer) 
+		extlist = i2v_GENERAL_NAMES(NULL, akeyid->issuer, extlist);
+	if(akeyid->serial) {
+		tmp = hex_to_string(akeyid->serial->data,
+						 akeyid->serial->length);
+		X509V3_add_value("serial", tmp, &extlist);
+		Free(tmp);
+	}
+	return extlist;
+}
+
+static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(method, ctx, values)
 X509V3_EXT_METHOD *method;
 X509V3_CTX *ctx;
-STACK *nval;
+STACK *values;
 {
-STACK *extku;
-char *extval;
-ASN1_OBJECT *objtmp;
-CONF_VALUE *val;
-int i;
-
-if(!(extku = sk_new(NULL))) {
-	X509V3err(X509V3_F_V2I_EXT_KU,ERR_R_MALLOC_FAILURE);
-	return NULL;
+return NULL;
 }
 
-for(i = 0; i < sk_num(nval); i++) {
-	val = (CONF_VALUE *)sk_value(nval, i);
-	if(val->value) extval = val->value;
-	else extval = val->name;
-	if(!(objtmp = OBJ_txt2obj(extval, 0))) {
-		sk_pop_free(extku, ASN1_OBJECT_free);
-		X509V3err(X509V3_F_V2I_EXT_KU,X509V3_R_INVALID_OBJECT_IDENTIFIER);
-		X509V3_conf_err(val);
-		return NULL;
-	}
-	sk_push(extku, (char *)objtmp);
-}
-return extku;
-}

@@ -1,4 +1,4 @@
-/* v3_extku.c */
+/* v3_skey.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project 1999.
  */
@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <pem.h>
 #include <asn1_mac.h>
 #include <err.h>
@@ -66,100 +67,105 @@
 #include "x509v3.h"
 
 #ifndef NOPROTO
-static STACK *v2i_ext_ku(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *nval);
-static STACK *i2v_ext_ku(X509V3_EXT_METHOD *method, STACK *eku, STACK *extlist);
+static ASN1_OCTET_STRING *octet_string_new(void);
+static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
 #else
-static STACK *v2i_ext_ku();
-static STACK *i2v_ext_ku();
+static ASN1_OCTET_STRING *s2i_skey_id();
+static ASN1_OCTET_STRING *octet_string_new();
 #endif
 
-X509V3_EXT_METHOD v3_ext_ku = {
-NID_ext_key_usage, 0,
-(X509V3_EXT_NEW)ext_ku_new,
-ext_ku_free,
-(X509V3_EXT_D2I)d2i_ext_ku,
-i2d_ext_ku,
-NULL, NULL,
-(X509V3_EXT_I2V)i2v_ext_ku,
-(X509V3_EXT_V2I)v2i_ext_ku,
-NULL,
-NULL
-};
+X509V3_EXT_METHOD v3_skey_id = { 
+NID_subject_key_identifier, 0,
+(X509V3_EXT_NEW)octet_string_new, ASN1_STRING_free,
+(X509V3_EXT_D2I)d2i_ASN1_OCTET_STRING,
+i2d_ASN1_OCTET_STRING,
+(X509V3_EXT_I2S)i2s_ASN1_OCTET_STRING,
+(X509V3_EXT_S2I)s2i_skey_id,
+NULL, NULL, NULL, NULL};
 
-STACK *ext_ku_new()
+
+static ASN1_OCTET_STRING *octet_string_new(void)
 {
-	return sk_new_null();
+	return ASN1_OCTET_STRING_new();
 }
 
-void ext_ku_free(eku)
-STACK *eku;
-{
-	sk_pop_free(eku, ASN1_OBJECT_free);
-	return;
-}
-
-int i2d_ext_ku(a,pp)
-STACK *a;
-unsigned char **pp;
-{
-	return i2d_ASN1_SET(a, pp, i2d_ASN1_OBJECT, V_ASN1_SEQUENCE,
-						 V_ASN1_UNIVERSAL, IS_SEQUENCE);
-}
-
-STACK *d2i_ext_ku(a,pp,length)
-STACK **a;
-unsigned char **pp;
-long length;
-{
-	return d2i_ASN1_SET(a, pp, length, (char *(*)())(d2i_ASN1_OBJECT),
-			 ASN1_OBJECT_free, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
-}
-
-
-
-static STACK *i2v_ext_ku(method, eku, ext_list)
+char *i2s_ASN1_OCTET_STRING(method, oct)
 X509V3_EXT_METHOD *method;
-STACK  *eku;
-STACK *ext_list;
+ASN1_OCTET_STRING *oct;
 {
-int i;
-ASN1_OBJECT *obj;
-char obj_tmp[80];
-for(i = 0; i < sk_num(eku); i++) {
-	obj = (ASN1_OBJECT *)sk_value(eku, i);
-	i2t_ASN1_OBJECT(obj_tmp, 80, obj);
-	X509V3_add_value(NULL, obj_tmp, &ext_list);
-}
-return ext_list;
+	return hex_to_string(oct->data, oct->length);
 }
 
-static STACK *v2i_ext_ku(method, ctx, nval)
+ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(method, ctx, str)
 X509V3_EXT_METHOD *method;
 X509V3_CTX *ctx;
-STACK *nval;
+char *str;
 {
-STACK *extku;
-char *extval;
-ASN1_OBJECT *objtmp;
-CONF_VALUE *val;
-int i;
+	ASN1_OCTET_STRING *oct;
+	long length;
 
-if(!(extku = sk_new(NULL))) {
-	X509V3err(X509V3_F_V2I_EXT_KU,ERR_R_MALLOC_FAILURE);
-	return NULL;
-}
-
-for(i = 0; i < sk_num(nval); i++) {
-	val = (CONF_VALUE *)sk_value(nval, i);
-	if(val->value) extval = val->value;
-	else extval = val->name;
-	if(!(objtmp = OBJ_txt2obj(extval, 0))) {
-		sk_pop_free(extku, ASN1_OBJECT_free);
-		X509V3err(X509V3_F_V2I_EXT_KU,X509V3_R_INVALID_OBJECT_IDENTIFIER);
-		X509V3_conf_err(val);
+	if(!(oct = ASN1_OCTET_STRING_new())) {
+		X509V3err(X509V3_F_S2I_ASN1_OCTET_STRING,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	sk_push(extku, (char *)objtmp);
+
+	if(!(oct->data = string_to_hex(str, &length))) {
+		ASN1_OCTET_STRING_free(oct);
+		return NULL;
+	}
+
+	oct->length = length;
+
+	return oct;
+
 }
-return extku;
+
+ASN1_OCTET_STRING *s2i_skey_id(method, ctx, str)
+X509V3_EXT_METHOD *method;
+X509V3_CTX *ctx;
+char *str;
+{
+	ASN1_OCTET_STRING *oct;
+	ASN1_BIT_STRING *pk;
+	unsigned char pkey_dig[EVP_MAX_MD_SIZE];
+	EVP_MD_CTX md;
+	int diglen;
+
+	if(strcmp(str, "hash")) return s2i_ASN1_OCTET_STRING(method, ctx, str);
+
+	if(!(oct = ASN1_OCTET_STRING_new())) {
+		X509V3err(X509V3_F_S2I_S2I_SKEY_ID,ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+
+	if(ctx && (ctx->flags == CTX_TEST)) return oct;
+
+	if(!ctx || (!ctx->subject_req && !ctx->subject_cert)) {
+		X509V3err(X509V3_F_S2I_ASN1_SKEY_ID,X509V3_R_NO_PUBLIC_KEY);
+		goto err;
+	}
+
+	if(ctx->subject_req) 
+		pk = ctx->subject_req->req_info->pubkey->public_key;
+	else pk = ctx->subject_cert->cert_info->key->public_key;
+
+	if(!pk) {
+		X509V3err(X509V3_F_S2I_ASN1_SKEY_ID,X509V3_R_NO_PUBLIC_KEY);
+		goto err;
+	}
+
+	EVP_DigestInit(&md, EVP_sha1());
+	EVP_DigestUpdate(&md, pk->data, pk->length);
+	EVP_DigestFinal(&md, pkey_dig, &diglen);
+
+	if(!ASN1_OCTET_STRING_set(oct, pkey_dig, diglen)) {
+		X509V3err(X509V3_F_S2I_S2I_SKEY_ID,ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	return oct;
+	
+	err:
+	ASN1_OCTET_STRING_free(oct);
+	return NULL;
 }

@@ -1,5 +1,5 @@
-/* lib/x509v3/x509v3_err.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
+/* crypto/asn1/f_enum.c */
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -55,67 +55,159 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+
 #include <stdio.h>
-#include "err.h"
-#include "x509v3.h"
+#include "cryptlib.h"
+#include "buffer.h"
+#include "x509.h"
 
-/* BEGIN ERROR CODES */
-#ifndef NO_ERR
-static ERR_STRING_DATA X509V3_str_functs[]=
+/* Based on a_int.c: equivalent ENUMERATED functions */
+
+int i2a_ASN1_ENUMERATED(bp, a)
+BIO *bp;
+ASN1_ENUMERATED *a;
 	{
-{ERR_PACK(0,X509V3_F_HEX_TO_STRING,0),	"hex_to_string"},
-{ERR_PACK(0,X509V3_F_S2I_ASN1_IA5STRING,0),	"S2I_ASN1_IA5STRING"},
-{ERR_PACK(0,X509V3_F_S2I_ASN1_OCTET_STRING,0),	"s2i_ASN1_OCTET_STRING"},
-{ERR_PACK(0,X509V3_F_S2I_ASN1_SKEY_ID,0),	"S2I_ASN1_SKEY_ID"},
-{ERR_PACK(0,X509V3_F_S2I_S2I_SKEY_ID,0),	"S2I_S2I_SKEY_ID"},
-{ERR_PACK(0,X509V3_F_STRING_TO_HEX,0),	"string_to_hex"},
-{ERR_PACK(0,X509V3_F_V2I_ASN1_BIT_STRING,0),	"V2I_ASN1_BIT_STRING"},
-{ERR_PACK(0,X509V3_F_V2I_AUTHORITY_KEYID,0),	"V2I_AUTHORITY_KEYID"},
-{ERR_PACK(0,X509V3_F_V2I_BASIC_CONSTRAINTS,0),	"V2I_BASIC_CONSTRAINTS"},
-{ERR_PACK(0,X509V3_F_V2I_EXT_KU,0),	"V2I_EXT_KU"},
-{ERR_PACK(0,X509V3_F_X509V3_ADD_EXT,0),	"X509V3_ADD_EXT"},
-{ERR_PACK(0,X509V3_F_X509V3_ADD_VALUE,0),	"X509V3_add_value"},
-{ERR_PACK(0,X509V3_F_X509V3_EXT_ADD_ALIAS,0),	"X509V3_EXT_add_alias"},
-{ERR_PACK(0,X509V3_F_X509V3_EXT_CONF,0),	"X509V3_EXT_conf"},
-{ERR_PACK(0,X509V3_F_X509V3_GET_VALUE_INT,0),	"X509V3_get_value_int"},
-{ERR_PACK(0,X509V3_F_X509V3_PARSE_LIST,0),	"X509V3_parse_list"},
-{ERR_PACK(0,X509V3_F_X509V3_VALUE_GET_BOOL,0),	"X509V3_VALUE_GET_BOOL"},
-{0,NULL},
-	};
+	int i,n=0;
+	static char *h="0123456789ABCDEF";
+	char buf[2];
 
-static ERR_STRING_DATA X509V3_str_reasons[]=
-	{
-{X509V3_R_BN_DEC2BN_ERROR                ,"bn dec2bn error"},
-{X509V3_R_BN_TO_ASN1_INTEGER_ERROR       ,"bn to asn1 integer error"},
-{X509V3_R_EXTENSION_NOT_FOUND            ,"extension not found"},
-{X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED,"extension setting not supported"},
-{X509V3_R_ILLEGAL_HEX_DIGIT              ,"illegal hex digit"},
-{X509V3_R_INVALID_BOOLEAN_STRING         ,"invalid boolean string"},
-{X509V3_R_INVALID_EXTENSION_STRING       ,"invalid extension string"},
-{X509V3_R_INVALID_NAME                   ,"invalid name"},
-{X509V3_R_INVALID_NULL_ARGUMENT          ,"invalid null argument"},
-{X509V3_R_INVALID_NULL_NAME              ,"invalid null name"},
-{X509V3_R_INVALID_NULL_VALUE             ,"invalid null value"},
-{X509V3_R_INVALID_OBJECT_IDENTIFIER      ,"invalid object identifier"},
-{X509V3_R_NO_PUBLIC_KEY                  ,"no public key"},
-{X509V3_R_ODD_NUMBER_OF_DIGITS           ,"odd number of digits"},
-{X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT    ,"unknown bit string argument"},
-{0,NULL},
-	};
+	if (a == NULL) return(0);
 
-#endif
-
-void ERR_load_X509V3_strings()
-	{
-	static int init=1;
-
-	if (init)
+	if (a->length == 0)
 		{
-		init=0;
-#ifndef NO_ERR
-		ERR_load_strings(ERR_LIB_X509V3,X509V3_str_functs);
-		ERR_load_strings(ERR_LIB_X509V3,X509V3_str_reasons);
-#endif
-
+		if (BIO_write(bp,"00",2) != 2) goto err;
+		n=2;
 		}
+	else
+		{
+		for (i=0; i<a->length; i++)
+			{
+			if ((i != 0) && (i%35 == 0))
+				{
+				if (BIO_write(bp,"\\\n",2) != 2) goto err;
+				n+=2;
+				}
+			buf[0]=h[((unsigned char)a->data[i]>>4)&0x0f];
+			buf[1]=h[((unsigned char)a->data[i]   )&0x0f];
+			if (BIO_write(bp,buf,2) != 2) goto err;
+			n+=2;
+			}
+		}
+	return(n);
+err:
+	return(-1);
 	}
+
+int a2i_ASN1_ENUMERATED(bp,bs,buf,size)
+BIO *bp;
+ASN1_ENUMERATED *bs;
+char *buf;
+int size;
+	{
+	int ret=0;
+	int i,j,k,m,n,again,bufsize;
+	unsigned char *s=NULL,*sp;
+	unsigned char *bufp;
+	int num=0,slen=0,first=1;
+
+	bs->type=V_ASN1_ENUMERATED;
+
+	bufsize=BIO_gets(bp,buf,size);
+	for (;;)
+		{
+		if (bufsize < 1) goto err_sl;
+		i=bufsize;
+		if (buf[i-1] == '\n') buf[--i]='\0';
+		if (i == 0) goto err_sl;
+		if (buf[i-1] == '\r') buf[--i]='\0';
+		if (i == 0) goto err_sl;
+		again=(buf[i-1] == '\\');
+
+		for (j=0; j<i; j++)
+			{
+			if (!(	((buf[j] >= '0') && (buf[j] <= '9')) ||
+				((buf[j] >= 'a') && (buf[j] <= 'f')) ||
+				((buf[j] >= 'A') && (buf[j] <= 'F'))))
+				{
+				i=j;
+				break;
+				}
+			}
+		buf[i]='\0';
+		/* We have now cleared all the crap off the end of the
+		 * line */
+		if (i < 2) goto err_sl;
+
+		bufp=(unsigned char *)buf;
+		if (first)
+			{
+			first=0;
+			if ((bufp[0] == '0') && (buf[1] == '0'))
+				{
+				bufp+=2;
+				i-=2;
+				}
+			}
+		k=0;
+		i-=again;
+		if (i%2 != 0)
+			{
+			ASN1err(ASN1_F_A2I_ASN1_ENUMERATED,ASN1_R_ODD_NUMBER_OF_CHARS);
+			goto err;
+			}
+		i/=2;
+		if (num+i > slen)
+			{
+			if (s == NULL)
+				sp=(unsigned char *)Malloc(
+					(unsigned int)num+i*2);
+			else
+				sp=(unsigned char *)Realloc(s,
+					(unsigned int)num+i*2);
+			if (sp == NULL)
+				{
+				ASN1err(ASN1_F_A2I_ASN1_ENUMERATED,ERR_R_MALLOC_FAILURE);
+				if (s != NULL) Free((char *)s);
+				goto err;
+				}
+			s=sp;
+			slen=num+i*2;
+			}
+		for (j=0; j<i; j++,k+=2)
+			{
+			for (n=0; n<2; n++)
+				{
+				m=bufp[k+n];
+				if ((m >= '0') && (m <= '9'))
+					m-='0';
+				else if ((m >= 'a') && (m <= 'f'))
+					m=m-'a'+10;
+				else if ((m >= 'A') && (m <= 'F'))
+					m=m-'A'+10;
+				else
+					{
+					ASN1err(ASN1_F_A2I_ASN1_ENUMERATED,ASN1_R_NON_HEX_CHARACTERS);
+					goto err;
+					}
+				s[num+j]<<=4;
+				s[num+j]|=m;
+				}
+			}
+		num+=i;
+		if (again)
+			bufsize=BIO_gets(bp,buf,size);
+		else
+			break;
+		}
+	bs->length=num;
+	bs->data=s;
+	ret=1;
+err:
+	if (0)
+		{
+err_sl:
+		ASN1err(ASN1_F_A2I_ASN1_ENUMERATED,ASN1_R_SHORT_LINE);
+		}
+	return(ret);
+	}
+

@@ -75,7 +75,7 @@ typedef char * (*X509V3_EXT_NEW)();
 typedef void (*X509V3_EXT_FREE)();
 typedef char * (*X509V3_EXT_D2I)();
 typedef int (*X509V3_EXT_I2D)();
-typedef STACK * (*X509V3_EXT_I2V)(struct v3_ext_method *method, char *ext);
+typedef STACK * (*X509V3_EXT_I2V)(struct v3_ext_method *method, char *ext, STACK *extlist);
 typedef char * (*X509V3_EXT_V2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, STACK *values);
 typedef char * (*X509V3_EXT_I2S)(struct v3_ext_method *method, char *ext);
 typedef char * (*X509V3_EXT_S2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, char *str);
@@ -105,11 +105,15 @@ X509V3_EXT_I2R i2r;
 char *usr_data;	/* Any extension specific data */
 };
 
+
 /* Context specific info */
 struct v3_ext_ctx {
+#define CTX_TEST 0x1
+int flags;
 X509 *issuer_cert;
 X509 *subject_cert;
 X509_REQ *subject_req;
+X509_CRL *crl;
 /* Maybe more here */
 };
 
@@ -118,6 +122,7 @@ typedef struct v3_ext_ctx X509V3_CTX;
 
 /* ext_flags values */
 #define X509V3_EXT_DYNAMIC 0x1
+#define X509V3_EXT_CTX_DEP 0x2
 
 typedef struct {
 int bitnum;
@@ -129,6 +134,12 @@ typedef struct {
 int ca;
 ASN1_INTEGER *pathlen;
 } BASIC_CONSTRAINTS;
+
+typedef struct {
+ASN1_OCTET_STRING *keyid;
+STACK *issuer;
+ASN1_INTEGER *serial;
+} AUTHORITY_KEYID;
 
 typedef struct {
 
@@ -194,12 +205,19 @@ GENERAL_NAME *d2i_GENERAL_NAME(GENERAL_NAME **a, unsigned char **pp, long length
 GENERAL_NAME *GENERAL_NAME_new(void);
 void GENERAL_NAME_free(GENERAL_NAME *a);
 
+int i2d_AUTHORITY_KEYID(AUTHORITY_KEYID *a, unsigned char **pp);
+AUTHORITY_KEYID *d2i_AUTHORITY_KEYID(AUTHORITY_KEYID **a, unsigned char **pp, long length);
+AUTHORITY_KEYID *AUTHORITY_KEYID_new(void);
+void AUTHORITY_KEYID_free(AUTHORITY_KEYID *a);
+
 STACK *GENERAL_NAMES_new(void);
 void GENERAL_NAMES_free(STACK *a);
 STACK *d2i_GENERAL_NAMES(STACK **a, unsigned char **pp, long length);
 int i2d_GENERAL_NAMES(STACK *a, unsigned char **pp);
+STACK *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method, STACK *gen, STACK *extlist);
 
-
+char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *ia5);
+ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
 
 int i2d_ext_ku(STACK *a, unsigned char **pp);
 STACK *d2i_ext_ku(STACK **a, unsigned char **pp, long length);
@@ -211,6 +229,7 @@ void X509V3_conf_free(CONF_VALUE *val);
 X509_EXTENSION *X509V3_EXT_conf_nid(LHASH *conf, X509V3_CTX *ctx, int ext_nid, char *value);
 X509_EXTENSION *X509V3_EXT_conf(LHASH *conf, X509V3_CTX *ctx, char *name, char *value);
 int X509V3_EXT_add_conf(LHASH *conf, X509V3_CTX *ctx, char *section, X509 *cert);
+int X509V3_EXT_check_conf(LHASH *conf, char *section);
 int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool);
 int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint);
 #endif
@@ -226,6 +245,9 @@ X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext);
 X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid);
 int X509V3_add_standard_extensions(void);
 STACK *X509V3_parse_list(char *line);
+
+char *hex_to_string(unsigned char *buffer, long len);
+unsigned char *string_to_hex(char *str, long *len);
 
 int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, int flag);
 int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag);
@@ -247,6 +269,10 @@ STACK *GENERAL_NAMES_new():
 void GENERAL_NAMES_free():
 STACK *d2i_GENERAL_NAMES();
 int i2d_GENERAL_NAMES();
+STACK *i2v_GENERAL_NAMES();
+
+char *i2s_ASN1_OCTET_STRING();
+ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING();
 
 int i2d_ext_ku();
 STACK *d2i_ext_ku();
@@ -258,6 +284,7 @@ void X509V3_conf_free();
 X509_EXTENSION *X509V3_EXT_conf_nid();
 X509_EXTENSION *X509V3_EXT_conf();
 int X509V3_EXT_add_conf();
+int X509V3_EXT_check_conf();
 int X509V3_get_value_bool();
 int X509V3_get_value_int();
 #endif
@@ -274,6 +301,9 @@ X509V3_EXT_METHOD *X509V3_EXT_get_nid();
 int X509V3_add_standard_extensions();
 STACK *X509V3_parse_list();
 
+char *hex_to_string();
+unsigned char *string_to_hex();
+
 int X509V3_EXT_print();
 int X509V3_EXT_print_fp();
 #endif
@@ -282,8 +312,14 @@ int X509V3_EXT_print_fp();
 /* Error codes for the X509V3 functions. */
 
 /* Function codes. */
+#define X509V3_F_HEX_TO_STRING				 111
 #define X509V3_F_S2I_ASN1_IA5STRING			 100
+#define X509V3_F_S2I_ASN1_OCTET_STRING			 112
+#define X509V3_F_S2I_ASN1_SKEY_ID			 114
+#define X509V3_F_S2I_S2I_SKEY_ID			 115
+#define X509V3_F_STRING_TO_HEX				 113
 #define X509V3_F_V2I_ASN1_BIT_STRING			 101
+#define X509V3_F_V2I_AUTHORITY_KEYID			 116
 #define X509V3_F_V2I_BASIC_CONSTRAINTS			 102
 #define X509V3_F_V2I_EXT_KU				 103
 #define X509V3_F_X509V3_ADD_EXT				 104
@@ -299,6 +335,7 @@ int X509V3_EXT_print_fp();
 #define X509V3_R_BN_TO_ASN1_INTEGER_ERROR		 101
 #define X509V3_R_EXTENSION_NOT_FOUND			 102
 #define X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED	 103
+#define X509V3_R_ILLEGAL_HEX_DIGIT			 113
 #define X509V3_R_INVALID_BOOLEAN_STRING			 104
 #define X509V3_R_INVALID_EXTENSION_STRING		 105
 #define X509V3_R_INVALID_NAME				 106
@@ -306,6 +343,8 @@ int X509V3_EXT_print_fp();
 #define X509V3_R_INVALID_NULL_NAME			 108
 #define X509V3_R_INVALID_NULL_VALUE			 109
 #define X509V3_R_INVALID_OBJECT_IDENTIFIER		 110
+#define X509V3_R_NO_PUBLIC_KEY				 114
+#define X509V3_R_ODD_NUMBER_OF_DIGITS			 112
 #define X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT		 111
  
 #ifdef  __cplusplus

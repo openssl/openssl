@@ -657,6 +657,8 @@ loop:
 			ext_ctx.issuer_cert = x509ss;
 			ext_ctx.subject_cert = x509ss;
 			ext_ctx.subject_req = NULL;
+			ext_ctx.crl = NULL;
+			ext_ctx.flags = 0;
 
 			/* Add extensions */
 			if(extensions && !X509V3_EXT_add_conf(req_conf, 

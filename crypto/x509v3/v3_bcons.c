@@ -66,7 +66,7 @@
 #include "x509v3.h"
 
 #ifndef NOPROTO
-static STACK *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method, BASIC_CONSTRAINTS *bcons);
+static STACK *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method, BASIC_CONSTRAINTS *bcons, STACK *extlist);
 static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK *values);
 
 #else
@@ -145,11 +145,11 @@ BASIC_CONSTRAINTS *a;
 	Free ((char *)a);
 }
 
-static STACK *i2v_BASIC_CONSTRAINTS(method, bcons)
+static STACK *i2v_BASIC_CONSTRAINTS(method, bcons, extlist)
 X509V3_EXT_METHOD *method;
 BASIC_CONSTRAINTS *bcons;
+STACK *extlist;
 {
-	STACK *extlist = NULL;
 	X509V3_add_value_bool("CA", bcons->ca, &extlist);
 	X509V3_add_value_int("pathlen", bcons->pathlen, &extlist);
 	return extlist;

@@ -104,7 +104,7 @@ int flag;
 		}
 		BIO_printf(out, value);
 	} else if(method->i2v) {
-		if(!(nval = method->i2v(method, ext_str))) {
+		if(!(nval = method->i2v(method, ext_str, NULL))) {
 			ok = 0;
 			goto err;
 		}
