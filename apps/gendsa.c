@@ -85,10 +85,11 @@ char **argv;
 	{
 	char buffer[200];
 	DSA *dsa=NULL;
-	int ret=1,num=DEFBITS;
+	int ret=1;
 	char *outfile=NULL;
 	char *inrand=NULL,*randfile,*dsaparams=NULL;
 	BIO *out=NULL,*in=NULL;
+	EVP_CIPHER *enc=NULL;
 
 	apps_startup();
 
@@ -117,6 +118,16 @@ char **argv;
 			{
 			dsaparams= *argv;
 			}
+#ifndef NO_DES
+		else if (strcmp(*argv,"-des") == 0)
+			enc=EVP_des_cbc();
+		else if (strcmp(*argv,"-des3") == 0)
+			enc=EVP_des_ede3_cbc();
+#endif
+#ifndef NO_IDEA
+		else if (strcmp(*argv,"-idea") == 0)
+			enc=EVP_idea_cbc();
+#endif
 		else
 			goto bad;
 		argv++;
@@ -126,8 +137,15 @@ char **argv;
 	if (dsaparams == NULL)
 		{
 bad:
-		BIO_printf(bio_err,"usage: gendsa [args] [numbits]\n");
-		BIO_printf(bio_err," -out file - output the key to 'file\n");
+		BIO_printf(bio_err,"usage: gendsa [args] [dsaparams]\n");
+		BIO_printf(bio_err," -out file - output the key to 'file'\n");
+#ifndef NO_DES
+		BIO_printf(bio_err," -des      - encrypt the generated key with DES in cbc mode\n");
+		BIO_printf(bio_err," -des3     - encrypt the generated key with DES in ede cbc mode (168 bit key)\n");
+#endif
+#ifndef NO_IDEA
+		BIO_printf(bio_err," -idea     - encrypt the generated key with IDEA in cbc mode\n");
+#endif
 		BIO_printf(bio_err," -rand file:file:...\n");
 		BIO_printf(bio_err,"           - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"             the random number generator\n");
@@ -135,7 +153,7 @@ bad:
 		}
 
 	in=BIO_new(BIO_s_file());
-	if (!(BIO_read_filename(in,"dsaparams")))
+	if (!(BIO_read_filename(in,dsaparams)))
 		{
 		perror(dsaparams);
 		goto end;
@@ -174,8 +192,8 @@ bad:
 			dsa_load_rand(inrand));
 		}
 
-	BIO_printf(bio_err,"Generating DSA parameters, %d bit long prime\n",num);
-	BIO_printf(bio_err,"This could take some time\n");
+	BIO_printf(bio_err,"Generating DSA key, %d bits\n",
+							BN_num_bits(dsa->p));
 	if (!DSA_generate_key(dsa)) goto end;
 
 	if (randfile == NULL)
@@ -183,7 +201,7 @@ bad:
 	else
 		RAND_write_file(randfile);
 
-	if (!PEM_write_bio_DSAPrivateKey(out,dsa,EVP_des_ede3_cbc(),NULL,0,NULL))
+	if (!PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,NULL))
 		goto end;
 	ret=0;
 end:
