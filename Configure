@@ -166,7 +166,7 @@ my %table=(
 
 "hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O4 -z::(unknown)::BN_LLONG DES_PTR DES_UNROLL DES_RISC1:::",
 # If hpux-cc fails (e.g. during "make test"), try the next one; otherwise,
-# please report your OS and compiler version to the bugs@openssl.org
+# please report your OS and compiler version to the openssl-bugs@openssl.org
 # mailing list.
 "hpux-brokencc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z::(unknown)::DES_PTR DES_UNROLL DES_RISC1:::",
 
