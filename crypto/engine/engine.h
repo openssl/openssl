@@ -355,6 +355,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_PROVIDE_PARAMETERS			 113
 #define ENGINE_R_REQUEST_FAILED				 114
 #define ENGINE_R_REQUEST_FALLBACK			 118
+#define ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL		 122
 #define ENGINE_R_UNIT_FAILURE				 115
 
 #ifdef  __cplusplus

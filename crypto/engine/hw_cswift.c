@@ -335,6 +335,7 @@ static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 	BIGNUM *exponent;
 	BIGNUM *argument;
 	BIGNUM *result;
+	SW_STATUS sw_status;
 	SW_LARGENUMBER arg, res;
 	SW_PARAM sw_param;
 	SW_CONTEXT_HANDLE hac;
@@ -374,9 +375,22 @@ static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		(unsigned char *)exponent->d);
 	sw_param.up.exp.exponent.value = (unsigned char *)exponent->d;
 	/* Attach the key params */
-	if(p_CSwift_AttachKeyParam(hac, &sw_param) != SW_OK)
+	sw_status = p_CSwift_AttachKeyParam(hac, &sw_param);
+	switch(sw_status)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_PROVIDE_PARAMETERS);
+	case SW_OK:
+		break;
+	case SW_ERR_INPUT_SIZE:
+		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,
+			ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		goto err;
+	default:
+		{
+		char tmpbuf[20];
+		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_REQUEST_FAILED);
+		sprintf(tmpbuf, "%ld", sw_status);
+		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
+		}
 		goto err;
 		}
 	/* Prepare the argument and response */
@@ -386,9 +400,13 @@ static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 	memset(result->d, 0, res.nbytes);
 	res.value = (unsigned char *)result->d;
 	/* Perform the operation */
-	if(p_CSwift_SimpleRequest(hac, SW_CMD_MODEXP, &arg, 1, &res, 1) != SW_OK)
+	if((sw_status = p_CSwift_SimpleRequest(hac, SW_CMD_MODEXP, &arg, 1,
+		&res, 1)) != SW_OK)
 		{
+		char tmpbuf[20];
 		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_REQUEST_FAILED);
+		sprintf(tmpbuf, "%ld", sw_status);
+		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		goto err;
 		}
 	/* Convert the response */
@@ -409,6 +427,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *q, const BIGNUM *dmp1,
 			const BIGNUM *dmq1, const BIGNUM *iqmp, BN_CTX *ctx)
 	{
+	SW_STATUS sw_status;
 	SW_LARGENUMBER arg, res;
 	SW_PARAM sw_param;
 	SW_CONTEXT_HANDLE hac;
@@ -467,9 +486,22 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		(unsigned char *)rsa_iqmp->d);
 	sw_param.up.crt.iqmp.value = (unsigned char *)rsa_iqmp->d;
 	/* Attach the key params */
-	if(p_CSwift_AttachKeyParam(hac, &sw_param) != SW_OK)
+	sw_status = p_CSwift_AttachKeyParam(hac, &sw_param);
+	switch(sw_status)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_PROVIDE_PARAMETERS);
+	case SW_OK:
+		break;
+	case SW_ERR_INPUT_SIZE:
+		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,
+			ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		goto err;
+	default:
+		{
+		char tmpbuf[20];
+		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_REQUEST_FAILED);
+		sprintf(tmpbuf, "%ld", sw_status);
+		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
+		}
 		goto err;
 		}
 	/* Prepare the argument and response */
@@ -479,10 +511,13 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 	memset(result->d, 0, res.nbytes);
 	res.value = (unsigned char *)result->d;
 	/* Perform the operation */
-	if(p_CSwift_SimpleRequest(hac, SW_CMD_MODEXP_CRT, &arg, 1,
-			&res, 1) != SW_OK)
+	if((sw_status = p_CSwift_SimpleRequest(hac, SW_CMD_MODEXP_CRT, &arg, 1,
+		&res, 1)) != SW_OK)
 		{
+		char tmpbuf[20];
 		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_REQUEST_FAILED);
+		sprintf(tmpbuf, "%ld", sw_status);
+		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		goto err;
 		}
 	/* Convert the response */
@@ -586,9 +621,22 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 				(unsigned char *)dsa_key->d);
 	sw_param.up.dsa.key.value = (unsigned char *)dsa_key->d;
 	/* Attach the key params */
-	if(p_CSwift_AttachKeyParam(hac, &sw_param) != SW_OK)
+	sw_status = p_CSwift_AttachKeyParam(hac, &sw_param);
+	switch(sw_status)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_PROVIDE_PARAMETERS);
+	case SW_OK:
+		break;
+	case SW_ERR_INPUT_SIZE:
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,
+			ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		goto err;
+	default:
+		{
+		char tmpbuf[20];
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_REQUEST_FAILED);
+		sprintf(tmpbuf, "%ld", sw_status);
+		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
+		}
 		goto err;
 		}
 	/* Prepare the argument and response */
@@ -599,10 +647,13 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	res.value = (unsigned char *)result->d;
 	/* Perform the operation */
 	sw_status = p_CSwift_SimpleRequest(hac, SW_CMD_DSS_SIGN, &arg, 1,
-			&res, 1);
+		&res, 1);
 	if(sw_status != SW_OK)
 		{
+		char tmpbuf[20];
 		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_REQUEST_FAILED);
+		sprintf(tmpbuf, "%ld", sw_status);
+		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		goto err;
 		}
 	/* Convert the response */
@@ -684,9 +735,22 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 				(unsigned char *)dsa_key->d);
 	sw_param.up.dsa.key.value = (unsigned char *)dsa_key->d;
 	/* Attach the key params */
-	if(p_CSwift_AttachKeyParam(hac, &sw_param) != SW_OK)
+	sw_status = p_CSwift_AttachKeyParam(hac, &sw_param);
+	switch(sw_status)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_PROVIDE_PARAMETERS);
+	case SW_OK:
+		break;
+	case SW_ERR_INPUT_SIZE:
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,
+			ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		goto err;
+	default:
+		{
+		char tmpbuf[20];
+		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_REQUEST_FAILED);
+		sprintf(tmpbuf, "%ld", sw_status);
+		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
+		}
 		goto err;
 		}
 	/* Prepare the argument and response */
@@ -701,10 +765,13 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 	res.value = (unsigned char *)(&sig_result);
 	/* Perform the operation */
 	sw_status = p_CSwift_SimpleRequest(hac, SW_CMD_DSS_VERIFY, arg, 2,
-			&res, 1);
+		&res, 1);
 	if(sw_status != SW_OK)
 		{
+		char tmpbuf[20];
 		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_REQUEST_FAILED);
+		sprintf(tmpbuf, "%ld", sw_status);
+		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		goto err;
 		}
 	/* Convert the response */

@@ -146,6 +146,7 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ENGINE_R_PROVIDE_PARAMETERS             ,"provide parameters"},
 {ENGINE_R_REQUEST_FAILED                 ,"request failed"},
 {ENGINE_R_REQUEST_FALLBACK               ,"request fallback"},
+{ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL    ,"size too large or too small"},
 {ENGINE_R_UNIT_FAILURE                   ,"unit failure"},
 {0,NULL}
 	};
