@@ -83,7 +83,7 @@ static RSA_METHOD rsa_pkcs1_eay_meth={
 	RSA_eay_private_encrypt,
 	RSA_eay_private_decrypt,
 	RSA_eay_mod_exp,
-	BN_mod_exp_mont,
+	BN_mod_exp_mont, /* XXX probably we should not use Montgomery if  e == 3 */
 	RSA_eay_init,
 	RSA_eay_finish,
 	0,
