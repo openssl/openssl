@@ -73,20 +73,17 @@ static SXNET * sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 						STACK_OF(CONF_VALUE) *nval);
 #endif
 X509V3_EXT_METHOD v3_sxnet = {
-NID_sxnet, X509V3_EXT_MULTILINE,
-(X509V3_EXT_NEW)SXNET_new,
-(X509V3_EXT_FREE)SXNET_free,
-(X509V3_EXT_D2I)d2i_SXNET,
-(X509V3_EXT_I2D)i2d_SXNET,
-NULL, NULL,
-NULL, 
+NID_sxnet, X509V3_EXT_MULTILINE, &SXNET_it,
+0,0,0,0,
+0,0,
+0, 
 #ifdef SXNET_TEST
 (X509V3_EXT_V2I)sxnet_v2i,
 #else
-NULL,
+0,
 #endif
 (X509V3_EXT_I2R)sxnet_i2r,
-NULL,
+0,
 NULL
 };
 

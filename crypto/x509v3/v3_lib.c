@@ -163,8 +163,9 @@ void *X509V3_EXT_d2i(X509_EXTENSION *ext)
 {
 	X509V3_EXT_METHOD *method;
 	unsigned char *p;
-	if(!(method = X509V3_EXT_get(ext)) || !method->d2i) return NULL;
+	if(!(method = X509V3_EXT_get(ext))) return NULL;
 	p = ext->value->data;
+	if(method->it) return ASN1_item_d2i(NULL, &p, ext->value->length, method->it);
 	return method->d2i(NULL, &p, ext->value->length);
 }
 

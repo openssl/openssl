@@ -939,7 +939,7 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 #endif
 #ifdef BN_RECURSION
 	BIGNUM *t;
-	int j,k;
+	int j=0,k;
 #endif
 
 #ifdef BN_COUNT

@@ -88,6 +88,9 @@ typedef void * (*X509V3_EXT_R2I)(struct v3_ext_method *method, struct v3_ext_ctx
 struct v3_ext_method {
 int ext_nid;
 int ext_flags;
+/* If this is set the following four fields are ignored */
+const ASN1_ITEM *it;
+/* Old style ASN1 calls */
 X509V3_EXT_NEW ext_new;
 X509V3_EXT_FREE ext_free;
 X509V3_EXT_D2I d2i;
@@ -291,30 +294,22 @@ DECLARE_ASN1_SET_OF(POLICYINFO)
 			X509V3_set_ctx(ctx, NULL, NULL, NULL, NULL, CTX_TEST)
 #define X509V3_set_ctx_nodb(ctx) ctx->db = NULL;
 
-#define EXT_BITSTRING(nid, table) { nid, 0, \
-			(X509V3_EXT_NEW)ASN1_BIT_STRING_new, \
-			(X509V3_EXT_FREE)ASN1_BIT_STRING_free, \
-			(X509V3_EXT_D2I)d2i_ASN1_BIT_STRING, \
-			(X509V3_EXT_I2D)i2d_ASN1_BIT_STRING, \
-			NULL, NULL, \
+#define EXT_BITSTRING(nid, table) { nid, 0, &ASN1_BIT_STRING_it, \
+			0,0,0,0, \
+			0,0, \
 			(X509V3_EXT_I2V)i2v_ASN1_BIT_STRING, \
 			(X509V3_EXT_V2I)v2i_ASN1_BIT_STRING, \
 			NULL, NULL, \
-			(char *)table}
+			table}
 
-#define EXT_IA5STRING(nid) { nid, 0, \
-			(X509V3_EXT_NEW)ASN1_IA5STRING_new, \
-			(X509V3_EXT_FREE)ASN1_IA5STRING_free, \
-			(X509V3_EXT_D2I)d2i_ASN1_IA5STRING, \
-			(X509V3_EXT_I2D)i2d_ASN1_IA5STRING, \
+#define EXT_IA5STRING(nid) { nid, 0, &ASN1_IA5STRING_it, \
+			0,0,0,0, \
 			(X509V3_EXT_I2S)i2s_ASN1_IA5STRING, \
 			(X509V3_EXT_S2I)s2i_ASN1_IA5STRING, \
-			NULL, NULL, NULL, NULL, \
+			0,0,0,0, \
 			NULL}
 
-#define EXT_END { -1, 0, NULL, NULL, NULL, NULL, NULL, NULL, \
-			 NULL, NULL, NULL, NULL, \
-			 NULL}
+#define EXT_END { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 
 /* X509_PURPOSE stuff */
@@ -394,10 +389,8 @@ typedef struct x509_purpose_st {
 DECLARE_STACK_OF(X509_PURPOSE)
 
 void ERR_load_X509V3_strings(void);
-int i2d_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS *a, unsigned char **pp);
-BASIC_CONSTRAINTS *d2i_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS **a, unsigned char **pp, long length);
-BASIC_CONSTRAINTS *BASIC_CONSTRAINTS_new(void);
-void BASIC_CONSTRAINTS_free(BASIC_CONSTRAINTS *a);
+
+DECLARE_ASN1_FUNCTIONS(BASIC_CONSTRAINTS)
 
 DECLARE_ASN1_FUNCTIONS(SXNET)
 DECLARE_ASN1_FUNCTIONS(SXNETID)

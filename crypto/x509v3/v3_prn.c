@@ -100,7 +100,8 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent, int ml)
 
 int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int indent)
 {
-	char *ext_str = NULL, *value = NULL;
+	void *ext_str = NULL;
+	char *value = NULL;
 	unsigned char *p;
 	X509V3_EXT_METHOD *method;	
 	STACK_OF(CONF_VALUE) *nval = NULL;
@@ -108,8 +109,11 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int inde
 	if(!(method = X509V3_EXT_get(ext)))
 		return unknown_ext_print(out, ext, flag, indent, 0);
 	p = ext->value->data;
-	if(!(ext_str = method->d2i(NULL, &p, ext->value->length)))
-		return unknown_ext_print(out, ext, flag, indent, 1);
+	if(method->it) ext_str = ASN1_item_d2i(NULL, &p, ext->value->length, method->it);
+	else ext_str = method->d2i(NULL, &p, ext->value->length);
+
+	if(!ext_str) unknown_ext_print(out, ext, flag, indent, 1);
+
 	if(method->i2s) {
 		if(!(value = method->i2s(method, ext_str))) {
 			ok = 0;
@@ -138,7 +142,8 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int inde
 	err:
 		sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
 		if(value) OPENSSL_free(value);
-		method->ext_free(ext_str);
+		if(method->it) ASN1_item_free(ext_str, method->it);
+		else method->ext_free(ext_str);
 		return ok;
 }
 

@@ -153,7 +153,8 @@ static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid,
 	}
 
 	ext  = do_ext_i2d(method, ext_nid, crit, ext_struc);
-	method->ext_free(ext_struc);
+	if(method->it) ASN1_item_free(ext_struc, method->it);
+	else method->ext_free(ext_struc);
 	return ext;
 
 }
@@ -161,19 +162,25 @@ static X509_EXTENSION *do_ext_conf(LHASH *conf, X509V3_CTX *ctx, int ext_nid,
 static X509_EXTENSION *do_ext_i2d(X509V3_EXT_METHOD *method, int ext_nid,
 						 int crit, void *ext_struc)
 {
-	unsigned char *ext_der, *p;
+	unsigned char *ext_der;
 	int ext_len;
 	ASN1_OCTET_STRING *ext_oct;
 	X509_EXTENSION *ext;
 	/* Convert internal representation to DER */
-	ext_len = method->i2d(ext_struc, NULL);
-	if(!(ext_der = OPENSSL_malloc(ext_len))) goto merr;
-	p = ext_der;
-	method->i2d(ext_struc, &p);
+	if(method->it) {
+		ext_len = ASN1_item_i2d(ext_struc, &ext_der, method->it);
+		if(ext_len < 0) goto merr;
+	} else {
+		unsigned char *p;
+		ext_len = method->i2d(ext_struc, NULL);
+		if(!(ext_der = OPENSSL_malloc(ext_len))) goto merr;
+		p = ext_der;
+		method->i2d(ext_struc, &p);
+	}
 	if(!(ext_oct = M_ASN1_OCTET_STRING_new())) goto merr;
 	ext_oct->data = ext_der;
 	ext_oct->length = ext_len;
-	
+
 	ext = X509_EXTENSION_create_by_NID(NULL, ext_nid, crit, ext_oct);
 	if(!ext) goto merr;
 	M_ASN1_OCTET_STRING_free(ext_oct);
