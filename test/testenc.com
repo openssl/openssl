@@ -56,5 +56,5 @@ $
 $	goto loop_cipher_commands
 $ loop_cipher_commands_end:
 $	close f
-$	delete 'test'-cipher-commands.;*
+$	delete 'test'-cipher-commands;*
 $	delete 'test';*
