@@ -63,6 +63,7 @@
 #include "engine_int.h"
 #include <openssl/engine.h>
 
+#ifndef NO_HW
 #ifndef NO_HW_CSWIFT
 
 /* Attribution notice: Rainbow have generously allowed me to reproduce
@@ -730,3 +731,4 @@ static int cswift_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 	}
 
 #endif /* !NO_HW_CSWIFT */
+#endif /* !NO_HW */

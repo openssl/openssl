@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx] [rsaref] [no-threads] [no-asm] [no-dso] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [rsaref] [no-threads] [no-asm] [no-dso] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -27,6 +27,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-
 #               Generic OpenSSL-style methods relating to this support
 #               are always compiled but return NULL if the hardware
 #               support isn't compiled.
+# no-hw         do not compile support for any crypto hardware.
 # rsaref        use RSAref
 # [no-]threads  [don't] try to create a library that is suitable for
 #               multithreaded applications (default is "threads" if we
@@ -480,6 +481,11 @@ foreach (@ARGV)
 		$hw =~ tr/[a-z]/[A-Z]/;
 		$flags .= "-DNO_HW_$hw ";
 		$openssl_other_defines .= "#define NO_HW_$hw\n";
+		}
+	elsif (/^no-hw$/)
+		{
+		$flags .= "-DNO_HW ";
+		$openssl_other_defines .= "#define NO_HW\n";
 		}
 	elsif (/^386$/)
 		{ $processor=386; }

@@ -185,6 +185,7 @@ static int engine_internal_check(void)
 	 * with our statically compiled-in engines. */
 	if(!engine_list_add(ENGINE_openssl()))
 		return 0;
+#ifndef NO_HW
 #ifndef NO_HW_CSWIFT
 	if(!engine_list_add(ENGINE_cswift()))
 		return 0;
@@ -197,6 +198,7 @@ static int engine_internal_check(void)
 	if(!engine_list_add(ENGINE_atalla()))
 		return 0;
 #endif /* !NO_HW_ATALLA */
+#endif /* !NO_HW */
 	engine_list_flag = 1;
 	return 1;
 	}

@@ -64,6 +64,7 @@
 #include "engine_int.h"
 #include <openssl/engine.h>
 
+#ifndef NO_HW
 #ifndef NO_HW_NCIPHER
 
 /* Attribution notice: nCipher har said several times that it's OK for
@@ -773,3 +774,4 @@ static void log_message(void *logstream, const char *message)
 	}
 
 #endif /* !NO_HW_NCIPHER */
+#endif /* !NO_HW */
