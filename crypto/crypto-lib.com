@@ -202,12 +202,14 @@ $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_print,bn_rand,bn_shift,bn_word,bn_blind,"+ -
 	"bn_kron,bn_sqrt,bn_gcd,bn_prime,bn_err,bn_sqr,"+LIB_BN_ASM+","+ -
 	"bn_recp,bn_mont,bn_mpi,bn_exp2"
+$ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_recp,ecp_nist,ec_cvt,ec_mult,"+ -
+	"ec_err"
 $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null,"+ -
 	"rsa_asn1"
-$ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_recp,ecp_nist,ec_cvt,ec_mult,"+ -
-	"ec_err"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,dsa_err,dsa_ossl"
+$ LIB_ECDSA = "ecs_lib,ecs_gen,ecs_asn1,ecs_ossl,ecs_sign,ecs_vrf,"+ -
+	"ecs_key,ecs_err"
 $ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err"
 $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
 	"dso_openssl,dso_win32,dso_vms"
@@ -641,6 +643,7 @@ $   WRITE SYS$OUTPUT "	",APPLICATION,".exe"
 $!
 $! Link The Program, Check To See If We Need To Link With RSAREF Or Not.
 $!
+$   ON ERROR THEN GOTO NEXT_APPLICATION
 $   IF (RSAREF.EQS."TRUE")
 $   THEN
 $!
