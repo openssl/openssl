@@ -422,6 +422,7 @@ my $target="";
 my $options="";
 foreach (@ARGV)
 	{
+	s /^-no-/no-/; # some people just can't read the instructions
 	if (/^no-asm$/)
 	 	{
 		$no_asm=1;
