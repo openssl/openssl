@@ -87,6 +87,9 @@
 #elif !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
 # define TIMES
 #endif
+#if !defined(_UNICOS)
+# define TIMEB
+#endif
 
 #ifndef _IRIX
 # include <time.h>
@@ -108,7 +111,13 @@
 #undef TIMES
 #endif
 
+#ifdef TIMEB
 #include <sys/timeb.h>
+#endif
+
+#if !defined(TIMES) && !defined(TIMEB)
+#error "It seems neither struct tms nor struct timeb is supported in this platform!"
+#endif
 
 #if defined(sun) || defined(__ultrix)
 #define _POSIX_SOURCE
@@ -268,8 +277,11 @@ static double Time_F(int s, int usertime)
 			return((ret < 1e-3)?1e-3:ret);
 			}
 		}
-	else
 # endif /* times() */
+# if defined(TIMES) && defined(TIMEB)
+	else
+# endif
+# ifdef TIMEB
 		{
 		static struct timeb tstart,tend;
 		long i;
@@ -287,6 +299,7 @@ static double Time_F(int s, int usertime)
 			return((ret < 0.001)?0.001:ret);
 			}
 		}
+# endif
 #endif
 	}
 
@@ -598,9 +611,11 @@ int MAIN(int argc, char **argv)
 #endif
 			BIO_printf(bio_err,"idea     rc2      des      rsa    blowfish\n");
 			BIO_printf(bio_err,"\n");
+#ifdef TIMES
 			BIO_printf(bio_err,"Available options:\n");
 			BIO_printf(bio_err,"\n");
 			BIO_printf(bio_err,"-elapsed        measure time in real time instead of CPU user time.\n");
+#endif
 			goto end;
 			}
 		argc--;
