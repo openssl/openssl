@@ -108,10 +108,8 @@ LINK_SO_A_UNPACKED=	\
   SHOBJECTS=$$UNPACKDIR/*.o; \
   $(LINK_SO) && rm -rf $$UNPACKDIR
 
-DETECT_GNU_LD=${CC} -v 2>&1 | grep '^gcc' >/dev/null 2>&1 && \
-	my_ld=`${CC} -print-prog-name=ld 2>&1` && \
-	[ -n "$$my_ld" ] && \
-	$$my_ld -v 2>&1 | grep 'GNU ld' >/dev/null 2>&1
+DETECT_GNU_LD=(${CC} -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
+
 DO_GNU=$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so \
 	SHLIB_SUFFIX= \
