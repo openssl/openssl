@@ -17,8 +17,11 @@
      the number of header dependencies.
      [Ben Laurie]
 
-  +) Make DES key schedule conform to the usual scheme, as well as correcting
-     its structure.
+  +) Make DES key schedule conform to the usual scheme, as well as
+     correcting its structure. This means that calls to DES functions
+     now have to pass a pointer to a des_key_schedule instead of a
+     plain des_key_schedule (which was actually always a pointer
+     anyway).
      [Ben Laurie]
 
   +) Enhanced support for IA-64 Unix platforms (well, Linux and HP-UX).

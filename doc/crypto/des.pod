@@ -19,71 +19,71 @@ des_fcrypt, des_crypt, des_enc_read, des_enc_write - DES encryption
 
  void des_random_key(des_cblock *ret);
 
- int des_set_key(const_des_cblock *key, des_key_schedule schedule);
- int des_key_sched(const_des_cblock *key, des_key_schedule schedule);
+ int des_set_key(const_des_cblock *key, des_key_schedule *schedule);
+ int des_key_sched(const_des_cblock *key, des_key_schedule *schedule);
  int des_set_key_checked(const_des_cblock *key,
-        des_key_schedule schedule);
+        des_key_schedule *schedule);
  void des_set_key_unchecked(const_des_cblock *key,
-        des_key_schedule schedule);
+        des_key_schedule *schedule);
 
  void des_set_odd_parity(des_cblock *key);
  int des_is_weak_key(const_des_cblock *key);
 
  void des_ecb_encrypt(const_des_cblock *input, des_cblock *output, 
-        des_key_schedule ks, int enc);
+        des_key_schedule *ks, int enc);
  void des_ecb2_encrypt(const_des_cblock *input, des_cblock *output, 
-        des_key_schedule ks1, des_key_schedule ks2, int enc);
+        des_key_schedule *ks1, des_key_schedule *ks2, int enc);
  void des_ecb3_encrypt(const_des_cblock *input, des_cblock *output, 
-        des_key_schedule ks1, des_key_schedule ks2, 
-        des_key_schedule ks3, int enc);
+        des_key_schedule *ks1, des_key_schedule *ks2, 
+        des_key_schedule *ks3, int enc);
 
  void des_ncbc_encrypt(const unsigned char *input, unsigned char *output, 
-        long length, des_key_schedule schedule, des_cblock *ivec, 
+        long length, des_key_schedule *schedule, des_cblock *ivec, 
         int enc);
  void des_cfb_encrypt(const unsigned char *in, unsigned char *out,
-        int numbits, long length, des_key_schedule schedule,
+        int numbits, long length, des_key_schedule *schedule,
         des_cblock *ivec, int enc);
  void des_ofb_encrypt(const unsigned char *in, unsigned char *out,
-        int numbits, long length, des_key_schedule schedule,
+        int numbits, long length, des_key_schedule *schedule,
         des_cblock *ivec);
  void des_pcbc_encrypt(const unsigned char *input, unsigned char *output, 
-        long length, des_key_schedule schedule, des_cblock *ivec, 
+        long length, des_key_schedule *schedule, des_cblock *ivec, 
         int enc);
  void des_cfb64_encrypt(const unsigned char *in, unsigned char *out,
-        long length, des_key_schedule schedule, des_cblock *ivec,
+        long length, des_key_schedule *schedule, des_cblock *ivec,
         int *num, int enc);
  void des_ofb64_encrypt(const unsigned char *in, unsigned char *out,
-        long length, des_key_schedule schedule, des_cblock *ivec,
+        long length, des_key_schedule *schedule, des_cblock *ivec,
         int *num);
 
  void des_xcbc_encrypt(const unsigned char *input, unsigned char *output, 
-        long length, des_key_schedule schedule, des_cblock *ivec, 
+        long length, des_key_schedule *schedule, des_cblock *ivec, 
         const_des_cblock *inw, const_des_cblock *outw, int enc);
 
  void des_ede2_cbc_encrypt(const unsigned char *input,
-        unsigned char *output, long length, des_key_schedule ks1,
-        des_key_schedule ks2, des_cblock *ivec, int enc);
+        unsigned char *output, long length, des_key_schedule *ks1,
+        des_key_schedule *ks2, des_cblock *ivec, int enc);
  void des_ede2_cfb64_encrypt(const unsigned char *in,
-        unsigned char *out, long length, des_key_schedule ks1,
-        des_key_schedule ks2, des_cblock *ivec, int *num, int enc);
+        unsigned char *out, long length, des_key_schedule *ks1,
+        des_key_schedule *ks2, des_cblock *ivec, int *num, int enc);
  void des_ede2_ofb64_encrypt(const unsigned char *in,
-        unsigned char *out, long length, des_key_schedule ks1,
-        des_key_schedule ks2, des_cblock *ivec, int *num);
+        unsigned char *out, long length, des_key_schedule *ks1,
+        des_key_schedule *ks2, des_cblock *ivec, int *num);
 
  void des_ede3_cbc_encrypt(const unsigned char *input,
-        unsigned char *output, long length, des_key_schedule ks1,
-        des_key_schedule ks2, des_key_schedule ks3, des_cblock *ivec,
+        unsigned char *output, long length, des_key_schedule *ks1,
+        des_key_schedule *ks2, des_key_schedule *ks3, des_cblock *ivec,
         int enc);
  void des_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out, 
-        long length, des_key_schedule ks1, des_key_schedule ks2, 
-        des_key_schedule ks3, des_cblock *ivec1, des_cblock *ivec2, 
+        long length, des_key_schedule *ks1, des_key_schedule *ks2, 
+        des_key_schedule *ks3, des_cblock *ivec1, des_cblock *ivec2, 
         int enc);
  void des_ede3_cfb64_encrypt(const unsigned char *in, unsigned char *out, 
-        long length, des_key_schedule ks1, des_key_schedule ks2,
-        des_key_schedule ks3, des_cblock *ivec, int *num, int enc);
+        long length, des_key_schedule *ks1, des_key_schedule *ks2,
+        des_key_schedule *ks3, des_cblock *ivec, int *num, int enc);
  void des_ede3_ofb64_encrypt(const unsigned char *in, unsigned char *out, 
-        long length, des_key_schedule ks1, 
-        des_key_schedule ks2, des_key_schedule ks3, 
+        long length, des_key_schedule *ks1, 
+        des_key_schedule *ks2, des_key_schedule *ks3, 
         des_cblock *ivec, int *num);
 
  int des_read_password(des_cblock *key, const char *prompt, int verify);
@@ -93,7 +93,7 @@ des_fcrypt, des_crypt, des_enc_read, des_enc_write - DES encryption
         int verify);
 
  DES_LONG des_cbc_cksum(const unsigned char *input, des_cblock *output, 
-        long length, des_key_schedule schedule, 
+        long length, des_key_schedule *schedule, 
         const_des_cblock *ivec);
  DES_LONG des_quad_cksum(const unsigned char *input, des_cblock output[], 
         long length, int out_count, des_cblock *seed);
@@ -105,10 +105,10 @@ des_fcrypt, des_crypt, des_enc_read, des_enc_write - DES encryption
  char *des_crypt(const char *buf, const char *salt);
  char *crypt(const char *buf, const char *salt);
 
- int des_enc_read(int fd, void *buf, int len, des_key_schedule sched,
+ int des_enc_read(int fd, void *buf, int len, des_key_schedule *sched,
         des_cblock *iv);
  int des_enc_write(int fd, const void *buf, int len,
-        des_key_schedule sched, des_cblock *iv);
+        des_key_schedule *sched, des_cblock *iv);
 
 =head1 DESCRIPTION
 
