@@ -343,11 +343,9 @@ sub main'function_end
 	popl	%ebx
 	popl	%ebp
 	ret
-$const
 .${func}_end:
 EOF
 	push(@out,$tmp);
-	$const="";
 
 	if ($main'cpp)
 		{ push(@out,"\tSIZE($func,.${func}_end-$func)\n"); }
@@ -458,6 +456,12 @@ sub main'set_label
 
 sub main'file_end
 	{
+	if ($const ne "")
+		{
+		push(@out,".section .rodata\n");
+		push(@out,$const);
+		$const="";
+		}
 	}
 
 sub main'data_word
