@@ -4,6 +4,18 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) In 'openssl passwd', verify passwords read from the terminal
+     unless the '-salt' option is used (which usually means that
+     verification would just waste user's time since the resulting
+     hash is going to be compared with some given password hash)
+     or the new '-noverify' option is used.
+
+     This is an incompatible change, but it does not affect
+     non-interactive use of 'openssl passwd' (passwords on the command
+     line, '-stdin' option, '-in ...' option) and thus should not
+     cause any problems.
+     [Bodo Moeller]
+
   *) Remove all references to RSAref, since there's no more need for it.
      [Richard Levitte]
 

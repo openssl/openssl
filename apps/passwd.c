@@ -50,6 +50,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
  * -salt string  - salt
  * -in file      - read passwords from file
  * -stdin        - read passwords from stdin
+ * -noverify     - never verify when reading password from terminal
  * -quiet        - no warnings
  * -table        - format output as table
  * -reverse      - switch table columns
@@ -62,6 +63,7 @@ int MAIN(int argc, char **argv)
 	int ret = 1;
 	char *infile = NULL;
 	int in_stdin = 0;
+	int in_noverify = 0;
 	char *salt = NULL, *passwd = NULL, **passwds = NULL;
 	char *salt_malloc = NULL, *passwd_malloc = NULL;
 	size_t passwd_malloc_size = 0;
@@ -128,6 +130,8 @@ int MAIN(int argc, char **argv)
 			else
 				badopt = 1;
 			}
+		else if (strcmp(argv[i], "-noverify") == 0)
+			in_noverify = 1;
 		else if (strcmp(argv[i], "-quiet") == 0)
 			quiet = 1;
 		else if (strcmp(argv[i], "-table") == 0)
@@ -174,6 +178,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "-salt string       use provided salt\n");
 		BIO_printf(bio_err, "-in file           read passwords from file\n");
 		BIO_printf(bio_err, "-stdin             read passwords from stdin\n");
+		BIO_printf(bio_err, "-noverify          never verify when reading password from terminal\n");
 		BIO_printf(bio_err, "-quiet             no warnings\n");
 		BIO_printf(bio_err, "-table             format output as table\n");
 		BIO_printf(bio_err, "-reverse           switch table columns\n");
@@ -222,7 +227,7 @@ int MAIN(int argc, char **argv)
 		
 		passwds = passwds_static;
 		if (in == NULL)
-			if (EVP_read_pw_string(passwd_malloc, passwd_malloc_size, "Password: ", 0) != 0)
+			if (EVP_read_pw_string(passwd_malloc, passwd_malloc_size, "Password: ", !(passed_salt || in_noverify)) != 0)
 				goto err;
 		passwds[0] = passwd_malloc;
 		}

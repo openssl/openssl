@@ -13,6 +13,7 @@ B<openssl passwd>
 [B<-salt> I<string>]
 [B<-in> I<file>]
 [B<-stdin>]
+[B<-noverify>]
 [B<-quiet>]
 [B<-table>]
 {I<password>}
@@ -22,7 +23,7 @@ B<openssl passwd>
 The B<passwd> command computes the hash of a password typed at
 run-time or the hash of each password in a list.  The password list is
 taken from the named file for option B<-in file>, from stdin for
-option B<-stdin>, and from the command line otherwise.
+option B<-stdin>, or from the command line, or from the terminal otherwise.
 The Unix standard algorithm B<crypt> and the MD5-based BSD password
 algorithm B<1> and its Apache variant B<apr1> are available.
 
@@ -45,6 +46,7 @@ Use the B<apr1> algorithm (Apache variant of the BSD algorithm).
 =item B<-salt> I<string>
 
 Use the specified salt.
+When reading a password from the terminal, this implies B<-noverify>.
 
 =item B<-in> I<file>
 
@@ -53,6 +55,10 @@ Read passwords from I<file>.
 =item B<-stdin>
 
 Read passwords from B<stdin>.
+
+=item B<-noverify>
+
+Don't verify when reading a password from the terminal.
 
 =item B<-quiet>
 
