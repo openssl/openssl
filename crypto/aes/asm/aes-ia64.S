@@ -1,3 +1,9 @@
+// ====================================================================
+// Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+// project. Rights for redistribution and usage in source and binary
+// forms are granted according to the OpenSSL license.
+// ====================================================================
+//
 // What's wrong with compiler generated code? Compiler never uses
 // variable 'shr' which is pairable with 'extr'/'dep' instructions.
 // Then it uses 'zxt' which is an I-type, but can be replaced with
