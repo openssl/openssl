@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/09/12 22:19:41 $
+  ______________                           $Date: 2000/09/13 01:50:24 $
 
   DEVELOPMENT STATE
 
@@ -25,8 +25,10 @@
 			sco5-gcc			- passed
 			sco5-cc				- passed
 			FreeBSD				- passed
-			Win32				- failed (PCURSORINFO)
+			Win32 VC++			- failed (PCURSORINFO)
                                   RAND_poll() problem on Win2000
+			CygWin32			- test failed
+			MingW32				- failed (thelp32.h)
 			aix-gcc (AIX 4.3.2)		- passed
     o  OpenSSL 0.9.5a: Released on April     1st, 2000
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
