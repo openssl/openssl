@@ -123,6 +123,11 @@ static char *sstrsep(char **string, const char *delim)
 static unsigned char *ustrsep(char **p,const char *sep)
     { return (unsigned char *)sstrsep(p,sep); }
 
+static int test1_exit(int ec)
+	{
+	EXIT(ec);
+	}
+
 static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 		  const unsigned char *iv,int in,
 		  const unsigned char *plaintext,int pn,
@@ -145,7 +150,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	{
 	fprintf(stderr,"Key length doesn't match, got %d expected %d\n",kn,
 		c->key_len);
-	EXIT(5);
+	test1_exit(5);
 	}
     EVP_CIPHER_CTX_init(&ctx);
     if (encdec != 0)
@@ -153,26 +158,26 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	if(!EVP_EncryptInit_ex(&ctx,c,NULL,key,iv))
 	    {
 	    fprintf(stderr,"EncryptInit failed\n");
-	    EXIT(10);
+	    test1_exit(10);
 	    }
 	EVP_CIPHER_CTX_set_padding(&ctx,0);
 
 	if(!EVP_EncryptUpdate(&ctx,out,&outl,plaintext,pn))
 	    {
 	    fprintf(stderr,"Encrypt failed\n");
-	    EXIT(6);
+	    test1_exit(6);
 	    }
 	if(!EVP_EncryptFinal_ex(&ctx,out+outl,&outl2))
 	    {
 	    fprintf(stderr,"EncryptFinal failed\n");
-	    EXIT(7);
+	    test1_exit(7);
 	    }
 
 	if(outl+outl2 != cn)
 	    {
 	    fprintf(stderr,"Ciphertext length mismatch got %d expected %d\n",
 		    outl+outl2,cn);
-	    EXIT(8);
+	    test1_exit(8);
 	    }
 
 	if(memcmp(out,ciphertext,cn))
@@ -180,7 +185,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	    fprintf(stderr,"Ciphertext mismatch\n");
 	    hexdump(stderr,"Got",out,cn);
 	    hexdump(stderr,"Expected",ciphertext,cn);
-	    EXIT(9);
+	    test1_exit(9);
 	    }
 	}
 
@@ -189,26 +194,26 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	if(!EVP_DecryptInit_ex(&ctx,c,NULL,key,iv))
 	    {
 	    fprintf(stderr,"DecryptInit failed\n");
-	    EXIT(11);
+	    test1_exit(11);
 	    }
 	EVP_CIPHER_CTX_set_padding(&ctx,0);
 
 	if(!EVP_DecryptUpdate(&ctx,out,&outl,ciphertext,cn))
 	    {
 	    fprintf(stderr,"Decrypt failed\n");
-	    EXIT(6);
+	    test1_exit(6);
 	    }
 	if(!EVP_DecryptFinal_ex(&ctx,out+outl,&outl2))
 	    {
 	    fprintf(stderr,"DecryptFinal failed\n");
-	    EXIT(7);
+	    test1_exit(7);
 	    }
 
 	if(outl+outl2 != cn)
 	    {
 	    fprintf(stderr,"Plaintext length mismatch got %d expected %d\n",
 		    outl+outl2,cn);
-	    EXIT(8);
+	    test1_exit(8);
 	    }
 
 	if(memcmp(out,plaintext,cn))
@@ -216,7 +221,7 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
 	    fprintf(stderr,"Plaintext mismatch\n");
 	    hexdump(stderr,"Got",out,cn);
 	    hexdump(stderr,"Expected",plaintext,cn);
-	    EXIT(9);
+	    test1_exit(9);
 	    }
 	}
 
