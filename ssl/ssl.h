@@ -841,7 +841,7 @@ BIO *	SSL_get_wbio(SSL *s);
 int	SSL_set_cipher_list(SSL *s, char *str);
 void	SSL_set_read_ahead(SSL *s, int yes);
 int	SSL_get_verify_mode(SSL *s);
-int	(*SSL_get_verify_callback(SSL *s))(int ok,X509_STORE_CTX *ctx);
+int	(*SSL_get_verify_callback(SSL *s))(int,X509_STORE_CTX *);
 void	SSL_set_verify(SSL *s, int mode,
 		       int (*callback)(int ok,X509_STORE_CTX *ctx));
 int	SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa);
@@ -898,7 +898,7 @@ X509 *	SSL_get_peer_certificate(SSL *s);
 STACK *	SSL_get_peer_cert_chain(SSL *s);
 
 int SSL_CTX_get_verify_mode(SSL_CTX *ctx);
-int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int ok,X509_STORE_CTX *ctx);
+int (*SSL_CTX_get_verify_callback(SSL_CTX *ctx))(int,X509_STORE_CTX *);
 void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,
 			int (*callback)(int, X509_STORE_CTX *));
 void SSL_CTX_set_cert_verify_cb(SSL_CTX *ctx, int (*cb)(),char *arg);
