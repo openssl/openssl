@@ -243,9 +243,9 @@ clean-shared:
 	done
 
 link-shared:
-	if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
+	@if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
 		tmp="$(SHARED_LIBS_LINK_EXTS)"; \
-		@for i in $(SHLIBDIRS); do \
+		for i in $(SHLIBDIRS); do \
 			prev=lib$$i$(SHLIB_EXT); \
 			for j in $${tmp:-x}; do \
 				( set -x; ln -f -s $$prev lib$$i$$j ); \
