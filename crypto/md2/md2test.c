@@ -59,7 +59,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/md2.h>
 
 #include "../e_os.h"
 
@@ -71,6 +70,7 @@ int main(int argc, char *argv[])
 }
 #else
 #include <openssl/evp.h>
+#include <openssl/md2.h>
 
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>
