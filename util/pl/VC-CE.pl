@@ -16,8 +16,8 @@ $cflags=' /W3 /WX /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -D$(TARGETCPU) -D_$(TARGETCP
 $lflags='/nologo /subsystem:windowsce,3.00 /machine:$(TARGETCPU) /opt:ref';
 $mlflags='';
 
-$out_def="out32";
-$tmp_def="tmp32";
+$out_def='out32_$(TARGETCPU)';
+$tmp_def='tmp32_$(TARGETCPU)';
 $inc_def="inc32";
 
 if ($debug)
@@ -63,8 +63,8 @@ if ($shlib)
 	$mlflags.=" $lflags /dll";
 #	$cflags =~ s| /MD| /MT|;
 	$lib_cflag=" -D_WINDLL -D_DLL";
-	$out_def="out32dll";
-	$tmp_def="tmp32dll";
+	$out_def='out32dll_$(TARGETCPU)';
+	$tmp_def='tmp32dll_$(TARGETCPU)';
 	}
 
 $cflags.=" /Fd$out_def";
