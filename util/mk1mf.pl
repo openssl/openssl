@@ -420,9 +420,11 @@ if (open(IN,"crypto/mk1mfinf.h"))
 			$old_mk1mfinf_h .= $_;
 			}
 		}
+	close(IN);
 
 	open(OUT,">crypto/mk1mfinf.h") || die "Can't open mk1mfinf.h";
 	print OUT $old_mk1mfinf_h;
+	close(OUT);
 	}
 
 open (OUT,">>crypto/mk1mfinf.h") || die "Can't open mk1mfinf.h";
