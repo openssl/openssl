@@ -268,7 +268,9 @@ void *EC_GROUP_get_extra_data(const EC_GROUP *group, void *(*extra_data_dup_func
 		|| (group->extra_data_free_func != extra_data_free_func)
 		|| (group->extra_data_clear_free_func != extra_data_clear_free_func))
 		{
+#if 0 /* this was an error in 0.9.7, but that does not make a lot of sense */
 		ECerr(EC_F_EC_GROUP_GET_EXTRA_DATA, EC_R_NO_SUCH_EXTRA_DATA);
+#endif
 		return NULL;
 		}
 

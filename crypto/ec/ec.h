@@ -195,7 +195,6 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GROUP_GET0_GENERATOR			 139
 #define EC_F_EC_GROUP_GET_COFACTOR			 140
 #define EC_F_EC_GROUP_GET_CURVE_GFP			 130
-#define EC_F_EC_GROUP_GET_EXTRA_DATA			 107
 #define EC_F_EC_GROUP_GET_ORDER				 141
 #define EC_F_EC_GROUP_NEW				 108
 #define EC_F_EC_GROUP_PRECOMPUTE_MULT			 142
@@ -232,7 +231,6 @@ void ERR_load_EC_strings(void);
 #define EC_R_INVALID_FIELD				 103
 #define EC_R_INVALID_FORM				 104
 #define EC_R_NOT_INITIALIZED				 111
-#define EC_R_NO_SUCH_EXTRA_DATA				 105
 #define EC_R_POINT_AT_INFINITY				 106
 #define EC_R_POINT_IS_NOT_ON_CURVE			 107
 #define EC_R_SLOT_FULL					 108
