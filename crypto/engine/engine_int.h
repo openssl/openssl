@@ -129,6 +129,10 @@ ENGINE *ENGINE_openssl();
 ENGINE *ENGINE_cswift();
 #endif /* HW_CSWIFT */
 
+#ifdef HW_NCIPHER
+ENGINE *ENGINE_hwcrhk();
+#endif /* HW_NCIPHER */
+
 #ifdef  __cplusplus
 }
 #endif
