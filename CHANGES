@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.5 and 0.9.6  [xx Xxx 2000]
+
+  *) 
+
  Changes between 0.9.4 and 0.9.5  [28 Feb 2000]
 
   *) PKCS7_encrypt() was adding text MIME headers twice because they
