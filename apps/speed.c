@@ -197,6 +197,10 @@
 # endif
 #endif
 
+#if !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MACINTOSH_CLASSIC) && !defined(OPENSSL_SYS_OS2)
+# define HAVE_FORK 1
+#endif
+
 #undef BUFSIZE
 #define BUFSIZE	((long)1024*8+1)
 int run=0;
@@ -209,7 +213,9 @@ static double Time_F(int s);
 static void print_message(const char *s,long num,int length);
 static void pkey_print_message(char *str,char *str2,long num,int bits,int sec);
 static void print_result(int alg,int run_no,int count,double time_used);
+#ifdef HAVE_FORK
 static int do_multi(int multi);
+#endif
 #ifdef SIGALRM
 #if defined(__STDC__) || defined(sgi) || defined(_AIX)
 #define SIGRETTYPE void
@@ -444,7 +450,9 @@ int MAIN(int argc, char **argv)
 	int pr_header=0;
 	const EVP_CIPHER *evp=NULL;
 	int decrypt=0;
+#ifdef HAVE_FORK
 	int multi=0;
+#endif
 
 #ifndef TIMES
 	usertime=-1;
@@ -540,6 +548,7 @@ int MAIN(int argc, char **argv)
 			   means all of them should be run) */
 			j--;
 			}
+#ifdef HAVE_FORK
 		else if	((argc > 0) && (strcmp(*argv,"-multi") == 0))
 			{
 			argc--;
@@ -555,7 +564,10 @@ int MAIN(int argc, char **argv)
 				BIO_printf(bio_err,"bad multi count\n");
 				goto end;
 				}				
+			j--;	/* Otherwise, -mr gets confused with
+				   an algorithm. */
 			}
+#endif
 		else if (argc > 0 && !strcmp(*argv,"-mr"))
 			{
 			mr=1;
@@ -777,7 +789,9 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"-evp e          use EVP e.\n");
 			BIO_printf(bio_err,"-decrypt        time decryption instead of encryption (only EVP).\n");
 			BIO_printf(bio_err,"-mr             produce machine readable output.\n");
+#ifdef HAVE_FORK
 			BIO_printf(bio_err,"-multi n        run n benchmarks in parallel.\n");
+#endif
 			goto end;
 			}
 		argc--;
@@ -785,8 +799,10 @@ int MAIN(int argc, char **argv)
 		j++;
 		}
 
+#ifdef HAVE_FORK
 	if(multi && do_multi(multi))
 		goto show_res;
+#endif
 
 	if (j == 0)
 		{
@@ -1635,6 +1651,7 @@ static char *sstrsep(char **string, const char *delim)
     return token;
     }
 
+#ifdef HAVE_FORK
 static int do_multi(int multi)
 	{
 	int n;
@@ -1767,4 +1784,4 @@ static int do_multi(int multi)
 		}
 	return 1;
 	}
-
+#endif
