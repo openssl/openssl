@@ -206,7 +206,7 @@ test_gen:
 	@echo "Generate and verify a certificate request"
 	@sh ./testgen
 
-test_ss keyU.ss certU.ss certCA.ss:
+test_ss keyU.ss certU.ss certCA.ss: testss
 	@echo "Generate and certify a test certificate"
 	@sh ./testss
 

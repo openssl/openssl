@@ -10,7 +10,7 @@ if [ "$2" = "" ]; then
 else
   cert="$2"
 fi
-ssltest="./ssltest -key $1 -cert $2 -c_key $1 -c_cert $2"
+ssltest="./ssltest -key $key -cert $cert -c_key $key -c_cert $cert"
 
 if ../apps/openssl x509 -in $cert -text -noout | fgrep 'DSA Public Key'; then
   dsa_cert=YES
