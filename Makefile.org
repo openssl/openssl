@@ -435,6 +435,7 @@ do_hpux-shared:
 		-o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Fl lib$$i.a -ldld -lc ) || exit 1; \
+	chmod a=rx lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
 	done
 
 # This assumes that GNU utilities are *not* used
@@ -453,6 +454,7 @@ do_hpux64-shared:
 		-o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+forceload lib$$i.a -ldl -lc ) || exit 1; \
+	chmod a=rx lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
 	done
 
 # The following method is said to work on all platforms.  Tests will
