@@ -663,6 +663,7 @@ sub var_add
 	return("") if $no_rsa  && $dir =~ /^rsaref/;
 	return("") if $no_dsa  && $dir =~ /\/dsa/;
 	return("") if $no_dh   && $dir =~ /\/dh/;
+	return("") if $no_ec   && $dir =~ /\/ec/;
 	if ($no_des && $dir =~ /\/des/)
 		{
 		if ($val =~ /read_pwd/)
