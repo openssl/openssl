@@ -556,7 +556,7 @@ depend:
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making dependencies $$i..." && \
-		$(MAKE) SDIRS='${SDIRS}' DEPFLAG='${DEPFLAG}' depend ) || exit 1; \
+		$(MAKE) SDIRS='${SDIRS}' DEPFLAG='${DEPFLAG}' PERL='${PERL}' depend ) || exit 1; \
 	fi; \
 	done;
 
