@@ -4,8 +4,10 @@
  * This is not thread-safe, nor can it be changed to become thread-safe
  * without changing various function prototypes and using a lot of locking.
  * Luckily, it's not really used anywhere except in ssl_verify_cert_chain
- * via SSL_get_ex_data_X509_STORE_CTX_idx (ssl/ssl_cert.c), where
- * new_func, dup_func, and free_func all are 0.
+ * via SSL_get_ex_data_X509_STORE_CTX_idx (ssl/ssl_cert.c),
+ * where new_func, dup_func, and free_func all are 0, and in
+ * hwcrhk_init (crypto/engine/hw_ncipher.c), which is hopefully only
+ * ever used during program initialization.
  *
  * Any multi-threaded application crazy enough to use ex_data for its own
  * purposes had better make sure that SSL_get_ex_data_X509_STORE_CTX_idx
