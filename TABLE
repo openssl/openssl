@@ -72,11 +72,35 @@ $shared_ldflag =
 $shared_extension = 
 $ranlib       = 
 
-*** CygWin32
+*** Cygwin
 $cc           = gcc
 $cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
 $unistd       = 
 $thread_cflag = 
+$sys_id       = CYGWIN32
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = win32
+$shared_target= cygwin-shared
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = .dll
+$ranlib       = 
+
+*** Cygwin-pre1.3
+$cc           = gcc
+$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
+$unistd       = 
+$thread_cflag = (unknown)
 $sys_id       = CYGWIN32
 $lflags       = 
 $bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT

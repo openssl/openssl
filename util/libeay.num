@@ -2760,3 +2760,5 @@ DES_read_2passwords                     3206	EXIST::FUNCTION:DES
 DES_read_password                       3207	EXIST::FUNCTION:DES
 UI_UTIL_read_pw                         3208	EXIST::FUNCTION:
 UI_UTIL_read_pw_string                  3209	EXIST::FUNCTION:
+ENGINE_load_aep                         3210	EXIST::FUNCTION:
+ENGINE_load_sureware                    3211	EXIST::FUNCTION:
