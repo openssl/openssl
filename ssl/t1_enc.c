@@ -58,8 +58,6 @@
 
 #include <stdio.h>
 #include <openssl/comp.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include "ssl_locl.h"
@@ -78,6 +76,7 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 	chunk=EVP_MD_size(md);
 
 	HMAC_Init(&ctx,sec,sec_len,md);
+	HMAC_Init(&ctx_tmp,sec,sec_len,md);
 	HMAC_Update(&ctx,seed,seed_len);
 	HMAC_Final(&ctx,A1,&A1_len);
 
@@ -85,8 +84,9 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 	for (;;)
 		{
 		HMAC_Init(&ctx,NULL,0,NULL); /* re-init */
+		HMAC_Init(&ctx_tmp,NULL,0,NULL); /* re-init */
 		HMAC_Update(&ctx,A1,A1_len);
-		memcpy(&ctx_tmp,&ctx,sizeof(ctx)); /* Copy for A2 */ /* not needed for last one */
+		HMAC_Update(&ctx_tmp,A1,A1_len);
 		HMAC_Update(&ctx,seed,seed_len);
 
 		if (olen > chunk)
@@ -642,6 +642,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	HMAC_Update(&hmac,buf,5);
 	HMAC_Update(&hmac,rec->input,rec->length);
 	HMAC_Final(&hmac,md,&md_size);
+	HMAC_cleanup(&hmac);
 
 #ifdef TLS_DEBUG
 printf("sec=");

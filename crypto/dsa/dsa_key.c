@@ -60,7 +60,6 @@
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
-#include <openssl/sha.h>
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/rand.h>

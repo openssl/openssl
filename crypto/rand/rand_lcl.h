@@ -129,55 +129,26 @@
 #endif
 #endif
 
+#include <openssl/evp.h>
+#define MD_CTX			EVP_MD_CTX
+#define MD_Update(a,b,c)	EVP_DigestUpdate(a,b,c)
+#define	MD_Final(a,b)		EVP_DigestFinal(a,b,NULL)
 #if defined(USE_MD5_RAND)
-#include <openssl/md5.h>
 #define MD_DIGEST_LENGTH	MD5_DIGEST_LENGTH
-#define	MD(a,b,c)		MD5(a,b,c)
+#define MD_Init(a)		EVP_DigestInit(a,EVP_md5())
+#define	MD(a,b,c)		EVP_Digest(a,b,c,EVP_md5())
 #elif defined(USE_SHA1_RAND)
-#include <openssl/sha.h>
 #define MD_DIGEST_LENGTH	SHA_DIGEST_LENGTH
-#define	MD(a,b,c)		SHA1(a,b,c)
+#define MD_Init(a)		EVP_DigestInit(a,EVP_sha1())
+#define	MD(a,b,c)		EVP_Digest(a,b,c,EVP_sha1())
 #elif defined(USE_MDC2_RAND)
-#include <openssl/mdc2.h>
 #define MD_DIGEST_LENGTH	MDC2_DIGEST_LENGTH
-#define	MD(a,b,c)		MDC2(a,b,c)
+#define MD_Init(a)		EVP_DigestInit(a,EVP_mdc2())
+#define	MD(a,b,c)		EVP_Digest(a,b,c,EVP_mdc2())
 #elif defined(USE_MD2_RAND)
-#include <openssl/md2.h>
 #define MD_DIGEST_LENGTH	MD2_DIGEST_LENGTH
-#define	MD(a,b,c)		MD2(a,b,c)
-#endif
-#if defined(USE_MD5_RAND)
-#include <openssl/md5.h>
-#define MD_DIGEST_LENGTH	MD5_DIGEST_LENGTH
-#define MD_CTX			MD5_CTX
-#define MD_Init(a)		MD5_Init(a)
-#define MD_Update(a,b,c)	MD5_Update(a,b,c)
-#define	MD_Final(a,b)		MD5_Final(a,b)
-#define	MD(a,b,c)		MD5(a,b,c)
-#elif defined(USE_SHA1_RAND)
-#include <openssl/sha.h>
-#define MD_DIGEST_LENGTH	SHA_DIGEST_LENGTH
-#define MD_CTX			SHA_CTX
-#define MD_Init(a)		SHA1_Init(a)
-#define MD_Update(a,b,c)	SHA1_Update(a,b,c)
-#define	MD_Final(a,b)		SHA1_Final(a,b)
-#define	MD(a,b,c)		SHA1(a,b,c)
-#elif defined(USE_MDC2_RAND)
-#include <openssl/mdc2.h>
-#define MD_DIGEST_LENGTH	MDC2_DIGEST_LENGTH
-#define MD_CTX			MDC2_CTX
-#define MD_Init(a)		MDC2_Init(a)
-#define MD_Update(a,b,c)	MDC2_Update(a,b,c)
-#define	MD_Final(a,b)		MDC2_Final(a,b)
-#define	MD(a,b,c)		MDC2(a,b,c)
-#elif defined(USE_MD2_RAND)
-#include <openssl/md2.h>
-#define MD_DIGEST_LENGTH	MD2_DIGEST_LENGTH
-#define MD_CTX			MD2_CTX
-#define MD_Init(a)		MD2_Init(a)
-#define MD_Update(a,b,c)	MD2_Update(a,b,c)
-#define	MD_Final(a,b)		MD2_Final(a,b)
-#define	MD(a,b,c)		MD2(a,b,c)
+#define MD_Init(a)		EVP_DigestInit(a,EVP_md2())
+#define	MD(a,b,c)		EVP_Digest(a,b,c,EVP_md2())
 #endif
 
 

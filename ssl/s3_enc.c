@@ -57,8 +57,6 @@
  */
 
 #include <stdio.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
 #include <openssl/evp.h>
 #include "ssl_locl.h"
 
@@ -83,8 +81,8 @@ static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
 
 static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 	{
-	MD5_CTX m5;
-	SHA_CTX s1;
+	EVP_MD_CTX m5;
+	EVP_MD_CTX s1;
 	unsigned char buf[16],smd[SHA_DIGEST_LENGTH];
 	unsigned char c='A';
 	int i,j,k;
@@ -106,25 +104,25 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 		for (j=0; j<k; j++)
 			buf[j]=c;
 		c++;
-		SHA1_Init(  &s1);
-		SHA1_Update(&s1,buf,k);
-		SHA1_Update(&s1,s->session->master_key,
+		EVP_DigestInit(&s1,EVP_sha1());
+		EVP_DigestUpdate(&s1,buf,k);
+		EVP_DigestUpdate(&s1,s->session->master_key,
 			s->session->master_key_length);
-		SHA1_Update(&s1,s->s3->server_random,SSL3_RANDOM_SIZE);
-		SHA1_Update(&s1,s->s3->client_random,SSL3_RANDOM_SIZE);
-		SHA1_Final( smd,&s1);
+		EVP_DigestUpdate(&s1,s->s3->server_random,SSL3_RANDOM_SIZE);
+		EVP_DigestUpdate(&s1,s->s3->client_random,SSL3_RANDOM_SIZE);
+		EVP_DigestFinal(&s1,smd,NULL);
 
-		MD5_Init(  &m5);
-		MD5_Update(&m5,s->session->master_key,
+		EVP_DigestInit(&m5,EVP_md5());
+		EVP_DigestUpdate(&m5,s->session->master_key,
 			s->session->master_key_length);
-		MD5_Update(&m5,smd,SHA_DIGEST_LENGTH);
+		EVP_DigestUpdate(&m5,smd,SHA_DIGEST_LENGTH);
 		if ((i+MD5_DIGEST_LENGTH) > num)
 			{
-			MD5_Final(smd,&m5);
+			EVP_DigestFinal(&m5,smd,NULL);
 			memcpy(km,smd,(num-i));
 			}
 		else
-			MD5_Final(km,&m5);
+			EVP_DigestFinal(&m5,km,NULL);
 
 		km+=MD5_DIGEST_LENGTH;
 		}
@@ -142,7 +140,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 	const EVP_CIPHER *c;
 	COMP_METHOD *comp;
 	const EVP_MD *m;
-	MD5_CTX md;
+	EVP_MD_CTX md;
 	int exp,n,i,j,k,cl;
 
 	exp=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
@@ -252,19 +250,19 @@ int ssl3_change_cipher_state(SSL *s, int which)
 		/* In here I set both the read and write key/iv to the
 		 * same value since only the correct one will be used :-).
 		 */
-		MD5_Init(&md);
-		MD5_Update(&md,key,j);
-		MD5_Update(&md,er1,SSL3_RANDOM_SIZE);
-		MD5_Update(&md,er2,SSL3_RANDOM_SIZE);
-		MD5_Final(&(exp_key[0]),&md);
+		EVP_DigestInit(&md,EVP_md5());
+		EVP_DigestUpdate(&md,key,j);
+		EVP_DigestUpdate(&md,er1,SSL3_RANDOM_SIZE);
+		EVP_DigestUpdate(&md,er2,SSL3_RANDOM_SIZE);
+		EVP_DigestFinal(&md,&(exp_key[0]),NULL);
 		key= &(exp_key[0]);
 
 		if (k > 0)
 			{
-			MD5_Init(&md);
-			MD5_Update(&md,er1,SSL3_RANDOM_SIZE);
-			MD5_Update(&md,er2,SSL3_RANDOM_SIZE);
-			MD5_Final(&(exp_iv[0]),&md);
+			EVP_DigestInit(&md,EVP_md5());
+			EVP_DigestUpdate(&md,er1,SSL3_RANDOM_SIZE);
+			EVP_DigestUpdate(&md,er2,SSL3_RANDOM_SIZE);
+			EVP_DigestFinal(&md,&(exp_iv[0]),NULL);
 			iv= &(exp_iv[0]);
 			}
 		}

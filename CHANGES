@@ -11,6 +11,11 @@
          *) applies to 0.9.6a (/0.9.6b) and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Change all calls to low level digest routines in the library and
+     applications to use EVP. Add missing calls to HMAC_cleanup() and
+     don't assume HMAC_CTX can be copied using memcpy().
+     [Verdon Walker <VWalker@novell.com>, Steve Henson]
+
   +) Add the possibility to control engines through control names but with
      arbitrary arguments instead of just a string.
      Change the key loaders to take a UI_METHOD instead of a callback

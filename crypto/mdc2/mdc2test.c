@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
     return(0);
 }
 #else
-#include <openssl/mdc2.h>
+#include <openssl/evp.h>
 
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>
@@ -92,16 +92,16 @@ int main(int argc, char *argv[])
 	int ret=0;
 	unsigned char md[MDC2_DIGEST_LENGTH];
 	int i;
-	MDC2_CTX c;
+	EVP_MD_CTX c;
 	static char *text="Now is the time for all ";
 
 #ifdef CHARSET_EBCDIC
 	ebcdic2ascii(text,text,strlen(text));
 #endif
 
-	MDC2_Init(&c);
-	MDC2_Update(&c,(unsigned char *)text,strlen(text));
-	MDC2_Final(&(md[0]),&c);
+	EVP_DigestInit(&c,EVP_mdc2());
+	EVP_DigestUpdate(&c,(unsigned char *)text,strlen(text));
+	EVP_DigestFinal(&c,&(md[0]),NULL);
 
 	if (memcmp(md,pad1,MDC2_DIGEST_LENGTH) != 0)
 		{
@@ -116,10 +116,10 @@ int main(int argc, char *argv[])
 	else
 		printf("pad1 - ok\n");
 
-	MDC2_Init(&c);
-	c.pad_type=2;
-	MDC2_Update(&c,(unsigned char *)text,strlen(text));
-	MDC2_Final(&(md[0]),&c);
+	EVP_DigestInit(&c,EVP_mdc2());
+	c.md.mdc2.pad_type=2;
+	EVP_DigestUpdate(&c,(unsigned char *)text,strlen(text));
+	EVP_DigestFinal(&c,&(md[0]),NULL);
 
 	if (memcmp(md,pad2,MDC2_DIGEST_LENGTH) != 0)
 		{

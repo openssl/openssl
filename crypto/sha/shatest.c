@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
     return(0);
 }
 #else
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 	unsigned char **P,**R;
 	static unsigned char buf[1000];
 	char *p,*r;
-	SHA_CTX c;
+	EVP_MD_CTX c;
 	unsigned char md[SHA_DIGEST_LENGTH];
 
 #ifdef CHARSET_EBCDIC
@@ -119,7 +119,8 @@ int main(int argc, char *argv[])
 	i=1;
 	while (*P != NULL)
 		{
-		p=pt(SHA(*P,(unsigned long)strlen((char *)*P),NULL));
+		EVP_Digest(*P,(unsigned long)strlen((char *)*P),md,NULL,EVP_sha());
+		p=pt(md);
 		if (strcmp(p,(char *)*R) != 0)
 			{
 			printf("error calculating SHA on '%s'\n",*P);
@@ -137,10 +138,10 @@ int main(int argc, char *argv[])
 #ifdef CHARSET_EBCDIC
 	ebcdic2ascii(buf, buf, 1000);
 #endif /*CHARSET_EBCDIC*/
-	SHA_Init(&c);
+	EVP_DigestInit(&c,EVP_sha());
 	for (i=0; i<1000; i++)
-		SHA_Update(&c,buf,1000);
-	SHA_Final(md,&c);
+		EVP_DigestUpdate(&c,buf,1000);
+	EVP_DigestFinal(&c,md,NULL);
 	p=pt(md);
 
 	r=bigret;

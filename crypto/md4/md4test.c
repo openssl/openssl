@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
     return(0);
 }
 #else
-#include <openssl/md4.h>
+#include <openssl/evp.h>
 
 static char *test[]={
 	"",
@@ -96,13 +96,15 @@ int main(int argc, char *argv[])
 	int i,err=0;
 	unsigned char **P,**R;
 	char *p;
+	unsigned char md[MD4_DIGEST_LENGTH];
 
 	P=(unsigned char **)test;
 	R=(unsigned char **)ret;
 	i=1;
 	while (*P != NULL)
 		{
-		p=pt(MD4(&(P[0][0]),(unsigned long)strlen((char *)*P),NULL));
+		EVP_Digest(&(P[0][0]),(unsigned long)strlen((char *)*P),md,NULL,EVP_md4());
+		p=pt(md);
 		if (strcmp(p,(char *)*R) != 0)
 			{
 			printf("error calculating MD4 on '%s'\n",*P);

@@ -79,17 +79,17 @@ int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
 unsigned long X509_issuer_and_serial_hash(X509 *a)
 	{
 	unsigned long ret=0;
-	MD5_CTX ctx;
+	EVP_MD_CTX ctx;
 	unsigned char md[16];
 	char str[256];
 
 	X509_NAME_oneline(a->cert_info->issuer,str,256);
 	ret=strlen(str);
-	MD5_Init(&ctx);
-	MD5_Update(&ctx,(unsigned char *)str,ret);
-	MD5_Update(&ctx,(unsigned char *)a->cert_info->serialNumber->data,
+	EVP_DigestInit(&ctx,EVP_md5());
+	EVP_DigestUpdate(&ctx,(unsigned char *)str,ret);
+	EVP_DigestUpdate(&ctx,(unsigned char *)a->cert_info->serialNumber->data,
 		(unsigned long)a->cert_info->serialNumber->length);
-	MD5_Final(&(md[0]),&ctx);
+	EVP_DigestFinal(&ctx,&(md[0]),NULL);
 	ret=(	((unsigned long)md[0]     )|((unsigned long)md[1]<<8L)|
 		((unsigned long)md[2]<<16L)|((unsigned long)md[3]<<24L)
 		)&0xffffffffL;

@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
     return(0);
 }
 #else
-#include <openssl/ripemd.h>
+#include <openssl/evp.h>
 
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>
@@ -102,6 +102,7 @@ int main(int argc, char *argv[])
 	int i,err=0;
 	unsigned char **P,**R;
 	char *p;
+	unsigned char md[RIPEMD160_DIGEST_LENGTH];
 
 	P=(unsigned char **)test;
 	R=(unsigned char **)ret;
@@ -111,7 +112,8 @@ int main(int argc, char *argv[])
 #ifdef CHARSET_EBCDIC
 		ebcdic2ascii((char *)*P, (char *)*P, strlen((char *)*P));
 #endif
-		p=pt(RIPEMD160(&(P[0][0]),(unsigned long)strlen((char *)*P),NULL));
+		EVP_Digest(&(P[0][0]),(unsigned long)strlen((char *)*P),md,NULL,EVP_ripemd160());
+		p=pt(md);
 		if (strcmp(p,(char *)*R) != 0)
 			{
 			printf("error calculating RIPEMD160 on '%s'\n",*P);

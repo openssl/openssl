@@ -264,7 +264,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 			
 		MD_Update(&m,buf,j);
 		MD_Update(&m,(unsigned char *)&(md_c[0]),sizeof(md_c));
-		MD_Final(local_md,&m);
+		MD_Final(&m,local_md);
 		md_c[1]++;
 
 		buf=(const char *)buf + j;
@@ -457,7 +457,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 			}
 		else
 			MD_Update(&m,&(state[st_idx]),j);
-		MD_Final(local_md,&m);
+		MD_Final(&m,local_md);
 
 		for (i=0; i<j; i++)
 			{
@@ -473,7 +473,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	MD_Update(&m,local_md,MD_DIGEST_LENGTH);
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	MD_Update(&m,md,MD_DIGEST_LENGTH);
-	MD_Final(md,&m);
+	MD_Final(&m,md);
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
 	memset(&m,0,sizeof(m));

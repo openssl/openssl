@@ -924,7 +924,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_MD2],c[D_MD2][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_MD2][j]); count++)
-				MD2(buf,(unsigned long)lengths[j],&(md2[0]));
+				EVP_Digest(buf,(unsigned long)lengths[j],&(md2[0]),NULL,EVP_md2());
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MD2],d);
@@ -940,7 +940,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_MDC2],c[D_MDC2][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_MDC2][j]); count++)
-				MDC2(buf,(unsigned long)lengths[j],&(mdc2[0]));
+				EVP_Digest(buf,(unsigned long)lengths[j],&(mdc2[0]),NULL,EVP_mdc2());
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MDC2],d);
@@ -957,7 +957,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_MD4],c[D_MD4][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_MD4][j]); count++)
-				MD4(&(buf[0]),(unsigned long)lengths[j],&(md4[0]));
+				EVP_Digest(&(buf[0]),(unsigned long)lengths[j],&(md4[0]),NULL,EVP_md4());
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MD4],d);
@@ -974,7 +974,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_MD5],c[D_MD5][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_MD5][j]); count++)
-				MD5(&(buf[0]),(unsigned long)lengths[j],&(md5[0]));
+				EVP_Digest(&(buf[0]),(unsigned long)lengths[j],&(md5[0]),NULL,EVP_md5());
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_MD5],d);
@@ -1005,6 +1005,7 @@ int MAIN(int argc, char **argv)
 				count,names[D_HMAC],d);
 			results[D_HMAC][j]=((double)count)/d*lengths[j];
 			}
+		HMAC_cleanup(&hctx);
 		}
 #endif
 #ifndef OPENSSL_NO_SHA
@@ -1015,7 +1016,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_SHA1],c[D_SHA1][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_SHA1][j]); count++)
-				SHA1(buf,(unsigned long)lengths[j],&(sha[0]));
+				EVP_Digest(buf,(unsigned long)lengths[j],&(sha[0]),NULL,EVP_sha1());
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_SHA1],d);
@@ -1031,7 +1032,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_RMD160],c[D_RMD160][j],lengths[j]);
 			Time_F(START,usertime);
 			for (count=0,run=1; COND(c[D_RMD160][j]); count++)
-				RIPEMD160(buf,(unsigned long)lengths[j],&(rmd160[0]));
+				EVP_Digest(buf,(unsigned long)lengths[j],&(rmd160[0]),NULL,EVP_ripemd160());
 			d=Time_F(STOP,usertime);
 			BIO_printf(bio_err,"%ld %s's in %.2fs\n",
 				count,names[D_RMD160],d);

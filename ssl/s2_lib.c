@@ -61,7 +61,7 @@
 #include <stdio.h>
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
-#include <openssl/md5.h>
+#include <openssl/evp.h>
 
 static long ssl2_default_timeout(void );
 const char *ssl2_version_str="SSLv2" OPENSSL_VERSION_PTEXT;
@@ -415,7 +415,7 @@ int ssl2_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 void ssl2_generate_key_material(SSL *s)
 	{
 	unsigned int i;
-	MD5_CTX ctx;
+	EVP_MD_CTX ctx;
 	unsigned char *km;
 	unsigned char c='0';
 
@@ -427,14 +427,14 @@ void ssl2_generate_key_material(SSL *s)
 	km=s->s2->key_material;
 	for (i=0; i<s->s2->key_material_length; i+=MD5_DIGEST_LENGTH)
 		{
-		MD5_Init(&ctx);
+		EVP_DigestInit(&ctx,EVP_md5());
 
-		MD5_Update(&ctx,s->session->master_key,s->session->master_key_length);
-		MD5_Update(&ctx,&c,1);
+		EVP_DigestUpdate(&ctx,s->session->master_key,s->session->master_key_length);
+		EVP_DigestUpdate(&ctx,&c,1);
 		c++;
-		MD5_Update(&ctx,s->s2->challenge,s->s2->challenge_length);
-		MD5_Update(&ctx,s->s2->conn_id,s->s2->conn_id_length);
-		MD5_Final(km,&ctx);
+		EVP_DigestUpdate(&ctx,s->s2->challenge,s->s2->challenge_length);
+		EVP_DigestUpdate(&ctx,s->s2->conn_id,s->s2->conn_id_length);
+		EVP_DigestFinal(&ctx,km,NULL);
 		km+=MD5_DIGEST_LENGTH;
 		}
 	}

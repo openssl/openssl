@@ -24,7 +24,7 @@
 #include "cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 #include <openssl/rand.h>
 
 int MGF1(unsigned char *mask, long len,
@@ -62,7 +62,7 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
     seed = to + 1;
     db = to + SHA_DIGEST_LENGTH + 1;
 
-    SHA1(param, plen, db);
+    EVP_Digest((void *)param, plen, db, NULL, EVP_sha1());
     memset(db + SHA_DIGEST_LENGTH, 0,
 	   emlen - flen - 2 * SHA_DIGEST_LENGTH - 1);
     db[emlen - flen - SHA_DIGEST_LENGTH - 1] = 0x01;
@@ -120,7 +120,7 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
     for (i = 0; i < dblen; i++)
 	db[i] ^= maskeddb[i];
 
-    SHA1(param, plen, phash);
+    EVP_Digest((void *)param, plen, phash, NULL, EVP_sha1());
 
     if (memcmp(db, phash, SHA_DIGEST_LENGTH) != 0)
 	goto decoding_err;
@@ -159,24 +159,24 @@ int MGF1(unsigned char *mask, long len,
     {
     long i, outlen = 0;
     unsigned char cnt[4];
-    SHA_CTX c;
+    EVP_MD_CTX c;
     unsigned char md[SHA_DIGEST_LENGTH];
 
     for (i = 0; outlen < len; i++)
 	{
 	cnt[0] = (i >> 24) & 255, cnt[1] = (i >> 16) & 255,
 	  cnt[2] = (i >> 8) & 255, cnt[3] = i & 255;
-	SHA1_Init(&c);
-	SHA1_Update(&c, seed, seedlen);
-	SHA1_Update(&c, cnt, 4);
+	EVP_DigestInit(&c,EVP_sha1());
+	EVP_DigestUpdate(&c, seed, seedlen);
+	EVP_DigestUpdate(&c, cnt, 4);
 	if (outlen + SHA_DIGEST_LENGTH <= len)
 	    {
-	    SHA1_Final(mask + outlen, &c);
+	    EVP_DigestFinal(&c, mask + outlen, NULL);
 	    outlen += SHA_DIGEST_LENGTH;
 	    }
 	else
 	    {
-	    SHA1_Final(md, &c);
+	    EVP_DigestFinal(&c, md, NULL);
 	    memcpy(mask + outlen, md, len - outlen);
 	    outlen = len;
 	    }

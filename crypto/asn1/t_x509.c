@@ -259,7 +259,6 @@ int X509_ocspid_print (BIO *bp, X509 *x)
 	unsigned char *dertmp;
 	int derlen;
 	int i;
-	SHA_CTX SHA1buf ;
 	unsigned char SHA1md[SHA_DIGEST_LENGTH];
 
 	/* display the hash of the subject as it would appear
@@ -271,9 +270,7 @@ int X509_ocspid_print (BIO *bp, X509 *x)
 		goto err;
 	i2d_X509_NAME(x->cert_info->subject, &dertmp);
 
-	SHA1_Init(&SHA1buf);
-	SHA1_Update(&SHA1buf, der, derlen);
-	SHA1_Final(SHA1md,&SHA1buf);
+	EVP_Digest(der, derlen, SHA1md, NULL, EVP_sha1());
 	for (i=0; i < SHA_DIGEST_LENGTH; i++)
 		{
 		if (BIO_printf(bp,"%02X",SHA1md[i]) <= 0) goto err;
@@ -286,10 +283,8 @@ int X509_ocspid_print (BIO *bp, X509 *x)
 	if (BIO_printf(bp,"\n        Public key OCSP hash: ") <= 0)
 		goto err;
 
-	SHA1_Init(&SHA1buf);
-	SHA1_Update(&SHA1buf, x->cert_info->key->public_key->data,
-		x->cert_info->key->public_key->length);
-	SHA1_Final(SHA1md,&SHA1buf);
+	EVP_Digest(x->cert_info->key->public_key->data,
+		x->cert_info->key->public_key->length, SHA1md, NULL, EVP_sha1());
 	for (i=0; i < SHA_DIGEST_LENGTH; i++)
 		{
 		if (BIO_printf(bp,"%02X",SHA1md[i]) <= 0)

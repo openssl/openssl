@@ -20,7 +20,7 @@
 # include <openssl/des.h>
 #endif
 #ifndef NO_MD5CRYPT_1
-# include <openssl/md5.h>
+# include <openssl/evp.h>
 #endif
 
 
@@ -310,7 +310,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 	unsigned char buf[MD5_DIGEST_LENGTH];
 	char *salt_out;
 	int n, i;
-	MD5_CTX md;
+	EVP_MD_CTX md;
 	size_t passwd_len, salt_len;
 
 	passwd_len = strlen(passwd);
@@ -325,48 +325,48 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 	salt_len = strlen(salt_out);
 	assert(salt_len <= 8);
 	
-	MD5_Init(&md);
-	MD5_Update(&md, passwd, passwd_len);
-	MD5_Update(&md, "$", 1);
-	MD5_Update(&md, magic, strlen(magic));
-	MD5_Update(&md, "$", 1);
-	MD5_Update(&md, salt_out, salt_len);
+	EVP_DigestInit(&md,EVP_md5());
+	EVP_DigestUpdate(&md, passwd, passwd_len);
+	EVP_DigestUpdate(&md, "$", 1);
+	EVP_DigestUpdate(&md, magic, strlen(magic));
+	EVP_DigestUpdate(&md, "$", 1);
+	EVP_DigestUpdate(&md, salt_out, salt_len);
 	
 	 {
-		MD5_CTX md2;
+		EVP_MD_CTX md2;
 
-		MD5_Init(&md2);
-		MD5_Update(&md2, passwd, passwd_len);
-		MD5_Update(&md2, salt_out, salt_len);
-		MD5_Update(&md2, passwd, passwd_len);
-		MD5_Final(buf, &md2);
+		EVP_DigestInit(&md2,EVP_md5());
+		EVP_DigestUpdate(&md2, passwd, passwd_len);
+		EVP_DigestUpdate(&md2, salt_out, salt_len);
+		EVP_DigestUpdate(&md2, passwd, passwd_len);
+		EVP_DigestFinal(&md2, buf, NULL);
 	 }
 	for (i = passwd_len; i > sizeof buf; i -= sizeof buf)
-		MD5_Update(&md, buf, sizeof buf);
-	MD5_Update(&md, buf, i);
+		EVP_DigestUpdate(&md, buf, sizeof buf);
+	EVP_DigestUpdate(&md, buf, i);
 	
 	n = passwd_len;
 	while (n)
 		{
-		MD5_Update(&md, (n & 1) ? "\0" : passwd, 1);
+		EVP_DigestUpdate(&md, (n & 1) ? "\0" : passwd, 1);
 		n >>= 1;
 		}
-	MD5_Final(buf, &md);
+	EVP_DigestFinal(&md, buf, NULL);
 
 	for (i = 0; i < 1000; i++)
 		{
-		MD5_CTX md2;
+		EVP_MD_CTX md2;
 
-		MD5_Init(&md2);
-		MD5_Update(&md2, (i & 1) ? (unsigned char *) passwd : buf,
-		                 (i & 1) ? passwd_len : sizeof buf);
+		EVP_DigestInit(&md2,EVP_md5());
+		EVP_DigestUpdate(&md2, (i & 1) ? (unsigned char *) passwd : buf,
+		                       (i & 1) ? passwd_len : sizeof buf);
 		if (i % 3)
-			MD5_Update(&md2, salt_out, salt_len);
+			EVP_DigestUpdate(&md2, salt_out, salt_len);
 		if (i % 7)
-			MD5_Update(&md2, passwd, passwd_len);
-		MD5_Update(&md2, (i & 1) ? buf : (unsigned char *) passwd,
-		                 (i & 1) ? sizeof buf : passwd_len);
-		MD5_Final(buf, &md2);
+			EVP_DigestUpdate(&md2, passwd, passwd_len);
+		EVP_DigestUpdate(&md2, (i & 1) ? buf : (unsigned char *) passwd,
+		                       (i & 1) ? sizeof buf : passwd_len);
+		EVP_DigestFinal(&md2, buf, NULL);
 		}
 	
 	 {

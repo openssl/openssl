@@ -64,8 +64,6 @@
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include "ssl_locl.h"

@@ -162,7 +162,7 @@ typedef struct ok_struct
 	EVP_MD_CTX md;
 	int blockout;		/* output block is ready */ 
 	int sigio;		/* must process signature */
-	char buf[IOBS];
+	unsigned char buf[IOBS];
 	} BIO_OK_CTX;
 
 static BIO_METHOD methods_ok=
@@ -474,7 +474,7 @@ static void sig_out(BIO* b)
 	ctx->buf_len+= md->digest->md_size;
 
 	EVP_DigestUpdate(md, WELLKNOWN, strlen(WELLKNOWN));
-	md->digest->final(&(ctx->buf[ctx->buf_len]), &(md->md.base[0]));
+	EVP_DigestFinal(md, &(ctx->buf[ctx->buf_len]), NULL);
 	ctx->buf_len+= md->digest->md_size;
 	ctx->blockout= 1;
 	ctx->sigio= 0;
@@ -498,7 +498,7 @@ static void sig_in(BIO* b)
 	ctx->buf_off+= md->digest->md_size;
 
 	EVP_DigestUpdate(md, WELLKNOWN, strlen(WELLKNOWN));
-	md->digest->final(tmp, &(md->md.base[0]));
+	EVP_DigestFinal(md, tmp, NULL);
 	ret= memcmp(&(ctx->buf[ctx->buf_off]), tmp, md->digest->md_size) == 0;
 	ctx->buf_off+= md->digest->md_size;
 	if(ret == 1)
@@ -531,7 +531,7 @@ static void block_out(BIO* b)
 	memcpy(ctx->buf, &tl, OK_BLOCK_BLOCK);
 	tl= swapem(tl);
 	EVP_DigestUpdate(md, (unsigned char*) &(ctx->buf[OK_BLOCK_BLOCK]), tl);
-	md->digest->final(&(ctx->buf[ctx->buf_len]), &(md->md.base[0]));
+	EVP_DigestFinal(md, &(ctx->buf[ctx->buf_len]), NULL);
 	ctx->buf_len+= md->digest->md_size;
 	ctx->blockout= 1;
 	}
@@ -551,7 +551,7 @@ static void block_in(BIO* b)
 	if (ctx->buf_len < tl+ OK_BLOCK_BLOCK+ md->digest->md_size) return;
  
 	EVP_DigestUpdate(md, (unsigned char*) &(ctx->buf[OK_BLOCK_BLOCK]), tl);
-	md->digest->final(tmp, &(md->md.base[0]));
+	EVP_DigestFinal(md, tmp, NULL);
 	if(memcmp(&(ctx->buf[tl+ OK_BLOCK_BLOCK]), tmp, md->digest->md_size) == 0)
 		{
 		/* there might be parts from next block lurking around ! */
