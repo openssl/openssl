@@ -94,7 +94,7 @@ static int FIPS_check_exe(const char *path)
 	} while(n > 0);
     BIO_gets(md,mdbuf,EVP_MAX_MD_SIZE);
     BIO_free_all(bio);
-    snprintf(p2,sizeof p2,"%s.sha1",path);
+    BIO_snprintf(p2,sizeof p2,"%s.sha1",path);
     bio=BIO_new_file(p2,"rb");
     if(!bio || BIO_read(bio,buf,20) != 20)
 	{
