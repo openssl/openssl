@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.6b and 0.9.6c  [XX xxx XXXX]
+
+  *) 
+
  Changes between 0.9.6a and 0.9.6b  [9 Jul 2001]
 
   *) Change ssleay_rand_bytes (crypto/rand/md_rand.c)
