@@ -192,7 +192,11 @@ int type;
 	char *s,*ss,*p;
 	char **pp;
 
-	if (dir == NULL) return(0);
+	if (dir == NULL || !*dir)
+	    {
+	    X509err(X509_F_ADD_CERT_DIR,X509_R_INVALID_DIRECTORY);
+	    return 0;
+	    }
 
 	s=dir;
 	p=s;
