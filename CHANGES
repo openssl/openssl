@@ -4,6 +4,10 @@
 
  Changes between 0.9.5 and 0.9.5a  [XX XXX 2000]
 
+  *) des_quad_cksum() byte order bug fix.
+     [Ulf Möller, using the problem description in krb4-0.9.7, where
+      the solution is attributed to Derrick J Brashear <shadow@DEMENTIA.ORG>]
+
   *) Fix so V_ASN1_APP_CHOOSE works again: however its use is strongly
      discouraged.
      [Steve Henson, pointed out by Brian Korver <briank@cs.stanford.edu>]

@@ -336,8 +336,15 @@ int main(int argc, char *argv[])
 	unsigned char cbc_in[40];
 	unsigned char cbc_out[40];
 	DES_LONG cs;
-	unsigned char qret[4][4],cret[8];
-	DES_LONG lqret[4];
+	unsigned char cret[8];
+#ifdef _CRAY
+        struct {
+            int a:32;
+            int b:32;
+        } lqret[2];
+#else
+        DES_LONG lqret[4];
+#endif
 	int num;
 	char *str;
 
@@ -701,43 +708,40 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 		}
 
 	printf("Doing quad_cksum\n");
-	/* This is obviously done this way especially to puzzle me. Although
-	   quad_cksum returns up to 4 groups of 8 bytes, this test gets it to
-	   produce 2 groups then treats them as 4 groups of 4 bytes.
-	   Ben 13 Feb 1999 */
-	cs=quad_cksum(cbc_data,(des_cblock *)qret,strlen((char *)cbc_data),2,
-		      &cbc_iv);
-
-	{ /* Big-endian fix */
-	static DES_LONG l=1;
-	static unsigned char *c=(unsigned char *)&l;
-	DES_LONG ll;
-
-	j=sizeof(lqret[0])-4;
-	for (i=0; i<4; i++)
-		{
-		lqret[i]=0;
-		memcpy(&(lqret[i]),&(qret[i][0]),4);
-		if (!c[0] && (j > 0))
-			lqret[i]=lqret[i]>>(j*8); /* For Cray */
-		}
-
-	if (!c[0])
-		{
-		ll=lqret[0]^lqret[3];
-		lqret[0]^=ll;
-		lqret[3]^=ll;
-		ll=lqret[1]^lqret[2];
-		lqret[1]^=ll;
-		lqret[2]^=ll;
-		}
-	}
+	cs=quad_cksum(cbc_data,(des_cblock *)lqret,
+		(long)strlen(cbc_data),2,(des_cblock *)cbc_iv);
 	if (cs != 0x70d7a63aL)
 		{
 		printf("quad_cksum error, ret %08lx should be 70d7a63a\n",
 			(unsigned long)cs);
 		err=1;
 		}
+#ifdef _CRAY
+	if (lqret[0].a != 0x327eba8dL)
+		{
+		printf("quad_cksum error, out[0] %08lx is not %08lx\n",
+			(unsigned long)lqret[0].a,0x327eba8dUL);
+		err=1;
+		}
+	if (lqret[0].b != 0x201a49ccL)
+		{
+		printf("quad_cksum error, out[1] %08lx is not %08lx\n",
+			(unsigned long)lqret[0].b,0x201a49ccUL);
+		err=1;
+		}
+	if (lqret[1].a != 0x70d7a63aL)
+		{
+		printf("quad_cksum error, out[2] %08lx is not %08lx\n",
+			(unsigned long)lqret[1].a,0x70d7a63aUL);
+		err=1;
+		}
+	if (lqret[1].b != 0x501c2c26L)
+		{
+		printf("quad_cksum error, out[3] %08lx is not %08lx\n",
+			(unsigned long)lqret[1].b,0x501c2c26UL);
+		err=1;
+		}
+#else
 	if (lqret[0] != 0x327eba8dL)
 		{
 		printf("quad_cksum error, out[0] %08lx is not %08lx\n",
@@ -762,6 +766,7 @@ plain[8+4], plain[8+5], plain[8+6], plain[8+7]);
 			(unsigned long)lqret[3],0x501c2c26UL);
 		err=1;
 		}
+#endif
 #endif
 
 	printf("input word alignment test");
