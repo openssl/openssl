@@ -77,6 +77,9 @@ void OPENSSL_load_builtin_modules(void)
 
 static int openssl_configured = 0;
 
+#if 0 /* Disabled because of obvious buffer overflow.
+       * This is not yet actually used anywhere -- but it shouldn't
+       * unless it is fixed first. */
 void OPENSSL_config(void)
 	{
 	char *file, config_name[256];
@@ -113,6 +116,7 @@ void OPENSSL_config(void)
 	return;
 
 	}
+#endif
 
 void OPENSSL_no_config()
 	{
