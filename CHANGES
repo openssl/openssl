@@ -4,6 +4,9 @@
 
  Changes between 0.9.5a and 0.9.6  [xx XXX 2000]
 
+  *) Bugfix for linux-elf makefile.one.
+     [Ulf Möller]
+
   *) RSA_get_default_method() will now cause a default
      RSA_METHOD to be chosen if one doesn't exist already.
      Previously this was only set during a call to RSA_new()
