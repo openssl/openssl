@@ -464,7 +464,7 @@ int tls1_enc(SSL *s, int send)
 	if ((s->session == NULL) || (ds == NULL) ||
 		(enc == NULL))
 		{
-		memcpy(rec->data,rec->input,rec->length);
+		memmove(rec->data,rec->input,rec->length);
 		rec->input=rec->data;
 		}
 	else
