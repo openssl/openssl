@@ -114,7 +114,7 @@ long ASN1_ENUMERATED_get(ASN1_ENUMERATED *a)
 	if (i == V_ASN1_NEG_ENUMERATED)
 		neg=1;
 	else if (i != V_ASN1_ENUMERATED)
-		return(0);
+		return -1;
 	
 	if (a->length > sizeof(long))
 		{
@@ -122,7 +122,7 @@ long ASN1_ENUMERATED_get(ASN1_ENUMERATED *a)
 		return(0xffffffffL);
 		}
 	if (a->data == NULL)
-		return(0);
+		return 0;
 
 	for (i=0; i<a->length; i++)
 		{

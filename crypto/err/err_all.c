@@ -83,6 +83,7 @@
 #include <openssl/rand.h>
 #include <openssl/dso.h>
 #include <openssl/engine.h>
+#include <openssl/ocsp.h>
 #include <openssl/err.h>
 
 void ERR_load_crypto_strings(void)
@@ -122,5 +123,6 @@ void ERR_load_crypto_strings(void)
 	ERR_load_RAND_strings();
 	ERR_load_DSO_strings();
 	ERR_load_ENGINE_strings();
+	ERR_load_OCSP_strings();
 #endif
 	}

@@ -657,6 +657,7 @@ int asn1_ex_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, char
 	ASN1_TYPE *typ = NULL;
 	int ret = 0;
 	const ASN1_PRIMITIVE_FUNCS *pf;
+	ASN1_INTEGER **tint;
 	pf = it->funcs;
 	if(pf && pf->prim_c2i) return pf->prim_c2i(pval, cont, len, utype, free_cont, it);
 	/* If ANY type clear type and set pointer to internal value */
@@ -700,7 +701,10 @@ int asn1_ex_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, char
 		case V_ASN1_NEG_INTEGER:
 		case V_ASN1_ENUMERATED:
 		case V_ASN1_NEG_ENUMERATED:
-		if(!c2i_ASN1_INTEGER((ASN1_INTEGER **)pval, &cont, len)) goto err;
+		tint = (ASN1_INTEGER **)pval;
+		if(!c2i_ASN1_INTEGER(tint, &cont, len)) goto err;
+		/* Fixup type to match the expected form */
+		(*tint)->type = utype | ((*tint)->type & V_ASN1_NEG);
 		break;
 
 		case V_ASN1_OCTET_STRING:

@@ -360,7 +360,7 @@ long ASN1_INTEGER_get(ASN1_INTEGER *a)
 	if (i == V_ASN1_NEG_INTEGER)
 		neg=1;
 	else if (i != V_ASN1_INTEGER)
-		return(0);
+		return -1;
 	
 	if (a->length > sizeof(long))
 		{
@@ -368,7 +368,7 @@ long ASN1_INTEGER_get(ASN1_INTEGER *a)
 		return(0xffffffffL);
 		}
 	if (a->data == NULL)
-		return(0);
+		return 0;
 
 	for (i=0; i<a->length; i++)
 		{
