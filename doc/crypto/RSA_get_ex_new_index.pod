@@ -111,7 +111,7 @@ present in the parent RSA structure when it is called.
 
 =head1 SEE ALSO
 
-rsa(3)
+L<rsa(3)|rsa(3)>
 
 =head1 HISTORY
 
