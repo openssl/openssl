@@ -423,7 +423,8 @@ my %table=(
 
 ##### MacOS X (a.k.a. Rhapsody or Darwin) setup
 "rhapsody-ppc-cc","cc:-O3 -DB_ENDIAN::(unknown):MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",
-"darwin-ppc-cc","cc:-O3 -DB_ENDIAN::(unknown):MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",
+"darwin-ppc-cc","cc:-O3 -nostdinc -I/System/Library/Frameworks/System.framework/Headers -I/System/Library/Frameworks/System.frameworks/Headers/bsd -I/usr/include -fomit-frame-pointer -Wall -DB_ENDIAN::(unknown):MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::::::::::::-fPIC",
+"darwin-i386-cc","cc:-O3 -nostdinc -I/System/Library/Frameworks/System.framework/Headers -I/System/Library/Frameworks/System.frameworks/Headers/bsd -I/usr/include -fomit-frame-pointer -Wall -DB_ENDIAN::(unknown):MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::::::::::::-fPIC",
 
 ##### Sony NEWS-OS 4.x
 "newsos4-gcc","gcc:-O -DB_ENDIAN::(unknown):NEWS4:-lmld -liberty:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::",

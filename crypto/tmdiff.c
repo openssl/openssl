@@ -65,12 +65,8 @@
 #undef TIMES
 #endif
 
-#ifndef OPENSSL_SYS_MSDOS
-#  ifndef OPENSSL_SYS_WIN32
-#    if !defined(OPENSSL_SYS_VMS) || defined(__DECC)
-#      define TIMES
-#    endif
-#  endif
+#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_VMS) || defined(__DECC) && !defined(OPENSSL_SYS_MACOSX)
+# define TIMES
 #endif
 
 #ifndef _IRIX

@@ -59,7 +59,7 @@
 /* define PART1, PART2, PART3 or PART4 to build only with a few of the options.
  * This is for machines with 64k code segment size restrictions. */
 
-#if !defined(OPENSSL_SYS_MSDOS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC))
+#if !defined(OPENSSL_SYS_MSDOS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC)) && !defined(OPENSSL_SYS_MACOSX)
 #define TIMES
 #endif
 
