@@ -211,7 +211,7 @@ static int win32_bind(DSO *dso, const char *symname, void **symptr)
 	return(1);
 	}
 
-static int win32_ctrl(DSO *dso, int cmd, long larg, void *parg)
+static long win32_ctrl(DSO *dso, int cmd, long larg, void *parg)
         {
         if(dso == NULL)
                 {
