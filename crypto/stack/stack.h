@@ -99,6 +99,7 @@ int (*sk_set_cmp_func(STACK *sk, int (*c)(const char * const *,
 			(const char * const *, const char * const *);
 STACK *sk_dup(STACK *st);
 void sk_sort(STACK *st);
+int sk_is_sorted(const STACK *st);
 
 #ifdef  __cplusplus
 }

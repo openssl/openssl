@@ -84,6 +84,7 @@ while(<IN>) {
 #define sk_${type_thing}_shift(st) SKM_sk_shift($type_thing, (st))
 #define sk_${type_thing}_pop(st) SKM_sk_pop($type_thing, (st))
 #define sk_${type_thing}_sort(st) SKM_sk_sort($type_thing, (st))
+#define sk_${type_thing}_is_sorted(st) SKM_sk_is_sorted($type_thing, (st))
 EOF
 	}
 	foreach $type_thing (sort @asn1setlst) {

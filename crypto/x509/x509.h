@@ -410,6 +410,7 @@ typedef struct X509_crl_info_st
 	ASN1_TIME *nextUpdate;
 	STACK_OF(X509_REVOKED) *revoked;
 	STACK_OF(X509_EXTENSION) /* [0] */ *extensions;
+	ASN1_ENCODING enc;
 	} X509_CRL_INFO;
 
 struct X509_crl_st
