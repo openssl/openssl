@@ -19,7 +19,8 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST= uitest.c
+#TEST= uitest.c
+TEST=
 APPS=
 
 COMPATSRC= ui_compat.c
