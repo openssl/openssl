@@ -208,7 +208,8 @@
 
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ
-# ifdef _SC_CLK_TCK
+# if defined(_SC_CLK_TCK) \
+     && (!defined(OPENSSL_SYS_VMS) || __CTRL_VER >= 70000000)
 #  define HZ ((double)sysconf(_SC_CLK_TCK))
 # else
 #  ifndef CLK_TCK
