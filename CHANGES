@@ -4,6 +4,22 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX xxxx]
 
+  *) Added an ENGINE that implements RSA by performing private key
+     exponentiations with the GMP library. The conversions to and from
+     GMP's mpz_t format aren't optimised nor are any montgomery forms
+     cached, and on x86 it appears OpenSSL's own performance has caught up.
+     However there are likely to be other architectures where GMP could
+     provide a boost. This ENGINE is not built in by default, but it can be
+     specified at Configure time and should be accompanied by the necessary
+     linker additions, eg;
+         ./config -DOPENSSL_USE_GMP -lgmp
+     [Geoff Thorpe]
+
+  *) "openssl engine" will not display ENGINE/DSO load failure errors when
+     testing availability of engines with "-t" - the old behaviour is
+     produced by increasing the feature's verbosity with "-tt".
+     [Geoff Thorpe]
+
   *) ECDSA routines: under certain error conditions uninitialized BN objects
      could be freed. Solution: make sure initialization is performed early
      enough. (Reported and fix supplied by Nils Larsch <nla@trustcenter.de>
