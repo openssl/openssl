@@ -1046,7 +1046,6 @@ err:
 
 int ERR_set_mark(void)
 	{
-	int i=0;
 	ERR_STATE *es;
 
 	es=ERR_get_state();
@@ -1058,7 +1057,6 @@ int ERR_set_mark(void)
 
 int ERR_pop_to_mark(void)
 	{
-	int i=0;
 	ERR_STATE *es;
 
 	es=ERR_get_state();
