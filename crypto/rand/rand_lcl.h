@@ -129,7 +129,6 @@
 #endif
 #endif
 
-#include <openssl/evp.h>
 #define MD_Update(a,b,c)	EVP_DigestUpdate(a,b,c)
 #define	MD_Final(a,b)		EVP_DigestFinal(a,b,NULL)
 #if defined(USE_MD5_RAND)

@@ -155,12 +155,10 @@ typedef struct x509_lookup_method_st
 			    X509_OBJECT *ret);
 	} X509_LOOKUP_METHOD;
 
-typedef struct x509_store_ctx_st X509_STORE_CTX;
-
 /* This is used to hold everything.  It is used for all certificate
  * validation.  Once we have a certificate chain, the 'verify'
  * function is then called to actually check the cert chain. */
-typedef struct x509_store_st
+struct x509_store_st
 	{
 	/* The following is a cache of trusted certs */
 	int cache; 	/* if true, stash any hits */
@@ -190,7 +188,7 @@ typedef struct x509_store_st
 	CRYPTO_EX_DATA ex_data;
 	int references;
 	int depth;		/* how deep to look (still unused -- X509_STORE_CTX's depth is used) */
-	}  X509_STORE;
+	};
 
 #define X509_STORE_set_depth(ctx,d)       ((ctx)->depth=(d))
 

@@ -59,11 +59,12 @@
 #ifndef HEADER_PKCS7_H
 #define HEADER_PKCS7_H
 
+#include <openssl/asn1.h>
 #include <openssl/bio.h>
-#include <openssl/x509.h>
 #include <openssl/e_os2.h>
 
 #include <openssl/symhacks.h>
+#include <openssl/types.h>
 
 #ifdef  __cplusplus
 extern "C" {

@@ -89,6 +89,7 @@
 #endif
 #include <openssl/evp.h>
 #include <openssl/e_os2.h>
+#include <openssl/types.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -98,10 +99,6 @@ extern "C" {
 /* Under Win32 this is defined in wincrypt.h */
 #undef X509_NAME
 #endif
-
-  /* If placed in pkcs12.h, we end up with a circular depency with pkcs7.h */
-#define DECLARE_PKCS12_STACK_OF(type) /* Nothing */
-#define IMPLEMENT_PKCS12_STACK_OF(type) /* Nothing */
 
 #define X509_FILETYPE_PEM	1
 #define X509_FILETYPE_ASN1	2
@@ -125,11 +122,11 @@ typedef struct X509_objects_st
 	int (*i2a)();
 	} X509_OBJECTS;
 
-typedef struct X509_algor_st
+struct X509_algor_st
 	{
 	ASN1_OBJECT *algorithm;
 	ASN1_TYPE *parameter;
-	} X509_ALGOR;
+	};
 
 DECLARE_STACK_OF(X509_ALGOR)
 DECLARE_ASN1_SET_OF(X509_ALGOR)
@@ -165,7 +162,7 @@ DECLARE_STACK_OF(X509_NAME_ENTRY)
 DECLARE_ASN1_SET_OF(X509_NAME_ENTRY)
 
 /* we always keep X509_NAMEs in 2 forms. */
-typedef struct X509_name_st
+struct X509_name_st
 	{
 	STACK_OF(X509_NAME_ENTRY) *entries;
 	int modified;	/* true if 'bytes' needs to be built */
@@ -175,7 +172,7 @@ typedef struct X509_name_st
 	char *bytes;
 #endif
 	unsigned long hash; /* Keep the hash around for lookups */
-	} X509_NAME;
+	};
 
 DECLARE_STACK_OF(X509_NAME)
 
@@ -254,7 +251,7 @@ typedef struct x509_cert_aux_st
 	STACK_OF(X509_ALGOR) *other;		/* other unspecified info */
 	} X509_CERT_AUX;
 
-typedef struct x509_st
+struct x509_st
 	{
 	X509_CINF *cert_info;
 	X509_ALGOR *sig_alg;
@@ -275,7 +272,7 @@ typedef struct x509_st
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif
 	X509_CERT_AUX *aux;
-	} X509;
+	};
 
 DECLARE_STACK_OF(X509)
 DECLARE_ASN1_SET_OF(X509)
@@ -415,14 +412,14 @@ typedef struct X509_crl_info_st
 	STACK_OF(X509_EXTENSION) /* [0] */ *extensions;
 	} X509_CRL_INFO;
 
-typedef struct X509_crl_st
+struct X509_crl_st
 	{
 	/* actual signature */
 	X509_CRL_INFO *crl;
 	X509_ALGOR *sig_alg;
 	ASN1_BIT_STRING *signature;
 	int references;
-	} X509_CRL;
+	};
 
 DECLARE_STACK_OF(X509_CRL)
 DECLARE_ASN1_SET_OF(X509_CRL)

@@ -60,7 +60,6 @@
 #include <errno.h>
 #include "cryptlib.h"
 #include <openssl/bio.h>
-#include <openssl/evp.h>
 
 static int buffer_write(BIO *h, const char *buf,int num);
 static int buffer_read(BIO *h, char *buf, int size);

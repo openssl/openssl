@@ -91,36 +91,35 @@ rsa_asn1.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 rsa_asn1.o: ../../include/openssl/opensslconf.h
 rsa_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/rsa.h
 rsa_asn1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-rsa_asn1.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_asn1.c
+rsa_asn1.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+rsa_asn1.o: ../cryptlib.h rsa_asn1.c
 rsa_chk.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 rsa_chk.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 rsa_chk.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 rsa_chk.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rsa_chk.o: ../../include/openssl/opensslv.h ../../include/openssl/rsa.h
 rsa_chk.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-rsa_chk.o: ../../include/openssl/symhacks.h rsa_chk.c
+rsa_chk.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+rsa_chk.o: rsa_chk.c
 rsa_eay.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_eay.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_eay.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rsa_eay.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 rsa_eay.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-rsa_eay.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-rsa_eay.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-rsa_eay.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-rsa_eay.o: ../../include/openssl/opensslv.h ../../include/openssl/pem.h
-rsa_eay.o: ../../include/openssl/pem2.h ../../include/openssl/pkcs7.h
+rsa_eay.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+rsa_eay.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 rsa_eay.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
-rsa_eay.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-rsa_eay.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rsa_eay.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-rsa_eay.o: ../../include/openssl/x509_vfy.h ../cryptlib.h rsa_eay.c
+rsa_eay.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+rsa_eay.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+rsa_eay.o: ../../include/openssl/ui.h ../cryptlib.h rsa_eay.c
 rsa_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 rsa_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 rsa_err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 rsa_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rsa_err.o: ../../include/openssl/opensslv.h ../../include/openssl/rsa.h
 rsa_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-rsa_err.o: ../../include/openssl/symhacks.h rsa_err.c
+rsa_err.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+rsa_err.o: rsa_err.c
 rsa_gen.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_gen.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_gen.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -128,22 +127,19 @@ rsa_gen.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 rsa_gen.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rsa_gen.o: ../../include/openssl/opensslv.h ../../include/openssl/rsa.h
 rsa_gen.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-rsa_gen.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_gen.c
+rsa_gen.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+rsa_gen.o: ../cryptlib.h rsa_gen.c
 rsa_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rsa_lib.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 rsa_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-rsa_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-rsa_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-rsa_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-rsa_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/pem.h
-rsa_lib.o: ../../include/openssl/pem2.h ../../include/openssl/pkcs7.h
+rsa_lib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+rsa_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 rsa_lib.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
-rsa_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-rsa_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rsa_lib.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-rsa_lib.o: ../../include/openssl/x509_vfy.h ../cryptlib.h rsa_lib.c
+rsa_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+rsa_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+rsa_lib.o: ../../include/openssl/ui.h ../cryptlib.h rsa_lib.c
 rsa_none.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_none.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_none.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -152,7 +148,7 @@ rsa_none.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rsa_none.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 rsa_none.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rsa_none.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rsa_none.o: ../cryptlib.h rsa_none.c
+rsa_none.o: ../../include/openssl/types.h ../cryptlib.h rsa_none.c
 rsa_null.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_null.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_null.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -161,7 +157,7 @@ rsa_null.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rsa_null.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 rsa_null.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rsa_null.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rsa_null.o: ../cryptlib.h rsa_null.c
+rsa_null.o: ../../include/openssl/types.h ../cryptlib.h rsa_null.c
 rsa_oaep.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_oaep.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_oaep.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -172,7 +168,8 @@ rsa_oaep.o: ../../include/openssl/opensslconf.h
 rsa_oaep.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 rsa_oaep.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rsa_oaep.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-rsa_oaep.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_oaep.c
+rsa_oaep.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+rsa_oaep.o: ../cryptlib.h rsa_oaep.c
 rsa_pk1.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_pk1.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_pk1.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -181,7 +178,7 @@ rsa_pk1.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rsa_pk1.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 rsa_pk1.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rsa_pk1.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rsa_pk1.o: ../cryptlib.h rsa_pk1.c
+rsa_pk1.o: ../../include/openssl/types.h ../cryptlib.h rsa_pk1.c
 rsa_saos.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_saos.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_saos.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -193,8 +190,9 @@ rsa_saos.o: ../../include/openssl/opensslconf.h
 rsa_saos.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
 rsa_saos.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rsa_saos.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-rsa_saos.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-rsa_saos.o: ../../include/openssl/x509_vfy.h ../cryptlib.h rsa_saos.c
+rsa_saos.o: ../../include/openssl/symhacks.h ../../include/openssl/types.h
+rsa_saos.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+rsa_saos.o: ../cryptlib.h rsa_saos.c
 rsa_sign.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_sign.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_sign.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -203,13 +201,13 @@ rsa_sign.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
 rsa_sign.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 rsa_sign.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 rsa_sign.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-rsa_sign.o: ../../include/openssl/opensslv.h ../../include/openssl/pem.h
-rsa_sign.o: ../../include/openssl/pem2.h ../../include/openssl/pkcs7.h
+rsa_sign.o: ../../include/openssl/opensslv.h ../../include/openssl/pkcs7.h
 rsa_sign.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 rsa_sign.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 rsa_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rsa_sign.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-rsa_sign.o: ../../include/openssl/x509_vfy.h ../cryptlib.h rsa_sign.c
+rsa_sign.o: ../../include/openssl/types.h ../../include/openssl/ui.h
+rsa_sign.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+rsa_sign.o: ../cryptlib.h rsa_sign.c
 rsa_ssl.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_ssl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_ssl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -218,4 +216,4 @@ rsa_ssl.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 rsa_ssl.o: ../../include/openssl/opensslv.h ../../include/openssl/rand.h
 rsa_ssl.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rsa_ssl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-rsa_ssl.o: ../cryptlib.h rsa_ssl.c
+rsa_ssl.o: ../../include/openssl/types.h ../cryptlib.h rsa_ssl.c

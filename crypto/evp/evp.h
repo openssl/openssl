@@ -67,6 +67,8 @@
 # undef OPENSSL_ALGORITHM_DEFINES
 #endif
 
+#include <openssl/types.h>
+
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
@@ -116,7 +118,7 @@ extern "C" {
 /* Type needs to be a bit field
  * Sub-type needs to be for variations on the method, as in, can it do
  * arbitrary encryption.... */
-typedef struct evp_pkey_st
+struct evp_pkey_st
 	{
 	int type;
 	int save_type;
@@ -135,7 +137,7 @@ typedef struct evp_pkey_st
 		} pkey;
 	int save_parameters;
 	STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
-	} EVP_PKEY;
+	};
 
 #define EVP_PKEY_MO_SIGN	0x0001
 #define EVP_PKEY_MO_VERIFY	0x0002
@@ -210,7 +212,7 @@ typedef struct evp_pkey_method_st
 #endif
 
 #ifndef EVP_MD
-typedef struct env_md_st
+struct env_md_st
 	{
 	int type;
 	int pkey_type;
@@ -224,7 +226,7 @@ typedef struct env_md_st
 	int required_pkey_type[5]; /*EVP_PKEY_xxx */
 	int block_size;
 	int ctx_size; /* how big does the ctx->md_data need to be */
-	} EVP_MD;
+	};
 
 
 
@@ -257,9 +259,6 @@ typedef struct env_md_ctx_st
 	const EVP_MD *digest;
 	void *md_data;
 	} EVP_MD_CTX;
-
-typedef struct evp_cipher_st EVP_CIPHER;
-typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
 
 struct evp_cipher_st
 	{

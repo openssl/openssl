@@ -152,7 +152,8 @@ cfb64enc.o: ../../include/openssl/opensslconf.h cfb64enc.c des_locl.h
 cfb_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 cfb_enc.o: ../../include/openssl/opensslconf.h cfb_enc.c des_locl.h
 des_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-des_enc.o: ../../include/openssl/opensslconf.h des_enc.c des_locl.h ncbc_enc.c
+des_enc.o: ../../include/openssl/opensslconf.h des_enc.c des_locl.h des_locl.h
+des_enc.o: ncbc_enc.c
 ecb3_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 ecb3_enc.o: ../../include/openssl/opensslconf.h des_locl.h ecb3_enc.c
 ecb_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h

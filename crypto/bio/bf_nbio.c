@@ -61,7 +61,6 @@
 #include "cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/bio.h>
-#include <openssl/evp.h>
 
 /* BIO_put and BIO_get both add to the digest,
  * BIO_gets returns the digest */
