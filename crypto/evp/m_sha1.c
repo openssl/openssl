@@ -77,7 +77,7 @@ static const EVP_MD sha1_md=
 	NID_sha1,
 	NID_sha1WithRSAEncryption,
 	SHA_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_FIPS,
 	init,
 	update,
 	final,

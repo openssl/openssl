@@ -117,6 +117,10 @@
 #include <openssl/aes.h>
 #endif
 
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 /*
 #define EVP_RC2_KEY_SIZE		16
 #define EVP_RC4_KEY_SIZE		16
@@ -290,6 +294,7 @@ struct env_md_st
 
 #define EVP_MD_FLAG_ONESHOT	0x0001 /* digest can only handle a single
 					* block */
+#define EVP_MD_FLAG_FIPS	0x0400 /* Note if suitable for use in FIPS mode */
 
 #define EVP_PKEY_NULL_method	NULL,NULL,{0,0,0,0}
 
@@ -332,6 +337,9 @@ struct env_md_ctx_st
 #define EVP_MD_CTX_FLAG_REUSE		0x0004 /* Don't free up ctx->md_data
 						* in EVP_MD_CTX_cleanup */
 
+#define EVP_MD_CTX_FLAG_NON_FIPS_ALLOW	0x0008	/* Allow use of non FIPS digest
+						 * in FIPS mode */
+
 struct evp_cipher_st
 	{
 	int nid;
@@ -373,6 +381,10 @@ struct evp_cipher_st
 #define 	EVP_CIPH_CUSTOM_KEY_LENGTH	0x80
 /* Don't use standard block padding */
 #define 	EVP_CIPH_NO_PADDING		0x100
+/* Note if suitable for use in FIPS mode */
+#define		EVP_CIPH_FLAG_FIPS		0x400
+/* Allow non FIPS cipher in FIPS mode */
+#define		EVP_CIPH_FLAG_NON_FIPS_ALLOW	0x800
 
 /* ctrl() values */
 
@@ -853,12 +865,16 @@ void ERR_load_EVP_strings(void);
 /* Function codes. */
 #define EVP_F_AES_INIT_KEY				 129
 #define EVP_F_D2I_PKEY					 100
+#define EVP_F_EVP_ADD_CIPHER				 130
+#define EVP_F_EVP_ADD_DIGEST				 131
 #define EVP_F_EVP_CIPHERINIT				 123
 #define EVP_F_EVP_CIPHER_CTX_CTRL			 124
 #define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH		 122
 #define EVP_F_EVP_DECRYPTFINAL				 101
 #define EVP_F_EVP_DIGESTINIT				 128
 #define EVP_F_EVP_ENCRYPTFINAL				 127
+#define EVP_F_EVP_GET_CIPHERBYNAME			 132
+#define EVP_F_EVP_GET_DIGESTBYNAME			 133
 #define EVP_F_EVP_MD_CTX_COPY				 110
 #define EVP_F_EVP_OPENINIT				 102
 #define EVP_F_EVP_PBE_ALG_ADD				 115
@@ -894,6 +910,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH		 138
 #define EVP_R_DECODE_ERROR				 114
 #define EVP_R_DIFFERENT_KEY_TYPES			 101
+#define EVP_R_DISABLED_FOR_FIPS				 141
 #define EVP_R_ENCODE_ERROR				 115
 #define EVP_R_EVP_PBE_CIPHERINIT_ERROR			 119
 #define EVP_R_EXPECTING_AN_RSA_KEY			 127

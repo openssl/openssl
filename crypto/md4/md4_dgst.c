@@ -70,7 +70,7 @@ const char *MD4_version="MD4" OPENSSL_VERSION_PTEXT;
 #define INIT_DATA_C (unsigned long)0x98badcfeL
 #define INIT_DATA_D (unsigned long)0x10325476L
 
-int MD4_Init(MD4_CTX *c)
+FIPS_NON_FIPS_MD_Init(MD4)
 	{
 	c->A=INIT_DATA_A;
 	c->B=INIT_DATA_B;

@@ -108,6 +108,7 @@ int MAIN(int argc, char **argv)
 	char *engine=NULL;
 #endif
 	char *hmac_key=NULL;
+	int non_fips_allow = 0;
 
 	apps_startup();
 
@@ -192,6 +193,8 @@ int MAIN(int argc, char **argv)
 			out_bin = 1;
 		else if (strcmp(*argv,"-d") == 0)
 			debug=1;
+		else if (strcmp(*argv,"-non-fips-allow") == 0)
+			non_fips_allow=1;
 		else if (!strcmp(*argv,"-hmac"))
 			{
 			if (--argc < 1)
@@ -341,6 +344,13 @@ int MAIN(int argc, char **argv)
 			goto end;
 		}
 	}
+
+	if (non_fips_allow)
+		{
+		EVP_MD_CTX *md_ctx;
+		BIO_get_md_ctx(bmd,&md_ctx);
+		EVP_MD_CTX_set_flags(md_ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+		}
 
 	/* we use md as a filter, reading from 'in' */
 	if (!BIO_set_md(bmd,md))

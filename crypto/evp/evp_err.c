@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,12 +68,16 @@ static ERR_STRING_DATA EVP_str_functs[]=
 	{
 {ERR_PACK(0,EVP_F_AES_INIT_KEY,0),	"AES_INIT_KEY"},
 {ERR_PACK(0,EVP_F_D2I_PKEY,0),	"D2I_PKEY"},
+{ERR_PACK(0,EVP_F_EVP_ADD_CIPHER,0),	"EVP_add_cipher"},
+{ERR_PACK(0,EVP_F_EVP_ADD_DIGEST,0),	"EVP_add_digest"},
 {ERR_PACK(0,EVP_F_EVP_CIPHERINIT,0),	"EVP_CipherInit"},
 {ERR_PACK(0,EVP_F_EVP_CIPHER_CTX_CTRL,0),	"EVP_CIPHER_CTX_ctrl"},
 {ERR_PACK(0,EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH,0),	"EVP_CIPHER_CTX_set_key_length"},
 {ERR_PACK(0,EVP_F_EVP_DECRYPTFINAL,0),	"EVP_DecryptFinal"},
 {ERR_PACK(0,EVP_F_EVP_DIGESTINIT,0),	"EVP_DigestInit"},
 {ERR_PACK(0,EVP_F_EVP_ENCRYPTFINAL,0),	"EVP_EncryptFinal"},
+{ERR_PACK(0,EVP_F_EVP_GET_CIPHERBYNAME,0),	"EVP_get_cipherbyname"},
+{ERR_PACK(0,EVP_F_EVP_GET_DIGESTBYNAME,0),	"EVP_get_digestbyname"},
 {ERR_PACK(0,EVP_F_EVP_MD_CTX_COPY,0),	"EVP_MD_CTX_copy"},
 {ERR_PACK(0,EVP_F_EVP_OPENINIT,0),	"EVP_OpenInit"},
 {ERR_PACK(0,EVP_F_EVP_PBE_ALG_ADD,0),	"EVP_PBE_alg_add"},
@@ -112,6 +116,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH ,"data not multiple of block length"},
 {EVP_R_DECODE_ERROR                      ,"decode error"},
 {EVP_R_DIFFERENT_KEY_TYPES               ,"different key types"},
+{EVP_R_DISABLED_FOR_FIPS                 ,"disabled for fips"},
 {EVP_R_ENCODE_ERROR                      ,"encode error"},
 {EVP_R_EVP_PBE_CIPHERINIT_ERROR          ,"evp pbe cipherinit error"},
 {EVP_R_EXPECTING_AN_RSA_KEY              ,"expecting an rsa key"},

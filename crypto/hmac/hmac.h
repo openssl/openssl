@@ -98,6 +98,7 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
 		    const unsigned char *d, int n, unsigned char *md,
 		    unsigned int *md_len);
 
+void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags);
 
 #ifdef  __cplusplus
 }

@@ -146,7 +146,18 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 		else
 			ctx->engine = NULL;
 #endif
-
+#ifdef OPENSSL_FIPS
+		if (FIPS_mode())
+			{
+			if (!(cipher->flags & EVP_CIPH_FLAG_FIPS)
+				& !(ctx->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW))
+				{
+				EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_DISABLED_FOR_FIPS);
+				ERR_add_error_data(2, "cipher=", EVP_CIPHER_name(cipher));
+				return 0;
+				}
+			}
+#endif
 		ctx->cipher=cipher;
 		if (ctx->cipher->ctx_size)
 			{
@@ -271,6 +282,9 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	int i,j,bl;
 
 	OPENSSL_assert(inl > 0);
+#ifdef OPENSSL_FIPS
+	OPENSSL_assert(!FIPS_mode() || ctx->cipher->flags & EVP_CIPH_FLAG_FIPS);
+#endif
 	if(ctx->buf_len == 0 && (inl&(ctx->block_mask)) == 0)
 		{
 		if(ctx->cipher->do_cipher(ctx,out,in,inl))

@@ -127,16 +127,18 @@ static int des_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
 
 BLOCK_CIPHER_defs(des, DES_key_schedule, NID_des, 8, 8, 8, 64,
-			0, des_init_key, NULL,
+			EVP_CIPH_FLAG_FIPS, des_init_key, NULL,
 			EVP_CIPHER_set_asn1_iv,
 			EVP_CIPHER_get_asn1_iv,
 			NULL)
 
-BLOCK_CIPHER_def_cfb(des,DES_key_schedule,NID_des,8,8,1,0,des_init_key,NULL,
+BLOCK_CIPHER_def_cfb(des,DES_key_schedule,NID_des,8,8,1,
+		     EVP_CIPH_FLAG_FIPS,des_init_key,NULL,
 		     EVP_CIPHER_set_asn1_iv,
 		     EVP_CIPHER_get_asn1_iv,NULL)
 
-BLOCK_CIPHER_def_cfb(des,DES_key_schedule,NID_des,8,8,8,0,des_init_key,NULL,
+BLOCK_CIPHER_def_cfb(des,DES_key_schedule,NID_des,8,8,8,
+		     EVP_CIPH_FLAG_FIPS,des_init_key,NULL,
 		     EVP_CIPHER_set_asn1_iv,
 		     EVP_CIPHER_get_asn1_iv,NULL)
 

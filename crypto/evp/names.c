@@ -61,6 +61,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 
 int EVP_add_cipher(const EVP_CIPHER *c)
 	{

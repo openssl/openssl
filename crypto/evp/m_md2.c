@@ -60,6 +60,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
+#include "evp_locl.h"
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/md2.h>

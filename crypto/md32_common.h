@@ -559,7 +559,7 @@ int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	static const unsigned char end[4]={0x80,0x00,0x00,0x00};
 	const unsigned char *cp=end;
 
-#ifdef OPENSSL_FIPS
+#if 0
 	if(FIPS_mode() && !FIPS_md5_allowed())
 	    {
 	    FIPSerr(FIPS_F_HASH_FINAL,FIPS_R_NON_FIPS_METHOD);

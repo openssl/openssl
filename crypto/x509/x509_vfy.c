@@ -365,7 +365,7 @@ static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 	else
 		return 0;
 }
-	
+
 
 /* Check a certificate chains extensions for consistency
  * with the supplied purpose

@@ -70,7 +70,7 @@ const char *MD5_version="MD5" OPENSSL_VERSION_PTEXT;
 #define INIT_DATA_C (unsigned long)0x98badcfeL
 #define INIT_DATA_D (unsigned long)0x10325476L
 
-int MD5_Init(MD5_CTX *c)
+FIPS_NON_FIPS_MD_Init(MD5)
 	{
 	c->A=INIT_DATA_A;
 	c->B=INIT_DATA_B;

@@ -195,6 +195,17 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 #endif
 	if (ctx->digest != type)
 		{
+#ifdef OPENSSL_FIPS
+		if (FIPS_mode())
+			{
+			if (!(type->flags & EVP_MD_FLAG_FIPS) 
+			 && !(ctx->flags & EVP_MD_CTX_FLAG_NON_FIPS_ALLOW))
+				{
+				EVPerr(EVP_F_EVP_DIGESTINIT, EVP_R_DISABLED_FOR_FIPS);
+				return 0;
+				}
+			}
+#endif
 		if (ctx->digest && ctx->digest->ctx_size)
 			OPENSSL_free(ctx->md_data);
 		ctx->digest=type;
