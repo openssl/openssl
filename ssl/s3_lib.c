@@ -771,11 +771,11 @@ STACK *have,*pref;
 		emask=cert->export_mask;
 			
 		alg=c->algorithms&(SSL_MKEY_MASK|SSL_AUTH_MASK);
-		if (SSL_IS_EXPORT(alg))
+		if (SSL_IS_EXPORT(c->algorithms))
 			{
 			ok=((alg & emask) == alg)?1:0;
 #ifdef CIPHER_DEBUG
-			printf("%d:[%08lX:%08lX]%s\n",ok,alg,mask,c->name);
+			printf("%d:[%08lX:%08lX]%s (export)\n",ok,alg,mask,c->name);
 #endif
 			}
 		else
