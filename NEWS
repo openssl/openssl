@@ -5,6 +5,14 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.7e and OpenSSL 0.9.7f:
+
+      o Several compilation issues fixed.
+      o Many memory allocation failure checks added.
+      o Improved comparison of X509 Name type.
+      o Mandatory basic checks on certificates.
+      o Performance improvements.
+
   Major changes between OpenSSL 0.9.7d and OpenSSL 0.9.7e:
 
       o Fix race condition in CRL checking code.
