@@ -98,7 +98,7 @@ void md5_block_data_order (MD5_CTX *c, const unsigned char *p,int num);
  *
  *				<appro@fy.chalmers.se>
  */
-#define md5_block_data_order	md5_block_host_order
+#define md5_block_data_order(c,p,num) md5_block_host_order((c),(const MD5_LONG *)(p),(num))
 #endif
 
 #define DATA_ORDER_IS_LITTLE_ENDIAN
