@@ -94,9 +94,9 @@ int main(int argc, char *argv[])
 	b = BN_new();
 	if (!p || !a || !b) ABORT;
 
-	if (!BN_hex2bn(&p, "D")) ABORT;
-	if (!BN_hex2bn(&a, "7")) ABORT;
-	if (!BN_hex2bn(&b, "C")) ABORT;
+	if (!BN_hex2bn(&p, "17")) ABORT;
+	if (!BN_hex2bn(&a, "1")) ABORT;
+	if (!BN_hex2bn(&b, "1")) ABORT;
 	
 	group = EC_GROUP_new(EC_GFp_mont_method());
 	if (!group) ABORT;
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
 	z = BN_new();
 	if (!x || !y || !z) ABORT;
 
-	if (!BN_hex2bn(&x, "C")) ABORT;
+	if (!BN_hex2bn(&x, "D")) ABORT;
 	if (!EC_POINT_set_compressed_coordinates_GFp(group, Q, x, 1, ctx)) ABORT;
 	if (!EC_POINT_is_on_curve(group, Q, ctx))
 		{

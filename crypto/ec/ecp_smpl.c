@@ -1409,13 +1409,18 @@ int ec_GFp_simple_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *
 		{
 		if (!field_mul(group, Zb23, Zb23, &b->Z, ctx)) goto end;
 		if (!field_mul(group, tmp1, &a->Y, Zb23, ctx)) goto end;
+		/* tmp1_ = tmp1 */
 		}
+	else
+		tmp1_ = &a->Y;
 	if (!a->Z_is_one)
 		{
 		if (!field_mul(group, Za23, Za23, &a->Z, ctx)) goto end;
 		if (!field_mul(group, tmp2, &b->Y, Za23, ctx)) goto end;
+		/* tmp2_ = tmp2 */
 		}
-	/* tmp1_ and tmp2_ are still ok */
+	else
+		tmp2_ = &b->Y;
 
 	/* compare  Y_a*Z_b^3  with  Y_b*Z_a^3 */
 	if (BN_cmp(tmp1_, tmp2_) != 0)
