@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/01/30 17:34:59 $
+  ______________                           $Date: 1999/02/01 08:18:31 $
 
   DEVELOPMENT STATE
 
@@ -21,6 +21,11 @@
 	4. Documentation on how all the above works.
 	Next on the list is probably PKCS#12 integration.
 
+    o Mark is currently working on:
+        Folding in any changes that are in the C2Net code base that were
+        not in the original SSLeay-0.9.1.b release.  Plus other minor
+        tidying.
+
   NEEDS PATCH
 
   OPEN ISSUES
@@ -40,6 +45,8 @@
           It's not obvious for which file xxx.org is the source.
           Suggestion: Rename xxx.org to xxx.h.in (Autoconf style), this way
                       one sees that xxx.h.in is the input for xxx.h
+
+          Status: Mark +1
 
     o  The installation under "make install" produces a very
        installation layout: $prefix/certs and $prefix/private dirs.  That's
