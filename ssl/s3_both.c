@@ -357,7 +357,8 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			}
 		*ok=1;
 		s->init_msg = s->init_buf->data + 4;
-		return((int)s->s3->tmp.message_size);
+		s->init_num = (int)s->s3->tmp.message_size;
+		return s->init_num;
 		}
 
 	p=(unsigned char *)s->init_buf->data;
