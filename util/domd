@@ -4,8 +4,11 @@
 
 TOP=$1
 shift
-MAKEDEPEND=$1
-shift
+if [ "$1" = "-MD" ]; then
+    shift
+    MAKEDEPEND=$1
+    shift
+fi
 if [ "$MAKEDEPEND" = "" ]; then MAKEDEPEND=makedepend; fi
 
 cp Makefile.ssl Makefile.save
