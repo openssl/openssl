@@ -194,7 +194,11 @@ sub main'pop	{ &out1("popl",@_); $stack-=4; }
 sub main'pushf	{ &out0("pushf"); $stack+=4; }
 sub main'popf	{ &out0("popf"); $stack-=4; }
 sub main'not	{ &out1("notl",@_); }
-sub main'call	{ &out1("call",($_[0]=~/^\Q${dot}\EL/?'':$under).$_[0]); }
+sub main'call	{	my $pre=$under;
+			foreach $i (%label)
+			{ if ($label{$i} eq $_[0]) { $pre=''; last; } }
+			&out1("call",$pre.$_[0]);
+		}
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
 sub main'test	{ &out2("testl",@_); }
@@ -336,8 +340,7 @@ sub main'function_begin
 
 	local($tmp)=<<"EOF";
 .text
-.align $align
-.globl $func
+.globl	$func
 EOF
 	push(@out,$tmp);
 	if ($main'cpp)
@@ -347,6 +350,7 @@ EOF
 	elsif ($main'aout)
 		{ }
 	else	{ $tmp=push(@out,".type\t$func,\@function\n"); }
+	push(@out,".align\t$align\n");
 	push(@out,"$func:\n");
 	$tmp=<<"EOF";
 	pushl	%ebp
@@ -368,8 +372,7 @@ sub main'function_begin_B
 
 	local($tmp)=<<"EOF";
 .text
-.align $align
-.globl $func
+.globl	$func
 EOF
 	push(@out,$tmp);
 	if ($main'cpp)
@@ -379,6 +382,7 @@ EOF
 	elsif ($main'aout)
 		{ }
 	else	{ push(@out,".type	$func,\@function\n"); }
+	push(@out,".align\t$align\n");
 	push(@out,"$func:\n");
 	$stack=4;
 	}
@@ -402,7 +406,7 @@ EOF
 	if ($main'cpp)
 		{ push(@out,"SIZE($func,${dot}L_${func}_end-$func)\n"); }
 	elsif ($main'coff or $main'aout)
-                { $tmp=push(@out,".align $align\n"); }
+                { }
 	else	{ push(@out,".size\t$func,${dot}L_${func}_end-$func\n"); }
 	push(@out,".ident	\"$func\"\n");
 	$stack=0;
@@ -433,7 +437,7 @@ sub main'function_end_B
 	if ($main'cpp)
 		{ push(@out,"SIZE($func,${dot}L_${func}_end-$func)\n"); }
         elsif ($main'coff or $main'aout)
-                { push(@out,".align $align\n"); }
+                { }
 	else	{ push(@out,".size\t$func,${dot}L_${func}_end-$func\n"); }
 	push(@out,".ident	\"$func\"\n");
 	$stack=0;
@@ -508,7 +512,11 @@ sub main'set_label
 		$label{$_[0]}="${dot}${label}${_[0]}";
 		$label++;
 		}
-	push(@out,".align $align\n") if ($_[1] != 0);
+	if ($_[1]!=0)
+		{
+		if ($_[1]>1)	{ main'align($_[1]);		}
+		else		{ push(@out,".align $align\n");	}
+		}
 	push(@out,"$label{$_[0]}:\n");
 	}
 
@@ -581,7 +589,7 @@ sub main'align
 		$val=$p2-1;
 		$val.=",0x90";
 	}
-	push(@out,".align $val\n");
+	push(@out,".align\t$val\n");
 	}
 
 # debug output functions: puts, putx, printf
@@ -678,9 +686,9 @@ ___
 		&main'call(&main'label("PIC_me_up"));
 		&main'set_label("PIC_me_up");
 		&main'blindpop($dst);
-		&main'add($dst,"\$$under"."_GLOBAL_OFFSET_TABLE_+[.-".
+		&main'add($dst,"\$${under}_GLOBAL_OFFSET_TABLE_+[.-".
 				&main'label("PIC_me_up") . "]");
-		&main'mov($dst,&main'DWP("$under".$sym."\@GOT",$dst));
+		&main'mov($dst,&main'DWP($under.$sym."\@GOT",$dst));
 		}
 	else
 		{
