@@ -458,7 +458,7 @@ sub bn_sub_part_words
 
 	&mov($num,&wparam(4));	# get dl
 	&cmp($num,0);
-	&je(&label("pw_end")); # unnoetig
+	&je(&label("pw_end"));
 	&jge(&label("pw_pos"));
 
 	&comment("pw_neg");
