@@ -5,6 +5,13 @@
 
  Changes between 0.9.2b and 0.9.3
 
+  *) Make SSL library a little more fool-proof by not requiring any longer
+     that SSL_set_{accept,connect}_state be called before
+     SSL_{accept,connect} may be used (SSL_set_..._state is omitted
+     in many applications because usually everything *appeared* to work as
+     intended anyway -- now it really works as intended).
+     [Bodo Moeller]
+
   *) Move openssl.cnf out of lib/.
      [Ulf Möller]
 

@@ -592,11 +592,19 @@ int SSL_check_private_key(SSL *ssl)
 
 int SSL_accept(SSL *s)
 	{
+	if (s->handshake_func == 0)
+		/* Not properly initialized yet */
+		SSL_set_accept_state(s);
+
 	return(s->method->ssl_accept(s));
 	}
 
 int SSL_connect(SSL *s)
 	{
+	if (s->handshake_func == 0)
+		/* Not properly initialized yet */
+		SSL_set_connect_state(s);
+
 	return(s->method->ssl_connect(s));
 	}
 
@@ -607,6 +615,12 @@ long SSL_get_default_timeout(SSL *s)
 
 int SSL_read(SSL *s,char *buf,int num)
 	{
+	if (s->handshake_func == 0)
+		{
+		SSLerr(SSL_F_SSL_READ, SSL_R_UNITIALIZED);
+		return -1;
+		}
+
 	if (s->shutdown & SSL_RECEIVED_SHUTDOWN)
 		{
 		s->rwstate=SSL_NOTHING;
@@ -626,6 +640,12 @@ int SSL_peek(SSL *s,char *buf,int num)
 
 int SSL_write(SSL *s,const char *buf,int num)
 	{
+	if (s->handshake_func == 0)
+		{
+		SSLerr(SSL_F_SSL_WRITE, SSL_R_UNITIALIZED);
+		return -1;
+		}
+
 	if (s->shutdown & SSL_SENT_SHUTDOWN)
 		{
 		s->rwstate=SSL_NOTHING;
@@ -637,6 +657,12 @@ int SSL_write(SSL *s,const char *buf,int num)
 
 int SSL_shutdown(SSL *s)
 	{
+	if (s->handshake_func == 0)
+		{
+		SSLerr(SSL_F_SSL_SHUTDOWN, SSL_R_UNITIALIZED);
+		return -1;
+		}
+
 	if ((s != NULL) && !SSL_in_init(s))
 		return(s->method->ssl_shutdown(s));
 	else

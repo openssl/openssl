@@ -514,6 +514,12 @@ struct ssl_st
 	int in_handshake;
 	int (*handshake_func)();
 
+	/* Imagine that here's a boolean member "init"
+	 * that is switched as soon as handshake_func becomes
+	 * != 0 for the first time (which is why we don't actually
+	 * need it).
+	 */
+
 	int server;	/* are we the server side? - mostly used by SSL_clear*/
 
 	int new_session;/* 1 if we are to use a new session */
@@ -1191,6 +1197,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL_INIT_WBIO_BUFFER			 184
 #define SSL_F_SSL_LOAD_CLIENT_CA_FILE			 185
 #define SSL_F_SSL_NEW					 186
+#define SSL_F_SSL_READ					 223
 #define SSL_F_SSL_RSA_PRIVATE_DECRYPT			 187
 #define SSL_F_SSL_RSA_PUBLIC_ENCRYPT			 188
 #define SSL_F_SSL_SESSION_NEW				 189
@@ -1202,6 +1209,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL_SET_SESSION				 195
 #define SSL_F_SSL_SET_SESSION_ID_CONTEXT		 218
 #define SSL_F_SSL_SET_WFD				 196
+#define SSL_F_SSL_SHUTDOWN				 224
 #define SSL_F_SSL_UNDEFINED_FUNCTION			 197
 #define SSL_F_SSL_USE_CERTIFICATE			 198
 #define SSL_F_SSL_USE_CERTIFICATE_ASN1			 199
@@ -1394,6 +1402,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES		 243
 #define SSL_R_UNEXPECTED_MESSAGE			 244
 #define SSL_R_UNEXPECTED_RECORD				 245
+#define SSL_R_UNITIALIZED				 275
 #define SSL_R_UNKNOWN_ALERT_TYPE			 246
 #define SSL_R_UNKNOWN_CERTIFICATE_TYPE			 247
 #define SSL_R_UNKNOWN_CIPHER_RETURNED			 248
