@@ -19,7 +19,6 @@
 # include <openssl/des.h>
 #endif
 #ifndef NO_MD5CRYPT_1
-# include <openssl/evp.h>
 # include <openssl/md5.h>
 #endif
 

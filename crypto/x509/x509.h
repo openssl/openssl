@@ -104,7 +104,6 @@
 #ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
 #endif
-#include <openssl/evp.h>
 #include <openssl/e_os2.h>
 #include <openssl/ossl_typ.h>
 

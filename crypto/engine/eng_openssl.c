@@ -68,6 +68,7 @@
 #include <openssl/engine.h>
 #include <openssl/dso.h>
 #include <openssl/pem.h>
+#include <openssl/evp.h>
 
 /* This testing gunk is implemented (and explained) lower down. It also assumes
  * the application explicitly calls "ENGINE_load_openssl()" because this is no
@@ -191,7 +192,6 @@ IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
  *        the "init_key" handler is called.
  *    TEST_ENG_OPENSSL_RC4_P_CIPHER - ditto for the "cipher" handler.
  */
-#include <openssl/evp.h>
 #include <openssl/rc4.h>
 #define TEST_RC4_KEY_SIZE		16
 static int test_cipher_nids[] = {NID_rc4,NID_rc4_40};
@@ -276,7 +276,6 @@ static int openssl_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 
 #ifdef TEST_ENG_OPENSSL_SHA
 /* Much the same sort of comment as for TEST_ENG_OPENSSL_RC4 */
-#include <openssl/evp.h>
 #include <openssl/sha.h>
 static int test_digest_nids[] = {NID_sha1};
 static int test_digest_nids_number = 1;

@@ -28,7 +28,6 @@
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include <openssl/err.h>
 #include <openssl/crypto.h>
 
 #include "e_os.h"
