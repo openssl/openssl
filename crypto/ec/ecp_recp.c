@@ -52,6 +52,11 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * Portions of this software developed by SUN MICROSYSTEMS, INC.,
+ * and contributed to the OpenSSL project.
+ */
 
 #include "ec_lcl.h"
 
@@ -65,6 +70,7 @@ const EC_METHOD *EC_GFp_recp_method(void)
 		ec_GFp_recp_group_copy,
 		ec_GFp_recp_group_set_curve_GFp,
 		ec_GFp_simple_group_get_curve_GFp,
+		ec_GFp_simple_group_get_degree,
 		ec_GFp_simple_group_set_generator,
 		ec_GFp_simple_group_get0_generator,
 		ec_GFp_simple_group_get_order,
@@ -85,6 +91,8 @@ const EC_METHOD *EC_GFp_recp_method(void)
 		ec_GFp_simple_add,
 		ec_GFp_simple_dbl,
 		ec_GFp_simple_invert,
+		0 /* mul */,
+		0 /* precompute_mult */,
 		ec_GFp_simple_is_at_infinity,
 		ec_GFp_simple_is_on_curve,
 		ec_GFp_simple_cmp,
@@ -92,6 +100,7 @@ const EC_METHOD *EC_GFp_recp_method(void)
 		ec_GFp_simple_points_make_affine,
 		ec_GFp_recp_field_mul,
 		ec_GFp_recp_field_sqr,
+		0 /* field_div */,
 		0 /* field_encode */,
 		0 /* field_decode */,
 		0 /* field_set_to_one */ };

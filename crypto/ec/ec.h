@@ -52,6 +52,32 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ *
+ * Portions of the attached software ("Contribution") are developed by 
+ * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
+ *
+ * The Contribution is licensed pursuant to the OpenSSL open source
+ * license provided above.
+ *
+ * In addition, Sun covenants to all licensees who provide a reciprocal
+ * covenant with respect to their own patents if any, not to sue under
+ * current and future patent claims necessarily infringed by the making,
+ * using, practicing, selling, offering for sale and/or otherwise
+ * disposing of the Contribution as delivered hereunder 
+ * (or portions thereof), provided that such covenant shall not apply:
+ *  1) for code that a licensee deletes from the Contribution;
+ *  2) separates from the Contribution; or
+ *  3) for infringements caused by:
+ *       i) the modification of the Contribution or
+ *      ii) the combination of the Contribution with other software or
+ *          devices where such combination causes the infringement.
+ *
+ * The elliptic curve binary polynomial software is originally written by 
+ * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
+ *
+ */
 
 #ifndef HEADER_EC_H
 #define HEADER_EC_H
@@ -103,11 +129,17 @@ const EC_METHOD *EC_GFp_recp_method(void); /* TODO */
 const EC_METHOD *EC_GFp_nist_method(void); /* TODO */
 #endif
 
+/* EC_METHODs for curves over GF(2^m).
+ * EC_GF2m_simple_method provides the basis for the optimized methods.
+ */
+const EC_METHOD *EC_GF2m_simple_method(void);
+
 
 EC_GROUP *EC_GROUP_new(const EC_METHOD *);
 void EC_GROUP_free(EC_GROUP *);
 void EC_GROUP_clear_free(EC_GROUP *);
 int EC_GROUP_copy(EC_GROUP *, const EC_GROUP *);
+EC_GROUP *EC_GROUP_dup(const EC_GROUP *);
 
 const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *);
 int EC_METHOD_get_field_type(const EC_METHOD *);
@@ -130,12 +162,12 @@ unsigned char *EC_GROUP_get0_seed(const EC_GROUP *);
 size_t EC_GROUP_get_seed_len(const EC_GROUP *);
 size_t EC_GROUP_set_seed(EC_GROUP *, const unsigned char *, size_t len);
 
-/* We don't have types for field specifications and field elements in general.
- * Otherwise we could declare
- *     int EC_GROUP_set_curve(EC_GROUP *, .....);
- */
 int EC_GROUP_set_curve_GFp(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int EC_GROUP_get_curve_GFp(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
+int EC_GROUP_set_curve_GF2m(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+int EC_GROUP_get_curve_GF2m(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
+
+int EC_GROUP_get_degree(const EC_GROUP *);
 
 /* EC_GROUP_check() returns 1 if 'group' defines a valid group, 0 otherwise */
 int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx);
@@ -143,9 +175,10 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx);
  * elliptic curve is not zero, 0 otherwise */
 int EC_GROUP_check_discriminant(const EC_GROUP *, BN_CTX *);
 
-/* EC_GROUP_new_GFp() calls EC_GROUP_new() and EC_GROUP_set_GFp()
+/* EC_GROUP_new_GF*() calls EC_GROUP_new() and EC_GROUP_set_GF*()
  * after choosing an appropriate EC_METHOD */
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 
 /* EC_GROUP_new_by_nid() and EC_GROUP_new_by_name() also set
  * generator and order */
@@ -181,15 +214,66 @@ EC_GROUP *EC_GROUP_new_by_name(int name);
 #define EC_GROUP_SECG_PRIME_384R1	NID_secp384r1
 #define EC_GROUP_SECG_PRIME_521R1	NID_secp521r1
 #define EC_GROUP_WTLS_6			NID_wap_wsg_idm_ecid_wtls6
-#define EC_GROUP_WTLS_7			NID_secp160r1
+#define EC_GROUP_WTLS_7			NID_wap_wsg_idm_ecid_wtls7
 #define EC_GROUP_WTLS_8			NID_wap_wsg_idm_ecid_wtls8
 #define EC_GROUP_WTLS_9			NID_wap_wsg_idm_ecid_wtls9
-#define EC_GROUP_WTLS_12		NID_secp224r1
+#define EC_GROUP_WTLS_12		NID_wap_wsg_idm_ecid_wtls12
+#define EC_GROUP_NIST_CHAR2_K163	NID_sect163k1
+#define EC_GROUP_NIST_CHAR2_B163	NID_sect163r2
+#define EC_GROUP_NIST_CHAR2_K233	NID_sect233k1
+#define EC_GROUP_NIST_CHAR2_B233	NID_sect233r1
+#define EC_GROUP_NIST_CHAR2_K283	NID_sect283k1
+#define EC_GROUP_NIST_CHAR2_B283	NID_sect283r1
+#define EC_GROUP_NIST_CHAR2_K409	NID_sect409k1
+#define EC_GROUP_NIST_CHAR2_B409	NID_sect409r1
+#define EC_GROUP_NIST_CHAR2_K571	NID_sect571k1
+#define EC_GROUP_NIST_CHAR2_B571	NID_sect571r1
+#define EC_GROUP_X9_62_CHAR2_163V1	NID_X9_62_c2pnb163v1
+#define EC_GROUP_X9_62_CHAR2_163V2	NID_X9_62_c2pnb163v2
+#define EC_GROUP_X9_62_CHAR2_163V3	NID_X9_62_c2pnb163v3
+#define EC_GROUP_X9_62_CHAR2_176V1	NID_X9_62_c2pnb176v1
+#define EC_GROUP_X9_62_CHAR2_191V1	NID_X9_62_c2tnb191v1
+#define EC_GROUP_X9_62_CHAR2_191V2	NID_X9_62_c2tnb191v2
+#define EC_GROUP_X9_62_CHAR2_191V3	NID_X9_62_c2tnb191v3
+#define EC_GROUP_X9_62_CHAR2_208W1	NID_X9_62_c2pnb208w1
+#define EC_GROUP_X9_62_CHAR2_239V1	NID_X9_62_c2tnb239v1
+#define EC_GROUP_X9_62_CHAR2_239V2	NID_X9_62_c2tnb239v2
+#define EC_GROUP_X9_62_CHAR2_239V3	NID_X9_62_c2tnb239v3
+#define EC_GROUP_X9_62_CHAR2_272W1	NID_X9_62_c2pnb272w1
+#define EC_GROUP_X9_62_CHAR2_304W1	NID_X9_62_c2pnb304w1
+#define EC_GROUP_X9_62_CHAR2_359V1	NID_X9_62_c2tnb359v1
+#define EC_GROUP_X9_62_CHAR2_368W1	NID_X9_62_c2pnb368w1
+#define EC_GROUP_X9_62_CHAR2_431R1	NID_X9_62_c2tnb431r1
+#define EC_GROUP_SECG_CHAR2_113R1	NID_sect113r1
+#define EC_GROUP_SECG_CHAR2_113R2	NID_sect113r2
+#define EC_GROUP_SECG_CHAR2_131R1	NID_sect131r1
+#define EC_GROUP_SECG_CHAR2_131R2	NID_sect131r2
+#define EC_GROUP_SECG_CHAR2_163K1	NID_sect163k1
+#define EC_GROUP_SECG_CHAR2_163R1	NID_sect163r1
+#define EC_GROUP_SECG_CHAR2_163R2	NID_sect163r2
+#define EC_GROUP_SECG_CHAR2_193R1	NID_sect193r1
+#define EC_GROUP_SECG_CHAR2_193R2	NID_sect193r2
+#define EC_GROUP_SECG_CHAR2_233K1	NID_sect233k1
+#define EC_GROUP_SECG_CHAR2_233R1	NID_sect233r1
+#define EC_GROUP_SECG_CHAR2_239K1	NID_sect239k1
+#define EC_GROUP_SECG_CHAR2_283K1	NID_sect283k1
+#define EC_GROUP_SECG_CHAR2_283R1	NID_sect283r1
+#define EC_GROUP_SECG_CHAR2_409K1	NID_sect409k1
+#define EC_GROUP_SECG_CHAR2_409R1	NID_sect409r1
+#define EC_GROUP_SECG_CHAR2_571K1	NID_sect571k1
+#define EC_GROUP_SECG_CHAR2_571R1	NID_sect571r1
+#define EC_GROUP_WTLS_1			NID_wap_wsg_idm_ecid_wtls1
+#define EC_GROUP_WTLS_3			NID_wap_wsg_idm_ecid_wtls3
+#define EC_GROUP_WTLS_4			NID_wap_wsg_idm_ecid_wtls4
+#define EC_GROUP_WTLS_5			NID_wap_wsg_idm_ecid_wtls5
+#define EC_GROUP_WTLS_10		NID_wap_wsg_idm_ecid_wtls10
+#define EC_GROUP_WTLS_11		NID_wap_wsg_idm_ecid_wtls11
 
 EC_POINT *EC_POINT_new(const EC_GROUP *);
 void EC_POINT_free(EC_POINT *);
 void EC_POINT_clear_free(EC_POINT *);
 int EC_POINT_copy(EC_POINT *, const EC_POINT *);
+EC_POINT *EC_POINT_dup(const EC_POINT *, const EC_GROUP *);
  
 const EC_METHOD *EC_POINT_method_of(const EC_POINT *);
 
@@ -203,6 +287,17 @@ int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *, EC_POINT *,
 int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *, const EC_POINT *,
 	BIGNUM *x, BIGNUM *y, BN_CTX *);
 int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *, EC_POINT *,
+	const BIGNUM *x, int y_bit, BN_CTX *);
+
+int EC_POINT_set_Jprojective_coordinates_GF2m(const EC_GROUP *, EC_POINT *,
+	const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *);
+int EC_POINT_get_Jprojective_coordinates_GF2m(const EC_GROUP *, const EC_POINT *,
+	BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *);
+int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *, EC_POINT *,
+	const BIGNUM *x, const BIGNUM *y, BN_CTX *);
+int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *, const EC_POINT *,
+	BIGNUM *x, BIGNUM *y, BN_CTX *);
+int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *, EC_POINT *,
 	const BIGNUM *x, int y_bit, BN_CTX *);
 
 size_t EC_POINT_point2oct(const EC_GROUP *, const EC_POINT *, point_conversion_form_t form,
@@ -309,6 +404,12 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_ASN1_GROUP2PKPARAMETERS			 162
 #define EC_F_EC_ASN1_PARAMETERS2GROUP			 157
 #define EC_F_EC_ASN1_PKPARAMETERS2GROUP			 163
+#define EC_F_EC_GF2M_SIMPLE_GROUP_CHECK_DISCRIMINANT	 168
+#define EC_F_EC_GF2M_SIMPLE_OCT2POINT			 169
+#define EC_F_EC_GF2M_SIMPLE_POINT2OCT			 170
+#define EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES_GF2M 171
+#define EC_F_EC_GF2M_SIMPLE_POINT_SET_AFFINE_COORDINATES_GF2M 172
+#define EC_F_EC_GF2M_SIMPLE_SET_COMPRESSED_COORDINATES_GF2M 185
 #define EC_F_EC_GFP_MONT_FIELD_DECODE			 133
 #define EC_F_EC_GFP_MONT_FIELD_ENCODE			 134
 #define EC_F_EC_GFP_MONT_FIELD_MUL			 131
@@ -328,15 +429,19 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GROUP_COPY				 106
 #define EC_F_EC_GROUP_GET0_GENERATOR			 139
 #define EC_F_EC_GROUP_GET_COFACTOR			 140
+#define EC_F_EC_GROUP_GET_CURVE_GF2M			 173
 #define EC_F_EC_GROUP_GET_CURVE_GFP			 130
+#define EC_F_EC_GROUP_GET_DEGREE			 174
 #define EC_F_EC_GROUP_GET_EXTRA_DATA			 107
 #define EC_F_EC_GROUP_GET_ORDER				 141
 #define EC_F_EC_GROUP_GROUP2NID				 147
 #define EC_F_EC_GROUP_NEW				 108
 #define EC_F_EC_GROUP_NEW_BY_NAME			 144
 #define EC_F_EC_GROUP_NEW_BY_NID			 146
+#define EC_F_EC_GROUP_NEW_GF2M_FROM_HEX			 175
 #define EC_F_EC_GROUP_NEW_GFP_FROM_HEX			 148
 #define EC_F_EC_GROUP_PRECOMPUTE_MULT			 142
+#define EC_F_EC_GROUP_SET_CURVE_GF2M			 176
 #define EC_F_EC_GROUP_SET_CURVE_GFP			 109
 #define EC_F_EC_GROUP_SET_EXTRA_DATA			 110
 #define EC_F_EC_GROUP_SET_GENERATOR			 111
@@ -346,18 +451,26 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_POINT_CMP				 113
 #define EC_F_EC_POINT_COPY				 114
 #define EC_F_EC_POINT_DBL				 115
+#define EC_F_EC_POINT_GET_AFFINE_COORDINATES_GF2M	 177
 #define EC_F_EC_POINT_GET_AFFINE_COORDINATES_GFP	 116
+#define EC_F_EC_POINT_GET_JPROJECTIVE_COORDINATES_GF2M	 178
 #define EC_F_EC_POINT_GET_JPROJECTIVE_COORDINATES_GFP	 117
 #define EC_F_EC_POINT_IS_AT_INFINITY			 118
 #define EC_F_EC_POINT_IS_ON_CURVE			 119
 #define EC_F_EC_POINT_MAKE_AFFINE			 120
+#define EC_F_EC_POINT_MUL				 179
 #define EC_F_EC_POINT_NEW				 121
 #define EC_F_EC_POINT_OCT2POINT				 122
 #define EC_F_EC_POINT_POINT2OCT				 123
+#define EC_F_EC_POINT_SET_AFFINE_COORDINATES_GF2M	 180
 #define EC_F_EC_POINT_SET_AFFINE_COORDINATES_GFP	 124
+#define EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GF2M	 181
 #define EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP	 125
+#define EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GF2M	 182
 #define EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP	 126
 #define EC_F_EC_POINT_SET_TO_INFINITY			 127
+#define EC_F_EC_WNAF_MUL				 183
+#define EC_F_EC_WNAF_PRECOMPUTE_MULT			 184
 #define EC_F_GFP_MONT_GROUP_SET_CURVE_GFP		 135
 #define EC_F_I2D_ECDSAPARAMETERS			 158
 #define EC_F_I2D_ECPARAMETERS				 164

@@ -52,6 +52,11 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * Portions of this software developed by SUN MICROSYSTEMS, INC.,
+ * and contributed to the OpenSSL project.
+ */
 
 #include <openssl/err.h>
 
@@ -209,7 +214,7 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
  *      scalar*generator
  * in the addition if scalar != NULL
  */
-int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
 	{
 	BN_CTX *new_ctx = NULL;
@@ -235,7 +240,7 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 		generator = EC_GROUP_get0_generator(group);
 		if (generator == NULL)
 			{
-			ECerr(EC_F_EC_POINTS_MUL, EC_R_UNDEFINED_GENERATOR);
+			ECerr(EC_F_EC_WNAF_MUL, EC_R_UNDEFINED_GENERATOR);
 			return 0;
 			}
 		}
@@ -244,7 +249,7 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 		{
 		if (group->meth != points[i]->meth)
 			{
-			ECerr(EC_F_EC_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
+			ECerr(EC_F_EC_WNAF_MUL, EC_R_INCOMPATIBLE_OBJECTS);
 			return 0;
 			}
 		}
@@ -294,7 +299,7 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 		}
 	if (!(v == val + num_val))
 		{
-		ECerr(EC_F_EC_POINTS_MUL, ERR_R_INTERNAL_ERROR);
+		ECerr(EC_F_EC_WNAF_MUL, ERR_R_INTERNAL_ERROR);
 		goto err;
 		}
 
@@ -438,6 +443,20 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	}
 
 
+/* Generic multiplication method.
+ * If group->meth does not provide a multiplication method, default to ec_wNAF_mul;
+ * otherwise use the group->meth's multiplication.
+ */
+int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
+	{
+	if (group->meth->mul == 0)
+		return ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
+	else
+		return group->meth->mul(group, r, scalar, num, points, scalars, ctx);
+	}
+
+
 int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar, const EC_POINT *point, const BIGNUM *p_scalar, BN_CTX *ctx)
 	{
 	const EC_POINT *points[1];
@@ -450,7 +469,7 @@ int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar, con
 	}
 
 
-int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
+int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	{
 	const EC_POINT *generator;
 	BN_CTX *new_ctx = NULL;
@@ -460,7 +479,7 @@ int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	generator = EC_GROUP_get0_generator(group);
 	if (generator == NULL)
 		{
-		ECerr(EC_F_EC_GROUP_PRECOMPUTE_MULT, EC_R_UNDEFINED_GENERATOR);
+		ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, EC_R_UNDEFINED_GENERATOR);
 		return 0;
 		}
 
@@ -478,7 +497,7 @@ int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	if (!EC_GROUP_get_order(group, order, ctx)) return 0;
 	if (BN_is_zero(order))
 		{
-		ECerr(EC_F_EC_GROUP_PRECOMPUTE_MULT, EC_R_UNKNOWN_ORDER);
+		ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, EC_R_UNKNOWN_ORDER);
 		goto err;
 		}
 
@@ -491,4 +510,19 @@ int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	if (new_ctx != NULL)
 		BN_CTX_free(new_ctx);
 	return ret;
+	}
+
+
+/* Generic multiplicaiton precomputation method.
+ * If group->meth does not provide a multiplication method, default to ec_wNAF_mul and do its
+ * precomputation; otherwise use the group->meth's precomputation if it exists.
+ */
+int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
+	{
+	if (group->meth->mul == 0)
+		return ec_wNAF_precompute_mult(group, ctx);
+	else if (group->meth->precompute_mult != 0)
+		return group->meth->precompute_mult(group, ctx);
+	else
+		return 1;
 	}

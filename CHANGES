@@ -4,6 +4,70 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Add named elliptic curves over binary fields from X9.62, SECG,
+     and WAP/WTLS; add OIDs that were still missing.
+
+     [Sheueling Chang Shantz and Douglas Stebila
+     (Sun Microsystems Laboratories)]
+
+  *) Extend the EC library for elliptic curves over binary fields
+     (new files ec2_smpl.c, ec2_smpt.c, ec2_mult.c in crypto/ec/).
+     New EC_METHOD:
+
+          EC_GF2m_simple_method
+
+     New API functions:
+
+          EC_GROUP_new_curve_GF2m
+          EC_GROUP_set_curve_GF2m
+          EC_GROUP_get_curve_GF2m
+          EC_POINT_set_Jprojective_coordinates_GF2m
+          EC_POINT_get_Jprojective_coordinates_GF2m
+          EC_POINT_set_affine_coordinates_GF2m
+          EC_POINT_get_affine_coordinates_GF2m
+          EC_POINT_set_compressed_coordinates_GF2m
+
+     Point compression for binary fields is disabled by default for
+     patent reasons (compile with OPENSSL_EC_BIN_PT_COMP defined to
+     enable it).
+
+     As binary polynomials are represented as BIGNUMs, various members
+     of the EC_GROUP and EC_POINT data structures can be shared
+     between the implementations for prime fields and binary fields;
+     the above ..._GF2m functions (except for EX_GROUP_new_curve_GF2m)
+     are essentially identical to their ..._GFp counterparts.
+     (For simplicity, '..._GFp' prefix has been dropped from various
+     internal method names.)
+
+     An internal 'field_div' method (similar to 'field_mul' and
+     'field_sqr') has been added; this is used only for binary fields.
+
+     [Sheueling Chang Shantz and Douglas Stebila
+     (Sun Microsystems Laboratories)]
+
+  *) Optionally dispatch EC_PONT_mul(), EC_POINT_precompute_mult()
+     through methods ('mul', 'precompute_mult').
+
+     The generic implementations (now internally called 'ec_wNAF_mul'
+     and 'ec_wNAF_precomputed_mult') remain the default if these
+     methods are undefined.
+
+     [Sheueling Chang Shantz and Douglas Stebila
+     (Sun Microsystems Laboratories)]
+
+  *) New function EC_GROUP_get_degree, which is defined through
+     EC_METHOD.  For curves over prime fields, this returns the bit
+     length of the modulus.
+
+     [Sheueling Chang Shantz and Douglas Stebila
+     (Sun Microsystems Laboratories)]
+
+  *) New functions EC_GROUP_dup, EC_POINT_dup.
+     (These simply call ..._new  and ..._copy).
+
+     [Sheueling Chang Shantz and Douglas Stebila
+     (Sun Microsystems Laboratories)]
+
   *) Add binary polynomial arithmetic software in crypto/bn/bn_gf2m.c.
      Polynomials are represented as BIGNUMs (where the sign bit is not
      used) in the following functions [macros]:  
@@ -55,9 +119,6 @@ TBD ... OPENSSL_NO_SUN_DIV ...  --Bodo
 
      [Sheueling Chang Shantz and Douglas Stebila
      (Sun Microsystems Laboratories)]
-
-  *) Add more WAP/WTLS elliptic curve OIDs.
-     [Douglas Stebila <douglas.stebila@sun.com>]
 
   *) Add new error code 'ERR_R_DISABLED' that can be used when some
      functionality is disabled at compile-time.

@@ -52,6 +52,32 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ *
+ * Portions of the attached software ("Contribution") are developed by 
+ * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
+ *
+ * The Contribution is licensed pursuant to the OpenSSL open source
+ * license provided above.
+ *
+ * In addition, Sun covenants to all licensees who provide a reciprocal
+ * covenant with respect to their own patents if any, not to sue under
+ * current and future patent claims necessarily infringed by the making,
+ * using, practicing, selling, offering for sale and/or otherwise
+ * disposing of the Contribution as delivered hereunder 
+ * (or portions thereof), provided that such covenant shall not apply:
+ *  1) for code that a licensee deletes from the Contribution;
+ *  2) separates from the Contribution; or
+ *  3) for infringements caused by:
+ *       i) the modification of the Contribution or
+ *      ii) the combination of the Contribution with other software or
+ *          devices where such combination causes the infringement.
+ *
+ * The elliptic curve binary polynomial software is originally written by 
+ * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,6 +93,7 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 #include <openssl/ec.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
+#include <openssl/obj_mac.h>
 
 #define ABORT do { \
 	fflush(stdout); \
@@ -80,37 +107,40 @@ static void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
 	{
 	clock_t clck;
 	int i, j;
-	BIGNUM *s, *s0;
+	BIGNUM *s;
+	BIGNUM *r[10], *r0[10];
 	EC_POINT *P;
 		
 	s = BN_new();
-	s0 = BN_new();
-	if (s == NULL || s0 == NULL) ABORT;
+	if (s == NULL) ABORT;
 
-	if (!EC_GROUP_get_curve_GFp(group, s, NULL, NULL, ctx)) ABORT;
-	fprintf(stdout, "Timings for %d bit prime, ", (int)BN_num_bits(s));
+	fprintf(stdout, "Timings for %d-bit field, ", EC_GROUP_get_degree(group));
 	if (!EC_GROUP_get_order(group, s, ctx)) ABORT;
-	fprintf(stdout, "%d bit scalars ", (int)BN_num_bits(s));
+	fprintf(stdout, "%d-bit scalars ", (int)BN_num_bits(s));
 	fflush(stdout);
 
 	P = EC_POINT_new(group);
 	if (P == NULL) ABORT;
 	EC_POINT_copy(P, EC_GROUP_get0_generator(group));
 
+	for (i = 0; i < 10; i++)
+		{
+		if ((r[i] = BN_new()) == NULL) ABORT;
+		if (!BN_pseudo_rand(r[i], BN_num_bits(s), 0, 0)) ABORT;
+		if (multi)
+			{
+			if ((r0[i] = BN_new()) == NULL) ABORT;
+			if (!BN_pseudo_rand(r0[i], BN_num_bits(s), 0, 0)) ABORT;
+			}
+		}
+
 	clck = clock();
 	for (i = 0; i < 10; i++)
 		{
-		if (!BN_pseudo_rand(s, BN_num_bits(s), 0, 0)) ABORT;
-		if (multi)
-			{
-			if (!BN_pseudo_rand(s0, BN_num_bits(s), 0, 0)) ABORT;
-			}
 		for (j = 0; j < 10; j++)
 			{
-			if (!EC_POINT_mul(group, P, s, multi ? P : NULL, multi ? s0 : NULL, ctx)) ABORT;
+			if (!EC_POINT_mul(group, P, r[i], multi ? P : NULL, multi ? r0[i] : NULL, ctx)) ABORT;
 			}
-		fprintf(stdout, ".");
-		fflush(stdout);
 		}
 	fprintf(stdout, "\n");
 	
@@ -136,11 +166,15 @@ static void timings(EC_GROUP *group, int multi, BN_CTX *ctx)
 
 	EC_POINT_free(P);
 	BN_free(s);
-	BN_free(s0);
+	for (i = 0; i < 10; i++)
+		{
+		BN_free(r[i]);
+		if (multi) BN_free(r0[i]);
+		}
 	}
 #endif
 
-int main(int argc, char *argv[])
+void prime_field_tests()
 	{	
 	BN_CTX *ctx = NULL;
 	BIGNUM *p, *a, *b;
@@ -152,20 +186,6 @@ int main(int argc, char *argv[])
 	size_t i, len;
 	int k;
 	
-	/* enable memory leak checking unless explicitly disabled */
-	if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL) && (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off"))))
-		{
-		CRYPTO_malloc_debug_init();
-		CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-		}
-	else
-		{
-		/* OPENSSL_DEBUG_MEMORY=off */
-		CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
-		}
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-	ERR_load_crypto_strings();
-
 #if 1 /* optional */
 	ctx = BN_CTX_new();
 	if (!ctx) ABORT;
@@ -333,6 +353,10 @@ int main(int argc, char *argv[])
 	/* G_y value taken from the standard: */
 	if (!BN_hex2bn(&z, "07192B95FFC8DA78631011ED6B24CDD573F977A11E794811")) ABORT;
 	if (0 != BN_cmp(y, z)) ABORT;
+
+	fprintf(stdout, "verify degree ...");
+	if (EC_GROUP_get_degree(group) != 192) ABORT;
+	fprintf(stdout, " ok\n");
 	
 	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
@@ -374,6 +398,10 @@ int main(int argc, char *argv[])
 	if (!BN_hex2bn(&z, "BD376388B5F723FB4C22DFE6CD4375A05A07476444D5819985007E34")) ABORT;
 	if (0 != BN_cmp(y, z)) ABORT;
 	
+	fprintf(stdout, "verify degree ...");
+	if (EC_GROUP_get_degree(group) != 224) ABORT;
+	fprintf(stdout, " ok\n");
+	
 	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
 	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
@@ -414,6 +442,10 @@ int main(int argc, char *argv[])
 	/* G_y value taken from the standard: */
 	if (!BN_hex2bn(&z, "4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5")) ABORT;
 	if (0 != BN_cmp(y, z)) ABORT;
+	
+	fprintf(stdout, "verify degree ...");
+	if (EC_GROUP_get_degree(group) != 256) ABORT;
+	fprintf(stdout, " ok\n");
 	
 	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
@@ -460,6 +492,10 @@ int main(int argc, char *argv[])
 	if (!BN_hex2bn(&z, "3617DE4A96262C6F5D9E98BF9292DC29F8F41DBD289A14"
 		"7CE9DA3113B5F0B8C00A60B1CE1D7E819D7A431D7C90EA0E5F")) ABORT;
 	if (0 != BN_cmp(y, z)) ABORT;
+	
+	fprintf(stdout, "verify degree ...");
+	if (EC_GROUP_get_degree(group) != 384) ABORT;
+	fprintf(stdout, " ok\n");
 	
 	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
@@ -512,6 +548,10 @@ int main(int argc, char *argv[])
 		"B446817AFBD17273E662C97EE72995EF42640C550B9013FAD0761353C"
 		"7086A272C24088BE94769FD16650")) ABORT;
 	if (0 != BN_cmp(y, z)) ABORT;
+	
+	fprintf(stdout, "verify degree ...");
+	if (EC_GROUP_get_degree(group) != 521) ABORT;
+	fprintf(stdout, " ok\n");
 	
 	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
@@ -622,6 +662,513 @@ int main(int argc, char *argv[])
 	if (P_256) EC_GROUP_free(P_256);
 	if (P_384) EC_GROUP_free(P_384);
 	if (P_521) EC_GROUP_free(P_521);
+
+	}
+
+/* Change test based on whether binary point compression is enabled or not. */
+#ifdef OPENSSL_EC_BIN_PT_COMP
+#define CHAR2_CURVE_TEST_INTERNAL(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
+	if (!BN_hex2bn(&x, _x)) ABORT; \
+	if (!EC_POINT_set_compressed_coordinates_GF2m(group, P, x, _y_bit, ctx)) ABORT; \
+	if (!EC_POINT_is_on_curve(group, P, ctx)) ABORT; \
+	if (!BN_hex2bn(&z, _order)) ABORT; \
+	if (!BN_hex2bn(&cof, _cof)) ABORT; \
+	if (!EC_GROUP_set_generator(group, P, z, cof)) ABORT; \
+	if (!EC_POINT_get_affine_coordinates_GF2m(group, P, x, y, ctx)) ABORT; \
+	fprintf(stdout, "\n%s -- Generator:\n     x = 0x", _name); \
+	BN_print_fp(stdout, x); \
+	fprintf(stdout, "\n     y = 0x"); \
+	BN_print_fp(stdout, y); \
+	fprintf(stdout, "\n"); \
+	/* G_y value taken from the standard: */ \
+	if (!BN_hex2bn(&z, _y)) ABORT; \
+	if (0 != BN_cmp(y, z)) ABORT;
+#else 
+#define CHAR2_CURVE_TEST_INTERNAL(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
+	if (!BN_hex2bn(&x, _x)) ABORT; \
+	if (!BN_hex2bn(&y, _y)) ABORT; \
+	if (!EC_POINT_set_affine_coordinates_GF2m(group, P, x, y, ctx)) ABORT; \
+	if (!EC_POINT_is_on_curve(group, P, ctx)) ABORT; \
+	if (!BN_hex2bn(&z, _order)) ABORT; \
+	if (!BN_hex2bn(&cof, _cof)) ABORT; \
+	if (!EC_GROUP_set_generator(group, P, z, cof)) ABORT; \
+	fprintf(stdout, "\n%s -- Generator:\n     x = 0x", _name); \
+	BN_print_fp(stdout, x); \
+	fprintf(stdout, "\n     y = 0x"); \
+	BN_print_fp(stdout, y); \
+	fprintf(stdout, "\n");
+#endif
+
+#define CHAR2_CURVE_TEST(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
+	if (!BN_hex2bn(&p, _p)) ABORT; \
+	if (!BN_hex2bn(&a, _a)) ABORT; \
+	if (!BN_hex2bn(&b, _b)) ABORT; \
+	if (!EC_GROUP_set_curve_GF2m(group, p, a, b, ctx)) ABORT; \
+	CHAR2_CURVE_TEST_INTERNAL(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
+	fprintf(stdout, "verify degree ..."); \
+	if (EC_GROUP_get_degree(group) != _degree) ABORT; \
+	fprintf(stdout, " ok\n"); \
+	fprintf(stdout, "verify group order ..."); \
+	fflush(stdout); \
+	if (!EC_GROUP_get_order(group, z, ctx)) ABORT; \
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT; \
+	if (!EC_POINT_is_at_infinity(group, Q)) ABORT; \
+	fprintf(stdout, "."); \
+	fflush(stdout); \
+	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT; \
+	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT; \
+	if (!EC_POINT_is_at_infinity(group, Q)) ABORT; \
+	fprintf(stdout, " ok\n"); \
+	if (!(_variable = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT; \
+	if (!EC_GROUP_copy(_variable, group)) ABORT;
+
+void char2_field_tests()
+	{	
+	BN_CTX *ctx = NULL;
+	BIGNUM *p, *a, *b;
+	EC_GROUP *group;
+	EC_GROUP *C2_K163 = NULL, *C2_K233 = NULL, *C2_K283 = NULL, *C2_K409 = NULL, *C2_K571 = NULL;
+	EC_GROUP *C2_B163 = NULL, *C2_B233 = NULL, *C2_B283 = NULL, *C2_B409 = NULL, *C2_B571 = NULL;
+	EC_POINT *P, *Q, *R;
+	BIGNUM *x, *y, *z, *cof;
+	unsigned char buf[100];
+	size_t i, len;
+	int k;
+	
+#if 1 /* optional */
+	ctx = BN_CTX_new();
+	if (!ctx) ABORT;
+#endif
+
+	p = BN_new();
+	a = BN_new();
+	b = BN_new();
+	if (!p || !a || !b) ABORT;
+
+	if (!BN_hex2bn(&p, "13")) ABORT;
+	if (!BN_hex2bn(&a, "3")) ABORT;
+	if (!BN_hex2bn(&b, "1")) ABORT;
+	
+	group = EC_GROUP_new(EC_GF2m_simple_method()); /* applications should use EC_GROUP_new_curve_GFp
+	                                             * so that the library gets to choose the EC_METHOD */
+	if (!group) ABORT;
+	if (!EC_GROUP_set_curve_GF2m(group, p, a, b, ctx)) ABORT;
+
+	{
+		EC_GROUP *tmp;
+		tmp = EC_GROUP_new(EC_GROUP_method_of(group));
+		if (!tmp) ABORT;
+		if (!EC_GROUP_copy(tmp, group));
+		EC_GROUP_free(group);
+		group = tmp;
+	}
+	
+	if (!EC_GROUP_get_curve_GF2m(group, p, a, b, ctx)) ABORT;
+
+	fprintf(stdout, "Curve defined by Weierstrass equation\n     y^2 + x*y = x^3 + a*x^2 + b  (mod 0x");
+	BN_print_fp(stdout, p);
+	fprintf(stdout, ")\n     a = 0x");
+	BN_print_fp(stdout, a);
+	fprintf(stdout, "\n     b = 0x");
+	BN_print_fp(stdout, b);
+	fprintf(stdout, "\n");
+
+	P = EC_POINT_new(group);
+	Q = EC_POINT_new(group);
+	R = EC_POINT_new(group);
+	if (!P || !Q || !R) ABORT;
+	
+	if (!EC_POINT_set_to_infinity(group, P)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, P)) ABORT;
+
+	buf[0] = 0;
+	if (!EC_POINT_oct2point(group, Q, buf, 1, ctx)) ABORT;
+
+	if (!EC_POINT_add(group, P, P, Q, ctx)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, P)) ABORT;
+
+	x = BN_new();
+	y = BN_new();
+	z = BN_new();
+	cof = BN_new();
+	if (!x || !y || !z || !cof) ABORT;
+
+	if (!BN_hex2bn(&x, "6")) ABORT;
+/* Change test based on whether binary point compression is enabled or not. */
+#ifdef OPENSSL_EC_BIN_PT_COMP
+	if (!EC_POINT_set_compressed_coordinates_GF2m(group, Q, x, 1, ctx)) ABORT;
+#else
+	if (!BN_hex2bn(&y, "8")) ABORT;
+	if (!EC_POINT_set_affine_coordinates_GF2m(group, Q, x, y, ctx)) ABORT;
+#endif
+	if (!EC_POINT_is_on_curve(group, Q, ctx))
+		{
+/* Change test based on whether binary point compression is enabled or not. */
+#ifdef OPENSSL_EC_BIN_PT_COMP
+		if (!EC_POINT_get_affine_coordinates_GF2m(group, Q, x, y, ctx)) ABORT;
+#endif
+		fprintf(stderr, "Point is not on curve: x = 0x");
+		BN_print_fp(stderr, x);
+		fprintf(stderr, ", y = 0x");
+		BN_print_fp(stderr, y);
+		fprintf(stderr, "\n");
+		ABORT;
+		}
+
+	fprintf(stdout, "A cyclic subgroup:\n");
+	k = 100;
+	do
+		{
+		if (k-- == 0) ABORT;
+
+		if (EC_POINT_is_at_infinity(group, P))
+			fprintf(stdout, "     point at infinity\n");
+		else
+			{
+			if (!EC_POINT_get_affine_coordinates_GF2m(group, P, x, y, ctx)) ABORT;
+
+			fprintf(stdout, "     x = 0x");
+			BN_print_fp(stdout, x);
+			fprintf(stdout, ", y = 0x");
+			BN_print_fp(stdout, y);
+			fprintf(stdout, "\n");
+			}
+		
+		if (!EC_POINT_copy(R, P)) ABORT;
+		if (!EC_POINT_add(group, P, P, Q, ctx)) ABORT;
+		}
+	while (!EC_POINT_is_at_infinity(group, P));
+
+	if (!EC_POINT_add(group, P, Q, R, ctx)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, P)) ABORT;
+
+/* Change test based on whether binary point compression is enabled or not. */
+#ifdef OPENSSL_EC_BIN_PT_COMP
+	len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_COMPRESSED, buf, sizeof buf, ctx);
+	if (len == 0) ABORT;
+	if (!EC_POINT_oct2point(group, P, buf, len, ctx)) ABORT;
+	if (0 != EC_POINT_cmp(group, P, Q, ctx)) ABORT;
+	fprintf(stdout, "Generator as octet string, compressed form:\n     ");
+	for (i = 0; i < len; i++) fprintf(stdout, "%02X", buf[i]);
+#endif
+	
+	len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_UNCOMPRESSED, buf, sizeof buf, ctx);
+	if (len == 0) ABORT;
+	if (!EC_POINT_oct2point(group, P, buf, len, ctx)) ABORT;
+	if (0 != EC_POINT_cmp(group, P, Q, ctx)) ABORT;
+	fprintf(stdout, "\nGenerator as octet string, uncompressed form:\n     ");
+	for (i = 0; i < len; i++) fprintf(stdout, "%02X", buf[i]);
+	
+/* Change test based on whether binary point compression is enabled or not. */
+#ifdef OPENSSL_EC_BIN_PT_COMP
+	len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_HYBRID, buf, sizeof buf, ctx);
+	if (len == 0) ABORT;
+	if (!EC_POINT_oct2point(group, P, buf, len, ctx)) ABORT;
+	if (0 != EC_POINT_cmp(group, P, Q, ctx)) ABORT;
+	fprintf(stdout, "\nGenerator as octet string, hybrid form:\n     ");
+	for (i = 0; i < len; i++) fprintf(stdout, "%02X", buf[i]);
+#endif
+
+	fprintf(stdout, "\n");
+	
+	if (!EC_POINT_invert(group, P, ctx)) ABORT;
+	if (0 != EC_POINT_cmp(group, P, R, ctx)) ABORT;
+
+
+	/* Curve K-163 (FIPS PUB 186-2, App. 6) */
+	CHAR2_CURVE_TEST
+		(
+		"NIST curve K-163",
+		"0800000000000000000000000000000000000000C9",
+		"1",
+		"1",
+		"02FE13C0537BBC11ACAA07D793DE4E6D5E5C94EEE8",
+		"0289070FB05D38FF58321F2E800536D538CCDAA3D9",
+		1,
+		"04000000000000000000020108A2E0CC0D99F8A5EF",
+		"2",
+		163,
+		C2_K163
+		);
+
+	/* Curve B-163 (FIPS PUB 186-2, App. 6) */
+	CHAR2_CURVE_TEST
+		(
+		"NIST curve B-163",
+		"0800000000000000000000000000000000000000C9",
+		"1",
+		"020A601907B8C953CA1481EB10512F78744A3205FD",
+		"03F0EBA16286A2D57EA0991168D4994637E8343E36",
+		"00D51FBC6C71A0094FA2CDD545B11C5C0C797324F1",
+		1,
+		"040000000000000000000292FE77E70C12A4234C33",
+		"2",
+		163,
+		C2_B163
+		);
+
+	/* Curve K-233 (FIPS PUB 186-2, App. 6) */
+	CHAR2_CURVE_TEST
+		(
+		"NIST curve K-233",
+		"020000000000000000000000000000000000000004000000000000000001",
+		"0",
+		"1",
+		"017232BA853A7E731AF129F22FF4149563A419C26BF50A4C9D6EEFAD6126",
+		"01DB537DECE819B7F70F555A67C427A8CD9BF18AEB9B56E0C11056FAE6A3",
+		0,
+		"008000000000000000000000000000069D5BB915BCD46EFB1AD5F173ABDF",
+		"4",
+		233,
+		C2_K233
+		);
+
+	/* Curve B-233 (FIPS PUB 186-2, App. 6) */
+	CHAR2_CURVE_TEST
+		(
+		"NIST curve B-233",
+		"020000000000000000000000000000000000000004000000000000000001",
+		"000000000000000000000000000000000000000000000000000000000001",
+		"0066647EDE6C332C7F8C0923BB58213B333B20E9CE4281FE115F7D8F90AD",
+		"00FAC9DFCBAC8313BB2139F1BB755FEF65BC391F8B36F8F8EB7371FD558B",
+		"01006A08A41903350678E58528BEBF8A0BEFF867A7CA36716F7E01F81052",
+		1,
+		"01000000000000000000000000000013E974E72F8A6922031D2603CFE0D7",
+		"2",
+		233,
+		C2_B233
+		);
+
+	/* Curve K-283 (FIPS PUB 186-2, App. 6) */
+	CHAR2_CURVE_TEST
+		(
+		"NIST curve K-283",
+		"0800000000000000000000000000000000000000000000000000000000000000000010A1",
+		"0",
+		"1",
+		"0503213F78CA44883F1A3B8162F188E553CD265F23C1567A16876913B0C2AC2458492836",
+		"01CCDA380F1C9E318D90F95D07E5426FE87E45C0E8184698E45962364E34116177DD2259",
+		0,
+		"01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE9AE2ED07577265DFF7F94451E061E163C61",
+		"4",
+		283,
+		C2_K283
+		);
+
+	/* Curve B-283 (FIPS PUB 186-2, App. 6) */
+	CHAR2_CURVE_TEST
+		(
+		"NIST curve B-283",
+		"0800000000000000000000000000000000000000000000000000000000000000000010A1",
+		"000000000000000000000000000000000000000000000000000000000000000000000001",
+		"027B680AC8B8596DA5A4AF8A19A0303FCA97FD7645309FA2A581485AF6263E313B79A2F5",
+		"05F939258DB7DD90E1934F8C70B0DFEC2EED25B8557EAC9C80E2E198F8CDBECD86B12053",
+		"03676854FE24141CB98FE6D4B20D02B4516FF702350EDDB0826779C813F0DF45BE8112F4",
+		1,
+		"03FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEF90399660FC938A90165B042A7CEFADB307",
+		"2",
+		283,
+		C2_B283
+		);
+
+	/* Curve K-409 (FIPS PUB 186-2, App. 6) */
+	CHAR2_CURVE_TEST
+		(
+		"NIST curve K-409",
+		"02000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000001",
+		"0",
+		"1",
+		"0060F05F658F49C1AD3AB1890F7184210EFD0987E307C84C27ACCFB8F9F67CC2C460189EB5AAAA62EE222EB1B35540CFE9023746",
+		"01E369050B7C4E42ACBA1DACBF04299C3460782F918EA427E6325165E9EA10E3DA5F6C42E9C55215AA9CA27A5863EC48D8E0286B",
+		1,
+		"007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE5F83B2D4EA20400EC4557D5ED3E3E7CA5B4B5C83B8E01E5FCF",
+		"4",
+		409,
+		C2_K409
+		);
+
+	/* Curve B-409 (FIPS PUB 186-2, App. 6) */
+	CHAR2_CURVE_TEST
+		(
+		"NIST curve B-409",
+		"02000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000001",
+		"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+		"0021A5C2C8EE9FEB5C4B9A753B7B476B7FD6422EF1F3DD674761FA99D6AC27C8A9A197B272822F6CD57A55AA4F50AE317B13545F",
+		"015D4860D088DDB3496B0C6064756260441CDE4AF1771D4DB01FFE5B34E59703DC255A868A1180515603AEAB60794E54BB7996A7",
+		"0061B1CFAB6BE5F32BBFA78324ED106A7636B9C5A7BD198D0158AA4F5488D08F38514F1FDF4B4F40D2181B3681C364BA0273C706",
+		1,
+		"010000000000000000000000000000000000000000000000000001E2AAD6A612F33307BE5FA47C3C9E052F838164CD37D9A21173",
+		"2",
+		409,
+		C2_B409
+		);
+
+	/* Curve K-571 (FIPS PUB 186-2, App. 6) */
+	CHAR2_CURVE_TEST
+		(
+		"NIST curve K-571",
+		"80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000425",
+		"0",
+		"1",
+		"026EB7A859923FBC82189631F8103FE4AC9CA2970012D5D46024804801841CA44370958493B205E647DA304DB4CEB08CBBD1BA39494776FB988B47174DCA88C7E2945283A01C8972",
+		"0349DC807F4FBF374F4AEADE3BCA95314DD58CEC9F307A54FFC61EFC006D8A2C9D4979C0AC44AEA74FBEBBB9F772AEDCB620B01A7BA7AF1B320430C8591984F601CD4C143EF1C7A3",
+		0,
+		"020000000000000000000000000000000000000000000000000000000000000000000000131850E1F19A63E4B391A8DB917F4138B630D84BE5D639381E91DEB45CFE778F637C1001",
+		"4",
+		571,
+		C2_K571
+		);
+
+	/* Curve B-571 (FIPS PUB 186-2, App. 6) */
+	CHAR2_CURVE_TEST
+		(
+		"NIST curve B-571",
+		"80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000425",
+		"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+		"02F40E7E2221F295DE297117B7F3D62F5C6A97FFCB8CEFF1CD6BA8CE4A9A18AD84FFABBD8EFA59332BE7AD6756A66E294AFD185A78FF12AA520E4DE739BACA0C7FFEFF7F2955727A",
+		"0303001D34B856296C16C0D40D3CD7750A93D1D2955FA80AA5F40FC8DB7B2ABDBDE53950F4C0D293CDD711A35B67FB1499AE60038614F1394ABFA3B4C850D927E1E7769C8EEC2D19",
+		"037BF27342DA639B6DCCFFFEB73D69D78C6C27A6009CBBCA1980F8533921E8A684423E43BAB08A576291AF8F461BB2A8B3531D2F0485C19B16E2F1516E23DD3C1A4827AF1B8AC15B",
+		1,
+		"03FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE661CE18FF55987308059B186823851EC7DD9CA1161DE93D5174D66E8382E9BB2FE84E47",
+		"2",
+		571,
+		C2_B571
+		);
+
+	/* more tests using the last curve */
+
+	if (!EC_POINT_copy(Q, P)) ABORT;
+	if (EC_POINT_is_at_infinity(group, Q)) ABORT;
+	if (!EC_POINT_dbl(group, P, P, ctx)) ABORT;
+	if (!EC_POINT_is_on_curve(group, P, ctx)) ABORT;
+	if (!EC_POINT_invert(group, Q, ctx)) ABORT; /* P = -2Q */
+
+	if (!EC_POINT_add(group, R, P, Q, ctx)) ABORT;
+	if (!EC_POINT_add(group, R, R, Q, ctx)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, R)) ABORT; /* R = P + 2Q */
+
+	{
+		const EC_POINT *points[3];
+		const BIGNUM *scalars[3];
+	
+		if (EC_POINT_is_at_infinity(group, Q)) ABORT;
+		points[0] = Q;
+		points[1] = Q;
+		points[2] = Q;
+
+		if (!BN_add(y, z, BN_value_one())) ABORT;
+		if (BN_is_odd(y)) ABORT;
+		if (!BN_rshift1(y, y)) ABORT;
+		scalars[0] = y; /* (group order + 1)/2,  so  y*Q + y*Q = Q */
+		scalars[1] = y;
+
+		fprintf(stdout, "combined multiplication ...");
+		fflush(stdout);
+
+		/* z is still the group order */
+		if (!EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx)) ABORT;
+		if (!EC_POINTs_mul(group, R, z, 2, points, scalars, ctx)) ABORT;
+		if (0 != EC_POINT_cmp(group, P, R, ctx)) ABORT;
+		if (0 != EC_POINT_cmp(group, R, Q, ctx)) ABORT;
+
+		fprintf(stdout, ".");
+		fflush(stdout);
+
+		if (!BN_pseudo_rand(y, BN_num_bits(y), 0, 0)) ABORT;
+		if (!BN_add(z, z, y)) ABORT;
+		z->neg = 1;
+		scalars[0] = y;
+		scalars[1] = z; /* z = -(order + y) */
+
+		if (!EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx)) ABORT;
+		if (!EC_POINT_is_at_infinity(group, P)) ABORT;
+
+		fprintf(stdout, ".");
+		fflush(stdout);
+
+		if (!BN_pseudo_rand(x, BN_num_bits(y) - 1, 0, 0)) ABORT;
+		if (!BN_add(z, x, y)) ABORT;
+		z->neg = 1;
+		scalars[0] = x;
+		scalars[1] = y;
+		scalars[2] = z; /* z = -(x+y) */
+
+		if (!EC_POINTs_mul(group, P, NULL, 3, points, scalars, ctx)) ABORT;
+		if (!EC_POINT_is_at_infinity(group, P)) ABORT;
+
+		fprintf(stdout, " ok\n\n");
+	}
+
+
+#if 0
+	timings(C2_K163, 0, ctx);
+	timings(C2_K163, 1, ctx);
+	timings(C2_B163, 0, ctx);
+	timings(C2_B163, 1, ctx);
+	timings(C2_K233, 0, ctx);
+	timings(C2_K233, 1, ctx);
+	timings(C2_B233, 0, ctx);
+	timings(C2_B233, 1, ctx);
+	timings(C2_K283, 0, ctx);
+	timings(C2_K283, 1, ctx);
+	timings(C2_B283, 0, ctx);
+	timings(C2_B283, 1, ctx);
+	timings(C2_K409, 0, ctx);
+	timings(C2_K409, 1, ctx);
+	timings(C2_B409, 0, ctx);
+	timings(C2_B409, 1, ctx);
+	timings(C2_K571, 0, ctx);
+	timings(C2_K571, 1, ctx);
+	timings(C2_B571, 0, ctx);
+	timings(C2_B571, 1, ctx);
+#endif
+
+
+	if (ctx)
+		BN_CTX_free(ctx);
+	BN_free(p); BN_free(a);	BN_free(b);
+	EC_GROUP_free(group);
+	EC_POINT_free(P);
+	EC_POINT_free(Q);
+	EC_POINT_free(R);
+	BN_free(x); BN_free(y); BN_free(z); BN_free(cof);
+
+	if (C2_K163) EC_GROUP_free(C2_K163);
+	if (C2_B163) EC_GROUP_free(C2_B163);
+	if (C2_K233) EC_GROUP_free(C2_K233);
+	if (C2_B233) EC_GROUP_free(C2_B233);
+	if (C2_K283) EC_GROUP_free(C2_K283);
+	if (C2_B283) EC_GROUP_free(C2_B283);
+	if (C2_K409) EC_GROUP_free(C2_K409);
+	if (C2_B409) EC_GROUP_free(C2_B409);
+	if (C2_K571) EC_GROUP_free(C2_K571);
+	if (C2_B571) EC_GROUP_free(C2_B571);
+
+	}
+
+static const char rnd_seed[] = "string to make the random number generator think it has entropy";
+
+int main(int argc, char *argv[])
+	{	
+	
+	/* enable memory leak checking unless explicitly disabled */
+	if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL) && (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off"))))
+		{
+		CRYPTO_malloc_debug_init();
+		CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
+		}
+	else
+		{
+		/* OPENSSL_DEBUG_MEMORY=off */
+		CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
+		}
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+	ERR_load_crypto_strings();
+
+	RAND_seed(rnd_seed, sizeof rnd_seed); /* or BN_generate_prime may fail */
+
+	prime_field_tests();
+	char2_field_tests();
 
 	ENGINE_cleanup();
 	CRYPTO_cleanup_all_ex_data();

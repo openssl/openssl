@@ -1,4 +1,7 @@
-/* crypto/ec/ec_cvt.c */
+/* crypto/ec/ec2_smpt.c */
+/* This code was originally written by Douglas Stebila 
+ * <dstebila@student.math.uwaterloo.ca> for the OpenSSL project.
+ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -52,75 +55,71 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-/* ====================================================================
- * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+
+
+/* Calaculates and sets the affine coordinates of an EC_POINT from the given
+ * compressed coordinates.  Uses algorithm 2.3.4 of SEC 1. 
+ * Note that the simple implementation only uses affine coordinates.
  *
- * Portions of the attached software ("Contribution") are developed by 
- * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
- *
- * The Contribution is licensed pursuant to the OpenSSL open source
- * license provided above.
- *
- * In addition, Sun covenants to all licensees who provide a reciprocal
- * covenant with respect to their own patents if any, not to sue under
- * current and future patent claims necessarily infringed by the making,
- * using, practicing, selling, offering for sale and/or otherwise
- * disposing of the Contribution as delivered hereunder 
- * (or portions thereof), provided that such covenant shall not apply:
- *  1) for code that a licensee deletes from the Contribution;
- *  2) separates from the Contribution; or
- *  3) for infringements caused by:
- *       i) the modification of the Contribution or
- *      ii) the combination of the Contribution with other software or
- *          devices where such combination causes the infringement.
- *
- * The elliptic curve binary polynomial software is originally written by
- * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
- *
+ * This algorithm is patented by Certicom Corp. under US Patent 6,141,420.
+ * This function is disabled by default and can be enabled by defining the 
+ * preprocessor macro OPENSSL_EC_BIN_PT_COMP at Configure-time.
  */
-
-#include "ec_lcl.h"
-
-
-EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
+int ec_GF2m_simple_set_compressed_coordinates_GF2m(const EC_GROUP *group, EC_POINT *point,
+	const BIGNUM *x_, int y_bit, BN_CTX *ctx)
 	{
-	const EC_METHOD *meth;
-	EC_GROUP *ret;
-	
-	/* Finally, this will use EC_GFp_nist_method if 'p' is a special
-	 * prime with optimized modular arithmetics (for NIST curves)
-	 */
-	meth = EC_GFp_mont_method();
-	
-	ret = EC_GROUP_new(meth);
-	if (ret == NULL)
-		return NULL;
+#ifndef OPENSSL_EC_BIN_PT_COMP	
+	ECerr(EC_F_EC_GF2M_SIMPLE_SET_COMPRESSED_COORDINATES_GF2M, ERR_R_DISABLED);
+	return 0;
+#else
+	BN_CTX *new_ctx = NULL;
+	BIGNUM *tmp, *x, *y, *z;
+	int ret = 0, z0;
 
-	if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx))
+	if (ctx == NULL)
 		{
-		EC_GROUP_clear_free(ret);
-		return NULL;
+		ctx = new_ctx = BN_CTX_new();
+		if (ctx == NULL)
+			return 0;
 		}
 
-	return ret;
-	}
+	y_bit = (y_bit != 0) ? 1 : 0;
 
-EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
-	{
-	const EC_METHOD *meth;
-	EC_GROUP *ret;
-	
-	meth = EC_GF2m_simple_method();
-	
-	ret = EC_GROUP_new(meth);
-	if (ret == NULL)
-		return NULL;
+	BN_CTX_start(ctx);
+	tmp = BN_CTX_get(ctx);
+	x = BN_CTX_get(ctx);
+	y = BN_CTX_get(ctx);
+	z = BN_CTX_get(ctx);
+	if (z == NULL) goto err;
 
-	if (!EC_GROUP_set_curve_GF2m(ret, p, a, b, ctx))
+	if (!BN_GF2m_mod_arr(x, x_, group->poly)) goto err;
+	if (BN_is_zero(x))
 		{
-		EC_GROUP_clear_free(ret);
-		return NULL;
+		if (!BN_GF2m_mod_sqrt_arr(y, &group->b, group->poly, ctx)) goto err;
+		}
+	else
+		{
+		if (!group->meth->field_sqr(group, tmp, x, ctx)) goto err;
+		if (!group->meth->field_div(group, tmp, &group->b, tmp, ctx)) goto err;
+		if (!BN_GF2m_add(tmp, &group->a, tmp)) goto err;
+		if (!BN_GF2m_add(tmp, x, tmp)) goto err;
+		if (!BN_GF2m_mod_solve_quad_arr(z, tmp, group->poly, ctx)) goto err;
+		z0 = (BN_is_odd(z)) ? 1 : 0;
+		if (!group->meth->field_mul(group, y, x, z, ctx)) goto err;
+		if (z0 != y_bit)
+			{
+			if (!BN_GF2m_add(y, y, x)) goto err;
+			}
 		}
 
+	if (!EC_POINT_set_affine_coordinates_GF2m(group, point, x, y, ctx)) goto err;
+
+	ret = 1;
+
+ err:
+	BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
 	return ret;
+#endif
 	}
