@@ -2256,7 +2256,8 @@ ASN1_TIME_check                         2782	EXIST::FUNCTION:
 UI_get0_user_data                       2783	EXIST::FUNCTION:
 HMAC_CTX_cleanup                        2784	EXIST::FUNCTION:HMAC
 DSA_up_ref                              2785	EXIST::FUNCTION:DSA
-_ossl_old_des_ede3_cfb64_encrypt        2786	EXIST::FUNCTION:DES
+_ossl_old_des_ede3_cfb64_encrypt        2786	EXIST:!VMS:FUNCTION:DES
+_ossl_odes_ede3_cfb64_encrypt           2786	EXIST:VMS:FUNCTION:DES
 ASN1_BMPSTRING_it                       2787	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ASN1_BMPSTRING_it                       2787	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 ASN1_tag2bit                            2788	EXIST::FUNCTION:
@@ -2526,7 +2527,8 @@ ENGINE_get_cipher_engine                3008	EXIST::FUNCTION:
 ENGINE_register_all_ciphers             3009	EXIST::FUNCTION:
 EC_POINT_copy                           3010	EXIST::FUNCTION:EC
 BN_kronecker                            3011	EXIST::FUNCTION:
-_ossl_old_des_ede3_ofb64_encrypt        3012	EXIST::FUNCTION:DES
+_ossl_old_des_ede3_ofb64_encrypt        3012	EXIST:!VMS:FUNCTION:DES
+_ossl_odes_ede3_ofb64_encrypt           3012	EXIST:VMS:FUNCTION:DES
 UI_method_get_reader                    3013	EXIST::FUNCTION:
 OCSP_BASICRESP_get_ext_count            3014	EXIST::FUNCTION:
 ASN1_ENUMERATED_it                      3015	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -2762,9 +2764,12 @@ UI_UTIL_read_pw                         3208	EXIST::FUNCTION:
 UI_UTIL_read_pw_string                  3209	EXIST::FUNCTION:
 ENGINE_load_aep                         3210	EXIST::FUNCTION:
 ENGINE_load_sureware                    3211	EXIST::FUNCTION:
-OPENSSL_add_all_algorithms_noconf       3212	EXIST::FUNCTION:
-OPENSSL_add_all_algorithms_conf         3213	EXIST::FUNCTION:
+OPENSSL_add_all_algorithms_noconf       3212	EXIST:!VMS:FUNCTION:
+OPENSSL_add_all_algo_noconf             3212	EXIST:VMS:FUNCTION:
+OPENSSL_add_all_algorithms_conf         3213	EXIST:!VMS:FUNCTION:
+OPENSSL_add_all_algo_conf               3213	EXIST:VMS:FUNCTION:
 OPENSSL_load_builtin_modules            3214	EXIST::FUNCTION:
 AES_ofb128_encrypt                      3215	EXIST::FUNCTION:AES
 AES_ctr128_encrypt                      3216	EXIST::FUNCTION:AES
 AES_cfb128_encrypt                      3217	EXIST::FUNCTION:AES
+ENGINE_load_4758cca                     3218	EXIST::FUNCTION:
