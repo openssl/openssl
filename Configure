@@ -2,6 +2,7 @@
 
 require 5.000;
 use strict;
+use POSIX qw(:errno_h);
 
 #
 # see PROBLEMS for instructions on what sort of things to do when 
@@ -326,9 +327,8 @@ if ($rmd160_obj =~ /\.o$/)
 	$cflags.=" -DRMD160_ASM";
 	}
 
-my $n=&file_new($Makefile);
-open(IN,'<Makefile.org') || die "unable to read $Makefile:$!\n";
-open(OUT,">".$n) || die "unable to read $n:$!\n";
+open(IN,'<Makefile.org') || die "unable to read Makefile.org:$!\n";
+open(OUT,">$Makefile") || die "unable to create $Makefile:$!\n";
 while (<IN>)
 	{
 	chop;
@@ -349,8 +349,7 @@ while (<IN>)
 	}
 close(IN);
 close(OUT);
-&Rename($Makefile,&file_old($Makefile));
-&Rename($n,$Makefile);
+
 print "CC            =$cc\n";
 print "CFLAG         =$cflags\n";
 print "EX_LIBS       =$lflags\n";
@@ -408,7 +407,7 @@ foreach (sort split(/\s+/,$bn_ops))
 	}
 
 ((my $in=$bn) =~ s/\.([^.]+)/.$postfix/);
-$n=&file_new($bn);
+my $n=&file_new($bn);
 open(IN,"<".$in) || die "unable to read $bn:$!\n";
 open(OUT,">$n") || die "unable to read $n:$!\n";
 while (<IN>)
@@ -610,7 +609,10 @@ sub Rename
 	my($from,$to)=@_;
 
 	unlink($to);
-	rename($from,$to) || die "unable to rename $from to $to:$!\n";
+	if(!rename($from,$to))
+	    {
+	    POSIX::errno() == POSIX::ENOENT || die "unable to rename $from to $to:$!\n";
+	    }
 	}
 
 sub file_new { local($a)=@_; $a =~ s/(\.[^.]+$|$)/.new/; $a; }
