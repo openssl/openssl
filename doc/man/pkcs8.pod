@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-pkcs8 - PKCS#8 format private key processing tool
+pkcs8 - PKCS#8 format private key conversion tool
 
 =head1 SYNOPSIS
 
@@ -29,7 +29,7 @@ format with a variety of PKCS#5 (v1.5 and v2.0) and PKCS#12 algorithms.
 
 =item B<-topk8>
 
-Normally a PKCS#8 private key is expected on input and a "traditional" format
+Normally a PKCS#8 private key is expected on input and a traditional format
 private key will be written. With the B<-topk8> option the situation is
 reversed: it reads a traditional format private key and writes a PKCS#8
 format key.
@@ -38,10 +38,10 @@ format key.
 
 This specifies the input format. If a PKCS#8 format key is expected on input
 then either a B<DER> or B<PEM> encoded version of a PKCS#8 key will be
-expected. Otherwise the B<DER> or B<PEM> format of the "traditional" format
+expected. Otherwise the B<DER> or B<PEM> format of the traditional format
 private key is used.
 
-=item B<-outform DER|NET|PEM>
+=item B<-outform DER|PEM>
 
 This specifies the output format, the options have the same meaning as the 
 B<-inform> option.
@@ -55,79 +55,102 @@ prompted for.
 =item B<-out filename>
 
 This specifies the output filename to write a key to or standard output by
-is not specified. If any encryption options are set then a pass phrase will be
+default. If any encryption options are set then a pass phrase will be
 prompted for. The output filename should B<not> be the same as the input
 filename.
 
-=item B<-des|-des3|-idea>
+=item B<-nocrypt>
 
-These options encrypt the private key with the DES, triple DES, or the 
-IDEA ciphers respectively before outputting it. A pass phrase is prompted for.
-If none of these options is specified the key is written in plain text. This
-means that using the B<rsa> utility to read in an encrypted key with no
-encryption option can be used to remove the pass phrase from a key, or by
-setting the encryption options it can be use to add or change the pass phrase.
-These options can only be used with PEM format output files.
+PKCS#8 keys generated or input are normally PKCS#8 EncryptedPrivateKeyInfo
+structures using an appropriate password based encryption algorithm. With
+this option an unencrypted PrivateKeyInfo structure is expected or output.
+This option does not encrypt private keys at all and should only be used
+when absolutely necessary. Certain software such as some versions of Java
+code signing software used unencrypted private keys.
 
-=item B<-text>
+=item B<-nooct>
 
-prints out the various public or private key components in
-plain text in addition to the encoded version. 
+This option generates private keys in a broken format that some software
+uses. Specifically the private key should be enclosed in a OCTET STRING
+but some software just includes the structure itself without the
+surrounding OCTET STRING.
 
-=item B<-noout>
+=item B<-v2 alg>
 
-this option prevents output of the encoded version of the key.
+This option enables the use of PKCS#5 v2.0 algorithms. Normally PKCS#8
+private keys are encrypted with the password based encryption algorithm
+called B<pbeWithMD5AndDES-CBC> this uses 56 bit DES encryption but it
+was the strongest encryption algorithm supported in PKCS#5 v1.5. Using 
+the B<-v2> option PKCS#5 v2.0 algorithms are used which can use any
+encryption algorithm such as 168 bit triple DES or 128 bit RC2 however
+not many implementations support PKCS#5 v2.0 yet. If you are just using
+private keys with OpenSSL then this doesn't matter.
 
-=item B<-modulus>
-
-this option prints out the value of the modulus of the key.
-
-=item B<-check>
-
-this option checks the consistency of an RSA private key.
-
-=item B<-pubin>
-
-by default a private key is input file with this option a public key is input
-instead.
-
-=item B<-pubout>
-
-by default a private key is output with this option a public
-key will be output instead. This option is automatically set if the input is
-a public key.
+The B<alg> argument is the encryption algorithm to use, valid values include
+B<des>, B<des3> and B<rc2>. It is recommended that B<des3> is used.
 
 =back
 
+=head1 NOTES
+
+Private keys encrypted using PKCS#5 v2.0 algorithms and high iteration
+counts are more secure that those encrypted using the traditional
+SSLeay compatible formats. So if additional security is considered
+important the keys should be converted.
+
+The default encryption is only 56 bits because this is the encryption
+that most current implementations of PKCS#8 will support.
+
+Some software may use PKCS#12 password based encryption algorithms
+with PKCS#8 format private keys: these are handled automatically
+but there is no option to produce them.
+
+It is possible to write out DER encoded encrypted private keys in
+PKCS#8 format because the encryption details are included at an ASN1
+level whereas the traditional format includes them at a PEM level.
+
 =head1 EXAMPLES
 
-To remove the pass phrase on an RSA private key:
+Convert a private from traditional to PKCS#5 v2.0 format using triple
+DES:
 
-C<openssl rsa -in key.pem -out keyout.pem>
+ openssl pkcs8 -in key.pem -topk8 -v2 des3 -out enckey.pem
 
-To encrypt a private key using triple DES:
+Convert a private key to PKCS#8 using a PKCS#5 1.5 compatible algorithm
+(DES):
 
-C<openssl rsa -in key.pem -des3 -out keyout.pem>
+ openssl pkcs8 -in key.pem -topk8 -out enckey.pem
 
-To convert a private key from PEM to DER format: 
+Read a DER unencrypted PKCS#8 format private key:
 
-C<openssl rsa -in key.pem -outform DER -out keyout.der>
+ openssl pkcs8 -inform DER -nocrypt -in key.der -out key.pem
 
-To print out the components of a private key to standard output:
+Convert a private key from any PKCS#8 format to traditional format:
 
-C<openssl rsa -in key.pem -text -noout>
+ openssl pkcs8 -in pk8.pem -out key.pem
 
-To just output the public part of a private key:
+=head1 STANDARDS
 
-C<openssl rsa -in key.pem -pubout -out pubkey.pem>
+Test vectors from this implementation were posted to the pkcs-tng mailing
+list using triple DES, DES and RC2 with high iteration counts, several
+people confirmed that they could decrypt the private keys produced and
+Therefore it can be assumed that the PKCS#5 v2.0 implementation is
+reasonably accurate at least as far as these algorithms are concerned.
 
 =head1 BUGS
 
-It should be possible to read or produce PKCS#8 format encrypted RSA keys:
-at present it isn't.
+It isn't possible to produce keys encrypted using PKCS#5 v1.5 algorithms
+other than B<pbeWithMD5AndDES-CBC> using this utility.
+
+There should be an option that prints out the encryption algorithm
+in use and other details such as the iteration count.
+
+PKCS#8 using triple DES and PKCS#5 v2.0 should be the default private
+key format for OpenSSL: for compatability several of the utilities use
+the old format at present.
 
 =head1 SEE ALSO
 
-L<pkcs8>, dsa(1), genrsa(1), gendsa(1)
+dsa(1), rsa(1), genrsa(1), gendsa(1)
 
 =cut
