@@ -126,7 +126,7 @@ BIO_new_bio_pair() returns 1 on success, with the new BIOs available in
 B<bio1> and B<bio2>, or 0 on failure, with NULL pointers stored into the
 locations for B<bio1> and B<bio2>. Check the error stack for more information.
 
-XXXXX: More return values need to be added here
+[XXXXX: More return values need to be added here]
 
 =head1 EXAMPLE
 
