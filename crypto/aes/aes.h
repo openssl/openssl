@@ -52,6 +52,8 @@
 #ifndef HEADER_AES_H
 #define HEADER_AES_H
 
+#include <openssl/e_os2.h>
+
 #ifdef OPENSSL_NO_AES
 #error AES is disabled.
 #endif
@@ -63,6 +65,10 @@
    Both sizes are in bytes. */
 #define AES_MAXNR 14
 #define AES_BLOCK_SIZE 16
+
+#if defined(OPENSSL_FIPS)
+#define FIPS_AES_SIZE_T	int
+#endif
 
 #ifdef  __cplusplus
 extern "C" {

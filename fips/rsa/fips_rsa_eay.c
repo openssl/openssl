@@ -65,13 +65,13 @@
 
 #if !defined(RSA_NULL) && defined(OPENSSL_FIPS)
 
-static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
+static int RSA_eay_public_encrypt(FIPS_RSA_SIZE_T flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
-static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
+static int RSA_eay_private_encrypt(FIPS_RSA_SIZE_T flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
-static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
+static int RSA_eay_public_decrypt(FIPS_RSA_SIZE_T flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
-static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
+static int RSA_eay_private_decrypt(FIPS_RSA_SIZE_T flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
 static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa);
 static int RSA_eay_init(RSA *rsa);
@@ -97,7 +97,7 @@ const RSA_METHOD *RSA_PKCS1_SSLeay(void)
 	return(&rsa_pkcs1_eay_meth);
 	}
 
-static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
+static int RSA_eay_public_encrypt(FIPS_RSA_SIZE_T flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
 	BIGNUM f,ret;
@@ -254,7 +254,7 @@ err:
 	}
 
 /* signing */
-static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
+static int RSA_eay_private_encrypt(FIPS_RSA_SIZE_T flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
 	BIGNUM f,ret;
@@ -370,7 +370,7 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
+static int RSA_eay_private_decrypt(FIPS_RSA_SIZE_T flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
 	BIGNUM f,ret;
@@ -503,7 +503,7 @@ err:
 	}
 
 /* signature verification */
-static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
+static int RSA_eay_public_decrypt(FIPS_RSA_SIZE_T flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
 	BIGNUM f,ret;

@@ -104,7 +104,7 @@ static int fips_check_rsa(RSA *rsa)
     return 1;
     }
 
-RSA *RSA_generate_key(int bits, unsigned long e_value,
+RSA *RSA_generate_key(FIPS_RSA_SIZE_T bits, unsigned long e_value,
 	     void (*callback)(int,int,void *), void *cb_arg)
 	{
 	RSA *rsa=NULL;

@@ -103,8 +103,8 @@ static int fips_check_dsa(DSA *dsa)
     return 1;
     }
 
-DSA *DSA_generate_parameters(int bits,
-		unsigned char *seed_in, int seed_len,
+DSA *DSA_generate_parameters(FIPS_DSA_SIZE_T bits,
+		unsigned char *seed_in, FIPS_DSA_SIZE_T seed_len,
 		int *counter_ret, unsigned long *h_ret,
 		void (*callback)(int, int, void *),
 		void *cb_arg)
