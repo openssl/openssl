@@ -121,6 +121,7 @@ int MAIN(int argc, char **argv)
 		else if(!strcmp(*argv, "-asn1parse")) asn1parse = 1;
 		else if(!strcmp(*argv, "-hexdump")) hexdump = 1;
 		else if(!strcmp(*argv, "-raw")) pad = RSA_NO_PADDING;
+		else if(!strcmp(*argv, "-oaep")) pad = RSA_PKCS1_OAEP_PADDING;
 		else if(!strcmp(*argv, "-ssl")) pad = RSA_SSLV23_PADDING;
 		else if(!strcmp(*argv, "-pkcs")) pad = RSA_PKCS1_PADDING;
 		else if(!strcmp(*argv, "-sign")) {
@@ -146,6 +147,9 @@ int MAIN(int argc, char **argv)
 		goto end;
 	}
 
+/* FIXME: seed PRNG only if needed */
+	app_RAND_load_file(NULL, bio_err, 0);
+	
 	switch(key_type) {
 		case KEY_PRIVKEY:
 		pkey = load_key(bio_err, keyfile, keyform, NULL);
@@ -266,7 +270,8 @@ static void usage()
 	BIO_printf(bio_err, "-certin         input is a certificate carrying an RSA public key\n");
 	BIO_printf(bio_err, "-ssl            use SSL v2 padding\n");
 	BIO_printf(bio_err, "-raw            use no padding\n");
-	BIO_printf(bio_err, "-pkcs           use PKCS#1 padding (default)\n");
+	BIO_printf(bio_err, "-pkcs           use PKCS#1 v.15 padding (default)\n");
+	BIO_printf(bio_err, "-oaep           use PKCS#1 OAEP\n");
 	BIO_printf(bio_err, "-sign           sign with private key\n");
 	BIO_printf(bio_err, "-verify         verify with public key\n");
 	BIO_printf(bio_err, "-encrypt        encrypt with public key\n");

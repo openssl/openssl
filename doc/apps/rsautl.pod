@@ -70,10 +70,12 @@ encrypt the input data using an RSA public key.
 
 decrypt the input data using an RSA private key.
 
-=item B<-pkcs, -ssl, -raw>
+=item B<-pkcs, -oaep, -ssl, -raw>
 
-the padding to use, PKCS#1 v1.5 (the default) SSL v2 or no padding
-respectively.
+the padding to use: PKCS#1 v1.5 (the default), PKCS#1 OAEP,
+special padding used in SSL v2 backwards compatible handshakes,
+or no padding, respectively.
+For signatures, only B<-pkcs> and B<-raw> can be used.
 
 =item B<-hexdump>
 
@@ -93,7 +95,7 @@ used to sign or verify small pieces of data.
 
 =head1 EXAMPLES
 
-Sign the some data using a private key:
+Sign some data using a private key:
 
  openssl rsautl -sign -in file -inkey key.pem -out sig
 
