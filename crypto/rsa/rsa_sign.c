@@ -67,7 +67,7 @@
 #define SSL_SIG_LENGTH	36
 
 int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
-	     unsigned char *sigret, unsigned int *siglen, RSA *rsa)
+	     unsigned char *sigret, unsigned int *siglen, const RSA *rsa)
 	{
 	X509_SIG sig;
 	ASN1_TYPE parameter;
@@ -143,7 +143,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 	}
 
 int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
-	     unsigned char *sigbuf, unsigned int siglen, RSA *rsa)
+	     unsigned char *sigbuf, unsigned int siglen, const RSA *rsa)
 	{
 	int i,ret=0,sigtype;
 	unsigned char *p,*s;
