@@ -83,7 +83,7 @@ char *uni2asc (unsigned char *uni, int unilen)
 	char *asctmp;
 	asclen = unilen / 2;
 	/* If no terminating zero allow for one */
-	if (uni[unilen - 1]) asclen++;
+	if (!unilen || uni[unilen - 1]) asclen++;
 	uni++;
 	if (!(asctmp = OPENSSL_malloc (asclen))) return NULL;
 	for (i = 0; i < unilen; i+=2) asctmp[i>>1] = uni[i];

@@ -4,6 +4,10 @@
 
  Changes between 0.9.6 and 0.9.6a  [xx XXX 2000]
 
+  *) Fix to uni2asc() to cope with zero length Unicode strings.
+     These are present in some PKCS#12 files.
+     [Steve Henson]
+
   *) Increase s2->wbuf allocation by one byte in ssl2_new (ssl/s2_lib.c).
      Otherwise do_ssl_write (ssl/s2_pkt.c) will write beyond buffer limits
      when writing a 32767 byte record.
