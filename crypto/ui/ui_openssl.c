@@ -191,6 +191,12 @@
 # define SGTTY
 #endif
 
+#if defined(OPENSSL_SYS_VSWORKS)
+#undef TERMIOS
+#undef TERMIO
+#undef SGTTY
+#endif
+
 #ifdef TERMIOS
 # include <termios.h>
 # define TTY_STRUCT		struct termios
@@ -444,7 +450,7 @@ static int open_console(UI *ui)
 	CRYPTO_w_lock(CRYPTO_LOCK_UI);
 	is_a_tty = 1;
 
-#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC)
+#if defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_VSWORKS)
 	tty_in=stdin;
 	tty_out=stderr;
 #else

@@ -109,10 +109,10 @@ typedef struct rsa_meth_st
  * option is set in 'flags'.
  */
 	int (*rsa_sign)(int type,
-		const unsigned char *m, unsigned int m_len,
+		const unsigned char *m, unsigned int m_length,
 		unsigned char *sigret, unsigned int *siglen, const RSA *rsa);
 	int (*rsa_verify)(int dtype,
-		const unsigned char *m, unsigned int m_len,
+		const unsigned char *m, unsigned int m_length,
 		unsigned char *sigbuf, unsigned int siglen, const RSA *rsa);
 
 	} RSA_METHOD;
@@ -231,18 +231,18 @@ RSA *d2i_Netscape_RSA(RSA **a, const unsigned char **pp, long length, int (*cb)(
 
 /* The following 2 functions sign and verify a X509_SIG ASN1 object
  * inside PKCS#1 padded RSA encryption */
-int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
+int RSA_sign(int type, const unsigned char *m, unsigned int m_length,
 	unsigned char *sigret, unsigned int *siglen, RSA *rsa);
-int RSA_verify(int type, const unsigned char *m, unsigned int m_len,
+int RSA_verify(int type, const unsigned char *m, unsigned int m_length,
 	unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
 
 /* The following 2 function sign and verify a ASN1_OCTET_STRING
  * object inside PKCS#1 padded RSA encryption */
 int RSA_sign_ASN1_OCTET_STRING(int type,
-	const unsigned char *m, unsigned int m_len,
+	const unsigned char *m, unsigned int m_length,
 	unsigned char *sigret, unsigned int *siglen, RSA *rsa);
 int RSA_verify_ASN1_OCTET_STRING(int type,
-	const unsigned char *m, unsigned int m_len,
+	const unsigned char *m, unsigned int m_length,
 	unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
 
 int RSA_blinding_on(RSA *rsa, BN_CTX *ctx);

@@ -88,6 +88,12 @@ extern "C" {
 #define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
 #endif
 
+#if defined(OPENSSL_SYS_VXWORKS)
+#  define NO_SYS_PARAM_H
+#  define NO_CHMOD
+#  define NO_SYSLOG
+#endif
+  
 #if defined(OPENSSL_SYS_MACINTOSH_CLASSIC)
 # if macintosh==1
 #  ifndef MAC_OS_GUSI_SOURCE
@@ -353,7 +359,9 @@ extern HINSTANCE _hInstance;
 #    ifndef NO_SYS_PARAM_H
 #      include <sys/param.h>
 #    endif
-#    ifndef OPENSSL_SYS_MPE
+#    ifdef OPENSSL_SYS_VXWORKS
+#      include <time.h> 
+#    elif !defined(OPENSSL_SYS_MPE)
 #      include <sys/time.h> /* Needed under linux for FD_XXX */
 #    endif
 

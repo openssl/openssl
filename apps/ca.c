@@ -90,7 +90,7 @@
 #    else
 #      include <unixlib.h>
 #    endif
-#  else
+#  elif !defined(OPENSSL_SYS_VXWORKS)
 #    include <sys/file.h>
 #  endif
 #endif
