@@ -1,6 +1,6 @@
 /* crypto/buffer/buf_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,15 +61,16 @@
 #include <stdio.h>
 #include <openssl/err.h>
 #include <openssl/buffer.h>
-#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_ERR is defined */
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA BUF_str_functs[]=
 	{
+{ERR_PACK(0,BUF_F_BUF_MEMDUP,0),	"BUF_memdup"},
 {ERR_PACK(0,BUF_F_BUF_MEM_GROW,0),	"BUF_MEM_grow"},
 {ERR_PACK(0,BUF_F_BUF_MEM_NEW,0),	"BUF_MEM_new"},
 {ERR_PACK(0,BUF_F_BUF_STRDUP,0),	"BUF_strdup"},
+{ERR_PACK(0,BUF_F_BUF_STRNDUP,0),	"BUF_strndup"},
 {0,NULL}
 	};
 

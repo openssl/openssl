@@ -78,6 +78,8 @@ void	BUF_MEM_free(BUF_MEM *a);
 int	BUF_MEM_grow(BUF_MEM *str, int len);
 int	BUF_MEM_grow_clean(BUF_MEM *str, int len);
 char *	BUF_strdup(const char *str);
+char *	BUF_strndup(const char *str, size_t siz);
+void *	BUF_memdup(const void *data, size_t siz);
 
 /* safe string functions */
 size_t BUF_strlcpy(char *dst,const char *src,size_t siz);
@@ -93,9 +95,11 @@ void ERR_load_BUF_strings(void);
 /* Error codes for the BUF functions. */
 
 /* Function codes. */
+#define BUF_F_BUF_MEMDUP				 103
 #define BUF_F_BUF_MEM_GROW				 100
 #define BUF_F_BUF_MEM_NEW				 101
 #define BUF_F_BUF_STRDUP				 102
+#define BUF_F_BUF_STRNDUP				 104
 
 /* Reason codes. */
 

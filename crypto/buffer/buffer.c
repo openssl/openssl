@@ -164,21 +164,40 @@ int BUF_MEM_grow_clean(BUF_MEM *str, int len)
 
 char *BUF_strdup(const char *str)
 	{
+	if (str == NULL) return(NULL);
+	return BUF_strndup(str, strlen(str));
+	}
+
+char *BUF_strndup(const char *str, size_t siz)
+	{
 	char *ret;
-	int n;
 
 	if (str == NULL) return(NULL);
 
-	n=strlen(str);
-	ret=OPENSSL_malloc(n+1);
+	ret=OPENSSL_malloc(siz+1);
 	if (ret == NULL) 
 		{
-		BUFerr(BUF_F_BUF_STRDUP,ERR_R_MALLOC_FAILURE);
+		BUFerr(BUF_F_BUF_STRNDUP,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
-	memcpy(ret,str,n+1);
+	BUF_strlcpy(ret,str,siz+1);
 	return(ret);
 	}
+
+void *BUF_memdup(const void *data, size_t siz)
+	{
+	void *ret;
+
+	if (data == NULL) return(NULL);
+
+	ret=OPENSSL_malloc(siz);
+	if (ret == NULL) 
+		{
+		BUFerr(BUF_F_BUF_MEMDUP,ERR_R_MALLOC_FAILURE);
+		return(NULL);
+		}
+	return memcpy(ret, data, siz);
+	}	
 
 size_t BUF_strlcpy(char *dst, const char *src, size_t size)
 	{

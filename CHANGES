@@ -4,6 +4,12 @@
 
  Changes between 0.9.7a and 0.9.8  [xx XXX xxxx]
 
+  *) Add the functions BUF_strndup() and BUF_memdup().  BUF_strndup()
+     works like BUF_strdup() but can be used to duplicate a portion of
+     a string.  The copy gets NUL-terminated.  BUF_memdup() duplicates
+     a memory area.
+     [Richard Levitte]
+
   *) Add the function sk_find_ex() which works like sk_find(), but will
      return an index to an element even if an exact match couldn't be
      found.  The index is guaranteed to point at the element where the
