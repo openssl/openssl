@@ -166,6 +166,9 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx);
  * elliptic curve is not zero, 0 otherwise */
 int EC_GROUP_check_discriminant(const EC_GROUP *, BN_CTX *);
 
+/* EC_GROUP_cmp() returns 0 if both groups are equal and 1 otherwise */
+int EC_GROUP_cmp(const EC_GROUP *, const EC_GROUP *, BN_CTX *);
+
 /* EC_GROUP_new_GF*() calls EC_GROUP_new() and EC_GROUP_set_GF*()
  * after choosing an appropriate EC_METHOD */
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);

@@ -234,6 +234,15 @@ int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 			return(1);
 		}
 #endif
+#ifndef OPENSSL_NO_EC
+	if (a->type == EVP_PKEY_EC && b->type == EVP_PKEY_EC)
+		{
+		if (EC_GROUP_cmp(a->pkey.eckey->group, b->pkey.eckey->group, NULL))
+			return 0;
+		else
+			return 1;
+		}
+#endif
 	return(-1);
 	}
 
