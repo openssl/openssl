@@ -530,6 +530,10 @@
 
  Changes between 0.9.7b and 0.9.7c  [xx XXX 2003]
 
+  *) Change AES_cbc_encrypt() so it outputs exact multiple of
+     blocks during encryption.
+     [Richard Levitte]
+
   *) Various fixes to base64 BIO and non blocking I/O. On write 
      flushes were not handled properly if the BIO retried. On read
      data was not being buffered properly and had various logic bugs.
