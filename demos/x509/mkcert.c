@@ -88,7 +88,7 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days)
 		}
 	rsa=NULL;
 
-	X509_set_version(x,3);
+	X509_set_version(x,2);
 	ASN1_INTEGER_set(X509_get_serialNumber(x),serial);
 	X509_gmtime_adj(X509_get_notBefore(x),0);
 	X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days);
