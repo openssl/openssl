@@ -69,11 +69,34 @@ $shared_ldflag =
 $shared_extension = 
 $ranlib       = 
 
-*** CygWin32
+*** Cygwin
 $cc           = gcc
-$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall
+$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -m486 -Wall
 $unistd       = 
 $thread_cflag = 
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = win32
+$shared_target= cygwin-shared
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = .dll
+$ranlib       = 
+
+*** Cygwin-pre1.3
+$cc           = gcc
+$cflags       = -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -m486 -Wall
+$unistd       = 
+$thread_cflag = (unknown)
 $lflags       = 
 $bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = 
@@ -1060,9 +1083,9 @@ $ranlib       =
 
 *** darwin-ppc-cc
 $cc           = cc
-$cflags       = -O3 -DB_ENDIAN
+$cflags       = -O3 -D_DARWIN -DB_ENDIAN
 $unistd       = 
-$thread_cflag = (unknown)
+$thread_cflag = -D_REENTRANT
 $lflags       = 
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $bn_obj       = 
@@ -1075,9 +1098,9 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
+$shared_target= darwin-shared
+$shared_cflag = -fPIC
+$shared_ldflag = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
 $shared_extension = 
 $ranlib       = 
 
@@ -1236,9 +1259,9 @@ $rc4_obj      = asm/rx86-elf.o
 $rmd160_obj   = asm/rm86-elf.o
 $rc5_obj      = asm/r586-elf.o
 $dso_scheme   = dlfcn
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_ldflag = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $shared_extension = 
 $ranlib       = 
 
@@ -2369,6 +2392,29 @@ $shared_ldflag =
 $shared_extension = 
 $ranlib       = 
 
+*** linux-s390x
+$cc           = gcc
+$cflags       = -DB_ENDIAN -DTERMIO -DNO_ASM -O3 -fomit-frame-pointer -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+
 *** linux-sparcv7
 $cc           = gcc
 $cflags       = -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
@@ -2647,10 +2693,10 @@ $ranlib       =
 
 *** sco5-cc
 $cc           = cc
-$cflags       = 
+$cflags       = -belf
 $unistd       = 
 $thread_cflag = (unknown)
-$lflags       = -lsocket
+$lflags       = -lsocket -lresolv
 $bn_ops       = DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
 $bn_obj       = 
 $des_obj      = 
@@ -2691,6 +2737,29 @@ $shared_ldflag =
 $shared_extension = 
 $ranlib       = 
 
+*** sco5-cc-shared
+$cc           = cc
+$cflags       = -belf
+$unistd       = 
+$thread_cflag = 
+$lflags       = -lsocket -lresolv -lnsl
+$bn_ops       = MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= svr3-shared
+$shared_cflag = -Kpic
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+
 *** sco5-gcc
 $cc           = gcc
 $cflags       = -O3 -fomit-frame-pointer
@@ -2710,6 +2779,29 @@ $rc5_obj      =
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+
+*** sco5-gcc-shared
+$cc           = gcc
+$cflags       = -O3 -DFILIO_H -fomit-frame-pointer
+$unistd       = 
+$thread_cflag = 
+$lflags       = -lsocket -lresolv -lnsl
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_obj       = asm/bn86-elf.o asm/co86-elf.o
+$des_obj      = asm/dx86-elf.o asm/yx86-elf.o
+$bf_obj       = asm/bx86-elf.o
+$md5_obj      = asm/mx86-elf.o
+$sha1_obj     = asm/sx86-elf.o
+$cast_obj     = asm/cx86-elf.o
+$rc4_obj      = asm/rx86-elf.o
+$rmd160_obj   = asm/rm86-elf.o
+$rc5_obj      = asm/r586-elf.o
+$dso_scheme   = dlfcn
+$shared_target= svr3-shared
+$shared_cflag = -fPIC
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 

@@ -224,6 +224,7 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 	w=n/8;
 	v=1<<(7-(n&0x07));
 	iv= ~v;
+	if (!value) v=0;
 
 	a->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07); /* clear, set on write */
 

@@ -4,6 +4,25 @@
 
  Changes between 0.9.6c and 0.9.6d  [XX xxx XXXX]
 
+  *) Add information about CygWin 1.3 and on, and preserve proper
+     configuration for the versions before that.
+     [Corinna Vinschen <vinschen@redhat.com> and Richard Levitte]
+
+  *) Make removal from session cache (SSL_CTX_remove_session()) more robust:
+     check whether we deal with a copy of a session and do not delete from
+     the cache in this case. Problem reported by "Izhar Shoshani Levi"
+     <izhar@checkpoint.com>.
+     [Lutz Jaenicke]
+
+  *) Do not store session data into the internal session cache, if it
+     is never intended to be looked up (SSL_SESS_CACHE_NO_INTERNAL_LOOKUP
+     flag is set). Proposed by Aslam <aslam@funk.com>.
+     [Lutz Jaenicke]
+
+  *) Have ASN1_BIT_STRING_set_bit() really clear a bit when the requested
+     value is 0.
+     [Richard Levitte]
+
   *) Fix a crashbug and a logic bug in hwcrhk_load_pubkey()
      [Toomas Kiisk <vix@cyber.ee> via Richard Levitte]
 

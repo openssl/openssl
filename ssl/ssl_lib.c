@@ -1472,9 +1472,10 @@ void ssl_update_cache(SSL *s,int mode)
 	 * and it would be rather hard to do anyway :-) */
 	if (s->session->session_id_length == 0) return;
 
-	if ((s->ctx->session_cache_mode & mode)
-		&& (!s->hit)
-		&& SSL_CTX_add_session(s->ctx,s->session)
+	i=s->ctx->session_cache_mode;
+	if ((i & mode) && (!s->hit)
+		&& ((i & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP)
+		    || SSL_CTX_add_session(s->ctx,s->session))
 		&& (s->ctx->new_session_cb != NULL))
 		{
 		CRYPTO_add(&s->session->references,1,CRYPTO_LOCK_SSL_SESSION);
@@ -1483,7 +1484,6 @@ void ssl_update_cache(SSL *s,int mode)
 		}
 
 	/* auto flush every 255 connections */
-	i=s->ctx->session_cache_mode;
 	if ((!(i & SSL_SESS_CACHE_NO_AUTO_CLEAR)) &&
 		((i & mode) == mode))
 		{
