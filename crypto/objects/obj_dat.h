@@ -460,16 +460,16 @@ static unsigned char lvalues[3837]={
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x11,0x01,/* [3030] OBJ_ms_csp_name */
 0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x01,/* [3039] OBJ_aes_128_ecb */
 0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x02,/* [3048] OBJ_aes_128_cbc */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x03,/* [3057] OBJ_aes_128_ofb */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x04,/* [3066] OBJ_aes_128_cfb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x03,/* [3057] OBJ_aes_128_ofb128 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x04,/* [3066] OBJ_aes_128_cfb128 */
 0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x15,/* [3075] OBJ_aes_192_ecb */
 0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x16,/* [3084] OBJ_aes_192_cbc */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x17,/* [3093] OBJ_aes_192_ofb */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x18,/* [3102] OBJ_aes_192_cfb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x17,/* [3093] OBJ_aes_192_ofb128 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x18,/* [3102] OBJ_aes_192_cfb128 */
 0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x29,/* [3111] OBJ_aes_256_ecb */
 0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2A,/* [3120] OBJ_aes_256_cbc */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2B,/* [3129] OBJ_aes_256_ofb */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2C,/* [3138] OBJ_aes_256_cfb */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2B,/* [3129] OBJ_aes_256_ofb128 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2C,/* [3138] OBJ_aes_256_cfb128 */
 0x55,0x1D,0x17,                              /* [3147] OBJ_hold_instruction_code */
 0x2A,0x86,0x48,0xCE,0x38,0x02,0x01,          /* [3150] OBJ_hold_instruction_none */
 0x2A,0x86,0x48,0xCE,0x38,0x02,0x02,          /* [3157] OBJ_hold_instruction_call_issuer */
@@ -1193,16 +1193,16 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"CSPName","Microsoft CSP Name",NID_ms_csp_name,9,&(lvalues[3030]),0},
 {"AES-128-ECB","aes-128-ecb",NID_aes_128_ecb,9,&(lvalues[3039]),0},
 {"AES-128-CBC","aes-128-cbc",NID_aes_128_cbc,9,&(lvalues[3048]),0},
-{"AES-128-OFB","aes-128-ofb",NID_aes_128_ofb,9,&(lvalues[3057]),0},
-{"AES-128-CFB","aes-128-cfb",NID_aes_128_cfb,9,&(lvalues[3066]),0},
+{"AES-128-OFB","aes-128-ofb",NID_aes_128_ofb128,9,&(lvalues[3057]),0},
+{"AES-128-CFB","aes-128-cfb",NID_aes_128_cfb128,9,&(lvalues[3066]),0},
 {"AES-192-ECB","aes-192-ecb",NID_aes_192_ecb,9,&(lvalues[3075]),0},
 {"AES-192-CBC","aes-192-cbc",NID_aes_192_cbc,9,&(lvalues[3084]),0},
-{"AES-192-OFB","aes-192-ofb",NID_aes_192_ofb,9,&(lvalues[3093]),0},
-{"AES-192-CFB","aes-192-cfb",NID_aes_192_cfb,9,&(lvalues[3102]),0},
+{"AES-192-OFB","aes-192-ofb",NID_aes_192_ofb128,9,&(lvalues[3093]),0},
+{"AES-192-CFB","aes-192-cfb",NID_aes_192_cfb128,9,&(lvalues[3102]),0},
 {"AES-256-ECB","aes-256-ecb",NID_aes_256_ecb,9,&(lvalues[3111]),0},
 {"AES-256-CBC","aes-256-cbc",NID_aes_256_cbc,9,&(lvalues[3120]),0},
-{"AES-256-OFB","aes-256-ofb",NID_aes_256_ofb,9,&(lvalues[3129]),0},
-{"AES-256-CFB","aes-256-cfb",NID_aes_256_cfb,9,&(lvalues[3138]),0},
+{"AES-256-OFB","aes-256-ofb",NID_aes_256_ofb128,9,&(lvalues[3129]),0},
+{"AES-256-CFB","aes-256-cfb",NID_aes_256_cfb128,9,&(lvalues[3138]),0},
 {"holdInstructionCode","Hold Instruction Code",
 	NID_hold_instruction_code,3,&(lvalues[3147]),0},
 {"holdInstructionNone","Hold Instruction None",
@@ -2628,16 +2628,16 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[375]),/* OBJ_id_pkix_OCSP_trustRoot       1 3 6 1 5 5 7 48 1 11 */
 &(nid_objs[418]),/* OBJ_aes_128_ecb                  2 16 840 1 101 3 4 1 1 */
 &(nid_objs[419]),/* OBJ_aes_128_cbc                  2 16 840 1 101 3 4 1 2 */
-&(nid_objs[420]),/* OBJ_aes_128_ofb                  2 16 840 1 101 3 4 1 3 */
-&(nid_objs[421]),/* OBJ_aes_128_cfb                  2 16 840 1 101 3 4 1 4 */
+&(nid_objs[420]),/* OBJ_aes_128_ofb128               2 16 840 1 101 3 4 1 3 */
+&(nid_objs[421]),/* OBJ_aes_128_cfb128               2 16 840 1 101 3 4 1 4 */
 &(nid_objs[422]),/* OBJ_aes_192_ecb                  2 16 840 1 101 3 4 1 21 */
 &(nid_objs[423]),/* OBJ_aes_192_cbc                  2 16 840 1 101 3 4 1 22 */
-&(nid_objs[424]),/* OBJ_aes_192_ofb                  2 16 840 1 101 3 4 1 23 */
-&(nid_objs[425]),/* OBJ_aes_192_cfb                  2 16 840 1 101 3 4 1 24 */
+&(nid_objs[424]),/* OBJ_aes_192_ofb128               2 16 840 1 101 3 4 1 23 */
+&(nid_objs[425]),/* OBJ_aes_192_cfb128               2 16 840 1 101 3 4 1 24 */
 &(nid_objs[426]),/* OBJ_aes_256_ecb                  2 16 840 1 101 3 4 1 41 */
 &(nid_objs[427]),/* OBJ_aes_256_cbc                  2 16 840 1 101 3 4 1 42 */
-&(nid_objs[428]),/* OBJ_aes_256_ofb                  2 16 840 1 101 3 4 1 43 */
-&(nid_objs[429]),/* OBJ_aes_256_cfb                  2 16 840 1 101 3 4 1 44 */
+&(nid_objs[428]),/* OBJ_aes_256_ofb128               2 16 840 1 101 3 4 1 43 */
+&(nid_objs[429]),/* OBJ_aes_256_cfb128               2 16 840 1 101 3 4 1 44 */
 &(nid_objs[71]),/* OBJ_netscape_cert_type           2 16 840 1 113730 1 1 */
 &(nid_objs[72]),/* OBJ_netscape_base_url            2 16 840 1 113730 1 2 */
 &(nid_objs[73]),/* OBJ_netscape_revocation_url      2 16 840 1 113730 1 3 */
