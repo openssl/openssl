@@ -118,6 +118,7 @@ asm/ia64-cpp.o:	asm/ia64.S
 	rm -f /tmp/ia64.$$$$.s
 
 asm/x86_64-gcc.o: asm/x86_64-gcc.c
+	$(CC) $(ASFLAGS) -c -o $@ $<
 
 asm/pa-risc2W.o: asm/pa-risc2W.s
 	/usr/ccs/bin/as -o asm/pa-risc2W.o asm/pa-risc2W.s

@@ -4175,6 +4175,56 @@ $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
 
+*** solaris64-x86_64-cc
+$cc           = cc
+$cflags       = -fast -xarch=amd64 -xstrconst -Xa -DL_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -lsocket -lnsl -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL
+$bn_obj       = 
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= solaris-shared
+$shared_cflag = -KPIC
+$shared_ldflag = -xarch=amd64
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+
+*** solaris64-x86_64-gcc
+$cc           = gcc
+$cflags       = -m64 -O3 -Wall -DL_ENDIAN -DMD32_REG_T=int
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -lsocket -lnsl -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL
+$bn_obj       = asm/x86_64-gcc.o
+$des_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = asm/rc4-amd64.o
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= solaris-shared
+$shared_cflag = -fPIC
+$shared_ldflag = -m64 -shared -static-libgcc
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+
 *** sunos-gcc
 $cc           = gcc
 $cflags       = -O3 -mv8 -Dssize_t=int

@@ -66,7 +66,7 @@ asm/rx86bsdi.o: asm/rx86unix.cpp
 asm/rx86unix.cpp: asm/rc4-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) rc4-586.pl cpp >rx86unix.cpp)
 
-asm/rc4-amd64.s: asm/rc4-amd64.pl;	$(PERL) $< $@
+asm/rc4-amd64.s: asm/rc4-amd64.pl;	$(PERL) asm/rc4-amd64.pl $@
 
 asm/rc4-ia64.s: asm/rc4-ia64.S
 	$(CC) $(CFLAGS) -E asm/rc4-ia64.S > $@

@@ -442,7 +442,7 @@ if [ "$SYSTEM" = "SunOS" ]; then
   	egrep -e '^cc: .* C [0-9]\.[0-9]' | \
 	sed 's/.* C \([0-9]\)\.\([0-9]\).*/\1\2/'`
   CCVER=${CCVER:-0}
-  if [ $CCVER -gt 40 ]; then
+  if [ $MACHINE != i86pc -a $CCVER -gt 40 ]; then
     CC=cc	# overrides gcc!!!
     if [ $CCVER -eq 50 ]; then
       echo "WARNING! Detected WorkShop C 5.0. Do make sure you have"
@@ -654,7 +654,14 @@ EOF
   sun4m-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
   sun4d-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
   sun4*-*-solaris2)	OUT="solaris-sparcv7-$CC" ;;
-  *86*-*-solaris2) OUT="solaris-x86-$CC" ;;
+  *86*-*-solaris2)
+	ISA64=`(isalist) 2>/dev/null | grep amd64`
+	if [ "$ISA64" != "" ]; then
+	    OUT="solaris64-x86_64-$CC"
+	else
+	    OUT="solaris-x86-$CC"
+	fi
+	;;
   *-*-sunos4) OUT="sunos-$CC" ;;
   alpha*-*-freebsd*) OUT="FreeBSD-alpha" ;;
   sparc64-*-freebsd*) OUT="FreeBSD-sparc64" ;;
