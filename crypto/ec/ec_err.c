@@ -67,13 +67,22 @@
 static ERR_STRING_DATA EC_str_functs[]=
 	{
 {ERR_PACK(0,EC_F_COMPUTE_WNAF,0),	"COMPUTE_WNAF"},
+{ERR_PACK(0,EC_F_D2I_ECDSAPARAMETERS,0),	"d2i_ECDSAParameters"},
+{ERR_PACK(0,EC_F_D2I_ECPARAMETERS,0),	"d2i_ECParameters"},
+{ERR_PACK(0,EC_F_D2I_ECPKPARAMETERS,0),	"d2i_ECPKParameters"},
+{ERR_PACK(0,EC_F_EC_ASN1_GROUP2CURVE,0),	"EC_ASN1_GROUP2CURVE"},
+{ERR_PACK(0,EC_F_EC_ASN1_GROUP2FIELDID,0),	"EC_ASN1_GROUP2FIELDID"},
+{ERR_PACK(0,EC_F_EC_ASN1_GROUP2PARAMETERS,0),	"EC_ASN1_GROUP2PARAMETERS"},
+{ERR_PACK(0,EC_F_EC_ASN1_GROUP2PKPARAMETERS,0),	"EC_ASN1_GROUP2PKPARAMETERS"},
+{ERR_PACK(0,EC_F_EC_ASN1_PARAMETERS2GROUP,0),	"EC_ASN1_PARAMETERS2GROUP"},
+{ERR_PACK(0,EC_F_EC_ASN1_PKPARAMETERS2GROUP,0),	"EC_ASN1_PKPARAMETERS2GROUP"},
 {ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_DECODE,0),	"ec_GFp_mont_field_decode"},
 {ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_ENCODE,0),	"ec_GFp_mont_field_encode"},
 {ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_MUL,0),	"ec_GFp_mont_field_mul"},
 {ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_SQR,0),	"ec_GFp_mont_field_sqr"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_CHECK_DISCRIMINANT,0),	"ec_GFp_simple_group_check_discriminant"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP,0),	"ec_GFp_simple_group_set_curve_GFp"},
-{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR,0),	"ec_GFp_simple_group_set_generator"},
+{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR,0),	"EC_GFP_SIMPLE_GROUP_SET_GENERATOR"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_MAKE_AFFINE,0),	"ec_GFp_simple_make_affine"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_OCT2POINT,0),	"ec_GFp_simple_oct2point"},
 {ERR_PACK(0,EC_F_EC_GFP_SIMPLE_POINT2OCT,0),	"ec_GFp_simple_point2oct"},
@@ -117,13 +126,26 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_PACK(0,EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP,0),	"EC_POINT_set_Jprojective_coordinates_GFp"},
 {ERR_PACK(0,EC_F_EC_POINT_SET_TO_INFINITY,0),	"EC_POINT_set_to_infinity"},
 {ERR_PACK(0,EC_F_GFP_MONT_GROUP_SET_CURVE_GFP,0),	"GFP_MONT_GROUP_SET_CURVE_GFP"},
+{ERR_PACK(0,EC_F_I2D_ECDSAPARAMETERS,0),	"i2d_ECDSAParameters"},
+{ERR_PACK(0,EC_F_I2D_ECPARAMETERS,0),	"i2d_ECParameters"},
+{ERR_PACK(0,EC_F_I2D_ECPKPARAMETERS,0),	"i2d_ECPKParameters"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA EC_str_reasons[]=
 	{
+{EC_R_ASN1_ERROR                         ,"asn1 error"},
+{EC_R_ASN1_UNKNOWN_FIELD                 ,"asn1 unknown field"},
 {EC_R_BUFFER_TOO_SMALL                   ,"buffer too small"},
+{EC_R_D2I_ECPARAMETERS_FAILURE           ,"d2i ecparameters failure"},
+{EC_R_D2I_ECPKPARAMETERS_FAILURE         ,"d2i ecpkparameters failure"},
+{EC_R_D2I_EC_PARAMETERS_FAILURE          ,"d2i ec parameters failure"},
 {EC_R_DISCRIMINANT_IS_ZERO               ,"discriminant is zero"},
+{EC_R_EC_GROUP_NEW_BY_NAME_FAILURE       ,"ec group new by name failure"},
+{EC_R_GROUP2PARAMETERS_FAILURE           ,"group2parameters failure"},
+{EC_R_GROUP2PKPARAMETERS_FAILURE         ,"group2pkparameters failure"},
+{EC_R_I2D_ECPKPARAMETERS_FAILURE         ,"i2d ecpkparameters failure"},
+{EC_R_I2D_EC_PARAMETERS_FAILURE          ,"i2d ec parameters failure"},
 {EC_R_INCOMPATIBLE_OBJECTS               ,"incompatible objects"},
 {EC_R_INVALID_ARGUMENT                   ,"invalid argument"},
 {EC_R_INVALID_COMPRESSED_POINT           ,"invalid compressed point"},
@@ -132,8 +154,12 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {EC_R_INVALID_FIELD                      ,"invalid field"},
 {EC_R_INVALID_FORM                       ,"invalid form"},
 {EC_R_INVALID_GROUP_ORDER                ,"invalid group order"},
+{EC_R_MISSING_PARAMETERS                 ,"missing parameters"},
+{EC_R_NOT_IMPLEMENTED                    ,"not implemented"},
 {EC_R_NOT_INITIALIZED                    ,"not initialized"},
 {EC_R_NO_SUCH_EXTRA_DATA                 ,"no such extra data"},
+{EC_R_PARAMETERS2GROUP_FAILURE           ,"parameters2group failure"},
+{EC_R_PKPARAMETERS2GROUP_FAILURE         ,"pkparameters2group failure"},
 {EC_R_POINT_AT_INFINITY                  ,"point at infinity"},
 {EC_R_POINT_IS_NOT_ON_CURVE              ,"point is not on curve"},
 {EC_R_SLOT_FULL                          ,"slot full"},
@@ -142,6 +168,7 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {EC_R_UNKNOWN_GROUP                      ,"unknown group"},
 {EC_R_UNKNOWN_NID                        ,"unknown nid"},
 {EC_R_UNKNOWN_ORDER                      ,"unknown order"},
+{EC_R_UNKNOWN_PARAMETERS_TYPE            ,"unknown parameters type"},
 {0,NULL}
 	};
 

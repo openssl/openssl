@@ -32,7 +32,7 @@ LIBOBJ=	ecs_lib.o ecs_gen.o ecs_asn1.o ecs_ossl.o ecs_sign.o ecs_vrf.o \
 SRC= $(LIBSRC)
 
 EXHEADER= ecdsa.h
-HEADER=	ecs_locl.h $(EXHEADER)
+HEADER=	$(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -87,12 +87,10 @@ ecs_asn1.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 ecs_asn1.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 ecs_asn1.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 ecs_asn1.o: ../../include/openssl/ec.h ../../include/openssl/err.h
-ecs_asn1.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-ecs_asn1.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+ecs_asn1.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 ecs_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ecs_asn1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ecs_asn1.o: ../../include/openssl/symhacks.h ../cryptlib.h ecdsa.h ecs_asn1.c
-ecs_asn1.o: ecs_locl.h
 ecs_err.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 ecs_err.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ecs_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -125,7 +123,7 @@ ecs_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ecs_lib.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 ecs_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ecs_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-ecs_lib.o: ../cryptlib.h ecdsa.h ecs_lib.c ecs_locl.h
+ecs_lib.o: ../cryptlib.h ecdsa.h ecs_lib.c
 ecs_ossl.o: ../../e_os.h ../../include/openssl/asn1.h
 ecs_ossl.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 ecs_ossl.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h

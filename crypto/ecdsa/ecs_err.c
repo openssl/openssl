@@ -1,6 +1,6 @@
 /* crypto/ecdsa/ecs_err.c */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -76,19 +76,19 @@ static ERR_STRING_DATA ECDSA_str_functs[]=
 {ERR_PACK(0,ECDSA_F_ECDSA_GET,0),	"ECDSA_GET"},
 {ERR_PACK(0,ECDSA_F_ECDSA_GET_CURVE_NID,0),	"ECDSA_GET_CURVE_NID"},
 {ERR_PACK(0,ECDSA_F_ECDSA_GET_ECDSA,0),	"ECDSA_GET_ECDSA"},
-{ERR_PACK(0,ECDSA_F_ECDSA_GET_EC_PARAMETERS,0),	"ECDSA_get_EC_PARAMETERS"},
-{ERR_PACK(0,ECDSA_F_ECDSA_GET_X9_62_CURVE,0),	"ECDSA_get_X9_62_CURVE"},
-{ERR_PACK(0,ECDSA_F_ECDSA_GET_X9_62_EC_PARAMETERS,0),	"ECDSA_get_X9_62_EC_PARAMETERS"},
-{ERR_PACK(0,ECDSA_F_ECDSA_GET_X9_62_FIELDID,0),	"ECDSA_get_X9_62_FIELDID"},
-{ERR_PACK(0,ECDSA_F_ECDSA_NEW,0),	"ECDSA_NEW"},
+{ERR_PACK(0,ECDSA_F_ECDSA_GET_EC_PARAMETERS,0),	"ECDSA_GET_EC_PARAMETERS"},
+{ERR_PACK(0,ECDSA_F_ECDSA_GET_X9_62_CURVE,0),	"ECDSA_GET_X9_62_CURVE"},
+{ERR_PACK(0,ECDSA_F_ECDSA_GET_X9_62_EC_PARAMETERS,0),	"ECDSA_GET_X9_62_EC_PARAMETERS"},
+{ERR_PACK(0,ECDSA_F_ECDSA_GET_X9_62_FIELDID,0),	"ECDSA_GET_X9_62_FIELDID"},
+{ERR_PACK(0,ECDSA_F_ECDSA_NEW,0),	"ECDSA_new"},
 {ERR_PACK(0,ECDSA_F_ECDSA_PRINT,0),	"ECDSA_print"},
 {ERR_PACK(0,ECDSA_F_ECDSA_PRINT_FP,0),	"ECDSA_print_fp"},
-{ERR_PACK(0,ECDSA_F_ECDSA_SET_GROUP_P,0),	"ECDSA_set_group_p"},
+{ERR_PACK(0,ECDSA_F_ECDSA_SET_GROUP_P,0),	"ECDSA_SET_GROUP_P"},
 {ERR_PACK(0,ECDSA_F_ECDSA_SET_PRIME_GROUP,0),	"ECDSA_SET_PRIME_GROUP"},
 {ERR_PACK(0,ECDSA_F_ECDSA_SIGN_SETUP,0),	"ECDSA_sign_setup"},
 {ERR_PACK(0,ECDSA_F_I2D_ECDSAPARAMETERS,0),	"i2d_ECDSAParameters"},
 {ERR_PACK(0,ECDSA_F_I2D_ECDSAPRIVATEKEY,0),	"i2d_ECDSAPrivateKey"},
-{ERR_PACK(0,ECDSA_F_I2D_ECDSAPUBLICKEY,0),	"i2d_ECDSAPublicKey"},
+{ERR_PACK(0,ECDSA_F_I2D_ECDSAPUBLICKEY,0),	"I2D_ECDSAPUBLICKEY"},
 {ERR_PACK(0,ECDSA_F_SIG_CB,0),	"SIG_CB"},
 {0,NULL}
 	};
@@ -118,6 +118,7 @@ static ERR_STRING_DATA ECDSA_str_reasons[]=
 {ECDSA_R_I2D_ECDSA_PRIVATEKEY            ,"i2d ecdsa privatekey"},
 {ECDSA_R_I2D_ECDSA_PUBLICKEY             ,"i2d ecdsa publickey"},
 {ECDSA_R_MISSING_PARAMETERS              ,"missing parameters"},
+{ECDSA_R_MISSING_PRIVATE_KEY             ,"missing private key"},
 {ECDSA_R_NOT_SUPPORTED                   ,"not supported"},
 {ECDSA_R_NO_CURVE_PARAMETER_A_SPECIFIED  ,"no curve parameter a specified"},
 {ECDSA_R_NO_CURVE_PARAMETER_B_SPECIFIED  ,"no curve parameter b specified"},

@@ -63,6 +63,7 @@
 const EC_METHOD *EC_GFp_simple_method(void)
 	{
 	static const EC_METHOD ret = {
+		NID_X9_62_prime_field,
 		ec_GFp_simple_group_init,
 		ec_GFp_simple_group_finish,
 		ec_GFp_simple_group_clear_finish,

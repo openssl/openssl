@@ -56,6 +56,7 @@
 
 #include <stdlib.h>
 
+#include <openssl/obj_mac.h>
 #include <openssl/ec.h>
 
 
@@ -63,6 +64,9 @@
  * so all this may change in future versions. */
 
 struct ec_method_st {
+	/* used by EC_METHOD_get_field_type: */
+        int field_type; /* a NID */
+
 	/* used by EC_GROUP_new, EC_GROUP_free, EC_GROUP_clear_free, EC_GROUP_copy: */
 	int (*group_init)(EC_GROUP *);
 	void (*group_finish)(EC_GROUP *);
@@ -140,12 +144,16 @@ struct ec_group_st {
 	EC_POINT *generator; /* optional */
 	BIGNUM order, cofactor;
 
-	int nid; /* optional NID for named curve */
+	int nid;       /* optional NID for named curve */
+	int asn1_flag; /* flag to control the asn1 encoding */
 
 	void *extra_data;
 	void *(*extra_data_dup_func)(void *);
 	void (*extra_data_free_func)(void *);
 	void (*extra_data_clear_free_func)(void *);
+
+	unsigned char *seed; /* XXX */
+	size_t seed_len;     /* XXX */
 
 	/* The following members are handled by the method functions,
 	 * even if they appear generic */

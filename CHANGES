@@ -4,6 +4,19 @@
 
  Changes between 0.9.7 and 0.9.8  [xx XXX 2002]
 
+  *) Add 'nid' and 'asn1_flag' members to EC_GROUP, and functions
+          EC_GROUP_get_nid()
+          EC_GROUP_get_set_asn1_flag()
+          EC_GROUP_get_get_asn1_flag()
+     'nid' is an optional NID for named curves.  'asn1_flag'
+     determines the encoding to be used for ASN1 purposes.
+     [Nils Larsch <nla@trustcenter.de>]
+
+  *) Add 'field_type' member to EC_METHOD, which holds the NID
+     of the appropriate field type OID.  The new function
+     EC_METHOD_get_field_type() returns this value.
+     [Nils Larsch <nla@trustcenter.de>]
+
   *) Add functions 
           EC_POINT_point2bn()
           EC_POINT_bn2point()

@@ -145,7 +145,8 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 			goto err;
 			}
 
-		if ((ECDSA_get_parameter_flags(ecdsa) & ECDSA_FLAG_NAMED_CURVE) && (nid = EC_GROUP_get_nid(ecdsa->group)))
+		if ((EC_GROUP_get_asn1_flag(ecdsa->group) & OPENSSL_EC_NAMED_CURVE) 
+                     && (nid = EC_GROUP_get_nid(ecdsa->group)))
 			{
 			/* just set the OID */
 			a->parameter->type = V_ASN1_OBJECT;
@@ -302,13 +303,17 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 			/* type == V_ASN1_OBJECT => the parameters are given
 			 * by an asn1 OID
 			 */
+			ECDSA *ecdsa;
 			if (ret->pkey.ecdsa == NULL)
 				ret->pkey.ecdsa = ECDSA_new();
-			if (ret->pkey.ecdsa->group)
-				EC_GROUP_free(ret->pkey.ecdsa->group);
-			ret->pkey.ecdsa->parameter_flags |= ECDSA_FLAG_NAMED_CURVE;
-			if ((ret->pkey.ecdsa->group = EC_GROUP_new_by_name(OBJ_obj2nid(a->parameter->value.object))) == NULL)
+			ecdsa = ret->pkey.ecdsa;
+			if (ecdsa->group)
+				EC_GROUP_free(ecdsa->group);
+			if ((ecdsa->group = EC_GROUP_new_by_name(
+                             OBJ_obj2nid(a->parameter->value.object))) == NULL)
 				goto err;
+			EC_GROUP_set_asn1_flag(ecdsa->group, OPENSSL_EC_NAMED_CURVE |
+                               (EC_GROUP_get_asn1_flag(ecdsa->group) & ~0x03));
 			}
 			/* the case implicitlyCA is currently not implemented */
 		ret->save_parameters = 1;

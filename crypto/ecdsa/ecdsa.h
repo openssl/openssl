@@ -93,9 +93,6 @@ typedef struct ecdsa_method
 	char *app_data;
 } ECDSA_METHOD;
 
-#define ECDSA_FLAG_NAMED_CURVE	1
-#define ECDSA_FLAG_IMPLICITLYCA	2
-
 struct ecdsa_st
 {
 	int version;
@@ -108,11 +105,6 @@ struct ecdsa_st
 
 	BIGNUM	 *kinv; /* signing pre-calc */
 	BIGNUM	 *r;	/* signing pre-calc */
-
-	unsigned char *seed;	/* seed for curve generation */
-	unsigned int  seed_len; 
-
-	int	parameter_flags;
 
 	int 	references;
 	int	flags;
@@ -160,9 +152,6 @@ int	ECDSA_print(BIO *bp, const ECDSA *x, int off);
 int	ECDSAParameters_print_fp(FILE *fp, const ECDSA *x);
 int	ECDSA_print_fp(FILE *fp, const ECDSA *x, int off);
 #endif 
-
-void 	ECDSA_set_parameter_flags(ECDSA *, int);
-int	ECDSA_get_parameter_flags(const ECDSA*);
 
 /* The ECDSA_{set|get}_conversion_type() functions set/get the
  * conversion form for ec-points (see ec.h) in a ECDSA-structure */
@@ -259,6 +248,7 @@ void ERR_load_ECDSA_strings(void);
 #define ECDSA_R_I2D_ECDSA_PRIVATEKEY			 115
 #define ECDSA_R_I2D_ECDSA_PUBLICKEY			 116
 #define ECDSA_R_MISSING_PARAMETERS			 117
+#define ECDSA_R_MISSING_PRIVATE_KEY			 139
 #define ECDSA_R_NOT_SUPPORTED				 118
 #define ECDSA_R_NO_CURVE_PARAMETER_A_SPECIFIED		 119
 #define ECDSA_R_NO_CURVE_PARAMETER_B_SPECIFIED		 120

@@ -110,7 +110,7 @@
  */
 
 #include "cryptlib.h"
-#include "ecs_locl.h"
+#include "ecdsa.h"
 #include <openssl/engine.h>
 
 const char *ECDSA_version="ECDSA" OPENSSL_VERSION_PTEXT;
@@ -186,11 +186,6 @@ ECDSA *ECDSA_new_method(ENGINE *engine)
 	ret->kinv = NULL;
 	ret->r = NULL;
 
-	ret->seed = NULL;
-	ret->seed_len = 0;
-
-	ret->parameter_flags = 0;
-
 	ret->references = 1;
 	ret->flags = ret->meth->flags;
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ECDSA, ret, &ret->ex_data);
@@ -235,7 +230,6 @@ void ECDSA_free(ECDSA *r)
 	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
 	if (r->kinv != NULL) BN_clear_free(r->kinv);
 	if (r->r    != NULL) BN_clear_free(r->r);
-	if (r->seed != NULL) OPENSSL_free(r->seed);
 	OPENSSL_free(r);
 }
 
@@ -301,16 +295,6 @@ int ECDSA_up_ref(ECDSA *ecdsa)
         return ((i > 1) ? 1 : 0);
 }
         
-void ECDSA_set_parameter_flags(ECDSA *ecdsa, int flag)
-{
-	ecdsa->parameter_flags = flag;
-}
-
-int ECDSA_get_parameter_flags(const ECDSA *ecdsa)
-{
-	return ecdsa->parameter_flags;
-}
-
 void	ECDSA_set_conversion_form(ECDSA *ecdsa, const point_conversion_form_t form)
 {
 	if (ecdsa) ecdsa->conversion_form = form;
