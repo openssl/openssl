@@ -442,7 +442,7 @@ EOF
 	#read waste < /dev/tty
 	OUT="linux-sparcv9" ;;
   sparc-*-linux2)
-	KARCH=`awk '/type/{print$3}' /proc/cpuinfo`
+	KARCH=`awk '/^type/{print$3}' /proc/cpuinfo`
 	case ${KARCH:-sun4} in
 	sun4u*)	OUT="linux-sparcv9" ;;
 	sun4m)	OUT="linux-sparcv8" ;;
