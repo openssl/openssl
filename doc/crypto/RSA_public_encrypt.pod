@@ -72,7 +72,8 @@ SSL, PKCS #1 v2.0
 
 =head1 SEE ALSO
 
-L<err(3)|err(3)>, L<rand(3)|rand(3)>, L<rsa(3)|rsa(3)>, L<RSA_size(3)|RSA_size(3)>
+L<ERR_get_error(3)|ERR_get_error(3)>, L<rand(3)|rand(3)>, L<rsa(3)|rsa(3)>,
+L<RSA_size(3)|RSA_size(3)>
 
 =head1 HISTORY
 

@@ -31,7 +31,7 @@ DSA_free() returns no value.
 
 =head1 SEE ALSO
 
-L<dsa(3)|dsa(3)>, L<err(3)|err(3)>,
+L<dsa(3)|dsa(3)>, L<ERR_get_error(3)|ERR_get_error(3)>,
 L<DSA_generate_parameters(3)|DSA_generate_parameters(3)>,
 L<DSA_generate_key(3)|DSA_generate_key(3)>
 

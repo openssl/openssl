@@ -36,7 +36,7 @@ L<ERR_get_error(3)|ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-L<dsa(3)|dsa(3)>, L<err(3)|err(3)>, L<rand(3)|rand(3)>,
+L<dsa(3)|dsa(3)>, L<ERR_get_error(3)|ERR_get_error(3)>, L<rand(3)|rand(3)>,
 L<DSA_SIG_new(3)|DSA_SIG_new(3)>,
 L<DSA_sign(3)|DSA_sign(3)>
 
