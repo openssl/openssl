@@ -84,9 +84,6 @@ foreach (@ARGV) {
 		mkdir "${CATOP}/crl", $DIRMODE ;
 		mkdir "${CATOP}/newcerts", $DIRMODE;
 		mkdir "${CATOP}/private", $DIRMODE;
-		open OUT, ">${CATOP}/serial";
-		print OUT "01\n";
-		close OUT;
 		open OUT, ">${CATOP}/index.txt";
 		close OUT;
 	    }
@@ -105,7 +102,8 @@ foreach (@ARGV) {
 		    print "Making CA certificate ...\n";
 		    system ("$REQ -new -keyout " .
 			"${CATOP}/private/$CAKEY -out ${CATOP}/$CAREQ");
-		    system ("$CA -out ${CATOP}/$CACERT $CADAYS -batch " . 
+		    system ("$CA -create_serial " .
+			"-out ${CATOP}/$CACERT $CADAYS -batch " . 
 			"-keyfile ${CATOP}/private/$CAKEY -selfsign " .
 			"-infiles ${CATOP}/$CAREQ ");
 		    $RET=$?;

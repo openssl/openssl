@@ -1434,12 +1434,9 @@ BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
 			}
 		else
 			{
-			ASN1_INTEGER_set(ai,1);
 			ret=BN_new();
-			if (ret == NULL)
+			if (ret == NULL || !rand_serial(ret, ai))
 				BIO_printf(bio_err, "Out of memory\n");
-			else
-				BN_one(ret);
 			}
 		}
 	else
@@ -1599,6 +1596,33 @@ int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 	return 1;
  err:
 	return 0;
+	}
+
+int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
+	{
+	BIGNUM *btmp;
+	int ret = 0;
+	if (b)
+		btmp = b;
+	else
+		btmp = BN_new();
+
+	if (!btmp)
+		return 0;
+
+	if (!BN_pseudo_rand(btmp, SERIAL_RAND_BITS, 0, 0))
+		goto error;
+	if (ai && !BN_to_ASN1_INTEGER(btmp, ai))
+		goto error;
+
+	ret = 1;
+	
+	error:
+
+	if (!b)
+		BN_free(btmp);
+	
+	return ret;
 	}
 
 CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)

@@ -4,6 +4,15 @@
 
  Changes between 0.9.7c and 0.9.8  [xx XXX xxxx]
 
+  *) Reduce the chances of duplicate issuer name and serial numbers (in
+     violation of RFC3280) using the OpenSSL certificate creation utilities. 
+     This is done by creating a random 64 bit value for the initial serial
+     number when a serial number file is created or when a self signed
+     certificate is created using 'openssl req -x509'. The initial serial
+     number file is now moved from CA.pl to the 'ca' utility with a new
+     option -create_serial.
+     [Steve Henson]
+
   *) Reduced header interdepencies by declaring more opaque objects in
      ossl_typ.h. As a consequence, including some headers (eg. engine.h) will
      give fewer recursive includes, which could break lazy source code - so
