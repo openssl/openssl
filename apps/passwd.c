@@ -54,6 +54,8 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
  * -reverse      - switch table columns
  */
 
+int MAIN(int, char **);
+
 int MAIN(int argc, char **argv)
 	{
 	int ret = 1;
