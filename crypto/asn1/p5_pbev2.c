@@ -1,6 +1,6 @@
 /* p5_pbev2.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+ * project 1999-2004.
  */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
@@ -123,6 +123,7 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 	if(EVP_CIPHER_param_to_asn1(&ctx, scheme->parameter) < 0) {
 		ASN1err(ASN1_F_PKCS5_PBE2_SET,
 					ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
+		EVP_CIPHER_CTX_cleanup(&ctx);
 		goto err;
 	}
 	EVP_CIPHER_CTX_cleanup(&ctx);
