@@ -205,7 +205,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	BN_init(&wnum);
 	wnum.d=	 &(snum->d[loop]);
 	wnum.top= div_n;
-	wnum.max= snum->max+1; /* a bit of a lie */
+	wnum.dmax= snum->dmax+1; /* a bit of a lie */
 
 	/* Get the top 2 words of sdiv */
 	/* i=sdiv->top; */

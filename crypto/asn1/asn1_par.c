@@ -292,7 +292,7 @@ static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
 							if (BIO_write(bp,"\n",1) <= 0)
 								goto end;
 							}
-						if (BIO_dump_indent(bp,opp,
+						if (BIO_dump_indent(bp,(char *)opp,
 							((dump == -1 || dump > os->length)?os->length:dump),
 							dump_indent) <= 0)
 							goto end;
@@ -373,7 +373,7 @@ static int asn1_parse2(BIO *bp, unsigned char **pp, long length, int offset,
 					if (BIO_write(bp,"\n",1) <= 0)
 						goto end;
 					}
-				if (BIO_dump_indent(bp,p,
+				if (BIO_dump_indent(bp,(char *)p,
 					((dump == -1 || dump > len)?len:dump),
 					dump_indent) <= 0)
 					goto end;

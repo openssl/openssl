@@ -262,7 +262,7 @@ void BN_clear_free(BIGNUM *a)
 	if (a == NULL) return;
 	if (a->d != NULL)
 		{
-		memset(a->d,0,a->max*sizeof(a->d[0]));
+		memset(a->d,0,a->dmax*sizeof(a->d[0]));
 		if (!(BN_get_flags(a,BN_FLG_STATIC_DATA)))
 			OPENSSL_free(a->d);
 		}
@@ -299,7 +299,7 @@ BIGNUM *BN_new(void)
 	ret->flags=BN_FLG_MALLOCED;
 	ret->top=0;
 	ret->neg=0;
-	ret->max=0;
+	ret->dmax=0;
 	ret->d=NULL;
 	return(ret);
 	}
@@ -317,7 +317,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 
 	bn_check_top(b);
 
-	if (words > b->max)
+	if (words > b->dmax)
 		{
 		bn_check_top(b);	
 		if (BN_get_flags(b,BN_FLG_STATIC_DATA))
@@ -427,17 +427,17 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 			}
 
 		b->d=a;
-		b->max=words;
+		b->dmax=words;
 
 		/* Now need to zero any data between b->top and b->max */
 
 		A= &(b->d[b->top]);
-		for (i=(b->max - b->top)>>3; i>0; i--,A+=8)
+		for (i=(b->dmax - b->top)>>3; i>0; i--,A+=8)
 			{
 			A[0]=0; A[1]=0; A[2]=0; A[3]=0;
 			A[4]=0; A[5]=0; A[6]=0; A[7]=0;
 			}
-		for (i=(b->max - b->top)&7; i>0; i--,A++)
+		for (i=(b->dmax - b->top)&7; i>0; i--,A++)
 			A[0]=0;
 #else
 			memset(A,0,sizeof(BN_ULONG)*(words+1));
@@ -508,7 +508,7 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 void BN_clear(BIGNUM *a)
 	{
 	if (a->d != NULL)
-		memset(a->d,0,a->max*sizeof(a->d[0]));
+		memset(a->d,0,a->dmax*sizeof(a->d[0]));
 	a->top=0;
 	a->neg=0;
 	}
