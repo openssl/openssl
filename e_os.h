@@ -456,6 +456,13 @@ extern char *sys_errlist[]; extern int sys_nerr;
 #define IRIX_CC_BUG	/* CDS++ up to V2.0Bsomething suffered from the same bug.*/
 #endif
 
+#if defined(OPENSSL_SYS_OS2) && defined(__EMX__)
+# include <io.h>
+# include <fcntl.h>
+# define NO_SYSLOG
+# define strcasecmp stricmp
+#endif
+
 #ifdef  __cplusplus
 }
 #endif
