@@ -896,6 +896,21 @@ start:
 					SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_SSL_HANDSHAKE_FAILURE);
 					return(-1);
 					}
+
+				if (s->s3->rbuf.left == 0) /* no read-ahead left? */
+					{
+					BIO *bio;
+					/* In the case where we try to read application data
+					 * the first time, but we trigger an SSL handshake, we
+					 * return -1 with the retry option set.  I do this
+					 * otherwise renegotiation can cause nasty problems 
+					 * in the blocking world */ /* ? */
+					s->rwstate=SSL_READING;
+					bio=SSL_get_rbio(s);
+					BIO_clear_retry_flags(bio);
+					BIO_set_retry_read(bio);
+					return(-1);
+					}
 				}
 			}
 		/* we either finished a handshake or ignored the request,
@@ -1006,30 +1021,21 @@ start:
 			return(-1);
 			}
 
-#if 1 /* probably nonsense (does not work with readahead),
-	   * but keep it for now anyway ... s_server relies on this */
-		{
-		BIO *bio;
-		/* In the case where we try to read application data
-		 * the first time, but we trigger an SSL handshake, we
-		 * return -1 with the retry option set.  I do this
-		 * otherwise renegotiation can cause nasty problems 
-		 * in the non-blocking world */ /* That's "non-non-blocking",
-		                                 * I guess? When receiving a
-		                                 * Hello Request, we have the
-		                                 * same problem (e.g. in s_client),
-		                                 * but it's really an application bug.
-		                                 */
-
-		s->rwstate=SSL_READING;
-		bio=SSL_get_rbio(s);
-		BIO_clear_retry_flags(bio);
-		BIO_set_retry_read(bio);
-		return(-1);
-		}
-#else
+		if (s->s3->rbuf.left == 0) /* no read-ahead left? */
+			{
+			BIO *bio;
+			/* In the case where we try to read application data
+			 * the first time, but we trigger an SSL handshake, we
+			 * return -1 with the retry option set.  I do this
+			 * otherwise renegotiation can cause nasty problems 
+			 * in the blocking world */ /* ? */
+			s->rwstate=SSL_READING;
+			bio=SSL_get_rbio(s);
+			BIO_clear_retry_flags(bio);
+			BIO_set_retry_read(bio);
+			return(-1);
+			}
 		goto start;
-#endif		
 		}
 
 	switch (rr->type)
