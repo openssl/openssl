@@ -391,20 +391,18 @@ void ERR_put_error(int lib, int func, int reason, const char *file,
 
 void ERR_clear_error(void)
 	{
+	int i;
 	ERR_STATE *es;
 
 	es=ERR_get_state();
 
-#if 0
-	/* hmm... is this needed */
 	for (i=0; i<ERR_NUM_ERRORS; i++)
 		{
 		es->err_buffer[i]=0;
+		err_clear_data(es,i);
 		es->err_file[i]=NULL;
 		es->err_line[i]= -1;
-		err_clear_data(es,i);
 		}
-#endif
 	es->top=es->bottom=0;
 	}
 
@@ -764,8 +762,9 @@ void ERR_set_error_data(char *data, int flags)
 	if (i == 0)
 		i=ERR_NUM_ERRORS-1;
 
+	err_clear_data(es,i);
 	es->err_data[i]=data;
-	es->err_data_flags[es->top]=flags;
+	es->err_data_flags[i]=flags;
 	}
 
 void ERR_add_error_data(int num, ...)
@@ -774,7 +773,7 @@ void ERR_add_error_data(int num, ...)
 	int i,n,s;
 	char *str,*p,*a;
 
-	s=64;
+	s=80;
 	str=OPENSSL_malloc(s+1);
 	if (str == NULL) return;
 	str[0]='\0';

@@ -3,7 +3,8 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
-  *) Fix a memory leak in err.c: free err_data string if necessary.
+  *) Fix memory leaks in err.c: free err_data string if necessary;
+     don't write to the wrong index in ERR_set_error_data.
      [Bodo Moeller]
 
   *) Function EC_POINTs_mul for simultaneous scalar multiplication
