@@ -10,6 +10,10 @@
                                    [23-Dec-1998] down below; but in later
                                    versions, these hyphens are gone.]
 
+  *) Bignum library bug fix. IRIX 6 passes "make test" now!
+     This also avoids the problems with SC4.2 and unpatched SC5.  
+     [Andy Polyakov <appro@fy.chalmers.se>]
+
   *) New functions sk_num, sk_value and sk_set to replace the previous macros.
      These are required because of the typesafe stack would otherwise break 
      existing code. If old code used a structure member which used to be STACK

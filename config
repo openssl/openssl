@@ -286,9 +286,9 @@ else
   if [ "$SYSTEM" = "SunOS" ]
   then
    case `cc -V 2>&1` in
-    *4*) CC=sc4;;
-    *5*) CC=sc5;;
-    *) CC=cc;;
+    *4*) CC=cc;;
+    *5*) CC=cc;;
+    *) CC=sc3;;
    esac
   fi
 fi

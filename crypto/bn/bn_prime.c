@@ -319,7 +319,7 @@ static int probable_prime_dh(BIGNUM *rnd, int bits, BIGNUM *add, BIGNUM *rem,
 	loop: for (i=1; i<NUMPRIMES; i++)
 		{
 		/* check that rnd is a prime */
-		if (BN_mod_word(rnd,(BN_LONG)primes[i]) <= 1)
+		if (BN_mod_word(rnd,(BN_ULONG)primes[i]) <= 1)
 			{
 			if (!BN_add(rnd,rnd,add)) goto err;
 			goto loop;
@@ -366,8 +366,8 @@ static int probable_prime_dh_strong(BIGNUM *p, int bits, BIGNUM *padd,
 		/* check that p and q are prime */
 		/* check that for p and q
 		 * gcd(p-1,primes) == 1 (except for 2) */
-		if (	(BN_mod_word(p,(BN_LONG)primes[i]) == 0) ||
-			(BN_mod_word(q,(BN_LONG)primes[i]) == 0))
+		if (	(BN_mod_word(p,(BN_ULONG)primes[i]) == 0) ||
+			(BN_mod_word(q,(BN_ULONG)primes[i]) == 0))
 			{
 			if (!BN_add(p,p,padd)) goto err;
 			if (!BN_add(q,q,qadd)) goto err;

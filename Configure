@@ -112,15 +112,12 @@ my %table=(
 "debug-solaris-usparc-gcc","gcc:-O3 -g -mcpu=ultrasparc -Wall -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_UNROLL BF_PTR:asm/sparcv8plus-gcc.o::",
 
 # DO NOT use /xO[34] on sparc with SC3.0.  It is broken, and will not pass the tests
-"solaris-sparc-cc","cc:-fast -O -Xa -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_UNROLL BF_PTR:::",
+"solaris-sparc-sc3","cc:-fast -O -Xa -DB_ENDIAN:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_UNROLL BF_PTR:::",
 # SC4 is ok, better than gcc even on bn as long as you tell it -xarch=v8
 # -fast slows things like DES down quite a lot
-# Don't use -xtarget=ultra with SC4.2. It is broken, and will break exptest.
-"solaris-sparc-sc4","cc:-xarch=v8 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
-"solaris-usparc-sc4","cc:-xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o::",
-# SC5.0 note: Compiler common patch 107357-01 or later is required!
-"solaris-usparc-sc5","cc:-xtarget=ultra -xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o:",
-"solaris64-usparc-sc5","cc:-xtarget=ultra -xarch=v9 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC:-D_REENTRANT:-lsocket -lnsl:SIXTY_FOUR_BIT_LONG RC4_CHAR DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o:",
+"solaris-sparc-cc","cc:-xarch=v8 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o::",
+"solaris-usparc-cc","cc:-xtarget=ultra -xarch=v8plus -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC -DBN_DIV2W:-D_REENTRANT:-lsocket -lnsl:BN_LLONG RC4_CHAR DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o:",
+"solaris64-usparc-cc","cc:-xtarget=ultra -xarch=v9 -xstrconst -xO5 -xdepend -Xa -DB_ENDIAN -DULTRASPARC:-D_REENTRANT:-lsocket -lnsl:SIXTY_FOUR_BIT_LONG RC4_CHAR DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o:",
 
 # Sunos configs, assuming sparc for the gcc one.
 ##"sunos-cc", "cc:-O4 -DNOPROTO -DNOCONST:(unknown)::DES_UNROLL:::",
@@ -133,12 +130,12 @@ my %table=(
 # 3 times faster, use if at all possible.
 #"irix-gcc","gcc:-O2 -mips2::SIXTY_FOUR_BIT BN_LLONG RC4_INDEX RC4_CHAR:::",
 "irix-gcc","gcc:-O2 -DTERMIOS -DB_ENDIAN:(unknown)::BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR:::",
-"irix64-gcc","gcc:-mips3 -O2 -DTERMIOS -DB_ENDIAN:(unknown)::MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT:::",
 "irix-cc", "cc:-O2 -use_readonly_const -DTERMIOS -DB_ENDIAN:(unknown)::BN_LLONG DES_PTR DES_RISC2 DES_UNROLL BF_PTR:::",
-"irix64-cc", "cc:-O2 -use_readonly_const -DTERMIOS -DB_ENDIAN:(unknown)::DES_PTR DES_RISC2 DES_UNROLL BF_PTR SIXTY_FOUR_BIT:::",
+"irix-mips3-gcc","gcc:-mips3 -O2 -DTERMIOS -DB_ENDIAN:(unknown)::MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT:::",
+"irix-mips3-cc", "cc:-n32 -mips3 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN:(unknown)::DES_PTR DES_RISC2 DES_UNROLL BF_PTR SIXTY_FOUR_BIT:::",
 "debug-irix-cc", "cc:-w2 -g -DCRYPTO_MDEBUG -DTERMIOS -DB_ENDIAN:(unknown):::::",
-# This is the n64 mode build.
-"irix-n64-cc", "cc:-64 -O2 -use_readonly_const -DTERMIOS:(unknown)::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT:::",
+# This is the n64 mode build. (Untested!)
+"irix64-mips4-cc", "cc:-64 -mips4 -O2 -use_readonly_const -DTERMIOS:(unknown)::DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT:::",
 
 # HPUX 9.X config.
 # Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or gcc.

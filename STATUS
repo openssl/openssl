@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 1999/05/18 08:52:01 $
+  ______________                           $Date: 1999/05/20 01:42:57 $
 
   DEVELOPMENT STATE
 
@@ -14,18 +14,9 @@
     o  OpenSSL 0.9.2b: Released on March    22th, 1999
     o  OpenSSL 0.9.1c: Released on December 23th, 1998
 
-     [ Proposed new numbering scheme: <major>.<minor>[<patchlevel>]
-       0.9.1c is   0913
-       1.0    is 010000
-       1.0  a is 010001
-       1.8  z is 01081a ]
-
   RELEASE SHOWSTOPPERS
 
     o BSD/OS: assembler functions must not have leading underscores
-    o exptest and rsa_oaep_test fail with irix64-*
-      (Don Badrak <dbadrak@geo.census.gov>: "Re: Problems to compile openssl
-	  on IRIX 6.2", openssl-users)
 
   AVAILABLE PATCHES
 

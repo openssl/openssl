@@ -119,11 +119,11 @@ extern "C" {
 /* This is where the long long data type is 64 bits, but long is 32.
  * For machines where there are 64bit registers, this is the mode to use.
  * IRIX, on R4000 and above should use this mode, along with the relevent
- * assember code :-).  Do NOT define BN_ULLONG.
+ * assember code :-).  Do NOT define BN_LLONG.
  */
 #ifdef SIXTY_FOUR_BIT
-#define BN_LLONG
-/* #define BN_ULLONG	unsigned long long */
+#undef BN_LLONG
+#undef BN_ULLONG
 #define BN_ULONG	unsigned long long
 #define BN_LONG		long long
 #define BN_BITS		128
