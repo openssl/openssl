@@ -7,9 +7,9 @@
  * 1 to 14, and f for release.  The patch level is exactly that.
  * For example:
  * 0.9.3-dev	  0x00903000
- * 0.9.3beta1	  0x00903001
- * 0.9.3beta2-dev 0x00903002
- * 0.9.3beta2     0x00903002 (same as ...beta2-dev)
+ * 0.9.3-beta1	  0x00903001
+ * 0.9.3-beta2-dev 0x00903002
+ * 0.9.3-beta2    0x00903002 (same as ...beta2-dev)
  * 0.9.3	  0x0090300f
  * 0.9.3a	  0x0090301f
  * 0.9.4 	  0x0090400f
@@ -26,7 +26,7 @@
  *  major minor fix final patch/beta)
  */
 #define OPENSSL_VERSION_NUMBER	0x00905811L
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.5a beta1 (dev) 18 Mar 2000"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.5a-beta1 20 Mar 2000"
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
 #endif /* HEADER_OPENSSLV_H */
