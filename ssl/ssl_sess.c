@@ -188,7 +188,6 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 	/* This is used only by servers. */
 
 	SSL_SESSION *ret=NULL,data;
-	int copy=1;
 
 	/* conn_init();*/
 	data.ssl_version=s->version;
@@ -206,6 +205,8 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 
 	if (ret == NULL)
 		{
+		int copy=1;
+	
 		s->ctx->stats.sess_miss++;
 		ret=NULL;
 		if (s->ctx->get_session_cb != NULL
@@ -217,6 +218,9 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 			/* The following should not return 1, otherwise,
 			 * things are very strange */
 			SSL_CTX_add_session(s->ctx,ret);
+			/* auto free it (decrement reference count now) */
+			if (!copy)
+				SSL_SESSION_free(ret);
 			}
 		if (ret == NULL) return(0);
 		}
@@ -232,10 +236,6 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 			SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED);
 	    return 0;
 	    }
-
-	/* auto free it */
-	if (!copy)
-	    SSL_SESSION_free(ret);
 
 	if (ret->cipher == NULL)
 		{
