@@ -81,7 +81,6 @@ BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
 		}
 	else
 		rnd=ret;
-	bn_verify(rnd);
 	if(!BN_generate_prime_ex(rnd, bits, safe, add, rem, &cb))
 		goto err;
 
@@ -89,7 +88,6 @@ BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
 	found = 1;
 err:
 	if (!found && (ret == NULL) && (rnd != NULL)) BN_free(rnd);
-	if(found) bn_verify(rnd);
 	return(found ? rnd : NULL);
 	}
 
