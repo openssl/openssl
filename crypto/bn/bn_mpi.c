@@ -88,7 +88,7 @@ int BN_bn2mpi(const BIGNUM *a, unsigned char *d)
 	return(num+4+ext);
 	}
 
-BIGNUM *BN_mpi2bn(unsigned char *d, int n, BIGNUM *a)
+BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *a)
 	{
 	long len;
 	int neg=0;

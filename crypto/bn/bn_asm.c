@@ -68,7 +68,7 @@
 
 #if defined(BN_LLONG) || defined(BN_UMULT_HIGH)
 
-BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
+BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 	{
 	BN_ULONG c1=0;
 
@@ -93,7 +93,7 @@ BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
 	return(c1);
 	} 
 
-BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
+BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 	{
 	BN_ULONG c1=0;
 
@@ -117,7 +117,7 @@ BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
 	return(c1);
 	} 
 
-void bn_sqr_words(BN_ULONG *r, BN_ULONG *a, int n)
+void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
         {
 	assert(n >= 0);
 	if (n <= 0) return;
@@ -139,7 +139,7 @@ void bn_sqr_words(BN_ULONG *r, BN_ULONG *a, int n)
 
 #else /* !(defined(BN_LLONG) || defined(BN_UMULT_HIGH)) */
 
-BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
+BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 	{
 	BN_ULONG c=0;
 	BN_ULONG bl,bh;
@@ -166,7 +166,7 @@ BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
 	return(c);
 	} 
 
-BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
+BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 	{
 	BN_ULONG carry=0;
 	BN_ULONG bl,bh;
@@ -193,7 +193,7 @@ BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
 	return(carry);
 	} 
 
-void bn_sqr_words(BN_ULONG *r, BN_ULONG *a, int n)
+void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
         {
 	assert(n >= 0);
 	if (n <= 0) return;
@@ -332,7 +332,7 @@ BN_ULONG bn_add_words(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
 	return((BN_ULONG)ll);
 	}
 #else /* !BN_LLONG */
-BN_ULONG bn_add_words(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
+BN_ULONG bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
         {
 	BN_ULONG c,l,t;
 
@@ -382,7 +382,7 @@ BN_ULONG bn_add_words(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
 	}
 #endif /* !BN_LLONG */
 
-BN_ULONG bn_sub_words(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
+BN_ULONG bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
         {
 	BN_ULONG t1,t2;
 	int c=0;
@@ -673,7 +673,7 @@ void bn_mul_comba4(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 	r[7]=c2;
 	}
 
-void bn_sqr_comba8(BN_ULONG *r, BN_ULONG *a)
+void bn_sqr_comba8(BN_ULONG *r, const BN_ULONG *a)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t,tt;
@@ -754,7 +754,7 @@ void bn_sqr_comba8(BN_ULONG *r, BN_ULONG *a)
 	r[15]=c1;
 	}
 
-void bn_sqr_comba4(BN_ULONG *r, BN_ULONG *a)
+void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t,tt;

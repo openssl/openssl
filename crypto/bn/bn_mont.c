@@ -96,7 +96,7 @@ err:
 	return(ret);
 	}
 
-int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
+int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
 	     BN_CTX *ctx)
 	{
 	int retn=0;
@@ -141,7 +141,7 @@ int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
 	n0=mont->n0;
 
 #ifdef BN_COUNT
-	printf("word BN_from_montgomery %d * %d\n",nl,nl);
+	fprintf(stderr,"word BN_from_montgomery %d * %d\n",nl,nl);
 #endif
 	for (i=0; i<nl; i++)
 		{

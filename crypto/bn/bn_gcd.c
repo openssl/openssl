@@ -62,7 +62,7 @@
 
 static BIGNUM *euclid(BIGNUM *a, BIGNUM *b);
 
-int BN_gcd(BIGNUM *r, BIGNUM *in_a, BIGNUM *in_b, BN_CTX *ctx)
+int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 	{
 	BIGNUM *a,*b,*t;
 	int ret=0;

@@ -792,7 +792,7 @@ int BN_mask_bits(BIGNUM *a, int n)
 	return(1);
 	}
 
-int bn_cmp_words(BN_ULONG *a, BN_ULONG *b, int n)
+int bn_cmp_words(const BN_ULONG *a, const BN_ULONG *b, int n)
 	{
 	int i;
 	BN_ULONG aa,bb;

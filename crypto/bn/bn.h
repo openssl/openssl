@@ -336,7 +336,7 @@ void	BN_clear_free(BIGNUM *a);
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
 BIGNUM *BN_bin2bn(const unsigned char *s,int len,BIGNUM *ret);
 int	BN_bn2bin(const BIGNUM *a, unsigned char *to);
-BIGNUM *BN_mpi2bn(unsigned char *s,int len,BIGNUM *ret);
+BIGNUM *BN_mpi2bn(const unsigned char *s,int len,BIGNUM *ret);
 int	BN_bn2mpi(const BIGNUM *a, unsigned char *to);
 int	BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
@@ -394,7 +394,7 @@ char *	BN_bn2hex(const BIGNUM *a);
 char *	BN_bn2dec(const BIGNUM *a);
 int 	BN_hex2bn(BIGNUM **a, const char *str);
 int 	BN_dec2bn(BIGNUM **a, const char *str);
-int	BN_gcd(BIGNUM *r,BIGNUM *in_a,BIGNUM *in_b,BN_CTX *ctx);
+int	BN_gcd(BIGNUM *r,const BIGNUM *in_a,const BIGNUM *in_b,BN_CTX *ctx);
 BIGNUM *BN_mod_inverse(BIGNUM *ret,
 	const BIGNUM *a, const BIGNUM *n,BN_CTX *ctx);
 BIGNUM *BN_generate_prime(BIGNUM *ret,int bits,int safe,
@@ -412,7 +412,8 @@ BN_MONT_CTX *BN_MONT_CTX_new(void );
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx);
 int BN_mod_mul_montgomery(BIGNUM *r,const BIGNUM *a,const BIGNUM *b,
 	BN_MONT_CTX *mont, BN_CTX *ctx);
-int BN_from_montgomery(BIGNUM *r,BIGNUM *a,BN_MONT_CTX *mont,BN_CTX *ctx);
+int BN_from_montgomery(BIGNUM *r,const BIGNUM *a,
+	BN_MONT_CTX *mont, BN_CTX *ctx);
 void BN_MONT_CTX_free(BN_MONT_CTX *mont);
 int BN_MONT_CTX_set(BN_MONT_CTX *mont,const BIGNUM *modulus,BN_CTX *ctx);
 BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to,BN_MONT_CTX *from);
@@ -455,15 +456,17 @@ BIGNUM *bn_dup_expand(const BIGNUM *a, int words);
 		} \
 	}
 
-BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w);
-BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w);
-void     bn_sqr_words(BN_ULONG *rp, BN_ULONG *ap, int num);
+BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
+BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
+void     bn_sqr_words(BN_ULONG *rp, const BN_ULONG *ap, int num);
 BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d);
-BN_ULONG bn_add_words(BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int num);
-BN_ULONG bn_sub_words(BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int num);
+BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int num);
+BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int num);
+BN_ULONG bn_add_part_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int num, int delta);
+BN_ULONG bn_sub_part_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int num, int delta);
 
 #ifdef BN_DEBUG
-  void bn_dump1(FILE *o, const char *a, BN_ULONG *b,int n);
+  void bn_dump1(FILE *o, const char *a, const BN_ULONG *b,int n);
 # define bn_print(a) {fprintf(stderr, #a "="); BN_print_fp(stderr,a); \
    fprintf(stderr,"\n");}
 # define bn_dump(a,n) bn_dump1(stderr,#a,a,n);
