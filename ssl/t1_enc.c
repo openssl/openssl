@@ -110,10 +110,10 @@
  */
 
 #include <stdio.h>
+#include "ssl_locl.h"
 #include <openssl/comp.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
-#include "ssl_locl.h"
 #include <openssl/md5.h>
 
 static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,

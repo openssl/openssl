@@ -114,6 +114,7 @@
 #include <string.h>
 #include <stdlib.h>
 #define OPENSSL_C /* tells apps.h to use complete apps_startup() */
+#include "apps.h"
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
@@ -123,7 +124,6 @@
 #include <openssl/ssl.h>
 #include <openssl/engine.h>
 #define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
-#include "apps.h"
 #include "progs.h"
 #include "s_apps.h"
 #include <openssl/err.h>

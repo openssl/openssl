@@ -57,9 +57,9 @@
  */
 
 #include <stdio.h>
+#include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/x509.h>
-#include "cryptlib.h"
 
 /* Password based encryption (PBE) functions */
 

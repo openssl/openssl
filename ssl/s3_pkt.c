@@ -112,9 +112,9 @@
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
+#include "ssl_locl.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
-#include "ssl_locl.h"
 
 static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 			 unsigned int len, int create_empty_fragment);

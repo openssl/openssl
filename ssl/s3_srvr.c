@@ -114,14 +114,14 @@
 
 
 #include <stdio.h>
+#include "ssl_locl.h"
+#include "kssl_lcl.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/krb5_asn.h>
-#include "ssl_locl.h"
-#include "kssl_lcl.h"
 #include <openssl/md5.h>
 
 static SSL_METHOD *ssl3_get_server_method(int ver);

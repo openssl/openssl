@@ -116,11 +116,11 @@
 #  include <assert.h>
 #endif
 #include <stdio.h>
+#include "ssl_locl.h"
+#include "kssl_lcl.h"
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
 #include <openssl/x509v3.h>
-#include "ssl_locl.h"
-#include "kssl_lcl.h"
 
 const char *SSL_version_str=OPENSSL_VERSION_TEXT;
 

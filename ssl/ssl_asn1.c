@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "ssl_locl.h"
 #include <openssl/asn1_mac.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#include "ssl_locl.h"
 
 typedef struct ssl_session_asn1_st
 	{

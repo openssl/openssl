@@ -58,11 +58,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "apps.h"
 #include <openssl/pem.h>
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#include "apps.h"
 
 /* Maximum leeway in validity period: default 5 minutes */
 #define MAX_VALIDITY_PERIOD	(5 * 60)

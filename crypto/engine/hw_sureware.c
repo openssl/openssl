@@ -51,9 +51,9 @@
 ====================================================================*/
 
 #include <stdio.h>
+#include "cryptlib.h"
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
-#include "cryptlib.h"
 #include <openssl/dso.h>
 #include "eng_int.h"
 #include "engine.h"

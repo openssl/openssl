@@ -110,8 +110,8 @@
  */
 
 #include <stdio.h>
-#include <openssl/evp.h>
 #include "ssl_locl.h"
+#include <openssl/evp.h>
 #include <openssl/md5.h>
 
 static unsigned char ssl3_pad_1[48]={
