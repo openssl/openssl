@@ -646,26 +646,26 @@ built OpenSSL with /MD your application must use /MD and cannot use /MDd.
 * How do I read or write a DER encoded buffer using the ASN1 functions?
 
 You have two options. You can either use a memory BIO in conjunction
-with the i2d_XXX_bio() or d2i_XXX_bio() functions or you can use the
-i2d_XXX(), d2i_XXX() functions directly. Since these are often the
+with the i2d_*_bio() or d2i_*_bio() functions or you can use the
+i2d_*(), d2i_*() functions directly. Since these are often the
 cause of grief here are some code fragments using PKCS7 as an example:
 
-unsigned char *buf, *p;
-int len;
+ unsigned char *buf, *p;
+ int len;
 
-len = i2d_PKCS7(p7, NULL);
-buf = OPENSSL_malloc(len); /* or Malloc, error checking omitted */
-p = buf;
-i2d_PKCS7(p7, &p);
+ len = i2d_PKCS7(p7, NULL);
+ buf = OPENSSL_malloc(len); /* or Malloc, error checking omitted */
+ p = buf;
+ i2d_PKCS7(p7, &p);
 
 At this point buf contains the len bytes of the DER encoding of
 p7.
 
 The opposite assumes we already have len bytes in buf:
 
-unsigned char *p;
-p = buf;
-p7 = d2i_PKCS7(NULL, &p, len);
+ unsigned char *p;
+ p = buf;
+ p7 = d2i_PKCS7(NULL, &p, len);
 
 At this point p7 contains a valid PKCS7 structure of NULL if an error
 occurred. If an error occurred ERR_print_errors(bio) should give more
