@@ -236,6 +236,7 @@ DH *DSA_dup_DH(DSA *r);
 
 /* Reason codes. */
 #define DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE		 100
+#define DSA_R_MISSING_PARAMETERS			 101
 
 #ifdef  __cplusplus
 }

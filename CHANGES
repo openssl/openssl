@@ -4,6 +4,11 @@
 
  Changes between 0.9.6a and 0.9.6b  [XX xxx XXXX]
 
+  *) Fix various bugs related to DSA S/MIME verification. Handle missing
+     parameters in DSA public key structures and return an error in the
+     DSA routines if parameters are absent.
+     [Steve Henson]
+
   *) In versions up to 0.9.6, RAND_file_name() resorted to file ".rnd"
      in the current directory if neither $RANDFILE nor $HOME was set.
      RAND_file_name() in 0.9.6a returned NULL in this case.  This has

@@ -234,7 +234,7 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 	a=key->algor;
 	if (ret->type == EVP_PKEY_DSA)
 		{
-		if (a->parameter->type == V_ASN1_SEQUENCE)
+		if (a->parameter && (a->parameter->type == V_ASN1_SEQUENCE))
 			{
 			ret->pkey.dsa->write_params=0;
 			p=a->parameter->value.sequence->data;
