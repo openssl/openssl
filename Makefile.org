@@ -732,7 +732,7 @@ install_docs:
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "config" ]; then sec=5; else sec=1; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
-		(cd `dirname $$i`; \
+		(cd `$(PERL) util/dirname.pl $$i`; \
 		sh -c "`cd ../../util; ./pod2mantest ignore` \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
@@ -742,7 +742,7 @@ install_docs:
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "des_modes" ]; then sec=7; else sec=3; fi; \
 		echo "installing man$$sec/`basename $$i .pod`.$$sec"; \
-		(cd `dirname $$i`; \
+		(cd `$(PERL) util/dirname.pl $$i`; \
 		sh -c "`cd ../../util; ./pod2mantest ignore` \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`") \
