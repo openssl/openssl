@@ -68,7 +68,7 @@
 
 #ifndef WIN32
 #ifdef __ultrix
-#include <sys/sylog.h>
+#include <sys/syslog.h>
 #else
 #include <syslog.h>
 #endif
