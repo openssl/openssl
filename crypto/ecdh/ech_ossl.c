@@ -173,7 +173,7 @@ static int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, E
 		}
 	
 	memset(buf, 0, buflen - len);
-	if (len != BN_bn2bin(x, buf + buflen - len))
+	if (len != (size_t)BN_bn2bin(x, buf + buflen - len))
 		{
 		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_BN_LIB);
 		goto err;
