@@ -448,7 +448,9 @@ STACK_OF(POLICYQUALINFO) *
 const X509_POLICY_NODE *
 	X509_policy_node_get0_parent(const X509_POLICY_NODE *node);
 
+#if 0
 void X509_policy_lib_init(void);
+#endif
 
 #ifdef  __cplusplus
 }
