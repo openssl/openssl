@@ -15,7 +15,6 @@
 #include <assert.h>
 
 #include "ec.h"
-#include "bn_modfs.h"
 
 
 
@@ -97,9 +96,9 @@ int EC_from_montgomery(EC *E, BN_MONTGOMERY *mont, BN_CTX *ctx)
 
 	if (!E->is_in_mont) return 1;
 
-	if (!BN_mont_red(E->A, mont, ctx)) return 0;
-	if (!BN_mont_red(E->B, mont, ctx)) return 0;
-	if (!BN_mont_red(E->h, mont, ctx)) return 0;
+	if (!BN_mont_red(E->A, mont)) return 0;
+	if (!BN_mont_red(E->B, mont)) return 0;
+	if (!BN_mont_red(E->h, mont)) return 0;
 
 	E->is_in_mont = 0;
 	return 1;
