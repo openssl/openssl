@@ -12,6 +12,10 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  +) Add -multi and -mr options to "openssl speed" - giving multiple parallel
+     runs for the former and machine-readable output for the latter.
+     [Ben Laurie]
+
   +) Add '-noemailDN' option to 'openssl ca'.  This prevents inclusion
      of the e-mail address in the DN (i.e., it will go into a certificate
      extension only).  The new configuration file option 'email_in_dn = no'
