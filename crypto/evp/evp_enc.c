@@ -149,6 +149,11 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 
 		ctx->cipher=cipher;
 		ctx->cipher_data=OPENSSL_malloc(ctx->cipher->ctx_size);
+		if (!ctx->cipher_data)
+			{
+			EVPerr(EVP_F_EVP_CIPHERINIT, ERR_R_MALLOC_FAILURE);
+			return 0;
+			}
 		ctx->key_len = cipher->key_len;
 		ctx->flags = 0;
 		if(ctx->cipher->flags & EVP_CIPH_CTRL_INIT)
