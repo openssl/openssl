@@ -3,11 +3,13 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Use better test patterns in bntest.
+     [Ulf Möller]
+
   *) Added Kerberos Cipher Suites to be used with TLS, as written in RFC
      2712.
      [Veers Staats <staatsvr@asc.hpc.mil>,
-      Jeffrey Altman <jaltman@columbia.edu>
-      via Richard Levitte]
+      Jeffrey Altman <jaltman@columbia.edu>, via Richard Levitte]
 
   *) rand_win.c fix for Borland C.
      [Ulf Möller]
@@ -86,7 +88,7 @@
      [Bodo Moeller]
 
   *) Move BN_mod_... functions into new file crypto/bn/bn_mod.c
-     (except for exponentation, which stays in crypto/bn/bn_exp.c,
+     (except for exponentiation, which stays in crypto/bn/bn_exp.c,
      and BN_mod_mul_reciprocal, which stays in crypto/bn/bn_recp.c)
      and add new functions:
 
@@ -114,8 +116,8 @@
   *) Remove a few calls to bn_wexpand() in BN_sqr() (the one in there
      was actually never needed) and in BN_mul().  The removal in BN_mul()
      required a small change in bn_mul_part_recursive() and the addition
-     of the static functions bn_cmp_part_words(), bn_sub_part_words()
-     and bn_add_part_words() which do the same thing as bn_cmp_words(),
+     of the functions bn_cmp_part_words(), bn_sub_part_words() and
+     bn_add_part_words(), which do the same thing as bn_cmp_words(),
      bn_sub_words() and bn_add_words() except they take arrays with
      differing sizes.
      [Richard Levitte]
