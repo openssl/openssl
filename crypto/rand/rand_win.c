@@ -113,7 +113,7 @@
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#if defined(WINDOWS) || defined(WIN32)
+#if defined(WINDOWS) || defined(WIN32) || defined(__CYGWIN32__)
 #include <windows.h>
 #ifndef _WIN32_WINNT
 # define _WIN32_WINNT 0x0400
@@ -643,6 +643,7 @@ static void readtimer(void)
 
 static void readscreen(void)
 {
+#ifndef __CYGWIN32__
   HDC		hScrDC;		/* screen DC */
   HDC		hMemDC;		/* memory DC */
   HBITMAP	hBitmap;	/* handle for our bitmap */
@@ -703,6 +704,7 @@ static void readscreen(void)
   DeleteObject(hBitmap);
   DeleteDC(hMemDC);
   DeleteDC(hScrDC);
+#endif
 }
 
 #else /* Unix version */
