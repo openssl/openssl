@@ -28,8 +28,10 @@
      support mutable.
      [Ben Laurie]
 
-  *) "linux-sparc64-gcc" configuration (ultrapenguin).
+  *) "linux-sparc64" configuration (ultrapenguin).
      [Ray Miller <ray.miller@oucs.ox.ac.uk>]
+     "linux-sparc" configuration.
+     [Christian Forster <fo@hawo.stw.uni-erlangen.de>]
 
   *) config now generates no-xxx options for missing ciphers.
      [Ulf Möller]
