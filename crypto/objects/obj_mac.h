@@ -2009,35 +2009,60 @@
 #define NID_aes_256_cfb128		429
 #define OBJ_aes_256_cfb128		OBJ_aes,44L
 
+#define SN_shmoo		"SHMOO"
+#define LN_shmoo		"shmoo"
+#define NID_shmoo		657
+#define OBJ_shmoo		1L,3L,6L,1L,4L,1L,14231L
+
+#define SN_ben		"BEN"
+#define LN_ben		"ben"
+#define NID_ben		658
+#define OBJ_ben		OBJ_shmoo,1L
+
+#define SN_openssl		"OpenSSL"
+#define LN_openssl		"openssl"
+#define NID_openssl		659
+#define OBJ_openssl		OBJ_ben,1L
+
 #define SN_aes_128_cfb1		"AES-128-CFB1"
 #define LN_aes_128_cfb1		"aes-128-cfb1"
 #define NID_aes_128_cfb1		650
-#define OBJ_aes_128_cfb1		1L,1L,1L,1L,666L,3L
+#define OBJ_aes_128_cfb1		OBJ_openssl,1L
 
 #define SN_aes_192_cfb1		"AES-192-CFB1"
 #define LN_aes_192_cfb1		"aes-192-cfb1"
 #define NID_aes_192_cfb1		651
-#define OBJ_aes_192_cfb1		1L,1L,1L,1L,666L,4L
+#define OBJ_aes_192_cfb1		OBJ_openssl,2L
 
 #define SN_aes_256_cfb1		"AES-256-CFB1"
 #define LN_aes_256_cfb1		"aes-256-cfb1"
 #define NID_aes_256_cfb1		652
-#define OBJ_aes_256_cfb1		1L,1L,1L,1L,666L,5L
+#define OBJ_aes_256_cfb1		OBJ_openssl,3L
 
 #define SN_aes_128_cfb8		"AES-128-CFB8"
 #define LN_aes_128_cfb8		"aes-128-cfb8"
 #define NID_aes_128_cfb8		653
-#define OBJ_aes_128_cfb8		1L,1L,1L,1L,666L,6L
+#define OBJ_aes_128_cfb8		OBJ_openssl,4L
 
 #define SN_aes_192_cfb8		"AES-192-CFB8"
 #define LN_aes_192_cfb8		"aes-192-cfb8"
 #define NID_aes_192_cfb8		654
-#define OBJ_aes_192_cfb8		1L,1L,1L,1L,666L,7L
+#define OBJ_aes_192_cfb8		OBJ_openssl,5L
 
 #define SN_aes_256_cfb8		"AES-256-CFB8"
 #define LN_aes_256_cfb8		"aes-256-cfb8"
 #define NID_aes_256_cfb8		655
-#define OBJ_aes_256_cfb8		1L,1L,1L,1L,666L,8L
+#define OBJ_aes_256_cfb8		OBJ_openssl,6L
+
+#define SN_des_cfb1		"DES-CFB1"
+#define LN_des_cfb1		"des-cfb1"
+#define NID_des_cfb1		656
+#define OBJ_des_cfb1		OBJ_openssl,7L
+
+#define SN_des_cfb8		"DES-CFB8"
+#define LN_des_cfb8		"des-cfb8"
+#define NID_des_cfb8		660
+#define OBJ_des_cfb8		OBJ_openssl,8L
 
 #define SN_hold_instruction_code		"holdInstructionCode"
 #define LN_hold_instruction_code		"Hold Instruction Code"

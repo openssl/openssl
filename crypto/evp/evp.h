@@ -640,10 +640,16 @@ const EVP_CIPHER *EVP_des_ede_ecb(void);
 const EVP_CIPHER *EVP_des_ede3_ecb(void);
 const EVP_CIPHER *EVP_des_cfb64(void);
 # define EVP_des_cfb EVP_des_cfb64
+const EVP_CIPHER *EVP_des_cfb1(void);
+const EVP_CIPHER *EVP_des_cfb8(void);
 const EVP_CIPHER *EVP_des_ede_cfb64(void);
 # define EVP_des_ede_cfb EVP_des_ede_cfb64
+const EVP_CIPHER *EVP_des_ede_cfb1(void);
+const EVP_CIPHER *EVP_des_ede_cfb8(void);
 const EVP_CIPHER *EVP_des_ede3_cfb64(void);
 # define EVP_des_ede3_cfb EVP_des_ede3_cfb64
+const EVP_CIPHER *EVP_des_ede3_cfb1(void);
+const EVP_CIPHER *EVP_des_ede3_cfb8(void);
 const EVP_CIPHER *EVP_des_ofb(void);
 const EVP_CIPHER *EVP_des_ede_ofb(void);
 const EVP_CIPHER *EVP_des_ede3_ofb(void);

@@ -1,5 +1,5 @@
 #
-# SSLeay/fips/sha1/Makefile
+# SSLeay/fips/aes/Makefile
 #
 
 DIR=	aes

@@ -653,3 +653,8 @@ aes_256_cfb1		652
 aes_128_cfb8		653
 aes_192_cfb8		654
 aes_256_cfb8		655
+des_cfb1		656
+shmoo		657
+ben		658
+openssl		659
+des_cfb8		660

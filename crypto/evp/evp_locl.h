@@ -225,3 +225,12 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 			  get_asn1, ctrl)
 
 #define EVP_C_DATA(kstruct, ctx)	((kstruct *)(ctx)->cipher_data)
+
+#define IMPLEMENT_CFBR(cipher,cprefix,kstruct,ksched,keysize,cbits,iv_len) \
+	BLOCK_CIPHER_func_cfb(cipher##_##keysize,cprefix,cbits,kstruct,ksched) \
+	BLOCK_CIPHER_def_cfb(cipher##_##keysize,kstruct, \
+			     NID_##cipher##_##keysize, keysize/8, iv_len, cbits, \
+			     0, cipher##_init_key, NULL, \
+			     EVP_CIPHER_set_asn1_iv, \
+			     EVP_CIPHER_get_asn1_iv, \
+			     NULL)

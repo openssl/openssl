@@ -681,14 +681,20 @@ aes 43			: AES-256-OFB		: aes-256-ofb
 !Cname aes-256-cfb128
 aes 44			: AES-256-CFB		: aes-256-cfb
 
+1 3 6 1 4 1 14231	: SHMOO			: shmoo
+shmoo 1			: BEN			: ben
+ben 1			: OpenSSL		: openssl
+
 # There are no OIDs for these modes...
 
-1 1 1 1 666 3		: AES-128-CFB1		: aes-128-cfb1
-1 1 1 1 666 4		: AES-192-CFB1		: aes-192-cfb1
-1 1 1 1 666 5		: AES-256-CFB1		: aes-256-cfb1
-1 1 1 1 666 6		: AES-128-CFB8		: aes-128-cfb8
-1 1 1 1 666 7		: AES-192-CFB8		: aes-192-cfb8
-1 1 1 1 666 8		: AES-256-CFB8		: aes-256-cfb8
+openssl 1		: AES-128-CFB1		: aes-128-cfb1
+openssl 2		: AES-192-CFB1		: aes-192-cfb1
+openssl 3		: AES-256-CFB1		: aes-256-cfb1
+openssl 4		: AES-128-CFB8		: aes-128-cfb8
+openssl 5		: AES-192-CFB8		: aes-192-cfb8
+openssl	6		: AES-256-CFB8		: aes-256-cfb8
+openssl 7		: DES-CFB1		: des-cfb1
+openssl 8		: DES-CFB8		: des-cfb8
 
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code

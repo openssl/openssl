@@ -177,11 +177,11 @@ DIRS=   crypto fips ssl $(SHLIB_MARK) apps test tools
 SHLIBDIRS= fips crypto ssl
 
 # dirs in crypto to build
-SDIRS=  \
+SDIRS=  objects \
 	md2 md4 md5 sha mdc2 hmac ripemd \
 	des rc2 rc4 rc5 idea bf cast \
 	bn ec rsa dsa dh dso engine aes \
-	buffer bio stack lhash rand err objects \
+	buffer bio stack lhash rand err \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5
 
 # tests to perform.  "alltests" is a special word indicating that all tests
@@ -231,7 +231,18 @@ sub_all:
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making all in $$i..." && \
-		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' AS='${AS}' ASFLAG='${ASFLAG}' SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}' all ) || exit 1; \
+		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' AS='${AS}' ASFLAG='${ASFLAG}' SDIRS='$(SDIRS)' FDIRS='$(FDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}' all ) || exit 1; \
+	else \
+		$(MAKE) $$i; \
+	fi; \
+	done;
+
+sub_target:
+	@for i in $(DIRS); \
+	do \
+	if [ -d "$$i" ]; then \
+		(cd $$i && echo "making $(TARGET) in $$i..." && \
+		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' AS='${AS}' ASFLAG='${ASFLAG}' SDIRS='$(SDIRS)' FDIRS='$(FDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}' TARGET='$(TARGET)' sub_target ) || exit 1; \
 	else \
 		$(MAKE) $$i; \
 	fi; \
@@ -486,7 +497,7 @@ do_hpux-shared:
 		libs="$(LIBKRB5) $$libs"; \
 	fi; \
 	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
- 		+vnocompatwarnings \
+		+vnocompatwarnings \
 		-b -z +s \
 		-o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
@@ -509,7 +520,7 @@ do_hpux64-shared:
 		libs="$(LIBKRB5) $$libs"; \
 	fi; \
 	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
- 		-b -z \
+		-b -z \
 		-o lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+h lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		+forceload lib$$i.a -ldl -lc ) || exit 1; \

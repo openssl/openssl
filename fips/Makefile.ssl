@@ -26,7 +26,7 @@ CFLAGS= $(INCLUDE) $(CFLAG)
 
 LIBS=
 
-FDIRS=rand sha1 aes dsa
+FDIRS=rand sha1 des aes dsa
 
 GENERAL=Makefile README fips-lib.com install.com
 
@@ -55,6 +55,13 @@ subdirs:
 	do \
 	(cd $$i && echo "making all in fips/$$i..." && \
 	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
+	done;
+
+sub_target:
+	@for i in $(FDIRS) ;\
+	do \
+	(cd $$i && echo "making $(TARGET) in fips/$$i..." && \
+	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' $(TARGET) ) || exit 1; \
 	done;
 
 files:
