@@ -206,6 +206,7 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 	if (salt) memcpy (osalt->data, salt, saltlen);
 	else RAND_bytes (osalt->data, saltlen);
 
+	if(iter <= 0) iter = PKCS5_DEFAULT_ITER;
 	if(!ASN1_INTEGER_set(kdf->iter, iter)) goto merr;
 
 	/* Now include salt in kdf structure */

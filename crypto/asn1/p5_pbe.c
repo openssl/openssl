@@ -119,6 +119,7 @@ X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt,
 		ASN1err(ASN1_F_ASN1_PBE_SET,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
+	if(iter <= 0) iter = PKCS5_DEFAULT_ITER;
 	ASN1_INTEGER_set (pbe->iter, iter);
 	if (!saltlen) saltlen = PKCS5_SALT_LEN;
 	if (!(pbe->salt->data = Malloc (saltlen))) {

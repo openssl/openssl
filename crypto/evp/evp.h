@@ -110,6 +110,8 @@ extern "C" {
 #define EVP_MAX_IV_LENGTH		8
 
 #define PKCS5_SALT_LEN			8
+/* Default PKCS#5 iteration count */
+#define PKCS5_DEFAULT_ITER		2048
 
 #ifndef NO_RSA
 #include <openssl/rsa.h>

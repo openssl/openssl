@@ -100,7 +100,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 
 	/* Extract useful info from parameter */
 	pbuf = param->value.sequence->data;
-	if (!param || (param->type = V_ASN1_SEQUENCE) ||
+	if (!param || (param->type != V_ASN1_SEQUENCE) ||
 	   !(pbe = d2i_PBEPARAM (NULL, &pbuf, param->value.sequence->length))) {
 		EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
 		return 0;

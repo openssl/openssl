@@ -67,6 +67,8 @@ extern "C" {
 #include <openssl/x509.h>
 #include <openssl/pem2.h>
 
+#define PEM_BUFSIZE		1024
+
 #define PEM_OBJ_UNDEF		0
 #define PEM_OBJ_X509		1
 #define PEM_OBJ_X509_REQ	2
@@ -499,6 +501,8 @@ int PEM_write_DSAPrivateKey(FILE *fp,DSA *x,const EVP_CIPHER *enc,
 #endif
 int PEM_write_PrivateKey(FILE *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
 	unsigned char *kstr,int klen, pem_password_cb *);
+int PEM_write_PKCS8PrivateKey(FILE *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
+	unsigned char *kstr,int klen, pem_password_cb *);
 int PEM_write_PKCS7(FILE *fp,PKCS7 *x);
 #ifndef NO_DH
 int PEM_write_DHparams(FILE *fp,DH *x);
@@ -548,6 +552,8 @@ int PEM_write_bio_DSAPrivateKey(BIO *fp,DSA *x,const EVP_CIPHER *enc,
 #endif
 int PEM_write_bio_PrivateKey(BIO *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
         unsigned char *kstr,int klen, pem_password_cb *);
+int PEM_write_bio_PKCS8PrivateKey(BIO *fp,EVP_PKEY *x,const EVP_CIPHER *enc,
+        unsigned char *kstr,int klen, pem_password_cb *);
 int PEM_write_bio_PKCS7(BIO *bp,PKCS7 *x);
 #ifndef NO_DH
 int PEM_write_bio_DHparams(BIO *bp,DH *x);
@@ -578,6 +584,7 @@ int PEM_write_bio_PKCS8_PRIV_KEY_INFO(BIO *bp,PKCS8_PRIV_KEY_INFO *x);
 #define PEM_F_PEM_ASN1_WRITE				 104
 #define PEM_F_PEM_ASN1_WRITE_BIO			 105
 #define PEM_F_PEM_DO_HEADER				 106
+#define PEM_F_PEM_F_PEM_WRITE_PKCS8PRIVATEKEY		 118
 #define PEM_F_PEM_GET_EVP_CIPHER_INFO			 107
 #define PEM_F_PEM_READ					 108
 #define PEM_F_PEM_READ_BIO				 109
@@ -586,6 +593,7 @@ int PEM_write_bio_PKCS8_PRIV_KEY_INFO(BIO *bp,PKCS8_PRIV_KEY_INFO *x);
 #define PEM_F_PEM_SIGNFINAL				 112
 #define PEM_F_PEM_WRITE					 113
 #define PEM_F_PEM_WRITE_BIO				 114
+#define PEM_F_PEM_WRITE_BIO_PKCS8PRIVATEKEY		 119
 #define PEM_F_PEM_X509_INFO_READ			 115
 #define PEM_F_PEM_X509_INFO_READ_BIO			 116
 #define PEM_F_PEM_X509_INFO_WRITE_BIO			 117
@@ -596,6 +604,7 @@ int PEM_write_bio_PKCS8_PRIV_KEY_INFO(BIO *bp,PKCS8_PRIV_KEY_INFO *x);
 #define PEM_R_BAD_END_LINE				 102
 #define PEM_R_BAD_IV_CHARS				 103
 #define PEM_R_BAD_PASSWORD_READ				 104
+#define PEM_R_ERROR_CONVERTING_PRIVATE_KEY		 115
 #define PEM_R_NOT_DEK_INFO				 105
 #define PEM_R_NOT_ENCRYPTED				 106
 #define PEM_R_NOT_PROC_TYPE				 107

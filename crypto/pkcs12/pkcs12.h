@@ -72,7 +72,7 @@ extern "C" {
 
 /* Default iteration count */
 #ifndef PKCS12_DEFAULT_ITER
-#define PKCS12_DEFAULT_ITER	2048
+#define PKCS12_DEFAULT_ITER	PKCS5_DEFAULT_ITER
 #endif
 
 #define PKCS12_MAC_KEY_LENGTH 20

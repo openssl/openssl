@@ -72,7 +72,6 @@
 const char *PEM_version="PEM" OPENSSL_VERSION_PTEXT;
 
 #define MIN_LENGTH	4
-#define PEM_BUFSIZE	1024
 
 static int def_callback(char *buf, int num, int w);
 static int load_iv(unsigned char **fromp,unsigned char *to, int num);
@@ -742,3 +741,61 @@ err:
 	BUF_MEM_free(dataB);
 	return(0);
 	}
+
+/* This function writes a private key in PKCS#8 format: it is a "drop in"
+ * replacement for PEM_write_bio_PrivateKey(). As usual if 'enc' is NULL then
+ * it uses the unencrypted private key form. It uses PKCS#5 v2.0 password based
+ * encryption algorithms.
+ */
+
+int PEM_write_bio_PKCS8PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
+             unsigned char *kstr, int klen, pem_password_cb *cb)
+{
+	X509_SIG *p8;
+	PKCS8_PRIV_KEY_INFO *p8inf;
+	char buf[PEM_BUFSIZE];
+	int ret;
+	if(!(p8inf = EVP_PKEY2PKCS8(x))) {
+		PEMerr(PEM_F_PEM_WRITE_BIO_PKCS8PRIVATEKEY,
+					PEM_R_ERROR_CONVERTING_PRIVATE_KEY);
+		return 0;
+	}
+	if(enc) {
+		if(!kstr) {
+			if(!cb) klen = def_callback(buf, PEM_BUFSIZE, 1);
+			else klen = cb(buf, PEM_BUFSIZE, 1);
+			if(klen <= 0) {
+				PEMerr(PEM_F_PEM_WRITE_BIO_PKCS8PRIVATEKEY,
+								PEM_R_READ_KEY);
+				PKCS8_PRIV_KEY_INFO_free(p8inf);
+				return 0;
+			}
+				
+			kstr = buf;
+		}
+		p8 = PKCS8_encrypt(-1, enc, kstr, klen, NULL, 0, 0, p8inf);
+		if(kstr == (unsigned char *)buf) memset(buf, 0, klen);
+		PKCS8_PRIV_KEY_INFO_free(p8inf);
+		ret = PEM_write_bio_PKCS8(bp, p8);
+		X509_SIG_free(p8);
+		return ret;
+	} else {
+		ret = PEM_write_bio_PKCS8_PRIV_KEY_INFO(bp, p8inf);
+		PKCS8_PRIV_KEY_INFO_free(p8inf);
+		return ret;
+	}
+}
+
+int PEM_write_PKCS8PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
+             unsigned char *kstr, int klen, pem_password_cb *cb)
+{
+	BIO *bp;
+	int ret;
+	if(!(bp = BIO_new_fp(fp, BIO_NOCLOSE))) {
+		PEMerr(PEM_F_PEM_F_PEM_WRITE_PKCS8PRIVATEKEY,ERR_R_BUF_LIB);
+                return(0);
+	}
+	ret = PEM_write_bio_PKCS8PrivateKey(bp, x, enc, kstr, klen, cb);
+	BIO_free(bp);
+	return ret;
+}

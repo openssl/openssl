@@ -4,6 +4,12 @@
 
  Changes between 0.9.3a and 0.9.4
 
+  *) Add a new pair of functions PEM_write_PKCS8PrivateKey() and 
+     PEM_write_bio_PKCS8PrivateKey() that are equivalent to
+     PEM_write_PrivateKey() and PEM_write_bio_PrivateKey() but use the more
+     secure PKCS#8 private key format with a high iteration count.
+     [Steve Henson]
+
   *) Fix determination of Perl interpreter: A perl or perl5
      _directory_ in $PATH was also accepted as the interpreter.
      [Ralf S. Engelschall]

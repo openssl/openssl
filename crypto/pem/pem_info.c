@@ -272,7 +272,6 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 	int i,ret=0;
 	unsigned char *data=NULL;
 	const char *objstr=NULL;
-#define PEM_BUFSIZE	1024
 	char buf[PEM_BUFSIZE];
 	unsigned char *iv=NULL;
 	

@@ -1769,3 +1769,5 @@ BIO_s_bio                               1793
 PKCS5_pbe2_set                          1794
 PKCS5_PBKDF2_HMAC_SHA1                  1795
 PKCS5_v2_PBE_keyivgen                   1796
+PEM_write_bio_PKCS8PrivateKey           1797
+PEM_write_PKCS8PrivateKey               1798
