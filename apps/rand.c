@@ -95,7 +95,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "Usage: rand [options] num\n");
 		BIO_printf(bio_err, "where options are\n");
 		BIO_printf(bio_err, "-out file             - write to file\n");
-		BIO_printf(bio_err," -engine e             - use engine e, possibly a hardware device.\n");
+		BIO_printf(bio_err, "-engine e             - use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err, "-rand file%cfile%c... - seed PRNG from files\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 		BIO_printf(bio_err, "-base64               - encode output\n");
 		goto err;
