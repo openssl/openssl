@@ -2801,9 +2801,9 @@ BIO_indent                              3242	EXIST::FUNCTION:
 BUF_strlcpy                             3243	EXIST::FUNCTION:
 OpenSSLDie                              3244	EXIST::FUNCTION:
 OPENSSL_cleanse                         3245	EXIST::FUNCTION:
-EVP_cast5_cfb64                         3246	EXIST::FUNCTION:CAST
-EVP_aes_128_cfb8                        3247	EXIST::FUNCTION:AES
-ENGINE_setup_bsd_cryptodev              3248	EXIST:__FreeBSD__:FUNCTION:ENGINE
+ENGINE_setup_bsd_cryptodev              3246	EXIST:__FreeBSD__:FUNCTION:ENGINE
+EVP_cast5_cfb64                         3247	EXIST::FUNCTION:CAST
+EVP_aes_128_cfb8                        3248	EXIST::FUNCTION:AES
 EVP_aes_256_cfb128                      3249	EXIST::FUNCTION:AES
 EVP_des_ede3_cfb64                      3250	EXIST::FUNCTION:DES
 EVP_aes_128_cfb1                        3251	EXIST::FUNCTION:AES

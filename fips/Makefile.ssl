@@ -26,7 +26,7 @@ CFLAGS= $(INCLUDE) $(CFLAG)
 
 LIBS=
 
-FDIRS=rand sha1 des aes dsa
+FDIRS=sha1 rand des aes dsa
 
 GENERAL=Makefile README fips-lib.com install.com
 
@@ -45,7 +45,8 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all: check lib subdirs shared
+all: subdirs lib check shared
+	ls -l $(LIB) $(LIBOBJ)
 
 check:
 	TOP=`pwd`/$(TOP) ./fips_check_sha1 fingerprint.sha1 $(SRC) $(HEADER)

@@ -630,6 +630,7 @@ my $rmd160_obj="";
 my $processor="";
 my $default_ranlib;
 my $perl;
+my $fips=0;
 
 my $no_ssl2=0;
 my $no_ssl3=0;
@@ -803,6 +804,8 @@ PROCESS_ARGS:
 			}
 		elsif (/^386$/)
 			{ $processor=386; }
+		elsif (/^fips$/)
+			{ $fips=1; }
 		elsif (/^rsaref$/)
 			{
 			# No RSAref support any more since it's not needed.
@@ -1138,7 +1141,12 @@ if ($ranlib eq "")
 
 $bn_obj = $bn_asm unless $bn_obj ne "";
 
-$des_obj=$des_enc	unless ($des_obj =~ /\.o$/);
+if ($fips)
+	{
+	$des_obj=$sha1_obj="";
+	$cflags.=" -DFIPS";
+	}
+$des_obj=$des_enc	unless (!$fips && $des_obj =~ /\.o$/);
 $bf_obj=$bf_enc		unless ($bf_obj =~ /\.o$/);
 $cast_obj=$cast_enc	unless ($cast_obj =~ /\.o$/);
 $rc4_obj=$rc4_enc	unless ($rc4_obj =~ /\.o$/);

@@ -53,6 +53,7 @@ RC5TEST=	rc5test
 BFTEST=		bftest
 CASTTEST=	casttest
 DESTEST=	destest
+FIPS_DESTEST=	fips_desmovs
 RANDTEST=	randtest
 FIPS_RANDTEST=	fips_randtest
 DHTEST=		dhtest
@@ -69,7 +70,7 @@ TESTS=		alltests
 
 EXE=	$(BNTEST) $(ECTEST) $(IDEATEST) $(MD2TEST)  $(MD4TEST) $(MD5TEST) $(HMACTEST) \
 	$(RC2TEST) $(RC4TEST) $(RC5TEST) \
-	$(DESTEST) $(SHATEST) $(SHA1TEST) $(FIPS_SHA1TEST) $(MDC2TEST) $(RMDTEST) \
+	$(DESTEST) $(FIPS_DESTEST) $(SHATEST) $(SHA1TEST) $(FIPS_SHA1TEST) $(MDC2TEST) $(RMDTEST) \
 	$(RANDTEST) $(FIPS_RANDTEST) $(DHTEST) $(ENGINETEST) \
 	$(BFTEST) $(CASTTEST) $(SSLTEST) $(EXPTEST) $(DSATEST) $(FIPS_DSATEST) $(RSATEST) \
 	$(EVPTEST) $(FIPS_AESTEST)
@@ -79,14 +80,14 @@ EXE=	$(BNTEST) $(ECTEST) $(IDEATEST) $(MD2TEST)  $(MD4TEST) $(MD5TEST) $(HMACTES
 OBJ=	$(BNTEST).o $(ECTEST).o $(IDEATEST).o $(MD2TEST).o $(MD4TEST).o $(MD5TEST).o \
 	$(HMACTEST).o \
 	$(RC2TEST).o $(RC4TEST).o $(RC5TEST).o \
-	$(DESTEST).o $(SHATEST).o $(SHA1TEST).o $(FIPS_SHA1TEST).o $(MDC2TEST).o $(RMDTEST).o \
+	$(DESTEST).o $(FIPS_DESTEST).o $(SHATEST).o $(SHA1TEST).o $(FIPS_SHA1TEST).o $(MDC2TEST).o $(RMDTEST).o \
 	$(RANDTEST).o $(FIPS_RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o $(FIPS_DSATEST).o $(EXPTEST).o $(RSATEST).o \
 	$(EVPTEST).o $(FIPS_AESTEST).o
 SRC=	$(BNTEST).c $(ECTEST).c $(IDEATEST).c $(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c \
 	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c \
-	$(DESTEST).c $(SHATEST).c $(SHA1TEST).c $(FIPS_SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
+	$(DESTEST).c $(FIPS_DESTEST).c $(SHATEST).c $(SHA1TEST).c $(FIPS_SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
 	$(RANDTEST).c $(FIPS_RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
 	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c $(FIPS_DSATEST).c $(EXPTEST).c $(RSATEST).c \
 	$(EVPTEST).c $(FIPS_AESTEST).c
@@ -309,7 +310,7 @@ $(FIPS_AESTEST): $(FIPS_AESTEST).o $(DLIBCRYPTO)
 	fi
 
 $(RSATEST): $(RSATEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(RSATEST) $(CFLAGS) $(RSATEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -317,7 +318,7 @@ $(RSATEST): $(RSATEST).o $(DLIBCRYPTO)
 	fi
 
 $(BNTEST): $(BNTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(BNTEST) $(CFLAGS) $(BNTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -325,7 +326,7 @@ $(BNTEST): $(BNTEST).o $(DLIBCRYPTO)
 	fi
 
 $(ECTEST): $(ECTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(ECTEST) $(CFLAGS) $(ECTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -333,7 +334,7 @@ $(ECTEST): $(ECTEST).o $(DLIBCRYPTO)
 	fi
 
 $(EXPTEST): $(EXPTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(EXPTEST) $(CFLAGS) $(EXPTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -341,7 +342,7 @@ $(EXPTEST): $(EXPTEST).o $(DLIBCRYPTO)
 	fi
 
 $(IDEATEST): $(IDEATEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(IDEATEST) $(CFLAGS) $(IDEATEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -349,7 +350,7 @@ $(IDEATEST): $(IDEATEST).o $(DLIBCRYPTO)
 	fi
 
 $(MD2TEST): $(MD2TEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(MD2TEST) $(CFLAGS) $(MD2TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -357,7 +358,7 @@ $(MD2TEST): $(MD2TEST).o $(DLIBCRYPTO)
 	fi
 
 $(SHATEST): $(SHATEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(SHATEST) $(CFLAGS) $(SHATEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -365,7 +366,7 @@ $(SHATEST): $(SHATEST).o $(DLIBCRYPTO)
 	fi
 
 $(SHA1TEST): $(SHA1TEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(SHA1TEST) $(CFLAGS) $(SHA1TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -373,14 +374,14 @@ $(SHA1TEST): $(SHA1TEST).o $(DLIBCRYPTO)
 	fi
 
 $(FIPS_SHA1TEST): $(FIPS_SHA1TEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(FIPS_SHA1TEST) $(CFLAGS) $(FIPS_SHA1TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  $(CC) -o $(FIPS_SHA1TEST) $(CFLAGS) $(FIPS_SHA1TEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 
 $(RMDTEST): $(RMDTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(RMDTEST) $(CFLAGS) $(RMDTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -388,7 +389,7 @@ $(RMDTEST): $(RMDTEST).o $(DLIBCRYPTO)
 	fi
 
 $(MDC2TEST): $(MDC2TEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(MDC2TEST) $(CFLAGS) $(MDC2TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -396,7 +397,7 @@ $(MDC2TEST): $(MDC2TEST).o $(DLIBCRYPTO)
 	fi
 
 $(MD4TEST): $(MD4TEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(MD4TEST) $(CFLAGS) $(MD4TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -404,7 +405,7 @@ $(MD4TEST): $(MD4TEST).o $(DLIBCRYPTO)
 	fi
 
 $(MD5TEST): $(MD5TEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(MD5TEST) $(CFLAGS) $(MD5TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -412,7 +413,7 @@ $(MD5TEST): $(MD5TEST).o $(DLIBCRYPTO)
 	fi
 
 $(HMACTEST): $(HMACTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(HMACTEST) $(CFLAGS) $(HMACTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -420,7 +421,7 @@ $(HMACTEST): $(HMACTEST).o $(DLIBCRYPTO)
 	fi
 
 $(RC2TEST): $(RC2TEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(RC2TEST) $(CFLAGS) $(RC2TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -428,7 +429,7 @@ $(RC2TEST): $(RC2TEST).o $(DLIBCRYPTO)
 	fi
 
 $(BFTEST): $(BFTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(BFTEST) $(CFLAGS) $(BFTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -436,7 +437,7 @@ $(BFTEST): $(BFTEST).o $(DLIBCRYPTO)
 	fi
 
 $(CASTTEST): $(CASTTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(CASTTEST) $(CFLAGS) $(CASTTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -444,7 +445,7 @@ $(CASTTEST): $(CASTTEST).o $(DLIBCRYPTO)
 	fi
 
 $(RC4TEST): $(RC4TEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(RC4TEST) $(CFLAGS) $(RC4TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -452,7 +453,7 @@ $(RC4TEST): $(RC4TEST).o $(DLIBCRYPTO)
 	fi
 
 $(RC5TEST): $(RC5TEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(RC5TEST) $(CFLAGS) $(RC5TEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -460,15 +461,23 @@ $(RC5TEST): $(RC5TEST).o $(DLIBCRYPTO)
 	fi
 
 $(DESTEST): $(DESTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(DESTEST) $(CFLAGS) $(DESTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	  $(CC) -o $(DESTEST) $(CFLAGS) $(DESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 
+$(FIPS_DESTEST): $(FIPS_DESTEST).o $(DLIBCRYPTO)
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
+	  $(CC) -o $(FIPS_DESTEST) $(CFLAGS) $(FIPS_DESTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+	else \
+	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
+	  $(CC) -o $(FIPS_DESTEST) $(CFLAGS) $(FIPS_DESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
+	fi
+
 $(RANDTEST): $(RANDTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(RANDTEST) $(CFLAGS) $(RANDTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -476,14 +485,14 @@ $(RANDTEST): $(RANDTEST).o $(DLIBCRYPTO)
 	fi
 
 $(FIPS_RANDTEST): $(FIPS_RANDTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(FIPS_RANDTEST) $(CFLAGS) $(FIPS_RANDTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  $(CC) -o $(FIPS_RANDTEST) $(CFLAGS) $(FIPS_RANDTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 
 $(DHTEST): $(DHTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(DHTEST) $(CFLAGS) $(DHTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -491,7 +500,7 @@ $(DHTEST): $(DHTEST).o $(DLIBCRYPTO)
 	fi
 
 $(DSATEST): $(DSATEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(DSATEST) $(CFLAGS) $(DSATEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -499,14 +508,14 @@ $(DSATEST): $(DSATEST).o $(DLIBCRYPTO)
 	fi
 
 $(FIPS_DSATEST): $(FIPS_DSATEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(FIPS_DSATEST) $(CFLAGS) $(FIPS_DSATEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  $(CC) -o $(FIPS_DSATEST) $(CFLAGS) $(FIPS_DSATEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 
 $(METHTEST): $(METHTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(METHTEST) $(CFLAGS) $(METHTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -514,7 +523,7 @@ $(METHTEST): $(METHTEST).o $(DLIBCRYPTO)
 	fi
 
 $(SSLTEST): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(SSLTEST) $(CFLAGS) $(SSLTEST).o $(PEX_LIBS) $(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -522,7 +531,7 @@ $(SSLTEST): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
 	fi
 
 $(ENGINETEST): $(ENGINETEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(ENGINETEST) $(CFLAGS) $(ENGINETEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -530,7 +539,7 @@ $(ENGINETEST): $(ENGINETEST).o $(DLIBCRYPTO)
 	fi
 
 $(EVPTEST): $(EVPTEST).o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o $(EVPTEST) $(CFLAGS) $(EVPTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -541,7 +550,7 @@ $(EVPTEST): $(EVPTEST).o $(DLIBCRYPTO)
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
 
 #$(AESTEST): $(AESTEST).o $(DLIBCRYPTO)
-#	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+#	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 #	  $(CC) -o $(AESTEST) $(CFLAGS) $(AESTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 #	else \
 #	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -549,7 +558,7 @@ $(EVPTEST): $(EVPTEST).o $(DLIBCRYPTO)
 #	fi
 
 dummytest: dummytest.o $(DLIBCRYPTO)
-	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" -o "$(SHLIB_TARGET)" = "" ] ; then \
 	  $(CC) -o dummytest $(CFLAGS) dummytest.o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
@@ -671,6 +680,25 @@ fips_aesavs.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 fips_aesavs.o: ../include/openssl/sha.h ../include/openssl/stack.h
 fips_aesavs.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
 fips_aesavs.o: ../include/openssl/ui_compat.h fips_aesavs.c
+fips_desmovs.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_desmovs.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+fips_desmovs.o: ../include/openssl/bn.h ../include/openssl/cast.h
+fips_desmovs.o: ../include/openssl/crypto.h ../include/openssl/des.h
+fips_desmovs.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+fips_desmovs.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips_desmovs.o: ../include/openssl/err.h ../include/openssl/evp.h
+fips_desmovs.o: ../include/openssl/fips.h ../include/openssl/idea.h
+fips_desmovs.o: ../include/openssl/lhash.h ../include/openssl/md2.h
+fips_desmovs.o: ../include/openssl/md4.h ../include/openssl/md5.h
+fips_desmovs.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+fips_desmovs.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+fips_desmovs.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+fips_desmovs.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
+fips_desmovs.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
+fips_desmovs.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+fips_desmovs.o: ../include/openssl/sha.h ../include/openssl/stack.h
+fips_desmovs.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
+fips_desmovs.o: ../include/openssl/ui_compat.h fips_desmovs.c
 fips_dsatest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 fips_dsatest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
 fips_dsatest.o: ../include/openssl/des.h ../include/openssl/des_old.h

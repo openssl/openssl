@@ -21,12 +21,13 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 GENERAL=Makefile
 TEST= fips_sha1test.c sha1vectors.txt sha1hashes.txt
 APPS=
+EXE= fips_standalone_sha1
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=fips_sha1dgst.c
 LIBOBJ=fips_sha1dgst.o
 
-SRC= $(LIBSRC)
+SRC= $(LIBSRC) fips_standalone_sha1.c
 
 EXHEADER=
 HEADER=	$(EXHEADER) fips_sha_locl.h fips_md32_common.h
@@ -36,10 +37,10 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd ../..; $(MAKE) DIRS=fips SDIRS=$(DIR) sub_all)
 
-all:	check lib fips_standalone_sha1
+all:	fips_standalone_sha1 check lib
 
 check:
-	TOP=`pwd`/$(TOP) ../fips_check_sha1 fingerprint.sha1 $(SRC) $(HEADER)
+	TOP=`pwd`/$(TOP) ../fips_check_sha1 fingerprint.sha1 $(LIBSRC) $(HEADER)
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
@@ -49,9 +50,7 @@ lib:	$(LIBOBJ)
 fips_standalone_sha1: fips_standalone_sha1.o fips_sha1dgst.o
 	$(CC) -o fips_standalone_sha1 $(CFLAGS) fips_standalone_sha1.o \
 	fips_sha1dgst.o
-	TOP=`pwd`/$(TOP) ../fips_check_sha1 standalone.sha1 \
-	  fips_standalone_sha1.c fips_sha1dgst.c fips_sha_locl.h \
-	  fips_md32_common.h
+	TOP=`pwd`/$(TOP) ../fips_check_sha1 standalone.sha1 $(SRC) $(HEADER)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
@@ -78,14 +77,18 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(SRC)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 fips_sha1dgst.o: ../../include/openssl/opensslv.h fips_sha1dgst.c
+fips_standalone_sha1.o: ../../include/openssl/e_os2.h
+fips_standalone_sha1.o: ../../include/openssl/opensslconf.h
+fips_standalone_sha1.o: ../../include/openssl/sha.h fips_standalone_sha1.c
