@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.3a and 0.9.4  [xx Jul/Aug/...? 1999]
+ Changes between 0.9.3a and 0.9.4  [xx Aug 1999]
 
   *) Allow the -k option to be used more than once in the enc program:
      this allows the same encrypted message to be read by multiple recipients.
