@@ -615,6 +615,8 @@ static int hwcrhk_rsa_mod_exp(BIGNUM *r, BIGNUM *I, RSA *rsa)
 			goto err;
 			}
 		}
+	/* If we're here, we must be here with some semblance of success :-) */
+	to_return = 1;
 err:
 	return to_return;
 	}
