@@ -1552,7 +1552,7 @@ $arflags      =
 
 *** debug-ben-fips-debug
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DFIPS -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_FIPS -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
