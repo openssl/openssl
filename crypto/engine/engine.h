@@ -483,6 +483,10 @@ int ENGINE_clear_defaults(void);
 /* Instruct an engine to load any EVP ciphers it knows of */
 /* XXX make this work via defaults? */
 void ENGINE_load_engine_ciphers(ENGINE *e);
+/* Get a particular cipher from a particular engine - NULL if the engine
+ * doesn't have it */
+const EVP_CIPHER *ENGINE_get_cipher_by_name(ENGINE *e,const char *name);
+
 
 /* Obligatory error function. */
 void ERR_load_ENGINE_strings(void);

@@ -387,6 +387,7 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define EVP_MD_CTX_type(e)		EVP_MD_type((e)->digest)
 
 #define EVP_CIPHER_nid(e)		((e)->nid)
+#define EVP_CIPHER_name(e)		OBJ_nid2sn(EVP_CIPHER_nid(e))
 #define EVP_CIPHER_block_size(e)	((e)->block_size)
 #define EVP_CIPHER_key_length(e)	((e)->key_len)
 #define EVP_CIPHER_iv_length(e)		((e)->iv_len)
@@ -435,7 +436,6 @@ void BIO_set_md(BIO *,const EVP_MD *md);
 #define EVP_delete_digest_alias(alias) \
 	OBJ_NAME_remove(alias,OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS);
 
-
 void	EVP_MD_CTX_init(EVP_MD_CTX *ctx);
 int	EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
 EVP_MD_CTX *EVP_MD_CTX_create(void);
@@ -457,21 +457,22 @@ int	EVP_BytesToKey(const EVP_CIPHER *type,const EVP_MD *md,
 		int datal, int count, unsigned char *key,unsigned char *iv);
 
 int	EVP_EncryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
-		unsigned char *key, unsigned char *iv);
+		const unsigned char *key, const unsigned char *iv);
 int	EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		int *outl, unsigned char *in, int inl);
+		int *outl, const unsigned char *in, int inl);
 int	EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
 int	EVP_DecryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
-		unsigned char *key, unsigned char *iv);
+		const unsigned char *key, const unsigned char *iv);
 int	EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		int *outl, unsigned char *in, int inl);
+		int *outl, const unsigned char *in, int inl);
 int	EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
 int	EVP_CipherInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
-		       unsigned char *key,unsigned char *iv,int enc);
+		       const unsigned char *key,const unsigned char *iv,
+		       int enc);
 int	EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		int *outl, unsigned char *in, int inl);
+		int *outl, const unsigned char *in, int inl);
 int	EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
 int	EVP_SignFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s,

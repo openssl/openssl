@@ -19,7 +19,7 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=
+TEST=evp_test.c evptests.txt
 APPS=
 
 LIB=$(TOP)/libcrypto.a

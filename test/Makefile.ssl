@@ -56,6 +56,7 @@ METHTEST=	methtest
 SSLTEST=	ssltest
 RSATEST=	rsa_test
 ENGINETEST=	enginetest
+EVPTEST=	evp_test
 
 TESTS=		alltests
 
@@ -63,7 +64,8 @@ EXE=	$(BNTEST) $(ECTEST) $(IDEATEST) $(MD2TEST)  $(MD4TEST) $(MD5TEST) $(HMACTES
 	$(RC2TEST) $(RC4TEST) $(RC5TEST) \
 	$(DESTEST) $(SHATEST) $(SHA1TEST) $(MDC2TEST) $(RMDTEST) \
 	$(RANDTEST) $(DHTEST) $(ENGINETEST) \
-	$(BFTEST) $(CASTTEST) $(SSLTEST) $(EXPTEST) $(DSATEST) $(RSATEST) 
+	$(BFTEST) $(CASTTEST) $(SSLTEST) $(EXPTEST) $(DSATEST) $(RSATEST) \
+	$(EVPTEST)
 
 # $(METHTEST)
 
@@ -72,13 +74,15 @@ OBJ=	$(BNTEST).o $(ECTEST).o $(IDEATEST).o $(MD2TEST).o $(MD4TEST).o $(MD5TEST).
 	$(RC2TEST).o $(RC4TEST).o $(RC5TEST).o \
 	$(DESTEST).o $(SHATEST).o $(SHA1TEST).o $(MDC2TEST).o $(RMDTEST).o \
 	$(RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
-	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o
+	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o \
+	$(EVPTEST).o
 SRC=	$(BNTEST).c $(ECTEST).c $(IDEATEST).c $(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c \
 	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c \
 	$(DESTEST).c $(SHATEST).c $(SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
 	$(RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
-	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c
+	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c \
+	$(EVPTEST).c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -116,7 +120,10 @@ alltests: \
 	test_rmd test_rc2 test_rc4 test_rc5 test_bf test_cast test_rd \
 	test_rand test_bn test_ec test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
-	test_ss test_ca test_engine test_ssl
+	test_ss test_ca test_engine test_ssl test_evp
+
+test_evp:
+	./$(EVPTEST) evptests.txt
 
 test_des:
 	./$(DESTEST)
@@ -342,6 +349,9 @@ $(SSLTEST): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
 $(ENGINETEST): $(ENGINETEST).o $(DLIBCRYPTO)
 	$(CC) -o $(ENGINETEST) $(CFLAGS) $(ENGINETEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
 
+$(EVPTEST): $(EVPTEST).o $(DLIBCRYPTO)
+	$(CC) -o $(EVPTEST) $(CFLAGS) $(EVPTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)
+	
 #$(RDTEST).o: $(RDTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(RDTEST).c
 
@@ -401,6 +411,16 @@ enginetest.o: ../include/openssl/rand.h ../include/openssl/rsa.h
 enginetest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 enginetest.o: ../include/openssl/symhacks.h ../include/openssl/types.h
 enginetest.o: ../include/openssl/ui.h enginetest.c
+evp_test.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+evp_test.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+evp_test.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+evp_test.o: ../include/openssl/e_os2.h ../include/openssl/engine.h
+evp_test.o: ../include/openssl/evp.h ../include/openssl/obj_mac.h
+evp_test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+evp_test.o: ../include/openssl/opensslv.h ../include/openssl/rand.h
+evp_test.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+evp_test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+evp_test.o: ../include/openssl/types.h ../include/openssl/ui.h evp_test.c
 exptest.o: ../include/openssl/bio.h ../include/openssl/bn.h
 exptest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 exptest.o: ../include/openssl/err.h ../include/openssl/lhash.h

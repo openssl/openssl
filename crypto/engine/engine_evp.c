@@ -96,3 +96,17 @@ void ENGINE_load_engine_ciphers(ENGINE *e)
     for(n=0 ; n < sk_ENGINE_EVP_CIPHER_num(e->ciphers) ; ++n)
 	EVP_add_cipher(sk_ENGINE_EVP_CIPHER_value(e->ciphers,n)->cipher);
     }
+
+const EVP_CIPHER *ENGINE_get_cipher_by_name(ENGINE *e,const char *name)
+    {
+    int n;
+
+    for(n=0 ; n < ENGINE_cipher_num(e) ; ++n)
+	{
+	const EVP_CIPHER *c=ENGINE_get_cipher(e,n);
+
+	if(!strcmp(EVP_CIPHER_name(c),name))
+	    return c;
+	}
+    return NULL;
+    }
