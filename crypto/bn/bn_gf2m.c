@@ -854,6 +854,7 @@ int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p[], BN_CTX *ctx)
 	{
 	int ret = 0, i, count = 0;
+	unsigned int j;
 	BIGNUM *a, *z, *rho, *w, *w2, *tmp;
 	
 	BN_CTX_start(ctx);
@@ -874,7 +875,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p
 		{
 		/* compute half-trace of a */
 		if (!BN_copy(z, a)) goto err;
-		for (i = 1; i <= (p[0] - 1) / 2; i++)
+		for (j = 1; j <= (p[0] - 1) / 2; j++)
 			{
 			if (!BN_GF2m_mod_sqr_arr(z, z, p, ctx)) goto err;
 			if (!BN_GF2m_mod_sqr_arr(z, z, p, ctx)) goto err;
@@ -894,7 +895,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p
 			if (!BN_GF2m_mod_arr(rho, rho, p)) goto err;
 			if (!BN_zero(z)) goto err;
 			if (!BN_copy(w, rho)) goto err;
-			for (i = 1; i <= p[0] - 1; i++)
+			for (j = 1; j <= p[0] - 1; j++)
 				{
 				if (!BN_GF2m_mod_sqr_arr(z, z, p, ctx)) goto err;
 				if (!BN_GF2m_mod_sqr_arr(w2, w, p, ctx)) goto err;
