@@ -187,6 +187,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "i860-intel-osf1"; exit 0
 	;;
 
+    Rhapsody:*)
+	echo "ppc-apple-rhapsody"; exit 0
+	;;
+
     SunOS:5.*)
 	echo "${MACHINE}-sun-solaris2"; exit 0
 	;;
@@ -395,6 +399,7 @@ case "$GUESSOS" in
 	;;
   mips-*-linux?) OUT="linux-mips" ;;
   ppc-*-linux2) OUT="linux-ppc" ;;
+  ppc-apple-rhapsody) OUT="rhapsody-ppc-cc" ;;
   sparc64-*-linux2)
 	#Before we can uncomment following lines we have to wait at least
 	#till 64-bit glibc for SPARC is operational:-(

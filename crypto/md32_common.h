@@ -200,16 +200,16 @@
    */
 #  if defined(__i386)
 #   define ROTATE(a,n)	({ register unsigned int ret;	\
-				asm volatile (		\
+				asm (			\
 				"roll %1,%0"		\
 				: "=r"(ret)		\
 				: "I"(n), "0"(a)	\
 				: "cc");		\
 			   ret;				\
 			})
-#  elif defined(__powerpc)
+#  elif defined(__powerpc) || defined(__ppc)
 #   define ROTATE(a,n)	({ register unsigned int ret;	\
-				asm volatile (		\
+				asm (			\
 				"rlwinm %0,%1,%2,0,31"	\
 				: "=r"(ret)		\
 				: "r"(a), "I"(n));	\
@@ -226,14 +226,14 @@
   /* some GNU C inline assembler templates by <appro@fy.chalmers.se> */
 #  if defined(__i386) && !defined(I386_ONLY)
 #   define BE_FETCH32(a)	({ register unsigned int l=(a);\
-				asm volatile (		\
+				asm (			\
 				"bswapl %0"		\
 				: "=r"(l) : "0"(l));	\
 			  l;				\
 			})
 #  elif defined(__powerpc)
 #   define LE_FETCH32(a)	({ register unsigned int l;	\
-				asm volatile (		\
+				asm (			\
 				"lwbrx %0,0,%1"		\
 				: "=r"(l)		\
 				: "r"(a));		\
@@ -242,7 +242,7 @@
 
 #  elif defined(__sparc) && defined(ULTRASPARC)
 #  define LE_FETCH32(a)	({ register unsigned int l;		\
-				asm volatile (			\
+				asm (				\
 				"lda [%1]#ASI_PRIMARY_LITTLE,%0"\
 				: "=r"(l)			\
 				: "r"(a));			\

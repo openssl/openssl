@@ -4,6 +4,9 @@
 
  Changes between 0.9.4 and 0.9.5  [xx XXX 2000]
 
+  *) ./config recognizes MacOS X now.
+     [Andy Polyakov]
+
   *) Bug fix for BN_div() when the first words of num and divsor are
      equal (it gave wrong results if (rem=(n1-q*d0)&BN_MASK2) < d0).
      [Ulf Möller]
