@@ -72,6 +72,7 @@ static void ERR_RSAREF_error(int function, int reason, char *file, int line);
 
 /* Function codes. */
 #define RSAREF_F_BNREF_MOD_EXP				 100
+#define RSAREF_F_CIPHER_DES_CBC_CODE			 112
 #define RSAREF_F_RSAREF_BN2BIN				 101
 #define RSAREF_F_RSAREF_MOD_EXP				 102
 #define RSAREF_F_RSAREF_PRIVATE_DECRYPT			 103
@@ -93,12 +94,14 @@ static void ERR_RSAREF_error(int function, int reason, char *file, int line);
 #define RSAREF_R_KEY					 105
 #define RSAREF_R_KEY_ENCODING				 106
 #define RSAREF_R_LEN					 107
+#define RSAREF_R_LENGTH_NOT_BLOCK_ALIGNED		 114
 #define RSAREF_R_MODULUS_LEN				 108
 #define RSAREF_R_NEED_RANDOM				 109
 #define RSAREF_R_PRIVATE_KEY				 110
 #define RSAREF_R_PUBLIC_KEY				 111
 #define RSAREF_R_SIGNATURE				 112
 #define RSAREF_R_SIGNATURE_ENCODING			 113
+#define RSAREF_R_UNKNOWN_FAULT				 115
 
 #ifdef  __cplusplus
 }

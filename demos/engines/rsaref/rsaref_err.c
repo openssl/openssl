@@ -67,6 +67,7 @@
 static ERR_STRING_DATA RSAREF_str_functs[]=
 	{
 {ERR_PACK(0,RSAREF_F_BNREF_MOD_EXP,0),	"BNREF_MOD_EXP"},
+{ERR_PACK(0,RSAREF_F_CIPHER_DES_CBC_CODE,0),	"CIPHER_DES_CBC_CODE"},
 {ERR_PACK(0,RSAREF_F_RSAREF_BN2BIN,0),	"RSAREF_BN2BIN"},
 {ERR_PACK(0,RSAREF_F_RSAREF_MOD_EXP,0),	"RSAREF_MOD_EXP"},
 {ERR_PACK(0,RSAREF_F_RSAREF_PRIVATE_DECRYPT,0),	"RSAREF_PRIVATE_DECRYPT"},
@@ -91,12 +92,14 @@ static ERR_STRING_DATA RSAREF_str_reasons[]=
 {RSAREF_R_KEY                            ,"key"},
 {RSAREF_R_KEY_ENCODING                   ,"key encoding"},
 {RSAREF_R_LEN                            ,"len"},
+{RSAREF_R_LENGTH_NOT_BLOCK_ALIGNED       ,"length not block aligned"},
 {RSAREF_R_MODULUS_LEN                    ,"modulus len"},
 {RSAREF_R_NEED_RANDOM                    ,"need random"},
 {RSAREF_R_PRIVATE_KEY                    ,"private key"},
 {RSAREF_R_PUBLIC_KEY                     ,"public key"},
 {RSAREF_R_SIGNATURE                      ,"signature"},
 {RSAREF_R_SIGNATURE_ENCODING             ,"signature encoding"},
+{RSAREF_R_UNKNOWN_FAULT                  ,"unknown fault"},
 {0,NULL}
 	};
 
