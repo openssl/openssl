@@ -323,6 +323,7 @@
 		mkdir -p `dirname $F`
 		ln -s $OPENSSL_SOURCE/$F $F
 	done
+	make -f Makefile.org clean
 
  OPENSSL_SOURCE is an environment variable that contains the absolute (this
  is important!) path to the OpenSSL source tree.
