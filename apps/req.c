@@ -102,6 +102,7 @@
  * -config file	- Load configuration file.
  * -key file	- make a request using key in file (or use it for verification).
  * -keyform	- key file format.
+ * -rand file(s) - load the file(s) into the PRNG.
  * -newkey	- make a key and a request.
  * -modulus	- print RSA modulus.
  * -x509	- output a self signed X509 structure instead.
@@ -378,6 +379,9 @@ bad:
 		BIO_printf(bio_err," -key file	use the private key contained in file\n");
 		BIO_printf(bio_err," -keyform arg   key file format\n");
 		BIO_printf(bio_err," -keyout arg    file to send the key to\n");
+		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+		BIO_printf(bio_err,"                load the file (or the files in the directory) into\n");
+		BIO_printf(bio_err,"                the random number generator\n");
 		BIO_printf(bio_err," -newkey rsa:bits generate a new RSA key of 'bits' in size\n");
 		BIO_printf(bio_err," -newkey dsa:file generate a new DSA key, parameters taken from CA in 'file'\n");
 
