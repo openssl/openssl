@@ -46,7 +46,7 @@ it is called as B<callback(3, 0, cb_arg)>.
 
 The process is then repeated for prime q with B<callback(3, 1, cb_arg)>.
 
-=head1 RETURN VALUES
+=head1 RETURN VALUE
 
 If key generation fails, RSA_generate_key() returns B<NULL>; the
 error codes can be obtained by ERR_get_error(3).

@@ -92,7 +92,6 @@ int RAND_load_file(const char *file, long bytes)
 	i=stat(file,&sb);
 	/* If the state fails, put some crap in anyway */
 	RAND_add(&sb,sizeof(sb),0);
-	ret+=sizeof(sb);
 	if (i < 0) return(0);
 	if (bytes <= 0) return(ret);
 

@@ -17,7 +17,7 @@ RSA_new, RSA_free - allocate and free RSA objects
 RSA_new() allocates and initializes an B<RSA> structure.
 
 RSA_free() frees the B<RSA> structure and its components. The key is
-erased before the memory is erased returned to the system.
+erased before the memory is returned to the system.
 
 =head1 RETURN VALUES
 
