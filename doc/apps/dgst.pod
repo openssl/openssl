@@ -6,7 +6,7 @@ dgst, md5, md2, sha1, sha, mdc2, ripemd160 - message digests
 
 =head1 SYNOPSIS
 
-[B<dgst>]
+B<openssl> B<dgst> 
 [B<-md5|-md2|-sha1|-sha|mdc2|-ripemd160>]
 [B<-c>]
 [B<-d>]
