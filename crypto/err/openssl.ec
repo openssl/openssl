@@ -1,30 +1,35 @@
+# crypto/err/openssl.ec
+
+# configuration file for util/mkerr.pl
+
+# files that may have to be rewritten by util/mkerr.pl
 L ERR		NONE				NONE
-L CRYPTO	crypto/crypto.h			crypto/cpt_err.c
 L BN		crypto/bn/bn.h			crypto/bn/bn_err.c
-L EC		crypto/ec/ec.h			crypto/ec/ec_err.c
 L RSA		crypto/rsa/rsa.h		crypto/rsa/rsa_err.c
-L DSA		crypto/dsa/dsa.h		crypto/dsa/dsa_err.c
-L DSO		crypto/dso/dso.h		crypto/dso/dso_err.c
 L DH		crypto/dh/dh.h			crypto/dh/dh_err.c
 L EVP		crypto/evp/evp.h		crypto/evp/evp_err.c
 L BUF		crypto/buffer/buffer.h		crypto/buffer/buf_err.c
-L BIO		crypto/bio/bio.h		crypto/bio/bio_err.c
 L OBJ		crypto/objects/objects.h	crypto/objects/obj_err.c
-L OCSP		crypto/ocsp/ocsp.h		crypto/ocsp/ocsp_err.c
 L PEM		crypto/pem/pem.h		crypto/pem/pem_err.c
+L DSA		crypto/dsa/dsa.h		crypto/dsa/dsa_err.c
 L X509		crypto/x509/x509.h		crypto/x509/x509_err.c
-L NONE		crypto/x509/x509_vfy.h		NONE
-L X509V3	crypto/x509v3/x509v3.h		crypto/x509v3/v3err.c
-#L METH		crypto/meth/meth.h		crypto/meth/meth_err.c
 L ASN1		crypto/asn1/asn1.h		crypto/asn1/asn1_err.c
 L CONF		crypto/conf/conf.h		crypto/conf/conf_err.c
-#L PROXY		crypto/proxy/proxy.h		crypto/proxy/proxy_err.c
-L PKCS7		crypto/pkcs7/pkcs7.h		crypto/pkcs7/pkcs7err.c
-L PKCS12	crypto/pkcs12/pkcs12.h		crypto/pkcs12/pk12err.c
+L CRYPTO	crypto/crypto.h			crypto/cpt_err.c
+L EC		crypto/ec/ec.h			crypto/ec/ec_err.c
 L SSL		ssl/ssl.h			ssl/ssl_err.c
-L COMP		crypto/comp/comp.h		crypto/comp/comp_err.c
+L BIO		crypto/bio/bio.h		crypto/bio/bio_err.c
+L PKCS7		crypto/pkcs7/pkcs7.h		crypto/pkcs7/pkcs7err.c
+L X509V3	crypto/x509v3/x509v3.h		crypto/x509v3/v3err.c
+L PKCS12	crypto/pkcs12/pkcs12.h		crypto/pkcs12/pk12err.c
 L RAND		crypto/rand/rand.h		crypto/rand/rand_err.c
+L DSO		crypto/dso/dso.h		crypto/dso/dso_err.c
 L ENGINE	crypto/engine/engine.h		crypto/engine/engine_err.c
+L OCSP		crypto/ocsp/ocsp.h		crypto/ocsp/ocsp_err.c
+
+# additional header files to be scanned for function names
+L NONE		crypto/x509/x509_vfy.h		NONE
+L NONE		crypto/ec/ec_lcl.h		NONE
 
 
 F RSAREF_F_RSA_BN2BIN

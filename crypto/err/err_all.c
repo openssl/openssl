@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
+#include <openssl/ec.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #ifndef OPENSSL_NO_RSA
@@ -91,7 +92,7 @@ void ERR_load_crypto_strings(void)
 	done=1;
 #ifndef OPENSSL_NO_ERR
 	ERR_load_ERR_strings(); /* include error strings for SYSerr */
-	ERR_load_BN_strings()
+	ERR_load_BN_strings();
 #ifndef OPENSSL_NO_RSA
 	ERR_load_RSA_strings();
 #endif
