@@ -120,6 +120,9 @@ asm/ia64-cpp.o:	asm/ia64.S
 
 asm/x86_64-gcc.o: asm/x86_64-gcc.c
 
+asm/pa-risc2W.o: asm/pa-risc2W.s
+	/usr/ccs/bin/as -o asm/pa-rics2W.o asm/pa-risc2W.s
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
