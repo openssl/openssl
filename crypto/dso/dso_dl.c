@@ -240,16 +240,18 @@ static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname)
 static char *dl_name_converter(DSO *dso, const char *filename)
 	{
 	char *translated;
-	int len, transform;
+	int len, rsize, transform;
 
 	len = strlen(filename);
+	rsize = len + 1;
 	transform = (strstr(filename, "/") == NULL);
-	if(transform)
-		/* We will convert this to "lib%s.so" */
-		translated = OPENSSL_malloc(len + 7);
-	else
-		/* We will simply duplicate filename */
-		translated = OPENSSL_malloc(len + 1);
+		{
+		/* We will convert this to "%s.so" or "lib%s.so" */
+		rsize += 3;	/* The length of ".so" */
+		if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
+			rsize += 3; /* The length of "lib" */
+		}
+	translated = OPENSSL_malloc(rsize);
 	if(translated == NULL)
 		{
 		DSOerr(DSO_F_DL_NAME_CONVERTER,
@@ -257,7 +259,12 @@ static char *dl_name_converter(DSO *dso, const char *filename)
 		return(NULL);   
 		}
 	if(transform)
-		sprintf(translated, "lib%s.so", filename);
+		{
+		if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
+			sprintf(translated, "lib%s.so", filename);
+		else
+			sprintf(translated, "%s.so", filename);
+		}
 	else
 		sprintf(translated, "%s", filename);
 	return(translated);

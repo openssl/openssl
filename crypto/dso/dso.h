@@ -81,12 +81,19 @@ extern "C" {
  * DSO to prevent *any* native name-translation at all - eg. if the caller has
  * prompted the user for a path to a driver library so the filename should be
  * interpreted as-is. */
-#define DSO_FLAG_NO_NAME_TRANSLATION 0x01
+#define DSO_FLAG_NO_NAME_TRANSLATION		0x01
+/* An extra flag to give if only the extension should be added as
+ * translation.  This is obviously only of importance on Unix and
+ * other operating systems where the translation also may prefix
+ * the name with something, like 'lib', and ignored everywhere else.
+ * This flag is also ignored if DSO_FLAG_NO_NAME_TRANSLATION is used
+ * at the same time. */
+#define DSO_FLAG_NAME_TRANSLATION_EXT_ONLY	0x02
 
 /* The following flag controls the translation of symbol names to upper
  * case.  This is currently only being implemented for OpenVMS.
  */
-#define DSO_FLAG_UPCASE_SYMBOL    0x02
+#define DSO_FLAG_UPCASE_SYMBOL			0x10
 
 
 typedef void (*DSO_FUNC_TYPE)(void);
@@ -182,6 +189,7 @@ int	DSO_free(DSO *dso);
 int	DSO_flags(DSO *dso);
 int	DSO_up(DSO *dso);
 long	DSO_ctrl(DSO *dso, int cmd, long larg, void *parg);
+
 /* This function sets the DSO's name_converter callback. If it is non-NULL,
  * then it will be used instead of the associated DSO_METHOD's function. If
  * oldcb is non-NULL then it is set to the function pointer value being
