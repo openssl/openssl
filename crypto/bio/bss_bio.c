@@ -387,7 +387,7 @@ static size_t bio_nwrite0(BIO *bio, char **buf)
 		write_offset -= b->size;
 	if (write_offset + num > b->size)
 		/* no ring buffer wrap-around for non-copying interface
-		 * (to fulfill the promise by BIO_ctrl_get_write_guarantee,
+		 * (to fulfil the promise by BIO_ctrl_get_write_guarantee,
 		 * BIO_nwrite may have to be called twice) */
 		num = b->size - write_offset;
 
