@@ -249,38 +249,6 @@ extern "C" {
 		*(++ftl) = 0x0; \
 	}
 
-
-/* This macro is to add extra stuff for development checking */
-#ifdef BN_DEBUG
-#define	bn_set_max(r) ((r)->max=(r)->top,BN_set_flags((r),BN_FLG_STATIC_DATA))
-#else
-#define	bn_set_max(r)
-#endif
-
-/* These macros are used to 'take' a section of a bignum for read only use */
-#define bn_set_low(r,a,n) \
-	{ \
-	(r)->top=((a)->top > (n))?(n):(a)->top; \
-	(r)->d=(a)->d; \
-	(r)->neg=(a)->neg; \
-	(r)->flags|=BN_FLG_STATIC_DATA; \
-	bn_set_max(r); \
-	}
-
-#define bn_set_high(r,a,n) \
-	{ \
-	if ((a)->top > (n)) \
-		{ \
-		(r)->top=(a)->top-n; \
-		(r)->d= &((a)->d[n]); \
-		} \
-	else \
-		(r)->top=0; \
-	(r)->neg=(a)->neg; \
-	(r)->flags|=BN_FLG_STATIC_DATA; \
-	bn_set_max(r); \
-	}
-
 #ifdef BN_LLONG
 #define mul_add(r,a,w,c) { \
 	BN_ULLONG t; \
