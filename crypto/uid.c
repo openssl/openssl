@@ -64,7 +64,7 @@ int OPENSSL_issetugid(void)
 	return issetugid();
 	}
 
-#elif defined(OPENSSL_SYS_WIN32)
+#elif defined(WIN32)
 
 int OPENSSL_issetugid(void)
 	{
