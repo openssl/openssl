@@ -375,6 +375,15 @@ TODO: bug: pad  x  with leading zeros if necessary
  
  Changes between 0.9.7 and 0.9.7a  [XX xxx 2003]
 
+  *) Another fix for SSLv2 session ID handling: the session ID was incorrectly
+     checked on reconnect on the client side, therefore session resumption
+     could still fail with a "ssl session id is different" error. This
+     behaviour is masked when SSL_OP_ALL is used due to
+     SSL_OP_MICROSOFT_SESS_ID_BUG being set.
+     Behaviour observed by Crispin Flowerday <crispin@flowerday.cx> as
+     followup to PR #377.
+     [Lutz Jaenicke]
+
   *) IA-32 assembler support enhancements: unified ELF targets, support
      for SCO/Caldera platforms, fix for Cygwin shared build.
      [Andy Polyakov]

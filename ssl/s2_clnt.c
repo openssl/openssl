@@ -1021,7 +1021,7 @@ static int get_server_finished(SSL *s)
 		if (!(s->options & SSL_OP_MICROSOFT_SESS_ID_BUG))
 			{
 			if ((s->session->session_id_length > sizeof s->session->session_id)
-			    || (0 != memcmp(buf, s->session->session_id,
+			    || (0 != memcmp(buf + 1, s->session->session_id,
 			                    (unsigned int)s->session->session_id_length)))
 				{
 				ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
