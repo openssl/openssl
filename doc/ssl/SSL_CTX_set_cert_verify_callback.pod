@@ -8,38 +8,36 @@ SSL_CTX_set_cert_verify_callback - set peer certificate verification procedure
 
  #include <openssl/ssl.h>
 
- void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx, int (*callback)(),
-                                       char *arg);
- int (*callback)();
+ void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx, int (*callback)(X509_STORE_CTX *,void *), void *arg);
 
 =head1 DESCRIPTION
 
 SSL_CTX_set_cert_verify_callback() sets the verification callback function for
-B<ctx>. SSL objects, that are created from B<ctx> inherit the setting valid at
-the time, L<SSL_new(3)|SSL_new(3)> is called. B<arg> is currently ignored.
+I<ctx>. SSL objects that are created from I<ctx> inherit the setting valid at
+the time when L<SSL_new(3)|SSL_new(3)> is called.
 
 =head1 NOTES
 
 Whenever a certificate is verified during a SSL/TLS handshake, a verification
 function is called. If the application does not explicitly specify a
 verification callback function, the built-in verification function is used.
-If a verification callback B<callback> is specified via
+If a verification callback I<callback> is specified via
 SSL_CTX_set_cert_verify_callback(), the supplied callback function is called
-instead. By setting B<callback> to NULL, the default behaviour is restored.
+instead. By setting I<callback> to NULL, the default behaviour is restored.
 
-When the verification must be performed, B<callback> will be called with
-the argument callback(X509_STORE_CTX *x509_store_ctx). The arguments B<arg>
-that can be specified when setting B<callback> are currently ignored.
+When the verification must be performed, I<callback> will be called with
+the arguments callback(X509_STORE_CTX *x509_store_ctx, void *arg). The 
+argument I<arg> is specified by the application when setting I<callback>.
 
-B<callback> should return 1 to indicate verification success and 0 to
-indicate verification failure. If SSL_VERIFY_PEER is set and B<callback>
+I<callback> should return 1 to indicate verification success and 0 to
+indicate verification failure. If SSL_VERIFY_PEER is set and I<callback>
 returns 0, the handshake will fail. As the verification procedure may
 allow to continue the connection in case of failure (by always returning 1)
 the verification result must be set in any case using the B<error>
-member of B<x509_store_ctx>, so that the calling application will be informed
+member of I<x509_store_ctx> so that the calling application will be informed
 about the detailed result of the verification procedure! 
 
-Within B<x509_store_ctx>, B<callback> has access to the B<verify_callback>
+Within I<x509_store_ctx>, I<callback> has access to the I<verify_callback>
 function set using L<SSL_CTX_set_verify(3)|SSL_CTX_set_verify(3)>.
 
 =head1 WARNINGS
@@ -56,12 +54,6 @@ the B<verify_callback> function.
 
 =head1 BUGS
 
-It is possible to specify arguments to be passed to the verification callback.
-Currently they are however not passed but ignored.
-
-The B<callback> function is not specified via a prototype, so that no
-type checking takes place.
-
 =head1 RETURN VALUES
 
 SSL_CTX_set_cert_verify_callback() does not provide diagnostic information.
@@ -71,5 +63,13 @@ SSL_CTX_set_cert_verify_callback() does not provide diagnostic information.
 L<ssl(3)|ssl(3)>, L<SSL_CTX_set_verify(3)|SSL_CTX_set_verify(3)>,
 L<SSL_get_verify_result(3)|SSL_get_verify_result(3)>,
 L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
+
+=head1 HISTORY
+
+Previous to OpenSSL 0.9.7, the I<arg> argument to B<SSL_CTX_set_cert_verify_callback>
+was ignored, and I<callback> was called simply as
+ int (*callback)(X509_STORE_CTX *)
+To compile software written for previous versions of OpenSSL, a dummy
+argument will have to be added to I<callback>.
 
 =cut

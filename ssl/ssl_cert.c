@@ -483,7 +483,11 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 		X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
 
 	if (s->ctx->app_verify_callback != NULL)
+#if 1 /* new with OpenSSL 0.9.7 */
+		i=s->ctx->app_verify_callback(&ctx, s->ctx->app_verify_arg); 
+#else
 		i=s->ctx->app_verify_callback(&ctx); /* should pass app_verify_arg */
+#endif
 	else
 		{
 #ifndef OPENSSL_NO_X509_VERIFY
