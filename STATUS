@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2000/03/23 22:01:25 $
+  ______________                           $Date: 2000/03/23 23:19:12 $
 
   DEVELOPMENT STATE
 
@@ -15,6 +15,13 @@
 			OpenBSD-x86			- passed
 			solaris-sparcv9-cc		- passed
                        0.9.5a-beta2 is available.
+                        linux-elf                       - passed
+                        OpenBSD-elf                     - passed
+                        FreeBSD-elf (i586-pc-freebsd3.2)- passed
+                        solaris-sparcv9-cc              - passed
+                        solaris-sparcv9-gcc             - passed
+                        Mingw32                         - passed
+
     o  OpenSSL 0.9.5:  Released on February 28th, 2000
     o  OpenSSL 0.9.4:  Released on August   09th, 1999
     o  OpenSSL 0.9.3a: Released on May      29th, 1999
