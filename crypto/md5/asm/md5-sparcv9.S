@@ -34,9 +34,11 @@
  *
  * or if above fails (it does if you have gas):
  *
- *	gcc -E -DULTRASPARC -DMD5_BLOCK_DATA_ORDER md5_block.sparc.S | \
+ *	gcc -E -DOPENSSL_SYSNAMEULTRASPARC -DMD5_BLOCK_DATA_ORDER md5_block.sparc.S | \
  *		as -xarch=v8plus /dev/fd/0 -o md5-sparcv9.o
  */
+
+#include <openssl/e_os2.h>
 
 #define	A	%o0
 #define B	%o1
