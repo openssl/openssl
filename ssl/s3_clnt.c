@@ -766,7 +766,12 @@ static int ssl3_get_server_certificate(SSL *s)
 		}
 
 	i=ssl_verify_cert_chain(s,sk);
-	if ((s->verify_mode != SSL_VERIFY_NONE) && (!i))
+	if ((s->verify_mode != SSL_VERIFY_NONE) && (!i)
+#ifndef OPENSSL_NO_KRB5
+                && (s->s3->tmp.new_cipher->algorithms & (SSL_MKEY_MASK|SSL_AUTH_MASK))
+                != (SSL_aKRB5|SSL_kKRB5)
+#endif /* OPENSSL_NO_KRB5 */
+                )
 		{
 		al=ssl_verify_alarm_type(s->verify_result);
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_CERTIFICATE_VERIFY_FAILED);
