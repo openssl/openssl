@@ -223,7 +223,7 @@ char **argv;
 	int req=0;
 	int verbose=0;
 	int gencrl=0;
-	int revoke=0;
+	int dorevoke=0;
 	long crldays=0;
 	long crlhours=0;
 	long errorline= -1;
@@ -388,7 +388,7 @@ EF_ALIGNMENT=0;
 			{
 			if (--argc < 1) goto bad;
 			infile= *(++argv);
-			revoke=1;
+			dorevoke=1;
 			}
 		else
 			{
@@ -1088,7 +1088,7 @@ bad:
 		PEM_write_bio_X509_CRL(Sout,crl);
 		}
 	/*****************************************************************/
-	if (revoke)
+	if (dorevoke)
 		{
         	in=BIO_new(BIO_s_file());
         	out=BIO_new(BIO_s_file());
