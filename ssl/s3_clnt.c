@@ -935,10 +935,12 @@ static int ssl3_get_key_exchange(SSL *s)
 		s->session->sess_cert->peer_rsa_tmp=rsa;
 		rsa=NULL;
 		}
-	else
+#else /* NO_RSA */
+	if (0)
+		;
 #endif
 #ifndef NO_DH
-		if (alg & SSL_kEDH)
+	else if (alg & SSL_kEDH)
 		{
 		if ((dh=DH_new()) == NULL)
 			{
@@ -994,10 +996,12 @@ static int ssl3_get_key_exchange(SSL *s)
 #ifndef NO_RSA
 		if (alg & SSL_aRSA)
 			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
-		else
+#else
+		if (0)
+			;
 #endif
 #ifndef NO_DSA
-		if (alg & SSL_aDSS)
+		else if (alg & SSL_aDSS)
 			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_DSA_SIGN].x509);
 #endif
 		/* else anonymous DH, so no certificate or pkey. */
@@ -1011,7 +1015,7 @@ static int ssl3_get_key_exchange(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER);
 		goto f_err;
 		}
-#endif
+#endif /* !NO_DH */
 	if (alg & SSL_aFZA)
 		{
 		al=SSL_AD_HANDSHAKE_FAILURE;
