@@ -191,6 +191,9 @@ int SSLStateMachine_read_extract(SSLStateMachine *pMachine,
 	    fprintf(stderr,"SSL_read wants more data\n");
 	    return 0;
 	    }
+
+	SSLStateMachine_print_error(pMachine,"SSL_read error");
+	exit(8);
 	}
 
     fprintf(stderr,"%d bytes of decrypted data read from state machine\n",n);
@@ -289,6 +292,8 @@ int main(int argc,char **argv)
     int nFD;
     const char *szCertificateFile;
     const char *szKeyFile;
+    char rbuf[1];
+    int nrbuf=0;
 
     if(argc != 4)
 	{
@@ -321,6 +326,14 @@ int main(int argc,char **argv)
 	/* Select socket for input */
 	FD_SET(nFD,&rfds);
 
+	/* check whether there's decrypted data */
+	if(!nrbuf)
+	    nrbuf=SSLStateMachine_read_extract(pMachine,rbuf,1);
+
+	/* if there's decrypted data, check whether we can write it */
+	if(nrbuf)
+	    FD_SET(1,&wfds);
+
 	/* Select socket for output */
 	if(SSLStateMachine_write_can_extract(pMachine))
 	    FD_SET(nFD,&wfds);
@@ -346,21 +359,29 @@ int main(int argc,char **argv)
 	    SSLStateMachine_read_inject(pMachine,buf,n);
 	    }
 
-	/* FIXME: we should only extract if stdout is ready */
-	n=SSLStateMachine_read_extract(pMachine,buf,sizeof buf);
-	if(n < 0)
+	/* stdout is ready for output (and hence we have some to send it) */
+	if(FD_ISSET(1,&wfds))
 	    {
-	    SSLStateMachine_print_error(pMachine,"read extract failed");
-	    break;
-	    }
-	assert(n >= 0);
-	if(n > 0)
-	    {
-	    int w;
+	    assert(nrbuf == 1);
+	    buf[0]=rbuf[0];
+	    nrbuf=0;
 
-	    w=write(1,buf,n);
-	    /* FIXME: we should push back any unwritten data */
-	    assert(w == n);
+	    n=SSLStateMachine_read_extract(pMachine,buf+1,sizeof buf-1);
+	    if(n < 0)
+		{
+		SSLStateMachine_print_error(pMachine,"read extract failed");
+		break;
+		}
+	    assert(n >= 0);
+	    ++n;
+	    if(n > 0) /* FIXME: has to be true now */
+		{
+		int w;
+		
+		w=write(1,buf,n);
+		/* FIXME: we should push back any unwritten data */
+		assert(w == n);
+		}
 	    }
 
 	/* Socket is ready for output (and therefore we have output to send) */
