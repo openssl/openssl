@@ -4,7 +4,11 @@
 
  Changes between 0.9.6i and 0.9.6j  [xx XXX 2003]
 
-  *) 
+  *) Countermeasure against the Klima-Pokorny-Rosa extension of
+     Bleichbacher's attack on PKCS #1 v1.5 padding: treat
+     a protocol version number mismatch like a decryption error
+     in ssl3_get_client_key_exchange (ssl/s3_srvr.c).
+     [Bodo Moeller]
 
  Changes between 0.9.6h and 0.9.6i  [19 Feb 2003]
 
