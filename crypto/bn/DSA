@@ -1,2 +1,0 @@
-DSA wants 64*32 to use word mont mul, but
-RSA wants to use full.
