@@ -161,7 +161,7 @@ int loc;
 
 		f=(char **)st->data;
 		t=(char **)&(st->data[1]);
-		for (i=st->num; i>loc; i--)
+		for (i=st->num; i>=loc; i--)
 			t[i]=f[i];
 			
 #ifdef undef /* no memmove on sunos :-( */

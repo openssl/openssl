@@ -213,8 +213,16 @@ err:\
 		if (Tinf & 0x80) \
 			{ c.error=ERR_R_BAD_ASN1_OBJECT_HEADER; \
 			c.line=__LINE__; goto err; } \
+		if (Tinf == (V_ASN1_CONSTRUCTED+1)) \
+					Tlen = c.slen - (c.p - c.q) - 2; \
 		if (func(&(r),&c.p,Tlen) == NULL) \
 			{ c.line=__LINE__; goto err; } \
+		if (Tinf == (V_ASN1_CONSTRUCTED+1)) { \
+			Tlen = c.slen - (c.p - c.q); \
+			if(!ASN1_check_infinite_end(&c.p, Tlen)) \
+				{ c.error=ERR_R_MISSING_ASN1_EOS; \
+				c.line=__LINE__; goto err; } \
+		}\
 		c.slen-=(c.p-c.q); \
 		}
 
@@ -230,10 +238,18 @@ err:\
 		if (Tinf & 0x80) \
 			{ c.error=ERR_R_BAD_ASN1_OBJECT_HEADER; \
 			c.line=__LINE__; goto err; } \
+		if (Tinf == (V_ASN1_CONSTRUCTED+1)) \
+					Tlen = c.slen - (c.p - c.q) - 2; \
 		if (d2i_ASN1_SET(&(r),&c.p,Tlen,(char *(*)())func, \
 			(void (*)())free_func, \
 			b,V_ASN1_UNIVERSAL) == NULL) \
 			{ c.line=__LINE__; goto err; } \
+		if (Tinf == (V_ASN1_CONSTRUCTED+1)) { \
+			Tlen = c.slen - (c.p - c.q); \
+			if(!ASN1_check_infinite_end(&c.p, Tlen)) \
+				{ c.error=ERR_R_MISSING_ASN1_EOS; \
+				c.line=__LINE__; goto err; } \
+		}\
 		c.slen-=(c.p-c.q); \
 		}
 
