@@ -10,6 +10,12 @@
      (and "OBJ_cleanup" in crypto/objects/obj_dat.c as an example).
      [Geoff Thorpe]
 
+  *) Add automatic query of EGD sockets in RAND_poll() for the unix variant.
+     If an EGD or PRNGD is running and enough entropy is returned, automatic
+     seeding like with /dev/[u]random will be performed.
+     Positions tried are: /etc/entropy, /var/run/egd-pool.
+     [Lutz Jaenicke]
+
   *) Change the Unix RAND_poll() variant to be able to poll several
      random devices and only read data for a small fragment of time
      to avoid hangs.  Also separate out the Unix variant to it's own

@@ -81,6 +81,12 @@ extern "C" {
  * My default, we will try to read at least one of these files */
 #define DEVRANDOM "/dev/urandom","/dev/random","/dev/srandom"
 #endif
+#ifndef DEVRANDOM_EGD
+/* set this to a comma-seperated list of 'egd' sockets to try out. These
+ * sockets will be tried in the order listed in case accessing the device files
+ * listed in DEVRANDOM did not return enough entropy. */
+#define DEVRANDOM_EGD "/etc/entropy","/var/run/egd-pool"
+#endif
 
 #if defined(__MWERKS__) && defined(macintosh)
 # if macintosh==1

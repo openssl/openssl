@@ -125,12 +125,18 @@ int RAND_poll(void)
 {
 	unsigned long l;
 	pid_t curr_pid = getpid();
-#ifdef DEVRANDOM
+#if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	unsigned char tmpbuf[ENTROPY_NEEDED];
 	int n = 0;
+#endif
+#ifdef DEVRANDOM
 	static const char *randomfiles[] = { DEVRANDOM, NULL };
 	const char **randomfile = NULL;
 	int fd;
+#endif
+#ifdef DEVRANDOM_EGD
+	static const char *egdsockets[] = { DEVRANDOM_EGD, NULL };
+	const char **egdsocket = NULL;
 #endif
 
 #ifdef DEVRANDOM
@@ -185,6 +191,24 @@ int RAND_poll(void)
 			close(fd);
 			}
 		}
+#endif
+
+#ifdef DEVRANDOM_EGD
+	/* Use an EGD socket to read entropy from an EGD or PRNGD entropy
+	 * collecting daemon. */
+
+	for (egdsocket = egdsockets; *egdsocket && n < ENTROPY_NEEDED; egdsocket++)
+		{
+		int r;
+
+		r = RAND_query_egd_bytes(*egdsocket, (unsigned char *)tmpbuf+n,
+					 ENTROPY_NEEDED-n);
+		if (r > 0)
+			n += r;
+		}
+#endif
+
+#if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	if (n > 0)
 		{
 		RAND_add(tmpbuf,sizeof tmpbuf,n);
@@ -201,7 +225,7 @@ int RAND_poll(void)
 	l=time(NULL);
 	RAND_add(&l,sizeof(l),0);
 
-#ifdef DEVRANDOM
+#if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	return 1;
 #endif
 	return 0;
