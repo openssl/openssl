@@ -278,6 +278,24 @@ true64-shared:
 	libs="$$libs -L. -l$$i"; \
 	done;
 
+# This assumes that GNU utilities are *not* used
+solaris-shared:
+	libs=; for i in ${SHLIBDIRS}; do \
+	rm -f lib$$i.so \
+		lib$$i.so.${SHLIB_MAJOR} \
+		lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
+	( set -x; ${CC}  -G -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		-h lib$$i.so.${SHLIB_MAJOR} \
+		-z allextract lib$$i.a $$libs ) || exit 1; \
+	libs="$$libs -L. -l$$i"; \
+	ln -s lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		lib$$i.so.${SHLIB_MAJOR}; \
+	ln -s lib$$i.so.${SHLIB_MAJOR} lib$$i.so; \
+	done; \
+	@set -x; \
+	for i in ${SHLIBDIRS}; do \
+	done;
+
 Makefile.ssl: Makefile.org
 	@echo "Makefile.ssl is older than Makefile.org."
 	@echo "Reconfigure the source tree (via './config' or 'perl Configure'), please."
