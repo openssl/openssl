@@ -111,6 +111,11 @@ DSO_METHOD *DSO_METHOD_dl(void)
  * type so the cast is safe.
  */
 
+#if defined(__hpux)
+static const char extension[] = ".sl";
+#else
+static const char extension[] = ".so";
+#endif
 static int dl_load(DSO *dso, const char *filename)
 	{
 	shl_t ptr;
@@ -118,12 +123,12 @@ static int dl_load(DSO *dso, const char *filename)
 	int len;
 
 	/* The same comment as in dlfcn_load applies here. bleurgh. */
-	len = strlen(filename);
+	len = strlen(filename) + len(extension);
 	if((dso->flags & DSO_FLAG_NAME_TRANSLATION) &&
-			(len + 6 < DSO_MAX_TRANSLATED_SIZE) &&
+			(len + 3 < DSO_MAX_TRANSLATED_SIZE) &&
 			(strstr(filename, "/") == NULL))
 		{
-		sprintf(translated, "lib%s.so", filename);
+		sprintf(translated, "lib%s%s", filename, extension);
 		ptr = shl_load(translated, BIND_IMMEDIATE, NULL);
 		}
 	else
