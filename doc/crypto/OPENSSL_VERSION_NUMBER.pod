@@ -82,6 +82,8 @@ if available or "OPENSSLDIR: N/A" otherwise.
 
 =back
 
+For an unknown B<t>, the text "not available" is returned.
+
 =head1 RETURN VALUE
 
 The version number.
