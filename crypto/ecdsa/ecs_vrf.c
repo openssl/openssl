@@ -54,7 +54,9 @@
  */
 
 #include "ecdsa.h"
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 
 /* returns
  *      1: correct signature

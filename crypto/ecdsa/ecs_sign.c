@@ -54,7 +54,9 @@
  */
 
 #include "ecdsa.h"
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 
 ECDSA_SIG * ECDSA_do_sign(const unsigned char *dgst, int dlen, EC_KEY *eckey)
 {

@@ -69,7 +69,9 @@
 
 #include "ecdh.h"
 #include <string.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 #include <openssl/err.h>
 
 const char *ECDH_version="ECDH" OPENSSL_VERSION_PTEXT;
@@ -105,11 +107,13 @@ int ECDH_set_method(EC_KEY *eckey, const ECDH_METHOD *meth)
         if (mtmp->finish)
 		mtmp->finish(eckey);
 #endif
+#ifndef OPENSSL_NO_ENGINE
 	if (ecdh->engine)
 		{
 		ENGINE_finish(ecdh->engine);
 		ecdh->engine = NULL;
 		}
+#endif
         ecdh->meth = meth;
 #if 0
         if (meth->init) 
@@ -139,6 +143,7 @@ ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 
 	ret->meth = ECDH_get_default_method();
 	ret->engine = engine;
+#ifndef OPENSSL_NO_ENGINE
 	if (!ret->engine)
 		ret->engine = ENGINE_get_default_ECDH();
 	if (ret->engine)
@@ -152,6 +157,7 @@ ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 			return NULL;
 			}
 		}
+#endif
 
 	ret->flags = ret->meth->flags;
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ECDH, ret, &ret->ex_data);
@@ -172,8 +178,10 @@ void ECDH_DATA_free(ECDH_DATA *r)
 	if (r->meth->finish)
 		r->meth->finish(r);
 #endif
+#ifndef OPENSSL_NO_ENGINE
 	if (r->engine)
 		ENGINE_finish(r->engine);
+#endif
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDH, r, &r->ex_data);
 
