@@ -1425,7 +1425,7 @@ int STORE_parse_attrs_endp(void *handle)
 	return 0;
 	}
 
-int STORE_ATTR_INFO_cmp(STORE_ATTR_INFO *a, STORE_ATTR_INFO *b)
+int STORE_ATTR_INFO_compare(STORE_ATTR_INFO *a, STORE_ATTR_INFO *b)
 	{
 	unsigned char *abits, *bbits;
 	int i;
