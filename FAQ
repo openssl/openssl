@@ -38,6 +38,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the OpenSSL compilation fail on Alpha Tru64 Unix?
 * Why does the OpenSSL compilation fail with "ar: command not found"?
 * Why does the OpenSSL compilation fail on Win32 with VC++?
+* What is special about OpenSSL on Redhat?
 
 [PROG] Questions about programming with OpenSSL
 
@@ -215,8 +216,11 @@ For Solaris 2.6, Tim Nibbe <tnibbe@sprint.net> and others have suggested
 installing the SUNski package from Sun patch 105710-01 (Sparc) which
 adds a /dev/random device and make sure it gets used, usually through
 $RANDFILE.  There are probably similar patches for the other Solaris
-versions.  However, be warned that /dev/random is usually a blocking
-device, which may have some effects on OpenSSL.
+versions.  An official statement from Sun with respect to /dev/random
+support can be found at
+  http://sunsolve.sun.com/pub-cgi/retrieve.pl?doc=fsrdb/27606&zone_32=SUNWski
+However, be warned that /dev/random is usually a blocking device, which
+may have some effects on OpenSSL.
 
 
 * Why do I get an "unable to write 'random state'" error message?
@@ -450,6 +454,41 @@ the 'bin' subdirectory of the VC++ installation directory (somewhere
 under 'Program Files').  This needs to be done prior to running NMAKE,
 and the changes are only valid for the current DOS session.
 
+
+* What is special about OpenSSL on Redhat?
+
+Red Hat Linux 7.0 and following versions already have a limited version of
+openssl already installed. This may well apply to other Linux distributions
+also. This version does not have support for the IDEA, RC5 and MDC-2
+algorithms as these are patented within the United States. For information
+these patent numbers and expiry dates are:
+
+MDC-2: 4,908,861 13/03/2007
+IDEA:  5,214,703 25/05/2010
+RC5:   5,724,428 03/03/2015
+
+However, Europeans and other non-Americans may wish to install all the
+features.
+
+To do this you MUST ensure that you do not overwrite the openssl that is in
+/usr/bin on your Red Hat machine. Several packages depend on this file,
+including sendmail and ssh. /usr/local/bin is a good alternative choice. The
+libraries that come with Red Hat 7.0 onwards have different names and so are
+not affected. (eg For Red Hat 7.2 they are /lib/libssl.so.0.9.6b and
+/lib/libcrypto.so.0.9.6b with symlinks /lib/libssl.so.2 and
+/lib/libcrypto.so.2 respectively).
+
+Please note that we have been advised by Red Hat attempting to recompile the
+openssl rpm with all the cryptography enabled will not work. All other
+packages depend on the original Red Hat supplied openssl package. It is also
+worth noting that due to the way Red Hat supplies its packages, updates to
+openssl on each distribution never change the package version, only the
+build number. For example, on Red Hat 7.1, the latest openssl package has
+version number 0.9.6 and build number 9 even though it contains all the
+relevant updates in packages up to and including 0.9.6b.
+
+A possible way around this is to persuade Red Hat to produce a non-US
+version of Red Hat Linux.
 
 [PROG] ========================================================================
 

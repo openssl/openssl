@@ -35,7 +35,7 @@ operation (|). Options can only be added but can never be reset.
 SSL_CTX_set_options() and SSL_set_options() affect the (external)
 protocol behaviour of the SSL library. The (internal) behaviour of
 the API can be changed by using the similar
-L<SSL_CTX_set_modes(3)|SSL_CTX_set_modes(3)> and SSL_set_modes() functions.
+L<SSL_CTX_set_mode(3)|SSL_CTX_set_mode(3)> and SSL_set_mode() functions.
 
 During a handshake, the option settings of the SSL object are used. When
 a new SSL object is created from a context using SSL_new(), the current

@@ -4,6 +4,11 @@
 
  Changes between 0.9.6d and 0.9.6e  [XX xxx XXXX]
 
+  *) Fix cipher selection routines: ciphers without encryption had no flags
+     for the cipher strength set and where therefore not handled correctly
+     by the selection routines (PR #130).
+     [Lutz Jaenicke]
+
   *) Fix EVP_dsa_sha macro.
      [Nils Larsch]
 

@@ -94,6 +94,18 @@
  You can also build a static version of the library using the Makefile
  ms\nt.mak
 
+ Borland C++ builder 5
+ ---------------------
+
+ * Configure for building with Borland Builder:
+   > perl Configure BC-32
+
+ * Create the appropriate makefile
+   > ms\do_nasm
+
+ * Build
+   > make -f ms\bcb.mak
+
  Borland C++ builder 3 and 4
  ---------------------------
 

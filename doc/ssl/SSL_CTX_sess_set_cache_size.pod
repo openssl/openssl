@@ -27,7 +27,7 @@ case is the size 0, which is used for unlimited size.
 
 When the maximum number of sessions is reached, no more new sessions are
 added to the cache. New space may be added by calling
-L<SSL_CTX_flush_sessions(3)|<SSL_CTX_flush_sessions(3)> to remove
+L<SSL_CTX_flush_sessions(3)|SSL_CTX_flush_sessions(3)> to remove
 expired sessions.
 
 If the size of the session cache is reduced and more sessions are already
@@ -46,6 +46,6 @@ SSL_CTX_sess_get_cache_size() returns the currently valid size.
 L<ssl(3)|ssl(3)>,
 L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>,
 L<SSL_CTX_sess_number(3)|SSL_CTX_sess_number(3)>,
-L<SSL_CTX_flush_sessions(3)|<SSL_CTX_flush_sessions(3)>
+L<SSL_CTX_flush_sessions(3)|SSL_CTX_flush_sessions(3)>
 
 =cut
