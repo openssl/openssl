@@ -92,7 +92,7 @@ static int des_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-static int des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+static int des_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			  const unsigned char *in, unsigned int inl)
 {
 	DES_cfb64_encrypt(in, out, (long)inl, ctx->cipher_data,

@@ -2009,6 +2009,11 @@
 #define NID_aes_256_cfb128		429
 #define OBJ_aes_256_cfb128		OBJ_aes,44L
 
+#define SN_aes_128_cfb1		"AES-128-CFB1"
+#define LN_aes_128_cfb1		"aes-128-cfb1"
+#define NID_aes_128_cfb1		650
+#define OBJ_aes_128_cfb1		1L,1L,1L,1L,666L,3L
+
 #define SN_hold_instruction_code		"holdInstructionCode"
 #define LN_hold_instruction_code		"Hold Instruction Code"
 #define NID_hold_instruction_code		430

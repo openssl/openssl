@@ -212,3 +212,22 @@ void AES_cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
 	}
     /* it is not necessary to cleanse ovec, since the IV is not secret */
     }
+
+/* N.B. This expects the input to be packed, LS bit first */
+void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
+		      const unsigned long length, const AES_KEY *key,
+		      unsigned char *ivec, int *num, const int enc)
+    {
+    unsigned int n;
+    unsigned char c[1],d[1];
+    assert(in && out && key && ivec && num);
+    assert(*num == 0);
+
+    for(n=0 ; n < length ; ++n)
+	{
+	c[0]=!!(in[n/8]&(1 << (n%8)));
+	AES_cfbr_encrypt_block(c,d,1,key,ivec,enc);
+	out[n/8]=(out[n/8]&~(1 << (n%8)))|((d[0]&1) << (n%8));
+	}
+    }
+

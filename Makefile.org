@@ -202,7 +202,7 @@ ONEDIRS=out tmp
 EDIRS=  times doc bugs util include certs ms shlib mt demos perl sf dep VMS
 WDIRS=  windows
 LIBS=   libcrypto.a libssl.a
-SIGS=	libcrypto.a.sha1 libcrypto$(SHLIBEXT).sha1
+SIGS=	libcrypto.sha1
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
 SHARED_LIBS=
@@ -221,6 +221,10 @@ HEADER=         e_os.h
 # we might remove 'clean-shared' from the targets to perform at this stage
 
 all: Makefile.ssl sub_all openssl.pc sigs
+
+sigs:
+	fips/sha1/fips_standalone_sha1 libcrypto.a > libcrypto.sha1
+	if [ "$(SHLIBEXT)" != "" ]; then fips/sha1/fips_standalone_sha1 libcrypto$(SHLIBEXT) >> libcrypto.sha1; fi
 
 sub_all:
 	@for i in $(DIRS); \

@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 650
-#define NUM_SN 643
-#define NUM_LN 643
-#define NUM_OBJ 617
+#define NUM_NID 651
+#define NUM_SN 644
+#define NUM_LN 644
+#define NUM_OBJ 618
 
-static unsigned char lvalues[4455]={
+static unsigned char lvalues[4461]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -685,6 +685,7 @@ static unsigned char lvalues[4455]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x06,/* [4425] OBJ_rsaOAEPEncryptionSET */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x14,0x02,0x02,/* [4434] OBJ_ms_smartcard_login */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x14,0x02,0x03,/* [4444] OBJ_ms_upn */
+0x29,0x01,0x01,0x85,0x1A,0x03,               /* [4454] OBJ_aes_128_cfb1 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1728,12 +1729,14 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	10,&(lvalues[4434]),0},
 {"msUPN","Microsoft Universal Principal Name",NID_ms_upn,10,
 	&(lvalues[4444]),0},
+{"AES-128-CFB1","aes-128-cfb1",NID_aes_128_cfb1,6,&(lvalues[4454]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[364]),/* "AD_DVCS" */
 &(nid_objs[419]),/* "AES-128-CBC" */
 &(nid_objs[421]),/* "AES-128-CFB" */
+&(nid_objs[650]),/* "AES-128-CFB1" */
 &(nid_objs[418]),/* "AES-128-ECB" */
 &(nid_objs[420]),/* "AES-128-OFB" */
 &(nid_objs[423]),/* "AES-192-CBC" */
@@ -2485,6 +2488,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[606]),/* "additional verification" */
 &(nid_objs[419]),/* "aes-128-cbc" */
 &(nid_objs[421]),/* "aes-128-cfb" */
+&(nid_objs[650]),/* "aes-128-cfb1" */
 &(nid_objs[418]),/* "aes-128-ecb" */
 &(nid_objs[420]),/* "aes-128-ofb" */
 &(nid_objs[423]),/* "aes-192-cbc" */
@@ -3235,6 +3239,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[642]),/* OBJ_set_brand_Novus              2 23 42 8 6011 */
 &(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666 1 */
 &(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666 2 */
+&(nid_objs[650]),/* OBJ_aes_128_cfb1                 1 1 1 1 666 3 */
 &(nid_objs[ 1]),/* OBJ_rsadsi                       1 2 840 113549 */
 &(nid_objs[185]),/* OBJ_X9cm                         1 2 840 10040 4 */
 &(nid_objs[127]),/* OBJ_id_pkix                      1 3 6 1 5 5 7 */

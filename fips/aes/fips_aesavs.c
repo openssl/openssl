@@ -43,10 +43,12 @@ int AESTest(EVP_CIPHER_CTX *ctx,
 	kt = 1000;
     else if (strcasecmp(amode, "ECB") == 0)
 	kt = 2000;
-    else if (strncasecmp(amode, "CFB", 3) == 0)
+    else if (strcasecmp(amode, "CFB128") == 0)
 	kt = 3000;
     else if (strncasecmp(amode, "OFB", 3) == 0)
 	kt = 4000;
+    else if(!strcasecmp(amode,"CFB1"))
+	kt=5000;
     else
 	{
 	printf("Unknown mode: %s\n", amode);
@@ -100,6 +102,12 @@ int AESTest(EVP_CIPHER_CTX *ctx,
 	    case 4256:  /* OFB 256 */
 		cipher = EVP_aes_256_ofb();
 		break;
+	    case 5128:
+		cipher=EVP_aes_128_cfb1();
+		break;
+	    default:
+		printf("Didn't handle mode %d\n",kt);
+		exit(1);
 		}
 	    if (dir)
 		{ /* encrypt */

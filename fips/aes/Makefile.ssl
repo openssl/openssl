@@ -80,7 +80,8 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) \
+		$(LIBSRC) fips_aesavs.c
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
@@ -93,3 +94,24 @@ clean:
 fips_aes_core.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
 fips_aes_core.o: ../../include/openssl/opensslconf.h fips_aes_core.c
 fips_aes_core.o: fips_aes_locl.h
+fips_aesavs.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+fips_aesavs.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
+fips_aesavs.o: ../../include/openssl/bn.h ../../include/openssl/cast.h
+fips_aesavs.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+fips_aesavs.o: ../../include/openssl/des_old.h ../../include/openssl/dh.h
+fips_aesavs.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_aesavs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+fips_aesavs.o: ../../include/openssl/fips.h ../../include/openssl/idea.h
+fips_aesavs.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
+fips_aesavs.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
+fips_aesavs.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
+fips_aesavs.o: ../../include/openssl/objects.h
+fips_aesavs.o: ../../include/openssl/opensslconf.h
+fips_aesavs.o: ../../include/openssl/opensslv.h
+fips_aesavs.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rc2.h
+fips_aesavs.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+fips_aesavs.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+fips_aesavs.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+fips_aesavs.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+fips_aesavs.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+fips_aesavs.o: fips_aesavs.c
