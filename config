@@ -402,7 +402,7 @@ case "$GUESSOS" in
   mips4-sgi-irix64)
 	echo "WARNING! If you wish to build 64-bit library, then you have to"
 	echo "         invoke './Configre irix64-mips4-$CC' *manually*."
-	echo "         Type Ctrl-C if you don't want to continue."
+	echo "         Type return if you want to continue, Ctrl-C to abort."
 	read waste < /dev/tty
 	options="$options -mips4"
 	OUT="irix-mips3-$CC"
@@ -447,7 +447,7 @@ EOF
 	#till 64-bit glibc for SPARC is operational:-(
 	#echo "WARNING! If you wish to build 64-bit library, then you have to"
 	#echo "         invoke './Configure linux64-sparcv9' *manually*."
-	#echo "         Type Ctrl-C if you don't want to continue."
+	#echo "         Type return if you want to continue, Ctrl-C to abort."
 	#read waste < /dev/tty
 	OUT="linux-sparcv9" ;;
   sparc-*-linux2)
@@ -466,7 +466,7 @@ EOF
 	if [ "$ISA64" != "" -a "$CC" = "cc" -a $CCVER -ge 50 ]; then
 		echo "WARNING! If you wish to build 64-bit library, then you have to"
 		echo "         invoke './Configure solaris64-sparcv9-cc' *manually*."
-		echo "         Type Ctrl-C if you don't want to continue."
+		echo "         Type return if you want to continue, Ctrl-C to abort."
 		read waste < /dev/tty
 	fi
 	OUT="solaris-sparcv9-$CC" ;;
