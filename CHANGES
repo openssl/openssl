@@ -3,6 +3,9 @@
 
  Changes between 0.9.6 and 0.9.7  [xx XXX 2000]
 
+  *) Add "-rand" option also to s_client and s_server.
+     [Lutz Jaenicke]
+
   *) New function EVP_CIPHER_CTX_set_padding() this is used to
      disable standard block padding (aka PKCS#5 padding) in the EVP
      API, which was previously mandatory. This means that the data is
@@ -802,9 +805,6 @@
      Previously, it would create entries for disableed algorithms no
      matter what.
      [Richard Levitte]
-
-  *) Add "-rand" option also to s_client and s_server.
-     [Lutz Jaenicke]
 
  Changes between 0.9.5a and 0.9.6  [24 Sep 2000]
 
