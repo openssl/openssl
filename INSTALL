@@ -147,7 +147,7 @@
        private         Initially empty, this is the default location
                        for private key files.
 
-     If you didn't chose a different installation prefix, the
+     If you didn't choose a different installation prefix, the
      following additional subdirectories will be created:
 
        bin             Contains the openssl binary and a few other 

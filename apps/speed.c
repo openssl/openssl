@@ -422,7 +422,7 @@ int MAIN(int argc, char **argv)
 			if (strcmp(*argv,"rc4") == 0) doit[D_RC4]=1;
 		else 
 #endif
-#ifndef NO_DEF
+#ifndef NO_DES
 			if (strcmp(*argv,"des-cbc") == 0) doit[D_CBC_DES]=1;
 		else	if (strcmp(*argv,"des-ede3") == 0) doit[D_EDE3_DES]=1;
 		else
