@@ -12,6 +12,9 @@
          *) applies to 0.9.6a/0.9.6b/0.9.6c and 0.9.7
          +) applies to 0.9.7 only
 
+  *) Add the configuration target linux-s390x.
+     [Neale Ferguson <Neale.Ferguson@SoftwareAG-USA.com> via Richard Levitte]
+
   +) Add the configuration target debug-linux-ppro.
      Make 'openssl rsa' use the general key loading routines
      implemented in apps.c, and make those routines able to
