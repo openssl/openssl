@@ -1,6 +1,7 @@
 set OPTS=no_asm
 
 perl Configure VC-WIN16
+perl util\mkfiles.pl >MINFO
 perl util\mk1mf.pl %OPTS% debug VC-WIN16 >d16.mak
 perl util\mk1mf.pl %OPTS% VC-WIN16 >16.mak
 perl util\mk1mf.pl %OPTS% debug dll VC-WIN16 >d16dll.mak
