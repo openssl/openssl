@@ -28,7 +28,13 @@
 /* Note: rewritten a little bit to provide error control and an OpenSSL-
    compatible API */
 
+#ifndef AES_DEBUG
+# ifndef NDEBUG
+#  define NDEBUG
+# endif
+#endif
 #include <assert.h>
+
 #include <stdlib.h>
 #include <openssl/aes.h>
 #include "aes_locl.h"
