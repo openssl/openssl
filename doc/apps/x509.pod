@@ -103,7 +103,7 @@ this option has no effect: SHA1 is always used with DSA keys.
 =head1 DISPLAY OPTIONS
 
 Note: the B<-alias> and B<-purpose> options are also display options
-but are described in the B<TRUST OPTIONS> section.
+but are described in the B<TRUST SETTINGS> section.
 
 =over 4
 
