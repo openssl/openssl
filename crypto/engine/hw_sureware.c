@@ -667,7 +667,9 @@ static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,un
 		if (!rsatmp->e || rsatmp->e->dmax!=(int)(el/sizeof(BN_ULONG))|| 
 			!rsatmp->n || rsatmp->n->dmax!=(int)(el/sizeof(BN_ULONG)))
 			goto err;
-		ret=p_surewarehk_Load_Rsa_Pubkey(msg,key_id,el,rsatmp->n->d, rsatmp->e->d);
+		ret=p_surewarehk_Load_Rsa_Pubkey(msg,key_id,el,
+						 (unsigned long *)rsatmp->n->d,
+						 (unsigned long *)rsatmp->e->d);
 		surewarehk_error_handling(msg,SUREWARE_F_SUREWAREHK_LOAD_PUBLIC_KEY,ret);
 		if (ret!=1)
 		{
@@ -708,10 +710,10 @@ static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,un
 			goto err;
 
 		ret=p_surewarehk_Load_Dsa_Pubkey(msg,key_id,el,
-										dsatmp->pub_key->d, 
-										dsatmp->p->d,
-										dsatmp->q->d,
-										dsatmp->g->d);
+						 (unsigned long *)dsatmp->pub_key->d, 
+						 (unsigned long *)dsatmp->p->d,
+						 (unsigned long *)dsatmp->q->d,
+						 (unsigned long *)dsatmp->g->d);
 		surewarehk_error_handling(msg,SUREWARE_F_SUREWAREHK_LOAD_PUBLIC_KEY,ret);
 		if (ret!=1)
 		{
@@ -979,7 +981,10 @@ static	DSA_SIG * surewarehk_dsa_do_sign(const unsigned char *from, int flen, DSA
 		if (!psign->r || psign->r->dmax!=20/sizeof(BN_ULONG) ||
 			!psign->s || psign->s->dmax!=20/sizeof(BN_ULONG))
 			goto err;
-		ret=p_surewarehk_Dsa_Sign(msg,flen,from,psign->r->d,psign->s->d,hptr);
+		ret=p_surewarehk_Dsa_Sign(msg,flen,from,
+					  (unsigned long *)psign->r->d,
+					  (unsigned long *)psign->s->d,
+					  hptr);
 		surewarehk_error_handling(msg,SUREWARE_F_SUREWAREHK_DSA_DO_SIGN,ret);
 	}
 	psign->r->top=20/sizeof(BN_ULONG);
@@ -1012,8 +1017,14 @@ static int surewarehk_modexp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		if (r && r->dmax==m->top)
 		{
 			/* do it*/
-			ret=p_surewarehk_Mod_Exp(msg,m->top*sizeof(BN_ULONG),m->d,p->top*sizeof(BN_ULONG),
-									p->d,a->top*sizeof(BN_ULONG),a->d,r->d);
+			ret=p_surewarehk_Mod_Exp(msg,
+						 m->top*sizeof(BN_ULONG),
+						 (unsigned long *)m->d,
+						 p->top*sizeof(BN_ULONG),
+						 (unsigned long *)p->d,
+						 a->top*sizeof(BN_ULONG),
+						 (unsigned long *)a->d,
+						 r->d);
 			surewarehk_error_handling(msg,SUREWARE_F_SUREWAREHK_MOD_EXP,ret);
 			if (ret==1)
 			{
