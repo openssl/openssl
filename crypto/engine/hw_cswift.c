@@ -83,6 +83,7 @@
 #include "vendor_defns/cswift.h"
 #endif
 
+static int cswift_destroy(ENGINE *e);
 static int cswift_init(ENGINE *e);
 static int cswift_finish(ENGINE *e);
 static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
@@ -236,9 +237,18 @@ static void cswift_load_error_strings(void)
 		ERR_load_strings(cswift_err_lib, cswift_str_functs);
 		}
 	}
+static void cswift_unload_error_strings(void)
+	{
+	if(cswift_err_lib >= 0)
+		{
+		ERR_unload_strings(cswift_err_lib, cswift_str_functs);
+		cswift_err_lib = -1;
+		}
+	}
 #else
 #define CSWIFTerr(f,r)					/* NOP */
 static void cswift_load_error_strings(void) { }		/* NOP */
+static void cswift_unload_error_strings(void) { }	/* NOP */
 #endif
 
 /* Constants used when creating the ENGINE */
@@ -268,6 +278,7 @@ static int bind_helper(ENGINE *e)
 #endif
 			!ENGINE_set_BN_mod_exp(e, &cswift_mod_exp) ||
 			!ENGINE_set_BN_mod_exp_crt(e, &cswift_mod_exp_crt) ||
+			!ENGINE_set_destroy_function(e, cswift_destroy) ||
 			!ENGINE_set_init_function(e, cswift_init) ||
 			!ENGINE_set_finish_function(e, cswift_finish) ||
 			!ENGINE_set_ctrl_function(e, cswift_ctrl) ||
@@ -359,6 +370,13 @@ static int get_context(SW_CONTEXT_HANDLE *hac)
 static void release_context(SW_CONTEXT_HANDLE hac)
 	{
         p_CSwift_ReleaseAccContext(hac);
+	}
+
+/* Destructor (complements the "ENGINE_cswift()" constructor) */
+static int cswift_destroy(ENGINE *e)
+	{
+	cswift_unload_error_strings();
+	return 1;
 	}
 
 /* (de)initialisation functions. */

@@ -71,6 +71,7 @@
 #include "vendor_defns/atalla.h"
 #endif
 
+static int atalla_destroy(ENGINE *e);
 static int atalla_init(ENGINE *e);
 static int atalla_finish(ENGINE *e);
 static int atalla_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
@@ -215,9 +216,18 @@ static void atalla_load_error_strings(void)
 		ERR_load_strings(atalla_err_lib,atalla_str_functs);
 		}
 	}
+static void atalla_unload_error_strings(void)
+	{
+	if (atalla_err_lib >= 0)
+		{
+		ERR_unload_strings(atalla_err_lib,atalla_str_functs);
+		atalla_err_lib = -1;
+		}
+	}
 #else
 #define ATALLAerr(f,r)					/* NOP */
 static void atalla_load_error_strings(void) { }		/* NOP */
+static void atalla_unload_error_strings(void) { }	/* NOP */
 #endif
 
 /* Constants used when creating the ENGINE */
@@ -249,6 +259,7 @@ static int bind_helper(ENGINE *e)
 			!ENGINE_set_DH(e, &atalla_dh) ||
 #endif
 			!ENGINE_set_BN_mod_exp(e, atalla_mod_exp) ||
+			!ENGINE_set_destroy_function(e, atalla_destroy) ||
 			!ENGINE_set_init_function(e, atalla_init) ||
 			!ENGINE_set_finish_function(e, atalla_finish) ||
 			!ENGINE_set_ctrl_function(e, atalla_ctrl) ||
@@ -332,6 +343,16 @@ static const char *ATALLA_LIBNAME = def_ATALLA_LIBNAME;
 static const char *ATALLA_F1 = "ASI_GetHardwareConfig";
 static const char *ATALLA_F2 = "ASI_RSAPrivateKeyOpFn";
 static const char *ATALLA_F3 = "ASI_GetPerformanceStatistics";
+
+/* Destructor (complements the "ENGINE_atalla()" constructor) */
+static int atalla_destroy(ENGINE *e)
+	{
+	/* Unload the atalla error strings so any error state including our
+	 * functs or reasons won't lead to a segfault (they simply get displayed
+	 * without corresponding string data because none will be found). */
+	atalla_unload_error_strings();
+	return 1;
+	}
 
 /* (de)initialisation functions. */
 static int atalla_init(ENGINE *e)

@@ -125,15 +125,30 @@ static void nuron_load_error_strings(void)
 		ERR_load_strings(nuron_err_lib, nuron_str_functs);
 		}
 	}
+static void nuron_unload_error_strings(void)
+	{
+	if(nuron_err_lib >= 0)
+		{
+		ERR_unload_strings(nuron_err_lib, nuron_str_functs);
+		nuron_err_lib = -1;
+		}
+	}
 #else
-#define NURONerr(f,r)				  /* NOP */
-static void nuron_load_error_strings(void) { }	 /* NOP */
+#define NURONerr(f,r)					/* NOP */
+static void nuron_load_error_strings(void) { }		/* NOP */
+static void nuron_unload_error_strings(void) { }	/* NOP */
 #endif
 
 typedef int tfnModExp(BIGNUM *r,const BIGNUM *a,const BIGNUM *p,const BIGNUM *m);
 static tfnModExp *pfnModExp = NULL;
 
 static DSO *pvDSOHandle = NULL;
+
+static int nuron_destroy(ENGINE *e)
+	{
+	nuron_unload_error_strings();
+	return 1;
+	}
 
 static int nuron_init(ENGINE *e)
 	{
@@ -356,6 +371,7 @@ static int bind_helper(ENGINE *e)
 			!ENGINE_set_DH(e, &nuron_dh) ||
 #endif
 			!ENGINE_set_BN_mod_exp(e, nuron_mod_exp) ||
+			!ENGINE_set_destroy_function(e, nuron_destroy) ||
 			!ENGINE_set_init_function(e, nuron_init) ||
 			!ENGINE_set_finish_function(e, nuron_finish) ||
 			!ENGINE_set_ctrl_function(e, nuron_ctrl) ||

@@ -83,6 +83,7 @@
 #include "vendor_defns/hwcryptohook.h"
 #endif
 
+static int hwcrhk_destroy(ENGINE *e);
 static int hwcrhk_init(ENGINE *e);
 static int hwcrhk_finish(ENGINE *e);
 static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()); 
@@ -281,9 +282,18 @@ static void hwcrhk_load_error_strings(void)
 		ERR_load_strings(hwcrhk_err_lib, hwcrhk_str_functs);
 		}
 	}
+static void hwcrhk_unload_error_strings(void)
+	{
+	if(hwcrhk_err_lib >= 0)
+		{
+		ERR_unload_strings(hwcrhk_err_lib, hwcrhk_str_functs);
+		hwcrhk_err_lib = -1;
+		}
+	}
 #else
-#define HWCRHKerr(f,r)				  /* NOP */
-static void hwcrhk_load_error_strings(void) { }	 /* NOP */
+#define HWCRHKerr(f,r)					/* NOP */
+static void hwcrhk_load_error_strings(void) { }		/* NOP */
+static void hwcrhk_unload_error_strings(void) { }	/* NOP */
 #endif
 
 /* Constants used when creating the ENGINE */
@@ -408,6 +418,7 @@ static int bind_helper(ENGINE *e)
 #endif
 			!ENGINE_set_RAND(e, &hwcrhk_rand) ||
 			!ENGINE_set_BN_mod_exp(e, hwcrhk_mod_exp) ||
+			!ENGINE_set_destroy_function(e, hwcrhk_destroy) ||
 			!ENGINE_set_init_function(e, hwcrhk_init) ||
 			!ENGINE_set_finish_function(e, hwcrhk_finish) ||
 			!ENGINE_set_ctrl_function(e, hwcrhk_ctrl) ||
@@ -528,6 +539,13 @@ static int get_context(HWCryptoHook_ContextHandle *hac,
 static void release_context(HWCryptoHook_ContextHandle hac)
 	{
 	p_hwcrhk_Finish(hac);
+	}
+
+/* Destructor (complements the "ENGINE_ncipher()" constructor) */
+static int hwcrhk_destroy(ENGINE *e)
+	{
+	hwcrhk_unload_error_strings();
+	return 1;
 	}
 
 /* (de)initialisation functions. */

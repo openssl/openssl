@@ -73,6 +73,7 @@
 #include "vendor_defns/hw_ubsec.h"
 #endif
 
+static int ubsec_destroy(ENGINE *e);
 static int ubsec_init(ENGINE *e);
 static int ubsec_finish(ENGINE *e);
 static int ubsec_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
@@ -230,9 +231,18 @@ static void ubsec_load_error_strings(void)
 		ERR_load_strings(ubsec_err_lib, ubsec_str_functs);
 		}
 	}
+static void ubsec_unload_error_strings(void)
+	{
+	if(ubsec_err_lib >= 0)
+		{
+		ERR_unload_strings(ubsec_err_lib, ubsec_str_functs);
+		ubsec_err_lib = -1;
+		}
+	}
 #else
-#define UBSECerr(f,r)				  /* NOP */
-static void ubsec_load_error_strings(void) { }	 /* NOP */
+#define UBSECerr(f,r)					/* NOP */
+static void ubsec_load_error_strings(void) { }		/* NOP */
+static void ubsec_unload_error_strings(void) { }	/* NOP */
 #endif
 
 /* Constants used when creating the ENGINE */
@@ -264,6 +274,7 @@ static int bind_helper(ENGINE *e)
 #endif
 			!ENGINE_set_BN_mod_exp(e, ubsec_mod_exp) ||
 			!ENGINE_set_BN_mod_exp_crt(e, ubsec_mod_exp_crt) ||
+			!ENGINE_set_destroy_function(e, ubsec_destroy) ||
 			!ENGINE_set_init_function(e, ubsec_init) ||
 			!ENGINE_set_finish_function(e, ubsec_finish) ||
 			!ENGINE_set_ctrl_function(e, ubsec_ctrl) ||
@@ -369,6 +380,13 @@ static const char *UBSEC_F10 = "dsa_verify_ioctl";
 #endif
 static const char *UBSEC_F11 = "math_accelerate_ioctl";
 static const char *UBSEC_F12 = "rng_ioctl";
+
+/* Destructor (complements the "ENGINE_ubsec()" constructor) */
+static int ubsec_destroy(ENGINE *e)
+	{
+	ubsec_unload_error_strings();
+	return 1;
+	}
 
 /* (de)initialisation functions. */
 static int ubsec_init(ENGINE *e)
