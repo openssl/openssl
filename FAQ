@@ -169,8 +169,11 @@ application you are using.  It is likely that it never worked
 correctly.  OpenSSL 0.9.5 and later make the error visible by refusing
 to perform potentially insecure encryption.
 
-On systems without /dev/urandom, it is a good idea to use the Entropy
-Gathering Demon; see the RAND_egd() manpage for details.
+On systems without /dev/urandom and /dev/random, it is a good idea to
+use the Entropy Gathering Demon (EGD); see the RAND_egd() manpage for
+details.  Starting with version 0.9.7, OpenSSL will automatically look
+for an EGD socket at /var/run/egd-pool, /dev/egd-pool, /etc/egd-pool and
+/etc/entropy.
 
 Most components of the openssl command line tool try to use the
 file $HOME/.rnd (or $RANDFILE, if this environment variable is set)
@@ -182,11 +185,6 @@ The $RANDFILE environment variable and $HOME/.rnd are only used by the
 OpenSSL command line tools. Applications using the OpenSSL library
 provide their own configuration options to specify the entropy source,
 please check out the documentation coming the with application.
-
-[Note to OpenSSL 0.9.5 users: The command "openssl rsa" in version
-0.9.5 does not do this and will fail on systems without /dev/urandom
-when trying to password-encrypt an RSA key!  This is a bug in the
-library; try a later version instead.]
 
 For Solaris 2.6, Tim Nibbe <tnibbe@sprint.net> and others have suggested
 installing the SUNski package from Sun patch 105710-01 (Sparc) which
