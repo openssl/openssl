@@ -107,6 +107,10 @@ extern "C" {
 #  define MS_STATIC
 #endif
 
+#if defined(_WIN32) && !defined(WIN32)
+#  define WIN32
+#endif
+
 #if defined(WIN32) || defined(WIN16)
 #  ifndef WINDOWS
 #    define WINDOWS
