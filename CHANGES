@@ -99,7 +99,7 @@
          EC_GROUP_get_nid()
      [Nils Larsch <nla@trustcenter.de, Bodo Moeller]
  
- Changes between 0.9.6d and 0.9.7  [XX xxx 2002]
+ Changes between 0.9.6e and 0.9.7  [XX xxx 2002]
 
   *) Make sure any ENGINE control commands make local copies of string
      pointers passed to them whenever necessary. Otherwise it is possible
@@ -1731,6 +1731,11 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Richard Levitte]
 
  Changes between 0.9.6d and 0.9.6e  [XX xxx XXXX]
+
+  *) Fix cipher selection routines: ciphers without encryption had no flags
+     for the cipher strength set and where therefore not handled correctly
+     by the selection routines (PR #130).
+     [Lutz Jaenicke]
 
   *) Fix EVP_dsa_sha macro.
      [Nils Larsch]
