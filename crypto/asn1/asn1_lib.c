@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/asn1_mac.h>
@@ -124,7 +125,7 @@ int ASN1_get_object(unsigned char **pp, long *plength, int *ptag, int *pclass,
 		(int)(omax+ *pp));
 
 #endif
-	if (*plength > (omax - (*pp - p)))
+	if (*plength > (omax - (p - *pp)))
 		{
 		ASN1err(ASN1_F_ASN1_GET_OBJECT,ASN1_R_TOO_LONG);
 		/* Set this so that even if things are not long enough
@@ -141,7 +142,7 @@ err:
 static int asn1_get_length(unsigned char **pp, int *inf, long *rl, int max)
 	{
 	unsigned char *p= *pp;
-	long ret=0;
+	unsigned long ret=0;
 	int i;
 
 	if (max-- < 1) return(0);
@@ -170,10 +171,10 @@ static int asn1_get_length(unsigned char **pp, int *inf, long *rl, int max)
 		else
 			ret=i;
 		}
-	if (ret < 0)
+	if (ret > LONG_MAX)
 		return 0;
 	*pp=p;
-	*rl=ret;
+	*rl=(long)ret;
 	return(1);
 	}
 
