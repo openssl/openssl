@@ -2087,7 +2087,7 @@ f_err:
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_ECDH)
 err:
 #endif
-#ifndef NO_OPENSSL_ECDH
+#ifndef OPENSSL_NO_ECDH
 	EVP_PKEY_free(clnt_pub_pkey);
 	EC_POINT_free(clnt_ecpoint);
 	if (srvr_ecdh != NULL) 
