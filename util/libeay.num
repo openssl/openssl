@@ -2248,7 +2248,6 @@ DSO_METHOD_win32                        2273
 ERR_load_DSO_strings                    2274
 DSO_METHOD_dl                           2275
 NCONF_load                              2276
-CONF_dump                               2277
 NCONF_load_fp                           2278
 NCONF_new                               2279
 NCONF_get_string                        2280
