@@ -222,7 +222,7 @@ bad:
 		}
 #endif
 	else if (informat == FORMAT_PEM)
-		rsa=PEM_read_bio_RSAPrivateKey(in,NULL,NULL);
+		rsa=PEM_read_bio_RSAPrivateKey(in,NULL,NULL,NULL);
 	else
 		{
 		BIO_printf(bio_err,"bad input format specified for key\n");
@@ -312,7 +312,7 @@ bad:
 		}
 #endif
 	else if (outformat == FORMAT_PEM)
-		i=PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,0,NULL);
+		i=PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,0,NULL,NULL);
 	else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;

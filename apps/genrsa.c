@@ -215,7 +215,7 @@ bad:
 		l+=rsa->e->d[i];
 		}
 	BIO_printf(bio_err,"e is %ld (0x%lX)\n",l,l);
-	if (!PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,0,NULL))
+	if (!PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,0,NULL,NULL))
 		goto err;
 
 	ret=0;

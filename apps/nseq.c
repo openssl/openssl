@@ -124,7 +124,7 @@ int MAIN(int argc, char **argv)
 	if (toseq) {
 		seq = NETSCAPE_CERT_SEQUENCE_new();
 		seq->certs = sk_X509_new(NULL);
-		while((x509 = PEM_read_bio_X509(in, NULL, NULL))) 
+		while((x509 = PEM_read_bio_X509(in, NULL, NULL, NULL))) 
 		    sk_X509_push(seq->certs,x509);
 
 		if(!sk_X509_num(seq->certs))
@@ -138,7 +138,7 @@ int MAIN(int argc, char **argv)
 		goto end;
 	}
 
-	if (!(seq = PEM_read_bio_NETSCAPE_CERT_SEQUENCE(in, NULL, NULL))) {
+	if (!(seq = PEM_read_bio_NETSCAPE_CERT_SEQUENCE(in, NULL, NULL, NULL))) {
 		BIO_printf (bio_err, "Error reading sequence file %s\n", infile);
 		ERR_print_errors(bio_err);
 		goto end;

@@ -195,7 +195,7 @@ bad:
 	if	(informat == FORMAT_ASN1)
 		p7=d2i_PKCS7_bio(in,NULL);
 	else if (informat == FORMAT_PEM)
-		p7=PEM_read_bio_PKCS7(in,NULL,NULL);
+		p7=PEM_read_bio_PKCS7(in,NULL,NULL,NULL);
 	else
 		{
 		BIO_printf(bio_err,"bad input format specified for pkcs7 object\n");

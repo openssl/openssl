@@ -377,7 +377,7 @@ bad:
 				goto end;
 				}
 			}
-		req=PEM_read_bio_X509_REQ(in,NULL,NULL);
+		req=PEM_read_bio_X509_REQ(in,NULL,NULL,NULL);
 		BIO_free(in);
 
 		if (req == NULL) { perror(infile); goto end; }
@@ -948,7 +948,7 @@ static EVP_PKEY *load_key(char *file, int format)
 #endif
 		if (format == FORMAT_PEM)
 		{
-		pkey=PEM_read_bio_PrivateKey(key,NULL,NULL);
+		pkey=PEM_read_bio_PrivateKey(key,NULL,NULL,NULL);
 		}
 	else
 		{
@@ -1031,7 +1031,7 @@ static X509 *load_cert(char *file, int format)
 		ah->data=NULL;
 		}
 	else if (format == FORMAT_PEM)
-		x=PEM_read_bio_X509(cert,NULL,NULL);
+		x=PEM_read_bio_X509(cert,NULL,NULL,NULL);
 	else	{
 		BIO_printf(bio_err,"bad input format specified for input cert\n");
 		goto end;

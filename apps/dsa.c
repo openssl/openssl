@@ -191,7 +191,7 @@ bad:
 	if	(informat == FORMAT_ASN1)
 		dsa=d2i_DSAPrivateKey_bio(in,NULL);
 	else if (informat == FORMAT_PEM)
-		dsa=PEM_read_bio_DSAPrivateKey(in,NULL,NULL);
+		dsa=PEM_read_bio_DSAPrivateKey(in,NULL,NULL,NULL);
 	else
 		{
 		BIO_printf(bio_err,"bad input format specified for key\n");
@@ -235,7 +235,7 @@ bad:
 	if 	(outformat == FORMAT_ASN1)
 		i=i2d_DSAPrivateKey_bio(out,dsa);
 	else if (outformat == FORMAT_PEM)
-		i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,NULL);
+		i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,NULL,NULL);
 	else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;

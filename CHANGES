@@ -2,7 +2,27 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.3a and 0.9.4
+ Changes between 0.9.3a and 0.9.4  [xx Jul/Aug/...? 1999]
+
+  *) pem_password_cb function type incompatibly changed from
+          typedef int pem_password_cb(char *buf, int size, int rwflag);
+     to
+          ....(char *buf, int size, int rwflag, void *userdata);
+     so that applications can pass data to their callbacks:
+     The PEM[_ASN1]_{read,write}... functions and macros now take an
+     additional void * argument, which is just handed through whenever
+     the password callback is called.
+     [Damien Miller <dmiller@ilogic.com.au>, with tiny changes by Bodo Moeller]
+
+     New function SSL_CTX_set_default_passwd_cb_userdata.
+
+     Compatibility note: As many C implementations push function arguments
+     onto the stack in reverse order, the new library version is likely to
+     interoperate with programs that have been compiled with the old
+     pem_password_cb definition (PEM_whatever takes some data that
+     happens to be on the stack as its last argument, and the callback
+     just ignores this garbage); but there is no guarantee whatsoever that
+     this will work.
 
   *) The -DPLATFORM="\"$(PLATFORM)\"" definition and the similar -DCFLAGS=...
      (both in crypto/Makefile.ssl for use by crypto/cversion.c) caused

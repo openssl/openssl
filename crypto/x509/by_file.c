@@ -149,7 +149,7 @@ int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type)
 		{
 		for (;;)
 			{
-			x=PEM_read_bio_X509(in,NULL,NULL);
+			x=PEM_read_bio_X509(in,NULL,NULL,NULL);
 			if (x == NULL)
 				{
 				if ((ERR_GET_REASON(ERR_peek_error()) ==
@@ -216,7 +216,7 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 		{
 		for (;;)
 			{
-			x=PEM_read_bio_X509_CRL(in,NULL,NULL);
+			x=PEM_read_bio_X509_CRL(in,NULL,NULL,NULL);
 			if (x == NULL)
 				{
 				if ((ERR_GET_REASON(ERR_peek_error()) ==

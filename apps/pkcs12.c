@@ -292,7 +292,7 @@ if (export_cert) {
 	unsigned char keyid[EVP_MAX_MD_SIZE];
 	unsigned int keyidlen;
 	/* Get private key so we can match it to a certificate */
-	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, NULL);
+	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, NULL, NULL);
 	if (!inkey) (void)BIO_reset(in);
 	if (!key) {
 		BIO_printf (bio_err, "Error loading private key\n");
@@ -531,7 +531,7 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 		p8 = bag->value.keybag;
 		if (!(pkey = EVP_PKCS82PKEY (p8))) return 0;
 		print_attribs (out, p8->attributes, "Key Attributes");
-		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, NULL);
+		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, NULL, NULL);
 		EVP_PKEY_free(pkey);
 	break;
 
@@ -547,7 +547,7 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 		if (!(pkey = EVP_PKCS82PKEY (p8))) return 0;
 		print_attribs (out, p8->attributes, "Key Attributes");
 		PKCS8_PRIV_KEY_INFO_free(p8);
-		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, NULL);
+		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, NULL, NULL);
 		EVP_PKEY_free(pkey);
 	break;
 
@@ -633,7 +633,7 @@ int cert_load(BIO *in, STACK_OF(X509) *sk)
 	int ret;
 	X509 *cert;
 	ret = 0;
-	while((cert = PEM_read_bio_X509(in, NULL, NULL))) {
+	while((cert = PEM_read_bio_X509(in, NULL, NULL, NULL))) {
 		ret = 1;
 		sk_X509_push(sk, cert);
 	}

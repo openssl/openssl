@@ -499,10 +499,10 @@ bad:
 		goto err;
 		}
 	if (key == NULL)
-		pkey=PEM_read_bio_PrivateKey(in,NULL,NULL);
+		pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,NULL);
 	else
 		{
-		pkey=PEM_read_bio_PrivateKey(in,NULL,key_callback);
+		pkey=PEM_read_bio_PrivateKey(in,NULL,key_callback,NULL);
 		memset(key,0,strlen(key));
 		}
 	if (pkey == NULL)
@@ -525,7 +525,7 @@ bad:
 		BIO_printf(bio_err,"trying to load CA certificate\n");
 		goto err;
 		}
-	x509=PEM_read_bio_X509(in,NULL,NULL);
+	x509=PEM_read_bio_X509(in,NULL,NULL,NULL);
 	if (x509 == NULL)
 		{
 		BIO_printf(bio_err,"unable to load CA certificate\n");
@@ -1146,7 +1146,7 @@ bad:
 				BIO_printf(bio_err,"error trying to load '%s' certificate\n",infile);
 				goto err;
 				}
-			x509=PEM_read_bio_X509(in,NULL,NULL);
+			x509=PEM_read_bio_X509(in,NULL,NULL,NULL);
 			if (x509 == NULL)
 				{
 				BIO_printf(bio_err,"unable to load '%s' certificate\n",infile);
@@ -1340,7 +1340,7 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 		perror(infile);
 		goto err;
 		}
-	if ((req=PEM_read_bio_X509_REQ(in,NULL,NULL)) == NULL)
+	if ((req=PEM_read_bio_X509_REQ(in,NULL,NULL,NULL)) == NULL)
 		{
 		BIO_printf(bio_err,"Error reading certificate request in %s\n",
 			infile);
@@ -1400,7 +1400,7 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 		perror(infile);
 		goto err;
 		}
-	if ((req=PEM_read_bio_X509(in,NULL,NULL)) == NULL)
+	if ((req=PEM_read_bio_X509(in,NULL,NULL,NULL)) == NULL)
 		{
 		BIO_printf(bio_err,"Error reading self signed certificate in %s\n",infile);
 		goto err;

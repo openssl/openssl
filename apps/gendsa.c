@@ -155,7 +155,7 @@ bad:
 		goto end;
 		}
 
-	if ((dsa=PEM_read_bio_DSAparams(in,NULL,NULL)) == NULL)
+	if ((dsa=PEM_read_bio_DSAparams(in,NULL,NULL,NULL)) == NULL)
 		{
 		BIO_printf(bio_err,"unable to load DSA parameter file\n");
 		goto end;
@@ -197,7 +197,7 @@ bad:
 	else
 		RAND_write_file(randfile);
 
-	if (!PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,NULL))
+	if (!PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,NULL,NULL))
 		goto end;
 	ret=0;
 end:

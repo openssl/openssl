@@ -280,7 +280,7 @@ static X509_CRL *load_crl(char *infile, int format)
 	if 	(format == FORMAT_ASN1)
 		x=d2i_X509_CRL_bio(in,NULL);
 	else if (format == FORMAT_PEM)
-		x=PEM_read_bio_X509_CRL(in,NULL,NULL);
+		x=PEM_read_bio_X509_CRL(in,NULL,NULL,NULL);
 	else	{
 		BIO_printf(bio_err,"bad input format specified for input crl\n");
 		goto end;

@@ -160,7 +160,7 @@ int MAIN(int argc, char **argv)
 	} else out = BIO_new_fp (stdout, BIO_NOCLOSE);
 
 	if (topk8) {
-		if (!(pkey = PEM_read_bio_PrivateKey(in, NULL, NULL))) {
+		if (!(pkey = PEM_read_bio_PrivateKey(in, NULL, NULL, NULL))) {
 			BIO_printf (bio_err, "Error reading key\n", outfile);
 			ERR_print_errors(bio_err);
 			return (1);
@@ -209,7 +209,7 @@ int MAIN(int argc, char **argv)
 
 	if(nocrypt) {
 		if(informat == FORMAT_PEM) 
-			p8inf = PEM_read_bio_PKCS8_PRIV_KEY_INFO(in,NULL,NULL);
+			p8inf = PEM_read_bio_PKCS8_PRIV_KEY_INFO(in,NULL,NULL, NULL);
 		else if(informat == FORMAT_ASN1)
 			p8inf = d2i_PKCS8_PRIV_KEY_INFO_bio(in, NULL);
 		else {
@@ -218,7 +218,7 @@ int MAIN(int argc, char **argv)
 		}
 	} else {
 		if(informat == FORMAT_PEM) 
-			p8 = PEM_read_bio_PKCS8(in, NULL, NULL);
+			p8 = PEM_read_bio_PKCS8(in, NULL, NULL, NULL);
 		else if(informat == FORMAT_ASN1)
 			p8 = d2i_PKCS8_bio(in, NULL);
 		else {
@@ -263,7 +263,7 @@ int MAIN(int argc, char **argv)
 	
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
 
-	PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL);
+	PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL, NULL);
 
 	EVP_PKEY_free(pkey);
 	BIO_free(out);

@@ -65,7 +65,7 @@
 #include <openssl/pem.h>
 
 #ifndef NO_FP_API
-STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb)
+STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb, void *u)
 	{
         BIO *b;
         STACK_OF(X509_INFO) *ret;
@@ -76,13 +76,13 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_p
                 return(0);
 		}
         BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=PEM_X509_INFO_read_bio(b,sk,cb);
+        ret=PEM_X509_INFO_read_bio(b,sk,cb,u);
         BIO_free(b);
         return(ret);
 	}
 #endif
 
-STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb)
+STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb, void *u)
 	{
 	X509_INFO *xi=NULL;
 	char *name=NULL,*header=NULL,**pp;
@@ -205,7 +205,7 @@ start:
 
 				if (!PEM_get_EVP_CIPHER_INFO(header,&cipher))
 					goto err;
-				if (!PEM_do_header(&cipher,data,&len,cb))
+				if (!PEM_do_header(&cipher,data,&len,cb,u))
 					goto err;
 				p=data;
 				if (d2i(pp,&p,len) == NULL)
@@ -266,7 +266,7 @@ err:
 
 /* A TJH addition */
 int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
-	     unsigned char *kstr, int klen, pem_password_cb *cb)
+	     unsigned char *kstr, int klen, pem_password_cb *cb, void *u)
 	{
 	EVP_CIPHER_CTX ctx;
 	int i,ret=0;
@@ -328,7 +328,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 			/* normal optionally encrypted stuff */
 			if (PEM_write_bio_RSAPrivateKey(bp,
 				xi->x_pkey->dec_pkey->pkey.rsa,
-				enc,kstr,klen,cb)<=0)
+				enc,kstr,klen,cb,u)<=0)
 				goto err;
 #endif
 			}

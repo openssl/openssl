@@ -1032,6 +1032,7 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 		goto err;
 
 	ret->default_passwd_callback=NULL;
+	ret->default_passwd_callback_userdata=NULL;
 	ret->client_cert_cb=NULL;
 
 	ret->sessions=lh_new(SSL_SESSION_hash,SSL_SESSION_cmp);
@@ -1129,6 +1130,11 @@ void SSL_CTX_free(SSL_CTX *a)
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)
 	{
 	ctx->default_passwd_callback=cb;
+	}
+
+void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx,void *u)
+	{
+	ctx->default_passwd_callback_userdata=u;
 	}
 
 void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx,int (*cb)(),char *arg)

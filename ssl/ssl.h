@@ -427,6 +427,9 @@ struct ssl_ctx_st
 	/* Default password callback. */
 /**/	pem_password_cb *default_passwd_callback;
 
+	/* Default password callback user data. */
+/**/	void *default_passwd_callback_userdata;
+
 	/* get client cert callback */
 /**/	int (*client_cert_cb)(/* SSL *ssl, X509 **x509, EVP_PKEY **pkey */);
 
@@ -727,16 +730,16 @@ struct ssl_st
 	(bp),(unsigned char **)(s_id))
 #define i2d_SSL_SESSION_bio(bp,s_id) ASN1_i2d_bio(i2d_SSL_SESSION, \
 	bp,(unsigned char *)s_id)
-#define PEM_read_SSL_SESSION(fp,x,cb) (SSL_SESSION *)PEM_ASN1_read( \
-	(char *(*)())d2i_SSL_SESSION,PEM_STRING_SSL_SESSION,fp,(char **)x,cb)
-#define PEM_read_bio_SSL_SESSION(bp,x,cb) (SSL_SESSION *)PEM_ASN1_read_bio( \
-	(char *(*)())d2i_SSL_SESSION,PEM_STRING_SSL_SESSION,bp,(char **)x,cb)
+#define PEM_read_SSL_SESSION(fp,x,cb,u) (SSL_SESSION *)PEM_ASN1_read( \
+	(char *(*)())d2i_SSL_SESSION,PEM_STRING_SSL_SESSION,fp,(char **)x,cb,u)
+#define PEM_read_bio_SSL_SESSION(bp,x,cb,u) (SSL_SESSION *)PEM_ASN1_read_bio( \
+	(char *(*)())d2i_SSL_SESSION,PEM_STRING_SSL_SESSION,bp,(char **)x,cb,u)
 #define PEM_write_SSL_SESSION(fp,x) \
 	PEM_ASN1_write((int (*)())i2d_SSL_SESSION, \
-		PEM_STRING_SSL_SESSION,fp, (char *)x, NULL,NULL,0,NULL)
+		PEM_STRING_SSL_SESSION,fp, (char *)x, NULL,NULL,0,NULL,NULL)
 #define PEM_write_bio_SSL_SESSION(bp,x) \
 	PEM_ASN1_write_bio((int (*)())i2d_SSL_SESSION, \
-		PEM_STRING_SSL_SESSION,bp, (char *)x, NULL,NULL,0,NULL)
+		PEM_STRING_SSL_SESSION,bp, (char *)x, NULL,NULL,0,NULL,NULL)
 #endif
 
 #define SSL_AD_REASON_OFFSET		1000
@@ -979,7 +982,8 @@ int SSL_CTX_use_PrivateKey_ASN1(int pk,SSL_CTX *ctx,
 int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x);
 int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, unsigned char *d);
 
-void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *);
+void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb);
+void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u);
 
 int SSL_CTX_check_private_key(SSL_CTX *ctx);
 int SSL_check_private_key(SSL *ctx);

@@ -194,7 +194,7 @@ bad:
 	if	(informat == FORMAT_ASN1)
 		dh=d2i_DHparams_bio(in,NULL);
 	else if (informat == FORMAT_PEM)
-		dh=PEM_read_bio_DHparams(in,NULL,NULL);
+		dh=PEM_read_bio_DHparams(in,NULL,NULL,NULL);
 	else
 		{
 		BIO_printf(bio_err,"bad input format specified\n");

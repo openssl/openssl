@@ -242,11 +242,11 @@ int MAIN(int argc, char **argv)
 					perror(p);
 					goto end;
 					}
-				if ((dsa_params=PEM_read_bio_DSAparams(in,NULL,NULL)) == NULL)
+				if ((dsa_params=PEM_read_bio_DSAparams(in,NULL,NULL,NULL)) == NULL)
 					{
 					ERR_clear_error();
 					(void)BIO_reset(in);
-					if ((xtmp=PEM_read_bio_X509(in,NULL,NULL)) == NULL)
+					if ((xtmp=PEM_read_bio_X509(in,NULL,NULL,NULL)) == NULL)
 						{
 						BIO_printf(bio_err,"unable to load DSA parameters from file\n");
 						goto end;
@@ -455,7 +455,7 @@ bad:
 			rsa=d2i_RSAPrivateKey_bio(in,NULL);
 		else */
 		if (keyform == FORMAT_PEM)
-			pkey=PEM_read_bio_PrivateKey(in,NULL,NULL);
+			pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,NULL);
 		else
 			{
 			BIO_printf(bio_err,"bad input format specified for X509 request\n");
@@ -560,7 +560,7 @@ bad:
 		i=0;
 loop:
 		if (!PEM_write_bio_PrivateKey(out,pkey,cipher,
-			NULL,0,NULL))
+			NULL,0,NULL,NULL))
 			{
 			if ((ERR_GET_REASON(ERR_peek_error()) ==
 				PEM_R_PROBLEMS_GETTING_PASSWORD) && (i < 3))
@@ -594,7 +594,7 @@ loop:
 		if	(informat == FORMAT_ASN1)
 			req=d2i_X509_REQ_bio(in,NULL);
 		else if (informat == FORMAT_PEM)
-			req=PEM_read_bio_X509_REQ(in,NULL,NULL);
+			req=PEM_read_bio_X509_REQ(in,NULL,NULL,NULL);
 		else
 			{
 			BIO_printf(bio_err,"bad input format specified for X509 request\n");

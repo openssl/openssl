@@ -289,7 +289,7 @@ static SSL_SESSION *load_sess_id(char *infile, int format)
 	if 	(format == FORMAT_ASN1)
 		x=d2i_SSL_SESSION_bio(in,NULL);
 	else if (format == FORMAT_PEM)
-		x=PEM_read_bio_SSL_SESSION(in,NULL,NULL);
+		x=PEM_read_bio_SSL_SESSION(in,NULL,NULL,NULL);
 	else	{
 		BIO_printf(bio_err,"bad input format specified for input crl\n");
 		goto end;

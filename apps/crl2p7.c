@@ -193,7 +193,7 @@ bad:
 		if 	(informat == FORMAT_ASN1)
 			crl=d2i_X509_CRL_bio(in,NULL);
 		else if (informat == FORMAT_PEM)
-			crl=PEM_read_bio_X509_CRL(in,NULL,NULL);
+			crl=PEM_read_bio_X509_CRL(in,NULL,NULL,NULL);
 		else	{
 			BIO_printf(bio_err,"bad input format specified for input crl\n");
 			goto end;
@@ -304,7 +304,7 @@ static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
 		}
 
 	/* This loads from a file, a stack of x509/crl/pkey sets */
-	sk=PEM_X509_INFO_read_bio(in,NULL,NULL);
+	sk=PEM_X509_INFO_read_bio(in,NULL,NULL,NULL);
 	if (sk == NULL) {
 		BIO_printf(bio_err,"error reading the file, %s\n",certfile);
 		goto end;

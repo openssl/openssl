@@ -171,7 +171,7 @@ static int check(X509_STORE *ctx, char *file)
 			}
 		}
 
-	x=PEM_read_bio_X509(in,NULL,NULL);
+	x=PEM_read_bio_X509(in,NULL,NULL,NULL);
 	if (x == NULL)
 		{
 		fprintf(stdout,"%s: unable to load certificate file\n",
