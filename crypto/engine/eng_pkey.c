@@ -1,7 +1,4 @@
-/* crypto/engine/eng_openssl.c */
-/* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
- * project 2000.
- */
+/* crypto/engine/eng_pkey.c */
 /* ====================================================================
  * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -56,39 +53,105 @@
  *
  */
 
-
-#include <stdio.h>
 #include <openssl/crypto.h>
 #include "cryptlib.h"
+#include "eng_int.h"
 #include <openssl/engine.h>
-#include <openssl/dso.h>
 
-/* The constants used when creating the ENGINE */
-static const char *engine_openssl_id = "openssl";
-static const char *engine_openssl_name = "Software engine support";
+/* Basic get/set stuff */
 
-/* As this is only ever called once, there's no need for locking
- * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_openssl(void)
+int ENGINE_set_load_privkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpriv_f)
 	{
-	ENGINE *ret = ENGINE_new();
-	if(!ret)
-		return NULL;
-	if(!ENGINE_set_id(ret, engine_openssl_id) ||
-			!ENGINE_set_name(ret, engine_openssl_name) ||
-#ifndef OPENSSL_NO_RSA
-			!ENGINE_set_RSA(ret, RSA_get_default_method()) ||
-#endif
-#ifndef OPENSSL_NO_DSA
-			!ENGINE_set_DSA(ret, DSA_get_default_method()) ||
-#endif
-#ifndef OPENSSL_NO_DH
-			!ENGINE_set_DH(ret, DH_get_default_method()) ||
-#endif
-			!ENGINE_set_RAND(ret, RAND_SSLeay()))
+	e->load_privkey = loadpriv_f;
+	return 1;
+	}
+
+int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f)
+	{
+	e->load_pubkey = loadpub_f;
+	return 1;
+	}
+
+ENGINE_LOAD_KEY_PTR ENGINE_get_load_privkey_function(const ENGINE *e)
+	{
+	return e->load_privkey;
+	}
+
+ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e)
+	{
+	return e->load_pubkey;
+	}
+
+/* API functions to load public/private keys */
+
+EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
+	UI_METHOD *ui_method, void *callback_data)
+	{
+	EVP_PKEY *pkey;
+
+	if(e == NULL)
 		{
-		ENGINE_free(ret);
-		return NULL;
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
+			ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
 		}
-	return ret;
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+	if(e->funct_ref == 0)
+		{
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
+			ENGINE_R_NOT_INITIALISED);
+		return 0;
+		}
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+	if (!e->load_privkey)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
+			ENGINE_R_NO_LOAD_FUNCTION);
+		return 0;
+		}
+	pkey = e->load_privkey(e, key_id, ui_method, callback_data);
+	if (!pkey)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
+			ENGINE_R_FAILED_LOADING_PRIVATE_KEY);
+		return 0;
+		}
+	return pkey;
+	}
+
+EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
+	UI_METHOD *ui_method, void *callback_data)
+	{
+	EVP_PKEY *pkey;
+
+	if(e == NULL)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
+			ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+	if(e->funct_ref == 0)
+		{
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
+			ENGINE_R_NOT_INITIALISED);
+		return 0;
+		}
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+	if (!e->load_pubkey)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
+			ENGINE_R_NO_LOAD_FUNCTION);
+		return 0;
+		}
+	pkey = e->load_pubkey(e, key_id, ui_method, callback_data);
+	if (!pkey)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
+			ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
+		return 0;
+		}
+	return pkey;
 	}

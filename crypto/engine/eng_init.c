@@ -1,7 +1,4 @@
-/* crypto/engine/eng_openssl.c */
-/* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
- * project 2000.
- */
+/* crypto/engine/eng_init.c */
 /* ====================================================================
  * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -56,39 +53,105 @@
  *
  */
 
-
-#include <stdio.h>
 #include <openssl/crypto.h>
 #include "cryptlib.h"
+#include "eng_int.h"
 #include <openssl/engine.h>
-#include <openssl/dso.h>
 
-/* The constants used when creating the ENGINE */
-static const char *engine_openssl_id = "openssl";
-static const char *engine_openssl_name = "Software engine support";
-
-/* As this is only ever called once, there's no need for locking
- * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_openssl(void)
+/* Initialise a engine type for use (or up its functional reference count
+ * if it's already in use). This version is only used internally. */
+int engine_unlocked_init(ENGINE *e)
 	{
-	ENGINE *ret = ENGINE_new();
-	if(!ret)
-		return NULL;
-	if(!ENGINE_set_id(ret, engine_openssl_id) ||
-			!ENGINE_set_name(ret, engine_openssl_name) ||
-#ifndef OPENSSL_NO_RSA
-			!ENGINE_set_RSA(ret, RSA_get_default_method()) ||
-#endif
-#ifndef OPENSSL_NO_DSA
-			!ENGINE_set_DSA(ret, DSA_get_default_method()) ||
-#endif
-#ifndef OPENSSL_NO_DH
-			!ENGINE_set_DH(ret, DH_get_default_method()) ||
-#endif
-			!ENGINE_set_RAND(ret, RAND_SSLeay()))
+	int to_return = 1;
+
+	if((e->funct_ref == 0) && e->init)
+		/* This is the first functional reference and the engine
+		 * requires initialisation so we do it now. */
+		to_return = e->init(e);
+	if(to_return)
 		{
-		ENGINE_free(ret);
-		return NULL;
+		/* OK, we return a functional reference which is also a
+		 * structural reference. */
+		e->struct_ref++;
+		e->funct_ref++;
+		engine_ref_debug(e, 0, 1)
+		engine_ref_debug(e, 1, 1)
 		}
+	return to_return;
+	}
+
+/* Free a functional reference to a engine type. This version is only used
+ * internally. */
+int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)
+	{
+	int to_return = 1;
+
+	/* Reduce the functional reference count here so if it's the terminating
+	 * case, we can release the lock safely and call the finish() handler
+	 * without risk of a race. We get a race if we leave the count until
+	 * after and something else is calling "finish" at the same time -
+	 * there's a chance that both threads will together take the count from
+	 * 2 to 0 without either calling finish(). */
+	e->funct_ref--;
+	engine_ref_debug(e, 1, -1)
+	if((e->funct_ref == 0) && e->finish)
+		{
+		if(unlock_for_handlers)
+			CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+		to_return = e->finish(e);
+		if(unlock_for_handlers)
+			CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+		if(!to_return)
+			return 0;
+		}
+#ifdef REF_CHECK
+	if(e->funct_ref < 0)
+		{
+		fprintf(stderr,"ENGINE_finish, bad functional reference count\n");
+		abort();
+		}
+#endif
+	/* Release the structural reference too */
+	if(!engine_free_util(e, 0))
+		{
+		ENGINEerr(ENGINE_F_ENGINE_FINISH,ENGINE_R_FINISH_FAILED);
+		return 0;
+		}
+	return to_return;
+	}
+
+/* The API (locked) version of "init" */
+int ENGINE_init(ENGINE *e)
+	{
+	int ret;
+	if(e == NULL)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_INIT,ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+	ret = engine_unlocked_init(e);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	return ret;
+	}
+
+/* The API (locked) version of "finish" */
+int ENGINE_finish(ENGINE *e)
+	{
+	int to_return = 1;
+
+	if(e == NULL)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_FINISH,ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+	to_return = engine_unlocked_finish(e, 1);
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+	if(!to_return)
+		{
+		ENGINEerr(ENGINE_F_ENGINE_FINISH,ENGINE_R_FINISH_FAILED);
+		return 0;
+		}
+	return to_return;
 	}

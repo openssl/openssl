@@ -60,83 +60,34 @@
 #include <openssl/engine.h>
 #include "eng_int.h"
 
-static int engine_add(ENGINE *e)
-	{
-	int toret = 1;
-	if (!ENGINE_by_id(ENGINE_get_id(e)))
-		{
-		(void)ERR_get_error();
-		toret = ENGINE_add(e);
-		}
-	ENGINE_free(e);
-	return toret;
-	}
-
-void ENGINE_load_cswift(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_CSWIFT
-	engine_add(ENGINE_cswift());
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-#endif /* !OPENSSL_NO_HW */
-	}
-
-void ENGINE_load_chil(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_CSWIFT
-	engine_add(ENGINE_ncipher());
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-#endif /* !OPENSSL_NO_HW */
-	}
-
-void ENGINE_load_atalla(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_CSWIFT
-	engine_add(ENGINE_atalla());
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-#endif /* !OPENSSL_NO_HW */
-	}
-
-void ENGINE_load_nuron(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_CSWIFT
-	engine_add(ENGINE_nuron());
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-#endif /* !OPENSSL_NO_HW */
-	}
-
-void ENGINE_load_ubsec(void)
-	{
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_UBSEC
-	engine_add(ENGINE_ubsec());
-#endif /* !OPENSSL_NO_HW_UBSEC */
-#endif /* !OPENSSL_NO_HW */
-	}
-
-void ENGINE_load_openbsd_dev_crypto(void)
-	{
-#ifndef OPENSSL_NO_HW
-# ifdef OPENSSL_OPENBSD_DEV_CRYPTO
-	engine_add(ENGINE_openbsd_dev_crypto());
-# endif
-#endif /* !OPENSSL_NO_HW */
-	}
-
 void ENGINE_load_builtin_engines(void)
 	{
-	static int done=0;
-
-	if (done) return;
-	done=1;
-
+	/* There's no longer any need for an "openssl" ENGINE unless, one day,
+	 * it is the *only* way for standard builtin implementations to be be
+	 * accessed (ie. it would be possible to statically link binaries with
+	 * *no* builtin implementations). */
+#if 0
+	ENGINE_load_openssl();
+#endif
+	ENGINE_load_dynamic();
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_CSWIFT
 	ENGINE_load_cswift();
+#endif
+#ifndef OPENSSL_NO_HW_NCIPHER
 	ENGINE_load_chil();
+#endif
+#ifndef OPENSSL_NO_HW_ATALLA
 	ENGINE_load_atalla();
+#endif
+#ifndef OPENSSL_NO_HW_NURON
 	ENGINE_load_nuron();
+#endif
+#ifndef OPENSSL_NO_HW_UBSEC
 	ENGINE_load_ubsec();
+#endif
+#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
 	ENGINE_load_openbsd_dev_crypto();
+#endif
+#endif
 	}

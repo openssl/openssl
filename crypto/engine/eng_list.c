@@ -73,11 +73,21 @@
  * list member. */
 static ENGINE *engine_list_head = NULL;
 static ENGINE *engine_list_tail = NULL;
-/* A boolean switch, used to ensure we only initialise once. This
- * is needed because the engine list may genuinely become empty during
- * use (so we can't use engine_list_head as an indicator for example. */
-static int engine_list_flag = 0;
-static int ENGINE_free_util(ENGINE *e, int locked);
+
+/* This cleanup function is only needed internally. If it should be called, we
+ * register it with the "ENGINE_cleanup()" stack to be called during cleanup. */
+
+static void engine_list_cleanup(void)
+	{
+	ENGINE *iterator = engine_list_head;
+
+	while(iterator != NULL)
+		{
+		ENGINE_remove(iterator);
+		iterator = engine_list_head;
+		}
+	return;
+	}
 
 /* These static functions starting with a lower case "engine_" always
  * take place when CRYPTO_LOCK_ENGINE has been locked up. */
@@ -115,6 +125,9 @@ static int engine_list_add(ENGINE *e)
 			}
 		engine_list_head = e;
 		e->prev = NULL;
+		/* The first time the list allocates, we should register the
+		 * cleanup. */
+		engine_cleanup_add_last(engine_list_cleanup);
 		}
 	else
 		{
@@ -169,66 +182,36 @@ static int engine_list_remove(ENGINE *e)
 		engine_list_head = e->next;
 	if(engine_list_tail == e)
 		engine_list_tail = e->prev;
-	ENGINE_free_util(e, 0);
-	return 1;
-	}
-
-/* This check always takes place with CRYPTO_LOCK_ENGINE locked up
- * so we're synchronised, but we can't call anything that tries to
- * lock it again! :-) NB: For convenience (and code-clarity) we
- * don't output errors for failures of the engine_list_add function
- * as it will generate errors itself. */
-static int engine_internal_check(void)
-	{
-	int toret = 1;
-	ENGINE *def_engine1, *def_engine2;
-	if(engine_list_flag)
-		return 1;
-	/* This is our first time up, we need to populate the list
-	 * with our statically compiled-in engines. */
-	def_engine1 = ENGINE_openssl();
-	def_engine2 = ENGINE_dynamic();
-	if(!engine_list_add(def_engine1) ||
-			!engine_list_add(def_engine2))
-		toret = 0;
-	else
-		engine_list_flag = 1;
-	ENGINE_free_util(def_engine1, 0);
-	ENGINE_free_util(def_engine2, 0);
+	engine_free_util(e, 0);
 	return 1;
 	}
 
 /* Get the first/last "ENGINE" type available. */
 ENGINE *ENGINE_get_first(void)
 	{
-	ENGINE *ret = NULL;
+	ENGINE *ret;
 
 	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
-	if(engine_internal_check())
+	ret = engine_list_head;
+	if(ret)
 		{
-		ret = engine_list_head;
-		if(ret)
-			{
-			ret->struct_ref++;
-			engine_ref_debug(ret, 0, 1)
-			}
+		ret->struct_ref++;
+		engine_ref_debug(ret, 0, 1)
 		}
 	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
 	return ret;
 	}
+
 ENGINE *ENGINE_get_last(void)
 	{
-	ENGINE *ret = NULL;
+	ENGINE *ret;
 
 	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
-	if(engine_internal_check())
-		{
 		ret = engine_list_tail;
-		if(ret)
-			{
-			ret->struct_ref++;
-			engine_ref_debug(ret, 0, 1)
-			}
+	if(ret)
+		{
+		ret->struct_ref++;
+		engine_ref_debug(ret, 0, 1)
 		}
 	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
 	return ret;
@@ -257,6 +240,7 @@ ENGINE *ENGINE_get_next(ENGINE *e)
 	ENGINE_free(e);
 	return ret;
 	}
+
 ENGINE *ENGINE_get_prev(ENGINE *e)
 	{
 	ENGINE *ret = NULL;
@@ -296,7 +280,7 @@ int ENGINE_add(ENGINE *e)
 			ENGINE_R_ID_OR_NAME_MISSING);
 		}
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
-	if(!engine_internal_check() || !engine_list_add(e))
+	if(!engine_list_add(e))
 		{
 		ENGINEerr(ENGINE_F_ENGINE_ADD,
 			ENGINE_R_INTERNAL_LIST_ERROR);
@@ -317,7 +301,7 @@ int ENGINE_remove(ENGINE *e)
 		return 0;
 		}
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
-	if(!engine_internal_check() || !engine_list_remove(e))
+	if(!engine_list_remove(e))
 		{
 		ENGINEerr(ENGINE_F_ENGINE_REMOVE,
 			ENGINE_R_INTERNAL_LIST_ERROR);
@@ -327,9 +311,33 @@ int ENGINE_remove(ENGINE *e)
 	return to_return;
 	}
 
+static void engine_cpy(ENGINE *dest, const ENGINE *src)
+	{
+	dest->id = src->id;
+	dest->name = src->name;
+#ifndef OPENSSL_NO_RSA
+	dest->rsa_meth = src->rsa_meth;
+#endif
+#ifndef OPENSSL_NO_DSA
+	dest->dsa_meth = src->dsa_meth;
+#endif
+#ifndef OPENSSL_NO_DH
+	dest->dh_meth = src->dh_meth;
+#endif
+	dest->rand_meth = src->rand_meth;
+	dest->destroy = src->destroy;
+	dest->init = src->init;
+	dest->finish = src->finish;
+	dest->ctrl = src->ctrl;
+	dest->load_privkey = src->load_privkey;
+	dest->load_pubkey = src->load_pubkey;
+	dest->cmd_defns = src->cmd_defns;
+	dest->flags = src->flags;
+	}
+
 ENGINE *ENGINE_by_id(const char *id)
 	{
-	ENGINE *iterator = NULL, *cp = NULL;
+	ENGINE *iterator;
 	if(id == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_BY_ID,
@@ -337,35 +345,29 @@ ENGINE *ENGINE_by_id(const char *id)
 		return NULL;
 		}
 	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
-	if(!engine_internal_check())
-		ENGINEerr(ENGINE_F_ENGINE_BY_ID,
-			ENGINE_R_INTERNAL_LIST_ERROR);
-	else
+	iterator = engine_list_head;
+	while(iterator && (strcmp(id, iterator->id) != 0))
+		iterator = iterator->next;
+	if(iterator)
 		{
-		iterator = engine_list_head;
-		while(iterator && (strcmp(id, iterator->id) != 0))
-			iterator = iterator->next;
-		if(iterator)
+		/* We need to return a structural reference. If this is an
+		 * ENGINE type that returns copies, make a duplicate - otherwise
+		 * increment the existing ENGINE's reference count. */
+		if(iterator->flags & ENGINE_FLAGS_BY_ID_COPY)
 			{
-			/* We need to return a structural reference. If this is
-			 * a "dynamic" ENGINE type, make a duplicate - otherwise
-			 * increment the existing ENGINE's reference count. */
-			if(iterator->flags & ENGINE_FLAGS_BY_ID_COPY)
-				{
-				cp = ENGINE_new();
-				if(!cp)
-					iterator = NULL;
-				else
-					{
-					ENGINE_cpy(cp, iterator);
-					iterator = cp;
-					}
-				}
+			ENGINE *cp = ENGINE_new();
+			if(!cp)
+				iterator = NULL;
 			else
 				{
-				iterator->struct_ref++;
-				engine_ref_debug(iterator, 0, 1)
+				engine_cpy(cp, iterator);
+				iterator = cp;
 				}
+			}
+		else
+			{
+			iterator->struct_ref++;
+			engine_ref_debug(iterator, 0, 1)
 			}
 		}
 	CRYPTO_r_unlock(CRYPTO_LOCK_ENGINE);
@@ -373,327 +375,4 @@ ENGINE *ENGINE_by_id(const char *id)
 		ENGINEerr(ENGINE_F_ENGINE_BY_ID,
 			ENGINE_R_NO_SUCH_ENGINE);
 	return iterator;
-	}
-
-ENGINE *ENGINE_new(void)
-	{
-	ENGINE *ret;
-
-	ret = (ENGINE *)OPENSSL_malloc(sizeof(ENGINE));
-	if(ret == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
-		return NULL;
-		}
-	memset(ret, 0, sizeof(ENGINE));
-	ret->struct_ref = 1;
-	engine_ref_debug(ret, 0, 1)
-	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data);
-	return ret;
-	}
-
-static int ENGINE_free_util(ENGINE *e, int locked)
-	{
-	int i;
-
-	if(e == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_FREE,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
-	if(locked)
-		i = CRYPTO_add(&e->struct_ref,-1,CRYPTO_LOCK_ENGINE);
-	else
-		i = --e->struct_ref;
-	engine_ref_debug(e, 0, -1)
-	if (i > 0) return 1;
-#ifdef REF_CHECK
-	if (i < 0)
-		{
-		fprintf(stderr,"ENGINE_free, bad structural reference count\n");
-		abort();
-		}
-#endif
-	/* Give the ENGINE a chance to do any structural cleanup corresponding
-	 * to allocation it did in its constructor (eg. unload error strings) */
-	if(e->destroy)
-		e->destroy(e);
-	sk_ENGINE_EVP_CIPHER_pop_free(e->ciphers,ENGINE_free_engine_cipher);
-	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ENGINE, e, &e->ex_data);
-	OPENSSL_free(e);
-	return 1;
-	}
-
-int ENGINE_free(ENGINE *e)
-	{
-	return ENGINE_free_util(e, 1);
-	}
-
-int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-		CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-	{
-	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_ENGINE, argl, argp,
-			new_func, dup_func, free_func);
-	}
-
-int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg)
-	{
-	return(CRYPTO_set_ex_data(&e->ex_data, idx, arg));
-	}
-
-void *ENGINE_get_ex_data(const ENGINE *e, int idx)
-	{
-	return(CRYPTO_get_ex_data(&e->ex_data, idx));
-	}
-
-void ENGINE_cleanup(void)
-	{
-	ENGINE *iterator = engine_list_head;
-
-	while(iterator != NULL)
-		{
-		ENGINE_remove(iterator);
-		iterator = engine_list_head;
-		}
-	engine_list_flag = 0;
-	/* Also unset any "default" ENGINEs that may have been set up (a default
-	 * constitutes a functional reference on an ENGINE and there's one for
-	 * each algorithm). */
-	ENGINE_clear_defaults();
-	return;
-	}
-
-int ENGINE_set_id(ENGINE *e, const char *id)
-	{
-	if(id == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_SET_ID,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
-	e->id = id;
-	return 1;
-	}
-
-int ENGINE_set_name(ENGINE *e, const char *name)
-	{
-	if(name == NULL)
-		{
-		ENGINEerr(ENGINE_F_ENGINE_SET_NAME,
-			ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-		}
-	e->name = name;
-	return 1;
-	}
-
-int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth)
-	{
-#ifndef OPENSSL_NO_RSA
-	e->rsa_meth = rsa_meth;
-	return 1;
-#else
-	return 0;
-#endif
-	}
-
-int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth)
-	{
-#ifndef OPENSSL_NO_DSA
-	e->dsa_meth = dsa_meth;
-	return 1;
-#else
-	return 0;
-#endif
-	}
-
-int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth)
-	{
-#ifndef OPENSSL_NO_DH
-	e->dh_meth = dh_meth;
-	return 1;
-#else
-	return 0;
-#endif
-	}
-
-int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth)
-	{
-	e->rand_meth = rand_meth;
-	return 1;
-	}
-
-int ENGINE_set_BN_mod_exp(ENGINE *e, BN_MOD_EXP bn_mod_exp)
-	{
-	e->bn_mod_exp = bn_mod_exp;
-	return 1;
-	}
-
-int ENGINE_set_BN_mod_exp_crt(ENGINE *e, BN_MOD_EXP_CRT bn_mod_exp_crt)
-	{
-	e->bn_mod_exp_crt = bn_mod_exp_crt;
-	return 1;
-	}
-
-int ENGINE_set_destroy_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR destroy_f)
-	{
-	e->destroy = destroy_f;
-	return 1;
-	}
-
-int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f)
-	{
-	e->init = init_f;
-	return 1;
-	}
-
-int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f)
-	{
-	e->finish = finish_f;
-	return 1;
-	}
-
-int ENGINE_set_ctrl_function(ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f)
-	{
-	e->ctrl = ctrl_f;
-	return 1;
-	}
-
-int ENGINE_set_load_privkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpriv_f)
-	{
-	e->load_privkey = loadpriv_f;
-	return 1;
-	}
-
-int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f)
-	{
-	e->load_pubkey = loadpub_f;
-	return 1;
-	}
-
-int ENGINE_set_flags(ENGINE *e, int flags)
-	{
-	e->flags = flags;
-	return 1;
-	}
-
-int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns)
-	{
-	e->cmd_defns = defns;
-	return 1;
-	}
-
-int ENGINE_cpy(ENGINE *dest, const ENGINE *src)
-	{
-	if(ENGINE_set_id(dest, ENGINE_get_id(src)) &&
-			ENGINE_set_name(dest, ENGINE_get_name(src)) &&
-#ifndef OPENSSL_NO_RSA
-			ENGINE_set_RSA(dest, ENGINE_get_RSA(src)) &&
-#endif
-#ifndef OPENSSL_NO_DSA
-			ENGINE_set_DSA(dest, ENGINE_get_DSA(src)) &&
-#endif
-#ifndef OPENSSL_NO_DH
-			ENGINE_set_DH(dest, ENGINE_get_DH(src)) &&
-#endif
-			ENGINE_set_RAND(dest, ENGINE_get_RAND(src)) &&
-			ENGINE_set_BN_mod_exp(dest,
-					ENGINE_get_BN_mod_exp(src)) &&
-			ENGINE_set_BN_mod_exp_crt(dest,
-					ENGINE_get_BN_mod_exp_crt(src)) &&
-			ENGINE_set_init_function(dest,
-					ENGINE_get_init_function(src)) &&
-			ENGINE_set_finish_function(dest,
-					ENGINE_get_finish_function(src)) &&
-			ENGINE_set_ctrl_function(dest,
-					ENGINE_get_ctrl_function(src)) &&
-			ENGINE_set_load_privkey_function(dest,
-					ENGINE_get_load_privkey_function(src)) &&
-			ENGINE_set_load_pubkey_function(dest,
-					ENGINE_get_load_pubkey_function(src)) &&
-			ENGINE_set_flags(dest, ENGINE_get_flags(src)) &&
-			ENGINE_set_cmd_defns(dest, ENGINE_get_cmd_defns(src)))
-		return 1;
-	return 0;
-	}
-
-const char *ENGINE_get_id(const ENGINE *e)
-	{
-	return e->id;
-	}
-
-const char *ENGINE_get_name(const ENGINE *e)
-	{
-	return e->name;
-	}
-
-const RSA_METHOD *ENGINE_get_RSA(const ENGINE *e)
-	{
-	return e->rsa_meth;
-	}
-
-const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e)
-	{
-	return e->dsa_meth;
-	}
-
-const DH_METHOD *ENGINE_get_DH(const ENGINE *e)
-	{
-	return e->dh_meth;
-	}
-
-const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e)
-	{
-	return e->rand_meth;
-	}
-
-BN_MOD_EXP ENGINE_get_BN_mod_exp(const ENGINE *e)
-	{
-	return e->bn_mod_exp;
-	}
-
-BN_MOD_EXP_CRT ENGINE_get_BN_mod_exp_crt(const ENGINE *e)
-	{
-	return e->bn_mod_exp_crt;
-	}
-
-ENGINE_GEN_INT_FUNC_PTR ENGINE_get_destroy_function(const ENGINE *e)
-	{
-	return e->destroy;
-	}
-
-ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e)
-	{
-	return e->init;
-	}
-
-ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e)
-	{
-	return e->finish;
-	}
-
-ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(const ENGINE *e)
-	{
-	return e->ctrl;
-	}
-
-ENGINE_LOAD_KEY_PTR ENGINE_get_load_privkey_function(const ENGINE *e)
-	{
-	return e->load_privkey;
-	}
-
-ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e)
-	{
-	return e->load_pubkey;
-	}
-
-int ENGINE_get_flags(const ENGINE *e)
-	{
-	return e->flags;
-	}
-
-const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e)
-	{
-	return e->cmd_defns;
 	}

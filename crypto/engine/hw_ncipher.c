@@ -417,7 +417,6 @@ static int bind_helper(ENGINE *e)
 			!ENGINE_set_DH(e, &hwcrhk_dh) ||
 #endif
 			!ENGINE_set_RAND(e, &hwcrhk_rand) ||
-			!ENGINE_set_BN_mod_exp(e, hwcrhk_mod_exp) ||
 			!ENGINE_set_destroy_function(e, hwcrhk_destroy) ||
 			!ENGINE_set_init_function(e, hwcrhk_init) ||
 			!ENGINE_set_finish_function(e, hwcrhk_finish) ||
@@ -454,9 +453,7 @@ static int bind_helper(ENGINE *e)
 	return 1;
 	}
 
-/* As this is only ever called once, there's no need for locking
- * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_ncipher(void)
+static ENGINE *engine_ncipher(void)
 	{
 	ENGINE *ret = ENGINE_new();
 	if(!ret)
@@ -467,6 +464,16 @@ ENGINE *ENGINE_ncipher(void)
 		return NULL;
 		}
 	return ret;
+	}
+
+void ENGINE_load_chil(void)
+	{
+	/* Copied from eng_[openssl|dyn].c */
+	ENGINE *toadd = engine_ncipher();
+	if(!toadd) return;
+	ENGINE_add(toadd);
+	ENGINE_free(toadd);
+	ERR_clear_error();
 	}
 
 /* This is a process-global DSO handle used for loading and unloading

@@ -258,7 +258,6 @@ static int bind_helper(ENGINE *e)
 #ifndef OPENSSL_NO_DH
 			!ENGINE_set_DH(e, &atalla_dh) ||
 #endif
-			!ENGINE_set_BN_mod_exp(e, atalla_mod_exp) ||
 			!ENGINE_set_destroy_function(e, atalla_destroy) ||
 			!ENGINE_set_init_function(e, atalla_init) ||
 			!ENGINE_set_finish_function(e, atalla_finish) ||
@@ -302,9 +301,7 @@ static int bind_helper(ENGINE *e)
 	return 1;
 	}
 
-/* As this is only ever called once, there's no need for locking
- * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_atalla(void)
+static ENGINE *engine_atalla(void)
 	{
 	ENGINE *ret = ENGINE_new();
 	if(!ret)
@@ -315,6 +312,16 @@ ENGINE *ENGINE_atalla(void)
 		return NULL;
 		}
 	return ret;
+	}
+
+void ENGINE_load_atalla(void)
+	{
+	/* Copied from eng_[openssl|dyn].c */
+	ENGINE *toadd = engine_atalla();
+	if(!toadd) return;
+	ENGINE_add(toadd);
+	ENGINE_free(toadd);
+	ERR_clear_error();
 	}
 
 /* This is a process-global DSO handle used for loading and unloading

@@ -87,14 +87,43 @@ extern "C" {
 
 #endif
 
-typedef struct engine_evp_cipher_st
-	{
-	const EVP_CIPHER *cipher;
-	} ENGINE_EVP_CIPHER;
+/* Any code that will need cleanup operations should use these functions to
+ * register callbacks. ENGINE_cleanup() will call all registered callbacks in
+ * order. NB: both the "add" functions assume CRYPTO_LOCK_ENGINE to already be
+ * held (in "write" mode). */
+typedef void (ENGINE_CLEANUP_CB)(void);
+DECLARE_STACK_OF(ENGINE_CLEANUP_CB)
+void engine_cleanup_add_first(ENGINE_CLEANUP_CB *cb);
+void engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb);
 
-DECLARE_STACK_OF(ENGINE_EVP_CIPHER)
+/* We need stacks of ENGINEs for use in eng_table.c */
+DECLARE_STACK_OF(ENGINE)
 
-void ENGINE_free_engine_cipher(ENGINE_EVP_CIPHER *p);
+/* If this symbol is defined then engine_table_select(), the function that is
+ * used by RSA, DSA (etc) code to select registered ENGINEs, cache defaults and
+ * functional references (etc), will display debugging summaries to stderr. */
+/* #define ENGINE_TABLE_DEBUG */
+
+/* This represents an implementation table. Dependent code should instantiate it
+ * as a (ENGINE_TABLE *) pointer value set initially to NULL. */
+typedef struct st_engine_table ENGINE_TABLE;
+int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
+		ENGINE *e, const int *nids, int num_nids, int setdefault);
+void engine_table_unregister(ENGINE_TABLE **table, ENGINE *e);
+void engine_table_cleanup(ENGINE_TABLE **table);
+#ifndef ENGINE_TABLE_DEBUG
+ENGINE *engine_table_select(ENGINE_TABLE **table, int nid);
+#else
+ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f, int l);
+#define engine_table_select(t,n) engine_table_select_tmp(t,n,__FILE__,__LINE__)
+#endif
+
+/* Internal versions of API functions that have control over locking. These are
+ * used between C files when functionality needs to be shared but the caller may
+ * already be controlling of the CRYPTO_LOCK_ENGINE lock. */
+int engine_unlocked_init(ENGINE *e);
+int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers);
+int engine_free_util(ENGINE *e, int locked);
 
 /* NB: Bitwise OR-able values for the "flags" variable in ENGINE are now exposed
  * in engine.h. */
@@ -110,16 +139,13 @@ struct engine_st
 	const DH_METHOD *dh_meth;
 	const RAND_METHOD *rand_meth;
 
-	BN_MOD_EXP bn_mod_exp;
-	BN_MOD_EXP_CRT bn_mod_exp_crt;
 	ENGINE_GEN_INT_FUNC_PTR	destroy;
+
 	ENGINE_GEN_INT_FUNC_PTR init;
 	ENGINE_GEN_INT_FUNC_PTR finish;
 	ENGINE_CTRL_FUNC_PTR ctrl;
 	ENGINE_LOAD_KEY_PTR load_privkey;
 	ENGINE_LOAD_KEY_PTR load_pubkey;
-
-	STACK_OF(ENGINE_EVP_CIPHER) *ciphers;
 
 	const ENGINE_CMD_DEFN *cmd_defns;
 	int flags;
@@ -137,48 +163,6 @@ struct engine_st
 	struct engine_st *prev;
 	struct engine_st *next;
 	};
-
-/* BUILT-IN ENGINES. (these functions are only ever called once and
- * do not return references - they are purely for bootstrapping). */
-
-/* Returns a structure of software only methods (the default). */
-ENGINE *ENGINE_openssl(void);
-
-/* Returns the "dynamic" ENGINE for loading entire ENGINE implementations from
- * shared libraries. */
-ENGINE *ENGINE_dynamic(void);
-
-#ifndef OPENSSL_NO_HW
-
-#ifndef OPENSSL_NO_HW_CSWIFT
-/* Returns a structure of cswift methods ... NB: This can exist and be
- * "used" even on non-cswift systems because the "init" will fail if the
- * card/library are not found. */
-ENGINE *ENGINE_cswift(void);
-#endif /* !OPENSSL_NO_HW_CSWIFT */
-
-#ifndef OPENSSL_NO_HW_NCIPHER
-ENGINE *ENGINE_ncipher(void);
-#endif /* !OPENSSL_NO_HW_NCIPHER */
-
-#ifndef OPENSSL_NO_HW_ATALLA
-/* Returns a structure of atalla methods. */
-ENGINE *ENGINE_atalla(void);
-#endif /* !OPENSSL_NO_HW_ATALLA */
-
-#ifndef OPENSSL_NO_HW_NURON
-ENGINE *ENGINE_nuron(void);
-#endif /* !OPENSSL_NO_HW_NURON */
-
-#ifndef OPENSSL_NO_HW_UBSEC
-ENGINE *ENGINE_ubsec(void);
-#endif /* !OPENSSL_NO_HW_UBSEC */
-
-#ifdef OPENSSL_OPENBSD_DEV_CRYPTO
-ENGINE *ENGINE_openbsd_dev_crypto(void);
-#endif
-
-#endif /* !OPENSSL_NO_HW */
 
 #ifdef  __cplusplus
 }

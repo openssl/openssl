@@ -1,6 +1,5 @@
-/* Written by Ben Laurie <ben@algroup.co.uk> August 2001 */
 /* ====================================================================
- * Copyright (c) 2000-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,60 +52,69 @@
  *
  */
 
-#include <openssl/engine.h>
 #include <openssl/evp.h>
+#include <openssl/engine.h>
 #include "eng_int.h"
-#include <string.h>
 
-int ENGINE_add_cipher(ENGINE *e,const EVP_CIPHER *c)
-    {
-    ENGINE_EVP_CIPHER *p;
+/* If this symbol is defined then ENGINE_get_default_DSA(), the function that is
+ * used by DSA to hook in implementation code and cache defaults (etc), will
+ * display brief debugging summaries to stderr with the 'nid'. */
+/* #define ENGINE_DSA_DEBUG */
 
-    p=OPENSSL_malloc(sizeof *p);
-    p->cipher=c;
+static ENGINE_TABLE *dsa_table = NULL;
+static const int dummy_nid = 1;
 
-    if(!e->ciphers)
-	e->ciphers=sk_ENGINE_EVP_CIPHER_new_null();
-    sk_ENGINE_EVP_CIPHER_push(e->ciphers,p);
-
-    return 1;
-    }
-
-void ENGINE_free_engine_cipher(ENGINE_EVP_CIPHER *p)
-    { OPENSSL_free(p); }
-
-int ENGINE_cipher_num(const ENGINE *e)
-    { return sk_ENGINE_EVP_CIPHER_num(e->ciphers); }
-
-const EVP_CIPHER *ENGINE_get_cipher(const ENGINE *e, int n)
-    { return sk_ENGINE_EVP_CIPHER_value(e->ciphers, n)->cipher; }
-
-void ENGINE_load_ciphers()
-    {
-    ENGINE *e;
-
-    for(e=ENGINE_get_first() ; e ; e=ENGINE_get_next(e))
-	ENGINE_load_engine_ciphers(e);
-    }
-	
-void ENGINE_load_engine_ciphers(ENGINE *e)
-    {
-    int n;
-
-    for(n=0 ; n < sk_ENGINE_EVP_CIPHER_num(e->ciphers) ; ++n)
-	EVP_add_cipher(sk_ENGINE_EVP_CIPHER_value(e->ciphers,n)->cipher);
-    }
-
-const EVP_CIPHER *ENGINE_get_cipher_by_name(ENGINE *e,const char *name)
-    {
-    int n;
-
-    for(n=0 ; n < ENGINE_cipher_num(e) ; ++n)
+void ENGINE_unregister_DSA(ENGINE *e)
 	{
-	const EVP_CIPHER *c=ENGINE_get_cipher(e,n);
-
-	if(!strcmp(EVP_CIPHER_name(c),name))
-	    return c;
+	engine_table_unregister(&dsa_table, e);
 	}
-    return NULL;
-    }
+
+static void engine_unregister_all_DSA()
+	{
+	engine_table_cleanup(&dsa_table);
+	}
+
+int ENGINE_register_DSA(ENGINE *e)
+	{
+	if(e->dsa_meth)
+		return engine_table_register(&dsa_table,
+				&engine_unregister_all_DSA, e, &dummy_nid, 1, 0);
+	return 1;
+	}
+
+void ENGINE_register_all_DSA()
+	{
+	ENGINE *e;
+
+	for(e=ENGINE_get_first() ; e ; e=ENGINE_get_next(e))
+		ENGINE_register_DSA(e);
+	}
+
+int ENGINE_set_default_DSA(ENGINE *e)
+	{
+	if(e->dsa_meth)
+		return engine_table_register(&dsa_table,
+				&engine_unregister_all_DSA, e, &dummy_nid, 1, 0);
+	return 1;
+	}
+
+/* Exposed API function to get a functional reference from the implementation
+ * table (ie. try to get a functional reference from the tabled structural
+ * references). */
+ENGINE *ENGINE_get_default_DSA(void)
+	{
+	return engine_table_select(&dsa_table, dummy_nid);
+	}
+
+/* Obtains an DSA implementation from an ENGINE functional reference */
+const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e)
+	{
+	return e->dsa_meth;
+	}
+
+/* Sets an DSA implementation in an ENGINE structure */
+int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth)
+	{
+	e->dsa_meth = dsa_meth;
+	return 1;
+	}

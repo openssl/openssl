@@ -368,7 +368,6 @@ static int bind_helper(ENGINE *e)
 #ifndef OPENSSL_NO_DH
 			!ENGINE_set_DH(e, &nuron_dh) ||
 #endif
-			!ENGINE_set_BN_mod_exp(e, nuron_mod_exp) ||
 			!ENGINE_set_destroy_function(e, nuron_destroy) ||
 			!ENGINE_set_init_function(e, nuron_init) ||
 			!ENGINE_set_finish_function(e, nuron_finish) ||
@@ -412,9 +411,7 @@ static int bind_helper(ENGINE *e)
 	return 1;
 	}
 
-/* As this is only ever called once, there's no need for locking
- * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_nuron(void)
+static ENGINE *engine_nuron(void)
 	{
 	ENGINE *ret = ENGINE_new();
 	if(!ret)
@@ -425,6 +422,16 @@ ENGINE *ENGINE_nuron(void)
 		return NULL;
 		}
 	return ret;
+	}
+
+void ENGINE_load_nuron(void)
+	{
+	/* Copied from eng_[openssl|dyn].c */
+	ENGINE *toadd = engine_nuron();
+	if(!toadd) return;
+	ENGINE_add(toadd);
+	ENGINE_free(toadd);
+	ERR_clear_error();
 	}
 
 /* This stuff is needed if this ENGINE is being compiled into a self-contained

@@ -102,6 +102,12 @@ typedef void DH_METHOD;
 #define ENGINE_METHOD_ALL		(unsigned int)0xFFFF
 #define ENGINE_METHOD_NONE		(unsigned int)0x0000
 
+/* This(ese) flag(s) controls behaviour of the ENGINE_TABLE mechanism used
+ * internally to control registration of ENGINE implementations, and can be set
+ * by ENGINE_set_table_flags(). The "NOINIT" flag prevents attempts to
+ * initialise registered ENGINEs if they are not already initialised. */
+#define ENGINE_TABLE_FLAG_NOINIT	(unsigned int)0x0001
+
 /* ENGINE flags that can be set by ENGINE_set_flags(). */
 /* #define ENGINE_FLAGS_MALLOCED	0x0001 */ /* Not used */
 
@@ -244,21 +250,6 @@ typedef struct ENGINE_CMD_DEFN_st
 	unsigned int cmd_flags; /* The input the command expects */
 	} ENGINE_CMD_DEFN;
 
-/* As we're missing a BIGNUM_METHOD, we need a couple of locally
- * defined function types that engines can implement. */
-
-/* mod_exp operation, calculates; r = a ^ p mod m
- * NB: ctx can be NULL, but if supplied, the implementation may use
- * it if it wishes. */
-typedef int (*BN_MOD_EXP)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-		const BIGNUM *m, BN_CTX *ctx);
-
-/* private key operation for RSA, provided seperately in case other
- * RSA implementations wish to use it. */
-typedef int (*BN_MOD_EXP_CRT)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-		const BIGNUM *q, const BIGNUM *dmp1, const BIGNUM *dmq1,
-		const BIGNUM *iqmp, BN_CTX *ctx);
-
 /* Generic function pointer */
 typedef int (*ENGINE_GEN_FUNC_PTR)();
 /* Generic function pointer taking no arguments */
@@ -291,8 +282,9 @@ int ENGINE_add(ENGINE *e);
 int ENGINE_remove(ENGINE *e);
 /* Retrieve an engine from the list by its unique "id" value. */
 ENGINE *ENGINE_by_id(const char *id);
-/* Add all the built-in engines.  By default, only the OpenSSL software
-   engine is loaded */
+/* Add all the built-in engines. */
+void ENGINE_load_openssl(void);
+void ENGINE_load_dynamic(void);
 void ENGINE_load_cswift(void);
 void ENGINE_load_chil(void);
 void ENGINE_load_atalla(void);
@@ -301,8 +293,41 @@ void ENGINE_load_ubsec(void);
 void ENGINE_load_openbsd_dev_crypto(void);
 void ENGINE_load_builtin_engines(void);
 
-/* Load all the currently known ciphers from all engines */
-void ENGINE_load_ciphers(void);
+/* Get and set global flags (ENGINE_TABLE_FLAG_***) for the implementation
+ * "registry" handling. */
+unsigned int ENGINE_get_table_flags(void);
+void ENGINE_set_table_flags(unsigned int flags);
+
+/* Manage registration of ENGINEs per "table". For each type, there are 3
+ * functions;
+ *   ENGINE_register_***(e) - registers the implementation from 'e' (if it has one)
+ *   ENGINE_unregister_***(e) - unregister the implementation from 'e'
+ *   ENGINE_register_all_***() - call ENGINE_register_***() for each 'e' in the list
+ * Cleanup is automatically registered from each table when required, so
+ * ENGINE_cleanup() will reverse any "register" operations. */
+
+int ENGINE_register_RSA(ENGINE *e);
+void ENGINE_unregister_RSA(ENGINE *e);
+void ENGINE_register_all_RSA(void);
+
+int ENGINE_register_DSA(ENGINE *e);
+void ENGINE_unregister_DSA(ENGINE *e);
+void ENGINE_register_all_DSA(void);
+
+int ENGINE_register_DH(ENGINE *e);
+void ENGINE_unregister_DH(ENGINE *e);
+void ENGINE_register_all_DH(void);
+
+int ENGINE_register_RAND(ENGINE *e);
+void ENGINE_unregister_RAND(ENGINE *e);
+void ENGINE_register_all_RAND(void);
+
+/* These functions register all support from the above categories. Note, use of
+ * these functions can result in static linkage of code your application may not
+ * need. If you only need a subset of functionality, consider using more
+ * selective initialisation. */
+int ENGINE_register_complete(ENGINE *e);
+int ENGINE_register_all_complete(void);
 
 /* Send parametrised control commands to the engine. The possibilities to send
  * down an integer, a pointer to data or a function pointer are provided. Any of
@@ -362,8 +387,6 @@ int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth);
 int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth);
 int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
 int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
-int ENGINE_set_BN_mod_exp(ENGINE *e, BN_MOD_EXP bn_mod_exp);
-int ENGINE_set_BN_mod_exp_crt(ENGINE *e, BN_MOD_EXP_CRT bn_mod_exp_crt);
 int ENGINE_set_destroy_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR destroy_f);
 int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f);
 int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
@@ -373,20 +396,16 @@ int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f);
 int ENGINE_set_flags(ENGINE *e, int flags);
 int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
 int ENGINE_add_cipher(ENGINE *e,const EVP_CIPHER *c);
-/* Copies across all ENGINE methods and pointers. NB: This does *not* change
- * reference counts however. */
-int ENGINE_cpy(ENGINE *dest, const ENGINE *src);
 /* These functions (and the "get" function lower down) allow control over any
  * per-structure ENGINE data. */
 int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 		CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
-/* Cleans the internal engine list. This should only be used when the
- * application is about to exit or restart operation (the next operation
- * requiring the ENGINE list will re-initialise it with defaults). NB: Dynamic
- * ENGINEs will only truly unload (including any allocated data or loaded
- * shared-libraries) if all remaining references are released too - so keys,
- * certificates, etc all need to be released for an in-use ENGINE to unload. */
+
+/* This function cleans up anything that needs it. Eg. the ENGINE_add() function
+ * automatically ensures the list cleanup function is registered to be called
+ * from ENGINE_cleanup(). Similarly, all ENGINE_register_*** functions ensure
+ * ENGINE_cleanup() will clean up after them. */
 void ENGINE_cleanup(void);
 
 /* These return values from within the ENGINE structure. These can be useful
@@ -399,10 +418,6 @@ const RSA_METHOD *ENGINE_get_RSA(const ENGINE *e);
 const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e);
 const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
 const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
-int ENGINE_cipher_num(const ENGINE *e);
-const EVP_CIPHER *ENGINE_get_cipher(const ENGINE *e, int n);
-BN_MOD_EXP ENGINE_get_BN_mod_exp(const ENGINE *e);
-BN_MOD_EXP_CRT ENGINE_get_BN_mod_exp_crt(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_destroy_function(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
@@ -451,8 +466,6 @@ ENGINE *ENGINE_get_default_RSA(void);
 ENGINE *ENGINE_get_default_DSA(void);
 ENGINE *ENGINE_get_default_DH(void);
 ENGINE *ENGINE_get_default_RAND(void);
-ENGINE *ENGINE_get_default_BN_mod_exp(void);
-ENGINE *ENGINE_get_default_BN_mod_exp_crt(void);
 
 /* This sets a new default ENGINE structure for performing RSA
  * operations. If the result is non-zero (success) then the ENGINE
@@ -463,25 +476,16 @@ int ENGINE_set_default_RSA(ENGINE *e);
 int ENGINE_set_default_DSA(ENGINE *e);
 int ENGINE_set_default_DH(ENGINE *e);
 int ENGINE_set_default_RAND(ENGINE *e);
-int ENGINE_set_default_BN_mod_exp(ENGINE *e);
-int ENGINE_set_default_BN_mod_exp_crt(ENGINE *e);
 
 /* The combination "set" - the flags are bitwise "OR"d from the
- * ENGINE_METHOD_*** defines above. */
+ * ENGINE_METHOD_*** defines above. As with the "ENGINE_register_complete()"
+ * function, this function can result in unnecessary static linkage. If your
+ * application requires only specific functionality, consider using more
+ * selective functions. */
 int ENGINE_set_default(ENGINE *e, unsigned int flags);
 
-/* This function resets all the internal "default" ENGINEs (there's one for each
- * of the various algorithms) to NULL, releasing any references as appropriate.
- * This function is called as part of the ENGINE_cleanup() function, so there's
- * no need to call both (although no harm is done). */
-int ENGINE_clear_defaults(void);
-
-/* Instruct an engine to load any EVP ciphers it knows of */
-/* XXX make this work via defaults? */
-void ENGINE_load_engine_ciphers(ENGINE *e);
-/* Get a particular cipher from a particular engine - NULL if the engine
- * doesn't have it */
-const EVP_CIPHER *ENGINE_get_cipher_by_name(ENGINE *e,const char *name);
+/* Deprecated functions ... */
+/* int ENGINE_clear_defaults(void); */
 
 /**************************/
 /* DYNAMIC ENGINE SUPPORT */
@@ -613,6 +617,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_SET_DEFAULT_TYPE		 126
 #define ENGINE_F_ENGINE_SET_ID				 129
 #define ENGINE_F_ENGINE_SET_NAME			 130
+#define ENGINE_F_ENGINE_TABLE_REGISTER			 184
 #define ENGINE_F_ENGINE_UNLOAD_KEY			 152
 #define ENGINE_F_INT_CTRL_HELPER			 172
 #define ENGINE_F_LOG_MESSAGE				 141

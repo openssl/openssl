@@ -161,12 +161,7 @@ int main(int argc, char *argv[])
 		}
 	else
 		printf("Remove that should fail did.\n");
-	if(!ENGINE_remove(new_h1))
-		{
-		printf("Remove failed!\n");
-		goto end;
-		}
-	display_engine_list();
+	ERR_clear_error();
 	if(!ENGINE_remove(new_h3))
 		{
 		printf("Remove failed!\n");

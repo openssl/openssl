@@ -236,9 +236,7 @@ static dynamic_data_ctx *dynamic_get_data_ctx(ENGINE *e)
 	return ctx;
 	}
 
-/* As this is only ever called once, there's no need for locking
- * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_dynamic(void)
+static ENGINE *engine_dynamic(void)
 	{
 	ENGINE *ret = ENGINE_new();
 	if(!ret)
@@ -255,6 +253,20 @@ ENGINE *ENGINE_dynamic(void)
 		return NULL;
 		}
 	return ret;
+	}
+
+void ENGINE_load_dynamic(void)
+	{
+	ENGINE *toadd = engine_dynamic();
+	if(!toadd) return;
+	ENGINE_add(toadd);
+	/* If the "add" worked, it gets a structural reference. So either way,
+	 * we release our just-created reference. */
+	ENGINE_free(toadd);
+	/* If the "add" didn't work, it was probably a conflict because it was
+	 * already added (eg. someone calling ENGINE_load_blah then calling
+	 * ENGINE_load_builtin_engines() perhaps). */
+	ERR_clear_error();
 	}
 
 static int dynamic_init(ENGINE *e)

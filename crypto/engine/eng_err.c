@@ -1,6 +1,6 @@
 /* crypto/engine/eng_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -90,6 +90,7 @@ static ERR_STRING_DATA ENGINE_str_functs[]=
 {ERR_PACK(0,ENGINE_F_ENGINE_SET_DEFAULT_TYPE,0),	"ENGINE_SET_DEFAULT_TYPE"},
 {ERR_PACK(0,ENGINE_F_ENGINE_SET_ID,0),	"ENGINE_set_id"},
 {ERR_PACK(0,ENGINE_F_ENGINE_SET_NAME,0),	"ENGINE_set_name"},
+{ERR_PACK(0,ENGINE_F_ENGINE_TABLE_REGISTER,0),	"ENGINE_TABLE_REGISTER"},
 {ERR_PACK(0,ENGINE_F_ENGINE_UNLOAD_KEY,0),	"ENGINE_UNLOAD_KEY"},
 {ERR_PACK(0,ENGINE_F_INT_CTRL_HELPER,0),	"INT_CTRL_HELPER"},
 {ERR_PACK(0,ENGINE_F_LOG_MESSAGE,0),	"LOG_MESSAGE"},
