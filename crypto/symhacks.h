@@ -199,6 +199,8 @@
 #define EC_GROUP_set_point_conversion_form	EC_GROUP_set_point_conv_form
 #undef EC_GROUP_get_point_conversion_form
 #define EC_GROUP_get_point_conversion_form	EC_GROUP_get_point_conv_form
+#undef EC_GROUP_clear_free_all_extra_data
+#define EC_GROUP_clear_free_all_extra_data	EC_GROUP_clr_free_all_xtra_data
 #undef EC_POINT_set_Jprojective_coordinates_GFp
 #define EC_POINT_set_Jprojective_coordinates_GFp \
                                                 EC_POINT_set_Jproj_coords_GFp
