@@ -40,7 +40,7 @@
       o SSL/TLS: add callback to retrieve SSL/TLS messages.
       o SSL/TLS: support AES cipher suites (RFC3268).
 
-  Major changes between OpenSSL 0.9.6c and OpenSSL 0.9.6d:
+  Major changes between OpenSSL 0.9.6d and OpenSSL 0.9.6e:
 
       o Important security related bugfixes.
       o Various SSL/TLS library bugfixes.
