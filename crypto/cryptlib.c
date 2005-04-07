@@ -602,9 +602,144 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 	}
 #endif
 
+#if defined(_WIN32)
+#include <tchar.h>
+
+#if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
+static int IsService(void)
+{ HWINSTA h;
+  DWORD len;
+  WCHAR *name;
+
+    (void)GetDesktopWindow(); /* return value is ignored */
+
+    h = GetProcessWindowStation();
+    if (h==NULL) return -1;
+
+    if (GetUserObjectInformationW (h,UOI_NAME,NULL,0,&len) ||
+	GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+	return -1;
+
+    if (len>512) return -1;		/* paranoia */
+    len++,len&=~1;			/* paranoia */
+#ifdef _MSC_VER
+    name=(WCHAR *)_alloca(len+sizeof(WCHAR));
+#else
+    name=(WCHAR *)alloca(len+sizeof(WCHAR));
+#endif
+    if (!GetUserObjectInformationW (h,UOI_NAME,name,len,&len))
+	return -1;
+
+    len++,len&=~1;			/* paranoia */
+    name[len/sizeof(WCHAR)]=L'\0';	/* paranoia */
+#if 1
+    /* This doesn't cover "interactive" services [working with real
+     * WinSta0's] nor programs started non-interactively by Task
+     * Scheduler [those are working with SAWinSta]. */
+    if (wcsstr(name,L"Service-0x"))	return 1;
+#else
+    /* This covers all non-interactive programs such as services. */
+    if (!wcsstr(name,L"WinSta0"))	return 1;
+#endif
+    else				return 0;
+}
+#endif
+
+void OPENSSL_showfatal (char *fmta,...)
+{ va_list ap;
+  TCHAR buf[256],*fmt;
+  HANDLE h;
+
+    if ((h=GetStdHandle(STD_ERROR_HANDLE)) != NULL &&
+	GetFileType(h)!=FILE_TYPE_UNKNOWN)
+    {	/* must be console application */
+	va_start (ap,fmta);
+	vfprintf (stderr,fmta,ap);
+	va_end (ap);
+	return;
+    }
+
+    if (sizeof(TCHAR)==sizeof(char))
+	fmt=fmta;
+    else do
+    { int    keepgoing;
+      size_t len_0=strlen(fmta)+1,i;
+      WCHAR *fmtw;
+
+#ifdef _MSC_VER
+	fmtw = (WCHAR *)_alloca (len_0*sizeof(WCHAR));
+#else
+	fmtw = (WCHAR *)alloca (len_0*sizeof(WCHAR));
+#endif
+	if (fmtw == NULL) { fmt=(TCHAR *)L"no stack?"; break; }
+
+#ifndef OPENSSL_NO_MULTIBYTE
+	if (!MultiByteToWideChar(CP_ACP,0,fmta,len_0,fmtw,len_0))
+#endif
+	    for (i=0;i<len_0;i++) fmtw[i]=(WCHAR)fmta[i];
+
+	for (i=0;i<len_0;i++)
+	{   if (fmtw[i]==L'%') do
+	    {	keepgoing=0;
+		switch (fmtw[i+1])
+		{   case L'0': case L'1': case L'2': case L'3': case L'4':
+		    case L'5': case L'6': case L'7': case L'8': case L'9':
+		    case L'.': case L'*':
+		    case L'-':	i++; keepgoing=1; break;
+		    case L's':	fmtw[i+1]=L'S';   break;
+		    case L'S':	fmtw[i+1]=L's';   break;
+		    case L'c':	fmtw[i+1]=L'C';   break;
+		    case L'C':	fmtw[i+1]=L'c';   break;
+		}
+	    } while (keepgoing);
+	}
+	fmt = (TCHAR *)fmtw;
+    } while (0);
+
+    va_start (ap,fmta);
+    _vsntprintf (buf,sizeof(buf)/sizeof(TCHAR)-1,fmt,ap);
+    buf [sizeof(buf)/sizeof(TCHAR)-1] = _T('\0');
+    va_end (ap);
+
+#if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
+    /* this -------------v--- guards NT-specific calls */
+    if (GetVersion() < 0x80000000 && IsService())
+    {	HANDLE h = RegisterEventSource(0,_T("OPENSSL"));
+	const TCHAR *pmsg=buf;
+	ReportEvent(h,EVENTLOG_ERROR_TYPE,0,0,0,1,0,&pmsg,0);
+	DeregisterEventSource(h);
+    }
+    else
+#endif
+    {	MSGBOXPARAMS         m;
+
+	m.cbSize             = sizeof(m);
+	m.hwndOwner          = NULL;
+	m.lpszCaption        = _T("OpenSSL: FATAL");
+	m.dwStyle            = MB_OK;
+	m.hInstance          = NULL;
+	m.lpszIcon           = IDI_ERROR;
+	m.dwContextHelpId    = 0;
+	m.lpfnMsgBoxCallback = NULL;
+	m.dwLanguageId       = MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US);
+	m.lpszText           = buf;
+
+	MessageBoxIndirect (&m);
+    }
+}
+#else
+void OPENSSL_showfatal (char *fmta,...)
+{ va_list ap;
+
+    va_start (ap,fmta);
+    vfprintf (stderr,fmta,ap);
+    va_end (ap);
+}
+#endif
+
 void OpenSSLDie(const char *file,int line,const char *assertion)
 	{
-	fprintf(stderr,
+	OPENSSL_showfatal(
 		"%s(%d): OpenSSL internal error, assertion failed: %s\n",
 		file,line,assertion);
 	abort();
