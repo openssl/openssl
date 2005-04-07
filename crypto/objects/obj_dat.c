@@ -414,7 +414,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	i=a2d_ASN1_OBJECT(NULL,0,s,-1);
 	if (i <= 0) {
 		/* Clear the error */
-		ERR_get_error();
+		ERR_clear_error();
 		return NULL;
 	}
 	/* Work out total size */

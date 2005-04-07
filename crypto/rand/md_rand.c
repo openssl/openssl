@@ -520,7 +520,7 @@ static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num)
 		err = ERR_peek_error();
 		if (ERR_GET_LIB(err) == ERR_LIB_RAND &&
 		    ERR_GET_REASON(err) == RAND_R_PRNG_NOT_SEEDED)
-			(void)ERR_get_error();
+			ERR_clear_error();
 		}
 	return (ret);
 	}

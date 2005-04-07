@@ -254,7 +254,7 @@ static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value,
 	path = NCONF_get_string(cnf, value, "path");
 	if (!path)
 		{
-		ERR_get_error();
+		ERR_clear_error();
 		path = name;
 		}
 	dso = DSO_load(NULL, path, NULL, 0);

@@ -204,7 +204,7 @@ int bio_ber_get_header(BIO *bio, BIO_BER_CTX *ctx)
 		if ((ctx->buf_len < BER_BUF_SIZE) &&
 			(ERR_GET_REASON(ERR_peek_error()) == ASN1_R_TOO_LONG))
 			{
-			ERR_get_error(); /* clear the error */
+			ERR_clear_error(); /* clear the error */
 			BIO_set_retry_read(b);
 			}
 		return(-1);

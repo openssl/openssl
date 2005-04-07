@@ -197,7 +197,7 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 			if (e != ASN1_R_TOO_LONG)
 				goto err;
 			else
-				ERR_get_error(); /* clear error */
+				ERR_clear_error(); /* clear error */
 			}
 		i=c.p-p;/* header length */
 		off+=i;	/* end of data */
