@@ -573,7 +573,7 @@ void OPENSSL_cpuid_setup(void)
 void OPENSSL_cpuid_setup(void) {}
 #endif
 
-#if (defined(_WIN32) || defined(__CYGWIN__)) && defined(_DLL)
+#if (defined(_WIN32) || defined(__CYGWIN__)) && defined(_WINDLL)
 #ifdef __CYGWIN__
 /* pick DLL_[PROCESS|THREAD]_[ATTACH|DETACH] definitions */
 #include <windows.h>
