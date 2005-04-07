@@ -337,6 +337,9 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "mips-sony-newsos4"; exit 0;
 	;;
 
+    MINGW*)
+	echo "${MACHINE}-whatever-mingw"; echo 0;
+	;;
     CYGWIN*)
 	case "$RELEASE" in
 	    [bB]*|1.0|1.[12].*)
