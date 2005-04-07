@@ -180,7 +180,7 @@ static void print_stats(BIO *bp,SSL_CTX *ctx);
 static int generate_session_id(const SSL *ssl, unsigned char *id,
 				unsigned int *id_len);
 #ifndef OPENSSL_NO_DH
-static DH *load_dh_param(char *dhfile);
+static DH *load_dh_param(const char *dhfile);
 static DH *get_dh512(void);
 #endif
 
@@ -1465,12 +1465,12 @@ static int init_ssl_connection(SSL *con)
 	}
 
 #ifndef OPENSSL_NO_DH
-static DH *load_dh_param(char *dhfile)
+static DH *load_dh_param(const char *dhfile)
 	{
 	DH *ret=NULL;
 	BIO *bio;
 
-	if ((bio=BIO_new_file(dhfile,"r")) == NULL)
+	if ((bio=BIO_new_file((char *)dhfile,"r")) == NULL)
 		goto err;
 	ret=PEM_read_bio_DHparams(bio,NULL,NULL,NULL);
 err:

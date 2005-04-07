@@ -344,7 +344,7 @@ int MAIN(int, char **);
 int MAIN(int argc, char **argv)
 	{
 	int ret=1,i;
-	char **pp;
+	const char **pp;
 	int verbose=0, list_cap=0, test_avail=0, test_avail_noise = 0;
 	ENGINE *e;
 	STACK *engines = sk_new_null();
