@@ -497,7 +497,7 @@ err:
 int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 	{
 	EVP_PKEY *pk;
-	int ret= -1,i,j;
+	int ret= -1,i;
 
 	if (pkey == NULL)
 		pk=X509_get_pubkey(x);
@@ -509,32 +509,10 @@ int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 	if (i == EVP_PKEY_RSA)
 		{
 		ret=SSL_PKEY_RSA_ENC;
-		if (x != NULL)
-			{
-			j=X509_get_ext_count(x);
-			/* check to see if this is a signing only certificate */
-			/* EAY EAY EAY EAY */
-			}
 		}
 	else if (i == EVP_PKEY_DSA)
 		{
 		ret=SSL_PKEY_DSA_SIGN;
-		}
-	else if (i == EVP_PKEY_DH)
-		{
-		/* if we just have a key, we needs to be guess */
-
-		if (x == NULL)
-			ret=SSL_PKEY_DH_DSA;
-		else
-			{
-			j=X509_get_signature_type(x);
-			if (j == EVP_PKEY_RSA)
-				ret=SSL_PKEY_DH_RSA;
-			else if (j== EVP_PKEY_DSA)
-				ret=SSL_PKEY_DH_DSA;
-			else ret= -1;
-			}
 		}
 #ifndef OPENSSL_NO_EC
 	else if (i == EVP_PKEY_EC)
@@ -542,8 +520,6 @@ int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 		ret = SSL_PKEY_ECC;
 		}
 #endif
-	else
-		ret= -1;
 
 err:
 	if(!pkey) EVP_PKEY_free(pk);

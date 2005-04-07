@@ -4,6 +4,10 @@
 
  Changes between 0.9.7f and 0.9.8  [xx XXX xxxx]
 
+  *) Remove buggy and incompletet DH cert support from
+     ssl/ssl_rsa.c and ssl/s3_both.c
+     [Nils Larsch]
+
   *) Use SHA-1 instead of MD5 as the default digest algorithm for
      the apps/openssl applications.
      [Nils Larsch]

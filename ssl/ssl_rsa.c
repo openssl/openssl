@@ -181,7 +181,7 @@ int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 	{
-	int i,ok=0,bad=0;
+	int i;
 
 	i=ssl_cert_type(NULL,pkey);
 	if (i < 0)
@@ -202,47 +202,18 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 		/* Don't check the public/private key, this is mostly
 		 * for smart cards. */
 		if ((pkey->type == EVP_PKEY_RSA) &&
-			(RSA_flags(pkey->pkey.rsa) &
-			 RSA_METHOD_FLAG_NO_CHECK))
-			 ok=1;
+			(RSA_flags(pkey->pkey.rsa) & RSA_METHOD_FLAG_NO_CHECK))
+			;
 		else
 #endif
-		     if (!X509_check_private_key(c->pkeys[i].x509,pkey))
+		if (!X509_check_private_key(c->pkeys[i].x509,pkey))
 			{
-			if ((i == SSL_PKEY_DH_RSA) || (i == SSL_PKEY_DH_DSA))
-				{
-				i=(i == SSL_PKEY_DH_RSA)?
-					SSL_PKEY_DH_DSA:SSL_PKEY_DH_RSA;
-
-				if (c->pkeys[i].x509 == NULL)
-					ok=1;
-				else
-					{
-					if (!X509_check_private_key(
-						c->pkeys[i].x509,pkey))
-						bad=1;
-					else
-						ok=1;
-					}
-				}
-			else
-				bad=1;
+			X509_free(c->pkeys[i].x509);
+			c->pkeys[i].x509 = NULL;
+			return 0;
 			}
-		else
-			ok=1;
-		}
-	else
-		ok=1;
-
-	if (bad)
-		{
-		X509_free(c->pkeys[i].x509);
-		c->pkeys[i].x509=NULL;
-		return(0);
 		}
 
-	ERR_clear_error(); /* make sure no error from X509_check_private_key()
-	                    * is left if we have chosen to ignore it */
 	if (c->pkeys[i].privatekey != NULL)
 		EVP_PKEY_free(c->pkeys[i].privatekey);
 	CRYPTO_add(&pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
@@ -418,7 +389,7 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 static int ssl_set_cert(CERT *c, X509 *x)
 	{
 	EVP_PKEY *pkey;
-	int i,ok=0,bad=0;
+	int i;
 
 	pkey=X509_get_pubkey(x);
 	if (pkey == NULL)
@@ -446,44 +417,23 @@ static int ssl_set_cert(CERT *c, X509 *x)
 		if ((c->pkeys[i].privatekey->type == EVP_PKEY_RSA) &&
 			(RSA_flags(c->pkeys[i].privatekey->pkey.rsa) &
 			 RSA_METHOD_FLAG_NO_CHECK))
-			 ok=1;
+			 ;
 		else
-#endif
-		{
+#endif /* OPENSSL_NO_RSA */
 		if (!X509_check_private_key(x,c->pkeys[i].privatekey))
 			{
-			if ((i == SSL_PKEY_DH_RSA) || (i == SSL_PKEY_DH_DSA))
-				{
-				i=(i == SSL_PKEY_DH_RSA)?
-					SSL_PKEY_DH_DSA:SSL_PKEY_DH_RSA;
-
-				if (c->pkeys[i].privatekey == NULL)
-					ok=1;
-				else
-					{
-					if (!X509_check_private_key(x,
-						c->pkeys[i].privatekey))
-						bad=1;
-					else
-						ok=1;
-					}
-				}
-			else
-				bad=1;
+			/* don't fail for a cert/key mismatch, just free
+			 * current private key (when switching to a different
+			 * cert & key, first this function should be used,
+			 * then ssl_set_pkey */
+			EVP_PKEY_free(c->pkeys[i].privatekey);
+			c->pkeys[i].privatekey=NULL;
+			/* clear error queue */
+			ERR_clear_error();
 			}
-		else
-			ok=1;
-		} /* OPENSSL_NO_RSA */
 		}
-	else
-		ok=1;
 
 	EVP_PKEY_free(pkey);
-	if (bad)
-		{
-		EVP_PKEY_free(c->pkeys[i].privatekey);
-		c->pkeys[i].privatekey=NULL;
-		}
 
 	if (c->pkeys[i].x509 != NULL)
 		X509_free(c->pkeys[i].x509);
