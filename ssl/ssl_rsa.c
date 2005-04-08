@@ -335,6 +335,11 @@ int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
 		pkey=PEM_read_bio_PrivateKey(in,NULL,
 			ssl->ctx->default_passwd_callback,ssl->ctx->default_passwd_callback_userdata);
 		}
+	else if (type == SSL_FILETYPE_ASN1)
+		{
+		j = ERR_R_ASN1_LIB;
+		pkey = d2i_PrivateKey_bio(in,NULL);
+		}
 	else
 		{
 		SSLerr(SSL_F_SSL_USE_PRIVATEKEY_FILE,SSL_R_BAD_SSL_FILETYPE);
@@ -648,6 +653,11 @@ int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 		j=ERR_R_PEM_LIB;
 		pkey=PEM_read_bio_PrivateKey(in,NULL,
 			ctx->default_passwd_callback,ctx->default_passwd_callback_userdata);
+		}
+	else if (type == SSL_FILETYPE_ASN1)
+		{
+		j = ERR_R_ASN1_LIB;
+		pkey = d2i_PrivateKey_bio(in,NULL);
 		}
 	else
 		{
