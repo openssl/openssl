@@ -77,6 +77,12 @@ SSL_CTX_use_PrivateKey() adds B<pkey> as private key to B<ctx>.
 SSL_CTX_use_RSAPrivateKey() adds the private key B<rsa> of type RSA
 to B<ctx>. SSL_use_PrivateKey() adds B<pkey> as private key to B<ssl>;
 SSL_use_RSAPrivateKey() adds B<rsa> as private key of type RSA to B<ssl>.
+If a certificate has already been set and the private does not belong
+to the certificate an error is returned. To change a certificate, private
+key pair the new certificate needs to be set with SSL_use_certificate()
+or SSL_CTX_use_certificate() before setting the private key with
+SSL_CTX_use_PrivateKey() or SSL_use_PrivateKey(). 
+
 
 SSL_CTX_use_PrivateKey_ASN1() adds the private key of type B<pk>
 stored at memory location B<d> (length B<len>) to B<ctx>.
@@ -153,5 +159,11 @@ L<SSL_CTX_set_default_passwd_cb(3)|SSL_CTX_set_default_passwd_cb(3)>,
 L<SSL_CTX_set_cipher_list(3)|SSL_CTX_set_cipher_list(3)>,
 L<SSL_CTX_set_client_cert_cb(3)|SSL_CTX_set_client_cert_cb(3)>,
 L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>
+
+=head1 HISTORY
+
+Support for DER encoded private keys (SSL_FILETYPE_ASN1) in
+SSL_CTX_use_PrivateKey_file() and SSL_use_PrivateKey_file() was added
+in 0.9.8 .
 
 =cut
