@@ -292,7 +292,7 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define		X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY	6
 #define		X509_V_ERR_CERT_SIGNATURE_FAILURE		7
 #define		X509_V_ERR_CRL_SIGNATURE_FAILURE		8
-#define		X509_V_ERR_CERT_NOT_YET_VALID			9	
+#define		X509_V_ERR_CERT_NOT_YET_VALID			9
 #define		X509_V_ERR_CERT_HAS_EXPIRED			10
 #define		X509_V_ERR_CRL_NOT_YET_VALID			11
 #define		X509_V_ERR_CRL_HAS_EXPIRED			12
@@ -325,10 +325,11 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define		X509_V_ERR_INVALID_NON_CA			37
 #define		X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED		38
 #define		X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE	39
+#define		X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED	40
 
-#define		X509_V_ERR_INVALID_EXTENSION			40
-#define		X509_V_ERR_INVALID_POLICY_EXTENSION		41
-#define		X509_V_ERR_NO_EXPLICIT_POLICY			42
+#define		X509_V_ERR_INVALID_EXTENSION			41
+#define		X509_V_ERR_INVALID_POLICY_EXTENSION		42
+#define		X509_V_ERR_NO_EXPLICIT_POLICY			43
 
 
 /* The application is not happy */
@@ -348,14 +349,16 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define	X509_V_FLAG_IGNORE_CRITICAL		0x10
 /* Disable workarounds for broken certificates */
 #define	X509_V_FLAG_X509_STRICT			0x20
+/* Enable proxy certificate validation */
+#define	X509_V_FLAG_ALLOW_PROXY_CERTS		0x40
 /* Enable policy checking */
-#define X509_V_FLAG_POLICY_CHECK		0x40
+#define X509_V_FLAG_POLICY_CHECK		0x80
 /* Policy variable require-explicit-policy */
-#define X509_V_FLAG_EXPLICIT_POLICY		0x80
+#define X509_V_FLAG_EXPLICIT_POLICY		0x100
 /* Policy variable inhibit-any-policy */
-#define	X509_V_FLAG_INHIBIT_ANY			0x100
+#define	X509_V_FLAG_INHIBIT_ANY			0x200
 /* Policy variable inhibit-policy-mapping */
-#define X509_V_FLAG_INHIBIT_MAP			0x200
+#define X509_V_FLAG_INHIBIT_MAP			0x400
 /* Notify callback that policy is OK */
 #define X509_V_FLAG_NOTIFY_POLICY		0x800
 

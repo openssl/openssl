@@ -190,6 +190,7 @@ struct app_verify_arg
 	{
 	char *string;
 	int app_verify;
+	int allow_proxy_certs;
 	char *proxy_auth;
 	char *proxy_cond;
 	};
@@ -223,6 +224,7 @@ static void sv_usage(void)
 	fprintf(stderr,"\n");
 	fprintf(stderr," -server_auth  - check server certificate\n");
 	fprintf(stderr," -client_auth  - do client authentication\n");
+	fprintf(stderr," -proxy        - allow proxy certificates\n");
 	fprintf(stderr," -proxy_auth <val> - set proxy policy rights\n");
 	fprintf(stderr," -proxy_cond <val> - experssion to test proxy policy rights\n");
 	fprintf(stderr," -v            - more output\n");
@@ -383,7 +385,7 @@ int main(int argc, char *argv[])
 	int client_auth=0;
 	int server_auth=0,i;
 	struct app_verify_arg app_verify_arg =
-		{ APP_CALLBACK_STRING, 0, NULL, NULL };
+		{ APP_CALLBACK_STRING, 0, 0, NULL, NULL };
 	char *server_cert=TEST_SERVER_CERT;
 	char *server_key=NULL;
 	char *client_cert=TEST_CLIENT_CERT;
@@ -579,6 +581,10 @@ int main(int argc, char *argv[])
 		else if	(strcmp(*argv,"-app_verify") == 0)
 			{
 			app_verify_arg.app_verify = 1;
+			}
+		else if	(strcmp(*argv,"-proxy") == 0)
+			{
+			app_verify_arg.allow_proxy_certs = 1;
 			}
 		else
 			{
@@ -1606,17 +1612,22 @@ static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 			fprintf(stderr,"depth=%d %s\n",
 				ctx->error_depth,buf);
 		else
+			{
 			fprintf(stderr,"depth=%d error=%d %s\n",
 				ctx->error_depth,ctx->error,buf);
+			}
 		}
 
 	if (ok == 0)
 		{
+		fprintf(stderr,"Error string: %s\n",
+			X509_verify_cert_error_string(ctx->error));
 		switch (ctx->error)
 			{
 		case X509_V_ERR_CERT_NOT_YET_VALID:
 		case X509_V_ERR_CERT_HAS_EXPIRED:
 		case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
+			fprintf(stderr,"  ... ignored.\n");
 			ok=1;
 			}
 		}
@@ -2017,6 +2028,10 @@ static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 
 		X509_STORE_CTX_set_ex_data(ctx,
 			get_proxy_auth_ex_data_idx(),letters);
+		}
+	if (cb_arg->allow_proxy_certs)
+		{
+		X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_ALLOW_PROXY_CERTS);
 		}
 
 #ifndef OPENSSL_NO_X509_VERIFY

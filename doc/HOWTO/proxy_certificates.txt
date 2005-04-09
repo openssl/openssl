@@ -22,7 +22,48 @@ name of the owner of the EE certificate.
 See http://www.ietf.org/rfc/rfc3820.txt for more information.
 
 
-2. How to create proxy cerificates
+2. A warning about proxy certificates
+
+Noone seems to have tested proxy certificates with security in mind.
+Basically, to this date, it seems that proxy certificates have only
+been used in a world that's highly aware of them.  What would happen
+if an unsuspecting application is to validate a chain of certificates
+that contains proxy certificates?  It would usually consider the leaf
+to be the certificate to check for authorisation data, and since proxy
+certificates are controlled by the EE certificate owner alone, it's
+would be normal to consider what the EE certificate owner could do
+with them.
+
+subjectAltName and issuerAltName are forbidden in proxy certificates,
+and this is enforced in OpenSSL.  The subject must be the same as the
+issuer, with one commonName added on.
+
+Possible threats are, as far as has been imagined so far:
+
+ - impersonation through commonName (think server certificates).
+ - use of additional extensions, possibly non-standard ones used in
+   certain environments, that would grant extra or different
+   authorisation rights.
+
+For this reason, OpenSSL requires that the use of proxy certificates
+be explicitely allowed.  Currently, this can be done using the
+following methods:
+
+ - if the application calls X509_verify_cert() itself, it can do the
+   following prior to that call (ctx is the pointer passed in the call
+   to X509_verify_cert()):
+
+	X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_ALLOW_PROXY_CERTS);
+
+ - in all other cases, proxy certificate validation can be enabled
+   before starting the application by setting the envirnoment variable
+   OPENSSL_ALLOW_PROXY with some non-empty value.
+
+There are thoughts to allow proxy certificates with a line in the
+default openssl.cnf, but that's still in the future.
+
+
+3. How to create proxy cerificates
 
 It's quite easy to create proxy certificates, by taking advantage of
 the lack of checks of the 'openssl x509' application (*ahem*).  But
@@ -111,7 +152,7 @@ section for it):
 	  -extfile openssl.cnf -extensions v3_proxy2
 
 
-3. How to have your application interpret the policy?
+4. How to have your application interpret the policy?
 
 The basic way to interpret proxy policies is to prepare some default
 rights, then do a check of the proxy certificate against the a chain
@@ -258,6 +299,7 @@ This is some cookbook code for you to fill in:
 
     X509_STORE_CTX_set_verify_cb(ctx, verify_callback);
     X509_STORE_CTX_set_ex_data(ctx, get_proxy_auth_ex_data_idx(), &rights);
+    X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_ALLOW_PROXY_CERTS);
     ok = X509_verify_cert(ctx);
 
     if (ok == 1)

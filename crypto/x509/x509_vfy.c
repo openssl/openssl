@@ -391,6 +391,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 	int (*cb)(int ok,X509_STORE_CTX *ctx);
 	int proxy_path_length = 0;
 	cb=ctx->verify_cb;
+	int allow_proxy_certs = !!(ctx->flags & X509_V_FLAG_ALLOW_PROXY_CERTS);
 
 	/* must_be_ca can have 1 of 3 values:
 	   -1: we accept both CA and non-CA certificates, to allow direct
@@ -401,6 +402,12 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 	       all certificates in the chain except the leaf certificate.
 	*/
 	must_be_ca = -1;
+
+	/* A hack to keep people who don't want to modify their software
+	   happy */
+	if (getenv("OPENSSL_ALLOW_PROXY_CERTS"))
+		allow_proxy_certs = 1;
+
 	/* Check all untrusted certificates */
 	for (i = 0; i < ctx->last_untrusted; i++)
 		{
@@ -410,6 +417,14 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 			&& (x->ex_flags & EXFLAG_CRITICAL))
 			{
 			ctx->error = X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION;
+			ctx->error_depth = i;
+			ctx->current_cert = x;
+			ok=cb(0,ctx);
+			if (!ok) goto end;
+			}
+		if (!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY))
+			{
+			ctx->error = X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED;
 			ctx->error_depth = i;
 			ctx->current_cert = x;
 			ok=cb(0,ctx);

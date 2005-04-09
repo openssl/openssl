@@ -88,6 +88,10 @@ PKCS#12: Personal Information Exchange Syntax Standard, version 1.0.
      (Format: TXT=143173 bytes) (Obsoletes RFC2437) (Status:           
      INFORMATIONAL)                                         
 
+3820 Internet X.509 Public Key Infrastructure (PKI) Proxy Certificate
+     Profile. S. Tuecke, V. Welch, D. Engert, L. Pearlman, M. Thompson.
+     June 2004. (Format: TXT=86374 bytes) (Status: PROPOSED STANDARD)
+
 
 Related:
 --------

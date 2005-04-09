@@ -338,7 +338,9 @@ static void x509v3_cache_extensions(X509 *x)
 	}
 	/* Handle proxy certificates */
 	if((pci=X509_get_ext_d2i(x, NID_proxyCertInfo, NULL, NULL))) {
-		if (x->ex_flags & EXFLAG_CA) {
+		if (x->ex_flags & EXFLAG_CA
+		    || X509_get_ext_by_NID(x, NID_subject_alt_name, 0) >= 0
+		    || X509_get_ext_by_NID(x, NID_issuer_alt_name, 0) >= 0) {
 			x->ex_flags |= EXFLAG_INVALID;
 		}
 		if (pci->pcPathLengthConstraint) {
