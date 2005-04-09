@@ -4,6 +4,14 @@
 
  Changes between 0.9.7f and 0.9.7g  [XX xxx XXXX]
 
+  *) Fixes for newer kerberos headers. NB: the casts are needed because
+     the 'length' field is signed on one version and unsigned on another
+     with no (?) obvious way to tell the difference, without these VC++
+     complains. Also the "definition" of FAR (blank) is no longer included
+     nor is the error ENOMEM. KRB5_PRIVATE has to be set to 1 to pick up
+     some needed definitions.
+     [Steve Henson]
+
   *) Undo Cygwin change.
      [Ulf Möller]
 

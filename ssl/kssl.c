@@ -73,12 +73,18 @@
 #undef _XOPEN_SOURCE /* To avoid clashes with anything else... */
 #include <string.h>
 
+#define KRB5_PRIVATE	1
+
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/krb5_asn.h>
 
 #ifndef OPENSSL_NO_KRB5
+
+#ifndef ENOMEM
+#define ENOMEM KRB5KRB_ERR_GENERIC
+#endif
 
 /* 
  * When OpenSSL is built on Windows, we do not want to require that
@@ -932,7 +938,7 @@ print_krb5_data(char *label, krb5_data *kdata)
 	int i;
 
 	printf("%s[%d] ", label, kdata->length);
-	for (i=0; i < kdata->length; i++)
+	for (i=0; i < (int)kdata->length; i++)
                 {
 		if (0 &&  isprint((int) kdata->data[i]))
                         printf(	"%c ",  kdata->data[i]);
@@ -984,14 +990,14 @@ print_krb5_keyblock(char *label, krb5_keyblock *keyblk)
 #ifdef KRB5_HEIMDAL
 	printf("%s\n\t[et%d:%d]: ", label, keyblk->keytype,
 					   keyblk->keyvalue->length);
-	for (i=0; i < keyblk->keyvalue->length; i++)
+	for (i=0; i < (int)keyblk->keyvalue->length; i++)
                 {
 		printf("%02x",(unsigned char *)(keyblk->keyvalue->contents)[i]);
 		}
 	printf("\n");
 #else
 	printf("%s\n\t[et%d:%d]: ", label, keyblk->enctype, keyblk->length);
-	for (i=0; i < keyblk->length; i++)
+	for (i=0; i < (int)keyblk->length; i++)
                 {
 		printf("%02x",keyblk->contents[i]);
 		}
@@ -1010,12 +1016,12 @@ print_krb5_princ(char *label, krb5_principal_data *princ)
 
 	printf("%s principal Realm: ", label);
 	if (princ == NULL)  return;
-	for (ui=0; ui < princ->realm.length; ui++)  putchar(princ->realm.data[ui]);
+	for (ui=0; ui < (int)princ->realm.length; ui++)  putchar(princ->realm.data[ui]);
 	printf(" (nametype %d) has %d strings:\n", princ->type,princ->length);
-	for (i=0; i < princ->length; i++)
+	for (i=0; i < (int)princ->length; i++)
                 {
 		printf("\t%d [%d]: ", i, princ->data[i].length);
-		for (uj=0; uj < princ->data[i].length; uj++)  {
+		for (uj=0; uj < (int)princ->data[i].length; uj++)  {
 			putchar(princ->data[i].data[uj]);
 			}
 		printf("\n");
