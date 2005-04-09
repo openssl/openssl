@@ -1607,7 +1607,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 		n2s(p,i);
 		authenticator.length = i;
 
-		if (n < ((long)enc_ticket.length + authenticator.length + 6))
+		if (n < (long)(enc_ticket.length + authenticator.length + 6))
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
 				SSL_R_DATA_LENGTH_TOO_LONG);
@@ -1632,7 +1632,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 			goto err;
 			}
 
-		if (n != ((long)enc_ticket.length + authenticator.length +
+		if (n != (long)(enc_ticket.length + authenticator.length +
 						enc_pms.length + 6))
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
