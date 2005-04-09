@@ -82,6 +82,12 @@ extern "C" {
 #ifdef KRB5_HEIMDAL
 typedef unsigned char krb5_octet;
 #define FAR
+#else
+
+#ifndef FAR
+#define FAR
+#endif
+
 #endif
 
 /*	Uncomment this to debug kssl problems or
