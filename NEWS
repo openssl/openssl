@@ -5,6 +5,15 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.7f and OpenSSL 0.9.7g:
+
+      o More compilation issues fixed.
+      o Adaptation to more modern Kerberos API.
+      o Enhanced or corrected configuration for Solaris64, Mingw and Cygwin.
+      o Enhanced x86_64 assembler BIGNUM module.
+      o More constification.
+      o Added processing of proxy certificates (RFC 3820).
+
   Major changes between OpenSSL 0.9.7e and OpenSSL 0.9.7f:
 
       o Several compilation issues fixed.
