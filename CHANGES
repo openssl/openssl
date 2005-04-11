@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.7g and 0.9.7h  [XX xxx XXXX]
+
+  *)
+
  Changes between 0.9.7f and 0.9.7g  [11 Apr 2005]
 
   *) Fixes for newer kerberos headers. NB: the casts are needed because
