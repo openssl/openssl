@@ -4,3 +4,5 @@ enc
 dec
 sign
 verify
+*.flc
+semantic.cache

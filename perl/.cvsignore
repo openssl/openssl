@@ -10,3 +10,5 @@ openssl_err.c
 openssl_ssl.c
 openssl_x509.c
 OpenSSL.bs
+*.flc
+semantic.cache

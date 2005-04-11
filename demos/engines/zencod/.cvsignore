@@ -2,3 +2,5 @@
 *.so
 *.so.*
 *.a
+*.flc
+semantic.cache

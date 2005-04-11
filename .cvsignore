@@ -14,3 +14,5 @@ cctest.c
 cctest.a
 libcrypto.so.*
 libssl.so.*
+*.flc
+semantic.cache
