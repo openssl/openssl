@@ -2,3 +2,5 @@ lib
 Makefile.save
 fips_test_suite
 fips_test_suite.sha1
+*.flc
+semantic.cache

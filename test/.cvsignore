@@ -17,3 +17,5 @@ tmp.bntest
 fips_aesavs
 fips_desmovs
 evptests.txt
+*.flc
+semantic.cache

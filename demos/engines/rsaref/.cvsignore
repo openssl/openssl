@@ -10,3 +10,5 @@ doc
 install
 rdemo
 source
+*.flc
+semantic.cache

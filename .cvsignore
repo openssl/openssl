@@ -15,3 +15,6 @@ cctest.a
 libcrypto.so.*
 libssl.so.*
 libcrypto.sha1
+libcrypto.a.sha1
+*.flc
+semantic.cache

@@ -2,3 +2,5 @@ lib
 buildinf.h
 opensslconf.h
 Makefile.save
+*.flc
+semantic.cache
