@@ -61,6 +61,8 @@
  * and contributed to the OpenSSL project.
  */
 
+#include <limits.h>
+
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include "ec_lcl.h"
