@@ -659,3 +659,9 @@ des_ede3_cfb1		658
 des_ede3_cfb8		659
 streetAddress		660
 postalCode		661
+id_ppl		662
+proxyCertInfo		663
+id_ppl_anyLanguage		664
+id_ppl_inheritAll		665
+id_ppl_independent		666
+Independent		667

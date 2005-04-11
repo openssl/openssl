@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 662
-#define NUM_SN 655
-#define NUM_LN 655
-#define NUM_OBJ 619
+#define NUM_NID 668
+#define NUM_SN 660
+#define NUM_LN 660
+#define NUM_OBJ 624
 
-static unsigned char lvalues[4461]={
+static unsigned char lvalues[4500]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -687,6 +687,11 @@ static unsigned char lvalues[4461]={
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x14,0x02,0x03,/* [4444] OBJ_ms_upn */
 0x55,0x04,0x09,                              /* [4454] OBJ_streetAddress */
 0x55,0x04,0x11,                              /* [4457] OBJ_postalCode */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x15,          /* [4460] OBJ_id_ppl */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0E,     /* [4467] OBJ_proxyCertInfo */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x00,     /* [4475] OBJ_id_ppl_anyLanguage */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x01,     /* [4483] OBJ_id_ppl_inheritAll */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x02,     /* [4491] OBJ_Independent */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1742,6 +1747,15 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"DES-EDE3-CFB8","des-ede3-cfb8",NID_des_ede3_cfb8,0,NULL},
 {"streetAddress","streetAddress",NID_streetAddress,3,&(lvalues[4454]),0},
 {"postalCode","postalCode",NID_postalCode,3,&(lvalues[4457]),0},
+{"id-ppl","id-ppl",NID_id_ppl,7,&(lvalues[4460]),0},
+{"proxyCertInfo","Proxy Certificate Information",NID_proxyCertInfo,8,
+	&(lvalues[4467]),0},
+{"id-ppl-anyLanguage","Any language",NID_id_ppl_anyLanguage,8,
+	&(lvalues[4475]),0},
+{"id-ppl-inheritAll","Inherit all",NID_id_ppl_inheritAll,8,
+	&(lvalues[4483]),0},
+{NULL,NULL,NID_undef,0,NULL},
+{"id-ppl-independent","Independent",NID_Independent,8,&(lvalues[4491]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2046,6 +2060,10 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[271]),/* "id-pkix1-explicit-93" */
 &(nid_objs[270]),/* "id-pkix1-implicit-88" */
 &(nid_objs[272]),/* "id-pkix1-implicit-93" */
+&(nid_objs[662]),/* "id-ppl" */
+&(nid_objs[664]),/* "id-ppl-anyLanguage" */
+&(nid_objs[667]),/* "id-ppl-independent" */
+&(nid_objs[665]),/* "id-ppl-inheritAll" */
 &(nid_objs[267]),/* "id-qcs" */
 &(nid_objs[359]),/* "id-qcs-pkixQCSyntax-v1" */
 &(nid_objs[259]),/* "id-qt" */
@@ -2221,6 +2239,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[415]),/* "prime256v1" */
 &(nid_objs[385]),/* "private" */
 &(nid_objs[84]),/* "privateKeyUsagePeriod" */
+&(nid_objs[663]),/* "proxyCertInfo" */
 &(nid_objs[510]),/* "pseudonym" */
 &(nid_objs[435]),/* "pss" */
 &(nid_objs[286]),/* "qcStatements" */
@@ -2406,6 +2425,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[363]),/* "AD Time Stamping" */
 &(nid_objs[405]),/* "ANSI X9.62" */
 &(nid_objs[368]),/* "Acceptable OCSP Responses" */
+&(nid_objs[664]),/* "Any language" */
 &(nid_objs[177]),/* "Authority Information Access" */
 &(nid_objs[365]),/* "Basic OCSP Response" */
 &(nid_objs[285]),/* "Biometric Info" */
@@ -2428,6 +2448,8 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[296]),/* "IPSec User" */
 &(nid_objs[182]),/* "ISO Member Body" */
 &(nid_objs[183]),/* "ISO US Member Body" */
+&(nid_objs[667]),/* "Independent" */
+&(nid_objs[665]),/* "Inherit all" */
 &(nid_objs[142]),/* "Invalidity Date" */
 &(nid_objs[504]),/* "MIME MHS" */
 &(nid_objs[388]),/* "Mail" */
@@ -2468,6 +2490,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[164]),/* "Policy Qualifier CPS" */
 &(nid_objs[165]),/* "Policy Qualifier User Notice" */
 &(nid_objs[385]),/* "Private" */
+&(nid_objs[663]),/* "Proxy Certificate Information" */
 &(nid_objs[ 1]),/* "RSA Data Security, Inc." */
 &(nid_objs[ 2]),/* "RSA Data Security, Inc. PKCS" */
 &(nid_objs[188]),/* "S/MIME" */
@@ -2704,6 +2727,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[271]),/* "id-pkix1-explicit-93" */
 &(nid_objs[270]),/* "id-pkix1-implicit-88" */
 &(nid_objs[272]),/* "id-pkix1-implicit-93" */
+&(nid_objs[662]),/* "id-ppl" */
 &(nid_objs[267]),/* "id-qcs" */
 &(nid_objs[359]),/* "id-qcs-pkixQCSyntax-v1" */
 &(nid_objs[259]),/* "id-qt" */
@@ -3310,6 +3334,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[266]),/* OBJ_id_aca                       1 3 6 1 5 5 7 10 */
 &(nid_objs[267]),/* OBJ_id_qcs                       1 3 6 1 5 5 7 11 */
 &(nid_objs[268]),/* OBJ_id_cct                       1 3 6 1 5 5 7 12 */
+&(nid_objs[662]),/* OBJ_id_ppl                       1 3 6 1 5 5 7 21 */
 &(nid_objs[176]),/* OBJ_id_ad                        1 3 6 1 5 5 7 48 */
 &(nid_objs[507]),/* OBJ_id_hex_partial_message       1 3 6 1 7 1 1 1 */
 &(nid_objs[508]),/* OBJ_id_hex_multipart_message     1 3 6 1 7 1 1 2 */
@@ -3363,6 +3388,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[292]),/* OBJ_sbqp_routerIdentifier        1 3 6 1 5 5 7 1 9 */
 &(nid_objs[397]),/* OBJ_ac_proxying                  1 3 6 1 5 5 7 1 10 */
 &(nid_objs[398]),/* OBJ_sinfo_access                 1 3 6 1 5 5 7 1 11 */
+&(nid_objs[663]),/* OBJ_proxyCertInfo                1 3 6 1 5 5 7 1 14 */
 &(nid_objs[164]),/* OBJ_id_qt_cps                    1 3 6 1 5 5 7 2 1 */
 &(nid_objs[165]),/* OBJ_id_qt_unotice                1 3 6 1 5 5 7 2 2 */
 &(nid_objs[293]),/* OBJ_textNotice                   1 3 6 1 5 5 7 2 3 */
@@ -3433,6 +3459,9 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[360]),/* OBJ_id_cct_crs                   1 3 6 1 5 5 7 12 1 */
 &(nid_objs[361]),/* OBJ_id_cct_PKIData               1 3 6 1 5 5 7 12 2 */
 &(nid_objs[362]),/* OBJ_id_cct_PKIResponse           1 3 6 1 5 5 7 12 3 */
+&(nid_objs[664]),/* OBJ_id_ppl_anyLanguage           1 3 6 1 5 5 7 21 0 */
+&(nid_objs[665]),/* OBJ_id_ppl_inheritAll            1 3 6 1 5 5 7 21 1 */
+&(nid_objs[667]),/* OBJ_Independent                  1 3 6 1 5 5 7 21 2 */
 &(nid_objs[178]),/* OBJ_ad_OCSP                      1 3 6 1 5 5 7 48 1 */
 &(nid_objs[179]),/* OBJ_ad_ca_issuers                1 3 6 1 5 5 7 48 2 */
 &(nid_objs[363]),/* OBJ_ad_timeStamping              1 3 6 1 5 5 7 48 3 */

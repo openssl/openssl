@@ -950,6 +950,10 @@
 #define NID_id_cct		268
 #define OBJ_id_cct		OBJ_id_pkix,12L
 
+#define SN_id_ppl		"id-ppl"
+#define NID_id_ppl		662
+#define OBJ_id_ppl		OBJ_id_pkix,21L
+
 #define SN_id_ad		"id-ad"
 #define NID_id_ad		176
 #define OBJ_id_ad		OBJ_id_pkix,48L
@@ -1064,6 +1068,11 @@
 #define LN_sinfo_access		"Subject Information Access"
 #define NID_sinfo_access		398
 #define OBJ_sinfo_access		OBJ_id_pe,11L
+
+#define SN_proxyCertInfo		"proxyCertInfo"
+#define LN_proxyCertInfo		"Proxy Certificate Information"
+#define NID_proxyCertInfo		663
+#define OBJ_proxyCertInfo		OBJ_id_pe,14L
 
 #define SN_id_qt_cps		"id-qt-cps"
 #define LN_id_qt_cps		"Policy Qualifier CPS"
@@ -1388,6 +1397,21 @@
 #define SN_id_cct_PKIResponse		"id-cct-PKIResponse"
 #define NID_id_cct_PKIResponse		362
 #define OBJ_id_cct_PKIResponse		OBJ_id_cct,3L
+
+#define SN_id_ppl_anyLanguage		"id-ppl-anyLanguage"
+#define LN_id_ppl_anyLanguage		"Any language"
+#define NID_id_ppl_anyLanguage		664
+#define OBJ_id_ppl_anyLanguage		OBJ_id_ppl,0L
+
+#define SN_id_ppl_inheritAll		"id-ppl-inheritAll"
+#define LN_id_ppl_inheritAll		"Inherit all"
+#define NID_id_ppl_inheritAll		665
+#define OBJ_id_ppl_inheritAll		OBJ_id_ppl,1L
+
+#define SN_Independent		"id-ppl-independent"
+#define LN_Independent		"Independent"
+#define NID_Independent		667
+#define OBJ_Independent		OBJ_id_ppl,2L
 
 #define SN_ad_OCSP		"OCSP"
 #define LN_ad_OCSP		"OCSP"

@@ -64,7 +64,7 @@ extern X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_crl_invdate;
 extern X509V3_EXT_METHOD v3_delta_crl, v3_cpols, v3_crld;
 extern X509V3_EXT_METHOD v3_ocsp_nonce, v3_ocsp_accresp, v3_ocsp_acutoff;
 extern X509V3_EXT_METHOD v3_ocsp_crlid, v3_ocsp_nocheck, v3_ocsp_serviceloc;
-extern X509V3_EXT_METHOD v3_crl_hold;
+extern X509V3_EXT_METHOD v3_crl_hold, v3_pci;
 
 /* This table will be searched using OBJ_bsearch so it *must* kept in
  * order of the ext_nid values.
@@ -107,8 +107,9 @@ static X509V3_EXT_METHOD *standard_exts[] = {
 #endif
 &v3_sinfo,
 #ifndef OPENSSL_NO_OCSP
-&v3_crl_hold
+&v3_crl_hold,
 #endif
+&v3_pci,
 };
 
 /* Number of standard extensions */

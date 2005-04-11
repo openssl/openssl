@@ -276,7 +276,7 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 #define		X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY	6
 #define		X509_V_ERR_CERT_SIGNATURE_FAILURE		7
 #define		X509_V_ERR_CRL_SIGNATURE_FAILURE		8
-#define		X509_V_ERR_CERT_NOT_YET_VALID			9	
+#define		X509_V_ERR_CERT_NOT_YET_VALID			9
 #define		X509_V_ERR_CERT_HAS_EXPIRED			10
 #define		X509_V_ERR_CRL_NOT_YET_VALID			11
 #define		X509_V_ERR_CRL_HAS_EXPIRED			12
@@ -307,6 +307,9 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 #define		X509_V_ERR_KEYUSAGE_NO_CRL_SIGN			35
 #define		X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION	36
 #define		X509_V_ERR_INVALID_NON_CA			37
+#define		X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED		38
+#define		X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE	39
+#define		X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED	40
 
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50
@@ -325,6 +328,8 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 #define	X509_V_FLAG_IGNORE_CRITICAL		0x10
 /* Disable workarounds for broken certificates */
 #define	X509_V_FLAG_X509_STRICT			0x20
+/* Enable proxy certificate validation */
+#define	X509_V_FLAG_ALLOW_PROXY_CERTS		0x40
 
 int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, int type,
 	     X509_NAME *name);

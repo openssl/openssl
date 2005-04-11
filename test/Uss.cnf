@@ -26,3 +26,11 @@ organizationName_value          = Dodgy Brothers
 
 1.commonName			= Common Name (eg, YOUR name)
 1.commonName_value		= Brother 2
+
+[ v3_ee ]
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer:always
+basicConstraints = CA:false
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+issuerAltName=issuer:copy
+

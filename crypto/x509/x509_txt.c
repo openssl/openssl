@@ -126,6 +126,10 @@ const char *X509_verify_cert_error_string(long n)
 		return ("invalid non-CA certificate (has CA markings)");
 	case X509_V_ERR_PATH_LENGTH_EXCEEDED:
 		return ("path length constraint exceeded");
+	case X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED:
+		return("proxy path length constraint exceeded");
+	case X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED:
+		return("proxy cerificates not allowed, please set the appropriate flag");
 	case X509_V_ERR_INVALID_PURPOSE:
 		return ("unsupported certificate purpose");
 	case X509_V_ERR_CERT_UNTRUSTED:
@@ -142,19 +146,16 @@ const char *X509_verify_cert_error_string(long n)
 		return("authority and issuer serial number mismatch");
 	case X509_V_ERR_KEYUSAGE_NO_CERTSIGN:
 		return("key usage does not include certificate signing");
-
 	case X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER:
 		return("unable to get CRL issuer certificate");
-
 	case X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION:
 		return("unhandled critical extension");
-
 	case X509_V_ERR_KEYUSAGE_NO_CRL_SIGN:
 		return("key usage does not include CRL signing");
-
+	case X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE:
+		return("key usage does not include digital signature");
 	case X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION:
 		return("unhandled critical CRL extension");
-
 	default:
 		BIO_snprintf(buf,sizeof buf,"error number %ld",n);
 		return(buf);

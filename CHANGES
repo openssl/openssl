@@ -15,6 +15,12 @@
   *) Undo Cygwin change.
      [Ulf Möller]
 
+  *) Added support for proxy certificates according to RFC 3820.
+     Because they may be a security thread to unaware applications,
+     they must be explicitely allowed in run-time.  See
+     docs/HOWTO/proxy_certificates.txt for further information.
+     [Richard Levitte]
+
  Changes between 0.9.7e and 0.9.7f  [22 Mar 2005]
 
   *) Use (SSL_RANDOM_VALUE - 4) bytes of pseudo random data when generating

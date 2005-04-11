@@ -312,6 +312,7 @@ id-pkix 9		: id-pda
 id-pkix 10		: id-aca
 id-pkix 11		: id-qcs
 id-pkix 12		: id-cct
+id-pkix 21		: id-ppl
 id-pkix 48		: id-ad
 
 # PKIX Modules
@@ -346,6 +347,7 @@ id-pe 9			: sbqp-routerIdentifier
 id-pe 10		: ac-proxying
 !Cname sinfo-access
 id-pe 11		: subjectInfoAccess	: Subject Information Access
+id-pe 14		: proxyCertInfo		: Proxy Certificate Information
 
 # PKIX policyQualifiers for Internet policy qualifiers
 id-qt 1			: id-qt-cps		: Policy Qualifier CPS
@@ -460,6 +462,11 @@ id-qcs 1		: id-qcs-pkixQCSyntax-v1
 id-cct 1		: id-cct-crs
 id-cct 2		: id-cct-PKIData
 id-cct 3		: id-cct-PKIResponse
+
+# Predefined Proxy Certificate policy languages
+id-ppl 0		: id-ppl-anyLanguage	: Any language
+id-ppl 1		: id-ppl-inheritAll	: Inherit all
+id-ppl 2		: id-ppl-independent	: Independent
 
 # access descriptors for authority info access extension
 !Cname ad-OCSP

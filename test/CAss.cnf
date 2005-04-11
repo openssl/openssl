@@ -23,3 +23,11 @@ organizationName_value		= Dodgy Brothers
 
 commonName			= Common Name (eg, YOUR name)
 commonName_value		= Dodgy CA
+
+[ v3_ca ]
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer:always
+basicConstraints = CA:true,pathlen:1
+keyUsage = cRLSign, keyCertSign
+issuerAltName=issuer:copy
+

@@ -259,20 +259,26 @@ test_gen:
 	@echo "Generate and verify a certificate request"
 	@sh ./testgen
 
-test_ss keyU.ss certU.ss certCA.ss: testss
+test_ss keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
+		intP1.ss intP2.ss: testss
 	@echo "Generate and certify a test certificate"
 	@sh ./testss
+	@cat certCA.ss certU.ss > intP1.ss
+	@cat certCA.ss certU.ss certP1.ss > intP2.ss
 
 test_engine: 
 	@echo "Manipulate the ENGINE structures"
 	../util/shlib_wrap.sh ./$(ENGINETEST)
 
-test_ssl: keyU.ss certU.ss certCA.ss
+test_ssl: keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
+		intP1.ss intP2.ss
 	@echo "test SSL protocol"
 	@if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 	  sh ./testfipsssl keyU.ss certU.ss certCA.ss; \
 	fi
 	@sh ./testssl keyU.ss certU.ss certCA.ss
+	@sh ./testsslproxy keyP1.ss certP1.ss intP1.ss
+	@sh ./testsslproxy keyP2.ss certP2.ss intP2.ss
 
 test_ca:
 	@if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
@@ -757,25 +763,26 @@ ssltest.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
 ssltest.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 ssltest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 ssltest.o: ../include/openssl/cast.h ../include/openssl/comp.h
-ssltest.o: ../include/openssl/crypto.h ../include/openssl/des.h
-ssltest.o: ../include/openssl/des_old.h ../include/openssl/dh.h
-ssltest.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-ssltest.o: ../include/openssl/engine.h ../include/openssl/err.h
-ssltest.o: ../include/openssl/evp.h ../include/openssl/fips.h
-ssltest.o: ../include/openssl/idea.h ../include/openssl/kssl.h
-ssltest.o: ../include/openssl/lhash.h ../include/openssl/md2.h
-ssltest.o: ../include/openssl/md4.h ../include/openssl/md5.h
-ssltest.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
-ssltest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-ssltest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-ssltest.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-ssltest.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-ssltest.o: ../include/openssl/rc2.h ../include/openssl/rc4.h
-ssltest.o: ../include/openssl/rc5.h ../include/openssl/ripemd.h
-ssltest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-ssltest.o: ../include/openssl/sha.h ../include/openssl/ssl.h
-ssltest.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
-ssltest.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
-ssltest.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
-ssltest.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
-ssltest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h ssltest.c
+ssltest.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+ssltest.o: ../include/openssl/des.h ../include/openssl/des_old.h
+ssltest.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+ssltest.o: ../include/openssl/e_os2.h ../include/openssl/engine.h
+ssltest.o: ../include/openssl/err.h ../include/openssl/evp.h
+ssltest.o: ../include/openssl/fips.h ../include/openssl/idea.h
+ssltest.o: ../include/openssl/kssl.h ../include/openssl/lhash.h
+ssltest.o: ../include/openssl/md2.h ../include/openssl/md4.h
+ssltest.o: ../include/openssl/md5.h ../include/openssl/mdc2.h
+ssltest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+ssltest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+ssltest.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+ssltest.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+ssltest.o: ../include/openssl/rand.h ../include/openssl/rc2.h
+ssltest.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+ssltest.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+ssltest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+ssltest.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+ssltest.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
+ssltest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+ssltest.o: ../include/openssl/tls1.h ../include/openssl/ui.h
+ssltest.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
+ssltest.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h ssltest.c
