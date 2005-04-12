@@ -621,7 +621,8 @@ static void err_load_strings(int lib, ERR_STRING_DATA *str)
 	{
 	while (str->error)
 		{
-		str->error|=ERR_PACK(lib,0,0);
+		if (lib)
+			str->error|=ERR_PACK(lib,0,0);
 		ERRFN(err_set_item)(str);
 		str++;
 		}
@@ -637,7 +638,8 @@ void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 	{
 	while (str->error)
 		{
-		str->error|=ERR_PACK(lib,0,0);
+		if (lib)
+			str->error|=ERR_PACK(lib,0,0);
 		ERRFN(err_del_item)(str);
 		str++;
 		}

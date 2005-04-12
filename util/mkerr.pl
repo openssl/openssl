@@ -9,6 +9,9 @@ my $reindex = 0;
 my $dowrite = 0;
 my $staticloader = "";
 
+my $pack_errcode;
+my $load_errcode;
+
 while (@ARGV) {
 	my $arg = $ARGV[0];
 	if($arg eq "-conf") {
@@ -399,6 +402,20 @@ EOF
 		$hincf = "\"$hfile\"";
 	}
 
+	# If static we know the error code at compile time so use it
+	# in error definitions.
+
+	if ($static)
+		{
+		$pack_errcode = "ERR_LIB_${lib}";
+		$load_errcode = "0";
+		}
+	else
+		{
+		$pack_errcode = "0";
+		$load_errcode = "ERR_LIB_${lib}";
+		}
+
 
 	open (OUT,">$cfile") || die "Can't open $cfile for writing";
 
@@ -469,6 +486,10 @@ EOF
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK($pack_errcode,func,0)
+#define ERR_REASON(reason) ERR_PACK($pack_errcode,0,reason)
+
 static ERR_STRING_DATA ${lib}_str_functs[]=
 	{
 EOF
@@ -480,7 +501,8 @@ EOF
 		if(exists $ftrans{$fn}) {
 			$fn = $ftrans{$fn};
 		}
-		print OUT "{ERR_PACK(0,$i,0),\t\"$fn\"},\n";
+#		print OUT "{ERR_PACK($pack_errcode,$i,0),\t\"$fn\"},\n";
+		print OUT "{ERR_FUNC($i),\t\"$fn\"},\n";
 	}
 	print OUT <<"EOF";
 {0,NULL}
@@ -492,6 +514,7 @@ EOF
 	# Add each reason code.
 	foreach $i (@reasons) {
 		my $rn;
+		my $rstr = "ERR_REASON($i)";
 		my $nspc = 0;
 		if (exists $err_reason_strings{$i}) {
 			$rn = $err_reason_strings{$i};
@@ -500,9 +523,9 @@ EOF
 			$rn = $1;
 			$rn =~ tr/_[A-Z]/ [a-z]/;
 		}
-		$nspc = 40 - length($i) unless length($i) > 40;
+		$nspc = 40 - length($rstr) unless length($rstr) > 40;
 		$nspc = " " x $nspc;
-		print OUT "{${i}${nspc},\"$rn\"},\n";
+		print OUT "{${rstr}${nspc},\"$rn\"},\n";
 	}
 if($static) {
 	print OUT <<"EOF";
@@ -519,8 +542,8 @@ ${staticloader}void ERR_load_${lib}_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_${lib},${lib}_str_functs);
-		ERR_load_strings(ERR_LIB_${lib},${lib}_str_reasons);
+		ERR_load_strings($load_errcode,${lib}_str_functs);
+		ERR_load_strings($load_errcode,${lib}_str_reasons);
 #endif
 
 		}
