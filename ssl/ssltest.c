@@ -1974,6 +1974,10 @@ static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 		X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_ALLOW_PROXY_CERTS);
 		}
 
+#ifndef OPENSSL_NO_X509_VERIFY
+	ok = X509_verify_cert(ctx);
+#endif
+
 	if (cb_arg->proxy_auth)
 		{
 		if (ok)
