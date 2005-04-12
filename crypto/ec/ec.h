@@ -501,9 +501,5 @@ void ERR_load_EC_strings(void);
 
 #ifdef  __cplusplus
 }
-#elif defined(__SUNPRO_C)
-# if __SUNPRO_C >= 0x520
-# pragma error_messages (default,E_ARRAY_OF_INCOMPLETE_NONAME,E_ARRAY_OF_INCOMPLETE)
-# endif
 #endif
 #endif

@@ -1,6 +1,6 @@
 /* crypto/rand/rand_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,16 +64,20 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_RAND,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_RAND,0,reason)
+
 static ERR_STRING_DATA RAND_str_functs[]=
 	{
-{ERR_PACK(0,RAND_F_RAND_GET_RAND_METHOD,0),	"RAND_get_rand_method"},
-{ERR_PACK(0,RAND_F_SSLEAY_RAND_BYTES,0),	"SSLEAY_RAND_BYTES"},
+{ERR_FUNC(RAND_F_RAND_GET_RAND_METHOD),	"RAND_get_rand_method"},
+{ERR_FUNC(RAND_F_SSLEAY_RAND_BYTES),	"SSLEAY_RAND_BYTES"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA RAND_str_reasons[]=
 	{
-{RAND_R_PRNG_NOT_SEEDED                  ,"PRNG not seeded"},
+{ERR_REASON(RAND_R_PRNG_NOT_SEEDED)      ,"PRNG not seeded"},
 {0,NULL}
 	};
 
@@ -87,8 +91,8 @@ void ERR_load_RAND_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_RAND,RAND_str_functs);
-		ERR_load_strings(ERR_LIB_RAND,RAND_str_reasons);
+		ERR_load_strings(0,RAND_str_functs);
+		ERR_load_strings(0,RAND_str_reasons);
 #endif
 
 		}

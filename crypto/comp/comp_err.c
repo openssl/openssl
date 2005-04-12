@@ -1,6 +1,6 @@
 /* crypto/comp/comp_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,10 +61,13 @@
 #include <stdio.h>
 #include <openssl/err.h>
 #include <openssl/comp.h>
-#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_ERR is defined */
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_COMP,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_COMP,0,reason)
+
 static ERR_STRING_DATA COMP_str_functs[]=
 	{
 {0,NULL}
@@ -85,8 +88,8 @@ void ERR_load_COMP_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_COMP,COMP_str_functs);
-		ERR_load_strings(ERR_LIB_COMP,COMP_str_reasons);
+		ERR_load_strings(0,COMP_str_functs);
+		ERR_load_strings(0,COMP_str_reasons);
 #endif
 
 		}

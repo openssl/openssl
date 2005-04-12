@@ -1,6 +1,6 @@
 /* crypto/ui/ui_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,32 +64,36 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_UI,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_UI,0,reason)
+
 static ERR_STRING_DATA UI_str_functs[]=
 	{
-{ERR_PACK(0,UI_F_GENERAL_ALLOCATE_BOOLEAN,0),	"GENERAL_ALLOCATE_BOOLEAN"},
-{ERR_PACK(0,UI_F_GENERAL_ALLOCATE_PROMPT,0),	"GENERAL_ALLOCATE_PROMPT"},
-{ERR_PACK(0,UI_F_GENERAL_ALLOCATE_STRING,0),	"GENERAL_ALLOCATE_STRING"},
-{ERR_PACK(0,UI_F_UI_CTRL,0),	"UI_ctrl"},
-{ERR_PACK(0,UI_F_UI_DUP_ERROR_STRING,0),	"UI_dup_error_string"},
-{ERR_PACK(0,UI_F_UI_DUP_INFO_STRING,0),	"UI_dup_info_string"},
-{ERR_PACK(0,UI_F_UI_DUP_INPUT_BOOLEAN,0),	"UI_dup_input_boolean"},
-{ERR_PACK(0,UI_F_UI_DUP_INPUT_STRING,0),	"UI_dup_input_string"},
-{ERR_PACK(0,UI_F_UI_DUP_VERIFY_STRING,0),	"UI_dup_verify_string"},
-{ERR_PACK(0,UI_F_UI_GET0_RESULT,0),	"UI_get0_result"},
-{ERR_PACK(0,UI_F_UI_NEW_METHOD,0),	"UI_new_method"},
-{ERR_PACK(0,UI_F_UI_SET_RESULT,0),	"UI_set_result"},
+{ERR_FUNC(UI_F_GENERAL_ALLOCATE_BOOLEAN),	"GENERAL_ALLOCATE_BOOLEAN"},
+{ERR_FUNC(UI_F_GENERAL_ALLOCATE_PROMPT),	"GENERAL_ALLOCATE_PROMPT"},
+{ERR_FUNC(UI_F_GENERAL_ALLOCATE_STRING),	"GENERAL_ALLOCATE_STRING"},
+{ERR_FUNC(UI_F_UI_CTRL),	"UI_ctrl"},
+{ERR_FUNC(UI_F_UI_DUP_ERROR_STRING),	"UI_dup_error_string"},
+{ERR_FUNC(UI_F_UI_DUP_INFO_STRING),	"UI_dup_info_string"},
+{ERR_FUNC(UI_F_UI_DUP_INPUT_BOOLEAN),	"UI_dup_input_boolean"},
+{ERR_FUNC(UI_F_UI_DUP_INPUT_STRING),	"UI_dup_input_string"},
+{ERR_FUNC(UI_F_UI_DUP_VERIFY_STRING),	"UI_dup_verify_string"},
+{ERR_FUNC(UI_F_UI_GET0_RESULT),	"UI_get0_result"},
+{ERR_FUNC(UI_F_UI_NEW_METHOD),	"UI_new_method"},
+{ERR_FUNC(UI_F_UI_SET_RESULT),	"UI_set_result"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA UI_str_reasons[]=
 	{
-{UI_R_COMMON_OK_AND_CANCEL_CHARACTERS    ,"common ok and cancel characters"},
-{UI_R_INDEX_TOO_LARGE                    ,"index too large"},
-{UI_R_INDEX_TOO_SMALL                    ,"index too small"},
-{UI_R_NO_RESULT_BUFFER                   ,"no result buffer"},
-{UI_R_RESULT_TOO_LARGE                   ,"result too large"},
-{UI_R_RESULT_TOO_SMALL                   ,"result too small"},
-{UI_R_UNKNOWN_CONTROL_COMMAND            ,"unknown control command"},
+{ERR_REASON(UI_R_COMMON_OK_AND_CANCEL_CHARACTERS),"common ok and cancel characters"},
+{ERR_REASON(UI_R_INDEX_TOO_LARGE)        ,"index too large"},
+{ERR_REASON(UI_R_INDEX_TOO_SMALL)        ,"index too small"},
+{ERR_REASON(UI_R_NO_RESULT_BUFFER)       ,"no result buffer"},
+{ERR_REASON(UI_R_RESULT_TOO_LARGE)       ,"result too large"},
+{ERR_REASON(UI_R_RESULT_TOO_SMALL)       ,"result too small"},
+{ERR_REASON(UI_R_UNKNOWN_CONTROL_COMMAND),"unknown control command"},
 {0,NULL}
 	};
 
@@ -103,8 +107,8 @@ void ERR_load_UI_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_UI,UI_str_functs);
-		ERR_load_strings(ERR_LIB_UI,UI_str_reasons);
+		ERR_load_strings(0,UI_str_functs);
+		ERR_load_strings(0,UI_str_reasons);
 #endif
 
 		}

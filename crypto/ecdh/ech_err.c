@@ -1,6 +1,6 @@
 /* crypto/ecdh/ech_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,18 +64,22 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_ECDH,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_ECDH,0,reason)
+
 static ERR_STRING_DATA ECDH_str_functs[]=
 	{
-{ERR_PACK(0,ECDH_F_ECDH_COMPUTE_KEY,0),	"ECDH_compute_key"},
-{ERR_PACK(0,ECDH_F_ECDH_DATA_NEW,0),	"ECDH_DATA_new"},
+{ERR_FUNC(ECDH_F_ECDH_COMPUTE_KEY),	"ECDH_compute_key"},
+{ERR_FUNC(ECDH_F_ECDH_DATA_NEW),	"ECDH_DATA_new"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA ECDH_str_reasons[]=
 	{
-{ECDH_R_KDF_FAILED                       ,"KDF failed"},
-{ECDH_R_NO_PRIVATE_VALUE                 ,"no private value"},
-{ECDH_R_POINT_ARITHMETIC_FAILURE         ,"point arithmetic failure"},
+{ERR_REASON(ECDH_R_KDF_FAILED)           ,"KDF failed"},
+{ERR_REASON(ECDH_R_NO_PRIVATE_VALUE)     ,"no private value"},
+{ERR_REASON(ECDH_R_POINT_ARITHMETIC_FAILURE),"point arithmetic failure"},
 {0,NULL}
 	};
 
@@ -89,8 +93,8 @@ void ERR_load_ECDH_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_ECDH,ECDH_str_functs);
-		ERR_load_strings(ERR_LIB_ECDH,ECDH_str_reasons);
+		ERR_load_strings(0,ECDH_str_functs);
+		ERR_load_strings(0,ECDH_str_reasons);
 #endif
 
 		}

@@ -1,6 +1,6 @@
 /* crypto/cpt_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,23 +64,27 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_CRYPTO,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_CRYPTO,0,reason)
+
 static ERR_STRING_DATA CRYPTO_str_functs[]=
 	{
-{ERR_PACK(0,CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX,0),	"CRYPTO_get_ex_new_index"},
-{ERR_PACK(0,CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,0),	"CRYPTO_get_new_dynlockid"},
-{ERR_PACK(0,CRYPTO_F_CRYPTO_GET_NEW_LOCKID,0),	"CRYPTO_get_new_lockid"},
-{ERR_PACK(0,CRYPTO_F_CRYPTO_SET_EX_DATA,0),	"CRYPTO_set_ex_data"},
-{ERR_PACK(0,CRYPTO_F_DEF_ADD_INDEX,0),	"DEF_ADD_INDEX"},
-{ERR_PACK(0,CRYPTO_F_DEF_GET_CLASS,0),	"DEF_GET_CLASS"},
-{ERR_PACK(0,CRYPTO_F_INT_DUP_EX_DATA,0),	"INT_DUP_EX_DATA"},
-{ERR_PACK(0,CRYPTO_F_INT_FREE_EX_DATA,0),	"INT_FREE_EX_DATA"},
-{ERR_PACK(0,CRYPTO_F_INT_NEW_EX_DATA,0),	"INT_NEW_EX_DATA"},
+{ERR_FUNC(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX),	"CRYPTO_get_ex_new_index"},
+{ERR_FUNC(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID),	"CRYPTO_get_new_dynlockid"},
+{ERR_FUNC(CRYPTO_F_CRYPTO_GET_NEW_LOCKID),	"CRYPTO_get_new_lockid"},
+{ERR_FUNC(CRYPTO_F_CRYPTO_SET_EX_DATA),	"CRYPTO_set_ex_data"},
+{ERR_FUNC(CRYPTO_F_DEF_ADD_INDEX),	"DEF_ADD_INDEX"},
+{ERR_FUNC(CRYPTO_F_DEF_GET_CLASS),	"DEF_GET_CLASS"},
+{ERR_FUNC(CRYPTO_F_INT_DUP_EX_DATA),	"INT_DUP_EX_DATA"},
+{ERR_FUNC(CRYPTO_F_INT_FREE_EX_DATA),	"INT_FREE_EX_DATA"},
+{ERR_FUNC(CRYPTO_F_INT_NEW_EX_DATA),	"INT_NEW_EX_DATA"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA CRYPTO_str_reasons[]=
 	{
-{CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK     ,"no dynlock create callback"},
+{ERR_REASON(CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK),"no dynlock create callback"},
 {0,NULL}
 	};
 
@@ -94,8 +98,8 @@ void ERR_load_CRYPTO_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_CRYPTO,CRYPTO_str_functs);
-		ERR_load_strings(ERR_LIB_CRYPTO,CRYPTO_str_reasons);
+		ERR_load_strings(0,CRYPTO_str_functs);
+		ERR_load_strings(0,CRYPTO_str_reasons);
 #endif
 
 		}

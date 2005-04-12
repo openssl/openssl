@@ -1,6 +1,6 @@
 /* crypto/ecdsa/ecs_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,27 +61,30 @@
 #include <stdio.h>
 #include <openssl/err.h>
 #include <openssl/ecdsa.h>
-#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_ERR is defined */
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_ECDSA,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_ECDSA,0,reason)
+
 static ERR_STRING_DATA ECDSA_str_functs[]=
 	{
-{ERR_PACK(0,ECDSA_F_ECDSA_DATA_NEW,0),	"ECDSA_DATA_new"},
-{ERR_PACK(0,ECDSA_F_ECDSA_DO_SIGN,0),	"ECDSA_do_sign"},
-{ERR_PACK(0,ECDSA_F_ECDSA_DO_VERIFY,0),	"ECDSA_do_verify"},
-{ERR_PACK(0,ECDSA_F_ECDSA_SIGN_SETUP,0),	"ECDSA_sign_setup"},
+{ERR_FUNC(ECDSA_F_ECDSA_DATA_NEW),	"ECDSA_DATA_new"},
+{ERR_FUNC(ECDSA_F_ECDSA_DO_SIGN),	"ECDSA_do_sign"},
+{ERR_FUNC(ECDSA_F_ECDSA_DO_VERIFY),	"ECDSA_do_verify"},
+{ERR_FUNC(ECDSA_F_ECDSA_SIGN_SETUP),	"ECDSA_sign_setup"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA ECDSA_str_reasons[]=
 	{
-{ECDSA_R_BAD_SIGNATURE                   ,"bad signature"},
-{ECDSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE     ,"data too large for key size"},
-{ECDSA_R_ERR_EC_LIB                      ,"err ec lib"},
-{ECDSA_R_MISSING_PARAMETERS              ,"missing parameters"},
-{ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED ,"random number generation failed"},
-{ECDSA_R_SIGNATURE_MALLOC_FAILED         ,"signature malloc failed"},
+{ERR_REASON(ECDSA_R_BAD_SIGNATURE)       ,"bad signature"},
+{ERR_REASON(ECDSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE),"data too large for key size"},
+{ERR_REASON(ECDSA_R_ERR_EC_LIB)          ,"err ec lib"},
+{ERR_REASON(ECDSA_R_MISSING_PARAMETERS)  ,"missing parameters"},
+{ERR_REASON(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED),"random number generation failed"},
+{ERR_REASON(ECDSA_R_SIGNATURE_MALLOC_FAILED),"signature malloc failed"},
 {0,NULL}
 	};
 
@@ -95,8 +98,8 @@ void ERR_load_ECDSA_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_ECDSA,ECDSA_str_functs);
-		ERR_load_strings(ERR_LIB_ECDSA,ECDSA_str_reasons);
+		ERR_load_strings(0,ECDSA_str_functs);
+		ERR_load_strings(0,ECDSA_str_reasons);
 #endif
 
 		}
