@@ -1,6 +1,6 @@
 /* crypto/ec/ec_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,70 +64,74 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_EC,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_EC,0,reason)
+
 static ERR_STRING_DATA EC_str_functs[]=
 	{
-{ERR_PACK(0,EC_F_COMPUTE_WNAF,0),	"COMPUTE_WNAF"},
-{ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_DECODE,0),	"ec_GFp_mont_field_decode"},
-{ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_ENCODE,0),	"ec_GFp_mont_field_encode"},
-{ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_MUL,0),	"ec_GFp_mont_field_mul"},
-{ERR_PACK(0,EC_F_EC_GFP_MONT_FIELD_SQR,0),	"ec_GFp_mont_field_sqr"},
-{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP,0),	"ec_GFp_simple_group_set_curve_GFp"},
-{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR,0),	"ec_GFp_simple_group_set_generator"},
-{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_MAKE_AFFINE,0),	"ec_GFp_simple_make_affine"},
-{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_OCT2POINT,0),	"ec_GFp_simple_oct2point"},
-{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_POINT2OCT,0),	"ec_GFp_simple_point2oct"},
-{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_POINTS_MAKE_AFFINE,0),	"ec_GFp_simple_points_make_affine"},
-{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES_GFP,0),	"ec_GFp_simple_point_get_affine_coordinates_GFp"},
-{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_POINT_SET_AFFINE_COORDINATES_GFP,0),	"ec_GFp_simple_point_set_affine_coordinates_GFp"},
-{ERR_PACK(0,EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES_GFP,0),	"ec_GFp_simple_set_compressed_coordinates_GFp"},
-{ERR_PACK(0,EC_F_EC_GROUP_COPY,0),	"EC_GROUP_copy"},
-{ERR_PACK(0,EC_F_EC_GROUP_GET0_GENERATOR,0),	"EC_GROUP_get0_generator"},
-{ERR_PACK(0,EC_F_EC_GROUP_GET_COFACTOR,0),	"EC_GROUP_get_cofactor"},
-{ERR_PACK(0,EC_F_EC_GROUP_GET_CURVE_GFP,0),	"EC_GROUP_get_curve_GFp"},
-{ERR_PACK(0,EC_F_EC_GROUP_GET_ORDER,0),	"EC_GROUP_get_order"},
-{ERR_PACK(0,EC_F_EC_GROUP_NEW,0),	"EC_GROUP_new"},
-{ERR_PACK(0,EC_F_EC_GROUP_PRECOMPUTE_MULT,0),	"EC_GROUP_precompute_mult"},
-{ERR_PACK(0,EC_F_EC_GROUP_SET_CURVE_GFP,0),	"EC_GROUP_set_curve_GFp"},
-{ERR_PACK(0,EC_F_EC_GROUP_SET_EXTRA_DATA,0),	"EC_GROUP_set_extra_data"},
-{ERR_PACK(0,EC_F_EC_GROUP_SET_GENERATOR,0),	"EC_GROUP_set_generator"},
-{ERR_PACK(0,EC_F_EC_POINTS_MAKE_AFFINE,0),	"EC_POINTs_make_affine"},
-{ERR_PACK(0,EC_F_EC_POINTS_MUL,0),	"EC_POINTs_mul"},
-{ERR_PACK(0,EC_F_EC_POINT_ADD,0),	"EC_POINT_add"},
-{ERR_PACK(0,EC_F_EC_POINT_CMP,0),	"EC_POINT_cmp"},
-{ERR_PACK(0,EC_F_EC_POINT_COPY,0),	"EC_POINT_copy"},
-{ERR_PACK(0,EC_F_EC_POINT_DBL,0),	"EC_POINT_dbl"},
-{ERR_PACK(0,EC_F_EC_POINT_GET_AFFINE_COORDINATES_GFP,0),	"EC_POINT_get_affine_coordinates_GFp"},
-{ERR_PACK(0,EC_F_EC_POINT_GET_JPROJECTIVE_COORDINATES_GFP,0),	"EC_POINT_get_Jprojective_coordinates_GFp"},
-{ERR_PACK(0,EC_F_EC_POINT_IS_AT_INFINITY,0),	"EC_POINT_is_at_infinity"},
-{ERR_PACK(0,EC_F_EC_POINT_IS_ON_CURVE,0),	"EC_POINT_is_on_curve"},
-{ERR_PACK(0,EC_F_EC_POINT_MAKE_AFFINE,0),	"EC_POINT_make_affine"},
-{ERR_PACK(0,EC_F_EC_POINT_NEW,0),	"EC_POINT_new"},
-{ERR_PACK(0,EC_F_EC_POINT_OCT2POINT,0),	"EC_POINT_oct2point"},
-{ERR_PACK(0,EC_F_EC_POINT_POINT2OCT,0),	"EC_POINT_point2oct"},
-{ERR_PACK(0,EC_F_EC_POINT_SET_AFFINE_COORDINATES_GFP,0),	"EC_POINT_set_affine_coordinates_GFp"},
-{ERR_PACK(0,EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP,0),	"EC_POINT_set_compressed_coordinates_GFp"},
-{ERR_PACK(0,EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP,0),	"EC_POINT_set_Jprojective_coordinates_GFp"},
-{ERR_PACK(0,EC_F_EC_POINT_SET_TO_INFINITY,0),	"EC_POINT_set_to_infinity"},
-{ERR_PACK(0,EC_F_GFP_MONT_GROUP_SET_CURVE_GFP,0),	"GFP_MONT_GROUP_SET_CURVE_GFP"},
+{ERR_FUNC(EC_F_COMPUTE_WNAF),	"COMPUTE_WNAF"},
+{ERR_FUNC(EC_F_EC_GFP_MONT_FIELD_DECODE),	"ec_GFp_mont_field_decode"},
+{ERR_FUNC(EC_F_EC_GFP_MONT_FIELD_ENCODE),	"ec_GFp_mont_field_encode"},
+{ERR_FUNC(EC_F_EC_GFP_MONT_FIELD_MUL),	"ec_GFp_mont_field_mul"},
+{ERR_FUNC(EC_F_EC_GFP_MONT_FIELD_SQR),	"ec_GFp_mont_field_sqr"},
+{ERR_FUNC(EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE_GFP),	"ec_GFp_simple_group_set_curve_GFp"},
+{ERR_FUNC(EC_F_EC_GFP_SIMPLE_GROUP_SET_GENERATOR),	"ec_GFp_simple_group_set_generator"},
+{ERR_FUNC(EC_F_EC_GFP_SIMPLE_MAKE_AFFINE),	"ec_GFp_simple_make_affine"},
+{ERR_FUNC(EC_F_EC_GFP_SIMPLE_OCT2POINT),	"ec_GFp_simple_oct2point"},
+{ERR_FUNC(EC_F_EC_GFP_SIMPLE_POINT2OCT),	"ec_GFp_simple_point2oct"},
+{ERR_FUNC(EC_F_EC_GFP_SIMPLE_POINTS_MAKE_AFFINE),	"ec_GFp_simple_points_make_affine"},
+{ERR_FUNC(EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES_GFP),	"ec_GFp_simple_point_get_affine_coordinates_GFp"},
+{ERR_FUNC(EC_F_EC_GFP_SIMPLE_POINT_SET_AFFINE_COORDINATES_GFP),	"ec_GFp_simple_point_set_affine_coordinates_GFp"},
+{ERR_FUNC(EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES_GFP),	"ec_GFp_simple_set_compressed_coordinates_GFp"},
+{ERR_FUNC(EC_F_EC_GROUP_COPY),	"EC_GROUP_copy"},
+{ERR_FUNC(EC_F_EC_GROUP_GET0_GENERATOR),	"EC_GROUP_get0_generator"},
+{ERR_FUNC(EC_F_EC_GROUP_GET_COFACTOR),	"EC_GROUP_get_cofactor"},
+{ERR_FUNC(EC_F_EC_GROUP_GET_CURVE_GFP),	"EC_GROUP_get_curve_GFp"},
+{ERR_FUNC(EC_F_EC_GROUP_GET_ORDER),	"EC_GROUP_get_order"},
+{ERR_FUNC(EC_F_EC_GROUP_NEW),	"EC_GROUP_new"},
+{ERR_FUNC(EC_F_EC_GROUP_PRECOMPUTE_MULT),	"EC_GROUP_precompute_mult"},
+{ERR_FUNC(EC_F_EC_GROUP_SET_CURVE_GFP),	"EC_GROUP_set_curve_GFp"},
+{ERR_FUNC(EC_F_EC_GROUP_SET_EXTRA_DATA),	"EC_GROUP_set_extra_data"},
+{ERR_FUNC(EC_F_EC_GROUP_SET_GENERATOR),	"EC_GROUP_set_generator"},
+{ERR_FUNC(EC_F_EC_POINTS_MAKE_AFFINE),	"EC_POINTs_make_affine"},
+{ERR_FUNC(EC_F_EC_POINTS_MUL),	"EC_POINTs_mul"},
+{ERR_FUNC(EC_F_EC_POINT_ADD),	"EC_POINT_add"},
+{ERR_FUNC(EC_F_EC_POINT_CMP),	"EC_POINT_cmp"},
+{ERR_FUNC(EC_F_EC_POINT_COPY),	"EC_POINT_copy"},
+{ERR_FUNC(EC_F_EC_POINT_DBL),	"EC_POINT_dbl"},
+{ERR_FUNC(EC_F_EC_POINT_GET_AFFINE_COORDINATES_GFP),	"EC_POINT_get_affine_coordinates_GFp"},
+{ERR_FUNC(EC_F_EC_POINT_GET_JPROJECTIVE_COORDINATES_GFP),	"EC_POINT_get_Jprojective_coordinates_GFp"},
+{ERR_FUNC(EC_F_EC_POINT_IS_AT_INFINITY),	"EC_POINT_is_at_infinity"},
+{ERR_FUNC(EC_F_EC_POINT_IS_ON_CURVE),	"EC_POINT_is_on_curve"},
+{ERR_FUNC(EC_F_EC_POINT_MAKE_AFFINE),	"EC_POINT_make_affine"},
+{ERR_FUNC(EC_F_EC_POINT_NEW),	"EC_POINT_new"},
+{ERR_FUNC(EC_F_EC_POINT_OCT2POINT),	"EC_POINT_oct2point"},
+{ERR_FUNC(EC_F_EC_POINT_POINT2OCT),	"EC_POINT_point2oct"},
+{ERR_FUNC(EC_F_EC_POINT_SET_AFFINE_COORDINATES_GFP),	"EC_POINT_set_affine_coordinates_GFp"},
+{ERR_FUNC(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP),	"EC_POINT_set_compressed_coordinates_GFp"},
+{ERR_FUNC(EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP),	"EC_POINT_set_Jprojective_coordinates_GFp"},
+{ERR_FUNC(EC_F_EC_POINT_SET_TO_INFINITY),	"EC_POINT_set_to_infinity"},
+{ERR_FUNC(EC_F_GFP_MONT_GROUP_SET_CURVE_GFP),	"GFP_MONT_GROUP_SET_CURVE_GFP"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA EC_str_reasons[]=
 	{
-{EC_R_BUFFER_TOO_SMALL                   ,"buffer too small"},
-{EC_R_INCOMPATIBLE_OBJECTS               ,"incompatible objects"},
-{EC_R_INVALID_ARGUMENT                   ,"invalid argument"},
-{EC_R_INVALID_COMPRESSED_POINT           ,"invalid compressed point"},
-{EC_R_INVALID_COMPRESSION_BIT            ,"invalid compression bit"},
-{EC_R_INVALID_ENCODING                   ,"invalid encoding"},
-{EC_R_INVALID_FIELD                      ,"invalid field"},
-{EC_R_INVALID_FORM                       ,"invalid form"},
-{EC_R_NOT_INITIALIZED                    ,"not initialized"},
-{EC_R_POINT_AT_INFINITY                  ,"point at infinity"},
-{EC_R_POINT_IS_NOT_ON_CURVE              ,"point is not on curve"},
-{EC_R_SLOT_FULL                          ,"slot full"},
-{EC_R_UNDEFINED_GENERATOR                ,"undefined generator"},
-{EC_R_UNKNOWN_ORDER                      ,"unknown order"},
+{ERR_REASON(EC_R_BUFFER_TOO_SMALL)       ,"buffer too small"},
+{ERR_REASON(EC_R_INCOMPATIBLE_OBJECTS)   ,"incompatible objects"},
+{ERR_REASON(EC_R_INVALID_ARGUMENT)       ,"invalid argument"},
+{ERR_REASON(EC_R_INVALID_COMPRESSED_POINT),"invalid compressed point"},
+{ERR_REASON(EC_R_INVALID_COMPRESSION_BIT),"invalid compression bit"},
+{ERR_REASON(EC_R_INVALID_ENCODING)       ,"invalid encoding"},
+{ERR_REASON(EC_R_INVALID_FIELD)          ,"invalid field"},
+{ERR_REASON(EC_R_INVALID_FORM)           ,"invalid form"},
+{ERR_REASON(EC_R_NOT_INITIALIZED)        ,"not initialized"},
+{ERR_REASON(EC_R_POINT_AT_INFINITY)      ,"point at infinity"},
+{ERR_REASON(EC_R_POINT_IS_NOT_ON_CURVE)  ,"point is not on curve"},
+{ERR_REASON(EC_R_SLOT_FULL)              ,"slot full"},
+{ERR_REASON(EC_R_UNDEFINED_GENERATOR)    ,"undefined generator"},
+{ERR_REASON(EC_R_UNKNOWN_ORDER)          ,"unknown order"},
 {0,NULL}
 	};
 
@@ -141,8 +145,8 @@ void ERR_load_EC_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_EC,EC_str_functs);
-		ERR_load_strings(ERR_LIB_EC,EC_str_reasons);
+		ERR_load_strings(0,EC_str_functs);
+		ERR_load_strings(0,EC_str_reasons);
 #endif
 
 		}

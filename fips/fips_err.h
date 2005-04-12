@@ -1,6 +1,6 @@
 /* fips/fips_err.h */
 /* ====================================================================
- * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,39 +64,43 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_FIPS,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_FIPS,0,reason)
+
 static ERR_STRING_DATA FIPS_str_functs[]=
 	{
-{ERR_PACK(0,FIPS_F_DSA_DO_SIGN,0),	"DSA_do_sign"},
-{ERR_PACK(0,FIPS_F_DSA_DO_VERIFY,0),	"DSA_do_verify"},
-{ERR_PACK(0,FIPS_F_DSA_GENERATE_PARAMETERS,0),	"DSA_generate_parameters"},
-{ERR_PACK(0,FIPS_F_FIPS_CHECK_DSA,0),	"FIPS_CHECK_DSA"},
-{ERR_PACK(0,FIPS_F_FIPS_CHECK_EXE,0),	"FIPS_CHECK_EXE"},
-{ERR_PACK(0,FIPS_F_FIPS_CHECK_RSA,0),	"FIPS_CHECK_RSA"},
-{ERR_PACK(0,FIPS_F_FIPS_DSA_CHECK,0),	"FIPS_dsa_check"},
-{ERR_PACK(0,FIPS_F_FIPS_MODE_SET,0),	"FIPS_mode_set"},
-{ERR_PACK(0,FIPS_F_FIPS_SELFTEST_AES,0),	"FIPS_selftest_aes"},
-{ERR_PACK(0,FIPS_F_FIPS_SELFTEST_DES,0),	"FIPS_selftest_des"},
-{ERR_PACK(0,FIPS_F_FIPS_SELFTEST_DSA,0),	"FIPS_selftest_dsa"},
-{ERR_PACK(0,FIPS_F_FIPS_SELFTEST_RSA,0),	"FIPS_selftest_rsa"},
-{ERR_PACK(0,FIPS_F_FIPS_SELFTEST_SHA1,0),	"FIPS_selftest_sha1"},
-{ERR_PACK(0,FIPS_F_HASH_FINAL,0),	"HASH_FINAL"},
-{ERR_PACK(0,FIPS_F_DH_GENERATE_PARAMETERS,0),	"DH_generate_parameters"},
-{ERR_PACK(0,FIPS_F_RSA_EAY_PUBLIC_ENCRYPT,0),	"RSA_EAY_PUBLIC_ENCRYPT"},
-{ERR_PACK(0,FIPS_F_RSA_GENERATE_KEY,0),	"RSA_generate_key"},
-{ERR_PACK(0,FIPS_F_SSLEAY_RAND_BYTES,0),	"SSLEAY_RAND_BYTES"},
+{ERR_FUNC(FIPS_F_DH_GENERATE_PARAMETERS),	"DH_generate_parameters"},
+{ERR_FUNC(FIPS_F_DSA_DO_SIGN),	"DSA_do_sign"},
+{ERR_FUNC(FIPS_F_DSA_DO_VERIFY),	"DSA_do_verify"},
+{ERR_FUNC(FIPS_F_DSA_GENERATE_PARAMETERS),	"DSA_generate_parameters"},
+{ERR_FUNC(FIPS_F_FIPS_CHECK_DSA),	"FIPS_CHECK_DSA"},
+{ERR_FUNC(FIPS_F_FIPS_CHECK_EXE),	"FIPS_CHECK_EXE"},
+{ERR_FUNC(FIPS_F_FIPS_CHECK_RSA),	"FIPS_CHECK_RSA"},
+{ERR_FUNC(FIPS_F_FIPS_DSA_CHECK),	"FIPS_dsa_check"},
+{ERR_FUNC(FIPS_F_FIPS_MODE_SET),	"FIPS_mode_set"},
+{ERR_FUNC(FIPS_F_FIPS_SELFTEST_AES),	"FIPS_selftest_aes"},
+{ERR_FUNC(FIPS_F_FIPS_SELFTEST_DES),	"FIPS_selftest_des"},
+{ERR_FUNC(FIPS_F_FIPS_SELFTEST_DSA),	"FIPS_selftest_dsa"},
+{ERR_FUNC(FIPS_F_FIPS_SELFTEST_RSA),	"FIPS_selftest_rsa"},
+{ERR_FUNC(FIPS_F_FIPS_SELFTEST_SHA1),	"FIPS_selftest_sha1"},
+{ERR_FUNC(FIPS_F_HASH_FINAL),	"HASH_FINAL"},
+{ERR_FUNC(FIPS_F_RSA_EAY_PUBLIC_ENCRYPT),	"RSA_EAY_PUBLIC_ENCRYPT"},
+{ERR_FUNC(FIPS_F_RSA_GENERATE_KEY),	"RSA_generate_key"},
+{ERR_FUNC(FIPS_F_SSLEAY_RAND_BYTES),	"SSLEAY_RAND_BYTES"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA FIPS_str_reasons[]=
 	{
-{FIPS_R_CANNOT_READ_EXE                  ,"cannot read exe"},
-{FIPS_R_CANNOT_READ_EXE_DIGEST           ,"cannot read exe digest"},
-{FIPS_R_EXE_DIGEST_DOES_NOT_MATCH        ,"exe digest does not match"},
-{FIPS_R_FIPS_MODE_ALREADY_SET            ,"fips mode already set"},
-{FIPS_R_FIPS_SELFTEST_FAILED             ,"fips selftest failed"},
-{FIPS_R_NON_FIPS_METHOD                  ,"non fips method"},
-{FIPS_R_PAIRWISE_TEST_FAILED             ,"pairwise test failed"},
-{FIPS_R_SELFTEST_FAILED                  ,"selftest failed"},
+{ERR_REASON(FIPS_R_CANNOT_READ_EXE)      ,"cannot read exe"},
+{ERR_REASON(FIPS_R_CANNOT_READ_EXE_DIGEST),"cannot read exe digest"},
+{ERR_REASON(FIPS_R_EXE_DIGEST_DOES_NOT_MATCH),"exe digest does not match"},
+{ERR_REASON(FIPS_R_FIPS_MODE_ALREADY_SET),"fips mode already set"},
+{ERR_REASON(FIPS_R_FIPS_SELFTEST_FAILED) ,"fips selftest failed"},
+{ERR_REASON(FIPS_R_NON_FIPS_METHOD)      ,"non fips method"},
+{ERR_REASON(FIPS_R_PAIRWISE_TEST_FAILED) ,"pairwise test failed"},
+{ERR_REASON(FIPS_R_SELFTEST_FAILED)      ,"selftest failed"},
 {0,NULL}
 	};
 
@@ -110,8 +114,8 @@ void ERR_load_FIPS_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_FIPS,FIPS_str_functs);
-		ERR_load_strings(ERR_LIB_FIPS,FIPS_str_reasons);
+		ERR_load_strings(0,FIPS_str_functs);
+		ERR_load_strings(0,FIPS_str_reasons);
 #endif
 
 		}

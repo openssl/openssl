@@ -1,6 +1,6 @@
 /* crypto/engine/eng_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,87 +64,91 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_ENGINE,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_ENGINE,0,reason)
+
 static ERR_STRING_DATA ENGINE_str_functs[]=
 	{
-{ERR_PACK(0,ENGINE_F_DYNAMIC_CTRL,0),	"DYNAMIC_CTRL"},
-{ERR_PACK(0,ENGINE_F_DYNAMIC_GET_DATA_CTX,0),	"DYNAMIC_GET_DATA_CTX"},
-{ERR_PACK(0,ENGINE_F_DYNAMIC_LOAD,0),	"DYNAMIC_LOAD"},
-{ERR_PACK(0,ENGINE_F_ENGINE_ADD,0),	"ENGINE_add"},
-{ERR_PACK(0,ENGINE_F_ENGINE_BY_ID,0),	"ENGINE_by_id"},
-{ERR_PACK(0,ENGINE_F_ENGINE_CMD_IS_EXECUTABLE,0),	"ENGINE_cmd_is_executable"},
-{ERR_PACK(0,ENGINE_F_ENGINE_CTRL,0),	"ENGINE_ctrl"},
-{ERR_PACK(0,ENGINE_F_ENGINE_CTRL_CMD,0),	"ENGINE_ctrl_cmd"},
-{ERR_PACK(0,ENGINE_F_ENGINE_CTRL_CMD_STRING,0),	"ENGINE_ctrl_cmd_string"},
-{ERR_PACK(0,ENGINE_F_ENGINE_FINISH,0),	"ENGINE_finish"},
-{ERR_PACK(0,ENGINE_F_ENGINE_FREE,0),	"ENGINE_free"},
-{ERR_PACK(0,ENGINE_F_ENGINE_GET_CIPHER,0),	"ENGINE_get_cipher"},
-{ERR_PACK(0,ENGINE_F_ENGINE_GET_DEFAULT_TYPE,0),	"ENGINE_GET_DEFAULT_TYPE"},
-{ERR_PACK(0,ENGINE_F_ENGINE_GET_DIGEST,0),	"ENGINE_get_digest"},
-{ERR_PACK(0,ENGINE_F_ENGINE_GET_NEXT,0),	"ENGINE_get_next"},
-{ERR_PACK(0,ENGINE_F_ENGINE_GET_PREV,0),	"ENGINE_get_prev"},
-{ERR_PACK(0,ENGINE_F_ENGINE_INIT,0),	"ENGINE_init"},
-{ERR_PACK(0,ENGINE_F_ENGINE_LIST_ADD,0),	"ENGINE_LIST_ADD"},
-{ERR_PACK(0,ENGINE_F_ENGINE_LIST_REMOVE,0),	"ENGINE_LIST_REMOVE"},
-{ERR_PACK(0,ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,0),	"ENGINE_load_private_key"},
-{ERR_PACK(0,ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,0),	"ENGINE_load_public_key"},
-{ERR_PACK(0,ENGINE_F_ENGINE_MODULE_INIT,0),	"ENGINE_MODULE_INIT"},
-{ERR_PACK(0,ENGINE_F_ENGINE_NEW,0),	"ENGINE_new"},
-{ERR_PACK(0,ENGINE_F_ENGINE_REMOVE,0),	"ENGINE_remove"},
-{ERR_PACK(0,ENGINE_F_ENGINE_SET_DEFAULT_STRING,0),	"ENGINE_set_default_string"},
-{ERR_PACK(0,ENGINE_F_ENGINE_SET_DEFAULT_TYPE,0),	"ENGINE_SET_DEFAULT_TYPE"},
-{ERR_PACK(0,ENGINE_F_ENGINE_SET_ID,0),	"ENGINE_set_id"},
-{ERR_PACK(0,ENGINE_F_ENGINE_SET_NAME,0),	"ENGINE_set_name"},
-{ERR_PACK(0,ENGINE_F_ENGINE_TABLE_REGISTER,0),	"ENGINE_TABLE_REGISTER"},
-{ERR_PACK(0,ENGINE_F_ENGINE_UNLOAD_KEY,0),	"ENGINE_UNLOAD_KEY"},
-{ERR_PACK(0,ENGINE_F_ENGINE_UP_REF,0),	"ENGINE_up_ref"},
-{ERR_PACK(0,ENGINE_F_INT_CTRL_HELPER,0),	"INT_CTRL_HELPER"},
-{ERR_PACK(0,ENGINE_F_INT_ENGINE_CONFIGURE,0),	"INT_ENGINE_CONFIGURE"},
-{ERR_PACK(0,ENGINE_F_LOG_MESSAGE,0),	"LOG_MESSAGE"},
-{ERR_PACK(0,ENGINE_F_SET_DATA_CTX,0),	"SET_DATA_CTX"},
+{ERR_FUNC(ENGINE_F_DYNAMIC_CTRL),	"DYNAMIC_CTRL"},
+{ERR_FUNC(ENGINE_F_DYNAMIC_GET_DATA_CTX),	"DYNAMIC_GET_DATA_CTX"},
+{ERR_FUNC(ENGINE_F_DYNAMIC_LOAD),	"DYNAMIC_LOAD"},
+{ERR_FUNC(ENGINE_F_ENGINE_ADD),	"ENGINE_add"},
+{ERR_FUNC(ENGINE_F_ENGINE_BY_ID),	"ENGINE_by_id"},
+{ERR_FUNC(ENGINE_F_ENGINE_CMD_IS_EXECUTABLE),	"ENGINE_cmd_is_executable"},
+{ERR_FUNC(ENGINE_F_ENGINE_CTRL),	"ENGINE_ctrl"},
+{ERR_FUNC(ENGINE_F_ENGINE_CTRL_CMD),	"ENGINE_ctrl_cmd"},
+{ERR_FUNC(ENGINE_F_ENGINE_CTRL_CMD_STRING),	"ENGINE_ctrl_cmd_string"},
+{ERR_FUNC(ENGINE_F_ENGINE_FINISH),	"ENGINE_finish"},
+{ERR_FUNC(ENGINE_F_ENGINE_FREE),	"ENGINE_free"},
+{ERR_FUNC(ENGINE_F_ENGINE_GET_CIPHER),	"ENGINE_get_cipher"},
+{ERR_FUNC(ENGINE_F_ENGINE_GET_DEFAULT_TYPE),	"ENGINE_GET_DEFAULT_TYPE"},
+{ERR_FUNC(ENGINE_F_ENGINE_GET_DIGEST),	"ENGINE_get_digest"},
+{ERR_FUNC(ENGINE_F_ENGINE_GET_NEXT),	"ENGINE_get_next"},
+{ERR_FUNC(ENGINE_F_ENGINE_GET_PREV),	"ENGINE_get_prev"},
+{ERR_FUNC(ENGINE_F_ENGINE_INIT),	"ENGINE_init"},
+{ERR_FUNC(ENGINE_F_ENGINE_LIST_ADD),	"ENGINE_LIST_ADD"},
+{ERR_FUNC(ENGINE_F_ENGINE_LIST_REMOVE),	"ENGINE_LIST_REMOVE"},
+{ERR_FUNC(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY),	"ENGINE_load_private_key"},
+{ERR_FUNC(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY),	"ENGINE_load_public_key"},
+{ERR_FUNC(ENGINE_F_ENGINE_MODULE_INIT),	"ENGINE_MODULE_INIT"},
+{ERR_FUNC(ENGINE_F_ENGINE_NEW),	"ENGINE_new"},
+{ERR_FUNC(ENGINE_F_ENGINE_REMOVE),	"ENGINE_remove"},
+{ERR_FUNC(ENGINE_F_ENGINE_SET_DEFAULT_STRING),	"ENGINE_set_default_string"},
+{ERR_FUNC(ENGINE_F_ENGINE_SET_DEFAULT_TYPE),	"ENGINE_SET_DEFAULT_TYPE"},
+{ERR_FUNC(ENGINE_F_ENGINE_SET_ID),	"ENGINE_set_id"},
+{ERR_FUNC(ENGINE_F_ENGINE_SET_NAME),	"ENGINE_set_name"},
+{ERR_FUNC(ENGINE_F_ENGINE_TABLE_REGISTER),	"ENGINE_TABLE_REGISTER"},
+{ERR_FUNC(ENGINE_F_ENGINE_UNLOAD_KEY),	"ENGINE_UNLOAD_KEY"},
+{ERR_FUNC(ENGINE_F_ENGINE_UP_REF),	"ENGINE_up_ref"},
+{ERR_FUNC(ENGINE_F_INT_CTRL_HELPER),	"INT_CTRL_HELPER"},
+{ERR_FUNC(ENGINE_F_INT_ENGINE_CONFIGURE),	"INT_ENGINE_CONFIGURE"},
+{ERR_FUNC(ENGINE_F_LOG_MESSAGE),	"LOG_MESSAGE"},
+{ERR_FUNC(ENGINE_F_SET_DATA_CTX),	"SET_DATA_CTX"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA ENGINE_str_reasons[]=
 	{
-{ENGINE_R_ALREADY_LOADED                 ,"already loaded"},
-{ENGINE_R_ARGUMENT_IS_NOT_A_NUMBER       ,"argument is not a number"},
-{ENGINE_R_CMD_NOT_EXECUTABLE             ,"cmd not executable"},
-{ENGINE_R_COMMAND_TAKES_INPUT            ,"command takes input"},
-{ENGINE_R_COMMAND_TAKES_NO_INPUT         ,"command takes no input"},
-{ENGINE_R_CONFLICTING_ENGINE_ID          ,"conflicting engine id"},
-{ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED   ,"ctrl command not implemented"},
-{ENGINE_R_DH_NOT_IMPLEMENTED             ,"dh not implemented"},
-{ENGINE_R_DSA_NOT_IMPLEMENTED            ,"dsa not implemented"},
-{ENGINE_R_DSO_FAILURE                    ,"DSO failure"},
-{ENGINE_R_DSO_NOT_FOUND                  ,"dso not found"},
-{ENGINE_R_ENGINES_SECTION_ERROR          ,"engines section error"},
-{ENGINE_R_ENGINE_IS_NOT_IN_LIST          ,"engine is not in the list"},
-{ENGINE_R_ENGINE_SECTION_ERROR           ,"engine section error"},
-{ENGINE_R_FAILED_LOADING_PRIVATE_KEY     ,"failed loading private key"},
-{ENGINE_R_FAILED_LOADING_PUBLIC_KEY      ,"failed loading public key"},
-{ENGINE_R_FINISH_FAILED                  ,"finish failed"},
-{ENGINE_R_GET_HANDLE_FAILED              ,"could not obtain hardware handle"},
-{ENGINE_R_ID_OR_NAME_MISSING             ,"'id' or 'name' missing"},
-{ENGINE_R_INIT_FAILED                    ,"init failed"},
-{ENGINE_R_INTERNAL_LIST_ERROR            ,"internal list error"},
-{ENGINE_R_INVALID_ARGUMENT               ,"invalid argument"},
-{ENGINE_R_INVALID_CMD_NAME               ,"invalid cmd name"},
-{ENGINE_R_INVALID_CMD_NUMBER             ,"invalid cmd number"},
-{ENGINE_R_INVALID_INIT_VALUE             ,"invalid init value"},
-{ENGINE_R_INVALID_STRING                 ,"invalid string"},
-{ENGINE_R_NOT_INITIALISED                ,"not initialised"},
-{ENGINE_R_NOT_LOADED                     ,"not loaded"},
-{ENGINE_R_NO_CONTROL_FUNCTION            ,"no control function"},
-{ENGINE_R_NO_INDEX                       ,"no index"},
-{ENGINE_R_NO_LOAD_FUNCTION               ,"no load function"},
-{ENGINE_R_NO_REFERENCE                   ,"no reference"},
-{ENGINE_R_NO_SUCH_ENGINE                 ,"no such engine"},
-{ENGINE_R_NO_UNLOAD_FUNCTION             ,"no unload function"},
-{ENGINE_R_PROVIDE_PARAMETERS             ,"provide parameters"},
-{ENGINE_R_RSA_NOT_IMPLEMENTED            ,"rsa not implemented"},
-{ENGINE_R_UNIMPLEMENTED_CIPHER           ,"unimplemented cipher"},
-{ENGINE_R_UNIMPLEMENTED_DIGEST           ,"unimplemented digest"},
-{ENGINE_R_VERSION_INCOMPATIBILITY        ,"version incompatibility"},
+{ERR_REASON(ENGINE_R_ALREADY_LOADED)     ,"already loaded"},
+{ERR_REASON(ENGINE_R_ARGUMENT_IS_NOT_A_NUMBER),"argument is not a number"},
+{ERR_REASON(ENGINE_R_CMD_NOT_EXECUTABLE) ,"cmd not executable"},
+{ERR_REASON(ENGINE_R_COMMAND_TAKES_INPUT),"command takes input"},
+{ERR_REASON(ENGINE_R_COMMAND_TAKES_NO_INPUT),"command takes no input"},
+{ERR_REASON(ENGINE_R_CONFLICTING_ENGINE_ID),"conflicting engine id"},
+{ERR_REASON(ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED),"ctrl command not implemented"},
+{ERR_REASON(ENGINE_R_DH_NOT_IMPLEMENTED) ,"dh not implemented"},
+{ERR_REASON(ENGINE_R_DSA_NOT_IMPLEMENTED),"dsa not implemented"},
+{ERR_REASON(ENGINE_R_DSO_FAILURE)        ,"DSO failure"},
+{ERR_REASON(ENGINE_R_DSO_NOT_FOUND)      ,"dso not found"},
+{ERR_REASON(ENGINE_R_ENGINES_SECTION_ERROR),"engines section error"},
+{ERR_REASON(ENGINE_R_ENGINE_IS_NOT_IN_LIST),"engine is not in the list"},
+{ERR_REASON(ENGINE_R_ENGINE_SECTION_ERROR),"engine section error"},
+{ERR_REASON(ENGINE_R_FAILED_LOADING_PRIVATE_KEY),"failed loading private key"},
+{ERR_REASON(ENGINE_R_FAILED_LOADING_PUBLIC_KEY),"failed loading public key"},
+{ERR_REASON(ENGINE_R_FINISH_FAILED)      ,"finish failed"},
+{ERR_REASON(ENGINE_R_GET_HANDLE_FAILED)  ,"could not obtain hardware handle"},
+{ERR_REASON(ENGINE_R_ID_OR_NAME_MISSING) ,"'id' or 'name' missing"},
+{ERR_REASON(ENGINE_R_INIT_FAILED)        ,"init failed"},
+{ERR_REASON(ENGINE_R_INTERNAL_LIST_ERROR),"internal list error"},
+{ERR_REASON(ENGINE_R_INVALID_ARGUMENT)   ,"invalid argument"},
+{ERR_REASON(ENGINE_R_INVALID_CMD_NAME)   ,"invalid cmd name"},
+{ERR_REASON(ENGINE_R_INVALID_CMD_NUMBER) ,"invalid cmd number"},
+{ERR_REASON(ENGINE_R_INVALID_INIT_VALUE) ,"invalid init value"},
+{ERR_REASON(ENGINE_R_INVALID_STRING)     ,"invalid string"},
+{ERR_REASON(ENGINE_R_NOT_INITIALISED)    ,"not initialised"},
+{ERR_REASON(ENGINE_R_NOT_LOADED)         ,"not loaded"},
+{ERR_REASON(ENGINE_R_NO_CONTROL_FUNCTION),"no control function"},
+{ERR_REASON(ENGINE_R_NO_INDEX)           ,"no index"},
+{ERR_REASON(ENGINE_R_NO_LOAD_FUNCTION)   ,"no load function"},
+{ERR_REASON(ENGINE_R_NO_REFERENCE)       ,"no reference"},
+{ERR_REASON(ENGINE_R_NO_SUCH_ENGINE)     ,"no such engine"},
+{ERR_REASON(ENGINE_R_NO_UNLOAD_FUNCTION) ,"no unload function"},
+{ERR_REASON(ENGINE_R_PROVIDE_PARAMETERS) ,"provide parameters"},
+{ERR_REASON(ENGINE_R_RSA_NOT_IMPLEMENTED),"rsa not implemented"},
+{ERR_REASON(ENGINE_R_UNIMPLEMENTED_CIPHER),"unimplemented cipher"},
+{ERR_REASON(ENGINE_R_UNIMPLEMENTED_DIGEST),"unimplemented digest"},
+{ERR_REASON(ENGINE_R_VERSION_INCOMPATIBILITY),"version incompatibility"},
 {0,NULL}
 	};
 
@@ -158,8 +162,8 @@ void ERR_load_ENGINE_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_ENGINE,ENGINE_str_functs);
-		ERR_load_strings(ERR_LIB_ENGINE,ENGINE_str_reasons);
+		ERR_load_strings(0,ENGINE_str_functs);
+		ERR_load_strings(0,ENGINE_str_reasons);
 #endif
 
 		}

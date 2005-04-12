@@ -1,6 +1,6 @@
 /* crypto/buffer/buf_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,11 +64,15 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_BUF,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_BUF,0,reason)
+
 static ERR_STRING_DATA BUF_str_functs[]=
 	{
-{ERR_PACK(0,BUF_F_BUF_MEM_GROW,0),	"BUF_MEM_grow"},
-{ERR_PACK(0,BUF_F_BUF_MEM_NEW,0),	"BUF_MEM_new"},
-{ERR_PACK(0,BUF_F_BUF_STRDUP,0),	"BUF_strdup"},
+{ERR_FUNC(BUF_F_BUF_MEM_GROW),	"BUF_MEM_grow"},
+{ERR_FUNC(BUF_F_BUF_MEM_NEW),	"BUF_MEM_new"},
+{ERR_FUNC(BUF_F_BUF_STRDUP),	"BUF_strdup"},
 {0,NULL}
 	};
 
@@ -87,8 +91,8 @@ void ERR_load_BUF_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_BUF,BUF_str_functs);
-		ERR_load_strings(ERR_LIB_BUF,BUF_str_reasons);
+		ERR_load_strings(0,BUF_str_functs);
+		ERR_load_strings(0,BUF_str_reasons);
 #endif
 
 		}

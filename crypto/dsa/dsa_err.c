@@ -1,6 +1,6 @@
 /* crypto/dsa/dsa_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,29 +64,33 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_DSA,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_DSA,0,reason)
+
 static ERR_STRING_DATA DSA_str_functs[]=
 	{
-{ERR_PACK(0,DSA_F_D2I_DSA_SIG,0),	"d2i_DSA_SIG"},
-{ERR_PACK(0,DSA_F_DSAPARAMS_PRINT,0),	"DSAparams_print"},
-{ERR_PACK(0,DSA_F_DSAPARAMS_PRINT_FP,0),	"DSAparams_print_fp"},
-{ERR_PACK(0,DSA_F_DSA_DO_SIGN,0),	"DSA_do_sign"},
-{ERR_PACK(0,DSA_F_DSA_DO_VERIFY,0),	"DSA_do_verify"},
-{ERR_PACK(0,DSA_F_DSA_NEW_METHOD,0),	"DSA_new_method"},
-{ERR_PACK(0,DSA_F_DSA_PRINT,0),	"DSA_print"},
-{ERR_PACK(0,DSA_F_DSA_PRINT_FP,0),	"DSA_print_fp"},
-{ERR_PACK(0,DSA_F_DSA_SIGN,0),	"DSA_sign"},
-{ERR_PACK(0,DSA_F_DSA_SIGN_SETUP,0),	"DSA_sign_setup"},
-{ERR_PACK(0,DSA_F_DSA_SIG_NEW,0),	"DSA_SIG_new"},
-{ERR_PACK(0,DSA_F_DSA_VERIFY,0),	"DSA_verify"},
-{ERR_PACK(0,DSA_F_I2D_DSA_SIG,0),	"i2d_DSA_SIG"},
-{ERR_PACK(0,DSA_F_SIG_CB,0),	"SIG_CB"},
+{ERR_FUNC(DSA_F_D2I_DSA_SIG),	"d2i_DSA_SIG"},
+{ERR_FUNC(DSA_F_DSAPARAMS_PRINT),	"DSAparams_print"},
+{ERR_FUNC(DSA_F_DSAPARAMS_PRINT_FP),	"DSAparams_print_fp"},
+{ERR_FUNC(DSA_F_DSA_DO_SIGN),	"DSA_do_sign"},
+{ERR_FUNC(DSA_F_DSA_DO_VERIFY),	"DSA_do_verify"},
+{ERR_FUNC(DSA_F_DSA_NEW_METHOD),	"DSA_new_method"},
+{ERR_FUNC(DSA_F_DSA_PRINT),	"DSA_print"},
+{ERR_FUNC(DSA_F_DSA_PRINT_FP),	"DSA_print_fp"},
+{ERR_FUNC(DSA_F_DSA_SIGN),	"DSA_sign"},
+{ERR_FUNC(DSA_F_DSA_SIGN_SETUP),	"DSA_sign_setup"},
+{ERR_FUNC(DSA_F_DSA_SIG_NEW),	"DSA_SIG_new"},
+{ERR_FUNC(DSA_F_DSA_VERIFY),	"DSA_verify"},
+{ERR_FUNC(DSA_F_I2D_DSA_SIG),	"i2d_DSA_SIG"},
+{ERR_FUNC(DSA_F_SIG_CB),	"SIG_CB"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA DSA_str_reasons[]=
 	{
-{DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE       ,"data too large for key size"},
-{DSA_R_MISSING_PARAMETERS                ,"missing parameters"},
+{ERR_REASON(DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE),"data too large for key size"},
+{ERR_REASON(DSA_R_MISSING_PARAMETERS)    ,"missing parameters"},
 {0,NULL}
 	};
 
@@ -100,8 +104,8 @@ void ERR_load_DSA_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_DSA,DSA_str_functs);
-		ERR_load_strings(ERR_LIB_DSA,DSA_str_reasons);
+		ERR_load_strings(0,DSA_str_functs);
+		ERR_load_strings(0,DSA_str_reasons);
 #endif
 
 		}

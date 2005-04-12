@@ -1,6 +1,6 @@
 /* crypto/bio/bio_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,73 +64,77 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_BIO,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_BIO,0,reason)
+
 static ERR_STRING_DATA BIO_str_functs[]=
 	{
-{ERR_PACK(0,BIO_F_ACPT_STATE,0),	"ACPT_STATE"},
-{ERR_PACK(0,BIO_F_BIO_ACCEPT,0),	"BIO_accept"},
-{ERR_PACK(0,BIO_F_BIO_BER_GET_HEADER,0),	"BIO_BER_GET_HEADER"},
-{ERR_PACK(0,BIO_F_BIO_CTRL,0),	"BIO_ctrl"},
-{ERR_PACK(0,BIO_F_BIO_GETHOSTBYNAME,0),	"BIO_gethostbyname"},
-{ERR_PACK(0,BIO_F_BIO_GETS,0),	"BIO_gets"},
-{ERR_PACK(0,BIO_F_BIO_GET_ACCEPT_SOCKET,0),	"BIO_get_accept_socket"},
-{ERR_PACK(0,BIO_F_BIO_GET_HOST_IP,0),	"BIO_get_host_ip"},
-{ERR_PACK(0,BIO_F_BIO_GET_PORT,0),	"BIO_get_port"},
-{ERR_PACK(0,BIO_F_BIO_MAKE_PAIR,0),	"BIO_MAKE_PAIR"},
-{ERR_PACK(0,BIO_F_BIO_NEW,0),	"BIO_new"},
-{ERR_PACK(0,BIO_F_BIO_NEW_FILE,0),	"BIO_new_file"},
-{ERR_PACK(0,BIO_F_BIO_NEW_MEM_BUF,0),	"BIO_new_mem_buf"},
-{ERR_PACK(0,BIO_F_BIO_NREAD,0),	"BIO_nread"},
-{ERR_PACK(0,BIO_F_BIO_NREAD0,0),	"BIO_nread0"},
-{ERR_PACK(0,BIO_F_BIO_NWRITE,0),	"BIO_nwrite"},
-{ERR_PACK(0,BIO_F_BIO_NWRITE0,0),	"BIO_nwrite0"},
-{ERR_PACK(0,BIO_F_BIO_PUTS,0),	"BIO_puts"},
-{ERR_PACK(0,BIO_F_BIO_READ,0),	"BIO_read"},
-{ERR_PACK(0,BIO_F_BIO_SOCK_INIT,0),	"BIO_sock_init"},
-{ERR_PACK(0,BIO_F_BIO_WRITE,0),	"BIO_write"},
-{ERR_PACK(0,BIO_F_BUFFER_CTRL,0),	"BUFFER_CTRL"},
-{ERR_PACK(0,BIO_F_CONN_CTRL,0),	"CONN_CTRL"},
-{ERR_PACK(0,BIO_F_CONN_STATE,0),	"CONN_STATE"},
-{ERR_PACK(0,BIO_F_FILE_CTRL,0),	"FILE_CTRL"},
-{ERR_PACK(0,BIO_F_FILE_READ,0),	"FILE_READ"},
-{ERR_PACK(0,BIO_F_LINEBUFFER_CTRL,0),	"LINEBUFFER_CTRL"},
-{ERR_PACK(0,BIO_F_MEM_READ,0),	"MEM_READ"},
-{ERR_PACK(0,BIO_F_MEM_WRITE,0),	"MEM_WRITE"},
-{ERR_PACK(0,BIO_F_SSL_NEW,0),	"SSL_new"},
-{ERR_PACK(0,BIO_F_WSASTARTUP,0),	"WSASTARTUP"},
+{ERR_FUNC(BIO_F_ACPT_STATE),	"ACPT_STATE"},
+{ERR_FUNC(BIO_F_BIO_ACCEPT),	"BIO_accept"},
+{ERR_FUNC(BIO_F_BIO_BER_GET_HEADER),	"BIO_BER_GET_HEADER"},
+{ERR_FUNC(BIO_F_BIO_CTRL),	"BIO_ctrl"},
+{ERR_FUNC(BIO_F_BIO_GETHOSTBYNAME),	"BIO_gethostbyname"},
+{ERR_FUNC(BIO_F_BIO_GETS),	"BIO_gets"},
+{ERR_FUNC(BIO_F_BIO_GET_ACCEPT_SOCKET),	"BIO_get_accept_socket"},
+{ERR_FUNC(BIO_F_BIO_GET_HOST_IP),	"BIO_get_host_ip"},
+{ERR_FUNC(BIO_F_BIO_GET_PORT),	"BIO_get_port"},
+{ERR_FUNC(BIO_F_BIO_MAKE_PAIR),	"BIO_MAKE_PAIR"},
+{ERR_FUNC(BIO_F_BIO_NEW),	"BIO_new"},
+{ERR_FUNC(BIO_F_BIO_NEW_FILE),	"BIO_new_file"},
+{ERR_FUNC(BIO_F_BIO_NEW_MEM_BUF),	"BIO_new_mem_buf"},
+{ERR_FUNC(BIO_F_BIO_NREAD),	"BIO_nread"},
+{ERR_FUNC(BIO_F_BIO_NREAD0),	"BIO_nread0"},
+{ERR_FUNC(BIO_F_BIO_NWRITE),	"BIO_nwrite"},
+{ERR_FUNC(BIO_F_BIO_NWRITE0),	"BIO_nwrite0"},
+{ERR_FUNC(BIO_F_BIO_PUTS),	"BIO_puts"},
+{ERR_FUNC(BIO_F_BIO_READ),	"BIO_read"},
+{ERR_FUNC(BIO_F_BIO_SOCK_INIT),	"BIO_sock_init"},
+{ERR_FUNC(BIO_F_BIO_WRITE),	"BIO_write"},
+{ERR_FUNC(BIO_F_BUFFER_CTRL),	"BUFFER_CTRL"},
+{ERR_FUNC(BIO_F_CONN_CTRL),	"CONN_CTRL"},
+{ERR_FUNC(BIO_F_CONN_STATE),	"CONN_STATE"},
+{ERR_FUNC(BIO_F_FILE_CTRL),	"FILE_CTRL"},
+{ERR_FUNC(BIO_F_FILE_READ),	"FILE_READ"},
+{ERR_FUNC(BIO_F_LINEBUFFER_CTRL),	"LINEBUFFER_CTRL"},
+{ERR_FUNC(BIO_F_MEM_READ),	"MEM_READ"},
+{ERR_FUNC(BIO_F_MEM_WRITE),	"MEM_WRITE"},
+{ERR_FUNC(BIO_F_SSL_NEW),	"SSL_new"},
+{ERR_FUNC(BIO_F_WSASTARTUP),	"WSASTARTUP"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA BIO_str_reasons[]=
 	{
-{BIO_R_ACCEPT_ERROR                      ,"accept error"},
-{BIO_R_BAD_FOPEN_MODE                    ,"bad fopen mode"},
-{BIO_R_BAD_HOSTNAME_LOOKUP               ,"bad hostname lookup"},
-{BIO_R_BROKEN_PIPE                       ,"broken pipe"},
-{BIO_R_CONNECT_ERROR                     ,"connect error"},
-{BIO_R_EOF_ON_MEMORY_BIO                 ,"EOF on memory BIO"},
-{BIO_R_ERROR_SETTING_NBIO                ,"error setting nbio"},
-{BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET,"error setting nbio on accepted socket"},
-{BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET,"error setting nbio on accept socket"},
-{BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET ,"gethostbyname addr is not af inet"},
-{BIO_R_INVALID_ARGUMENT                  ,"invalid argument"},
-{BIO_R_INVALID_IP_ADDRESS                ,"invalid ip address"},
-{BIO_R_IN_USE                            ,"in use"},
-{BIO_R_KEEPALIVE                         ,"keepalive"},
-{BIO_R_NBIO_CONNECT_ERROR                ,"nbio connect error"},
-{BIO_R_NO_ACCEPT_PORT_SPECIFIED          ,"no accept port specified"},
-{BIO_R_NO_HOSTNAME_SPECIFIED             ,"no hostname specified"},
-{BIO_R_NO_PORT_DEFINED                   ,"no port defined"},
-{BIO_R_NO_PORT_SPECIFIED                 ,"no port specified"},
-{BIO_R_NO_SUCH_FILE                      ,"no such file"},
-{BIO_R_NULL_PARAMETER                    ,"null parameter"},
-{BIO_R_TAG_MISMATCH                      ,"tag mismatch"},
-{BIO_R_UNABLE_TO_BIND_SOCKET             ,"unable to bind socket"},
-{BIO_R_UNABLE_TO_CREATE_SOCKET           ,"unable to create socket"},
-{BIO_R_UNABLE_TO_LISTEN_SOCKET           ,"unable to listen socket"},
-{BIO_R_UNINITIALIZED                     ,"uninitialized"},
-{BIO_R_UNSUPPORTED_METHOD                ,"unsupported method"},
-{BIO_R_WRITE_TO_READ_ONLY_BIO            ,"write to read only BIO"},
-{BIO_R_WSASTARTUP                        ,"WSAStartup"},
+{ERR_REASON(BIO_R_ACCEPT_ERROR)          ,"accept error"},
+{ERR_REASON(BIO_R_BAD_FOPEN_MODE)        ,"bad fopen mode"},
+{ERR_REASON(BIO_R_BAD_HOSTNAME_LOOKUP)   ,"bad hostname lookup"},
+{ERR_REASON(BIO_R_BROKEN_PIPE)           ,"broken pipe"},
+{ERR_REASON(BIO_R_CONNECT_ERROR)         ,"connect error"},
+{ERR_REASON(BIO_R_EOF_ON_MEMORY_BIO)     ,"EOF on memory BIO"},
+{ERR_REASON(BIO_R_ERROR_SETTING_NBIO)    ,"error setting nbio"},
+{ERR_REASON(BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET),"error setting nbio on accepted socket"},
+{ERR_REASON(BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET),"error setting nbio on accept socket"},
+{ERR_REASON(BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET),"gethostbyname addr is not af inet"},
+{ERR_REASON(BIO_R_INVALID_ARGUMENT)      ,"invalid argument"},
+{ERR_REASON(BIO_R_INVALID_IP_ADDRESS)    ,"invalid ip address"},
+{ERR_REASON(BIO_R_IN_USE)                ,"in use"},
+{ERR_REASON(BIO_R_KEEPALIVE)             ,"keepalive"},
+{ERR_REASON(BIO_R_NBIO_CONNECT_ERROR)    ,"nbio connect error"},
+{ERR_REASON(BIO_R_NO_ACCEPT_PORT_SPECIFIED),"no accept port specified"},
+{ERR_REASON(BIO_R_NO_HOSTNAME_SPECIFIED) ,"no hostname specified"},
+{ERR_REASON(BIO_R_NO_PORT_DEFINED)       ,"no port defined"},
+{ERR_REASON(BIO_R_NO_PORT_SPECIFIED)     ,"no port specified"},
+{ERR_REASON(BIO_R_NO_SUCH_FILE)          ,"no such file"},
+{ERR_REASON(BIO_R_NULL_PARAMETER)        ,"null parameter"},
+{ERR_REASON(BIO_R_TAG_MISMATCH)          ,"tag mismatch"},
+{ERR_REASON(BIO_R_UNABLE_TO_BIND_SOCKET) ,"unable to bind socket"},
+{ERR_REASON(BIO_R_UNABLE_TO_CREATE_SOCKET),"unable to create socket"},
+{ERR_REASON(BIO_R_UNABLE_TO_LISTEN_SOCKET),"unable to listen socket"},
+{ERR_REASON(BIO_R_UNINITIALIZED)         ,"uninitialized"},
+{ERR_REASON(BIO_R_UNSUPPORTED_METHOD)    ,"unsupported method"},
+{ERR_REASON(BIO_R_WRITE_TO_READ_ONLY_BIO),"write to read only BIO"},
+{ERR_REASON(BIO_R_WSASTARTUP)            ,"WSAStartup"},
 {0,NULL}
 	};
 
@@ -144,8 +148,8 @@ void ERR_load_BIO_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_BIO,BIO_str_functs);
-		ERR_load_strings(ERR_LIB_BIO,BIO_str_reasons);
+		ERR_load_strings(0,BIO_str_functs);
+		ERR_load_strings(0,BIO_str_reasons);
 #endif
 
 		}

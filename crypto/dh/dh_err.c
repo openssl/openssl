@@ -1,6 +1,6 @@
 /* crypto/dh/dh_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,21 +64,25 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_DH,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_DH,0,reason)
+
 static ERR_STRING_DATA DH_str_functs[]=
 	{
-{ERR_PACK(0,DH_F_DHPARAMS_PRINT,0),	"DHparams_print"},
-{ERR_PACK(0,DH_F_DHPARAMS_PRINT_FP,0),	"DHparams_print_fp"},
-{ERR_PACK(0,DH_F_DH_COMPUTE_KEY,0),	"DH_compute_key"},
-{ERR_PACK(0,DH_F_DH_GENERATE_KEY,0),	"DH_generate_key"},
-{ERR_PACK(0,DH_F_DH_GENERATE_PARAMETERS,0),	"DH_generate_parameters"},
-{ERR_PACK(0,DH_F_DH_NEW_METHOD,0),	"DH_new_method"},
+{ERR_FUNC(DH_F_DHPARAMS_PRINT),	"DHparams_print"},
+{ERR_FUNC(DH_F_DHPARAMS_PRINT_FP),	"DHparams_print_fp"},
+{ERR_FUNC(DH_F_DH_COMPUTE_KEY),	"DH_compute_key"},
+{ERR_FUNC(DH_F_DH_GENERATE_KEY),	"DH_generate_key"},
+{ERR_FUNC(DH_F_DH_GENERATE_PARAMETERS),	"DH_generate_parameters"},
+{ERR_FUNC(DH_F_DH_NEW_METHOD),	"DH_new_method"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA DH_str_reasons[]=
 	{
-{DH_R_BAD_GENERATOR                      ,"bad generator"},
-{DH_R_NO_PRIVATE_VALUE                   ,"no private value"},
+{ERR_REASON(DH_R_BAD_GENERATOR)          ,"bad generator"},
+{ERR_REASON(DH_R_NO_PRIVATE_VALUE)       ,"no private value"},
 {0,NULL}
 	};
 
@@ -92,8 +96,8 @@ void ERR_load_DH_strings(void)
 		{
 		init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(ERR_LIB_DH,DH_str_functs);
-		ERR_load_strings(ERR_LIB_DH,DH_str_reasons);
+		ERR_load_strings(0,DH_str_functs);
+		ERR_load_strings(0,DH_str_reasons);
 #endif
 
 		}

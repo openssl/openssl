@@ -90,6 +90,7 @@ void ERR_load_FIPS_strings(void);
 /* Error codes for the FIPS functions. */
 
 /* Function codes. */
+#define FIPS_F_DH_GENERATE_PARAMETERS			 117
 #define FIPS_F_DSA_DO_SIGN				 111
 #define FIPS_F_DSA_DO_VERIFY				 112
 #define FIPS_F_DSA_GENERATE_PARAMETERS			 110
@@ -104,7 +105,6 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_SELFTEST_RSA			 108
 #define FIPS_F_FIPS_SELFTEST_SHA1			 103
 #define FIPS_F_HASH_FINAL				 100
-#define FIPS_F_DH_GENERATE_PARAMETERS			 117
 #define FIPS_F_RSA_EAY_PUBLIC_ENCRYPT			 114
 #define FIPS_F_RSA_GENERATE_KEY				 113
 #define FIPS_F_SSLEAY_RAND_BYTES			 101
