@@ -600,7 +600,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 			nt_headers = (IMAGE_NT_HEADERS *)((char *)dos_header
 						+ dos_header->e_lfanew);
 			if (nt_headers->Signature==IMAGE_NT_SIGNATURE &&
-			    histDLL!=(HINSTANCE)(nt_headers->OptionalHeader.ImageBase))
+			    hinstDLL!=(HINSTANCE)(nt_headers->OptionalHeader.ImageBase))
 				OPENSSL_NONPIC_relocated=1;
 			}
 		}
@@ -663,7 +663,7 @@ static int IsService(void)
 
 void OPENSSL_showfatal (const char *fmta,...)
 { va_list ap;
-  TCHAR buf[256]
+  TCHAR buf[256];
   const TCHAR *fmt;
   HANDLE h;
 
