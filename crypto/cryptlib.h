@@ -95,6 +95,7 @@ extern "C" {
 
 void OPENSSL_showfatal(const char *,...);
 void *OPENSSL_stderr(void);
+extern int OPENSSL_NONPIC_relocated;
 
 #ifdef  __cplusplus
 }

@@ -480,6 +480,8 @@ const char *CRYPTO_get_lock_name(int type)
 		return(sk_value(app_locks,type-CRYPTO_NUM_LOCKS));
 	}
 
+int OPENSSL_NONPIC_relocated=0;
+
 #if defined(_WIN32) && defined(_WINDLL)
 
 /* All we really need to do is remove the 'error' state when a thread
@@ -491,6 +493,21 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 	switch(fdwReason)
 		{
 	case DLL_PROCESS_ATTACH:
+#if defined(_WIN32_WINNT)
+		{
+		IMAGE_DOS_HEADER *dos_header = (IMAGE_DOS_HEADER *)hinstDLL;
+		IMAGE_NT_HEADERS *nt_headers;
+
+		if (dos_header->e_magic==IMAGE_DOS_SIGNATURE)
+			{
+			nt_headers = (IMAGE_NT_HEADERS *)((char *)dos_header
+						+ dos_header->e_lfanew);
+			if (nt_headers->Signature==IMAGE_NT_SIGNATURE &&
+			    histDLL!=(HINSTANCE)(nt_headers->OptionalHeader.ImageBase))
+				OPENSSL_NONPIC_relocated=1;
+			}
+		}
+#endif
 		break;
 	case DLL_THREAD_ATTACH:
 		break;
