@@ -339,7 +339,7 @@ do_cygwin-shared:
 	[ "$(PLATFORM)" = "mingw" ] && shlib=$${i}eay32.dll; \
 	[ -f apps/$$shlib ] && rm apps/$$shlib; \
 	[ -f test/$$shlib ] && rm test/$$shlib; \
-	base=;  [ $$i = "crypto" ] && base=-Wl,--image-base,0xFE00000; \
+	base=;  [ $$i = "crypto" ] && base=-Wl,--image-base,0x61200000; \
 	( set -x; ${CC} ${SHARED_LDFLAGS} \
 		-shared $$base -o $$shlib \
 		-Wl,-Bsymbolic \
