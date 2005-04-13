@@ -237,8 +237,8 @@ extern "C" {
 # define OPENSSL_IMPORT globalref
 # define OPENSSL_GLOBAL globaldef
 #elif defined(OPENSSL_SYS_WINDOWS) && defined(OPENSSL_OPT_WINDLL)
-# define OPENSSL_EXPORT extern _declspec(dllexport)
-# define OPENSSL_IMPORT extern _declspec(dllimport)
+# define OPENSSL_EXPORT extern __declspec(dllexport)
+# define OPENSSL_IMPORT extern __declspec(dllimport)
 # define OPENSSL_GLOBAL
 #else
 # define OPENSSL_EXPORT extern
