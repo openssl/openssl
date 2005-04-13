@@ -645,9 +645,10 @@ static int IsService(void)
 }
 #endif
 
-void OPENSSL_showfatal (char *fmta,...)
+void OPENSSL_showfatal (const char *fmta,...)
 { va_list ap;
-  TCHAR buf[256],*fmt;
+  TCHAR buf[256]
+  const TCHAR *fmt;
   HANDLE h;
 
     if ((h=GetStdHandle(STD_ERROR_HANDLE)) != NULL &&
@@ -671,7 +672,7 @@ void OPENSSL_showfatal (char *fmta,...)
 #else
 	fmtw = (WCHAR *)alloca (len_0*sizeof(WCHAR));
 #endif
-	if (fmtw == NULL) { fmt=(TCHAR *)L"no stack?"; break; }
+	if (fmtw == NULL) { fmt=(const TCHAR *)L"no stack?"; break; }
 
 #ifndef OPENSSL_NO_MULTIBYTE
 	if (!MultiByteToWideChar(CP_ACP,0,fmta,len_0,fmtw,len_0))
@@ -693,7 +694,7 @@ void OPENSSL_showfatal (char *fmta,...)
 		}
 	    } while (keepgoing);
 	}
-	fmt = (TCHAR *)fmtw;
+	fmt = (const TCHAR *)fmtw;
     } while (0);
 
     va_start (ap,fmta);
@@ -728,7 +729,7 @@ void OPENSSL_showfatal (char *fmta,...)
     }
 }
 #else
-void OPENSSL_showfatal (char *fmta,...)
+void OPENSSL_showfatal (const char *fmta,...)
 { va_list ap;
 
     va_start (ap,fmta);
@@ -744,3 +745,5 @@ void OpenSSLDie(const char *file,int line,const char *assertion)
 		file,line,assertion);
 	abort();
 	}
+
+void *OPENSSL_stderr(void)	{ return stderr; }

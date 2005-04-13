@@ -95,6 +95,8 @@ extern "C" {
 
 void OPENSSL_cpuid_setup(void);
 extern unsigned long OPENSSL_ia32cap_P;
+void OPENSSL_showfatal(const char *,...);
+void *OPENSSL_stderr(void);
 
 #ifdef  __cplusplus
 }
