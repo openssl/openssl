@@ -484,7 +484,7 @@ my %table=(
 "BC-16","bcc:::(unknown):WIN16::BN_LLONG DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 
 # MinGW
-"mingw", "gcc:-mno-cygwin -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall -D_WIN32_WINNT=0x333:::MINGW32:-lwsock32 -lgdi32:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_coff_asm}:win32:cygwin-shared:-D_WINDLL:-mno-cygwin -shared:.dll.a",
+"mingw", "gcc:-mno-cygwin -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall -D_WIN32_WINNT=0x333:::MINGW32:-lwsock32 -lgdi32:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts} EXPORT_VAR_AS_FN:${x86_coff_asm}:win32:cygwin-shared:-D_WINDLL:-mno-cygwin -shared:.dll.a",
 
 # UWIN 
 "UWIN", "cc:-DTERMIOS -DL_ENDIAN -O -Wall:::UWIN::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${no_asm}:win32",
