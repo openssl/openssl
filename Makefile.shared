@@ -457,7 +457,7 @@ link_o.solaris:
 		LIBDEPS="$(LIBDEPS)"; \
 		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
 		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
+		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_O)
@@ -473,7 +473,7 @@ link_a.solaris:
 		LIBDEPS="$(LIBDEPS)"; \
 		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
 		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -G -dy -z text -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
+		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -R $(LIBRPATH) -Wl,-Bsymbolic"; \
 		SHAREDCMD='$(CC)'; \
 	fi; \
 	$(LINK_SO_A)
