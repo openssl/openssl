@@ -462,7 +462,7 @@ typedef struct ssl3_comp_st
 	COMP_METHOD *method; /* The method :-) */
 	} SSL3_COMP;
 
-OPENSSL_EXTERN SSL3_ENC_METHOD ssl3_undef_enc_method;
+extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 OPENSSL_EXTERN SSL_CIPHER ssl2_ciphers[];
 OPENSSL_EXTERN SSL_CIPHER ssl3_ciphers[];
 
