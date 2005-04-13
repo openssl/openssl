@@ -64,11 +64,6 @@
 #endif
 
 
-#ifdef OPENSSL_BUILD_SHLIBCRYPTO
-# undef OPENSSL_EXTERN
-# define OPENSSL_EXTERN OPENSSL_EXPORT
-#endif
-
 #undef c2l
 #define c2l(c,l)	(l =((unsigned long)(*((c)++)))    , \
 			 l|=((unsigned long)(*((c)++)))<< 8L, \
@@ -222,11 +217,11 @@
 	}
 #endif
 
-OPENSSL_EXTERN const CAST_LONG CAST_S_table0[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table1[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table2[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table3[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table4[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table5[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table6[256];
-OPENSSL_EXTERN const CAST_LONG CAST_S_table7[256];
+extern const CAST_LONG CAST_S_table0[256];
+extern const CAST_LONG CAST_S_table1[256];
+extern const CAST_LONG CAST_S_table2[256];
+extern const CAST_LONG CAST_S_table3[256];
+extern const CAST_LONG CAST_S_table4[256];
+extern const CAST_LONG CAST_S_table5[256];
+extern const CAST_LONG CAST_S_table6[256];
+extern const CAST_LONG CAST_S_table7[256];
