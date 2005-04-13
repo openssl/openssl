@@ -180,8 +180,8 @@ my %table=(
 "solaris64-x86_64-gcc","gcc:-m64 -O3 -Wall -DL_ENDIAN -DMD32_REG_T=int::-D_REENTRANT::-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL:asm/x86_64-gcc.o::::::asm/rc4-amd64.o:::dlfcn:solaris-shared:-fPIC:-m64 -shared -static-libgcc:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 #### Solaris x86 with Sun C setups
-"solaris-x86-cc","cc:-fast -O -Xa::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR::::::::::dlfcn:solaris-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"solaris64-x86_64-cc","cc:-fast -xarch=amd64 -xstrconst -Xa -DL_ENDIAN::-D_REENTRANT::-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL::::::::::dlfcn:solaris-shared:-KPIC:-xarch=amd64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"solaris-x86-cc","cc:-fast -O -Xa::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR::::::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"solaris64-x86_64-cc","cc:-fast -xarch=amd64 -xstrconst -Xa -DL_ENDIAN::-D_REENTRANT::-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL::::::::::dlfcn:solaris-shared:-KPIC:-xarch=amd64 -G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 #### SPARC Solaris with GNU C setups
 "solaris-sparcv7-gcc","gcc:-O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::::::::::dlfcn:solaris-shared:-fPIC:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -200,17 +200,17 @@ my %table=(
 
 #### SPARC Solaris with Sun C setups
 # DO NOT use /xO[34] on sparc with SC3.0.  It is broken, and will not pass the tests
-"solaris-sparc-sc3","cc:-fast -O -Xa -DB_ENDIAN::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR::::::::::dlfcn:solaris-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"solaris-sparc-sc3","cc:-fast -O -Xa -DB_ENDIAN::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR::::::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # SC4.0 doesn't pass 'make test', upgrade to SC5.0 or SC4.2.
 # SC4.2 is ok, better than gcc even on bn as long as you tell it -xarch=v8
 # SC5.0 note: Compiler common patch 107357-01 or later is required!
-"solaris-sparcv7-cc","cc:-xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::::::::dlfcn:solaris-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"solaris-sparcv7-cc","cc:-xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "solaris-sparcv8-cc","cc:-xarch=v8 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o:::::::::dlfcn:solaris-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"solaris-sparcv9-cc","cc:-xtarget=ultra -xarch=v8plus -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o::::::dlfcn:solaris-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"solaris64-sparcv9-cc","cc:-xtarget=ultra -xarch=v9 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o::::::dlfcn:solaris-shared:-KPIC:-xarch=v9:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):/usr/ccs/bin/ar rs",
+"solaris-sparcv9-cc","cc:-xtarget=ultra -xarch=v8plus -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"solaris64-sparcv9-cc","cc:-xtarget=ultra -xarch=v9 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o::::::dlfcn:solaris-shared:-KPIC:-xarch=v9 -G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):/usr/ccs/bin/ar rs",
 ####
-"debug-solaris-sparcv8-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xarch=v8 -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o:::::::::dlfcn:solaris-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"debug-solaris-sparcv9-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o::::::dlfcn:solaris-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"debug-solaris-sparcv8-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xarch=v8 -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8.o:::::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"debug-solaris-sparcv9-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 #### SPARC Linux setups
 "linux-sparcv7","gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT:::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::",
@@ -271,56 +271,56 @@ my %table=(
 #
 #!#"hpux-parisc-cc","cc:-Ae +O3 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl",
 # Since there is mention of this in shlib/hpux10-cc.sh
-"hpux-parisc-cc-o4","cc:-Ae +O4 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"hpux-parisc-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W::::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"hpux64-parisc-cc","cc:-Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dlfcn:hpux64-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-parisc-cc-o4","cc:-Ae +O4 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-parisc-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W::::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux64-parisc-cc","cc:-Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dlfcn:hpux-shared:+Z:+DD64 -b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # 64bit PARISC for GCC without optimization, which seems to make problems.
 # Submitted by <ross.alexander@uk.neceur.com>
-"hpux64-parisc-gcc","gcc:-DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dlfcn:hpux64-shared:-fpic::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"hpux64-parisc2-gcc","gcc:-O3 -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:asm/pa-risc2W.o:::::::::dlfcn:hpux64-shared:-fpic::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux64-parisc-gcc","gcc:-DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dlfcn:hpux-shared:-fpic:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux64-parisc2-gcc","gcc:-O3 -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:asm/pa-risc2W.o:::::::::dlfcn:hpux-shared:-fPIC:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # IA-64 targets
-"hpux-ia64-cc","cc:-Ae +DD32 +O3 +Olit=all -z -DB_ENDIAN::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:asm/ia64-cpp.o::::asm/sha1-ia64.o::asm/rc4-ia64.o:::dlfcn:hpux-shared:+Z::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-ia64-cc","cc:-Ae +DD32 +O3 +Olit=all -z -DB_ENDIAN::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:asm/ia64-cpp.o::::asm/sha1-ia64.o::asm/rc4-ia64.o:::dlfcn:hpux-shared:+Z:-b:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # Frank Geurts <frank.geurts@nl.abnamro.com> has patiently assisted with
 # with debugging of the following config.
-"hpux64-ia64-cc","cc:-Ae +DD64 +O3 +Olit=all -z -DB_ENDIAN::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:asm/ia64-cpp.o::::asm/sha1-ia64.o::asm/rc4-ia64.o:::dlfcn:hpux64-shared:+Z::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux64-ia64-cc","cc:-Ae +DD64 +O3 +Olit=all -z -DB_ENDIAN::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:asm/ia64-cpp.o::::asm/sha1-ia64.o::asm/rc4-ia64.o:::dlfcn:hpux-shared:+Z:+DD64 -b:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # More attempts at unified 10.X and 11.X targets for HP C compiler.
 #
 # Chris Ruemmler <ruemmler@cup.hp.com>
 # Kevin Steves <ks@hp.se>
-"hpux-parisc-cc","cc:+O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::-D_REENTRANT::-Wl,+s -ldld:MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dl:hpux-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"hpux-parisc2-cc","cc:+DA2.0 +DS2.0 +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-Wl,+s -ldld:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:asm/pa-risc2.o:::::::::dl:hpux-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"hpux64-parisc2-cc","cc:+DD64 +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:asm/pa-risc2W.o:::::::::dlfcn:hpux64-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-parisc-cc","cc:+O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::-D_REENTRANT::-Wl,+s -ldld:MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-parisc2-cc","cc:+DA2.0 +DS2.0 +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-Wl,+s -ldld:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:asm/pa-risc2.o:::::::::dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux64-parisc2-cc","cc:+DD64 +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:asm/pa-risc2W.o:::::::::dlfcn:hpux-shared:+Z:+DD64 -b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # Isn't the line below meaningless? HP-UX cc optimizes for host by default.
 # hpux-parisc1_0-cc with +DAportable flag would make more sense. <appro>
-"hpux-parisc1_1-cc","cc:+DA1.1 +DS1.1 +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-Wl,+s -ldld:MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dl:hpux-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-parisc1_1-cc","cc:+DA1.1 +DS1.1 +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-Wl,+s -ldld:MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # HPUX 9.X config.
 # Don't use the bundled cc.  It is broken.  Use HP ANSI C if possible, or
 # egcs.  gcc 2.8.1 is also broken.
 
-"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z::(unknown)::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z::(unknown)::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # If hpux-cc fails (e.g. during "make test"), try the next one; otherwise,
 # please report your OS and compiler version to the openssl-bugs@openssl.org
 # mailing list.
-"hpux-brokencc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z::(unknown)::-Wl,+s -ldld:DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-brokencc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z::(unknown)::-Wl,+s -ldld:DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
-"hpux-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown)::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown)::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # If hpux-gcc fails, try this one:
-"hpux-brokengcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown)::-Wl,+s -ldld:DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-brokengcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown)::-Wl,+s -ldld:DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # HPUX 9.X on Motorola 68k platforms with gcc
 "hpux-m68k-gcc",  "gcc:-DB_ENDIAN -DBN_DIV2W -O3::(unknown):::BN_LLONG DES_PTR DES_UNROLL:::::::::::::",
 
 # HPUX 10.X config.  Supports threads.
-"hpux10-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z::-D_REENTRANT::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux10-cc",	"cc:-DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY -Ae +ESlit +O3 -z::-D_REENTRANT::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # If hpux10-cc fails, try this one (if still fails, try deleting BN_LLONG):
-"hpux10-brokencc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z::-D_REENTRANT::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux10-brokencc",	"cc:-DB_ENDIAN -DBN_DIV2W -Ae +ESlit +O2 -z::-D_REENTRANT::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
-"hpux10-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::-D_REENTRANT::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux10-gcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::-D_REENTRANT::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # If hpux10-gcc fails, try this one:
-"hpux10-brokengcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::-D_REENTRANT::-Wl,+s -ldld:DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux10-brokengcc",	"gcc:-DB_ENDIAN -DBN_DIV2W -O3::-D_REENTRANT::-Wl,+s -ldld:DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # HPUX 11.X from www.globus.org.
 # Only works on PA-RISC 2.0 cpus, and not optimized.  Why?
@@ -563,7 +563,7 @@ my %table=(
 
 ##### MacOS X (a.k.a. Rhapsody or Darwin) setup
 "rhapsody-ppc-cc","cc:-O3 -DB_ENDIAN::(unknown):MACOSX_RHAPSODY::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",
-"darwin-ppc-cc","cc:-O3 -fomit-frame-pointer -fno-common -DB_ENDIAN::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/osx_ppc32.o::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+"darwin-ppc-cc","cc:-O3 -fomit-frame-pointer -DB_ENDIAN::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/osx_ppc32.o:::::::::dlfcn:darwin-shared:-fPIC -fno-common::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 "darwin-i386-cc","cc:-O3 -fomit-frame-pointer -fno-common -DB_ENDIAN::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 
 ##### A/UX

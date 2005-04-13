@@ -309,7 +309,7 @@ do_gnu-shared:
 		-Wl,-soname=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-Wl,-Bsymbolic \
 		-Wl,--whole-archive lib$$i.a \
-		-Wl,--no-whole-archive $$libs ${EX_LIBS} -lc ) || exit 1; \
+		-Wl,--no-whole-archive $$libs ${EX_LIBS} ) || exit 1; \
 	libs="-l$$i $$libs"; \
 	done
 
@@ -321,7 +321,8 @@ do_darwin-shared:
 	if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
 		libs="$(LIBKRB5) $$libs"; \
 	fi; \
-	( set -x; ${CC} --verbose -dynamiclib -o lib$$i${SHLIB_EXT} \
+	( set -x; ${CC} ${SHARED_LDFLAGS}
+		--verbose -dynamiclib -o lib$$i${SHLIB_EXT} \
 		lib$$i.a $$libs -all_load -current_version ${SHLIB_MAJOR}.${SHLIB_MINOR} \
 		-compatibility_version ${SHLIB_MAJOR}.`echo ${SHLIB_MINOR} | cut -d. -f1` \
 		-install_name ${INSTALLTOP}/lib/lib$$i${SHLIB_EXT} ) || exit 1; \
@@ -361,7 +362,7 @@ do_alpha-osf1-shared:
 		( set -x; ${CC} ${SHARED_LDFLAGS} \
 			-shared -o lib$$i.so \
 			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
+			-all lib$$i.a -none $$libs ${EX_LIBS} ) || exit 1; \
 		libs="-l$$i $$libs"; \
 		done; \
 	fi
@@ -380,7 +381,7 @@ do_tru64-shared:
 		( set -x; ${CC} ${SHARED_LDFLAGS} \
 			-shared -msym -o lib$$i.so \
 			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
+			-all lib$$i.a -none $$libs ${EX_LIBS} ) || exit 1; \
 		libs="-l$$i $$libs"; \
 		done; \
 	fi
@@ -400,7 +401,7 @@ do_tru64-shared-rpath:
 			-shared -msym -o lib$$i.so \
 			-rpath  ${INSTALLTOP}/lib \
 			-set_version "${SHLIB_VERSION_HISTORY}${SHLIB_VERSION_NUMBER}" \
-			-all lib$$i.a -none $$libs ${EX_LIBS} -lc ) || exit 1; \
+			-all lib$$i.a -none $$libs ${EX_LIBS} ) || exit 1; \
 		libs="-l$$i $$libs"; \
 		done; \
 	fi
@@ -418,12 +419,12 @@ do_solaris-shared:
 		( PATH=/usr/ccs/bin:$$PATH ; export PATH; \
 		  MINUSZ='-z '; \
 		  (${CC} -v 2>&1 | grep gcc) > /dev/null && MINUSZ='-Wl,-z,'; \
-		  set -x; ${CC} ${SHARED_LDFLAGS} -G -dy -z text \
+		  set -x; ${CC} ${SHARED_LDFLAGS} \
 			-o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-h lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-Wl,-Bsymbolic \
 			$${MINUSZ}allextract lib$$i.a $${MINUSZ}defaultextract \
-			$$libs ${EX_LIBS} -lc ) || exit 1; \
+			$$libs ${EX_LIBS} ) || exit 1; \
 		libs="-l$$i $$libs"; \
 		done; \
 	fi
@@ -491,18 +492,18 @@ do_irix-shared:
 		  set -x; ${CC} ${SHARED_LDFLAGS} \
 			-shared -o lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			-Wl,-soname,lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			$${WHOLELIB} $$libs ${EX_LIBS} -lc) || exit 1; \
+			$${WHOLELIB} $$libs ${EX_LIBS}) || exit 1; \
 		libs="-l$$i $$libs"; \
 		done; \
 	fi
 
 # This assumes that GNU utilities are *not* used
-# HP-UX includes the full pathname of libs we depend on, so we would get
-# ./libcrypto (with ./ as path information) compiled into libssl, hence
-# we omit the SHLIBDEPS. Applications must be linked with -lssl -lcrypto
-# anyway.
-# The object modules are loaded from lib$i.a using the undocumented -Fl
-# option.
+# 32-bit PA-RISC HP-UX embeds the -L pathname of libs we link with. It's
+# possible to compensate for it with +cdp ../: and +cdp ./:, but we
+# don't have corresponding framework for linking apps. +cdp option
+# was introduced in HP-UX 11.x and applies in 32-bit PA-RISC link
+# editor context only [it's simply ignored in other cases, which are all
+# ELFs by the way].
 #
 # WARNING: Until DSO is fixed to support a search path, we support SHLIB_PATH
 #          by temporarily specifying "+s"!
@@ -518,38 +519,12 @@ do_hpux-shared:
 		shlib=lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
 	fi; \
 	[ -f $$shlib ] && rm -f $$shlib; \
-	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
-		+vnocompatwarnings \
-		-b -z +s \
-		-o $$shlib +h $$shlib \
-		-Fl lib$$i.a -ldld -lc ) || exit 1; \
-	chmod a=rx $$shlib; \
-	done
-
-# This assumes that GNU utilities are *not* used
-# HP-UX includes the full pathname of libs we depend on, so we would get
-# ./libcrypto (with ./ as path information) compiled into libssl, hence
-# we omit the SHLIBDEPS. Applications must be linked with -lssl -lcrypto
-# anyway.
-#
-# HP-UX in 64bit mode has "+s" enabled by default; it will search for
-# shared libraries along LD_LIBRARY_PATH _and_ SHLIB_PATH.
-#
-do_hpux64-shared:
-	for i in ${SHLIBDIRS}; do \
-	if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
-		libs="$(LIBKRB5) $$libs"; \
-	fi; \
-	if expr $(PLATFORM) : '.*ia64' > /dev/null; then \
-		shlib=lib$$i.so.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
-	else \
-		shlib=lib$$i.sl.${SHLIB_MAJOR}.${SHLIB_MINOR}; \
-	fi; \
-	[ -f $$shlib ] && rm -f $$shlib; \
-	( set -x; /usr/ccs/bin/ld ${SHARED_LDFLAGS} \
-		-b -z \
-		-o $$shlib +h $$shlib \
-		+forceload lib$$i.a -ldl -lc ) || exit 1; \
+	ALLSYMSFLAGS='-Wl,-Fl'; \
+	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
+	( set -x; ${CC} ${SHARED_LDFLAGS} \
+		-Wl,-B,symbolic,+vnocompatwarnings,-z,+s \
+		-Wl,+cdp,../:,+cdp,./:,+h,$$shlib \
+		-o $$shlib $$ALLSYMSFLAGS lib$$i.a -ldld ) || exit 1; \
 	chmod a=rx $$shlib; \
 	done
 
