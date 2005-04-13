@@ -320,7 +320,7 @@ $dso_scheme   = dlfcn
 $shared_target= cygwin-shared
 $shared_cflag = -D_WINDLL
 $shared_ldflag = -shared
-$shared_extension = .dll
+$shared_extension = .dll.a
 $ranlib       = 
 $arflags      = 
 
@@ -1238,7 +1238,7 @@ $dso_scheme   = dlfcn
 $shared_target= cygwin-shared
 $shared_cflag = -D_WINDLL
 $shared_ldflag = -shared
-$shared_extension = .dll
+$shared_extension = .dll.a
 $ranlib       = 
 $arflags      = 
 
@@ -3080,7 +3080,7 @@ $arflags      =
 
 *** mingw
 $cc           = gcc
-$cflags       = -mno-cygwin -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall
+$cflags       = -mno-cygwin -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall -D_WIN32_WINNT=0x333
 $unistd       = 
 $thread_cflag = 
 $sys_id       = MINGW32
@@ -3101,7 +3101,7 @@ $dso_scheme   = win32
 $shared_target= cygwin-shared
 $shared_cflag = -D_WINDLL
 $shared_ldflag = -mno-cygwin -shared
-$shared_extension = .dll
+$shared_extension = .dll.a
 $ranlib       = 
 $arflags      = 
 
