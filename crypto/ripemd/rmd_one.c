@@ -68,7 +68,8 @@ unsigned char *RIPEMD160(const unsigned char *d, unsigned long n,
 	static unsigned char m[RIPEMD160_DIGEST_LENGTH];
 
 	if (md == NULL) md=m;
-	RIPEMD160_Init(&c);
+	if (!RIPEMD160_Init(&c))
+		return NULL;
 	RIPEMD160_Update(&c,d,n);
 	RIPEMD160_Final(md,&c);
 	OPENSSL_cleanse(&c,sizeof(c)); /* security consideration */

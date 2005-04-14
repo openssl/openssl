@@ -68,7 +68,8 @@ unsigned char *SHA(const unsigned char *d, unsigned long n, unsigned char *md)
 	static unsigned char m[SHA_DIGEST_LENGTH];
 
 	if (md == NULL) md=m;
-	SHA_Init(&c);
+	if (!SHA_Init(&c))
+		return NULL;
 	SHA_Update(&c,d,n);
 	SHA_Final(md,&c);
 	OPENSSL_cleanse(&c,sizeof(c));

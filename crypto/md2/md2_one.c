@@ -69,7 +69,8 @@ unsigned char *MD2(const unsigned char *d, unsigned long n, unsigned char *md)
 	static unsigned char m[MD2_DIGEST_LENGTH];
 
 	if (md == NULL) md=m;
-	MD2_Init(&c);
+	if (!MD2_Init(&c))
+		return NULL;
 #ifndef CHARSET_EBCDIC
 	MD2_Update(&c,d,n);
 #else

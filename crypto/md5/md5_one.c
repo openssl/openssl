@@ -71,7 +71,8 @@ unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md)
 	static unsigned char m[MD5_DIGEST_LENGTH];
 
 	if (md == NULL) md=m;
-	MD5_Init(&c);
+	if (!MD5_Init(&c))
+		return NULL;
 #ifndef CHARSET_EBCDIC
 	MD5_Update(&c,d,n);
 #else
