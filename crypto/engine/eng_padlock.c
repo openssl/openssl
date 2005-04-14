@@ -391,14 +391,14 @@ padlock_verify_context(struct padlock_cipher_data *cdata)
 {
 	asm volatile (
 	"pushfl\n"
-"	bt	$30,(%%esp)\n"
+"	btl	$30,(%%esp)\n"
 "	jnc	1f\n"
-"	cmp	%2,%1\n"
+"	cmpl	%2,%1\n"
 "	je	1f\n"
 "	popfl\n"
-"	sub	$4,%%esp\n"
-"1:	add	$4,%%esp\n"
-"	mov	%2,%0"
+"	subl	$4,%%esp\n"
+"1:	addl	$4,%%esp\n"
+"	movl	%2,%0"
 	:"+m"(padlock_saved_context)
 	: "r"(padlock_saved_context), "r"(cdata) : "cc");
 }
