@@ -68,7 +68,8 @@ unsigned char *SHA1(const unsigned char *d, size_t n, unsigned char *md)
 	static unsigned char m[SHA_DIGEST_LENGTH];
 
 	if (md == NULL) md=m;
-	SHA1_Init(&c);
+	if (!SHA1_Init(&c))
+		return NULL;
 	SHA1_Update(&c,d,n);
 	SHA1_Final(md,&c);
 	OPENSSL_cleanse(&c,sizeof(c));
