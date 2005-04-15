@@ -51,7 +51,7 @@ all:
 	fi
 
 check:
-	TOP=`pwd`/$(TOP) ./fips_check_sha1 fingerprint.sha1 $(SRC) $(HEADER)
+	$(PERL) ../util/checkhash.pl
 
 subdirs:
 	@for i in $(FDIRS) ;\

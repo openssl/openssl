@@ -37,13 +37,7 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd $(TOP); $(MAKE) DIRS=fips SDIRS=$(DIR) sub_all)
 
-all:	check_standalone check lib
-
-check:
-	TOP=`pwd`/$(TOP) ../fips_check_sha1 fingerprint.sha1 $(LIBSRC) $(HEADER)
-
-check_standalone: fips_standalone_sha1
-	TOP=`pwd`/$(TOP) ../fips_check_sha1 standalone.sha1 $(SRC) $(HEADER)
+all:	lib
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
