@@ -300,8 +300,8 @@ int MAIN(int argc, char **argv)
 	X509_REVOKED *r=NULL;
 	ASN1_TIME *tmptm;
 	ASN1_INTEGER *tmpser;
-	char *p,*f;
-	const char **pp;
+	char *f;
+	const char *p, **pp;
 	int i,j;
 	const EVP_MD *dgst=NULL;
 	STACK_OF(CONF_VALUE) *attribs=NULL;
@@ -871,7 +871,7 @@ bad:
 			BIO_printf(bio_err," in entry %d\n", i+1);
 			goto err;
 			}
-		if (!check_time_format(pp[DB_exp_date]))
+		if (!check_time_format((char *)pp[DB_exp_date]))
 			{
 			BIO_printf(bio_err,"entry %d: invalid expiry date\n",i+1);
 			goto err;
@@ -1252,7 +1252,7 @@ bad:
 			x=sk_X509_value(cert_sk,i);
 
 			j=x->cert_info->serialNumber->length;
-			p=(char *)x->cert_info->serialNumber->data;
+			p=(const char *)x->cert_info->serialNumber->data;
 			
 			if(strlen(outdir) >= (size_t)(j ? BSIZE-j*2-6 : BSIZE-8))
 				{
@@ -1373,7 +1373,7 @@ bad:
 
 		for (i=0; i<sk_num(db->db->data); i++)
 			{
-			pp=(char **)sk_value(db->db->data,i);
+			pp=(const char **)sk_value(db->db->data,i);
 			if (pp[DB_type][0] == DB_TYPE_REV)
 				{
 				if ((r=X509_REVOKED_new()) == NULL) goto err;

@@ -1979,7 +1979,7 @@ void free_index(CA_DB *db)
 		}
 	}
 
-int parse_yesno(char *str, int def)
+int parse_yesno(const char *str, int def)
 	{
 	int ret = def;
 	if (str)
