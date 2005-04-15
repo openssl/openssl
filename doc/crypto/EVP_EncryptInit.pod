@@ -22,7 +22,7 @@ EVP_CIPHER_CTX_set_padding - EVP cipher routines
 
  #include <openssl/evp.h>
 
- int EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *a);
+ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *a);
 
  int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
 	 ENGINE *impl, unsigned char *key, unsigned char *iv);
@@ -236,8 +236,8 @@ RC5 can be set.
 
 =head1 RETURN VALUES
 
-EVP_CIPHER_CTX_init, EVP_EncryptInit_ex(), EVP_EncryptUpdate() and
-EVP_EncryptFinal_ex() return 1 for success and 0 for failure.
+EVP_EncryptInit_ex(), EVP_EncryptUpdate() and EVP_EncryptFinal_ex()
+return 1 for success and 0 for failure.
 
 EVP_DecryptInit_ex() and EVP_DecryptUpdate() return 1 for success and 0 for failure.
 EVP_DecryptFinal_ex() returns 0 if the decrypt failed or 1 for success.
