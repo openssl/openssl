@@ -206,6 +206,8 @@ sub check_hashes
 		print "FIPS hash check successful\n";
 		}
 
+	return 0;
+
 	}
 
 
