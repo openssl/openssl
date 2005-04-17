@@ -1183,7 +1183,7 @@ if ($fips)
 		$openssl_other_defines.="#define OPENSSL_FIPS_DES_ASM\n";
 		}
 	else {	$fips_des_obj=$fips_des_enc;  }
-	$fips_sha1_obj='asm/sx86-elf.o' if ($sha1_obj =~ /\-elf\.o$/);
+	$fips_sha1_obj='asm/fips-sx86-elf.o' if ($sha1_obj =~ /\-elf\.o$/);
 	$des_obj=$sha1_obj="";
 	$openssl_other_defines.="#define OPENSSL_FIPS\n";
 	}
