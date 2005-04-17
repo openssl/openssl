@@ -64,6 +64,8 @@
 #include <openssl/rsa.h>
 #include <openssl/fips.h>
 
+void *OPENSSL_stderr(void);
+
 #ifdef OPENSSL_FIPS
 
 static int fips_check_rsa(RSA *rsa)
@@ -81,7 +83,7 @@ static int fips_check_rsa(RSA *rsa)
 			 RSA_PKCS1_OAEP_PADDING);
     if(n < 0)
 	{
-	ERR_print_errors_fp(stderr);
+	ERR_print_errors_fp(OPENSSL_stderr());
 	exit(1);
 	}
     if(!memcmp(ctext,original_ptext,n))
@@ -92,7 +94,7 @@ static int fips_check_rsa(RSA *rsa)
     n=RSA_private_decrypt(n,ctext,ptext,rsa,RSA_PKCS1_OAEP_PADDING);
     if(n < 0)
 	{
-	ERR_print_errors_fp(stderr);
+	ERR_print_errors_fp(OPENSSL_stderr());
 	exit(1);
 	}
     if(n != sizeof(original_ptext)-1 || memcmp(ptext,original_ptext,n))

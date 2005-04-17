@@ -77,6 +77,8 @@
 #endif
 #include <string.h>
 
+void *OPENSSL_stderr(void);
+
 #ifdef OPENSSL_FIPS
 
 #define SEED_SIZE	8
@@ -151,7 +153,7 @@ static void fips_gettime(unsigned char buf[8])
 
     if(test_mode)
 	{
-	fprintf(stderr,"WARNING!!! PRNG IN TEST MODE!!!\n");
+	fprintf(OPENSSL_stderr(),"WARNING!!! PRNG IN TEST MODE!!!\n");
 	memcpy(buf,test_faketime,sizeof test_faketime);
 	return;
 	}

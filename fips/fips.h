@@ -55,12 +55,11 @@
 extern "C" {
 #endif
 
-/* Note that these are defined in crypto/cryptlib.c so they're
- * available even without -lfips.
- */
 struct dsa_st;
 
 int FIPS_mode_set(int onoff,const char *path);
+int FIPS_mode(void);
+const void *FIPS_rand_check(void);
 void FIPS_allow_md5(int onoff);
 int FIPS_md5_allowed(void);
 int FIPS_selftest_failed(void);

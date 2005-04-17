@@ -65,6 +65,60 @@
 
 static int fips_md5_allowed = 0;
 static int fips_selftest_fail = 0;
+static int fips_mode = 0;
+static const void *fips_rand_check = 0;
+
+static void fips_set_mode(int onoff)
+	{
+	int owning_thread = fips_is_owning_thread();
+
+	if (fips_is_started())
+		{
+		if (!owning_thread) fips_w_lock();
+		fips_mode = onoff;
+		if (!owning_thread) fips_w_unlock();
+		}
+	}
+
+static void fips_set_rand_check(const void *rand_check)
+	{
+	int owning_thread = fips_is_owning_thread();
+
+	if (fips_is_started())
+		{
+		if (!owning_thread) fips_w_lock();
+		fips_rand_check = rand_check;
+		if (!owning_thread) fips_w_unlock();
+		}
+	}
+
+int FIPS_mode(void)
+	{
+	int ret = 0;
+	int owning_thread = fips_is_owning_thread();
+
+	if (fips_is_started())
+		{
+		if (!owning_thread) fips_r_lock();
+		ret = fips_mode;
+		if (!owning_thread) fips_r_unlock();
+		}
+	return ret;
+	}
+
+const void *FIPS_rand_check(void)
+	{
+	const void *ret = 0;
+	int owning_thread = fips_is_owning_thread();
+
+	if (fips_is_started())
+		{
+		if (!owning_thread) fips_r_lock();
+		ret = fips_rand_check;
+		if (!owning_thread) fips_r_unlock();
+		}
+	return ret;
+	}
 
 void FIPS_allow_md5(int onoff)
     {
@@ -72,9 +126,9 @@ void FIPS_allow_md5(int onoff)
 	{
 	int owning_thread = fips_is_owning_thread();
 
-	if (!owning_thread) CRYPTO_w_lock(CRYPTO_LOCK_FIPS);
+	if (!owning_thread) fips_w_lock();
 	fips_md5_allowed = onoff;
-	if (!owning_thread) CRYPTO_w_unlock(CRYPTO_LOCK_FIPS);
+	if (!owning_thread) fips_w_unlock();
 	}
     }
 
@@ -85,9 +139,9 @@ int FIPS_md5_allowed(void)
 	{
 	int owning_thread = fips_is_owning_thread();
 
-	if (!owning_thread) CRYPTO_r_lock(CRYPTO_LOCK_FIPS);
+	if (!owning_thread) fips_r_lock();
 	ret = fips_md5_allowed;
-	if (!owning_thread) CRYPTO_r_unlock(CRYPTO_LOCK_FIPS);
+	if (!owning_thread) fips_r_unlock();
 	}
     return ret;
     }
@@ -99,9 +153,9 @@ int FIPS_selftest_failed(void)
 	{
 	int owning_thread = fips_is_owning_thread();
 
-	if (!owning_thread) CRYPTO_r_lock(CRYPTO_LOCK_FIPS);
+	if (!owning_thread) fips_r_lock();
 	ret = fips_selftest_fail;
-	if (!owning_thread) CRYPTO_r_unlock(CRYPTO_LOCK_FIPS);
+	if (!owning_thread) fips_r_unlock();
 	}
     return ret;
     }
@@ -185,7 +239,7 @@ int FIPS_mode_set(int onoff,const char *path)
     int fips_clear_owning_thread();
     int ret = 0;
 
-    CRYPTO_w_lock(CRYPTO_LOCK_FIPS);
+    fips_w_lock();
     fips_set_started();
     fips_set_owning_thread();
 
@@ -244,7 +298,7 @@ int FIPS_mode_set(int onoff,const char *path)
     ret = 1;
 end:
     fips_clear_owning_thread();
-    CRYPTO_w_unlock(CRYPTO_LOCK_FIPS);
+    fips_w_unlock();
     return ret;
     }
 
