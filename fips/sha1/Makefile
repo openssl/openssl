@@ -14,6 +14,7 @@ MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
 AR=		ar r
+EXE_EXT=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
@@ -21,7 +22,7 @@ GENERAL=Makefile
 TEST= fips_sha1test.c
 TESTDATA= sha1vectors.txt sha1hashes.txt
 APPS=
-EXE= fips_standalone_sha1
+EXE= fips_standalone_sha1$(EXE_EXT)
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=fips_sha1dgst.c fips_sha1_selftest.c asm/sx86-elf.s
@@ -37,16 +38,19 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd $(TOP); $(MAKE) DIRS=fips SDIRS=$(DIR) sub_all)
 
-all:	lib
+all:	check_standalone lib
+
+check_standalone:	fips_standalone_sha1$(EXE_EXT)
+	TOP=`pwd`/$(TOP) ../fips_check_sha1 standalone.sha1 $(SRC) $(HEADER)
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@sleep 2; touch lib
 
-fips_standalone_sha1: fips_standalone_sha1.o fips_sha1dgst.o $(FIPS_SHA1_ASM_OBJ)
-	$(CC) -o fips_standalone_sha1 $(CFLAGS) fips_standalone_sha1.o \
-	fips_sha1dgst.o $(FIPS_SHA1_ASM_OBJ)
+fips_standalone_sha1$(EXE_EXT): fips_standalone_sha1.o fips_sha1dgst.o $(FIPS_SHA1_ASM_OBJ)
+	$(CC) -o fips_standalone_sha1$(EXE_EXT) $(CFLAGS) \
+		fips_standalone_sha1.o fips_sha1dgst.o $(FIPS_SHA1_ASM_OBJ)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
