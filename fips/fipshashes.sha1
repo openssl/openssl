@@ -3,6 +3,7 @@ HMAC-SHA1(fips_err_wrapper.c)= d3e2be316062510312269e98f964cb87e7577898
 HMAC-SHA1(fips.h)= 9a7c66b93923f83dc0a9c4acd03506059ddafe5f
 HMAC-SHA1(fips_err.h)= 03468e3b593f7528fd934e49bf052c23cc98d301
 HMAC-SHA1(aes/fips_aes_core.c)= b70bbbd675efe0613da0d57055310926a0104d55
+HMAC-SHA1(aes/asm/fips-ax86-elf.s)= 0d1c89f93cbf7bf4854bb238627c99ecda462f17
 HMAC-SHA1(aes/fips_aes_selftest.c)= 98b01502221e7fe529fd981222f2cbb52eb4cbe0
 HMAC-SHA1(aes/fips_aes_locl.h)= a98eb0aa449f1d95b8064e261b2ac2b1f328685e
 HMAC-SHA1(des/fips_des_enc.c)= 9527f8ea81602358f1aa11348237fdb1e9eeff32

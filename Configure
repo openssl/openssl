@@ -1174,6 +1174,7 @@ if ($ranlib eq "")
 $bn_obj = $bn_asm unless $bn_obj ne "";
 
 my $fips_des_obj;
+my $fips_aes_obj;
 my $fips_sha1_obj;
 if ($fips)
 	{
@@ -1181,8 +1182,13 @@ if ($fips)
 		{
 		$fips_des_obj='asm/fips-dx86-elf.o';
 		$openssl_other_defines.="#define OPENSSL_FIPS_DES_ASM\n";
+		$fips_aes_obj='asm/fips-ax86-elf.o';
+		$openssl_other_defines.="#define OPENSSL_FIPS_AES_ASM\n";
 		}
-	else {	$fips_des_obj=$fips_des_enc;  }
+	else	{
+		$fips_des_obj=$fips_des_enc;
+		$fips_aes_obj='fips_aes_core.o';
+		}
 	$fips_sha1_obj='asm/fips-sx86-elf.o' if ($sha1_obj =~ /\-elf\.o$/);
 	$des_obj=$sha1_obj="";
 	$openssl_other_defines.="#define OPENSSL_FIPS\n";
@@ -1287,6 +1293,7 @@ while (<IN>)
 	s/^BN_ASM=.*$/BN_ASM= $bn_obj/;
 	s/^DES_ENC=.*$/DES_ENC= $des_obj/;
 	s/^FIPS_DES_ENC=.*$/FIPS_DES_ENC= $fips_des_obj/;
+	s/^FIPS_AES_ENC=.*$/FIPS_AES_ENC= $fips_aes_obj/;
 	s/^BF_ENC=.*$/BF_ENC= $bf_obj/;
 	s/^CAST_ENC=.*$/CAST_ENC= $cast_obj/;
 	s/^RC4_ENC=.*$/RC4_ENC= $rc4_obj/;
