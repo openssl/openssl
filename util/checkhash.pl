@@ -1,81 +1,151 @@
 #!/usr/local/bin/perl -w
 
-my $change_dir = "";
-my $check_program = "sha1/fips_standalone_sha1";
+my $package = caller;
 
-my $verbose = 0;
-my $badfiles = 0;
-my $rebuild = 0;
-my $force_rewrite = 0;
-my $hash_file = "fipshashes.sha1";
-my $recurse = 0;
-
-my @fingerprint_files;
-
-while (@ARGV)
+if (!(defined $package))
 	{
-	my $arg = $ARGV[0];
-	if ($arg eq "-chdir")
+	my $retval = check_hashes(@ARGV);
+	exit $retval;
+	}
+
+1;
+
+sub check_hashes
+	{
+
+	my @args = @_;
+
+	my $change_dir = "";
+	my $check_program = "sha1/fips_standalone_sha1";
+
+	my $verbose = 0;
+	my $badfiles = 0;
+	my $rebuild = 0;
+	my $force_rewrite = 0;
+	my $hash_file = "fipshashes.sha1";
+	my $recurse = 0;
+
+	my @fingerprint_files;
+
+	while (@args)
 		{
-		shift @ARGV;
-		$change_dir = shift @ARGV;
+		my $arg = $args[0];
+		if ($arg eq "-chdir")
+			{
+			shift @args;
+			$change_dir = shift @args;
+			}
+		elsif ($arg eq "-rebuild")
+			{
+			shift @args;
+			$rebuild = 1;
+			}
+		elsif ($arg eq "-verbose")
+			{
+			shift @args;
+			$verbose = 1;
+			}
+		elsif ($arg eq "-force-rewrite")
+			{
+			shift @args;
+			$force_rewrite = 1;
+			}
+		elsif ($arg eq "-hash_file")
+			{
+			shift @args;
+			$hash_file = shift @args;
+			}
+		elsif ($arg eq "-recurse")
+			{
+			shift @args;
+			$recurse = 1;
+			}
+		elsif ($arg eq "-program_path")
+			{
+			shift @args;
+			$check_program = shift @args;
+			}
+		else
+			{
+			print STDERR "Unknown Option $arg";
+			return 1;
+			}
+
 		}
-	elsif ($arg eq "-rebuild")
+
+	chdir $change_dir if $change_dir ne "";
+
+	if ($recurse)
 		{
-		shift @ARGV;
-		$rebuild = 1;
-		}
-	elsif ($arg eq "-verbose")
-		{
-		shift @ARGV;
-		$verbose = 1;
-		}
-	elsif ($arg eq "-force-rewrite")
-		{
-		shift @ARGV;
-		$force_rewrite = 1;
-		}
-	elsif ($arg eq "-hash_file")
-		{
-		shift @ARGV;
-		$hash_file = shift @ARGV;
-		}
-	elsif ($arg eq "-recurse")
-		{
-		shift @ARGV;
-		$recurse = 1;
-		}
-	elsif ($arg eq "-program_path")
-		{
-		shift @ARGV;
-		$check_program = shift @ARGV;
+		@fingerprint_files = ("fingerprint.sha1",
+					<*/fingerprint.sha1>);
 		}
 	else
 		{
-		die "Unknown Option $arg";
+		push @fingerprint_files, $hash_file;
 		}
 
-	}
+	foreach $fp (@fingerprint_files)
+		{
+		if (!open(IN, "$fp"))
+			{
+			print STDERR "Can't open file $fp";
+			return 1;
+			}
+		print STDERR "Opening Fingerprint file $fp\n" if $verbose;
+		my $dir = $fp;
+		$dir =~ s/[^\/]*$//;
+		while (<IN>)
+			{
+			chomp;
+			if (!(($file, $hash) = /^HMAC-SHA1\((.*)\)\s*=\s*(\w*)$/))
+				{
+				print STDERR "FATAL: Invalid syntax in file $fp\n";
+				print STDERR "Line:\n$_\n";
+				fatal_error();
+				return 1;
+				}
+			if (!$rebuild && length($hash) != 40)
+				{
+				print STDERR "FATAL: Invalid hash length in $fp for file $file\n";
+				fatal_error();
+				return 1;
+				}
+			push @hashed_files, "$dir$file";
+			if (exists $hashes{"$dir$file"})
+				{
+				print STDERR "FATAL: Duplicate Hash file $dir$file\n";
+				fatal_error();
+				return 1;
+				}
+			if (! -r "$dir$file")
+				{
+				print STDERR "FATAL: Can't access $dir$file\n";
+				fatal_error();
+				return 1;
+				}
+			$hashes{"$dir$file"} = $hash;
+			}
+		close IN;
+		}
 
-chdir $change_dir if $change_dir ne "";
+	@checked_hashes = `$check_program @hashed_files`;
 
-if ($recurse)
-	{
-	@fingerprint_files = ("fingerprint.sha1",
-				<*/fingerprint.sha1>);
-	}
-else
-	{
-	push @fingerprint_files, $hash_file;
-	}
+	if ($? != 0)
+		{
+		print STDERR "Error running hash program $check_program\n";
+		fatal_error();
+		return 1;
+		}
 
-foreach $fp (@fingerprint_files)
-	{
-	open(IN, "$fp") || die "Can't open file $fp";
-	print STDERR "Opening Fingerprint file $fp\n" if $verbose;
-	my $dir = $fp;
-	$dir =~ s/[^\/]*$//;
-	while (<IN>)
+	if (@checked_hashes != @hashed_files)
+		{
+		print STDERR "FATAL: hash count incorrect\n";
+		fatal_error();
+		return 1;
+		}
+
+	foreach (@checked_hashes)
 		{
 		chomp;
 		if (!(($file, $hash) = /^HMAC-SHA1\((.*)\)\s*=\s*(\w*)$/))
@@ -83,99 +153,65 @@ foreach $fp (@fingerprint_files)
 			print STDERR "FATAL: Invalid syntax in file $fp\n";
 			print STDERR "Line:\n$_\n";
 			fatal_error();
+			return 1;
 			}
-		if (!$rebuild && length($hash) != 40)
+		if (length($hash) != 40)
 			{
-			print STDERR "FATAL: Invalid hash length in $fp for file $file\n";
+			print STDERR "FATAL: Invalid hash length for file $file\n";
 			fatal_error();
+			return 1;
 			}
-		push @hashed_files, "$dir$file";
-		if (exists $hashes{"$dir$file"})
+		if ($hash ne $hashes{$file})
 			{
-			print STDERR "FATAL: Duplicate Hash file $dir$file\n";
-			fatal_error();
+			if ($rebuild)
+				{
+				print STDERR "Updating hash on file $file\n";
+				$hashes{$file} = $hash;
+				}
+			else
+				{
+				print STDERR "Hash check failed for file $file\n";
+				}
+			$badfiles++;
 			}
-		if (! -r "$dir$file")
-			{
-			print STDERR "FATAL: Can't access $dir$file\n";
-			fatal_error();
-			}
-		$hashes{"$dir$file"} = $hash;
+		elsif ($verbose)
+			{ print "Hash Check OK for $file\n";}
 		}
-	close IN;
-	}
+		
 
-@checked_hashes = `$check_program @hashed_files`;
-
-if ($? != 0)
-	{
-	print STDERR "Error running hash program $check_program\n";
-	fatal_error();
-	}
-
-if (@checked_hashes != @hashed_files)
-	{
-	print STDERR "FATAL: hash count incorrect\n";
-	fatal_error();
-	}
-
-foreach (@checked_hashes)
-	{
-	chomp;
-	if (!(($file, $hash) = /^HMAC-SHA1\((.*)\)\s*=\s*(\w*)$/))
+	if ($badfiles && !$rebuild)
 		{
-		print STDERR "FATAL: Invalid syntax in file $fp\n";
-		print STDERR "Line:\n$_\n";
+		print STDERR "FATAL: hash mismatch on $badfiles files\n";
 		fatal_error();
+		return 1;
 		}
-	if (length($hash) != 40)
+
+	if ($badfiles || $force_rewrite)
 		{
-		print STDERR "FATAL: Invalid hash length for file $file\n";
-		fatal_error();
-		}
-	if ($hash ne $hashes{$file})
-		{
-		if ($rebuild)
+		print "Updating Hash file $hash_file\n";
+		if (!open(OUT, ">$hash_file"))
 			{
-			print STDERR "Updating hash on file $file\n";
-			$hashes{$file} = $hash;
+			print STDERR "Error rewriting $hash_file";
+			return 1;
 			}
-		else
+		foreach (@hashed_files)
 			{
-			print STDERR "Hash check failed for file $file\n";
+			print OUT "HMAC-SHA1($_)= $hashes{$_}\n";
 			}
-		$badfiles++;
+		close OUT;
 		}
-	elsif ($verbose)
-		{ print "Hash Check OK for $file\n";}
-	}
-	
 
-if ($badfiles && !$rebuild)
-	{
-	print STDERR "FATAL: hash mismatch on $badfiles files\n";
-	fatal_error();
-	}
-
-if ($badfiles || $force_rewrite)
-	{
-	print "Updating Hash file $hash_file\n";
-	open OUT, ">$hash_file" || die "Error rewriting $hash_file";
-	foreach (@hashed_files)
+	if (!$badfiles)
 		{
-		print OUT "HMAC-SHA1($_)= $hashes{$_}\n";
+		print "FIPS hash check successful\n";
 		}
-	close OUT;
-	}
 
-if (!$badfiles)
-	{
-	print "FIPS hash check successful\n";
 	}
 
 
 sub fatal_error
 	{
 	print STDERR "*** Your source code does not match the FIPS validated source ***\n";
-	exit 1;
 	}
+
+
