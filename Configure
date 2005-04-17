@@ -1177,7 +1177,7 @@ my $fips_des_obj;
 my $fips_sha1_obj;
 if ($fips)
 	{
-	if ($des_obj =~ /\-elf\.o$/ && $no_shared) # FIPS DES module is not PIC
+	if ($des_obj =~ /\-elf\.o$/)
 		{
 		$fips_des_obj='asm/fips-dx86-elf.o';
 		$openssl_other_defines.="#define OPENSSL_FIPS_DES_ASM\n";

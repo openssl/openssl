@@ -62,10 +62,15 @@ DES_encrypt1:
 
 .byte 209
 .byte 199	
-	leal	DES_SPtrans,	%ebp
+	.align	8
+	call	.L000PIC_me_up
+.L000PIC_me_up:
+	popl	%ebp
+	addl	$_GLOBAL_OFFSET_TABLE_+[.-.L000PIC_me_up],%ebp
+	movl	DES_SPtrans@GOT(%ebp),%ebp
 	movl	24(%esp),	%ecx
 	cmpl	$0,		%ebx
-	je	.L000start_decrypt
+	je	.L001start_decrypt
 
 
 	movl	(%ecx),		%eax
@@ -546,8 +551,8 @@ DES_encrypt1:
 	movl	24(%esp),	%ecx
 	xorl	0x400(%ebp,%eax),%esi
 	xorl	0x500(%ebp,%edx),%esi
-	jmp	.L001end
-.L000start_decrypt:
+	jmp	.L002end
+.L001start_decrypt:
 
 
 	movl	120(%ecx),	%eax
@@ -1028,7 +1033,7 @@ DES_encrypt1:
 	movl	24(%esp),	%ecx
 	xorl	0x400(%ebp,%eax),%esi
 	xorl	0x500(%ebp,%edx),%esi
-.L001end:
+.L002end:
 
 
 	movl	20(%esp),	%edx
@@ -1097,10 +1102,15 @@ DES_encrypt2:
 	roll	$3,		%esi
 	movl	4(%eax),	%edi
 	roll	$3,		%edi
-	leal	DES_SPtrans,	%ebp
+	.align	8
+	call	.L003PIC_me_up
+.L003PIC_me_up:
+	popl	%ebp
+	addl	$_GLOBAL_OFFSET_TABLE_+[.-.L003PIC_me_up],%ebp
+	movl	DES_SPtrans@GOT(%ebp),%ebp
 	movl	24(%esp),	%ecx
 	cmpl	$0,		%ebx
-	je	.L002start_decrypt
+	je	.L004start_decrypt
 
 
 	movl	(%ecx),		%eax
@@ -1581,8 +1591,8 @@ DES_encrypt2:
 	movl	24(%esp),	%ecx
 	xorl	0x400(%ebp,%eax),%esi
 	xorl	0x500(%ebp,%edx),%esi
-	jmp	.L003end
-.L002start_decrypt:
+	jmp	.L005end
+.L004start_decrypt:
 
 
 	movl	120(%ecx),	%eax
@@ -2063,7 +2073,7 @@ DES_encrypt2:
 	movl	24(%esp),	%ecx
 	xorl	0x400(%ebp,%eax),%esi
 	xorl	0x500(%ebp,%edx),%esi
-.L003end:
+.L005end:
 
 
 	rorl	$3,		%edi
@@ -2356,12 +2366,12 @@ DES_ncbc_encrypt:
 	pushl	%eax
 	pushl	%ebx
 	cmpl	$0,		%ecx
-	jz	.L004decrypt
+	jz	.L006decrypt
 	andl	$4294967288,	%ebp
 	movl	12(%esp),	%eax
 	movl	16(%esp),	%ebx
-	jz	.L005encrypt_finish
-.L006encrypt_loop:
+	jz	.L007encrypt_finish
+.L008encrypt_loop:
 	movl	(%esi),		%ecx
 	movl	4(%esi),	%edx
 	xorl	%ecx,		%eax
@@ -2376,38 +2386,38 @@ DES_ncbc_encrypt:
 	addl	$8,		%esi
 	addl	$8,		%edi
 	subl	$8,		%ebp
-	jnz	.L006encrypt_loop
-.L005encrypt_finish:
+	jnz	.L008encrypt_loop
+.L007encrypt_finish:
 	movl	56(%esp),	%ebp
 	andl	$7,		%ebp
-	jz	.L007finish
-	call	.L008PIC_point
-.L008PIC_point:
+	jz	.L009finish
+	call	.L010PIC_point
+.L010PIC_point:
 	popl	%edx
-	leal	.L009cbc_enc_jmp_table-.L008PIC_point(%edx),%ecx
+	leal	.L011cbc_enc_jmp_table-.L010PIC_point(%edx),%ecx
 	movl	(%ecx,%ebp,4),	%ebp
 	addl	%edx,		%ebp
 	xorl	%ecx,		%ecx
 	xorl	%edx,		%edx
 	jmp	*%ebp
-.L010ej7:
+.L012ej7:
 	movb	6(%esi),	%dh
 	sall	$8,		%edx
-.L011ej6:
+.L013ej6:
 	movb	5(%esi),	%dh
-.L012ej5:
+.L014ej5:
 	movb	4(%esi),	%dl
-.L013ej4:
+.L015ej4:
 	movl	(%esi),		%ecx
-	jmp	.L014ejend
-.L015ej3:
+	jmp	.L016ejend
+.L017ej3:
 	movb	2(%esi),	%ch
 	sall	$8,		%ecx
-.L016ej2:
+.L018ej2:
 	movb	1(%esi),	%ch
-.L017ej1:
+.L019ej1:
 	movb	(%esi),		%cl
-.L014ejend:
+.L016ejend:
 	xorl	%ecx,		%eax
 	xorl	%edx,		%ebx
 	movl	%eax,		12(%esp)
@@ -2417,14 +2427,14 @@ DES_ncbc_encrypt:
 	movl	16(%esp),	%ebx
 	movl	%eax,		(%edi)
 	movl	%ebx,		4(%edi)
-	jmp	.L007finish
+	jmp	.L009finish
 .align 16
-.L004decrypt:
+.L006decrypt:
 	andl	$4294967288,	%ebp
 	movl	20(%esp),	%eax
 	movl	24(%esp),	%ebx
-	jz	.L018decrypt_finish
-.L019decrypt_loop:
+	jz	.L020decrypt_finish
+.L021decrypt_loop:
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
 	movl	%eax,		12(%esp)
@@ -2445,11 +2455,11 @@ DES_ncbc_encrypt:
 	addl	$8,		%esi
 	addl	$8,		%edi
 	subl	$8,		%ebp
-	jnz	.L019decrypt_loop
-.L018decrypt_finish:
+	jnz	.L021decrypt_loop
+.L020decrypt_finish:
 	movl	56(%esp),	%ebp
 	andl	$7,		%ebp
-	jz	.L007finish
+	jz	.L009finish
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
 	movl	%eax,		12(%esp)
@@ -2463,29 +2473,29 @@ DES_ncbc_encrypt:
 	xorl	%ebx,		%edx
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
-.L020dj7:
+.L022dj7:
 	rorl	$16,		%edx
 	movb	%dl,		6(%edi)
 	shrl	$16,		%edx
-.L021dj6:
+.L023dj6:
 	movb	%dh,		5(%edi)
-.L022dj5:
+.L024dj5:
 	movb	%dl,		4(%edi)
-.L023dj4:
+.L025dj4:
 	movl	%ecx,		(%edi)
-	jmp	.L024djend
-.L025dj3:
+	jmp	.L026djend
+.L027dj3:
 	rorl	$16,		%ecx
 	movb	%cl,		2(%edi)
 	sall	$16,		%ecx
-.L026dj2:
+.L028dj2:
 	movb	%ch,		1(%esi)
-.L027dj1:
+.L029dj1:
 	movb	%cl,		(%esi)
-.L024djend:
-	jmp	.L007finish
+.L026djend:
+	jmp	.L009finish
 .align 16
-.L007finish:
+.L009finish:
 	movl	64(%esp),	%ecx
 	addl	$28,		%esp
 	movl	%eax,		(%ecx)
@@ -2496,15 +2506,15 @@ DES_ncbc_encrypt:
 	popl	%ebp
 	ret
 .align 16
-.L009cbc_enc_jmp_table:
+.L011cbc_enc_jmp_table:
 	.long 0
-	.long .L017ej1-.L008PIC_point
-	.long .L016ej2-.L008PIC_point
-	.long .L015ej3-.L008PIC_point
-	.long .L013ej4-.L008PIC_point
-	.long .L012ej5-.L008PIC_point
-	.long .L011ej6-.L008PIC_point
-	.long .L010ej7-.L008PIC_point
+	.long .L019ej1-.L010PIC_point
+	.long .L018ej2-.L010PIC_point
+	.long .L017ej3-.L010PIC_point
+	.long .L015ej4-.L010PIC_point
+	.long .L014ej5-.L010PIC_point
+	.long .L013ej6-.L010PIC_point
+	.long .L012ej7-.L010PIC_point
 .L_DES_ncbc_encrypt_end:
 	.size	DES_ncbc_encrypt,.L_DES_ncbc_encrypt_end-DES_ncbc_encrypt
 .ident	"desasm.pl"
@@ -2543,12 +2553,12 @@ DES_ede3_cbc_encrypt:
 	pushl	%eax
 	pushl	%ebx
 	cmpl	$0,		%ecx
-	jz	.L028decrypt
+	jz	.L030decrypt
 	andl	$4294967288,	%ebp
 	movl	16(%esp),	%eax
 	movl	20(%esp),	%ebx
-	jz	.L029encrypt_finish
-.L030encrypt_loop:
+	jz	.L031encrypt_finish
+.L032encrypt_loop:
 	movl	(%esi),		%ecx
 	movl	4(%esi),	%edx
 	xorl	%ecx,		%eax
@@ -2563,38 +2573,38 @@ DES_ede3_cbc_encrypt:
 	addl	$8,		%esi
 	addl	$8,		%edi
 	subl	$8,		%ebp
-	jnz	.L030encrypt_loop
-.L029encrypt_finish:
+	jnz	.L032encrypt_loop
+.L031encrypt_finish:
 	movl	60(%esp),	%ebp
 	andl	$7,		%ebp
-	jz	.L031finish
-	call	.L032PIC_point
-.L032PIC_point:
+	jz	.L033finish
+	call	.L034PIC_point
+.L034PIC_point:
 	popl	%edx
-	leal	.L033cbc_enc_jmp_table-.L032PIC_point(%edx),%ecx
+	leal	.L035cbc_enc_jmp_table-.L034PIC_point(%edx),%ecx
 	movl	(%ecx,%ebp,4),	%ebp
 	addl	%edx,		%ebp
 	xorl	%ecx,		%ecx
 	xorl	%edx,		%edx
 	jmp	*%ebp
-.L034ej7:
+.L036ej7:
 	movb	6(%esi),	%dh
 	sall	$8,		%edx
-.L035ej6:
+.L037ej6:
 	movb	5(%esi),	%dh
-.L036ej5:
+.L038ej5:
 	movb	4(%esi),	%dl
-.L037ej4:
+.L039ej4:
 	movl	(%esi),		%ecx
-	jmp	.L038ejend
-.L039ej3:
+	jmp	.L040ejend
+.L041ej3:
 	movb	2(%esi),	%ch
 	sall	$8,		%ecx
-.L040ej2:
+.L042ej2:
 	movb	1(%esi),	%ch
-.L041ej1:
+.L043ej1:
 	movb	(%esi),		%cl
-.L038ejend:
+.L040ejend:
 	xorl	%ecx,		%eax
 	xorl	%edx,		%ebx
 	movl	%eax,		16(%esp)
@@ -2604,14 +2614,14 @@ DES_ede3_cbc_encrypt:
 	movl	20(%esp),	%ebx
 	movl	%eax,		(%edi)
 	movl	%ebx,		4(%edi)
-	jmp	.L031finish
+	jmp	.L033finish
 .align 16
-.L028decrypt:
+.L030decrypt:
 	andl	$4294967288,	%ebp
 	movl	24(%esp),	%eax
 	movl	28(%esp),	%ebx
-	jz	.L042decrypt_finish
-.L043decrypt_loop:
+	jz	.L044decrypt_finish
+.L045decrypt_loop:
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
 	movl	%eax,		16(%esp)
@@ -2632,11 +2642,11 @@ DES_ede3_cbc_encrypt:
 	addl	$8,		%esi
 	addl	$8,		%edi
 	subl	$8,		%ebp
-	jnz	.L043decrypt_loop
-.L042decrypt_finish:
+	jnz	.L045decrypt_loop
+.L044decrypt_finish:
 	movl	60(%esp),	%ebp
 	andl	$7,		%ebp
-	jz	.L031finish
+	jz	.L033finish
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
 	movl	%eax,		16(%esp)
@@ -2650,29 +2660,29 @@ DES_ede3_cbc_encrypt:
 	xorl	%ebx,		%edx
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
-.L044dj7:
+.L046dj7:
 	rorl	$16,		%edx
 	movb	%dl,		6(%edi)
 	shrl	$16,		%edx
-.L045dj6:
+.L047dj6:
 	movb	%dh,		5(%edi)
-.L046dj5:
+.L048dj5:
 	movb	%dl,		4(%edi)
-.L047dj4:
+.L049dj4:
 	movl	%ecx,		(%edi)
-	jmp	.L048djend
-.L049dj3:
+	jmp	.L050djend
+.L051dj3:
 	rorl	$16,		%ecx
 	movb	%cl,		2(%edi)
 	sall	$16,		%ecx
-.L050dj2:
+.L052dj2:
 	movb	%ch,		1(%esi)
-.L051dj1:
+.L053dj1:
 	movb	%cl,		(%esi)
-.L048djend:
-	jmp	.L031finish
+.L050djend:
+	jmp	.L033finish
 .align 16
-.L031finish:
+.L033finish:
 	movl	76(%esp),	%ecx
 	addl	$32,		%esp
 	movl	%eax,		(%ecx)
@@ -2683,15 +2693,15 @@ DES_ede3_cbc_encrypt:
 	popl	%ebp
 	ret
 .align 16
-.L033cbc_enc_jmp_table:
+.L035cbc_enc_jmp_table:
 	.long 0
-	.long .L041ej1-.L032PIC_point
-	.long .L040ej2-.L032PIC_point
-	.long .L039ej3-.L032PIC_point
-	.long .L037ej4-.L032PIC_point
-	.long .L036ej5-.L032PIC_point
-	.long .L035ej6-.L032PIC_point
-	.long .L034ej7-.L032PIC_point
+	.long .L043ej1-.L034PIC_point
+	.long .L042ej2-.L034PIC_point
+	.long .L041ej3-.L034PIC_point
+	.long .L039ej4-.L034PIC_point
+	.long .L038ej5-.L034PIC_point
+	.long .L037ej6-.L034PIC_point
+	.long .L036ej7-.L034PIC_point
 .L_DES_ede3_cbc_encrypt_end:
 	.size	DES_ede3_cbc_encrypt,.L_DES_ede3_cbc_encrypt_end-DES_ede3_cbc_encrypt
 .ident	"desasm.pl"
