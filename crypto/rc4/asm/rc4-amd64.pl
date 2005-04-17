@@ -35,145 +35,99 @@
 # of code remain redundant.
 
 $output=shift;
+open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
 
-$win64a=1 if ($output =~ /win64a.[s|asm]/);
-
-open STDOUT,">$output" || die "can't open $output: $!";
-
-if (defined($win64a)) {
-    $dat="%rcx";	# arg1
-    $len="%rdx";	# arg2
-    $inp="%rsi";	# r8, arg3 moves here
-    $out="%rdi";	# r9, arg4 moves here
-} else {
-    $dat="%rdi";	# arg1
-    $len="%rsi";	# arg2
-    $inp="%rdx";	# arg3
-    $out="%rcx";	# arg4
-}
+$dat="%rdi";	    # arg1
+$len="%rsi";	    # arg2
+$inp="%rdx";	    # arg3
+$out="%rcx";	    # arg4
 
 $XX="%r10";
 $TX="%r8";
 $YY="%r11";
 $TY="%r9";
 
-sub PTR() {
-    my $ret=shift;
-    if (defined($win64a)) {
-	$ret =~ s/\[([\S]+)\+([\S]+)\]/[$2+$1]/g;   # [%rN+%rM*4]->[%rM*4+%rN]
-	$ret =~ s/:([^\[]+)\[([^\]]+)\]/:[$2+$1]/g; # :off[ea]->:[ea+off]
-    } else {
-	$ret =~ s/[\+\*]/,/g;		# [%rN+%rM*4]->[%rN,%rM,4]
-	$ret =~ s/\[([^\]]+)\]/($1)/g;	# [%rN]->(%rN)
-    }
-    $ret;
-}
-
-$code=<<___ if (!defined($win64a));
+$code=<<___;
 .text
 
 .globl	RC4
-.type	RC4,\@function
+.type	RC4,\@function,4
 .align	16
 RC4:	or	$len,$len
 	jne	.Lentry
-	repret
+	ret
 .Lentry:
-___
-$code=<<___ if (defined($win64a));
-_TEXT	SEGMENT
-PUBLIC	RC4
-ALIGN	16
-RC4	PROC
-	or	$len,$len
-	jne	.Lentry
-	repret
-.Lentry:
-	push	%rdi
-	push	%rsi
-	sub	\$40,%rsp
-	mov	%r8,$inp
-	mov	%r9,$out
-___
-$code.=<<___;
 	add	\$8,$dat
-	movl	`&PTR("DWORD:-8[$dat]")`,$XX#d
-	movl	`&PTR("DWORD:-4[$dat]")`,$YY#d
-	cmpl	\$-1,`&PTR("DWORD:256[$dat]")`
+	movl	-8($dat),$XX#d
+	movl	-4($dat),$YY#d
+	cmpl	\$-1,256($dat)
 	je	.LRC4_CHAR
 	test	\$-8,$len
 	jz	.Lloop1
 .align	16
 .Lloop8:
 	inc	$XX#b
-	movl	`&PTR("DWORD:[$dat+$XX*4]")`,$TX#d
+	movl	($dat,$XX,4),$TX#d
 	add	$TX#b,$YY#b
-	movl	`&PTR("DWORD:[$dat+$YY*4]")`,$TY#d
-	movl	$TX#d,`&PTR("DWORD:[$dat+$YY*4]")`
-	movl	$TY#d,`&PTR("DWORD:[$dat+$XX*4]")`
+	movl	($dat,$YY,4),$TY#d
+	movl	$TX#d,($dat,$YY,4)
+	movl	$TY#d,($dat,$XX,4)
 	add	$TX#b,$TY#b
 	inc	$XX#b
-	movl	`&PTR("DWORD:[$dat+$XX*4]")`,$TX#d
-	movb	`&PTR("BYTE:[$dat+$TY*4]")`,%al
+	movl	($dat,$XX,4),$TX#d
+	movb	($dat,$TY,4),%al
 ___
 for ($i=1;$i<=6;$i++) {
 $code.=<<___;
 	add	$TX#b,$YY#b
 	ror	\$8,%rax
-	movl	`&PTR("DWORD:[$dat+$YY*4]")`,$TY#d
-	movl	$TX#d,`&PTR("DWORD:[$dat+$YY*4]")`
-	movl	$TY#d,`&PTR("DWORD:[$dat+$XX*4]")`
+	movl	($dat,$YY,4),$TY#d
+	movl	$TX#d,($dat,$YY,4)
+	movl	$TY#d,($dat,$XX,4)
 	add	$TX#b,$TY#b
 	inc	$XX#b
-	movl	`&PTR("DWORD:[$dat+$XX*4]")`,$TX#d
-	movb	`&PTR("BYTE:[$dat+$TY*4]")`,%al
+	movl	($dat,$XX,4),$TX#d
+	movb	($dat,$TY,4),%al
 ___
 }
 $code.=<<___;
 	add	$TX#b,$YY#b
 	ror	\$8,%rax
-	movl	`&PTR("DWORD:[$dat+$YY*4]")`,$TY#d
-	movl	$TX#d,`&PTR("DWORD:[$dat+$YY*4]")`
-	movl	$TY#d,`&PTR("DWORD:[$dat+$XX*4]")`
+	movl	($dat,$YY,4),$TY#d
+	movl	$TX#d,($dat,$YY,4)
+	movl	$TY#d,($dat,$XX,4)
 	sub	\$8,$len
 	add	$TY#b,$TX#b
-	movb	`&PTR("BYTE:[$dat+$TX*4]")`,%al
+	movb	($dat,$TX,4),%al
 	ror	\$8,%rax
 	add	\$8,$inp
 	add	\$8,$out
 
-	xor	`&PTR("QWORD:-8[$inp]")`,%rax
-	mov	%rax,`&PTR("QWORD:-8[$out]")`
+	xor	-8($inp),%rax
+	mov	%rax,-8($out)
 
 	test	\$-8,$len
 	jnz	.Lloop8
 	cmp	\$0,$len
 	jne	.Lloop1
 .Lexit:
-	movl	$XX#d,`&PTR("DWORD:-8[$dat]")`
-	movl	$YY#d,`&PTR("DWORD:-4[$dat]")`
-___
-$code.=<<___ if (defined($win64a));
-	add	\$40,%rsp
-	pop	%rsi
-	pop	%rdi
-___
-$code.=<<___;
-	repret
+	movl	$XX#d,-8($dat)
+	movl	$YY#d,-4($dat)
+	ret
 .align	16
 .Lloop1:
-	movzb	`&PTR("BYTE:[$inp]")`,%eax
+	movzb	($inp),%eax
 	inc	$XX#b
-	movl	`&PTR("DWORD:[$dat+$XX*4]")`,$TX#d
+	movl	($dat,$XX,4),$TX#d
 	add	$TX#b,$YY#b
-	movl	`&PTR("DWORD:[$dat+$YY*4]")`,$TY#d
-	movl	$TX#d,`&PTR("DWORD:[$dat+$YY*4]")`
-	movl	$TY#d,`&PTR("DWORD:[$dat+$XX*4]")`
+	movl	($dat,$YY,4),$TY#d
+	movl	$TX#d,($dat,$YY,4)
+	movl	$TY#d,($dat,$XX,4)
 	add	$TY#b,$TX#b
-	movl	`&PTR("DWORD:[$dat+$TX*4]")`,$TY#d
+	movl	($dat,$TX,4),$TY#d
 	xor	$TY,%rax
 	inc	$inp
-	movb	%al,`&PTR("BYTE:[$out]")`
+	movb	%al,($out)
 	inc	$out
 	dec	$len
 	jnz	.Lloop1
@@ -182,46 +136,25 @@ $code.=<<___;
 .align	16
 .LRC4_CHAR:
 	add	\$1,$XX#b
-	movzb	`&PTR("BYTE:[$dat+$XX]")`,$TX#d
+	movzb	($dat,$XX),$TX#d
 	add	$TX#b,$YY#b
-	movzb	`&PTR("BYTE:[$dat+$YY]")`,$TY#d
-	movb	$TX#b,`&PTR("BYTE:[$dat+$YY]")`
-	movb	$TY#b,`&PTR("BYTE:[$dat+$XX]")`
+	movzb	($dat,$YY),$TY#d
+	movb	$TX#b,($dat,$YY)
+	movb	$TY#b,($dat,$XX)
 	add	$TX#b,$TY#b
-	movzb	`&PTR("BYTE:[$dat+$TY]")`,$TY#d
-	xorb	`&PTR("BYTE:[$inp]")`,$TY#b
-	movb	$TY#b,`&PTR("BYTE:[$out]")`
+	movzb	($dat,$TY),$TY#d
+	xorb	($inp),$TY#b
+	movb	$TY#b,($out)
 	lea	1($inp),$inp
 	lea	1($out),$out
 	sub	\$1,$len
 	jnz	.LRC4_CHAR
 	jmp	.Lexit
-___
-$code.=<<___ if (defined($win64a));
-RC4	ENDP
-_TEXT	ENDS
-END
-___
-$code.=<<___ if (!defined($win64a));
 .size	RC4,.-RC4
 ___
 
 $code =~ s/#([bwd])/$1/gm;
-$code =~ s/\`([^\`]*)\`/eval $1/gem;
 
-if (defined($win64a)) {
-    $code =~ s/\.align/ALIGN/gm;
-    $code =~ s/[\$%]//gm;
-    $code =~ s/\.L/\$L/gm;
-    $code =~ s/([\w]+)([\s]+)([\S]+),([\S]+)/$1$2$4,$3/gm;
-    $code =~ s/([QD]*WORD|BYTE):/$1 PTR/gm;
-    $code =~ s/mov[bwlq]/mov/gm;
-    $code =~ s/movzb/movzx/gm;
-    $code =~ s/repret/DB\t0F3h,0C3h/gm;
-    $code =~ s/cmpl/cmp/gm;
-    $code =~ s/xorb/xor/gm;
-} else {
-    $code =~ s/([QD]*WORD|BYTE)://gm;
-    $code =~ s/repret/.byte\t0xF3,0xC3/gm;
-}
 print $code;
+
+close STDOUT;
