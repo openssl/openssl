@@ -57,6 +57,7 @@
  */
 
 #include <openssl/crypto.h>
+#include <openssl/fips.h>
 #include <openssl/cast.h>
 
 #include "cast_lcl.h"

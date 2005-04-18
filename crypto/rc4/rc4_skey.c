@@ -58,6 +58,7 @@
 
 #include <openssl/rc4.h>
 #include <openssl/crypto.h>
+#include <openssl/fips.h>
 #include "rc4_locl.h"
 #include <openssl/opensslv.h>
 
