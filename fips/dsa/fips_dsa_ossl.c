@@ -83,7 +83,7 @@ static int dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 				const BIGNUM *m, BN_CTX *ctx,
 				BN_MONT_CTX *m_ctx);
 
-static DSA_METHOD openssl_dsa_meth = {
+static const DSA_METHOD openssl_dsa_meth = {
 "OpenSSL FIPS DSA method",
 dsa_do_sign,
 dsa_sign_setup,

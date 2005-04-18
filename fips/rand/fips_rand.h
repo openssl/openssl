@@ -64,7 +64,7 @@ void FIPS_rand_seed(const void *buf, FIPS_RAND_SIZE_T num);
 /* NB: this returns true if _partially_ seeded */
 int FIPS_rand_seeded(void);
 
-RAND_METHOD *FIPS_rand_method(void);
+const RAND_METHOD *FIPS_rand_method(void);
 
 #ifdef  __cplusplus
 }

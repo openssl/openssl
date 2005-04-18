@@ -65,7 +65,7 @@
 #include <openssl/opensslconf.h>
 
 #ifdef OPENSSL_FIPS
-const char *SHA1_version="SHA1" OPENSSL_VERSION_PTEXT;
+const char SHA1_version[]="SHA1" OPENSSL_VERSION_PTEXT;
 
 /* The implementation is in fips_md32_common.h */
 #include "fips_sha_locl.h"

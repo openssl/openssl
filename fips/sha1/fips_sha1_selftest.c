@@ -53,7 +53,7 @@
 #include <openssl/sha.h>
 
 #ifdef OPENSSL_FIPS
-static char *test[]=
+static const char * const test[]=
     {
     "",
     "abc",

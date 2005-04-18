@@ -103,7 +103,7 @@ static void fips_rand_add(const void *buf, FIPS_RAND_SIZE_T num, double add_entr
 static int fips_rand_bytes(unsigned char *buf, FIPS_RAND_SIZE_T num);
 static int fips_rand_status(void);
 
-static RAND_METHOD rand_fips_meth=
+static const RAND_METHOD rand_fips_meth=
     {
     FIPS_rand_seed,
     fips_rand_bytes,
@@ -115,7 +115,7 @@ static RAND_METHOD rand_fips_meth=
 
 static int second;
 
-RAND_METHOD *FIPS_rand_method(void)
+const RAND_METHOD *FIPS_rand_method(void)
 {
   return &rand_fips_meth;
 }
