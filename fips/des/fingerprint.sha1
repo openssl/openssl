@@ -1,5 +1,0 @@
-HMAC-SHA1(fips_des_enc.c)= 9527f8ea81602358f1aa11348237fdb1e9eeff32
-HMAC-SHA1(asm/fips-dx86-elf.s)= 2f85e8e86806c92ee4c12cf5354e19eccf6ed47d
-HMAC-SHA1(fips_des_selftest.c)= 3bc574e51647c5f5ab45d1007b2cf461d67764a9
-HMAC-SHA1(fips_set_key.c)= 2858450d3d9c8d4ab8edea683baa54fa34f3a605
-HMAC-SHA1(fips_des_locl.h)= 7053848e884df47f06de9f2248380b92e58ef4e5

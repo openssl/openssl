@@ -1,3 +1,0 @@
-HMAC-SHA1(fips_aes_core.c)= b70bbbd675efe0613da0d57055310926a0104d55
-HMAC-SHA1(fips_aes_selftest.c)= 98b01502221e7fe529fd981222f2cbb52eb4cbe0
-HMAC-SHA1(fips_aes_locl.h)= a98eb0aa449f1d95b8064e261b2ac2b1f328685e

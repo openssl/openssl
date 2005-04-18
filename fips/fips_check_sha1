@@ -1,8 +1,0 @@
-#!/bin/sh
-
-FP=$1
-shift
-
-egrep 'define OPENSSL_FIPS' $TOP/include/openssl/opensslconf.h > /dev/null || exit 0
-
-$TOP/fips/sha1/fips_standalone_sha1 $@ | diff -w $FP - || { echo; echo "*** Your source code does not match the FIPS validated source ***"; echo; exit 1; }
