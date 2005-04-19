@@ -62,7 +62,7 @@ my @dirs = (
 );
 
 foreach (@dirs) {
-	&files_dir ($_, "Makefile.ssl");
+	&files_dir ($_, "Makefile");
 }
 
 exit(0);

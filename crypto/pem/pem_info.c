@@ -186,7 +186,7 @@ start:
 #ifndef OPENSSL_NO_DSA
 			if (strcmp(name,PEM_STRING_DSA) == 0)
 			{
-			(D2I_OF(RSA))d2i=d2i_DSAPrivateKey;
+			(D2I_OF(DSA))d2i=d2i_DSAPrivateKey;
 			if (xi->x_pkey != NULL) 
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;

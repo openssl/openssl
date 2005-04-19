@@ -390,7 +390,8 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 	X509 *x;
 	int (*cb)(int ok,X509_STORE_CTX *ctx);
 	int proxy_path_length = 0;
-	int allow_proxy_certs = !!(ctx->flags & X509_V_FLAG_ALLOW_PROXY_CERTS);
+	int allow_proxy_certs =
+		!!(ctx->param->flags & X509_V_FLAG_ALLOW_PROXY_CERTS);
 	cb=ctx->verify_cb;
 
 	/* must_be_ca can have 1 of 3 values:

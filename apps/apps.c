@@ -2146,7 +2146,7 @@ error:
 
 /* This code MUST COME AFTER anything that uses rename() */
 #ifdef OPENSSL_SYS_WIN32
-int WIN32_rename(char *from, char *to)
+int WIN32_rename(const char *from, const char *to)
 	{
 #ifndef OPENSSL_SYS_WINCE
 	/* Windows rename gives an error if 'to' exists, so delete it

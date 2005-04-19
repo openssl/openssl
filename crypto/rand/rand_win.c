@@ -558,7 +558,8 @@ int RAND_poll(void)
 			if (module_first(handle, &m))
 				do
 					RAND_add(&m, m.dwSize, 9);
-				while (module_next(handle, &m) && GetTickCount < stoptime);
+				while (module_next(handle, &m)
+					       	&& (GetTickCount() < stoptime));
 			if (close_snap)
 				close_snap(handle);
 			else

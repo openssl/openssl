@@ -10,7 +10,7 @@ $OPTIONS="";
 $ssl_version="";
 $banner="\t\@echo Building OpenSSL";
 
-open(IN,"<Makefile.ssl") || die "unable to open Makefile.ssl!\n";
+open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
     $ssl_version=$1 if (/^VERSION=(.*)$/);
     $OPTIONS=$1 if (/^OPTIONS=(.*)$/);
