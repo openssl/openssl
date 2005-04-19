@@ -432,7 +432,11 @@ sub do_defs
 
 		print STDERR "DEBUG: parsing ----------\n" if $debug;
 		while(<IN>) {
-			last if (/\/\* Error codes for the \w+ functions\. \*\//);
+			if (/\/\* Error codes for the \w+ functions\. \*\//)
+				{
+				undef @tag;
+				last;
+				}
 			if ($line ne '') {
 				$_ = $line . $_;
 				$line = '';
