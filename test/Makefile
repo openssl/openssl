@@ -311,7 +311,7 @@ $(DLIBSSL):
 $(DLIBCRYPTO):
 	(cd ..; $(MAKE) DIRS=crypto all)
 
-BUILD_CMD=if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+BUILD_CMD=if [ "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
 		set -x; $${CC:-$(CC)} -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	elif [ -z "$(SHARED_LIBS)" ]; then \
 		set -x; $${CC:-$(CC)} -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \

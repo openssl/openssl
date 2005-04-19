@@ -499,15 +499,6 @@ do_irix-shared:
 	fi
 
 # This assumes that GNU utilities are *not* used
-# 32-bit PA-RISC HP-UX embeds the -L pathname of libs we link with. It's
-# possible to compensate for it with +cdp ../: and +cdp ./:, but we
-# don't have corresponding framework for linking apps. +cdp option
-# was introduced in HP-UX 11.x and applies in 32-bit PA-RISC link
-# editor context only [it's simply ignored in other cases, which are all
-# ELFs by the way].
-#
-# WARNING: Until DSO is fixed to support a search path, we support SHLIB_PATH
-#          by temporarily specifying "+s"!
 #
 do_hpux-shared:
 	for i in ${SHLIBDIRS}; do \
@@ -523,8 +514,7 @@ do_hpux-shared:
 	ALLSYMSFLAGS='-Wl,-Fl'; \
 	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
 	( set -x; ${CC} ${SHARED_LDFLAGS} \
-		-Wl,-B,symbolic,+vnocompatwarnings,-z,+s \
-		-Wl,+cdp,../:,+cdp,./:,+h,$$shlib \
+		-Wl,-B,symbolic,+vnocompatwarnings,-z,+h,$$shlib \
 		-o $$shlib $$ALLSYMSFLAGS lib$$i.a -ldld ) || exit 1; \
 	chmod a=rx $$shlib; \
 	done
