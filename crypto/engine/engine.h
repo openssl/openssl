@@ -341,7 +341,9 @@ void ENGINE_load_aep(void);
 void ENGINE_load_atalla(void);
 void ENGINE_load_chil(void);
 void ENGINE_load_cswift(void);
+#ifndef OPENSSL_NO_GMP
 void ENGINE_load_gmp(void);
+#endif
 void ENGINE_load_nuron(void);
 void ENGINE_load_sureware(void);
 void ENGINE_load_ubsec(void);

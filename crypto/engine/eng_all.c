@@ -102,7 +102,7 @@ void ENGINE_load_builtin_engines(void)
 #if defined(__OpenBSD__) || defined(__FreeBSD__)
 	ENGINE_load_cryptodev();
 #endif
-#if defined(OPENSSL_USE_GMP) && !defined(OPENSSL_NO_HW_GMP)
+#if !defined(OPENSSL_NO_GMP) && !defined(OPENSSL_NO_HW_GMP)
 	ENGINE_load_gmp();
 #endif
 #endif

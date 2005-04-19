@@ -582,6 +582,7 @@ my $zlib=1;      # but "no-zlib" is default
 my $no_krb5=0;   # but "no-krb5" is implied unless "--with-krb5-..." is used
 my $no_asm=0;
 my $no_dso=0;
+my $no_gmp=0;
 my @skip=();
 my $Makefile="Makefile";
 my $des_locl="crypto/des/des_locl.h";
@@ -611,6 +612,7 @@ my $perl;
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 my %disabled = ( # "what"         => "comment"
+		 "gmp"		  => "default",
                  "mdc2"           => "default",
                  "rc5"            => "default",
                  "shared"         => "default",
