@@ -98,7 +98,7 @@ sub check_hashes
 		while (<IN>)
 			{
 			chomp;
-			if (!(($file, $hash) = /^[\"]*HMAC-SHA1\((.*)\)\s*=\s*(\w*)[\",]*$/))
+			if (!(($file, $hash) = /^\"HMAC-SHA1\((.*)\)\s*=\s*(\w*)\",$/))
 				{
 				/^\"/ || next;
 				print STDERR "FATAL: Invalid syntax in file $fp\n";
