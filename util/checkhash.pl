@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/env perl -w
 
 my $package = caller;
 
@@ -22,7 +22,7 @@ sub check_hashes
 	my $badfiles = 0;
 	my $rebuild = 0;
 	my $force_rewrite = 0;
-	my $hash_file = "fipshashes.sha1";
+	my $hash_file = "fipshashes.c";
 	my $recurse = 0;
 
 	my @fingerprint_files;
@@ -98,8 +98,9 @@ sub check_hashes
 		while (<IN>)
 			{
 			chomp;
-			if (!(($file, $hash) = /^HMAC-SHA1\((.*)\)\s*=\s*(\w*)$/))
+			if (!(($file, $hash) = /^[\"]*HMAC-SHA1\((.*)\)\s*=\s*(\w*)[\",]*$/))
 				{
+				/^\"/ || next;
 				print STDERR "FATAL: Invalid syntax in file $fp\n";
 				print STDERR "Line:\n$_\n";
 				fatal_error();
@@ -194,10 +195,12 @@ sub check_hashes
 			print STDERR "Error rewriting $hash_file";
 			return 1;
 			}
+		print OUT "const char * const FIPS_source_hashes[] = {\n";
 		foreach (@hashed_files)
 			{
-			print OUT "HMAC-SHA1($_)= $hashes{$_}\n";
+			print OUT "\"HMAC-SHA1($_)= $hashes{$_}\",\n";
 			}
+		print OUT "};\n";
 		close OUT;
 		}
 
