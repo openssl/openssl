@@ -848,6 +848,9 @@ sub do_defs
 				/(\w+(\{[0-9]+\})?)\W*\(\)/s;
 				$s = $1;
 				print STDERR "DEBUG: found function $s\n" if $debug;
+
+			} elsif (/TYPEDEF_\w+_OF/) {
+				next;
 			} elsif (/\(/ and not (/=/)) {
 				print STDERR "File $file: cannot parse: $_;\n";
 				next;
