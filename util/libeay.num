@@ -2891,7 +2891,7 @@ BN_GF2m_mod_exp_arr                     3324	EXIST::FUNCTION:
 STORE_ATTR_INFO_modify_number           3325	EXIST::FUNCTION:
 X509_keyid_get0                         3326	EXIST::FUNCTION:
 EC_GROUP_new_by_nid                     3327	EXIST::FUNCTION:EC
-ENGINE_load_gmp                         3328	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ENGINE_load_gmp                         3328	EXIST::FUNCTION:ENGINE,GMP,STATIC_ENGINE
 BN_GF2m_mod_mul_arr                     3329	EXIST::FUNCTION:
 STORE_list_public_key_endp              3330	EXIST::FUNCTION:
 o2i_ECPublicKey                         3331	EXIST::FUNCTION:EC
@@ -3300,3 +3300,4 @@ BIO_dump_cb                             3699	EXIST::FUNCTION:
 SHA256_Update                           3700	EXIST::FUNCTION:SHA,SHA256
 BN_GF2m_mod_inv_arr                     3701	EXIST::FUNCTION:
 ENGINE_unregister_ECDSA                 3702	EXIST::FUNCTION:ENGINE
+OPENSSL_ia32cap_loc                     3703	EXIST::FUNCTION:
