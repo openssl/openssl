@@ -126,7 +126,14 @@ err:\
 		(c.eos=ASN1_const_check_infinite_end(&c.p,c.slen)))
 
 /* Don't use this with d2i_ASN1_BOOLEAN() */
-#define M_ASN1_D2I_get(type,b,func) \
+#define M_ASN1_D2I_get(b, func) \
+	c.q=c.p; \
+	if (func(&(b),&c.p,c.slen) == NULL) \
+		{c.line=__LINE__; goto err; } \
+	c.slen-=(c.p-c.q);
+
+/* Don't use this with d2i_ASN1_BOOLEAN() */
+#define M_ASN1_D2I_get_x(type,b,func) \
 	c.q=c.p; \
 	if (((D2I_OF(type))func)(&(b),&c.p,c.slen) == NULL) \
 		{c.line=__LINE__; goto err; } \
