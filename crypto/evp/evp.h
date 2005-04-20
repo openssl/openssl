@@ -277,8 +277,8 @@ typedef int evp_verify_method(int type,const unsigned char *m,
 				(evp_verify_method *)RSA_verify, \
 				{EVP_PKEY_RSA,EVP_PKEY_RSA2,0,0}
 #define EVP_PKEY_RSA_ASN1_OCTET_STRING_method \
-				RSA_sign_ASN1_OCTET_STRING, \
-				RSA_verify_ASN1_OCTET_STRING, \
+				(evp_sign_method *)RSA_sign_ASN1_OCTET_STRING, \
+				(evp_verify_method *)RSA_verify_ASN1_OCTET_STRING, \
 				{EVP_PKEY_RSA,EVP_PKEY_RSA2,0,0}
 #else
 #define EVP_PKEY_RSA_method	EVP_PKEY_NULL_method
