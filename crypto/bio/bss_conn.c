@@ -590,9 +590,9 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 		break;
 	case BIO_CTRL_GET_CALLBACK:
 		{
-		int (**fptr)(const BIO *bio,int state,int ret);
+		int (**fptr)(const BIO *bio,int state,int xret);
 
-		fptr=(int (**)(const BIO *bio,int state,int ret))ptr;
+		fptr=(int (**)(const BIO *bio,int state,int xret))ptr;
 		*fptr=data->info_callback;
 		}
 		break;
