@@ -194,14 +194,14 @@ STACK_OF(type) \
 	sk_is_sorted(st)
 
 #define	SKM_ASN1_SET_OF_d2i(type, st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
-	d2i_ASN1_SET(st,pp,length, (char *(*)(void ** ,const unsigned char ** ,long))d2i_func, (void (*)(void *))free_func, ex_tag,ex_class)
+	d2i_ASN1_SET(st,pp,length, (void *(*)(void ** ,const unsigned char ** ,long))d2i_func, (void (*)(void *))free_func, ex_tag,ex_class)
 #define	SKM_ASN1_SET_OF_i2d(type, st, pp, i2d_func, ex_tag, ex_class, is_set) \
 	i2d_ASN1_SET(st,pp,i2d_func,ex_tag,ex_class,is_set)
 
 #define	SKM_ASN1_seq_pack(type, st, i2d_func, buf, len) \
 	ASN1_seq_pack(st, i2d_func, buf, len)
 #define	SKM_ASN1_seq_unpack(type, buf, len, d2i_func, free_func) \
-	ASN1_seq_unpack(buf,len,(char *(*)(void **,const unsigned char **,long))d2i_func, (void(*)(void *))free_func)
+	ASN1_seq_unpack(buf,len,(void *(*)(void **,const unsigned char **,long))d2i_func, (void(*)(void *))free_func)
 
 #define SKM_PKCS12_decrypt_d2i(type, algor, d2i_func, free_func, pass, passlen, oct, seq) \
 	((STACK *)PKCS12_decrypt_d2i(algor,(char *(*)())d2i_func, (void(*)(void *))free_func,pass,passlen,oct,seq))
