@@ -262,6 +262,63 @@ $link="$bin_dir$link" if ($link !~ /^\$/);
 
 $INSTALLTOP =~ s|/|$o|g;
 
+#############################################
+# We parse in input file and 'store' info for later printing.
+open(IN,"<$infile") || die "unable to open $infile:$!\n";
+$_=<IN>;
+for (;;)
+	{
+	chop;
+
+	($key,$val)=/^([^=]+)=(.*)/;
+	if ($key eq "RELATIVE_DIRECTORY")
+		{
+		if ($lib ne "")
+			{
+			$uc=$lib;
+			$uc =~ s/^lib(.*)\.a/$1/;
+			$uc =~ tr/a-z/A-Z/;
+			$lib_nam{$uc}=$uc;
+			$lib_obj{$uc}.=$libobj." ";
+			}
+		last if ($val eq "FINISHED");
+		$lib="";
+		$libobj="";
+		$dir=$val;
+		}
+
+	if ($key eq "KRB5_INCLUDES")
+		{ $cflags .= " $val";}
+
+	if ($key eq "LIBKRB5")
+		{ $ex_libs .= " $val";}
+
+	if ($key eq "TEST")
+		{ $test.=&var_add($dir,$val); }
+
+	if (($key eq "PROGS") || ($key eq "E_OBJ"))
+		{ $e_exe.=&var_add($dir,$val); }
+
+	if ($key eq "LIB")
+		{
+		$lib=$val;
+		$lib =~ s/^.*\/([^\/]+)$/$1/;
+		}
+
+	if ($key eq "EXHEADER")
+		{ $exheader.=&var_add($dir,$val); }
+
+	if ($key eq "HEADER")
+		{ $header.=&var_add($dir,$val); }
+
+	if ($key eq "LIBOBJ")
+		{ $libobj=&var_add($dir,$val); }
+
+	if (!($_=<IN>))
+		{ $_="RELATIVE_DIRECTORY=FINISHED\n"; }
+	}
+close(IN);
+
 $defs= <<"EOF";
 # This makefile has been automatically generated from the OpenSSL distribution.
 # This single makefile will build the complete OpenSSL distribution and
@@ -478,57 +535,6 @@ EOF
 printf OUT "  #define DATE \"%s\"\n", scalar gmtime();
 printf OUT "#endif\n";
 close(OUT);
-
-#############################################
-# We parse in input file and 'store' info for later printing.
-open(IN,"<$infile") || die "unable to open $infile:$!\n";
-$_=<IN>;
-for (;;)
-	{
-	chop;
-
-	($key,$val)=/^([^=]+)=(.*)/;
-	if ($key eq "RELATIVE_DIRECTORY")
-		{
-		if ($lib ne "")
-			{
-			$uc=$lib;
-			$uc =~ s/^lib(.*)\.a/$1/;
-			$uc =~ tr/a-z/A-Z/;
-			$lib_nam{$uc}=$uc;
-			$lib_obj{$uc}.=$libobj." ";
-			}
-		last if ($val eq "FINISHED");
-		$lib="";
-		$libobj="";
-		$dir=$val;
-		}
-
-	if ($key eq "TEST")
-		{ $test.=&var_add($dir,$val); }
-
-	if (($key eq "PROGS") || ($key eq "E_OBJ"))
-		{ $e_exe.=&var_add($dir,$val); }
-
-	if ($key eq "LIB")
-		{
-		$lib=$val;
-		$lib =~ s/^.*\/([^\/]+)$/$1/;
-		}
-
-	if ($key eq "EXHEADER")
-		{ $exheader.=&var_add($dir,$val); }
-
-	if ($key eq "HEADER")
-		{ $header.=&var_add($dir,$val); }
-
-	if ($key eq "LIBOBJ")
-		{ $libobj=&var_add($dir,$val); }
-
-	if (!($_=<IN>))
-		{ $_="RELATIVE_DIRECTORY=FINISHED\n"; }
-	}
-close(IN);
 
 # Strip of trailing ' '
 foreach (keys %lib_obj) { $lib_obj{$_}=&clean_up_ws($lib_obj{$_}); }
