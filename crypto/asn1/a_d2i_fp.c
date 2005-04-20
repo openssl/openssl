@@ -93,7 +93,7 @@ void *ASN1_d2i_bio(void *(*xnew)(void), d2i_of_void *d2i, BIO *in, void **x)
 	len = asn1_d2i_read_bio(in, &b);
 	if(len < 0) goto err;
 
-	p=b->data;
+	p=(unsigned char *)b->data;
 	ret=d2i(x,&p,len);
 err:
 	if (b != NULL) BUF_MEM_free(b);
