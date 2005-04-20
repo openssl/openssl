@@ -201,7 +201,7 @@ STACK_OF(type) \
 #define	SKM_ASN1_seq_pack(type, st, i2d_func, buf, len) \
 	ASN1_seq_pack(st, i2d_func, buf, len)
 #define	SKM_ASN1_seq_unpack(type, buf, len, d2i_func, free_func) \
-	ASN1_seq_unpack(buf,len,(char *(*)(void *,const unsigned char **,long))d2i_func, (void(*)(void *))free_func)
+	ASN1_seq_unpack(buf,len,(char *(*)(void **,const unsigned char **,long))d2i_func, (void(*)(void *))free_func)
 
 #define SKM_PKCS12_decrypt_d2i(type, algor, d2i_func, free_func, pass, passlen, oct, seq) \
 	((STACK *)PKCS12_decrypt_d2i(algor,(char *(*)())d2i_func, (void(*)(void *))free_func,pass,passlen,oct,seq))
