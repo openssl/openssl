@@ -1056,7 +1056,7 @@ else
 			}
 		}
 	$withargs{"krb5-lib"} .= " -lresolv"
-		if ("$lresolv" ne "");
+		if ("$lresolv" ne "" && !$IsWindows);
 	$withargs{"krb5-include"} = "-I".$withargs{"krb5-dir"}."/include"
 		if $withargs{"krb5-include"} eq "" &&
 		   $withargs{"krb5-dir"} ne "";
