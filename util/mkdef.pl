@@ -1011,7 +1011,7 @@ sub is_valid
 {
 	my ($keywords_txt,$platforms) = @_;
 	my (@keywords) = split /,/,$keywords_txt;
-	my ($falsesum, $truesum) = (0, !grep(/^[^!]/,@keywords));
+	my ($falsesum, $truesum) = (0, 1);
 
 	# Param: one keyword
 	sub recognise
@@ -1079,7 +1079,7 @@ sub is_valid
 		if ($k =~ /^!(.*)$/) {
 			$falsesum += &recognise($1,$platforms);
 		} else {
-			$truesum += &recognise($k,$platforms);
+			$truesum *= &recognise($k,$platforms);
 		}
 	}
 	print STDERR "DEBUG: [",$#keywords,",",$#keywords < 0,"] is_valid($keywords_txt) => (\!$falsesum) && $truesum = ",(!$falsesum) && $truesum,"\n" if $debug;
