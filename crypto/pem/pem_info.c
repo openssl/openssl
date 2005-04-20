@@ -127,7 +127,7 @@ start:
 		if (	(strcmp(name,PEM_STRING_X509) == 0) ||
 			(strcmp(name,PEM_STRING_X509_OLD) == 0))
 			{
-			(D2I_OF(X509))d2i=d2i_X509;
+			d2i=(D2I_OF(void))d2i_X509;
 			if (xi->x509 != NULL)
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
@@ -138,7 +138,7 @@ start:
 			}
 		else if ((strcmp(name,PEM_STRING_X509_TRUSTED) == 0))
 			{
-			(D2I_OF(X509))d2i=d2i_X509_AUX;
+			d2i=(D2I_OF(void))d2i_X509_AUX;
 			if (xi->x509 != NULL)
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
@@ -149,7 +149,7 @@ start:
 			}
 		else if (strcmp(name,PEM_STRING_X509_CRL) == 0)
 			{
-			(D2I_OF(X509_CRL))d2i=d2i_X509_CRL;
+			d2i=(D2I_OF(void))d2i_X509_CRL;
 			if (xi->crl != NULL)
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
@@ -162,7 +162,7 @@ start:
 #ifndef OPENSSL_NO_RSA
 			if (strcmp(name,PEM_STRING_RSA) == 0)
 			{
-			(D2I_OF(RSA))d2i=d2i_RSAPrivateKey;
+			d2i=(D2I_OF(void))d2i_RSAPrivateKey;
 			if (xi->x_pkey != NULL) 
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
@@ -186,7 +186,7 @@ start:
 #ifndef OPENSSL_NO_DSA
 			if (strcmp(name,PEM_STRING_DSA) == 0)
 			{
-			(D2I_OF(DSA))d2i=d2i_DSAPrivateKey;
+			d2i=(D2I_OF(void))d2i_DSAPrivateKey;
 			if (xi->x_pkey != NULL) 
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
@@ -210,7 +210,7 @@ start:
 #ifndef OPENSSL_NO_EC
  			if (strcmp(name,PEM_STRING_ECPRIVATEKEY) == 0)
  			{
- 				(D2I_OF(EC_KEY))d2i=d2i_ECPrivateKey;
+ 				d2i=(D2I_OF(void))d2i_ECPrivateKey;
  				if (xi->x_pkey != NULL) 
  				{
  					if (!sk_X509_INFO_push(ret,xi)) goto err;
