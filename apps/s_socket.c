@@ -291,7 +291,7 @@ int do_server(int port, int *ret, int (*cb)(char *hostname, int s, unsigned char
 			SHUTDOWN(accept_socket);
 			return(0);
 			}
-		i=(*cb)(name,sock, context);
+		i=(*cb)(name,sock, (unsigned char *)context);
 		if (name != NULL) OPENSSL_free(name);
 		SHUTDOWN2(sock);
 		if (i < 0)
