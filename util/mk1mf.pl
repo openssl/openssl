@@ -916,55 +916,92 @@ sub do_copy_rule
 
 sub read_options
 	{
-	if    (/^no-rc2$/)	{ $no_rc2=1; }
-	elsif (/^no-rc4$/)	{ $no_rc4=1; }
-	elsif (/^no-rc5$/)	{ $no_rc5=1; }
-	elsif (/^no-idea$/)	{ $no_idea=1; }
-	elsif (/^no-aes$/)	{ $no_aes=1; }
-	elsif (/^no-des$/)	{ $no_des=1; }
-	elsif (/^no-bf$/)	{ $no_bf=1; }
-	elsif (/^no-cast$/)	{ $no_cast=1; }
-	elsif (/^no-md2$/)  	{ $no_md2=1; }
-	elsif (/^no-md4$/)	{ $no_md4=1; }
-	elsif (/^no-md5$/)	{ $no_md5=1; }
-	elsif (/^no-sha$/)	{ $no_sha=1; }
-	elsif (/^no-sha1$/)	{ $no_sha1=1; }
-	elsif (/^no-ripemd$/)	{ $no_ripemd=1; }
-	elsif (/^no-mdc2$/)	{ $no_mdc2=1; }
-	elsif (/^no-patents$/)	{ $no_rc2=$no_rc4=$no_rc5=$no_idea=$no_rsa=1; }
-	elsif (/^no-rsa$/)	{ $no_rsa=1; }
-	elsif (/^no-dsa$/)	{ $no_dsa=1; }
-	elsif (/^no-dh$/)	{ $no_dh=1; }
-	elsif (/^no-hmac$/)	{ $no_hmac=1; }
-	elsif (/^no-aes$/)	{ $no_aes=1; }
-	elsif (/^no-asm$/)	{ $no_asm=1; }
-	elsif (/^nasm$/)	{ $nasm=1; }
-	elsif (/^nw-nasm$/)	{ $nw_nasm=1; }
-	elsif (/^nw-mwasm$/)	{ $nw_mwasm=1; }
-	elsif (/^gaswin$/)	{ $gaswin=1; }
-	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
-	elsif (/^no-ssl3$/)	{ $no_ssl3=1; }
-	elsif (/^no-err$/)	{ $no_err=1; }
-	elsif (/^no-sock$/)	{ $no_sock=1; }
-	elsif (/^no-krb5$/)	{ $no_krb5=1; }
-	elsif (/^no-ec$/)	{ $no_ec=1; }
-	elsif (/^no-ecdsa$/)	{ $no_ecdsa=1; }
-	elsif (/^no-ecdh$/)	{ $no_ecdh=1; }
-	elsif (/^no-engine$/)	{ $no_engine=1; }
-	elsif (/^no-hw$/)	{ $no_hw=1; }
+	# Many options are handled in a similar way. In particular
+	# no-xxx sets zero or more scalars to 1.
+	# Process these using a hash containing the option name and
+	# reference to the scalars to set.
 
-	elsif (/^just-ssl$/)	{ $no_rc2=$no_idea=$no_des=$no_bf=$no_cast=1;
-				  $no_md2=$no_sha=$no_mdc2=$no_dsa=$no_dh=1;
-				  $no_ssl2=$no_err=$no_ripemd=$no_rc5=1;
-				  $no_aes=1; }
+	my %valid_options = (
+		"no-rc2" => \$no_rc2,
+		"no-rc4" => \$no_rc4,
+		"no-rc5" => \$no_rc5,
+		"no-idea" => \$no_idea,
+		"no-aes" => \$no_aes,
+		"no-des" => \$no_des,
+		"no-bf" => \$no_bf,
+		"no-cast" => \$no_cast,
+		"no-md2" => \$no_md2,
+		"no-md4" => \$no_md4,
+		"no-md5" => \$no_md5,
+		"no-sha" => \$no_sha,
+		"no-sha1" => \$no_sha1,
+		"no-ripemd" => \$no_ripemd,
+		"no-mdc2" => \$no_mdc2,
+		"no-patents" => 
+			[\$no_rc2, \$no_rc4, \$no_rc5, \$no_idea, \$no_rsa],
+		"no-rsa" => \$no_rsa,
+		"no-dsa" => \$no_dsa,
+		"no-dh" => \$no_dh,
+		"no-hmac" => \$no_hmac,
+		"no-aes" => \$no_aes,
+		"no-asm" => \$no_asm,
+		"nasm" => \$nasm,
+		"nw-nasm" => \$nw_nasm,
+		"nw-mwasm" => \$nw_mwasm,
+		"gaswin" => \$gaswin,
+		"no-ssl2" => \$no_ssl2,
+		"no-ssl3" => \$no_ssl3,
+		"no-err" => \$no_err,
+		"no-sock" => \$no_sock,
+		"no-krb5" => \$no_krb5,
+		"no-ec" => \$no_ec,
+		"no-ecdsa" => \$no_ecdsa,
+		"no-ecdh" => \$no_ecdh,
+		"no-engine" => \$no_engine,
+		"no-hw" => \$no_hw,
+		"just-ssl" =>
+			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
+			  \$no_md2, \$no_sha, \$no_mdc2, \$no_dsa, \$no_dh,
+			  \$no_ssl2, \$no_err, \$no_ripemd, \$no_rc5,
+			  \$no_aes],
+		"rsaref" => 0,
+		"gcc" => \$gcc,
+		"debug" => \$debug,
+		"profile" => \$profile,
+		"shlib" => \$shlib,
+		"dll" => \$dll,
+		"shared" => 0,
+		"no-gmp" => 0,
+		"no-shared" => 0,
+		"no-zlib" => 0,
+		"no-zlib-dynamic" => 0,
+		);
 
-	elsif (/^rsaref$/)	{ }
-	elsif (/^gcc$/)		{ $gcc=1; }
-	elsif (/^debug$/)	{ $debug=1; }
-	elsif (/^profile$/)	{ $profile=1; }
-	elsif (/^shlib$/)	{ $shlib=1; }
-	elsif (/^dll$/)		{ $shlib=1; }
-	elsif (/^shared$/)	{ } # We just need to ignore it for now...
+	if (exists $valid_options{$_})
+		{
+		my $r = $valid_options{$_};
+		if ( ref $r eq "SCALAR")
+			{ $$r = 1;}
+		elsif ( ref $r eq "ARRAY")
+			{
+			my $r2;
+			foreach $r2 (@$r)
+				{
+				$$r2 = 1;
+				}
+			}
+		}
+	# There are also enable-xxx options which correspond to
+	# the no-xxx. Since the scalars are enabled by default
+	# these can be ignored.
+	elsif (/^enable-/)
+		{
+		my $t = $_;
+		$t =~ s/^enable/no/;
+		if (exists $valid_options{$t})
+			{return 1;}
+		return 0;
+		}
 	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }
 	elsif (/^-[lL].*$/)	{ $l_flags.="$_ "; }
 	elsif ((!/^-help/) && (!/^-h/) && (!/^-\?/) && /^-.*$/)
