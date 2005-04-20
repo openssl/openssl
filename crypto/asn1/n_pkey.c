@@ -197,7 +197,7 @@ int i2d_RSA_NET(const RSA *a, unsigned char **pp,
 		
 	if (cb == NULL)
 		cb=EVP_read_pw_string;
-	i=cb(buf,256,"Enter Private Key password:",1);
+	i=cb((char *)buf,256,"Enter Private Key password:",1);
 	if (i != 0)
 		{
 		ASN1err(ASN1_F_I2D_NETSCAPE_RSA,ASN1_R_BAD_PASSWORD_READ);
@@ -290,7 +290,7 @@ static RSA *d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
 	unsigned char key[EVP_MAX_KEY_LENGTH];
 	EVP_CIPHER_CTX ctx;
 
-	i=cb(buf,256,"Enter Private Key password:",0);
+	i=cb((char *)buf,256,"Enter Private Key password:",0);
 	if (i != 0)
 		{
 		ASN1err(ASN1_F_D2I_NETSCAPE_RSA_2,ASN1_R_BAD_PASSWORD_READ);
