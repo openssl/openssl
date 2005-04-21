@@ -975,7 +975,7 @@ sub read_options
 		"debug" => \$debug,
 		"profile" => \$profile,
 		"shlib" => \$shlib,
-		"dll" => \$dll,
+		"dll" => \$shlib,
 		"shared" => 0,
 		"no-gmp" => 0,
 		"no-shared" => 0,
