@@ -569,6 +569,8 @@ void OPENSSL_cpuid_setup(void)
 }
 #endif
 
+#else
+unsigned long *OPENSSL_ia32cap_loc(void) { return NULL; }
 #endif
 #if !defined(OPENSSL_CPUID_SETUP)
 void OPENSSL_cpuid_setup(void) {}
