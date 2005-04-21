@@ -1028,7 +1028,7 @@ else
 			if $withargs{"krb5-dir"} eq "";
 		$withargs{"krb5-lib"} = "-L".$withargs{"krb5-dir"}.
 			"/lib -lgssapi -lkrb5 -lcom_err"
-			if $withargs{"krb5-lib"} eq "";
+			if $withargs{"krb5-lib"} eq "" && !$IsWindows;
 		$cflags="-DKRB5_HEIMDAL $cflags";
 		}
 	if ($withargs{"krb5-flavor"} =~ /^[Mm][Ii][Tt]/)
@@ -1037,7 +1037,7 @@ else
 			if $withargs{"krb5-dir"} eq "";
 		$withargs{"krb5-lib"} = "-L".$withargs{"krb5-dir"}.
 			"/lib -lgssapi_krb5 -lkrb5 -lcom_err -lk5crypto"
-			if $withargs{"krb5-lib"} eq "";
+			if $withargs{"krb5-lib"} eq "" && !$IsWindows;
 		$cflags="-DKRB5_MIT $cflags";
 		$withargs{"krb5-flavor"} =~ s/^[Mm][Ii][Tt][._-]*//;
 		if ($withargs{"krb5-flavor"} =~ /^1[._-]*[01]/)
