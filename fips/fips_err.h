@@ -108,11 +108,11 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 
 void ERR_load_FIPS_strings(void)
 	{
-	static int init=1;
+	static int init;
 
-	if (init)
+	if (!init)
 		{
-		init=0;
+		init=1;
 #ifndef OPENSSL_NO_ERR
 		ERR_load_strings(0,FIPS_str_functs);
 		ERR_load_strings(0,FIPS_str_reasons);

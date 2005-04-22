@@ -63,9 +63,9 @@
 #define PATH_MAX 1024
 #endif
 
-static int fips_selftest_fail = 0;
-static int fips_mode = 0;
-static const void *fips_rand_check = 0;
+static int fips_selftest_fail;
+static int fips_mode;
+static const void *fips_rand_check;
 
 static void fips_set_mode(int onoff)
 	{
