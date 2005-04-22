@@ -4,6 +4,11 @@
 
  Changes between 0.9.7g and 0.9.7h  [XX xxx XXXX]
 
+  *) New function BN_MONT_CTX_set_locked() to set montgomery parameters in
+     a threadsafe manner. Modify rsa code to use new function and add calls
+     to dsa and dh code (which had race conditions before).
+     [Steve Henson]
+
   *) Include the fixed error library code in the C error file definitions
      instead of fixing them up at runtime. This keeps the error code
      structures constant.

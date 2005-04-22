@@ -347,3 +347,23 @@ BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
 	return(to);
 	}
 
+BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock,
+					const BIGNUM *mod, BN_CTX *ctx)
+	{
+	if (*pmont)
+		return *pmont;
+	CRYPTO_w_lock(lock);
+	if (!*pmont)
+		{
+		*pmont = BN_MONT_CTX_new();
+		if (*pmont && !BN_MONT_CTX_set(*pmont, mod, ctx))
+			{
+			BN_MONT_CTX_free(*pmont);
+			*pmont = NULL;
+			}
+		}
+	CRYPTO_w_unlock(lock);
+	return *pmont;
+	}
+		
+
