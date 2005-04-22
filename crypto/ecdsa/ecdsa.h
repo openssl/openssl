@@ -92,7 +92,7 @@ struct ecdsa_method
 	int (*ecdsa_sign_setup)(EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinv, 
 			BIGNUM **r);
 	int (*ecdsa_do_verify)(const unsigned char *dgst, int dgst_len, 
-			ECDSA_SIG *sig, EC_KEY *eckey);
+			const ECDSA_SIG *sig, EC_KEY *eckey);
 #if 0
 	int (*init)(EC_KEY *eckey);
 	int (*finish)(EC_KEY *eckey);
@@ -191,8 +191,8 @@ ECDSA_SIG *ECDSA_do_sign(const unsigned char *dgst,int dgst_len,EC_KEY *eckey);
  * \param eckey pointer to the EC_KEY object containing a public EC key
  * \return 1 if the signature is valid, 0 if the signature is invalid and -1 on error
  */
-int	  ECDSA_do_verify(const unsigned char *dgst, int dgst_len, ECDSA_SIG 
-		*sig, EC_KEY* eckey);
+int	  ECDSA_do_verify(const unsigned char *dgst, int dgst_len,
+		const ECDSA_SIG *sig, EC_KEY* eckey);
 
 const ECDSA_METHOD *ECDSA_OpenSSL(void);
 

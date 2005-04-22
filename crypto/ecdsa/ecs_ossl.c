@@ -66,7 +66,7 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dlen,
 static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, 
 		BIGNUM **rp);
 static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len, 
-		ECDSA_SIG *sig, EC_KEY *eckey);
+		const ECDSA_SIG *sig, EC_KEY *eckey);
 
 static ECDSA_METHOD openssl_ecdsa_meth = {
 	"OpenSSL ECDSA method",
@@ -320,7 +320,7 @@ err:
 }
 
 static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
-		ECDSA_SIG *sig, EC_KEY *eckey)
+		const ECDSA_SIG *sig, EC_KEY *eckey)
 {
 	int ret = -1;
 	BN_CTX   *ctx;
