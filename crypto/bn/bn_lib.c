@@ -827,6 +827,14 @@ int BN_mask_bits(BIGNUM *a, int n)
 	return(1);
 	}
 
+void BN_set_negative(BIGNUM *a, int b)
+	{
+	if (b && !BN_is_zero(a))
+		a->neg = 1;
+	else
+		a->neg = 0;
+	}
+
 int bn_cmp_words(const BN_ULONG *a, const BN_ULONG *b, int n)
 	{
 	int i;

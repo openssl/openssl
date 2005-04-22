@@ -552,7 +552,7 @@ static int print(BIO *bp, const char *number, BIGNUM *num, unsigned char *buf,
 	const char *neg;
 
 	if (num == NULL) return(1);
-	neg = (BN_get_sign(num))?"-":"";
+	neg = (BN_is_negative(num))?"-":"";
 	if(!BIO_indent(bp,off,128))
 		return 0;
 	if (BN_is_zero(num))

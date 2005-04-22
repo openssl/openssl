@@ -416,7 +416,7 @@ ASN1_INTEGER *BN_to_ASN1_INTEGER(BIGNUM *bn, ASN1_INTEGER *ai)
 		ASN1err(ASN1_F_BN_TO_ASN1_INTEGER,ERR_R_NESTED_ASN1_ERROR);
 		goto err;
 		}
-	if (BN_get_sign(bn))
+	if (BN_is_negative(bn))
 		ret->type = V_ASN1_NEG_INTEGER;
 	else ret->type=V_ASN1_INTEGER;
 	j=BN_num_bits(bn);
@@ -451,7 +451,7 @@ BIGNUM *ASN1_INTEGER_to_BN(ASN1_INTEGER *ai, BIGNUM *bn)
 	if ((ret=BN_bin2bn(ai->data,ai->length,bn)) == NULL)
 		ASN1err(ASN1_F_ASN1_INTEGER_TO_BN,ASN1_R_BN_LIB);
 	else if(ai->type == V_ASN1_NEG_INTEGER)
-		BN_set_sign(ret, 1);
+		BN_set_negative(ret, 1);
 	return(ret);
 	}
 

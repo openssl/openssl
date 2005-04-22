@@ -296,8 +296,8 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 		}
 
 	/* GF(2^m) field elements should always have BIGNUM::neg = 0 */
-	BN_set_sign(&r->X, 0);
-	BN_set_sign(&r->Y, 0);
+	BN_set_negative(&r->X, 0);
+	BN_set_negative(&r->Y, 0);
 
 	ret = 1;
 
@@ -343,7 +343,7 @@ int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	if (scalar)
 		{
 		if (!ec_GF2m_montgomery_point_multiply(group, p, scalar, group->generator, ctx)) goto err;
-		if (BN_get_sign(scalar)) 
+		if (BN_is_negative(scalar)) 
 			if (!group->meth->invert(group, p, ctx)) goto err;
 		if (!group->meth->add(group, r, r, p, ctx)) goto err;
 		}
@@ -351,7 +351,7 @@ int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	for (i = 0; i < num; i++)
 		{
 		if (!ec_GF2m_montgomery_point_multiply(group, p, scalars[i], points[i], ctx)) goto err;
-		if (BN_get_sign(scalars[i]))
+		if (BN_is_negative(scalars[i]))
 			if (!group->meth->invert(group, p, ctx)) goto err;
 		if (!group->meth->add(group, r, r, p, ctx)) goto err;
 		}

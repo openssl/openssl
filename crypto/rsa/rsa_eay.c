@@ -622,7 +622,7 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	if (!BN_sub(r0,r0,m1)) goto err;
 	/* This will help stop the size of r0 increasing, which does
 	 * affect the multiply if it optimised for a power of 2 size */
-	if (BN_get_sign(r0))
+	if (BN_is_negative(r0))
 		if (!BN_add(r0,r0,rsa->p)) goto err;
 
 	if (!BN_mul(r1,r0,rsa->iqmp,ctx)) goto err;
@@ -634,7 +634,7 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	 * This will *never* happen with OpenSSL generated keys because
          * they ensure p > q [steve]
          */
-	if (BN_get_sign(r0))
+	if (BN_is_negative(r0))
 		if (!BN_add(r0,r0,rsa->p)) goto err;
 	if (!BN_mul(r1,r0,rsa->q,ctx)) goto err;
 	if (!BN_add(r0,r1,m1)) goto err;
@@ -648,7 +648,7 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 		 * for absolute equality, just congruency. */
 		if (!BN_sub(vrfy, vrfy, I)) goto err;
 		if (!BN_mod(vrfy, vrfy, rsa->n, ctx)) goto err;
-		if (BN_get_sign(vrfy))
+		if (BN_is_negative(vrfy))
 			if (!BN_add(vrfy, vrfy, rsa->n)) goto err;
 		if (!BN_is_zero(vrfy))
 			/* 'I' and 'vrfy' aren't congruent mod n. Don't leak

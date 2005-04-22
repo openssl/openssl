@@ -203,7 +203,7 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 	next_bit = bit << 1; /* at most 256 */
 	mask = next_bit - 1; /* at most 255 */
 
-	if (BN_get_sign(scalar))
+	if (BN_is_negative(scalar))
 		{
 		sign = -1;
 		}

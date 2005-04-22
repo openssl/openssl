@@ -134,7 +134,7 @@ char *BN_bn2dec(const BIGNUM *a)
 		}
 	else
 		{
-		if (BN_get_sign(t))
+		if (BN_is_negative(t))
 			*p++ = '-';
 
 		i=0;

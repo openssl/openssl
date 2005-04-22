@@ -462,14 +462,13 @@
      Makefile.shared, for Cygwin's sake.
      [Richard Levitte]
 
-  *) Extend the BIGNUM API by creating new macros that behave like
-     functions
+  *) Extend the BIGNUM API by creating a function 
+          void BN_set_negative(BIGNUM *a, int neg);
+     and a macro that behave like
+          int  BN_is_negative(const BIGNUM *a);
 
-          void BN_set_sign(BIGNUM *a, int neg);
-          int BN_get_sign(const BIGNUM *a);
-
-     and avoid the need to access 'a->neg' directly in applications.
-     [Nils Larsch  <nla@trustcenter.de>]
+     to avoid the need to access 'a->neg' directly in applications.
+     [Nils Larsch]
 
   *) Implement fast modular reduction for pseudo-Mersenne primes
      used in NIST curves (crypto/bn/bn_nist.c, crypto/ec/ecp_nist.c).

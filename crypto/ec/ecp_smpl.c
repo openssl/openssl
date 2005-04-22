@@ -192,7 +192,7 @@ int ec_GFp_simple_group_set_curve(EC_GROUP *group,
 
 	/* group->field */
 	if (!BN_copy(&group->field, p)) goto err;
-	BN_set_sign(&group->field, 0);
+	BN_set_negative(&group->field, 0);
 
 	/* group->a */
 	if (!BN_nnmod(tmp_a, a, p, ctx)) goto err;

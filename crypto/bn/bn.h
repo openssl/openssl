@@ -90,13 +90,9 @@ extern "C" {
  * BN_DEBUG - turn on various debugging alterations to the bignum code
  * BN_DEBUG_RAND - uses random poisoning of unused words to trip up
  * mismanagement of bignum internals. You must also define BN_DEBUG.
- * BN_STRICT - disables anything (not already caught by BN_DEBUG) that uses the
- * old ambiguity over zero representation. At some point, this behaviour should
- * become standard.
  */
 /* #define BN_DEBUG */
 /* #define BN_DEBUG_RAND */
-/* #define BN_STRICT */
 
 #ifdef OPENSSL_SYS_VMS
 #undef BN_LLONG /* experimental, so far... */
@@ -366,11 +362,7 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 /* Note that BN_abs_is_word didn't work reliably for w == 0 until 0.9.8 */
 #define BN_abs_is_word(a,w) ((((a)->top == 1) && ((a)->d[0] == (BN_ULONG)(w))) || \
 				(((w) == 0) && ((a)->top == 0)))
-#ifdef BN_STRICT
 #define BN_is_zero(a)       ((a)->top == 0)
-#else
-#define BN_is_zero(a)       BN_abs_is_word(a,0)
-#endif
 #define BN_is_one(a)        (BN_abs_is_word((a),1) && !(a)->neg)
 #define BN_is_word(a,w)     (BN_abs_is_word((a),(w)) && (!(w) || !(a)->neg))
 #define BN_is_odd(a)	    (((a)->top > 0) && ((a)->d[0] & 1))
@@ -387,14 +379,6 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 #else
 #define BN_zero(a)	(BN_set_word((a),0))
 #endif
-/* BN_set_sign(BIGNUM *, int) sets the sign of a BIGNUM
- * (0 for a non-negative value, 1 for negative) */
-#define BN_set_sign(a,b) ((a)->neg = (b))
-/* BN_get_sign(BIGNUM *) returns the sign of the BIGNUM */
-#define BN_get_sign(a)   ((a)->neg)
-
-/*#define BN_ascii2bn(a)	BN_hex2bn(a) */
-/*#define BN_bn2ascii(a)	BN_bn2hex(a) */
 
 const BIGNUM *BN_value_one(void);
 char *	BN_options(void);
@@ -429,6 +413,10 @@ int	BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
 int	BN_sqr(BIGNUM *r, const BIGNUM *a,BN_CTX *ctx);
+/* BN_set_negative(): sets sign of a bignum */
+void	BN_set_negative(BIGNUM *b, int n);
+/* BN_get_negative():  returns 1 if the bignum is < 0 and 0 otherwise */
+#define BN_is_negative(a) ((a)->neg != 0)
 
 int	BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 	BN_CTX *ctx);

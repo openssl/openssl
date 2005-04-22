@@ -281,13 +281,13 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 
-	if (BN_is_zero(sig->r) || BN_get_sign(sig->r) ||
+	if (BN_is_zero(sig->r) || BN_is_negative(sig->r) ||
 	    BN_ucmp(sig->r, dsa->q) >= 0)
 		{
 		ret = 0;
 		goto err;
 		}
-	if (BN_is_zero(sig->s) || BN_get_sign(sig->s) ||
+	if (BN_is_zero(sig->s) || BN_is_negative(sig->s) ||
 	    BN_ucmp(sig->s, dsa->q) >= 0)
 		{
 		ret = 0;

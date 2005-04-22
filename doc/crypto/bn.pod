@@ -27,6 +27,9 @@ bn - multiprecision integer arithmetics
  int BN_num_bits(const BIGNUM *a);
  int BN_num_bits_word(BN_ULONG w);
 
+ void BN_set_negative(BIGNUM *a, int n);
+ int  BN_is_negative(const BIGNUM *a);
+
  int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
  int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
  int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
