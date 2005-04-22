@@ -3301,3 +3301,4 @@ SHA256_Update                           3700	EXIST::FUNCTION:SHA,SHA256
 BN_GF2m_mod_inv_arr                     3701	EXIST::FUNCTION:
 ENGINE_unregister_ECDSA                 3702	EXIST::FUNCTION:ENGINE
 OPENSSL_ia32cap_loc                     3703	EXIST::FUNCTION:
+BN_set_negative                         3704	EXIST::FUNCTION:
