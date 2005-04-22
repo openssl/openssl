@@ -6,7 +6,7 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 #
-# Version 3.2.
+# Version 3.3.
 #
 # You might fail to appreciate this module performance from the first
 # try. If compared to "vanilla" linux-ia32-icc target, i.e. considered
@@ -104,9 +104,9 @@ sub encvert()
   my $v0 = $acc, $v1 = $key;
 
 	&mov	($v0,$s[3]);				# copy s3
-	&mov	(&DWP(0,"esp"),$s[2]);			# save s2
+	&mov	(&DWP(4,"esp"),$s[2]);			# save s2
 	&mov	($v1,$s[0]);				# copy s0
-	&mov	(&DWP(4,"esp"),$s[1]);			# save s1
+	&mov	(&DWP(8,"esp"),$s[1]);			# save s1
 
 	&movz	($s[2],&HB($s[0]));
 	&and	($s[0],0xFF);
@@ -127,7 +127,7 @@ sub encvert()
 	&movz	($v0,&HB($v1));
 	&and	($v1,0xFF);
 	&xor	($s[1],&DWP(2,$te,$v1,8));		# s3>>16
-	 &mov	($v1,&DWP(0,"esp"));			# restore s2
+	 &mov	($v1,&DWP(4,"esp"));			# restore s2
 	&xor	($s[0],&DWP(1,$te,$v0,8));		# s3>>24
 
 	&mov	($v0,$v1);
@@ -139,7 +139,7 @@ sub encvert()
 	&movz	($v1,&HB($v0));
 	&and	($v0,0xFF);
 	&xor	($s[0],&DWP(2,$te,$v0,8));		# s2>>16
-	 &mov	($v0,&DWP(4,"esp"));			# restore s1
+	 &mov	($v0,&DWP(8,"esp"));			# restore s1
 	&xor	($s[3],&DWP(1,$te,$v1,8));		# s2>>24
 
 	&mov	($v1,$v0);
@@ -172,19 +172,19 @@ sub encstep()
 			&movz	($tmp,&HB($s[1]));
 			&xor	($out,&DWP(3,$te,$tmp,8));
 
-	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],&DWP(0,"esp"));	}##%ebx
+	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],&DWP(4,"esp"));	}##%ebx
 	else        {	&mov	($tmp,$s[2]);
 			&shr	($tmp,16);			}
 	if ($i==2)  {	&and	($s[1],0xFF);			}#%edx[2]
 			&and	($tmp,0xFF);
 			&xor	($out,&DWP(2,$te,$tmp,8));
 
-	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(4,"esp"));	}##%ecx
+	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}##%ecx
 	elsif($i==2){	&movz	($tmp,&HB($s[3]));		}#%ebx[2]
 	else        {	&mov	($tmp,$s[3]); 
 			&shr	($tmp,24)			}
 			&xor	($out,&DWP(1,$te,$tmp,8));
-	if ($i<2)   {	&mov	(&DWP(4*$i,"esp"),$out);	}
+	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
 	if ($i==3)  {	&mov	($s[3],$acc);			}
 			&comment();
 }
@@ -208,7 +208,7 @@ sub enclast()
 			&and	($tmp,0x0000ff00);
 			&xor	($out,$tmp);
 
-	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],&DWP(0,"esp"));	}##%ebx
+	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],&DWP(4,"esp"));	}##%ebx
 	else        {	mov	($tmp,$s[2]);
 			&shr	($tmp,16);			}
 	if ($i==2)  {	&and	($s[1],0xFF);			}#%edx[2]
@@ -217,14 +217,14 @@ sub enclast()
 			&and	($tmp,0x00ff0000);
 			&xor	($out,$tmp);
 
-	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(4,"esp"));	}##%ecx
+	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}##%ecx
 	elsif($i==2){	&movz	($tmp,&HB($s[3]));		}#%ebx[2]
 	else        {	&mov	($tmp,$s[3]);
 			&shr	($tmp,24);			}
 			&mov	($tmp,&DWP(2,$te,$tmp,8));
 			&and	($tmp,0xff000000);
 			&xor	($out,$tmp);
-	if ($i<2)   {	&mov	(&DWP(4*$i,"esp"),$out);	}
+	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
 	if ($i==3)  {	&mov	($s[3],$acc);			}
 }
 
@@ -238,13 +238,8 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 		&mov	($s2="esi",$acc="ecx");
 	}
 
-	# allocate aligned stack frame
-	&mov	($acc,"esp");
-	&sub	("esp",20);
-	&and	("esp",-16);
-
+	# note that caller is expected to allocate stack frame for me!
 	&mov	(&DWP(12,"esp"),$key);		# save key
-	&mov	(&DWP(16,"esp"),$acc);		# save %esp
 
 	&xor	($s0,&DWP(0,$key));		# xor with key
 	&xor	($s1,&DWP(4,$key));
@@ -256,7 +251,7 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 	if ($small_footprint) {
 	    &lea	($acc,&DWP(-2,$acc,$acc));
 	    &lea	($acc,&DWP(0,$key,$acc,8));
-	    &mov	(&DWP(8,"esp"),$acc);	# end of key schedule
+	    &mov	(&DWP(16,"esp"),$acc);	# end of key schedule
 	    &align	(4);
 	    &set_label("loop");
 		if ($vertical_spin) {
@@ -267,12 +262,12 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 		    &encstep(2,"ebp",$s2,$s3,$s0,$s1);
 		    &encstep(3,"ebp",$s3,$s0,$s1,$s2);
 		}
-		&add	($key,16);			# advance rd_key
+		&add	($key,16);		# advance rd_key
 		&xor	($s0,&DWP(0,$key));
 		&xor	($s1,&DWP(4,$key));
 		&xor	($s2,&DWP(8,$key));
 		&xor	($s3,&DWP(12,$key));
-	    &cmp	($key,&DWP(8,"esp"));
+	    &cmp	($key,&DWP(16,"esp"));
 	    &mov	(&DWP(12,"esp"),$key);
 	    &jb		(&label("loop"));
 	}
@@ -298,7 +293,7 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 		&xor	($s3,&DWP(16*$i+12,$key));
 	    }
 	    &add	($key,32);
-	    &mov	(&DWP(12,"esp"),$key);		# advance rd_key
+	    &mov	(&DWP(12,"esp"),$key);	# advance rd_key
 	&set_label("12rounds");
 	    for ($i=1;$i<3;$i++) {
 		if ($vertical_spin) {
@@ -315,7 +310,7 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 		&xor	($s3,&DWP(16*$i+12,$key));
 	    }
 	    &add	($key,32);
-	    &mov	(&DWP(12,"esp"),$key);		# advance rd_key
+	    &mov	(&DWP(12,"esp"),$key);	# advance rd_key
 	&set_label("10rounds");
 	    for ($i=1;$i<10;$i++) {
 		if ($vertical_spin) {
@@ -343,7 +338,6 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 	&enclast(2,"ebp",$s2,$s3,$s0,$s1);
 	&enclast(3,"ebp",$s3,$s0,$s1,$s2);
 
-	&mov	("esp",&DWP(16,"esp"));		# restore %esp
 	&add	($key,$small_footprint?16:160);
 	&xor	($s0,&DWP(0,$key));
 	&xor	($s1,&DWP(4,$key));
@@ -429,6 +423,12 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 	&mov	($acc,&wparam(0));		# load inp
 	&mov	($key,&wparam(2));		# load key
 
+	&mov	($s0,"esp");
+	&sub	("esp",24);
+	&and	("esp",-64);
+	&add	("esp",4);
+	&mov	(&DWP(16,"esp"),$s0);
+
 	&call   (&label("pic_point"));          # make it PIC!
 	&set_label("pic_point");
 	&blindpop("ebp");
@@ -440,6 +440,8 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 	&mov	($s3,&DWP(12,$acc));
 
 	&call	("_x86_AES_encrypt");
+
+	&mov	("esp",&DWP(16,"esp"));
 
 	&mov	($acc,&wparam(1));		# load out
 	&mov	(&DWP(0,$acc),$s0);		# write output data
@@ -474,12 +476,12 @@ sub decstep()
 			&and	($tmp,0xFF);
 			&xor	($out,&DWP(2,$td,$tmp,8));
 
-	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(4,"esp"));	}
+	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}
 	else        {	&mov	($tmp,$s[3]);			}
 			&shr	($tmp,24);
 			&xor	($out,&DWP(1,$td,$tmp,8));
-	if ($i<2)   {	&mov	(&DWP(4*$i,"esp"),$out);	}
-	if ($i==3)  {	&mov	($s[3],&DWP(0,"esp"));		}
+	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
+	if ($i==3)  {	&mov	($s[3],&DWP(4,"esp"));		}
 			&comment();
 }
 
@@ -508,25 +510,20 @@ sub declast()
 			&and	($tmp,0x00ff0000);
 			&xor	($out,$tmp);
 
-	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(4,"esp"));	}
+	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}
 	else        {	&mov	($tmp,$s[3]);			}
 			&shr	($tmp,24);
 			&mov	($tmp,&DWP(2048,$td,$tmp,4));
 			&and	($tmp,0xff000000);
 			&xor	($out,$tmp);
-	if ($i<2)   {	&mov	(&DWP(4*$i,"esp"),$out);	}
-	if ($i==3)  {	&mov	($s[3],&DWP(0,"esp"));		}
+	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
+	if ($i==3)  {	&mov	($s[3],&DWP(4,"esp"));		}
 }
 
 &public_label("AES_Td");
 &function_begin_B("_x86_AES_decrypt");
-	# allocate aligned stack frame
-	&mov	($acc,"esp");
-	&sub	("esp",20);
-	&and	("esp",-16);
-
+	# note that caller is expected to allocate stack frame for me!
 	&mov	(&DWP(12,"esp"),$key);		# save key
-	&mov	(&DWP(16,"esp"),$acc);		# save %esp
 
 	&xor	($s0,&DWP(0,$key));		# xor with key
 	&xor	($s1,&DWP(4,$key));
@@ -538,19 +535,19 @@ sub declast()
 	if ($small_footprint) {
 	    &lea	($acc,&DWP(-2,$acc,$acc));
 	    &lea	($acc,&DWP(0,$key,$acc,8));
-	    &mov	(&DWP(8,"esp"),$acc);	# end of key schedule
+	    &mov	(&DWP(16,"esp"),$acc);	# end of key schedule
 	    &align	(4);
 	    &set_label("loop");
 		&decstep(0,"ebp",$s0,$s3,$s2,$s1);
 		&decstep(1,"ebp",$s1,$s0,$s3,$s2);
 		&decstep(2,"ebp",$s2,$s1,$s0,$s3);
 		&decstep(3,"ebp",$s3,$s2,$s1,$s0);
-		&add	($key,16);			# advance rd_key
+		&add	($key,16);		# advance rd_key
 		&xor	($s0,&DWP(0,$key));
 		&xor	($s1,&DWP(4,$key));
 		&xor	($s2,&DWP(8,$key));
 		&xor	($s3,&DWP(12,$key));
-	    &cmp	($key,&DWP(8,"esp"));
+	    &cmp	($key,&DWP(16,"esp"));
 	    &mov	(&DWP(12,"esp"),$key);
 	    &jb		(&label("loop"));
 	}
@@ -572,7 +569,7 @@ sub declast()
 		&xor	($s3,&DWP(16*$i+12,$key));
 	    }
 	    &add	($key,32);
-	    &mov	(&DWP(12,"esp"),$key);		# advance rd_key
+	    &mov	(&DWP(12,"esp"),$key);	# advance rd_key
 	&set_label("12rounds");
 	    for ($i=1;$i<3;$i++) {
 		&decstep(0,"ebp",$s0,$s3,$s2,$s1);
@@ -585,7 +582,7 @@ sub declast()
 		&xor	($s3,&DWP(16*$i+12,$key));
 	    }
 	    &add	($key,32);
-	    &mov	(&DWP(12,"esp"),$key);		# advance rd_key
+	    &mov	(&DWP(12,"esp"),$key);	# advance rd_key
 	&set_label("10rounds");
 	    for ($i=1;$i<10;$i++) {
 		&decstep(0,"ebp",$s0,$s3,$s2,$s1);
@@ -604,7 +601,6 @@ sub declast()
 	&declast(2,"ebp",$s2,$s1,$s0,$s3);
 	&declast(3,"ebp",$s3,$s2,$s1,$s0);
 
-	&mov	("esp",&DWP(16,"esp"));		# restore %esp
 	&add	($key,$small_footprint?16:160);
 	&xor	($s0,&DWP(0,$key));
 	&xor	($s1,&DWP(4,$key));
@@ -751,6 +747,12 @@ sub declast()
 	&mov	($acc,&wparam(0));		# load inp
 	&mov	($key,&wparam(2));		# load key
 
+	&mov	($s0,"esp");
+	&sub	("esp",24);
+	&and	("esp",-64);
+	&add	("esp",4);
+	&mov	(&DWP(16,"esp"),$s0);
+
 	&call   (&label("pic_point"));          # make it PIC!
 	&set_label("pic_point");
 	&blindpop("ebp");
@@ -763,6 +765,8 @@ sub declast()
 
 	&call	("_x86_AES_decrypt");
 
+	&mov	("esp",&DWP(16,"esp"));
+
 	&mov	($acc,&wparam(1));		# load out
 	&mov	(&DWP(0,$acc),$s0);		# write output data
 	&mov	(&DWP(4,$acc),$s1);
@@ -772,7 +776,23 @@ sub declast()
 
 # void AES_cbc_encrypt (const void char *inp, unsigned char *out,
 #			size_t length, const AES_KEY *key,
-#			unsigned char *ivp,const int enc); 
+#			unsigned char *ivp,const int enc);
+{
+# stack frame layout
+# -4(%esp)	0(%esp)		return address
+# 0(%esp)	4(%esp)		tmp1
+# 4(%esp)	8(%esp)		tmp2
+# 8(%esp)	12(%esp)	key
+# 12(%esp)	16(%esp)	end of key schedule
+my $_esp=&DWP(16,"esp");	#saved %esp
+my $_inp=&DWP(20,"esp");	#copy of wparam(0)
+my $_out=&DWP(24,"esp");	#copy of wparam(1)
+my $_len=&DWP(28,"esp");	#copy of wparam(2)
+my $_key=&DWP(32,"esp");	#copy of wparam(3)
+my $_ivp=&DWP(36,"esp");	#copy of wparam(4)
+my $_tmp=&DWP(40,"esp");	#volatile variable
+my $ivec=&DWP(44,"esp");	#ivec[16]
+
 &public_label("AES_Te");
 &public_label("AES_Td");
 &function_begin("AES_cbc_encrypt");
@@ -780,7 +800,7 @@ sub declast()
 	&cmp	($s2,0);
 	&je	(&label("enc_out"));
 
-	&call   (&label("pic_point"));          # make it PIC!
+	&call   (&label("pic_point"));		# make it PIC!
 	&set_label("pic_point");
 	&blindpop("ebp");
 
@@ -789,19 +809,57 @@ sub declast()
 
 	&lea    ("ebp",&DWP(&label("AES_Te")."-".&label("pic_point"),"ebp"));
 
-	&mov	($acc,&wparam(0));		# load inp
-	&mov	($key,&wparam(4));		# load ivp
+	# allocate aligned stack frame...
+	&lea	($key,&DWP(-44,"esp"));
+	&and	($key,-64);
 
+	# ... and make sure it doesn't alias with AES_Te modulo 4096
+	&mov	($s1,"ebp");
+	&mov	($s3,$key);
+	&and	($s1,0xfff);		# t = %ebp&0xfff
+	&and	($s3,0xfff);		# p = %esp&0xfff
+
+	&cmp	($s3,$s1);		# if (p<t) goto ok
+	&jb	(&label("te_ok"));
+	&lea	($acc,&DWP(2048,$s1));
+	&cmp	($s3,$acc);		# if (p>=(t+2048)) goto ok
+	&jae	(&label("te_ok"));
+	&sub	($s1,$s3);		# t -= p
+	&lea	($key,&DWP(-64,$key,$s1));# %esp -= (p-t)+64
+	&set_label("te_ok");
+
+	&mov	($s0,&wparam(0));	# load inp
+	&mov	($s1,&wparam(1));	# load out
+	&mov	($s3,&wparam(3));	# load key
+	&mov	($acc,&wparam(4));	# load ivp
+
+	&exch	("esp",$key);
+	&add	("esp",4);		# reserve for return address!
+	&mov	($_esp,$key);		# save %esp
+
+	&mov	($_inp,$s0);		# save copy of inp
+	&mov	($_out,$s1);		# save copy of out
+	&mov	($_len,$s2);		# save copy of len
+	&mov	($_key,$s3);		# save copy of key
+	&mov	($_ivp,$acc);		# save copy of ivp
+
+	&mov	($acc,$s0);
+	&mov	($key,16);
+	&align	(4);
+	&set_label("prefetch_te");
+		&mov	($s0,&DWP(0,"ebp"));
+		&mov	($s1,&DWP(32,"ebp"));
+		&mov	($s2,&DWP(64,"ebp"));
+		&mov	($s3,&DWP(96,"ebp"));
+		&lea	("ebp",&DWP(128,"ebp"));
+		&dec	($key);
+	&jnz	(&label("prefetch_te"));
+	&sub	("ebp",2048);
+
+	&mov	($s2,$_len);
+	&mov	($key,$_ivp);
 	&test	($s2,0xFFFFFFF0);
 	&jz	(&label("enc_tail"));		# short input...
-
-	# prefetch AES_Te
-	for ($i=0;$i<2048;$i+=128)
-	{	&mov	($s0,&DWP($i+0,"ebp"));
-		&mov	($s1,&DWP($i+32,"ebp"));
-		&mov	($s2,&DWP($i+64,"ebp"));
-		&mov	($s3,&DWP($i+96,"ebp"));
-	}
 
 	&mov	($s0,&DWP(0,$key));		# load iv
 	&mov	($s1,&DWP(4,$key));
@@ -811,43 +869,44 @@ sub declast()
 		&mov	($s2,&DWP(8,$key));
 		&mov	($s3,&DWP(12,$key));
 
-		&xor	($s0,&DWP(0,$acc));		# xor input data
+		&xor	($s0,&DWP(0,$acc));	# xor input data
 		&xor	($s1,&DWP(4,$acc));
 		&xor	($s2,&DWP(8,$acc));
 		&xor	($s3,&DWP(12,$acc));
 
-		&mov	($key,&wparam(3));		# load key
+		&mov	($key,$_key);		# load key
 		&call	("_x86_AES_encrypt");
 
-		&mov	($acc,&wparam(0));		# load inp
-		&mov	($key,&wparam(1));		# load out
+		&mov	($acc,$_inp);		# load inp
+		&mov	($key,$_out);		# load out
 
-		&mov	(&DWP(0,$key),$s0);		# save output data
+		&mov	(&DWP(0,$key),$s0);	# save output data
 		&mov	(&DWP(4,$key),$s1);
 		&mov	(&DWP(8,$key),$s2);
 		&mov	(&DWP(12,$key),$s3);
 
-		&mov	($s2,&wparam(2));		# load len
+		&mov	($s2,$_len);		# load len
 
 		&lea	($acc,&DWP(16,$acc));
-		&mov	(&wparam(0),$acc);		# save inp
+		&mov	($_inp,$acc);		# save inp
 
 		&lea	($s3,&DWP(16,$key));
-		&mov	(&wparam(1),$s3);		# save out
+		&mov	($_out,$s3);		# save out
 
 		&sub	($s2,16);
 		&test	($s2,0xFFFFFFF0);
-		&mov	(&wparam(2),$s2);		# save len
+		&mov	($_len,$s2);		# save len
 	&jnz	(&label("enc_loop"));
 	&test	($s2,15);
 	&jnz	(&label("enc_tail"));
-	&mov	($acc,&wparam(4));		# load ivp
-	&mov	($s2,&DWP(8,$key));		# restore last dwords
+	&mov	($acc,$_ivp);		# load ivp
+	&mov	($s2,&DWP(8,$key));	# restore last dwords
 	&mov	($s3,&DWP(12,$key));
-	&mov	(&DWP(0,$acc),$s0);		# save iv
+	&mov	(&DWP(0,$acc),$s0);	# save ivec
 	&mov	(&DWP(4,$acc),$s1);
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
+	&mov	("esp",$_esp);
     &set_label("enc_out");
 	&function_end_A();
 
@@ -855,7 +914,7 @@ sub declast()
     &set_label("enc_tail");
 	&push	($key eq "edi" ? $key : "");	# push ivp
 	&pushf	();
-	&mov	($key,&wparam(1));		# load out
+	&mov	($key,$_out);			# load out
 	&mov	($s1,16);
 	&sub	($s1,$s2);
 	&cmp	($key,$acc);			# compare with inp
@@ -871,81 +930,109 @@ sub declast()
 	&popf	();
 	&pop	($key);				# pop ivp
 
-	# prefetch AES_Te
-	for ($i=0;$i<2048;$i+=128)
-	{	&mov	($s0,&DWP($i+0,"ebp"));
-		&mov	($s1,&DWP($i+32,"ebp"));
-		&mov	($s2,&DWP($i+64,"ebp"));
-		&mov	($s3,&DWP($i+96,"ebp"));
-	}
-
-	&mov	($acc,&wparam(1));		# output as input
+	&mov	($acc,$_out);			# output as input
 	&mov	($s0,&DWP(0,$key));
 	&mov	($s1,&DWP(4,$key));
-	&mov	(&wparam(2),16);		# len=16
+	&mov	($_len,16);			# len=16
 	&jmp	(&label("enc_loop"));		# one more spin...
 
 #----------------------------- DECRYPT -----------------------------#
 &align	(4);
 &set_label("DECRYPT");
-    &stack_push(5);				# allocate temp + ivp
-
 	&lea    ("ebp",&DWP(&label("AES_Td")."-".&label("pic_point"),"ebp"));
 
-	# prefetch AES_Td
-	for ($i=0;$i<3072;$i+=128)
-	{	&mov	($s0,&DWP($i+0,"ebp"));
-		&mov	($s1,&DWP($i+32,"ebp"));
-		&mov	($s2,&DWP($i+64,"ebp"));
-		&mov	($s3,&DWP($i+96,"ebp"));
-	}
+	# allocate aligned stack frame...
+	&lea	($key,&DWP(-64,"esp"));
+	&and	($key,-64);
 
-	&mov	($acc,&wparam(0));		# load inp
-	&cmp	($acc,&wparam(1));
+	# ... and make sure it doesn't alias with AES_Td modulo 4096
+	&mov	($s1,"ebp");
+	&mov	($s3,$key);
+	&and	($s1,0xfff);		# t = %ebp&0xfff
+	&and	($s3,0xfff);		# p = %esp&0xfff
+
+	&cmp	($s3,$s1);		# if (p<t) goto ok
+	&jb	(&label("td_ok"));
+	&lea	($acc,&DWP(3072,$s1));
+	&cmp	($s3,$acc);		# if (p>=(t+3072)) goto ok
+	&jae	(&label("td_ok"));
+	&sub	($s1,$s3);		# t -= p
+	&lea	($key,&DWP(-64,$key,$s1));# %esp -= (p-t)+64
+	&set_label("td_ok");
+
+	&mov	($s0,&wparam(0));	# load inp
+	&mov	($s1,&wparam(1));	# load out
+	&mov	($s3,&wparam(3));	# load key
+	&mov	($acc,&wparam(4));	# load ivp
+
+	&exch	("esp",$key);
+	&add	("esp",4);		# reserve for return address!
+	&mov	($_esp,$key);		# save %esp
+
+	&mov	($_inp,$s0);		# save copy of inp
+	&mov	($_out,$s1);		# save copy of out
+	&mov	($_len,$s2);		# save copy of len
+	&mov	($_key,$s3);		# save copy of key
+	&mov	($_ivp,$acc);		# save copy of ivp
+
+	&mov	($acc,$s0);
+	&mov	($key,24);
+	&align	(4);
+	&set_label("prefetch_td");
+		&mov	($s0,&DWP(0,"ebp"));
+		&mov	($s1,&DWP(32,"ebp"));
+		&mov	($s2,&DWP(64,"ebp"));
+		&mov	($s3,&DWP(96,"ebp"));
+		&lea	("ebp",&DWP(128,"ebp"));
+		&dec	($key);
+	&jnz	(&label("prefetch_td"));
+	&sub	("ebp",3072);
+
+	&cmp	($acc,$_out);
 	&je	(&label("dec_in_place"));	# in-place processing...
 
-	&mov	($key,&wparam(4));		# load ivp
-	&mov	(&swtmp(4),$key);
+	&mov	($key,$_ivp);		# load ivp
+	&mov	($_tmp,$key);
 
 	&align	(4);
 	&set_label("dec_loop");
-		&mov	($s0,&DWP(0,$acc));		# read input
+		&mov	($s0,&DWP(0,$acc));	# read input
 		&mov	($s1,&DWP(4,$acc));
 		&mov	($s2,&DWP(8,$acc));
 		&mov	($s3,&DWP(12,$acc));
 
-		&mov	($key,&wparam(3));		# load key
+		&mov	($key,$_key);		# load key
 		&call	("_x86_AES_decrypt");
 
-		&mov	($key,&swtmp(4));		# load ivp
-		&mov	($acc,&wparam(2));		# load len
-		&xor	($s0,&DWP(0,$key));		# xor iv
+		&mov	($key,$_tmp);		# load ivp
+		&mov	($acc,$_len);		# load len
+		&xor	($s0,&DWP(0,$key));	# xor iv
 		&xor	($s1,&DWP(4,$key));
 		&xor	($s2,&DWP(8,$key));
 		&xor	($s3,&DWP(12,$key));
 
 		&sub	($acc,16);
 		&jc	(&label("dec_partial"));
-		&mov	(&wparam(2),$acc);		# save len
-		&mov	($acc,&wparam(0));		# load inp
-		&mov	($key,&wparam(1));		# load out
+		&mov	($_len,$acc);		# save len
+		&mov	($acc,$_inp);		# load inp
+		&mov	($key,$_out);		# load out
 
-		&mov	(&DWP(0,$key),$s0);		# write output
+		&mov	(&DWP(0,$key),$s0);	# write output
 		&mov	(&DWP(4,$key),$s1);
 		&mov	(&DWP(8,$key),$s2);
 		&mov	(&DWP(12,$key),$s3);
 
-		&mov	(&swtmp(4),$acc);		# save ivp
+		&mov	($_tmp,$acc);		# save ivp
 		&lea	($acc,&DWP(16,$acc));
-		&mov	(&wparam(0),$acc);		# save inp
+		&mov	($_inp,$acc);		# save inp
 
 		&lea	($key,&DWP(16,$key));
-		&mov	(&wparam(1),$key);		# save out
+		&mov	($_out,$key);		# save out
 
 	&jnz	(&label("dec_loop"));
-	&mov	($key,&swtmp(4));	# load temp ivp
+	&mov	($key,$_tmp);		# load temp ivp
     &set_label("dec_end");
-	&mov	($acc,&wparam(4));	# load user ivp
+	&mov	($acc,$_ivp);		# load user ivp
 	&mov	($s0,&DWP(0,$key));	# load iv
 	&mov	($s1,&DWP(4,$key));
 	&mov	($s2,&DWP(8,$key));
@@ -958,80 +1045,80 @@ sub declast()
 
     &align	(4);
     &set_label("dec_partial");
-	&lea	($key,&swtmp(0));
+	&lea	($key,$ivec);
 	&mov	(&DWP(0,$key),$s0);	# dump output to stack
 	&mov	(&DWP(4,$key),$s1);
 	&mov	(&DWP(8,$key),$s2);
 	&mov	(&DWP(12,$key),$s3);
 	&lea	($s2 eq "ecx" ? $s2 : "",&DWP(16,$acc));
 	&mov	($acc eq "esi" ? $acc : "",$key);
-	&mov	($key eq "edi" ? $key : "",&wparam(1));
+	&mov	($key eq "edi" ? $key : "",$_out);	# load out
 	&pushf	();
 	&data_word(0x90A4F3FC);	# cld; rep movsb; nop	# copy output
 	&popf	();
-	&mov	($key,&wparam(0));	# load temp ivp
+	&mov	($key,$_inp);		# use inp as temp ivp
 	&jmp	(&label("dec_end"));
 
     &align	(4);
     &set_label("dec_in_place");
 	&set_label("dec_in_place_loop");
-		&lea	($key,&swtmp(0));
-		&mov	($s0,&DWP(0,$acc));		# read input
+		&lea	($key,$ivec);
+		&mov	($s0,&DWP(0,$acc));	# read input
 		&mov	($s1,&DWP(4,$acc));
 		&mov	($s2,&DWP(8,$acc));
 		&mov	($s3,&DWP(12,$acc));
 
-		&mov	(&DWP(0,$key),$s0);		# copy to temp
+		&mov	(&DWP(0,$key),$s0);	# copy to temp
 		&mov	(&DWP(4,$key),$s1);
 		&mov	(&DWP(8,$key),$s2);
 		&mov	(&DWP(12,$key),$s3);
 
-		&mov	($key,&wparam(3));		# load key
+		&mov	($key,$_key);		# load key
 		&call	("_x86_AES_decrypt");
 
-		&mov	($key,&wparam(4));		# load ivp
-		&mov	($acc,&wparam(1));		# load out
-		&xor	($s0,&DWP(0,$key));		# xor iv
+		&mov	($key,$_ivp);		# load ivp
+		&mov	($acc,$_out);		# load out
+		&xor	($s0,&DWP(0,$key));	# xor iv
 		&xor	($s1,&DWP(4,$key));
 		&xor	($s2,&DWP(8,$key));
 		&xor	($s3,&DWP(12,$key));
 
-		&mov	(&DWP(0,$acc),$s0);		# write output
+		&mov	(&DWP(0,$acc),$s0);	# write output
 		&mov	(&DWP(4,$acc),$s1);
 		&mov	(&DWP(8,$acc),$s2);
 		&mov	(&DWP(12,$acc),$s3);
 
 		&lea	($acc,&DWP(16,$acc));
-		&mov	(&wparam(1),$acc);		# save out
+		&mov	($_out,$acc);		# save out
 
-		&lea	($acc,&swtmp(0));
-		&mov	($s0,&DWP(0,$acc));		# read temp
+		&lea	($acc,$ivec);
+		&mov	($s0,&DWP(0,$acc));	# read temp
 		&mov	($s1,&DWP(4,$acc));
 		&mov	($s2,&DWP(8,$acc));
 		&mov	($s3,&DWP(12,$acc));
 
-		&mov	(&DWP(0,$key),$s0);		# copy iv
+		&mov	(&DWP(0,$key),$s0);	# copy iv
 		&mov	(&DWP(4,$key),$s1);
 		&mov	(&DWP(8,$key),$s2);
 		&mov	(&DWP(12,$key),$s3);
 
-		&mov	($acc,&wparam(0));		# load inp
+		&mov	($acc,$_inp);		# load inp
 
 		&lea	($acc,&DWP(16,$acc));
-		&mov	(&wparam(0),$acc);		# save inp
+		&mov	($_inp,$acc);		# save inp
 
-		&mov	($s2,&wparam(2));		# load len
+		&mov	($s2,$_len);		# load len
 		&sub	($s2,16);
 		&jc	(&label("dec_in_place_partial"));
-		&mov	(&wparam(2),$s2);		# save len
+		&mov	($_len,$s2);		# save len
 	&jnz	(&label("dec_in_place_loop"));
 	&jmp	(&label("dec_out"));
 
     &align	(4);
     &set_label("dec_in_place_partial");
 	# one can argue if this is actually required...
-	&mov	($key eq "edi" ? $key : "",&wparam(1));
-	&lea	($acc eq "esi" ? $acc : "",&swtmp(0));
+	&mov	($key eq "edi" ? $key : "",$_out);
+	&lea	($acc eq "esi" ? $acc : "",$ivec);
 	&lea	($key,&DWP(0,$key,$s2));
 	&lea	($acc,&DWP(16,$acc,$s2));
 	&neg	($s2 eq "ecx" ? $s2 : "");
@@ -1041,8 +1128,9 @@ sub declast()
 
     &align	(4);
     &set_label("dec_out");
-    &stack_pop(5);
+    &mov	("esp",$_esp);
 &function_end("AES_cbc_encrypt");
+}
 
 #------------------------------------------------------------------#
 
