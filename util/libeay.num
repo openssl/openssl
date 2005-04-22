@@ -2811,7 +2811,7 @@ EVP_aes_192_cfb8                        3252	EXIST::FUNCTION:AES
 FIPS_mode_set                           3253	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_selftest_dsa                       3254	EXIST:OPENSSL_FIPS:FUNCTION:
 EVP_aes_256_cfb8                        3255	EXIST::FUNCTION:AES
-FIPS_allow_md5                          3256	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_allow_md5                          3256	NOEXIST::FUNCTION:
 DES_ede3_cfb_encrypt                    3257	EXIST::FUNCTION:DES
 EVP_des_ede3_cfb8                       3258	EXIST::FUNCTION:DES
 FIPS_rand_seeded                        3259	EXIST:OPENSSL_FIPS:FUNCTION:
@@ -2837,7 +2837,7 @@ FIPS_dsa_check                          3278	EXIST:OPENSSL_FIPS:FUNCTION:
 AES_cfb1_encrypt                        3279	EXIST::FUNCTION:AES
 EVP_des_ede3_cfb1                       3280	EXIST::FUNCTION:DES
 FIPS_rand_check                         3281	EXIST:OPENSSL_FIPS:FUNCTION:
-FIPS_md5_allowed                        3282	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_md5_allowed                        3282	NOEXIST::FUNCTION:
 FIPS_mode                               3283	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_selftest_failed                    3284	EXIST:OPENSSL_FIPS:FUNCTION:
 sk_is_sorted                            3285	EXIST::FUNCTION:
@@ -2867,3 +2867,4 @@ PROXY_CERT_INFO_EXTENSION_it            3307	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIA
 PROXY_CERT_INFO_EXTENSION_it            3307	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 PROXY_POLICY_free                       3308	EXIST::FUNCTION:
 PROXY_POLICY_new                        3309	EXIST::FUNCTION:
+BN_MONT_CTX_set_locked                  3310	EXIST::FUNCTION:
