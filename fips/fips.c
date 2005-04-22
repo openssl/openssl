@@ -63,7 +63,6 @@
 #define PATH_MAX 1024
 #endif
 
-static int fips_md5_allowed = 0;
 static int fips_selftest_fail = 0;
 static int fips_mode = 0;
 static const void *fips_rand_check = 0;
@@ -119,32 +118,6 @@ const void *FIPS_rand_check(void)
 		}
 	return ret;
 	}
-
-void FIPS_allow_md5(int onoff)
-    {
-    if (fips_is_started())
-	{
-	int owning_thread = fips_is_owning_thread();
-
-	if (!owning_thread) fips_w_lock();
-	fips_md5_allowed = onoff;
-	if (!owning_thread) fips_w_unlock();
-	}
-    }
-
-int FIPS_md5_allowed(void)
-    {
-    int ret = 1;
-    if (fips_is_started())
-	{
-	int owning_thread = fips_is_owning_thread();
-
-	if (!owning_thread) fips_r_lock();
-	ret = fips_md5_allowed;
-	if (!owning_thread) fips_r_unlock();
-	}
-    return ret;
-    }
 
 int FIPS_selftest_failed(void)
     {

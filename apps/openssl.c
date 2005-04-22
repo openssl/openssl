@@ -250,8 +250,6 @@ int main(int Argc, char *Argv[])
 			EXIT(1);
 		}
 		in_FIPS_mode = 1;
-		if (getenv("OPENSSL_FIPS_MD5"))
-			FIPS_allow_md5(1);
 		}
 #endif
 	if (bio_err == NULL)

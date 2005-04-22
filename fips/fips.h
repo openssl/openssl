@@ -60,8 +60,6 @@ struct dsa_st;
 int FIPS_mode_set(int onoff,const char *path);
 int FIPS_mode(void);
 const void *FIPS_rand_check(void);
-void FIPS_allow_md5(int onoff);
-int FIPS_md5_allowed(void);
 int FIPS_selftest_failed(void);
 int FIPS_dsa_check(struct dsa_st *dsa);
 void FIPS_corrupt_sha1(void);
