@@ -79,8 +79,9 @@
 #include <openssl/obj_mac.h>
 #include <openssl/bn.h>
 
-static int ecdh_compute_key(void *out, size_t len, const EC_POINT *pub_key, EC_KEY *ecdh,
-                            void *(*KDF)(void *in, size_t inlen, void *out, size_t outlen));
+static int ecdh_compute_key(void *out, size_t len, const EC_POINT *pub_key,
+	EC_KEY *ecdh, 
+	void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
 
 static ECDH_METHOD openssl_ecdh_meth = {
 	"OpenSSL ECDH method",
@@ -104,8 +105,9 @@ const ECDH_METHOD *ECDH_OpenSSL(void)
  *  - ECSVDP-DH
  * Finally an optional KDF is applied.
  */
-static int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
-                            void *(*KDF)(void *in, size_t inlen, void *out, size_t outlen))
+static int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+	EC_KEY *ecdh,
+	void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen))
 	{
 	BN_CTX *ctx;
 	EC_POINT *tmp=NULL;
@@ -182,7 +184,7 @@ static int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, E
 
 	if (KDF != 0)
 		{
-		if (KDF(buf, buflen, out, outlen) == NULL)
+		if (KDF(buf, buflen, out, &outlen) == NULL)
 			{
 			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ECDH_R_KDF_FAILED);
 			goto err;

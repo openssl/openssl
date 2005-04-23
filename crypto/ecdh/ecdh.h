@@ -92,7 +92,7 @@ struct ecdh_method
 	{
 	const char *name;
 	int (*compute_key)(void *key, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
-	                   void *(*KDF)(void *in, size_t inlen, void *out, size_t outlen));
+	                   void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
 #if 0
 	int (*init)(EC_KEY *eckey);
 	int (*finish)(EC_KEY *eckey);
@@ -127,7 +127,7 @@ const ECDH_METHOD *ECDH_get_default_method(void);
 int 	  ECDH_set_method(EC_KEY *, const ECDH_METHOD *);
 
 int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
-                     void *(*KDF)(void *in, size_t inlen, void *out, size_t outlen));
+                     void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
 
 int 	  ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new 
 		*new_func, CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);

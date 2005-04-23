@@ -449,11 +449,13 @@ static double Time_F(int s)
 
 
 static const int KDF1_SHA1_len = 20;
-static void *KDF1_SHA1(void *in, size_t inlen, void *out, size_t outlen)
+static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 	{
 #ifndef OPENSSL_NO_SHA
-	if (outlen != SHA_DIGEST_LENGTH)
+	if (*outlen < SHA_DIGEST_LENGTH)
 		return NULL;
+	else
+		*outlen = SHA_DIGEST_LENGTH;
 	return SHA1(in, inlen, out);
 #else
 	return NULL;
@@ -2189,7 +2191,7 @@ int MAIN(int argc, char **argv)
 					 * otherwise, use result (see section 4.8 of draft-ietf-tls-ecc-03.txt).
 					 */
 					int field_size, outlen;
-					void *(*kdf)(void *in, size_t inlen, void *out, size_t xoutlen);
+					void *(*kdf)(const void *in, size_t inlen, void *out, size_t *xoutlen);
 					field_size = EC_GROUP_get_degree(ecdh_a[j]->group);
 					if (field_size <= 24 * 8)
 						{

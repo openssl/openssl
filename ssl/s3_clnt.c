@@ -1579,11 +1579,13 @@ static int ssl3_get_server_done(SSL *s)
 
 
 static const int KDF1_SHA1_len = 20;
-static void *KDF1_SHA1(void *in, size_t inlen, void *out, size_t outlen)
+static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 	{
 #ifndef OPENSSL_NO_SHA
-	if (outlen != SHA_DIGEST_LENGTH)
+	if (*outlen < SHA_DIGEST_LENGTH)
 		return NULL;
+	else
+		*outlen = SHA_DIGEST_LENGTH;
 	return SHA1(in, inlen, out);
 #else
 	return NULL;
