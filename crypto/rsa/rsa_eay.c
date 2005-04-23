@@ -148,7 +148,7 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 	if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
 		{
 		if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_n,
-					CRYPTO_LOCK_RSA, rsa->n, ctx)
+					CRYPTO_LOCK_RSA, rsa->n, ctx))
 			goto err;
 		}
 
@@ -521,7 +521,7 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 	if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
 		{
 		if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_n,
-					CRYPTO_LOCK_RSA, rsa->n, ctx)
+					CRYPTO_LOCK_RSA, rsa->n, ctx))
 			goto err;
 		}
 
@@ -572,10 +572,10 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	if (rsa->flags & RSA_FLAG_CACHE_PRIVATE)
 		{
 		if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_p,
-					CRYPTO_LOCK_RSA, rsa->p, ctx)
+					CRYPTO_LOCK_RSA, rsa->p, ctx))
 			goto err;
 		if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_q,
-					CRYPTO_LOCK_RSA, rsa->q, ctx)
+					CRYPTO_LOCK_RSA, rsa->q, ctx))
 			goto err;
 		}
 

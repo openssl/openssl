@@ -281,7 +281,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 		{
 		mont = BN_MONT_CTX_set_locked(
 					(BN_MONT_CTX **)&dsa->method_mont_p,
-					CRYPTO_LOCK_DSA, dsa->p, ctx));
+					CRYPTO_LOCK_DSA, dsa->p, ctx);
 		if (!mont)
 			goto err;
 		}
