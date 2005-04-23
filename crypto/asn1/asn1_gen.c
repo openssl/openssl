@@ -88,7 +88,7 @@
 
 struct tag_name_st
 	{
-	char *strnam;
+	const char *strnam;
 	int len;
 	int tag;
 	};

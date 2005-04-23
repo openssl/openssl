@@ -429,7 +429,7 @@ unsigned long flags;		/* Various flags */
 long tag;			/* tag, not used if no tagging */
 unsigned long offset;		/* Offset of this field in structure */
 #ifndef NO_ASN1_FIELD_NAMES
-char *field_name;		/* Field name */
+const char *field_name;		/* Field name */
 #endif
 ASN1_ITEM_EXP *item;		/* Relevant ASN1_ITEM or ASN1_ADB */
 };
