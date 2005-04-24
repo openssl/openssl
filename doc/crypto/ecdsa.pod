@@ -22,7 +22,7 @@ ecdsa - Elliptic Curve Digital Signature Algorithm
  ECDSA_SIG*	ECDSA_do_sign(const unsigned char *dgst, int dgst_len,
 			EC_KEY *eckey);
  int		ECDSA_do_verify(const unsigned char *dgst, int dgst_len,
-			ECDSA_SIG *sig, EC_KEY* eckey);
+			const ECDSA_SIG *sig, EC_KEY* eckey);
  int		ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *ctx,
 			BIGNUM **kinv, BIGNUM **rp);
  int		ECDSA_sign(int type, const unsigned char *dgst,
