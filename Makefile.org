@@ -266,8 +266,8 @@ openssl.pc: Makefile
 	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > openssl.pc
 
-Makefile: Makefile.org
-	@echo "Makefile is older than Makefile.org."
+Makefile: Makefile.org Configure config
+	@echo "Makefile is older than Makefile.org, Configure or config."
 	@echo "Reconfigure the source tree (via './config' or 'perl Configure'), please."
 	@false
 
