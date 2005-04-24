@@ -194,6 +194,7 @@ sub main'rdtsc	{ &out0("rdtsc"); }
 sub main'halt	{ &out0("hlt"); }
 sub main'movz	{ &out2("movzx",@_); }
 sub main'neg	{ &out1("neg",@_); }
+sub main'cld	{ &out0("cld"); }
 
 # SSE2
 sub main'emms	{ &out0("emms"); }

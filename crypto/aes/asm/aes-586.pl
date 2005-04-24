@@ -6,7 +6,7 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 #
-# Version 3.3.
+# Version 3.4.
 #
 # You might fail to appreciate this module performance from the first
 # try. If compared to "vanilla" linux-ia32-icc target, i.e. considered
@@ -60,6 +60,12 @@
 # misaligned, which unfortunately has negative impact on elder IA-32
 # implementations, Pentium suffered 30% penalty, PIII - 10%.
 #
+# Version 3.3 avoids L1 cache aliasing between stack frame and
+# S-boxes, and 3.4 - L1 cache aliasing even between key schedule. The
+# latter is achieved by copying the key schedule to controlled place in
+# stack. This unfortunately has rather strong impact on small block CBC
+# performance, ~2x deterioration on 16-byte block if compared to 3.3.
+#
 # Current ECB performance numbers for 128-bit key in CPU cycles per
 # processed byte [measure commonly used by AES benchmarkers] are:
 #
@@ -81,6 +87,12 @@ $s3="edx";
 $key="edi";
 $acc="esi";
 
+$compromise=0;		# $compromise=128 abstains from copying key
+			# schedule to stack when encrypting inputs
+			# shorter than 128 bytes at the cost of
+			# risksing aliasing with S-boxes. In return
+			# you get way better, up to +70%, small block
+			# performance.
 $small_footprint=1;	# $small_footprint=1 code is ~5% slower [on
 			# recent µ-archs], but ~5 times smaller!
 			# I favor compact code to minimize cache
@@ -792,6 +804,7 @@ my $_key=&DWP(32,"esp");	#copy of wparam(3)
 my $_ivp=&DWP(36,"esp");	#copy of wparam(4)
 my $_tmp=&DWP(40,"esp");	#volatile variable
 my $ivec=&DWP(44,"esp");	#ivec[16]
+my $aes_key=&DWP(60,"esp");	#copy of aes_key
 
 &public_label("AES_Te");
 &public_label("AES_Td");
@@ -804,28 +817,37 @@ my $ivec=&DWP(44,"esp");	#ivec[16]
 	&set_label("pic_point");
 	&blindpop("ebp");
 
+	&pushf	();
+	&cld	();
+
 	&cmp	(&wparam(5),0);
 	&je	(&label("DECRYPT"));
 
 	&lea    ("ebp",&DWP(&label("AES_Te")."-".&label("pic_point"),"ebp"));
 
 	# allocate aligned stack frame...
-	&lea	($key,&DWP(-44,"esp"));
+	&lea	($key,&DWP(-64-260,"esp"));
 	&and	($key,-64);
 
 	# ... and make sure it doesn't alias with AES_Te modulo 4096
-	&mov	($s1,"ebp");
+	&mov	($s0,"ebp");
+	&lea	($s1,&DWP(2048,"ebp"));
 	&mov	($s3,$key);
-	&and	($s1,0xfff);		# t = %ebp&0xfff
+	&and	($s0,0xfff);		# s = %ebp&0xfff
+	&and	($s1,0xfff);		# e = (%ebp+2048)&0xfff
 	&and	($s3,0xfff);		# p = %esp&0xfff
 
-	&cmp	($s3,$s1);		# if (p<t) goto ok
-	&jb	(&label("te_ok"));
-	&lea	($acc,&DWP(2048,$s1));
-	&cmp	($s3,$acc);		# if (p>=(t+2048)) goto ok
-	&jae	(&label("te_ok"));
-	&sub	($s1,$s3);		# t -= p
-	&lea	($key,&DWP(-64,$key,$s1));# %esp -= (p-t)+64
+	&cmp	($s3,$s1);		# if (p>=e) %esp =- (p-e);
+	&jb	(&label("te_break_out"));
+	&sub	($s3,$s1);
+	&sub	($key,$s3);
+	&jmp	(&label("te_ok"));
+	&set_label("te_break_out");	# else %esp -= (p-s)&0xfff + framesz;
+	&sub	($s3,$s0);
+	&and	($s3,0xfff);
+	&add	($s3,64+320);
+	&sub	($key,$s3);
+	&align	(4);
 	&set_label("te_ok");
 
 	&mov	($s0,&wparam(0));	# load inp
@@ -842,6 +864,19 @@ my $ivec=&DWP(44,"esp");	#ivec[16]
 	&mov	($_len,$s2);		# save copy of len
 	&mov	($_key,$s3);		# save copy of key
 	&mov	($_ivp,$acc);		# save copy of ivp
+
+	if ($compromise) {
+		&cmp	($s2,$compromise);
+		&jb	(&label("skip_ecopy"));
+	}
+	# copy key schedule to stack
+	&mov	("ecx",260/4);
+	&mov	("esi",$s3);
+	&lea	("edi",$aes_key);
+	&mov	($_key,"edi");
+	&align	(4);
+	&data_word(0xF689A5F3);	# rep movsd
+	&set_label("skip_ecopy") if ($compromise);
 
 	&mov	($acc,$s0);
 	&mov	($key,16);
@@ -906,28 +941,42 @@ my $ivec=&DWP(44,"esp");	#ivec[16]
 	&mov	(&DWP(4,$acc),$s1);
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
+
+	&mov	("edi",$_key);
 	&mov	("esp",$_esp);
+	if ($compromise) {
+		&cmp	(&wparam(2),$compromise);
+		&jb	(&label("skip_ezero"));
+	}
+	# zero copy of key schedule
+	&mov	("ecx",256/4);
+	&xor	("eax","eax");
+	&align	(4);
+	&data_word(0xF689ABF3);	# rep stosd
+	&set_label("skip_ezero") if ($compromise);
+	&popf	();
     &set_label("enc_out");
 	&function_end_A();
+	&pushf	();			# kludge, never executed
 
     &align	(4);
     &set_label("enc_tail");
 	&push	($key eq "edi" ? $key : "");	# push ivp
-	&pushf	();
 	&mov	($key,$_out);			# load out
 	&mov	($s1,16);
 	&sub	($s1,$s2);
 	&cmp	($key,$acc);			# compare with inp
 	&je	(&label("enc_in_place"));
-	&data_word(0x90A4F3FC);	# cld; rep movsb; nop	# copy input
+	&align	(4);
+	&data_word(0xF689A4F3);	# rep movsb	# copy input
 	&jmp	(&label("enc_skip_in_place"));
     &set_label("enc_in_place");
 	&lea	($key,&DWP(0,$key,$s2));
     &set_label("enc_skip_in_place");
 	&mov	($s2,$s1);
 	&xor	($s0,$s0);
-	&data_word(0x90AAF3FC);	# cld; rep stosb; nop	# zero tail
-	&popf	();
+	&align	(4);
+	&data_word(0xF689AAF3);	# rep stosb	# zero tail
 	&pop	($key);				# pop ivp
 
 	&mov	($acc,$_out);			# output as input
@@ -942,22 +991,28 @@ my $ivec=&DWP(44,"esp");	#ivec[16]
 	&lea    ("ebp",&DWP(&label("AES_Td")."-".&label("pic_point"),"ebp"));
 
 	# allocate aligned stack frame...
-	&lea	($key,&DWP(-64,"esp"));
+	&lea	($key,&DWP(-64-260,"esp"));
 	&and	($key,-64);
 
 	# ... and make sure it doesn't alias with AES_Td modulo 4096
-	&mov	($s1,"ebp");
+	&mov	($s0,"ebp");
+	&lea	($s1,&DWP(3072,"ebp"));
 	&mov	($s3,$key);
-	&and	($s1,0xfff);		# t = %ebp&0xfff
+	&and	($s0,0xfff);		# s = %ebp&0xfff
+	&and	($s1,0xfff);		# e = (%ebp+3072)&0xfff
 	&and	($s3,0xfff);		# p = %esp&0xfff
 
-	&cmp	($s3,$s1);		# if (p<t) goto ok
-	&jb	(&label("td_ok"));
-	&lea	($acc,&DWP(3072,$s1));
-	&cmp	($s3,$acc);		# if (p>=(t+3072)) goto ok
-	&jae	(&label("td_ok"));
-	&sub	($s1,$s3);		# t -= p
-	&lea	($key,&DWP(-64,$key,$s1));# %esp -= (p-t)+64
+	&cmp	($s3,$s1);		# if (p>=e) %esp =- (p-e);
+	&jb	(&label("td_break_out"));
+	&sub	($s3,$s1);
+	&sub	($key,$s3);
+	&jmp	(&label("td_ok"));
+	&set_label("td_break_out");	# else %esp -= (p-s)&0xfff + framesz;
+	&sub	($s3,$s0);
+	&and	($s3,0xfff);
+	&add	($s3,64+320);
+	&sub	($key,$s3);
+	&align	(4);
 	&set_label("td_ok");
 
 	&mov	($s0,&wparam(0));	# load inp
@@ -974,6 +1029,19 @@ my $ivec=&DWP(44,"esp");	#ivec[16]
 	&mov	($_len,$s2);		# save copy of len
 	&mov	($_key,$s3);		# save copy of key
 	&mov	($_ivp,$acc);		# save copy of ivp
+
+	if ($compromise) {
+		&cmp	($s2,$compromise);
+		&jb	(&label("skip_dcopy"));
+	}
+	# copy key schedule to stack
+	&mov	("ecx",260/4);
+	&mov	("esi",$s3);
+	&lea	("edi",$aes_key);
+	&mov	($_key,"edi");
+	&align	(4);
+	&data_word(0xF689A5F3);	# rep movsd
+	&set_label("skip_dcopy") if ($compromise);
 
 	&mov	($acc,$s0);
 	&mov	($key,24);
@@ -1053,10 +1121,8 @@ my $ivec=&DWP(44,"esp");	#ivec[16]
 	&lea	($s2 eq "ecx" ? $s2 : "",&DWP(16,$acc));
 	&mov	($acc eq "esi" ? $acc : "",$key);
 	&mov	($key eq "edi" ? $key : "",$_out);	# load out
-	&pushf	();
-	&data_word(0x90A4F3FC);	# cld; rep movsb; nop	# copy output
-	&popf	();
-	&mov	($key,$_inp);		# use inp as temp ivp
+	&data_word(0xF689A4F3);	# rep movsb		# copy output
+	&mov	($key,$_inp);				# use inp as temp ivp
 	&jmp	(&label("dec_end"));
 
     &align	(4);
@@ -1122,13 +1188,23 @@ my $ivec=&DWP(44,"esp");	#ivec[16]
 	&lea	($key,&DWP(0,$key,$s2));
 	&lea	($acc,&DWP(16,$acc,$s2));
 	&neg	($s2 eq "ecx" ? $s2 : "");
-	&pushf	();
-	&data_word(0x90A4F3FC);	# cld; rep movsb; nop	# restore tail
-	&popf	();
+	&data_word(0xF689A4F3);	# rep movsb	# restore tail
 
     &align	(4);
     &set_label("dec_out");
+    &mov	("edi",$_key);
     &mov	("esp",$_esp);
+    if ($compromise) {
+	&cmp	(&wparam(2),$compromise);
+	&jb	(&label("skip_dzero"));
+    }
+    # zero copy of key schedule
+    &mov	("ecx",256/4);
+    &xor	("eax","eax");
+    &align	(4);
+    &data_word(0xF689ABF3);	# rep stosd
+    &set_label("skip_dzero") if ($compromise);
+    &popf	();
 &function_end("AES_cbc_encrypt");
 }
 
