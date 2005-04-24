@@ -1023,27 +1023,35 @@ AES_cbc_encrypt:
 	call	.L005pic_point
 .L005pic_point:
 	popl	%ebp
-	cmpl	$0,		40(%esp)
+	pushfl
+	cld	
+	cmpl	$0,		44(%esp)
 	je	.L006DECRYPT
 	leal	AES_Te-.L005pic_point(%ebp),%ebp
-	leal	-44(%esp),	%edi
+	leal	-324(%esp),	%edi
 	andl	$-64,		%edi
-	movl	%ebp,		%ebx
+	movl	%ebp,		%eax
+	leal	2048(%ebp),	%ebx
 	movl	%edi,		%edx
+	andl	$4095,		%eax
 	andl	$4095,		%ebx
 	andl	$4095,		%edx
 	cmpl	%ebx,		%edx
-	jb	.L007te_ok
-	leal	2048(%ebx),	%esi
-	cmpl	%esi,		%edx
-	jae	.L007te_ok
-	subl	%edx,		%ebx
-	leal	-64(%edi,%ebx),	%edi
-.L007te_ok:
-	movl	20(%esp),	%eax
-	movl	24(%esp),	%ebx
-	movl	32(%esp),	%edx
-	movl	36(%esp),	%esi
+	jb	.L007te_break_out
+	subl	%ebx,		%edx
+	subl	%edx,		%edi
+	jmp	.L008te_ok
+.L007te_break_out:
+	subl	%eax,		%edx
+	andl	$4095,		%edx
+	addl	$384,		%edx
+	subl	%edx,		%edi
+.align	4
+.L008te_ok:
+	movl	24(%esp),	%eax
+	movl	28(%esp),	%ebx
+	movl	36(%esp),	%edx
+	movl	40(%esp),	%esi
 	xchgl	%edi,		%esp
 	addl	$4,		%esp
 	movl	%edi,		16(%esp)
@@ -1052,26 +1060,32 @@ AES_cbc_encrypt:
 	movl	%ecx,		28(%esp)
 	movl	%edx,		32(%esp)
 	movl	%esi,		36(%esp)
+	movl	$65,		%ecx
+	movl	%edx,		%esi
+	leal	60(%esp),	%edi
+	movl	%edi,		32(%esp)
+.align	4
+	.long	4136216051
 	movl	%eax,		%esi
 	movl	$16,		%edi
 .align	4
-.L008prefetch_te:
+.L009prefetch_te:
 	movl	(%ebp),		%eax
 	movl	32(%ebp),	%ebx
 	movl	64(%ebp),	%ecx
 	movl	96(%ebp),	%edx
 	leal	128(%ebp),	%ebp
 	decl	%edi
-	jnz	.L008prefetch_te
+	jnz	.L009prefetch_te
 	subl	$2048,		%ebp
 	movl	28(%esp),	%ecx
 	movl	36(%esp),	%edi
 	testl	$4294967280,	%ecx
-	jz	.L009enc_tail
+	jz	.L010enc_tail
 	movl	(%edi),		%eax
 	movl	4(%edi),	%ebx
 .align	4
-.L010enc_loop:
+.L011enc_loop:
 	movl	8(%edi),	%ecx
 	movl	12(%edi),	%edx
 	xorl	(%esi),		%eax
@@ -1094,9 +1108,9 @@ AES_cbc_encrypt:
 	subl	$16,		%ecx
 	testl	$4294967280,	%ecx
 	movl	%ecx,		28(%esp)
-	jnz	.L010enc_loop
+	jnz	.L011enc_loop
 	testl	$15,		%ecx
-	jnz	.L009enc_tail
+	jnz	.L010enc_tail
 	movl	36(%esp),	%esi
 	movl	8(%edi),	%ecx
 	movl	12(%edi),	%edx
@@ -1104,58 +1118,71 @@ AES_cbc_encrypt:
 	movl	%ebx,		4(%esi)
 	movl	%ecx,		8(%esi)
 	movl	%edx,		12(%esi)
+	movl	32(%esp),	%edi
 	movl	16(%esp),	%esp
+	movl	$64,		%ecx
+	xorl	%eax,		%eax
+.align	4
+	.long	4136217587
+	popfl
 .L004enc_out:
 	popl	%edi
 	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
-.align	4
-.L009enc_tail:
-	pushl	%edi
 	pushfl
+.align	4
+.L010enc_tail:
+	pushl	%edi
 	movl	24(%esp),	%edi
 	movl	$16,		%ebx
 	subl	%ecx,		%ebx
 	cmpl	%esi,		%edi
-	je	.L011enc_in_place
-	.long	2426729468
-	jmp	.L012enc_skip_in_place
-.L011enc_in_place:
+	je	.L012enc_in_place
+.align	4
+	.long	4136215795
+	jmp	.L013enc_skip_in_place
+.L012enc_in_place:
 	leal	(%edi,%ecx),	%edi
-.L012enc_skip_in_place:
+.L013enc_skip_in_place:
 	movl	%ebx,		%ecx
 	xorl	%eax,		%eax
-	.long	2427122684
-	popfl
+.align	4
+	.long	4136217331
 	popl	%edi
 	movl	24(%esp),	%esi
 	movl	(%edi),		%eax
 	movl	4(%edi),	%ebx
 	movl	$16,		28(%esp)
-	jmp	.L010enc_loop
+	jmp	.L011enc_loop
 .align	4
 .L006DECRYPT:
 	leal	AES_Td-.L005pic_point(%ebp),%ebp
-	leal	-64(%esp),	%edi
+	leal	-324(%esp),	%edi
 	andl	$-64,		%edi
-	movl	%ebp,		%ebx
+	movl	%ebp,		%eax
+	leal	3072(%ebp),	%ebx
 	movl	%edi,		%edx
+	andl	$4095,		%eax
 	andl	$4095,		%ebx
 	andl	$4095,		%edx
 	cmpl	%ebx,		%edx
-	jb	.L013td_ok
-	leal	3072(%ebx),	%esi
-	cmpl	%esi,		%edx
-	jae	.L013td_ok
-	subl	%edx,		%ebx
-	leal	-64(%edi,%ebx),	%edi
-.L013td_ok:
-	movl	20(%esp),	%eax
-	movl	24(%esp),	%ebx
-	movl	32(%esp),	%edx
-	movl	36(%esp),	%esi
+	jb	.L014td_break_out
+	subl	%ebx,		%edx
+	subl	%edx,		%edi
+	jmp	.L015td_ok
+.L014td_break_out:
+	subl	%eax,		%edx
+	andl	$4095,		%edx
+	addl	$384,		%edx
+	subl	%edx,		%edi
+.align	4
+.L015td_ok:
+	movl	24(%esp),	%eax
+	movl	28(%esp),	%ebx
+	movl	36(%esp),	%edx
+	movl	40(%esp),	%esi
 	xchgl	%edi,		%esp
 	addl	$4,		%esp
 	movl	%edi,		16(%esp)
@@ -1164,24 +1191,30 @@ AES_cbc_encrypt:
 	movl	%ecx,		28(%esp)
 	movl	%edx,		32(%esp)
 	movl	%esi,		36(%esp)
+	movl	$65,		%ecx
+	movl	%edx,		%esi
+	leal	60(%esp),	%edi
+	movl	%edi,		32(%esp)
+.align	4
+	.long	4136216051
 	movl	%eax,		%esi
 	movl	$24,		%edi
 .align	4
-.L014prefetch_td:
+.L016prefetch_td:
 	movl	(%ebp),		%eax
 	movl	32(%ebp),	%ebx
 	movl	64(%ebp),	%ecx
 	movl	96(%ebp),	%edx
 	leal	128(%ebp),	%ebp
 	decl	%edi
-	jnz	.L014prefetch_td
+	jnz	.L016prefetch_td
 	subl	$3072,		%ebp
 	cmpl	24(%esp),	%esi
-	je	.L015dec_in_place
+	je	.L017dec_in_place
 	movl	36(%esp),	%edi
 	movl	%edi,		40(%esp)
 .align	4
-.L016dec_loop:
+.L018dec_loop:
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
 	movl	8(%esi),	%ecx
@@ -1195,7 +1228,7 @@ AES_cbc_encrypt:
 	xorl	8(%edi),	%ecx
 	xorl	12(%edi),	%edx
 	subl	$16,		%esi
-	jc	.L017dec_partial
+	jc	.L019dec_partial
 	movl	%esi,		28(%esp)
 	movl	20(%esp),	%esi
 	movl	24(%esp),	%edi
@@ -1208,9 +1241,9 @@ AES_cbc_encrypt:
 	movl	%esi,		20(%esp)
 	leal	16(%edi),	%edi
 	movl	%edi,		24(%esp)
-	jnz	.L016dec_loop
+	jnz	.L018dec_loop
 	movl	40(%esp),	%edi
-.L018dec_end:
+.L020dec_end:
 	movl	36(%esp),	%esi
 	movl	(%edi),		%eax
 	movl	4(%edi),	%ebx
@@ -1220,9 +1253,9 @@ AES_cbc_encrypt:
 	movl	%ebx,		4(%esi)
 	movl	%ecx,		8(%esi)
 	movl	%edx,		12(%esi)
-	jmp	.L019dec_out
+	jmp	.L021dec_out
 .align	4
-.L017dec_partial:
+.L019dec_partial:
 	leal	44(%esp),	%edi
 	movl	%eax,		(%edi)
 	movl	%ebx,		4(%edi)
@@ -1231,14 +1264,12 @@ AES_cbc_encrypt:
 	leal	16(%esi),	%ecx
 	movl	%edi,		%esi
 	movl	24(%esp),	%edi
-	pushfl
-	.long	2426729468
-	popfl
+	.long	4136215795
 	movl	20(%esp),	%edi
-	jmp	.L018dec_end
+	jmp	.L020dec_end
 .align	4
-.L015dec_in_place:
-.L020dec_in_place_loop:
+.L017dec_in_place:
+.L022dec_in_place_loop:
 	leal	44(%esp),	%edi
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
@@ -1276,23 +1307,27 @@ AES_cbc_encrypt:
 	movl	%esi,		20(%esp)
 	movl	28(%esp),	%ecx
 	subl	$16,		%ecx
-	jc	.L021dec_in_place_partial
+	jc	.L023dec_in_place_partial
 	movl	%ecx,		28(%esp)
-	jnz	.L020dec_in_place_loop
-	jmp	.L019dec_out
+	jnz	.L022dec_in_place_loop
+	jmp	.L021dec_out
 .align	4
-.L021dec_in_place_partial:
+.L023dec_in_place_partial:
 	movl	24(%esp),	%edi
 	leal	44(%esp),	%esi
 	leal	(%edi,%ecx),	%edi
 	leal	16(%esi,%ecx),	%esi
 	negl	%ecx
-	pushfl
-	.long	2426729468
-	popfl
+	.long	4136215795
 .align	4
-.L019dec_out:
+.L021dec_out:
+	movl	32(%esp),	%edi
 	movl	16(%esp),	%esp
+	movl	$64,		%ecx
+	xorl	%eax,		%eax
+.align	4
+	.long	4136217587
+	popfl
 	popl	%edi
 	popl	%esi
 	popl	%ebx
@@ -1315,28 +1350,28 @@ AES_set_encrypt_key:
 	call	FIPS_selftest_failed
 	cmpl	$0,%eax
 	mov	$-3,%eax
-	jne	.L027exit
+	jne	.L029exit
 
 	movl	20(%esp),	%esi
 	movl	28(%esp),	%edi
 	testl	$-1,		%esi
-	jz	.L022badpointer
+	jz	.L024badpointer
 	testl	$-1,		%edi
-	jz	.L022badpointer
-	call	.L023pic_point
-.L023pic_point:
+	jz	.L024badpointer
+	call	.L025pic_point
+.L025pic_point:
 	popl	%ebp
-	leal	AES_Te-.L023pic_point(%ebp),%ebp
+	leal	AES_Te-.L025pic_point(%ebp),%ebp
 	movl	24(%esp),	%ecx
 	cmpl	$128,		%ecx
-	je	.L02410rounds
+	je	.L02610rounds
 	cmpl	$192,		%ecx
-	je	.L02512rounds
+	je	.L02712rounds
 	cmpl	$256,		%ecx
-	je	.L02614rounds
+	je	.L02814rounds
 	movl	$-2,		%eax
-	jmp	.L027exit
-.L02410rounds:
+	jmp	.L029exit
+.L02610rounds:
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
 	movl	8(%esi),	%ecx
@@ -1346,12 +1381,12 @@ AES_set_encrypt_key:
 	movl	%ecx,		8(%edi)
 	movl	%edx,		12(%edi)
 	xorl	%ecx,		%ecx
-	jmp	.L02810shortcut
+	jmp	.L03010shortcut
 .align	4
-.L02910loop:
+.L03110loop:
 	movl	(%edi),		%eax
 	movl	12(%edi),	%edx
-.L02810shortcut:
+.L03010shortcut:
 	movzbl	%dl,		%esi
 	movl	2(%ebp,%esi,8),	%ebx
 	movzbl	%dh,		%esi
@@ -1380,11 +1415,11 @@ AES_set_encrypt_key:
 	incl	%ecx
 	addl	$16,		%edi
 	cmpl	$10,		%ecx
-	jl	.L02910loop
+	jl	.L03110loop
 	movl	$10,		80(%edi)
 	xorl	%eax,		%eax
-	jmp	.L027exit
-.L02512rounds:
+	jmp	.L029exit
+.L02712rounds:
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
 	movl	8(%esi),	%ecx
@@ -1398,12 +1433,12 @@ AES_set_encrypt_key:
 	movl	%ecx,		16(%edi)
 	movl	%edx,		20(%edi)
 	xorl	%ecx,		%ecx
-	jmp	.L03012shortcut
+	jmp	.L03212shortcut
 .align	4
-.L03112loop:
+.L03312loop:
 	movl	(%edi),		%eax
 	movl	20(%edi),	%edx
-.L03012shortcut:
+.L03212shortcut:
 	movzbl	%dl,		%esi
 	movl	2(%ebp,%esi,8),	%ebx
 	movzbl	%dh,		%esi
@@ -1430,19 +1465,19 @@ AES_set_encrypt_key:
 	xorl	12(%edi),	%eax
 	movl	%eax,		36(%edi)
 	cmpl	$7,		%ecx
-	je	.L03212break
+	je	.L03412break
 	incl	%ecx
 	xorl	16(%edi),	%eax
 	movl	%eax,		40(%edi)
 	xorl	20(%edi),	%eax
 	movl	%eax,		44(%edi)
 	addl	$24,		%edi
-	jmp	.L03112loop
-.L03212break:
+	jmp	.L03312loop
+.L03412break:
 	movl	$12,		72(%edi)
 	xorl	%eax,		%eax
-	jmp	.L027exit
-.L02614rounds:
+	jmp	.L029exit
+.L02814rounds:
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
 	movl	8(%esi),	%ecx
@@ -1460,11 +1495,11 @@ AES_set_encrypt_key:
 	movl	%ecx,		24(%edi)
 	movl	%edx,		28(%edi)
 	xorl	%ecx,		%ecx
-	jmp	.L03314shortcut
+	jmp	.L03514shortcut
 .align	4
-.L03414loop:
+.L03614loop:
 	movl	28(%edi),	%edx
-.L03314shortcut:
+.L03514shortcut:
 	movl	(%edi),		%eax
 	movzbl	%dl,		%esi
 	movl	2(%ebp,%esi,8),	%ebx
@@ -1492,7 +1527,7 @@ AES_set_encrypt_key:
 	xorl	12(%edi),	%eax
 	movl	%eax,		44(%edi)
 	cmpl	$6,		%ecx
-	je	.L03514break
+	je	.L03714break
 	incl	%ecx
 	movl	%eax,		%edx
 	movl	16(%edi),	%eax
@@ -1521,14 +1556,14 @@ AES_set_encrypt_key:
 	xorl	28(%edi),	%eax
 	movl	%eax,		60(%edi)
 	addl	$32,		%edi
-	jmp	.L03414loop
-.L03514break:
+	jmp	.L03614loop
+.L03714break:
 	movl	$14,		48(%edi)
 	xorl	%eax,		%eax
-	jmp	.L027exit
-.L022badpointer:
+	jmp	.L029exit
+.L024badpointer:
 	movl	$-1,		%eax
-.L027exit:
+.L029exit:
 	popl	%edi
 	popl	%esi
 	popl	%ebx
@@ -1554,9 +1589,9 @@ AES_set_decrypt_key:
 	call	AES_set_encrypt_key
 	addl	$12,		%esp
 	cmpl	$0,		%eax
-	je	.L036proceed
+	je	.L038proceed
 	ret
-.L036proceed:
+.L038proceed:
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -1566,7 +1601,7 @@ AES_set_decrypt_key:
 	leal	(,%ecx,4),	%ecx
 	leal	(%esi,%ecx,4),	%edi
 .align	4
-.L037invert:
+.L039invert:
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
 	movl	(%edi),		%ecx
@@ -1586,17 +1621,17 @@ AES_set_decrypt_key:
 	addl	$16,		%esi
 	subl	$16,		%edi
 	cmpl	%edi,		%esi
-	jne	.L037invert
-	call	.L038pic_point
-.L038pic_point:
+	jne	.L039invert
+	call	.L040pic_point
+.L040pic_point:
 	popl	%ebp
-	leal	AES_Td-.L038pic_point(%ebp),%edi
-	leal	AES_Te-.L038pic_point(%ebp),%ebp
+	leal	AES_Td-.L040pic_point(%ebp),%edi
+	leal	AES_Te-.L040pic_point(%ebp),%ebp
 	movl	28(%esp),	%esi
 	movl	240(%esi),	%ecx
 	decl	%ecx
 .align	4
-.L039permute:
+.L041permute:
 	addl	$16,		%esi
 	movl	(%esi),		%eax
 	movl	%eax,		%edx
@@ -1663,7 +1698,7 @@ AES_set_decrypt_key:
 	xorl	1(%edi,%ebx,8),	%eax
 	movl	%eax,		12(%esi)
 	decl	%ecx
-	jnz	.L039permute
+	jnz	.L041permute
 	xorl	%eax,		%eax
 	popl	%edi
 	popl	%esi
