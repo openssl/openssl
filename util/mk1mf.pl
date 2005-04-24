@@ -43,6 +43,7 @@ $infile="MINFO";
 	);
 
 $platform="";
+my $xcflags="";
 foreach (@ARGV)
 	{
 	if (!&read_options && !defined($ops{$_}))
@@ -209,6 +210,8 @@ $tmp_dir=(defined($VARS{'TMP'}))?$VARS{'TMP'}:$tmp_def.($debug?".dbg":"");
 $inc_dir=(defined($VARS{'INC'}))?$VARS{'INC'}:$inc_def;
 
 $bin_dir=$bin_dir.$o unless ((substr($bin_dir,-1,1) eq $o) || ($bin_dir eq ''));
+
+$cflags= "$xcflags$cflags" if $xcflags ne "";
 
 $cflags.=" -DOPENSSL_NO_IDEA" if $no_idea;
 $cflags.=" -DOPENSSL_NO_AES"  if $no_aes;
@@ -941,8 +944,24 @@ sub read_options
 	elsif (/^shlib$/)	{ $shlib=1; }
 	elsif (/^dll$/)		{ $shlib=1; }
 	elsif (/^shared$/)	{ } # We just need to ignore it for now...
-	elsif (/^zlib$/)	{ } # Ignore
-	elsif (/^zlib-dynamic$/){ } # Ignore
+	elsif (/^zlib$/)	{ $xcflags = "-DZLIB $xcflags"; }
+	elsif (/^zlib-dynamic$/){ $xcflags = "-DZLIB_SHARED -DZLIB $xcflags"; }
+	elsif (/^--with-krb5-flavor=(.*)$/)
+		{
+		my $krb5_flavor = $1;
+		if ($krb5_flavor =~ /^force-[Hh]eimdal$/)
+			{
+			$xcflags="-DKRB5_HEIMDAL $xcflags";
+			}
+		elsif ($krb5_flavor =~ /^MIT/i)
+			{
+			$xcflags="-DKRB5_MIT $xcflags";
+		 	if ($krb5_flavor =~ /^MIT[._-]*1[._-]*[01]/i)
+				{
+				$xcflags="-DKRB5_MIT_OLD11 $xcflags"
+				}
+			}
+		}
 	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }
 	elsif (/^-[lL].*$/)	{ $l_flags.="$_ "; }
 	elsif ((!/^-help/) && (!/^-h/) && (!/^-\?/) && /^-.*$/)
