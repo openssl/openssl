@@ -45,6 +45,7 @@ $infile="MINFO";
 	);
 
 $platform="";
+my $xcflags="";
 foreach (@ARGV)
 	{
 	if (!&read_options && !defined($ops{$_}))
@@ -119,6 +120,7 @@ $src_dir=(defined($VARS{'SRC'}))?$VARS{'SRC'}:'.';
 $bin_dir=(defined($VARS{'BIN'}))?$VARS{'BIN'}:'';
 
 # $bin_dir.=$o causes a core dump on my sparc :-(
+
 
 $NT=0;
 
@@ -220,6 +222,10 @@ $tmp_dir=(defined($VARS{'TMP'}))?$VARS{'TMP'}:$tmp_def.($debug?".dbg":"");
 $inc_dir=(defined($VARS{'INC'}))?$VARS{'INC'}:$inc_def;
 
 $bin_dir=$bin_dir.$o unless ((substr($bin_dir,-1,1) eq $o) || ($bin_dir eq ''));
+
+print STDERR "XCFLAGS is $xcflags\n";
+
+$cflags= "$xcflags$cflags" if $xcflags ne "";
 
 $cflags.=" -DOPENSSL_NO_IDEA" if $no_idea;
 $cflags.=" -DOPENSSL_NO_AES"  if $no_aes;
@@ -997,6 +1003,11 @@ sub read_options
 				}
 			}
 		}
+	elsif (/^enable-zlib$/) { $xcflags = "-DZLIB $xcflags"; }
+	elsif (/^enable-zlib-dynamic$/)
+		{
+		$xcflags = "-DZLIB_SHARED -DZLIB $xcflags";
+		}
 	# There are also enable-xxx options which correspond to
 	# the no-xxx. Since the scalars are enabled by default
 	# these can be ignored.
@@ -1007,6 +1018,22 @@ sub read_options
 		if (exists $valid_options{$t})
 			{return 1;}
 		return 0;
+		}
+	elsif (/^--with-krb5-flavor=(.*)$/)
+		{
+		my $krb5_flavor = $1;
+		if ($krb5_flavor =~ /^force-[Hh]eimdal$/)
+			{
+			$xcflags="-DKRB5_HEIMDAL $xcflags";
+			}
+		elsif ($krb5_flavor =~ /^MIT/i)
+			{
+			$xcflags="-DKRB5_MIT $xcflags";
+		 	if ($krb5_flavor =~ /^MIT[._-]*1[._-]*[01]/i)
+				{
+				$xcflags="-DKRB5_MIT_OLD11 $xcflags"
+				}
+			}
 		}
 	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }
 	elsif (/^-[lL].*$/)	{ $l_flags.="$_ "; }
