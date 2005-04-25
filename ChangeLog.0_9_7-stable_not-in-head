@@ -1,9 +1,15 @@
-2002-02-13 19:22  bodo
+This is a collection of those CVS change log entries for the 0.9.7
+branch (OpenSSL_0_9_7-stable) that do not appear similarly in
+0.9.8-dev (CVS head).
+    
+Some obvious false positives have been eliminated: e.g., we do not
+care about a simple "make update"; and we don't care about changes
+identified to the 0.9.7 branch that were explicitly identified as
+backports from head.
+    
+Eliminating all other entries (and finally this file), either as false
+positives or as things that should go into 0.9.8, remains to be done.
 
-	Changed:
-		README (1.39.2.1), "Exp", lines: +1 -1
-
-	it's year 2002 now
 
 2002-02-14 03:43  levitte
 

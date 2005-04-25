@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7f and 0.9.8  [xx XXX xxxx]
+ Changes between 0.9.7g and 0.9.8  [xx XXX xxxx]
 
   *) Add support for DER encoded private keys (SSL_FILETYPE_ASN1)
      to SSL_CTX_use_PrivateKey_file() and SSL_use_PrivateKey_file()
