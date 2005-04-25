@@ -9,6 +9,8 @@ backports from head.
     
 Eliminating all other entries (and finally this file), either as false
 positives or as things that should go into 0.9.8, remains to be done.
+Any additional changes to 0.9.7 that are not immediately put into 0.9.8,
+but belong there as well, should be added to the end of this file.
 
 
 2002-02-14 03:43  levitte
