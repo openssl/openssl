@@ -202,22 +202,6 @@ but belong there as well, should be added to the end of this file.
 	Add the possibility to enable olde des support, not just disable
 	it, for future support.  Redocument
 
-2002-04-10 21:50  jaenicke
-
-	Changed:
-		CHANGES (1.977.2.19), "Exp", lines: +723 -669
-
-	In preparation of 0.9.7: re-order changelog, so that the changes
-	are listed as of ... -> 0.9.6c -> 0.9.6d -> 0.9.7 Submitted by:
-	Reviewed by: PR:
-
-2002-04-11 20:43  jaenicke
-
-	Changed:
-		NEWS (1.39.2.3), "Exp", lines: +27 -0
-
-	Compile NEWS from CHANGES.  Submitted by: Reviewed by: PR:
-
 2002-04-15 15:28  jaenicke
 
 	Changed:
@@ -227,13 +211,6 @@ but belong there as well, should be added to the end of this file.
 
 	Use the "mail" short name according to RFC2798 (Michael Bell
 	<michael.bell@rz.hu-berlin.de>).  Submitted by: Reviewed by: PR:
-
-2002-04-15 16:17  jaenicke
-
-	Changed:
-		CHANGES (1.977.2.25), "Exp", lines: +4 -2
-
-	Document OID changes.  Submitted by: Reviewed by: PR:
 
 2002-04-20 12:25  levitte
 
@@ -514,15 +491,6 @@ but belong there as well, should be added to the end of this file.
 		crypto/rc5/rc5_locl.h (1.3.2.4), "Exp", lines: +1 -1
 
 	Fix warnings, use correct -Ds.
-
-2003-03-18 13:12  ben
-
-	Changed:
-		CHANGES (1.977.2.101), "Exp", lines: +6 -0
-		crypto/rsa/rsa_eay.c (1.28.2.4), "Exp", lines: +23 -4
-		crypto/rsa/rsa_lib.c (1.30.2.3), "Exp", lines: +7 -1
-
-	Turn on RSA blinding by default.
 
 2003-03-24 17:57  steve
 
@@ -2076,7 +2044,7 @@ but belong there as well, should be added to the end of this file.
 
 2004-12-09 19:03  appro
 
-	Changed:
+	vChanged:
 		crypto/Makefile (1.1.4.4), "Exp", lines: +2 -0
 
 	Postpone linking of shared libcrypto in FIPS build.
