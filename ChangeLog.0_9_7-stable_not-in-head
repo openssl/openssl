@@ -92,13 +92,6 @@ be added to the end of this file.
 	Add argument to OPENSSL_config() and add flag to tolerate missing
 	config file.
 
-2002-02-15 01:12  steve
-
-	Changed:
-		NEWS (1.39.2.1), "Exp", lines: +5 -1
-
-	Update NEWS
-
 2002-02-15 01:33  steve
 
 	Changed:
@@ -243,14 +236,6 @@ be added to the end of this file.
 	Use 0 instead of NULL when casting to function pointers, to avoid
 	warnings from compilers when NULL is defined as '((void *)0)'.
 	This has already been applied in the main branch.
-
-2002-05-22 09:58  levitte
-
-	Changed:
-		util/mkerr.pl (1.18.2.1), "Exp", lines: +2 -2
-
-	Update copyright years.  This has already been applied in the main
-	branch.
 
 2002-05-23 17:25  levitte
 
