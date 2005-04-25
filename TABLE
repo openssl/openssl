@@ -1215,6 +1215,33 @@ $shared_extension =
 $ranlib       = 
 $arflags      = 
 
+*** debug-BSD-x86-elf
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DTERMIOS -O3 -Wall -g
+$unistd       = 
+$thread_cflag = -pthread -D_THREAD_SAFE -D_REENTRANT
+$sys_id       = 
+$lflags       = 
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$cpuid_obj    = x86cpuid-elf.o
+$bn_obj       = bn86-elf.o co86-elf.o
+$des_obj      = dx86-elf.o yx86-elf.o
+$aes_obj      = ax86-elf.o
+$bf_obj       = bx86-elf.o
+$md5_obj      = mx86-elf.o
+$sha1_obj     = sx86-elf.o s512sse2-elf.o
+$cast_obj     = cx86-elf.o
+$rc4_obj      = rx86-elf.o
+$rmd160_obj   = rm86-elf.o
+$rc5_obj      = r586-elf.o
+$dso_scheme   = dlfcn
+$shared_target= bsd-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+
 *** debug-Cygwin
 $cc           = gcc
 $cflags       = -DTERMIOS -DL_ENDIAN -march=i486 -Wall -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -g -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror
@@ -3085,7 +3112,7 @@ $unistd       =
 $thread_cflag = 
 $sys_id       = MINGW32
 $lflags       = -lwsock32 -lgdi32
-$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT EXPORT_VAR_AS_FN
 $cpuid_obj    = x86cpuid-cof.o
 $bn_obj       = bn86-cof.o co86-cof.o
 $des_obj      = dx86-cof.o yx86-cof.o
