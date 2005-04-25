@@ -2507,16 +2507,6 @@ but belong there as well, should be added to the end of this file.
 
 		PR: 1044 + 1045
 
-2005-04-17 03:15  levitte
-
-	Changed:
-		ssl/ssltest.c (1.53.2.28), "Exp", lines: +4 -1
-
-	Apparently, isascii() is an X/Open function, so to get it properly
-	declared, we need to define _XOPEN_SOURCE before including ctype.h.
-
-		Ported from HEAD.
-
 2005-04-17 06:35  steve
 
 	Changed:
@@ -2674,13 +2664,6 @@ but belong there as well, should be added to the end of this file.
 		test/Makefile (1.1.4.12), "Exp", lines: +1 -1
 
 	Enable shared link on HP-UX.
-
-2005-04-19 18:00  steve
-
-	Changed:
-		util/mkdef.pl (1.67.2.9), "Exp", lines: +2 -2
-
-	Fix from HEAD.
 
 2005-04-20 10:27  steve
 
