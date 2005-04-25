@@ -14,13 +14,13 @@
  protocols as well as a full-strength general purpose cryptography library.
  The project is managed by a worldwide community of volunteers that use the
  Internet to communicate, plan, and develop the OpenSSL toolkit and its
- related documentation. 
+ related documentation.
 
  OpenSSL is based on the excellent SSLeay library developed from Eric A. Young
  and Tim J. Hudson.  The OpenSSL toolkit is licensed under a dual-license (the
  OpenSSL license plus the SSLeay license) situation, which basically means
  that you are free to get and use it for commercial and non-commercial
- purposes as long as you fulfill the conditions of both licenses. 
+ purposes as long as you fulfill the conditions of both licenses.
 
  OVERVIEW
  --------
@@ -53,11 +53,11 @@
         MDC2 message digest. A DES based hash that is popular on smart cards.
 
      Public Key
-        RSA encryption/decryption/generation.  
+        RSA encryption/decryption/generation.
             There is no limit on the number of bits.
-        DSA encryption/decryption/generation.   
+        DSA encryption/decryption/generation.
             There is no limit on the number of bits.
-        Diffie-Hellman key-exchange/key generation.  
+        Diffie-Hellman key-exchange/key generation.
             There is no limit on the number of bits.
 
      X.509v3 certificates
@@ -80,16 +80,16 @@
         A simple stack.
         A Configuration loader that uses a format similar to MS .ini files.
 
- openssl: 
+ openssl:
      A command line tool that can be used for:
         Creation of RSA, DH and DSA key parameters
-        Creation of X.509 certificates, CSRs and CRLs 
+        Creation of X.509 certificates, CSRs and CRLs
         Calculation of Message Digests
         Encryption and Decryption with Ciphers
         SSL/TLS Client and Server Tests
         Handling of S/MIME signed or encrypted mail
 
-        
+
  PATENTS
  -------
 
@@ -104,12 +104,14 @@
  licensing conditions. Their web page is http://www.rsasecurity.com/.
 
  RC4 is a trademark of RSA Security, so use of this label should perhaps
- only be used with RSA Security's permission. 
+ only be used with RSA Security's permission.
 
  The IDEA algorithm is patented by Ascom in Austria, France, Germany, Italy,
  Japan, the Netherlands, Spain, Sweden, Switzerland, UK and the USA.  They
  should be contacted if that algorithm is to be used; their web page is
  http://www.ascom.ch/.
+
+ The MDC2 algorithm is patented by IBM.
 
  INSTALLATION
  ------------
@@ -129,7 +131,7 @@
  or application author.  We try to collect those in doc/PROBLEMS, with current
  thoughts on how they should be solved in a future of OpenSSL.
 
- SUPPORT 
+ SUPPORT
  -------
 
  If you have any problems with OpenSSL then please take the following steps
@@ -138,7 +140,7 @@
     - Download the current snapshot from ftp://ftp.openssl.org/snapshot/
       to see if the problem has already been addressed
     - Remove ASM versions of libraries
-    - Remove compiler optimisation flags 
+    - Remove compiler optimisation flags
 
  If you wish to report a bug then please include the following information in
  any bug report:
@@ -154,7 +156,7 @@
     - Stack Traceback (if the application dumps core)
 
  Report the bug to the OpenSSL project via the Request Tracker
- (http://www.openssl.org/rt2.html) by mail to:
+ (http://www.openssl.org/support/rt2.html) by mail to:
 
     openssl-bugs@openssl.org
 
@@ -191,3 +193,4 @@
  # ./Configure dist; make clean
  # cd ..
  # diff -ur openssl-orig openssl-work > mydiffs.patch
+
