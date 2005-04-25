@@ -1068,15 +1068,6 @@ be added to the end of this file.
 	The use of "exp" as a variable name in a prototype causes a
 	conflict with FC2 headers.
 
-2004-11-13 14:52  steve
-
-	Changed:
-		crypto/evp/e_old.c (1.1.2.2), "Exp", lines: +1 -1
-
-	PR: 959
-
-		Use OPENSSL_NO_CAST, not OPENSSL_NO_CAST5 in e_old.c
-
 2004-11-27 13:55  steve
 
 	Changed:
