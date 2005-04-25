@@ -822,66 +822,6 @@ be added to the end of this file.
 
 	Check error returns.
 
-2004-05-15 19:51  ben
-
-	Changed:
-		crypto/dh/dh.h (1.23.2.6), "Exp", lines: +1 -0
-		crypto/dh/dh_err.c (1.6.2.3), "Exp", lines: +2 -1
-		crypto/dh/dh_gen.c (1.8.8.2), "Exp", lines: +9 -0
-		fips/fips_test_suite.c (1.1.4.2), "Exp", lines: +4 -3
-		fips/aes/fips_aesavs.c (1.1.2.11), "Exp", lines: +49 -1
-		fips/des/fingerprint.sha1 (1.1.2.4), "Exp", lines: +1 -1
-		fips/des/fips_desmovs.c (1.1.2.5), "Exp", lines: +49 -1
-		fips/des/fips_set_key.c (1.1.4.2), "Exp", lines: +2 -0
-		fips/sha1/fingerprint.sha1 (1.1.2.5), "Exp", lines: +1 -1
-		fips/sha1/fips_md32_common.h (1.1.2.4), "Exp", lines: +3 -0
-		fips/sha1/standalone.sha1 (1.1.2.6), "Exp", lines: +1 -1
-
-	Fix self-tests, ban some things in FIPS mode, fix copyrights.
-
-2004-05-17 06:28  levitte
-
-	Changed:
-		util/mk1mf.pl (1.41.2.11), "Exp", lines: +8 -2
-		util/pl/BC-16.pl (1.2.2.2), "Exp", lines: +9 -4
-		util/pl/BC-32.pl (1.11.2.5), "Exp", lines: +8 -3
-		util/pl/Mingw32.pl (1.12.6.6), "Exp", lines: +7 -2
-		util/pl/OS2-EMX.pl (1.1.2.4), "Exp", lines: +7 -2
-		util/pl/VC-16.pl (1.3.2.2), "Exp", lines: +7 -2
-		util/pl/VC-32.pl (1.11.2.4), "Exp", lines: +7 -2
-		util/pl/VC-CE.pl (1.1.2.6), "Exp", lines: +7 -2
-		util/pl/linux.pl (1.3.6.1), "Exp", lines: +7 -2
-		util/pl/ultrix.pl (1.2.8.2), "Exp", lines: +7 -2
-		util/pl/unix.pl (1.2.8.1), "Exp", lines: +7 -2
-
-	Generate SHA1 files on Windows and other platforms supported by
-	mk1mf.pl, when building in FIPS mode.
-
-		Note: UNTESTED!
-
-2004-05-17 06:30  levitte
-
-	Changed:
-		apps/apps.h (1.44.2.14), "Exp", lines: +3 -0
-		apps/openssl.c (1.48.2.10), "Exp", lines: +9 -5
-
-	Make sure the applications know when we are running in FIPS mode.
-	We can't use the variable in libcrypto, since it's supposedly
-	unknown.
-
-		Note: currently only supported in MONOLITH mode.
-
-2004-05-17 06:31  levitte
-
-	Changed:
-		apps/enc.c (1.35.2.9), "Exp", lines: +10 -1
-
-	When in FIPS mode, use SHA1 to digest the key, rather than MD5, as
-	MD5 isn't a FIPS-approved algorithm.
-
-		Note: this means the user needs to keep track of this, and
-	we need to add support for that...
-
 2004-05-17 06:39  levitte
 
 	Changed:
@@ -951,23 +891,6 @@ be added to the end of this file.
 
 	Fix memory leak.
 
-2004-07-21 19:41  steve
-
-	Changed:
-		crypto/pem/pem_all.c (1.20.2.1), "Exp", lines: +119 -0
-
-	When in FIPS mode write private keys in PKCS#8 and PBES2 format to
-	avoid use of prohibited MD5 algorithm.
-
-2004-07-23 15:20  ben
-
-	Changed:
-		fips/rand/fingerprint.sha1 (1.1.2.7), "Exp", lines: +1 -1
-		fips/rand/fips_rand.c (1.1.2.7), "Exp", lines: +22 -7
-		fips/rand/fips_randtest.c (1.1.2.5), "Exp", lines: +2 -2
-
-	Convert to X9.31.
-
 2004-07-24 15:40  appro
 
 	Changed:
@@ -994,13 +917,6 @@ be added to the end of this file.
 
 		Thanks to Dr Stephen Henson <shenson@drh-consultancy.co.uk>
 	for making me aware of this error.
-
-2004-08-09 14:13  levitte
-
-	Changed:
-		makevms.com (1.35.2.8), "Exp", lines: +1 -1
-
-	In the fips directory, we use FIPS-LIB.COM, not CRYPTO-LIB.COM...
 
 2004-08-11 22:34  levitte
 
@@ -1043,22 +959,6 @@ be added to the end of this file.
 		crypto/x509/x509_req.c (1.13.2.3), "Exp", lines: +1 -1
 
 	Oops, forgot to reorder extension request nids.
-
-2004-10-14 07:51  levitte
-
-	Changed:
-		VMS/mkshared.com (1.3.2.1), "Exp", lines: +8 -0
-
-	We need to check for OPENSSL_FIPS when building shared libraries,
-	so we get correct transfer vectors for those functions when
-	required.
-
-2004-10-26 13:47  steve
-
-	Changed:
-		util/mkfiles.pl (1.12.2.2), "Exp", lines: +1 -0
-
-	Add fips/dh directory to mkfiles.pl
 
 2004-11-11 02:18  steve
 
