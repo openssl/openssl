@@ -57,22 +57,6 @@ but belong there as well, should be added to the end of this file.
 	Make sure memset() is defined by including string.h Notified by
 	Oscar Jacobsson <oscar@jacobsson.org>
 
-2002-02-14 14:51  bodo
-
-	Changed:
-		crypto/evp/evp_test.c (1.14.2.1), "Exp", lines: +2 -0
-
-	don't call OPENSSL_config(), this does not make any sense during
-	"make test"
-
-2002-02-14 15:47  bodo
-
-	Changed:
-		crypto/ec/ectest.c (1.21.2.1), "Exp", lines: +6 -1
-
-	fix: make it possible to disable memory debugging even if it is
-	enabled by default
-
 2002-02-14 17:23  levitte
 
 	Changed:
@@ -159,21 +143,6 @@ but belong there as well, should be added to the end of this file.
 		crypto/conf/conf_mod.c (1.8.2.3), "Exp", lines: +1 -1
 
 	Add flag to disable config module DSO loading.
-
-2002-02-15 11:12  bodo
-
-	Changed:
-		NEWS (1.39.2.2), "Exp", lines: +1 -0
-
-	mention EC library
-
-2002-02-15 11:19  bodo
-
-	Changed:
-		crypto/conf/conf.h (1.30.2.2), "Exp", lines: +1 -1
-		crypto/conf/conf_mall.c (1.6.2.2), "Exp", lines: +1 -1
-
-	constify
 
 2002-02-20 00:24  steve
 
@@ -448,13 +417,6 @@ but belong there as well, should be added to the end of this file.
 
 	An engine changed name.
 
-2002-10-29 18:00  geoff
-
-	Changed:
-		ssl/ssl.h (1.126.2.15), "Exp", lines: +1 -1
-
-	Bodo spotted this keyslip in my patch to 0.9.7-stable.
-
 2002-10-29 18:46  geoff
 
 	Changed:
@@ -469,14 +431,6 @@ but belong there as well, should be added to the end of this file.
 
 	Return my normal debug targets to something not so extreme, and
 	make the extreme ones special (or 'extreme', if you will :-)).
-
-2002-11-12 14:35  bodo
-
-	Changed:
-		CHANGES (1.977.2.65), "Exp", lines: +4 -4
-
-	fix order of changes -- if B depends on A, A should be listed after
-	B (reversed 'chronological' order)
 
 2002-11-13 12:35  levitte
 
@@ -584,34 +538,6 @@ but belong there as well, should be added to the end of this file.
 		crypto/rc5/rc5_locl.h (1.3.2.4), "Exp", lines: +1 -1
 
 	Fix warnings, use correct -Ds.
-
-2003-02-06 19:00  bodo
-
-	Changed:
-		crypto/ec/ec.h (1.34.2.1), "Exp", lines: +0 -2
-		crypto/ec/ec_err.c (1.17.2.1), "Exp", lines: +0 -2
-		crypto/ec/ec_lib.c (1.13.2.3), "Exp", lines: +2 -0
-
-	EC_GROUP_get_extra_data() should not set an error when it returns
-	NULL.  (NB: this is not an API change because this internal
-	function is unused in 0.9.7.  0.9.8-dev will use it, and will
-	contain a similar change).
-
-2003-02-06 19:07  bodo
-
-	Changed:
-		crypto/ec/ec_mult.c (1.18.2.3), "Exp", lines: +11 -0
-
-	additional sanity checks for arguments to EC_POINTs_mul()
-
-2003-02-14 15:43  bodo
-
-	Changed:
-		crypto/ec/ec_lib.c (1.13.2.4), "Exp", lines: +1 -1
-
-	mask old error codes so that mkerr.pl does not re-add them
-
-	year 2003
 
 2003-03-18 13:12  ben
 
