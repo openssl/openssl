@@ -2538,3 +2538,276 @@ positives or as things that should go into 0.9.8, remains to be done.
 
 	Move cygcrypto.dll above cygwin.dll.
 
+2005-04-14 14:44  steve
+
+	Changed:
+		fips/fipshashes.sha1 (1.1.2.1), "Exp", lines: +29 -0
+		util/checkhash.pl (1.1.2.1), "Exp", lines: +181 -0
+
+	Perl script that checks or rebuilds FIPS hash files. This works on
+	both Unix and Windows.
+
+		Merge all FIPS hash files into a single hash file
+	fips/fips.sha1
+
+2005-04-15 05:27  steve
+
+	Changed:
+		fips/Makefile (1.1.4.9), "Exp", lines: +1 -1
+		fips/aes/Makefile (1.1.4.4), "Exp", lines: +1 -4
+		fips/des/Makefile (1.1.4.6), "Exp", lines: +1 -4
+		fips/dh/Makefile (1.1.2.5), "Exp", lines: +1 -4
+		fips/dsa/Makefile (1.1.4.4), "Exp", lines: +1 -4
+		fips/rand/Makefile (1.1.4.3), "Exp", lines: +1 -4
+		fips/rsa/Makefile (1.1.4.5), "Exp", lines: +1 -4
+		fips/sha1/Makefile (1.1.4.9), "Exp", lines: +1 -7
+
+	Update hash checking in makefiles to use new perl script.
+
+2005-04-15 10:00  nils
+
+	Changed:
+		doc/HOWTO/keys.txt (1.1.2.2), "Exp", lines: +3 -3
+		doc/crypto/EVP_EncryptInit.pod (1.10.2.5), "Exp", lines: +3 -3
+
+	EVP_CIPHER_CTX_init is a void function + fix typo
+
+		PR: 1044 + 1045
+
+2005-04-17 03:15  levitte
+
+	Changed:
+		ssl/ssltest.c (1.53.2.28), "Exp", lines: +4 -1
+
+	Apparently, isascii() is an X/Open function, so to get it properly
+	declared, we need to define _XOPEN_SOURCE before including ctype.h.
+
+		Ported from HEAD.
+
+2005-04-17 06:35  steve
+
+	Changed:
+		util/pl/VC-32.pl (1.11.2.6), "Exp", lines: +1 -1
+
+	Include user32.lib to import MessageBoxIndirect
+
+2005-04-17 06:37  steve
+
+	Changed:
+		util/checkhash.pl (1.1.2.2), "Exp", lines: +163 -127
+
+	Modify checkhash.pl so it can be run standalone or included as a
+	funtion in another perl script.
+
+2005-04-17 16:00  appro
+
+	Changed:
+		fips/sha1/Makefile (1.1.4.10), "Exp", lines: +9 -5
+
+	Bring back fips_standalone_sha1.
+
+2005-04-17 16:17  appro
+
+	Deleted:
+		fips/sha1/asm/sx86-elf.s (1.1.4.4)
+	Changed:
+		Configure (1.314.2.114), "Exp", lines: +1 -1
+		fips/fipshashes.sha1 (1.1.2.2), "Exp", lines: +1 -1
+		fips/sha1/Makefile (1.1.4.11), "Exp", lines: +1 -1
+		fips/sha1/standalone.sha1 (1.1.2.13), "Exp", lines: +1 -1
+		fips/sha1/asm/fips-sx86-elf.s (1.1.2.1), "Exp", lines: +1568 -0
+
+	Rename fips/sha1/sx86-elf.s to fips/sha1/fips-sx86-elf.s.
+
+2005-04-17 16:21  steve
+
+	Changed:
+		util/checkhash.pl (1.1.2.3), "Exp", lines: +2 -0
+
+	Return 0 for successful hash check.
+
+2005-04-17 16:35  appro
+
+	Changed:
+		Configure (1.314.2.115), "Exp", lines: +1 -1
+		fips/fipshashes.sha1 (1.1.2.3), "Exp", lines: +1 -1
+		fips/des/asm/fips-dx86-elf.s (1.1.4.2), "Exp", lines: +108 -98
+
+	Regenerate fips/des/asm/fips-dx86-elf.s with -fPIC flag.
+
+2005-04-17 16:54  appro
+
+	Changed:
+		Configure (1.314.2.116), "Exp", lines: +8 -1
+		Makefile.org (1.154.2.99), "Exp", lines: +3 -2
+		crypto/aes/aes_cbc.c (1.1.2.11), "Exp", lines: +2 -0
+		fips/fipshashes.sha1 (1.1.2.4), "Exp", lines: +1 -0
+		fips/aes/Makefile (1.1.4.5), "Exp", lines: +4 -2
+		fips/aes/asm/fips-ax86-elf.s (1.1.2.1), "Exp", lines: +1822 -0
+
+	Throw in fips/aes/asm/fips-ax86-elf.s.
+
+2005-04-17 17:26  appro
+
+	Changed:
+		crypto/cryptlib.c (1.32.2.18), "Exp", lines: +6 -55
+		crypto/crypto.h (1.62.2.11), "Exp", lines: +0 -3
+		fips/fips.c (1.1.2.11), "Exp", lines: +62 -8
+		fips/fips.h (1.1.2.7), "Exp", lines: +2 -3
+		fips/fips_locl.h (1.1.4.3), "Exp", lines: +6 -3
+		fips/fipshashes.sha1 (1.1.2.5), "Exp", lines: +4 -4
+		fips/rand/fips_rand.c (1.1.2.10), "Exp", lines: +3 -1
+		fips/rsa/fips_rsa_gen.c (1.1.4.4), "Exp", lines: +4 -2
+
+	Resolve minor binary compatibility issues in fips.
+
+2005-04-17 18:22  appro
+
+	Changed:
+		fips/fipshashes.sha1 (1.1.2.6), "Exp", lines: +12 -12
+		fips/des/fips_des_locl.h (1.1.2.4), "Exp", lines: +1 -1
+		fips/des/fips_set_key.c (1.1.4.4), "Exp", lines: +2 -2
+		fips/dh/fips_dh_key.c (1.1.2.3), "Exp", lines: +1 -1
+		fips/dsa/fips_dsa_ossl.c (1.1.2.7), "Exp", lines: +1 -1
+		fips/dsa/fips_dsa_selftest.c (1.1.4.2), "Exp", lines: +3 -3
+		fips/rand/fips_rand.c (1.1.2.11), "Exp", lines: +2 -2
+		fips/rand/fips_rand.h (1.1.2.5), "Exp", lines: +1 -1
+		fips/rsa/fips_rsa_eay.c (1.1.4.4), "Exp", lines: +1 -1
+		fips/rsa/fips_rsa_gen.c (1.1.4.5), "Exp", lines: +1 -1
+		fips/rsa/fips_rsa_selftest.c (1.1.4.5), "Exp", lines: +11 -11
+		fips/sha1/fips_sha1_selftest.c (1.1.4.2), "Exp", lines: +1 -1
+		fips/sha1/fips_sha1dgst.c (1.1.2.5), "Exp", lines: +1 -1
+		fips/sha1/standalone.sha1 (1.1.2.14), "Exp", lines: +2 -2
+
+	Minor fips const-ification.
+
+2005-04-18 07:02  steve
+
+	Changed:
+		crypto/bf/bf_skey.c (1.6.2.2), "Exp", lines: +1 -0
+		crypto/cast/c_skey.c (1.5.6.2), "Exp", lines: +1 -0
+		crypto/idea/i_skey.c (1.5.6.2), "Exp", lines: +1 -0
+		crypto/rc2/rc2_skey.c (1.4.6.2), "Exp", lines: +1 -0
+		crypto/rc4/rc4_skey.c (1.10.8.3), "Exp", lines: +1 -0
+		crypto/rc5/rc5_skey.c (1.4.6.2), "Exp", lines: +1 -0
+
+	Pick up definition of FIPS_mode() in fips.h to avoid warnings.
+
+2005-04-18 10:34  steve
+
+	Deleted:
+		fips/fingerprint.sha1 (1.1.2.14)
+		fips/fips_check_sha1 (1.1.2.8)
+		fips/fips_make_sha1 (1.1.2.7)
+		fips/aes/fingerprint.sha1 (1.1.2.7)
+		fips/des/fingerprint.sha1 (1.1.2.6)
+		fips/dh/fingerprint.sha1 (1.1.2.4)
+		fips/dsa/fingerprint.sha1 (1.1.2.7)
+		fips/rand/fingerprint.sha1 (1.1.2.10)
+		fips/rsa/fingerprint.sha1 (1.1.4.7)
+		fips/sha1/fingerprint.sha1 (1.1.2.12)
+	Changed:
+		fips/sha1/Makefile (1.1.4.12), "Exp", lines: +1 -4
+
+	Remove obsolete fingerprint.sha1 files and associated scripts.
+	Delete test in fips/sha1/Makefile: the top level test checks the
+	same files.
+
+2005-04-19 09:11  appro
+
+	Deleted:
+		fips/fipshashes.sha1 (1.1.2.7)
+		fips/sha1/standalone.sha1 (1.1.2.15)
+	Changed:
+		fips/fipshashes.c (1.1.2.1), "Exp", lines: +32 -0
+		util/checkhash.pl (1.1.2.4), "Exp", lines: +7 -4
+
+	Maintain fingerprint hashes as C source.
+
+2005-04-19 09:17  appro
+
+	Changed:
+		util/checkhash.pl (1.1.2.5), "Exp", lines: +1 -1
+
+	Complete the transition C-code hashes.
+
+2005-04-19 16:21  appro
+
+	Changed:
+		Configure (1.314.2.117), "Exp", lines: +24 -21
+		Makefile.org (1.154.2.100), "Exp", lines: +1 -11
+		TABLE (1.99.2.52), "Exp", lines: +20 -20
+		apps/Makefile (1.1.4.15), "Exp", lines: +1 -1
+		test/Makefile (1.1.4.12), "Exp", lines: +1 -1
+
+	Enable shared link on HP-UX.
+
+2005-04-19 18:00  steve
+
+	Changed:
+		util/mkdef.pl (1.67.2.9), "Exp", lines: +2 -2
+
+	Fix from HEAD.
+
+2005-04-20 10:27  steve
+
+	Changed:
+		Configure (1.314.2.118), "Exp", lines: +1 -1
+		util/mk1mf.pl (1.41.2.12), "Exp", lines: +2 -0
+
+	Ignore zlib related options in mk1mf.pl
+
+2005-04-20 18:42  steve
+
+	Changed:
+		Configure (1.314.2.119), "Exp", lines: +2 -2
+
+	Don't use kerberos library locations on windows.
+
+2005-04-21 19:06  steve
+
+	Changed:
+		apps/openssl.c (1.48.2.13), "Exp", lines: +0 -2
+		fips/fips.c (1.1.2.12), "Exp", lines: +0 -27
+		fips/fips.h (1.1.2.8), "Exp", lines: +0 -2
+		fips/fipshashes.c (1.1.2.2), "Exp", lines: +2 -2
+
+	Remove defunct FIPS_allow_md5() and related functions.
+
+2005-04-22 06:15  appro
+
+	Changed:
+		fips/fips.c (1.1.2.13), "Exp", lines: +3 -3
+		fips/fips_err.h (1.1.4.4), "Exp", lines: +3 -3
+		fips/fipshashes.c (1.1.2.4), "Exp", lines: +2 -2
+
+	Move some variables to .bss.
+
+2005-04-22 07:17  steve
+
+	Changed:
+		CHANGES (1.977.2.156), "Exp", lines: +5 -0
+		crypto/bn/bn.h (1.66.2.4), "Exp", lines: +2 -0
+		crypto/bn/bn_mont.c (1.30.2.3), "Exp", lines: +20 -0
+		crypto/dh/dh_key.c (1.16.2.4), "Exp", lines: +14 -10
+		crypto/dsa/dsa_ossl.c (1.12.2.7), "Exp", lines: +12 -9
+		crypto/rsa/rsa_eay.c (1.28.2.10), "Exp", lines: +16 -90
+		fips/fipshashes.c (1.1.2.5), "Exp", lines: +3 -3
+		fips/dh/fips_dh_key.c (1.1.2.4), "Exp", lines: +13 -10
+		fips/dsa/fips_dsa_ossl.c (1.1.2.8), "Exp", lines: +12 -9
+		fips/rsa/fips_rsa_eay.c (1.1.4.5), "Exp", lines: +17 -90
+
+	New function BN_MONT_CTX_set_locked, to set montgomery parameters
+	in a threadsafe manner.
+
+		Modify or add calls to use it in rsa, dsa and dh
+	algorithms.
+
+2005-04-23 06:46  nils
+
+	Changed:
+		crypto/dsa/dsa_ossl.c (1.12.2.8), "Exp", lines: +1 -1
+		crypto/rsa/rsa_eay.c (1.28.2.11), "Exp", lines: +4 -4
+
+	fix typo
+
