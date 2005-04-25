@@ -150,15 +150,6 @@ be added to the end of this file.
 
 	Remove old comment
 
-2002-02-26 22:42  jaenicke
-
-	Changed:
-		CHANGES (1.977.2.6), "Exp", lines: +4 -0
-		ssl/ssl_lib.c (1.110.2.1), "Exp", lines: +6 -8
-
-	Make sure that bad sessions are removed in SSL_clear() (found by
-	Yoram Zahavi).	Submitted by: Reviewed by: PR:
-
 2002-03-01 16:39  ben
 
 	Changed:
@@ -206,16 +197,6 @@ be added to the end of this file.
 
 	Add the possibility to enable olde des support, not just disable
 	it, for future support.  Redocument
-
-2002-04-15 15:28  jaenicke
-
-	Changed:
-		crypto/objects/obj_dat.h (1.49.2.5), "Exp", lines: +4 -4
-		crypto/objects/obj_mac.h (1.19.2.5), "Exp", lines: +1 -1
-		crypto/objects/objects.txt (1.20.2.5), "Exp", lines: +7 -2
-
-	Use the "mail" short name according to RFC2798 (Michael Bell
-	<michael.bell@rz.hu-berlin.de>).  Submitted by: Reviewed by: PR:
 
 2002-04-20 12:25  levitte
 
@@ -294,13 +275,6 @@ be added to the end of this file.
 	Correct syntax in ssl-lib.com maketests.com was missing the TCP/IP
 	options TCPIP and NONE
 
-2002-07-30 13:30  jaenicke
-
-	Changed:
-		NEWS (1.39.2.11), "Exp", lines: +1 -1
-
-	Typo.  Submitted by: Reviewed by: PR:
-
 2002-08-13 14:19  levitte
 
 	Changed:
@@ -345,14 +319,6 @@ be added to the end of this file.
 		crypto/crypto-lib.com (1.53.2.8), "Exp", lines: +1 -1
 
 	I think that's the last forgotten compilation module.
-
-2002-08-16 18:44  jaenicke
-
-	Changed:
-		README (1.39.2.9), "Exp", lines: +1 -1
-
-	Fix wrong URI.	Submitted by: Mike Castle <dalgoda@ix.netcom.com>
-	Reviewed by: PR: 200
 
 2002-10-05 13:59  steve
 
