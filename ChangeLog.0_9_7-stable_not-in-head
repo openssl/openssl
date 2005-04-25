@@ -22,23 +22,6 @@ but belong there as well, should be added to the end of this file.
 	generates different keys than previous versions of OpenSSL and
 	libdes, let's make Assar's change experimental for now.
 
-2002-02-14 13:28  levitte
-
-	Changed:
-		CHANGES (1.977.2.1), "Exp", lines: +1 -1
-		Configure (1.314.2.1), "Exp", lines: +8 -4
-		Makefile.org (1.154.2.1), "Exp", lines: +2 -2
-		config (1.95.2.2), "Exp", lines: +4 -4
-
-	At Corinna Vinschen's request, change CygWin32 to Cygwin
-
-2002-02-14 14:36  levitte
-
-	Changed:
-		Configure (1.314.2.2), "Exp", lines: +1 -1
-
-	The Cygwin shared extension was shifted.
-
 2002-02-14 14:42  levitte
 
 	Changed:
@@ -177,13 +160,6 @@ but belong there as well, should be added to the end of this file.
 		Configure (1.314.2.6), "Exp", lines: +1 -0
 
 	OpenBSD variant.
-
-2002-03-06 17:59  ben
-
-	Changed:
-		ssl/s3_lib.c (1.57.2.1), "Exp", lines: +1 -1
-
-	ADH-DES-CBC-SHA should be LOW.
 
 2002-03-08 20:12  steve
 
