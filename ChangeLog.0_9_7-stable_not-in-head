@@ -1089,16 +1089,6 @@ be added to the end of this file.
 
 	Move cygcrypto.dll above cygwin.dll.
 
-2005-04-15 10:00  nils
-
-	Changed:
-		doc/HOWTO/keys.txt (1.1.2.2), "Exp", lines: +3 -3
-		doc/crypto/EVP_EncryptInit.pod (1.10.2.5), "Exp", lines: +3 -3
-
-	EVP_CIPHER_CTX_init is a void function + fix typo
-
-		PR: 1044 + 1045
-
 2005-04-17 06:35  steve
 
 	Changed:
