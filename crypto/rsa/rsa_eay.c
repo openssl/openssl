@@ -212,64 +212,78 @@ err:
 	return(r);
 	}
 
-static int rsa_eay_blinding(RSA *rsa, BN_CTX *ctx)
-	{
-	int ret = 1;
-	CRYPTO_w_lock(CRYPTO_LOCK_RSA);
-	/* Check again inside the lock - the macro's check is racey */
-	if(rsa->blinding == NULL)
-		ret = RSA_blinding_on(rsa, ctx);
-	CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
-	return ret;
-	}
+static BN_BLINDING *rsa_get_blinding(RSA *rsa, BIGNUM **r, int *local, BN_CTX *ctx)
+{
+	BN_BLINDING *ret;
 
-#define BLINDING_HELPER(rsa, ctx, err_instr) \
-	do { \
-		if((!((rsa)->flags & RSA_FLAG_NO_BLINDING)) && \
-		    ((rsa)->blinding == NULL) && \
-		    !rsa_eay_blinding(rsa, ctx)) \
-			err_instr \
-	} while(0)
-
-static BN_BLINDING *setup_blinding(RSA *rsa, BN_CTX *ctx)
-	{
-	BIGNUM *A, *Ai;
-	BN_BLINDING *ret = NULL;
-
-	/* added in OpenSSL 0.9.6j and 0.9.7b */
-
-	/* NB: similar code appears in RSA_blinding_on (rsa_lib.c);
-	 * this should be placed in a new function of its own, but for reasons
-	 * of binary compatibility can't */
-
-	BN_CTX_start(ctx);
-	A = BN_CTX_get(ctx);
-	if ((RAND_status() == 0) && rsa->d != NULL && rsa->d->d != NULL)
+	if (rsa->blinding == NULL)
 		{
-		/* if PRNG is not properly seeded, resort to secret exponent as unpredictable seed */
-		RAND_add(rsa->d->d, rsa->d->dmax * sizeof rsa->d->d[0], 0.0);
-		if (!BN_pseudo_rand_range(A,rsa->n)) goto err;
+		if (rsa->blinding == NULL)
+			{
+			CRYPTO_w_lock(CRYPTO_LOCK_RSA);
+			if (rsa->blinding == NULL)
+				rsa->blinding = RSA_setup_blinding(rsa, ctx);
+			CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
+			}
+		}
+
+	ret = rsa->blinding;
+	if (ret == NULL)
+		return NULL;
+
+	if (BN_BLINDING_get_thread_id(ret) != CRYPTO_thread_id())
+		{
+		*local = 0;
+		if (rsa->mt_blinding == NULL)
+			{
+			CRYPTO_w_lock(CRYPTO_LOCK_RSA);
+			if (rsa->mt_blinding == NULL)
+				rsa->mt_blinding = RSA_setup_blinding(rsa, ctx);
+			CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
+			}
+		ret = rsa->mt_blinding;
 		}
 	else
-		{
-		if (!BN_rand_range(A,rsa->n)) goto err;
-		}
-	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
+		*local = 1;
 
-	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,rsa->_method_mod_n))
-		goto err;
-	ret = BN_BLINDING_new(A,Ai,rsa->n);
-	BN_free(Ai);
-err:
-	BN_CTX_end(ctx);
 	return ret;
-	}
+}
+
+static int rsa_blinding_convert(BN_BLINDING *b, int local, BIGNUM *f,
+	BIGNUM *r, BN_CTX *ctx)
+{
+	if (local)
+		return BN_BLINDING_convert_ex(f, NULL, b, ctx);
+	else
+		{
+		int ret;
+		CRYPTO_w_lock(CRYPTO_LOCK_RSA_BLINDING);
+		ret = BN_BLINDING_convert_ex(f, r, b, ctx);
+		CRYPTO_w_unlock(CRYPTO_LOCK_RSA_BLINDING);
+		return ret;
+		}
+}
+
+static int rsa_blinding_invert(BN_BLINDING *b, int local, BIGNUM *f,
+	BIGNUM *r, BN_CTX *ctx)
+{
+	if (local)
+		return BN_BLINDING_invert_ex(f, NULL, b, ctx);
+	else
+		{
+		int ret;
+		CRYPTO_r_lock(CRYPTO_LOCK_RSA_BLINDING);
+		ret = BN_BLINDING_invert_ex(f, r, b, ctx);
+		CRYPTO_r_unlock(CRYPTO_LOCK_RSA_BLINDING);
+		return ret;
+		}
+}
 
 /* signing */
 static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
-	BIGNUM *f,*ret;
+	BIGNUM *f, *ret, *br;
 	int i,j,k,num=0,r= -1;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
@@ -278,9 +292,10 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	BN_CTX_start(ctx);
-	f = BN_CTX_get(ctx);
+	f   = BN_CTX_get(ctx);
+	br  = BN_CTX_get(ctx);
 	ret = BN_CTX_get(ctx);
-	num=BN_num_bytes(rsa->n);
+	num = BN_num_bytes(rsa->n);
 	buf = OPENSSL_malloc(num);
 	if(!f || !ret || !buf)
 		{
@@ -312,17 +327,9 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 		goto err;
 		}
 
-	BLINDING_HELPER(rsa, ctx, goto err;);
-	blinding = rsa->blinding;
-	
-	/* Now unless blinding is disabled, 'blinding' is non-NULL.
-	 * But the BN_BLINDING object may be owned by some other thread
-	 * (we don't want to keep it constant and we don't want to use
-	 * lots of locking to avoid race conditions, so only a single
-	 * thread can use it; other threads have to use local blinding
-	 * factors) */
 	if (!(rsa->flags & RSA_FLAG_NO_BLINDING))
 		{
+		blinding = rsa_get_blinding(rsa, &br, &local_blinding, ctx);
 		if (blinding == NULL)
 			{
 			RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_INTERNAL_ERROR);
@@ -331,20 +338,8 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 		}
 	
 	if (blinding != NULL)
-		{
-		if (blinding->thread_id != CRYPTO_thread_id())
-			{
-			/* we need a local one-time blinding factor */
-
-			blinding = setup_blinding(rsa, ctx);
-			if (blinding == NULL)
-				goto err;
-			local_blinding = 1;
-			}
-		}
-
-	if (blinding)
-		if (!BN_BLINDING_convert(f, blinding, ctx)) goto err;
+		if (!rsa_blinding_convert(blinding, local_blinding, f, br, ctx))
+			goto err;
 
 	if ( (rsa->flags & RSA_FLAG_EXT_PKEY) ||
 		((rsa->p != NULL) &&
@@ -361,7 +356,8 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 		}
 
 	if (blinding)
-		if (!BN_BLINDING_invert(ret, blinding, ctx)) goto err;
+		if (!rsa_blinding_invert(blinding, local_blinding, ret, br, ctx))
+			goto err;
 
 	/* put in leading 0 bytes if the number is less than the
 	 * length of the modulus */
@@ -377,8 +373,6 @@ err:
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
 		}
-	if (local_blinding)
-		BN_BLINDING_free(blinding);
 	if (buf != NULL)
 		{
 		OPENSSL_cleanse(buf,num);
@@ -390,7 +384,7 @@ err:
 static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
-	BIGNUM *f,*ret;
+	BIGNUM *f, *ret, *br;
 	int j,num=0,r= -1;
 	unsigned char *p;
 	unsigned char *buf=NULL;
@@ -400,9 +394,10 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 
 	if((ctx = BN_CTX_new()) == NULL) goto err;
 	BN_CTX_start(ctx);
-	f = BN_CTX_get(ctx);
+	f   = BN_CTX_get(ctx);
+	br  = BN_CTX_get(ctx);
 	ret = BN_CTX_get(ctx);
-	num=BN_num_bytes(rsa->n);
+	num = BN_num_bytes(rsa->n);
 	buf = OPENSSL_malloc(num);
 	if(!f || !ret || !buf)
 		{
@@ -427,39 +422,19 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 		goto err;
 		}
 
-	BLINDING_HELPER(rsa, ctx, goto err;);
-	blinding = rsa->blinding;
-	
-	/* Now unless blinding is disabled, 'blinding' is non-NULL.
-	 * But the BN_BLINDING object may be owned by some other thread
-	 * (we don't want to keep it constant and we don't want to use
-	 * lots of locking to avoid race conditions, so only a single
-	 * thread can use it; other threads have to use local blinding
-	 * factors) */
 	if (!(rsa->flags & RSA_FLAG_NO_BLINDING))
 		{
+		blinding = rsa_get_blinding(rsa, &br, &local_blinding, ctx);
 		if (blinding == NULL)
 			{
-			RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, ERR_R_INTERNAL_ERROR);
+			RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 		}
 	
 	if (blinding != NULL)
-		{
-		if (blinding->thread_id != CRYPTO_thread_id())
-			{
-			/* we need a local one-time blinding factor */
-
-			blinding = setup_blinding(rsa, ctx);
-			if (blinding == NULL)
-				goto err;
-			local_blinding = 1;
-			}
-		}
-
-	if (blinding)
-		if (!BN_BLINDING_convert(f, blinding, ctx)) goto err;
+		if (!rsa_blinding_convert(blinding, local_blinding, f, br, ctx))
+			goto err;
 
 	/* do the decrypt */
 	if ( (rsa->flags & RSA_FLAG_EXT_PKEY) ||
@@ -478,7 +453,8 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 		}
 
 	if (blinding)
-		if (!BN_BLINDING_invert(ret, blinding, ctx)) goto err;
+		if (!rsa_blinding_invert(blinding, local_blinding, ret, br, ctx))
+			goto err;
 
 	p=buf;
 	j=BN_bn2bin(ret,p); /* j is only used with no-padding mode */
@@ -512,8 +488,6 @@ err:
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
 		}
-	if (local_blinding)
-		BN_BLINDING_free(blinding);
 	if (buf != NULL)
 		{
 		OPENSSL_cleanse(buf,num);

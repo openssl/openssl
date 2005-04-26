@@ -156,6 +156,7 @@ struct rsa_st
 	 * NULL */
 	char *bignum_data;
 	BN_BLINDING *blinding;
+	BN_BLINDING *mt_blinding;
 	};
 
 #define RSA_3	0x3L
@@ -279,6 +280,7 @@ int RSA_verify_ASN1_OCTET_STRING(int type,
 
 int RSA_blinding_on(RSA *rsa, BN_CTX *ctx);
 void RSA_blinding_off(RSA *rsa);
+BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *ctx);
 
 int RSA_padding_add_PKCS1_type_1(unsigned char *to,int tlen,
 	const unsigned char *f,int fl);
@@ -341,6 +343,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_PADDING_CHECK_SSLV23			 114
 #define RSA_F_RSA_PRINT					 115
 #define RSA_F_RSA_PRINT_FP				 116
+#define RSA_F_RSA_SETUP_BLINDING			 125
 #define RSA_F_RSA_SIGN					 117
 #define RSA_F_RSA_SIGN_ASN1_OCTET_STRING		 118
 #define RSA_F_RSA_VERIFY				 119
@@ -367,6 +370,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_INVALID_MESSAGE_LENGTH			 131
 #define RSA_R_IQMP_NOT_INVERSE_OF_Q			 126
 #define RSA_R_KEY_SIZE_TOO_SMALL			 120
+#define RSA_R_NO_PUBLIC_EXPONENT			 133
 #define RSA_R_NULL_BEFORE_BLOCK_MISSING			 113
 #define RSA_R_N_DOES_NOT_EQUAL_P_Q			 127
 #define RSA_R_OAEP_DECODING_ERROR			 121

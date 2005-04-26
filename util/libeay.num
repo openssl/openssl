@@ -3305,3 +3305,11 @@ BN_set_negative                         3704	EXIST::FUNCTION:
 BIO_new_dgram                           3705	EXIST::FUNCTION:
 BIO_s_datagram                          3706	EXIST::FUNCTION:DGRAM
 BIO_dgram_non_fatal_error               3707	EXIST::FUNCTION:
+RSA_setup_blinding                      3708	EXIST::FUNCTION:RSA
+BN_BLINDING_set_thread_id               3709	EXIST::FUNCTION:
+BN_BLINDING_convert_ex                  3710	EXIST::FUNCTION:
+BN_BLINDING_create_param                3711	EXIST::FUNCTION:
+BN_BLINDING_set_flags                   3712	EXIST::FUNCTION:
+BN_BLINDING_invert_ex                   3713	EXIST::FUNCTION:
+BN_BLINDING_get_thread_id               3714	EXIST::FUNCTION:
+BN_BLINDING_get_flags                   3715	EXIST::FUNCTION:

@@ -4,6 +4,18 @@
 
  Changes between 0.9.7g and 0.9.8  [xx XXX xxxx]
 
+  *) Add new functionality to the bn blinding code:
+     - automatic re-creation of the BN_BLINDING parameters after
+       a fixed number of uses (currently 32)
+     - add new function for parameter creation
+     - introduce flags to control the update behaviour of the
+       BN_BLINDING parameters
+     - hide BN_BLINDING structure
+     Add a second BN_BLINDING slot to the RSA structure to improve
+     performance when a single RSA object is shared among several
+     threads.
+     [Nils Larsch]
+
   *) Add support for DTLS.
      [Nagendra Modadugu <nagendra@cs.stanford.edu> and Ben Laurie]
 

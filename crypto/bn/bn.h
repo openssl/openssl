@@ -274,16 +274,6 @@ struct bignum_st
 	int flags;
 	};
 
-struct bn_blinding_st
-	{
-	int init;
-	BIGNUM *A;
-	BIGNUM *Ai;
-	BIGNUM *mod; /* just a reference */
-	unsigned long thread_id; /* added in OpenSSL 0.9.6j and 0.9.7b;
-				  * used only by crypto/rsa/rsa_eay.c, rsa_lib.c */
-	};
-
 /* Used for montgomery multiplication */
 struct bn_mont_ctx_st
 	{
@@ -521,11 +511,26 @@ void BN_MONT_CTX_free(BN_MONT_CTX *mont);
 int BN_MONT_CTX_set(BN_MONT_CTX *mont,const BIGNUM *mod,BN_CTX *ctx);
 BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to,BN_MONT_CTX *from);
 
-BN_BLINDING *BN_BLINDING_new(BIGNUM *A,BIGNUM *Ai,BIGNUM *mod);
+/* BN_BLINDING flags */
+#define	BN_BLINDING_NO_UPDATE	0x00000001
+#define	BN_BLINDING_NO_RECREATE	0x00000002
+
+BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod);
 void BN_BLINDING_free(BN_BLINDING *b);
 int BN_BLINDING_update(BN_BLINDING *b,BN_CTX *ctx);
-int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *r, BN_CTX *ctx);
+int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
 int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
+int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *);
+int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *);
+unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *);
+void BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long);
+unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
+void BN_BLINDING_set_flags(BN_BLINDING *, unsigned long);
+BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
+	const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
+	int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+			  const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx),
+	BN_MONT_CTX *m_ctx);
 
 #ifndef OPENSSL_NO_DEPRECATED
 void BN_set_params(int mul,int high,int low,int mont);
@@ -727,6 +732,7 @@ void ERR_load_BN_strings(void);
 /* Function codes. */
 #define BN_F_BNRAND					 114
 #define BN_F_BN_BLINDING_CONVERT			 100
+#define BN_F_BN_BLINDING_CREATE_PARAM			 133
 #define BN_F_BN_BLINDING_INVERT				 101
 #define BN_F_BN_BLINDING_NEW				 102
 #define BN_F_BN_BLINDING_UPDATE				 103
