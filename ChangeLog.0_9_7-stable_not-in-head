@@ -675,15 +675,6 @@ be added to the end of this file.
 
 	Make make tags make tags.
 
-2004-06-19 15:54  ben
-
-	Changed:
-		apps/Makefile (1.1.4.3), "Exp", lines: +3 -3
-		apps/prime.c (1.1.2.1), "Exp", lines: +115 -0
-		apps/progs.h (1.26.2.3), "Exp", lines: +2 -0
-
-	Add primality tester.
-
 2004-06-21 20:05  levitte
 
 	Changed:
@@ -771,21 +762,6 @@ be added to the end of this file.
 
 	The use of "exp" as a variable name in a prototype causes a
 	conflict with FC2 headers.
-
-2004-11-27 13:55  steve
-
-	Changed:
-		apps/prime.c (1.1.2.3), "Exp", lines: +28 -17
-
-	Fix leaks and give an error if no argument specified in prime.c
-
-2004-11-27 14:02  steve
-
-	Changed:
-		apps/prime.c (1.1.2.4), "Exp", lines: +7 -8
-
-	Remove unnecessary check and call BIO_free_all() on bio_out to
-	avoid a leak on VMS.
 
 2004-12-09 19:00  appro
 
