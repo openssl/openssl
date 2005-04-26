@@ -693,13 +693,6 @@ be added to the end of this file.
 
 		PR: 900
 
-2004-06-24 14:12  steve
-
-	Changed:
-		apps/prime.c (1.1.2.2), "Exp", lines: +3 -0
-
-	Include <string.h> to get definition of strcmp.
-
 2004-06-24 14:31  steve
 
 	Changed:
