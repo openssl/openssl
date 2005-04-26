@@ -759,13 +759,6 @@ be added to the end of this file.
 	Remove VMS_strcasecmp() from apps.c, it's not used any more.  And
 	besides, the implementation is bogus.
 
-2005-01-31 02:46  steve
-
-	Changed:
-		test/testss (1.7.2.1), "Exp", lines: +1 -1
-
-	Use SHA1 for test certificates so FIPS SSL/TLS tests work.
-
 2005-02-03 12:09  appro
 
 	Changed:
@@ -833,13 +826,6 @@ be added to the end of this file.
 
 	Move cygcrypto.dll above cygwin.dll.
 
-2005-04-17 06:35  steve
-
-	Changed:
-		util/pl/VC-32.pl (1.11.2.6), "Exp", lines: +1 -1
-
-	Include user32.lib to import MessageBoxIndirect
-
 2005-04-19 16:21  appro
 
 	Changed:
@@ -850,13 +836,6 @@ be added to the end of this file.
 		test/Makefile (1.1.4.12), "Exp", lines: +1 -1
 
 	Enable shared link on HP-UX.
-
-2005-04-20 18:42  steve
-
-	Changed:
-		Configure (1.314.2.119), "Exp", lines: +2 -2
-
-	Don't use kerberos library locations on windows.
 
 2005-04-22 07:17  steve
 
