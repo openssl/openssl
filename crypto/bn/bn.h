@@ -510,6 +510,8 @@ int BN_from_montgomery(BIGNUM *r,const BIGNUM *a,
 void BN_MONT_CTX_free(BN_MONT_CTX *mont);
 int BN_MONT_CTX_set(BN_MONT_CTX *mont,const BIGNUM *mod,BN_CTX *ctx);
 BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to,BN_MONT_CTX *from);
+BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock,
+					const BIGNUM *mod, BN_CTX *ctx);
 
 /* BN_BLINDING flags */
 #define	BN_BLINDING_NO_UPDATE	0x00000001

@@ -228,11 +228,12 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		if (!BN_rand_range(&k, dsa->q)) goto err;
 	while (BN_is_zero(&k));
 
-	if ((dsa->method_mont_p == NULL) && (dsa->flags & DSA_FLAG_CACHE_MONT_P))
+	if (dsa->flags & DSA_FLAG_CACHE_MONT_P)
 		{
-		if ((dsa->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dsa->method_mont_p,
-				dsa->p,ctx)) goto err;
+		if (!BN_MONT_CTX_set_locked((BN_MONT_CTX **)&dsa->method_mont_p,
+						CRYPTO_LOCK_DSA,
+						dsa->p, ctx))
+			goto err;
 		}
 
 	/* Compute r = (g^k mod p) mod q */
@@ -307,13 +308,15 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	/* u2 = r * w mod q */
 	if (!BN_mod_mul(&u2,sig->r,&u2,dsa->q,ctx)) goto err;
 
-	if ((dsa->method_mont_p == NULL) && (dsa->flags & DSA_FLAG_CACHE_MONT_P))
+
+	if (dsa->flags & DSA_FLAG_CACHE_MONT_P)
 		{
-		if ((dsa->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dsa->method_mont_p,
-				dsa->p,ctx)) goto err;
+		mont = BN_MONT_CTX_set_locked(
+					(BN_MONT_CTX **)&dsa->method_mont_p,
+					CRYPTO_LOCK_DSA, dsa->p, ctx);
+		if (!mont)
+			goto err;
 		}
-	mont=(BN_MONT_CTX *)dsa->method_mont_p;
 
 
 	DSA_MOD_EXP(goto err, dsa, &t1, dsa->g, &u1, dsa->pub_key, &u2, dsa->p, ctx, mont);

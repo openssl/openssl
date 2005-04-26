@@ -97,40 +97,13 @@ const RSA_METHOD *RSA_PKCS1_SSLeay(void)
 	return(&rsa_pkcs1_eay_meth);
 	}
 
-/* Static helper to reduce oodles of code duplication. As a slight
- * optimisation, the "MONT_HELPER() macro must be used as front-end to this
- * function, to prevent unnecessary function calls - there is an initial test
- * that is performed by the macro-generated code. */
-static int rsa_eay_mont_helper(BN_MONT_CTX **ptr, const BIGNUM *modulus, BN_CTX *ctx)
-	{
-	BN_MONT_CTX *bn_mont_ctx;
-	if((bn_mont_ctx = BN_MONT_CTX_new()) == NULL)
-		return 0;
-	if(!BN_MONT_CTX_set(bn_mont_ctx, modulus, ctx))
-		{
-		BN_MONT_CTX_free(bn_mont_ctx);
-		return 0;
-		}
-	if (*ptr == NULL) /* other thread may have finished first */
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_RSA);
-		if (*ptr == NULL) /* check again in the lock to stop races */
-			{
-			*ptr = bn_mont_ctx;
-			bn_mont_ctx = NULL;
-			}
-		CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
-		}
-	if (bn_mont_ctx)
-		BN_MONT_CTX_free(bn_mont_ctx);
-	return 1;
-	}
 /* Usage example;
  *    MONT_HELPER(rsa, bn_ctx, p, rsa->flags & RSA_FLAG_CACHE_PRIVATE, goto err);
  */
 #define MONT_HELPER(rsa, ctx, m, pre_cond, err_instr) \
 	if((pre_cond) && ((rsa)->_method_mod_##m == NULL) && \
-			!rsa_eay_mont_helper(&((rsa)->_method_mod_##m), \
+			!BN_MONT_CTX_set_locked(&((rsa)->_method_mod_##m), \
+				CRYPTO_LOCK_RSA, \
 				(rsa)->m, (ctx))) \
 		err_instr
 

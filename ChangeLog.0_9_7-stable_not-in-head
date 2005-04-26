@@ -837,31 +837,3 @@ be added to the end of this file.
 
 	Enable shared link on HP-UX.
 
-2005-04-22 07:17  steve
-
-	Changed:
-		CHANGES (1.977.2.156), "Exp", lines: +5 -0
-		crypto/bn/bn.h (1.66.2.4), "Exp", lines: +2 -0
-		crypto/bn/bn_mont.c (1.30.2.3), "Exp", lines: +20 -0
-		crypto/dh/dh_key.c (1.16.2.4), "Exp", lines: +14 -10
-		crypto/dsa/dsa_ossl.c (1.12.2.7), "Exp", lines: +12 -9
-		crypto/rsa/rsa_eay.c (1.28.2.10), "Exp", lines: +16 -90
-		fips/fipshashes.c (1.1.2.5), "Exp", lines: +3 -3
-		fips/dh/fips_dh_key.c (1.1.2.4), "Exp", lines: +13 -10
-		fips/dsa/fips_dsa_ossl.c (1.1.2.8), "Exp", lines: +12 -9
-		fips/rsa/fips_rsa_eay.c (1.1.4.5), "Exp", lines: +17 -90
-
-	New function BN_MONT_CTX_set_locked, to set montgomery parameters
-	in a threadsafe manner.
-
-		Modify or add calls to use it in rsa, dsa and dh
-	algorithms.
-
-2005-04-23 06:46  nils
-
-	Changed:
-		crypto/dsa/dsa_ossl.c (1.12.2.8), "Exp", lines: +1 -1
-		crypto/rsa/rsa_eay.c (1.28.2.11), "Exp", lines: +4 -4
-
-	fix typo
-

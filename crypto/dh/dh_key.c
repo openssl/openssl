@@ -127,13 +127,15 @@ static int generate_key(DH *dh)
 	else
 		pub_key=dh->pub_key;
 
-	if ((dh->method_mont_p == NULL) && (dh->flags & DH_FLAG_CACHE_MONT_P))
+
+	if (dh->flags & DH_FLAG_CACHE_MONT_P)
 		{
-		if ((dh->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dh->method_mont_p,
-				dh->p,ctx)) goto err;
+		mont = BN_MONT_CTX_set_locked(
+				(BN_MONT_CTX **)&dh->method_mont_p,
+				CRYPTO_LOCK_DH, dh->p, ctx);
+		if (!mont)
+			goto err;
 		}
-	mont=(BN_MONT_CTX *)dh->method_mont_p;
 
 	if (generate_new_key)
 		{
@@ -173,14 +175,16 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 		DHerr(DH_F_COMPUTE_KEY,DH_R_NO_PRIVATE_VALUE);
 		goto err;
 		}
-	if ((dh->method_mont_p == NULL) && (dh->flags & DH_FLAG_CACHE_MONT_P))
+
+	if (dh->flags & DH_FLAG_CACHE_MONT_P)
 		{
-		if ((dh->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dh->method_mont_p,
-				dh->p,ctx)) goto err;
+		mont = BN_MONT_CTX_set_locked(
+				(BN_MONT_CTX **)&dh->method_mont_p,
+				CRYPTO_LOCK_DH, dh->p, ctx);
+		if (!mont)
+			goto err;
 		}
 
-	mont=(BN_MONT_CTX *)dh->method_mont_p;
 	if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key,dh->p,ctx,mont))
 		{
 		DHerr(DH_F_COMPUTE_KEY,ERR_R_BN_LIB);
