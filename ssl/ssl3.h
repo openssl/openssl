@@ -438,34 +438,6 @@ typedef struct ssl3_state_st
 	} SSL3_STATE;
 
 
-/* client methods */
-int ssl3_client_hello(SSL *s);
-int ssl3_get_server_hello(SSL *s);
-int ssl3_get_certificate_request(SSL *s);
-int ssl3_get_server_done(SSL *s);
-int ssl3_send_client_verify(SSL *s);
-int ssl3_send_client_certificate(SSL *s);
-int ssl3_send_client_key_exchange(SSL *s);
-int ssl3_get_key_exchange(SSL *s);
-int ssl3_get_server_certificate(SSL *s);
-int ssl3_check_cert_and_algorithm(SSL *s);
-
-/* server methods */
-int ssl3_get_client_hello(SSL *s);
-int ssl3_send_server_hello(SSL *s);
-int ssl3_send_hello_request(SSL *s);
-int ssl3_send_server_key_exchange(SSL *s);
-int ssl3_send_certificate_request(SSL *s);
-int ssl3_send_server_done(SSL *s);
-int ssl3_check_client_hello(SSL *s);
-int ssl3_get_client_certificate(SSL *s);
-int ssl3_get_client_key_exchange(SSL *s);
-int ssl3_get_cert_verify(SSL *s);
-
-/* utility functions */
-void ssl3_record_sequence_update(unsigned char *seq);
-int ssl3_do_change_cipher_spec(SSL *ssl);
-
 /* SSLv3 */
 /*client */
 /* extra state */
