@@ -18,7 +18,7 @@ while(<IN>) {
 }
 close(IN);
 
-die "Makefile.ssl is not the toplevel Makefile!\n" if $ssl_version eq "";
+die "Makefile is not the toplevel Makefile!\n" if $ssl_version eq "";
 
 $infile="MINFO";
 
