@@ -684,21 +684,6 @@ be added to the end of this file.
 
 		PR: 900
 
-2004-06-24 14:31  steve
-
-	Changed:
-		crypto/evp/evp_lib.c (1.6.8.5), "Exp", lines: +2 -2
-
-	Return an error if an attempt is made to encode or decode cipher
-	ASN1 parameters and the cipher doesn't support it.
-
-2004-07-04 18:36  steve
-
-	Changed:
-		crypto/asn1/p5_pbev2.c (1.20.2.2), "Exp", lines: +2 -1
-
-	Fix memory leak.
-
 2004-07-24 15:40  appro
 
 	Changed:
@@ -734,34 +719,12 @@ be added to the end of this file.
 	Another missing module in the VMS build files.	I believe this is
 	the last, though...
 
-2004-09-10 22:27  steve
-
-	Changed:
-		crypto/x509/x509_req.c (1.13.2.2), "Exp", lines: +1 -1
-
-	Stop warning.
-
 2004-09-11 11:45  levitte
 
 	Changed:
 		test/testenc.com (1.6.8.2), "Exp", lines: +1 -1
 
 	Makefile.ssl changed name to Makefile...
-
-2004-09-14 00:39  steve
-
-	Changed:
-		crypto/x509/x509_req.c (1.13.2.3), "Exp", lines: +1 -1
-
-	Oops, forgot to reorder extension request nids.
-
-2004-11-11 02:18  steve
-
-	Changed:
-		crypto/engine/vendor_defns/sureware.h (1.2.2.1), "Exp", lines: +1 -1
-
-	The use of "exp" as a variable name in a prototype causes a
-	conflict with FC2 headers.
 
 2004-12-09 19:00  appro
 
