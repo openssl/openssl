@@ -173,7 +173,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned long long priority)
 		if (rdata != NULL) OPENSSL_free(rdata);
 		if (item != NULL) pitem_free(item);
 		
-		SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
 		return(0);
 		}
 	
@@ -348,7 +348,7 @@ dtls1_process_record(SSL *s)
 	if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH)
 		{
 		al=SSL_AD_RECORD_OVERFLOW;
-		SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
+		SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
 		goto f_err;
 		}
 
@@ -386,7 +386,7 @@ if (	(sess == NULL) ||
 			{
 #if 0 /* OK only for stream ciphers (then rr->length is visible from ciphertext anyway) */
 			al=SSL_AD_RECORD_OVERFLOW;
-			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_PRE_MAC_LENGTH_TOO_LONG);
+			SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_PRE_MAC_LENGTH_TOO_LONG);
 			goto f_err;
 #else
 			goto decryption_failed_or_bad_record_mac;
@@ -397,7 +397,7 @@ if (	(sess == NULL) ||
 			{
 #if 0 /* OK only for stream ciphers */
 			al=SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_LENGTH_TOO_SHORT);
+			SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_LENGTH_TOO_SHORT);
 			goto f_err;
 #else
 			goto decryption_failed_or_bad_record_mac;
@@ -417,13 +417,13 @@ if (	(sess == NULL) ||
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH)
 			{
 			al=SSL_AD_RECORD_OVERFLOW;
-			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_COMPRESSED_LENGTH_TOO_LONG);
+			SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_COMPRESSED_LENGTH_TOO_LONG);
 			goto f_err;
 			}
 		if (!ssl3_do_uncompress(s))
 			{
 			al=SSL_AD_DECOMPRESSION_FAILURE;
-			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_BAD_DECOMPRESSION);
+			SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_BAD_DECOMPRESSION);
 			goto f_err;
 			}
 		}
@@ -431,7 +431,7 @@ if (	(sess == NULL) ||
 	if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH)
 		{
 		al=SSL_AD_RECORD_OVERFLOW;
-		SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_DATA_LENGTH_TOO_LONG);
+		SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_DATA_LENGTH_TOO_LONG);
 		goto f_err;
 		}
 
@@ -456,7 +456,7 @@ decryption_failed_or_bad_record_mac:
 	 * we should not reveal which kind of error occured -- this
 	 * might become visible to an attacker (e.g. via logfile) */
 	al=SSL_AD_BAD_RECORD_MAC;
-	SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
+	SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
 err:
@@ -536,7 +536,7 @@ again:
 			{
 			if (version != s->version)
 				{
-				SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
+				SSLerr(SSL_F_DTLS1_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
 				/* Send back error using their
 				 * version number :-) */
 				s->version=version;
@@ -547,14 +547,14 @@ again:
 
 		if ((version & 0xff00) != (DTLS1_VERSION & 0xff00))
 			{
-			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
+			SSLerr(SSL_F_DTLS1_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
 			goto err;
 			}
 
 		if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH)
 			{
 			al=SSL_AD_RECORD_OVERFLOW;
-			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_PACKET_LENGTH_TOO_LONG);
+			SSLerr(SSL_F_DTLS1_GET_RECORD,SSL_R_PACKET_LENGTH_TOO_LONG);
 			goto f_err;
 			}
 
@@ -667,7 +667,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		(type != SSL3_RT_HANDSHAKE) && type) ||
 	    (peek && (type != SSL3_RT_APPLICATION_DATA)))
 		{
-		SSLerr(SSL_F_SSL3_READ_BYTES, ERR_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_DTLS1_READ_BYTES, ERR_R_INTERNAL_ERROR);
 		return -1;
 		}
 
@@ -684,7 +684,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		if (i < 0) return(i);
 		if (i == 0)
 			{
-			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_SSL_HANDSHAKE_FAILURE);
+			SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_SSL_HANDSHAKE_FAILURE);
 			return(-1);
 			}
 		}
@@ -720,7 +720,7 @@ start:
 		&& (rr->type != SSL3_RT_HANDSHAKE))
 		{
 		al=SSL_AD_UNEXPECTED_MESSAGE;
-		SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_DATA_BETWEEN_CCS_AND_FINISHED);
+		SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_DATA_BETWEEN_CCS_AND_FINISHED);
 		goto err;
 		}
 
@@ -742,7 +742,7 @@ start:
 			(s->enc_read_ctx == NULL))
 			{
 			al=SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_APP_DATA_IN_HANDSHAKE);
+			SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_APP_DATA_IN_HANDSHAKE);
 			goto f_err;
 			}
 
@@ -833,7 +833,7 @@ start:
 			(s->d1->handshake_fragment[3] != 0))
 			{
 			al=SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_BAD_HELLO_REQUEST);
+			SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_BAD_HELLO_REQUEST);
 			goto err;
 			}
 
@@ -854,7 +854,7 @@ start:
 				if (i < 0) return(i);
 				if (i == 0)
 					{
-					SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_SSL_HANDSHAKE_FAILURE);
+					SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_SSL_HANDSHAKE_FAILURE);
 					return(-1);
 					}
 
@@ -941,7 +941,7 @@ start:
 
 			s->rwstate=SSL_NOTHING;
 			s->s3->fatal_alert = alert_descr;
-			SSLerr(SSL_F_SSL3_READ_BYTES, SSL_AD_REASON_OFFSET + alert_descr);
+			SSLerr(SSL_F_DTLS1_READ_BYTES, SSL_AD_REASON_OFFSET + alert_descr);
 			BIO_snprintf(tmp,sizeof tmp,"%d",alert_descr);
 			ERR_add_error_data(2,"SSL alert number ",tmp);
 			s->shutdown|=SSL_RECEIVED_SHUTDOWN;
@@ -951,7 +951,7 @@ start:
 		else
 			{
 			al=SSL_AD_ILLEGAL_PARAMETER;
-			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_UNKNOWN_ALERT_TYPE);
+			SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_UNKNOWN_ALERT_TYPE);
 			goto f_err;
 			}
 
@@ -980,7 +980,7 @@ start:
 				(rr->off != 0) || (rr->data[0] != SSL3_MT_CCS))
 				{
 				i=SSL_AD_ILLEGAL_PARAMETER;
-				SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_BAD_CHANGE_CIPHER_SPEC);
+				SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_BAD_CHANGE_CIPHER_SPEC);
 				goto err;
 				}
 			
@@ -1041,7 +1041,7 @@ start:
 		if (i < 0) return(i);
 		if (i == 0)
 			{
-			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_SSL_HANDSHAKE_FAILURE);
+			SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_SSL_HANDSHAKE_FAILURE);
 			return(-1);
 			}
 
@@ -1076,7 +1076,7 @@ start:
 			}
 #endif
 		al=SSL_AD_UNEXPECTED_MESSAGE;
-		SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_UNEXPECTED_RECORD);
+		SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_UNEXPECTED_RECORD);
 		goto f_err;
 	case SSL3_RT_CHANGE_CIPHER_SPEC:
 	case SSL3_RT_ALERT:
@@ -1085,7 +1085,7 @@ start:
 		 * of SSL3_RT_HANDSHAKE when s->in_handshake is set, but that
 		 * should not happen when type != rr->type */
 		al=SSL_AD_UNEXPECTED_MESSAGE;
-		SSLerr(SSL_F_SSL3_READ_BYTES,ERR_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_DTLS1_READ_BYTES,ERR_R_INTERNAL_ERROR);
 		goto f_err;
 	case SSL3_RT_APPLICATION_DATA:
 		/* At this point, we were expecting handshake data,
@@ -1114,7 +1114,7 @@ start:
 		else
 			{
 			al=SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_UNEXPECTED_RECORD);
+			SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_UNEXPECTED_RECORD);
 			goto f_err;
 			}
 		}
@@ -1138,7 +1138,7 @@ dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, int len)
 		if (i < 0) return(i);
 		if (i == 0)
 			{
-			SSLerr(SSL_F_SSL3_WRITE_BYTES,SSL_R_SSL_HANDSHAKE_FAILURE);
+			SSLerr(SSL_F_DTLS1_WRITE_APP_DATA_BYTES,SSL_R_SSL_HANDSHAKE_FAILURE);
 			return -1;
 			}
 		}
@@ -1251,8 +1251,7 @@ int dtls1_write_bytes(SSL *s, int type, const void *buf_, int len)
 	return tot + i;
 	}
 
-int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
-	unsigned int len, int create_empty_fragment)
+int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len, int create_empty_fragment)
 	{
 	unsigned char *p,*pseq;
 	int i,mac_size,clear=0;
@@ -1319,7 +1318,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 			if (s->s3->wbuf.len < (size_t)prefix_len + SSL3_RT_MAX_PACKET_SIZE)
 				{
 				/* insufficient space */
-				SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+				SSLerr(SSL_F_DO_DTLS1_WRITE, ERR_R_INTERNAL_ERROR);
 				goto err;
 				}
 			}
@@ -1365,7 +1364,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 		{
 		if (!ssl3_do_compress(s))
 			{
-			SSLerr(SSL_F_DO_SSL3_WRITE,SSL_R_COMPRESSION_FAILURE);
+			SSLerr(SSL_F_DO_DTLS1_WRITE,SSL_R_COMPRESSION_FAILURE);
 			goto err;
 			}
 		}

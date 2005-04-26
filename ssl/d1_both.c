@@ -324,8 +324,7 @@ int dtls1_do_write(SSL *s, int type)
  * Read an entire handshake message.  Handshake messages arrive in
  * fragments.
  */
-long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, 
-	int	*ok)
+long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	{
 	int i, al;
 
@@ -337,7 +336,7 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max,
 		if ((mt >= 0) && (s->s3->tmp.message_type != mt))
 			{
 			al=SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_UNEXPECTED_MESSAGE);
+			SSLerr(SSL_F_DTLS1_GET_MESSAGE,SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 			}
 		*ok=1;
@@ -488,7 +487,7 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st *msg_hdr, int *ok)
     if ( (int)msg_hdr->frag_len && !BUF_MEM_grow_clean(s->init_buf, 
              (int)msg_hdr->frag_len + DTLS1_HM_HEADER_LENGTH + s->init_num))
         {
-        SSLerr(SSL_F_SSL3_GET_MESSAGE,ERR_R_BUF_LIB);
+        SSLerr(SSL_F_DTLS1_PROCESS_OUT_OF_SEQ_MESSAGE,ERR_R_BUF_LIB);
         goto err;
         }
 
@@ -519,7 +518,7 @@ err:
     }
 
 
-static long 
+static long
 dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	{
 	unsigned char *p;
@@ -573,7 +572,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
     if ( frag_off + frag_len > l)
         {
         al=SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_EXCESSIVE_MESSAGE_SIZE);
+        SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,SSL_R_EXCESSIVE_MESSAGE_SIZE);
         goto f_err;
         }
 
@@ -598,7 +597,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
         else /* Incorrectly formated Hello request */
             {
             al=SSL_AD_UNEXPECTED_MESSAGE;
-            SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_UNEXPECTED_MESSAGE);
+            SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,SSL_R_UNEXPECTED_MESSAGE);
             goto f_err;
             }
         }
@@ -613,13 +612,13 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 		if (l > (INT_MAX-DTLS1_HM_HEADER_LENGTH)) 
 			{
 			al=SSL_AD_ILLEGAL_PARAMETER;
-			SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_EXCESSIVE_MESSAGE_SIZE);
+			SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,SSL_R_EXCESSIVE_MESSAGE_SIZE);
 			goto f_err;
 			}
 		if (l && !BUF_MEM_grow_clean(s->init_buf,(int)l
 			+ DTLS1_HM_HEADER_LENGTH))
 			{
-			SSLerr(SSL_F_SSL3_GET_MESSAGE,ERR_R_BUF_LIB);
+			SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,ERR_R_BUF_LIB);
 			goto err;
 			}
         /* Only do this test when we're reading the expected message.
@@ -627,7 +626,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
         if ( l > (unsigned long)max)
 			{
 			al=SSL_AD_ILLEGAL_PARAMETER;
-			SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_EXCESSIVE_MESSAGE_SIZE);
+			SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,SSL_R_EXCESSIVE_MESSAGE_SIZE);
 			goto f_err;
 			}
 
@@ -637,20 +636,20 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
     if ( frag_len > (unsigned long)max)
         {
         al=SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_EXCESSIVE_MESSAGE_SIZE);
+        SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,SSL_R_EXCESSIVE_MESSAGE_SIZE);
         goto f_err;
         }
     if ( frag_len + s->init_num > (INT_MAX - DTLS1_HM_HEADER_LENGTH))
         {
         al=SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_SSL3_GET_MESSAGE,SSL_R_EXCESSIVE_MESSAGE_SIZE);
+        SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,SSL_R_EXCESSIVE_MESSAGE_SIZE);
         goto f_err;
         }
 
     if ( frag_len & !BUF_MEM_grow_clean(s->init_buf, (int)frag_len 
              + DTLS1_HM_HEADER_LENGTH + s->init_num))
         {
-        SSLerr(SSL_F_SSL3_GET_MESSAGE,ERR_R_BUF_LIB);
+        SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,ERR_R_BUF_LIB);
         goto err;
         }
 
@@ -842,14 +841,14 @@ unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
 	buf=s->init_buf;
 	if (!BUF_MEM_grow_clean(buf,10))
 		{
-		SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
+		SSLerr(SSL_F_DTLS1_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
 		return(0);
 		}
 	if (x != NULL)
 		{
 		if(!X509_STORE_CTX_init(&xs_ctx,s->ctx->cert_store,NULL,NULL))
 			{
-			SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_X509_LIB);
+			SSLerr(SSL_F_DTLS1_OUTPUT_CERT_CHAIN,ERR_R_X509_LIB);
 			return(0);
 			}
 
@@ -858,7 +857,7 @@ unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
 			n=i2d_X509(x,NULL);
 			if (!BUF_MEM_grow_clean(buf,(int)(n+l+3)))
 				{
-				SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
+				SSLerr(SSL_F_DTLS1_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
 				return(0);
 				}
 			p=(unsigned char *)&(buf->data[l]);
@@ -888,7 +887,7 @@ unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
 		n=i2d_X509(x,NULL);
 		if (!BUF_MEM_grow_clean(buf,(int)(n+l+3)))
 			{
-			SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
+			SSLerr(SSL_F_DTLS1_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
 			return(0);
 			}
 		p=(unsigned char *)&(buf->data[l]);

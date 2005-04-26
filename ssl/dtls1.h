@@ -67,8 +67,6 @@
 extern "C" {
 #endif
 
-#define DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES	1
-
 #define DTLS1_VERSION			0x0100
 #define DTLS1_VERSION_MAJOR		0x01
 #define DTLS1_VERSION_MINOR		0x00
@@ -104,7 +102,7 @@ struct hm_header_st
 	unsigned short seq;
 	unsigned long frag_off;
 	unsigned long frag_len;
-    unsigned int is_ccs;
+	unsigned int is_ccs;
 	};
 
 struct ccs_header_st
@@ -126,16 +124,16 @@ struct dtls1_timeout_st
 	};
 
 typedef struct record_pqueue_st
-    {
-    unsigned short epoch;
-    pqueue q;
-    } record_pqueue;
+	{
+	unsigned short epoch;
+	pqueue q;
+	} record_pqueue;
 
 typedef struct hm_fragment_st
-    {
-    struct hm_header_st msg_header;
-    unsigned char *fragment;
-    } hm_fragment;
+	{
+	struct hm_header_st msg_header;
+	unsigned char *fragment;
+	} hm_fragment;
 
 typedef struct dtls1_state_st
 	{
@@ -164,15 +162,15 @@ typedef struct dtls1_state_st
 
 	unsigned short handshake_read_seq;
 
-    /* only matters for handshake messages */  
+	/* only matters for handshake messages */  
 	unsigned long long next_expected_seq_num; 
 
 	/* Received handshake records (processed and unprocessed) */
 	record_pqueue unprocessed_rcds;
-    record_pqueue processed_rcds;
+	record_pqueue processed_rcds;
 
-    /* Buffered handshake messages */
-    pqueue buffered_messages;
+	/* Buffered handshake messages */
+	pqueue buffered_messages;
 
 	/* Buffered (sent) handshake records */
 	pqueue sent_messages;

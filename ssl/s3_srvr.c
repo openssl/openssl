@@ -767,60 +767,60 @@ int ssl3_get_client_hello(SSL *s)
 		/* cookie stuff */
 		cookie_len = *(p++);
 
-        if ( (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) &&
-            s->d1->send_cookie == 0)
-            {
-            /* HelloVerifyMessage has already been sent */
-            if ( cookie_len != s->d1->cookie_len)
-                {
-                al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
-                goto f_err;
-                }
-            }
+		if ( (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) &&
+			s->d1->send_cookie == 0)
+			{
+			/* HelloVerifyMessage has already been sent */
+			if ( cookie_len != s->d1->cookie_len)
+				{
+				al = SSL_AD_HANDSHAKE_FAILURE;
+				SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
+				goto f_err;
+				}
+			}
 
-        /* 
-         * The ClientHello may contain a cookie even if the
-         * HelloVerify message has not been sent--make sure that it
-         * does not cause an overflow.
-         */
+		/* 
+		 * The ClientHello may contain a cookie even if the
+		 * HelloVerify message has not been sent--make sure that it
+		 * does not cause an overflow.
+		 */
 		if ( cookie_len > sizeof(s->d1->rcvd_cookie))
 			{
 			/* too much data */
-            al = SSL_AD_DECODE_ERROR;
+			al = SSL_AD_DECODE_ERROR;
 			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
 			goto f_err;
 			}
 
-        /* verify the cookie if appropriate option is set. */
-        if ( (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) &&
-            cookie_len > 0)
-            {
-            memcpy(s->d1->rcvd_cookie, p, cookie_len);
+		/* verify the cookie if appropriate option is set. */
+		if ( (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) &&
+			cookie_len > 0)
+			{
+			memcpy(s->d1->rcvd_cookie, p, cookie_len);
 
-            if ( s->ctx->app_verify_cookie_cb != NULL)
-                {
-                if ( s->ctx->app_verify_cookie_cb(s, s->d1->rcvd_cookie,
-                    cookie_len) == 0)
-                    {
-                    al=SSL_AD_HANDSHAKE_FAILURE;
-                    SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, 
-                        SSL_R_COOKIE_MISMATCH);
-                    goto f_err;
-                    }
-                /* else cookie verification succeeded */
-                }
-            else if ( memcmp(s->d1->rcvd_cookie, s->d1->cookie, 
-                          s->d1->cookie_len) != 0) /* default verification */
-                {
-                    al=SSL_AD_HANDSHAKE_FAILURE;
-                    SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, 
-                        SSL_R_COOKIE_MISMATCH);
-                    goto f_err;
-                }
-            }
+			if ( s->ctx->app_verify_cookie_cb != NULL)
+				{
+				if ( s->ctx->app_verify_cookie_cb(s, s->d1->rcvd_cookie,
+					cookie_len) == 0)
+					{
+					al=SSL_AD_HANDSHAKE_FAILURE;
+					SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, 
+						SSL_R_COOKIE_MISMATCH);
+					goto f_err;
+					}
+				/* else cookie verification succeeded */
+				}
+			else if ( memcmp(s->d1->rcvd_cookie, s->d1->cookie, 
+						  s->d1->cookie_len) != 0) /* default verification */
+				{
+					al=SSL_AD_HANDSHAKE_FAILURE;
+					SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, 
+						SSL_R_COOKIE_MISMATCH);
+					goto f_err;
+				}
+			}
 
-        p += cookie_len;
+		p += cookie_len;
 		}
 
 	n2s(p,i);
@@ -872,8 +872,7 @@ int ssl3_get_client_hello(SSL *s)
 			if ((s->options & SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG) && (sk_SSL_CIPHER_num(ciphers) == 1))
 				{
 				/* Very bad for multi-threading.... */
-				s->session->cipher=sk_SSL_CIPHER_value(ciphers,
-								       0);
+				s->session->cipher=sk_SSL_CIPHER_value(ciphers, 0);
 				}
 			else
 				{

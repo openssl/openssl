@@ -622,7 +622,9 @@ long	ssl3_callback_ctrl(SSL *s,int cmd, void (*fp)(void));
 long	ssl3_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)(void));
 int	ssl3_pending(const SSL *s);
 
-/* -- begin DTLS -- */
+void ssl3_record_sequence_update(unsigned char *seq);
+int ssl3_do_change_cipher_spec(SSL *ssl);
+
 int dtls1_do_write(SSL *s,int type);
 int ssl3_read_n(SSL *s, int n, int max, int extend);
 int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
@@ -635,7 +637,32 @@ unsigned char *dtls1_set_message_header(SSL *s,
 	unsigned long frag_off, unsigned long frag_len);
 int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
 int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
-/* -- end DTLS -- */
+
+/* client functionality */
+int ssl3_client_hello(SSL *s);
+int ssl3_get_server_hello(SSL *s);
+int ssl3_get_certificate_request(SSL *s);
+int ssl3_get_server_done(SSL *s);
+int ssl3_send_client_verify(SSL *s);
+int ssl3_send_client_certificate(SSL *s);
+int ssl3_send_client_key_exchange(SSL *s);
+int ssl3_get_key_exchange(SSL *s);
+int ssl3_get_server_certificate(SSL *s);
+int ssl3_check_cert_and_algorithm(SSL *s);
+
+/* server functionality */
+int ssl3_get_client_hello(SSL *s);
+int ssl3_send_server_hello(SSL *s);
+int ssl3_send_hello_request(SSL *s);
+int ssl3_send_server_key_exchange(SSL *s);
+int ssl3_send_certificate_request(SSL *s);
+int ssl3_send_server_done(SSL *s);
+int ssl3_check_client_hello(SSL *s);
+int ssl3_get_client_certificate(SSL *s);
+int ssl3_get_client_key_exchange(SSL *s);
+int ssl3_get_cert_verify(SSL *s);
+
+
 
 int ssl23_accept(SSL *s);
 int ssl23_connect(SSL *s);
@@ -649,7 +676,6 @@ long tls1_ctrl(SSL *s,int cmd, long larg, void *parg);
 long tls1_callback_ctrl(SSL *s,int cmd, void (*fp)(void));
 SSL_METHOD *tlsv1_base_method(void );
 
-/* -- start DTLS functions -- */
 int dtls1_new(SSL *s);
 int	dtls1_accept(SSL *s);
 int	dtls1_connect(SSL *s);
@@ -664,7 +690,6 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 	unsigned int len, int create_empty_fragement);
 int dtls1_dispatch_alert(SSL *s);
 int dtls1_enc(SSL *s, int snd);
-/* -- end DTLS functions -- */
 
 int ssl_init_wbio_buffer(SSL *s, int push);
 void ssl_free_wbio_buffer(SSL *s);

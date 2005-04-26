@@ -197,7 +197,7 @@ int dtls1_connect(SSL *s)
 
 			if ((s->version & 0xff00 ) != (DTLS1_VERSION & 0xff00))
 				{
-				SSLerr(SSL_F_SSL3_CONNECT, ERR_R_INTERNAL_ERROR);
+				SSLerr(SSL_F_DTLS1_CONNECT, ERR_R_INTERNAL_ERROR);
 				ret = -1;
 				goto end;
 				}
@@ -499,7 +499,7 @@ int dtls1_connect(SSL *s)
 			/* break; */
 			
 		default:
-			SSLerr(SSL_F_SSL3_CONNECT,SSL_R_UNKNOWN_STATE);
+			SSLerr(SSL_F_DTLS1_CONNECT,SSL_R_UNKNOWN_STATE);
 			ret= -1;
 			goto end;
 			/* break; */
@@ -579,7 +579,7 @@ int dtls1_client_hello(SSL *s)
 			{
 			if (i > sizeof s->session->session_id)
 				{
-				SSLerr(SSL_F_SSL3_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
+				SSLerr(SSL_F_DTLS1_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
 				goto err;
 				}
 			memcpy(p,s->session->session_id,i);
@@ -589,7 +589,7 @@ int dtls1_client_hello(SSL *s)
 		/* cookie stuff */
 		if ( s->d1->cookie_len > sizeof(s->d1->cookie))
 			{
-			SSLerr(SSL_F_SSL3_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_DTLS1_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 		*(p++) = s->d1->cookie_len;
@@ -600,7 +600,7 @@ int dtls1_client_hello(SSL *s)
 		i=ssl_cipher_list_to_bytes(s,SSL_get_ciphers(s),&(p[2]));
 		if (i == 0)
 			{
-			SSLerr(SSL_F_SSL3_CLIENT_HELLO,SSL_R_NO_CIPHERS_AVAILABLE);
+			SSLerr(SSL_F_DTLS1_CLIENT_HELLO,SSL_R_NO_CIPHERS_AVAILABLE);
 			goto err;
 			}
 		s2n(i,p);
@@ -665,7 +665,7 @@ static int dtls1_get_hello_verify(SSL *s)
 
 	if ((data[0] != (s->version>>8)) || (data[1] != (s->version&0xff)))
 		{
-		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_WRONG_SSL_VERSION);
+		SSLerr(SSL_F_DTLS1_GET_HELLO_VERIFY,SSL_R_WRONG_SSL_VERSION);
 		s->version=(s->version&0xff00)|data[1];
 		al = SSL_AD_PROTOCOL_VERSION;
 		goto f_err;
@@ -727,7 +727,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 					(pkey->type != EVP_PKEY_RSA) ||
 					(pkey->pkey.rsa == NULL))
 					{
-					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+					SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
 					goto err;
 					}
 				rsa=pkey->pkey.rsa;
@@ -753,7 +753,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 #endif
 			if (n <= 0)
 				{
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,SSL_R_BAD_RSA_ENCRYPT);
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,SSL_R_BAD_RSA_ENCRYPT);
 				goto err;
 				}
 
@@ -816,7 +816,7 @@ int dtls1_send_client_key_exchange(SSL *s)
                                 {
                                 ssl3_send_alert(s,SSL3_AL_FATAL,
 						SSL_AD_HANDSHAKE_FAILURE);
-                                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+                                SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
 						kssl_err.reason);
                                 goto err;
                                 }
@@ -883,7 +883,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 			outl += padl;
 			if (outl > sizeof epms)
 				{
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
 				goto err;
 				}
 			EVP_CIPHER_CTX_cleanup(&ciph_ctx);
@@ -914,19 +914,19 @@ int dtls1_send_client_key_exchange(SSL *s)
 				{
 				/* we get them from the cert */
 				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_HANDSHAKE_FAILURE);
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,SSL_R_UNABLE_TO_FIND_DH_PARAMETERS);
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,SSL_R_UNABLE_TO_FIND_DH_PARAMETERS);
 				goto err;
 				}
 			
 			/* generate a new random key */
 			if ((dh_clnt=DHparams_dup(dh_srvr)) == NULL)
 				{
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
 				goto err;
 				}
 			if (!DH_generate_key(dh_clnt))
 				{
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
 				goto err;
 				}
 
@@ -937,7 +937,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 
 			if (n <= 0)
 				{
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
 				goto err;
 				}
 
@@ -962,7 +962,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 		else
 			{
 			ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_HANDSHAKE_FAILURE);
-			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 		
@@ -1021,7 +1021,7 @@ int dtls1_send_client_verify(SSL *s)
 					 MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH,
 					&(p[2]), &u, pkey->pkey.rsa) <= 0 )
 				{
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,ERR_R_RSA_LIB);
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_VERIFY,ERR_R_RSA_LIB);
 				goto err;
 				}
 			s2n(u,p);
@@ -1037,7 +1037,7 @@ int dtls1_send_client_verify(SSL *s)
 				SHA_DIGEST_LENGTH,&(p[2]),
 				(unsigned int *)&j,pkey->pkey.dsa))
 				{
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,ERR_R_DSA_LIB);
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_VERIFY,ERR_R_DSA_LIB);
 				goto err;
 				}
 			s2n(j,p);
@@ -1046,7 +1046,7 @@ int dtls1_send_client_verify(SSL *s)
 		else
 #endif
 			{
-			SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,ERR_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_DTLS1_SEND_CLIENT_VERIFY,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 
@@ -1110,7 +1110,7 @@ int dtls1_send_client_certificate(SSL *s)
 		else if (i == 1)
 			{
 			i=0;
-			SSLerr(SSL_F_SSL3_SEND_CLIENT_CERTIFICATE,SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
+			SSLerr(SSL_F_DTLS1_SEND_CLIENT_CERTIFICATE,SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
 			}
 
 		if (x509 != NULL) X509_free(x509);

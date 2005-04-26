@@ -376,14 +376,12 @@ typedef struct ssl_method_st
 	int (*ssl_shutdown)(SSL *s);
 	int (*ssl_renegotiate)(SSL *s);
 	int (*ssl_renegotiate_check)(SSL *s);
-	/* -- begin DTLS -- */
 	long (*ssl_get_message)(SSL *s, int st1, int stn, int mt, long
 		max, int *ok);
 	int (*ssl_read_bytes)(SSL *s, int type, unsigned char *buf, int len, 
 		int peek);
 	int (*ssl_write_bytes)(SSL *s, int type, const void *buf_, int len);
 	int (*ssl_dispatch_alert)(SSL *s);
-	/* -- end DTLS -- */
 	long (*ssl_ctrl)(SSL *s,int cmd,long larg,void *parg);
 	long (*ssl_ctx_ctrl)(SSL_CTX *ctx,int cmd,long larg,void *parg);
 	SSL_CIPHER *(*get_cipher_by_char)(const unsigned char *ptr);
@@ -1549,7 +1547,31 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_CLIENT_HELLO				 101
 #define SSL_F_CLIENT_MASTER_KEY				 102
 #define SSL_F_D2I_SSL_SESSION				 103
+#define SSL_F_DO_DTLS1_WRITE				 1003
 #define SSL_F_DO_SSL3_WRITE				 104
+#define SSL_F_DTLS1_ACCEPT				 1004
+#define SSL_F_DTLS1_BUFFER_RECORD			 1005
+#define SSL_F_DTLS1_CLIENT_HELLO			 1006
+#define SSL_F_DTLS1_CONNECT				 1007
+#define SSL_F_DTLS1_ENC					 1008
+#define SSL_F_DTLS1_GET_HELLO_VERIFY			 1009
+#define SSL_F_DTLS1_GET_MESSAGE				 1010
+#define SSL_F_DTLS1_GET_MESSAGE_FRAGMENT		 1011
+#define SSL_F_DTLS1_GET_RECORD				 1012
+#define SSL_F_DTLS1_OUTPUT_CERT_CHAIN			 1013
+#define SSL_F_DTLS1_PROCESS_OUT_OF_SEQ_MESSAGE		 1014
+#define SSL_F_DTLS1_PROCESS_RECORD			 1015
+#define SSL_F_DTLS1_READ_BYTES				 1016
+#define SSL_F_DTLS1_READ_FAILED				 1001
+#define SSL_F_DTLS1_SEND_CERTIFICATE_REQUEST		 1017
+#define SSL_F_DTLS1_SEND_CLIENT_CERTIFICATE		 1018
+#define SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE		 1019
+#define SSL_F_DTLS1_SEND_CLIENT_VERIFY			 1020
+#define SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST		 1002
+#define SSL_F_DTLS1_SEND_SERVER_CERTIFICATE		 1021
+#define SSL_F_DTLS1_SEND_SERVER_HELLO			 1022
+#define SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE		 1023
+#define SSL_F_DTLS1_WRITE_APP_DATA_BYTES		 1024
 #define SSL_F_GET_CLIENT_FINISHED			 105
 #define SSL_F_GET_CLIENT_HELLO				 106
 #define SSL_F_GET_CLIENT_MASTER_KEY			 107
@@ -1690,9 +1712,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_TLS1_SETUP_KEY_BLOCK			 211
 #define SSL_F_WRITE_PENDING				 212
 
-#define SSL_F_DTLS1_READ_FAILED          1001
-#define SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST    1002
-
 /* Reason codes. */
 #define SSL_R_APP_DATA_IN_HANDSHAKE			 100
 #define SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT 272
@@ -1745,6 +1764,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_COMPRESSION_LIBRARY_ERROR			 142
 #define SSL_R_CONNECTION_ID_IS_DIFFERENT		 143
 #define SSL_R_CONNECTION_TYPE_NOT_SET			 144
+#define SSL_R_COOKIE_MISMATCH				 2002
 #define SSL_R_DATA_BETWEEN_CCS_AND_FINISHED		 145
 #define SSL_R_DATA_LENGTH_TOO_LONG			 146
 #define SSL_R_DECRYPTION_FAILED				 147
@@ -1836,6 +1856,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_PUBLIC_KEY_IS_NOT_RSA			 209
 #define SSL_R_PUBLIC_KEY_NOT_RSA			 210
 #define SSL_R_READ_BIO_NOT_SET				 211
+#define SSL_R_READ_TIMEOUT_EXPIRED			 2001
 #define SSL_R_READ_WRONG_PACKET_TYPE			 212
 #define SSL_R_RECORD_LENGTH_MISMATCH			 213
 #define SSL_R_RECORD_TOO_LARGE				 214
@@ -1930,9 +1951,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_WRONG_VERSION_NUMBER			 267
 #define SSL_R_X509_LIB					 268
 #define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS		 269
-
-#define SSL_R_READ_TIMEOUT_EXPIRED              2001
-#define SSL_R_COOKIE_MISMATCH                   2002
 
 #ifdef  __cplusplus
 }
