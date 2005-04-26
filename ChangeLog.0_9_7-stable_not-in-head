@@ -766,13 +766,6 @@ be added to the end of this file.
 	Remove VMS_strcasecmp() from apps.c, it's not used any more.  And
 	besides, the implementation is bogus.
 
-2005-01-31 02:40  steve
-
-	Changed:
-		crypto/asn1/a_verify.c (1.12.2.3), "Exp", lines: +7 -6
-
-	Avoid memory leak.
-
 2005-01-31 02:46  steve
 
 	Changed:
