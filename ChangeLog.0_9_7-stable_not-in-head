@@ -381,16 +381,6 @@ be added to the end of this file.
 
 	Dont forget req.
 
-2003-04-10 03:13  steve
-
-	Changed:
-		crypto/rsa/rsa_sign.c (1.11.2.6), "Exp", lines: +2 -2
-
-	Only call redirected rsa_sign or rsa_verify if the pointer is set.
-
-		This allows, for example, a smart card to redirect rsa_sign
-	and keep the default rsa_verify.
-
 2003-07-03 23:43  levitte
 
 	Changed:

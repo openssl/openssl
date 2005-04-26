@@ -76,7 +76,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 	const unsigned char *s = NULL;
 	X509_ALGOR algor;
 	ASN1_OCTET_STRING digest;
-	if(rsa->flags & RSA_FLAG_SIGN_VER)
+	if((rsa->flags & RSA_FLAG_SIGN_VER) && rsa->meth->rsa_sign)
 		{
 		return rsa->meth->rsa_sign(type, m, m_len,
 			sigret, siglen, rsa);
@@ -155,7 +155,7 @@ int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
 		return(0);
 		}
 
-	if(rsa->flags & RSA_FLAG_SIGN_VER)
+	if((rsa->flags & RSA_FLAG_SIGN_VER) && rsa->meth->rsa_verify)
 		{
 		return rsa->meth->rsa_verify(dtype, m, m_len,
 			sigbuf, siglen, rsa);
