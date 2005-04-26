@@ -63,99 +63,12 @@ be added to the end of this file.
 
 	Add the configuration target VxWorks.
 
-2002-02-14 19:46  steve
-
-	Changed:
-		crypto/engine/hw_sureware.c (1.2.2.1), "Exp", lines: +8 -4
-
-	Fix warnings:
-
-		#if out some unused function.
-
-		"index" is a global function on some platforms.
-
-2002-02-14 19:52  steve
-
-	Changed:
-		crypto/tmdiff.c (1.9.2.2), "Exp", lines: +1 -0
-
-	typo (?)
-
-2002-02-15 00:38  steve
-
-	Changed:
-		CHANGES (1.977.2.2), "Exp", lines: +5 -0
-		crypto/conf/conf.h (1.30.2.1), "Exp", lines: +2 -1
-		crypto/conf/conf_mall.c (1.6.2.1), "Exp", lines: +6 -7
-		crypto/conf/conf_mod.c (1.8.2.1), "Exp", lines: +8 -0
-
-	Add argument to OPENSSL_config() and add flag to tolerate missing
-	config file.
-
-2002-02-15 01:33  steve
-
-	Changed:
-		crypto/asn1/asn1.h (1.103.2.1), "Exp", lines: +3 -0
-		crypto/asn1/asn1_err.c (1.42.2.1), "Exp", lines: +3 -0
-		crypto/asn1/asn_moid.c (1.2.2.1), "Exp", lines: +21 -10
-		crypto/conf/conf_mod.c (1.8.2.2), "Exp", lines: +2 -6
-
-	Don't call finish function if it isn't set.
-
-		Fix OID module.
-
-2002-02-15 01:58  steve
-
-	Changed:
-		crypto/x509/x509_vfy.c (1.56.2.1), "Exp", lines: +23 -13
-
-	Allow a NULL store parameter to X509_STORE_CTX_init().
-
-2002-02-15 02:01  steve
-
-	Changed:
-		crypto/evp/evp_enc.c (1.28.2.1), "Exp", lines: +2 -1
-
-	Only initialize cipher ctx if cipher is not NULL.
-
-2002-02-15 03:43  steve
-
-	Changed:
-		crypto/conf/conf_mod.c (1.8.2.3), "Exp", lines: +1 -1
-
-	Add flag to disable config module DSO loading.
-
-2002-02-20 00:24  steve
-
-	Changed:
-		CHANGES (1.977.2.3), "Exp", lines: +4 -0
-		apps/apps.c (1.49.2.1), "Exp", lines: +20 -0
-		crypto/conf/conf_mall.c (1.6.2.3), "Exp", lines: +2 -14
-		crypto/conf/conf_mod.c (1.8.2.4), "Exp", lines: +15 -1
-
-	Use default openssl.cnf if config filename set to NULL and
-	openssl_conf if appname NULL.
-
-2002-02-23 14:43  steve
-
-	Changed:
-		crypto/asn1/asn_moid.c (1.2.2.2), "Exp", lines: +0 -1
-
-	Remove old comment
-
 2002-03-01 16:39  ben
 
 	Changed:
 		Configure (1.314.2.6), "Exp", lines: +1 -0
 
 	OpenBSD variant.
-
-2002-03-08 20:12  steve
-
-	Changed:
-		apps/apps.c (1.49.2.4), "Exp", lines: +1 -1
-
-	typo
 
 2002-03-22 03:36  levitte
 
@@ -204,14 +117,6 @@ be added to the end of this file.
 		crypto/conf/conf_mod.c (1.8.2.6), "Exp", lines: +1 -1
 
 	Fix warning.
-
-2002-05-11 14:42  steve
-
-	Changed:
-		ssl/ssl_cert.c (1.48.2.3), "Exp", lines: +0 -1
-
-
-		closedir is not used on Win32.
 
 2002-05-22 09:53  levitte
 
@@ -304,13 +209,6 @@ be added to the end of this file.
 		crypto/crypto-lib.com (1.53.2.8), "Exp", lines: +1 -1
 
 	I think that's the last forgotten compilation module.
-
-2002-10-05 13:59  steve
-
-	Changed:
-		crypto/engine/hw_cswift.c (1.17.2.4), "Exp", lines: +1 -1
-
-	Win32 fix (signed/unsigned compare error).
 
 2002-10-09 14:19  levitte
 
@@ -447,14 +345,6 @@ be added to the end of this file.
 		crypto/rc5/rc5_locl.h (1.3.2.4), "Exp", lines: +1 -1
 
 	Fix warnings, use correct -Ds.
-
-2003-03-24 17:57  steve
-
-	Changed:
-		crypto/x509/x509_vfy.c (1.56.2.5), "Exp", lines: +2 -2
-		crypto/x509/x509_vfy.c (1.56.2.6), "Exp", lines: +2 -2
-
-	Get X509_V_FLAG_CRL_CHECK_ALL logic the right way round.  PR:544
 
 ? 2003-04-04 16:21  levitte
 
