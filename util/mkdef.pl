@@ -91,7 +91,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "BIO", "COMP", "BUFFER", "LHASH", "STACK", "ERR",
 			 "LOCKING",
 			 # External "algorithms"
-			 "FP_API", "STDIO", "SOCK", "KRB5",
+			 "FP_API", "STDIO", "SOCK", "KRB5", "DGRAM",
 			 # Engines
 			 "STATIC_ENGINE", "ENGINE", "HW", "GMP",
 			 # Deprecated functions
