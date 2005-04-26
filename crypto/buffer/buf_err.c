@@ -72,6 +72,7 @@ static ERR_STRING_DATA BUF_str_functs[]=
 	{
 {ERR_FUNC(BUF_F_BUF_MEMDUP),	"BUF_memdup"},
 {ERR_FUNC(BUF_F_BUF_MEM_GROW),	"BUF_MEM_grow"},
+{ERR_FUNC(BUF_F_BUF_MEM_GROW_CLEAN),	"BUF_MEM_grow_clean"},
 {ERR_FUNC(BUF_F_BUF_MEM_NEW),	"BUF_MEM_new"},
 {ERR_FUNC(BUF_F_BUF_STRDUP),	"BUF_strdup"},
 {ERR_FUNC(BUF_F_BUF_STRNDUP),	"BUF_strndup"},

@@ -330,7 +330,7 @@ void ERR_load_DSO_strings(void);
 #define DSO_F_DSO_SET_FILENAME				 129
 #define DSO_F_DSO_SET_NAME_CONVERTER			 122
 #define DSO_F_DSO_UP_REF				 114
-#define DSO_F_VMS_BIND_VAR				 115
+#define DSO_F_VMS_BIND_SYM				 115
 #define DSO_F_VMS_LOAD					 116
 #define DSO_F_VMS_MERGER				 133
 #define DSO_F_VMS_UNLOAD				 117

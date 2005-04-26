@@ -71,7 +71,7 @@
 static ERR_STRING_DATA ECDH_str_functs[]=
 	{
 {ERR_FUNC(ECDH_F_ECDH_COMPUTE_KEY),	"ECDH_compute_key"},
-{ERR_FUNC(ECDH_F_ECDH_DATA_NEW),	"ECDH_DATA_new"},
+{ERR_FUNC(ECDH_F_ECDH_DATA_NEW_METHOD),	"ECDH_DATA_new_method"},
 {0,NULL}
 	};
 

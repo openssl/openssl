@@ -695,6 +695,7 @@ void ERR_load_BIO_strings(void);
 #define BIO_F_ACPT_STATE				 100
 #define BIO_F_BIO_ACCEPT				 101
 #define BIO_F_BIO_BER_GET_HEADER			 102
+#define BIO_F_BIO_CALLBACK_CTRL				 131
 #define BIO_F_BIO_CTRL					 103
 #define BIO_F_BIO_GETHOSTBYNAME				 120
 #define BIO_F_BIO_GETS					 104

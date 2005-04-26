@@ -1677,6 +1677,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_INIT_WBIO_BUFFER			 184
 #define SSL_F_SSL_LOAD_CLIENT_CA_FILE			 185
 #define SSL_F_SSL_NEW					 186
+#define SSL_F_SSL_PEEK					 1025
 #define SSL_F_SSL_READ					 223
 #define SSL_F_SSL_RSA_PRIVATE_DECRYPT			 187
 #define SSL_F_SSL_RSA_PUBLIC_ENCRYPT			 188

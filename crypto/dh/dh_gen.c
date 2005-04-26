@@ -119,7 +119,7 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB 
 	
 	if (generator <= 1)
 		{
-		DHerr(DH_F_DH_GENERATE_PARAMETERS, DH_R_BAD_GENERATOR);
+		DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_BAD_GENERATOR);
 		goto err;
 		}
 	if (generator == DH_GENERATOR_2)
@@ -162,7 +162,7 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB 
 err:
 	if (ok == -1)
 		{
-		DHerr(DH_F_DH_GENERATE_PARAMETERS,ERR_R_BN_LIB);
+		DHerr(DH_F_DH_BUILTIN_GENPARAMS,ERR_R_BN_LIB);
 		ok=0;
 		}
 

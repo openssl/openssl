@@ -1289,7 +1289,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 				}
 			if (!EC_KEY_up_ref(ecdhp))
 				{
-				SSLerr(SSL_F_SSL3_CTRL,ERR_R_ECDH_LIB);
+				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_ECDH_LIB);
 				goto err;
 				}
 			ecdh = ecdhp;
@@ -1921,7 +1921,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                         if (kssl_err.text)
                                 printf("kssl_err text= %s\n", kssl_err.text);
 #endif	/* KSSL_DEBUG */
-                        SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+                        SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                                 kssl_err.reason);
                         goto err;
                         }
@@ -1938,14 +1938,14 @@ int ssl3_get_client_key_exchange(SSL *s)
                         if (kssl_err.text)
                                 printf("kssl_err text= %s\n", kssl_err.text);
 #endif	/* KSSL_DEBUG */
-                        SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+                        SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                                 kssl_err.reason);
                         goto err;
 			}
 
 		if ((krb5rc = kssl_validate_times(authtime, &ttimes)) != 0)
 			{
-			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, krb5rc);
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, krb5rc);
                         goto err;
 			}
 

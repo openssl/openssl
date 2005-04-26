@@ -257,8 +257,7 @@ void BN_CTX_start(BN_CTX *ctx)
 	/* (Try to) get a new frame pointer */
 	else if(!BN_STACK_push(&ctx->stack, ctx->used))
 		{
-		/* I know this isn't BN_CTX_get, but ... */
-		BNerr(BN_F_BN_CTX_GET,BN_R_TOO_MANY_TEMPORARY_VARIABLES);
+		BNerr(BN_F_BN_CTX_START,BN_R_TOO_MANY_TEMPORARY_VARIABLES);
 		ctx->err_stack++;
 		}
 	CTXDBG_EXIT(ctx);

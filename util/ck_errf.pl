@@ -13,7 +13,7 @@ foreach $file (@ARGV)
 	$func="";
 	while (<IN>)
 		{
-		if (!/;$/ && /^([a-zA-Z].+[\s*])?([A-Za-z_0-9]+)\(.*\)/)
+		if (!/;$/ && /^([a-zA-Z].+[\s*])?([A-Za-z_0-9]+)\(.*[\),]/)
 			{
 			$func=$2;
 			$func =~ tr/A-Z/a-z/;

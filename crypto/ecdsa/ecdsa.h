@@ -280,7 +280,7 @@ void ERR_load_ECDSA_strings(void);
 /* Error codes for the ECDSA functions. */
 
 /* Function codes. */
-#define ECDSA_F_ECDSA_DATA_NEW				 100
+#define ECDSA_F_ECDSA_DATA_NEW_METHOD			 100
 #define ECDSA_F_ECDSA_DO_SIGN				 101
 #define ECDSA_F_ECDSA_DO_VERIFY				 102
 #define ECDSA_F_ECDSA_SIGN_SETUP			 103

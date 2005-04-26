@@ -408,7 +408,7 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 		if (!EC_POINT_get_affine_coordinates_GFp(group,
 			point, X, NULL, ctx))
 		{
-			ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
+			ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_EC_LIB);
 			goto err;
 		}
 	}
@@ -417,7 +417,7 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 		if (!EC_POINT_get_affine_coordinates_GF2m(group,
 			point, X, NULL, ctx))
 		{
-			ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
+			ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_EC_LIB);
 			goto err;
 		}
 	}

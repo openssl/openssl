@@ -725,6 +725,7 @@ void ERR_load_BN_strings(void);
 /* Error codes for the BN functions. */
 
 /* Function codes. */
+#define BN_F_BNRAND					 114
 #define BN_F_BN_BLINDING_CONVERT			 100
 #define BN_F_BN_BLINDING_INVERT				 101
 #define BN_F_BN_BLINDING_NEW				 102
@@ -733,7 +734,9 @@ void ERR_load_BN_strings(void);
 #define BN_F_BN_BN2HEX					 105
 #define BN_F_BN_CTX_GET					 116
 #define BN_F_BN_CTX_NEW					 106
+#define BN_F_BN_CTX_START				 130
 #define BN_F_BN_DIV					 107
+#define BN_F_BN_DIV_RECP				 131
 #define BN_F_BN_EXPAND2					 108
 #define BN_F_BN_EXPAND_INTERNAL				 120
 #define BN_F_BN_GF2M_MOD				 126
@@ -743,6 +746,7 @@ void ERR_load_BN_strings(void);
 #define BN_F_BN_GF2M_MOD_SOLVE_QUAD			 128
 #define BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR			 129
 #define BN_F_BN_GF2M_MOD_SQR				 125
+#define BN_F_BN_GF2M_MOD_SQRT				 132
 #define BN_F_BN_MOD_EXP2_MONT				 118
 #define BN_F_BN_MOD_EXP_MONT				 109
 #define BN_F_BN_MOD_EXP_MONT_WORD			 117
@@ -752,7 +756,6 @@ void ERR_load_BN_strings(void);
 #define BN_F_BN_MOD_SQRT				 121
 #define BN_F_BN_MPI2BN					 112
 #define BN_F_BN_NEW					 113
-#define BN_F_BN_RAND					 114
 #define BN_F_BN_RAND_RANGE				 122
 #define BN_F_BN_USUB					 115
 

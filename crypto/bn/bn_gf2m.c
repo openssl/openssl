@@ -902,7 +902,7 @@ int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
 		{
-		BNerr(BN_F_BN_GF2M_MOD_EXP,BN_R_INVALID_LENGTH);
+		BNerr(BN_F_BN_GF2M_MOD_SQRT,BN_R_INVALID_LENGTH);
 		goto err;
 		}
 	ret = BN_GF2m_mod_sqrt_arr(r, a, arr, ctx);

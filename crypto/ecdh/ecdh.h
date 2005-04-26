@@ -145,7 +145,7 @@ void ERR_load_ECDH_strings(void);
 
 /* Function codes. */
 #define ECDH_F_ECDH_COMPUTE_KEY				 100
-#define ECDH_F_ECDH_DATA_NEW				 101
+#define ECDH_F_ECDH_DATA_NEW_METHOD			 101
 
 /* Reason codes. */
 #define ECDH_R_KDF_FAILED				 102

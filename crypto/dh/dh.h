@@ -198,12 +198,13 @@ void ERR_load_DH_strings(void);
 /* Error codes for the DH functions. */
 
 /* Function codes. */
+#define DH_F_COMPUTE_KEY				 102
 #define DH_F_DHPARAMS_PRINT				 100
 #define DH_F_DHPARAMS_PRINT_FP				 101
-#define DH_F_DH_COMPUTE_KEY				 102
-#define DH_F_DH_GENERATE_KEY				 103
-#define DH_F_DH_GENERATE_PARAMETERS			 104
+#define DH_F_DH_BUILTIN_GENPARAMS			 106
 #define DH_F_DH_NEW_METHOD				 105
+#define DH_F_GENERATE_KEY				 103
+#define DH_F_GENERATE_PARAMETERS			 104
 
 /* Reason codes. */
 #define DH_R_BAD_GENERATOR				 101

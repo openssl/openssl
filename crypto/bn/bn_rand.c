@@ -134,7 +134,7 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 	buf=(unsigned char *)OPENSSL_malloc(bytes);
 	if (buf == NULL)
 		{
-		BNerr(BN_F_BN_RAND,ERR_R_MALLOC_FAILURE);
+		BNerr(BN_F_BNRAND,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 

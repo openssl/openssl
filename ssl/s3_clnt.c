@@ -653,8 +653,7 @@ int ssl3_get_server_hello(SSL *s)
 			else /* already sent a cookie */
 				{
 				al=SSL_AD_UNEXPECTED_MESSAGE;
-				SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
-					SSL_R_BAD_MESSAGE_TYPE);
+				SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_BAD_MESSAGE_TYPE);
 				goto f_err;
 				}
 			}
@@ -663,7 +662,7 @@ int ssl3_get_server_hello(SSL *s)
 	if ( s->s3->tmp.message_type != SSL3_MT_SERVER_HELLO)
 		{
 		al=SSL_AD_UNEXPECTED_MESSAGE;
-		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_BAD_MESSAGE_TYPE);
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_BAD_MESSAGE_TYPE);
 		goto f_err;
 		}
 

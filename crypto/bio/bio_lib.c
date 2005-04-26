@@ -338,7 +338,7 @@ long BIO_callback_ctrl(BIO *b, int cmd, void (*fp)(struct bio_st *, int, const c
 
 	if ((b->method == NULL) || (b->method->callback_ctrl == NULL))
 		{
-		BIOerr(BIO_F_BIO_CTRL,BIO_R_UNSUPPORTED_METHOD);
+		BIOerr(BIO_F_BIO_CALLBACK_CTRL,BIO_R_UNSUPPORTED_METHOD);
 		return(-2);
 		}
 

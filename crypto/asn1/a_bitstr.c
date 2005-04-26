@@ -165,7 +165,7 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
 	*pp=p;
 	return(ret);
 err:
-	ASN1err(ASN1_F_D2I_ASN1_BIT_STRING,i);
+	ASN1err(ASN1_F_C2I_ASN1_BIT_STRING,i);
 	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
 		M_ASN1_BIT_STRING_free(ret);
 	return(NULL);

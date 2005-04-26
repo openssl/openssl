@@ -70,6 +70,7 @@
 
 static ERR_STRING_DATA BN_str_functs[]=
 	{
+{ERR_FUNC(BN_F_BNRAND),	"BNRAND"},
 {ERR_FUNC(BN_F_BN_BLINDING_CONVERT),	"BN_BLINDING_convert"},
 {ERR_FUNC(BN_F_BN_BLINDING_INVERT),	"BN_BLINDING_invert"},
 {ERR_FUNC(BN_F_BN_BLINDING_NEW),	"BN_BLINDING_new"},
@@ -78,7 +79,9 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_FUNC(BN_F_BN_BN2HEX),	"BN_bn2hex"},
 {ERR_FUNC(BN_F_BN_CTX_GET),	"BN_CTX_get"},
 {ERR_FUNC(BN_F_BN_CTX_NEW),	"BN_CTX_new"},
+{ERR_FUNC(BN_F_BN_CTX_START),	"BN_CTX_start"},
 {ERR_FUNC(BN_F_BN_DIV),	"BN_div"},
+{ERR_FUNC(BN_F_BN_DIV_RECP),	"BN_div_recp"},
 {ERR_FUNC(BN_F_BN_EXPAND2),	"bn_expand2"},
 {ERR_FUNC(BN_F_BN_EXPAND_INTERNAL),	"BN_EXPAND_INTERNAL"},
 {ERR_FUNC(BN_F_BN_GF2M_MOD),	"BN_GF2m_mod"},
@@ -88,6 +91,7 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_FUNC(BN_F_BN_GF2M_MOD_SOLVE_QUAD),	"BN_GF2m_mod_solve_quad"},
 {ERR_FUNC(BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR),	"BN_GF2m_mod_solve_quad_arr"},
 {ERR_FUNC(BN_F_BN_GF2M_MOD_SQR),	"BN_GF2m_mod_sqr"},
+{ERR_FUNC(BN_F_BN_GF2M_MOD_SQRT),	"BN_GF2m_mod_sqrt"},
 {ERR_FUNC(BN_F_BN_MOD_EXP2_MONT),	"BN_mod_exp2_mont"},
 {ERR_FUNC(BN_F_BN_MOD_EXP_MONT),	"BN_mod_exp_mont"},
 {ERR_FUNC(BN_F_BN_MOD_EXP_MONT_WORD),	"BN_mod_exp_mont_word"},
@@ -97,7 +101,6 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_FUNC(BN_F_BN_MOD_SQRT),	"BN_mod_sqrt"},
 {ERR_FUNC(BN_F_BN_MPI2BN),	"BN_mpi2bn"},
 {ERR_FUNC(BN_F_BN_NEW),	"BN_new"},
-{ERR_FUNC(BN_F_BN_RAND),	"BN_rand"},
 {ERR_FUNC(BN_F_BN_RAND_RANGE),	"BN_rand_range"},
 {ERR_FUNC(BN_F_BN_USUB),	"BN_usub"},
 {0,NULL}

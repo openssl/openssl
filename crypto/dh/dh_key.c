@@ -148,7 +148,7 @@ static int generate_key(DH *dh)
 	ok=1;
 err:
 	if (ok != 1)
-		DHerr(DH_F_DH_GENERATE_KEY,ERR_R_BN_LIB);
+		DHerr(DH_F_GENERATE_KEY,ERR_R_BN_LIB);
 
 	if ((pub_key != NULL)  && (dh->pub_key == NULL))  BN_free(pub_key);
 	if ((priv_key != NULL) && (dh->priv_key == NULL)) BN_free(priv_key);
@@ -170,7 +170,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	
 	if (dh->priv_key == NULL)
 		{
-		DHerr(DH_F_DH_COMPUTE_KEY,DH_R_NO_PRIVATE_VALUE);
+		DHerr(DH_F_COMPUTE_KEY,DH_R_NO_PRIVATE_VALUE);
 		goto err;
 		}
 	if ((dh->method_mont_p == NULL) && (dh->flags & DH_FLAG_CACHE_MONT_P))
@@ -183,7 +183,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	mont=(BN_MONT_CTX *)dh->method_mont_p;
 	if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key,dh->p,ctx,mont))
 		{
-		DHerr(DH_F_DH_COMPUTE_KEY,ERR_R_BN_LIB);
+		DHerr(DH_F_COMPUTE_KEY,ERR_R_BN_LIB);
 		goto err;
 		}
 

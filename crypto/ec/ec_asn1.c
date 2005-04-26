@@ -384,7 +384,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 				}
 			if (!ASN1_INTEGER_set(char_two->p.tpBasis, (long)k))
 				{
-				ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS,
+				ECerr(EC_F_EC_ASN1_GROUP2FIELDID,
 					ERR_R_ASN1_LIB);
 				goto err;
 				}
@@ -992,7 +992,7 @@ EC_GROUP *ec_asn1_pkparameters2group(const ECPKPARAMETERS *params)
 		}
 	else
 		{
-		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_ASN1_ERROR);
+		ECerr(EC_F_EC_ASN1_PKPARAMETERS2GROUP, EC_R_ASN1_ERROR);
 		return NULL;
 		}
 

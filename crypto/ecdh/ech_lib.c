@@ -134,7 +134,7 @@ ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 	ret=(ECDH_DATA *)OPENSSL_malloc(sizeof(ECDH_DATA));
 	if (ret == NULL)
 		{
-		ECDHerr(ECDH_F_ECDH_DATA_NEW, ERR_R_MALLOC_FAILURE);
+		ECDHerr(ECDH_F_ECDH_DATA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
 
@@ -151,7 +151,7 @@ ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 		ret->meth = ENGINE_get_ECDH(ret->engine);
 		if (!ret->meth)
 			{
-			ECDHerr(ECDH_F_ECDH_DATA_NEW, ERR_R_ENGINE_LIB);
+			ECDHerr(ECDH_F_ECDH_DATA_NEW_METHOD, ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			OPENSSL_free(ret);
 			return NULL;

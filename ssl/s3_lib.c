@@ -1833,7 +1833,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			}
 		if (!EC_KEY_up_ref((EC_KEY *)parg))
 			{
-			SSLerr(SSL_F_SSL3_CTRL,ERR_R_ECDH_LIB);
+			SSLerr(SSL_F_SSL3_CTX_CTRL,ERR_R_ECDH_LIB);
 			return 0;
 			}
 		ecdh = (EC_KEY *)parg;

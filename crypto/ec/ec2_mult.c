@@ -221,7 +221,7 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 
 	if (r == point)
 		{
-		ECerr(EC_F_EC_POINT_MUL, EC_R_INVALID_ARGUMENT);
+		ECerr(EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY, EC_R_INVALID_ARGUMENT);
 		return 0;
 		}
 	

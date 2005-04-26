@@ -105,6 +105,7 @@ void ERR_load_BUF_strings(void);
 /* Function codes. */
 #define BUF_F_BUF_MEMDUP				 103
 #define BUF_F_BUF_MEM_GROW				 100
+#define BUF_F_BUF_MEM_GROW_CLEAN			 105
 #define BUF_F_BUF_MEM_NEW				 101
 #define BUF_F_BUF_STRDUP				 102
 #define BUF_F_BUF_STRNDUP				 104

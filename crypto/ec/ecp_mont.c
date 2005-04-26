@@ -223,7 +223,7 @@ int ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *
 	if (mont == NULL) goto err;
 	if (!BN_MONT_CTX_set(mont, p, ctx))
 		{
-		ECerr(EC_F_GFP_MONT_GROUP_SET_CURVE, ERR_R_BN_LIB);
+		ECerr(EC_F_EC_GFP_MONT_GROUP_SET_CURVE, ERR_R_BN_LIB);
 		goto err;
 		}
 	one = BN_new();
@@ -306,7 +306,7 @@ int ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r, BN_CTX *ctx)
 	{
 	if (group->field_data2 == NULL)
 		{
-		ECerr(EC_F_EC_GFP_MONT_FIELD_DECODE, EC_R_NOT_INITIALIZED);
+		ECerr(EC_F_EC_GFP_MONT_FIELD_SET_TO_ONE, EC_R_NOT_INITIALIZED);
 		return 0;
 		}
 
