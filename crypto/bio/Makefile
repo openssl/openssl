@@ -174,6 +174,13 @@ bss_conn.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bss_conn.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bss_conn.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bss_conn.o: ../../include/openssl/symhacks.h ../cryptlib.h bss_conn.c
+bss_dgram.o: ../../e_os.h ../../include/openssl/bio.h
+bss_dgram.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+bss_dgram.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+bss_dgram.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+bss_dgram.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+bss_dgram.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+bss_dgram.o: ../../include/openssl/symhacks.h ../cryptlib.h bss_dgram.c
 bss_fd.o: ../../e_os.h ../../include/openssl/bio.h
 bss_fd.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bss_fd.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h

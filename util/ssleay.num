@@ -223,3 +223,6 @@ SSL_COMP_get_compress_methods           271	EXIST:VMS:FUNCTION:COMP
 SSL_COMP_get_name                       272	EXIST::FUNCTION:COMP
 SSL_get_current_expansion               273	EXIST::FUNCTION:COMP
 SSL_get_current_compression             274	EXIST::FUNCTION:COMP
+DTLSv1_client_method                    275	EXIST::FUNCTION:
+DTLSv1_method                           276	EXIST::FUNCTION:
+DTLSv1_server_method                    277	EXIST::FUNCTION:
