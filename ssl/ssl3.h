@@ -294,6 +294,8 @@ typedef struct ssl3_record_st
 /*rw*/	unsigned char *data;    /* pointer to the record data */
 /*rw*/	unsigned char *input;   /* where the decode bytes are */
 /*r */	unsigned char *comp;    /* only used with decompression - malloc()ed */
+/*r */  unsigned long epoch;    /* epoch number, needed by DTLS1 */
+/*r */  unsigned long long seq_num; /* sequence number, needed by DTLS1 */
 	} SSL3_RECORD;
 
 typedef struct ssl3_buffer_st
@@ -435,6 +437,35 @@ typedef struct ssl3_state_st
 
 	} SSL3_STATE;
 
+
+/* client methods */
+int ssl3_client_hello(SSL *s);
+int ssl3_get_server_hello(SSL *s);
+int ssl3_get_certificate_request(SSL *s);
+int ssl3_get_server_done(SSL *s);
+int ssl3_send_client_verify(SSL *s);
+int ssl3_send_client_certificate(SSL *s);
+int ssl3_send_client_key_exchange(SSL *s);
+int ssl3_get_key_exchange(SSL *s);
+int ssl3_get_server_certificate(SSL *s);
+int ssl3_check_cert_and_algorithm(SSL *s);
+
+/* server methods */
+int ssl3_get_client_hello(SSL *s);
+int ssl3_send_server_hello(SSL *s);
+int ssl3_send_hello_request(SSL *s);
+int ssl3_send_server_key_exchange(SSL *s);
+int ssl3_send_certificate_request(SSL *s);
+int ssl3_send_server_done(SSL *s);
+int ssl3_check_client_hello(SSL *s);
+int ssl3_get_client_certificate(SSL *s);
+int ssl3_get_client_key_exchange(SSL *s);
+int ssl3_get_cert_verify(SSL *s);
+
+/* utility functions */
+void ssl3_record_sequence_update(unsigned char *seq);
+int ssl3_do_change_cipher_spec(SSL *ssl);
+
 /* SSLv3 */
 /*client */
 /* extra state */
@@ -445,6 +476,8 @@ typedef struct ssl3_state_st
 /* read from server */
 #define SSL3_ST_CR_SRVR_HELLO_A		(0x120|SSL_ST_CONNECT)
 #define SSL3_ST_CR_SRVR_HELLO_B		(0x121|SSL_ST_CONNECT)
+#define DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A (0x126|SSL_ST_CONNECT)
+#define DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B (0x127|SSL_ST_CONNECT)
 #define SSL3_ST_CR_CERT_A		(0x130|SSL_ST_CONNECT)
 #define SSL3_ST_CR_CERT_B		(0x131|SSL_ST_CONNECT)
 #define SSL3_ST_CR_KEY_EXCH_A		(0x140|SSL_ST_CONNECT)
@@ -481,6 +514,8 @@ typedef struct ssl3_state_st
 #define SSL3_ST_SR_CLNT_HELLO_B		(0x111|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CLNT_HELLO_C		(0x112|SSL_ST_ACCEPT)
 /* write to client */
+#define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A (0x113|SSL_ST_ACCEPT)
+#define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B (0x114|SSL_ST_ACCEPT)
 #define SSL3_ST_SW_HELLO_REQ_A		(0x120|SSL_ST_ACCEPT)
 #define SSL3_ST_SW_HELLO_REQ_B		(0x121|SSL_ST_ACCEPT)
 #define SSL3_ST_SW_HELLO_REQ_C		(0x122|SSL_ST_ACCEPT)
@@ -521,6 +556,8 @@ typedef struct ssl3_state_st
 #define SSL3_MT_CERTIFICATE_VERIFY		15
 #define SSL3_MT_CLIENT_KEY_EXCHANGE		16
 #define SSL3_MT_FINISHED			20
+#define DTLS1_MT_HELLO_VERIFY_REQUEST    3
+
 
 #define SSL3_MT_CCS				1
 

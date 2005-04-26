@@ -1381,6 +1381,10 @@ static SSL_METHOD SSLv3_data= {
 	ssl3_shutdown,
 	ssl3_renegotiate,
 	ssl3_renegotiate_check,
+	ssl3_get_message,
+	ssl3_read_bytes,
+	ssl3_write_bytes,
+	ssl3_dispatch_alert,
 	ssl3_ctrl,
 	ssl3_ctx_ctrl,
 	ssl3_get_cipher_by_char,
@@ -2141,13 +2145,13 @@ int ssl3_shutdown(SSL *s)
 		{
 		/* resend it if not sent */
 #if 1
-		ssl3_dispatch_alert(s);
+		s->method->ssl_dispatch_alert(s);
 #endif
 		}
 	else if (!(s->shutdown & SSL_RECEIVED_SHUTDOWN))
 		{
 		/* If we are waiting for a close from our peer, we are closed */
-		ssl3_read_bytes(s,0,NULL,0,0);
+		s->method->ssl_read_bytes(s,0,NULL,0,0);
 		}
 
 	if ((s->shutdown == (SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN)) &&
@@ -2202,8 +2206,8 @@ int ssl3_write(SSL *s, const void *buf, int len)
 		}
 	else
 		{
-		ret=ssl3_write_bytes(s,SSL3_RT_APPLICATION_DATA,
-				     buf,len);
+		ret=s->method->ssl_write_bytes(s,SSL3_RT_APPLICATION_DATA,
+			buf,len);
 		if (ret <= 0) return(ret);
 		}
 
@@ -2217,7 +2221,7 @@ static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 	clear_sys_error();
 	if (s->s3->renegotiate) ssl3_renegotiate_check(s);
 	s->s3->in_read_app_data=1;
-	ret=ssl3_read_bytes(s,SSL3_RT_APPLICATION_DATA,buf,len,peek);
+	ret=s->method->ssl_read_bytes(s,SSL3_RT_APPLICATION_DATA,buf,len,peek);
 	if ((ret == -1) && (s->s3->in_read_app_data == 2))
 		{
 		/* ssl3_read_bytes decided to call s->handshake_func, which
@@ -2226,7 +2230,7 @@ static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 		 * and thinks that application data makes sense here; so disable
 		 * handshake processing and try to read application data again. */
 		s->in_handshake++;
-		ret=ssl3_read_bytes(s,SSL3_RT_APPLICATION_DATA,buf,len,peek);
+		ret=s->method->ssl_read_bytes(s,SSL3_RT_APPLICATION_DATA,buf,len,peek);
 		s->in_handshake--;
 		}
 	else

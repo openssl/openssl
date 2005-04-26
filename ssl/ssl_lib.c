@@ -957,6 +957,13 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 		l=s->max_cert_list;
 		s->max_cert_list=larg;
 		return(l);
+	case SSL_CTRL_SET_MTU:
+		if (SSL_version(s) == DTLS1_VERSION)
+			{
+			s->d1->mtu = larg;
+			return larg;
+			}
+		return 0;
 	default:
 		return(s->method->ssl_ctrl(s,cmd,larg,parg));
 		}
@@ -1368,6 +1375,8 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ret->default_passwd_callback=0;
 	ret->default_passwd_callback_userdata=NULL;
 	ret->client_cert_cb=0;
+    ret->app_gen_cookie_cb=0;
+    ret->app_verify_cookie_cb=0;
 
 	ret->sessions=lh_new(LHASH_HASH_FN(SSL_SESSION_hash),
 			LHASH_COMP_FN(SSL_SESSION_cmp));

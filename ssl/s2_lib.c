@@ -224,6 +224,10 @@ static SSL_METHOD SSLv2_data= {
 	ssl2_shutdown,
 	ssl_ok,	/* NULL - renegotiate */
 	ssl_ok,	/* NULL - check renegotiate */
+	NULL, /* NULL - ssl_get_message */
+	NULL, /* NULL - ssl_get_record */
+	NULL, /* NULL - ssl_write_bytes */
+	NULL, /* NULL - dispatch_alert */
 	ssl2_ctrl,	/* local */
 	ssl2_ctx_ctrl,	/* local */
 	ssl2_get_cipher_by_char,

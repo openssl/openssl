@@ -135,6 +135,7 @@ typedef unsigned int u_int;
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 #include "s_apps.h"
+#include "timeouts.h"
 
 #ifdef OPENSSL_SYS_WINCE
 /* Windows CE incorrectly defines fileno as returning void*, so to avoid problems below... */
@@ -215,6 +216,8 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
+	BIO_printf(bio_err," -dtls1        - just use DTLSv1\n");    
+	BIO_printf(bio_err," -mtu          - set the MTU\n");
 	BIO_printf(bio_err," -no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
 	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences (only SSLv2)\n");
@@ -260,6 +263,7 @@ int MAIN(int argc, char **argv)
 	int starttls_proto = 0;
 	int prexit = 0, vflags = 0;
 	SSL_METHOD *meth=NULL;
+	int sock_type=SOCK_STREAM;
 	BIO *sbio;
 	char *inrand=NULL;
 #ifndef OPENSSL_NO_ENGINE
@@ -269,6 +273,11 @@ int MAIN(int argc, char **argv)
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
 	struct timeval tv;
 #endif
+
+	struct sockaddr peer;
+	int peerlen = sizeof(peer);
+	int enable_timeouts = 0 ;
+	long mtu = 0;
 
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_client_method();
@@ -386,6 +395,20 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_TLS1
 		else if	(strcmp(*argv,"-tls1") == 0)
 			meth=TLSv1_client_method();
+#endif
+#ifndef OPENSSL_NO_DTLS1
+		else if	(strcmp(*argv,"-dtls1") == 0)
+			{
+			meth=DTLSv1_client_method();
+			sock_type=SOCK_DGRAM;
+			}
+		else if (strcmp(*argv,"-timeout") == 0)
+			enable_timeouts=1;
+		else if (strcmp(*argv,"-mtu") == 0)
+			{
+			if (--argc < 1) goto bad;
+			mtu = atol(*(++argv));
+			}
 #endif
 		else if (strcmp(*argv,"-bugs") == 0)
 			bugs=1;
@@ -550,6 +573,10 @@ bad:
 		SSL_CTX_set_options(ctx,SSL_OP_ALL|off);
 	else
 		SSL_CTX_set_options(ctx,off);
+	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
+	 * Setting read ahead solves this problem.
+	 */
+	if (sock_type == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
 	if (cipher != NULL)
@@ -589,7 +616,7 @@ bad:
 
 re_start:
 
-	if (init_client(&s,host,port) == 0)
+	if (init_client(&s,host,port,sock_type) == 0)
 		{
 		BIO_printf(bio_err,"connect:errno=%d\n",get_last_socket_error());
 		SHUTDOWN(s);
@@ -610,7 +637,46 @@ re_start:
 		}
 #endif                                              
 	if (c_Pause & 0x01) con->debug=1;
-	sbio=BIO_new_socket(s,BIO_NOCLOSE);
+
+	if ( SSL_version(con) == DTLS1_VERSION)
+		{
+		struct timeval timeout;
+
+		sbio=BIO_new_dgram(s,BIO_NOCLOSE);
+		if (getsockname(s, &peer, &peerlen) < 0)
+			{
+			BIO_printf(bio_err, "getsockname:errno=%d\n",
+				get_last_socket_error());
+			SHUTDOWN(s);
+			goto end;
+			}
+
+		BIO_ctrl_set_connected(sbio, 1, &peer);
+
+		if ( enable_timeouts)
+			{
+			timeout.tv_sec = 0;
+			timeout.tv_usec = DGRAM_RCV_TIMEOUT;
+			BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_RECV_TIMEOUT, 0, &timeout);
+			
+			timeout.tv_sec = 0;
+			timeout.tv_usec = DGRAM_SND_TIMEOUT;
+			BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_SEND_TIMEOUT, 0, &timeout);
+			}
+
+		if ( mtu > 0)
+			{
+			SSL_set_options(con, SSL_OP_NO_QUERY_MTU);
+			SSL_set_mtu(con, mtu);
+			}
+		else
+			/* want to do MTU discovery */
+			BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL);
+		}
+	else
+		sbio=BIO_new_socket(s,BIO_NOCLOSE);
+
+
 
 	if (nbio_test)
 		{

@@ -33,7 +33,7 @@ SDIRS=	objects \
 	bn ec rsa dsa ecdsa ecdh dh dso engine aes \
 	buffer bio stack lhash rand err \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5 \
-	store
+	store pqueue
 
 GENERAL=Makefile README crypto-lib.com install.com
 

@@ -376,6 +376,14 @@ typedef struct ssl_method_st
 	int (*ssl_shutdown)(SSL *s);
 	int (*ssl_renegotiate)(SSL *s);
 	int (*ssl_renegotiate_check)(SSL *s);
+	/* -- begin DTLS -- */
+	long (*ssl_get_message)(SSL *s, int st1, int stn, int mt, long
+		max, int *ok);
+	int (*ssl_read_bytes)(SSL *s, int type, unsigned char *buf, int len, 
+		int peek);
+	int (*ssl_write_bytes)(SSL *s, int type, const void *buf_, int len);
+	int (*ssl_dispatch_alert)(SSL *s);
+	/* -- end DTLS -- */
 	long (*ssl_ctrl)(SSL *s,int cmd,long larg,void *parg);
 	long (*ssl_ctx_ctrl)(SSL_CTX *ctx,int cmd,long larg,void *parg);
 	SSL_CIPHER *(*get_cipher_by_char)(const unsigned char *ptr);
@@ -490,6 +498,11 @@ typedef struct ssl_session_st
  *             This used to be 0x000FFFFFL before 0.9.7. */
 #define SSL_OP_ALL					0x00000FFFL
 
+/* DTLS options */
+#define SSL_OP_NO_QUERY_MTU                 0x00001000L
+/* Turn on Cookie Exchange (on relevant for servers) */
+#define SSL_OP_COOKIE_EXCHANGE              0x00002000L
+
 /* As server, disallow session resumption on renegotiation */
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
 /* If set, always create a new key when using tmp_ecdh parameters */
@@ -555,6 +568,8 @@ typedef struct ssl_session_st
 	SSL_ctrl((ssl),SSL_CTRL_MODE,(op),NULL)
 #define SSL_get_mode(ssl) \
         SSL_ctrl((ssl),SSL_CTRL_MODE,0,NULL)
+#define SSL_set_mtu(ssl, mtu) \
+        SSL_ctrl((ssl),SSL_CTRL_SET_MTU,(mtu),NULL)
 
 
 void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
@@ -679,6 +694,14 @@ struct ssl_ctx_st
 	/* get client cert callback */
 	int (*client_cert_cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey);
 
+    /* cookie generate callback */
+    int (*app_gen_cookie_cb)(SSL *ssl, unsigned char *cookie, 
+        unsigned int *cookie_len);
+
+    /* verify cookie callback */
+    int (*app_verify_cookie_cb)(SSL *ssl, unsigned char *cookie, 
+        unsigned int cookie_len);
+
 	CRYPTO_EX_DATA ex_data;
 
 	const EVP_MD *rsa_md5;/* For SSLv2 - name is 'ssl2-md5' */
@@ -775,6 +798,8 @@ struct ssl_ctx_st
 #define SSL_CTX_get_info_callback(ctx)		((ctx)->info_callback)
 #define SSL_CTX_set_client_cert_cb(ctx,cb)	((ctx)->client_cert_cb=(cb))
 #define SSL_CTX_get_client_cert_cb(ctx)		((ctx)->client_cert_cb)
+#define SSL_CTX_set_cookie_generate_cb(ctx,cb) ((ctx)->app_gen_cookie_cb=(cb))
+#define SSL_CTX_set_cookie_verify_cb(ctx,cb) ((ctx)->app_verify_cookie_cb=(cb))
 
 #define SSL_NOTHING	1
 #define SSL_WRITING	2
@@ -790,7 +815,7 @@ struct ssl_ctx_st
 struct ssl_st
 	{
 	/* protocol version
-	 * (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION)
+	 * (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION, DTLS1_VERSION)
 	 */
 	int version;
 	int type; /* SSL_ST_CONNECT or SSL_ST_ACCEPT */
@@ -854,6 +879,7 @@ struct ssl_st
 
 	struct ssl2_state_st *s2; /* SSLv2 variables */
 	struct ssl3_state_st *s3; /* SSLv3 variables */
+	struct dtls1_state_st *d1; /* DTLSv1 variables */
 
 	int read_ahead;		/* Read as many input bytes as possible
 	               	 	 * (for non-blocking reads) */
@@ -953,6 +979,7 @@ struct ssl_st
 #include <openssl/ssl2.h>
 #include <openssl/ssl3.h>
 #include <openssl/tls1.h> /* This is mostly sslv3 with a few tweaks */
+#include <openssl/dtls1.h> /* Datagram TLS */
 #include <openssl/ssl23.h>
 
 #ifdef  __cplusplus
@@ -1118,6 +1145,8 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_CTRL_SET_MSG_CALLBACK               15
 #define SSL_CTRL_SET_MSG_CALLBACK_ARG           16
 
+/* only applies to datagram connections */
+#define SSL_CTRL_SET_MTU                17
 /* Stats */
 #define SSL_CTRL_SESS_NUMBER			20
 #define SSL_CTRL_SESS_CONNECT			21
@@ -1361,6 +1390,10 @@ SSL_METHOD *SSLv23_client_method(void);	/* SSLv3 but can rollback to v2 */
 SSL_METHOD *TLSv1_method(void);		/* TLSv1.0 */
 SSL_METHOD *TLSv1_server_method(void);	/* TLSv1.0 */
 SSL_METHOD *TLSv1_client_method(void);	/* TLSv1.0 */
+
+SSL_METHOD *DTLSv1_method(void);		/* DTLSv1.0 */
+SSL_METHOD *DTLSv1_server_method(void);	/* DTLSv1.0 */
+SSL_METHOD *DTLSv1_client_method(void);	/* DTLSv1.0 */
 
 STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s);
 
@@ -1657,6 +1690,9 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_TLS1_SETUP_KEY_BLOCK			 211
 #define SSL_F_WRITE_PENDING				 212
 
+#define SSL_F_DTLS1_READ_FAILED          1001
+#define SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST    1002
+
 /* Reason codes. */
 #define SSL_R_APP_DATA_IN_HANDSHAKE			 100
 #define SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT 272
@@ -1894,6 +1930,9 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_WRONG_VERSION_NUMBER			 267
 #define SSL_R_X509_LIB					 268
 #define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS		 269
+
+#define SSL_R_READ_TIMEOUT_EXPIRED              2001
+#define SSL_R_COOKIE_MISMATCH                   2002
 
 #ifdef  __cplusplus
 }

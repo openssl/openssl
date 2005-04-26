@@ -94,6 +94,7 @@ extern "C" {
 #define BIO_TYPE_BER		(18|0x0200)		/* BER -> bin filter */
 #define BIO_TYPE_BIO		(19|0x0400)		/* (half a) BIO pair */
 #define BIO_TYPE_LINEBUFFER	(20|0x0200)		/* filter */
+#define BIO_TYPE_DGRAM		(21|0x0400|0x0100)
 
 #define BIO_TYPE_DESCRIPTOR	0x0100	/* socket, fd, connect or accept */
 #define BIO_TYPE_FILTER		0x0200
@@ -124,6 +125,38 @@ extern "C" {
 #define BIO_CTRL_GET_CALLBACK	15  /* opt - set callback function */
 
 #define BIO_CTRL_SET_FILENAME	30	/* BIO_s_file special */
+
+/* dgram BIO stuff */
+#define BIO_CTRL_DGRAM_CONNECT       31  /* BIO dgram special */
+#define BIO_CTRL_DGRAM_SET_CONNECTED 32  /* allow for an externally
+										  * connected socket to be
+										  * passed in */ 
+#define BIO_CTRL_DGRAM_SET_RECV_TIMEOUT 33 /* setsockopt, essentially */
+#define BIO_CTRL_DGRAM_GET_RECV_TIMEOUT 34 /* getsockopt, essentially */
+#define BIO_CTRL_DGRAM_SET_SEND_TIMEOUT 35 /* setsockopt, essentially */
+#define BIO_CTRL_DGRAM_GET_SEND_TIMEOUT 36 /* getsockopt, essentially */
+
+#define BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP 37 /* flag whether the last */
+#define BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP 38 /* I/O operation tiemd out */
+					
+/* #ifdef IP_MTU_DISCOVER */
+#define BIO_CTRL_DGRAM_MTU_DISCOVER       39 /* set DF bit on egress packets */
+/* #endif */
+
+#define BIO_CTRL_DGRAM_QUERY_MTU          40 /* as kernel for current MTU */
+#define BIO_CTRL_DGRAM_GET_MTU            41 /* get cached value for MTU */
+#define BIO_CTRL_DGRAM_SET_MTU            42 /* set cached value for
+											  * MTU. want to use this
+                                              * if asking the kernel
+                                              * fails */
+
+#define BIO_CTRL_DGRAM_MTU_EXCEEDED       43 /* check whether the MTU
+											  * was exceed in the
+											  * previous write
+											  * operation */
+
+#define BIO_CTRL_DGRAM_SET_PEER           44 /* Destination for the data */
+
 
 /* modifiers */
 #define BIO_FP_READ		0x02
@@ -488,6 +521,18 @@ size_t BIO_ctrl_get_write_guarantee(BIO *b);
 size_t BIO_ctrl_get_read_request(BIO *b);
 int BIO_ctrl_reset_read_request(BIO *b);
 
+/* ctrl macros for dgram */
+#define BIO_ctrl_dgram_connect(b,peer)  \
+                     (int)BIO_ctrl(b,BIO_CTRL_DGRAM_CONNECT,0, (char *)peer)
+#define BIO_ctrl_set_connected(b, state, peer) \
+         (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SET_CONNECTED, state, (char *)peer)
+#define BIO_dgram_recv_timedout(b) \
+         (int)BIO_ctrl(b, BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP, 0, NULL)
+#define BIO_dgram_send_timedout(b) \
+         (int)BIO_ctrl(b, BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP, 0, NULL)
+#define BIO_dgram_set_peer(b,peer) \
+         (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, (char *)peer)
+
 /* These two aren't currently implemented */
 /* int BIO_get_ex_num(BIO *bio); */
 /* void BIO_set_ex_free_func(BIO *bio,int idx,void (*cb)()); */
@@ -567,10 +612,16 @@ BIO_METHOD *BIO_f_buffer(void);
 BIO_METHOD *BIO_f_linebuffer(void);
 #endif
 BIO_METHOD *BIO_f_nbio_test(void);
+#ifndef OPENSSL_NO_DGRAM
+BIO_METHOD *BIO_s_datagram(void);
+#endif
+
 /* BIO_METHOD *BIO_f_ber(void); */
 
 int BIO_sock_should_retry(int i);
 int BIO_sock_non_fatal_error(int error);
+int BIO_dgram_non_fatal_error(int error);
+
 int BIO_fd_should_retry(int i);
 int BIO_fd_non_fatal_error(int error);
 int BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
@@ -604,6 +655,7 @@ void BIO_sock_cleanup(void);
 int BIO_set_tcp_ndelay(int sock,int turn_on);
 
 BIO *BIO_new_socket(int sock, int close_flag);
+BIO *BIO_new_dgram(int fd, int close_flag);
 BIO *BIO_new_fd(int fd, int close_flag);
 BIO *BIO_new_connect(char *host_port);
 BIO *BIO_new_accept(char *host_port);

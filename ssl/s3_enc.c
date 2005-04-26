@@ -569,7 +569,7 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 	const EVP_MD *hash;
 	unsigned char *p,rec_char;
 	unsigned int md_size;
-	int npad,i;
+	int npad;
 
 	if (send)
 		{
@@ -612,13 +612,19 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 
 	EVP_MD_CTX_cleanup(&md_ctx);
 
+	ssl3_record_sequence_update(seq);
+	return(md_size);
+	}
+
+void ssl3_record_sequence_update(unsigned char *seq)
+	{
+	int i;
+
 	for (i=7; i>=0; i--)
 		{
 		++seq[i];
 		if (seq[i] != 0) break; 
 		}
-
-	return(md_size);
 	}
 
 int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,

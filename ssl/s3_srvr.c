@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -141,16 +141,6 @@
 #include <openssl/md5.h>
 
 static SSL_METHOD *ssl3_get_server_method(int ver);
-static int ssl3_get_client_hello(SSL *s);
-static int ssl3_check_client_hello(SSL *s);
-static int ssl3_send_server_hello(SSL *s);
-static int ssl3_send_server_key_exchange(SSL *s);
-static int ssl3_send_certificate_request(SSL *s);
-static int ssl3_send_server_done(SSL *s);
-static int ssl3_get_client_key_exchange(SSL *s);
-static int ssl3_get_client_certificate(SSL *s);
-static int ssl3_get_cert_verify(SSL *s);
-static int ssl3_send_hello_request(SSL *s);
 
 #ifndef OPENSSL_NO_ECDH
 static int nid2curve_id(int nid);
@@ -629,7 +619,7 @@ end:
 	return(ret);
 	}
 
-static int ssl3_send_hello_request(SSL *s)
+int ssl3_send_hello_request(SSL *s)
 	{
 	unsigned char *p;
 
@@ -651,14 +641,14 @@ static int ssl3_send_hello_request(SSL *s)
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
-static int ssl3_check_client_hello(SSL *s)
+int ssl3_check_client_hello(SSL *s)
 	{
 	int ok;
 	long n;
 
 	/* this function is called when we really expect a Certificate message,
 	 * so permit appropriate message length */
-	n=ssl3_get_message(s,
+	n=s->method->ssl_get_message(s,
 		SSL3_ST_SR_CERT_A,
 		SSL3_ST_SR_CERT_B,
 		-1,
@@ -684,9 +674,10 @@ static int ssl3_check_client_hello(SSL *s)
 	return 1;
 }
 
-static int ssl3_get_client_hello(SSL *s)
+int ssl3_get_client_hello(SSL *s)
 	{
 	int i,j,ok,al,ret= -1;
+	int cookie_len;
 	long n;
 	unsigned long id;
 	unsigned char *p,*d,*q;
@@ -705,7 +696,7 @@ static int ssl3_get_client_hello(SSL *s)
 		s->first_packet=1;
 		s->state=SSL3_ST_SR_CLNT_HELLO_B;
 		}
-	n=ssl3_get_message(s,
+	n=s->method->ssl_get_message(s,
 		SSL3_ST_SR_CLNT_HELLO_B,
 		SSL3_ST_SR_CLNT_HELLO_C,
 		SSL3_MT_CLIENT_HELLO,
@@ -770,6 +761,68 @@ static int ssl3_get_client_hello(SSL *s)
 		}
 
 	p+=j;
+
+	if (SSL_version(s) == DTLS1_VERSION)
+		{
+		/* cookie stuff */
+		cookie_len = *(p++);
+
+        if ( (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) &&
+            s->d1->send_cookie == 0)
+            {
+            /* HelloVerifyMessage has already been sent */
+            if ( cookie_len != s->d1->cookie_len)
+                {
+                al = SSL_AD_HANDSHAKE_FAILURE;
+                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
+                goto f_err;
+                }
+            }
+
+        /* 
+         * The ClientHello may contain a cookie even if the
+         * HelloVerify message has not been sent--make sure that it
+         * does not cause an overflow.
+         */
+		if ( cookie_len > sizeof(s->d1->rcvd_cookie))
+			{
+			/* too much data */
+            al = SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
+			goto f_err;
+			}
+
+        /* verify the cookie if appropriate option is set. */
+        if ( (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) &&
+            cookie_len > 0)
+            {
+            memcpy(s->d1->rcvd_cookie, p, cookie_len);
+
+            if ( s->ctx->app_verify_cookie_cb != NULL)
+                {
+                if ( s->ctx->app_verify_cookie_cb(s, s->d1->rcvd_cookie,
+                    cookie_len) == 0)
+                    {
+                    al=SSL_AD_HANDSHAKE_FAILURE;
+                    SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, 
+                        SSL_R_COOKIE_MISMATCH);
+                    goto f_err;
+                    }
+                /* else cookie verification succeeded */
+                }
+            else if ( memcmp(s->d1->rcvd_cookie, s->d1->cookie, 
+                          s->d1->cookie_len) != 0) /* default verification */
+                {
+                    al=SSL_AD_HANDSHAKE_FAILURE;
+                    SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, 
+                        SSL_R_COOKIE_MISMATCH);
+                    goto f_err;
+                }
+            }
+
+        p += cookie_len;
+		}
+
 	n2s(p,i);
 	if ((i == 0) && (j != 0))
 		{
@@ -983,7 +1036,7 @@ err:
 	return(ret);
 	}
 
-static int ssl3_send_server_hello(SSL *s)
+int ssl3_send_server_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
@@ -1054,7 +1107,7 @@ static int ssl3_send_server_hello(SSL *s)
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
-static int ssl3_send_server_done(SSL *s)
+int ssl3_send_server_done(SSL *s)
 	{
 	unsigned char *p;
 
@@ -1078,7 +1131,7 @@ static int ssl3_send_server_done(SSL *s)
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
-static int ssl3_send_server_key_exchange(SSL *s)
+int ssl3_send_server_key_exchange(SSL *s)
 	{
 #ifndef OPENSSL_NO_RSA
 	unsigned char *q;
@@ -1497,7 +1550,7 @@ err:
 	return(-1);
 	}
 
-static int ssl3_send_certificate_request(SSL *s)
+int ssl3_send_certificate_request(SSL *s)
 	{
 	unsigned char *p,*d;
 	int i,j,nl,off,n;
@@ -1601,7 +1654,7 @@ static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 #endif
 	}
 
-static int ssl3_get_client_key_exchange(SSL *s)
+int ssl3_get_client_key_exchange(SSL *s)
 	{
 	int i,al,ok;
 	long n;
@@ -1626,7 +1679,7 @@ static int ssl3_get_client_key_exchange(SSL *s)
 	BN_CTX *bn_ctx = NULL; 
 #endif
 
-	n=ssl3_get_message(s,
+	n=s->method->ssl_get_message(s,
 		SSL3_ST_SR_KEY_EXCH_A,
 		SSL3_ST_SR_KEY_EXCH_B,
 		SSL3_MT_CLIENT_KEY_EXCHANGE,
@@ -2138,7 +2191,7 @@ err:
 	return(-1);
 	}
 
-static int ssl3_get_cert_verify(SSL *s)
+int ssl3_get_cert_verify(SSL *s)
 	{
 	EVP_PKEY *pkey=NULL;
 	unsigned char *p;
@@ -2147,7 +2200,7 @@ static int ssl3_get_cert_verify(SSL *s)
 	int type=0,i,j;
 	X509 *peer;
 
-	n=ssl3_get_message(s,
+	n=s->method->ssl_get_message(s,
 		SSL3_ST_SR_CERT_VRFY_A,
 		SSL3_ST_SR_CERT_VRFY_B,
 		-1,
@@ -2293,7 +2346,7 @@ end:
 	return(ret);
 	}
 
-static int ssl3_get_client_certificate(SSL *s)
+int ssl3_get_client_certificate(SSL *s)
 	{
 	int i,ok,al,ret= -1;
 	X509 *x=NULL;
@@ -2302,7 +2355,7 @@ static int ssl3_get_client_certificate(SSL *s)
 	unsigned char *d;
 	STACK_OF(X509) *sk=NULL;
 
-	n=ssl3_get_message(s,
+	n=s->method->ssl_get_message(s,
 		SSL3_ST_SR_CERT_A,
 		SSL3_ST_SR_CERT_B,
 		-1,

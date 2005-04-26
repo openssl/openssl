@@ -176,6 +176,20 @@
 			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
 			 *((c)++)=(unsigned char)(((l)    )&0xff))
 
+#define l2n6(l,c)	(*((c)++)=(unsigned char)(((l)>>40)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>32)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>24)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+			 *((c)++)=(unsigned char)(((l)    )&0xff))
+
+#define n2l6(c,l)	(l =((unsigned long long)(*((c)++)))<<40, \
+			 l|=((unsigned long long)(*((c)++)))<<32, \
+			 l|=((unsigned long long)(*((c)++)))<<24, \
+			 l|=((unsigned long long)(*((c)++)))<<16, \
+			 l|=((unsigned long long)(*((c)++)))<< 8, \
+			 l|=((unsigned long long)(*((c)++))))
+
 /* NOTE - c is not incremented as per l2c */
 #define l2cn(l1,l2,c,n)	{ \
 			c+=n; \
@@ -608,6 +622,21 @@ long	ssl3_callback_ctrl(SSL *s,int cmd, void (*fp)(void));
 long	ssl3_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)(void));
 int	ssl3_pending(const SSL *s);
 
+/* -- begin DTLS -- */
+int dtls1_do_write(SSL *s,int type);
+int ssl3_read_n(SSL *s, int n, int max, int extend);
+int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
+int ssl3_do_compress(SSL *ssl);
+int ssl3_do_uncompress(SSL *ssl);
+int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
+	unsigned int len);
+unsigned char *dtls1_set_message_header(SSL *s, 
+	unsigned char *p, unsigned char mt,	unsigned long len, 
+	unsigned long frag_off, unsigned long frag_len);
+int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
+int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
+/* -- end DTLS -- */
+
 int ssl23_accept(SSL *s);
 int ssl23_connect(SSL *s);
 int ssl23_read_bytes(SSL *s, int n);
@@ -619,6 +648,23 @@ void tls1_clear(SSL *s);
 long tls1_ctrl(SSL *s,int cmd, long larg, void *parg);
 long tls1_callback_ctrl(SSL *s,int cmd, void (*fp)(void));
 SSL_METHOD *tlsv1_base_method(void );
+
+/* -- start DTLS functions -- */
+int dtls1_new(SSL *s);
+int	dtls1_accept(SSL *s);
+int	dtls1_connect(SSL *s);
+void dtls1_free(SSL *s);
+void dtls1_clear(SSL *s);
+long dtls1_ctrl(SSL *s,int cmd, long larg, void *parg);
+SSL_METHOD *dtlsv1_base_method(void );
+
+long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
+int dtls1_get_record(SSL *s);
+int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
+	unsigned int len, int create_empty_fragement);
+int dtls1_dispatch_alert(SSL *s);
+int dtls1_enc(SSL *s, int snd);
+/* -- end DTLS functions -- */
 
 int ssl_init_wbio_buffer(SSL *s, int push);
 void ssl_free_wbio_buffer(SSL *s);

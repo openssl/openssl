@@ -1,5 +1,4 @@
 openssl.pc
-Makefile.ssl
 MINFO
 makefile.one
 tmp
@@ -16,3 +15,4 @@ libcrypto.so.*
 libssl.so.*
 *.flc
 semantic.cache
+Makefile

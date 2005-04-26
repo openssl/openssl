@@ -154,6 +154,7 @@ typedef unsigned int u_int;
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
 #include "s_apps.h"
+#include "timeouts.h"
 
 #ifdef OPENSSL_SYS_WINCE
 /* Windows CE incorrectly defines fileno as returning void*, so to avoid problems below... */
@@ -260,6 +261,11 @@ static char *engine_id=NULL;
 #endif
 static const char *session_id_prefix=NULL;
 
+static int enable_timeouts = 0;
+static long mtu;
+static int cert_chain = 0;
+
+
 #ifdef MONOLITH
 static void s_server_init(void)
 	{
@@ -333,6 +339,10 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - Just talk SSLv3\n");
 	BIO_printf(bio_err," -tls1         - Just talk TLSv1\n");
+	BIO_printf(bio_err," -dtls1        - Just talk DTLSv1\n");
+	BIO_printf(bio_err," -timeout      - Enable timeouts\n");
+	BIO_printf(bio_err," -mtu          - Set MTU\n");
+	BIO_printf(bio_err," -chain        - Read a certificate chain\n");
 	BIO_printf(bio_err," -no_ssl2      - Just disable SSLv2\n");
 	BIO_printf(bio_err," -no_ssl3      - Just disable SSLv3\n");
 	BIO_printf(bio_err," -no_tls1      - Just disable TLSv1\n");
@@ -524,6 +534,7 @@ int MAIN(int argc, char *argv[])
 	int no_tmp_rsa=0,no_dhe=0,no_ecdhe=0,nocert=0;
 	int state=0;
 	SSL_METHOD *meth=NULL;
+    int sock_type=SOCK_STREAM;
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE *e=NULL;
 #endif
@@ -741,6 +752,22 @@ int MAIN(int argc, char *argv[])
 		else if	(strcmp(*argv,"-tls1") == 0)
 			{ meth=TLSv1_server_method(); }
 #endif
+#ifndef OPENSSL_NO_DTLS1
+		else if	(strcmp(*argv,"-dtls1") == 0)
+			{ 
+			meth=DTLSv1_server_method();
+			sock_type = SOCK_DGRAM;
+			}
+		else if (strcmp(*argv,"-timeout") == 0)
+			enable_timeouts = 1;
+		else if (strcmp(*argv,"-mtu") == 0)
+			{
+			if (--argc < 1) goto bad;
+			mtu = atol(*(++argv));
+			}
+		else if (strcmp(*argv, "-chain") == 0)
+			cert_chain = 1;
+#endif
 		else if (strcmp(*argv, "-id_prefix") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -892,6 +919,10 @@ bad:
 	if (bugs) SSL_CTX_set_options(ctx,SSL_OP_ALL);
 	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
 	SSL_CTX_set_options(ctx,off);
+	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
+	 * Setting read ahead solves this problem.
+	 */
+	if (sock_type == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
 
@@ -1046,9 +1077,9 @@ bad:
 
 	BIO_printf(bio_s_out,"ACCEPT\n");
 	if (www)
-		do_server(port,&accept_socket,www_body, context);
+		do_server(port,sock_type,&accept_socket,www_body, context);
 	else
-		do_server(port,&accept_socket,sv_body, context);
+		do_server(port,sock_type,&accept_socket,sv_body, context);
 	print_stats(bio_s_out,ctx);
 	ret=0;
 end:
@@ -1067,7 +1098,7 @@ end:
 		OPENSSL_free(dpass);
 	if (bio_s_out != NULL)
 		{
-		BIO_free(bio_s_out);
+        BIO_free(bio_s_out);
 		bio_s_out=NULL;
 		}
 	apps_shutdown();
@@ -1146,7 +1177,39 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	}
 	SSL_clear(con);
 
-	sbio=BIO_new_socket(s,BIO_NOCLOSE);
+	if (SSL_version(con) == DTLS1_VERSION)
+		{
+		struct timeval timeout;
+
+		sbio=BIO_new_dgram(s,BIO_NOCLOSE);
+
+		if ( enable_timeouts)
+			{
+			timeout.tv_sec = 0;
+			timeout.tv_usec = DGRAM_RCV_TIMEOUT;
+			BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_RECV_TIMEOUT, 0, &timeout);
+			
+			timeout.tv_sec = 0;
+			timeout.tv_usec = DGRAM_SND_TIMEOUT;
+			BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_SEND_TIMEOUT, 0, &timeout);
+			}
+
+		
+		if ( mtu > 0)
+			{
+			SSL_set_options(con, SSL_OP_NO_QUERY_MTU);
+			SSL_set_mtu(con, mtu);
+			}
+		else
+			/* want to do MTU discovery */
+			BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL);
+
+        /* turn on cookie exchange */
+        SSL_set_options(con, SSL_OP_COOKIE_EXCHANGE);
+		}
+	else
+		sbio=BIO_new_socket(s,BIO_NOCLOSE);
+
 	if (s_nbio_test)
 		{
 		BIO *test;
@@ -1252,7 +1315,8 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				if ((i <= 0) || (buf[0] == 'q'))
 					{
 					BIO_printf(bio_s_out,"DONE\n");
-					SHUTDOWN(s);
+					if (SSL_version(con) != DTLS1_VERSION)
+                        SHUTDOWN(s);
 	/*				close_accept_socket();
 					ret= -11;*/
 					goto err;

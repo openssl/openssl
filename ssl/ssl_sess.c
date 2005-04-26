@@ -204,6 +204,11 @@ int ssl_get_new_session(SSL *s, int session)
 			ss->ssl_version=TLS1_VERSION;
 			ss->session_id_length=SSL3_SSL_SESSION_ID_LENGTH;
 			}
+		else if (s->version == DTLS1_VERSION)
+			{
+			ss->ssl_version=DTLS1_VERSION;
+			ss->session_id_length=SSL3_SSL_SESSION_ID_LENGTH;
+			}
 		else
 			{
 			SSLerr(SSL_F_SSL_GET_NEW_SESSION,SSL_R_UNSUPPORTED_SSL_VERSION);

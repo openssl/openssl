@@ -134,17 +134,7 @@
 #include <openssl/bn.h>
 
 static SSL_METHOD *ssl3_get_client_method(int ver);
-static int ssl3_client_hello(SSL *s);
-static int ssl3_get_server_hello(SSL *s);
-static int ssl3_get_certificate_request(SSL *s);
 static int ca_dn_cmp(const X509_NAME * const *a,const X509_NAME * const *b);
-static int ssl3_get_server_done(SSL *s);
-static int ssl3_send_client_verify(SSL *s);
-static int ssl3_send_client_certificate(SSL *s);
-static int ssl3_send_client_key_exchange(SSL *s);
-static int ssl3_get_key_exchange(SSL *s);
-static int ssl3_get_server_certificate(SSL *s);
-static int ssl3_check_cert_and_algorithm(SSL *s);
 
 #ifndef OPENSSL_NO_ECDH
 static int curve_id2nid(int curve_id);
@@ -539,7 +529,7 @@ end:
 	}
 
 
-static int ssl3_client_hello(SSL *s)
+int ssl3_client_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
@@ -632,7 +622,7 @@ err:
 	return(-1);
 	}
 
-static int ssl3_get_server_hello(SSL *s)
+int ssl3_get_server_hello(SSL *s)
 	{
 	STACK_OF(SSL_CIPHER) *sk;
 	SSL_CIPHER *c;
@@ -642,14 +632,41 @@ static int ssl3_get_server_hello(SSL *s)
 	long n;
 	SSL_COMP *comp;
 
-	n=ssl3_get_message(s,
+	n=s->method->ssl_get_message(s,
 		SSL3_ST_CR_SRVR_HELLO_A,
 		SSL3_ST_CR_SRVR_HELLO_B,
-		SSL3_MT_SERVER_HELLO,
+		-1,
 		300, /* ?? */
 		&ok);
 
 	if (!ok) return((int)n);
+
+	if ( SSL_version(s) == DTLS1_VERSION)
+		{
+		if ( s->s3->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST)
+			{
+			if ( s->d1->send_cookie == 0)
+				{
+				s->s3->tmp.reuse_message = 1;
+				return 1;
+				}
+			else /* already sent a cookie */
+				{
+				al=SSL_AD_UNEXPECTED_MESSAGE;
+				SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
+					SSL_R_BAD_MESSAGE_TYPE);
+				goto f_err;
+				}
+			}
+		}
+	
+	if ( s->s3->tmp.message_type != SSL3_MT_SERVER_HELLO)
+		{
+		al=SSL_AD_UNEXPECTED_MESSAGE;
+		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_BAD_MESSAGE_TYPE);
+		goto f_err;
+		}
+
 	d=p=(unsigned char *)s->init_msg;
 
 	if ((p[0] != (s->version>>8)) || (p[1] != (s->version&0xff)))
@@ -777,7 +794,7 @@ err:
 	return(-1);
 	}
 
-static int ssl3_get_server_certificate(SSL *s)
+int ssl3_get_server_certificate(SSL *s)
 	{
 	int al,i,ok,ret= -1;
 	unsigned long n,nc,llen,l;
@@ -789,7 +806,7 @@ static int ssl3_get_server_certificate(SSL *s)
 	EVP_PKEY *pkey=NULL;
 	int need_cert = 1; /* VRS: 0=> will allow null cert if auth == KRB5 */
 
-	n=ssl3_get_message(s,
+	n=s->method->ssl_get_message(s,
 		SSL3_ST_CR_CERT_A,
 		SSL3_ST_CR_CERT_B,
 		-1,
@@ -961,7 +978,7 @@ err:
 	return(ret);
 	}
 
-static int ssl3_get_key_exchange(SSL *s)
+int ssl3_get_key_exchange(SSL *s)
 	{
 #ifndef OPENSSL_NO_RSA
 	unsigned char *q,md_buf[EVP_MAX_MD_SIZE*2];
@@ -987,7 +1004,7 @@ static int ssl3_get_key_exchange(SSL *s)
 
 	/* use same message size as in ssl3_get_certificate_request()
 	 * as ServerKeyExchange message may be skipped */
-	n=ssl3_get_message(s,
+	n=s->method->ssl_get_message(s,
 		SSL3_ST_CR_KEY_EXCH_A,
 		SSL3_ST_CR_KEY_EXCH_B,
 		-1,
@@ -1405,7 +1422,7 @@ err:
 	return(-1);
 	}
 
-static int ssl3_get_certificate_request(SSL *s)
+int ssl3_get_certificate_request(SSL *s)
 	{
 	int ok,ret=0;
 	unsigned long n,nc,l;
@@ -1415,7 +1432,7 @@ static int ssl3_get_certificate_request(SSL *s)
 	unsigned char *d;
 	STACK_OF(X509_NAME) *ca_sk=NULL;
 
-	n=ssl3_get_message(s,
+	n=s->method->ssl_get_message(s,
 		SSL3_ST_CR_CERT_REQ_A,
 		SSL3_ST_CR_CERT_REQ_B,
 		-1,
@@ -1553,12 +1570,12 @@ static int ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b)
 	return(X509_NAME_cmp(*a,*b));
 	}
 
-static int ssl3_get_server_done(SSL *s)
+int ssl3_get_server_done(SSL *s)
 	{
 	int ok,ret=0;
 	long n;
 
-	n=ssl3_get_message(s,
+	n=s->method->ssl_get_message(s,
 		SSL3_ST_CR_SRVR_DONE_A,
 		SSL3_ST_CR_SRVR_DONE_B,
 		SSL3_MT_SERVER_DONE,
@@ -1592,7 +1609,7 @@ static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 #endif
 	}
 
-static int ssl3_send_client_key_exchange(SSL *s)
+int ssl3_send_client_key_exchange(SSL *s)
 	{
 	unsigned char *p,*d;
 	int n;
@@ -2087,7 +2104,7 @@ err:
 	return(-1);
 	}
 
-static int ssl3_send_client_verify(SSL *s)
+int ssl3_send_client_verify(SSL *s)
 	{
 	unsigned char *p,*d;
 	unsigned char data[MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH];
@@ -2175,7 +2192,7 @@ err:
 	return(-1);
 	}
 
-static int ssl3_send_client_certificate(SSL *s)
+int ssl3_send_client_certificate(SSL *s)
 	{
 	X509 *x509=NULL;
 	EVP_PKEY *pkey=NULL;
@@ -2254,7 +2271,7 @@ static int ssl3_send_client_certificate(SSL *s)
 
 #define has_bits(i,m)	(((i)&(m)) == (m))
 
-static int ssl3_check_cert_and_algorithm(SSL *s)
+int ssl3_check_cert_and_algorithm(SSL *s)
 	{
 	int i,idx;
 	long algs;

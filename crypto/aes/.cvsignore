@@ -2,3 +2,4 @@ lib
 Makefile.save
 *.flc
 semantic.cache
+ax86-elf.s
