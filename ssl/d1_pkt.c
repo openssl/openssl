@@ -775,7 +775,7 @@ start:
 	 * fill that so that we can process the data at a fixed place.
 	 */
 		{
-		unsigned int i, dest_maxlen = 0;
+		unsigned int k, dest_maxlen = 0;
 		unsigned char *dest = NULL;
 		unsigned int *dest_len = NULL;
 
@@ -807,9 +807,9 @@ start:
 				}
 
 			/* now move 'n' bytes: */
-			for ( i = 0; i < dest_maxlen; i++)
+			for ( k = 0; k < dest_maxlen; k++)
 				{
-				dest[i] = rr->data[rr->off++];
+				dest[k] = rr->data[rr->off++];
 				rr->length--;
 				}
 			*dest_len = dest_maxlen;
@@ -1504,8 +1504,8 @@ int dtls1_dispatch_alert(SSL *s)
 	{
 	int i,j;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
-	char buf[2 + 2 + 3]; /* alert level + alert desc + message seq +frag_off */
-	char *ptr = &buf[0];
+	unsigned char buf[2 + 2 + 3]; /* alert level + alert desc + message seq +frag_off */
+	unsigned char *ptr = &buf[0];
 
 	s->s3->alert_dispatch=0;
 

@@ -525,7 +525,7 @@ int MAIN(int argc, char *argv[])
 	int vflags = 0;
 	short port=PORT;
 	char *CApath=NULL,*CAfile=NULL;
-	char *context = NULL;
+	unsigned char *context = NULL;
 	char *dhfile = NULL;
 	char *named_curve = NULL;
 	int badop=0,bugs=0;
@@ -604,7 +604,7 @@ int MAIN(int argc, char *argv[])
 		else if	(strcmp(*argv,"-context") == 0)
 			{
 			if (--argc < 1) goto bad;
-			context= *(++argv);
+			context= (unsigned char *)*(++argv);
 			}
 		else if	(strcmp(*argv,"-cert") == 0)
 			{

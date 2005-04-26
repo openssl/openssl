@@ -275,7 +275,7 @@ int MAIN(int argc, char **argv)
 #endif
 
 	struct sockaddr peer;
-	int peerlen = sizeof(peer);
+	socklen_t peerlen = sizeof(peer);
 	int enable_timeouts = 0 ;
 	long mtu = 0;
 

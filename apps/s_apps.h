@@ -148,7 +148,7 @@ typedef fd_mask fd_set;
 #define PORT_STR        "4433"
 #define PROTOCOL        "tcp"
 
-int do_server(int port, int type, int *ret, int (*cb) (char *hostname, int s, unsigned char *context), char *context);
+int do_server(int port, int type, int *ret, int (*cb) (char *hostname, int s, unsigned char *context), unsigned char *context);
 #ifdef HEADER_X509_H
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 #endif

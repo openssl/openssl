@@ -262,7 +262,7 @@ int dtls1_do_write(SSL *s, int type)
 			dtls1_fix_message_header(s, frag_off, 
 				len - DTLS1_HM_HEADER_LENGTH);
 
-			dtls1_write_message_header(s, &s->init_buf->data[s->init_off]);
+			dtls1_write_message_header(s, (unsigned char *)&s->init_buf->data[s->init_off]);
 
 			OPENSSL_assert(len >= DTLS1_HM_HEADER_LENGTH);
 			}
@@ -472,7 +472,7 @@ dtls1_process_handshake_fragment(SSL *s, int frag_len)
     {
     unsigned char *p;
 
-    p = s->init_buf->data;
+    p = (unsigned char *)s->init_buf->data;
 
 	ssl3_finish_mac(s, &p[s->init_num - frag_len], frag_len);
     }
@@ -492,7 +492,7 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st *msg_hdr, int *ok)
         goto err;
         }
 
-    p = s->init_buf->data;
+    p = (unsigned char *)s->init_buf->data;
 
     /* read the body of the fragment (header has already been read */
     if ( msg_hdr->frag_len > 0)
@@ -666,7 +666,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	s->state=stn;
 	
 	/* next state (stn) */
-	p = s->init_buf->data;
+	p = (unsigned char *)s->init_buf->data;
 
 	if ( frag_len > 0)
 		{
