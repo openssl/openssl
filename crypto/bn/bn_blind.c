@@ -278,7 +278,6 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
 	BN_MONT_CTX *m_ctx)
 {
 	int    retry_counter = 32;
-	BIGNUM *a, *ai;
 	BN_BLINDING *ret = NULL;
 
 	if (b == NULL)
