@@ -925,19 +925,6 @@ be added to the end of this file.
 
 	Makefile.ssl changed name to Makefile...
 
-2004-09-14 00:30  steve
-
-	Changed:
-		crypto/asn1/a_strex.c (1.8.2.6), "Exp", lines: +7 -2
-
-	ASN1_STRING_to_UTF8() assumed that the MBSTRING_* flags were of the
-	form MBSTRING_FLAG|nbyte where "nbyte" is the number of bytes per
-	character.
-
-		Unfortunately this isn't so and we can't change the
-	#defines because this would break binary compatibility, so for
-	0.9.7X only translate between the two.
-
 2004-09-14 00:39  steve
 
 	Changed:
