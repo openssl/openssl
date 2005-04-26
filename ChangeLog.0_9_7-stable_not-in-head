@@ -104,13 +104,6 @@ be added to the end of this file.
 	Add the possibility to enable olde des support, not just disable
 	it, for future support.  Redocument
 
-2002-04-20 12:25  levitte
-
-	Changed:
-		util/mk1mf.pl (1.41.2.1), "Exp", lines: +4 -1
-
-	Make sure ec is properly handled in Windows.
-
 2002-05-08 17:13  ben
 
 	Changed:
@@ -857,14 +850,6 @@ be added to the end of this file.
 		test/Makefile (1.1.4.12), "Exp", lines: +1 -1
 
 	Enable shared link on HP-UX.
-
-2005-04-20 10:27  steve
-
-	Changed:
-		Configure (1.314.2.118), "Exp", lines: +1 -1
-		util/mk1mf.pl (1.41.2.12), "Exp", lines: +2 -0
-
-	Ignore zlib related options in mk1mf.pl
 
 2005-04-20 18:42  steve
 
