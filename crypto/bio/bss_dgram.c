@@ -64,8 +64,6 @@
 #define USE_SOCKETS
 #include "cryptlib.h"
 
-#include <sys/socket.h>
-
 #include <openssl/bio.h>
 
 #define IP_MTU      14 /* linux is lame */
@@ -174,13 +172,18 @@ static int dgram_read(BIO *b, char *out, int outl)
 	bio_dgram_data *data = (bio_dgram_data *)b->ptr;
 
 	struct sockaddr peer;
-	socklen_t peerlen = sizeof(peer);
+	int peerlen = sizeof(peer);
 
 	if (out != NULL)
 		{
 		clear_socket_error();
 		memset(&peer, 0x00, peerlen);
-		ret=recvfrom(b->num,out,outl,0,&peer,&peerlen);
+		/* Last arg in recvfrom is signed on some platforms and
+		 * unsigned on others. It is of type socklen_t on some
+		 * but this is not universal. Cast to (void *) to avoid
+		 * compiler warnings.
+		 */
+		ret=recvfrom(b->num,out,outl,0,&peer,(void *)&peerlen);
 
 		if ( ! data->connected  && ret > 0)
 			BIO_ctrl(b, BIO_CTRL_DGRAM_CONNECT, 0, &peer);
@@ -303,7 +306,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 #endif
 	case BIO_CTRL_DGRAM_QUERY_MTU:
          sockopt_len = sizeof(sockopt_val);
-		if ((ret = getsockopt(b->num, IPPROTO_IP, IP_MTU, &sockopt_val,
+		if ((ret = getsockopt(b->num, IPPROTO_IP, IP_MTU, (void *)&sockopt_val,
 			&sockopt_len)) < 0 || sockopt_val < 0)
 			{ ret = 0; }
 		else
@@ -345,7 +348,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		break;
 	case BIO_CTRL_DGRAM_GET_RECV_TIMEOUT:
 		if ( getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO, 
-			ptr, (socklen_t *)&ret) < 0)
+			ptr, (void *)&ret) < 0)
 			{ perror("getsockopt"); ret = -1; }
 		break;
 	case BIO_CTRL_DGRAM_SET_SEND_TIMEOUT:
@@ -355,7 +358,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		break;
 	case BIO_CTRL_DGRAM_GET_SEND_TIMEOUT:
 		if ( getsockopt(b->num, SOL_SOCKET, SO_SNDTIMEO, 
-			ptr, (socklen_t *)&ret) < 0)
+			ptr, (void *)&ret) < 0)
 			{ perror("getsockopt"); ret = -1; }
 		break;
 	case BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP:
@@ -369,6 +372,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		else
 			ret = 0;
 		break;
+#ifdef EMSGSIZE
 	case BIO_CTRL_DGRAM_MTU_EXCEEDED:
 		if ( data->_errno == EMSGSIZE)
 			{
@@ -378,6 +382,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		else
 			ret = 0;
 		break;
+#endif
 	default:
 		ret=0;
 		break;

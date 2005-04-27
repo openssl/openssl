@@ -57,8 +57,9 @@
  *
  */
 
+#include "cryptlib.h"
+#include <openssl/bn.h>
 #include "pqueue.h"
-#include "crypto.h"
 
 typedef struct _pqueue
 	{
@@ -67,7 +68,7 @@ typedef struct _pqueue
 	} pqueue_s;
 
 pitem *
-pitem_new(unsigned long long priority, void *data)
+pitem_new(BN_ULLONG priority, void *data)
 	{
 	pitem *item = (pitem *) OPENSSL_malloc(sizeof(pitem));
 	if (item == NULL) return NULL;
@@ -160,7 +161,7 @@ pqueue_pop(pqueue_s *pq)
 	}
 
 pitem *
-pqueue_find(pqueue_s *pq, unsigned long long priority)
+pqueue_find(pqueue_s *pq, BN_ULLONG priority)
 	{
 	pitem *next, *prev = NULL;
 	pitem *found = NULL;

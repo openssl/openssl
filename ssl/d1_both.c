@@ -222,7 +222,7 @@ int dtls1_do_write(SSL *s, int type)
 
 	if ( s->init_off == 0  && type == SSL3_RT_HANDSHAKE)
 		OPENSSL_assert(s->init_num == 
-			s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH);
+			(int)s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH);
 
 	frag_off = 0;
 	while( s->init_num)
@@ -289,7 +289,7 @@ int dtls1_do_write(SSL *s, int type)
 			
 			/* bad if this assert fails, only part of the handshake
 			 * message got sent.  but why would this happen? */
-			OPENSSL_assert(len == ret); 
+			OPENSSL_assert(len == (unsigned int)ret); 
 			
 			if (type == SSL3_RT_HANDSHAKE && ! s->d1->retransmitting)
 				/* should not be done for 'Hello Request's, but in that case
@@ -360,7 +360,7 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		else if ( i <= 0 && !*ok)
 			return i;
 
-		if (s->d1->r_msg_hdr.msg_len == s->init_num - DTLS1_HM_HEADER_LENGTH)
+		if (s->d1->r_msg_hdr.msg_len == (unsigned int)s->init_num - DTLS1_HM_HEADER_LENGTH)
 			{
 			memset(&(s->d1->r_msg_hdr), 0x00, sizeof(struct hm_header_st));
 
@@ -413,7 +413,7 @@ dtls1_retrieve_buffered_fragment(SSL *s, unsigned long *copied)
     frag = (hm_fragment *)item->data;
     
     if ( s->d1->handshake_read_seq == frag->msg_header.seq &&
-        frag->msg_header.frag_off <= s->init_num - DTLS1_HM_HEADER_LENGTH)
+        frag->msg_header.frag_off <= (unsigned int)s->init_num - DTLS1_HM_HEADER_LENGTH)
         {
         pqueue_pop(s->d1->buffered_messages);
         overlap = s->init_num - DTLS1_HM_HEADER_LENGTH 
@@ -685,7 +685,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 
     /* XDTLS:  an incorrectly formatted fragment should cause the 
      * handshake to fail */
-	OPENSSL_assert(i == frag_len);
+	OPENSSL_assert(i == (int)frag_len);
 
 #if 0
     /* Successfully read a fragment.
@@ -1049,12 +1049,12 @@ dtls1_buffer_message(SSL *s, int is_ccs)
     if ( is_ccs)
         {
         OPENSSL_assert(s->d1->w_msg_hdr.msg_len + 
-            DTLS1_CCS_HEADER_LENGTH == s->init_num);
+            DTLS1_CCS_HEADER_LENGTH == (unsigned int)s->init_num);
         }
     else
         {
         OPENSSL_assert(s->d1->w_msg_hdr.msg_len + 
-            DTLS1_HM_HEADER_LENGTH == s->init_num);
+            DTLS1_HM_HEADER_LENGTH == (unsigned int)s->init_num);
         }
 
     frag->msg_header.msg_len = s->d1->w_msg_hdr.msg_len;

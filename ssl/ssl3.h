@@ -295,7 +295,7 @@ typedef struct ssl3_record_st
 /*rw*/	unsigned char *input;   /* where the decode bytes are */
 /*r */	unsigned char *comp;    /* only used with decompression - malloc()ed */
 /*r */  unsigned long epoch;    /* epoch number, needed by DTLS1 */
-/*r */  unsigned long long seq_num; /* sequence number, needed by DTLS1 */
+/*r */  BN_ULLONG seq_num; /* sequence number, needed by DTLS1 */
 	} SSL3_RECORD;
 
 typedef struct ssl3_buffer_st

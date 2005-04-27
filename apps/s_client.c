@@ -275,7 +275,7 @@ int MAIN(int argc, char **argv)
 #endif
 
 	struct sockaddr peer;
-	socklen_t peerlen = sizeof(peer);
+	int peerlen = sizeof(peer);
 	int enable_timeouts = 0 ;
 	long mtu = 0;
 
@@ -643,7 +643,7 @@ re_start:
 		struct timeval timeout;
 
 		sbio=BIO_new_dgram(s,BIO_NOCLOSE);
-		if (getsockname(s, &peer, &peerlen) < 0)
+		if (getsockname(s, &peer, (void *)&peerlen) < 0)
 			{
 			BIO_printf(bio_err, "getsockname:errno=%d\n",
 				get_last_socket_error());

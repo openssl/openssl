@@ -183,12 +183,12 @@
 			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
 			 *((c)++)=(unsigned char)(((l)    )&0xff))
 
-#define n2l6(c,l)	(l =((unsigned long long)(*((c)++)))<<40, \
-			 l|=((unsigned long long)(*((c)++)))<<32, \
-			 l|=((unsigned long long)(*((c)++)))<<24, \
-			 l|=((unsigned long long)(*((c)++)))<<16, \
-			 l|=((unsigned long long)(*((c)++)))<< 8, \
-			 l|=((unsigned long long)(*((c)++))))
+#define n2l6(c,l)	(l =((BN_ULLONG)(*((c)++)))<<40, \
+			 l|=((BN_ULLONG)(*((c)++)))<<32, \
+			 l|=((BN_ULLONG)(*((c)++)))<<24, \
+			 l|=((BN_ULLONG)(*((c)++)))<<16, \
+			 l|=((BN_ULLONG)(*((c)++)))<< 8, \
+			 l|=((BN_ULLONG)(*((c)++))))
 
 /* NOTE - c is not incremented as per l2c */
 #define l2cn(l1,l2,c,n)	{ \

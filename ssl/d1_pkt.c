@@ -124,7 +124,7 @@
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf, 
 	int len, int peek);
 static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
-	unsigned long long *seq_num);
+	BN_ULLONG *seq_num);
 static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 static DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr, 
     unsigned int *is_next_epoch);
@@ -133,10 +133,10 @@ static int dtls1_record_needs_buffering(SSL *s, SSL3_RECORD *rr,
 	unsigned short *priority, unsigned long *offset);
 #endif
 static int dtls1_buffer_record(SSL *s, record_pqueue *q,
-	unsigned long long priority);
+	BN_ULLONG priority);
 static int dtls1_process_record(SSL *s);
-static unsigned long long bytes_to_long_long(unsigned char *bytes);
-static void long_long_to_bytes(unsigned long long num, unsigned char *bytes);
+static BN_ULLONG bytes_to_long_long(unsigned char *bytes);
+static void long_long_to_bytes(BN_ULLONG num, unsigned char *bytes);
 static void dtls1_clear_timeouts(SSL *s);
 
 
@@ -161,7 +161,7 @@ dtls1_copy_record(SSL *s, pitem *item)
 
 
 static int
-dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned long long priority)
+dtls1_buffer_record(SSL *s, record_pqueue *queue, BN_ULLONG priority)
 {
     DTLS1_RECORD_DATA *rdata;
 	pitem *item;
@@ -275,9 +275,9 @@ static int
 dtls1_get_buffered_record(SSL *s)
 	{
 	pitem *item;
-	unsigned long long priority = 
-		(((unsigned long long)s->d1->handshake_read_seq) << 32) | 
-		((unsigned long long)s->d1->r_msg_hdr.frag_off);
+	BN_ULLONG priority = 
+		(((BN_ULLONG)s->d1->handshake_read_seq) << 32) | 
+		((BN_ULLONG)s->d1->r_msg_hdr.frag_off);
 	
 	if ( ! SSL_in_init(s))  /* if we're not (re)negotiating, 
 							   nothing buffered */
@@ -482,7 +482,7 @@ int dtls1_get_record(SSL *s)
 	unsigned char *p;
 	short version;
 	DTLS1_BITMAP *bitmap;
-	unsigned long long read_sequence;
+	BN_ULLONG read_sequence;
     unsigned int is_next_epoch;
 
 	rr= &(s->s3->rrec);
@@ -1243,7 +1243,7 @@ int dtls1_write_bytes(SSL *s, int type, const void *buf_, int len)
 		return i;
 		}
 
-	if ( s->s3->wnum + i == len)
+	if ( (int)s->s3->wnum + i == len)
 		s->s3->wnum = 0;
 	else 
 		s->s3->wnum += i;
@@ -1419,7 +1419,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 	/* buffer the record, making it easy to handle retransmits */
 	if ( type == SSL3_RT_HANDSHAKE || type == SSL3_RT_CHANGE_CIPHER_SPEC)
 		dtls1_buffer_record(s, wr->data, wr->length, 
-			*((unsigned long long *)&(s->s3->write_sequence[0])));
+			*((BN_ULLONG *)&(s->s3->write_sequence[0])));
 #endif
 
 	ssl3_record_sequence_update(&(s->s3->write_sequence[0]));
@@ -1451,10 +1451,10 @@ err:
 
 
 static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
-	unsigned long long *seq_num)
+	BN_ULLONG *seq_num)
 	{
-	unsigned long long mask = 0x0000000000000001LL;
-	unsigned long long rcd_num;
+	BN_ULLONG mask = 0x0000000000000001L;
+	BN_ULLONG rcd_num;
 
 	rcd_num = bytes_to_long_long(s->s3->read_sequence);
 	
@@ -1479,17 +1479,17 @@ static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
 static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap)
 	{
 	unsigned int shift;
-	unsigned long long mask = 0x0000000000000001L;
-	unsigned long long rcd_num;
+	BN_ULLONG mask = 0x0000000000000001L;
+	BN_ULLONG rcd_num;
 
 	rcd_num = bytes_to_long_long(s->s3->read_sequence);
 
 	if (rcd_num >= bitmap->max_seq_num)
 		{
-		shift = rcd_num - bitmap->max_seq_num + 1;
+		shift = (unsigned int)(rcd_num - bitmap->max_seq_num) + 1;
 		bitmap->max_seq_num = rcd_num + 1;
 		bitmap->map <<= shift;
-		bitmap->map |= 0x0000000000000001LL;
+		bitmap->map |= 0x0000000000000001L;
 		}
 	else
 		{
@@ -1570,7 +1570,7 @@ dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr, unsigned int *is_next_epoch)
         return &s->d1->bitmap;
 
     /* Only HM and ALERT messages can be from the next epoch */
-    else if (rr->epoch == s->d1->r_epoch + 1 &&
+    else if (rr->epoch == (unsigned long)(s->d1->r_epoch + 1) &&
         (rr->type == SSL3_RT_HANDSHAKE ||
             rr->type == SSL3_RT_ALERT))
         {
@@ -1669,25 +1669,25 @@ dtls1_reset_seq_numbers(SSL *s, int rw)
 	}
 
 
-static unsigned long long
+static BN_ULLONG
 bytes_to_long_long(unsigned char *bytes)
 	{
-	unsigned long long num;
+	BN_ULLONG num;
 
-	num = (((unsigned long long)bytes[0]) << 56) |
-		(((unsigned long long)bytes[1]) << 48) |
-		(((unsigned long long)bytes[2]) << 40) |
-		(((unsigned long long)bytes[3]) << 32) |
-		(((unsigned long long)bytes[4]) << 24) |
-		(((unsigned long long)bytes[5]) << 16) |
-		(((unsigned long long)bytes[6]) <<  8) |
-		(((unsigned long long)bytes[7])      );
+	num = (((BN_ULLONG)bytes[0]) << 56) |
+		(((BN_ULLONG)bytes[1]) << 48) |
+		(((BN_ULLONG)bytes[2]) << 40) |
+		(((BN_ULLONG)bytes[3]) << 32) |
+		(((BN_ULLONG)bytes[4]) << 24) |
+		(((BN_ULLONG)bytes[5]) << 16) |
+		(((BN_ULLONG)bytes[6]) <<  8) |
+		(((BN_ULLONG)bytes[7])      );
 
 	return num;
 	}
 
 static void
-long_long_to_bytes(unsigned long long num, unsigned char *bytes)
+long_long_to_bytes(BN_ULLONG num, unsigned char *bytes)
 	{
 	bytes[0] = (unsigned char)((num >> 56)&0xff);
 	bytes[1] = (unsigned char)((num >> 48)&0xff);

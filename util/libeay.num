@@ -3313,3 +3313,15 @@ BN_BLINDING_set_flags                   3712	EXIST::FUNCTION:
 BN_BLINDING_invert_ex                   3713	EXIST::FUNCTION:
 BN_BLINDING_get_thread_id               3714	EXIST::FUNCTION:
 BN_BLINDING_get_flags                   3715	EXIST::FUNCTION:
+pitem_new                               3716	EXIST::FUNCTION:
+pqueue_iterator                         3717	EXIST::FUNCTION:
+pqueue_print                            3718	EXIST::FUNCTION:
+pqueue_find                             3719	EXIST::FUNCTION:
+pqueue_peek                             3720	EXIST::FUNCTION:
+pqueue_pop                              3721	EXIST::FUNCTION:
+BN_MONT_CTX_set_locked                  3722	EXIST::FUNCTION:
+pqueue_free                             3723	EXIST::FUNCTION:
+pqueue_next                             3724	EXIST::FUNCTION:
+pqueue_new                              3725	EXIST::FUNCTION:
+pqueue_insert                           3726	EXIST::FUNCTION:
+pitem_free                              3727	EXIST::FUNCTION:
