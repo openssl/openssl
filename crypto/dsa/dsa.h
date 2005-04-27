@@ -146,7 +146,7 @@ struct dsa_st
 
 	int flags;
 	/* Normally used to cache montgomery values */
-	char *method_mont_p;
+	BN_MONT_CTX *method_mont_p;
 	int references;
 	CRYPTO_EX_DATA ex_data;
 	const DSA_METHOD *meth;

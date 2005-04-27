@@ -114,7 +114,7 @@ struct dh_st
 	BIGNUM *priv_key;	/* x */
 
 	int flags;
-	char *method_mont_p;
+	BN_MONT_CTX *method_mont_p;
 	/* Place holders if we want to do X9.42 DH */
 	BIGNUM *q;
 	BIGNUM *j;
