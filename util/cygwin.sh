@@ -21,11 +21,11 @@ function cleanup()
 
 function get_openssl_version()
 {
-  eval `grep '^VERSION=' Makefile.ssl`
+  eval `grep '^VERSION=' Makefile`
   if [ -z "${VERSION}" ]
   then
-    echo "Error: Couldn't retrieve OpenSSL version from Makefile.ssl."
-    echo "       Check value of variable VERSION in Makefile.ssl."
+    echo "Error: Couldn't retrieve OpenSSL version from Makefile."
+    echo "       Check value of variable VERSION in Makefile."
     exit 1
   fi
 }

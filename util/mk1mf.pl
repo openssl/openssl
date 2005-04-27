@@ -675,7 +675,7 @@ if ($platform eq "linux-elf") {
     print <<"EOF";
 # Generate perlasm output files
 %.cpp:
-	(cd \$(\@D)/..; PERL=perl make -f Makefile.ssl asm/\$(\@F))
+	(cd \$(\@D)/..; PERL=perl make -f Makefile asm/\$(\@F))
 EOF
 }
 print "###################################################################\n";
