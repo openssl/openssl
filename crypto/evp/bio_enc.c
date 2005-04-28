@@ -71,7 +71,7 @@ static int enc_new(BIO *h);
 static int enc_free(BIO *data);
 static long enc_callback_ctrl(BIO *h, int cmd, bio_info_cb *fps);
 #define ENC_BLOCK_SIZE	(1024*4)
-#define BUF_OFFSET	EVP_MAX_BLOCK_LENGTH
+#define BUF_OFFSET	(EVP_MAX_BLOCK_LENGTH*2)
 
 typedef struct enc_struct
 	{
