@@ -108,7 +108,7 @@ static int generate_key(DH *dh)
 	int generate_new_key=0;
 	unsigned l;
 	BN_CTX *ctx;
-	BN_MONT_CTX *mont;
+	BN_MONT_CTX *mont=NULL;
 	BIGNUM *pub_key=NULL,*priv_key=NULL;
 
 	ctx = BN_CTX_new();
@@ -164,7 +164,7 @@ err:
 static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	{
 	BN_CTX *ctx;
-	BN_MONT_CTX *mont;
+	BN_MONT_CTX *mont=NULL;
 	BIGNUM *tmp;
 	int ret= -1;
 
