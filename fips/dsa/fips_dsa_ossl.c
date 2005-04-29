@@ -153,17 +153,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, FIPS_DSA_SIZE_T dlen, DSA
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
 
-	if ((dsa->kinv == NULL) || (dsa->r == NULL))
-		{
-		if (!DSA_sign_setup(dsa,ctx,&kinv,&r)) goto err;
-		}
-	else
-		{
-		kinv=dsa->kinv;
-		dsa->kinv=NULL;
-		r=dsa->r;
-		dsa->r=NULL;
-		}
+	if (!DSA_sign_setup(dsa,ctx,&kinv,&r)) goto err;
 
 	if (BN_bin2bn(dgst,dlen,&m) == NULL) goto err;
 
