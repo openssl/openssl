@@ -230,7 +230,10 @@ BN_CTX *BN_CTX_new(void)
 
 void BN_CTX_free(BN_CTX *ctx)
 	{
+	if (ctx == NULL)
+		return;
 #ifdef BN_CTX_DEBUG
+	{
 	BN_POOL_ITEM *pool = ctx->pool.head;
 	fprintf(stderr,"BN_CTX_free, stack-size=%d, pool-bignums=%d\n",
 		ctx->stack.size, ctx->pool.size);
@@ -242,6 +245,7 @@ void BN_CTX_free(BN_CTX *ctx)
 		pool = pool->next;
 	}
 	fprintf(stderr,"\n");
+	}
 #endif
 	BN_STACK_finish(&ctx->stack);
 	BN_POOL_finish(&ctx->pool);
