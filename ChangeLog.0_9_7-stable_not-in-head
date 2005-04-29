@@ -529,21 +529,6 @@ be added to the end of this file.
 	saw weren't due to that, but to a change on the SCO machines I used
 	for testing, where my $PATH was suddenly incorrect.
 
-2003-09-27 20:31  levitte
-
-	Changed:
-		apps/pkcs8.c (1.22.2.8), "Exp", lines: +5 -6
-
-	Remove extra argument to BIO_printf().	PR: 685
-
-2003-11-19 06:18  geoff
-
-	Changed:
-		crypto/x509/x509.h (1.116.2.4), "Exp", lines: +0 -4
-
-	Remove duplicate prototypes have already been (correctly) added to
-	rsa.h, as this is already included by x509.h anyway.
-
 2004-01-21 10:58  appro
 
 	Changed:
@@ -653,13 +638,6 @@ be added to the end of this file.
 		apps/enc.c (1.35.2.11), "Exp", lines: +4 -4
 
 	Rewrite the usage to avoid confusion.
-
-2004-05-17 06:47  levitte
-
-	Changed:
-		apps/enc.c (1.35.2.12), "Exp", lines: +1 -1
-
-	Typo corretced.
 
 2004-06-19 15:32  ben
 
