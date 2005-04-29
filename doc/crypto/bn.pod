@@ -175,6 +175,7 @@ L<BN_cmp(3)|BN_cmp(3)>, L<BN_zero(3)|BN_zero(3)>, L<BN_rand(3)|BN_rand(3)>,
 L<BN_generate_prime(3)|BN_generate_prime(3)>, L<BN_set_bit(3)|BN_set_bit(3)>,
 L<BN_bn2bin(3)|BN_bn2bin(3)>, L<BN_mod_inverse(3)|BN_mod_inverse(3)>,
 L<BN_mod_mul_reciprocal(3)|BN_mod_mul_reciprocal(3)>,
-L<BN_mod_mul_montgomery(3)|BN_mod_mul_montgomery(3)> 
+L<BN_mod_mul_montgomery(3)|BN_mod_mul_montgomery(3)>,
+L<BN_BLINDING_new(3)|BN_BLINDING_new(3)>
 
 =cut
