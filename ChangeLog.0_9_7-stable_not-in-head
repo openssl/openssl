@@ -612,18 +612,6 @@ be added to the end of this file.
 	All EVP_*_cfb functions have changed names to EVP_*_cfb64 or
 	EVP_*_cfb128.
 
-2004-05-15 18:39  ben
-
-	Changed:
-		ssl/s23_clnt.c (1.20.2.6), "Exp", lines: +5 -2
-		ssl/s2_clnt.c (1.37.2.11), "Exp", lines: +5 -2
-		ssl/s2_srvr.c (1.36.2.8), "Exp", lines: +6 -3
-		ssl/s3_clnt.c (1.53.2.17), "Exp", lines: +2 -1
-		ssl/s3_srvr.c (1.85.2.22), "Exp", lines: +4 -2
-		ssl/ssl_sess.c (1.40.2.8), "Exp", lines: +2 -1
-
-	Check error returns.
-
 2004-05-17 06:39  levitte
 
 	Changed:

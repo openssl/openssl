@@ -1048,7 +1048,8 @@ int ssl3_send_server_hello(SSL *s)
 		p=s->s3->server_random;
 		Time=time(NULL);			/* Time */
 		l2n(Time,p);
-		RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4);
+		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
+			return -1;
 		/* Do the message type and length last */
 		d=p= &(buf[4]);
 
@@ -1784,7 +1785,8 @@ int ssl3_get_client_key_exchange(SSL *s)
 			i = SSL_MAX_MASTER_KEY_LENGTH;
 			p[0] = s->client_version >> 8;
 			p[1] = s->client_version & 0xff;
-			RAND_pseudo_bytes(p+2, i-2); /* should be RAND_bytes, but we cannot work around a failure */
+			if (RAND_pseudo_bytes(p+2, i-2) <= 0) /* should be RAND_bytes, but we cannot work around a failure */
+				goto err;
 			}
 	
 		s->session->master_key_length=
