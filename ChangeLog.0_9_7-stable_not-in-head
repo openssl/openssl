@@ -104,50 +104,12 @@ be added to the end of this file.
 	Add the possibility to enable olde des support, not just disable
 	it, for future support.  Redocument
 
-2002-05-08 17:13  ben
-
-	Changed:
-		crypto/conf/conf_mod.c (1.8.2.6), "Exp", lines: +1 -1
-
-	Fix warning.
-
-2002-05-22 09:53  levitte
-
-	Changed:
-		apps/speed.c (1.83.2.7), "Exp", lines: +4 -1
-
-	Remove warnings about unused symbols when configured with no-rsa.
-
-2002-05-22 09:55  levitte
-
-	Changed:
-		crypto/asn1/x_pubkey.c (1.21.2.1), "Exp", lines: +1 -1
-
-	Remove warnings about uninitialised variables.	This has already
-	been applied in the main branch.
-
-2002-05-22 09:56  levitte
-
-	Changed:
-		crypto/engine/hw_4758_cca.c (1.1.2.4), "Exp", lines: +14 -14
-
-	Use 0 instead of NULL when casting to function pointers, to avoid
-	warnings from compilers when NULL is defined as '((void *)0)'.
-	This has already been applied in the main branch.
-
 2002-05-23 17:25  levitte
 
 	Changed:
 		VMS/tcpip_shr_decc.opt (1.1.4.1), "Exp", lines: +1 -0
 
 	Forgot this file.
-
-2002-05-31 16:34  ben
-
-	Changed:
-		crypto/evp/evp_test.c (1.14.2.5), "Exp", lines: +1 -1
-
-	Fix a warning.
 
 2002-06-05 08:45  levitte
 
@@ -240,13 +202,6 @@ be added to the end of this file.
 
 	Make OpenSSLdie() visible (it's a must to get a proper reference in
 	libeay.num).
-
-2002-11-13 14:36  levitte
-
-	Changed:
-		crypto/pem/pem_lib.c (1.36.2.5), "Exp", lines: +1 -1
-
-	C++ comments in C code, 'nuff said...
 
 2002-11-13 15:30  levitte
 
@@ -359,20 +314,6 @@ be added to the end of this file.
 	create a library search path.
 
 		Correct typos.
-
-2003-04-09 07:25  levitte
-
-	Changed:
-		test/Makefile.ssl (1.84.2.26), "Exp", lines: +1 -1
-
-	Typo
-
-2003-04-09 08:50  levitte
-
-	Changed:
-		apps/Makefile.ssl (1.100.2.23), "Exp", lines: +1 -0
-
-	Dont forget req.
 
 2003-07-03 23:43  levitte
 
