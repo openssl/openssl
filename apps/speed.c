@@ -997,6 +997,7 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_ECDSA
 		     if (strcmp(*argv,"ecdsap160") == 0) ecdsa_doit[R_EC_P160]=2;
+		else if (strcmp(*argv,"ecdsap192") == 0) ecdsa_doit[R_EC_P192]=2;
 		else if (strcmp(*argv,"ecdsap224") == 0) ecdsa_doit[R_EC_P224]=2;
 		else if (strcmp(*argv,"ecdsap256") == 0) ecdsa_doit[R_EC_P256]=2;
 		else if (strcmp(*argv,"ecdsap384") == 0) ecdsa_doit[R_EC_P384]=2;
@@ -1020,6 +1021,7 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_ECDH
 		     if (strcmp(*argv,"ecdhp160") == 0) ecdh_doit[R_EC_P160]=2;
+		else if (strcmp(*argv,"ecdhp192") == 0) ecdh_doit[R_EC_P192]=2;
 		else if (strcmp(*argv,"ecdhp224") == 0) ecdh_doit[R_EC_P224]=2;
 		else if (strcmp(*argv,"ecdhp256") == 0) ecdh_doit[R_EC_P256]=2;
 		else if (strcmp(*argv,"ecdhp384") == 0) ecdh_doit[R_EC_P384]=2;
@@ -1109,13 +1111,13 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"dsa512   dsa1024  dsa2048\n");
 #endif
 #ifndef OPENSSL_NO_ECDSA
-			BIO_printf(bio_err,"ecdsap160 ecdsap224 ecdsap256 ecdsap384 ecdsap521\n");
+			BIO_printf(bio_err,"ecdsap160 ecdsap192 ecdsap224 ecdsap256 ecdsap384 ecdsap521\n");
 			BIO_printf(bio_err,"ecdsak163 ecdsak233 ecdsak283 ecdsak409 ecdsak571\n");
 			BIO_printf(bio_err,"ecdsab163 ecdsab233 ecdsab283 ecdsab409 ecdsab571\n");
 			BIO_printf(bio_err,"ecdsa\n");
 #endif
 #ifndef OPENSSL_NO_ECDH
-			BIO_printf(bio_err,"ecdhp160  ecdhp224  ecdhp256  ecdhp384  ecdhp521\n");
+			BIO_printf(bio_err,"ecdhp160  ecdhp192  ecdhp224  ecdhp256  ecdhp384  ecdhp521\n");
 			BIO_printf(bio_err,"ecdhk163  ecdhk233  ecdhk283  ecdhk409  ecdhk571\n");
 			BIO_printf(bio_err,"ecdhb163  ecdhb233  ecdhb283  ecdhb409  ecdhb571\n");
 			BIO_printf(bio_err,"ecdh\n");
