@@ -53,7 +53,7 @@
  *
  */
 
-#include "ecdsa.h"
+#include "ecs_locl.h"
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
 

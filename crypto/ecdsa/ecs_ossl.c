@@ -56,7 +56,7 @@
  *
  */
 
-#include "ecdsa.h"
+#include "ecs_locl.h"
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/bn.h>

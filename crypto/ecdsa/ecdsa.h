@@ -75,44 +75,14 @@
 extern "C" {
 #endif
 
-/* Already defined in ossl_typ.h */
-/* typedef struct ecdsa_method ECDSA_METHOD; */
-
 typedef struct ECDSA_SIG_st
 	{
 	BIGNUM *r;
 	BIGNUM *s;
 	} ECDSA_SIG;
 
-struct ecdsa_method 
-	{
-	const char *name;
-	ECDSA_SIG *(*ecdsa_do_sign)(const unsigned char *dgst, int dgst_len, 
-			EC_KEY *eckey);
-	int (*ecdsa_sign_setup)(EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinv, 
-			BIGNUM **r);
-	int (*ecdsa_do_verify)(const unsigned char *dgst, int dgst_len, 
-			const ECDSA_SIG *sig, EC_KEY *eckey);
-#if 0
-	int (*init)(EC_KEY *eckey);
-	int (*finish)(EC_KEY *eckey);
-#endif
-	int flags;
-	char *app_data;
-	};
-
-typedef struct ecdsa_data_st {
-	/* EC_KEY_METH_DATA part */
-	int (*init)(EC_KEY *);
-	void (*finish)(EC_KEY *);
-	/* method (ECDSA) specific part */
-	BIGNUM	*kinv;	/* signing pre-calc */
-	BIGNUM	*r;	/* signing pre-calc */
-	ENGINE	*engine;
-	int	flags;
-	const ECDSA_METHOD *meth;
-	CRYPTO_EX_DATA ex_data;
-} ECDSA_DATA; 
+/* ecdsa_data_st is defined in ecs_locl.h  */
+typedef struct ecdsa_data_st ECDSA_DATA;
 
 /** ECDSA_SIG *ECDSA_SIG_new(void)
  * allocates and initialize a ECDSA_SIG structure
@@ -163,14 +133,6 @@ ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *eng);
  * \param data pointer to a ECDSA_DATA structure
  */
 void ECDSA_DATA_free(ECDSA_DATA *data);
-
-/** ecdsa_check
- * checks whether ECKEY->meth_data is a pointer to a ECDSA_DATA structure
- * and if not it removes the old meth_data and creates a ECDSA_DATA structure.
- * \param  eckey pointer to a EC_KEY object
- * \return pointer to a ECDSA_DATA structure
- */
-ECDSA_DATA *ecdsa_check(EC_KEY *eckey);
 
 /** ECDSA_do_sign
  * computes the ECDSA signature of the given hash value using

@@ -30,7 +30,7 @@ LIBOBJ=	ech_lib.o ech_ossl.o ech_key.o ech_err.o
 SRC= $(LIBSRC)
 
 EXHEADER= ecdh.h
-HEADER=	$(EXHEADER)
+HEADER=	ech_locl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

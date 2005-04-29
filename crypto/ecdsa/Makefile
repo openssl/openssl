@@ -30,7 +30,7 @@ LIBOBJ=	ecs_lib.o ecs_asn1.o ecs_ossl.o ecs_sign.o ecs_vrf.o ecs_err.o
 SRC= $(LIBSRC)
 
 EXHEADER= ecdsa.h
-HEADER=	$(EXHEADER)
+HEADER=	ecs_locl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

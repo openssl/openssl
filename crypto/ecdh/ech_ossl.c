@@ -73,7 +73,7 @@
 
 #include "cryptlib.h"
 
-#include <openssl/ecdh.h>
+#include "ech_locl.h"
 #include <openssl/err.h>
 #include <openssl/sha.h>
 #include <openssl/obj_mac.h>
