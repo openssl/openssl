@@ -66,6 +66,7 @@
 #include <openssl/err.h>
 
 static int asn1_check_eoc(unsigned char **in, long len);
+static int asn1_find_end(unsigned char **in, long len, char inf);
 static int asn1_collect(BUF_MEM *buf, unsigned char **in, long len, char inf, int tag, int aclass);
 static int collect_data(BUF_MEM *buf, unsigned char **p, long plen);
 static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *inf, char *cst,
@@ -644,7 +645,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, unsigned char **in, long inl
 		cont = *in;
 		/* If indefinite length constructed find the real end */
 		if(inf) {
-			if(!asn1_collect(NULL, &p, plen, inf, -1, -1)) goto err;
+			if(!asn1_find_end(&p, plen, inf)) goto err;
 			len = p - cont;
 		} else {
 			len = p - cont + plen;
@@ -807,12 +808,66 @@ int asn1_ex_c2i(ASN1_VALUE **pval, unsigned char *cont, int len, int utype, char
 	return ret;
 }
 
+/* This function finds the end of an ASN1 structure when passed its maximum
+ * length, whether it is indefinite length and a pointer to the content.
+ * This is more efficient than calling asn1_collect because it does not
+ * recurse on each indefinite length header.
+ */
+
+static int asn1_find_end(unsigned char **in, long len, char inf)
+	{
+	int expected_eoc;
+	long plen;
+	unsigned char *p = *in, *q;
+	/* If not indefinite length constructed just add length */
+	if (inf == 0)
+		{
+		*in += len;
+		return 1;
+		}
+	expected_eoc = 1;
+	/* Indefinite length constructed form. Find the end when enough EOCs
+	 * are found. If more indefinite length constructed headers
+	 * are encountered increment the expected eoc count otherwise justi
+	 * skip to the end of the data.
+	 */
+	while (len > 0)
+		{
+		if(asn1_check_eoc(&p, len))
+			{
+			expected_eoc--;
+			if (expected_eoc == 0)
+				break;
+			len -= 2;
+			continue;
+			}
+		q = p;
+		/* Just read in a header: only care about the length */
+		if(!asn1_check_tlen(&plen, NULL, NULL, &inf, NULL, &p, len,
+				-1, 0, 0, NULL))
+			{
+			ASN1err(ASN1_F_ASN1_FIND_END, ERR_R_NESTED_ASN1_ERROR);
+			return 0;
+			}
+		if (inf)
+			expected_eoc++;
+		else
+			p += plen;
+		len -= p - q;
+		}
+	if (expected_eoc)
+		{
+		ASN1err(ASN1_F_ASN1_FIND_END, ASN1_R_MISSING_EOC);
+		return 0;
+		}
+	*in = p;
+	return 1;
+	}
+
 /* This function collects the asn1 data from a constructred string
  * type into a buffer. The values of 'in' and 'len' should refer
  * to the contents of the constructed type and 'inf' should be set
- * if it is indefinite length. If 'buf' is NULL then we just want
- * to find the end of the current structure: useful for indefinite
- * length constructed stuff.
+ * if it is indefinite length.
  */
 
 static int asn1_collect(BUF_MEM *buf, unsigned char **in, long len, char inf, int tag, int aclass)
@@ -822,11 +877,6 @@ static int asn1_collect(BUF_MEM *buf, unsigned char **in, long len, char inf, in
 	char cst, ininf;
 	p = *in;
 	inf &= 1;
-	/* If no buffer and not indefinite length constructed just pass over the encoded data */
-	if(!buf && !inf) {
-		*in += len;
-		return 1;
-	}
 	while(len > 0) {
 		q = p;
 		/* Check for EOC */
