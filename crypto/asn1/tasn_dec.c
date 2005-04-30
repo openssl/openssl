@@ -895,7 +895,13 @@ static int asn1_collect(BUF_MEM *buf, unsigned char **in, long len, char inf, in
 		}
 		/* If indefinite length constructed update max length */
 		if(cst) {
-			if(!asn1_collect(buf, &p, plen, ininf, tag, aclass)) return 0;
+#ifdef OPENSSL_ALLOW_NESTED_ASN1_STRINGS
+			if (!asn1_collect(buf, &p, plen, ininf, tag, aclass))
+				return 0;
+#else
+			ASN1err(ASN1_F_ASN1_COLLECT, ASN1_R_NESTED_ASN1_STRING);
+			return 0;
+#endif
 		} else {
 			if(!collect_data(buf, &p, plen)) return 0;
 		}

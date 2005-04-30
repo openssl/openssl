@@ -203,6 +203,7 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ERR_REASON(ASN1_R_MISSING_SECOND_NUMBER),"missing second number"},
 {ERR_REASON(ASN1_R_MSTRING_NOT_UNIVERSAL),"mstring not universal"},
 {ERR_REASON(ASN1_R_MSTRING_WRONG_TAG)    ,"mstring wrong tag"},
+{ERR_REASON(ASN1_R_NESTED_ASN1_STRING)   ,"nested asn1 string"},
 {ERR_REASON(ASN1_R_NON_HEX_CHARACTERS)   ,"non hex characters"},
 {ERR_REASON(ASN1_R_NOT_ENOUGH_DATA)      ,"not enough data"},
 {ERR_REASON(ASN1_R_NO_MATCHING_CHOICE_TYPE),"no matching choice type"},
