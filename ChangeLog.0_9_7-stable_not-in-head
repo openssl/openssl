@@ -240,23 +240,6 @@ be added to the end of this file.
 		Thanks to Dr Stephen Henson <shenson@drh-consultancy.co.uk>
 	for making me aware of this error.
 
-2004-12-28 00:48  appro
-
-	Changed:
-		Configure (1.314.2.103), "Exp", lines: +1 -2
-		Makefile.org (1.154.2.92), "Exp", lines: +2 -2
-
-	Cosmetic mingw update.	PR: 924
-
-2005-03-12 10:28  appro
-
-	Changed:
-		Makefile.org (1.154.2.95), "Exp", lines: +9 -2
-		apps/Makefile (1.1.4.13), "Exp", lines: +0 -1
-		test/Makefile (1.1.4.9), "Exp", lines: +0 -1
-
-	Move copying of .dll to apps/ and test/ to more appropriate place.
-
 2005-03-15 10:46  appro [FIPS]
 
 	Changed:
@@ -267,13 +250,6 @@ be added to the end of this file.
 	Real Bourne shell doesn't accept ! as in "if ! grep ..." Fix this
 	in crypto/Makefile and make Makefile.org and fips/Makefile more
 	discreet.
-
-2005-04-14 00:47  appro
-
-	Changed:
-		Makefile.org (1.154.2.98), "Exp", lines: +1 -1
-
-	Move cygcrypto.dll above cygwin.dll.
 
 2005-04-19 16:21  appro
 
