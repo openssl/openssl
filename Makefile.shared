@@ -260,9 +260,14 @@ link_a.cygwin:
 	SHLIB_SOVER=; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="$(CFLAGS) -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a"; \
+	base=;  [ $(LIBNAME) = "crypto" ] && base=-Wl,--image-base,0x61200000; \
+	SHAREDFLAGS="$(CFLAGS) $$base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a"; \
 	SHAREDCMD='${CC}'; \
-	$(LINK_SO_A)
+	[ -f apps/$$SHLIB$$SHLIB_SUFFIX ] && rm apps/$$SHLIB$$SHLIB_SUFFIX; \
+	[ -f test/$$SHLIB$$SHLIB_SUFFIX ] && rm test/$$SHLIB$$SHLIB_SUFFIX; \
+	$(LINK_SO_A) || exit 1; \
+	cp -p $$SHLIB$$SHLIB_SUFFIX apps/; \
+	cp -p $$SHLIB$$SHLIB_SUFFIX test/
 link_app.cygwin:
 	LDCMD=$(CC);\
 	LDFLAGS="$(CFLAGS)"; \

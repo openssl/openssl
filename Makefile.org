@@ -501,7 +501,7 @@ install_docs:
 	@pod2man="`cd util; ./pod2mantest $(PERL)`"; \
 	here="`pwd`"; \
 	filecase=; \
-	if [ "$(PLATFORM)" = "DJGPP" -o "$(PLATFORM)" = "Cygwin" ]; then \
+	if [ "$(PLATFORM)" = "DJGPP" -o "$(PLATFORM)" = "Cygwin" -o "$(PLATFORM)" = "mingw" ]; then \
 		filecase=-i; \
 	fi; \
 	set -e; for i in doc/apps/*.pod; do \
