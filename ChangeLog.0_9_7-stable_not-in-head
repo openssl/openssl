@@ -40,20 +40,6 @@ be added to the end of this file.
 	Return my normal debug targets to something not so extreme, and
 	make the extreme ones special (or 'extreme', if you will :-)).
 
-2002-12-12 18:41  levitte
-
-	Changed:
-		crypto/engine/hw_ncipher.c (1.26.2.7), "Exp", lines: +38 -2
-		crypto/engine/hw_ncipher_err.c (1.1.2.2), "Exp", lines: +1 -1
-		crypto/engine/hw_ncipher_err.h (1.1.2.2), "Exp", lines: +1 -1
-		crypto/cryptlib.c (1.32.2.8), "Exp", lines: +2 -1
-		crypto/crypto.h (1.62.2.7), "Exp", lines: +2 -1
-		CHANGES (1.977.2.78), "Exp", lines: +14 -0
-
-	Add a static lock called HWCRHK, for the case of having an
-	application that wants to use the hw_ncipher engine without having
-	given any callbacks for the dynamic type of locks.
-
 2002-12-15 16:27  appro
 
 	Changed:
