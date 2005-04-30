@@ -10,8 +10,6 @@ CFLAG=-g
 INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
-NEWMAKE=	make
-MAKE=		$(NEWMAKE)
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
@@ -72,7 +70,7 @@ lib:	$(LIBOBJ)
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		for l in $(LIBNAMES); do \
-			$(NEWMAKE) -f ../Makefile.shared \
+			$(MAKE) -f ../Makefile.shared \
 				CC="$(CC)" LIBNAME=$$l LIBEXTRAS=e_$$l.o \
 				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
 				CFLAG="$(CFLAG)" LDFLAGS="$(LDFLAGS)" \

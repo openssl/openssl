@@ -10,8 +10,6 @@ CFLAG=		-g -static
 INSTALL_PREFIX=
 INSTALLTOP=	/usr/local/ssl
 OPENSSLDIR=	/usr/local/ssl
-NEWMAKE=	make
-MAKE=		$(NEWMAKE)
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
@@ -93,7 +91,7 @@ req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+	$(MAKE) -f $(TOP)/Makefile.shared \
 		APPNAME=req CC="$(CC)" CFLAGS="$(CFLAGS)" \
 		LDFLAGS="$(LDFLAG)" SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 		OBJECTS="sreq.o $(A_OBJ) $(RAND_OBJ)" \
@@ -163,7 +161,7 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	else \
 	  LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
 	fi; \
-	$(NEWMAKE) -f $(TOP)/Makefile.shared \
+	$(MAKE) -f $(TOP)/Makefile.shared \
 		APPNAME=$(EXE) CC="$(CC)" CFLAGS="$(CFLAG)" \
 		LDFLAGS="$(LDFLAGS)" SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
 		OBJECTS="$(PROGRAM).o $(E_OBJ)" \

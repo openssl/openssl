@@ -40,19 +40,6 @@ be added to the end of this file.
 	Return my normal debug targets to something not so extreme, and
 	make the extreme ones special (or 'extreme', if you will :-)).
 
-2002-12-15 16:27  appro
-
-	Changed:
-		Makefile.org (1.154.2.41), "Exp", lines: +2 -1
-
-	Another Solaris shared build clean-up. This is not actually needed
-	if one uses WorkShop C. It's gcc driver that brings copy of
-	libgcc.a into .so otherwise. In case you wonder what it's -Wl,-z...
-	and not just -z. Problem is that gcc driver apparently omits all -z
-	options but -z text. Don't ask me why. I'm not committing
-	corresponding workaround into the HEAD as Makefile.shared
-	reportedly needs even more work...
-
 2002-12-16 19:17  appro
 
 	Changed:
@@ -61,25 +48,6 @@ be added to the end of this file.
 
 	This is rollback to 0.9.6h bn_mul.c to address problem reported in
 	RT#272.
-
-2002-12-16 19:59  appro
-
-	Changed:
-		Makefile.org (1.154.2.42), "Exp", lines: +3 -1
-
-	Some of Sun compiler drivers (well, one of those I have) collect
-	all options specified with -Wl in the beginnig of the ld command
-	line which kind of obsoletes the idea as it's -z defaultextract
-	that will be closest to lib*.a and not -z allextract:-(
-
-!2002-12-27 17:49  appro
-!
-!	Changed:
-!		Configure (1.314.2.62), "Exp", lines: +1 -1
-!
-!	According to Tim Rice <tim@multitalents.net> assembler support in
-!	SCO5 never worked anyway. Note this is not going to HEAD as we
-!	intend to provide an alternative solution as soon as 0.9.7 is out.
 
 2003-01-01 16:48  ben
 
@@ -212,15 +180,6 @@ be added to the end of this file.
 
 	DES CFB8 test.
 
-2004-01-21 10:58  appro
-
-	Changed:
-		Configure (1.314.2.89), "Exp", lines: +1 -0
-		config (1.95.2.27), "Exp", lines: +7 -6
-		crypto/bn/Makefile.ssl (1.65.2.7), "Exp", lines: +3 -0
-
-	Proper support for HP-UX64 gcc build.  PR: 772
-
 2004-03-17 05:01  mark
 
 	Changed:
@@ -271,16 +230,6 @@ be added to the end of this file.
 
 		PR: 900
 
-2004-07-24 15:40  appro
-
-	Changed:
-		ssl/ssl_cert.c (1.48.2.9), "Exp", lines: +5 -2
-
-	Add casts where casts due. It's "safe" to cast, because "wrong"
-	casts will either be optimized away or never performed. The trouble
-	is that compiler first parses code, then optimizes, not both at
-	once...
-
 2004-08-02 16:15  levitte [FIPS]
 
 	Changed:
@@ -290,21 +239,6 @@ be added to the end of this file.
 
 		Thanks to Dr Stephen Henson <shenson@drh-consultancy.co.uk>
 	for making me aware of this error.
-
-2004-12-09 19:00  appro
-
-	Changed:
-		apps/openssl.c (1.48.2.11), "Exp", lines: +1 -1
-
-	Eliminate dependency on UNICODE macro.
-
-2004-12-20 14:18  appro
-
-	Changed:
-		util/mklink.pl (1.6.2.2), "Exp", lines: +1 -0
-
-	When re-linking files, really relink them. In other words, emulate
-	ln -f.
 
 2004-12-28 00:48  appro
 
@@ -323,16 +257,6 @@ be added to the end of this file.
 
 	Allow for ./config no-sha0.  PR: 993
 
-2005-02-03 12:09  appro
-
-	Changed:
-		Configure (1.314.2.105), "Exp", lines: +2 -2
-		Makefile.org (1.154.2.94), "Exp", lines: +16 -6
-		TABLE (1.99.2.44), "Exp", lines: +2 -2
-
-	Final HP-UX specific touches to "cope with run-time linker on
-	multi-ABI platforms."
-
 2005-03-12 10:28  appro
 
 	Changed:
@@ -342,16 +266,7 @@ be added to the end of this file.
 
 	Move copying of .dll to apps/ and test/ to more appropriate place.
 
-2005-03-12 13:15  appro
-
-	Changed:
-		apps/Makefile (1.1.4.14), "Exp", lines: +4 -2
-		test/Makefile (1.1.4.10), "Exp", lines: +42 -194
-
-	Fold rules in test/Makefile and provide hooks for updated FIPS
-	build procedures.
-
-2005-03-15 10:46  appro
+2005-03-15 10:46  appro [FIPS]
 
 	Changed:
 		Makefile.org (1.154.2.96), "Exp", lines: +1 -1
@@ -361,27 +276,6 @@ be added to the end of this file.
 	Real Bourne shell doesn't accept ! as in "if ! grep ..." Fix this
 	in crypto/Makefile and make Makefile.org and fips/Makefile more
 	discreet.
-
-2005-03-26 20:32  appro
-
-	Changed:
-		crypto/perlasm/x86nasm.pl (1.2.8.8), "Exp", lines: +6 -1
-
-	Resolve "operation size not specified" in NASM modules.
-
-2005-04-03 21:16  appro
-
-	Changed:
-		Configure (1.314.2.109), "Exp", lines: +10 -0
-		TABLE (1.99.2.48), "Exp", lines: +50 -0
-		config (1.95.2.33), "Exp", lines: +9 -2
-		crypto/bn/Makefile (1.1.4.4), "Exp", lines: +1 -0
-		crypto/rc4/Makefile (1.1.4.6), "Exp", lines: +1 -1
-
-	Extend Solaris x86 support to amd64. Note that if both gcc and Sun
-	C are installed, it defaults to gcc, because it beats Sun C on
-	every benchmark. Also note that gcc shared build was verified to
-	work woth Sun C...
 
 2005-04-14 00:47  appro
 

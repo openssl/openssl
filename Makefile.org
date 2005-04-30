@@ -118,8 +118,6 @@ SDIRS=  \
 TESTS = alltests
 
 MAKEFILE= Makefile
-NEWMAKE=  make
-MAKE=     $(NEWMAKE)
 
 MANDIR=$(OPENSSLDIR)/man
 MAN1=1
@@ -229,7 +227,7 @@ clean-shared:
 
 link-shared:
 	@ set -e; for i in ${SHLIBDIRS}; do \
-		$(NEWMAKE) -f $(HERE)/Makefile.shared \
+		$(MAKE) -f $(HERE)/Makefile.shared \
 			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
 			symlink.$(SHLIB_TARGET); \
@@ -243,7 +241,7 @@ do_$(SHLIB_TARGET):
 		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
 			libs="$(LIBKRB5) $$libs"; \
 		fi; \
-		$(NEWMAKE) -f Makefile.shared \
+		$(MAKE) -f Makefile.shared \
 			$(BUILDENV) \
 			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
@@ -483,7 +481,7 @@ install_sw:
 		done; \
 		(	here="`pwd`"; \
 			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
-			$(NEWMAKE) -f $$here/Makefile HERE="$$here" link-shared ); \
+			$(MAKE) -f $$here/Makefile HERE="$$here" link-shared ); \
 		if [ "$(INSTALLTOP)" != "/usr" ]; then \
 			echo 'OpenSSL shared libraries have been installed in:'; \
 			echo '  $(INSTALLTOP)'; \
