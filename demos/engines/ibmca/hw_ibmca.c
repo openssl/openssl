@@ -288,6 +288,9 @@ static ENGINE *engine_ibmca(void)
 	return ret;
 	}
 
+#ifdef ENGINE_DYNAMIC_SUPPORT
+static
+#endif
 void ENGINE_load_ibmca(void)
 	{
 	/* Copied from eng_[openssl|dyn].c */
