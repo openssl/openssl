@@ -75,7 +75,7 @@ void OpenSSL_add_all_digests(void)
 	EVP_add_digest_alias(SN_md5,"ssl2-md5");
 	EVP_add_digest_alias(SN_md5,"ssl3-md5");
 #endif
-#ifndef OPENSSL_NO_SHA
+#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA0)
 	EVP_add_digest(EVP_sha());
 #ifndef OPENSSL_NO_DSA
 	EVP_add_digest(EVP_dss());

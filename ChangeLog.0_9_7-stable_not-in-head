@@ -248,15 +248,6 @@ be added to the end of this file.
 
 	Cosmetic mingw update.	PR: 924
 
-2005-01-09 18:58  appro
-
-	Changed:
-		crypto/evp/c_alld.c (1.4.2.1), "Exp", lines: +1 -1
-		crypto/evp/m_sha.c (1.8.2.1), "Exp", lines: +1 -1
-		crypto/sha/shatest.c (1.11.2.2), "Exp", lines: +2 -2
-
-	Allow for ./config no-sha0.  PR: 993
-
 2005-03-12 10:28  appro
 
 	Changed:
