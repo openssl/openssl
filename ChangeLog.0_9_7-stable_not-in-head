@@ -72,13 +72,6 @@ be added to the end of this file.
 	line which kind of obsoletes the idea as it's -z defaultextract
 	that will be closest to lib*.a and not -z allextract:-(
 
-2002-12-17 15:21  levitte
-
-	Changed:
-		NEWS (1.39.2.16), "Exp", lines: +4 -1
-
-	A few more NEWS items.
-
 !2002-12-27 17:49  appro
 !
 !	Changed:
@@ -88,17 +81,6 @@ be added to the end of this file.
 !	SCO5 never worked anyway. Note this is not going to HEAD as we
 !	intend to provide an alternative solution as soon as 0.9.7 is out.
 
-2002-12-28 02:35  levitte
-
-	Changed:
-		Configure (1.314.2.63), "Exp", lines: +1 -1
-
-	Hmm, the variables $x96_elf_asm and others contain a number of
-	colons, so when removing one reference, if should be replaced with
-	the appropriate number of colons, or chaos will follow...
-
-	It's rather silly to believe we'd release 0.9.7a in 2002 :-).
-
 2003-01-01 16:48  ben
 
 	Changed:
@@ -106,35 +88,6 @@ be added to the end of this file.
 		crypto/rc5/rc5_locl.h (1.3.2.4), "Exp", lines: +1 -1
 
 	Fix warnings, use correct -Ds.
-
-? 2003-04-04 16:21  levitte
-
-	Changed:
-		util/mkdef.pl (1.67.2.5), "Exp", lines: +10 -5
-		util/mkerr.pl (1.18.2.3), "Exp", lines: +6 -6
-
-	Transfer the changes to detect multiline comments and the GCC
-	extension __attribute__.
-
-2003-04-08 13:54  levitte
-
-	Changed:
-		test/Makefile.ssl (1.84.2.25), "Exp", lines: +29 -1
-		apps/Makefile.ssl (1.100.2.22), "Exp", lines: +1 -0
-		Makefile.org (1.154.2.61), "Exp", lines: +4 -5
-
-	Set LD_LIBRARY_PATH when linking, since OpenUnix' ld uses it to
-	create a library search path.
-
-		Correct typos.
-
-2003-07-03 23:43  levitte
-
-	Changed:
-		Makefile.org (1.154.2.65), "Exp", lines: +2 -2
-
-	Add a slash so grep doesn't return both ./crypto/bio/bss_mem.o and
-	./crypto/mem.o when we're looking for mem.o.
 
 2003-07-27 15:46  ben
 
@@ -259,30 +212,6 @@ be added to the end of this file.
 
 	DES CFB8 test.
 
-2003-08-11 11:56  levitte
-
-	Changed:
-		apps/Makefile.ssl (1.100.2.24), "Exp", lines: +1 -1
-
-	Oops, removed a little too much.
-
-2003-08-11 13:46  levitte
-
-	Changed:
-		test/Makefile.ssl (1.84.2.33), "Exp", lines: +28 -28
-
-	Don't fiddle with LD_LIBRARY_PATH when building non-static.
-
-2003-08-14 08:54  levitte
-
-	Changed:
-		apps/Makefile.ssl (1.100.2.25), "Exp", lines: +1 -1
-		test/Makefile.ssl (1.84.2.34), "Exp", lines: +28 -28
-
-	Undo the change that left LD_LIBRARY_PATH unchanged.  The errors I
-	saw weren't due to that, but to a change on the SCO machines I used
-	for testing, where my $PATH was suddenly incorrect.
-
 2004-01-21 10:58  appro
 
 	Changed:
@@ -291,13 +220,6 @@ be added to the end of this file.
 		crypto/bn/Makefile.ssl (1.65.2.7), "Exp", lines: +3 -0
 
 	Proper support for HP-UX64 gcc build.  PR: 772
-
-2004-01-29 10:41  levitte
-
-	Changed:
-		crypto/bn/bn_lcl.h (1.23.2.6), "Exp", lines: +8 -9
-
-	Have the declarations match the definitions.
 
 2004-03-17 05:01  mark
 
@@ -321,31 +243,6 @@ be added to the end of this file.
 		Submitted by: Steven Henson Reviewed by: Joe Orton Approved
 	by: Mark Cox
 
-2004-04-02 14:39  levitte
-
-	Changed:
-		crypto/bn/Makefile.ssl (1.65.2.8), "Exp", lines: +1 -1
-
-	Typo.  "pa-rics2W" corrected to "pa-risc2W".  PR: 868
-
-2004-05-12 12:09  levitte
-
-	Changed:
-		apps/apps.h (1.44.2.13), "Exp", lines: +0 -6
-		crypto/o_str.c (1.5.2.1), "Exp", lines: +4 -3
-		crypto/o_str.h (1.2.6.1), "Exp", lines: +0 -0
-
-	The functions OPENSSL_strcasen?cmp() were forgotten when merging
-	the FIPS branch into this.  It's needed at least for certain
-	OpenVMS versions, and should really be used in a more general way.
-
-2004-05-12 12:17  levitte
-
-	Changed:
-		crypto/Makefile (1.1.4.2), "Exp", lines: +3 -3
-
-	Forgot to update the Makefile with the o_str stuff...
-
 2004-05-12 16:11  ben
 
 	Changed:
@@ -357,29 +254,6 @@ be added to the end of this file.
 		fips/rand/fips_rand.c (1.1.2.5), "Exp", lines: +29 -0
 
 	Blow up in people's faces if they don't reseed.
-
-2004-05-14 19:54  levitte
-
-	Changed:
-		util/libeay.num (1.173.2.20), "Exp", lines: +43 -54
-
-	All EVP_*_cfb functions have changed names to EVP_*_cfb64 or
-	EVP_*_cfb128.
-
-2004-05-17 06:39  levitte
-
-	Changed:
-		apps/enc.c (1.35.2.10), "Exp", lines: +14 -0
-
-	Make it possible for the user to choose the digest used to create
-	the key.
-
-2004-05-17 06:40  levitte
-
-	Changed:
-		apps/enc.c (1.35.2.11), "Exp", lines: +4 -4
-
-	Rewrite the usage to avoid confusion.
 
 2004-06-19 15:32  ben
 
@@ -407,14 +281,7 @@ be added to the end of this file.
 	is that compiler first parses code, then optimizes, not both at
 	once...
 
-2004-07-27 16:09  levitte
-
-	Changed:
-		makevms.com (1.35.2.5), "Exp", lines: +1 -1
-
-	Typo
-
-2004-08-02 16:15  levitte
+2004-08-02 16:15  levitte [FIPS]
 
 	Changed:
 		crypto/cryptlib.c (1.32.2.13), "Exp", lines: +4 -4
@@ -423,21 +290,6 @@ be added to the end of this file.
 
 		Thanks to Dr Stephen Henson <shenson@drh-consultancy.co.uk>
 	for making me aware of this error.
-
-2004-08-11 22:34  levitte
-
-	Changed:
-		apps/makeapps.com (1.18.2.6), "Exp", lines: +2 -2
-
-	Another missing module in the VMS build files.	I believe this is
-	the last, though...
-
-2004-09-11 11:45  levitte
-
-	Changed:
-		test/testenc.com (1.6.8.2), "Exp", lines: +1 -1
-
-	Makefile.ssl changed name to Makefile...
 
 2004-12-09 19:00  appro
 
@@ -470,14 +322,6 @@ be added to the end of this file.
 		crypto/sha/shatest.c (1.11.2.2), "Exp", lines: +2 -2
 
 	Allow for ./config no-sha0.  PR: 993
-
-2005-01-11 07:53  levitte
-
-	Changed:
-		apps/apps.c (1.49.2.31), "Exp", lines: +0 -16
-
-	Remove VMS_strcasecmp() from apps.c, it's not used any more.  And
-	besides, the implementation is bogus.
 
 2005-02-03 12:09  appro
 
