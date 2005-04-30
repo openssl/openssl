@@ -114,9 +114,11 @@ int MAIN(int argc, char **argv)
 	unsigned char salt[PKCS5_SALT_LEN];
 	char *str=NULL, *passarg = NULL, *pass = NULL;
 	char *hkey=NULL,*hiv=NULL,*hsalt = NULL;
+	char *md=NULL;
 	int enc=1,printkey=0,i,base64=0;
 	int debug=0,olb64=0,nosalt=0;
 	const EVP_CIPHER *cipher=NULL,*c;
+	EVP_CIPHER_CTX *ctx = NULL;
 	char *inf=NULL,*outf=NULL;
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
 #define PROG_NAME_SIZE  39
@@ -124,6 +126,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
 #endif
+	const EVP_MD *dgst=NULL;
 
 	apps_startup();
 
@@ -253,6 +256,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			hiv= *(++argv);
 			}
+		else if (strcmp(*argv,"-md") == 0)
+			{
+			if (--argc < 1) goto bad;
+			md= *(++argv);
+			}
 		else if	((argv[0][0] == '-') &&
 			((c=EVP_get_cipherbyname(&(argv[0][1]))) != NULL))
 			{
@@ -271,8 +279,10 @@ bad:
 			BIO_printf(bio_err,"%-14s encrypt\n","-e");
 			BIO_printf(bio_err,"%-14s decrypt\n","-d");
 			BIO_printf(bio_err,"%-14s base64 encode/decode, depending on encryption flag\n","-a/-base64");
-			BIO_printf(bio_err,"%-14s key is the next argument\n","-k");
-			BIO_printf(bio_err,"%-14s key is the first line of the file argument\n","-kfile");
+			BIO_printf(bio_err,"%-14s passphrase is the next argument\n","-k");
+			BIO_printf(bio_err,"%-14s passphrase is the first line of the file argument\n","-kfile");
+			BIO_printf(bio_err,"%-14s the next argument is the md to use to create a key\n","-md");
+			BIO_printf(bio_err,"%-14s   from a passphrase.  One of md2, md5, sha or sha1\n","");
 			BIO_printf(bio_err,"%-14s key/iv in hex is the next argument\n","-K/-iv");
 			BIO_printf(bio_err,"%-14s print the iv/key (then exit if -P)\n","-[pP]");
 			BIO_printf(bio_err,"%-14s buffer size\n","-bufsize <n>");
@@ -295,6 +305,17 @@ bad:
 #ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine, 0);
 #endif
+
+	if (md && (dgst=EVP_get_digestbyname(md)) == NULL)
+		{
+		BIO_printf(bio_err,"%s is an unsupported message digest type\n",md);
+		goto end;
+		}
+
+	if (dgst == NULL)
+		{
+		dgst = EVP_md5();
+		}
 
 	if (bufsize != NULL)
 		{
@@ -483,7 +504,7 @@ bad:
 				sptr = salt;
 			}
 
-			EVP_BytesToKey(cipher,EVP_md5(),sptr,
+			EVP_BytesToKey(cipher,dgst,sptr,
 				(unsigned char *)str,
 				strlen(str),1,key,iv);
 			/* zero the complete buffer or the string
@@ -516,13 +537,31 @@ bad:
 
 		if ((benc=BIO_new(BIO_f_cipher())) == NULL)
 			goto end;
-		BIO_set_cipher(benc,cipher,key,iv,enc);
-		if (nopad)
+
+		/* Since we may be changing parameters work on the encryption
+		 * context rather than calling BIO_set_cipher().
+		 */
+
+		BIO_get_cipher_ctx(benc, &ctx);
+		if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc))
 			{
-			EVP_CIPHER_CTX *ctx;
-			BIO_get_cipher_ctx(benc, &ctx);
-			EVP_CIPHER_CTX_set_padding(ctx, 0);
+			BIO_printf(bio_err, "Error setting cipher %s\n",
+				EVP_CIPHER_name(cipher));
+			ERR_print_errors(bio_err);
+			goto end;
 			}
+
+		if (nopad)
+			EVP_CIPHER_CTX_set_padding(ctx, 0);
+
+		if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, enc))
+			{
+			BIO_printf(bio_err, "Error setting cipher %s\n",
+				EVP_CIPHER_name(cipher));
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+
 		if (debug)
 			{
 			BIO_set_callback(benc,BIO_debug_callback);
