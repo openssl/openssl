@@ -3,7 +3,7 @@
  * project 2000.
  */
 /* ====================================================================
- * Copyright (c) 2000-2004 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1075,7 +1075,7 @@ static int asn1_find_end(const unsigned char **in, long len, char inf)
 	expected_eoc = 1;
 	/* Indefinite length constructed form. Find the end when enough EOCs
 	 * are found. If more indefinite length constructed headers
-	 * are encountered increment the expected eoc count otherwise just
+	 * are encountered increment the expected eoc count otherwise justi
 	 * skip to the end of the data.
 	 */
 	while (len > 0)
@@ -1159,8 +1159,13 @@ static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len,
 		/* If indefinite length constructed update max length */
 		if (cst)
 			{
+#ifdef OPENSSL_ALLOW_NESTED_ASN1_STRINGS
 			if (!asn1_collect(buf, &p, plen, ininf, tag, aclass))
 				return 0;
+#else
+			ASN1err(ASN1_F_ASN1_COLLECT, ASN1_R_NESTED_ASN1_STRING);
+			return 0;
+#endif
 			}
 		else if (!collect_data(buf, &p, plen))
 			return 0;

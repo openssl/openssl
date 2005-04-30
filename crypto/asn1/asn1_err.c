@@ -227,6 +227,7 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ERR_REASON(ASN1_R_MISSING_VALUE)        ,"missing value"},
 {ERR_REASON(ASN1_R_MSTRING_NOT_UNIVERSAL),"mstring not universal"},
 {ERR_REASON(ASN1_R_MSTRING_WRONG_TAG)    ,"mstring wrong tag"},
+{ERR_REASON(ASN1_R_NESTED_ASN1_STRING)   ,"nested asn1 string"},
 {ERR_REASON(ASN1_R_NON_HEX_CHARACTERS)   ,"non hex characters"},
 {ERR_REASON(ASN1_R_NOT_ASCII_FORMAT)     ,"not ascii format"},
 {ERR_REASON(ASN1_R_NOT_ENOUGH_DATA)      ,"not enough data"},
