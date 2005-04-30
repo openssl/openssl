@@ -25,20 +25,6 @@ be added to the end of this file.
 
 	OpenBSD variant.
 
-2002-10-09 14:19  levitte
-
-	Changed:
-		crypto/engine/hw_cswift.c (1.17.2.5), "Exp", lines: +1 -0
-
-	The dissapearing destroy callback reappears
-
-2002-10-24 00:09  levitte
-
-	Changed:
-		crypto/crypto-lib.com (1.53.2.9), "Exp", lines: +1 -1
-
-	An engine changed name.
-
 2002-10-29 18:46  geoff
 
 	Changed:
@@ -53,25 +39,6 @@ be added to the end of this file.
 
 	Return my normal debug targets to something not so extreme, and
 	make the extreme ones special (or 'extreme', if you will :-)).
-
-2002-11-13 12:35  levitte
-
-	Changed:
-		crypto/cryptlib.h (1.10.2.4), "Exp", lines: +0 -4
-		crypto/crypto.h (1.62.2.3), "Exp", lines: +4 -0
-
-	Make OpenSSLdie() visible (it's a must to get a proper reference in
-	libeay.num).
-
-2002-11-13 15:30  levitte
-
-	Changed:
-		demos/engines/ibmca/hw_ibmca.c (1.1.2.2), "Exp", lines: +3 -0
-		demos/engines/zencod/hw_zencod.c (1.1.2.2), "Exp", lines: +4 -1
-		demos/engines/cluster_labs/hw_cluster_labs.c (1.1.2.2), "Exp", lines: +5 -2
-
-	The loading functions should be static if we build a dynamic
-	engine.
 
 2002-12-12 18:41  levitte
 
