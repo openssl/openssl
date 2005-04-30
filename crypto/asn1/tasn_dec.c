@@ -1075,7 +1075,7 @@ static int asn1_find_end(const unsigned char **in, long len, char inf)
 	expected_eoc = 1;
 	/* Indefinite length constructed form. Find the end when enough EOCs
 	 * are found. If more indefinite length constructed headers
-	 * are encountered increment the expected eoc count otherwise justi
+	 * are encountered increment the expected eoc count otherwise just
 	 * skip to the end of the data.
 	 */
 	while (len > 0)
