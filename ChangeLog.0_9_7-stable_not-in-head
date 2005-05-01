@@ -18,13 +18,6 @@ are not immediately put into 0.9.8, but belong there as well, should
 be added to the end of this file.
 
 
-2002-03-01 16:39  ben
-
-	Changed:
-		Configure (1.314.2.6), "Exp", lines: +1 -0
-
-	OpenBSD variant.
-
 2002-10-29 18:46  geoff
 
 	Changed:
@@ -48,14 +41,6 @@ be added to the end of this file.
 
 	This is rollback to 0.9.6h bn_mul.c to address problem reported in
 	RT#272.
-
-2003-01-01 16:48  ben
-
-	Changed:
-		crypto/des/des_locl.h (1.19.2.5), "Exp", lines: +1 -1
-		crypto/rc5/rc5_locl.h (1.3.2.4), "Exp", lines: +1 -1
-
-	Fix warnings, use correct -Ds.
 
 2003-07-27 15:46  ben
 
@@ -213,13 +198,6 @@ be added to the end of this file.
 		fips/rand/fips_rand.c (1.1.2.5), "Exp", lines: +29 -0
 
 	Blow up in people's faces if they don't reseed.
-
-2004-06-19 15:32  ben
-
-	Changed:
-		Makefile.org (1.154.2.81), "Exp", lines: +2 -7
-
-	Make make tags make tags.
 
 2004-06-21 20:05  levitte
 
