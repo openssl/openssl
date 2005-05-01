@@ -4,6 +4,10 @@
 
  Changes between 0.9.7g and 0.9.7h  [XX xxx XXXX]
 
+  *) Add support for smime-type MIME parameter in S/MIME messages which some
+     clients need.
+     [Steve Henson]
+
   *) New function BN_MONT_CTX_set_locked() to set montgomery parameters in
      a threadsafe manner. Modify rsa code to use new function and add calls
      to dsa and dh code (which had race conditions before).

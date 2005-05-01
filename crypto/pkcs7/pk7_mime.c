@@ -3,7 +3,7 @@
  * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -152,11 +152,12 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 {
 	char bound[33], c;
 	int i;
-	char *mime_prefix, *mime_eol;
+	char *mime_prefix, *mime_eol, *msg_type=NULL;
 	if (flags & PKCS7_NOOLDMIMETYPE)
 		mime_prefix = "application/pkcs7-";
 	else
 		mime_prefix = "application/x-pkcs7-";
+
 	if (flags & PKCS7_CRLFEOL)
 		mime_eol = "\r\n";
 	else
@@ -198,11 +199,30 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 						mime_eol, mime_eol);
 		return 1;
 	}
+
+	/* Determine smime-type header */
+
+	if (PKCS7_type_is_enveloped(p7))
+		msg_type = "enveloped-data";
+	else if (PKCS7_type_is_signed(p7))
+		{
+		/* If we have any signers it is signed-data othewise 
+		 * certs-only.
+		 */
+		STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
+		sinfos = PKCS7_get_signer_info(p7);
+		if (sk_PKCS7_SIGNER_INFO_num(sinfos) > 0)
+			msg_type = "signed-data";
+		else
+			msg_type = "certs-only";
+		}
 	/* MIME headers */
 	BIO_printf(bio, "MIME-Version: 1.0%s", mime_eol);
 	BIO_printf(bio, "Content-Disposition: attachment;");
 	BIO_printf(bio, " filename=\"smime.p7m\"%s", mime_eol);
 	BIO_printf(bio, "Content-Type: %smime;", mime_prefix);
+	if (msg_type)
+		BIO_printf(bio, " smime-type=%s;", msg_type);
 	BIO_printf(bio, " name=\"smime.p7m\"%s", mime_eol);
 	BIO_printf(bio, "Content-Transfer-Encoding: base64%s%s",
 						mime_eol, mime_eol);
