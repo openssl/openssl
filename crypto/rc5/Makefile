@@ -102,7 +102,7 @@ rc5_ecb.o: ../../include/openssl/opensslv.h ../../include/openssl/rc5.h
 rc5_ecb.o: rc5_ecb.c rc5_locl.h
 rc5_enc.o: ../../include/openssl/rc5.h rc5_enc.c rc5_locl.h
 rc5_skey.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-rc5_skey.o: ../../include/openssl/opensslconf.h
+rc5_skey.o: ../../include/openssl/fips.h ../../include/openssl/opensslconf.h
 rc5_skey.o: ../../include/openssl/opensslv.h ../../include/openssl/rc5.h
 rc5_skey.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 rc5_skey.o: ../../include/openssl/symhacks.h rc5_locl.h rc5_skey.c
