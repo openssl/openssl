@@ -25,7 +25,7 @@ CFLAGS= $(INCLUDE) $(CFLAG)
 
 LIBS=
 
-FDIRS=sha1 rand des aes dsa rsa dh
+FDIRS=sha1 rand des aes dsa rsa dh hmac
 
 GENERAL=Makefile README fips-lib.com install.com
 
