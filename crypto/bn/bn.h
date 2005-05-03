@@ -390,8 +390,6 @@ BIGNUM *BN_new(void);
 void	BN_init(BIGNUM *);
 void	BN_clear_free(BIGNUM *a);
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
-/* BN_ncopy(): like BN_copy() but copies at most the first n BN_ULONGs */
-BIGNUM *BN_ncopy(BIGNUM *a, const BIGNUM *b, size_t n);
 void	BN_swap(BIGNUM *a, BIGNUM *b);
 BIGNUM *BN_bin2bn(const unsigned char *s,int len,BIGNUM *ret);
 int	BN_bn2bin(const BIGNUM *a, unsigned char *to);
