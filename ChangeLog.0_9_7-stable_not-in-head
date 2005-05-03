@@ -18,13 +18,6 @@ are not immediately put into 0.9.8, but belong there as well, should
 be added to the end of this file.
 
 
-2002-10-29 18:46  geoff
-
-	Changed:
-		doc/ssl/SSL_CTX_set_session_cache_mode.pod (1.5.2.2), "Exp", lines: +1 -0
-
-	Correct another inconsistency in my recent commits.
-
 2002-11-04 17:33  levitte
 
 	Changed:
