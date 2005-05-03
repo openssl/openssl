@@ -44,8 +44,10 @@
 # improvement [I had to test it], while final Intel P4 performance
 # achieves respectful 432MBps on 2.8GHz processor now. For reference.
 # If executed on Xeon, current RC4_CHAR code-path is 2.7x faster than
-# RC4_INT code-path. While if executed on Opteron, it's is only 25%
-# slower than the latter...
+# RC4_INT code-path. While if executed on Opteron, it's only 25%
+# slower slower than the RC4_INT one [meaning that if detecting CPU
+# is not desired, then RC4_CHAR code-path should be preferred, as it
+# provides better *all-round* performance].
 
 $output=shift;
 open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
