@@ -112,7 +112,7 @@ const EC_METHOD *EC_GFp_nist_method(void)
 	return &ret;
 	}
 
-#if BN_BITS2 == 64 && UINT_MAX != 4294967295UL && ULONG_MAX != 4294967295UL
+#if BN_BITS2 == 64
 #define	NO_32_BIT_TYPE
 #endif
 
