@@ -30,15 +30,18 @@
 #    stack frame allocation. If volatile storage is actually required
 #    that is. If not, just leave the stack as is.
 # 3. Functions tagged with ".type name,@function" get crafted with
-#    unified Windows prologue and epilogue automatically. If you want
+#    unified Win64 prologue and epilogue automatically. If you want
 #    to take care of ABI differences yourself, tag functions as
-#    ".type name,@abi-omnipotent."
-# 4. As minor optimization you can specify number of input arguments
-#    as ".type name,@function,N." Keep in mind that if N is larger
-#    than 6, then you *have to* write "abi-omnipotent" code, because
-#    it can't be resolved with unified prologue.
-# 5. Name local labels as .L*.
-# 6. Don't use repret, it's generated automatically.
+#    ".type name,@abi-omnipotent" instead.
+# 4. To optimize the Win64 prologue you can specify number of input
+#    arguments as ".type name,@function,N." Keep in mind that if N is
+#    larger than 6, then you *have to* write "abi-omnipotent" code,
+#    because >6 cases can't be addressed with unified prologue.
+# 5. Name local labels as .L*, do *not* use dynamic labels such as 1:
+#    (sorry about latter).
+# 6. Don't use [or hand-code with .byte] "rep ret." "ret" mnemonic is
+#    required to identify the spots, where to inject Win64 epilogue!
+#    But on the pros, it's then prefixed with rep automatically:-)
 
 my $output = shift;
 open STDOUT,">$output" || die "can't open $output: $!";
@@ -143,6 +146,11 @@ my $current_function;
 	my $sz = shift;
 
 	if (!$masm) {
+	    # elder GNU assembler insists on 64-bit EAs:-(
+	    # on pros side, this results in more compact code:-)
+	    $self->{index} =~ s/^[er](.?[0-9xp])[d]?$/r\1/;
+	    $self->{base}  =~ s/^[er](.?[0-9xp])[d]?$/r\1/;
+
 	    if (defined($self->{index})) {
 		sprintf "%s(%%%s,%%%s,%d)",	$self->{label},$self->{base},
 					$self->{index},$self->{scale};
@@ -340,8 +348,9 @@ while($line=<>) {
 
     chomp($line);
 
-    $line =~ s/\[#!].*$//;	# get rid of comments...
-    $line =~ s/^\s+//;		# ... and skip white spaces
+    $line =~ s|[#!].*$||;	# get rid of asm-style comments...
+    $line =~ s|/\*.*\*/||;	# ... and C-style comments...
+    $line =~ s|^\s+||;		# ... and skip white spaces in beginning
 
     undef $label;
     undef $opcode;
