@@ -289,9 +289,10 @@ static int print_hmac(BIO *err, BIO *out,
 		unsigned char *Key, int Klen,
 		unsigned char *Msg, int Msglen, int Tlen)
 	{
-	unsigned int i, mdlen;
+	int i, mdlen;
 	unsigned char md[EVP_MAX_MD_SIZE];
-	if (!HMAC(EVP_sha1(), Key, Klen, Msg, Msglen, md, &mdlen))
+	if (!HMAC(EVP_sha1(), Key, Klen, Msg, Msglen, md,
+						(unsigned int *)&mdlen))
 		{
 		BIO_puts(err, "Error calculating HMAC\n");
 		return 0;
