@@ -1087,6 +1087,14 @@ start:
 			goto f_err;
 			}
 
+		/* Check we have a cipher to change to */
+		if (s->s3->tmp.new_cipher == NULL)
+			{
+			al=SSL_AD_UNEXPECTED_MESSAGE;
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_CCS_RECEIVED_EARLY);
+			goto f_err;
+			}
+
 		rr->length=0;
 
 		if (s->msg_callback)

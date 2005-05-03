@@ -165,28 +165,6 @@ be added to the end of this file.
 
 	DES CFB8 test.
 
-2004-03-17 05:01  mark
-
-	Changed:
-		CHANGES (1.977.2.128), "Exp", lines: +9 -1
-		FAQ (1.61.2.30), "Exp", lines: +1 -1
-		LICENSE (1.7.2.3), "Exp", lines: +1 -1
-		NEWS (1.39.2.21), "Exp", lines: +8 -0
-		README (1.39.2.24), "Exp", lines: +2 -2
-		STATUS (1.211.2.41), "Exp", lines: +4 -1
-		openssl.spec (1.6.2.6), "Exp", lines: +1 -1
-		crypto/opensslv.h (1.40.2.21), "Exp", lines: +2 -2
-		ssl/s3_pkt.c (1.46.2.6), "Exp", lines: +8 -0
-		ssl/s3_srvr.c (1.85.2.20), "Exp", lines: +16 -0
-
-	Fix null-pointer assignment in do_change_cipher_spec() revealed by
-	using the Codenomicon TLS Test Tool (CAN-2004-0079) Fix flaw in
-	SSL/TLS handshaking when using Kerberos ciphersuites
-	(CAN-2004-0112) Ready for 0.9.7d build
-
-		Submitted by: Steven Henson Reviewed by: Joe Orton Approved
-	by: Mark Cox
-
 2004-05-12 16:11  ben
 
 	Changed:
