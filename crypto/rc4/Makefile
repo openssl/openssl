@@ -58,7 +58,7 @@ rx86-cof.s: asm/rc4-586.pl ../perlasm/x86asm.pl
 rx86-out.s: asm/rc4-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) rc4-586.pl a.out $(CFLAGS) > ../$@)
 
-rc4-amd64.s: asm/rc4-amd64.pl;	$(PERL) asm/rc4-amd64.pl $@
+rc4-x86_64.s: asm/rc4-x86_64.pl;	$(PERL) asm/rc4-x86_64.pl $@
 
 rc4-ia64.s: asm/rc4-ia64.S
 	$(CC) $(CFLAGS) -E asm/rc4-ia64.S > $@
