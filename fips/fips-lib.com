@@ -75,7 +75,7 @@ $ ENDIF
 $!
 $! Define The Different Encryption Types.
 $!
-$ ENCRYPT_TYPES = "Basic,SHA1,RAND,DES,AES,DSA,RSA,DH"
+$ ENCRYPT_TYPES = "Basic,SHA1,RAND,DES,AES,DSA,RSA,DH,HMAC"
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -158,6 +158,7 @@ $ LIB_AES = "fips_aes_core,fips_aes_selftest"
 $ LIB_DSA = "fips_dsa_ossl,fips_dsa_gen,fips_dsa_selftest"
 $ LIB_RSA = "fips_rsa_eay,fips_rsa_gen,fips_rsa_selftest"
 $ LIB_DH = "fips_dh_check,fips_dh_gen,fips_dh_key"
+$ LIB_HMAC = "fips_hmac"
 $!
 $! Setup exceptional compilations
 $!
