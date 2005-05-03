@@ -105,19 +105,17 @@ EOF
 }
 
 my $output = shift;
-open STDOUT,">$output" or die "can't open $output: $!";
+open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
 
 $code .= <<EOF;
 .text
 .align 16
 
 .globl md5_block_asm_host_order
-.type md5_block_asm_host_order,\@function
+.type md5_block_asm_host_order,\@function,3
 md5_block_asm_host_order:
 	push	%rbp
 	push	%rbx
-	push	%r12
-	push	%r13
 	push	%r14
 	push	%r15
 
@@ -131,7 +129,6 @@ md5_block_asm_host_order:
 	mov	1*4(%rbp),	%ebx	# ebx = ctx->B
 	mov	2*4(%rbp),	%ecx	# ecx = ctx->C
 	mov	3*4(%rbp),	%edx	# edx = ctx->D
-	push	%rbp			# save ctx
 	# end is 'rdi'
 	# ptr is 'rsi'
 	# A is 'eax'
@@ -140,10 +137,10 @@ md5_block_asm_host_order:
 	# D is 'edx'
 
 	cmp	%rdi,		%rsi		# cmp end with ptr
-	je	1f				# jmp if ptr == end
+	je	.Lend				# jmp if ptr == end
 
 	# BEGIN of loop over 16-word blocks
-2:	# save old values of A, B, C, D
+.Lloop:	# save old values of A, B, C, D
 	mov	%eax,		%r8d
 	mov	%ebx,		%r9d
 	mov	%ecx,		%r14d
@@ -226,10 +223,10 @@ $code .= <<EOF;
 	# loop control
 	add	\$64,		%rsi		# ptr += 64
 	cmp	%rdi,		%rsi		# cmp end with ptr
-	jb	2b				# jmp if ptr < end
+	jb	.Lloop				# jmp if ptr < end
 	# END of loop over 16-word blocks
 
-1:	pop	%rbp				# restore ctx
+.Lend:
 	mov	%eax,		0*4(%rbp)	# ctx->A = A
 	mov	%ebx,		1*4(%rbp)	# ctx->B = B
 	mov	%ecx,		2*4(%rbp)	# ctx->C = C
@@ -237,13 +234,12 @@ $code .= <<EOF;
 
 	pop	%r15
 	pop	%r14
-	pop	%r13
-	pop	%r12
 	pop	%rbx
 	pop	%rbp
 	ret
-.L_md5_block_asm_host_order_end:
-.size md5_block_asm_host_order,.L_md5_block_asm_host_order_end-md5_block_asm_host_order
+.size md5_block_asm_host_order,.-md5_block_asm_host_order
 EOF
 
 print $code;
+
+close STDOUT;
