@@ -76,6 +76,8 @@ md5-sparcv9.o: asm/md5-sparcv9.S
 	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -c \
 		-o md5-sparcv9.o asm/md5-sparcv9.S
 
+md5-x86_64.s:	asm/md5-x86_64.pl;	$(PERL) asm/md5-x86_64.pl $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
