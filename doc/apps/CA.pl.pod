@@ -47,7 +47,7 @@ written to the file "newreq.pem".
 creates a new certificate request. The private key and request are
 written to the file "newreq.pem".
 
-=item B<-newreq-nowdes>
+=item B<-newreq-nodes>
 
 is like B<-newreq> except that the private key will not be encrypted.
 
