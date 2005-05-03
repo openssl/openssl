@@ -620,7 +620,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 	}
 #endif
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #include <tchar.h>
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
