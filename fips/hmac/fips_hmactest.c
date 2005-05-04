@@ -146,7 +146,7 @@ int hmac_test(BIO *err, BIO *out, BIO *in)
 	char *linebuf, *olinebuf, *p, *q;
 	char *keyword, *value;
 	unsigned char *Key = NULL, *Msg = NULL;
-	int Count, Klen, Tlen, have_key, have_mesg;
+	int Count, Klen, Tlen;
 	long Keylen, Msglen;
 	int ret = 0;
 	int lnum = 0;
@@ -160,8 +160,6 @@ int hmac_test(BIO *err, BIO *out, BIO *in)
 	Count = -1;
 	Klen = -1;
 	Tlen = -1;
-	have_key = 0;
-	have_mesg = 0;
 
 	while (BIO_gets(in, olinebuf, HMAC_TEST_MAXLINELEN) > 0)
 		{
