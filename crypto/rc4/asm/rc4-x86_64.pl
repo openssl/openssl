@@ -45,9 +45,9 @@
 # achieves respectful 432MBps on 2.8GHz processor now. For reference.
 # If executed on Xeon, current RC4_CHAR code-path is 2.7x faster than
 # RC4_INT code-path. While if executed on Opteron, it's only 25%
-# slower slower than the RC4_INT one [meaning that if detecting CPU
-# is not desired, then RC4_CHAR code-path should be preferred, as it
-# provides better *all-round* performance].
+# slower than the RC4_INT one [meaning that if CPU µ-arch detection
+# is not implemented, then this final RC4_CHAR code-path should be
+# preferred, as it provides better *all-round* performance].
 
 $output=shift;
 open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
@@ -184,7 +184,7 @@ $code.=<<___;
 	add	$TX[0]#b,$YY#b
 	lea	1($XX[0]),$XX[1]
 	movzb	($dat,$YY),$TY#d
-	movzb	$XX[1]#b,$XX[1]
+	movzb	$XX[1]#b,$XX[1]#d
 	movzb	($dat,$XX[1]),$TX[1]#d
 	movb	$TX[0]#b,($dat,$YY)
 	cmp	$XX[1],$YY
