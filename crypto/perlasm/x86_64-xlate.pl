@@ -113,12 +113,14 @@ my $current_function;
 	    $self->{value} = $1;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
+
+	    $self->{value} = oct($self->{value}) if ($self->{value} =~ /^0/);
 	}
 	$ret;
     }
     sub out {
     	my $self = shift;
-	sprintf $masm?"%s":"\$%s",$self->{value};
+	sprintf $masm?"0%xh":"\$0x%x",$self->{value};
     }
 }
 { package ea;		# pick up effective addresses: expr(%reg,%reg,scale)
@@ -134,7 +136,6 @@ my $current_function;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 
-	    $self->{label} =~ s/\.L/\$L/g;
 	    $self->{base}  =~ s/^%//;
 	    $self->{index} =~ s/^%// if (defined($self->{index}));
 	}
@@ -152,7 +153,8 @@ my $current_function;
 	    $self->{base}  =~ s/^[er](.?[0-9xp])[d]?$/r\1/;
 
 	    if (defined($self->{index})) {
-		sprintf "%s(%%%s,%%%s,%d)",	$self->{label},$self->{base},
+		sprintf "%s(%%%s,%%%s,%d)",
+					$self->{label},$self->{base},
 					$self->{index},$self->{scale};
 	    }
 	    else {
@@ -160,6 +162,10 @@ my $current_function;
 	    }
 	} else {
 	    %szmap = ( b=>"BYTE", w=>"WORD", l=>"DWORD", q=>"QWORD" );
+
+	    $self->{label} =~ s/\./\$/g;
+	    $self->{label} =~ s/0x([0-9a-f]+)/0$1h/ig;
+	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
 
 	    if (defined($self->{index})) {
 		sprintf "%s PTR %s[%s*%d+%s]",$szmap{$sz},
