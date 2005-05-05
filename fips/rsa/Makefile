@@ -18,7 +18,7 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=
+TEST= fips_rsavtest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
