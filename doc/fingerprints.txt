@@ -26,3 +26,32 @@ pub   1024R/49A563D9 1997-02-24
 uid                  Mark Cox <mjc@redhat.com>
 uid                  Mark Cox <mark@awe.com>
 uid                  Mark Cox <mjc@apache.org>
+
+pub   1024R/26BB437D 1997-04-28
+      Key fingerprint = 00 C9 21 8E D1 AB 70 37  DD 67 A2 3A 0A 6F 8D A5
+uid                  Ralf S. Engelschall <rse@engelschall.com>
+
+pub   1024R/9C58A66D 1997-04-03
+      Key fingerprint = 13 D0 B8 9D 37 30 C3 ED  AC 9C 24 7D 45 8C 17 67
+uid                  jaenicke@openssl.org
+uid                  Lutz Jaenicke <Lutz.Jaenicke@aet.TU-Cottbus.DE>
+
+pub   1024D/2118CF83 1998-07-13
+      Key fingerprint = 7656 55DE 62E3 96FF 2587  EB6C 4F6D E156 2118 CF83
+uid                  Ben Laurie <ben@thebunker.net>
+uid                  Ben Laurie <ben@cryptix.org>
+uid                  Ben Laurie <ben@algroup.co.uk>
+sub   4096g/1F5143E7 1998-07-13
+
+pub   1024R/5A6A9B85 1994-03-22
+      Key fingerprint = C7 AC 7E AD 56 6A 65 EC  F6 16 66 83 7E 86 68 28
+uid                  Bodo Moeller <2005@bmoeller.de>
+uid                  Bodo Moeller <2003@bmoeller.de>
+uid                  Bodo Moeller <2004@bmoeller.de>
+uid                  Bodo Moeller <bmoeller@acm.org>
+uid                  Bodo Moeller <bodo@openssl.org>
+uid                  Bodo Moeller <bm@ulf.mali.sub.org>
+uid                  Bodo Moeller <3moeller@informatik.uni-hamburg.de>
+uid                  Bodo Moeller <Bodo_Moeller@public.uni-hamburg.de>
+uid                  Bodo Moeller <3moeller@rzdspc5.informatik.uni-hamburg.de>
+
