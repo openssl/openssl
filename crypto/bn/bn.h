@@ -94,10 +94,6 @@ extern "C" {
 /* #define BN_DEBUG */
 /* #define BN_DEBUG_RAND */
 
-#ifdef OPENSSL_SYS_VMS
-#undef BN_LLONG /* experimental, so far... */
-#endif
-
 #define BN_MUL_COMBA
 #define BN_SQR_COMBA
 #define BN_RECURSION
@@ -169,10 +165,12 @@ extern "C" {
 #endif
 
 #ifdef THIRTY_TWO_BIT
-#if defined(OPENSSL_SYS_WIN32) && !defined(__GNUC__)
-#define BN_ULLONG	unsigned _int64
-#else
-#define BN_ULLONG	unsigned long long
+#ifdef BN_LLONG
+# if defined(OPENSSL_SYS_WIN32) && !defined(__GNUC__)
+#  define BN_ULLONG	unsigned _int64
+# else
+#  define BN_ULLONG	unsigned long long
+# endif
 #endif
 #define BN_ULONG	unsigned long
 #define BN_LONG		long
