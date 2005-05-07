@@ -25,12 +25,14 @@ APPS=
 EXE= fips_standalone_sha1$(EXE_EXT)
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_sha1dgst.c fips_sha1_selftest.c asm/fips-sx86-elf.s
-LIBOBJ=fips_sha1dgst.o fips_sha1_selftest.o $(FIPS_SHA1_ASM_OBJ)
+LIBSRC=fips_sha1dgst.c fips_sha1_selftest.c asm/fips-sx86-elf.s \
+	fips_sha256.c fips_sha512.c
+LIBOBJ=fips_sha1dgst.o fips_sha1_selftest.o $(FIPS_SHA1_ASM_OBJ) \
+	fips_sha256.o fips_sha512.o
 
 SRC= $(LIBSRC) fips_standalone_sha1.c
 
-EXHEADER=
+EXHEADER=fips_sha.h
 HEADER=	$(EXHEADER) fips_sha_locl.h fips_md32_common.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)

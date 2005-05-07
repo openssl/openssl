@@ -2,7 +2,7 @@
 #include <openssl/dsa.h>
 #include <openssl/fips.h>
 #include <openssl/err.h>
-#include <openssl/sha.h>
+#include <openssl/fips_sha.h>
 #include <string.h>
 
 int hex2bin(const char *in, unsigned char *out)

@@ -84,7 +84,11 @@
 #include <openssl/md5.h>
 #endif
 #ifndef OPENSSL_NO_SHA
+#ifndef OPENSSL_FIPS
 #include <openssl/sha.h>
+#else
+#include <openssl/fips_sha.h>
+#endif
 #endif
 #ifndef OPENSSL_NO_RIPEMD
 #include <openssl/ripemd.h>
@@ -128,7 +132,7 @@
 #define EVP_CAST5_KEY_SIZE		16
 #define EVP_RC5_32_12_16_KEY_SIZE	16
 */
-#define EVP_MAX_MD_SIZE			(16+20) /* The SSLv3 md5+sha1 type */
+#define EVP_MAX_MD_SIZE			64	/* longest known SHA512 */
 #define EVP_MAX_KEY_LENGTH		32
 #define EVP_MAX_IV_LENGTH		16
 #define EVP_MAX_BLOCK_LENGTH		32
@@ -642,6 +646,14 @@ const EVP_MD *EVP_sha(void);
 const EVP_MD *EVP_sha1(void);
 const EVP_MD *EVP_dss(void);
 const EVP_MD *EVP_dss1(void);
+#ifndef OPENSSL_NO_SHA256
+const EVP_MD *EVP_sha224(void);
+const EVP_MD *EVP_sha256(void);
+#endif
+#ifndef OPENSSL_NO_SHA512
+const EVP_MD *EVP_sha384(void);
+const EVP_MD *EVP_sha512(void);
+#endif
 #endif
 #ifndef OPENSSL_NO_MDC2
 const EVP_MD *EVP_mdc2(void);

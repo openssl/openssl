@@ -50,10 +50,10 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/fips.h>
-#include <openssl/sha.h>
+#include <openssl/fips_sha.h>
 
 #ifdef OPENSSL_FIPS
-static const char * const test[]=
+static char *test[]=
     {
     "",
     "abc",
@@ -61,7 +61,7 @@ static const char * const test[]=
     NULL,
     };
 
-static unsigned char ret[][SHA_DIGEST_LENGTH]=
+static const unsigned char ret[][SHA_DIGEST_LENGTH]=
     {
     { 0xda,0x39,0xa3,0xee,0x5e,0x6b,0x4b,0x0d,0x32,0x55,
       0xbf,0xef,0x95,0x60,0x18,0x90,0xaf,0xd8,0x07,0x09 },
@@ -73,7 +73,7 @@ static unsigned char ret[][SHA_DIGEST_LENGTH]=
 
 void FIPS_corrupt_sha1()
     {
-    ret[0][0]++;
+    test[2][0]++;
     }
 
 int FIPS_selftest_sha1()

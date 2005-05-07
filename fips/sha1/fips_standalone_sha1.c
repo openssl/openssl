@@ -47,14 +47,15 @@
  *
  */
 
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
-#include <openssl/opensslconf.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <openssl/opensslconf.h>
+#include <openssl/fips_sha.h>
+#include <openssl/hmac.h>
 
 int FIPS_selftest_failed() { return 0; }
+void OPENSSL_cleanse(void *p,size_t len) {}
 
 #ifdef OPENSSL_FIPS
 

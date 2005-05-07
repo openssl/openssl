@@ -63,12 +63,28 @@
 
 #include <openssl/opensslv.h>
 #include <openssl/opensslconf.h>
+#include <openssl/crypto.h>
 
 #ifdef OPENSSL_FIPS
 const char SHA1_version[]="SHA1" OPENSSL_VERSION_PTEXT;
 
 /* The implementation is in fips_md32_common.h */
 #include "fips_sha_locl.h"
+
+unsigned char *SHA1(const unsigned char *d, size_t n, unsigned char *md)
+	{
+	SHA_CTX c;
+	static unsigned char m[SHA_DIGEST_LENGTH];
+
+	OPENSSL_assert(sizeof(unsigned long)<=sizeof(size_t));
+	if (md == NULL) md=m;
+	if (!SHA1_Init(&c))
+		return NULL;
+	SHA1_Update(&c,d,n);
+	SHA1_Final(md,&c);
+	OPENSSL_cleanse(&c,sizeof(c));
+	return(md);
+	}
 
 #else /* ndef OPENSSL_FIPS */
 

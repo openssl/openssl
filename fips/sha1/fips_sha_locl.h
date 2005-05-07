@@ -60,7 +60,7 @@
 #include <string.h>
 
 #include <openssl/opensslconf.h>
-#include <openssl/sha.h>
+#include <openssl/fips_sha.h>
 #include <openssl/fips.h>
 
 #ifndef SHA_LONG_LOG2
@@ -93,8 +93,8 @@
 # define HASH_BLOCK_DATA_ORDER   	sha_block_data_order
 # define Xupdate(a,ix,ia,ib,ic,id)	(ix=(a)=(ia^ib^ic^id))
 
-  void sha_block_host_order (SHA_CTX *c, const void *p,FIPS_SHA_SIZE_T num);
-  void sha_block_data_order (SHA_CTX *c, const void *p,FIPS_SHA_SIZE_T num);
+  void sha_block_host_order (SHA_CTX *c, const void *p,size_t num);
+  void sha_block_data_order (SHA_CTX *c, const void *p,size_t num);
 
 #elif defined(SHA_1)
 
@@ -124,8 +124,8 @@
 #   define HASH_BLOCK_DATA_ORDER_ALIGNED	sha1_block_asm_data_order
 #  endif
 # endif
-  void sha1_block_host_order (SHA_CTX *c, const void *p,FIPS_SHA_SIZE_T num);
-  void sha1_block_data_order (SHA_CTX *c, const void *p,FIPS_SHA_SIZE_T num);
+  void sha1_block_host_order (SHA_CTX *c, const void *p,size_t num);
+  void sha1_block_data_order (SHA_CTX *c, const void *p,size_t num);
 
 #else
 # error "Either SHA_0 or SHA_1 must be defined."
@@ -141,6 +141,9 @@
 
 int HASH_INIT (SHA_CTX *c)
 	{
+	/* This assert denotes binary compatibility in 0.9.7 context
+           and commonly optimized away by compiler. */
+	OPENSSL_assert(sizeof(unsigned long)<=sizeof(size_t));
 	c->h0=INIT_DATA_h0;
 	c->h1=INIT_DATA_h1;
 	c->h2=INIT_DATA_h2;
@@ -222,7 +225,7 @@ int HASH_INIT (SHA_CTX *c)
 #endif
 
 #ifndef DONT_IMPLEMENT_BLOCK_HOST_ORDER
-void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, FIPS_SHA_SIZE_T num)
+void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, size_t num)
 	{
 	const SHA_LONG *W=d;
 	register unsigned MD32_REG_T A,B,C,D,E,T;
@@ -350,7 +353,7 @@ void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, FIPS_SHA_SIZE_T num)
 #endif
 
 #ifndef DONT_IMPLEMENT_BLOCK_DATA_ORDER
-void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, FIPS_SHA_SIZE_T num)
+void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 	{
 	const unsigned char *data=p;
 	register unsigned MD32_REG_T A,B,C,D,E,T,l;

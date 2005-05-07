@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
-#include <openssl/sha.h>
+#include <openssl/fips_sha.h>
 #include <openssl/err.h>
 #include <openssl/fips.h>
 #ifdef FLAT_INC

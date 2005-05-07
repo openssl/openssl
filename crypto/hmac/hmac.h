@@ -64,7 +64,7 @@
 
 #include <openssl/evp.h>
 
-#define HMAC_MAX_MD_CBLOCK	64
+#define HMAC_MAX_MD_CBLOCK	128
 
 #ifdef  __cplusplus
 extern "C" {

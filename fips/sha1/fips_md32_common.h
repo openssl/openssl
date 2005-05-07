@@ -206,7 +206,7 @@
 				: "cc");		\
 			   ret;				\
 			})
-#  elif defined(__powerpc) || defined(__ppc)
+#  elif defined(__powerpc) || defined(__ppc__) || defined(__powerpc64__)
 #   define ROTATE(a,n)	({ register unsigned int ret;	\
 				asm (			\
 				"rlwinm %0,%1,%2,0,31"	\
@@ -393,7 +393,7 @@
  * Time for some action:-)
  */
 
-int HASH_UPDATE (HASH_CTX *c, const void *data_, FIPS_SHA_SIZE_T len)
+int HASH_UPDATE (HASH_CTX *c, const void *data_, size_t len)
 	{
 	const unsigned char *data=data_;
 	register HASH_LONG * p;

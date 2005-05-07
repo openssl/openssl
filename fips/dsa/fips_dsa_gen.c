@@ -82,7 +82,7 @@
 #include <openssl/rand.h>
 #endif
 #ifndef OPENSSL_NO_SHA
-#include <openssl/sha.h>
+#include <openssl/fips_sha.h>
 #endif
 #include <openssl/fips.h>
 #include <openssl/err.h>

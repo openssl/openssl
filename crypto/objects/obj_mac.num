@@ -665,3 +665,11 @@ id_ppl_anyLanguage		664
 id_ppl_inheritAll		665
 id_ppl_independent		666
 Independent		667
+sha256WithRSAEncryption		668
+sha384WithRSAEncryption		669
+sha512WithRSAEncryption		670
+sha224WithRSAEncryption		671
+sha256		672
+sha384		673
+sha512		674
+sha224		675
