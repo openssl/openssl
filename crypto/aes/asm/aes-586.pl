@@ -826,7 +826,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&lea    ("ebp",&DWP(&label("AES_Te")."-".&label("pic_point"),"ebp"));
 
 	# allocate aligned stack frame...
-	&lea	($key,&DWP(-64-260,"esp"));
+	&lea	($key,&DWP(-64-244,"esp"));
 	&and	($key,-64);
 
 	# ... and make sure it doesn't alias with AES_Te modulo 4096
@@ -845,7 +845,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&set_label("te_break_out");	# else %esp -= (p-s)&0xfff + framesz;
 	&sub	($s3,$s0);
 	&and	($s3,0xfff);
-	&add	($s3,64+320);
+	&add	($s3,64+256);
 	&sub	($key,$s3);
 	&align	(4);
 	&set_label("te_ok");
@@ -870,7 +870,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 		&jb	(&label("skip_ecopy"));
 	}
 	# copy key schedule to stack
-	&mov	("ecx",260/4);
+	&mov	("ecx",244/4);
 	&mov	("esi",$s3);
 	&lea	("edi",$aes_key);
 	&mov	($_key,"edi");
@@ -949,7 +949,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 		&jb	(&label("skip_ezero"));
 	}
 	# zero copy of key schedule
-	&mov	("ecx",256/4);
+	&mov	("ecx",240/4);
 	&xor	("eax","eax");
 	&align	(4);
 	&data_word(0xF689ABF3);	# rep stosd
@@ -991,7 +991,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&lea    ("ebp",&DWP(&label("AES_Td")."-".&label("pic_point"),"ebp"));
 
 	# allocate aligned stack frame...
-	&lea	($key,&DWP(-64-260,"esp"));
+	&lea	($key,&DWP(-64-244,"esp"));
 	&and	($key,-64);
 
 	# ... and make sure it doesn't alias with AES_Td modulo 4096
@@ -1010,7 +1010,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&set_label("td_break_out");	# else %esp -= (p-s)&0xfff + framesz;
 	&sub	($s3,$s0);
 	&and	($s3,0xfff);
-	&add	($s3,64+320);
+	&add	($s3,64+256);
 	&sub	($key,$s3);
 	&align	(4);
 	&set_label("td_ok");
@@ -1035,7 +1035,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 		&jb	(&label("skip_dcopy"));
 	}
 	# copy key schedule to stack
-	&mov	("ecx",260/4);
+	&mov	("ecx",244/4);
 	&mov	("esi",$s3);
 	&lea	("edi",$aes_key);
 	&mov	($_key,"edi");
@@ -1199,7 +1199,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&jb	(&label("skip_dzero"));
     }
     # zero copy of key schedule
-    &mov	("ecx",256/4);
+    &mov	("ecx",240/4);
     &xor	("eax","eax");
     &align	(4);
     &data_word(0xF689ABF3);	# rep stosd
