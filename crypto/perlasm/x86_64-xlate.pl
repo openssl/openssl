@@ -42,6 +42,19 @@
 # 6. Don't use [or hand-code with .byte] "rep ret." "ret" mnemonic is
 #    required to identify the spots, where to inject Win64 epilogue!
 #    But on the pros, it's then prefixed with rep automatically:-)
+# 7. Due to MASM limitations [and certain general counter-intuitivity
+#    of ip-relative addressing] generation of position-independent
+#    code is assisted by synthetic directive, .picmeup, which puts
+#    address of the *next* instruction into target register.
+#
+#    Example 1:
+#		.picmeup	%rax
+#		lea		.Label-.(%rax),%rax
+#    Example 2:
+#		.picmeup	%rcx
+#	.Lpic_point:
+#		...
+#		lea		.Label-.Lpic_point(%rcx),%rbp
 
 my $output = shift;
 open STDOUT,">$output" || die "can't open $output: $!";
@@ -113,14 +126,18 @@ my $current_function;
 	    $self->{value} = $1;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
-
-	    $self->{value} = oct($self->{value}) if ($self->{value} =~ /^0/);
 	}
 	$ret;
     }
     sub out {
     	my $self = shift;
-	sprintf $masm?"0%xh":"\$0x%x",$self->{value};
+
+	if (!$masm) {
+	    sprintf "\$%s",$self->{value};
+	} else {
+	    $self->{value} =~ s/0x([0-9a-f]+)/0$1h/ig;
+	    sprintf "%s",$self->{value};
+	}
     }
 }
 { package ea;		# pick up effective addresses: expr(%reg,%reg,scale)
@@ -156,8 +173,7 @@ my $current_function;
 		sprintf "%s(%%%s,%%%s,%d)",
 					$self->{label},$self->{base},
 					$self->{index},$self->{scale};
-	    }
-	    else {
+	    } else {
 		sprintf "%s(%%%s)",	$self->{label},$self->{base};
 	    }
 	} else {
@@ -172,8 +188,7 @@ my $current_function;
 					$self->{label},
 					$self->{index},$self->{scale},
 					$self->{base};
-	    }
-	    else {
+	    } else {
 		sprintf "%s PTR %s[%s]",$szmap{$sz},
 					$self->{label},$self->{base};
 	    }
@@ -281,13 +296,26 @@ my $current_function;
 	local	*line = shift;
 	undef	$ret;
 	my	$dir;
+	my	%opcode =	# lea 2f-1f(%rip),%dst; 1: nop; 2:
+		(	"%rax"=>0x01058d48,	"%rcx"=>0x010d8d48,
+			"%rdx"=>0x01158d48,	"%rbx"=>0x011d8d48,
+			"%rsp"=>0x01258d48,	"%rbp"=>0x012d8d48,
+			"%rsi"=>0x01358d48,	"%rdi"=>0x013d8d48,
+			"%r8" =>0x01058d4c,	"%r9" =>0x010d8d4c,
+			"%r10"=>0x01158d4c,	"%r11"=>0x011d8d4c,
+			"%r12"=>0x01258d4c,	"%r13"=>0x012d8d4c,
+			"%r14"=>0x01358d4c,	"%r15"=>0x013d8d4c	);
 
 	if ($line =~ /^\s*(\.\w+)/) {
 	    if (!$masm) {
 		$self->{value} = $1;
 		$line =~ s/\@abi\-omnipotent/\@function/;
 		$line =~ s/\@function.*/\@function/;
-		$self->{value} = $line;
+		if ($line =~ /\.picmeup\s+(%r[\w]+)/i) {
+		    $self->{value} = sprintf "\t.long\t0x%x,0x90000000",$opcode{$1};
+		} else {
+		    $self->{value} = $line;
+		}
 		$line = "";
 		return $self;
 	    }
@@ -308,20 +336,19 @@ my $current_function;
 				  };
 		/\.globl/   && do { $self->{value} = "PUBLIC\t".$line; last; };
 		/\.type/    && do { ($sym,$type,$narg) = split(',',$line);
-				    if ($type eq "\@function")
-				    {	undef $current_function;
+				    if ($type eq "\@function") {
+					undef $current_function;
 					$current_function->{name} = $sym;
 					$current_function->{abi}  = "svr4";
 					$current_function->{narg} = $narg;
-				    }
-				    elsif ($type eq "\@abi-omnipotent")
-				    {	undef $current_function;
+				    } elsif ($type eq "\@abi-omnipotent") {
+					undef $current_function;
 					$current_function->{name} = $sym;
 				    }
 				    last;
 				  };
-		/\.size/    && do { if (defined($current_function))
-				    {	$self->{value}="$current_function->{name}\tENDP";
+		/\.size/    && do { if (defined($current_function)) {
+					$self->{value}="$current_function->{name}\tENDP";
 					undef $current_function;
 				    }
 				    last;
@@ -336,6 +363,9 @@ my $current_function;
 				    $self->{value} = "\tD$sz\t";
 				    for (@arr) { $self->{value} .= sprintf"0%Xh,",oct; }
 				    $self->{value} .= sprintf"0%Xh",oct($last);
+				    last;
+				  };
+		/\.picmeup/ && do { $self->{value} = sprintf"\tDD\t 0%Xh,090000000h",$opcode{$line};
 				    last;
 				  };
 	    }
@@ -391,13 +421,11 @@ while($line=<>) {
 	    if (!$masm) {
 		printf "\t%s\t%s,%s",	$opcode->out($dst->size()),
 					$src->out($sz),$dst->out($sz);
-	    }
-	    else {
+	    } else {
 		printf "\t%s\t%s,%s",	$opcode->out(),
 					$dst->out($sz),$src->out($sz);
 	    }
-	}
-	elsif (defined($src)) {
+	} elsif (defined($src)) {
 	    printf "\t%s\t%s",$opcode->out(),$src->out($sz);
 	} else {
 	    printf "\t%s",$opcode->out();
