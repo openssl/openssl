@@ -274,7 +274,7 @@ $   WRITE H_FILE "#define DES_UNROLL"
 $   WRITE H_FILE "#endif"
 $!
 $   WRITE H_FILE "#if defined(HEADER_BN_H)"
-$   WRITE H_FILE "#define BN_LLONG"
+$   WRITE H_FILE "#undef BN_LLONG"	! Never define with SIXTY_FOUR_BIT
 $   WRITE H_FILE "#undef SIXTY_FOUR_BIT_LONG"
 $   WRITE H_FILE "#undef SIXTY_FOUR_BIT"
 $   WRITE H_FILE "#define SIXTY_FOUR_BIT"
@@ -309,7 +309,7 @@ $   WRITE H_FILE "#undef DES_UNROLL"
 $   WRITE H_FILE "#endif"
 $!
 $   WRITE H_FILE "#if defined(HEADER_BN_H)"
-$   WRITE H_FILE "#undef BN_LLONG"
+$   WRITE H_FILE "#undef BN_LLONG"	! VAX C/DEC C doesn't have long long
 $   WRITE H_FILE "#undef SIXTY_FOUR_BIT_LONG"
 $   WRITE H_FILE "#undef SIXTY_FOUR_BIT"
 $   WRITE H_FILE "#undef THIRTY_TWO_BIT"
