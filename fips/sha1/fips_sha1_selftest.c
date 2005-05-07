@@ -53,12 +53,11 @@
 #include <openssl/fips_sha.h>
 
 #ifdef OPENSSL_FIPS
-static char *test[]=
+static char test[][60]=
     {
     "",
     "abc",
-    "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
-    NULL,
+    "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
     };
 
 static const unsigned char ret[][SHA_DIGEST_LENGTH]=
@@ -80,7 +79,7 @@ int FIPS_selftest_sha1()
     {
     int n;
 
-    for(n=0 ; test[n] ; ++n)
+    for(n=0 ; n<sizeof(test)/sizeof(test[0]) ; ++n)
 	{
 	unsigned char md[SHA_DIGEST_LENGTH];
 
