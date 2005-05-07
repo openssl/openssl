@@ -90,6 +90,7 @@ static DES_cblock key1;
 static DES_cblock key2;
 static DES_key_schedule ks1,ks2;
 static int key_set;
+static int key_init;
 static int test_mode;
 static unsigned char test_faketime[8];
 
@@ -153,7 +154,7 @@ static void fips_gettime(unsigned char buf[8])
 
     if(test_mode)
 	{
-	fprintf(OPENSSL_stderr(),"WARNING!!! PRNG IN TEST MODE!!!\n");
+	/* fprintf(OPENSSL_stderr(),"WARNING!!! PRNG IN TEST MODE!!!\n"); */
 	memcpy(buf,test_faketime,sizeof test_faketime);
 	return;
 	}
@@ -202,22 +203,23 @@ static void fips_rand_cleanup(void)
     {
     OPENSSL_cleanse(seed,sizeof seed);
     n_seed=0;
+    o_seed=0;
+    key_init=0;
     }
 
 void FIPS_rand_seed(const void *buf_, FIPS_RAND_SIZE_T num)
     {
     const char *buf=buf_;
     FIPS_RAND_SIZE_T n;
-    static int init;
 
     /* If the key hasn't been set, we can't seed! */
     if(!key_set)
 	return;
 
     CRYPTO_w_lock(CRYPTO_LOCK_RAND);
-    if(!init)
+    if(!key_init)
 	{
-	init=1;
+	key_init=1;
 	DES_set_key(&key1,&ks1);
 	DES_set_key(&key2,&ks2);
 	}

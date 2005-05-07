@@ -22,8 +22,8 @@ TEST= fips_randtest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_rand.c
-LIBOBJ=fips_rand.o
+LIBSRC=fips_rand.c fips_rand_selftest.c
+LIBOBJ=fips_rand.o fips_rand_selftest.o
 
 SRC= $(LIBSRC)
 
@@ -61,6 +61,22 @@ tags:
 	ctags $(SRC)
 
 tests:
+
+top_fips_rngvs:
+	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_rngvs sub_target)
+
+fips_rngvs: fips_rngvs.o $(TOP)/libcrypto.a
+	$(CC) $(CFLAGS) -o fips_rngvs fips_rngvs.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
+	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_rngvs
+
+Q=../testvectors/rng/req
+A=../testvectors/rng/rsp
+
+fips_test: top_fips_rngvs
+	-rm -rf $A
+	mkdir $A
+	./fips_rngvs mct < $Q/MCT.req > $A/MCT.rsp
+	./fips_rngvs vst < $Q/VST.req > $A/VST.rsp
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff

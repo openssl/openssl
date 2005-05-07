@@ -239,6 +239,14 @@ int FIPS_mode_set(int onoff,const char *path)
 	    goto end;
 	    }
 
+	/* Perform RNG KAT before seeding */
+	if (!FIPS_selftest_rng())
+	    {
+	    fips_selftest_fail = 1;
+	    ret = 0;
+	    goto end;
+	    }
+
 	/* automagically seed PRNG if not already seeded */
 	if(!FIPS_rand_seeded())
 	    {

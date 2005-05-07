@@ -228,19 +228,22 @@ int main(int argc,char **argv)
         /* Corrupted KAT tests */
         if (!strcmp(argv[1], "aes")) {
             FIPS_corrupt_aes();
-            printf("3. AES encryption/decryption with corrupted KAT...\n");
+            printf("AES encryption/decryption with corrupted KAT...\n");
         } else if (!strcmp(argv[1], "des")) {
             FIPS_corrupt_des();
-            printf("5. DES-ECB encryption/decryption with corrupted KAT...\n");
+            printf("DES-ECB encryption/decryption with corrupted KAT...\n");
         } else if (!strcmp(argv[1], "dsa")) {
             FIPS_corrupt_dsa();
-            printf("6. DSA key generation and signature validation with corrupted KAT...\n");
+            printf("DSA key generation and signature validation with corrupted KAT...\n");
         } else if (!strcmp(argv[1], "rsa")) {
             FIPS_corrupt_rsa();
-            printf("4. RSA key generation and encryption/decryption with corrupted KAT...\n");
+            printf("RSA key generation and encryption/decryption with corrupted KAT...\n");
         } else if (!strcmp(argv[1], "sha1")) {
             FIPS_corrupt_sha1();
-            printf("7. SHA-1 hash with corrupted KAT...\n");
+            printf("SHA-1 hash with corrupted KAT...\n");
+	} else if (!strcmp(argv[1], "rng")) {
+	    FIPS_corrupt_rng();
+	    printf("RNG test with corrupted KAT...\n");
         } else {
             printf("Bad argument \"%s\"\n", argv[1]);
             exit(1);
