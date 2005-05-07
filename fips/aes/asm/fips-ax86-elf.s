@@ -1024,11 +1024,11 @@ AES_cbc_encrypt:
 .L005pic_point:
 	popl	%ebp
 	pushfl
-	cld	
+	cld
 	cmpl	$0,		44(%esp)
 	je	.L006DECRYPT
 	leal	AES_Te-.L005pic_point(%ebp),%ebp
-	leal	-324(%esp),	%edi
+	leal	-308(%esp),	%edi
 	andl	$-64,		%edi
 	movl	%ebp,		%eax
 	leal	2048(%ebp),	%ebx
@@ -1044,7 +1044,7 @@ AES_cbc_encrypt:
 .L007te_break_out:
 	subl	%eax,		%edx
 	andl	$4095,		%edx
-	addl	$384,		%edx
+	addl	$320,		%edx
 	subl	%edx,		%edi
 .align	4
 .L008te_ok:
@@ -1060,7 +1060,7 @@ AES_cbc_encrypt:
 	movl	%ecx,		28(%esp)
 	movl	%edx,		32(%esp)
 	movl	%esi,		36(%esp)
-	movl	$65,		%ecx
+	movl	$61,		%ecx
 	movl	%edx,		%esi
 	leal	60(%esp),	%edi
 	movl	%edi,		32(%esp)
@@ -1120,7 +1120,7 @@ AES_cbc_encrypt:
 	movl	%edx,		12(%esi)
 	movl	32(%esp),	%edi
 	movl	16(%esp),	%esp
-	movl	$64,		%ecx
+	movl	$60,		%ecx
 	xorl	%eax,		%eax
 .align	4
 	.long	4136217587
@@ -1159,7 +1159,7 @@ AES_cbc_encrypt:
 .align	4
 .L006DECRYPT:
 	leal	AES_Td-.L005pic_point(%ebp),%ebp
-	leal	-324(%esp),	%edi
+	leal	-308(%esp),	%edi
 	andl	$-64,		%edi
 	movl	%ebp,		%eax
 	leal	3072(%ebp),	%ebx
@@ -1175,7 +1175,7 @@ AES_cbc_encrypt:
 .L014td_break_out:
 	subl	%eax,		%edx
 	andl	$4095,		%edx
-	addl	$384,		%edx
+	addl	$320,		%edx
 	subl	%edx,		%edi
 .align	4
 .L015td_ok:
@@ -1191,7 +1191,7 @@ AES_cbc_encrypt:
 	movl	%ecx,		28(%esp)
 	movl	%edx,		32(%esp)
 	movl	%esi,		36(%esp)
-	movl	$65,		%ecx
+	movl	$61,		%ecx
 	movl	%edx,		%esi
 	leal	60(%esp),	%edi
 	movl	%edi,		32(%esp)
@@ -1323,7 +1323,7 @@ AES_cbc_encrypt:
 .L021dec_out:
 	movl	32(%esp),	%edi
 	movl	16(%esp),	%esp
-	movl	$64,		%ecx
+	movl	$60,		%ecx
 	xorl	%eax,		%eax
 .align	4
 	.long	4136217587
