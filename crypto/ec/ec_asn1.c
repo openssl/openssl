@@ -707,7 +707,7 @@ ECPKPARAMETERS *ec_asn1_group2pkparameters(const EC_GROUP *group,
 		/* use the asn1 OID to describe the
 		 * the elliptic curve parameters
 		 */
-		tmp = EC_GROUP_get_nid(group);
+		tmp = EC_GROUP_get_curve_name(group);
 		if (tmp)
 			{
 			ret->type = 0;

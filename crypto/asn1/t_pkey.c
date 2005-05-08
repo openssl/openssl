@@ -303,7 +303,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 		if (!BIO_indent(bp, off, 128))
 			goto err;
 
-		nid = EC_GROUP_get_nid(x);
+		nid = EC_GROUP_get_curve_name(x);
 		if (nid == 0)
 			goto err;
 

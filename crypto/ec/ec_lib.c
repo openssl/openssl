@@ -334,13 +334,13 @@ int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
 	}
 
 
-void EC_GROUP_set_nid(EC_GROUP *group, int nid)
+void EC_GROUP_set_curve_name(EC_GROUP *group, int nid)
 	{
 	group->curve_name = nid;
 	}
 
 
-int EC_GROUP_get_nid(const EC_GROUP *group)
+int EC_GROUP_get_curve_name(const EC_GROUP *group)
 	{
 	return group->curve_name;
 	}
@@ -481,8 +481,8 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
 	    EC_METHOD_get_field_type(EC_GROUP_method_of(b)))
 		return 1;
 	/* compare the curve name (if present) */
-	if (EC_GROUP_get_nid(a) && EC_GROUP_get_nid(b) &&
-	    EC_GROUP_get_nid(a) == EC_GROUP_get_nid(b))
+	if (EC_GROUP_get_curve_name(a) && EC_GROUP_get_curve_name(b) &&
+	    EC_GROUP_get_curve_name(a) == EC_GROUP_get_curve_name(b))
 		return 0;
 
 	if (!ctx)

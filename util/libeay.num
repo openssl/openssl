@@ -2937,7 +2937,7 @@ X509_VERIFY_PARAM_set1_policies         3367	EXIST::FUNCTION:
 EVP_sha512                              3368	EXIST::FUNCTION:SHA,SHA512
 X509_VERIFY_PARAM_set1_name             3369	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set_purpose           3370	EXIST::FUNCTION:
-EC_GROUP_get_nid                        3371	EXIST::FUNCTION:EC
+EC_GROUP_get_curve_name                 3371	EXIST::FUNCTION:EC
 STORE_get_number                        3372	EXIST::FUNCTION:
 ECDSA_sign_setup                        3373	EXIST::FUNCTION:ECDSA
 BN_GF2m_mod_solve_quad_arr              3374	EXIST::FUNCTION:
@@ -2983,7 +2983,7 @@ ECDSA_SIG_free                          3409	EXIST::FUNCTION:ECDSA
 PEM_write_bio_ECPKParameters            3410	EXIST::FUNCTION:EC
 STORE_method_set_ctrl_function          3411	EXIST::FUNCTION:
 STORE_list_public_key_end               3412	EXIST::FUNCTION:
-EC_GROUP_set_nid                        3413	EXIST::FUNCTION:EC
+EC_GROUP_set_curve_name                 3413	EXIST::FUNCTION:EC
 STORE_get_arbitrary                     3414	EXIST::FUNCTION:
 STORE_store_crl                         3415	EXIST::FUNCTION:
 X509_policy_node_get0_policy            3416	EXIST::FUNCTION:

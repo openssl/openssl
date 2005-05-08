@@ -1327,7 +1327,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 			 * supported named curves, curve_id is non-zero.
 			 */
 			if ((curve_id = 
-			    nid2curve_id(EC_GROUP_get_nid(ecdh->group)))
+			    nid2curve_id(EC_GROUP_get_curve_name(ecdh->group)))
 			    == 0)
 				{
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);

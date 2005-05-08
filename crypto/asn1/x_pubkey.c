@@ -171,7 +171,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 			}
 
 		if (EC_GROUP_get_asn1_flag(eckey->group)
-                     && (nid = EC_GROUP_get_nid(eckey->group)))
+                     && (nid = EC_GROUP_get_curve_name(eckey->group)))
 			{
 			/* just set the OID */
 			a->parameter->type = V_ASN1_OBJECT;

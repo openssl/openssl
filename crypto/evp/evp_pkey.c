@@ -616,7 +616,7 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	}
 	
 	if (EC_GROUP_get_asn1_flag(eckey->group)
-                     && (nid = EC_GROUP_get_nid(eckey->group)))
+                     && (nid = EC_GROUP_get_curve_name(eckey->group)))
 	{
 		/* we have a 'named curve' => just set the OID */
 		p8->pkeyalg->parameter->type = V_ASN1_OBJECT;

@@ -143,8 +143,8 @@ EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *);
 int EC_GROUP_get_order(const EC_GROUP *, BIGNUM *order, BN_CTX *);
 int EC_GROUP_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 
-void EC_GROUP_set_nid(EC_GROUP *, int); /* curve name */
-int EC_GROUP_get_nid(const EC_GROUP *);
+void EC_GROUP_set_curve_name(EC_GROUP *, int nid); /* curve name */
+int EC_GROUP_get_curve_name(const EC_GROUP *);
 
 void EC_GROUP_set_asn1_flag(EC_GROUP *, int flag);
 int EC_GROUP_get_asn1_flag(const EC_GROUP *);

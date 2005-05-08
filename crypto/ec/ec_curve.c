@@ -1245,7 +1245,7 @@ EC_GROUP *EC_GROUP_new_by_nid(int nid)
 		return NULL;
 		}
 
-	EC_GROUP_set_nid(ret, nid);
+	EC_GROUP_set_curve_name(ret, nid);
 
 	return ret;
 	}
