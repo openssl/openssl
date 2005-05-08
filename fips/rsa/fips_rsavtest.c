@@ -68,6 +68,7 @@
 static int rsa_test(BIO *err, BIO *out, BIO *in);
 static int rsa_printver(BIO *err, BIO *out,
 		BIGNUM *n, BIGNUM *e,
+		const EVP_MD *dgst,
 		unsigned char *Msg, long Msglen,
 		unsigned char *S, long Slen);
 
@@ -146,6 +147,7 @@ int rsa_test(BIO *err, BIO *out, BIO *in)
 	{
 	char *linebuf, *olinebuf, *p, *q;
 	char *keyword, *value;
+	const EVP_MD *dgst = NULL;
 	BIGNUM *n = NULL, *e = NULL;
 	unsigned char *Msg = NULL, *S = NULL;
 	long Msglen, Slen;
@@ -209,7 +211,17 @@ int rsa_test(BIO *err, BIO *out, BIO *in)
 			}
 		else if (!strcmp(keyword, "SHAAlg"))
 			{
-			if (strcmp(value, "SHA1"))
+			if (!strcmp(value, "SHA1"))
+				dgst = EVP_sha1();
+			else if (!strcmp(value, "SHA224"))
+				dgst = EVP_sha224();
+			else if (!strcmp(value, "SHA256"))
+				dgst = EVP_sha256();
+			else if (!strcmp(value, "SHA384"))
+				dgst = EVP_sha384();
+			else if (!strcmp(value, "SHA512"))
+				dgst = EVP_sha512();
+			else
 				{
 				BIO_printf(err,
 					"FATAL: unsupported algorithm \"%s\"\n",
@@ -221,6 +233,8 @@ int rsa_test(BIO *err, BIO *out, BIO *in)
 			{
 			if (Msg)
 				goto parse_error;
+			if (strlen(value) & 1)
+				*(--value) = '0';
 			Msg = string_to_hex(value, &Msglen);
 			if (!Msg)
 				goto parse_error;
@@ -229,6 +243,8 @@ int rsa_test(BIO *err, BIO *out, BIO *in)
 			{
 			if (S)
 				goto parse_error;
+			if (strlen(value) & 1)
+				*(--value) = '0';
 			S = string_to_hex(value, &Slen);
 			if (!S)
 				goto parse_error;
@@ -240,9 +256,10 @@ int rsa_test(BIO *err, BIO *out, BIO *in)
 
 		BIO_puts(out, olinebuf);
 
-		if (n && e && Msg && S)
+		if (n && e && Msg && S && dgst)
 			{
-			if (!rsa_printver(err, out, n, e, Msg, Msglen, S, Slen))
+			if (!rsa_printver(err, out, n, e, dgst,
+						Msg, Msglen, S, Slen))
 				goto error;
 			OPENSSL_free(Msg);
 			Msg = NULL;
@@ -279,6 +296,7 @@ int rsa_test(BIO *err, BIO *out, BIO *in)
 
 static int rsa_printver(BIO *err, BIO *out,
 		BIGNUM *n, BIGNUM *e,
+		const EVP_MD *dgst,
 		unsigned char *Msg, long Msglen,
 		unsigned char *S, long Slen)
 	{
@@ -300,7 +318,7 @@ static int rsa_printver(BIO *err, BIO *out,
 
 	EVP_MD_CTX_init(&ctx);
 
-	if (!EVP_VerifyInit_ex(&ctx, EVP_sha1(), NULL))
+	if (!EVP_VerifyInit_ex(&ctx, dgst, NULL))
 		goto error;
 	if (!EVP_VerifyUpdate(&ctx, Msg, Msglen))
 		goto error;

@@ -66,7 +66,7 @@
 #include <openssl/x509v3.h>
 
 static int rsa_stest(BIO *err, BIO *out, BIO *in);
-static int rsa_printsig(BIO *err, BIO *out, RSA *pkey,
+static int rsa_printsig(BIO *err, BIO *out, RSA *rsa, const EVP_MD *dgst,
 		unsigned char *Msg, long Msglen);
 
 int main(int argc, char **argv)
@@ -145,6 +145,7 @@ int rsa_stest(BIO *err, BIO *out, BIO *in)
 	char *linebuf, *olinebuf, *p, *q;
 	char *keyword, *value;
 	RSA *rsa = NULL;
+	const EVP_MD *dgst = NULL;
 	unsigned char *Msg = NULL;
 	long Msglen;
 	int keylen = -1, current_keylen = -1;
@@ -210,7 +211,17 @@ int rsa_stest(BIO *err, BIO *out, BIO *in)
 			}
 		else if (!strcmp(keyword, "SHAAlg"))
 			{
-			if (strcmp(value, "SHA1"))
+			if (!strcmp(value, "SHA1"))
+				dgst = EVP_sha1();
+			else if (!strcmp(value, "SHA224"))
+				dgst = EVP_sha224();
+			else if (!strcmp(value, "SHA256"))
+				dgst = EVP_sha256();
+			else if (!strcmp(value, "SHA384"))
+				dgst = EVP_sha384();
+			else if (!strcmp(value, "SHA512"))
+				dgst = EVP_sha512();
+			else
 				{
 				BIO_printf(err,
 					"FATAL: unsupported algorithm \"%s\"\n",
@@ -222,6 +233,8 @@ int rsa_stest(BIO *err, BIO *out, BIO *in)
 			{
 			if (Msg)
 				goto parse_error;
+			if (strlen(value) & 1)
+				*(--value) = '0';
 			Msg = string_to_hex(value, &Msglen);
 			if (!Msg)
 				goto parse_error;
@@ -248,9 +261,9 @@ int rsa_stest(BIO *err, BIO *out, BIO *in)
 			current_keylen = keylen;
 			}
 
-		if (Msg)
+		if (Msg && dgst)
 			{
-			if (!rsa_printsig(err, out, rsa, Msg, Msglen))
+			if (!rsa_printsig(err, out, rsa, dgst, Msg, Msglen))
 				goto error;
 			OPENSSL_free(Msg);
 			Msg = NULL;
@@ -279,7 +292,7 @@ int rsa_stest(BIO *err, BIO *out, BIO *in)
 
 	}
 
-static int rsa_printsig(BIO *err, BIO *out, RSA *rsa,
+static int rsa_printsig(BIO *err, BIO *out, RSA *rsa, const EVP_MD *dgst,
 		unsigned char *Msg, long Msglen)
 	{
 	int ret = 0;
@@ -301,7 +314,7 @@ static int rsa_printsig(BIO *err, BIO *out, RSA *rsa,
 
 	EVP_MD_CTX_init(&ctx);
 
-	if (!EVP_SignInit_ex(&ctx, EVP_sha1(), NULL))
+	if (!EVP_SignInit_ex(&ctx, dgst, NULL))
 		goto error;
 	if (!EVP_SignUpdate(&ctx, Msg, Msglen))
 		goto error;

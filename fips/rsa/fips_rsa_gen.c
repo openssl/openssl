@@ -70,13 +70,25 @@ void *OPENSSL_stderr(void);
 
 static int fips_check_rsa(RSA *rsa)
     {
-    int n;
-    unsigned char ctext[256];
-    unsigned char ptext[256];
+    int n, ret = 0;
+    unsigned char tctext[256], *ctext = tctext;
+    unsigned char tptext[256], *ptext = tptext;
     /* The longest we can have with OAEP padding and a 512 bit key */
     static const unsigned char original_ptext[] =
 	"\x01\x23\x45\x67\x89\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0"
 	"\x23\x45\x67\x89\xab\xcd";
+
+    if (RSA_size(rsa) > sizeof(tctext))
+	{
+	ctext = OPENSSL_malloc(RSA_size(rsa));
+	ptext = OPENSSL_malloc(RSA_size(rsa));
+	if (!ctext || !ptext)
+		{
+		ERR_print_errors_fp(OPENSSL_stderr());
+		exit(1);
+		}
+	}
+	
 
     /* this will fail for keys shorter than 512 bits */
     n=RSA_public_encrypt(sizeof(original_ptext)-1,original_ptext,ctext,rsa,
@@ -89,7 +101,7 @@ static int fips_check_rsa(RSA *rsa)
     if(!memcmp(ctext,original_ptext,n))
   	{
   	FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
- 	return 0;
+ 	goto error;
  	}
     n=RSA_private_decrypt(n,ctext,ptext,rsa,RSA_PKCS1_OAEP_PADDING);
     if(n < 0)
@@ -100,10 +112,20 @@ static int fips_check_rsa(RSA *rsa)
     if(n != sizeof(original_ptext)-1 || memcmp(ptext,original_ptext,n))
 	{
 	FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
-	return 0;
+	goto error;
 	}
 
-    return 1;
+    ret = 1;
+
+    error:
+
+    if (RSA_size(rsa) > sizeof(tctext))
+	{
+	OPENSSL_free(ctext);
+	OPENSSL_free(ptext);
+	}
+
+    return ret;
     }
 
 RSA *RSA_generate_key(FIPS_RSA_SIZE_T bits, unsigned long e_value,
