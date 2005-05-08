@@ -349,14 +349,6 @@ static const SHA_LONG64 K512[80] = {
 #define Ch(x,y,z)	(((x) & (y)) ^ ((~(x)) & (z)))
 #define Maj(x,y,z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 
-#if defined(OPENSSL_IA32_SSE2) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
-#define	GO_FOR_SSE2(ctx,in,num)		do {		\
-	void	sha512_block_sse2(void *,const void *,size_t);	\
-	if (!(OPENSSL_ia32cap_P & (1<<26))) break;	\
-	sha512_block_sse2(ctx->h,in,num); return;	\
-					} while (0)
-#endif
-
 #ifdef OPENSSL_SMALL_FOOTPRINT
 
 static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
@@ -365,10 +357,6 @@ static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
 	SHA_LONG64	a,b,c,d,e,f,g,h,s0,s1,T1,T2;
 	SHA_LONG64	X[16];
 	int i;
-
-#ifdef GO_FOR_SSE2
-	GO_FOR_SSE2(ctx,in,num);
-#endif
 
 			while (num--) {
 
@@ -426,10 +414,6 @@ static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
 	SHA_LONG64	a,b,c,d,e,f,g,h,s0,s1,T1;
 	SHA_LONG64	X[16];
 	int i;
-
-#ifdef GO_FOR_SSE2
-	GO_FOR_SSE2(ctx,in,num);
-#endif
 
 			while (num--) {
 
