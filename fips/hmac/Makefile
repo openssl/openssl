@@ -22,8 +22,8 @@ TEST=fips_hmactest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_hmac.c
-LIBOBJ=fips_hmac.o
+LIBSRC=fips_hmac.c fips_hmac_selftest.c
+LIBOBJ=fips_hmac.o fips_hmac_selftest.o
 
 SRC= $(LIBSRC)
 
