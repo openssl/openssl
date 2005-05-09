@@ -75,8 +75,8 @@ int main(int argc, char *argv[])
 
 #else
 
-static int hmac_test(BIO *err, BIO *out, BIO *in);
-static int print_hmac(BIO *err, BIO *out,
+static int hmac_test(BIO *err, const EVP_MD *md, BIO *out, BIO *in);
+static int print_hmac(BIO *err, const EVP_MD *md, BIO *out,
 		unsigned char *Key, int Klen,
 		unsigned char *Msg, int Msglen, int Tlen);
 
@@ -85,6 +85,8 @@ int main(int argc, char **argv)
 	BIO *in = NULL, *out = NULL, *err = NULL;
 
 	int ret = 1;
+	const EVP_MD *md=EVP_sha1();
+
 	ERR_load_crypto_strings();
 
 	err = BIO_new_fp(stderr, BIO_NOCLOSE);
@@ -101,6 +103,19 @@ int main(int argc, char **argv)
 		goto end;
 		}
 
+	if (argc>1 && *argv[1]=='-')
+		{
+		if (!strcasecmp(argv[1],"-sha1"))	md=EVP_sha1();
+		else if (!strcasecmp(argv[1],"-sha224"))md=EVP_sha224();
+		else if (!strcasecmp(argv[1],"-sha256"))md=EVP_sha256();
+		else if (!strcasecmp(argv[1],"-sha384"))md=EVP_sha384();
+		else if (!strcasecmp(argv[1],"-sha512"))md=EVP_sha512();
+		else	{
+			BIO_printf(err,"Usage: %s [-sha[1|224|256|384|512]] [input [output]]\n");
+			return 1;
+			}
+		argc--, argv++;
+		}
 	if (argc == 1)
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
 	else
@@ -123,7 +138,7 @@ int main(int argc, char **argv)
 		goto end;
 		}
 
-	if (!hmac_test(err, out, in))
+	if (!hmac_test(err, md, out, in))
 		{
 		fprintf(stderr, "FATAL hmac file processing error\n");
 		goto end;
@@ -149,7 +164,7 @@ int main(int argc, char **argv)
 
 #define HMAC_TEST_MAXLINELEN	1024
 
-int hmac_test(BIO *err, BIO *out, BIO *in)
+int hmac_test(BIO *err, const EVP_MD *md, BIO *out, BIO *in)
 	{
 	char *linebuf, *olinebuf, *p, *q;
 	char *keyword, *value;
@@ -253,7 +268,7 @@ int hmac_test(BIO *err, BIO *out, BIO *in)
 
 		if (Key && Msg && (Tlen > 0) && (Klen > 0))
 			{
-			if (!print_hmac(err, out, Key, Klen, Msg, Msglen, Tlen))
+			if (!print_hmac(err, md, out, Key, Klen, Msg, Msglen, Tlen))
 				goto error;
 			OPENSSL_free(Key);
 			Key = NULL;
@@ -291,13 +306,13 @@ int hmac_test(BIO *err, BIO *out, BIO *in)
 
 	}
 
-static int print_hmac(BIO *err, BIO *out,
+static int print_hmac(BIO *err, const EVP_MD *emd, BIO *out,
 		unsigned char *Key, int Klen,
 		unsigned char *Msg, int Msglen, int Tlen)
 	{
 	int i, mdlen;
 	unsigned char md[EVP_MAX_MD_SIZE];
-	if (!HMAC(EVP_sha1(), Key, Klen, Msg, Msglen, md,
+	if (!HMAC(emd, Key, Klen, Msg, Msglen, md,
 						(unsigned int *)&mdlen))
 		{
 		BIO_puts(err, "Error calculating HMAC\n");
