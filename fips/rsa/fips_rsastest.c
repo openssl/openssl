@@ -65,6 +65,16 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
+#ifndef OPENSSL_FIPS
+
+int main(int argc, char *argv[])
+{
+    printf("No FIPS RSA support\n");
+    return(0);
+}
+
+#else
+
 static int rsa_stest(BIO *err, BIO *out, BIO *in);
 static int rsa_printsig(BIO *err, BIO *out, RSA *rsa, const EVP_MD *dgst,
 		unsigned char *Msg, long Msglen);
@@ -84,13 +94,11 @@ int main(int argc, char **argv)
 		goto end;
 		}
 
-#ifdef OPENSSL_FIPS
 	if(!FIPS_mode_set(1,argv[0]))
 		{
 		ERR_print_errors(err);
 		goto end;
 		}
-#endif
 
 	if (argc == 1)
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
@@ -338,4 +346,4 @@ static int rsa_printsig(BIO *err, BIO *out, RSA *rsa, const EVP_MD *dgst,
 
 	return ret;
 	}
-
+#endif

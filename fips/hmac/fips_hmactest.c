@@ -65,6 +65,16 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
+#ifndef OPENSSL_FIPS
+
+int main(int argc, char *argv[])
+{
+    printf("No FIPS HMAC support\n");
+    return(0);
+}
+
+#else
+
 static int hmac_test(BIO *err, BIO *out, BIO *in);
 static int print_hmac(BIO *err, BIO *out,
 		unsigned char *Key, int Klen,
@@ -85,13 +95,11 @@ int main(int argc, char **argv)
 		goto end;
 		}
 
-#ifdef OPENSSL_FIPS
 	if(!FIPS_mode_set(1,argv[0]))
 		{
 		ERR_print_errors(err);
 		goto end;
 		}
-#endif
 
 	if (argc == 1)
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
@@ -307,4 +315,4 @@ static int print_hmac(BIO *err, BIO *out,
 	return 1;
 	}
 
-
+#endif
