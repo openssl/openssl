@@ -325,12 +325,12 @@ my $current_function;
 	    undef $self->{value};
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 	    SWITCH: for ($dir) {
-		/\.(text|data)/
+		/\.(text)/
 			    && do { my $v=undef;
 				    $v="$current_segment\tENDS\n" if ($current_segment);
-				    $current_segment = "_$1";
+				    $current_segment = "_$1\$";
 				    $current_segment =~ tr/[a-z]/[A-Z]/;
-				    $v.="$current_segment\tSEGMENT PARA";
+				    $v.="$current_segment\tSEGMENT ALIGN(64) 'CODE'";
 				    $self->{value} = $v;
 				    last;
 				  };

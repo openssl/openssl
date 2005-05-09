@@ -258,7 +258,7 @@ sub main'function_begin
 	push(@labels,$func);
 
 	local($tmp)=<<"EOF";
-_TEXT\$	SEGMENT PARA
+_TEXT\$	SEGMENT PAGE 'CODE'
 PUBLIC	_$func
 $extra
 _$func PROC NEAR
@@ -276,7 +276,7 @@ sub main'function_begin_B
 	local($func,$extra)=@_;
 
 	local($tmp)=<<"EOF";
-_TEXT\$	SEGMENT	PARA
+_TEXT\$	SEGMENT	PAGE 'CODE'
 PUBLIC	_$func
 $extra
 _$func PROC NEAR
