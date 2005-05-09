@@ -779,8 +779,8 @@
           EC_get_builtin_curves().
      Also add a 'curve_name' member to EC_GROUP objects, which can be
      accessed via
-         EC_GROUP_set_nid()
-         EC_GROUP_get_nid()
+         EC_GROUP_set_curve_name()
+         EC_GROUP_get_curve_name()
      [Nils Larsch <nla@trustcenter.de, Bodo Moeller]
  
   *) Remove a few calls to bn_wexpand() in BN_sqr() (the one in there
