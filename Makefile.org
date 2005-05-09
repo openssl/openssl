@@ -366,6 +366,7 @@ tags:
 errors:
 	$(PERL) util/mkerr.pl -recurse -write
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
+	$(PERL) util/ck_errf.pl */*.c */*/*.c
 
 stacks:
 	$(PERL) util/mkstack.pl -write

@@ -1,6 +1,6 @@
-/* hw_4758_cca_err.c */
+/* e_4758_cca_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,30 +64,34 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(0,func,0)
+#define ERR_REASON(reason) ERR_PACK(0,0,reason)
+
 static ERR_STRING_DATA CCA4758_str_functs[]=
 	{
-{ERR_PACK(0,CCA4758_F_IBM_4758_CCA_CTRL,0),	"IBM_4758_CCA_CTRL"},
-{ERR_PACK(0,CCA4758_F_IBM_4758_CCA_FINISH,0),	"IBM_4758_CCA_FINISH"},
-{ERR_PACK(0,CCA4758_F_IBM_4758_CCA_INIT,0),	"IBM_4758_CCA_INIT"},
-{ERR_PACK(0,CCA4758_F_IBM_4758_CCA_LOAD_PRIVKEY,0),	"IBM_4758_CCA_LOAD_PRIVKEY"},
-{ERR_PACK(0,CCA4758_F_IBM_4758_CCA_LOAD_PUBKEY,0),	"IBM_4758_CCA_LOAD_PUBKEY"},
-{ERR_PACK(0,CCA4758_F_IBM_4758_CCA_SIGN,0),	"IBM_4758_CCA_SIGN"},
-{ERR_PACK(0,CCA4758_F_IBM_4758_CCA_VERIFY,0),	"IBM_4758_CCA_VERIFY"},
+{ERR_FUNC(CCA4758_F_CCA_RSA_SIGN),	"CCA_RSA_SIGN"},
+{ERR_FUNC(CCA4758_F_CCA_RSA_VERIFY),	"CCA_RSA_VERIFY"},
+{ERR_FUNC(CCA4758_F_IBM_4758_CCA_CTRL),	"IBM_4758_CCA_CTRL"},
+{ERR_FUNC(CCA4758_F_IBM_4758_CCA_FINISH),	"IBM_4758_CCA_FINISH"},
+{ERR_FUNC(CCA4758_F_IBM_4758_CCA_INIT),	"IBM_4758_CCA_INIT"},
+{ERR_FUNC(CCA4758_F_IBM_4758_LOAD_PRIVKEY),	"IBM_4758_LOAD_PRIVKEY"},
+{ERR_FUNC(CCA4758_F_IBM_4758_LOAD_PUBKEY),	"IBM_4758_LOAD_PUBKEY"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA CCA4758_str_reasons[]=
 	{
-{CCA4758_R_ALREADY_LOADED                ,"already loaded"},
-{CCA4758_R_ASN1_OID_UNKNOWN_FOR_MD       ,"asn1 oid unknown for md"},
-{CCA4758_R_COMMAND_NOT_IMPLEMENTED       ,"command not implemented"},
-{CCA4758_R_DSO_FAILURE                   ,"dso failure"},
-{CCA4758_R_FAILED_LOADING_PRIVATE_KEY    ,"failed loading private key"},
-{CCA4758_R_FAILED_LOADING_PUBLIC_KEY     ,"failed loading public key"},
-{CCA4758_R_NOT_LOADED                    ,"not loaded"},
-{CCA4758_R_SIZE_TOO_LARGE_OR_TOO_SMALL   ,"size too large or too small"},
-{CCA4758_R_UNIT_FAILURE                  ,"unit failure"},
-{CCA4758_R_UNKNOWN_ALGORITHM_TYPE        ,"unknown algorithm type"},
+{ERR_REASON(CCA4758_R_ALREADY_LOADED)    ,"already loaded"},
+{ERR_REASON(CCA4758_R_ASN1_OID_UNKNOWN_FOR_MD),"asn1 oid unknown for md"},
+{ERR_REASON(CCA4758_R_COMMAND_NOT_IMPLEMENTED),"command not implemented"},
+{ERR_REASON(CCA4758_R_DSO_FAILURE)       ,"dso failure"},
+{ERR_REASON(CCA4758_R_FAILED_LOADING_PRIVATE_KEY),"failed loading private key"},
+{ERR_REASON(CCA4758_R_FAILED_LOADING_PUBLIC_KEY),"failed loading public key"},
+{ERR_REASON(CCA4758_R_NOT_LOADED)        ,"not loaded"},
+{ERR_REASON(CCA4758_R_SIZE_TOO_LARGE_OR_TOO_SMALL),"size too large or too small"},
+{ERR_REASON(CCA4758_R_UNIT_FAILURE)      ,"unit failure"},
+{ERR_REASON(CCA4758_R_UNKNOWN_ALGORITHM_TYPE),"unknown algorithm type"},
 {0,NULL}
 	};
 

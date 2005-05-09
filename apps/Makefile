@@ -600,6 +600,19 @@ pkcs8.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 pkcs8.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 pkcs8.o: ../include/openssl/txt_db.h ../include/openssl/x509.h
 pkcs8.o: ../include/openssl/x509_vfy.h apps.h pkcs8.c
+prime.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+prime.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+prime.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+prime.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+prime.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+prime.o: ../include/openssl/engine.h ../include/openssl/evp.h
+prime.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+prime.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+prime.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+prime.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
+prime.o: ../include/openssl/sha.h ../include/openssl/stack.h
+prime.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
+prime.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h prime.c
 rand.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 rand.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 rand.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h

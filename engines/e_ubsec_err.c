@@ -1,6 +1,6 @@
-/* hw_ubsec_err.c */
+/* e_ubsec_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,32 +64,38 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(0,func,0)
+#define ERR_REASON(reason) ERR_PACK(0,0,reason)
+
 static ERR_STRING_DATA UBSEC_str_functs[]=
 	{
-{ERR_PACK(0,UBSEC_F_UBSEC_CTRL,0),	"UBSEC_CTRL"},
-{ERR_PACK(0,UBSEC_F_UBSEC_DH_COMPUTE_KEY,0),	"UBSEC_DH_COMPUTE_KEY"},
-{ERR_PACK(0,UBSEC_F_UBSEC_DSA_SIGN,0),	"UBSEC_DSA_SIGN"},
-{ERR_PACK(0,UBSEC_F_UBSEC_DSA_VERIFY,0),	"UBSEC_DSA_VERIFY"},
-{ERR_PACK(0,UBSEC_F_UBSEC_FINISH,0),	"UBSEC_FINISH"},
-{ERR_PACK(0,UBSEC_F_UBSEC_INIT,0),	"UBSEC_INIT"},
-{ERR_PACK(0,UBSEC_F_UBSEC_MOD_EXP,0),	"UBSEC_MOD_EXP"},
-{ERR_PACK(0,UBSEC_F_UBSEC_RNG_BYTES,0),	"UBSEC_RNG_BYTES"},
-{ERR_PACK(0,UBSEC_F_UBSEC_RSA_MOD_EXP,0),	"UBSEC_RSA_MOD_EXP"},
-{ERR_PACK(0,UBSEC_F_UBSEC_RSA_MOD_EXP_CRT,0),	"UBSEC_RSA_MOD_EXP_CRT"},
+{ERR_FUNC(UBSEC_F_UBSEC_CTRL),	"UBSEC_CTRL"},
+{ERR_FUNC(UBSEC_F_UBSEC_DH_COMPUTE_KEY),	"UBSEC_DH_COMPUTE_KEY"},
+{ERR_FUNC(UBSEC_F_UBSEC_DH_GENERATE_KEY),	"UBSEC_DH_GENERATE_KEY"},
+{ERR_FUNC(UBSEC_F_UBSEC_DSA_DO_SIGN),	"UBSEC_DSA_DO_SIGN"},
+{ERR_FUNC(UBSEC_F_UBSEC_DSA_VERIFY),	"UBSEC_DSA_VERIFY"},
+{ERR_FUNC(UBSEC_F_UBSEC_FINISH),	"UBSEC_FINISH"},
+{ERR_FUNC(UBSEC_F_UBSEC_INIT),	"UBSEC_INIT"},
+{ERR_FUNC(UBSEC_F_UBSEC_MOD_EXP),	"UBSEC_MOD_EXP"},
+{ERR_FUNC(UBSEC_F_UBSEC_MOD_EXP_CRT),	"UBSEC_MOD_EXP_CRT"},
+{ERR_FUNC(UBSEC_F_UBSEC_RAND_BYTES),	"UBSEC_RAND_BYTES"},
+{ERR_FUNC(UBSEC_F_UBSEC_RSA_MOD_EXP),	"UBSEC_RSA_MOD_EXP"},
+{ERR_FUNC(UBSEC_F_UBSEC_RSA_MOD_EXP_CRT),	"UBSEC_RSA_MOD_EXP_CRT"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA UBSEC_str_reasons[]=
 	{
-{UBSEC_R_ALREADY_LOADED                  ,"already loaded"},
-{UBSEC_R_BN_EXPAND_FAIL                  ,"bn expand fail"},
-{UBSEC_R_CTRL_COMMAND_NOT_IMPLEMENTED    ,"ctrl command not implemented"},
-{UBSEC_R_DSO_FAILURE                     ,"dso failure"},
-{UBSEC_R_MISSING_KEY_COMPONENTS          ,"missing key components"},
-{UBSEC_R_NOT_LOADED                      ,"not loaded"},
-{UBSEC_R_REQUEST_FAILED                  ,"request failed"},
-{UBSEC_R_SIZE_TOO_LARGE_OR_TOO_SMALL     ,"size too large or too small"},
-{UBSEC_R_UNIT_FAILURE                    ,"unit failure"},
+{ERR_REASON(UBSEC_R_ALREADY_LOADED)      ,"already loaded"},
+{ERR_REASON(UBSEC_R_BN_EXPAND_FAIL)      ,"bn expand fail"},
+{ERR_REASON(UBSEC_R_CTRL_COMMAND_NOT_IMPLEMENTED),"ctrl command not implemented"},
+{ERR_REASON(UBSEC_R_DSO_FAILURE)         ,"dso failure"},
+{ERR_REASON(UBSEC_R_MISSING_KEY_COMPONENTS),"missing key components"},
+{ERR_REASON(UBSEC_R_NOT_LOADED)          ,"not loaded"},
+{ERR_REASON(UBSEC_R_REQUEST_FAILED)      ,"request failed"},
+{ERR_REASON(UBSEC_R_SIZE_TOO_LARGE_OR_TOO_SMALL),"size too large or too small"},
+{ERR_REASON(UBSEC_R_UNIT_FAILURE)        ,"unit failure"},
 {0,NULL}
 	};
 

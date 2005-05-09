@@ -512,13 +512,13 @@ static int append_exp(tag_exp_arg *arg, int exp_tag, int exp_class, int exp_cons
 	/* Can only have IMPLICIT if permitted */
 	if ((arg->imp_tag != -1) && !imp_ok)
 		{
-		ASN1err(ASN1_F_APPEND_TAG, ASN1_R_ILLEGAL_IMPLICIT_TAG);
+		ASN1err(ASN1_F_APPEND_EXP, ASN1_R_ILLEGAL_IMPLICIT_TAG);
 		return 0;
 		}
 
 	if (arg->exp_count == ASN1_FLAG_EXP_MAX)
 		{
-		ASN1err(ASN1_F_APPEND_TAG, ASN1_R_DEPTH_EXCEEDED);
+		ASN1err(ASN1_F_APPEND_EXP, ASN1_R_DEPTH_EXCEEDED);
 		return 0;
 		}
 

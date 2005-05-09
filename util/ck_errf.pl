@@ -32,7 +32,7 @@ foreach $file (@ARGV)
 			$n=$2;
 
 			if ($lib ne $errlib)
-				{ print "$file:$.:$func:$n\n"; next; }
+				{ print "$file:$.:$func:$n [${errlib}err]\n"; next; }
 
 			$n =~ tr/A-Z/a-z/;
 			if (($n ne $func) && ($errlib ne "SYS"))

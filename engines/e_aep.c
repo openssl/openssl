@@ -620,7 +620,7 @@ static int aep_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	rv = aep_return_connection(hConnection);
 	if (rv != AEP_R_OK)
 		{
-		AEPHKerr(AEPHK_F_AEP_RAND,AEPHK_R_RETURN_CONNECTION_FAILED); 
+		AEPHKerr(AEPHK_F_AEP_MOD_EXP,AEPHK_R_RETURN_CONNECTION_FAILED); 
 		goto err;
 		}
 
@@ -658,7 +658,7 @@ static AEP_RV aep_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	rv = aep_return_connection(hConnection);
 	if (rv != AEP_R_OK)
 		{
-		AEPHKerr(AEPHK_F_AEP_RAND,AEPHK_R_RETURN_CONNECTION_FAILED); 
+		AEPHKerr(AEPHK_F_AEP_MOD_EXP_CRT,AEPHK_R_RETURN_CONNECTION_FAILED); 
 		goto err;
 		}
  

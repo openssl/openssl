@@ -74,6 +74,7 @@ static void ERR_CSWIFT_error(int function, int reason, char *file, int line);
 #define CSWIFT_F_CSWIFT_INIT				 104
 #define CSWIFT_F_CSWIFT_MOD_EXP				 105
 #define CSWIFT_F_CSWIFT_MOD_EXP_CRT			 106
+#define CSWIFT_F_CSWIFT_RAND_BYTES			 108
 #define CSWIFT_F_CSWIFT_RSA_MOD_EXP			 107
 
 /* Reason codes. */

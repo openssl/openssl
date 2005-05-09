@@ -1091,7 +1091,7 @@ start:
 		if (s->s3->tmp.new_cipher == NULL)
 			{
 			al=SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_CCS_RECEIVED_EARLY);
+			SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_CCS_RECEIVED_EARLY);
 			goto f_err;
 			}
 

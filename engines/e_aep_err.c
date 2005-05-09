@@ -1,6 +1,6 @@
-/* hw_aep_err.c */
+/* e_aep_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,38 +64,42 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(0,func,0)
+#define ERR_REASON(reason) ERR_PACK(0,0,reason)
+
 static ERR_STRING_DATA AEPHK_str_functs[]=
 	{
-{ERR_PACK(0,AEPHK_F_AEP_CTRL,0),	"AEP_CTRL"},
-{ERR_PACK(0,AEPHK_F_AEP_FINISH,0),	"AEP_FINISH"},
-{ERR_PACK(0,AEPHK_F_AEP_GET_CONNECTION,0),	"AEP_GET_CONNECTION"},
-{ERR_PACK(0,AEPHK_F_AEP_INIT,0),	"AEP_INIT"},
-{ERR_PACK(0,AEPHK_F_AEP_MOD_EXP,0),	"AEP_MOD_EXP"},
-{ERR_PACK(0,AEPHK_F_AEP_MOD_EXP_CRT,0),	"AEP_MOD_EXP_CRT"},
-{ERR_PACK(0,AEPHK_F_AEP_RAND,0),	"AEP_RAND"},
-{ERR_PACK(0,AEPHK_F_AEP_RSA_MOD_EXP,0),	"AEP_RSA_MOD_EXP"},
+{ERR_FUNC(AEPHK_F_AEP_CTRL),	"AEP_CTRL"},
+{ERR_FUNC(AEPHK_F_AEP_FINISH),	"AEP_FINISH"},
+{ERR_FUNC(AEPHK_F_AEP_GET_CONNECTION),	"AEP_GET_CONNECTION"},
+{ERR_FUNC(AEPHK_F_AEP_INIT),	"AEP_INIT"},
+{ERR_FUNC(AEPHK_F_AEP_MOD_EXP),	"AEP_MOD_EXP"},
+{ERR_FUNC(AEPHK_F_AEP_MOD_EXP_CRT),	"AEP_MOD_EXP_CRT"},
+{ERR_FUNC(AEPHK_F_AEP_RAND),	"AEP_RAND"},
+{ERR_FUNC(AEPHK_F_AEP_RSA_MOD_EXP),	"AEP_RSA_MOD_EXP"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA AEPHK_str_reasons[]=
 	{
-{AEPHK_R_ALREADY_LOADED                  ,"already loaded"},
-{AEPHK_R_CLOSE_HANDLES_FAILED            ,"close handles failed"},
-{AEPHK_R_CONNECTIONS_IN_USE              ,"connections in use"},
-{AEPHK_R_CTRL_COMMAND_NOT_IMPLEMENTED    ,"ctrl command not implemented"},
-{AEPHK_R_FINALIZE_FAILED                 ,"finalize failed"},
-{AEPHK_R_GET_HANDLE_FAILED               ,"get handle failed"},
-{AEPHK_R_GET_RANDOM_FAILED               ,"get random failed"},
-{AEPHK_R_INIT_FAILURE                    ,"init failure"},
-{AEPHK_R_MISSING_KEY_COMPONENTS          ,"missing key components"},
-{AEPHK_R_MOD_EXP_CRT_FAILED              ,"mod exp crt failed"},
-{AEPHK_R_MOD_EXP_FAILED                  ,"mod exp failed"},
-{AEPHK_R_NOT_LOADED                      ,"not loaded"},
-{AEPHK_R_OK                              ,"ok"},
-{AEPHK_R_RETURN_CONNECTION_FAILED        ,"return connection failed"},
-{AEPHK_R_SETBNCALLBACK_FAILURE           ,"setbncallback failure"},
-{AEPHK_R_SIZE_TOO_LARGE_OR_TOO_SMALL     ,"size too large or too small"},
-{AEPHK_R_UNIT_FAILURE                    ,"unit failure"},
+{ERR_REASON(AEPHK_R_ALREADY_LOADED)      ,"already loaded"},
+{ERR_REASON(AEPHK_R_CLOSE_HANDLES_FAILED),"close handles failed"},
+{ERR_REASON(AEPHK_R_CONNECTIONS_IN_USE)  ,"connections in use"},
+{ERR_REASON(AEPHK_R_CTRL_COMMAND_NOT_IMPLEMENTED),"ctrl command not implemented"},
+{ERR_REASON(AEPHK_R_FINALIZE_FAILED)     ,"finalize failed"},
+{ERR_REASON(AEPHK_R_GET_HANDLE_FAILED)   ,"get handle failed"},
+{ERR_REASON(AEPHK_R_GET_RANDOM_FAILED)   ,"get random failed"},
+{ERR_REASON(AEPHK_R_INIT_FAILURE)        ,"init failure"},
+{ERR_REASON(AEPHK_R_MISSING_KEY_COMPONENTS),"missing key components"},
+{ERR_REASON(AEPHK_R_MOD_EXP_CRT_FAILED)  ,"mod exp crt failed"},
+{ERR_REASON(AEPHK_R_MOD_EXP_FAILED)      ,"mod exp failed"},
+{ERR_REASON(AEPHK_R_NOT_LOADED)          ,"not loaded"},
+{ERR_REASON(AEPHK_R_OK)                  ,"ok"},
+{ERR_REASON(AEPHK_R_RETURN_CONNECTION_FAILED),"return connection failed"},
+{ERR_REASON(AEPHK_R_SETBNCALLBACK_FAILURE),"setbncallback failure"},
+{ERR_REASON(AEPHK_R_SIZE_TOO_LARGE_OR_TOO_SMALL),"size too large or too small"},
+{ERR_REASON(AEPHK_R_UNIT_FAILURE)        ,"unit failure"},
 {0,NULL}
 	};
 

@@ -67,13 +67,13 @@ static void ERR_CCA4758_error(int function, int reason, char *file, int line);
 /* Error codes for the CCA4758 functions. */
 
 /* Function codes. */
+#define CCA4758_F_CCA_RSA_SIGN				 105
+#define CCA4758_F_CCA_RSA_VERIFY			 106
 #define CCA4758_F_IBM_4758_CCA_CTRL			 100
 #define CCA4758_F_IBM_4758_CCA_FINISH			 101
 #define CCA4758_F_IBM_4758_CCA_INIT			 102
-#define CCA4758_F_IBM_4758_CCA_LOAD_PRIVKEY		 103
-#define CCA4758_F_IBM_4758_CCA_LOAD_PUBKEY		 104
-#define CCA4758_F_IBM_4758_CCA_SIGN			 105
-#define CCA4758_F_IBM_4758_CCA_VERIFY			 106
+#define CCA4758_F_IBM_4758_LOAD_PRIVKEY			 103
+#define CCA4758_F_IBM_4758_LOAD_PUBKEY			 104
 
 /* Reason codes. */
 #define CCA4758_R_ALREADY_LOADED			 100

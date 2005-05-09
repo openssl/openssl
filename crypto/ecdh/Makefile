@@ -102,7 +102,7 @@ ech_key.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 ech_key.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 ech_key.o: ../../include/openssl/store.h ../../include/openssl/symhacks.h
 ech_key.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-ech_key.o: ../../include/openssl/x509_vfy.h ecdh.h ech_key.c
+ech_key.o: ../../include/openssl/x509_vfy.h ech_key.c ech_locl.h
 ech_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ech_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 ech_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
@@ -118,7 +118,7 @@ ech_lib.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 ech_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 ech_lib.o: ../../include/openssl/store.h ../../include/openssl/symhacks.h
 ech_lib.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-ech_lib.o: ../../include/openssl/x509_vfy.h ecdh.h ech_lib.c
+ech_lib.o: ../../include/openssl/x509_vfy.h ech_lib.c ech_locl.h
 ech_ossl.o: ../../e_os.h ../../include/openssl/asn1.h
 ech_ossl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ech_ossl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -129,4 +129,4 @@ ech_ossl.o: ../../include/openssl/opensslconf.h
 ech_ossl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ech_ossl.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 ech_ossl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ech_ossl.o: ../cryptlib.h ech_ossl.c
+ech_ossl.o: ../cryptlib.h ech_locl.h ech_ossl.c

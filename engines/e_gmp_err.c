@@ -1,6 +1,6 @@
 /* e_gmp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,18 +64,22 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(0,func,0)
+#define ERR_REASON(reason) ERR_PACK(0,0,reason)
+
 static ERR_STRING_DATA GMP_str_functs[]=
 	{
-{ERR_PACK(0,GMP_F_E_GMP_CTRL,0),	"E_GMP_CTRL"},
-{ERR_PACK(0,GMP_F_E_GMP_RSA_MOD_EXP,0),	"E_GMP_RSA_MOD_EXP"},
+{ERR_FUNC(GMP_F_E_GMP_CTRL),	"E_GMP_CTRL"},
+{ERR_FUNC(GMP_F_E_GMP_RSA_MOD_EXP),	"E_GMP_RSA_MOD_EXP"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA GMP_str_reasons[]=
 	{
-{GMP_R_CTRL_COMMAND_NOT_IMPLEMENTED      ,"ctrl command not implemented"},
-{GMP_R_KEY_CONTEXT_ERROR                 ,"key context error"},
-{GMP_R_MISSING_KEY_COMPONENTS            ,"missing key components"},
+{ERR_REASON(GMP_R_CTRL_COMMAND_NOT_IMPLEMENTED),"ctrl command not implemented"},
+{ERR_REASON(GMP_R_KEY_CONTEXT_ERROR)     ,"key context error"},
+{ERR_REASON(GMP_R_MISSING_KEY_COMPONENTS),"missing key components"},
 {0,NULL}
 	};
 

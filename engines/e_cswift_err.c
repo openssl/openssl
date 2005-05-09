@@ -1,6 +1,6 @@
-/* hw_cswift_err.c */
+/* e_cswift_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,30 +64,35 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(0,func,0)
+#define ERR_REASON(reason) ERR_PACK(0,0,reason)
+
 static ERR_STRING_DATA CSWIFT_str_functs[]=
 	{
-{ERR_PACK(0,CSWIFT_F_CSWIFT_CTRL,0),	"CSWIFT_CTRL"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_DSA_SIGN,0),	"CSWIFT_DSA_SIGN"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_DSA_VERIFY,0),	"CSWIFT_DSA_VERIFY"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_FINISH,0),	"CSWIFT_FINISH"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_INIT,0),	"CSWIFT_INIT"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_MOD_EXP,0),	"CSWIFT_MOD_EXP"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_MOD_EXP_CRT,0),	"CSWIFT_MOD_EXP_CRT"},
-{ERR_PACK(0,CSWIFT_F_CSWIFT_RSA_MOD_EXP,0),	"CSWIFT_RSA_MOD_EXP"},
+{ERR_FUNC(CSWIFT_F_CSWIFT_CTRL),	"CSWIFT_CTRL"},
+{ERR_FUNC(CSWIFT_F_CSWIFT_DSA_SIGN),	"CSWIFT_DSA_SIGN"},
+{ERR_FUNC(CSWIFT_F_CSWIFT_DSA_VERIFY),	"CSWIFT_DSA_VERIFY"},
+{ERR_FUNC(CSWIFT_F_CSWIFT_FINISH),	"CSWIFT_FINISH"},
+{ERR_FUNC(CSWIFT_F_CSWIFT_INIT),	"CSWIFT_INIT"},
+{ERR_FUNC(CSWIFT_F_CSWIFT_MOD_EXP),	"CSWIFT_MOD_EXP"},
+{ERR_FUNC(CSWIFT_F_CSWIFT_MOD_EXP_CRT),	"CSWIFT_MOD_EXP_CRT"},
+{ERR_FUNC(CSWIFT_F_CSWIFT_RAND_BYTES),	"CSWIFT_RAND_BYTES"},
+{ERR_FUNC(CSWIFT_F_CSWIFT_RSA_MOD_EXP),	"CSWIFT_RSA_MOD_EXP"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA CSWIFT_str_reasons[]=
 	{
-{CSWIFT_R_ALREADY_LOADED                 ,"already loaded"},
-{CSWIFT_R_BAD_KEY_SIZE                   ,"bad key size"},
-{CSWIFT_R_BN_CTX_FULL                    ,"bn ctx full"},
-{CSWIFT_R_BN_EXPAND_FAIL                 ,"bn expand fail"},
-{CSWIFT_R_CTRL_COMMAND_NOT_IMPLEMENTED   ,"ctrl command not implemented"},
-{CSWIFT_R_MISSING_KEY_COMPONENTS         ,"missing key components"},
-{CSWIFT_R_NOT_LOADED                     ,"not loaded"},
-{CSWIFT_R_REQUEST_FAILED                 ,"request failed"},
-{CSWIFT_R_UNIT_FAILURE                   ,"unit failure"},
+{ERR_REASON(CSWIFT_R_ALREADY_LOADED)     ,"already loaded"},
+{ERR_REASON(CSWIFT_R_BAD_KEY_SIZE)       ,"bad key size"},
+{ERR_REASON(CSWIFT_R_BN_CTX_FULL)        ,"bn ctx full"},
+{ERR_REASON(CSWIFT_R_BN_EXPAND_FAIL)     ,"bn expand fail"},
+{ERR_REASON(CSWIFT_R_CTRL_COMMAND_NOT_IMPLEMENTED),"ctrl command not implemented"},
+{ERR_REASON(CSWIFT_R_MISSING_KEY_COMPONENTS),"missing key components"},
+{ERR_REASON(CSWIFT_R_NOT_LOADED)         ,"not loaded"},
+{ERR_REASON(CSWIFT_R_REQUEST_FAILED)     ,"request failed"},
+{ERR_REASON(CSWIFT_R_UNIT_FAILURE)       ,"unit failure"},
 {0,NULL}
 	};
 

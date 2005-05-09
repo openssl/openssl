@@ -1,6 +1,6 @@
-/* hw_atalla_err.c */
+/* e_atalla_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,26 +64,30 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(0,func,0)
+#define ERR_REASON(reason) ERR_PACK(0,0,reason)
+
 static ERR_STRING_DATA ATALLA_str_functs[]=
 	{
-{ERR_PACK(0,ATALLA_F_ATALLA_CTRL,0),	"ATALLA_CTRL"},
-{ERR_PACK(0,ATALLA_F_ATALLA_FINISH,0),	"ATALLA_FINISH"},
-{ERR_PACK(0,ATALLA_F_ATALLA_INIT,0),	"ATALLA_INIT"},
-{ERR_PACK(0,ATALLA_F_ATALLA_MOD_EXP,0),	"ATALLA_MOD_EXP"},
-{ERR_PACK(0,ATALLA_F_ATALLA_RSA_MOD_EXP,0),	"ATALLA_RSA_MOD_EXP"},
+{ERR_FUNC(ATALLA_F_ATALLA_CTRL),	"ATALLA_CTRL"},
+{ERR_FUNC(ATALLA_F_ATALLA_FINISH),	"ATALLA_FINISH"},
+{ERR_FUNC(ATALLA_F_ATALLA_INIT),	"ATALLA_INIT"},
+{ERR_FUNC(ATALLA_F_ATALLA_MOD_EXP),	"ATALLA_MOD_EXP"},
+{ERR_FUNC(ATALLA_F_ATALLA_RSA_MOD_EXP),	"ATALLA_RSA_MOD_EXP"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA ATALLA_str_reasons[]=
 	{
-{ATALLA_R_ALREADY_LOADED                 ,"already loaded"},
-{ATALLA_R_BN_CTX_FULL                    ,"bn ctx full"},
-{ATALLA_R_BN_EXPAND_FAIL                 ,"bn expand fail"},
-{ATALLA_R_CTRL_COMMAND_NOT_IMPLEMENTED   ,"ctrl command not implemented"},
-{ATALLA_R_MISSING_KEY_COMPONENTS         ,"missing key components"},
-{ATALLA_R_NOT_LOADED                     ,"not loaded"},
-{ATALLA_R_REQUEST_FAILED                 ,"request failed"},
-{ATALLA_R_UNIT_FAILURE                   ,"unit failure"},
+{ERR_REASON(ATALLA_R_ALREADY_LOADED)     ,"already loaded"},
+{ERR_REASON(ATALLA_R_BN_CTX_FULL)        ,"bn ctx full"},
+{ERR_REASON(ATALLA_R_BN_EXPAND_FAIL)     ,"bn expand fail"},
+{ERR_REASON(ATALLA_R_CTRL_COMMAND_NOT_IMPLEMENTED),"ctrl command not implemented"},
+{ERR_REASON(ATALLA_R_MISSING_KEY_COMPONENTS),"missing key components"},
+{ERR_REASON(ATALLA_R_NOT_LOADED)         ,"not loaded"},
+{ERR_REASON(ATALLA_R_REQUEST_FAILED)     ,"request failed"},
+{ERR_REASON(ATALLA_R_UNIT_FAILURE)       ,"unit failure"},
 {0,NULL}
 	};
 

@@ -1,6 +1,6 @@
-/* hw_nuron_err.c */
+/* e_nuron_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,23 +64,27 @@
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(0,func,0)
+#define ERR_REASON(reason) ERR_PACK(0,0,reason)
+
 static ERR_STRING_DATA NURON_str_functs[]=
 	{
-{ERR_PACK(0,NURON_F_NURON_CTRL,0),	"NURON_CTRL"},
-{ERR_PACK(0,NURON_F_NURON_FINISH,0),	"NURON_FINISH"},
-{ERR_PACK(0,NURON_F_NURON_INIT,0),	"NURON_INIT"},
-{ERR_PACK(0,NURON_F_NURON_MOD_EXP,0),	"NURON_MOD_EXP"},
+{ERR_FUNC(NURON_F_NURON_CTRL),	"NURON_CTRL"},
+{ERR_FUNC(NURON_F_NURON_FINISH),	"NURON_FINISH"},
+{ERR_FUNC(NURON_F_NURON_INIT),	"NURON_INIT"},
+{ERR_FUNC(NURON_F_NURON_MOD_EXP),	"NURON_MOD_EXP"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA NURON_str_reasons[]=
 	{
-{NURON_R_ALREADY_LOADED                  ,"already loaded"},
-{NURON_R_CTRL_COMMAND_NOT_IMPLEMENTED    ,"ctrl command not implemented"},
-{NURON_R_DSO_FAILURE                     ,"dso failure"},
-{NURON_R_DSO_FUNCTION_NOT_FOUND          ,"dso function not found"},
-{NURON_R_DSO_NOT_FOUND                   ,"dso not found"},
-{NURON_R_NOT_LOADED                      ,"not loaded"},
+{ERR_REASON(NURON_R_ALREADY_LOADED)      ,"already loaded"},
+{ERR_REASON(NURON_R_CTRL_COMMAND_NOT_IMPLEMENTED),"ctrl command not implemented"},
+{ERR_REASON(NURON_R_DSO_FAILURE)         ,"dso failure"},
+{ERR_REASON(NURON_R_DSO_FUNCTION_NOT_FOUND),"dso function not found"},
+{ERR_REASON(NURON_R_DSO_NOT_FOUND)       ,"dso not found"},
+{ERR_REASON(NURON_R_NOT_LOADED)          ,"not loaded"},
 {0,NULL}
 	};
 

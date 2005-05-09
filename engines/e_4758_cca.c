@@ -401,7 +401,7 @@ static EVP_PKEY *ibm_4758_load_privkey(ENGINE* e, const char* key_id,
 
 	if (keyLabelLength > sizeof(keyLabel))
 		{
-		CCA4758err(CCA4758_F_IBM_4758_CCA_LOAD_PRIVKEY,
+		CCA4758err(CCA4758_F_IBM_4758_LOAD_PRIVKEY,
 		CCA4758_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
 		return NULL;
 		}
@@ -412,7 +412,7 @@ static EVP_PKEY *ibm_4758_load_privkey(ENGINE* e, const char* key_id,
 	keyToken = OPENSSL_malloc(MAX_CCA_PKA_TOKEN_SIZE + sizeof(long));
 	if (!keyToken)
 		{
-		CCA4758err(CCA4758_F_IBM_4758_CCA_LOAD_PRIVKEY,
+		CCA4758err(CCA4758_F_IBM_4758_LOAD_PRIVKEY,
 				ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
@@ -423,7 +423,7 @@ static EVP_PKEY *ibm_4758_load_privkey(ENGINE* e, const char* key_id,
 
 	if (returnCode)
 		{
-		CCA4758err(CCA4758_F_IBM_4758_CCA_LOAD_PRIVKEY,
+		CCA4758err(CCA4758_F_IBM_4758_LOAD_PRIVKEY,
 			CCA4758_R_FAILED_LOADING_PRIVATE_KEY);
 		goto err;
 		}
@@ -434,7 +434,7 @@ static EVP_PKEY *ibm_4758_load_privkey(ENGINE* e, const char* key_id,
 
 	if (returnCode)
 		{
-		CCA4758err(CCA4758_F_IBM_4758_CCA_LOAD_PRIVKEY,
+		CCA4758err(CCA4758_F_IBM_4758_LOAD_PRIVKEY,
 			CCA4758_R_FAILED_LOADING_PRIVATE_KEY);
 		goto err;
 		}
@@ -443,7 +443,7 @@ static EVP_PKEY *ibm_4758_load_privkey(ENGINE* e, const char* key_id,
 			exponent, &modulusLength, &modulusFieldLength,
 			modulus))
 		{
-		CCA4758err(CCA4758_F_IBM_4758_CCA_LOAD_PRIVKEY,
+		CCA4758err(CCA4758_F_IBM_4758_LOAD_PRIVKEY,
 			CCA4758_R_FAILED_LOADING_PRIVATE_KEY);
 		goto err;
 		}
@@ -493,7 +493,7 @@ static EVP_PKEY *ibm_4758_load_pubkey(ENGINE* e, const char* key_id,
 
 	if (keyLabelLength > sizeof(keyLabel))
 		{
-		CCA4758err(CCA4758_F_IBM_4758_CCA_LOAD_PRIVKEY,
+		CCA4758err(CCA4758_F_IBM_4758_LOAD_PUBKEY,
 			CCA4758_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
 		return NULL;
 		}
@@ -504,7 +504,7 @@ static EVP_PKEY *ibm_4758_load_pubkey(ENGINE* e, const char* key_id,
 	keyToken = OPENSSL_malloc(MAX_CCA_PKA_TOKEN_SIZE + sizeof(long));
 	if (!keyToken)
 		{
-		CCA4758err(CCA4758_F_IBM_4758_CCA_LOAD_PUBKEY,
+		CCA4758err(CCA4758_F_IBM_4758_LOAD_PUBKEY,
 				ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
@@ -515,7 +515,7 @@ static EVP_PKEY *ibm_4758_load_pubkey(ENGINE* e, const char* key_id,
 
 	if (returnCode)
 		{
-		CCA4758err(CCA4758_F_IBM_4758_CCA_LOAD_PRIVKEY,
+		CCA4758err(CCA4758_F_IBM_4758_LOAD_PUBKEY,
 				ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
@@ -523,7 +523,7 @@ static EVP_PKEY *ibm_4758_load_pubkey(ENGINE* e, const char* key_id,
 	if (!getModulusAndExponent(keyToken+sizeof(long), &exponentLength,
 			exponent, &modulusLength, &modulusFieldLength, modulus))
 		{
-		CCA4758err(CCA4758_F_IBM_4758_CCA_LOAD_PRIVKEY,
+		CCA4758err(CCA4758_F_IBM_4758_LOAD_PUBKEY,
 			CCA4758_R_FAILED_LOADING_PUBLIC_KEY);
 		goto err;
 		}
@@ -636,14 +636,14 @@ static int cca_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 
 		if (!algorithm.algorithm)
 			{
-			CCA4758err(CCA4758_F_IBM_4758_CCA_VERIFY,
+			CCA4758err(CCA4758_F_CCA_RSA_VERIFY,
 				CCA4758_R_UNKNOWN_ALGORITHM_TYPE);
 			return 0;
 			}
 
 		if (!algorithm.algorithm->length)
 			{
-			CCA4758err(CCA4758_F_IBM_4758_CCA_VERIFY,
+			CCA4758err(CCA4758_F_CCA_RSA_VERIFY,
 				CCA4758_R_ASN1_OID_UNKNOWN_FOR_MD);
 			return 0;
 			}
@@ -663,7 +663,7 @@ static int cca_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 
 	if (length - RSA_PKCS1_PADDING > keyLength)
 		{
-		CCA4758err(CCA4758_F_IBM_4758_CCA_VERIFY,
+		CCA4758err(CCA4758_F_CCA_RSA_VERIFY,
 			CCA4758_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
 		return 0;
 		}
@@ -673,7 +673,7 @@ static int cca_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 		case NID_md5_sha1 :
 			if (m_len != SSL_SIG_LEN)
 				{
-				CCA4758err(CCA4758_F_IBM_4758_CCA_VERIFY,
+				CCA4758err(CCA4758_F_CCA_RSA_VERIFY,
 				CCA4758_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
 				return 0;
 				}
@@ -688,7 +688,7 @@ static int cca_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 					(unsigned int)keyLength+1);
 			if (!hashBuffer)
 				{
-				CCA4758err(CCA4758_F_IBM_4758_CCA_VERIFY,
+				CCA4758err(CCA4758_F_CCA_RSA_VERIFY,
 						ERR_R_MALLOC_FAILURE);
 				return 0;
 				}
@@ -703,7 +703,7 @@ static int cca_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 					(unsigned int)keyLength+1);
 			if (!hashBuffer)
 				{
-				CCA4758err(CCA4758_F_IBM_4758_CCA_VERIFY,
+				CCA4758err(CCA4758_F_CCA_RSA_VERIFY,
 						ERR_R_MALLOC_FAILURE);
 				return 0;
 				}
@@ -760,14 +760,14 @@ static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
 
 		if (!algorithm.algorithm)
 			{
-			CCA4758err(CCA4758_F_IBM_4758_CCA_SIGN,
+			CCA4758err(CCA4758_F_CCA_RSA_SIGN,
 				CCA4758_R_UNKNOWN_ALGORITHM_TYPE);
 			return 0;
 			}
 
 		if (!algorithm.algorithm->length)
 			{
-			CCA4758err(CCA4758_F_IBM_4758_CCA_SIGN,
+			CCA4758err(CCA4758_F_CCA_RSA_SIGN,
 				CCA4758_R_ASN1_OID_UNKNOWN_FOR_MD);
 			return 0;
 			}
@@ -787,7 +787,7 @@ static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
 
 	if (length - RSA_PKCS1_PADDING > keyLength)
 		{
-		CCA4758err(CCA4758_F_IBM_4758_CCA_SIGN,
+		CCA4758err(CCA4758_F_CCA_RSA_SIGN,
 			CCA4758_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
 		return 0;
 		}
@@ -797,7 +797,7 @@ static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
 		case NID_md5_sha1 :
 			if (m_len != SSL_SIG_LEN)
 				{
-				CCA4758err(CCA4758_F_IBM_4758_CCA_SIGN,
+				CCA4758err(CCA4758_F_CCA_RSA_SIGN,
 				CCA4758_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
 				return 0;
 				}
@@ -811,7 +811,7 @@ static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
 					(unsigned int)keyLength+1);
 			if (!hashBuffer)
 				{
-				CCA4758err(CCA4758_F_IBM_4758_CCA_VERIFY,
+				CCA4758err(CCA4758_F_CCA_RSA_SIGN,
 						ERR_R_MALLOC_FAILURE);
 				return 0;
 				}
@@ -825,7 +825,7 @@ static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
 					(unsigned int)keyLength+1);
 			if (!hashBuffer)
 				{
-				CCA4758err(CCA4758_F_IBM_4758_CCA_VERIFY,
+				CCA4758err(CCA4758_F_CCA_RSA_SIGN,
 						ERR_R_MALLOC_FAILURE);
 				return 0;
 				}

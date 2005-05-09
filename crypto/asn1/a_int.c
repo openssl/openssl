@@ -256,7 +256,7 @@ ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 	*pp=pend;
 	return(ret);
 err:
-	ASN1err(ASN1_F_D2I_ASN1_INTEGER,i);
+	ASN1err(ASN1_F_C2I_ASN1_INTEGER,i);
 	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
 		M_ASN1_INTEGER_free(ret);
 	return(NULL);

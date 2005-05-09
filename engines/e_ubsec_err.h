@@ -69,12 +69,14 @@ static void ERR_UBSEC_error(int function, int reason, char *file, int line);
 /* Function codes. */
 #define UBSEC_F_UBSEC_CTRL				 100
 #define UBSEC_F_UBSEC_DH_COMPUTE_KEY			 101
-#define UBSEC_F_UBSEC_DSA_SIGN				 102
+#define UBSEC_F_UBSEC_DH_GENERATE_KEY			 111
+#define UBSEC_F_UBSEC_DSA_DO_SIGN			 102
 #define UBSEC_F_UBSEC_DSA_VERIFY			 103
 #define UBSEC_F_UBSEC_FINISH				 104
 #define UBSEC_F_UBSEC_INIT				 105
 #define UBSEC_F_UBSEC_MOD_EXP				 106
-#define UBSEC_F_UBSEC_RNG_BYTES				 107
+#define UBSEC_F_UBSEC_MOD_EXP_CRT			 110
+#define UBSEC_F_UBSEC_RAND_BYTES			 107
 #define UBSEC_F_UBSEC_RSA_MOD_EXP			 108
 #define UBSEC_F_UBSEC_RSA_MOD_EXP_CRT			 109
 

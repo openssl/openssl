@@ -808,7 +808,7 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 	if (p_hwcrhk_RSAGetPublicKey(*hptr, &n, &e, &rmsg)
 		!= HWCRYPTOHOOK_ERROR_MPISIZE)
 		{
-		HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PUBKEY,HWCRHK_R_CHIL_ERROR);
+		HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY,HWCRHK_R_CHIL_ERROR);
 		ERR_add_error_data(1,rmsg.buf);
 		goto err;
 		}
@@ -820,7 +820,7 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 
 	if (p_hwcrhk_RSAGetPublicKey(*hptr, &n, &e, &rmsg))
 		{
-		HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PUBKEY,
+		HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY,
 			HWCRHK_R_CHIL_ERROR);
 		ERR_add_error_data(1,rmsg.buf);
 		goto err;
@@ -835,7 +835,7 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 #endif
 
         if (!res)
-                HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PUBKEY,
+                HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY,
                         HWCRHK_R_PRIVATE_KEY_ALGORITHMS_DISABLED);
 
 	return res;
@@ -962,7 +962,7 @@ static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 
 	if(!hwcrhk_context)
 		{
-		HWCRHKerr(HWCRHK_F_HWCRHK_MOD_EXP,HWCRHK_R_NOT_INITIALISED);
+		HWCRHKerr(HWCRHK_F_HWCRHK_RSA_MOD_EXP,HWCRHK_R_NOT_INITIALISED);
 		goto err;
 		}
 

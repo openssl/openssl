@@ -10,6 +10,9 @@ CFLAG=-g
 INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
+PERL=           perl
+NEWMAKE=	make
+MAKE=		$(NEWMAKE)
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
@@ -17,7 +20,7 @@ AR=		ar r
 
 PEX_LIBS=
 EX_LIBS=
- 
+
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile engines.com install.com engine_vector.mar

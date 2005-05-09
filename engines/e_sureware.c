@@ -585,7 +585,7 @@ static void surewarehk_error_handling(char *const msg,int func,int ret)
 			ENGINEerr(func,SUREWARE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
 			break;
 		case SUREWAREHOOK_ERROR_INVALID_PAD:
-			ENGINEerr(func,RSA_R_PADDING_CHECK_FAILED);
+			ENGINEerr(func,SUREWARE_R_PADDING_CHECK_FAILED);
 			break;
 		default:
 			ENGINEerr(func,SUREWARE_R_REQUEST_FAILED);
@@ -654,7 +654,7 @@ static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,un
 	int ret=0;
 	if(!p_surewarehk_Load_Rsa_Pubkey || !p_surewarehk_Load_Dsa_Pubkey)
 	{
-		SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PUBLIC_KEY,ENGINE_R_NOT_INITIALISED);
+		SUREWAREerr(SUREWARE_F_SUREWARE_LOAD_PUBLIC,ENGINE_R_NOT_INITIALISED);
 		goto err;
 	}
 	switch (keytype)
@@ -677,10 +677,10 @@ static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,un
 		ret=p_surewarehk_Load_Rsa_Pubkey(msg,key_id,el,
 						 (unsigned long *)rsatmp->n->d,
 						 (unsigned long *)rsatmp->e->d);
-		surewarehk_error_handling(msg,SUREWARE_F_SUREWAREHK_LOAD_PUBLIC_KEY,ret);
+		surewarehk_error_handling(msg,SUREWARE_F_SUREWARE_LOAD_PUBLIC,ret);
 		if (ret!=1)
 		{
-			SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PRIVATE_KEY,ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
+			SUREWAREerr(SUREWARE_F_SUREWARE_LOAD_PUBLIC,ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
 			goto err;
 		}
 		/* normalise pub e and pub n */
@@ -721,10 +721,10 @@ static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,un
 						 (unsigned long *)dsatmp->p->d,
 						 (unsigned long *)dsatmp->q->d,
 						 (unsigned long *)dsatmp->g->d);
-		surewarehk_error_handling(msg,SUREWARE_F_SUREWAREHK_LOAD_PUBLIC_KEY,ret);
+		surewarehk_error_handling(msg,SUREWARE_F_SUREWARE_LOAD_PUBLIC,ret);
 		if (ret!=1)
 		{
-			SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PRIVATE_KEY,ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
+			SUREWAREerr(SUREWARE_F_SUREWARE_LOAD_PUBLIC,ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
 			goto err;
 		}
 		/* set parameters */
@@ -745,7 +745,7 @@ static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,un
 #endif
 
 	default:
-		SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PRIVATE_KEY,ENGINE_R_FAILED_LOADING_PRIVATE_KEY);
+		SUREWAREerr(SUREWARE_F_SUREWARE_LOAD_PUBLIC,ENGINE_R_FAILED_LOADING_PRIVATE_KEY);
 		goto err;
 	}
 	return res;
@@ -775,14 +775,14 @@ static EVP_PKEY *surewarehk_load_privkey(ENGINE *e, const char *key_id,
 
 	if(!p_surewarehk_Load_Privkey)
 	{
-		SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PRIVATE_KEY,ENGINE_R_NOT_INITIALISED);
+		SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PRIVKEY,ENGINE_R_NOT_INITIALISED);
 	}
 	else
 	{
 		ret=p_surewarehk_Load_Privkey(msg,key_id,&hptr,&el,&keytype);
 		if (ret!=1)
 		{
-			SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PRIVATE_KEY,ENGINE_R_FAILED_LOADING_PRIVATE_KEY);
+			SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PRIVKEY,ENGINE_R_FAILED_LOADING_PRIVATE_KEY);
 			ERR_add_error_data(1,msg);		
 		}
 		else
@@ -803,7 +803,7 @@ static EVP_PKEY *surewarehk_load_pubkey(ENGINE *e, const char *key_id,
 
 	if(!p_surewarehk_Info_Pubkey)
 	{
-		SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PUBLIC_KEY,ENGINE_R_NOT_INITIALISED);
+		SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PUBKEY,ENGINE_R_NOT_INITIALISED);
 	}
 	else
 	{
@@ -811,7 +811,7 @@ static EVP_PKEY *surewarehk_load_pubkey(ENGINE *e, const char *key_id,
 		ret=p_surewarehk_Info_Pubkey(msg,key_id,&el,&keytype);
 		if (ret!=1)
 		{
-			SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PUBLIC_KEY,ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
+			SUREWAREerr(SUREWARE_F_SUREWAREHK_LOAD_PUBKEY,ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
 			ERR_add_error_data(1,msg);
 		}
 		else
@@ -842,7 +842,7 @@ static void surewarehk_dh_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 {
 	if(!p_surewarehk_Free)
 	{
-		SUREWAREerr(SUREWARE_F_SUREWAREHK_EX_FREE,ENGINE_R_NOT_INITIALISED);
+		SUREWAREerr(SUREWARE_F_SUREWAREHK_DH_EX_FREE,ENGINE_R_NOT_INITIALISED);
 	}
 	else
 		p_surewarehk_Free((char *)item,1);
@@ -888,7 +888,7 @@ static int surewarehk_rsa_priv_dec(int flen,const unsigned char *from,unsigned c
 		/* intermediate buffer for padding */
 		if ((buf=OPENSSL_malloc(tlen)) == NULL)
 		{
-			RSAerr(SUREWARE_F_SUREWAREHK_RSA_PRIV_DEC,ERR_R_MALLOC_FAILURE);
+			SUREWAREerr(SUREWARE_F_SUREWAREHK_RSA_PRIV_DEC,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		memcpy(buf,to,tlen);/* transfert to into buf */
@@ -906,11 +906,11 @@ static int surewarehk_rsa_priv_dec(int flen,const unsigned char *from,unsigned c
 			ret=RSA_padding_check_none(to,tlen,(unsigned char *)buf,flen,tlen);
 			break;
 		default:
-			RSAerr(SUREWARE_F_SUREWAREHK_RSA_PRIV_DEC,RSA_R_UNKNOWN_PADDING_TYPE);
+			SUREWAREerr(SUREWARE_F_SUREWAREHK_RSA_PRIV_DEC,SUREWARE_R_UNKNOWN_PADDING_TYPE);
 			goto err;
 		}
 		if (ret < 0)
-			RSAerr(SUREWARE_F_SUREWAREHK_RSA_PRIV_DEC,RSA_R_PADDING_CHECK_FAILED);
+			SUREWAREerr(SUREWARE_F_SUREWAREHK_RSA_PRIV_DEC,SUREWARE_R_PADDING_CHECK_FAILED);
 	}
 err:
 	if (buf)
@@ -932,12 +932,12 @@ static int surewarehk_rsa_sign(int flen,const unsigned char *from,unsigned char 
 	char msg[64]="ENGINE_rsa_sign";
 	if (!p_surewarehk_Rsa_Sign)
 	{
-		SUREWAREerr(SUREWARE_F_SUREWAREHK_RSA_PRIV_ENC,ENGINE_R_NOT_INITIALISED);
+		SUREWAREerr(SUREWARE_F_SUREWAREHK_RSA_SIGN,ENGINE_R_NOT_INITIALISED);
 	}
 	/* extract ref to private key */
 	else if (!(hptr=RSA_get_ex_data(rsa, rsaHndidx)))
 	{
-		SUREWAREerr(SUREWARE_F_SUREWAREHK_RSA_PRIV_ENC,SUREWARE_R_MISSING_KEY_COMPONENTS);
+		SUREWAREerr(SUREWARE_F_SUREWAREHK_RSA_SIGN,SUREWARE_R_MISSING_KEY_COMPONENTS);
 	}
 	else
 	{
@@ -945,11 +945,11 @@ static int surewarehk_rsa_sign(int flen,const unsigned char *from,unsigned char 
 		{
 		case RSA_PKCS1_PADDING: /* do it in one shot */
 			ret=p_surewarehk_Rsa_Sign(msg,flen,(unsigned char *)from,&tlen,to,hptr,SUREWARE_PKCS1_PAD);
-			surewarehk_error_handling(msg,SUREWARE_F_SUREWAREHK_RSA_PRIV_ENC,ret);
+			surewarehk_error_handling(msg,SUREWARE_F_SUREWAREHK_RSA_SIGN,ret);
 			break;
 		case RSA_NO_PADDING:
 		default:
-			RSAerr(SUREWARE_F_SUREWAREHK_RSA_PRIV_ENC,RSA_R_UNKNOWN_PADDING_TYPE);
+			SUREWAREerr(SUREWARE_F_SUREWAREHK_RSA_SIGN,SUREWARE_R_UNKNOWN_PADDING_TYPE);
 		}
 	}
 	return ret==1 ? tlen : ret;
@@ -1016,7 +1016,7 @@ static int surewarehk_modexp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	char msg[64]="ENGINE_modexp";
 	if (!p_surewarehk_Mod_Exp)
 	{
-		SUREWAREerr(SUREWARE_F_SUREWAREHK_MOD_EXP,ENGINE_R_NOT_INITIALISED);
+		SUREWAREerr(SUREWARE_F_SUREWAREHK_MODEXP,ENGINE_R_NOT_INITIALISED);
 	}
 	else
 	{
@@ -1032,7 +1032,7 @@ static int surewarehk_modexp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 						 a->top*sizeof(BN_ULONG),
 						 (unsigned long *)a->d,
 						 (unsigned long *)r->d);
-			surewarehk_error_handling(msg,SUREWARE_F_SUREWAREHK_MOD_EXP,ret);
+			surewarehk_error_handling(msg,SUREWARE_F_SUREWAREHK_MODEXP,ret);
 			if (ret==1)
 			{
 				/* normalise result */

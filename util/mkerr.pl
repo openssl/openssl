@@ -148,7 +148,7 @@ while (($hdr, $lib) = each %libinc)
 		my $name = $1;
 		$name =~ tr/[a-z]/[A-Z]/;
 		$ftrans{$name} = $1;
-	    } elsif (/\(/ and not (/=/ or /DECLARE_STACK/)) {
+	    } elsif (/\(/ and not (/=/ or /DECLARE_STACK/ or /TYPEDEF_D2I2D_OF/)) {
 		print STDERR "Header $hdr: cannot parse: $_;\n";
 	    }
 	}

@@ -248,12 +248,12 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		a->algorithm=OBJ_nid2obj(type->pkey_type);
 		if (a->algorithm == NULL)
 			{
-			ASN1err(ASN1_F_ASN1_SIGN,ASN1_R_UNKNOWN_OBJECT_TYPE);
+			ASN1err(ASN1_F_ASN1_ITEM_SIGN,ASN1_R_UNKNOWN_OBJECT_TYPE);
 			goto err;
 			}
 		if (a->algorithm->length == 0)
 			{
-			ASN1err(ASN1_F_ASN1_SIGN,ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
+			ASN1err(ASN1_F_ASN1_ITEM_SIGN,ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
 			goto err;
 			}
 		}
@@ -263,7 +263,7 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	if ((buf_in == NULL) || (buf_out == NULL))
 		{
 		outl=0;
-		ASN1err(ASN1_F_ASN1_SIGN,ERR_R_MALLOC_FAILURE);
+		ASN1err(ASN1_F_ASN1_ITEM_SIGN,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
@@ -273,7 +273,7 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 			(unsigned int *)&outl,pkey))
 		{
 		outl=0;
-		ASN1err(ASN1_F_ASN1_SIGN,ERR_R_EVP_LIB);
+		ASN1err(ASN1_F_ASN1_ITEM_SIGN,ERR_R_EVP_LIB);
 		goto err;
 		}
 	if (signature->data != NULL) OPENSSL_free(signature->data);
