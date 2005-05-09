@@ -426,7 +426,7 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 #rcon:
 	&data_word(0x00000001, 0x00000002, 0x00000004, 0x00000008);
 	&data_word(0x00000010, 0x00000020, 0x00000040, 0x00000080);
-	&data_word(0x0000001b, 0x00000036);
+	&data_word(0x0000001b, 0x00000036, 0, 0, 0, 0, 0, 0);
 &function_end_B("_x86_AES_encrypt");
 
 # void AES_encrypt (const void *inp,void *out,const AES_KEY *key);

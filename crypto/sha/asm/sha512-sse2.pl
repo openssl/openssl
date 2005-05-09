@@ -316,7 +316,7 @@ $func="sha512_block_sse2";
 	&leave	();
 &ret	();
 
-&align(16);
+&align(64);
 &set_label("K512");	# Yes! I keep it in the code segment!
 	&data_word(0xd728ae22,0x428a2f98);	# u64
 	&data_word(0x23ef65cd,0x71374491);	# u64
