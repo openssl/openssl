@@ -222,7 +222,7 @@ int FIPS_selftest_rsa()
     SHA1(original_ptext,sizeof(original_ptext) - 1,md);
     if(memcmp(md,mdkat,SHA_DIGEST_LENGTH))
 	{
-	FIPSerr(FIPS_F_FIPS_SELFTEST_SHA1,FIPS_R_SELFTEST_FAILED);
+	FIPSerr(FIPS_F_FIPS_SELFTEST_SHA,FIPS_R_SELFTEST_FAILED);
 	return 0;
 	}
     /* ...3) then encrypt the digest, and compare the ciphertext

@@ -73,10 +73,10 @@ Q=../testvectors/rng/req
 A=../testvectors/rng/rsp
 
 fips_test: top_fips_rngvs
-	-rm -rf $A
-	mkdir $A
-	./fips_rngvs mct < $Q/MCT.req > $A/MCT.rsp
-	./fips_rngvs vst < $Q/VST.req > $A/VST.rsp
+	-rm -rf $(A)
+	mkdir $(A)
+	./fips_rngvs mct < $(Q)/MCT.req > $(A)/MCT.rsp
+	./fips_rngvs vst < $(Q)/VST.req > $(A)/VST.rsp
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff

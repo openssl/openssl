@@ -72,6 +72,7 @@ void FIPS_corrupt_rsa(void);
 int FIPS_selftest_rsa(void);
 void FIPS_corrupt_dsa(void);
 int FIPS_selftest_dsa(void);
+void FIPS_corrupt_rng(void);
 int FIPS_selftest_rng(void);
 int FIPS_selftest_hmac(void);
 
@@ -103,7 +104,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_SELFTEST_DSA			 109
 #define FIPS_F_FIPS_SELFTEST_RNG			 118
 #define FIPS_F_FIPS_SELFTEST_RSA			 108
-#define FIPS_F_FIPS_SELFTEST_SHA1			 103
+#define FIPS_F_FIPS_SELFTEST_SHA			 103
 #define FIPS_F_HASH_FINAL				 100
 #define FIPS_F_RSA_EAY_PUBLIC_ENCRYPT			 114
 #define FIPS_F_RSA_GENERATE_KEY				 113

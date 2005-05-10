@@ -62,6 +62,29 @@ tags:
 
 tests:
 
+top_fips_rsastest:
+	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_rsastest sub_target)
+
+top_fips_rsavtest:
+	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_rsavtest sub_target)
+
+fips_rsastest: fips_rsastest.o $(TOP)/libcrypto.a
+	$(CC) $(CFLAGS) -o fips_rsastest fips_rsastest.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
+	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_rsastest
+
+fips_rsavtest: fips_rsavtest.o $(TOP)/libcrypto.a
+	$(CC) $(CFLAGS) -o fips_rsavtest fips_rsavtest.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
+	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_rsavtest
+
+Q=../testvectors/rsa/req
+A=../testvectors/rsa/rsp
+
+fips_test: top top_fips_rsastest top_fips_rsavtest
+	-rm -rf $(A)
+	mkdir $(A)
+	./fips_rsastest < $(Q)/SigGen15.req > $(A)/SigGen15.rsp
+	./fips_rsavtest < $(Q)/SigVer15.req > $(A)/SigVer15.rsp
+
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 

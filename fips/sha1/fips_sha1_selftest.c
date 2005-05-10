@@ -86,7 +86,7 @@ int FIPS_selftest_sha1()
 	SHA1((unsigned char*)test[n],strlen(test[n]),md);
 	if(memcmp(md,ret[n],sizeof md))
 	    {
-	    FIPSerr(FIPS_F_FIPS_SELFTEST_SHA1,FIPS_R_SELFTEST_FAILED);
+	    FIPSerr(FIPS_F_FIPS_SELFTEST_SHA,FIPS_R_SELFTEST_FAILED);
 	    return 0;
 	    }
 	}
