@@ -85,7 +85,6 @@ int main(int argc, char **argv)
 	BIO *in = NULL, *out = NULL, *err = NULL;
 
 	int ret = 1;
-	const EVP_MD *md=EVP_sha1();
 
 	ERR_load_crypto_strings();
 
@@ -103,19 +102,6 @@ int main(int argc, char **argv)
 		goto end;
 		}
 
-	if (argc>1 && *argv[1]=='-')
-		{
-		if (!strcasecmp(argv[1],"-sha1"))	md=EVP_sha1();
-		else if (!strcasecmp(argv[1],"-sha224"))md=EVP_sha224();
-		else if (!strcasecmp(argv[1],"-sha256"))md=EVP_sha256();
-		else if (!strcasecmp(argv[1],"-sha384"))md=EVP_sha384();
-		else if (!strcasecmp(argv[1],"-sha512"))md=EVP_sha512();
-		else	{
-			BIO_printf(err,"Usage: %s [-sha[1|224|256|384|512]] [input [output]]\n");
-			return 1;
-			}
-		argc--, argv++;
-		}
 	if (argc == 1)
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
 	else
@@ -138,7 +124,7 @@ int main(int argc, char **argv)
 		goto end;
 		}
 
-	if (!hmac_test(err, md, out, in))
+	if (!hmac_test(err, EVP_sha1(), out, in))
 		{
 		fprintf(stderr, "FATAL hmac file processing error\n");
 		goto end;
@@ -197,7 +183,7 @@ int hmac_test(BIO *err, const EVP_MD *md, BIO *out, BIO *in)
 		p = strchr(linebuf, '=');
 
 		/* If no = or starts with [ (for [L=20] line) just copy */
-		if (!p || *keyword=='[')
+		if (!p)
 			{
 			if (!BIO_puts(out, olinebuf))
 				goto error;
@@ -210,7 +196,7 @@ int hmac_test(BIO *err, const EVP_MD *md, BIO *out, BIO *in)
 		while (isspace((unsigned char)*q))
 			*q-- = 0;
 
-
+		*p = 0;
 		value = p + 1;
 
 		/* Remove leading space from value */
@@ -223,7 +209,19 @@ int hmac_test(BIO *err, const EVP_MD *md, BIO *out, BIO *in)
 		while (*p == '\n' || isspace((unsigned char)*p))
 			*p-- = 0;
 
-		if (!strcmp(keyword, "Count"))
+		if (!strcmp(keyword,"[L") && *p==']')
+			{
+			switch (atoi(value))
+				{
+				case 20: md=EVP_sha1();   break;
+				case 28: md=EVP_sha224(); break;
+				case 32: md=EVP_sha256(); break;
+				case 48: md=EVP_sha384(); break;
+				case 64: md=EVP_sha512(); break;
+				default: goto parse_error;
+				}
+			}
+		else if (!strcmp(keyword, "Count"))
 			{
 			if (Count != -1)
 				goto parse_error;
