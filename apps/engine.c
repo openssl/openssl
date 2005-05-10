@@ -387,11 +387,15 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-pre") == 0)
 			{
 			argc--; argv++;
+			if (argc == 0)
+				goto skip_arg_loop;
 			sk_push(pre_cmds,*argv);
 			}
 		else if (strcmp(*argv,"-post") == 0)
 			{
 			argc--; argv++;
+			if (argc == 0)
+				goto skip_arg_loop;
 			sk_push(post_cmds,*argv);
 			}
 		else if ((strncmp(*argv,"-h",2) == 0) ||
