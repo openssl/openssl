@@ -1929,8 +1929,8 @@ static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 
 		fprintf(stderr, "In app_verify_callback, allowing cert. ");
 		fprintf(stderr, "Arg is: %s\n", cb_arg->string);
-		fprintf(stderr, "Finished printing do we have a context? 0x%x a cert? 0x%x\n",
-			(unsigned int)ctx, (unsigned int)ctx->cert);
+		fprintf(stderr, "Finished printing do we have a context? 0x%p a cert? 0x%p\n",
+			ctx, ctx->cert);
 		if (ctx->cert)
 			s=X509_NAME_oneline(X509_get_subject_name(ctx->cert),buf,256);
 		if (s != NULL)
