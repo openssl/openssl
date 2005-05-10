@@ -774,14 +774,14 @@
   *) Include some named elliptic curves, and add OIDs from X9.62,
      SECG, and WAP/WTLS.  Each curve can be obtained from the new
      function
-          EC_GROUP_new_by_nid(),
+          EC_GROUP_new_by_curve_name(),
      and the list of available named curves can be obtained with
           EC_get_builtin_curves().
      Also add a 'curve_name' member to EC_GROUP objects, which can be
      accessed via
          EC_GROUP_set_curve_name()
          EC_GROUP_get_curve_name()
-     [Nils Larsch <nla@trustcenter.de, Bodo Moeller]
+     [Nils Larsch <larsch@trustcenter.de, Bodo Moeller]
  
   *) Remove a few calls to bn_wexpand() in BN_sqr() (the one in there
      was actually never needed) and in BN_mul().  The removal in BN_mul()

@@ -2906,7 +2906,7 @@ EC_POINT_set_affine_coords_GF2m         3340	EXIST:VMS:FUNCTION:EC
 BN_GF2m_mod_exp_arr                     3341	EXIST::FUNCTION:
 STORE_ATTR_INFO_modify_number           3342	EXIST::FUNCTION:
 X509_keyid_get0                         3343	EXIST::FUNCTION:
-EC_GROUP_new_by_nid                     3344	EXIST::FUNCTION:EC
+EC_GROUP_new_by_curve_name              3344	EXIST::FUNCTION:EC
 ENGINE_load_gmp                         3345	EXIST::FUNCTION:ENGINE,GMP,STATIC_ENGINE
 pitem_new                               3346	EXIST::FUNCTION:
 BN_GF2m_mod_mul_arr                     3347	EXIST::FUNCTION:

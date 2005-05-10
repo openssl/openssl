@@ -262,7 +262,7 @@ EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
 					ERR_R_MALLOC_FAILURE);
 				goto ecerr;
 			}
-			if ((eckey->group = EC_GROUP_new_by_nid(
+			if ((eckey->group = EC_GROUP_new_by_curve_name(
                              OBJ_obj2nid(a->parameter->value.object))) == NULL)
 				goto ecerr;
 			EC_GROUP_set_asn1_flag(eckey->group, 

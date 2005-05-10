@@ -967,7 +967,7 @@ EC_GROUP *ec_asn1_pkparameters2group(const ECPKPARAMETERS *params)
 	if (params->type == 0)
 		{ /* the curve is given by an OID */
 		tmp = OBJ_obj2nid(params->value.named_curve);
-		if ((ret = EC_GROUP_new_by_nid(tmp)) == NULL)
+		if ((ret = EC_GROUP_new_by_curve_name(tmp)) == NULL)
 			{
 			ECerr(EC_F_EC_ASN1_PKPARAMETERS2GROUP, 
 			      EC_R_EC_GROUP_NEW_BY_NAME_FAILURE);

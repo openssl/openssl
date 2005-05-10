@@ -411,7 +411,7 @@ bad:
 			goto end;
 			}
 
-		group = EC_GROUP_new_by_nid(nid);
+		group = EC_GROUP_new_by_curve_name(nid);
 		if (group == NULL)
 			{
 			BIO_printf(bio_err, "unable to create curve (%s)\n", 

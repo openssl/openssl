@@ -734,7 +734,7 @@ bad:
 					goto end;
 					}
 
-				ecdh->group = EC_GROUP_new_by_nid(nid);
+				ecdh->group = EC_GROUP_new_by_curve_name(nid);
 				if (ecdh->group == NULL)
 					{
 					BIO_printf(bio_err, "unable to create curve (%s)\n", named_curve);
@@ -744,7 +744,7 @@ bad:
 				}
 			
 			if (ecdh->group == NULL)
-				ecdh->group=EC_GROUP_new_by_nid(NID_sect163r2);
+				ecdh->group=EC_GROUP_new_by_curve_name(NID_sect163r2);
 
 			SSL_CTX_set_tmp_ecdh(s_ctx, ecdh);
 			SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_ECDH_USE);

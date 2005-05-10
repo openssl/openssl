@@ -338,7 +338,7 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 			eckey = ret->pkey.eckey;
 			if (eckey->group)
 				EC_GROUP_free(eckey->group);
-			if ((eckey->group = EC_GROUP_new_by_nid(
+			if ((eckey->group = EC_GROUP_new_by_curve_name(
                              OBJ_obj2nid(a->parameter->value.object))) == NULL)
 				goto err;
 			EC_GROUP_set_asn1_flag(eckey->group, 

@@ -203,7 +203,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 	/* create the key */
 	if ((key = EC_KEY_new()) == NULL)
 		goto x962_int_err;
-	if ((key->group = EC_GROUP_new_by_nid(nid)) == NULL)
+	if ((key->group = EC_GROUP_new_by_curve_name(nid)) == NULL)
 		goto x962_int_err;
 	if (!EC_KEY_generate_key(key))
 		goto x962_int_err;
@@ -337,7 +337,7 @@ int test_builtin(BIO *out)
 		/* create new ecdsa key (== EC_KEY) */
 		if ((eckey = EC_KEY_new()) == NULL)
 			goto builtin_err;
-		if ((eckey->group = EC_GROUP_new_by_nid(nid)) == NULL)
+		if ((eckey->group = EC_GROUP_new_by_curve_name(nid)) == NULL)
 			goto builtin_err;
 		if (EC_GROUP_get_degree(eckey->group) < 160)
 			/* drop the curve */ 
@@ -356,7 +356,7 @@ int test_builtin(BIO *out)
 		/* create second key */
 		if ((wrong_eckey = EC_KEY_new()) == NULL)
 			goto builtin_err;
-		if ((wrong_eckey->group = EC_GROUP_new_by_nid(nid)) == NULL)
+		if ((wrong_eckey->group = EC_GROUP_new_by_curve_name(nid)) == NULL)
 			goto builtin_err;
 		if (!EC_KEY_generate_key(wrong_eckey))
 			{

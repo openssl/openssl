@@ -2049,7 +2049,7 @@ int MAIN(int argc, char **argv)
 			} 
 		else 
 			{
-			ecdsa[j]->group = EC_GROUP_new_by_nid(test_curves[j]);
+			ecdsa[j]->group = EC_GROUP_new_by_curve_name(test_curves[j]);
 			/* Could not obtain group information */
 			if (ecdsa[j]->group == NULL) 
 				{
@@ -2168,7 +2168,7 @@ int MAIN(int argc, char **argv)
 			}
 		else
 			{
-			ecdh_a[j]->group = EC_GROUP_new_by_nid(test_curves[j]);
+			ecdh_a[j]->group = EC_GROUP_new_by_curve_name(test_curves[j]);
 			if (ecdh_a[j]->group == NULL)
 				{
 				BIO_printf(bio_err,"ECDH failure.\n");

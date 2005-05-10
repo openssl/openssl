@@ -178,8 +178,9 @@ int EC_GROUP_cmp(const EC_GROUP *, const EC_GROUP *, BN_CTX *);
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 
-/* EC_GROUP_new_by_nid() creates a EC_GROUP structure specified by a NID */
-EC_GROUP *EC_GROUP_new_by_nid(int nid);
+/* EC_GROUP_new_by_curve_name() creates a EC_GROUP structure
+ * specified by a curve name (in form of a NID) */
+EC_GROUP *EC_GROUP_new_by_curve_name(int nid);
 /* handling of internal curves */
 typedef struct { 
 	int nid;
@@ -428,7 +429,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GROUP_GET_TRINOMIAL_BASIS		 194
 #define EC_F_EC_GROUP_GROUP2NID				 147
 #define EC_F_EC_GROUP_NEW				 108
-#define EC_F_EC_GROUP_NEW_BY_NID			 174
+#define EC_F_EC_GROUP_NEW_BY_CURVE_NAME			 174
 #define EC_F_EC_GROUP_NEW_FROM_DATA			 175
 #define EC_F_EC_GROUP_PRECOMPUTE_MULT			 142
 #define EC_F_EC_GROUP_SET_CURVE_GF2M			 176

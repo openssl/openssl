@@ -1252,10 +1252,10 @@ void internal_curve_test(void)
 		{
 		EC_GROUP *group = NULL;
 		int nid = curves[n].nid;
-		if ((group = EC_GROUP_new_by_nid(nid)) == NULL)
+		if ((group = EC_GROUP_new_by_curve_name(nid)) == NULL)
 			{
 			ok = 0;
-			fprintf(stdout, "\nEC_GROUP_new_by_nid() failed with"
+			fprintf(stdout, "\nEC_GROUP_new_curve_name() failed with"
 				" curve %s\n", OBJ_nid2sn(nid));
 			/* try next curve */
 			continue;

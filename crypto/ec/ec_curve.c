@@ -1224,7 +1224,7 @@ err:
 	return group;
 	}
 
-EC_GROUP *EC_GROUP_new_by_nid(int nid)
+EC_GROUP *EC_GROUP_new_by_curve_name(int nid)
 	{
 	size_t i;
 	EC_GROUP *ret = NULL;
@@ -1241,7 +1241,7 @@ EC_GROUP *EC_GROUP_new_by_nid(int nid)
 
 	if (ret == NULL)
 		{
-		ECerr(EC_F_EC_GROUP_NEW_BY_NID, EC_R_UNKNOWN_GROUP);
+		ECerr(EC_F_EC_GROUP_NEW_BY_CURVE_NAME, EC_R_UNKNOWN_GROUP);
 		return NULL;
 		}
 

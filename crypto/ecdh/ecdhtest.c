@@ -132,7 +132,7 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 	int i,alen,blen,aout,bout,ret=0;
 
 	if ((a=EC_KEY_new()) == NULL) goto err;
-	if ((a->group=EC_GROUP_new_by_nid(nid)) == NULL) goto err;
+	if ((a->group=EC_GROUP_new_by_curve_name(nid)) == NULL) goto err;
 
 	if ((b=EC_KEY_new()) == NULL) goto err;
 	b->group = a->group;

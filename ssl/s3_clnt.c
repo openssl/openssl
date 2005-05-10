@@ -1214,7 +1214,7 @@ int ssl3_get_key_exchange(SSL *s)
 			goto f_err;
 			}
 
-		if (!(ecdh->group=EC_GROUP_new_by_nid(curve_nid)))
+		if (!(ecdh->group=EC_GROUP_new_by_curve_name(curve_nid)))
 			{
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_EC_LIB);
 			goto err;

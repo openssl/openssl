@@ -999,7 +999,7 @@ bad:
 				goto end;
 				}
 
-			ecdh->group = EC_GROUP_new_by_nid(nid);
+			ecdh->group = EC_GROUP_new_by_curve_name(nid);
 			if (ecdh->group == NULL)
 				{
 				BIO_printf(bio_err, "unable to create curve (%s)\n", 
@@ -1015,7 +1015,7 @@ bad:
 		else
 			{
 			BIO_printf(bio_s_out,"Using default temp ECDH parameters\n");
-			ecdh->group=EC_GROUP_new_by_nid(NID_sect163r2);
+			ecdh->group=EC_GROUP_new_by_curve_name(NID_sect163r2);
 			if (ecdh->group == NULL) 
 				{
 				BIO_printf(bio_err, "unable to create curve (sect163r2)\n");
