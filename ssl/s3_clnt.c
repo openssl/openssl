@@ -567,7 +567,7 @@ static int ssl3_client_hello(SSL *s)
 			}
 		
 		/* Ciphers supported */
-		i=ssl_cipher_list_to_bytes(s,SSL_get_ciphers(s),&(p[2]));
+		i=ssl_cipher_list_to_bytes(s,SSL_get_ciphers(s),&(p[2]),0);
 		if (i == 0)
 			{
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,SSL_R_NO_CIPHERS_AVAILABLE);

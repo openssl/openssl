@@ -1181,7 +1181,8 @@ char *SSL_get_shared_ciphers(const SSL *s,char *buf,int len)
 	return(buf);
 	}
 
-int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p)
+int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
+                             int (*put_cb)(const SSL_CIPHER *, unsigned char *))
 	{
 	int i,j=0;
 	SSL_CIPHER *c;
@@ -1200,7 +1201,8 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p)
                 if ((c->algorithms & SSL_KRB5) && nokrb5)
                     continue;
 #endif /* OPENSSL_NO_KRB5 */                    
-		j=ssl_put_cipher_by_char(s,c,p);
+
+		j = put_cb ? put_cb(c,p) : ssl_put_cipher_by_char(s,c,p);
 		p+=j;
 		}
 	return(p-q);

@@ -797,7 +797,7 @@ static int server_hello(SSL *s)
 			/* lets send out the ciphers we like in the
 			 * prefered order */
 			sk= s->session->ciphers;
-			n=ssl_cipher_list_to_bytes(s,s->session->ciphers,d);
+			n=ssl_cipher_list_to_bytes(s,s->session->ciphers,d,0);
 			d+=n;
 			s2n(n,p);		/* add cipher length */
 			}
