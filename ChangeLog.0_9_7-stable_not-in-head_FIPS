@@ -141,6 +141,14 @@ This is the "FIPS"-related part.
 
 	Missing files.
 
+2003-07-31 23:30  levitte
+
+	Changed:
+		Makefile.org (1.154.2.71), "Exp", lines: +2 -0
+
+	If FDIRS is to be treated like SDIRS, let's not forget to
+	initialize it in Makefile.org.
+
 2003-07-31 23:41  levitte
 
 	Changed:
@@ -746,6 +754,15 @@ This is the "FIPS"-related part.
 
 		PR: 900
 
+2004-06-21 20:05  levitte
+
+	Changed:
+		Makefile.org (1.154.2.82), "Exp", lines: +3 -1
+
+	Standard sh doesn't tolerate ! as part of the conditional command.
+
+		PR: 900
+
 2004-06-28 22:33  levitte
 
 	Changed:
@@ -910,6 +927,16 @@ This is the "FIPS"-related part.
 	all, thus not becoming a problem.  Applications that are built or
 	rebuilt to use FIPS functionality will need to be recompiled in any
 	case, thus not being a problem either.
+
+2004-08-02 16:15  levitte
+
+	Changed:
+		crypto/cryptlib.c (1.32.2.13), "Exp", lines: +4 -4
+
+	Let's lock a write lock when changing values, shall we?
+
+		Thanks to Dr Stephen Henson <shenson@drh-consultancy.co.uk>
+	for making me aware of this error.
 
 2004-08-05 20:11  steve
 
@@ -1239,6 +1266,17 @@ This is the "FIPS"-related part.
 		apps/x509.c (1.67.2.20), "Exp", lines: +8 -1
 
 	In FIPS mode use SHA1 as default digest in x509 and req utilities.
+
+2005-03-15 10:46  appro
+
+	Changed:
+		Makefile.org (1.154.2.96), "Exp", lines: +1 -1
+		crypto/Makefile (1.1.4.6), "Exp", lines: +2 -3
+		fips/Makefile (1.1.4.8), "Exp", lines: +4 -1
+
+	Real Bourne shell doesn't accept ! as in "if ! grep ..." Fix this
+	in crypto/Makefile and make Makefile.org and fips/Makefile more
+	discreet.
 
 2005-03-22 18:29  steve
 
