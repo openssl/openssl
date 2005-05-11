@@ -2868,3 +2868,10 @@ PROXY_CERT_INFO_EXTENSION_it            3307	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTI
 PROXY_POLICY_free                       3308	EXIST::FUNCTION:
 PROXY_POLICY_new                        3309	EXIST::FUNCTION:
 BN_MONT_CTX_set_locked                  3310	EXIST::FUNCTION:
+FIPS_selftest_rng                       3311	EXIST:OPENSSL_FIPS:FUNCTION:
+EVP_sha384                              3312	EXIST::FUNCTION:SHA
+EVP_sha512                              3313	EXIST::FUNCTION:SHA
+EVP_sha224                              3314	EXIST::FUNCTION:SHA
+EVP_sha256                              3315	EXIST::FUNCTION:SHA
+FIPS_selftest_hmac                      3316	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_corrupt_rng                        3317	EXIST:OPENSSL_FIPS:FUNCTION:

@@ -101,11 +101,11 @@ fips_dsa_gen.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
 fips_dsa_gen.o: ../../include/openssl/des_old.h ../../include/openssl/dh.h
 fips_dsa_gen.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
 fips_dsa_gen.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_dsa_gen.o: ../../include/openssl/fips.h ../../include/openssl/idea.h
-fips_dsa_gen.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
-fips_dsa_gen.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
-fips_dsa_gen.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
-fips_dsa_gen.o: ../../include/openssl/objects.h
+fips_dsa_gen.o: ../../include/openssl/fips.h ../../include/openssl/fips_sha.h
+fips_dsa_gen.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
+fips_dsa_gen.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
+fips_dsa_gen.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+fips_dsa_gen.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 fips_dsa_gen.o: ../../include/openssl/opensslconf.h
 fips_dsa_gen.o: ../../include/openssl/opensslv.h
 fips_dsa_gen.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
