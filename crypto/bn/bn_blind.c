@@ -211,7 +211,7 @@ int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 
 	if ((b->A == NULL) || (b->Ai == NULL))
 		{
-		BNerr(BN_F_BN_BLINDING_CONVERT,BN_R_NOT_INITIALIZED);
+		BNerr(BN_F_BN_BLINDING_CONVERT_EX,BN_R_NOT_INITIALIZED);
 		return(0);
 		}
 
@@ -233,7 +233,7 @@ int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *ct
 	bn_check_top(n);
 	if ((b->A == NULL) || (b->Ai == NULL))
 		{
-		BNerr(BN_F_BN_BLINDING_INVERT,BN_R_NOT_INITIALIZED);
+		BNerr(BN_F_BN_BLINDING_INVERT_EX,BN_R_NOT_INITIALIZED);
 		return(0);
 		}
 

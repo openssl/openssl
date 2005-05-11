@@ -559,11 +559,11 @@ void ERR_load_OCSP_strings(void);
 
 /* Function codes. */
 #define OCSP_F_ASN1_STRING_ENCODE			 100
-#define OCSP_F_CERT_ID_NEW				 101
 #define OCSP_F_D2I_OCSP_NONCE				 102
 #define OCSP_F_OCSP_BASIC_ADD1_STATUS			 103
 #define OCSP_F_OCSP_BASIC_SIGN				 104
 #define OCSP_F_OCSP_BASIC_VERIFY			 105
+#define OCSP_F_OCSP_CERT_ID_NEW				 101
 #define OCSP_F_OCSP_CHECK_DELEGATED			 106
 #define OCSP_F_OCSP_CHECK_IDS				 107
 #define OCSP_F_OCSP_CHECK_ISSUER			 108

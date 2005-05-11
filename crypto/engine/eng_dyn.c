@@ -189,7 +189,7 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
 	c = OPENSSL_malloc(sizeof(dynamic_data_ctx));
 	if(!c)
 		{
-		ENGINEerr(ENGINE_F_SET_DATA_CTX,ERR_R_MALLOC_FAILURE);
+		ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX,ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
 	memset(c, 0, sizeof(dynamic_data_ctx));
@@ -206,7 +206,7 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
 	c->dirs = sk_new_null();
 	if(!c->dirs)
 		{
-		ENGINEerr(ENGINE_F_SET_DATA_CTX,ERR_R_MALLOC_FAILURE);
+		ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX,ERR_R_MALLOC_FAILURE);
 		OPENSSL_free(c);
 		return 0;
 		}

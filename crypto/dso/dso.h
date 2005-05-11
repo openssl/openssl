@@ -336,9 +336,11 @@ void ERR_load_DSO_strings(void);
 #define DSO_F_VMS_UNLOAD				 117
 #define DSO_F_WIN32_BIND_FUNC				 118
 #define DSO_F_WIN32_BIND_VAR				 119
+#define DSO_F_WIN32_JOINER				 135
 #define DSO_F_WIN32_LOAD				 120
 #define DSO_F_WIN32_MERGER				 134
 #define DSO_F_WIN32_NAME_CONVERTER			 125
+#define DSO_F_WIN32_SPLITTER				 136
 #define DSO_F_WIN32_UNLOAD				 121
 
 /* Reason codes. */

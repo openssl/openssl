@@ -141,7 +141,7 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
 		*x=sk;
 	return(sk);
 err:
-	X509err(X509_F_X509_ADD_ATTR,ERR_R_MALLOC_FAILURE);
+	X509err(X509_F_X509AT_ADD1_ATTR,ERR_R_MALLOC_FAILURE);
 err2:
 	if (new_attr != NULL) X509_ATTRIBUTE_free(new_attr);
 	if (sk != NULL) sk_X509_ATTRIBUTE_free(sk);

@@ -579,7 +579,7 @@ static int asn1_template_ex_d2i(ASN1_VALUE **val,
 			/* If NDEF we must have an EOC here */
 			if (!asn1_check_eoc(&p, len))
 				{
-				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+				ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I,
 						ASN1_R_MISSING_EOC);
 				goto err;
 				}
@@ -590,7 +590,7 @@ static int asn1_template_ex_d2i(ASN1_VALUE **val,
 			 * an error */
 			if (len)
 				{
-				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+				ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I,
 					ASN1_R_EXPLICIT_LENGTH_MISMATCH);
 				goto err;
 				}
@@ -649,7 +649,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
 					&p, len, sktag, skaclass, opt, ctx);
 		if (!ret)
 			{
-			ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I,
+			ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
 						ERR_R_NESTED_ASN1_ERROR);
 			return 0;
 			}
@@ -672,7 +672,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
 				
 		if (!*val)
 			{
-			ASN1err(ASN1_F_ASN1_TEMPLATE_EX_D2I,
+			ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
 						ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
@@ -687,7 +687,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
 				{
 				if (!sk_eoc)
 					{
-					ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+					ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
 							ASN1_R_UNEXPECTED_EOC);
 					goto err;
 					}
@@ -700,21 +700,21 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
 						ASN1_ITEM_ptr(tt->item),
 						-1, 0, 0, ctx))
 				{
-				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+				ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
 					ERR_R_NESTED_ASN1_ERROR);
 				goto err;
 				}
 			len -= p - q;
 			if (!sk_push((STACK *)*val, (char *)skfield))
 				{
-				ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+				ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
 						ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
 			}
 		if (sk_eoc)
 			{
-			ASN1err(ASN1_F_ASN1_TEMPLATE_D2I, ASN1_R_MISSING_EOC);
+			ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I, ASN1_R_MISSING_EOC);
 			goto err;
 			}
 		}
@@ -725,7 +725,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
 			ASN1_ITEM_ptr(tt->item), tt->tag, aclass, opt, ctx);
 		if (!ret)
 			{
-			ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+			ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
 						ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 			}
@@ -739,7 +739,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
 							-1, 0, opt, ctx);
 		if (!ret)
 			{
-			ASN1err(ASN1_F_ASN1_TEMPLATE_D2I,
+			ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
 					ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 			}
@@ -944,7 +944,7 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 		case V_ASN1_NULL:
 		if (len)
 			{
-			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+			ASN1err(ASN1_F_ASN1_EX_C2I,
 						ASN1_R_NULL_IS_WRONG_LENGTH);
 			goto err;
 			}
@@ -954,7 +954,7 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 		case V_ASN1_BOOLEAN:
 		if (len != 1)
 			{
-			ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+			ASN1err(ASN1_F_ASN1_EX_C2I,
 						ASN1_R_BOOLEAN_IS_WRONG_LENGTH);
 			goto err;
 			}
@@ -1006,7 +1006,7 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 			stmp = ASN1_STRING_type_new(utype);
 			if (!stmp)
 				{
-				ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+				ASN1err(ASN1_F_ASN1_EX_C2I,
 							ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
@@ -1030,7 +1030,7 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 			{
 			if (!ASN1_STRING_set(stmp, cont, len))
 				{
-				ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE,
+				ASN1err(ASN1_F_ASN1_EX_C2I,
 							ERR_R_MALLOC_FAILURE);
 				ASN1_STRING_free(stmp);	
 				*pval = NULL;

@@ -122,7 +122,7 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	db = OPENSSL_malloc(dblen);
 	if (db == NULL)
 		{
-		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP, ERR_R_MALLOC_FAILURE);
+		RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, ERR_R_MALLOC_FAILURE);
 		return -1;
 		}
 

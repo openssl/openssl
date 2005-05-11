@@ -141,19 +141,19 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD *metho
 	int i, objlen;
 	char *objtmp, *ptmp;
 	if(!(ainfo = sk_ACCESS_DESCRIPTION_new_null())) {
-		X509V3err(X509V3_F_V2I_ACCESS_DESCRIPTION,ERR_R_MALLOC_FAILURE);
+		X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
 		cnf = sk_CONF_VALUE_value(nval, i);
 		if(!(acc = ACCESS_DESCRIPTION_new())
 			|| !sk_ACCESS_DESCRIPTION_push(ainfo, acc)) {
-			X509V3err(X509V3_F_V2I_ACCESS_DESCRIPTION,ERR_R_MALLOC_FAILURE);
+			X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		ptmp = strchr(cnf->name, ';');
 		if(!ptmp) {
-			X509V3err(X509V3_F_V2I_ACCESS_DESCRIPTION,X509V3_R_INVALID_SYNTAX);
+			X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,X509V3_R_INVALID_SYNTAX);
 			goto err;
 		}
 		objlen = ptmp - cnf->name;
@@ -162,14 +162,14 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD *metho
 		if(!v2i_GENERAL_NAME_ex(acc->location, method, ctx, &ctmp, 0))
 								 goto err; 
 		if(!(objtmp = OPENSSL_malloc(objlen + 1))) {
-			X509V3err(X509V3_F_V2I_ACCESS_DESCRIPTION,ERR_R_MALLOC_FAILURE);
+			X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		strncpy(objtmp, cnf->name, objlen);
 		objtmp[objlen] = 0;
 		acc->method = OBJ_txt2obj(objtmp, 0);
 		if(!acc->method) {
-			X509V3err(X509V3_F_V2I_ACCESS_DESCRIPTION,X509V3_R_BAD_OBJECT);
+			X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,X509V3_R_BAD_OBJECT);
 			ERR_add_error_data(2, "value=", objtmp);
 			OPENSSL_free(objtmp);
 			goto err;

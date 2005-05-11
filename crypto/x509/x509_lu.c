@@ -497,7 +497,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 		if (ok == X509_LU_RETRY)
 			{
 			X509_OBJECT_free_contents(&obj);
-			X509err(X509_F_X509_VERIFY_CERT,X509_R_SHOULD_RETRY);
+			X509err(X509_F_X509_STORE_CTX_GET1_ISSUER,X509_R_SHOULD_RETRY);
 			return -1;
 			}
 		else if (ok != X509_LU_FAIL)

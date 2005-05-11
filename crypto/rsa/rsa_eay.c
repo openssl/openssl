@@ -400,7 +400,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 		blinding = rsa_get_blinding(rsa, &br, &local_blinding, ctx);
 		if (blinding == NULL)
 			{
-			RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_INTERNAL_ERROR);
+			RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 		}

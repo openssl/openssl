@@ -432,7 +432,7 @@ int RSA_memory_lock(RSA *r)
 		j+= (*t[i])->top;
 	if ((p=OPENSSL_malloc_locked((off+j)*sizeof(BN_ULONG))) == NULL)
 		{
-		RSAerr(RSA_F_MEMORY_LOCK,ERR_R_MALLOC_FAILURE);
+		RSAerr(RSA_F_RSA_MEMORY_LOCK,ERR_R_MALLOC_FAILURE);
 		return(0);
 		}
 	bn=(BIGNUM *)p;

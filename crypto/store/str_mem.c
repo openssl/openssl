@@ -196,7 +196,7 @@ static int mem_modify(STORE *s, STORE_OBJECT_TYPES type,
 	OPENSSL_ITEM modify_attributes[], OPENSSL_ITEM delete_attributes[],
 	OPENSSL_ITEM parameters[])
 	{
-	STOREerr(STORE_F_MEM_STORE, STORE_R_NOT_IMPLEMENTED);
+	STOREerr(STORE_F_MEM_MODIFY, STORE_R_NOT_IMPLEMENTED);
 	return 0;
 	}
 static int mem_delete(STORE *s, STORE_OBJECT_TYPES type,
@@ -324,7 +324,7 @@ static int mem_list_end(STORE *s, void *handle)
 
 	if (!context)
 		{
-		STOREerr(STORE_F_MEM_LIST_NEXT, ERR_R_PASSED_NULL_PARAMETER);
+		STOREerr(STORE_F_MEM_LIST_END, ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}
 	if (context && context->search_attributes)

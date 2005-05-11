@@ -118,7 +118,7 @@ static int do_pk8pkey(BIO *bp, EVP_PKEY *x, int isder, int nid, const EVP_CIPHER
 	char buf[PEM_BUFSIZE];
 	int ret;
 	if(!(p8inf = EVP_PKEY2PKCS8(x))) {
-		PEMerr(PEM_F_PEM_WRITE_BIO_PKCS8PRIVATEKEY,
+		PEMerr(PEM_F_DO_PK8PKEY,
 					PEM_R_ERROR_CONVERTING_PRIVATE_KEY);
 		return 0;
 	}
@@ -127,8 +127,7 @@ static int do_pk8pkey(BIO *bp, EVP_PKEY *x, int isder, int nid, const EVP_CIPHER
 			if(!cb) klen = PEM_def_callback(buf, PEM_BUFSIZE, 1, u);
 			else klen = cb(buf, PEM_BUFSIZE, 1, u);
 			if(klen <= 0) {
-				PEMerr(PEM_F_PEM_WRITE_BIO_PKCS8PRIVATEKEY,
-								PEM_R_READ_KEY);
+				PEMerr(PEM_F_DO_PK8PKEY,PEM_R_READ_KEY);
 				PKCS8_PRIV_KEY_INFO_free(p8inf);
 				return 0;
 			}
@@ -215,7 +214,7 @@ static int do_pk8pkey_fp(FILE *fp, EVP_PKEY *x, int isder, int nid, const EVP_CI
 	BIO *bp;
 	int ret;
 	if(!(bp = BIO_new_fp(fp, BIO_NOCLOSE))) {
-		PEMerr(PEM_F_PEM_F_DO_PK8KEY_FP,ERR_R_BUF_LIB);
+		PEMerr(PEM_F_DO_PK8PKEY_FP,ERR_R_BUF_LIB);
                 return(0);
 	}
 	ret = do_pk8pkey(bp, x, isder, nid, enc, kstr, klen, cb, u);

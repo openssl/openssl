@@ -276,7 +276,7 @@ get_next:
 
 	return(1);
 err:
-	X509err(X509_F_X509_REQ_PRINT,ERR_R_BUF_LIB);
+	X509err(X509_F_X509_REQ_PRINT_EX,ERR_R_BUF_LIB);
 	return(0);
 	}
 

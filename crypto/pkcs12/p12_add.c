@@ -68,16 +68,16 @@ PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it, int nid
 	PKCS12_BAGS *bag;
 	PKCS12_SAFEBAG *safebag;
 	if (!(bag = PKCS12_BAGS_new())) {
-		PKCS12err(PKCS12_F_PKCS12_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
+		PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	bag->type = OBJ_nid2obj(nid1);
 	if (!ASN1_item_pack(obj, it, &bag->value.octet)) {
-		PKCS12err(PKCS12_F_PKCS12_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
+		PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	if (!(safebag = PKCS12_SAFEBAG_new())) {
-		PKCS12err(PKCS12_F_PKCS12_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
+		PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	safebag->value.bag = bag;

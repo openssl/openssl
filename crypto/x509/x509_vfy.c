@@ -849,7 +849,7 @@ static int check_policy(X509_STORE_CTX *ctx)
 				ctx->param->policies, ctx->param->flags);
 	if (ret == 0)
 		{
-		X509err(X509_F_X509_VERIFY_CERT,ERR_R_MALLOC_FAILURE);
+		X509err(X509_F_CHECK_POLICY,ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
 	/* Invalid or inconsistent extensions */

@@ -271,7 +271,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 
 	if (!filename)
 		{
-		DSOerr(DSO_F_WIN32_MERGER,DSO_R_NO_FILENAME);
+		DSOerr(DSO_F_WIN32_SPLITTER,DSO_R_NO_FILENAME);
 		/*goto err;*/
 		return(NULL);
 		}
@@ -279,7 +279,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 	result = OPENSSL_malloc(sizeof(struct file_st));
 	if(result == NULL)
 		{
-		DSOerr(DSO_F_WIN32_MERGER,
+		DSOerr(DSO_F_WIN32_SPLITTER,
 			ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
@@ -303,7 +303,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 		case ':':
 			if(position != IN_DEVICE)
 				{
-				DSOerr(DSO_F_WIN32_MERGER,
+				DSOerr(DSO_F_WIN32_SPLITTER,
 					DSO_R_INCORRECT_FILE_SYNTAX);
 				/*goto err;*/
 				return(NULL);
@@ -373,7 +373,7 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
 
 	if(!file_split)
 		{
-		DSOerr(DSO_F_WIN32_MERGER,
+		DSOerr(DSO_F_WIN32_JOINER,
 				ERR_R_PASSED_NULL_PARAMETER);
 		return(NULL);
 		}
@@ -401,14 +401,14 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
 
 	if(!len)
 		{
-		DSOerr(DSO_F_WIN32_MERGER, DSO_R_EMPTY_FILE_STRUCTURE);
+		DSOerr(DSO_F_WIN32_JOINER, DSO_R_EMPTY_FILE_STRUCTURE);
 		return(NULL);
 		}
 
 	result = OPENSSL_malloc(len + 1);
 	if (!result)
 		{
-		DSOerr(DSO_F_WIN32_MERGER,
+		DSOerr(DSO_F_WIN32_JOINER,
 			ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}

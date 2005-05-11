@@ -90,7 +90,7 @@ X509_EXTENSION *X509V3_EXT_nconf(CONF *conf, X509V3_CTX *ctx, char *name,
 	ret = do_ext_nconf(conf, ctx, OBJ_sn2nid(name), crit, value);
 	if (!ret)
 		{
-		X509V3err(X509V3_F_X509V3_EXT_CONF,X509V3_R_ERROR_IN_EXTENSION);
+		X509V3err(X509V3_F_X509V3_EXT_NCONF,X509V3_R_ERROR_IN_EXTENSION);
 		ERR_add_error_data(4,"name=", name, ", value=", value);
 		}
 	return ret;
@@ -121,12 +121,12 @@ static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid,
 	void *ext_struc;
 	if (ext_nid == NID_undef)
 		{
-		X509V3err(X509V3_F_DO_EXT_CONF,X509V3_R_UNKNOWN_EXTENSION_NAME);
+		X509V3err(X509V3_F_DO_EXT_NCONF,X509V3_R_UNKNOWN_EXTENSION_NAME);
 		return NULL;
 		}
 	if (!(method = X509V3_EXT_get_nid(ext_nid)))
 		{
-		X509V3err(X509V3_F_DO_EXT_CONF,X509V3_R_UNKNOWN_EXTENSION);
+		X509V3err(X509V3_F_DO_EXT_NCONF,X509V3_R_UNKNOWN_EXTENSION);
 		return NULL;
 		}
 	/* Now get internal extension representation based on type */
@@ -136,7 +136,7 @@ static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid,
 		else nval = X509V3_parse_list(value);
 		if(sk_CONF_VALUE_num(nval) <= 0)
 			{
-			X509V3err(X509V3_F_X509V3_EXT_CONF,X509V3_R_INVALID_EXTENSION_STRING);
+			X509V3err(X509V3_F_DO_EXT_NCONF,X509V3_R_INVALID_EXTENSION_STRING);
 			ERR_add_error_data(4, "name=", OBJ_nid2sn(ext_nid), ",section=", value);
 			return NULL;
 			}
@@ -153,14 +153,14 @@ static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid,
 		{
 		if(!ctx->db || !ctx->db_meth)
 			{
-			X509V3err(X509V3_F_X509V3_EXT_CONF,X509V3_R_NO_CONFIG_DATABASE);
+			X509V3err(X509V3_F_DO_EXT_NCONF,X509V3_R_NO_CONFIG_DATABASE);
 			return NULL;
 			}
 		if(!(ext_struc = method->r2i(method, ctx, value))) return NULL;
 		}
 	else
 		{
-		X509V3err(X509V3_F_X509V3_EXT_CONF,X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED);
+		X509V3err(X509V3_F_DO_EXT_NCONF,X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED);
 		ERR_add_error_data(2, "name=", OBJ_nid2sn(ext_nid));
 		return NULL;
 		}

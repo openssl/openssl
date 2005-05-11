@@ -159,7 +159,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 			{
 			if (!ENGINE_init(impl))
 				{
-				EVPerr(EVP_F_EVP_DIGESTINIT, EVP_R_INITIALIZATION_ERROR);
+				EVPerr(EVP_F_EVP_DIGESTINIT_EX,EVP_R_INITIALIZATION_ERROR);
 				return 0;
 				}
 			}
@@ -173,7 +173,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 			if(!d)
 				{
 				/* Same comment from evp_enc.c */
-				EVPerr(EVP_F_EVP_DIGESTINIT, EVP_R_INITIALIZATION_ERROR);
+				EVPerr(EVP_F_EVP_DIGESTINIT_EX,EVP_R_INITIALIZATION_ERROR);
 				return 0;
 				}
 			/* We'll use the ENGINE's private digest definition */
@@ -189,7 +189,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 	else
 	if(!ctx->digest)
 		{
-		EVPerr(EVP_F_EVP_DIGESTINIT, EVP_R_NO_DIGEST_SET);
+		EVPerr(EVP_F_EVP_DIGESTINIT_EX,EVP_R_NO_DIGEST_SET);
 		return 0;
 		}
 #endif
@@ -251,14 +251,14 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 	unsigned char *tmp_buf;
 	if ((in == NULL) || (in->digest == NULL))
 		{
-		EVPerr(EVP_F_EVP_MD_CTX_COPY,EVP_R_INPUT_NOT_INITIALIZED);
+		EVPerr(EVP_F_EVP_MD_CTX_COPY_EX,EVP_R_INPUT_NOT_INITIALIZED);
 		return 0;
 		}
 #ifndef OPENSSL_NO_ENGINE
 	/* Make sure it's safe to copy a digest context using an ENGINE */
 	if (in->engine && !ENGINE_init(in->engine))
 		{
-		EVPerr(EVP_F_EVP_MD_CTX_COPY,ERR_R_ENGINE_LIB);
+		EVPerr(EVP_F_EVP_MD_CTX_COPY_EX,ERR_R_ENGINE_LIB);
 		return 0;
 		}
 #endif

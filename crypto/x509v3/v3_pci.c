@@ -82,13 +82,13 @@ static int process_pci_value(CONF_VALUE *val,
 		{
 		if (*language)
 			{
-			X509V3err(X509V3_F_R2I_PCI,X509V3_R_POLICY_LANGUAGE_ALREADTY_DEFINED);
+			X509V3err(X509V3_F_PROCESS_PCI_VALUE,X509V3_R_POLICY_LANGUAGE_ALREADTY_DEFINED);
 			X509V3_conf_err(val);
 			return 0;
 			}
 		if (!(*language = OBJ_txt2obj(val->value, 0)))
 			{
-			X509V3err(X509V3_F_R2I_PCI,X509V3_R_INVALID_OBJECT_IDENTIFIER);
+			X509V3err(X509V3_F_PROCESS_PCI_VALUE,X509V3_R_INVALID_OBJECT_IDENTIFIER);
 			X509V3_conf_err(val);
 			return 0;
 			}
@@ -97,13 +97,13 @@ static int process_pci_value(CONF_VALUE *val,
 		{
 		if (*pathlen)
 			{
-			X509V3err(X509V3_F_R2I_PCI,X509V3_R_POLICY_PATH_LENGTH_ALREADTY_DEFINED);
+			X509V3err(X509V3_F_PROCESS_PCI_VALUE,X509V3_R_POLICY_PATH_LENGTH_ALREADTY_DEFINED);
 			X509V3_conf_err(val);
 			return 0;
 			}
 		if (!X509V3_get_value_int(val, pathlen))
 			{
-			X509V3err(X509V3_F_R2I_PCI,X509V3_R_POLICY_PATH_LENGTH);
+			X509V3err(X509V3_F_PROCESS_PCI_VALUE,X509V3_R_POLICY_PATH_LENGTH);
 			X509V3_conf_err(val);
 			return 0;
 			}
@@ -117,7 +117,7 @@ static int process_pci_value(CONF_VALUE *val,
 			*policy = ASN1_OCTET_STRING_new();
 			if (!*policy)
 				{
-				X509V3err(X509V3_F_R2I_PCI,ERR_R_MALLOC_FAILURE);
+				X509V3err(X509V3_F_PROCESS_PCI_VALUE,ERR_R_MALLOC_FAILURE);
 				X509V3_conf_err(val);
 				return 0;
 				}
@@ -148,7 +148,7 @@ static int process_pci_value(CONF_VALUE *val,
 			BIO *b = BIO_new_file(val->value + 5, "r");
 			if (!b)
 				{
-				X509V3err(X509V3_F_R2I_PCI,ERR_R_BIO_LIB);
+				X509V3err(X509V3_F_PROCESS_PCI_VALUE,ERR_R_BIO_LIB);
 				X509V3_conf_err(val);
 				goto err;
 				}
@@ -172,7 +172,7 @@ static int process_pci_value(CONF_VALUE *val,
 
 			if (n < 0)
 				{
-				X509V3err(X509V3_F_R2I_PCI,ERR_R_BIO_LIB);
+				X509V3err(X509V3_F_PROCESS_PCI_VALUE,ERR_R_BIO_LIB);
 				X509V3_conf_err(val);
 				goto err;
 				}
@@ -193,13 +193,13 @@ static int process_pci_value(CONF_VALUE *val,
 			}
 		else
 			{
-			X509V3err(X509V3_F_R2I_PCI,X509V3_R_INCORRECT_POLICY_SYNTAX_TAG);
+			X509V3err(X509V3_F_PROCESS_PCI_VALUE,X509V3_R_INCORRECT_POLICY_SYNTAX_TAG);
 			X509V3_conf_err(val);
 			goto err;
 			}
 		if (!tmp_data)
 			{
-			X509V3err(X509V3_F_R2I_PCI,ERR_R_MALLOC_FAILURE);
+			X509V3err(X509V3_F_PROCESS_PCI_VALUE,ERR_R_MALLOC_FAILURE);
 			X509V3_conf_err(val);
 			goto err;
 			}

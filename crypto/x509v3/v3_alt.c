@@ -241,7 +241,7 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
 	CONF_VALUE *cnf;
 	int i;
 	if(!(gens = sk_GENERAL_NAME_new_null())) {
-		X509V3err(X509V3_F_V2I_GENERAL_NAMES,ERR_R_MALLOC_FAILURE);
+		X509V3err(X509V3_F_V2I_ISSUER_ALT,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
@@ -306,7 +306,7 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
 	CONF_VALUE *cnf;
 	int i;
 	if(!(gens = sk_GENERAL_NAME_new_null())) {
-		X509V3err(X509V3_F_V2I_GENERAL_NAMES,ERR_R_MALLOC_FAILURE);
+		X509V3err(X509V3_F_V2I_SUBJECT_ALT,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
@@ -428,7 +428,7 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
 
 	if(!value)
 		{
-		X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_MISSING_VALUE);
+		X509V3err(X509V3_F_V2I_GENERAL_NAME_EX,X509V3_R_MISSING_VALUE);
 		return NULL;
 		}
 
@@ -439,7 +439,7 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
 		gen = GENERAL_NAME_new();
 		if(gen == NULL)
 			{
-			X509V3err(X509V3_F_V2I_GENERAL_NAME,ERR_R_MALLOC_FAILURE);
+			X509V3err(X509V3_F_V2I_GENERAL_NAME_EX,ERR_R_MALLOC_FAILURE);
 			return NULL;
 			}
 		}
@@ -464,7 +464,7 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
 		ASN1_OBJECT *obj;
 		if(!(obj = OBJ_txt2obj(value,0)))
 			{
-			X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_BAD_OBJECT);
+			X509V3err(X509V3_F_V2I_GENERAL_NAME_EX,X509V3_R_BAD_OBJECT);
 			ERR_add_error_data(2, "value=", value);
 			goto err;
 			}
@@ -479,7 +479,7 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
 			gen->d.ip = a2i_IPADDRESS(value);
 		if(gen->d.ip == NULL)
 			{
-			X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_BAD_IP_ADDRESS);
+			X509V3err(X509V3_F_V2I_GENERAL_NAME_EX,X509V3_R_BAD_IP_ADDRESS);
 			ERR_add_error_data(2, "value=", value);
 			goto err;
 			}
@@ -490,7 +490,7 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
 		type = GEN_DIRNAME;
 		if (!do_dirname(gen, value, ctx))
 			{
-			X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_DIRNAME_ERROR);
+			X509V3err(X509V3_F_V2I_GENERAL_NAME_EX,X509V3_R_DIRNAME_ERROR);
 			goto err;
 			}
 		}
@@ -498,14 +498,14 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
 		{
 		if (!do_othername(gen, value, ctx))
 			{
-			X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_OTHERNAME_ERROR);
+			X509V3err(X509V3_F_V2I_GENERAL_NAME_EX,X509V3_R_OTHERNAME_ERROR);
 			goto err;
 			}
 		type = GEN_OTHERNAME;
 		}
 	else
 		{
-		X509V3err(X509V3_F_V2I_GENERAL_NAME,X509V3_R_UNSUPPORTED_OPTION);
+		X509V3err(X509V3_F_V2I_GENERAL_NAME_EX,X509V3_R_UNSUPPORTED_OPTION);
 		ERR_add_error_data(2, "name=", name);
 		goto err;
 		}
@@ -516,7 +516,7 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
 			      !ASN1_STRING_set(gen->d.ia5, (unsigned char*)value,
 					       strlen(value)))
 			{
-			X509V3err(X509V3_F_V2I_GENERAL_NAME,ERR_R_MALLOC_FAILURE);
+			X509V3err(X509V3_F_V2I_GENERAL_NAME_EX,ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
 		}

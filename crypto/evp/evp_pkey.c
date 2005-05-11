@@ -74,7 +74,7 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8inf, EVP_PKEY *pkey);
 
 /* Extract a private key from a PKCS8 structure */
 
-EVP_PKEY *EVP_PKCS82PKEY (PKCS8_PRIV_KEY_INFO *p8)
+EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 {
 	EVP_PKEY *pkey = NULL;
 #ifndef OPENSSL_NO_RSA
@@ -337,17 +337,17 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 	PKCS8_PRIV_KEY_INFO *p8;
 
 	if (!(p8 = PKCS8_PRIV_KEY_INFO_new())) {	
-		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+		EVPerr(EVP_F_EVP_PKEY2PKCS8_BROKEN,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	p8->broken = broken;
 	if (!ASN1_INTEGER_set(p8->version, 0)) {
-		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+		EVPerr(EVP_F_EVP_PKEY2PKCS8_BROKEN,ERR_R_MALLOC_FAILURE);
 		PKCS8_PRIV_KEY_INFO_free (p8);
 		return NULL;
 	}
 	if (!(p8->pkeyalg->parameter = ASN1_TYPE_new ())) {
-		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+		EVPerr(EVP_F_EVP_PKEY2PKCS8_BROKEN,ERR_R_MALLOC_FAILURE);
 		PKCS8_PRIV_KEY_INFO_free (p8);
 		return NULL;
 	}
@@ -362,7 +362,7 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 		p8->pkeyalg->parameter->type = V_ASN1_NULL;
 		if (!ASN1_pack_string_of (EVP_PKEY,pkey, i2d_PrivateKey,
 					 &p8->pkey->value.octet_string)) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_EVP_PKEY2PKCS8_BROKEN,ERR_R_MALLOC_FAILURE);
 			PKCS8_PRIV_KEY_INFO_free (p8);
 			return NULL;
 		}
@@ -387,7 +387,7 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 		break;
 #endif
 		default:
-		EVPerr(EVP_F_EVP_PKEY2PKCS8, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
+		EVPerr(EVP_F_EVP_PKEY2PKCS8_BROKEN, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
 		PKCS8_PRIV_KEY_INFO_free (p8);
 		return NULL;
 	}
@@ -412,7 +412,7 @@ PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken)
 		break;
 
 		default:
-		EVPerr(EVP_F_EVP_PKCS8_SET_BROKEN,EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE);
+		EVPerr(EVP_F_PKCS8_SET_BROKEN,EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE);
 		return NULL;
 	}
 }
@@ -430,24 +430,24 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	p8->pkeyalg->algorithm = OBJ_nid2obj(NID_dsa);
 	len = i2d_DSAparams (pkey->pkey.dsa, NULL);
 	if (!(p = OPENSSL_malloc(len))) {
-		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+		EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	q = p;
 	i2d_DSAparams (pkey->pkey.dsa, &q);
 	if (!(params = ASN1_STRING_new())) {
-		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+		EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	if (!ASN1_STRING_set(params, p, len)) {
-		EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+		EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	OPENSSL_free(p);
 	p = NULL;
 	/* Get private key into integer */
 	if (!(prkey = BN_to_ASN1_INTEGER (pkey->pkey.dsa->priv_key, NULL))) {
-		EVPerr(EVP_F_EVP_PKEY2PKCS8,EVP_R_ENCODE_ERROR);
+		EVPerr(EVP_F_DSA_PKEY2PKCS8,EVP_R_ENCODE_ERROR);
 		goto err;
 	}
 
@@ -458,7 +458,7 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 
 		if (!ASN1_pack_string_of(ASN1_INTEGER,prkey, i2d_ASN1_INTEGER,
 					 &p8->pkey->value.octet_string)) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 
@@ -476,39 +476,39 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 		params = NULL;
 		p8->pkeyalg->parameter->type = V_ASN1_SEQUENCE;
 		if (!(ndsa = sk_ASN1_TYPE_new_null())) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		if (!(ttmp = ASN1_TYPE_new())) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		if (!(ttmp->value.integer =
 			BN_to_ASN1_INTEGER(pkey->pkey.dsa->pub_key, NULL))) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,EVP_R_ENCODE_ERROR);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,EVP_R_ENCODE_ERROR);
 			goto err;
 		}
 		ttmp->type = V_ASN1_INTEGER;
 		if (!sk_ASN1_TYPE_push(ndsa, ttmp)) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 
 		if (!(ttmp = ASN1_TYPE_new())) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		ttmp->value.integer = prkey;
 		prkey = NULL;
 		ttmp->type = V_ASN1_INTEGER;
 		if (!sk_ASN1_TYPE_push(ndsa, ttmp)) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		ttmp = NULL;
 
 		if (!(p8->pkey->value.octet_string = ASN1_OCTET_STRING_new())) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 
@@ -516,7 +516,7 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 					 &p8->pkey->value.octet_string->data,
 					 &p8->pkey->value.octet_string->length)) {
 
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
@@ -526,36 +526,36 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 
 		p8->pkeyalg->parameter->type = V_ASN1_NULL;
 		if (!(ndsa = sk_ASN1_TYPE_new_null())) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		if (!(ttmp = ASN1_TYPE_new())) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		ttmp->value.sequence = params;
 		params = NULL;
 		ttmp->type = V_ASN1_SEQUENCE;
 		if (!sk_ASN1_TYPE_push(ndsa, ttmp)) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 
 		if (!(ttmp = ASN1_TYPE_new())) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		ttmp->value.integer = prkey;
 		prkey = NULL;
 		ttmp->type = V_ASN1_INTEGER;
 		if (!sk_ASN1_TYPE_push(ndsa, ttmp)) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		ttmp = NULL;
 
 		if (!(p8->pkey->value.octet_string = ASN1_OCTET_STRING_new())) {
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 
@@ -563,7 +563,7 @@ static int dsa_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 					 &p8->pkey->value.octet_string->data,
 					 &p8->pkey->value.octet_string->length)) {
 
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_DSA_PKEY2PKCS8,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
@@ -590,7 +590,7 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 
 	if (pkey->pkey.eckey == NULL || pkey->pkey.eckey->group == NULL)
 	{
-		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, EVP_R_MISSING_PARAMETERS);
+		EVPerr(EVP_F_ECKEY_PKEY2PKCS8, EVP_R_MISSING_PARAMETERS);
 		return 0;
 	}
 	eckey = pkey->pkey.eckey;
@@ -611,7 +611,7 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 
 	if ((p8->pkeyalg->parameter = ASN1_TYPE_new()) == NULL)
 	{
-		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+		EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	
@@ -626,18 +626,18 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	{
 		if ((i = i2d_ECParameters(eckey, NULL)) == 0)
 		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
+			EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_EC_LIB);
 			return 0;
 		}
 		if ((p = (unsigned char *) OPENSSL_malloc(i)) == NULL)
 		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
 			return 0;
 		}	
 		pp = p;
 		if (!i2d_ECParameters(eckey, &pp))
 		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
+			EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_EC_LIB);
 			OPENSSL_free(p);
 			return 0;
 		}
@@ -645,7 +645,7 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 		if ((p8->pkeyalg->parameter->value.sequence 
 			= ASN1_STRING_new()) == NULL)
 		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_ASN1_LIB);
+			EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_ASN1_LIB);
 			OPENSSL_free(p);
 			return 0;
 		}
@@ -663,21 +663,21 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	if (!i)
 	{
 		pkey->pkey.eckey->enc_flag = tmp_flags;
-		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
+		EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_EC_LIB);
 		return 0;
 	}
 	p = (unsigned char *) OPENSSL_malloc(i);
 	if (!p)
 	{
 		pkey->pkey.eckey->enc_flag = tmp_flags;
-		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+		EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	pp = p;
 	if (!i2d_ECPrivateKey(pkey->pkey.eckey, &pp))
 	{
 		pkey->pkey.eckey->enc_flag = tmp_flags;
-		EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_EC_LIB);
+		EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_EC_LIB);
 		OPENSSL_free(p);
 		return 0;
 	}
@@ -693,7 +693,7 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 		    (const void *)p, i))
 
 		{
-			EVPerr(EVP_F_EC_KEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+			EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
 		}
 		else
 			ret = 1;
@@ -702,7 +702,7 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 		case PKCS8_NS_DB:		/* DSA specific */
 		case PKCS8_EMBEDDED_PARAM:	/* DSA specific */
 		default:
-			EVPerr(EVP_F_EVP_PKEY2PKCS8,EVP_R_ENCODE_ERROR);
+			EVPerr(EVP_F_ECKEY_PKEY2PKCS8,EVP_R_ENCODE_ERROR);
 	}
 	OPENSSL_cleanse(p, (size_t)i);
 	OPENSSL_free(p);

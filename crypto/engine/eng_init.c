@@ -111,7 +111,7 @@ int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)
 	/* Release the structural reference too */
 	if(!engine_free_util(e, 0))
 		{
-		ENGINEerr(ENGINE_F_ENGINE_FINISH,ENGINE_R_FINISH_FAILED);
+		ENGINEerr(ENGINE_F_ENGINE_UNLOCKED_FINISH,ENGINE_R_FINISH_FAILED);
 		return 0;
 		}
 	return to_return;

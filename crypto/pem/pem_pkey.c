@@ -105,7 +105,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, vo
 		if (cb) klen=cb(psbuf,PEM_BUFSIZE,0,u);
 		else klen=PEM_def_callback(psbuf,PEM_BUFSIZE,0,u);
 		if (klen <= 0) {
-			PEMerr(PEM_F_PEM_ASN1_READ_BIO,
+			PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY,
 					PEM_R_BAD_PASSWORD_READ);
 			X509_SIG_free(p8);
 			goto err;
@@ -122,7 +122,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, vo
 	}
 p8err:
 	if (ret == NULL)
-		PEMerr(PEM_F_PEM_ASN1_READ_BIO,ERR_R_ASN1_LIB);
+		PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY,ERR_R_ASN1_LIB);
 err:
 	OPENSSL_free(nm);
 	OPENSSL_free(data);
@@ -137,7 +137,7 @@ EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void 
 
         if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
-		PEMerr(PEM_F_PEM_ASN1_READ,ERR_R_BUF_LIB);
+		PEMerr(PEM_F_PEM_READ_PRIVATEKEY,ERR_R_BUF_LIB);
                 return(0);
 		}
         BIO_set_fp(b,fp,BIO_NOCLOSE);

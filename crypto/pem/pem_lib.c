@@ -81,7 +81,7 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
 #ifdef OPENSSL_NO_FP_API
 	/* We should not ever call the default callback routine from
 	 * windows. */
-	PEMerr(PEM_F_DEF_CALLBACK,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+	PEMerr(PEM_F_PEM_DEF_CALLBACK,ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 	return(-1);
 #else
 	int i,j;
@@ -102,7 +102,7 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
 		i=EVP_read_pw_string(buf,num,prompt,w);
 		if (i != 0)
 			{
-			PEMerr(PEM_F_DEF_CALLBACK,PEM_R_PROBLEMS_GETTING_PASSWORD);
+			PEMerr(PEM_F_PEM_DEF_CALLBACK,PEM_R_PROBLEMS_GETTING_PASSWORD);
 			memset(buf,0,(unsigned int)num);
 			return(-1);
 			}

@@ -139,7 +139,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 		if(degenerate == 3)
 			{
 			ok = 0; /* we set our own err */
-			RSAerr(RSA_F_RSA_GENERATE_KEY,RSA_R_KEY_SIZE_TOO_SMALL);
+			RSAerr(RSA_F_RSA_BUILTIN_KEYGEN,RSA_R_KEY_SIZE_TOO_SMALL);
 			goto err;
 			}
 		if (!BN_sub(r2,rsa->q,BN_value_one())) goto err;
@@ -180,7 +180,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 err:
 	if (ok == -1)
 		{
-		RSAerr(RSA_F_RSA_GENERATE_KEY,ERR_LIB_BN);
+		RSAerr(RSA_F_RSA_BUILTIN_KEYGEN,ERR_LIB_BN);
 		ok=0;
 		}
 	BN_CTX_end(ctx);

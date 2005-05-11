@@ -13,16 +13,21 @@ foreach $file (@ARGV)
 	$func="";
 	while (<IN>)
 		{
-		if (!/;$/ && /^([a-zA-Z].+[\s*])?([A-Za-z_0-9]+)\(.*[\),]/)
+		if (!/;$/ && /^([a-zA-Z].*[\s*])?([A-Za-z_0-9]+)\(.*[),]/)
 			{
-			$func=$2;
+			/^([^()]*(\([^()]*\)[^()]*)*)\(/;
+			$1 =~ /([A-Za-z_0-9]*)$/;
+			$func = $1;
 			$func =~ tr/A-Z/a-z/;
 			}
 		if (/([A-Z0-9]+)err\(([^,]+)/)
 			{
-			next if ($func eq "");
 			$errlib=$1;
 			$n=$2;
+
+			if ($func eq "")
+				{ print "$file:$.:???:$n\n"; next; }
+
 			if ($n !~ /([^_]+)_F_(.+)$/)
 				{
 		#		print "check -$file:$.:$func:$n\n";

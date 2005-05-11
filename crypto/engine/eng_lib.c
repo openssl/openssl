@@ -108,7 +108,7 @@ int engine_free_util(ENGINE *e, int locked)
 
 	if(e == NULL)
 		{
-		ENGINEerr(ENGINE_F_ENGINE_FREE,
+		ENGINEerr(ENGINE_F_ENGINE_FREE_UTIL,
 			ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}

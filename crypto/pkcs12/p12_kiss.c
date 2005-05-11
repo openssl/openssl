@@ -80,7 +80,7 @@ static int parse_bag( PKCS12_SAFEBAG *bag, const char *pass, int passlen,
  * passed unitialised.
  */
 
-int PKCS12_parse (PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
+int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 	     STACK_OF(X509) **ca)
 {
 
@@ -141,7 +141,7 @@ int PKCS12_parse (PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 
 /* Parse the outer PKCS#12 structure */
 
-static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
+static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
 	     EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca)
 {
 	STACK_OF(PKCS7) *asafes;
@@ -178,10 +178,10 @@ static int parse_pk12 (PKCS12 *p12, const char *pass, int passlen,
 }
 
 
-static int parse_bags (STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
-		       int passlen, EVP_PKEY **pkey, X509 **cert,
-		       STACK_OF(X509) **ca, ASN1_OCTET_STRING **keyid,
-		       char *keymatch)
+static int parse_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
+		      int passlen, EVP_PKEY **pkey, X509 **cert,
+		      STACK_OF(X509) **ca, ASN1_OCTET_STRING **keyid,
+		      char *keymatch)
 {
 	int i;
 	for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
@@ -197,9 +197,9 @@ static int parse_bags (STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
 #define MATCH_ALL  0x3
 
 static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
-		      EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca,
-		      ASN1_OCTET_STRING **keyid,
-	     char *keymatch)
+		     EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca,
+		     ASN1_OCTET_STRING **keyid,
+		     char *keymatch)
 {
 	PKCS8_PRIV_KEY_INFO *p8;
 	X509 *x509;
@@ -221,7 +221,7 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 			if (M_ASN1_OCTET_STRING_cmp(*keyid, lkey)) lkey = NULL;
 		} else {
 			if (!(*keyid = M_ASN1_OCTET_STRING_dup(lkey))) {
-				PKCS12err(PKCS12_F_PARSE_BAGS,ERR_R_MALLOC_FAILURE);
+				PKCS12err(PKCS12_F_PARSE_BAG,ERR_R_MALLOC_FAILURE);
 				return 0;
 		    }
 		}

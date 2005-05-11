@@ -72,7 +72,7 @@ int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
 
         if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
-		X509err(X509_F_X509_PRINT_FP,ERR_R_BUF_LIB);
+		X509err(X509_F_X509_CRL_PRINT_FP,ERR_R_BUF_LIB);
                 return(0);
 		}
         BIO_set_fp(b,fp,BIO_NOCLOSE);

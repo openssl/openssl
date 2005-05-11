@@ -107,35 +107,35 @@ const RSA_METHOD *RSA_null_method(void)
 static int RSA_null_public_encrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
-	RSAerr(RSA_F_RSA_NULL, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
+	RSAerr(RSA_F_RSA_NULL_PUBLIC_ENCRYPT, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
 	return -1;
 	}
 
 static int RSA_null_private_encrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
-	RSAerr(RSA_F_RSA_NULL, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
+	RSAerr(RSA_F_RSA_NULL_PRIVATE_ENCRYPT, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
 	return -1;
 	}
 
 static int RSA_null_private_decrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
-	RSAerr(RSA_F_RSA_NULL, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
+	RSAerr(RSA_F_RSA_NULL_PRIVATE_DECRYPT, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
 	return -1;
 	}
 
 static int RSA_null_public_decrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
-	RSAerr(RSA_F_RSA_NULL, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
+	RSAerr(RSA_F_RSA_NULL_PUBLIC_DECRYPT, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
 	return -1;
 	}
 
 #if 0 /* not currently used */
 static int RSA_null_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 	{
-	RSAerr(RSA_F_RSA_NULL, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
+	...err(RSA_F_RSA_NULL_MOD_EXP, RSA_R_RSA_OPERATIONS_NOT_SUPPORTED);
 	return -1;
 	}
 #endif
@@ -149,5 +149,3 @@ static int RSA_null_finish(RSA *rsa)
 	{
 	return(1);
 	}
-
-

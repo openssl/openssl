@@ -123,7 +123,7 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 	return 1;
 
  memerr:
-	ASN1err(ASN1_F_X509_NAME_NEW, ERR_R_MALLOC_FAILURE);
+	ASN1err(ASN1_F_X509_NAME_EX_NEW, ERR_R_MALLOC_FAILURE);
 	if (ret)
 		{
 		if (ret->entries)
@@ -197,7 +197,7 @@ static int x509_name_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long len
 	*in = p;
 	return ret;
 	err:
-	ASN1err(ASN1_F_D2I_X509_NAME, ERR_R_NESTED_ASN1_ERROR);
+	ASN1err(ASN1_F_X509_NAME_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
 	return 0;
 }
 
@@ -248,7 +248,7 @@ static int x509_name_encode(X509_NAME *a)
 	return len;
 	memerr:
 	sk_pop_free(intname, sk_internal_free);
-	ASN1err(ASN1_F_D2I_X509_NAME, ERR_R_MALLOC_FAILURE);
+	ASN1err(ASN1_F_X509_NAME_ENCODE, ERR_R_MALLOC_FAILURE);
 	return -1;
 }
 

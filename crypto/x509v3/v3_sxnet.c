@@ -154,7 +154,7 @@ int SXNET_add_id_asc(SXNET **psx, char *zone, char *user,
 {
 	ASN1_INTEGER *izone = NULL;
 	if(!(izone = s2i_ASN1_INTEGER(NULL, zone))) {
-		X509V3err(X509V3_F_SXNET_ADD_ASC,X509V3_R_ERROR_CONVERTING_ZONE);
+		X509V3err(X509V3_F_SXNET_ADD_ID_ASC,X509V3_R_ERROR_CONVERTING_ZONE);
 		return 0;
 	}
 	return SXNET_add_id_INTEGER(psx, izone, user, userlen);

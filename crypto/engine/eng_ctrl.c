@@ -255,7 +255,7 @@ int ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name,
 
 	if((e == NULL) || (cmd_name == NULL))
 		{
-		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD_STRING,
+		ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD,
 			ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 		}

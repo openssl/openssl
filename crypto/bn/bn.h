@@ -729,9 +729,9 @@ void ERR_load_BN_strings(void);
 
 /* Function codes. */
 #define BN_F_BNRAND					 114
-#define BN_F_BN_BLINDING_CONVERT			 100
+#define BN_F_BN_BLINDING_CONVERT_EX			 100
 #define BN_F_BN_BLINDING_CREATE_PARAM			 133
-#define BN_F_BN_BLINDING_INVERT				 101
+#define BN_F_BN_BLINDING_INVERT_EX			 101
 #define BN_F_BN_BLINDING_NEW				 102
 #define BN_F_BN_BLINDING_UPDATE				 103
 #define BN_F_BN_BN2DEC					 104

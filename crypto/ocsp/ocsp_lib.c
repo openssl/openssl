@@ -112,7 +112,7 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
 	if (alg->algorithm != NULL) ASN1_OBJECT_free(alg->algorithm);
 	if ((nid = EVP_MD_type(dgst)) == NID_undef)
 	        {
-		OCSPerr(OCSP_F_CERT_ID_NEW,OCSP_R_UNKNOWN_NID);
+		OCSPerr(OCSP_F_OCSP_CERT_ID_NEW,OCSP_R_UNKNOWN_NID);
 		goto err;
 		}
 	if (!(alg->algorithm=OBJ_nid2obj(nid))) goto err;
@@ -134,7 +134,7 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
 		}
 	return cid;
 digerr:
-	OCSPerr(OCSP_F_CERT_ID_NEW,OCSP_R_DIGEST_ERR);
+	OCSPerr(OCSP_F_OCSP_CERT_ID_NEW,OCSP_R_DIGEST_ERR);
 err:
 	if (cid) OCSP_CERTID_free(cid);
 	return NULL;
