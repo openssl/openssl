@@ -121,7 +121,7 @@ int FIPS_selftest_hmac()
 	{
 	md = (*t->alg)();
 	HMAC(md,t->key,strlen(t->key),
-		t->iv,strlen(t->iv),
+		(const unsigned char *)t->iv,strlen(t->iv),
 		out,&outlen);
 
 	if(outlen<md->md_size || memcmp(out,t->kaval,md->md_size))
