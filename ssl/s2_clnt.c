@@ -584,7 +584,7 @@ static int client_hello(SSL *s)
 		s2n(SSL2_VERSION,p);			/* version */
 		n=j=0;
 
-		n=ssl_cipher_list_to_bytes(s,SSL_get_ciphers(s),d);
+		n=ssl_cipher_list_to_bytes(s,SSL_get_ciphers(s),d,0);
 		d+=n;
 
 		if (n == 0)

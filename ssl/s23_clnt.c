@@ -220,8 +220,27 @@ static int ssl23_client_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
-	int i,ch_len;
+	int i,j,ch_len;
+	unsigned long Time,l;
+	int ssl2_compat;
+	int version = 0, version_major, version_minor;
+	SSL_COMP *comp;
 	int ret;
+
+	ssl2_compat = (s->options & SSL_OP_NO_SSLv2) ? 0 : 1;
+
+	if (!(s->options & SSL_OP_NO_TLSv1))
+		{
+		version = TLS1_VERSION;
+		}
+	else if (!(s->options & SSL_OP_NO_SSLv3))
+		{
+		version = SSL3_VERSION;
+		}
+	else if (!(s->options & SSL_OP_NO_SSLv2))
+		{
+		version = SSL2_VERSION;
+		}
 
 	buf=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL23_ST_CW_CLNT_HELLO_A)
@@ -235,31 +254,25 @@ static int ssl23_client_hello(SSL *s)
 #endif
 
 		p=s->s3->client_random;
-		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE) <= 0)
+		Time=time(NULL);			/* Time */
+		l2n(Time,p);
+		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
 			return -1;
 
-		/* Do the message type and length last */
-		d= &(buf[2]);
-		p=d+9;
-
-		*(d++)=SSL2_MT_CLIENT_HELLO;
-		if (!(s->options & SSL_OP_NO_TLSv1))
+		if (version == TLS1_VERSION)
 			{
-			*(d++)=TLS1_VERSION_MAJOR;
-			*(d++)=TLS1_VERSION_MINOR;
-			s->client_version=TLS1_VERSION;
+			version_major = TLS1_VERSION_MAJOR;
+			version_minor = TLS1_VERSION_MINOR;
 			}
-		else if (!(s->options & SSL_OP_NO_SSLv3))
+		else if (version == SSL3_VERSION)
 			{
-			*(d++)=SSL3_VERSION_MAJOR;
-			*(d++)=SSL3_VERSION_MINOR;
-			s->client_version=SSL3_VERSION;
+			version_major = SSL3_VERSION_MAJOR;
+			version_minor = SSL3_VERSION_MINOR;
 			}
-		else if (!(s->options & SSL_OP_NO_SSLv2))
+		else if (version == SSL2_VERSION)
 			{
-			*(d++)=SSL2_VERSION_MAJOR;
-			*(d++)=SSL2_VERSION_MINOR;
-			s->client_version=SSL2_VERSION;
+			version_major = SSL2_VERSION_MAJOR;
+			version_minor = SSL2_VERSION_MINOR;
 			}
 		else
 			{
@@ -267,59 +280,153 @@ static int ssl23_client_hello(SSL *s)
 			return(-1);
 			}
 
-		/* Ciphers supported */
-		i=ssl_cipher_list_to_bytes(s,SSL_get_ciphers(s),p);
-		if (i == 0)
+		s->client_version = version;
+
+		if (ssl2_compat)
 			{
-			/* no ciphers */
-			SSLerr(SSL_F_SSL23_CLIENT_HELLO,SSL_R_NO_CIPHERS_AVAILABLE);
-			return(-1);
-			}
-		s2n(i,d);
-		p+=i;
+			/* create SSL 2.0 compatible Client Hello */
 
-		/* put in the session-id, zero since there is no
-		 * reuse. */
+			/* two byte record header will be written last */
+			d = &(buf[2]);
+			p = d + 9; /* leave space for message type, version, individual length fields */
+
+			*(d++) = SSL2_MT_CLIENT_HELLO;
+			*(d++) = version_major;
+			*(d++) = version_minor;
+			
+			/* Ciphers supported */
+			i=ssl_cipher_list_to_bytes(s,SSL_get_ciphers(s),p,0);
+			if (i == 0)
+				{
+				/* no ciphers */
+				SSLerr(SSL_F_SSL23_CLIENT_HELLO,SSL_R_NO_CIPHERS_AVAILABLE);
+				return -1;
+				}
+			s2n(i,d);
+			p+=i;
+			
+			/* put in the session-id length (zero since there is no reuse) */
 #if 0
-		s->session->session_id_length=0;
+			s->session->session_id_length=0;
 #endif
-		s2n(0,d);
+			s2n(0,d);
 
-		if (s->options & SSL_OP_NETSCAPE_CHALLENGE_BUG)
-			ch_len=SSL2_CHALLENGE_LENGTH;
+			if (s->options & SSL_OP_NETSCAPE_CHALLENGE_BUG)
+				ch_len=SSL2_CHALLENGE_LENGTH;
+			else
+				ch_len=SSL2_MAX_CHALLENGE_LENGTH;
+
+			/* write out sslv2 challenge */
+			if (SSL3_RANDOM_SIZE < ch_len)
+				i=SSL3_RANDOM_SIZE;
+			else
+				i=ch_len;
+			s2n(i,d);
+			memset(&(s->s3->client_random[0]),0,SSL3_RANDOM_SIZE);
+			if (RAND_pseudo_bytes(&(s->s3->client_random[SSL3_RANDOM_SIZE-i]),i) <= 0)
+				return -1;
+
+			memcpy(p,&(s->s3->client_random[SSL3_RANDOM_SIZE-i]),i);
+			p+=i;
+
+			i= p- &(buf[2]);
+			buf[0]=((i>>8)&0xff)|0x80;
+			buf[1]=(i&0xff);
+
+			/* number of bytes to write */
+			s->init_num=i+2;
+			s->init_off=0;
+
+			ssl3_finish_mac(s,&(buf[2]),i);
+			}
 		else
-			ch_len=SSL2_MAX_CHALLENGE_LENGTH;
+			{
+			/* create Client Hello in SSL 3.0/TLS 1.0 format */
 
-		/* write out sslv2 challenge */
-		if (SSL3_RANDOM_SIZE < ch_len)
-			i=SSL3_RANDOM_SIZE;
-		else
-			i=ch_len;
-		s2n(i,d);
-		memset(&(s->s3->client_random[0]),0,SSL3_RANDOM_SIZE);
-		if (RAND_pseudo_bytes(&(s->s3->client_random[SSL3_RANDOM_SIZE-i]),i) <= 0)
-			return -1;
+			/* do the record header (5 bytes) and handshake message header (4 bytes) last */
+			d = p = &(buf[9]);
+			
+			*(p++) = version_major;
+			*(p++) = version_minor;
 
-		memcpy(p,&(s->s3->client_random[SSL3_RANDOM_SIZE-i]),i);
-		p+=i;
+			/* Random stuff */
+			memcpy(p, s->s3->client_random, SSL3_RANDOM_SIZE);
+			p += SSL3_RANDOM_SIZE;
 
-		i= p- &(buf[2]);
-		buf[0]=((i>>8)&0xff)|0x80;
-		buf[1]=(i&0xff);
+			/* Session ID (zero since there is no reuse) */
+			*(p++) = 0;
+
+			/* Ciphers supported (using SSL 3.0/TLS 1.0 format) */
+			i=ssl_cipher_list_to_bytes(s,SSL_get_ciphers(s),&(p[2]),ssl3_put_cipher_by_char);
+			if (i == 0)
+				{
+				SSLerr(SSL_F_SSL23_CLIENT_HELLO,SSL_R_NO_CIPHERS_AVAILABLE);
+				return -1;
+				}
+			s2n(i,p);
+			p+=i;
+
+			/* COMPRESSION */
+			if (s->ctx->comp_methods == NULL)
+				j=0;
+			else
+				j=sk_SSL_COMP_num(s->ctx->comp_methods);
+			*(p++)=1+j;
+			for (i=0; i<j; i++)
+				{
+				comp=sk_SSL_COMP_value(s->ctx->comp_methods,i);
+				*(p++)=comp->id;
+				}
+			*(p++)=0; /* Add the NULL method */
+			
+			l = p-d;
+			*p = 42;
+
+			/* fill in 4-byte handshake header */
+			d=&(buf[5]);
+			*(d++)=SSL3_MT_CLIENT_HELLO;
+			l2n3(l,d);
+
+			l += 4;
+
+			if (l > SSL3_RT_MAX_PLAIN_LENGTH)
+				{
+				SSLerr(SSL_F_SSL23_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);
+				return -1;
+				}
+			
+			/* fill in 5-byte record header */
+			d=buf;
+			*(d++) = SSL3_RT_HANDSHAKE;
+			*(d++) = version_major;
+			*(d++) = version_minor; /* arguably we should send the *lowest* suported version here
+			                         * (indicating, e.g., TLS 1.0 in "SSL 3.0 format") */
+			s2n((int)l,d);
+
+			/* number of bytes to write */
+			s->init_num=p-buf;
+			s->init_off=0;
+
+			ssl3_finish_mac(s,&(buf[5]), s->init_num - 5);
+			}
 
 		s->state=SSL23_ST_CW_CLNT_HELLO_B;
-		/* number of bytes to write */
-		s->init_num=i+2;
 		s->init_off=0;
-
-		ssl3_finish_mac(s,&(buf[2]),i);
 		}
 
 	/* SSL3_ST_CW_CLNT_HELLO_B */
 	ret = ssl23_write_bytes(s);
-	if (ret >= 2)
-		if (s->msg_callback)
-			s->msg_callback(1, SSL2_VERSION, 0, s->init_buf->data+2, ret-2, s, s->msg_callback_arg); /* CLIENT-HELLO */
+
+	if ((ret >= 2) && s->msg_callback)
+		{
+		/* Client Hello has been sent; tell msg_callback */
+
+		if (ssl2_compat)
+			s->msg_callback(1, version, 0, s->init_buf->data+2, ret-2, s, s->msg_callback_arg);
+		else
+			s->msg_callback(1, version, SSL3_RT_HANDSHAKE, s->init_buf->data+5, ret-5, s, s->msg_callback_arg);
+		}
+
 	return ret;
 	}
 

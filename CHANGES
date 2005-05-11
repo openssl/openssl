@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7g and 0.9.8  [xx XXX xxxx]
+ Changes between 0.9.7h and 0.9.8  [xx XXX xxxx]
 
   *) Add new functionality to the bn blinding code:
      - automatic re-creation of the BN_BLINDING parameters after
@@ -793,6 +793,13 @@
      [Richard Levitte]
 
  Changes between 0.9.7g and 0.9.7h  [XX xxx XXXX]
+
+  *) Change the client implementation for SSLv23_method() and
+     SSLv23_client_method() so that is uses the SSL 3.0/TLS 1.0
+     Client Hello message format if the SSL_OP_NO_SSLv2 option is set.
+     (Previously, the SSL 2.0 backwards compatible Client Hello
+     message format would be used even with SSL_OP_NO_SSLv2.)
+     [Bodo Moeller]
 
   *) Add support for smime-type MIME parameter in S/MIME messages which some
      clients need.
