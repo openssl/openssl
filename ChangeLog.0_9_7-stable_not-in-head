@@ -150,18 +150,6 @@ be added to the end of this file.
 
 	DES CFB8 test.
 
-2004-05-12 16:11  ben
-
-	Changed:
-		crypto/rand/rand.h (1.26.2.8), "Exp", lines: +2 -0
-		crypto/rand/rand_err.c (1.6.2.4), "Exp", lines: +2 -0
-		fips/fingerprint.sha1 (1.1.2.5), "Exp", lines: +1 -1
-		fips/fips.c (1.1.2.4), "Exp", lines: +5 -1
-		fips/rand/fingerprint.sha1 (1.1.2.5), "Exp", lines: +1 -1
-		fips/rand/fips_rand.c (1.1.2.5), "Exp", lines: +29 -0
-
-	Blow up in people's faces if they don't reseed.
-
 2005-04-19 16:21  appro
 
 	Changed:
