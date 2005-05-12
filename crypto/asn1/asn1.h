@@ -901,22 +901,22 @@ int ASN1_object_size(int constructed, int length, int tag);
 /* Used to implement other functions */
 void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, char *x);
 #define ASN1_dup_of(type,i2d,d2i,x) \
-	((type *(*)(I2D_OF(type),D2I_OF(type),type *))ASN1_dup)(i2d,d2i,x)
+	((type *(*)(I2D_OF(type),D2I_OF(type),type *))openssl_fcast(ASN1_dup))(i2d,d2i,x)
 #define ASN1_dup_of_const(type,i2d,d2i,x) \
-	((type *(*)(I2D_OF_const(type),D2I_OF(type),type *))ASN1_dup)(i2d,d2i,x)
+	((type *(*)(I2D_OF_const(type),D2I_OF(type),type *))openssl_fcast(ASN1_dup))(i2d,d2i,x)
 
 void *ASN1_item_dup(const ASN1_ITEM *it, void *x);
 
 #ifndef OPENSSL_NO_FP_API
 void *ASN1_d2i_fp(void *(*xnew)(void), d2i_of_void *d2i, FILE *in, void **x);
 #define ASN1_d2i_fp_of(type,xnew,d2i,in,x) \
-	((type *(*)(type *(*)(void),D2I_OF(type),FILE *,type **))ASN1_d2i_fp)(xnew,d2i,in,x)
+	((type *(*)(type *(*)(void),D2I_OF(type),FILE *,type **))openssl_fcast(ASN1_d2i_fp))(xnew,d2i,in,x)
 void *ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x);
 int ASN1_i2d_fp(i2d_of_void *i2d,FILE *out,void *x);
 #define ASN1_i2d_fp_of(type,i2d,out,x) \
-	((int (*)(I2D_OF(type),FILE *,type *))ASN1_i2d_fp)(i2d,out,x)
+	((int (*)(I2D_OF(type),FILE *,type *))openssl_fcast(ASN1_i2d_fp))(i2d,out,x)
 #define ASN1_i2d_fp_of_const(type,i2d,out,x) \
-	((int (*)(I2D_OF_const(type),FILE *,type *))ASN1_i2d_fp)(i2d,out,x)
+	((int (*)(I2D_OF_const(type),FILE *,type *))openssl_fcast(ASN1_i2d_fp))(i2d,out,x)
 int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x);
 int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
 #endif
@@ -926,13 +926,13 @@ int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
 #ifndef OPENSSL_NO_BIO
 void *ASN1_d2i_bio(void *(*xnew)(void), d2i_of_void *d2i, BIO *in, void **x);
 #define ASN1_d2i_bio_of(type,xnew,d2i,in,x) \
-	((type *(*)(type *(*)(void),D2I_OF(type),BIO *,type **))ASN1_d2i_bio)(xnew,d2i,in,x)
+	((type *(*)(type *(*)(void),D2I_OF(type),BIO *,type **))openssl_fcast(ASN1_d2i_bio))(xnew,d2i,in,x)
 void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x);
 int ASN1_i2d_bio(i2d_of_void *i2d,BIO *out, unsigned char *x);
 #define ASN1_i2d_bio_of(type,i2d,out,x) \
-	((int (*)(I2D_OF(type),BIO *,type *))ASN1_i2d_bio)(i2d,out,x)
+	((int (*)(I2D_OF(type),BIO *,type *))openssl_fcast(ASN1_i2d_bio))(i2d,out,x)
 #define ASN1_i2d_bio_of_const(type,i2d,out,x) \
-	((int (*)(I2D_OF_const(type),BIO *,type *))ASN1_i2d_bio)(i2d,out,x)
+	((int (*)(I2D_OF_const(type),BIO *,type *))openssl_fcast(ASN1_i2d_bio))(i2d,out,x)
 int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x);
 int ASN1_UTCTIME_print(BIO *fp,ASN1_UTCTIME *a);
 int ASN1_GENERALIZEDTIME_print(BIO *fp,ASN1_GENERALIZEDTIME *a);
@@ -976,7 +976,7 @@ void *ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it);
 ASN1_STRING *ASN1_pack_string(void *obj, i2d_of_void *i2d,
 			      ASN1_OCTET_STRING **oct);
 #define ASN1_pack_string_of(type,obj,i2d,oct) \
-	((ASN1_STRING *(*)(type *,I2D_OF(type),ASN1_OCTET_STRING **))ASN1_pack_string)(obj,i2d,oct)
+	((ASN1_STRING *(*)(type *,I2D_OF(type),ASN1_OCTET_STRING **))openssl_fcast(ASN1_pack_string))(obj,i2d,oct)
 ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_OCTET_STRING **oct);
 
 void ASN1_STRING_set_default_mask(unsigned long mask);
