@@ -576,7 +576,7 @@ abs_val(LDOUBLE value)
 }
 
 static LDOUBLE
-pow10(int in_exp)
+pow_10(int in_exp)
 {
     LDOUBLE result = 1;
     while (in_exp) {
@@ -639,11 +639,11 @@ fmtfp(
 
     /* we "cheat" by converting the fractional part to integer by
        multiplying by a factor of 10 */
-    fracpart = roundv((pow10(max)) * (ufvalue - intpart));
+    fracpart = roundv((pow_10(max)) * (ufvalue - intpart));
 
-    if (fracpart >= (long)pow10(max)) {
+    if (fracpart >= (long)pow_10(max)) {
         intpart++;
-        fracpart -= (long)pow10(max);
+        fracpart -= (long)pow_10(max);
     }
 
     /* convert integer part */
