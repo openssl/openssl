@@ -158,7 +158,7 @@ static int int_engine_configure(char *name, char *value, const CONF *cnf)
 		 	 */
 			if (!strcmp(ctrlvalue, "EMPTY"))
 				ctrlvalue = NULL;
-			else if (!strcmp(ctrlname, "init"))
+			if (!strcmp(ctrlname, "init"))
 				{
 				if (!NCONF_get_number_e(cnf, value, "init", &do_init))
 					goto err;
