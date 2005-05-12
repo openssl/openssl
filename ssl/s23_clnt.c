@@ -430,7 +430,7 @@ static int ssl23_client_hello(SSL *s)
 		/* Client Hello has been sent; tell msg_callback */
 
 		if (ssl2_compat)
-			s->msg_callback(1, version, 0, s->init_buf->data+2, ret-2, s, s->msg_callback_arg);
+			s->msg_callback(1, SSL2_VERSION, 0, s->init_buf->data+2, ret-2, s, s->msg_callback_arg);
 		else
 			s->msg_callback(1, version, SSL3_RT_HANDSHAKE, s->init_buf->data+5, ret-5, s, s->msg_callback_arg);
 		}
