@@ -55,12 +55,12 @@
 #ifndef HEADER_SAFESTACK_H
 #define HEADER_SAFESTACK_H
 
+typedef void (*openssl_fptr)(void);
+#define openssl_fcast(f) ((openssl_fptr)f)
+
 #include <openssl/stack.h>
 
 #ifdef DEBUG_SAFESTACK
-
-typedef void (*openssl_fptr)(void);
-#define openssl_fcast(f) ((openssl_fptr)f)
 
 #define STACK_OF(type) struct stack_st_##type
 #define PREDECLARE_STACK_OF(type) STACK_OF(type);
