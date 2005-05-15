@@ -484,7 +484,7 @@ $! Copy All The ".H" Files From The [.FIPS] Directories.
 $!
 $ FDIRS := ,SHA1,RAND,DES,AES,DSA,RSA
 $ EXHEADER_ := fips.h
-$ EXHEADER_SHA1 :=
+$ EXHEADER_SHA1 := fips_sha.h
 $ EXHEADER_RAND := fips_rand.h
 $ EXHEADER_DES :=
 $ EXHEADER_AES :=
