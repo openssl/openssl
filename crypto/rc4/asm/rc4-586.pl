@@ -200,22 +200,23 @@ sub RC4
 
 	&lea	($ty,&DWP(0,$in,$ty));
 	&mov	(&swtmp(2),$ty);
+	&movz	($tx,&BP(0,$d,$x));
 
 	# strangely enough unrolled loop performs over 20% slower...
 	&set_label("RC4_CHAR_loop");
-		&movz	($tx,&BP(0,$d,$x));
 		&add	(&LB($y),&LB($tx));
 		&movz	($ty,&BP(0,$d,$y));
 		&movb	(&BP(0,$d,$y),&LB($tx));
 		&movb	(&BP(0,$d,$x),&LB($ty));
 		&add	(&LB($ty),&LB($tx));
 		&movz	($ty,&BP(0,$d,$ty));
+		&add	(&LB($x),1);
 		&xorb	(&LB($ty),&BP(0,$in));
-		&movb	(&BP(0,$out),&LB($ty));
-		&inc	(&LB($x));
-		&inc	($in);
-		&inc	($out);
+		&lea	($in,&BP(1,$in));
+		&movz	($tx,&BP(0,$d,$x));
 		&cmp	($in,&swtmp(2));
+		&movb	(&BP(0,$out),&LB($ty));
+		&lea	($out,&BP(1,$out));
 	&jb	(&label("RC4_CHAR_loop"));
 
 	&set_label("finished");
