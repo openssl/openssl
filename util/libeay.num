@@ -3332,3 +3332,12 @@ pitem_free                              3732	EXIST::FUNCTION:
 BN_GF2m_mod_inv_arr                     3733	EXIST::FUNCTION:
 ENGINE_unregister_ECDSA                 3734	EXIST::FUNCTION:ENGINE
 BN_BLINDING_set_thread_id               3735	EXIST::FUNCTION:
+EVP_PKEY_add1_attr_by_NID               3736	EXIST::FUNCTION:
+EVP_PKEY_add1_attr_by_txt               3737	EXIST::FUNCTION:
+EVP_PKEY_get_attr                       3738	EXIST::FUNCTION:
+EVP_PKEY_get_attr_count                 3739	EXIST::FUNCTION:
+EVP_PKEY_delete_attr                    3740	EXIST::FUNCTION:
+EVP_PKEY_get_attr_by_OBJ                3741	EXIST::FUNCTION:
+EVP_PKEY_add1_attr                      3742	EXIST::FUNCTION:
+EVP_PKEY_get_attr_by_NID                3743	EXIST::FUNCTION:
+EVP_PKEY_add1_attr_by_OBJ               3744	EXIST::FUNCTION:
