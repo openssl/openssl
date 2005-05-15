@@ -7,10 +7,6 @@ TOP=	..
 CC=	cc
 INCLUDES= -I$(TOP) -I../../include
 CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-MAKE=		make
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
@@ -25,6 +21,7 @@ MISC_APPS= c_hash c_info c_issuer c_name
 all:
 
 install:
+	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@for i in $(APPS) ; \
 	do  \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \

@@ -7,12 +7,6 @@ TOP=	..
 CC=	cc
 INCLUDES= -I../include
 CFLAG=-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=/usr/local/ssl
-PERL=           perl
-NEWMAKE=	make
-MAKE=		$(NEWMAKE)
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
@@ -95,6 +89,7 @@ links:
 # XXXXX This currently only works on systems that use .so as suffix
 # for shared libraries.
 install:
+	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		for l in $(LIBNAMES); do \

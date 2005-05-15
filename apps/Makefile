@@ -7,9 +7,6 @@ TOP=		..
 CC=		cc
 INCLUDES=	-I$(TOP) -I../include $(KRB5_INCLUDES)
 CFLAG=		-g -static
-INSTALL_PREFIX=
-INSTALLTOP=	/usr/local/ssl
-OPENSSLDIR=	/usr/local/ssl
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
@@ -106,6 +103,7 @@ files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
 install:
+	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@set -e; for i in $(EXE); \
 	do  \
 	(echo installing $$i; \
