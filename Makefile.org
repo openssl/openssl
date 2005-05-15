@@ -148,6 +148,7 @@ all: Makefile build_all openssl.pc
 
 BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}'	\
+		LIBRPATH='$(INSTALLTOP)/lib'			\
 		CC='${CC}' CFLAG='${CFLAG}' 			\
 		AS='${CC}' ASFLAG='${CFLAG} -c'			\
 		AR='${AR}' PERL='${PERL}' RANLIB='${RANLIB}'	\
@@ -168,10 +169,13 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 BUILD_CMD=if echo " $(DIRS) " | grep " $$dir " >/dev/null 2>/dev/null; then \
 	if [ -d "$$dir" ]; then \
 		(cd $$dir && echo "making $$target in $$dir..." && \
-		$(MAKE) -e $(BUILDENV) $$target ) || exit 1; \
+		$(MAKE) $(BUILDENV) $$target ) || exit 1; \
 	else \
 		$(MAKE) $$dir; \
 	fi; fi
+
+reflect:
+	[ -n "$(THIS)" ] && $(MAKE) $(THIS) $(BIULDENV)
 
 sub_all: build_all
 build_all: build_libs build_apps build_tests build_tools
@@ -335,7 +339,7 @@ test:   tests
 
 tests: rehash
 	@(cd test && echo "testing..." && \
-	$(MAKE) -e $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on tests );
+	$(MAKE) $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on tests );
 	util/opensslwrap.sh version -a
 
 report:

@@ -68,11 +68,8 @@ lib:	$(LIBOBJ)
 		set -e; \
 		for l in $(LIBNAMES); do \
 			$(MAKE) -f ../Makefile.shared \
-				CC="$(CC)" LIBNAME=$$l LIBEXTRAS=e_$$l.o \
+				LIBNAME=$$l LIBEXTRAS=e_$$l.o \
 				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
-				CFLAG="$(CFLAG)" LDFLAGS="$(LDFLAGS)" \
-				SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
-				PLATFORM="$(PLATFORM)" \
 				link_o.$(SHLIB_TARGET); \
 		done; \
 	else \

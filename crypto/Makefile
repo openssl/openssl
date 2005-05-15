@@ -8,10 +8,6 @@ CC=		cc
 INCLUDE=	-I. -I$(TOP) -I../include
 INCLUDES=	-I.. -I../.. -I../../include
 CFLAG=		-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=	/usr/local/ssl
-MAKE=           make
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=       Makefile
@@ -76,16 +72,16 @@ ia64cpuid.s: ia64cpuid.S
 	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
 
 testapps:
-	if echo ${SDIRS} | fgrep ' des '; \
-	then cd des && $(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' des; fi
-	if echo ${SDIRS} | fgrep ' pkcs7 '; \
-	then cd pkcs7 && $(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' testapps; fi
+	@if [ -z "(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
+	[ -z "$(THIS)" ] || ( if echo ${SDIRS} | fgrep ' des '; \
+	then cd des && $(MAKE) des; fi )
+	[ -z "$(THIS)" ] || ( cd pkcs7 && $(MAKE) testapps );
 
 subdirs:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making all in crypto/$$i..." && \
-	$(MAKE) -e INCLUDES='${INCLUDES}' all ) || exit 1; \
+	$(MAKE) INCLUDES='${INCLUDES}' all ) || exit 1; \
 	done;
 
 files:
@@ -101,8 +97,8 @@ links:
 	@$(PERL) $(TOP)/util/mklink.pl ../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../apps $(APPS)
 	@for i in $(SDIRS); do \
-	(cd $$i && echo "making links in crypto/$$i..." && \
-	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PERL='${PERL}' links ); \
+	    (cd $$i && echo "making links in crypto/$$i..." && \
+	    $(MAKE) links ); \
 	done;
 
 lib:	$(LIBOBJ)
@@ -119,17 +115,19 @@ libs:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making libs in crypto/$$i..." && \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' lib ); \
+	$(MAKE) lib );
 	done;
 
 tests:
-	@for i in $(SDIRS) ;\
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@ fi
+	@[ -z "$(THIS)" ] || (for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making tests in crypto/$$i..." && \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' tests ); \
-	done;
+	$(MAKE) tests ); \
+	done; )
 
 install:
+	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ;\
 	do \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
@@ -138,14 +136,14 @@ install:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making install in crypto/$$i..." && \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}'  INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' install ); \
+	$(MAKE) install ); \
 	done;
 
 lint:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making lint in crypto/$$i..." && \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' lint ); \
+	$(MAKE) lint ); \
 	done;
 
 depend:
@@ -155,7 +153,7 @@ depend:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making depend in crypto/$$i..." && \
-	$(MAKE) MAKEFILE='${MAKEFILE}' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' DEPFLAG='${DEPFLAG}' MAKEDEPPROG='${MAKEDEPPROG}' KRB5_INCLUDES='${KRB5_INCLUDES}' PERL='${PERL}' depend ); \
+	$(MAKE) depend ); \
 	done;
 
 clean:
@@ -163,7 +161,7 @@ clean:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making clean in crypto/$$i..." && \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' clean ); \
+	$(MAKE) clean ); \
 	done;
 
 dclean:
@@ -172,7 +170,7 @@ dclean:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making dclean in crypto/$$i..." && \
-	$(MAKE) PERL='${PERL}' CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' dclean ); \
+	$(MAKE) dclean ); \
 	done;
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

@@ -89,11 +89,8 @@ req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
 	$(MAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=req CC="$(CC)" CFLAGS="$(CFLAGS)" \
-		LDFLAGS="$(LDFLAG)" SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
-		OBJECTS="sreq.o $(A_OBJ) $(RAND_OBJ)" \
+		APPNAME=req OBJECTS="sreq.o $(A_OBJ) $(RAND_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)" \
-		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
 sreq.o: req.c 
@@ -160,11 +157,8 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	  LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
 	fi; \
 	$(MAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$(EXE) CC="$(CC)" CFLAGS="$(CFLAG)" \
-		LDFLAGS="$(LDFLAGS)" SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
-		OBJECTS="$(PROGRAM).o $(E_OBJ)" \
+		APPNAME=$(EXE) OBJECTS="$(PROGRAM).o $(E_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
-		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 	@case "../*.dll" in *\**) ;; *) cp -p ../*.dll .;; esac
 	-(cd ..; \

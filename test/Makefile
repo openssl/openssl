@@ -311,11 +311,8 @@ BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		LIBRARIES="$(LIBSSL) $(LIBCRYPTO)"; \
 	fi; \
 	$(MAKE) -f $(TOP)/Makefile.shared \
-		APPNAME=$$target$(EXE_EXT) CC="$(CC)" CFLAGS="$(CFLAGS)" \
-		LDFLAGS="$(LDFLAGS)" SHARED_LDFLAGS="$(SHARED_LDFLAGS)" \
-		OBJECTS="$$target.o" \
+		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
-		LIBRPATH=$(INSTALLTOP)/lib \
 		link_app.$${shlib_target}
 
 $(RSATEST)$(EXE_EXT): $(RSATEST).o $(DLIBCRYPTO)
