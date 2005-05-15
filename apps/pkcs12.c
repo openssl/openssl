@@ -538,6 +538,10 @@ int MAIN(int argc, char **argv)
 		catmp = (unsigned char *)sk_value(canames, i);
 		X509_alias_set1(sk_X509_value(certs, i), catmp, -1);
 		}
+
+	if (csp_name && key)
+		EVP_PKEY_add1_attr_by_NID(key, NID_ms_csp_name,
+				MBSTRING_ASC, (unsigned char *)csp_name, -1);
 		
 
 #ifdef CRYPTO_MDEBUG

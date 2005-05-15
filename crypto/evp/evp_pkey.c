@@ -709,3 +709,65 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	return ret;
 }
 #endif
+
+/* EVP_PKEY attribute functions */
+
+int EVP_PKEY_get_attr_count(const EVP_PKEY *key)
+{
+	return X509at_get_attr_count(key->attributes);
+}
+
+int EVP_PKEY_get_attr_by_NID(const EVP_PKEY *key, int nid,
+			  int lastpos)
+{
+	return X509at_get_attr_by_NID(key->attributes, nid, lastpos);
+}
+
+int EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, ASN1_OBJECT *obj,
+			  int lastpos)
+{
+	return X509at_get_attr_by_OBJ(key->attributes, obj, lastpos);
+}
+
+X509_ATTRIBUTE *EVP_PKEY_get_attr(const EVP_PKEY *key, int loc)
+{
+	return X509at_get_attr(key->attributes, loc);
+}
+
+X509_ATTRIBUTE *EVP_PKEY_delete_attr(EVP_PKEY *key, int loc)
+{
+	return X509at_delete_attr(key->attributes, loc);
+}
+
+int EVP_PKEY_add1_attr(EVP_PKEY *key, X509_ATTRIBUTE *attr)
+{
+	if(X509at_add1_attr(&key->attributes, attr)) return 1;
+	return 0;
+}
+
+int EVP_PKEY_add1_attr_by_OBJ(EVP_PKEY *key,
+			const ASN1_OBJECT *obj, int type,
+			const unsigned char *bytes, int len)
+{
+	if(X509at_add1_attr_by_OBJ(&key->attributes, obj,
+				type, bytes, len)) return 1;
+	return 0;
+}
+
+int EVP_PKEY_add1_attr_by_NID(EVP_PKEY *key,
+			int nid, int type,
+			const unsigned char *bytes, int len)
+{
+	if(X509at_add1_attr_by_NID(&key->attributes, nid,
+				type, bytes, len)) return 1;
+	return 0;
+}
+
+int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
+			const char *attrname, int type,
+			const unsigned char *bytes, int len)
+{
+	if(X509at_add1_attr_by_txt(&key->attributes, attrname,
+				type, bytes, len)) return 1;
+	return 0;
+}

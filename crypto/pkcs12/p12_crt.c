@@ -122,9 +122,21 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 
 	if (pkey)
 		{
+		int cspidx;
 		bag = PKCS12_add_key(&bags, pkey, keytype, iter, nid_key, pass);
+
 		if (!bag)
 			goto err;
+
+		cspidx = EVP_PKEY_get_attr_by_NID(pkey, NID_ms_csp_name, -1);
+		if (cspidx >= 0)
+			{
+			X509_ATTRIBUTE *cspattr;
+			cspattr = EVP_PKEY_get_attr(pkey, cspidx);
+			if (!X509at_add1_attr(&bag->attrib, cspattr))
+				goto err;
+			}
+
 		if(name && !PKCS12_add_friendlyname(bag, name, -1))
 			goto err;
 		if(keyidlen && !PKCS12_add_localkeyid(bag, keyid, keyidlen))
