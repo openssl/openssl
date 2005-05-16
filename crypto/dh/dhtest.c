@@ -136,6 +136,10 @@ int main(int argc, char *argv[])
 	b->g=BN_dup(a->g);
 	if ((b->p == NULL) || (b->g == NULL)) goto err;
 
+	/* Set a to run with normal modexp and b to use constant time */
+	a->flags &= ~DH_FLAG_NO_EXP_CONSTTIME;
+	b->flags |= DH_FLAG_NO_EXP_CONSTTIME;
+
 	if (!DH_generate_key(a)) goto err;
 	BIO_puts(out,"pri 1=");
 	BN_print(out,a->priv_key);

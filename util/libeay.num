@@ -2875,3 +2875,4 @@ EVP_sha224                              3314	EXIST::FUNCTION:SHA
 EVP_sha256                              3315	EXIST::FUNCTION:SHA
 FIPS_selftest_hmac                      3316	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_corrupt_rng                        3317	EXIST:OPENSSL_FIPS:FUNCTION:
+BN_mod_exp_mont_consttime               3318	EXIST::FUNCTION:

@@ -86,6 +86,7 @@ int test_mont(BIO *bp,BN_CTX *ctx);
 int test_mod(BIO *bp,BN_CTX *ctx);
 int test_mod_mul(BIO *bp,BN_CTX *ctx);
 int test_mod_exp(BIO *bp,BN_CTX *ctx);
+int test_mod_exp_mont_consttime(BIO *bp,BN_CTX *ctx);
 int test_exp(BIO *bp,BN_CTX *ctx);
 int test_kron(BIO *bp,BN_CTX *ctx);
 int test_sqrt(BIO *bp,BN_CTX *ctx);
@@ -211,6 +212,10 @@ int main(int argc, char *argv[])
 
 	message(out,"BN_mod_exp");
 	if (!test_mod_exp(out,ctx)) goto err;
+	BIO_flush(out);
+
+	message(out,"BN_mod_exp_mont_consttime");
+	if (!test_mod_exp_mont_consttime(out,ctx)) goto err;
 	BIO_flush(out);
 
 	message(out,"BN_exp");
@@ -780,6 +785,57 @@ int test_mod_exp(BIO *bp, BN_CTX *ctx)
 		BN_bntest_rand(b,2+i,0,0); /**/
 
 		if (!BN_mod_exp(d,a,b,c,ctx))
+			return(00);
+
+		if (bp != NULL)
+			{
+			if (!results)
+				{
+				BN_print(bp,a);
+				BIO_puts(bp," ^ ");
+				BN_print(bp,b);
+				BIO_puts(bp," % ");
+				BN_print(bp,c);
+				BIO_puts(bp," - ");
+				}
+			BN_print(bp,d);
+			BIO_puts(bp,"\n");
+			}
+		BN_exp(e,a,b,ctx);
+		BN_sub(e,e,d);
+		BN_div(a,b,e,c,ctx);
+		if(!BN_is_zero(b))
+		    {
+		    fprintf(stderr,"Modulo exponentiation test failed!\n");
+		    return 0;
+		    }
+		}
+	BN_free(a);
+	BN_free(b);
+	BN_free(c);
+	BN_free(d);
+	BN_free(e);
+	return(1);
+	}
+
+int test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
+	{
+	BIGNUM *a,*b,*c,*d,*e;
+	int i;
+
+	a=BN_new();
+	b=BN_new();
+	c=BN_new();
+	d=BN_new();
+	e=BN_new();
+
+	BN_bntest_rand(c,30,0,1); /* must be odd for montgomery */
+	for (i=0; i<num2; i++)
+		{
+		BN_bntest_rand(a,20+i*5,0,0); /**/
+		BN_bntest_rand(b,2+i,0,0); /**/
+
+		if (!BN_mod_exp_mont_consttime(d,a,b,c,ctx,NULL))
 			return(00);
 
 		if (bp != NULL)

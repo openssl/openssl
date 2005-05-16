@@ -90,8 +90,21 @@ int DSA_generate_key(DSA *dsa)
 		}
 	else
 		pub_key=dsa->pub_key;
+	
+	{
+		BIGNUM local_prk;
+		BIGNUM *prk;
 
-	if (!BN_mod_exp(pub_key,dsa->g,priv_key,dsa->p,ctx)) goto err;
+		if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0)
+			{
+			prk = &local_prk;
+			BN_with_flags(prk, priv_key, BN_FLG_EXP_CONSTTIME);
+			}
+		else
+			prk = priv_key;
+
+		if (!BN_mod_exp(pub_key,dsa->g,prk,dsa->p,ctx)) goto err;
+	}
 
 	dsa->priv_key=priv_key;
 	dsa->pub_key=pub_key;

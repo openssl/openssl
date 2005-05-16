@@ -1706,7 +1706,7 @@ show_res:
 				k,rsa_bits[k],rsa_results[k][0],
 				rsa_results[k][1]);
 		else
-			fprintf(stdout,"rsa %4u bits %8.4fs %8.4fs %8.1f %8.1f\n",
+			fprintf(stdout,"rsa %4u bits %8.6fs %8.6fs %8.1f %8.1f\n",
 				rsa_bits[k],rsa_results[k][0],rsa_results[k][1],
 				1.0/rsa_results[k][0],1.0/rsa_results[k][1]);
 		}
@@ -1725,7 +1725,7 @@ show_res:
 			fprintf(stdout,"+F3:%u:%u:%f:%f\n",
 				k,dsa_bits[k],dsa_results[k][0],dsa_results[k][1]);
 		else
-			fprintf(stdout,"dsa %4u bits %8.4fs %8.4fs %8.1f %8.1f\n",
+			fprintf(stdout,"dsa %4u bits %8.6fs %8.6fs %8.1f %8.1f\n",
 				dsa_bits[k],dsa_results[k][0],dsa_results[k][1],
 				1.0/dsa_results[k][0],1.0/dsa_results[k][1]);
 		}

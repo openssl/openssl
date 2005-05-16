@@ -157,28 +157,35 @@ struct rsa_st
 #define RSA_3	0x3L
 #define RSA_F4	0x10001L
 
-#define RSA_METHOD_FLAG_NO_CHECK	0x01 /* don't check pub/private match */
+#define RSA_METHOD_FLAG_NO_CHECK	0x0001 /* don't check pub/private match */
 
-#define RSA_FLAG_CACHE_PUBLIC		0x02
-#define RSA_FLAG_CACHE_PRIVATE		0x04
-#define RSA_FLAG_BLINDING		0x08
-#define RSA_FLAG_THREAD_SAFE		0x10
+#define RSA_FLAG_CACHE_PUBLIC		0x0002
+#define RSA_FLAG_CACHE_PRIVATE		0x0004
+#define RSA_FLAG_BLINDING		0x0008
+#define RSA_FLAG_THREAD_SAFE		0x0010
 /* This flag means the private key operations will be handled by rsa_mod_exp
  * and that they do not depend on the private key components being present:
  * for example a key stored in external hardware. Without this flag bn_mod_exp
  * gets called when private key components are absent.
  */
-#define RSA_FLAG_EXT_PKEY		0x20
+#define RSA_FLAG_EXT_PKEY		0x0020
 
 /* This flag in the RSA_METHOD enables the new rsa_sign, rsa_verify functions.
  */
-#define RSA_FLAG_SIGN_VER		0x40
+#define RSA_FLAG_SIGN_VER		0x0040
 
-#define RSA_FLAG_NO_BLINDING		0x80 /* new with 0.9.6j and 0.9.7b; the built-in
-                                              * RSA implementation now uses blinding by
-                                              * default (ignoring RSA_FLAG_BLINDING),
-                                              * but other engines might not need it
-                                              */
+#define RSA_FLAG_NO_BLINDING		0x0080 /* new with 0.9.6j and 0.9.7b; the built-in
+                                                * RSA implementation now uses blinding by
+                                                * default (ignoring RSA_FLAG_BLINDING),
+                                                * but other engines might not need it
+                                                */
+#define RSA_FLAG_NO_EXP_CONSTTIME	0x0100 /* new with 0.9.7h; the built-in RSA
+                                                * implementation now uses constant time
+                                                * modular exponentiation for secret exponents
+                                                * by default. This flag causes the
+                                                * faster variable sliding window method to
+                                                * be used for all exponents.
+                                                */
 
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2

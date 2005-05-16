@@ -227,10 +227,10 @@ int main(int argc, char *argv[])
 
     plen = sizeof(ptext_ex) - 1;
 
-    for (v = 0; v < 3; v++)
+    for (v = 0; v < 6; v++)
 	{
 	key = RSA_new();
-	switch (v) {
+	switch (v%3) {
     case 0:
 	clen = key1(key, ctext_ex);
 	break;
@@ -241,6 +241,7 @@ int main(int argc, char *argv[])
 	clen = key3(key, ctext_ex);
 	break;
 	}
+	if (v/3 > 1) key->flags |= RSA_FLAG_NO_EXP_CONSTTIME;
 
 	num = RSA_public_encrypt(plen, ptext_ex, ctext, key,
 				 RSA_PKCS1_PADDING);

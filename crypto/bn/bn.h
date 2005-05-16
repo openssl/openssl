@@ -225,9 +225,20 @@ extern "C" {
 
 #define BN_FLG_MALLOCED		0x01
 #define BN_FLG_STATIC_DATA	0x02
+#define BN_FLG_EXP_CONSTTIME	0x04 /* avoid leaking exponent information through timings
+                            	      * (BN_mod_exp_mont() will call BN_mod_exp_mont_consttime) */
 #define BN_FLG_FREE		0x8000	/* used for debuging */
 #define BN_set_flags(b,n)	((b)->flags|=(n))
 #define BN_get_flags(b,n)	((b)->flags&(n))
+
+#define BN_with_flags(dest,b,n)  ((dest)->d=(b)->d, \
+                                  (dest)->top=(b)->top, \
+                                  (dest)->dmax=(b)->dmax, \
+                                  (dest)->neg=(b)->neg, \
+                                  (dest)->flags=(((dest)->flags & BN_FLG_MALLOCED) \
+                                                 |  ((b)->flags & ~BN_FLG_MALLOCED) \
+                                                 |  BN_FLG_STATIC_DATA \
+                                                 |  (n)))
 
 typedef struct bignum_st
 	{
@@ -378,6 +389,8 @@ int	BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	const BIGNUM *m,BN_CTX *ctx);
 int	BN_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
+	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont);
 int	BN_mod_exp_mont_word(BIGNUM *r, BN_ULONG a, const BIGNUM *p,
 	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 int	BN_mod_exp2_mont(BIGNUM *r, const BIGNUM *a1, const BIGNUM *p1,
@@ -512,11 +525,15 @@ void ERR_load_BN_strings(void);
 #define BN_F_BN_CTX_GET					 116
 #define BN_F_BN_CTX_NEW					 106
 #define BN_F_BN_DIV					 107
+#define BN_F_BN_EXP					 123
 #define BN_F_BN_EXPAND2					 108
 #define BN_F_BN_EXPAND_INTERNAL				 120
 #define BN_F_BN_MOD_EXP2_MONT				 118
 #define BN_F_BN_MOD_EXP_MONT				 109
+#define BN_F_BN_MOD_EXP_MONT_CONSTTIME			 124
 #define BN_F_BN_MOD_EXP_MONT_WORD			 117
+#define BN_F_BN_MOD_EXP_RECP				 125
+#define BN_F_BN_MOD_EXP_SIMPLE				 126
 #define BN_F_BN_MOD_INVERSE				 110
 #define BN_F_BN_MOD_LSHIFT_QUICK			 119
 #define BN_F_BN_MOD_MUL_RECIPROCAL			 111

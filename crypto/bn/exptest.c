@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 	BIO *out=NULL;
 	int i,ret;
 	unsigned char c;
-	BIGNUM *r_mont,*r_recp,*r_simple,*a,*b,*m;
+	BIGNUM *r_mont,*r_mont_const,*r_recp,*r_simple,*a,*b,*m;
 
 	RAND_seed(rnd_seed, sizeof rnd_seed); /* or BN_rand may fail, and we don't
 	                                       * even check its return value
@@ -88,6 +88,7 @@ int main(int argc, char *argv[])
 	ctx=BN_CTX_new();
 	if (ctx == NULL) EXIT(1);
 	r_mont=BN_new();
+	r_mont_const=BN_new();
 	r_recp=BN_new();
 	r_simple=BN_new();
 	a=BN_new();
@@ -143,8 +144,17 @@ int main(int argc, char *argv[])
 			EXIT(1);
 			}
 
+		ret=BN_mod_exp_mont_consttime(r_mont_const,a,b,m,ctx,NULL);
+		if (ret <= 0)
+			{
+			printf("BN_mod_exp_mont_consttime() problems\n");
+			ERR_print_errors(out);
+			EXIT(1);
+			}
+
 		if (BN_cmp(r_simple, r_mont) == 0
-		    && BN_cmp(r_simple,r_recp) == 0)
+		    && BN_cmp(r_simple,r_recp) == 0
+			&& BN_cmp(r_simple,r_mont_const) == 0)
 			{
 			printf(".");
 			fflush(stdout);
@@ -153,6 +163,8 @@ int main(int argc, char *argv[])
 		  	{
 			if (BN_cmp(r_simple,r_mont) != 0)
 				printf("\nsimple and mont results differ\n");
+			if (BN_cmp(r_simple,r_mont) != 0)
+				printf("\nsimple and mont const time results differ\n");
 			if (BN_cmp(r_simple,r_recp) != 0)
 				printf("\nsimple and recp results differ\n");
 
@@ -162,11 +174,13 @@ int main(int argc, char *argv[])
 			printf("\nsimple   =");	BN_print(out,r_simple);
 			printf("\nrecp     =");	BN_print(out,r_recp);
 			printf("\nmont     ="); BN_print(out,r_mont);
+			printf("\nmont_ct  ="); BN_print(out,r_mont_const);
 			printf("\n");
 			EXIT(1);
 			}
 		}
 	BN_free(r_mont);
+	BN_free(r_mont_const);
 	BN_free(r_recp);
 	BN_free(r_simple);
 	BN_free(a);
