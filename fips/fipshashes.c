@@ -34,5 +34,5 @@ const char * const FIPS_source_hashes[] = {
 "HMAC-SHA1(sha1/fips_sha256.c)= 826e768677e67b7c87dfc9e084245b619804d01c",
 "HMAC-SHA1(sha1/fips_sha512.c)= 27e16912ff196982425c00fe266fa84ef4f48fcd",
 "HMAC-SHA1(hmac/fips_hmac.c)= a477cec1da76c0092979c4a875b6469339bff7ef",
-"HMAC-SHA1(hmac/fips_hmac_selftest.c)= 09a27945cafdeb5978109e90278c981464dba324",
+"HMAC-SHA1(hmac/fips_hmac_selftest.c)= ebb32b205babf4300017de767fd6e3f1879765c9",
 };

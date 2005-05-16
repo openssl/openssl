@@ -124,7 +124,7 @@ int FIPS_selftest_hmac()
 		(const unsigned char *)t->iv,strlen(t->iv),
 		out,&outlen);
 
-	if(outlen<md->md_size || memcmp(out,t->kaval,md->md_size))
+	if(memcmp(out,t->kaval,outlen))
 	    {
 	    FIPSerr(FIPS_F_FIPS_SELFTEST_SHA,FIPS_R_SELFTEST_FAILED);
 	    return 0;
