@@ -981,13 +981,6 @@ bad:
 		{
 		EC_KEY *ecdh=NULL;
 
-		ecdh = EC_KEY_new();
-		if (ecdh == NULL)
-			{
-			BIO_printf(bio_err,"Could not create ECDH struct.\n");
-			goto end;
-			}
-
 		if (named_curve)
 			{
 			int nid = OBJ_sn2nid(named_curve);
@@ -998,9 +991,8 @@ bad:
 					named_curve);
 				goto end;
 				}
-
-			ecdh->group = EC_GROUP_new_by_curve_name(nid);
-			if (ecdh->group == NULL)
+			ecdh = EC_KEY_new_by_curve_name(nid);
+			if (ecdh == NULL)
 				{
 				BIO_printf(bio_err, "unable to create curve (%s)\n", 
 					named_curve);
@@ -1008,15 +1000,15 @@ bad:
 				}
 			}
 
-		if (ecdh->group != NULL)
+		if (ecdh != NULL)
 			{
 			BIO_printf(bio_s_out,"Setting temp ECDH parameters\n");
 			}
 		else
 			{
 			BIO_printf(bio_s_out,"Using default temp ECDH parameters\n");
-			ecdh->group=EC_GROUP_new_by_curve_name(NID_sect163r2);
-			if (ecdh->group == NULL) 
+			ecdh = EC_KEY_new_by_curve_name(NID_sect163r2);
+			if (ecdh == NULL) 
 				{
 				BIO_printf(bio_err, "unable to create curve (sect163r2)\n");
 				goto end;

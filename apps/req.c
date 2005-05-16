@@ -344,6 +344,7 @@ int MAIN(int argc, char **argv)
 				{
 				X509 *xtmp=NULL;
 				EVP_PKEY *dtmp;
+				EC_GROUP *group;
 
 				pkey_type=TYPE_EC;
 				p+=3;
@@ -354,10 +355,10 @@ int MAIN(int argc, char **argv)
 					}
 				if ((ec_params = EC_KEY_new()) == NULL)
 					goto end;
-				if ((ec_params->group = PEM_read_bio_ECPKParameters(in, NULL, NULL, NULL)) == NULL)
+				group = PEM_read_bio_ECPKParameters(in, NULL, NULL, NULL);
+				if (group == NULL)
 					{
-					if (ec_params)
-						EC_KEY_free(ec_params);
+					EC_KEY_free(ec_params);
 					ERR_clear_error();
 					(void)BIO_reset(in);
 					if ((xtmp=PEM_read_bio_X509(in,NULL,NULL,NULL)) == NULL)
@@ -369,7 +370,7 @@ int MAIN(int argc, char **argv)
 					if ((dtmp=X509_get_pubkey(xtmp))==NULL)
 						goto end;
 					if (dtmp->type == EVP_PKEY_EC)
-						ec_params = ECParameters_dup(dtmp->pkey.eckey);
+						ec_params = EC_KEY_dup(dtmp->pkey.ec);
 					EVP_PKEY_free(dtmp);
 					X509_free(xtmp);
 					if (ec_params == NULL)
@@ -378,12 +379,16 @@ int MAIN(int argc, char **argv)
 						goto end;
 						}
 					}
+				else
+					{
+					if (EC_KEY_set_group(ec_params, group) == 0)
+						goto end;
+					EC_GROUP_free(group);
+					}
 
 				BIO_free(in);
 				in=NULL;
-				
-				newkey = EC_GROUP_get_degree(ec_params->group);
-
+				newkey = EC_GROUP_get_degree(EC_KEY_get0_group(ec_params));
 				}
 			else
 #endif

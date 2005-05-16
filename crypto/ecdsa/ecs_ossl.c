@@ -62,7 +62,7 @@
 #include <openssl/bn.h>
 
 static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dlen, 
-		EC_KEY *eckey);
+		const BIGNUM *, const BIGNUM *, EC_KEY *eckey);
 static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, 
 		BIGNUM **rp);
 static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len, 
@@ -92,14 +92,14 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
 	BN_CTX   *ctx = NULL;
 	BIGNUM	 *k = NULL, *r = NULL, *order = NULL, *X = NULL;
 	EC_POINT *tmp_point=NULL;
-	EC_GROUP *group;
+	const EC_GROUP *group;
 	int 	 ret = 0;
-	if (!eckey  || !eckey->group || !eckey->pub_key || !eckey->priv_key)
+
+	if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
-	group = eckey->group;
 
 	if (ctx_in == NULL) 
 	{
@@ -210,24 +210,27 @@ err:
 
 
 static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len, 
-		EC_KEY *eckey)
+		const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey)
 {
 	int     ok = 0;
-	BIGNUM *kinv=NULL, *r, *s, *m=NULL,*tmp=NULL,*order=NULL;
+	BIGNUM *kinv=NULL, *s, *m=NULL,*tmp=NULL,*order=NULL;
+	const BIGNUM *ckinv;
 	BN_CTX     *ctx = NULL;
-	EC_GROUP   *group;
+	const EC_GROUP   *group;
 	ECDSA_SIG  *ret;
 	ECDSA_DATA *ecdsa;
+	const BIGNUM *priv_key;
 
-	ecdsa = ecdsa_check(eckey);
-
-	if (!eckey->group || !eckey->pub_key || !eckey->priv_key || !ecdsa)
+	ecdsa    = ecdsa_check(eckey);
+	group    = EC_KEY_get0_group(eckey);
+	priv_key = EC_KEY_get0_private_key(eckey);
+	
+	if (group == NULL || priv_key == NULL || ecdsa == NULL)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 	}
 
-	group = eckey->group;
 	ret = ECDSA_SIG_new();
 	if (!ret)
 	{
@@ -262,26 +265,26 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 	}
 	do
 	{
-		if (ecdsa->kinv == NULL || ecdsa->r == NULL)
+		if (in_kinv == NULL || in_r == NULL)
 		{
 			if (!ECDSA_sign_setup(eckey, ctx, &kinv, &ret->r))
 			{
 				ECDSAerr(ECDSA_F_ECDSA_DO_SIGN,ERR_R_ECDSA_LIB);
 				goto err;
 			}
-			r = ret->r;
+			ckinv = kinv;
 		}
 		else
 		{
-			BN_free(ret->r);
-			kinv   = ecdsa->kinv;
-			r      = ecdsa->r;
-			ret->r = r;
-			ecdsa->kinv = NULL;
-			ecdsa->r    = NULL;
+			ckinv  = in_kinv;
+			if (BN_copy(ret->r, in_r) == NULL)
+			{
+				ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_MALLOC_FAILURE);
+				goto err;
+			}
 		}
 
-		if (!BN_mod_mul(tmp, eckey->priv_key, r, order, ctx))
+		if (!BN_mod_mul(tmp, priv_key, ret->r, order, ctx))
 		{
 			ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
 			goto err;
@@ -291,7 +294,7 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 			ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
 			goto err;
 		}
-		if (!BN_mod_mul(s, s, kinv, order, ctx))
+		if (!BN_mod_mul(s, s, ckinv, order, ctx))
 		{
 			ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
 			goto err;
@@ -326,15 +329,16 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 	BN_CTX   *ctx;
 	BIGNUM   *order, *u1, *u2, *m, *X;
 	EC_POINT *point = NULL;
-	EC_GROUP *group;
+	const EC_GROUP *group;
+	const EC_POINT *pub_key;
+
 	/* check input values */
-	if (!eckey || !eckey->group || !eckey->pub_key || !sig)
+	if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL ||
+	    (pub_key = EC_KEY_get0_public_key(eckey)) == NULL || sig == NULL)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ECDSA_R_MISSING_PARAMETERS);
 		return -1;
 	}
-
-	group = eckey->group;
 
 	ctx = BN_CTX_new();
 	if (!ctx)
@@ -398,7 +402,7 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if (!EC_POINT_mul(group, point, u1, eckey->pub_key, u2, ctx))
+	if (!EC_POINT_mul(group, point, u1, pub_key, u2, ctx))
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_EC_LIB);
 		goto err;

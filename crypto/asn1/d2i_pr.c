@@ -113,7 +113,7 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
 #endif
 #ifndef OPENSSL_NO_EC
 	case EVP_PKEY_EC:
-		if ((ret->pkey.eckey = d2i_ECPrivateKey(NULL, 
+		if ((ret->pkey.ec = d2i_ECPrivateKey(NULL, 
 			(const unsigned char **)pp, length)) == NULL)
 			{
 			ASN1err(ASN1_F_D2I_PRIVATEKEY, ERR_R_ASN1_LIB);

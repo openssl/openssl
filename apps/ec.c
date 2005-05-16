@@ -3,7 +3,7 @@
  * Written by Nils Larsch for the OpenSSL project.
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -89,6 +89,7 @@ int MAIN(int argc, char **argv)
 #endif
 	int 	ret = 1;
 	EC_KEY 	*eckey = NULL;
+	const EC_GROUP *group;
 	int 	i, badops = 0;
 	const EVP_CIPHER *enc = NULL;
 	BIO 	*in = NULL, *out = NULL;
@@ -328,14 +329,13 @@ bad:
 			}
 		}
 
+	group = EC_KEY_get0_group(eckey);
+
 	if (new_form)
-		{
-		EC_GROUP_set_point_conversion_form(eckey->group, form);
-		eckey->conv_form = form;
-		}
+		EC_KEY_set_conv_form(eckey, form);
 
 	if (new_asn1_flag)
-		EC_GROUP_set_asn1_flag(eckey->group, asn1_flag);
+		EC_KEY_set_asn1_flag(eckey, asn1_flag);
 
 	if (text) 
 		if (!EC_KEY_print(out, eckey, 0))
@@ -352,7 +352,7 @@ bad:
 	if (outformat == FORMAT_ASN1) 
 		{
 		if (param_out)
-			i = i2d_ECPKParameters_bio(out, eckey->group);
+			i = i2d_ECPKParameters_bio(out, group);
 		else if (pubin || pubout) 
 			i = i2d_EC_PUBKEY_bio(out, eckey);
 		else 
@@ -361,7 +361,7 @@ bad:
 	else if (outformat == FORMAT_PEM) 
 		{
 		if (param_out)
-			i = PEM_write_bio_ECPKParameters(out, eckey->group);
+			i = PEM_write_bio_ECPKParameters(out, group);
 		else if (pubin || pubout)
 			i = PEM_write_bio_EC_PUBKEY(out, eckey);
 		else 

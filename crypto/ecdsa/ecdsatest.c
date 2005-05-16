@@ -3,7 +3,7 @@
  * Written by Nils Larsch for the OpenSSL project.
  */
 /* ====================================================================
- * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -201,9 +201,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 
 	BIO_printf(out, "testing %s: ", OBJ_nid2sn(nid));
 	/* create the key */
-	if ((key = EC_KEY_new()) == NULL)
-		goto x962_int_err;
-	if ((key->group = EC_GROUP_new_by_curve_name(nid)) == NULL)
+	if ((key = EC_KEY_new_by_curve_name(nid)) == NULL)
 		goto x962_int_err;
 	if (!EC_KEY_generate_key(key))
 		goto x962_int_err;
@@ -291,6 +289,7 @@ int test_builtin(BIO *out)
 	EC_builtin_curve *curves = NULL;
 	size_t		crv_len = 0, n = 0;
 	EC_KEY		*eckey = NULL, *wrong_eckey = NULL;
+	EC_GROUP	*group;
 	unsigned char	digest[20], wrong_digest[20];
 	unsigned char	*signature = NULL; 
 	unsigned int	sig_len;
@@ -337,9 +336,13 @@ int test_builtin(BIO *out)
 		/* create new ecdsa key (== EC_KEY) */
 		if ((eckey = EC_KEY_new()) == NULL)
 			goto builtin_err;
-		if ((eckey->group = EC_GROUP_new_by_curve_name(nid)) == NULL)
+		group = EC_GROUP_new_by_curve_name(nid);
+		if (group == NULL)
 			goto builtin_err;
-		if (EC_GROUP_get_degree(eckey->group) < 160)
+		if (EC_KEY_set_group(eckey, group) == 0)
+			goto builtin_err;
+		EC_GROUP_free(group);
+		if (EC_GROUP_get_degree(EC_KEY_get0_group(eckey)) < 160)
 			/* drop the curve */ 
 			{
 			EC_KEY_free(eckey);
@@ -356,8 +359,12 @@ int test_builtin(BIO *out)
 		/* create second key */
 		if ((wrong_eckey = EC_KEY_new()) == NULL)
 			goto builtin_err;
-		if ((wrong_eckey->group = EC_GROUP_new_by_curve_name(nid)) == NULL)
+		group = EC_GROUP_new_by_curve_name(nid);
+		if (group == NULL)
 			goto builtin_err;
+		if (EC_KEY_set_group(wrong_eckey, group) == 0)
+			goto builtin_err;
+		EC_GROUP_free(group);
 		if (!EC_KEY_generate_key(wrong_eckey))
 			{
 			BIO_printf(out, " failed\n");

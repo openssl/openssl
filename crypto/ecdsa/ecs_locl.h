@@ -69,7 +69,7 @@ struct ecdsa_method
 	{
 	const char *name;
 	ECDSA_SIG *(*ecdsa_do_sign)(const unsigned char *dgst, int dgst_len, 
-			EC_KEY *eckey);
+			const BIGNUM *inv, const BIGNUM *rp, EC_KEY *eckey);
 	int (*ecdsa_sign_setup)(EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinv, 
 			BIGNUM **r);
 	int (*ecdsa_do_verify)(const unsigned char *dgst, int dgst_len, 
@@ -82,18 +82,15 @@ struct ecdsa_method
 	char *app_data;
 	};
 
-struct ecdsa_data_st {
+typedef struct ecdsa_data_st {
 	/* EC_KEY_METH_DATA part */
 	int (*init)(EC_KEY *);
-	void (*finish)(EC_KEY *);
 	/* method (ECDSA) specific part */
-	BIGNUM	*kinv;	/* signing pre-calc */
-	BIGNUM	*r;	/* signing pre-calc */
 	ENGINE	*engine;
 	int	flags;
 	const ECDSA_METHOD *meth;
 	CRYPTO_EX_DATA ex_data;
-};
+} ECDSA_DATA;
 
 /** ecdsa_check
  * checks whether ECKEY->meth_data is a pointer to a ECDSA_DATA structure

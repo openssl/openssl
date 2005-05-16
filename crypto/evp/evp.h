@@ -140,7 +140,7 @@ struct evp_pkey_st
 		struct dh_st *dh;	/* DH */
 #endif
 #ifndef OPENSSL_NO_EC
-		struct ec_key_st *eckey;/* ECC */
+		struct ec_key_st *ec;	/* ECC */
 #endif
 		} pkey;
 	int save_parameters;

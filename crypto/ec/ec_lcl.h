@@ -229,22 +229,37 @@ struct ec_group_st {
 	int (*field_mod_func)(BIGNUM *, const BIGNUM *, const BIGNUM *,	BN_CTX *); /* method-specific */
 } /* EC_GROUP */;
 
+struct ec_key_st {
+	int version;
 
-/* Basically a 'mixin' for extra data, but available for EC_GROUPs only
+	EC_GROUP *group;
+
+	EC_POINT *pub_key;
+	BIGNUM	 *priv_key;
+
+	unsigned int enc_flag;
+	point_conversion_form_t conv_form;
+
+	int 	references;
+
+	EC_EXTRA_DATA *method_data;
+} /* EC_KEY */;
+
+/* Basically a 'mixin' for extra data, but available for EC_GROUPs/EC_KEYs only
  * (with visibility limited to 'package' level for now).
  * We use the function pointers as index for retrieval; this obviates
  * global ex_data-style index tables.
  */
-int EC_GROUP_set_extra_data(EC_GROUP *, void *data,
+int EC_EX_DATA_set_data(EC_EXTRA_DATA **, void *data,
 	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
-void *EC_GROUP_get_extra_data(const EC_GROUP *,
+void *EC_EX_DATA_get_data(const EC_EXTRA_DATA *,
 	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
-void EC_GROUP_free_extra_data(EC_GROUP*,
+void EC_EX_DATA_free_data(EC_EXTRA_DATA **,
 	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
-void EC_GROUP_clear_free_extra_data(EC_GROUP*,
+void EC_EX_DATA_clear_free_data(EC_EXTRA_DATA **,
 	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
-void EC_GROUP_free_all_extra_data(EC_GROUP *);
-void EC_GROUP_clear_free_all_extra_data(EC_GROUP *);
+void EC_EX_DATA_free_all_data(EC_EXTRA_DATA **);
+void EC_EX_DATA_clear_free_all_data(EC_EXTRA_DATA **);
 
 
 

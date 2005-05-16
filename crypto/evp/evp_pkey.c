@@ -250,6 +250,7 @@ EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 		}
 		else
 		{
+			EC_GROUP *group;
 			cp = p = param->value.object->data;
 			plen = param->value.object->length;
 
@@ -262,11 +263,13 @@ EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 					ERR_R_MALLOC_FAILURE);
 				goto ecerr;
 			}
-			if ((eckey->group = EC_GROUP_new_by_curve_name(
-                             OBJ_obj2nid(a->parameter->value.object))) == NULL)
+			group = EC_GROUP_new_by_curve_name(OBJ_obj2nid(a->parameter->value.object));
+			if (group == NULL)
 				goto ecerr;
-			EC_GROUP_set_asn1_flag(eckey->group, 
-						OPENSSL_EC_NAMED_CURVE);
+			EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
+			if (EC_KEY_set_group(eckey, group) == 0)
+				goto ecerr;
+			EC_GROUP_free(group);
 		}
 
 		/* We have parameters now set private key */
@@ -277,28 +280,40 @@ EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 		}
 
 		/* calculate public key (if necessary) */
-		if (!eckey->pub_key)
+		if (EC_KEY_get0_public_key(eckey) == NULL)
 		{
+			const BIGNUM *priv_key;
+			const EC_GROUP *group;
+			EC_POINT *pub_key;
 			/* the public key was not included in the SEC1 private
 			 * key => calculate the public key */
-			eckey->pub_key = EC_POINT_new(eckey->group);
-			if (!eckey->pub_key)
+			group   = EC_KEY_get0_group(eckey);
+			pub_key = EC_POINT_new(group);
+			if (pub_key == NULL)
 			{
 				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
 				goto ecerr;
 			}
-			if (!EC_POINT_copy(eckey->pub_key, 
-				EC_GROUP_get0_generator(eckey->group)))
+			if (!EC_POINT_copy(pub_key, EC_GROUP_get0_generator(group)))
 			{
+				EC_POINT_free(pub_key);
 				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
 				goto ecerr;
 			}
-			if (!EC_POINT_mul(eckey->group, eckey->pub_key, 
-				eckey->priv_key, NULL, NULL, ctx))
+			priv_key = EC_KEY_get0_private_key(eckey);
+			if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, ctx))
 			{
+				EC_POINT_free(pub_key);
 				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
 				goto ecerr;
 			}
+			if (EC_KEY_set_public_key(eckey, pub_key) == 0)
+			{
+				EC_POINT_free(pub_key);
+				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
+				goto ecerr;
+			}
+			EC_POINT_free(pub_key);
 		}
 
 		EVP_PKEY_assign_EC_KEY(pkey, eckey);
@@ -583,17 +598,18 @@ err:
 #ifndef OPENSSL_NO_EC
 static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 {
-	EC_KEY		*eckey;
+	EC_KEY		*ec_key;
+	const EC_GROUP  *group;
 	unsigned char	*p, *pp;
 	int 		nid, i, ret = 0;
-	unsigned int    tmp_flags;
+	unsigned int    tmp_flags, old_flags;
 
-	if (pkey->pkey.eckey == NULL || pkey->pkey.eckey->group == NULL)
+	ec_key = pkey->pkey.ec;
+	if (ec_key == NULL || (group = EC_KEY_get0_group(ec_key)) == NULL) 
 	{
 		EVPerr(EVP_F_ECKEY_PKEY2PKCS8, EVP_R_MISSING_PARAMETERS);
 		return 0;
 	}
-	eckey = pkey->pkey.eckey;
 
 	/* set the ec parameters OID */
 	if (p8->pkeyalg->algorithm)
@@ -615,8 +631,8 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 		return 0;
 	}
 	
-	if (EC_GROUP_get_asn1_flag(eckey->group)
-                     && (nid = EC_GROUP_get_curve_name(eckey->group)))
+	if (EC_GROUP_get_asn1_flag(group)
+                     && (nid = EC_GROUP_get_curve_name(group)))
 	{
 		/* we have a 'named curve' => just set the OID */
 		p8->pkeyalg->parameter->type = V_ASN1_OBJECT;
@@ -624,7 +640,7 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	}
 	else	/* explicit parameters */
 	{
-		if ((i = i2d_ECParameters(eckey, NULL)) == 0)
+		if ((i = i2d_ECParameters(ec_key, NULL)) == 0)
 		{
 			EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_EC_LIB);
 			return 0;
@@ -635,7 +651,7 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 			return 0;
 		}	
 		pp = p;
-		if (!i2d_ECParameters(eckey, &pp))
+		if (!i2d_ECParameters(ec_key, &pp))
 		{
 			EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_EC_LIB);
 			OPENSSL_free(p);
@@ -657,32 +673,33 @@ static int eckey_pkey2pkcs8(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 
 	/* do not include the parameters in the SEC1 private key
 	 * see PKCS#11 12.11 */
-	tmp_flags  = pkey->pkey.eckey->enc_flag;
-	pkey->pkey.eckey->enc_flag |= EC_PKEY_NO_PARAMETERS;
-	i = i2d_ECPrivateKey(pkey->pkey.eckey, NULL);
+	old_flags = EC_KEY_get_enc_flags(pkey->pkey.ec);
+	tmp_flags = old_flags | EC_PKEY_NO_PARAMETERS;
+	EC_KEY_set_enc_flags(pkey->pkey.ec, tmp_flags);
+	i = i2d_ECPrivateKey(pkey->pkey.ec, NULL);
 	if (!i)
 	{
-		pkey->pkey.eckey->enc_flag = tmp_flags;
+		EC_KEY_set_enc_flags(pkey->pkey.ec, old_flags);
 		EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_EC_LIB);
 		return 0;
 	}
 	p = (unsigned char *) OPENSSL_malloc(i);
 	if (!p)
 	{
-		pkey->pkey.eckey->enc_flag = tmp_flags;
+		EC_KEY_set_enc_flags(pkey->pkey.ec, old_flags);
 		EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	pp = p;
-	if (!i2d_ECPrivateKey(pkey->pkey.eckey, &pp))
+	if (!i2d_ECPrivateKey(pkey->pkey.ec, &pp))
 	{
-		pkey->pkey.eckey->enc_flag = tmp_flags;
+		EC_KEY_set_enc_flags(pkey->pkey.ec, old_flags);
 		EVPerr(EVP_F_ECKEY_PKEY2PKCS8, ERR_R_EC_LIB);
 		OPENSSL_free(p);
 		return 0;
 	}
 	/* restore old encoding flags */
-	pkey->pkey.eckey->enc_flag = tmp_flags;
+	EC_KEY_set_enc_flags(pkey->pkey.ec, old_flags);
 
 	switch(p8->broken) {
 

@@ -139,7 +139,7 @@ const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *);
 int EC_METHOD_get_field_type(const EC_METHOD *);
 
 int EC_GROUP_set_generator(EC_GROUP *, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor);
-EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *);
+const EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *);
 int EC_GROUP_get_order(const EC_GROUP *, BIGNUM *order, BN_CTX *);
 int EC_GROUP_get_cofactor(const EC_GROUP *, BIGNUM *cofactor, BN_CTX *);
 
@@ -292,35 +292,36 @@ int     ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
 /* the EC_KEY stuff */
 typedef struct ec_key_st EC_KEY;
 
-typedef struct ec_key_meth_data_st {
-	int (*init)(EC_KEY *);
-	void (*finish)(EC_KEY *);
-	} EC_KEY_METH_DATA;
-
-struct ec_key_st {
-	int version;
-
-	EC_GROUP *group;
-
-	EC_POINT *pub_key;
-	BIGNUM	 *priv_key;
-
-	unsigned int enc_flag;
-	point_conversion_form_t conv_form;
-
-	int 	references;
-
-	EC_KEY_METH_DATA *meth_data;
-	}/* EC_KEY */;
 /* some values for the encoding_flag */
 #define EC_PKEY_NO_PARAMETERS	0x001
 #define EC_PKEY_NO_PUBKEY	0x002
 
 EC_KEY *EC_KEY_new(void);
+EC_KEY *EC_KEY_new_by_curve_name(int nid);
 void EC_KEY_free(EC_KEY *);
 EC_KEY *EC_KEY_copy(EC_KEY *, const EC_KEY *);
 EC_KEY *EC_KEY_dup(const EC_KEY *);
+
 int EC_KEY_up_ref(EC_KEY *);
+
+const EC_GROUP *EC_KEY_get0_group(const EC_KEY *);
+int EC_KEY_set_group(EC_KEY *, const EC_GROUP *);
+const BIGNUM *EC_KEY_get0_private_key(const EC_KEY *);
+int EC_KEY_set_private_key(EC_KEY *, const BIGNUM *);
+const EC_POINT *EC_KEY_get0_public_key(const EC_KEY *);
+int EC_KEY_set_public_key(EC_KEY *, const EC_POINT *);
+unsigned EC_KEY_get_enc_flags(const EC_KEY *);
+void EC_KEY_set_enc_flags(EC_KEY *, unsigned int);
+point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *);
+void EC_KEY_set_conv_form(EC_KEY *, point_conversion_form_t);
+/* functions to set/get method specific data  */
+void *EC_KEY_get_key_method_data(EC_KEY *, 
+	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
+void EC_KEY_insert_key_method_data(EC_KEY *, void *data,
+	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
+/* wrapper functions for the underlying EC_GROUP object */
+void EC_KEY_set_asn1_flag(EC_KEY *, int);
+int EC_KEY_precompute_mult(EC_KEY *, BN_CTX *ctx);
 
 /* EC_KEY_generate_key() creates a ec private (public) key */
 int EC_KEY_generate_key(EC_KEY *);

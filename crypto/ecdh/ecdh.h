@@ -85,13 +85,6 @@
 extern "C" {
 #endif
 
-typedef struct ecdh_data_st ECDH_DATA;
-
-/* ECDH_DATA functions */
-ECDH_DATA *ECDH_DATA_new(void);
-ECDH_DATA *ECDH_DATA_new_method(ENGINE *);
-void ECDH_DATA_free(ECDH_DATA *);
-
 const ECDH_METHOD *ECDH_OpenSSL(void);
 
 void	  ECDH_set_default_method(const ECDH_METHOD *);

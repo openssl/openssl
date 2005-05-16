@@ -119,9 +119,7 @@ static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 	}
 
 
-int test_ecdh_curve(int , char *, BN_CTX *, BIO *);
-
-int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
+static int test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
 	{
 	EC_KEY *a=NULL;
 	EC_KEY *b=NULL;
@@ -130,12 +128,14 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 	char buf[12];
 	unsigned char *abuf=NULL,*bbuf=NULL;
 	int i,alen,blen,aout,bout,ret=0;
+	const EC_GROUP *group;
 
-	if ((a=EC_KEY_new()) == NULL) goto err;
-	if ((a->group=EC_GROUP_new_by_curve_name(nid)) == NULL) goto err;
+	a = EC_KEY_new_by_curve_name(nid);
+	b = EC_KEY_new_by_curve_name(nid);
+	if (a == NULL || b == NULL)
+		goto err;
 
-	if ((b=EC_KEY_new()) == NULL) goto err;
-	b->group = a->group;
+	group = EC_KEY_get0_group(a);
 
 	if ((x_a=BN_new()) == NULL) goto err;
 	if ((y_a=BN_new()) == NULL) goto err;
@@ -152,13 +152,15 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 
 	if (!EC_KEY_generate_key(a)) goto err;
 	
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(a->group)) == NID_X9_62_prime_field) 
+	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) == NID_X9_62_prime_field) 
 		{
-		if (!EC_POINT_get_affine_coordinates_GFp(a->group, a->pub_key, x_a, y_a, ctx)) goto err;
+		if (!EC_POINT_get_affine_coordinates_GFp(group,
+			EC_KEY_get0_public_key(a), x_a, y_a, ctx)) goto err;
 		}
 	else
 		{
-		if (!EC_POINT_get_affine_coordinates_GF2m(a->group, a->pub_key, x_a, y_a, ctx)) goto err;
+		if (!EC_POINT_get_affine_coordinates_GF2m(group,
+			EC_KEY_get0_public_key(a), x_a, y_a, ctx)) goto err;
 		}
 #ifdef NOISY
 	BIO_puts(out,"  pri 1=");
@@ -175,13 +177,15 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 
 	if (!EC_KEY_generate_key(b)) goto err;
 
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(b->group)) == NID_X9_62_prime_field) 
+	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) == NID_X9_62_prime_field) 
 		{
-		if (!EC_POINT_get_affine_coordinates_GFp(b->group, b->pub_key, x_b, y_b, ctx)) goto err;
+		if (!EC_POINT_get_affine_coordinates_GFp(group, 
+			EC_KEY_get0_public_key(b), x_b, y_b, ctx)) goto err;
 		}
 	else
 		{
-		if (!EC_POINT_get_affine_coordinates_GF2m(a->group, b->pub_key, x_b, y_b, ctx)) goto err;
+		if (!EC_POINT_get_affine_coordinates_GF2m(group, 
+			EC_KEY_get0_public_key(b), x_b, y_b, ctx)) goto err;
 		}
 
 #ifdef NOISY
@@ -199,7 +203,7 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 
 	alen=KDF1_SHA1_len;
 	abuf=(unsigned char *)OPENSSL_malloc(alen);
-	aout=ECDH_compute_key(abuf,alen,b->pub_key,a,KDF1_SHA1);
+	aout=ECDH_compute_key(abuf,alen,EC_KEY_get0_public_key(b),a,KDF1_SHA1);
 
 #ifdef NOISY
 	BIO_puts(out,"  key1 =");
@@ -216,7 +220,7 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 
 	blen=KDF1_SHA1_len;
 	bbuf=(unsigned char *)OPENSSL_malloc(blen);
-	bout=ECDH_compute_key(bbuf,blen,a->pub_key,b,KDF1_SHA1);
+	bout=ECDH_compute_key(bbuf,blen,EC_KEY_get0_public_key(a),b,KDF1_SHA1);
 
 #ifdef NOISY
 	BIO_puts(out,"  key2 =");
@@ -237,7 +241,7 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 		BIO_printf(out, " failed\n\n");
 		BIO_printf(out, "key a:\n");
 		BIO_printf(out, "private key: ");
-		BN_print(out, a->priv_key);
+		BN_print(out, EC_KEY_get0_private_key(a));
 		BIO_printf(out, "\n");
 		BIO_printf(out, "public key (x,y): ");
 		BN_print(out, x_a);
@@ -245,7 +249,7 @@ int test_ecdh_curve(int nid, char *text, BN_CTX *ctx, BIO *out)
 		BN_print(out, y_a);
 		BIO_printf(out, "\nkey b:\n");
 		BIO_printf(out, "private key: ");
-		BN_print(out, b->priv_key);
+		BN_print(out, EC_KEY_get0_private_key(b));
 		BIO_printf(out, "\n");
 		BIO_printf(out, "public key (x,y): ");
 		BN_print(out, x_b);
@@ -286,8 +290,6 @@ err:
 	if (y_a) BN_free(y_a);
 	if (x_b) BN_free(x_b);
 	if (y_b) BN_free(y_b);
-	if (a->group) EC_GROUP_free(a->group);
-	a->group = b->group = NULL;
 	if (b) EC_KEY_free(b);
 	if (a) EC_KEY_free(a);
 	return(ret);

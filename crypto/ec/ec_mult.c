@@ -325,7 +325,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
 	{
 	BN_CTX *new_ctx = NULL;
-	EC_POINT *generator = NULL;
+	const EC_POINT *generator = NULL;
 	EC_POINT *tmp = NULL;
 	size_t totalnum;
 	size_t blocksize = 0, numblocks = 0; /* for wNAF splitting */
@@ -385,7 +385,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 		
 		/* look if we can use precomputed multiples of generator */
 
-		pre_comp = EC_GROUP_get_extra_data(group, ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free);
+		pre_comp = EC_EX_DATA_get_data(group->extra_data, ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free);
 
 		if (pre_comp && pre_comp->numblocks && (EC_POINT_cmp(group, generator, pre_comp->points[0], ctx) == 0))
 			{
@@ -744,7 +744,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	int ret = 0;
 
 	/* if there is an old EC_PRE_COMP object, throw it away */
-	EC_GROUP_free_extra_data(group, ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free);
+	EC_EX_DATA_free_data(&group->extra_data, ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free);
 
 	if ((pre_comp = ec_pre_comp_new(group)) == NULL)
 		return 0;
@@ -872,7 +872,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	points = NULL;
 	pre_comp->num = num;
 
-	if (!EC_GROUP_set_extra_data(group, pre_comp,
+	if (!EC_EX_DATA_set_data(&group->extra_data, pre_comp,
 		ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free))
 		goto err;
 	pre_comp = NULL;
@@ -902,7 +902,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 
 int ec_wNAF_have_precompute_mult(const EC_GROUP *group)
 	{
-	if (EC_GROUP_get_extra_data(group, ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free) != NULL)
+	if (EC_EX_DATA_get_data(group->extra_data, ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free) != NULL)
 		return 1;
 	else
 		return 0;

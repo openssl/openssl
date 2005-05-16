@@ -1,6 +1,6 @@
 /* crypto/ecdsa/ecs_lib.c */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,9 +63,10 @@
 
 const char *ECDSA_version="ECDSA" OPENSSL_VERSION_PTEXT;
 
-static void ecdsa_finish(EC_KEY *);
-
 static const ECDSA_METHOD *default_ECDSA_method = NULL;
+
+static void *ecdsa_data_dup(void *);
+static void  ecdsa_data_free(void *);
 
 void ECDSA_set_default_method(const ECDSA_METHOD *meth)
 {
@@ -90,10 +91,6 @@ int ECDSA_set_method(EC_KEY *eckey, const ECDSA_METHOD *meth)
 		return 0;
 
         mtmp = ecdsa->meth;
-#if 0
-        if (mtmp->finish)
-		mtmp->finish(eckey);
-#endif
 #ifndef OPENSSL_NO_ENGINE
 	if (ecdsa->engine)
 	{
@@ -102,19 +99,11 @@ int ECDSA_set_method(EC_KEY *eckey, const ECDSA_METHOD *meth)
 	}
 #endif
         ecdsa->meth = meth;
-#if 0
-        if (meth->init) 
-		meth->init(eckey);
-#endif
+
         return 1;
 }
 
-ECDSA_DATA *ECDSA_DATA_new(void)
-{
-	return ECDSA_DATA_new_method(NULL);
-}
-
-ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *engine)
+static ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *engine)
 {
 	ECDSA_DATA *ret;
 
@@ -126,10 +115,6 @@ ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *engine)
 	}
 
 	ret->init = NULL;
-	ret->finish = ecdsa_finish;
-
-	ret->kinv = NULL;
-	ret->r    = NULL;
 
 	ret->meth = ECDSA_get_default_method();
 	ret->engine = engine;
@@ -162,22 +147,30 @@ ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *engine)
 	return(ret);
 }
 
-void ECDSA_DATA_free(ECDSA_DATA *r)
+void *ecdsa_data_new(void)
 {
-	if (r->kinv)
-		BN_clear_free(r->kinv);
-	if (r->r)
-		BN_clear_free(r->r);
+	return (void *)ECDSA_DATA_new_method(NULL);
+}
 
-#if 0
-	if (r->meth->finish)
-		r->meth->finish(r);
-#endif
+static void *ecdsa_data_dup(void *data)
+{
+	ECDSA_DATA *r = (ECDSA_DATA *)data;
+
+	/* XXX: dummy operation */
+	if (r == NULL)
+		return NULL;
+
+	return ecdsa_data_new();
+}
+
+static void ecdsa_data_free(void *data)
+{
+	ECDSA_DATA *r = (ECDSA_DATA *)data;
+
 #ifndef OPENSSL_NO_ENGINE
 	if (r->engine)
 		ENGINE_finish(r->engine);
 #endif
-
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDSA, r, &r->ex_data);
 
 	OPENSSL_cleanse((void *)r, sizeof(ECDSA_DATA));
@@ -187,23 +180,23 @@ void ECDSA_DATA_free(ECDSA_DATA *r)
 
 ECDSA_DATA *ecdsa_check(EC_KEY *key)
 {
-	if (key->meth_data)
+	ECDSA_DATA *ecdsa_data;
+ 
+	void *data = EC_KEY_get_key_method_data(key, ecdsa_data_dup,
+					ecdsa_data_free, ecdsa_data_free);
+	if (data == NULL)
 	{
-		if (key->meth_data->finish != ecdsa_finish)
-		{
-			key->meth_data->finish(key);
-			key->meth_data = (EC_KEY_METH_DATA *)ECDSA_DATA_new();
-		}
+		ecdsa_data = (ECDSA_DATA *)ecdsa_data_new();
+		if (ecdsa_data == NULL)
+			return NULL;
+		EC_KEY_insert_key_method_data(key, (void *)ecdsa_data,
+			ecdsa_data_dup, ecdsa_data_free, ecdsa_data_free);
 	}
 	else
-		key->meth_data = (EC_KEY_METH_DATA *)ECDSA_DATA_new();
-	return (ECDSA_DATA *)key->meth_data;
-}
+		ecdsa_data = (ECDSA_DATA *)data;
+	
 
-static void ecdsa_finish(EC_KEY *key)
-{
-	if (key->meth_data && key->meth_data->finish == ecdsa_finish)
-		ECDSA_DATA_free((ECDSA_DATA *)key->meth_data);
+	return ecdsa_data;
 }
 
 int ECDSA_size(const EC_KEY *r)
@@ -212,11 +205,12 @@ int ECDSA_size(const EC_KEY *r)
 	ASN1_INTEGER bs;
 	BIGNUM	*order=NULL;
 	unsigned char buf[4];
+	const EC_GROUP *group = EC_KEY_get0_group(r);
 
-	if (r == NULL || r->group == NULL)
+	if (r == NULL || group == NULL)
 		return 0;
 	if ((order = BN_new()) == NULL) return 0;
-	if (!EC_GROUP_get_order(r->group,order,NULL))
+	if (!EC_GROUP_get_order(group,order,NULL))
 	{
 		BN_clear_free(order);
 		return 0;

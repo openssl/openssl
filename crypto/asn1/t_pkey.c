@@ -79,7 +79,7 @@
 #include <openssl/ec.h>
 #endif
 
-static int print(BIO *fp,const char *str,BIGNUM *num,
+static int print(BIO *fp,const char *str, const BIGNUM *num,
 		unsigned char *buf,int off);
 static int print_bin(BIO *fp, const char *str, const unsigned char *num,
 		size_t len, int off);
@@ -279,7 +279,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 	size_t	buf_len=0, i;
 	int     ret=0, reason=ERR_R_BIO_LIB;
 	BN_CTX  *ctx=NULL;
-	EC_POINT *point=NULL;
+	const EC_POINT *point=NULL;
 	BIGNUM	*p=NULL, *a=NULL, *b=NULL, *gen=NULL,
 		*order=NULL, *cofactor=NULL;
 	const unsigned char *seed;
@@ -481,24 +481,29 @@ int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 	int     ret=0, reason=ERR_R_BIO_LIB;
 	BIGNUM  *pub_key=NULL, *order=NULL;
 	BN_CTX  *ctx=NULL;
+	const EC_GROUP *group;
+	const EC_POINT *public_key;
+	const BIGNUM *priv_key;
  
-	if (!x || !x->group)
+	if (x == NULL || (group = EC_KEY_get0_group(x)) == NULL)
 		{
 		reason = ERR_R_PASSED_NULL_PARAMETER;
 		goto err;
 		}
 
-	if ((pub_key = EC_POINT_point2bn(x->group, x->pub_key,
-		x->conv_form, NULL, ctx)) == NULL)
+	public_key = EC_KEY_get0_public_key(x);
+	if ((pub_key = EC_POINT_point2bn(group, public_key,
+		EC_KEY_get_conv_form(x), NULL, ctx)) == NULL)
 		{
 		reason = ERR_R_EC_LIB;
 		goto err;
 		}
 
 	buf_len = (size_t)BN_num_bytes(pub_key);
-	if (x->priv_key)
+	priv_key = EC_KEY_get0_private_key(x);
+	if (priv_key != NULL)
 		{
-		if ((i = (size_t)BN_num_bytes(x->priv_key)) > buf_len)
+		if ((i = (size_t)BN_num_bytes(priv_key)) > buf_len)
 			buf_len = i;
 		}
 
@@ -509,25 +514,25 @@ int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 		goto err;
 		}
 
-	if (x->priv_key != NULL)
+	if (priv_key != NULL)
 		{
 		if (!BIO_indent(bp, off, 128))
 			goto err;
 		if ((order = BN_new()) == NULL)
 			goto err;
-		if (!EC_GROUP_get_order(x->group, order, NULL))
+		if (!EC_GROUP_get_order(group, order, NULL))
 			goto err;
 		if (BIO_printf(bp, "Private-Key: (%d bit)\n", 
 			BN_num_bits(order)) <= 0) goto err;
 		}
   
-	if ((x->priv_key != NULL) && !print(bp, "priv:", x->priv_key, 
+	if ((priv_key != NULL) && !print(bp, "priv:", priv_key, 
 		buffer, off))
 		goto err;
 	if ((pub_key != NULL) && !print(bp, "pub: ", pub_key,
 		buffer, off))
 		goto err;
-	if (!ECPKParameters_print(bp, x->group, off))
+	if (!ECPKParameters_print(bp, group, off))
 		goto err;
 	ret=1;
 err:
@@ -545,7 +550,7 @@ err:
 	}
 #endif /* OPENSSL_NO_EC */
 
-static int print(BIO *bp, const char *number, BIGNUM *num, unsigned char *buf,
+static int print(BIO *bp, const char *number, const BIGNUM *num, unsigned char *buf,
 	     int off)
 	{
 	int n,i;
@@ -770,8 +775,9 @@ int ECParameters_print(BIO *bp, const EC_KEY *x)
 	{
 	int     reason=ERR_R_EC_LIB, ret=0;
 	BIGNUM	*order=NULL;
+	const EC_GROUP *group;
  
-	if (!x || !x->group)
+	if (x == NULL || (group = EC_KEY_get0_group(x)) == NULL)
 		{
 		reason = ERR_R_PASSED_NULL_PARAMETER;;
 		goto err;
@@ -783,7 +789,7 @@ int ECParameters_print(BIO *bp, const EC_KEY *x)
 		goto err;
 		}
 
-	if (!EC_GROUP_get_order(x->group, order, NULL))
+	if (!EC_GROUP_get_order(group, order, NULL))
 		{
 		reason = ERR_R_EC_LIB;
 		goto err;
@@ -792,7 +798,7 @@ int ECParameters_print(BIO *bp, const EC_KEY *x)
 	if (BIO_printf(bp, "ECDSA-Parameters: (%d bit)\n", 
 		BN_num_bits(order)) <= 0)
 		goto err;
-	if (!ECPKParameters_print(bp, x->group, 4))
+	if (!ECPKParameters_print(bp, group, 4))
 		goto err;
 	ret=1;
 err:

@@ -1189,6 +1189,9 @@ int ssl3_get_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_ECDH
 	else if (alg & SSL_kECDHE)
 		{
+		EC_GROUP *ngroup;
+		const EC_GROUP *group;
+
 		if ((ecdh=EC_KEY_new()) == NULL)
 			{
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
@@ -1214,14 +1217,23 @@ int ssl3_get_key_exchange(SSL *s)
 			goto f_err;
 			}
 
-		if (!(ecdh->group=EC_GROUP_new_by_curve_name(curve_nid)))
+		ngroup = EC_GROUP_new_by_curve_name(curve_nid);
+		if (ngroup == NULL)
 			{
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_EC_LIB);
 			goto err;
 			}
+		if (EC_KEY_set_group(ecdh, ngroup) == 0)
+			{
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_EC_LIB);
+			goto err;
+			}
+		EC_GROUP_free(ngroup);
+
+		group = EC_KEY_get0_group(ecdh);
 
 		if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) &&
-		    (EC_GROUP_get_degree(ecdh->group) > 163))
+		    (EC_GROUP_get_degree(group) > 163))
 			{
 			al=SSL_AD_EXPORT_RESTRICTION;
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER);
@@ -1231,7 +1243,7 @@ int ssl3_get_key_exchange(SSL *s)
 		p+=2;
 
 		/* Next, get the encoded ECPoint */
-		if (((srvr_ecpoint = EC_POINT_new(ecdh->group)) == NULL) ||
+		if (((srvr_ecpoint = EC_POINT_new(group)) == NULL) ||
 		    ((bn_ctx = BN_CTX_new()) == NULL))
 			{
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
@@ -1242,7 +1254,7 @@ int ssl3_get_key_exchange(SSL *s)
 		p+=1;
 		param_len += (1 + encoded_pt_len);
 		if ((param_len > n) ||
-		    (EC_POINT_oct2point(ecdh->group, srvr_ecpoint, 
+		    (EC_POINT_oct2point(group, srvr_ecpoint, 
 			p, encoded_pt_len, bn_ctx) == 0))
 			{
 			al=SSL_AD_DECODE_ERROR;
@@ -1267,10 +1279,11 @@ int ssl3_get_key_exchange(SSL *s)
 			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
 #endif
 		/* else anonymous ECDH, so no certificate or pkey. */
-		ecdh->pub_key = srvr_ecpoint;
+		EC_KEY_set_public_key(ecdh, srvr_ecpoint);
 		s->session->sess_cert->peer_ecdh_tmp=ecdh;
 		ecdh=NULL;
 		BN_CTX_free(bn_ctx);
+		EC_POINT_free(srvr_ecpoint);
 		srvr_ecpoint = NULL;
 		}
 	else if (alg & SSL_kECDH)
@@ -1623,7 +1636,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 #endif /* OPENSSL_NO_KRB5 */
 #ifndef OPENSSL_NO_ECDH
 	EC_KEY *clnt_ecdh = NULL;
-	EC_POINT *srvr_ecpoint = NULL;
+	const EC_POINT *srvr_ecpoint = NULL;
 	EVP_PKEY *srvr_pub_pkey = NULL;
 	unsigned char *encodedPoint = NULL;
 	int encoded_pt_len = 0;
@@ -1890,7 +1903,8 @@ int ssl3_send_client_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_ECDH 
 		else if ((l & SSL_kECDH) || (l & SSL_kECDHE))
 			{
-			EC_GROUP *srvr_group = NULL;
+			const EC_GROUP *srvr_group = NULL;
+			EC_KEY *tkey;
 			int ecdh_clnt_cert = 0;
 			int field_size = 0;
 
@@ -1924,10 +1938,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 
 			if (s->session->sess_cert->peer_ecdh_tmp != NULL)
 				{
-				srvr_group = s->session->sess_cert-> \
-				    peer_ecdh_tmp->group;
-				srvr_ecpoint = s->session->sess_cert-> \
-				    peer_ecdh_tmp->pub_key;
+				tkey = s->session->sess_cert->peer_ecdh_tmp;
 				}
 			else
 				{
@@ -1936,17 +1947,18 @@ int ssl3_send_client_key_exchange(SSL *s)
 				    sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
 				if ((srvr_pub_pkey == NULL) ||
 				    (srvr_pub_pkey->type != EVP_PKEY_EC) ||
-				    (srvr_pub_pkey->pkey.eckey == NULL))
+				    (srvr_pub_pkey->pkey.ec == NULL))
 					{
 					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 					    ERR_R_INTERNAL_ERROR);
 					goto err;
 					}
 
-				srvr_group = srvr_pub_pkey->pkey.eckey->group;
-				srvr_ecpoint = 
-				    srvr_pub_pkey->pkey.eckey->pub_key;
+				tkey = srvr_pub_pkey->pkey.ec;
 				}
+
+			srvr_group   = EC_KEY_get0_group(tkey);
+			srvr_ecpoint = EC_KEY_get0_public_key(tkey);
 
 			if ((srvr_group == NULL) || (srvr_ecpoint == NULL))
 				{
@@ -1961,15 +1973,30 @@ int ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 				}
 
-			clnt_ecdh->group = srvr_group;
+			if (!EC_KEY_set_group(clnt_ecdh, srvr_group))
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_EC_LIB);
+				goto err;
+				}
 			if (ecdh_clnt_cert) 
 				{ 
 				/* Reuse key info from our certificate
 				 * We only need our private key to perform
 				 * the ECDH computation.
 				 */
-				clnt_ecdh->priv_key = BN_dup(s->cert->key-> \
-				    privatekey->pkey.eckey->priv_key);
+				const BIGNUM *priv_key;
+				tkey = s->cert->key->privatekey->pkey.ec;
+				priv_key = EC_KEY_get0_private_key(tkey);
+				if (priv_key == NULL)
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+					goto err;
+					}
+				if (!EC_KEY_set_private_key(clnt_ecdh, priv_key))
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_EC_LIB);
+					goto err;
+					}
 				}
 			else 
 				{
@@ -1985,7 +2012,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			 * make sure to clear it out afterwards
 			 */
 
-			field_size = EC_GROUP_get_degree(clnt_ecdh->group);
+			field_size = EC_GROUP_get_degree(srvr_group);
 			if (field_size <= 0)
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, 
@@ -2026,8 +2053,8 @@ int ssl3_send_client_key_exchange(SSL *s)
 				 * allocate memory accordingly.
 				 */
 				encoded_pt_len = 
-				    EC_POINT_point2oct(clnt_ecdh->group, 
-					clnt_ecdh->pub_key, 
+				    EC_POINT_point2oct(srvr_group, 
+					EC_KEY_get0_public_key(clnt_ecdh), 
 					POINT_CONVERSION_UNCOMPRESSED, 
 					NULL, 0, NULL);
 
@@ -2043,8 +2070,8 @@ int ssl3_send_client_key_exchange(SSL *s)
 					}
 
 				/* Encode the public key */
-				n = EC_POINT_point2oct(clnt_ecdh->group, 
-				    clnt_ecdh->pub_key, 
+				n = EC_POINT_point2oct(srvr_group, 
+				    EC_KEY_get0_public_key(clnt_ecdh), 
 				    POINT_CONVERSION_UNCOMPRESSED, 
 				    encodedPoint, encoded_pt_len, bn_ctx);
 
@@ -2061,11 +2088,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			BN_CTX_free(bn_ctx);
 			if (encodedPoint != NULL) OPENSSL_free(encodedPoint);
 			if (clnt_ecdh != NULL) 
-				{
-				 /* group is shared */
-				 clnt_ecdh->group = NULL; 
 				 EC_KEY_free(clnt_ecdh);
-				}
 			EVP_PKEY_free(srvr_pub_pkey);
 			}
 #endif /* !OPENSSL_NO_ECDH */
@@ -2094,11 +2117,7 @@ err:
 	BN_CTX_free(bn_ctx);
 	if (encodedPoint != NULL) OPENSSL_free(encodedPoint);
 	if (clnt_ecdh != NULL) 
-		{
-		/* group is shared */
-		clnt_ecdh->group = NULL; 
 		EC_KEY_free(clnt_ecdh);
-		}
 	EVP_PKEY_free(srvr_pub_pkey);
 #endif
 	return(-1);
@@ -2165,7 +2184,7 @@ int ssl3_send_client_verify(SSL *s)
 			if (!ECDSA_sign(pkey->save_type,
 				&(data[MD5_DIGEST_LENGTH]),
 				SHA_DIGEST_LENGTH,&(p[2]),
-				(unsigned int *)&j,pkey->pkey.eckey))
+				(unsigned int *)&j,pkey->pkey.ec))
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
 				    ERR_R_ECDSA_LIB);

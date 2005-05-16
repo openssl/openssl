@@ -89,7 +89,7 @@ int i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp)
 #ifndef OPENSSL_NO_EC
 	if (a->type == EVP_PKEY_EC)
 		{
-		return(i2d_ECPrivateKey(a->pkey.eckey, pp));
+		return(i2d_ECPrivateKey(a->pkey.ec, pp));
 		}
 #endif
 

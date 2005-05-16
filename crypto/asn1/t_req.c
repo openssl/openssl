@@ -166,7 +166,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags, unsigned long
 		if (pkey->type == EVP_PKEY_EC)
 		{
 			BIO_printf(bp, "%12sEC Public Key: \n","");
-			EC_KEY_print(bp, pkey->pkey.eckey, 16);
+			EC_KEY_print(bp, pkey->pkey.ec, 16);
 		}
 	else
 #endif

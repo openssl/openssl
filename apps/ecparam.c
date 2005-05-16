@@ -3,7 +3,7 @@
  * Written by Nils Larsch for the OpenSSL project.
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -647,11 +647,11 @@ bad:
 
 		assert(need_rand);
 
-		eckey->group = group;
+		if (EC_KEY_set_group(eckey, group) == 0)
+			goto end;
 		
 		if (!EC_KEY_generate_key(eckey))
 			{
-			eckey->group = NULL;
 			EC_KEY_free(eckey);
 			goto end;
 			}
@@ -664,11 +664,9 @@ bad:
 			{
 			BIO_printf(bio_err, "bad output format specified "
 				"for outfile\n");
-			eckey->group = NULL;
 			EC_KEY_free(eckey);
 			goto end;
 			}
-		eckey->group = NULL;
 		EC_KEY_free(eckey);
 		}
 

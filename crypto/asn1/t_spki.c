@@ -100,7 +100,7 @@ int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki)
 		if (pkey->type == EVP_PKEY_EC)
 		{
 			BIO_printf(out, "  EC Public Key:\n");
-			EC_KEY_print(out, pkey->pkey.eckey,2);
+			EC_KEY_print(out, pkey->pkey.ec,2);
 		}
 		else
 #endif

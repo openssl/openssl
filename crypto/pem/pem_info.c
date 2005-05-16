@@ -225,7 +225,7 @@ start:
  			if ((xi->x_pkey->dec_pkey=EVP_PKEY_new()) == NULL)
  				goto err;
  			xi->x_pkey->dec_pkey->type=EVP_PKEY_EC;
- 			pp=&(xi->x_pkey->dec_pkey->pkey.eckey);
+ 			pp=&(xi->x_pkey->dec_pkey->pkey.ec);
  			if ((int)strlen(header) > 10) /* assume encrypted */
  				raw=1;
 			}

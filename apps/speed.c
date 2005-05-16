@@ -2040,7 +2040,7 @@ int MAIN(int argc, char **argv)
 		int ret;
 
 		if (!ecdsa_doit[j]) continue; /* Ignore Curve */ 
-		ecdsa[j] = EC_KEY_new();
+		ecdsa[j] = EC_KEY_new_by_curve_name(test_curves[j]);
 		if (ecdsa[j] == NULL) 
 			{
 			BIO_printf(bio_err,"ECDSA failure.\n");
@@ -2049,100 +2049,89 @@ int MAIN(int argc, char **argv)
 			} 
 		else 
 			{
-			ecdsa[j]->group = EC_GROUP_new_by_curve_name(test_curves[j]);
-			/* Could not obtain group information */
-			if (ecdsa[j]->group == NULL) 
+#if 1
+			EC_KEY_precompute_mult(ecdsa[j], NULL);
+#endif
+			/* Perform ECDSA signature test */
+			EC_KEY_generate_key(ecdsa[j]);
+			ret = ECDSA_sign(0, buf, 20, ecdsasig, 
+				&ecdsasiglen, ecdsa[j]);
+			if (ret == 0) 
 				{
-				BIO_printf(bio_err,"ECDSA failure.Could not obtain group information\n");
+				BIO_printf(bio_err,"ECDSA sign failure.  No ECDSA sign will be done.\n");
 				ERR_print_errors(bio_err);
 				rsa_count=1;
 				} 
 			else 
 				{
-#if 1
-				EC_GROUP_precompute_mult(ecdsa[j]->group, NULL);
-#endif
-				/* Perform ECDSA signature test */
-				EC_KEY_generate_key(ecdsa[j]);
-				ret = ECDSA_sign(0, buf, 20, ecdsasig, 
-					&ecdsasiglen, ecdsa[j]);
-				if (ret == 0) 
-					{
-					BIO_printf(bio_err,"ECDSA sign failure.  No ECDSA sign will be done.\n");
-					ERR_print_errors(bio_err);
-					rsa_count=1;
-					} 
-				else 
-					{
-					pkey_print_message("sign","ecdsa",
-						ecdsa_c[j][0], 
-						test_curves_bits[j],
-						ECDSA_SECONDS);
-
-					Time_F(START);
-					for (count=0,run=1; COND(ecdsa_c[j][0]);
-						count++) 
-						{
-						ret=ECDSA_sign(0, buf, 20, 
-							ecdsasig, &ecdsasiglen,
-							ecdsa[j]);
-						if (ret == 0) 
-							{
-							BIO_printf(bio_err, "ECDSA sign failure\n");
-							ERR_print_errors(bio_err);
-							count=1;
-							break;
-							}
-						}
-					d=Time_F(STOP);
-
-					BIO_printf(bio_err, mr ? "+R5:%ld:%d:%.2f\n" :
-						"%ld %d bit ECDSA signs in %.2fs \n", 
-						count, test_curves_bits[j], d);
-					ecdsa_results[j][0]=d/(double)count;
-					rsa_count=count;
-					}
-
-				/* Perform ECDSA verification test */
-				ret=ECDSA_verify(0, buf, 20, ecdsasig, 
-					ecdsasiglen, ecdsa[j]);
-				if (ret != 1) 
-					{
-					BIO_printf(bio_err,"ECDSA verify failure.  No ECDSA verify will be done.\n");
-					ERR_print_errors(bio_err);
-					ecdsa_doit[j] = 0;
-					} 
-				else 
-					{
-					pkey_print_message("verify","ecdsa",
-					ecdsa_c[j][1],
+				pkey_print_message("sign","ecdsa",
+					ecdsa_c[j][0], 
 					test_curves_bits[j],
 					ECDSA_SECONDS);
-					Time_F(START);
-					for (count=0,run=1; COND(ecdsa_c[j][1]); count++) 
-						{
-						ret=ECDSA_verify(0, buf, 20, ecdsasig, ecdsasiglen, ecdsa[j]);
-						if (ret != 1) 
-							{
-							BIO_printf(bio_err, "ECDSA verify failure\n");
-							ERR_print_errors(bio_err);
-							count=1;
-							break;
-							}
-						}
-					d=Time_F(STOP);
-					BIO_printf(bio_err, mr? "+R6:%ld:%d:%.2f\n"
-							: "%ld %d bit ECDSA verify in %.2fs\n",
-					count, test_curves_bits[j], d);
-					ecdsa_results[j][1]=d/(double)count;
-					}
 
-				if (rsa_count <= 1) 
+				Time_F(START);
+				for (count=0,run=1; COND(ecdsa_c[j][0]);
+					count++) 
 					{
-					/* if longer than 10s, don't do any more */
-					for (j++; j<EC_NUM; j++)
-					ecdsa_doit[j]=0;
+					ret=ECDSA_sign(0, buf, 20, 
+						ecdsasig, &ecdsasiglen,
+						ecdsa[j]);
+					if (ret == 0) 
+						{
+						BIO_printf(bio_err, "ECDSA sign failure\n");
+						ERR_print_errors(bio_err);
+						count=1;
+						break;
+						}
 					}
+				d=Time_F(STOP);
+
+				BIO_printf(bio_err, mr ? "+R5:%ld:%d:%.2f\n" :
+					"%ld %d bit ECDSA signs in %.2fs \n", 
+					count, test_curves_bits[j], d);
+				ecdsa_results[j][0]=d/(double)count;
+				rsa_count=count;
+				}
+
+			/* Perform ECDSA verification test */
+			ret=ECDSA_verify(0, buf, 20, ecdsasig, 
+				ecdsasiglen, ecdsa[j]);
+			if (ret != 1) 
+				{
+				BIO_printf(bio_err,"ECDSA verify failure.  No ECDSA verify will be done.\n");
+				ERR_print_errors(bio_err);
+				ecdsa_doit[j] = 0;
+				} 
+			else 
+				{
+				pkey_print_message("verify","ecdsa",
+				ecdsa_c[j][1],
+				test_curves_bits[j],
+				ECDSA_SECONDS);
+				Time_F(START);
+				for (count=0,run=1; COND(ecdsa_c[j][1]); count++) 
+					{
+					ret=ECDSA_verify(0, buf, 20, ecdsasig, ecdsasiglen, ecdsa[j]);
+					if (ret != 1) 
+						{
+						BIO_printf(bio_err, "ECDSA verify failure\n");
+						ERR_print_errors(bio_err);
+						count=1;
+						break;
+						}
+					}
+				d=Time_F(STOP);
+				BIO_printf(bio_err, mr? "+R6:%ld:%d:%.2f\n"
+						: "%ld %d bit ECDSA verify in %.2fs\n",
+				count, test_curves_bits[j], d);
+				ecdsa_results[j][1]=d/(double)count;
+				}
+
+			if (rsa_count <= 1) 
+				{
+				/* if longer than 10s, don't do any more */
+				for (j++; j<EC_NUM; j++)
+				ecdsa_doit[j]=0;
 				}
 			}
 		}
@@ -2158,8 +2147,8 @@ int MAIN(int argc, char **argv)
 	for (j=0; j<EC_NUM; j++)
 		{
 		if (!ecdh_doit[j]) continue;
-		ecdh_a[j] = EC_KEY_new();
-		ecdh_b[j] = EC_KEY_new();
+		ecdh_a[j] = EC_KEY_new_by_curve_name(test_curves[j]);
+		ecdh_b[j] = EC_KEY_new_by_curve_name(test_curves[j]);
 		if ((ecdh_a[j] == NULL) || (ecdh_b[j] == NULL))
 			{
 			BIO_printf(bio_err,"ECDH failure.\n");
@@ -2168,89 +2157,78 @@ int MAIN(int argc, char **argv)
 			}
 		else
 			{
-			ecdh_a[j]->group = EC_GROUP_new_by_curve_name(test_curves[j]);
-			if (ecdh_a[j]->group == NULL)
+			/* generate two ECDH key pairs */
+			if (!EC_KEY_generate_key(ecdh_a[j]) ||
+				!EC_KEY_generate_key(ecdh_b[j]))
 				{
-				BIO_printf(bio_err,"ECDH failure.\n");
+				BIO_printf(bio_err,"ECDH key generation failure.\n");
 				ERR_print_errors(bio_err);
-				rsa_count=1;
+				rsa_count=1;		
 				}
 			else
 				{
-				ecdh_b[j]->group = EC_GROUP_dup(ecdh_a[j]->group);
-
-				/* generate two ECDH key pairs */
-				if (!EC_KEY_generate_key(ecdh_a[j]) ||
-					!EC_KEY_generate_key(ecdh_b[j]))
+				/* If field size is not more than 24 octets, then use SHA-1 hash of result;
+				 * otherwise, use result (see section 4.8 of draft-ietf-tls-ecc-03.txt).
+				 */
+				int field_size, outlen;
+				void *(*kdf)(const void *in, size_t inlen, void *out, size_t *xoutlen);
+				field_size = EC_GROUP_get_degree(EC_KEY_get0_group(ecdh_a[j]));
+				if (field_size <= 24 * 8)
 					{
-					BIO_printf(bio_err,"ECDH key generation failure.\n");
-					ERR_print_errors(bio_err);
-					rsa_count=1;		
+					outlen = KDF1_SHA1_len;
+					kdf = KDF1_SHA1;
 					}
 				else
 					{
-					/* If field size is not more than 24 octets, then use SHA-1 hash of result;
-					 * otherwise, use result (see section 4.8 of draft-ietf-tls-ecc-03.txt).
-					 */
-					int field_size, outlen;
-					void *(*kdf)(const void *in, size_t inlen, void *out, size_t *xoutlen);
-					field_size = EC_GROUP_get_degree(ecdh_a[j]->group);
-					if (field_size <= 24 * 8)
-						{
-						outlen = KDF1_SHA1_len;
-						kdf = KDF1_SHA1;
-						}
-					else
-						{
-						outlen = (field_size+7)/8;
-						kdf = NULL;
-						}
-					secret_size_a = ECDH_compute_key(secret_a, outlen,
-						ecdh_b[j]->pub_key,
-						ecdh_a[j], kdf);
-					secret_size_b = ECDH_compute_key(secret_b, outlen,
-						ecdh_a[j]->pub_key,
-						ecdh_b[j], kdf);
-					if (secret_size_a != secret_size_b) 
-						ecdh_checks = 0;
-					else
-						ecdh_checks = 1;
-
-					for (secret_idx = 0; 
-					    (secret_idx < secret_size_a)
-						&& (ecdh_checks == 1);
-					    secret_idx++)
-						{
-						if (secret_a[secret_idx] != secret_b[secret_idx])
-						ecdh_checks = 0;
-						}
-
-					if (ecdh_checks == 0)
-						{
-						BIO_printf(bio_err,"ECDH computations don't match.\n");
-						ERR_print_errors(bio_err);
-						rsa_count=1;		
-						}
-
-					pkey_print_message("","ecdh",
-					ecdh_c[j][0], 
-					test_curves_bits[j],
-					ECDH_SECONDS);
-					Time_F(START);
-					for (count=0,run=1; COND(ecdh_c[j][0]); count++)
-						{
-						ECDH_compute_key(secret_a, outlen,
-						ecdh_b[j]->pub_key,
-						ecdh_a[j], kdf);
-						}
-					d=Time_F(STOP);
-					BIO_printf(bio_err, mr ? "+R7:%ld:%d:%.2f\n" :"%ld %d-bit ECDH ops in %.2fs\n",
-					count, test_curves_bits[j], d);
-					ecdh_results[j][0]=d/(double)count;
-					rsa_count=count;
+					outlen = (field_size+7)/8;
+					kdf = NULL;
 					}
+				secret_size_a = ECDH_compute_key(secret_a, outlen,
+					EC_KEY_get0_public_key(ecdh_b[j]),
+					ecdh_a[j], kdf);
+				secret_size_b = ECDH_compute_key(secret_b, outlen,
+					EC_KEY_get0_public_key(ecdh_a[j]),
+					ecdh_b[j], kdf);
+				if (secret_size_a != secret_size_b) 
+					ecdh_checks = 0;
+				else
+					ecdh_checks = 1;
+
+				for (secret_idx = 0; 
+				    (secret_idx < secret_size_a)
+					&& (ecdh_checks == 1);
+				    secret_idx++)
+					{
+					if (secret_a[secret_idx] != secret_b[secret_idx])
+					ecdh_checks = 0;
+					}
+
+				if (ecdh_checks == 0)
+					{
+					BIO_printf(bio_err,"ECDH computations don't match.\n");
+					ERR_print_errors(bio_err);
+					rsa_count=1;		
+					}
+
+				pkey_print_message("","ecdh",
+				ecdh_c[j][0], 
+				test_curves_bits[j],
+				ECDH_SECONDS);
+				Time_F(START);
+				for (count=0,run=1; COND(ecdh_c[j][0]); count++)
+					{
+					ECDH_compute_key(secret_a, outlen,
+					EC_KEY_get0_public_key(ecdh_b[j]),
+					ecdh_a[j], kdf);
+					}
+				d=Time_F(STOP);
+				BIO_printf(bio_err, mr ? "+R7:%ld:%d:%.2f\n" :"%ld %d-bit ECDH ops in %.2fs\n",
+				count, test_curves_bits[j], d);
+				ecdh_results[j][0]=d/(double)count;
+				rsa_count=count;
 				}
 			}
+
 
 		if (rsa_count <= 1)
 			{

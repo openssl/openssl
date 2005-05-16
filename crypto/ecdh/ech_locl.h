@@ -75,16 +75,15 @@ struct ecdh_method
 	char *app_data;
 	};
 
-struct ecdh_data_st {
+typedef struct ecdh_data_st {
 	/* EC_KEY_METH_DATA part */
 	int (*init)(EC_KEY *);
-	void (*finish)(EC_KEY *);
 	/* method specific part */
 	ENGINE	*engine;
 	int	flags;
 	const ECDH_METHOD *meth;
 	CRYPTO_EX_DATA ex_data;
-};
+} ECDH_DATA;
 
 ECDH_DATA *ecdh_check(EC_KEY *);
 

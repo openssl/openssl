@@ -81,9 +81,6 @@ typedef struct ECDSA_SIG_st
 	BIGNUM *s;
 	} ECDSA_SIG;
 
-/* ecdsa_data_st is defined in ecs_locl.h  */
-typedef struct ecdsa_data_st ECDSA_DATA;
-
 /** ECDSA_SIG *ECDSA_SIG_new(void)
  * allocates and initialize a ECDSA_SIG structure
  * \return pointer to a ECDSA_SIG structure or NULL if an error occurred
@@ -115,25 +112,6 @@ int	  i2d_ECDSA_SIG(const ECDSA_SIG *a, unsigned char **pp);
  */
 ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **v, const unsigned char **pp, long len);
 
-/** ECDSA_DATA_new
- * creates a new ECDSA_DATA object
- * \return pointer to a newly allocated (and initialized) ECDSA_DATA object
- */
-ECDSA_DATA *ECDSA_DATA_new(void);
-
-/** ECDSA_DATA_new_method
- * creates a new ECDSA_DATA object using a specified ENGINE
- * \param eng pointer to a ENGINE structure
- * \return pointer to a newly allocated (and initialized) ECDSA_DATA object
- */
-ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *eng);
-
-/** ECDSA_DATA_free
- * frees ECDSA_DATA structure
- * \param data pointer to a ECDSA_DATA structure
- */
-void ECDSA_DATA_free(ECDSA_DATA *data);
-
 /** ECDSA_do_sign
  * computes the ECDSA signature of the given hash value using
  * the supplied private key and returns the created signature.
@@ -143,6 +121,20 @@ void ECDSA_DATA_free(ECDSA_DATA *data);
  * \return pointer to a ECDSA_SIG structure or NULL
  */
 ECDSA_SIG *ECDSA_do_sign(const unsigned char *dgst,int dgst_len,EC_KEY *eckey);
+
+/** ECDSA_do_sign_ex
+ * computes ECDSA signature of a given hash value using the supplied
+ * private key (note: sig must point to ECDSA_size(eckey) bytes of memory).
+ * \param dgst pointer to the hash value to sign
+ * \param dgstlen length of the hash value
+ * \param kinv optional pointer to a pre-computed inverse k
+ * \param rp optional pointer to the pre-computed rp value (see 
+ *        ECDSA_sign_setup
+ * \param eckey pointer to the EC_KEY object containing a private EC key
+ * \return pointer to a ECDSA_SIG structure or NULL
+ */
+ECDSA_SIG *ECDSA_do_sign_ex(const unsigned char *dgst, int dgstlen, 
+		const BIGNUM *kinv, const BIGNUM *rp, EC_KEY *eckey);
 
 /** ECDSA_do_verify
  * verifies that the supplied signature is a valid ECDSA
@@ -186,9 +178,7 @@ int 	  ECDSA_set_method(EC_KEY *eckey, const ECDSA_METHOD *meth);
 int	  ECDSA_size(const EC_KEY *eckey);
 
 /** ECDSA_sign_setup
- * precompute parts of the signing operation (the computed values may be
- * passed to ECDSA_DATA->kinv and ECDSA_DATA->r for a later signature
- * computation).
+ * precompute parts of the signing operation. 
  * \param eckey pointer to the EC_KEY object containing a private EC key
  * \param ctx  pointer to a BN_CTX object (may be NULL)
  * \param kinv pointer to a BIGNUM pointer for the inverse of k
@@ -211,6 +201,25 @@ int 	  ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinv,
  */
 int	  ECDSA_sign(int type, const unsigned char *dgst, int dgstlen, 
 		unsigned char *sig, unsigned int *siglen, EC_KEY *eckey);
+
+
+/** ECDSA_sign_ex
+ * computes ECDSA signature of a given hash value using the supplied
+ * private key (note: sig must point to ECDSA_size(eckey) bytes of memory).
+ * \param type this parameter is ignored
+ * \param dgst pointer to the hash value to sign
+ * \param dgstlen length of the hash value
+ * \param sig buffer to hold the DER encoded signature
+ * \param siglen pointer to the length of the returned signature
+ * \param kinv optional pointer to a pre-computed inverse k
+ * \param rp optional pointer to the pre-computed rp value (see 
+ *        ECDSA_sign_setup
+ * \param eckey pointer to the EC_KEY object containing a private EC key
+ * \return 1 on success and 0 otherwise
+ */
+int	  ECDSA_sign_ex(int type, const unsigned char *dgst, int dgstlen, 
+		unsigned char *sig, unsigned int *siglen, const BIGNUM *kinv,
+		const BIGNUM *rp, EC_KEY *eckey);
 
 /** ECDSA_verify
  * verifies that the given signature is valid ECDSA signature

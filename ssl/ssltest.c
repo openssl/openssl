@@ -720,36 +720,30 @@ bad:
 #ifndef OPENSSL_NO_ECDH
 	if (!no_ecdhe)
 		{
-		ecdh = EC_KEY_new();
-		if (ecdh != NULL)
+		int nid;
+
+		if (named_curve != NULL)
 			{
-			if (named_curve)
-				{
-				int nid = OBJ_sn2nid(named_curve);
-
-				if (nid == 0)
-					{
-					BIO_printf(bio_err, "unknown curve name (%s)\n", named_curve);
-					EC_KEY_free(ecdh);
-					goto end;
-					}
-
-				ecdh->group = EC_GROUP_new_by_curve_name(nid);
-				if (ecdh->group == NULL)
-					{
-					BIO_printf(bio_err, "unable to create curve (%s)\n", named_curve);
-					EC_KEY_free(ecdh);
-					goto end;
-					}
+			nid = OBJ_sn2nid(named_curve);
+			if (nid == 0)
+			{
+				BIO_printf(bio_err, "unknown curve name (%s)\n", named_curve);
+				goto end;
 				}
-			
-			if (ecdh->group == NULL)
-				ecdh->group=EC_GROUP_new_by_curve_name(NID_sect163r2);
-
-			SSL_CTX_set_tmp_ecdh(s_ctx, ecdh);
-			SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_ECDH_USE);
-			EC_KEY_free(ecdh);
 			}
+		else
+			nid = NID_sect163r2;
+
+		ecdh = EC_KEY_new_by_curve_name(nid);
+		if (ecdh == NULL)
+			{
+			BIO_printf(bio_err, "unable to create curve\n");
+			goto end;
+			}
+
+		SSL_CTX_set_tmp_ecdh(s_ctx, ecdh);
+		SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_ECDH_USE);
+		EC_KEY_free(ecdh);
 		}
 #else
 	(void)no_ecdhe;

@@ -159,9 +159,10 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 		{
 		int nid=0;
 		unsigned char *pp;
-		EC_KEY *eckey;
+		EC_KEY *ec_key;
+		const EC_GROUP *group;
 		
-		eckey = pkey->pkey.eckey;
+		ec_key = pkey->pkey.ec;
 		ASN1_TYPE_free(a->parameter);
 
 		if ((a->parameter = ASN1_TYPE_new()) == NULL)
@@ -170,8 +171,9 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 			goto err;
 			}
 
-		if (EC_GROUP_get_asn1_flag(eckey->group)
-                     && (nid = EC_GROUP_get_curve_name(eckey->group)))
+		group = EC_KEY_get0_group(ec_key);
+		if (EC_GROUP_get_asn1_flag(group)
+                     && (nid = EC_GROUP_get_curve_name(group)))
 			{
 			/* just set the OID */
 			a->parameter->type = V_ASN1_OBJECT;
@@ -179,7 +181,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 			}
 		else /* explicit parameters */
 			{
-			if ((i = i2d_ECParameters(eckey, NULL)) == 0)
+			if ((i = i2d_ECParameters(ec_key, NULL)) == 0)
 				{
 				X509err(X509_F_X509_PUBKEY_SET, ERR_R_EC_LIB);
 				goto err;
@@ -190,7 +192,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 				goto err;
 				}	
 			pp = p;
-			if (!i2d_ECParameters(eckey, &pp))
+			if (!i2d_ECParameters(ec_key, &pp))
 				{
 				X509err(X509_F_X509_PUBKEY_SET, ERR_R_EC_LIB);
 				OPENSSL_free(p);
@@ -313,7 +315,7 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 			/* type == V_ASN1_SEQUENCE => we have explicit parameters
                          * (e.g. parameters in the X9_62_EC_PARAMETERS-structure )
 			 */
-			if ((ret->pkey.eckey= EC_KEY_new()) == NULL)
+			if ((ret->pkey.ec= EC_KEY_new()) == NULL)
 				{
 				X509err(X509_F_X509_PUBKEY_GET, 
 					ERR_R_MALLOC_FAILURE);
@@ -321,7 +323,7 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 				}
 			cp = p = a->parameter->value.sequence->data;
 			j = a->parameter->value.sequence->length;
-			if (!d2i_ECParameters(&ret->pkey.eckey, &cp, (long)j))
+			if (!d2i_ECParameters(&ret->pkey.ec, &cp, (long)j))
 				{
 				X509err(X509_F_X509_PUBKEY_GET, ERR_R_EC_LIB);
 				goto err;
@@ -332,17 +334,21 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 			/* type == V_ASN1_OBJECT => the parameters are given
 			 * by an asn1 OID
 			 */
-			EC_KEY *eckey;
-			if (ret->pkey.eckey == NULL)
-				ret->pkey.eckey = EC_KEY_new();
-			eckey = ret->pkey.eckey;
-			if (eckey->group)
-				EC_GROUP_free(eckey->group);
-			if ((eckey->group = EC_GROUP_new_by_curve_name(
-                             OBJ_obj2nid(a->parameter->value.object))) == NULL)
+			EC_KEY   *ec_key;
+			EC_GROUP *group;
+
+			if (ret->pkey.ec == NULL)
+				ret->pkey.ec = EC_KEY_new();
+			ec_key = ret->pkey.ec;
+			if (ec_key == NULL)
 				goto err;
-			EC_GROUP_set_asn1_flag(eckey->group, 
-						OPENSSL_EC_NAMED_CURVE);
+			group = EC_GROUP_new_by_curve_name(OBJ_obj2nid(a->parameter->value.object));
+			if (group == NULL)
+				goto err;
+			EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
+			if (EC_KEY_set_group(ec_key, group) == 0)
+				goto err;
+			EC_GROUP_free(group);
 			}
 			/* the case implicitlyCA is currently not implemented */
 		ret->save_parameters = 1;

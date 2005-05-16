@@ -76,9 +76,10 @@
 
 const char *ECDH_version="ECDH" OPENSSL_VERSION_PTEXT;
 
-static void ecdh_finish(EC_KEY *);
-
 static const ECDH_METHOD *default_ECDH_method = NULL;
+
+static void *ecdh_data_dup(void *);
+static void  ecdh_data_free(void *);
 
 void ECDH_set_default_method(const ECDH_METHOD *meth)
 	{
@@ -122,12 +123,7 @@ int ECDH_set_method(EC_KEY *eckey, const ECDH_METHOD *meth)
         return 1;
 	}
 
-ECDH_DATA *ECDH_DATA_new(void)
-	{
-	return ECDH_DATA_new_method(NULL);
-	}
-
-ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
+static ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 	{
 	ECDH_DATA *ret;
 
@@ -139,7 +135,6 @@ ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 		}
 
 	ret->init = NULL;
-	ret->finish = ecdh_finish;
 
 	ret->meth = ECDH_get_default_method();
 	ret->engine = engine;
@@ -172,12 +167,26 @@ ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 	return(ret);
 	}
 
-void ECDH_DATA_free(ECDH_DATA *r)
+void *ecdh_data_new(void)
 	{
-#if 0
-	if (r->meth->finish)
-		r->meth->finish(r);
-#endif
+	return (void *)ECDH_DATA_new_method(NULL);
+	}
+
+static void *ecdh_data_dup(void *data)
+{
+	ECDH_DATA *r = (ECDH_DATA *)data;
+
+	/* XXX: dummy operation */
+	if (r == NULL)
+		return NULL;
+
+	return (void *)ecdh_data_new();
+}
+
+void ecdh_data_free(void *data)
+	{
+	ECDH_DATA *r = (ECDH_DATA *)data;
+
 #ifndef OPENSSL_NO_ENGINE
 	if (r->engine)
 		ENGINE_finish(r->engine);
@@ -192,25 +201,24 @@ void ECDH_DATA_free(ECDH_DATA *r)
 
 ECDH_DATA *ecdh_check(EC_KEY *key)
 	{
-	if (key->meth_data)
-		{
-		if (key->meth_data->finish != ecdh_finish)
-			{
-			key->meth_data->finish(key);
-			key->meth_data = (EC_KEY_METH_DATA *)ECDH_DATA_new();
-			}
-		}
-	else
-		key->meth_data = (EC_KEY_METH_DATA *)ECDH_DATA_new();
-	return (ECDH_DATA *)key->meth_data;
-	}
-
-static void ecdh_finish(EC_KEY *key)
+	ECDH_DATA *ecdh_data;
+ 
+	void *data = EC_KEY_get_key_method_data(key, ecdh_data_dup,
+					ecdh_data_free, ecdh_data_free);
+	if (data == NULL)
 	{
-	if (key->meth_data && key->meth_data->finish == ecdh_finish)
-		ECDH_DATA_free((ECDH_DATA *)key->meth_data);
+		ecdh_data = (ECDH_DATA *)ecdh_data_new();
+		if (ecdh_data == NULL)
+			return NULL;
+		EC_KEY_insert_key_method_data(key, (void *)ecdh_data,
+			ecdh_data_dup, ecdh_data_free, ecdh_data_free);
 	}
+	else
+		ecdh_data = (ECDH_DATA *)data;
+	
 
+	return ecdh_data;
+	}
 
 int ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
