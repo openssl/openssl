@@ -6,6 +6,7 @@ DIR=		crypto
 TOP=		..
 CC=		cc
 INCLUDE=	-I. -I$(TOP) -I../include
+# INCLUDES targets sudbirs!
 INCLUDES=	-I.. -I../.. -I../../include
 CFLAG=		-g
 MAKEDEPPROG=	makedepend
@@ -72,10 +73,10 @@ ia64cpuid.s: ia64cpuid.S
 	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
 
 testapps:
-	@if [ -z "(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 	[ -z "$(THIS)" ] || ( if echo ${SDIRS} | fgrep ' des '; \
 	then cd des && $(MAKE) des; fi )
 	[ -z "$(THIS)" ] || ( cd pkcs7 && $(MAKE) testapps );
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 subdirs:
 	@for i in $(SDIRS) ;\
@@ -89,7 +90,7 @@ files:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making 'files' in crypto/$$i..." && \
-	$(MAKE) PERL='${PERL}' files ); \
+	$(MAKE) files ); \
 	done;
 
 links:
@@ -119,12 +120,12 @@ libs:
 	done;
 
 tests:
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@ fi
 	@[ -z "$(THIS)" ] || (for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making tests in crypto/$$i..." && \
 	$(MAKE) tests ); \
 	done; )
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
@@ -147,14 +148,15 @@ lint:
 	done;
 
 depend:
-	if [ ! -f buildinf.h ]; then touch buildinf.h; fi # fake buildinf.h if it does not exist
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
-	if [ ! -s buildinf.h ]; then rm buildinf.h; fi
-	@for i in $(SDIRS) ;\
+	[ -z "$(THIS)" -o -f buildinf.h ] || touch buildinf.h # fake buildinf.h if it does not exist
+	[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	[ -z "$(THIS)" -o -s buildinf.h ] || rm buildinf.h
+	@[ -z "$(THIS)" ] || for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making depend in crypto/$$i..." && \
-	$(MAKE) depend ); \
+	$(MAKE) INCLUDES='${INCLUDES}' depend ); \
 	done;
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 clean:
 	rm -f buildinf.h *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff

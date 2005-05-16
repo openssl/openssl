@@ -147,11 +147,12 @@ HEADER=         e_os.h
 all: Makefile build_all openssl.pc
 
 BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
-		SDIRS='$(SDIRS)' INSTALLTOP='${INSTALLTOP}'	\
-		LIBRPATH='$(INSTALLTOP)/lib'			\
 		CC='${CC}' CFLAG='${CFLAG}' 			\
 		AS='${CC}' ASFLAG='${CFLAG} -c'			\
 		AR='${AR}' PERL='${PERL}' RANLIB='${RANLIB}'	\
+		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/lib'		\
+		INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}'	\
+		DEPFLAG='${DEPFLAG}' MAKEDEPPROG='${MAKEDEPPROG}'	\
 		LDFLAGS="$(LDFLAGS)" SHARED_LDFLAGS="$(SHARED_LDFLAGS)"	\
 		KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}'	\
 		EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}'	\
@@ -164,7 +165,8 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}'	\
 		SHA1_ASM_OBJ='${SHA1_ASM_OBJ}'			\
 		MD5_ASM_OBJ='${MD5_ASM_OBJ}'			\
-		RMD160_ASM_OBJ='${RMD160_ASM_OBJ}'
+		RMD160_ASM_OBJ='${RMD160_ASM_OBJ}'		\
+		THIS=$${THIS:-$@}
 
 BUILD_CMD=if echo " $(DIRS) " | grep " $$dir " >/dev/null 2>/dev/null; then \
 	if [ -d "$$dir" ]; then \
@@ -245,12 +247,10 @@ do_$(SHLIB_TARGET):
 		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
 			libs="$(LIBKRB5) $$libs"; \
 		fi; \
-		$(MAKE) -f Makefile.shared \
-			$(BUILDENV) \
+		$(MAKE) -f Makefile.shared $(BUILDENV) \
 			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
 			LIBDEPS="$$libs $(EX_LIBS)" \
-			LIBRPATH="$(INSTALLTOP)/lib" \
 			link_a.$(SHLIB_TARGET); \
 		libs="-l$$i $$libs"; \
 	done
@@ -350,7 +350,7 @@ depend:
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making dependencies $$i..." && \
-		$(MAKE) SDIRS='${SDIRS}' CFLAG='-DOPENSSL_NO_DEPRECATED ${CFLAG}' DEPFLAG='${DEPFLAG}' MAKEDEPPROG='${MAKEDEPPROG}' KRB5_INCLUDES='${KRB5_INCLUDES}' PERL='${PERL}' depend ) || exit 1; \
+		$(MAKE) $(BUILDENV) CFLAG='-DOPENSSL_NO_DEPRECATED ${CFLAG}' depend ) || exit 1; \
 	fi; \
 	done;
 
@@ -450,7 +450,7 @@ install_sw:
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i; echo "installing $$i..."; \
-		$(MAKE) $(BUILDENV) INSTALL_PREFIX='${INSTALL_PREFIX}' OPENSSLDIR='${OPENSSLDIR}' install ); \
+		$(MAKE) $(BUILDENV) install ); \
 	fi; \
 	done
 	@set -e; for i in $(LIBS) ;\
