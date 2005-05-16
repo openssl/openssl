@@ -799,6 +799,21 @@
 
  Changes between 0.9.7g and 0.9.7h  [XX xxx XXXX]
 
+  *) Make a new fixed-window mod_exp implementation the default for
+     RSA, DSA, and DH private-key operations to mitigate the
+     hyper-threading timing attacks pointed out by Colin Percival
+     (http://www.daemonology.net/hyperthreading-considered-harmful/),
+     and potential related attacks.
+
+     BN_mod_exp_mont_consttime() is the new exponentiation implementation,
+     and this is automatically used by BN_mod_exp_mont() if the new flag
+     BN_FLG_EXP_CONSTTIME is set for the exponent.  RSA, DSA, and DH
+     will use this BN flag for private exponents unless the flag
+     RSA_FLAG_NO_EXP_CONSTTIME, DSA_FLAG_NO_EXP_CONSTTIME, or
+     DH_FLAG_NO_EXP_CONSTTIME, respectively, is set.
+
+     [Matthew D Wood (Intel Corp), with some changes by Bodo Moeller]
+
   *) Change the client implementation for SSLv23_method() and
      SSLv23_client_method() so that is uses the SSL 3.0/TLS 1.0
      Client Hello message format if the SSL_OP_NO_SSLv2 option is set.

@@ -245,11 +245,22 @@ extern "C" {
 
 #define BN_FLG_MALLOCED		0x01
 #define BN_FLG_STATIC_DATA	0x02
+#define BN_FLG_EXP_CONSTTIME	0x04 /* avoid leaking exponent information through timings
+                            	      * (BN_mod_exp_mont() will call BN_mod_exp_mont_consttime) */
 #ifndef OPENSSL_NO_DEPRECATED
 #define BN_FLG_FREE		0x8000	/* used for debuging */
 #endif
 #define BN_set_flags(b,n)	((b)->flags|=(n))
 #define BN_get_flags(b,n)	((b)->flags&(n))
+
+#define BN_with_flags(dest,b,n)  ((dest)->d=(b)->d, \
+                                  (dest)->top=(b)->top, \
+                                  (dest)->dmax=(b)->dmax, \
+                                  (dest)->neg=(b)->neg, \
+                                  (dest)->flags=(((dest)->flags & BN_FLG_MALLOCED) \
+                                                 |  ((b)->flags & ~BN_FLG_MALLOCED) \
+                                                 |  BN_FLG_STATIC_DATA \
+                                                 |  (n)))
 
 /* Already declared in ossl_typ.h */
 #if 0
@@ -439,6 +450,8 @@ int	BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	const BIGNUM *m,BN_CTX *ctx);
 int	BN_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
+	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont);
 int	BN_mod_exp_mont_word(BIGNUM *r, BN_ULONG a, const BIGNUM *p,
 	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 int	BN_mod_exp2_mont(BIGNUM *r, const BIGNUM *a1, const BIGNUM *p1,
@@ -728,9 +741,9 @@ void ERR_load_BN_strings(void);
 /* Error codes for the BN functions. */
 
 /* Function codes. */
-#define BN_F_BNRAND					 114
+#define BN_F_BNRAND					 127
 #define BN_F_BN_BLINDING_CONVERT_EX			 100
-#define BN_F_BN_BLINDING_CREATE_PARAM			 133
+#define BN_F_BN_BLINDING_CREATE_PARAM			 128
 #define BN_F_BN_BLINDING_INVERT_EX			 101
 #define BN_F_BN_BLINDING_NEW				 102
 #define BN_F_BN_BLINDING_UPDATE				 103
@@ -738,28 +751,32 @@ void ERR_load_BN_strings(void);
 #define BN_F_BN_BN2HEX					 105
 #define BN_F_BN_CTX_GET					 116
 #define BN_F_BN_CTX_NEW					 106
-#define BN_F_BN_CTX_START				 130
+#define BN_F_BN_CTX_START				 129
 #define BN_F_BN_DIV					 107
-#define BN_F_BN_DIV_RECP				 131
+#define BN_F_BN_DIV_RECP				 130
+#define BN_F_BN_EXP					 123
 #define BN_F_BN_EXPAND2					 108
 #define BN_F_BN_EXPAND_INTERNAL				 120
-#define BN_F_BN_GF2M_MOD				 126
-#define BN_F_BN_GF2M_MOD_DIV				 123
-#define BN_F_BN_GF2M_MOD_EXP				 127
-#define BN_F_BN_GF2M_MOD_MUL				 124
-#define BN_F_BN_GF2M_MOD_SOLVE_QUAD			 128
-#define BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR			 129
-#define BN_F_BN_GF2M_MOD_SQR				 125
-#define BN_F_BN_GF2M_MOD_SQRT				 132
+#define BN_F_BN_GF2M_MOD				 131
+#define BN_F_BN_GF2M_MOD_EXP				 132
+#define BN_F_BN_GF2M_MOD_MUL				 133
+#define BN_F_BN_GF2M_MOD_SOLVE_QUAD			 134
+#define BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR			 135
+#define BN_F_BN_GF2M_MOD_SQR				 136
+#define BN_F_BN_GF2M_MOD_SQRT				 137
 #define BN_F_BN_MOD_EXP2_MONT				 118
 #define BN_F_BN_MOD_EXP_MONT				 109
+#define BN_F_BN_MOD_EXP_MONT_CONSTTIME			 124
 #define BN_F_BN_MOD_EXP_MONT_WORD			 117
+#define BN_F_BN_MOD_EXP_RECP				 125
+#define BN_F_BN_MOD_EXP_SIMPLE				 126
 #define BN_F_BN_MOD_INVERSE				 110
 #define BN_F_BN_MOD_LSHIFT_QUICK			 119
 #define BN_F_BN_MOD_MUL_RECIPROCAL			 111
 #define BN_F_BN_MOD_SQRT				 121
 #define BN_F_BN_MPI2BN					 112
 #define BN_F_BN_NEW					 113
+#define BN_F_BN_RAND					 114
 #define BN_F_BN_RAND_RANGE				 122
 #define BN_F_BN_USUB					 115
 
@@ -775,10 +792,9 @@ void ERR_load_BN_strings(void);
 #define BN_R_INVALID_LENGTH				 106
 #define BN_R_INVALID_RANGE				 115
 #define BN_R_NOT_A_SQUARE				 111
-#define BN_R_NOT_IMPLEMENTED				 116
 #define BN_R_NOT_INITIALIZED				 107
 #define BN_R_NO_INVERSE					 108
-#define BN_R_NO_SOLUTION				 117
+#define BN_R_NO_SOLUTION				 116
 #define BN_R_P_IS_NOT_PRIME				 112
 #define BN_R_TOO_MANY_ITERATIONS			 113
 #define BN_R_TOO_MANY_TEMPORARY_VARIABLES		 109

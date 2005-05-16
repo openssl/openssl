@@ -321,7 +321,7 @@ void do_mul_exp(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *c, BN_CTX *ctx)
 #else /* TEST_SQRT */
 			"2*sqrt [prime == %d (mod 64)] %4d %4d mod %4d"
 #endif
-			" -> %8.3fms %5.1f (%ld)\n",
+			" -> %8.6fms %5.1f (%ld)\n",
 #ifdef TEST_SQRT
 			P_MOD_64,
 #endif
