@@ -7,8 +7,6 @@ TOP=	../..
 CC=	cc
 INCLUDES=
 CFLAG=-g
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
 AR=		ar r
 
@@ -64,6 +62,7 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
+	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 dclean:
@@ -75,8 +74,13 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+rc2_cbc.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc2.h
 rc2_cbc.o: rc2_cbc.c rc2_locl.h
-rc2_ecb.o: rc2_ecb.c rc2_locl.h
+rc2_ecb.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+rc2_ecb.o: ../../include/openssl/rc2.h rc2_ecb.c rc2_locl.h
+rc2_skey.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc2.h
 rc2_skey.o: rc2_locl.h rc2_skey.c
+rc2cfb64.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc2.h
 rc2cfb64.o: rc2_locl.h rc2cfb64.c
+rc2ofb64.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc2.h
 rc2ofb64.o: rc2_locl.h rc2ofb64.c

@@ -8,8 +8,6 @@ CC=	cc
 CPP=	$(CC) -E
 INCLUDES=
 CFLAG=-g
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
 AR=		ar r
 
@@ -81,6 +79,7 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
+	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 dclean:
@@ -92,8 +91,14 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-bf_cfb64.o: bf_cfb64.c bf_locl.h
+bf_cfb64.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
+bf_cfb64.o: ../../include/openssl/opensslconf.h bf_cfb64.c bf_locl.h
+bf_ecb.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
+bf_ecb.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 bf_ecb.o: bf_ecb.c bf_locl.h
-bf_enc.o: bf_enc.c bf_locl.h
-bf_ofb64.o: bf_locl.h bf_ofb64.c
-bf_skey.o: bf_locl.h bf_pi.h bf_skey.c
+bf_enc.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
+bf_enc.o: ../../include/openssl/opensslconf.h bf_enc.c bf_locl.h
+bf_ofb64.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
+bf_ofb64.o: ../../include/openssl/opensslconf.h bf_locl.h bf_ofb64.c
+bf_skey.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
+bf_skey.o: ../../include/openssl/opensslconf.h bf_locl.h bf_pi.h bf_skey.c

@@ -7,8 +7,6 @@ TOP=	../..
 CC=	cc
 INCLUDES=
 CFLAG=-g
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
 AR=		ar r
 
@@ -64,6 +62,7 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
+	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 dclean:
@@ -75,3 +74,13 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+i_cbc.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
+i_cbc.o: i_cbc.c idea_lcl.h
+i_cfb64.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
+i_cfb64.o: i_cfb64.c idea_lcl.h
+i_ecb.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
+i_ecb.o: ../../include/openssl/opensslv.h i_ecb.c idea_lcl.h
+i_ofb64.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
+i_ofb64.o: i_ofb64.c idea_lcl.h
+i_skey.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
+i_skey.o: i_skey.c idea_lcl.h

@@ -7,8 +7,6 @@ TOP=	..
 CC=	cc
 INCLUDES= -I../crypto -I$(TOP) -I../include $(KRB5_INCLUDES)
 CFLAG=-g
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
 AR=		ar r
 # KRB5 stuff
@@ -92,7 +90,11 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	@if [ -z "$(THIS)" ]; then \
+	    $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; \
+	else \
+	    $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC); \
+	fi
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new

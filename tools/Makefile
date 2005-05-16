@@ -7,8 +7,6 @@ TOP=	..
 CC=	cc
 INCLUDES= -I$(TOP) -I../../include
 CFLAG=-g
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
 
 CFLAGS= $(INCLUDES) $(CFLAG)

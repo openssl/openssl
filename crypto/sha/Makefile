@@ -8,8 +8,6 @@ CC=     cc
 CPP=    $(CC) -E
 INCLUDES=
 CFLAG=-g
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=       Makefile
 AR=             ar r
 
@@ -92,6 +90,7 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
+	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 dclean:
@@ -103,6 +102,33 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+sha1_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+sha1_one.o: ../../include/openssl/opensslconf.h
+sha1_one.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+sha1_one.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+sha1_one.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 sha1_one.o: sha1_one.c
-sha512.o: sha512.c
-sha_one.o: sha_one.c
+sha1dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+sha1dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/sha.h
+sha1dgst.o: ../md32_common.h sha1dgst.c sha_locl.h
+sha256.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+sha256.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+sha256.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+sha256.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+sha256.o: ../../include/openssl/symhacks.h ../md32_common.h sha256.c
+sha512.o: ../../e_os.h ../../include/openssl/bio.h
+sha512.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+sha512.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+sha512.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+sha512.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+sha512.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+sha512.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+sha512.o: ../cryptlib.h sha512.c
+sha_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+sha_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/sha.h
+sha_dgst.o: ../md32_common.h sha_dgst.c sha_locl.h
+sha_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+sha_one.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+sha_one.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+sha_one.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+sha_one.o: ../../include/openssl/symhacks.h sha_one.c

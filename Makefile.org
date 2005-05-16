@@ -152,7 +152,9 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		AR='${AR}' PERL='${PERL}' RANLIB='${RANLIB}'	\
 		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/lib'		\
 		INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}'	\
-		DEPFLAG='${DEPFLAG}' MAKEDEPPROG='${MAKEDEPPROG}'	\
+		MAKEDEPEND='$$(TOP)/util/domd $$(TOP) -MD $(MAKEDEPPROG)'\
+		DEPFLAG='-DOPENSSL_NO_DEPRECATED ${DEPFLAG}'	\
+		MAKEDEPPROG='${MAKEDEPPROG}'			\
 		LDFLAGS="$(LDFLAGS)" SHARED_LDFLAGS="$(SHARED_LDFLAGS)"	\
 		KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}'	\
 		EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}'	\
@@ -177,7 +179,7 @@ BUILD_CMD=if echo " $(DIRS) " | grep " $$dir " >/dev/null 2>/dev/null; then \
 	fi; fi
 
 reflect:
-	[ -n "$(THIS)" ] && $(MAKE) $(THIS) $(BIULDENV)
+	@[ -n "$(THIS)" ] && $(MAKE) $(THIS) $(BUILDENV)
 
 sub_all: build_all
 build_all: build_libs build_apps build_tests build_tools
@@ -350,7 +352,7 @@ depend:
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making dependencies $$i..." && \
-		$(MAKE) $(BUILDENV) CFLAG='-DOPENSSL_NO_DEPRECATED ${CFLAG}' depend ) || exit 1; \
+		$(MAKE) $(BUILDENV) depend ) || exit 1; \
 	fi; \
 	done;
 

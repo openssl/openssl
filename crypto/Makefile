@@ -151,11 +151,12 @@ depend:
 	[ -z "$(THIS)" -o -f buildinf.h ] || touch buildinf.h # fake buildinf.h if it does not exist
 	[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 	[ -z "$(THIS)" -o -s buildinf.h ] || rm buildinf.h
-	@[ -z "$(THIS)" ] || for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making depend in crypto/$$i..." && \
-	$(MAKE) INCLUDES='${INCLUDES}' depend ); \
-	done;
+	@[ -z "$(THIS)" ] || (set -e; \
+	for i in $(SDIRS) ; do \
+	    (	cd $$i && echo "making depend in crypto/$$i..." && \
+		$(MAKE) INCLUDES='${INCLUDES}' depend \
+	    ); \
+	done; )
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 clean:

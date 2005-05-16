@@ -8,8 +8,6 @@ CC=	cc
 CPP=	$(CC) -E
 INCLUDES=
 CFLAG=-g
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
 AR=		ar r
 
@@ -79,6 +77,7 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
+	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 dclean:
@@ -90,3 +89,18 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+c_cfb64.o: ../../e_os.h ../../include/openssl/cast.h
+c_cfb64.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+c_cfb64.o: c_cfb64.c cast_lcl.h
+c_ecb.o: ../../e_os.h ../../include/openssl/cast.h
+c_ecb.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+c_ecb.o: ../../include/openssl/opensslv.h c_ecb.c cast_lcl.h
+c_enc.o: ../../e_os.h ../../include/openssl/cast.h
+c_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+c_enc.o: c_enc.c cast_lcl.h
+c_ofb64.o: ../../e_os.h ../../include/openssl/cast.h
+c_ofb64.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+c_ofb64.o: c_ofb64.c cast_lcl.h
+c_skey.o: ../../e_os.h ../../include/openssl/cast.h
+c_skey.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+c_skey.o: c_skey.c cast_lcl.h cast_s.h
