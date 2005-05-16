@@ -800,10 +800,10 @@
  Changes between 0.9.7g and 0.9.7h  [XX xxx XXXX]
 
   *) Make a new fixed-window mod_exp implementation the default for
-     RSA, DSA, and DH private-key operations to mitigate the
-     hyper-threading timing attacks pointed out by Colin Percival
-     (http://www.daemonology.net/hyperthreading-considered-harmful/),
-     and potential related attacks.
+     RSA, DSA, and DH private-key operations so that the sequence of
+     squares and multiplies and the memory access pattern are
+     independent of the particular secret key.  This will mitigate
+     cache-timing and potential related attacks.
 
      BN_mod_exp_mont_consttime() is the new exponentiation implementation,
      and this is automatically used by BN_mod_exp_mont() if the new flag
