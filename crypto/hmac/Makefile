@@ -75,12 +75,4 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-hmac.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
-hmac.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-hmac.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-hmac.o: ../../include/openssl/evp.h ../../include/openssl/hmac.h
-hmac.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-hmac.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-hmac.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-hmac.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-hmac.o: ../../include/openssl/symhacks.h ../cryptlib.h hmac.c
+hmac.o: hmac.c

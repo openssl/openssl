@@ -188,26 +188,18 @@ ede_cbcm_enc.o: ../../include/openssl/ossl_typ.h
 ede_cbcm_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ede_cbcm_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 ede_cbcm_enc.o: ../../include/openssl/ui_compat.h des_locl.h ede_cbcm_enc.c
-enc_read.o: ../../e_os.h ../../include/openssl/bio.h
-enc_read.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 enc_read.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-enc_read.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-enc_read.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-enc_read.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-enc_read.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-enc_read.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-enc_read.o: ../../include/openssl/ui_compat.h ../cryptlib.h des_locl.h
-enc_read.o: enc_read.c
-enc_writ.o: ../../e_os.h ../../include/openssl/bio.h
-enc_writ.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+enc_read.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+enc_read.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+enc_read.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+enc_read.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+enc_read.o: des_locl.h enc_read.c
 enc_writ.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-enc_writ.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-enc_writ.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-enc_writ.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-enc_writ.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
-enc_writ.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-enc_writ.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
-enc_writ.o: ../cryptlib.h des_locl.h enc_writ.c
+enc_writ.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+enc_writ.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
+enc_writ.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+enc_writ.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+enc_writ.o: ../../include/openssl/ui_compat.h des_locl.h enc_writ.c
 fcrypt.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 fcrypt.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 fcrypt.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
