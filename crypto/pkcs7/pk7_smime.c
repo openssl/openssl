@@ -296,11 +296,9 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 	
 	if (tmpin == indata)
 		{
-		if(indata) BIO_pop(p7bio);
-		BIO_free_all(p7bio);
+		if (indata) BIO_pop(p7bio);
 		}
-	else
-		BIO_free_all(tmpin);
+	BIO_free_all(p7bio);
 
 	sk_X509_free(signers);
 
