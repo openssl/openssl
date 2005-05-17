@@ -58,8 +58,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/hmac.h>
 #include "cryptlib.h"
+#include <openssl/hmac.h>
 
 void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 		  const EVP_MD *md, ENGINE *impl)

@@ -57,9 +57,9 @@
  */
 
 #include <stdio.h>
+#include "cryptlib.h"
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 
@@ -86,7 +86,12 @@ void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u),
 #ifndef OPENSSL_NO_FP_API
 static int print_fp(const char *str, size_t len, void *fp)
 	{
-	return fprintf((FILE *)fp, "%s", str);
+	BIO bio;
+
+	BIO_set(&bio,BIO_s_file());
+	BIO_set_fp(&bio,fp,BIO_NOCLOSE);
+
+	return BIO_printf(&bio, "%s", str);
 	}
 void ERR_print_errors_fp(FILE *fp)
 	{

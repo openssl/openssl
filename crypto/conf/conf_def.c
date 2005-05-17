@@ -60,6 +60,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "cryptlib.h"
 #include <openssl/stack.h>
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
@@ -67,7 +68,6 @@
 #include "conf_def.h"
 #include <openssl/buffer.h>
 #include <openssl/err.h>
-#include "cryptlib.h"
 
 static char *eat_ws(CONF *conf, char *p);
 static char *eat_alpha_numeric(CONF *conf, char *p);
