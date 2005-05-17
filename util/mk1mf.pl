@@ -26,15 +26,9 @@ $infile="MINFO";
 	"VC-WIN32",   "Microsoft Visual C++ [4-6] - Windows NT or 9X",
 	"VC-CE",   "Microsoft eMbedded Visual C++ 3.0 - Windows CE ONLY",
 	"VC-NT",   "Microsoft Visual C++ [4-6] - Windows NT ONLY",
-	"VC-W31-16",  "Microsoft Visual C++ 1.52 - Windows 3.1 - 286",
-	"VC-WIN16",   "Alias for VC-W31-32",
-	"VC-W31-32",  "Microsoft Visual C++ 1.52 - Windows 3.1 - 386+",
-	"VC-MSDOS","Microsoft Visual C++ 1.52 - MSDOS",
 	"Mingw32", "GNU C++ - Windows NT or 9x",
 	"Mingw32-files", "Create files with DOS copy ...",
 	"BC-NT",   "Borland C++ 4.5 - Windows NT",
-	"BC-W31",  "Borland C++ 4.5 - Windows 3.1 - PROBABLY NOT WORKING",
-	"BC-MSDOS","Borland C++ 4.5 - MSDOS",
 	"linux-elf","Linux elf",
 	"ultrix-mips","DEC mips ultrix",
 	"FreeBSD","FreeBSD distribution",
@@ -125,25 +119,7 @@ $bin_dir=(defined($VARS{'BIN'}))?$VARS{'BIN'}:'';
 $NT=0;
 
 push(@INC,"util/pl","pl");
-if ($platform eq "VC-MSDOS")
-	{
-	$asmbits=16;
-	$msdos=1;
-	require 'VC-16.pl';
-	}
-elsif ($platform eq "VC-W31-16")
-	{
-	$asmbits=16;
-	$msdos=1; $win16=1;
-	require 'VC-16.pl';
-	}
-elsif (($platform eq "VC-W31-32") || ($platform eq "VC-WIN16"))
-	{
-	$asmbits=32;
-	$msdos=1; $win16=1;
-	require 'VC-16.pl';
-	}
-elsif (($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
+if (($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
 	{
 	$NT = 1 if $platform eq "VC-NT";
 	require 'VC-32.pl';
@@ -164,23 +140,6 @@ elsif ($platform eq "BC-NT")
 	{
 	$bc=1;
 	require 'BC-32.pl';
-	}
-elsif ($platform eq "BC-W31")
-	{
-	$bc=1;
-	$msdos=1; $w16=1;
-	require 'BC-16.pl';
-	}
-elsif ($platform eq "BC-Q16")
-	{
-	$msdos=1; $w16=1; $shlib=0; $qw=1;
-	require 'BC-16.pl';
-	}
-elsif ($platform eq "BC-MSDOS")
-	{
-	$asmbits=16;
-	$msdos=1;
-	require 'BC-16.pl';
 	}
 elsif ($platform eq "FreeBSD")
 	{
