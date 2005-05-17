@@ -1,0 +1,14 @@
+librsaref.so.gnu
+librsaref.so.tru64
+librsaref.so.solaris
+librsaref.so.irix
+librsaref.so.hpux32
+librsaref.so.hpux64
+librsaref.so.aix
+librsaref.exp
+doc
+install
+rdemo
+source
+*.flc
+semantic.cache
