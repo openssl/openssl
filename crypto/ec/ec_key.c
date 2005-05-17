@@ -201,46 +201,16 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 	return dest;
 	}
 
-EC_KEY *EC_KEY_dup(const EC_KEY *eckey)
+EC_KEY *EC_KEY_dup(const EC_KEY *ec_key)
 	{
-	EC_KEY *ret = NULL;
-	int	ok = 1;
-
-	ret = EC_KEY_new();
+	EC_KEY *ret = EC_KEY_new();
 	if (ret == NULL)
 		return NULL;
-	/* copy the parameters */
-	if (eckey->group)
-		{
-		ret->group = EC_GROUP_dup(eckey->group);
-		if (ret->group == NULL)
-			ok = 0;
-		}
-	/*  copy the public key */
-	if (eckey->pub_key && eckey->group)
-		{
-		ret->pub_key = EC_POINT_dup(eckey->pub_key, eckey->group);
-		if (ret->pub_key == NULL)
-			ok = 0;
-		}
-	/* copy the private key */
-	if (eckey->priv_key)
-		{
-		ret->priv_key = BN_dup(eckey->priv_key);
-		if (ret->priv_key == NULL)
-			ok = 0;
-		}
-	/* copy the rest */
-	ret->enc_flag  = eckey->enc_flag;
-	ret->conv_form = eckey->conv_form;
-	ret->version   = eckey->version;
-
-	if (!ok)
+	if (EC_KEY_copy(ret, ec_key) == NULL)
 		{
 		EC_KEY_free(ret);
-		ret = NULL;
+		return NULL;
 		}
-
 	return ret;
 	}
 
