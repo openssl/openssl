@@ -39,10 +39,6 @@ echo md2test
 md2test
 if errorlevel 1 goto done
 
-echo mdc2test
-mdc2test
-if errorlevel 1 goto done
-
 echo rc2test
 rc2test
 if errorlevel 1 goto done
