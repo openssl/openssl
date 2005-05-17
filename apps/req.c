@@ -79,7 +79,6 @@
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
-#include "../crypto/cryptlib.h"
 
 #define SECTION		"req"
 

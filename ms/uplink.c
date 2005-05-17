@@ -1,4 +1,4 @@
-#if defined(_WIN64) && !defined(UNICODE)
+#if (defined(_WIN64) || defined(_WIN32_WCE)) && !defined(UNICODE)
 #define UNICODE
 #endif
 #if defined(UNICODE) && !defined(_UNICODE)
@@ -7,146 +7,90 @@
 #if defined(_UNICODE) && !defined(UNICODE)
 #define UNICODE
 #endif
-#if defined(_MSC_VER) && !defined(_WIN32_WINNT)
-#define _WIN32_WINNT 0x0333	/* 3.51 */
-#endif
 
 #include <windows.h>
 #include <tchar.h>
 #include <stdio.h>
-#include <malloc.h>
 #include "uplink.h"
-
-#ifdef _MSC_VER
-#pragma comment(lib,"delayimp")
-/*
- * CL command line should also be complemented with following:
- *
- *	/link /delayload:advapi32.dll /delayload:user32.dll
- *
- * This is required if/as we want to support Win9x. With delayloaded
- * DLLs in question all we have to do is to make sure NT-specific
- * functions are not actually called under Win9x.
- */
-#endif
-
-#if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
-int IsService()
-{ HWINSTA h;
-  DWORD len;
-  WCHAR *name;
-
-    GetDesktopWindow(); /* return value is ignored */
-
-    h = GetProcessWindowStation();
-    if (h==NULL) return -1;
-
-    if (GetUserObjectInformationW (h,UOI_NAME,NULL,0,&len) ||
-	GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-	return -1;
-
-    if (len>512) return -1;		/* paranoia */
-    len++,len&=~1;			/* paranoia */
-#ifdef _MSC_VER
-    name=(WCHAR *)_alloca(len+sizeof(WCHAR));
-#else
-    name=(WCHAR *)alloca(len+sizeof(WCHAR));
-#endif
-    if (!GetUserObjectInformationW (h,UOI_NAME,name,len,&len))
-	return -1;
-
-    len++,len&=~1;			/* paranoia */
-    name[len/sizeof(WCHAR)]=L'\0';	/* paranoia */
-#if 1
-    /* This doesn't cover "interactive" services [working with real
-     * WinSta0's] nor programs started non-interactively by Task
-     * Scheduler [those are working with SAWinSta]. */
-    if (wcsstr(name,L"Service-0x"))	return 1;
-#else
-    /* This covers all non-interactive programs such as services. */
-    if (!wcsstr(name,L"WinSta0"))	return 1;
-#endif
-    else				return 0;
-}
-#endif
+void OPENSSL_showfatal(const char *,...);
 
 static TCHAR msg[128];
 
-static void unimplemented ()
-{
-#if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
-    /* this -------------v--- guards NT-specific calls */
-    if (GetVersion() < 0x80000000 && IsService())
-    {	HANDLE h = RegisterEventSource(0,_T("OPENSSL"));
-	TCHAR *pmsg=msg;
-	ReportEvent(h,EVENTLOG_ERROR_TYPE,0,0,0,1,0,&pmsg,0);
-	DeregisterEventSource(h);
-    }
-    else
-#endif
-    {	MSGBOXPARAMS         m;
-
-	m.cbSize             = sizeof(m);
-	m.hwndOwner          = NULL;
-	m.lpszCaption        = _T("OpenSSL: FATAL");
-	m.dwStyle            = MB_OK;
-	m.hInstance          = NULL;
-	m.lpszIcon           = IDI_ERROR;
-	m.dwContextHelpId    = 0;
-	m.lpfnMsgBoxCallback = NULL;
-	m.dwLanguageId       = MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US);
-	m.lpszText           = msg;
-
-	MessageBoxIndirect (&m);
-    }
+static void unimplemented (void)
+{   OPENSSL_showfatal (sizeof(TCHAR)==sizeof(char)?"%s\n":"%S\n",msg);
     ExitProcess (1);
 }
 
-void OPENSSL_Uplink (void **table, int index)
-{ static HMODULE app=NULL;
-  static void **applinktable=NULL;
+void OPENSSL_Uplink (volatile void **table, int index)
+{ static HMODULE volatile apphandle=NULL;
+  static void ** volatile applinktable=NULL;
   int len;
+  void (*func)(void)=unimplemented;
+  HANDLE h;
+  void **p;
 
-    len = _stprintf (msg,_T("OPENSSL_Uplink(%p,%02X): "),table,index);
-    _tcscpy (msg+len,_T("unimplemented function"));
-    table [index] = unimplemented;
+    /* Note that the below code is not MT-safe in respect to msg
+     * buffer, but what's the worst thing that can happen? Error
+     * message might be misleading or corrupted. As error condition
+     * is fatal and should never be risen, I accept the risk... */
+    /* One can argue that I should have used InterlockedExchangePointer
+     * or something to update static variables and table[]. Well,
+     * store instructions are as atomic as they can get and assigned
+     * values are effectively constant... So that volatile qualifier
+     * should be sufficient [it prohibits compiler to reorder memory
+     * access instructions]. */
+    do {
+	len = _stprintf (msg,_T("OPENSSL_Uplink(%p,%02X): "),table,index);
+	_tcscpy (msg+len,_T("unimplemented function"));
 
-    if (app==NULL && (app=GetModuleHandle(NULL))==NULL)
-    {	app=(HMODULE)-1; _tcscpy (msg+len,_T("no host application"));
-	return;
-    }
-    else if (app==(HMODULE)-1)	{ return; }
-
-    if (applinktable==NULL)
-    { void**(*applink)();
-
-	applink=(void**(*)())GetProcAddress(app,"OPENSSL_Applink");
-	if (applink==NULL)
-	{   app=(HMODULE)-1; _tcscpy (msg+len,_T("no OPENSSL_Applink"));
-	    return;
+	if ((h=apphandle)==NULL)
+	{   if  ((h=GetModuleHandle(NULL))==NULL)
+	    {	apphandle=(HMODULE)-1;
+		_tcscpy (msg+len,_T("no host application"));
+		break;
+	    }
+	    apphandle = h;
 	}
-	applinktable = (*applink)();
+	if ((h=apphandle)==(HMODULE)-1) /* revalidate */
+	    break;
+
 	if (applinktable==NULL)
-	{   app=(HMODULE)-1; _tcscpy (msg+len,_T("no ApplinkTable"));
-	    return;
+	{ void**(*applink)();
+
+	    applink=(void**(*)())GetProcAddress(h,"OPENSSL_Applink");
+	    if (applink==NULL)
+	    {	apphandle=(HMODULE)-1;
+		_tcscpy (msg+len,_T("no OPENSSL_Applink"));
+		break;
+	    }
+	    p = (*applink)();
+	    if (p==NULL)
+	    {	apphandle=(HMODULE)-1;
+		_tcscpy (msg+len,_T("no ApplinkTable"));
+		break;
+	    }
+	    applinktable = p;
 	}
-    }
 
-    if (index > (int)applinktable[0])	{ return; }
+	if (index > (int)p[0])
+	    break;
 
-    if (applinktable[index]) table[index] = applinktable[index];
+	if (p[index]) func = p[index];
+    } while (0);
+
+    table[index] = func;
 }    
 
-#if defined(_MSC_VER) && defined(_M_IX86)
+#if defined(_MSC_VER) && defined(_M_IX86) && !defined(OPENSSL_NO_INLINE_ASM)
 #define LAZY(i)		\
-__declspec(naked) static void lazy##i () { 	\
+__declspec(naked) static void lazy##i (void) { 	\
 	_asm	push i				\
 	_asm	push OFFSET OPENSSL_UplinkTable	\
 	_asm	call OPENSSL_Uplink		\
 	_asm	add  esp,8			\
 	_asm	jmp  OPENSSL_UplinkTable+4*i	}
 
-#if APPLINK_MAX>20
+#if APPLINK_MAX>25
 #error "Add more stubs..."
 #endif
 /* make some in advance... */
@@ -154,12 +98,14 @@ LAZY(1)  LAZY(2)  LAZY(3)  LAZY(4)  LAZY(5)
 LAZY(6)  LAZY(7)  LAZY(8)  LAZY(9)  LAZY(10)
 LAZY(11) LAZY(12) LAZY(13) LAZY(14) LAZY(15)
 LAZY(16) LAZY(17) LAZY(18) LAZY(19) LAZY(20)
+LAZY(21) LAZY(22) LAZY(23) LAZY(24) LAZY(25)
 void *OPENSSL_UplinkTable[] = {
 	(void *)APPLINK_MAX,
 	lazy1, lazy2, lazy3, lazy4, lazy5,
 	lazy6, lazy7, lazy8, lazy9, lazy10,
 	lazy11,lazy12,lazy13,lazy14,lazy15,
 	lazy16,lazy17,lazy18,lazy19,lazy20,
+	lazy21,lazy22,lazy23,lazy24,lazy25,
 };
 #endif
 

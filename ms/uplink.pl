@@ -29,9 +29,36 @@ $arg = shift;
 
 if ($arg =~ /win32n/)	{ ia32nasm();  }
 elsif ($arg =~ /win32/)	{ ia32masm();  }
-elsif ($arg =~ /ia64/)	{ ia64ias();   }
-elsif ($arg =~ /amd64/)	{ amd64masm(); }
+elsif ($arg =~ /coff/)	{ ia32gas();   }
+elsif ($arg =~ /win64i/ or $arg =~ /ia64/)	{ ia64ias();   }
+elsif ($arg =~ /win64a/ or $arg =~ /amd64/)	{ amd64masm(); }
 else	{ die "nonsense $arg"; }
+
+sub ia32gas() {
+print <<___;
+.text
+___
+for ($i=1;$i<=$N;$i++) {
+print <<___;
+.def	.Lazy$i;	.scl	3;	.type	32;	.endef
+.align	4
+.Lazy$i:
+	pushl	\$$i
+	pushl	_OPENSSL_UplinkTable
+	call	_OPENSSL_Uplink
+	addl	\$8,%esp
+	jmp	*(_OPENSSL_UplinkTable+4*$i)
+___
+}
+print <<___;
+.data
+.align	4
+.globl  _OPENSSL_UplinkTable
+_OPENSSL_UplinkTable:
+	.long	$N
+___
+for ($i=1;$i<=$N;$i++) {   print "	.long	.Lazy$i\n";   }
+}
 
 sub ia32masm() {
 print <<___;
