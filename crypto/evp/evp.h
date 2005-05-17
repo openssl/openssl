@@ -646,6 +646,7 @@ const EVP_MD *EVP_sha(void);
 const EVP_MD *EVP_sha1(void);
 const EVP_MD *EVP_dss(void);
 const EVP_MD *EVP_dss1(void);
+#ifdef OPENSSL_FIPS
 #ifndef OPENSSL_NO_SHA256
 const EVP_MD *EVP_sha224(void);
 const EVP_MD *EVP_sha256(void);
@@ -653,6 +654,7 @@ const EVP_MD *EVP_sha256(void);
 #ifndef OPENSSL_NO_SHA512
 const EVP_MD *EVP_sha384(void);
 const EVP_MD *EVP_sha512(void);
+#endif
 #endif
 #endif
 #ifndef OPENSSL_NO_MDC2
