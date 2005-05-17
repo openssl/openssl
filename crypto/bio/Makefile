@@ -35,7 +35,7 @@ LIBOBJ= bio_lib.o bio_cb.o bio_err.o \
 SRC= $(LIBSRC)
 
 EXHEADER= bio.h
-HEADER=	bss_file.c $(EXHEADER)
+HEADER=	bio_lcl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

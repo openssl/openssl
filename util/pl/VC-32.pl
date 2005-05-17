@@ -11,7 +11,7 @@ $rm='del';
 
 # C compiler stuff
 $cc='cl';
-$cflags=' /MD /W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
+$cflags=' /MD /W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0333 -DL_ENDIAN -DDSO_WIN32';
 $lflags="/nologo /subsystem:console /machine:I386 /opt:ref";
 $mlflags='';
 
@@ -95,6 +95,32 @@ if ($shlib)
 	$lib_cflag=" -D_WINDLL";
 	$out_def="out32dll";
 	$tmp_def="tmp32dll";
+	#
+	# Engage Applink...
+	#
+	$app_ex_obj.=" \$(OBJ_D)\\applink.obj /implib:\$(TMP_D)\\junk.lib";
+	$cflags.=" -DOPENSSL_USE_APPLINK";
+	# I'm open for better suggestions than overriding $banner...
+	$banner=<<'___';
+	@echo Building OpenSSL
+
+$(OBJ_D)\applink.obj:	ms\applink.c
+	$(CC) /Fo$(OBJ_D)\applink.obj $(APP_CFLAGS) -c ms\applink.c
+$(OBJ_D)\uplink.obj:	ms\uplink.c $(OBJ_D)\applink.c
+	$(CC) /Fo$(OBJ_D)\uplink.obj $(SHLIB_CFLAGS) -c ms\uplink.c
+$(INCL_D)\uplink.h:	ms\uplink.h
+	$(CP) ms\uplink.h $(INCL_D)\uplink.h
+$(INCO_D)\applink.c:	ms\applink.c
+	$(CP) ms\applink.c $(INCO_D)\applink.c
+$(OBJ_D)\applink.c:	ms\applink.c
+	$(CP) ms\applink.c $(OBJ_D)\applink.c
+
+HEADER=$(HEADER) $(INCL_D)\uplink.h
+EXHEADER= $(EXHEADER) $(INCO_D)\applink.c
+
+LIBS_DEP=$(LIBS_DEP) $(OBJ_D)\applink.obj
+CRYPTOOBJ=$(OBJ_D)\uplink.obj $(CRYPTOOBJ)
+___
 	}
 
 $cflags.=" /Fd$out_def";
