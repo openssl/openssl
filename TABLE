@@ -1,32 +1,5 @@
 Output of `Configure TABLE':
 
-*** BC-16
-$cc           = bcc
-$cflags       = 
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = WIN16
-$lflags       = 
-$bn_ops       = BN_LLONG DES_PTR RC4_INDEX SIXTEEN_BIT
-$cpuid_obj    = 
-$bn_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-
 *** BC-32
 $cc           = bcc32
 $cflags       = 
@@ -648,33 +621,6 @@ $shared_extension =
 $ranlib       = 
 $arflags      = 
 
-*** VC-MSDOS
-$cc           = cl
-$cflags       = 
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = MSDOS
-$lflags       = 
-$bn_ops       = BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT
-$cpuid_obj    = 
-$bn_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-
 *** VC-NT
 $cc           = cl
 $cflags       = 
@@ -695,87 +641,6 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = win32
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-
-*** VC-W31-16
-$cc           = cl
-$cflags       = 
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = WIN16
-$lflags       = 
-$bn_ops       = BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX SIXTEEN_BIT
-$cpuid_obj    = 
-$bn_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-
-*** VC-W31-32
-$cc           = cl
-$cflags       = 
-$unistd       = 
-$thread_cflag = 
-$sys_id       = WIN16
-$lflags       = 
-$bn_ops       = BN_LLONG MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT
-$cpuid_obj    = 
-$bn_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-
-*** VC-WIN16
-$cc           = cl
-$cflags       = 
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = WIN16
-$lflags       = 
-$bn_ops       = MD2_CHAR DES_UNROLL DES_PTR RC4_INDEX THIRTY_TWO_BIT
-$cpuid_obj    = 
-$bn_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
 $shared_target= 
 $shared_cflag = 
 $shared_ldflag = 
