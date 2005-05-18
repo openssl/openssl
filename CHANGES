@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8 and 0.9.9  [xx XXX xxxx]
+
+  *) 
+
  Changes between 0.9.7h and 0.9.8  [xx XXX xxxx]
 
   *) Add attribute functions to EVP_PKEY structure. Modify
