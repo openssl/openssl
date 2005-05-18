@@ -25,11 +25,11 @@
  * (Prior to 0.9.5a beta1, a different scheme was used: MMNNFFRBB for
  *  major minor fix final patch/beta)
  */
-#define OPENSSL_VERSION_NUMBER	0x00908000L
+#define OPENSSL_VERSION_NUMBER	0x00909000L
 #ifdef OPENSSL_FIPS
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.8-fips-dev XX xxx XXXX"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.9-fips-dev XX xxx XXXX"
 #else
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.8-dev XX xxx XXXX"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.9-dev XX xxx XXXX"
 #endif
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
