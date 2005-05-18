@@ -99,23 +99,18 @@ if ($shlib)
 	# Engage Applink...
 	#
 	$app_ex_obj.=" \$(OBJ_D)\\applink.obj /implib:\$(TMP_D)\\junk.lib";
-	$cflags.=" -DOPENSSL_USE_APPLINK";
+	$cflags.=" -DOPENSSL_USE_APPLINK -I.";
 	# I'm open for better suggestions than overriding $banner...
 	$banner=<<'___';
 	@echo Building OpenSSL
 
 $(OBJ_D)\applink.obj:	ms\applink.c
 	$(CC) /Fo$(OBJ_D)\applink.obj $(APP_CFLAGS) -c ms\applink.c
-$(OBJ_D)\uplink.obj:	ms\uplink.c $(OBJ_D)\applink.c
+$(OBJ_D)\uplink.obj:	ms\uplink.c ms\applink.c
 	$(CC) /Fo$(OBJ_D)\uplink.obj $(SHLIB_CFLAGS) -c ms\uplink.c
-$(INCL_D)\uplink.h:	ms\uplink.h
-	$(CP) ms\uplink.h $(INCL_D)\uplink.h
 $(INCO_D)\applink.c:	ms\applink.c
 	$(CP) ms\applink.c $(INCO_D)\applink.c
-$(OBJ_D)\applink.c:	ms\applink.c
-	$(CP) ms\applink.c $(OBJ_D)\applink.c
 
-HEADER=$(HEADER) $(INCL_D)\uplink.h
 EXHEADER= $(EXHEADER) $(INCO_D)\applink.c
 
 LIBS_DEP=$(LIBS_DEP) $(OBJ_D)\applink.obj
