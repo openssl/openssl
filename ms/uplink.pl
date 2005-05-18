@@ -44,7 +44,7 @@ print <<___;
 .align	4
 .Lazy$i:
 	pushl	\$$i
-	pushl	_OPENSSL_UplinkTable
+	pushl	\$_OPENSSL_UplinkTable
 	call	_OPENSSL_Uplink
 	addl	\$8,%esp
 	jmp	*(_OPENSSL_UplinkTable+4*$i)

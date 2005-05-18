@@ -66,7 +66,7 @@
 
 #ifdef OPENSSL_USE_APPLINK
 #define BIO_FLAGS_UPLINK 0x8000
-#include "uplink.h"
+#include "ms/uplink.h"
 #endif
 
 #include <openssl/crypto.h>
