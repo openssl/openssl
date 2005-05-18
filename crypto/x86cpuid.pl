@@ -5,6 +5,8 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],"x86cpuid");
 
+for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
+
 &function_begin("OPENSSL_ia32_cpuid");
 	&xor	("edx","edx");
 	&pushf	();
@@ -115,17 +117,19 @@ require "x86asm.pl";
 	&mov	("ecx",&DWP(0,"ecx"));
 	&bt	(&DWP(0,"ecx"),1);
 	&jnc	(&label("no_x87"));
-	&bt	(&DWP(0,"ecx"),26);
-	&jnc	(&label("no_sse2"));
-	&pxor	("xmm0","xmm0");
-	&pxor	("xmm1","xmm1");
-	&pxor	("xmm2","xmm2");
-	&pxor	("xmm3","xmm3");
-	&pxor	("xmm4","xmm4");
-	&pxor	("xmm5","xmm5");
-	&pxor	("xmm6","xmm6");
-	&pxor	("xmm7","xmm7");
-&set_label("no_sse2");
+	if ($sse2) {
+		&bt	(&DWP(0,"ecx"),26);
+		&jnc	(&label("no_sse2"));
+		&pxor	("xmm0","xmm0");
+		&pxor	("xmm1","xmm1");
+		&pxor	("xmm2","xmm2");
+		&pxor	("xmm3","xmm3");
+		&pxor	("xmm4","xmm4");
+		&pxor	("xmm5","xmm5");
+		&pxor	("xmm6","xmm6");
+		&pxor	("xmm7","xmm7");
+	&set_label("no_sse2");
+	}
 	# just a bunch of fldz to zap the fp/mm bank...
 	&data_word(0xeed9eed9,0xeed9eed9,0xeed9eed9,0xeed9eed9);
 	&emms	();
