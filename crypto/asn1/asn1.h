@@ -932,7 +932,7 @@ int ASN1_i2d_bio(i2d_of_void *i2d,BIO *out, unsigned char *x);
 #define ASN1_i2d_bio_of(type,i2d,out,x) \
 	((int (*)(I2D_OF(type),BIO *,type *))openssl_fcast(ASN1_i2d_bio))(i2d,out,x)
 #define ASN1_i2d_bio_of_const(type,i2d,out,x) \
-	((int (*)(I2D_OF_const(type),BIO *,type *))openssl_fcast(ASN1_i2d_bio))(i2d,out,x)
+	((int (*)(I2D_OF_const(type),BIO *,const type *))openssl_fcast(ASN1_i2d_bio))(i2d,out,x)
 int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x);
 int ASN1_UTCTIME_print(BIO *fp,ASN1_UTCTIME *a);
 int ASN1_GENERALIZEDTIME_print(BIO *fp,ASN1_GENERALIZEDTIME *a);
