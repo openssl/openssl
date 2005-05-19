@@ -150,12 +150,12 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		CC='${CC}' CFLAG='${CFLAG}' 			\
 		AS='${CC}' ASFLAG='${CFLAG} -c'			\
 		AR='${AR}' PERL='${PERL}' RANLIB='${RANLIB}'	\
-		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/lib'		\
+		SDIRS='${SDIRS}' LIBRPATH='${INSTALLTOP}/lib'		\
 		INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}'	\
-		MAKEDEPEND='$$(TOP)/util/domd $$(TOP) -MD $(MAKEDEPPROG)'\
+		MAKEDEPEND='$${TOP}/util/domd $${TOP} -MD ${MAKEDEPPROG}'\
 		DEPFLAG='-DOPENSSL_NO_DEPRECATED ${DEPFLAG}'	\
 		MAKEDEPPROG='${MAKEDEPPROG}'			\
-		LDFLAGS="$(LDFLAGS)" SHARED_LDFLAGS="$(SHARED_LDFLAGS)"	\
+		LDFLAGS='${LDFLAGS}' SHARED_LDFLAGS='${SHARED_LDFLAGS}'	\
 		KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}'	\
 		EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}'	\
 		SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}'	\
@@ -173,7 +173,7 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 BUILD_CMD=if echo " $(DIRS) " | grep " $$dir " >/dev/null 2>/dev/null; then \
 	if [ -d "$$dir" ]; then \
 		(cd $$dir && echo "making $$target in $$dir..." && \
-		$(MAKE) $(BUILDENV) $$target ) || exit 1; \
+		$(MAKE) $(BUILDENV) BUILDENV="$(BUILDENV)" $$target ) || exit 1; \
 	else \
 		$(MAKE) $$dir; \
 	fi; fi

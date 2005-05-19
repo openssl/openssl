@@ -88,7 +88,7 @@ subdirs:
 	@for i in $(SDIRS) ;\
 	do \
 	(cd $$i && echo "making all in crypto/$$i..." && \
-	$(MAKE) INCLUDES='${INCLUDES}' all ) || exit 1; \
+	$(MAKE) $(BUILDENV) INCLUDES='${INCLUDES}' all ) || exit 1; \
 	done;
 
 files:
