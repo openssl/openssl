@@ -12,7 +12,7 @@
  * 0.9.3-beta2    0x00903002 (same as ...beta2-dev)
  * 0.9.3	  0x0090300f
  * 0.9.3a	  0x0090301f
- * 0.9.4 	  0x0090400f
+ * 0.9.4	  0x0090400f
  * 1.2.3z	  0x102031af
  *
  * For continuity reasons (because 0.9.5 is already out, and is coded
@@ -27,9 +27,9 @@
  */
 #define OPENSSL_VERSION_NUMBER	0x00908001L
 #ifdef OPENSSL_FIPS
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.8-fips-beta1-dev XX xxx XXXX"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.8-fips-beta1 19 May 2005"
 #else
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.8-beta1-dev XX xxx XXXX"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.8-beta1 19 May 2005"
 #endif
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 

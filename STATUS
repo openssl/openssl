@@ -1,11 +1,11 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2005/05/18 04:14:21 $
+  ______________                           $Date: 2005/05/19 19:42:03 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.9:  Under development...
-    o  OpenSSL 0.9.8:  In beta...
+    o  OpenSSL 0.9.8-beta1:  Released on May 19th, 2005
     o  OpenSSL 0.9.7g: Released on April     11th, 2005
     o  OpenSSL 0.9.7f: Released on March     22nd, 2005
     o  OpenSSL 0.9.7e: Released on October   25th, 2004
@@ -56,16 +56,8 @@
 	Private key, certificate and CRL API and implementation.
 	Developing and bugfixing PKCS#7 (S/MIME code).
         Various X509 issues: character sets, certificate request extensions.
-    o Geoff and Richard are currently working on:
-	ENGINE (the new code that gives hardware support among others).
     o Richard is currently working on:
-	UI (User Interface)
-	UTIL (a new set of library functions to support some higher level
-	      functionality that is currently missing).
-	Shared library support for VMS.
-	Kerberos 5 authentication (Heimdal)
 	Constification
-	Compression
 	Attribute Certificate support
 	Certificate Pair support
 	Storage Engines (primarly an LDAP storage engine)
