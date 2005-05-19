@@ -88,6 +88,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 
     	if (!(si = PKCS7_add_signature(p7,signcert,pkey,EVP_sha1()))) {
 		PKCS7err(PKCS7_F_PKCS7_SIGN,PKCS7_R_PKCS7_ADD_SIGNATURE_ERROR);
+		PKCS7_free(p7);
 		return NULL;
 	}
 
@@ -105,6 +106,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		{
 		if(!(smcap = sk_X509_ALGOR_new_null())) {
 			PKCS7err(PKCS7_F_PKCS7_SIGN,ERR_R_MALLOC_FAILURE);
+			PKCS7_free(p7);
 			return NULL;
 		}
 #ifndef OPENSSL_NO_DES
@@ -130,6 +132,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 
 	if (!(p7bio = PKCS7_dataInit(p7, NULL))) {
 		PKCS7err(PKCS7_F_PKCS7_SIGN,ERR_R_MALLOC_FAILURE);
+		PKCS7_free(p7);
 		return NULL;
 	}
 
@@ -139,10 +142,12 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 
         if (!PKCS7_dataFinal(p7,p7bio)) {
 		PKCS7err(PKCS7_F_PKCS7_SIGN,PKCS7_R_PKCS7_DATASIGN);
+		PKCS7_free(p7);
+		BIO_free_all(p7bio);
 		return NULL;
 	}
 
-        BIO_free_all(p7bio);
+	BIO_free_all(p7bio);
 	return p7;
 }
 
