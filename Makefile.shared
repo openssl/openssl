@@ -68,7 +68,7 @@ LIBDEPS=
 # The rest is private to this makefile.
 
 SET_X=:
-SET_X=set -x
+#SET_X=set -x
 
 top:
 	echo "Trying to use this makefile interactively?  Don't."

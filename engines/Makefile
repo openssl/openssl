@@ -65,7 +65,7 @@ lib:	$(LIBOBJ)
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		for l in $(LIBNAMES); do \
-			$(MAKE) -f ../Makefile.shared \
+			$(MAKE) -f ../Makefile.shared $(BUILDENV) \
 				LIBNAME=$$l LIBEXTRAS=e_$$l.o \
 				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
 				link_o.$(SHLIB_TARGET); \
