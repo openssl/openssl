@@ -119,6 +119,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_R_NON_FIPS_METHOD				 100
 #define FIPS_R_PAIRWISE_TEST_FAILED			 107
 #define FIPS_R_SELFTEST_FAILED				 101
+#define FIPS_R_KEY_TOO_SHORT				 108
 
 #ifdef  __cplusplus
 }

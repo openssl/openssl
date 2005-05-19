@@ -261,34 +261,16 @@ int main(int argc,char **argv)
 
     /* Non-Approved cryptographic operation
     */
-    printf("0. Non-Approved cryptographic operation test...\n");
+    printf("1. Non-Approved cryptographic operation test...\n");
     printf("\ta. Excluded algorithm (MD5)...");
     printf( md5_test() ? "successful\n" :  Fail("FAILED!\n") );
     printf("\tb. Included algorithm (D-H)...");
     printf( dh_test() ? "successful\n" :  Fail("FAILED!\n") );
 
-    /* Power-up self test failure
-    */
-    printf("1. Automatic power-up self test...");
-    printf( FIPS_mode_set(1,"/dev/null") ? Fail("passed INCORRECTLY!\n") : "failed as expected\n" );
-
-    /* Algorithm call when uninitialized failure
-    */
-    printf("\ta. AES API failure on failed power-up self test...");
-    printf( FIPS_aes_test() ? Fail("passed INCORRECTLY!\n") :"failed as expected\n" );
-    printf("\tb. RSA API failure on failed power-up self test...");
-    printf( FIPS_rsa_test() ? Fail("passed INCORRECTLY!\n") :  "failed as expected\n" );
-    printf("\tc. DES API failure on failed power-up self test...");
-    printf( FIPS_des_test() ? Fail("passed INCORRECTLY!\n") : "failed as expected\n" );
-    printf("\td. DSA API failure on failed power-up self test...");
-    printf( FIPS_dsa_test() ? Fail("passed INCORRECTLY!\n") :  "failed as expected\n" );
-    printf("\te. SHA1 API failure on failed power-up self test...");
-    printf( FIPS_sha1_test() ? Fail("passed INCORRECTLY!\n") : "failed as expected\n" );
-
-    /* Power-up self test retry
+    /* Power-up self test
     */
     ERR_clear_error();
-    printf("2. Automatic power-up self test retry...");
+    printf("2. Automatic power-up self test...");
     if (!FIPS_mode_set(1,argv[0]))
 	{
 	ERR_load_crypto_strings();
