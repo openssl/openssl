@@ -46,6 +46,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the OpenSSL test suite fail on MacOS X?
 * Why does the OpenSSL test suite fail in BN_sqr test [on a 64-bit platform]?
 * Why does OpenBSD-i386 build fail on des-586.s with "Unimplemented segment type"?
+* Why does the OpenSSL test suite fail in sha512t on x86 CPU?
 
 [PROG] Questions about programming with OpenSSL
 
@@ -597,6 +598,14 @@ For your convenience a pre-compiled replacement binary is provided at
 Reportedly elder *BSD a.out platforms also suffer from this problem and
 remedy should be same. Provided binary is statically linked and should be
 working across wider range of *BSD branches, not just OpenBSD.
+
+* Why does the OpenSSL test suite fail in sha512t on x86 CPU?
+
+If the test program in question fails withs SIGILL, Illegal Instruction
+exception, then you more than likely to run SSE2-capable CPU, such as
+Intel P4, under control of kernel which does not support SSE2
+instruction extentions. See accompanying INSTALL file and
+OPENSSL_ia32cap(3) documentation page for further information.
 
 [PROG] ========================================================================
 
