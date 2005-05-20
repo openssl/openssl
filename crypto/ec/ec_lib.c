@@ -622,7 +622,7 @@ void EC_EX_DATA_free_data(EC_EXTRA_DATA **ex_data,
 	}
 
 /* this has 'package' visibility */
-void EC_EX_DATA_clear_free_extra_data(EC_EXTRA_DATA **ex_data,
+void EC_EX_DATA_clear_free_data(EC_EXTRA_DATA **ex_data,
 	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *))
 	{
 	EC_EXTRA_DATA **p;

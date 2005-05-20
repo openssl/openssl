@@ -65,6 +65,7 @@ const char *ECDSA_version="ECDSA" OPENSSL_VERSION_PTEXT;
 
 static const ECDSA_METHOD *default_ECDSA_method = NULL;
 
+static void *ecdsa_data_new(void);
 static void *ecdsa_data_dup(void *);
 static void  ecdsa_data_free(void *);
 
@@ -147,7 +148,7 @@ static ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *engine)
 	return(ret);
 }
 
-void *ecdsa_data_new(void)
+static void *ecdsa_data_new(void)
 {
 	return (void *)ECDSA_DATA_new_method(NULL);
 }
