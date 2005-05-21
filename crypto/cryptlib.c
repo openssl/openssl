@@ -624,7 +624,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 #include <tchar.h>
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
-static int IsService(void)
+int OPENSSL_isservice(void)
 { HWINSTA h;
   DWORD len;
   WCHAR *name;
@@ -722,7 +722,7 @@ void OPENSSL_showfatal (const char *fmta,...)
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
     /* this -------------v--- guards NT-specific calls */
-    if (GetVersion() < 0x80000000 && IsService())
+    if (GetVersion() < 0x80000000 && OPENSSL_isservice())
     {	HANDLE h = RegisterEventSource(0,_T("OPENSSL"));
 	const TCHAR *pmsg=buf;
 	ReportEvent(h,EVENTLOG_ERROR_TYPE,0,0,0,1,0,&pmsg,0);
@@ -754,6 +754,7 @@ void OPENSSL_showfatal (const char *fmta,...)
     vfprintf (stderr,fmta,ap);
     va_end (ap);
 }
+int OPENSSL_isservice (void) { return 0; }
 #endif
 
 void OpenSSLDie(const char *file,int line,const char *assertion)

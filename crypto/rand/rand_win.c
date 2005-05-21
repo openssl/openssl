@@ -632,7 +632,8 @@ int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 void RAND_screen(void) /* function available for backward compatibility */
 {
 	RAND_poll();
-	readscreen();
+	if (GetVersion() >= 0x80000000 || !OPENSSL_isservice())
+		readscreen();
 }
 
 

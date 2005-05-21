@@ -235,6 +235,23 @@ extern "C" {
 #  define NO_DIRENT
 
 #  ifdef WINDOWS
+#    ifndef _WIN32_WINNT
+       /*
+	* Defining _WIN32_WINNT here in e_os.h implies certain "discipline."
+	* Most notably we ought to check for availability of each specific
+	* routine with GetProcAddress() and/or quard NT-specific calls with
+	* GetVersion() < 0x80000000. One can argue that in latter "or" case
+	* we ought to /DELAYLOAD some .DLLs in order to protect ourselves
+	* against run-time link errors. This doesn't seem to be necessary,
+	* because it turned out that already Windows 95, first non-NT Win32
+	* implementation, is equipped with at least NT 3.51 stubs, dummy
+	* routines with same name, but which do nothing. Meaning that it's
+	* apparently appropriate to guard generic NT calls with GetVersion
+	* alone, while NT 4.0 and above calls ought to be additionally
+	* checked upon with GetProcAddress.
+	*/
+#      define _WIN32_WINNT 0x0400
+#    endif
 #    include <windows.h>
 #    include <stddef.h>
 #    include <errno.h>
