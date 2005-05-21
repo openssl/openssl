@@ -82,14 +82,19 @@ files:
 links:
 
 # XXXXX This currently only works on systems that use .so as suffix
-# for shared libraries.
+# for shared libraries as well as for Cygwin which uses the
+# dlfcn_name_converter and therefore stores the engines with .so suffix, too.
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		for l in $(LIBNAMES); do \
 			( echo installing $$l; \
-			  cp lib$$l.so $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so.new; \
+			  if [ "$(PLATFORM)" != "Cygwin" ]; then \
+				  cp lib$$l.so $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so.new; \
+			  else \
+				  cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so.new; \
+			  fi; \
 			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so.new; \
 			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so ); \
 		done; \

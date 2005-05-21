@@ -231,7 +231,8 @@ link_o.cygwin:
 	SHLIB=cyg$(LIBNAME); \
 	expr $(PLATFORM) : 'mingw' > /dev/null && SHLIB=$(LIBNAME)eay32; \
 	SHLIB_SUFFIX=.dll; \
-	SHLIB_SOVER=-$(LIBVERSION); \
+	LIBVERSION="$(LIBVERSION)"; \
+	SHLIB_SOVER=${LIBVERSION:+"-$(LIBVERSION)"}; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a"; \
@@ -242,16 +243,16 @@ link_a.cygwin:
 	SHLIB=cyg$(LIBNAME); \
 	expr $(PLATFORM) : 'mingw' > /dev/null && SHLIB=$(LIBNAME)eay32; \
 	SHLIB_SUFFIX=.dll; \
-	SHLIB_SOVER=; \
+	SHLIB_SOVER=-$(LIBVERSION); \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	base=;  [ $(LIBNAME) = "crypto" ] && base=-Wl,--image-base,0x61200000; \
+	base=;  [ $(LIBNAME) = "crypto" ] && base=-Wl,--image-base,0x63000000; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a"; \
 	[ -f apps/$$SHLIB$$SHLIB_SUFFIX ] && rm apps/$$SHLIB$$SHLIB_SUFFIX; \
 	[ -f test/$$SHLIB$$SHLIB_SUFFIX ] && rm test/$$SHLIB$$SHLIB_SUFFIX; \
 	$(LINK_SO_A) || exit 1; \
-	cp -p $$SHLIB$$SHLIB_SUFFIX apps/; \
-	cp -p $$SHLIB$$SHLIB_SUFFIX test/
+	cp -p $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX apps/; \
+	cp -p $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX test/
 link_app.cygwin:
 	$(LINK_APP)
 

@@ -276,7 +276,7 @@ Makefile: Makefile.org Configure config
 	@false
 
 libclean:
-	rm -f *.map *.so *.so.* engines/*.so *.a */lib */*/lib
+	rm -f *.map *.so *.so.* *.dll engines/*.so engines/*.dll *.a engines/*.a */lib */*/lib
 
 clean:	libclean
 	rm -f shlib/*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
@@ -476,13 +476,13 @@ install_sw:
 					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
 					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 				else \
-					c=`echo $$i | sed 's/^lib/cyg/'`; \
+					c=`echo $$i | sed 's/^lib\(.*\)\.dll\.a/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
 					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
 					chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
 					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
-					cp $$i.a $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a.new; \
-					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a.new; \
-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.a; \
+					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 				fi ); \
 			fi; \
 		done; \
