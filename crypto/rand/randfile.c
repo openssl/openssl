@@ -57,7 +57,7 @@
  */
 
 /* We need to define this to get macros like S_IFBLK and S_IFCHR */
-#define _XOPEN_SOURCE 1
+#define _XOPEN_SOURCE 500
 
 #include <errno.h>
 #include <stdio.h>
