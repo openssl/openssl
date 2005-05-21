@@ -537,7 +537,8 @@ sub main'file_end
 	if ($main'elf && grep {/%[x]*mm[0-7]/i} @out) {
 		local($tmp);
 
-		push (@out,"\n.comm\t${under}OPENSSL_ia32cap_P,4,4\n");
+		push (@out,"\n.section\t.bss\n");
+		push (@out,".comm\t${under}OPENSSL_ia32cap_P,4,4\n");
 
 		push (@out,".section\t.init\n");
 		# One can argue that it's wasteful to craft every
@@ -572,6 +573,8 @@ sub main'file_end
 		movl	%edx,0(%edi)
 		popl	%ebx
 		popl	%edi
+		jmp	1f
+	.align	$align
 	1:
 ___
 		push (@out,$tmp);
@@ -716,6 +719,9 @@ sub main'initseg
 		$tmp=<<___;
 .section	.init
 	call	$under$f
+	jmp	1f
+.align	$align
+1:
 ___
 		}
 	elsif ($main'coff)
