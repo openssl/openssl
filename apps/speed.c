@@ -496,8 +496,12 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_SHA
 	unsigned char sha[SHA_DIGEST_LENGTH];
+#ifndef OPENSSL_NO_SHA256
 	unsigned char sha256[SHA256_DIGEST_LENGTH];
+#endif
+#ifndef OPENSSL_NO_SHA512
 	unsigned char sha512[SHA512_DIGEST_LENGTH];
+#endif
 #endif
 #ifndef OPENSSL_NO_RIPEMD
 	unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
@@ -878,10 +882,14 @@ int MAIN(int argc, char **argv)
 							doit[D_SHA256]=1,
 							doit[D_SHA512]=1;
 		else
+#ifndef OPENSSL_NO_SHA256
 			if (strcmp(*argv,"sha256") == 0) doit[D_SHA256]=1;
 		else
+#endif
+#ifndef OPENSSL_NO_SHA512
 			if (strcmp(*argv,"sha512") == 0) doit[D_SHA512]=1;
 		else
+#endif
 #endif
 #ifndef OPENSSL_NO_RIPEMD
 			if (strcmp(*argv,"ripemd") == 0) doit[D_RMD160]=1;
@@ -1064,8 +1072,12 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_SHA1
 			BIO_printf(bio_err,"sha1     ");
-			BIO_printf(bio_err,"sha256  ");
-			BIO_printf(bio_err,"sha512  ");
+#endif
+#ifndef OPENSSL_NO_SHA256
+			BIO_printf(bio_err,"sha256   ");
+#endif
+#ifndef OPENSSL_NO_SHA512
+			BIO_printf(bio_err,"sha512   ");
 #endif
 #ifndef OPENSSL_NO_RIPEMD160
 			BIO_printf(bio_err,"rmd160");

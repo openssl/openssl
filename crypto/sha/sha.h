@@ -148,6 +148,7 @@ void SHA256_Transform(SHA256_CTX *c, const unsigned char *data);
 #define SHA384_DIGEST_LENGTH	48
 #define SHA512_DIGEST_LENGTH	64
 
+#ifndef OPENSSL_NO_SHA512
 /*
  * Unlike 32-bit digest algorithms, SHA-512 *relies* on SHA_LONG64
  * being exactly 64-bit wide. See Implementation Notes in sha512.c
@@ -178,7 +179,6 @@ typedef struct SHA512state_st
 	unsigned int num,md_len;
 	} SHA512_CTX;
 
-#ifndef OPENSSL_NO_SHA512
 int SHA384_Init(SHA512_CTX *c);
 int SHA384_Update(SHA512_CTX *c, const void *data, size_t len);
 int SHA384_Final(unsigned char *md, SHA512_CTX *c);
