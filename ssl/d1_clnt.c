@@ -115,6 +115,7 @@
 
 #include <stdio.h>
 #include "ssl_locl.h"
+#include "kssl_lcl.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
