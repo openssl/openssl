@@ -151,14 +151,14 @@ $!
 $! Define The Different Encryption "library" Strings.
 $!
 $ LIB_ = "fips,fips_err_wrapper"
-$ LIB_SHA1 = "fips_sha1dgst,fips_sha1_selftest"
-$ LIB_RAND = "fips_rand"
+$ LIB_SHA1 = "fips_sha1dgst,fips_sha1_selftest,fips_sha256,fips_sha512"
+$ LIB_RAND = "fips_rand,fips_rand_selftest"
 $ LIB_DES = "fips_des_enc,fips_des_selftest,fips_set_key"
 $ LIB_AES = "fips_aes_core,fips_aes_selftest"
 $ LIB_DSA = "fips_dsa_ossl,fips_dsa_gen,fips_dsa_selftest"
 $ LIB_RSA = "fips_rsa_eay,fips_rsa_gen,fips_rsa_selftest"
 $ LIB_DH = "fips_dh_check,fips_dh_gen,fips_dh_key"
-$ LIB_HMAC = "fips_hmac"
+$ LIB_HMAC = "fips_hmac,fips_hmac_selftest"
 $!
 $! Setup exceptional compilations
 $!
