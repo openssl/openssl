@@ -178,7 +178,9 @@ typedef struct SHA512state_st
 	} u;
 	unsigned int num,md_len;
 	} SHA512_CTX;
+#endif
 
+#ifndef OPENSSL_NO_SHA512
 int SHA384_Init(SHA512_CTX *c);
 int SHA384_Update(SHA512_CTX *c, const void *data, size_t len);
 int SHA384_Final(unsigned char *md, SHA512_CTX *c);
