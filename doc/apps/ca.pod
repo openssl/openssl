@@ -391,7 +391,7 @@ the same as B<-msie_hack>
 the same as B<-policy>. Mandatory. See the B<POLICY FORMAT> section
 for more information.
 
-=item B<nameopt>, B<certopt>
+=item B<name_opt>, B<cert_opt>
 
 these options allow the format used to display the certificate details
 when asking the user to confirm signing. All the options supported by
@@ -513,8 +513,8 @@ A sample configuration file with the relevant sections for B<ca>:
  policy         = policy_any            # default policy
  email_in_dn    = no                    # Don't add the email into cert DN
 
- nameopt	= ca_default		# Subject name display option
- certopt	= ca_default		# Certificate display option
+ name_opt	= ca_default		# Subject name display option
+ cert_opt	= ca_default		# Certificate display option
  copy_extensions = none			# Don't copy extensions from request
 
  [ policy_any ]
