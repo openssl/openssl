@@ -160,7 +160,7 @@ d1_clnt.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
 d1_clnt.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 d1_clnt.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 d1_clnt.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h d1_clnt.c
-d1_clnt.o: ssl_locl.h
+d1_clnt.o: kssl_lcl.h ssl_locl.h
 d1_enc.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 d1_enc.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 d1_enc.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
