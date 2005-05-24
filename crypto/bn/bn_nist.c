@@ -282,6 +282,11 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	nist_cp_bn_0(buf, a_d + BN_NIST_192_TOP, top - BN_NIST_192_TOP, BN_NIST_192_TOP);
 
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma save
+# pragma message disable BADSUBSCRIPT
+#endif
+
 	nist_set_192(t_d, buf, 0, 3, 3);
 	if (bn_add_words(r_d, r_d, t_d, BN_NIST_192_TOP))
 		++carry;
@@ -289,6 +294,10 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	nist_set_192(t_d, buf, 4, 4, 0);
 	if (bn_add_words(r_d, r_d, t_d, BN_NIST_192_TOP))
 		++carry;
+
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma restore
+#endif
 
 	nist_set_192(t_d, buf, 5, 5, 5)
 	if (bn_add_words(r_d, r_d, t_d, BN_NIST_192_TOP))
