@@ -16,7 +16,7 @@ sub check_hashes
 	my @args = @_;
 
 	my $change_dir = "";
-	my $check_program = "sha1/fips_standalone_sha1";
+	my $check_program = "sha/fips_standalone_sha1";
 
 	my $verbose = 0;
 	my $badfiles = 0;

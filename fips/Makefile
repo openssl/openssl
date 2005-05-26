@@ -25,7 +25,7 @@ CFLAGS= $(INCLUDE) $(CFLAG)
 
 LIBS=
 
-FDIRS=sha1 rand des aes dsa rsa dh hmac
+FDIRS=sha rand des aes dsa rsa dh hmac
 
 GENERAL=Makefile README fips-lib.com install.com
 
@@ -115,7 +115,7 @@ fips_test_suite: fips_test_suite.o $(TOP)/libcrypto.a
 
 fips_test: top top_fips_test_suite
 	cd testvectors && perl -p -i -e 's/COUNT=/COUNT = /' des[23]/req/*.req
-	@for i in dsa sha1 aes des hmac rand rsa; \
+	@for i in dsa sha aes des hmac rand rsa; \
 	do \
 		(cd $$i && echo "making fips_test in fips/$$i..." && $(MAKE) fips_test) \
 	done;
