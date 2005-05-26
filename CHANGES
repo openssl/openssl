@@ -803,6 +803,13 @@
 
  Changes between 0.9.7g and 0.9.7h  [XX xxx XXXX]
 
+  *) For DSA signing, unless DSA_FLAG_NO_EXP_CONSTTIME is set, perform
+     the exponentiation using a fixed-length exponent.  (Otherwise,
+     the information leaked through timing could expose the secret key
+     after many signatures; cf. Bleichenbacher's attack on DSA with
+     biased k.)
+     [Bodo Moeller]
+
   *) Make a new fixed-window mod_exp implementation the default for
      RSA, DSA, and DH private-key operations so that the sequence of
      squares and multiplies and the memory access pattern are
