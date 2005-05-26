@@ -160,7 +160,7 @@ test_sha:
 	../util/shlib_wrap.sh ./$(SHATEST)
 	../util/shlib_wrap.sh ./$(SHA1TEST)
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  ../util/shlib_wrap.sh ./$(FIPS_SHATEST) sha1vectors.txt | sed s/Strings/Hashes/ | cmp sha1hashes.txt - ; \
+	  ../util/shlib_wrap.sh ./$(FIPS_SHATEST) < SHAmix.req | diff -w SHAmix.fax - ; \
 	fi
 
 test_mdc2:

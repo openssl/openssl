@@ -1,5 +1,5 @@
 #
-# SSLeay/fips/sha1/Makefile
+# SSLeay/fips/sha/Makefile
 #
 
 DIR=	sha
@@ -19,8 +19,8 @@ EXE_EXT=
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST= fips_sha1test.c
-TESTDATA= sha1vectors.txt sha1hashes.txt
+TEST= fips_shatest.c
+TESTDATA= SHAmix.req SHAmix.fax
 APPS=
 EXE= fips_standalone_sha1$(EXE_EXT)
 
@@ -72,17 +72,17 @@ tags:
 
 tests:
 
-top_fips_sha1test:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_sha1test sub_target)
+top_fips_shatest:
+	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_shatest sub_target)
 
-fips_sha1test: fips_sha1test.o $(TOP)/libcrypto.a
-	$(CC) $(CFLAGS) -o fips_sha1test fips_sha1test.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
-	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_sha1test
+fips_shatest: fips_shatest.o $(TOP)/libcrypto.a
+	$(CC) $(CFLAGS) -o fips_shatest fips_shatest.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
+	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_shatest
 
-fips_test: top_fips_sha1test
-	-rm -rf ../testvectors/sha1/rsp
-	mkdir ../testvectors/sha1/rsp
-	./fips_sha1test ../testvectors/sha1/req/sha.req  > ../testvectors/sha1/rsp/sha.rsp
+fips_test: top_fips_shatest
+	-rm -rf ../testvectors/sha/rsp
+	mkdir ../testvectors/sha/rsp
+	./fips_shatest ../testvectors/sha/req/sha.req  > ../testvectors/sha/rsp/sha.rsp
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
@@ -116,15 +116,15 @@ fips_sha1dgst.o: ../../include/openssl/opensslv.h
 fips_sha1dgst.o: ../../include/openssl/safestack.h
 fips_sha1dgst.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 fips_sha1dgst.o: fips_sha1dgst.c
-fips_sha1test.o: ../../e_os.h ../../include/openssl/bio.h
-fips_sha1test.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_sha1test.o: ../../include/openssl/err.h ../../include/openssl/fips.h
-fips_sha1test.o: ../../include/openssl/fips_sha.h ../../include/openssl/lhash.h
-fips_sha1test.o: ../../include/openssl/opensslconf.h
-fips_sha1test.o: ../../include/openssl/opensslv.h
-fips_sha1test.o: ../../include/openssl/safestack.h
-fips_sha1test.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_sha1test.o: fips_sha1test.c
+fips_shatest.o: ../../e_os.h ../../include/openssl/bio.h
+fips_shatest.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+fips_shatest.o: ../../include/openssl/err.h ../../include/openssl/fips.h
+fips_shatest.o: ../../include/openssl/fips_sha.h ../../include/openssl/lhash.h
+fips_shatest.o: ../../include/openssl/opensslconf.h
+fips_shatest.o: ../../include/openssl/opensslv.h
+fips_shatest.o: ../../include/openssl/safestack.h
+fips_shatest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+fips_shatest.o: fips_shatest.c
 fips_sha256.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 fips_sha256.o: ../../include/openssl/fips.h ../../include/openssl/fips_sha.h
 fips_sha256.o: ../../include/openssl/opensslconf.h
