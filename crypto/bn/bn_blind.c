@@ -207,6 +207,8 @@ int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
 
 int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 	{
+	int ret = 1;
+
 	bn_check_top(n);
 
 	if ((b->A == NULL) || (b->Ai == NULL))
@@ -216,9 +218,13 @@ int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 		}
 
 	if (r != NULL)
-		BN_copy(r, b->Ai);
+		{
+		if (!BN_copy(r, b->Ai)) ret=0;
+		}
 
-	return BN_mod_mul(n,n,b->A,b->mod,ctx);
+	if (!BN_mod_mul(n,n,b->A,b->mod,ctx)) ret=0;
+	
+	return ret;
 	}
 
 int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
@@ -351,4 +357,3 @@ err:
 
 	return ret;
 }
-
