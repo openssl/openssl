@@ -262,7 +262,7 @@ int dgst_test(BIO *err, BIO *out, BIO *in)
 
 		BIO_puts(out, olinebuf);
 
-		if (md && Msg && (MsgLen > 0))
+		if (md && Msg && (MsgLen >= 0))
 			{
 			if (!print_dgst(err, md, out, Msg, MsgLen))
 				goto error;
@@ -352,6 +352,8 @@ static int print_monte(BIO *err, const EVP_MD *md, BIO *out,
 	memcpy(m1, Seed, SeedLen);
 	memcpy(m2, Seed, SeedLen);
 	memcpy(m3, Seed, SeedLen);
+
+	BIO_puts(out, "\n");
 
 	for (j = 0; j < 100; j++)
 		{
