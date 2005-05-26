@@ -202,7 +202,7 @@ err:
 static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	{
 	BN_CTX *ctx;
-	BIGNUM k,*kinv=NULL,*r=NULL;
+	BIGNUM k,kq,*K,*kinv=NULL,*r=NULL;
 	int ret=0;
 
 	if (!dsa->p || !dsa->q || !dsa->g)
@@ -212,6 +212,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		}
 
 	BN_init(&k);
+	BN_init(&kq);
 
 	if (ctx_in == NULL)
 		{
@@ -221,7 +222,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		ctx=ctx_in;
 
 	if ((r=BN_new()) == NULL) goto err;
-	kinv=NULL;
 
 	/* Get random k */
 	do
@@ -241,7 +241,30 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		}
 
 	/* Compute r = (g^k mod p) mod q */
-	DSA_BN_MOD_EXP(goto err, dsa, r, dsa->g, &k, dsa->p, ctx,
+
+	if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0)
+		{
+		if (!BN_copy(&kq, &k)) goto err;
+
+		/* We do not want timing information to leak the length of k,
+		 * so we compute g^k using an equivalent exponent of fixed length.
+		 *
+		 * (This is a kludge that we need because the BN_mod_exp_mont()
+		 * does not let us specify the desired timing behaviour.) */
+
+		if (!BN_add(&kq, &kq, dsa->q)) goto err;
+		if (BN_num_bits(&kq) <= BN_num_bits(dsa->q))
+			{
+			if (!BN_add(&kq, &kq, dsa->q)) goto err;
+			}
+
+		K = &kq;
+		}
+	else
+		{
+		K = &k;
+		}
+	DSA_BN_MOD_EXP(goto err, dsa, r, dsa->g, K, dsa->p, ctx,
 			dsa->method_mont_p);
 	if (!BN_mod(r,r,dsa->q,ctx)) goto err;
 
@@ -264,6 +287,7 @@ err:
 	if (ctx_in == NULL) BN_CTX_free(ctx);
 	if (kinv != NULL) BN_clear_free(kinv);
 	BN_clear_free(&k);
+	BN_clear_free(&kq);
 	return(ret);
 	}
 
