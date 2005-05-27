@@ -776,7 +776,8 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 			}
 		}
 
-	if (!check_crl_time(ctx, crl, 1))
+	ok = check_crl_time(ctx, crl, 1);
+	if (!ok)
 		goto err;
 
 	ok = 1;
@@ -1006,7 +1007,8 @@ static int internal_verify(X509_STORE_CTX *ctx)
 
 		xs->valid = 1;
 
-		if (!check_cert_time(ctx, xs))
+		ok = check_cert_time(ctx, xs);
+		if (!ok)
 			goto end;
 
 		/* The last error (if any) is still in the error value */
