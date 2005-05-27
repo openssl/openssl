@@ -81,6 +81,7 @@ static ERR_STRING_DATA RSA_str_functs[]=
 {ERR_FUNC(RSA_F_RSA_NULL),	"RSA_NULL"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_NONE),	"RSA_padding_add_none"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP),	"RSA_padding_add_PKCS1_OAEP"},
+{ERR_FUNC(RSA_F_RSA_PADDING_ADD_PKCS1_PSS),	"RSA_padding_add_PKCS1_PSS"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1),	"RSA_padding_add_PKCS1_type_1"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2),	"RSA_padding_add_PKCS1_type_2"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_SSLV23),	"RSA_padding_add_SSLv23"},
@@ -95,6 +96,7 @@ static ERR_STRING_DATA RSA_str_functs[]=
 {ERR_FUNC(RSA_F_RSA_SIGN_ASN1_OCTET_STRING),	"RSA_sign_ASN1_OCTET_STRING"},
 {ERR_FUNC(RSA_F_RSA_VERIFY),	"RSA_verify"},
 {ERR_FUNC(RSA_F_RSA_VERIFY_ASN1_OCTET_STRING),	"RSA_verify_ASN1_OCTET_STRING"},
+{ERR_FUNC(RSA_F_RSA_VERIFY_PKCS1_PSS),	"RSA_verify_PKCS1_PSS"},
 {0,NULL}
 	};
 
@@ -117,12 +119,15 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {ERR_REASON(RSA_R_DMP1_NOT_CONGRUENT_TO_D),"dmp1 not congruent to d"},
 {ERR_REASON(RSA_R_DMQ1_NOT_CONGRUENT_TO_D),"dmq1 not congruent to d"},
 {ERR_REASON(RSA_R_D_E_NOT_CONGRUENT_TO_1),"d e not congruent to 1"},
+{ERR_REASON(RSA_R_FIRST_OCTET_INVALID)   ,"first octet invalid"},
 {ERR_REASON(RSA_R_INVALID_MESSAGE_LENGTH),"invalid message length"},
 {ERR_REASON(RSA_R_IQMP_NOT_INVERSE_OF_Q) ,"iqmp not inverse of q"},
 {ERR_REASON(RSA_R_KEY_SIZE_TOO_SMALL)    ,"key size too small"},
+{ERR_REASON(RSA_R_LAST_OCTET_INVALID)    ,"last octet invalid"},
 {ERR_REASON(RSA_R_NULL_BEFORE_BLOCK_MISSING),"null before block missing"},
 {ERR_REASON(RSA_R_N_DOES_NOT_EQUAL_P_Q)  ,"n does not equal p q"},
 {ERR_REASON(RSA_R_OAEP_DECODING_ERROR)   ,"oaep decoding error"},
+{ERR_REASON(RSA_R_ONE_CHECK_FAILED)      ,"one check failed"},
 {ERR_REASON(RSA_R_PADDING_CHECK_FAILED)  ,"padding check failed"},
 {ERR_REASON(RSA_R_P_NOT_PRIME)           ,"p not prime"},
 {ERR_REASON(RSA_R_Q_NOT_PRIME)           ,"q not prime"},
@@ -132,6 +137,7 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {ERR_REASON(RSA_R_UNKNOWN_ALGORITHM_TYPE),"unknown algorithm type"},
 {ERR_REASON(RSA_R_UNKNOWN_PADDING_TYPE)  ,"unknown padding type"},
 {ERR_REASON(RSA_R_WRONG_SIGNATURE_LENGTH),"wrong signature length"},
+{ERR_REASON(RSA_R_ZERO_CHECK_FAILED)     ,"zero check failed"},
 {0,NULL}
 	};
 
