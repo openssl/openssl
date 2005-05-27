@@ -385,6 +385,7 @@ static int RSA_eay_private_encrypt(FIPS_RSA_SIZE_T flen, const unsigned char *fr
 		
 		if (!(rsa->flags & RSA_FLAG_NO_EXP_CONSTTIME))
 			{
+			BN_init(&local_d);
 			d = &local_d;
 			BN_with_flags(d, rsa->d, BN_FLG_EXP_CONSTTIME);
 			}

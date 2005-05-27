@@ -11,9 +11,10 @@ CFLAG=		-g
 INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=	/usr/local/ssl
+MAKEFILE=       Makefile
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=       Makefile
+PERL=		perl
 RM=             rm -f
 AR=		ar r
 

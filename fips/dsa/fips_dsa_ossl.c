@@ -212,6 +212,10 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	do
 		if (!BN_rand_range(&k, dsa->q)) goto err;
 	while (BN_is_zero(&k));
+	if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0)
+		{
+		BN_set_flags(&k, BN_FLG_EXP_CONSTTIME);
+		}
 
 	if (dsa->flags & DSA_FLAG_CACHE_MONT_P)
 		{
@@ -222,6 +226,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		}
 
 	/* Compute r = (g^k mod p) mod q */
+
 	if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0)
 		{
 		if (!BN_copy(&kq, &k)) goto err;
@@ -244,7 +249,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		{
 		K = &k;
 		}
-
 	if (!dsa->meth->bn_mod_exp(dsa, r,dsa->g,K,dsa->p,ctx,
 		(BN_MONT_CTX *)dsa->method_mont_p)) goto err;
 	if (!BN_mod(r,r,dsa->q,ctx)) goto err;
