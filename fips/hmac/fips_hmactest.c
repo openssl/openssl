@@ -250,12 +250,16 @@ int hmac_test(BIO *err, const EVP_MD *md, BIO *out, BIO *in)
 			if (Msg)
 				goto parse_error;
 			Msg = string_to_hex(value, &Msglen);
+			if (!Msg)
+				goto parse_error;
 			}
 		else if (!strcmp(keyword, "Key"))
 			{
 			if (Key)
 				goto parse_error;
 			Key = string_to_hex(value, &Keylen);
+			if (!Key)
+				goto parse_error;
 			}
 		else if (!strcmp(keyword, "Mac"))
 			continue;
