@@ -253,6 +253,8 @@ extern "C" {
 #define BN_set_flags(b,n)	((b)->flags|=(n))
 #define BN_get_flags(b,n)	((b)->flags&(n))
 
+/* get a clone of a BIGNUM with changed flags, for *temporary* use only
+ * (the two BIGNUMs cannot not be used in parallel!) */
 #define BN_with_flags(dest,b,n)  ((dest)->d=(b)->d, \
                                   (dest)->top=(b)->top, \
                                   (dest)->dmax=(b)->dmax, \
