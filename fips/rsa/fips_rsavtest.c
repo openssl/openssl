@@ -115,6 +115,12 @@ int main(int argc, char **argv)
 		argc -= 2;
 		argv += 2;
 		}
+	else if ((argc > 1) && !strcmp("-x931", argv[1]))
+		{
+		Saltlen = -2;
+		argc--;
+		argv++;
+		}
 
 	if (argc == 1)
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
@@ -340,22 +346,42 @@ static int rsa_printver(BIO *err, BIO *out,
 
 	EVP_MD_CTX_init(&ctx);
 
-	if (Saltlen >= 0)
+	if (Saltlen != -1)
 		{
+		int pad;
 		unsigned char mdtmp[EVP_MAX_MD_SIZE];
 		buf = OPENSSL_malloc(RSA_size(rsa_pubkey));
+		if (Saltlen == -2)
+			pad = RSA_X931_PADDING;
+		else
+			pad = RSA_NO_PADDING;
 		if (!buf)
 			goto error;
-		r = RSA_public_decrypt(Slen, S, buf, rsa_pubkey,
-							RSA_NO_PADDING);
+		r = RSA_public_decrypt(Slen, S, buf, rsa_pubkey, pad);
+
 		if (r > 0)
 			{
+			unsigned int mdlen;
 			EVP_DigestInit_ex(&ctx, dgst, NULL);
 			if (!EVP_DigestUpdate(&ctx, Msg, Msglen))
 				goto error;
-			if (!EVP_DigestFinal_ex(&ctx, mdtmp, NULL))
+			if (!EVP_DigestFinal_ex(&ctx, mdtmp, &mdlen))
 				goto error;
-			r = RSA_verify_PKCS1_PSS(rsa_pubkey, mdtmp, dgst,
+			if (pad == RSA_X931_PADDING)
+				{
+				if (r != mdlen + 1)
+					r = 0;
+				else if (buf[mdlen] !=
+				    RSA_X931_hash_id(EVP_MD_type(dgst)))
+					r = 0;
+				else if (memcmp(buf, mdtmp, mdlen))
+					r = 0;
+				else
+					r = 1;
+				}
+			else
+				r = RSA_verify_PKCS1_PSS(rsa_pubkey,
+							mdtmp, dgst,
 							buf, Saltlen);
 			}
 		if (r < 0)

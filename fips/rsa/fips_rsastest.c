@@ -111,6 +111,12 @@ int main(int argc, char **argv)
 		argc -= 2;
 		argv += 2;
 		}
+	else if ((argc > 1) && !strcmp("-x931", argv[1]))
+		{
+		Saltlen = -2;
+		argc--;
+		argv++;
+		}
 
 	if (argc == 1)
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
@@ -318,7 +324,7 @@ static int rsa_printsig(BIO *err, BIO *out, RSA *rsa, const EVP_MD *dgst,
 	{
 	int ret = 0;
 	unsigned char *sigbuf = NULL;
-	unsigned int i, siglen;
+	int i, siglen;
 	/* EVP_PKEY structure */
 	EVP_PKEY *key = NULL;
 	EVP_MD_CTX ctx;
@@ -335,24 +341,36 @@ static int rsa_printsig(BIO *err, BIO *out, RSA *rsa, const EVP_MD *dgst,
 
 	EVP_MD_CTX_init(&ctx);
 
-	if (Saltlen >= 0)
+	if (Saltlen != -1)
 		{
-		unsigned char mdtmp[EVP_MAX_MD_SIZE];
+		unsigned int mdlen;
+		unsigned char mdtmp[EVP_MAX_MD_SIZE + 1];
 
 		if (!EVP_DigestInit_ex(&ctx, dgst, NULL))
 			goto error;
 		if (!EVP_DigestUpdate(&ctx, Msg, Msglen))
 			goto error;
-		if (!EVP_DigestFinal(&ctx, mdtmp, NULL))
+		if (!EVP_DigestFinal(&ctx, mdtmp, &mdlen))
 			goto error;
-
-		if (!RSA_padding_add_PKCS1_PSS(rsa, sigbuf, mdtmp,
+	
+		if (Saltlen == -2)
+			{
+			mdtmp[mdlen] = RSA_X931_hash_id(EVP_MD_type(dgst));
+			siglen = RSA_private_encrypt(mdlen + 1, mdtmp,
+					sigbuf, rsa, RSA_X931_PADDING);
+			if (siglen <= 0)
+				goto error;
+			}
+		else
+			{
+			if (!RSA_padding_add_PKCS1_PSS(rsa, sigbuf, mdtmp,
 							dgst, Saltlen))
-			goto error;
-		siglen = RSA_private_encrypt(siglen, sigbuf, sigbuf, rsa,
-						RSA_NO_PADDING);
-		if (siglen <= 0)
-			goto error;
+				goto error;
+			siglen = RSA_private_encrypt(siglen, sigbuf, sigbuf,
+						rsa, RSA_NO_PADDING);
+			if (siglen <= 0)
+				goto error;
+			}
 		}
 	else
 		{
@@ -360,7 +378,7 @@ static int rsa_printsig(BIO *err, BIO *out, RSA *rsa, const EVP_MD *dgst,
 			goto error;
 		if (!EVP_SignUpdate(&ctx, Msg, Msglen))
 			goto error;
-		if (!EVP_SignFinal(&ctx, sigbuf, &siglen, key))
+		if (!EVP_SignFinal(&ctx, sigbuf, (unsigned int *)&siglen, key))
 			goto error;
 		}
 
