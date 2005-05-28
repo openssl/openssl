@@ -309,7 +309,7 @@ static int rsa_blinding_invert(BN_BLINDING *b, int local, BIGNUM *f,
 static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
-	BIGNUM *f, *ret, *br;
+	BIGNUM *f, *ret, *br, *res;
 	int i,j,k,num=0,r= -1;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
@@ -333,6 +333,9 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 		{
 	case RSA_PKCS1_PADDING:
 		i=RSA_padding_add_PKCS1_type_1(buf,num,from,flen);
+		break;
+	case RSA_X931_PADDING:
+		i=RSA_padding_add_X931(buf,num,from,flen);
 		break;
 	case RSA_NO_PADDING:
 		i=RSA_padding_add_none(buf,num,from,flen);
@@ -400,10 +403,21 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 		if (!rsa_blinding_invert(blinding, local_blinding, ret, br, ctx))
 			goto err;
 
+	if (padding == RSA_X931_PADDING)
+		{
+		BN_sub(f, rsa->n, ret);
+		if (BN_cmp(ret, f))
+			res = f;
+		else
+			res = ret;
+		}
+	else
+		res = ret;
+
 	/* put in leading 0 bytes if the number is less than the
 	 * length of the modulus */
-	j=BN_num_bytes(ret);
-	i=BN_bn2bin(ret,&(to[num-j]));
+	j=BN_num_bytes(res);
+	i=BN_bn2bin(res,&(to[num-j]));
 	for (k=0; k<(num-i); k++)
 		to[k]=0;
 
@@ -593,6 +607,9 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 	if (!rsa->meth->bn_mod_exp(ret,f,rsa->e,rsa->n,ctx,
 		rsa->_method_mod_n)) goto err;
 
+	if ((padding == RSA_X931_PADDING) && ((ret->d[0] & 0xf) != 12))
+		BN_sub(ret, rsa->n, ret);
+
 	p=buf;
 	i=BN_bn2bin(ret,p);
 
@@ -600,6 +617,9 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 		{
 	case RSA_PKCS1_PADDING:
 		r=RSA_padding_check_PKCS1_type_1(to,num,buf,i,num);
+		break;
+	case RSA_X931_PADDING:
+		r=RSA_padding_check_X931(to,num,buf,i,num);
 		break;
 	case RSA_NO_PADDING:
 		r=RSA_padding_check_none(to,num,buf,i,num);
