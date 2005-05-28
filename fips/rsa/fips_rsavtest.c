@@ -75,18 +75,19 @@ int main(int argc, char *argv[])
 
 #else
 
-static int rsa_test(BIO *err, BIO *out, BIO *in);
+int rsa_test(BIO *err, BIO *out, BIO *in, int saltlen);
 static int rsa_printver(BIO *err, BIO *out,
 		BIGNUM *n, BIGNUM *e,
 		const EVP_MD *dgst,
 		unsigned char *Msg, long Msglen,
-		unsigned char *S, long Slen);
+		unsigned char *S, long Slen, int Saltlen);
 
 int main(int argc, char **argv)
 	{
 	BIO *in = NULL, *out = NULL, *err = NULL;
 
 	int ret = 1;
+	int Saltlen = -1;
 	ERR_load_crypto_strings();
 
 	err = BIO_new_fp(stderr, BIO_NOCLOSE);
@@ -101,6 +102,18 @@ int main(int argc, char **argv)
 		{
 		ERR_print_errors(err);
 		goto end;
+		}
+
+	if ((argc > 2) && !strcmp("-saltlen", argv[1]))
+		{
+		Saltlen = atoi(argv[2]);
+		if (Saltlen < 0)
+			{
+			BIO_printf(err, "FATAL: Invalid salt length\n");
+			goto end;
+			}
+		argc -= 2;
+		argv += 2;
 		}
 
 	if (argc == 1)
@@ -125,7 +138,7 @@ int main(int argc, char **argv)
 		goto end;
 		}
 
-	if (!rsa_test(err, out, in))
+	if (!rsa_test(err, out, in, Saltlen))
 		{
 		fprintf(stderr, "FATAL RSAVTEST file processing error\n");
 		goto end;
@@ -151,7 +164,7 @@ int main(int argc, char **argv)
 
 #define RSA_TEST_MAXLINELEN	10240
 
-int rsa_test(BIO *err, BIO *out, BIO *in)
+int rsa_test(BIO *err, BIO *out, BIO *in, int Saltlen)
 	{
 	char *linebuf, *olinebuf, *p, *q;
 	char *keyword, *value;
@@ -267,7 +280,7 @@ int rsa_test(BIO *err, BIO *out, BIO *in)
 		if (n && e && Msg && S && dgst)
 			{
 			if (!rsa_printver(err, out, n, e, dgst,
-						Msg, Msglen, S, Slen))
+					Msg, Msglen, S, Slen, Saltlen))
 				goto error;
 			OPENSSL_free(Msg);
 			Msg = NULL;
@@ -306,13 +319,14 @@ static int rsa_printver(BIO *err, BIO *out,
 		BIGNUM *n, BIGNUM *e,
 		const EVP_MD *dgst,
 		unsigned char *Msg, long Msglen,
-		unsigned char *S, long Slen)
+		unsigned char *S, long Slen, int Saltlen)
 	{
 	int ret = 0, r;
 	/* Setup RSA and EVP_PKEY structures */
 	RSA *rsa_pubkey = NULL;
 	EVP_PKEY *pubkey = NULL;
 	EVP_MD_CTX ctx;
+	unsigned char *buf = NULL;
 	rsa_pubkey = RSA_new();
 	pubkey = EVP_PKEY_new();
 	if (!rsa_pubkey || !pubkey)
@@ -326,18 +340,43 @@ static int rsa_printver(BIO *err, BIO *out,
 
 	EVP_MD_CTX_init(&ctx);
 
-	if (!EVP_VerifyInit_ex(&ctx, dgst, NULL))
-		goto error;
-	if (!EVP_VerifyUpdate(&ctx, Msg, Msglen))
-		goto error;
+	if (Saltlen >= 0)
+		{
+		unsigned char mdtmp[EVP_MAX_MD_SIZE];
+		buf = OPENSSL_malloc(RSA_size(rsa_pubkey));
+		if (!buf)
+			goto error;
+		r = RSA_public_decrypt(Slen, S, buf, rsa_pubkey,
+							RSA_NO_PADDING);
+		if (r > 0)
+			{
+			EVP_DigestInit_ex(&ctx, dgst, NULL);
+			if (!EVP_DigestUpdate(&ctx, Msg, Msglen))
+				goto error;
+			if (!EVP_DigestFinal_ex(&ctx, mdtmp, NULL))
+				goto error;
+			r = RSA_verify_PKCS1_PSS(rsa_pubkey, mdtmp, dgst,
+							buf, Saltlen);
+			}
+		if (r < 0)
+			r = 0;
+		}
+	else
+		{
 
-	r = EVP_VerifyFinal(&ctx, S, Slen, pubkey);
+		if (!EVP_VerifyInit_ex(&ctx, dgst, NULL))
+			goto error;
+		if (!EVP_VerifyUpdate(&ctx, Msg, Msglen))
+			goto error;
+
+		r = EVP_VerifyFinal(&ctx, S, Slen, pubkey);
+
+		}
 
 	EVP_MD_CTX_cleanup(&ctx);
 
 	if (r < 0)
 		goto error;
-
 	ERR_clear_error();
 
 	if (r == 0)
@@ -352,6 +391,8 @@ static int rsa_printver(BIO *err, BIO *out,
 		RSA_free(rsa_pubkey);
 	if (pubkey)
 		EVP_PKEY_free(pubkey);
+	if (buf)
+		OPENSSL_free(buf);
 
 	return ret;
 	}
