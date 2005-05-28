@@ -196,6 +196,7 @@ struct rsa_st
 #define RSA_SSLV23_PADDING	2
 #define RSA_NO_PADDING		3
 #define RSA_PKCS1_OAEP_PADDING	4
+#define RSA_X931_PADDING	5
 
 #define RSA_PKCS1_PADDING_SIZE	11
 
@@ -297,6 +298,8 @@ int RSA_padding_add_PKCS1_type_2(unsigned char *to,int tlen,
 	const unsigned char *f,int fl);
 int RSA_padding_check_PKCS1_type_2(unsigned char *to,int tlen,
 	const unsigned char *f,int fl,int rsa_len);
+int PKCS1_MGF1(unsigned char *mask, long len,
+	const unsigned char *seed, long seedlen, const EVP_MD *dgst);
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to,int tlen,
 	const unsigned char *f,int fl,
 	const unsigned char *p,int pl);
@@ -311,6 +314,11 @@ int RSA_padding_add_none(unsigned char *to,int tlen,
 	const unsigned char *f,int fl);
 int RSA_padding_check_none(unsigned char *to,int tlen,
 	const unsigned char *f,int fl,int rsa_len);
+int RSA_padding_add_X931(unsigned char *to,int tlen,
+	const unsigned char *f,int fl);
+int RSA_padding_check_X931(unsigned char *to,int tlen,
+	const unsigned char *f,int fl,int rsa_len);
+int RSA_X931_hash_id(int nid);
 
 int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
@@ -329,37 +337,43 @@ void ERR_load_RSA_strings(void);
 /* Error codes for the RSA functions. */
 
 /* Function codes. */
-#define RSA_F_RSA_BUILTIN_KEYGEN			 105
+#define RSA_F_MEMORY_LOCK				 100
+#define RSA_F_RSA_BUILTIN_KEYGEN			 129
 #define RSA_F_RSA_CHECK_KEY				 123
 #define RSA_F_RSA_EAY_PRIVATE_DECRYPT			 101
 #define RSA_F_RSA_EAY_PRIVATE_ENCRYPT			 102
 #define RSA_F_RSA_EAY_PUBLIC_DECRYPT			 103
 #define RSA_F_RSA_EAY_PUBLIC_ENCRYPT			 104
-#define RSA_F_RSA_MEMORY_LOCK				 100
+#define RSA_F_RSA_GENERATE_KEY				 105
+#define RSA_F_RSA_MEMORY_LOCK				 130
 #define RSA_F_RSA_NEW_METHOD				 106
 #define RSA_F_RSA_NULL					 124
-#define RSA_F_RSA_NULL_MOD_EXP				 126
-#define RSA_F_RSA_NULL_PRIVATE_DECRYPT			 127
-#define RSA_F_RSA_NULL_PRIVATE_ENCRYPT			 128
-#define RSA_F_RSA_NULL_PUBLIC_DECRYPT			 129
-#define RSA_F_RSA_NULL_PUBLIC_ENCRYPT			 130
+#define RSA_F_RSA_NULL_MOD_EXP				 131
+#define RSA_F_RSA_NULL_PRIVATE_DECRYPT			 132
+#define RSA_F_RSA_NULL_PRIVATE_ENCRYPT			 133
+#define RSA_F_RSA_NULL_PUBLIC_DECRYPT			 134
+#define RSA_F_RSA_NULL_PUBLIC_ENCRYPT			 135
 #define RSA_F_RSA_PADDING_ADD_NONE			 107
 #define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP		 121
+#define RSA_F_RSA_PADDING_ADD_PKCS1_PSS			 125
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1		 108
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2		 109
 #define RSA_F_RSA_PADDING_ADD_SSLV23			 110
+#define RSA_F_RSA_PADDING_ADD_X931			 127
 #define RSA_F_RSA_PADDING_CHECK_NONE			 111
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP		 122
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1		 112
 #define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2		 113
 #define RSA_F_RSA_PADDING_CHECK_SSLV23			 114
+#define RSA_F_RSA_PADDING_CHECK_X931			 128
 #define RSA_F_RSA_PRINT					 115
 #define RSA_F_RSA_PRINT_FP				 116
-#define RSA_F_RSA_SETUP_BLINDING			 125
+#define RSA_F_RSA_SETUP_BLINDING			 136
 #define RSA_F_RSA_SIGN					 117
 #define RSA_F_RSA_SIGN_ASN1_OCTET_STRING		 118
 #define RSA_F_RSA_VERIFY				 119
 #define RSA_F_RSA_VERIFY_ASN1_OCTET_STRING		 120
+#define RSA_F_RSA_VERIFY_PKCS1_PSS			 126
 
 /* Reason codes. */
 #define RSA_R_ALGORITHM_MISMATCH			 100
@@ -379,13 +393,19 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_DMP1_NOT_CONGRUENT_TO_D			 124
 #define RSA_R_DMQ1_NOT_CONGRUENT_TO_D			 125
 #define RSA_R_D_E_NOT_CONGRUENT_TO_1			 123
+#define RSA_R_FIRST_OCTET_INVALID			 133
+#define RSA_R_INVALID_HEADER				 137
 #define RSA_R_INVALID_MESSAGE_LENGTH			 131
+#define RSA_R_INVALID_PADDING				 138
+#define RSA_R_INVALID_TRAILER				 139
 #define RSA_R_IQMP_NOT_INVERSE_OF_Q			 126
 #define RSA_R_KEY_SIZE_TOO_SMALL			 120
-#define RSA_R_NO_PUBLIC_EXPONENT			 133
+#define RSA_R_LAST_OCTET_INVALID			 134
+#define RSA_R_NO_PUBLIC_EXPONENT			 140
 #define RSA_R_NULL_BEFORE_BLOCK_MISSING			 113
 #define RSA_R_N_DOES_NOT_EQUAL_P_Q			 127
 #define RSA_R_OAEP_DECODING_ERROR			 121
+#define RSA_R_ONE_CHECK_FAILED				 135
 #define RSA_R_PADDING_CHECK_FAILED			 114
 #define RSA_R_P_NOT_PRIME				 128
 #define RSA_R_Q_NOT_PRIME				 129
@@ -395,6 +415,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_UNKNOWN_ALGORITHM_TYPE			 117
 #define RSA_R_UNKNOWN_PADDING_TYPE			 118
 #define RSA_R_WRONG_SIGNATURE_LENGTH			 119
+#define RSA_R_ZERO_CHECK_FAILED				 136
 
 #ifdef  __cplusplus
 }

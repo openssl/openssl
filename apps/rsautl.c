@@ -148,6 +148,7 @@ int MAIN(int argc, char **argv)
 		else if(!strcmp(*argv, "-oaep")) pad = RSA_PKCS1_OAEP_PADDING;
 		else if(!strcmp(*argv, "-ssl")) pad = RSA_SSLV23_PADDING;
 		else if(!strcmp(*argv, "-pkcs")) pad = RSA_PKCS1_PADDING;
+		else if(!strcmp(*argv, "-x931")) pad = RSA_X931_PADDING;
 		else if(!strcmp(*argv, "-sign")) {
 			rsa_mode = RSA_SIGN;
 			need_priv = 1;
