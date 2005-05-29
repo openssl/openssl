@@ -283,7 +283,7 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	nist_cp_bn_0(buf, a_d + BN_NIST_192_TOP, top - BN_NIST_192_TOP, BN_NIST_192_TOP);
 
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
-# pragma save
+# pragma message save
 # pragma message disable BADSUBSCRIPT
 #endif
 
@@ -296,7 +296,7 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		++carry;
 
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
-# pragma restore
+# pragma message restore
 #endif
 
 	nist_set_192(t_d, buf, 5, 5, 5)
