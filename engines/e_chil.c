@@ -87,7 +87,7 @@
 #endif
 
 #define HWCRHK_LIB_NAME "hwcrhk engine"
-#include "e_ncipher_err.c"
+#include "e_chil_err.c"
 
 static int hwcrhk_destroy(ENGINE *e);
 static int hwcrhk_init(ENGINE *e);

@@ -1,4 +1,4 @@
-/* e_4758_cca_err.c */
+/* e_chil_err.c */
 /* ====================================================================
  * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -60,7 +60,7 @@
 
 #include <stdio.h>
 #include <openssl/err.h>
-#include "e_4758_cca_err.h"
+#include "e_chil_err.h"
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
@@ -68,86 +68,94 @@
 #define ERR_FUNC(func) ERR_PACK(0,func,0)
 #define ERR_REASON(reason) ERR_PACK(0,0,reason)
 
-static ERR_STRING_DATA CCA4758_str_functs[]=
+static ERR_STRING_DATA HWCRHK_str_functs[]=
 	{
-{ERR_FUNC(CCA4758_F_CCA_RSA_SIGN),	"CCA_RSA_SIGN"},
-{ERR_FUNC(CCA4758_F_CCA_RSA_VERIFY),	"CCA_RSA_VERIFY"},
-{ERR_FUNC(CCA4758_F_IBM_4758_CCA_CTRL),	"IBM_4758_CCA_CTRL"},
-{ERR_FUNC(CCA4758_F_IBM_4758_CCA_FINISH),	"IBM_4758_CCA_FINISH"},
-{ERR_FUNC(CCA4758_F_IBM_4758_CCA_INIT),	"IBM_4758_CCA_INIT"},
-{ERR_FUNC(CCA4758_F_IBM_4758_LOAD_PRIVKEY),	"IBM_4758_LOAD_PRIVKEY"},
-{ERR_FUNC(CCA4758_F_IBM_4758_LOAD_PUBKEY),	"IBM_4758_LOAD_PUBKEY"},
+{ERR_FUNC(HWCRHK_F_HWCRHK_CTRL),	"HWCRHK_CTRL"},
+{ERR_FUNC(HWCRHK_F_HWCRHK_FINISH),	"HWCRHK_FINISH"},
+{ERR_FUNC(HWCRHK_F_HWCRHK_GET_PASS),	"HWCRHK_GET_PASS"},
+{ERR_FUNC(HWCRHK_F_HWCRHK_INIT),	"HWCRHK_INIT"},
+{ERR_FUNC(HWCRHK_F_HWCRHK_INSERT_CARD),	"HWCRHK_INSERT_CARD"},
+{ERR_FUNC(HWCRHK_F_HWCRHK_LOAD_PRIVKEY),	"HWCRHK_LOAD_PRIVKEY"},
+{ERR_FUNC(HWCRHK_F_HWCRHK_LOAD_PUBKEY),	"HWCRHK_LOAD_PUBKEY"},
+{ERR_FUNC(HWCRHK_F_HWCRHK_MOD_EXP),	"HWCRHK_MOD_EXP"},
+{ERR_FUNC(HWCRHK_F_HWCRHK_RAND_BYTES),	"HWCRHK_RAND_BYTES"},
+{ERR_FUNC(HWCRHK_F_HWCRHK_RSA_MOD_EXP),	"HWCRHK_RSA_MOD_EXP"},
 {0,NULL}
 	};
 
-static ERR_STRING_DATA CCA4758_str_reasons[]=
+static ERR_STRING_DATA HWCRHK_str_reasons[]=
 	{
-{ERR_REASON(CCA4758_R_ALREADY_LOADED)    ,"already loaded"},
-{ERR_REASON(CCA4758_R_ASN1_OID_UNKNOWN_FOR_MD),"asn1 oid unknown for md"},
-{ERR_REASON(CCA4758_R_COMMAND_NOT_IMPLEMENTED),"command not implemented"},
-{ERR_REASON(CCA4758_R_DSO_FAILURE)       ,"dso failure"},
-{ERR_REASON(CCA4758_R_FAILED_LOADING_PRIVATE_KEY),"failed loading private key"},
-{ERR_REASON(CCA4758_R_FAILED_LOADING_PUBLIC_KEY),"failed loading public key"},
-{ERR_REASON(CCA4758_R_NOT_LOADED)        ,"not loaded"},
-{ERR_REASON(CCA4758_R_SIZE_TOO_LARGE_OR_TOO_SMALL),"size too large or too small"},
-{ERR_REASON(CCA4758_R_UNIT_FAILURE)      ,"unit failure"},
-{ERR_REASON(CCA4758_R_UNKNOWN_ALGORITHM_TYPE),"unknown algorithm type"},
+{ERR_REASON(HWCRHK_R_ALREADY_LOADED)     ,"already loaded"},
+{ERR_REASON(HWCRHK_R_BIO_WAS_FREED)      ,"bio was freed"},
+{ERR_REASON(HWCRHK_R_CHIL_ERROR)         ,"chil error"},
+{ERR_REASON(HWCRHK_R_CTRL_COMMAND_NOT_IMPLEMENTED),"ctrl command not implemented"},
+{ERR_REASON(HWCRHK_R_DSO_FAILURE)        ,"dso failure"},
+{ERR_REASON(HWCRHK_R_LOCKING_MISSING)    ,"locking missing"},
+{ERR_REASON(HWCRHK_R_MISSING_KEY_COMPONENTS),"missing key components"},
+{ERR_REASON(HWCRHK_R_NOT_INITIALISED)    ,"not initialised"},
+{ERR_REASON(HWCRHK_R_NOT_LOADED)         ,"not loaded"},
+{ERR_REASON(HWCRHK_R_NO_CALLBACK)        ,"no callback"},
+{ERR_REASON(HWCRHK_R_NO_KEY)             ,"no key"},
+{ERR_REASON(HWCRHK_R_PRIVATE_KEY_ALGORITHMS_DISABLED),"private key algorithms disabled"},
+{ERR_REASON(HWCRHK_R_REQUEST_FAILED)     ,"request failed"},
+{ERR_REASON(HWCRHK_R_REQUEST_FALLBACK)   ,"request fallback"},
+{ERR_REASON(HWCRHK_R_UNIT_FAILURE)       ,"unit failure"},
 {0,NULL}
 	};
 
 #endif
 
-#ifdef CCA4758_LIB_NAME
-static ERR_STRING_DATA CCA4758_lib_name[]=
+#ifdef HWCRHK_LIB_NAME
+static ERR_STRING_DATA HWCRHK_lib_name[]=
         {
-{0	,CCA4758_LIB_NAME},
+{0	,HWCRHK_LIB_NAME},
 {0,NULL}
 	};
 #endif
 
 
-static int CCA4758_lib_error_code=0;
-static int CCA4758_error_init=1;
+static int HWCRHK_lib_error_code=0;
+static int HWCRHK_error_init=1;
 
-static void ERR_load_CCA4758_strings(void)
+static void ERR_load_HWCRHK_strings(void)
 	{
-	if (CCA4758_lib_error_code == 0)
-		CCA4758_lib_error_code=ERR_get_next_error_library();
+	if (HWCRHK_lib_error_code == 0)
+		HWCRHK_lib_error_code=ERR_get_next_error_library();
 
-	if (CCA4758_error_init)
+	if (HWCRHK_error_init)
 		{
-		CCA4758_error_init=0;
+		HWCRHK_error_init=0;
 #ifndef OPENSSL_NO_ERR
-		ERR_load_strings(CCA4758_lib_error_code,CCA4758_str_functs);
-		ERR_load_strings(CCA4758_lib_error_code,CCA4758_str_reasons);
+		ERR_load_strings(HWCRHK_lib_error_code,HWCRHK_str_functs);
+		ERR_load_strings(HWCRHK_lib_error_code,HWCRHK_str_reasons);
 #endif
 
-#ifdef CCA4758_LIB_NAME
-		CCA4758_lib_name->error = ERR_PACK(CCA4758_lib_error_code,0,0);
-		ERR_load_strings(0,CCA4758_lib_name);
+#ifdef HWCRHK_LIB_NAME
+		HWCRHK_lib_name->error = ERR_PACK(HWCRHK_lib_error_code,0,0);
+		ERR_load_strings(0,HWCRHK_lib_name);
 #endif
 		}
 	}
 
-static void ERR_unload_CCA4758_strings(void)
+static void ERR_unload_HWCRHK_strings(void)
 	{
-	if (CCA4758_error_init == 0)
+	if (HWCRHK_error_init == 0)
 		{
 #ifndef OPENSSL_NO_ERR
-		ERR_unload_strings(CCA4758_lib_error_code,CCA4758_str_functs);
-		ERR_unload_strings(CCA4758_lib_error_code,CCA4758_str_reasons);
+		ERR_unload_strings(HWCRHK_lib_error_code,HWCRHK_str_functs);
+		ERR_unload_strings(HWCRHK_lib_error_code,HWCRHK_str_reasons);
 #endif
 
-#ifdef CCA4758_LIB_NAME
-		ERR_unload_strings(0,CCA4758_lib_name);
+#ifdef HWCRHK_LIB_NAME
+		ERR_unload_strings(0,HWCRHK_lib_name);
 #endif
-		CCA4758_error_init=1;
+		HWCRHK_error_init=1;
 		}
 	}
 
-static void ERR_CCA4758_error(int function, int reason, char *file, int line)
+static void ERR_HWCRHK_error(int function, int reason, char *file, int line)
 	{
-	if (CCA4758_lib_error_code == 0)
-		CCA4758_lib_error_code=ERR_get_next_error_library();
-	ERR_PUT_error(CCA4758_lib_error_code,function,reason,file,line);
+	if (HWCRHK_lib_error_code == 0)
+		HWCRHK_lib_error_code=ERR_get_next_error_library();
+	ERR_PUT_error(HWCRHK_lib_error_code,function,reason,file,line);
 	}

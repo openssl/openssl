@@ -73,7 +73,7 @@
 #include "vendor_defns/hw_4758_cca.h"
 #endif
 
-#include "e_4758_cca_err.c"
+#include "e_4758cca_err.c"
 
 static int ibm_4758_cca_destroy(ENGINE *e);
 static int ibm_4758_cca_init(ENGINE *e);

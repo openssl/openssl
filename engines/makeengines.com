@@ -34,7 +34,7 @@ $! Set the names of the engines we want to build
 $!
 $ ENGINES = "," + P6
 $ IF ENGINES .EQS. "," THEN -
-	ENGINES = ",4758_cca,aep,atalla,cswift,ncipher,nuron,sureware,ubsec"
+	ENGINES = ",4758cca,aep,atalla,cswift,chil,nuron,sureware,ubsec"
 $!
 $! Set the default TCP/IP library to link against if needed
 $!
@@ -79,11 +79,11 @@ $ THEN
 $   ENGINE_ = "engine_vector.mar"
 $   EXTRA_OBJ := ,'OBJ_DIR'ENGINE_VECTOR.OBJ
 $ ENDIF
-$ ENGINE_4758_CCA = "e_4758_cca"
+$ ENGINE_4758CCA = "e_4758cca"
 $ ENGINE_aep = "e_aep"
 $ ENGINE_atalla = "e_atalla"
 $ ENGINE_cswift = "e_cswift"
-$ ENGINE_ncipher = "e_ncipher"
+$ ENGINE_chil = "e_chil"
 $ ENGINE_nuron = "e_nuron"
 $ ENGINE_sureware = "e_sureware"
 $ ENGINE_ubsec = "e_ubsec"
