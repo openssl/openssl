@@ -361,14 +361,14 @@ static int rsa_printver(BIO *err, BIO *out,
 
 		if (r > 0)
 			{
-			unsigned int mdlen;
 			EVP_DigestInit_ex(&ctx, dgst, NULL);
 			if (!EVP_DigestUpdate(&ctx, Msg, Msglen))
 				goto error;
-			if (!EVP_DigestFinal_ex(&ctx, mdtmp, &mdlen))
+			if (!EVP_DigestFinal_ex(&ctx, mdtmp, NULL))
 				goto error;
 			if (pad == RSA_X931_PADDING)
 				{
+				int mdlen = EVP_MD_size(dgst);
 				if (r != mdlen + 1)
 					r = 0;
 				else if (buf[mdlen] !=

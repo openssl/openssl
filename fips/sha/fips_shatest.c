@@ -328,7 +328,7 @@ static int print_dgst(BIO *err, const EVP_MD *emd, BIO *out,
 static int print_monte(BIO *err, const EVP_MD *md, BIO *out,
 		unsigned char *Seed, int SeedLen)
 	{
-	int i, j, k;
+	unsigned int i, j, k;
 	int ret = 0;
 	EVP_MD_CTX ctx;
 	unsigned char *m1, *m2, *m3, *p;
