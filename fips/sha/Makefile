@@ -116,15 +116,6 @@ fips_sha1dgst.o: ../../include/openssl/opensslv.h
 fips_sha1dgst.o: ../../include/openssl/safestack.h
 fips_sha1dgst.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 fips_sha1dgst.o: fips_sha1dgst.c
-fips_shatest.o: ../../e_os.h ../../include/openssl/bio.h
-fips_shatest.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_shatest.o: ../../include/openssl/err.h ../../include/openssl/fips.h
-fips_shatest.o: ../../include/openssl/fips_sha.h ../../include/openssl/lhash.h
-fips_shatest.o: ../../include/openssl/opensslconf.h
-fips_shatest.o: ../../include/openssl/opensslv.h
-fips_shatest.o: ../../include/openssl/safestack.h
-fips_shatest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_shatest.o: fips_shatest.c
 fips_sha256.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 fips_sha256.o: ../../include/openssl/fips.h ../../include/openssl/fips_sha.h
 fips_sha256.o: ../../include/openssl/opensslconf.h
@@ -138,6 +129,29 @@ fips_sha512.o: ../../include/openssl/opensslconf.h
 fips_sha512.o: ../../include/openssl/opensslv.h
 fips_sha512.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 fips_sha512.o: ../../include/openssl/symhacks.h fips_sha512.c
+fips_shatest.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+fips_shatest.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
+fips_shatest.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+fips_shatest.o: ../../include/openssl/cast.h ../../include/openssl/conf.h
+fips_shatest.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+fips_shatest.o: ../../include/openssl/des_old.h ../../include/openssl/dh.h
+fips_shatest.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_shatest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+fips_shatest.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
+fips_shatest.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
+fips_shatest.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+fips_shatest.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+fips_shatest.o: ../../include/openssl/opensslconf.h
+fips_shatest.o: ../../include/openssl/opensslv.h
+fips_shatest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
+fips_shatest.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+fips_shatest.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+fips_shatest.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+fips_shatest.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+fips_shatest.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+fips_shatest.o: ../../include/openssl/ui_compat.h ../../include/openssl/x509.h
+fips_shatest.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+fips_shatest.o: fips_shatest.c
 fips_standalone_sha1.o: ../../include/openssl/aes.h
 fips_standalone_sha1.o: ../../include/openssl/asn1.h
 fips_standalone_sha1.o: ../../include/openssl/bio.h

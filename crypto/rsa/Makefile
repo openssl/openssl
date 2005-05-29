@@ -184,6 +184,26 @@ rsa_pk1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rsa_pk1.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 rsa_pk1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 rsa_pk1.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_pk1.c
+rsa_pss.o: ../../e_os.h ../../include/openssl/aes.h
+rsa_pss.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+rsa_pss.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+rsa_pss.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
+rsa_pss.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+rsa_pss.o: ../../include/openssl/des_old.h ../../include/openssl/dh.h
+rsa_pss.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+rsa_pss.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+rsa_pss.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
+rsa_pss.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
+rsa_pss.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+rsa_pss.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+rsa_pss.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+rsa_pss.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
+rsa_pss.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+rsa_pss.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+rsa_pss.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+rsa_pss.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+rsa_pss.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+rsa_pss.o: ../../include/openssl/ui_compat.h ../cryptlib.h rsa_pss.c
 rsa_saos.o: ../../e_os.h ../../include/openssl/aes.h
 rsa_saos.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 rsa_saos.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
@@ -237,3 +257,13 @@ rsa_ssl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rsa_ssl.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 rsa_ssl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 rsa_ssl.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_ssl.c
+rsa_x931.o: ../../e_os.h ../../include/openssl/asn1.h
+rsa_x931.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+rsa_x931.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+rsa_x931.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+rsa_x931.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+rsa_x931.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+rsa_x931.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+rsa_x931.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
+rsa_x931.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+rsa_x931.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_x931.c

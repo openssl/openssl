@@ -2876,3 +2876,9 @@ EVP_sha256                              3315	EXIST:OPENSSL_FIPS:FUNCTION:SHA,SHA
 FIPS_selftest_hmac                      3316	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_corrupt_rng                        3317	EXIST:OPENSSL_FIPS:FUNCTION:
 BN_mod_exp_mont_consttime               3318	EXIST::FUNCTION:
+RSA_X931_hash_id                        3319	EXIST::FUNCTION:RSA
+RSA_padding_check_X931                  3320	EXIST::FUNCTION:RSA
+RSA_verify_PKCS1_PSS                    3321	EXIST::FUNCTION:RSA
+RSA_padding_add_X931                    3322	EXIST::FUNCTION:RSA
+RSA_padding_add_PKCS1_PSS               3323	EXIST::FUNCTION:RSA
+PKCS1_MGF1                              3324	EXIST::FUNCTION:RSA
