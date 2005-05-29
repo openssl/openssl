@@ -4,6 +4,13 @@
 
  Changes between 0.9.7h and 0.9.8  [xx XXX xxxx]
 
+  *) Correct naming of the 'chil' and '4758cca' ENGINEs. This
+     involves renaming the source and generated shared-libs for
+     both. The engines will accept the corrected or legacy ids
+     ('ncipher' and '4758_cca' respectively) when binding. NB,
+     this only applies when building 'shared'.
+     [Corinna Vinschen <vinschen@redhat.com> and Geoff Thorpe]
+
   *) Add attribute functions to EVP_PKEY structure. Modify
      PKCS12_create() to recognize a CSP name attribute and
      use it. Make -CSP option work again in pkcs12 utility.

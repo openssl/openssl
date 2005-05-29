@@ -20,23 +20,23 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= 4758_cca aep atalla cswift gmp ncipher nuron sureware ubsec
+LIBNAMES= 4758cca aep atalla cswift gmp chil nuron sureware ubsec
 
-LIBSRC=	e_4758_cca.c \
+LIBSRC=	e_4758cca.c \
 	e_aep.c \
 	e_atalla.c \
 	e_cswift.c \
 	e_gmp.c \
-	e_ncipher.c \
+	e_chil.c \
 	e_nuron.c \
 	e_sureware.c \
 	e_ubsec.c
-LIBOBJ= e_4758_cca.o \
+LIBOBJ= e_4758cca.o \
 	e_aep.o \
 	e_atalla.o \
 	e_cswift.o \
 	e_gmp.o \
-	e_ncipher.o \
+	e_chil.o \
 	e_nuron.o \
 	e_sureware.o \
 	e_ubsec.o
@@ -44,12 +44,12 @@ LIBOBJ= e_4758_cca.o \
 SRC= $(LIBSRC)
 
 EXHEADER= 
-HEADER=	e_4758_cca_err.c e_4758_cca_err.h \
+HEADER=	e_4758cca_err.c e_4758cca_err.h \
 	e_aep_err.c e_aep_err.h \
 	e_atalla_err.c e_atalla_err.h \
 	e_cswift_err.c e_cswift_err.h \
 	e_gmp_err.c e_gmp_err.h \
-	e_ncipher_err.c e_ncipher_err.h \
+	e_chil_err.c e_chil_err.h \
 	e_nuron_err.c e_nuron_err.h \
 	e_sureware_err.c e_sureware_err.h \
 	e_ubsec_err.c e_ubsec_err.h
@@ -130,22 +130,22 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-e_4758_cca.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_4758_cca.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_4758_cca.o: ../include/openssl/crypto.h ../include/openssl/dso.h
-e_4758_cca.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_4758_cca.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_4758_cca.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_4758_cca.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_4758_cca.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_4758_cca.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_4758_cca.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_4758_cca.o: ../include/openssl/rand.h ../include/openssl/rsa.h
-e_4758_cca.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-e_4758_cca.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_4758_cca.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-e_4758_cca.o: e_4758_cca.c e_4758_cca_err.c e_4758_cca_err.h
-e_4758_cca.o: vendor_defns/hw_4758_cca.h
+e_4758cca.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+e_4758cca.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+e_4758cca.o: ../include/openssl/crypto.h ../include/openssl/dso.h
+e_4758cca.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+e_4758cca.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+e_4758cca.o: ../include/openssl/engine.h ../include/openssl/err.h
+e_4758cca.o: ../include/openssl/evp.h ../include/openssl/lhash.h
+e_4758cca.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+e_4758cca.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+e_4758cca.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
+e_4758cca.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+e_4758cca.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+e_4758cca.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+e_4758cca.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+e_4758cca.o: e_4758cca.c e_4758cca_err.c e_4758cca_err.h
+e_4758cca.o: vendor_defns/hw_4758_cca.h
 e_aep.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_aep.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_aep.o: ../include/openssl/crypto.h ../include/openssl/dh.h
@@ -184,24 +184,24 @@ e_gmp.o: ../include/openssl/e_os2.h ../include/openssl/engine.h
 e_gmp.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 e_gmp.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 e_gmp.o: ../include/openssl/stack.h ../include/openssl/symhacks.h e_gmp.c
-e_ncipher.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_ncipher.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_ncipher.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_ncipher.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
-e_ncipher.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_ncipher.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_ncipher.o: ../include/openssl/err.h ../include/openssl/evp.h
-e_ncipher.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-e_ncipher.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-e_ncipher.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-e_ncipher.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-e_ncipher.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-e_ncipher.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_ncipher.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_ncipher.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
-e_ncipher.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-e_ncipher.o: e_ncipher.c e_ncipher_err.c e_ncipher_err.h
-e_ncipher.o: vendor_defns/hwcryptohook.h
+e_chil.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+e_chil.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+e_chil.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+e_chil.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
+e_chil.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+e_chil.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+e_chil.o: ../include/openssl/err.h ../include/openssl/evp.h
+e_chil.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+e_chil.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+e_chil.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+e_chil.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+e_chil.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
+e_chil.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+e_chil.o: ../include/openssl/sha.h ../include/openssl/stack.h
+e_chil.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
+e_chil.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+e_chil.o: e_chil.c e_chil_err.c e_chil_err.h
+e_chil.o: vendor_defns/hwcryptohook.h
 e_nuron.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_nuron.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_nuron.o: ../include/openssl/crypto.h ../include/openssl/dh.h
