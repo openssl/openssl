@@ -168,6 +168,23 @@ e_atalla.o: ../include/openssl/ossl_typ.h ../include/openssl/rsa.h
 e_atalla.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 e_atalla.o: ../include/openssl/symhacks.h e_atalla.c e_atalla_err.c
 e_atalla.o: e_atalla_err.h vendor_defns/atalla.h
+e_chil.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+e_chil.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+e_chil.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+e_chil.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
+e_chil.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+e_chil.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+e_chil.o: ../include/openssl/err.h ../include/openssl/evp.h
+e_chil.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+e_chil.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+e_chil.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+e_chil.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+e_chil.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
+e_chil.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+e_chil.o: ../include/openssl/sha.h ../include/openssl/stack.h
+e_chil.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
+e_chil.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h e_chil.c
+e_chil.o: e_chil_err.c e_chil_err.h vendor_defns/hwcryptohook.h
 e_cswift.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_cswift.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_cswift.o: ../include/openssl/crypto.h ../include/openssl/dh.h
@@ -184,24 +201,6 @@ e_gmp.o: ../include/openssl/e_os2.h ../include/openssl/engine.h
 e_gmp.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 e_gmp.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 e_gmp.o: ../include/openssl/stack.h ../include/openssl/symhacks.h e_gmp.c
-e_chil.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_chil.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_chil.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_chil.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
-e_chil.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_chil.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_chil.o: ../include/openssl/err.h ../include/openssl/evp.h
-e_chil.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-e_chil.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-e_chil.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-e_chil.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-e_chil.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-e_chil.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_chil.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_chil.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
-e_chil.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-e_chil.o: e_chil.c e_chil_err.c e_chil_err.h
-e_chil.o: vendor_defns/hwcryptohook.h
 e_nuron.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_nuron.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_nuron.o: ../include/openssl/crypto.h ../include/openssl/dh.h
