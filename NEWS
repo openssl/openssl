@@ -71,6 +71,8 @@
         SHA-1.
       o Added support for DTLS.  THIS IS STILL BEING WORKED ON!
       o New BIGNUM blinding.
+      o Added support for the RSA-PSS encryption scheme
+      o Added support for the RSA X.931 padding.
 
   Major changes between OpenSSL 0.9.7f and OpenSSL 0.9.7g:
 
