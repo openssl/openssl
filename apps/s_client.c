@@ -263,6 +263,9 @@ int MAIN(int argc, char **argv)
 	int starttls_proto = 0;
 	int prexit = 0, vflags = 0;
 	SSL_METHOD *meth=NULL;
+#ifdef sock_type
+#undef sock_type
+#endif
 	int sock_type=SOCK_STREAM;
 	BIO *sbio;
 	char *inrand=NULL;

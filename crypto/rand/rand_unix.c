@@ -153,7 +153,7 @@ int RAND_poll(void)
 	int n = 0;
 #endif
 #ifdef DEVRANDOM
-	static const char *randomfiles[] = { DEVRANDOM };
+	static const char *randomfiles[] = { "DEVRANDOM" };
 	struct stat randomstats[sizeof(randomfiles)/sizeof(randomfiles[0])];
 	int fd,i;
 #endif
