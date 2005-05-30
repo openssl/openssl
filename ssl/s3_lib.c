@@ -128,6 +128,7 @@
 #include "kssl_lcl.h"
 #include <openssl/md5.h>
 #include <openssl/dh.h>
+#include <openssl/pq_compat.h>
 
 const char *ssl3_version_str="SSLv3" OPENSSL_VERSION_PTEXT;
 
@@ -1441,6 +1442,8 @@ int ssl3_new(SSL *s)
 	memset(s3,0,sizeof *s3);
 	EVP_MD_CTX_init(&s3->finish_dgst1);
 	EVP_MD_CTX_init(&s3->finish_dgst2);
+	pq_64bit_init(&(s3->rrec.seq_num));
+	pq_64bit_init(&(s3->wrec.seq_num));
 
 	s->s3=s3;
 
@@ -1475,6 +1478,9 @@ void ssl3_free(SSL *s)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
 	EVP_MD_CTX_cleanup(&s->s3->finish_dgst1);
 	EVP_MD_CTX_cleanup(&s->s3->finish_dgst2);
+	pq_64bit_free(&(s->s3->rrec.seq_num));
+	pq_64bit_free(&(s->s3->wrec.seq_num));
+
 	OPENSSL_cleanse(s->s3,sizeof *s->s3);
 	OPENSSL_free(s->s3);
 	s->s3=NULL;

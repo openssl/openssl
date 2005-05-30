@@ -22,7 +22,7 @@ LIBOBJ=pqueue.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= pqueue.h
+EXHEADER= pqueue.h pq_compat.h
 HEADER=	$(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)

@@ -442,6 +442,7 @@ dtls1_buffer_handshake_fragment(SSL *s, struct hm_header_st* msg_hdr)
 {
     hm_fragment *frag = NULL;
     pitem *item = NULL;
+	PQ_64BIT seq64;
 
     frag = dtls1_hm_fragment_new(msg_hdr->frag_len);
     if ( frag == NULL)
@@ -452,9 +453,14 @@ dtls1_buffer_handshake_fragment(SSL *s, struct hm_header_st* msg_hdr)
 
     memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
 
-    item = pitem_new(msg_hdr->seq, frag);
+    pq_64bit_init(&seq64);
+    pq_64bit_assign_word(&seq64, msg_hdr->seq);
+
+    item = pitem_new(seq64, frag);
     if ( item == NULL)
         goto err;
+
+    pq_64bit_free(&seq64);
 
     pqueue_insert(s->d1->buffered_messages, item);
     return 1;
@@ -1037,6 +1043,7 @@ dtls1_buffer_message(SSL *s, int is_ccs)
     {
     pitem *item;
     hm_fragment *frag;
+	PQ_64BIT seq64;
 
     /* this function is called immediately after a message has 
      * been serialized */
@@ -1064,7 +1071,11 @@ dtls1_buffer_message(SSL *s, int is_ccs)
     frag->msg_header.frag_len = s->d1->w_msg_hdr.msg_len;
     frag->msg_header.is_ccs = is_ccs;
 
-    item = pitem_new(frag->msg_header.seq, frag);
+    pq_64bit_init(&seq64);
+    pq_64bit_assign_word(&seq64, frag->msg_header.seq);
+
+    item = pitem_new(seq64, frag);
+    pq_64bit_free(&seq64);
     if ( item == NULL)
         {
         dtls1_hm_fragment_free(frag);
@@ -1090,6 +1101,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
     pitem *item;
     hm_fragment *frag ;
     unsigned long header_length;
+	PQ_64BIT seq64;
 
     /*
       OPENSSL_assert(s->init_num == 0);
@@ -1097,7 +1109,11 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
      */
 
     /* XDTLS:  the requested message ought to be found, otherwise error */
-    item = pqueue_find(s->d1->sent_messages, seq);
+    pq_64bit_init(&seq64);
+    pq_64bit_assign_word(&seq64, seq);
+
+    item = pqueue_find(s->d1->sent_messages, seq64);
+    pq_64bit_free(&seq64);
     if ( item == NULL)
         {
         fprintf(stderr, "retransmit:  message %d non-existant\n", seq);
