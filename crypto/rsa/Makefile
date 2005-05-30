@@ -179,6 +179,17 @@ rsa_pk1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rsa_pk1.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 rsa_pk1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 rsa_pk1.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_pk1.c
+rsa_pss.o: ../../e_os.h ../../include/openssl/asn1.h
+rsa_pss.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+rsa_pss.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+rsa_pss.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+rsa_pss.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+rsa_pss.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+rsa_pss.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+rsa_pss.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
+rsa_pss.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+rsa_pss.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+rsa_pss.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_pss.c
 rsa_saos.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_saos.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_saos.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -216,3 +227,13 @@ rsa_ssl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rsa_ssl.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 rsa_ssl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 rsa_ssl.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_ssl.c
+rsa_x931.o: ../../e_os.h ../../include/openssl/asn1.h
+rsa_x931.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+rsa_x931.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+rsa_x931.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+rsa_x931.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+rsa_x931.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+rsa_x931.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+rsa_x931.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
+rsa_x931.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+rsa_x931.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_x931.c
