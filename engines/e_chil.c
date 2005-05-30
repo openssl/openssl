@@ -1,4 +1,4 @@
-/* crypto/engine/hw_ncipher.c -*- mode: C; c-file-style: "eay" -*- */
+/* crypto/engine/e_chil.c -*- mode: C; c-file-style: "eay" -*- */
 /* Written by Richard Levitte (richard@levitte.org), Geoff Thorpe
  * (geoff@geoffthorpe.net) and Dr Stephen N Henson (shenson@bigfoot.com)
  * for the OpenSSL project 2000.
@@ -70,7 +70,7 @@
 #include <openssl/bn.h>
 
 #ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_NCIPHER
+#ifndef OPENSSL_NO_HW_CHIL
 
 /* Attribution notice: nCipher have said several times that it's OK for
  * us to implement a general interface to their boxes, and recently declared
@@ -86,7 +86,7 @@
 #include "vendor_defns/hwcryptohook.h"
 #endif
 
-#define HWCRHK_LIB_NAME "hwcrhk engine"
+#define HWCRHK_LIB_NAME "CHIL engine"
 #include "e_chil_err.c"
 
 static int hwcrhk_destroy(ENGINE *e);
@@ -177,7 +177,7 @@ static const ENGINE_CMD_DEFN hwcrhk_cmd_defns[] = {
 /* Our internal RSA_METHOD that we provide pointers to */
 static RSA_METHOD hwcrhk_rsa =
 	{
-	"nCipher RSA method",
+	"CHIL RSA method",
 	NULL,
 	NULL,
 	NULL,
@@ -198,7 +198,7 @@ static RSA_METHOD hwcrhk_rsa =
 /* Our internal DH_METHOD that we provide pointers to */
 static DH_METHOD hwcrhk_dh =
 	{
-	"nCipher DH method",
+	"CHIL DH method",
 	NULL,
 	NULL,
 	hwcrhk_mod_exp_dh,
@@ -212,7 +212,7 @@ static DH_METHOD hwcrhk_dh =
 
 static RAND_METHOD hwcrhk_rand =
 	{
-	/* "nCipher RAND method", */
+	/* "CHIL RAND method", */
 	NULL,
 	hwcrhk_rand_bytes,
 	NULL,
@@ -223,7 +223,7 @@ static RAND_METHOD hwcrhk_rand =
 
 /* Constants used when creating the ENGINE */
 static const char *engine_hwcrhk_id = "chil";
-static const char *engine_hwcrhk_name = "nCipher hardware engine support";
+static const char *engine_hwcrhk_name = "CHIL hardware engine support";
 /* Compatibility hack, the dynamic library uses this form in the path */
 static const char *engine_hwcrhk_id_alt = "ncipher";
 
@@ -325,7 +325,7 @@ static HWCryptoHook_InitInfo hwcrhk_globals = {
 
 /* Now, to our own code */
 
-/* This internal function is used by ENGINE_ncipher() and possibly by the
+/* This internal function is used by ENGINE_chil() and possibly by the
  * "dynamic" ENGINE support too */
 static int bind_helper(ENGINE *e)
 	{
@@ -381,7 +381,7 @@ static int bind_helper(ENGINE *e)
 	}
 
 #ifdef OPENSSL_NO_DYNAMIC_ENGINE
-static ENGINE *engine_ncipher(void)
+static ENGINE *engine_chil(void)
 	{
 	ENGINE *ret = ENGINE_new();
 	if(!ret)
@@ -397,7 +397,7 @@ static ENGINE *engine_ncipher(void)
 void ENGINE_load_chil(void)
 	{
 	/* Copied from eng_[openssl|dyn].c */
-	ENGINE *toadd = engine_ncipher();
+	ENGINE *toadd = engine_chil();
 	if(!toadd) return;
 	ENGINE_add(toadd);
 	ENGINE_free(toadd);
@@ -493,7 +493,7 @@ static void release_context(HWCryptoHook_ContextHandle hac)
 	p_hwcrhk_Finish(hac);
 	}
 
-/* Destructor (complements the "ENGINE_ncipher()" constructor) */
+/* Destructor (complements the "ENGINE_chil()" constructor) */
 static int hwcrhk_destroy(ENGINE *e)
 	{
 	free_HWCRHK_LIBNAME();
@@ -1356,5 +1356,5 @@ IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
 #endif /* OPENSSL_NO_DYNAMIC_ENGINE */
 
-#endif /* !OPENSSL_NO_HW_NCIPHER */
+#endif /* !OPENSSL_NO_HW_CHIL */
 #endif /* !OPENSSL_NO_HW */
