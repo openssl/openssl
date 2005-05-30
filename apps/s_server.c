@@ -262,6 +262,9 @@ static char *engine_id=NULL;
 static const char *session_id_prefix=NULL;
 
 static int enable_timeouts = 0;
+#ifdef mtu
+#undef mtu
+#endif
 static long mtu;
 static int cert_chain = 0;
 
@@ -534,6 +537,9 @@ int MAIN(int argc, char *argv[])
 	int no_tmp_rsa=0,no_dhe=0,no_ecdhe=0,nocert=0;
 	int state=0;
 	SSL_METHOD *meth=NULL;
+#ifdef sock_type
+#undef sock_type
+#endif
     int sock_type=SOCK_STREAM;
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE *e=NULL;
