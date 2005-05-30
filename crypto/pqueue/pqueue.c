@@ -68,12 +68,14 @@ typedef struct _pqueue
 	} pqueue_s;
 
 pitem *
-pitem_new(BN_ULLONG priority, void *data)
+pitem_new(PQ_64BIT priority, void *data)
 	{
 	pitem *item = (pitem *) OPENSSL_malloc(sizeof(pitem));
 	if (item == NULL) return NULL;
 
-	item->priority = priority;
+	pq_64bit_init(&(item->priority));
+	pq_64bit_assign(&item->priority, &priority);
+
 	item->data = data;
 	item->next = NULL;
 
@@ -84,7 +86,8 @@ void
 pitem_free(pitem *item)
 	{
 	if (item == NULL) return;
-	
+
+	pq_64bit_free(&(item->priority));
 	OPENSSL_free(item);
 	}
 
@@ -121,7 +124,7 @@ pqueue_insert(pqueue_s *pq, pitem *item)
 		next != NULL;
 		curr = next, next = next->next)
 		{
-		if (item->priority < next->priority)
+		if (pq_64bit_gt(&(next->priority), &(item->priority)))
 			{
 			item->next = next;
 
@@ -133,7 +136,7 @@ pqueue_insert(pqueue_s *pq, pitem *item)
 			return item;
 			}
 		/* duplicates not allowed */
-		if (item->priority == next->priority)
+		if (pq_64bit_eq(&(item->priority), &(next->priority)))
 			return NULL;
 		}
 
@@ -161,7 +164,7 @@ pqueue_pop(pqueue_s *pq)
 	}
 
 pitem *
-pqueue_find(pqueue_s *pq, BN_ULLONG priority)
+pqueue_find(pqueue_s *pq, PQ_64BIT priority)
 	{
 	pitem *next, *prev = NULL;
 	pitem *found = NULL;
@@ -172,7 +175,7 @@ pqueue_find(pqueue_s *pq, BN_ULLONG priority)
 	for ( next = pq->items; next->next != NULL; 
 		  prev = next, next = next->next)
 		{
-		if ( next->priority == priority)
+		if ( pq_64bit_eq(&(next->priority), &priority))
 			{
 			found = next;
 			break;
@@ -180,7 +183,7 @@ pqueue_find(pqueue_s *pq, BN_ULLONG priority)
 		}
 	
 	/* check the one last node */
-	if ( next->priority == priority)
+	if ( pq_64bit_eq(&(next->priority), &priority))
 		found = next;
 
 	if ( ! found)
@@ -196,6 +199,7 @@ pqueue_find(pqueue_s *pq, BN_ULLONG priority)
 	return found;
 	}
 
+#if !(defined(OPENSSL_SYS_VMS) || defined(VMS_TEST))
 void
 pqueue_print(pqueue_s *pq)
 	{
@@ -207,6 +211,7 @@ pqueue_print(pqueue_s *pq)
 		item = item->next;
 		}
 	}
+#endif
 
 pitem *
 pqueue_iterator(pqueue_s *pq)

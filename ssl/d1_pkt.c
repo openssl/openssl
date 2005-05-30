@@ -124,7 +124,7 @@
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf, 
 	int len, int peek);
 static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
-	BN_ULLONG *seq_num);
+	PQ_64BIT *seq_num);
 static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 static DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr, 
     unsigned int *is_next_epoch);
@@ -133,12 +133,12 @@ static int dtls1_record_needs_buffering(SSL *s, SSL3_RECORD *rr,
 	unsigned short *priority, unsigned long *offset);
 #endif
 static int dtls1_buffer_record(SSL *s, record_pqueue *q,
-	BN_ULLONG priority);
+	PQ_64BIT priority);
 static int dtls1_process_record(SSL *s);
-static BN_ULLONG bytes_to_long_long(unsigned char *bytes);
-static void long_long_to_bytes(BN_ULLONG num, unsigned char *bytes);
+#if !(defined(OPENSSL_SYS_VMS) || defined(VMS_TEST))
+static PQ_64BIT bytes_to_long_long(unsigned char *bytes, PQ_64BIT *num);
+#endif
 static void dtls1_clear_timeouts(SSL *s);
-
 
 /* copy buffered record into SSL structure */
 static int
@@ -161,7 +161,7 @@ dtls1_copy_record(SSL *s, pitem *item)
 
 
 static int
-dtls1_buffer_record(SSL *s, record_pqueue *queue, BN_ULLONG priority)
+dtls1_buffer_record(SSL *s, record_pqueue *queue, PQ_64BIT priority)
 {
     DTLS1_RECORD_DATA *rdata;
 	pitem *item;
@@ -275,9 +275,9 @@ static int
 dtls1_get_buffered_record(SSL *s)
 	{
 	pitem *item;
-	BN_ULLONG priority = 
-		(((BN_ULLONG)s->d1->handshake_read_seq) << 32) | 
-		((BN_ULLONG)s->d1->r_msg_hdr.frag_off);
+	PQ_64BIT priority = 
+		(((PQ_64BIT)s->d1->handshake_read_seq) << 32) | 
+		((PQ_64BIT)s->d1->r_msg_hdr.frag_off);
 	
 	if ( ! SSL_in_init(s))  /* if we're not (re)negotiating, 
 							   nothing buffered */
@@ -482,7 +482,6 @@ int dtls1_get_record(SSL *s)
 	unsigned char *p;
 	short version;
 	DTLS1_BITMAP *bitmap;
-	BN_ULLONG read_sequence;
     unsigned int is_next_epoch;
 
 	rr= &(s->s3->rrec);
@@ -522,9 +521,9 @@ again:
         /* sequence number is 64 bits, with top 2 bytes = epoch */ 
 		n2s(p,rr->epoch);
 
-		read_sequence = 0;
-		n2l6(p, read_sequence);
-		long_long_to_bytes(read_sequence, s->s3->read_sequence);
+		memcpy(&(s->s3->read_sequence[2]), p, 6);
+		p+=6;
+
 		n2s(p,rr->length);
 
 		/* Lets check version */
@@ -1406,7 +1405,8 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 /*	else
 	s2n(s->d1->handshake_epoch, pseq); */
 
-	l2n6(bytes_to_long_long(s->s3->write_sequence), pseq);
+	memcpy(pseq, &(s->s3->write_sequence[2]), 6);
+	pseq+=6;
 	s2n(wr->length,pseq);
 
 	/* we should now have
@@ -1419,7 +1419,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 	/* buffer the record, making it easy to handle retransmits */
 	if ( type == SSL3_RT_HANDSHAKE || type == SSL3_RT_CHANGE_CIPHER_SPEC)
 		dtls1_buffer_record(s, wr->data, wr->length, 
-			*((BN_ULLONG *)&(s->s3->write_sequence[0])));
+			*((PQ_64BIT *)&(s->s3->write_sequence[0])));
 #endif
 
 	ssl3_record_sequence_update(&(s->s3->write_sequence[0]));
@@ -1451,27 +1451,60 @@ err:
 
 
 static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
-	BN_ULLONG *seq_num)
+	PQ_64BIT *seq_num)
 	{
-	BN_ULLONG mask = 0x0000000000000001L;
-	BN_ULLONG rcd_num;
+#if !(defined(OPENSSL_SYS_VMS) || defined(VMS_TEST))
+	PQ_64BIT mask = 0x0000000000000001L;
+#endif
+	PQ_64BIT rcd_num, tmp;
 
-	rcd_num = bytes_to_long_long(s->s3->read_sequence);
+	pq_64bit_init(&rcd_num);
+	pq_64bit_init(&tmp);
+
+	/* this is the sequence number for the record just read */
+	pq_64bit_bin2num(&rcd_num, s->s3->read_sequence, 8);
+
 	
-	if (rcd_num >= bitmap->max_seq_num)
+	if (pq_64bit_gt(&rcd_num, &(bitmap->max_seq_num)) ||
+		pq_64bit_eq(&rcd_num, &(bitmap->max_seq_num)))
 		{
-		*seq_num = rcd_num;
+		pq_64bit_assign(seq_num, &rcd_num);
+		pq_64bit_free(&rcd_num);
+		pq_64bit_free(&tmp);
 		return 1;  /* this record is new */
 		}
-	
-	if (bitmap->max_seq_num - rcd_num > bitmap->length)
-		return 0;  /* stale, outside the window */
 
+	pq_64bit_sub(&tmp, &(bitmap->max_seq_num), &rcd_num);
+
+	if ( pq_64bit_get_word(&tmp) > bitmap->length)
+		{
+		pq_64bit_free(&rcd_num);
+		pq_64bit_free(&tmp);
+		return 0;  /* stale, outside the window */
+		}
+
+#if (defined(OPENSSL_SYS_VMS) || defined(VMS_TEST))
+	{
+	int offset;
+	pq_64bit_sub(&tmp, &(bitmap->max_seq_num), &rcd_num);
+	pq_64bit_sub_word(&tmp, 1);
+	offset = pq_64bit_get_word(&tmp);
+	if ( pq_64bit_is_bit_set(&(bitmap->map), offset))
+		{
+		pq_64bit_free(&rcd_num);
+		pq_64bit_free(&tmp);
+		return 0;
+		}
+	}
+#else
 	mask <<= (bitmap->max_seq_num - rcd_num - 1);
 	if (bitmap->map & mask)
 		return 0; /* record previously received */
+#endif
 	
-	*seq_num = rcd_num;
+	pq_64bit_assign(seq_num, &rcd_num);
+	pq_64bit_free(&rcd_num);
+	pq_64bit_free(&tmp);
 	return 1;
 	}
 
@@ -1479,23 +1512,49 @@ static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
 static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap)
 	{
 	unsigned int shift;
-	BN_ULLONG mask = 0x0000000000000001L;
-	BN_ULLONG rcd_num;
+	PQ_64BIT rcd_num;
+	PQ_64BIT tmp;
+	PQ_64BIT_CTX *ctx;
 
-	rcd_num = bytes_to_long_long(s->s3->read_sequence);
+	pq_64bit_init(&rcd_num);
+	pq_64bit_init(&tmp);
 
-	if (rcd_num >= bitmap->max_seq_num)
+	pq_64bit_bin2num(&rcd_num, s->s3->read_sequence, 8);
+
+	/* unfortunate code complexity due to 64-bit manipulation support
+	 * on 32-bit machines */
+	if ( pq_64bit_gt(&rcd_num, &(bitmap->max_seq_num)) ||
+		pq_64bit_eq(&rcd_num, &(bitmap->max_seq_num)))
 		{
-		shift = (unsigned int)(rcd_num - bitmap->max_seq_num) + 1;
-		bitmap->max_seq_num = rcd_num + 1;
-		bitmap->map <<= shift;
-		bitmap->map |= 0x0000000000000001L;
+		pq_64bit_sub(&tmp, &rcd_num, &(bitmap->max_seq_num));
+		pq_64bit_add_word(&tmp, 1);
+
+		shift = (unsigned int)pq_64bit_get_word(&tmp);
+
+		pq_64bit_lshift(&(tmp), &(bitmap->map), shift);
+		pq_64bit_assign(&(bitmap->map), &tmp);
+
+		pq_64bit_set_bit(&(bitmap->map), 0);
+		pq_64bit_add_word(&rcd_num, 1);
+		pq_64bit_assign(&(bitmap->max_seq_num), &rcd_num);
+
+		pq_64bit_assign_word(&tmp, 1);
+		pq_64bit_lshift(&tmp, &tmp, bitmap->length);
+		ctx = pq_64bit_ctx_new(&ctx);
+		pq_64bit_mod(&(bitmap->map), &(bitmap->map), &tmp, ctx);
+		pq_64bit_ctx_free(ctx);
 		}
 	else
 		{
-		mask <<= (bitmap->max_seq_num - rcd_num - 1);
-		bitmap->map |= mask;
+		pq_64bit_sub(&tmp, &(bitmap->max_seq_num), &rcd_num);
+		pq_64bit_sub_word(&tmp, 1);
+		shift = (unsigned int)pq_64bit_get_word(&tmp);
+
+		pq_64bit_set_bit(&(bitmap->map), shift);
 		}
+
+	pq_64bit_free(&rcd_num);
+	pq_64bit_free(&tmp);
 	}
 
 
@@ -1656,8 +1715,17 @@ dtls1_reset_seq_numbers(SSL *s, int rw)
 		{
 		seq = s->s3->read_sequence;
 		s->d1->r_epoch++;
-		memcpy(&(s->d1->bitmap), &(s->d1->next_bitmap), sizeof(DTLS1_BITMAP));
+
+		pq_64bit_assign(&(s->d1->bitmap.map), &(s->d1->next_bitmap.map));
+		s->d1->bitmap.length = s->d1->next_bitmap.length;
+		pq_64bit_assign(&(s->d1->bitmap.max_seq_num), 
+			&(s->d1->next_bitmap.max_seq_num));
+
+		pq_64bit_free(&(s->d1->next_bitmap.map));
+		pq_64bit_free(&(s->d1->next_bitmap.max_seq_num));
 		memset(&(s->d1->next_bitmap), 0x00, sizeof(DTLS1_BITMAP));
+		pq_64bit_init(&(s->d1->next_bitmap.map));
+		pq_64bit_init(&(s->d1->next_bitmap.max_seq_num));
 		}
 	else
 		{
@@ -1668,36 +1736,26 @@ dtls1_reset_seq_numbers(SSL *s, int rw)
 	memset(seq, 0x00, seq_bytes);
 	}
 
+#if !(defined(OPENSSL_SYS_VMS) || defined(VMS_TEST))
+static PQ_64BIT
+bytes_to_long_long(unsigned char *bytes, PQ_64BIT *num)
+       {
+       PQ_64BIT _num;
 
-static BN_ULLONG
-bytes_to_long_long(unsigned char *bytes)
-	{
-	BN_ULLONG num;
+       _num = (((PQ_64BIT)bytes[0]) << 56) |
+               (((PQ_64BIT)bytes[1]) << 48) |
+               (((PQ_64BIT)bytes[2]) << 40) |
+               (((PQ_64BIT)bytes[3]) << 32) |
+               (((PQ_64BIT)bytes[4]) << 24) |
+               (((PQ_64BIT)bytes[5]) << 16) |
+               (((PQ_64BIT)bytes[6]) <<  8) |
+               (((PQ_64BIT)bytes[7])      );
 
-	num = (((BN_ULLONG)bytes[0]) << 56) |
-		(((BN_ULLONG)bytes[1]) << 48) |
-		(((BN_ULLONG)bytes[2]) << 40) |
-		(((BN_ULLONG)bytes[3]) << 32) |
-		(((BN_ULLONG)bytes[4]) << 24) |
-		(((BN_ULLONG)bytes[5]) << 16) |
-		(((BN_ULLONG)bytes[6]) <<  8) |
-		(((BN_ULLONG)bytes[7])      );
+	   *num = _num ;
+       return _num;
+       }
+#endif
 
-	return num;
-	}
-
-static void
-long_long_to_bytes(BN_ULLONG num, unsigned char *bytes)
-	{
-	bytes[0] = (unsigned char)((num >> 56)&0xff);
-	bytes[1] = (unsigned char)((num >> 48)&0xff);
-	bytes[2] = (unsigned char)((num >> 40)&0xff);
-	bytes[3] = (unsigned char)((num >> 32)&0xff);
-	bytes[4] = (unsigned char)((num >> 24)&0xff);
-	bytes[5] = (unsigned char)((num >> 16)&0xff);
-	bytes[6] = (unsigned char)((num >>  8)&0xff);
-	bytes[7] = (unsigned char)((num      )&0xff);
-	}
 
 static void
 dtls1_clear_timeouts(SSL *s)
