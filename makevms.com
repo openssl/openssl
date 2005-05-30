@@ -482,14 +482,16 @@ $ COPY SYS$DISK:[.SSL]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Copy All The ".H" Files From The [.FIPS] Directories.
 $!
-$ FDIRS := ,SHA1,RAND,DES,AES,DSA,RSA
+$ FDIRS := ,SHA,RAND,DES,AES,DSA,RSA,DH,HMAC
 $ EXHEADER_ := fips.h
-$ EXHEADER_SHA1 := fips_sha.h
+$ EXHEADER_SHA := fips_sha.h
 $ EXHEADER_RAND := fips_rand.h
 $ EXHEADER_DES :=
 $ EXHEADER_AES :=
 $ EXHEADER_DSA :=
 $ EXHEADER_RSA :=
+$ EXHEADER_DH :=
+$ EXHEADER_HMAC :=
 $
 $ I = 0
 $ LOOP_FDIRS: 
