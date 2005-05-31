@@ -719,9 +719,9 @@ sub main'initseg
 		$tmp=<<___;
 .section	.init
 	call	$under$f
-	jmp	1f
+	jmp	.Linitalign
 .align	$align
-1:
+.Linitalign:
 ___
 		}
 	elsif ($main'coff)
