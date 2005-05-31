@@ -56,6 +56,7 @@
  *
  */
 
+#include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_EC
 #include <stdio.h>
 #include <stdlib.h>

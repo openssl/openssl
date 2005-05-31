@@ -1,6 +1,4 @@
 /* pkcs12.c */
-#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_SHA1)
-
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project.
  */
@@ -57,6 +55,9 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+#include <openssl/opensslconf.h>
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_SHA1)
 
 #include <stdio.h>
 #include <stdlib.h>
