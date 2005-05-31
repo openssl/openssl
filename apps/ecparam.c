@@ -68,6 +68,8 @@
  * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
  *
  */
+
+#include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_EC
 #include <assert.h>
 #include <stdio.h>
