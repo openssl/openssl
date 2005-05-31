@@ -660,7 +660,9 @@ case "$GUESSOS" in
   sparc64-*-*bsd*)	OUT="BSD-sparc64" ;;
   ia64-*-*bsd*)		OUT="BSD-ia64" ;;
   amd64-*-*bsd*)	OUT="BSD-x86_64" ;;
-  *86*-*-*bsd*)		case "`(file -L /usr/lib/libc.so.*) 2>/dev/null`" in
+  *86*-*-*bsd*)		# assume highest libc.so.* version is the one in effect
+			libc=`(ls /usr/lib/libc.so.* /lib/libc.so.* | tail -1) 2>/dev/null`
+			case "`(file $libc) 2>/dev/null`" in
 			*ELF*)	OUT="BSD-x86-elf" ;;
 			*)	OUT="BSD-x86"; options="$options no-sse2" ;;
 			esac ;;
@@ -675,9 +677,9 @@ case "$GUESSOS" in
 	  OUT="OpenUNIX-8" 
 	fi
 	;;
-  *-*-[Uu]nix[Ww]are7) OUT="unixware-7" ;;
-  *-*-[Uu]nix[Ww]are20*) OUT="unixware-2.0" ;;
-  *-*-[Uu]nix[Ww]are21*) OUT="unixware-2.1" ;;
+  *-*-[Uu]nix[Ww]are7) OUT="unixware-7; options="$options no-sse2" ;;
+  *-*-[Uu]nix[Ww]are20*) OUT="unixware-2.0"; options="$options no-sse2 no-sha512" ;;
+  *-*-[Uu]nix[Ww]are21*) OUT="unixware-2.1"; options="$options no-sse2 no-sha512" ;;
   *-*-vos)
 	options="$options no-threads no-shared no-asm no-dso"
 	EXE=".pm"

@@ -3348,33 +3348,6 @@ $shared_extension =
 $ranlib       = 
 $arflags      = 
 
-*** sco3-gcc
-$cc           = gcc
-$cflags       = -O3 -fomit-frame-pointer -Dssize_t=int -DNO_SYS_UN_H
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = 
-$lflags       = -lsocket
-$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
-$cpuid_obj    = 
-$bn_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
-$arflags      = 
-
 *** sco5-cc
 $cc           = cc
 $cflags       = -belf
