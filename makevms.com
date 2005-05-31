@@ -496,7 +496,7 @@ $ LOOP_SDIRS_END:
 $!
 $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
-$ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,kssl.h
+$ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,dtls1.h,kssl.h
 $ COPY SYS$DISK:[.SSL]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Purge all doubles
