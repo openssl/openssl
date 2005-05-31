@@ -66,11 +66,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
 #include <openssl/dso.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
+#ifndef OPENSSL_NO_AES
 #include <openssl/aes.h>
+#endif
 #include <openssl/rand.h>
 
 #ifndef OPENSSL_NO_HW
@@ -134,7 +137,9 @@ static int padlock_init(ENGINE *e);
 static RAND_METHOD padlock_rand;
 
 /* Cipher Stuff */
+#ifndef OPENSSL_NO_AES
 static int padlock_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids, int nid);
+#endif
 
 /* Engine names */
 static const char *padlock_id = "padlock";
@@ -143,7 +148,9 @@ static char padlock_name[100];
 /* Available features */
 static int padlock_use_ace = 0;	/* Advanced Cryptography Engine */
 static int padlock_use_rng = 0;	/* Random Number Generator */
+#ifndef OPENSSL_NO_AES
 static int padlock_aes_align_required = 1;
+#endif
 
 /* ===== Engine "management" functions ===== */
 
@@ -169,8 +176,9 @@ padlock_bind_helper(ENGINE *e)
 	    !ENGINE_set_name(e, padlock_name) ||
 
 	    !ENGINE_set_init_function(e, padlock_init) ||
-
+#ifndef OPENSSL_NO_AES
 	    (padlock_use_ace && !ENGINE_set_ciphers (e, padlock_ciphers)) ||
+#endif
 	    (padlock_use_rng && !ENGINE_set_RAND (e, &padlock_rand))) {
 		return 0;
 	}
@@ -228,6 +236,7 @@ IMPLEMENT_DYNAMIC_BIND_FN (padlock_bind_fn);
 
 /* ===== Here comes the "real" engine ===== */
 
+#ifndef OPENSSL_NO_AES
 /* Some AES-related constants */
 #define AES_BLOCK_SIZE		16
 #define AES_KEY_SIZE_128	16
@@ -264,6 +273,7 @@ struct padlock_cipher_data
  * so we accept the penatly...
  */
 static volatile struct padlock_cipher_data *padlock_saved_context;
+#endif
 
 /*
  * =======================================================
@@ -355,6 +365,7 @@ padlock_available(void)
 	return padlock_use_ace + padlock_use_rng;
 }
 
+#ifndef OPENSSL_NO_AES
 /* Our own htonl()/ntohl() */
 static inline void
 padlock_bswapl(AES_KEY *ks)
@@ -367,6 +378,7 @@ padlock_bswapl(AES_KEY *ks)
 		key++;
 	}
 }
+#endif
 
 /* Force key reload from memory to the CPU microcode.
    Loading EFLAGS from the stack clears EFLAGS[30] 
@@ -377,6 +389,7 @@ padlock_reload_key(void)
 	asm volatile ("pushfl; popfl");
 }
 
+#ifndef OPENSSL_NO_AES
 /*
  * This is heuristic key context tracing. At first one
  * believes that one should use atomic swap instructions,
@@ -430,6 +443,7 @@ PADLOCK_XCRYPT_ASM(padlock_xcrypt_ecb, ".byte 0xf3,0x0f,0xa7,0xc8")	/* rep xcryp
 PADLOCK_XCRYPT_ASM(padlock_xcrypt_cbc, ".byte 0xf3,0x0f,0xa7,0xd0")	/* rep xcryptcbc */
 PADLOCK_XCRYPT_ASM(padlock_xcrypt_cfb, ".byte 0xf3,0x0f,0xa7,0xe0")	/* rep xcryptcfb */
 PADLOCK_XCRYPT_ASM(padlock_xcrypt_ofb, ".byte 0xf3,0x0f,0xa7,0xe8")	/* rep xcryptofb */
+#endif
 
 /* The RNG call itself */
 static inline unsigned int
@@ -600,6 +614,7 @@ padlock_bswapl(void *key)
 #endif
 
 /* ===== AES encryption/decryption ===== */
+#ifndef OPENSSL_NO_AES
 
 #if defined(NID_aes_128_cfb128) && ! defined (NID_aes_128_cfb)
 #define NID_aes_128_cfb	NID_aes_128_cfb128
@@ -1029,6 +1044,8 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 
 	return 1;
 }
+
+#endif /* OPENSSL_NO_AES */
 
 /* ===== Random Number Generator ===== */
 /*
