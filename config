@@ -675,9 +675,9 @@ case "$GUESSOS" in
 	  OUT="OpenUNIX-8" 
 	fi
 	;;
-  *-*-[Uu]nix[Ww]are7) OUT="unixware-7" ;;
-  *-*-[Uu]nix[Ww]are20*) OUT="unixware-2.0" ;;
-  *-*-[Uu]nix[Ww]are21*) OUT="unixware-2.1" ;;
+  *-*-[Uu]nix[Ww]are7) OUT="unixware-7; options="$options no-sse2" ;;
+  *-*-[Uu]nix[Ww]are20*) OUT="unixware-2.0"; options="$options no-sse2 no-sha512" ;;
+  *-*-[Uu]nix[Ww]are21*) OUT="unixware-2.1"; options="$options no-sse2 no-sha512" ;;
   *-*-vos)
 	options="$options no-threads no-shared no-asm no-dso"
 	EXE=".pm"
