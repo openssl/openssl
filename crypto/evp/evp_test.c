@@ -52,6 +52,7 @@
 
 #include "../e_os.h"
 
+#include <openssl/opensslconf.h>
 #include <openssl/evp.h>
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
@@ -395,6 +396,27 @@ int main(int argc,char **argv)
 	if(!test_cipher(cipher,key,kn,iv,in,plaintext,pn,ciphertext,cn,encdec)
 	   && !test_digest(cipher,plaintext,pn,ciphertext,cn))
 	    {
+#ifdef OPENSSL_NO_AES
+	    if (strstr(cipher, "AES") == cipher)
+		{
+		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher); 
+		continue;
+		}
+#endif
+#ifdef OPENSSL_NO_DES
+	    if (strstr(cipher, "DES") == cipher)
+		{
+		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher); 
+		continue;
+		}
+#endif
+#ifdef OPENSSL_NO_RC4
+	    if (strstr(cipher, "RC4") == cipher)
+		{
+		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher); 
+		continue;
+		}
+#endif
 	    fprintf(stderr,"Can't find %s\n",cipher);
 	    EXIT(3);
 	    }
