@@ -84,10 +84,11 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_DSA),	"FIPS_selftest_dsa"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_RNG),	"FIPS_selftest_rng"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_RSA),	"FIPS_selftest_rsa"},
-{ERR_FUNC(FIPS_F_FIPS_SELFTEST_SHA),	"FIPS_selftest_sha"},
+{ERR_FUNC(FIPS_F_FIPS_SELFTEST_SHA),	"FIPS_SELFTEST_SHA"},
 {ERR_FUNC(FIPS_F_HASH_FINAL),	"HASH_FINAL"},
 {ERR_FUNC(FIPS_F_RSA_EAY_PUBLIC_ENCRYPT),	"RSA_EAY_PUBLIC_ENCRYPT"},
 {ERR_FUNC(FIPS_F_RSA_GENERATE_KEY),	"RSA_generate_key"},
+{ERR_FUNC(FIPS_F_RSA_X931_GENERATE_KEY),	"RSA_X931_generate_key"},
 {ERR_FUNC(FIPS_F_SSLEAY_RAND_BYTES),	"SSLEAY_RAND_BYTES"},
 {0,NULL}
 	};
@@ -99,6 +100,8 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 {ERR_REASON(FIPS_R_EXE_DIGEST_DOES_NOT_MATCH),"exe digest does not match"},
 {ERR_REASON(FIPS_R_FIPS_MODE_ALREADY_SET),"fips mode already set"},
 {ERR_REASON(FIPS_R_FIPS_SELFTEST_FAILED) ,"fips selftest failed"},
+{ERR_REASON(FIPS_R_INVALID_KEY_LENGTH)   ,"invalid key length"},
+{ERR_REASON(FIPS_R_KEY_TOO_SHORT)        ,"key too short"},
 {ERR_REASON(FIPS_R_NON_FIPS_METHOD)      ,"non fips method"},
 {ERR_REASON(FIPS_R_PAIRWISE_TEST_FAILED) ,"pairwise test failed"},
 {ERR_REASON(FIPS_R_SELFTEST_FAILED)      ,"selftest failed"},
@@ -109,11 +112,11 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 
 void ERR_load_FIPS_strings(void)
 	{
-	static int init;
+	static int init=1;
 
-	if (!init)
+	if (init)
 		{
-		init=1;
+		init=0;
 #ifndef OPENSSL_NO_ERR
 		ERR_load_strings(0,FIPS_str_functs);
 		ERR_load_strings(0,FIPS_str_reasons);

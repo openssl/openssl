@@ -108,6 +108,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_HASH_FINAL				 100
 #define FIPS_F_RSA_EAY_PUBLIC_ENCRYPT			 114
 #define FIPS_F_RSA_GENERATE_KEY				 113
+#define FIPS_F_RSA_X931_GENERATE_KEY			 119
 #define FIPS_F_SSLEAY_RAND_BYTES			 101
 
 /* Reason codes. */
@@ -116,10 +117,11 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_R_EXE_DIGEST_DOES_NOT_MATCH		 105
 #define FIPS_R_FIPS_MODE_ALREADY_SET			 102
 #define FIPS_R_FIPS_SELFTEST_FAILED			 106
+#define FIPS_R_INVALID_KEY_LENGTH			 109
+#define FIPS_R_KEY_TOO_SHORT				 108
 #define FIPS_R_NON_FIPS_METHOD				 100
 #define FIPS_R_PAIRWISE_TEST_FAILED			 107
 #define FIPS_R_SELFTEST_FAILED				 101
-#define FIPS_R_KEY_TOO_SHORT				 108
 
 #ifdef  __cplusplus
 }

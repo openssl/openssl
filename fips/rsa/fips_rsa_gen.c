@@ -68,7 +68,7 @@ void *OPENSSL_stderr(void);
 
 #ifdef OPENSSL_FIPS
 
-static int fips_check_rsa(RSA *rsa)
+int fips_check_rsa(RSA *rsa)
     {
     int n, ret = 0;
     unsigned char tctext[256], *ctext = tctext;

@@ -204,6 +204,15 @@ int	RSA_size(const RSA *);
 RSA *	RSA_generate_key(int bits, unsigned long e,void
 		(*callback)(int,int,void *),void *cb_arg);
 int	RSA_check_key(const RSA *);
+#ifndef FIPS
+int RSA_X931_derive(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1, BIGNUM *q2,
+			void (*cb)(int, int, void *), void *cb_arg,
+			const BIGNUM *Xp1, const BIGNUM *Xp2, const BIGNUM *Xp,
+			const BIGNUM *Xq1, const BIGNUM *Xq2, const BIGNUM *Xq,
+			const BIGNUM *e);
+RSA *RSA_X931_generate_key(int bits, const BIGNUM *e,
+	     void (*cb)(int,int,void *), void *cb_arg);
+#endif
 	/* next 4 return -1 on error */
 int	RSA_public_encrypt(int flen, const unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);

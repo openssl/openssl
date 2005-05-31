@@ -18,12 +18,12 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST= fips_rsavtest.c fips_rsastest.c
+TEST= fips_rsavtest.c fips_rsastest.c fips_rsagtest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_rsa_eay.c fips_rsa_gen.c fips_rsa_selftest.c
-LIBOBJ=fips_rsa_eay.o fips_rsa_gen.o fips_rsa_selftest.o
+LIBSRC=fips_rsa_eay.c fips_rsa_gen.c fips_rsa_selftest.c fips_rsa_x931g.c
+LIBOBJ=fips_rsa_eay.o fips_rsa_gen.o fips_rsa_selftest.o fips_rsa_x931g.o
 
 SRC= $(LIBSRC)
 
@@ -68,6 +68,9 @@ top_fips_rsastest:
 top_fips_rsavtest:
 	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_rsavtest sub_target)
 
+top_fips_rsagtest:
+	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_rsagtest sub_target)
+
 fips_rsastest: fips_rsastest.o $(TOP)/libcrypto.a
 	$(CC) $(CFLAGS) -o fips_rsastest fips_rsastest.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
 	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_rsastest
@@ -76,10 +79,14 @@ fips_rsavtest: fips_rsavtest.o $(TOP)/libcrypto.a
 	$(CC) $(CFLAGS) -o fips_rsavtest fips_rsavtest.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
 	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_rsavtest
 
+fips_rsagtest: fips_rsagtest.o $(TOP)/libcrypto.a
+	$(CC) $(CFLAGS) -o fips_rsagtest fips_rsagtest.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
+	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_rsagtest
+
 Q=../testvectors/rsa/req
 A=../testvectors/rsa/rsp
 
-fips_test: top top_fips_rsastest top_fips_rsavtest
+fips_test: top top_fips_rsastest top_fips_rsavtest top_fips_rsagtest
 	-rm -rf $(A)
 	mkdir $(A)
 	./fips_rsastest < $(Q)/SigGen15.req > $(A)/SigGen15.rsp
