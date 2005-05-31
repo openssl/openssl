@@ -660,7 +660,9 @@ case "$GUESSOS" in
   sparc64-*-*bsd*)	OUT="BSD-sparc64" ;;
   ia64-*-*bsd*)		OUT="BSD-ia64" ;;
   amd64-*-*bsd*)	OUT="BSD-x86_64" ;;
-  *86*-*-*bsd*)		case "`(file -L /usr/lib/libc.so.*) 2>/dev/null`" in
+  *86*-*-*bsd*)		# assume highest libc.so.* version is the one in effect
+			libc=`(ls /usr/lib/libc.so.* /lib/libc.so.* | tail -1) 2>/dev/null`
+			case "`(file $libc) 2>/dev/null`" in
 			*ELF*)	OUT="BSD-x86-elf" ;;
 			*)	OUT="BSD-x86"; options="$options no-sse2" ;;
 			esac ;;
