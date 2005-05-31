@@ -79,7 +79,7 @@ co86-out.s: asm/co-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) co-586.pl a.out $(CFLAGS) > ../$@)
 
 sparcv8.o:	asm/sparcv8.S
-
+	$(CC) $(CFLAGS) -c asm/sparcv8.S
 sparcv8plus.o:	asm/sparcv8plus.S
 	$(CC) $(CFLAGS) -c asm/sparcv8plus.S
 
