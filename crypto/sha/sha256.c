@@ -4,12 +4,12 @@
  * according to the OpenSSL license [found in ../../LICENSE].
  * ====================================================================
  */
+#include <openssl/opensslconf.h>
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA256)
 
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
