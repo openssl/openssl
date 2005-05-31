@@ -187,7 +187,7 @@ $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_recp,bn_mont,bn_mpi,bn_exp2"
 $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null,"+ -
-	"rsa_asn1"
+	"rsa_pss,rsa_x931,rsa_asn1"
 $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_recp,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec_err"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,dsa_err,dsa_ossl"
