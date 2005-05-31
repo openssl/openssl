@@ -168,23 +168,23 @@ _DATA	SEGMENT
 PUBLIC	OPENSSL_UplinkTable
 OPENSSL_UplinkTable	DQ	$N
 ___
-for ($i=1;$i<=$N;$i++) {   print "	DQ	FLAT:\$lazy$i\n";   }
+for ($i=1;$i<=$N;$i++) {   print "	DQ	\$lazy$i\n";   }
 print <<___;
 _DATA	ENDS
 
-TEXT	SEGMENT
-EXTERN	OPENSSL_Uplink:NEAR
+_TEXT	SEGMENT
+EXTERN	OPENSSL_Uplink:PROC
 ___
 for ($i=1;$i<=$N;$i++) {
 print <<___;
 ALIGN	4
-\$lazy$i	PROC NEAR
+\$lazy$i	PROC
 	push	r9
 	push	r8
 	push	rdx
 	push	rcx
 	sub	rsp,40
-	mov	rcx,OFFSET FLAT:OPENSSL_UplinkTable
+	lea	rcx,OFFSET OPENSSL_UplinkTable
 	mov	rdx,$i
 	call	OPENSSL_Uplink
 	add	rsp,40
@@ -197,7 +197,7 @@ ALIGN	4
 ___
 }
 print <<___;
-TEXT	ENDS
+_TEXT	ENDS
 END
 ___
 }
