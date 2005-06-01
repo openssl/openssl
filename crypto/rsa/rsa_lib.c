@@ -402,6 +402,11 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 
 	ret = BN_BLINDING_create_param(NULL, e, rsa->n, ctx,
 			rsa->meth->bn_mod_exp, rsa->_method_mod_n);
+	if (ret == NULL)
+		{
+		RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_BN_LIB);
+		goto err;
+		}
 	BN_BLINDING_set_thread_id(ret, CRYPTO_thread_id());
 err:
 	BN_CTX_end(ctx);
