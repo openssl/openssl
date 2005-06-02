@@ -35,7 +35,7 @@ calls OPENSSL_add_all_algorithms() by compiling an application with the
 preprocessor symbol B<OPENSSL_LOAD_CONF> #define'd. In this way configuration
 can be added without source changes.
 
-The environment variable B<OPENSSL_CONFIG> can be set to specify the location
+The environment variable B<OPENSSL_CONF> can be set to specify the location
 of the configuration file.
  
 Currently ASN1 OBJECTs and ENGINE configuration can be performed future
