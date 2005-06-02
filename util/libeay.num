@@ -2882,3 +2882,8 @@ RSA_verify_PKCS1_PSS                    3321	EXIST::FUNCTION:RSA
 RSA_padding_add_X931                    3322	EXIST::FUNCTION:RSA
 RSA_padding_add_PKCS1_PSS               3323	EXIST::FUNCTION:RSA
 PKCS1_MGF1                              3324	EXIST::FUNCTION:RSA
+BN_X931_generate_Xpq                    3325	EXIST:OPENSSL_FIPS:FUNCTION:
+RSA_X931_generate_key                   3326	EXIST:OPENSSL_FIPS:FUNCTION:RSA
+BN_X931_derive_prime                    3327	EXIST:OPENSSL_FIPS:FUNCTION:
+BN_X931_generate_prime                  3328	EXIST:OPENSSL_FIPS:FUNCTION:
+RSA_X931_derive                         3329	EXIST:OPENSSL_FIPS:FUNCTION:RSA

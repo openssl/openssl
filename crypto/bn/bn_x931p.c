@@ -59,6 +59,8 @@
 #include <stdio.h>
 #include <openssl/bn.h>
 
+#ifdef OPENSSL_FIPS
+
 /* X9.31 routines for prime derivation */
 
 
@@ -277,3 +279,4 @@ int BN_X931_generate_prime(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
 
 	}
 
+#endif

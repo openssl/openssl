@@ -49,6 +49,8 @@
 #include <openssl/fips.h>
 #include <openssl/opensslv.h>
 
+#ifdef OPENSSL_FIPS
+
 const char SHA512_version[]="SHA-512" OPENSSL_VERSION_PTEXT;
 
 #if defined(_M_IX86) || defined(_M_AMD64) || defined(__i386) || defined(__x86_64)
@@ -479,4 +481,7 @@ static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
 
 #endif /* SHA512_ASM */
 
+#endif
+
 #endif /* OPENSSL_NO_SHA512 */
+

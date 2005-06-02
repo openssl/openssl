@@ -15,6 +15,8 @@
 #include <openssl/fips.h>
 #include <openssl/opensslv.h>
 
+#ifdef OPENSSL_FIPS
+
 const char SHA256_version[]="SHA-256" OPENSSL_VERSION_PTEXT;
 
 int SHA224_Init (SHA256_CTX *c)
@@ -317,4 +319,7 @@ void HASH_BLOCK_HOST_ORDER (SHA256_CTX *ctx, const void *in, size_t num)
 void HASH_BLOCK_DATA_ORDER (SHA256_CTX *ctx, const void *in, size_t num)
 {   sha256_block (ctx,in,num,0);   }
 
+#endif
+
 #endif /* OPENSSL_NO_SHA256 */
+

@@ -64,6 +64,8 @@
 #include <openssl/rsa.h>
 #include <openssl/fips.h>
 
+#ifdef OPENSSL_FIPS
+
 extern int fips_check_rsa(RSA *rsa);
 
 
@@ -284,3 +286,4 @@ RSA *RSA_X931_generate_key(FIPS_RSA_SIZE_T bits, const BIGNUM *e,
 
 	}
 
+#endif

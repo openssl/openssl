@@ -204,7 +204,7 @@ int	RSA_size(const RSA *);
 RSA *	RSA_generate_key(int bits, unsigned long e,void
 		(*callback)(int,int,void *),void *cb_arg);
 int	RSA_check_key(const RSA *);
-#ifndef FIPS
+#ifdef OPENSSL_FIPS
 int RSA_X931_derive(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1, BIGNUM *q2,
 			void (*cb)(int, int, void *), void *cb_arg,
 			const BIGNUM *Xp1, const BIGNUM *Xp2, const BIGNUM *Xp,
