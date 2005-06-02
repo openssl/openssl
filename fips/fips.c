@@ -208,7 +208,6 @@ static int FIPS_check_exe(const char *path)
 
 int FIPS_mode_set(int onoff,const char *path)
     {
-    void fips_set_mode(int _onoff);
     int fips_set_owning_thread();
     int fips_clear_owning_thread();
     int ret = 0;
