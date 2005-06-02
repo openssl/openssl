@@ -320,6 +320,12 @@ int RSA_padding_check_X931(unsigned char *to,int tlen,
 	const unsigned char *f,int fl,int rsa_len);
 int RSA_X931_hash_id(int nid);
 
+int RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash,
+			const EVP_MD *Hash, const unsigned char *EM, int sLen);
+int RSA_padding_add_PKCS1_PSS(RSA *rsa, unsigned char *EM,
+			const unsigned char *mHash,
+			const EVP_MD *Hash, int sLen);
+
 int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int RSA_set_ex_data(RSA *r,int idx,void *arg);
