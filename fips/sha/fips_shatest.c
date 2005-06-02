@@ -371,7 +371,7 @@ static int print_monte(BIO *err, const EVP_MD *md, BIO *out,
 			m3 = p;
 			EVP_DigestFinal_ex(&ctx, m3, &m3len);
 			}
-		BIO_printf(out, "Count = %d\n", j);
+		BIO_printf(out, "COUNT = %d\n", j);
 		BIO_puts(out, "MD = ");
 		for (k = 0; k < m3len; k++)
 			BIO_printf(out, "%02x", m3[k]);
