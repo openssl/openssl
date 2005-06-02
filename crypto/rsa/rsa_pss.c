@@ -76,10 +76,35 @@ int RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash,
 	unsigned char *DB = NULL;
 	EVP_MD_CTX ctx;
 	unsigned char H_[EVP_MAX_MD_SIZE];
+
+	hLen = EVP_MD_size(Hash);
+	/*
+	 * Negative sLen has special meanings:
+	 *	-1	sLen == hLen
+	 *	-2	salt length is autorecovered from signature
+	 *	-N	reserved
+	 */
+	if      (sLen == -1)	sLen = hLen;
+	else if (sLen == -2)	sLen = -2;
+	else if (sLen < -2)
+		{
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_SLEN_CHECK_FAILED);
+		goto err;
+		}
+
 	MSBits = (BN_num_bits(rsa->n) - 1) & 0x7;
 	emLen = RSA_size(rsa);
-	hLen = EVP_MD_size(Hash);
-	if (emLen < (hLen + sLen + 2))
+	if (EM[0] & (0xFF << MSBits))
+		{
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_FIRST_OCTET_INVALID);
+		goto err;
+		}
+	if (MSBits == 0)
+		{
+		EM++;
+		emLen--;
+		}
+	if (emLen < (hLen + sLen + 2)) /* sLen can be small negative */
 		{
 		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_DATA_TOO_LARGE);
 		goto err;
@@ -88,16 +113,6 @@ int RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash,
 		{
 		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_LAST_OCTET_INVALID);
 		goto err;
-		}
-	if (EM[0] & (0xFF << MSBits))
-		{
-		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_FIRST_OCTET_INVALID);
-		goto err;
-		}
-	if (!MSBits)
-		{
-		EM++;
-		emLen--;
 		}
 	maskedDBLen = emLen - hLen - 1;
 	H = EM + maskedDBLen;
@@ -112,26 +127,23 @@ int RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash,
 		DB[i] ^= EM[i];
 	if (MSBits)
 		DB[0] &= 0xFF >> (8 - MSBits);
-	for (i = 0; i < (emLen - hLen - sLen - 2); i++)
+	for (i = 0; DB[i] == 0 && i < (maskedDBLen-1); i++) ;
+	if (DB[i++] != 0x1)
 		{
-		if (DB[i] != 0)	
-			{
-			RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS,
-						RSA_R_ZERO_CHECK_FAILED);
-			goto err;
-			}
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_SLEN_RECOVERY_FAILED);
+		goto err;
 		}
-	if (DB[i] != 0x1)
+	if (sLen >= 0 && (maskedDBLen - i) != sLen)
 		{
-		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_ONE_CHECK_FAILED);
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_SLEN_CHECK_FAILED);
 		goto err;
 		}
 	EVP_MD_CTX_init(&ctx);
 	EVP_DigestInit_ex(&ctx, Hash, NULL);
 	EVP_DigestUpdate(&ctx, zeroes, sizeof zeroes);
 	EVP_DigestUpdate(&ctx, mHash, hLen);
-	if (sLen)
-		EVP_DigestUpdate(&ctx, DB + maskedDBLen - sLen, sLen);
+	if (maskedDBLen - i)
+		EVP_DigestUpdate(&ctx, DB + i, maskedDBLen - i);
 	EVP_DigestFinal(&ctx, H_, NULL);
 	EVP_MD_CTX_cleanup(&ctx);
 	if (memcmp(H_, H, hLen))
@@ -159,21 +171,38 @@ int RSA_padding_add_PKCS1_PSS(RSA *rsa, unsigned char *EM,
 	int hLen, maskedDBLen, MSBits, emLen;
 	unsigned char *H, *salt = NULL, *p;
 	EVP_MD_CTX ctx;
-	MSBits = (BN_num_bits(rsa->n) - 1) & 0x7;
-	emLen = RSA_size(rsa);
+
 	hLen = EVP_MD_size(Hash);
-	if (sLen < 0)
-		sLen = 0;
-	if (emLen < (hLen + sLen + 2))
+	/*
+	 * Negative sLen has special meanings:
+	 *	-1	sLen == hLen
+	 *	-2	salt length is maximized
+	 *	-N	reserved
+	 */
+	if      (sLen == -1)	sLen = hLen;
+	else if (sLen == -2)	sLen = -2;
+	else if (sLen < -2)
 		{
-		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS,
-		   RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS, RSA_R_SLEN_CHECK_FAILED);
 		goto err;
 		}
+
+	MSBits = (BN_num_bits(rsa->n) - 1) & 0x7;
+	emLen = RSA_size(rsa);
 	if (MSBits == 0)
 		{
 		*EM++ = 0;
 		emLen--;
+		}
+	if (sLen == -2)
+		{
+		sLen = emLen - hLen - 2;
+		}
+	else if (emLen < (hLen + sLen + 2))
+		{
+		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS,
+		   RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+		goto err;
 		}
 	if (sLen > 0)
 		{
