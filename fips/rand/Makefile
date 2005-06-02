@@ -75,8 +75,8 @@ A=../testvectors/rng/rsp
 fips_test: top_fips_rngvs
 	-rm -rf $(A)
 	mkdir $(A)
-	./fips_rngvs mct < $(Q)/MCT.req > $(A)/MCT.rsp
-	./fips_rngvs vst < $(Q)/VST.req > $(A)/VST.rsp
+	./fips_rngvs mct < $(Q)/ANSI931_TDES2MCT.req > $(A)/ANSI931_TDES2MCT.rsp
+	./fips_rngvs vst < $(Q)/ANSI931_TDES2VST.req > $(A)/ANSI931_TDES2VST.rsp
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff

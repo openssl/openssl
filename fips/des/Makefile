@@ -72,17 +72,9 @@ fips_desmovs: fips_desmovs.o $(TOP)/libcrypto.a
 	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_desmovs
 
 fips_test: top_fips_desmovs
-	find ../testvectors/des/req -name '*.req' > testlist
-	-rm -rf ../testvectors/des/rsp
-	mkdir ../testvectors/des/rsp
-	./fips_desmovs -d testlist
-	find ../testvectors/des2/req -name '*.req' > testlist
-	-rm -rf ../testvectors/des2/rsp
-	mkdir ../testvectors/des2/rsp
-	./fips_desmovs -d testlist
-	find ../testvectors/des3/req -name '*.req' > testlist
-	-rm -rf ../testvectors/des3/rsp
-	mkdir ../testvectors/des3/rsp
+	find ../testvectors/tdes/req -name '*.req' > testlist
+	-rm -rf ../testvectors/tdes/rsp
+	mkdir ../testvectors/tdes/rsp
 	./fips_desmovs -d testlist
 
 lint:

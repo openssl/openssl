@@ -79,10 +79,31 @@ fips_shatest: fips_shatest.o $(TOP)/libcrypto.a
 	$(CC) $(CFLAGS) -o fips_shatest fips_shatest.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
 	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_shatest
 
+Q=../testvectors/sha/req
+A=../testvectors/sha/rsp
+
+VECTORS = SHA1LongMsg \
+	SHA1Monte \
+	SHA1ShortMsg \
+	SHA224LongMsg \
+	SHA224Monte \
+	SHA224ShortMsg \
+	SHA256LongMsg \
+	SHA256Monte \
+	SHA256ShortMsg \
+	SHA384LongMsg \
+	SHA384Monte \
+	SHA384ShortMsg \
+	SHA512LongMsg \
+	SHA512Monte \
+	SHA512ShortMsg
+
 fips_test: top_fips_shatest
-	-rm -rf ../testvectors/sha/rsp
-	mkdir ../testvectors/sha/rsp
-	./fips_shatest ../testvectors/sha/req/sha.req  > ../testvectors/sha/rsp/sha.rsp
+	-rm -rf $(A)
+	mkdir $(A)
+	for file in $(VECTORS); do \
+		./fips_shatest $(Q)/$$file.req $(A)/$$file.rsp; \
+	done
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
