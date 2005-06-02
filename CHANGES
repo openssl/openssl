@@ -807,7 +807,7 @@
  Changes between 0.9.7g and 0.9.7h  [XX xxx XXXX]
 
   *) Minimal support for X9.31 signatures and PSS padding modes. This is
-     mainly for FIPS compliant and not fully integrated at this stage.
+     mainly for FIPS compliance and not fully integrated at this stage.
      [Steve Henson]
 
   *) For DSA signing, unless DSA_FLAG_NO_EXP_CONSTTIME is set, perform
