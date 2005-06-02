@@ -389,7 +389,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_NULL_BEFORE_BLOCK_MISSING			 113
 #define RSA_R_N_DOES_NOT_EQUAL_P_Q			 127
 #define RSA_R_OAEP_DECODING_ERROR			 121
-#define RSA_R_ONE_CHECK_FAILED				 135
+#define RSA_R_SLEN_RECOVERY_FAILED			 135
 #define RSA_R_PADDING_CHECK_FAILED			 114
 #define RSA_R_P_NOT_PRIME				 128
 #define RSA_R_Q_NOT_PRIME				 129
@@ -399,7 +399,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_UNKNOWN_ALGORITHM_TYPE			 117
 #define RSA_R_UNKNOWN_PADDING_TYPE			 118
 #define RSA_R_WRONG_SIGNATURE_LENGTH			 119
-#define RSA_R_ZERO_CHECK_FAILED				 136
+#define RSA_R_SLEN_CHECK_FAILED				 136
 
 #ifdef  __cplusplus
 }
