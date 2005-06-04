@@ -1075,7 +1075,7 @@ int dtls1_send_certificate_request(SSL *s)
 		d=(unsigned char *)buf->data;
 		*(d++)=SSL3_MT_CERTIFICATE_REQUEST;
 		l2n3(n,d);
-		l2n(s->d1->handshake_write_seq,d);
+		s2n(s->d1->handshake_write_seq,d);
 		s->d1->handshake_write_seq++;
 
 		/* we should now have things packed up, so lets send
