@@ -130,7 +130,7 @@ You can find out if OpenSSL was configured with thread support:
 
  #define OPENSSL_THREAD_DEFINES
  #include <openssl/opensslconf.h>
- #if defined(THREADS)
+ #if defined(OPENSSL_THREADS)
    // thread support enabled
  #else
    // no thread support
