@@ -134,3 +134,37 @@ Any information helping to solve this issue would be deeply
 appreciated.
 
 NOTE: building non-shared doesn't come with this problem.
+
+* ULTRIX build fails with shell errors, such as "bad substitution"
+  and "test: argument expected"
+
+The problem is caused by ULTRIX /bin/sh supporting only original
+Bourne shell syntax/semantics, and the trouble is that the vast
+majority is so accustomed to more modern syntax, that very few
+people [if any] would recognize the ancient syntax even as valid.
+This inevitably results in non-trivial scripts breaking on ULTRIX,
+and OpenSSL isn't an exclusion. Fortunately there is workaround,
+hire /bin/ksh to do the job /bin/sh fails to do.
+
+1. Trick make(1) to use /bin/ksh by setting up following environ-
+   ment variables *prior* you execute ./Configure and make:
+
+	PROG_ENV=POSIX
+	MAKESHELL=/bin/ksh
+	export PROG_ENV MAKESHELL
+
+   or if your shell is csh-compatible:
+
+	setenv PROG_ENV POSIX
+	setenv MAKESHELL /bin/ksh
+
+2. Trick /bin/sh to use alternative expression evaluator. Create
+   following 'test' script for example in /tmp:
+
+	#!/bin/ksh
+	${0##*/} "$@"
+
+   Then 'chmod a+x /tmp/test; ln /tmp/test /tmp/[' and *prepend*
+   your $PATH with chosen location, e.g. PATH=/tmp:$PATH. Alter-
+   natively just replace system /bin/test and /bin/[ with the
+   above script.
