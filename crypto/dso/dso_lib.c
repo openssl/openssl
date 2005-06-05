@@ -464,3 +464,15 @@ const char *DSO_get_loaded_filename(DSO *dso)
 		}
 	return(dso->loaded_filename);
 	}
+
+int DSO_pathbyaddr(void *addr,char *path,int sz)
+	{
+	DSO_METHOD *meth = default_DSO_meth;
+	if (meth == NULL) meth = DSO_METHOD_openssl();
+	if (meth->pathbyaddr == NULL)
+		{
+		DSOerr(DSO_F_PATHBYADDR,DSO_R_UNSUPPORTED);
+		return(NULL);
+		}
+	return (*meth->pathbyaddr)(addr,path,sz);
+	}

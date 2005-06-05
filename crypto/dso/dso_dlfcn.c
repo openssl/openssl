@@ -68,6 +68,12 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 #else
 
 #ifdef HAVE_DLFCN_H
+
+#ifdef __linux
+# ifndef _GNU_SOURCE
+#  define _GNU_SOURCE	/* make sure dladdr is declared */
+# endif
+#endif
 #include <dlfcn.h>
 #endif
 
@@ -87,6 +93,7 @@ static long dlfcn_ctrl(DSO *dso, int cmd, long larg, void *parg);
 static char *dlfcn_name_converter(DSO *dso, const char *filename);
 static char *dlfcn_merger(DSO *dso, const char *filespec1,
 	const char *filespec2);
+static int dlfcn_pathbyaddr(void *addr,char *path,int sz);
 
 static DSO_METHOD dso_meth_dlfcn = {
 	"OpenSSL 'dlfcn' shared library method",
@@ -103,7 +110,8 @@ static DSO_METHOD dso_meth_dlfcn = {
 	dlfcn_name_converter,
 	dlfcn_merger,
 	NULL, /* init */
-	NULL  /* finish */
+	NULL, /* finish */
+	dlfcn_pathbyaddr
 	};
 
 DSO_METHOD *DSO_METHOD_dlfcn(void)
@@ -366,4 +374,63 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
 	return(translated);
 	}
 
+#ifdef __sgi
+#if 0
+This is a quote from IRIX manual for dladdr(3c):
+
+     <dlfcn.h> does not contain a prototype for dladdr or definition of
+     Dl_info.  The #include <dlfcn.h>  in the SYNOPSIS line is traditional,
+     but contains no dladdr prototype and no IRIX library contains an
+     implementation.  Write your own declaration based on the code below.
+
+     The following code is dependent on internal interfaces that are not
+     part of the IRIX compatibility guarantee; however, there is no future
+     intention to change this interface, so on a practical level, the code
+     below is safe to use on IRIX.
+#endif
+#include <rld_interface.h>
+#ifndef _RLD_INTERFACE_DLFCN_H_DLADDR
+#define _RLD_INTERFACE_DLFCN_H_DLADDR
+typedef struct Dl_info {
+    const char * dli_fname;
+    void       * dli_fbase;
+    const char * dli_sname;
+    void       * dli_saddr;
+    int          dli_version;
+    int          dli_reserved1;
+    long         dli_reserved[4];
+} Dl_info;
+#else
+typedef struct Dl_info Dl_info;
+#endif
+#define _RLD_DLADDR             14
+
+static int dladdr(void *address, Dl_info *dl)
+{
+	void *v;
+	v = _rld_new_interface(_RLD_DLADDR,address,dl);
+	return (int)v;
+}
+#endif
+
+static int dlfcn_pathbyaddr(void *addr,char *path,int sz)
+	{
+	Dl_info dli;
+	int len;
+
+	if (addr == NULL) addr = dlfcn_pathbyaddr;
+
+	if (dladdr(addr,&dli))
+		{
+		len = (int)strlen(dli.dli_fname);
+		if (sz <= 0) return len+1;
+		if (len >= sz) len=sz-1;
+		memcpy(path,dli.dli_fname,len);
+		path[len++]=0;
+		return len;
+		}
+
+	ERR_add_error_data(4, "dlfcn_pathbyaddr(): ", dlerror());
+	return -1;
+	}
 #endif /* DSO_DLFCN */
