@@ -438,11 +438,7 @@ extern HINSTANCE _hInstance;
 #  elif defined(OPENSSL_SYS_NETWARE)
          /* NetWare uses the WinSock2 interfaces
          */
-#      if defined(NETWARE_CLIB)
-#        include <ws2nlm.h>
-#      elif defined(NETWARE_LIBC)
-#        include <novsock2.h>
-#      endif
+#      include <novsock2.h>
 #      define SSLeay_Write(a,b,c)   send((a),(b),(c),0)
 #      define SSLeay_Read(a,b,c) recv((a),(b),(c),0)
 #      define SHUTDOWN(fd)    { shutdown((fd),0); closesocket(fd); }

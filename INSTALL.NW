@@ -95,7 +95,12 @@ following tools may be required:
          Microsoft SDK.  Note: The winsock2.h support headers may change
          with various versions of winsock2.h.  Check the dependencies
          section on the NDK WinSock2 download page for the latest
-         information on dependencies.
+         information on dependencies. These components are unsupported by
+         Novell. They are provided as a courtesy, but it is strongly
+         suggested that all development be done using LIBC, not CLIB.
+
+         As of June 2005, the WinSock2 components are available at:
+         http://forgeftp.novell.com//ws2comp/
 
 
       NLM and NetWare libraries for C (including CLIB and XPlat):
@@ -287,13 +292,6 @@ To run do_tests.pl type (at the console prompt):
 The do_tests.pl script generates a log file "\openssl\test_out\tests.log"
 which should be reviewed for errors.  Any errors will be denoted by the word
 "ERROR" in the log.
-
-NOTE:  Currently (11/2002), the LibC test nlms report an error while loading
-       when launched from the perl script (do_tests.pl).  The problems are 
-       being addressed by the LibC development team and should be fixed in the
-       next release.  Until the problems are corrected, the LibC test nlms 
-       will have to be executed manually.  
-
 
 DEVELOPING WITH THE OPENSSL SDK:
 --------------------------------

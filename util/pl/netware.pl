@@ -82,10 +82,12 @@ else
 #        paths for each subdirectory a recursive include directive
 #        is used ( -ir crypto ).
 #
+#        A similar issue exists for the engines and apps subdirectories.
+#
 #        Turned off the "possible" warnings ( -w nopossible ).  Metrowerks
 #        complained a lot about various stuff.  May want to turn back
 #        on for further development.
-$cflags="-ir crypto -msgstyle gcc -align 4 -processor pentium \\
+$cflags="-ir crypto -ir engines -ir apps -msgstyle gcc -align 4 -processor pentium \\
          -char unsigned -w on -w nolargeargs -w nopossible -w nounusedarg \\
          -w noimplicitconv -relax_pointers -nosyspath -DL_ENDIAN \\
          -DOPENSSL_SYSNAME_NETWARE -U_WIN32 -maxerrors 20 ";
