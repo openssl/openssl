@@ -494,7 +494,7 @@ my %table=(
 
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
 "ultrix-cc","cc:-std1 -O -Olimit 2500 -DL_ENDIAN::(unknown):::::::",
-"ultrix-gcc","gcc:-O3 -DL_ENDIAN::(unknown):::::::",
+"ultrix-gcc","gcc:-O3 -DL_ENDIAN::(unknown):::BN_LLONG::::",
 # K&R C is no longer supported; you need gcc on old Ultrix installations
 ##"ultrix","cc:-O2 -DNOPROTO -DNOCONST -DL_ENDIAN::(unknown):::::::",
 
