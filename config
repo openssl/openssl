@@ -654,7 +654,7 @@ case "$GUESSOS" in
 	;;
   *-*-sunos4)		OUT="sunos-$CC" ;;
 
-  *86*-*-bsdi4)		OUT="bsdi-elf-gcc"; options="$options no-sse2" ;;
+  *86*-*-bsdi4)		OUT="BSD-x86-elf"; options="$options no-sse2 -ldl" ;;
   alpha*-*-*bsd*)	OUT="BSD-generic64; options="$options -DL_ENDIAN" ;;
   powerpc64-*-*bsd*)	OUT="BSD-generic64; options="$options -DB_ENDIAN" ;;
   sparc64-*-*bsd*)	OUT="BSD-sparc64" ;;
