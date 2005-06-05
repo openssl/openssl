@@ -483,10 +483,10 @@ my %table=(
 
 # NetWare from David Ward (dsward@novell.com) - requires MetroWerks NLM development tools
 # netware-clib => legacy CLib c-runtime support
-"netware-clib", "mwccnlm:::::${x86_gcc_opts}:::",
+"netware-clib", "mwccnlm::::::BN_LLONG ${x86_gcc_opts}::",
 # netware-libc => LibC/NKS support
-"netware-libc", "mwccnlm:::::BN_LLONG ${x86_gcc_opts}:::",
-"netware-libc-gcc", "i586-netware-gcc:-nostdinc -I/ndk/libc/include -I/ndk/libc/include/winsock -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYSNAME_NETWARE -DTERMIO -O2 -Wall::::${x86_gcc_opts}:::",
+"netware-libc", "mwccnlm::::::BN_LLONG ${x86_gcc_opts}::",
+"netware-libc-gcc", "i586-netware-gcc:-nostdinc -I/ndk/libc/include -I/ndk/libc/include/winsock -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYSNAME_NETWARE -DTERMIO -O2 -Wall:::::BN_LLONG ${x86_gcc_opts}::",
 
 # DJGPP
 "DJGPP", "gcc:-I/dev/env/WATT_ROOT/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall -DDEVRANDOM=\"/dev/urandom\\x24\":::MSDOS:-L/dev/env/WATT_ROOT/lib -lwatt:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:",

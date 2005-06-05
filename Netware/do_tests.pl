@@ -42,8 +42,8 @@ sub main()
    encryption_tests();
    pem_tests();
    verify_tests();
-   ssl_tests();
    ca_tests();
+   ssl_tests();
 
    close(OUT);
 
@@ -67,10 +67,17 @@ sub algorithm_tests
 
    foreach $i (@tests)
    {
-      $outFile = "$output_path\\$i.out";
-      system("$i > $outFile");
-      log_desc("Test: $i\.nlm:");
-      log_output("", $outFile );
+      if (-e "$base_path\\$i.nlm")
+	  {
+         $outFile = "$output_path\\$i.out";
+         system("$i > $outFile");
+         log_desc("Test: $i\.nlm:");
+         log_output("", $outFile );
+	  }
+	  else
+	  {
+         log_desc("Test: $i\.nlm: file not found");
+	  }
    }
 }
 
@@ -246,61 +253,63 @@ sub verify_tests
 sub ssl_tests
 {
    my $outFile = "$output_path\\ssl_tst.out";
+   my($CAcert) = "$output_path\\certCA.ss";
+   my($Ukey)   = "$output_path\\keyU.ss";
+   my($Ucert)  = "$output_path\\certU.ss";
+   my($ssltest)= "ssltest -key $Ukey -cert $Ucert -c_key $Ukey -c_cert $Ucert -CAfile $CAcert";
 
    print( "\nRUNNING SSL TESTS:\n\n");
 
    print( OUT "\n========================================================\n");
    print( OUT "SSL TESTS:\n\n");
 
-   make_tmp_cert_file();
-
    system("ssltest -ssl2 >$outFile");
    log_desc("Testing sslv2:");
    log_output("ssltest -ssl2", $outFile);
 
-   system("ssltest -ssl2 -server_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -ssl2 -server_auth >$outFile");
    log_desc("Testing sslv2 with server authentication:");
-   log_output("ssltest -ssl2 -server_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -ssl2 -server_auth", $outFile);
 
-   system("ssltest -ssl2 -client_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -ssl2 -client_auth >$outFile");
    log_desc("Testing sslv2 with client authentication:");
-   log_output("ssltest -ssl2 -client_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -ssl2 -client_auth", $outFile);
 
-   system("ssltest -ssl2 -server_auth -client_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -ssl2 -server_auth -client_auth >$outFile");
    log_desc("Testing sslv2 with both client and server authentication:");
-   log_output("ssltest -ssl2 -server_auth -client_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -ssl2 -server_auth -client_auth", $outFile);
 
    system("ssltest -ssl3 >$outFile");
    log_desc("Testing sslv3:");
    log_output("ssltest -ssl3", $outFile);
 
-   system("ssltest -ssl3 -server_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -ssl3 -server_auth >$outFile");
    log_desc("Testing sslv3 with server authentication:");
-   log_output("ssltest -ssl3 -server_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -ssl3 -server_auth", $outFile);
 
-   system("ssltest -ssl3 -client_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -ssl3 -client_auth >$outFile");
    log_desc("Testing sslv3 with client authentication:");
-   log_output("ssltest -ssl3 -client_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -ssl3 -client_auth", $outFile);
 
-   system("ssltest -ssl3 -server_auth -client_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -ssl3 -server_auth -client_auth >$outFile");
    log_desc("Testing sslv3 with both client and server authentication:");
-   log_output("ssltest -ssl3 -server_auth -client_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -ssl3 -server_auth -client_auth", $outFile);
 
    system("ssltest >$outFile");
    log_desc("Testing sslv2/sslv3:");
    log_output("ssltest", $outFile);
 
-   system("ssltest -server_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -server_auth >$outFile");
    log_desc("Testing sslv2/sslv3 with server authentication:");
-   log_output("ssltest -server_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -server_auth", $outFile);
 
-   system("ssltest -client_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -client_auth >$outFile");
    log_desc("Testing sslv2/sslv3 with client authentication:");
-   log_output("ssltest -client_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -client_auth ", $outFile);
 
-   system("ssltest -server_auth -client_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -server_auth -client_auth >$outFile");
    log_desc("Testing sslv2/sslv3 with both client and server authentication:");
-   log_output("ssltest -server_auth -client_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -server_auth -client_auth", $outFile);
 
    system("ssltest -bio_pair -ssl2 >$outFile");
    log_desc("Testing sslv2 via BIO pair:");
@@ -310,49 +319,49 @@ sub ssl_tests
    log_desc("Testing sslv2/sslv3 with 1024 bit DHE via BIO pair:");
    log_output("ssltest -bio_pair -dhe1024dsa -v", $outFile);
 
-   system("ssltest -bio_pair -ssl2 -server_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -bio_pair -ssl2 -server_auth >$outFile");
    log_desc("Testing sslv2 with server authentication via BIO pair:");
-   log_output("ssltest -bio_pair -ssl2 -server_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -bio_pair -ssl2 -server_auth", $outFile);
 
-   system("ssltest -bio_pair -ssl2 -client_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -bio_pair -ssl2 -client_auth >$outFile");
    log_desc("Testing sslv2 with client authentication via BIO pair:");
-   log_output("ssltest -bio_pair -ssl2 -client_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -bio_pair -ssl2 -client_auth", $outFile);
 
-   system("ssltest -bio_pair -ssl2 -server_auth -client_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -bio_pair -ssl2 -server_auth -client_auth >$outFile");
    log_desc("Testing sslv2 with both client and server authentication via BIO pair:");
-   log_output("ssltest -bio_pair -ssl2 -server_auth -client_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -bio_pair -ssl2 -server_auth -client_auth", $outFile);
 
    system("ssltest -bio_pair -ssl3 >$outFile");
    log_desc("Testing sslv3 via BIO pair:");
    log_output("ssltest -bio_pair -ssl3", $outFile);
 
-   system("ssltest -bio_pair -ssl3 -server_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -bio_pair -ssl3 -server_auth >$outFile");
    log_desc("Testing sslv3 with server authentication via BIO pair:");
-   log_output("ssltest -bio_pair -ssl3 -server_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -bio_pair -ssl3 -server_auth", $outFile);
 
-   system("ssltest -bio_pair -ssl3 -client_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -bio_pair -ssl3 -client_auth >$outFile");
    log_desc("Testing sslv3 with client authentication  via BIO pair:");
-   log_output("ssltest -bio_pair -ssl3 -client_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -bio_pair -ssl3 -client_auth", $outFile);
 
-   system("ssltest -bio_pair -ssl3 -server_auth -client_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -bio_pair -ssl3 -server_auth -client_auth >$outFile");
    log_desc("Testing sslv3 with both client and server authentication via BIO pair:");
-   log_output("ssltest -bio_pair -ssl3 -server_auth -client_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -bio_pair -ssl3 -server_auth -client_auth", $outFile);
 
    system("ssltest -bio_pair >$outFile");
    log_desc("Testing sslv2/sslv3 via BIO pair:");
    log_output("ssltest -bio_pair", $outFile);
 
-   system("ssltest -bio_pair -server_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -bio_pair -server_auth >$outFile");
    log_desc("Testing sslv2/sslv3 with server authentication via BIO pair:");
-   log_output("ssltest -bio_pair -server_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -bio_pair -server_auth", $outFile);
 
-   system("ssltest -bio_pair -client_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -bio_pair -client_auth >$outFile");
    log_desc("Testing sslv2/sslv3 with client authentication via BIO pair:");
-   log_output("ssltest -bio_pair -client_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -bio_pair -client_auth", $outFile);
 
-   system("ssltest -bio_pair -server_auth -client_auth -CAfile $tmp_cert >$outFile");
+   system("$ssltest -bio_pair -server_auth -client_auth >$outFile");
    log_desc("Testing sslv2/sslv3 with both client and server authentication via BIO pair:");
-   log_output("ssltest -bio_pair -server_auth -client_auth -CAfile $tmp_cert", $outFile);
+   log_output("$ssltest -bio_pair -server_auth -client_auth", $outFile);
 }
 
 
