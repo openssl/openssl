@@ -944,7 +944,7 @@ int X509_cmp_time(ASN1_TIME *ctm, time_t *cmp_time)
 		offset=0;
 	else
 		{
-		if ((*str != '+') && (str[5] != '-'))
+		if ((*str != '+') && (*str != '-'))
 			return 0;
 		offset=((str[1]-'0')*10+(str[2]-'0'))*60;
 		offset+=(str[3]-'0')*10+(str[4]-'0');
