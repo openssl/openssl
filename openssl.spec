@@ -121,7 +121,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %config %attr(0644,root,root) %{openssldir}/openssl.cnf 
 %dir %attr(0755,root,root) %{openssldir}/certs
-%dir %attr(0755,root,root) %{openssldir}/lib
 %dir %attr(0755,root,root) %{openssldir}/misc
 %dir %attr(0750,root,root) %{openssldir}/private
 
