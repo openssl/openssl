@@ -63,14 +63,16 @@
 /* 
  * The purpose of this header file is for supporting 64-bit integer
  * manipulation on 32-bit (and lower) machines.  Currently the only
- * such environment is VMS.  Other environments that do not natively
- * support 64-bit integers can safely use the code developed for VMS.
+ * such environment is VMS, Utrix and those with smaller default integer
+ * sizes than 32 bits.  For all such environment, we fall back to using
+ * BIGNUM.  We may need to fine tune the conditions for systems that
+ * are incorrectly configured.
  *
  * The only clients of this code are (1) pqueue for priority, and
  * (2) DTLS, for sequence number manipulation.
  */
 
-#if defined(OPENSSL_SYS_VMS) || defined(VMS_TEST)
+#if (defined(THIRTY_TWO_BIT) && !defined(BN_LLONG)) || defined(SIXTEEN_BIT) || defined(EIGHT_BIT)
 
 #define PQ_64BIT     BIGNUM
 #define PQ_64BIT_CTX BN_CTX
