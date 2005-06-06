@@ -135,7 +135,7 @@ static int dtls1_record_needs_buffering(SSL *s, SSL3_RECORD *rr,
 static int dtls1_buffer_record(SSL *s, record_pqueue *q,
 	PQ_64BIT priority);
 static int dtls1_process_record(SSL *s);
-#if !(defined(OPENSSL_SYS_VMS) || defined(VMS_TEST))
+#if PQ_64BIT_IS_INTEGER
 static PQ_64BIT bytes_to_long_long(unsigned char *bytes, PQ_64BIT *num);
 #endif
 static void dtls1_clear_timeouts(SSL *s);
@@ -1453,7 +1453,7 @@ err:
 static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
 	PQ_64BIT *seq_num)
 	{
-#if !(defined(OPENSSL_SYS_VMS) || defined(VMS_TEST))
+#if PQ_64BIT_IS_INTEGER
 	PQ_64BIT mask = 0x0000000000000001L;
 #endif
 	PQ_64BIT rcd_num, tmp;
@@ -1483,7 +1483,7 @@ static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
 		return 0;  /* stale, outside the window */
 		}
 
-#if (defined(OPENSSL_SYS_VMS) || defined(VMS_TEST))
+#if PQ_64BIT_IS_BIGNUM
 	{
 	int offset;
 	pq_64bit_sub(&tmp, &(bitmap->max_seq_num), &rcd_num);
@@ -1736,7 +1736,7 @@ dtls1_reset_seq_numbers(SSL *s, int rw)
 	memset(seq, 0x00, seq_bytes);
 	}
 
-#if !(defined(OPENSSL_SYS_VMS) || defined(VMS_TEST))
+#if PQ_64BIT_IS_INTEGER
 static PQ_64BIT
 bytes_to_long_long(unsigned char *bytes, PQ_64BIT *num)
        {
