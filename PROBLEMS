@@ -12,8 +12,8 @@ along the whole library path before it bothers looking for .a libraries.  This
 means that -L switches won't matter unless OpenSSL is built with shared
 library support.
 
-The workaround may be to change the following lines in apps/Makefile.ssl and
-test/Makefile.ssl:
+The workaround may be to change the following lines in apps/Makefile and
+test/Makefile:
 
   LIBCRYPTO=-L.. -lcrypto
   LIBSSL=-L.. -lssl
@@ -70,12 +70,6 @@ The solution is simple for now: don't run parallell make when testing.
 
   The recomendation is to upgrade your compiler. This naturally applies to
   other similar cases.
-
-- There is a subtle Solaris x86-specific gcc run-time environment bug, which
-  "falls between" OpenSSL [0.9.8 and later], Solaris ld and GCC. The bug
-  manifests itself as Segmentation Fault upon early application start-up.
-  The problem can be worked around by patching the environment according to
-  http://www.openssl.org/~appro/values.c.
 
 * solaris64-sparcv9-cc SHA-1 performance with WorkShop 6 compiler.
 
