@@ -403,7 +403,6 @@ static int rsa_printver(BIO *err, BIO *out,
 
 	if (r < 0)
 		goto error;
-ERR_print_errors(err);
 	ERR_clear_error();
 
 	if (r == 0)
