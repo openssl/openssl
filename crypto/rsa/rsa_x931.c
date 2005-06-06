@@ -115,9 +115,9 @@ int RSA_padding_check_X931(unsigned char *to, int tlen,
 		return -1;
 		}
 
-	j=flen-3;
 	if (*p++ == 0x6B)
 		{
+		j=flen-3;
 		for (i = 0; i < j; i++)
 			{
 			unsigned char c = *p++;
@@ -130,15 +130,17 @@ int RSA_padding_check_X931(unsigned char *to, int tlen,
 				return -1;
 				}
 			}
-		}
 
-	j -= i;
+		j -= i;
 
-	if (i == 0)
-		{
-		RSAerr(RSA_F_RSA_PADDING_CHECK_X931, RSA_R_INVALID_PADDING);
-		return -1;
+		if (i == 0)
+			{
+			RSAerr(RSA_F_RSA_PADDING_CHECK_X931, RSA_R_INVALID_PADDING);
+			return -1;
+			}
+
 		}
+	else j = flen - 2;
 
 	if (p[j] != 0xCC)
 		{
