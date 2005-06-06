@@ -47,6 +47,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the OpenSSL test suite fail in BN_sqr test [on a 64-bit platform]?
 * Why does OpenBSD-i386 build fail on des-586.s with "Unimplemented segment type"?
 * Why does the OpenSSL test suite fail in sha512t on x86 CPU?
+* Why does compiler fail to compile sha512.c?
 
 [PROG] Questions about programming with OpenSSL
 
@@ -606,6 +607,15 @@ exception, then you more than likely to run SSE2-capable CPU, such as
 Intel P4, under control of kernel which does not support SSE2
 instruction extentions. See accompanying INSTALL file and
 OPENSSL_ia32cap(3) documentation page for further information.
+
+* Why does compiler fail to compile sha512.c?
+
+OpenSSL SHA-512 implementation depends on compiler support for 64-bit
+integer type. Few elder compilers [ULTRIX cc, SCO compiler to mention a
+couple] lack support for this and therefore are incapable of compiling
+the module in question. The recommendation is to disable SHA-512 by
+adding no-sha512 to ./config [or ./Configure] command line. Another
+possible alternative might be to switch to GCC.
 
 [PROG] ========================================================================
 
