@@ -12,8 +12,8 @@ along the whole library path before it bothers looking for .a libraries.  This
 means that -L switches won't matter unless OpenSSL is built with shared
 library support.
 
-The workaround may be to change the following lines in apps/Makefile.ssl and
-test/Makefile.ssl:
+The workaround may be to change the following lines in apps/Makefile and
+test/Makefile:
 
   LIBCRYPTO=-L.. -lcrypto
   LIBSSL=-L.. -lssl
