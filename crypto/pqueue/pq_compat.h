@@ -74,6 +74,9 @@
 
 #if (defined(THIRTY_TWO_BIT) && !defined(BN_LLONG)) || defined(SIXTEEN_BIT) || defined(EIGHT_BIT)
 
+#define PQ_64BIT_IS_INTEGER 0
+#define PQ_64BIT_IS_BIGNUM 1
+
 #define PQ_64BIT     BIGNUM
 #define PQ_64BIT_CTX BN_CTX
 
@@ -101,6 +104,9 @@
 #define pq_64bit_get_length(x)             BN_num_bits((x))
 
 #else
+
+#define PQ_64BIT_IS_INTEGER 1
+#define PQ_64BIT_IS_BIGNUM 0
 
 #if defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG)
 #define PQ_64BIT BN_ULONG

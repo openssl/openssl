@@ -199,7 +199,7 @@ pqueue_find(pqueue_s *pq, PQ_64BIT priority)
 	return found;
 	}
 
-#if !(defined(OPENSSL_SYS_VMS) || defined(VMS_TEST))
+#if PQ_64BIT_IS_INTEGER
 void
 pqueue_print(pqueue_s *pq)
 	{
