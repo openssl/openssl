@@ -258,6 +258,9 @@ sub_target:
 libcrypto$(SHLIB_EXT): libcrypto.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
 		$(MAKE) SHLIBDIRS=crypto build-shared; \
+        	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
+                    fips/sha/fips_standalone_sha1 -binary $@ > $@.$${HMAC_EXT:-sha1}; \
+		fi; \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
 	fi

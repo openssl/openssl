@@ -64,10 +64,12 @@ tests:
 
 Q=../testvectors/rsa/req
 A=../testvectors/rsa/rsp
+Q62=../testvectors/rsa_salt_62/req
+A62=../testvectors/rsa_salt_62/rsp
 
 fips_test:
-	-rm -rf $(A)
-	mkdir $(A)
+	-rm -rf $(A) $(A62)
+	mkdir $(A) $(A62)
 	if [ -f $(Q)/SigGen15.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rsastest < $(Q)/SigGen15.req  > $(A)/SigGen15.rsp; fi
 	if [ -f $(Q)/SigVer15.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rsavtest < $(Q)/SigVer15.req > $(A)/SigVer15.rsp; fi
 	if [ -f $(Q)/SigGenPSS.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rsastest -saltlen 0 < $(Q)/SigGenPSS.req > $(A)/SigGenPSS.rsp; fi
