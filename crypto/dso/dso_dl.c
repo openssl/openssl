@@ -281,4 +281,32 @@ static char *dl_name_converter(DSO *dso, const char *filename)
 	return(translated);
 	}
 
+#ifdef OPENSSL_FIPS
+static void dl_ref_point(){}
+
+int DSO_pathbyaddr(void *addr,char *path,int sz)
+	{
+	struct shl_descriptor inf;
+	int i,len;
+
+	if (addr == NULL) addr = dl_ref_porint;
+
+	for (i=-1;shl_get_r(i,&inf)==0;i++)
+		{
+		if (((size_t)addr >= inf.tstart && (size_t)addr < inf.tend) ||
+		    ((size_t)addr >= inf.dstart && (size_t)addr < inf.dend))
+			{
+			len = (int)strlen(inf.filename);
+			if (sz <= 0) return len+1;
+			if (len >= sz) len=sz-1;
+			memcpy(path,inf.filename,len);
+			path[len++] = 0;
+			return len;
+			}
+		}
+
+	return -1;
+	}
+#endif
+
 #endif /* DSO_DL */
