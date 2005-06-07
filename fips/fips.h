@@ -58,6 +58,7 @@ extern "C" {
 struct dsa_st;
 
 int FIPS_mode_set(int onoff,const char *path);
+#define FIPS_init(f) FIPS_mode_set((f),NULL)
 int FIPS_mode(void);
 const void *FIPS_rand_check(void);
 int FIPS_selftest_failed(void);
