@@ -6,6 +6,16 @@
  * NIST document "The Random Number Generator Validation System (RNGVS)", May 25, 2004.
  *
 */
+#include <openssl/opensslconf.h>
+
+#ifndef OPENSSL_FIPS
+#include <stdio.h>
+int main()
+{
+    printf("No FIPS RNG support\n");
+    exit(0);
+}
+#else
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -220,3 +230,4 @@ int main(int argc,char **argv)
 
     return 0;
     }
+#endif

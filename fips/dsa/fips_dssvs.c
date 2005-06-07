@@ -1,3 +1,15 @@
+#include <openssl/opensslconf.h>
+
+#ifndef OPENSSL_FIPS
+#include <stdio.h>
+
+int main()
+{
+    printf("No FIPS DSA support\n");
+    return(0);
+}
+#else
+
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/fips.h>
@@ -304,3 +316,4 @@ int main(int argc,char **argv)
 
     return 0;
     }
+#endif
