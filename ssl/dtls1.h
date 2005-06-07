@@ -90,9 +90,11 @@ extern "C" {
 
 typedef struct dtls1_bitmap_st
 	{
-	PQ_64BIT map;
-	unsigned long length;     /* sizeof the bitmap in bits */
-	PQ_64BIT max_seq_num;  /* max record number seen so far */
+	unsigned long map;		/* track 32 packets on 32-bit systems
+					   and 64 - on 64-bit systems */
+	unsigned char max_seq_num[8];	/* max record number seen so far,
+					   64-bit value in big-endian
+					   encoding */
 	} DTLS1_BITMAP;
 
 struct hm_header_st

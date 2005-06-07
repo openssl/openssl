@@ -121,10 +121,27 @@
 #include <openssl/buffer.h>
 #include <openssl/pqueue.h>
 
+/* mod 256 saturating subtract of two 64-bit values in big-endian order */
+static int satsub64be(const unsigned char *v1,const unsigned char *v2)
+	{
+	int i;
+	unsigned char c1,c2;
+
+	for (i=0;i<8;i++,v1++,v2++)
+		{
+		c1=*v1; c2=*v2;
+		if (c1!=c2) break;
+		}
+	if (i==8)	return 0;
+	else if (i==7)	return (int)c1-(int)c2;
+	else if (c1>c2)	return 256;
+	else		return -256;
+	}
+
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf, 
 	int len, int peek);
 static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
-	PQ_64BIT *seq_num);
+	unsigned char *seq_num);
 static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 static DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr, 
     unsigned int *is_next_epoch);
@@ -133,7 +150,7 @@ static int dtls1_record_needs_buffering(SSL *s, SSL3_RECORD *rr,
 	unsigned short *priority, unsigned long *offset);
 #endif
 static int dtls1_buffer_record(SSL *s, record_pqueue *q,
-	PQ_64BIT priority);
+	unsigned char *priority);
 static int dtls1_process_record(SSL *s);
 #if PQ_64BIT_IS_INTEGER
 static PQ_64BIT bytes_to_long_long(unsigned char *bytes, PQ_64BIT *num);
@@ -161,9 +178,9 @@ dtls1_copy_record(SSL *s, pitem *item)
 
 
 static int
-dtls1_buffer_record(SSL *s, record_pqueue *queue, PQ_64BIT priority)
-{
-    DTLS1_RECORD_DATA *rdata;
+dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
+	{
+	DTLS1_RECORD_DATA *rdata;
 	pitem *item;
 
 	rdata = OPENSSL_malloc(sizeof(DTLS1_RECORD_DATA));
@@ -200,7 +217,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, PQ_64BIT priority)
 	ssl3_setup_buffers(s);
 	
 	return(1);
-    }
+	}
 
 
 static int
@@ -482,15 +499,15 @@ int dtls1_get_record(SSL *s)
 	unsigned char *p;
 	short version;
 	DTLS1_BITMAP *bitmap;
-    unsigned int is_next_epoch;
+	unsigned int is_next_epoch;
 
 	rr= &(s->s3->rrec);
 	sess=s->session;
 
-    /* The epoch may have changed.  If so, process all the
-     * pending records.  This is a non-blocking operation. */
-    if ( ! dtls1_process_buffered_records(s))
-        return 0;
+	/* The epoch may have changed.  If so, process all the
+	 * pending records.  This is a non-blocking operation. */
+	if ( ! dtls1_process_buffered_records(s))
+            return 0;
 
 	/* if we're renegotiating, then there may be buffered records */
 	if (dtls1_get_processed_record(s))
@@ -518,7 +535,7 @@ again:
 		ssl_minor= *(p++);
 		version=(ssl_major<<8)|ssl_minor;
 
-        /* sequence number is 64 bits, with top 2 bytes = epoch */ 
+		/* sequence number is 64 bits, with top 2 bytes = epoch */ 
 		n2s(p,rr->epoch);
 
 		memcpy(&(s->s3->read_sequence[2]), p, 6);
@@ -590,7 +607,7 @@ again:
 		}
 
 	/* check whether this is a repeat, or aged record */
-	if ( ! dtls1_record_replay_check(s, bitmap, &(rr->seq_num)))
+	if ( ! dtls1_record_replay_check(s, bitmap, rr->seq_num))
 		{
 		s->packet_length=0; /* dump this record */
 		goto again;     /* get another record */
@@ -599,20 +616,21 @@ again:
 	/* just read a 0 length packet */
 	if (rr->length == 0) goto again;
 
-    /* If this record is from the next epoch (either HM or ALERT), buffer it
-     * since it cannot be processed at this time.
-     * Records from the next epoch are marked as received even though they are 
-     * not processed, so as to prevent any potential resource DoS attack */
-    if (is_next_epoch)
-        {
-        dtls1_record_bitmap_update(s, bitmap);
-        dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), rr->seq_num);
-        s->packet_length = 0;
-        goto again;
-        }
+	/* If this record is from the next epoch (either HM or ALERT),
+	 * buffer it since it cannot be processed at this time. Records
+	 * from the next epoch are marked as received even though they
+	 * are not processed, so as to prevent any potential resource
+	 * DoS attack */
+	if (is_next_epoch)
+		{
+		dtls1_record_bitmap_update(s, bitmap);
+		dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), rr->seq_num);
+		s->packet_length = 0;
+		goto again;
+		}
 
-    if ( ! dtls1_process_record(s))
-        return(0);
+	if ( ! dtls1_process_record(s))
+		return(0);
 
 	dtls1_clear_timeouts(s);  /* done waiting */
 	return(1);
@@ -1451,110 +1469,49 @@ err:
 
 
 static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
-	PQ_64BIT *seq_num)
+	unsigned char *seq_num)
 	{
-#if PQ_64BIT_IS_INTEGER
-	PQ_64BIT mask = 0x0000000000000001L;
-#endif
-	PQ_64BIT rcd_num, tmp;
+	int cmp;
+	unsigned int shift;
+	const unsigned char *seq = s->s3->read_sequence;
 
-	pq_64bit_init(&rcd_num);
-	pq_64bit_init(&tmp);
-
-	/* this is the sequence number for the record just read */
-	pq_64bit_bin2num(&rcd_num, s->s3->read_sequence, 8);
-
-	
-	if (pq_64bit_gt(&rcd_num, &(bitmap->max_seq_num)) ||
-		pq_64bit_eq(&rcd_num, &(bitmap->max_seq_num)))
+	cmp = satsub64be(seq,bitmap->max_seq_num);
+	if (cmp > 0)
 		{
-		pq_64bit_assign(seq_num, &rcd_num);
-		pq_64bit_free(&rcd_num);
-		pq_64bit_free(&tmp);
-		return 1;  /* this record is new */
+		memcpy (seq_num,seq,8);
+		return 1; /* this record in new */
 		}
-
-	pq_64bit_sub(&tmp, &(bitmap->max_seq_num), &rcd_num);
-
-	if ( pq_64bit_get_word(&tmp) > bitmap->length)
-		{
-		pq_64bit_free(&rcd_num);
-		pq_64bit_free(&tmp);
-		return 0;  /* stale, outside the window */
-		}
-
-#if PQ_64BIT_IS_BIGNUM
-	{
-	int offset;
-	pq_64bit_sub(&tmp, &(bitmap->max_seq_num), &rcd_num);
-	pq_64bit_sub_word(&tmp, 1);
-	offset = pq_64bit_get_word(&tmp);
-	if ( pq_64bit_is_bit_set(&(bitmap->map), offset))
-		{
-		pq_64bit_free(&rcd_num);
-		pq_64bit_free(&tmp);
-		return 0;
-		}
-	}
-#else
-	mask <<= (bitmap->max_seq_num - rcd_num - 1);
-	if (bitmap->map & mask)
+	shift = -cmp;
+	if (shift >= sizeof(bitmap->map)*8)
+		return 0; /* stale, outside the window */
+	else if (bitmap->map & (1UL<<shift))
 		return 0; /* record previously received */
-#endif
-	
-	pq_64bit_assign(seq_num, &rcd_num);
-	pq_64bit_free(&rcd_num);
-	pq_64bit_free(&tmp);
+
 	return 1;
 	}
 
 
 static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap)
 	{
+	int cmp;
 	unsigned int shift;
-	PQ_64BIT rcd_num;
-	PQ_64BIT tmp;
-	PQ_64BIT_CTX *ctx;
+	const unsigned char *seq = s->s3->read_sequence;
 
-	pq_64bit_init(&rcd_num);
-	pq_64bit_init(&tmp);
-
-	pq_64bit_bin2num(&rcd_num, s->s3->read_sequence, 8);
-
-	/* unfortunate code complexity due to 64-bit manipulation support
-	 * on 32-bit machines */
-	if ( pq_64bit_gt(&rcd_num, &(bitmap->max_seq_num)) ||
-		pq_64bit_eq(&rcd_num, &(bitmap->max_seq_num)))
+	cmp = satsub64be(seq,bitmap->max_seq_num);
+	if (cmp > 0)
 		{
-		pq_64bit_sub(&tmp, &rcd_num, &(bitmap->max_seq_num));
-		pq_64bit_add_word(&tmp, 1);
-
-		shift = (unsigned int)pq_64bit_get_word(&tmp);
-
-		pq_64bit_lshift(&(tmp), &(bitmap->map), shift);
-		pq_64bit_assign(&(bitmap->map), &tmp);
-
-		pq_64bit_set_bit(&(bitmap->map), 0);
-		pq_64bit_add_word(&rcd_num, 1);
-		pq_64bit_assign(&(bitmap->max_seq_num), &rcd_num);
-
-		pq_64bit_assign_word(&tmp, 1);
-		pq_64bit_lshift(&tmp, &tmp, bitmap->length);
-		ctx = pq_64bit_ctx_new(&ctx);
-		pq_64bit_mod(&(bitmap->map), &(bitmap->map), &tmp, ctx);
-		pq_64bit_ctx_free(ctx);
+		shift = cmp;
+		if (shift < sizeof(bitmap->map)*8)
+			bitmap->map <<= shift, bitmap->map |= 1UL;
+		else
+			bitmap->map = 1UL;
+		memcpy(bitmap->max_seq_num,seq,8);
 		}
-	else
-		{
-		pq_64bit_sub(&tmp, &(bitmap->max_seq_num), &rcd_num);
-		pq_64bit_sub_word(&tmp, 1);
-		shift = (unsigned int)pq_64bit_get_word(&tmp);
-
-		pq_64bit_set_bit(&(bitmap->map), shift);
+	else	{
+		shift = -cmp;
+		if (shift < sizeof(bitmap->map)*8)
+			bitmap->map |= 1UL<<shift;
 		}
-
-	pq_64bit_free(&rcd_num);
-	pq_64bit_free(&tmp);
 	}
 
 
@@ -1715,17 +1672,8 @@ dtls1_reset_seq_numbers(SSL *s, int rw)
 		{
 		seq = s->s3->read_sequence;
 		s->d1->r_epoch++;
-
-		pq_64bit_assign(&(s->d1->bitmap.map), &(s->d1->next_bitmap.map));
-		s->d1->bitmap.length = s->d1->next_bitmap.length;
-		pq_64bit_assign(&(s->d1->bitmap.max_seq_num), 
-			&(s->d1->next_bitmap.max_seq_num));
-
-		pq_64bit_free(&(s->d1->next_bitmap.map));
-		pq_64bit_free(&(s->d1->next_bitmap.max_seq_num));
+		memcpy(&(s->d1->bitmap), &(s->d1->next_bitmap), sizeof(DTLS1_BITMAP));
 		memset(&(s->d1->next_bitmap), 0x00, sizeof(DTLS1_BITMAP));
-		pq_64bit_init(&(s->d1->next_bitmap.map));
-		pq_64bit_init(&(s->d1->next_bitmap.max_seq_num));
 		}
 	else
 		{
