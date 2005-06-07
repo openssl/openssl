@@ -21,7 +21,7 @@ AR=		ar r
 PEX_LIBS=
 EX_LIBS=
 
-CFLAGS= $(INCLUDE) $(CFLAG)
+CFLAGS= $(INCLUDE) $(CFLAG) -DHMAC_EXT=\"$${HMAC_EXT:-sha1}\"
 
 
 LIBS=
@@ -101,11 +101,7 @@ libs:
 	done;
 
 tests:
-	@for i in $(FDIRS) ;\
-	do \
-	(cd $$i && echo "making tests in fips/$$i..." && \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' tests ); \
-	done;
+	(cd ..; make DIRS=test)
 
 top_fips_test_suite:
 	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=. TARGET=fips_test_suite sub_target)
@@ -114,8 +110,8 @@ fips_test_suite: fips_test_suite.o $(TOP)/libcrypto.a
 	$(CC) $(CFLAGS) -o fips_test_suite fips_test_suite.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
 	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_test_suite || { rm fips_test_suite; false; }
 
-fips_test: top top_fips_test_suite
-	cd testvectors && perl -p -i -e 's/COUNT=/COUNT = /' des[23]/req/*.req
+fips_test: top tests
+	-cd testvectors && perl -p -i -e 's/COUNT=/COUNT = /' des[23]/req/*.req
 	@for i in dsa sha aes des hmac rand rsa; \
 	do \
 		(cd $$i && echo "making fips_test in fips/$$i..." && $(MAKE) fips_test) \

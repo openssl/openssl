@@ -5,6 +5,7 @@
 
 lib=$1
 exe=$2
+ext=${HMAC_EXT:-sha1}
 
 # deal with the case where we're run from within the build and OpenSSL is
 # not yet installed.  Also, make sure LD_LIBRARY_PATH is properly set in
@@ -22,9 +23,9 @@ else
 fi
 
 echo "Checking library fingerprint for $lib"
-openssl sha1 -hmac etaonrishdlcupfm $lib | sed "s/(.*\//(/" | diff -w $lib.sha1 - || { echo "$libs fingerprint mismatch"; exit 1; }
+openssl sha1 -hmac etaonrishdlcupfm $lib | sed "s/(.*\//(/" | diff -w $lib.$ext - || { echo "$libs fingerprint mismatch"; exit 1; }
 
 [ -x $exe.exe ] && exe=$exe.exe
 
 echo "Making fingerprint for $exe"
-openssl sha1 -hmac etaonrishdlcupfm -binary $exe > $exe.sha1 || rm $exe.sha1
+openssl sha1 -hmac etaonrishdlcupfm -binary $exe > $exe.$ext || rm $exe.$ext

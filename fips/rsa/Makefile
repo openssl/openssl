@@ -62,35 +62,21 @@ tags:
 
 tests:
 
-top_fips_rsastest:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_rsastest sub_target)
-
-top_fips_rsavtest:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_rsavtest sub_target)
-
-top_fips_rsagtest:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_rsagtest sub_target)
-
-fips_rsastest: fips_rsastest.o $(TOP)/libcrypto.a
-	$(CC) $(CFLAGS) -o fips_rsastest fips_rsastest.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
-	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_rsastest
-
-fips_rsavtest: fips_rsavtest.o $(TOP)/libcrypto.a
-	$(CC) $(CFLAGS) -o fips_rsavtest fips_rsavtest.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
-	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_rsavtest
-
-fips_rsagtest: fips_rsagtest.o $(TOP)/libcrypto.a
-	$(CC) $(CFLAGS) -o fips_rsagtest fips_rsagtest.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
-	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_rsagtest
-
 Q=../testvectors/rsa/req
 A=../testvectors/rsa/rsp
 
-fips_test: top top_fips_rsastest top_fips_rsavtest top_fips_rsagtest
+fips_test:
 	-rm -rf $(A)
 	mkdir $(A)
-	./fips_rsastest < $(Q)/SigGen15.req > $(A)/SigGen15.rsp
-	./fips_rsavtest < $(Q)/SigVer15.req > $(A)/SigVer15.rsp
+	if [ -f $(Q)/SigGen15.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rsastest < $(Q)/SigGen15.req  > $(A)/SigGen15.rsp; fi
+	if [ -f $(Q)/SigVer15.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rsavtest < $(Q)/SigVer15.req > $(A)/SigVer15.rsp; fi
+	if [ -f $(Q)/SigGenPSS.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rsastest -saltlen 0 < $(Q)/SigGenPSS.req > $(A)/SigGenPSS.rsp; fi
+	if [ -f $(Q)/SigVerPSS.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rsavtest -saltlen 0 < $(Q)/SigVerPSS.req > $(A)/SigVerPSS.rsp; fi
+	if [ -f $(Q)/SigGenRSA.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rsastest -x931 < $(Q)/SigGenRSA.req > $(A)/SigGenRSA.rsp; fi
+	if [ -f $(Q)/SigVerRSA.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rsavtest -x931 < $(Q)/SigVerRSA.req > $(A)/SigVerRSA.rsp; fi
+	if [ -f $(Q62)/SigGenPSS.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rsastest -saltlen 62 < $(Q62)/SigGenPSS.req >$(A62)/SigGenPSS.rsp; fi
+	if [ -f $(Q62)/SigVerPSS.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rsavtest -saltlen 62 <$(Q62)/SigVerPSS.req >$(A62)/SigVerPSS.rsp; fi
+	if [ -f $(Q)/KeyGenRSA.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rsagtest < $(Q)/KeyGenRSA.req > $(A)/KeyGenRSA.rsp; fi
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff

@@ -18,7 +18,7 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST= fips_randtest.c
+TEST= fips_randtest.c fips_rngvs.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
@@ -62,21 +62,14 @@ tags:
 
 tests:
 
-top_fips_rngvs:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_rngvs sub_target)
-
-fips_rngvs: fips_rngvs.o $(TOP)/libcrypto.a
-	$(CC) $(CFLAGS) -o fips_rngvs fips_rngvs.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
-	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_rngvs
-
 Q=../testvectors/rng/req
 A=../testvectors/rng/rsp
 
-fips_test: top_fips_rngvs
+fips_test:
 	-rm -rf $(A)
 	mkdir $(A)
-	./fips_rngvs mct < $(Q)/ANSI931_TDES2MCT.req > $(A)/ANSI931_TDES2MCT.rsp
-	./fips_rngvs vst < $(Q)/ANSI931_TDES2VST.req > $(A)/ANSI931_TDES2VST.rsp
+	if [ -f $(Q)/ANSI931_TDES2MCT.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rngvs mct < $(Q)/ANSI931_TDES2MCT.req > $(A)/ANSI931_TDES2MCT.rsp; fi
+	if [ -f $(Q)/ANSI931_TDES2VST.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_rngvs vst < $(Q)/ANSI931_TDES2VST.req > $(A)/ANSI931_TDES2VST.rsp; fi
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff

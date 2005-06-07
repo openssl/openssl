@@ -72,13 +72,6 @@ tags:
 
 tests:
 
-top_fips_shatest:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_shatest sub_target)
-
-fips_shatest: fips_shatest.o $(TOP)/libcrypto.a
-	$(CC) $(CFLAGS) -o fips_shatest fips_shatest.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
-	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_shatest
-
 Q=../testvectors/sha/req
 A=../testvectors/sha/rsp
 
@@ -98,11 +91,13 @@ VECTORS = SHA1LongMsg \
 	SHA512Monte \
 	SHA512ShortMsg
 
-fips_test: top_fips_shatest
+fips_test:
 	-rm -rf $(A)
 	mkdir $(A)
 	for file in $(VECTORS); do \
-		./fips_shatest $(Q)/$$file.req $(A)/$$file.rsp; \
+	    if [ -f $(Q)/$$file.req ]; then \
+		$(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_shatest $(Q)/$$file.req $(A)/$$file.rsp; \
+	    fi; \
 	done
 
 lint:

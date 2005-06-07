@@ -90,6 +90,7 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_FUNC(FIPS_F_RSA_GENERATE_KEY),	"RSA_generate_key"},
 {ERR_FUNC(FIPS_F_RSA_X931_GENERATE_KEY),	"RSA_X931_generate_key"},
 {ERR_FUNC(FIPS_F_SSLEAY_RAND_BYTES),	"SSLEAY_RAND_BYTES"},
+{ERR_FINC(FIPS_F_FIPS_CHECK_DSO),	"FIPS_check_dso"},
 {0,NULL}
 	};
 
@@ -105,6 +106,7 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 {ERR_REASON(FIPS_R_NON_FIPS_METHOD)      ,"non fips method"},
 {ERR_REASON(FIPS_R_PAIRWISE_TEST_FAILED) ,"pairwise test failed"},
 {ERR_REASON(FIPS_R_SELFTEST_FAILED)      ,"selftest failed"},
+{ERR_REASON(FIPS_R_NO_DSO_PATH)		 ,"DSO can't be determined"},
 {0,NULL}
 	};
 

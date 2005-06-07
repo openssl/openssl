@@ -110,6 +110,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_RSA_GENERATE_KEY				 113
 #define FIPS_F_RSA_X931_GENERATE_KEY			 119
 #define FIPS_F_SSLEAY_RAND_BYTES			 101
+#define FIPS_F_FIPS_CHECK_DSO				 120
 
 /* Reason codes. */
 #define FIPS_R_CANNOT_READ_EXE				 103
@@ -122,6 +123,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_R_NON_FIPS_METHOD				 100
 #define FIPS_R_PAIRWISE_TEST_FAILED			 107
 #define FIPS_R_SELFTEST_FAILED				 101
+#define FIPS_R_NO_DSO_PATH				 110
 
 #ifdef  __cplusplus
 }

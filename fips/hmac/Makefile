@@ -62,20 +62,13 @@ tags:
 
 tests:
 
-top_fips_hmactest:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_hmactest sub_target)
-
-fips_hmactest: fips_hmactest.o $(TOP)/libcrypto.a
-	$(CC) $(CFLAGS) -o fips_hmactest fips_hmactest.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
-	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_hmactest
-
 Q=../testvectors/hmac/req
 A=../testvectors/hmac/rsp
 
-fips_test: top top_fips_hmactest
+fips_test:
 	-rm -rf $(A)
 	mkdir $(A)
-	./fips_hmactest < $(Q)/HMAC.req > $(A)/HMAC.rsp
+	if [ -f $(Q)/HMAC.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_hmactest < $(Q)/HMAC.req > $(A)/HMAC.rsp; fi
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff

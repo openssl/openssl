@@ -68,6 +68,8 @@ FIPS_HMACTEST=	fips_hmactest
 FIPS_RSAVTEST=	fips_rsavtest
 FIPS_RSASTEST=	fips_rsastest
 FIPS_RSAGTEST=	fips_rsagtest
+FIPS_DSSVS=	fips_dssvs
+FIPS_RNGVS=	fips_rngvs
 
 TESTS=		alltests
 
@@ -78,7 +80,8 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT) $(IDEATEST)$(EXE_EXT) $(MD2TEST)$(E
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) $(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(FIPS_DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
 	$(EVPTEST)$(EXE_EXT) $(FIPS_AESTEST)$(EXE_EXT) \
 	$(FIPS_HMACTEST)$(EXE_EXT) $(FIPS_RSAVTEST)$(EXE_EXT) \
-	$(FIPS_RSASTEST)$(EXE_EXT) $(FIPS_RSAGTEST)$(EXE_EXT)
+	$(FIPS_RSASTEST)$(EXE_EXT) $(FIPS_RSAGTEST)$(EXE_EXT) \
+	$(FIPS_DSSVS)$(EXE_EXT) $(FIPS_RNGVS)$(EXE_EXT)
 
 # $(METHTEST)$(EXE_EXT)
 
@@ -89,7 +92,7 @@ OBJ=	$(BNTEST).o $(ECTEST).o $(IDEATEST).o $(MD2TEST).o $(MD4TEST).o $(MD5TEST).
 	$(RANDTEST).o $(FIPS_RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o $(FIPS_DSATEST).o $(EXPTEST).o $(RSATEST).o \
 	$(EVPTEST).o $(FIPS_AESTEST).o $(FIPS_HMACTEST).o $(FIPS_RSAVTEST).o \
-	$(FIPS_RSASTEST).o $(FIPS_RSAGTEST).o
+	$(FIPS_RSASTEST).o $(FIPS_RSAGTEST).o $(FIPS_DSSVS).o $(FIPS_RNGVS).o
 SRC=	$(BNTEST).c $(ECTEST).c $(IDEATEST).c $(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c \
 	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c \
@@ -97,7 +100,7 @@ SRC=	$(BNTEST).c $(ECTEST).c $(IDEATEST).c $(MD2TEST).c  $(MD4TEST).c $(MD5TEST)
 	$(RANDTEST).c $(FIPS_RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
 	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c $(FIPS_DSATEST).c $(EXPTEST).c $(RSATEST).c \
 	$(EVPTEST).c $(FIPS_AESTEST).c $(FIPS_HMACTEST).c $(FIPS_RSAVTEST).c \
-	$(FIPS_RSASTEST).c $(FIPS_RSAGTEST).c
+	$(FIPS_RSASTEST).c $(FIPS_RSAGTEST).c $(FIPS_DSSVS).c $(FIPS_RNGVS).c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -328,35 +331,31 @@ BUILD_CMD=if [ "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
 		$(CC) -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi;
 
-$(FIPS_AESTEST)$(EXE_EXT): $(FIPS_AESTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_AESTEST); $(BUILD_CMD)
+FIPS_BUILD_CMD=$(BUILD_CMD) \
 	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_AESTEST); \
+	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $$target; \
 	fi
+
+$(FIPS_AESTEST)$(EXE_EXT): $(FIPS_AESTEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_AESTEST); $(FIPS_BUILD_CMD)
 
 $(FIPS_HMACTEST)$(EXE_EXT): $(FIPS_HMACTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_HMACTEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_HMACTEST); \
-	fi
+	@target=$(FIPS_HMACTEST); $(FIPS_BUILD_CMD)
 
 $(FIPS_RSAVTEST)$(EXE_EXT): $(FIPS_RSAVTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_RSAVTEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_RSAVTEST); \
-	fi
+	@target=$(FIPS_RSAVTEST); $(FIPS_BUILD_CMD)
 
 $(FIPS_RSASTEST)$(EXE_EXT): $(FIPS_RSASTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_RSASTEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_RSASTEST); \
-	fi
+	@target=$(FIPS_RSASTEST); $(FIPS_BUILD_CMD)
 
 $(FIPS_RSAGTEST)$(EXE_EXT): $(FIPS_RSAGTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_RSAGTEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_RSAGTEST); \
-	fi
+	@target=$(FIPS_RSAGTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_DSSVS)$(EXE_EXT): $(FIPS_DSSVS).o $(DLIBCRYPTO)
+	@target=$(FIPS_DSSVS); $(FIPS_BUILD_CMD)
+
+$(FIPS_RNGVS)$(EXE_EXT): $(FIPS_RNGVS).o $(DLIBCRYPTO)
+	@target=$(FIPS_RNGVS); $(FIPS_BUILD_CMD)
 
 $(RSATEST)$(EXE_EXT): $(RSATEST).o $(DLIBCRYPTO)
 	@target=$(RSATEST); $(BUILD_CMD)
@@ -383,10 +382,7 @@ $(SHA1TEST)$(EXE_EXT): $(SHA1TEST).o $(DLIBCRYPTO)
 	@target=$(SHA1TEST); $(BUILD_CMD)
 
 $(FIPS_SHATEST)$(EXE_EXT): $(FIPS_SHATEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_SHATEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_SHATEST); \
-	fi
+	@target=$(FIPS_SHATEST); $(FIPS_BUILD_CMD)
 
 $(RMDTEST)$(EXE_EXT): $(RMDTEST).o $(DLIBCRYPTO)
 	@target=$(RMDTEST); $(BUILD_CMD)
@@ -422,19 +418,13 @@ $(DESTEST)$(EXE_EXT): $(DESTEST).o $(DLIBCRYPTO)
 	@target=$(DESTEST); $(BUILD_CMD)
 
 $(FIPS_DESTEST)$(EXE_EXT): $(FIPS_DESTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_DESTEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DESTEST); \
-	fi
+	@target=$(FIPS_DESTEST); $(FIPS_BUILD_CMD)
 
 $(RANDTEST)$(EXE_EXT): $(RANDTEST).o $(DLIBCRYPTO)
 	@target=$(RANDTEST); $(BUILD_CMD)
 
 $(FIPS_RANDTEST)$(EXE_EXT): $(FIPS_RANDTEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_RANDTEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_RANDTEST); \
-	fi
+	@target=$(FIPS_RANDTEST); $(FIPS_BUILD_CMD)
 
 $(DHTEST)$(EXE_EXT): $(DHTEST).o $(DLIBCRYPTO)
 	@target=$(DHTEST); $(BUILD_CMD)
@@ -443,10 +433,7 @@ $(DSATEST)$(EXE_EXT): $(DSATEST).o $(DLIBCRYPTO)
 	@target=$(DSATEST); $(BUILD_CMD)
 
 $(FIPS_DSATEST)$(EXE_EXT): $(FIPS_DSATEST).o $(DLIBCRYPTO)
-	@target=$(FIPS_DSATEST); $(BUILD_CMD)
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(FIPS_DSATEST); \
-	fi
+	@target=$(FIPS_DSATEST); $(FIPS_BUILD_CMD)
 
 $(METHTEST)$(EXE_EXT): $(METHTEST).o $(DLIBCRYPTO)
 	@target=$(METHTEST); $(BUILD_CMD)

@@ -104,7 +104,7 @@ int main(int argc,char **argv)
     {
 #ifdef OPENSSL_FIPS
     static char key[]="etaonrishdlcupfm";
-    int n;
+    int n,binary=0;
 
     if(argc < 2)
 	{
@@ -112,7 +112,14 @@ int main(int argc,char **argv)
 	exit(1);
 	}
 
-    for(n=1 ; n < argc ; ++n)
+    n=1;
+    if (!strcmp(argv[n],"-binary"))
+	{
+	n++;
+	binary=1;	/* emit binary fingerprint... */
+	}
+
+    for(; n < argc ; ++n)
 	{
 	FILE *f=fopen(argv[n],"rb");
 	SHA_CTX md_ctx,o_ctx;
@@ -144,6 +151,12 @@ int main(int argc,char **argv)
 	    SHA1_Update(&md_ctx,buf,l);
 	    }
 	hmac_final(md,&md_ctx,&o_ctx);
+
+	if (binary)
+	    {
+	    fwrite(md,20,1,stdout);
+	    break;	/* ... for single(!) file */
+	    }
 
 	printf("HMAC-SHA1(%s)= ",argv[n]);
 	for(i=0 ; i < 20 ; ++i)

@@ -18,7 +18,7 @@ AR=		ar r
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=fips_dsatest.c
+TEST=fips_dsatest.c fips_dssvs.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
@@ -62,23 +62,16 @@ tags:
 
 tests:
 
-top_fips_dssvs:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_dssvs sub_target)
-
-fips_dssvs: fips_dssvs.o $(TOP)/libcrypto.a
-	$(CC) $(CFLAGS) -o fips_dssvs fips_dssvs.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
-	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_dssvs
-
 Q=../testvectors/dsa/req
 A=../testvectors/dsa/rsp
 
-fips_test: top_fips_dssvs
+fips_test:
 	-rm -rf $A
 	mkdir $A
-	./fips_dssvs pqg < $Q/PQGGen.req > $A/PQGGen.rsp
-	./fips_dssvs keypair < $Q/KeyPair.req > $A/KeyPair.rsp
-	./fips_dssvs siggen < $Q/SigGen.req > $A/SigGen.rsp
-	./fips_dssvs sigver < $Q/SigVer.req > $A/SigVer.rsp
+	if [ -f $(Q)/PQGGen.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_dssvs pqg < $(Q)/PQGGen.req > $(A)/PQGGen.rsp; fi
+	if [ -f $(Q)/KeyPair.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_dssvs keypair < $(Q)/KeyPair.req > $(A)/KeyPair.rsp; fi
+	if [ -f $(Q)/SigGen.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_dssvs siggen < $(Q)/SigGen.req > $(A)/SigGen.rsp; fi
+	if [ -f $(Q)/SigVer.req ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_dssvs sigver < $Q/SigVer.req > $A/SigVer.rsp; fi
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff

@@ -66,18 +66,11 @@ tags:
 
 tests:
 
-top_fips_aesavs:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=$(DIR) TARGET=fips_aesavs sub_target)
-
-fips_aesavs: fips_aesavs.o $(TOP)/libcrypto.a
-	$(CC) $(CFLAGS) -o fips_aesavs fips_aesavs.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
-	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_aesavs
-
-fips_test: top top_fips_aesavs
-	find ../testvectors/aes/req -name '*.req' > testlist
+fips_test:
+	-find ../testvectors/aes/req -name '*.req' > testlist
 	-rm -rf ../testvectors/aes/rsp
 	mkdir ../testvectors/aes/rsp
-	./fips_aesavs -d testlist
+	if [ -s testlist ]; then $(TOP)/util/shlib_wrap.sh $(TOP)/test/fips_aesavs -d testlist; fi
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
