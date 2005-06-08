@@ -740,9 +740,11 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			if (!found)
 				break;	/* ignore this entry */
 
-			algorithms |= ca_list[j]->algorithms;
+			algorithms |= (ca_list[j]->algorithms & ~mask) |
+			              (ca_list[j]->algorithms &	algorithms & mask);
 			mask |= ca_list[j]->mask;
-			algo_strength |= ca_list[j]->algo_strength;
+			algo_strength |= (ca_list[j]->algo_strength & ~mask_strength) |
+			                 (ca_list[j]->algo_strength & algorithms & mask_strength);
 			mask_strength |= ca_list[j]->mask_strength;
 
 			if (!multi) break;
@@ -910,6 +912,13 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 			}
 		}
 	OPENSSL_free(co_list);	/* Not needed any longer */
+	/* if no ciphers where selected let's return NULL */
+	if (sk_SSL_CIPHER_num(cipherstack) == 0)
+		{
+		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST, SSL_R_NO_CIPHER_MATCH);
+		sk_SSL_CIPHER_free(cipherstack);
+		return NULL;
+		}
 
 	/*
 	 * The following passage is a little bit odd. If pointer variables
