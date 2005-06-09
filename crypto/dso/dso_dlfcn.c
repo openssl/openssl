@@ -302,7 +302,11 @@ int DSO_pathbyaddr(void *addr,char *path,int sz)
 	Dl_info dli;
 	int len;
 
-	if (addr == NULL) addr = dlfcn_ref_point;
+	if (addr == NULL)
+		{
+		union { void(*f)(void); void *p; } t = { dlfcn_ref_point };
+		addr = t.p;
+		}
 
 	if (dladdr(addr,&dli))
 		{

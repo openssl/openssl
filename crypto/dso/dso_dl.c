@@ -290,7 +290,11 @@ int DSO_pathbyaddr(void *addr,char *path,int sz)
 	struct shl_descriptor inf;
 	int i,len;
 
-	if (addr == NULL) addr = dl_ref_point;
+	if (addr == NULL)
+		{
+		union { void(*f)(); void *p; } t = { dl_ref_point };
+		addr = t.p;
+		}
 
 	for (i=-1;shl_get_r(i,&inf)==0;i++)
 		{
