@@ -472,7 +472,7 @@ int DSO_pathbyaddr(void *addr,char *path,int sz)
 	if (meth->pathbyaddr == NULL)
 		{
 		DSOerr(DSO_F_PATHBYADDR,DSO_R_UNSUPPORTED);
-		return(NULL);
+		return -1;
 		}
 	return (*meth->pathbyaddr)(addr,path,sz);
 	}
