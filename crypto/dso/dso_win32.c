@@ -635,7 +635,12 @@ static int win32_pathbyaddr(void *addr,char *path,int sz)
 	MODULE32 module_first, module_next;
 	int len;
  
-	if (addr == NULL) addr = win32_pathbyaddr;
+	if (addr == NULL)
+		{
+		union	{ int(*f)(void*,char*,int); void *p; } t =
+			{ win32_pathbyaddr };
+		addr = t.p;
+		}
 
 	dll = LoadLibrary(TEXT(DLLNAME));
 	if (dll == NULL)

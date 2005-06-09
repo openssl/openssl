@@ -357,7 +357,12 @@ static int dl_pathbyaddr(void *addr,char *path,int sz)
 	struct shl_descriptor inf;
 	int i,len;
 
-	if (addr == NULL) addr = dl_pathbyaddr;
+	if (addr == NULL)
+		{
+		union	{ int(*f)(void*,char*,int); void *p; } t =
+			{ dl_pathbyaddr };
+		addr = t.p;
+		}
 
 	for (i=-1;shl_get_r(i,&inf)==0;i++)
 		{

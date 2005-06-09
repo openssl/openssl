@@ -423,7 +423,12 @@ static int dlfcn_pathbyaddr(void *addr,char *path,int sz)
 	Dl_info dli;
 	int len;
 
-	if (addr == NULL) addr = dlfcn_pathbyaddr;
+	if (addr == NULL)
+		{
+		union	{ int(*f)(void*,char*,int); void *p; } t =
+			{ dlfcn_pathbyaddr };
+		addr = t.p;
+		}
 
 	if (dladdr(addr,&dli))
 		{
