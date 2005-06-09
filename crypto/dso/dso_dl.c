@@ -126,7 +126,8 @@ static int dl_load(DSO *dso)
 		DSOerr(DSO_F_DL_LOAD,DSO_R_NO_FILENAME);
 		goto err;
 		}
-	ptr = shl_load(filename, BIND_IMMEDIATE|DYNAMIC_PATH, 0L);
+	ptr = shl_load(filename, BIND_IMMEDIATE |
+		(dso->flags&DSO_FLAG_NO_NAME_TRANSLATION?0:DYNAMIC_PATH), 0L);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_DL_LOAD,DSO_R_LOAD_FAILED);
