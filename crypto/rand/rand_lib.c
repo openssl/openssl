@@ -87,16 +87,6 @@ int RAND_set_rand_method(const RAND_METHOD *meth)
 
 const RAND_METHOD *RAND_get_rand_method(void)
 	{
-#ifdef OPENSSL_FIPS
-	if(FIPS_mode()
-		&& default_RAND_meth != FIPS_rand_check())
-	    {
-	    RANDerr(RAND_F_RAND_GET_RAND_METHOD,RAND_R_NON_FIPS_METHOD);
-	    return 0;
-	    }
-#endif
-
-
 	if (!default_RAND_meth)
 		{
 #ifndef OPENSSL_NO_ENGINE
@@ -114,8 +104,22 @@ const RAND_METHOD *RAND_get_rand_method(void)
 			funct_ref = e;
 		else
 #endif
-			default_RAND_meth = RAND_SSLeay();
+#ifdef OPENSSL_FIPS
+			if(FIPS_mode())
+				default_RAND_meth=FIPS_rand_method();
+			else
+#endif
+				default_RAND_meth = RAND_SSLeay();
 		}
+
+#ifdef OPENSSL_FIPS
+	if(FIPS_mode()
+		&& default_RAND_meth != FIPS_rand_check())
+	    {
+	    RANDerr(RAND_F_RAND_GET_RAND_METHOD,RAND_R_NON_FIPS_METHOD);
+	    return 0;
+	    }
+#endif
 	return default_RAND_meth;
 	}
 
