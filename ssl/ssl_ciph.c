@@ -700,11 +700,18 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			if (!found)
 				break;	/* ignore this entry */
 
-			algorithms = (ca_list[j]->algorithms & ~mask) |
-			             (ca_list[j]->algorithms &	algorithms & mask);
+			/* New algorithms:
+			 *  1 - any old restrictions apply outside new mask
+			 *  2 - any new restrictions apply outside old mask
+			 *  3 - enforce old & new where masks intersect
+			 */
+			algorithms = (algorithms & ~ca_list[j]->mask) |		/* 1 */
+			             (ca_list[j]->algorithms & ~mask) |		/* 2 */
+			             (algorithms & ca_list[j]->algorithms);	/* 3 */
 			mask |= ca_list[j]->mask;
-			algo_strength = (ca_list[j]->algo_strength & ~mask_strength) |
-			                (ca_list[j]->algo_strength & algo_strength & mask_strength);
+			algo_strength = (algo_strength & ~ca_list[j]->mask_strength) |
+			                (ca_list[j]->algo_strength & ~mask_strength) |
+			                (algo_strength & ca_list[j]->algo_strength);
 			mask_strength |= ca_list[j]->mask_strength;
 
 			if (!multi) break;
@@ -758,7 +765,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	{
 	int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases;
 	unsigned long disabled_mask;
-	STACK_OF(SSL_CIPHER) *cipherstack;
+	STACK_OF(SSL_CIPHER) *cipherstack, *tmp_cipher_list;
 	const char *rule_p;
 	CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
 	SSL_CIPHER **ca_list = NULL;
@@ -766,7 +773,8 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	/*
 	 * Return with error if nothing to do.
 	 */
-	if (rule_str == NULL) return(NULL);
+	if (rule_str == NULL || cipher_list == NULL || cipher_list_by_id == NULL)
+		return NULL;
 
 	if (init_ciphers)
 		{
@@ -876,54 +884,19 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 			}
 		}
 	OPENSSL_free(co_list);	/* Not needed any longer */
-	/* if no ciphers where selected let's return NULL */
-	if (sk_SSL_CIPHER_num(cipherstack) == 0)
+
+	tmp_cipher_list = sk_SSL_CIPHER_dup(cipherstack);
+	if (tmp_cipher_list == NULL)
 		{
-		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST, SSL_R_NO_CIPHER_MATCH);
 		sk_SSL_CIPHER_free(cipherstack);
 		return NULL;
 		}
-
-	/*
-	 * The following passage is a little bit odd. If pointer variables
-	 * were supplied to hold STACK_OF(SSL_CIPHER) return information,
-	 * the old memory pointed to is free()ed. Then, however, the
-	 * cipher_list entry will be assigned just a copy of the returned
-	 * cipher stack. For cipher_list_by_id a copy of the cipher stack
-	 * will be created. See next comment...
-	 */
-	if (cipher_list != NULL)
-		{
-		if (*cipher_list != NULL)
-			sk_SSL_CIPHER_free(*cipher_list);
-		*cipher_list = cipherstack;
-		}
-
-	if (cipher_list_by_id != NULL)
-		{
-		if (*cipher_list_by_id != NULL)
-			sk_SSL_CIPHER_free(*cipher_list_by_id);
-		*cipher_list_by_id = sk_SSL_CIPHER_dup(cipherstack);
-		}
-
-	/*
-	 * Now it is getting really strange. If something failed during
-	 * the previous pointer assignment or if one of the pointers was
-	 * not requested, the error condition is met. That might be
-	 * discussable. The strange thing is however that in this case
-	 * the memory "ret" pointed to is "free()ed" and hence the pointer
-	 * cipher_list becomes wild. The memory reserved for
-	 * cipher_list_by_id however is not "free()ed" and stays intact.
-	 */
-	if (	(cipher_list_by_id == NULL) ||
-		(*cipher_list_by_id == NULL) ||
-		(cipher_list == NULL) ||
-		(*cipher_list == NULL))
-		{
-		sk_SSL_CIPHER_free(cipherstack);
-		return(NULL);
-		}
-
+	if (*cipher_list != NULL)
+		sk_SSL_CIPHER_free(*cipher_list);
+	*cipher_list = cipherstack;
+	if (*cipher_list_by_id != NULL)
+		sk_SSL_CIPHER_free(*cipher_list_by_id);
+	*cipher_list_by_id = tmp_cipher_list;
 	sk_SSL_CIPHER_set_cmp_func(*cipher_list_by_id,ssl_cipher_ptr_id_cmp);
 
 	return(cipherstack);
