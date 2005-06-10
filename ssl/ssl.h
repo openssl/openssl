@@ -1655,6 +1655,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_CTRL					 232
 #define SSL_F_SSL_CTX_CHECK_PRIVATE_KEY			 168
 #define SSL_F_SSL_CTX_NEW				 169
+#define SSL_F_SSL_CTX_SET_CIPHER_LIST			 1026
 #define SSL_F_SSL_CTX_SET_PURPOSE			 226
 #define SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT		 219
 #define SSL_F_SSL_CTX_SET_SSL_VERSION			 170
@@ -1685,6 +1686,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_SESSION_PRINT_FP			 190
 #define SSL_F_SSL_SESS_CERT_NEW				 225
 #define SSL_F_SSL_SET_CERT				 191
+#define SSL_F_SSL_SET_CIPHER_LIST			 1027
 #define SSL_F_SSL_SET_FD				 192
 #define SSL_F_SSL_SET_PKEY				 193
 #define SSL_F_SSL_SET_PURPOSE				 227
