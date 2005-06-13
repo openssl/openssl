@@ -761,7 +761,7 @@ PROCESS_ARGS:
 			}
 		else
 			{
-			die "target already defined - $target\n" if ($target ne "");
+			die "target already defined - $target (offending arg: $_)\n" if ($target ne "");
 			$target=$_;
 			}
 
