@@ -1,12 +1,12 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2005/06/06 00:42:24 $
+  ______________                           $Date: 2005/06/13 03:36:58 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.9:  Under development...
+    o  OpenSSL 0.9.8-beta5:  Released on June 13th, 2005
     o  OpenSSL 0.9.8-beta4:  Released on June 6th, 2005
-	linux-elf (Debian [unstable])					SUCCESS
     o  OpenSSL 0.9.8-beta3:  Released on May 31th, 2005
     o  OpenSSL 0.9.8-beta2:  Released on May 24th, 2005
     o  OpenSSL 0.9.8-beta1:  Released on May 19th, 2005
