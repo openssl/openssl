@@ -141,8 +141,8 @@ less Unix-centric, it might have been used much earlier.
 
 With version 0.9.6 OpenSSL was extended to interface to external crypto
 hardware. This was realized in a special release '0.9.6-engine'. With
-version 0.9.7 (not yet released) the changes were merged into the main
-development line, so that the special release is no longer necessary.
+version 0.9.7 the changes were merged into the main development line,
+so that the special release is no longer necessary.
 
 * How do I check the authenticity of the OpenSSL distribution?
 
