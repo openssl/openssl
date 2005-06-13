@@ -65,9 +65,18 @@ B<CRYPTO_LOCK>, and releases it otherwise.
 B<file> and B<line> are the file number of the function setting the
 lock. They can be useful for debugging.
 
-id_function(void) is a function that returns a thread ID. It is not
-needed on Windows nor on platforms where getpid() returns a different
-ID for each thread (most notably Linux).
+id_function(void) is a function that returns a thread ID, for
+instance, pthread_self(). It is not, needed on Windows nor on
+platforms where getpid() returns a different ID for each thread.
+However, even on those platforms, pthread_self() should be used, since
+the behavior of getpid() may depend on the machine where the program
+is being run, not the machine where the program is being compiled.
+(For instance, Red Hat 8 Linux and earlier used LinuxThreads, whose
+getpid() returns a different value for each thread; Red Hat 9 Linux
+and later use NPTL, which is Posix-conformant, and thus whose getpid()
+returns the same value for all threads in a process.  But a program
+compiled on Red Hat 8 and run on Red Hat 9 will by default see
+getpid() returning the same value for all threads.)
 
 Additionally, OpenSSL supports dynamic locks, and sometimes, some parts
 of OpenSSL need it for better performance.  To enable this, the following
