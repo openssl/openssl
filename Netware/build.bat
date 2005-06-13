@@ -6,14 +6,15 @@ rem
 rem   usage:
 rem      build [target] [debug opts] [assembly opts] [configure opts]
 rem
-rem      target        - "netware-clib" - CLib NetWare build
-rem                    - "netware-libc" - LibC NKS NetWare build
+rem      target        - "netware-clib" - CLib NetWare build (WinSock Sockets)
+rem                    - "netware-libc" - LibC NKS NetWare build (WinSock Sockets)
+rem                    - "netware-libc-bsdsock" - LibC NKS NetWare build (BSD Sockets)
 rem 
 rem      debug opts    - "debug"  - build debug
 rem
 rem      assembly opts - "nw-mwasm" - use Metrowerks assembler
-rem      "nw-nasm"  - use NASM assembler
-rem      "no-asm"   - don't use assembly
+rem                    - "nw-nasm"  - use NASM assembler
+rem                    - "no-asm"   - don't use assembly
 rem
 rem      configure opts- all unrecognized arguments are passed to the
 rem                       perl configure script
@@ -76,6 +77,8 @@ if "%1" == "netware-clib" set BLD_TARGET=netware-clib
 if "%1" == "netware-clib" set ARG_PROCESSED=YES
 if "%1" == "netware-libc" set BLD_TARGET=netware-libc
 if "%1" == "netware-libc" set ARG_PROCESSED=YES
+if "%1" == "netware-libc-bsdsock" set BLD_TARGET=netware-libc-bsdsock
+if "%1" == "netware-libc-bsdsock" set ARG_PROCESSED=YES
 
 rem   If we didn't recognize the argument, consider it an option for config
 if "%ARG_PROCESSED%" == "NO" set CONFIG_OPTS=%CONFIG_OPTS% %1
@@ -92,6 +95,7 @@ rem build the nlm make file name which includes target and debug info
 set NLM_MAKE=
 if "%BLD_TARGET%" == "netware-clib" set NLM_MAKE=netware\nlm_clib
 if "%BLD_TARGET%" == "netware-libc" set NLM_MAKE=netware\nlm_libc
+if "%BLD_TARGET%" == "netware-libc-bsdsock" set NLM_MAKE=netware\nlm_libc_bsdsock
 if "%DEBUG%" == "" set NLM_MAKE=%NLM_MAKE%.mak
 if "%DEBUG%" == "debug" set NLM_MAKE=%NLM_MAKE%_dbg.mak
 
@@ -184,8 +188,9 @@ echo .  No build target specified!!!
 echo .
 echo .  usage: build [target] [debug opts] [assembly opts] [configure opts]
 echo .
-echo .     target        - "netware-clib" - CLib NetWare build
-echo .                   - "netware-libc" - LibC NKS NetWare build
+echo .     target        - "netware-clib" - CLib NetWare build (WinSock Sockets)
+echo .                   - "netware-libc" - LibC NKS NetWare build (WinSock Sockets)
+echo .                   - "netware-libc-bsdsock" - LibC NKS NetWare build (BSD Sockets)
 echo .
 echo .     debug opts    - "debug"  - build debug
 echo .

@@ -2,19 +2,25 @@
 #
 
 # The import files and other misc imports needed to link
+@misc_imports = ("GetProcessSwitchCount", "RunningProcess",  
+                 "GetSuperHighResolutionTimer");
 if ($LIBC)
 {
-   @import_files = ("libc.imp", "ws2nlm.imp");
+   @import_files = ("libc.imp");
    @module_files = ("libc");
 }
 else
 {
    # clib build
-   @import_files = ("clib.imp", "ws2nlm.imp");
+   @import_files = ("clib.imp");
    @module_files = ("clib");
+   push(@misc_imports, "_rt_modu64%16", "_rt_divu64%16");
 }
-@misc_imports = ("GetProcessSwitchCount", "RunningProcess",  
-                 "GetSuperHighResolutionTimer" );
+if (!$BSDSOCK)
+{
+   push(@import_files, "ws2nlm.imp");
+}
+		 
 
 # The "IMPORTS" environment variable must be set and point to the location
 # where import files (*.imp) can be found.
@@ -120,6 +126,12 @@ else
 {
    $cflags.=" -DNETWARE_CLIB";
    $lflags.=" -entry _Prelude -exit _Stop";
+}
+
+# If BSD Socket support is requested, set a define for the compiler
+if ($BSDSOCK)
+{
+   $cflags.=" -DNETWARE_BSDSOCK";
 }
 
 

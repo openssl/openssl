@@ -62,6 +62,9 @@
 #define USE_SOCKETS
 #include "cryptlib.h"
 #include <openssl/bio.h>
+#if defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_BSDSOCK)
+#include "netdb.h"
+#endif
 
 #ifndef OPENSSL_NO_SOCK
 
@@ -79,7 +82,7 @@
 #define MAX_LISTEN  32
 #endif
 
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
 static int wsa_init_done=0;
 #endif
 
@@ -474,7 +477,7 @@ int BIO_sock_init(void)
 		return (-1);
 #endif
 
-#if defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
     WORD wVerReq;
     WSADATA wsaData;
     int err;
@@ -512,7 +515,7 @@ void BIO_sock_cleanup(void)
 #endif
 		WSACleanup();
 		}
-#elif defined(OPENSSL_SYS_NETWARE)
+#elif defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
    if (wsa_init_done)
         {
         wsa_init_done=0;

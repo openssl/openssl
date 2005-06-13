@@ -32,6 +32,10 @@ The necessary LibC functionality ships with NetWare 6.  However, earlier
 NetWare 5.x versions will require updates in order to run the OpenSSL LibC
 build.
 
+As of June 2005, the LibC build can be configured to use BSD sockets instead
+of WinSock sockets. Call Configure (usually through netware\build.bat) using
+a target of "netware-libc-bsdsock" instead of "netware-libc".
+
 
 REQUIRED TOOLS:
 ---------------
@@ -126,7 +130,8 @@ following tools may be required:
          
          NOTE: The LibC SDK includes the necessary WinSock2 support.  It
          It is not necessary to download the WinSock2 Developer when building
-         for LibC.
+         for LibC. The LibC SDK also includes the appropriate BSD socket support
+         if configuring to use BSD sockets.
 
 
 BUILDING:
@@ -177,8 +182,9 @@ the assembly code.  Always run build.bat from the "openssl" directory.
 
    netware\build [target] [debug opts] [assembly opts] [configure opts]
 
-      target        - "netware-clib" - CLib NetWare build
-                    - "netware-libc" - LibC NetWare build
+      target        - "netware-clib" - CLib NetWare build (WinSock Sockets)
+                    - "netware-libc" - LibC NetWare build (WinSock Sockets)
+                    - "netware-libc-bsdsock" - LibC NetWare build (BSD Sockets)
  
       debug opts    - "debug"  - build debug
 
@@ -197,25 +203,29 @@ the assembly code.  Always run build.bat from the "openssl" directory.
       LibC build, non-debug, using NASM assembly:
          netware\build.bat netware-libc nw-nasm
 
+      LibC build, BSD sockets, non-debug, without assembly:
+         netware\build.bat netware-libc-bsdsock no-asm
+
 Running build.bat generates a make file to be processed by your make 
 tool (gmake or nmake):
 
-   CLIB ex: gmake -f netware\nlm_clib.mak 
+   CLIB ex: gmake -f netware\nlm_clib_dbg.mak 
    LibC ex: gmake -f netware\nlm_libc.mak 
+   LibC ex: gmake -f netware\nlm_libc_bsdsock.mak 
 
 
 You can also run the build scripts manually if you do not want to use the
 build.bat file.  Run the following scripts in the "\openssl"
 subdirectory (in the order listed below):
 
-   perl configure no-asm [other config opts] [netware-clib|netware-libc]
+   perl configure no-asm [other config opts] [netware-clib|netware-libc|netware-libc-bsdsock]
       configures no assembly build for specified netware environment
       (CLIB or LibC).
 
    perl util\mkfiles.pl >MINFO
       generates a listing of source files (used by mk1mf)
 
-   perl util\mk1mf.pl no-asm [other config opts] [netware-clib|netware-libc >netware\nlm.mak
+   perl util\mk1mf.pl no-asm [other config opts] [netware-clib|netware-libc|netware-libc-bsdsock >netware\nlm.mak
       generates the makefile for NetWare
 
    gmake -f netware\nlm.mak

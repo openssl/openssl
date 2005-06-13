@@ -486,7 +486,10 @@ my %table=(
 # netware-clib => legacy CLib c-runtime support
 "netware-clib", "mwccnlm::::::BN_LLONG ${x86_gcc_opts}::",
 # netware-libc => LibC/NKS support
+# NetWare defaults socket bio to WinSock sockets. However, the LibC build can be
+# configured to use BSD sockets instead.
 "netware-libc", "mwccnlm::::::BN_LLONG ${x86_gcc_opts}::",
+"netware-libc-bsdsock", "mwccnlm::::::BN_LLONG ${x86_gcc_opts}::",
 "netware-libc-gcc", "i586-netware-gcc:-nostdinc -I/ndk/libc/include -I/ndk/libc/include/winsock -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYSNAME_NETWARE -DTERMIO -O2 -Wall:::::BN_LLONG ${x86_gcc_opts}::",
 
 # DJGPP
@@ -530,7 +533,7 @@ my %table=(
 
 my @MK1MF_Builds=qw(VC-WIN64I VC-WIN64A
 		    VC-NT VC-CE VC-WIN32
-		    BC-32 OS2-EMX netware-clib netware-libc);
+		    BC-32 OS2-EMX netware-clib netware-libc netware-libc-bsdsock);
 
 my $idx = 0;
 my $idx_cc = $idx++;
