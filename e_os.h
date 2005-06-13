@@ -182,10 +182,18 @@ extern "C" {
 #define readsocket(s,b,n)	    read((s),(b),(n))
 #define writesocket(s,b,n)	    write((s),(char *)(b),(n))
 #elif defined(OPENSSL_SYS_NETWARE)
+#if defined(NETWARE_BSDSOCK)
+#define get_last_socket_error() errno
+#define clear_socket_error()    errno=0
+#define closesocket(s)          close(s)
+#define readsocket(s,b,n)       recv((s),(b),(n),0)
+#define writesocket(s,b,n)      send((s),(b),(n),0)
+#else
 #define get_last_socket_error()	WSAGetLastError()
 #define clear_socket_error()	WSASetLastError(0)
 #define readsocket(s,b,n)		recv((s),(b),(n),0)
 #define writesocket(s,b,n)		send((s),(b),(n),0)
+#endif
 #else
 #define get_last_socket_error()	errno
 #define clear_socket_error()	errno=0
@@ -436,9 +444,17 @@ extern HINSTANCE _hInstance;
 #    define SHUTDOWN2(fd)		MacSocket_close(fd)
 
 #  elif defined(OPENSSL_SYS_NETWARE)
-         /* NetWare uses the WinSock2 interfaces
+         /* NetWare uses the WinSock2 interfaces by default, but can be configured for BSD
          */
-#      include <novsock2.h>
+#      if defined(NETWARE_BSDSOCK)
+#        include <sys/socket.h>
+#        include <netinet/in.h>
+#        include <sys/time.h>
+#        include <sys/select.h>
+#        define INVALID_SOCKET (int)(~0)
+#      else
+#        include <novsock2.h>
+#      endif
 #      define SSLeay_Write(a,b,c)   send((a),(b),(c),0)
 #      define SSLeay_Read(a,b,c) recv((a),(b),(c),0)
 #      define SHUTDOWN(fd)    { shutdown((fd),0); closesocket(fd); }

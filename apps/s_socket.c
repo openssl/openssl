@@ -87,8 +87,12 @@ typedef unsigned int u_int;
 
 #ifndef OPENSSL_NO_SOCK
 
+#if defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_BSDSOCK)
+#include "netdb.h"
+#endif
+
 static struct hostent *GetHostByName(char *name);
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
 static void ssl_sock_cleanup(void);
 #endif
 static int ssl_sock_init(void);
@@ -104,7 +108,7 @@ static int host_ip(char *str, unsigned char ip[4]);
 #define SOCKET_PROTOCOL	IPPROTO_TCP
 #endif
 
-#ifdef OPENSSL_SYS_NETWARE
+#if defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
 static int wsa_init_done=0;
 #endif
 
@@ -156,7 +160,7 @@ static void ssl_sock_cleanup(void)
 		WSACleanup();
 		}
 	}
-#elif defined(OPENSSL_SYS_NETWARE)
+#elif defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
 static void sock_cleanup(void)
     {
     if (wsa_init_done)
@@ -199,7 +203,7 @@ static int ssl_sock_init(void)
 		SetWindowLong(topWnd,GWL_WNDPROC,(LONG)lpTopHookProc);
 #endif /* OPENSSL_SYS_WIN16 */
 		}
-#elif defined(OPENSSL_SYS_NETWARE)
+#elif defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
    WORD wVerReq;
    WSADATA wsaData;
    int err;
@@ -398,7 +402,7 @@ redoit:
 	ret=accept(acc_sock,(struct sockaddr *)&from,(void *)&len);
 	if (ret == INVALID_SOCKET)
 		{
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
 		i=WSAGetLastError();
 		BIO_printf(bio_err,"accept error %d\n",i);
 #else
