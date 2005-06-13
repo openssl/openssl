@@ -27,9 +27,9 @@
  */
 #define OPENSSL_VERSION_NUMBER	0x00908005L
 #ifdef OPENSSL_FIPS
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.8-fips-beta5-dev XX xxx XXXX"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.8-fips-beta5 13 Jun 2005"
 #else
-#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.8-beta4-dev XX xxx XXXX"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 0.9.8-beta5 13 Jun 2005"
 #endif
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
