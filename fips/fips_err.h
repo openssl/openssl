@@ -96,9 +96,9 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 
 static ERR_STRING_DATA FIPS_str_reasons[]=
 	{
-{ERR_REASON(FIPS_R_CANNOT_READ_EXE)      ,"cannot read exe"},
-{ERR_REASON(FIPS_R_CANNOT_READ_EXE_DIGEST),"cannot read exe digest"},
-{ERR_REASON(FIPS_R_EXE_DIGEST_DOES_NOT_MATCH),"exe digest does not match"},
+{ERR_REASON(FIPS_R_CANNOT_READ_EXE)      ,"cannot access executable object"},
+{ERR_REASON(FIPS_R_CANNOT_READ_EXE_DIGEST),"cannot access detached digest"},
+{ERR_REASON(FIPS_R_EXE_DIGEST_DOES_NOT_MATCH),"detached digest verification failed"},
 {ERR_REASON(FIPS_R_FIPS_MODE_ALREADY_SET),"fips mode already set"},
 {ERR_REASON(FIPS_R_FIPS_SELFTEST_FAILED) ,"fips selftest failed"},
 {ERR_REASON(FIPS_R_INVALID_KEY_LENGTH)   ,"invalid key length"},
@@ -106,7 +106,7 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 {ERR_REASON(FIPS_R_NON_FIPS_METHOD)      ,"non fips method"},
 {ERR_REASON(FIPS_R_PAIRWISE_TEST_FAILED) ,"pairwise test failed"},
 {ERR_REASON(FIPS_R_SELFTEST_FAILED)      ,"selftest failed"},
-{ERR_REASON(FIPS_R_NO_DSO_PATH)		 ,"DSO can't be determined"},
+{ERR_REASON(FIPS_R_NO_DSO_PATH)		 ,"DSO path can't be determined"},
 {0,NULL}
 	};
 
