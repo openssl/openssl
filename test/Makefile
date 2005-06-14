@@ -322,18 +322,21 @@ $(DLIBSSL):
 $(DLIBCRYPTO):
 	(cd ..; $(MAKE) DIRS=crypto all)
 
-BUILD_CMD=if [ "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+BUILD_CMD=SHARED_LIBS="$(SHARED_LIBS)"; \
+	if [ "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+		SHARED_LIBS=""; \
+	fi; \
+	if [ -z "$$SHARED_LIBS" ]; then \
 		set -x; $${CC:-$(CC)} -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO) $(EX_LIBS) ; \
-	elif [ -z "$(SHARED_LIBS)" ]; then \
-		set -x; $${CC:-$(CC)} -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
-	else \
-		set -x; LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
+	else	set -x; LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 		$(CC) -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi;
+	fi
 
-FIPS_BUILD_CMD=$(BUILD_CMD) \
-	if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $$target; \
+FIPS_BUILD_CMD=$(BUILD_CMD); \
+	if [ -z "$$SHARED_LIBS" ]; then \
+	    if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
+		TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $$target; \
+	    fi; \
 	fi
 
 $(FIPS_AESTEST)$(EXE_EXT): $(FIPS_AESTEST).o $(DLIBCRYPTO)

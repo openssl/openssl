@@ -343,7 +343,7 @@ do_cygwin-shared:
 	[ "$(PLATFORM)" = "mingw" ] && shlib=$${i}eay32.dll; \
 	[ -f apps/$$shlib ] && rm apps/$$shlib; \
 	[ -f test/$$shlib ] && rm test/$$shlib; \
-	base=;  [ $$i = "crypto" ] && base=-Wl,--image-base,0x61200000; \
+	base=;  [ $$i = "crypto" ] && base=-Wl,--image-base,0x63000000; \
 	( set -x; ${CC} ${SHARED_LDFLAGS} \
 		-shared $$base -o $$shlib \
 		-Wl,-Bsymbolic \
@@ -518,7 +518,7 @@ do_hpux-shared:
 	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
 	( set -x; ${CC} ${SHARED_LDFLAGS} \
 		-Wl,-B,symbolic,+vnocompatwarnings,-z,+h,$$shlib \
-		-o $$shlib $$ALLSYMSFLAGS lib$$i.a -ldld ) || exit 1; \
+		-o $$shlib $$ALLSYMSFLAGS,lib$$i.a -ldld ) || exit 1; \
 	chmod a=rx $$shlib; \
 	done
 
@@ -812,7 +812,16 @@ install_sw:
 				if [ "$(PLATFORM)" != "Cygwin" ]; then \
 					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
 					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+					mv -f	$(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new \
+						$(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+					sig="$$i.$${HMAC_EXT:-sha1}"; \
+					if [ -f $$sig ]; then \
+						echo installing $$sig; \
+						cp $$sig $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$sig.new; \
+						chmod 444 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$sig.new; \
+						mv -f	$(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$sig.new \
+							$(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$sig; \
+					fi; \
 				else \
 					c=`echo $$i | sed 's/^lib\(.*\)\.dll/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
 					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \

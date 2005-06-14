@@ -23,7 +23,7 @@ else
 fi
 
 echo "Checking library fingerprint for $lib"
-openssl sha1 -hmac etaonrishdlcupfm $lib | sed "s/(.*\//(/" | diff -w $lib.$ext - || { echo "$libs fingerprint mismatch"; exit 1; }
+openssl sha1 -hmac etaonrishdlcupfm $lib | sed "s/(.*\//(/" | diff -w $lib.sha1 - || { echo "$libs fingerprint mismatch"; exit 1; }
 
 [ -x $exe.exe ] && exe=$exe.exe
 
