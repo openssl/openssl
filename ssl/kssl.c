@@ -70,7 +70,9 @@
 
 #define _XOPEN_SOURCE 500 /* glibc2 needs this to declare strptime() */
 #include <time.h>
+#if 0 /* Experimental */
 #undef _XOPEN_SOURCE /* To avoid clashes with anything else... */
+#endif
 #include <string.h>
 
 #define KRB5_PRIVATE	1
