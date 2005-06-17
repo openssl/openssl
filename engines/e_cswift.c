@@ -98,6 +98,7 @@ static int cswift_destroy(ENGINE *e);
 static int cswift_init(ENGINE *e);
 static int cswift_finish(ENGINE *e);
 static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
+static int cswift_bn_32copy(SW_LARGENUMBER * out, const BIGNUM * in);
 
 /* BIGNUM stuff */
 static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -415,7 +416,10 @@ static int cswift_init(ENGINE *e)
 	return 1;
 err:
 	if(cswift_dso)
+	{
 		DSO_free(cswift_dso);
+		cswift_dso = NULL;
+	}
 	p_CSwift_AcquireAccContext = NULL;
 	p_CSwift_AttachKeyParam = NULL;
 	p_CSwift_SimpleRequest = NULL;
@@ -565,6 +569,29 @@ err:
 	return to_return;
 	}
 
+
+int cswift_bn_32copy(SW_LARGENUMBER * out, const BIGNUM * in)
+{
+	int mod;
+	int numbytes = BN_num_bytes(in);
+
+	mod = 0;
+	while( ((out->nbytes = (numbytes+mod)) % 32) )
+	{
+		mod++;
+	}
+	out->value = (unsigned char*)OPENSSL_malloc(out->nbytes);
+	if(!out->value)
+	{
+		return 0;
+	}
+	BN_bn2bin(in, &out->value[mod]);
+	if(mod)
+		memset(out->value, 0, mod);
+
+	return 1;
+}
+
 /* Un petit mod_exp chinois */
 static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *q, const BIGNUM *dmp1,
@@ -574,15 +601,16 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	SW_LARGENUMBER arg, res;
 	SW_PARAM sw_param;
 	SW_CONTEXT_HANDLE hac;
-	BIGNUM *rsa_p = NULL;
-	BIGNUM *rsa_q = NULL;
-	BIGNUM *rsa_dmp1 = NULL;
-	BIGNUM *rsa_dmq1 = NULL;
-	BIGNUM *rsa_iqmp = NULL;
-	BIGNUM *argument = NULL;
 	BIGNUM *result = NULL;
+	BIGNUM *argument = NULL;
 	int to_return = 0; /* expect failure */
 	int acquired = 0;
+
+	sw_param.up.crt.p.value = NULL;
+	sw_param.up.crt.q.value = NULL;
+	sw_param.up.crt.dmp1.value = NULL;
+	sw_param.up.crt.dmq1.value = NULL;
+	sw_param.up.crt.iqmp.value = NULL;
  
 	if(!get_context(&hac))
 		{
@@ -590,44 +618,55 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		goto err;
 		}
 	acquired = 1;
+
 	/* Prepare the params */
-	BN_CTX_start(ctx);
-	rsa_p = BN_CTX_get(ctx);
-	rsa_q = BN_CTX_get(ctx);
-	rsa_dmp1 = BN_CTX_get(ctx);
-	rsa_dmq1 = BN_CTX_get(ctx);
-	rsa_iqmp = BN_CTX_get(ctx);
-	argument = BN_CTX_get(ctx);
-	result = BN_CTX_get(ctx);
-	if(!result)
+	argument = BN_new();
+	result = BN_new();
+	if(!result || !argument)
 		{
 		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BN_CTX_FULL);
 		goto err;
 		}
-	if(!bn_wexpand(rsa_p, p->top) || !bn_wexpand(rsa_q, q->top) ||
-			!bn_wexpand(rsa_dmp1, dmp1->top) ||
-			!bn_wexpand(rsa_dmq1, dmq1->top) ||
-			!bn_wexpand(rsa_iqmp, iqmp->top) ||
-			!bn_wexpand(argument, a->top) ||
+
+
+	sw_param.type = SW_ALG_CRT;
+	/************************************************************************/
+	/* 04/02/2003                                                           */
+	/* Modified by Frederic Giudicelli (deny-all.com) to overcome the       */
+	/* limitation of cswift with values not a multiple of 32                */
+	/************************************************************************/
+	if(!cswift_bn_32copy(&sw_param.up.crt.p, p))
+	{
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BN_EXPAND_FAIL);
+		goto err;
+	}
+	if(!cswift_bn_32copy(&sw_param.up.crt.q, q))
+	{
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BN_EXPAND_FAIL);
+		goto err;
+	}
+	if(!cswift_bn_32copy(&sw_param.up.crt.dmp1, dmp1))
+	{
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BN_EXPAND_FAIL);
+		goto err;
+	}
+	if(!cswift_bn_32copy(&sw_param.up.crt.dmq1, dmq1))
+	{
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BN_EXPAND_FAIL);
+		goto err;
+	}
+	if(!cswift_bn_32copy(&sw_param.up.crt.iqmp, iqmp))
+	{
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BN_EXPAND_FAIL);
+		goto err;
+	}
+	if(	!bn_wexpand(argument, a->top) ||
 			!bn_wexpand(result, p->top + q->top))
 		{
 		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BN_EXPAND_FAIL);
 		goto err;
 		}
-	sw_param.type = SW_ALG_CRT;
-	sw_param.up.crt.p.nbytes = BN_bn2bin(p, (unsigned char *)rsa_p->d);
-	sw_param.up.crt.p.value = (unsigned char *)rsa_p->d;
-	sw_param.up.crt.q.nbytes = BN_bn2bin(q, (unsigned char *)rsa_q->d);
-	sw_param.up.crt.q.value = (unsigned char *)rsa_q->d;
-	sw_param.up.crt.dmp1.nbytes = BN_bn2bin(dmp1,
-		(unsigned char *)rsa_dmp1->d);
-	sw_param.up.crt.dmp1.value = (unsigned char *)rsa_dmp1->d;
-	sw_param.up.crt.dmq1.nbytes = BN_bn2bin(dmq1,
-		(unsigned char *)rsa_dmq1->d);
-	sw_param.up.crt.dmq1.value = (unsigned char *)rsa_dmq1->d;
-	sw_param.up.crt.iqmp.nbytes = BN_bn2bin(iqmp,
-		(unsigned char *)rsa_iqmp->d);
-	sw_param.up.crt.iqmp.value = (unsigned char *)rsa_iqmp->d;
+
 	/* Attach the key params */
 	sw_status = p_CSwift_AttachKeyParam(hac, &sw_param);
 	switch(sw_status)
@@ -666,9 +705,22 @@ static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	BN_bin2bn((unsigned char *)result->d, res.nbytes, r);
 	to_return = 1;
 err:
+	if(sw_param.up.crt.p.value)
+		OPENSSL_free(sw_param.up.crt.p.value);
+	if(sw_param.up.crt.q.value)
+		OPENSSL_free(sw_param.up.crt.q.value);
+	if(sw_param.up.crt.dmp1.value)
+		OPENSSL_free(sw_param.up.crt.dmp1.value);
+	if(sw_param.up.crt.dmq1.value)
+		OPENSSL_free(sw_param.up.crt.dmq1.value);
+	if(sw_param.up.crt.iqmp.value)
+		OPENSSL_free(sw_param.up.crt.iqmp.value);
+	if(result)
+		BN_free(result);
+	if(argument)
+		BN_free(argument);
 	if(acquired)
 		release_context(hac);
-	BN_CTX_end(ctx);
 	return to_return;
 	}
  
@@ -676,6 +728,27 @@ err:
 static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	{
 	int to_return = 0;
+	const RSA_METHOD * def_rsa_method;
+
+	/* Try the limits of RSA (2048 bits) */
+	if(BN_num_bytes(rsa->p) > 128 ||
+		BN_num_bytes(rsa->q) > 128 ||
+		BN_num_bytes(rsa->dmp1) > 128 ||
+		BN_num_bytes(rsa->dmq1) > 128 ||
+		BN_num_bytes(rsa->iqmp) > 128)
+	{
+#ifdef RSA_NULL
+		def_rsa_method=RSA_null_method();
+#else
+#if 0
+		def_rsa_method=RSA_PKCS1_RSAref();
+#else
+		def_rsa_method=RSA_PKCS1_SSLeay();
+#endif
+#endif
+		if(def_rsa_method)
+			return def_rsa_method->rsa_mod_exp(r0, I, rsa, ctx);
+	}
 
 	if(!rsa->p || !rsa->q || !rsa->dmp1 || !rsa->dmq1 || !rsa->iqmp)
 		{
@@ -693,6 +766,26 @@ err:
 static int cswift_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
+	const RSA_METHOD * def_rsa_method;
+
+	/* Try the limits of RSA (2048 bits) */
+	if(BN_num_bytes(r) > 256 ||
+		BN_num_bytes(a) > 256 ||
+		BN_num_bytes(m) > 256)
+	{
+#ifdef RSA_NULL
+		def_rsa_method=RSA_null_method();
+#else
+#if 0
+		def_rsa_method=RSA_PKCS1_RSAref();
+#else
+		def_rsa_method=RSA_PKCS1_SSLeay();
+#endif
+#endif
+		if(def_rsa_method)
+			return def_rsa_method->bn_mod_exp(r, a, p, m, ctx, m_ctx);
+	}
+
 	return cswift_mod_exp(r, a, p, m, ctx);
 	}
 
@@ -937,9 +1030,10 @@ static int cswift_rand_bytes(unsigned char *buf, int num)
 	SW_CONTEXT_HANDLE hac;
 	SW_STATUS swrc;
 	SW_LARGENUMBER largenum;
-	size_t nbytes = 0;
 	int acquired = 0;
 	int to_return = 0; /* assume failure */
+	unsigned char buf32[1024];
+
 
 	if (!get_context(&hac))
 	{
@@ -948,17 +1042,19 @@ static int cswift_rand_bytes(unsigned char *buf, int num)
 	}
 	acquired = 1;
 
-	while (nbytes < (size_t)num)
+	/************************************************************************/
+	/* 04/02/2003                                                           */
+	/* Modified by Frederic Giudicelli (deny-all.com) to overcome the       */
+	/* limitation of cswift with values not a multiple of 32                */
+	/************************************************************************/
+
+	while(num >= sizeof(buf32))
 	{
+		largenum.value = buf;
+		largenum.nbytes = sizeof(buf32);
 		/* tell CryptoSwift how many bytes we want and where we want it.
 		 * Note: - CryptoSwift cannot do more than 4096 bytes at a time.
 		 *       - CryptoSwift can only do multiple of 32-bits. */
-		largenum.value = (SW_BYTE *) buf + nbytes;
-		if (4096 > num - nbytes)
-			largenum.nbytes = num - nbytes;
-		else
-			largenum.nbytes = 4096;
-
 		swrc = p_CSwift_SimpleRequest(hac, SW_CMD_RAND, NULL, 0, &largenum, 1);
 		if (swrc != SW_OK)
 		{
@@ -968,14 +1064,30 @@ static int cswift_rand_bytes(unsigned char *buf, int num)
 			ERR_add_error_data(2, "CryptoSwift error number is ", tmpbuf);
 			goto err;
 		}
-
-		nbytes += largenum.nbytes;
+		buf += sizeof(buf32);
+		num -= sizeof(buf32);
 	}
-	to_return = 1;  /* success */
+	if(num)
+	{
+		largenum.nbytes = sizeof(buf32);
+		largenum.value = buf32;
+		swrc = p_CSwift_SimpleRequest(hac, SW_CMD_RAND, NULL, 0, &largenum, 1);
+		if (swrc != SW_OK)
+		{
+			char tmpbuf[20];
+			CSWIFTerr(CSWIFT_F_CSWIFT_CTRL, CSWIFT_R_REQUEST_FAILED);
+			sprintf(tmpbuf, "%ld", swrc);
+			ERR_add_error_data(2, "CryptoSwift error number is ", tmpbuf);
+			goto err;
+		}
+		memcpy(buf, largenum.value, num);
+	}
 
+	to_return = 1;  /* success */
 err:
 	if (acquired)
 		release_context(hac);
+
 	return to_return;
 }
 
