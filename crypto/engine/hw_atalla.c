@@ -375,6 +375,7 @@ static int atalla_init(ENGINE *e)
 err:
 	if(atalla_dso)
 		DSO_free(atalla_dso);
+	atalla_dso = NULL;
 	p_Atalla_GetHardwareConfig = NULL;
 	p_Atalla_RSAPrivateKeyOpFn = NULL;
 	p_Atalla_GetPerformanceStatistics = NULL;

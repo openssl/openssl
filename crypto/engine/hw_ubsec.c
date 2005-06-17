@@ -454,6 +454,7 @@ static int ubsec_init(ENGINE *e)
 err:
 	if(ubsec_dso)
 		DSO_free(ubsec_dso);
+	ubsec_dso = NULL;
 	p_UBSEC_ubsec_bytes_to_bits = NULL;
 	p_UBSEC_ubsec_bits_to_bytes = NULL;
 	p_UBSEC_ubsec_open = NULL;
