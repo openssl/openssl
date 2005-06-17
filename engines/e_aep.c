@@ -479,6 +479,7 @@ static int aep_init(ENGINE *e)
 
 	if(aep_dso)
 		DSO_free(aep_dso);
+	aep_dso = NULL;
 		
 	p_AEP_OpenConnection    = NULL;
 	p_AEP_ModExp            = NULL;
