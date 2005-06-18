@@ -53,7 +53,9 @@ static COMP_METHOD zlib_method={
 # include <windows.h>
 
 # define Z_CALLCONV _stdcall
-# define ZLIB_SHARED
+# ifndef ZLIB_SHARED
+#  define ZLIB_SHARED
+# endif
 #else
 # define Z_CALLCONV
 #endif /* !(OPENSSL_SYS_WINDOWS || OPENSSL_SYS_WIN32) */
