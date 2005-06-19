@@ -719,7 +719,7 @@ static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	int to_return = 0;
 	const RSA_METHOD * def_rsa_method;
 
-	// Try the limits of RSA (2048 bits)
+	/* Try the limits of RSA (2048 bits) */
 	if(BN_num_bytes(rsa->p) > 128 ||
 		BN_num_bytes(rsa->q) > 128 ||
 		BN_num_bytes(rsa->dmp1) > 128 ||
@@ -761,7 +761,7 @@ static int cswift_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	{
 	const RSA_METHOD * def_rsa_method;
 
-	// Try the limits of RSA (2048 bits)
+	/* Try the limits of RSA (2048 bits) */
 	if(BN_num_bytes(r) > 256 ||
 		BN_num_bytes(a) > 256 ||
 		BN_num_bytes(m) > 256)
