@@ -522,8 +522,8 @@ install_docs:
 			--release=$(VERSION) `basename $$i`") \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
 		$(PERL) util/extract-names.pl < $$i | \
-			grep -v $$filecase "^$$fn\$$" | \
-			grep -v "[	]" | \
+			(grep -v $$filecase "^$$fn\$$"; true) | \
+			(grep -v "[	]"; true) | \
 			(cd $(INSTALL_PREFIX)$(MANDIR)/man$$sec/; \
 			 while read n; do \
 				$$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
@@ -539,8 +539,8 @@ install_docs:
 			--release=$(VERSION) `basename $$i`") \
 			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
 		$(PERL) util/extract-names.pl < $$i | \
-			grep -v $$filecase "^$$fn\$$" | \
-			grep -v "[	]" | \
+			(grep -v $$filecase "^$$fn\$$"; true) | \
+			(grep -v "[	]"; true) | \
 			(cd $(INSTALL_PREFIX)$(MANDIR)/man$$sec/; \
 			 while read n; do \
 				$$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
