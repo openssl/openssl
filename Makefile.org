@@ -726,11 +726,15 @@ crypto/objects/obj_mac.h: crypto/objects/objects.pl crypto/objects/objects.txt c
 apps/openssl-vms.cnf: apps/openssl.cnf
 	$(PERL) VMS/VMSify-conf.pl < apps/openssl.cnf > apps/openssl-vms.cnf
 
+crypto/bn/bn_prime.h: crypto/bn/bn_prime.pl
+	$(PERL) crypto/bn/bn_prime.pl >crypto/bn/bn_prime.h
+
+
 TABLE: Configure
 	(echo 'Output of `Configure TABLE'"':"; \
 	$(PERL) Configure TABLE) > TABLE
 
-update: depend errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h apps/openssl-vms.cnf TABLE
+update: errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h apps/openssl-vms.cnf crypto/bn/bn_prime.h TABLE depend
 
 # Build distribution tar-file. As the list of files returned by "find" is
 # pretty long, on several platforms a "too many arguments" error or similar
