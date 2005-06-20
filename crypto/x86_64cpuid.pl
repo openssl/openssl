@@ -70,8 +70,8 @@ print<<___ if(!defined($win64a));
 .align	16
 OPENSSL_rdtsc:
 	rdtsc
-	shl	\$32,%rdx
-	or	%rdx,%rax
+	shlq	\$32,%rdx
+	orq	%rdx,%rax
 	ret
 .size	OPENSSL_rdtsc,.-OPENSSL_rdtsc
 
@@ -80,11 +80,11 @@ OPENSSL_rdtsc:
 .align	16
 OPENSSL_atomic_add:
 	movl	(%rdi),%eax
-.Lspin:	lea	(%rsi,%rax),%r8
-lock;	cmpxchg	%r8d,(%rdi)
+.Lspin:	leaq	(%rsi,%rax),%r8
+lock;	cmpxchgl	%r8d,(%rdi)
 	jne	.Lspin
-	mov	%r8d,%eax
-	cdqe
+	movl	%r8d,%eax
+	.byte	0x48,0x98
 	ret
 .size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
 
@@ -108,28 +108,28 @@ OPENSSL_wipe_cpu:
 	pxor	%xmm13,%xmm13
 	pxor	%xmm14,%xmm14
 	pxor	%xmm15,%xmm15
-	xor	%rcx,%rcx
-	xor	%rdx,%rdx
-	xor	%rsi,%rsi
-	xor	%rdi,%rdi
-	xor	%r8,%r8
-	xor	%r9,%r9
-	xor	%r10,%r10
-	xor	%r11,%r11
-	lea	8(%rsp),%rax
+	xorq	%rcx,%rcx
+	xorq	%rdx,%rdx
+	xorq	%rsi,%rsi
+	xorq	%rdi,%rdi
+	xorq	%r8,%r8
+	xorq	%r9,%r9
+	xorq	%r10,%r10
+	xorq	%r11,%r11
+	leaq	8(%rsp),%rax
 	ret
 .size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
 
 .globl	OPENSSL_ia32_cpuid
 .align	16
 OPENSSL_ia32_cpuid:
-	mov	%rbx,%r8
-	mov	\$1,%eax
+	movq	%rbx,%r8
+	movl	\$1,%eax
 	cpuid
-	shl	\$32,%rcx
-	mov	%edx,%eax
-	mov	%r8,%rbx
-	or	%rcx,%rax
+	shlq	\$32,%rcx
+	movl	%edx,%eax
+	movq	%r8,%rbx
+	orq	%rcx,%rax
 	ret
 .size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
 
