@@ -135,8 +135,8 @@ static int satsub64be(const unsigned char *v1,const unsigned char *v2)
 		 * always aligned, but I take no chances... */
 		if (((size_t)v1|(size_t)v2)&0x7)	break;
 
-		l =  *((long *)v1);
-		l =- *((long *)v2);
+		l  = *((long *)v1);
+		l -= *((long *)v2);
 		if (l>128)		return 128;
 		else if (l<-128)	return -128;
 		else			return (int)l;
