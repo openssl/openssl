@@ -121,27 +121,53 @@
 #include <openssl/buffer.h>
 #include <openssl/pqueue.h>
 
-/* mod 256 saturating subtract of two 64-bit values in big-endian order */
+/* mod 128 saturating subtract of two 64-bit values in big-endian order */
 static int satsub64be(const unsigned char *v1,const unsigned char *v2)
-	{
-	int i;
-	unsigned char c1,c2;
+{	int ret,sat,brw,i;
 
-	for (i=0;i<8;i++,v1++,v2++)
-		{
-		c1=*v1; c2=*v2;
-		if (c1!=c2) break;
+	if (sizeof(long) == 8) do
+	{	const union { long one; char little; } is_endian = {1};
+		long l;
+
+		if (is_endian.little)			break;
+		/* not reached on little-endians */
+		/* following test is redundant, because input is
+		 * always aligned, but I take no chances... */
+		if (((size_t)v1|(size_t)v2)&0x7)	break;
+
+		l =  *((long *)v1);
+		l =- *((long *)v2);
+		if (l>128)		return 128;
+		else if (l<-128)	return -128;
+		else			return (int)l;
+	} while (0);
+
+	ret = (int)v1[7]-(int)v2[7];
+	sat = 0;
+	brw = ret>>8;	/* brw is either 0 or -1 */
+	if (ret & 0x80)
+	{	for (i=6;i>=0;i--)
+		{	brw += (int)v1[i]-(int)v2[i];
+			sat |= ~brw;
+			brw >>= 8;
 		}
-	if (i==8)	return 0;
-	else if (i==7)	return (int)c1-(int)c2;
-	else if (c1>c2)	return 256;
-	else		return -256;
 	}
+	else
+	{	for (i=6;i>=0;i--)
+		{	brw += (int)v1[i]-(int)v2[i];
+			sat |= brw;
+			brw >>= 8;
+		}
+	}
+	brw <<= 8;	/* brw is either 0 or -256 */
+
+	if (sat&0xff)	return brw | 0x80;
+	else		return brw + (ret&0xFF);
+}
 
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf, 
 	int len, int peek);
-static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
-	unsigned char *seq_num);
+static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap);
 static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 static DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr, 
     unsigned int *is_next_epoch);
@@ -334,17 +360,17 @@ dtls1_get_buffered_record(SSL *s)
 static int
 dtls1_process_record(SSL *s)
 {
-    int i,al;
+	int i,al;
 	int clear=0;
-    int enc_err;
+	int enc_err;
 	SSL_SESSION *sess;
-    SSL3_RECORD *rr;
+	SSL3_RECORD *rr;
 	unsigned int mac_size;
 	unsigned char md[EVP_MAX_MD_SIZE];
 
 
 	rr= &(s->s3->rrec);
-    sess = s->session;
+	sess = s->session;
 
 	/* At this point, s->packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
 	 * and we have that many bytes in s->packet
@@ -390,10 +416,10 @@ printf("\n");
 #endif
 
 	/* r->length is now the compressed data plus mac */
-if (	(sess == NULL) ||
+	if (	(sess == NULL) ||
 		(s->enc_read_ctx == NULL) ||
 		(s->read_hash == NULL))
-    clear=1;
+	clear=1;
 
 	if (!clear)
 		{
@@ -463,8 +489,8 @@ if (	(sess == NULL) ||
 
 	/* we have pulled in a full packet so zero things */
 	s->packet_length=0;
-    dtls1_record_bitmap_update(s, &(s->d1->bitmap));/* Mark receipt of record. */
-    return(1);
+	dtls1_record_bitmap_update(s, &(s->d1->bitmap));/* Mark receipt of record. */
+	return(1);
 
 decryption_failed_or_bad_record_mac:
 	/* Separate 'decryption_failed' alert was introduced with TLS 1.0,
@@ -601,13 +627,13 @@ again:
 	/* match epochs.  NULL means the packet is dropped on the floor */
 	bitmap = dtls1_get_bitmap(s, rr, &is_next_epoch);
 	if ( bitmap == NULL)
-        {
-        s->packet_length = 0;  /* dump this record */
-        goto again;   /* get another record */
+		{
+		s->packet_length = 0;  /* dump this record */
+		goto again;   /* get another record */
 		}
 
 	/* check whether this is a repeat, or aged record */
-	if ( ! dtls1_record_replay_check(s, bitmap, rr->seq_num))
+	if ( ! dtls1_record_replay_check(s, bitmap))
 		{
 		s->packet_length=0; /* dump this record */
 		goto again;     /* get another record */
@@ -1468,8 +1494,7 @@ err:
 
 
 
-static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
-	unsigned char *seq_num)
+static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap)
 	{
 	int cmp;
 	unsigned int shift;
@@ -1478,7 +1503,7 @@ static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
 	cmp = satsub64be(seq,bitmap->max_seq_num);
 	if (cmp > 0)
 		{
-		memcpy (seq_num,seq,8);
+		memcpy (s->s3->rrec.seq_num,seq,8);
 		return 1; /* this record in new */
 		}
 	shift = -cmp;
@@ -1487,6 +1512,7 @@ static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
 	else if (bitmap->map & (1UL<<shift))
 		return 0; /* record previously received */
 
+	memcpy (s->s3->rrec.seq_num,seq,8);
 	return 1;
 	}
 
