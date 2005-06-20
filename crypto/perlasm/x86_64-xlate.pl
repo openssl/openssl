@@ -168,6 +168,10 @@ my $current_function;
 	    # on pros side, this results in more compact code:-)
 	    $self->{index} =~ s/^[er](.?[0-9xp])[d]?$/r\1/;
 	    $self->{base}  =~ s/^[er](.?[0-9xp])[d]?$/r\1/;
+	    # Solaris /usr/ccs/bin/as can't handle multiplications
+	    # in $self->{label}
+	    $self->{label} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)/eg;
+	    $self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
 
 	    if (defined($self->{index})) {
 		sprintf "%s(%%%s,%%%s,%d)",
