@@ -313,7 +313,7 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 			/* There will never be more than two '=' */
 			}
 
-		if ((v == B64_EOF) || (n >= 64))
+		if ((v == B64_EOF && (n&3) == 0) || (n >= 64))
 			{
 			/* This is needed to work correctly on 64 byte input
 			 * lines.  We process the line and then need to
