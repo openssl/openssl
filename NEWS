@@ -69,10 +69,12 @@
         argument form 'enable-xxx'.
       o Change the default digest in 'openssl' commands from MD5 to
         SHA-1.
-      o Added support for DTLS.  THIS IS STILL BEING WORKED ON!
+      o Added support for DTLS.
       o New BIGNUM blinding.
       o Added support for the RSA-PSS encryption scheme
       o Added support for the RSA X.931 padding.
+      o Added support for BSD sockets on NetWare.
+      o Added support for files larger than 2GB.
 
   Major changes between OpenSSL 0.9.7f and OpenSSL 0.9.7g:
 
