@@ -326,7 +326,7 @@ $arflags      =
 
 *** DJGPP
 $cc           = gcc
-$cflags       = -I/dev/env/WATT_ROOT/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall -DDEVRANDOM="/dev/urandom\x24"
+$cflags       = -I/dev/env/WATT_ROOT/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = MSDOS
