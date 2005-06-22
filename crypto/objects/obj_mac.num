@@ -663,7 +663,7 @@ id_ppl		662
 proxyCertInfo		663
 id_ppl_anyLanguage		664
 id_ppl_inheritAll		665
-id_ppl_independent		666
+name_constraints		666
 Independent		667
 sha256WithRSAEncryption		668
 sha384WithRSAEncryption		669

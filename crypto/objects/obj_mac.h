@@ -1799,6 +1799,11 @@
 #define NID_delta_crl		140
 #define OBJ_delta_crl		OBJ_id_ce,27L
 
+#define SN_name_constraints		"nameConstraints"
+#define LN_name_constraints		"X509v3 Name Constraints"
+#define NID_name_constraints		666
+#define OBJ_name_constraints		OBJ_id_ce,30L
+
 #define SN_crl_distribution_points		"crlDistributionPoints"
 #define LN_crl_distribution_points		"X509v3 CRL Distribution Points"
 #define NID_crl_distribution_points		103

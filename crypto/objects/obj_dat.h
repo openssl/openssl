@@ -63,11 +63,11 @@
  */
 
 #define NUM_NID 676
-#define NUM_SN 668
-#define NUM_LN 668
-#define NUM_OBJ 632
+#define NUM_SN 669
+#define NUM_LN 669
+#define NUM_OBJ 633
 
-static unsigned char lvalues[4572]={
+static unsigned char lvalues[4575]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -691,15 +691,16 @@ static unsigned char lvalues[4572]={
 0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x0E,     /* [4467] OBJ_proxyCertInfo */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x00,     /* [4475] OBJ_id_ppl_anyLanguage */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x01,     /* [4483] OBJ_id_ppl_inheritAll */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x02,     /* [4491] OBJ_Independent */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0B,/* [4499] OBJ_sha256WithRSAEncryption */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0C,/* [4508] OBJ_sha384WithRSAEncryption */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0D,/* [4517] OBJ_sha512WithRSAEncryption */
-0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0E,/* [4526] OBJ_sha224WithRSAEncryption */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x01,/* [4535] OBJ_sha256 */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x02,/* [4544] OBJ_sha384 */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x03,/* [4553] OBJ_sha512 */
-0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x04,/* [4562] OBJ_sha224 */
+0x55,0x1D,0x1E,                              /* [4491] OBJ_name_constraints */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x02,     /* [4494] OBJ_Independent */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0B,/* [4502] OBJ_sha256WithRSAEncryption */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0C,/* [4511] OBJ_sha384WithRSAEncryption */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0D,/* [4520] OBJ_sha512WithRSAEncryption */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0E,/* [4529] OBJ_sha224WithRSAEncryption */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x01,/* [4538] OBJ_sha256 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x02,/* [4547] OBJ_sha384 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x03,/* [4556] OBJ_sha512 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x04,/* [4565] OBJ_sha224 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1762,20 +1763,21 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[4475]),0},
 {"id-ppl-inheritAll","Inherit all",NID_id_ppl_inheritAll,8,
 	&(lvalues[4483]),0},
-{NULL,NULL,NID_undef,0,NULL},
-{"id-ppl-independent","Independent",NID_Independent,8,&(lvalues[4491]),0},
+{"nameConstraints","X509v3 Name Constraints",NID_name_constraints,3,
+	&(lvalues[4491]),0},
+{"id-ppl-independent","Independent",NID_Independent,8,&(lvalues[4494]),0},
 {"RSA-SHA256","sha256WithRSAEncryption",NID_sha256WithRSAEncryption,9,
-	&(lvalues[4499]),0},
+	&(lvalues[4502]),0},
 {"RSA-SHA384","sha384WithRSAEncryption",NID_sha384WithRSAEncryption,9,
-	&(lvalues[4508]),0},
+	&(lvalues[4511]),0},
 {"RSA-SHA512","sha512WithRSAEncryption",NID_sha512WithRSAEncryption,9,
-	&(lvalues[4517]),0},
+	&(lvalues[4520]),0},
 {"RSA-SHA224","sha224WithRSAEncryption",NID_sha224WithRSAEncryption,9,
-	&(lvalues[4526]),0},
-{"SHA256","sha256",NID_sha256,9,&(lvalues[4535]),0},
-{"SHA384","sha384",NID_sha384,9,&(lvalues[4544]),0},
-{"SHA512","sha512",NID_sha512,9,&(lvalues[4553]),0},
-{"SHA224","sha224",NID_sha224,9,&(lvalues[4562]),0},
+	&(lvalues[4529]),0},
+{"SHA256","sha256",NID_sha256,9,&(lvalues[4538]),0},
+{"SHA384","sha384",NID_sha384,9,&(lvalues[4547]),0},
+{"SHA512","sha512",NID_sha512,9,&(lvalues[4556]),0},
+{"SHA224","sha224",NID_sha224,9,&(lvalues[4565]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2210,6 +2212,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[649]),/* "msUPN" */
 &(nid_objs[481]),/* "nSRecord" */
 &(nid_objs[173]),/* "name" */
+&(nid_objs[666]),/* "nameConstraints" */
 &(nid_objs[369]),/* "noCheck" */
 &(nid_objs[403]),/* "noRevAvail" */
 &(nid_objs[72]),/* "nsBaseUrl" */
@@ -2545,6 +2548,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[126]),/* "X509v3 Extended Key Usage" */
 &(nid_objs[86]),/* "X509v3 Issuer Alternative Name" */
 &(nid_objs[83]),/* "X509v3 Key Usage" */
+&(nid_objs[666]),/* "X509v3 Name Constraints" */
 &(nid_objs[403]),/* "X509v3 No Revocation Available" */
 &(nid_objs[401]),/* "X509v3 Policy Constraints" */
 &(nid_objs[84]),/* "X509v3 Private Key Usage Period" */
@@ -3169,6 +3173,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[430]),/* OBJ_hold_instruction_code        2 5 29 23 */
 &(nid_objs[142]),/* OBJ_invalidity_date              2 5 29 24 */
 &(nid_objs[140]),/* OBJ_delta_crl                    2 5 29 27 */
+&(nid_objs[666]),/* OBJ_name_constraints             2 5 29 30 */
 &(nid_objs[103]),/* OBJ_crl_distribution_points      2 5 29 31 */
 &(nid_objs[89]),/* OBJ_certificate_policies         2 5 29 32 */
 &(nid_objs[90]),/* OBJ_authority_key_identifier     2 5 29 35 */
