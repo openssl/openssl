@@ -885,8 +885,8 @@ foreach (sort (keys %disabled))
 			$openssl_other_defines .= "#define OPENSSL_NO_$ALGO\n";
 			print " OPENSSL_NO_$ALGO";
 		
-			if (/^err$/)
-				{ $flags .= "-DOPENSSL_NO_ERR "; }
+			if (/^err$/)	{ $flags .= "-DOPENSSL_NO_ERR "; }
+			elsif (/^asm$/)	{ $no_asm = 1; }
 			}
 		else
 			{
