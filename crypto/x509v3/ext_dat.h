@@ -112,10 +112,10 @@ static X509V3_EXT_METHOD *standard_exts[] = {
 #ifndef OPENSSL_NO_OCSP
 &v3_crl_hold,
 #endif
+&v3_pci,
 &v3_name_constraints,
 &v3_policy_mappings,
-&v3_inhibit_anyp,
-&v3_pci
+&v3_inhibit_anyp
 };
 
 /* Number of standard extensions */
