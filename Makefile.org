@@ -112,6 +112,8 @@ SDIRS=  \
 	buffer bio stack lhash rand err \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5 \
 	store pqueue
+# keep in mind that the above list is adjusted by ./Configure
+# according to no-xxx arguments...
 
 # tests to perform.  "alltests" is a special word indicating that all tests
 # should be performed.
@@ -146,17 +148,30 @@ HEADER=         e_os.h
 
 all: Makefile build_all openssl.pc
 
+# as we stick to -e, CLEARENV ensures that local variables in lower
+# Makefiles remain local and variable. $${var+var} is tribute to Korn
+# shell, which [annoyingly enough] terminates unset with error if var
+# is not set:-(
+CLEARENV=	unset $${TOP+TOP} $${LIB+LIB} $${LIBS+LIBS}	\
+		$${INCLUDE+INCLUDE} $${INCLUDES+INCLUDES}	\
+		$${DIR+DIR} $${DIRS+DIRS} $${SRC+SRC}		\
+		$${LIBSRC+LIBSRC} $${LIBOBJ+LIBOBJ} $${ALL+ALL}	\
+		$${EXHEADER+EXHEADER} $${HEADER+HEADER}		\
+		$${GENERAL+GENERAL} $${CFLAGS+CFLAGS}		\
+		$${ASFLAGS+ASFLAGS} $${AFLAGS+AFLAGS}		\
+		$${SHARED_LIB+SHARED_LIB} $${LIBEXTRAS+LIBEXTRAS}
+
 BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		CC='${CC}' CFLAG='${CFLAG}' 			\
 		AS='${CC}' ASFLAG='${CFLAG} -c'			\
 		AR='${AR}' PERL='${PERL}' RANLIB='${RANLIB}'	\
-		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/lib'	\
+		SDIRS='${SDIRS}' LIBRPATH='${INSTALLTOP}/lib'	\
 		INSTALL_PREFIX='${INSTALL_PREFIX}'		\
 		INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}'	\
-		MAKEDEPEND='$$(TOP)/util/domd $$(TOP) -MD $(MAKEDEPPROG)' \
+		MAKEDEPEND='$$$${TOP}/util/domd $$$${TOP} -MD ${MAKEDEPPROG}' \
 		DEPFLAG='-DOPENSSL_NO_DEPRECATED ${DEPFLAG}'	\
 		MAKEDEPPROG='${MAKEDEPPROG}'			\
-		LDFLAGS="$(LDFLAGS)" SHARED_LDFLAGS="$(SHARED_LDFLAGS)"	\
+		LDFLAGS='${LDFLAGS}' SHARED_LDFLAGS='${SHARED_LDFLAGS}'	\
 		KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}'	\
 		EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}'	\
 		SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}'	\
@@ -169,18 +184,19 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		SHA1_ASM_OBJ='${SHA1_ASM_OBJ}'			\
 		MD5_ASM_OBJ='${MD5_ASM_OBJ}'			\
 		RMD160_ASM_OBJ='${RMD160_ASM_OBJ}'		\
-		THIS=$${THIS:-$@}
+		THIS=$${THIS:-$@} MAKEFILE=Makefile MAKEOVERRIDES=
+# MAKEOVERRIDES= effectively "equalizes" GNU-ish and SysV-ish make flavors,
+# which in turn eliminates ambiguities in variable treatment with -e.
 
-BUILD_CMD=if echo " $(DIRS) " | grep " $$dir " >/dev/null 2>/dev/null; then \
-	if [ -d "$$dir" ]; then \
-		(cd $$dir && echo "making $$target in $$dir..." && \
-		$(MAKE) $(BUILDENV) $$target ) || exit 1; \
-	else \
-		$(MAKE) $$dir; \
-	fi; fi
+BUILD_CMD=  if [ -d "$$dir" ]; then \
+	    (	cd $$dir && echo "making $$target in $$dir..." && \
+		$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. DIR=$$dir $$target \
+	    ) || exit 1; \
+	    fi
+RECURSIVE_BUILD_CMD=for dir in $(DIRS); do $(BUILD_CMD); done
 
 reflect:
-	@[ -n "$(THIS)" ] && $(MAKE) $(THIS) $(BUILDENV)
+	@[ -n "$(THIS)" ] && $(CLEARENV) && $(MAKE) $(THIS) -e $(BUILDENV)
 
 sub_all: build_all
 build_all: build_libs build_apps build_tests build_tools
@@ -250,7 +266,7 @@ do_$(SHLIB_TARGET):
 		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
 			libs="$(LIBKRB5) $$libs"; \
 		fi; \
-		$(MAKE) -f Makefile.shared $(BUILDENV) \
+		$(CLEARENV) && $(MAKE) -f Makefile.shared -e $(BUILDENV) \
 			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
 			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
 			LIBDEPS="$$libs $(EX_LIBS)" \
@@ -281,14 +297,8 @@ libclean:
 
 clean:	libclean
 	rm -f shlib/*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
-	@set -e; for i in $(DIRS) ;\
-	do \
-	if [ -d "$$i" ]; then \
-		(cd $$i && echo "making clean in $$i..." && \
-		$(MAKE) SDIRS='${SDIRS}' clean ) || exit 1; \
-		rm -f $(LIBS); \
-	fi; \
-	done;
+	@set -e; target=clean; $(RECURSIVE_BUILD_CMD)
+	rm -f $(LIBS)
 	rm -f openssl.pc
 	rm -f speed.* .pure
 	rm -f $(TARFILE)
@@ -303,32 +313,20 @@ makefile.one: files
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile > $(TOP)/MINFO
-	@set -e; for i in $(DIRS) ;\
-	do \
-	if [ -d "$$i" ]; then \
-		(cd $$i && echo "making 'files' in $$i..." && \
-		$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' files ) || exit 1; \
-	fi; \
-	done;
+	@set -e; target=files; $(RECURSIVE_BUILD_CMD)
 
 links:
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
-	@set -e; target=links; for dir in $(DIRS); do $(BUILD_CMD); done
+	@set -e; target=links; $(RECURSIVE_BUILD_CMD)
 
 gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \
-	$(MAKE) $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on generate );
+	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on generate );
 
 dclean:
 	rm -f *.bak
-	@set -e; for i in $(DIRS) ;\
-	do \
-	if [ -d "$$i" ]; then \
-		(cd $$i && echo "making dclean in $$i..." && \
-		$(MAKE) SDIRS='${SDIRS}' PERL='${PERL}' dclean ) || exit 1; \
-	fi; \
-	done;
+	@set -e; target=dclean; $(RECURSIVE_BUILD_CMD)
 
 rehash: rehash.time
 rehash.time: certs
@@ -342,29 +340,17 @@ test:   tests
 
 tests: rehash
 	@(cd test && echo "testing..." && \
-	$(MAKE) $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on tests );
+	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on tests );
 	util/opensslwrap.sh version -a
 
 report:
 	@$(PERL) util/selftest.pl
 
 depend:
-	@set -e; for i in $(DIRS) ;\
-	do \
-	if [ -d "$$i" ]; then \
-		(cd $$i && echo "making dependencies $$i..." && \
-		$(MAKE) $(BUILDENV) depend ) || exit 1; \
-	fi; \
-	done;
+	@set -e; target=depend; $(RECURSIVE_BUILD_CMD)
 
 lint:
-	@set -e; for i in $(DIRS) ;\
-	do \
-	if [ -d "$$i" ]; then \
-		(cd $$i && echo "making lint $$i..." && \
-		$(MAKE) SDIRS='${SDIRS}' lint ) || exit 1; \
-	fi; \
-	done;
+	@set -e; target=lint; $(RECURSIVE_BUILD_CMD)
 
 tags:
 	rm -f TAGS
@@ -435,7 +421,7 @@ dist:
 	@$(MAKE) TAR='${TAR}' TARFLAGS='${TARFLAGS}' tar
 
 dist_pem_h:
-	(cd crypto/pem; $(MAKE) $(BUILDENV) pem.h; $(MAKE) clean)
+	(cd crypto/pem; $(MAKE) -e $(BUILDENV) pem.h; $(MAKE) clean)
 
 install: all install_docs install_sw
 
@@ -453,13 +439,7 @@ install_sw:
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
-	@set -e; for i in $(DIRS) ;\
-	do \
-	if [ -d "$$i" ]; then \
-		(cd $$i; echo "installing $$i..."; \
-		$(MAKE) $(BUILDENV) install ); \
-	fi; \
-	done
+	@set -e; target=install; $(RECURSIVE_BUILD_CMD)
 	@set -e; for i in $(LIBS) ;\
 	do \
 		if [ -f "$$i" ]; then \

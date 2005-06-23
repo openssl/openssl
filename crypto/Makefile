@@ -15,6 +15,11 @@ MAKEFILE=       Makefile
 RM=             rm -f
 AR=		ar r
 
+RECURSIVE_MAKE=	[ -n "$(SDIRS)" ] && for i in $(SDIRS) ; do \
+		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
+		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES='${INCLUDES}' $$target ) || exit 1; \
+		done;
+
 PEX_LIBS=
 EX_LIBS=
  
@@ -23,14 +28,6 @@ ASFLAGS= $(INCLUDE) $(ASFLAG)
 AFLAGS=$(ASFLAGS)
 
 LIBS=
-
-SDIRS=	objects \
-	md2 md4 md5 sha mdc2 hmac ripemd \
-	des rc2 rc4 rc5 idea bf cast \
-	bn ec rsa dsa ecdsa ecdh dh dso engine aes \
-	buffer bio stack lhash rand err \
-	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5 \
-	store pqueue
 
 GENERAL=Makefile README crypto-lib.com install.com
 
@@ -51,30 +48,6 @@ top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
 all: shared
-
-BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
-		CC='${CC}' CFLAG='${CFLAG}' 			\
-		AS='${CC}' ASFLAG='${CFLAG} -c'			\
-		AR='${AR}' PERL='${PERL}' RANLIB='${RANLIB}'	\
-		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/lib'		\
-		INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}'	\
-		MAKEDEPEND='$$(TOP)/util/domd $$(TOP) -MD $(MAKEDEPPROG)'\
-		DEPFLAG='-DOPENSSL_NO_DEPRECATED ${DEPFLAG}'	\
-		MAKEDEPPROG='${MAKEDEPPROG}'			\
-		LDFLAGS="$(LDFLAGS)" SHARED_LDFLAGS="$(SHARED_LDFLAGS)"	\
-		KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}'	\
-		EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}'	\
-		SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}'	\
-		PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}'	\
-		CPUID_OBJ='${CPUID_OBJ}'			\
-		BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' 	\
-		AES_ASM_OBJ='${AES_ASM_OBJ}'			\
-		BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}'	\
-		RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}'	\
-		SHA1_ASM_OBJ='${SHA1_ASM_OBJ}'			\
-		MD5_ASM_OBJ='${MD5_ASM_OBJ}'			\
-		RMD160_ASM_OBJ='${RMD160_ASM_OBJ}'		\
-		THIS=$${THIS:-$@}
 
 buildinf.h: ../Makefile
 	( echo "#ifndef MK1MF_BUILD"; \
@@ -103,34 +76,23 @@ ia64cpuid.s: ia64cpuid.S
 	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
 
 testapps:
-	[ -z "$(THIS)" ] || ( if echo ${SDIRS} | fgrep ' des '; \
-	then cd des && $(MAKE) des; fi )
-	[ -z "$(THIS)" ] || ( cd pkcs7 && $(MAKE) testapps );
+	[ -z "$(THIS)" ] || (	if echo ${SDIRS} | fgrep ' des '; \
+				then cd des && $(MAKE) -e des; fi )
+	[ -z "$(THIS)" ] || ( cd pkcs7 && $(MAKE) -e testapps );
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 subdirs:
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making all in crypto/$$i..." && \
-	$(MAKE) $(BUILDENV) INCLUDES='${INCLUDES}' all ) || exit 1; \
-	done;
+	@target=all; $(RECURSIVE_MAKE)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making 'files' in crypto/$$i..." && \
-	$(MAKE) files ); \
-	done;
+	@target=files; $(RECURSIVE_MAKE)
 
 links:
 	@$(PERL) $(TOP)/util/mklink.pl ../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../apps $(APPS)
-	@for i in $(SDIRS); do \
-	    (cd $$i && echo "making links in crypto/$$i..." && \
-	    $(MAKE) links ); \
-	done;
+	@target=links; $(RECURSIVE_MAKE)
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
@@ -143,19 +105,7 @@ shared: buildinf.h lib subdirs
 	fi
 
 libs:
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making libs in crypto/$$i..." && \
-	$(MAKE) lib );
-	done;
-
-tests:
-	@[ -z "$(THIS)" ] || (for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making tests in crypto/$$i..." && \
-	$(MAKE) tests ); \
-	done; )
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
+	@target=lib; $(RECURSIVE_MAKE)
 
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
@@ -164,47 +114,26 @@ install:
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making install in crypto/$$i..." && \
-	$(MAKE) install ); \
-	done;
+	@target=install; $(RECURSIVE_MAKE)
 
 lint:
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making lint in crypto/$$i..." && \
-	$(MAKE) lint ); \
-	done;
+	@target=lint; $(RECURSIVE_MAKE)
 
 depend:
-	[ -z "$(THIS)" -o -f buildinf.h ] || touch buildinf.h # fake buildinf.h if it does not exist
-	[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
-	[ -z "$(THIS)" -o -s buildinf.h ] || rm buildinf.h
-	@[ -z "$(THIS)" ] || (set -e; \
-	for i in $(SDIRS) ; do \
-	    (	cd $$i && echo "making depend in crypto/$$i..." && \
-		$(MAKE) INCLUDES='${INCLUDES}' depend \
-	    ); \
-	done; )
+	@[ -z "$(THIS)" -o -f buildinf.h ] || touch buildinf.h # fake buildinf.h if it does not exist
+	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	@[ -z "$(THIS)" -o -s buildinf.h ] || rm buildinf.h
+	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 clean:
 	rm -f buildinf.h *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making clean in crypto/$$i..." && \
-	$(MAKE) clean ); \
-	done;
+	@target=clean; $(RECURSIVE_MAKE)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making dclean in crypto/$$i..." && \
-	$(MAKE) dclean ); \
-	done;
+	@target=dclean; $(RECURSIVE_MAKE)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

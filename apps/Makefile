@@ -86,7 +86,7 @@ req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	$(MAKE) -f $(TOP)/Makefile.shared \
+	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=req OBJECTS="sreq.o $(A_OBJ) $(RAND_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)" \
 		link_app.$${shlib_target}
@@ -158,7 +158,7 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	else \
 	  LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
 	fi; \
-	$(MAKE) -f $(TOP)/Makefile.shared \
+	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$(EXE) OBJECTS="$(PROGRAM).o $(E_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
@@ -621,25 +621,24 @@ rand.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 rand.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 rand.o: ../include/openssl/txt_db.h ../include/openssl/x509.h
 rand.o: ../include/openssl/x509_vfy.h apps.h rand.c
-req.o: ../crypto/cryptlib.h ../e_os.h ../include/openssl/asn1.h
-req.o: ../include/openssl/bio.h ../include/openssl/bn.h
-req.o: ../include/openssl/buffer.h ../include/openssl/conf.h
-req.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-req.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-req.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-req.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-req.o: ../include/openssl/err.h ../include/openssl/evp.h
-req.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-req.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-req.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-req.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-req.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-req.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-req.o: ../include/openssl/sha.h ../include/openssl/stack.h
-req.o: ../include/openssl/store.h ../include/openssl/symhacks.h
-req.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
-req.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-req.o: ../include/openssl/x509v3.h apps.h req.c
+req.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+req.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+req.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+req.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+req.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+req.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+req.o: ../include/openssl/engine.h ../include/openssl/err.h
+req.o: ../include/openssl/evp.h ../include/openssl/lhash.h
+req.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+req.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+req.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+req.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+req.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+req.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+req.o: ../include/openssl/stack.h ../include/openssl/store.h
+req.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
+req.o: ../include/openssl/ui.h ../include/openssl/x509.h
+req.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h apps.h req.c
 rsa.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 rsa.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 rsa.o: ../include/openssl/conf.h ../include/openssl/crypto.h
