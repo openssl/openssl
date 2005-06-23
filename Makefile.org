@@ -149,10 +149,11 @@ HEADER=         e_os.h
 all: Makefile build_all openssl.pc
 
 # as we stick to -e, CLEARENV ensures that local variables in lower
-# Makefiles remain local and variable. $${var+var} is tribute to Korn
-# shell, which [annoyingly enough] terminates unset with error if var
-# is not set:-(
-CLEARENV=	unset $${TOP+TOP} $${LIB+LIB} $${LIBS+LIBS}	\
+# Makefiles remain local and variable. $${VAR+VAR} is tribute to Korn
+# shell, which [annoyingly enough] terminates unset with error if VAR
+# is not present:-( TOP= && unset TOP is tribute to HP-UX /bin/sh,
+# which terminates unset with error if no variable was present:-(
+CLEARENV=	TOP= && unset TOP $${LIB+LIB} $${LIBS+LIBS}	\
 		$${INCLUDE+INCLUDE} $${INCLUDES+INCLUDES}	\
 		$${DIR+DIR} $${DIRS+DIRS} $${SRC+SRC}		\
 		$${LIBSRC+LIBSRC} $${LIBOBJ+LIBOBJ} $${ALL+ALL}	\
