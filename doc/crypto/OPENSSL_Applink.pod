@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OPENSSL_Applink
+OPENSSL_Applink - glue between OpenSSL BIO and Win32 compiler run-time
 
 =head1 SYNOPSIS
 
