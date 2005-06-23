@@ -173,10 +173,8 @@ my %table=(
 "cc",		"cc:-O::(unknown)::::::",
 
 ####VOS Configurations
-"vos-gcc","gcc:-b hppa1.1-stratus-vos -O3 -Wall -Wuninitialized -D_POSIX_C_SOURCE=200112L -D_BSD::(unknown):VOS:-Wl,-map:BN_LLONG:${no_asm}:::::.so:",
-"debug-vos-gcc","gcc:-b hppa1.1-stratus-vos -O0 -g -Wall -D_POSIX_C_SOURCE=200112L -D_BSD -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG::(unknown):VOS:-Wl,-map:BN_LLONG:${no_asm}:::::.so:",
-"vos-vcc","vcc:-b i386-stratus-vos -O3 -D_POSIX_C_SOURCE=200112L -D_BSD::(unknown):VOS:-Wl,-map::${no_asm}:::::.so:",
-"debug-vos-vcc","vcc:-b i386-stratus-vos -O0 -g -D_POSIX_C_SOURCE=200112L -D_BSD -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG::(unknown):VOS:-Wl,-map::${no_asm}:::::.so:",
+"vos-gcc","gcc:-O3 -Wall -D_POSIX_C_SOURCE=200112L -D_BSD -DB_ENDIAN::(unknown):VOS:-Wl,-map:BN_LLONG:${no_asm}:::::.so:",
+"debug-vos-gcc","gcc:-O0 -g -Wall -D_POSIX_C_SOURCE=200112L -D_BSD -DB_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG::(unknown):VOS:-Wl,-map:BN_LLONG:${no_asm}:::::.so:",
 
 #### Solaris x86 with GNU C setups
 # -DOPENSSL_NO_INLINE_ASM switches off inline assembler. We have to do it
