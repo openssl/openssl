@@ -114,7 +114,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 	{
 	int ret=0;
 	BY_DIR *ld;
-	char *dir;
+	char *dir = NULL;
 
 	ld=(BY_DIR *)ctx->method_data;
 
