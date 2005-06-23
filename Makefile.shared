@@ -202,6 +202,7 @@ link_o.darwin:
 	SHLIB_SUFFIX=.dylib; \
 	ALLSYMSFLAGS='-all_load'; \
 	NOALLSYMSFLAGS=''; \
+	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS)"; \
 	if [ -n "$(LIBVERSION)" ]; then \
 		SHAREDFLAGS="$$SHAREDFLAGS -current_version $(LIBVERSION)"; \
 	fi; \
@@ -215,6 +216,7 @@ link_a.darwin:
 	SHLIB_SUFFIX=.dylib; \
 	ALLSYMSFLAGS='-all_load'; \
 	NOALLSYMSFLAGS=''; \
+	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS)"; \
 	if [ -n "$(LIBVERSION)" ]; then \
 		SHAREDFLAGS="$$SHAREDFLAGS -current_version $(LIBVERSION)"; \
 	fi; \
