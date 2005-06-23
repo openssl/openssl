@@ -93,7 +93,9 @@ int main(int argc, char * argv[])
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/ecdsa.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
