@@ -119,7 +119,9 @@ create_cygwin_readme
 create_profile_files
 
 cd ${INSTALL_PREFIX}
-strip usr/bin/*.exe usr/bin/*.dll
+chmod u+w usr/lib/engines/*.so
+strip usr/bin/*.exe usr/bin/*.dll usr/lib/engines/*.so
+chmod u-w usr/lib/engines/*.so
 
 # Runtime package
 find etc usr/bin usr/lib/engines usr/share/doc usr/ssl/certs \
