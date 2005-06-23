@@ -69,6 +69,7 @@ void md4_block_host_order (MD4_CTX *c, const void *p,size_t num);
 void md4_block_data_order (MD4_CTX *c, const void *p,size_t num);
 
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
+# if !defined(B_ENDIAN)
 /*
  * *_block_host_order is expected to handle aligned data while
  * *_block_data_order - unaligned. As algorithm and host (x86)
@@ -90,7 +91,8 @@ void md4_block_data_order (MD4_CTX *c, const void *p,size_t num);
  *
  *				<appro@fy.chalmers.se>
  */
-#define md4_block_data_order md4_block_host_order
+# define md4_block_data_order md4_block_host_order
+# endif
 #endif
 
 #define DATA_ORDER_IS_LITTLE_ENDIAN

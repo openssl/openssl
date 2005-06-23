@@ -344,9 +344,11 @@
 #elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
 
 #if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
-  /* See comment in DATA_ORDER_IS_BIG_ENDIAN section. */
-# define HOST_c2l(c,l)	((l)=*((const unsigned int *)(c)), (c)+=4, l)
-# define HOST_l2c(l,c)	(*((unsigned int *)(c))=(l), (c)+=4, l)
+# ifndef B_ENDIAN
+   /* See comment in DATA_ORDER_IS_BIG_ENDIAN section. */
+#  define HOST_c2l(c,l)	((l)=*((const unsigned int *)(c)), (c)+=4, l)
+#  define HOST_l2c(l,c)	(*((unsigned int *)(c))=(l), (c)+=4, l)
+# endif
 #endif
 
 #ifndef HOST_c2l
