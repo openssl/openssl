@@ -130,9 +130,8 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 		&pxor	("xmm7","xmm7");
 	&set_label("no_sse2");
 	}
-	# just a bunch of fldz to zap the fp/mm bank...
-	&data_word(0xeed9eed9,0xeed9eed9,0xeed9eed9,0xeed9eed9);
-	&emms	();
+	# just a bunch of fldz to zap the fp/mm bank followed by finit...
+	&data_word(0xeed9eed9,0xeed9eed9,0xeed9eed9,0xeed9eed9,0x90e3db9b);
 &set_label("no_x87");
 	&lea	("eax",&DWP(4,"esp"));
 	&ret	();
