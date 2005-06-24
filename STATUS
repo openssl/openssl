@@ -1,10 +1,19 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2005/06/23 06:31:08 $
+  ______________                           $Date: 2005/06/24 22:23:54 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.9:  Under development...
+    o  OpenSSL 0.9.8-beta7-dev (snapshot 20050624):
+	OpenVMS/Alpha [7.3-2; Compaq C 6.4-005]			SUCCESS
+	DJGPP							SUCCESS
+	Cygwin							SUCCESS
+	Irix 6.5.19m [MIPSpro 7.4.2m]				SUCCESS
+	Solaris 9 [Sun Studio 8]				SUCCESS
+	MacOS X 10.4.1						SUCCESS
+	Stratus VOS/PA-RISC [gcc]				SUCCESS
+	Stratus VOS/Intel IA32 [gcc]				SUCCESS
     o  OpenSSL 0.9.8-beta6:  Released on June 21th, 2005
 	OpenVMS/Alpha [7.3-2; Compaq C 6.4-005]			SUCCESS
 	Windows 2000 [VC-WIN32; MSVC 6.0]			SUCCESS
