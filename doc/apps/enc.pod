@@ -211,9 +211,9 @@ Blowfish and RC5 algorithms use a 128 bit key.
 
  rc2-cbc            128 bit RC2 in CBC mode
  rc2                Alias for rc2-cbc
- rc2-cfb            128 bit RC2 in CBC mode
- rc2-ecb            128 bit RC2 in CBC mode
- rc2-ofb            128 bit RC2 in CBC mode
+ rc2-cfb            128 bit RC2 in CFB mode
+ rc2-ecb            128 bit RC2 in ECB mode
+ rc2-ofb            128 bit RC2 in OFB mode
  rc2-64-cbc         64 bit RC2 in CBC mode
  rc2-40-cbc         40 bit RC2 in CBC mode
 
@@ -223,9 +223,9 @@ Blowfish and RC5 algorithms use a 128 bit key.
 
  rc5-cbc            RC5 cipher in CBC mode
  rc5                Alias for rc5-cbc
- rc5-cfb            RC5 cipher in CBC mode
- rc5-ecb            RC5 cipher in CBC mode
- rc5-ofb            RC5 cipher in CBC mode
+ rc5-cfb            RC5 cipher in CFB mode
+ rc5-ecb            RC5 cipher in ECB mode
+ rc5-ofb            RC5 cipher in OFB mode
 
 =head1 EXAMPLES
 
