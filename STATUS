@@ -1,20 +1,37 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2005/06/14 05:42:52 $
+  ______________                           $Date: 2005/06/24 22:27:57 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 0.9.9:  Under development...
+    o  OpenSSL 0.9.8-beta7-dev (snapshot 20050624):
+	OpenVMS/Alpha [7.3-2; Compaq C 6.4-005]			SUCCESS
+	DJGPP							SUCCESS
+	Cygwin							SUCCESS
+	Irix 6.5.19m [MIPSpro 7.4.2m]				SUCCESS
+	Solaris 9 [Sun Studio 8]				SUCCESS
+	MacOS X 10.4.1						SUCCESS
+	Stratus VOS/PA-RISC [gcc]				SUCCESS
+	Stratus VOS/Intel IA32 [gcc]				SUCCESS
+    o  OpenSSL 0.9.8-beta6:  Released on June 21th, 2005
+	OpenVMS/Alpha [7.3-2; Compaq C 6.4-005]			SUCCESS
+	Windows 2000 [VC-WIN32; MSVC 6.0]			SUCCESS
+	Cygwin 1.5.5-1 [Cygwin; gcc 3.3.1]			SUCCESS
+	Red Hat Linux 9 [linux-elf; gcc 3.2.2]			SUCCESS
+	FreeBSD 4.6 [BSD-x86-elf; gcc 2.95.3]			SUCCESS
+	Solaris 2.6 [solaris-sparcv9-cc;
+		     Sun Workshop 6 update 2 C 5.3]		SUCCESS
+	Solaris 2.7 [solaris-sparcv9-cc;
+		     Sun Workshop 6 update 2 C 5.3]		SUCCESS
+	AIX 5.1 [aix-cc; C for AIX Compiler, version 6]		SUCCESS
+	HP-UX 11.11 [hpux-parisc2-cc; HP C Compiler B.11.11.08]	SUCCESS
+	Tru64 OSF1 V4.0E [tru64-alpha-cc; DEC C V5.8-009]	SUCCESS
+	? [linux-elf; gcc 3.4.2]				SUCCESS
+	Solaris 8 [solaris-sparcv9-cc; Sun C 5.7 2005/01/07 32-bit] SUCCESS
+	Solaris 8 [solaris64-sparcv9-cc; Sun C 5.7 2005/01/07 64-bit] SUCCESS
+	Solaris 8 [solaris-sparcv9-gcc; gcc 2.95.3 32-bit]	SUCCESS
     o  OpenSSL 0.9.8-beta5:  Released on June 13th, 2005
-       OpenVMS/Alpha 7.3-2 w. Compaq C 6.4-005			SUCCESS
-       Cygwin (1.5.17 and current CVS)				SUCCESS
-       linux-elf (SuSE 9.3)					SUCCESS
-       linux-? (Gentoo/armel)					SUCCESS
-       linux-? (Gentoo/armeb)					FAILURE
-		(Tester comment: Gentoo/armeb failed the x509 certificate test
-		 ('test_ss') due to lack of enough random data, but i'm pretty
-		 sure that's a system issue and unrelated to openssl ;))
-       linux-x86_64 (Linux AMD64)				SUCCESS
     o  OpenSSL 0.9.8-beta4:  Released on June 6th, 2005
     o  OpenSSL 0.9.8-beta3:  Released on May 31th, 2005
     o  OpenSSL 0.9.8-beta2:  Released on May 24th, 2005
