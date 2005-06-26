@@ -162,7 +162,6 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 		APPNAME=$(EXE) OBJECTS="$(PROGRAM).o $(E_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
-	@case "../*.dll" in *\**) ;; *) cp -p ../*.dll .;; esac
 	-(cd ..; \
 	  OPENSSL="`pwd`/util/opensslwrap.sh"; export OPENSSL; \
 	  $(PERL) tools/c_rehash certs)
