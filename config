@@ -84,7 +84,7 @@ if [ "x$XREL" != "x" ]; then
 	    4.2)
 		echo "whatever-whatever-unixware1"; exit 0
 		;;
-	    5)
+	    5*)
 		case "x${VERSION}" in
 		    # We hardcode i586 in place of ${MACHINE} for the
 		    # following reason. The catch is that even though Pentium
@@ -93,8 +93,7 @@ if [ "x$XREL" != "x" ]; then
 		    # with i386 is that it makes ./config pass 386 to
 		    # ./Configure, which in turn makes make generate
 		    # inefficient SHA-1 (for this moment) code.
-		    x7*)  echo "i586-sco-unixware7";           exit 0 ;;
-		    x8*)  echo "i586-unkn-OpenUNIX${VERSION}"; exit 0 ;;
+		    x[678]*)  echo "i586-sco-unixware7"; exit 0 ;;
 		esac
 		;;
 	esac
@@ -675,14 +674,13 @@ case "$GUESSOS" in
 
   *-*-osf)		OUT="osf1-alpha-cc" ;;
   *-*-tru64)		OUT="tru64-alpha-cc" ;;
-  *-*-OpenUNIX*)
+  *-*-[Uu]nix[Ww]are7)
 	if [ "$CC" = "gcc" ]; then
-	  OUT="OpenUNIX-8-gcc" 
+	  OUT="unixware-7-gcc" ; options="$options no-sse2"
 	else    
-	  OUT="OpenUNIX-8" 
+	  OUT="unixware-7" ; options="$options no-sse2 -D__i386__"
 	fi
 	;;
-  *-*-[Uu]nix[Ww]are7) OUT="unixware-7"; options="$options no-sse2" ;;
   *-*-[Uu]nix[Ww]are20*) OUT="unixware-2.0"; options="$options no-sse2 no-sha512" ;;
   *-*-[Uu]nix[Ww]are21*) OUT="unixware-2.1"; options="$options no-sse2 no-sha512" ;;
   *-*-vos)
