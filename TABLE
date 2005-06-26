@@ -1005,7 +1005,7 @@ $cflags       = -O3 -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
-$lflags       = 
+$lflags       = -Wl,-search_paths_first
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $cpuid_obj    = 
 $bn_obj       = osx_ppc32.o
@@ -1757,39 +1757,12 @@ $arflags      =
 
 *** debug-vos-gcc
 $cc           = gcc
-$cflags       = -b hppa1.1-stratus-vos -O0 -g -Wall -D_POSIX_C_SOURCE=200112L -D_BSD -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG
+$cflags       = -O0 -g -Wall -D_POSIX_C_SOURCE=200112L -D_BSD -DB_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = VOS
 $lflags       = -Wl,-map
 $bn_ops       = BN_LLONG
-$cpuid_obj    = 
-$bn_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = .so
-$ranlib       = 
-$arflags      = 
-
-*** debug-vos-vcc
-$cc           = vcc
-$cflags       = -b i386-stratus-vos -O0 -g -D_POSIX_C_SOURCE=200112L -D_BSD -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = VOS
-$lflags       = -Wl,-map
-$bn_ops       = 
 $cpuid_obj    = 
 $bn_obj       = 
 $des_obj      = 
@@ -2412,7 +2385,7 @@ $sys_id       =
 $lflags       = 
 $bn_ops       = DES_PTR RC4_CHAR RC4_CHUNK_LL DES_RISC2 DES_UNROLL BF_PTR SIXTY_FOUR_BIT
 $cpuid_obj    = 
-$bn_obj       = mips3.o
+$bn_obj       = bn-mips3.o
 $des_obj      = 
 $aes_obj      = 
 $bf_obj       = 
@@ -2432,14 +2405,14 @@ $arflags      =
 
 *** irix-mips3-gcc
 $cc           = gcc
-$cflags       = -mabi=n32 -mmips-as -O3 -DTERMIOS -DB_ENDIAN -DBN_DIV3W
+$cflags       = -mabi=n32 -O3 -DTERMIOS -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_SGI_MP_SOURCE
 $sys_id       = 
 $lflags       = 
 $bn_ops       = MD2_CHAR RC4_INDEX RC4_CHAR RC4_CHUNK_LL DES_UNROLL DES_RISC2 DES_PTR BF_PTR SIXTY_FOUR_BIT
 $cpuid_obj    = 
-$bn_obj       = mips3.o
+$bn_obj       = bn-mips3.o
 $des_obj      = 
 $aes_obj      = 
 $bf_obj       = 
@@ -2466,7 +2439,7 @@ $sys_id       =
 $lflags       = 
 $bn_ops       = RC4_CHAR RC4_CHUNK DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG
 $cpuid_obj    = 
-$bn_obj       = mips3.o
+$bn_obj       = bn-mips3.o
 $des_obj      = 
 $aes_obj      = 
 $bf_obj       = 
@@ -2486,14 +2459,14 @@ $arflags      =
 
 *** irix64-mips4-gcc
 $cc           = gcc
-$cflags       = -mabi=64 -mips4 -mmips-as -O3 -DTERMIOS -DB_ENDIAN -DBN_DIV3W
+$cflags       = -mabi=64 -mips4 -O3 -DTERMIOS -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_SGI_MP_SOURCE
 $sys_id       = 
 $lflags       = 
 $bn_ops       = RC4_CHAR RC4_CHUNK DES_RISC2 DES_UNROLL SIXTY_FOUR_BIT_LONG
 $cpuid_obj    = 
-$bn_obj       = mips3.o
+$bn_obj       = bn-mips3.o
 $des_obj      = 
 $aes_obj      = 
 $bf_obj       = 
@@ -3647,7 +3620,7 @@ $arflags      =
 
 *** solaris-x86-gcc
 $cc           = gcc
-$cflags       = -O3 -fomit-frame-pointer -march=i486 -Wall -DL_ENDIAN -DOPENSSL_NO_INLINE_ASM
+$cflags       = -O3 -fomit-frame-pointer -march=pentium -Wall -DL_ENDIAN -DOPENSSL_NO_INLINE_ASM
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -4025,39 +3998,12 @@ $arflags      =
 
 *** vos-gcc
 $cc           = gcc
-$cflags       = -b hppa1.1-stratus-vos -O3 -Wall -Wuninitialized -D_POSIX_C_SOURCE=200112L -D_BSD
+$cflags       = -O3 -Wall -D_POSIX_C_SOURCE=200112L -D_BSD -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = VOS
 $lflags       = -Wl,-map
 $bn_ops       = BN_LLONG
-$cpuid_obj    = 
-$bn_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = .so
-$ranlib       = 
-$arflags      = 
-
-*** vos-vcc
-$cc           = vcc
-$cflags       = -b i386-stratus-vos -O3 -D_POSIX_C_SOURCE=200112L -D_BSD
-$unistd       = 
-$thread_cflag = (unknown)
-$sys_id       = VOS
-$lflags       = -Wl,-map
-$bn_ops       = 
 $cpuid_obj    = 
 $bn_obj       = 
 $des_obj      = 
