@@ -73,10 +73,6 @@ typedef struct rc4_key_st
 	{
 	RC4_INT x,y;
 	RC4_INT data[256];
-#if defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
-	/* see crypto/rc4/asm/rc4-ia64.S for further details... */
-	RC4_INT pad[512-256-2];
-#endif
 	} RC4_KEY;
 
  

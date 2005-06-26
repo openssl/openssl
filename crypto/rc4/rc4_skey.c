@@ -95,10 +95,6 @@ FIPS_NON_FIPS_VCIPHER_Init(RC4)
         unsigned int i;
         
         d= &(key->data[0]);
-#if defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
-	/* see crypto/rc4/asm/rc4-ia64.S for further details... */
-	d=(RC4_INT *)(((size_t)(d+255))&~(sizeof(key->data)-1));
-#endif
 
 	for (i=0; i<256; i++)
 		d[i]=i;
