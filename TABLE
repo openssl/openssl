@@ -432,60 +432,6 @@ $shared_extension =
 $ranlib       = 
 $arflags      = 
 
-*** OpenUNIX-8
-$cc           = cc
-$cflags       = -O -DFILIO_H -Kalloca
-$unistd       = 
-$thread_cflag = -Kthread
-$sys_id       = 
-$lflags       = -lsocket -lnsl
-$bn_ops       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
-$cpuid_obj    = x86cpuid-elf.o
-$bn_obj       = bn86-elf.o co86-elf.o
-$des_obj      = dx86-elf.o yx86-elf.o
-$aes_obj      = ax86-elf.o
-$bf_obj       = bx86-elf.o
-$md5_obj      = mx86-elf.o
-$sha1_obj     = sx86-elf.o s512sse2-elf.o
-$cast_obj     = cx86-elf.o
-$rc4_obj      = rx86-elf.o
-$rmd160_obj   = rm86-elf.o
-$rc5_obj      = r586-elf.o
-$dso_scheme   = dlfcn
-$shared_target= svr5-shared
-$shared_cflag = -Kpic
-$shared_ldflag = 
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
-$arflags      = 
-
-*** OpenUNIX-8-gcc
-$cc           = gcc
-$cflags       = -O -DFILIO_H -fomit-frame-pointer
-$unistd       = 
-$thread_cflag = -pthread
-$sys_id       = 
-$lflags       = -lsocket -lnsl
-$bn_ops       = BN_LLONG MD2_CHAR RC4_INDEX DES_PTR DES_RISC1 DES_UNROLL
-$cpuid_obj    = x86cpuid-elf.o
-$bn_obj       = bn86-elf.o co86-elf.o
-$des_obj      = dx86-elf.o yx86-elf.o
-$aes_obj      = ax86-elf.o
-$bf_obj       = bx86-elf.o
-$md5_obj      = mx86-elf.o
-$sha1_obj     = sx86-elf.o s512sse2-elf.o
-$cast_obj     = cx86-elf.o
-$rc4_obj      = rx86-elf.o
-$rmd160_obj   = rm86-elf.o
-$rc5_obj      = r586-elf.o
-$dso_scheme   = dlfcn
-$shared_target= svr5-shared
-$shared_cflag = -fPIC
-$shared_ldflag = 
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
-$arflags      = 
-
 *** ReliantUNIX
 $cc           = cc
 $cflags       = -KPIC -g -DTERMIOS -DB_ENDIAN
@@ -3971,7 +3917,7 @@ $arflags      =
 
 *** unixware-7-gcc
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DFILIO_H -O3 -fomit-frame-pointer -march=i486 -Wall
+$cflags       = -DL_ENDIAN -DFILIO_H -O3 -fomit-frame-pointer -march=pentium -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
