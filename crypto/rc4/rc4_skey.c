@@ -93,10 +93,6 @@ void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
         unsigned int i;
         
         d= &(key->data[0]);
-#if defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
-	/* see crypto/rc4/asm/rc4-ia64.S for further details... */
-	d=(RC4_INT *)(((size_t)(d+255))&~(sizeof(key->data)-1));
-#endif
         key->x = 0;     
         key->y = 0;     
         id1=id2=0;     

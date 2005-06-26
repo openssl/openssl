@@ -54,7 +54,11 @@ rx86-out.s: asm/rc4-586.pl ../perlasm/x86asm.pl
 rc4-x86_64.s: asm/rc4-x86_64.pl;	$(PERL) asm/rc4-x86_64.pl $@
 
 rc4-ia64.s: asm/rc4-ia64.S
-	$(CC) $(CFLAGS) -E asm/rc4-ia64.S > $@
+	@case `awk '/^#define RC4_INT/{print$$NF}' $(TOP)/include/openssl/opensslconf.h` in \
+	int)	set -x; $(CC) $(CFLAGS) -DSZ=4 -E asm/rc4-ia64.S > $@ ;; \
+	char)	set -x; $(CC) $(CFLAGS) -DSZ=1 -E asm/rc4-ia64.S > $@ ;; \
+	*)	exit 1 ;; \
+	esac
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
