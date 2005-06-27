@@ -297,7 +297,7 @@ load_krb5_dll(void)
 	HANDLE hKRB5_32;
     
 	krb5_loaded++;
-	hKRB5_32 = LoadLibrary("KRB5_32");
+	hKRB5_32 = LoadLibrary(TEXT("KRB5_32"));
 	if (!hKRB5_32)
 		return;
 
