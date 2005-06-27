@@ -68,6 +68,25 @@ DSO_METHOD *DSO_METHOD_win32(void)
 	}
 #else
 
+#ifdef _WIN32_WCE
+# if _WIN32_WCE < 300
+static FARPROC GetProcAddressA(HMODULE hModule,LPCSTR lpProcName)
+	{
+	WCHAR lpProcNameW[64];
+	int i;
+
+	for (i=0;lpProcName[i] && i<64;i++)
+		lpProcNameW[i] = (WCHAR)lpProcName[i];
+	if (i==64) return NULL;
+	lpProcNameW[i] = 0;
+
+	return GetProcAddressW(hModule,lpProcNameW);
+	}
+# endif
+# undef GetProcAddress
+# define GetProcAddress GetProcAddressA
+#endif
+
 /* Part of the hack in "win32_load" ... */
 #define DSO_MAX_TRANSLATED_SIZE 256
 
@@ -122,7 +141,7 @@ static int win32_load(DSO *dso)
 		DSOerr(DSO_F_WIN32_LOAD,DSO_R_NO_FILENAME);
 		goto err;
 		}
-	h = LoadLibrary(filename);
+	h = LoadLibraryA(filename);
 	if(h == NULL)
 		{
 		DSOerr(DSO_F_WIN32_LOAD,DSO_R_LOAD_FAILED);
