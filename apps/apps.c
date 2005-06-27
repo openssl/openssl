@@ -1591,8 +1591,9 @@ int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 		{
 		if (errno != ENOENT 
 #ifdef ENOTDIR
-			&& errno != ENOTDIR)
+			&& errno != ENOTDIR
 #endif
+		   )
 			goto err;
 		}
 	else
@@ -1893,8 +1894,9 @@ int rotate_index(char *dbfile, char *new_suffix, char *old_suffix)
 		{
 		if (errno != ENOENT 
 #ifdef ENOTDIR
-			&& errno != ENOTDIR)
+			&& errno != ENOTDIR
 #endif
+		   )
 			goto err;
 		}
 	else
@@ -1929,8 +1931,9 @@ int rotate_index(char *dbfile, char *new_suffix, char *old_suffix)
 		{
 		if (errno != ENOENT 
 #ifdef ENOTDIR
-			&& errno != ENOTDIR)
+			&& errno != ENOTDIR
 #endif
+		   )
 			goto err;
 		}
 	else
