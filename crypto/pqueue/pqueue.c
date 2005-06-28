@@ -207,7 +207,7 @@ pqueue_print(pqueue_s *pq)
 
 	while(item != NULL)
 		{
-		printf("item" PQ_64BIT_PRINT "\n", item->priority);
+		printf("item\t" PQ_64BIT_PRINT "\n", item->priority);
 		item = item->next;
 		}
 	}
