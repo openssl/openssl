@@ -312,7 +312,7 @@ BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 	else \
 		LIBRARIES="$(LIBSSL) $(LIBCRYPTO)"; \
 	fi; \
-	$(MAKE) -f $(TOP)/Makefile.shared $(BUILDENV) \
+	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}

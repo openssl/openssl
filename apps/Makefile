@@ -86,7 +86,7 @@ req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	$(MAKE) -f $(TOP)/Makefile.shared $(BUILDENV) \
+	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=req OBJECTS="sreq.o $(A_OBJ) $(RAND_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)" \
 		link_app.$${shlib_target}
@@ -158,11 +158,10 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	else \
 	  LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
 	fi; \
-	$(MAKE) -f $(TOP)/Makefile.shared $(BUILDENV) \
+	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$(EXE) OBJECTS="$(PROGRAM).o $(E_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
-	@case "../*.dll" in *\**) ;; *) cp -p ../*.dll .;; esac
 	-(cd ..; \
 	  OPENSSL="`pwd`/util/opensslwrap.sh"; export OPENSSL; \
 	  $(PERL) tools/c_rehash certs)
@@ -835,7 +834,7 @@ speed.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 speed.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 speed.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
 speed.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
-speed.o: ../include/openssl/x509_vfy.h apps.h speed.c testdsa.h testrsa.h
+speed.o: ../include/openssl/x509_vfy.h testdsa.h testrsa.h apps.h speed.c
 spkac.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 spkac.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 spkac.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
