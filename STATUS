@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2005/06/24 22:27:57 $
+  ______________                           $Date: 2005/06/28 05:55:22 $
 
   DEVELOPMENT STATE
 
@@ -70,6 +70,7 @@
 
   RELEASE SHOWSTOPPERS
 
+    o The Makefiles fail with some SysV makes.
     o 
 
   AVAILABLE PATCHES
