@@ -262,8 +262,8 @@ sub using486
 
 sub main'file
 	{
-	push(@out,".") if ($main'mwerks);
-	push(@out,"section\t.text\n");
+	if ($main'mwerks)	{ push(@out,".section\t.text\n"); }
+	else			{ push(@out,"section\t.text use32\n"); }
 	}
 
 sub main'function_begin
