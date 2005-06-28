@@ -140,7 +140,7 @@ int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 		group->field_mod_func = BN_nist_mod_192;
 	else if (BN_ucmp(BN_get0_nist_prime_224(), p) == 0)
 		{
-#if !defined(NO_32_BIT_TYPE) || defined(OPENSSL_NO_ASM)
+#ifndef NO_32_BIT_TYPE
 		group->field_mod_func = BN_nist_mod_224;
 #else
 		ECerr(EC_F_EC_GFP_NIST_GROUP_SET_CURVE, EC_R_NOT_A_SUPPORTED_NIST_PRIME);
@@ -149,7 +149,7 @@ int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 		}
 	else if (BN_ucmp(BN_get0_nist_prime_256(), p) == 0)
 		{
-#if !defined(NO_32_BIT_TYPE) || defined(OPENSSL_NO_ASM)
+#ifndef NO_32_BIT_TYPE
 		group->field_mod_func = BN_nist_mod_256;
 #else
 		ECerr(EC_F_EC_GFP_NIST_GROUP_SET_CURVE, EC_R_NOT_A_SUPPORTED_NIST_PRIME);
@@ -158,7 +158,7 @@ int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 		}
 	else if (BN_ucmp(BN_get0_nist_prime_384(), p) == 0)
 		{
-#if !defined(NO_32_BIT_TYPE) || defined(OPENSSL_NO_ASM)
+#ifndef NO_32_BIT_TYPE
 		group->field_mod_func = BN_nist_mod_384;
 #else
 		ECerr(EC_F_EC_GFP_NIST_GROUP_SET_CURVE, EC_R_NOT_A_SUPPORTED_NIST_PRIME);
