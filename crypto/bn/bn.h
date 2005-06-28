@@ -167,7 +167,7 @@ extern "C" {
 #ifdef THIRTY_TWO_BIT
 #ifdef BN_LLONG
 # if defined(OPENSSL_SYS_WIN32) && !defined(__GNUC__)
-#  define BN_ULLONG	unsigned _int64
+#  define BN_ULLONG	unsigned __int64
 # else
 #  define BN_ULLONG	unsigned long long
 # endif
