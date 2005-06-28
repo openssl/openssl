@@ -168,3 +168,9 @@ hire /bin/ksh to do the job /bin/sh fails to do.
    your $PATH with chosen location, e.g. PATH=/tmp:$PATH. Alter-
    natively just replace system /bin/test and /bin/[ with the
    above script.
+
+* hpux64-ia64-cc fails blowfish test.
+
+Compiler bug, presumably at particular patch level. It should be noted
+that same compiler generates correct 32-bit code, a.k.a. hpux-ia64-cc
+target. Drop optimization level to +O2 when compiling 64-bit bf_skey.o.
