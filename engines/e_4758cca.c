@@ -202,8 +202,10 @@ static RAND_METHOD ibm_4758_cca_rand =
 
 static const char *engine_4758_cca_id = "4758cca";
 static const char *engine_4758_cca_name = "IBM 4758 CCA hardware engine support";
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE 
 /* Compatibility hack, the dynamic library uses this form in the path */
 static const char *engine_4758_cca_id_alt = "4758_cca";
+#endif
 
 /* engine implementation */
 /*-----------------------*/
