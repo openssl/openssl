@@ -109,7 +109,10 @@
 #define PQ_64BIT_IS_INTEGER 1
 #define PQ_64BIT_IS_BIGNUM 0
 
-#if defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG)
+#if defined(SIXTY_FOUR_BIT)
+#define PQ_64BIT BN_ULONG
+#define PQ_64BIT_PRINT "%lld"
+#elif defined(SIXTY_FOUR_BIT_LONG)
 #define PQ_64BIT BN_ULONG
 #define PQ_64BIT_PRINT "%ld"
 #elif defined(THIRTY_TWO_BIT)
