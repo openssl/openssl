@@ -1694,7 +1694,7 @@ static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 					fprintf(stderr, "  Certificate proxy rights = %*.*s", i, i, s);
 					while(i-- > 0)
 						{
-						char c = *s++;
+						int c = *s++;
 						if (isascii(c) && isalpha(c))
 							{
 							if (islower(c))
@@ -1755,11 +1755,11 @@ static int process_proxy_cond_adders(unsigned int letters[26],
 static int process_proxy_cond_val(unsigned int letters[26],
 	const char *cond, const char **cond_end, int *pos, int indent)
 	{
-	char c;
+	int c;
 	int ok = 1;
 	int negate = 0;
 
-	while(isspace(*cond))
+	while(isspace((int)*cond))
 		{
 		cond++; (*pos)++;
 		}
@@ -1774,7 +1774,7 @@ static int process_proxy_cond_val(unsigned int letters[26],
 		{
 		negate = !negate;
 		cond++; (*pos)++;
-		while(isspace(*cond))
+		while(isspace((int)*cond))
 			{
 			cond++; (*pos)++;
 			}
@@ -1789,7 +1789,7 @@ static int process_proxy_cond_val(unsigned int letters[26],
 		cond = *cond_end;
 		if (ok < 0)
 			goto end;
-		while(isspace(*cond))
+		while(isspace((int)*cond))
 			{
 			cond++; (*pos)++;
 			}
@@ -1849,7 +1849,7 @@ static int process_proxy_cond_multipliers(unsigned int letters[26],
 
 	while(ok >= 0)
 		{
-		while(isspace(*cond))
+		while(isspace((int)*cond))
 			{
 			cond++; (*pos)++;
 			}
@@ -1916,7 +1916,7 @@ static int process_proxy_cond_adders(unsigned int letters[26],
 
 	while(ok >= 0)
 		{
-		while(isspace(*cond))
+		while(isspace((int)*cond))
 			{
 			cond++; (*pos)++;
 			}
@@ -1999,7 +1999,7 @@ static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 			letters[i] = 0;
 		for(sp = cb_arg->proxy_auth; *sp; sp++)
 			{
-			char c = *sp;
+			int c = *sp;
 			if (isascii(c) && isalpha(c))
 				{
 				if (islower(c))

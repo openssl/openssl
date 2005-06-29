@@ -111,8 +111,10 @@
 
 #if defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG)
 #define PQ_64BIT BN_ULONG
+#define PQ_64BIT_PRINT "%ld"
 #elif defined(THIRTY_TWO_BIT)
 #define PQ_64BIT BN_ULLONG
+#define PQ_64BIT_PRINT "%lld"
 #endif
 
 #define PQ_64BIT_CTX      void
