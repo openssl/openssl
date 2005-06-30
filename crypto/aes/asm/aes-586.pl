@@ -6,7 +6,7 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 #
-# Version 3.4.
+# Version 3.5.
 #
 # You might fail to appreciate this module performance from the first
 # try. If compared to "vanilla" linux-ia32-icc target, i.e. considered
@@ -65,6 +65,11 @@
 # latter is achieved by copying the key schedule to controlled place in
 # stack. This unfortunately has rather strong impact on small block CBC
 # performance, ~2x deterioration on 16-byte block if compared to 3.3.
+#
+# Version 3.5 checks if there L1 cache aliasing between user-supplied
+# key schedule and S-boxes and abstains from copying the former if
+# there no. This allows end-user to consciously retain small block
+# performance by aligning key schedule in specific manner.
 #
 # Current ECB performance numbers for 128-bit key in CPU cycles per
 # processed byte [measure commonly used by AES benchmarkers] are:
@@ -805,6 +810,7 @@ my $_ivp=&DWP(36,"esp");	#copy of wparam(4)
 my $_tmp=&DWP(40,"esp");	#volatile variable
 my $ivec=&DWP(44,"esp");	#ivec[16]
 my $aes_key=&DWP(60,"esp");	#copy of aes_key
+my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
 
 &public_label("AES_Te");
 &public_label("AES_Td");
@@ -865,18 +871,27 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&mov	($_key,$s3);		# save copy of key
 	&mov	($_ivp,$acc);		# save copy of ivp
 
+	&mov	($mark,0);		# copy of aes_key->rounds = 0;
 	if ($compromise) {
 		&cmp	($s2,$compromise);
 		&jb	(&label("skip_ecopy"));
 	}
-	# copy key schedule to stack
-	&mov	("ecx",244/4);
+	# do we copy key schedule to stack?
+	&mov	($s1 eq "ebx" ? $s1 : "",$s3);
+	&mov	($s2 eq "ecx" ? $s2 : "",244/4);
+	&sub	($s1,"ebp");
 	&mov	("esi",$s3);
+	&and	($s1,0xfff);
 	&lea	("edi",$aes_key);
-	&mov	($_key,"edi");
+	&cmp	($s1,2048);
+	&jb	(&label("do_ecopy"));
+	&cmp	($s1,4096-244);
+	&jb	(&label("skip_ecopy"));
 	&align	(4);
-	&data_word(0xF689A5F3);	# rep movsd
-	&set_label("skip_ecopy") if ($compromise);
+	&set_label("do_ecopy");
+		&mov	($_key,"edi");
+		&data_word(0xF689A5F3);	# rep movsd
+	&set_label("skip_ecopy");
 
 	&mov	($acc,$s0);
 	&mov	($key,16);
@@ -942,8 +957,10 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
 
+	&cmp	($mark,0);		# was the key schedule copied?
 	&mov	("edi",$_key);
 	&mov	("esp",$_esp);
+	&je	(&label("skip_ezero"));
 	if ($compromise) {
 		&cmp	(&wparam(2),$compromise);
 		&jb	(&label("skip_ezero"));
@@ -953,7 +970,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&xor	("eax","eax");
 	&align	(4);
 	&data_word(0xF689ABF3);	# rep stosd
-	&set_label("skip_ezero") if ($compromise);
+	&set_label("skip_ezero")
 	&popf	();
     &set_label("enc_out");
 	&function_end_A();
@@ -1030,18 +1047,27 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&mov	($_key,$s3);		# save copy of key
 	&mov	($_ivp,$acc);		# save copy of ivp
 
+	&mov	($mark,0);		# copy of aes_key->rounds = 0;
 	if ($compromise) {
 		&cmp	($s2,$compromise);
 		&jb	(&label("skip_dcopy"));
 	}
-	# copy key schedule to stack
-	&mov	("ecx",244/4);
+	# do we copy key schedule to stack?
+	&mov	($s1 eq "ebx" ? $s1 : "",$s3);
+	&mov	($s2 eq "ecx" ? $s2 : "",244/4);
+	&sub	($s1,"ebp");
 	&mov	("esi",$s3);
+	&and	($s1,0xfff);
 	&lea	("edi",$aes_key);
-	&mov	($_key,"edi");
+	&cmp	($s1,3072);
+	&jb	(&label("do_dcopy"));
+	&cmp	($s1,4096-244);
+	&jb	(&label("skip_dcopy"));
 	&align	(4);
-	&data_word(0xF689A5F3);	# rep movsd
-	&set_label("skip_dcopy") if ($compromise);
+	&set_label("do_dcopy");
+		&mov	($_key,"edi");
+		&data_word(0xF689A5F3);	# rep movsd
+	&set_label("skip_dcopy");
 
 	&mov	($acc,$s0);
 	&mov	($key,24);
@@ -1192,8 +1218,10 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 
     &align	(4);
     &set_label("dec_out");
+    &cmp	($mark,0);		# was the key schedule copied?
     &mov	("edi",$_key);
     &mov	("esp",$_esp);
+    &je		(&label("skip_dzero"));
     if ($compromise) {
 	&cmp	(&wparam(2),$compromise);
 	&jb	(&label("skip_dzero"));
@@ -1203,7 +1231,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
     &xor	("eax","eax");
     &align	(4);
     &data_word(0xF689ABF3);	# rep stosd
-    &set_label("skip_dzero") if ($compromise);
+    &set_label("skip_dzero")
     &popf	();
 &function_end("AES_cbc_encrypt");
 }
