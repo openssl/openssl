@@ -66,9 +66,9 @@
 # stack. This unfortunately has rather strong impact on small block CBC
 # performance, ~2x deterioration on 16-byte block if compared to 3.3.
 #
-# Version 3.5 checks if there L1 cache aliasing between user-supplied
+# Version 3.5 checks if there is L1 cache aliasing between user-supplied
 # key schedule and S-boxes and abstains from copying the former if
-# there no. This allows end-user to consciously retain small block
+# there is no. This allows end-user to consciously retain small block
 # performance by aligning key schedule in specific manner.
 #
 # Current ECB performance numbers for 128-bit key in CPU cycles per
