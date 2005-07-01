@@ -890,7 +890,7 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
 	&align	(4);
 	&set_label("do_ecopy");
 		&mov	($_key,"edi");
-		&data_word(0xF689A5F3);	# rep movsd
+		&data_word(0xA5F3F689);	# rep movsd
 	&set_label("skip_ecopy");
 
 	&mov	($acc,$s0);
@@ -961,15 +961,11 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
 	&mov	("edi",$_key);
 	&mov	("esp",$_esp);
 	&je	(&label("skip_ezero"));
-	if ($compromise) {
-		&cmp	(&wparam(2),$compromise);
-		&jb	(&label("skip_ezero"));
-	}
 	# zero copy of key schedule
 	&mov	("ecx",240/4);
 	&xor	("eax","eax");
 	&align	(4);
-	&data_word(0xF689ABF3);	# rep stosd
+	&data_word(0xABF3F689);	# rep stosd
 	&set_label("skip_ezero")
 	&popf	();
     &set_label("enc_out");
@@ -985,7 +981,7 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
 	&cmp	($key,$acc);			# compare with inp
 	&je	(&label("enc_in_place"));
 	&align	(4);
-	&data_word(0xF689A4F3);	# rep movsb	# copy input
+	&data_word(0xA4F3F689);	# rep movsb	# copy input
 	&jmp	(&label("enc_skip_in_place"));
     &set_label("enc_in_place");
 	&lea	($key,&DWP(0,$key,$s2));
@@ -993,7 +989,7 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
 	&mov	($s2,$s1);
 	&xor	($s0,$s0);
 	&align	(4);
-	&data_word(0xF689AAF3);	# rep stosb	# zero tail
+	&data_word(0xAAF3F689);	# rep stosb	# zero tail
 	&pop	($key);				# pop ivp
 
 	&mov	($acc,$_out);			# output as input
@@ -1066,7 +1062,7 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
 	&align	(4);
 	&set_label("do_dcopy");
 		&mov	($_key,"edi");
-		&data_word(0xF689A5F3);	# rep movsd
+		&data_word(0xA5F3F689);	# rep movsd
 	&set_label("skip_dcopy");
 
 	&mov	($acc,$s0);
@@ -1147,7 +1143,7 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
 	&lea	($s2 eq "ecx" ? $s2 : "",&DWP(16,$acc));
 	&mov	($acc eq "esi" ? $acc : "",$key);
 	&mov	($key eq "edi" ? $key : "",$_out);	# load out
-	&data_word(0xF689A4F3);	# rep movsb		# copy output
+	&data_word(0xA4F3F689);	# rep movsb		# copy output
 	&mov	($key,$_inp);				# use inp as temp ivp
 	&jmp	(&label("dec_end"));
 
@@ -1214,7 +1210,7 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
 	&lea	($key,&DWP(0,$key,$s2));
 	&lea	($acc,&DWP(16,$acc,$s2));
 	&neg	($s2 eq "ecx" ? $s2 : "");
-	&data_word(0xF689A4F3);	# rep movsb	# restore tail
+	&data_word(0xA4F3F689);	# rep movsb	# restore tail
 
     &align	(4);
     &set_label("dec_out");
@@ -1222,15 +1218,11 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
     &mov	("edi",$_key);
     &mov	("esp",$_esp);
     &je		(&label("skip_dzero"));
-    if ($compromise) {
-	&cmp	(&wparam(2),$compromise);
-	&jb	(&label("skip_dzero"));
-    }
     # zero copy of key schedule
     &mov	("ecx",240/4);
     &xor	("eax","eax");
     &align	(4);
-    &data_word(0xF689ABF3);	# rep stosd
+    &data_word(0xABF3F689);	# rep stosd
     &set_label("skip_dzero")
     &popf	();
 &function_end("AES_cbc_encrypt");
