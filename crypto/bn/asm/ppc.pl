@@ -1717,7 +1717,7 @@ Lppcasm_div1:
 	li	r9,1			# r9=1
 	$SHL	r10,r9,r8		# r9<<=r8
 	$UCMP	0,r3,r10		#	
-	bc	BO_IF,CR0_GT,Lppcasm_div2	#or if (h > (1<<r8))
+	bc	BO_IF_NOT,CR0_GT,Lppcasm_div2	#or if (h > (1<<r8))
 	$UDIV	r3,r3,r0		#if not assert(0) divide by 0!
 					#that's how we signal overflow
 	bclr	BO_ALWAYS,CR0_LT	#return. NEVER REACHED.
