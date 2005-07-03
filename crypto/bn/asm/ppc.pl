@@ -124,6 +124,7 @@ if ($opf =~ /32\.s/) {
 	$CLRU=	"clrlwi";	# clear upper bits
 	$INSR=	"insrwi";	# insert right
 	$ROTL=	"rotlwi";	# rotate left by immediate
+	$TR=	"tw";		# conditional trap
 } elsif ($opf =~ /64\.s/) {
 	$BITS=	64;
 	$BNSZ=	$BITS/8;
@@ -147,6 +148,7 @@ if ($opf =~ /32\.s/) {
 	$CLRU=	"clrldi";	# clear upper bits
 	$INSR=	"insrdi";	# insert right 
 	$ROTL=	"rotldi";	# rotate left by immediate
+	$TR=	"td";		# conditional trap
 } else { die "nonsense $opf"; }
 
 ( defined shift || open STDOUT,">$opf" ) || die "can't open $opf: $!";
@@ -1715,7 +1717,7 @@ Lppcasm_div1:
 	bc	BO_IF,CR0_EQ,Lppcasm_div2	#proceed if no leading zeros
 	subf	r8,r7,r8		#r8 = BN_num_bits_word(d)
 	$SHR.	r9,r3,r8		#are there any bits above r8'th?
-	tw	16,r9,r0		#if there're, signal to dump core...
+	$TR	16,r9,r0		#if there're, signal to dump core...
 Lppcasm_div2:
 	$UCMP	0,r3,r5			#h>=d?
 	bc	BO_IF,CR0_LT,Lppcasm_div3	#goto Lppcasm_div3 if not
