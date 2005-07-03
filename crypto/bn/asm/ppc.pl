@@ -116,7 +116,7 @@ if ($opf =~ /32\.s/) {
 	$UDIV=	"divwu";	# unsigned divide
 	$UCMPI=	"cmplwi";	# unsigned compare with immediate
 	$UCMP=	"cmplw";	# unsigned compare
-	$COUNTZ="cntlzw";	# count leading zeros
+	$CNTLZ=	"cntlzw";	# count leading zeros
 	$SHL=	"slw";		# shift left
 	$SHR=	"srw";		# unsigned shift right
 	$SHRI=	"srwi";		# unsigned shift right by immediate	
@@ -124,6 +124,7 @@ if ($opf =~ /32\.s/) {
 	$CLRU=	"clrlwi";	# clear upper bits
 	$INSR=	"insrwi";	# insert right
 	$ROTL=	"rotlwi";	# rotate left by immediate
+	$TR=	"tw";		# conditional trap
 } elsif ($opf =~ /64\.s/) {
 	$BITS=	64;
 	$BNSZ=	$BITS/8;
@@ -139,7 +140,7 @@ if ($opf =~ /32\.s/) {
 	$UDIV=	"divdu";	# unsigned divide
 	$UCMPI=	"cmpldi";	# unsigned compare with immediate
 	$UCMP=	"cmpld";	# unsigned compare
-	$COUNTZ="cntlzd";	# count leading zeros
+	$CNTLZ=	"cntlzd";	# count leading zeros
 	$SHL=	"sld";		# shift left
 	$SHR=	"srd";		# unsigned shift right
 	$SHRI=	"srdi";		# unsigned shift right by immediate	
@@ -147,6 +148,7 @@ if ($opf =~ /32\.s/) {
 	$CLRU=	"clrldi";	# clear upper bits
 	$INSR=	"insrdi";	# insert right 
 	$ROTL=	"rotldi";	# rotate left by immediate
+	$TR=	"td";		# conditional trap
 } else { die "nonsense $opf"; }
 
 ( defined shift || open STDOUT,">$opf" ) || die "can't open $opf: $!";
@@ -1710,17 +1712,12 @@ Lppcasm_add_adios:
 	bclr	BO_ALWAYS,CR0_LT	
 Lppcasm_div1:
 	xor	r0,r0,r0		#r0=0
-	$COUNTZ	r7,r5			#r7 = num leading 0s in d.
-	subfic	r8,r7,$BITS		#r8 = BN_num_bits_word(d)
-	cmpi	0,0,r8,$BITS		#
-	bc	BO_IF,CR0_EQ,Lppcasm_div2	#proceed if (r8==$BITS)	
-	li	r9,1			# r9=1
-	$SHL	r10,r9,r8		# r9<<=r8
-	$UCMP	0,r3,r10		#	
-	bc	BO_IF,CR0_GT,Lppcasm_div2	#or if (h > (1<<r8))
-	$UDIV	r3,r3,r0		#if not assert(0) divide by 0!
-					#that's how we signal overflow
-	bclr	BO_ALWAYS,CR0_LT	#return. NEVER REACHED.
+	li	r8,$BITS
+	$CNTLZ.	r7,r5			#r7 = num leading 0s in d.
+	bc	BO_IF,CR0_EQ,Lppcasm_div2	#proceed if no leading zeros
+	subf	r8,r7,r8		#r8 = BN_num_bits_word(d)
+	$SHR.	r9,r3,r8		#are there any bits above r8'th?
+	$TR	16,r9,r0		#if there're, signal to dump core...
 Lppcasm_div2:
 	$UCMP	0,r3,r5			#h>=d?
 	bc	BO_IF,CR0_LT,Lppcasm_div3	#goto Lppcasm_div3 if not
