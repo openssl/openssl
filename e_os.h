@@ -266,6 +266,16 @@ extern "C" {
 #    include <stddef.h>
 #    include <errno.h>
 #    include <string.h>
+#    ifdef _WIN64
+#      define strlen(s) _strlen31(s)
+/* cut strings to 2GB */
+static unsigned int _strlen31(const char *str)
+	{
+	unsigned int len=0;
+	while (*str && len<0x80000000U) str++, len++;
+	return len&0x7FFFFFFF;
+	}
+#    endif
 #    include <malloc.h>
 #  endif
 #  include <io.h>
@@ -426,6 +436,15 @@ extern "C" {
 #    elif !defined(__DJGPP__)
 #      include <winsock.h>
 extern HINSTANCE _hInstance;
+#      ifdef _WIN64
+/*
+ * Even though sizeof(SOCKET) is 8, it's safe to cast it to int, because
+ * the value constitutes an index in per-process table of limited size
+ * and not a real pointer.
+ */
+#        define socket(d,t,p)	((int)socket(d,t,p))
+#        define accept(s,f,l)	((int)accept(s,f,l))
+#      endif
 #      define SSLeay_Write(a,b,c)	send((a),(b),(c),0)
 #      define SSLeay_Read(a,b,c)	recv((a),(b),(c),0)
 #      define SHUTDOWN(fd)		{ shutdown((fd),0); closesocket(fd); }

@@ -545,7 +545,6 @@ const char *CRYPTO_get_lock_name(int type)
 
 unsigned long  OPENSSL_ia32cap_P=0;
 unsigned long *OPENSSL_ia32cap_loc(void) { return &OPENSSL_ia32cap_P; }
-int OPENSSL_NONPIC_relocated=0;
 
 #if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
 #define OPENSSL_CPUID_SETUP
@@ -572,6 +571,7 @@ void OPENSSL_cpuid_setup(void)
 #else
 unsigned long *OPENSSL_ia32cap_loc(void) { return NULL; }
 #endif
+int OPENSSL_NONPIC_relocated = 0;
 #if !defined(OPENSSL_CPUID_SETUP)
 void OPENSSL_cpuid_setup(void) {}
 #endif
