@@ -66,19 +66,19 @@ foreach (@ARGV) {
 	    exit 0;
 	} elsif (/^-newcert$/) {
 	    # create a certificate
-	    system ("$REQ -new -x509 -keyout newreq.pem -out newreq.pem $DAYS");
+	    system ("$REQ -new -x509 -keyout newkey.pem -out newcert.pem $DAYS");
 	    $RET=$?;
-	    print "Certificate (and private key) is in newreq.pem\n"
+	    print "Certificate is in newcert.pem, private key is in newkey.pem\n"
 	} elsif (/^-newreq$/) {
 	    # create a certificate request
-	    system ("$REQ -new -keyout newreq.pem -out newreq.pem $DAYS");
+	    system ("$REQ -new -keyout newkey.pem -out newreq.pem $DAYS");
 	    $RET=$?;
-	    print "Request (and private key) is in newreq.pem\n";
+	    print "Request is in newreq.pem, private key is in newkey.pem\n";
 	} elsif (/^-newreq-nodes$/) {
 	    # create a certificate request
-	    system ("$REQ -new -nodes -keyout newreq.pem -out newreq.pem $DAYS");
+	    system ("$REQ -new -nodes -keyout newkey.pem -out newreq.pem $DAYS");
 	    $RET=$?;
-	    print "Request (and private key) is in newreq.pem\n";
+	    print "Request is in newreq.pem, private key is in newkey.pem\n";
 	} elsif (/^-newca$/) {
 		# if explicitly asked for or it doesn't exist then setup the
 		# directory structure that Eric likes to manage things 
@@ -118,10 +118,11 @@ foreach (@ARGV) {
 	} elsif (/^-pkcs12$/) {
 	    my $cname = $ARGV[1];
 	    $cname = "My Certificate" unless defined $cname;
-	    system ("$PKCS12 -in newcert.pem -inkey newreq.pem " .
+	    system ("$PKCS12 -in newcert.pem -inkey newkey.pem " .
 			"-certfile ${CATOP}/$CACERT -out newcert.p12 " .
 			"-export -name \"$cname\"");
 	    $RET=$?;
+	    print "PKCS #12 file is in newcert.p12\n";
 	    exit $RET;
 	} elsif (/^-xsign$/) {
 	    system ("$CA -policy policy_anything -infiles newreq.pem");

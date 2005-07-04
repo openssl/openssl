@@ -51,15 +51,15 @@ case $i in
     ;;
 -newcert) 
     # create a certificate
-    $REQ -new -x509 -keyout newreq.pem -out newreq.pem $DAYS
+    $REQ -new -x509 -keyout newkey.pem -out newcert.pem $DAYS
     RET=$?
-    echo "Certificate (and private key) is in newreq.pem"
+    echo "Certificate is in newcert.pem, private key is in newkey.pem"
     ;;
 -newreq) 
     # create a certificate request
-    $REQ -new -keyout newreq.pem -out newreq.pem $DAYS
+    $REQ -new -keyout newkey.pem -out newreq.pem $DAYS
     RET=$?
-    echo "Request (and private key) is in newreq.pem"
+    echo "Request is in newreq.pem, private key is in newkey.pem"
     ;;
 -newca)     
     # if explicitly asked for or it doesn't exist then setup the directory
