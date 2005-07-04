@@ -4,6 +4,9 @@
 
  Changes between 0.9.7h and 0.9.8  [xx XXX xxxx]
 
+  *) Add -utf8 command line and config file option to 'ca'.
+     [Stefan <stf@udoma.org]
+
   *) Correct naming of the 'chil' and '4758cca' ENGINEs. This
      involves renaming the source and generated shared-libs for
      both. The engines will accept the corrected or legacy ids
