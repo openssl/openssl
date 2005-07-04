@@ -157,7 +157,7 @@ void RC4(RC4_KEY *key, unsigned long len, const unsigned char *indata,
 		if (!is_endian.little)
 			{	/* BIG-ENDIAN CASE */
 # define BESHFT(c)	(((sizeof(RC4_CHUNK)-(c)-1)*8)&(sizeof(RC4_CHUNK)*8-1))
-			for (;len&-sizeof(RC4_CHUNK);len-=sizeof(RC4_CHUNK))
+			for (;len&~(sizeof(RC4_CHUNK)-1);len-=sizeof(RC4_CHUNK))
 				{
 				ichunk  = *(RC4_CHUNK *)indata;
 				otp  = RC4_STEP<<BESHFT(0);
@@ -210,7 +210,7 @@ void RC4(RC4_KEY *key, unsigned long len, const unsigned char *indata,
 		else
 			{	/* LITTLE-ENDIAN CASE */
 # define LESHFT(c)	(((c)*8)&(sizeof(RC4_CHUNK)*8-1))
-			for (;len&-sizeof(RC4_CHUNK);len-=sizeof(RC4_CHUNK))
+			for (;len&~(sizeof(RC4_CHUNK)-1);len-=sizeof(RC4_CHUNK))
 				{
 				ichunk  = *(RC4_CHUNK *)indata;
 				otp  = RC4_STEP;
