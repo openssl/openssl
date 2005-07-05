@@ -8,8 +8,8 @@ Release: 1
 
 Summary: Secure Sockets Layer and cryptography libraries and tools
 Name: openssl
-Version: %{libmaj}.%{libmin}.%{librel}
-#Version: %{libmaj}.%{libmin}.%{librel}%{librev}
+#Version: %{libmaj}.%{libmin}.%{librel}
+Version: %{libmaj}.%{libmin}.%{librel}%{librev}
 Source0: ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
 Copyright: Freely distributable
 Group: System Environment/Libraries
