@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7h and 0.9.8  [xx XXX xxxx]
+ Changes between 0.9.7h and 0.9.8  [05 Jul 2005]
 
   *) Add libcrypto.pc and libssl.pc for those who feel they need them.
      [Richard Levitte]
