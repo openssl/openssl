@@ -8,6 +8,9 @@
 
  Changes between 0.9.7h and 0.9.8  [xx XXX xxxx]
 
+  *) Add initial support for Win64, both IA64 and AMD64/x64 flavors.
+     [Andy Polyakov]
+
   *) Add -utf8 command line and config file option to 'ca'.
      [Stefan <stf@udoma.org]
 
