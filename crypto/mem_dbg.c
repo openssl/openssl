@@ -252,8 +252,16 @@ long CRYPTO_dbg_get_options(void)
 /* static int mem_cmp(MEM *a, MEM *b) */
 static int mem_cmp(const void *a_void, const void *b_void)
 	{
+#ifdef _WIN64
+	const char *a=(const char *)((const MEM *)a_void)->addr,
+		   *b=(const char *)((const MEM *)b_void)->addr;
+	if (a==b)	return 0;
+	else if (a>b)	return 1;
+	else		return -1;
+#else
 	return((const char *)((const MEM *)a_void)->addr
 		- (const char *)((const MEM *)b_void)->addr);
+#endif
 	}
 
 /* static unsigned long mem_hash(MEM *a) */

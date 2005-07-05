@@ -24,6 +24,8 @@ $infile="MINFO";
 
 %ops=(
 	"VC-WIN32",   "Microsoft Visual C++ [4-6] - Windows NT or 9X",
+	"VC-WIN64I",  "Microsoft C/C++ - Win64/IA-64",
+	"VC-WIN64A",  "Microsoft C/C++ - Win64/x64",
 	"VC-CE",   "Microsoft eMbedded Visual C++ 3.0 - Windows CE ONLY",
 	"VC-NT",   "Microsoft Visual C++ [4-6] - Windows NT ONLY",
 	"Mingw32", "GNU C++ - Windows NT or 9x",
@@ -120,9 +122,10 @@ $bin_dir=(defined($VARS{'BIN'}))?$VARS{'BIN'}:'';
 $NT=0;
 
 push(@INC,"util/pl","pl");
-if (($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
+if (($platform =~ /VC-(.+)/))
 	{
-	$NT = 1 if $platform eq "VC-NT";
+	$FLAVOR=$1;
+	$NT = 1 if $1 eq "NT";
 	require 'VC-32.pl';
 	}
 elsif ($platform eq "VC-CE")
