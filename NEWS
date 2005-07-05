@@ -21,6 +21,7 @@
       o Complete rework of shared library construction and linking
         programs with shared or static libraries, through a separate
         Makefile.shared.
+      o Rework of the passing of parameters from one Makefile to another.
       o Changed ENGINE framework to load dynamic engine modules
         automatically from specifically given directories.
       o New structure and ASN.1 functions for CertificatePair.
@@ -75,6 +76,8 @@
       o Added support for the RSA X.931 padding.
       o Added support for BSD sockets on NetWare.
       o Added support for files larger than 2GB.
+      o Added initial support for Win64.
+      o Added alternate pkg-config files.
 
   Major changes between OpenSSL 0.9.7f and OpenSSL 0.9.7g:
 
