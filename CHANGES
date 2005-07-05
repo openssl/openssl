@@ -8,11 +8,22 @@
 
  Changes between 0.9.7h and 0.9.8  [xx XXX xxxx]
 
+  *) Add libcrypto.pc and libssl.pc for those who feel they need them.
+     [Richard Levitte]
+
+  *) Change CA.sh and CA.pl so they don't bundle the CSR and the private
+     key into the same file any more.
+     [Richard Levitte]
+
   *) Add initial support for Win64, both IA64 and AMD64/x64 flavors.
      [Andy Polyakov]
 
   *) Add -utf8 command line and config file option to 'ca'.
      [Stefan <stf@udoma.org]
+
+  *) Removed the macro des_crypt(), as it seems to conflict with some
+     libraries.  Use DES_crypt().
+     [Richard Levitte]
 
   *) Correct naming of the 'chil' and '4758cca' ENGINEs. This
      involves renaming the source and generated shared-libs for
