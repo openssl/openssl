@@ -3,6 +3,7 @@
  ----------------------------------
 
  [Instructions for building for Windows CE can be found in INSTALL.WCE]
+ [Instructions for building for Win64 can be found in INSTALL.W64]
 
  Heres a few comments about building OpenSSL in Windows environments.  Most
  of this is tested on Win32 but it may also work in Win 3.1 with some
