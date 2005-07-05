@@ -146,7 +146,7 @@ WTARFILE=       $(NAME)-win.tar
 EXHEADER=       e_os2.h
 HEADER=         e_os.h
 
-all: Makefile build_all openssl.pc
+all: Makefile build_all openssl.pc libssl.pc libcrypto.pc
 
 # as we stick to -e, CLEARENV ensures that local variables in lower
 # Makefiles remain local and variable. $${VAR+VAR} is tribute to Korn
@@ -277,6 +277,32 @@ do_$(SHLIB_TARGET):
 		libs="-l$$i $$libs"; \
 	done
 
+libcrypto.pc: Makefile
+	@ ( echo 'prefix=$(INSTALLTOP)'; \
+	    echo 'exec_prefix=$${prefix}'; \
+	    echo 'libdir=$${exec_prefix}/lib'; \
+	    echo 'includedir=$${prefix}/include'; \
+	    echo ''; \
+	    echo 'Name: OpenSSL-libcrypto'; \
+	    echo 'Description: OpenSSL cryptography library'; \
+	    echo 'Version: '$(VERSION); \
+	    echo 'Requires: '; \
+	    echo 'Libs: -L$${libdir} -lcrypto $(EX_LIBS)'; \
+	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libcrypto.pc
+
+libssl.pc: Makefile
+	@ ( echo 'prefix=$(INSTALLTOP)'; \
+	    echo 'exec_prefix=$${prefix}'; \
+	    echo 'libdir=$${exec_prefix}/lib'; \
+	    echo 'includedir=$${prefix}/include'; \
+	    echo ''; \
+	    echo 'Name: OpenSSL'; \
+	    echo 'Description: Secure Sockets Layer and cryptography libraries'; \
+	    echo 'Version: '$(VERSION); \
+	    echo 'Requires: '; \
+	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(EX_LIBS)'; \
+	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libssl.pc
+
 openssl.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
@@ -302,7 +328,7 @@ clean:	libclean
 	rm -f shlib/*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
 	@set -e; target=clean; $(RECURSIVE_BUILD_CMD)
 	rm -f $(LIBS)
-	rm -f openssl.pc
+	rm -f openssl.pc libssl.pc libcrypto.pc
 	rm -f speed.* .pure
 	rm -f $(TARFILE)
 	@set -e; for i in $(ONEDIRS) ;\
@@ -484,6 +510,10 @@ install_sw:
 			sed -e '1,/^$$/d' doc/openssl-shared.txt; \
 		fi; \
 	fi
+	cp libcrypto.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/libcrypto.pc
+	cp libssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/libssl.pc
 	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/openssl.pc
 
