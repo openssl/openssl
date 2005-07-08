@@ -62,7 +62,10 @@ links:
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
-install:
+# We need to use force because 'install' matches 'INSTALL' on case
+# insensitive systems
+FRC.install:
+install: FRC.install
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
