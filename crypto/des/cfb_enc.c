@@ -125,7 +125,7 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 				sh[0]=v0, sh[1]=v1, sh[2]=d0, sh[3]=d1;
 #endif
 				if (rem==0)
-					memcpy(ovec,ovec+num,8);
+					memmove(ovec,ovec+num,8);
 				else
 					for(i=0 ; i < 8 ; ++i)
 						ovec[i]=ovec[i+num]<<rem |
@@ -168,7 +168,7 @@ void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 				sh[0]=v0, sh[1]=v1, sh[2]=d0, sh[3]=d1;
 #endif
 				if (rem==0)
-					memcpy (ovec,ovec+num,8);
+					memmove(ovec,ovec+num,8);
 				else
 					for(i=0 ; i < 8 ; ++i)
 						ovec[i]=ovec[i+num]<<rem |
