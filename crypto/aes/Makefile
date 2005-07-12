@@ -55,6 +55,9 @@ ax86-cof.s: asm/aes-586.pl ../perlasm/x86asm.pl
 ax86-out.s: asm/aes-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) aes-586.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
 
+aes-x86_64.s: asm/aes-x86_64.pl
+	$(PERL) asm/aes-x86_64.pl $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
