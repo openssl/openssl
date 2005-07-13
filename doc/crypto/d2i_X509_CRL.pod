@@ -9,7 +9,7 @@ i2d_X509_CRL_bio, i2d_X509_CRL_fp - PKCS#10 certificate request functions.
 
  #include <openssl/x509.h>
 
- X509_CRL *d2i_X509_CRL(X509_CRL **a, unsigned char **pp, long length);
+ X509_CRL *d2i_X509_CRL(X509_CRL **a, const unsigned char **pp, long length);
  int i2d_X509_CRL(X509_CRL *a, unsigned char **pp);
 
  X509_CRL *d2i_X509_CRL_bio(BIO *bp, X509_CRL **x);
