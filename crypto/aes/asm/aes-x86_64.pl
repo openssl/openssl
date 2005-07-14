@@ -10,12 +10,21 @@
 #
 # aes-*-cbc benchmarks are improved by 50% [compared to gcc 3.3.2 on
 # Opteron 240 CPU] plus all the bells-n-whistles from 32-bit version
-# [you'll notice a lot of resemblance], such as compressed S-boxs
-# and prefetch of these tables in CBC mode, as well as avoiding L1
-# cache aliasing between stack frame and key schedule and already
-# mentioned tables.
+# [you'll notice a lot of resemblance], such as compressed S-boxes
+# in little-endian byte order, prefetch of these tables in CBC mode,
+# as well as avoiding L1 cache aliasing between stack frame and key
+# schedule and already mentioned tables.
 #
-# ECB performance is 15.6 cycles per processed byte for 128-bit key.
+# Performance in number of cycles per processed byte for 128-bit key:
+#
+#		ECB		CBC encrypt
+# AMD64		15.6		14.6(*)
+# EM64T		23.3(**)	21.4(*)
+#
+# (*)	CBC benchmarks are better than ECB thanks to custom ABI used
+#	by the private block encryption function.
+# (**)	This module exhibits virtually same ECB performance as 32-bit
+#	counterpart on [current] Intel CPU.
 
 $output=shift;
 open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
