@@ -30,6 +30,7 @@ B<openssl> B<req>
 [B<-[md5|sha1|md2|mdc2]>]
 [B<-config filename>]
 [B<-subj arg>]
+[B<-multivalue-rdn>]
 [B<-x509>]
 [B<-days n>]
 [B<-set_serial n>]
@@ -172,6 +173,15 @@ sets subject name for new request or supersedes the subject name
 when processing a request.
 The arg must be formatted as I</type0=value0/type1=value1/type2=...>,
 characters may be escaped by \ (backslash), no spaces are skipped.
+
+=item B<-multivalue-rdn>
+
+this option causes the -subj argument to be interpreted with full
+support for multivalued RDNs. Example:
+
+I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
+
+If -multi-rdn is not used then the UID value is I<123456+CN=John Doe>.
 
 =item B<-x509>
 

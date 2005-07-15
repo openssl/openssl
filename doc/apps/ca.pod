@@ -17,7 +17,6 @@ B<openssl> B<ca>
 [B<-crl_hold instruction>]
 [B<-crl_compromise time>]
 [B<-crl_CA_compromise time>]
-[B<-subj arg>]
 [B<-crldays days>]
 [B<-crlhours hours>]
 [B<-crlexts section>]
@@ -45,6 +44,9 @@ B<openssl> B<ca>
 [B<-extensions section>]
 [B<-extfile section>]
 [B<-engine id>]
+[B<-subj arg>]
+[B<-utf8>]
+[B<-multivalue-rdn>]
 
 =head1 DESCRIPTION
 
@@ -218,6 +220,28 @@ to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
+=item B<-subj arg>
+
+supersedes subject name given in the request.
+The arg must be formatted as I</type0=value0/type1=value1/type2=...>,
+characters may be escaped by \ (backslash), no spaces are skipped.
+
+=item B<-utf8>
+
+this option causes field values to be interpreted as UTF8 strings, by 
+default they are interpreted as ASCII. This means that the field
+values, whether prompted from a terminal or obtained from a
+configuration file, must be valid UTF8 strings.
+
+=item B<-multivalue-rdn>
+
+this option causes the -subj argument to be interpretedt with full
+support for multivalued RDNs. Example:
+
+I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
+
+If -multi-rdn is not used then the UID value is I<123456+CN=John Doe>.
+
 =back
 
 =head1 CRL OPTIONS
@@ -267,12 +291,6 @@ B<time>. B<time> should be in GeneralizedTime format that is B<YYYYMMDDHHMMSSZ>.
 
 This is the same as B<crl_compromise> except the revocation reason is set to
 B<CACompromise>.
-
-=item B<-subj arg>
-
-supersedes subject name given in the request.
-The arg must be formatted as I</type0=value0/type1=value1/type2=...>,
-characters may be escaped by \ (backslash), no spaces are skipped.
 
 =item B<-crlexts section>
 
