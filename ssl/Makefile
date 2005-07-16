@@ -142,8 +142,9 @@ d1_both.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 d1_both.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 d1_both.o: ../include/openssl/x509_vfy.h d1_both.c ssl_locl.h
 d1_clnt.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-d1_clnt.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-d1_clnt.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
+d1_clnt.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+d1_clnt.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+d1_clnt.o: ../include/openssl/dh.h ../include/openssl/dsa.h
 d1_clnt.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
 d1_clnt.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
 d1_clnt.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
@@ -239,8 +240,9 @@ d1_pkt.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 d1_pkt.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h d1_pkt.c
 d1_pkt.o: ssl_locl.h
 d1_srvr.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-d1_srvr.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-d1_srvr.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
+d1_srvr.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+d1_srvr.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+d1_srvr.o: ../include/openssl/dh.h ../include/openssl/dsa.h
 d1_srvr.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
 d1_srvr.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
 d1_srvr.o: ../include/openssl/ecdsa.h ../include/openssl/err.h

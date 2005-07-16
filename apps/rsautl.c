@@ -56,6 +56,7 @@
  *
  */
 
+#include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_RSA
 
 #include "apps.h"

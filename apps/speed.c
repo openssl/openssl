@@ -286,9 +286,17 @@ static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
 static double rsa_results[RSA_NUM][2];
 static double dsa_results[DSA_NUM][2];
+#ifndef OPENSSL_NO_ECDSA
 static double ecdsa_results[EC_NUM][2];
+#endif
+#ifndef OPENSSL_NO_ECDH
 static double ecdh_results[EC_NUM][1];
+#endif
 
+#if defined(OPENSSL_NO_DSA) && !(defined(OPENSSL_NO_ECDSA) && defined(OPENSSL_NO_ECDH))
+static const char rnd_seed[] = "string to make the random number generator think it has entropy";
+static int rnd_fake = 0;
+#endif
 
 #ifdef SIGALRM
 #if defined(__STDC__) || defined(sgi) || defined(_AIX)
@@ -448,6 +456,7 @@ static double Time_F(int s)
 #endif /* if defined(OPENSSL_SYS_NETWARE) */
 
 
+#ifndef OPENSSL_NO_ECDH
 static const int KDF1_SHA1_len = 20;
 static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 	{
@@ -459,8 +468,9 @@ static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 	return SHA1(in, inlen, out);
 #else
 	return NULL;
-#endif
+#endif	/* OPENSSL_NO_SHA */
 	}
+#endif	/* OPENSSL_NO_ECDH */
 
 
 int MAIN(int, char **);
@@ -695,8 +705,12 @@ int MAIN(int argc, char **argv)
 
 	int rsa_doit[RSA_NUM];
 	int dsa_doit[DSA_NUM];
+#ifndef OPENSSL_NO_ECDSA
 	int ecdsa_doit[EC_NUM];
+#endif
+#ifndef OPENSSL_NO_ECDH
         int ecdh_doit[EC_NUM];
+#endif
 	int doit[ALGOR_NUM];
 	int pr_header=0;
 	const EVP_CIPHER *evp_cipher=NULL;

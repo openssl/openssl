@@ -73,10 +73,10 @@
 
 #include "../e_os.h"
 
+#include <openssl/opensslconf.h>	/* for OPENSSL_NO_ECDH */
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
-#include <openssl/ec.h>
 #include <openssl/objects.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
@@ -89,6 +89,7 @@ int main(int argc, char *argv[])
     return(0);
 }
 #else
+#include <openssl/ec.h>
 #include <openssl/ecdh.h>
 
 #ifdef OPENSSL_SYS_WIN16

@@ -127,7 +127,9 @@
 #include "ssl_locl.h"
 #include "kssl_lcl.h"
 #include <openssl/md5.h>
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 
 const char *ssl3_version_str="SSLv3" OPENSSL_VERSION_PTEXT;
 

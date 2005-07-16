@@ -79,6 +79,13 @@
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
+#include <openssl/bn.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
 
 #define SECTION		"req"
 
@@ -724,7 +731,9 @@ bad:
 
 	if (newreq && (pkey == NULL))
 		{
+#ifndef OPENSSL_NO_RSA
 		BN_GENCB cb;
+#endif
 		char *randfile = NCONF_get_string(req_conf,SECTION,"RANDFILE");
 		if (randfile == NULL)
 			ERR_clear_error();

@@ -57,6 +57,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <openssl/opensslconf.h>	/* for OPENSSL_NO_DH */
 #ifndef OPENSSL_NO_DH
 #include <stdio.h>
 #include <stdlib.h>

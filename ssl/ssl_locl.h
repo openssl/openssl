@@ -127,8 +127,12 @@
 #include <openssl/comp.h>
 #include <openssl/bio.h>
 #include <openssl/stack.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+#endif
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <openssl/symhacks.h>

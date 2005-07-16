@@ -143,9 +143,15 @@
 #endif
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 #include <openssl/bn.h>
 
 #define _XOPEN_SOURCE_EXTENDED	1 /* Or gethostname won't be declared properly
@@ -390,7 +396,9 @@ int main(int argc, char *argv[])
 	char *server_key=NULL;
 	char *client_cert=TEST_CLIENT_CERT;
 	char *client_key=NULL;
+#ifndef OPENSSL_NO_ECDH
 	char *named_curve = NULL;
+#endif
 	SSL_CTX *s_ctx=NULL;
 	SSL_CTX *c_ctx=NULL;
 	SSL_METHOD *meth=NULL;

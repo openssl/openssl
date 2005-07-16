@@ -100,23 +100,6 @@
 extern "C" {
 #endif
 
-/* Fixups for missing algorithms */
-#ifdef OPENSSL_NO_RSA
-typedef void RSA_METHOD;
-#endif
-#ifdef OPENSSL_NO_DSA
-typedef void DSA_METHOD;
-#endif
-#ifdef OPENSSL_NO_DH
-typedef void DH_METHOD;
-#endif
-#ifdef OPENSSL_NO_ECDH
-typedef void ECDH_METHOD;
-#endif
-#ifdef OPENSSL_NO_ECDSA
-typedef void ECDSA_METHOD;
-#endif
-
 /* These flags are used to control combinations of algorithm (methods)
  * by bitwise "OR"ing. */
 #define ENGINE_METHOD_RSA		(unsigned int)0x0001

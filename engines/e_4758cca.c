@@ -61,7 +61,9 @@
 #include <openssl/objects.h>
 #include <openssl/engine.h>
 #include <openssl/rand.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
 #include <openssl/bn.h>
 
 #ifndef OPENSSL_NO_HW
@@ -109,8 +111,10 @@ static int getModulusAndExponent(const unsigned char *token, long *exponentLengt
 static int cca_get_random_bytes(unsigned char*, int );
 static int cca_random_status(void);
 
+#ifndef OPENSSL_NO_RSA
 static void cca_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 		int idx,long argl, void *argp);
+#endif
 
 /* Function pointers for CCA verbs */
 /*---------------------------------*/
@@ -154,7 +158,9 @@ static const char* n_pkaDecrypt = CSNDPKD;
 #endif
 static const char* n_randomNumberGenerate = CSNBRNG;
 
+#ifndef OPENSSL_NO_RSA
 static int hndidx = -1;
+#endif
 static DSO *dso = NULL;
 
 /* openssl engine initialization structures */
@@ -221,8 +227,10 @@ static int bind_helper(ENGINE *e)
 			!ENGINE_set_init_function(e, ibm_4758_cca_init) ||
 			!ENGINE_set_finish_function(e, ibm_4758_cca_finish) ||
 			!ENGINE_set_ctrl_function(e, ibm_4758_cca_ctrl) ||
+#ifndef OPENSSL_NO_RSA
 			!ENGINE_set_load_privkey_function(e, ibm_4758_load_privkey) ||
 			!ENGINE_set_load_pubkey_function(e, ibm_4758_load_pubkey) ||
+#endif
 			!ENGINE_set_cmd_defns(e, cca4758_cmd_defns))
 		return 0;
 	/* Ensure the error handling is set up */
@@ -304,8 +312,10 @@ static int ibm_4758_cca_init(ENGINE *e)
 		}
 #endif
 
+#ifndef OPENSSL_NO_RSA
 	hndidx = RSA_get_ex_new_index(0, "IBM 4758 CCA RSA key handle",
 		NULL, NULL, cca_ex_free);
+#endif
 
 	return 1;
 err:
@@ -313,13 +323,15 @@ err:
 		DSO_free(dso);
 	dso = NULL;
 
+#ifndef OPENSSL_NO_RSA
 	keyRecordRead = (F_KEYRECORDREAD)0;
-	randomNumberGenerate = (F_RANDOMNUMBERGENERATE)0;
 	digitalSignatureGenerate = (F_DIGITALSIGNATUREGENERATE)0;
 	digitalSignatureVerify = (F_DIGITALSIGNATUREVERIFY)0;
 	publicKeyExtract = (F_PUBLICKEYEXTRACT)0;
 	pkaEncrypt = (F_PKAENCRYPT)0;
 	pkaDecrypt = (F_PKADECRYPT)0;
+#endif
+	randomNumberGenerate = (F_RANDOMNUMBERGENERATE)0;
 	return 0;
 	}
 
@@ -339,6 +351,7 @@ static int ibm_4758_cca_finish(ENGINE *e)
 		return 0;
 		}
 	dso = NULL;
+#ifndef OPENSSL_NO_RSA
 	keyRecordRead = (F_KEYRECORDREAD)0;
 	randomNumberGenerate = (F_RANDOMNUMBERGENERATE)0;
 	digitalSignatureGenerate = (F_DIGITALSIGNATUREGENERATE)0;
@@ -346,6 +359,8 @@ static int ibm_4758_cca_finish(ENGINE *e)
 	publicKeyExtract = (F_PUBLICKEYEXTRACT)0;
 	pkaEncrypt = (F_PKAENCRYPT)0;
 	pkaDecrypt = (F_PKADECRYPT)0;
+#endif
+	randomNumberGenerate = (F_RANDOMNUMBERGENERATE)0;
 	return 1;
 	}
 
@@ -951,12 +966,14 @@ static int cca_get_random_bytes(unsigned char* buf, int num)
 	return 1;
 	}
 
+#ifndef OPENSSL_NO_RSA
 static void cca_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad, int idx,
 		long argl, void *argp)
 	{
 	if (item)
 		OPENSSL_free(item);
 	}
+#endif
 
 /* Goo to handle building as a dynamic engine */
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE 
