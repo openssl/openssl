@@ -115,7 +115,7 @@ int MAIN(int argc, char **argv)
 
     BN_print(bio_out,bn);
     BIO_printf(bio_out," is %sprime\n",
-	       BN_is_prime(bn,checks,NULL,NULL,NULL) ? "" : "not ");
+	       BN_is_prime_ex(bn,checks,NULL,NULL) ? "" : "not ");
 
     BN_free(bn);
     BIO_free_all(bio_out);

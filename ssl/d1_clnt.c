@@ -121,6 +121,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
+#endif
 
 static SSL_METHOD *dtls1_get_client_method(int ver);
 static int dtls1_get_hello_verify(SSL *s);

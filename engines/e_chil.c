@@ -65,8 +65,12 @@
 #include <openssl/engine.h>
 #include <openssl/ui.h>
 #include <openssl/rand.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 #include <openssl/bn.h>
 
 #ifndef OPENSSL_NO_HW
@@ -108,9 +112,11 @@ static int hwcrhk_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 /* RSA stuff */
 static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
 #endif
+#ifndef OPENSSL_NO_RSA
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int hwcrhk_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+#endif
 
 #ifndef OPENSSL_NO_DH
 /* DH stuff */
@@ -129,8 +135,10 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 	UI_METHOD *ui_method, void *callback_data);
 static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
 	UI_METHOD *ui_method, void *callback_data);
+#ifndef OPENSSL_NO_RSA
 static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 	int ind,long argl, void *argp);
+#endif
 
 /* Interaction stuff */
 static int hwcrhk_insert_card(const char *prompt_info,
@@ -763,8 +771,8 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 #if !defined(OPENSSL_NO_RSA)
 	char tempbuf[1024];
 	HWCryptoHook_ErrMsgBuf rmsg;
-#endif
 	HWCryptoHook_PassphraseContext ppctx;
+#endif
 
 #if !defined(OPENSSL_NO_RSA)
 	rmsg.buf = tempbuf;
@@ -1072,12 +1080,14 @@ err:
 	}
 #endif
 
+#ifndef OPENSSL_NO_RSA
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int hwcrhk_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return hwcrhk_mod_exp(r, a, p, m, ctx);
 	}
+#endif
 
 #ifndef OPENSSL_NO_DH
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
@@ -1136,7 +1146,7 @@ static int hwcrhk_rand_status(void)
 	}
 
 /* This cleans up an RSA KM key, called when ex_data is freed */
-
+#ifndef OPENSSL_NO_RSA
 static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
 	int ind,long argl, void *argp)
 {
@@ -1161,6 +1171,7 @@ static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
                 }
 #endif
 }
+#endif
 
 /* Mutex calls: since the HWCryptoHook model closely follows the POSIX model
  * these just wrap the POSIX functions and add some logging.

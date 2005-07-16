@@ -62,9 +62,15 @@
 #include <openssl/buffer.h>
 #include <openssl/dso.h>
 #include <openssl/engine.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 #include <openssl/bn.h>
 
 #ifndef OPENSSL_NO_HW
@@ -91,10 +97,10 @@ static int atalla_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 #ifndef OPENSSL_NO_RSA
 /* RSA stuff */
 static int atalla_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
-#endif
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int atalla_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+#endif
 
 #ifndef OPENSSL_NO_DSA
 /* DSA stuff */
@@ -563,12 +569,14 @@ static int atalla_mod_exp_dsa(DSA *dsa, BIGNUM *r, BIGNUM *a,
 	}
 #endif
 
+#ifndef OPENSSL_NO_RSA
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
 static int atalla_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return atalla_mod_exp(r, a, p, m, ctx);
 	}
+#endif
 
 #ifndef OPENSSL_NO_DH
 /* This function is aliased to mod_exp (with the dh and mont dropped). */

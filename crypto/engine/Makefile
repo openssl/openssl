@@ -185,7 +185,8 @@ eng_openssl.o: ../../include/openssl/x509_vfy.h ../cryptlib.h eng_openssl.c
 eng_padlock.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
 eng_padlock.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 eng_padlock.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
-eng_padlock.o: ../../include/openssl/engine.h ../../include/openssl/evp.h
+eng_padlock.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+eng_padlock.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 eng_padlock.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 eng_padlock.o: ../../include/openssl/opensslconf.h
 eng_padlock.o: ../../include/openssl/opensslv.h

@@ -125,7 +125,9 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
 #include <openssl/bn.h>
 
 #define NON_MAIN

@@ -75,6 +75,7 @@
 #include <openssl/aes.h>
 #endif
 #include <openssl/rand.h>
+#include <openssl/err.h>
 
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_PADLOCK

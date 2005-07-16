@@ -70,9 +70,15 @@
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 
 /* This testing gunk is implemented (and explained) lower down. It also assumes
  * the application explicitly calls "ENGINE_load_openssl()" because this is no

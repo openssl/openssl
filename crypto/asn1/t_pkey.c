@@ -81,8 +81,10 @@
 
 static int print(BIO *fp,const char *str, const BIGNUM *num,
 		unsigned char *buf,int off);
+#ifndef OPENSSL_NO_EC
 static int print_bin(BIO *fp, const char *str, const unsigned char *num,
 		size_t len, int off);
+#endif
 #ifndef OPENSSL_NO_RSA
 #ifndef OPENSSL_NO_FP_API
 int RSA_print_fp(FILE *fp, const RSA *x, int off)
@@ -601,6 +603,7 @@ static int print(BIO *bp, const char *number, const BIGNUM *num, unsigned char *
 	return(1);
 	}
 
+#ifndef OPENSSL_NO_EC
 static int print_bin(BIO *fp, const char *name, const unsigned char *buf,
 		size_t len, int off)
 	{
@@ -638,6 +641,7 @@ static int print_bin(BIO *fp, const char *name, const unsigned char *buf,
 
 	return 1;
 	}
+#endif
 
 #ifndef OPENSSL_NO_DH
 #ifndef OPENSSL_NO_FP_API

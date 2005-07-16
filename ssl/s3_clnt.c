@@ -130,7 +130,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 #include <openssl/bn.h>
 
 static SSL_METHOD *ssl3_get_client_method(int ver);
@@ -1608,6 +1610,7 @@ int ssl3_get_server_done(SSL *s)
 	}
 
 
+#ifndef OPENSSL_NO_ECDH
 static const int KDF1_SHA1_len = 20;
 static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 	{
@@ -1619,8 +1622,9 @@ static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 	return SHA1(in, inlen, out);
 #else
 	return NULL;
-#endif
+#endif	/* OPENSSL_NO_SHA */
 	}
+#endif	/* OPENSSL_NO_ECDH */
 
 int ssl3_send_client_key_exchange(SSL *s)
 	{
@@ -2132,7 +2136,7 @@ int ssl3_send_client_verify(SSL *s)
 	unsigned u=0;
 #endif
 	unsigned long n;
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
 	int j;
 #endif
 

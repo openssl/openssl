@@ -125,7 +125,9 @@
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
 #include <openssl/x509v3.h>
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 
 const char *SSL_version_str=OPENSSL_VERSION_TEXT;
 
@@ -1551,7 +1553,10 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	int rsa_enc_export,dh_rsa_export,dh_dsa_export;
 	int rsa_tmp_export,dh_tmp_export,kl;
 	unsigned long mask,emask;
-	int have_ecc_cert, have_ecdh_tmp, ecdh_ok, ecdsa_ok, ecc_pkey_size;
+	int have_ecc_cert, ecdh_ok, ecdsa_ok, ecc_pkey_size;
+#ifndef OPENSSL_NO_ECDH
+	int have_ecdh_tmp;
+#endif
 	X509 *x = NULL;
 	EVP_PKEY *ecc_pkey = NULL;
 	int signature_nid = 0;
