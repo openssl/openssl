@@ -443,7 +443,7 @@ builtin_err:
 		EC_KEY_free(eckey);
 	if (wrong_eckey)
 		EC_KEY_free(wrong_eckey);
-	if (signature);
+	if (signature)
 		OPENSSL_free(signature);
 	if (curves)
 		OPENSSL_free(curves);
