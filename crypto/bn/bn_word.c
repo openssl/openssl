@@ -175,7 +175,13 @@ int BN_sub_word(BIGNUM *a, BN_ULONG w)
 	/* degenerate case: w is zero */
 	if (!w) return 1;
 	/* degenerate case: a is zero */
-	if(BN_is_zero(a)) return BN_set_word(a,w);
+	if(BN_is_zero(a))
+		{
+		i = BN_set_word(a,w);
+		if (i != 0)
+			BN_set_negative(a, 1);
+		return i;
+		}
 	/* handle 'a' when negative */
 	if (a->neg)
 		{
