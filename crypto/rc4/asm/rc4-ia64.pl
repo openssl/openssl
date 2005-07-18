@@ -194,21 +194,13 @@ $threshold = (3 * ($phases * ($unroll_count + 1)) + 7);
 sub I {
     local *code = shift;
     local $format = shift;
-    local $a0 = shift;
-    local $a1 = shift;
-    local $a2 = shift;
-    local $a3 = shift;
-    $code .= sprintf ("\t\t".$format."\n", $a0, $a1, $a2, $a3);
+    $code .= sprintf ("\t\t".$format."\n", @_);
 }
 
 sub P {
     local *code = shift;
     local $format = shift;
-    local $a0 = shift;
-    local $a1 = shift;
-    local $a2 = shift;
-    local $a3 = shift;
-    $code .= sprintf ($format."\n", $a0, $a1, $a2, $a3);
+    $code .= sprintf ($format."\n", @_);
 }
 
 sub STOP {
@@ -239,6 +231,10 @@ sub emit_body {
 ___
 
     if (($p & 0xf) == 0) {
+	$c.="#ifdef RC4_BIG_ENDIAN\n";
+	&I(\$c,"shr.u	OutWord[%u] = OutWord[%u], 32;;",
+				$iw1 % $NOutWord, $iw1 % $NOutWord);
+	$c.="#endif\n";
 	&I(\$c, "st4 [OutPtr] = OutWord[%u], 4", $iw1 % $NOutWord);
 	return;
     }
@@ -311,6 +307,7 @@ ___
 	&I(\$bypass, "add J = J, SI[%u]", $i1 % $NSI);
 	&I(\$bypass, "mov SI[%u] = SI[%u]", $i0 % $NSI, $i1 % $NSI);
 	&I(\$bypass, "br.sptk.many .rc4Resume%u\n", $label);
+	&I(\$bypass, ";;");
     }
 }
 
@@ -394,10 +391,11 @@ $code=<<___;
 
 /* Define a macro for the bit number of the n-th byte: */
 
-#ifdef L_ENDIAN
-# define BYTE_POS(n)	(8 * (n))
-#else
+#if defined(_HPUX_SOURCE) || defined(B_ENDIAN)
+# define RC4_BIG_ENDIAN
 # define BYTE_POS(n)	(56 - (8 * (n)))
+#else
+# define BYTE_POS(n)	(8 * (n))
 #endif
 
 /*
@@ -406,8 +404,9 @@ $code=<<___;
    will never be taken since regardless of the number of bytes because
    the epilogue count is 4.
 */
-
-#define MODSCHED_RC4(label)						   \\
+/* MODSCHED_RC4 macro was split to _PROLOGUE and _LOOP, because HP-UX
+   assembler failed on original macro with syntax error. <appro> */
+#define MODSCHED_RC4_PROLOGUE						   \\
 	{								   \\
 				ld1		Data[0] = [InPtr], 1;	   \\
 				add		IFinal = 1, I[1];	   \\
@@ -421,8 +420,9 @@ $code=<<___;
 	{								   \\
 				add		J = J, SI[0];		   \\
 				zxt1		I[0] = IFinal;		   \\
-				br.cexit.spnt.few label; /* never taken */ \\
-	} ;;								   \\
+				br.cexit.spnt.few .+16; /* never taken */  \\
+	} ;;
+#define MODSCHED_RC4_LOOP(label)					   \\
 label:									   \\
 	{	.mmi;							   \\
 		(pComputeI)	ld1		Data[0] = [InPtr], 1;	   \\
@@ -476,63 +476,42 @@ RC4:
 		      OutWord[2]
 		.rotp pPhase[4]
 
-#ifdef _LP64
-		add		InPrefetch = 0, InputBuffer
-		nop		0x0
-	}
-#else
-		ADDP		InputBuffer = 0, InputBuffer
-		ADDP		StateTable = 0, StateTable
-	}
-	;;
-	{
 		ADDP		InPrefetch = 0, InputBuffer
-		ADDP		OutputBuffer = 0, OutputBuffer
-		nop		0x0
+		ADDP		KTable = 0, StateTable
 	}
-#endif
+	{
+		.mmi
+		ADDP		InPtr = 0, InputBuffer
+		ADDP		OutPtr = 0, OutputBuffer
+		mov		RetVal = r0
+	}
 	;;
 	{
 		.mmi
 		lfetch.nt1	[InPrefetch], 0x80
-		LKEY		I[1] = [StateTable], SZ
-		mov		OutPrefetch = OutputBuffer
-	} ;;
-	{
-        	.mii
-        	nop     	0x0
-        	nop     	0x0
-        	mov     	RetVal = r0
+		ADDP		OutPrefetch = 0, OutputBuffer
 	}
 	{               // Return 0 if the input length is nonsensical
         	.mib
-        	nop     	0x0
-        	cmp.ge  	L_NOK, L_OK = r0, DataLen
+		ADDP		StateTable = 0, StateTable
+        	cmp.ge.unc  	L_NOK, L_OK = r0, DataLen
 	(L_NOK) br.ret.sptk.few rp
 	}
 	;;
 	{
         	.mib
-        	nop     	0x0
-        	cmp.eq  	L_NOK, L_OK = r0, InputBuffer
+        	cmp.eq.or  	L_NOK, L_OK = r0, InPtr
+        	cmp.eq.or  	L_NOK, L_OK = r0, OutPtr
+		nop		0x0
+	}
+	{
+		.mib
+        	cmp.eq.or  	L_NOK, L_OK = r0, StateTable
+		nop		0x0
 	(L_NOK) br.ret.sptk.few rp
 	}
 	;;
-	{
-        	.mib
-        	nop     	0x0
-        	cmp.eq  	L_NOK, L_OK = r0, OutputBuffer
-	(L_NOK) br.ret.sptk.few rp
-	}
-	;;
-	{
-        	.mib
-        	nop     	0x0
-        	cmp.eq  	L_NOK, L_OK = r0, StateTable
-	(L_NOK) br.ret.sptk.few rp
-	}
-
-
+		LKEY		I[1] = [KTable], SZ
 /* Prefetch the state-table. It contains 256 elements of size SZ */
 
 #if SZ == 1
@@ -568,8 +547,12 @@ RC4:
 		lfetch.fault.nt1		[tmp0], -256	//  3
 		lfetch.fault.nt1		[tmp1], -256;;
 #endif
+	{
+		.mii
 		lfetch.fault.nt1		[tmp0]		//  1
-
+		add		I[1]=1,I[1];;
+		zxt1		I[1]=I[1]
+	}
 	{
 		.mmi
 		lfetch.nt1	[InPrefetch], 0x80
@@ -580,19 +563,13 @@ RC4:
 	{
 		.mmi
 		lfetch.excl.nt1	[OutPrefetch], 0x80
-		LKEY		J = [StateTable], SZ
-		ADDP		EndPtr = DataLen, InputBuffer
+		LKEY		J = [KTable], SZ
+		ADDP		EndPtr = DataLen, InPtr
 	}  ;;
 	{
 		.mmi
-		mov		InPtr = InputBuffer
-		mov		OutPtr = OutputBuffer
 		ADDP		EndPtr = -1, EndPtr	// Make it point to
 							// last data byte.
-	} ;;
-	{
-		.mii
-		mov		KTable = StateTable
 		mov		One = 1
 		.save		ar.lc, LCSave
 		mov		LCSave = ar.lc
@@ -614,6 +591,7 @@ RC4:
 	} ;;
 	{
 		.mmb
+.pred.rel	"mutex",pUnaligned,pAligned
 (pUnaligned)	add		Remainder = -1, Remainder
 (pAligned)	sub		Remainder = EndPtr, InPtr
 (pAligned)	br.cond.dptk.many .rc4Aligned
@@ -628,7 +606,8 @@ RC4:
 /* Do the initial few bytes via the compact, modulo-scheduled loop
    until the output pointer is 8-byte-aligned.  */
 
-		MODSCHED_RC4(.RC4AlignLoop)
+		MODSCHED_RC4_PROLOGUE
+		MODSCHED_RC4_LOOP(.RC4AlignLoop)
 
 	{
 		.mib
@@ -671,13 +650,7 @@ RC4:
 	} ;;
 	{
 		.mmi
-		getf.sig	LoopCount = f6		// M2		5 cyc
-		nop		0x0
-		nop		0x0
-	} ;;
-	{
-		.mmi
-		nop		0x0
+		getf.sig	LoopCount = f6;;	// M2		5 cyc
 		nop		0x0
 		shr.u		LoopCount = LoopCount, 4
 	} ;;
@@ -747,32 +720,26 @@ $code.=<<___;
 
 /* Do the remaining bytes via the compact, modulo-scheduled loop */
 
-		MODSCHED_RC4(.RC4RestLoop)
-
-	{
-		.mmi
-		nop		0x0
-		nop		0x0
-		zxt1		IFinal = IFinal
-	} ;;
+		MODSCHED_RC4_PROLOGUE
+		MODSCHED_RC4_LOOP(.RC4RestLoop)
 
 .rc4Complete:
 	{
 		.mmi
-		ADDP		KTable = -2*SZ, KTable ;;
-		SKEY		[KTable] = IFinal, SZ
+		add		KTable = -SZ, KTable
+		add		IFinal = -1, IFinal
 		mov		ar.lc = LCSave
 	} ;;
 	{
 		.mii
-		nop		0x0
-		nop		0x0
-		add		RetVal = 1, r0
-	}
+		SKEY		[KTable] = J,-SZ
+		zxt1		IFinal = IFinal
+		mov		pr = PRSave, 0x1FFFF
+	} ;;
 	{
 		.mib
-		SKEY		[KTable] = J
-		mov		pr = PRSave, 0x1FFFF
+		SKEY		[KTable] = IFinal
+		add		RetVal = 1, r0
 		br.ret.sptk.few	rp
 	} ;;
 ___
