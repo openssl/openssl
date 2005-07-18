@@ -128,15 +128,14 @@ sgm0=r50;	sgm1=r51;	// small constants
 .align	32
 $func:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
-	.save	ar.lc,r3
-	.save	pr,prsave
 { .mmi;	alloc	r2=ar.pfs,3,17,0,16
 	$ADDP	ctx=0,r32		// 1st arg
+	.save	ar.lc,r3
 	mov	r3=ar.lc	}
 { .mmi;	$ADDP	input=0,r33		// 2nd arg
 	addl	Ktbl=\@ltoff($TABLE#),gp
+	.save	pr,prsave
 	mov	prsave=pr	};;
 
 	.body

@@ -75,14 +75,13 @@ yy=r31;
 .skip	16
 RC4:
 	.prologue
-	.fframe 0
 	.save   ar.pfs,r2
-	.save	ar.lc,r3
-	.save	pr,prsave
 { .mii;	alloc	r2=ar.pfs,4,12,0,16
+	.save	pr,prsave
 	mov	prsave=pr
 	ADDP	key=0,in0		};;
 { .mib;	cmp.eq	p6,p0=0,in1			// len==0?
+	.save	ar.lc,r3
 	mov	r3=ar.lc
 (p6)	br.ret.spnt.many	b0	};;	// emergency exit
 

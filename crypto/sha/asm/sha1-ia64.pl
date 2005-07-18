@@ -251,11 +251,9 @@ inp=r33;	// in1
 .align	32
 sha1_block_asm_host_order:
 	.prologue
-	.fframe	0
-	.save	ar.pfs,r0
-	.save	ar.lc,r3
 { .mmi;	alloc	tmp1=ar.pfs,3,15,0,0
 	$ADDP	tmp0=4,ctx
+	.save	ar.lc,r3
 	mov	r3=ar.lc		}
 { .mmi;	$ADDP	ctx=0,ctx
 	$ADDP	inp=0,inp
@@ -406,11 +404,9 @@ $code.=<<___ if ($big_endian);
 ___
 $code.=<<___;
 	.prologue
-	.fframe	0
-	.save	ar.pfs,r0
-	.save	ar.lc,r3
 { .mmi;	alloc	tmp1=ar.pfs,3,15,0,0
 	$ADDP	tmp0=4,ctx
+	.save	ar.lc,r3
 	mov	r3=ar.lc		}
 { .mmi;	$ADDP	ctx=0,ctx
 	$ADDP	inp=0,inp

@@ -179,11 +179,10 @@ _ia64_AES_encrypt:
 .skip	16
 AES_encrypt:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
-	.save	ar.lc,r3
 { .mmi;	alloc	r2=ar.pfs,3,0,12,0
 	addl	out8=@ltoff(AES_Te#),gp
+	.save	ar.lc,r3
 	mov	r3=ar.lc		}
 { .mmi;	and	out0=3,in0
 	ADDP	in0=0,in0
@@ -472,11 +471,10 @@ _ia64_AES_decrypt:
 .skip	16
 AES_decrypt:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
-	.save	ar.lc,r3
 { .mmi;	alloc	r2=ar.pfs,3,0,12,0
 	addl	out8=@ltoff(AES_Td#),gp
+	.save	ar.lc,r3
 	mov	r3=ar.lc		}
 { .mmi;	and	out0=3,in0
 	ADDP	in0=0,in0
