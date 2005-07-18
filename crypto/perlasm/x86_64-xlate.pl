@@ -167,10 +167,12 @@ my $current_function;
     	my $self = shift;
 	my $sz = shift;
 
-	# silently convert all EAs to 64-bit, required for elder GNU
-	# assembler and results in more compact code
-	$self->{index} =~ s/^[er](.?[0-9xp])[d]?$/r\1/;
-	$self->{base}  =~ s/^[er](.?[0-9xp])[d]?$/r\1/;
+	# Silently convert all EAs to 64-bit. This is required for
+	# elder GNU assembler and results in more compact code,
+	# *but* most importantly AES module depends on this feature!
+	$self->{index} =~ s/^[er](.?[0-9xpi])[d]?$/r\1/;
+	$self->{base}  =~ s/^[er](.?[0-9xpi])[d]?$/r\1/;
+
 	if (!$masm) {
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{label}

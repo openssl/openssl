@@ -6,9 +6,9 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 #
-# Version 1.0.
+# Version 1.1.
 #
-# aes-*-cbc benchmarks are improved by 50% [compared to gcc 3.3.2 on
+# aes-*-cbc benchmarks are improved by >70% [compared to gcc 3.3.2 on
 # Opteron 240 CPU] plus all the bells-n-whistles from 32-bit version
 # [you'll notice a lot of resemblance], such as compressed S-boxes
 # in little-endian byte order, prefetch of these tables in CBC mode,
@@ -18,14 +18,14 @@
 # Performance in number of cycles per processed byte for 128-bit key:
 #
 #		ECB		CBC encrypt
-# AMD64		15.6		14.6(*)
-# EM64T		23.3(**)	21.4(*)
+# AMD64		13.7		13.0(*)
+# EM64T		20.2		18.6(*)
 #
 # (*)	CBC benchmarks are better than ECB thanks to custom ABI used
 #	by the private block encryption function.
-# (**)	This module exhibits virtually same ECB performance as 32-bit
-#	counterpart on [current] Intel CPU.
 
+$verticalspin=1;	# unlike 32-bit version $verticalspin performs
+			# ~15% better on both AMD and Intel cores
 $output=shift;
 open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
 
@@ -35,20 +35,22 @@ $s0="%eax";
 $s1="%ebx";
 $s2="%ecx";
 $s3="%edx";
-$inp="%rdi";
-$out="%rsi";
-$acc0="%ebp";
-$acc1="%r8d";
-$acc2="%r9d";
+$acc0="%esi";
+$acc1="%edi";
+$acc2="%ebp";
+$inp="%r8";
+$out="%r9";
 $t0="%r10d";
 $t1="%r11d";
 $t2="%r12d";
-$cnt="%r13d";
-$tbl="%r14";
+$rnds="%r13d";
+$sbox="%r14";
 $key="%r15";
 
-sub hi() { my $r=shift; $r =~ s/%[er]([a-d])x/%\1h/; $r; }
-sub lo() { my $r=shift; $r =~ s/%[er]([a-d])x/%\1l/; $r; }
+sub hi() { my $r=shift;	$r =~ s/%[er]([a-d])x/%\1h/;	$r; }
+sub lo() { my $r=shift;	$r =~ s/%[er]([a-d])x/%\1l/;
+			$r =~ s/%[er]([sd]i)/%\1l/;
+			$r =~ s/%(r[0-9]+)[d]?/%\1b/;	$r; }
 sub _data_word()
 { my $i;
     while(defined($i=shift)) { $code.=sprintf".long\t0x%08x,0x%08x\n",$i,$i; }
@@ -61,6 +63,169 @@ sub data_word()
     $code.=sprintf"0x%08x\n",$last;
 }
 
+sub encvert()
+{ my $t3="%r8d";	# zaps $inp!
+  my $qs0='"$s0"';
+  my $qs1='"$s1"';
+  my $qs2='"$s2"';
+  my $qs3='"$s3"';
+
+$code.=<<___;
+	# favor 3-way issue Opteron pipeline...
+	movzb	`&lo($qs0)`,$acc0
+	movzb	`&lo($qs1)`,$acc1
+	movzb	`&lo($qs2)`,$acc2
+	mov	0($sbox,$acc0,8),$t0
+	mov	0($sbox,$acc1,8),$t1
+	mov	0($sbox,$acc2,8),$t2
+
+	movzb	`&hi($qs1)`,$acc0
+	movzb	`&hi($qs2)`,$acc1
+	movzb	`&lo($qs3)`,$acc2
+	xor	3($sbox,$acc0,8),$t0
+	xor	3($sbox,$acc1,8),$t1
+	mov	0($sbox,$acc2,8),$t3
+
+	movzb	`&hi($qs3)`,$acc0
+	shr	\$16,$s2
+	movzb	`&hi($qs0)`,$acc2
+	xor	3($sbox,$acc0,8),$t2
+	shr	\$16,$s3
+	xor	3($sbox,$acc2,8),$t3
+
+	shr	\$16,$s1
+	lea	16($key),$key
+	shr	\$16,$s0
+
+	movzb	`&lo($qs2)`,$acc0
+	movzb	`&lo($qs3)`,$acc1
+	movzb	`&lo($qs0)`,$acc2
+	xor	2($sbox,$acc0,8),$t0
+	xor	2($sbox,$acc1,8),$t1
+	xor	2($sbox,$acc2,8),$t2
+
+	movzb	`&hi($qs3)`,$acc0
+	movzb	`&hi($qs0)`,$acc1
+	movzb	`&lo($qs1)`,$acc2
+	xor	1($sbox,$acc0,8),$t0
+	xor	1($sbox,$acc1,8),$t1
+	xor	2($sbox,$acc2,8),$t3
+
+	mov	12($key),$s3
+	movzb	`&hi($qs1)`,$acc1
+	movzb	`&hi($qs2)`,$acc2
+	mov	0($key),$s0
+	xor	1($sbox,$acc1,8),$t2
+	xor	1($sbox,$acc2,8),$t3
+
+	mov	4($key),$s1
+	mov	8($key),$s2
+	xor	$t0,$s0
+	xor	$t1,$s1
+	xor	$t2,$s2
+	xor	$t3,$s3
+___
+}
+
+sub enclastvert()
+{ my $t3="%r8d";	# zaps $inp!
+  my $qs0='"$s0"';
+  my $qs1='"$s1"';
+  my $qs2='"$s2"';
+  my $qs3='"$s3"';
+
+$code.=<<___;
+	movzb	`&lo($qs0)`,$acc0
+	movzb	`&lo($qs1)`,$acc1
+	movzb	`&lo($qs2)`,$acc2
+	mov	2($sbox,$acc0,8),$t0
+	mov	2($sbox,$acc1,8),$t1
+	mov	2($sbox,$acc2,8),$t2
+
+	and	\$0x000000ff,$t0
+	and	\$0x000000ff,$t1
+	and	\$0x000000ff,$t2
+
+	movzb	`&lo($qs3)`,$acc0
+	movzb	`&hi($qs1)`,$acc1
+	movzb	`&hi($qs2)`,$acc2
+	mov	2($sbox,$acc0,8),$t3
+	mov	0($sbox,$acc1,8),$acc1	#$t0
+	mov	0($sbox,$acc2,8),$acc2	#$t1
+
+	and	\$0x000000ff,$t3
+	and	\$0x0000ff00,$acc1
+	and	\$0x0000ff00,$acc2
+
+	xor	$acc1,$t0
+	xor	$acc2,$t1
+	shr	\$16,$s2
+
+	movzb	`&hi($qs3)`,$acc0
+	movzb	`&hi($qs0)`,$acc1
+	shr	\$16,$s3
+	mov	0($sbox,$acc0,8),$acc0	#$t2
+	mov	0($sbox,$acc1,8),$acc1	#$t3
+
+	and	\$0x0000ff00,$acc0
+	and	\$0x0000ff00,$acc1
+	shr	\$16,$s1
+	xor	$acc0,$t2
+	xor	$acc1,$t3
+	shr	\$16,$s0
+
+	movzb	`&lo($qs2)`,$acc0
+	movzb	`&lo($qs3)`,$acc1
+	movzb	`&lo($qs0)`,$acc2
+	mov	0($sbox,$acc0,8),$acc0	#$t0
+	mov	0($sbox,$acc1,8),$acc1	#$t1
+	mov	0($sbox,$acc2,8),$acc2	#$t2
+
+	and	\$0x00ff0000,$acc0
+	and	\$0x00ff0000,$acc1
+	and	\$0x00ff0000,$acc2
+
+	xor	$acc0,$t0
+	xor	$acc1,$t1
+	xor	$acc2,$t2
+
+	movzb	`&lo($qs1)`,$acc0
+	movzb	`&hi($qs3)`,$acc1
+	movzb	`&hi($qs0)`,$acc2
+	mov	0($sbox,$acc0,8),$acc0	#$t3
+	mov	2($sbox,$acc1,8),$acc1	#$t0
+	mov	2($sbox,$acc2,8),$acc2	#$t1
+
+	and	\$0x00ff0000,$acc0
+	and	\$0xff000000,$acc1
+	and	\$0xff000000,$acc2
+
+	xor	$acc0,$t3
+	xor	$acc1,$t0
+	xor	$acc2,$t1
+
+	movzb	`&hi($qs1)`,$acc0
+	movzb	`&hi($qs2)`,$acc1
+	mov	16+12($key),$s3
+	mov	2($sbox,$acc0,8),$acc0	#$t2
+	mov	2($sbox,$acc1,8),$acc1	#$t3
+	mov	16+0($key),$s0
+
+	and	\$0xff000000,$acc0
+	and	\$0xff000000,$acc1
+
+	xor	$acc0,$t2
+	xor	$acc1,$t3
+
+	mov	16+4($key),$s1
+	mov	16+8($key),$s2
+	xor	$t0,$s0
+	xor	$t1,$s1
+	xor	$t2,$s2
+	xor	$t3,$s3
+___
+}
+
 sub encstep()
 { my ($i,@s) = @_;
   my $tmp0=$acc0;
@@ -68,24 +233,28 @@ sub encstep()
   my $tmp2=$acc2;
   my $out=($t0,$t1,$t2,$s[0])[$i];
 
-	$code.="	mov	$s[0],$out\n"		if ($i!=3);
-			$tmp1=$s[2]			if ($i==3);
+	if ($i==3) {
+		$tmp0=$s[1];
+		$tmp1=$s[2];
+		$tmp2=$s[3];
+	}
+	$code.="	movzb	".&lo($s[0]).",$out\n";
 	$code.="	mov	$s[2],$tmp1\n"		if ($i!=3);
-	$code.="	and	\$0xFF,$out\n";
+	$code.="	lea	16($key),$key\n"	if ($i==0);
 
-	$code.="	mov	0($tbl,$out,8),$out\n";
-	$code.="	shr	\$16,$tmp1\n";
-			$tmp2=$s[3]			if ($i==3);
-	$code.="	mov	$s[3],$tmp2\n"		if ($i!=3);
-
-			$tmp0=$s[1]			if ($i==3);
 	$code.="	movzb	".&hi($s[1]).",$tmp0\n";
-	$code.="	and	\$0xFF,$tmp1\n";
-	$code.="	shr	\$24,$tmp2\n";
+	$code.="	mov	0($sbox,$out,8),$out\n";
 
-	$code.="	xor	3($tbl,$tmp0,8),$out\n";
-	$code.="	xor	2($tbl,$tmp1,8),$out\n";
-	$code.="	xor	1($tbl,$tmp2,8),$out\n";
+	$code.="	shr	\$16,$tmp1\n";
+	$code.="	mov	$s[3],$tmp2\n"		if ($i!=3);
+	$code.="	xor	3($sbox,$tmp0,8),$out\n";
+
+	$code.="	movzb	".&lo($tmp1).",$tmp1\n";
+	$code.="	shr	\$24,$tmp2\n";
+	$code.="	xor	4*$i($key),$out\n";
+
+	$code.="	xor	2($sbox,$tmp1,8),$out\n";
+	$code.="	xor	1($sbox,$tmp2,8),$out\n";
 
 	$code.="	mov	$t0,$s[1]\n"		if ($i==3);
 	$code.="	mov	$t1,$s[2]\n"		if ($i==3);
@@ -100,25 +269,26 @@ sub enclast()
   my $tmp2=$acc2;
   my $out=($t0,$t1,$t2,$s[0])[$i];
 
-	$code.="	mov	$s[0],$out\n"		if ($i!=3);
-			$tmp1=$s[2]			if ($i==3);
+	if ($i==3) {
+		$tmp0=$s[1];
+		$tmp1=$s[2];
+		$tmp2=$s[3];
+	}
+	$code.="	movzb	".&lo($s[0]).",$out\n";
 	$code.="	mov	$s[2],$tmp1\n"		if ($i!=3);
-	$code.="	and	\$0xFF,$out\n";
 
-	$code.="	mov	2($tbl,$out,8),$out\n";
+	$code.="	mov	2($sbox,$out,8),$out\n";
 	$code.="	shr	\$16,$tmp1\n";
-			$tmp2=$s[3]			if ($i==3);
 	$code.="	mov	$s[3],$tmp2\n"		if ($i!=3);
 
 	$code.="	and	\$0x000000ff,$out\n";
-			$tmp0=$s[1]			if ($i==3);
 	$code.="	movzb	".&hi($s[1]).",$tmp0\n";
-	$code.="	and	\$0xFF,$tmp1\n";
+	$code.="	movzb	".&lo($tmp1).",$tmp1\n";
 	$code.="	shr	\$24,$tmp2\n";
 
-	$code.="	mov	0($tbl,$tmp0,8),$tmp0\n";
-	$code.="	mov	0($tbl,$tmp1,8),$tmp1\n";
-	$code.="	mov	2($tbl,$tmp2,8),$tmp2\n";
+	$code.="	mov	0($sbox,$tmp0,8),$tmp0\n";
+	$code.="	mov	0($sbox,$tmp1,8),$tmp1\n";
+	$code.="	mov	2($sbox,$tmp2,8),$tmp2\n";
 
 	$code.="	and	\$0x0000ff00,$tmp0\n";
 	$code.="	and	\$0x00ff0000,$tmp1\n";
@@ -142,36 +312,35 @@ _x86_64_AES_encrypt:
 	xor	8($key),$s2
 	xor	12($key),$s3
 
-	mov	240($key),$cnt			# load key->rounds
-	sub	\$1,$cnt
-.align	4
+	mov	240($key),$rnds			# load key->rounds
+	sub	\$1,$rnds
+	jmp	.Lenc_loop
+.align	16
 .Lenc_loop:
 ___
-	&encstep(0,$s0,$s1,$s2,$s3);
-	&encstep(1,$s1,$s2,$s3,$s0);
-	&encstep(2,$s2,$s3,$s0,$s1);
-	&encstep(3,$s3,$s0,$s1,$s2);
+	if ($verticalspin) { &encvert(); }
+	else {	&encstep(0,$s0,$s1,$s2,$s3);
+		&encstep(1,$s1,$s2,$s3,$s0);
+		&encstep(2,$s2,$s3,$s0,$s1);
+		&encstep(3,$s3,$s0,$s1,$s2);
+	}
 $code.=<<___;
-	lea	16($key),$key
-	xor	0($key),$s0			# xor with key
-	xor	4($key),$s1
-	xor	8($key),$s2
-	xor	12($key),$s3
-
-	sub	\$1,$cnt
+	sub	\$1,$rnds
 	jnz	.Lenc_loop
 ___
-	&enclast(0,$s0,$s1,$s2,$s3);
-	&enclast(1,$s1,$s2,$s3,$s0);
-	&enclast(2,$s2,$s3,$s0,$s1);
-	&enclast(3,$s3,$s0,$s1,$s2);
+	if ($verticalspin) { &enclastvert(); }
+	else {	&enclast(0,$s0,$s1,$s2,$s3);
+		&enclast(1,$s1,$s2,$s3,$s0);
+		&enclast(2,$s2,$s3,$s0,$s1);
+		&enclast(3,$s3,$s0,$s1,$s2);
+		$code.=<<___;
+		xor	16+0($key),$s0		# xor with key
+		xor	16+4($key),$s1
+		xor	16+8($key),$s2
+		xor	16+12($key),$s3
+___
+	}
 $code.=<<___;
-	lea	16($key),$key
-	xor	0($key),$s0			# xor with key
-	xor	4($key),$s1
-	xor	8($key),$s2
-	xor	12($key),$s3
-
 	.byte	0xf3,0xc3			# rep ret
 .size	_x86_64_AES_encrypt,.-_x86_64_AES_encrypt
 ___
@@ -190,9 +359,11 @@ AES_encrypt:
 	push	%r15
 
 	mov	%rdx,$key
+	mov	%rdi,$inp
+	mov	%rsi,$out
 
-	.picmeup	$tbl
-	lea	AES_Te-.($tbl),$tbl
+	.picmeup	$sbox
+	lea	AES_Te-.($sbox),$sbox
 
 	mov	0($inp),$s0
 	mov	4($inp),$s1
@@ -218,6 +389,169 @@ ___
 
 #------------------------------------------------------------------#
 
+sub decvert()
+{ my $t3="%r8d";	# zaps $inp!
+  my $qs0='"$s0"';
+  my $qs1='"$s1"';
+  my $qs2='"$s2"';
+  my $qs3='"$s3"';
+
+$code.=<<___;
+	# favor 3-way issue Opteron pipeline...
+	movzb	`&lo($qs0)`,$acc0
+	movzb	`&lo($qs1)`,$acc1
+	movzb	`&lo($qs2)`,$acc2
+	mov	0($sbox,$acc0,8),$t0
+	mov	0($sbox,$acc1,8),$t1
+	mov	0($sbox,$acc2,8),$t2
+
+	movzb	`&hi($qs3)`,$acc0
+	movzb	`&hi($qs0)`,$acc1
+	movzb	`&lo($qs3)`,$acc2
+	xor	3($sbox,$acc0,8),$t0
+	xor	3($sbox,$acc1,8),$t1
+	mov	0($sbox,$acc2,8),$t3
+
+	movzb	`&hi($qs1)`,$acc0
+	shr	\$16,$s0
+	movzb	`&hi($qs2)`,$acc2
+	xor	3($sbox,$acc0,8),$t2
+	shr	\$16,$s3
+	xor	3($sbox,$acc2,8),$t3
+
+	shr	\$16,$s1
+	lea	16($key),$key
+	shr	\$16,$s2
+
+	movzb	`&lo($qs2)`,$acc0
+	movzb	`&lo($qs3)`,$acc1
+	movzb	`&lo($qs0)`,$acc2
+	xor	2($sbox,$acc0,8),$t0
+	xor	2($sbox,$acc1,8),$t1
+	xor	2($sbox,$acc2,8),$t2
+
+	movzb	`&hi($qs1)`,$acc0
+	movzb	`&hi($qs2)`,$acc1
+	movzb	`&lo($qs1)`,$acc2
+	xor	1($sbox,$acc0,8),$t0
+	xor	1($sbox,$acc1,8),$t1
+	xor	2($sbox,$acc2,8),$t3
+
+	movzb	`&hi($qs3)`,$acc0
+	mov	12($key),$s3
+	movzb	`&hi($qs0)`,$acc2
+	xor	1($sbox,$acc0,8),$t2
+	mov	0($key),$s0
+	xor	1($sbox,$acc2,8),$t3
+
+	xor	$t0,$s0
+	mov	4($key),$s1
+	mov	8($key),$s2
+	xor	$t2,$s2
+	xor	$t1,$s1
+	xor	$t3,$s3
+___
+}
+
+sub declastvert()
+{ my $t3="%r8d";	# zaps $inp!
+  my $qs0='"$s0"';
+  my $qs1='"$s1"';
+  my $qs2='"$s2"';
+  my $qs3='"$s3"';
+
+$code.=<<___;
+	movzb	`&lo($qs0)`,$acc0
+	movzb	`&lo($qs1)`,$acc1
+	movzb	`&lo($qs2)`,$acc2
+	mov	2048($sbox,$acc0,4),$t0
+	mov	2048($sbox,$acc1,4),$t1
+	mov	2048($sbox,$acc2,4),$t2
+
+	and	\$0x000000ff,$t0
+	and	\$0x000000ff,$t1
+	and	\$0x000000ff,$t2
+
+	movzb	`&lo($qs3)`,$acc0
+	movzb	`&hi($qs3)`,$acc1
+	movzb	`&hi($qs0)`,$acc2
+	mov	2048($sbox,$acc0,4),$t3
+	mov	2048($sbox,$acc1,4),$acc1	#$t0
+	mov	2048($sbox,$acc2,4),$acc2	#$t1
+
+	and	\$0x000000ff,$t3
+	and	\$0x0000ff00,$acc1
+	and	\$0x0000ff00,$acc2
+
+	xor	$acc1,$t0
+	xor	$acc2,$t1
+	shr	\$16,$s3
+
+	movzb	`&hi($qs1)`,$acc0
+	movzb	`&hi($qs2)`,$acc1
+	shr	\$16,$s0
+	mov	2048($sbox,$acc0,4),$acc0	#$t2
+	mov	2048($sbox,$acc1,4),$acc1	#$t3
+
+	and	\$0x0000ff00,$acc0
+	and	\$0x0000ff00,$acc1
+	shr	\$16,$s1
+	xor	$acc0,$t2
+	xor	$acc1,$t3
+	shr	\$16,$s2
+
+	movzb	`&lo($qs2)`,$acc0
+	movzb	`&lo($qs3)`,$acc1
+	movzb	`&lo($qs0)`,$acc2
+	mov	2048($sbox,$acc0,4),$acc0	#$t0
+	mov	2048($sbox,$acc1,4),$acc1	#$t1
+	mov	2048($sbox,$acc2,4),$acc2	#$t2
+
+	and	\$0x00ff0000,$acc0
+	and	\$0x00ff0000,$acc1
+	and	\$0x00ff0000,$acc2
+
+	xor	$acc0,$t0
+	xor	$acc1,$t1
+	xor	$acc2,$t2
+
+	movzb	`&lo($qs1)`,$acc0
+	movzb	`&hi($qs1)`,$acc1
+	movzb	`&hi($qs2)`,$acc2
+	mov	2048($sbox,$acc0,4),$acc0	#$t3
+	mov	2048($sbox,$acc1,4),$acc1	#$t0
+	mov	2048($sbox,$acc2,4),$acc2	#$t1
+
+	and	\$0x00ff0000,$acc0
+	and	\$0xff000000,$acc1
+	and	\$0xff000000,$acc2
+
+	xor	$acc0,$t3
+	xor	$acc1,$t0
+	xor	$acc2,$t1
+
+	movzb	`&hi($qs3)`,$acc0
+	movzb	`&hi($qs0)`,$acc1
+	mov	16+12($key),$s3
+	mov	2048($sbox,$acc0,4),$acc0	#$t2
+	mov	2048($sbox,$acc1,4),$acc1	#$t3
+	mov	16+0($key),$s0
+
+	and	\$0xff000000,$acc0
+	and	\$0xff000000,$acc1
+
+	xor	$acc0,$t2
+	xor	$acc1,$t3
+
+	mov	16+4($key),$s1
+	mov	16+8($key),$s2
+	xor	$t0,$s0
+	xor	$t1,$s1
+	xor	$t2,$s2
+	xor	$t3,$s3
+___
+}
+
 sub decstep()
 { my ($i,@s) = @_;
   my $tmp0=$acc0;
@@ -230,7 +564,7 @@ sub decstep()
 	$code.="	mov	$s[2],$tmp1\n"		if ($i!=3);
 	$code.="	and	\$0xFF,$out\n";
 
-	$code.="	mov	0($tbl,$out,8),$out\n";
+	$code.="	mov	0($sbox,$out,8),$out\n";
 	$code.="	shr	\$16,$tmp1\n";
 			$tmp2=$s[3]			if ($i==3);
 	$code.="	mov	$s[3],$tmp2\n"		if ($i!=3);
@@ -240,9 +574,9 @@ sub decstep()
 	$code.="	and	\$0xFF,$tmp1\n";
 	$code.="	shr	\$24,$tmp2\n";
 
-	$code.="	xor	3($tbl,$tmp0,8),$out\n";
-	$code.="	xor	2($tbl,$tmp1,8),$out\n";
-	$code.="	xor	1($tbl,$tmp2,8),$out\n";
+	$code.="	xor	3($sbox,$tmp0,8),$out\n";
+	$code.="	xor	2($sbox,$tmp1,8),$out\n";
+	$code.="	xor	1($sbox,$tmp2,8),$out\n";
 
 	$code.="	mov	$t2,$s[1]\n"		if ($i==3);
 	$code.="	mov	$t1,$s[2]\n"		if ($i==3);
@@ -262,7 +596,7 @@ sub declast()
 	$code.="	mov	$s[2],$tmp1\n"		if ($i!=3);
 	$code.="	and	\$0xFF,$out\n";
 
-	$code.="	mov	2048($tbl,$out,4),$out\n";
+	$code.="	mov	2048($sbox,$out,4),$out\n";
 	$code.="	shr	\$16,$tmp1\n";
 			$tmp2=$s[3]			if ($i==3);
 	$code.="	mov	$s[3],$tmp2\n"		if ($i!=3);
@@ -273,9 +607,9 @@ sub declast()
 	$code.="	and	\$0xFF,$tmp1\n";
 	$code.="	shr	\$24,$tmp2\n";
 
-	$code.="	mov	2048($tbl,$tmp0,4),$tmp0\n";
-	$code.="	mov	2048($tbl,$tmp1,4),$tmp1\n";
-	$code.="	mov	2048($tbl,$tmp2,4),$tmp2\n";
+	$code.="	mov	2048($sbox,$tmp0,4),$tmp0\n";
+	$code.="	mov	2048($sbox,$tmp1,4),$tmp1\n";
+	$code.="	mov	2048($sbox,$tmp2,4),$tmp2\n";
 
 	$code.="	and	\$0x0000ff00,$tmp0\n";
 	$code.="	and	\$0x00ff0000,$tmp1\n";
@@ -299,36 +633,42 @@ _x86_64_AES_decrypt:
 	xor	8($key),$s2
 	xor	12($key),$s3
 
-	mov	240($key),$cnt			# load key->rounds
-	sub	\$1,$cnt
-.align	4
+	mov	240($key),$rnds			# load key->rounds
+	sub	\$1,$rnds
+	jmp	.Ldec_loop
+.align	16
 .Ldec_loop:
 ___
-	&decstep(0,$s0,$s3,$s2,$s1);
-	&decstep(1,$s1,$s0,$s3,$s2);
-	&decstep(2,$s2,$s1,$s0,$s3);
-	&decstep(3,$s3,$s2,$s1,$s0);
+	if ($verticalspin) { &decvert(); }
+	else {	&decstep(0,$s0,$s3,$s2,$s1);
+		&decstep(1,$s1,$s0,$s3,$s2);
+		&decstep(2,$s2,$s1,$s0,$s3);
+		&decstep(3,$s3,$s2,$s1,$s0);
+		$code.=<<___;
+		lea	16($key),$key
+		xor	0($key),$s0			# xor with key
+		xor	4($key),$s1
+		xor	8($key),$s2
+		xor	12($key),$s3
+___
+	}
 $code.=<<___;
-	lea	16($key),$key
-	xor	0($key),$s0			# xor with key
-	xor	4($key),$s1
-	xor	8($key),$s2
-	xor	12($key),$s3
-
-	sub	\$1,$cnt
+	sub	\$1,$rnds
 	jnz	.Ldec_loop
 ___
-	&declast(0,$s0,$s3,$s2,$s1);
-	&declast(1,$s1,$s0,$s3,$s2);
-	&declast(2,$s2,$s1,$s0,$s3);
-	&declast(3,$s3,$s2,$s1,$s0);
+	if ($verticalspin) { &declastvert(); }
+	else {	&declast(0,$s0,$s3,$s2,$s1);
+		&declast(1,$s1,$s0,$s3,$s2);
+		&declast(2,$s2,$s1,$s0,$s3);
+		&declast(3,$s3,$s2,$s1,$s0);
+		$code.=<<___;
+		xor	16+0($key),$s0			# xor with key
+		xor	4($key),$s1
+		xor	8($key),$s2
+		xor	12($key),$s3
+___
+	}
 $code.=<<___;
-	lea	16($key),$key
-	xor	0($key),$s0			# xor with key
-	xor	4($key),$s1
-	xor	8($key),$s2
-	xor	12($key),$s3
-
 	.byte	0xf3,0xc3			# rep ret
 .size	_x86_64_AES_decrypt,.-_x86_64_AES_decrypt
 ___
@@ -347,9 +687,11 @@ AES_decrypt:
 	push	%r15
 
 	mov	%rdx,$key
+	mov	%rdi,$inp
+	mov	%rsi,$out
 
-	.picmeup	$tbl
-	lea	AES_Td-.($tbl),$tbl
+	.picmeup	$sbox
+	lea	AES_Td-.($sbox),$sbox
 
 	mov	0($inp),$s0
 	mov	4($inp),$s1
@@ -719,24 +1061,24 @@ AES_cbc_encrypt:
 	pushfq
 	cld
 
-	.picmeup $tbl
+	.picmeup $sbox
 .Lcbc_pic_point:
 
 	cmp	\$0,%r9
 	je	.LDECRYPT
 
-	lea	AES_Te-.Lcbc_pic_point($tbl),$tbl
+	lea	AES_Te-.Lcbc_pic_point($sbox),$sbox
 
 	# allocate aligned stack frame...
 	lea	-64-248(%rsp),$key
 	and	\$-64,$key
 
 	# ... and make it doesn't alias with AES_Te modulo 4096
-	mov	$tbl,%r10
-	lea	2048($tbl),%r11
+	mov	$sbox,%r10
+	lea	2048($sbox),%r11
 	mov	$key,%r12
-	and	\$0xFFF,%r10	# s = $tbl&0xfff
-	and	\$0xFFF,%r11	# e = ($tbl+2048)&0xfff
+	and	\$0xFFF,%r10	# s = $sbox&0xfff
+	and	\$0xFFF,%r11	# e = ($sbox+2048)&0xfff
 	and	\$0xFFF,%r12	# p = %rsp&0xfff
 
 	cmp	%r11,%r12	# if (p=>e) %rsp =- (p-e);
@@ -758,13 +1100,15 @@ AES_cbc_encrypt:
 	mov	%rdx,$_len	# save copy of len
 	mov	%rcx,$_key	# save copy of key
 	mov	%r8,$_ivp	# save copy of ivp
-
 	movl	\$0,$mark	# copy of aes_key->rounds = 0;
+	mov	%r8,%rbp	# rearrange input arguments
+	mov	%rsi,$out
+	mov	%rdi,$inp
 	mov	%rcx,$key
 
 	# do we copy key schedule to stack?
 	mov	$key,%r10
-	sub	$tbl,%r10
+	sub	$sbox,%r10
 	and	\$0xfff,%r10
 	cmp	\$2048,%r10
 	jb	.Lcbc_do_ecopy
@@ -772,8 +1116,6 @@ AES_cbc_encrypt:
 	jb	.Lcbc_skip_ecopy
 .align	4
 .Lcbc_do_ecopy:
-		mov	%rsi,%r10	# backup $inp,$out
-		mov	%rdi,%r11
 		mov	$key,%rsi
 		lea	$aes_key,%rdi
 		lea	$aes_key,$key
@@ -781,29 +1123,27 @@ AES_cbc_encrypt:
 		.long	0x90A548F3	# rep movsq
 		mov	(%rsi),%eax	# copy aes_key->rounds
 		mov	%eax,(%rdi)
-		mov	%r10,%rsi	# restore $inp,$out
-		mov	%r11,%rdi
 .Lcbc_skip_ecopy:
 	mov	$key,$keyp	# save key pointer
 
 	mov	\$16,%ecx
 .align	4
 .Lcbc_prefetch_te:
-		mov	0($tbl),%r10
-		mov	32($tbl),%r11
-		mov	64($tbl),%r12
-		mov	96($tbl),%r13
-		lea	128($tbl),$tbl
+		mov	0($sbox),%r10
+		mov	32($sbox),%r11
+		mov	64($sbox),%r12
+		mov	96($sbox),%r13
+		lea	128($sbox),$sbox
 		sub	\$1,%ecx
 	jnz	.Lcbc_prefetch_te
-	sub	\$2048,$tbl
+	sub	\$2048,$sbox
 
 	test	\$-16,%rdx		# check upon length
 	mov	%rdx,%r10
-	mov	0(%r8),$s0		# load iv
-	mov	4(%r8),$s1
-	mov	8(%r8),$s2
-	mov	12(%r8),$s3
+	mov	0(%rbp),$s0		# load iv
+	mov	4(%rbp),$s1
+	mov	8(%rbp),$s2
+	mov	12(%rbp),$s3
 	jz	.Lcbc_enc_tail		# short input...
 
 .align	4
@@ -812,10 +1152,12 @@ AES_cbc_encrypt:
 		xor	4($inp),$s1
 		xor	8($inp),$s2
 		xor	12($inp),$s3
+		mov	$inp,$ivec	# if ($verticalspin) save inp
 
 		mov	$keyp,$key	# restore key
 		call	_x86_64_AES_encrypt
 
+		mov	$ivec,$inp	# if ($verticalspin) restore inp
 		mov	$s0,0($out)
 		mov	$s1,4($out)
 		mov	$s2,8($out)
@@ -830,11 +1172,11 @@ AES_cbc_encrypt:
 	jnz	.Lcbc_enc_loop
 	test	\$15,%r10
 	jnz	.Lcbc_enc_tail
-	mov	$_ivp,%r10	# restore ivp
-	mov	$s0,0(%r10)	# save ivec
-	mov	$s1,4(%r10)
-	mov	$s2,8(%r10)
-	mov	$s3,12(%r10)
+	mov	$_ivp,%rbp	# restore ivp
+	mov	$s0,0(%rbp)	# save ivec
+	mov	$s1,4(%rbp)
+	mov	$s2,8(%rbp)
+	mov	$s3,12(%rbp)
 
 .align	4
 .Lcbc_cleanup:
@@ -858,36 +1200,34 @@ AES_cbc_encrypt:
 .align	4
 .Lcbc_enc_tail:
 	cmp	$inp,$out
-	mov	$inp,%r11
-	mov	$out,%r12
 	je	.Lcbc_enc_in_place
 	mov	%r10,%rcx
-	xchg	%rsi,%rdi
+	mov	$inp,%rsi
+	mov	$out,%rdi
 	.long	0xF689A4F3		# rep movsb
 .Lcbc_enc_in_place:
 	mov	\$16,%rcx		# zero tail
 	sub	%r10,%rcx
 	xor	%rax,%rax
 	.long	0xF689AAF3		# rep stosb
-	mov	%r12,$inp		# this is not a mistake!
-	mov	%r12,$out
+	mov	$out,$inp		# this is not a mistake!
 	movq	\$16,$_len		# len=16
 	jmp	.Lcbc_enc_loop		# one more spin...
 #----------------------------- DECRYPT -----------------------------#
 .align	16
 .LDECRYPT:
-	lea	AES_Td-.Lcbc_pic_point($tbl),$tbl
+	lea	AES_Td-.Lcbc_pic_point($sbox),$sbox
 
 	# allocate aligned stack frame...
 	lea	-64-248(%rsp),$key
 	and	\$-64,$key
 
 	# ... and make it doesn't alias with AES_Td modulo 4096
-	mov	$tbl,%r10
-	lea	3072($tbl),%r11
+	mov	$sbox,%r10
+	lea	3072($sbox),%r11
 	mov	$key,%r12
-	and	\$0xFFF,%r10	# s = $tbl&0xfff
-	and	\$0xFFF,%r11	# e = ($tbl+2048)&0xfff
+	and	\$0xFFF,%r10	# s = $sbox&0xfff
+	and	\$0xFFF,%r11	# e = ($sbox+2048)&0xfff
 	and	\$0xFFF,%r12	# p = %rsp&0xfff
 
 	cmp	%r11,%r12	# if (p=>e) %rsp =- (p-e);
@@ -909,13 +1249,15 @@ AES_cbc_encrypt:
 	mov	%rdx,$_len	# save copy of len
 	mov	%rcx,$_key	# save copy of key
 	mov	%r8,$_ivp	# save copy of ivp
-
 	movl	\$0,$mark	# copy of aes_key->rounds = 0;
+	mov	%r8,%rbp	# rearrange input arguments
+	mov	%rsi,$out
+	mov	%rdi,$inp
 	mov	%rcx,$key
 
 	# do we copy key schedule to stack?
 	mov	$key,%r10
-	sub	$tbl,%r10
+	sub	$sbox,%r10
 	and	\$0xfff,%r10
 	cmp	\$3072,%r10
 	jb	.Lcbc_do_dcopy
@@ -923,8 +1265,6 @@ AES_cbc_encrypt:
 	jb	.Lcbc_skip_dcopy
 .align	4
 .Lcbc_do_dcopy:
-		mov	%rsi,%r10	# backup $inp,$out
-		mov	%rdi,%r11
 		mov	$key,%rsi
 		lea	$aes_key,%rdi
 		lea	$aes_key,$key
@@ -932,51 +1272,51 @@ AES_cbc_encrypt:
 		.long	0x90A548F3	# rep movsq
 		mov	(%rsi),%eax	# copy aes_key->rounds
 		mov	%eax,(%rdi)
-		mov	%r10,%rsi	# restore $inp,$out
-		mov	%r11,%rdi
 .Lcbc_skip_dcopy:
 	mov	$key,$keyp	# save key pointer
 
 	mov	\$24,%ecx
 .align	4
 .Lcbc_prefetch_td:
-		mov	0($tbl),%r10
-		mov	32($tbl),%r11
-		mov	64($tbl),%r12
-		mov	96($tbl),%r13
-		lea	128($tbl),$tbl
+		mov	0($sbox),%r10
+		mov	32($sbox),%r11
+		mov	64($sbox),%r12
+		mov	96($sbox),%r13
+		lea	128($sbox),$sbox
 		sub	\$1,%ecx
 	jnz	.Lcbc_prefetch_td
-	sub	\$3072,$tbl
+	sub	\$3072,$sbox
 
 	cmp	$inp,$out
 	je	.Lcbc_dec_in_place
 
-	mov	%r8,$ivec
+	mov	%rbp,$ivec
 .align	4
 .Lcbc_dec_loop:
 		mov	0($inp),$s0		# read input
 		mov	4($inp),$s1
 		mov	8($inp),$s2
 		mov	12($inp),$s3
+		mov	$inp,8+$ivec	# if ($verticalspin) save inp
 
-		mov	$keyp,$key		# load key
+		mov	$keyp,$key	# restore key
 		call	_x86_64_AES_decrypt
 
-		mov	$ivec,%r8		# load ivp
-		xor	0(%r8),$s0		# xor iv
-		xor	4(%r8),$s1
-		xor	8(%r8),$s2
-		xor	12(%r8),$s3
-		mov	$inp,%r8		# current input, next iv
+		mov	$ivec,%rbp	# load ivp
+		mov	8+$ivec,$inp	# if ($verticalspin) restore inp
+		xor	0(%rbp),$s0	# xor iv
+		xor	4(%rbp),$s1
+		xor	8(%rbp),$s2
+		xor	12(%rbp),$s3
+		mov	$inp,%rbp	# current input, next iv
 
-		mov	$_len,%r10		# load len
+		mov	$_len,%r10	# load len
 		sub	\$16,%r10
 		jc	.Lcbc_dec_partial
-		mov	%r10,$_len		# update len
-		mov	%r8,$ivec		# update ivp
+		mov	%r10,$_len	# update len
+		mov	%rbp,$ivec	# update ivp
 
-		mov	$s0,0($out)		# write output
+		mov	$s0,0($out)	# write output
 		mov	$s1,4($out)
 		mov	$s2,8($out)
 		mov	$s3,12($out)
@@ -985,11 +1325,11 @@ AES_cbc_encrypt:
 		lea	16($out),$out
 	jnz	.Lcbc_dec_loop
 .Lcbc_dec_end:
-	mov	$_ivp,%r9		# load user ivp
-	mov	0(%r8),%r10		# load iv
-	mov	8(%r8),%r11
-	mov	%r10,0(%r9)		# copy back to user
-	mov	%r11,8(%r9)
+	mov	$_ivp,%r12		# load user ivp
+	mov	0(%rbp),%r10		# load iv
+	mov	8(%rbp),%r11
+	mov	%r10,0(%r12)		# copy back to user
+	mov	%r11,8(%r12)
 	jmp	.Lcbc_cleanup
 
 .align	4
@@ -1007,26 +1347,28 @@ AES_cbc_encrypt:
 
 .align	16
 .Lcbc_dec_in_place:
-		mov	0($inp),$s0		# load input
+		mov	0($inp),$s0	# load input
 		mov	4($inp),$s1
 		mov	8($inp),$s2
 		mov	12($inp),$s3
 
+		mov	$inp,$ivec	# if ($verticalspin) save inp
 		mov	$keyp,$key
 		call	_x86_64_AES_decrypt
 
-		mov	$_ivp,%r8
-		xor	0(%r8),$s0
-		xor	4(%r8),$s1
-		xor	8(%r8),$s2
-		xor	12(%r8),$s3
+		mov	$ivec,$inp	# if ($verticalspin) restore inp
+		mov	$_ivp,%rbp
+		xor	0(%rbp),$s0
+		xor	4(%rbp),$s1
+		xor	8(%rbp),$s2
+		xor	12(%rbp),$s3
 
-		mov	0($inp),%r10		# copy input to iv
+		mov	0($inp),%r10	# copy input to iv
 		mov	8($inp),%r11
-		mov	%r10,0(%r8)
-		mov	%r11,8(%r8)
+		mov	%r10,0(%rbp)
+		mov	%r11,8(%rbp)
 
-		mov	$s0,0($out)		# save output [zaps input]
+		mov	$s0,0($out)	# save output [zaps input]
 		mov	$s1,4($out)
 		mov	$s2,8($out)
 		mov	$s3,12($out)
@@ -1044,7 +1386,7 @@ AES_cbc_encrypt:
 .Lcbc_dec_in_place_partial:
 	# one can argue if this is actually required
 	lea	($out,%rcx),%rdi
-	lea	(%r8,%rcx),%rsi
+	lea	(%rbp,%rcx),%rsi
 	neg	%rcx
 	.long	0xF689A4F3	# rep movsb	# restore tail
 	jmp	.Lcbc_cleanup
@@ -1261,6 +1603,8 @@ ___
 	&data_word(0xbabababa, 0x77777777, 0xd6d6d6d6, 0x26262626);
 	&data_word(0xe1e1e1e1, 0x69696969, 0x14141414, 0x63636363);
 	&data_word(0x55555555, 0x21212121, 0x0c0c0c0c, 0x7d7d7d7d);
+
+$code =~ s/\`([^\`]*)\`/eval($1)/gem;
 
 print $code;
 
