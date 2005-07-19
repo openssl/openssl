@@ -73,6 +73,9 @@
 # elif defined(__sparc) && defined(OPENSSL_SYS_ULTRASPARC)
    void md5_block_asm_data_order_aligned (MD5_CTX *c, const MD5_LONG *p,size_t num);
 #  define HASH_BLOCK_DATA_ORDER_ALIGNED md5_block_asm_data_order_aligned
+# elif defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
+#  define md5_block_host_order md5_block_asm_host_order
+#  define md5_block_data_order md5_block_asm_data_order
 # endif
 #endif
 
