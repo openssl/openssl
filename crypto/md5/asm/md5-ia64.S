@@ -168,6 +168,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 #define	ADDP	add
 #endif
 
+#if defined(_HPUX_SOURCE) || defined(B_ENDIAN)
+#define HOST_IS_BIG_ENDIAN
+#endif
+
 //	Macros for getting the left and right portions of little-endian words
 
 #define	GETLW(dst, src, align)	dep.z dst = src, 32 - 8 * align, 8 * align
@@ -312,7 +316,7 @@ md5_block_asm_host_order:
 	ld4	AccumD = [CtxPtr1]
 	dep	DPtr_ = 0, DPtrIn, 0, 2
 } ;;
-#if defined(_HPUX_SOURCE) || defined(B_ENDIAN)
+#ifdef HOST_IS_BIG_ENDIAN
 (pDataOrder)	rum	psr.be;;	// switch to little-endian
 #endif
 {	.mmb
@@ -361,7 +365,7 @@ md5_block_asm_host_order:
 } ;;
 
 .md5_exit:
-#if defined(_HPUX_SOURCE) || defined(B_ENDIAN)
+#ifdef HOST_IS_BIG_ENDIAN
 (pDataOrder)	sum	psr.be;;	// switch back to big-endian mode
 #endif
 {	.mmi
