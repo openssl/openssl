@@ -449,7 +449,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 			}
 		OPENSSL_assert(b <= sizeof ctx->final);
 		n=ctx->final[b-1];
-		if (n > (int)b)
+		if (n == 0 || n > (int)b)
 			{
 			EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,EVP_R_BAD_DECRYPT);
 			return(0);
