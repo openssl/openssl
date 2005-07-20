@@ -6,7 +6,7 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 #
-# Version 1.1.
+# Version 2.0.
 #
 # aes-*-cbc benchmarks are improved by >70% [compared to gcc 3.3.2 on
 # Opteron 240 CPU] plus all the bells-n-whistles from 32-bit version
@@ -65,30 +65,26 @@ sub data_word()
 
 sub encvert()
 { my $t3="%r8d";	# zaps $inp!
-  my $qs0='"$s0"';
-  my $qs1='"$s1"';
-  my $qs2='"$s2"';
-  my $qs3='"$s3"';
 
 $code.=<<___;
 	# favor 3-way issue Opteron pipeline...
-	movzb	`&lo($qs0)`,$acc0
-	movzb	`&lo($qs1)`,$acc1
-	movzb	`&lo($qs2)`,$acc2
+	movzb	`&lo("$s0")`,$acc0
+	movzb	`&lo("$s1")`,$acc1
+	movzb	`&lo("$s2")`,$acc2
 	mov	0($sbox,$acc0,8),$t0
 	mov	0($sbox,$acc1,8),$t1
 	mov	0($sbox,$acc2,8),$t2
 
-	movzb	`&hi($qs1)`,$acc0
-	movzb	`&hi($qs2)`,$acc1
-	movzb	`&lo($qs3)`,$acc2
+	movzb	`&hi("$s1")`,$acc0
+	movzb	`&hi("$s2")`,$acc1
+	movzb	`&lo("$s3")`,$acc2
 	xor	3($sbox,$acc0,8),$t0
 	xor	3($sbox,$acc1,8),$t1
 	mov	0($sbox,$acc2,8),$t3
 
-	movzb	`&hi($qs3)`,$acc0
+	movzb	`&hi("$s3")`,$acc0
 	shr	\$16,$s2
-	movzb	`&hi($qs0)`,$acc2
+	movzb	`&hi("$s0")`,$acc2
 	xor	3($sbox,$acc0,8),$t2
 	shr	\$16,$s3
 	xor	3($sbox,$acc2,8),$t3
@@ -97,23 +93,23 @@ $code.=<<___;
 	lea	16($key),$key
 	shr	\$16,$s0
 
-	movzb	`&lo($qs2)`,$acc0
-	movzb	`&lo($qs3)`,$acc1
-	movzb	`&lo($qs0)`,$acc2
+	movzb	`&lo("$s2")`,$acc0
+	movzb	`&lo("$s3")`,$acc1
+	movzb	`&lo("$s0")`,$acc2
 	xor	2($sbox,$acc0,8),$t0
 	xor	2($sbox,$acc1,8),$t1
 	xor	2($sbox,$acc2,8),$t2
 
-	movzb	`&hi($qs3)`,$acc0
-	movzb	`&hi($qs0)`,$acc1
-	movzb	`&lo($qs1)`,$acc2
+	movzb	`&hi("$s3")`,$acc0
+	movzb	`&hi("$s0")`,$acc1
+	movzb	`&lo("$s1")`,$acc2
 	xor	1($sbox,$acc0,8),$t0
 	xor	1($sbox,$acc1,8),$t1
 	xor	2($sbox,$acc2,8),$t3
 
 	mov	12($key),$s3
-	movzb	`&hi($qs1)`,$acc1
-	movzb	`&hi($qs2)`,$acc2
+	movzb	`&hi("$s1")`,$acc1
+	movzb	`&hi("$s2")`,$acc2
 	mov	0($key),$s0
 	xor	1($sbox,$acc1,8),$t2
 	xor	1($sbox,$acc2,8),$t3
@@ -129,15 +125,11 @@ ___
 
 sub enclastvert()
 { my $t3="%r8d";	# zaps $inp!
-  my $qs0='"$s0"';
-  my $qs1='"$s1"';
-  my $qs2='"$s2"';
-  my $qs3='"$s3"';
 
 $code.=<<___;
-	movzb	`&lo($qs0)`,$acc0
-	movzb	`&lo($qs1)`,$acc1
-	movzb	`&lo($qs2)`,$acc2
+	movzb	`&lo("$s0")`,$acc0
+	movzb	`&lo("$s1")`,$acc1
+	movzb	`&lo("$s2")`,$acc2
 	mov	2($sbox,$acc0,8),$t0
 	mov	2($sbox,$acc1,8),$t1
 	mov	2($sbox,$acc2,8),$t2
@@ -146,9 +138,9 @@ $code.=<<___;
 	and	\$0x000000ff,$t1
 	and	\$0x000000ff,$t2
 
-	movzb	`&lo($qs3)`,$acc0
-	movzb	`&hi($qs1)`,$acc1
-	movzb	`&hi($qs2)`,$acc2
+	movzb	`&lo("$s3")`,$acc0
+	movzb	`&hi("$s1")`,$acc1
+	movzb	`&hi("$s2")`,$acc2
 	mov	2($sbox,$acc0,8),$t3
 	mov	0($sbox,$acc1,8),$acc1	#$t0
 	mov	0($sbox,$acc2,8),$acc2	#$t1
@@ -161,8 +153,8 @@ $code.=<<___;
 	xor	$acc2,$t1
 	shr	\$16,$s2
 
-	movzb	`&hi($qs3)`,$acc0
-	movzb	`&hi($qs0)`,$acc1
+	movzb	`&hi("$s3")`,$acc0
+	movzb	`&hi("$s0")`,$acc1
 	shr	\$16,$s3
 	mov	0($sbox,$acc0,8),$acc0	#$t2
 	mov	0($sbox,$acc1,8),$acc1	#$t3
@@ -174,9 +166,9 @@ $code.=<<___;
 	xor	$acc1,$t3
 	shr	\$16,$s0
 
-	movzb	`&lo($qs2)`,$acc0
-	movzb	`&lo($qs3)`,$acc1
-	movzb	`&lo($qs0)`,$acc2
+	movzb	`&lo("$s2")`,$acc0
+	movzb	`&lo("$s3")`,$acc1
+	movzb	`&lo("$s0")`,$acc2
 	mov	0($sbox,$acc0,8),$acc0	#$t0
 	mov	0($sbox,$acc1,8),$acc1	#$t1
 	mov	0($sbox,$acc2,8),$acc2	#$t2
@@ -189,9 +181,9 @@ $code.=<<___;
 	xor	$acc1,$t1
 	xor	$acc2,$t2
 
-	movzb	`&lo($qs1)`,$acc0
-	movzb	`&hi($qs3)`,$acc1
-	movzb	`&hi($qs0)`,$acc2
+	movzb	`&lo("$s1")`,$acc0
+	movzb	`&hi("$s3")`,$acc1
+	movzb	`&hi("$s0")`,$acc2
 	mov	0($sbox,$acc0,8),$acc0	#$t3
 	mov	2($sbox,$acc1,8),$acc1	#$t0
 	mov	2($sbox,$acc2,8),$acc2	#$t1
@@ -204,8 +196,8 @@ $code.=<<___;
 	xor	$acc1,$t0
 	xor	$acc2,$t1
 
-	movzb	`&hi($qs1)`,$acc0
-	movzb	`&hi($qs2)`,$acc1
+	movzb	`&hi("$s1")`,$acc0
+	movzb	`&hi("$s2")`,$acc1
 	mov	16+12($key),$s3
 	mov	2($sbox,$acc0,8),$acc0	#$t2
 	mov	2($sbox,$acc1,8),$acc1	#$t3
@@ -391,30 +383,26 @@ ___
 
 sub decvert()
 { my $t3="%r8d";	# zaps $inp!
-  my $qs0='"$s0"';
-  my $qs1='"$s1"';
-  my $qs2='"$s2"';
-  my $qs3='"$s3"';
 
 $code.=<<___;
 	# favor 3-way issue Opteron pipeline...
-	movzb	`&lo($qs0)`,$acc0
-	movzb	`&lo($qs1)`,$acc1
-	movzb	`&lo($qs2)`,$acc2
+	movzb	`&lo("$s0")`,$acc0
+	movzb	`&lo("$s1")`,$acc1
+	movzb	`&lo("$s2")`,$acc2
 	mov	0($sbox,$acc0,8),$t0
 	mov	0($sbox,$acc1,8),$t1
 	mov	0($sbox,$acc2,8),$t2
 
-	movzb	`&hi($qs3)`,$acc0
-	movzb	`&hi($qs0)`,$acc1
-	movzb	`&lo($qs3)`,$acc2
+	movzb	`&hi("$s3")`,$acc0
+	movzb	`&hi("$s0")`,$acc1
+	movzb	`&lo("$s3")`,$acc2
 	xor	3($sbox,$acc0,8),$t0
 	xor	3($sbox,$acc1,8),$t1
 	mov	0($sbox,$acc2,8),$t3
 
-	movzb	`&hi($qs1)`,$acc0
+	movzb	`&hi("$s1")`,$acc0
 	shr	\$16,$s0
-	movzb	`&hi($qs2)`,$acc2
+	movzb	`&hi("$s2")`,$acc2
 	xor	3($sbox,$acc0,8),$t2
 	shr	\$16,$s3
 	xor	3($sbox,$acc2,8),$t3
@@ -423,23 +411,23 @@ $code.=<<___;
 	lea	16($key),$key
 	shr	\$16,$s2
 
-	movzb	`&lo($qs2)`,$acc0
-	movzb	`&lo($qs3)`,$acc1
-	movzb	`&lo($qs0)`,$acc2
+	movzb	`&lo("$s2")`,$acc0
+	movzb	`&lo("$s3")`,$acc1
+	movzb	`&lo("$s0")`,$acc2
 	xor	2($sbox,$acc0,8),$t0
 	xor	2($sbox,$acc1,8),$t1
 	xor	2($sbox,$acc2,8),$t2
 
-	movzb	`&hi($qs1)`,$acc0
-	movzb	`&hi($qs2)`,$acc1
-	movzb	`&lo($qs1)`,$acc2
+	movzb	`&hi("$s1")`,$acc0
+	movzb	`&hi("$s2")`,$acc1
+	movzb	`&lo("$s1")`,$acc2
 	xor	1($sbox,$acc0,8),$t0
 	xor	1($sbox,$acc1,8),$t1
 	xor	2($sbox,$acc2,8),$t3
 
-	movzb	`&hi($qs3)`,$acc0
+	movzb	`&hi("$s3")`,$acc0
 	mov	12($key),$s3
-	movzb	`&hi($qs0)`,$acc2
+	movzb	`&hi("$s0")`,$acc2
 	xor	1($sbox,$acc0,8),$t2
 	mov	0($key),$s0
 	xor	1($sbox,$acc2,8),$t3
@@ -455,15 +443,11 @@ ___
 
 sub declastvert()
 { my $t3="%r8d";	# zaps $inp!
-  my $qs0='"$s0"';
-  my $qs1='"$s1"';
-  my $qs2='"$s2"';
-  my $qs3='"$s3"';
 
 $code.=<<___;
-	movzb	`&lo($qs0)`,$acc0
-	movzb	`&lo($qs1)`,$acc1
-	movzb	`&lo($qs2)`,$acc2
+	movzb	`&lo("$s0")`,$acc0
+	movzb	`&lo("$s1")`,$acc1
+	movzb	`&lo("$s2")`,$acc2
 	mov	2048($sbox,$acc0,4),$t0
 	mov	2048($sbox,$acc1,4),$t1
 	mov	2048($sbox,$acc2,4),$t2
@@ -472,9 +456,9 @@ $code.=<<___;
 	and	\$0x000000ff,$t1
 	and	\$0x000000ff,$t2
 
-	movzb	`&lo($qs3)`,$acc0
-	movzb	`&hi($qs3)`,$acc1
-	movzb	`&hi($qs0)`,$acc2
+	movzb	`&lo("$s3")`,$acc0
+	movzb	`&hi("$s3")`,$acc1
+	movzb	`&hi("$s0")`,$acc2
 	mov	2048($sbox,$acc0,4),$t3
 	mov	2048($sbox,$acc1,4),$acc1	#$t0
 	mov	2048($sbox,$acc2,4),$acc2	#$t1
@@ -487,8 +471,8 @@ $code.=<<___;
 	xor	$acc2,$t1
 	shr	\$16,$s3
 
-	movzb	`&hi($qs1)`,$acc0
-	movzb	`&hi($qs2)`,$acc1
+	movzb	`&hi("$s1")`,$acc0
+	movzb	`&hi("$s2")`,$acc1
 	shr	\$16,$s0
 	mov	2048($sbox,$acc0,4),$acc0	#$t2
 	mov	2048($sbox,$acc1,4),$acc1	#$t3
@@ -500,9 +484,9 @@ $code.=<<___;
 	xor	$acc1,$t3
 	shr	\$16,$s2
 
-	movzb	`&lo($qs2)`,$acc0
-	movzb	`&lo($qs3)`,$acc1
-	movzb	`&lo($qs0)`,$acc2
+	movzb	`&lo("$s2")`,$acc0
+	movzb	`&lo("$s3")`,$acc1
+	movzb	`&lo("$s0")`,$acc2
 	mov	2048($sbox,$acc0,4),$acc0	#$t0
 	mov	2048($sbox,$acc1,4),$acc1	#$t1
 	mov	2048($sbox,$acc2,4),$acc2	#$t2
@@ -515,9 +499,9 @@ $code.=<<___;
 	xor	$acc1,$t1
 	xor	$acc2,$t2
 
-	movzb	`&lo($qs1)`,$acc0
-	movzb	`&hi($qs1)`,$acc1
-	movzb	`&hi($qs2)`,$acc2
+	movzb	`&lo("$s1")`,$acc0
+	movzb	`&hi("$s1")`,$acc1
+	movzb	`&hi("$s2")`,$acc2
 	mov	2048($sbox,$acc0,4),$acc0	#$t3
 	mov	2048($sbox,$acc1,4),$acc1	#$t0
 	mov	2048($sbox,$acc2,4),$acc2	#$t1
@@ -530,8 +514,8 @@ $code.=<<___;
 	xor	$acc1,$t0
 	xor	$acc2,$t1
 
-	movzb	`&hi($qs3)`,$acc0
-	movzb	`&hi($qs0)`,$acc1
+	movzb	`&hi("$s3")`,$acc0
+	movzb	`&hi("$s0")`,$acc1
 	mov	16+12($key),$s3
 	mov	2048($sbox,$acc0,4),$acc0	#$t2
 	mov	2048($sbox,$acc1,4),$acc1	#$t3
