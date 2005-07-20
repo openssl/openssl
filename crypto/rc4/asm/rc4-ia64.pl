@@ -231,7 +231,7 @@ sub emit_body {
 ___
 
     if (($p & 0xf) == 0) {
-	$c.="#ifdef RC4_BIG_ENDIAN\n";
+	$c.="#ifdef HOST_IS_BIG_ENDIAN\n";
 	&I(\$c,"shr.u	OutWord[%u] = OutWord[%u], 32;;",
 				$iw1 % $NOutWord, $iw1 % $NOutWord);
 	$c.="#endif\n";
@@ -392,7 +392,7 @@ $code=<<___;
 /* Define a macro for the bit number of the n-th byte: */
 
 #if defined(_HPUX_SOURCE) || defined(B_ENDIAN)
-# define RC4_BIG_ENDIAN
+# define HOST_IS_BIG_ENDIAN
 # define BYTE_POS(n)	(56 - (8 * (n)))
 #else
 # define BYTE_POS(n)	(8 * (n))
