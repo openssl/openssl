@@ -24,7 +24,9 @@
 
 rk0=r8;     rk1=r9;
 
-prsave=r10;
+pfssave=r2;
+lcsave=r10;
+prsave=r3;
 maskff=r11;
 twenty4=r14;
 sixteen=r15;
@@ -67,6 +69,9 @@ te0=r40;    te1=r41;    te2=r42;    te3=r43;
 // Clobber:	r16-r31,rk0-rk1,r32-r43
 .align	32
 _ia64_AES_encrypt:
+	.prologue
+	.altrp	b6
+	.body
 { .mmi;	alloc	r16=ar.pfs,12,0,0,8
 	LDKEY	t0=[rk0],2*KSZ
 	mov	pr.rot=1<<16	}
@@ -179,20 +184,21 @@ _ia64_AES_encrypt:
 .skip	16
 AES_encrypt:
 	.prologue
-	.save	ar.pfs,r2
-{ .mmi;	alloc	r2=ar.pfs,3,0,12,0
-	addl	out8=@ltoff(AES_Te#),gp
-	.save	ar.lc,r3
-	mov	r3=ar.lc		}
-{ .mmi;	and	out0=3,in0
-	ADDP	in0=0,in0
-	ADDP	out11=KSZ*60,in2	};;	// &AES_KEY->rounds
+	.save	ar.pfs,pfssave
+{ .mmi;	alloc	pfssave=ar.pfs,3,0,12,0
+	and	out0=3,in0
+	mov	r3=ip			}
+{ .mmi;	ADDP	in0=0,in0
+	ADDP	out11=KSZ*60,in2		// &AES_KEY->rounds
+	.save	ar.lc,lcsave
+	mov	lcsave=ar.lc		};;
 
-	.body
-{ .mmi;	ld8	out8=[out8]			// Te0
-	ld4	out11=[out11]			// AES_KEY->rounds
+{ .mmi;	ld4	out11=[out11]			// AES_KEY->rounds
+	add	out8=(AES_Te#-AES_encrypt#),r3	// Te0
+	.save	pr,prsave
 	mov	prsave=pr		}
 
+	.body
 #if defined(_HPUX_SOURCE)	// HPUX is big-endian, cut 15+15 cycles...
 { .mib; cmp.ne	p6,p0=out0,r0
 	add	out0=4,in0
@@ -215,8 +221,8 @@ AES_encrypt:
 	ADDP	in1=0,in1
 (p6)	br.spnt	.Le_o_unaligned		};;
 
-{ .mii;	mov	ar.pfs=r2
-	mov	ar.lc=r3		}
+{ .mii;	mov	ar.pfs=psfsave
+	mov	ar.lc=lcsave		}
 { .mmi;	st4	[in1]=r16,8		// s0
 	st4	[in0]=r20,8		// s1
 	mov	pr=prsave,0x1ffff	};;
@@ -299,10 +305,10 @@ AES_encrypt:
 	mov	pr=prsave,0x1ffff	}//;;
 { .mmi;	st1	[out1]=r26,4
 	st1	[out0]=r27,4
-	mov	ar.pfs=r2		};;
+	mov	ar.pfs=pfssave		};;
 { .mmi;	st1	[out3]=r28
 	st1	[out2]=r29
-	mov	ar.lc=r3		}//;;
+	mov	ar.lc=lcsave		}//;;
 { .mmb;	st1	[out1]=r30
 	st1	[out0]=r31
 	br.ret.sptk.many	b0	};;
@@ -359,6 +365,9 @@ while(<>) {
 // Clobber:	r16-r31,rk0-rk1,r32-r43
 .align	32
 _ia64_AES_decrypt:
+	.prologue
+	.altrp	b6
+	.body
 { .mmi;	alloc	r16=ar.pfs,12,0,0,8
 	LDKEY	t0=[rk0],2*KSZ
 	mov	pr.rot=1<<16	}
@@ -471,20 +480,21 @@ _ia64_AES_decrypt:
 .skip	16
 AES_decrypt:
 	.prologue
-	.save	ar.pfs,r2
-{ .mmi;	alloc	r2=ar.pfs,3,0,12,0
-	addl	out8=@ltoff(AES_Td#),gp
-	.save	ar.lc,r3
-	mov	r3=ar.lc		}
-{ .mmi;	and	out0=3,in0
-	ADDP	in0=0,in0
-	ADDP	out11=KSZ*60,in2	};;	// &AES_KEY->rounds
+	.save	ar.pfs,pfssave
+{ .mmi;	alloc	pfssave=ar.pfs,3,0,12,0
+	and	out0=3,in0
+	mov	r3=ip			}
+{ .mmi;	ADDP	in0=0,in0
+	ADDP	out11=KSZ*60,in2		// &AES_KEY->rounds
+	.save	ar.lc,lcsave
+	mov	lcsave=ar.lc		};;
 
-	.body
-{ .mmi;	ld8	out8=[out8]			// Te0
-	ld4	out11=[out11]			// AES_KEY->rounds
+{ .mmi;	ld4	out11=[out11]			// AES_KEY->rounds
+	add	out8=(AES_Td#-AES_decrypt#),r3	// Td0
+	.save	pr,prsave
 	mov	prsave=pr		}
 
+	.body
 #if defined(_HPUX_SOURCE)	// HPUX is big-endian, cut 15+15 cycles...
 { .mib; cmp.ne	p6,p0=out0,r0
 	add	out0=4,in0
@@ -507,8 +517,8 @@ AES_decrypt:
 	ADDP	in1=0,in1
 (p6)	br.spnt	.Ld_o_unaligned		};;
 
-{ .mii;	mov	ar.pfs=r2
-	mov	ar.lc=r3		}
+{ .mii;	mov	ar.pfs=pfssave
+	mov	ar.lc=lcsave		}
 { .mmi;	st4	[in1]=r16,8		// s0
 	st4	[in0]=r20,8		// s1
 	mov	pr=prsave,0x1ffff	};;
@@ -591,10 +601,10 @@ AES_decrypt:
 	mov	pr=prsave,0x1ffff	}//;;
 { .mmi;	st1	[out1]=r26,4
 	st1	[out0]=r27,4
-	mov	ar.pfs=r2		};;
+	mov	ar.pfs=pfssave		};;
 { .mmi;	st1	[out3]=r28
 	st1	[out2]=r29
-	mov	ar.lc=r3		}//;;
+	mov	ar.lc=lcsave		}//;;
 { .mmb;	st1	[out1]=r30
 	st1	[out0]=r31
 	br.ret.sptk.many	b0	};;

@@ -110,6 +110,8 @@ $code=<<___;
 .explicit
 .text
 
+pfssave=r2;
+lcsave=r3;
 prsave=r14;
 K=r15;
 A=r16;	B=r17;	C=r18;	D=r19;
@@ -128,20 +130,17 @@ sgm0=r50;	sgm1=r51;	// small constants
 .align	32
 $func:
 	.prologue
-	.save	ar.pfs,r2
-{ .mmi;	alloc	r2=ar.pfs,3,17,0,16
+	.save	ar.pfs,pfssave
+{ .mmi;	alloc	pfssave=ar.pfs,3,17,0,16
 	$ADDP	ctx=0,r32		// 1st arg
-	.save	ar.lc,r3
-	mov	r3=ar.lc	}
+	.save	ar.lc,lcsave
+	mov	lcsave=ar.lc	}
 { .mmi;	$ADDP	input=0,r33		// 2nd arg
-	addl	Ktbl=\@ltoff($TABLE#),gp
+	mov	num=r34			// 3rd arg
 	.save	pr,prsave
 	mov	prsave=pr	};;
 
 	.body
-{ .mii;	ld8	Ktbl=[Ktbl]
-	mov	num=r34		};;	// 3rd arg
-
 { .mib;	add	r8=0*$SZ,ctx
 	add	r9=1*$SZ,ctx
 	brp.loop.imp	.L_first16,.L_first16_ctop
@@ -151,20 +150,23 @@ $func:
 	brp.loop.imp	.L_rest,.L_rest_ctop
 				};;
 // load A-H
+.Lpic_point:
 { .mmi;	$LDW	A=[r8],4*$SZ
 	$LDW	B=[r9],4*$SZ
-	mov	sgm0=$sigma0[2]	}
+	mov	Ktbl=ip		}
 { .mmi;	$LDW	C=[r10],4*$SZ
 	$LDW	D=[r11],4*$SZ
-	mov	sgm1=$sigma1[2]	};;
+	mov	sgm0=$sigma0[2]	};;
 { .mmi;	$LDW	E=[r8]
-	$LDW	F=[r9]		}
+	$LDW	F=[r9]
+	add	Ktbl=($TABLE#-.Lpic_point),Ktbl		}
 { .mmi;	$LDW	G=[r10]
 	$LDW	H=[r11]
 	cmp.ne	p15,p14=0,r35	};;	// used in sha256_block
 
 .L_outer:
-{ .mii;	mov	ar.lc=15
+{ .mii;	mov	sgm1=$sigma1[2]
+	mov	ar.lc=15
 	mov	ar.ec=1		};;
 .align	32
 .L_first16:
@@ -329,7 +331,7 @@ $code.=<<___;
 (p6)	add	Ktbl=-$SZ*$rounds,Ktbl	}
 { .mmi;	$LDW	r38=[r10],-4*$SZ
 	$LDW	r39=[r11],-4*$SZ
-(p7)	mov	ar.lc=r3		};;
+(p7)	mov	ar.lc=lcsave		};;
 { .mmi;	add	A=A,r32
 	add	B=B,r33
 	add	C=C,r34			}
