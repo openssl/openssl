@@ -292,7 +292,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		buf[0]=mod->d[0]; /* tmod = N mod word size */
 		buf[1]=0;
 		tmod.d=buf;
-		tmod.top=1;
+		tmod.top = buf[0] != 0 ? 1 : 0;
 		tmod.dmax=2;
 		tmod.neg=0;
 							/* Ri = R^-1 mod N*/
