@@ -541,7 +541,7 @@ int dtls1_client_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
-	int i,j;
+	unsigned int i,j;
 	unsigned long Time,l;
 	SSL_COMP *comp;
 

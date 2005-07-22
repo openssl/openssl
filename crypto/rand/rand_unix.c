@@ -155,7 +155,8 @@ int RAND_poll(void)
 #ifdef DEVRANDOM
 	static const char *randomfiles[] = { DEVRANDOM };
 	struct stat randomstats[sizeof(randomfiles)/sizeof(randomfiles[0])];
-	int fd,i;
+	int fd;
+	unsigned int i;
 #endif
 #ifdef DEVRANDOM_EGD
 	static const char *egdsockets[] = { DEVRANDOM_EGD, NULL };
@@ -168,7 +169,8 @@ int RAND_poll(void)
 	 * have this. Use /dev/urandom if you can as /dev/random may block
 	 * if it runs out of random entries.  */
 
-	for (i=0; i<sizeof(randomfiles)/sizeof(randomfiles[0]) && n < ENTROPY_NEEDED; i++)
+	for (i = 0; (i < sizeof(randomfiles)/sizeof(randomfiles[0])) &&
+			(n < ENTROPY_NEEDED); i++)
 		{
 		if ((fd = open(randomfiles[i], O_RDONLY
 #ifdef O_NONBLOCK
@@ -185,7 +187,8 @@ int RAND_poll(void)
 			{
 			struct timeval t = { 0, 10*1000 }; /* Spend 10ms on
 							      each file. */
-			int r,j;
+			int r;
+			unsigned int j;
 			fd_set fset;
 			struct stat *st=&randomstats[i];
 
