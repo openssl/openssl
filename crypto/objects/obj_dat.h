@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 751
-#define NUM_SN 747
-#define NUM_LN 747
-#define NUM_OBJ 709
+#define NUM_NID 752
+#define NUM_SN 748
+#define NUM_LN 748
+#define NUM_OBJ 710
 
-static unsigned char lvalues[5002]={
+static unsigned char lvalues[5005]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -777,6 +777,7 @@ static unsigned char lvalues[5002]={
 0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x00,     /* [4977] OBJ_id_ppl_anyLanguage */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x01,     /* [4985] OBJ_id_ppl_inheritAll */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x02,     /* [4993] OBJ_Independent */
+0x55,0x1D,0x1C,                              /* [5001] OBJ_issuing_distribution_point */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1945,6 +1946,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"id-ppl-inheritAll","Inherit all",NID_id_ppl_inheritAll,8,
 	&(lvalues[4985]),0},
 {"id-ppl-independent","Independent",NID_Independent,8,&(lvalues[4993]),0},
+{"issuingDistributionPoint","X509v3 Issuing Distrubution Point",
+	NID_issuing_distribution_point,3,&(lvalues[5001]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2382,6 +2385,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[295]),/* "ipsecTunnel" */
 &(nid_objs[296]),/* "ipsecUser" */
 &(nid_objs[86]),/* "issuerAltName" */
+&(nid_objs[751]),/* "issuingDistributionPoint" */
 &(nid_objs[492]),/* "janetMailbox" */
 &(nid_objs[150]),/* "keyBag" */
 &(nid_objs[83]),/* "keyUsage" */
@@ -2797,6 +2801,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[126]),/* "X509v3 Extended Key Usage" */
 &(nid_objs[739]),/* "X509v3 Inhibit Any Policy" */
 &(nid_objs[86]),/* "X509v3 Issuer Alternative Name" */
+&(nid_objs[751]),/* "X509v3 Issuing Distrubution Point" */
 &(nid_objs[83]),/* "X509v3 Key Usage" */
 &(nid_objs[736]),/* "X509v3 Name Constraints" */
 &(nid_objs[403]),/* "X509v3 No Revocation Available" */
@@ -3502,6 +3507,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[430]),/* OBJ_hold_instruction_code        2 5 29 23 */
 &(nid_objs[142]),/* OBJ_invalidity_date              2 5 29 24 */
 &(nid_objs[140]),/* OBJ_delta_crl                    2 5 29 27 */
+&(nid_objs[751]),/* OBJ_issuing_distribution_point   2 5 29 28 */
 &(nid_objs[736]),/* OBJ_name_constraints             2 5 29 30 */
 &(nid_objs[103]),/* OBJ_crl_distribution_points      2 5 29 31 */
 &(nid_objs[89]),/* OBJ_certificate_policies         2 5 29 32 */

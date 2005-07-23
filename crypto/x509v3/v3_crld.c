@@ -3,7 +3,7 @@
  * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999, 2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -160,3 +160,112 @@ ASN1_ITEM_TEMPLATE(CRL_DIST_POINTS) =
 ASN1_ITEM_TEMPLATE_END(CRL_DIST_POINTS)
 
 IMPLEMENT_ASN1_FUNCTIONS(CRL_DIST_POINTS)
+
+ASN1_SEQUENCE(ISSUING_DIST_POINT) = {
+	ASN1_EXP_OPT(ISSUING_DIST_POINT, distpoint, DIST_POINT_NAME, 0),
+	ASN1_IMP_OPT(ISSUING_DIST_POINT, onlyuser, ASN1_FBOOLEAN, 1),
+	ASN1_IMP_OPT(ISSUING_DIST_POINT, onlyCA, ASN1_FBOOLEAN, 2),
+	ASN1_IMP_OPT(ISSUING_DIST_POINT, onlysomereasons, ASN1_BIT_STRING, 3),
+	ASN1_IMP_OPT(ISSUING_DIST_POINT, indirectCRL, ASN1_FBOOLEAN, 4),
+	ASN1_IMP_OPT(ISSUING_DIST_POINT, onlyattr, ASN1_FBOOLEAN, 5)
+} ASN1_SEQUENCE_END(ISSUING_DIST_POINT)
+
+static int i2r_idp(X509V3_EXT_METHOD *method,
+	     void *pidp, BIO *out, int indent);
+
+X509V3_EXT_METHOD v3_idp =
+	{
+	NID_issuing_distribution_point, X509V3_EXT_MULTILINE,
+	ASN1_ITEM_ref(ISSUING_DIST_POINT),
+	0,0,0,0,
+	0,0,
+	0,0,
+	i2r_idp,0,
+	NULL
+	};
+
+static const BIT_STRING_BITNAME reason_flags[] = {
+{1, "Key Compromise", "keyCompromise"},
+{2, "CA Compromise", "CACompromise"},
+{3, "Affiliation Changed", "affiliationChanged"},
+{4, "Superseded", "superseded"},
+{5, "Cessation Of Operation", "cessationOfOperation"},
+{6, "Certificate Hold", "certificateHold"},
+{7, "Privilege Withdrawn", "privilegeWithdrawn"},
+{8, "AA Compromise", "AACompromise"},
+{-1, NULL, NULL}
+};
+
+static int print_reasons(BIO *out, const char *rname,
+			ASN1_BIT_STRING *rflags, int indent)
+	{
+	int first = 1;
+	const BIT_STRING_BITNAME *pbn;
+	BIO_printf(out, "%*s%s:\n%*s", indent, "", rname, indent + 2, "");
+	for (pbn = reason_flags; pbn->lname; pbn++)
+		{
+		if (ASN1_BIT_STRING_get_bit(rflags, pbn->bitnum))
+			{
+			if (first)
+				first = 0;
+			else
+				BIO_puts(out, ",");
+			BIO_puts(out, pbn->lname);
+			}
+		}
+	if (first)
+		BIO_puts(out, "<EMPTY>\n");
+	else
+		BIO_puts(out, "\n");
+	return 1;
+	}
+
+static int print_distpoint(BIO *out, DIST_POINT_NAME *dpn, int indent)
+	{
+	int i;
+	if (dpn->type == 0)
+		{
+		STACK_OF(GENERAL_NAME) *gens;
+		BIO_printf(out, "%*sFull Name:\n", indent, "");
+		gens = dpn->name.fullname;
+		for (i = 0; i < sk_GENERAL_NAME_num(gens); i++)
+			{
+			BIO_printf(out, "%*s", indent + 2, "");
+			GENERAL_NAME_print(out, sk_GENERAL_NAME_value(gens, i));
+			}
+		}
+	else
+		{
+		X509_NAME ntmp;
+		ntmp.entries = dpn->name.relativename;
+		BIO_printf(out, "%*sRelative Name:\n%*s",
+						indent, "", indent + 2, "");
+		X509_NAME_print_ex(out, &ntmp, 0, XN_FLAG_ONELINE);
+		BIO_puts(out, "\n");
+		}
+	return 1;
+	}
+
+static int i2r_idp(X509V3_EXT_METHOD *method, void *pidp, BIO *out, int indent)
+	{
+	ISSUING_DIST_POINT *idp = pidp;
+	if (idp->distpoint)
+		print_distpoint(out, idp->distpoint, indent);
+	if (idp->onlyuser > 0)
+		BIO_printf(out, "%*sOnly User Certificates\n", indent, "");
+	if (idp->onlyCA > 0)
+		BIO_printf(out, "%*sOnly CA Certificates\n", indent, "");
+	if (idp->indirectCRL > 0)
+		BIO_printf(out, "%*sIndirect CRL\n", indent, "");
+	if (idp->onlysomereasons)
+		print_reasons(out, "Only Some Reasons", 
+				idp->onlysomereasons, indent);
+	if (idp->onlyattr > 0)
+		BIO_printf(out, "%*sOnly Attribute Certificates\n", indent, "");
+	if (!idp->distpoint && (idp->onlyuser <= 0) && (idp->onlyCA <= 0)
+		&& (idp->indirectCRL <= 0) && !idp->onlysomereasons
+		&& (idp->onlyattr <= 0))
+		BIO_printf(out, "%*s<EMPTY>\n", indent, "");
+		
+	return 1;
+	}

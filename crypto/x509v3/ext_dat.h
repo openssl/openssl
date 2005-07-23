@@ -66,7 +66,7 @@ extern X509V3_EXT_METHOD v3_ocsp_nonce, v3_ocsp_accresp, v3_ocsp_acutoff;
 extern X509V3_EXT_METHOD v3_ocsp_crlid, v3_ocsp_nocheck, v3_ocsp_serviceloc;
 extern X509V3_EXT_METHOD v3_crl_hold, v3_pci;
 extern X509V3_EXT_METHOD v3_policy_mappings, v3_policy_constraints;
-extern X509V3_EXT_METHOD v3_name_constraints, v3_inhibit_anyp;
+extern X509V3_EXT_METHOD v3_name_constraints, v3_inhibit_anyp, v3_idp;
 
 /* This table will be searched using OBJ_bsearch so it *must* kept in
  * order of the ext_nid values.
@@ -115,7 +115,8 @@ static X509V3_EXT_METHOD *standard_exts[] = {
 &v3_name_constraints,
 &v3_policy_mappings,
 &v3_inhibit_anyp,
-&v3_pci
+&v3_pci,
+&v3_idp
 };
 
 /* Number of standard extensions */

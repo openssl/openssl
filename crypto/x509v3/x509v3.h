@@ -329,6 +329,15 @@ typedef struct PROXY_CERT_INFO_EXTENSION_st
 DECLARE_ASN1_FUNCTIONS(PROXY_POLICY)
 DECLARE_ASN1_FUNCTIONS(PROXY_CERT_INFO_EXTENSION)
 
+typedef struct ISSUING_DIST_POINT_st
+	{
+	DIST_POINT_NAME *distpoint;
+	int onlyuser;
+	int onlyCA;
+	ASN1_BIT_STRING *onlysomereasons;
+	int indirectCRL;
+	int onlyattr;
+	} ISSUING_DIST_POINT;
 
 #define X509V3_conf_err(val) ERR_add_error_data(6, "section:", val->section, \
 ",name:", val->name, ",value:", val->value);

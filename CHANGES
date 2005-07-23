@@ -4,7 +4,8 @@
 
  Changes between 0.9.8 and 0.9.9  [xx XXX xxxx]
 
-  *) 
+  *) Add print only support for Issuing Distribution Point CRL extension.
+     [Steve Henson]
 
  Changes between 0.9.8 and 0.9.8a  [XX xxx XXXX]
 

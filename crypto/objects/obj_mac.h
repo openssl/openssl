@@ -2094,6 +2094,11 @@
 #define NID_delta_crl		140
 #define OBJ_delta_crl		OBJ_id_ce,27L
 
+#define SN_issuing_distribution_point		"issuingDistributionPoint"
+#define LN_issuing_distribution_point		"X509v3 Issuing Distrubution Point"
+#define NID_issuing_distribution_point		751
+#define OBJ_issuing_distribution_point		OBJ_id_ce,28L
+
 #define SN_name_constraints		"nameConstraints"
 #define LN_name_constraints		"X509v3 Name Constraints"
 #define NID_name_constraints		736
