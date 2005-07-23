@@ -427,7 +427,9 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
+#if 0
 	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
+#endif
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -471,7 +473,9 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
+#if 0
 	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
+#endif
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -516,7 +520,9 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
+#if 0
 	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
+#endif
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -566,7 +572,9 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
+#if 0
 	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
+#endif
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -622,7 +630,9 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
+#if 0
 	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
+#endif
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -786,7 +796,7 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT; \
 	fprintf(stdout, "."); \
 	fflush(stdout); \
-	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT; \
+	/* if (!EC_GROUP_precompute_mult(group, ctx)) ABORT; */ \
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT; \
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT; \
 	fprintf(stdout, " ok\n"); \
