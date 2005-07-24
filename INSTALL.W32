@@ -287,3 +287,21 @@
  (e.g. fopen()), and OpenSSL cannot change these; so in general you cannot
  rely on CRYPTO_malloc_init() solving your problem, and you should
  consistently use the multithreaded library.
+
+ Linking your application
+ ------------------------
+
+ If you link with static OpenSSL libraries [those built with ms/nt.mak],
+ then you're expected to additionally link your application with
+ WSOCK32.LIB, ADVAPI32.LIB, GDI32.LIB and USER32.LIB. Those developing
+ non-interactive service applications might feel concerned about linking
+ with latter two, as they are justly associated with interactive desktop,
+ which is not available to service processes. The toolkit is designed
+ to detect in which context it's currently executed, GUI, console app
+ or service, and act accordingly, namely whether or not to actually make
+ GUI calls.
+
+ If you link with OpenSSL .DLLs, then you're expected to include into
+ your application code small "shim" snippet, which provides glue between
+ OpenSSL BIO layer and your compiler run-time. Look up OPENSSL_Applink
+ reference page for further details.
