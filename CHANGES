@@ -4,6 +4,10 @@
 
  Changes between 0.9.8 and 0.9.9  [xx XXX xxxx]
 
+  *) Modify CRL distribution points extension code to print out previously
+     unsupported fields.
+     [Steve Henson]
+
   *) Add print only support for Issuing Distribution Point CRL extension.
      [Steve Henson]
 

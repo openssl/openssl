@@ -63,41 +63,20 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
-static STACK_OF(CONF_VALUE) *i2v_crld(X509V3_EXT_METHOD *method,
-		STACK_OF(DIST_POINT) *crld, STACK_OF(CONF_VALUE) *extlist);
 static STACK_OF(DIST_POINT) *v2i_crld(X509V3_EXT_METHOD *method,
 				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
+static int i2r_crldp(X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
+								int indent);
 
 X509V3_EXT_METHOD v3_crld = {
 NID_crl_distribution_points, X509V3_EXT_MULTILINE, ASN1_ITEM_ref(CRL_DIST_POINTS),
 0,0,0,0,
 0,0,
-(X509V3_EXT_I2V)i2v_crld,
+0,
 (X509V3_EXT_V2I)v2i_crld,
-0,0,
+i2r_crldp,0,
 NULL
 };
-
-static STACK_OF(CONF_VALUE) *i2v_crld(X509V3_EXT_METHOD *method,
-			STACK_OF(DIST_POINT) *crld, STACK_OF(CONF_VALUE) *exts)
-{
-	DIST_POINT *point;
-	int i;
-	for(i = 0; i < sk_DIST_POINT_num(crld); i++) {
-		point = sk_DIST_POINT_value(crld, i);
-		if(point->distpoint) {
-			if(point->distpoint->type == 0)
-				exts = i2v_GENERAL_NAMES(NULL,
-					 point->distpoint->name.fullname, exts);
-		        else X509V3_add_value("RelativeName","<UNSUPPORTED>", &exts);
-		}
-		if(point->reasons) 
-			X509V3_add_value("reasons","<UNSUPPORTED>", &exts);
-		if(point->CRLissuer)
-			X509V3_add_value("CRLissuer","<UNSUPPORTED>", &exts);
-	}
-	return exts;
-}
 
 static STACK_OF(DIST_POINT) *v2i_crld(X509V3_EXT_METHOD *method,
 				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
@@ -209,7 +188,7 @@ static int print_reasons(BIO *out, const char *rname,
 			if (first)
 				first = 0;
 			else
-				BIO_puts(out, ",");
+				BIO_puts(out, ", ");
 			BIO_puts(out, pbn->lname);
 			}
 		}
@@ -220,19 +199,24 @@ static int print_reasons(BIO *out, const char *rname,
 	return 1;
 	}
 
-static int print_distpoint(BIO *out, DIST_POINT_NAME *dpn, int indent)
+static int print_gens(BIO *out, STACK_OF(GENERAL_NAME) *gens, int indent)
 	{
 	int i;
+	for (i = 0; i < sk_GENERAL_NAME_num(gens); i++)
+		{
+		BIO_printf(out, "%*s", indent + 2, "");
+		GENERAL_NAME_print(out, sk_GENERAL_NAME_value(gens, i));
+		BIO_puts(out, "\n");
+		}
+	return 1;
+	}
+
+static int print_distpoint(BIO *out, DIST_POINT_NAME *dpn, int indent)
+	{
 	if (dpn->type == 0)
 		{
-		STACK_OF(GENERAL_NAME) *gens;
 		BIO_printf(out, "%*sFull Name:\n", indent, "");
-		gens = dpn->name.fullname;
-		for (i = 0; i < sk_GENERAL_NAME_num(gens); i++)
-			{
-			BIO_printf(out, "%*s", indent + 2, "");
-			GENERAL_NAME_print(out, sk_GENERAL_NAME_value(gens, i));
-			}
+		print_gens(out, dpn->name.fullname, indent + 2);
 		}
 	else
 		{
@@ -267,5 +251,28 @@ static int i2r_idp(X509V3_EXT_METHOD *method, void *pidp, BIO *out, int indent)
 		&& (idp->onlyattr <= 0))
 		BIO_printf(out, "%*s<EMPTY>\n", indent, "");
 		
+	return 1;
+	}
+
+static int i2r_crldp(X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
+								int indent)
+	{
+	STACK_OF(DIST_POINT) *crld = pcrldp;
+	DIST_POINT *point;
+	int i;
+	for(i = 0; i < sk_DIST_POINT_num(crld); i++)
+		{
+		point = sk_DIST_POINT_value(crld, i);
+		if(point->distpoint)
+			print_distpoint(out, point->distpoint, indent + 2);
+		if(point->reasons) 
+			print_reasons(out, "Reasons", point->reasons,
+								indent + 2);
+		if(point->CRLissuer)
+			{
+			BIO_printf(out, "%*sCRL Issuer:\n", indent, "");
+			print_gens(out, point->CRLissuer, indent + 2);
+			}
+		}
 	return 1;
 	}
