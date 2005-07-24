@@ -308,8 +308,8 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 	memset(result, 0, sizeof(struct file_st));
 	position = IN_DEVICE;
 
-	if(filename[0] == '\\' && filename[1] == '\\'
-		|| filename[0] == '/' && filename[1] == '/')
+	if((filename[0] == '\\' && filename[1] == '\\')
+		|| (filename[0] == '/' && filename[1] == '/'))
 		{
 		position = IN_NODE;
 		filename += 2;
