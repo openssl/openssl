@@ -128,10 +128,6 @@ if (($platform =~ /VC-(.+)/))
 	$NT = 1 if $1 eq "NT";
 	require 'VC-32.pl';
 	}
-elsif ($platform eq "VC-CE")
-	{
-	require 'VC-CE.pl';
-	}
 elsif ($platform eq "Mingw32")
 	{
 	require 'Mingw32.pl';
