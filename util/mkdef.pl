@@ -741,7 +741,8 @@ sub do_defs
 				} elsif (/^\s*DECLARE_PKCS12_STACK_OF\s*\(\s*(\w*)\s*\)/) {
 					next;
 				} elsif (/^DECLARE_PEM_rw\s*\(\s*(\w*)\s*,/ ||
-					 /^DECLARE_PEM_rw_cb\s*\(\s*(\w*)\s*,/ ) {
+					 /^DECLARE_PEM_rw_cb\s*\(\s*(\w*)\s*,/ ||
+					 /^DECLARE_PEM_rw_const\s*\(\s*(\w*)\s*,/ ) {
 					# Things not in Win16
 					$def .=
 					    "#INFO:"
