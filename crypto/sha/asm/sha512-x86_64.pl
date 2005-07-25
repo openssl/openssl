@@ -8,7 +8,8 @@
 #
 # sha256/512_block procedure for x86_64.
 #
-# 40% improvement over compiler-generated code on Opteron. No magical
+# 40% improvement over compiler-generated code on Opteron. On EM64T
+# sha256 was observed to run >80% faster and sha512 - >40%. No magical
 # tricks, just straight implementation... I really wonder why gcc
 # [being armed with inline assembler] fails to generate as fast code.
 # The only thing which is cool about this module is that it's very
@@ -34,10 +35,10 @@
 #
 # Special note on Intel EM64T. While Opteron CPU exhibits perfect
 # perfromance ratio of 1.5 between 64- and 32-bit flavors [see above],
-# [currently available] EM64T CPUs apparently are far from it. 64-bit
-# version, sha512_block, is hardly faster than 32-bit one. This is
-# presumably because 64-bit shifts/rotates apparently are not atomic
-# instructions, but implemented in microcode.
+# [currently available] EM64T CPUs apparently are far from it. On the
+# contrary, 64-bit version, sha512_block, is ~30% *slower* than 32-bit
+# sha256_block:-( This is presumably because 64-bit shifts/rotates
+# apparently are not atomic instructions, but implemented in microcode.
 
 $output=shift;
 open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
