@@ -29,11 +29,11 @@ BN_add_word() adds B<w> to B<a> (C<a+=w>).
 
 BN_sub_word() subtracts B<w> from B<a> (C<a-=w>).
 
-BN_mul_word() multiplies B<a> and B<w> (C<a*=b>).
+BN_mul_word() multiplies B<a> and B<w> (C<a*=w>).
 
 BN_div_word() divides B<a> by B<w> (C<a/=w>) and returns the remainder.
 
-BN_mod_word() returns the remainder of B<a> divided by B<w> (C<a%m>).
+BN_mod_word() returns the remainder of B<a> divided by B<w> (C<a%w>).
 
 For BN_div_word() and BN_mod_word(), B<w> must not be 0.
 
@@ -42,7 +42,8 @@ For BN_div_word() and BN_mod_word(), B<w> must not be 0.
 BN_add_word(), BN_sub_word() and BN_mul_word() return 1 for success, 0
 on error. The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
 
-BN_mod_word() and BN_div_word() return B<a>%B<w>.
+BN_mod_word() and BN_div_word() return B<a>%B<w> on success and
+B<(BN_ULONG)-1> if an error occurred.
 
 =head1 SEE ALSO
 
@@ -53,5 +54,8 @@ L<bn(3)|bn(3)>, L<ERR_get_error(3)|ERR_get_error(3)>, L<BN_add(3)|BN_add(3)>
 BN_add_word() and BN_mod_word() are available in all versions of
 SSLeay and OpenSSL. BN_div_word() was added in SSLeay 0.8, and
 BN_sub_word() and BN_mul_word() in SSLeay 0.9.0.
+
+Before 0.9.8a the return value for BN_div_word() and BN_mod_word()
+in case of an error was 0.
 
 =cut
