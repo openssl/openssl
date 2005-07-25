@@ -63,24 +63,243 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
-static STACK_OF(DIST_POINT) *v2i_crld(X509V3_EXT_METHOD *method,
+static void *v2i_crld(X509V3_EXT_METHOD *method,
 				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 static int i2r_crldp(X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
 								int indent);
 
-X509V3_EXT_METHOD v3_crld = {
-NID_crl_distribution_points, X509V3_EXT_MULTILINE, ASN1_ITEM_ref(CRL_DIST_POINTS),
-0,0,0,0,
-0,0,
-0,
-(X509V3_EXT_V2I)v2i_crld,
-i2r_crldp,0,
-NULL
+X509V3_EXT_METHOD v3_crld =
+	{
+	NID_crl_distribution_points, 0, ASN1_ITEM_ref(CRL_DIST_POINTS),
+	0,0,0,0,
+	0,0,
+	0,
+	v2i_crld,
+	i2r_crldp,0,
+	NULL
+	};
+
+static STACK_OF(GENERAL_NAME) *gnames_from_sectname(X509V3_CTX *ctx, char *sect)
+	{
+	STACK_OF(CONF_VALUE) *gnsect;
+	STACK_OF(GENERAL_NAME) *gens;
+	if (*sect == '@')
+		gnsect = X509V3_get_section(ctx, sect + 1);
+	else
+		gnsect = X509V3_parse_list(sect);
+	if (!gnsect)
+		{
+		X509V3err(X509V3_F_GNAMES_FROM_SECTNAME,
+						X509V3_R_SECTION_NOT_FOUND);
+		return NULL;
+		}
+	gens = v2i_GENERAL_NAMES(NULL, ctx, gnsect);
+	if (*sect == '@')
+		X509V3_section_free(ctx, gnsect);
+	else
+		sk_CONF_VALUE_pop_free(gnsect, X509V3_conf_free);
+	return gens;
+	}
+
+static int get_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
+							CONF_VALUE *cnf)
+	{
+	STACK_OF(GENERAL_NAME) *fnm = NULL;
+	STACK_OF(X509_NAME_ENTRY) *rnm = NULL;
+	if (!strncmp(cnf->name, "fullname", 9))
+		{
+		fnm = gnames_from_sectname(ctx, cnf->value);
+		if (!fnm)
+			goto err;
+		}
+	else if (!strcmp(cnf->name, "relativename"))
+		{
+		int ret;
+		STACK_OF(CONF_VALUE) *dnsect;
+		X509_NAME *nm;
+		nm = X509_NAME_new();
+		if (!nm)
+			return -1;
+		dnsect = X509V3_get_section(ctx, cnf->value);
+		if (!dnsect)
+			{
+			X509V3err(X509V3_F_GET_DIST_POINT_NAME,
+						X509V3_R_SECTION_NOT_FOUND);
+			return -1;
+			}
+		ret = X509V3_NAME_from_section(nm, dnsect, MBSTRING_ASC);
+		X509V3_section_free(ctx, dnsect);
+		rnm = nm->entries;
+		nm->entries = NULL;
+		X509_NAME_free(nm);
+		if (!ret || sk_X509_NAME_ENTRY_num(rnm) <= 0)
+			goto err;
+		/* Since its a name fragment can't have more than one
+		 * RDNSequence
+		 */
+		if (sk_X509_NAME_ENTRY_value(rnm,
+				sk_X509_NAME_ENTRY_num(rnm) - 1)->set)
+			{
+			X509V3err(X509V3_F_GET_DIST_POINT_NAME,
+						X509V3_R_INVAID_MULTIPLE_RDNS);
+			goto err;
+			}
+		}
+	else
+		return 0;
+
+	if (*pdp)
+		{
+		X509V3err(X509V3_F_GET_DIST_POINT_NAME,
+						X509V3_R_DISTPOINT_ALREADY_SET);
+		goto err;
+		}
+
+	*pdp = DIST_POINT_NAME_new();
+	if (!*pdp)
+		goto err;
+	if (fnm)
+		{
+		(*pdp)->type = 0;
+		(*pdp)->name.fullname = fnm;
+		}
+	else
+		{
+		(*pdp)->type = 1;
+		(*pdp)->name.relativename = rnm;
+		}
+
+	return 1;
+		
+	err:
+	if (fnm)
+		sk_GENERAL_NAME_pop_free(fnm, GENERAL_NAME_free);
+	if (rnm)
+		sk_X509_NAME_ENTRY_pop_free(rnm, X509_NAME_ENTRY_free);
+	return -1;
+	}
+
+
+static const BIT_STRING_BITNAME reason_flags[] = {
+{1, "Key Compromise", "keyCompromise"},
+{2, "CA Compromise", "CACompromise"},
+{3, "Affiliation Changed", "affiliationChanged"},
+{4, "Superseded", "superseded"},
+{5, "Cessation Of Operation", "cessationOfOperation"},
+{6, "Certificate Hold", "certificateHold"},
+{7, "Privilege Withdrawn", "privilegeWithdrawn"},
+{8, "AA Compromise", "AACompromise"},
+{-1, NULL, NULL}
 };
 
-static STACK_OF(DIST_POINT) *v2i_crld(X509V3_EXT_METHOD *method,
+static int set_reasons(ASN1_BIT_STRING **preas, char *value)
+	{
+	STACK_OF(CONF_VALUE) *rsk = NULL;
+	const BIT_STRING_BITNAME *pbn;
+	const char *bnam;
+	int i, ret = 0;
+	rsk = X509V3_parse_list(value);
+	if (!rsk)
+		return 0;
+	if (*preas)
+		return 0;
+	for (i = 0; i < sk_CONF_VALUE_num(rsk); i++)
+		{
+		bnam = sk_CONF_VALUE_value(rsk, i)->name;
+		if (!*preas)
+			{
+			*preas = ASN1_BIT_STRING_new();
+			if (!*preas)
+				goto err;
+			}
+		for (pbn = reason_flags; pbn->lname; pbn++)
+			{
+			if (!strcmp(pbn->sname, bnam))
+				{
+				if (!ASN1_BIT_STRING_set_bit(*preas,
+							pbn->bitnum, 1))
+					goto err;
+				break;
+				}
+			}
+		if (!pbn->lname)
+			goto err;
+		}
+	ret = 1;
+
+	err:
+	sk_CONF_VALUE_pop_free(rsk, X509V3_conf_free);
+	return ret;
+	}
+
+static int print_reasons(BIO *out, const char *rname,
+			ASN1_BIT_STRING *rflags, int indent)
+	{
+	int first = 1;
+	const BIT_STRING_BITNAME *pbn;
+	BIO_printf(out, "%*s%s:\n%*s", indent, "", rname, indent + 2, "");
+	for (pbn = reason_flags; pbn->lname; pbn++)
+		{
+		if (ASN1_BIT_STRING_get_bit(rflags, pbn->bitnum))
+			{
+			if (first)
+				first = 0;
+			else
+				BIO_puts(out, ", ");
+			BIO_puts(out, pbn->lname);
+			}
+		}
+	if (first)
+		BIO_puts(out, "<EMPTY>\n");
+	else
+		BIO_puts(out, "\n");
+	return 1;
+	}
+
+static DIST_POINT *crldp_from_section(X509V3_CTX *ctx,
+						STACK_OF(CONF_VALUE) *nval)
+	{
+	int i;
+	CONF_VALUE *cnf;
+	DIST_POINT *point = NULL;
+	point = DIST_POINT_new();
+	if (!point)
+		goto err;
+	for(i = 0; i < sk_CONF_VALUE_num(nval); i++)
+		{
+		int ret;
+		cnf = sk_CONF_VALUE_value(nval, i);
+		ret = get_dist_point_name(&point->distpoint, ctx, cnf);
+		if (ret > 0)
+			continue;
+		if (ret < 0)
+			goto err;
+		if (!strcmp(cnf->name, "reasons"))
+			{
+			if (!set_reasons(&point->reasons, cnf->value))
+				goto err;
+			}
+		else if (!strcmp(cnf->name, "CRLissuer"))
+			{
+			point->CRLissuer =
+				gnames_from_sectname(ctx, cnf->value);
+			if (!point->CRLissuer)
+				goto err;
+			}
+		}
+
+	return point;
+			
+
+	err:
+	if (point)
+		DIST_POINT_free(point);
+	return NULL;
+	}
+
+static void *v2i_crld(X509V3_EXT_METHOD *method,
 				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
-{
+	{
 	STACK_OF(DIST_POINT) *crld = NULL;
 	GENERAL_NAMES *gens = NULL;
 	GENERAL_NAME *gen = NULL;
@@ -90,19 +309,44 @@ static STACK_OF(DIST_POINT) *v2i_crld(X509V3_EXT_METHOD *method,
 	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
 		DIST_POINT *point;
 		cnf = sk_CONF_VALUE_value(nval, i);
-		if(!(gen = v2i_GENERAL_NAME(method, ctx, cnf))) goto err; 
-		if(!(gens = GENERAL_NAMES_new())) goto merr;
-		if(!sk_GENERAL_NAME_push(gens, gen)) goto merr;
-		gen = NULL;
-		if(!(point = DIST_POINT_new())) goto merr;
-		if(!sk_DIST_POINT_push(crld, point)) {
-			DIST_POINT_free(point);
-			goto merr;
-		}
-		if(!(point->distpoint = DIST_POINT_NAME_new())) goto merr;
-		point->distpoint->name.fullname = gens;
-		point->distpoint->type = 0;
-		gens = NULL;
+		if (!cnf->value && cnf->name[0] == '@')
+			{
+			STACK_OF(CONF_VALUE) *dpsect;
+			dpsect = X509V3_get_section(ctx, cnf->name + 1);
+			if (!dpsect)
+				goto err;
+			point = crldp_from_section(ctx, dpsect);
+			X509V3_section_free(ctx, dpsect);
+			if (!point)
+				goto err;
+			if(!sk_DIST_POINT_push(crld, point))
+				{
+				DIST_POINT_free(point);
+				goto merr;
+				}
+			}
+		else
+			{
+			if(!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
+				goto err; 
+			if(!(gens = GENERAL_NAMES_new()))
+				goto merr;
+			if(!sk_GENERAL_NAME_push(gens, gen))
+				goto merr;
+			gen = NULL;
+			if(!(point = DIST_POINT_new()))
+				goto merr;
+			if(!sk_DIST_POINT_push(crld, point))
+				{
+				DIST_POINT_free(point);
+				goto merr;
+				}
+			if(!(point->distpoint = DIST_POINT_NAME_new()))
+				goto merr;
+			point->distpoint->name.fullname = gens;
+			point->distpoint->type = 0;
+			gens = NULL;
+			}
 	}
 	return crld;
 
@@ -163,42 +407,6 @@ X509V3_EXT_METHOD v3_idp =
 	NULL
 	};
 
-static const BIT_STRING_BITNAME reason_flags[] = {
-{1, "Key Compromise", "keyCompromise"},
-{2, "CA Compromise", "CACompromise"},
-{3, "Affiliation Changed", "affiliationChanged"},
-{4, "Superseded", "superseded"},
-{5, "Cessation Of Operation", "cessationOfOperation"},
-{6, "Certificate Hold", "certificateHold"},
-{7, "Privilege Withdrawn", "privilegeWithdrawn"},
-{8, "AA Compromise", "AACompromise"},
-{-1, NULL, NULL}
-};
-
-static int print_reasons(BIO *out, const char *rname,
-			ASN1_BIT_STRING *rflags, int indent)
-	{
-	int first = 1;
-	const BIT_STRING_BITNAME *pbn;
-	BIO_printf(out, "%*s%s:\n%*s", indent, "", rname, indent + 2, "");
-	for (pbn = reason_flags; pbn->lname; pbn++)
-		{
-		if (ASN1_BIT_STRING_get_bit(rflags, pbn->bitnum))
-			{
-			if (first)
-				first = 0;
-			else
-				BIO_puts(out, ", ");
-			BIO_puts(out, pbn->lname);
-			}
-		}
-	if (first)
-		BIO_puts(out, "<EMPTY>\n");
-	else
-		BIO_puts(out, "\n");
-	return 1;
-	}
-
 static int print_gens(BIO *out, STACK_OF(GENERAL_NAME) *gens, int indent)
 	{
 	int i;
@@ -216,7 +424,7 @@ static int print_distpoint(BIO *out, DIST_POINT_NAME *dpn, int indent)
 	if (dpn->type == 0)
 		{
 		BIO_printf(out, "%*sFull Name:\n", indent, "");
-		print_gens(out, dpn->name.fullname, indent + 2);
+		print_gens(out, dpn->name.fullname, indent);
 		}
 	else
 		{
@@ -262,16 +470,17 @@ static int i2r_crldp(X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
 	int i;
 	for(i = 0; i < sk_DIST_POINT_num(crld); i++)
 		{
+		BIO_puts(out, "\n");
 		point = sk_DIST_POINT_value(crld, i);
 		if(point->distpoint)
-			print_distpoint(out, point->distpoint, indent + 2);
+			print_distpoint(out, point->distpoint, indent);
 		if(point->reasons) 
 			print_reasons(out, "Reasons", point->reasons,
-								indent + 2);
+								indent);
 		if(point->CRLissuer)
 			{
 			BIO_printf(out, "%*sCRL Issuer:\n", indent, "");
-			print_gens(out, point->CRLissuer, indent + 2);
+			print_gens(out, point->CRLissuer, indent);
 			}
 		}
 	return 1;
