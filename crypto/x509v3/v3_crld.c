@@ -101,7 +101,7 @@ static STACK_OF(GENERAL_NAME) *gnames_from_sectname(X509V3_CTX *ctx, char *sect)
 	return gens;
 	}
 
-static int get_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
+static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
 							CONF_VALUE *cnf)
 	{
 	STACK_OF(GENERAL_NAME) *fnm = NULL;
@@ -123,7 +123,7 @@ static int get_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
 		dnsect = X509V3_get_section(ctx, cnf->value);
 		if (!dnsect)
 			{
-			X509V3err(X509V3_F_GET_DIST_POINT_NAME,
+			X509V3err(X509V3_F_SET_DIST_POINT_NAME,
 						X509V3_R_SECTION_NOT_FOUND);
 			return -1;
 			}
@@ -140,7 +140,7 @@ static int get_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
 		if (sk_X509_NAME_ENTRY_value(rnm,
 				sk_X509_NAME_ENTRY_num(rnm) - 1)->set)
 			{
-			X509V3err(X509V3_F_GET_DIST_POINT_NAME,
+			X509V3err(X509V3_F_SET_DIST_POINT_NAME,
 						X509V3_R_INVAID_MULTIPLE_RDNS);
 			goto err;
 			}
@@ -150,7 +150,7 @@ static int get_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
 
 	if (*pdp)
 		{
-		X509V3err(X509V3_F_GET_DIST_POINT_NAME,
+		X509V3err(X509V3_F_SET_DIST_POINT_NAME,
 						X509V3_R_DISTPOINT_ALREADY_SET);
 		goto err;
 		}
@@ -178,7 +178,6 @@ static int get_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
 		sk_X509_NAME_ENTRY_pop_free(rnm, X509_NAME_ENTRY_free);
 	return -1;
 	}
-
 
 static const BIT_STRING_BITNAME reason_flags[] = {
 {1, "Key Compromise", "keyCompromise"},
@@ -269,7 +268,7 @@ static DIST_POINT *crldp_from_section(X509V3_CTX *ctx,
 		{
 		int ret;
 		cnf = sk_CONF_VALUE_value(nval, i);
-		ret = get_dist_point_name(&point->distpoint, ctx, cnf);
+		ret = set_dist_point_name(&point->distpoint, ctx, cnf);
 		if (ret > 0)
 			continue;
 		if (ret < 0)
@@ -393,8 +392,12 @@ ASN1_SEQUENCE(ISSUING_DIST_POINT) = {
 	ASN1_IMP_OPT(ISSUING_DIST_POINT, onlyattr, ASN1_FBOOLEAN, 5)
 } ASN1_SEQUENCE_END(ISSUING_DIST_POINT)
 
+IMPLEMENT_ASN1_FUNCTIONS(ISSUING_DIST_POINT)
+
 static int i2r_idp(X509V3_EXT_METHOD *method,
 	     void *pidp, BIO *out, int indent);
+static void *v2i_idp(X509V3_EXT_METHOD *method,
+				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 
 X509V3_EXT_METHOD v3_idp =
 	{
@@ -402,10 +405,72 @@ X509V3_EXT_METHOD v3_idp =
 	ASN1_ITEM_ref(ISSUING_DIST_POINT),
 	0,0,0,0,
 	0,0,
-	0,0,
+	0,
+	v2i_idp,
 	i2r_idp,0,
 	NULL
 	};
+
+static void *v2i_idp(X509V3_EXT_METHOD *method,
+				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
+	{
+	ISSUING_DIST_POINT *idp = NULL;
+	CONF_VALUE *cnf;
+	char *name, *val;
+	int i, ret;
+	idp = ISSUING_DIST_POINT_new();
+	if (!idp)
+		goto merr;
+	for(i = 0; i < sk_CONF_VALUE_num(nval); i++)
+		{
+		cnf = sk_CONF_VALUE_value(nval, i);
+		name = cnf->name;
+		val = cnf->value;
+		ret = set_dist_point_name(&idp->distpoint, ctx, cnf);
+		if (ret > 0)
+			continue;
+		if (ret < 0)
+			goto err;
+		if (!strcmp(name, "onlyuser"))
+			{
+			if (!X509V3_get_value_bool(cnf, &idp->onlyuser))
+				goto err;
+			}
+		else if (!strcmp(name, "onlyCA"))
+			{
+			if (!X509V3_get_value_bool(cnf, &idp->onlyCA))
+				goto err;
+			}
+		else if (!strcmp(name, "onlyAA"))
+			{
+			if (!X509V3_get_value_bool(cnf, &idp->onlyattr))
+				goto err;
+			}
+		else if (!strcmp(name, "indirectCRL"))
+			{
+			if (!X509V3_get_value_bool(cnf, &idp->indirectCRL))
+				goto err;
+			}
+		else if (!strcmp(name, "onlysomereasons"))
+			{
+			if (!set_reasons(&idp->onlysomereasons, val))
+				goto err;
+			}
+		else
+			{
+                        X509V3err(X509V3_F_V2I_IDP, X509V3_R_INVALID_NAME);
+                        X509V3_conf_err(cnf);
+                        goto err;
+			}
+		}
+	return idp;
+
+	merr:
+	X509V3err(X509V3_F_V2I_IDP,ERR_R_MALLOC_FAILURE);
+	err:
+	ISSUING_DIST_POINT_free(idp);
+	return NULL;
+	}
 
 static int print_gens(BIO *out, STACK_OF(GENERAL_NAME) *gens, int indent)
 	{
