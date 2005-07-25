@@ -309,10 +309,10 @@ static void *v2i_crld(X509V3_EXT_METHOD *method,
 	for(i = 0; i < sk_CONF_VALUE_num(nval); i++) {
 		DIST_POINT *point;
 		cnf = sk_CONF_VALUE_value(nval, i);
-		if (!cnf->value && cnf->name[0] == '@')
+		if (!cnf->value)
 			{
 			STACK_OF(CONF_VALUE) *dpsect;
-			dpsect = X509V3_get_section(ctx, cnf->name + 1);
+			dpsect = X509V3_get_section(ctx, cnf->name);
 			if (!dpsect)
 				goto err;
 			point = crldp_from_section(ctx, dpsect);
