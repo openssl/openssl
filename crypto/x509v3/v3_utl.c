@@ -826,13 +826,13 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
 				break;
 				}
 #ifndef CHARSET_EBCDIC
-			if (*p == '+')
+		if (*type == '+')
 #else
-			if (*p == os_toascii['+'])
+		if (*type == os_toascii['+'])
 #endif
 			{
 			mval = -1;
-			p++;
+			type++;
 			}
 		else
 			mval = 0;
