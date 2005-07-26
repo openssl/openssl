@@ -341,7 +341,8 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
 	X509_NAME_ENTRY *ne;
 	GENERAL_NAME *gen = NULL;
 	int i;
-	if(ctx->flags == CTX_TEST) return 1;
+	if(ctx != NULL && ctx->flags == CTX_TEST)
+		return 1;
 	if(!ctx || (!ctx->subject_cert && !ctx->subject_req)) {
 		X509V3err(X509V3_F_COPY_EMAIL,X509V3_R_NO_SUBJECT_DETAILS);
 		goto err;

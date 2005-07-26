@@ -620,8 +620,10 @@ UI_METHOD *UI_create_method(char *name)
 	UI_METHOD *ui_method = (UI_METHOD *)OPENSSL_malloc(sizeof(UI_METHOD));
 
 	if (ui_method)
+		{
 		memset(ui_method, 0, sizeof(*ui_method));
-	ui_method->name = BUF_strdup(name);
+		ui_method->name = BUF_strdup(name);
+		}
 	return ui_method;
 	}
 
