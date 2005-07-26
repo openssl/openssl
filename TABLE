@@ -1244,12 +1244,12 @@ $arflags      =
 
 *** debug-geoff
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DBN_DEBUG_RAND -DBN_STRICT -DPURIFY -DOPENSSL_NO_DEPRECATED -DOPENSSL_NO_ASM -DOPENSSL_NO_INLINE_ASM -DL_ENDIAN -DTERMIO -DPEDANTIC -O1 -ggdb2 -Wall -Werror -Wundef -pedantic -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align -Wsign-compare -Wmissing-prototypes -Wmissing-declarations -Wno-long-long
+$cflags       = -DBN_DEBUG -DBN_DEBUG_RAND -DBN_STRICT -DPURIFY -DOPENSSL_NO_DEPRECATED -DOPENSSL_NO_ASM -DOPENSSL_NO_INLINE_ASM -DL_ENDIAN -DTERMIO -DPEDANTIC -DMD32_REG_T=int -O1 -ggdb2 -Wall -Werror -Wundef -pedantic -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align -Wsign-compare -Wmissing-prototypes -Wmissing-declarations -Wno-long-long
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
 $lflags       = -ldl
-$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$bn_ops       = SIXTY_FOUR_BIT_LONG
 $cpuid_obj    = 
 $bn_obj       = 
 $des_obj      = 

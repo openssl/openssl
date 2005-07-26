@@ -3367,3 +3367,4 @@ pitem_free                              3767	EXIST::FUNCTION:
 BN_GF2m_mod_inv_arr                     3768	EXIST::FUNCTION:
 ENGINE_unregister_ECDSA                 3769	EXIST::FUNCTION:ENGINE
 BN_BLINDING_set_thread_id               3770	EXIST::FUNCTION:
+DSO_pathbyaddr                          3771	EXIST::FUNCTION:

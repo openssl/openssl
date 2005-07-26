@@ -824,7 +824,7 @@ speed.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 speed.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 speed.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
 speed.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
-speed.o: ../include/openssl/x509_vfy.h apps.h speed.c testdsa.h testrsa.h
+speed.o: ../include/openssl/x509_vfy.h testdsa.h testrsa.h apps.h speed.c
 spkac.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 spkac.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 spkac.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
