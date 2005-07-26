@@ -1228,7 +1228,7 @@ dtls1_min_mtu(void)
 static unsigned int 
 dtls1_guess_mtu(unsigned int curr_mtu)
 	{
-	int i;
+	unsigned int i;
 
 	if ( curr_mtu == 0 )
 		return g_probable_mtu[0] ;
