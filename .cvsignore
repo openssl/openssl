@@ -1,4 +1,6 @@
 openssl.pc
+libcrypto.pc
+libssl.pc
 MINFO
 makefile.one
 tmp
