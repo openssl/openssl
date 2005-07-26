@@ -198,6 +198,11 @@ int DSA_print(BIO *bp, const DSA *x, int off)
 
 	if (x->p)
 		buf_len = (size_t)BN_num_bytes(x->p);
+	else
+		{
+		DSAerr(DSA_F_DSA_PRINT,DSA_R_MISSING_PARAMETERS);
+		goto err;
+		}
 	if (x->q)
 		if (buf_len < (i = (size_t)BN_num_bytes(x->q)))
 			buf_len = i;
@@ -670,6 +675,11 @@ int DHparams_print(BIO *bp, const DH *x)
 
 	if (x->p)
 		buf_len = (size_t)BN_num_bytes(x->p);
+	else
+		{
+		reason = ERR_R_PASSED_NULL_PARAMETER;
+		goto err;
+		}
 	if (x->g)
 		if (buf_len < (i = (size_t)BN_num_bytes(x->g)))
 			buf_len = i;
@@ -728,6 +738,11 @@ int DSAparams_print(BIO *bp, const DSA *x)
 
 	if (x->p)
 		buf_len = (size_t)BN_num_bytes(x->p);
+	else
+		{
+		DSAerr(DSA_F_DSA_PRINT,DSA_R_MISSING_PARAMETERS);
+		goto err;
+		}
 	if (x->q)
 		if (buf_len < (i = (size_t)BN_num_bytes(x->q)))
 			buf_len = i;
@@ -737,7 +752,7 @@ int DSAparams_print(BIO *bp, const DSA *x)
 	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
-		reason=ERR_R_MALLOC_FAILURE;
+		DSAerr(DSA_F_DSA_PRINT,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
@@ -750,7 +765,6 @@ int DSAparams_print(BIO *bp, const DSA *x)
 	ret=1;
 err:
 	if (m != NULL) OPENSSL_free(m);
-	DSAerr(DSA_F_DSAPARAMS_PRINT,reason);
 	return(ret);
 	}
 

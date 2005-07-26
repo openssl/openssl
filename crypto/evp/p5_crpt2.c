@@ -156,10 +156,15 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	const EVP_CIPHER *cipher;
 	PBKDF2PARAM *kdf = NULL;
 
+	if (param == NULL || param->type != V_ASN1_SEQUENCE ||
+	    param->value.sequence == NULL) {
+		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
+		return 0;
+	}
+
 	pbuf = param->value.sequence->data;
 	plen = param->value.sequence->length;
-	if(!param || (param->type != V_ASN1_SEQUENCE) ||
-				   !(pbe2 = d2i_PBE2PARAM(NULL, &pbuf, plen))) {
+	if(!(pbe2 = d2i_PBE2PARAM(NULL, &pbuf, plen))) {
 		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
 		return 0;
 	}

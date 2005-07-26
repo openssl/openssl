@@ -101,6 +101,8 @@ int OCSP_request_set1_name(OCSP_REQUEST *req, X509_NAME *nm)
 	{
 	GENERAL_NAME *gen;
 	gen = GENERAL_NAME_new();
+	if (gen == NULL)
+		return 0;
 	if (!X509_NAME_set(&gen->d.directoryName, nm))
 		{
 		GENERAL_NAME_free(gen);

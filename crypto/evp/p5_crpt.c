@@ -114,9 +114,14 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	const unsigned char *pbuf;
 
 	/* Extract useful info from parameter */
+	if (param == NULL || param->type != V_ASN1_SEQUENCE ||
+	    param->value.sequence == NULL) {
+		EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
+		return 0;
+	}
+
 	pbuf = param->value.sequence->data;
-	if (!param || (param->type != V_ASN1_SEQUENCE) ||
-	   !(pbe = d2i_PBEPARAM (NULL, &pbuf, param->value.sequence->length))) {
+	if (!(pbe = d2i_PBEPARAM(NULL, &pbuf, param->value.sequence->length))) {
 		EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
 		return 0;
 	}

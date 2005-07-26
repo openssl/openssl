@@ -153,7 +153,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 #endif /* OPENSSL_NO_KRB5 */
 	if (x->compress_meth != 0)
 		{
-		SSL_COMP *comp;
+		SSL_COMP *comp = NULL;
 
 		ssl_cipher_get_evp(x,NULL,NULL,&comp);
 		if (comp == NULL)
