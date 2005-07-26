@@ -178,7 +178,7 @@ static int dtls1_record_needs_buffering(SSL *s, SSL3_RECORD *rr,
 static int dtls1_buffer_record(SSL *s, record_pqueue *q,
 	unsigned char *priority);
 static int dtls1_process_record(SSL *s);
-#if PQ_64BIT_IS_INTEGER
+#ifdef PQ_64BIT_IS_INTEGER
 static PQ_64BIT bytes_to_long_long(unsigned char *bytes, PQ_64BIT *num);
 #endif
 static void dtls1_clear_timeouts(SSL *s);
@@ -1710,7 +1710,7 @@ dtls1_reset_seq_numbers(SSL *s, int rw)
 	memset(seq, 0x00, seq_bytes);
 	}
 
-#if PQ_64BIT_IS_INTEGER
+#ifdef PQ_64BIT_IS_INTEGER
 static PQ_64BIT
 bytes_to_long_long(unsigned char *bytes, PQ_64BIT *num)
        {
