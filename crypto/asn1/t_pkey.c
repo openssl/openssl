@@ -733,7 +733,7 @@ int DSAparams_print_fp(FILE *fp, const DSA *x)
 int DSAparams_print(BIO *bp, const DSA *x)
 	{
 	unsigned char *m=NULL;
-	int reason=ERR_R_BUF_LIB,ret=0;
+	int ret=0;
 	size_t buf_len=0,i;
 
 	if (x->p)
