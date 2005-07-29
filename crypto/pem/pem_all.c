@@ -221,7 +221,7 @@ DSA *PEM_read_bio_DSAPrivateKey(BIO *bp, DSA **dsa, pem_password_cb *cb,
 {
 	EVP_PKEY *pktmp;
 	pktmp = PEM_read_bio_PrivateKey(bp, NULL, cb, u);
-	return pkey_get_dsa(pktmp, dsa);
+	return pkey_get_dsa(pktmp, dsa);	/* will free pktmp */
 }
 
 IMPLEMENT_PEM_write_cb_const(DSAPrivateKey, DSA, PEM_STRING_DSA, DSAPrivateKey)
@@ -234,7 +234,7 @@ DSA *PEM_read_DSAPrivateKey(FILE *fp, DSA **dsa, pem_password_cb *cb,
 {
 	EVP_PKEY *pktmp;
 	pktmp = PEM_read_PrivateKey(fp, NULL, cb, u);
-	return pkey_get_dsa(pktmp, dsa);
+	return pkey_get_dsa(pktmp, dsa);	/* will free pktmp */
 }
 
 #endif
@@ -265,7 +265,7 @@ EC_KEY *PEM_read_bio_ECPrivateKey(BIO *bp, EC_KEY **key, pem_password_cb *cb,
 {
 	EVP_PKEY *pktmp;
 	pktmp = PEM_read_bio_PrivateKey(bp, NULL, cb, u);
-	return pkey_get_eckey(pktmp, key);
+	return pkey_get_eckey(pktmp, key);	/* will free pktmp */
 }
 
 IMPLEMENT_PEM_rw_const(ECPKParameters, EC_GROUP, PEM_STRING_ECPARAMETERS, ECPKParameters)
@@ -281,7 +281,7 @@ EC_KEY *PEM_read_ECPrivateKey(FILE *fp, EC_KEY **eckey, pem_password_cb *cb,
 {
 	EVP_PKEY *pktmp;
 	pktmp = PEM_read_PrivateKey(fp, NULL, cb, u);
-	return pkey_get_eckey(pktmp, eckey);
+	return pkey_get_eckey(pktmp, eckey);	/* will free pktmp */
 }
 
 #endif
