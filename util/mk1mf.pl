@@ -314,14 +314,6 @@ EOF
 
 $defs .= $preamble if defined $preamble;
 
-if ($platform eq "VC-CE")
-	{
-	$defs.= <<"EOF";
-!INCLUDE <\$(WCECOMPAT)/wcedefs.mak>
-
-EOF
-	}
-
 $defs.= <<"EOF";
 INSTALLTOP=$INSTALLTOP
 

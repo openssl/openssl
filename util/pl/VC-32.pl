@@ -32,10 +32,30 @@ if ($FLAVOR =~ /WIN64/)
     }
 elsif ($FLAVOR =~ /CE/)
     {
-    $base_cflags=' /W3 /WX /Gs0 /GF /Gy /nologo $(WCETARGETDEFS) -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -I$(WCECOMPAT)/include';
+    # sanity check
+    die '%OSVERSION% is not defined'	if (!defined($ENV{'OSVERSION'}));
+    die '%PLATFORM% is not defined'	if (!defined($ENV{'PLATFORM'}));
+    die '%TARGETCPU% is not defined'	if (!defined($ENV{'TARGETCPU'}));
+
+    # pull CE version from OSVERSION environment variable
+    $wcevers = $ENV{'OSVERSION'};			# WCENNN
+    die '%OSVERSION% value is insane'	if ($wcevers !~ /^WCE([1-9])([0-9]{2})$/);
+    $wcecdefs = "-D_WIN32_WCE=$1$2";		# -D_WIN32_WCE=NNN
+    $wcelflag = "/subsystem:windowsce,$1.$2";	# ...,N.NN
+    if ($ENV{'TARGETCPU'} =~ /^X86/)
+    {	$wcelflag .= " /machine:X86";			}
+    else
+    {	$wcelflag .= " /machine:$ENV{'TARGETCPU'}";	}
+    $wceplatf =  $ENV{'PLATFORM'};
+    $wceplatf =~ tr/a-z0-9 /A-Z0-9_/d;
+    $wcecdefs .= " -DWCEPLATFORM=$wceplatf";
+
+    $cc='$(CC)';
+    $base_cflags=' /W3 /WX /Gs0 /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -I$(WCECOMPAT)/include';
+    $base_cflags.=" $wcecdefs";
     $opt_cflags=' /MD /Ox /O2 /Ob2';
     $dbg_clfags=' /MDd /Od -DDEBUG -D_DEBUG';
-    $lflags='/nologo /subsystem:windowsce,$(WCELDVERSION) /machine:$(WCELDMACHINE) /opt:ref';
+    $lflags="/nologo /opt:ref $wcelflag";
     }
 else	# Win32
     {
@@ -74,7 +94,10 @@ elsif ($FLAVOR =~ /CE/)	{ $ex_libs='winsock.lib'; }
 else			{ $ex_libs='wsock32.lib'; }
 
 if ($FLAVOR =~ /CE/)
-	{ $ex_libs.=' $(WCECOMPAT)/lib/wcecompatex.lib $(WCELDFLAGS)'; }
+	{
+	$ex_libs.=' $(WCECOMPAT)/lib/wcecompatex.lib';
+	$ex_libs.=' /nodefaultlib:oldnames.lib coredll.lib corelibc.lib' if ($ENV{'TARGETCPU'} eq "X86");
+	}
 else
 	{
 	$ex_libs.=' gdi32.lib advapi32.lib user32.lib';
