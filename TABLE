@@ -3159,7 +3159,7 @@ $shared_extension =
 $ranlib       = 
 $arflags      = 
 
-*** ofs1-alpha-cc
+*** osf1-alpha-cc
 $cc           = cc
 $cflags       = -std1 -tune host -O4 -readonly_strings
 $unistd       = 
