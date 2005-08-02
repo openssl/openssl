@@ -84,16 +84,6 @@ extern "C" {
 
 /* ---------------------- Microsoft operating systems ---------------------- */
 
-/* The 16 bit environments are pretty straightforward */
-#if defined(OPENSSL_SYSNAME_WIN16) || defined(OPENSSL_SYSNAME_MSDOS)
-# undef OPENSSL_SYS_UNIX
-# define OPENSSL_SYS_MSDOS
-#endif
-#if defined(OPENSSL_SYSNAME_WIN16)
-# undef OPENSSL_SYS_UNIX
-# define OPENSSL_SYS_WIN16
-#endif
-
 /* For 32 bit environment, there seems to be the CygWin environment and then
    all the others that try to do the same thing Microsoft does... */
 #if defined(OPENSSL_SYSNAME_UWIN)
@@ -120,7 +110,7 @@ extern "C" {
 #endif
 
 /* Anything that tries to look like Microsoft is "Windows" */
-#if defined(OPENSSL_SYS_WIN16) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINNT) || defined(OPENSSL_SYS_WINCE)
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINNT) || defined(OPENSSL_SYS_WINCE)
 # undef OPENSSL_SYS_UNIX
 # define OPENSSL_SYS_WINDOWS
 # ifndef OPENSSL_SYS_MSDOS
@@ -211,9 +201,6 @@ extern "C" {
 
 
 /* Specials for I/O an exit */
-#ifdef OPENSSL_SYS_WIN16
-# define OPENSSL_NO_FP_API
-#endif
 #ifdef OPENSSL_SYS_MSDOS
 # define OPENSSL_UNISTD_IO <io.h>
 # define OPENSSL_DECLARE_EXIT extern void exit(int);
