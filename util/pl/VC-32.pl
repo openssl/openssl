@@ -48,7 +48,7 @@ elsif ($FLAVOR =~ /CE/)
     {	$wcelflag .= " /machine:$ENV{'TARGETCPU'}";	}
     $wceplatf =  $ENV{'PLATFORM'};
     $wceplatf =~ tr/a-z0-9 /A-Z0-9_/d;
-    $wcecdefs .= " -DWCEPLATFORM=$wceplatf";
+    $wcecdefs .= " -DWCE_$wceplatf";
 
     $cc='$(CC)';
     $base_cflags=' /W3 /WX /Gs0 /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -I$(WCECOMPAT)/include';
@@ -95,7 +95,7 @@ else			{ $ex_libs='wsock32.lib'; }
 
 if ($FLAVOR =~ /CE/)
 	{
-	$ex_libs.=' $(WCECOMPAT)/lib/wcecompatex.lib';
+	$ex_libs.=' $(WCECOMPAT)/lib/wcecompatex.lib cryptapi.lib';
 	$ex_libs.=' /nodefaultlib:oldnames.lib coredll.lib corelibc.lib' if ($ENV{'TARGETCPU'} eq "X86");
 	}
 else
