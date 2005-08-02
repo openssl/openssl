@@ -51,9 +51,9 @@ elsif ($FLAVOR =~ /CE/)
     $wcecdefs .= " -DWCE_PLATFORM_$wceplatf";
 
     $cc='$(CC)';
-    $base_cflags=' /W3 /WX /Gs0 /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -I$(WCECOMPAT)/include';
+    $base_cflags=' /W3 /WX /Gs0 /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -I$(WCECOMPAT)/include -DOPENSSL_SMALL_FOOTPRINT';
     $base_cflags.=" $wcecdefs";
-    $opt_cflags=' /MD /Ox /O2 /Ob2';
+    $opt_cflags=' /MD /O1i';	# optimize for space, but with intrinsics...
     $dbg_clfags=' /MDd /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /opt:ref $wcelflag";
     }
