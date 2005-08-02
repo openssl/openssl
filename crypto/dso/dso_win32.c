@@ -85,6 +85,26 @@ static FARPROC GetProcAddressA(HMODULE hModule,LPCSTR lpProcName)
 # endif
 # undef GetProcAddress
 # define GetProcAddress GetProcAddressA
+
+static HINSTANCE LoadLibraryA(LPCSTR *lpLibFileName)
+	{
+	WCHAR *fnamw;
+	size_t len_0=strlen(lpLibFileName)+1,i;
+
+#ifdef _MSC_VER
+	fname = (WCHAR *)_alloca (len_0*sizeof(WCHAR));
+#else
+	fnamw = (WCHAR *)alloca (len_0*sizeof(WCHAR));
+#endif
+	if (fnamw == NULL) return NULL;
+
+#if defined(_WIN32_WCE) && _WIN32_WCE>=101
+	if (!MultiByteToWideChar(CP_ACP,0,lpLibFileName,len_0,fnamw,len_0))
+#endif
+		for (i=0;i<len_0;i++) fnamw[i]=(WCHAR)lpLibFileName[i];
+
+	return LoadLibraryW(fnamw);
+	}
 #endif
 
 /* Part of the hack in "win32_load" ... */
