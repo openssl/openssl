@@ -40,21 +40,31 @@ elsif ($FLAVOR =~ /CE/)
     # pull CE version from OSVERSION environment variable
     $wcevers = $ENV{'OSVERSION'};			# WCENNN
     die '%OSVERSION% value is insane'	if ($wcevers !~ /^WCE([1-9])([0-9]{2})$/);
-    $wcecdefs = "-D_WIN32_WCE=$1$2";		# -D_WIN32_WCE=NNN
-    $wcelflag = "/subsystem:windowsce,$1.$2";	# ...,N.NN
-    if ($ENV{'TARGETCPU'} =~ /^X86/)
-    {	$wcelflag .= " /machine:X86";			}
-    else
-    {	$wcelflag .= " /machine:$ENV{'TARGETCPU'}";	}
+    $wcecdefs = "-D_WIN32_WCE=$1$2 -DUNDER_CE=$1$2";	# -D_WIN32_WCE=NNN
+    $wcelflag = "/subsystem:windowsce,$1.$2";		# ...,N.NN
     $wceplatf =  $ENV{'PLATFORM'};
     $wceplatf =~ tr/a-z0-9 /A-Z0-9_/d;
     $wcecdefs .= " -DWCE_PLATFORM_$wceplatf";
+    $wcetgt = $ENV{'TARGETCPU'};	# just shorter name...
+    SWITCH: for($wcetgt) {
+	/^X86/		&& do {	$wcecdefs.=" -Dx86 -D_X86_";
+				$wcelflag.=" /machine:X86";	last; }
+	/^ARM/		&& do {	$wcecdefs.=" -DARM -D_ARM_";
+				$wcelflag.=" /machine:$wcetgt";	last; }
+	/^R4[0-9]{3}/	&& do {	$wcecdefs.=" -DMIPS -D_MIPS_ -DMIPS_R4000";
+				$wcelflag.=" /machine:$wcetgt";	last; }
+	/^SH[0-9]/	&& do {	$wcecdefs.=" -D$wcetgt -D_$wcetgt_ -DSHx";
+				$wcelflag.=" /machine:$wcetgt";	last; }
+	{ $wcecdefs.=" -D$wcetgt -D_$wcetgt_";
+	  $wcelflag.=" /machine:$wcetgt";			last; }
+    }
 
     $cc='$(CC)';
-    $base_cflags=' /W3 /WX /Gs0 /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -I$(WCECOMPAT)/include -DOPENSSL_SMALL_FOOTPRINT';
+    $base_cflags=' /W3 /WX /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -I$(WCECOMPAT)/include -DOPENSSL_SMALL_FOOTPRINT';
     $base_cflags.=" $wcecdefs";
-    $opt_cflags=' /MD /O1i';	# optimize for space, but with intrinsics...
-    $dbg_clfags=' /MDd /Od -DDEBUG -D_DEBUG';
+    $base_cflags.=" -Qsh4" if ($wcetgt =~ /^SH4/);
+    $opt_cflags=' /MC /O1i';	# optimize for space, but with intrinsics...
+    $dbg_clfags=' /MC /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /opt:ref $wcelflag";
     }
 else	# Win32
@@ -95,7 +105,7 @@ else			{ $ex_libs='wsock32.lib'; }
 
 if ($FLAVOR =~ /CE/)
 	{
-	$ex_libs.=' $(WCECOMPAT)/lib/wcecompatex.lib cryptapi.lib';
+	$ex_libs.=' $(WCECOMPAT)/lib/wcecompatex.lib';
 	$ex_libs.=' /nodefaultlib:oldnames.lib coredll.lib corelibc.lib' if ($ENV{'TARGETCPU'} eq "X86");
 	}
 else
