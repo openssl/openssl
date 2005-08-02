@@ -245,7 +245,7 @@ extern "C" {
 #  define NO_DIRENT
 
 #  ifdef WINDOWS
-#    ifndef _WIN32_WINNT
+#    if !defined(_WIN32_WCE) && !defined(_WIN32_WINNT)
        /*
 	* Defining _WIN32_WINNT here in e_os.h implies certain "discipline."
 	* Most notably we ought to check for availability of each specific
