@@ -217,21 +217,22 @@ int RAND_poll(void)
         osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
         GetVersionEx( &osverinfo ) ;
 
-#if defined(OPENSSL_SYS_WINCE) && WCEPLATFORM!=MS_HPC_PRO
-#ifndef CryptAcquireContext
-#define CryptAcquireContext CryptAcquireContextW
-#endif
+#if defined(OPENSSL_SYS_WINCE)
+# if defined(_WIN32_WCE) && _WIN32_WCE>=210
+# ifndef CryptAcquireContext
+   /* reserve for broken header... */
+#  define CryptAcquireContext CryptAcquireContextW
+# endif
 	/* poll the CryptoAPI PRNG */
 	/* The CryptoAPI returns sizeof(buf) bytes of randomness */
-	if (CryptAcquireContext(&hProvider, 0, 0, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
+	if (CryptAcquireContext(&hProvider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
 		{
 		if (CryptGenRandom(hProvider, sizeof(buf), buf))
 			RAND_add(buf, sizeof(buf), sizeof(buf));
 		CryptReleaseContext(hProvider, 0); 
 		}
-#endif
-
-#ifndef OPENSSL_SYS_WINCE
+# endif
+#else	/* OPENSSL_SYS_WINCE */
 	/*
 	 * None of below libraries are present on Windows CE, which is
 	 * why we #ifndef the whole section. This also excuses us from
@@ -361,7 +362,7 @@ int RAND_poll(void)
 		{
 		/* poll the CryptoAPI PRNG */
                 /* The CryptoAPI returns sizeof(buf) bytes of randomness */
-		if (acquire(&hProvider, 0, 0, PROV_RSA_FULL,
+		if (acquire(&hProvider, NULL, NULL, PROV_RSA_FULL,
 			CRYPT_VERIFYCONTEXT))
 			{
 			if (gen(hProvider, sizeof(buf), buf) != 0)
