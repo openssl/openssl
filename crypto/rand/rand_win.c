@@ -167,7 +167,7 @@ typedef DWORD (WINAPI *GETQUEUESTATUS)(UINT);
 
 typedef HANDLE (WINAPI *CREATETOOLHELP32SNAPSHOT)(DWORD, DWORD);
 typedef BOOL (WINAPI *CLOSETOOLHELP32SNAPSHOT)(HANDLE);
-typedef BOOL (WINAPI *HEAP32FIRST)(LPHEAPENTRY32, DWORD, DWORD);
+typedef BOOL (WINAPI *HEAP32FIRST)(LPHEAPENTRY32, DWORD, ULONG_PTR);
 typedef BOOL (WINAPI *HEAP32NEXT)(LPHEAPENTRY32);
 typedef BOOL (WINAPI *HEAP32LIST)(HANDLE, LPHEAPLIST32);
 typedef BOOL (WINAPI *PROCESS32)(HANDLE, LPPROCESSENTRY32);
@@ -195,20 +195,7 @@ int RAND_poll(void)
 	HCRYPTPROV hProvider = 0;
 	BYTE buf[64];
 	DWORD w;
-	HWND h;
 	int good = 0;
-
-	HMODULE advapi, kernel, user, netapi;
-	CRYPTACQUIRECONTEXTW acquire = 0;
-	CRYPTGENRANDOM gen = 0;
-	CRYPTRELEASECONTEXT release = 0;
-#if 1 /* There was previously a problem with NETSTATGET.  Currently, this
-       * section is still experimental, but if all goes well, this conditional
-       * will be removed
-       */
-	NETSTATGET netstatget = 0;
-	NETFREE netfree = 0;
-#endif /* 1 */
 
 	/* Determine the OS version we are on so we can turn off things 
 	 * that do not work properly.
@@ -246,17 +233,18 @@ int RAND_poll(void)
 	 * implement own shim routine, which would accept ANSI argument
 	 * and expand it to Unicode.
 	 */
-
+	{
 	/* load functions dynamically - not available on all systems */
-	advapi = LoadLibrary(TEXT("ADVAPI32.DLL"));
-	kernel = LoadLibrary(TEXT("KERNEL32.DLL"));
-	user = LoadLibrary(TEXT("USER32.DLL"));
-	netapi = LoadLibrary(TEXT("NETAPI32.DLL"));
+	HMODULE advapi = LoadLibrary(TEXT("ADVAPI32.DLL"));
+	HMODULE kernel = LoadLibrary(TEXT("KERNEL32.DLL"));
+	HMODULE user = NULL;
+	HMODULE netapi = LoadLibrary(TEXT("NETAPI32.DLL"));
+	CRYPTACQUIRECONTEXTW acquire = NULL;
+	CRYPTGENRANDOM gen = NULL;
+	CRYPTRELEASECONTEXT release = NULL;
+	NETSTATGET netstatget = NULL;
+	NETFREE netfree = NULL;
 
-#if 1 /* There was previously a problem with NETSTATGET.  Currently, this
-       * section is still experimental, but if all goes well, this conditional
-       * will be removed
-       */
 	if (netapi)
 		{
 		netstatget = (NETSTATGET) GetProcAddress(netapi,"NetStatisticsGet");
@@ -286,7 +274,6 @@ int RAND_poll(void)
 
 	if (netapi)
 		FreeLibrary(netapi);
-#endif /* 1 */
 
         /* It appears like this can cause an exception deep within ADVAPI32.DLL
          * at random times on Windows 2000.  Reported by Jeffrey Altman.  
@@ -394,7 +381,9 @@ int RAND_poll(void)
         if (advapi)
 		FreeLibrary(advapi);
 
-	if (user)
+	if ((osverinfo.dwPlatformId != VER_PLATFORM_WIN32_NT ||
+	     !OPENSSL_isservice()) &&
+	    (user = LoadLibrary(TEXT("USER32.DLL"))))
 		{
 		GETCURSORINFO cursor;
 		GETFOREGROUNDWINDOW win;
@@ -407,7 +396,7 @@ int RAND_poll(void)
 		if (win)
 			{
 			/* window handle */
-			h = win();
+			HWND h = win();
 			RAND_add(&h, sizeof(h), 0);
 			}
 		if (cursor)
@@ -570,6 +559,7 @@ int RAND_poll(void)
 
 		FreeLibrary(kernel);
 		}
+	}
 #endif /* !OPENSSL_SYS_WINCE */
 
 	/* timer data */
@@ -633,8 +623,7 @@ int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 void RAND_screen(void) /* function available for backward compatibility */
 {
 	RAND_poll();
-	if (GetVersion() >= 0x80000000 || !OPENSSL_isservice())
-		readscreen();
+	readscreen();
 }
 
 
@@ -709,6 +698,9 @@ static void readscreen(void)
   int		h;		/* screen height */
   int		y;		/* y-coordinate of screen lines to grab */
   int		n = 16;		/* number of screen lines to grab at a time */
+
+  if (GetVersion() >= 0x80000000 || !OPENSSL_isservice())
+    return;
 
   /* Create a screen DC and a memory DC compatible to screen DC */
   hScrDC = CreateDC(TEXT("DISPLAY"), NULL, NULL, NULL);
