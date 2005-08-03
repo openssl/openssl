@@ -205,7 +205,9 @@ int RAND_poll(void)
         GetVersionEx( &osverinfo ) ;
 
 #if defined(OPENSSL_SYS_WINCE)
-# if defined(_WIN32_WCE) && _WIN32_WCE>=210
+# if defined(_WIN32_WCE) && _WIN32_WCE>=300
+/* Even though MSDN says _WIN32_WCE>=210, it doesn't seem to be available
+ * in commonly available implementations prior 300... */
 # ifndef CryptAcquireContext
    /* reserve for broken header... */
 #  define CryptAcquireContext CryptAcquireContextW

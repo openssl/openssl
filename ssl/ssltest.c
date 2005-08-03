@@ -893,6 +893,7 @@ end:
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL) BIO_free(bio_err);
 	EXIT(ret);
+	return ret;
 	}
 
 int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,

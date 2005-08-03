@@ -48,15 +48,15 @@ elsif ($FLAVOR =~ /CE/)
     $wcetgt = $ENV{'TARGETCPU'};	# just shorter name...
     SWITCH: for($wcetgt) {
 	/^X86/		&& do {	$wcecdefs.=" -Dx86 -D_X86_";
-				$wcelflag.=" /machine:X86";	last; }
+				$wcelflag.=" /machine:X86";	last; };
 	/^ARM/		&& do {	$wcecdefs.=" -DARM -D_ARM_";
-				$wcelflag.=" /machine:$wcetgt";	last; }
+				$wcelflag.=" /machine:$wcetgt";	last; };
 	/^R4[0-9]{3}/	&& do {	$wcecdefs.=" -DMIPS -D_MIPS_ -DMIPS_R4000";
-				$wcelflag.=" /machine:$wcetgt";	last; }
+				$wcelflag.=" /machine:MIPS";	last; };
 	/^SH[0-9]/	&& do {	$wcecdefs.=" -D$wcetgt -D_$wcetgt_ -DSHx";
-				$wcelflag.=" /machine:$wcetgt";	last; }
+				$wcelflag.=" /machine:$wcetgt";	last; };
 	{ $wcecdefs.=" -D$wcetgt -D_$wcetgt_";
-	  $wcelflag.=" /machine:$wcetgt";			last; }
+	  $wcelflag.=" /machine:$wcetgt";			last; };
     }
 
     $cc='$(CC)';
@@ -64,6 +64,7 @@ elsif ($FLAVOR =~ /CE/)
     $base_cflags.=" $wcecdefs";
     $base_cflags.=" -Qsh4" if ($wcetgt =~ /^SH4/);
     $opt_cflags=' /MC /O1i';	# optimize for space, but with intrinsics...
+    $opt_cflags.=' /wd4959';	# disable "too large to optimize" warning...
     $dbg_clfags=' /MC /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /opt:ref $wcelflag";
     }
