@@ -669,9 +669,9 @@ void OPENSSL_showfatal (const char *fmta,...)
 { va_list ap;
   TCHAR buf[256];
   const TCHAR *fmt;
+#ifdef STD_ERROR_HANDLE	/* what a dirty trick! */
   HANDLE h;
 
-#ifdef STD_ERROR_HANDLE	/* what a dirty trick! */
     if ((h=GetStdHandle(STD_ERROR_HANDLE)) != NULL &&
 	GetFileType(h)!=FILE_TYPE_UNKNOWN)
     {	/* must be console application */
@@ -734,7 +734,7 @@ void OPENSSL_showfatal (const char *fmta,...)
     }
     else
 #endif
-	MessageBox (NULL,buf,_T("OpenSSL: FATAL"),MB_OK|MB_ICONSTOP|MB_TASKMODAL);
+	MessageBox (NULL,buf,_T("OpenSSL: FATAL"),MB_OK|MB_ICONSTOP);
 }
 #else
 void OPENSSL_showfatal (const char *fmta,...)

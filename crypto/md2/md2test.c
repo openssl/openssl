@@ -128,6 +128,7 @@ int main(int argc, char *argv[])
     if (err) printf("ERROR: %d\n", err);
 #endif
 	EXIT(err);
+	return err;
 	}
 
 static char *pt(unsigned char *md)

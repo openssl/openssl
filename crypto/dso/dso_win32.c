@@ -86,13 +86,13 @@ static FARPROC GetProcAddressA(HMODULE hModule,LPCSTR lpProcName)
 # undef GetProcAddress
 # define GetProcAddress GetProcAddressA
 
-static HINSTANCE LoadLibraryA(LPCSTR *lpLibFileName)
+static HINSTANCE LoadLibraryA(LPCSTR lpLibFileName)
 	{
 	WCHAR *fnamw;
 	size_t len_0=strlen(lpLibFileName)+1,i;
 
 #ifdef _MSC_VER
-	fname = (WCHAR *)_alloca (len_0*sizeof(WCHAR));
+	fnamw = (WCHAR *)_alloca (len_0*sizeof(WCHAR));
 #else
 	fnamw = (WCHAR *)alloca (len_0*sizeof(WCHAR));
 #endif
