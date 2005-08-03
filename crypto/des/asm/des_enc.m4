@@ -43,7 +43,7 @@
 !		100% faster than gcc-3.2.1 -m64 -mcpu=ultrasparc -O5
 !
 
-.ident "des_enc.m4 2.0"
+.ident "des_enc.m4 2.1"
 
 #if defined(__SUNPRO_C) && defined(__sparcv9)
 # define ABI64  /* They've said -xarch=v9 at command line */
@@ -1424,44 +1424,6 @@ DES_decrypt3:
 .DES_decrypt3.end:
 	.size	 DES_decrypt3,.DES_decrypt3.end-DES_decrypt3
 
-! input:	out0	offset between .PIC.me.up and caller
-! output:	out0	pointer to .PIC.me.up
-!		out2	pointer to .des_and
-!		global1	pointer to DES_SPtrans
-	.align	32
-.PIC.me.up:
-	add	out0,%o7,out0			! pointer to .PIC.me.up
-
-#ifdef OPENSSL_PIC
-	! In case anybody wonders why this code is same for both ABI.
-	! To start with it is not. Do note LDPTR below. But of course
-	! you must be wondering why the rest of it does not contain
-	! things like %hh, %hm and %lm. Well, those are needed only
-	! if OpenSSL library *itself* will become larger than 4GB,
-	! which is not going to happen any time soon. 
-	sethi	%hi(DES_SPtrans),global1
-	or	global1,%lo(DES_SPtrans),global1
-	sethi	%hi(_GLOBAL_OFFSET_TABLE_-(.PIC.me.up-.)),out2
-	add	global1,out0,global1
-	add	out2,%lo(_GLOBAL_OFFSET_TABLE_-(.PIC.me.up-.)),out2
-	LDPTR	[out2+global1],global1
-#elif 0
-	setn	DES_SPtrans,out2,global1	! synthetic instruction !
-#elif defined(ABI64)
-	sethi	%hh(DES_SPtrans),out2
-	or	out2,%hm(DES_SPtrans),out2
-	sethi	%lm(DES_SPtrans),global1
-	or	global1,%lo(DES_SPtrans),global1
-	sllx	out2,32,out2
-	or	out2,global1,global1
-#else
-	sethi	%hi(DES_SPtrans),global1
-	or	global1,%lo(DES_SPtrans),global1
-#endif
-
-	retl
-	add	out0,.des_and-.PIC.me.up,out2
-
 	.align	256
 	.type	 .des_and,#object
 	.size	 .des_and,284
@@ -1516,6 +1478,50 @@ DES_decrypt3:
 	.word	0                         ! 276
 	.word	LOOPS                     ! 280
 	.word	0x0000FC00                ! 284
+.PIC.DES_SPtrans:
+	.word	%r_disp32(DES_SPtrans)
+
+! input:	out0	offset between .PIC.me.up and caller
+! output:	out0	pointer to .PIC.me.up
+!		out2	pointer to .des_and
+!		global1	pointer to DES_SPtrans
+	.align	32
+.PIC.me.up:
+	add	out0,%o7,out0			! pointer to .PIC.me.up
+#if 1
+	ld	[out0+(.PIC.DES_SPtrans-.PIC.me.up)],global1
+	add	global1,(.PIC.DES_SPtrans-.PIC.me.up),global1
+	add	global1,out0,global1
+#else
+# ifdef OPENSSL_PIC
+	! In case anybody wonders why this code is same for both ABI.
+	! To start with it is not. Do note LDPTR below. But of course
+	! you must be wondering why the rest of it does not contain
+	! things like %hh, %hm and %lm. Well, those are needed only
+	! if OpenSSL library *itself* will become larger than 4GB,
+	! which is not going to happen any time soon. 
+	sethi	%hi(DES_SPtrans),global1
+	or	global1,%lo(DES_SPtrans),global1
+	sethi	%hi(_GLOBAL_OFFSET_TABLE_-(.PIC.me.up-.)),out2
+	add	global1,out0,global1
+	add	out2,%lo(_GLOBAL_OFFSET_TABLE_-(.PIC.me.up-.)),out2
+	LDPTR	[out2+global1],global1
+# elif 0
+	setn	DES_SPtrans,out2,global1	! synthetic instruction !
+# elif defined(ABI64)
+	sethi	%hh(DES_SPtrans),out2
+	or	out2,%hm(DES_SPtrans),out2
+	sethi	%lm(DES_SPtrans),global1
+	or	global1,%lo(DES_SPtrans),global1
+	sllx	out2,32,out2
+	or	out2,global1,global1
+# else
+	sethi	%hi(DES_SPtrans),global1
+	or	global1,%lo(DES_SPtrans),global1
+# endif
+#endif
+	retl
+	add	out0,.des_and-.PIC.me.up,out2
 
 ! void DES_ncbc_encrypt(input, output, length, schedule, ivec, enc)
 ! *****************************************************************
