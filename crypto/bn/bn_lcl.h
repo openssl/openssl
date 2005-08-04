@@ -270,6 +270,15 @@ extern "C" {
 		: "a"(a),"g"(b)		\
 		: "cc");
 #  endif
+# elif (defined(_M_AMD64) || defined(_M_X64)) && defined(SIXTY_FOUR_BIT)
+#  if defined(_MSC_VER) && _MSC_VER>=1400
+    unsigned __int64 __umulh	(unsigned __int64 a,unsigned __int64 b);
+    unsigned __int64 _umul128	(unsigned __int64 a,unsigned __int64 b,
+				 unsigned __int64 *h);
+#   pragma intrinsic(__umulh,_umul128)
+#   define BN_UMULT_HIGH(a,b)		__umulh((a),(b))
+#   define BN_UMULT_LOHI(low,high,a,b)	((low)=_umul128((a),(b),&(high)))
+#  endif
 # endif		/* cpu */
 #endif		/* OPENSSL_NO_ASM */
 
@@ -311,6 +320,33 @@ extern "C" {
 	t=(BN_ULLONG)(a)*(a); \
 	(r0)=Lw(t); \
 	(r1)=Hw(t); \
+	}
+
+#elif defined(BN_UMULT_LOHI)
+#define mul_add(r,a,w,c) {		\
+	BN_ULONG high,low,ret,tmp=(a);	\
+	ret =  (r);			\
+	BN_UMULT_LOHI(low,high,w,tmp);	\
+	ret += (c);			\
+	(c) =  (ret<(c))?1:0;		\
+	(c) += high;			\
+	ret += low;			\
+	(c) += (ret<low)?1:0;		\
+	(r) =  ret;			\
+	}
+
+#define mul(r,a,w,c)	{		\
+	BN_ULONG high,low,ret,ta=(a);	\
+	BN_UMULT_LOHI(low,high,w,ta);	\
+	ret =  low + (c);		\
+	(c) =  high;			\
+	(c) += (ret<low)?1:0;		\
+	(r) =  ret;			\
+	}
+
+#define sqr(r0,r1,a)	{		\
+	BN_ULONG tmp=(a);		\
+	BN_UMULT_LOHI(r0,r1,tmp,tmp);	\
 	}
 
 #elif defined(BN_UMULT_HIGH)
