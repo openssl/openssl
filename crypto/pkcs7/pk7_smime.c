@@ -441,7 +441,7 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
 		return 0;
 	}
 
-	if(!X509_check_private_key(cert, pkey)) {
+	if(cert && !X509_check_private_key(cert, pkey)) {
 		PKCS7err(PKCS7_F_PKCS7_DECRYPT,
 				PKCS7_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
 		return 0;
