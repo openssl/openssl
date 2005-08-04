@@ -62,6 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include <openssl/err.h>
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
 			 void *value);
@@ -307,6 +308,17 @@ err:
 	return(out);
 	}
 
+static int pkcs7_cmp_ri(PKCS7_RECIP_INFO *ri, X509 *pcert)
+	{
+	int ret;
+	ret = X509_NAME_cmp(ri->issuer_and_serial->issuer,
+				pcert->cert_info->issuer);
+	if (ret)
+		return ret;
+	return M_ASN1_INTEGER_cmp(pcert->cert_info->serialNumber,
+					ri->issuer_and_serial->serial);
+	}
+
 /* int */
 BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	{
@@ -417,18 +429,18 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		 * (if any)
 		 */
 
-		for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++) {
-			ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
-			if(!X509_NAME_cmp(ri->issuer_and_serial->issuer,
-					pcert->cert_info->issuer) &&
-			     !M_ASN1_INTEGER_cmp(pcert->cert_info->serialNumber,
-					ri->issuer_and_serial->serial)) break;
-			ri=NULL;
-		}
-		if (ri == NULL) {
-			PKCS7err(PKCS7_F_PKCS7_DATADECODE,
-				 PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE);
-			goto err;
+		if (pcert) {
+			for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++) {
+				ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
+				if (!pkcs7_cmp_ri(ri, pcert))
+					break;
+				ri=NULL;
+			}
+			if (ri == NULL) {
+				PKCS7err(PKCS7_F_PKCS7_DATADECODE,
+				      PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE);
+				goto err;
+			}
 		}
 
 		jj=EVP_PKEY_size(pkey);
@@ -439,12 +451,40 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			goto err;
 			}
 
-		jj=EVP_PKEY_decrypt(tmp, M_ASN1_STRING_data(ri->enc_key),
-			M_ASN1_STRING_length(ri->enc_key), pkey);
-		if (jj <= 0)
+		/* If we haven't got a certificate try each ri in turn */
+
+		if (pcert == NULL)
 			{
-			PKCS7err(PKCS7_F_PKCS7_DATADECODE,ERR_R_EVP_LIB);
-			goto err;
+			for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++)
+				{
+				ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
+				jj=EVP_PKEY_decrypt(tmp,
+					M_ASN1_STRING_data(ri->enc_key),
+					M_ASN1_STRING_length(ri->enc_key),
+						pkey);
+				if (jj > 0)
+					break;
+				ERR_clear_error();
+				ri = NULL;
+				}
+			if (ri == NULL)
+				{
+				PKCS7err(PKCS7_F_PKCS7_DATADECODE,
+				      PKCS7_R_NO_RECIPIENT_MATCHES_KEY);
+				goto err;
+				}
+			}
+		else
+			{
+			jj=EVP_PKEY_decrypt(tmp,
+				M_ASN1_STRING_data(ri->enc_key),
+				M_ASN1_STRING_length(ri->enc_key), pkey);
+			if (jj <= 0)
+				{
+				PKCS7err(PKCS7_F_PKCS7_DATADECODE,
+								ERR_R_EVP_LIB);
+				goto err;
+				}
 			}
 
 		evp_ctx=NULL;

@@ -384,9 +384,9 @@ int MAIN(int argc, char **argv)
 		}
 	else if (operation == SMIME_DECRYPT)
 		{
-		if (!recipfile)
+		if (!recipfile && !keyfile)
 			{
-			BIO_printf(bio_err, "No recipient certificate and key specified\n");
+			BIO_printf(bio_err, "No recipient certificate or key specified\n");
 			badarg = 1;
 			}
 		}
