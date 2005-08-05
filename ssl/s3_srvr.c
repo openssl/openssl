@@ -156,28 +156,10 @@ static SSL_METHOD *ssl3_get_server_method(int ver)
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv3_server_method(void)
-	{
-	static int init=1;
-	static SSL_METHOD SSLv3_server_data;
-
-	if (init)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
-
-		if (init)
-			{
-			memcpy((char *)&SSLv3_server_data,(char *)sslv3_base_method(),
-				sizeof(SSL_METHOD));
-			SSLv3_server_data.ssl_accept=ssl3_accept;
-			SSLv3_server_data.get_ssl_method=ssl3_get_server_method;
-			init=0;
-			}
-			
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
-		}
-	return(&SSLv3_server_data);
-	}
+IMPLEMENT_ssl3_meth_func(SSLv3_server_method,
+			ssl3_accept,
+			ssl_undefined_function,
+			ssl3_get_server_method)
 
 int ssl3_accept(SSL *s)
 	{

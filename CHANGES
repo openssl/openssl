@@ -14,6 +14,10 @@
 
  Changes between 0.9.8 and 0.9.8a  [XX xxx XXXX]
 
+  *) Initialize SSL_METHOD structures at compile time instead of during
+     runtime, thus removing the need for a lock.
+     [Steve Henson]
+
   *) Make PKCS7_decrypt() work even if no certificate is supplied by
      attempting to decrypt each encrypted key in turn. Add support to
      smime utility.

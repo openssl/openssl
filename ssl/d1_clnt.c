@@ -136,28 +136,10 @@ static SSL_METHOD *dtls1_get_client_method(int ver)
 		return(NULL);
 	}
 
-SSL_METHOD *DTLSv1_client_method(void)
-	{
-	static int init=1;
-	static SSL_METHOD DTLSv1_client_data;
-
-	if (init)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
-
-		if (init)
-			{
-			memcpy((char *)&DTLSv1_client_data,(char *)dtlsv1_base_method(),
-				sizeof(SSL_METHOD));
-			DTLSv1_client_data.ssl_connect=dtls1_connect;
-			DTLSv1_client_data.get_ssl_method=dtls1_get_client_method;
-			init=0;
-			}
-		
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
-		}
-	return(&DTLSv1_client_data);
-	}
+IMPLEMENT_dtls1_meth_func(DTLSv1_client_method,
+			ssl_undefined_function,
+			dtls1_connect,
+			dtls1_get_client_method)
 
 int dtls1_connect(SSL *s)
 	{

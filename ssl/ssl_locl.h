@@ -515,6 +515,195 @@ SSL_METHOD *sslv2_base_method(void);
 SSL_METHOD *sslv23_base_method(void);
 SSL_METHOD *sslv3_base_method(void);
 
+extern SSL3_ENC_METHOD TLSv1_enc_data;
+extern SSL3_ENC_METHOD SSLv3_enc_data;
+extern SSL3_ENC_METHOD DTLSv1_enc_data;
+
+#define IMPLEMENT_tls1_meth_func(func_name, s_accept, s_connect, s_get_meth) \
+SSL_METHOD *func_name(void)  \
+	{ \
+	static SSL_METHOD func_name##_data= { \
+		TLS1_VERSION, \
+		tls1_new, \
+		tls1_clear, \
+		tls1_free, \
+		s_accept, \
+		s_connect, \
+		ssl3_read, \
+		ssl3_peek, \
+		ssl3_write, \
+		ssl3_shutdown, \
+		ssl3_renegotiate, \
+		ssl3_renegotiate_check, \
+		ssl3_get_message, \
+		ssl3_read_bytes, \
+		ssl3_write_bytes, \
+		ssl3_dispatch_alert, \
+		ssl3_ctrl, \
+		ssl3_ctx_ctrl, \
+		ssl3_get_cipher_by_char, \
+		ssl3_put_cipher_by_char, \
+		ssl3_pending, \
+		ssl3_num_ciphers, \
+		ssl3_get_cipher, \
+		s_get_meth, \
+		tls1_default_timeout, \
+		&TLSv1_enc_data, \
+		ssl_undefined_void_function, \
+		ssl3_callback_ctrl, \
+		ssl3_ctx_callback_ctrl, \
+	}; \
+	return &func_name##_data; \
+	}
+
+#define IMPLEMENT_ssl3_meth_func(func_name, s_accept, s_connect, s_get_meth) \
+SSL_METHOD *func_name(void)  \
+	{ \
+	static SSL_METHOD func_name##_data= { \
+		SSL3_VERSION, \
+		ssl3_new, \
+		ssl3_clear, \
+		ssl3_free, \
+		s_accept, \
+		s_connect, \
+		ssl3_read, \
+		ssl3_peek, \
+		ssl3_write, \
+		ssl3_shutdown, \
+		ssl3_renegotiate, \
+		ssl3_renegotiate_check, \
+		ssl3_get_message, \
+		ssl3_read_bytes, \
+		ssl3_write_bytes, \
+		ssl3_dispatch_alert, \
+		ssl3_ctrl, \
+		ssl3_ctx_ctrl, \
+		ssl3_get_cipher_by_char, \
+		ssl3_put_cipher_by_char, \
+		ssl3_pending, \
+		ssl3_num_ciphers, \
+		ssl3_get_cipher, \
+		s_get_meth, \
+		ssl3_default_timeout, \
+		&SSLv3_enc_data, \
+		ssl_undefined_void_function, \
+		ssl3_callback_ctrl, \
+		ssl3_ctx_callback_ctrl, \
+	}; \
+	return &func_name##_data; \
+	}
+
+#define IMPLEMENT_ssl23_meth_func(func_name, s_accept, s_connect, s_get_meth) \
+SSL_METHOD *func_name(void)  \
+	{ \
+	static SSL_METHOD func_name##_data= { \
+	TLS1_VERSION, \
+	tls1_new, \
+	tls1_clear, \
+	tls1_free, \
+	s_accept, \
+	s_connect, \
+	ssl23_read, \
+	ssl23_peek, \
+	ssl23_write, \
+	ssl_undefined_function, \
+	ssl_undefined_function, \
+	ssl_ok, \
+	ssl3_get_message, \
+	ssl3_read_bytes, \
+	ssl3_write_bytes, \
+	ssl3_dispatch_alert, \
+	ssl3_ctrl, \
+	ssl3_ctx_ctrl, \
+	ssl23_get_cipher_by_char, \
+	ssl23_put_cipher_by_char, \
+	ssl_undefined_const_function, \
+	ssl23_num_ciphers, \
+	ssl23_get_cipher, \
+	s_get_meth, \
+	ssl23_default_timeout, \
+	&ssl3_undef_enc_method, \
+	ssl_undefined_void_function, \
+	ssl3_callback_ctrl, \
+	ssl3_ctx_callback_ctrl, \
+	}; \
+	return &func_name##_data; \
+	}
+
+#define IMPLEMENT_ssl2_meth_func(func_name, s_accept, s_connect, s_get_meth) \
+SSL_METHOD *func_name(void)  \
+	{ \
+	static SSL_METHOD func_name##_data= { \
+		SSL2_VERSION, \
+		ssl2_new,	/* local */ \
+		ssl2_clear,	/* local */ \
+		ssl2_free,	/* local */ \
+		s_accept, \
+		s_connect, \
+		ssl2_read, \
+		ssl2_peek, \
+		ssl2_write, \
+		ssl2_shutdown, \
+		ssl_ok,	/* NULL - renegotiate */ \
+		ssl_ok,	/* NULL - check renegotiate */ \
+		NULL, /* NULL - ssl_get_message */ \
+		NULL, /* NULL - ssl_get_record */ \
+		NULL, /* NULL - ssl_write_bytes */ \
+		NULL, /* NULL - dispatch_alert */ \
+		ssl2_ctrl,	/* local */ \
+		ssl2_ctx_ctrl,	/* local */ \
+		ssl2_get_cipher_by_char, \
+		ssl2_put_cipher_by_char, \
+		ssl2_pending, \
+		ssl2_num_ciphers, \
+		ssl2_get_cipher, \
+		s_get_meth, \
+		ssl2_default_timeout, \
+		&ssl3_undef_enc_method, \
+		ssl_undefined_void_function, \
+		ssl2_callback_ctrl,	/* local */ \
+		ssl2_ctx_callback_ctrl,	/* local */ \
+	}; \
+	return &func_name##_data; \
+	}
+
+#define IMPLEMENT_dtls1_meth_func(func_name, s_accept, s_connect, s_get_meth) \
+SSL_METHOD *func_name(void)  \
+	{ \
+	static SSL_METHOD func_name##_data= { \
+		DTLS1_VERSION, \
+		dtls1_new, \
+		dtls1_clear, \
+		dtls1_free, \
+		s_accept, \
+		s_connect, \
+		ssl3_read, \
+		ssl3_peek, \
+		ssl3_write, \
+		ssl3_shutdown, \
+		ssl3_renegotiate, \
+		ssl3_renegotiate_check, \
+		dtls1_get_message, \
+		dtls1_read_bytes, \
+		dtls1_write_app_data_bytes, \
+		dtls1_dispatch_alert, \
+		ssl3_ctrl, \
+		ssl3_ctx_ctrl, \
+		ssl3_get_cipher_by_char, \
+		ssl3_put_cipher_by_char, \
+		ssl3_pending, \
+		ssl3_num_ciphers, \
+		ssl3_get_cipher, \
+		s_get_meth, \
+		dtls1_default_timeout, \
+		&DTLSv1_enc_data, \
+		ssl_undefined_void_function, \
+		ssl3_callback_ctrl, \
+		ssl3_ctx_callback_ctrl, \
+	}; \
+	return &func_name##_data; \
+	}
+
 void ssl_clear_cipher_ctx(SSL *s);
 int ssl_clear_bad_session(SSL *s);
 CERT *ssl_cert_new(void);
@@ -578,6 +767,7 @@ long	ssl2_ctx_ctrl(SSL_CTX *s,int cmd, long larg, void *parg);
 long	ssl2_callback_ctrl(SSL *s,int cmd, void (*fp)(void));
 long	ssl2_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)(void));
 int	ssl2_pending(const SSL *s);
+long	ssl2_default_timeout(void );
 
 SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c,unsigned char *p);
@@ -629,7 +819,18 @@ int	ssl3_pending(const SSL *s);
 
 void ssl3_record_sequence_update(unsigned char *seq);
 int ssl3_do_change_cipher_spec(SSL *ssl);
+long ssl3_default_timeout(void );
 
+int ssl23_num_ciphers(void );
+SSL_CIPHER *ssl23_get_cipher(unsigned int u);
+int ssl23_read(SSL *s, void *buf, int len);
+int ssl23_peek(SSL *s, void *buf, int len);
+int ssl23_write(SSL *s, const void *buf, int len);
+int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
+SSL_CIPHER *ssl23_get_cipher_by_char(const unsigned char *p);
+long ssl23_default_timeout(void );
+
+long tls1_default_timeout(void);
 int dtls1_do_write(SSL *s,int type);
 int ssl3_read_n(SSL *s, int n, int max, int extend);
 int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
@@ -640,6 +841,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 unsigned char *dtls1_set_message_header(SSL *s, 
 	unsigned char *p, unsigned char mt,	unsigned long len, 
 	unsigned long frag_off, unsigned long frag_len);
+
 int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
 int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
 
@@ -654,6 +856,7 @@ void dtls1_clear_record_buffer(SSL *s);
 void dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr);
 void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
+long dtls1_default_timeout(void);
 
 
 /* some client-only functions */

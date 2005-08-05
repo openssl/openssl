@@ -80,28 +80,10 @@ static SSL_METHOD *ssl23_get_client_method(int ver)
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv23_client_method(void)
-	{
-	static int init=1;
-	static SSL_METHOD SSLv23_client_data;
-
-	if (init)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
-
-		if (init)
-			{
-			memcpy((char *)&SSLv23_client_data,
-				(char *)sslv23_base_method(),sizeof(SSL_METHOD));
-			SSLv23_client_data.ssl_connect=ssl23_connect;
-			SSLv23_client_data.get_ssl_method=ssl23_get_client_method;
-			init=0;
-			}
-
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
-		}
-	return(&SSLv23_client_data);
-	}
+IMPLEMENT_ssl23_meth_func(SSLv23_client_method,
+			ssl_undefined_function,
+			ssl23_connect,
+			ssl23_get_client_method)
 
 int ssl23_connect(SSL *s)
 	{

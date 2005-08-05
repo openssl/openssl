@@ -137,28 +137,10 @@ static SSL_METHOD *ssl2_get_server_method(int ver)
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv2_server_method(void)
-	{
-	static int init=1;
-	static SSL_METHOD SSLv2_server_data;
-
-	if (init)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
-
-		if (init)
-			{
-			memcpy((char *)&SSLv2_server_data,(char *)sslv2_base_method(),
-				sizeof(SSL_METHOD));
-			SSLv2_server_data.ssl_accept=ssl2_accept;
-			SSLv2_server_data.get_ssl_method=ssl2_get_server_method;
-			init=0;
-			}
-
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
-		}
-	return(&SSLv2_server_data);
-	}
+IMPLEMENT_ssl2_meth_func(SSLv2_server_method,
+			ssl2_accept,
+			ssl_undefined_function,
+			ssl2_get_server_method)
 
 int ssl2_accept(SSL *s)
 	{
