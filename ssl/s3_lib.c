@@ -136,8 +136,6 @@ const char *ssl3_version_str="SSLv3" OPENSSL_VERSION_PTEXT;
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers)/sizeof(SSL_CIPHER))
 
-static long ssl3_default_timeout(void );
-
 OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 /* The RSA ciphers */
 /* Cipher 01 */
@@ -1357,7 +1355,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 /* end of list */
 	};
 
-static SSL3_ENC_METHOD SSLv3_enc_data={
+SSL3_ENC_METHOD SSLv3_enc_data={
 	ssl3_enc,
 	ssl3_mac,
 	ssl3_setup_key_block,
@@ -1371,49 +1369,17 @@ static SSL3_ENC_METHOD SSLv3_enc_data={
 	ssl3_alert_code,
 	};
 
-static SSL_METHOD SSLv3_data= {
-	SSL3_VERSION,
-	ssl3_new,
-	ssl3_clear,
-	ssl3_free,
-	ssl_undefined_function,
-	ssl_undefined_function,
-	ssl3_read,
-	ssl3_peek,
-	ssl3_write,
-	ssl3_shutdown,
-	ssl3_renegotiate,
-	ssl3_renegotiate_check,
-	ssl3_get_message,
-	ssl3_read_bytes,
-	ssl3_write_bytes,
-	ssl3_dispatch_alert,
-	ssl3_ctrl,
-	ssl3_ctx_ctrl,
-	ssl3_get_cipher_by_char,
-	ssl3_put_cipher_by_char,
-	ssl3_pending,
-	ssl3_num_ciphers,
-	ssl3_get_cipher,
-	ssl_bad_method,
-	ssl3_default_timeout,
-	&SSLv3_enc_data,
-	ssl_undefined_void_function,
-	ssl3_callback_ctrl,
-	ssl3_ctx_callback_ctrl,
-	};
-
-static long ssl3_default_timeout(void)
+long ssl3_default_timeout(void)
 	{
 	/* 2 hours, the 24 hours mentioned in the SSLv3 spec
 	 * is way too long for http, the cache would over fill */
 	return(60*60*2);
 	}
 
-SSL_METHOD *sslv3_base_method(void)
-	{
-	return(&SSLv3_data);
-	}
+IMPLEMENT_ssl3_meth_func(sslv3_base_method,
+			ssl_undefined_function,
+			ssl_undefined_function,
+			ssl_bad_method)
 
 int ssl3_num_ciphers(void)
 	{

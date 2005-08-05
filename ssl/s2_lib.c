@@ -63,7 +63,6 @@
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 
-static long ssl2_default_timeout(void );
 const char *ssl2_version_str="SSLv2" OPENSSL_VERSION_PTEXT;
 
 #define SSL2_NUM_CIPHERS (sizeof(ssl2_ciphers)/sizeof(SSL_CIPHER))
@@ -211,47 +210,15 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 /* end of list :-) */
 	};
 
-static SSL_METHOD SSLv2_data= {
-	SSL2_VERSION,
-	ssl2_new,	/* local */
-	ssl2_clear,	/* local */
-	ssl2_free,	/* local */
-	ssl_undefined_function,
-	ssl_undefined_function,
-	ssl2_read,
-	ssl2_peek,
-	ssl2_write,
-	ssl2_shutdown,
-	ssl_ok,	/* NULL - renegotiate */
-	ssl_ok,	/* NULL - check renegotiate */
-	NULL, /* NULL - ssl_get_message */
-	NULL, /* NULL - ssl_get_record */
-	NULL, /* NULL - ssl_write_bytes */
-	NULL, /* NULL - dispatch_alert */
-	ssl2_ctrl,	/* local */
-	ssl2_ctx_ctrl,	/* local */
-	ssl2_get_cipher_by_char,
-	ssl2_put_cipher_by_char,
-	ssl2_pending,
-	ssl2_num_ciphers,
-	ssl2_get_cipher,
-	ssl_bad_method,
-	ssl2_default_timeout,
-	&ssl3_undef_enc_method,
-	ssl_undefined_void_function,
-	ssl2_callback_ctrl,	/* local */
-	ssl2_ctx_callback_ctrl,	/* local */
-	};
-
-static long ssl2_default_timeout(void)
+long ssl2_default_timeout(void)
 	{
 	return(300);
 	}
 
-SSL_METHOD *sslv2_base_method(void)
-	{
-	return(&SSLv2_data);
-	}
+IMPLEMENT_ssl2_meth_func(sslv2_base_method,
+			ssl_undefined_function,
+			ssl_undefined_function,
+			ssl_bad_method)
 
 int ssl2_num_ciphers(void)
 	{
