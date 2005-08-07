@@ -4,6 +4,9 @@
 
  Changes between 0.9.8 and 0.9.8a  [XX xxx XXXX]
 
+  *) Extended Windows CE support.
+     [Satoshi Nakamura and Andy Polyakov]
+
   *) Initialize SSL_METHOD structures at compile time instead of during
      runtime, thus removing the need for a lock.
      [Steve Henson]

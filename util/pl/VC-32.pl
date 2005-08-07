@@ -50,7 +50,7 @@ elsif ($FLAVOR =~ /CE/)
 	/^X86/		&& do {	$wcecdefs.=" -Dx86 -D_X86_";
 				$wcelflag.=" /machine:X86";	last; };
 	/^ARM/		&& do {	$wcecdefs.=" -DARM -D_ARM_";
-				$wcelflag.=" /machine:$wcetgt";	last; };
+				$wcelflag.=" /machine:ARM";	last; };
 	/^R4[0-9]{3}/	&& do {	$wcecdefs.=" -DMIPS -D_MIPS_ -DMIPS_R4000";
 				$wcelflag.=" /machine:MIPS";	last; };
 	/^SH[0-9]/	&& do {	$wcecdefs.=" -D$wcetgt -D_$wcetgt_ -DSHx";
@@ -64,7 +64,6 @@ elsif ($FLAVOR =~ /CE/)
     $base_cflags.=" $wcecdefs";
     $base_cflags.=" -Qsh4" if ($wcetgt =~ /^SH4/);
     $opt_cflags=' /MC /O1i';	# optimize for space, but with intrinsics...
-    $opt_cflags.=' /wd4959';	# disable "too large to optimize" warning...
     $dbg_clfags=' /MC /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /opt:ref $wcelflag";
     }
