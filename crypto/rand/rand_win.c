@@ -156,6 +156,7 @@ typedef struct tagCURSORINFO
 #define CURSOR_SHOWING     0x00000001
 #endif /* CURSOR_SHOWING */
 
+#if !defined(OPENSSL_SYS_WINCE)
 typedef BOOL (WINAPI *CRYPTACQUIRECONTEXTW)(HCRYPTPROV *, LPCWSTR, LPCWSTR,
 				    DWORD, DWORD);
 typedef BOOL (WINAPI *CRYPTGENRANDOM)(HCRYPTPROV, DWORD, BYTE *);
@@ -175,9 +176,7 @@ typedef BOOL (WINAPI *THREAD32)(HANDLE, LPTHREADENTRY32);
 typedef BOOL (WINAPI *MODULE32)(HANDLE, LPMODULEENTRY32);
 
 #include <lmcons.h>
-#ifndef OPENSSL_SYS_WINCE
 #include <lmstats.h>
-#endif
 #if 1 /* The NET API is Unicode only.  It requires the use of the UNICODE
        * macro.  When UNICODE is defined LPTSTR becomes LPWSTR.  LMSTR was
        * was added to the Platform SDK to allow the NET API to be used in
@@ -188,12 +187,12 @@ typedef NET_API_STATUS (NET_API_FUNCTION * NETSTATGET)
         (LPWSTR, LPWSTR, DWORD, DWORD, LPBYTE*);
 typedef NET_API_STATUS (NET_API_FUNCTION * NETFREE)(LPBYTE);
 #endif /* 1 */
+#endif /* !OPENSSL_SYS_WINCE */
 
 int RAND_poll(void)
 {
 	MEMORYSTATUS m;
 	HCRYPTPROV hProvider = 0;
-	BYTE buf[64];
 	DWORD w;
 	int good = 0;
 
@@ -208,18 +207,18 @@ int RAND_poll(void)
 # if defined(_WIN32_WCE) && _WIN32_WCE>=300
 /* Even though MSDN says _WIN32_WCE>=210, it doesn't seem to be available
  * in commonly available implementations prior 300... */
-# ifndef CryptAcquireContext
-   /* reserve for broken header... */
-#  define CryptAcquireContext CryptAcquireContextW
-# endif
+	{
+	BYTE buf[64];
 	/* poll the CryptoAPI PRNG */
 	/* The CryptoAPI returns sizeof(buf) bytes of randomness */
-	if (CryptAcquireContext(&hProvider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
+	if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL,
+				CRYPT_VERIFYCONTEXT))
 		{
 		if (CryptGenRandom(hProvider, sizeof(buf), buf))
 			RAND_add(buf, sizeof(buf), sizeof(buf));
 		CryptReleaseContext(hProvider, 0); 
 		}
+	}
 # endif
 #else	/* OPENSSL_SYS_WINCE */
 	/*
@@ -246,6 +245,7 @@ int RAND_poll(void)
 	CRYPTRELEASECONTEXT release = NULL;
 	NETSTATGET netstatget = NULL;
 	NETFREE netfree = NULL;
+	BYTE buf[64];
 
 	if (netapi)
 		{

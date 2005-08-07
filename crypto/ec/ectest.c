@@ -95,6 +95,11 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 
+#if defined(_MSC_VER) && defined(_MIPS_) && _MSC_VER<1300
+/* suppress "too big too optimize" warning */
+#pragma warning(disable:4959)
+#endif
+
 #define ABORT do { \
 	fflush(stdout); \
 	fprintf(stderr, "%s:%d: ABORT\n", __FILE__, __LINE__); \

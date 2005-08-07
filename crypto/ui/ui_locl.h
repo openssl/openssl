@@ -62,6 +62,10 @@
 #include <openssl/ui.h>
 #include <openssl/crypto.h>
 
+#ifdef _
+#undef _
+#endif
+
 struct ui_method_st
 	{
 	char *name;
