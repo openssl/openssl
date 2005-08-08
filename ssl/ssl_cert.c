@@ -200,7 +200,6 @@ CERT *ssl_cert_dup(CERT *cert)
 #ifndef OPENSSL_NO_DH
 	if (cert->dh_tmp != NULL)
 		{
-		/* DH parameters don't have a reference count */
 		ret->dh_tmp = DHparams_dup(cert->dh_tmp);
 		if (ret->dh_tmp == NULL)
 			{
@@ -234,8 +233,12 @@ CERT *ssl_cert_dup(CERT *cert)
 #ifndef OPENSSL_NO_ECDH
 	if (cert->ecdh_tmp)
 		{
-		EC_KEY_up_ref(cert->ecdh_tmp);
-		ret->ecdh_tmp = cert->ecdh_tmp;
+		ret->ecdh_tmp = EC_KEY_dup(cert->ecdh_tmp);
+		if (ret->ecdh_tmp == NULL)
+			{
+			SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_EC_LIB);
+			goto err;
+			}
 		}
 	ret->ecdh_tmp_cb = cert->ecdh_tmp_cb;
 #endif

@@ -1805,12 +1805,12 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			SSLerr(SSL_F_SSL3_CTX_CTRL,ERR_R_ECDH_LIB);
 			return 0;
 			}
-		if (!EC_KEY_up_ref((EC_KEY *)parg))
+		ecdh = EC_KEY_dup((EC_KEY *)parg);
+		if (ecdh == NULL)
 			{
-			SSLerr(SSL_F_SSL3_CTX_CTRL,ERR_R_ECDH_LIB);
+			SSLerr(SSL_F_SSL3_CTX_CTRL,ERR_R_EC_LIB);
 			return 0;
 			}
-		ecdh = (EC_KEY *)parg;
 		if (!(ctx->options & SSL_OP_SINGLE_ECDH_USE))
 			{
 			if (!EC_KEY_generate_key(ecdh))
