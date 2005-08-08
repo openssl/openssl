@@ -84,7 +84,7 @@ long dtls1_default_timeout(void)
 	return(60*60*2);
 	}
 
-IMPLEMENT_dtls1_meth_func(dtls1_base_method,
+IMPLEMENT_dtls1_meth_func(dtlsv1_base_method,
 			ssl_undefined_function,
 			ssl_undefined_function,
 			ssl_bad_method)
