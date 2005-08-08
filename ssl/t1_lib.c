@@ -83,11 +83,6 @@ long tls1_default_timeout(void)
 	return(60*60*2);
 	}
 
-IMPLEMENT_tls1_meth_func(tlsv1_base_method,
-			ssl_undefined_function,
-			ssl_undefined_function,
-			ssl_bad_method)
-
 int tls1_new(SSL *s)
 	{
 	if (!ssl3_new(s)) return(0);

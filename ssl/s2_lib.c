@@ -215,11 +215,6 @@ long ssl2_default_timeout(void)
 	return(300);
 	}
 
-IMPLEMENT_ssl2_meth_func(sslv2_base_method,
-			ssl_undefined_function,
-			ssl_undefined_function,
-			ssl_bad_method)
-
 int ssl2_num_ciphers(void)
 	{
 	return(SSL2_NUM_CIPHERS);

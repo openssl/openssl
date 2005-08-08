@@ -1375,11 +1375,6 @@ long ssl3_default_timeout(void)
 	return(60*60*2);
 	}
 
-IMPLEMENT_ssl3_meth_func(sslv3_base_method,
-			ssl_undefined_function,
-			ssl_undefined_function,
-			ssl_bad_method)
-
 int ssl3_num_ciphers(void)
 	{
 	return(SSL3_NUM_CIPHERS);

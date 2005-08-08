@@ -511,9 +511,6 @@ OPENSSL_EXTERN SSL_CIPHER ssl3_ciphers[];
 
 
 SSL_METHOD *ssl_bad_method(int ver);
-SSL_METHOD *sslv2_base_method(void);
-SSL_METHOD *sslv23_base_method(void);
-SSL_METHOD *sslv3_base_method(void);
 
 extern SSL3_ENC_METHOD TLSv1_enc_data;
 extern SSL3_ENC_METHOD SSLv3_enc_data;
@@ -907,7 +904,6 @@ void tls1_free(SSL *s);
 void tls1_clear(SSL *s);
 long tls1_ctrl(SSL *s,int cmd, long larg, void *parg);
 long tls1_callback_ctrl(SSL *s,int cmd, void (*fp)(void));
-SSL_METHOD *tlsv1_base_method(void );
 
 int dtls1_new(SSL *s);
 int	dtls1_accept(SSL *s);
@@ -915,7 +911,6 @@ int	dtls1_connect(SSL *s);
 void dtls1_free(SSL *s);
 void dtls1_clear(SSL *s);
 long dtls1_ctrl(SSL *s,int cmd, long larg, void *parg);
-SSL_METHOD *dtlsv1_base_method(void );
 
 long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 int dtls1_get_record(SSL *s);

@@ -65,11 +65,6 @@ long ssl23_default_timeout(void)
 	return(300);
 	}
 
-IMPLEMENT_ssl23_meth_func(sslv23_base_method,
-			ssl_undefined_function,
-			ssl_undefined_function,
-			ssl_bad_method)
-
 int ssl23_num_ciphers(void)
 	{
 	return(ssl3_num_ciphers()
