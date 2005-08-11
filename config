@@ -451,8 +451,6 @@ if [ "$SYSTEM" = "SunOS" ]; then
       echo "         patch #107357-01 or later applied."
       sleep 5
     fi
-  elif [ "$CC" = "cc" -a $CCVER -gt 0 ]; then
-    CC=sc3
   fi
 fi
 
