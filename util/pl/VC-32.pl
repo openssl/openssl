@@ -54,7 +54,7 @@ elsif ($FLAVOR =~ /CE/)
     SWITCH: for($wcetgt) {
 	/^X86/		&& do {	$wcecdefs.=" -Dx86 -D_X86_ -D_i386_ -Di_386_";
 				$wcelflag.=" /machine:IX86";	last; };
-	/^ARM4[IT]/	&& do { $wcecdefs.=" -DARM -D_ARM_ -D$wcetgt";
+	/^ARMV4[IT]/	&& do { $wcecdefs.=" -DARM -D_ARM_ -D$wcetgt";
 				$wcecdefs.=" -DTHUMB -D_THUMB_" if($wcetgt=~/T$/);
 				$wcecdefs.=" -QRarch4T -QRinterwork-return";
 				$wcelflag.=" /machine:THUMB";	last; };
