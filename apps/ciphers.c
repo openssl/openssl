@@ -90,7 +90,7 @@ int MAIN(int argc, char **argv)
 	SSL_CTX *ctx=NULL;
 	SSL *ssl=NULL;
 	char *ciphers=NULL;
-	SSL_METHOD *meth=NULL;
+	const SSL_METHOD *meth=NULL;
 	STACK_OF(SSL_CIPHER) *sk;
 	char buf[512];
 	BIO *STDout=NULL;

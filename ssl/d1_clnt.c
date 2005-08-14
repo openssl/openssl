@@ -125,10 +125,10 @@
 #include <openssl/dh.h>
 #endif
 
-static SSL_METHOD *dtls1_get_client_method(int ver);
+static const SSL_METHOD *dtls1_get_client_method(int ver);
 static int dtls1_get_hello_verify(SSL *s);
 
-static SSL_METHOD *dtls1_get_client_method(int ver)
+static const SSL_METHOD *dtls1_get_client_method(int ver)
 	{
 	if (ver == DTLS1_VERSION)
 		return(DTLSv1_client_method());

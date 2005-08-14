@@ -544,7 +544,7 @@ int MAIN(int argc, char *argv[])
 	int off=0;
 	int no_tmp_rsa=0,no_dhe=0,no_ecdhe=0,nocert=0;
 	int state=0;
-	SSL_METHOD *meth=NULL;
+	const SSL_METHOD *meth=NULL;
 #ifdef sock_type
 #undef sock_type
 #endif

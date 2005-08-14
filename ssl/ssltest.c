@@ -401,7 +401,7 @@ int main(int argc, char *argv[])
 #endif
 	SSL_CTX *s_ctx=NULL;
 	SSL_CTX *c_ctx=NULL;
-	SSL_METHOD *meth=NULL;
+	const SSL_METHOD *meth=NULL;
 	SSL *c_ssl,*s_ssl;
 	int number=1,reuse=0;
 	long bytes=256L;

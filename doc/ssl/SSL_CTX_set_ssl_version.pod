@@ -9,9 +9,9 @@ SSL_CTX_set_ssl_version, SSL_set_ssl_method, SSL_get_ssl_method
 
  #include <openssl/ssl.h>
 
- int SSL_CTX_set_ssl_version(SSL_CTX *ctx, SSL_METHOD *method);
- int SSL_set_ssl_method(SSL *s, SSL_METHOD *method);
- SSL_METHOD *SSL_get_ssl_method(SSL *ssl);
+ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *method);
+ int SSL_set_ssl_method(SSL *s, const SSL_METHOD *method);
+ const SSL_METHOD *SSL_get_ssl_method(SSL *ssl);
 
 =head1 DESCRIPTION
 

@@ -212,7 +212,7 @@ int SSL_clear(SSL *s)
 	}
 
 /** Used to change an SSL_CTXs default SSL method type */
-int SSL_CTX_set_ssl_version(SSL_CTX *ctx,SSL_METHOD *meth)
+int SSL_CTX_set_ssl_version(SSL_CTX *ctx,const SSL_METHOD *meth)
 	{
 	STACK_OF(SSL_CIPHER) *sk;
 
@@ -1330,7 +1330,7 @@ int SSL_SESSION_cmp(const SSL_SESSION *a,const SSL_SESSION *b)
 static IMPLEMENT_LHASH_HASH_FN(SSL_SESSION_hash, SSL_SESSION *)
 static IMPLEMENT_LHASH_COMP_FN(SSL_SESSION_cmp, SSL_SESSION *)
 
-SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
+SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	{
 	SSL_CTX *ret=NULL;
 	
@@ -1899,12 +1899,12 @@ void ssl_update_cache(SSL *s,int mode)
 		}
 	}
 
-SSL_METHOD *SSL_get_ssl_method(SSL *s)
+const SSL_METHOD *SSL_get_ssl_method(SSL *s)
 	{
 	return(s->method);
 	}
 
-int SSL_set_ssl_method(SSL *s,SSL_METHOD *meth)
+int SSL_set_ssl_method(SSL *s, const SSL_METHOD *meth)
 	{
 	int conn= -1;
 	int ret=1;

@@ -8,7 +8,7 @@ SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled funct
 
  #include <openssl/ssl.h>
 
- SSL_CTX *SSL_CTX_new(SSL_METHOD *method);
+ SSL_CTX *SSL_CTX_new(const SSL_METHOD *method);
 
 =head1 DESCRIPTION
 

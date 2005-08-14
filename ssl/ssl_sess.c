@@ -553,7 +553,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 int SSL_set_session(SSL *s, SSL_SESSION *session)
 	{
 	int ret=0;
-	SSL_METHOD *meth;
+	const SSL_METHOD *meth;
 
 	if (session != NULL)
 		{

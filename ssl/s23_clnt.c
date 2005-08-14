@@ -63,10 +63,10 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 
-static SSL_METHOD *ssl23_get_client_method(int ver);
+static const SSL_METHOD *ssl23_get_client_method(int ver);
 static int ssl23_client_hello(SSL *s);
 static int ssl23_get_server_hello(SSL *s);
-static SSL_METHOD *ssl23_get_client_method(int ver)
+static const SSL_METHOD *ssl23_get_client_method(int ver)
 	{
 #ifndef OPENSSL_NO_SSL2
 	if (ver == SSL2_VERSION)

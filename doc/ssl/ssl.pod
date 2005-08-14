@@ -130,39 +130,39 @@ protocol methods defined in B<SSL_METHOD> structures.
 
 =over 4
 
-=item SSL_METHOD *B<SSLv2_client_method>(void);
+=item const SSL_METHOD *B<SSLv2_client_method>(void);
 
 Constructor for the SSLv2 SSL_METHOD structure for a dedicated client.
 
-=item SSL_METHOD *B<SSLv2_server_method>(void);
+=item const SSL_METHOD *B<SSLv2_server_method>(void);
 
 Constructor for the SSLv2 SSL_METHOD structure for a dedicated server.
 
-=item SSL_METHOD *B<SSLv2_method>(void);
+=item const SSL_METHOD *B<SSLv2_method>(void);
 
 Constructor for the SSLv2 SSL_METHOD structure for combined client and server.
 
-=item SSL_METHOD *B<SSLv3_client_method>(void);
+=item const SSL_METHOD *B<SSLv3_client_method>(void);
 
 Constructor for the SSLv3 SSL_METHOD structure for a dedicated client.
 
-=item SSL_METHOD *B<SSLv3_server_method>(void);
+=item const SSL_METHOD *B<SSLv3_server_method>(void);
 
 Constructor for the SSLv3 SSL_METHOD structure for a dedicated server.
 
-=item SSL_METHOD *B<SSLv3_method>(void);
+=item const SSL_METHOD *B<SSLv3_method>(void);
 
 Constructor for the SSLv3 SSL_METHOD structure for combined client and server.
 
-=item SSL_METHOD *B<TLSv1_client_method>(void);
+=item const SSL_METHOD *B<TLSv1_client_method>(void);
 
 Constructor for the TLSv1 SSL_METHOD structure for a dedicated client.
 
-=item SSL_METHOD *B<TLSv1_server_method>(void);
+=item cosnt SSL_METHOD *B<TLSv1_server_method>(void);
 
 Constructor for the TLSv1 SSL_METHOD structure for a dedicated server.
 
-=item SSL_METHOD *B<TLSv1_method>(void);
+=item const SSL_METHOD *B<TLSv1_method>(void);
 
 Constructor for the TLSv1 SSL_METHOD structure for combined client and server.
 
@@ -249,7 +249,7 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item long B<SSL_CTX_need_tmp_RSA>(SSL_CTX *ctx);
 
-=item SSL_CTX *B<SSL_CTX_new>(SSL_METHOD *meth);
+=item SSL_CTX *B<SSL_CTX_new>(const SSL_METHOD *meth);
 
 =item int B<SSL_CTX_remove_session>(SSL_CTX *ctx, SSL_SESSION *c);
 
@@ -327,7 +327,7 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item void B<SSL_CTX_set_session_cache_mode>(SSL_CTX *ctx, int mode);
 
-=item int B<SSL_CTX_set_ssl_version>(SSL_CTX *ctx, SSL_METHOD *meth);
+=item int B<SSL_CTX_set_ssl_version>(SSL_CTX *ctx, const SSL_METHOD *meth);
 
 =item void B<SSL_CTX_set_timeout>(SSL_CTX *ctx, long t);
 
@@ -512,7 +512,7 @@ connection defined in the B<SSL> structure.
 
 =item int B<SSL_get_shutdown>(const SSL *ssl);
 
-=item SSL_METHOD *B<SSL_get_ssl_method>(SSL *ssl);
+=item const SSL_METHOD *B<SSL_get_ssl_method>(SSL *ssl);
 
 =item int B<SSL_get_state>(const SSL *ssl);
 
@@ -596,7 +596,7 @@ connection defined in the B<SSL> structure.
 
 =item void B<SSL_set_shutdown>(SSL *ssl, int mode);
 
-=item int B<SSL_set_ssl_method>(SSL *ssl, SSL_METHOD *meth);
+=item int B<SSL_set_ssl_method>(SSL *ssl, const SSL_METHOD *meth);
 
 =item void B<SSL_set_time>(SSL *ssl, long t);
 

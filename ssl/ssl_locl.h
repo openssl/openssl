@@ -517,9 +517,9 @@ extern SSL3_ENC_METHOD SSLv3_enc_data;
 extern SSL3_ENC_METHOD DTLSv1_enc_data;
 
 #define IMPLEMENT_tls1_meth_func(func_name, s_accept, s_connect, s_get_meth) \
-SSL_METHOD *func_name(void)  \
+const SSL_METHOD *func_name(void)  \
 	{ \
-	static SSL_METHOD func_name##_data= { \
+	static const SSL_METHOD func_name##_data= { \
 		TLS1_VERSION, \
 		tls1_new, \
 		tls1_clear, \
@@ -554,9 +554,9 @@ SSL_METHOD *func_name(void)  \
 	}
 
 #define IMPLEMENT_ssl3_meth_func(func_name, s_accept, s_connect, s_get_meth) \
-SSL_METHOD *func_name(void)  \
+const SSL_METHOD *func_name(void)  \
 	{ \
-	static SSL_METHOD func_name##_data= { \
+	static const SSL_METHOD func_name##_data= { \
 		SSL3_VERSION, \
 		ssl3_new, \
 		ssl3_clear, \
@@ -591,9 +591,9 @@ SSL_METHOD *func_name(void)  \
 	}
 
 #define IMPLEMENT_ssl23_meth_func(func_name, s_accept, s_connect, s_get_meth) \
-SSL_METHOD *func_name(void)  \
+const SSL_METHOD *func_name(void)  \
 	{ \
-	static SSL_METHOD func_name##_data= { \
+	static const SSL_METHOD func_name##_data= { \
 	TLS1_VERSION, \
 	tls1_new, \
 	tls1_clear, \
@@ -628,9 +628,9 @@ SSL_METHOD *func_name(void)  \
 	}
 
 #define IMPLEMENT_ssl2_meth_func(func_name, s_accept, s_connect, s_get_meth) \
-SSL_METHOD *func_name(void)  \
+const SSL_METHOD *func_name(void)  \
 	{ \
-	static SSL_METHOD func_name##_data= { \
+	static const SSL_METHOD func_name##_data= { \
 		SSL2_VERSION, \
 		ssl2_new,	/* local */ \
 		ssl2_clear,	/* local */ \
@@ -665,9 +665,9 @@ SSL_METHOD *func_name(void)  \
 	}
 
 #define IMPLEMENT_dtls1_meth_func(func_name, s_accept, s_connect, s_get_meth) \
-SSL_METHOD *func_name(void)  \
+const SSL_METHOD *func_name(void)  \
 	{ \
-	static SSL_METHOD func_name##_data= { \
+	static const SSL_METHOD func_name##_data= { \
 		DTLS1_VERSION, \
 		dtls1_new, \
 		dtls1_clear, \

@@ -142,13 +142,13 @@
 #endif
 #include <openssl/md5.h>
 
-static SSL_METHOD *ssl3_get_server_method(int ver);
+static const SSL_METHOD *ssl3_get_server_method(int ver);
 
 #ifndef OPENSSL_NO_ECDH
 static int nid2curve_id(int nid);
 #endif
 
-static SSL_METHOD *ssl3_get_server_method(int ver)
+static const SSL_METHOD *ssl3_get_server_method(int ver)
 	{
 	if (ver == SSL3_VERSION)
 		return(SSLv3_server_method());

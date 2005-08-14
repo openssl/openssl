@@ -117,7 +117,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 
-static SSL_METHOD *ssl2_get_server_method(int ver);
+static const SSL_METHOD *ssl2_get_server_method(int ver);
 static int get_client_master_key(SSL *s);
 static int get_client_hello(SSL *s);
 static int server_hello(SSL *s); 
@@ -129,7 +129,7 @@ static int ssl_rsa_private_decrypt(CERT *c, int len, unsigned char *from,
 	unsigned char *to,int padding);
 #define BREAK	break
 
-static SSL_METHOD *ssl2_get_server_method(int ver)
+static const SSL_METHOD *ssl2_get_server_method(int ver)
 	{
 	if (ver == SSL2_VERSION)
 		return(SSLv2_server_method());

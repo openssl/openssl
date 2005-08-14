@@ -61,8 +61,8 @@
 #include <stdio.h>
 #include <openssl/objects.h>
 
-static SSL_METHOD *ssl2_get_method(int ver);
-static SSL_METHOD *ssl2_get_method(int ver)
+static const SSL_METHOD *ssl2_get_method(int ver);
+static const SSL_METHOD *ssl2_get_method(int ver)
 	{
 	if (ver == SSL2_VERSION)
 		return(SSLv2_method());

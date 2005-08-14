@@ -389,7 +389,7 @@ typedef struct ssl_method_st
 	int (*ssl_pending)(const SSL *s);
 	int (*num_ciphers)(void);
 	SSL_CIPHER *(*get_cipher)(unsigned ncipher);
-	struct ssl_method_st *(*get_ssl_method)(int version);
+	const struct ssl_method_st *(*get_ssl_method)(int version);
 	long (*get_timeout)(void);
 	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
 	int (*ssl_version)(void);
@@ -616,7 +616,7 @@ DECLARE_STACK_OF(SSL_COMP)
 
 struct ssl_ctx_st
 	{
-	SSL_METHOD *method;
+	const SSL_METHOD *method;
 
 	STACK_OF(SSL_CIPHER) *cipher_list;
 	/* same as above but sorted for lookup */
@@ -818,7 +818,7 @@ struct ssl_st
 	int version;
 	int type; /* SSL_ST_CONNECT or SSL_ST_ACCEPT */
 
-	SSL_METHOD *method; /* SSLv3 */
+	const SSL_METHOD *method; /* SSLv3 */
 
 	/* There are 2 BIO's even though they are normally both the
 	 * same.  This is so data can be read and written to different
@@ -1212,7 +1212,7 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 #endif
 
 int	SSL_CTX_set_cipher_list(SSL_CTX *,const char *str);
-SSL_CTX *SSL_CTX_new(SSL_METHOD *meth);
+SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
 void	SSL_CTX_free(SSL_CTX *);
 long SSL_CTX_set_timeout(SSL_CTX *ctx,long t);
 long SSL_CTX_get_timeout(const SSL_CTX *ctx);
@@ -1371,27 +1371,27 @@ int	SSL_get_error(const SSL *s,int ret_code);
 const char *SSL_get_version(const SSL *s);
 
 /* This sets the 'default' SSL version that SSL_new() will create */
-int SSL_CTX_set_ssl_version(SSL_CTX *ctx,SSL_METHOD *meth);
+int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth);
 
-SSL_METHOD *SSLv2_method(void);		/* SSLv2 */
-SSL_METHOD *SSLv2_server_method(void);	/* SSLv2 */
-SSL_METHOD *SSLv2_client_method(void);	/* SSLv2 */
+const SSL_METHOD *SSLv2_method(void);		/* SSLv2 */
+const SSL_METHOD *SSLv2_server_method(void);	/* SSLv2 */
+const SSL_METHOD *SSLv2_client_method(void);	/* SSLv2 */
 
-SSL_METHOD *SSLv3_method(void);		/* SSLv3 */
-SSL_METHOD *SSLv3_server_method(void);	/* SSLv3 */
-SSL_METHOD *SSLv3_client_method(void);	/* SSLv3 */
+const SSL_METHOD *SSLv3_method(void);		/* SSLv3 */
+const SSL_METHOD *SSLv3_server_method(void);	/* SSLv3 */
+const SSL_METHOD *SSLv3_client_method(void);	/* SSLv3 */
 
-SSL_METHOD *SSLv23_method(void);	/* SSLv3 but can rollback to v2 */
-SSL_METHOD *SSLv23_server_method(void);	/* SSLv3 but can rollback to v2 */
-SSL_METHOD *SSLv23_client_method(void);	/* SSLv3 but can rollback to v2 */
+const SSL_METHOD *SSLv23_method(void);	/* SSLv3 but can rollback to v2 */
+const SSL_METHOD *SSLv23_server_method(void);	/* SSLv3 but can rollback to v2 */
+const SSL_METHOD *SSLv23_client_method(void);	/* SSLv3 but can rollback to v2 */
 
-SSL_METHOD *TLSv1_method(void);		/* TLSv1.0 */
-SSL_METHOD *TLSv1_server_method(void);	/* TLSv1.0 */
-SSL_METHOD *TLSv1_client_method(void);	/* TLSv1.0 */
+const SSL_METHOD *TLSv1_method(void);		/* TLSv1.0 */
+const SSL_METHOD *TLSv1_server_method(void);	/* TLSv1.0 */
+const SSL_METHOD *TLSv1_client_method(void);	/* TLSv1.0 */
 
-SSL_METHOD *DTLSv1_method(void);		/* DTLSv1.0 */
-SSL_METHOD *DTLSv1_server_method(void);	/* DTLSv1.0 */
-SSL_METHOD *DTLSv1_client_method(void);	/* DTLSv1.0 */
+const SSL_METHOD *DTLSv1_method(void);		/* DTLSv1.0 */
+const SSL_METHOD *DTLSv1_server_method(void);	/* DTLSv1.0 */
+const SSL_METHOD *DTLSv1_client_method(void);	/* DTLSv1.0 */
 
 STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s);
 
@@ -1400,8 +1400,8 @@ int SSL_renegotiate(SSL *s);
 int SSL_renegotiate_pending(SSL *s);
 int SSL_shutdown(SSL *s);
 
-SSL_METHOD *SSL_get_ssl_method(SSL *s);
-int SSL_set_ssl_method(SSL *s,SSL_METHOD *method);
+const SSL_METHOD *SSL_get_ssl_method(SSL *s);
+int SSL_set_ssl_method(SSL *s, const SSL_METHOD *method);
 const char *SSL_alert_type_string_long(int value);
 const char *SSL_alert_type_string(int value);
 const char *SSL_alert_desc_string_long(int value);

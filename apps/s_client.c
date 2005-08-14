@@ -262,7 +262,7 @@ int MAIN(int argc, char **argv)
 	int ret=1,in_init=1,i,nbio_test=0;
 	int starttls_proto = 0;
 	int prexit = 0, vflags = 0;
-	SSL_METHOD *meth=NULL;
+	const SSL_METHOD *meth=NULL;
 #ifdef sock_type
 #undef sock_type
 #endif

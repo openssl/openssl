@@ -135,7 +135,7 @@
 #endif
 #include <openssl/bn.h>
 
-static SSL_METHOD *ssl3_get_client_method(int ver);
+static const SSL_METHOD *ssl3_get_client_method(int ver);
 static int ca_dn_cmp(const X509_NAME * const *a,const X509_NAME * const *b);
 
 #ifndef OPENSSL_NO_ECDH
@@ -143,7 +143,7 @@ static int curve_id2nid(int curve_id);
 int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs);
 #endif
 
-static SSL_METHOD *ssl3_get_client_method(int ver)
+static const SSL_METHOD *ssl3_get_client_method(int ver)
 	{
 	if (ver == SSL3_VERSION)
 		return(SSLv3_client_method());
