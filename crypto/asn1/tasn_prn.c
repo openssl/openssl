@@ -66,11 +66,27 @@
 #include <openssl/x509v3.h>
 #include "asn1_locl.h"
 
-#define ASN1_PCTX_FLAGS_SHOW_ABSENT	0x1
-#define ASN1_PCTX_FLAGS_SHOW_SEQUENCE	0x2
-#define ASN1_PCTX_FLAGS_SHOW_TYPE	0x4
-#define ASN1_PCTX_FLAGS_NO_FIELD_NAME	0x8
-#define ASN1_PCTX_FLAGS_NO_STRUCT_NAME	0x10
+#include <string.h>
+/* Print flags */
+
+/* Indicate missing OPTIONAL fields */
+#define ASN1_PCTX_FLAGS_SHOW_ABSENT		0x001	
+/* Mark start and end of SEQUENCE */
+#define ASN1_PCTX_FLAGS_SHOW_SEQUENCE		0x002
+/* Mark start and end of SEQUENCE/SET OF */
+#define ASN1_PCTX_FLAGS_SHOW_SSOF		0x004
+/* Show the ASN1 type of primitives */
+#define ASN1_PCTX_FLAGS_SHOW_TYPE		0x008
+/* Don't show ASN1 type of ANY */
+#define ASN1_PCTX_FLAGS_NO_ANY_TYPE		0x010
+/* Don't show ASN1 type of MSTRINGs */
+#define ASN1_PCTX_FLAGS_NO_MSTRING_TYPE		0x020
+/* Don't show field names in SEQUENCE */
+#define ASN1_PCTX_FLAGS_NO_FIELD_NAME		0x040
+/* Show structure names of each SEQUENCE field */
+#define ASN1_PCTX_FLAGS_SHOW_FIELD_STRUCT_NAME	0x080
+/* Don't show structure name even at top level */
+#define ASN1_PCTX_FLAGS_NO_STRUCT_NAME		0x100
 
 /* Print routines.
  */
@@ -162,39 +178,48 @@ void ASN1_PCTX_set_str_flags(ASN1_PCTX *p, unsigned long flags)
 /* Main print routines */
 
 static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
-				const ASN1_ITEM *it, const ASN1_PCTX *pctx);
+				const ASN1_ITEM *it,
+				const char *fname, const char *sname,
+				int nohdr, const ASN1_PCTX *pctx);
 int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 				const ASN1_TEMPLATE *tt, const ASN1_PCTX *pctx);
 static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 				const ASN1_ITEM *it, int indent,
+				const char *fname, const char *sname,
 				const ASN1_PCTX *pctx);
+static int asn1_print_fsname(BIO *out, int indent,
+			const char *fname, const char *sname,
+			const ASN1_PCTX *pctx);
 
 int ASN1_item_print(BIO *out, ASN1_VALUE *ifld, int indent,
 				const ASN1_ITEM *it, const ASN1_PCTX *pctx)
 	{
+	const char *sname;
 	if (pctx == NULL)
 		pctx = &default_pctx;
-	return asn1_item_print_ctx(out, &ifld, indent, it, pctx);
+	if (pctx->flags & ASN1_PCTX_FLAGS_NO_STRUCT_NAME)
+		sname = NULL;
+	else
+		sname = it->sname;
+	return asn1_item_print_ctx(out, &ifld, indent, it,
+							NULL, sname, 0, pctx);
 	}
 
 static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
-				const ASN1_ITEM *it, const ASN1_PCTX *pctx)
+				const ASN1_ITEM *it,
+				const char *fname, const char *sname,
+				int nohdr, const ASN1_PCTX *pctx)
 	{
 	const ASN1_TEMPLATE *tt;
 	const ASN1_EXTERN_FUNCS *ef;
 	ASN1_VALUE **tmpfld;
 	int i;
-	if (BIO_printf(out, "%s:", it->sname) <= 0)
-		return 0;
 	if(*fld == NULL)
 		{
-		if (!(pctx->flags & ASN1_PCTX_FLAGS_SHOW_ABSENT))
+		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_ABSENT)
 			{
-			if (BIO_puts(out, "\n") <= 0)
+			if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))
 				return 0;
-			}
-		else
-			{
 			if (BIO_puts(out, "<ABSENT>\n") <= 0)
 				return 0;
 			}
@@ -212,23 +237,35 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 			}
 		/* fall thru */
 		case ASN1_ITYPE_MSTRING:
-		if (!asn1_primitive_print(out, fld, it, indent, pctx))
+		if (!asn1_primitive_print(out, fld, it,
+				indent, fname, sname,pctx))
 			return 0;
 		break;
 
 		case ASN1_ITYPE_EXTERN:
+		if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))
+			return 0;
 		/* Use new style print routine if possible */
 		ef = it->funcs;
 		if (ef && ef->asn1_ex_print)
 			{
-			if (!ef->asn1_ex_print(out, fld, indent, "", pctx))
+			i = ef->asn1_ex_print(out, fld, indent, "", pctx);
+			if (!i)
 				return 0;
+			if ((i == 2) && (BIO_puts(out, "\n") <= 0))
+				return 0;
+			return 1;
 			}
-		else if (BIO_printf(out, ":EXTERNAL TYPE %s\n", it->sname) <= 0)
+		else if (sname && 
+			BIO_printf(out, ":EXTERNAL TYPE %s\n", sname) <= 0)
 			return 0;
 		break;
 
 		case ASN1_ITYPE_CHOICE:
+#if 0
+		if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))
+			return 0;
+#endif
 		/* CHOICE type, get selector */
 		i = asn1_get_choice_selector(fld, it);
 		/* This should never happen... */
@@ -247,15 +284,20 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 
 		case ASN1_ITYPE_SEQUENCE:
 		case ASN1_ITYPE_NDEF_SEQUENCE:
-		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_SEQUENCE)
+		if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))
+			return 0;
+		if (fname || sname)
 			{
-			if (BIO_puts(out, " {\n") <= 0)
-				return 0;
-			}
-		else
-			{
-			if (BIO_puts(out, "\n") <= 0)
-				return 0;
+			if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_SEQUENCE)
+				{
+				if (BIO_puts(out, " {\n") <= 0)
+					return 0;
+				}
+			else
+				{
+				if (BIO_puts(out, "\n") <= 0)
+					return 0;
+				}
 			}
 
 		/* Print each field entry */
@@ -279,8 +321,7 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 		BIO_printf(out, "Unprocessed type %d\n", it->itype);
 		return 0;
 		}
-	if (BIO_puts(out, "\n") <= 0)
-		return 0;
+
 	return 1;
 	}
 
@@ -288,34 +329,49 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 				const ASN1_TEMPLATE *tt, const ASN1_PCTX *pctx)
 	{
 	int i, flags;
+	const char *sname, *fname;
 	flags = tt->flags;
+	if(pctx->flags & ASN1_PCTX_FLAGS_SHOW_FIELD_STRUCT_NAME)
+		sname = tt->item->sname;
+	else
+		sname = NULL;
+	if(pctx->flags & ASN1_PCTX_FLAGS_NO_FIELD_NAME)
+		fname = NULL;
+	else
+		fname = tt->field_name;
 	if(flags & ASN1_TFLG_SK_MASK)
 		{
 		char *tname;
 		ASN1_VALUE *skitem;
 		/* SET OF, SEQUENCE OF */
-		if(pctx->flags & ASN1_PCTX_FLAGS_SHOW_SEQUENCE)
+		if (fname)
 			{
-			if(flags & ASN1_TFLG_SET_OF)
-				tname = "SET";
-			else
-				tname = "SEQUENCE";
-			if (BIO_printf(out, "%*s%s OF %s {\n",
-				indent, "", tname, tt->field_name) <= 0)
+			if(pctx->flags & ASN1_PCTX_FLAGS_SHOW_SSOF)
+				{
+				if(flags & ASN1_TFLG_SET_OF)
+					tname = "SET";
+				else
+					tname = "SEQUENCE";
+				if (BIO_printf(out, "%*s%s OF %s {\n",
+					indent, "", tname, tt->field_name) <= 0)
+					return 0;
+				}
+			else if (BIO_printf(out, "%*s%s:\n", indent, "",
+					fname) <= 0)
 				return 0;
 			}
-		else if (BIO_printf(out, "%*s%s:\n", indent, "",
-					tt->field_name) <= 0)
-				return 0;
 		for(i = 0; i < sk_num((STACK *)*fld); i++)
 			{
-			if (BIO_printf(out, "%*s", indent + 2, "") <= 0)
+			if ((i > 0) && (BIO_puts(out, "\n") <= 0))
 				return 0;
+
 			skitem = (ASN1_VALUE *)sk_value((STACK *)*fld, i);
 			if (!asn1_item_print_ctx(out, &skitem, indent + 2,
-					tt->item, pctx))
+					tt->item, NULL, NULL, 1, pctx))
 				return 0;
 			}
+		if (!i && BIO_printf(out, "%*s<EMPTY>\n", indent + 2, "") <= 0)
+				return 0;
 		if(pctx->flags & ASN1_PCTX_FLAGS_SHOW_SEQUENCE)
 			{
 			if (BIO_printf(out, "%*s}\n", indent, "") <= 0)
@@ -323,17 +379,22 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 			}
 		return 1;
 		}
-	else if (BIO_printf(out, "%*s%s:", indent, "", tt->field_name) <= 0)
-				return 0;
-	return asn1_item_print_ctx(out, fld, indent, tt->item, pctx);
+	return asn1_item_print_ctx(out, fld, indent, tt->item,
+							fname, sname, 0, pctx);
 	}
 
-int asn1_print_fsname(BIO *out, int indent,
+static int asn1_print_fsname(BIO *out, int indent,
 			const char *fname, const char *sname,
 			const ASN1_PCTX *pctx)
 	{
 	static char spaces[] = "                    ";
 	const int nspaces = sizeof(spaces) - 1;
+
+#if 0
+	if (!sname && !fname)
+		return 1;
+#endif
+
 	while (indent > nspaces)
 		{
 		if (BIO_write(out, spaces, nspaces) != nspaces)
@@ -342,30 +403,37 @@ int asn1_print_fsname(BIO *out, int indent,
 		}
 	if (BIO_write(out, spaces, indent) != indent)
 		return 0;
-	if (!(pctx->flags &
-		(ASN1_PCTX_FLAGS_NO_FIELD_NAME|ASN1_PCTX_FLAGS_NO_STRUCT_NAME)))
+	if (pctx->flags & ASN1_PCTX_FLAGS_NO_STRUCT_NAME)
+		sname = NULL;
+	if (pctx->flags & ASN1_PCTX_FLAGS_NO_FIELD_NAME)
+		fname = NULL;
+	if (!sname && !fname)
 		return 1;
-	if (fname && !(pctx->flags & ASN1_PCTX_FLAGS_NO_FIELD_NAME))
+	if (fname)
 		{
 		if (BIO_puts(out, fname) <= 0)
 			return 0;
 		}
-	if (sname && !(pctx->flags & ASN1_PCTX_FLAGS_NO_STRUCT_NAME))
+	if (sname)
 		{
-		if (pctx->flags & ASN1_PCTX_FLAGS_NO_FIELD_NAME)
+		if (fname)
+			{
+			if (BIO_printf(out, " (%s)", sname) <= 0)
+				return 0;
+			}
+		else
 			{
 			if (BIO_puts(out, sname) <= 0)
 				return 0;
 			}
-		else if (BIO_printf(out, " (%s)", sname) <= 0)
-			return 0;
 		}
-	if (BIO_write(out, ":", 1) != 1)
+	if (BIO_write(out, ": ", 2) != 2)
 		return 0;
 	return 1;
 	}
 
-int asn1_print_boolean_ctx(BIO *out, const int bool, const ASN1_PCTX *pctx)
+static int asn1_print_boolean_ctx(BIO *out, const int bool,
+							const ASN1_PCTX *pctx)
 	{
 	const char *str;
 	switch (bool)
@@ -396,7 +464,7 @@ static int asn1_print_integer_ctx(BIO *out, ASN1_INTEGER *str,
 	char *s;
 	int ret = 1;
 	s = i2s_ASN1_INTEGER(NULL, str);
-	if (BIO_printf(out, "%s", s) <= 0)
+	if (BIO_puts(out, s) <= 0)
 		ret = 0;
 	OPENSSL_free(s);
 	return ret;
@@ -435,11 +503,15 @@ static int asn1_print_obstring_ctx(BIO *out, ASN1_STRING *str, int indent,
 
 static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 				const ASN1_ITEM *it, int indent,
+				const char *fname, const char *sname,
 				const ASN1_PCTX *pctx)
 	{
 	long utype;
 	ASN1_STRING *str;
-	int ret = 1;
+	int ret = 1, needlf = 1;
+	const char *pname;
+	if (!asn1_print_fsname(out, indent, fname, sname, pctx))
+			return 0;
 	str = (ASN1_STRING *)*fld;
 	if (it->itype == ASN1_ITYPE_MSTRING)
 		utype = str->type & ~V_ASN1_NEG;
@@ -451,11 +523,33 @@ static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 		utype = atype->type;
 		fld = (ASN1_VALUE **)&atype->value.ptr;
 		str = (ASN1_STRING *)*fld;
+		if (pctx->flags & ASN1_PCTX_FLAGS_NO_ANY_TYPE)
+			pname = NULL;
+		else 
+			pname = ASN1_tag2str(utype);
 		}
-	if (BIO_puts(out, ASN1_tag2str(utype)) <= 0)
-		return 0;
-	if (utype != V_ASN1_NULL && BIO_puts(out, ":") <= 0)
-		return 0;
+	else
+		{
+		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_TYPE)
+			pname = ASN1_tag2str(utype);
+		else 
+			pname = NULL;
+		}
+
+	if (utype == V_ASN1_NULL)
+		{
+		if (BIO_puts(out, "NULL\n") <= 0)
+			return 0;
+		return 1;
+		}
+
+	if (pname)
+		{
+		if (BIO_puts(out, pname) <= 0)
+			return 0;
+		if (BIO_puts(out, ":") <= 0)
+			return 0;
+		}
 
 	switch (utype)
 		{
@@ -473,9 +567,6 @@ static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 		ret = asn1_print_integer_ctx(out, str, pctx);
 		break;
 
-		case V_ASN1_NULL:
-		break;
-
 		case V_ASN1_UTCTIME:
 		ret = ASN1_UTCTIME_print(out, str);
 		break;
@@ -491,13 +582,18 @@ static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 		case V_ASN1_OCTET_STRING:
 		case V_ASN1_BIT_STRING:
 		ret = asn1_print_obstring_ctx(out, str, indent, pctx);
+		needlf = 0;
 		break;
 
 		case V_ASN1_SEQUENCE:
 		case V_ASN1_SET:
+		case V_ASN1_OTHER:
+		if (BIO_puts(out, "\n") <= 0)
+			return 0;
 		if (ASN1_parse_dump(out, str->data, str->length,
 						indent, 0) <= 0)
 			ret = 0;
+		needlf = 0;
 		break;
 
 		default:
@@ -505,6 +601,8 @@ static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 
 		}
 	if (!ret)
+		return 0;
+	if (needlf && BIO_puts(out, "\n") <= 0)
 		return 0;
 	return 1;
 	}
