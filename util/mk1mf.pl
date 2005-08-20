@@ -271,10 +271,10 @@ for (;;)
 		{ $ex_libs .= " $val";}
 
 	if ($key eq "TEST")
-		{ $test.=&var_add($dir,$val); }
+		{ $test.=&var_add($dir,$val, 0); }
 
 	if (($key eq "PROGS") || ($key eq "E_OBJ"))
-		{ $e_exe.=&var_add($dir,$val); }
+		{ $e_exe.=&var_add($dir,$val, 0); }
 
 	if ($key eq "LIB")
 		{
@@ -283,13 +283,13 @@ for (;;)
 		}
 
 	if ($key eq "EXHEADER")
-		{ $exheader.=&var_add($dir,$val); }
+		{ $exheader.=&var_add($dir,$val, 1); }
 
 	if ($key eq "HEADER")
-		{ $header.=&var_add($dir,$val); }
+		{ $header.=&var_add($dir,$val, 1); }
 
 	if ($key eq "LIBOBJ")
-		{ $libobj=&var_add($dir,$val); }
+		{ $libobj=&var_add($dir,$val, 0); }
 
 	if (!($_=<IN>))
 		{ $_="RELATIVE_DIRECTORY=FINISHED\n"; }
@@ -518,11 +518,11 @@ foreach (split(/\s+/,$exheader)){ $h{$_}=1; }
 foreach (split(/\s+/,$header))	{ $h.=$_." " unless $h{$_}; }
 chop($h); $header=$h;
 
-$defs.=&do_defs("HEADER",$header,"\$(INCL_D)",".h");
-$rules.=&do_copy_rule("\$(INCL_D)",$header,".h");
+$defs.=&do_defs("HEADER",$header,"\$(INCL_D)","");
+$rules.=&do_copy_rule("\$(INCL_D)",$header,"");
 
-$defs.=&do_defs("EXHEADER",$exheader,"\$(INCO_D)",".h");
-$rules.=&do_copy_rule("\$(INCO_D)",$exheader,".h");
+$defs.=&do_defs("EXHEADER",$exheader,"\$(INCO_D)","");
+$rules.=&do_copy_rule("\$(INCO_D)",$exheader,"");
 
 $defs.=&do_defs("T_OBJ",$test,"\$(OBJ_D)",$obj);
 $rules.=&do_compile_rule("\$(OBJ_D)",$test,"\$(APP_CFLAGS)");
@@ -640,7 +640,7 @@ print $rules;
 # directories
 sub var_add
 	{
-	local($dir,$val)=@_;
+	local($dir,$val,$keepext)=@_;
 	local(@a,$_,$ret);
 
 	return("") if $no_engine && $dir =~ /\/engine/;
@@ -669,7 +669,7 @@ sub var_add
 
 	$val =~ s/^\s*(.*)\s*$/$1/;
 	@a=split(/\s+/,$val);
-	grep(s/\.[och]$//,@a);
+	grep(s/\.[och]$//,@a) unless $keepext;
 
 	@a=grep(!/^e_.*_3d$/,@a) if $no_des;
 	@a=grep(!/^e_.*_d$/,@a) if $no_des;
