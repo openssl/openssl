@@ -177,6 +177,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	BN_MONT_CTX *mont=NULL;
 	BIGNUM *tmp;
 	int ret= -1;
+        int check_result;
 
 	ctx = BN_CTX_new();
 	if (ctx == NULL) goto err;
@@ -200,6 +201,12 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 			}
 		if (!mont)
 			goto err;
+		}
+
+        if (!DH_check_pub_key(dh, pub_key, &check_result) || check_result)
+		{
+		DHerr(DH_F_COMPUTE_KEY,DH_R_INVALID_PUBKEY);
+		goto err;
 		}
 
 	if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key,dh->p,ctx,mont))

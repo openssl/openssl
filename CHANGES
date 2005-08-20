@@ -4,6 +4,9 @@
 
  Changes between 0.9.8 and 0.9.8a  [XX xxx XXXX]
 
+  *) Avoid small subgroup attacks in Diffie-Hellman.
+     [Nick Matthewson and Ben Laurie]
+
   *) Extended Windows CE support.
      [Satoshi Nakamura and Andy Polyakov]
 
