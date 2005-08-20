@@ -1033,16 +1033,15 @@ bad:
 		}
 	else if (outformat == FORMAT_NETSCAPE)
 		{
-		ASN1_HEADER ah;
-		ASN1_OCTET_STRING os;
+		NETSCAPE_X509 nx;
+		ASN1_OCTET_STRING hdr;
 
-		os.data=(unsigned char *)NETSCAPE_CERT_HDR;
-		os.length=strlen(NETSCAPE_CERT_HDR);
-		ah.header= &os;
-		ah.data=(char *)x;
-		ah.meth=X509_asn1_meth();
+		hdr.data=(unsigned char *)NETSCAPE_CERT_HDR;
+		hdr.length=strlen(NETSCAPE_CERT_HDR);
+		nx.header= &hdr;
+		nx.cert=x;
 
-		i=ASN1_i2d_bio_of(ASN1_HEADER,i2d_ASN1_HEADER,out,&ah);
+		i=ASN1_item_i2d_bio(ASN1_ITEM_rptr(NETSCAPE_X509),out,&nx);
 		}
 	else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");

@@ -1,9 +1,9 @@
 SSLeay                                  1	EXIST::FUNCTION:
 SSLeay_version                          2	EXIST::FUNCTION:
-ASN1_BIT_STRING_asn1_meth               3	EXIST::FUNCTION:
-ASN1_HEADER_free                        4	EXIST::FUNCTION:
-ASN1_HEADER_new                         5	EXIST::FUNCTION:
-ASN1_IA5STRING_asn1_meth                6	EXIST::FUNCTION:
+ASN1_BIT_STRING_asn1_meth               3	NOEXIST::FUNCTION:
+ASN1_HEADER_free                        4	NOEXIST::FUNCTION:
+ASN1_HEADER_new                         5	NOEXIST::FUNCTION:
+ASN1_IA5STRING_asn1_meth                6	NOEXIST::FUNCTION:
 ASN1_INTEGER_get                        7	EXIST::FUNCTION:
 ASN1_INTEGER_set                        8	EXIST::FUNCTION:
 ASN1_INTEGER_to_BN                      9	EXIST::FUNCTION:
@@ -469,7 +469,7 @@ RC2_set_key                             476	EXIST::FUNCTION:RC2
 RC4                                     477	EXIST::FUNCTION:RC4
 RC4_options                             478	EXIST::FUNCTION:RC4
 RC4_set_key                             479	EXIST::FUNCTION:RC4
-RSAPrivateKey_asn1_meth                 480	EXIST::FUNCTION:RSA
+RSAPrivateKey_asn1_meth                 480	NOEXIST::FUNCTION:
 RSAPrivateKey_dup                       481	EXIST::FUNCTION:RSA
 RSAPublicKey_dup                        482	EXIST::FUNCTION:RSA
 RSA_PKCS1_SSLeay                        483	EXIST::FUNCTION:RSA
@@ -624,7 +624,7 @@ X509_STORE_set_default_paths            630	EXIST::FUNCTION:STDIO
 X509_VAL_free                           631	EXIST::FUNCTION:
 X509_VAL_new                            632	EXIST::FUNCTION:
 X509_add_ext                            633	EXIST::FUNCTION:
-X509_asn1_meth                          634	EXIST::FUNCTION:
+X509_asn1_meth                          634	NOEXIST::FUNCTION:
 X509_certificate_type                   635	EXIST::FUNCTION:
 X509_check_private_key                  636	EXIST::FUNCTION:
 X509_cmp_current_time                   637	EXIST::FUNCTION:
@@ -704,7 +704,7 @@ bn_sqr_words                            710	EXIST::FUNCTION:
 _ossl_old_crypt                         711	EXIST:!NeXT,!PERL5:FUNCTION:DES
 d2i_ASN1_BIT_STRING                     712	EXIST::FUNCTION:
 d2i_ASN1_BOOLEAN                        713	EXIST::FUNCTION:
-d2i_ASN1_HEADER                         714	EXIST::FUNCTION:
+d2i_ASN1_HEADER                         714	NOEXIST::FUNCTION:
 d2i_ASN1_IA5STRING                      715	EXIST::FUNCTION:
 d2i_ASN1_INTEGER                        716	EXIST::FUNCTION:
 d2i_ASN1_OBJECT                         717	EXIST::FUNCTION:
@@ -809,7 +809,7 @@ i2a_ASN1_OBJECT                         816	EXIST::FUNCTION:BIO
 i2a_ASN1_STRING                         817	EXIST::FUNCTION:BIO
 i2d_ASN1_BIT_STRING                     818	EXIST::FUNCTION:
 i2d_ASN1_BOOLEAN                        819	EXIST::FUNCTION:
-i2d_ASN1_HEADER                         820	EXIST::FUNCTION:
+i2d_ASN1_HEADER                         820	NOEXIST::FUNCTION:
 i2d_ASN1_IA5STRING                      821	EXIST::FUNCTION:
 i2d_ASN1_INTEGER                        822	EXIST::FUNCTION:
 i2d_ASN1_OBJECT                         823	EXIST::FUNCTION:
@@ -3368,3 +3368,15 @@ BN_GF2m_mod_inv_arr                     3768	EXIST::FUNCTION:
 ENGINE_unregister_ECDSA                 3769	EXIST::FUNCTION:ENGINE
 BN_BLINDING_set_thread_id               3770	EXIST::FUNCTION:
 DSO_pathbyaddr                          3771	EXIST::FUNCTION:
+d2i_NETSCAPE_X509                       3772	EXIST::FUNCTION:
+i2d_ISSUING_DIST_POINT                  3773	EXIST::FUNCTION:
+NETSCAPE_X509_free                      3774	EXIST::FUNCTION:
+ISSUING_DIST_POINT_new                  3775	EXIST::FUNCTION:
+d2i_ISSUING_DIST_POINT                  3776	EXIST::FUNCTION:
+NETSCAPE_X509_it                        3777	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
+NETSCAPE_X509_it                        3777	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+ISSUING_DIST_POINT_free                 3778	EXIST::FUNCTION:
+i2d_NETSCAPE_X509                       3779	EXIST::FUNCTION:
+ISSUING_DIST_POINT_it                   3780	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
+ISSUING_DIST_POINT_it                   3780	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+NETSCAPE_X509_new                       3781	EXIST::FUNCTION:

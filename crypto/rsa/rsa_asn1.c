@@ -62,17 +62,6 @@
 #include <openssl/rsa.h>
 #include <openssl/asn1t.h>
 
-static ASN1_METHOD method={
-        (I2D_OF(void))     i2d_RSAPrivateKey,
-        (D2I_OF(void))     d2i_RSAPrivateKey,
-        (void *(*)(void))  RSA_new,
-        (void (*)(void *)) RSA_free};
-
-ASN1_METHOD *RSAPrivateKey_asn1_meth(void)
-	{
-	return(&method);
-	}
-
 /* Override the default free and new methods */
 static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
 {

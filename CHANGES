@@ -4,6 +4,10 @@
 
  Changes between 0.9.8 and 0.9.9  [xx XXX xxxx]
 
+  *) Remove the ancient ASN1_METHOD code. This was only ever used in one
+     place for the (very old) "NETSCAPE" format certificates which are now
+     handled using new ASN1 code equivalents.
+
   *) Let the TLSv1_method() etc. functions return a 'const' SSL_METHOD
      pointer and make the SSL_METHOD parameter in SSL_CTX_new,
      SSL_CTX_set_ssl_version and SSL_set_ssl_method 'const'.

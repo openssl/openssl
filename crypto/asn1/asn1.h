@@ -516,21 +516,11 @@ typedef struct asn1_type_st
 DECLARE_STACK_OF(ASN1_TYPE)
 DECLARE_ASN1_SET_OF(ASN1_TYPE)
 
-typedef struct asn1_method_st
-	{
-	i2d_of_void *i2d;
-	d2i_of_void *d2i;
-	void *(*create)(void);
-	void (*destroy)(void *);
-	} ASN1_METHOD;
-
-/* This is used when parsing some Netscape objects */
-typedef struct asn1_header_st
+typedef struct NETSCAPE_X509_st
 	{
 	ASN1_OCTET_STRING *header;
-	void *data;
-	ASN1_METHOD *meth;
-	} ASN1_HEADER;
+	X509 *cert;
+	} NETSCAPE_X509;
 
 /* This is used to contain a list of bit names */
 typedef struct BIT_STRING_BITNAME_st {
@@ -944,19 +934,11 @@ int ASN1_parse_dump(BIO *bp,const unsigned char *pp,long len,int indent,int dump
 #endif
 const char *ASN1_tag2str(int tag);
 
-/* Used to load and write netscape format cert/key */
-int i2d_ASN1_HEADER(ASN1_HEADER *a,unsigned char **pp);
-ASN1_HEADER *d2i_ASN1_HEADER(ASN1_HEADER **a,const unsigned char **pp, long length);
-ASN1_HEADER *ASN1_HEADER_new(void );
-void ASN1_HEADER_free(ASN1_HEADER *a);
+/* Used to load and write netscape format cert */
+
+DECLARE_ASN1_FUNCTIONS(NETSCAPE_X509)
 
 int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s);
-
-/* Not used that much at this point, except for the first two */
-ASN1_METHOD *X509_asn1_meth(void);
-ASN1_METHOD *RSAPrivateKey_asn1_meth(void);
-ASN1_METHOD *ASN1_IA5STRING_asn1_meth(void);
-ASN1_METHOD *ASN1_BIT_STRING_asn1_meth(void);
 
 int ASN1_TYPE_set_octetstring(ASN1_TYPE *a,
 	unsigned char *data, int len);

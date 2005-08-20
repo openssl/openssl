@@ -745,8 +745,6 @@ static int load_pkcs12(BIO *err, BIO *in, const char *desc,
 X509 *load_cert(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip)
 	{
-	ASN1_HEADER *ah=NULL;
-	BUF_MEM *buf=NULL;
 	X509 *x=NULL;
 	BIO *cert;
 
@@ -776,46 +774,21 @@ X509 *load_cert(BIO *err, const char *file, int format,
 		x=d2i_X509_bio(cert,NULL);
 	else if (format == FORMAT_NETSCAPE)
 		{
-		const unsigned char *p,*op;
-		int size=0,i;
-
-		/* We sort of have to do it this way because it is sort of nice
-		 * to read the header first and check it, then
-		 * try to read the certificate */
-		buf=BUF_MEM_new();
-		for (;;)
-			{
-			if ((buf == NULL) || (!BUF_MEM_grow(buf,size+1024*10)))
+		NETSCAPE_X509 *nx;
+		nx=ASN1_item_d2i_bio(ASN1_ITEM_rptr(NETSCAPE_X509),cert,NULL);
+		if (nx == NULL)
 				goto end;
-			i=BIO_read(cert,&(buf->data[size]),1024*10);
-			size+=i;
-			if (i == 0) break;
-			if (i < 0)
-				{
-				perror("reading certificate");
-				goto end;
-				}
-			}
-		p=(unsigned char *)buf->data;
-		op=p;
 
-		/* First load the header */
-		if ((ah=d2i_ASN1_HEADER(NULL,&p,(long)size)) == NULL)
-			goto end;
-		if ((ah->header == NULL) || (ah->header->data == NULL) ||
-			(strncmp(NETSCAPE_CERT_HDR,(char *)ah->header->data,
-			ah->header->length) != 0))
+		if ((strncmp(NETSCAPE_CERT_HDR,(char *)nx->header->data,
+			nx->header->length) != 0))
 			{
+			NETSCAPE_X509_free(nx);
 			BIO_printf(err,"Error reading header on certificate\n");
 			goto end;
 			}
-		/* header is ok, so now read the object */
-		p=op;
-		ah->meth=X509_asn1_meth();
-		if ((ah=d2i_ASN1_HEADER(&ah,&p,(long)size)) == NULL)
-			goto end;
-		x=(X509 *)ah->data;
-		ah->data=NULL;
+		x=nx->cert;
+		nx->cert = NULL;
+		NETSCAPE_X509_free(nx);
 		}
 	else if (format == FORMAT_PEM)
 		x=PEM_read_bio_X509_AUX(cert,NULL,
@@ -837,9 +810,7 @@ end:
 		BIO_printf(err,"unable to load certificate\n");
 		ERR_print_errors(err);
 		}
-	if (ah != NULL) ASN1_HEADER_free(ah);
 	if (cert != NULL) BIO_free(cert);
-	if (buf != NULL) BUF_MEM_free(buf);
 	return(x);
 	}
 
