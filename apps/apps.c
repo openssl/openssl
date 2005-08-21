@@ -940,6 +940,36 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 		{
 		pkey=d2i_PUBKEY_bio(key, NULL);
 		}
+	else if (format == FORMAT_ASN1RSA)
+		{
+		RSA *rsa;
+		rsa = d2i_RSAPublicKey_bio(key, NULL);
+		if (rsa)
+			{
+			pkey = EVP_PKEY_new();
+			if (pkey)
+				EVP_PKEY_set1_RSA(pkey, rsa);
+			RSA_free(rsa);
+			}
+		else
+			pkey = NULL;
+		}
+	else if (format == FORMAT_PEMRSA)
+		{
+		RSA *rsa;
+		rsa = PEM_read_bio_RSAPublicKey(key, NULL, 
+			(pem_password_cb *)password_callback, &cb_data);
+		if (rsa)
+			{
+			pkey = EVP_PKEY_new();
+			if (pkey)
+				EVP_PKEY_set1_RSA(pkey, rsa);
+			RSA_free(rsa);
+			}
+		else
+			pkey = NULL;
+		}
+
 	else if (format == FORMAT_PEM)
 		{
 		pkey=PEM_read_bio_PUBKEY(key,NULL,

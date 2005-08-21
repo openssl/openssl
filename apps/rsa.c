@@ -173,6 +173,10 @@ int MAIN(int argc, char **argv)
 			pubin=1;
 		else if (strcmp(*argv,"-pubout") == 0)
 			pubout=1;
+		else if (strcmp(*argv,"-RSAPublicKey_in") == 0)
+			pubin = 2;
+		else if (strcmp(*argv,"-RSAPublicKey_out") == 0)
+			pubout = 2;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -246,10 +250,23 @@ bad:
 		EVP_PKEY	*pkey;
 
 		if (pubin)
-			pkey = load_pubkey(bio_err, infile,
-				(informat == FORMAT_NETSCAPE && sgckey ?
-					FORMAT_IISSGC : informat), 1,
+			{
+			int tmpformat;
+			if (pubin == 2)
+				{
+				if (informat == FORMAT_PEM)
+					tmpformat = FORMAT_PEMRSA;
+				else if (informat == FORMAT_ASN1)
+					tmpformat = FORMAT_ASN1RSA;
+				}
+			else if (informat == FORMAT_NETSCAPE && sgckey)
+				tmpformat = FORMAT_IISSGC;
+			else
+				tmpformat = informat;
+					
+			pkey = load_pubkey(bio_err, infile, tmpformat, 1,
 				passin, e, "Public Key");
+			}
 		else
 			pkey = load_key(bio_err, infile,
 				(informat == FORMAT_NETSCAPE && sgckey ?
@@ -335,7 +352,13 @@ bad:
 		}
 	BIO_printf(bio_err,"writing RSA key\n");
 	if 	(outformat == FORMAT_ASN1) {
-		if(pubout || pubin) i=i2d_RSA_PUBKEY_bio(out,rsa);
+		if(pubout || pubin) 
+			{
+			if (pubout == 2)
+				i=i2d_RSAPublicKey_bio(out,rsa);
+			else
+				i=i2d_RSA_PUBKEY_bio(out,rsa);
+			}
 		else i=i2d_RSAPrivateKey_bio(out,rsa);
 	}
 #ifndef OPENSSL_NO_RC4
@@ -359,7 +382,12 @@ bad:
 #endif
 	else if (outformat == FORMAT_PEM) {
 		if(pubout || pubin)
-		    i=PEM_write_bio_RSA_PUBKEY(out,rsa);
+			{
+			if (pubout == 2)
+		    		i=PEM_write_bio_RSAPublicKey(out,rsa);
+			else
+		    		i=PEM_write_bio_RSA_PUBKEY(out,rsa);
+			}
 		else i=PEM_write_bio_RSAPrivateKey(out,rsa,
 						enc,NULL,0,NULL,passout);
 	} else	{

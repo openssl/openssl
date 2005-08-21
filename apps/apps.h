@@ -331,6 +331,8 @@ void policies_print(BIO *out, X509_STORE_CTX *ctx);
 #define FORMAT_ENGINE   7
 #define FORMAT_IISSGC	8	/* XXX this stupid macro helps us to avoid
 				 * adding yet another param to load_*key() */
+#define FORMAT_PEMRSA	9	/* PEM RSAPubicKey format */
+#define FORMAT_ASN1RSA	10	/* DER RSAPubicKey format */
 
 #define EXT_COPY_NONE	0
 #define EXT_COPY_ADD	1
