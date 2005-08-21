@@ -251,7 +251,7 @@ bad:
 
 		if (pubin)
 			{
-			int tmpformat;
+			int tmpformat=-1;
 			if (pubin == 2)
 				{
 				if (informat == FORMAT_PEM)
