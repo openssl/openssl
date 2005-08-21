@@ -1040,6 +1040,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_F_ASN1_MBSTRING_NCOPY			 122
 #define ASN1_F_ASN1_OBJECT_NEW				 123
 #define ASN1_F_ASN1_PACK_STRING				 124
+#define ASN1_F_ASN1_PCTX_NEW				 205
 #define ASN1_F_ASN1_PKCS5_PBE_SET			 125
 #define ASN1_F_ASN1_SEQ_PACK				 126
 #define ASN1_F_ASN1_SEQ_UNPACK				 127
