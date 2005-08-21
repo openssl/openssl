@@ -115,6 +115,8 @@ int SSL_library_init(void)
 	   be discarded safely */
 	(void)SSL_COMP_get_compression_methods();
 #endif
+	/* initialize cipher/digest methods table */
+	ssl_load_ciphers();
 	return(1);
 	}
 
