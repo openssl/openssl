@@ -165,9 +165,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_HIGH,  0, 0,  SSL_HIGH, 0,0,0,0,SSL_STRONG_MASK},
 	};
 
-static int init_ciphers=1;
-
-static void load_ciphers(void)
+void ssl_load_ciphers(void)
 	{
 	ssl_cipher_methods[SSL_ENC_DES_IDX]= 
 		EVP_get_cipherbyname(SN_des_cbc);
@@ -192,7 +190,6 @@ static void load_ciphers(void)
 		EVP_get_digestbyname(SN_md5);
 	ssl_digest_methods[SSL_MD_SHA1_IDX]=
 		EVP_get_digestbyname(SN_sha1);
-	init_ciphers=0;
 	}
 
 static int sk_comp_cmp(const SSL_COMP * const *a,
@@ -815,13 +812,6 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 */
 	if (rule_str == NULL || cipher_list == NULL || cipher_list_by_id == NULL)
 		return NULL;
-
-	if (init_ciphers)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL);
-		if (init_ciphers) load_ciphers();
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
-		}
 
 	/*
 	 * To reduce the work to do we only want to process the compiled

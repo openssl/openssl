@@ -739,6 +739,7 @@ int ssl_cert_type(X509 *x,EVP_PKEY *pkey);
 void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher);
 STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
+void ssl_load_ciphers(void);
 
 int ssl2_enc_init(SSL *s, int client);
 int ssl2_generate_key_material(SSL *s);
