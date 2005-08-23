@@ -27,7 +27,7 @@
 
  Changes between 0.9.8 and 0.9.8a  [XX xxx XXXX]
 
-  *) Avoid small subgroup attacks in Diffie-Hellman.
+  *) Avoid some small subgroup attacks in Diffie-Hellman.
      [Nick Mathewson and Ben Laurie]
 
   *) Add functions for well-known primes.
