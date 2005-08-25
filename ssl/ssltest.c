@@ -224,6 +224,7 @@ static const char rnd_seed[] = "string to make the random number generator think
 
 int doit_biopair(SSL *s_ssl,SSL *c_ssl,long bytes,clock_t *s_time,clock_t *c_time);
 int doit(SSL *s_ssl,SSL *c_ssl,long bytes);
+static int do_test_cipherlist(void);
 static void sv_usage(void)
 	{
 	fprintf(stderr,"usage: ssltest [args ...]\n");
@@ -272,6 +273,7 @@ static void sv_usage(void)
 	               "                 Use \"openssl ecparam -list_curves\" for all names\n"  \
 	               "                 (default is sect163r2).\n");
 #endif
+	fprintf(stderr," -test_cipherlist - verifies the order of the ssl cipher lists\n");
 	}
 
 static void print_details(SSL *c_ssl, const char *prefix)
@@ -381,6 +383,7 @@ static void lock_dbg_cb(int mode, int type, const char *file, int line)
 		}
 	}
 
+
 int main(int argc, char *argv[])
 	{
 	char *CApath=NULL,*CAfile=NULL;
@@ -419,6 +422,7 @@ int main(int argc, char *argv[])
 	int comp = 0;
 	COMP_METHOD *cm = NULL;
 	STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
+	int test_cipherlist = 0;
 
 	verbose = 0;
 	debug = 0;
@@ -594,6 +598,10 @@ int main(int argc, char *argv[])
 			{
 			app_verify_arg.allow_proxy_certs = 1;
 			}
+		else if (strcmp(*argv,"-test_cipherlist") == 0)
+			{
+			test_cipherlist = 1;
+			}
 		else
 			{
 			fprintf(stderr,"unknown option %s\n",*argv);
@@ -607,6 +615,15 @@ int main(int argc, char *argv[])
 		{
 bad:
 		sv_usage();
+		goto end;
+		}
+
+	if (test_cipherlist == 1)
+		{
+		/* ensure that the cipher list are correctly sorted and exit */
+		if (do_test_cipherlist() == 0)
+			EXIT(1);
+		ret = 0;
 		goto end;
 		}
 
@@ -2212,5 +2229,58 @@ static DH *get_dh1024dsa()
 		{ DH_free(dh); return(NULL); }
 	dh->length = 160;
 	return(dh);
+	}
+
+static int do_test_cipherlist(void)
+	{
+	int i = 0;
+	const SSL_METHOD *meth;
+	SSL_CIPHER *ci, *tci = NULL;
+
+	fprintf(stderr, "testing SSLv2 cipher list order: ");
+	meth = SSLv2_method();
+	while ((ci = meth->get_cipher(i++)) != NULL)
+		{
+		if (tci != NULL)
+			if (ci->id >= tci->id)
+				{
+				fprintf(stderr, "failed %lx vs. %lx\n", ci->id, tci->id);
+				return 0;
+				}
+		tci = ci;
+		}
+	fprintf(stderr, "ok\n");
+
+	fprintf(stderr, "testing SSLv3 cipher list order: ");
+	meth = SSLv3_method();
+	tci = NULL;
+	while ((ci = meth->get_cipher(i++)) != NULL)
+		{
+		if (tci != NULL)
+			if (ci->id >= tci->id)
+				{
+				fprintf(stderr, "failed %lx vs. %lx\n", ci->id, tci->id);
+				return 0;
+				}
+		tci = ci;
+		}
+	fprintf(stderr, "ok\n");
+
+	fprintf(stderr, "testing TLSv1 cipher list order: ");
+	meth = TLSv1_method();
+	tci = NULL;
+	while ((ci = meth->get_cipher(i++)) != NULL)
+		{
+		if (tci != NULL)
+			if (ci->id >= tci->id)
+				{
+				fprintf(stderr, "failed %lx vs. %lx\n", ci->id, tci->id);
+				return 0;
+				}
+		tci = ci;
+		}
+	fprintf(stderr, "ok\n");
+
+	return 1;
 	}
 #endif

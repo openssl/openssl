@@ -136,6 +136,7 @@ const char *ssl3_version_str="SSLv3" OPENSSL_VERSION_PTEXT;
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers)/sizeof(SSL_CIPHER))
 
+/* list of available SSLv3 ciphers (sorted by id) */
 OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 /* The RSA ciphers */
 /* Cipher 01 */
@@ -164,75 +165,6 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_CIPHERS,
 	SSL_ALL_STRENGTHS,
 	},
-
-/* anon DH */
-/* Cipher 17 */
-	{
-	1,
-	SSL3_TXT_ADH_RC4_40_MD5,
-	SSL3_CK_ADH_RC4_40_MD5,
-	SSL_kEDH |SSL_aNULL|SSL_RC4  |SSL_MD5 |SSL_SSLV3,
-	SSL_EXPORT|SSL_EXP40,
-	0,
-	40,
-	128,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
-	},
-/* Cipher 18 */
-	{
-	1,
-	SSL3_TXT_ADH_RC4_128_MD5,
-	SSL3_CK_ADH_RC4_128_MD5,
-	SSL_kEDH |SSL_aNULL|SSL_RC4  |SSL_MD5 |SSL_SSLV3,
-	SSL_NOT_EXP|SSL_MEDIUM,
-	0,
-	128,
-	128,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
-	},
-/* Cipher 19 */
-	{
-	1,
-	SSL3_TXT_ADH_DES_40_CBC_SHA,
-	SSL3_CK_ADH_DES_40_CBC_SHA,
-	SSL_kEDH |SSL_aNULL|SSL_DES|SSL_SHA1|SSL_SSLV3,
-	SSL_EXPORT|SSL_EXP40,
-	0,
-	40,
-	128,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
-	},
-/* Cipher 1A */
-	{
-	1,
-	SSL3_TXT_ADH_DES_64_CBC_SHA,
-	SSL3_CK_ADH_DES_64_CBC_SHA,
-	SSL_kEDH |SSL_aNULL|SSL_DES  |SSL_SHA1|SSL_SSLV3,
-	SSL_NOT_EXP|SSL_LOW,
-	0,
-	56,
-	56,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
-	},
-/* Cipher 1B */
-	{
-	1,
-	SSL3_TXT_ADH_DES_192_CBC_SHA,
-	SSL3_CK_ADH_DES_192_CBC_SHA,
-	SSL_kEDH |SSL_aNULL|SSL_3DES |SSL_SHA1|SSL_SSLV3,
-	SSL_NOT_EXP|SSL_HIGH,
-	0,
-	168,
-	168,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
-	},
-
-/* RSA again */
 /* Cipher 03 */
 	{
 	1,
@@ -339,8 +271,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_CIPHERS,
 	SSL_ALL_STRENGTHS,
 	},
-
-/*  The DH ciphers */
+/* The DH ciphers */
 /* Cipher 0B */
 	{
 	0,
@@ -492,6 +423,71 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA,
 	SSL3_CK_EDH_RSA_DES_192_CBC3_SHA,
 	SSL_kEDH|SSL_aRSA|SSL_3DES |SSL_SHA1|SSL_SSLV3,
+	SSL_NOT_EXP|SSL_HIGH,
+	0,
+	168,
+	168,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 17 */
+	{
+	1,
+	SSL3_TXT_ADH_RC4_40_MD5,
+	SSL3_CK_ADH_RC4_40_MD5,
+	SSL_kEDH |SSL_aNULL|SSL_RC4  |SSL_MD5 |SSL_SSLV3,
+	SSL_EXPORT|SSL_EXP40,
+	0,
+	40,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 18 */
+	{
+	1,
+	SSL3_TXT_ADH_RC4_128_MD5,
+	SSL3_CK_ADH_RC4_128_MD5,
+	SSL_kEDH |SSL_aNULL|SSL_RC4  |SSL_MD5 |SSL_SSLV3,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 19 */
+	{
+	1,
+	SSL3_TXT_ADH_DES_40_CBC_SHA,
+	SSL3_CK_ADH_DES_40_CBC_SHA,
+	SSL_kEDH |SSL_aNULL|SSL_DES|SSL_SHA1|SSL_SSLV3,
+	SSL_EXPORT|SSL_EXP40,
+	0,
+	40,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 1A */
+	{
+	1,
+	SSL3_TXT_ADH_DES_64_CBC_SHA,
+	SSL3_CK_ADH_DES_64_CBC_SHA,
+	SSL_kEDH |SSL_aNULL|SSL_DES  |SSL_SHA1|SSL_SSLV3,
+	SSL_NOT_EXP|SSL_LOW,
+	0,
+	56,
+	56,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 1B */
+	{
+	1,
+	SSL3_TXT_ADH_DES_192_CBC_SHA,
+	SSL3_CK_ADH_DES_192_CBC_SHA,
+	SSL_kEDH |SSL_aNULL|SSL_3DES |SSL_SHA1|SSL_SSLV3,
 	SSL_NOT_EXP|SSL_HIGH,
 	0,
 	168,
@@ -746,262 +742,165 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 #endif	/* OPENSSL_NO_KRB5 */
+/* New AES ciphersuites */
 
+/* Cipher 2F */
+	{
+	1,
+	TLS1_TXT_RSA_WITH_AES_128_SHA,
+	TLS1_CK_RSA_WITH_AES_128_SHA,
+	SSL_kRSA|SSL_aRSA|SSL_AES|SSL_SHA |SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 30 */
+	{
+	0,
+	TLS1_TXT_DH_DSS_WITH_AES_128_SHA,
+	TLS1_CK_DH_DSS_WITH_AES_128_SHA,
+	SSL_kDHd|SSL_aDH|SSL_AES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 31 */
+	{
+	0,
+	TLS1_TXT_DH_RSA_WITH_AES_128_SHA,
+	TLS1_CK_DH_RSA_WITH_AES_128_SHA,
+	SSL_kDHr|SSL_aDH|SSL_AES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 32 */
+	{
+	1,
+	TLS1_TXT_DHE_DSS_WITH_AES_128_SHA,
+	TLS1_CK_DHE_DSS_WITH_AES_128_SHA,
+	SSL_kEDH|SSL_aDSS|SSL_AES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 33 */
+	{
+	1,
+	TLS1_TXT_DHE_RSA_WITH_AES_128_SHA,
+	TLS1_CK_DHE_RSA_WITH_AES_128_SHA,
+	SSL_kEDH|SSL_aRSA|SSL_AES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 34 */
+	{
+	1,
+	TLS1_TXT_ADH_WITH_AES_128_SHA,
+	TLS1_CK_ADH_WITH_AES_128_SHA,
+	SSL_kEDH|SSL_aNULL|SSL_AES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
 
-#if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES
-	/* New TLS Export CipherSuites */
-	/* Cipher 60 */
-	    {
-	    1,
-	    TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_MD5,
-	    TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_MD5,
-	    SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5|SSL_TLSV1,
-	    SSL_EXPORT|SSL_EXP56,
-	    0,
-	    56,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 61 */
-	    {
-	    1,
-	    TLS1_TXT_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5,
-	    TLS1_CK_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5,
-	    SSL_kRSA|SSL_aRSA|SSL_RC2|SSL_MD5|SSL_TLSV1,
-	    SSL_EXPORT|SSL_EXP56,
-	    0,
-	    56,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 62 */
-	    {
-	    1,
-	    TLS1_TXT_RSA_EXPORT1024_WITH_DES_CBC_SHA,
-	    TLS1_CK_RSA_EXPORT1024_WITH_DES_CBC_SHA,
-	    SSL_kRSA|SSL_aRSA|SSL_DES|SSL_SHA|SSL_TLSV1,
-	    SSL_EXPORT|SSL_EXP56,
-	    0,
-	    56,
-	    56,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 63 */
-	    {
-	    1,
-	    TLS1_TXT_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA,
-	    TLS1_CK_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA,
-	    SSL_kEDH|SSL_aDSS|SSL_DES|SSL_SHA|SSL_TLSV1,
-	    SSL_EXPORT|SSL_EXP56,
-	    0,
-	    56,
-	    56,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 64 */
-	    {
-	    1,
-	    TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_SHA,
-	    TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_SHA,
-	    SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_SHA|SSL_TLSV1,
-	    SSL_EXPORT|SSL_EXP56,
-	    0,
-	    56,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 65 */
-	    {
-	    1,
-	    TLS1_TXT_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA,
-	    TLS1_CK_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA,
-	    SSL_kEDH|SSL_aDSS|SSL_RC4|SSL_SHA|SSL_TLSV1,
-	    SSL_EXPORT|SSL_EXP56,
-	    0,
-	    56,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 66 */
-	    {
-	    1,
-	    TLS1_TXT_DHE_DSS_WITH_RC4_128_SHA,
-	    TLS1_CK_DHE_DSS_WITH_RC4_128_SHA,
-	    SSL_kEDH|SSL_aDSS|SSL_RC4|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_MEDIUM,
-	    0,
-	    128,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS
-	    },
-#endif
-	/* New AES ciphersuites */
-
-	/* Cipher 2F */
-	    {
-	    1,
-	    TLS1_TXT_RSA_WITH_AES_128_SHA,
-	    TLS1_CK_RSA_WITH_AES_128_SHA,
-	    SSL_kRSA|SSL_aRSA|SSL_AES|SSL_SHA |SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_MEDIUM,
-	    0,
-	    128,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 30 */
-	    {
-	    0,
-	    TLS1_TXT_DH_DSS_WITH_AES_128_SHA,
-	    TLS1_CK_DH_DSS_WITH_AES_128_SHA,
-	    SSL_kDHd|SSL_aDH|SSL_AES|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_MEDIUM,
-	    0,
-	    128,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 31 */
-	    {
-	    0,
-	    TLS1_TXT_DH_RSA_WITH_AES_128_SHA,
-	    TLS1_CK_DH_RSA_WITH_AES_128_SHA,
-	    SSL_kDHr|SSL_aDH|SSL_AES|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_MEDIUM,
-	    0,
-	    128,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 32 */
-	    {
-	    1,
-	    TLS1_TXT_DHE_DSS_WITH_AES_128_SHA,
-	    TLS1_CK_DHE_DSS_WITH_AES_128_SHA,
-	    SSL_kEDH|SSL_aDSS|SSL_AES|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_MEDIUM,
-	    0,
-	    128,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 33 */
-	    {
-	    1,
-	    TLS1_TXT_DHE_RSA_WITH_AES_128_SHA,
-	    TLS1_CK_DHE_RSA_WITH_AES_128_SHA,
-	    SSL_kEDH|SSL_aRSA|SSL_AES|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_MEDIUM,
-	    0,
-	    128,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 34 */
-	    {
-	    1,
-	    TLS1_TXT_ADH_WITH_AES_128_SHA,
-	    TLS1_CK_ADH_WITH_AES_128_SHA,
-	    SSL_kEDH|SSL_aNULL|SSL_AES|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_MEDIUM,
-	    0,
-	    128,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-
-	/* Cipher 35 */
-	    {
-	    1,
-	    TLS1_TXT_RSA_WITH_AES_256_SHA,
-	    TLS1_CK_RSA_WITH_AES_256_SHA,
-	    SSL_kRSA|SSL_aRSA|SSL_AES|SSL_SHA |SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_HIGH,
-	    0,
-	    256,
-	    256,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 36 */
-	    {
-	    0,
-	    TLS1_TXT_DH_DSS_WITH_AES_256_SHA,
-	    TLS1_CK_DH_DSS_WITH_AES_256_SHA,
-	    SSL_kDHd|SSL_aDH|SSL_AES|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_HIGH,
-	    0,
-	    256,
-	    256,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 37 */
-	    {
-	    0,
-	    TLS1_TXT_DH_RSA_WITH_AES_256_SHA,
-	    TLS1_CK_DH_RSA_WITH_AES_256_SHA,
-	    SSL_kDHr|SSL_aDH|SSL_AES|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_HIGH,
-	    0,
-	    256,
-	    256,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 38 */
-	    {
-	    1,
-	    TLS1_TXT_DHE_DSS_WITH_AES_256_SHA,
-	    TLS1_CK_DHE_DSS_WITH_AES_256_SHA,
-	    SSL_kEDH|SSL_aDSS|SSL_AES|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_HIGH,
-	    0,
-	    256,
-	    256,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 39 */
-	    {
-	    1,
-	    TLS1_TXT_DHE_RSA_WITH_AES_256_SHA,
-	    TLS1_CK_DHE_RSA_WITH_AES_256_SHA,
-	    SSL_kEDH|SSL_aRSA|SSL_AES|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_HIGH,
-	    0,
-	    256,
-	    256,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
+/* Cipher 35 */
+	{
+	1,
+	TLS1_TXT_RSA_WITH_AES_256_SHA,
+	TLS1_CK_RSA_WITH_AES_256_SHA,
+	SSL_kRSA|SSL_aRSA|SSL_AES|SSL_SHA |SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH,
+	0,
+	256,
+	256,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 36 */
+	{
+	0,
+	TLS1_TXT_DH_DSS_WITH_AES_256_SHA,
+	TLS1_CK_DH_DSS_WITH_AES_256_SHA,
+	SSL_kDHd|SSL_aDH|SSL_AES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH,
+	0,
+	256,
+	256,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 37 */
+	{
+	0,
+	TLS1_TXT_DH_RSA_WITH_AES_256_SHA,
+	TLS1_CK_DH_RSA_WITH_AES_256_SHA,
+	SSL_kDHr|SSL_aDH|SSL_AES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH,
+	0,
+	256,
+	256,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 38 */
+	{
+	1,
+	TLS1_TXT_DHE_DSS_WITH_AES_256_SHA,
+	TLS1_CK_DHE_DSS_WITH_AES_256_SHA,
+	SSL_kEDH|SSL_aDSS|SSL_AES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH,
+	0,
+	256,
+	256,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* Cipher 39 */
+	{
+	1,
+	TLS1_TXT_DHE_RSA_WITH_AES_256_SHA,
+	TLS1_CK_DHE_RSA_WITH_AES_256_SHA,
+	SSL_kEDH|SSL_aRSA|SSL_AES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH,
+	0,
+	256,
+	256,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
 	/* Cipher 3A */
-	    {
-	    1,
-	    TLS1_TXT_ADH_WITH_AES_256_SHA,
-	    TLS1_CK_ADH_WITH_AES_256_SHA,
-	    SSL_kEDH|SSL_aNULL|SSL_AES|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_HIGH,
-	    0,
-	    256,
-	    256,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-
+	{
+	1,
+	TLS1_TXT_ADH_WITH_AES_256_SHA,
+	TLS1_CK_ADH_WITH_AES_256_SHA,
+	SSL_kEDH|SSL_aNULL|SSL_AES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH,
+	0,
+	256,
+	256,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
 #ifndef OPENSSL_NO_ECDH
 	/* Cipher 47 */
 	    {
@@ -1083,36 +982,6 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
             0,
             256,
             256,
-            SSL_ALL_CIPHERS,
-            SSL_ALL_STRENGTHS,
-            },
-
-	/* Cipher 5B */
-	/* XXX NOTE: The ECC/TLS draft has a bug and reuses 4B for this */
-	    {
-            1,
-            TLS1_TXT_ECDH_ECDSA_EXPORT_WITH_RC4_40_SHA,
-            TLS1_CK_ECDH_ECDSA_EXPORT_WITH_RC4_40_SHA,
-            SSL_kECDH|SSL_aECDSA|SSL_RC4|SSL_SHA|SSL_TLSV1,
-            SSL_EXPORT|SSL_EXP40,
-            0,
-            40,
-            128,
-            SSL_ALL_CIPHERS,
-            SSL_ALL_STRENGTHS,
-            },
-
-	/* Cipher 5C */
-	/* XXX NOTE: The ECC/TLS draft has a bug and reuses 4C for this */
-	    {
-            1,
-            TLS1_TXT_ECDH_ECDSA_EXPORT_WITH_RC4_56_SHA,
-            TLS1_CK_ECDH_ECDSA_EXPORT_WITH_RC4_56_SHA,
-            SSL_kECDH|SSL_aECDSA|SSL_RC4|SSL_SHA|SSL_TLSV1,
-            SSL_EXPORT|SSL_EXP56,
-            0,
-            56,
-            128,
             SSL_ALL_CIPHERS,
             SSL_ALL_STRENGTHS,
             },
@@ -1312,7 +1181,134 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
             SSL_ALL_CIPHERS,
             SSL_ALL_STRENGTHS,
             },
+	/* Cipher 5B */
+	/* XXX NOTE: The ECC/TLS draft has a bug and reuses 4B for this */
+	    {
+            1,
+            TLS1_TXT_ECDH_ECDSA_EXPORT_WITH_RC4_40_SHA,
+            TLS1_CK_ECDH_ECDSA_EXPORT_WITH_RC4_40_SHA,
+            SSL_kECDH|SSL_aECDSA|SSL_RC4|SSL_SHA|SSL_TLSV1,
+            SSL_EXPORT|SSL_EXP40,
+            0,
+            40,
+            128,
+            SSL_ALL_CIPHERS,
+            SSL_ALL_STRENGTHS,
+            },
 
+	/* Cipher 5C */
+	/* XXX NOTE: The ECC/TLS draft has a bug and reuses 4C for this */
+	    {
+            1,
+            TLS1_TXT_ECDH_ECDSA_EXPORT_WITH_RC4_56_SHA,
+            TLS1_CK_ECDH_ECDSA_EXPORT_WITH_RC4_56_SHA,
+            SSL_kECDH|SSL_aECDSA|SSL_RC4|SSL_SHA|SSL_TLSV1,
+            SSL_EXPORT|SSL_EXP56,
+            0,
+            56,
+            128,
+            SSL_ALL_CIPHERS,
+            SSL_ALL_STRENGTHS,
+            },
+
+#endif	/* OPENSSL_NO_ECDH */
+
+#if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES
+	/* New TLS Export CipherSuites */
+	/* Cipher 60 */
+	    {
+	    1,
+	    TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_MD5,
+	    TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_MD5,
+	    SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5|SSL_TLSV1,
+	    SSL_EXPORT|SSL_EXP56,
+	    0,
+	    56,
+	    128,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
+	/* Cipher 61 */
+	    {
+	    1,
+	    TLS1_TXT_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5,
+	    TLS1_CK_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5,
+	    SSL_kRSA|SSL_aRSA|SSL_RC2|SSL_MD5|SSL_TLSV1,
+	    SSL_EXPORT|SSL_EXP56,
+	    0,
+	    56,
+	    128,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
+	/* Cipher 62 */
+	    {
+	    1,
+	    TLS1_TXT_RSA_EXPORT1024_WITH_DES_CBC_SHA,
+	    TLS1_CK_RSA_EXPORT1024_WITH_DES_CBC_SHA,
+	    SSL_kRSA|SSL_aRSA|SSL_DES|SSL_SHA|SSL_TLSV1,
+	    SSL_EXPORT|SSL_EXP56,
+	    0,
+	    56,
+	    56,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
+	/* Cipher 63 */
+	    {
+	    1,
+	    TLS1_TXT_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA,
+	    TLS1_CK_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA,
+	    SSL_kEDH|SSL_aDSS|SSL_DES|SSL_SHA|SSL_TLSV1,
+	    SSL_EXPORT|SSL_EXP56,
+	    0,
+	    56,
+	    56,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
+	/* Cipher 64 */
+	    {
+	    1,
+	    TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_SHA,
+	    TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_SHA,
+	    SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_SHA|SSL_TLSV1,
+	    SSL_EXPORT|SSL_EXP56,
+	    0,
+	    56,
+	    128,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
+	/* Cipher 65 */
+	    {
+	    1,
+	    TLS1_TXT_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA,
+	    TLS1_CK_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA,
+	    SSL_kEDH|SSL_aDSS|SSL_RC4|SSL_SHA|SSL_TLSV1,
+	    SSL_EXPORT|SSL_EXP56,
+	    0,
+	    56,
+	    128,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
+	/* Cipher 66 */
+	    {
+	    1,
+	    TLS1_TXT_DHE_DSS_WITH_RC4_128_SHA,
+	    TLS1_CK_DHE_DSS_WITH_RC4_128_SHA,
+	    SSL_kEDH|SSL_aDSS|SSL_RC4|SSL_SHA|SSL_TLSV1,
+	    SSL_NOT_EXP|SSL_MEDIUM,
+	    0,
+	    128,
+	    128,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS
+	    },
+#endif
+
+#ifndef OPENSSL_NO_ECDH
 	/* Cipher 77 XXX: ECC ciphersuites offering forward secrecy
 	 * are not yet specified in the ECC/TLS draft but our code
 	 * allows them to be implemented very easily. To add such
@@ -1349,7 +1345,6 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
             SSL_ALL_CIPHERS,
             SSL_ALL_STRENGTHS,
             },
-
 #endif /* !OPENSSL_NO_ECDH */
 
 /* end of list */
@@ -1891,41 +1886,20 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
  * available */
 SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 	{
-	static int init=1;
-	static SSL_CIPHER *sorted[SSL3_NUM_CIPHERS];
-	SSL_CIPHER c,*cp= &c,**cpp;
+	SSL_CIPHER c,*cp;
 	unsigned long id;
 	unsigned int i;
 
-	if (init)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL);
-
-		if (init)
-			{
-			for (i=0; i<SSL3_NUM_CIPHERS; i++)
-				sorted[i]= &(ssl3_ciphers[i]);
-
-			qsort(sorted,
-				SSL3_NUM_CIPHERS,sizeof(SSL_CIPHER *),
-				FP_ICC ssl_cipher_ptr_id_cmp);
-
-			init=0;
-			}
-		
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
-		}
-
 	id=0x03000000L|((unsigned long)p[0]<<8L)|(unsigned long)p[1];
 	c.id=id;
-	cpp=(SSL_CIPHER **)OBJ_bsearch((char *)&cp,
-		(char *)sorted,
-		SSL3_NUM_CIPHERS,sizeof(SSL_CIPHER *),
-		FP_ICC ssl_cipher_ptr_id_cmp);
-	if ((cpp == NULL) || !(*cpp)->valid)
-		return(NULL);
+	cp = (SSL_CIPHER *)OBJ_bsearch((char *)&c,
+		(char *)ssl3_ciphers,
+		SSL3_NUM_CIPHERS,sizeof(SSL_CIPHER),
+		FP_ICC ssl_cipher_id_cmp);
+	if (cp == NULL || cp->valid == 0)
+		return NULL;
 	else
-		return(*cpp);
+		return cp;
 	}
 
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)

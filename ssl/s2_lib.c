@@ -67,6 +67,7 @@ const char *ssl2_version_str="SSLv2" OPENSSL_VERSION_PTEXT;
 
 #define SSL2_NUM_CIPHERS (sizeof(ssl2_ciphers)/sizeof(SSL_CIPHER))
 
+/* list of available SSLv2 ciphers (sorted by id) */
 OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 /* NULL_WITH_MD5 v3 */
 #if 0
@@ -83,19 +84,6 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 #endif
-/* RC4_128_EXPORT40_WITH_MD5 */
-	{
-	1,
-	SSL2_TXT_RC4_128_EXPORT40_WITH_MD5,
-	SSL2_CK_RC4_128_EXPORT40_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5|SSL_SSLV2,
-	SSL_EXPORT|SSL_EXP40,
-	SSL2_CF_5_BYTE_ENC,
-	40,
-	128,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
-	},
 /* RC4_128_WITH_MD5 */
 	{
 	1,
@@ -109,12 +97,12 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 	SSL_ALL_CIPHERS,
 	SSL_ALL_STRENGTHS,
 	},
-/* RC2_128_CBC_EXPORT40_WITH_MD5 */
+/* RC4_128_EXPORT40_WITH_MD5 */
 	{
 	1,
-	SSL2_TXT_RC2_128_CBC_EXPORT40_WITH_MD5,
-	SSL2_CK_RC2_128_CBC_EXPORT40_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_RC2|SSL_MD5|SSL_SSLV2,
+	SSL2_TXT_RC4_128_EXPORT40_WITH_MD5,
+	SSL2_CK_RC4_128_EXPORT40_WITH_MD5,
+	SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5|SSL_SSLV2,
 	SSL_EXPORT|SSL_EXP40,
 	SSL2_CF_5_BYTE_ENC,
 	40,
@@ -131,6 +119,19 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 	SSL_NOT_EXP|SSL_MEDIUM,
 	0,
 	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* RC2_128_CBC_EXPORT40_WITH_MD5 */
+	{
+	1,
+	SSL2_TXT_RC2_128_CBC_EXPORT40_WITH_MD5,
+	SSL2_CK_RC2_128_CBC_EXPORT40_WITH_MD5,
+	SSL_kRSA|SSL_aRSA|SSL_RC2|SSL_MD5|SSL_SSLV2,
+	SSL_EXPORT|SSL_EXP40,
+	SSL2_CF_5_BYTE_ENC,
+	40,
 	128,
 	SSL_ALL_CIPHERS,
 	SSL_ALL_STRENGTHS,
@@ -338,42 +339,21 @@ long ssl2_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
  * available */
 SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p)
 	{
-	static int init=1;
-	static SSL_CIPHER *sorted[SSL2_NUM_CIPHERS];
-	SSL_CIPHER c,*cp= &c,**cpp;
+	SSL_CIPHER c,*cp;
 	unsigned long id;
 	unsigned int i;
-
-	if (init)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL);
-
-		if (init)
-			{
-			for (i=0; i<SSL2_NUM_CIPHERS; i++)
-				sorted[i]= &(ssl2_ciphers[i]);
-
-			qsort((char *)sorted,
-				SSL2_NUM_CIPHERS,sizeof(SSL_CIPHER *),
-				FP_ICC ssl_cipher_ptr_id_cmp);
-
-			init=0;
-			}
-			
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
-		}
 
 	id=0x02000000L|((unsigned long)p[0]<<16L)|
 		((unsigned long)p[1]<<8L)|(unsigned long)p[2];
 	c.id=id;
-	cpp=(SSL_CIPHER **)OBJ_bsearch((char *)&cp,
-		(char *)sorted,
-		SSL2_NUM_CIPHERS,sizeof(SSL_CIPHER *),
-		FP_ICC ssl_cipher_ptr_id_cmp);
-	if ((cpp == NULL) || !(*cpp)->valid)
-		return(NULL);
+	cp = (SSL_CIPHER *)OBJ_bsearch((char *)&c,
+		(char *)ssl2_ciphers,
+		SSL2_NUM_CIPHERS,sizeof(SSL_CIPHER),
+		FP_ICC ssl_cipher_id_cmp);
+	if ((cp == NULL) || (cp->valid == 0))
+		return NULL;
 	else
-		return(*cpp);
+		return cp;
 	}
 
 int ssl2_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
