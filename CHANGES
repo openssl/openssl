@@ -27,6 +27,10 @@
 
  Changes between 0.9.8 and 0.9.8a  [XX xxx XXXX]
 
+  *) Keep cipherlists sorted in the source instead of sorting them at
+     runtime, thus removing the need for a lock.
+     [Nils Larsch]
+
   *) Avoid some small subgroup attacks in Diffie-Hellman.
      [Nick Mathewson and Ben Laurie]
 

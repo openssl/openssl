@@ -265,6 +265,7 @@ test_engine:
 test_ssl: keyU.ss certU.ss certCA.ss certP1.ss keyP1.ss certP2.ss keyP2.ss \
 		intP1.ss intP2.ss
 	@echo "test SSL protocol"
+	../util/shlib_wrap.sh ./$(SSLTEST) -test_cipherlist
 	@sh ./testssl keyU.ss certU.ss certCA.ss
 	@sh ./testsslproxy keyP1.ss certP1.ss intP1.ss
 	@sh ./testsslproxy keyP2.ss certP2.ss intP2.ss
