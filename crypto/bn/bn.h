@@ -699,9 +699,11 @@ int RAND_pseudo_bytes(unsigned char *buf,int num);
 #define bn_check_top(a) \
 	do { \
 		const BIGNUM *_bnum2 = (a); \
-		assert((_bnum2->top == 0) || \
+		if (_bnum2 != NULL) { \
+			assert((_bnum2->top == 0) || \
 				(_bnum2->d[_bnum2->top - 1] != 0)); \
-		bn_pollute(_bnum2); \
+			bn_pollute(_bnum2); \
+		} \
 	} while(0)
 
 #define bn_fix_top(a)		bn_check_top(a)

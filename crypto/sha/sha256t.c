@@ -54,7 +54,7 @@ unsigned char addenum_3[SHA224_DIGEST_LENGTH] = {
 	0xf0,0x3f,0x42,0x58,0x19,0x48,0xb2,0xee,
 	0x4e,0xe7,0xad,0x67 };
 
-int main ()
+int main (int argc,char **argv)
 { unsigned char md[SHA256_DIGEST_LENGTH];
   int		i;
   EVP_MD_CTX	evp;

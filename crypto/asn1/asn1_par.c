@@ -419,7 +419,7 @@ end:
 
 const char *ASN1_tag2str(int tag)
 {
-	const static char *tag2str[] = {
+	static const char *tag2str[] = {
 	 "EOC", "BOOLEAN", "INTEGER", "BIT STRING", "OCTET STRING", /* 0-4 */
 	 "NULL", "OBJECT", "OBJECT DESCRIPTOR", "EXTERNAL", "REAL", /* 5-9 */
 	 "ENUMERATED", "<ASN1 11>", "UTF8STRING", "<ASN1 13>", 	    /* 10-13 */

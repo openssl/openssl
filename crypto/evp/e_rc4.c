@@ -90,6 +90,7 @@ static const EVP_CIPHER r4_cipher=
 	sizeof(EVP_RC4_KEY),
 	NULL,
 	NULL,
+	NULL,
 	NULL
 	};
 
@@ -103,6 +104,7 @@ static const EVP_CIPHER r4_40_cipher=
 	NULL,
 	sizeof(EVP_RC4_KEY),
 	NULL, 
+	NULL,
 	NULL,
 	NULL
 	};

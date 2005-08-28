@@ -75,8 +75,11 @@ static DSO_METHOD dso_meth_null = {
 	NULL, /* unbind_func */
 #endif
 	NULL, /* ctrl */
+	NULL, /* dso_name_converter */
+	NULL, /* dso_merger */
 	NULL, /* init */
-	NULL  /* finish */
+	NULL, /* finish */
+	NULL  /* pathbyaddr */
 	};
 
 DSO_METHOD *DSO_METHOD_null(void)

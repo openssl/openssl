@@ -65,7 +65,7 @@
 /* some FIPS 140-1 random number test */
 /* some simple tests */
 
-int main()
+int main(int argc,char **argv)
 	{
 	unsigned char buf[2500];
 	int i,j,k,s,sign,nsign,err=0;

@@ -231,7 +231,7 @@ void prime_field_tests()
 		EC_GROUP *tmp;
 		tmp = EC_GROUP_new(EC_GROUP_method_of(group));
 		if (!tmp) ABORT;
-		if (!EC_GROUP_copy(tmp, group));
+		if (!EC_GROUP_copy(tmp, group)) ABORT;
 		EC_GROUP_free(group);
 		group = tmp;
 	}
@@ -834,7 +834,7 @@ void char2_field_tests()
 		EC_GROUP *tmp;
 		tmp = EC_GROUP_new(EC_GROUP_method_of(group));
 		if (!tmp) ABORT;
-		if (!EC_GROUP_copy(tmp, group));
+		if (!EC_GROUP_copy(tmp, group)) ABORT;
 		EC_GROUP_free(group);
 		group = tmp;
 	}

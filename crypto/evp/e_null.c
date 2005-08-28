@@ -76,6 +76,7 @@ static const EVP_CIPHER n_cipher=
 	0,
 	NULL,
 	NULL,
+	NULL,
 	NULL
 	};
 

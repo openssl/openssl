@@ -148,8 +148,8 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	if (rr != r) BN_copy(r,rr);
 	ret = 1;
  err:
-	if(rr) bn_check_top(rr);
-	if(tmp) bn_check_top(tmp);
+	bn_check_top(rr);
+	bn_check_top(tmp);
 	BN_CTX_end(ctx);
 	return(ret);
 	}
