@@ -242,7 +242,7 @@ $ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
 	"tasn_new,tasn_fre,tasn_enc,tasn_dec,tasn_utl,tasn_typ,"+ -
 	"f_int,f_string,n_pkey,"+ -
 	"f_enum,x_pkey,a_bool,x_exten,"+ -
-	"asn1_gen,asn1_par,asn1_lib,asn1_err,a_meth,a_bytes,a_strnid,"+ -
+	"asn1_gen,asn1_par,asn1_lib,asn1_err,a_bytes,a_strnid,"+ -
 	"evp_asn1,asn_pack,p5_pbe,p5_pbev2,p8_pkey,asn_moid"
 $ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err,"+ -
 	"pem_x509,pem_xaux,pem_oth,pem_pk8,pem_pkey"
