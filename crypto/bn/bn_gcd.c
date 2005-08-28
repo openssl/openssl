@@ -488,7 +488,6 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 err:
 	if ((ret == NULL) && (in == NULL)) BN_free(R);
 	BN_CTX_end(ctx);
-	if (ret)
-		bn_check_top(ret);
+	bn_check_top(ret);
 	return(ret);
 	}

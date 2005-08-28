@@ -1062,7 +1062,7 @@ static int cswift_rand_bytes(unsigned char *buf, int num)
 	/* limitation of cswift with values not a multiple of 32                */
 	/************************************************************************/
 
-	while(num >= sizeof(buf32))
+	while(num >= (int)sizeof(buf32))
 	{
 		largenum.value = buf;
 		largenum.nbytes = sizeof(buf32);

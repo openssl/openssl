@@ -64,7 +64,7 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
-const static unsigned char zeroes[] = {0,0,0,0,0,0,0,0};
+static const unsigned char zeroes[] = {0,0,0,0,0,0,0,0};
 
 #if defined(_MSC_VER) && defined(_ARM_)
 #pragma optimize("g", off)

@@ -114,8 +114,8 @@ static unsigned char output[7][30]={
 
 int main(int argc, char *argv[])
 	{
-	int i,err=0;
-	int j;
+	int err=0;
+	unsigned int i, j;
 	unsigned char *p;
 	RC4_KEY key;
 	unsigned char obuf[512];
@@ -129,12 +129,12 @@ int main(int argc, char *argv[])
 			{
 			printf("error calculating RC4\n");
 			printf("output:");
-			for (j=0; j<data_len[i]+1; j++)
+			for (j=0; j<data_len[i]+1U; j++)
 				printf(" %02x",obuf[j]);
 			printf("\n");
 			printf("expect:");
 			p= &(output[i][0]);
-			for (j=0; j<data_len[i]+1; j++)
+			for (j=0; j<data_len[i]+1U; j++)
 				printf(" %02x",*(p++));
 			printf("\n");
 			err++;
@@ -180,12 +180,12 @@ int main(int argc, char *argv[])
 			{
 			printf("error in RC4 multi-call processing\n");
 			printf("output:");
-			for (j=0; j<data_len[3]+1; j++)
+			for (j=0; j<data_len[3]+1U; j++)
 				printf(" %02x",obuf[j]);
 			printf("\n");
 			printf("expect:");
 			p= &(output[3][0]);
-			for (j=0; j<data_len[3]+1; j++)
+			for (j=0; j<data_len[3]+1U; j++)
 				printf(" %02x",*(p++));
 			err++;
 			}

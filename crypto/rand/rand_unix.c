@@ -155,7 +155,8 @@ int RAND_poll(void)
 #ifdef DEVRANDOM
 	static const char *randomfiles[] = { DEVRANDOM };
 	struct stat randomstats[sizeof(randomfiles)/sizeof(randomfiles[0])];
-	int fd,i;
+	int fd;
+	size_t i;
 #endif
 #ifdef DEVRANDOM_EGD
 	static const char *egdsockets[] = { DEVRANDOM_EGD, NULL };
@@ -185,7 +186,8 @@ int RAND_poll(void)
 			{
 			struct timeval t = { 0, 10*1000 }; /* Spend 10ms on
 							      each file. */
-			int r,j;
+			int r;
+			size_t j;
 			fd_set fset;
 			struct stat *st=&randomstats[i];
 

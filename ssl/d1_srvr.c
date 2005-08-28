@@ -658,7 +658,8 @@ int dtls1_send_server_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
-	int i,sl;
+	int i;
+	unsigned int sl;
 	unsigned long l,Time;
 
 	if (s->state == SSL3_ST_SW_SRVR_HELLO_A)

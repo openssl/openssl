@@ -257,6 +257,7 @@ static const EVP_CIPHER test_r4_cipher=
 	sizeof(TEST_RC4_KEY),
 	NULL,
 	NULL,
+	NULL,
 	NULL
 	};
 static const EVP_CIPHER test_r4_40_cipher=
@@ -269,6 +270,7 @@ static const EVP_CIPHER test_r4_40_cipher=
 	NULL,
 	sizeof(TEST_RC4_KEY),
 	NULL, 
+	NULL,
 	NULL,
 	NULL
 	};

@@ -80,7 +80,7 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
 
 	/* The problem is when building with 8, 16, or 32 BN_ULONG,
 	 * unsigned long can be larger */
-	for (i=0; i<sizeof(unsigned long)*8; i++)
+	for (i=0; i<(int)sizeof(unsigned long)*8; i++)
 		{
 		if (e_value & (1UL<<i))
 			BN_set_bit(e,i);

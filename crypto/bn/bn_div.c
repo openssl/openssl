@@ -185,10 +185,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	BN_ULONG d0,d1;
 	int num_n,div_n;
 
-	if (dv)
-		bn_check_top(dv);
-	if (rm)
-		bn_check_top(rm);
+	bn_check_top(dv);
+	bn_check_top(rm);
 	bn_check_top(num);
 	bn_check_top(divisor);
 
@@ -394,8 +392,7 @@ X) -> 0x%08X\n",
 	BN_CTX_end(ctx);
 	return(1);
 err:
-	if (rm)
-		bn_check_top(rm);
+	bn_check_top(rm);
 	BN_CTX_end(ctx);
 	return(0);
 	}
