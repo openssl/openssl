@@ -249,16 +249,22 @@ bad:
 		}
 
 	BIO_printf(bio_err,"read DSA key\n");
-	if	(informat == FORMAT_ASN1) {
-		if(pubin) dsa=d2i_DSA_PUBKEY_bio(in,NULL);
-		else dsa=d2i_DSAPrivateKey_bio(in,NULL);
-	} else if (informat == FORMAT_PEM) {
-		if(pubin) dsa=PEM_read_bio_DSA_PUBKEY(in,NULL, NULL, NULL);
-		else dsa=PEM_read_bio_DSAPrivateKey(in,NULL,NULL,passin);
-	} else
+
 		{
-		BIO_printf(bio_err,"bad input format specified for key\n");
-		goto end;
+		EVP_PKEY	*pkey;
+
+		if (pubin)
+			pkey = load_pubkey(bio_err, infile, informat, 1,
+				passin, e, "Public Key");
+		else
+			pkey = load_key(bio_err, infile, informat, 1,
+				passin, e, "Private Key");
+
+		if (pkey)
+			{
+			dsa = EVP_PKEY_get1_DSA(pkey);
+			EVP_PKEY_free(pkey);
+			}
 		}
 	if (dsa == NULL)
 		{
@@ -311,6 +317,15 @@ bad:
 			i=PEM_write_bio_DSA_PUBKEY(out,dsa);
 		else i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,
 							NULL,0,NULL, passout);
+	} else if (outformat == FORMAT_MSBLOB) {
+		EVP_PKEY *pk;
+		pk = EVP_PKEY_new();
+		EVP_PKEY_set1_DSA(pk, dsa);
+		if (pubin || pubout)
+			i = i2b_PublicKey_bio(out, pk);
+		else
+			i = i2b_PrivateKey_bio(out, pk);
+		EVP_PKEY_free(pk);
 	} else {
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;

@@ -333,6 +333,8 @@ void policies_print(BIO *out, X509_STORE_CTX *ctx);
 				 * adding yet another param to load_*key() */
 #define FORMAT_PEMRSA	9	/* PEM RSAPubicKey format */
 #define FORMAT_ASN1RSA	10	/* DER RSAPubicKey format */
+#define FORMAT_MSBLOB	11	/* MS Key blob format */
+#define FORMAT_PVK	12	/* MS PVK file format */
 
 #define EXT_COPY_NONE	0
 #define EXT_COPY_ADD	1

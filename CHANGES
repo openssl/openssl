@@ -4,6 +4,11 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Integrated support for PVK file format and some related formats such
+     as MS PUBLICKEYBLOB and PRIVATEKEYBLOB. Command line switches to support
+     these in the 'rsa' and 'dsa' utilities.
+     [Steve Henson]
+
   *) Support for PKCS#1 RSAPublicKey format on rsa utility command line.
      [Steve Henson]
 

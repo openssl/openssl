@@ -239,11 +239,18 @@ int str2fmt(char *s)
 	else if ((*s == 'T') || (*s == 't'))
 		return(FORMAT_TEXT);
 	else if ((*s == 'P') || (*s == 'p'))
-		return(FORMAT_PEM);
-	else if ((*s == 'N') || (*s == 'n'))
-		return(FORMAT_NETSCAPE);
-	else if ((*s == 'S') || (*s == 's'))
-		return(FORMAT_SMIME);
+ 		{
+ 		if (s[1] == 'V' || s[1] == 'v')
+ 			return FORMAT_PVK;
+ 		else
+  			return(FORMAT_PEM);
+ 		}
+  	else if ((*s == 'N') || (*s == 'n'))
+  		return(FORMAT_NETSCAPE);
+  	else if ((*s == 'S') || (*s == 's'))
+  		return(FORMAT_SMIME);
+ 	else if ((*s == 'M') || (*s == 'm'))
+ 		return(FORMAT_MSBLOB);
 	else if ((*s == '1')
 		|| (strcmp(s,"PKCS12") == 0) || (strcmp(s,"pkcs12") == 0)
 		|| (strcmp(s,"P12") == 0) || (strcmp(s,"p12") == 0))
@@ -879,6 +886,11 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 				&pkey, NULL, NULL))
 			goto end;
 		}
+	else if (format == FORMAT_MSBLOB)
+		pkey = b2i_PrivateKey_bio(key);
+	else if (format == FORMAT_PVK)
+		pkey = b2i_PVK_bio(key, (pem_password_cb *)password_callback,
+								&cb_data);
 	else
 		{
 		BIO_printf(err,"bad input format specified for key file\n");
@@ -979,6 +991,8 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	else if (format == FORMAT_NETSCAPE || format == FORMAT_IISSGC)
 		pkey = load_netscape_key(err, key, file, key_descrip, format);
 #endif
+	else if (format == FORMAT_MSBLOB)
+		pkey = b2i_PublicKey_bio(key);
 	else
 		{
 		BIO_printf(err,"bad input format specified for key file\n");

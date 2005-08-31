@@ -18,10 +18,10 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= pem_sign.c pem_seal.c pem_info.c pem_lib.c pem_all.c pem_err.c \
-	pem_x509.c pem_xaux.c pem_oth.c pem_pk8.c pem_pkey.c
+	pem_x509.c pem_xaux.c pem_oth.c pem_pk8.c pem_pkey.c pvkfmt.c
 
 LIBOBJ=	pem_sign.o pem_seal.o pem_info.o pem_lib.o pem_all.o pem_err.o \
-	pem_x509.o pem_xaux.o pem_oth.o pem_pk8.o pem_pkey.o
+	pem_x509.o pem_xaux.o pem_oth.o pem_pk8.o pem_pkey.o pvkfmt.o
 
 SRC= $(LIBSRC)
 

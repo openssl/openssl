@@ -111,6 +111,8 @@ int MAIN(int argc, char **argv)
 #endif
 	int modulus=0;
 
+	int pvk_encr = 2;
+
 	apps_startup();
 
 	if (bio_err == NULL)
@@ -177,6 +179,12 @@ int MAIN(int argc, char **argv)
 			pubin = 2;
 		else if (strcmp(*argv,"-RSAPublicKey_out") == 0)
 			pubout = 2;
+		else if (strcmp(*argv,"-pvk-strong") == 0)
+			pvk_encr=2;
+		else if (strcmp(*argv,"-pvk-weak") == 0)
+			pvk_encr=1;
+		else if (strcmp(*argv,"-pvk-none") == 0)
+			pvk_encr=0;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -390,6 +398,17 @@ bad:
 			}
 		else i=PEM_write_bio_RSAPrivateKey(out,rsa,
 						enc,NULL,0,NULL,passout);
+	} else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
+		EVP_PKEY *pk;
+		pk = EVP_PKEY_new();
+		EVP_PKEY_set1_RSA(pk, rsa);
+		if (outformat == FORMAT_PVK)
+			i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
+		else if (pubin || pubout)
+			i = i2b_PublicKey_bio(out, pk);
+		else
+			i = i2b_PrivateKey_bio(out, pk);
+		EVP_PKEY_free(pk);
 	} else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;
