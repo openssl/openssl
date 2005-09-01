@@ -832,6 +832,17 @@ typedef struct ASN1_AUX_st {
         return ASN1_item_dup(ASN1_ITEM_rptr(stname), x); \
         }
 
+#define IMPLEMENT_ASN1_PRINT_FUNCTION(stname) \
+	IMPLEMENT_ASN1_PRINT_FUNCTION_fname(stname, stname, stname)
+
+#define IMPLEMENT_ASN1_PRINT_FUNCTION_fname(stname, itname, fname) \
+	int fname##_print(BIO *out, stname *x, int indent, \
+						const ASN1_PCTX *pctx) \
+	{ \
+		return ASN1_item_print(out, (ASN1_VALUE *)x, indent, \
+			ASN1_ITEM_rptr(itname), pctx); \
+	} 
+
 #define IMPLEMENT_ASN1_FUNCTIONS_const(name) \
 		IMPLEMENT_ASN1_FUNCTIONS_const_fname(name, name, name)
 

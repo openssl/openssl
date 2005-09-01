@@ -317,6 +317,13 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 	type *name##_new(void); \
 	void name##_free(type *a);
 
+#define DECLARE_ASN1_PRINT_FUNCTION(stname) \
+	DECLARE_ASN1_PRINT_FUNCTION_fname(stname, stname)
+
+#define DECLARE_ASN1_PRINT_FUNCTION_fname(stname, fname) \
+	int fname##_print(BIO *out, stname *x, int indent, \
+					 const ASN1_PCTX *pctx);
+
 #define D2I_OF(type) type *(*)(type **,const unsigned char **,long)
 #define I2D_OF(type) int (*)(type *,unsigned char **)
 #define I2D_OF_const(type) int (*)(const type *,unsigned char **)
@@ -1011,6 +1018,8 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf);
 /* Don't show structure name even at top level */
 #define ASN1_PCTX_FLAGS_NO_STRUCT_NAME		0x100
 
+int ASN1_item_print(BIO *out, ASN1_VALUE *ifld, int indent,
+				const ASN1_ITEM *it, const ASN1_PCTX *pctx);
 ASN1_PCTX *ASN1_PCTX_new(void);
 void ASN1_PCTX_free(ASN1_PCTX *p);
 unsigned long ASN1_PCTX_get_flags(ASN1_PCTX *p);

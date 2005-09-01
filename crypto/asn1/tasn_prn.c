@@ -161,12 +161,15 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 				const ASN1_ITEM *it,
 				const char *fname, const char *sname,
 				int nohdr, const ASN1_PCTX *pctx);
+
 int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 				const ASN1_TEMPLATE *tt, const ASN1_PCTX *pctx);
+
 static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 				const ASN1_ITEM *it, int indent,
 				const char *fname, const char *sname,
 				const ASN1_PCTX *pctx);
+
 static int asn1_print_fsname(BIO *out, int indent,
 			const char *fname, const char *sname,
 			const ASN1_PCTX *pctx);
