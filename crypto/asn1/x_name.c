@@ -60,6 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+#include "asn1_locl.h"
 
 static int x509_name_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long len, const ASN1_ITEM *it,
 					int tag, int aclass, char opt, ASN1_TLC *ctx);
@@ -69,6 +70,12 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it);
 static void x509_name_ex_free(ASN1_VALUE **val, const ASN1_ITEM *it);
 
 static int x509_name_encode(X509_NAME *a);
+
+
+static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
+						int indent,
+						const char *fname, 
+						const ASN1_PCTX *pctx);
 
 ASN1_SEQUENCE(X509_NAME_ENTRY) = {
 	ASN1_SIMPLE(X509_NAME_ENTRY, object, ASN1_OBJECT),
@@ -102,7 +109,8 @@ const ASN1_EXTERN_FUNCS x509_name_ff = {
 	x509_name_ex_free,
 	0,	/* Default clear behaviour is OK */
 	x509_name_ex_d2i,
-	x509_name_ex_i2d
+	x509_name_ex_i2d,
+	x509_name_ex_print
 };
 
 IMPLEMENT_EXTERN_ASN1(X509_NAME, V_ASN1_SEQUENCE, x509_name_ff) 
@@ -251,6 +259,17 @@ static int x509_name_encode(X509_NAME *a)
 	ASN1err(ASN1_F_X509_NAME_ENCODE, ERR_R_MALLOC_FAILURE);
 	return -1;
 }
+
+static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
+						int indent,
+						const char *fname, 
+						const ASN1_PCTX *pctx)
+	{
+	if (X509_NAME_print_ex(out, (X509_NAME *)*pval,
+					indent, pctx->nm_flags) <= 0)
+		return 0;
+	return 1;
+	}
 
 
 int X509_NAME_set(X509_NAME **xn, X509_NAME *name)

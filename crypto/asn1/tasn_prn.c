@@ -67,26 +67,6 @@
 #include "asn1_locl.h"
 
 #include <string.h>
-/* Print flags */
-
-/* Indicate missing OPTIONAL fields */
-#define ASN1_PCTX_FLAGS_SHOW_ABSENT		0x001	
-/* Mark start and end of SEQUENCE */
-#define ASN1_PCTX_FLAGS_SHOW_SEQUENCE		0x002
-/* Mark start and end of SEQUENCE/SET OF */
-#define ASN1_PCTX_FLAGS_SHOW_SSOF		0x004
-/* Show the ASN1 type of primitives */
-#define ASN1_PCTX_FLAGS_SHOW_TYPE		0x008
-/* Don't show ASN1 type of ANY */
-#define ASN1_PCTX_FLAGS_NO_ANY_TYPE		0x010
-/* Don't show ASN1 type of MSTRINGs */
-#define ASN1_PCTX_FLAGS_NO_MSTRING_TYPE		0x020
-/* Don't show field names in SEQUENCE */
-#define ASN1_PCTX_FLAGS_NO_FIELD_NAME		0x040
-/* Show structure names of each SEQUENCE field */
-#define ASN1_PCTX_FLAGS_SHOW_FIELD_STRUCT_NAME	0x080
-/* Don't show structure name even at top level */
-#define ASN1_PCTX_FLAGS_NO_STRUCT_NAME		0x100
 
 /* Print routines.
  */

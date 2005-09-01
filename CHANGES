@@ -4,6 +4,11 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Very, very preliminary EXPERIMENTAL support for printing of general
+     ASN1 structures. This currently produces rather ugly output and doesn't
+     handle several customised structures at all.
+     [Steve Henson]
+
   *) Integrated support for PVK file format and some related formats such
      as MS PUBLICKEYBLOB and PRIVATEKEYBLOB. Command line switches to support
      these in the 'rsa' and 'dsa' utilities.
