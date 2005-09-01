@@ -245,7 +245,7 @@ $ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
 	"asn1_gen,asn1_par,asn1_lib,asn1_err,a_bytes,a_strnid,"+ -
 	"evp_asn1,asn_pack,p5_pbe,p5_pbev2,p8_pkey,asn_moid"
 $ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err,"+ -
-	"pem_x509,pem_xaux,pem_oth,pem_pk8,pem_pkey"
+	"pem_x509,pem_xaux,pem_oth,pem_pk8,pem_pkey,pvkfmt"
 $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
 	"x509_obj,x509_req,x509spki,x509_vfy,"+ -
 	"x509_set,x509cset,x509rset,x509_err,"+ -
