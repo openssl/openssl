@@ -268,7 +268,7 @@ static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
 	if (X509_NAME_print_ex(out, (X509_NAME *)*pval,
 					indent, pctx->nm_flags) <= 0)
 		return 0;
-	return 1;
+	return 2;
 	}
 
 
