@@ -3,7 +3,7 @@
  * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,7 +62,8 @@
 #include <openssl/x509.h>
 
 /* Minor tweak to operation: zero private key data */
-static int pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+							void *exarg)
 {
 	/* Since the structure must still be valid use ASN1_OP_FREE_PRE */
 	if(operation == ASN1_OP_FREE_PRE) {

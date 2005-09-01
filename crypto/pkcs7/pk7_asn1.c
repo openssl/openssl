@@ -98,7 +98,8 @@ ASN1_NDEF_SEQUENCE(PKCS7_SIGNED) = {
 IMPLEMENT_ASN1_FUNCTIONS(PKCS7_SIGNED)
 
 /* Minor tweak to operation: free up EVP_PKEY */
-static int si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+							void *exarg)
 {
 	if(operation == ASN1_OP_FREE_POST) {
 		PKCS7_SIGNER_INFO *si = (PKCS7_SIGNER_INFO *)*pval;
@@ -140,7 +141,8 @@ ASN1_NDEF_SEQUENCE(PKCS7_ENVELOPE) = {
 IMPLEMENT_ASN1_FUNCTIONS(PKCS7_ENVELOPE)
 
 /* Minor tweak to operation: free up X509 */
-static int ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+								void *exarg)
 {
 	if(operation == ASN1_OP_FREE_POST) {
 		PKCS7_RECIP_INFO *ri = (PKCS7_RECIP_INFO *)*pval;

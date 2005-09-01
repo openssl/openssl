@@ -3,7 +3,7 @@
  * project 2000.
  */
 /* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -695,7 +695,8 @@ typedef struct ASN1_PRIMITIVE_FUNCS_st {
  * then an external type is more appropriate.
  */
 
-typedef int ASN1_aux_cb(int operation, ASN1_VALUE **in, const ASN1_ITEM *it);
+typedef int ASN1_aux_cb(int operation, ASN1_VALUE **in, const ASN1_ITEM *it,
+				void *exarg);
 
 typedef struct ASN1_AUX_st {
 	void *app_data;
@@ -705,6 +706,13 @@ typedef struct ASN1_AUX_st {
 	ASN1_aux_cb *asn1_cb;
 	int enc_offset;		/* Offset of ASN1_ENCODING structure */
 } ASN1_AUX;
+
+/* For print related callbacks exarg points to this structure */
+typedef struct ASN1_PRINT_ARG_st {
+	BIO *out;
+	int indent;
+	ASN1_PCTX *pctx;
+} ASN1_PRINT_ARG;
 
 /* Flags in ASN1_AUX */
 
@@ -725,6 +733,8 @@ typedef struct ASN1_AUX_st {
 #define ASN1_OP_D2I_POST	5
 #define ASN1_OP_I2D_PRE		6
 #define ASN1_OP_I2D_POST	7
+#define ASN1_OP_PRINT_PRE	8
+#define ASN1_OP_PRINT_POST	9
 
 /* Macro to implement a primitive type */
 #define IMPLEMENT_ASN1_TYPE(stname) IMPLEMENT_ASN1_TYPE_ex(stname, stname, 0)

@@ -146,7 +146,7 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
 		case ASN1_ITYPE_CHOICE:
 		if (asn1_cb)
 			{
-			i = asn1_cb(ASN1_OP_NEW_PRE, pval, it);
+			i = asn1_cb(ASN1_OP_NEW_PRE, pval, it, NULL);
 			if (!i)
 				goto auxerr;
 			if (i==2)
@@ -166,7 +166,7 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
 			memset(*pval, 0, it->size);
 			}
 		asn1_set_choice_selector(pval, -1, it);
-		if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it))
+		if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it, NULL))
 				goto auxerr;
 		break;
 
@@ -174,7 +174,7 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
 		case ASN1_ITYPE_SEQUENCE:
 		if (asn1_cb)
 			{
-			i = asn1_cb(ASN1_OP_NEW_PRE, pval, it);
+			i = asn1_cb(ASN1_OP_NEW_PRE, pval, it, NULL);
 			if (!i)
 				goto auxerr;
 			if (i==2)
@@ -201,7 +201,7 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
 			if (!ASN1_template_new(pseqval, tt))
 				goto memerr;
 			}
-		if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it))
+		if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it, NULL))
 				goto auxerr;
 		break;
 	}
