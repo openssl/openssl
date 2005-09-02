@@ -330,9 +330,9 @@ static unsigned char lvalues[4575]={
 0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x04,     /* [2092] OBJ_ac_auditEntity */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x05,     /* [2100] OBJ_ac_targeting */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x06,     /* [2108] OBJ_aaControls */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x07,     /* [2116] OBJ_sbqp_ipAddrBlock */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x08,     /* [2124] OBJ_sbqp_autonomousSysNum */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x09,     /* [2132] OBJ_sbqp_routerIdentifier */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x07,     /* [2116] OBJ_sbgp_ipAddrBlock */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x08,     /* [2124] OBJ_sbgp_autonomousSysNum */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x09,     /* [2132] OBJ_sbgp_routerIdentifier */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x02,0x03,     /* [2140] OBJ_textNotice */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x05,     /* [2148] OBJ_ipsecEndSystem */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x06,     /* [2156] OBJ_ipsecTunnel */
@@ -1143,12 +1143,12 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[2092]),0},
 {"ac-targeting","ac-targeting",NID_ac_targeting,8,&(lvalues[2100]),0},
 {"aaControls","aaControls",NID_aaControls,8,&(lvalues[2108]),0},
-{"sbqp-ipAddrBlock","sbqp-ipAddrBlock",NID_sbqp_ipAddrBlock,8,
+{"sbgp-ipAddrBlock","sbgp-ipAddrBlock",NID_sbgp_ipAddrBlock,8,
 	&(lvalues[2116]),0},
-{"sbqp-autonomousSysNum","sbqp-autonomousSysNum",
-	NID_sbqp_autonomousSysNum,8,&(lvalues[2124]),0},
-{"sbqp-routerIdentifier","sbqp-routerIdentifier",
-	NID_sbqp_routerIdentifier,8,&(lvalues[2132]),0},
+{"sbgp-autonomousSysNum","sbgp-autonomousSysNum",
+	NID_sbgp_autonomousSysNum,8,&(lvalues[2124]),0},
+{"sbgp-routerIdentifier","sbgp-routerIdentifier",
+	NID_sbgp_routerIdentifier,8,&(lvalues[2132]),0},
 {"textNotice","textNotice",NID_textNotice,8,&(lvalues[2140]),0},
 {"ipsecEndSystem","IPSec End System",NID_ipsecEndSystem,8,
 	&(lvalues[2148]),0},
@@ -2285,9 +2285,9 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[ 1]),/* "rsadsi" */
 &(nid_objs[482]),/* "sOARecord" */
 &(nid_objs[155]),/* "safeContentsBag" */
-&(nid_objs[291]),/* "sbqp-autonomousSysNum" */
-&(nid_objs[290]),/* "sbqp-ipAddrBlock" */
-&(nid_objs[292]),/* "sbqp-routerIdentifier" */
+&(nid_objs[291]),/* "sbgp-autonomousSysNum" */
+&(nid_objs[290]),/* "sbgp-ipAddrBlock" */
+&(nid_objs[292]),/* "sbgp-routerIdentifier" */
 &(nid_objs[159]),/* "sdsiCertificate" */
 &(nid_objs[154]),/* "secretBag" */
 &(nid_objs[474]),/* "secretary" */
@@ -2962,9 +2962,9 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[124]),/* "run length compression" */
 &(nid_objs[482]),/* "sOARecord" */
 &(nid_objs[155]),/* "safeContentsBag" */
-&(nid_objs[291]),/* "sbqp-autonomousSysNum" */
-&(nid_objs[290]),/* "sbqp-ipAddrBlock" */
-&(nid_objs[292]),/* "sbqp-routerIdentifier" */
+&(nid_objs[291]),/* "sbgp-autonomousSysNum" */
+&(nid_objs[290]),/* "sbgp-ipAddrBlock" */
+&(nid_objs[292]),/* "sbgp-routerIdentifier" */
 &(nid_objs[159]),/* "sdsiCertificate" */
 &(nid_objs[154]),/* "secretBag" */
 &(nid_objs[474]),/* "secretary" */
@@ -3424,9 +3424,9 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[287]),/* OBJ_ac_auditEntity               1 3 6 1 5 5 7 1 4 */
 &(nid_objs[288]),/* OBJ_ac_targeting                 1 3 6 1 5 5 7 1 5 */
 &(nid_objs[289]),/* OBJ_aaControls                   1 3 6 1 5 5 7 1 6 */
-&(nid_objs[290]),/* OBJ_sbqp_ipAddrBlock             1 3 6 1 5 5 7 1 7 */
-&(nid_objs[291]),/* OBJ_sbqp_autonomousSysNum        1 3 6 1 5 5 7 1 8 */
-&(nid_objs[292]),/* OBJ_sbqp_routerIdentifier        1 3 6 1 5 5 7 1 9 */
+&(nid_objs[290]),/* OBJ_sbgp_ipAddrBlock             1 3 6 1 5 5 7 1 7 */
+&(nid_objs[291]),/* OBJ_sbgp_autonomousSysNum        1 3 6 1 5 5 7 1 8 */
+&(nid_objs[292]),/* OBJ_sbgp_routerIdentifier        1 3 6 1 5 5 7 1 9 */
 &(nid_objs[397]),/* OBJ_ac_proxying                  1 3 6 1 5 5 7 1 10 */
 &(nid_objs[398]),/* OBJ_sinfo_access                 1 3 6 1 5 5 7 1 11 */
 &(nid_objs[663]),/* OBJ_proxyCertInfo                1 3 6 1 5 5 7 1 14 */

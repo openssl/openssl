@@ -1068,17 +1068,17 @@
 #define NID_aaControls		289
 #define OBJ_aaControls		OBJ_id_pe,6L
 
-#define SN_sbqp_ipAddrBlock		"sbqp-ipAddrBlock"
-#define NID_sbqp_ipAddrBlock		290
-#define OBJ_sbqp_ipAddrBlock		OBJ_id_pe,7L
+#define SN_sbgp_ipAddrBlock		"sbgp-ipAddrBlock"
+#define NID_sbgp_ipAddrBlock		290
+#define OBJ_sbgp_ipAddrBlock		OBJ_id_pe,7L
 
-#define SN_sbqp_autonomousSysNum		"sbqp-autonomousSysNum"
-#define NID_sbqp_autonomousSysNum		291
-#define OBJ_sbqp_autonomousSysNum		OBJ_id_pe,8L
+#define SN_sbgp_autonomousSysNum		"sbgp-autonomousSysNum"
+#define NID_sbgp_autonomousSysNum		291
+#define OBJ_sbgp_autonomousSysNum		OBJ_id_pe,8L
 
-#define SN_sbqp_routerIdentifier		"sbqp-routerIdentifier"
-#define NID_sbqp_routerIdentifier		292
-#define OBJ_sbqp_routerIdentifier		OBJ_id_pe,9L
+#define SN_sbgp_routerIdentifier		"sbgp-routerIdentifier"
+#define NID_sbgp_routerIdentifier		292
+#define OBJ_sbgp_routerIdentifier		OBJ_id_pe,9L
 
 #define SN_ac_proxying		"ac-proxying"
 #define NID_ac_proxying		397
