@@ -287,9 +287,9 @@ qcStatements		286
 ac_auditEntity		287
 ac_targeting		288
 aaControls		289
-sbqp_ipAddrBlock		290
-sbqp_autonomousSysNum		291
-sbqp_routerIdentifier		292
+sbgp_ipAddrBlock		290
+sbgp_autonomousSysNum		291
+sbgp_routerIdentifier		292
 textNotice		293
 ipsecEndSystem		294
 ipsecTunnel		295

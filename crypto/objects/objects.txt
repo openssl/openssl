@@ -434,9 +434,9 @@ id-pe 3			: qcStatements
 id-pe 4			: ac-auditEntity
 id-pe 5			: ac-targeting
 id-pe 6			: aaControls
-id-pe 7			: sbqp-ipAddrBlock
-id-pe 8			: sbqp-autonomousSysNum
-id-pe 9			: sbqp-routerIdentifier
+id-pe 7			: sbgp-ipAddrBlock
+id-pe 8			: sbgp-autonomousSysNum
+id-pe 9			: sbgp-routerIdentifier
 id-pe 10		: ac-proxying
 !Cname sinfo-access
 id-pe 11		: subjectInfoAccess	: Subject Information Access
