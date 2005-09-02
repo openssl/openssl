@@ -478,6 +478,9 @@ int X509_VERIFY_PARAM_set1(X509_VERIFY_PARAM *to,
 						const X509_VERIFY_PARAM *from);
 int X509_VERIFY_PARAM_set1_name(X509_VERIFY_PARAM *param, const char *name);
 int X509_VERIFY_PARAM_set_flags(X509_VERIFY_PARAM *param, unsigned long flags);
+int X509_VERIFY_PARAM_clear_flags(X509_VERIFY_PARAM *param,
+							unsigned long flags);
+unsigned long X509_VERIFY_PARAM_get_flags(X509_VERIFY_PARAM *param);
 int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose);
 int X509_VERIFY_PARAM_set_trust(X509_VERIFY_PARAM *param, int trust);
 void X509_VERIFY_PARAM_set_depth(X509_VERIFY_PARAM *param, int depth);
