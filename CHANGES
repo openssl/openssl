@@ -37,6 +37,9 @@
 
  Changes between 0.9.8 and 0.9.8a  [XX xxx XXXX]
 
+  *) Add two function to clear and return the verify parameter flags.
+     [Steve Henson]
+
   *) Keep cipherlists sorted in the source instead of sorting them at
      runtime, thus removing the need for a lock.
      [Nils Larsch]

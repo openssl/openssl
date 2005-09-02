@@ -211,6 +211,17 @@ int X509_VERIFY_PARAM_set_flags(X509_VERIFY_PARAM *param, unsigned long flags)
 	return 1;
 	}
 
+int X509_VERIFY_PARAM_clear_flags(X509_VERIFY_PARAM *param, unsigned long flags)
+	{
+	param->flags &= ~flags;
+	return 1;
+	}
+
+unsigned long X509_VERIFY_PARAM_get_flags(X509_VERIFY_PARAM *param)
+	{
+	return param->flags;
+	}
+
 int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose)
 	{
 	return X509_PURPOSE_set(&param->purpose, purpose);
