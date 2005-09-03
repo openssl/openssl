@@ -58,6 +58,7 @@
 
 
 #include <stddef.h>
+#include "cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
@@ -65,8 +66,6 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 #include "asn1_locl.h"
-
-#include <string.h>
 
 /* Print routines.
  */
@@ -196,12 +195,25 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 	const ASN1_TEMPLATE *tt;
 	const ASN1_EXTERN_FUNCS *ef;
 	ASN1_VALUE **tmpfld;
+	const ASN1_AUX *aux = it->funcs;
+	ASN1_aux_cb *asn1_cb;
+	ASN1_PRINT_ARG parg;
 	int i;
+	if (aux && aux->asn1_cb)
+		{
+		parg.out = out;
+		parg.indent = indent;
+		parg.pctx = pctx;
+		asn1_cb = aux->asn1_cb;
+		}
+	else asn1_cb = 0;
+
 	if(*fld == NULL)
 		{
 		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_ABSENT)
 			{
-			if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))
+			if (!nohdr && !asn1_print_fsname(out, indent,
+							fname, sname, pctx))
 				return 0;
 			if (BIO_puts(out, "<ABSENT>\n") <= 0)
 				return 0;
@@ -283,6 +295,15 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 				}
 			}
 
+		if (asn1_cb)
+			{
+			i = asn1_cb(ASN1_OP_PRINT_PRE, fld, it, &parg);
+			if (i == 0)
+				return 0;
+			if (i == 2)
+				return 1;
+			}
+
 		/* Print each field entry */
 		for(i = 0, tt = it->templates; i < it->tcount; i++, tt++)
 			{
@@ -296,6 +317,13 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_SEQUENCE)
 			{
 			if (BIO_printf(out, "%*s}\n", indent, "") < 0)
+				return 0;
+			}
+
+		if (asn1_cb)
+			{
+			i = asn1_cb(ASN1_OP_PRINT_POST, fld, it, &parg);
+			if (i == 0)
 				return 0;
 			}
 		break;

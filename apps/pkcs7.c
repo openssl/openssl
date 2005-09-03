@@ -241,7 +241,7 @@ bad:
 		}
 
 	if (p7_print)
-		PKCS7_print(out, p7, 0, NULL);
+		PKCS7_print_ctx(out, p7, 0, NULL);
 
 	if (print_certs)
 		{

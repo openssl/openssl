@@ -321,7 +321,7 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 	DECLARE_ASN1_PRINT_FUNCTION_fname(stname, stname)
 
 #define DECLARE_ASN1_PRINT_FUNCTION_fname(stname, fname) \
-	int fname##_print(BIO *out, stname *x, int indent, \
+	int fname##_print_ctx(BIO *out, stname *x, int indent, \
 					 const ASN1_PCTX *pctx);
 
 #define D2I_OF(type) type *(*)(type **,const unsigned char **,long)
