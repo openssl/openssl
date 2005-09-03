@@ -846,7 +846,7 @@ typedef struct ASN1_PRINT_ARG_st {
 	IMPLEMENT_ASN1_PRINT_FUNCTION_fname(stname, stname, stname)
 
 #define IMPLEMENT_ASN1_PRINT_FUNCTION_fname(stname, itname, fname) \
-	int fname##_print(BIO *out, stname *x, int indent, \
+	int fname##_print_ex(BIO *out, stname *x, int indent, \
 						const ASN1_PCTX *pctx) \
 	{ \
 		return ASN1_item_print(out, (ASN1_VALUE *)x, indent, \
