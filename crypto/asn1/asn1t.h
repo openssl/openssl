@@ -711,7 +711,7 @@ typedef struct ASN1_AUX_st {
 typedef struct ASN1_PRINT_ARG_st {
 	BIO *out;
 	int indent;
-	ASN1_PCTX *pctx;
+	const ASN1_PCTX *pctx;
 } ASN1_PRINT_ARG;
 
 /* Flags in ASN1_AUX */
