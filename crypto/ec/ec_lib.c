@@ -558,7 +558,7 @@ int EC_EX_DATA_set_data(EC_EXTRA_DATA **ex_data, void *data,
 		{
 		if (d->dup_func == dup_func && d->free_func == free_func && d->clear_free_func == clear_free_func)
 			{
-			ECerr(EC_F_EC_GROUP_SET_EXTRA_DATA, EC_R_SLOT_FULL);
+			ECerr(EC_F_EC_EX_DATA_SET_DATA, EC_R_SLOT_FULL);
 			return 0;
 			}
 		}
