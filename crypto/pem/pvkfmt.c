@@ -742,7 +742,8 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
 			PEMerr(PEM_F_DO_PVK_BODY, ERR_R_MALLOC_FAILURE);
 			return NULL;
 			}
-		if (!derive_pvk_key(keybuf, p, saltlen, psbuf, inlen))
+		if (!derive_pvk_key(keybuf, p, saltlen,
+			    (unsigned char *)psbuf, inlen))
 			return NULL;
 		p += saltlen;
 		/* Copy BLOBHEADER across, decrypt rest */
@@ -893,7 +894,8 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel,
 			PEMerr(PEM_F_I2B_PVK,PEM_R_BAD_PASSWORD_READ);
 			goto error;
 			}
-		if (!derive_pvk_key(keybuf, salt, PVK_SALTLEN, psbuf, inlen))
+		if (!derive_pvk_key(keybuf, salt, PVK_SALTLEN,
+			    (unsigned char *)psbuf, inlen))
 			goto error;
 		if (enclevel == 1)
 			memset(keybuf + 5, 0, 11);
