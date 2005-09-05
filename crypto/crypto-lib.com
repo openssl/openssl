@@ -240,6 +240,7 @@ $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"x_nx509,d2i_pu,d2i_pr,i2d_pu,i2d_pr"
 $ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
 	"tasn_new,tasn_fre,tasn_enc,tasn_dec,tasn_utl,tasn_typ,"+ -
+	"tasn_prn,"+ -
 	"f_int,f_string,n_pkey,"+ -
 	"f_enum,x_pkey,a_bool,x_exten,"+ -
 	"asn1_gen,asn1_par,asn1_lib,asn1_err,a_bytes,a_strnid,"+ -
