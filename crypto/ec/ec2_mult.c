@@ -76,7 +76,7 @@
  * coordinates.
  * Uses algorithm Mdouble in appendix of 
  *     Lopez, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
- *     GF(2^m) without precomputation".
+ *     GF(2^m) without precomputation" (CHES '99, LNCS 1717).
  * modified to not require precomputation of c=b^{2^{m-1}}.
  */
 static int gf2m_Mdouble(const EC_GROUP *group, BIGNUM *x, BIGNUM *z, BN_CTX *ctx)
@@ -107,8 +107,8 @@ static int gf2m_Mdouble(const EC_GROUP *group, BIGNUM *x, BIGNUM *z, BN_CTX *ctx
 /* Compute the x-coordinate x1/z1 for the point (x1/z1)+(x2/x2) in Montgomery 
  * projective coordinates.
  * Uses algorithm Madd in appendix of 
- *     Lopex, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
- *     GF(2^m) without precomputation".
+ *     Lopez, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
+ *     GF(2^m) without precomputation" (CHES '99, LNCS 1717).
  */
 static int gf2m_Madd(const EC_GROUP *group, const BIGNUM *x, BIGNUM *x1, BIGNUM *z1, 
 	const BIGNUM *x2, const BIGNUM *z2, BN_CTX *ctx)
@@ -140,8 +140,8 @@ static int gf2m_Madd(const EC_GROUP *group, const BIGNUM *x, BIGNUM *x1, BIGNUM 
 
 /* Compute the x, y affine coordinates from the point (x1, z1) (x2, z2) 
  * using Montgomery point multiplication algorithm Mxy() in appendix of 
- *     Lopex, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
- *     GF(2^m) without precomputation".
+ *     Lopez, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
+ *     GF(2^m) without precomputation" (CHES '99, LNCS 1717).
  * Returns:
  *     0 on error
  *     1 if return value should be the point at infinity
@@ -209,8 +209,8 @@ static int gf2m_Mxy(const EC_GROUP *group, const BIGNUM *x, const BIGNUM *y, BIG
 /* Computes scalar*point and stores the result in r.
  * point can not equal r.
  * Uses algorithm 2P of
- *     Lopex, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
- *     GF(2^m) without precomputation".
+ *     Lopez, J. and Dahab, R.  "Fast multiplication on elliptic curves over 
+ *     GF(2^m) without precomputation" (CHES '99, LNCS 1717).
  */
 static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	const EC_POINT *point, BN_CTX *ctx)
