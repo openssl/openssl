@@ -343,7 +343,7 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 	const char *sname, *fname;
 	flags = tt->flags;
 	if(pctx->flags & ASN1_PCTX_FLAGS_SHOW_FIELD_STRUCT_NAME)
-		sname = tt->item->sname;
+		sname = ASN1_ITEM_ptr(tt->item)->sname;
 	else
 		sname = NULL;
 	if(pctx->flags & ASN1_PCTX_FLAGS_NO_FIELD_NAME)
@@ -378,7 +378,7 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 
 			skitem = (ASN1_VALUE *)sk_value((STACK *)*fld, i);
 			if (!asn1_item_print_ctx(out, &skitem, indent + 2,
-					tt->item, NULL, NULL, 1, pctx))
+				ASN1_ITEM_ptr(tt->item), NULL, NULL, 1, pctx))
 				return 0;
 			}
 		if (!i && BIO_printf(out, "%*s<EMPTY>\n", indent + 2, "") <= 0)
@@ -390,7 +390,7 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 			}
 		return 1;
 		}
-	return asn1_item_print_ctx(out, fld, indent, tt->item,
+	return asn1_item_print_ctx(out, fld, indent, ASN1_ITEM_ptr(tt->item),
 							fname, sname, 0, pctx);
 	}
 
