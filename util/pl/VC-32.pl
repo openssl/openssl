@@ -12,6 +12,7 @@ $rm='del';
 # C compiler stuff
 $cc='cl';
 $cflags=' /MD /W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
+$cflags.=' -D_CRT_SECURE_NO_DEPRECATE';	# shut up VC8
 $lflags="/nologo /subsystem:console /machine:I386 /opt:ref";
 $mlflags='';
 
