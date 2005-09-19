@@ -286,7 +286,8 @@
 
 #ifndef PEDANTIC
 # if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-#  if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
+#  if ((defined(__i386) || defined(__i386__)) && && !defined(I386_ONLY)) || \
+      (defined(__x86_64) || defined(__x86_64__))
     /*
      * This gives ~30-40% performance improvement in SHA-256 compiled
      * with gcc [on P4]. Well, first macro to be frank. We can pull
