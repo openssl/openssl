@@ -180,3 +180,11 @@ target. Drop optimization level to +O2 when compiling 64-bit bf_skey.o.
 Unfortunately, the 'no-engines' configuration option currently doesn't
 work properly.  Use 'no-hw' and you'll will at least get no hardware
 support.  We'll see how we fix that on OpenSSL versions past 0.9.8.
+
+* 'make test' fails in BN_sqr [commonly with "error 139" denoting SIGSEGV]
+  if elder GNU binutils were deployed to link shared libcrypto.so.
+
+As subject suggests the failure is caused by a bug in elder binutils,
+either as or ld, and was observed on FreeBSD and Linux. There are two
+options. First is naturally to upgrade binutils, the second one - to
+reconfigure with additional no-sse2 [or 386] option passed to ./config.
