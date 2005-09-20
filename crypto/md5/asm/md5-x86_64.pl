@@ -15,7 +15,7 @@ my $code;
 #   dst = x + ((dst + F(x,y,z) + X[k] + T_i) <<< s)
 #   %r10d = X[k_next]
 #   %r11d = z' (copy of z for the next step)
-# Each round1_step() takes about 5.71 clocks (9 instructions, 1.58 IPC)
+# Each round1_step() takes about 5.3 clocks (9 instructions, 1.7 IPC)
 sub round1_step
 {
     my ($pos, $dst, $x, $y, $z, $k_next, $T_i, $s) = @_;
@@ -37,22 +37,26 @@ EOF
 # round2_step() does:
 #   dst = x + ((dst + G(x,y,z) + X[k] + T_i) <<< s)
 #   %r10d = X[k_next]
-#   %r11d = y' (copy of y for the next step)
-# Each round2_step() takes about 6.22 clocks (9 instructions, 1.45 IPC)
+#   %r11d = z' (copy of z for the next step)
+#   %r12d = z' (copy of z for the next step)
+# Each round2_step() takes about 5.4 clocks (11 instructions, 2.0 IPC)
 sub round2_step
 {
     my ($pos, $dst, $x, $y, $z, $k_next, $T_i, $s) = @_;
     $code .= " mov	1*4(%rsi),	%r10d		/* (NEXT STEP) X[1] */\n" if ($pos == -1);
-    $code .= " mov	%ecx,		%r11d		/* (NEXT STEP) y' = %ecx */\n" if ($pos == -1);
+    $code .= " mov	%edx,		%r11d		/* (NEXT STEP) z' = %edx */\n" if ($pos == -1);
+    $code .= " mov	%edx,		%r12d		/* (NEXT STEP) z' = %edx */\n" if ($pos == -1);
     $code .= <<EOF;
-	xor	$x,		%r11d		/* x ^ ... */
+	not	%r11d				/* not z */
 	lea	$T_i($dst,%r10d),$dst		/* Const + dst + ... */
-	and	$z,		%r11d		/* z & ... */
-	xor	$y,		%r11d		/* y ^ ... */
+	and	$x,		%r12d		/* x & z */
+	and	$y,		%r11d		/* y & (not z) */
 	mov	$k_next*4(%rsi),%r10d		/* (NEXT STEP) X[$k_next] */
-	add	%r11d,		$dst		/* dst += ... */
+	or	%r11d,		%r12d		/* (y & (not z)) | (x & z) */
+	mov	$y,		%r11d		/* (NEXT STEP) z' = $y */
+	add	%r12d,		$dst		/* dst += ... */
+	mov	$y,		%r12d		/* (NEXT STEP) z' = $y */
 	rol	\$$s,		$dst		/* dst <<< s */
-	mov	$x,		%r11d		/* (NEXT STEP) y' = $x */
 	add	$x,		$dst		/* dst += x */
 EOF
 }
@@ -61,7 +65,7 @@ EOF
 #   dst = x + ((dst + H(x,y,z) + X[k] + T_i) <<< s)
 #   %r10d = X[k_next]
 #   %r11d = y' (copy of y for the next step)
-# Each round3_step() takes about 4.26 clocks (8 instructions, 1.88 IPC)
+# Each round3_step() takes about 4.2 clocks (8 instructions, 1.9 IPC)
 sub round3_step
 {
     my ($pos, $dst, $x, $y, $z, $k_next, $T_i, $s) = @_;
@@ -83,7 +87,7 @@ EOF
 #   dst = x + ((dst + I(x,y,z) + X[k] + T_i) <<< s)
 #   %r10d = X[k_next]
 #   %r11d = not z' (copy of not z for the next step)
-# Each round4_step() takes about 5.27 clocks (9 instructions, 1.71 IPC)
+# Each round4_step() takes about 5.2 clocks (9 instructions, 1.7 IPC)
 sub round4_step
 {
     my ($pos, $dst, $x, $y, $z, $k_next, $T_i, $s) = @_;
@@ -116,6 +120,7 @@ $code .= <<EOF;
 md5_block_asm_host_order:
 	push	%rbp
 	push	%rbx
+	push	%r12
 	push	%r14
 	push	%r15
 
@@ -234,6 +239,7 @@ $code .= <<EOF;
 
 	pop	%r15
 	pop	%r14
+	pop	%r12
 	pop	%rbx
 	pop	%rbp
 	ret
