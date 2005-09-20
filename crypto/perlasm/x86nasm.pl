@@ -263,7 +263,16 @@ sub using486
 sub main'file
 	{
 	if ($main'mwerks)	{ push(@out,".section\t.text\n"); }
-	else			{ push(@out,"section\t.text use32\n"); }
+	else	{
+		local $tmp=<<___;
+%ifdef __omf__
+section	code	use32 class=code
+%else
+section	.text
+%endif
+___
+		push(@out,$tmp);
+		}
 	}
 
 sub main'function_begin
