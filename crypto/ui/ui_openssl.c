@@ -586,6 +586,14 @@ static void pushsig(void)
 	sa.sa_handler=recsig;
 #endif
 
+#ifdef OPENSSL_SYS_WIN32
+	savsig[SIGABRT]=signal(SIGABRT,recsig);
+	savsig[SIGFPE]=signal(SIGFPE,recsig);
+	savsig[SIGILL]=signal(SIGILL,recsig);
+	savsig[SIGINT]=signal(SIGINT,recsig);
+	savsig[SIGSEGV]=signal(SIGSEGV,recsig);
+	savsig[SIGTERM]=signal(SIGTERM,recsig);
+#else
 	for (i=1; i<NX509_SIG; i++)
 		{
 #ifdef SIGUSR1
@@ -606,6 +614,7 @@ static void pushsig(void)
 		savsig[i]=signal(i,recsig);
 #endif
 		}
+#endif
 
 #ifdef SIGWINCH
 	signal(SIGWINCH,SIG_DFL);
@@ -616,6 +625,14 @@ static void popsig(void)
 	{
 	int i;
 
+#ifdef OPENSSL_SYS_WIN32
+	signal(SIGABRT,savsig[SIGABRT]);
+	signal(SIGFPE,savsig[SIGFPE]);
+	signal(SIGILL,savsig[SIGILL]);
+	signal(SIGINT,savsig[SIGINT]);
+	signal(SIGSEGV,savsig[SIGSEGV]);
+	signal(SIGTERM,savsig[SIGTERM]);
+#else
 	for (i=1; i<NX509_SIG; i++)
 		{
 #ifdef SIGUSR1
@@ -632,6 +649,7 @@ static void popsig(void)
 		signal(i,savsig[i]);
 #endif
 		}
+#endif
 	}
 
 static void recsig(int i)
