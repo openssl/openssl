@@ -565,6 +565,9 @@ extern HINSTANCE _hInstance;
 extern char *sys_errlist[]; extern int sys_nerr;
 # define strerror(errnum) \
 	(((errnum)<0 || (errnum)>=sys_nerr) ? NULL : sys_errlist[errnum])
+  /* Being signed SunOS 4.x memcpy breaks ASN1_OBJECT table lookup */
+#include "o_str.h"
+# define memcmp OPENSSL_memcmp
 #endif
 
 #ifndef OPENSSL_EXIT
