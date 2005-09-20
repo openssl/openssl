@@ -51,7 +51,7 @@ $lfile='';
 $shlib_ex_obj="";
 $app_ex_obj="c0x32.obj"; 
 
-$asm='nasmw -f obj';
+$asm='nasmw -f obj -d__omf__';
 $asm.=" /Zi" if $debug;
 $afile='-o';
 

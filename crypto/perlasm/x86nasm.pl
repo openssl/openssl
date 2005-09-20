@@ -221,7 +221,15 @@ sub using486
 
 sub main'file
 	{
-	push(@out, "segment .text use32\n");
+	local $tmp;
+	$tmp=<<___;
+%ifdef __omf__
+section	code	use32 class=code
+%else
+section	.text
+%endif
+___
+	push(@out,$tmp);
 	}
 
 sub main'function_begin
