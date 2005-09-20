@@ -745,6 +745,11 @@ case "$GUESSOS" in
 		fi
 	    fi
 	fi
+	if (lsattr -E -O -l proc0 | grep -i powepc) >/dev/null 2>&1; then
+	    :	# this applies even to Power3 and later, as they return PowerPC_POWER[345]
+	else
+	    options="$options no-asm"
+	fi
 	;;
   # these are all covered by the catchall below
   # *-dgux) OUT="dgux" ;;
