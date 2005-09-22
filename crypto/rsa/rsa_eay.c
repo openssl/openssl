@@ -283,9 +283,9 @@ static int rsa_blinding_convert(BN_BLINDING *b, int local, BIGNUM *f,
 	else
 		{
 		int ret;
-		CRYPTO_w_lock(CRYPTO_LOCK_RSA_BLINDING);
+		CRYPTO_r_lock(CRYPTO_LOCK_RSA_BLINDING);
 		ret = BN_BLINDING_convert_ex(f, r, b, ctx);
-		CRYPTO_w_unlock(CRYPTO_LOCK_RSA_BLINDING);
+		CRYPTO_r_unlock(CRYPTO_LOCK_RSA_BLINDING);
 		return ret;
 		}
 }
@@ -298,9 +298,9 @@ static int rsa_blinding_invert(BN_BLINDING *b, int local, BIGNUM *f,
 	else
 		{
 		int ret;
-		CRYPTO_r_lock(CRYPTO_LOCK_RSA_BLINDING);
+		CRYPTO_w_lock(CRYPTO_LOCK_RSA_BLINDING);
 		ret = BN_BLINDING_invert_ex(f, r, b, ctx);
-		CRYPTO_r_unlock(CRYPTO_LOCK_RSA_BLINDING);
+		CRYPTO_w_unlock(CRYPTO_LOCK_RSA_BLINDING);
 		return ret;
 		}
 }
