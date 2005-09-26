@@ -578,7 +578,9 @@ static int close_console(UI *ui)
 /* Internal functions to handle signals and act on them */
 static void pushsig(void)
 	{
+#ifndef OPENSSL_SYS_WIN32
 	int i;
+#endif
 #ifdef SIGACTION
 	struct sigaction sa;
 
@@ -623,8 +625,6 @@ static void pushsig(void)
 
 static void popsig(void)
 	{
-	int i;
-
 #ifdef OPENSSL_SYS_WIN32
 	signal(SIGABRT,savsig[SIGABRT]);
 	signal(SIGFPE,savsig[SIGFPE]);
@@ -633,6 +633,7 @@ static void popsig(void)
 	signal(SIGSEGV,savsig[SIGSEGV]);
 	signal(SIGTERM,savsig[SIGTERM]);
 #else
+	int i;
 	for (i=1; i<NX509_SIG; i++)
 		{
 #ifdef SIGUSR1
