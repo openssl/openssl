@@ -396,7 +396,10 @@ static int MS_CALLBACK file_gets(BIO *bp, char *buf, int size)
 	int ret=0;
 
 	buf[0]='\0';
-	fgets(buf,size,(FILE *)bp->ptr);
+	if (b->flags&BIO_FLAGS_UPLINK)
+		UP_fgets(buf,size,bp->ptr);
+	else
+		fgets(buf,size,(FILE *)bp->ptr);
 	if (buf[0] != '\0')
 		ret=strlen(buf);
 	return(ret);
