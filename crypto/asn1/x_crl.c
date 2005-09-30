@@ -102,6 +102,23 @@ ASN1_SEQUENCE_enc(X509_CRL_INFO, enc, crl_inf_cb) = {
 	ASN1_EXP_SEQUENCE_OF_OPT(X509_CRL_INFO, extensions, X509_EXTENSION, 0)
 } ASN1_SEQUENCE_END_enc(X509_CRL_INFO, X509_CRL_INFO)
 
+static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+								void *exarg)
+{
+	X509_CRL *a = (X509_CRL_INFO *)*pval;
+
+#ifndef OPENSSL_NO_SHA
+	switch(operation) {
+		/* Hash CRL here for rapid comparison in X509_digest_cmp()
+		 */
+		case ASN1_OP_D2I_POST:
+		X509_CRL_digest(crl->digest, crl);
+		break;
+	}
+#endif
+	return 1;
+}
+
 ASN1_SEQUENCE_ref(X509_CRL, 0, CRYPTO_LOCK_X509_CRL) = {
 	ASN1_SIMPLE(X509_CRL, crl, X509_CRL_INFO),
 	ASN1_SIMPLE(X509_CRL, sig_alg, X509_ALGOR),

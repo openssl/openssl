@@ -666,7 +666,9 @@ int ssl3_get_client_hello(SSL *s)
 	unsigned long id;
 	unsigned char *p,*d,*q;
 	SSL_CIPHER *c;
+#ifndef OPENSSL_NO_COMP
 	SSL_COMP *comp=NULL;
+#endif
 	STACK_OF(SSL_CIPHER) *ciphers=NULL;
 
 	/* We do this so that we will respond with our native type.
@@ -897,6 +899,7 @@ int ssl3_get_client_hello(SSL *s)
 	 * options, we will now look for them.  We have i-1 compression
 	 * algorithms from the client, starting at q. */
 	s->s3->tmp.new_compression=NULL;
+#ifndef OPENSSL_NO_COMP
 	if (s->ctx->comp_methods != NULL)
 		{ /* See if we have a match */
 		int m,nn,o,v,done=0;
@@ -921,6 +924,7 @@ int ssl3_get_client_hello(SSL *s)
 		else
 			comp=NULL;
 		}
+#endif
 
 	/* TLS does not mind if there is extra stuff */
 #if 0   /* SSL 3.0 does not mind either, so we should disable this test
@@ -944,7 +948,11 @@ int ssl3_get_client_hello(SSL *s)
 
 	if (!s->hit)
 		{
+#ifdef OPENSSL_NO_COMP
+		s->session->compress_meth=0;
+#else
 		s->session->compress_meth=(comp == NULL)?0:comp->id;
+#endif
 		if (s->session->ciphers != NULL)
 			sk_SSL_CIPHER_free(s->session->ciphers);
 		s->session->ciphers=ciphers;
@@ -1070,10 +1078,14 @@ int ssl3_send_server_hello(SSL *s)
 		p+=i;
 
 		/* put the compression method */
+#ifdef OPENSSL_NO_COMP
+			*(p++)=0;
+#else
 		if (s->s3->tmp.new_compression == NULL)
 			*(p++)=0;
 		else
 			*(p++)=s->s3->tmp.new_compression->id;
+#endif
 
 		/* do the header */
 		l=(p-d);

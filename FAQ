@@ -31,6 +31,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does my browser give a warning about a mismatched hostname?
 * How do I install a CA certificate into a browser?
 * Why is OpenSSL x509 DN output not conformant to RFC2253?
+* What is a "128 bit certificate"? Can I create one with OpenSSL?
 
 [BUILD] Questions about building and testing OpenSSL
 
@@ -385,6 +386,43 @@ been extended in version 0.9.7 of OpenSSL. Using the new X509_NAME_print_ex()
 interface, the "-nameopt" option could be introduded. See the manual
 page of the "openssl x509" commandline tool for details. The old behaviour
 has however been left as default for the sake of compatibility.
+
+* What is a "128 bit certificate"? Can I create one with OpenSSL?
+
+The term "128 bit certificate" is a highly misleading marketing term. It does
+*not* refer to the size of the public key in the certificate! A certificate
+containing a 128 bit RSA key would have negligible security.
+
+There were various other names such as "magic certificates", "SGC
+certificates", "step up certificates" etc.
+
+You can't generally create such a certificate using OpenSSL but there is no
+need to any more. Nowadays web browsers using unrestricted strong encryption
+are generally available.
+
+When there were tight export restrictions on the export of strong encryption
+software from the US only weak encryption algorithms could be freely exported
+(initially 40 bit and then 56 bit). It was widely recognised that this was
+inadequate. A relaxation the rules allowed the use of strong encryption but
+only to an authorised server.
+
+Two slighly different techniques were developed to support this, one used by
+Netscape was called "step up", the other used by MSIE was called "Server Gated
+Cryptography" (SGC). When a browser initially connected to a server it would
+check to see if the certificate contained certain extensions and was issued by
+an authorised authority. If these test succeeded it would reconnect using
+strong encryption.
+
+Only certain (initially one) certificate authorities could issue the
+certificates and they generally cost more than ordinary certificates.
+
+Although OpenSSL can create certificates containing the appropriate extensions
+the certificate would not come from a permitted authority and so would not
+be recognized.
+
+The export laws were later changed to allow almost unrestricted use of strong
+encryption so these certificates are now obsolete.
+
 
 [BUILD] =======================================================================
 

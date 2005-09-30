@@ -420,7 +420,9 @@ int main(int argc, char *argv[])
 	int print_time = 0;
 	clock_t s_time = 0, c_time = 0;
 	int comp = 0;
+#ifndef OPENSSL_NO_COMP
 	COMP_METHOD *cm = NULL;
+#endif
 	STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 	int test_cipherlist = 0;
 
@@ -652,6 +654,7 @@ bad:
 	SSL_library_init();
 	SSL_load_error_strings();
 
+#ifndef OPENSSL_NO_COMP
 	if (comp == COMP_ZLIB) cm = COMP_zlib();
 	if (comp == COMP_RLE) cm = COMP_rle();
 	if (cm != NULL)
@@ -675,6 +678,7 @@ bad:
 			ERR_print_errors_fp(stderr);
 			}
 		}
+#endif
 	ssl_comp_methods = SSL_COMP_get_compression_methods();
 	fprintf(stderr, "Available compression methods:\n");
 	{

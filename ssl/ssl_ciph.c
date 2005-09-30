@@ -192,6 +192,9 @@ void ssl_load_ciphers(void)
 		EVP_get_digestbyname(SN_sha1);
 	}
 
+
+#ifndef OPENSSL_NO_COMP
+
 static int sk_comp_cmp(const SSL_COMP * const *a,
 			const SSL_COMP * const *b)
 	{
@@ -231,6 +234,7 @@ static void load_builtin_compressions(void)
 		}
 	CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
 	}
+#endif
 
 int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	     const EVP_MD **md, SSL_COMP **comp)
@@ -243,8 +247,9 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	if (comp != NULL)
 		{
 		SSL_COMP ctmp;
-
+#ifndef OPENSSL_NO_COMP
 		load_builtin_compressions();
+#endif
 
 		*comp=NULL;
 		ctmp.id=s->compress_meth;
@@ -1131,6 +1136,21 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 	return(NULL);
 	}
 
+#ifdef OPENSSL_NO_COMP
+void *SSL_COMP_get_compression_methods(void)
+	{
+	return NULL;
+	}
+int SSL_COMP_add_compression_method(int id, void *cm)
+	{
+	return 1;
+	}
+
+const char *SSL_COMP_get_name(const void *comp)
+	{
+	return NULL;
+	}
+#else
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 	{
 	load_builtin_compressions();
@@ -1191,3 +1211,4 @@ const char *SSL_COMP_get_name(const COMP_METHOD *comp)
 	return NULL;
 	}
 
+#endif
