@@ -943,7 +943,6 @@ bad:
 			if (verbose) BIO_printf(bio_err,
 				"Done. %d entries marked as expired\n",i); 
 	      		}
-			goto err;
 	  	}
 
  	/*****************************************************************/
