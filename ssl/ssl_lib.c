@@ -2246,6 +2246,7 @@ void ssl_clear_cipher_ctx(SSL *s)
 		OPENSSL_free(s->enc_write_ctx);
 		s->enc_write_ctx=NULL;
 		}
+#ifndef OPENSSL_NO_COMP
 	if (s->expand != NULL)
 		{
 		COMP_CTX_free(s->expand);
@@ -2256,6 +2257,7 @@ void ssl_clear_cipher_ctx(SSL *s)
 		COMP_CTX_free(s->compress);
 		s->compress=NULL;
 		}
+#endif
 	}
 
 /* Fix this function so that it takes an optional type parameter */
@@ -2282,6 +2284,16 @@ SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
 		return(s->session->cipher);
 	return(NULL);
 	}
+#ifdef OPENSSL_NO_COMP
+const void *SSL_get_current_compression(SSL *s)
+	{
+	return NULL;
+	}
+const void *SSL_get_current_expansion(SSL *s)
+	{
+	return NULL;
+	}
+#else
 
 const COMP_METHOD *SSL_get_current_compression(SSL *s)
 	{
@@ -2296,6 +2308,7 @@ const COMP_METHOD *SSL_get_current_expansion(SSL *s)
 		return(s->expand->meth);
 	return(NULL);
 	}
+#endif
 
 int ssl_init_wbio_buffer(SSL *s,int push)
 	{

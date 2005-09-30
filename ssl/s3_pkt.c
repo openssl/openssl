@@ -476,6 +476,7 @@ err:
 
 int ssl3_do_uncompress(SSL *ssl)
 	{
+#ifndef OPENSSL_NO_COMP
 	int i;
 	SSL3_RECORD *rr;
 
@@ -487,12 +488,13 @@ int ssl3_do_uncompress(SSL *ssl)
 	else
 		rr->length=i;
 	rr->data=rr->comp;
-
+#endif
 	return(1);
 	}
 
 int ssl3_do_compress(SSL *ssl)
 	{
+#ifndef OPENSSL_NO_COMP
 	int i;
 	SSL3_RECORD *wr;
 
@@ -506,6 +508,7 @@ int ssl3_do_compress(SSL *ssl)
 		wr->length=i;
 
 	wr->input=wr->data;
+#endif
 	return(1);
 	}
 

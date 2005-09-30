@@ -371,11 +371,15 @@ int dtls1_connect(SSL *s)
 			s->init_num=0;
 
 			s->session->cipher=s->s3->tmp.new_cipher;
+#ifdef OPENSSL_NO_COMP
+			s->session->compress_meth=0;
+#else
 			if (s->s3->tmp.new_compression == NULL)
 				s->session->compress_meth=0;
 			else
 				s->session->compress_meth=
 					s->s3->tmp.new_compression->id;
+#endif
 			if (!s->method->ssl3_enc->setup_key_block(s))
 				{
 				ret= -1;

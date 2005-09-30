@@ -231,7 +231,9 @@ int tls1_change_cipher_state(SSL *s, int which)
 	int client_write;
 	EVP_CIPHER_CTX *dd;
 	const EVP_CIPHER *c;
+#ifndef OPENSSL_NO_COMP
 	const SSL_COMP *comp;
+#endif
 	const EVP_MD *m;
 	int is_export,n,i,j,k,exp_label_len,cl;
 	int reuse_dd = 0;
@@ -239,7 +241,9 @@ int tls1_change_cipher_state(SSL *s, int which)
 	is_export=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	c=s->s3->tmp.new_sym_enc;
 	m=s->s3->tmp.new_hash;
+#ifndef OPENSSL_NO_COMP
 	comp=s->s3->tmp.new_compression;
+#endif
 	key_block=s->s3->tmp.key_block;
 
 #ifdef KSSL_DEBUG
@@ -265,6 +269,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 			goto err;
 		dd= s->enc_read_ctx;
 		s->read_hash=m;
+#ifndef OPENSSL_NO_COMP
 		if (s->expand != NULL)
 			{
 			COMP_CTX_free(s->expand);
@@ -284,6 +289,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 			if (s->s3->rrec.comp == NULL)
 				goto err;
 			}
+#endif
 		/* this is done by dtls1_reset_seq_numbers for DTLS1_VERSION */
  		if (s->version != DTLS1_VERSION)
 			memset(&(s->s3->read_sequence[0]),0,8);
@@ -301,6 +307,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 			goto err;
 		dd= s->enc_write_ctx;
 		s->write_hash=m;
+#ifndef OPENSSL_NO_COMP
 		if (s->compress != NULL)
 			{
 			COMP_CTX_free(s->compress);
@@ -315,6 +322,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 				goto err2;
 				}
 			}
+#endif
 		/* this is done by dtls1_reset_seq_numbers for DTLS1_VERSION */
  		if (s->version != DTLS1_VERSION)
 			memset(&(s->s3->write_sequence[0]),0,8);

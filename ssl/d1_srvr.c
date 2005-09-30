@@ -705,10 +705,14 @@ int dtls1_send_server_hello(SSL *s)
 		p+=i;
 
 		/* put the compression method */
+#ifdef OPENSSL_NO_COMP
+		*(p++)=0;
+#else
 		if (s->s3->tmp.new_compression == NULL)
 			*(p++)=0;
 		else
 			*(p++)=s->s3->tmp.new_compression->id;
+#endif
 
 		/* do the header */
 		l=(p-d);
