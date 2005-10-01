@@ -358,9 +358,7 @@ int ssl3_setup_key_block(SSL *s)
 	const EVP_MD *hash;
 	int num;
 	int ret = 0;
-#ifdef OPENSSL_NO_COMP
 	SSL_COMP *comp;
-#endif
 
 	if (s->s3->tmp.key_block_length != 0)
 		return(1);
