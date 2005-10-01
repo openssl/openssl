@@ -4,6 +4,10 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) New option -V for 'openssl ciphers'. This prints the ciphersuite code
+     in addition to the text details.
+     [Bodo Moeller]
+
   *) Very, very preliminary EXPERIMENTAL support for printing of general
      ASN1 structures. This currently produces rather ugly output and doesn't
      handle several customised structures at all.
