@@ -678,7 +678,6 @@ bad:
 			ERR_print_errors_fp(stderr);
 			}
 		}
-#endif
 	ssl_comp_methods = SSL_COMP_get_compression_methods();
 	fprintf(stderr, "Available compression methods:\n");
 	{
@@ -692,6 +691,7 @@ bad:
 			fprintf(stderr, "  %d: %s\n", c->id, c->name);
 			}
 	}
+#endif
 
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	if (ssl2)

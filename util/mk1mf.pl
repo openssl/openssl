@@ -954,6 +954,7 @@ sub read_options
 				}
 			}
 		}
+	elsif (/^no-comp$/) { $xcflags = "-DOPENSSL_NO_COMP $xcflags"; }
 	elsif (/^enable-zlib$/) { $xcflags = "-DZLIB $xcflags"; }
 	elsif (/^enable-zlib-dynamic$/)
 		{
