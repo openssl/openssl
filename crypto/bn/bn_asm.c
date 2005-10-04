@@ -75,6 +75,7 @@ BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 	assert(num >= 0);
 	if (num <= 0) return(c1);
 
+#ifndef OPENSSL_SMALL_FOOTPRINT
 	while (num&~3)
 		{
 		mul_add(rp[0],ap[0],w,c1);
@@ -83,11 +84,11 @@ BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 		mul_add(rp[3],ap[3],w,c1);
 		ap+=4; rp+=4; num-=4;
 		}
-	if (num)
+#endif
+	while (num)
 		{
-		mul_add(rp[0],ap[0],w,c1); if (--num==0) return c1;
-		mul_add(rp[1],ap[1],w,c1); if (--num==0) return c1;
-		mul_add(rp[2],ap[2],w,c1); return c1;
+		mul_add(rp[0],ap[0],w,c1);
+		ap++; rp++; num--;
 		}
 	
 	return(c1);
@@ -100,6 +101,7 @@ BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 	assert(num >= 0);
 	if (num <= 0) return(c1);
 
+#ifndef OPENSSL_SMALL_FOOTPRINT
 	while (num&~3)
 		{
 		mul(rp[0],ap[0],w,c1);
@@ -108,11 +110,11 @@ BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 		mul(rp[3],ap[3],w,c1);
 		ap+=4; rp+=4; num-=4;
 		}
-	if (num)
+#endif
+	while (num)
 		{
-		mul(rp[0],ap[0],w,c1); if (--num == 0) return c1;
-		mul(rp[1],ap[1],w,c1); if (--num == 0) return c1;
-		mul(rp[2],ap[2],w,c1);
+		mul(rp[0],ap[0],w,c1);
+		ap++; rp++; num--;
 		}
 	return(c1);
 	} 
@@ -121,6 +123,8 @@ void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
         {
 	assert(n >= 0);
 	if (n <= 0) return;
+
+#ifndef OPENSSL_SMALL_FOOTPRINT
 	while (n&~3)
 		{
 		sqr(r[0],r[1],a[0]);
@@ -129,11 +133,11 @@ void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
 		sqr(r[6],r[7],a[3]);
 		a+=4; r+=8; n-=4;
 		}
-	if (n)
+#endif
+	while (n)
 		{
-		sqr(r[0],r[1],a[0]); if (--n == 0) return;
-		sqr(r[2],r[3],a[1]); if (--n == 0) return;
-		sqr(r[4],r[5],a[2]);
+		sqr(r[0],r[1],a[0]);
+		a++; r+=2; n--;
 		}
 	}
 
@@ -150,18 +154,20 @@ BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 	bl=LBITS(w);
 	bh=HBITS(w);
 
-	for (;;)
+#ifndef OPENSSL_SMALL_FOOTPRINT
+	while (num&~3)
 		{
 		mul_add(rp[0],ap[0],bl,bh,c);
-		if (--num == 0) break;
 		mul_add(rp[1],ap[1],bl,bh,c);
-		if (--num == 0) break;
 		mul_add(rp[2],ap[2],bl,bh,c);
-		if (--num == 0) break;
 		mul_add(rp[3],ap[3],bl,bh,c);
-		if (--num == 0) break;
-		ap+=4;
-		rp+=4;
+		ap+=4; rp+=4; num-=4;
+		}
+#endif
+	while (num)
+		{
+		mul_add(rp[0],ap[0],bl,bh,c);
+		ap++; rp++; num--;
 		}
 	return(c);
 	} 
@@ -177,18 +183,20 @@ BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 	bl=LBITS(w);
 	bh=HBITS(w);
 
-	for (;;)
+#ifndef OPENSSL_SMALL_FOOTPRINT
+	while (num&~3)
 		{
 		mul(rp[0],ap[0],bl,bh,carry);
-		if (--num == 0) break;
 		mul(rp[1],ap[1],bl,bh,carry);
-		if (--num == 0) break;
 		mul(rp[2],ap[2],bl,bh,carry);
-		if (--num == 0) break;
 		mul(rp[3],ap[3],bl,bh,carry);
-		if (--num == 0) break;
-		ap+=4;
-		rp+=4;
+		ap+=4; rp+=4; num-=4;
+		}
+#endif
+	while (num)
+		{
+		mul(rp[0],ap[0],bl,bh,carry);
+		ap++; rp++; num--;
 		}
 	return(carry);
 	} 
@@ -197,22 +205,21 @@ void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
         {
 	assert(n >= 0);
 	if (n <= 0) return;
-	for (;;)
+
+#ifndef OPENSSL_SMALL_FOOTPRINT
+	while (n&~3)
 		{
 		sqr64(r[0],r[1],a[0]);
-		if (--n == 0) break;
-
 		sqr64(r[2],r[3],a[1]);
-		if (--n == 0) break;
-
 		sqr64(r[4],r[5],a[2]);
-		if (--n == 0) break;
-
 		sqr64(r[6],r[7],a[3]);
-		if (--n == 0) break;
-
-		a+=4;
-		r+=8;
+		a+=4; r+=8; n-=4;
+		}
+#endif
+	while (n)
+		{
+		sqr64(r[0],r[1],a[0]);
+		a++; r+=2; n--;
 		}
 	}
 
@@ -303,31 +310,30 @@ BN_ULONG bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 	assert(n >= 0);
 	if (n <= 0) return((BN_ULONG)0);
 
-	for (;;)
+#ifndef OPENSSL_SMALL_FOOTPRINT
+	while (n&~3)
 		{
 		ll+=(BN_ULLONG)a[0]+b[0];
 		r[0]=(BN_ULONG)ll&BN_MASK2;
 		ll>>=BN_BITS2;
-		if (--n <= 0) break;
-
 		ll+=(BN_ULLONG)a[1]+b[1];
 		r[1]=(BN_ULONG)ll&BN_MASK2;
 		ll>>=BN_BITS2;
-		if (--n <= 0) break;
-
 		ll+=(BN_ULLONG)a[2]+b[2];
 		r[2]=(BN_ULONG)ll&BN_MASK2;
 		ll>>=BN_BITS2;
-		if (--n <= 0) break;
-
 		ll+=(BN_ULLONG)a[3]+b[3];
 		r[3]=(BN_ULONG)ll&BN_MASK2;
 		ll>>=BN_BITS2;
-		if (--n <= 0) break;
-
-		a+=4;
-		b+=4;
-		r+=4;
+		a+=4; b+=4; r+=4; n-=4;
+		}
+#endif
+	while (n)
+		{
+		ll+=(BN_ULLONG)a[0]+b[0];
+		r[0]=(BN_ULONG)ll&BN_MASK2;
+		ll>>=BN_BITS2;
+		a++; b++; r++; n--;
 		}
 	return((BN_ULONG)ll);
 	}
@@ -340,7 +346,8 @@ BN_ULONG bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 	if (n <= 0) return((BN_ULONG)0);
 
 	c=0;
-	for (;;)
+#ifndef OPENSSL_SMALL_FOOTPRINT
+	while (n&~3)
 		{
 		t=a[0];
 		t=(t+c)&BN_MASK2;
@@ -348,35 +355,36 @@ BN_ULONG bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 		l=(t+b[0])&BN_MASK2;
 		c+=(l < t);
 		r[0]=l;
-		if (--n <= 0) break;
-
 		t=a[1];
 		t=(t+c)&BN_MASK2;
 		c=(t < c);
 		l=(t+b[1])&BN_MASK2;
 		c+=(l < t);
 		r[1]=l;
-		if (--n <= 0) break;
-
 		t=a[2];
 		t=(t+c)&BN_MASK2;
 		c=(t < c);
 		l=(t+b[2])&BN_MASK2;
 		c+=(l < t);
 		r[2]=l;
-		if (--n <= 0) break;
-
 		t=a[3];
 		t=(t+c)&BN_MASK2;
 		c=(t < c);
 		l=(t+b[3])&BN_MASK2;
 		c+=(l < t);
 		r[3]=l;
-		if (--n <= 0) break;
-
-		a+=4;
-		b+=4;
-		r+=4;
+		a+=4; b+=4; r+=4; n-=4;
+		}
+#endif
+	while(n)
+		{
+		t=a[0];
+		t=(t+c)&BN_MASK2;
+		c=(t < c);
+		l=(t+b[0])&BN_MASK2;
+		c+=(l < t);
+		r[0]=l;
+		a++; b++; r++; n--;
 		}
 	return((BN_ULONG)c);
 	}
@@ -390,36 +398,35 @@ BN_ULONG bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 	assert(n >= 0);
 	if (n <= 0) return((BN_ULONG)0);
 
-	for (;;)
+#ifndef OPENSSL_SMALL_FOOTPRINT
+	while (n&~3)
 		{
 		t1=a[0]; t2=b[0];
 		r[0]=(t1-t2-c)&BN_MASK2;
 		if (t1 != t2) c=(t1 < t2);
-		if (--n <= 0) break;
-
 		t1=a[1]; t2=b[1];
 		r[1]=(t1-t2-c)&BN_MASK2;
 		if (t1 != t2) c=(t1 < t2);
-		if (--n <= 0) break;
-
 		t1=a[2]; t2=b[2];
 		r[2]=(t1-t2-c)&BN_MASK2;
 		if (t1 != t2) c=(t1 < t2);
-		if (--n <= 0) break;
-
 		t1=a[3]; t2=b[3];
 		r[3]=(t1-t2-c)&BN_MASK2;
 		if (t1 != t2) c=(t1 < t2);
-		if (--n <= 0) break;
-
-		a+=4;
-		b+=4;
-		r+=4;
+		a+=4; b+=4; r+=4; n-=4;
+		}
+#endif
+	while (n)
+		{
+		t1=a[0]; t2=b[0];
+		r[0]=(t1-t2-c)&BN_MASK2;
+		if (t1 != t2) c=(t1 < t2);
+		a++; b++; r++; n--;
 		}
 	return(c);
 	}
 
-#ifdef BN_MUL_COMBA
+#if defined(BN_MUL_COMBA) && !defined(OPENSSL_SMALL_FOOTPRINT)
 
 #undef bn_mul_comba8
 #undef bn_mul_comba4
@@ -826,7 +833,7 @@ void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
  * This is essentially reference implementation, which may or may not
  * result in performance improvement. E.g. on IA-32 this does give 40%
  * faster rsa1024 private key operations and 10% faster rsa4096 ones,
- * while on AMD64 it improves rsa1024 sign only by 10%, but *worsens*
+ * while on AMD64 it improves rsa1024 sign only by 10% and *worsens*
  * rsa4096 sign by 15%. Once again, it's a reference implementation,
  * one to be used as start-point for platform-specific assembler.
  */

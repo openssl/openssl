@@ -94,9 +94,11 @@ extern "C" {
 /* #define BN_DEBUG */
 /* #define BN_DEBUG_RAND */
 
+#ifndef OPENSSL_SMALL_FOOTPRINT
 #define BN_MUL_COMBA
 #define BN_SQR_COMBA
 #define BN_RECURSION
+#endif
 
 /* This next option uses the C libraries (2 word)/(1 word) function.
  * If it is not defined, I use my C version (which is slower).
