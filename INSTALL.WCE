@@ -12,7 +12,7 @@
  from http://www.activestate.com/ActivePerl.
 
  Windows CE support in OpenSSL relies on wcecompat and therefore it's
- appropriate to check http://www.essemer.com.au/windowce/ for updates in
+ appropriate to check http://www.essemer.com.au/windowsce/ for updates in
  case of compilation problems. As for the moment of this writing version
  1.1 is available and actually required for WCE 4.2 and newer platforms.
  All Windows CE specific issues should be directed to www.essemer.com.au.
