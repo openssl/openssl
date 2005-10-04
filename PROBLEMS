@@ -188,3 +188,10 @@ As subject suggests the failure is caused by a bug in elder binutils,
 either as or ld, and was observed on FreeBSD and Linux. There are two
 options. First is naturally to upgrade binutils, the second one - to
 reconfigure with additional no-sse2 [or 386] option passed to ./config.
+
+* If configured with ./config no-dso, toolkit still gets linked with -ldl,
+  which most notably poses a problem when linking with dietlibc.
+
+We don't have framework to associate -ldl with no-dso, therefore the only
+way is to edit Makefile right after ./config no-dso and remove -ldl from
+EX_LIBS line.
