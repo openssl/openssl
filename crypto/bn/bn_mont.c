@@ -74,6 +74,22 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 	{
 	BIGNUM *tmp;
 	int ret=0;
+#ifdef OPENSSL_BN_ASM_MONT
+	int num = mont->N.top;
+
+	if (num>1 && a->top==num && b->top==num)
+		{
+		if (bn_wexpand(r,num) == NULL) return 0;
+		r->neg = a->neg^b->neg;
+		r->top = num;
+		if (a==b)
+			bn_sqr_mont(r->d,a->d,mont->N.d,mont->n0,num);
+		else
+			bn_mul_mont(r->d,a->d,b->d,mont->N.d,mont->n0,num);
+		bn_fix_top(r);
+		return 1;
+		}
+#endif
 
 	BN_CTX_start(ctx);
 	tmp = BN_CTX_get(ctx);
