@@ -729,8 +729,7 @@ int RAND_pseudo_bytes(unsigned char *buf,int num);
 	bn_pollute(a); \
 	}
 
-void bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num);
-void bn_sqr_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *np,BN_ULONG n0, int num);
+int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num);
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
 BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
 void     bn_sqr_words(BN_ULONG *rp, const BN_ULONG *ap, int num);

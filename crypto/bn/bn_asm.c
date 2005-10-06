@@ -831,13 +831,14 @@ void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
 #ifdef OPENSSL_BN_ASM_MONT
 /*
  * This is essentially reference implementation, which may or may not
- * result in performance improvement. E.g. on IA-32 this does give 40%
- * faster rsa1024 private key operations and 10% faster rsa4096 ones,
- * while on AMD64 it improves rsa1024 sign only by 10% and *worsens*
- * rsa4096 sign by 15%. Once again, it's a reference implementation,
- * one to be used as start-point for platform-specific assembler.
+ * result in performance improvement. E.g. on IA-32 this routine was
+ * observed to give 40% faster rsa1024 private key operations and 10%
+ * faster rsa4096 ones, while on AMD64 it improves rsa1024 sign only
+ * by 10% and *worsens* rsa4096 sign by 15%. Once again, it's a
+ * reference implementation, one to be used as start-point for
+ * platform-specific assembler.
  */
-void bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num)
+int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num)
 	{
 	BN_ULONG c0,c1,ml,*tp;
 #ifdef mul64
@@ -846,6 +847,9 @@ void bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_
 	volatile BN_ULONG *vp;
 	int i=0,j;
 
+#if 0	/* template for platform-specific implementation */
+	if (ap==bp)	return bn_sqr_mont(rp,ap,np,n0,num);
+#endif
 	vp = tp = alloca((num+2)*sizeof(BN_ULONG));
 
 	tp[num]   = bn_mul_words(tp,ap,num,bp[0]);
@@ -890,18 +894,22 @@ void bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_
 		if (tp[num]!=0 || c0==0)
 			{
 			for(i=0;i<num+2;i++)	vp[i] = 0;
-			return;
+			return 1;
 			}
 		}
 	for(i=0;i<num;i++)	rp[i] = tp[i],	vp[i] = 0;
 	vp[num]   = 0;
 	vp[num+1] = 0;
+	return 1;
 	}
-
-void bn_sqr_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *np,BN_ULONG n0, int num)
-	{
-	bn_mul_mont(rp,ap,ap,np,n0,num);
-	}
+#else
+/*
+ * Return value of 0 indicates that multiplication/convolution was not
+ * performed to signal the caller to fall down to alternative/original
+ * code-path.
+ */
+int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num)
+{	return 0;	}
 #endif /* OPENSSL_BN_ASM_MONT */
 
 #else /* !BN_MUL_COMBA */
@@ -942,7 +950,7 @@ void bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 	}
 
 #ifdef OPENSSL_BN_ASM_MONT
-void bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num)
+int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num)
 	{
 	BN_ULONG c0,c1,*tp;
 	volatile BN_ULONG *vp;
@@ -972,18 +980,17 @@ void bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_
 		if (tp[num]!=0 || c0==0)
 			{
 			for(i=0;i<num+2;i++)	vp[i] = 0;
-			return;
+			return 1;
 			}
 		}
 	for(i=0;i<num;i++)	rp[i] = tp[i],	vp[i] = 0;
 	vp[num]   = 0;
 	vp[num+1] = 0;
+	return 1;
 	}
-
-void bn_sqr_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *np,BN_ULONG n0, int num)
-	{
-	bn_mul_mont(rp,ap,ap,np,n0,num);
-	}
+#else
+int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num)
+{	return 0;	}
 #endif /* OPENSSL_BN_ASM_MONT */
 
 #endif /* !BN_MUL_COMBA */

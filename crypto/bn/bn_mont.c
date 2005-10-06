@@ -80,14 +80,13 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 	if (num>1 && a->top==num && b->top==num)
 		{
 		if (bn_wexpand(r,num) == NULL) return 0;
-		r->neg = a->neg^b->neg;
-		r->top = num;
-		if (a==b)
-			bn_sqr_mont(r->d,a->d,mont->N.d,mont->n0,num);
-		else
-			bn_mul_mont(r->d,a->d,b->d,mont->N.d,mont->n0,num);
-		bn_fix_top(r);
-		return 1;
+		if (bn_mul_mont(r->d,a->d,b->d,mont->N.d,mont->n0,num))
+			{
+			r->neg = a->neg^b->neg;
+			r->top = num;
+			bn_fix_top(r);
+			return 1;
+			}
 		}
 #endif
 
