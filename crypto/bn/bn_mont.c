@@ -69,23 +69,27 @@
 
 #define MONT_WORD /* use the faster word-based algorithm */
 
+#ifdef MONT_WORD
+static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont);
+#endif
+
 int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 			  BN_MONT_CTX *mont, BN_CTX *ctx)
 	{
 	BIGNUM *tmp;
 	int ret=0;
-#ifdef OPENSSL_BN_ASM_MONT
+#if defined(OPENSSL_BN_ASM_MONT) && defined(MONT_WORD)
 	int num = mont->N.top;
 
 	if (num>1 && a->top==num && b->top==num)
 		{
-		if (bn_wexpand(r,num) == NULL) return 0;
+		if (bn_wexpand(r,num) == NULL) return(0);
 		if (bn_mul_mont(r->d,a->d,b->d,mont->N.d,mont->n0,num))
 			{
 			r->neg = a->neg^b->neg;
 			r->top = num;
-			bn_fix_top(r);
-			return 1;
+			bn_correct_top(r);
+			return(1);
 			}
 		}
 #endif
@@ -104,7 +108,11 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 		if (!BN_mul(tmp,a,b,ctx)) goto err;
 		}
 	/* reduce from aRR to aR */
+#ifdef MONT_WORD
+	if (!BN_from_montgomery_word(r,tmp,mont)) goto err;
+#else
 	if (!BN_from_montgomery(r,tmp,mont,ctx)) goto err;
+#endif
 	bn_check_top(r);
 	ret=1;
 err:
@@ -112,35 +120,25 @@ err:
 	return(ret);
 	}
 
-int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
-	     BN_CTX *ctx)
-	{
-	int retn=0;
-
 #ifdef MONT_WORD
-	BIGNUM *n,*r;
+static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
+	{
+	BIGNUM *n;
 	BN_ULONG *ap,*np,*rp,n0,v,*nrp;
 	int al,nl,max,i,x,ri;
 
-	BN_CTX_start(ctx);
-	if ((r = BN_CTX_get(ctx)) == NULL) goto err;
-
-	if (!BN_copy(r,a)) goto err;
 	n= &(mont->N);
-
-	ap=a->d;
 	/* mont->ri is the size of mont->N in bits (rounded up
 	   to the word size) */
 	al=ri=mont->ri/BN_BITS2;
-	
+
 	nl=n->top;
-	if ((al == 0) || (nl == 0)) { r->top=0; return(1); }
+	if ((al == 0) || (nl == 0)) { ret->top=0; return(1); }
 
 	max=(nl+al+1); /* allow for overflow (no?) XXX */
-	if (bn_wexpand(r,max) == NULL) goto err;
-	if (bn_wexpand(ret,max) == NULL) goto err;
+	if (bn_wexpand(r,max) == NULL) return(0);
 
-	r->neg=a->neg^n->neg;
+	r->neg^=n->neg;
 	np=n->d;
 	rp=r->d;
 	nrp= &(r->d[nl]);
@@ -157,7 +155,7 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
 	n0=mont->n0;
 
 #ifdef BN_COUNT
-	fprintf(stderr,"word BN_from_montgomery %d * %d\n",nl,nl);
+	fprintf(stderr,"word BN_from_montgomery_word %d * %d\n",nl,nl);
 #endif
 	for (i=0; i<nl; i++)
 		{
@@ -194,15 +192,18 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
 #if 0
 	BN_rshift(ret,r,mont->ri);
 #else
-	ret->neg = r->neg;
-	x=ri;
-	rp=ret->d;
-	ap= &(r->d[x]);
-	if (r->top < x)
-		al=0;
-	else
-		al=r->top-x;
+	if (r->top < ri)
+		{
+		ret->top=0;
+		return(1);
+		}
+	al=r->top-ri;
+	if (bn_wexpand(ret,al) == NULL) return(0);
+	ret->neg=r->neg;
 	ret->top=al;
+
+	rp=ret->d;
+	ap=&(r->d[ri]);
 	al-=4;
 	for (i=0; i<al; i+=4)
 		{
@@ -221,7 +222,29 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
 	for (; i<al; i++)
 		rp[i]=ap[i];
 #endif
-#else /* !MONT_WORD */ 
+
+	if (BN_ucmp(ret, &(mont->N)) >= 0)
+		{
+		if (!BN_usub(ret,ret,&(mont->N))) return(0);
+		}
+	bn_check_top(ret);
+
+	return(1);
+	}
+#endif	/* MONT_WORD */
+
+int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
+	     BN_CTX *ctx)
+	{
+	int retn=0;
+#ifdef MONT_WORD
+	BIGNUM *t;
+
+	BN_CTX_start(ctx);
+	if ((t = BN_CTX_get(ctx)) && BN_copy(t,a))
+		retn = BN_from_montgomery_word(ret,t,mont);
+	BN_CTX_end(ctx);
+#else /* !MONT_WORD */
 	BIGNUM *t1,*t2;
 
 	BN_CTX_start(ctx);
@@ -238,7 +261,6 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
 	if (!BN_mul(t1,t2,&mont->N,ctx)) goto err;
 	if (!BN_add(t2,a,t1)) goto err;
 	if (!BN_rshift(ret,t2,mont->ri)) goto err;
-#endif /* MONT_WORD */
 
 	if (BN_ucmp(ret, &(mont->N)) >= 0)
 		{
@@ -248,6 +270,7 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
 	bn_check_top(ret);
  err:
 	BN_CTX_end(ctx);
+#endif /* MONT_WORD */
 	return(retn);
 	}
 
