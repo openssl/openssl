@@ -97,8 +97,8 @@ bn_mul_mont:
 	xor	%rdx,%rdx
 	add	$hi0,$hi1
 	adc	\$0,%rdx
-	mov	$hi1,-8(%rsp,$j,8)
-	mov	%rdx,(%rsp,$j,8)
+	mov	$hi1,-8(%rsp,$num,8)
+	mov	%rdx,(%rsp,$num,8)	# store upmost overflow bit
 
 	lea	1($i),$i		# i++
 .align	4
@@ -146,26 +146,25 @@ bn_mul_mont:
 	cmp	$num,$j
 	jl	.Linner
 
-	xor	%rdx,%rdx		# $j equals to num here...
+	xor	%rdx,%rdx
 	add	$hi0,$hi1
 	adc	\$0,%rdx
-	add	(%rsp,$j,8),$hi1	# pull upmost overflow bit
+	add	(%rsp,$num,8),$hi1	# pull upmost overflow bit
 	adc	\$0,%rdx
-	mov	$hi1,-8(%rsp,$j,8)
-	mov	%rdx,(%rsp,$j,8)	# store upmost overflow bit
+	mov	$hi1,-8(%rsp,$num,8)
+	mov	%rdx,(%rsp,$num,8)	# store upmost overflow bit
 
 	lea	1($i),$i		# i++
 	cmp	$num,$i
 	jl	.Louter
 
-	sub	$i,$i			# clear CF at once
-	cmp	\$0,%rdx		# %rdx still holds upmost overflow bit
-	jnz	.Lsub			# ... and $j still equals to num
-	mov	-8(%rsp,$num,8),%rax
-	cmp	-8($np,$num,8),%rax	# tp[num-1]-np[num-1]
-	jae	.Lsub
-
+	xor	$i,$i			# i=0
 	lea	-1($num),$j		# j=num-1
+	cmp	\$0,%rdx		# %rdx still holds upmost overflow bit
+	jnz	.Lsub			# CF is cleared by compare with 0
+	mov	(%rsp,$j,8),%rax
+	cmp	($np,$j,8),%rax		# tp[num-1]-np[num-1]
+	jae	.Lsub			# if taken CF was cleared by above cmp
 .align	4
 .Lcopy:
 	mov	(%rsp,$j,8),%rax
@@ -190,8 +189,8 @@ bn_mul_mont:
 	sbb	($np,$i,8),%rax
 	mov	%rax,($rp,$i,8)		# rp[i]=tp[i]-np[j]
 	lea	1($i),$i		# i++
-	dec	$j			# doesn't affect cf!
-	jg	.Lsub
+	dec	$j			# doesn't affect CF!
+	jge	.Lsub
 	lea	-1($num),$j		# j=num-1
 	sbb	\$0,%rdx
 	jc	.Lcopy			# tp was less than np
