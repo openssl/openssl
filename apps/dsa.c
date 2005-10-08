@@ -110,6 +110,8 @@ int MAIN(int argc, char **argv)
 	char *passin = NULL, *passout = NULL;
 	int modulus=0;
 
+	int pvk_encr = 2;
+
 	apps_startup();
 
 	if (bio_err == NULL)
@@ -169,6 +171,12 @@ int MAIN(int argc, char **argv)
 			engine= *(++argv);
 			}
 #endif
+		else if (strcmp(*argv,"-pvk-strong") == 0)
+			pvk_encr=2;
+		else if (strcmp(*argv,"-pvk-weak") == 0)
+			pvk_encr=1;
+		else if (strcmp(*argv,"-pvk-none") == 0)
+			pvk_encr=0;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -317,11 +325,13 @@ bad:
 			i=PEM_write_bio_DSA_PUBKEY(out,dsa);
 		else i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,
 							NULL,0,NULL, passout);
-	} else if (outformat == FORMAT_MSBLOB) {
+	} else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
 		EVP_PKEY *pk;
 		pk = EVP_PKEY_new();
 		EVP_PKEY_set1_DSA(pk, dsa);
-		if (pubin || pubout)
+		if (outformat == FORMAT_PVK)
+			i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
+		else if (pubin || pubout)
 			i = i2b_PublicKey_bio(out, pk);
 		else
 			i = i2b_PrivateKey_bio(out, pk);
