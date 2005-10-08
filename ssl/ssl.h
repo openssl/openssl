@@ -754,7 +754,7 @@ struct ssl_ctx_st
 	 * actual record size can be more than this due to
 	 * padding and MAC overheads.
 	 */
-	int max_send_fragment;
+	unsigned int max_send_fragment;
 	};
 
 #define SSL_SESS_CACHE_OFF			0x0000
@@ -976,7 +976,7 @@ struct ssl_st
 	int first_packet;
 	int client_version;	/* what was passed, used for
 				 * SSLv3/TLS rollback check */
-	int max_send_fragment;
+	unsigned int max_send_fragment;
 	};
 
 #ifdef __cplusplus
