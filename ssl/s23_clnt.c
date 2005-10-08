@@ -349,7 +349,8 @@ static int ssl23_client_hello(SSL *s)
 			p+=i;
 
 			/* COMPRESSION */
-			if (s->ctx->comp_methods == NULL)
+			if ((s->options & SSL_OP_NO_COMPRESSION)
+						|| !s->ctx->comp_methods)
 				j=0;
 			else
 				j=sk_SSL_COMP_num(s->ctx->comp_methods);

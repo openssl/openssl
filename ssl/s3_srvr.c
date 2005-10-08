@@ -900,7 +900,7 @@ int ssl3_get_client_hello(SSL *s)
 	 * algorithms from the client, starting at q. */
 	s->s3->tmp.new_compression=NULL;
 #ifndef OPENSSL_NO_COMP
-	if (s->ctx->comp_methods != NULL)
+	if (!(s->options & SSL_OP_NO_COMPRESSION) && s->ctx->comp_methods)
 		{ /* See if we have a match */
 		int m,nn,o,v,done=0;
 

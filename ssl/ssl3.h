@@ -244,6 +244,18 @@ extern "C" {
 #define SSL3_SESSION_ID_SIZE			32
 #define SSL3_RT_HEADER_LENGTH			5
 
+/* This is the maximum MAC (digest) size used by the SSL library.
+ * Currently this is 20 when SHA1 is used. This must be updated if larger
+ * digests are used in future.
+ */
+
+#define SSL3_RT_MAX_MD_SIZE			20
+
+/* Maximum block size used in all ciphersuites. Currently 16 for AES.
+ */
+
+#define	SSL_RT_MAX_CIPHER_BLOCK_SIZE		16
+
 /* Due to MS stuffing up, this can change.... */
 #if defined(OPENSSL_SYS_WIN16) || \
 	(defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32))
@@ -252,14 +264,36 @@ extern "C" {
 #define SSL3_RT_MAX_EXTRA			(16384)
 #endif
 
+/* Maximum plaintext length: defined by SSL/TLS standards */
 #define SSL3_RT_MAX_PLAIN_LENGTH		16384
+/* Maximum compression overhead: defined by SSL/TLS standards */
+#define SSL3_RT_MAX_COMPRESSED_OVERHEAD		1024
+
+/* The standards give a maximum encryption overhead of 1024 bytes.
+ * In practice the value is lower than this. The overhead is the maximum
+ * number of padding bytes (256) plus the mac size.
+ */
+#define SSL3_RT_MAX_ENCRYPTED_OVERHEAD	(256 + SSL3_RT_MAX_MD_SIZE)
+
+/* OpenSSL currently only uses a padding length of at most one block so
+ * the send overhead is smaller.
+ */
+
+#define SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
+			(SSL_RT_MAX_CIPHER_BLOCK_SIZE + SSL3_RT_MAX_MD_SIZE)
+
+/* If compression isn't used don't include the compression overhead */
+
 #ifdef OPENSSL_NO_COMP
-#define SSL3_RT_MAX_COMPRESSED_LENGTH	SSL3_RT_MAX_PLAIN_LENGTH
+#define SSL3_RT_MAX_COMPRESSED_LENGTH		SSL3_RT_MAX_PLAIN_LENGTH
 #else
-#define SSL3_RT_MAX_COMPRESSED_LENGTH	(1024+SSL3_RT_MAX_PLAIN_LENGTH)
+#define SSL3_RT_MAX_COMPRESSED_LENGTH	\
+		(SSL3_RT_MAX_PLAIN_LENGTH+SSL3_RT_MAX_COMPRESSED_OVERHEAD)
 #endif
-#define SSL3_RT_MAX_ENCRYPTED_LENGTH	(1024+SSL3_RT_MAX_COMPRESSED_LENGTH)
-#define SSL3_RT_MAX_PACKET_SIZE		(SSL3_RT_MAX_ENCRYPTED_LENGTH+SSL3_RT_HEADER_LENGTH)
+#define SSL3_RT_MAX_ENCRYPTED_LENGTH	\
+		(SSL3_RT_MAX_ENCRYPTED_OVERHEAD+SSL3_RT_MAX_COMPRESSED_LENGTH)
+#define SSL3_RT_MAX_PACKET_SIZE		\
+		(SSL3_RT_MAX_ENCRYPTED_LENGTH+SSL3_RT_HEADER_LENGTH)
 #define SSL3_RT_MAX_DATA_SIZE			(1024*1024)
 
 #define SSL3_MD_CLIENT_FINISHED_CONST	"\x43\x4C\x4E\x54"
@@ -346,6 +380,9 @@ typedef struct ssl3_state_st
 	/* flags for countermeasure against known-IV weakness */
 	int need_empty_fragments;
 	int empty_fragment_done;
+
+	/* The value of 'extra' when the buffers were initialized */
+	int init_extra;
 
 	SSL3_BUFFER rbuf;	/* read IO goes into here */
 	SSL3_BUFFER wbuf;	/* write IO goes into here */

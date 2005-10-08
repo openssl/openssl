@@ -4,6 +4,12 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) New option SSL_OP_NO_COMP to disable use of compression selectively
+     in SSL structures. New SSL ctrl to set maximum send fragment size. 
+     Save memory by seeting the I/O buffer sizes dynamically instead of
+     using the maximum available value.
+     [Steve Henson]
+
   *) New option -V for 'openssl ciphers'. This prints the ciphersuite code
      in addition to the text details.
      [Bodo Moeller]

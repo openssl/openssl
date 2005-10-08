@@ -589,16 +589,22 @@ int ssl_verify_alarm_type(long type)
 int ssl3_setup_buffers(SSL *s)
 	{
 	unsigned char *p;
-	unsigned int extra;
 	size_t len;
 
 	if (s->s3->rbuf.buf == NULL)
 		{
+		len = SSL3_RT_MAX_PLAIN_LENGTH
+			+ SSL3_RT_MAX_ENCRYPTED_OVERHEAD
+			+ SSL3_RT_HEADER_LENGTH;
 		if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
-			extra=SSL3_RT_MAX_EXTRA;
-		else
-			extra=0;
-		len = SSL3_RT_MAX_PACKET_SIZE + extra;
+			{
+			s->s3->init_extra = 1;
+			len += SSL3_RT_MAX_EXTRA;
+			}
+#ifndef OPENSSL_NO_COMP
+		if (!(s->options & SSL_OP_NO_COMPRESSION))
+			len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+#endif
 		if ((p=OPENSSL_malloc(len)) == NULL)
 			goto err;
 		s->s3->rbuf.buf = p;
@@ -607,8 +613,16 @@ int ssl3_setup_buffers(SSL *s)
 
 	if (s->s3->wbuf.buf == NULL)
 		{
-		len = SSL3_RT_MAX_PACKET_SIZE;
-		len += SSL3_RT_HEADER_LENGTH + 256; /* extra space for empty fragment */
+		len = s->max_send_fragment
+			+ SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD
+			+ SSL3_RT_HEADER_LENGTH;
+#ifndef OPENSSL_NO_COMP
+		if (!(s->options & SSL_OP_NO_COMPRESSION))
+			len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+#endif
+		if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
+			len += SSL3_RT_HEADER_LENGTH
+				+ SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
 		if ((p=OPENSSL_malloc(len)) == NULL)
 			goto err;
 		s->s3->wbuf.buf = p;

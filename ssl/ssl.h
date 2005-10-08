@@ -503,6 +503,8 @@ typedef struct ssl_session_st
 
 /* As server, disallow session resumption on renegotiation */
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
+/* Don't use compression even if supported */
+#define SSL_OP_NO_COMPRESSION				0x00020000L
 /* If set, always create a new key when using tmp_ecdh parameters */
 #define SSL_OP_SINGLE_ECDH_USE				0x00080000L
 /* If set, always create a new key when using tmp_dh parameters */
@@ -747,6 +749,12 @@ struct ssl_ctx_st
 #endif
 
 	int quiet_shutdown;
+
+	/* Maximum amount of data to send in one fragment.
+	 * actual record size can be more than this due to
+	 * padding and MAC overheads.
+	 */
+	int max_send_fragment;
 	};
 
 #define SSL_SESS_CACHE_OFF			0x0000
@@ -968,6 +976,7 @@ struct ssl_st
 	int first_packet;
 	int client_version;	/* what was passed, used for
 				 * SSLv3/TLS rollback check */
+	int max_send_fragment;
 	};
 
 #ifdef __cplusplus
@@ -1170,6 +1179,8 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 
 #define SSL_CTRL_GET_MAX_CERT_LIST		50
 #define SSL_CTRL_SET_MAX_CERT_LIST		51
+
+#define SSL_CTRL_SET_MAX_SEND_FRAGMENT		52
 
 #define SSL_session_reused(ssl) \
 	SSL_ctrl((ssl),SSL_CTRL_GET_SESSION_REUSED,0,NULL)
@@ -1491,6 +1502,11 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void );
 	SSL_ctrl(ssl,SSL_CTRL_GET_MAX_CERT_LIST,0,NULL)
 #define SSL_set_max_cert_list(ssl,m) \
 	SSL_ctrl(ssl,SSL_CTRL_SET_MAX_CERT_LIST,m,NULL)
+
+#define SSL_CTX_set_max_send_fragment(ctx,m) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_MAX_SEND_FRAGMENT,m,NULL)
+#define SSL_set_max_send_fragment(ssl,m) \
+	SSL_ctrl(ssl,SSL_CTRL_SET_MAX_SEND_FRAGMENT,m,NULL)
 
      /* NB: the keylength is only applicable when is_export is true */
 #ifndef OPENSSL_NO_RSA

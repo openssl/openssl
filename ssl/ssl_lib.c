@@ -303,6 +303,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->trust = ctx->trust;
 #endif
 	s->quiet_shutdown=ctx->quiet_shutdown;
+	s->max_send_fragment = ctx->max_send_fragment;
 
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->ctx=ctx;
@@ -973,6 +974,11 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 			return larg;
 			}
 		return 0;
+	case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
+		if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
+			return 0;
+		s->max_send_fragment = larg;
+		return 1;
 	default:
 		return(s->method->ssl_ctrl(s,cmd,larg,parg));
 		}
@@ -1061,6 +1067,11 @@ long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,void *parg)
 		return(ctx->options|=larg);
 	case SSL_CTRL_MODE:
 		return(ctx->mode|=larg);
+	case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
+		if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
+			return 0;
+		ctx->max_send_fragment = larg;
+		return 1;
 	default:
 		return(ctx->method->ssl_ctx_ctrl(ctx,cmd,larg,parg));
 		}
@@ -1452,6 +1463,8 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
 	ret->extra_certs=NULL;
 	ret->comp_methods=SSL_COMP_get_compression_methods();
+
+	ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
 	return(ret);
 err:

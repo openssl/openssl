@@ -588,7 +588,9 @@ int ssl3_client_hello(SSL *s)
 #ifdef OPENSSL_NO_COMP
 		*(p++)=1;
 #else
-		if (s->ctx->comp_methods == NULL)
+
+		if ((s->options & SSL_OP_NO_COMPRESSION)
+					|| !s->ctx->comp_methods)
 			j=0;
 		else
 			j=sk_SSL_COMP_num(s->ctx->comp_methods);
@@ -768,7 +770,7 @@ int ssl3_get_server_hello(SSL *s)
 		}
 #else
 	j= *(p++);
-	if (j == 0)
+	if ((j == 0) || (s->options & SSL_OP_NO_COMPRESSION))
 		comp=NULL;
 	else
 		comp=ssl3_comp_find(s->ctx->comp_methods,j);

@@ -754,6 +754,8 @@ int MAIN(int argc, char *argv[])
 			{ off|=SSL_OP_NO_SSLv3; }
 		else if	(strcmp(*argv,"-no_tls1") == 0)
 			{ off|=SSL_OP_NO_TLSv1; }
+		else if	(strcmp(*argv,"-no_comp") == 0)
+			{ off|=SSL_OP_NO_COMPRESSION; }
 #ifndef OPENSSL_NO_SSL2
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			{ meth=SSLv2_server_method(); }
