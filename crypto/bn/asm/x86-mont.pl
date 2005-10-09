@@ -6,6 +6,8 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 
+# October 2005
+#
 # This is a "teaser" code, as it can be improved in several ways...
 # First of all non-SSE2 path should be implemented (yes, for now it
 # performs Montgomery multiplication/convolution only on SSE2-capable
