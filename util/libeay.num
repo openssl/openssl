@@ -3367,3 +3367,14 @@ pitem_free                              3767	EXIST::FUNCTION:
 BN_GF2m_mod_inv_arr                     3768	EXIST::FUNCTION:
 ENGINE_unregister_ECDSA                 3769	EXIST::FUNCTION:ENGINE
 BN_BLINDING_set_thread_id               3770	EXIST::FUNCTION:
+get_rfc3526_prime_8192                  3771	EXIST::FUNCTION:
+X509_VERIFY_PARAM_clear_flags           3772	EXIST::FUNCTION:
+get_rfc2409_prime_1024                  3773	EXIST::FUNCTION:
+DH_check_pub_key                        3774	EXIST::FUNCTION:DH
+get_rfc3526_prime_2048                  3775	EXIST::FUNCTION:
+get_rfc3526_prime_6144                  3776	EXIST::FUNCTION:
+get_rfc3526_prime_1536                  3777	EXIST::FUNCTION:
+get_rfc3526_prime_3072                  3778	EXIST::FUNCTION:
+get_rfc3526_prime_4096                  3779	EXIST::FUNCTION:
+get_rfc2409_prime_768                   3780	EXIST::FUNCTION:
+X509_VERIFY_PARAM_get_flags             3781	EXIST::FUNCTION:
