@@ -188,7 +188,7 @@ $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_print,bn_rand,bn_shift,bn_word,bn_blind,"+ -
 	"bn_kron,bn_sqrt,bn_gcd,bn_prime,bn_err,bn_sqr,"+LIB_BN_ASM+","+ -
 	"bn_recp,bn_mont,bn_mpi,bn_exp2,bn_gf2m,bn_nist,"+ -
-	"bn_depr"
+	"bn_depr,bn_const"
 $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec_err,ec_curve,ec_check,ec_print,ec_asn1,ec_key,"+ -
 	"ec2_smpl,ec2_mult"
