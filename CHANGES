@@ -45,7 +45,17 @@
   *) Add print and set support for Issuing Distribution Point CRL extension.
      [Steve Henson]
 
- Changes between 0.9.8 and 0.9.8a  [XX xxx XXXX]
+ Changes between 0.9.8 and 0.9.8a  [11 Oct 2005]
+
+  *) Remove the functionality of SSL_OP_MSIE_SSLV2_RSA_PADDING
+     (part of SSL_OP_ALL).  This option used to disable the
+     countermeasure against man-in-the-middle protocol-version
+     rollback in the SSL 2.0 server implementation, which is a bad
+     idea.  (CAN-2005-2969)
+
+     [Bodo Moeller; problem pointed out by Yutaka Oiwa (Research Center
+     for Information Security, National Institute of Advanced Industrial
+     Science and Technology [AIST], Japan)]
 
   *) Add two function to clear and return the verify parameter flags.
      [Steve Henson]
@@ -891,7 +901,17 @@
      differing sizes.
      [Richard Levitte]
 
- Changes between 0.9.7g and 0.9.7h  [XX xxx XXXX]
+ Changes between 0.9.7g and 0.9.7h  [11 Oct 2005]
+
+  *) Remove the functionality of SSL_OP_MSIE_SSLV2_RSA_PADDING
+     (part of SSL_OP_ALL).  This option used to disable the
+     countermeasure against man-in-the-middle protocol-version
+     rollback in the SSL 2.0 server implementation, which is a bad
+     idea.  (CAN-2005-2969)
+
+     [Bodo Moeller; problem pointed out by Yutaka Oiwa (Research Center
+     for Information Security, National Institute of Advanced Industrial
+     Science and Technology [AIST], Japan)]
 
   *) Minimal support for X9.31 signatures and PSS padding modes. This is
      mainly for FIPS compliance and not fully integrated at this stage.
