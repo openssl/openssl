@@ -2,6 +2,8 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8a and 0.9.8b  [XX xxx XXXX]
+
  Changes between 0.9.8 and 0.9.8a  [11 Oct 2005]
 
   *) Remove the functionality of SSL_OP_MSIE_SSLV2_RSA_PADDING
