@@ -2,7 +2,17 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7g and 0.9.7h  [XX xxx XXXX]
+ Changes between 0.9.7g and 0.9.7h  [11 Oct 2005]
+
+  *) Remove the functionality of SSL_OP_MSIE_SSLV2_RSA_PADDING
+     (part of SSL_OP_ALL).  This option used to disable the
+     countermeasure against man-in-the-middle protocol-version
+     rollback in the SSL 2.0 server implementation, which is a bad
+     idea.  (CAN-2005-2969)
+
+     [Bodo Moeller; problem pointed out by Yutaka Oiwa (Research Center
+     for Information Security, National Institute of Advanced Industrial
+     Science and Technology [AIST], Japan)]
 
   *) Minimal support for X9.31 signatures and PSS padding modes. This is
      mainly for FIPS compliance and not fully integrated at this stage.
@@ -52,6 +62,9 @@
      [Steve Henson]
 
  Changes between 0.9.7f and 0.9.7g  [11 Apr 2005]
+
+  [NB: OpenSSL 0.9.7h and later 0.9.7 patch levels were released after
+  OpenSSL 0.9.8.]
 
   *) Fixes for newer kerberos headers. NB: the casts are needed because
      the 'length' field is signed on one version and unsigned on another

@@ -268,9 +268,6 @@ int ssl23_get_client_hello(SSL *s)
 	int n=0,j;
 	int type=0;
 	int v[2];
-#ifndef OPENSSL_NO_RSA
-	int use_sslv2_strong=0;
-#endif
 
 	if (s->state ==	SSL23_ST_SR_CLNT_HELLO_A)
 		{
@@ -528,9 +525,7 @@ int ssl23_get_client_hello(SSL *s)
 			}
 
 		s->state=SSL2_ST_GET_CLIENT_HELLO_A;
-		if ((s->options & SSL_OP_MSIE_SSLV2_RSA_PADDING) ||
-			use_sslv2_strong ||
-			(s->options & SSL_OP_NO_TLSv1 && s->options & SSL_OP_NO_SSLv3))
+		if (s->options & SSL_OP_NO_TLSv1 && s->options & SSL_OP_NO_SSLv3)
 			s->s2->ssl2_rollback=0;
 		else
 			/* reject SSL 2.0 session if client supports SSL 3.0 or TLS 1.0

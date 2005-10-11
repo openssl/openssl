@@ -1,10 +1,13 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2005/04/11 15:10:06 $
+  ______________                           $Date: 2005/10/11 10:10:03 $
 
   DEVELOPMENT STATE
 
-    o  OpenSSL 0.9.8:  Under development...
+    o  OpenSSL 0.9.9:  Under development...
+    o  OpenSSL 0.9.8a: Released on October   11th, 2005
+    o  OpenSSL 0.9.8:  Released on July       5th, 2005
+    o  OpenSSL 0.9.7h: Released on October   11th, 2005
     o  OpenSSL 0.9.7g: Released on April     11th, 2005
     o  OpenSSL 0.9.7f: Released on March     22nd, 2005
     o  OpenSSL 0.9.7e: Released on October   25th, 2004
