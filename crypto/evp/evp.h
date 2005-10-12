@@ -135,7 +135,7 @@
 #ifdef OPENSSL_FIPS
 #define EVP_MAX_MD_SIZE			64	/* longest known SHA512 */
 #else
-#define EXP_MAX_MD_SIZE			(16+20)	/* The SSLv3 md5+sha1 type */
+#define EVP_MAX_MD_SIZE			(16+20)	/* The SSLv3 md5+sha1 type */
 #endif
 #define EVP_MAX_KEY_LENGTH		32
 #define EVP_MAX_IV_LENGTH		16
