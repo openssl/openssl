@@ -60,7 +60,6 @@ $mask="mm7";
 if($sse2) {
 	&picmeup("eax","OPENSSL_ia32cap_P");
 	&bt	(&DWP(0,"eax"),26);
-	&mov	("eax",0);		# zero signals "we did nothing"
 	&jnc	(&label("non_sse2"));
 
 	################################# load argument block...
@@ -232,9 +231,13 @@ if($sse2) {
 &set_label("exit_sse2");
 	&mov	("esp",$_sp);		# pull saved stack pointer
 	&mov	("eax",1);
+	&jmp	(&label("leave"));
 &set_label("non_sse2");
 }
 
+	&xor	("eax","eax");	# zero signals "not implemented [yet]"
+
+&set_label("leave");
 &function_end("bn_mul_mont");
 
 &asm_finish();
