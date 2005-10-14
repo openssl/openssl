@@ -137,8 +137,7 @@ fips_sha256.o: ../../include/openssl/fips.h ../../include/openssl/fips_sha.h
 fips_sha256.o: ../../include/openssl/opensslconf.h
 fips_sha256.o: ../../include/openssl/opensslv.h
 fips_sha256.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_sha256.o: ../../include/openssl/symhacks.h fips_md32_common.h
-fips_sha256.o: fips_sha256.c
+fips_sha256.o: ../../include/openssl/symhacks.h fips_sha256.c
 fips_sha512.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 fips_sha512.o: ../../include/openssl/fips.h ../../include/openssl/fips_sha.h
 fips_sha512.o: ../../include/openssl/opensslconf.h

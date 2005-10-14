@@ -126,6 +126,40 @@ fips_rsa_selftest.o: ../../include/openssl/rsa.h
 fips_rsa_selftest.o: ../../include/openssl/safestack.h
 fips_rsa_selftest.o: ../../include/openssl/stack.h
 fips_rsa_selftest.o: ../../include/openssl/symhacks.h fips_rsa_selftest.c
+fips_rsa_x931g.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+fips_rsa_x931g.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+fips_rsa_x931g.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_rsa_x931g.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+fips_rsa_x931g.o: ../../include/openssl/opensslconf.h
+fips_rsa_x931g.o: ../../include/openssl/opensslv.h
+fips_rsa_x931g.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rsa.h
+fips_rsa_x931g.o: ../../include/openssl/safestack.h
+fips_rsa_x931g.o: ../../include/openssl/stack.h
+fips_rsa_x931g.o: ../../include/openssl/symhacks.h fips_rsa_x931g.c
+fips_rsagtest.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+fips_rsagtest.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
+fips_rsagtest.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+fips_rsagtest.o: ../../include/openssl/cast.h ../../include/openssl/conf.h
+fips_rsagtest.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+fips_rsagtest.o: ../../include/openssl/des_old.h ../../include/openssl/dh.h
+fips_rsagtest.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_rsagtest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+fips_rsagtest.o: ../../include/openssl/hmac.h ../../include/openssl/idea.h
+fips_rsagtest.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
+fips_rsagtest.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
+fips_rsagtest.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
+fips_rsagtest.o: ../../include/openssl/objects.h
+fips_rsagtest.o: ../../include/openssl/opensslconf.h
+fips_rsagtest.o: ../../include/openssl/opensslv.h
+fips_rsagtest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
+fips_rsagtest.o: ../../include/openssl/rc2.h ../../include/openssl/rc4.h
+fips_rsagtest.o: ../../include/openssl/rc5.h ../../include/openssl/ripemd.h
+fips_rsagtest.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+fips_rsagtest.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+fips_rsagtest.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+fips_rsagtest.o: ../../include/openssl/ui_compat.h ../../include/openssl/x509.h
+fips_rsagtest.o: ../../include/openssl/x509_vfy.h
+fips_rsagtest.o: ../../include/openssl/x509v3.h fips_rsagtest.c
 fips_rsastest.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
 fips_rsastest.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
 fips_rsastest.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h

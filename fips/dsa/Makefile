@@ -146,3 +146,4 @@ fips_dsatest.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 fips_dsatest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 fips_dsatest.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
 fips_dsatest.o: fips_dsatest.c
+fips_dssvs.o: ../../include/openssl/opensslconf.h fips_dssvs.c

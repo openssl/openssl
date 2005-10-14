@@ -125,3 +125,4 @@ fips_randtest.o: ../../include/openssl/safestack.h
 fips_randtest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 fips_randtest.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
 fips_randtest.o: fips_randtest.c
+fips_rngvs.o: ../../include/openssl/opensslconf.h fips_rngvs.c

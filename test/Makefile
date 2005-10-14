@@ -613,6 +613,7 @@ fips_dsatest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 fips_dsatest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 fips_dsatest.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
 fips_dsatest.o: fips_dsatest.c
+fips_dssvs.o: ../include/openssl/opensslconf.h fips_dssvs.c
 fips_hmactest.o: ../include/openssl/aes.h ../include/openssl/asn1.h
 fips_hmactest.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 fips_hmactest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
@@ -644,6 +645,29 @@ fips_randtest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
 fips_randtest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 fips_randtest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
 fips_randtest.o: ../include/openssl/ui_compat.h fips_randtest.c
+fips_rngvs.o: ../include/openssl/opensslconf.h fips_rngvs.c
+fips_rsagtest.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_rsagtest.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+fips_rsagtest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+fips_rsagtest.o: ../include/openssl/cast.h ../include/openssl/conf.h
+fips_rsagtest.o: ../include/openssl/crypto.h ../include/openssl/des.h
+fips_rsagtest.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+fips_rsagtest.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips_rsagtest.o: ../include/openssl/err.h ../include/openssl/evp.h
+fips_rsagtest.o: ../include/openssl/hmac.h ../include/openssl/idea.h
+fips_rsagtest.o: ../include/openssl/lhash.h ../include/openssl/md2.h
+fips_rsagtest.o: ../include/openssl/md4.h ../include/openssl/md5.h
+fips_rsagtest.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+fips_rsagtest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+fips_rsagtest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+fips_rsagtest.o: ../include/openssl/pkcs7.h ../include/openssl/rc2.h
+fips_rsagtest.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+fips_rsagtest.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
+fips_rsagtest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+fips_rsagtest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+fips_rsagtest.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
+fips_rsagtest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+fips_rsagtest.o: ../include/openssl/x509v3.h fips_rsagtest.c
 fips_rsastest.o: ../include/openssl/aes.h ../include/openssl/asn1.h
 fips_rsastest.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 fips_rsastest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
@@ -710,6 +734,20 @@ fips_shatest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
 fips_shatest.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
 fips_shatest.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h
 fips_shatest.o: fips_shatest.c
+fips_test_suite.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_test_suite.o: ../include/openssl/bio.h ../include/openssl/bn.h
+fips_test_suite.o: ../include/openssl/crypto.h ../include/openssl/des.h
+fips_test_suite.o: ../include/openssl/des_old.h ../include/openssl/dh.h
+fips_test_suite.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips_test_suite.o: ../include/openssl/err.h ../include/openssl/fips.h
+fips_test_suite.o: ../include/openssl/lhash.h ../include/openssl/md5.h
+fips_test_suite.o: ../include/openssl/opensslconf.h
+fips_test_suite.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+fips_test_suite.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+fips_test_suite.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+fips_test_suite.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+fips_test_suite.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
+fips_test_suite.o: fips_test_suite.c
 hmactest.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
 hmactest.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
 hmactest.o: ../include/openssl/bn.h ../include/openssl/cast.h

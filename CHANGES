@@ -2,7 +2,14 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7h and 0.9.7i  [XX xxx XXXX]
+ Changes between 0.9.7h and 0.9.7i  [14 Oct 2005]
+
+  *) Wrapped the definition of EVP_MAX_MD_SIZE in a #ifdef OPENSSL_FIPS.
+     The value now differs depending on if you build for FIPS or not.
+     BEWARE!  A program linked with a shared FIPSed libcrypto can't be
+     safely run with a non-FIPSed libcrypto, as it may crash because of
+     the difference induced by this change.
+     [Andy Polyakov]
 
  Changes between 0.9.7g and 0.9.7h  [11 Oct 2005]
 

@@ -329,3 +329,5 @@ bn_word.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bn_word.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 bn_word.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 bn_word.o: ../cryptlib.h bn_lcl.h bn_word.c
+bn_x931p.o: ../../include/openssl/bn.h ../../include/openssl/e_os2.h
+bn_x931p.o: ../../include/openssl/opensslconf.h bn_x931p.c
