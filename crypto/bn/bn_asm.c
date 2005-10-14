@@ -835,8 +835,12 @@ void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
  * observed to give 40% faster rsa1024 private key operations and 10%
  * faster rsa4096 ones, while on AMD64 it improves rsa1024 sign only
  * by 10% and *worsens* rsa4096 sign by 15%. Once again, it's a
- * reference implementation, one to be used as start-point for
- * platform-specific assembler.
+ * reference implementation, one to be used as starting point for
+ * platform-specific assembler. Mentioned numbers apply to compiler
+ * generated code compiled with and without -DOPENSSL_BN_ASM_MONT and
+ * can vary not only from platform to platform, but even for compiler
+ * versions. Assembler vs. assembler improvement coefficients can
+ * [and are known to] differ and are to be documented elsewhere.
  */
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num)
 	{
@@ -963,12 +967,12 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 	for(i=0;i<num;i++)
 		{
 		c0         = bn_mul_add_words(tp,ap,num,bp[i]);
-		c1         = tp[num] + c0;
+		c1         = (tp[num] + c0)&BN_MASK2;
 		tp[num]    = c1;
 		tp[num+1]  = (c1<c0?1:0);
 
 		c0         = bn_mul_add_words(tp,np,num,tp[0]*n0);
-		c1         = tp[num] + c0;
+		c1         = (tp[num] + c0)&BN_MASK2;
 		tp[num]    = c1;
 		tp[num+1] += (c1<c0?1:0);
 		for(j=0;j<=num;j++)	tp[j]=tp[j+1];
