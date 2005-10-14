@@ -37,16 +37,15 @@ $ap="esi";
 $rp="edi";	$bp="edi";		# overlapping variables!!!
 $np="edx";
 $num="ebp";
-$tp="esp";
 
-$bias=2;				# amount of extra words in tp
-					# (rounded up to even value)
-$_rp=&DWP(4*($bias+0),"esp",$num,4);	# stack frame layout below tp
-$_ap=&DWP(4*($bias+1),"esp",$num,4);
-$_bp=&DWP(4*($bias+2),"esp",$num,4);
-$_np=&DWP(4*($bias+3),"esp",$num,4);
-$_n0=&DWP(4*($bias+4),"esp",$num,4);
-$_sp=&DWP(4*($bias+5),"esp",$num,4);
+$_rp=&DWP(4*0,"esp");			# stack top layout
+$_ap=&DWP(4*1,"esp");
+$_bp=&DWP(4*2,"esp");
+$_np=&DWP(4*3,"esp");
+$_n0=&DWP(4*4,"esp");
+$_num=&DWP(4*5,"esp");
+$_sp=&DWP(4*6,"esp");
+$frame=32;				# size of above frame rounded up to 16n
 
 $acc0="mm0";				# mmx register bank layout
 $acc1="mm1";
@@ -71,12 +70,12 @@ if($sse2) {
 	&mov	($num,&wparam(5));	# int num
 
 	&mov	("edi","esp");		# saved stack pointer!
-	&add	($num,$bias+6);
+	&add	($num,1);		# extra word on top of tp
 	&neg	($num);
-	&lea	("esp",&DWP(0,"esp",$num,4));	# alloca(4*(num+$bias+6))
+	&lea	("esp",&DWP(-$frame,"esp",$num,4));	# alloca($frame+8*($num+1))
 	&neg	($num);
 	&and	("esp",-1024);		# minimize TLB utilization
-	&sub	($num,$bias+6);		# num is restored to its original value
+	&sub	($num,1);		# num is restored to its original value
 					# and will remain constant from now...
 
 	&mov	($_rp,"eax");		# ... save a copy of argument block
@@ -84,6 +83,7 @@ if($sse2) {
 	&mov	($_bp,"ecx");
 	&mov	($_np,"edx");
 	&mov	($_n0,"esi");
+	#&mov	($_num,$num);		# redundant in sse2 context
 	&mov	($_sp,"edi");		# saved stack pointer!
 
 	&mov	("eax",-1);
@@ -126,7 +126,7 @@ if($sse2) {
 
 	&paddq	($car1,$acc1);			# +=c1
 	&paddq	($car1,$acc0);			# +=ap[j]*bp[0];
-	&movd	(&DWP(-4,"esp",$j,4),$car1);	# tp[j-1]=
+	&movd	(&DWP($frame-4,"esp",$j,4),$car1);	# tp[j-1]=
 
 	&psrlq	($car0,32);
 	&psrlq	($car1,32);
@@ -136,7 +136,7 @@ if($sse2) {
 	&jl	(&label("1st"));
 
 	&paddq	($car1,$car0);
-	&movq	(&DWP(-4,"esp",$num,4),$car1);
+	&movq	(&DWP($frame-4,"esp",$num,4),$car1);
 
 	&inc	($i);				# i++
 &set_label("outer");
@@ -144,8 +144,8 @@ if($sse2) {
 
 	&movd	($mul0,&DWP(0,$bp,$i,4));	# bp[i]
 	&movd	($mul1,&DWP(0,$ap));		# ap[0]
-	&movd	($temp,&DWP(0,"esp"));		# tp[0]
-	&movd	($car1,&DWP(0,$np,$j,4));	# np[0]
+	&movd	($temp,&DWP($frame,"esp"));	# tp[0]
+	&movd	($car1,&DWP(0,$np));		# np[0]
 	&pmuludq($mul1,$mul0);			# ap[0]*bp[i]
 
 	&paddq	($mul1,$temp);			# +=tp[0]
@@ -165,7 +165,7 @@ if($sse2) {
 &set_label("inner");
 	&movd	($acc0,&DWP(0,$ap,$j,4));	# ap[j]
 	&movd	($acc1,&DWP(0,$np,$j,4));	# np[j]
-	&movd	($temp,&DWP(0,"esp",$j,4));	# tp[j]
+	&movd	($temp,&DWP($frame,"esp",$j,4));# tp[j]
 	&pmuludq($acc0,$mul0);			# ap[j]*bp[i]
 	&pmuludq($acc1,$mul1);			# np[j]*m1
 	&paddq	($car0,$temp);			# +=tp[j]
@@ -175,7 +175,7 @@ if($sse2) {
 
 	&paddq	($car1,$acc1);			# +=c1
 	&paddq	($car1,$acc0);			# +=ap[j]*bp[i]+tp[j]
-	&movd	(&DWP(-4,"esp",$j,4),$car1);	# tp[j-1]
+	&movd	(&DWP($frame-4,"esp",$j,4),$car1);	# tp[j-1]=
 
 	&psrlq	($car0,32);
 	&psrlq	($car1,32);
@@ -184,10 +184,10 @@ if($sse2) {
 	&cmp	($j,$num);
 	&jl	(&label("inner"));
 
-	&movd	($temp,&DWP(0,"esp",$num,4));
+	&movd	($temp,&DWP($frame,"esp",$num,4));
 	&paddq	($car1,$car0);
 	&paddq	($car1,$temp);
-	&movq	(&DWP(-4,"esp",$num,4),$car1);
+	&movq	(&DWP($frame-4,"esp",$num,4),$car1);
 
 	&lea	($i,&DWP(1,$i));		# i++
 	&cmp	($i,$num);
@@ -195,26 +195,26 @@ if($sse2) {
 
 	&emms	();				# done with mmx bank
 
-	&mov	("esi",&DWP(0,"esp",$num,4));	# load upmost overflow bit
+	&mov	("esi",&DWP($frame,"esp",$num,4));# load upmost overflow bit
 	&mov	($rp,$_rp);			# load result pointer
 						# [$ap and $bp are zapped]
 	&xor	($i,$i);			# i=0
 	&lea	($j,&DWP(-1,$num));		# j=num-1
 	&cmp	("esi",0);			# clears CF unconditionally
 	&jnz	(&label("sub"));
-	&mov	("eax",&DWP(0,"esp",$j,4));
+	&mov	("eax",&DWP($frame,"esp",$j,4));
 	&cmp	("eax",&DWP(0,$np,$j,4));	# tp[num-1]-np[num-1]?
 	&jae	(&label("sub"));		# if taken CF is cleared
 &set_label("copy");
-	&mov	("eax",&DWP(0,"esp",$j,4));
+	&mov	("eax",&DWP($frame,"esp",$j,4));
 	&mov	(&DWP(0,$rp,$j,4),"eax");	# rp[i]=tp[i]
-	&mov	(&DWP(0,"esp",$j,4),$j);	# zap temporary vector
+	&mov	(&DWP($frame,"esp",$j,4),$j);	# zap temporary vector
 	&dec	($j);
 	&jge	(&label("copy"));
 	&jmp	(&label("exit_sse2"));
 
 &set_label("sub",4);
-	&mov	("eax",&DWP(0,"esp",$i,4));
+	&mov	("eax",&DWP($frame,"esp",$i,4));
 	&sbb	("eax",&DWP(0,$np,$i,4));
 	&mov	(&DWP(0,$rp,$i,4),"eax");	# rp[i]=tp[i]-np[i]
 	&lea	($i,&DWP(1,$i));		# i++
@@ -224,7 +224,7 @@ if($sse2) {
 	&sbb	("esi",0);			# esi holds upmost overflow bit
 	&jc	(&label("copy"));
 &set_label("zap");
-	&mov	(&DWP(0,"esp",$j,4),$i);	# zap temporary vector
+	&mov	(&DWP($frame,"esp",$j,4),$i);	# zap temporary vector
 	&dec	($j);
 	&jge	(&label("zap"));
 
