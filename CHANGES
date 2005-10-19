@@ -10,7 +10,7 @@
      (part of SSL_OP_ALL).  This option used to disable the
      countermeasure against man-in-the-middle protocol-version
      rollback in the SSL 2.0 server implementation, which is a bad
-     idea.  (CAN-2005-2969)
+     idea.  (CVE-2005-2969)
 
      [Bodo Moeller; problem pointed out by Yutaka Oiwa (Research Center
      for Information Security, National Institute of Advanced Industrial
@@ -1040,11 +1040,11 @@
  Changes between 0.9.7c and 0.9.7d  [17 Mar 2004]
 
   *) Fix null-pointer assignment in do_change_cipher_spec() revealed           
-     by using the Codenomicon TLS Test Tool (CAN-2004-0079)                    
+     by using the Codenomicon TLS Test Tool (CVE-2004-0079)                    
      [Joe Orton, Steve Henson]   
 
   *) Fix flaw in SSL/TLS handshaking when using Kerberos ciphersuites
-     (CAN-2004-0112)
+     (CVE-2004-0112)
      [Joe Orton, Steve Henson]   
 
   *) Make it possible to have multiple active certificates with the same
@@ -1087,9 +1087,9 @@
   *) Fix various bugs revealed by running the NISCC test suite:
 
      Stop out of bounds reads in the ASN1 code when presented with
-     invalid tags (CAN-2003-0543 and CAN-2003-0544).
+     invalid tags (CVE-2003-0543 and CVE-2003-0544).
      
-     Free up ASN1_TYPE correctly if ANY type is invalid (CAN-2003-0545).
+     Free up ASN1_TYPE correctly if ANY type is invalid (CVE-2003-0545).
 
      If verify callback ignores invalid public key errors don't try to check
      certificate signature with the NULL public key.
@@ -1174,7 +1174,7 @@
      via timing by performing a MAC computation even if incorrrect
      block cipher padding has been found.  This is a countermeasure
      against active attacks where the attacker has to distinguish
-     between bad padding and a MAC verification error. (CAN-2003-0078)
+     between bad padding and a MAC verification error. (CVE-2003-0078)
 
      [Bodo Moeller; problem pointed out by Brice Canvel (EPFL),
      Alain Hiltgen (UBS), Serge Vaudenay (EPFL), and
@@ -1391,7 +1391,7 @@
 
      Remote buffer overflow in SSL3 protocol - an attacker could
      supply an oversized master key in Kerberos-enabled versions.
-     (CAN-2002-0657)
+     (CVE-2002-0657)
      [Ben Laurie (CHATS)]
 
   *) Change the SSL kerb5 codes to match RFC 2712.
@@ -3075,7 +3075,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
  Changes between 0.9.6l and 0.9.6m  [17 Mar 2004]
 
   *) Fix null-pointer assignment in do_change_cipher_spec() revealed
-     by using the Codenomicon TLS Test Tool (CAN-2004-0079)
+     by using the Codenomicon TLS Test Tool (CVE-2004-0079)
      [Joe Orton, Steve Henson]
 
  Changes between 0.9.6k and 0.9.6l  [04 Nov 2003]
@@ -3083,7 +3083,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Fix additional bug revealed by the NISCC test suite:
 
      Stop bug triggering large recursion when presented with
-     certain ASN.1 tags (CAN-2003-0851)
+     certain ASN.1 tags (CVE-2003-0851)
      [Steve Henson]
 
  Changes between 0.9.6j and 0.9.6k  [30 Sep 2003]
@@ -3091,7 +3091,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Fix various bugs revealed by running the NISCC test suite:
 
      Stop out of bounds reads in the ASN1 code when presented with
-     invalid tags (CAN-2003-0543 and CAN-2003-0544).
+     invalid tags (CVE-2003-0543 and CVE-2003-0544).
      
      If verify callback ignores invalid public key errors don't try to check
      certificate signature with the NULL public key.
@@ -3143,7 +3143,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      via timing by performing a MAC computation even if incorrrect
      block cipher padding has been found.  This is a countermeasure
      against active attacks where the attacker has to distinguish
-     between bad padding and a MAC verification error. (CAN-2003-0078)
+     between bad padding and a MAC verification error. (CVE-2003-0078)
 
      [Bodo Moeller; problem pointed out by Brice Canvel (EPFL),
      Alain Hiltgen (UBS), Serge Vaudenay (EPFL), and
@@ -3276,7 +3276,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Add various sanity checks to asn1_get_length() to reject
      the ASN1 length bytes if they exceed sizeof(long), will appear
      negative or the content length exceeds the length of the
-     supplied buffer. (CAN-2002-0659)
+     supplied buffer. (CVE-2002-0659)
      [Steve Henson, Adi Stav <stav@mercury.co.il>, James Yonan <jim@ntlp.com>]
 
   *) Assertions for various potential buffer overflows, not known to
@@ -3284,15 +3284,15 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Ben Laurie (CHATS)]
 
   *) Various temporary buffers to hold ASCII versions of integers were
-     too small for 64 bit platforms. (CAN-2002-0655)
+     too small for 64 bit platforms. (CVE-2002-0655)
      [Matthew Byng-Maddick <mbm@aldigital.co.uk> and Ben Laurie (CHATS)>
 
   *) Remote buffer overflow in SSL3 protocol - an attacker could
-     supply an oversized session ID to a client. (CAN-2002-0656)
+     supply an oversized session ID to a client. (CVE-2002-0656)
      [Ben Laurie (CHATS)]
 
   *) Remote buffer overflow in SSL2 protocol - an attacker could
-     supply an oversized client master key. (CAN-2002-0656)
+     supply an oversized client master key. (CVE-2002-0656)
      [Ben Laurie (CHATS)]
 
  Changes between 0.9.6c and 0.9.6d  [9 May 2002]
