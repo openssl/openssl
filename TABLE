@@ -783,6 +783,33 @@ $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = -X 64
 
+*** aix64-gcc
+$cc           = gcc
+$cflags       = -O -DB_ENDIAN
+$unistd       = 
+$thread_cflag = -D_THREAD_SAFE
+$sys_id       = AIX
+$lflags       = 
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR
+$cpuid_obj    = 
+$bn_obj       = aix_ppc64.o
+$des_obj      = 
+$aes_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+$arflags      = -X64
+
 *** aux3-gcc
 $cc           = gcc
 $cflags       = -O2 -DTERMIO
