@@ -144,7 +144,7 @@ $sys_id       =
 $lflags       = 
 $bn_ops       = SIXTY_FOUR_BIT_LONG RC2_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC2 BF_PTR
 $cpuid_obj    = 
-$bn_obj       = 
+$bn_obj       = bn_asm.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
 $aes_obj      = 
 $bf_obj       = 
@@ -2864,14 +2864,14 @@ $arflags      =
 
 *** linux-sparcv9
 $cc           = gcc
-$cflags       = -m32 -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DBN_DIV2W
+$cflags       = -m32 -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plusa -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
 $lflags       = -ldl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $cpuid_obj    = 
-$bn_obj       = sparcv8plus.o
+$bn_obj       = sparcv8plus.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
 $aes_obj      = 
 $bf_obj       = 
@@ -2925,7 +2925,7 @@ $sys_id       = ULTRASPARC
 $lflags       = -ldl
 $bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $cpuid_obj    = 
-$bn_obj       = 
+$bn_obj       = bn_asm.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
 $aes_obj      = 
 $bf_obj       = 
@@ -3512,14 +3512,14 @@ $arflags      =
 
 *** solaris-sparcv9-cc
 $cc           = cc
-$cflags       = -xtarget=ultra -xarch=v8plus -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W
+$cflags       = -xtarget=ultra -xarch=v8plusa -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
 $lflags       = -lsocket -lnsl -ldl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR
 $cpuid_obj    = 
-$bn_obj       = sparcv8plus.o
+$bn_obj       = sparcv8plus.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
 $aes_obj      = 
 $bf_obj       = 
@@ -3546,7 +3546,7 @@ $sys_id       = ULTRASPARC
 $lflags       = -lsocket -lnsl -ldl
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $cpuid_obj    = 
-$bn_obj       = sparcv8plus.o
+$bn_obj       = sparcv8plus.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
 $aes_obj      = 
 $bf_obj       = 
@@ -3620,14 +3620,14 @@ $arflags      =
 
 *** solaris64-sparcv9-cc
 $cc           = cc
-$cflags       = -xtarget=ultra -xarch=v9 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN
+$cflags       = -xtarget=ultra -xarch=v9a -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
 $lflags       = -lsocket -lnsl -ldl
 $bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR
 $cpuid_obj    = 
-$bn_obj       = 
+$bn_obj       = bn_asm.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
 $aes_obj      = 
 $bf_obj       = 
@@ -3654,7 +3654,7 @@ $sys_id       = ULTRASPARC
 $lflags       = -lsocket -lnsl -ldl
 $bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR
 $cpuid_obj    = 
-$bn_obj       = 
+$bn_obj       = bn_asm.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
 $aes_obj      = 
 $bf_obj       = 
