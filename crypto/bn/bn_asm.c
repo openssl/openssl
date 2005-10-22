@@ -828,7 +828,9 @@ void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
 	r[7]=c2;
 	}
 
+#ifdef OPENSSL_NO_ASM
 #ifdef OPENSSL_BN_ASM_MONT
+#include <alloca.h>
 /*
  * This is essentially reference implementation, which may or may not
  * result in performance improvement. E.g. on IA-32 this routine was
@@ -914,9 +916,10 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
  * performed to signal the caller to fall down to alternative/original
  * code-path.
  */
-int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num)
+int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num)
 {	return 0;	}
 #endif /* OPENSSL_BN_ASM_MONT */
+#endif
 
 #else /* !BN_MUL_COMBA */
 
@@ -955,10 +958,12 @@ void bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 	r[15]=bn_mul_add_words(&(r[7]),a,8,b[7]);
 	}
 
+#ifdef OPENSSL_NO_ASM
 #ifdef OPENSSL_BN_ASM_MONT
-int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num)
+#include <alloca.h>
+int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0p, int num)
 	{
-	BN_ULONG c0,c1,*tp;
+	BN_ULONG c0,c1,*tp,n0=*n0p;
 	volatile BN_ULONG *vp;
 	int i=0,j;
 
@@ -995,8 +1000,9 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 	return 1;
 	}
 #else
-int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num)
+int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num)
 {	return 0;	}
 #endif /* OPENSSL_BN_ASM_MONT */
+#endif
 
 #endif /* !BN_MUL_COMBA */
