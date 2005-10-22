@@ -66,7 +66,7 @@ if($sse2) {
 	&mov	("ebx",&wparam(1));	# const BN_ULONG *ap
 	&mov	("ecx",&wparam(2));	# const BN_ULONG *bp
 	&mov	("edx",&wparam(3));	# const BN_ULONG *np
-	&mov	("esi",&wparam(4));	# BN_ULONG n0
+	&mov	("esi",&wparam(4));	# const BN_ULONG *n0
 	&mov	($num,&wparam(5));	# int num
 
 	&mov	("edi","esp");		# saved stack pointer!
@@ -78,6 +78,7 @@ if($sse2) {
 	&sub	($num,1);		# num is restored to its original value
 					# and will remain constant from now...
 
+	&mov	("esi",&DWP(0,"esi"));	# pull n0[0]
 	&mov	($_rp,"eax");		# ... save a copy of argument block
 	&mov	($_ap,"ebx");
 	&mov	($_bp,"ecx");

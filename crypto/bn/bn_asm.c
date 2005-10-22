@@ -842,9 +842,9 @@ void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
  * versions. Assembler vs. assembler improvement coefficients can
  * [and are known to] differ and are to be documented elsewhere.
  */
-int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,BN_ULONG n0, int num)
+int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0p, int num)
 	{
-	BN_ULONG c0,c1,ml,*tp;
+	BN_ULONG c0,c1,ml,*tp,n0;
 #ifdef mul64
 	BN_ULONG mh;
 #endif
@@ -852,9 +852,11 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 	int i=0,j;
 
 #if 0	/* template for platform-specific implementation */
-	if (ap==bp)	return bn_sqr_mont(rp,ap,np,n0,num);
+	if (ap==bp)	return bn_sqr_mont(rp,ap,np,n0p,num);
 #endif
 	vp = tp = alloca((num+2)*sizeof(BN_ULONG));
+
+	n0 = *n0p;
 
 	tp[num]   = bn_mul_words(tp,ap,num,bp[0]);
 	tp[num+1] = 0;

@@ -4,6 +4,12 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) New candidate for BIGNUM assembler implementation, bn_mul_mont,
+     dedicated Montgomery multiplication procedure, is introduced.
+     BN_MONT_CTX is modified to allow bn_mul_mont to reach for higher
+     "64-bit" performance on certain 32-bit targets.
+     [Andy Polyakov]
+
   *) New option SSL_OP_NO_COMP to disable use of compression selectively
      in SSL structures. New SSL ctrl to set maximum send fragment size. 
      Save memory by seeting the I/O buffer sizes dynamically instead of

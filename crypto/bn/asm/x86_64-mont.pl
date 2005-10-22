@@ -22,7 +22,7 @@ $rp="%rdi";	# BN_ULONG *rp,
 $ap="%rsi";	# const BN_ULONG *ap,
 $bp="%rdx";	# const BN_ULONG *bp,
 $np="%rcx";	# const BN_ULONG *np,
-$n0="%r8";	# BN_ULONG n0,
+$n0="%r8";	# const BN_ULONG *n0,
 $num="%r9";	# int num);
 $lo0="%r10";
 $hi0="%r11";
@@ -54,6 +54,8 @@ bn_mul_mont:
 	and	\$-1024,%rsp		# minimize TLB usage
 	mov	%rbp,8(%rsp,$num,8)	# tp[num+1]=%rsp
 	mov	%rdx,$bp		# $bp reassigned, remember?
+
+	mov	($n0),$n0		# pull n0[0] value
 
 	xor	$i,$i			# i=0
 	xor	$j,$j			# j=0

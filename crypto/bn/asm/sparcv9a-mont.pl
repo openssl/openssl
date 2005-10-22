@@ -70,7 +70,7 @@ $rp="%i0";	# BN_ULONG *rp,
 $ap="%i1";	# const BN_ULONG *ap,
 $bp="%i2";	# const BN_ULONG *bp,
 $np="%i3";	# const BN_ULONG *np,
-$n0="%i4";	# BN_ULONG n0,
+$n0="%i4";	# const BN_ULONG *n0,
 $num="%i5";	# int num);
 
 $tp="%l0";
@@ -125,7 +125,7 @@ $fname:
 	sethi	%hi(0xffff),$mask
 	sll	$num,3,$num		! num*=8
 	or	$mask,%lo(0xffff),$mask
-	mov	%i4,$n0			! reassigned, remember?
+	ldx	[%i4],$n0		! reassigned, remember?
 
 	add	%sp,$bias,%o0		! real top of stack
 	sll	$num,2,%o1
