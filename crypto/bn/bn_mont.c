@@ -334,8 +334,8 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		if (!(BN_set_bit(R,2*BN_BITS2))) goto err;
 
 								tmod.top=0;
-		if (buf[0] = mod->d[0])				tmod.top=1;
-		if (buf[1] = mod->top>1 ? mod->d[1] : 0)	tmod.top=2;
+		if ((buf[0] = mod->d[0]))			tmod.top=1;
+		if ((buf[1] = mod->top>1 ? mod->d[1] : 0))	tmod.top=2;
 
 		if ((BN_mod_inverse(Ri,R,&tmod,ctx)) == NULL)
 			goto err;
