@@ -88,6 +88,8 @@ sparcv8.o:	asm/sparcv8.S
 	$(CC) $(CFLAGS) -c asm/sparcv8.S
 sparcv8plus.o:	asm/sparcv8plus.S
 	$(CC) $(CFLAGS) -c asm/sparcv8plus.S
+sparcv9a-mont.s:	asm/sparcv9a-mont.pl
+	$(PERL) asm/sparcv9a-mont.pl $(CFLAGS) > $@
 
 bn-mips3.o:	asm/mips3.s
 	@if [ "$(CC)" = "gcc" ]; then \

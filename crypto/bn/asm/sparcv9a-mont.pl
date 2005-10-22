@@ -6,6 +6,8 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 
+# October 2005
+#
 # "Teaser" Montgomery multiplication module for UltraSPARC. Why FPU?
 # Because unlike integer multiplier, which simply stalls whole CPU,
 # FPU is fully pipelined and can effectively emit 48 bit partial
@@ -18,16 +20,22 @@
 # USI&II cores currently exhibit uniform 2x improvement [over pre-
 # bn_mul_mont codebase] for all key lengths and benchmarks. On USIII
 # performance improves few percents for shorter keys and worsens few
-# percents for longer keys. This's because USIII integer multiplier
+# percents for longer keys. This is because USIII integer multiplier
 # is >3x faster than USI&II one, which is harder to match [but see
 # TODO list below]. It should also be noted that SPARC64 V features
 # out-of-order execution, which *might* mean that integer multiplier
 # is pipelined, which in turn *might* be impossible to match...
-#
+
+# In 32-bit context the implementation implies following additional
+# limitations on input arguments:
+# - num may not be less than 4;
+# - num has to be even;
+# - ap, bp, rp, np has to be 64-bit aligned [which is not a problem
+#   as long as BIGNUM.d are malloc-ated];
+# Failure to meet either condition has no fatal effects, simply
+# doesn't give any performance gain.
+
 # TODO:
-# - complete 32-bit adaptation (requires universal changes to
-#   BN_MONT_CTX and bn_mul_mont prototype, but nothing really
-#   unmanagable:-);
 # - modulo-schedule inner loop for better performance (on in-order
 #   execution core such as UltraSPARC this shall result in further
 #   noticeable(!) improvement);
@@ -40,7 +48,7 @@ for (@ARGV) {
 	$vis=1      if (/\-mcpu=ultra/ || /\-xarch\=v[9|8plus]\S/);
 }
 
-if (!$vis || $bits==32) {	# 32-bit is not supported just yet...
+if (!$vis) {
 print<<___;
 .section	".text",#alloc,#execinstr
 .global $fname
@@ -73,7 +81,7 @@ $np="%i3";	# const BN_ULONG *np,
 $n0="%i4";	# const BN_ULONG *n0,
 $num="%i5";	# int num);
 
-$tp="%l0";
+$tp="%l0";	# t[num]
 $ap_l="%l1";	# a[num],n[num] are smashed to 32-bit words and saved
 $ap_h="%l2";	# to these four vectors as double-precision FP values.
 $np_l="%l3";	# This way a bunch of fxtods are eliminated in second
@@ -82,8 +90,8 @@ $i="%l5";
 $j="%l6";
 $mask="%l7";	# 16-bit mask, 0xffff
 
-$n0="%g4";	# reassigned!!!
-$carry="%i4";	# reassigned!!! [only 1 bit is used]
+$n0="%g4";	# reassigned(!) to "64-bit" register
+$carry="%i4";	# %i4 reused(!) for a carry bit
 
 # FP register naming chart
 #
@@ -121,24 +129,46 @@ $code=<<___;
 .global $fname
 .align  32
 $fname:
-	save	%sp,-$frame,%sp
+	save	%sp,-$frame-$locals,%sp
 	sethi	%hi(0xffff),$mask
-	sll	$num,3,$num		! num*=8
 	or	$mask,%lo(0xffff),$mask
-	ldx	[%i4],$n0		! reassigned, remember?
+___
+$code.=<<___ if ($bits==64);
+	ldx	[%i4],$n0		! $n0 reassigned, remember?
+___
+$code.=<<___ if ($bits==32);
+	cmp	$num,4
+	bl,a,pn %icc,.Lret
+	clr	%i0
+	andcc	$num,1,%g0		! $num has to be even...
+	bnz,a,pn %icc,.Lret
+	clr	%i0			! signal "unsupported input value"
+	or	$bp,$ap,%l0
+	srl	$num,1,$num
+	or	$rp,$np,%l1
+	or	%l0,%l1,%l0
+	andcc	%l0,7,%g0		! ...and pointers has to be 8-byte aligned
+	bnz,a,pn %icc,.Lret
+	clr	%i0			! signal "unsupported input value"
+	ld	[%i4+0],$n0		! $n0 reassigned, remember?
+	ld	[%i4+4],%o0
+	sllx	%o0,32,%o0
+	or	%o0,$n0,$n0		! $n0=n0[1].n0[0]
+___
+$code.=<<___;
+	sll	$num,3,$num		! num*=8
 
 	add	%sp,$bias,%o0		! real top of stack
 	sll	$num,2,%o1
 	add	%o1,$num,%o1		! %o1=num*5
 	sub	%o0,%o1,%o0
-	sub	%o0,$locals,%o0
 	and	%o0,-2048,%o0		! optimize TLB utilization
-	sub	%o0,$bias,%sp		! alloca
+	sub	%o0,$bias,%sp		! alloca(5*num*8)
 
-	rd	%asi,%o7
+	rd	%asi,%o7		! save %asi
 	add	%sp,$bias+$frame+$locals,$tp
 	add	$tp,$num,$ap_l
-	add	$ap_l,$num,$ap_l	! [an]p_[lh] point at the vector ends !
+	add	$ap_l,$num,$ap_l	! [an]p_[lh] point at the vectors' ends !
 	add	$ap_l,$num,$ap_h
 	add	$ap_h,$num,$np_l
 	add	$np_l,$num,$np_h
@@ -150,49 +180,60 @@ $fname:
 	add	$bp,$num,$bp
 	add	$np,$num,$np
 
-	stx	%o7,[%sp+$bias+$frame+48]
+	stx	%o7,[%sp+$bias+$frame+48]	! save %asi
 
 	sub	%g0,$num,$i
 	sub	%g0,$num,$j
 
 	add	$ap,$j,%o3
 	add	$bp,$i,%o4
+___
+$code.=<<___ if ($bits==64);
 	ldx	[$bp+$i],%o0		! bp[0]
-	add	$np,$j,%o5
-	add	%sp,$bias+$frame+0,%o7
 	ldx	[$ap+$j],%o1		! ap[0]
+___
+$code.=<<___ if ($bits==32);
+	ldd	[$bp+$i],%o0		! bp[0]
+	ldd	[$ap+$j],%g2		! ap[0]
+	sllx	%o1,32,%o1
+	sllx	%g3,32,%g3
+	or	%o0,%o1,%o0
+	or	%g2,%g3,%o1
+___
+$code.=<<___;
+	add	$np,$j,%o5
 
 	mulx	%o1,%o0,%o0		! ap[0]*bp[0]
 	mulx	$n0,%o0,%o0		! ap[0]*bp[0]*n0
-	stx	%o0,[%o7]
+	stx	%o0,[%sp+$bias+$frame+0]
 
-	ld	[%o3+4],$alo_		! load a[j] as pair of 32-bit words
-	fxors	$alo,$alo,$alo
-	ld	[%o3+0],$ahi_
-	fxors	$ahi,$ahi,$ahi
-	ld	[%o5+4],$nlo_		! load n[j] as pair of 32-bit words
-	fxors	$nlo,$nlo,$nlo
-	ld	[%o5+0],$nhi_
-	fxors	$nhi,$nhi,$nhi
+	ld	[%o3+`$bits==32 ? 0 : 4`],$alo_	! load a[j] as pair of 32-bit words
+	fzeros	$alo
+	ld	[%o3+`$bits==32 ? 4 : 0`],$ahi_
+	fzeros	$ahi
+	ld	[%o5+`$bits==32 ? 0 : 4`],$nlo_	! load n[j] as pair of 32-bit words
+	fzeros	$nlo
+	ld	[%o5+`$bits==32 ? 4 : 0`],$nhi_
+	fzeros	$nhi
 
 	! transfer b[i] to FPU as 4x16-bit values
-	ldda	[%o4+6]%asi,$ba
+	ldda	[%o4+`$bits==32 ? 2 : 6`]%asi,$ba
 	fxtod	$alo,$alo
-	ldda	[%o4+4]%asi,$bb
+	ldda	[%o4+`$bits==32 ? 0 : 4`]%asi,$bb
 	fxtod	$ahi,$ahi
-	ldda	[%o4+2]%asi,$bc
+	ldda	[%o4+`$bits==32 ? 6 : 2`]%asi,$bc
 	fxtod	$nlo,$nlo
-	ldda	[%o4+0]%asi,$bd
+	ldda	[%o4+`$bits==32 ? 4 : 0`]%asi,$bd
 	fxtod	$nhi,$nhi
 
 	! transfer ap[0]*b[0]*n0 to FPU as 4x16-bit values
-	ldda	[%o7+6]%asi,$na
+	ldda	[%sp+$bias+$frame+6]%asi,$na
 	fxtod	$ba,$ba
-	ldda	[%o7+4]%asi,$nb
+	ldda	[%sp+$bias+$frame+4]%asi,$nb
 	fxtod	$bb,$bb
-	ldda	[%o7+2]%asi,$nc
+	ldda	[%sp+$bias+$frame+2]%asi,$nc
 	fxtod	$bc,$bc
-	ldda	[%o7+0]%asi,$nd
+	ldda	[%sp+$bias+$frame+0]%asi,$nd
 	fxtod	$bd,$bd
 
 	std	$alo,[$ap_l+$j]		! save smashed ap[j] in double format
@@ -204,27 +245,27 @@ $fname:
 	std	$nhi,[$np_h+$j]
 	fxtod	$nd,$nd
 
-	fmuld	$alo,$ba,$aloa
-	fmuld	$nlo,$na,$nloa
-	fmuld	$alo,$bb,$alob
-	fmuld	$nlo,$nb,$nlob
-	fmuld	$alo,$bc,$aloc
-	fmuld	$nlo,$nc,$nloc
-		faddd	$aloa,$nloa,$nloa
-	fmuld	$alo,$bd,$alod
-	fmuld	$nlo,$nd,$nlod
-		faddd	$alob,$nlob,$nlob
-	fmuld	$ahi,$ba,$ahia
-	fmuld	$nhi,$na,$nhia
-		faddd	$aloc,$nloc,$nloc
-	fmuld	$ahi,$bb,$ahib
-	fmuld	$nhi,$nb,$nhib
-		faddd	$alod,$nlod,$nlod
-	fmuld	$ahi,$bc,$ahic
-	fmuld	$nhi,$nc,$nhic
-		faddd	$ahia,$nhia,$nhia
-	fmuld	$ahi,$bd,$ahid
-	fmuld	$nhi,$nd,$nhid
+		fmuld	$alo,$ba,$aloa
+		fmuld	$nlo,$na,$nloa
+		fmuld	$alo,$bb,$alob
+		fmuld	$nlo,$nb,$nlob
+		fmuld	$alo,$bc,$aloc
+		fmuld	$nlo,$nc,$nloc
+	faddd	$aloa,$nloa,$nloa
+		fmuld	$alo,$bd,$alod
+		fmuld	$nlo,$nd,$nlod
+	faddd	$alob,$nlob,$nlob
+		fmuld	$ahi,$ba,$ahia
+		fmuld	$nhi,$na,$nhia
+	faddd	$aloc,$nloc,$nloc
+		fmuld	$ahi,$bb,$ahib
+		fmuld	$nhi,$nb,$nhib
+	faddd	$alod,$nlod,$nlod
+		fmuld	$ahi,$bc,$ahic
+		fmuld	$nhi,$nc,$nhic
+	faddd	$ahia,$nhia,$nhia
+		fmuld	$ahi,$bd,$ahid
+		fmuld	$nhi,$nd,$nhid
 
 	faddd	$ahib,$nhib,$nhib
 	faddd	$ahic,$nhic,$dota	! $nhic
@@ -270,14 +311,14 @@ $fname:
 .L1st:
 	add	$ap,$j,%o3
 	add	$np,$j,%o4
-	ld	[%o3+4],$alo_		! load a[j] as pair of 32-bit words
-	fxors	$alo,$alo,$alo
-	ld	[%o3+0],$ahi_
-	fxors	$ahi,$ahi,$ahi
-	ld	[%o4+4],$nlo_		! load n[j] as pair of 32-bit words
-	fxors	$nlo,$nlo,$nlo
-	ld	[%o4+0],$nhi_
-	fxors	$nhi,$nhi,$nhi
+	ld	[%o3+`$bits==32 ? 0 : 4`],$alo_	! load a[j] as pair of 32-bit words
+	fzeros	$alo
+	ld	[%o3+`$bits==32 ? 4 : 0`],$ahi_
+	fzeros	$ahi
+	ld	[%o4+`$bits==32 ? 0 : 4`],$nlo_	! load n[j] as pair of 32-bit words
+	fzeros	$nlo
+	ld	[%o4+`$bits==32 ? 4 : 0`],$nhi_
+	fzeros	$nhi
 
 	fxtod	$alo,$alo
 	fxtod	$ahi,$ahi
@@ -285,31 +326,31 @@ $fname:
 	fxtod	$nhi,$nhi
 
 	std	$alo,[$ap_l+$j]		! save smashed ap[j] in double format
-	fmuld	$alo,$ba,$aloa
+		fmuld	$alo,$ba,$aloa
 	std	$ahi,[$ap_h+$j]
-	fmuld	$nlo,$na,$nloa
+		fmuld	$nlo,$na,$nloa
 	std	$nlo,[$np_l+$j]		! save smashed np[j] in double format
-	fmuld	$alo,$bb,$alob
+		fmuld	$alo,$bb,$alob
 	std	$nhi,[$np_h+$j]
-	fmuld	$nlo,$nb,$nlob
-	fmuld	$alo,$bc,$aloc
-	fmuld	$nlo,$nc,$nloc
-		faddd	$aloa,$nloa,$nloa
-	fmuld	$alo,$bd,$alod
-	fmuld	$nlo,$nd,$nlod
-		faddd	$alob,$nlob,$nlob
-	fmuld	$ahi,$ba,$ahia
-	fmuld	$nhi,$na,$nhia
-		faddd	$aloc,$nloc,$nloc
-	fmuld	$ahi,$bb,$ahib
-	fmuld	$nhi,$nb,$nhib
-		faddd	$alod,$nlod,$nlod
-	fmuld	$ahi,$bc,$ahic
-	fmuld	$nhi,$nc,$nhic
-		faddd	$ahia,$nhia,$nhia
-	fmuld	$ahi,$bd,$ahid
-	fmuld	$nhi,$nd,$nhid
-		faddd	$ahib,$nhib,$nhib
+		fmuld	$nlo,$nb,$nlob
+		fmuld	$alo,$bc,$aloc
+		fmuld	$nlo,$nc,$nloc
+	faddd	$aloa,$nloa,$nloa
+		fmuld	$alo,$bd,$alod
+		fmuld	$nlo,$nd,$nlod
+	faddd	$alob,$nlob,$nlob
+		fmuld	$ahi,$ba,$ahia
+		fmuld	$nhi,$na,$nhia
+	faddd	$aloc,$nloc,$nloc
+		fmuld	$ahi,$bb,$ahib
+		fmuld	$nhi,$nb,$nhib
+	faddd	$alod,$nlod,$nlod
+		fmuld	$ahi,$bc,$ahic
+		fmuld	$nhi,$nc,$nhic
+	faddd	$ahia,$nhia,$nhia
+		fmuld	$ahi,$bd,$ahid
+		fmuld	$nhi,$nd,$nhid
+	faddd	$ahib,$nhib,$nhib
 
 	faddd	$dota,$nloa,$nloa
 	faddd	$dotb,$nlob,$nlob
@@ -354,8 +395,8 @@ $fname:
 	add	%g1,1,%g1
 
 	stx	%o0,[$tp]		! tp[j-1]=
-	add	$j,8,$j
-	brnz	$j,.L1st
+	addcc	$j,8,$j
+	bnz,pt	%icc,.L1st
 	add	$tp,8,$tp
 
 	fdtox	$dota,$dota
@@ -386,31 +427,41 @@ $fname:
 	add	%sp,$bias+$frame+$locals,$tp
 
 	add	$bp,$i,%o4
+___
+$code.=<<___ if ($bits==64);
 	ldx	[$bp+$i],%o0		! bp[i]
-	add	%sp,$bias+$frame+0,%o7
 	ldx	[$ap+$j],%o1		! ap[0]
-
+___
+$code.=<<___ if ($bits==32);
+	ldd	[$bp+$i],%o0		! bp[i]
+	ldd	[$ap+$j],%g2		! ap[0]
+	sllx	%o1,32,%o1
+	sllx	%g3,32,%g3
+	or	%o0,%o1,%o0
+	or	%g2,%g3,%o1
+___
+$code.=<<___;
 	ldx	[$tp],%o2		! tp[0]
 	mulx	%o1,%o0,%o0
 	addcc	%o2,%o0,%o0
 	mulx	$n0,%o0,%o0		! (ap[0]*bp[i]+t[0])*n0
-	stx	%o0,[%o7]
+	stx	%o0,[%sp+$bias+$frame+0]
 
 
 	! transfer b[i] to FPU as 4x16-bit values
-	ldda	[%o4+6]%asi,$ba
-	ldda	[%o4+4]%asi,$bb
-	ldda	[%o4+2]%asi,$bc
-	ldda	[%o4+0]%asi,$bd
+	ldda	[%o4+`$bits==32 ? 2 : 6`]%asi,$ba
+	ldda	[%o4+`$bits==32 ? 0 : 4`]%asi,$bb
+	ldda	[%o4+`$bits==32 ? 6 : 2`]%asi,$bc
+	ldda	[%o4+`$bits==32 ? 4 : 0`]%asi,$bd
 
 	! transfer (ap[0]*b[i]+t[0])*n0 to FPU as 4x16-bit values
-	ldda	[%o7+6]%asi,$na
+	ldda	[%sp+$bias+$frame+6]%asi,$na
 	fxtod	$ba,$ba
-	ldda	[%o7+4]%asi,$nb
+	ldda	[%sp+$bias+$frame+4]%asi,$nb
 	fxtod	$bb,$bb
-	ldda	[%o7+2]%asi,$nc
+	ldda	[%sp+$bias+$frame+2]%asi,$nc
 	fxtod	$bc,$bc
-	ldda	[%o7+0]%asi,$nd
+	ldda	[%sp+$bias+$frame+0]%asi,$nd
 	fxtod	$bd,$bd
 	ldd	[$ap_l+$j],$alo		! load a[j] in double format
 	fxtod	$na,$na
@@ -421,27 +472,27 @@ $fname:
 	ldd	[$np_h+$j],$nhi
 	fxtod	$nd,$nd
 
-	fmuld	$alo,$ba,$aloa
-	fmuld	$nlo,$na,$nloa
-	fmuld	$alo,$bb,$alob
-	fmuld	$nlo,$nb,$nlob
-	fmuld	$alo,$bc,$aloc
-	fmuld	$nlo,$nc,$nloc
-		faddd	$aloa,$nloa,$nloa
-	fmuld	$alo,$bd,$alod
-	fmuld	$nlo,$nd,$nlod
-		faddd	$alob,$nlob,$nlob
-	fmuld	$ahi,$ba,$ahia
-	fmuld	$nhi,$na,$nhia
-		faddd	$aloc,$nloc,$nloc
-	fmuld	$ahi,$bb,$ahib
-	fmuld	$nhi,$nb,$nhib
-		faddd	$alod,$nlod,$nlod
-	fmuld	$ahi,$bc,$ahic
-	fmuld	$nhi,$nc,$nhic
-		faddd	$ahia,$nhia,$nhia
-	fmuld	$ahi,$bd,$ahid
-	fmuld	$nhi,$nd,$nhid
+		fmuld	$alo,$ba,$aloa
+		fmuld	$nlo,$na,$nloa
+		fmuld	$alo,$bb,$alob
+		fmuld	$nlo,$nb,$nlob
+		fmuld	$alo,$bc,$aloc
+		fmuld	$nlo,$nc,$nloc
+	faddd	$aloa,$nloa,$nloa
+		fmuld	$alo,$bd,$alod
+		fmuld	$nlo,$nd,$nlod
+	faddd	$alob,$nlob,$nlob
+		fmuld	$ahi,$ba,$ahia
+		fmuld	$nhi,$na,$nhia
+	faddd	$aloc,$nloc,$nloc
+		fmuld	$ahi,$bb,$ahib
+		fmuld	$nhi,$nb,$nhib
+	faddd	$alod,$nlod,$nlod
+		fmuld	$ahi,$bc,$ahic
+		fmuld	$nhi,$nc,$nhic
+	faddd	$ahia,$nhia,$nhia
+		fmuld	$ahi,$bd,$ahid
+		fmuld	$nhi,$nd,$nhid
 
 	faddd	$ahib,$nhib,$nhib
 	faddd	$ahic,$nhic,$dota	! $nhic
@@ -496,27 +547,27 @@ $fname:
 	ldd	[$np_l+$j],$nlo		! load n[j] in double format
 	ldd	[$np_h+$j],$nhi
 
-	fmuld	$alo,$ba,$aloa
-	fmuld	$nlo,$na,$nloa
-	fmuld	$alo,$bb,$alob
-	fmuld	$nlo,$nb,$nlob
-	fmuld	$alo,$bc,$aloc
-	fmuld	$nlo,$nc,$nloc
-		faddd	$aloa,$nloa,$nloa
-	fmuld	$alo,$bd,$alod
-	fmuld	$nlo,$nd,$nlod
-		faddd	$alob,$nlob,$nlob
-	fmuld	$ahi,$ba,$ahia
-	fmuld	$nhi,$na,$nhia
-		faddd	$aloc,$nloc,$nloc
-	fmuld	$ahi,$bb,$ahib
-	fmuld	$nhi,$nb,$nhib
-		faddd	$alod,$nlod,$nlod
-	fmuld	$ahi,$bc,$ahic
-	fmuld	$nhi,$nc,$nhic
-		faddd	$ahia,$nhia,$nhia
-	fmuld	$ahi,$bd,$ahid
-	fmuld	$nhi,$nd,$nhid
+		fmuld	$alo,$ba,$aloa
+		fmuld	$nlo,$na,$nloa
+		fmuld	$alo,$bb,$alob
+		fmuld	$nlo,$nb,$nlob
+		fmuld	$alo,$bc,$aloc
+		fmuld	$nlo,$nc,$nloc
+	faddd	$aloa,$nloa,$nloa
+		fmuld	$alo,$bd,$alod
+		fmuld	$nlo,$nd,$nlod
+	faddd	$alob,$nlob,$nlob
+		fmuld	$ahi,$ba,$ahia
+		fmuld	$nhi,$na,$nhia
+	faddd	$aloc,$nloc,$nloc
+		fmuld	$ahi,$bb,$ahib
+		fmuld	$nhi,$nb,$nhib
+	faddd	$alod,$nlod,$nlod
+		fmuld	$ahi,$bc,$ahic
+		fmuld	$nhi,$nc,$nhic
+	faddd	$ahia,$nhia,$nhia
+		fmuld	$ahi,$bd,$ahid
+		fmuld	$nhi,$nd,$nhid
 
 	faddd	$ahib,$nhib,$nhib
 	faddd	$dota,$nloa,$nloa
@@ -567,8 +618,8 @@ $fname:
 	add	%g1,1,%g1
 
 	stx	%o0,[$tp]		! tp[j-1]
-	add	$j,8,$j
-	brnz	$j,.Linner
+	addcc	$j,8,$j
+	bnz,pt	%icc,.Linner
 	add	$tp,8,$tp
 
 	fdtox	$dota,$dota
@@ -594,62 +645,77 @@ $fname:
 	bcs,a	%xcc,.+8
 	add	$carry,1,$carry
 
-	add	$i,8,$i
-	brnz	$i,.Louter
+	addcc	$i,8,$i
+	bnz	%icc,.Louter
 	nop
 
-	sub	%g0,$num,$j		! j=-num
-	add	$tp,8,$tp		! adjust tp to point at the end
-
+	sub	%g0,$num,%o7		! n=-num
 	cmp	$carry,0		! clears %icc.c
 	bne,pn	%icc,.Lsub
-	nop
+	add	$tp,8,$tp		! adjust tp to point at the end
 
 	ld	[$tp-8],%o0
-	ld	[$np-8],%o1
-	cmp	%o0,%o1
+	ld	[$np-`$bits==32 ? 4 : 8`],%o1
+	cmp	%o0,%o1			! compare topmost words
 	bcs,pt	%icc,.Lcopy		! %icc.c is clean if not taken
 	nop
 
 .align	32,0x1000000
 .Lsub:
-	ldd	[$tp+$j],%o0
-	ldd	[$np+$j],%o2
-	subccc	%o1,%o3,%o1
-	subccc	%o0,%o2,%o0
-	std	%o0,[$rp+$j]
-	add	$j,8,$j
-	brnz	$j,.Lsub
+	ldd	[$tp+%o7],%o0
+	ldd	[$np+%o7],%o2
+___
+$code.=<<___ if ($bits==64);
+	subccc	%o1,%o3,%o3
+	subccc	%o0,%o2,%o2
+___
+$code.=<<___ if ($bits==32);
+	subccc	%o1,%o2,%o2
+	subccc	%o0,%o3,%o3
+___
+$code.=<<___;
+	std	%o2,[$rp+%o7]
+	add	%o7,8,%o7
+	brnz,pt	%o7,.Lsub
 	nop
 	subccc	$carry,0,$carry
-	bcc	%icc,.Lzap
-	sub	%g0,$num,$j
+	bcc,pt	%icc,.Lzap
+	sub	%g0,$num,%o7
 
 .align	16,0x1000000
 .Lcopy:
-	ldx	[$tp+$j],%o0
-	stx	%o0,[$rp+$j]
-	add	$j,8,$j
-	brnz	$j,.Lcopy
+	ldx	[$tp+%o7],%o0
+___
+$code.=<<___ if ($bits==64);
+	stx	%o0,[$rp+%o7]
+___
+$code.=<<___ if ($bits==32);
+	srlx	%o0,32,%o1
+	std	%o0,[$rp+%o7]
+___
+$code.=<<___;
+	add	%o7,8,%o7
+	brnz,pt	%o7,.Lcopy
 	nop
 	ba	.Lzap
-	sub	%g0,$num,$j
+	sub	%g0,$num,%o7
 
 .align	32
 .Lzap:
-	stx	%g0,[$tp+$j]
-	stx	%g0,[$ap_l+$j]
-	stx	%g0,[$ap_h+$j]
-	stx	%g0,[$np_l+$j]
-	stx	%g0,[$np_h+$j]
-	add	$j,8,$j
-	brnz	$j,.Lzap
+	stx	%g0,[$tp+%o7]
+	stx	%g0,[$ap_l+%o7]
+	stx	%g0,[$ap_h+%o7]
+	stx	%g0,[$np_l+%o7]
+	stx	%g0,[$np_h+%o7]
+	add	%o7,8,%o7
+	brnz,pt	%o7,.Lzap
 	nop
 
 	ldx	[%sp+$bias+$frame+48],%o7
 	wr	%g0,%o7,%asi		! restore %asi
 
 	mov	1,%i0
+.Lret:
 	ret
 	restore
 .type   $fname,#function
