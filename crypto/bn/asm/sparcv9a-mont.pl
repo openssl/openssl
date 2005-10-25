@@ -13,9 +13,12 @@
 # FPU is fully pipelined and can effectively emit 48 bit partial
 # product every cycle. Why not blended SPARC v9? One can argue that
 # making this module dependent on UltraSPARC VIS extension limits its
-# binary compatibility. Very well may be, but the simple fact is that
-# there is no known SPARC v9 implementation, which does not implement
-# VIS. Even brand new Fujitsu's SPARC64 V is equipped with VIS unit.
+# binary compatibility. Well yes, it does exclude SPARC64 prior-V(!)
+# implementations from compatibility matrix. But the rest, whole Sun
+# UltraSPARC family and brand new Fujitsu's SPARC64 V, all support
+# VIS extension instructions used in this module. This is considered
+# good enough to recommend HAL SPARC64 users [if any] to simply fall
+# down to no-asm configuration.
 
 # USI&II cores currently exhibit uniform 2x improvement [over pre-
 # bn_mul_mont codebase] for all key lengths and benchmarks. On USIII
@@ -24,7 +27,10 @@
 # is >3x faster than USI&II one, which is harder to match [but see
 # TODO list below]. It should also be noted that SPARC64 V features
 # out-of-order execution, which *might* mean that integer multiplier
-# is pipelined, which in turn *might* be impossible to match...
+# is pipelined, which in turn *might* be impossible to match... On
+# additional note, SPARC64 V implements FP Multiply-Add instruction,
+# which is perfectly usable in this context... In other words, as far
+# as HAL/Fujitsu SPARC64 family goes, talk to the author:-)
 
 # In 32-bit context the implementation implies following additional
 # limitations on input arguments:
