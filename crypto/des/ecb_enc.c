@@ -58,7 +58,6 @@
 
 #include "des_locl.h"
 #include "des_ver.h"
-#include "spr.h"
 #include <openssl/opensslv.h>
 #include <openssl/bio.h>
 
