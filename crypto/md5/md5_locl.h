@@ -66,10 +66,9 @@
 #endif
 
 #ifdef MD5_ASM
-# if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || defined(__x86_64) || defined(__x86_64__)
-#  if !defined(B_ENDIAN)
-#   define md5_block_host_order md5_block_asm_host_order
-#  endif
+# if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || \
+     defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+#  define md5_block_host_order md5_block_asm_host_order
 # elif defined(__sparc) && defined(OPENSSL_SYS_ULTRASPARC)
    void md5_block_asm_data_order_aligned (MD5_CTX *c, const MD5_LONG *p,size_t num);
 #  define HASH_BLOCK_DATA_ORDER_ALIGNED md5_block_asm_data_order_aligned
@@ -82,7 +81,8 @@
 void md5_block_host_order (MD5_CTX *c, const void *p,size_t num);
 void md5_block_data_order (MD5_CTX *c, const void *p,size_t num);
 
-#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || defined(__x86_64) || defined(__x86_64__)
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || \
+    defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 # if !defined(B_ENDIAN)
 /*
  * *_block_host_order is expected to handle aligned data while

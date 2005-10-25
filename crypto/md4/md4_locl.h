@@ -68,7 +68,8 @@
 void md4_block_host_order (MD4_CTX *c, const void *p,size_t num);
 void md4_block_data_order (MD4_CTX *c, const void *p,size_t num);
 
-#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || \
+    defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 # if !defined(B_ENDIAN)
 /*
  * *_block_host_order is expected to handle aligned data while

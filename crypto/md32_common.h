@@ -288,6 +288,7 @@
 # if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 #  if ((defined(__i386) || defined(__i386__)) && !defined(I386_ONLY)) || \
       (defined(__x86_64) || defined(__x86_64__))
+#   if !defined(B_ENDIAN)
     /*
      * This gives ~30-40% performance improvement in SHA-256 compiled
      * with gcc [on P4]. Well, first macro to be frank. We can pull
@@ -300,6 +301,7 @@
 #   define HOST_l2c(l,c)	({ unsigned int r=(l);			\
 				   asm ("bswapl %0":"=r"(r):"0"(r));	\
 				   *((unsigned int *)(c))=r; (c)+=4; r;	})
+#   endif
 #  endif
 # endif
 #endif

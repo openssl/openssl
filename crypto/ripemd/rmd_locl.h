@@ -72,16 +72,15 @@
  */
 #ifdef RMD160_ASM
 # if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
-#  if !defined(B_ENDIAN)
-#   define ripemd160_block_host_order ripemd160_block_asm_host_order
-#  endif
+#  define ripemd160_block_host_order ripemd160_block_asm_host_order
 # endif
 #endif
 
 void ripemd160_block_host_order (RIPEMD160_CTX *c, const void *p,size_t num);
 void ripemd160_block_data_order (RIPEMD160_CTX *c, const void *p,size_t num);
 
-#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || \
+    defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 # if !defined(B_ENDIAN)
 #  define ripemd160_block_data_order ripemd160_block_host_order
 # endif
