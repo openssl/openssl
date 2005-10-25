@@ -18,8 +18,14 @@ require "desboth.pl";
 
 $L="edi";
 $R="esi";
+$trans="ebp";
+$small_footprint=1 if (grep(/\-DOPENSSL_SMALL_FOOTPRINT/,@ARGV));
+# one can discuss setting this variable to 1 unconditionally, as
+# the folded loop is only 3% slower than unrolled, but >7 times smaller
 
 &external_label("DES_SPtrans");
+&DES_encrypt_internal();
+&DES_decrypt_internal();
 &DES_encrypt("DES_encrypt1",1);
 &DES_encrypt("DES_encrypt2",0);
 &DES_encrypt3("DES_encrypt3",1);
@@ -30,6 +36,80 @@ $R="esi";
 
 &asm_finish();
 
+sub DES_encrypt_internal()
+	{
+	&function_begin_B("_x86_DES_encrypt");
+
+	if ($small_footprint)
+	    {
+	    &lea("edx",&DWP(128,"ecx"));
+	    &push("edx");
+	    &push("ecx");
+	    &set_label("eloop");
+		&D_ENCRYPT(0,$L,$R,0,$trans,"eax","ebx","ecx","edx",&swtmp(0));
+		&comment("");
+		&D_ENCRYPT(1,$R,$L,2,$trans,"eax","ebx","ecx","edx",&swtmp(0));
+		&comment("");
+		&add("ecx",16);
+		&cmp("ecx",&swtmp(1));
+		&mov(&swtmp(0),"ecx");
+		&jb(&label("eloop"));
+	    &add("esp",8);
+	    }
+	else
+	    {
+	    &push("ecx");
+	    for ($i=0; $i<16; $i+=2)
+		{
+		&comment("Round $i");
+		&D_ENCRYPT($i,$L,$R,$i*2,$trans,"eax","ebx","ecx","edx",&swtmp(0));
+		&comment("Round ".sprintf("%d",$i+1));
+		&D_ENCRYPT($i+1,$R,$L,($i+1)*2,$trans,"eax","ebx","ecx","edx",&swtmp(0));
+		}
+	    &add("esp",4);
+	}
+	&ret();
+
+	&function_end_B("_x86_DES_encrypt");
+	}
+	
+sub DES_decrypt_internal()
+	{
+	&function_begin_B("_x86_DES_decrypt");
+
+	if ($small_footprint)
+	    {
+	    &push("ecx");
+	    &lea("ecx",&DWP(128,"ecx"));
+	    &push("ecx");
+	    &set_label("dloop");
+		&D_ENCRYPT(0,$L,$R,-2,$trans,"eax","ebx","ecx","edx",&swtmp(0));
+		&comment("");
+		&D_ENCRYPT(1,$R,$L,-4,$trans,"eax","ebx","ecx","edx",&swtmp(0));
+		&comment("");
+		&sub("ecx",16);
+		&cmp("ecx",&swtmp(1));
+		&mov(&swtmp(0),"ecx");
+		&ja(&label("dloop"));
+	    &add("esp",8);
+	    }
+	else
+	    {
+	    &push("ecx");
+	    for ($i=15; $i>0; $i-=2)
+		{
+		&comment("Round $i");
+		&D_ENCRYPT(15-$i,$L,$R,$i*2,$trans,"eax","ebx","ecx","edx",&swtmp(0));
+		&comment("Round ".sprintf("%d",$i-1));
+		&D_ENCRYPT(15-$i+1,$R,$L,($i-1)*2,$trans,"eax","ebx","ecx","edx",&swtmp(0));
+		}
+	    &add("esp",4);
+	    }
+	&ret();
+
+	&function_end_B("_x86_DES_decrypt");
+	}
+	
 sub DES_encrypt
 	{
 	local($name,$do_ip)=@_;
@@ -41,7 +121,6 @@ sub DES_encrypt
 
 	&comment("");
 	&comment("Load the 2 words");
-	$trans="ebp";
 
 	if ($do_ip)
 		{
@@ -75,38 +154,16 @@ sub DES_encrypt
 
 	# PIC-ification:-)
 	&picmeup($trans,"DES_SPtrans");
-	#if ($cpp)	{ &picmeup($trans,"DES_SPtrans");   }
-	#else		{ &lea($trans,&DWP("DES_SPtrans")); }
 
 	&mov(	"ecx",	&wparam(1)	);
+
 	&cmp("ebx","0");
-	&je(&label("start_decrypt"));
-
-	for ($i=0; $i<16; $i+=2)
-		{
-		&comment("");
-		&comment("Round $i");
-		&D_ENCRYPT($i,$L,$R,$i*2,$trans,"eax","ebx","ecx","edx");
-
-		&comment("");
-		&comment("Round ".sprintf("%d",$i+1));
-		&D_ENCRYPT($i+1,$R,$L,($i+1)*2,$trans,"eax","ebx","ecx","edx");
-		}
-	&jmp(&label("end"));
-
-	&set_label("start_decrypt");
-
-	for ($i=15; $i>0; $i-=2)
-		{
-		&comment("");
-		&comment("Round $i");
-		&D_ENCRYPT(15-$i,$L,$R,$i*2,$trans,"eax","ebx","ecx","edx");
-		&comment("");
-		&comment("Round ".sprintf("%d",$i-1));
-		&D_ENCRYPT(15-$i+1,$R,$L,($i-1)*2,$trans,"eax","ebx","ecx","edx");
-		}
-
-	&set_label("end");
+	&je(&label("decrypt"));
+	&call("_x86_DES_encrypt");
+	&jmp(&label("done"));
+	&set_label("decrypt");
+	&call("_x86_DES_decrypt");
+	&set_label("done");
 
 	if ($do_ip)
 		{
@@ -140,7 +197,7 @@ sub DES_encrypt
 
 sub D_ENCRYPT
 	{
-	local($r,$L,$R,$S,$trans,$u,$tmp1,$tmp2,$t)=@_;
+	local($r,$L,$R,$S,$trans,$u,$tmp1,$tmp2,$t,$wp1)=@_;
 
 	 &mov(	$u,		&DWP(&n2a($S*4),$tmp2,"",0));
 	&xor(	$tmp1,		$tmp1);
@@ -167,7 +224,7 @@ sub D_ENCRYPT
 	&and(	$t,		"0xff"	);
 	 &xor(	$L,		&DWP("0x600",$trans,$tmp1,0));
 	 &xor(	$L,		&DWP("0x700",$trans,$tmp2,0));
-	&mov(	$tmp2,		&wparam(1)	);
+	&mov(	$tmp2,		$wp1	);
 	 &xor(	$L,		&DWP("0x400",$trans,$u,0));
 	 &xor(	$L,		&DWP("0x500",$trans,$t,0));
 	}
