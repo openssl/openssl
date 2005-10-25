@@ -301,10 +301,66 @@ static const SHA_LONG64 K512[80] = {
 #ifndef PEDANTIC
 # if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 #  if defined(__x86_64) || defined(__x86_64__)
-#   define PULL64(x) ({ SHA_LONG64 ret=*((const SHA_LONG64 *)(&(x)));	\
+#   define ROTR(a,n)	({ unsigned long ret;		\
+				asm ("rorq %1,%0"	\
+				: "=r"(ret)		\
+				: "J"(n),"0"(a)		\
+				: "cc"); ret;		})
+#   if !defined(B_ENDIAN)
+#    define PULL64(x) ({ SHA_LONG64 ret=*((const SHA_LONG64 *)(&(x)));	\
 				asm ("bswapq	%0"		\
 				: "=r"(ret)			\
 				: "0"(ret)); ret;		})
+#   endif
+#  elif (defined(__i386) || defined(__i386__)) && !defined(B_ENDIAN)
+#   if defined(I386_ONLY)
+#    define PULL64(x) ({ const unsigned int *p=(const unsigned int *)(&(x));\
+			unsigned int hi,lo;			\
+				asm("xchgb %%ah,%%al;xchgb %%dh,%%dl;"\
+				    "roll $16,%%eax; roll $16,%%edx; "\
+				    "xchgb %%ah,%%al;xchgb %%dh,%%dl;" \
+				: "=a"(lo),"=d"(hi)		\
+				: "0"(p[1]),"1"(p[0]) : "cc");	\
+				((SHA_LONG64)hi)<<32|lo;	})
+#   else
+#    define PULL64(x) ({ const unsigned int *p=(const unsigned int *)(&(x));\
+			unsigned int hi,lo;			\
+				asm ("bswapl %0; bswapl %1;"	\
+				: "=r"(lo),"=r"(hi)		\
+				: "0"(p[1]),"1"(p[0]));		\
+				((SHA_LONG64)hi)<<32|lo;	})
+#   endif
+#  elif defined(_ARCH_PPC) && defined(__64BIT__)
+#   define ROTR(a,n)	({ unsigned long ret;		\
+				asm ("rotrdi %0,%1,%2"	\
+				: "=r"(ret)		\
+				: "r"(a),"K"(n)); ret;	})
+#  endif
+# elif defined(_MSC_VER)
+#  if defined(_WIN64)	/* applies to both IA-64 and AMD64 */
+#   define ROTR(a,n)	_rotr64((a),n)
+#  endif
+#  if defined(_M_IX86) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#   if defined(I386_ONLY)
+    static SHA_LONG64 __fastcall __pull64be(const void *x)
+    {	_asm	mov	edx, [ecx + 0]
+	_asm	mov	eax, [ecx + 4]
+	_asm	xchg	dh,dl
+	_asm	xchg	ah,al
+	_asm	rol	edx,16
+	_asm	rol	eax,16
+	_asm	xchg	dh,dl
+	_asm	xchg	ah,al
+    }
+#   else
+    static SHA_LONG64 __fastcall __pull64be(const void *x)
+    {	_asm	mov	edx, [ecx + 0]
+	_asm	mov	eax, [ecx + 4]
+	_asm	bswap	edx
+	_asm	bswap	eax
+    }
+#   endif
+#   define PULL64(x) __pull64be(&(x))
 #  endif
 # endif
 #endif
@@ -312,27 +368,6 @@ static const SHA_LONG64 K512[80] = {
 #ifndef PULL64
 #define B(x,j)    (((SHA_LONG64)(*(((const unsigned char *)(&x))+j)))<<((7-j)*8))
 #define PULL64(x) (B(x,0)|B(x,1)|B(x,2)|B(x,3)|B(x,4)|B(x,5)|B(x,6)|B(x,7))
-#endif
-
-#ifndef PEDANTIC
-# if defined(_MSC_VER)
-#  if defined(_WIN64)	/* applies to both IA-64 and AMD64 */
-#   define ROTR(a,n)	_rotr64((a),n)
-#  endif
-# elif defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-#  if defined(__x86_64) || defined(__x86_64__)
-#   define ROTR(a,n)	({ unsigned long ret;		\
-				asm ("rorq %1,%0"	\
-				: "=r"(ret)		\
-				: "J"(n),"0"(a)		\
-				: "cc"); ret;		})
-#  elif defined(_ARCH_PPC) && defined(__64BIT__)
-#   define ROTR(a,n)	({ unsigned long ret;		\
-				asm ("rotrdi %0,%1,%2"	\
-				: "=r"(ret)		\
-				: "r"(a),"K"(n)); ret;	})
-#  endif
-# endif
 #endif
 
 #ifndef ROTR
