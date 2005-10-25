@@ -84,6 +84,7 @@ links:
 # XXXXX This currently only works on systems that use .so as suffix
 # for shared libraries as well as for Cygwin which uses the
 # dlfcn_name_converter and therefore stores the engines with .so suffix, too.
+# XXXXX This was extended to HP-UX dl targets, which use .sl suffix.
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
@@ -91,12 +92,18 @@ install:
 		for l in $(LIBNAMES); do \
 			( echo installing $$l; \
 			  if [ "$(PLATFORM)" != "Cygwin" ]; then \
-				  cp lib$$l.so $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so.new; \
+				case "$(CFLAGS)" in \
+				*DSO_DLFCN*)	sfx="so";;	\
+				*DSO_DL*)	sfx="sl";;	\
+				*)		sfx="bad";;	\
+				esac; \
+				cp lib$$l.$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
 			  else \
-				  cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so.new; \
+			  	sfx="so"; \
+				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
 			  fi; \
-			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so.new; \
-			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.so ); \
+			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
+			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx ); \
 		done; \
 	fi
 

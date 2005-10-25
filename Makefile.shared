@@ -196,10 +196,14 @@ link_app.bsd:
 	fi; $(LINK_APP)
 
 # For Darwin AKA Mac OS/X (dyld)
+# link_o.darwin produces .so, because we let it use dso_dlfcn module,
+# which has .so extension hard-coded. One can argue that one should
+# develop special dso module for MacOS X. At least manual encourages
+# to use native NSModule(3) API and refers to dlfcn as termporary hack.
 link_o.darwin:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME); \
-	SHLIB_SUFFIX=.dylib; \
+	SHLIB_SUFFIX=.so; \
 	ALLSYMSFLAGS='-all_load'; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS)"; \
@@ -450,7 +454,7 @@ link_o.hpux:
 	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
 	$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).sl; \
-	expr $(PLATFORM) : '.*ia64' > /dev/null && SHLIB=lib$(LIBNAME).so; \
+	expr "$(CFLAGS)" : 'DSO_DLFCN' > /dev/null && SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
 	ALLSYMSFLAGS='-Wl,-Fl'; \
 	NOALLSYMSFLAGS=''; \
