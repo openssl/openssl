@@ -875,7 +875,7 @@
      (part of SSL_OP_ALL).  This option used to disable the
      countermeasure against man-in-the-middle protocol-version
      rollback in the SSL 2.0 server implementation, which is a bad
-     idea.
+     idea.  (CVE-2005-2969)
 
      [Bodo Moeller; problem pointed out by Yutaka Oiwa (Research Center
      for Information Security, National Institute of Advanced Industrial
