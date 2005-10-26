@@ -5,6 +5,11 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8 and OpenSSL 0.9.8a:
+
+      o Fix potential SSL 2.0 rollback, CAN-2005-2969
+      o Extended Windows CE support
+
   Major changes between OpenSSL 0.9.7g and OpenSSL 0.9.8:
 
       o Major work on the BIGNUM library for higher efficiency and to
