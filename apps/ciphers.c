@@ -198,7 +198,7 @@ int MAIN(int argc, char **argv)
 				int id0 = (int)(id >> 24);
 				int id1 = (int)((id >> 16) & 0xffL);
 				int id2 = (int)((id >> 8) & 0xffL);
-				int id3 = (int)(i & 0xffL);
+				int id3 = (int)(id & 0xffL);
 				
 				if ((id & 0xff000000L) == 0x02000000L)
 					BIO_printf(STDout, "     0x%02X,0x%02X,0x%02X - ", id1, id2, id3); /* SSL2 cipher */
