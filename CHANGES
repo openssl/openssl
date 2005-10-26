@@ -78,7 +78,7 @@
 
   *) Extended Windows CE support.
      [Satoshi Nakamura and Andy Polyakov]
- 
+
   *) Initialize SSL_METHOD structures at compile time instead of during
      runtime, thus removing the need for a lock.
      [Steve Henson]
@@ -976,6 +976,9 @@
      [Steve Henson]
 
  Changes between 0.9.7f and 0.9.7g  [11 Apr 2005]
+
+  [NB: OpenSSL 0.9.7h and later 0.9.7 patch levels were released after
+  OpenSSL 0.9.8.]
 
   *) Fixes for newer kerberos headers. NB: the casts are needed because
      the 'length' field is signed on one version and unsigned on another
