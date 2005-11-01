@@ -51,6 +51,12 @@
   *) Add print and set support for Issuing Distribution Point CRL extension.
      [Steve Henson]
 
+ Changes between 0.9.8a and 0.9.8b  [XX xxx XXXX]
+
+  *) Corrected the numerous bugs in the Win32 path splitter in DSO.
+     Hopefully, we will not see any false combination of paths any more.
+     [Richard Levitte]
+
  Changes between 0.9.8 and 0.9.8a  [11 Oct 2005]
 
   *) Remove the functionality of SSL_OP_MSIE_SSLV2_RSA_PADDING
