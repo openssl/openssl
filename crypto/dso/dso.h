@@ -125,7 +125,7 @@ typedef char* (*DSO_NAME_CONVERTER_FUNC)(DSO *, const char *);
  * file specifications and added together in whatever fashion that is
  * sensible for the DSO method in question.  The only rule that really
  * applies is that if the two specification contain pieces of the same
- * type, the copy from the string string takes priority.  One could see
+ * type, the copy from the first string takes priority.  One could see
  * it as the first specification is the one given by the user and the
  * second being a bunch of defaults to add on if they're missing in the
  * first. */
