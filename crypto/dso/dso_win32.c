@@ -307,6 +307,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 	struct file_st *result = NULL;
 	enum { IN_NODE, IN_DEVICE, IN_FILE } position;
 	const char *start = filename;
+	char last;
 
 	if (!filename)
 		{
@@ -337,7 +338,8 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 
 	do
 		{
-		switch(filename[0])
+		last = filename[0];
+		switch(last)
 			{
 		case ':':
 			if(position != IN_DEVICE)
@@ -362,10 +364,19 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 				start = ++filename;
 				result->dir = start;
 				}
+			else if(position == IN_DEVICE)
+				{
+				position = IN_FILE;
+				filename++;
+				result->dir = start;
+				result->dirlen = filename - start;
+				start = filename;
+				}
 			else
 				{
 				filename++;
 				result->dirlen += filename - start;
+				start = filename;
 				}
 			break;
 		case '\0':
@@ -379,12 +390,19 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 					{
 					if (assume_last_is_dir)
 						{
-						result->devicelen += filename - start;
+						if (position == IN_DEVICE)
+							{
+							result->dir = start;
+							result->dirlen = 0;
+							}
+						result->dirlen +=
+							filename - start;
 						}
 					else
 						{
 						result->file = start;
-						result->filelen = filename - start;
+						result->filelen =
+							filename - start;
 						}
 					}
 				}
@@ -394,7 +412,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 			break;
 			}
 		}
-	while(*filename);
+	while(last);
 
 	if(!result->nodelen) result->node = NULL;
 	if(!result->devicelen) result->device = NULL;
@@ -482,10 +500,13 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
 		result[offset] = '\\'; offset++;
 		start = end + 1;
 		}
+#if 0 /* Not needed, since the directory converter above already appeneded
+	 a backslash */
 	if(file_split->predir && (file_split->dir || file_split->file))
 		{
 		result[offset] = '\\'; offset++;
 		}
+#endif
 	start = file_split->dir;
 	while(file_split->dirlen > (start - file_split->dir))
 		{
@@ -500,10 +521,13 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
 		result[offset] = '\\'; offset++;
 		start = end + 1;
 		}
+#if 0 /* Not needed, since the directory converter above already appeneded
+	 a backslash */
 	if(file_split->dir && file_split->file)
 		{
 		result[offset] = '\\'; offset++;
 		}
+#endif
 	strncpy(&result[offset], file_split->file,
 		file_split->filelen); offset += file_split->filelen;
 	result[offset] = '\0';
@@ -554,7 +578,7 @@ static char *win32_merger(DSO *dso, const char *filespec1, const char *filespec2
 			return(NULL);
 			}
 		filespec2_split = win32_splitter(dso, filespec2, 0);
-		if (!filespec1_split)
+		if (!filespec2_split)
 			{
 			DSOerr(DSO_F_WIN32_MERGER,
 				ERR_R_MALLOC_FAILURE);
