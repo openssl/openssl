@@ -2522,6 +2522,7 @@ static void print_result(int alg,int run_no,int count,double time_used)
 	results[alg][run_no]=((double)count)/time_used*lengths[run_no];
 	}
 
+#ifdef HAVE_FORK
 static char *sstrsep(char **string, const char *delim)
     {
     char isdelim[256];
@@ -2553,7 +2554,6 @@ static char *sstrsep(char **string, const char *delim)
     return token;
     }
 
-#ifdef HAVE_FORK
 static int do_multi(int multi)
 	{
 	int n;
