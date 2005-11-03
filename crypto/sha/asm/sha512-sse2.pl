@@ -22,7 +22,7 @@
 #
 #		2.4GHz P4	1.4GHz AMD32	1.4GHz AMD64(*)
 # SHA256/gcc(*)	54		43		59
-# SHA512/gcc	17		23		92
+# SHA512/gcc	21		24		92
 # SHA512/sse2	61(**)		57(**)
 # SHA512/icc	26		28
 # SHA256/icc(*)	65		54

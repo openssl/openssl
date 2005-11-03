@@ -227,9 +227,9 @@ sub main'pxor	{ &out2("pxor",@_); }
 sub main'por	{ &out2("por",@_); }
 sub main'pand	{ &out2("pand",@_); }
 sub main'movq	{
-	local($p1,$p2)=@_;
-	if ($p1=~/^mm[0-7]$/ && $p2=~/^mm[0-7]$/)
-		# movq between mmx registers sinks Intel CPUs
+	local($p1,$p2,$optimize)=@_;
+	if ($optimize && $p1=~/^mm[0-7]$/ && $p2=~/^mm[0-7]$/)
+		# movq between mmx registers can sink Intel CPUs
 		{	push(@out,"\tpshufw\t\$0xe4,%$p2,%$p1\n");	}
 	else	{	&out2("movq",@_);				}
 	}
