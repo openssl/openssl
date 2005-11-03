@@ -408,6 +408,10 @@ static unsigned int _strlen31(const char *str)
 #      define setvbuf(a, b, c, d) setbuffer((a), (b), (d))
        typedef unsigned long clock_t;
 #    endif
+#    ifdef OPENSSL_SYS_WIN32_CYGWIN
+#      include <io.h>
+#      include <fcntl.h>
+#    endif
 
 #    define OPENSSL_CONF	"openssl.cnf"
 #    define SSLEAY_CONF		OPENSSL_CONF
