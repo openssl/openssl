@@ -56,12 +56,17 @@
  * [including the GNU Public Licence.]
  */
 
-#if !defined(_WIN32_WCE)
-
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
 #include "cryptlib.h"
+
+#if defined(OPENSSL_NO_POSIX_IO)
+/*
+ * One can argue that one should implement dummy placeholder for
+ * BIO_s_fd here...
+ */
+#else
 /*
  * As for unconditional usage of "UPLINK" interface in this module.
  * Trouble is that unlike Unix file descriptors [which are indexes

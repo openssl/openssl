@@ -87,6 +87,9 @@ OPENSSL_IMPLEMENT_GLOBAL(int,DES_rw_mode)=DES_PCBC_MODE;
 int DES_enc_read(int fd, void *buf, int len, DES_key_schedule *sched,
 		 DES_cblock *iv)
 	{
+#if defined(OPENSSL_NO_POSIX_IO)
+	return(0);
+#else
 	/* data to be unencrypted */
 	int net_num=0;
 	static unsigned char *net=NULL;
@@ -224,5 +227,6 @@ int DES_enc_read(int fd, void *buf, int len, DES_key_schedule *sched,
 			}
 		}
 	return num;
+#endif /* OPENSSL_NO_POSIX_IO */
 	}
 
