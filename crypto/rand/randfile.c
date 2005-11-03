@@ -75,9 +75,7 @@
 #ifndef NO_SYS_TYPES_H
 # include <sys/types.h>
 #endif
-#ifdef MAC_OS_pre_X
-# include <stat.h>
-#else
+#ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 #endif
 
@@ -96,21 +94,25 @@ int RAND_load_file(const char *file, long bytes)
 	 * if bytes == -1, read complete file. */
 
 	MS_STATIC unsigned char buf[BUFSIZE];
+#ifndef OPENSSL_NO_POSIX_IO
 	struct stat sb;
+#endif
 	int i,ret=0,n;
 	FILE *in;
 
 	if (file == NULL) return(0);
 
+#ifndef OPENSSL_NO_POSIX_IO
 	i=stat(file,&sb);
 	/* If the state fails, put some crap in anyway */
 	RAND_add(&sb,sizeof(sb),0.0);
 	if (i < 0) return(0);
+#endif
 	if (bytes == 0) return(ret);
 
 	in=fopen(file,"rb");
 	if (in == NULL) goto err;
-#if defined(S_IFBLK) && defined(S_IFCHR)
+#if defined(S_IFBLK) && defined(S_IFCHR) && !defined(OPNESSL_NO_POSIX_IO)
 	if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
 	  /* this file is a device. we don't want read an infinite number
 	   * of bytes from a random device, nor do we want to use buffered
@@ -149,6 +151,7 @@ int RAND_write_file(const char *file)
 	int i,ret=0,rand_err=0;
 	FILE *out = NULL;
 	int n;
+#ifndef OPENSSL_NO_POSIX_IO
 	struct stat sb;
 	
 	i=stat(file,&sb);
@@ -164,8 +167,9 @@ int RAND_write_file(const char *file)
 	  }
 #endif
 	}
+#endif
 
-#if defined(O_CREAT) && !defined(OPENSSL_SYS_WIN32)
+#if defined(O_CREAT) && !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_POSIX_IO)
 	{
 	/* For some reason Win32 can't write to files created this way */
 	

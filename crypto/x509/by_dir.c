@@ -65,9 +65,7 @@
 #ifndef NO_SYS_TYPES_H
 # include <sys/types.h>
 #endif
-#ifdef MAC_OS_pre_X
-# include <stat.h>
-#else
+#ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 #endif
 
@@ -254,7 +252,6 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 	int i,j,k;
 	unsigned long h;
 	BUF_MEM *b=NULL;
-	struct stat st;
 	X509_OBJECT stmp,*tmp;
 	const char *postfix="";
 
@@ -334,8 +331,13 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 					postfix,k);
 				}
 			k++;
+#ifndef OPENSSL_NO_POSIX_IO
+			{
+			struct stat st;
 			if (stat(b->data,&st) < 0)
 				break;
+			}
+#endif
 			/* found one. */
 			if (type == X509_LU_X509)
 				{
