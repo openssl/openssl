@@ -176,50 +176,20 @@ extern BIO *bio_err;
 #  define apps_shutdown()
 #else
 #  ifndef OPENSSL_NO_ENGINE
-#    if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WIN16) || \
-     defined(OPENSSL_SYS_WIN32)
-#      ifdef _O_BINARY
-#        define apps_startup() \
-			do { _fmode=_O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
+#    define apps_startup() \
+			do { do_pipe_sig(); CRYPTO_malloc_init(); \
 			ERR_load_crypto_strings(); OpenSSL_add_all_algorithms(); \
 			ENGINE_load_builtin_engines(); setup_ui_method(); } while(0)
-#      else
-#        define apps_startup() \
-			do { _fmode=O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
-			ERR_load_crypto_strings(); OpenSSL_add_all_algorithms(); \
-			ENGINE_load_builtin_engines(); setup_ui_method(); } while(0)
-#      endif
-#    else
-#      define apps_startup() \
-			do { do_pipe_sig(); OpenSSL_add_all_algorithms(); \
-			ERR_load_crypto_strings(); ENGINE_load_builtin_engines(); \
-			setup_ui_method(); } while(0)
-#    endif
 #    define apps_shutdown() \
 			do { CONF_modules_unload(1); destroy_ui_method(); \
 			EVP_cleanup(); ENGINE_cleanup(); \
 			CRYPTO_cleanup_all_ex_data(); ERR_remove_state(0); \
 			ERR_free_strings(); } while(0)
 #  else
-#    if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WIN16) || \
-     defined(OPENSSL_SYS_WIN32)
-#      ifdef _O_BINARY
-#        define apps_startup() \
-			do { _fmode=_O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
+#    define apps_startup() \
+			do { do_pipe_sig(); CRYPTO_malloc_init(); \
 			ERR_load_crypto_strings(); OpenSSL_add_all_algorithms(); \
 			setup_ui_method(); } while(0)
-#      else
-#        define apps_startup() \
-			do { _fmode=O_BINARY; do_pipe_sig(); CRYPTO_malloc_init(); \
-			ERR_load_crypto_strings(); OpenSSL_add_all_algorithms(); \
-			setup_ui_method(); } while(0)
-#      endif
-#    else
-#      define apps_startup() \
-			do { do_pipe_sig(); OpenSSL_add_all_algorithms(); \
-			ERR_load_crypto_strings(); \
-			setup_ui_method(); } while(0)
-#    endif
 #    define apps_shutdown() \
 			do { CONF_modules_unload(1); destroy_ui_method(); \
 			EVP_cleanup(); \
