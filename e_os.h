@@ -282,6 +282,7 @@ static unsigned int _strlen31(const char *str)
 #  include <fcntl.h>
 
 #  ifdef OPENSSL_SYS_WINCE
+#    define OPENSSL_NO_POSIX_IO
 #    include <winsock_extras.h>
 #  endif
 
