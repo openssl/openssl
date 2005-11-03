@@ -56,6 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
+#if !defined(_WIN32_WCE)
+
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
@@ -292,3 +294,4 @@ int BIO_fd_non_fatal_error(int err)
 		}
 	return(0);
 	}
+#endif

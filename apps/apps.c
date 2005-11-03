@@ -642,6 +642,15 @@ static char *app_get_pass(BIO *err, char *arg, int keepbio)
 				BIO_printf(err, "Can't open file %s\n", arg + 5);
 				return NULL;
 			}
+#if !defined(_WIN32)
+		/*
+		 * Under _WIN32, which covers even Win64 and CE, file
+		 * descriptors referenced by BIO_s_fd are not inherited
+		 * by child process and therefore below is not an option.
+		 * It could have been an option if bss_fd.c was operating
+		 * on real Windows descriptors, such as those obtained
+		 * with CreateFile.
+		 */
 		} else if(!strncmp(arg, "fd:", 3)) {
 			BIO *btmp;
 			i = atoi(arg + 3);
@@ -653,6 +662,7 @@ static char *app_get_pass(BIO *err, char *arg, int keepbio)
 			/* Can't do BIO_gets on an fd BIO so add a buffering BIO */
 			btmp = BIO_new(BIO_f_buffer());
 			pwdbio = BIO_push(btmp, pwdbio);
+#endif
 		} else if(!strcmp(arg, "stdin")) {
 			pwdbio = BIO_new_fp(stdin, BIO_NOCLOSE);
 			if(!pwdbio) {
