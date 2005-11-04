@@ -113,8 +113,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <ctype.h>
+#include <errno.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -130,17 +130,14 @@
 #endif
 #include <openssl/bn.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#ifdef fileno
-#undef fileno
-#define fileno(a) (int)_fileno(a)
-#endif
-#endif
-
 #define NON_MAIN
 #include "apps.h"
 #undef NON_MAIN
+
+#ifdef _WIN32
+static int WIN32_rename(const char *from, const char *to);
+#define rename(from,to) WIN32_rename((from),(to))
+#endif
 
 typedef struct {
 	const char *name;
@@ -170,18 +167,23 @@ int args_from_file(char *file, int *argc, char **argv[])
 	static char *buf=NULL;
 	static char **arg=NULL;
 	char *p;
-	struct stat stbuf;
-
-	if (stat(file,&stbuf) < 0) return(0);
 
 	fp=fopen(file,"r");
 	if (fp == NULL)
 		return(0);
 
+	if (fseek(fp,0,SEEK_END)==0)
+		len=ftell(fp), rewind(fp);
+	else	len=-1;
+	if (len<=0)
+		{
+		fclose(fp);
+		return(0);
+		}
+
 	*argc=0;
 	*argv=NULL;
 
-	len=(unsigned int)stbuf.st_size;
 	if (buf != NULL) OPENSSL_free(buf);
 	buf=(char *)OPENSSL_malloc(len+1);
 	if (buf == NULL) return(0);
@@ -1623,7 +1625,6 @@ int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 	{
 	char buf[5][BSIZE];
 	int i,j;
-	struct stat sb;
 
 	i = strlen(serialfile) + strlen(old_suffix);
 	j = strlen(serialfile) + strlen(new_suffix);
@@ -1648,30 +1649,21 @@ int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 	j = BIO_snprintf(buf[1], sizeof buf[1], "%s-%s",
 		serialfile, old_suffix);
 #endif
-	if (stat(serialfile,&sb) < 0)
-		{
-		if (errno != ENOENT 
+#ifdef RL_DEBUG
+	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
+		serialfile, buf[1]);
+#endif
+	if (rename(serialfile,buf[1]) < 0 && errno != ENOENT
 #ifdef ENOTDIR
 			&& errno != ENOTDIR
 #endif
-		   )
-			goto err;
-		}
-	else
-		{
-#ifdef RL_DEBUG
-		BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-			serialfile, buf[1]);
-#endif
-		if (rename(serialfile,buf[1]) < 0)
-			{
+	   )		{
 			BIO_printf(bio_err,
 				"unable to rename %s to %s\n",
 				serialfile, buf[1]);
 			perror("reason");
 			goto err;
 			}
-		}
 #ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 		buf[0],serialfile);
@@ -1894,7 +1886,6 @@ int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suf
 	{
 	char buf[5][BSIZE];
 	int i,j;
-	struct stat sb;
 
 	i = strlen(dbfile) + strlen(old_suffix);
 	j = strlen(dbfile) + strlen(new_suffix);
@@ -1938,30 +1929,21 @@ int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suf
 	j = BIO_snprintf(buf[3], sizeof buf[3], "%s-attr-%s",
 		dbfile, old_suffix);
 #endif
-	if (stat(dbfile,&sb) < 0)
-		{
-		if (errno != ENOENT 
-#ifdef ENOTDIR
-			&& errno != ENOTDIR
-#endif
-		   )
-			goto err;
-		}
-	else
-		{
 #ifdef RL_DEBUG
-		BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-			dbfile, buf[1]);
+	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
+		dbfile, buf[1]);
 #endif
-		if (rename(dbfile,buf[1]) < 0)
-			{
+	if (rename(dbfile,buf[1]) < 0 && errno != ENOENT
+#ifdef ENOTDIR
+		&& errno != ENOTDIR
+#endif
+	   )		{
 			BIO_printf(bio_err,
 				"unable to rename %s to %s\n",
 				dbfile, buf[1]);
 			perror("reason");
 			goto err;
 			}
-		}
 #ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 		buf[0],dbfile);
@@ -1975,23 +1957,15 @@ int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suf
 		rename(buf[1],dbfile);
 		goto err;
 		}
-	if (stat(buf[4],&sb) < 0)
-		{
-		if (errno != ENOENT 
-#ifdef ENOTDIR
-			&& errno != ENOTDIR
-#endif
-		   )
-			goto err;
-		}
-	else
-		{
 #ifdef RL_DEBUG
-		BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-			buf[4],buf[3]);
+	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
+		buf[4],buf[3]);
 #endif
-		if (rename(buf[4],buf[3]) < 0)
-			{
+	if (rename(buf[4],buf[3]) < 0 && errno != ENOENT
+#ifdef ENOTDIR
+		&& errno != ENOTDIR
+#endif
+	   )		{
 			BIO_printf(bio_err,
 				"unable to rename %s to %s\n",
 				buf[4], buf[3]);
@@ -2000,7 +1974,6 @@ int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suf
 			rename(buf[1],dbfile);
 			goto err;
 			}
-		}
 #ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 		buf[2],buf[4]);
@@ -2195,45 +2168,6 @@ error:
 	return NULL;
 }
 
-/* This code MUST COME AFTER anything that uses rename() */
-#ifdef OPENSSL_SYS_WIN32
-int WIN32_rename(const char *from, const char *to)
-	{
-#ifndef OPENSSL_SYS_WINCE
-	/* Windows rename gives an error if 'to' exists, so delete it
-	 * first and ignore file not found errror
-	 */
-	if((remove(to) != 0) && (errno != ENOENT))
-		return -1;
-#undef rename
-	return rename(from, to);
-#else
-	/* convert strings to UNICODE */
-	{
-	BOOL result = FALSE;
-	WCHAR* wfrom;
-	WCHAR* wto;
-	int i;
-	wfrom = malloc((strlen(from)+1)*2);
-	wto = malloc((strlen(to)+1)*2);
-	if (wfrom != NULL && wto != NULL)
-		{
-		for (i=0; i<(int)strlen(from)+1; i++)
-			wfrom[i] = (short)from[i];
-		for (i=0; i<(int)strlen(to)+1; i++)
-			wto[i] = (short)to[i];
-		result = MoveFile(wfrom, wto);
-		}
-	if (wfrom != NULL)
-		free(wfrom);
-	if (wto != NULL)
-		free(wto);
-	return result;
-	}
-#endif
-	}
-#endif
-
 int args_verify(char ***pargs, int *pargc,
 			int *badarg, BIO *err, X509_VERIFY_PARAM **pm)
 	{
@@ -2374,6 +2308,62 @@ void policies_print(BIO *out, X509_STORE_CTX *ctx)
 	}
 
 #if defined(_WIN32)
+# ifdef fileno
+#  undef fileno
+#  define fileno(a) (int)_fileno(a)
+# endif
+
+# include <windows.h>
+# include <tchar.h>
+
+static int WIN32_rename(const char *from, const char *to)
+	{
+	TCHAR  *tfrom=NULL,*tto;
+	DWORD	err;
+	int	ret=0;
+
+	if (sizeof(TCHAR) == 1)
+		{
+		tfrom = (TCHAR *)from;
+		tto   = (TCHAR *)to;
+		}
+	else	/* UNICODE path */
+		{
+		size_t i,flen=strlen(from)+1,tlen=strlen(to)+1;
+		tfrom = (TCHAR *)malloc(sizeof(TCHAR)*(flen+tlen));
+		if (tfrom==NULL) goto err;
+		tto=tfrom+flen;
+#if !defined(_WIN32_WCE) || _WIN32_WCE>=101
+		if (!MultiByteToWideChar(CP_ACP,0,from,flen,(WCHAR *)tfrom,flen))
+#endif
+			for (i=0;i<flen;i++)	tfrom[i]=(TCHAR)from[i];
+#if !defined(_WIN32_WCE) || _WIN32_WCE>=101
+		if (!MultiByteToWideChar(CP_ACP,0,to,  tlen,(WCHAR *)tto,  tlen))
+#endif
+			for (i=0;i<tlen;i++)	tto[i]  =(TCHAR)to[i];
+		}
+
+	if (MoveFile(tfrom,tto))	goto ok;
+	err=GetLastError();
+	if (err==ERROR_ALREADY_EXISTS || err==ERROR_FILE_EXISTS)
+		{
+		if (DeleteFile(tto) && MoveFile(tfrom,tto))
+			goto ok;
+		err=GetLastError();
+		}
+	if (err==ERROR_FILE_NOT_FOUND || err==ERROR_PATH_NOT_FOUND)
+		errno = ENOENT;
+	else if (err==ERROR_ACCESS_DENIED)
+		errno = EACCES;
+	else
+		errno = EINVAL;	/* we could map more codes... */
+err:
+	ret=-1;
+ok:
+	if (tfrom!=NULL && tfrom!=(TCHAR *)from)	free(tfrom);
+	return ret;
+	}
+
 int app_isdir(const char *name)
 	{
 	HANDLE		hList;
