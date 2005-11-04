@@ -316,4 +316,7 @@ void policies_print(BIO *out, X509_STORE_CTX *ctx);
 
 #define SERIAL_RAND_BITS	64
 
+int app_isdir(const char *);
+int raw_read_stdin(void *,int);
+int raw_write_stdout(const void *,int);
 #endif

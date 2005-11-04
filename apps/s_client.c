@@ -137,15 +137,6 @@ typedef unsigned int u_int;
 #include "s_apps.h"
 #include "timeouts.h"
 
-#ifdef OPENSSL_SYS_WINCE
-/* Windows CE incorrectly defines fileno as returning void*, so to avoid problems below... */
-#ifdef fileno
-#undef fileno
-#endif
-#define fileno(a) (int)_fileno(a)
-#endif
-
-
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
@@ -926,7 +917,7 @@ re_start:
 #ifdef CHARSET_EBCDIC
 			ascii2ebcdic(&(sbuf[sbuf_off]),&(sbuf[sbuf_off]),sbuf_len);
 #endif
-			i=write(fileno(stdout),&(sbuf[sbuf_off]),sbuf_len);
+			i=raw_write_stdout(&(sbuf[sbuf_off]),sbuf_len);
 
 			if (i <= 0)
 				{
@@ -1004,7 +995,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
 #endif
 #elif defined (OPENSSL_SYS_NETWARE)
-        else if (_kbhit())
+		else if (_kbhit())
 #else
 		else if (FD_ISSET(fileno(stdin),&readfds))
 #endif
@@ -1013,7 +1004,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				{
 				int j, lf_num;
 
-				i=read(fileno(stdin),cbuf,BUFSIZZ/2);
+				i=raw_read_stdin(cbuf,BUFSIZZ/2);
 				lf_num = 0;
 				/* both loops are skipped when i <= 0 */
 				for (j = 0; j < i; j++)
@@ -1032,7 +1023,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				assert(lf_num == 0);
 				}
 			else
-				i=read(fileno(stdin),cbuf,BUFSIZZ);
+				i=raw_read_stdin(cbuf,BUFSIZZ);
 
 			if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q')))
 				{

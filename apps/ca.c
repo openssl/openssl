@@ -63,7 +63,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <openssl/conf.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -826,7 +825,6 @@ bad:
 	/* lookup where to write new certificates */
 	if ((outdir == NULL) && (req))
 		{
-		struct stat sb;
 
 		if ((outdir=NCONF_get_string(conf,section,ENV_NEW_CERTS_DIR))
 			== NULL)
@@ -852,20 +850,12 @@ bad:
 			goto err;
 			}
 
-		if (stat(outdir,&sb) != 0)
-			{
-			BIO_printf(bio_err,"unable to stat(%s)\n",outdir);
-			perror(outdir);
-			goto err;
-			}
-#ifdef S_IFDIR
-		if (!(sb.st_mode & S_IFDIR))
+		if (app_isdir(outdir)<=0)
 			{
 			BIO_printf(bio_err,"%s need to be a directory\n",outdir);
 			perror(outdir);
 			goto err;
 			}
-#endif
 #endif
 		}
 

@@ -125,7 +125,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sys/stat.h>
 #include <openssl/e_os2.h>
 #ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
@@ -162,14 +161,6 @@ typedef unsigned int u_int;
 #include "s_apps.h"
 #include "timeouts.h"
 
-#ifdef OPENSSL_SYS_WINCE
-/* Windows CE incorrectly defines fileno as returning void*, so to avoid problems below... */
-#ifdef fileno
-#undef fileno
-#endif
-#define fileno(a) (int)_fileno(a)
-#endif
-
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
@@ -193,14 +184,6 @@ static DH *get_dh512(void);
 
 #ifdef MONOLITH
 static void s_server_init(void);
-#endif
-
-#ifndef S_ISDIR
-# if defined(_S_IFMT) && defined(_S_IFDIR)
-#  define S_ISDIR(a)	(((a) & _S_IFMT) == _S_IFDIR)
-# else
-#  define S_ISDIR(a)	(((a) & S_IFMT) == S_IFDIR)
-# endif
 #endif
 
 #ifndef OPENSSL_NO_DH
@@ -1293,7 +1276,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				{
 				int j, lf_num;
 
-				i=read(fileno(stdin), buf, bufsize/2);
+				i=raw_read_stdin(buf, bufsize/2);
 				lf_num = 0;
 				/* both loops are skipped when i <= 0 */
 				for (j = 0; j < i; j++)
@@ -1312,7 +1295,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				assert(lf_num == 0);
 				}
 			else
-				i=read(fileno(stdin),buf,bufsize);
+				i=raw_read_stdin(buf,bufsize);
 			if (!s_quiet)
 				{
 				if ((i <= 0) || (buf[0] == 'Q'))
@@ -1428,7 +1411,7 @@ again:
 #ifdef CHARSET_EBCDIC
 					ascii2ebcdic(buf,buf,i);
 #endif
-					write(fileno(stdout),buf,
+					raw_write_stdout(buf,
 						(unsigned int)i);
 					if (SSL_pending(con)) goto again;
 					break;
@@ -1580,7 +1563,6 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	char *buf=NULL;
 	int ret=1;
 	int i,j,k,blank,dot;
-	struct stat st_buf;
 	SSL *con;
 	SSL_CIPHER *c;
 	BIO *io,*ssl_bio,*sbio;
@@ -1845,14 +1827,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 #endif
 
 			/* if a directory, do the index thang */
-			if (stat(p,&st_buf) < 0)
-				{
-				BIO_puts(io,text);
-				BIO_printf(io,"Error accessing '%s'\r\n",p);
-				ERR_print_errors(io);
-				break;
-				}
-			if (S_ISDIR(st_buf.st_mode))
+			if (app_isdir(p)>0)
 				{
 #if 0 /* must check buffer size */
 				strcat(p,"/index.html");

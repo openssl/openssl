@@ -63,7 +63,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include "apps.h"
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -295,18 +294,11 @@ end:
  */
 static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
 	{
-	struct stat st;
 	BIO *in=NULL;
 	int count=0;
 	int ret= -1;
 	STACK_OF(X509_INFO) *sk=NULL;
 	X509_INFO *xi;
-
-	if ((stat(certfile,&st) != 0))
-		{
-		BIO_printf(bio_err,"unable to load the file, %s\n",certfile);
-		goto end;
-		}
 
 	in=BIO_new(BIO_s_file());
 	if ((in == NULL) || (BIO_read_filename(in,certfile) <= 0))

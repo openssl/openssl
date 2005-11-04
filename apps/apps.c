@@ -130,6 +130,14 @@
 #endif
 #include <openssl/bn.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#ifdef fileno
+#undef fileno
+#define fileno(a) (int)_fileno(a)
+#endif
+#endif
+
 #define NON_MAIN
 #include "apps.h"
 #undef NON_MAIN
@@ -773,7 +781,9 @@ X509 *load_cert(BIO *err, const char *file, int format,
 
 	if (file == NULL)
 		{
+#ifdef _IONBF
 		setvbuf(stdin, NULL, _IONBF, 0);
+#endif
 		BIO_set_fp(cert,stdin,BIO_NOCLOSE);
 		}
 	else
@@ -865,7 +875,9 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 		}
 	if (file == NULL && maybe_stdin)
 		{
+#ifdef _IONBF
 		setvbuf(stdin, NULL, _IONBF, 0);
+#endif
 		BIO_set_fp(key,stdin,BIO_NOCLOSE);
 		}
 	else
@@ -947,7 +959,9 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 		}
 	if (file == NULL && maybe_stdin)
 		{
+#ifdef _IONBF
 		setvbuf(stdin, NULL, _IONBF, 0);
+#endif
 		BIO_set_fp(key,stdin,BIO_NOCLOSE);
 		}
 	else
@@ -2358,3 +2372,78 @@ void policies_print(BIO *out, X509_STORE_CTX *ctx)
 	if (free_out)
 		BIO_free(out);
 	}
+
+#if defined(_WIN32)
+int app_isdir(const char *name)
+	{
+	HANDLE		hList;
+	WIN32_FIND_DATA	FileData;
+#if defined(UNICODE) || defined(_UNICODE)
+	size_t i, len_0 = strlen(name)+1;
+
+	if (len_0 > sizeof(FileData.cFileName)/sizeof(FileData.cFileName[0]))
+		return -1;
+
+#if !defined(_WIN32_WCE) || _WIN32_WCE>=101
+	if (!MultiByteToWideChar(CP_ACP,0,name,len_0,FileData.cFileName,len_0))
+#endif
+		for (i=0;i<len_0;i++)
+			FileData.cFileName[i] = (WCHAR)name[i];
+
+	hList = FindFirstFile(FileData.cFileName,&FileData);
+#else
+	hList = FindFirstFile(name,&FileData);
+#endif
+	if (hList == INVALID_HANDLE_VALUE)	return -1;
+	FindClose(hList);
+	return ((FileData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)!=0);
+	}
+#else
+#include <sys/stat.h>
+#ifndef S_ISDIR
+# if defined(_S_IFMT) && defined(_S_IFDIR)
+#  define S_ISDIR(a)   (((a) & _S_IFMT) == _S_IFDIR)
+# else 
+#  define S_ISDIR(a)   (((a) & S_IFMT) == S_IFDIR)
+# endif 
+#endif 
+
+int app_isdir(const char *name)
+	{
+#if defined(S_ISDIR)
+	struct stat st;
+
+	if (stat(name,&st)==0)	return S_ISDIR(st.st_mode);
+	else			return -1;
+#else
+	return -1;
+#endif
+	}
+#endif
+
+#if defined(_WIN32) && defined(STD_INPUT_HANDLE)
+int raw_read_stdin(void *buf,int siz)
+	{
+	DWORD n;
+	if (ReadFile(GetStdHandle(STD_INPUT_HANDLE),buf,siz,&n,NULL))
+		return (n);
+	else	return (-1);
+	}
+#else
+int raw_read_stdin(void *buf,int siz)
+	{	return read(fileno(stdin),buf,siz);	}
+#endif
+
+#if defined(_WIN32) && defined(STD_OUTPUT_HANDLE)
+int raw_write_stdout(void *buf,int siz)
+	{
+	DWORD n;
+	if (WriteFile(GetStdHandle(STD_OUTPUT_HANDLE),buf,siz,&n,NULL))
+		return (n);
+	else	return (-1);
+	}
+#else
+int raw_write_stdout(const void *buf,int siz)
+	{	return write(fileno(stdout),buf,siz);	}
+#endif
+
