@@ -2401,7 +2401,7 @@ double app_tminterval(int stop,int usertime)
 			{
 			BIO_printf(bio_err,"To get meaningful results, run "
 					   "this program on idle system.\n");
-			warning=1;
+			warning=0;
 			}
 		GetSystemTime(&systime);
 		SystemTimeToFileTime(&systime,&now);
@@ -2421,6 +2421,41 @@ double app_tminterval(int stop,int usertime)
 		ret = (tmstop.QuadPart - tmstart.QuadPart)*1e-7;
 		}
 
+	return (ret);
+	}
+
+#elif defined(OPENSSL_SYSTEM_VXWORKS)
+#include <time.h>
+
+double app_tminterval(int stop,int usertime)
+	{
+	double ret=0;
+#ifdef CLOCK_REALTIME
+	static struct timespec	tmstart;
+	struct timespec		now;
+#else
+	static unsigned long	tmstart;
+	unsigned long		now;
+#endif
+	static int warning=1;
+
+	if (usertime && warning)
+		{
+		BIO_printf(bio_err,"To get meaningful results, run "
+				   "this program on idle system.\n");
+		warning=0;
+		}
+
+#ifdef CLOCK_REALTIME
+	clock_gettime(CLOCK_REALTIME,&now);
+	if (stop==TM_START)	tmstart = now;
+	else	ret = ( (now.tv_sec+now.tv_nsec*1e-9)
+			- (tmstart.tv_sec+tmstart.tv_nsec*1e-9) );
+#else
+	now = tickGet();
+	if (stop==TM_START)	tmstart = now;
+	else			ret = (now - tmstart)/(double)sysClkRateGet();
+#endif
 	return (ret);
 	}
 
