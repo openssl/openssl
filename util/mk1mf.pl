@@ -10,7 +10,7 @@ $OPTIONS="";
 $ssl_version="";
 $banner="\t\@echo Building OpenSSL";
 
-my $no_static_engine = 0;
+my $no_static_engine = 1;
 my $engines = "";
 
 
