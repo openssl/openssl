@@ -283,7 +283,9 @@ static unsigned int _strlen31(const char *str)
 
 #  ifdef OPENSSL_SYS_WINCE
 #    define OPENSSL_NO_POSIX_IO
-#    include <winsock_extras.h>
+#    if defined(_WIN32_WCE) && _WIN32_WCE<410
+#      include <winsock_extras.h>
+#    endif
 #  endif
 
 #  define ssize_t long

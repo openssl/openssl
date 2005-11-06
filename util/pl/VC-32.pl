@@ -79,8 +79,10 @@ elsif ($FLAVOR =~ /CE/)
     }
 
     $cc='$(CC)';
-    $base_cflags=' /W3 /WX /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -I$(WCECOMPAT)/include -DOPENSSL_SMALL_FOOTPRINT';
+    $base_cflags=' /W3 /WX /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -DOPENSSL_SMALL_FOOTPRINT';
     $base_cflags.=" $wcecdefs";
+    $base_cflags.=' $(WCECOMPAT)/include'		if (defined($ENV{'WCECOMPAT'}));
+    $base_cflags.=' $(PORTSDK_LIBPATH)/../../include'	if (defined($ENV{'PORTSDK_LIBPATH'}));
     $opt_cflags=' /MC /O1i';	# optimize for space, but with intrinsics...
     $dbg_clfags=' /MC /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /opt:ref $wcelflag";
@@ -124,7 +126,8 @@ else			{ $ex_libs='wsock32.lib'; }
 
 if ($FLAVOR =~ /CE/)
 	{
-	$ex_libs.=' $(WCECOMPAT)/lib/wcecompatex.lib';
+	$ex_libs.=' $(WCECOMPAT)/lib/wcecompatex.lib'	if (defined($ENV{'WCECOMPAT'}));
+	$ex_libs.=' $(PORTSDK_LIBPATH)/portlib.lib'	if (defined($ENV{'PORTSDK_LIBPATH'}));
 	$ex_libs.=' /nodefaultlib:oldnames.lib coredll.lib corelibc.lib' if ($ENV{'TARGETCPU'} eq "X86");
 	}
 else
@@ -225,6 +228,7 @@ ___
 elsif ($shlib && $FLAVOR =~ /CE/)
 	{
 	$mlflags.=" $lflags /dll";
+	$lflags.=' /entry:mainCRTstartup' if(defined($ENV{'PORTSDK_LIBPATH'}));
 	$lib_cflag=" -D_WINDLL -D_DLL";
 	$out_def='out32dll_$(TARGETCPU)';
 	$tmp_def='tmp32dll_$(TARGETCPU)';
@@ -259,7 +263,9 @@ sub do_lib_rule
 			{}
 		elsif ($FLAVOR =~ /CE/)
 			{
-			$ex.=' winsock.lib $(WCECOMPAT)/lib/wcecompatex.lib';
+			$ex.=' winsock.lib';
+			$ex.=' $(WCECOMPAT)/lib/wcecompatex.lib' if (defined($ENV{'WCECOMPAT'}));
+			$ex.=' $(PORTSDK_LIBPATH)/portlib.lib'	 if (defined($ENV{'PORTSDK_LIBPATH'}));
 			}
 		else
 			{
