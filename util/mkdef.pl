@@ -739,6 +739,12 @@ sub do_defs
 					$def .= "int i2d_$1_NDEF(void);";
 				} elsif (/^\s*DECLARE_ASN1_SET_OF\s*\(\s*(\w*)\s*\)/) {
 					next;
+				} elsif (/^\s*DECLARE_ASN1_PRINT_FUNCTION\s*\(\s*(\w*)\s*\)/) {
+					$def .= "int $1_print_ctx(void);";
+					next;
+				} elsif (/^\s*DECLARE_ASN1_PRINT_FUNCTION_name\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+					$def .= "int $2_print_ctx(void);";
+					next;
 				} elsif (/^\s*DECLARE_PKCS12_STACK_OF\s*\(\s*(\w*)\s*\)/) {
 					next;
 				} elsif (/^DECLARE_PEM_rw\s*\(\s*(\w*)\s*,/ ||

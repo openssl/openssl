@@ -3413,3 +3413,4 @@ ASN1_PCTX_get_str_flags                 3811	EXIST::FUNCTION:
 ASN1_PCTX_free                          3812	EXIST::FUNCTION:
 DSO_pathbyaddr                          3813	EXIST::FUNCTION:
 ASN1_PCTX_set_cert_flags                3814	EXIST::FUNCTION:
+PKCS7_print_ctx                         3815	EXIST::FUNCTION:
