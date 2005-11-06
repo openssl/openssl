@@ -3405,7 +3405,7 @@ ISSUING_DIST_POINT_free                 3804	EXIST::FUNCTION:
 i2d_NETSCAPE_X509                       3805	EXIST::FUNCTION:
 ISSUING_DIST_POINT_it                   3806	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ISSUING_DIST_POINT_it                   3806	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-bn_mul_mont                             3807	EXIST::FUNCTION:
+bn_mul_mont                             3807	NOEXIST::FUNCTION:
 ASN1_PCTX_set_oid_flags                 3808	EXIST::FUNCTION:
 ASN1_PCTX_new                           3809	EXIST::FUNCTION:
 NETSCAPE_X509_new                       3810	EXIST::FUNCTION:
