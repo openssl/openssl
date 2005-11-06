@@ -2424,6 +2424,38 @@ double app_tminterval(int stop,int usertime)
 	return (ret);
 	}
 
+#elif defined(OPENSSL_SYSTEM_VMS)
+#include <time.h>
+#include <times.h>
+
+double app_tminterval(int stop,int usertime)
+	{
+	static clock_t	tmstart;
+	double		ret = 0;
+	clock_t		now;
+#ifdef __TMS
+	struct tms	rus;
+
+	now = times(&rus);
+	if (usertime)	now = rus.tms_utime;
+#else
+	if (usertime)
+		now = clock(); /* sum of user and kernel times */
+	else	{
+		struct timeval tv;
+		gettimeofday(&tv,NULL);
+		now = (clock_t)(
+			(unsigned long long)tv.tv_sec*CLK_TCK +
+			(unsigned long long)tv.tv_usec*(1000000/CLK_TCK)
+			);
+		}
+#endif
+	if (stop==TM_START)	tmstart = now;
+	else			ret = (now - tmstart)/(double)(CLK_TCK);
+
+	return (ret);
+	}
+
 #elif defined(_SC_CLK_TCK)	/* by means of unistd.h */
 #include <sys/times.h>
 
