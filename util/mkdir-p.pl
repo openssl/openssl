@@ -8,6 +8,7 @@
 my $arg;
 
 foreach $arg (@ARGV) {
+  $arg =~ tr|\\|/|;
   &do_mkdir_p($arg);
 }
 
