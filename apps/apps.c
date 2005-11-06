@@ -2307,6 +2307,9 @@ void policies_print(BIO *out, X509_STORE_CTX *ctx)
 		BIO_free(out);
 	}
 
+/*
+ * Platform-specific sections
+ */
 #if defined(_WIN32)
 # ifdef fileno
 #  undef fileno
@@ -2363,7 +2366,98 @@ ok:
 	if (tfrom!=NULL && tfrom!=(TCHAR *)from)	free(tfrom);
 	return ret;
 	}
+#endif
 
+/* app_tminterval section */
+#if defined(_WIN32)
+double app_tminterval(int stop,int usertime)
+	{
+	FILETIME		now;
+	double			ret=0;
+	static ULARGE_INTEGER	tmstart;
+#ifdef _WIN32_WINNT
+	static HANDLE		proc=NULL;
+
+	if (proc==NULL)
+		{
+		if (GetVersion() < 0x80000000)
+			proc = OpenProcess(PROCESS_QUERY_INFORMATION,FALSE,
+						GetCurrentProcessId());
+		if (proc==NULL) proc = (HANDLE)-1;
+		}
+
+	if (usertime && proc!=(HANDLE)-1)
+		{
+		FILETIME junk;
+		GetProcessTimes(proc,&junk,&junk,&junk,&now);
+		}
+	else
+#endif
+		{
+		SYSTEMTIME systime;
+		GetSystemTime(&systime);
+		SystemTimeToFileTime(&systime,&now);
+		}
+
+	if (stop==TM_START)
+		{
+		tmstart.u.LowPart  = now.dwLowDateTime;
+		tmstart.u.HighPart = now.dwHighDateTime;
+		}
+	else	{
+		ULARGE_INTEGER tmstop;
+
+		tmstop.u.LowPart   = now.dwLowDateTime;
+		tmstop.u.HighPart  = now.dwHighDateTime;
+
+		ret = (tmstop.QuadPart - tmstart.QuadPart)*1e-7;
+		}
+
+	return (ret);
+	}
+
+#elif defined(_SC_CLK_TCK)	/* by means of unistd.h */
+#include <sys/times.h>
+
+double app_tminterval(int stop,int usertime)
+	{
+	double		ret = 0;
+	struct tms	rus;
+	clock_t		now = times(&rus);
+	static clock_t	tmstart;
+
+	if (usertime)		now = rus.tms_utime;
+
+	if (stop==TMSTART)	tmstart = now;
+	else			ret = (now - tmstart)/(double)sysconf(_SC_CLK_TCK);
+
+	return (ret);
+	}
+
+#else
+#include <sys/time.h>
+#include <sys/resource.h>
+
+double app_tminterval(int stop,int usertime)
+	{
+	double		ret = 0;
+	struct rusage	rus;
+	struct timeval	now;
+	static struct timeval tmstart;
+
+	if (usertime)		getrusage(RUSAGE_SELF,&rus), now = rus.ru_time;
+	else			gettimeofday(&now,NULL);
+
+	if (stop==TMSTART)	tmstart = now;
+	else			ret = ( (now.tv_sec+now.tv_usec*1e-6)
+					- (tmstart.tv_sec+tmstart.tv_usec*1e-6) );
+
+	return ret;
+	}
+#endif
+
+/* app_isdir section */
+#ifdef _WIN32
 int app_isdir(const char *name)
 	{
 	HANDLE		hList;
@@ -2411,6 +2505,7 @@ int app_isdir(const char *name)
 	}
 #endif
 
+/* raw_read|write section */
 #if defined(_WIN32) && defined(STD_INPUT_HANDLE)
 int raw_read_stdin(void *buf,int siz)
 	{
@@ -2436,4 +2531,3 @@ int raw_write_stdout(void *buf,int siz)
 int raw_write_stdout(const void *buf,int siz)
 	{	return write(fileno(stdout),buf,siz);	}
 #endif
-

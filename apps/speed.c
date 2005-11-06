@@ -108,53 +108,8 @@
 #include <signal.h>
 #endif
 
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(OPENSSL_SYS_MACOSX)
-# define USE_TOD
-#elif !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VXWORKS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC))
-# define TIMES
-#endif
-#if !defined(_UNICOS) && !defined(__OpenBSD__) && !defined(sgi) && !defined(__FreeBSD__) && !(defined(__bsdi) || defined(__bsdi__)) && !defined(_AIX) && !defined(OPENSSL_SYS_MPE) && !defined(__NetBSD__) && !defined(OPENSSL_SYS_VXWORKS) /* FIXME */
-# define TIMEB
-#endif
-
-#if defined(OPENSSL_SYS_NETWARE)
-#undef TIMES
-#undef TIMEB
-#include <time.h>
-#endif
-
-#ifndef _IRIX
-# include <time.h>
-#endif
-#ifdef TIMES
-# include <sys/types.h>
-# include <sys/times.h>
-#endif
-#ifdef USE_TOD
-# include <sys/time.h>
-# include <sys/resource.h>
-#endif
-
-/* Depending on the VMS version, the tms structure is perhaps defined.
-   The __TMS macro will show if it was.  If it wasn't defined, we should
-   undefine TIMES, since that tells the rest of the program how things
-   should be handled.				-- Richard Levitte */
-#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__TMS)
-#undef TIMES
-#endif
-
-#ifdef TIMEB
-#include <sys/timeb.h>
-#endif
-
-#if !defined(TIMES) && !defined(TIMEB) && !defined(USE_TOD) && !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_NETWARE)
-#error "It seems neither struct tms nor struct timeb is supported in this platform!"
-#endif
-
-#if defined(sun) || defined(__ultrix)
-#define _POSIX_SOURCE
-#include <limits.h>
-#include <sys/param.h>
+#ifdef _WIN32
+#include <windows.h>
 #endif
 
 #include <openssl/bn.h>
@@ -218,34 +173,6 @@
 #endif
 #ifndef OPENSSL_NO_ECDH
 #include <openssl/ecdh.h>
-#endif
-
-/*
- * The following "HZ" timing stuff should be sync'd up with the code in
- * crypto/tmdiff.[ch]. That appears to try to do the same job, though I think
- * this code is more up to date than libcrypto's so there may be features to
- * migrate over first. This is used in two places further down AFAICS. 
- * The point is that nothing in openssl actually *uses* that tmdiff stuff, so
- * either speed.c should be using it or it should go because it's obviously not
- * useful enough. Anyone want to do a janitorial job on this?
- */
-
-/* The following if from times(3) man page.  It may need to be changed */
-#ifndef HZ
-# if defined(_SC_CLK_TCK) \
-     && (!defined(OPENSSL_SYS_VMS) || __CTRL_VER >= 70000000)
-#  define HZ sysconf(_SC_CLK_TCK)
-# else
-#  ifndef CLK_TCK
-#   ifndef _BSD_CLK_TCK_ /* FreeBSD hack */
-#    define HZ	100.0
-#   else /* _BSD_CLK_TCK_ */
-#    define HZ ((double)_BSD_CLK_TCK_)
-#   endif
-#  else /* CLK_TCK */
-#   define HZ ((double)CLK_TCK)
-#  endif
-# endif
 #endif
 
 #if !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MACINTOSH_CLASSIC) && !defined(OPENSSL_SYS_OS2) && !defined(OPENSSL_SYS_NETWARE)
@@ -319,141 +246,46 @@ static SIGRETTYPE sig_done(int sig)
 #define START	0
 #define STOP	1
 
-#if defined(OPENSSL_SYS_NETWARE)
+#if defined(_WIN32)
 
-   /* for NetWare the best we can do is use clock() which returns the
-    * time, in hundredths of a second, since the NLM began executing
-   */
+#define SIGALRM
+static unsigned int lapse,schlock;
+static void alarm(unsigned int secs) { lapse = secs*1000; }
+
+static DWORD WINAPI sleepy(VOID *arg)
+	{
+	schlock = 1;
+	Sleep(lapse);
+	run = 0;
+	return 0;
+	}
+
 static double Time_F(int s)
 	{
-	double ret;
+	if (s == START)
+		{
+		HANDLE	thr;
+		schlock = 0;
+		thr = CreateThread(NULL,4096,sleepy,NULL,0,NULL);
+		if (thr==NULL)
+			{
+			DWORD ret=GetLastError();
+			BIO_printf(bio_err,"unable to CreateThread (%d)",ret);
+			ExitProcess(ret);
+			}
+		CloseHandle(thr);		/* detach the thread	*/
+		while (!schlock) Sleep(0);	/* scheduler spinlock	*/
+		}
 
-   static clock_t tstart,tend;
-
-   if (s == START)
-   {
-      tstart=clock();
-      return(0);
-   }
-   else
-   {
-      tend=clock();
-      ret=(double)((double)(tend)-(double)(tstart));
-      return((ret < 0.001)?0.001:ret);
-   }
-   }
-
+	return app_tminterval(s,usertime);
+	}
 #else
 
 static double Time_F(int s)
 	{
-	double ret;
-
-#ifdef USE_TOD
-	if(usertime)
-		{
-		static struct rusage tstart,tend;
-
-		getrusage_used = 1;
-		if (s == START)
-			{
-			getrusage(RUSAGE_SELF,&tstart);
-			return(0);
-			}
-		else
-			{
-			long i;
-
-			getrusage(RUSAGE_SELF,&tend);
-			i=(long)tend.ru_utime.tv_usec-(long)tstart.ru_utime.tv_usec;
-			ret=((double)(tend.ru_utime.tv_sec-tstart.ru_utime.tv_sec))
-			  +((double)i)/1000000.0;
-			return((ret < 0.001)?0.001:ret);
-			}
-		}
-	else
-		{
-		static struct timeval tstart,tend;
-		long i;
-
-		gettimeofday_used = 1;
-		if (s == START)
-			{
-			gettimeofday(&tstart,NULL);
-			return(0);
-			}
-		else
-			{
-			gettimeofday(&tend,NULL);
-			i=(long)tend.tv_usec-(long)tstart.tv_usec;
-			ret=((double)(tend.tv_sec-tstart.tv_sec))+((double)i)/1000000.0;
-			return((ret < 0.001)?0.001:ret);
-			}
-		}
-#else  /* ndef USE_TOD */
-		
-# ifdef TIMES
-	if (usertime)
-		{
-		static struct tms tstart,tend;
-
-		times_used = 1;
-		if (s == START)
-			{
-			times(&tstart);
-			return(0);
-			}
-		else
-			{
-			times(&tend);
-			ret = HZ;
-			ret=(double)(tend.tms_utime-tstart.tms_utime) / ret;
-			return((ret < 1e-3)?1e-3:ret);
-			}
-		}
-# endif /* times() */
-# if defined(TIMES) && defined(TIMEB)
-	else
-# endif
-# ifdef OPENSSL_SYS_VXWORKS
-                {
-		static unsigned long tick_start, tick_end;
-
-		if( s == START )
-			{
-			tick_start = tickGet();
-			return 0;
-			}
-		else
-			{
-			tick_end = tickGet();
-			ret = (double)(tick_end - tick_start) / (double)sysClkRateGet();
-			return((ret < 0.001)?0.001:ret);
-			}
-                }
-# elif defined(TIMEB)
-		{
-		static struct timeb tstart,tend;
-		long i;
-
-		ftime_used = 1;
-		if (s == START)
-			{
-			ftime(&tstart);
-			return(0);
-			}
-		else
-			{
-			ftime(&tend);
-			i=(long)tend.millitm-(long)tstart.millitm;
-			ret=((double)(tend.time-tstart.time))+((double)i)/1000.0;
-			return((ret < 0.001)?0.001:ret);
-			}
-		}
-# endif
-#endif
+	return app_tminterval(s,usertime);
 	}
-#endif /* if defined(OPENSSL_SYS_NETWARE) */
+#endif
 
 
 #ifndef OPENSSL_NO_ECDH
@@ -1508,7 +1340,9 @@ int MAIN(int argc, char **argv)
 #else
 #define COND(c)	(run)
 #define COUNT(d) (count)
+#ifndef _WIN32
 	signal(SIGALRM,sig_done);
+#endif
 #endif /* SIGALRM */
 
 #ifndef OPENSSL_NO_MD2
@@ -2295,35 +2129,6 @@ show_res:
 		printf("%s ",BF_options());
 #endif
 		fprintf(stdout,"\n%s\n",SSLeay_version(SSLEAY_CFLAGS));
-		printf("available timing options: ");
-#ifdef TIMES
-		printf("TIMES ");
-#endif
-#ifdef TIMEB
-		printf("TIMEB ");
-#endif
-#ifdef USE_TOD
-		printf("USE_TOD ");
-#endif
-#ifdef HZ
-#define as_string(s) (#s)
-		{
-		double dbl = HZ;
-		printf("HZ=%g", dbl);
-		}
-# ifdef _SC_CLK_TCK
-		printf(" [sysconf value]");
-# endif
-#endif
-		printf("\n");
-		printf("timing function used: %s%s%s%s%s%s%s\n",
-		       (ftime_used ? "ftime" : ""),
-		       (ftime_used + times_used > 1 ? "," : ""),
-		       (times_used ? "times" : ""),
-		       (ftime_used + times_used + gettimeofday_used > 1 ? "," : ""),
-		       (gettimeofday_used ? "gettimeofday" : ""),
-		       (ftime_used + times_used + gettimeofday_used + getrusage_used > 1 ? "," : ""),
-		       (getrusage_used ? "getrusage" : ""));
 		}
 
 	if (pr_header)

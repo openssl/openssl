@@ -314,4 +314,8 @@ void policies_print(BIO *out, X509_STORE_CTX *ctx);
 int app_isdir(const char *);
 int raw_read_stdin(void *,int);
 int raw_write_stdout(const void *,int);
+
+#define TM_START	0
+#define TM_STOP		1
+double app_tminterval (int stop,int usertime);
 #endif
