@@ -2424,6 +2424,28 @@ double app_tminterval(int stop,int usertime)
 	return (ret);
 	}
 
+#elif defined(OPENSSL_SYSTEM_NETWARE)
+#include <time.h>
+
+double app_tminterval(int stop,int usertime)
+	{
+	double		ret=0;
+	static clock_t	tmstart;
+	static int	warning=1;
+
+	if (usertime && warning)
+		{
+		BIO_printf(bio_err,"To get meaningful results, run "
+				   "this program on idle system.\n");
+		warning=0;
+		}
+
+	if (stop==TM_START)	tmstart = clock();
+	else			ret     = (clock()-tmstart)/(double)CLOCKS_PER_SEC;
+
+	return (ret);
+	}
+
 #elif defined(OPENSSL_SYSTEM_VXWORKS)
 #include <time.h>
 
