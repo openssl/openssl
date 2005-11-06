@@ -183,7 +183,6 @@
 #define BUFSIZE	((long)1024*8+1)
 int run=0;
 
-static char ftime_used = 0, times_used = 0, gettimeofday_used = 0, getrusage_used = 0;
 static int mr=0;
 static int usertime=1;
 
@@ -1050,11 +1049,6 @@ int MAIN(int argc, char **argv)
 
 	if (usertime == 0 && !mr)
 		BIO_printf(bio_err,"You have chosen to measure elapsed time instead of user CPU time.\n");
-	if (usertime <= 0 && !mr)
-		{
-		BIO_printf(bio_err,"To get the most accurate results, try to run this\n");
-		BIO_printf(bio_err,"program when this computer is idle.\n");
-		}
 
 #ifndef OPENSSL_NO_RSA
 	for (i=0; i<RSA_NUM; i++)

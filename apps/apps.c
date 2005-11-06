@@ -2375,6 +2375,7 @@ double app_tminterval(int stop,int usertime)
 	FILETIME		now;
 	double			ret=0;
 	static ULARGE_INTEGER	tmstart;
+	static int		warning=1;
 #ifdef _WIN32_WINNT
 	static HANDLE		proc=NULL;
 
@@ -2394,6 +2395,12 @@ double app_tminterval(int stop,int usertime)
 	else
 #endif
 		{
+		if (usertime && warning)
+			{
+			BIO_printf(bio_err,"To get meaningful results, run "
+					   "this program on idle system.\n"
+			warning=1;
+			}
 		SYSTEMTIME systime;
 		GetSystemTime(&systime);
 		SystemTimeToFileTime(&systime,&now);
@@ -2428,7 +2435,7 @@ double app_tminterval(int stop,int usertime)
 
 	if (usertime)		now = rus.tms_utime;
 
-	if (stop==TMSTART)	tmstart = now;
+	if (stop==TM_START)	tmstart = now;
 	else			ret = (now - tmstart)/(double)sysconf(_SC_CLK_TCK);
 
 	return (ret);
@@ -2448,7 +2455,7 @@ double app_tminterval(int stop,int usertime)
 	if (usertime)		getrusage(RUSAGE_SELF,&rus), now = rus.ru_time;
 	else			gettimeofday(&now,NULL);
 
-	if (stop==TMSTART)	tmstart = now;
+	if (stop==TM_START)	tmstart = now;
 	else			ret = ( (now.tv_sec+now.tv_usec*1e-6)
 					- (tmstart.tv_sec+tmstart.tv_usec*1e-6) );
 
