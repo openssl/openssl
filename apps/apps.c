@@ -2395,13 +2395,14 @@ double app_tminterval(int stop,int usertime)
 	else
 #endif
 		{
+		SYSTEMTIME systime;
+
 		if (usertime && warning)
 			{
 			BIO_printf(bio_err,"To get meaningful results, run "
-					   "this program on idle system.\n"
+					   "this program on idle system.\n");
 			warning=1;
 			}
-		SYSTEMTIME systime;
 		GetSystemTime(&systime);
 		SystemTimeToFileTime(&systime,&now);
 		}
