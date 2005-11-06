@@ -10,6 +10,10 @@ $OPTIONS="";
 $ssl_version="";
 $banner="\t\@echo Building OpenSSL";
 
+my $no_static_engine = 0;
+my $engines = "";
+
+
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
     $ssl_version=$1 if (/^VERSION=(.*)$/);
@@ -94,6 +98,8 @@ foreach (grep(!/^$/, split(/ /, $OPTIONS)))
 	{
 	print STDERR "unknown option - $_\n" if !&read_options;
 	}
+
+$no_static_engine = 0 if (!$shlib);
 
 $no_mdc2=1 if ($no_des);
 
@@ -214,6 +220,16 @@ $cflags.=" -DOPENSSL_NO_ECDSA" if $no_ecdsa;
 $cflags.=" -DOPENSSL_NO_ECDH" if $no_ecdh;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
+
+if ($no_static_engine)
+	{
+	$cflags .= " -DOPENSSL_NO_STATIC_ENGINE";
+	}
+else
+	{
+	$cflags .= " -DOPENSSL_NO_DYNAMIC_ENGINE";
+	}
+
 #$cflags.=" -DRSAref"  if $rsaref ne "";
 
 ## if ($unix)
@@ -288,8 +304,10 @@ for (;;)
 	if ($key eq "HEADER")
 		{ $header.=&var_add($dir,$val, 1); }
 
-	if ($key eq "LIBOBJ")
+	if ($key eq "LIBOBJ" && ($dir ne "engines" || !$no_static_engine))
 		{ $libobj=&var_add($dir,$val, 0); }
+	if ($key eq "LIBNAMES" && $dir eq "engines" && $no_static_engine)
+ 		{ $engines.=$val }
 
 	if (!($_=<IN>))
 		{ $_="RELATIVE_DIRECTORY=FINISHED\n"; }
@@ -385,12 +403,14 @@ CRYPTO=$crypto
 # BIN_D  - Binary output directory
 # TEST_D - Binary test file output directory
 # LIB_D  - library output directory
+# ENG_D  - dynamic engine output directory
 # Note: if you change these point to different directories then uncomment out
 # the lines around the 'NB' comment below.
 # 
 BIN_D=\$(OUT_D)
 TEST_D=\$(OUT_D)
 LIB_D=\$(OUT_D)
+ENG_D=\$(OUT_D)
 
 # INCL_D - local library directory
 # OBJ_D  - temp object file directory
@@ -446,7 +466,7 @@ $banner
 headers: \$(HEADER) \$(EXHEADER)
 	@
 
-lib: \$(LIBS_DEP)
+lib: \$(LIBS_DEP) \$(E_SHLIB)
 
 exe: \$(T_EXE) \$(BIN_D)$o\$(E_EXE)$exep
 
@@ -617,6 +637,16 @@ foreach (split(/\s+/,$test))
 	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
 	}
 
+$defs.=&do_defs("E_SHLIB",$engines,"\$(ENG_D)",$shlibp);
+
+foreach (split(/\s+/,$engines))
+	{
+	$rules.=&do_compile_rule("\$(OBJ_D)","engines${o}e_$_",$lib);
+	$rules.= &do_lib_rule("\$(OBJ_D)${o}e_${_}.obj","\$(ENG_D)$o$_$shlibp","",$shlib,"");
+	}
+
+
+
 $rules.= &do_lib_rule("\$(SSLOBJ)","\$(O_SSL)",$ssl,$shlib,"\$(SO_SSL)");
 $rules.= &do_lib_rule("\$(CRYPTOOBJ)","\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)");
 
@@ -777,7 +807,7 @@ sub do_defs
 		elsif ($var eq "SSLOBJ")
 			{ $ret.="\$(OBJ_D)\\\$(SSL).res "; }
 		}
-	chop($ret);
+	chomp($ret);
 	$ret.="\n\n";
 	return($ret);
 	}
@@ -959,6 +989,14 @@ sub read_options
 	elsif (/^enable-zlib-dynamic$/)
 		{
 		$xcflags = "-DZLIB_SHARED -DZLIB $xcflags";
+		}
+	elsif (/^no-static-engine/)
+		{
+		$no_static_engine = 1;
+		}
+	elsif (/^enable-static-engine/)
+		{
+		$no_static_engine = 0;
 		}
 	# There are also enable-xxx options which correspond to
 	# the no-xxx. Since the scalars are enabled by default

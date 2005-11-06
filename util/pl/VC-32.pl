@@ -235,10 +235,14 @@ $cflags.=" /Fd$out_def";
 sub do_lib_rule
 	{
 	local($objs,$target,$name,$shlib)=@_;
-	local($ret,$Name);
+	local($ret);
 
 	$taget =~ s/\//$o/g if $o ne '/';
-	($Name=$name) =~ tr/a-z/A-Z/;
+	if ($name ne "")
+		{
+		$name =~ tr/a-z/A-Z/;
+		$name = "/def:ms/${name}.def";
+		}
 
 #	$target="\$(LIB_D)$o$target";
 	$ret.="$target: $objs\n";
@@ -250,8 +254,10 @@ sub do_lib_rule
 		}
 	else
 		{
-		local($ex)=($target =~ /O_SSL/)?' $(L_CRYPTO)':'';
-		if ($FLAVOR =~ /CE/)
+		local($ex)=($target =~ /O_CRYPTO/)?'':' $(L_CRYPTO)';
+		if ($name eq "")
+			{}
+		elsif ($FLAVOR =~ /CE/)
 			{
 			$ex.=' winsock.lib $(WCECOMPAT)/lib/wcecompatex.lib';
 			}
@@ -261,7 +267,7 @@ sub do_lib_rule
 			$ex.=' wsock32.lib gdi32.lib advapi32.lib user32.lib';
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 			}
-		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
+		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
 		}
 	$ret.="\n";
 	return($ret);

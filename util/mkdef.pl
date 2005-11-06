@@ -145,6 +145,8 @@ foreach (@ARGV, split(/ /, $options))
 		$do_crypto=1;
 		$libname=$_;
 	}
+	$no_static_engine=1 if $_ eq "no-static-engine";
+	$no_static_engine=0 if $_ eq "enable-static-engine";
 	$do_update=1 if $_ eq "update";
 	$do_rewrite=1 if $_ eq "rewrite";
 	$do_ctest=1 if $_ eq "ctest";

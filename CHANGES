@@ -53,6 +53,10 @@
 
  Changes between 0.9.8a and 0.9.8b  [XX xxx XXXX]
 
+  *) Add support for building of engines under engine/ as shared libraries
+     under VC++ build system.
+     [Steve Henson]
+
   *) Corrected the numerous bugs in the Win32 path splitter in DSO.
      Hopefully, we will not see any false combination of paths any more.
      [Richard Levitte]

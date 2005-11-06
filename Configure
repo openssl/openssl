@@ -866,6 +866,8 @@ foreach (sort (keys %disabled))
 		{ $no_shared = 1; }
 	elsif (/^zlib$/)
 		{ $zlib = 0; }
+	elsif (/^static-engine$/)
+		{ }
 	elsif (/^zlib-dynamic$/)
 		{ }
 	elsif (/^symlinks$/)
@@ -1124,13 +1126,16 @@ if (!$no_shared)
 		}
 	}
 
-if ($no_shared)
+if (!$IsMK1MF)
 	{
-	$openssl_other_defines.="#define OPENSSL_NO_DYNAMIC_ENGINE\n";
-	}
-else
-	{
-	$openssl_other_defines.="#define OPENSSL_NO_STATIC_ENGINE\n";
+	if ($no_shared)
+		{
+		$openssl_other_defines.="#define OPENSSL_NO_DYNAMIC_ENGINE\n";
+		}
+	else
+		{
+		$openssl_other_defines.="#define OPENSSL_NO_STATIC_ENGINE\n";
+		}
 	}
 
 $cpuid_obj.=" uplink.o uplink-cof.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
