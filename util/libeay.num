@@ -1117,11 +1117,11 @@ COMP_compress_block                     1144	EXIST::FUNCTION:
 COMP_expand_block                       1145	EXIST::FUNCTION:
 COMP_rle                                1146	EXIST::FUNCTION:
 COMP_zlib                               1147	EXIST::FUNCTION:
-ms_time_diff                            1148	EXIST::FUNCTION:
-ms_time_new                             1149	EXIST::FUNCTION:
-ms_time_free                            1150	EXIST::FUNCTION:
-ms_time_cmp                             1151	EXIST::FUNCTION:
-ms_time_get                             1152	EXIST::FUNCTION:
+ms_time_diff                            1148	NOEXIST::FUNCTION:
+ms_time_new                             1149	NOEXIST::FUNCTION:
+ms_time_free                            1150	NOEXIST::FUNCTION:
+ms_time_cmp                             1151	NOEXIST::FUNCTION:
+ms_time_get                             1152	NOEXIST::FUNCTION:
 PKCS7_set_attributes                    1153	EXIST::FUNCTION:
 PKCS7_set_signed_attributes             1154	EXIST::FUNCTION:
 X509_ATTRIBUTE_create                   1155	EXIST::FUNCTION:

@@ -275,7 +275,6 @@ $crypto.=" crypto/comp/comp.h" ; # unless $no_comp;
 $crypto.=" crypto/ocsp/ocsp.h";
 $crypto.=" crypto/ui/ui.h crypto/ui/ui_compat.h";
 $crypto.=" crypto/krb5/krb5_asn.h";
-$crypto.=" crypto/tmdiff.h";
 $crypto.=" crypto/store/store.h";
 $crypto.=" crypto/pqueue/pqueue.h";
 
