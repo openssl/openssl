@@ -28,6 +28,13 @@ sub main'asm_init_output { @out=(); }
 sub main'asm_get_output { return(@out); }
 sub main'get_labels { return(@labels); }
 sub main'external_label { push(@labels,@_); }
+sub main'external_label
+{
+	push(@labels,@_);
+	foreach (@_) {
+		push(@out, "EXTRN\t_$_:DWORD\n");
+	}
+}
 
 sub main'LB
 	{
@@ -246,7 +253,9 @@ sub main'file
 	local($tmp)=<<"EOF";
 	TITLE	$file.asm
         .386
-.model FLAT
+.model	FLAT
+_TEXT\$	SEGMENT PAGE 'CODE'
+
 EOF
 	push(@out,$tmp);
 	}
@@ -258,7 +267,6 @@ sub main'function_begin
 	push(@labels,$func);
 
 	local($tmp)=<<"EOF";
-_TEXT\$	SEGMENT PAGE 'CODE'
 PUBLIC	_$func
 $extra
 _$func PROC NEAR
@@ -276,7 +284,6 @@ sub main'function_begin_B
 	local($func,$extra)=@_;
 
 	local($tmp)=<<"EOF";
-_TEXT\$	SEGMENT	PAGE 'CODE'
 PUBLIC	_$func
 $extra
 _$func PROC NEAR
@@ -296,7 +303,6 @@ sub main'function_end
 	pop	ebp
 	ret
 _$func ENDP
-_TEXT\$	ENDS
 EOF
 	push(@out,$tmp);
 	$stack=0;
@@ -309,7 +315,6 @@ sub main'function_end_B
 
 	local($tmp)=<<"EOF";
 _$func ENDP
-_TEXT\$	ENDS
 EOF
 	push(@out,$tmp);
 	$stack=0;
@@ -339,6 +344,7 @@ sub main'file_end
 	elsif (grep {/mm[0-7]\s*,/i} @out) {
 		grep {s/\.[3-7]86/\.686\n\t\.MMX/} @out;
 		}
+	push(@out,"_TEXT\$	ENDS\n");
 	push(@out,"END\n");
 	}
 
