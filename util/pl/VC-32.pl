@@ -260,7 +260,9 @@ sub do_lib_rule
 		{
 		local($ex)=($target =~ /O_CRYPTO/)?'':' $(L_CRYPTO)';
 		if ($name eq "")
-			{}
+			{
+			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
+			}
 		elsif ($FLAVOR =~ /CE/)
 			{
 			$ex.=' winsock.lib';
