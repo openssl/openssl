@@ -486,7 +486,10 @@ close STDOUT;
 # arguments passed to callee, *but* not less than 4! This means that
 # upon function entry point 5th argument resides at 40(%rsp), as well
 # as that 32 bytes from 8(%rsp) can always be used as temporal
-# storage [without allocating a frame].
+# storage [without allocating a frame]. One can actually argue that
+# one can assume a "red zone" above stack pointer under Win64 as well.
+# Point is that at apparently no accasion Windows would alter the area
+# above stack pointer in true asynchronous manner...
 #
 # All the above means that if assembler programmer adheres to Unix
 # register and stack layout, but disregards the "red zone" existense,
