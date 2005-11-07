@@ -7,7 +7,8 @@ $ssl=	"ssleay32";
 $crypto="libeay32";
 
 $o='\\';
-$cp='copy nul+';	# Timestamps get stuffed otherwise
+$cp='$(PERL) util/copy.pl';
+$mkdir='$(PERL) util/mkdir-p.pl';
 $rm='del';
 
 # C compiler stuff

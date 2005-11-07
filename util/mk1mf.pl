@@ -113,7 +113,8 @@ $out_def="out";
 $inc_def="outinc";
 $tmp_def="tmp";
 
-$mkdir="-mkdir";
+$perl="perl" unless defined $perl;
+$mkdir="-mkdir" unless defined $mkdir;
 
 ($ssl,$crypto)=("ssl","crypto");
 $ranlib="echo ranlib";
@@ -314,6 +315,30 @@ for (;;)
 	}
 close(IN);
 
+if ($shlib)
+	{
+	$extra_install= <<"EOF";
+	\$(CP) \$(O_SSL) \$(INSTALLTOP)${o}bin
+	\$(CP) \$(O_CRYPTO) \$(INSTALLTOP)${o}bin
+	\$(CP) \$(L_SSL) \$(INSTALLTOP)${o}lib
+	\$(CP) \$(L_CRYPTO) \$(INSTALLTOP)${o}lib
+EOF
+	if ($no_static_engine)
+		{
+		$extra_install .= <<"EOF"
+	\$(MKDIR) \$(INSTALLTOP)${o}engines
+	\$(CP) \$(E_SHLIB) \$(INSTALLTOP)${o}engines
+EOF
+		}
+	}
+else
+	{
+	$extra_install= <<"EOF";
+	\$(CP) \$(O_SSL) \$(INSTALLTOP)${o}lib
+	\$(CP) \$(O_CRYPTO) \$(INSTALLTOP)${o}lib
+EOF
+	}
+
 $defs= <<"EOF";
 # This makefile has been automatically generated from the OpenSSL distribution.
 # This single makefile will build the complete OpenSSL distribution and
@@ -384,6 +409,7 @@ TMP_D=$tmp_dir
 INC_D=$inc_dir
 INCO_D=$inc_dir${o}openssl
 
+PERL=$perl
 CP=$cp
 RM=$rm
 RANLIB=$ranlib
@@ -470,7 +496,7 @@ lib: \$(LIBS_DEP) \$(E_SHLIB)
 
 exe: \$(T_EXE) \$(BIN_D)$o\$(E_EXE)$exep
 
-install:
+install: all
 	\$(MKDIR) \$(INSTALLTOP)
 	\$(MKDIR) \$(INSTALLTOP)${o}bin
 	\$(MKDIR) \$(INSTALLTOP)${o}include
@@ -478,8 +504,13 @@ install:
 	\$(MKDIR) \$(INSTALLTOP)${o}lib
 	\$(CP) \$(INCO_D)${o}*.\[ch\] \$(INSTALLTOP)${o}include${o}openssl
 	\$(CP) \$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin
-	\$(CP) \$(O_SSL) \$(INSTALLTOP)${o}lib
-	\$(CP) \$(O_CRYPTO) \$(INSTALLTOP)${o}lib
+	\$(CP) apps${o}openssl.cnf \$(INSTALLTOP)
+$extra_install
+
+
+test: \$(T_EXE)
+	cd \$(BIN_D)
+	..${o}ms${o}test
 
 clean:
 	\$(RM) \$(TMP_D)$o*.*
