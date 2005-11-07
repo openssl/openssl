@@ -507,6 +507,11 @@ install: all
 	\$(CP) apps${o}openssl.cnf \$(INSTALLTOP)
 $extra_install
 
+
+test: \$(T_EXE)
+	cd \$(BIN_D)
+	..${o}ms${o}test
+
 clean:
 	\$(RM) \$(TMP_D)$o*.*
 
