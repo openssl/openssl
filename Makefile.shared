@@ -504,7 +504,7 @@ link_a.aix:
 	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -G -bE:lib$(LIBNAME).exp -bM:SRE'; \
 	$(LINK_SO_A_VIA_O)
 link_app.aix:
-	LDFLAGS="$(CFLAGS) -blibpath:$(LIBRPATH)"; \
+	LDFLAGS="$(CFLAGS) -blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
 	$(LINK_APP)
 
 link_o.reliantunix:
