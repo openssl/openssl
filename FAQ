@@ -710,16 +710,19 @@ Note that debug and release libraries are NOT interchangeable.  If you
 built OpenSSL with /MD your application must use /MD and cannot use /MDd.
 
 As per 0.9.8 the above limitation is eliminated for .DLLs. OpenSSL
-.DLLs compiled with some specific run-time option [we recommend the
+.DLLs compiled with some specific run-time option [we insist on the
 default /MD] can be deployed with application compiled with different
 option or even different compiler. But there is a catch! Instead of
 re-compiling OpenSSL toolkit, as you would have to with prior versions,
 you have to compile small C snippet with compiler and/or options of
 your choice. The snippet gets installed as
 <install-root>/include/openssl/applink.c and should be either added to
-your project or simply #include-d in one [and only one] of your source
-files. Failure to do either manifests itself as fatal "no
-OPENSSL_Applink" error.
+your application project or simply #include-d in one [and only one]
+of your application source files. Failure to link this shim module
+into your application manifests itself as fatal "no OPENSSL_Applink"
+run-time error. An explicit reminder is due that in this situation
+[mixing compiler options] it is as important to add CRYPTO_malloc_init
+prior first call to OpenSSL.
 
 * How do I read or write a DER encoded buffer using the ASN1 functions?
 
