@@ -27,7 +27,6 @@ $label="L000";
 sub main'asm_init_output { @out=(); }
 sub main'asm_get_output { return(@out); }
 sub main'get_labels { return(@labels); }
-sub main'external_label { push(@labels,@_); }
 sub main'external_label
 {
 	push(@labels,@_);
