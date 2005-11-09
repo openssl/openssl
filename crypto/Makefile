@@ -94,9 +94,9 @@ links:
 	@$(PERL) $(TOP)/util/mklink.pl ../apps $(APPS)
 	@target=links; $(RECURSIVE_MAKE)
 
+# lib: $(LIB): are splitted to avoid end-less loop
 lib:	$(LIB)
 	@touch lib
-
 $(LIB):	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
