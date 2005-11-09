@@ -31,6 +31,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does my browser give a warning about a mismatched hostname?
 * How do I install a CA certificate into a browser?
 * Why is OpenSSL x509 DN output not conformant to RFC2253?
+* What is a "128 bit certificate"? Can I create one with OpenSSL?
 
 [BUILD] Questions about building and testing OpenSSL
 
@@ -386,6 +387,43 @@ interface, the "-nameopt" option could be introduded. See the manual
 page of the "openssl x509" commandline tool for details. The old behaviour
 has however been left as default for the sake of compatibility.
 
+* What is a "128 bit certificate"? Can I create one with OpenSSL?
+
+The term "128 bit certificate" is a highly misleading marketing term. It does
+*not* refer to the size of the public key in the certificate! A certificate
+containing a 128 bit RSA key would have negligible security.
+
+There were various other names such as "magic certificates", "SGC
+certificates", "step up certificates" etc.
+
+You can't generally create such a certificate using OpenSSL but there is no
+need to any more. Nowadays web browsers using unrestricted strong encryption
+are generally available.
+
+When there were tight export restrictions on the export of strong encryption
+software from the US only weak encryption algorithms could be freely exported
+(initially 40 bit and then 56 bit). It was widely recognised that this was
+inadequate. A relaxation the rules allowed the use of strong encryption but
+only to an authorised server.
+
+Two slighly different techniques were developed to support this, one used by
+Netscape was called "step up", the other used by MSIE was called "Server Gated
+Cryptography" (SGC). When a browser initially connected to a server it would
+check to see if the certificate contained certain extensions and was issued by
+an authorised authority. If these test succeeded it would reconnect using
+strong encryption.
+
+Only certain (initially one) certificate authorities could issue the
+certificates and they generally cost more than ordinary certificates.
+
+Although OpenSSL can create certificates containing the appropriate extensions
+the certificate would not come from a permitted authority and so would not
+be recognized.
+
+The export laws were later changed to allow almost unrestricted use of strong
+encryption so these certificates are now obsolete.
+
+
 [BUILD] =======================================================================
 
 * Why does the linker complain about undefined symbols?
@@ -672,16 +710,19 @@ Note that debug and release libraries are NOT interchangeable.  If you
 built OpenSSL with /MD your application must use /MD and cannot use /MDd.
 
 As per 0.9.8 the above limitation is eliminated for .DLLs. OpenSSL
-.DLLs compiled with some specific run-time option [we recommend the
+.DLLs compiled with some specific run-time option [we insist on the
 default /MD] can be deployed with application compiled with different
 option or even different compiler. But there is a catch! Instead of
 re-compiling OpenSSL toolkit, as you would have to with prior versions,
 you have to compile small C snippet with compiler and/or options of
 your choice. The snippet gets installed as
 <install-root>/include/openssl/applink.c and should be either added to
-your project or simply #include-d in one [and only one] of your source
-files. Failure to do either manifests itself as fatal "no
-OPENSSL_Applink" error.
+your application project or simply #include-d in one [and only one]
+of your application source files. Failure to link this shim module
+into your application manifests itself as fatal "no OPENSSL_Applink"
+run-time error. An explicit reminder is due that in this situation
+[mixing compiler options] it is as important to add CRYPTO_malloc_init
+prior first call to OpenSSL.
 
 * How do I read or write a DER encoded buffer using the ASN1 functions?
 
