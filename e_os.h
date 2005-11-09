@@ -249,16 +249,16 @@ extern "C" {
        /*
 	* Defining _WIN32_WINNT here in e_os.h implies certain "discipline."
 	* Most notably we ought to check for availability of each specific
-	* routine with GetProcAddress() and/or quard NT-specific calls with
+	* routine with GetProcAddress() and/or guard NT-specific calls with
 	* GetVersion() < 0x80000000. One can argue that in latter "or" case
 	* we ought to /DELAYLOAD some .DLLs in order to protect ourselves
 	* against run-time link errors. This doesn't seem to be necessary,
 	* because it turned out that already Windows 95, first non-NT Win32
 	* implementation, is equipped with at least NT 3.51 stubs, dummy
 	* routines with same name, but which do nothing. Meaning that it's
-	* apparently appropriate to guard generic NT calls with GetVersion
-	* alone, while NT 4.0 and above calls ought to be additionally
-	* checked upon with GetProcAddress.
+	* apparently sufficient to guard "vanilla" NT calls with GetVersion
+	* alone, while NT 4.0 and above interfaces ought to be linked with
+	* GetProcAddress at run-time.
 	*/
 #      define _WIN32_WINNT 0x0400
 #    endif
@@ -283,9 +283,6 @@ static unsigned int _strlen31(const char *str)
 
 #  ifdef OPENSSL_SYS_WINCE
 #    define OPENSSL_NO_POSIX_IO
-#    if defined(_WIN32_WCE) && _WIN32_WCE<410
-#      include <winsock_extras.h>
-#    endif
 #  endif
 
 #  define ssize_t long
@@ -441,8 +438,16 @@ static unsigned int _strlen31(const char *str)
 #      define SHUTDOWN(fd)		close(fd)
 #      define SHUTDOWN2(fd)		close(fd)
 #    elif !defined(__DJGPP__)
+#      if defined(_WIN32_WCE) && _WIN32_WCE<410
+#        define getservbyname _masked_declaration_getservbyname
+#      endif
 #      include <winsock.h>
-extern HINSTANCE _hInstance;
+#      ifdef getservbyname
+#        undef getservbyname
+         /* this is used to be wcecompat/include/winsock_extras.h */
+         struct servent* PASCAL getservbyname(const char*,const char*);
+#      endif
+
 #      ifdef _WIN64
 /*
  * Even though sizeof(SOCKET) is 8, it's safe to cast it to int, because
