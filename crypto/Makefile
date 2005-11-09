@@ -94,10 +94,12 @@ links:
 	@$(PERL) $(TOP)/util/mklink.pl ../apps $(APPS)
 	@target=links; $(RECURSIVE_MAKE)
 
-lib:	$(LIBOBJ)
+# lib: and $(LIB): are splitted to avoid end-less loop
+lib:	$(LIB)
+	@touch lib
+$(LIB):	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
-	@touch lib
 
 shared: buildinf.h lib subdirs
 	if [ -n "$(SHARED_LIBS)" ]; then \
