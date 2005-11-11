@@ -358,12 +358,12 @@ BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock,
 	CRYPTO_w_lock(lock);
 	if (!*pmont)
 		{
-		*pmont = BN_MONT_CTX_new();
-		if (*pmont && !BN_MONT_CTX_set(*pmont, mod, ctx))
-			{
-			BN_MONT_CTX_free(*pmont);
-			*pmont = NULL;
-			}
+		BN_MONT_CTX *mtmp;
+		mtmp = BN_MONT_CTX_new();
+		if (mtmp && !BN_MONT_CTX_set(mtmp, mod, ctx))
+			BN_MONT_CTX_free(mtmp);
+		else
+			*pmont = mtmp;
 		}
 	CRYPTO_w_unlock(lock);
 	return *pmont;
