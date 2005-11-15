@@ -178,7 +178,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 /* RC4_64_WITH_MD5 */
-#if 1
+#if 0
 	{
 	1,
 	SSL2_TXT_RC4_64_WITH_MD5,

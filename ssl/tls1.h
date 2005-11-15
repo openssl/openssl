@@ -97,12 +97,13 @@ extern "C" {
 #define TLS1_AD_USER_CANCELLED		90
 #define TLS1_AD_NO_RENEGOTIATION	100
 
-/* Additional TLS ciphersuites from draft-ietf-tls-56-bit-ciphersuites-00.txt
+/* Additional TLS ciphersuites from expired Internet Draft
+ * draft-ietf-tls-56-bit-ciphersuites-01.txt
  * (available if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES is defined, see
  * s3_lib.c).  We actually treat them like SSL 3.0 ciphers, which we probably
- * shouldn't. */
-#define TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_MD5		0x03000060
-#define TLS1_CK_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5	0x03000061
+ * shouldn't.  Note that the first two are actually not in the IDs. */
+#define TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_MD5		0x03000060 /* not in ID */
+#define TLS1_CK_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5	0x03000061 /* not in ID */
 #define TLS1_CK_RSA_EXPORT1024_WITH_DES_CBC_SHA		0x03000062
 #define TLS1_CK_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA	0x03000063
 #define TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_SHA		0x03000064
