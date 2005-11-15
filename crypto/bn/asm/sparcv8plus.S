@@ -162,10 +162,14 @@
  * BN_ULONG w;
  */
 bn_mul_add_words:
+	sra	%o2,%g0,%o2	! signx %o2
 	brgz,a	%o2,.L_bn_mul_add_words_proceed
 	lduw	[%o1],%g2
 	retl
 	clr	%o0
+	nop
+	nop
+	nop
 
 .L_bn_mul_add_words_proceed:
 	srl	%o3,%g0,%o3	! clruw	%o3
@@ -260,10 +264,14 @@ bn_mul_add_words:
  * BN_ULONG w;
  */
 bn_mul_words:
+	sra	%o2,%g0,%o2	! signx %o2
 	brgz,a	%o2,.L_bn_mul_words_proceeed
 	lduw	[%o1],%g2
 	retl
 	clr	%o0
+	nop
+	nop
+	nop
 
 .L_bn_mul_words_proceeed:
 	srl	%o3,%g0,%o3	! clruw	%o3
@@ -344,10 +352,14 @@ bn_mul_words:
  * int n;
  */
 bn_sqr_words:
+	sra	%o2,%g0,%o2	! signx %o2
 	brgz,a	%o2,.L_bn_sqr_words_proceeed
 	lduw	[%o1],%g2
 	retl
 	clr	%o0
+	nop
+	nop
+	nop
 
 .L_bn_sqr_words_proceeed:
 	andcc	%o2,-4,%g0
