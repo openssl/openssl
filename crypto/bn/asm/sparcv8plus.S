@@ -162,10 +162,14 @@
  * BN_ULONG w;
  */
 bn_mul_add_words:
+	sra	%o2,%g0,%o2	! signx %o2
 	brgz,a	%o2,.L_bn_mul_add_words_proceed
 	lduw	[%o1],%g2
 	retl
 	clr	%o0
+	nop
+	nop
+	nop
 
 .L_bn_mul_add_words_proceed:
 	srl	%o3,%g0,%o3	! clruw	%o3
@@ -260,10 +264,14 @@ bn_mul_add_words:
  * BN_ULONG w;
  */
 bn_mul_words:
+	sra	%o2,%g0,%o2	! signx %o2
 	brgz,a	%o2,.L_bn_mul_words_proceeed
 	lduw	[%o1],%g2
 	retl
 	clr	%o0
+	nop
+	nop
+	nop
 
 .L_bn_mul_words_proceeed:
 	srl	%o3,%g0,%o3	! clruw	%o3
@@ -344,10 +352,14 @@ bn_mul_words:
  * int n;
  */
 bn_sqr_words:
+	sra	%o2,%g0,%o2	! signx %o2
 	brgz,a	%o2,.L_bn_sqr_words_proceeed
 	lduw	[%o1],%g2
 	retl
 	clr	%o0
+	nop
+	nop
+	nop
 
 .L_bn_sqr_words_proceeed:
 	andcc	%o2,-4,%g0
@@ -445,6 +457,7 @@ bn_div_words:
  * int n;
  */
 bn_add_words:
+	sra	%o3,%g0,%o3	! signx %o3
 	brgz,a	%o3,.L_bn_add_words_proceed
 	lduw	[%o1],%o4
 	retl
@@ -454,7 +467,6 @@ bn_add_words:
 	andcc	%o3,-4,%g0
 	bz,pn	%icc,.L_bn_add_words_tail
 	addcc	%g0,0,%g0	! clear carry flag
-	nop
 
 .L_bn_add_words_loop:		! wow! 32 aligned!
 	dec	4,%o3
@@ -523,6 +535,7 @@ bn_add_words:
  * int n;
  */
 bn_sub_words:
+	sra	%o3,%g0,%o3	! signx %o3
 	brgz,a	%o3,.L_bn_sub_words_proceed
 	lduw	[%o1],%o4
 	retl
@@ -532,7 +545,6 @@ bn_sub_words:
 	andcc	%o3,-4,%g0
 	bz,pn	%icc,.L_bn_sub_words_tail
 	addcc	%g0,0,%g0	! clear carry flag
-	nop
 
 .L_bn_sub_words_loop:		! wow! 32 aligned!
 	dec	4,%o3
