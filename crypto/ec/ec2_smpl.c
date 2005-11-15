@@ -14,7 +14,7 @@
  *
  */
 /* ====================================================================
- * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -403,18 +403,94 @@ int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_
 	}
 
 
-/* Include patented algorithms. */
-#include "ec2_smpt.c"
+/* Calculates and sets the affine coordinates of an EC_POINT from the given
+ * compressed coordinates.  Uses algorithm 2.3.4 of SEC 1. 
+ * Note that the simple implementation only uses affine coordinates.
+ *
+ * The method is from the following publication:
+ * 
+ *     Harper, Menezes, Vanstone:
+ *     "Public-Key Cryptosystems with Very Small Key Lengths",
+ *     EUROCRYPT '92, Springer-Verlag LNCS 658,
+ *     published February 1993
+ *
+ * US Patents 6,141,420 and 6,618,483 (Vanstone, Mullin, Agnew) describe
+ * the same method, but claim no priority date earlier than July 29, 1994
+ * (and additionally fail to cite the EUROCRYPT '92 publication as prior art).
+ */
+int ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
+	const BIGNUM *x_, int y_bit, BN_CTX *ctx)
+	{
+	BN_CTX *new_ctx = NULL;
+	BIGNUM *tmp, *x, *y, *z;
+	int ret = 0, z0;
+
+	/* clear error queue */
+	ERR_clear_error();
+
+	if (ctx == NULL)
+		{
+		ctx = new_ctx = BN_CTX_new();
+		if (ctx == NULL)
+			return 0;
+		}
+
+	y_bit = (y_bit != 0) ? 1 : 0;
+
+	BN_CTX_start(ctx);
+	tmp = BN_CTX_get(ctx);
+	x = BN_CTX_get(ctx);
+	y = BN_CTX_get(ctx);
+	z = BN_CTX_get(ctx);
+	if (z == NULL) goto err;
+
+	if (!BN_GF2m_mod_arr(x, x_, group->poly)) goto err;
+	if (BN_is_zero(x))
+		{
+		if (!BN_GF2m_mod_sqrt_arr(y, &group->b, group->poly, ctx)) goto err;
+		}
+	else
+		{
+		if (!group->meth->field_sqr(group, tmp, x, ctx)) goto err;
+		if (!group->meth->field_div(group, tmp, &group->b, tmp, ctx)) goto err;
+		if (!BN_GF2m_add(tmp, &group->a, tmp)) goto err;
+		if (!BN_GF2m_add(tmp, x, tmp)) goto err;
+		if (!BN_GF2m_mod_solve_quad_arr(z, tmp, group->poly, ctx))
+			{
+			unsigned long err = ERR_peek_last_error();
+			
+			if (ERR_GET_LIB(err) == ERR_LIB_BN && ERR_GET_REASON(err) == BN_R_NO_SOLUTION)
+				{
+				ERR_clear_error();
+				ECerr(EC_F_EC_GF2M_SIMPLE_SET_COMPRESSED_COORDINATES, EC_R_INVALID_COMPRESSED_POINT);
+				}
+			else
+				ECerr(EC_F_EC_GF2M_SIMPLE_SET_COMPRESSED_COORDINATES, ERR_R_BN_LIB);
+			goto err;
+			}
+		z0 = (BN_is_odd(z)) ? 1 : 0;
+		if (!group->meth->field_mul(group, y, x, z, ctx)) goto err;
+		if (z0 != y_bit)
+			{
+			if (!BN_GF2m_add(y, y, x)) goto err;
+			}
+		}
+
+	if (!EC_POINT_set_affine_coordinates_GF2m(group, point, x, y, ctx)) goto err;
+
+	ret = 1;
+
+ err:
+	BN_CTX_end(ctx);
+	if (new_ctx != NULL)
+		BN_CTX_free(new_ctx);
+	return ret;
+	}
 
 
 /* Converts an EC_POINT to an octet string.  
  * If buf is NULL, the encoded length will be returned.
  * If the length len of buf is smaller than required an error will be returned.
- *
- * The point compression section of this function is patented by Certicom Corp. 
- * under US Patent 6,141,420.  Point compression is disabled by default and can 
- * be enabled by defining the preprocessor macro OPENSSL_EC_BIN_PT_COMP at 
- * Configure-time.
  */
 size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point, point_conversion_form_t form,
 	unsigned char *buf, size_t len, BN_CTX *ctx)
@@ -424,14 +500,6 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point, po
 	int used_ctx = 0;
 	BIGNUM *x, *y, *yxi;
 	size_t field_len, i, skip;
-
-#ifndef OPENSSL_EC_BIN_PT_COMP
-	if ((form == POINT_CONVERSION_COMPRESSED) || (form == POINT_CONVERSION_HYBRID)) 
-		{
-		ECerr(EC_F_EC_GF2M_SIMPLE_POINT2OCT, ERR_R_DISABLED);
-		goto err;
-		}
-#endif
 
 	if ((form != POINT_CONVERSION_COMPRESSED)
 		&& (form != POINT_CONVERSION_UNCOMPRESSED)
@@ -487,13 +555,11 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point, po
 		if (!EC_POINT_get_affine_coordinates_GF2m(group, point, x, y, ctx)) goto err;
 
 		buf[0] = form;
-#ifdef OPENSSL_EC_BIN_PT_COMP
 		if ((form != POINT_CONVERSION_UNCOMPRESSED) && !BN_is_zero(x))
 			{
 			if (!group->meth->field_div(group, yxi, y, x, ctx)) goto err;
 			if (BN_is_odd(yxi)) buf[0]++;
 			}
-#endif
 
 		i = 1;
 		

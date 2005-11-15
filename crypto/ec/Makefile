@@ -19,7 +19,7 @@ APPS=
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c\
 	ec_err.c ec_curve.c ec_check.c ec_print.c ec_asn1.c ec_key.c\
-	ec2_smpl.c ec2_smpt.c ec2_mult.c
+	ec2_smpl.c ec2_mult.c
 
 LIBOBJ=	ec_lib.o ecp_smpl.o ecp_mont.o ecp_nist.o ec_cvt.o ec_mult.o\
 	ec_err.o ec_curve.o ec_check.o ec_print.o ec_asn1.o ec_key.o\
@@ -94,8 +94,7 @@ ec2_smpl.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 ec2_smpl.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
 ec2_smpl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec2_smpl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ec2_smpl.o: ../../include/openssl/symhacks.h ec2_smpl.c ec2_smpt.c ec_lcl.h
-ec2_smpt.o: ec2_smpt.c
+ec2_smpl.o: ../../include/openssl/symhacks.h ec2_smpl.c ec_lcl.h
 ec_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 ec_asn1.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ec_asn1.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

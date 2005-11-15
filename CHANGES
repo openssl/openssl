@@ -4,6 +4,11 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Move code previously exiled into file crypto/ec/ec2_smpt.c
+     to ec2_smpl.c, and no longer require the OPENSSL_EC_BIN_PT_COMP
+     macro.
+     [Bodo Moeller]
+
   *) New candidate for BIGNUM assembler implementation, bn_mul_mont,
      dedicated Montgomery multiplication procedure, is introduced.
      BN_MONT_CTX is modified to allow bn_mul_mont to reach for higher
