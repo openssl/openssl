@@ -109,6 +109,10 @@
  *
  */
 
+#define _POSIX_C_SOURCE 2	/* On VMS, you need to define this to get
+				   the declaration of fileno().  The value
+				   2 is to make sure no function defined
+				   in POSIX-2 is left undefined. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
