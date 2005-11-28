@@ -416,6 +416,11 @@ sub main'set_label
 		}
 	}
 
+sub main'data_byte
+	{
+	push(@out,"\tDB\t".join(',',@_)."\n");
+	}
+
 sub main'data_word
 	{
 	push(@out,"\tDD\t".join(',',@_)."\n");

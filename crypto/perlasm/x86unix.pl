@@ -594,6 +594,11 @@ ___
 		}
 	}
 
+sub main'data_byte
+	{
+	push(@out,"\t.byte\t".join(',',@_)."\n");
+	}
+
 sub main'data_word
 	{
 	push(@out,"\t.long\t".join(',',@_)."\n");

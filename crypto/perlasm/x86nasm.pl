@@ -401,6 +401,11 @@ sub main'set_label
 	push(@out,"$label{$_[0]}:\n");
 	}
 
+sub main'data_byte
+	{
+	push(@out,(($main'mwerks)?".byte\t":"DB\t").join(',',@_)."\n");
+	}
+
 sub main'data_word
 	{
 	push(@out,(($main'mwerks)?".long\t":"DD\t").join(',',@_)."\n");

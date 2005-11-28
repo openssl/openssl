@@ -44,6 +44,7 @@ MD2TEST=	md2test
 MD4TEST=	md4test
 MD5TEST=	md5test
 HMACTEST=	hmactest
+WPTEST=		wp_test
 RC2TEST=	rc2test
 RC4TEST=	rc4test
 RC5TEST=	rc5test
@@ -62,7 +63,7 @@ EVPTEST=	evp_test
 TESTS=		alltests
 
 EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)$(EXE_EXT) $(IDEATEST)$(EXE_EXT) \
-	$(MD2TEST)$(EXE_EXT)  $(MD4TEST)$(EXE_EXT) $(MD5TEST)$(EXE_EXT) $(HMACTEST)$(EXE_EXT) \
+	$(MD2TEST)$(EXE_EXT)  $(MD4TEST)$(EXE_EXT) $(MD5TEST)$(EXE_EXT) $(HMACTEST)$(EXE_EXT) $(WPTEST)$(EXE_EXT) \
 	$(RC2TEST)$(EXE_EXT) $(RC4TEST)$(EXE_EXT) $(RC5TEST)$(EXE_EXT) \
 	$(DESTEST)$(EXE_EXT) $(SHATEST)$(EXE_EXT) $(SHA1TEST)$(EXE_EXT) $(SHA256TEST)$(EXE_EXT) $(SHA512TEST)$(EXE_EXT) \
 	$(MDC2TEST)$(EXE_EXT) $(RMDTEST)$(EXE_EXT) \
@@ -74,7 +75,7 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 
 OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(MD2TEST).o $(MD4TEST).o $(MD5TEST).o \
-	$(HMACTEST).o \
+	$(HMACTEST).o $(WPTEST).o \
 	$(RC2TEST).o $(RC4TEST).o $(RC5TEST).o \
 	$(DESTEST).o $(SHATEST).o $(SHA1TEST).o $(SHA256TEST).o $(SHA512TEST).o \
 	$(MDC2TEST).o $(RMDTEST).o \
@@ -83,7 +84,7 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(EVPTEST).o
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
-	$(HMACTEST).c \
+	$(HMACTEST).c $(WPTEST).c \
 	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c \
 	$(DESTEST).c $(SHATEST).c $(SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
 	$(RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
@@ -125,7 +126,7 @@ apps:
 
 alltests: \
 	test_des test_idea test_sha test_md4 test_md5 test_hmac \
-	test_md2 test_mdc2 \
+	test_md2 test_mdc2 test_wp \
 	test_rmd test_rc2 test_rc4 test_rc5 test_bf test_cast test_aes \
 	test_rand test_bn test_ec test_ecdsa test_ecdh \
 	test_enc test_x509 test_rsa test_crl test_sid \
@@ -158,6 +159,9 @@ test_md4:
 
 test_hmac:
 	../util/shlib_wrap.sh ./$(HMACTEST)
+
+test_wp:
+	../util/shlib_wrap.sh ./$(WPTEST)
 
 test_md2:
 	../util/shlib_wrap.sh ./$(MD2TEST)
@@ -362,6 +366,9 @@ $(MD5TEST)$(EXE_EXT): $(MD5TEST).o $(DLIBCRYPTO)
 
 $(HMACTEST)$(EXE_EXT): $(HMACTEST).o $(DLIBCRYPTO)
 	@target=$(HMACTEST); $(BUILD_CMD)
+
+$(WPTEST)$(EXE_EXT): $(WPTEST).o $(DLIBCRYPTO)
+	@target=$(WPTEST); $(BUILD_CMD)
 
 $(RC2TEST)$(EXE_EXT): $(RC2TEST).o $(DLIBCRYPTO)
 	@target=$(RC2TEST); $(BUILD_CMD)
@@ -613,3 +620,8 @@ ssltest.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
 ssltest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ssltest.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 ssltest.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h ssltest.c
+wp_test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+wp_test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+wp_test.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+wp_test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+wp_test.o: ../include/openssl/whrlpool.h wp_test.c

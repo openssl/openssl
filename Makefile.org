@@ -106,7 +106,7 @@ SHLIBDIRS= crypto ssl
 # dirs in crypto to build
 SDIRS=  \
 	objects \
-	md2 md4 md5 sha mdc2 hmac ripemd \
+	md2 md4 md5 sha mdc2 hmac ripemd whrlpool \
 	des aes rc2 rc4 rc5 idea bf cast \
 	bn ec rsa dsa ecdsa dh ecdh dso engine \
 	buffer bio stack lhash rand err \
