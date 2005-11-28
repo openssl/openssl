@@ -45,7 +45,7 @@
 #	non-MMX implementation would actually pay off, but till
 #	opposite is proved "unlikely" is assumed.
 
-push(@INC,"../CVS/HEAD/openssl/crypto/perlasm","../../perlasm");
+push(@INC,"../../perlasm");
 require "x86asm.pl";
 
 &asm_init($ARGV[0],"wp-mmx.pl");
@@ -99,7 +99,7 @@ $tbl="ebp";
 	&call	(&label("pic_point"));
 &set_label("pic_point");
 	&blindpop($tbl);
-        &lea    ($tbl,&DWP(&label("table")."-".&label("pic_point"),$tbl));
+	&lea	($tbl,&DWP(&label("table")."-".&label("pic_point"),$tbl));
 
 	&xor	("ecx","ecx");
 	&xor	("edx","edx");
