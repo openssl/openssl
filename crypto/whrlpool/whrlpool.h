@@ -15,7 +15,7 @@ extern "C" {
 typedef struct	{
 	union	{
 		unsigned char	c[WHIRLPOOL_DIGEST_LENGTH];
-		/* double q is here to ensures 64-bit alignment */
+		/* double q is here to ensure 64-bit alignment */
 		double		q[WHIRLPOOL_DIGEST_LENGTH/sizeof(double)];
 		}	H;
 	unsigned char	data[WHIRLPOOL_BBLOCK/8];
