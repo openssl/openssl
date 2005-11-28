@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 752
-#define NUM_SN 748
-#define NUM_LN 748
-#define NUM_OBJ 710
+#define NUM_NID 753
+#define NUM_SN 749
+#define NUM_LN 749
+#define NUM_OBJ 711
 
-static unsigned char lvalues[5005]={
+static unsigned char lvalues[5011]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -778,6 +778,7 @@ static unsigned char lvalues[5005]={
 0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x01,     /* [4985] OBJ_id_ppl_inheritAll */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x02,     /* [4993] OBJ_Independent */
 0x55,0x1D,0x1C,                              /* [5001] OBJ_issuing_distribution_point */
+0x28,0xCF,0x06,0x03,0x00,0x37,               /* [5004] OBJ_whirlpool */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1948,6 +1949,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"id-ppl-independent","Independent",NID_Independent,8,&(lvalues[4993]),0},
 {"issuingDistributionPoint","X509v3 Issuing Distrubution Point",
 	NID_issuing_distribution_point,3,&(lvalues[5001]),0},
+{"whirlpool","whirlpool",NID_whirlpool,6,&(lvalues[5004]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2696,6 +2698,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[726]),/* "wap-wsg-idm-ecid-wtls7" */
 &(nid_objs[727]),/* "wap-wsg-idm-ecid-wtls8" */
 &(nid_objs[728]),/* "wap-wsg-idm-ecid-wtls9" */
+&(nid_objs[752]),/* "whirlpool" */
 &(nid_objs[503]),/* "x500UniqueIdentifier" */
 &(nid_objs[158]),/* "x509Certificate" */
 &(nid_objs[160]),/* "x509Crl" */
@@ -3446,6 +3449,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[726]),/* "wap-wsg-idm-ecid-wtls7" */
 &(nid_objs[727]),/* "wap-wsg-idm-ecid-wtls8" */
 &(nid_objs[728]),/* "wap-wsg-idm-ecid-wtls9" */
+&(nid_objs[752]),/* "whirlpool" */
 &(nid_objs[503]),/* "x500UniqueIdentifier" */
 &(nid_objs[158]),/* "x509Certificate" */
 &(nid_objs[160]),/* "x509Crl" */
@@ -3719,6 +3723,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[729]),/* OBJ_wap_wsg_idm_ecid_wtls10      2 23 43 13 4 10 */
 &(nid_objs[730]),/* OBJ_wap_wsg_idm_ecid_wtls11      2 23 43 13 4 11 */
 &(nid_objs[731]),/* OBJ_wap_wsg_idm_ecid_wtls12      2 23 43 13 4 12 */
+&(nid_objs[752]),/* OBJ_whirlpool                    1 0 10118 3 0 55 */
 &(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666 1 */
 &(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666 2 */
 &(nid_objs[ 1]),/* OBJ_rsadsi                       1 2 840 113549 */
