@@ -77,7 +77,7 @@ $! Define The Different Encryption Types.
 $!
 $ ENCRYPT_TYPES = "Basic,"+ -
 		  "OBJECTS,"+ -
-		  "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ -
+		  "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,WHRLPOOL,"+ -
 		  "DES,RC2,RC4,RC5,IDEA,BF,CAST,"+ -
 		  "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,AES,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
@@ -169,6 +169,7 @@ $ LIB_SHA = "sha_dgst,sha1dgst,sha_one,sha1_one,sha256,sha512"
 $ LIB_MDC2 = "mdc2dgst,mdc2_one"
 $ LIB_HMAC = "hmac"
 $ LIB_RIPEMD = "rmd_dgst,rmd_one"
+$ LIB_WHRLPOOL = "wp_dgst,wp_block"
 $ LIB_DES = "set_key,ecb_enc,cbc_enc,"+ -
 	"ecb3_enc,cfb64enc,cfb64ede,cfb_enc,ofb64ede,"+ -
 	"enc_read,enc_writ,ofb64enc,"+ -
