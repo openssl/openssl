@@ -24,10 +24,10 @@ typedef struct	{
 	} WHIRLPOOL_CTX;
 
 #ifndef OPENSSL_NO_WHIRLPOOL
-void WHIRLPOOL_Init	(WHIRLPOOL_CTX *c);
-void WHIRLPOOL_Update	(WHIRLPOOL_CTX *c,const void *inp,size_t bytes);
+int WHIRLPOOL_Init	(WHIRLPOOL_CTX *c);
+int WHIRLPOOL_Update	(WHIRLPOOL_CTX *c,const void *inp,size_t bytes);
 void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c,const void *inp,size_t bits);
-void WHIRLPOOL_Final	(unsigned char *md,WHIRLPOOL_CTX *c);
+int WHIRLPOOL_Final	(unsigned char *md,WHIRLPOOL_CTX *c);
 unsigned char *WHIRLPOOL(const void *inp,size_t bytes,unsigned char *md);
 #endif
 

@@ -54,9 +54,13 @@
 #include "wp_locl.h"
 #include <string.h>
 
-void WHIRLPOOL_Init	(WHIRLPOOL_CTX *c) { memset (c,0,sizeof(*c)); }
+int WHIRLPOOL_Init	(WHIRLPOOL_CTX *c)
+	{
+	memset (c,0,sizeof(*c));
+	return(1);
+	}
 
-void WHIRLPOOL_Update	(WHIRLPOOL_CTX *c,const void *_inp,size_t bytes)
+int WHIRLPOOL_Update	(WHIRLPOOL_CTX *c,const void *_inp,size_t bytes)
 	{
 	/* Well, largest suitable chunk size actually is
 	 * (1<<(sizeof(size_t)*8-3))-64, but below number
@@ -73,6 +77,8 @@ void WHIRLPOOL_Update	(WHIRLPOOL_CTX *c,const void *_inp,size_t bytes)
 		}
 	if (bytes)
 		WHIRLPOOL_BitUpdate(c,inp,bytes*8);
+
+	return(1);
 	}
 
 void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c,const void *_inp,size_t bits)
@@ -206,7 +212,7 @@ void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c,const void *_inp,size_t bits)
 		}
 	}
 
-void WHIRLPOOL_Final	(unsigned char *md,WHIRLPOOL_CTX *c)
+int WHIRLPOOL_Final	(unsigned char *md,WHIRLPOOL_CTX *c)
 	{
 	unsigned int	bitoff  = c->bitoff,
 			byteoff = bitoff/8;
@@ -238,8 +244,12 @@ void WHIRLPOOL_Final	(unsigned char *md,WHIRLPOOL_CTX *c)
 
 	whirlpool_block(c,c->data,1);
 
-	memcpy(md,c->H.c,WHIRLPOOL_DIGEST_LENGTH);
-	memset(c,0,sizeof(*c));
+	if (md)	{
+		memcpy(md,c->H.c,WHIRLPOOL_DIGEST_LENGTH);
+		memset(c,0,sizeof(*c));
+		return(1);
+		}
+	return(0);
 	}
 
 unsigned char *WHIRLPOOL(const void *inp, size_t bytes,unsigned char *md)
