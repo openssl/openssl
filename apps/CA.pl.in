@@ -113,6 +113,7 @@ foreach (@ARGV) {
 		    system ("$CA -create_serial " .
 			"-out ${CATOP}/$CACERT $CADAYS -batch " . 
 			"-keyfile ${CATOP}/private/$CAKEY -selfsign " .
+			"-extensions v3_ca " .
 			"-infiles ${CATOP}/$CAREQ ");
 		    $RET=$?;
 		}
