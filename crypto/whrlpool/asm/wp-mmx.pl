@@ -31,7 +31,7 @@
 #
 # (*)	I've sketched even non-MMX assembler, but for the record
 #	I've failed to beat the Intel compiler on P4, without using
-*	MMX that is...
+#	MMX that is...
 # (**)	... on AMD on the other hand non-MMX assembler was observed
 #	to perform significantly better, but I figured this MMX
 #	implementation is even faster anyway, so why bother? As for
@@ -106,9 +106,9 @@ $tbl="ebp";
 
 	for($i=0;$i<8;$i++) { &movq(@mm[$i],&QWP($i*8,"esi")); }    # L=H
 &set_label("outerloop");
-	for($i=0;$i<8;$i++) { &movq(&QWP($i*8,"esp"),@mm[$i]); }    # K=H
+	for($i=0;$i<8;$i++) { &movq(&QWP($i*8,"esp"),@mm[$i]); }    # K=L
 	for($i=0;$i<8;$i++) { &pxor(@mm[$i],&QWP($i*8,"edi")); }    # L^=inp
-	for($i=0;$i<8;$i++) { &movq(&QWP(64+$i*8,"esp"),@mm[$i]); } #S=L
+	for($i=0;$i<8;$i++) { &movq(&QWP(64+$i*8,"esp"),@mm[$i]); } # S=L
 
 	&xor	("esi","esi");
 	&mov	(&DWP(12,"ebx"),"esi");		# zero round counter
