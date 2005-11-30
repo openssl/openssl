@@ -22,7 +22,7 @@ LIBSRC= encode.c digest.c evp_enc.c evp_key.c evp_acnf.c \
 	e_des.c e_bf.c e_idea.c e_des3.c \
 	e_rc4.c e_aes.c names.c \
 	e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c \
-	m_null.c m_md2.c m_md4.c m_md5.c m_sha.c m_sha1.c \
+	m_null.c m_md2.c m_md4.c m_md5.c m_sha.c m_sha1.c m_wp.c \
 	m_dss.c m_dss1.c m_mdc2.c m_ripemd.c m_ecdsa.c\
 	p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c \
 	bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c \
@@ -34,7 +34,7 @@ LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o evp_acnf.o \
 	e_des.o e_bf.o e_idea.o e_des3.o \
 	e_rc4.o e_aes.o names.o \
 	e_xcbc_d.o e_rc2.o e_cast.o e_rc5.o \
-	m_null.o m_md2.o m_md4.o m_md5.o m_sha.o m_sha1.o \
+	m_null.o m_md2.o m_md4.o m_md5.o m_sha.o m_sha1.o m_wp.o \
 	m_dss.o m_dss1.o m_mdc2.o m_ripemd.o m_ecdsa.o\
 	p_open.o p_seal.o p_sign.o p_verify.o p_lib.o p_enc.o p_dec.o \
 	bio_md.o bio_b64.o bio_enc.o evp_err.o e_null.o \
@@ -505,6 +505,19 @@ m_sha1.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 m_sha1.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 m_sha1.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 m_sha1.o: ../cryptlib.h m_sha1.c
+m_wp.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
+m_wp.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+m_wp.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+m_wp.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+m_wp.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+m_wp.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+m_wp.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+m_wp.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+m_wp.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+m_wp.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+m_wp.o: ../../include/openssl/symhacks.h ../../include/openssl/whrlpool.h
+m_wp.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+m_wp.o: ../cryptlib.h m_wp.c
 names.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 names.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 names.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

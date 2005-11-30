@@ -111,4 +111,7 @@ void OpenSSL_add_all_digests(void)
 	EVP_add_digest(EVP_sha384());
 	EVP_add_digest(EVP_sha512());
 #endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+	EVP_add_digest(EVP_whirlpool());
+#endif
 	}
