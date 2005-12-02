@@ -3378,3 +3378,5 @@ get_rfc3526_prime_3072                  3778	EXIST::FUNCTION:
 get_rfc3526_prime_4096                  3779	EXIST::FUNCTION:
 get_rfc2409_prime_768                   3780	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get_flags             3781	EXIST::FUNCTION:
+EVP_CIPHER_CTX_new                      3782	EXIST::FUNCTION:
+EVP_CIPHER_CTX_free                     3783	EXIST::FUNCTION:
