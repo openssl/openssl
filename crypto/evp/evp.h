@@ -625,6 +625,9 @@ const EVP_MD *EVP_mdc2(void);
 #ifndef OPENSSL_NO_RIPEMD
 const EVP_MD *EVP_ripemd160(void);
 #endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+const EVP_MD *EVP_whirlpool(void);
+#endif
 const EVP_CIPHER *EVP_enc_null(void);		/* does nothing :-) */
 #ifndef OPENSSL_NO_DES
 const EVP_CIPHER *EVP_des_ecb(void);
