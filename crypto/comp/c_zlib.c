@@ -397,13 +397,18 @@ COMP_METHOD *COMP_zlib(void)
 			p_deflateInit_
 				= (deflateInit__ft) DSO_bind_func(zlib_dso,
 					"deflateInit_");
-			zlib_loaded++;
+
+			if (p_compress && p_inflateEnd && p_inflate
+				&& p_inflateInit_ && p_deflateEnd
+				&& p_deflate && p_deflateInit_)
+				zlib_loaded++;
 			}
 		}
 
 #endif
 #if defined(ZLIB) || defined(ZLIB_SHARED)
-	meth = &zlib_stateful_method;
+	if (zlib_loaded)
+		meth = &zlib_stateful_method;
 #endif
 
 	return(meth);
