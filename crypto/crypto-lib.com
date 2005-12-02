@@ -227,7 +227,7 @@ $ LIB_EVP = "encode,digest,evp_enc,evp_key,evp_acnf,"+ -
 	"e_des,e_bf,e_idea,e_des3,"+ -
 	"e_rc4,e_aes,names,"+ -
 	"e_xcbc_d,e_rc2,e_cast,e_rc5"
-$ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1,m_wq," + -
+$ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1,m_wp," + -
 	"m_dss,m_dss1,m_mdc2,m_ripemd,m_ecdsa,"+ -
 	"p_open,p_seal,p_sign,p_verify,p_lib,p_enc,p_dec,"+ -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
