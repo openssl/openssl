@@ -74,6 +74,13 @@ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 	/* ctx->cipher=NULL; */
 	}
 
+EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
+	{
+	EVP_CIPHER_CTX *ctx=OPENSSL_malloc(sizeof *ctx);
+	if (ctx)
+		EVP_CIPHER_CTX_init(ctx);
+	return ctx;
+	}
 
 int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     const unsigned char *key, const unsigned char *iv, int enc)
@@ -470,6 +477,15 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	else
 		*outl=0;
 	return(1);
+	}
+
+void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
+	{
+	if (ctx)
+		{
+		EVP_CIPHER_CTX_cleanup(ctx);
+		OPENSSL_free(ctx);
+		}
 	}
 
 int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
