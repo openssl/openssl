@@ -153,6 +153,45 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&ret	();
 &function_end_B("OPENSSL_atomic_add");
 
+# This function can become handy under Win32 in situations when
+# we don't know which calling convention, __stdcall or __cdecl(*),
+# indirect callee is using. In C it can be deployed as
+#
+#ifdef OPENSSL_CPUID_OBJ
+#	type OPENSSL_indirect_call(void *f,...);
+#	...
+#	OPENSSL_indirect_call(func,[up to $max arguments]);
+#endif
+#
+# (*)	it's designed to work even for __fastcall if number of
+#	arguments is 1 or 2!
+&function_begin_B("OPENSSL_indirect_call");
+	{
+	my $i,$max=7;		# $max has to be chosen as 4*n-1
+				# in order to preserve eventual
+				# stack alignment
+	&push	("ebp");
+	&mov	("ebp","esp");
+	&sub	("esp",$max*4);
+	&mov	("ecx",&DWP(12,"ebp"));
+	&mov	(&DWP(0,"esp"),"ecx");
+	&mov	("edx",&DWP(16,"ebp"));
+	&mov	(&DWP(4,"esp"),"edx");
+	for($i=2;$i<$max;$i++)
+		{
+		# Some copies will be redundant/bogus...
+		&mov	("eax",&DWP(12+$i*4,"ebp"));
+		&mov	(&DWP(0+$i*4,"esp"),"eax");
+		}
+	&call	(&DWP(8,"ebp"));# make the call...
+	&mov	("esp","ebp");	# ... and just restore the stack pointer
+				# without paying attention to what we called,
+				# (__cdecl *func) or (__stdcall *one).
+	&pop	("ebp");
+	&ret	();
+	}
+&function_end_B("OPENSSL_indirect_call");
+
 &initseg("OPENSSL_cpuid_setup");
 
 &asm_finish();
