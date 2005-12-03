@@ -12,9 +12,10 @@
 # to 32-bit MMX version executed on same CPU. So why did I bother?
 # Well, it's faster than gcc 3.3.2 generated code by over 50%, and
 # over 80% faster than PathScale 1.4, an "ambitious" commercial
-# compiler. What is it with x86_64 compilers? It's not the first
-# example when they fail to generate more optimal code, when I
-# believe they had *all* chances to...
+# compiler. Furthermore it surpasses gcc 3.4.3 by 170% and Sun Studio
+# 10 - by 360%[!]... What is it with x86_64 compilers? It's not the
+# first example when they fail to generate more optimal code, when
+# I believe they had *all* chances to...
 #
 # Note that register and stack frame layout are virtually identical
 # to 32-bit MMX version, except that %r8-15 are used instead of
