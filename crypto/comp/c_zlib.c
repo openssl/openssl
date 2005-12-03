@@ -406,8 +406,10 @@ COMP_METHOD *COMP_zlib(void)
 		}
 
 #endif
-#if defined(ZLIB) || defined(ZLIB_SHARED)
+#ifdef ZLIB_SHARED
 	if (zlib_loaded)
+#endif
+#if defined(ZLIB) || defined(ZLIB_SHARED)
 		meth = &zlib_stateful_method;
 #endif
 
