@@ -186,7 +186,7 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 					goto err;
 				}
 			while(blsize--)
-				tmp[i++] = BN_div_word(bl, 0x80L);
+				tmp[i++] = (unsigned char)BN_div_word(bl, 0x80L);
 			}
 		else
 			{
