@@ -211,6 +211,7 @@ $cflags.=" -DOPENSSL_NO_DES"  if $no_des;
 $cflags.=" -DOPENSSL_NO_RSA"  if $no_rsa;
 $cflags.=" -DOPENSSL_NO_DSA"  if $no_dsa;
 $cflags.=" -DOPENSSL_NO_DH"   if $no_dh;
+$cflags.=" -DOPENSSL_NO_WHIRLPOOL"   if $no_whirlpool;
 $cflags.=" -DOPENSSL_NO_SOCK" if $no_sock;
 $cflags.=" -DOPENSSL_NO_SSL2" if $no_ssl2;
 $cflags.=" -DOPENSSL_NO_SSL3" if $no_ssl3;
@@ -727,6 +728,7 @@ sub var_add
 	return("") if $no_sock && $dir =~ /\/proxy/;
 	return("") if $no_bf   && $dir =~ /\/bf/;
 	return("") if $no_cast && $dir =~ /\/cast/;
+	return("") if $no_whirlpool && $dir =~ /\/whrlpool/;
 
 	$val =~ s/^\s*(.*)\s*$/$1/;
 	@a=split(/\s+/,$val);
@@ -961,6 +963,7 @@ sub read_options
 		"no-sha1" => \$no_sha1,
 		"no-ripemd" => \$no_ripemd,
 		"no-mdc2" => \$no_mdc2,
+		"no-whirlpool" => \$no_whirlpool,
 		"no-patents" => 
 			[\$no_rc2, \$no_rc4, \$no_rc5, \$no_idea, \$no_rsa],
 		"no-rsa" => \$no_rsa,

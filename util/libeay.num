@@ -3400,7 +3400,7 @@ i2b_PublicKey_bio                       3800	EXIST::FUNCTION:
 b2i_PrivateKey                          3801	EXIST::FUNCTION:
 b2i_PrivateKey_bio                      3802	EXIST::FUNCTION:
 PKCS7_print_ctx                         3803	EXIST::FUNCTION:
-EVP_whirlpool                           3804	EXIST::FUNCTION:
+EVP_whirlpool                           3804	EXIST::FUNCTION:WHIRLPOOL
 ASN1_PCTX_set_flags                     3805	EXIST::FUNCTION:
 NETSCAPE_X509_it                        3806	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 NETSCAPE_X509_it                        3806	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -3416,3 +3416,8 @@ ASN1_PCTX_get_str_flags                 3814	EXIST::FUNCTION:
 ASN1_PCTX_free                          3815	EXIST::FUNCTION:
 DSO_pathbyaddr                          3816	EXIST::FUNCTION:
 ASN1_PCTX_set_cert_flags                3817	EXIST::FUNCTION:
+WHIRLPOOL_Init                          3818	EXIST::FUNCTION:WHIRLPOOL
+WHIRLPOOL                               3819	EXIST::FUNCTION:WHIRLPOOL
+WHIRLPOOL_BitUpdate                     3820	EXIST::FUNCTION:WHIRLPOOL
+WHIRLPOOL_Final                         3821	EXIST::FUNCTION:WHIRLPOOL
+WHIRLPOOL_Update                        3822	EXIST::FUNCTION:WHIRLPOOL

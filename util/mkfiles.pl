@@ -55,6 +55,7 @@ my @dirs = (
 "crypto/krb5",
 "crypto/store",
 "crypto/pqueue",
+"crypto/whrlpool",
 "ssl",
 "apps",
 "engines",
