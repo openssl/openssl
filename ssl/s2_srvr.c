@@ -144,7 +144,7 @@ IMPLEMENT_ssl2_meth_func(SSLv2_server_method,
 
 int ssl2_accept(SSL *s)
 	{
-	unsigned long l=time(NULL);
+	unsigned long l=(unsigned long)time(NULL);
 	BUF_MEM *buf=NULL;
 	int ret= -1;
 	long num1;

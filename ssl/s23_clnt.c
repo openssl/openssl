@@ -88,7 +88,7 @@ IMPLEMENT_ssl23_meth_func(SSLv23_client_method,
 int ssl23_connect(SSL *s)
 	{
 	BUF_MEM *buf=NULL;
-	unsigned long Time=time(NULL);
+	unsigned long Time=(unsigned long)time(NULL);
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
 	int new_state,state;
@@ -236,7 +236,7 @@ static int ssl23_client_hello(SSL *s)
 #endif
 
 		p=s->s3->client_random;
-		Time=time(NULL);			/* Time */
+		Time=(unsigned long)time(NULL);		/* Time */
 		l2n(Time,p);
 		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
 			return -1;

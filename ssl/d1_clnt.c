@@ -144,7 +144,7 @@ IMPLEMENT_dtls1_meth_func(DTLSv1_client_method,
 int dtls1_connect(SSL *s)
 	{
 	BUF_MEM *buf=NULL;
-	unsigned long Time=time(NULL),l;
+	unsigned long Time=(unsigned long)time(NULL),l;
 	long num1;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
@@ -544,7 +544,7 @@ int dtls1_client_hello(SSL *s)
 		/* else use the pre-loaded session */
 
 		p=s->s3->client_random;
-		Time=time(NULL);			/* Time */
+		Time=(unsigned long)time(NULL);			/* Time */
 		l2n(Time,p);
 		RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-sizeof(Time));
 

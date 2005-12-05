@@ -118,7 +118,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 	ss->verify_result = 1; /* avoid 0 (= X509_V_OK) just in case */
 	ss->references=1;
 	ss->timeout=60*5+4; /* 5 minute timeout by default */
-	ss->time=time(NULL);
+	ss->time=(unsigned long)time(NULL);
 	ss->prev=NULL;
 	ss->next=NULL;
 	ss->compress_meth=0;
