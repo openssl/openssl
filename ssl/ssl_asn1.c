@@ -344,7 +344,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 		OPENSSL_free(ai.data); ai.data=NULL; ai.length=0;
 		}
 	else
-		ret->time=time(NULL);
+		ret->time=(unsigned long)time(NULL);
 
 	ai.length=0;
 	M_ASN1_D2I_get_EXP_opt(aip,d2i_ASN1_INTEGER,2);

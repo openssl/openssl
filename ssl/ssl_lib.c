@@ -1901,7 +1901,7 @@ void ssl_update_cache(SSL *s,int mode)
 			?s->ctx->stats.sess_connect_good
 			:s->ctx->stats.sess_accept_good) & 0xff) == 0xff)
 			{
-			SSL_CTX_flush_sessions(s->ctx,time(NULL));
+			SSL_CTX_flush_sessions(s->ctx,(unsigned long)time(NULL));
 			}
 		}
 	}

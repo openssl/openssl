@@ -144,7 +144,7 @@ IMPLEMENT_dtls1_meth_func(DTLSv1_server_method,
 int dtls1_accept(SSL *s)
 	{
 	BUF_MEM *buf;
-	unsigned long l,Time=time(NULL);
+	unsigned long l,Time=(unsigned long)time(NULL);
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	long num1;
 	int ret= -1;
@@ -666,7 +666,7 @@ int dtls1_send_server_hello(SSL *s)
 		{
 		buf=(unsigned char *)s->init_buf->data;
 		p=s->s3->server_random;
-		Time=time(NULL);			/* Time */
+		Time=(unsigned long)time(NULL);			/* Time */
 		l2n(Time,p);
 		RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-sizeof(Time));
 		/* Do the message type and length last */
