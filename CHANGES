@@ -4,6 +4,16 @@
 
  Changes between 0.9.8a and 0.9.8b  [XX xxx XXXX]
 
+  *) Fixes and enhancements to zlib compression code. We now only use
+     "zlib1.dll" and use the default __cdecl calling convention on Win32
+     to conform with the standards mentioned here:
+           http://www.zlib.net/DLL_FAQ.txt
+     Static zlib linking now works on Windows and the new --with-zlib-include
+     --with-zlib-lib options to Configure can be used to supply the location
+     of the headers and library. Gracefully handle case where zlib library
+     can't be loaded.
+     [Steve Henson]
+
   *) Several fixes and enhancements to the OID generation code. The old code
      sometimes allowed invalid OIDs (1.X for X >= 40 for example), couldn't
      handle numbers larger than ULONG_MAX, truncated printing and had a
