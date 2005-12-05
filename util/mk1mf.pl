@@ -12,6 +12,8 @@ $banner="\t\@echo Building OpenSSL";
 
 my $no_static_engine = 1;
 my $engines = "";
+local $zlib_opt = 0;	# 0 = no zlib, 1 = static, 2 = dynamic
+local $zlib_lib = "";
 
 
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
@@ -223,6 +225,9 @@ $cflags.=" -DOPENSSL_NO_ECDH" if $no_ecdh;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
 
+$cflags.= " -DZLIB" if $zlib_opt;
+$cflags.= " -DZLIB_SHARED" if $zlib_opt == 2;
+
 if ($no_static_engine)
 	{
 	$cflags .= " -DOPENSSL_NO_STATIC_ENGINE";
@@ -240,6 +245,7 @@ else
 	{ $cflags="$c_flags$cflags" if ($c_flags ne ""); }
 
 $ex_libs="$l_flags$ex_libs" if ($l_flags ne "");
+
 
 %shlib_ex_cflags=("SSL" => " -DOPENSSL_BUILD_SHLIBSSL",
 		  "CRYPTO" => " -DOPENSSL_BUILD_SHLIBCRYPTO");
@@ -285,8 +291,14 @@ for (;;)
 	if ($key eq "KRB5_INCLUDES")
 		{ $cflags .= " $val";}
 
+	if ($key eq "ZLIB_INCLUDE")
+		{ $cflags .= " -I$val";}
+
+	if ($key eq "LIBZLIB")
+		{ $zlib_lib = "$val" if $val ne "";}
+
 	if ($key eq "LIBKRB5")
-		{ $ex_libs .= " $val";}
+		{ $ex_libs .= " $val" if $val ne "";}
 
 	if ($key eq "TEST")
 		{ $test.=&var_add($dir,$val, 0); }
@@ -338,6 +350,7 @@ else
 	\$(CP) \$(O_SSL) \$(INSTALLTOP)${o}lib
 	\$(CP) \$(O_CRYPTO) \$(INSTALLTOP)${o}lib
 EOF
+	$ex_libs .= " $zlib_lib" if $zlib_opt == 1;
 	}
 
 $defs= <<"EOF";
@@ -833,7 +846,7 @@ sub do_defs
 		$ret.=$t;
 		}
 	# hack to add version info on MSVC
-	if ($shlib && ($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
+	if ($shlib && (($platform eq "VC-WIN32") || ($platform eq "VC-NT")))
 		{
 		if ($var eq "CRYPTOOBJ")
 			{ $ret.="\$(OBJ_D)\\\$(CRYPTO).res "; }
@@ -1019,10 +1032,10 @@ sub read_options
 			}
 		}
 	elsif (/^no-comp$/) { $xcflags = "-DOPENSSL_NO_COMP $xcflags"; }
-	elsif (/^enable-zlib$/) { $xcflags = "-DZLIB $xcflags"; }
+	elsif (/^enable-zlib$/) { $zlib_opt = 1 if $zlib_opt == 0 }
 	elsif (/^enable-zlib-dynamic$/)
 		{
-		$xcflags = "-DZLIB_SHARED -DZLIB $xcflags";
+		$zlib_opt = 2;
 		}
 	elsif (/^no-static-engine/)
 		{

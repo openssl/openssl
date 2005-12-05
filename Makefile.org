@@ -100,6 +100,10 @@ RMD160_ASM_OBJ=
 KRB5_INCLUDES=
 LIBKRB5=
 
+# Zlib stuff
+ZLIB_INCLUDE=
+LIBZLIB=
+
 DIRS=   crypto ssl engines apps test tools
 SHLIBDIRS= crypto ssl
 

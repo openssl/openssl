@@ -11,6 +11,8 @@ $cp='$(PERL) util/copy.pl';
 $mkdir='$(PERL) util/mkdir-p.pl';
 $rm='del';
 
+$zlib_lib="zlib1.lib";
+
 # C compiler stuff
 $cc='cl';
 if ($FLAVOR =~ /WIN64/)
@@ -146,7 +148,6 @@ if ($FLAVOR =~ /NT/)
 	$cflags.=" -DOPENSSL_SYSNAME_WINNT -DUNICODE -D_UNICODE";
 	$ex_libs="unicows.lib $ex_libs";
 	}
-
 # static library stuff
 $mklib='lib';
 $ranlib='';
@@ -278,6 +279,7 @@ sub do_lib_rule
 			$ex.=' wsock32.lib gdi32.lib advapi32.lib user32.lib';
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 			}
+		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
 		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
 		}
 	$ret.="\n";
