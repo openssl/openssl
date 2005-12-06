@@ -748,9 +748,13 @@ PROCESS_ARGS:
 				{
 				$withargs{"krb5-".$1}=$2;
 				}
-			elsif (/^--with-zlib-(lib|include)=(.*)$/)
+			elsif (/^--with-zlib-lib=(.*)$/)
 				{
-				$withargs{"zlib-".$1}=$2;
+				$withargs{"zlib-lib"}=$1;
+				}
+			elsif (/^--with-zlib-include=(.*)$/)
+				{
+				$withargs{"zlib-include"}="-I$1";
 				}
 			else
 				{
