@@ -172,6 +172,7 @@ sub main'popf	{ &out0("popfd"); $stack-=4; }
 sub main'bswap	{ &out1("bswap",@_); &using486(); }
 sub main'not	{ &out1("not",@_); }
 sub main'call	{ &out1("call",($_[0]=~/^\$L/?'':'_').$_[0]); }
+sub main'call_ptr { &out1p("call",@_); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
 sub main'test	{ &out2("test",@_); }
@@ -436,7 +437,7 @@ sub out1p
 	local($name,$p1)=@_;
 	local($l,$t);
 
-	push(@out,"\t$name\t ".&conv($p1)."\n");
+	push(@out,"\t$name\t".&conv($p1)."\n");
 	}
 
 sub main'picmeup
@@ -452,10 +453,10 @@ sub main'initseg
 	local($f)=@_;
 	local($tmp)=<<___;
 OPTION	DOTNAME
-.CRT\$XIU	SEGMENT DWORD PUBLIC 'DATA'
+.CRT\$XCU	SEGMENT DWORD PUBLIC 'DATA'
 EXTRN	_$f:NEAR
 DD	_$f
-.CRT\$XIU	ENDS
+.CRT\$XCU	ENDS
 ___
 	push(@out,$tmp);
 	}

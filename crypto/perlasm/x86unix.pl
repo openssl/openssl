@@ -200,6 +200,7 @@ sub main'call	{	my $pre=$under;
 			{ if ($label{$i} eq $_[0]) { $pre=''; last; } }
 			&out1("call",$pre.$_[0]);
 		}
+sub main'call_ptr { &out1p("call",@_); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
 sub main'test	{ &out2("testl",@_); }

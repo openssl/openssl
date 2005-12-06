@@ -183,7 +183,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 		&mov	("eax",&DWP(12+$i*4,"ebp"));
 		&mov	(&DWP(0+$i*4,"esp"),"eax");
 		}
-	&call	(&DWP(8,"ebp"));# make the call...
+	&call_ptr	(&DWP(8,"ebp"));# make the call...
 	&mov	("esp","ebp");	# ... and just restore the stack pointer
 				# without paying attention to what we called,
 				# (__cdecl *func) or (__stdcall *one).
