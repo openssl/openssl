@@ -200,6 +200,7 @@ sub main'call	{	my $pre=$under;
 			{ if ($label{$i} eq $_[0]) { $pre=''; last; } }
 			&out1("call",$pre.$_[0]);
 		}
+sub main'call_ptr { &out1p("call",@_); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
 sub main'test	{ &out2("testl",@_); }
@@ -215,7 +216,6 @@ sub main'cld	{ &out0("cld"); }
 # SSE2
 sub main'emms	{ &out0("emms"); }
 sub main'movd	{ &out2("movd",@_); }
-sub main'movq	{ &out2("movq",@_); }
 sub main'movdqu	{ &out2("movdqu",@_); }
 sub main'movdqa	{ &out2("movdqa",@_); }
 sub main'movdq2q{ &out2("movdq2q",@_); }
@@ -227,6 +227,13 @@ sub main'psllq	{ &out2("psllq",@_); }
 sub main'pxor	{ &out2("pxor",@_); }
 sub main'por	{ &out2("por",@_); }
 sub main'pand	{ &out2("pand",@_); }
+sub main'movq	{
+	local($p1,$p2,$optimize)=@_;
+	if ($optimize && $p1=~/^mm[0-7]$/ && $p2=~/^mm[0-7]$/)
+		# movq between mmx registers can sink Intel CPUs
+		{	push(@out,"\tpshufw\t\$0xe4,%$p2,%$p1\n");	}
+	else	{	&out2("movq",@_);				}
+	}
 
 # The bswapl instruction is new for the 486. Emulate if i386.
 sub main'bswap
@@ -586,6 +593,11 @@ ___
 		push(@out,$const);
 		$const="";
 		}
+	}
+
+sub main'data_byte
+	{
+	push(@out,"\t.byte\t".join(',',@_)."\n");
 	}
 
 sub main'data_word

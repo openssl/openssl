@@ -27,7 +27,13 @@ $label="L000";
 sub main'asm_init_output { @out=(); }
 sub main'asm_get_output { return(@out); }
 sub main'get_labels { return(@labels); }
-sub main'external_label { push(@labels,@_); }
+sub main'external_label
+{
+	push(@labels,@_);
+	foreach (@_) {
+		push(@out, "EXTRN\t_$_:DWORD\n");
+	}
+}
 
 sub main'LB
 	{
@@ -166,6 +172,7 @@ sub main'popf	{ &out0("popfd"); $stack-=4; }
 sub main'bswap	{ &out1("bswap",@_); &using486(); }
 sub main'not	{ &out1("not",@_); }
 sub main'call	{ &out1("call",($_[0]=~/^\$L/?'':'_').$_[0]); }
+sub main'call_ptr { &out1p("call",@_); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
 sub main'test	{ &out2("test",@_); }
@@ -246,7 +253,9 @@ sub main'file
 	local($tmp)=<<"EOF";
 	TITLE	$file.asm
         .386
-.model FLAT
+.model	FLAT
+_TEXT\$	SEGMENT PAGE 'CODE'
+
 EOF
 	push(@out,$tmp);
 	}
@@ -258,7 +267,6 @@ sub main'function_begin
 	push(@labels,$func);
 
 	local($tmp)=<<"EOF";
-_TEXT\$	SEGMENT PAGE 'CODE'
 PUBLIC	_$func
 $extra
 _$func PROC NEAR
@@ -276,7 +284,6 @@ sub main'function_begin_B
 	local($func,$extra)=@_;
 
 	local($tmp)=<<"EOF";
-_TEXT\$	SEGMENT	PAGE 'CODE'
 PUBLIC	_$func
 $extra
 _$func PROC NEAR
@@ -296,7 +303,6 @@ sub main'function_end
 	pop	ebp
 	ret
 _$func ENDP
-_TEXT\$	ENDS
 EOF
 	push(@out,$tmp);
 	$stack=0;
@@ -309,7 +315,6 @@ sub main'function_end_B
 
 	local($tmp)=<<"EOF";
 _$func ENDP
-_TEXT\$	ENDS
 EOF
 	push(@out,$tmp);
 	$stack=0;
@@ -339,6 +344,7 @@ sub main'file_end
 	elsif (grep {/mm[0-7]\s*,/i} @out) {
 		grep {s/\.[3-7]86/\.686\n\t\.MMX/} @out;
 		}
+	push(@out,"_TEXT\$	ENDS\n");
 	push(@out,"END\n");
 	}
 
@@ -411,6 +417,11 @@ sub main'set_label
 		}
 	}
 
+sub main'data_byte
+	{
+	push(@out,"\tDB\t".join(',',@_)."\n");
+	}
+
 sub main'data_word
 	{
 	push(@out,"\tDD\t".join(',',@_)."\n");
@@ -426,7 +437,7 @@ sub out1p
 	local($name,$p1)=@_;
 	local($l,$t);
 
-	push(@out,"\t$name\t ".&conv($p1)."\n");
+	push(@out,"\t$name\t".&conv($p1)."\n");
 	}
 
 sub main'picmeup
@@ -442,10 +453,10 @@ sub main'initseg
 	local($f)=@_;
 	local($tmp)=<<___;
 OPTION	DOTNAME
-.CRT\$XIU	SEGMENT DWORD PUBLIC 'DATA'
+.CRT\$XCU	SEGMENT DWORD PUBLIC 'DATA'
 EXTRN	_$f:NEAR
 DD	_$f
-.CRT\$XIU	ENDS
+.CRT\$XCU	ENDS
 ___
 	push(@out,$tmp);
 	}

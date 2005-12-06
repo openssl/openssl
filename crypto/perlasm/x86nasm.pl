@@ -184,6 +184,7 @@ sub main'popf	{ &out0("popfd"); $stack-=4; }
 sub main'bswap	{ &out1("bswap",@_); &using486(); }
 sub main'not	{ &out1("not",@_); }
 sub main'call	{ &out1("call",($_[0]=~/^\@L/?'':$under).$_[0]); }
+sub main'call_ptr { &out1p("call",@_); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
 sub main'test	{ &out2("test",@_); }
@@ -401,6 +402,11 @@ sub main'set_label
 	push(@out,"$label{$_[0]}:\n");
 	}
 
+sub main'data_byte
+	{
+	push(@out,(($main'mwerks)?".byte\t":"DB\t").join(',',@_)."\n");
+	}
+
 sub main'data_word
 	{
 	push(@out,(($main'mwerks)?".long\t":"DD\t").join(',',@_)."\n");
@@ -417,7 +423,7 @@ sub out1p
 	my($name,$p1)=@_;
 	my($l,$t);
 
-	push(@out,"\t$name\t ".&conv($p1)."\n");
+	push(@out,"\t$name\t".&conv($p1)."\n");
 	}
 
 sub main'picmeup
@@ -434,7 +440,7 @@ sub main'initseg
 	if ($main'win32)
 		{
 		local($tmp)=<<___;
-segment	.CRT\$XIU data
+segment	.CRT\$XCU data
 extern	$under$f
 DD	$under$f
 ___
