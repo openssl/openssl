@@ -292,7 +292,7 @@ for (;;)
 		{ $cflags .= " $val";}
 
 	if ($key eq "ZLIB_INCLUDE")
-		{ $cflags .= " -I$val";}
+		{ $cflags .= " $val" if $val ne "";}
 
 	if ($key eq "LIBZLIB")
 		{ $zlib_lib = "$val" if $val ne "";}
