@@ -196,6 +196,8 @@ if (!$no_asm)
 	$rmd160_asm_src='crypto\ripemd\asm\rm_win32.asm';
 	$whirlpool_asm_obj='crypto\whrlpool\asm\wp_win32.obj';
 	$whirlpool_asm_src='crypto\whrlpool\asm\wp_win32.asm';
+	$cpuid_asm_obj='crypto\cpu_win32.obj';
+	$cpuid_asm_src='crypto\cpu_win32.asm';
 	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM -DRMD160_ASM -DWHIRLPOOL_ASM";
 	}
 

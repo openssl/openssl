@@ -59,6 +59,11 @@ cd crypto\whrlpool\asm
 perl wp-mmx.pl win32n > wp_win32.asm
 cd ..\..\..
 
+echo CPU-ID
+cd crypto
+perl x86cpuid.pl win32n > cpu_win32.asm
+cd ..
+
 echo on
 
 perl util\mkfiles.pl >MINFO
