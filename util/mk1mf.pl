@@ -414,6 +414,8 @@ SHA1_ASM_OBJ=$sha1_asm_obj
 SHA1_ASM_SRC=$sha1_asm_src
 RMD160_ASM_OBJ=$rmd160_asm_obj
 RMD160_ASM_SRC=$rmd160_asm_src
+WHIRLPOOL_ASM_OBJ=$whirlpool_asm_obj
+WHIRLPOOL_ASM_SRC=$whirlpool_asm_src
 
 # The output directory for everything intersting
 OUT_D=$out_dir
@@ -657,6 +659,11 @@ foreach (values %lib_nam)
 		$lib_obj =~ s/\s(\S*\/rmd_dgst\S*)/ $1 \$(RMD160_ASM_OBJ)/;
 		$rules.=&do_asm_rule($rmd160_asm_obj,$rmd160_asm_src);
 		}
+	if (($whirlpool_asm_obj ne "") && ($_ eq "CRYPTO"))
+		{
+		$lib_obj =~ s/\s(\S*\/wp_dgst\S*)/ $1 \$(WHIRLPOOL_ASM_OBJ)/;
+		$rules.=&do_asm_rule($whirlpool_asm_obj,$whirlpool_asm_src);
+		}
 	$defs.=&do_defs(${_}."OBJ",$lib_obj,"\$(OBJ_D)",$obj);
 	$lib=($slib)?" \$(SHLIB_CFLAGS)".$shlib_ex_cflags{$_}:" \$(LIB_CFLAGS)";
 	$rules.=&do_compile_rule("\$(OBJ_D)",$lib_obj{$_},$lib);
@@ -840,6 +847,7 @@ sub do_defs
 		elsif ($_ =~ /MD5_ASM/)	{ $t="$_ "; }
 		elsif ($_ =~ /SHA1_ASM/){ $t="$_ "; }
 		elsif ($_ =~ /RMD160_ASM/){ $t="$_ "; }
+		elsif ($_ =~ /WHIRLPOOL_ASM/){ $t="$_ "; }
 		else	{ $t="$location${o}$_$pf "; }
 
 		$Vars{$var}.="$t ";

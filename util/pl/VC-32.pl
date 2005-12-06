@@ -194,7 +194,9 @@ if (!$no_asm)
 	$sha1_asm_src='crypto\sha\asm\s1_win32.asm';
 	$rmd160_asm_obj='crypto\ripemd\asm\rm_win32.obj';
 	$rmd160_asm_src='crypto\ripemd\asm\rm_win32.asm';
-	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM -DRMD160_ASM";
+	$whirlpool_asm_obj='crypto\whrlpool\asm\wp_win32.obj';
+	$whirlpool_asm_src='crypto\whrlpool\asm\wp_win32.asm';
+	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM -DRMD160_ASM -DWHIRLPOOL_ASM";
 	}
 
 if ($shlib && $FLAVOR !~ /CE/)

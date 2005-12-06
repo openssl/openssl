@@ -54,6 +54,11 @@ cd crypto\rc5\asm
 perl rc5-586.pl win32n > r5_win32.asm
 cd ..\..\..
 
+echo Whirlpool
+cd crypto\whrlpool\asm
+perl wp-mmx.pl win32n > wp_win32.asm
+cd ..\..\..
+
 echo on
 
 perl util\mkfiles.pl >MINFO
