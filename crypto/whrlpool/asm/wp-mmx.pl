@@ -114,7 +114,7 @@ $tbl="ebp";
 	&mov	(&DWP(12,"ebx"),"esi");		# zero round counter
 
 &set_label("round",16);
-	&movq	(@mm[0],&DWP(2048*$SCALE,$tbl,"esi",8));	# rc[r]
+	&movq	(@mm[0],&QWP(2048*$SCALE,$tbl,"esi",8));	# rc[r]
 	&mov	("eax",&DWP(0,"esp"));
 	&mov	("ebx",&DWP(4,"esp"));
 for($i=0;$i<8;$i++) {
@@ -488,5 +488,5 @@ for($i=0;$i<8;$i++) {
 	&L(0xfb,0xee,0x7c,0x66,0xdd,0x17,0x47,0x9e);
 	&L(0xca,0x2d,0xbf,0x07,0xad,0x5a,0x83,0x33);
 
-&function_end_B("whrilpool_block_mmx");
+&function_end_B("whirlpool_block_mmx");
 &asm_finish(); 
