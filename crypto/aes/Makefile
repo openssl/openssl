@@ -58,6 +58,9 @@ ax86-out.s: asm/aes-586.pl ../perlasm/x86asm.pl
 aes-x86_64.s: asm/aes-x86_64.pl
 	$(PERL) asm/aes-x86_64.pl $@
 
+aes-sparcv9.s: asm/aes-sparcv9.pl
+	$(PERL) asm/aes-sparcv9.pl $(CFLAGS) > $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
