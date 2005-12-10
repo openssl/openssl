@@ -511,11 +511,10 @@ AES_encrypt:
 	ld	[%i0+8],%o2
 	ld	[%i0+12],%o3
 
-1:	call	.+8
 	mov	%i2,%o5
-	sub	%o7,1b-AES_Te,%o4
-	call	_sparcv9_AES_encrypt
 	nop
+1:	call	_sparcv9_AES_encrypt
+	sub	%o7,1b-AES_Te,%o4
 
 	st	%o0,[%i1+0]
 	st	%o1,[%i1+4]
@@ -572,11 +571,10 @@ AES_encrypt:
 	or	%l7,%l6,%l6
 	or	%l4,%l6,%o3
 
-1:	call	.+8
 	mov	%i2,%o5
-	sub	%o7,1b-AES_Te,%o4
-	call	_sparcv9_AES_encrypt
 	nop
+1:	call	_sparcv9_AES_encrypt
+	sub	%o7,1b-AES_Te,%o4
 
 	srl	%o0,24,%l0
 	srl	%o0,16,%l1
@@ -1051,11 +1049,10 @@ AES_decrypt:
 	ld	[%i0+8],%o2
 	ld	[%i0+12],%o3
 
-1:	call	.+8
 	mov	%i2,%o5
-	sub	%o7,1b-AES_Td,%o4
-	call	_sparcv9_AES_decrypt
 	nop
+1:	call	_sparcv9_AES_decrypt
+	sub	%o7,1b-AES_Td,%o4
 
 	st	%o0,[%i1+0]
 	st	%o1,[%i1+4]
@@ -1112,11 +1109,10 @@ AES_decrypt:
 	or	%l7,%l6,%l6
 	or	%l4,%l6,%o3
 
-1:	call	.+8
 	mov	%i2,%o5
-	sub	%o7,1b-AES_Td,%o4
-	call	_sparcv9_AES_decrypt
 	nop
+1:	call	_sparcv9_AES_decrypt
+	sub	%o7,1b-AES_Td,%o4
 
 	srl	%o0,24,%l0
 	srl	%o0,16,%l1
