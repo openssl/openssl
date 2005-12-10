@@ -9,6 +9,8 @@ $o='\\';
 $cp='copy nul+';	# Timestamps get stuffed otherwise
 $rm='del';
 
+$zlib_lib="zlib1.lib";
+
 # C compiler stuff
 $cc='cl';
 $cflags=' /MD /W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
@@ -119,6 +121,7 @@ sub do_lib_rule
 		{
 		local($ex)=($target =~ /O_SSL/)?' $(L_CRYPTO)':'';
 		$ex.=' wsock32.lib gdi32.lib advapi32.lib user32.lib';
+ 		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
 		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
 		}
 	$ret.="\n";

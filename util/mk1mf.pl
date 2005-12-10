@@ -10,6 +10,9 @@ $OPTIONS="";
 $ssl_version="";
 $banner="\t\@echo Building OpenSSL";
 
+local $zlib_opt = 0;	# 0 = no zlib, 1 = static, 2 = dynamic
+local $zlib_lib = "";
+
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
     $ssl_version=$1 if (/^VERSION=(.*)$/);
@@ -242,12 +245,16 @@ $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
 $cflags.=" -DOPENSSL_FIPS"    if $fips;
 #$cflags.=" -DRSAref"  if $rsaref ne "";
 
+$cflags.= " -DZLIB" if $zlib_opt;
+$cflags.= " -DZLIB_SHARED" if $zlib_opt == 2;
+
 ## if ($unix)
 ##	{ $cflags="$c_flags" if ($c_flags ne ""); }
 ##else
 	{ $cflags="$c_flags$cflags" if ($c_flags ne ""); }
 
 $ex_libs="$l_flags$ex_libs" if ($l_flags ne "");
+
 
 %shlib_ex_cflags=("SSL" => " -DOPENSSL_BUILD_SHLIBSSL",
 		  "CRYPTO" => " -DOPENSSL_BUILD_SHLIBCRYPTO");
@@ -293,8 +300,14 @@ for (;;)
 	if ($key eq "KRB5_INCLUDES")
 		{ $cflags .= " $val";}
 
+	if ($key eq "ZLIB_INCLUDE")
+		{ $cflags .= " $val" if $val ne "";}
+
+	if ($key eq "LIBZLIB")
+		{ $zlib_lib = "$val" if $val ne "";}
+
 	if ($key eq "LIBKRB5")
-		{ $ex_libs .= " $val";}
+		{ $ex_libs .= " $val" if $val ne "";}
 
 	if ($key eq "TEST")
 		{ $test.=&var_add($dir,$val); }
@@ -346,6 +359,7 @@ if ($platform eq "VC-CE")
 !INCLUDE <\$(WCECOMPAT)/wcedefs.mak>
 
 EOF
+	$ex_libs .= " $zlib_lib" if $zlib_opt == 1;
 	}
 
 $defs.= <<"EOF";
@@ -944,8 +958,8 @@ sub read_options
 	elsif (/^shlib$/)	{ $shlib=1; }
 	elsif (/^dll$/)		{ $shlib=1; }
 	elsif (/^shared$/)	{ } # We just need to ignore it for now...
-	elsif (/^zlib$/)	{ $xcflags = "-DZLIB $xcflags"; }
-	elsif (/^zlib-dynamic$/){ $xcflags = "-DZLIB_SHARED -DZLIB $xcflags"; }
+ 	elsif (/^zlib$/) { $zlib_opt = 1 if $zlib_opt == 0 }
+	elsif (/^zlib-dynamic$/){ $zlib_opt = 2; }
 	elsif (/^--with-krb5-flavor=(.*)$/)
 		{
 		my $krb5_flavor = $1;
