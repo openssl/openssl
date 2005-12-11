@@ -172,6 +172,10 @@ RMD160_ASM_OBJ= asm/rm86-out.o
 KRB5_INCLUDES=
 LIBKRB5=
 
+# Zlib stuff
+ZLIB_INCLUDE=
+LIBZLIB=
+
 # When we're prepared to use shared libraries in the programs we link here
 # we might set SHLIB_MARK to '$(SHARED_LIBS)'.
 SHLIB_MARK=
