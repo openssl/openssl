@@ -73,6 +73,10 @@
 
  Changes between 0.9.8a and 0.9.8b  [XX xxx XXXX]
 
+  *) Update support for ECC-based TLS ciphersuites according to
+     draft-ietf-tls-ecc-12.txt with proposed changes.
+     [Douglas Stebila]
+
   *) New functions EVP_CIPHER_CTX_new() and EVP_CIPHER_CTX_free() to support
      opaque EVP_CIPHER_CTX handling.
      [Steve Henson]

@@ -20,23 +20,23 @@ SSLTEST=$OPENSSL_DIR/test/ssltest
 SSLVERSION=
 
 # These don't really require any certificates
-AECDH_CIPHER_LIST="EXP-AECDH-RC4-40-SHA EXP-AECDH-DES-40-CBC-SHA AECDH-DES-CBC3-SHA AECDH-DES-CBC-SHA AECDH-RC4-SHA AECDH-NULL-SHA"
+AECDH_CIPHER_LIST="AECDH-AES256-SHA AECDH-AES128-SHA AECDH-DES-CBC3-SHA AECDH-RC4-SHA AECDH-NULL-SHA"
 
 # These require ECC certificates signed with ECDSA
 # The EC public key must be authorized for key agreement.
-ECDH_ECDSA_CIPHER_LIST="EXP-ECDH-ECDSA-RC4-56-SHA EXP-ECDH-ECDSA-RC4-40-SHA ECDH-ECDSA-AES256-SHA ECDH-ECDSA-AES128-SHA ECDH-ECDSA-DES-CBC3-SHA ECDH-ECDSA-DES-CBC-SHA ECDH-ECDSA-RC4-SHA ECDH-ECDSA-NULL-SHA"
+ECDH_ECDSA_CIPHER_LIST="ECDH-ECDSA-AES256-SHA ECDH-ECDSA-AES128-SHA ECDH-ECDSA-DES-CBC3-SHA ECDH-ECDSA-RC4-SHA ECDH-ECDSA-NULL-SHA"
 
 # These require ECC certificates.
 # The EC public key must be authorized for digital signature.
-ECDHE_ECDSA_CIPHER_LIST="ECDHE-ECDSA-AES128-SHA"
+ECDHE_ECDSA_CIPHER_LIST="ECDHE-ECDSA-AES256-SHA ECDHE-ECDSA-AES128-SHA ECDHE-ECDSA-DES-CBC3-SHA ECDHE-ECDSA-RC4-SHA ECDHE-ECDSA-NULL-SHA"
 
 # These require ECC certificates signed with RSA.
 # The EC public key must be authorized for key agreement.
-ECDH_RSA_CIPHER_LIST="EXP-ECDH-RSA-RC4-56-SHA EXP-ECDH-RSA-RC4-40-SHA ECDH-RSA-AES256-SHA ECDH-RSA-AES128-SHA ECDH-RSA-DES-CBC3-SHA ECDH-RSA-DES-CBC-SHA ECDH-RSA-RC4-SHA ECDH-RSA-NULL-SHA"
+ECDH_RSA_CIPHER_LIST="ECDH-RSA-AES256-SHA ECDH-RSA-AES128-SHA ECDH-RSA-DES-CBC3-SHA ECDH-RSA-RC4-SHA ECDH-RSA-NULL-SHA"
 
 # These require RSA certificates.
 # The RSA public key must be authorized for digital signature.
-ECDHE_RSA_CIPHER_LIST="ECDHE-RSA-AES128-SHA"
+ECDHE_RSA_CIPHER_LIST="ECDHE-RSA-AES256-SHA ECDHE-RSA-AES128-SHA ECDHE-RSA-DES-CBC3-SHA ECDHE-RSA-RC4-SHA ECDHE-RSA-NULL-SHA"
 
 # List of Elliptic curves over which we wish to test generation of
 # ephemeral ECDH keys when using AECDH or ECDHE ciphers
@@ -78,9 +78,9 @@ done
 
 for curve in $ELLIPTIC_CURVE_LIST
 do
-    echo "Testing EXP-AECDH-RC4-40-SHA (with $curve)"
+    echo "Testing AECDH-RC4-SHA (with $curve)"
     $SSLTEST $SSL_VERSION -cert $SERVER_PEM \
-	-named_curve $curve -cipher EXP-AECDH-RC4-40-SHA
+	-named_curve $curve -cipher AECDH-RC4-SHA
 done
 fi
 
@@ -167,6 +167,9 @@ if [ "$1" = "ecdhe-rsa" ]; then
 for cipher in $ECDHE_RSA_CIPHER_LIST
 do
     echo "Testing $cipher (with server authentication)"
+    echo $SSLTEST $SSL_VERSION -CAfile $CA_PEM \
+	-cert $SERVER_PEM -server_auth \
+	-cipher $cipher -named_curve $DEFAULT_CURVE
     $SSLTEST $SSL_VERSION -CAfile $CA_PEM \
 	-cert $SERVER_PEM -server_auth \
 	-cipher $cipher -named_curve $DEFAULT_CURVE
