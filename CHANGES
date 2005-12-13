@@ -4,6 +4,10 @@
 
  Changes between 0.9.8a and 0.9.8b  [XX xxx XXXX]
 
+  *) New functions EVP_CIPHER_CTX_new() and EVP_CIPHER_CTX_free() to support
+     opaque EVP_CIPHER_CTX handling.
+     [Steve Henson]
+
   *) Fixes and enhancements to zlib compression code. We now only use
      "zlib1.dll" and use the default __cdecl calling convention on Win32
      to conform with the standards mentioned here:
