@@ -138,11 +138,7 @@ $fname:
 	save	%sp,-$frame-$locals,%sp
 	sethi	%hi(0xffff),$mask
 	or	$mask,%lo(0xffff),$mask
-___
-$code.=<<___ if ($bits==64);
-	ldx	[%i4],$n0		! $n0 reassigned, remember?
-___
-$code.=<<___ if ($bits==32);
+
 	cmp	$num,4
 	bl,a,pn %icc,.Lret
 	clr	%i0
@@ -160,8 +156,7 @@ $code.=<<___ if ($bits==32);
 	ld	[%i4+4],%o0
 	sllx	%o0,32,%o0
 	or	%o0,$n0,$n0		! $n0=n0[1].n0[0]
-___
-$code.=<<___;
+
 	sll	$num,3,$num		! num*=8
 
 	add	%sp,$bias,%o0		! real top of stack
@@ -188,48 +183,44 @@ $code.=<<___;
 
 	stx	%o7,[%sp+$bias+$frame+48]	! save %asi
 
-	sub	%g0,$num,$i
-	sub	%g0,$num,$j
+	sub	%g0,$num,$i		! i=-num
+	sub	%g0,$num,$j		! j=-num
 
 	add	$ap,$j,%o3
 	add	$bp,$i,%o4
-___
-$code.=<<___ if ($bits==64);
+
 	ldx	[$bp+$i],%o0		! bp[0]
 	ldx	[$ap+$j],%o1		! ap[0]
-___
-$code.=<<___ if ($bits==32);
-	ldd	[$bp+$i],%o0		! bp[0]
-	ldd	[$ap+$j],%g2		! ap[0]
-	sllx	%o1,32,%o1
-	sllx	%g3,32,%g3
-	or	%o0,%o1,%o0
-	or	%g2,%g3,%o1
-___
-$code.=<<___;
+	sllx	%o0,32,%g1
+	sllx	%o1,32,%g5
+	srlx	%o0,32,%o0
+	srlx	%o1,32,%o1
+	or	%g1,%o0,%o0
+	or	%g5,%o1,%o1
+
 	add	$np,$j,%o5
 
 	mulx	%o1,%o0,%o0		! ap[0]*bp[0]
 	mulx	$n0,%o0,%o0		! ap[0]*bp[0]*n0
 	stx	%o0,[%sp+$bias+$frame+0]
 
-	ld	[%o3+`$bits==32 ? 0 : 4`],$alo_	! load a[j] as pair of 32-bit words
+	ld	[%o3+0],$alo_	! load a[j] as pair of 32-bit words
 	fzeros	$alo
-	ld	[%o3+`$bits==32 ? 4 : 0`],$ahi_
+	ld	[%o3+4],$ahi_
 	fzeros	$ahi
-	ld	[%o5+`$bits==32 ? 0 : 4`],$nlo_	! load n[j] as pair of 32-bit words
+	ld	[%o5+0],$nlo_	! load n[j] as pair of 32-bit words
 	fzeros	$nlo
-	ld	[%o5+`$bits==32 ? 4 : 0`],$nhi_
+	ld	[%o5+4],$nhi_
 	fzeros	$nhi
 
 	! transfer b[i] to FPU as 4x16-bit values
-	ldda	[%o4+`$bits==32 ? 2 : 6`]%asi,$ba
+	ldda	[%o4+2]%asi,$ba
 	fxtod	$alo,$alo
-	ldda	[%o4+`$bits==32 ? 0 : 4`]%asi,$bb
+	ldda	[%o4+0]%asi,$bb
 	fxtod	$ahi,$ahi
-	ldda	[%o4+`$bits==32 ? 6 : 2`]%asi,$bc
+	ldda	[%o4+6]%asi,$bc
 	fxtod	$nlo,$nlo
-	ldda	[%o4+`$bits==32 ? 4 : 0`]%asi,$bd
+	ldda	[%o4+4]%asi,$bd
 	fxtod	$nhi,$nhi
 
 	! transfer ap[0]*b[0]*n0 to FPU as 4x16-bit values
@@ -256,24 +247,24 @@ $code.=<<___;
 		fmuld	$alo,$bb,$alob
 		fmuld	$nlo,$nb,$nlob
 		fmuld	$alo,$bc,$aloc
-		fmuld	$nlo,$nc,$nloc
 	faddd	$aloa,$nloa,$nloa
+		fmuld	$nlo,$nc,$nloc
 		fmuld	$alo,$bd,$alod
-		fmuld	$nlo,$nd,$nlod
 	faddd	$alob,$nlob,$nlob
+		fmuld	$nlo,$nd,$nlod
 		fmuld	$ahi,$ba,$ahia
-		fmuld	$nhi,$na,$nhia
 	faddd	$aloc,$nloc,$nloc
+		fmuld	$nhi,$na,$nhia
 		fmuld	$ahi,$bb,$ahib
-		fmuld	$nhi,$nb,$nhib
 	faddd	$alod,$nlod,$nlod
+		fmuld	$nhi,$nb,$nhib
 		fmuld	$ahi,$bc,$ahic
-		fmuld	$nhi,$nc,$nhic
 	faddd	$ahia,$nhia,$nhia
+		fmuld	$nhi,$nc,$nhic
 		fmuld	$ahi,$bd,$ahid
+	faddd	$ahib,$nhib,$nhib
 		fmuld	$nhi,$nd,$nhid
 
-	faddd	$ahib,$nhib,$nhib
 	faddd	$ahic,$nhic,$dota	! $nhic
 	faddd	$ahid,$nhid,$dotb	! $nhid
 
@@ -317,13 +308,13 @@ $code.=<<___;
 .L1st:
 	add	$ap,$j,%o3
 	add	$np,$j,%o4
-	ld	[%o3+`$bits==32 ? 0 : 4`],$alo_	! load a[j] as pair of 32-bit words
+	ld	[%o3+0],$alo_	! load a[j] as pair of 32-bit words
 	fzeros	$alo
-	ld	[%o3+`$bits==32 ? 4 : 0`],$ahi_
+	ld	[%o3+4],$ahi_
 	fzeros	$ahi
-	ld	[%o4+`$bits==32 ? 0 : 4`],$nlo_	! load n[j] as pair of 32-bit words
+	ld	[%o4+0],$nlo_	! load n[j] as pair of 32-bit words
 	fzeros	$nlo
-	ld	[%o4+`$bits==32 ? 4 : 0`],$nhi_
+	ld	[%o4+4],$nhi_
 	fzeros	$nhi
 
 	fxtod	$alo,$alo
@@ -340,23 +331,23 @@ $code.=<<___;
 	std	$nhi,[$np_h+$j]
 		fmuld	$nlo,$nb,$nlob
 		fmuld	$alo,$bc,$aloc
-		fmuld	$nlo,$nc,$nloc
 	faddd	$aloa,$nloa,$nloa
+		fmuld	$nlo,$nc,$nloc
 		fmuld	$alo,$bd,$alod
-		fmuld	$nlo,$nd,$nlod
 	faddd	$alob,$nlob,$nlob
+		fmuld	$nlo,$nd,$nlod
 		fmuld	$ahi,$ba,$ahia
-		fmuld	$nhi,$na,$nhia
 	faddd	$aloc,$nloc,$nloc
+		fmuld	$nhi,$na,$nhia
 		fmuld	$ahi,$bb,$ahib
-		fmuld	$nhi,$nb,$nhib
 	faddd	$alod,$nlod,$nlod
+		fmuld	$nhi,$nb,$nhib
 		fmuld	$ahi,$bc,$ahic
-		fmuld	$nhi,$nc,$nhic
 	faddd	$ahia,$nhia,$nhia
+		fmuld	$nhi,$nc,$nhic
 		fmuld	$ahi,$bd,$ahid
-		fmuld	$nhi,$nd,$nhid
 	faddd	$ahib,$nhib,$nhib
+		fmuld	$nhi,$nd,$nhid
 
 	faddd	$dota,$nloa,$nloa
 	faddd	$dotb,$nlob,$nlob
@@ -429,36 +420,31 @@ $code.=<<___;
 	add	$i,8,$i
 .align	32
 .Louter:
-	sub	%g0,$num,$j
+	sub	%g0,$num,$j		! j=-num
 	add	%sp,$bias+$frame+$locals,$tp
 
 	add	$bp,$i,%o4
-___
-$code.=<<___ if ($bits==64);
+
 	ldx	[$bp+$i],%o0		! bp[i]
 	ldx	[$ap+$j],%o1		! ap[0]
-___
-$code.=<<___ if ($bits==32);
-	ldd	[$bp+$i],%o0		! bp[i]
-	ldd	[$ap+$j],%g2		! ap[0]
-	sllx	%o1,32,%o1
-	sllx	%g3,32,%g3
-	or	%o0,%o1,%o0
-	or	%g2,%g3,%o1
-___
-$code.=<<___;
+	sllx	%o0,32,%g1
+	sllx	%o1,32,%g5
+	srlx	%o0,32,%o0
+	srlx	%o1,32,%o1
+	or	%g1,%o0,%o0
+	or	%g5,%o1,%o1
+
 	ldx	[$tp],%o2		! tp[0]
 	mulx	%o1,%o0,%o0
 	addcc	%o2,%o0,%o0
 	mulx	$n0,%o0,%o0		! (ap[0]*bp[i]+t[0])*n0
 	stx	%o0,[%sp+$bias+$frame+0]
 
-
 	! transfer b[i] to FPU as 4x16-bit values
-	ldda	[%o4+`$bits==32 ? 2 : 6`]%asi,$ba
-	ldda	[%o4+`$bits==32 ? 0 : 4`]%asi,$bb
-	ldda	[%o4+`$bits==32 ? 6 : 2`]%asi,$bc
-	ldda	[%o4+`$bits==32 ? 4 : 0`]%asi,$bd
+	ldda	[%o4+2]%asi,$ba
+	ldda	[%o4+0]%asi,$bb
+	ldda	[%o4+6]%asi,$bc
+	ldda	[%o4+4]%asi,$bd
 
 	! transfer (ap[0]*b[i]+t[0])*n0 to FPU as 4x16-bit values
 	ldda	[%sp+$bias+$frame+6]%asi,$na
@@ -483,24 +469,24 @@ $code.=<<___;
 		fmuld	$alo,$bb,$alob
 		fmuld	$nlo,$nb,$nlob
 		fmuld	$alo,$bc,$aloc
-		fmuld	$nlo,$nc,$nloc
 	faddd	$aloa,$nloa,$nloa
+		fmuld	$nlo,$nc,$nloc
 		fmuld	$alo,$bd,$alod
-		fmuld	$nlo,$nd,$nlod
 	faddd	$alob,$nlob,$nlob
+		fmuld	$nlo,$nd,$nlod
 		fmuld	$ahi,$ba,$ahia
-		fmuld	$nhi,$na,$nhia
 	faddd	$aloc,$nloc,$nloc
+		fmuld	$nhi,$na,$nhia
 		fmuld	$ahi,$bb,$ahib
-		fmuld	$nhi,$nb,$nhib
 	faddd	$alod,$nlod,$nlod
+		fmuld	$nhi,$nb,$nhib
 		fmuld	$ahi,$bc,$ahic
-		fmuld	$nhi,$nc,$nhic
 	faddd	$ahia,$nhia,$nhia
+		fmuld	$nhi,$nc,$nhic
 		fmuld	$ahi,$bd,$ahid
+	faddd	$ahib,$nhib,$nhib
 		fmuld	$nhi,$nd,$nhid
 
-	faddd	$ahib,$nhib,$nhib
 	faddd	$ahic,$nhic,$dota	! $nhic
 	faddd	$ahid,$nhid,$dotb	! $nhid
 
@@ -558,24 +544,24 @@ $code.=<<___;
 		fmuld	$alo,$bb,$alob
 		fmuld	$nlo,$nb,$nlob
 		fmuld	$alo,$bc,$aloc
-		fmuld	$nlo,$nc,$nloc
 	faddd	$aloa,$nloa,$nloa
+		fmuld	$nlo,$nc,$nloc
 		fmuld	$alo,$bd,$alod
-		fmuld	$nlo,$nd,$nlod
 	faddd	$alob,$nlob,$nlob
+		fmuld	$nlo,$nd,$nlod
 		fmuld	$ahi,$ba,$ahia
-		fmuld	$nhi,$na,$nhia
 	faddd	$aloc,$nloc,$nloc
+		fmuld	$nhi,$na,$nhia
 		fmuld	$ahi,$bb,$ahib
-		fmuld	$nhi,$nb,$nhib
 	faddd	$alod,$nlod,$nlod
+		fmuld	$nhi,$nb,$nhib
 		fmuld	$ahi,$bc,$ahic
-		fmuld	$nhi,$nc,$nhic
 	faddd	$ahia,$nhia,$nhia
+		fmuld	$nhi,$nc,$nhic
 		fmuld	$ahi,$bd,$ahid
+	faddd	$ahib,$nhib,$nhib
 		fmuld	$nhi,$nd,$nhid
 
-	faddd	$ahib,$nhib,$nhib
 	faddd	$dota,$nloa,$nloa
 	faddd	$dotb,$nlob,$nlob
 	faddd	$ahic,$nhic,$dota	! $nhic
@@ -661,7 +647,7 @@ $code.=<<___;
 	add	$tp,8,$tp		! adjust tp to point at the end
 
 	ld	[$tp-8],%o0
-	ld	[$np-`$bits==32 ? 4 : 8`],%o1
+	ld	[$np-4],%o1
 	cmp	%o0,%o1			! compare topmost words
 	bcs,pt	%icc,.Lcopy		! %icc.c is clean if not taken
 	nop
@@ -670,41 +656,26 @@ $code.=<<___;
 .Lsub:
 	ldd	[$tp+%o7],%o0
 	ldd	[$np+%o7],%o2
-___
-$code.=<<___ if ($bits==64);
-	subccc	%o1,%o3,%o3
-	subccc	%o0,%o2,%o2
-___
-$code.=<<___ if ($bits==32);
 	subccc	%o1,%o2,%o2
 	subccc	%o0,%o3,%o3
-___
-$code.=<<___;
 	std	%o2,[$rp+%o7]
 	add	%o7,8,%o7
 	brnz,pt	%o7,.Lsub
 	nop
 	subccc	$carry,0,$carry
 	bcc,pt	%icc,.Lzap
-	sub	%g0,$num,%o7
+	sub	%g0,$num,%o7		! n=-num
 
 .align	16,0x1000000
 .Lcopy:
 	ldx	[$tp+%o7],%o0
-___
-$code.=<<___ if ($bits==64);
-	stx	%o0,[$rp+%o7]
-___
-$code.=<<___ if ($bits==32);
 	srlx	%o0,32,%o1
 	std	%o0,[$rp+%o7]
-___
-$code.=<<___;
 	add	%o7,8,%o7
 	brnz,pt	%o7,.Lcopy
 	nop
 	ba	.Lzap
-	sub	%g0,$num,%o7
+	sub	%g0,$num,%o7		! n=-num
 
 .align	32
 .Lzap:
