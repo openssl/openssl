@@ -316,16 +316,16 @@ $4:
 	ld	[global1+local1], local1
 	xor	$2, out1, out1            ! 8642
 	xor	$2, out0, out0            ! 7531
-	fmovs	%f0, %f0                  ! fxor used for alignment
+	! fmovs	%f0, %f0                  ! fxor used for alignment
 
 	srl	out1, 4, local0           ! rotate 4 right
 	and	out0, local5, local3      ! 3
-	fmovs	%f0, %f0
+	! fmovs	%f0, %f0
 
 	ld	[$5+$3*8], local7         ! key 7531 next round
 	srl	local3, 8, local3         ! 3
 	and	local0, 252, local2       ! 2
-	fmovs	%f0, %f0
+	! fmovs	%f0, %f0
 
 	ld	[global3+local3],local3   ! 3
 	sll	out1, 28, out1            ! rotate
