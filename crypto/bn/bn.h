@@ -174,8 +174,8 @@ extern "C" {
 #  define BN_ULLONG	unsigned long long
 # endif
 #endif
-#define BN_ULONG	unsigned long
-#define BN_LONG		long
+#define BN_ULONG	unsigned int
+#define BN_LONG		int
 #define BN_BITS		64
 #define BN_BYTES	4
 #define BN_BITS2	32
