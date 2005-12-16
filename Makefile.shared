@@ -280,7 +280,7 @@ link_o.alpha-osf1:
 		NOALLSYMSFLAGS='-none'; \
 		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared"; \
 		if [ -n "$$SHLIB_HIST" ]; then \
-			SHAREDFLAGS="$$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
+			SHAREDFLAGS="$$SHAREDFLAGS -set_version $$SHLIB_HIST"; \
 		fi; \
 	fi; \
 	$(LINK_SO_O)
@@ -301,7 +301,7 @@ link_a.alpha-osf1:
 		NOALLSYMSFLAGS='-none'; \
 		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared"; \
 		if [ -n "$$SHLIB_HIST" ]; then \
-			SHAREDFLAGS="$$SHAREDFLAGS -set_version \"$$SHLIB_HIST\""; \
+			SHAREDFLAGS="$$SHAREDFLAGS -set_version $$SHLIB_HIST"; \
 		fi; \
 	fi; \
 	$(LINK_SO_A)
@@ -543,7 +543,7 @@ symlink.hpux:
 	expr $(PLATFORM) : '.*ia64' > /dev/null && SHLIB=lib$(LIBNAME).so; \
 	$(SYMLINK_SO)
 # The following lines means those specific architectures do no symlinks
-symlink.cygwin symlib.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
+symlink.cygwin symlink.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
 
 # Compatibility targets
 link_o.bsd-gcc-shared link_o.linux-shared link_o.gnu-shared: link_o.gnu
