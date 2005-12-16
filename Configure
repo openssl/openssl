@@ -724,7 +724,7 @@ PROCESS_ARGS:
 			}
 		elsif (/^[-+]/)
 			{
-			if (/^-[lL](.*)$/)
+			if (/^-[lL](.*)$/ or /^-Wl,/)
 				{
 				$libs.=$_." ";
 				}
