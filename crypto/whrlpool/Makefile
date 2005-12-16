@@ -21,7 +21,7 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=wp_dgst.c wp_block.c
-LIBOBJ=wp_dgst.o wp_block.o
+LIBOBJ=wp_dgst.o wp_block.o $(WP_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
@@ -40,12 +40,15 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-x86mmx-elf.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
+w86mmx-elf.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) wp-mmx.pl elf $(CFLAGS) $(PROCESSOR)) > $@
-x86mmx-cof.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
+w86mmx-cof.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) wp-mmx.pl coff $(CFLAGS) $(PROCESSOR)) > $@
-x86mmx-out.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
+w86mmx-out.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) wp-mmx.pl a.out $(CFLAGS) $(PROCESSOR)) > $@
+
+wp-x86_64.s: asm/wp-x86_64.pl
+	$(PERL) asm/wp-x86_64.pl $@
 
 $(LIBOBJ): $(LIBSRC)
 

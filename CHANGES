@@ -4,6 +4,9 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Whirlpool hash implementation is added.
+     [Andy Polyakov]
+
   *) BIGNUM code on 64-bit SPARCv9 targets is switched from bn(64,64) to
      bn(64,32). Because of instruction set limitations it doesn't have
      any negative impact on performance. This was done mostly in order
