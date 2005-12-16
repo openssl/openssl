@@ -11,6 +11,8 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
+WP_ASM_OBJ=wp_block.o
+
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
@@ -21,7 +23,7 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=wp_dgst.c wp_block.c
-LIBOBJ=wp_dgst.o wp_block.o $(WP_ASM_OBJ)
+LIBOBJ=wp_dgst.o $(WP_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
