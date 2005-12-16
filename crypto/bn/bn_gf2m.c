@@ -121,74 +121,12 @@ static const BN_ULONG SQR_tb[16] =
     SQR_tb[(w) >> 12 & 0xF] << 24 | SQR_tb[(w) >>  8 & 0xF] << 16 | \
     SQR_tb[(w) >>  4 & 0xF] <<  8 | SQR_tb[(w)       & 0xF]
 #endif
-#ifdef SIXTEEN_BIT
-#define SQR1(w) \
-    SQR_tb[(w) >> 12 & 0xF] <<  8 | SQR_tb[(w) >>  8 & 0xF]
-#define SQR0(w) \
-    SQR_tb[(w) >>  4 & 0xF] <<  8 | SQR_tb[(w)       & 0xF]
-#endif
-#ifdef EIGHT_BIT
-#define SQR1(w) \
-    SQR_tb[(w) >>  4 & 0xF]
-#define SQR0(w) \
-    SQR_tb[(w)       & 15]
-#endif
 
 /* Product of two polynomials a, b each with degree < BN_BITS2 - 1,
  * result is a polynomial r with degree < 2 * BN_BITS - 1
  * The caller MUST ensure that the variables have the right amount
  * of space allocated.
  */
-#ifdef EIGHT_BIT
-static void bn_GF2m_mul_1x1(BN_ULONG *r1, BN_ULONG *r0, const BN_ULONG a, const BN_ULONG b)
-	{
-	register BN_ULONG h, l, s;
-	BN_ULONG tab[4], top1b = a >> 7;
-	register BN_ULONG a1, a2;
-
-	a1 = a & (0x7F); a2 = a1 << 1;
-
-	tab[0] = 0; tab[1] = a1; tab[2] = a2; tab[3] = a1^a2;
-
-	s = tab[b      & 0x3]; l  = s;
-	s = tab[b >> 2 & 0x3]; l ^= s << 2; h  = s >> 6;
-	s = tab[b >> 4 & 0x3]; l ^= s << 4; h ^= s >> 4;
-	s = tab[b >> 6      ]; l ^= s << 6; h ^= s >> 2;
-	
-	/* compensate for the top bit of a */
-
-	if (top1b & 01) { l ^= b << 7; h ^= b >> 1; } 
-
-	*r1 = h; *r0 = l;
-	} 
-#endif
-#ifdef SIXTEEN_BIT
-static void bn_GF2m_mul_1x1(BN_ULONG *r1, BN_ULONG *r0, const BN_ULONG a, const BN_ULONG b)
-	{
-	register BN_ULONG h, l, s;
-	BN_ULONG tab[4], top1b = a >> 15; 
-	register BN_ULONG a1, a2;
-
-	a1 = a & (0x7FFF); a2 = a1 << 1;
-
-	tab[0] = 0; tab[1] = a1; tab[2] = a2; tab[3] = a1^a2;
-
-	s = tab[b      & 0x3]; l  = s;
-	s = tab[b >> 2 & 0x3]; l ^= s <<  2; h  = s >> 14;
-	s = tab[b >> 4 & 0x3]; l ^= s <<  4; h ^= s >> 12;
-	s = tab[b >> 6 & 0x3]; l ^= s <<  6; h ^= s >> 10;
-	s = tab[b >> 8 & 0x3]; l ^= s <<  8; h ^= s >>  8;
-	s = tab[b >>10 & 0x3]; l ^= s << 10; h ^= s >>  6;
-	s = tab[b >>12 & 0x3]; l ^= s << 12; h ^= s >>  4;
-	s = tab[b >>14      ]; l ^= s << 14; h ^= s >>  2;
-
-	/* compensate for the top bit of a */
-
-	if (top1b & 01) { l ^= b << 15; h ^= b >> 1; } 
-
-	*r1 = h; *r0 = l;
-	} 
-#endif
 #ifdef THIRTY_TWO_BIT
 static void bn_GF2m_mul_1x1(BN_ULONG *r1, BN_ULONG *r0, const BN_ULONG a, const BN_ULONG b)
 	{

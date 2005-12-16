@@ -139,6 +139,8 @@ extern "C" {
 #define BN_DEC_FMT1	"%lu"
 #define BN_DEC_FMT2	"%019lu"
 #define BN_DEC_NUM	19
+#define BN_HEX_FMT1	"%lX"
+#define BN_HEX_FMT2	"%08lX"
 #endif
 
 /* This is where the long long data type is 64 bits, but long is 32.
@@ -164,14 +166,18 @@ extern "C" {
 #define BN_DEC_FMT1	"%llu"
 #define BN_DEC_FMT2	"%019llu"
 #define BN_DEC_NUM	19
+#define BN_HEX_FMT1	"%llX"
+#define BN_HEX_FMT2	"%08llX"
 #endif
 
 #ifdef THIRTY_TWO_BIT
 #ifdef BN_LLONG
-# if defined(OPENSSL_SYS_WIN32) && !defined(__GNUC__)
+# if defined(_WIN32) && !defined(__GNUC__)
 #  define BN_ULLONG	unsigned __int64
+#  define BN_MASK	(0xffffffffffffffffI64)
 # else
 #  define BN_ULLONG	unsigned long long
+#  define BN_MASK	(0xffffffffffffffffLL)
 # endif
 #endif
 #define BN_ULONG	unsigned int
@@ -180,67 +186,17 @@ extern "C" {
 #define BN_BYTES	4
 #define BN_BITS2	32
 #define BN_BITS4	16
-#ifdef OPENSSL_SYS_WIN32
-/* VC++ doesn't like the LL suffix */
-#define BN_MASK		(0xffffffffffffffffL)
-#else
-#define BN_MASK		(0xffffffffffffffffLL)
-#endif
 #define BN_MASK2	(0xffffffffL)
 #define BN_MASK2l	(0xffff)
 #define BN_MASK2h1	(0xffff8000L)
 #define BN_MASK2h	(0xffff0000L)
 #define BN_TBIT		(0x80000000L)
 #define BN_DEC_CONV	(1000000000L)
-#define BN_DEC_FMT1	"%lu"
-#define BN_DEC_FMT2	"%09lu"
+#define BN_DEC_FMT1	"%u"
+#define BN_DEC_FMT2	"%09u"
 #define BN_DEC_NUM	9
-#endif
-
-#ifdef SIXTEEN_BIT
-#ifndef BN_DIV2W
-#define BN_DIV2W
-#endif
-#define BN_ULLONG	unsigned long
-#define BN_ULONG	unsigned short
-#define BN_LONG		short
-#define BN_BITS		32
-#define BN_BYTES	2
-#define BN_BITS2	16
-#define BN_BITS4	8
-#define BN_MASK		(0xffffffff)
-#define BN_MASK2	(0xffff)
-#define BN_MASK2l	(0xff)
-#define BN_MASK2h1	(0xff80)
-#define BN_MASK2h	(0xff00)
-#define BN_TBIT		(0x8000)
-#define BN_DEC_CONV	(100000)
-#define BN_DEC_FMT1	"%u"
-#define BN_DEC_FMT2	"%05u"
-#define BN_DEC_NUM	5
-#endif
-
-#ifdef EIGHT_BIT
-#ifndef BN_DIV2W
-#define BN_DIV2W
-#endif
-#define BN_ULLONG	unsigned short
-#define BN_ULONG	unsigned char
-#define BN_LONG		char
-#define BN_BITS		16
-#define BN_BYTES	1
-#define BN_BITS2	8
-#define BN_BITS4	4
-#define BN_MASK		(0xffff)
-#define BN_MASK2	(0xff)
-#define BN_MASK2l	(0xf)
-#define BN_MASK2h1	(0xf8)
-#define BN_MASK2h	(0xf0)
-#define BN_TBIT		(0x80)
-#define BN_DEC_CONV	(100)
-#define BN_DEC_FMT1	"%u"
-#define BN_DEC_FMT2	"%02u"
-#define BN_DEC_NUM	2
+#define BN_HEX_FMT1	"%X"
+#define BN_HEX_FMT2	"%04X"
 #endif
 
 #define BN_DEFAULT_BITS	1280

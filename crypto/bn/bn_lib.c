@@ -235,7 +235,7 @@ int BN_num_bits_word(BN_ULONG l)
 		else
 #endif
 			{
-#if defined(SIXTEEN_BIT) || defined(THIRTY_TWO_BIT) || defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG)
+#if defined(THIRTY_TWO_BIT) || defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG)
 			if (l & 0xff00L)
 				return(bits[(int)(l>>8)]+8);
 			else	

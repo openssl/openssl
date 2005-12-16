@@ -486,7 +486,7 @@ static void print_word(BIO *bp,BN_ULONG w)
 		return;
 		}
 #endif
-	BIO_printf(bp,"%lX",w);
+	BIO_printf(bp,BN_HEX_FMT1,w);
 	}
 
 int test_div_word(BIO *bp)
