@@ -72,7 +72,7 @@ $apj="%l5";
 $npj="%l6";
 $tpj="%l7";
 
-$fname="bn_mul_mont";
+$fname="bn_mul_mont_int";
 
 $code=<<___;
 .section	".text",#alloc,#execinstr
@@ -298,7 +298,8 @@ $fname:
 ___
 
 ########
-######## bn_sqr_mont gives up to 20% improvement over above code
+######## .Lbn_sqr_mont gives up to 20% *overall* improvement over
+######## code without following dedicated squaring procedure.
 ########
 $sbit="%i2";		# re-use $bp!
 

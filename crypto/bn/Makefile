@@ -86,10 +86,12 @@ mo86-out.s: asm/x86-mont.pl ../perlasm/x86asm.pl
 
 sparcv8.o:	asm/sparcv8.S
 	$(CC) $(CFLAGS) -c asm/sparcv8.S
-sparcv8plus.o:	asm/sparcv8plus.S
-	$(CC) $(CFLAGS) -c asm/sparcv8plus.S
+bn-sparcv9.o:	asm/sparcv8plus.S
+	$(CC) $(CFLAGS) -c -o $@ asm/sparcv8plus.S
 sparcv9a-mont.s:	asm/sparcv9a-mont.pl
 	$(PERL) asm/sparcv9a-mont.pl $(CFLAGS) > $@
+sparcv9-mont.s:		asm/sparcv9-mont.pl
+	$(PERL) asm/sparcv9-mont.pl $(CFLAGS) > $@
 
 bn-mips3.o:	asm/mips3.s
 	@if [ "$(CC)" = "gcc" ]; then \

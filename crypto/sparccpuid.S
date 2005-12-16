@@ -215,9 +215,9 @@ OPENSSL_atomic_add:
 	sra	%o0,%g0,%o0	! we return signed int, remember?
 .size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
 
-.global	OPENSSL_rdtick
+.global	_sparcv9_rdtick
 .align	32
-OPENSSL_rdtick:
+_sparcv9_rdtick:
 	subcc	%g0,1,%o0
 	.word	0x91408000	!rd	%ccr,%o0
 	cmp	%o0,0x99
@@ -229,8 +229,8 @@ OPENSSL_rdtick:
 .notick:
 	retl
 	xor	%o1,%o1,%o1
-.type	OPENSSL_rdtick,#function
-.size	OPENSSL_rdtick,.-OPENSSL_rdtick
+.type	_sparcv9_rdtick,#function
+.size	_sparcv9_rdtick,.-_sparcv9_rdtick
 
 .section	".init",#alloc,#execinstr
 	call	OPENSSL_cpuid_setup

@@ -32,8 +32,8 @@
 # which is perfectly usable in this context... In other words, as far
 # as HAL/Fujitsu SPARC64 family goes, talk to the author:-)
 
-# In 32-bit context the implementation implies following additional
-# limitations on input arguments:
+# The implementation implies following "non-natural" limitations on
+# input arguments:
 # - num may not be less than 4;
 # - num has to be even;
 # - ap, bp, rp, np has to be 64-bit aligned [which is not a problem
@@ -47,7 +47,7 @@
 #   noticeable(!) improvement);
 # - dedicated squaring procedure[?];
 
-$fname="bn_mul_mont";
+$fname="bn_mul_mont_fpu";
 $bits=32;
 for (@ARGV) {
 	$bits=64    if (/\-m64/        || /\-xarch\=v9/);

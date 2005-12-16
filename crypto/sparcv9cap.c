@@ -16,7 +16,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 	int bn_mul_mont_fpu(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num);
 	int bn_mul_mont_int(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num);
 
-	if (OPENSSL_sparcv9cap_P&(SPARCV9_PREFER_FPU|SPARCV9_VIS1) ==
+	if ((OPENSSL_sparcv9cap_P&(SPARCV9_PREFER_FPU|SPARCV9_VIS1)) ==
 		(SPARCV9_PREFER_FPU|SPARCV9_VIS1))
 		return bn_mul_mont_fpu(rp,ap,bp,np,n0,num);
 	else
@@ -25,7 +25,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 
 unsigned long OPENSSL_rdtsc(void)
 	{
-	unsigned long OPENSSL_rdtick(void);
+	unsigned long _sparcv9_rdtick(void);
 
 	if (OPENSSL_sparcv9cap_P&SPARCV9_TICK_PRIVILEGED)
 #if defined(__sun) && defined(__SVR4)
@@ -34,7 +34,7 @@ unsigned long OPENSSL_rdtsc(void)
 		return 0;
 #endif
 	else
-		return OPENSSL_rdtick();
+		return _sparcv9_rdtick();
 	}
 
 #if defined(__sun) && defined(__SVR4)
@@ -79,14 +79,18 @@ void OPENSSL_cpuid_setup(void)
 	{
 	void *h;
 	char *e;
+	static int trigger=0;
 
-	if (e=getenv("OPENSSL_sparcv9cap"))
+	if (trigger) return;
+	trigger=1;
+
+	if ((e=getenv("OPENSSL_sparcv9cap")))
 		{
 		OPENSSL_sparcv9cap_P=strtoul(e,NULL,0);
 		return;
 		}
 
-	if (h = dlopen("libdevinfo.so.1",RTLD_LAZY)) do
+	if ((h = dlopen("libdevinfo.so.1",RTLD_LAZY))) do
 		{
 		di_init_t	di_init;
 		di_fini_t	di_fini;
@@ -110,24 +114,20 @@ void OPENSSL_cpuid_setup(void)
 	if (h) dlclose(h);
 	}
 
-#elif defined(__linux)
+#else
 
-void OPENSSL_cpuid_setup(void)
+void OPENSSL_cpucap_setup(void)
 	{
 	char *e;
  
-	if (e=getenv("OPENSSL_sparcv9cap"))
+	if ((e=getenv("OPENSSL_sparcv9cap")))
 		{
 		OPENSSL_sparcv9cap_P=strtoul(env,NULL,0);
 		return;
 		}
 
-	/* Linux apparently supports UltraSPARC-I/II/III only */
+	/* For now we assume that the rest supports UltraSPARC-I* only */
 	OPENSSL_sparcv9cap_P |= SPARCV9_PREFER_FPU|SPARCV9_VIS1;
 	}
-
-#else
-
-void OPENSSL_cpuid_setup(void) {}
 
 #endif
