@@ -140,7 +140,7 @@ extern "C" {
 #define BN_DEC_FMT2	"%019lu"
 #define BN_DEC_NUM	19
 #define BN_HEX_FMT1	"%lX"
-#define BN_HEX_FMT2	"%08lX"
+#define BN_HEX_FMT2	"%016lX"
 #endif
 
 /* This is where the long long data type is 64 bits, but long is 32.
@@ -167,7 +167,7 @@ extern "C" {
 #define BN_DEC_FMT2	"%019llu"
 #define BN_DEC_NUM	19
 #define BN_HEX_FMT1	"%llX"
-#define BN_HEX_FMT2	"%08llX"
+#define BN_HEX_FMT2	"%016llX"
 #endif
 
 #ifdef THIRTY_TWO_BIT
@@ -196,7 +196,7 @@ extern "C" {
 #define BN_DEC_FMT2	"%09u"
 #define BN_DEC_NUM	9
 #define BN_HEX_FMT1	"%X"
-#define BN_HEX_FMT2	"%04X"
+#define BN_HEX_FMT2	"%08X"
 #endif
 
 #define BN_DEFAULT_BITS	1280
