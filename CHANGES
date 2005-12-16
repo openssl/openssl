@@ -4,6 +4,13 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) BIGNUM code on 64-bit SPARCv9 targets is switched from bn(64,64) to
+     bn(64,32). Because of instruction set limitations it doesn't have
+     any negative impact on performance. This was done mostly in order
+     to make it possible to share assembler modules, such as bn_mul_mont
+     implementations, between 32- and 64-bit builds without hassle.
+     [Andy Polyakov]
+
   *) Disable rogue ciphersuites:
 
       - SSLv2 0x08 0x00 0x80 ("RC4-64-MD5")
