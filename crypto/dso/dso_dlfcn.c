@@ -380,7 +380,7 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
 	}
 
 #ifdef __sgi
-#if 0
+/*
 This is a quote from IRIX manual for dladdr(3c):
 
      <dlfcn.h> does not contain a prototype for dladdr or definition of
@@ -392,7 +392,7 @@ This is a quote from IRIX manual for dladdr(3c):
      part of the IRIX compatibility guarantee; however, there is no future
      intention to change this interface, so on a practical level, the code
      below is safe to use on IRIX.
-#endif
+*/
 #include <rld_interface.h>
 #ifndef _RLD_INTERFACE_DLFCN_H_DLADDR
 #define _RLD_INTERFACE_DLFCN_H_DLADDR
@@ -416,7 +416,7 @@ static int dladdr(void *address, Dl_info *dl)
 	v = _rld_new_interface(_RLD_DLADDR,address,dl);
 	return (int)v;
 }
-#endif
+#endif /* __sgi */
 
 static int dlfcn_pathbyaddr(void *addr,char *path,int sz)
 	{
