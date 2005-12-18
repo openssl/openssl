@@ -116,7 +116,7 @@ void OPENSSL_cpuid_setup(void)
 
 #else
 
-void OPENSSL_cpucap_setup(void)
+void OPENSSL_cpuid_setup(void)
 	{
 	char *e;
  
