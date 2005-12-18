@@ -256,13 +256,7 @@ extern "C" {
 
 #define	SSL_RT_MAX_CIPHER_BLOCK_SIZE		16
 
-/* Due to MS stuffing up, this can change.... */
-#if defined(OPENSSL_SYS_WIN16) || \
-	(defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32))
-#define SSL3_RT_MAX_EXTRA			(14000)
-#else
 #define SSL3_RT_MAX_EXTRA			(16384)
-#endif
 
 /* Maximum plaintext length: defined by SSL/TLS standards */
 #define SSL3_RT_MAX_PLAIN_LENGTH		16384

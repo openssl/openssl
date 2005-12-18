@@ -123,9 +123,6 @@ extern "C" {
 #if defined(OPENSSL_SYS_WIN32) && !defined(WIN32)
 #  define WIN32
 #endif
-#if defined(OPENSSL_SYS_WIN16) && !defined(WIN16)
-#  define WIN16
-#endif
 #if defined(OPENSSL_SYS_WINDOWS) && !defined(WINDOWS)
 #  define WINDOWS
 #endif
@@ -203,7 +200,7 @@ extern "C" {
 #define writesocket(s,b,n)	write((s),(b),(n))
 #endif
 
-#ifdef WIN16
+#ifdef WIN16 /* never the case */
 #  define MS_CALLBACK	_far _loadds
 #  define MS_FAR	_far
 #else
@@ -295,12 +292,7 @@ static unsigned int _strlen31(const char *str)
 #    define _kbhit kbhit
 #  endif
 
-#  if defined(WIN16) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
-#    define EXIT(n) _wsetexit(_WINEXITNOPERSIST)
-#    define OPENSSL_EXIT(n) do { if (n == 0) EXIT(n); return(n); } while(0)
-#  else
-#    define EXIT(n) exit(n)
-#  endif
+#  define EXIT(n) exit(n)
 #  define LIST_SEPARATOR_CHAR ';'
 #  ifndef X_OK
 #    define X_OK	0
@@ -591,18 +583,6 @@ extern char *sys_errlist[]; extern int sys_nerr;
 #endif
 
 /***********************************************/
-
-/* do we need to do this for getenv.
- * Just define getenv for use under windows */
-
-#ifdef WIN16
-/* How to do this needs to be thought out a bit more.... */
-/*char *GETENV(char *);
-#define Getenv	GETENV*/
-#define Getenv	getenv
-#else
-#define Getenv getenv
-#endif
 
 #define DG_GCC_BUG	/* gcc < 2.6.3 on DGUX */
 

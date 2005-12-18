@@ -127,7 +127,7 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 			BIOerr(BIO_F_BIO_NEW_FILE,ERR_R_SYS_LIB);
 		return(NULL);
 		}
-	if ((ret=BIO_new(BIO_s_file_internal())) == NULL)
+	if ((ret=BIO_new(BIO_s_file())) == NULL)
 		return(NULL);
 
 	BIO_clear_flags(ret,BIO_FLAGS_UPLINK); /* we did fopen -> we disengage UPLINK */
