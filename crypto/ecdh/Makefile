@@ -64,7 +64,7 @@ lint:
 
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
