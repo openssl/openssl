@@ -704,6 +704,7 @@ static int win32_pathbyaddr(void *addr,char *path,int sz)
 		GetProcAddress(dll,"CreateToolhelp32Snapshot");
 	if (create_snap == NULL)
 		{
+		FreeLibrary(dll);
 		DSOerr(DSO_F_PATHBYADDR,DSO_R_UNSUPPORTED);
 		return -1;
 		}
