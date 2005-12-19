@@ -2970,7 +2970,7 @@ $arflags      =
 
 *** linux-sparcv9
 $cc           = gcc
-$cflags       = -m32 -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plusa -DBN_DIV2W
+$cflags       = -m32 -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -3642,7 +3642,7 @@ $arflags      =
 
 *** solaris-sparcv9-cc
 $cc           = cc
-$cflags       = -xtarget=ultra -xarch=v8plusa -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W
+$cflags       = -xtarget=ultra -xarch=v8plus -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -3754,7 +3754,7 @@ $arflags      =
 
 *** solaris64-sparcv9-cc
 $cc           = cc
-$cflags       = -xtarget=ultra -xarch=v9a -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN
+$cflags       = -xtarget=ultra -xarch=v9 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC

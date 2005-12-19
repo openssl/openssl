@@ -49,23 +49,7 @@
 
 $fname="bn_mul_mont_fpu";
 $bits=32;
-for (@ARGV) {
-	$bits=64    if (/\-m64/        || /\-xarch\=v9/);
-	$vis=1      if (/\-mcpu=ultra/ || /\-xarch\=v[9|8plus]\S/);
-}
-
-if (!$vis) {
-print<<___;
-.section	".text",#alloc,#execinstr
-.global $fname
-$fname:
-	retl
-	xor	%o0,%o0,%o0	! just signal "not implemented"
-.type   $fname,#function
-.size	$fname,(.-$fname)
-___
-exit;
-}
+for (@ARGV) { $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
 
 if ($bits==64) {
 	$bias=2047;
@@ -700,5 +684,18 @@ $fname:
 ___
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
+
+# Below substitution makes it possible to compile without demanding
+# VIS extentions on command line, e.g. -xarch=v9 vs. -xarch=v9a. I
+# dare to do this, because VIS capability is detected at run-time now
+# and this routine is not called on CPU not capable to execute it. Do
+# note that fzeros is not the only VIS dependency! Another dependency
+# is implicit and is just _a_ numerical value loaded to %asi register,
+# which assembler can't recognize as VIS specific...
+$code =~ s/fzeros\s+%f([0-9]+)/
+	   sprintf(".word\t0x%x\t! fzeros %%f%d",0x81b00c20|($1<<25),$1)
+	  /gem;
+
 print $code;
+# flush
 close STDOUT;
