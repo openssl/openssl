@@ -184,7 +184,7 @@ pqueue_find(pqueue_s *pq, unsigned char *prio64be)
 		}
 	
 	/* check the one last node */
-	if ( memcpy(next->priority, prio64be,8) ==0)
+	if ( memcmp(next->priority, prio64be,8) ==0)
 		found = next;
 
 	if ( ! found)
