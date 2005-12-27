@@ -878,7 +878,7 @@ padlock_aes_cipher_omnivorous(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 }
 
 #ifndef  PADLOCK_CHUNK
-# define PADLOCK_CHUNK	4096	/* Must be a power of 2 larger than 16 */
+# define PADLOCK_CHUNK	512	/* Must be a power of 2 larger than 16 */
 #endif
 #if PADLOCK_CHUNK<16 || PADLOCK_CHUNK&(PADLOCK_CHUNK-1)
 # error "insane PADLOCK_CHUNK..."
@@ -905,6 +905,11 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 	/* VIA promises CPUs that won't require alignment in the future.
 	   For now padlock_aes_align_required is initialized to 1 and
 	   the condition is never met... */
+	/* C7 core is capable to manage unaligned input in non-ECB[!]
+	   mode, but performance penalties appear to be approximately
+	   same as for software alignment below or ~3x. They promise to
+	   improve it in the future, but for now we can just as well
+	   pretend that it can only handle aligned input... */
 	if (!padlock_aes_align_required)
 		return padlock_aes_cipher_omnivorous(ctx, out_arg, in_arg, nbytes);
 
