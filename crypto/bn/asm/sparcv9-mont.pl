@@ -94,17 +94,17 @@ $fname:
 	cmp	$ap,$bp
 	and	$num,$mask,$num
 	ld	[$bp],$mul0		! bp[0]
-	be,pt	`$bits==32?"%icc":"%xcc"`,.Lbn_sqr_mont
 	nop
 
 	add	%sp,$bias,%o7		! real top of stack
-	ld	[$ap],$car0		! ap[0]
+	ld	[$ap],$car0		! ap[0] ! redundant in squaring context
 	sub	%o7,$num,%o7
 	ld	[$ap+4],$apj		! ap[1]
 	and	%o7,-1024,%o7
 	ld	[$np],$car1		! np[0]
 	sub	%o7,$bias,%sp		! alloca
 	ld	[$np+4],$npj		! np[1]
+	be,pt	`$bits==32?"%icc":"%xcc"`,.Lbn_sqr_mont
 	mov	12,$j
 
 	mulx	$car0,$mul0,$car0	! ap[0]*bp[0]
@@ -306,15 +306,6 @@ $sbit="%i2";		# re-use $bp!
 $code.=<<___;
 .align	32
 .Lbn_sqr_mont:
-	add	%sp,$bias,%o7			! real top of stack
-	ld	[$ap+4],$apj			! ap[1]
-	sub	%o7,$num,%o7
-	ld	[$np],$car1			! np[0]
-	and	%o7,-1024,%o7
-	ld	[$np+4],$npj			! np[1]
-	sub	%o7,$bias,%sp			! alloca
-	mov	12,$j
-
 	mulx	$mul0,$mul0,$car0		! ap[0]*ap[0]
 	mulx	$apj,$mul0,$tmp0		!prologue!
 	and	$car0,$mask,$acc0
