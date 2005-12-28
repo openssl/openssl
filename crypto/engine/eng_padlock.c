@@ -257,7 +257,9 @@ struct padlock_cipher_data
 	union {	unsigned int pad[4];
 		struct {
 			int rounds:4;
-			int algo:3;
+			int dgst:1;	/* n/a in C3 */
+			int align:1;	/* n/a in C3 */
+			int ciphr:1;	/* n/a in C3 */
 			int keygen:1;
 			int interm:1;
 			int encdec:1;
@@ -650,17 +652,13 @@ static int padlock_cipher_nids[] = {
 
 	NID_aes_192_ecb,
 	NID_aes_192_cbc,
-#if 0
-	NID_aes_192_cfb,	/* FIXME: AES192/256 CFB/OFB don't work. */
+	NID_aes_192_cfb,
 	NID_aes_192_ofb,
-#endif
 
 	NID_aes_256_ecb,
 	NID_aes_256_cbc,
-#if 0
 	NID_aes_256_cfb,
 	NID_aes_256_ofb,
-#endif
 };
 static int padlock_cipher_nids_num = (sizeof(padlock_cipher_nids)/
 				      sizeof(padlock_cipher_nids[0]));
@@ -676,12 +674,17 @@ static int padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 #define ALIGNED_CIPHER_DATA(ctx) ((struct padlock_cipher_data *)\
 	NEAREST_ALIGNED(ctx->cipher_data))
 
+#define EVP_CIPHER_block_size_ECB	AES_BLOCK_SIZE
+#define EVP_CIPHER_block_size_CBC	AES_BLOCK_SIZE
+#define EVP_CIPHER_block_size_OFB	1
+#define EVP_CIPHER_block_size_CFB	1
+
 /* Declaring so many ciphers by hand would be a pain.
    Instead introduce a bit of preprocessor magic :-) */
 #define	DECLARE_AES_EVP(ksize,lmode,umode)	\
 static const EVP_CIPHER padlock_aes_##ksize##_##lmode = {	\
 	NID_aes_##ksize##_##lmode,		\
-	AES_BLOCK_SIZE,			\
+	EVP_CIPHER_block_size_##umode,	\
 	AES_KEY_SIZE_##ksize,		\
 	AES_BLOCK_SIZE,			\
 	0 | EVP_CIPH_##umode##_MODE,	\
@@ -783,7 +786,10 @@ padlock_aes_init_key (EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	memset(cdata, 0, sizeof(struct padlock_cipher_data));
 
 	/* Prepare Control word. */
-	cdata->cword.b.encdec = (ctx->encrypt == 0);
+	if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_OFB_MODE)
+		cdata->cword.b.encdec = 0;
+	else
+		cdata->cword.b.encdec = (ctx->encrypt == 0);
 	cdata->cword.b.rounds = 10 + (key_len - 128) / 32;
 	cdata->cword.b.ksize = (key_len - 128) / 64;
 
@@ -803,7 +809,9 @@ padlock_aes_init_key (EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			   and is listed as hardware errata. They most
 			   likely will fix it at some point and then
 			   a check for stepping would be due here. */
-			if (enc)
+			if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_CFB_MODE ||
+			    EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_OFB_MODE ||
+			    enc)
 				AES_set_encrypt_key(key, key_len, &cdata->ks);
 			else
 				AES_set_decrypt_key(key, key_len, &cdata->ks);
@@ -897,10 +905,53 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 	int    inp_misaligned, out_misaligned, realign_in_loop;
 	size_t chunk, allocated=0;
 
+	/* ctx->num is maintained in byte-oriented modes,
+	   such as CFB and OFB... */
+	if ((chunk = ctx->num)) { /* borrow chunk variable */
+		unsigned char *ivp=ctx->iv;
+
+		switch (EVP_CIPHER_CTX_mode(ctx)) {
+		case EVP_CIPH_CFB_MODE:
+			if (chunk >= AES_BLOCK_SIZE)
+				return 0; /* bogus value */
+
+			if (ctx->encrypt)
+				while (chunk<AES_BLOCK_SIZE && nbytes!=0) {
+					ivp[chunk] = *(out_arg++) = *(in_arg++) ^ ivp[chunk];
+					chunk++, nbytes--;
+				}
+			else	while (chunk<AES_BLOCK_SIZE && nbytes!=0) {
+					unsigned char c = *(in_arg++);
+					*(out_arg++) = c ^ ivp[chunk];
+					ivp[chunk++] = c, nbytes--;
+				}
+
+			ctx->num = chunk%AES_BLOCK_SIZE;
+			break;
+		case EVP_CIPH_OFB_MODE:
+			if (chunk >= AES_BLOCK_SIZE)
+				return 0; /* bogus value */
+
+			while (chunk<AES_BLOCK_SIZE && nbytes!=0) {
+				*(out_arg++) = *(in_arg++) ^ ivp[chunk];
+				chunk++, nbytes--;
+			}
+
+			ctx->num = chunk%AES_BLOCK_SIZE;
+			break;
+		}
+	}
+
 	if (nbytes == 0)
 		return 1;
+#if 0
 	if (nbytes % AES_BLOCK_SIZE)
 		return 0; /* are we expected to do tail processing? */
+#else
+	/* nbytes is always multiple of AES_BLOCK_SIZE in ECB and CBC
+	   modes and arbitrary value in byte-oriented modes, such as
+	   CFB and OFB... */
+#endif
 
 	/* VIA promises CPUs that won't require alignment in the future.
 	   For now padlock_aes_align_required is initialized to 1 and
@@ -910,7 +961,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 	   same as for software alignment below or ~3x. They promise to
 	   improve it in the future, but for now we can just as well
 	   pretend that it can only handle aligned input... */
-	if (!padlock_aes_align_required)
+	if (!padlock_aes_align_required && (nbytes%AES_BLOCK_SIZE)==0)
 		return padlock_aes_cipher_omnivorous(ctx, out_arg, in_arg, nbytes);
 
 	inp_misaligned = (((size_t)in_arg) & 0x0F);
@@ -922,7 +973,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 	 * in order to improve L1 cache utilization... */
 	realign_in_loop = out_misaligned|inp_misaligned;
 
-	if (!realign_in_loop)
+	if (!realign_in_loop && (nbytes%AES_BLOCK_SIZE)==0)
 		return padlock_aes_cipher_omnivorous(ctx, out_arg, in_arg, nbytes);
 
 	/* this takes one "if" out of the loops */
@@ -989,8 +1040,10 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 		break;
 
 	case EVP_CIPH_CFB_MODE:
-		memcpy (cdata->iv, ctx->iv, AES_BLOCK_SIZE);
-		goto cfb_shortcut;
+		memcpy (iv = cdata->iv, ctx->iv, AES_BLOCK_SIZE);
+		chunk &= ~(AES_BLOCK_SIZE-1);
+		if (chunk)	goto cfb_shortcut;
+		else		goto cfb_skiploop;
 		do	{
 			if (iv != cdata->iv)
 				memcpy(cdata->iv, iv, AES_BLOCK_SIZE);
@@ -1009,13 +1062,47 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 			else
 				out     = out_arg+=chunk;
 
-		} while (nbytes -= chunk);
+			nbytes -= chunk;
+		} while (nbytes >= AES_BLOCK_SIZE);
+
+		cfb_skiploop:
+		if (nbytes) {
+			unsigned char *ivp = cdata->iv;
+
+			if (iv != ivp) {
+				memcpy(ivp, iv, AES_BLOCK_SIZE);
+				iv = ivp;
+			}
+			ctx->num = nbytes;
+			if (cdata->cword.b.encdec) {
+				cdata->cword.b.encdec=0;
+				padlock_reload_key();
+				padlock_xcrypt_ecb(1,cdata,ivp,ivp);
+				cdata->cword.b.encdec=1;
+				padlock_reload_key();
+				while(nbytes) {
+					unsigned char c = *(in_arg++);
+					*(out_arg++) = c ^ *ivp;
+					*(ivp++) = c, nbytes--;
+				}
+			}
+			else {	padlock_reload_key();
+				padlock_xcrypt_ecb(1,cdata,ivp,ivp);
+				padlock_reload_key();
+				while (nbytes) {
+					*ivp = *(out_arg++) = *(in_arg++) ^ *ivp;
+					ivp++, nbytes--;
+				}
+			}
+		}
+
 		memcpy(ctx->iv, iv, AES_BLOCK_SIZE);
 		break;
 
 	case EVP_CIPH_OFB_MODE:
 		memcpy(cdata->iv, ctx->iv, AES_BLOCK_SIZE);
-		do	{
+		chunk &= ~(AES_BLOCK_SIZE-1);
+		if (chunk) do	{
 			if (inp_misaligned)
 				inp = padlock_memcpy(out, in_arg, chunk);
 			else
@@ -1031,7 +1118,21 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 
 			nbytes -= chunk;
 			chunk   = PADLOCK_CHUNK;
-		} while (nbytes);
+		} while (nbytes >= AES_BLOCK_SIZE);
+
+		if (nbytes) {
+			unsigned char *ivp = cdata->iv;
+
+			ctx->num = nbytes;
+			padlock_reload_key();	/* empirically found */
+			padlock_xcrypt_ecb(1,cdata,ivp,ivp);
+			padlock_reload_key();	/* empirically found */
+			while (nbytes) {
+				*(out_arg++) = *(in_arg++) ^ *ivp;
+				ivp++, nbytes--;
+			}
+		}
+
 		memcpy(ctx->iv, cdata->iv, AES_BLOCK_SIZE);
 		break;
 
