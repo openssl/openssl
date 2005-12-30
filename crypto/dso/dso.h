@@ -173,6 +173,9 @@ typedef struct dso_meth_st
 
 	/* Return pathname of the module containing location */
 	int (*pathbyaddr)(void *addr,char *path,int sz);
+	/* Perform global symbol lookup, i.e. among *all* modules,
+	 * see commentray in dso_lib.c for further details. */
+	DSO_FUNC_TYPE (*globallookup)(const char *symname);
 	} DSO_METHOD;
 
 /**********************************************************************/
@@ -357,6 +360,7 @@ void ERR_load_DSO_strings(void);
 #define DSO_F_WIN32_SPLITTER				 136
 #define DSO_F_WIN32_UNLOAD				 121
 #define DSO_F_PATHBYADDR				 137
+#define DSO_F_GLOBAL_LOOKUP_FUNC			 138
 
 /* Reason codes. */
 #define DSO_R_CTRL_FAILED				 100

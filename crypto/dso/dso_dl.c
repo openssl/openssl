@@ -86,6 +86,7 @@ static int dl_ctrl(DSO *dso, int cmd, long larg, void *parg);
 static char *dl_name_converter(DSO *dso, const char *filename);
 static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2);
 static int dl_pathbyaddr(void *addr,char *path,int sz);
+static DSO_FUNC_TYPE dl_globallookup(const char *name);
 
 static DSO_METHOD dso_meth_dl = {
 	"OpenSSL 'dl' shared library method",
@@ -103,7 +104,8 @@ static DSO_METHOD dso_meth_dl = {
 	dl_merger,
 	NULL, /* init */
 	NULL, /* finish */
-	dl_pathbyaddr
+	dl_pathbyaddr,
+	dl_globallookup
 	};
 
 DSO_METHOD *DSO_METHOD_dl(void)
@@ -379,5 +381,13 @@ static int dl_pathbyaddr(void *addr,char *path,int sz)
 		}
 
 	return -1;
+	}
+
+static DSO_FUNC_TYPE dl_globallookup(const char *name)
+	{
+	DSO_FUNC_TYPE ret;
+	shl_t h = NULL;
+
+	return shl_findsym(&h,name,TYPE_UNDEFINED,&ret) ? NULL : ret;
 	}
 #endif /* DSO_DL */

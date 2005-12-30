@@ -289,6 +289,7 @@ DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname)
 		DSOerr(DSO_F_DSO_BIND_FUNC,DSO_R_UNSUPPORTED);
 		return(NULL);
 		}
+fprintf(stderr,"boo\n");
 	if((ret = dso->meth->dso_bind_func(dso, symname)) == NULL)
 		{
 		DSOerr(DSO_F_DSO_BIND_FUNC,DSO_R_SYM_FAILURE);
@@ -475,4 +476,24 @@ int DSO_pathbyaddr(void *addr,char *path,int sz)
 		return -1;
 		}
 	return (*meth->pathbyaddr)(addr,path,sz);
+	}
+
+/* This function should be used with caution! It looks up symbols in
+ * *all* loaded modules and if module gets unloaded by somebody else
+ * attempt to dereference the pointer is doomed to have fatal
+ * consequences. Primary usage for this function is to probe *core*
+ * system functionality, e.g. check if getnameinfo(3) is available
+ * at run-time without bothering about OS-specific details such as
+ * libc.so.versioning or where does it actually reside: in libc
+ * itself or libsocket. */
+DSO_FUNC_TYPE DSO_global_lookup_func(const char *name)
+	{
+	DSO_METHOD *meth = default_DSO_meth;
+	if (meth == NULL) meth = DSO_METHOD_openssl();
+	if (meth->globallookup == NULL)
+		{
+		DSOerr(DSO_F_GLOBAL_LOOKUP_FUNC,DSO_R_UNSUPPORTED);
+		return NULL;
+		}
+	return (*meth->globallookup)(name);
 	}

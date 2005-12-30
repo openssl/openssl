@@ -129,6 +129,7 @@ static char *win32_name_converter(DSO *dso, const char *filename);
 static char *win32_merger(DSO *dso, const char *filespec1,
 	const char *filespec2);
 static int win32_pathbyaddr(void *addr,char *path,int sz);
+static DSO_FUNC_TYPE win32_globallookup(const char *name);
 
 static const char *openssl_strnchr(const char *string, int c, size_t len);
 
@@ -148,7 +149,8 @@ static DSO_METHOD dso_meth_win32 = {
 	win32_merger,
 	NULL, /* init */
 	NULL, /* finish */
-	win32_pathbyaddr
+	win32_pathbyaddr,
+	win32_globallookup
 	};
 
 DSO_METHOD *DSO_METHOD_win32(void)
@@ -769,5 +771,66 @@ static int win32_pathbyaddr(void *addr,char *path,int sz)
 	(*close_snap)(hModuleSnap); 
 	FreeLibrary(dll);
 	return 0;
+	}
+
+static DSO_FUNC_TYPE win32_globallookup(const char *name)
+	{
+	HMODULE dll;
+	HANDLE hModuleSnap = INVALID_HANDLE_VALUE;
+	MODULEENTRY32 me32;
+	CREATETOOLHELP32SNAPSHOT create_snap;
+	CLOSETOOLHELP32SNAPSHOT  close_snap;
+	MODULE32 module_first, module_next;
+	FARPROC ret=NULL;
+
+	dll = LoadLibrary(TEXT(DLLNAME));
+	if (dll == NULL)
+		{
+		DSOerr(DSO_F_GLOBAL_LOOKUP_FUNC,DSO_R_UNSUPPORTED);
+		return NULL;
+		}
+
+	create_snap = (CREATETOOLHELP32SNAPSHOT)
+		GetProcAddress(dll,"CreateToolhelp32Snapshot");
+	if (create_snap == NULL)
+		{
+		FreeLibrary(dll);
+		DSOerr(DSO_F_GLOBAL_LOOKUP_FUNC,DSO_R_UNSUPPORTED);
+		return NULL;
+		}
+	/* We take the rest for granted... */
+#ifdef _WIN32_WCE
+	close_snap = (CLOSETOOLHELP32SNAPSHOT)
+		GetProcAddress(dll,"CloseToolhelp32Snapshot");
+#else
+	close_snap = (CLOSETOOLHELP32SNAPSHOT)CloseHandle;
+#endif
+	module_first = (MODULE32)GetProcAddress(dll,"Module32First");
+	module_next  = (MODULE32)GetProcAddress(dll,"Module32Next");
+
+	hModuleSnap = (*create_snap)(TH32CS_SNAPMODULE,0);
+	if( hModuleSnap == INVALID_HANDLE_VALUE ) return NULL;
+
+	me32.dwSize = sizeof(me32);
+
+	if (!(*module_first)(hModuleSnap,&me32))
+		{
+		(*close_snap)(hModuleSnap);
+		FreeLibrary(dll);
+		return NULL;
+		}
+
+	do	{
+		if (ret = GetProcAddress(me32.hModule,fname))
+			{
+			(*close_snap)(hModuleSnap);
+			FreeLibrary(dll);
+			return ret;
+			}
+		} while((*module_next)(hModuleSnap,&me32));
+
+	(*close_snap)(hModuleSnap); 
+	FreeLibrary(dll);
+	return NULL;
 	}
 #endif /* DSO_WIN32 */
