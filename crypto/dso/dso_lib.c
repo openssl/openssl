@@ -289,7 +289,6 @@ DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname)
 		DSOerr(DSO_F_DSO_BIND_FUNC,DSO_R_UNSUPPORTED);
 		return(NULL);
 		}
-fprintf(stderr,"boo\n");
 	if((ret = dso->meth->dso_bind_func(dso, symname)) == NULL)
 		{
 		DSOerr(DSO_F_DSO_BIND_FUNC,DSO_R_SYM_FAILURE);
