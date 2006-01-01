@@ -103,15 +103,24 @@ while (($hdr, $lib) = each %libinc)
 		    next;
 		}
 
-		$cpp = 1 if /^#.*ifdef.*cplusplus/;  # skip "C" declaration
+		if(/\/\*/) {
+		    if (not /\*\//) {		# multiline comment...
+			$line = $_;		# ... just accumulate
+			next; 
+		    } else {
+			s/\/\*.*?\*\///gs;	# wipe it
+		    }
+		}
+
 		if ($cpp) {
-		    $cpp = 0 if /^#.*endif/;
+		    $cpp++ if /^#\s*if/;
+		    $cpp-- if /^#\s*endif/;
 		    next;
 		}
+		$cpp = 1 if /^#.*ifdef.*cplusplus/;  # skip "C" declaration
 
 		next if (/^\#/);                      # skip preprocessor directives
 
-		s/\/\*.*?\*\///gs;                   # ignore comments
 		s/{[^{}]*}//gs;                      # ignore {} blocks
 
 		if (/\{|\/\*/) { # Add a } so editor works...
@@ -128,27 +137,25 @@ while (($hdr, $lib) = each %libinc)
 	    $defnr++;
 	    print STDERR "def: $defnr\r" if $debug;
 
+	    # The goal is to collect function names from function declarations.
+
 	    s/^[\n\s]*//g;
 	    s/[\n\s]*$//g;
-	    next if(/typedef\W/);
-	    if (/\(\*(\w*)\([^\)]+/) {
-		my $name = $1;
+
+	    # Skip over recognized non-function declarations
+	    next if(/typedef\W/ or /struct\W/ or /DECLARE_STACK_OF/ or /TYPEDEF_.*_OF/);
+
+	    # Reduce argument lists to empty ()
+	    # fold round brackets recursively: (t(*v)(t),t) -> (t{}{},t) -> {}
+	    while(/\(.*\)/s) { s/\([^\(\)]+\)/\{\}/gs; }
+	    # pretend as we didn't use curly braces: {} -> ()
+	    s/\{\}/\(\)/gs;
+
+	    if (/(\w+)\s*\(\).*/s) {	# first token prior [first] () is
+		my $name = $1;		# a function name!
 		$name =~ tr/[a-z]/[A-Z]/;
 		$ftrans{$name} = $1;
-	    } elsif (/\w+\W+(\w+)\W*\(\s*\)(\s*__attribute__\(.*\)\s*)?$/s){
-		# K&R C
-		next ;
-	    } elsif (/\w+\W+\w+\W*\(.*\)(\s*__attribute__\(.*\)\s*)?$/s) {
-		while (not /\(\)(\s*__attribute__\(.*\)\s*)?$/s) {
-		    s/[^\(\)]*\)(\s*__attribute__\(.*\)\s*)?$/\)/s;
-		    s/\([^\(\)]*\)\)(\s*__attribute__\(.*\)\s*)?$/\)/s;
-		}
-		s/\(void\)//;
-		/(\w+(\{[0-9]+\})?)\W*\(\)/s;
-		my $name = $1;
-		$name =~ tr/[a-z]/[A-Z]/;
-		$ftrans{$name} = $1;
-	    } elsif (/\(/ and not (/=/ or /DECLARE_STACK/ or /TYPEDEF_D2I2D_OF/)) {
+	    } elsif (/[\(\)]/ and not (/=/)) {
 		print STDERR "Header $hdr: cannot parse: $_;\n";
 	    }
 	}
@@ -200,11 +207,10 @@ while (($hdr, $lib) = each %libinc)
 # so all those unreferenced can be printed out.
 
 
-print STDERR "Files loaded: " if $debug;
 foreach $file (@source) {
 	# Don't parse the error source file.
 	next if exists $cskip{$file};
-	print STDERR $file if $debug;
+	print STDERR "File loaded: ".$file."\r" if $debug;
 	open(IN, "<$file") || die "Can't open source file $file\n";
 	while(<IN>) {
 		if(/(([A-Z0-9]+)_F_([A-Z0-9_]+))/) {
