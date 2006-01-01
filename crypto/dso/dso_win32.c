@@ -809,7 +809,12 @@ static DSO_FUNC_TYPE win32_globallookup(const char *name)
 	module_next  = (MODULE32)GetProcAddress(dll,"Module32Next");
 
 	hModuleSnap = (*create_snap)(TH32CS_SNAPMODULE,0);
-	if( hModuleSnap == INVALID_HANDLE_VALUE ) return NULL;
+	if( hModuleSnap == INVALID_HANDLE_VALUE )
+		{
+		FreeLibrary(dll);
+		DSOerr(DSO_F_PATHBYADDR,DSO_R_UNSUPPORTED);
+		return NULL;
+		}
 
 	me32.dwSize = sizeof(me32);
 
