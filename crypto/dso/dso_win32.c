@@ -129,7 +129,7 @@ static char *win32_name_converter(DSO *dso, const char *filename);
 static char *win32_merger(DSO *dso, const char *filespec1,
 	const char *filespec2);
 static int win32_pathbyaddr(void *addr,char *path,int sz);
-static DSO_FUNC_TYPE win32_globallookup(const char *name);
+static void *win32_globallookup(const char *name);
 
 static const char *openssl_strnchr(const char *string, int c, size_t len);
 
@@ -773,7 +773,7 @@ static int win32_pathbyaddr(void *addr,char *path,int sz)
 	return 0;
 	}
 
-static DSO_FUNC_TYPE win32_globallookup(const char *name)
+static void *win32_globallookup(const char *name)
 	{
 	HMODULE dll;
 	HANDLE hModuleSnap = INVALID_HANDLE_VALUE;

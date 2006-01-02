@@ -99,7 +99,7 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename);
 static char *dlfcn_merger(DSO *dso, const char *filespec1,
 	const char *filespec2);
 static int dlfcn_pathbyaddr(void *addr,char *path,int sz);
-static DSO_FUNC_TYPE dlfcn_globallookup(const char *name);
+static void *dlfcn_globallookup(const char *name);
 
 static DSO_METHOD dso_meth_dlfcn = {
 	"OpenSSL 'dlfcn' shared library method",
@@ -446,17 +446,16 @@ static int dlfcn_pathbyaddr(void *addr,char *path,int sz)
 	return -1;
 	}
 
-static DSO_FUNC_TYPE dlfcn_globallookup(const char *name)
+static void *dlfcn_globallookup(const char *name)
 	{
-	union { void *p; DSO_FUNC_TYPE f; } ret = { NULL };
-	void *handle = dlopen(NULL,RTLD_LAZY);
+	void *ret = NULL,*handle = dlopen(NULL,RTLD_LAZY);
 	
 	if (handle)
 		{
-		ret.p = dlsym(handle,name);
+		ret = dlsym(handle,name);
 		dlclose(handle);
 		}
 
-	return ret.f;
+	return ret;
 	}
 #endif /* DSO_DLFCN */
